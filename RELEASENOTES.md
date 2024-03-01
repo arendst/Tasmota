@@ -124,7 +124,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - IR support data larger than 64 bits [#20831](https://github.com/arendst/Tasmota/issues/20831)
 - TasMesh support for LWT messages [#20392](https://github.com/arendst/Tasmota/issues/20392)
 - QMC5883l check for overflow and scale reading [#20643](https://github.com/arendst/Tasmota/issues/20643)
-- Berry add explicit error log when memory allocation fails [#20807](https://github.com/arendst/Tasmota/issues/20807)
+- Berry explicit error log when memory allocation fails [#20807](https://github.com/arendst/Tasmota/issues/20807)
+- Berry `path.rename()` [#20840](https://github.com/arendst/Tasmota/issues/20840)
 - HASPmota `p<x>b<y>.delete` to delete an object [#20735](https://github.com/arendst/Tasmota/issues/20735)
 - LVGL and HASPmota typicons font [#20742](https://github.com/arendst/Tasmota/issues/20742)
 
@@ -133,6 +134,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Changed
 - ESP32 Core3 platform update from 2024.01.12 to 2024.02.10 [#20730](https://github.com/arendst/Tasmota/issues/20730)
 - NeoPool webUI pH alarms (4 & 5) completed (#20743)[#20743](https://github.com/arendst/Tasmota/issues/20743)
+- Prevent shutter MQTT broadcast with activated ShutterLock [#20827](https://github.com/arendst/Tasmota/issues/20827)
 - Berry class `int64` made immutable [#20727](https://github.com/arendst/Tasmota/issues/20727)
 - Matter reduce memory usage when reading with wildcards [#20809](https://github.com/arendst/Tasmota/issues/20809)
 - LVGL make lv_touch_3_buttons more responsive [#20728](https://github.com/arendst/Tasmota/issues/20728)
@@ -143,6 +145,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Shutter inverted using internal commands [#20752](https://github.com/arendst/Tasmota/issues/20752)
 - ESP32 PWM activity on unconfigured PWM GPIOs [#20732](https://github.com/arendst/Tasmota/issues/20732)
 - Berry Memory leak in `import re` [#20823](https://github.com/arendst/Tasmota/issues/20823)
+- Berry bug when parsing ternary operator [#20839](https://github.com/arendst/Tasmota/issues/20839)
 - HASPmota PSRAM memory leak [#20818](https://github.com/arendst/Tasmota/issues/20818)
 
 ### Removed

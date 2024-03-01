@@ -5,14 +5,14 @@ All notable changes to this project will be documented in this file.
 
 ## [13.4.0.2]
 ### Added
-- Berry add `path.rename()`
+- Berry `path.rename()` (#20840)
 
 ### Breaking Changed
 
 ### Changed
 
 ### Fixed
-- Berry bug when parsing ternary operator
+- Berry bug when parsing ternary operator (#20839)
 
 ### Removed
 
@@ -37,7 +37,7 @@ All notable changes to this project will be documented in this file.
 - HASPmota fix and improve demo with pixel-perfect fonts (#20734)
 - NeoPool webUI pH alarms (4 & 5) completed (#20743)
 - Matter reduce memory usage when reading with wildcards (#20809)
-- Prevent shutter MQTT broadcast with activated ShutterLock
+- Prevent shutter MQTT broadcast with activated ShutterLock (#20827)
 
 ### Fixed
 - ESP32 PWM activity on unconfigured PWM GPIOs (#20732)
