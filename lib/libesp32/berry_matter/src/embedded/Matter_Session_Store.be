@@ -35,7 +35,8 @@ class Matter_Session_Store
   var device                      # device root object
   var sessions
   var fabrics                     # list of provisioned fabrics
-  static var _FABRICS  = "_matter_fabrics.json"
+  static var _FABRICS  = "/_matter_fabrics.json"
+  static var _FABRICS_TEMP  = "/_matter_fabrics.tmp"   # temporary saved file before renaming to _FABRICS
 
   #############################################################
   def init(device)
@@ -318,12 +319,13 @@ class Matter_Session_Store
   #############################################################
   def save_fabrics()
     import json
+    import path
     try
       self.remove_expired()      # clean before saving
       var sessions_saved = 0
       var fabrics_saved = 0
 
-      var f = open(self._FABRICS, "w")
+      var f = open(self._FABRICS_TEMP, "w")
 
       f.write("[")
       for fab : self.fabrics.persistables()
@@ -337,8 +339,14 @@ class Matter_Session_Store
       f.write("]")
 
       f.close()
-      tasmota.log(f"MTR: =Saved     {fabrics_saved} fabric(s) and {sessions_saved} session(s)", 2)
-      self.device.event_fabrics_saved()     # signal event
+      # saving went well, now remove previous version and rename
+      path.remove(self._FABRICS)
+      if (path.rename(self._FABRICS_TEMP, self._FABRICS))
+        tasmota.log(f"MTR: =Saved     {fabrics_saved} fabric(s) and {sessions_saved} session(s)", 2)
+        self.device.event_fabrics_saved()     # signal event
+      else
+        tasmota.log(f"MTR: Saving Fabrics failed", 2)
+      end
     except .. as e, m
       tasmota.log("MTR: Session_Store::save Exception:" + str(e) + "|" + str(m), 2)
     end
