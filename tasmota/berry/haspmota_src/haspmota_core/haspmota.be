@@ -1245,6 +1245,17 @@ class lvh_img : lvh_obj
   def get_angle()
     return self._lv_obj.get_angle()
   end
+  #- ------------------------------------------------------------#
+  # `src` virtual setter
+  # If source is `tasmota_logo`, use the embedded logo
+  #- ------------------------------------------------------------#
+  def set_src(t)
+    if (t == 'tasmota_logo')
+      self._lv_obj.set_tasmota_logo()
+    else
+      self._lv_obj.set_src(t)
+    end
+  end
 end
 
 #====================================================================
