@@ -5028,36 +5028,6 @@ void be_load_lvh_line_class(bvm *vm) {
 extern const bclass be_class_lvh_img;
 
 /********************************************************************
-** Solidified function: get_angle
-********************************************************************/
-be_local_closure(lvh_img_get_angle,   /* name */
-  be_nested_proto(
-    3,                          /* nstack */
-    1,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(_lv_obj),
-    /* K1   */  be_nested_str_weak(get_angle),
-    }),
-    be_str_weak(get_angle),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 4]) {  /* code */
-      0x88040100,  //  0000  GETMBR	R1	R0	K0
-      0x8C040301,  //  0001  GETMET	R1	R1	K1
-      0x7C040200,  //  0002  CALL	R1	1
-      0x80040200,  //  0003  RET	1	R1
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: set_auto_size
 ********************************************************************/
 be_local_closure(lvh_img_set_auto_size,   /* name */
@@ -5086,6 +5056,36 @@ be_local_closure(lvh_img_set_auto_size,   /* name */
       0x88100903,  //  0004  GETMBR	R4	R4	K3
       0x7C080400,  //  0005  CALL	R2	2
       0x80000000,  //  0006  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_angle
+********************************************************************/
+be_local_closure(lvh_img_get_angle,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(get_angle),
+    }),
+    be_str_weak(get_angle),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 4]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x7C040200,  //  0002  CALL	R1	1
+      0x80040200,  //  0003  RET	1	R1
     })
   )
 );
@@ -5128,6 +5128,45 @@ be_local_closure(lvh_img_set_angle,   /* name */
 
 
 /********************************************************************
+** Solidified function: set_src
+********************************************************************/
+be_local_closure(lvh_img_set_src,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_nested_str_weak(tasmota_logo),
+    /* K1   */  be_nested_str_weak(_lv_obj),
+    /* K2   */  be_nested_str_weak(set_tasmota_logo),
+    /* K3   */  be_nested_str_weak(set_src),
+    }),
+    be_str_weak(set_src),
+    &be_const_str_solidified,
+    ( &(const binstruction[11]) {  /* code */
+      0x1C080300,  //  0000  EQ	R2	R1	K0
+      0x780A0003,  //  0001  JMPF	R2	#0006
+      0x88080101,  //  0002  GETMBR	R2	R0	K1
+      0x8C080502,  //  0003  GETMET	R2	R2	K2
+      0x7C080200,  //  0004  CALL	R2	1
+      0x70020003,  //  0005  JMP		#000A
+      0x88080101,  //  0006  GETMBR	R2	R0	K1
+      0x8C080503,  //  0007  GETMET	R2	R2	K3
+      0x5C100200,  //  0008  MOVE	R4	R1
+      0x7C080400,  //  0009  CALL	R2	2
+      0x80000000,  //  000A  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: get_auto_size
 ********************************************************************/
 be_local_closure(lvh_img_get_auto_size,   /* name */
@@ -5158,13 +5197,14 @@ extern const bclass be_class_lvh_obj;
 be_local_class(lvh_img,
     0,
     &be_class_lvh_obj,
-    be_nested_map(5,
+    be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(get_angle, -1), be_const_closure(lvh_img_get_angle_closure) },
-        { be_const_key_weak(set_auto_size, -1), be_const_closure(lvh_img_set_auto_size_closure) },
-        { be_const_key_weak(set_angle, 4), be_const_closure(lvh_img_set_angle_closure) },
-        { be_const_key_weak(get_auto_size, -1), be_const_closure(lvh_img_get_auto_size_closure) },
         { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_image) },
+        { be_const_key_weak(set_auto_size, 2), be_const_closure(lvh_img_set_auto_size_closure) },
+        { be_const_key_weak(get_angle, 0), be_const_closure(lvh_img_get_angle_closure) },
+        { be_const_key_weak(set_angle, -1), be_const_closure(lvh_img_set_angle_closure) },
+        { be_const_key_weak(set_src, -1), be_const_closure(lvh_img_set_src_closure) },
+        { be_const_key_weak(get_auto_size, -1), be_const_closure(lvh_img_get_auto_size_closure) },
     })),
     be_str_weak(lvh_img)
 );
