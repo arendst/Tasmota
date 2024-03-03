@@ -6951,6 +6951,33 @@ void be_load_lvh_qrcode_class(bvm *vm) {
 extern const bclass be_class_lvh_chart;
 
 /********************************************************************
+** Solidified function: get_y_min
+********************************************************************/
+be_local_closure(lvh_chart_get_y_min,   /* name */
+  be_nested_proto(
+    2,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 1]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_y_min),
+    }),
+    be_str_weak(get_y_min),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 2]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x80040200,  //  0001  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: add_point
 ********************************************************************/
 be_local_closure(lvh_chart_add_point,   /* name */
@@ -6966,7 +6993,7 @@ be_local_closure(lvh_chart_add_point,   /* name */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
     /* K1   */  be_nested_str_weak(set_next_value),
-    /* K2   */  be_nested_str_weak(ser1),
+    /* K2   */  be_nested_str_weak(_ser1),
     }),
     be_str_weak(add_point),
     &be_const_str_solidified,
@@ -6977,6 +7004,212 @@ be_local_closure(lvh_chart_add_point,   /* name */
       0x5C140200,  //  0003  MOVE	R5	R1
       0x7C080600,  //  0004  CALL	R2	3
       0x80000000,  //  0005  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_val2
+********************************************************************/
+be_local_closure(lvh_chart_set_val2,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 1]) {     /* constants */
+    /* K0   */  be_nested_str_weak(add_point2),
+    }),
+    be_str_weak(set_val2),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 4]) {  /* code */
+      0x8C080100,  //  0000  GETMET	R2	R0	K0
+      0x5C100200,  //  0001  MOVE	R4	R1
+      0x7C080400,  //  0002  CALL	R2	2
+      0x80000000,  //  0003  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_y_min
+********************************************************************/
+be_local_closure(lvh_chart_set_y_min,   /* name */
+  be_nested_proto(
+    7,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 6]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_y_min),
+    /* K1   */  be_nested_str_weak(_lv_obj),
+    /* K2   */  be_nested_str_weak(set_range),
+    /* K3   */  be_nested_str_weak(lv),
+    /* K4   */  be_nested_str_weak(CHART_AXIS_PRIMARY_Y),
+    /* K5   */  be_nested_str_weak(_y_max),
+    }),
+    be_str_weak(set_y_min),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 9]) {  /* code */
+      0x90020001,  //  0000  SETMBR	R0	K0	R1
+      0x88080101,  //  0001  GETMBR	R2	R0	K1
+      0x8C080502,  //  0002  GETMET	R2	R2	K2
+      0xB8120600,  //  0003  GETNGBL	R4	K3
+      0x88100904,  //  0004  GETMBR	R4	R4	K4
+      0x88140100,  //  0005  GETMBR	R5	R0	K0
+      0x88180105,  //  0006  GETMBR	R6	R0	K5
+      0x7C080800,  //  0007  CALL	R2	4
+      0x80000000,  //  0008  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: add_point2
+********************************************************************/
+be_local_closure(lvh_chart_add_point2,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_next_value),
+    /* K2   */  be_nested_str_weak(_ser2),
+    }),
+    be_str_weak(add_point2),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 6]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x88100102,  //  0002  GETMBR	R4	R0	K2
+      0x5C140200,  //  0003  MOVE	R5	R1
+      0x7C080600,  //  0004  CALL	R2	3
+      0x80000000,  //  0005  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_series1_color
+********************************************************************/
+be_local_closure(lvh_chart_set_series1_color,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_series_color),
+    /* K2   */  be_nested_str_weak(_ser1),
+    }),
+    be_str_weak(set_series1_color),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 6]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x88100102,  //  0002  GETMBR	R4	R0	K2
+      0x5C140200,  //  0003  MOVE	R5	R1
+      0x7C080600,  //  0004  CALL	R2	3
+      0x80000000,  //  0005  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_series2_color
+********************************************************************/
+be_local_closure(lvh_chart_set_series2_color,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_series_color),
+    /* K2   */  be_nested_str_weak(_ser2),
+    }),
+    be_str_weak(set_series2_color),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 6]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x88100102,  //  0002  GETMBR	R4	R0	K2
+      0x5C140200,  //  0003  MOVE	R5	R1
+      0x7C080600,  //  0004  CALL	R2	3
+      0x80000000,  //  0005  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_y_max
+********************************************************************/
+be_local_closure(lvh_chart_set_y_max,   /* name */
+  be_nested_proto(
+    7,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 6]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_y_max),
+    /* K1   */  be_nested_str_weak(_lv_obj),
+    /* K2   */  be_nested_str_weak(set_range),
+    /* K3   */  be_nested_str_weak(lv),
+    /* K4   */  be_nested_str_weak(CHART_AXIS_PRIMARY_Y),
+    /* K5   */  be_nested_str_weak(_y_min),
+    }),
+    be_str_weak(set_y_max),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 9]) {  /* code */
+      0x90020001,  //  0000  SETMBR	R0	K0	R1
+      0x88080101,  //  0001  GETMBR	R2	R0	K1
+      0x8C080502,  //  0002  GETMET	R2	R2	K2
+      0xB8120600,  //  0003  GETNGBL	R4	K3
+      0x88100904,  //  0004  GETMBR	R4	R4	K4
+      0x88140105,  //  0005  GETMBR	R5	R0	K5
+      0x88180100,  //  0006  GETMBR	R6	R0	K0
+      0x7C080800,  //  0007  CALL	R2	4
+      0x80000000,  //  0008  RET	0
     })
   )
 );
@@ -6997,22 +7230,22 @@ be_local_closure(lvh_chart_post_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[17]) {     /* constants */
-    /* K0   */  be_nested_str_weak(y_min),
+    /* K0   */  be_nested_str_weak(_y_min),
     /* K1   */  be_const_int(0),
-    /* K2   */  be_nested_str_weak(y_max),
-    /* K3   */  be_nested_str_weak(h_div),
+    /* K2   */  be_nested_str_weak(_y_max),
+    /* K3   */  be_nested_str_weak(_h_div),
     /* K4   */  be_const_int(3),
-    /* K5   */  be_nested_str_weak(v_div),
+    /* K5   */  be_nested_str_weak(_v_div),
     /* K6   */  be_nested_str_weak(_lv_obj),
     /* K7   */  be_nested_str_weak(set_update_mode),
     /* K8   */  be_nested_str_weak(lv),
     /* K9   */  be_nested_str_weak(CHART_UPDATE_MODE_SHIFT),
-    /* K10  */  be_nested_str_weak(ser1),
+    /* K10  */  be_nested_str_weak(_ser1),
     /* K11  */  be_nested_str_weak(add_series),
     /* K12  */  be_nested_str_weak(color),
     /* K13  */  be_const_int(15615044),
     /* K14  */  be_nested_str_weak(CHART_AXIS_PRIMARY_Y),
-    /* K15  */  be_nested_str_weak(ser2),
+    /* K15  */  be_nested_str_weak(_ser2),
     /* K16  */  be_const_int(4517444),
     }),
     be_str_weak(post_init),
@@ -7057,183 +7290,6 @@ be_local_closure(lvh_chart_post_init,   /* name */
 
 
 /********************************************************************
-** Solidified function: set_y_min
-********************************************************************/
-be_local_closure(lvh_chart_set_y_min,   /* name */
-  be_nested_proto(
-    7,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_str_weak(y_min),
-    /* K1   */  be_nested_str_weak(_lv_obj),
-    /* K2   */  be_nested_str_weak(set_range),
-    /* K3   */  be_nested_str_weak(lv),
-    /* K4   */  be_nested_str_weak(CHART_AXIS_PRIMARY_Y),
-    /* K5   */  be_nested_str_weak(y_max),
-    }),
-    be_str_weak(set_y_min),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 9]) {  /* code */
-      0x90020001,  //  0000  SETMBR	R0	K0	R1
-      0x88080101,  //  0001  GETMBR	R2	R0	K1
-      0x8C080502,  //  0002  GETMET	R2	R2	K2
-      0xB8120600,  //  0003  GETNGBL	R4	K3
-      0x88100904,  //  0004  GETMBR	R4	R4	K4
-      0x88140100,  //  0005  GETMBR	R5	R0	K0
-      0x88180105,  //  0006  GETMBR	R6	R0	K5
-      0x7C080800,  //  0007  CALL	R2	4
-      0x80000000,  //  0008  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: set_series1_color
-********************************************************************/
-be_local_closure(lvh_chart_set_series1_color,   /* name */
-  be_nested_proto(
-    6,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_weak(_lv_obj),
-    /* K1   */  be_nested_str_weak(set_series_color),
-    /* K2   */  be_nested_str_weak(ser1),
-    }),
-    be_str_weak(set_series1_color),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 6]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x88100102,  //  0002  GETMBR	R4	R0	K2
-      0x5C140200,  //  0003  MOVE	R5	R1
-      0x7C080600,  //  0004  CALL	R2	3
-      0x80000000,  //  0005  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: set_series2_color
-********************************************************************/
-be_local_closure(lvh_chart_set_series2_color,   /* name */
-  be_nested_proto(
-    6,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_weak(_lv_obj),
-    /* K1   */  be_nested_str_weak(set_series_color),
-    /* K2   */  be_nested_str_weak(ser2),
-    }),
-    be_str_weak(set_series2_color),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 6]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x88100102,  //  0002  GETMBR	R4	R0	K2
-      0x5C140200,  //  0003  MOVE	R5	R1
-      0x7C080600,  //  0004  CALL	R2	3
-      0x80000000,  //  0005  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: set_y_max
-********************************************************************/
-be_local_closure(lvh_chart_set_y_max,   /* name */
-  be_nested_proto(
-    7,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_str_weak(y_max),
-    /* K1   */  be_nested_str_weak(_lv_obj),
-    /* K2   */  be_nested_str_weak(set_range),
-    /* K3   */  be_nested_str_weak(lv),
-    /* K4   */  be_nested_str_weak(CHART_AXIS_PRIMARY_Y),
-    /* K5   */  be_nested_str_weak(y_min),
-    }),
-    be_str_weak(set_y_max),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 9]) {  /* code */
-      0x90020001,  //  0000  SETMBR	R0	K0	R1
-      0x88080101,  //  0001  GETMBR	R2	R0	K1
-      0x8C080502,  //  0002  GETMET	R2	R2	K2
-      0xB8120600,  //  0003  GETNGBL	R4	K3
-      0x88100904,  //  0004  GETMBR	R4	R4	K4
-      0x88140105,  //  0005  GETMBR	R5	R0	K5
-      0x88180100,  //  0006  GETMBR	R6	R0	K0
-      0x7C080800,  //  0007  CALL	R2	4
-      0x80000000,  //  0008  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: add_point2
-********************************************************************/
-be_local_closure(lvh_chart_add_point2,   /* name */
-  be_nested_proto(
-    6,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_weak(_lv_obj),
-    /* K1   */  be_nested_str_weak(set_next_value),
-    /* K2   */  be_nested_str_weak(ser2),
-    }),
-    be_str_weak(add_point2),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 6]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x88100102,  //  0002  GETMBR	R4	R0	K2
-      0x5C140200,  //  0003  MOVE	R5	R1
-      0x7C080600,  //  0004  CALL	R2	3
-      0x80000000,  //  0005  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: get_y_max
 ********************************************************************/
 be_local_closure(lvh_chart_get_y_max,   /* name */
@@ -7247,7 +7303,7 @@ be_local_closure(lvh_chart_get_y_max,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(y_max),
+    /* K0   */  be_nested_str_weak(_y_max),
     }),
     be_str_weak(get_y_max),
     &be_const_str_solidified,
@@ -7290,35 +7346,6 @@ be_local_closure(lvh_chart_set_val,   /* name */
 
 
 /********************************************************************
-** Solidified function: set_val2
-********************************************************************/
-be_local_closure(lvh_chart_set_val2,   /* name */
-  be_nested_proto(
-    5,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(add_point2),
-    }),
-    be_str_weak(set_val2),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 4]) {  /* code */
-      0x8C080100,  //  0000  GETMET	R2	R0	K0
-      0x5C100200,  //  0001  MOVE	R4	R1
-      0x7C080400,  //  0002  CALL	R2	2
-      0x80000000,  //  0003  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: set_v_div_line_count
 ********************************************************************/
 be_local_closure(lvh_chart_set_v_div_line_count,   /* name */
@@ -7332,10 +7359,10 @@ be_local_closure(lvh_chart_set_v_div_line_count,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_weak(v_div),
+    /* K0   */  be_nested_str_weak(_v_div),
     /* K1   */  be_nested_str_weak(_lv_obj),
     /* K2   */  be_nested_str_weak(set_div_line_count),
-    /* K3   */  be_nested_str_weak(h_div),
+    /* K3   */  be_nested_str_weak(_h_div),
     }),
     be_str_weak(set_v_div_line_count),
     &be_const_str_solidified,
@@ -7347,33 +7374,6 @@ be_local_closure(lvh_chart_set_v_div_line_count,   /* name */
       0x88140100,  //  0004  GETMBR	R5	R0	K0
       0x7C080600,  //  0005  CALL	R2	3
       0x80000000,  //  0006  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: get_y_min
-********************************************************************/
-be_local_closure(lvh_chart_get_y_min,   /* name */
-  be_nested_proto(
-    2,                          /* nstack */
-    1,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(y_min),
-    }),
-    be_str_weak(get_y_min),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 2]) {  /* code */
-      0x88040100,  //  0000  GETMBR	R1	R0	K0
-      0x80040200,  //  0001  RET	1	R1
     })
   )
 );
@@ -7394,10 +7394,10 @@ be_local_closure(lvh_chart_set_h_div_line_count,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_weak(h_div),
+    /* K0   */  be_nested_str_weak(_h_div),
     /* K1   */  be_nested_str_weak(_lv_obj),
     /* K2   */  be_nested_str_weak(set_div_line_count),
-    /* K3   */  be_nested_str_weak(v_div),
+    /* K3   */  be_nested_str_weak(_v_div),
     }),
     be_str_weak(set_h_div_line_count),
     &be_const_str_solidified,
@@ -7424,25 +7424,25 @@ be_local_class(lvh_chart,
     &be_class_lvh_obj,
     be_nested_map(20,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(y_max, -1), be_const_var(3) },
-        { be_const_key_weak(get_y_min, 18), be_const_closure(lvh_chart_get_y_min_closure) },
-        { be_const_key_weak(set_v_div_line_count, 0), be_const_closure(lvh_chart_set_v_div_line_count_closure) },
-        { be_const_key_weak(h_div, 6), be_const_var(4) },
-        { be_const_key_weak(set_y_min, -1), be_const_closure(lvh_chart_set_y_min_closure) },
-        { be_const_key_weak(ser2, 12), be_const_var(1) },
+        { be_const_key_weak(get_y_min, -1), be_const_closure(lvh_chart_get_y_min_closure) },
+        { be_const_key_weak(_h_div, 16), be_const_var(4) },
+        { be_const_key_weak(set_v_div_line_count, -1), be_const_closure(lvh_chart_set_v_div_line_count_closure) },
         { be_const_key_weak(set_val2, -1), be_const_closure(lvh_chart_set_val2_closure) },
-        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_chart) },
-        { be_const_key_weak(ser1, 1), be_const_var(0) },
-        { be_const_key_weak(set_series2_color, -1), be_const_closure(lvh_chart_set_series2_color_closure) },
-        { be_const_key_weak(post_init, 16), be_const_closure(lvh_chart_post_init_closure) },
-        { be_const_key_weak(set_val, -1), be_const_closure(lvh_chart_set_val_closure) },
+        { be_const_key_weak(set_y_min, -1), be_const_closure(lvh_chart_set_y_min_closure) },
         { be_const_key_weak(add_point2, -1), be_const_closure(lvh_chart_add_point2_closure) },
-        { be_const_key_weak(v_div, -1), be_const_var(5) },
+        { be_const_key_weak(_ser2, -1), be_const_var(1) },
+        { be_const_key_weak(_ser1, 11), be_const_var(0) },
+        { be_const_key_weak(_v_div, 18), be_const_var(5) },
+        { be_const_key_weak(set_series2_color, -1), be_const_closure(lvh_chart_set_series2_color_closure) },
+        { be_const_key_weak(set_y_max, 1), be_const_closure(lvh_chart_set_y_max_closure) },
+        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_chart) },
+        { be_const_key_weak(_y_max, -1), be_const_var(3) },
         { be_const_key_weak(get_y_max, -1), be_const_closure(lvh_chart_get_y_max_closure) },
-        { be_const_key_weak(y_min, 11), be_const_var(2) },
-        { be_const_key_weak(set_y_max, -1), be_const_closure(lvh_chart_set_y_max_closure) },
+        { be_const_key_weak(_y_min, 13), be_const_var(2) },
+        { be_const_key_weak(set_val, -1), be_const_closure(lvh_chart_set_val_closure) },
+        { be_const_key_weak(post_init, -1), be_const_closure(lvh_chart_post_init_closure) },
         { be_const_key_weak(add_point, 2), be_const_closure(lvh_chart_add_point_closure) },
-        { be_const_key_weak(set_series1_color, -1), be_const_closure(lvh_chart_set_series1_color_closure) },
+        { be_const_key_weak(set_series1_color, 0), be_const_closure(lvh_chart_set_series1_color_closure) },
         { be_const_key_weak(set_h_div_line_count, -1), be_const_closure(lvh_chart_set_h_div_line_count_closure) },
     })),
     be_str_weak(lvh_chart)
