@@ -1548,33 +1548,33 @@ end
 class lvh_chart : lvh_obj
   static _lv_class = lv.chart
   # ser1/ser2 contains the first/second series of data
-  var ser1, ser2
+  var _ser1, _ser2
   # y_min/y_max contain the main range for y. Since LVGL does not have getters, we need to memorize on our side the lates tvalues
-  var y_min, y_max
+  var _y_min, _y_max
   # h_div/v_div contain the horizontal and vertical divisions, we need to memorize values because both are set from same API
-  var h_div, v_div
+  var _h_div, _v_div
 
   def post_init()
     # default values from LVGL are 0..100
-    self.y_min = 0
-    self.y_max = 100
+    self._y_min = 0
+    self._y_max = 100
     # default values
     #define LV_CHART_HDIV_DEF 3
     #define LV_CHART_VDIV_DEF 5
-    self.h_div = 3
-    self.v_div = 5
+    self._h_div = 3
+    self._v_div = 5
 
     self._lv_obj.set_update_mode(lv.CHART_UPDATE_MODE_SHIFT)
 
-    self.ser1 = self._lv_obj.add_series(lv.color(0xEE4444), lv.CHART_AXIS_PRIMARY_Y)
-    self.ser2 = self._lv_obj.add_series(lv.color(0x44EE44), lv.CHART_AXIS_PRIMARY_Y)
+    self._ser1 = self._lv_obj.add_series(lv.color(0xEE4444), lv.CHART_AXIS_PRIMARY_Y)
+    self._ser2 = self._lv_obj.add_series(lv.color(0x44EE44), lv.CHART_AXIS_PRIMARY_Y)
   end
 
   def add_point(v)
-    self._lv_obj.set_next_value(self.ser1, v)
+    self._lv_obj.set_next_value(self._ser1, v)
   end
   def add_point2(v)
-    self._lv_obj.set_next_value(self.ser2, v)
+    self._lv_obj.set_next_value(self._ser2, v)
   end
 
   def set_val(v)
@@ -1584,33 +1584,33 @@ class lvh_chart : lvh_obj
     self.add_point2(v)
   end
   def get_y_min()
-    return self.y_min
+    return self._y_min
   end
   def get_y_max()
-    return self.y_max
+    return self._y_max
   end
-  def set_y_min(y_min)
-    self.y_min = y_min
-    self._lv_obj.set_range(lv.CHART_AXIS_PRIMARY_Y, self.y_min, self.y_max)
+  def set_y_min(_y_min)
+    self._y_min = _y_min
+    self._lv_obj.set_range(lv.CHART_AXIS_PRIMARY_Y, self._y_min, self._y_max)
   end
-  def set_y_max(y_max)
-    self.y_max = y_max
-    self._lv_obj.set_range(lv.CHART_AXIS_PRIMARY_Y, self.y_min, self.y_max)
+  def set_y_max(_y_max)
+    self._y_max = _y_max
+    self._lv_obj.set_range(lv.CHART_AXIS_PRIMARY_Y, self._y_min, self._y_max)
   end
 
   def set_series1_color(color)
-    self._lv_obj.set_series_color(self.ser1, color)
+    self._lv_obj.set_series_color(self._ser1, color)
   end
   def set_series2_color(color)
-    self._lv_obj.set_series_color(self.ser2, color)
+    self._lv_obj.set_series_color(self._ser2, color)
   end
-  def set_h_div_line_count(h_div)
-    self.h_div = h_div
-    self._lv_obj.set_div_line_count(self.h_div, self.v_div)
+  def set_h_div_line_count(_h_div)
+    self._h_div = _h_div
+    self._lv_obj.set_div_line_count(self._h_div, self._v_div)
   end
-  def set_v_div_line_count(v_div)
-    self.v_div = v_div
-    self._lv_obj.set_div_line_count(self.h_div, self.v_div)
+  def set_v_div_line_count(_v_div)
+    self._v_div = _v_div
+    self._lv_obj.set_div_line_count(self._h_div, self._v_div)
   end
 end
 
