@@ -81,6 +81,7 @@ lv_fun_globs = [
               ]
 headers_names = list_files(lv_src_prefix, lv_fun_globs)
 headers_names += list_files("../../LVGL_assets/src/", ["lv_theme_haspmota.h"])
+headers_names += list_files("../src/", ["lv_berry.h"])
 
 output_filename = "../mapping/lv_funcs.h"
 sys.stdout = open(output_filename, 'w', encoding='utf-8')
@@ -90,7 +91,6 @@ print("""
 // Extract function signatures from LVGL APIs in headers
 
 // Custom Tasmota functions
-void lv_image_set_tasmota_logo(lv_obj_t * img);
 lv_ts_calibration_t * lv_get_ts_calibration(void);
 
 // ======================================================================
@@ -128,6 +128,8 @@ for header_name in headers_names:
       fun = re.sub('LV_ATTRIBUTE_FAST_MEM ', '', fun)
       # remove LV_ATTRIBUTE_TIMER_HANDLER 
       fun = re.sub('LV_ATTRIBUTE_TIMER_HANDLER ', '', fun)
+      # remove extern 
+      fun = re.sub('extern ', '', fun)
       exclude = False
       for exclude_prefix in ["typedef", "_LV_", "LV_"]:
         if fun.startswith(exclude_prefix): exclude = True

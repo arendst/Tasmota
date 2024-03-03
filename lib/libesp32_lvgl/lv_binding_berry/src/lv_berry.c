@@ -354,3 +354,8 @@ int lv0_member(bvm *vm) {
   be_module_load(vm, be_newstr(vm, "undefined"));
   be_return(vm);
 }
+
+// temporarily fix lv_span_get_style()
+lv_style_t * lv_span_get_style(lv_span_t * span) {
+      return &span->style;
+}

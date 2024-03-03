@@ -125,8 +125,6 @@ scr_load_anim|lv.obj, int, int, int, bool||[lv_screen_load_anim](https://docs.lv
 screen_active||lv.obj|[lv_screen_active](https://docs.lvgl.io/9.0/search.html?q=lv_screen_active)
 screen_load|lv.obj||[lv_screen_load](https://docs.lvgl.io/9.0/search.html?q=lv_screen_load)
 screen_load_anim|lv.obj, int, int, int, bool||[lv_screen_load_anim](https://docs.lvgl.io/9.0/search.html?q=lv_screen_load_anim)
-span_set_text|lv.spangroup, string||[lv_span_set_text](https://docs.lvgl.io/9.0/search.html?q=lv_span_set_text)
-span_set_text_static|lv.spangroup, string||[lv_span_set_text_static](https://docs.lvgl.io/9.0/search.html?q=lv_span_set_text_static)
 span_stack_deinit|||[lv_span_stack_deinit](https://docs.lvgl.io/9.0/search.html?q=lv_span_stack_deinit)
 span_stack_init|||[lv_span_stack_init](https://docs.lvgl.io/9.0/search.html?q=lv_span_stack_init)
 style_get_num_custom_props||int|[lv_style_get_num_custom_props](https://docs.lvgl.io/9.0/search.html?q=lv_style_get_num_custom_props)
@@ -1275,9 +1273,9 @@ text_is_selected||bool|[lv_textarea_text_is_selected](https://docs.lvgl.io/9.0/s
 
 Method|Arguments|Return type|LVGL equivalent
 :---|:---|:---|:---
-delete_span|lv.spangroup||[lv_spangroup_delete_span](https://docs.lvgl.io/9.0/search.html?q=lv_spangroup_delete_span)
+delete_span|lv.span||[lv_spangroup_delete_span](https://docs.lvgl.io/9.0/search.html?q=lv_spangroup_delete_span)
 get_align||int|[lv_spangroup_get_align](https://docs.lvgl.io/9.0/search.html?q=lv_spangroup_get_align)
-get_child|int|lv.spangroup|[lv_spangroup_get_child](https://docs.lvgl.io/9.0/search.html?q=lv_spangroup_get_child)
+get_child|int|lv.span|[lv_spangroup_get_child](https://docs.lvgl.io/9.0/search.html?q=lv_spangroup_get_child)
 get_expand_height|int|int|[lv_spangroup_get_expand_height](https://docs.lvgl.io/9.0/search.html?q=lv_spangroup_get_expand_height)
 get_expand_width|int|int|[lv_spangroup_get_expand_width](https://docs.lvgl.io/9.0/search.html?q=lv_spangroup_get_expand_width)
 get_indent||int|[lv_spangroup_get_indent](https://docs.lvgl.io/9.0/search.html?q=lv_spangroup_get_indent)
@@ -1286,13 +1284,21 @@ get_max_lines||int|[lv_spangroup_get_max_lines](https://docs.lvgl.io/9.0/search.
 get_mode||int|[lv_spangroup_get_mode](https://docs.lvgl.io/9.0/search.html?q=lv_spangroup_get_mode)
 get_overflow||int|[lv_spangroup_get_overflow](https://docs.lvgl.io/9.0/search.html?q=lv_spangroup_get_overflow)
 get_span_count||int|[lv_spangroup_get_span_count](https://docs.lvgl.io/9.0/search.html?q=lv_spangroup_get_span_count)
-new_span||lv.spangroup|[lv_spangroup_new_span](https://docs.lvgl.io/9.0/search.html?q=lv_spangroup_new_span)
+new_span||lv.span|[lv_spangroup_new_span](https://docs.lvgl.io/9.0/search.html?q=lv_spangroup_new_span)
 refr_mode|||[lv_spangroup_refr_mode](https://docs.lvgl.io/9.0/search.html?q=lv_spangroup_refr_mode)
 set_align|int||[lv_spangroup_set_align](https://docs.lvgl.io/9.0/search.html?q=lv_spangroup_set_align)
 set_indent|int||[lv_spangroup_set_indent](https://docs.lvgl.io/9.0/search.html?q=lv_spangroup_set_indent)
 set_max_lines|int||[lv_spangroup_set_max_lines](https://docs.lvgl.io/9.0/search.html?q=lv_spangroup_set_max_lines)
 set_mode|int||[lv_spangroup_set_mode](https://docs.lvgl.io/9.0/search.html?q=lv_spangroup_set_mode)
 set_overflow|int||[lv_spangroup_set_overflow](https://docs.lvgl.io/9.0/search.html?q=lv_spangroup_set_overflow)
+
+### widget `lv.span`
+
+Method|Arguments|Return type|LVGL equivalent
+:---|:---|:---|:---
+get_style||lv.style|[lv_span_get_style](https://docs.lvgl.io/9.0/search.html?q=lv_span_get_style)
+set_text|string||[lv_span_set_text](https://docs.lvgl.io/9.0/search.html?q=lv_span_set_text)
+set_text_static|string||[lv_span_set_text_static](https://docs.lvgl.io/9.0/search.html?q=lv_span_set_text_static)
 
 ### widget `lv.scale`
 

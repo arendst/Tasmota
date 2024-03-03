@@ -147,8 +147,6 @@ const be_ntv_func_def_t lv_func[] = {
   { "screen_active", { (const void*) &lv_screen_active, "lv.obj", "" } },
   { "screen_load", { (const void*) &lv_screen_load, "", "(lv.obj)" } },
   { "screen_load_anim", { (const void*) &lv_screen_load_anim, "", "(lv.obj)iiib" } },
-  { "span_set_text", { (const void*) &lv_span_set_text, "", "(lv.spangroup)s" } },
-  { "span_set_text_static", { (const void*) &lv_span_set_text_static, "", "(lv.spangroup)s" } },
   { "span_stack_deinit", { (const void*) &lv_span_stack_deinit, "", "" } },
   { "span_stack_init", { (const void*) &lv_span_stack_init, "", "" } },
   { "style_get_num_custom_props", { (const void*) &lv_style_get_num_custom_props, "i", "" } },
