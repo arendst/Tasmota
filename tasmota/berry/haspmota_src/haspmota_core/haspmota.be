@@ -1330,6 +1330,28 @@ class lvh_roller : lvh_obj
 end
 
 #====================================================================
+#  led
+#====================================================================
+class lvh_led : lvh_obj
+  static _lv_class = lv.led
+
+  # `val` is a synonym for `brightness`
+  def set_val(t)
+    self._lv_obj.set_brightness(t)
+  end
+  def get_val()
+    return self._lv_obj.get_brightness()
+  end
+
+  def set_color(t)
+    var v = self.parse_color(t)
+    self._lv_obj.set_color(v)
+  end
+  def get_color()
+  end
+end
+
+#====================================================================
 #  dropdown
 #====================================================================
 class lvh_dropdown : lvh_obj
@@ -1826,6 +1848,7 @@ class HASPmota
  	# static lvh_linemeter = lvh_linemeter
  	# static lvh_gauge = lvh_gauge
 	static lvh_textarea = lvh_textarea    # additional?
+  static lvh_led = lvh_led
   static lvh_spangroup = lvh_spangroup
   static lvh_span = lvh_span
   static lvh_qrcode = lvh_qrcode
@@ -2300,7 +2323,7 @@ def solidify_haspmota()
     "page", "obj", "scr",
     "btn", "switch", "checkbox",
     "label", "spinner", "line", "img", "roller", "btnmatrix",
-    "bar", "slider", "arc", "textarea", "dropdown",
+    "bar", "slider", "arc", "textarea", "led", "dropdown",
     "qrcode", "chart", "spangroup", "span",
     # new internal names
     "button", "image", "buttonmatrix",
