@@ -23,6 +23,20 @@ void LoraInput(void) {
   int packet_size = Lora.Receive(data);
   if (!packet_size) { return; }
 
+  if (TAS_LORA_REMOTE_COMMAND == data[0]) {
+    char *payload = data +1;       // Skip TAS_LORA_REMOTE_COMMAND
+    char *command_part;
+    char *topic_part = strtok_r(payload, " ", &command_part);
+    if (topic_part && command_part) {
+      if (!strcasecmp(topic_part, SettingsText(SET_MQTT_TOPIC))) {  // Is it mine
+        ExecuteCommand(command_part, SRC_REMOTE);
+        return;
+      } else {
+        *--command_part = ' ';     // Restore strtok_r '/0'
+      }
+    }
+  }
+
   bool raw = Lora.raw;
   // Set raw mode if zeroes within data
   for (uint32_t i = 0; i < packet_size; i++) {
@@ -113,14 +127,30 @@ void LoraInit(void) {
  * Commands
 \*********************************************************************************************/
 
-#define D_CMND_LORASEND   "Send"
-#define D_CMND_LORACONFIG "Config"
+#define D_CMND_LORASEND    "Send"
+#define D_CMND_LORACONFIG  "Config"
+#define D_CMND_LORACOMMAND "Command"
 
 const char kLoraCommands[] PROGMEM = "LoRa|"  // Prefix
-  D_CMND_LORASEND "|" D_CMND_LORACONFIG;
+  D_CMND_LORASEND "|" D_CMND_LORACONFIG "|" D_CMND_LORACOMMAND ;
 
 void (* const LoraCommand[])(void) PROGMEM = {
-  &CmndLoraSend, &CmndLoraConfig };
+  &CmndLoraSend, &CmndLoraConfig, &CmndLoraCommand };
+
+void CmndLoraCommand(void) {
+  // LoRaCommand <topic_of_lora_receiver> <command>
+  // LoRaCommand lorareceiver power 2
+  // LoRaCommand lorareceiver publish cmnd/anytopic/power 2
+  if (XdrvMailbox.data_len > 0) {
+    char data[LORA_MAX_PACKET_LENGTH] = { 0 };
+    XdrvMailbox.data_len++;       // Add Signal CmndLoraCommand to lora receiver
+    uint32_t len = (XdrvMailbox.data_len < LORA_MAX_PACKET_LENGTH -1) ? XdrvMailbox.data_len : LORA_MAX_PACKET_LENGTH -2;
+    data[0] = TAS_LORA_REMOTE_COMMAND;
+    strlcpy(data +1, XdrvMailbox.data, len);
+    Lora.Send((uint8_t*)data, len);
+    ResponseCmndDone();
+  }
+}
 
 void CmndLoraSend(void) {
   // LoRaSend "Hello Tiger"     - Send "Hello Tiger\n"
@@ -139,7 +169,7 @@ void CmndLoraSend(void) {
       char data[LORA_MAX_PACKET_LENGTH] = { 0 };
       uint32_t len = (XdrvMailbox.data_len < LORA_MAX_PACKET_LENGTH -1) ? XdrvMailbox.data_len : LORA_MAX_PACKET_LENGTH -2;
 #ifdef USE_LORA_DEBUG
-      AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Len %d, Send %*_H"), len, len + 2, XdrvMailbox.data);
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Len %d, Send %*_H"), len, len + 2, XdrvMailbox.data);
 #endif
       if (1 == XdrvMailbox.index) {                                         // "Hello Tiger\n"
         memcpy(data, XdrvMailbox.data, len);
