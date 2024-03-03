@@ -3,7 +3,6 @@
 // Extract function signatures from LVGL APIs in headers
 
 // Custom Tasmota functions
-void lv_image_set_tasmota_logo(lv_obj_t * img);
 lv_ts_calibration_t * lv_get_ts_calibration(void);
 
 // ======================================================================
@@ -1471,4 +1470,9 @@ lv_obj_t * lv_tileview_get_tile_active(lv_obj_t * obj)
 // ../../LVGL_assets/src/lv_theme_haspmota.h
 lv_theme_t * lv_theme_haspmota_init(lv_display_t * disp, lv_color_t color_primary, lv_color_t color_secondary, bool dark, const lv_font_t * font)
 bool lv_theme_haspmota_is_inited(void)
+
+// ../src/lv_berry.h
+void be_load_lvgl_classes(bvm *vm)
+void lv_image_set_tasmota_logo(lv_obj_t * img)
+lv_style_t * lv_span_get_style(lv_span_t * span)
 

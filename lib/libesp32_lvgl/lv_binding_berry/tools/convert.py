@@ -35,8 +35,9 @@ lv_widgets = ['obj',
               'dropdown', 'image', 'label', 'line', 'roller', 'slider',
               'switch', 'table', 'textarea',
               # added in LVGL 9
-              'spangroup', 'scale',
+              'spangroup', 'span', 'scale',
               ]
+lv_widgets_no_class = ['span']      # widgets that don't have a lv_obj class
 # extra widgets
 lv_widgets = lv_widgets + [ 'chart', 'imagebutton', 'led', 'msgbox', 'spinbox', 'spinner', 'keyboard', 'tabview', 'tileview' , 'list',
                             'animimg', 'calendar', 'menu']
@@ -44,7 +45,7 @@ lv_widgets = lv_widgets + [ 'chart', 'imagebutton', 'led', 'msgbox', 'spinbox', 
 # add qrcode
 lv_widgets = lv_widgets + [ 'qrcode' ]
 
-lv_prefix = ['group', 'style', 'indev', 'display', 'timer', 'anim', 'event'] + lv_widgets
+lv_prefix = ['group', 'style', 'indev', 'display', 'timer', 'anim', 'event', 'span'] + lv_widgets
 
 # define here widget inheritance because it's hard to deduce from source
 lv_widget_inheritance = {
@@ -58,6 +59,7 @@ lv_widget_inheritance = {
   "canvas": "image",
   "roller_label": "label",
   "animimg": "image",
+  "span": None,
 }
 
 # contains any custom attribute we need to add to a widget
@@ -239,6 +241,7 @@ class type_mapper_class:
 
   # the following types are skipped without warning, because it would be too complex to adapt (so we don't map any function using or returning these types)
   skipping_type = [
+    "bvm *",                      # Berry
     "lv_global_t *",              # reading globals is not useful in Berry
     "lv_event_dsc_t *",           # internal implementation, use functions instead
     "lv_draw_task_t *",           # skip low-level tasks for now
@@ -418,7 +421,7 @@ class type_mapper_class:
     '_lv_display_t *': "lv_display",
     "lv_indev_t *": "lv_indev",
     "lv_point_t []": "lv_point_arr",
-    "lv_span_t *": "lv_spangroup",
+    "lv_span_t *": "lv_span",
     # "lv_image_header_t *": "lv_image_header",
     "lv_image_dsc_t *": "lv_image_dsc",
     "lv_ts_calibration_t *": "lv_ts_calibration",
@@ -829,15 +832,24 @@ const size_t lv_classes_size = sizeof(lv_classes) / sizeof(lv_classes[0]);
 # keep only create
 for subtype, flv in lv.items():
   print(f"  /* `lv_{subtype}` methods */")
+  create_found = False        # does the method contains an explicit `_create()` method
   for f in sorted(flv, key=lambda x: x.be_name):
     if f.c_func_name.endswith("_create"):
+      create_found = True
       c_ret_type = "+_p"  # constructor, init method does not return any value
       if subtype in lv_widgets:
         print(f"#ifdef BE_LV_WIDGET_{subtype.upper()}")
-        print(f"  int be_ntv_lv_{subtype}_init(bvm *vm)       {{ return be_call_c_func(vm, (void*) &{f.orig_func_name}, \"{c_ret_type}\", \"{f.c_argc}\"); }}")
+        print(f"  int be_ntv_lv_{subtype}_init(bvm *vm)       {{ return be_call_c_func(vm, (void*) &{f.orig_func_name}, \"+_p\", \"{f.c_argc}\"); }}")
         print(f"#endif // BE_LV_WIDGET_{subtype.upper()}")
       else:
-        print(f"  int be_ntv_lv_{subtype}_init(bvm *vm)       {{ return be_call_c_func(vm, (void*) &{f.orig_func_name}, \"{c_ret_type}\", \"{f.c_argc}\"); }}")
+        print(f"  int be_ntv_lv_{subtype}_init(bvm *vm)       {{ return be_call_c_func(vm, (void*) &{f.orig_func_name}, \"+_p\", \"{f.c_argc}\"); }}")
+
+  if not create_found and subtype in lv_widgets:
+    # there is no explicit create, add one
+    print(f"#ifdef BE_LV_WIDGET_{subtype.upper()}")
+    print(f"  int be_ntv_lv_{subtype}_init(bvm *vm)       {{ return be_call_c_func(vm, (void*) &{f.orig_func_name}, \"+_p\", \"{f.c_argc}\"); }}")
+    print(f"#endif // BE_LV_WIDGET_{subtype.upper()}")
+
 
 print("""
 // create font either empty or from parameter on stack
@@ -1072,11 +1084,18 @@ for subtype, flv in lv.items():
 ** Solidified class: lv_{subtype}
 ********************************************************************/
 #include "be_fixed_be_class_lv_{subtype}.h"
-/* @const_object_info_begin
-class be_class_lv_{subtype} (scope: global, name: lv_{subtype}, super: be_class_lv_{super_class}, strings: weak) {{
-    _class, comptr(&lv_{subtype}_class)
-    init, func(be_ntv_lv_{subtype}_init)""")
+/* @const_object_info_begin""")
+    if super_class is not None:
+      print(f"class be_class_lv_{subtype} (scope: global, name: lv_{subtype}, super: be_class_lv_{super_class}, strings: weak) {{")
+    else:
+      print(f"class be_class_lv_{subtype} (scope: global, name: lv_{subtype}, strings: weak) {{")
+      print(f"    _p, var")
+      print(f"    tostring, func(lv_x_tostring)")
+      print(f"    member, func(lv_x_member)")
+    print(f"    init, func(be_ntv_lv_{subtype}_init)")
 
+    if subtype not in lv_widgets_no_class:
+      print(f"    _class, comptr(&lv_{subtype}_class)")
     if subtype in lv_widget_custom_ptr:
       for k, v in lv_widget_custom_ptr[subtype].items():
         print(f"    {k}, {v}")

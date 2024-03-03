@@ -169,40 +169,6 @@ extern int lvbe_style_set_y(bvm *vm);
 
 /* `lv_theme` external functions definitions */
 
-/* `lv_image` external functions definitions */
-extern int lvbe_image_create(bvm *vm);
-extern int lvbe_image_get_rotation(bvm *vm);
-extern int lvbe_image_get_antialias(bvm *vm);
-extern int lvbe_image_get_blend_mode(bvm *vm);
-extern int lvbe_image_get_inner_align(bvm *vm);
-extern int lvbe_image_get_offset_x(bvm *vm);
-extern int lvbe_image_get_offset_x(bvm *vm);
-extern int lvbe_image_get_offset_y(bvm *vm);
-extern int lvbe_image_get_offset_y(bvm *vm);
-extern int lvbe_image_get_pivot(bvm *vm);
-extern int lvbe_image_get_rotation(bvm *vm);
-extern int lvbe_image_get_rotation(bvm *vm);
-extern int lvbe_image_get_scale(bvm *vm);
-extern int lvbe_image_get_scale_x(bvm *vm);
-extern int lvbe_image_get_scale_y(bvm *vm);
-extern int lvbe_image_get_src(bvm *vm);
-extern int lvbe_image_get_scale(bvm *vm);
-extern int lvbe_image_set_rotation(bvm *vm);
-extern int lvbe_image_set_antialias(bvm *vm);
-extern int lvbe_image_set_blend_mode(bvm *vm);
-extern int lvbe_image_set_inner_align(bvm *vm);
-extern int lvbe_image_set_offset_x(bvm *vm);
-extern int lvbe_image_set_offset_y(bvm *vm);
-extern int lvbe_image_set_pivot(bvm *vm);
-extern int lvbe_image_set_rotation(bvm *vm);
-extern int lvbe_image_set_rotation(bvm *vm);
-extern int lvbe_image_set_scale(bvm *vm);
-extern int lvbe_image_set_scale_x(bvm *vm);
-extern int lvbe_image_set_scale_y(bvm *vm);
-extern int lvbe_image_set_src(bvm *vm);
-extern int lvbe_image_set_tasmota_logo(bvm *vm);
-extern int lvbe_image_set_scale(bvm *vm);
-
 /* `lv_group` external functions definitions */
 extern int lvbe_group_add_obj(bvm *vm);
 extern int lvbe_group_create(bvm *vm);
@@ -1005,6 +971,40 @@ extern int lvbe_dropdown_set_selected_highlight(bvm *vm);
 extern int lvbe_dropdown_set_symbol(bvm *vm);
 extern int lvbe_dropdown_set_text(bvm *vm);
 
+/* `lv_image` external functions definitions */
+extern int lvbe_image_create(bvm *vm);
+extern int lvbe_image_get_rotation(bvm *vm);
+extern int lvbe_image_get_antialias(bvm *vm);
+extern int lvbe_image_get_blend_mode(bvm *vm);
+extern int lvbe_image_get_inner_align(bvm *vm);
+extern int lvbe_image_get_offset_x(bvm *vm);
+extern int lvbe_image_get_offset_x(bvm *vm);
+extern int lvbe_image_get_offset_y(bvm *vm);
+extern int lvbe_image_get_offset_y(bvm *vm);
+extern int lvbe_image_get_pivot(bvm *vm);
+extern int lvbe_image_get_rotation(bvm *vm);
+extern int lvbe_image_get_rotation(bvm *vm);
+extern int lvbe_image_get_scale(bvm *vm);
+extern int lvbe_image_get_scale_x(bvm *vm);
+extern int lvbe_image_get_scale_y(bvm *vm);
+extern int lvbe_image_get_src(bvm *vm);
+extern int lvbe_image_get_scale(bvm *vm);
+extern int lvbe_image_set_rotation(bvm *vm);
+extern int lvbe_image_set_antialias(bvm *vm);
+extern int lvbe_image_set_blend_mode(bvm *vm);
+extern int lvbe_image_set_inner_align(bvm *vm);
+extern int lvbe_image_set_offset_x(bvm *vm);
+extern int lvbe_image_set_offset_y(bvm *vm);
+extern int lvbe_image_set_pivot(bvm *vm);
+extern int lvbe_image_set_rotation(bvm *vm);
+extern int lvbe_image_set_rotation(bvm *vm);
+extern int lvbe_image_set_scale(bvm *vm);
+extern int lvbe_image_set_scale_x(bvm *vm);
+extern int lvbe_image_set_scale_y(bvm *vm);
+extern int lvbe_image_set_src(bvm *vm);
+extern int lvbe_image_set_tasmota_logo(bvm *vm);
+extern int lvbe_image_set_scale(bvm *vm);
+
 /* `lv_imagebutton` external functions definitions */
 extern int lvbe_imagebutton_create(bvm *vm);
 extern int lvbe_imagebutton_set_src(bvm *vm);
@@ -1151,6 +1151,11 @@ extern int lvbe_slider_set_mode(bvm *vm);
 extern int lvbe_slider_set_range(bvm *vm);
 extern int lvbe_slider_set_value(bvm *vm);
 
+/* `lv_span` external functions definitions */
+extern int lvbe_span_get_style(bvm *vm);
+extern int lvbe_span_set_text(bvm *vm);
+extern int lvbe_span_set_text_static(bvm *vm);
+
 /* `lv_spangroup` external functions definitions */
 extern int lvbe_spangroup_create(bvm *vm);
 extern int lvbe_spangroup_delete_span(bvm *vm);
@@ -1287,7 +1292,6 @@ extern int be_ntv_lv_style_init(bvm *vm);
 extern int be_ntv_lv_font_init(bvm *vm);
 extern int be_ntv_lv_color_init(bvm *vm);
 extern int be_ntv_lv_theme_init(bvm *vm);
-extern int be_ntv_lv_image_init(bvm *vm);
 extern int be_ntv_lv_group_init(bvm *vm);
 extern int be_ntv_lv_obj_init(bvm *vm);
 extern int be_ntv_lv_event_init(bvm *vm);
@@ -1306,6 +1310,7 @@ extern int be_ntv_lv_canvas_init(bvm *vm);
 extern int be_ntv_lv_chart_init(bvm *vm);
 extern int be_ntv_lv_checkbox_init(bvm *vm);
 extern int be_ntv_lv_dropdown_init(bvm *vm);
+extern int be_ntv_lv_image_init(bvm *vm);
 extern int be_ntv_lv_imagebutton_init(bvm *vm);
 extern int be_ntv_lv_keyboard_init(bvm *vm);
 extern int be_ntv_lv_label_init(bvm *vm);
@@ -1317,6 +1322,7 @@ extern int be_ntv_lv_msgbox_init(bvm *vm);
 extern int be_ntv_lv_roller_init(bvm *vm);
 extern int be_ntv_lv_scale_init(bvm *vm);
 extern int be_ntv_lv_slider_init(bvm *vm);
+extern int be_ntv_lv_span_init(bvm *vm);
 extern int be_ntv_lv_spangroup_init(bvm *vm);
 extern int be_ntv_lv_spinbox_init(bvm *vm);
 extern int be_ntv_lv_spinner_init(bvm *vm);
@@ -1357,6 +1363,7 @@ extern const bclass be_class_lv_qrcode;
 extern const bclass be_class_lv_roller;
 extern const bclass be_class_lv_scale;
 extern const bclass be_class_lv_slider;
+extern const bclass be_class_lv_span;
 extern const bclass be_class_lv_spangroup;
 extern const bclass be_class_lv_spinbox;
 extern const bclass be_class_lv_spinner;
@@ -1518,24 +1525,13 @@ extern void arc_anim_end_angle(void * obj, int32_t v);
 
 
 /********************************************************************
-** Solidified class: lv_image
-********************************************************************/
-#include "be_fixed_be_class_lv_image.h"
-/* @const_object_info_begin
-class be_class_lv_image (scope: global, name: lv_image, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_image_class)
-    init, func(be_ntv_lv_image_init)
-}
-@const_object_info_end */
-
-/********************************************************************
 ** Solidified class: lv_qrcode
 ********************************************************************/
 #include "be_fixed_be_class_lv_qrcode.h"
 /* @const_object_info_begin
 class be_class_lv_qrcode (scope: global, name: lv_qrcode, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_qrcode_class)
     init, func(be_ntv_lv_qrcode_init)
+    _class, comptr(&lv_qrcode_class)
 }
 @const_object_info_end */
 
@@ -1545,8 +1541,8 @@ class be_class_lv_qrcode (scope: global, name: lv_qrcode, super: be_class_lv_obj
 #include "be_fixed_be_class_lv_animimg.h"
 /* @const_object_info_begin
 class be_class_lv_animimg (scope: global, name: lv_animimg, super: be_class_lv_image, strings: weak) {
-    _class, comptr(&lv_animimg_class)
     init, func(be_ntv_lv_animimg_init)
+    _class, comptr(&lv_animimg_class)
 }
 @const_object_info_end */
 
@@ -1556,8 +1552,8 @@ class be_class_lv_animimg (scope: global, name: lv_animimg, super: be_class_lv_i
 #include "be_fixed_be_class_lv_arc.h"
 /* @const_object_info_begin
 class be_class_lv_arc (scope: global, name: lv_arc, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_arc_class)
     init, func(be_ntv_lv_arc_init)
+    _class, comptr(&lv_arc_class)
 }
 @const_object_info_end */
 
@@ -1567,8 +1563,8 @@ class be_class_lv_arc (scope: global, name: lv_arc, super: be_class_lv_obj, stri
 #include "be_fixed_be_class_lv_bar.h"
 /* @const_object_info_begin
 class be_class_lv_bar (scope: global, name: lv_bar, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_bar_class)
     init, func(be_ntv_lv_bar_init)
+    _class, comptr(&lv_bar_class)
 }
 @const_object_info_end */
 
@@ -1578,8 +1574,8 @@ class be_class_lv_bar (scope: global, name: lv_bar, super: be_class_lv_obj, stri
 #include "be_fixed_be_class_lv_button.h"
 /* @const_object_info_begin
 class be_class_lv_button (scope: global, name: lv_button, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_button_class)
     init, func(be_ntv_lv_button_init)
+    _class, comptr(&lv_button_class)
 }
 @const_object_info_end */
 
@@ -1589,8 +1585,8 @@ class be_class_lv_button (scope: global, name: lv_button, super: be_class_lv_obj
 #include "be_fixed_be_class_lv_buttonmatrix.h"
 /* @const_object_info_begin
 class be_class_lv_buttonmatrix (scope: global, name: lv_buttonmatrix, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_buttonmatrix_class)
     init, func(be_ntv_lv_buttonmatrix_init)
+    _class, comptr(&lv_buttonmatrix_class)
 }
 @const_object_info_end */
 
@@ -1600,8 +1596,8 @@ class be_class_lv_buttonmatrix (scope: global, name: lv_buttonmatrix, super: be_
 #include "be_fixed_be_class_lv_calendar.h"
 /* @const_object_info_begin
 class be_class_lv_calendar (scope: global, name: lv_calendar, super: be_class_lv_buttonmatrix, strings: weak) {
-    _class, comptr(&lv_calendar_class)
     init, func(be_ntv_lv_calendar_init)
+    _class, comptr(&lv_calendar_class)
 }
 @const_object_info_end */
 
@@ -1611,8 +1607,8 @@ class be_class_lv_calendar (scope: global, name: lv_calendar, super: be_class_lv
 #include "be_fixed_be_class_lv_canvas.h"
 /* @const_object_info_begin
 class be_class_lv_canvas (scope: global, name: lv_canvas, super: be_class_lv_image, strings: weak) {
-    _class, comptr(&lv_canvas_class)
     init, func(be_ntv_lv_canvas_init)
+    _class, comptr(&lv_canvas_class)
 }
 @const_object_info_end */
 
@@ -1622,8 +1618,8 @@ class be_class_lv_canvas (scope: global, name: lv_canvas, super: be_class_lv_ima
 #include "be_fixed_be_class_lv_chart.h"
 /* @const_object_info_begin
 class be_class_lv_chart (scope: global, name: lv_chart, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_chart_class)
     init, func(be_ntv_lv_chart_init)
+    _class, comptr(&lv_chart_class)
 }
 @const_object_info_end */
 
@@ -1633,8 +1629,8 @@ class be_class_lv_chart (scope: global, name: lv_chart, super: be_class_lv_obj, 
 #include "be_fixed_be_class_lv_checkbox.h"
 /* @const_object_info_begin
 class be_class_lv_checkbox (scope: global, name: lv_checkbox, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_checkbox_class)
     init, func(be_ntv_lv_checkbox_init)
+    _class, comptr(&lv_checkbox_class)
 }
 @const_object_info_end */
 
@@ -1644,8 +1640,19 @@ class be_class_lv_checkbox (scope: global, name: lv_checkbox, super: be_class_lv
 #include "be_fixed_be_class_lv_dropdown.h"
 /* @const_object_info_begin
 class be_class_lv_dropdown (scope: global, name: lv_dropdown, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_dropdown_class)
     init, func(be_ntv_lv_dropdown_init)
+    _class, comptr(&lv_dropdown_class)
+}
+@const_object_info_end */
+
+/********************************************************************
+** Solidified class: lv_image
+********************************************************************/
+#include "be_fixed_be_class_lv_image.h"
+/* @const_object_info_begin
+class be_class_lv_image (scope: global, name: lv_image, super: be_class_lv_obj, strings: weak) {
+    init, func(be_ntv_lv_image_init)
+    _class, comptr(&lv_image_class)
 }
 @const_object_info_end */
 
@@ -1655,8 +1662,8 @@ class be_class_lv_dropdown (scope: global, name: lv_dropdown, super: be_class_lv
 #include "be_fixed_be_class_lv_imagebutton.h"
 /* @const_object_info_begin
 class be_class_lv_imagebutton (scope: global, name: lv_imagebutton, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_imagebutton_class)
     init, func(be_ntv_lv_imagebutton_init)
+    _class, comptr(&lv_imagebutton_class)
 }
 @const_object_info_end */
 
@@ -1666,8 +1673,8 @@ class be_class_lv_imagebutton (scope: global, name: lv_imagebutton, super: be_cl
 #include "be_fixed_be_class_lv_keyboard.h"
 /* @const_object_info_begin
 class be_class_lv_keyboard (scope: global, name: lv_keyboard, super: be_class_lv_buttonmatrix, strings: weak) {
-    _class, comptr(&lv_keyboard_class)
     init, func(be_ntv_lv_keyboard_init)
+    _class, comptr(&lv_keyboard_class)
 }
 @const_object_info_end */
 
@@ -1677,8 +1684,8 @@ class be_class_lv_keyboard (scope: global, name: lv_keyboard, super: be_class_lv
 #include "be_fixed_be_class_lv_label.h"
 /* @const_object_info_begin
 class be_class_lv_label (scope: global, name: lv_label, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_label_class)
     init, func(be_ntv_lv_label_init)
+    _class, comptr(&lv_label_class)
 }
 @const_object_info_end */
 
@@ -1688,8 +1695,8 @@ class be_class_lv_label (scope: global, name: lv_label, super: be_class_lv_obj, 
 #include "be_fixed_be_class_lv_led.h"
 /* @const_object_info_begin
 class be_class_lv_led (scope: global, name: lv_led, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_led_class)
     init, func(be_ntv_lv_led_init)
+    _class, comptr(&lv_led_class)
 }
 @const_object_info_end */
 
@@ -1699,8 +1706,8 @@ class be_class_lv_led (scope: global, name: lv_led, super: be_class_lv_obj, stri
 #include "be_fixed_be_class_lv_line.h"
 /* @const_object_info_begin
 class be_class_lv_line (scope: global, name: lv_line, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_line_class)
     init, func(be_ntv_lv_line_init)
+    _class, comptr(&lv_line_class)
 }
 @const_object_info_end */
 
@@ -1710,8 +1717,8 @@ class be_class_lv_line (scope: global, name: lv_line, super: be_class_lv_obj, st
 #include "be_fixed_be_class_lv_list.h"
 /* @const_object_info_begin
 class be_class_lv_list (scope: global, name: lv_list, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_list_class)
     init, func(be_ntv_lv_list_init)
+    _class, comptr(&lv_list_class)
 }
 @const_object_info_end */
 
@@ -1721,8 +1728,8 @@ class be_class_lv_list (scope: global, name: lv_list, super: be_class_lv_obj, st
 #include "be_fixed_be_class_lv_menu.h"
 /* @const_object_info_begin
 class be_class_lv_menu (scope: global, name: lv_menu, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_menu_class)
     init, func(be_ntv_lv_menu_init)
+    _class, comptr(&lv_menu_class)
 }
 @const_object_info_end */
 
@@ -1732,8 +1739,8 @@ class be_class_lv_menu (scope: global, name: lv_menu, super: be_class_lv_obj, st
 #include "be_fixed_be_class_lv_msgbox.h"
 /* @const_object_info_begin
 class be_class_lv_msgbox (scope: global, name: lv_msgbox, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_msgbox_class)
     init, func(be_ntv_lv_msgbox_init)
+    _class, comptr(&lv_msgbox_class)
 }
 @const_object_info_end */
 
@@ -1743,8 +1750,8 @@ class be_class_lv_msgbox (scope: global, name: lv_msgbox, super: be_class_lv_obj
 #include "be_fixed_be_class_lv_roller.h"
 /* @const_object_info_begin
 class be_class_lv_roller (scope: global, name: lv_roller, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_roller_class)
     init, func(be_ntv_lv_roller_init)
+    _class, comptr(&lv_roller_class)
 }
 @const_object_info_end */
 
@@ -1754,8 +1761,8 @@ class be_class_lv_roller (scope: global, name: lv_roller, super: be_class_lv_obj
 #include "be_fixed_be_class_lv_scale.h"
 /* @const_object_info_begin
 class be_class_lv_scale (scope: global, name: lv_scale, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_scale_class)
     init, func(be_ntv_lv_scale_init)
+    _class, comptr(&lv_scale_class)
 }
 @const_object_info_end */
 
@@ -1765,8 +1772,21 @@ class be_class_lv_scale (scope: global, name: lv_scale, super: be_class_lv_obj, 
 #include "be_fixed_be_class_lv_slider.h"
 /* @const_object_info_begin
 class be_class_lv_slider (scope: global, name: lv_slider, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_slider_class)
     init, func(be_ntv_lv_slider_init)
+    _class, comptr(&lv_slider_class)
+}
+@const_object_info_end */
+
+/********************************************************************
+** Solidified class: lv_span
+********************************************************************/
+#include "be_fixed_be_class_lv_span.h"
+/* @const_object_info_begin
+class be_class_lv_span (scope: global, name: lv_span, strings: weak) {
+    _p, var
+    tostring, func(lv_x_tostring)
+    member, func(lv_x_member)
+    init, func(be_ntv_lv_span_init)
 }
 @const_object_info_end */
 
@@ -1776,8 +1796,8 @@ class be_class_lv_slider (scope: global, name: lv_slider, super: be_class_lv_obj
 #include "be_fixed_be_class_lv_spangroup.h"
 /* @const_object_info_begin
 class be_class_lv_spangroup (scope: global, name: lv_spangroup, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_spangroup_class)
     init, func(be_ntv_lv_spangroup_init)
+    _class, comptr(&lv_spangroup_class)
 }
 @const_object_info_end */
 
@@ -1787,8 +1807,8 @@ class be_class_lv_spangroup (scope: global, name: lv_spangroup, super: be_class_
 #include "be_fixed_be_class_lv_spinbox.h"
 /* @const_object_info_begin
 class be_class_lv_spinbox (scope: global, name: lv_spinbox, super: be_class_lv_textarea, strings: weak) {
-    _class, comptr(&lv_spinbox_class)
     init, func(be_ntv_lv_spinbox_init)
+    _class, comptr(&lv_spinbox_class)
 }
 @const_object_info_end */
 
@@ -1798,8 +1818,8 @@ class be_class_lv_spinbox (scope: global, name: lv_spinbox, super: be_class_lv_t
 #include "be_fixed_be_class_lv_spinner.h"
 /* @const_object_info_begin
 class be_class_lv_spinner (scope: global, name: lv_spinner, super: be_class_lv_arc, strings: weak) {
-    _class, comptr(&lv_spinner_class)
     init, func(be_ntv_lv_spinner_init)
+    _class, comptr(&lv_spinner_class)
 }
 @const_object_info_end */
 
@@ -1809,8 +1829,8 @@ class be_class_lv_spinner (scope: global, name: lv_spinner, super: be_class_lv_a
 #include "be_fixed_be_class_lv_switch.h"
 /* @const_object_info_begin
 class be_class_lv_switch (scope: global, name: lv_switch, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_switch_class)
     init, func(be_ntv_lv_switch_init)
+    _class, comptr(&lv_switch_class)
 }
 @const_object_info_end */
 
@@ -1820,8 +1840,8 @@ class be_class_lv_switch (scope: global, name: lv_switch, super: be_class_lv_obj
 #include "be_fixed_be_class_lv_table.h"
 /* @const_object_info_begin
 class be_class_lv_table (scope: global, name: lv_table, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_table_class)
     init, func(be_ntv_lv_table_init)
+    _class, comptr(&lv_table_class)
 }
 @const_object_info_end */
 
@@ -1831,8 +1851,8 @@ class be_class_lv_table (scope: global, name: lv_table, super: be_class_lv_obj, 
 #include "be_fixed_be_class_lv_tabview.h"
 /* @const_object_info_begin
 class be_class_lv_tabview (scope: global, name: lv_tabview, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_tabview_class)
     init, func(be_ntv_lv_tabview_init)
+    _class, comptr(&lv_tabview_class)
 }
 @const_object_info_end */
 
@@ -1842,8 +1862,8 @@ class be_class_lv_tabview (scope: global, name: lv_tabview, super: be_class_lv_o
 #include "be_fixed_be_class_lv_textarea.h"
 /* @const_object_info_begin
 class be_class_lv_textarea (scope: global, name: lv_textarea, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_textarea_class)
     init, func(be_ntv_lv_textarea_init)
+    _class, comptr(&lv_textarea_class)
 }
 @const_object_info_end */
 
@@ -1853,8 +1873,8 @@ class be_class_lv_textarea (scope: global, name: lv_textarea, super: be_class_lv
 #include "be_fixed_be_class_lv_tileview.h"
 /* @const_object_info_begin
 class be_class_lv_tileview (scope: global, name: lv_tileview, super: be_class_lv_obj, strings: weak) {
-    _class, comptr(&lv_tileview_class)
     init, func(be_ntv_lv_tileview_init)
+    _class, comptr(&lv_tileview_class)
 }
 @const_object_info_end */
 
