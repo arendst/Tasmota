@@ -141,6 +141,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - LVGL make lv_touch_3_buttons more responsive [#20728](https://github.com/arendst/Tasmota/issues/20728)
 - HASPmota fix and improve demo with pixel-perfect fonts [#20734](https://github.com/arendst/Tasmota/issues/20734)
 - HASPmota more attributes [#20744](https://github.com/arendst/Tasmota/issues/20744)
+- HASPmota support for spangroup (styled text) [#20852](https://github.com/arendst/Tasmota/issues/20852)
+- HASPmota support for led [#20857](https://github.com/arendst/Tasmota/issues/20857)
 
 ### Fixed
 - Shutter inverted using internal commands [#20752](https://github.com/arendst/Tasmota/issues/20752)

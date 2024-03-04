@@ -211,13 +211,13 @@ void EthernetInit(void) {
   if (Settings->eth_type < 7) {
     // CONFIG_ETH_USE_ESP32_EMAC
     if (!PinUsed(GPIO_ETH_PHY_MDC) && !PinUsed(GPIO_ETH_PHY_MDIO)) {  // && should be || but keep for backward compatibility
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "No ETH MDC and ETH MDIO GPIO defined"));
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ETH "No ETH MDC and ETH MDIO GPIO defined"));
       return;
     }
   } else {
     // ETH_SPI_SUPPORTS_CUSTOM
     if (!PinUsed(GPIO_ETH_PHY_MDC) || !PinUsed(GPIO_ETH_PHY_MDIO) || !PinUsed(GPIO_ETH_PHY_POWER)) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "No ETH MDC (SPI CS), ETH MDIO (SPI IRQ) and ETH POWER (SPI RST) GPIO defined"));
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ETH "No ETH MDC (SPI CS), ETH MDIO (SPI IRQ) and ETH POWER (SPI RST) GPIO defined"));
       return;
     }
   }

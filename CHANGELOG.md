@@ -6,8 +6,8 @@ All notable changes to this project will be documented in this file.
 ## [13.4.0.2]
 ### Added
 - Berry `path.rename()` (#20840)
-- HASPmota support for spangroup (styled text)
-- HASPmota support for led
+- HASPmota support for spangroup (styled text) (#20852)
+- HASPmota support for led (#20857)
 
 ### Breaking Changed
 - Drop support for old (insecure) fingerprint format (#20842)
