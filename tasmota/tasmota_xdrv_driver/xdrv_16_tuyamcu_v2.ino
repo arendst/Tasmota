@@ -192,17 +192,6 @@ typedef struct TUYA_STRUCT_tag {
   // if state is TUYA_STARTUP_STATE_WAIT_ACK_CMD
   uint8_t expectedResponseCmd;
 
-//  uint8_t rxedDPids[TUYA_MAX_STORED_DPs];
-//  uint8_t rxedDPidType[TUYA_MAX_STORED_DPs];
-  // DPValues are changed by every TUYA_CMD_STATE
-//  uint32_t rxedDPvalues[TUYA_MAX_STORED_DPs];
-  // DPValues are changed by every TUYA_CMD_STATE
-//  uint32_t desiredDPvalues[TUYA_MAX_STORED_DPs];
-  // set to 1 if desired value changed
-//  uint8_t toSet[TUYA_MAX_STORED_DPs];
-  // set to 1 if a DP is to be sent
-  uint8_t requestSend;
-
   uint16_t Levels[5];       // Array to store the values of TuyaMCU channels
   uint16_t Snapshot[5];     // Array to store a snapshot of Tasmota actual channel values
   uint16_t EnumState[4];      // Array to store up to four Enum type 4 values
@@ -1068,7 +1057,6 @@ void TuyaPostState(uint8_t id, uint8_t type, uint8_t *value, int len = 4){
           memcpy(dp->desiredValue, value, len);
           dp->desiredValueLen = len;
           dp->toSet = 1;
-          pTuya->requestSend = 1;
           AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: DP%d des v set (0x%x,%d)"), id, dp->desiredValue[0], dp->desiredValueLen);
 
           if (TuyaDpIdIsDimmer(id)){
@@ -1094,7 +1082,6 @@ void TuyaPostState(uint8_t id, uint8_t type, uint8_t *value, int len = 4){
         memcpy(dp->desiredValue, value, len);
         dp->desiredValueLen = len;
         dp->toSet = 1;
-        pTuya->requestSend = 1;
         AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: NEW DP %d desiredvalue set (0x%08x len %d)"), id, dp->desiredValue[0], dp->desiredValueLen);
       } else {
         AddLog(LOG_LEVEL_ERROR, PSTR("TYA: DP %d value over len (%d > %d)"), id, len, TUYA_MAX_STRING_SIZE);
