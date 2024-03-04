@@ -897,7 +897,7 @@ void Tuya_statemachine(int cmd = -1, int len = 0, unsigned char *payload = (unsi
       for (i = 0; i < pTuya->numRxedDPids; i++){
         TUYA_DP_STORE *dp = &pTuya->DPStore[i];
         // if set requested, and MCU has reported at least once
-        if (dp->toSet && dp->rxed){
+        if (dp->toSet) {
           // if value is different
           if ((dp->rxedValueLen != dp->desiredValueLen) || memcmp(dp->rxedValue, dp->desiredValue, dp->desiredValueLen)){
             uint8_t send = 1;
