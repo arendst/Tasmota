@@ -272,11 +272,11 @@ extern "C" {
     { 0, nullptr}
   };
 
-  // typicons Font
-  const lv_font_table_t lv_typicons_fonts[] = {
-    { 24, &typicons24 },
-    { 0, nullptr}
-  };
+  // // typicons Font
+  // const lv_font_table_t lv_typicons_fonts[] = {
+  //   { 24, &typicons24 },
+  //   { 0, nullptr}
+  // };
 
   // robotocondensed-latin1
   const lv_font_table_t lv_robotocondensed_fonts[] = {
@@ -326,7 +326,7 @@ extern "C" {
   const lv_font_names_t lv_embedded_fonts[] = {
     { "montserrat", lv_montserrat_fonts },
     { "seg7", lv_seg7_fonts },
-    { "typicons", lv_typicons_fonts },
+    // { "typicons", lv_typicons_fonts },
     { "unscii", lv_unscii_fonts},
 #ifdef USE_LVGL_HASPMOTA
     { "robotocondensed", lv_robotocondensed_fonts },
