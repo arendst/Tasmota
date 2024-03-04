@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Breaking Changed
 - Drop support for old (insecure) fingerprint format (#20842)
+- LVGL remove embedded typicons font
 
 ### Changed
 
