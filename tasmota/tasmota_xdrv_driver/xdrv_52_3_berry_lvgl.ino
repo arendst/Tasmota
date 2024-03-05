@@ -188,6 +188,9 @@ extern "C" {
   #if LV_FONT_MONTSERRAT_14
     { 14, &lv_font_montserrat_14 },
   #endif
+  #if LV_FONT_MONTSERRAT_TASMOTA_14
+    { 14, &lv_font_montserrat_tasmota_14 },
+  #endif
   #if LV_FONT_MONTSERRAT_16
     { 16, &lv_font_montserrat_16 },
   #endif
@@ -196,6 +199,9 @@ extern "C" {
   #endif
   #if LV_FONT_MONTSERRAT_20
     { 20, &lv_font_montserrat_20 },
+  #endif
+  #if LV_FONT_MONTSERRAT_TASMOTA_20
+    { 20, &lv_font_montserrat_tasmota_20 },
   #endif
   #if LV_FONT_MONTSERRAT_22
     { 22, &lv_font_montserrat_22 },
@@ -272,6 +278,60 @@ extern "C" {
     { 0, nullptr}
   };
 
+  // icons Font for sizes not covered by montserrat
+  // if montserrat is defined, use it, else import icons font
+  const lv_font_table_t lv_icons_fonts[] = {
+#ifdef LV_FONT_MONTSERRAT_TASMOTA_12
+    { 12, &lv_font_montserrat_tasmota_12 },
+#elif defined(FONT_ICONS_12)
+    { 12, &lv_font_icons_12 },
+#endif
+
+#ifdef LV_FONT_MONTSERRAT_TASMOTA_14
+    { 14, &lv_font_montserrat_tasmota_14 },
+#elif defined(FONT_ICONS_14)
+    { 14, &lv_font_icons_14 },
+#endif
+
+#ifdef LV_FONT_MONTSERRAT_TASMOTA_16
+    { 16, &lv_font_montserrat_tasmota_16 },
+#elif defined(FONT_ICONS_16)
+    { 16, &lv_font_icons_16 },
+#endif
+
+#ifdef LV_FONT_MONTSERRAT_TASMOTA_18
+    { 18, &lv_font_montserrat_tasmota_18 },
+#elif defined(FONT_ICONS_18)
+    { 18, &lv_font_icons_18 },
+#endif
+
+#ifdef LV_FONT_MONTSERRAT_TASMOTA_20
+    { 20, &lv_font_montserrat_tasmota_20 },
+#elif defined(FONT_ICONS_20)
+    { 20, &lv_font_icons_20 },
+#endif
+
+#ifdef LV_FONT_MONTSERRAT_TASMOTA_22
+    { 22, &lv_font_montserrat_tasmota_22 },
+#elif defined(FONT_ICONS_22)
+    { 22, &lv_font_icons_22 },
+#endif
+
+#ifdef LV_FONT_MONTSERRAT_TASMOTA_24
+    { 24, &lv_font_montserrat_tasmota_24 },
+#elif defined(FONT_ICONS_24)
+    { 24, &lv_font_icons_24 },
+#endif
+
+#ifdef LV_FONT_MONTSERRAT_TASMOTA_28
+    { 28, &lv_font_montserrat_tasmota_28 },
+#elif defined(FONT_ICONS_28)
+    { 28, &lv_font_icons_28 },
+#endif
+
+    { 0, nullptr}
+  };
+
   // // typicons Font
   // const lv_font_table_t lv_typicons_fonts[] = {
   //   { 24, &typicons24 },
@@ -324,13 +384,14 @@ extern "C" {
 
   // register all included fonts
   const lv_font_names_t lv_embedded_fonts[] = {
+    { "icons", lv_icons_fonts },
     { "montserrat", lv_montserrat_fonts },
     { "seg7", lv_seg7_fonts },
     // { "typicons", lv_typicons_fonts },
-    { "unscii", lv_unscii_fonts},
 #ifdef USE_LVGL_HASPMOTA
     { "robotocondensed", lv_robotocondensed_fonts },
 #endif
+    { "unscii", lv_unscii_fonts},
     { nullptr, nullptr}
   };
 

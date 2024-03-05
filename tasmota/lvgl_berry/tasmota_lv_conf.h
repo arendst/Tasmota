@@ -368,10 +368,12 @@
 #define LV_FONT_MONTSERRAT_8  0
 #define LV_FONT_MONTSERRAT_10 1       // TASMOTA
 #define LV_FONT_MONTSERRAT_12 0
-#define LV_FONT_MONTSERRAT_14 1
+#define LV_FONT_MONTSERRAT_14 0
+#define LV_FONT_MONTSERRAT_TASMOTA_14 1
 #define LV_FONT_MONTSERRAT_16 0
 #define LV_FONT_MONTSERRAT_18 0
-#define LV_FONT_MONTSERRAT_20 1       // TASMOTA
+#define LV_FONT_MONTSERRAT_20 0
+#define LV_FONT_MONTSERRAT_TASMOTA_20 1       // TASMOTA
 #define LV_FONT_MONTSERRAT_22 0
 #define LV_FONT_MONTSERRAT_24 0
 #define LV_FONT_MONTSERRAT_26 0
@@ -386,6 +388,8 @@
 #define LV_FONT_MONTSERRAT_44 0
 #define LV_FONT_MONTSERRAT_46 0
 #define LV_FONT_MONTSERRAT_48 0
+
+#define LV_FONT_ICONS_18 1
 
 /*Demonstrate special features*/
 #define LV_FONT_MONTSERRAT_28_COMPRESSED 1       // TASMOTA  /*bpp = 3*/
@@ -424,7 +428,26 @@
                                   LV_FONT_DECLARE(robotocondensed_regular_40_latin1) \
                                   LV_FONT_DECLARE(robotocondensed_regular_44_latin1) \
                                   LV_FONT_DECLARE(robotocondensed_regular_48_latin1) \
+                                  LV_FONT_DECLARE(lv_font_icons_12) \
+                                  LV_FONT_DECLARE(lv_font_icons_14) \
+                                  LV_FONT_DECLARE(lv_font_icons_16) \
+                                  LV_FONT_DECLARE(lv_font_icons_18) \
+                                  LV_FONT_DECLARE(lv_font_icons_20) \
+                                  LV_FONT_DECLARE(lv_font_icons_22) \
+                                  LV_FONT_DECLARE(lv_font_icons_24) \
+                                  LV_FONT_DECLARE(lv_font_icons_28) \
+                                //   LV_FONT_DECLARE(montserrat_tasmota_14) \
+                                //   LV_FONT_DECLARE(montserrat_tasmota_20) \
                                 //   LV_FONT_DECLARE(typicons24) \
+
+#define FONT_ICONS_12 1
+#define FONT_ICONS_14 0
+#define FONT_ICONS_16 0
+#define FONT_ICONS_18 1
+#define FONT_ICONS_20 0
+#define FONT_ICONS_22 0
+#define FONT_ICONS_24 1
+#define FONT_ICONS_28 0
 
 #define ROBOTOCONDENSED_REGULAR_12_LATIN1  1
 #define ROBOTOCONDENSED_REGULAR_14_LATIN1  0
@@ -432,16 +455,12 @@
 #define ROBOTOCONDENSED_REGULAR_20_LATIN1  0
 #define ROBOTOCONDENSED_REGULAR_22_LATIN1  0
 #define ROBOTOCONDENSED_REGULAR_24_LATIN1  1
-#define ROBOTOCONDENSED_REGULAR_28_LATIN1  0
-#define ROBOTOCONDENSED_REGULAR_32_LATIN1  0
 #define ROBOTOCONDENSED_REGULAR_36_LATIN1  0
-#define ROBOTOCONDENSED_REGULAR_38_LATIN1  0
-#define ROBOTOCONDENSED_REGULAR_40_LATIN1  0
-#define ROBOTOCONDENSED_REGULAR_44_LATIN1  0
 #define ROBOTOCONDENSED_REGULAR_48_LATIN1  0
 
 /*Always set a default font*/
-#define LV_FONT_DEFAULT &lv_font_montserrat_14
+#define LV_FONT_DEFAULT &lv_font_montserrat_tasmota_14
+// #define LV_FONT_DEFAULT &lv_font_montserrat_14
 
 /*Enable handling large font and/or fonts with a lot of characters.
  *The limit depends on the font size, font face and bpp.
