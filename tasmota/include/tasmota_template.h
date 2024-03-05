@@ -826,8 +826,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_RF_SENSOR),                // Rf receiver with sensor decoding
 #endif
 #ifdef USE_SR04
-  AGPIO(GPIO_SR04_TRIG),                // SR04 Tri/TXgger pin
-  AGPIO(GPIO_SR04_ECHO),                // SR04 Ech/RXo pin
+  AGPIO(GPIO_SR04_TRIG) + MAX_SR04,                // SR04 Tri/TXgger pin
+  AGPIO(GPIO_SR04_ECHO) + MAX_SR04,                // SR04 Ech/RXo pin
 #endif
 #ifdef USE_ME007
   AGPIO(GPIO_ME007_TRIG),              // ME007 Trigger pin (xsns_23_me007.ino)
