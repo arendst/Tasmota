@@ -81,6 +81,9 @@ class lvh_root
     "bg_grad_dir": "style_bg_grad_dir",
     "line_color": "style_line_color",
     "line_rounded": "style_line_rounded",
+    "line_dash_gap": "style_line_dash_gap",
+    "line_dash_width": "style_line_dash_width",
+    "line_opa": "style_line_opa",
     "arc_color": "style_arc_color",
     "arc_opa": "style_arc_opa",
     "arc_rounded": "style_arc_rounded",
@@ -627,7 +630,7 @@ class lvh_obj : lvh_root
   # hold = LV_EVENT_LONG_PRESSED_REPEAT
   # changed = LV_EVENT_VALUE_CHANGED
   #====================================================================
-  static _event_map = {
+  static var _event_map = {
     lv.EVENT_PRESSED:             "down",
     lv.EVENT_CLICKED:             "up",
     lv.EVENT_PRESS_LOST:          "lost",
@@ -783,8 +786,15 @@ class lvh_obj : lvh_root
   #====================================================================
   def check_label()
     if self._lv_label == nil
-      self._lv_label = lv.label(self.get_obj())
-      self._lv_label.set_align(lv.ALIGN_CENTER);
+      import introspect
+      if introspect.contains(self._lv_obj, "set_text")
+        # if the `set_text` method exist, then use the native label
+        self._lv_label = self._lv_obj
+      else
+        # otherwise create a sub-label object
+        self._lv_label = lv.label(self.get_obj())
+        self._lv_label.set_align(lv.ALIGN_CENTER);
+      end
     end
   end
   def set_text(t)
@@ -1129,7 +1139,7 @@ end
 #  label
 #====================================================================
 class lvh_label : lvh_obj
-  static _lv_class = lv.label
+  static var _lv_class = lv.label
   # label do not need a sub-label
   def post_init()
     self._lv_label = self._lv_obj   # the label is also the object itself
@@ -1141,8 +1151,8 @@ end
 #  arc
 #====================================================================
 class lvh_arc : lvh_obj
-  static _lv_class = lv.arc
-  static _lv_part2_selector = lv.PART_KNOB
+  static var _lv_class = lv.arc
+  static var _lv_part2_selector = lv.PART_KNOB
 
   # line_width converts to arc_width
   def set_line_width(t, style_modifier)
@@ -1189,8 +1199,8 @@ end
 #  switch
 #====================================================================
 class lvh_switch : lvh_obj
-  static _lv_class = lv.switch
-  static _lv_part2_selector = lv.PART_KNOB
+  static var _lv_class = lv.switch
+  static var _lv_part2_selector = lv.PART_KNOB
   # map val to toggle
   def set_val(t)
     return self.set_toggle(t)
@@ -1204,7 +1214,7 @@ end
 #  spinner
 #====================================================================
 class lvh_spinner : lvh_arc
-  static _lv_class = lv.spinner
+  static var _lv_class = lv.spinner
   var _speed, _angle
 
   # init
@@ -1230,7 +1240,7 @@ end
 #  img
 #====================================================================
 class lvh_img : lvh_obj
-  static _lv_class = lv.image
+  static var _lv_class = lv.image
 
   def set_auto_size(v)
     if v
@@ -1262,25 +1272,31 @@ end
 #  qrcode
 #====================================================================
 class lvh_qrcode : lvh_obj
-  static _lv_class = lv.qrcode
+  static var _lv_class = lv.qrcode
+  var qr_text                         # any change needs the text to be update again
 
-
+  def _update()
+    var t = self.qr_text
+    if (t != nil)
+      self._lv_obj.update(t, size(t))
+    end
+  end
   # ignore attributes, spinner can't be changed once created
-  def set_qr_size(t)                  self._lv_obj.set_size(t)                              end
-  def set_size(t)                     self._lv_obj.set_size(t)                              end
+  def set_qr_size(t)                  self._lv_obj.set_size(t)                              self._update()  end
+  def set_size(t)                     self._lv_obj.set_size(t)                              self._update()  end
   def get_qr_size() end
   def get_size() end
-  def set_qr_dark_color(t)            self._lv_obj.set_dark_color(self.parse_color(t))      end
-  def set_dark_color(t)               self._lv_obj.set_dark_color(self.parse_color(t))      end
+  def set_qr_dark_color(t)            self._lv_obj.set_dark_color(self.parse_color(t))      self._update()  end
+  def set_dark_color(t)               self._lv_obj.set_dark_color(self.parse_color(t))      self._update()  end
   def get_qr_dark_color() end
   def get_dark_color() end
-  def set_qr_light_color(t)            self._lv_obj.set_light_color(self.parse_color(t))     end
-  def set_light_color(t)               self._lv_obj.set_light_color(self.parse_color(t))     end
+  def set_qr_light_color(t)            self._lv_obj.set_light_color(self.parse_color(t))     self._update()  end
+  def set_light_color(t)               self._lv_obj.set_light_color(self.parse_color(t))     self._update()  end
   def get_qr_light_color() end
   def get_light_color() end
   def set_qr_text(t)
-    t = str(t)
-    self._lv_obj.update(t, size(t))
+    self.qr_text = str(t)
+    self._update()
   end
   def get_qr_text() end
 end
@@ -1289,7 +1305,7 @@ end
 #  slider
 #====================================================================
 class lvh_slider : lvh_obj
-  static _lv_class = lv.slider
+  static var _lv_class = lv.slider
 
   def set_val(t)
     self._lv_obj.set_value(t, 0)    # add second parameter - no animation
@@ -1312,7 +1328,7 @@ end
 #  roller
 #====================================================================
 class lvh_roller : lvh_obj
-  static _lv_class = lv.roller
+  static var _lv_class = lv.roller
 
   def set_val(t)
     self._lv_obj.set_selected(t, 0)    # add second parameter - no animation
@@ -1344,7 +1360,7 @@ end
 #  led
 #====================================================================
 class lvh_led : lvh_obj
-  static _lv_class = lv.led
+  static var _lv_class = lv.led
 
   # `val` is a synonym for `brightness`
   def set_val(t)
@@ -1366,8 +1382,8 @@ end
 #  dropdown
 #====================================================================
 class lvh_dropdown : lvh_obj
-  static _lv_class = lv.dropdown
-  static _dir = [ lv.DIR_BOTTOM, lv.DIR_TOP, lv.DIR_LEFT, lv.DIR_RIGHT ] # 0 = down, 1 = up, 2 = left, 3 = right
+  static var _lv_class = lv.dropdown
+  static var _dir = [ lv.DIR_BOTTOM, lv.DIR_TOP, lv.DIR_LEFT, lv.DIR_RIGHT ] # 0 = down, 1 = up, 2 = left, 3 = right
 
   def set_val(t)
     self._lv_obj.set_selected(t, 0)    # add second parameter - no animation
@@ -1430,18 +1446,31 @@ class lvh_dropdown : lvh_obj
 end
 
 class lvh_bar : lvh_obj
-  static _lv_class = lv.bar
+  static var _lv_class = lv.bar
   
   def set_val(t)
     self._lv_obj.set_value(t, lv.ANIM_OFF)
   end
+  def set_min(t)
+    self._lv_obj.set_range(int(t), self._lv_obj.get_max_value())
+  end
+  def set_max(t)
+    self._lv_obj.set_range(self._lv_obj.get_min_value(), int(t))
+  end
+  def get_min()
+    return self._lv_obj.get_min_value()
+  end
+  def get_max()
+    return self._lv_obj.get_max_value()
+  end
+
 end
 
 #====================================================================
 #  spangroup
 #====================================================================
 class lvh_spangroup : lvh_obj
-  static _lv_class = lv.spangroup
+  static var _lv_class = lv.spangroup
   # label do not need a sub-label
   def post_init()
     self._lv_obj.set_mode(lv.SPAN_MODE_BREAK)           # use lv.SPAN_MODE_BREAK by default
@@ -1458,7 +1487,7 @@ end
 #  span
 #====================================================================
 class lvh_span : lvh_root
-  static _lv_class = nil
+  static var _lv_class = nil
   # label do not need a sub-label
   var _style                          # style object
 
@@ -1579,7 +1608,7 @@ end
 # Adapted to getting values one after the other
 #################################################################################
 class lvh_chart : lvh_obj
-  static _lv_class = lv.chart
+  static var _lv_class = lv.chart
   # ser1/ser2 contains the first/second series of data
   var _ser1, _ser2
   # y_min/y_max contain the main range for y. Since LVGL does not have getters, we need to memorize on our side the lates tvalues
@@ -1647,19 +1676,66 @@ class lvh_chart : lvh_obj
   end
 end
 
+#====================================================================
+#  line
+#====================================================================
+class lvh_line : lvh_obj
+  static var _lv_class = lv.line
+  var _lv_points          # needs to save to avoid garbage collection
+  # list of points
+  def set_points(t)
+    if isinstance(t, list)
+      var pts = []
+      for p: t
+        if (isinstance(p, list) && size(p) == 2)
+          var pt = lv.point()
+          pt.x = int(p[0])
+          pt.y = int(p[1])
+          pts.push(pt)
+        end
+      end
+      var pt_arr = lv.point_arr(pts)
+      self._lv_points = pt_arr
+      self._lv_obj.set_points(pt_arr, size(pts))
+    else
+      print(f"HSP: 'line' wrong format for 'points' {t}")
+    end
+  end
+end
+
+#====================================================================
+#  btnmatrix
+#====================================================================
+class lvh_btnmatrix : lvh_obj
+  static var _lv_class = lv.btnmatrix
+  var _options                      # need to keep the reference alive to avoid GC
+  var _options_arr                  # need to keep the reference alive to avoid GC
+  
+  def set_options(l)
+    if (isinstance(l, list))
+      self._options = l
+      self._options_arr = lv.str_arr(l)
+      self._lv_obj.set_map(self._options_arr)
+    else
+      print("HTP: 'btnmatrix' needs 'options' to be a list of strings")
+    end
+  end
+  def get_options()
+    return self._options
+  end
+end
+
 #################################################################################
 #
 # All other subclasses than just map the LVGL object
 # and doesn't have any specific behavior
 #
 #################################################################################
-class lvh_btn : lvh_obj         static _lv_class = lv.btn         end
-class lvh_btnmatrix : lvh_obj   static _lv_class = lv.btnmatrix   end
-class lvh_checkbox : lvh_obj    static _lv_class = lv.checkbox    end
-class lvh_line : lvh_obj        static _lv_class = lv.line        end
-class lvh_textarea : lvh_obj    static _lv_class = lv.textarea    end
+class lvh_btn : lvh_obj         static var _lv_class = lv.btn         end
+class lvh_checkbox : lvh_obj    static var _lv_class = lv.checkbox    end
+class lvh_textarea : lvh_obj    static var _lv_class = lv.textarea    end
 # special case for scr (which is actually lv_obj)
-class lvh_scr : lvh_obj         static _lv_class = nil            end    # no class for screen
+class lvh_scr : lvh_obj         static var _lv_class = nil            end    # no class for screen
 
 
 #################################################################################

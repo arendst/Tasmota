@@ -1370,43 +1370,46 @@ be_local_class(lvh_root,
         { be_const_key_weak(get_text_rule_format, 21), be_const_closure(lvh_root_get_text_rule_format_closure) },
         { be_const_key_weak(set_text, -1), be_const_closure(lvh_root_set_text_closure) },
         { be_const_key_weak(_attr_map, 12), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(35,
+        be_const_map( *     be_nested_map(38,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(arc_rounded, -1), be_nested_str_weak(style_arc_rounded) },
-        { be_const_key_weak(line_color, 13), be_nested_str_weak(style_line_color) },
-        { be_const_key_weak(bg_grad_dir, -1), be_nested_str_weak(style_bg_grad_dir) },
-        { be_const_key_weak(border_side, 7), be_nested_str_weak(style_border_side) },
-        { be_const_key_weak(pad_all, -1), be_nested_str_weak(style_pad_all) },
-        { be_const_key_weak(height, -1), be_nested_str_weak(style_height) },
-        { be_const_key_weak(y, -1), be_nested_str_weak(y) },
-        { be_const_key_weak(arc_opa, -1), be_nested_str_weak(style_arc_opa) },
-        { be_const_key_weak(pad_right, -1), be_nested_str_weak(style_pad_right) },
-        { be_const_key_weak(image_recolor_opa, 28), be_nested_str_weak(style_img_recolor_opa) },
-        { be_const_key_weak(x, -1), be_nested_str_weak(x) },
-        { be_const_key_weak(arc_color, -1), be_nested_str_weak(style_arc_color) },
         { be_const_key_weak(w, -1), be_nested_str_weak(width) },
-        { be_const_key_weak(h, -1), be_nested_str_weak(height) },
-        { be_const_key_weak(radius, 8), be_nested_str_weak(style_radius) },
-        { be_const_key_weak(width, 11), be_nested_str_weak(style_width) },
-        { be_const_key_weak(border_color, 22), be_nested_str_weak(style_border_color) },
-        { be_const_key_weak(bg_grad_color, 34), be_nested_str_weak(style_bg_grad_color) },
-        { be_const_key_weak(bg_color, -1), be_nested_str_weak(style_bg_color) },
-        { be_const_key_weak(border_width, 33), be_nested_str_weak(style_border_width) },
-        { be_const_key_weak(pad_top, -1), be_nested_str_weak(style_pad_top) },
-        { be_const_key_weak(image_recolor, 17), be_nested_str_weak(style_img_recolor) },
-        { be_const_key_weak(border_post, -1), be_nested_str_weak(style_border_pot) },
-        { be_const_key_weak(start_angle1, -1), be_nested_str_weak(start_angle) },
-        { be_const_key_weak(border_opa, -1), be_nested_str_weak(style_border_opa) },
-        { be_const_key_weak(rotation, 10), be_nested_str_weak(rotation) },
-        { be_const_key_weak(arc_width, 12), be_nested_str_weak(style_arc_width) },
-        { be_const_key_weak(end_angle, -1), be_nested_str_weak(bg_end_angle) },
-        { be_const_key_weak(pad_bottom, -1), be_nested_str_weak(style_pad_bottom) },
-        { be_const_key_weak(bg_opa, -1), be_nested_str_weak(style_bg_opa) },
-        { be_const_key_weak(end_angle1, -1), be_nested_str_weak(end_angle) },
-        { be_const_key_weak(start_angle, 30), be_nested_str_weak(bg_start_angle) },
-        { be_const_key_weak(src, -1), be_nested_str_weak(src) },
-        { be_const_key_weak(line_rounded, -1), be_nested_str_weak(style_line_rounded) },
+        { be_const_key_weak(border_color, 25), be_nested_str_weak(style_border_color) },
+        { be_const_key_weak(line_opa, -1), be_nested_str_weak(style_line_opa) },
+        { be_const_key_weak(border_side, 17), be_nested_str_weak(style_border_side) },
+        { be_const_key_weak(pad_all, -1), be_nested_str_weak(style_pad_all) },
+        { be_const_key_weak(image_recolor, -1), be_nested_str_weak(style_img_recolor) },
         { be_const_key_weak(pad_left, -1), be_nested_str_weak(style_pad_left) },
+        { be_const_key_weak(arc_rounded, 14), be_nested_str_weak(style_arc_rounded) },
+        { be_const_key_weak(pad_right, 37), be_nested_str_weak(style_pad_right) },
+        { be_const_key_weak(line_dash_width, -1), be_nested_str_weak(style_line_dash_width) },
+        { be_const_key_weak(end_angle, -1), be_nested_str_weak(bg_end_angle) },
+        { be_const_key_weak(start_angle1, -1), be_nested_str_weak(start_angle) },
+        { be_const_key_weak(border_post, -1), be_nested_str_weak(style_border_pot) },
+        { be_const_key_weak(src, 18), be_nested_str_weak(src) },
+        { be_const_key_weak(x, -1), be_nested_str_weak(x) },
+        { be_const_key_weak(line_rounded, 8), be_nested_str_weak(style_line_rounded) },
+        { be_const_key_weak(image_recolor_opa, -1), be_nested_str_weak(style_img_recolor_opa) },
+        { be_const_key_weak(radius, 36), be_nested_str_weak(style_radius) },
+        { be_const_key_weak(arc_color, -1), be_nested_str_weak(style_arc_color) },
+        { be_const_key_weak(border_opa, 26), be_nested_str_weak(style_border_opa) },
+        { be_const_key_weak(h, -1), be_nested_str_weak(height) },
+        { be_const_key_weak(line_dash_gap, 20), be_nested_str_weak(style_line_dash_gap) },
+        { be_const_key_weak(arc_opa, -1), be_nested_str_weak(style_arc_opa) },
+        { be_const_key_weak(rotation, -1), be_nested_str_weak(rotation) },
+        { be_const_key_weak(height, 19), be_nested_str_weak(style_height) },
+        { be_const_key_weak(end_angle1, -1), be_nested_str_weak(end_angle) },
+        { be_const_key_weak(pad_top, -1), be_nested_str_weak(style_pad_top) },
+        { be_const_key_weak(bg_grad_color, -1), be_nested_str_weak(style_bg_grad_color) },
+        { be_const_key_weak(border_width, 29), be_nested_str_weak(style_border_width) },
+        { be_const_key_weak(pad_bottom, -1), be_nested_str_weak(style_pad_bottom) },
+        { be_const_key_weak(arc_width, -1), be_nested_str_weak(style_arc_width) },
+        { be_const_key_weak(line_color, -1), be_nested_str_weak(style_line_color) },
+        { be_const_key_weak(bg_color, 11), be_nested_str_weak(style_bg_color) },
+        { be_const_key_weak(bg_opa, -1), be_nested_str_weak(style_bg_opa) },
+        { be_const_key_weak(y, -1), be_nested_str_weak(y) },
+        { be_const_key_weak(bg_grad_dir, -1), be_nested_str_weak(style_bg_grad_dir) },
+        { be_const_key_weak(width, -1), be_nested_str_weak(style_width) },
+        { be_const_key_weak(start_angle, -1), be_nested_str_weak(bg_start_angle) },
     }))    ) } )) },
         { be_const_key_weak(_text_rule, 20), be_const_var(8) },
         { be_const_key_weak(text_rule_matched, 29), be_const_closure(lvh_root_text_rule_matched_closure) },
@@ -2384,7 +2387,7 @@ be_local_closure(lvh_obj_register_event_cb,   /* name */
 ********************************************************************/
 be_local_closure(lvh_obj_check_label,   /* name */
   be_nested_proto(
-    5,                          /* nstack */
+    6,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -2392,33 +2395,46 @@ be_local_closure(lvh_obj_check_label,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 6]) {     /* constants */
+    ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_label),
-    /* K1   */  be_nested_str_weak(lv),
-    /* K2   */  be_nested_str_weak(label),
-    /* K3   */  be_nested_str_weak(get_obj),
-    /* K4   */  be_nested_str_weak(set_align),
-    /* K5   */  be_nested_str_weak(ALIGN_CENTER),
+    /* K1   */  be_nested_str_weak(introspect),
+    /* K2   */  be_nested_str_weak(contains),
+    /* K3   */  be_nested_str_weak(_lv_obj),
+    /* K4   */  be_nested_str_weak(set_text),
+    /* K5   */  be_nested_str_weak(lv),
+    /* K6   */  be_nested_str_weak(label),
+    /* K7   */  be_nested_str_weak(get_obj),
+    /* K8   */  be_nested_str_weak(set_align),
+    /* K9   */  be_nested_str_weak(ALIGN_CENTER),
     }),
     be_str_weak(check_label),
     &be_const_str_solidified,
-    ( &(const binstruction[16]) {  /* code */
+    ( &(const binstruction[25]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x4C080000,  //  0001  LDNIL	R2
       0x1C040202,  //  0002  EQ	R1	R1	R2
-      0x7806000A,  //  0003  JMPF	R1	#000F
-      0xB8060200,  //  0004  GETNGBL	R1	K1
-      0x8C040302,  //  0005  GETMET	R1	R1	K2
-      0x8C0C0103,  //  0006  GETMET	R3	R0	K3
-      0x7C0C0200,  //  0007  CALL	R3	1
-      0x7C040400,  //  0008  CALL	R1	2
-      0x90020001,  //  0009  SETMBR	R0	K0	R1
-      0x88040100,  //  000A  GETMBR	R1	R0	K0
-      0x8C040304,  //  000B  GETMET	R1	R1	K4
-      0xB80E0200,  //  000C  GETNGBL	R3	K1
-      0x880C0705,  //  000D  GETMBR	R3	R3	K5
-      0x7C040400,  //  000E  CALL	R1	2
-      0x80000000,  //  000F  RET	0
+      0x78060013,  //  0003  JMPF	R1	#0018
+      0xA4060200,  //  0004  IMPORT	R1	K1
+      0x8C080302,  //  0005  GETMET	R2	R1	K2
+      0x88100103,  //  0006  GETMBR	R4	R0	K3
+      0x58140004,  //  0007  LDCONST	R5	K4
+      0x7C080600,  //  0008  CALL	R2	3
+      0x780A0002,  //  0009  JMPF	R2	#000D
+      0x88080103,  //  000A  GETMBR	R2	R0	K3
+      0x90020002,  //  000B  SETMBR	R0	K0	R2
+      0x7002000A,  //  000C  JMP		#0018
+      0xB80A0A00,  //  000D  GETNGBL	R2	K5
+      0x8C080506,  //  000E  GETMET	R2	R2	K6
+      0x8C100107,  //  000F  GETMET	R4	R0	K7
+      0x7C100200,  //  0010  CALL	R4	1
+      0x7C080400,  //  0011  CALL	R2	2
+      0x90020002,  //  0012  SETMBR	R0	K0	R2
+      0x88080100,  //  0013  GETMBR	R2	R0	K0
+      0x8C080508,  //  0014  GETMET	R2	R2	K8
+      0xB8120A00,  //  0015  GETNGBL	R4	K5
+      0x88100909,  //  0016  GETMBR	R4	R4	K9
+      0x7C080400,  //  0017  CALL	R2	2
+      0x80000000,  //  0018  RET	0
     })
   )
 );
@@ -5005,15 +5021,116 @@ void be_load_lvh_spinner_class(bvm *vm) {
 extern const bclass be_class_lvh_line;
 
 /********************************************************************
+** Solidified function: set_points
+********************************************************************/
+be_local_closure(lvh_line_set_points,   /* name */
+  be_nested_proto(
+    9,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[14]) {     /* constants */
+    /* K0   */  be_const_int(2),
+    /* K1   */  be_nested_str_weak(lv),
+    /* K2   */  be_nested_str_weak(point),
+    /* K3   */  be_nested_str_weak(x),
+    /* K4   */  be_const_int(0),
+    /* K5   */  be_nested_str_weak(y),
+    /* K6   */  be_const_int(1),
+    /* K7   */  be_nested_str_weak(push),
+    /* K8   */  be_nested_str_weak(stop_iteration),
+    /* K9   */  be_nested_str_weak(point_arr),
+    /* K10  */  be_nested_str_weak(_lv_points),
+    /* K11  */  be_nested_str_weak(_lv_obj),
+    /* K12  */  be_nested_str_weak(set_points),
+    /* K13  */  be_nested_str_weak(HSP_X3A_X20_X27line_X27_X20wrong_X20format_X20for_X20_X27points_X27_X20_X25s),
+    }),
+    be_str_weak(set_points),
+    &be_const_str_solidified,
+    ( &(const binstruction[61]) {  /* code */
+      0x6008000F,  //  0000  GETGBL	R2	G15
+      0x5C0C0200,  //  0001  MOVE	R3	R1
+      0x60100012,  //  0002  GETGBL	R4	G18
+      0x7C080400,  //  0003  CALL	R2	2
+      0x780A0030,  //  0004  JMPF	R2	#0036
+      0x60080012,  //  0005  GETGBL	R2	G18
+      0x7C080000,  //  0006  CALL	R2	0
+      0x600C0010,  //  0007  GETGBL	R3	G16
+      0x5C100200,  //  0008  MOVE	R4	R1
+      0x7C0C0200,  //  0009  CALL	R3	1
+      0xA802001A,  //  000A  EXBLK	0	#0026
+      0x5C100600,  //  000B  MOVE	R4	R3
+      0x7C100000,  //  000C  CALL	R4	0
+      0x6014000F,  //  000D  GETGBL	R5	G15
+      0x5C180800,  //  000E  MOVE	R6	R4
+      0x601C0012,  //  000F  GETGBL	R7	G18
+      0x7C140400,  //  0010  CALL	R5	2
+      0x78160012,  //  0011  JMPF	R5	#0025
+      0x6014000C,  //  0012  GETGBL	R5	G12
+      0x5C180800,  //  0013  MOVE	R6	R4
+      0x7C140200,  //  0014  CALL	R5	1
+      0x1C140B00,  //  0015  EQ	R5	R5	K0
+      0x7816000D,  //  0016  JMPF	R5	#0025
+      0xB8160200,  //  0017  GETNGBL	R5	K1
+      0x8C140B02,  //  0018  GETMET	R5	R5	K2
+      0x7C140200,  //  0019  CALL	R5	1
+      0x60180009,  //  001A  GETGBL	R6	G9
+      0x941C0904,  //  001B  GETIDX	R7	R4	K4
+      0x7C180200,  //  001C  CALL	R6	1
+      0x90160606,  //  001D  SETMBR	R5	K3	R6
+      0x60180009,  //  001E  GETGBL	R6	G9
+      0x941C0906,  //  001F  GETIDX	R7	R4	K6
+      0x7C180200,  //  0020  CALL	R6	1
+      0x90160A06,  //  0021  SETMBR	R5	K5	R6
+      0x8C180507,  //  0022  GETMET	R6	R2	K7
+      0x5C200A00,  //  0023  MOVE	R8	R5
+      0x7C180400,  //  0024  CALL	R6	2
+      0x7001FFE4,  //  0025  JMP		#000B
+      0x580C0008,  //  0026  LDCONST	R3	K8
+      0xAC0C0200,  //  0027  CATCH	R3	1	0
+      0xB0080000,  //  0028  RAISE	2	R0	R0
+      0xB80E0200,  //  0029  GETNGBL	R3	K1
+      0x8C0C0709,  //  002A  GETMET	R3	R3	K9
+      0x5C140400,  //  002B  MOVE	R5	R2
+      0x7C0C0400,  //  002C  CALL	R3	2
+      0x90021403,  //  002D  SETMBR	R0	K10	R3
+      0x8810010B,  //  002E  GETMBR	R4	R0	K11
+      0x8C10090C,  //  002F  GETMET	R4	R4	K12
+      0x5C180600,  //  0030  MOVE	R6	R3
+      0x601C000C,  //  0031  GETGBL	R7	G12
+      0x5C200400,  //  0032  MOVE	R8	R2
+      0x7C1C0200,  //  0033  CALL	R7	1
+      0x7C100600,  //  0034  CALL	R4	3
+      0x70020005,  //  0035  JMP		#003C
+      0x60080001,  //  0036  GETGBL	R2	G1
+      0x600C0018,  //  0037  GETGBL	R3	G24
+      0x5810000D,  //  0038  LDCONST	R4	K13
+      0x5C140200,  //  0039  MOVE	R5	R1
+      0x7C0C0400,  //  003A  CALL	R3	2
+      0x7C080200,  //  003B  CALL	R2	1
+      0x80000000,  //  003C  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified class: lvh_line
 ********************************************************************/
 extern const bclass be_class_lvh_obj;
 be_local_class(lvh_line,
-    0,
+    1,
     &be_class_lvh_obj,
-    be_nested_map(1,
+    be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_weak(_lv_points, -1), be_const_var(0) },
         { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_line) },
+        { be_const_key_weak(set_points, -1), be_const_closure(lvh_line_set_points_closure) },
     })),
     be_str_weak(lvh_line)
 );
@@ -5452,15 +5569,97 @@ void be_load_lvh_roller_class(bvm *vm) {
 extern const bclass be_class_lvh_btnmatrix;
 
 /********************************************************************
+** Solidified function: set_options
+********************************************************************/
+be_local_closure(lvh_btnmatrix_set_options,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 7]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_options),
+    /* K1   */  be_nested_str_weak(_options_arr),
+    /* K2   */  be_nested_str_weak(lv),
+    /* K3   */  be_nested_str_weak(str_arr),
+    /* K4   */  be_nested_str_weak(_lv_obj),
+    /* K5   */  be_nested_str_weak(set_map),
+    /* K6   */  be_nested_str_weak(HTP_X3A_X20_X27btnmatrix_X27_X20needs_X20_X27options_X27_X20to_X20be_X20a_X20list_X20of_X20strings),
+    }),
+    be_str_weak(set_options),
+    &be_const_str_solidified,
+    ( &(const binstruction[20]) {  /* code */
+      0x6008000F,  //  0000  GETGBL	R2	G15
+      0x5C0C0200,  //  0001  MOVE	R3	R1
+      0x60100012,  //  0002  GETGBL	R4	G18
+      0x7C080400,  //  0003  CALL	R2	2
+      0x780A000A,  //  0004  JMPF	R2	#0010
+      0x90020001,  //  0005  SETMBR	R0	K0	R1
+      0xB80A0400,  //  0006  GETNGBL	R2	K2
+      0x8C080503,  //  0007  GETMET	R2	R2	K3
+      0x5C100200,  //  0008  MOVE	R4	R1
+      0x7C080400,  //  0009  CALL	R2	2
+      0x90020202,  //  000A  SETMBR	R0	K1	R2
+      0x88080104,  //  000B  GETMBR	R2	R0	K4
+      0x8C080505,  //  000C  GETMET	R2	R2	K5
+      0x88100101,  //  000D  GETMBR	R4	R0	K1
+      0x7C080400,  //  000E  CALL	R2	2
+      0x70020002,  //  000F  JMP		#0013
+      0x60080001,  //  0010  GETGBL	R2	G1
+      0x580C0006,  //  0011  LDCONST	R3	K6
+      0x7C080200,  //  0012  CALL	R2	1
+      0x80000000,  //  0013  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_options
+********************************************************************/
+be_local_closure(lvh_btnmatrix_get_options,   /* name */
+  be_nested_proto(
+    2,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 1]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_options),
+    }),
+    be_str_weak(get_options),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 2]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x80040200,  //  0001  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified class: lvh_btnmatrix
 ********************************************************************/
 extern const bclass be_class_lvh_obj;
 be_local_class(lvh_btnmatrix,
-    0,
+    2,
     &be_class_lvh_obj,
-    be_nested_map(1,
+    be_nested_map(5,
     ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_weak(_options, 1), be_const_var(0) },
+        { be_const_key_weak(set_options, -1), be_const_closure(lvh_btnmatrix_set_options_closure) },
         { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_buttonmatrix) },
+        { be_const_key_weak(_options_arr, -1), be_const_var(1) },
+        { be_const_key_weak(get_options, -1), be_const_closure(lvh_btnmatrix_get_options_closure) },
     })),
     be_str_weak(lvh_btnmatrix)
 );
@@ -5473,6 +5672,73 @@ void be_load_lvh_btnmatrix_class(bvm *vm) {
 }
 
 extern const bclass be_class_lvh_bar;
+
+/********************************************************************
+** Solidified function: set_max
+********************************************************************/
+be_local_closure(lvh_bar_set_max,   /* name */
+  be_nested_proto(
+    7,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_range),
+    /* K2   */  be_nested_str_weak(get_min_value),
+    }),
+    be_str_weak(set_max),
+    &be_const_str_solidified,
+    ( &(const binstruction[10]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x88100100,  //  0002  GETMBR	R4	R0	K0
+      0x8C100902,  //  0003  GETMET	R4	R4	K2
+      0x7C100200,  //  0004  CALL	R4	1
+      0x60140009,  //  0005  GETGBL	R5	G9
+      0x5C180200,  //  0006  MOVE	R6	R1
+      0x7C140200,  //  0007  CALL	R5	1
+      0x7C080600,  //  0008  CALL	R2	3
+      0x80000000,  //  0009  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_min
+********************************************************************/
+be_local_closure(lvh_bar_get_min,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(get_min_value),
+    }),
+    be_str_weak(get_min),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 4]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x7C040200,  //  0002  CALL	R1	1
+      0x80040200,  //  0003  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
 
 /********************************************************************
 ** Solidified function: set_val
@@ -5510,16 +5776,87 @@ be_local_closure(lvh_bar_set_val,   /* name */
 
 
 /********************************************************************
+** Solidified function: get_max
+********************************************************************/
+be_local_closure(lvh_bar_get_max,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(get_max_value),
+    }),
+    be_str_weak(get_max),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 4]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x7C040200,  //  0002  CALL	R1	1
+      0x80040200,  //  0003  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_min
+********************************************************************/
+be_local_closure(lvh_bar_set_min,   /* name */
+  be_nested_proto(
+    7,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_range),
+    /* K2   */  be_nested_str_weak(get_max_value),
+    }),
+    be_str_weak(set_min),
+    &be_const_str_solidified,
+    ( &(const binstruction[10]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x60100009,  //  0002  GETGBL	R4	G9
+      0x5C140200,  //  0003  MOVE	R5	R1
+      0x7C100200,  //  0004  CALL	R4	1
+      0x88140100,  //  0005  GETMBR	R5	R0	K0
+      0x8C140B02,  //  0006  GETMET	R5	R5	K2
+      0x7C140200,  //  0007  CALL	R5	1
+      0x7C080600,  //  0008  CALL	R2	3
+      0x80000000,  //  0009  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified class: lvh_bar
 ********************************************************************/
 extern const bclass be_class_lvh_obj;
 be_local_class(lvh_bar,
     0,
     &be_class_lvh_obj,
-    be_nested_map(2,
+    be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_weak(set_min, 5), be_const_closure(lvh_bar_set_min_closure) },
+        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_bar) },
+        { be_const_key_weak(get_min, -1), be_const_closure(lvh_bar_get_min_closure) },
         { be_const_key_weak(set_val, -1), be_const_closure(lvh_bar_set_val_closure) },
-        { be_const_key_weak(_lv_class, 0), be_const_class(be_class_lv_bar) },
+        { be_const_key_weak(set_max, 0), be_const_closure(lvh_bar_set_max_closure) },
+        { be_const_key_weak(get_max, -1), be_const_closure(lvh_bar_get_max_closure) },
     })),
     be_str_weak(lvh_bar)
 );
@@ -6698,12 +7035,12 @@ void be_load_lvh_dropdown_class(bvm *vm) {
 extern const bclass be_class_lvh_qrcode;
 
 /********************************************************************
-** Solidified function: set_dark_color
+** Solidified function: _update
 ********************************************************************/
-be_local_closure(lvh_qrcode_set_dark_color,   /* name */
+be_local_closure(lvh_qrcode__update,   /* name */
   be_nested_proto(
     7,                          /* nstack */
-    2,                          /* argc */
+    1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -6711,20 +7048,25 @@ be_local_closure(lvh_qrcode_set_dark_color,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_weak(_lv_obj),
-    /* K1   */  be_nested_str_weak(set_dark_color),
-    /* K2   */  be_nested_str_weak(parse_color),
+    /* K0   */  be_nested_str_weak(qr_text),
+    /* K1   */  be_nested_str_weak(_lv_obj),
+    /* K2   */  be_nested_str_weak(update),
     }),
-    be_str_weak(set_dark_color),
+    be_str_weak(_update),
     &be_const_str_solidified,
-    ( &(const binstruction[ 7]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x8C100102,  //  0002  GETMET	R4	R0	K2
-      0x5C180200,  //  0003  MOVE	R6	R1
-      0x7C100400,  //  0004  CALL	R4	2
-      0x7C080400,  //  0005  CALL	R2	2
-      0x80000000,  //  0006  RET	0
+    ( &(const binstruction[12]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x4C080000,  //  0001  LDNIL	R2
+      0x20080202,  //  0002  NE	R2	R1	R2
+      0x780A0006,  //  0003  JMPF	R2	#000B
+      0x88080101,  //  0004  GETMBR	R2	R0	K1
+      0x8C080502,  //  0005  GETMET	R2	R2	K2
+      0x5C100200,  //  0006  MOVE	R4	R1
+      0x6014000C,  //  0007  GETGBL	R5	G12
+      0x5C180200,  //  0008  MOVE	R6	R1
+      0x7C140200,  //  0009  CALL	R5	1
+      0x7C080600,  //  000A  CALL	R2	3
+      0x80000000,  //  000B  RET	0
     })
   )
 );
@@ -6732,64 +7074,23 @@ be_local_closure(lvh_qrcode_set_dark_color,   /* name */
 
 
 /********************************************************************
-** Solidified function: set_qr_size
+** Solidified function: get_qr_size
 ********************************************************************/
-be_local_closure(lvh_qrcode_set_qr_size,   /* name */
+be_local_closure(lvh_qrcode_get_qr_size,   /* name */
   be_nested_proto(
-    5,                          /* nstack */
-    2,                          /* argc */
+    1,                          /* nstack */
+    1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(_lv_obj),
-    /* K1   */  be_nested_str_weak(set_size),
-    }),
-    be_str_weak(set_qr_size),
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    be_str_weak(get_qr_size),
     &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x5C100200,  //  0002  MOVE	R4	R1
-      0x7C080400,  //  0003  CALL	R2	2
-      0x80000000,  //  0004  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: set_qr_light_color
-********************************************************************/
-be_local_closure(lvh_qrcode_set_qr_light_color,   /* name */
-  be_nested_proto(
-    7,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_weak(_lv_obj),
-    /* K1   */  be_nested_str_weak(set_light_color),
-    /* K2   */  be_nested_str_weak(parse_color),
-    }),
-    be_str_weak(set_qr_light_color),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 7]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x8C100102,  //  0002  GETMET	R4	R0	K2
-      0x5C180200,  //  0003  MOVE	R6	R1
-      0x7C100400,  //  0004  CALL	R4	2
-      0x7C080400,  //  0005  CALL	R2	2
-      0x80000000,  //  0006  RET	0
+    ( &(const binstruction[ 1]) {  /* code */
+      0x80000000,  //  0000  RET	0
     })
   )
 );
@@ -6809,21 +7110,24 @@ be_local_closure(lvh_qrcode_set_light_color,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
+    ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
     /* K1   */  be_nested_str_weak(set_light_color),
     /* K2   */  be_nested_str_weak(parse_color),
+    /* K3   */  be_nested_str_weak(_update),
     }),
     be_str_weak(set_light_color),
     &be_const_str_solidified,
-    ( &(const binstruction[ 7]) {  /* code */
+    ( &(const binstruction[ 9]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
       0x8C100102,  //  0002  GETMET	R4	R0	K2
       0x5C180200,  //  0003  MOVE	R6	R1
       0x7C100400,  //  0004  CALL	R4	2
       0x7C080400,  //  0005  CALL	R2	2
-      0x80000000,  //  0006  RET	0
+      0x8C080103,  //  0006  GETMET	R2	R0	K3
+      0x7C080200,  //  0007  CALL	R2	1
+      0x80000000,  //  0008  RET	0
     })
   )
 );
@@ -6831,9 +7135,9 @@ be_local_closure(lvh_qrcode_set_light_color,   /* name */
 
 
 /********************************************************************
-** Solidified function: set_qr_text
+** Solidified function: set_dark_color
 ********************************************************************/
-be_local_closure(lvh_qrcode_set_qr_text,   /* name */
+be_local_closure(lvh_qrcode_set_dark_color,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -6843,25 +7147,180 @@ be_local_closure(lvh_qrcode_set_qr_text,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
+    ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
-    /* K1   */  be_nested_str_weak(update),
+    /* K1   */  be_nested_str_weak(set_dark_color),
+    /* K2   */  be_nested_str_weak(parse_color),
+    /* K3   */  be_nested_str_weak(_update),
     }),
-    be_str_weak(set_qr_text),
+    be_str_weak(set_dark_color),
     &be_const_str_solidified,
-    ( &(const binstruction[12]) {  /* code */
-      0x60080008,  //  0000  GETGBL	R2	G8
-      0x5C0C0200,  //  0001  MOVE	R3	R1
-      0x7C080200,  //  0002  CALL	R2	1
-      0x5C040400,  //  0003  MOVE	R1	R2
-      0x88080100,  //  0004  GETMBR	R2	R0	K0
-      0x8C080501,  //  0005  GETMET	R2	R2	K1
-      0x5C100200,  //  0006  MOVE	R4	R1
-      0x6014000C,  //  0007  GETGBL	R5	G12
-      0x5C180200,  //  0008  MOVE	R6	R1
-      0x7C140200,  //  0009  CALL	R5	1
-      0x7C080600,  //  000A  CALL	R2	3
-      0x80000000,  //  000B  RET	0
+    ( &(const binstruction[ 9]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x8C100102,  //  0002  GETMET	R4	R0	K2
+      0x5C180200,  //  0003  MOVE	R6	R1
+      0x7C100400,  //  0004  CALL	R4	2
+      0x7C080400,  //  0005  CALL	R2	2
+      0x8C080103,  //  0006  GETMET	R2	R0	K3
+      0x7C080200,  //  0007  CALL	R2	1
+      0x80000000,  //  0008  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_size
+********************************************************************/
+be_local_closure(lvh_qrcode_get_size,   /* name */
+  be_nested_proto(
+    1,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    be_str_weak(get_size),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 1]) {  /* code */
+      0x80000000,  //  0000  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_qr_text
+********************************************************************/
+be_local_closure(lvh_qrcode_get_qr_text,   /* name */
+  be_nested_proto(
+    1,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    0,                          /* has constants */
+    NULL,                       /* no const */
+    be_str_weak(get_qr_text),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 1]) {  /* code */
+      0x80000000,  //  0000  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_qr_size
+********************************************************************/
+be_local_closure(lvh_qrcode_set_qr_size,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_size),
+    /* K2   */  be_nested_str_weak(_update),
+    }),
+    be_str_weak(set_qr_size),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 7]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x5C100200,  //  0002  MOVE	R4	R1
+      0x7C080400,  //  0003  CALL	R2	2
+      0x8C080102,  //  0004  GETMET	R2	R0	K2
+      0x7C080200,  //  0005  CALL	R2	1
+      0x80000000,  //  0006  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_qr_dark_color
+********************************************************************/
+be_local_closure(lvh_qrcode_set_qr_dark_color,   /* name */
+  be_nested_proto(
+    7,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_dark_color),
+    /* K2   */  be_nested_str_weak(parse_color),
+    /* K3   */  be_nested_str_weak(_update),
+    }),
+    be_str_weak(set_qr_dark_color),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 9]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x8C100102,  //  0002  GETMET	R4	R0	K2
+      0x5C180200,  //  0003  MOVE	R6	R1
+      0x7C100400,  //  0004  CALL	R4	2
+      0x7C080400,  //  0005  CALL	R2	2
+      0x8C080103,  //  0006  GETMET	R2	R0	K3
+      0x7C080200,  //  0007  CALL	R2	1
+      0x80000000,  //  0008  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_qr_light_color
+********************************************************************/
+be_local_closure(lvh_qrcode_set_qr_light_color,   /* name */
+  be_nested_proto(
+    7,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_lv_obj),
+    /* K1   */  be_nested_str_weak(set_light_color),
+    /* K2   */  be_nested_str_weak(parse_color),
+    /* K3   */  be_nested_str_weak(_update),
+    }),
+    be_str_weak(set_qr_light_color),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 9]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x8C100102,  //  0002  GETMET	R4	R0	K2
+      0x5C180200,  //  0003  MOVE	R6	R1
+      0x7C100400,  //  0004  CALL	R4	2
+      0x7C080400,  //  0005  CALL	R2	2
+      0x8C080103,  //  0006  GETMET	R2	R0	K3
+      0x7C080200,  //  0007  CALL	R2	1
+      0x80000000,  //  0008  RET	0
     })
   )
 );
@@ -6905,90 +7364,21 @@ be_local_closure(lvh_qrcode_set_size,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
+    ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
     /* K1   */  be_nested_str_weak(set_size),
+    /* K2   */  be_nested_str_weak(_update),
     }),
     be_str_weak(set_size),
     &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
+    ( &(const binstruction[ 7]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
       0x5C100200,  //  0002  MOVE	R4	R1
       0x7C080400,  //  0003  CALL	R2	2
-      0x80000000,  //  0004  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: get_size
-********************************************************************/
-be_local_closure(lvh_qrcode_get_size,   /* name */
-  be_nested_proto(
-    1,                          /* nstack */
-    1,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
-    be_str_weak(get_size),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 1]) {  /* code */
-      0x80000000,  //  0000  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: get_light_color
-********************************************************************/
-be_local_closure(lvh_qrcode_get_light_color,   /* name */
-  be_nested_proto(
-    1,                          /* nstack */
-    1,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
-    be_str_weak(get_light_color),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 1]) {  /* code */
-      0x80000000,  //  0000  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: get_qr_text
-********************************************************************/
-be_local_closure(lvh_qrcode_get_qr_text,   /* name */
-  be_nested_proto(
-    1,                          /* nstack */
-    1,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
-    be_str_weak(get_qr_text),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 1]) {  /* code */
-      0x80000000,  //  0000  RET	0
+      0x8C080102,  //  0004  GETMET	R2	R0	K2
+      0x7C080200,  //  0005  CALL	R2	1
+      0x80000000,  //  0006  RET	0
     })
   )
 );
@@ -7044,11 +7434,11 @@ be_local_closure(lvh_qrcode_get_qr_light_color,   /* name */
 
 
 /********************************************************************
-** Solidified function: set_qr_dark_color
+** Solidified function: set_qr_text
 ********************************************************************/
-be_local_closure(lvh_qrcode_set_qr_dark_color,   /* name */
+be_local_closure(lvh_qrcode_set_qr_text,   /* name */
   be_nested_proto(
-    7,                          /* nstack */
+    4,                          /* nstack */
     2,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -7056,20 +7446,19 @@ be_local_closure(lvh_qrcode_set_qr_dark_color,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_weak(_lv_obj),
-    /* K1   */  be_nested_str_weak(set_dark_color),
-    /* K2   */  be_nested_str_weak(parse_color),
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(qr_text),
+    /* K1   */  be_nested_str_weak(_update),
     }),
-    be_str_weak(set_qr_dark_color),
+    be_str_weak(set_qr_text),
     &be_const_str_solidified,
     ( &(const binstruction[ 7]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x8C100102,  //  0002  GETMET	R4	R0	K2
-      0x5C180200,  //  0003  MOVE	R6	R1
-      0x7C100400,  //  0004  CALL	R4	2
-      0x7C080400,  //  0005  CALL	R2	2
+      0x60080008,  //  0000  GETGBL	R2	G8
+      0x5C0C0200,  //  0001  MOVE	R3	R1
+      0x7C080200,  //  0002  CALL	R2	1
+      0x90020002,  //  0003  SETMBR	R0	K0	R2
+      0x8C080101,  //  0004  GETMET	R2	R0	K1
+      0x7C080200,  //  0005  CALL	R2	1
       0x80000000,  //  0006  RET	0
     })
   )
@@ -7078,9 +7467,9 @@ be_local_closure(lvh_qrcode_set_qr_dark_color,   /* name */
 
 
 /********************************************************************
-** Solidified function: get_qr_size
+** Solidified function: get_light_color
 ********************************************************************/
-be_local_closure(lvh_qrcode_get_qr_size,   /* name */
+be_local_closure(lvh_qrcode_get_light_color,   /* name */
   be_nested_proto(
     1,                          /* nstack */
     1,                          /* argc */
@@ -7091,7 +7480,7 @@ be_local_closure(lvh_qrcode_get_qr_size,   /* name */
     NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
-    be_str_weak(get_qr_size),
+    be_str_weak(get_light_color),
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
       0x80000000,  //  0000  RET	0
@@ -7106,25 +7495,27 @@ be_local_closure(lvh_qrcode_get_qr_size,   /* name */
 ********************************************************************/
 extern const bclass be_class_lvh_obj;
 be_local_class(lvh_qrcode,
-    0,
+    1,
     &be_class_lvh_obj,
-    be_nested_map(15,
+    be_nested_map(17,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(set_dark_color, 6), be_const_closure(lvh_qrcode_set_dark_color_closure) },
+        { be_const_key_weak(get_qr_text, -1), be_const_closure(lvh_qrcode_get_qr_text_closure) },
+        { be_const_key_weak(get_qr_size, -1), be_const_closure(lvh_qrcode_get_qr_size_closure) },
         { be_const_key_weak(set_qr_size, -1), be_const_closure(lvh_qrcode_set_qr_size_closure) },
-        { be_const_key_weak(set_qr_light_color, 10), be_const_closure(lvh_qrcode_set_qr_light_color_closure) },
-        { be_const_key_weak(set_light_color, 9), be_const_closure(lvh_qrcode_set_light_color_closure) },
-        { be_const_key_weak(get_qr_size, 11), be_const_closure(lvh_qrcode_get_qr_size_closure) },
+        { be_const_key_weak(get_qr_light_color, -1), be_const_closure(lvh_qrcode_get_qr_light_color_closure) },
+        { be_const_key_weak(get_size, 11), be_const_closure(lvh_qrcode_get_size_closure) },
+        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_qrcode) },
+        { be_const_key_weak(set_light_color, 0), be_const_closure(lvh_qrcode_set_light_color_closure) },
+        { be_const_key_weak(set_dark_color, 2), be_const_closure(lvh_qrcode_set_dark_color_closure) },
+        { be_const_key_weak(qr_text, 3), be_const_var(0) },
+        { be_const_key_weak(set_qr_dark_color, -1), be_const_closure(lvh_qrcode_set_qr_dark_color_closure) },
+        { be_const_key_weak(get_qr_dark_color, 14), be_const_closure(lvh_qrcode_get_qr_dark_color_closure) },
         { be_const_key_weak(get_dark_color, -1), be_const_closure(lvh_qrcode_get_dark_color_closure) },
         { be_const_key_weak(set_size, -1), be_const_closure(lvh_qrcode_set_size_closure) },
-        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_qrcode) },
-        { be_const_key_weak(get_size, -1), be_const_closure(lvh_qrcode_get_size_closure) },
-        { be_const_key_weak(get_qr_dark_color, 5), be_const_closure(lvh_qrcode_get_qr_dark_color_closure) },
-        { be_const_key_weak(get_qr_text, -1), be_const_closure(lvh_qrcode_get_qr_text_closure) },
+        { be_const_key_weak(_update, 10), be_const_closure(lvh_qrcode__update_closure) },
+        { be_const_key_weak(set_qr_light_color, -1), be_const_closure(lvh_qrcode_set_qr_light_color_closure) },
+        { be_const_key_weak(set_qr_text, -1), be_const_closure(lvh_qrcode_set_qr_text_closure) },
         { be_const_key_weak(get_light_color, -1), be_const_closure(lvh_qrcode_get_light_color_closure) },
-        { be_const_key_weak(get_qr_light_color, -1), be_const_closure(lvh_qrcode_get_qr_light_color_closure) },
-        { be_const_key_weak(set_qr_dark_color, -1), be_const_closure(lvh_qrcode_set_qr_dark_color_closure) },
-        { be_const_key_weak(set_qr_text, 4), be_const_closure(lvh_qrcode_set_qr_text_closure) },
     })),
     be_str_weak(lvh_qrcode)
 );

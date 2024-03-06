@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Berry bug when parsing ternary operator (#20839)
+- HASPmota fix widgets line, btnmatrix, qrcode, bar, checkbox
 
 ### Removed
 
