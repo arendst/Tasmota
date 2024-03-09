@@ -429,6 +429,7 @@
                                   LV_FONT_DECLARE(robotocondensed_regular_40_latin1) \
                                   LV_FONT_DECLARE(robotocondensed_regular_44_latin1) \
                                   LV_FONT_DECLARE(robotocondensed_regular_48_latin1) \
+                                  LV_FONT_DECLARE(lv_font_icons_10) \
                                   LV_FONT_DECLARE(lv_font_icons_12) \
                                   LV_FONT_DECLARE(lv_font_icons_14) \
                                   LV_FONT_DECLARE(lv_font_icons_16) \
@@ -441,6 +442,7 @@
                                 //   LV_FONT_DECLARE(montserrat_tasmota_20) \
                                 //   LV_FONT_DECLARE(typicons24) \
 
+#define FONT_ICONS_10 1
 #define FONT_ICONS_12 1
 #define FONT_ICONS_14 0
 #define FONT_ICONS_16 0
