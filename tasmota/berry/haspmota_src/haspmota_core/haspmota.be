@@ -146,6 +146,7 @@ class lvh_root
   #====================================================================
   # Rule engine to map value and text to rules
   # hence enabling auto-updates ob objects
+  var _val                                  # last known value, useful for graceful initialization
   var _val_rule                             # rule pattern to map the `val` attribute
   var _val_rule_formula                     # Berry fragment to transform the value grabbed from rule
   var _val_rule_function                    # compiled function
@@ -314,6 +315,17 @@ class lvh_root
       self._lv_obj = obj
     end
     self.post_init()
+  end
+
+  #====================================================================
+  # called once all attributes have been parsed
+  # and gives an opportunity to clean up or refresh
+  #====================================================================
+  def post_config()
+    # set again value, because the first time the range might not have been valid
+    if (self._val != nil)
+      self.set_val(self._val)
+    end
   end
 
   #####################################################################
@@ -962,6 +974,7 @@ class lvh_obj : lvh_root
   end
 
   def set_val(t)
+    self._val = t
     self._lv_obj.set_value(t)
   end
   def get_val()
@@ -1153,6 +1166,7 @@ end
 class lvh_arc : lvh_obj
   static var _lv_class = lv.arc
   static var _lv_part2_selector = lv.PART_KNOB
+  var _label_angle                  # nil if none
 
   # line_width converts to arc_width
   def set_line_width(t, style_modifier)
@@ -1170,9 +1184,11 @@ class lvh_arc : lvh_obj
 
   def set_min(t)
     self._lv_obj.set_range(int(t), self.get_max())
+    self.refresh_label_to_angle()
   end
   def set_max(t)
     self._lv_obj.set_range(self.get_min(), int(t))
+    self.refresh_label_to_angle()
   end
   def get_min()
     return self._lv_obj.get_min_value()
@@ -1193,6 +1209,34 @@ class lvh_arc : lvh_obj
   def get_type()
     return self._lv_obj.get_mode()
   end
+  # force refresh after set_val
+  def set_val(t)
+    super(self).set_val(t)
+    self.refresh_label_to_angle()
+  end
+  # force refresh after set_text
+  def set_text(t)
+    super(self).set_text(t)
+    self.refresh_label_to_angle()
+  end
+  #====================================================================
+  # `label_to_angle`
+  # ability to turn and offset the label.
+  # value is the offset in pixels to move the label
+  def set_label_to_angle(t)
+    self._label_angle = int(t)
+    self.refresh_label_to_angle()
+  end
+  def refresh_label_to_angle()
+    if (self._label_angle != nil && self._lv_label != nil)
+      self._lv_obj.rotate_obj_to_angle(self._lv_label, self._label_angle)
+    end
+  end
+  # update after parsing
+  def post_config()
+    super(self).post_config()   # not needed yet
+    self.refresh_label_to_angle()
+  end
 end
 
 #====================================================================
@@ -1203,6 +1247,7 @@ class lvh_switch : lvh_obj
   static var _lv_part2_selector = lv.PART_KNOB
   # map val to toggle
   def set_val(t)
+    self._val = t
     return self.set_toggle(t)
   end
   def get_val()
@@ -1241,6 +1286,8 @@ end
 #====================================================================
 class lvh_img : lvh_obj
   static var _lv_class = lv.image
+  var _raw                        # used to store raw image in RAM
+  var _imd_dsc
 
   def set_auto_size(v)
     if v
@@ -1265,6 +1312,23 @@ class lvh_img : lvh_obj
     else
       self._lv_obj.set_src(t)
     end
+  end
+  #- ------------------------------------------------------------#
+  # `raw` virtual setter
+  # Decode base64
+  #- ------------------------------------------------------------#
+  def set_raw(t)
+    self._raw = bytes().fromb64(t)
+    var img_dsc = lv.lv_image_dsc()
+    
+    img_dsc.header_cf = lv.COLOR_FORMAT_RAW
+    #img_dsc.header_w = 0
+    #img_dsc.header_h = 0
+    img_dsc.data_size = size(self._raw)
+    img_dsc.data = self._raw._buffer()
+    self._imd_dsc = img_dsc
+
+    self._lv_obj.set_src(img_dsc)
   end
 end
 
@@ -1308,6 +1372,7 @@ class lvh_slider : lvh_obj
   static var _lv_class = lv.slider
 
   def set_val(t)
+    self._val = t
     self._lv_obj.set_value(t, 0)    # add second parameter - no animation
   end
   def set_min(t)
@@ -1331,6 +1396,7 @@ class lvh_roller : lvh_obj
   static var _lv_class = lv.roller
 
   def set_val(t)
+    self._val = t
     self._lv_obj.set_selected(t, 0)    # add second parameter - no animation
   end
   def get_val()
@@ -1364,6 +1430,7 @@ class lvh_led : lvh_obj
 
   # `val` is a synonym for `brightness`
   def set_val(t)
+    self._val = t
     self._lv_obj.set_brightness(t)
   end
   def get_val()
@@ -1386,6 +1453,7 @@ class lvh_dropdown : lvh_obj
   static var _dir = [ lv.DIR_BOTTOM, lv.DIR_TOP, lv.DIR_LEFT, lv.DIR_RIGHT ] # 0 = down, 1 = up, 2 = left, 3 = right
 
   def set_val(t)
+    self._val = t
     self._lv_obj.set_selected(t, 0)    # add second parameter - no animation
   end
   def get_val()
@@ -1449,6 +1517,7 @@ class lvh_bar : lvh_obj
   static var _lv_class = lv.bar
   
   def set_val(t)
+    self._val = t
     self._lv_obj.set_value(t, lv.ANIM_OFF)
   end
   def set_min(t)
@@ -1640,6 +1709,7 @@ class lvh_chart : lvh_obj
   end
 
   def set_val(v)
+    self._val = v
     self.add_point(v)
   end
   def set_val2(v)
@@ -2378,6 +2448,9 @@ class HASPmota
       # introspect.set(obj, k, jline[k])
       obj_lvh.(k) = jline[k]
     end
+
+    # finally call 'post_config()' when all attributes are set, which gives an opportunity to clean or refresh
+    obj_lvh.post_config()
   end
 end
 haspmota.HASPmota = HASPmota
