@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - LVGL optimize fonts and add icons (#20880)
+- LVGL improved readability of montserrat-10
 
 ### Fixed
 - Berry bug when parsing ternary operator (#20839)
