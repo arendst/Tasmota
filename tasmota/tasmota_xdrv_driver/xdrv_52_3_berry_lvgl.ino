@@ -284,6 +284,12 @@ extern "C" {
   // icons Font for sizes not covered by montserrat
   // if montserrat is defined, use it, else import icons font
   const lv_font_table_t lv_icons_fonts[] = {
+#ifdef LV_FONT_MONTSERRAT_TASMOTA_10
+    { 10, &lv_font_montserrat_tasmota_10 },
+#elif defined(FONT_ICONS_10)
+    { 10, &lv_font_icons_10 },
+#endif
+
 #ifdef LV_FONT_MONTSERRAT_TASMOTA_12
     { 12, &lv_font_montserrat_tasmota_12 },
 #elif defined(FONT_ICONS_12)
