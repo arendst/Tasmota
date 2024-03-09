@@ -8,18 +8,18 @@ All notable changes to this project will be documented in this file.
 - Berry `path.rename()` (#20840)
 - HASPmota support for spangroup (styled text) (#20852)
 - HASPmota support for led (#20857)
-- HASPmota improve arc and img
+- HASPmota improve arc and img (#20894)
 
 ### Breaking Changed
 - Drop support for old (insecure) fingerprint format (#20842)
-- LVGL remove embedded typicons font
+- LVGL remove embedded typicons font (#20872)
 
 ### Changed
-- LVGL optimize fonts and add icons
+- LVGL optimize fonts and add icons (#20880)
 
 ### Fixed
 - Berry bug when parsing ternary operator (#20839)
-- HASPmota fix widgets line, btnmatrix, qrcode, bar, checkbox
+- HASPmota widgets line, btnmatrix, qrcode, bar, checkbox (#20881)
 
 ### Removed
 

@@ -126,11 +126,13 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - QMC5883l check for overflow and scale reading [#20643](https://github.com/arendst/Tasmota/issues/20643)
 - Berry explicit error log when memory allocation fails [#20807](https://github.com/arendst/Tasmota/issues/20807)
 - Berry `path.rename()` [#20840](https://github.com/arendst/Tasmota/issues/20840)
-- HASPmota `p<x>b<y>.delete` to delete an object [#20735](https://github.com/arendst/Tasmota/issues/20735)
 - LVGL and HASPmota typicons font [#20742](https://github.com/arendst/Tasmota/issues/20742)
+- HASPmota `p<x>b<y>.delete` to delete an object [#20735](https://github.com/arendst/Tasmota/issues/20735)
+- HASPmota improve arc and img [#20894](https://github.com/arendst/Tasmota/issues/20894)
 
 ### Breaking Changed
 - Drop support for old (insecure) fingerprint format [#20842](https://github.com/arendst/Tasmota/issues/20842)
+- LVGL remove embedded typicons font [#20872](https://github.com/arendst/Tasmota/issues/20872)
 
 ### Changed
 - ESP32 Core3 platform update from 2024.01.12 to 2024.02.10 [#20730](https://github.com/arendst/Tasmota/issues/20730)
@@ -139,6 +141,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry class `int64` made immutable [#20727](https://github.com/arendst/Tasmota/issues/20727)
 - Matter reduce memory usage when reading with wildcards [#20809](https://github.com/arendst/Tasmota/issues/20809)
 - LVGL make lv_touch_3_buttons more responsive [#20728](https://github.com/arendst/Tasmota/issues/20728)
+- LVGL optimize fonts and add icons [#20880](https://github.com/arendst/Tasmota/issues/20880)
 - HASPmota fix and improve demo with pixel-perfect fonts [#20734](https://github.com/arendst/Tasmota/issues/20734)
 - HASPmota more attributes [#20744](https://github.com/arendst/Tasmota/issues/20744)
 - HASPmota support for spangroup (styled text) [#20852](https://github.com/arendst/Tasmota/issues/20852)
@@ -150,5 +153,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry Memory leak in `import re` [#20823](https://github.com/arendst/Tasmota/issues/20823)
 - Berry bug when parsing ternary operator [#20839](https://github.com/arendst/Tasmota/issues/20839)
 - HASPmota PSRAM memory leak [#20818](https://github.com/arendst/Tasmota/issues/20818)
+- HASPmota widgets line, btnmatrix, qrcode, bar, checkbox [#20881](https://github.com/arendst/Tasmota/issues/20881)
 
 ### Removed
