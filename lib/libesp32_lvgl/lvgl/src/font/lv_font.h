@@ -172,6 +172,9 @@ LV_FONT_DECLARE(lv_font_montserrat_8)
 #if LV_FONT_MONTSERRAT_10
 LV_FONT_DECLARE(lv_font_montserrat_10)
 #endif
+#if LV_FONT_MONTSERRAT_TASMOTA_10
+LV_FONT_DECLARE(lv_font_montserrat_tasmota_10)
+#endif
 
 #if LV_FONT_MONTSERRAT_12
 LV_FONT_DECLARE(lv_font_montserrat_12)

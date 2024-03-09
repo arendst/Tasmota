@@ -182,6 +182,9 @@ extern "C" {
   #if LV_FONT_MONTSERRAT_10
     { 10, &lv_font_montserrat_10 },
   #endif
+  #if LV_FONT_MONTSERRAT_TASMOTA_10
+    { 10, &lv_font_montserrat_tasmota_10 },
+  #endif
   #if LV_FONT_MONTSERRAT_12
     { 12, &lv_font_montserrat_12 },
   #endif
