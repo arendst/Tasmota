@@ -1226,11 +1226,10 @@ https://rya.nc/tasmota-fingerprint.html"
     #define BE_LV_WIDGET_SLIDER
     #define BE_LV_WIDGET_SWITCH
     #define BE_LV_WIDGET_TABLE
-    #define BE_LV_WIDGET_TEXTAREA
+    // #define BE_LV_WIDGET_TEXTAREA
 
     #define BE_LV_WIDGET_ANIMIMG
     #define BE_LV_WIDGET_CHART
-    #define BE_LV_WIDGET_COLORWHEEL
     #define BE_LV_WIDGET_IMGBTN       // LVGL 8
     #define BE_LV_WIDGET_IMAGEBUTTON  // LVGL 9
     // #define BE_LV_WIDGET_KEYBOARD
@@ -1240,7 +1239,7 @@ https://rya.nc/tasmota-fingerprint.html"
     #define BE_LV_WIDGET_MSGBOX
     #define BE_LV_WIDGET_QRCODE
     #define BE_LV_WIDGET_SCALE
-    #define BE_LV_WIDGET_SPINBOX
+    // #define BE_LV_WIDGET_SPINBOX
     #define BE_LV_WIDGET_SPINNER
     #define BE_LV_WIDGET_SPANGROUP
     #define BE_LV_WIDGET_SPAN
