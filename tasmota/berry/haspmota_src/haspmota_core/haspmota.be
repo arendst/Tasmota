@@ -1804,7 +1804,7 @@ end
 #################################################################################
 class lvh_btn : lvh_obj         static var _lv_class = lv.btn         end
 class lvh_checkbox : lvh_obj    static var _lv_class = lv.checkbox    end
-class lvh_textarea : lvh_obj    static var _lv_class = lv.textarea    end
+# class lvh_textarea : lvh_obj    static var _lv_class = lv.textarea    end
 # special case for scr (which is actually lv_obj)
 class lvh_scr : lvh_obj         static var _lv_class = nil            end    # no class for screen
 
@@ -2004,7 +2004,7 @@ class HASPmota
 	static lvh_arc = lvh_arc
  	# static lvh_linemeter = lvh_linemeter
  	# static lvh_gauge = lvh_gauge
-	static lvh_textarea = lvh_textarea    # additional?
+	# static lvh_textarea = lvh_textarea    # additional?
   static lvh_led = lvh_led
   static lvh_spangroup = lvh_spangroup
   static lvh_span = lvh_span
@@ -2482,7 +2482,7 @@ def solidify_haspmota()
     "page", "obj", "scr",
     "btn", "switch", "checkbox",
     "label", "spinner", "line", "img", "roller", "btnmatrix",
-    "bar", "slider", "arc", "textarea", "led", "dropdown",
+    "bar", "slider", "arc", #- "textarea", -# "led", "dropdown",
     "qrcode", "chart", "spangroup", "span",
     # new internal names
     "button", "image", "buttonmatrix",

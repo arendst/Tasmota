@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 - Drop support for old (insecure) fingerprint format (#20842)
 - LVGL remove embedded typicons font (#20872)
+- LVGL remove `textarea` and `spinbox` from binaries
 
 ### Changed
 - LVGL optimize fonts and add icons (#20880)
