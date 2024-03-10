@@ -6,9 +6,9 @@
 
 #if !RADIOLIB_EXCLUDE_LORAWAN
 
-#if defined(RADIOLIB_EEPROM_UNSUPPORTED)
-  #warning "Persistent storage not supported!"
-#endif
+//#if defined(RADIOLIB_EEPROM_UNSUPPORTED)
+//  #warning "Persistent storage not supported!"
+//#endif
 
 // flag to indicate whether there was some action during Rx mode (timeout or downlink)
 static volatile bool downlinkAction = false;
