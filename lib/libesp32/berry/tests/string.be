@@ -191,7 +191,7 @@ assert(string.startswith("qwerty", "QW", true) == true)
 assert(string.startswith("qwerty", "qz", true) == false)
 assert(string.startswith("qwerty", "qwertyw", true) == false)
 
-# andswith case sensitive
+# endswith case sensitive
 assert(string.endswith("", "") == true)
 assert(string.endswith("qwerty", "ty") == true)
 assert(string.endswith("qwerty", "qwerty") == true)
@@ -201,7 +201,7 @@ assert(string.endswith("qwerty", "TY") == false)
 assert(string.endswith("qwerty", "tr") == false)
 assert(string.endswith("qwerty", "qwertyw") == false)
 
-# andswith case insensitive
+# endswith case insensitive
 assert(string.endswith("", "", true) == true)
 assert(string.endswith("qwerty", "ty", true) == true)
 assert(string.endswith("qwerty", "qwerty", true) == true)
