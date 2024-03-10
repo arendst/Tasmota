@@ -3,8 +3,8 @@
 {"id":11,"obj":"label","x":0,"y":0,"w":320,"pad_right":90,"h":22,"bg_color":"#D00000","bg_opa":255,"radius":0,"border_side":0,"text":"Tasmota","text_font":"montserrat-20"}
 
 {"id":15,"obj":"lv_wifi_arcs","x":291,"y":0,"w":29,"h":20,"radius":0,"border_side":0,"bg_color":"#000000","line_color":"#FFFFFF"}
-{"id":16,"obj":"lv_clock","x":208,"y":3,"w":55,"h":16,"radius":0,"border_side":0}
-{"id":17,"obj":"label","x":268,"y":-2,"w":25,"h":20,"text":"\uE02A","align":0,"text_font":"typicons-24"}
+{"id":16,"obj":"lv_clock","x":218,"y":3,"w":55,"h":16,"radius":0,"border_side":0}
+{"id":17,"comment":"-- Battery indicator --","obj":"label","x":275,"y":0,"w":20,"h":20,"text":"\uF2A3","align":0,"text_font":"icons-18"}
 
 {"comment":"---------- Bottom buttons - prev/home/next ----------"}
 {"id":101,"obj":"btn","x":20,"y":210,"w":80,"h":25,"action":"prev","bg_color":"#1fa3ec","radius":10,"border_side":1,"text":"\uF053","text_font":"montserrat-20"}
@@ -33,7 +33,7 @@
 
 {"page":3,"comment":"---------- Page 3 - qrcode ----------"}
 {"id":0,"bg_color":"#0000A0","bg_grad_color":"#000000","bg_grad_dir":1,"text_color":"#FFFFFF"}
-{"id":1,"obj":"qrcode","qr_text":"https://github.com/arendst/Tasmota","x":85,"y":40,"qr_size":150}
+{"id":1,"obj":"qrcode","qr_text":"https://github.com/arendst/Tasmota","x":85,"y":40,"qr_size":150,"qr_light_color":"#FFFFFF","qr_dark_color":"#000000"}
 
 {"page":4,"comment":"---------- Page 4 - fan animation ----------"}
 {"id":0,"bg_color":"#0000A0","bg_grad_color":"#000000","bg_grad_dir":1,"text_color":"#FFFFFF"}
