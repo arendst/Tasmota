@@ -142,12 +142,14 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Matter reduce memory usage when reading with wildcards [#20809](https://github.com/arendst/Tasmota/issues/20809)
 - LVGL make lv_touch_3_buttons more responsive [#20728](https://github.com/arendst/Tasmota/issues/20728)
 - LVGL optimize fonts and add icons [#20880](https://github.com/arendst/Tasmota/issues/20880)
+- LVGL improved readability of montserrat-10 [#20900](https://github.com/arendst/Tasmota/issues/20900)
 - HASPmota fix and improve demo with pixel-perfect fonts [#20734](https://github.com/arendst/Tasmota/issues/20734)
 - HASPmota more attributes [#20744](https://github.com/arendst/Tasmota/issues/20744)
 - HASPmota support for spangroup (styled text) [#20852](https://github.com/arendst/Tasmota/issues/20852)
 - HASPmota support for led [#20857](https://github.com/arendst/Tasmota/issues/20857)
 
 ### Fixed
+- Filesystem save of JSON settings data
 - Shutter inverted using internal commands [#20752](https://github.com/arendst/Tasmota/issues/20752)
 - ESP32 PWM activity on unconfigured PWM GPIOs [#20732](https://github.com/arendst/Tasmota/issues/20732)
 - Berry Memory leak in `import re` [#20823](https://github.com/arendst/Tasmota/issues/20823)

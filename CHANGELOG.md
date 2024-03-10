@@ -16,11 +16,12 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - LVGL optimize fonts and add icons (#20880)
-- LVGL improved readability of montserrat-10
+- LVGL improved readability of montserrat-10 (#20900)
 
 ### Fixed
 - Berry bug when parsing ternary operator (#20839)
 - HASPmota widgets line, btnmatrix, qrcode, bar, checkbox (#20881)
+- Filesystem save of JSON settings data
 
 ### Removed
 
