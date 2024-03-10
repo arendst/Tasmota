@@ -54,6 +54,7 @@ struct {
 
 #define XDRV_122_KEY           "drvset122"
 
+#ifdef USE_UFILESYS
 bool DrvDemoLoadData(void) {
   char key[] = XDRV_122_KEY;
   String json = UfsJsonSettingsRead(key);
@@ -96,6 +97,7 @@ void DrvDemoDeleteData(void) {
   char key[] = XDRV_122_KEY;
   UfsJsonSettingsDelete(key);  // Use defaults
 }
+#endif  // USE_UFILESYS
 
 /*********************************************************************************************/
 
