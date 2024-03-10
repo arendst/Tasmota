@@ -6,7 +6,7 @@
  * 2 wire communication - I2C
  *******************************************************************/
 #include "be_constobj.h"
-#include "esp_idf_version.h"
+#include "esp_arduino_version.h"
 
 extern int b_serial_init(bvm *vm);
 extern int b_serial_deinit(bvm *vm);
@@ -16,7 +16,7 @@ extern int b_serial_read(bvm *vm);
 extern int b_serial_available(bvm *vm);
 extern int b_serial_flush(bvm *vm);
 
-#if ESP_IDF_VERSION_MAJOR < 5
+#if (ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(2, 0, 15))
     #include "esp32-hal.h"
 #else
     // it should be #include "HardwareSerial.h"
