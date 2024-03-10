@@ -168,7 +168,7 @@
 #define INA3221C_SHUNT_ADC_LSB                  (0.00004)   // VShunt ADC LSB is 40µV
 #define INA3221_DEFAULT_SHUNT_RESISTOR          (0.1)
 
-#define ENERGY_FAKTOR                           (1.0/(3600.0*1000.0))  // reading values all xx ms
+#define ENERGY_FACTOR                           (1.0/(3600.0*1000.0))  // reading values all xx ms
 
 #ifdef DEBUG_TASMOTA_SENSOR
 // temporary strings for floating point in debug messages
@@ -284,10 +284,10 @@ bool Ina3221Read(uint8_t device, uint8_t channel)
     // convert to shunt voltage in V
     pChannel->current = INA3221C_SHUNT_ADC_LSB * (float)(shunt_voltage >> 3) / pChannel->shunt;
     #ifdef INA3221_CALC_CHARGE_AH
-    pChannel->energy_ah += (pChannel->current * (float)delta_ms * ENERGY_FAKTOR);
+    pChannel->energy_ah += (pChannel->current * (float)delta_ms * ENERGY_FACTOR);
     #endif
     #ifdef INA3221_CALC_ENERGY_WH
-    pChannel->energy_wh += (pChannel->current * pChannel->voltage * (float)delta_ms * ENERGY_FAKTOR);
+    pChannel->energy_wh += (pChannel->current * pChannel->voltage * (float)delta_ms * ENERGY_FACTOR);
     #endif
   } else {
     pChannel->current = INFINITY;
