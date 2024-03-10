@@ -6,7 +6,7 @@
  * 2 wire communication - I2C
  *******************************************************************/
 #include "be_constobj.h"
-#include "esp_idf_version.h"
+#include "esp_arduino_version.h"
 
 extern int b_serial_init(bvm *vm);
 extern int b_serial_deinit(bvm *vm);
