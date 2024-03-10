@@ -48,91 +48,12 @@ class lvh_root
   #
   # If mapping is null, we use set_X and get_X from our own class
   static var _attr_map = {
-    "x": "x",
-    "y": "y",
     "w": "width",
     "h": "height",
-    # special case for height/width that can be in styles
-    "height": "style_height",
-    "width": "style_width",
-    # arc
-    # "asjustable": nil,
-    # "mode": nil,
     "start_angle": "bg_start_angle",
     "start_angle1": "start_angle",
     "end_angle": "bg_end_angle",
     "end_angle1": "end_angle",
-    "radius": "style_radius",
-    "border_side": "style_border_side",
-    "border_width": "style_border_width",
-    "border_color": "style_border_color",
-    "border_opa": "style_border_opa",
-    "border_post": "style_border_pot",
-    # "line_width": nil,                      # depends on class
-    # "line_width1": nil,                     # depends on class
-    # "action": nil,                          # store the action in self.action
-    # "hidden": nil,                          # apply to self
-    # "enabled": nil,                         # apply to self
-    # "click": nil,                           # synonym to enabled
-    # "toggle": nil,
-    "bg_color": "style_bg_color",
-    "bg_opa": "style_bg_opa",
-    "bg_grad_color": "style_bg_grad_color",
-    "bg_grad_dir": "style_bg_grad_dir",
-    "line_color": "style_line_color",
-    "line_rounded": "style_line_rounded",
-    "line_dash_gap": "style_line_dash_gap",
-    "line_dash_width": "style_line_dash_width",
-    "line_opa": "style_line_opa",
-    "arc_color": "style_arc_color",
-    "arc_opa": "style_arc_opa",
-    "arc_rounded": "style_arc_rounded",
-    "arc_width": "style_arc_width",
-    "pad_left": "style_pad_left",
-    "pad_right": "style_pad_right",
-    "pad_top": "style_pad_top",
-    "pad_bottom": "style_pad_bottom",
-    "pad_all": "style_pad_all",             # write-only
-    # "type": nil,
-    # below automatically create a sub-label
-    # "text": nil,                            # apply to self
-    # "value_str": nil,                       # synonym to 'text'
-    # "align": nil,
-    # "text_font": nil,
-    # "value_font": nil,                      # synonym to text_font
-    # "text_color": nil,
-    # "value_color": nil,                     # synonym to text_color
-    # "value_ofs_x": nil,
-    # "value_ofs_y": nil,
-    #
-    # "min": nil,
-    # "max": nil,
-    # "val": nil,
-    "rotation": "rotation",
-    # img
-    "src": "src",
-    "image_recolor": "style_img_recolor",
-    "image_recolor_opa": "style_img_recolor_opa",
-    # spinner
-    # "angle": nil,
-    # "speed": nil,
-    # padding of knob
-    # "pad_top2": nil,
-    # "pad_bottom2": nil,
-    # "pad_left2": nil,
-    # "pad_right2": nil,
-    # "pad_all2": nil,
-    # "radius2": nil,
-    # rule based update of attributes
-    # supporting both `val` and `text`
-    # "val_rule": nil,
-    # "val_rule_formula": nil,
-    # "text_rule": nil,
-    # "text_rule_formula": nil,
-    # "text_rule_format": nil,
-    # "meta": nil,
-    # roller
-    # "options": nil,
   }
 
   #====================================================================
@@ -1007,22 +928,19 @@ class lvh_obj : lvh_root
     import string
     import introspect
 
-    # print("> getmember", k)
-    var prefix = k[0..3]
-    if prefix == "set_" || prefix == "get_" return end    # avoid recursion
+    if string.startswith(k, "set_") || string.startswith(k, "get_")   return end
 
     # check if the attribute ends with 2 digits, if so remove the two suffix digits
-    var style_modifier = 0
+    var style_modifier = nil
     if size(k) >= 3
       var char_last_1 = string.byte(k[-1])
       var char_last_2 = string.byte(k[-2])
-      var suffix_digits = nil
       if (char_last_1 >= 0x30 && char_last_1 <= 0x39 && char_last_2 >= 0x30 && char_last_2 <= 0x39)
         # we extract the last 2 digits
-        suffix_digits = int(k[-2..])
-        k = k [0..-3]      # remove 2 last digits
+        var suffix_digits = int(k[-2..])
+        k = k[0..-3]      # remove 2 last digits
+        style_modifier = self.digits_to_style(suffix_digits)
       end
-      style_modifier = self.digits_to_style(suffix_digits)
     end
     # print(f">>>: getmember {k=} {style_modifier=}")
 
@@ -1033,30 +951,27 @@ class lvh_obj : lvh_root
     var f = introspect.get(self, "get_" + k)  # call self method
     if type(f) == 'function'
       # print(f">>>: getmember local method get_{k}")
-      return f(self, style_modifier)
+      return f(self, style_modifier != nil ? style_modifier : 0)
     end
 
-    # next check if there is a mapping to an LVGL attribute
-    if self._attr_map.contains(k)
-      var kv = self._attr_map[k]
+    # apply any synonym from _attr_map
+    k = self._attr_map.find(k, k)
 
-      f = introspect.get(self._lv_obj, "get_" + kv)
+    # try first `get_X` from lvgl object, only if there is no style modifier
+    if (style_modifier == nil)
+      f = introspect.get(self._lv_obj, "get_" + k)
       if type(f) == 'function'                  # found and function, call it
-        if string.find(kv, "style_") == 0
-          # print(f">>>: getmember style_ method get_{k}")
-          # style function need a selector as second parameter
-          return f(self._lv_obj, style_modifier)
-        else
-          # print(f">>>: getmember standard method get_{k}")
-          return f(self._lv_obj)
-        end
+        # print(f">>>: getmember standard method get_{k}")
+        return f(self._lv_obj)
       end
     end
 
-    # finally try any `get_XXX` within the LVGL object
-    f = introspect.get(self._lv_obj, "get_" + k)
+    # if not found, try `get_style_X`
+    f = introspect.get(self._lv_obj, "get_style_" + k)
     if type(f) == 'function'                  # found and function, call it
-      return f(self._lv_obj)
+      # print(f">>>: getmember style_ method get_{k}")
+      # style function need a selector as second parameter
+      return f(self._lv_obj, style_modifier != nil ? style_modifier : 0)
     end
 
     # fallback to exception if attribute unknown or not a function
@@ -1070,22 +985,19 @@ class lvh_obj : lvh_root
     import string
     import introspect
 
-    # print(">>>: setmember", k, v)
-    var prefix = k[0..3]
-    if prefix == "set_" || prefix == "get_" return end      # avoid infinite loop
+    if string.startswith(k, "set_") || string.startswith(k, "get_")   return end
 
     # check if the attribute ends with 2 digits, if so remove the two suffix digits
-    var style_modifier = 0
+    var style_modifier = nil
     if size(k) >= 3
       var char_last_1 = string.byte(k[-1])
       var char_last_2 = string.byte(k[-2])
-      var suffix_digits = nil
       if (char_last_1 >= 0x30 && char_last_1 <= 0x39 && char_last_2 >= 0x30 && char_last_2 <= 0x39)
         # we extract the last 2 digits
-        suffix_digits = int(k[-2..])
-        k = k [0..-3]      # remove 2 last digits
+        var suffix_digits = int(k[-2..])
+        k = k[0..-3]      # remove 2 last digits
+        style_modifier = self.digits_to_style(suffix_digits)
       end
-      style_modifier = self.digits_to_style(suffix_digits)
     end
     # print(f">>>: setmember {k=} {style_modifier=}")
 
@@ -1096,51 +1008,37 @@ class lvh_obj : lvh_root
     var f = introspect.get(self, "set_" + k)
     if type(f) == 'function'
       # print(f">>>: setmember local method set_{k}")
-      f(self, v, style_modifier)
+      f(self, v, style_modifier != nil ? style_modifier : 0)
       return
     end
 
-    # next check if there is a mapping to an LVGL attribute
-    if self._attr_map.contains(k)
-      
-      var kv = self._attr_map[k]
-      f = introspect.get(self._lv_obj, "set_" + kv)
-      # if the attribute contains 'color', convert to lv_color
-      if self.is_color_attribute(kv)
-        v = self.parse_color(v)
-      end
-      # print("f=", f, v, kv, self._lv_obj, self)
-      if type(f) == 'function'
-        try
-          if string.find(kv, "style_") == 0
-            # print(f">>>: setmember style_ method set_{k}")
-            # style function need a selector as second parameter
-            f(self._lv_obj, v, style_modifier)
-          else
-            # print(f">>>: setmember standard method set_{k}")
-            f(self._lv_obj, v)
-          end
-        except .. as e, m
-          raise e, m + " for " + k
-        end
-        return
-      else
-        print("HSP: Could not find function set_"+kv)
-      end
-    else
+    # apply any synonym from _attr_map
+    k = self._attr_map.find(k, k)
+
+    # if the attribute contains 'color', convert to lv_color
+    if self.is_color_attribute(k)
+      v = self.parse_color(v)
+    end
+    
+    # try first `set_X` from lvgl object
+    if (style_modifier == nil)
       f = introspect.get(self._lv_obj, "set_" + k)
-      if type(f) == 'function'
-        try
-          f(self._lv_obj, v)
-        except .. as e, m
-          raise e, m + " for " + k
-        end
-      else
-        print("HSP: unknown attribute:", k)
+      if type(f) == 'function'                  # found and function, call it
+        # print(f">>>: setmember standard method set_{k}")
+        return f(self._lv_obj, v)
       end
     end
-  end
 
+    # if not found, try `set_style_X`
+    f = introspect.get(self._lv_obj, "set_style_" + k)
+    if type(f) == 'function'                  # found and function, call it
+      # print(f">>>: setmember style_ method set_{k}")
+      # style function need a selector as second parameter
+      return f(self._lv_obj, v, style_modifier != nil ? style_modifier : 0)
+    end
+
+    print("HSP: unknown attribute:", k)
+  end
 end
 
 #################################################################################
@@ -1514,6 +1412,9 @@ class lvh_dropdown : lvh_obj
   end
 end
 
+#====================================================================
+#  bar
+#====================================================================
 class lvh_bar : lvh_obj
   static var _lv_class = lv.bar
   
@@ -1532,6 +1433,40 @@ class lvh_bar : lvh_obj
   end
   def get_max()
     return self._lv_obj.get_max_value()
+  end
+end
+
+#====================================================================
+#  scale
+#====================================================================
+class lvh_scale : lvh_obj
+  static var _lv_class = lv.scale
+  var _options                      # need to keep the reference alive to avoid GC
+  var _options_arr                  # need to keep the reference alive to avoid GC
+  
+  def set_text_src(l)
+    if (isinstance(l, list))
+      self._options = l
+      self._options_arr = lv.str_arr(l)
+      self._lv_obj.set_text_src(self._options_arr)
+    else
+      print("HTP: 'scale' needs 'text_src' to be a list of strings")
+    end
+  end
+  def get_text_src()
+    return self._options
+  end
+  def set_min(t)
+    self._lv_obj.set_range(int(t), self._lv_obj.get_range_max_value())
+  end
+  def set_max(t)
+    self._lv_obj.set_range(self._lv_obj.get_range_min_value(), int(t))
+  end
+  def get_min()
+    return self._lv_obj.get_range_min_value()
+  end
+  def get_max()
+    return self._lv_obj.get_range_max_value()
   end
 
 end
@@ -1599,10 +1534,7 @@ class lvh_span : lvh_root
   #   import string
   #   import introspect
 
-  #   do
-  #     var prefix = k[0..3]
-  #     if prefix == "set_" || prefix == "get_" return end    # avoid recursion
-  #   end
+  #   if string.startswith(k, "set_") || string.startswith(k, "get_")   return end
 
   #   # if attribute name is in ignore list, abort
   #   if self._attr_ignore.find(k) != nil return end
@@ -1632,11 +1564,7 @@ class lvh_span : lvh_root
     import string
     import introspect
 
-    do
-      # print(">>>: span setmember", k, v)
-      var prefix = k[0..3]
-      if prefix == "set_" || prefix == "get_" return end      # avoid infinite loop
-    end
+    if string.startswith(k, "set_") || string.startswith(k, "get_")   return end
 
     # if attribute name is in ignore list, abort
     if self._attr_ignore.find(k) != nil return end
@@ -2006,6 +1934,7 @@ class HASPmota
  	# static lvh_gauge = lvh_gauge
 	# static lvh_textarea = lvh_textarea    # additional?
   static lvh_led = lvh_led
+  static lvh_scale = lvh_scale
   static lvh_spangroup = lvh_spangroup
   static lvh_span = lvh_span
   static lvh_qrcode = lvh_qrcode
@@ -2483,6 +2412,7 @@ def solidify_haspmota()
     "btn", "switch", "checkbox",
     "label", "spinner", "line", "img", "roller", "btnmatrix",
     "bar", "slider", "arc", #- "textarea", -# "led", "dropdown",
+    "scale",
     "qrcode", "chart", "spangroup", "span",
     # new internal names
     "button", "image", "buttonmatrix",
