@@ -225,7 +225,9 @@ bool tasconsole_serial = false;
 
 #if ARDUINO_USB_MODE
 //#warning **** TasConsole ARDUINO_USB_MODE ****
-//HWCDC HWCDCSerial;                        // Already defined in HWCDC.cpp
+#if (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,1,3))
+HWCDC HWCDCSerial;
+#endif
 TASCONSOLE TasConsole{HWCDCSerial};         // ESP32C3/C6/S3 embedded USB using JTAG interface
 //#warning **** TasConsole uses HWCDC ****
 #else   // No ARDUINO_USB_MODE
