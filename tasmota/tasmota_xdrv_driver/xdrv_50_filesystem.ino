@@ -594,6 +594,9 @@ bool _UfsJsonSettingsUpdate(const char* data) {
       if (buf[0] == '}') {
         bracket_count--;
       }
+      else if (buf[0] == '{') {        // Next bracket
+        bracket_count++;
+      }
     } else {
       if (buf[0] == '}') {             // Last bracket
         break;                         // End of file
@@ -678,19 +681,14 @@ bool UfsJsonSettingsWrite(const char* data) {
   char filename[14];
   snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), 0);  // /.drvset000
   if (!TfsFileExists(filename)) {
-    File ofile = ffsp->open(filename, "w");
-    if (!ofile) { return false; }      // Error - unable to open settings file
-    ofile.write((uint8_t*)data, strlen(data));
-    ofile.close();
-    return true;                       // State - Append success
+    return TfsSaveFile(filename, (uint8_t*)data, strlen(data));
   }
   return _UfsJsonSettingsUpdate(data); // State - 0 = Error, 1 = Append success
 }
 
 String UfsJsonSettingsRead(const char* key) {
   // Read: Input UserSet2
-  //       Output "" = Error, {"Param1":123,"Param2":"Text2"} = Data
-
+  //       Output "" = Error, {"Param1":123,"Param2":"Text2","Param3":[{"Param3a":1},{"Param3b":1}]} = Data
   String data = "";
   char filename[14];
   snprintf_P(filename, sizeof(filename), PSTR(TASM_FILE_DRIVER), 0);      // /.drvset000
@@ -725,6 +723,9 @@ String UfsJsonSettingsRead(const char* key) {
             index = 0;                 // End of data which is not mine
           }
         }
+      }
+      else if (buf[0] == '{') {        // Next bracket
+        bracket_count++;
       }
     } else {
       if (buf[0] == '}') {             // Last bracket
