@@ -8,6 +8,7 @@ lv_tasmota = module("lv_tasmota")
 def init(lv_tasmota)
   import lv
   lv.start = lv_tasmota.start
+  lv._constants = lv_tasmota._constants
   lv.splash_init = lv_tasmota.splash_init
   lv.splash_remove = lv_tasmota.splash_remove
   lv.splash = lv_tasmota.splash

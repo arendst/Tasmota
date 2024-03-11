@@ -33,7 +33,7 @@
 
 {"page":3,"comment":"---------- Page 3 - qrcode ----------"}
 {"id":0,"bg_color":"#0000A0","bg_grad_color":"#000000","bg_grad_dir":1,"text_color":"#FFFFFF"}
-{"id":1,"obj":"qrcode","qr_text":"https://github.com/arendst/Tasmota","x":85,"y":40,"qr_size":150,"qr_light_color":"#FFFFFF","qr_dark_color":"#000000"}
+{"id":1,"obj":"qrcode","qr_text":"https://github.com/arendst/Tasmota","x":85,"y":40,"qr_size":150}
 
 {"page":4,"comment":"---------- Page 4 - fan animation ----------"}
 {"id":0,"bg_color":"#0000A0","bg_grad_color":"#000000","bg_grad_dir":1,"text_color":"#FFFFFF"}
