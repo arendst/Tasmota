@@ -1238,6 +1238,10 @@ class lvh_qrcode : lvh_obj
   static var _lv_class = lv.qrcode
   var qr_text                         # any change needs the text to be update again
 
+  def post_config()
+    super(self).post_config()
+    self._update()
+  end
   def _update()
     var t = self.qr_text
     if (t != nil)
@@ -2417,7 +2421,7 @@ def solidify_haspmota()
     # new internal names
     "button", "image", "buttonmatrix",
   ]
-  var f = open("be_lv_haspmota.c", "w")
+  var f = open("be_lv_haspmota_solidified.h", "w")
   f.write(
   '/********************************************************************\n'
   ' * Tasmota HASPmota solidified\n'

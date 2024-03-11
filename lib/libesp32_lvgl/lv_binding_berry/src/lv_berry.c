@@ -355,7 +355,29 @@ int lv0_member(bvm *vm) {
   be_return(vm);
 }
 
-// temporarily fix lv_span_get_style()
+/*********************************************************************************************\
+ * Return a hash of all LV int constants
+\*********************************************************************************************/
+int lv0_constants_as_hash(bvm *vm) {
+  be_newobject(vm, "map");
+
+  for (int i = 0; i < lv0_constants_size; i++) {
+    char first_char = lv0_constants[i].name[0];
+    if ( !(first_char >= 'a' && first_char <='z') && !(first_char >= 'A' && first_char <='Z') ) {
+      continue;
+    }
+    be_pushstring(vm, lv0_constants[i].name);
+    be_pushint(vm, lv0_constants[i].value);
+    be_data_insert(vm, -3);
+    be_pop(vm, 2);
+  }
+  be_pop(vm, 1);
+  be_return(vm);
+}
+
+/*********************************************************************************************\
+ * temporarily fix lv_span_get_style()
+\*********************************************************************************************/
 lv_style_t * lv_span_get_style(lv_span_t * span) {
       return &span->style;
 }

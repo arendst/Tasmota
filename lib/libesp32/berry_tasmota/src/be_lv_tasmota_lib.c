@@ -6,6 +6,7 @@
 #ifdef USE_LVGL
 
 extern int lv0_start(bvm *vm);
+extern int lv0_constants_as_hash(bvm *vm);    // dump all integer constants
 
 extern int lv0_register_button_encoder(bvm *vm);  // add buttons with encoder logic
 
@@ -22,6 +23,7 @@ extern int lv0_load_freetype_font(bvm *vm);
 /* @const_object_info_begin
 module lv_tasmota (scope: global, strings: weak) {
     init, closure(lv_tasmota_init_closure)
+    _constants, func(lv0_constants_as_hash)
 
     start, func(lv0_start)
     splash, closure(lv_tasmota_splash_closure)
