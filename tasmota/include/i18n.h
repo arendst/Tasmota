@@ -500,7 +500,7 @@
   #define D_JSON_MAXENERGYREACHED "MaxEnergyReached"
 
 // xsns_100_ina3221.ino
-#define  D_JSON_CHARGE "charge"
+#define  D_JSON_CHARGE "Charge"
 
 
 // Commands xdrv_04_light.ino
