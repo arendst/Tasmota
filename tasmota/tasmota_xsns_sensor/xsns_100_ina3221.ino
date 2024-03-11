@@ -41,27 +41,18 @@
  *     energies in Ah and Wh to the output, To reset the energie calculation disable tge 
  *     according INA3221 chanel by setting the shunt to 0.0 and enable it again 
  * For example :
- *     sensor100 1,0.0,0.1,0.2 and sensor100 1,0.1,0.1,0.2 will reset chanel 1
+ *     sensor100 1,0.0,0.1,0.2 and sensor100 1,0.1,0.1,0.2 will reset channel 1
  * Nevertheless, hte driver tries to identifiy if the chip as an address is a IN3221
 \*********************************************************************************************/
 
 // setup of INA3221 config
 
-#ifndef INA3221_AVERAGING_MASK
-#define INA3221_AVERAGING_MASK              INA3221_AVERAGING_512_SAMPLES   
+#ifndef INA3221_CONFIG_INIT
+#define INA3221_CONFIG_INIT     INA3221_AVERAGING_16_SAMPLES |\
+                                INA3221_VBUS_CONV_TIME_1MS |\
+                                INA3221_SHUNT_CONV_TIME_1MS
+// that results in a complete conversions sequence in 6,6 ms  and a slope time of 105,6 ms
 #endif
-#ifndef INA3221_VBUS_CONV_TIME_MASK
-#define INA3221_VBUS_CONV_TIME_MASK         INA3221_VBUS_CONV_TIME_8MS    
-#endif
-#ifndef INA3221_SHUNT_CONV_TIME_MASK
-#define INA3221_SHUNT_CONV_TIME_MASK        INA3221_SHUNT_CONV_TIME_4MS    
-#endif
-#ifndef INA3221_MODE_MASK
-#define INA3221_MODE_MASK                   INA3221_MODE_SHUNT_AND_BUS_CONTINOUS    
-#endif
-
-#define  D_CHARGE_AH                        D_BATTERY_CHARGE    
-#define  D_ENERGY_WH                        D_AS3935_ENERGY
 
 // end of setup of INA3221 config
 
@@ -97,15 +88,17 @@
 #define INA3221_ENABLE_MASK                     (0x7000)
 #define INA3221_ENABLE_CH(ch)                   (0x4000>>(ch))    // default: set
 
+#define INA3221_AVERAGING_MASK                  (0x0E00)
 #define INA3221_AVERAGING_NONE                  (0x0000)
 #define INA3221_AVERAGING_4_SAMPLES             (0x0200)
 #define INA3221_AVERAGING_16_SAMPLES            (0x0400)
 #define INA3221_AVERAGING_64_SAMPLES            (0x0600)
 #define INA3221_AVERAGING_128_SAMPLES           (0x0800)
 #define INA3221_AVERAGING_256_SAMPLES           (0x0A00)
-#define INA3221_AVERAGING_512_SAMPLES           (0x0C00)  // 1 sample, default
+#define INA3221_AVERAGING_512_SAMPLES           (0x0C00)  // 1 sample
 #define INA3221_AVERAGING_1024_SAMPLES          (0x0E00)
 
+#define INA3221_VBUS_CONV_TIME_MASK             (0x01C0)
 #define INA3221_VBUS_CONV_TIME_140US            (0x0000)
 #define INA3221_VBUS_CONV_TIME_204US            (0x0040)
 #define INA3221_VBUS_CONV_TIME_332US            (0x0080)
@@ -113,17 +106,19 @@
 #define INA3221_VBUS_CONV_TIME_1MS              (0x0100)  // 1.1ms
 #define INA3221_VBUS_CONV_TIME_2MS              (0x0140)  // 2.116ms
 #define INA3221_VBUS_CONV_TIME_4MS              (0x0180)  // 4.156ms
-#define INA3221_VBUS_CONV_TIME_8MS              (0x01C0)  // 8.244ms, default
+#define INA3221_VBUS_CONV_TIME_8MS              (0x01C0)  // 8.244ms
 
+#define INA3221_SHUNT_CONV_TIME_MASK            (0x0038)
 #define INA3221_SHUNT_CONV_TIME_140US           (0x0000)
 #define INA3221_SHUNT_CONV_TIME_204US           (0x0008)
 #define INA3221_SHUNT_CONV_TIME_332US           (0x0010)
 #define INA3221_SHUNT_CONV_TIME_588US           (0x0018)
 #define INA3221_SHUNT_CONV_TIME_1MS             (0x0020)  // 1.1ms
 #define INA3221_SHUNT_CONV_TIME_2MS             (0x0028)  // 2.116ms
-#define INA3221_SHUNT_CONV_TIME_4MS             (0x0030)  // 4.156ms, default
+#define INA3221_SHUNT_CONV_TIME_4MS             (0x0030)  // 4.156ms
 #define INA3221_SHUNT_CONV_TIME_8MS             (0x0038)  // 8.244ms
 
+#define INA3221_MODE_MASK                       (0x0007)
 #define INA3221_MODE_POWER_DOWN                 (0x0000)
 #define INA3221_MODE_SHUNT_VOLTAGE_TRIGGERED    (0x0001)
 #define INA3221_MODE_BUS_VOLTAGE_TRIGGERED      (0x0002)
@@ -168,7 +163,7 @@
 #define INA3221C_SHUNT_ADC_LSB                  (0.00004)   // VShunt ADC LSB is 40µV
 #define INA3221_DEFAULT_SHUNT_RESISTOR          (0.1)
 
-#define ENERGY_FACTOR                           (1.0/(3600.0*1000.0))  // reading values all xx ms
+#define INA3221_ENERGY_FACTOR                   (1.0/(3600.0*1000.0))  // reading values all xx ms
 
 #ifdef DEBUG_TASMOTA_SENSOR
 // temporary strings for floating point in debug messages
@@ -180,8 +175,8 @@ const char INA3221_SENSORCMND_START[] PROGMEM = "{\"" D_CMND_SENSOR "%d\":{\"idx
 const char INA3221_SENSORCMND_END[] PROGMEM = "]}}";
 
 #if defined(INA3221_CALC_CHARGE_AH) || defined(INA3221_CALC_ENERGY_WH)
-uint32_t last_millis;
-uint32_t delta_ms;
+uint32_t INA3221_last_millis;
+uint32_t INA3221_delta_ms;
 #endif
 
 struct INA3221_Channel_Data {
@@ -189,7 +184,7 @@ struct INA3221_Channel_Data {
   float     current;
   float     shunt;
   #ifdef INA3221_CALC_CHARGE_AH
-  float     energy_ah;
+  float     charge_ah;
   #endif
   #ifdef INA3221_CALC_ENERGY_WH
   float     energy_wh;
@@ -224,10 +219,8 @@ bool Ina3221SetConfig(uint8_t addr)
 
   // write default configuration
   uint16_t config = INA3221_ENABLE_MASK |
-                    INA3221_AVERAGING_MASK |
-                    INA3221_VBUS_CONV_TIME_MASK |
-                    INA3221_SHUNT_CONV_TIME_MASK |
-                    INA3221_MODE_MASK;
+                    INA3221_CONFIG_INIT |
+                    INA3221_MODE_BUS_VOLTAGE_CONTINUOUS;
   DEBUG_SENSOR_LOG(PSTR(D_INA3221 ":SetConfig: addr:0x%02X, config=0x%04X"), addr, config);
   // Set Config register
   if (!I2cWrite16(addr, INA3221_REG_CONFIG, config))
@@ -259,7 +252,7 @@ void Ina3221SetShunt(uint8_t device, uint8_t channel, float shunt)
   }else{
     Ina3221Data[device].enabled_chan &= ~(1<<channel);
     #ifdef INA3221_CALC_CHARGE_AH
-    Ina3221Data[device].chan[channel].energy_ah =0.0;
+    Ina3221Data[device].chan[channel].charge_ah =0.0;
     #endif
     #ifdef INA3221_CALC_ENERGY_WH
     Ina3221Data[device].chan[channel].energy_wh =0.0;
@@ -284,15 +277,15 @@ bool Ina3221Read(uint8_t device, uint8_t channel)
     // convert to shunt voltage in V
     pChannel->current = INA3221C_SHUNT_ADC_LSB * (float)(shunt_voltage >> 3) / pChannel->shunt;
     #ifdef INA3221_CALC_CHARGE_AH
-    pChannel->energy_ah += (pChannel->current * (float)delta_ms * ENERGY_FACTOR);
+    pChannel->charge_ah += (pChannel->current * (float)INA3221_delta_ms * INA3221_ENERGY_FACTOR);
     #endif
     #ifdef INA3221_CALC_ENERGY_WH
-    pChannel->energy_wh += (pChannel->current * pChannel->voltage * (float)delta_ms * ENERGY_FACTOR);
+    pChannel->energy_wh += (pChannel->current * pChannel->voltage * (float)INA3221_delta_ms * INA3221_ENERGY_FACTOR);
     #endif
   } else {
     pChannel->current = INFINITY;
     #ifdef INA3221_CALC_CHARGE_AH
-    pChannel->energy_ah = INFINITY;
+    pChannel->charge_ah = INFINITY;
     #endif
     #ifdef INA3221_CALC_ENERGY_WH
     pChannel->energy_wh = INFINITY;
@@ -373,7 +366,9 @@ void Ina3221Detect(void)
     free(Ina3221Data);
     Ina3221Data = nullptr;
   }
-  last_millis = millis();
+  #if defined(INA3221_CALC_CHARGE_AH) || defined(INA3221_CALC_ENERGY_WH)
+  INA3221_last_millis = millis();
+  #endif
 }
 
 void Ina3221Every250ms(void)
@@ -388,34 +383,34 @@ void Ina3221Every250ms(void)
   if (++_ina3221_current_device >= INA3221_MAX_COUNT){
     _ina3221_current_device = 0;
      #if defined(INA3221_CALC_CHARGE_AH) || defined(INA3221_CALC_ENERGY_WH)
-     delta_ms = millis()-last_millis;
-     last_millis = millis();
+     INA3221_delta_ms = millis()-INA3221_last_millis;
+     INA3221_last_millis = millis();
      #endif
      }
 }
 
 #ifdef USE_WEBSERVER
 // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#define INA_AL      "<td style='text-align:right'>"
+#define INA3221_AL      "<td style='text-align:right'>"
 const char HTTP_SNS_INA3221_HEADER[] PROGMEM =
   // "{s}" D_INA3221 "&nbsp;&nbsp;&nbsp;&nbsp;</th><td>&nbsp;</td><td style='text-align:right'>" D_VOLTAGE " </td><td>&nbsp;</td><td style='text-align:right'>" D_CURRENT " </td><td>&nbsp;</td><td style='text-align:right'>" D_POWERUSAGE
-  "{s}" D_INA3221 "&nbsp;&nbsp;&nbsp;&nbsp;</th>" INA_AL D_VOLTAGE " </td><td>&nbsp;</td>" INA_AL D_CURRENT " </td><td>&nbsp;</td>" INA_AL D_POWERUSAGE
+  "{s}" D_INA3221 "&nbsp;&nbsp;&nbsp;&nbsp;</th>" INA3221_AL D_VOLTAGE " </td><td>&nbsp;</td>" INA3221_AL D_CURRENT " </td><td>&nbsp;</td>" INA3221_AL D_POWERUSAGE
     #ifdef INA3221_CALC_CHARGE_AH
-    "</td><td>&nbsp;</td>" INA_AL D_CHARGE_AH
+    "</td><td>&nbsp;</td>" INA3221_AL D_CHARGE
     #endif
     #ifdef INA3221_CALC_ENERGY_WH
-    "</td><td>&nbsp;</td>" INA_AL D_ENERGY_WH
+    "</td><td>&nbsp;</td>" INA3221_AL D_ENERGY
     #endif
   "{e}";
 
  const char HTTP_SNS_INA3221_DATA[] PROGMEM =
   // "{s}%s </th></th><td>&nbsp;</td><td style='text-align:right'>%s " D_UNIT_VOLT " </td><td>&nbsp;</td><td style='text-align:right'>%s " D_UNIT_AMPERE " </td><td>&nbsp;</td><td style='text-align:right'>%s " D_UNIT_WATT
-  "{s}%s </th></th>" INA_AL " %s " D_UNIT_VOLT " </td><td>&nbsp;</td>" INA_AL " %s " D_UNIT_AMPERE " </td><td>&nbsp;</td>" INA_AL " %s " D_UNIT_WATT
+  "{s}%s </th></th>" INA3221_AL " %s " D_UNIT_VOLT " </td><td>&nbsp;</td>" INA3221_AL " %s " D_UNIT_AMPERE " </td><td>&nbsp;</td>" INA3221_AL " %s " D_UNIT_WATT
     #ifdef INA3221_CALC_CHARGE_AH
-    "</td><td>&nbsp;</td>" INA_AL " %s " D_UNIT_CHARGE
+    "</td><td>&nbsp;</td>" INA3221_AL " %s " D_UNIT_CHARGE
     #endif
     #ifdef INA3221_CALC_ENERGY_WH
-    "</td><td>&nbsp;</td>" INA_AL " %s " D_UNIT_WATTHOUR
+    "</td><td>&nbsp;</td>" INA3221_AL " %s " D_UNIT_WATTHOUR
     #endif
   "{e}";
 #endif  // USE_WEBSERVER
@@ -428,7 +423,7 @@ void Ina3221Show(bool json)
   char current[3*FLOATSZ+3];
   char power[3*FLOATSZ+3];
   #ifdef INA3221_CALC_CHARGE_AH
-  char energy_ah[3*FLOATSZ+3];
+  char charge_ah[3*FLOATSZ+3];
   #endif
   #ifdef INA3221_CALC_ENERGY_WH
   char energy_wh[3*FLOATSZ+3];
@@ -440,18 +435,20 @@ void Ina3221Show(bool json)
       uint8_t enabled_chan = Ina3221Data[device].enabled_chan;
       if (!enabled_chan) continue;
 
-      if (Ina3221count > 1)
+      if (Ina3221count > 1){
         snprintf_P(name, sizeof(name), PSTR("%s%c%d"), INA3221_TYPE, IndexSeparator(), device +1);
-      else
+      }
+      else{
         snprintf_P(name, sizeof(name), PSTR("%s"), INA3221_TYPE);
         voltage[0] = current[0] = power[0] = 
           #ifdef INA3221_CALC_CHARGE_AH
-          energy_ah[0] =
+          charge_ah[0] =
           #endif
           #ifdef INA3221_CALC_ENERGY_WH
           energy_wh[0] =
           #endif
         '\0';
+       }
       for (int chan=0 ; enabled_chan ; chan++, enabled_chan>>=1) {
         if (0x01 & enabled_chan) {
           dtostrfd(Ina3221Data[device].chan[chan].voltage, Settings->flag2.voltage_resolution, temp);
@@ -461,20 +458,20 @@ void Ina3221Show(bool json)
           dtostrfd(Ina3221Data[device].chan[chan].voltage * Ina3221Data[device].chan[chan].current, Settings->flag2.wattage_resolution, temp);
           strncat(power, temp, sizeof(power));
           #ifdef INA3221_CALC_CHARGE_AH
-          dtostrfd(Ina3221Data[device].chan[chan].energy_ah, Settings->flag2.energy_resolution, temp);
-          strncat(energy_ah, temp, sizeof(energy_ah));
+          dtostrfd(Ina3221Data[device].chan[chan].charge_ah, Settings->flag2.energy_resolution, temp);
+          strncat(charge_ah, temp, sizeof(charge_ah));
           #endif
           #ifdef INA3221_CALC_ENERGY_WH
           dtostrfd(Ina3221Data[device].chan[chan].energy_wh, Settings->flag2.energy_resolution, temp);
           strncat(energy_wh, temp, sizeof(energy_wh));
           #endif
-        } //if enabled
-        else {
+       }  //if enabled
+       else {
           strncat(voltage, "null", sizeof(voltage));
           strncat(current, "null", sizeof(current));
           strncat(power, "null", sizeof(power));
           #ifdef INA3221_CALC_CHARGE_AH
-          strncat(energy_ah, "null", sizeof(energy_ah));
+          strncat(charge_ah, "null", sizeof(charge_ah));
           #endif
           #ifdef INA3221_CALC_ENERGY_WH
           strncat(energy_wh, "null", sizeof(energy_wh));
@@ -485,31 +482,28 @@ void Ina3221Show(bool json)
           strncat(current, ",", sizeof(current));
           strncat(power, ",", sizeof(power));
           #ifdef INA3221_CALC_CHARGE_AH
-          strncat(energy_ah, ",", sizeof(energy_ah));
+          strncat(charge_ah, ",", sizeof(charge_ah));
           #endif
           #ifdef INA3221_CALC_ENERGY_WH
           strncat(energy_wh, ",", sizeof(energy_wh));
           #endif
         }
-      } // for channel
-      #if defined(INA3221_CALC_CHARGE_AH) || defined(INA3221_CALC_ENERGY_WH)
-        #if defined(INA3221_CALC_CHARGE_AH) && defined(INA3221_CALC_ENERGY_WH)
-        ResponseAppend_P(PSTR(",\"%s\":{\"Id\":\"0x%02x\",\"" D_JSON_VOLTAGE "\":[%s],\"" D_JSON_CURRENT "\":[%s],\"" D_JSON_POWERUSAGE "\":[%s],\"" D_JSON_CHARGE "\":[%s],\"" D_JSON_ENERGY "\":[%s]}"),
-                      name, Ina3221Data[device].i2caddr, voltage, current, power, energy_ah, energy_wh);
-        #else
-          #ifdef INA3221_CALC_CHARGE_AH
-          ResponseAppend_P(PSTR(",\"%s\":{\"Id\":\"0x%02x\",\"" D_JSON_VOLTAGE "\":[%s],\"" D_JSON_CURRENT "\":[%s],\"" D_JSON_POWERUSAGE "\":[%s],\"" D_JSON_CHARGE "\":[%s]}"),
-                      name, Ina3221Data[device].i2caddr, voltage, current, power, energy_ah, energy_wh);
-          #endif
-          #ifdef INA3221_CALC_ENERGY_WH
-          ResponseAppend_P(PSTR(",\"%s\":{\"Id\":\"0x%02x\",\"" D_JSON_VOLTAGE "\":[%s],\"" D_JSON_CURRENT "\":[%s],\"" D_JSON_POWERUSAGE "\":[%s],\"" D_JSON_ENERGY "\":[%s]}"),
-                      name, Ina3221Data[device].i2caddr, voltage, current, power, energy_ah, energy_wh);
-          #endif
-        #endif
-      #else
-        ResponseAppend_P(PSTR(",\"%s\":{\"Id\":\"0x%02x\",\"" D_JSON_VOLTAGE "\":[%s],\"" D_JSON_CURRENT "\":[%s],\"" D_JSON_POWERUSAGE "\":[%s]}"),
-                      name, Ina3221Data[device].i2caddr, voltage, current, power);
+      } // for channel	  
+     ResponseAppend_P(PSTR(",\"%s\":{\"Id\":\"0x%02x\",\"" D_JSON_VOLTAGE "\":[%s],\"" D_JSON_CURRENT "\":[%s],\"" D_JSON_POWERUSAGE "\":[%s]"
+      #ifdef INA3221_CALC_CHARGE_AH
+      ",\"" D_JSON_CHARGE "\":[%s]"
       #endif
+      #ifdef INA3221_CALC_ENERGY_WH
+      ",\"" D_JSON_ENERGY "\":[%s]"
+      #endif
+      "}"),name, Ina3221Data[device].i2caddr, voltage, current, power
+      #ifdef INA3221_CALC_CHARGE_AH
+      , charge_ah
+      #endif
+      #ifdef INA3221_CALC_ENERGY_WH
+      , energy_wh
+      #endif
+      );
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) {
         DomoticzSensor(DZ_VOLTAGE, voltage);
@@ -517,7 +511,7 @@ void Ina3221Show(bool json)
       }
 #endif  // USE_DOMOTICZ
     } // for device
-  } // if json
+ } // if json
 #ifdef USE_WEBSERVER
   else {
     // header
@@ -527,34 +521,28 @@ void Ina3221Show(bool json)
       uint8_t enabled_chan = Ina3221Data[device].enabled_chan;
       for (int chan=0 ; enabled_chan ; chan++, enabled_chan>>=1) {
         if (0x01 & enabled_chan) {
-          if (Ina3221count > 1)
+          if (Ina3221count > 1){
             snprintf_P(name, sizeof(name), PSTR("%s%c%d:%d"), INA3221_TYPE, IndexSeparator(), device +1, chan);
-          else
+          }else{
             snprintf_P(name, sizeof(name), PSTR("%s:%d"), INA3221_TYPE, chan);
-          dtostrfd(Ina3221Data[device].chan[chan].voltage, Settings->flag2.voltage_resolution, voltage);
-          dtostrfd(Ina3221Data[device].chan[chan].current, Settings->flag2.current_resolution, current);
-          dtostrfd(Ina3221Data[device].chan[chan].voltage * Ina3221Data[device].chan[chan].current, Settings->flag2.wattage_resolution, power);
-          #ifdef INA3221_CALC_CHARGE_AH
-          dtostrfd(Ina3221Data[device].chan[chan].energy_ah, Settings->flag2.energy_resolution, energy_ah);
-          #endif 
-          #ifdef INA3221_CALC_ENERGY_WH
-          dtostrfd(Ina3221Data[device].chan[chan].energy_wh, Settings->flag2.energy_resolution, energy_wh);
-          #endif
-          #if defined(INA3221_CALC_CHARGE_AH) || defined(INA3221_CALC_ENERGY_WH)
-            #if defined(INA3221_CALC_CHARGE_AH) && defined(INA3221_CALC_ENERGY_WH)
-              WSContentSend_PD(HTTP_SNS_INA3221_DATA, name, voltage, current, power, energy_ah, energy_wh);
-            #else
-              #ifdef INA3221_CALC_CHARGE_AH
-              WSContentSend_PD(HTTP_SNS_INA3221_DATA, name, voltage, current, power, energy_ah);
-              #endif
-              #ifdef INA3221_CALC_ENERGY_WH
-              WSContentSend_PD(HTTP_SNS_INA3221_DATA, name, voltage, current, power,energy_wh);
-              #endif
+            dtostrfd(Ina3221Data[device].chan[chan].voltage, Settings->flag2.voltage_resolution, voltage);
+            dtostrfd(Ina3221Data[device].chan[chan].current, Settings->flag2.current_resolution, current);
+            dtostrfd(Ina3221Data[device].chan[chan].voltage * Ina3221Data[device].chan[chan].current, Settings->flag2.wattage_resolution, power);
+            #ifdef INA3221_CALC_CHARGE_AH
+            dtostrfd(Ina3221Data[device].chan[chan].charge_ah, Settings->flag2.energy_resolution, charge_ah);
             #endif
-          #else
-            WSContentSend_PD(HTTP_SNS_INA3221_DATA, name, voltage, current, power);
-          #endif
-    
+            #ifdef INA3221_CALC_ENERGY_WH
+            dtostrfd(Ina3221Data[device].chan[chan].energy_wh, Settings->flag2.energy_resolution, energy_wh);
+            #endif
+            WSContentSend_PD(HTTP_SNS_INA3221_DATA, name, voltage, current, power
+            #ifdef INA3221_CALC_CHARGE_AH
+            , charge_ah
+            #endif
+            #ifdef INA3221_CALC_ENERGY_WH
+            , energy_wh
+            #endif
+            );
+          } 
         } // if active
       } // for channel
     } // for device
