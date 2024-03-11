@@ -34,6 +34,9 @@
 #include "be_mapping.h"
 #include "be_ctypes.h"
 #include "lv_berry.h"
+#ifdef USE_LVGL_HASPMOTA
+  #include "be_lv_haspmota.h"
+#endif // USE_LVGL_HASPMOTA
 
 // Berry easy logging
 extern "C" {

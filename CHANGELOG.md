@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - LVGL optimize fonts and add icons (#20880)
 - LVGL improved readability of montserrat-10 (#20900)
+- HASPmota moved to a distinct library `lv_haspmota`
 
 ### Fixed
 - Berry bug when parsing ternary operator (#20839)
