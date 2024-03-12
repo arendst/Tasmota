@@ -536,6 +536,11 @@
 #define D_ENERGY_YESTERDAY "Energie gestern"
 #define D_ENERGY_TOTAL "Energie gesamt"
 
+// xsns_100_ina3221.ino
+#define  D_CHARGE                         "Ladung"    
+#define  D_ENERGY                         "Energie"
+#define  D_UNIT_CHARGE                    "Ah"
+
 // xdrv_27_shutter.ino
 #define D_OPEN "Öffnen"
 #define D_CLOSE "Schliessen"

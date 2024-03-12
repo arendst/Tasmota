@@ -499,6 +499,10 @@
   #define D_JSON_ENERGYMONITOR "EnergyMonitor"
   #define D_JSON_MAXENERGYREACHED "MaxEnergyReached"
 
+// xsns_100_ina3221.ino
+#define  D_JSON_CHARGE "Charge"
+
+
 // Commands xdrv_04_light.ino
 #define D_SO_CHANNELREMAP "ChannelRemap"    // SO37
 #define D_SO_MULTIPWM "MultiPWM"            // SO68
