@@ -528,8 +528,13 @@ bool (* const xsns_func_ptr[])(uint32_t) = {  // Sensor Function Pointers for si
 #endif
 
 #ifdef XSNS_127
-  &Xsns127
+  &Xsns127,
 #endif
+
+#ifdef XSNS_128
+  &Xsns128
+#endif
+
 };
 
 const uint8_t xsns_present = sizeof(xsns_func_ptr) / sizeof(xsns_func_ptr[0]);  // Number of External Sensors found
@@ -1049,8 +1054,13 @@ const uint8_t kXsnsList[] = {
 #endif
 
 #ifdef XSNS_127
-  XSNS_127
+  XSNS_127,
 #endif
+
+#ifdef XSNS_128
+  XSNS_128
+#endif
+
 };
 
 /*********************************************************************************************/

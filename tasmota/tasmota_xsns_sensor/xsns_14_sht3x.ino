@@ -18,7 +18,7 @@
 */
 
 #ifdef USE_I2C
-#ifdef USE_SHT3X
+#ifdef USE_SHT3X 
 /*********************************************************************************************\
  * Sensirion I2C temperature and humidity sensors
  *
