@@ -75,6 +75,7 @@ lv_fun_globs = [
                   "misc/lv_style_gen.h",
                   "misc/lv_style.h",
                   "misc/lv_timer.h",
+                  "misc/lv_text.h",
                   "font/lv_font.h",
                   # add version information
                   "../lvgl.h",

@@ -154,6 +154,8 @@ const be_ntv_func_def_t lv_func[] = {
   { "style_prop_has_flag", { (const void*) &lv_style_prop_has_flag, "b", "ii" } },
   { "style_register_prop", { (const void*) &lv_style_register_prop, "i", "i" } },
   { "task_handler", { (const void*) &lv_task_handler, "i", "" } },
+  { "text_get_size", { (const void*) &lv_text_get_size, "", "cs(lv.font)iiii" } },
+  { "text_get_width", { (const void*) &lv_text_get_width, "i", "si(lv.font)i" } },
   { "theme_apply", { (const void*) &lv_theme_apply, "", "(lv.obj)" } },
   { "theme_get_color_primary", { (const void*) &lv_theme_get_color_primary, "lv.color", "(lv.obj)" } },
   { "theme_get_color_secondary", { (const void*) &lv_theme_get_color_secondary, "lv.color", "(lv.obj)" } },
