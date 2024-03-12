@@ -6,15 +6,7 @@
 #
 # rm haspmota.tapp; zip -j -0 haspmota.tapp haspmota_core/*
 #################################################################################
-# How to solidify (needs an ESP32 with PSRAM)
-#-
 
-import path
-path.remove("haspmota.bec")
-load('haspmota.be')
-global.solidify_haspmota()
-
--#
 var haspmota = module("haspmota")
 
 #################################################################################
@@ -23,6 +15,7 @@ var haspmota = module("haspmota")
 # Allows to map either a `lv_obj` for LVGL or arbitrary object
 #
 #################################################################################
+#@ solidify:lvh_root,weak
 class lvh_root
   static var _lv_class = nil        # _lv_class refers to the lvgl class encapsulated, and is overriden by subclasses
 
@@ -506,6 +499,7 @@ end
 # Adds specific virtual members used by HASPmota
 #################################################################################
 #################################################################################
+#@ solidify:lvh_obj,weak
 class lvh_obj : lvh_root
   static var _lv_class = lv.obj     # _lv_class refers to the lvgl class encapsulated, and is overriden by subclasses
   static var _lv_part2_selector     # selector for secondary part (like knob of arc)
@@ -1050,6 +1044,7 @@ end
 #====================================================================
 #  label
 #====================================================================
+#@ solidify:lvh_label,weak
 class lvh_label : lvh_obj
   static var _lv_class = lv.label
   # label do not need a sub-label
@@ -1062,6 +1057,7 @@ end
 #====================================================================
 #  arc
 #====================================================================
+#@ solidify:lvh_arc,weak
 class lvh_arc : lvh_obj
   static var _lv_class = lv.arc
   static var _lv_part2_selector = lv.PART_KNOB
@@ -1141,6 +1137,7 @@ end
 #====================================================================
 #  switch
 #====================================================================
+#@ solidify:lvh_switch,weak
 class lvh_switch : lvh_obj
   static var _lv_class = lv.switch
   static var _lv_part2_selector = lv.PART_KNOB
@@ -1157,6 +1154,7 @@ end
 #====================================================================
 #  spinner
 #====================================================================
+#@ solidify:lvh_spinner,weak
 class lvh_spinner : lvh_arc
   static var _lv_class = lv.spinner
   var _speed, _angle
@@ -1183,6 +1181,7 @@ end
 #====================================================================
 #  img
 #====================================================================
+#@ solidify:lvh_img,weak
 class lvh_img : lvh_obj
   static var _lv_class = lv.image
   var _raw                        # used to store raw image in RAM
@@ -1234,6 +1233,7 @@ end
 #====================================================================
 #  qrcode
 #====================================================================
+#@ solidify:lvh_qrcode,weak
 class lvh_qrcode : lvh_obj
   static var _lv_class = lv.qrcode
   var qr_text                         # any change needs the text to be update again
@@ -1271,6 +1271,7 @@ end
 #====================================================================
 #  slider
 #====================================================================
+#@ solidify:lvh_slider,weak
 class lvh_slider : lvh_obj
   static var _lv_class = lv.slider
 
@@ -1295,6 +1296,7 @@ end
 #====================================================================
 #  roller
 #====================================================================
+#@ solidify:lvh_roller,weak
 class lvh_roller : lvh_obj
   static var _lv_class = lv.roller
 
@@ -1328,6 +1330,7 @@ end
 #====================================================================
 #  led
 #====================================================================
+#@ solidify:lvh_led,weak
 class lvh_led : lvh_obj
   static var _lv_class = lv.led
 
@@ -1351,6 +1354,7 @@ end
 #====================================================================
 #  dropdown
 #====================================================================
+#@ solidify:lvh_dropdown,weak
 class lvh_dropdown : lvh_obj
   static var _lv_class = lv.dropdown
   static var _dir = [ lv.DIR_BOTTOM, lv.DIR_TOP, lv.DIR_LEFT, lv.DIR_RIGHT ] # 0 = down, 1 = up, 2 = left, 3 = right
@@ -1419,6 +1423,7 @@ end
 #====================================================================
 #  bar
 #====================================================================
+#@ solidify:lvh_bar,weak
 class lvh_bar : lvh_obj
   static var _lv_class = lv.bar
   
@@ -1443,6 +1448,7 @@ end
 #====================================================================
 #  scale
 #====================================================================
+#@ solidify:lvh_scale,weak
 class lvh_scale : lvh_obj
   static var _lv_class = lv.scale
   var _options                      # need to keep the reference alive to avoid GC
@@ -1478,6 +1484,7 @@ end
 #====================================================================
 #  spangroup
 #====================================================================
+#@ solidify:lvh_spangroup,weak
 class lvh_spangroup : lvh_obj
   static var _lv_class = lv.spangroup
   # label do not need a sub-label
@@ -1495,6 +1502,7 @@ end
 #====================================================================
 #  span
 #====================================================================
+#@ solidify:lvh_span,weak
 class lvh_span : lvh_root
   static var _lv_class = nil
   # label do not need a sub-label
@@ -1609,6 +1617,7 @@ end
 # Special case for lv.chart
 # Adapted to getting values one after the other
 #################################################################################
+#@ solidify:lvh_chart,weak
 class lvh_chart : lvh_obj
   static var _lv_class = lv.chart
   # ser1/ser2 contains the first/second series of data
@@ -1682,6 +1691,7 @@ end
 #====================================================================
 #  line
 #====================================================================
+#@ solidify:lvh_line,weak
 class lvh_line : lvh_obj
   static var _lv_class = lv.line
   var _lv_points          # needs to save to avoid garbage collection
@@ -1709,8 +1719,9 @@ end
 #====================================================================
 #  btnmatrix
 #====================================================================
+#@ solidify:lvh_btnmatrix,weak
 class lvh_btnmatrix : lvh_obj
-  static var _lv_class = lv.btnmatrix
+  static var _lv_class = lv.buttonmatrix
   var _options                      # need to keep the reference alive to avoid GC
   var _options_arr                  # need to keep the reference alive to avoid GC
   
@@ -1734,10 +1745,13 @@ end
 # and doesn't have any specific behavior
 #
 #################################################################################
-class lvh_btn : lvh_obj         static var _lv_class = lv.btn         end
+#@ solidify:lvh_btn,weak
+class lvh_btn : lvh_obj         static var _lv_class = lv.button      end
+#@ solidify:lvh_checkbox,weak
 class lvh_checkbox : lvh_obj    static var _lv_class = lv.checkbox    end
 # class lvh_textarea : lvh_obj    static var _lv_class = lv.textarea    end
 # special case for scr (which is actually lv_obj)
+#@ solidify:lvh_scr,weak
 class lvh_scr : lvh_obj         static var _lv_class = nil            end    # no class for screen
 
 
@@ -1748,6 +1762,7 @@ class lvh_scr : lvh_obj         static var _lv_class = nil            end    # n
 #################################################################################
 #
 # ex of transition: lv.scr_load_anim(scr, lv.SCR_LOAD_ANIM_MOVE_RIGHT, 500, 0, false)
+#@ solidify:lvh_page,weak
 class lvh_page
   var _obj_id               # (map) of `lvh_obj` objects by id numbers
   var _page_id              # (int) id number of this page
@@ -2401,56 +2416,6 @@ haspmota.init = def (m)         # `init(m)` is called during first `import haspm
   return oh()
 end
 
-#################################################################################
-# Solidify
-#################################################################################
-def solidify_haspmota()
-  import path 
-  path.remove("haspmota.bec")
-  import solidify
-  import introspect
-
-  var classes = [
-    "root",
-    "page", "obj", "scr",
-    "btn", "switch", "checkbox",
-    "label", "spinner", "line", "img", "roller", "btnmatrix",
-    "bar", "slider", "arc", #- "textarea", -# "led", "dropdown",
-    "scale",
-    "qrcode", "chart", "spangroup", "span",
-    # new internal names
-    "button", "image", "buttonmatrix",
-  ]
-  var f = open("be_lv_haspmota_solidified.h", "w")
-  f.write(
-  '/********************************************************************\n'
-  ' * Tasmota HASPmota solidified\n'
-  ' *******************************************************************/\n'
-  '#include "be_constobj.h"\n'
-  '\n'
-  '#ifdef USE_LVGL\n'
-  '#ifdef USE_LVGL_HASPMOTA\n'
-  '\n'
-  )
-  for c:classes
-    f.write(f'extern const bclass be_class_lv_{c};\n')
-  end
-
-  for c:classes
-    if introspect.contains(haspmota.HASPmota, "lvh_"+c)
-      solidify.dump(haspmota.HASPmota.("lvh_"+c), true, f)
-    end
-  end
-  solidify.dump(haspmota, true, f)
-
-  f.write(
-  '\n'
-  '#endif // USE_LVGL_HASPMOTA\n'
-  '#endif // USE_LVGL\n'
-  )
-  f.close()
-  print("Ok")
-end
-
+#@ solidify:haspmota,weak
 global.haspmota = haspmota
 return haspmota
