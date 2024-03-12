@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
 - Berry bug when parsing ternary operator (#20839)
 - HASPmota widgets line, btnmatrix, qrcode, bar, checkbox (#20881)
 - Filesystem save of JSON settings data
+- Berry fix walrus with member or index
 
 ### Removed
 

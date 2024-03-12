@@ -33,3 +33,26 @@ assert_attribute_error("var a,b def f() a end")
 
 # while the following does have side effect
 def f() a := b end
+
+# bug when using walrus with member
+def id(x) return x end
+var a = 1
+import global
+def f() return id(global.a := 42) end
+assert(f() == 42)
+# bug: returns <module: global>
+
+def concat(x, y, z) return str(x)+str(y)+str(z) end
+var a = 1
+import global
+def f() return concat(global.a := 1, global.a := 42, global.a := 0) end
+assert(f() == "1420")
+# bug: returns '1<module: global>42'
+
+# same bug when using index
+def id(x) return x end
+l = [10,11]
+import global
+def f() return id(global.l[0] := 42) end
+assert(f() == 42)
+# bug: returns [42, 11]
