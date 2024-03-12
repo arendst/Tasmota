@@ -379,5 +379,8 @@ int lv0_constants_as_hash(bvm *vm) {
  * temporarily fix lv_span_get_style()
 \*********************************************************************************************/
 lv_style_t * lv_span_get_style(lv_span_t * span) {
-      return &span->style;
+  return &span->style;
+}
+lv_area_t * lv_bar_get_indic_area(lv_obj_t * bar) {
+  return &((lv_bar_t*)bar)->indic_area;
 }

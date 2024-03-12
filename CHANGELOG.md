@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - HASPmota support for led (#20857)
 - HASPmota improve arc and img (#20894)
 - Berry add `string.startswith`, `string.endswith` and `%q` format
+- LVGL add `lv.draw_label_dsc` and `lv_bar.get_indic_area`
 
 ### Breaking Changed
 - Drop support for old (insecure) fingerprint format (#20842)

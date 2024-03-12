@@ -964,6 +964,19 @@ void lv_style_set_grid_cell_row_pos(lv_style_t * style, int32_t value)
 void lv_style_set_grid_cell_y_align(lv_style_t * style, lv_grid_align_t value)
 void lv_style_set_grid_cell_row_span(lv_style_t * style, int32_t value)
 
+// ../../lvgl/src/misc/lv_text.h
+void lv_text_get_size(lv_point_t * size_res, const char * text, const lv_font_t * font, int32_t letter_space, int32_t line_space, int32_t max_width, lv_text_flag_t flag)
+int32_t lv_text_get_width(const char * txt, uint32_t length, const lv_font_t * font, int32_t letter_space)
+char * _lv_text_set_text_vfmt(const char * fmt, va_list ap) LV_FORMAT_ATTRIBUTE(1, 0)
+uint8_t (*_lv_text_encoded_size)(const char *)
+uint32_t (*_lv_text_unicode_to_encoded)(uint32_t)
+uint32_t (*_lv_text_encoded_conv_wc)(uint32_t c)
+uint32_t (*_lv_text_encoded_next)(const char *, uint32_t *)
+uint32_t (*_lv_text_encoded_prev)(const char *, uint32_t *)
+uint32_t (*_lv_text_encoded_get_byte_id)(const char *, uint32_t)
+uint32_t (*_lv_text_encoded_get_char_id)(const char *, uint32_t)
+uint32_t (*_lv_text_get_encoded_length)(const char *)
+
 // ../../lvgl/src/misc/lv_timer.h
 uint32_t lv_timer_handler(void)
 static inline uint32_t lv_timer_handler_run_in_period(uint32_t period)
@@ -1475,4 +1488,5 @@ bool lv_theme_haspmota_is_inited(void)
 void be_load_lvgl_classes(bvm *vm)
 void lv_image_set_tasmota_logo(lv_obj_t * img)
 lv_style_t * lv_span_get_style(lv_span_t * span)
+lv_area_t * lv_bar_get_indic_area(lv_obj_t * bar)
 

@@ -850,6 +850,7 @@ extern int lvbe_arc_set_value(bvm *vm);
 
 /* `lv_bar` external functions definitions */
 extern int lvbe_bar_create(bvm *vm);
+extern int lvbe_bar_get_indic_area(bvm *vm);
 extern int lvbe_bar_get_max_value(bvm *vm);
 extern int lvbe_bar_get_min_value(bvm *vm);
 extern int lvbe_bar_get_mode(bvm *vm);

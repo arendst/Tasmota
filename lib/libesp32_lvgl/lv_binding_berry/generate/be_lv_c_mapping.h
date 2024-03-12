@@ -839,6 +839,7 @@ const be_ntv_func_def_t lv_arc_func[] = {
 /* `lv_bar` methods */
 #ifdef BE_LV_WIDGET_BAR
 const be_ntv_func_def_t lv_bar_func[] = {
+  { "get_indic_area", { (const void*) &lv_bar_get_indic_area, "lv.area", "(lv.obj)" } },
   { "get_max_value", { (const void*) &lv_bar_get_max_value, "i", "(lv.obj)" } },
   { "get_min_value", { (const void*) &lv_bar_get_min_value, "i", "(lv.obj)" } },
   { "get_mode", { (const void*) &lv_bar_get_mode, "i", "(lv.obj)" } },

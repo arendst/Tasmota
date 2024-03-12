@@ -250,6 +250,7 @@ class type_mapper_class:
     "lv_vector_dsc_t",            # see later if we need this
     "lv_point_precise_t",         # see later if we need this
     "void **",                    # edge case of lv_animimg_get_src()
+    "va_list",
     "lv_matrix_t *",
     "lv_event_list_t *",
     "lv_style_value_t *",
@@ -338,6 +339,7 @@ class type_mapper_class:
     "lv_style_res_t": "i",
     # LVGL 9
     "lv_image_align_t": "i",
+    "lv_text_flag_t": "i",
     "lv_display_rotation_t": "i",
     "lv_color_format_t": "i",
     "lv_value_precise_t": "i",

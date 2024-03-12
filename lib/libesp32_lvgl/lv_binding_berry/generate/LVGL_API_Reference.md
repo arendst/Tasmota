@@ -132,6 +132,8 @@ style_prop_get_default|int|int|[lv_style_prop_get_default](https://docs.lvgl.io/
 style_prop_has_flag|int, int|bool|[lv_style_prop_has_flag](https://docs.lvgl.io/9.0/search.html?q=lv_style_prop_has_flag)
 style_register_prop|int|int|[lv_style_register_prop](https://docs.lvgl.io/9.0/search.html?q=lv_style_register_prop)
 task_handler||int|[lv_task_handler](https://docs.lvgl.io/9.0/search.html?q=lv_task_handler)
+text_get_size|comptr, string, lv.font, int, int, int, int||[lv_text_get_size](https://docs.lvgl.io/9.0/search.html?q=lv_text_get_size)
+text_get_width|string, int, lv.font, int|int|[lv_text_get_width](https://docs.lvgl.io/9.0/search.html?q=lv_text_get_width)
 theme_apply|lv.obj||[lv_theme_apply](https://docs.lvgl.io/9.0/search.html?q=lv_theme_apply)
 theme_get_color_primary|lv.obj|lv.color|[lv_theme_get_color_primary](https://docs.lvgl.io/9.0/search.html?q=lv_theme_get_color_primary)
 theme_get_color_secondary|lv.obj|lv.color|[lv_theme_get_color_secondary](https://docs.lvgl.io/9.0/search.html?q=lv_theme_get_color_secondary)
@@ -1017,6 +1019,7 @@ set_value|int||[lv_arc_set_value](https://docs.lvgl.io/9.0/search.html?q=lv_arc_
 
 Method|Arguments|Return type|LVGL equivalent
 :---|:---|:---|:---
+get_indic_area||lv.area|[lv_bar_get_indic_area](https://docs.lvgl.io/9.0/search.html?q=lv_bar_get_indic_area)
 get_max_value||int|[lv_bar_get_max_value](https://docs.lvgl.io/9.0/search.html?q=lv_bar_get_max_value)
 get_min_value||int|[lv_bar_get_min_value](https://docs.lvgl.io/9.0/search.html?q=lv_bar_get_min_value)
 get_mode||int|[lv_bar_get_mode](https://docs.lvgl.io/9.0/search.html?q=lv_bar_get_mode)
