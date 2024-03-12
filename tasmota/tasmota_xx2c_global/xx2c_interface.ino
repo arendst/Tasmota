@@ -406,7 +406,15 @@ const uint8_t kI2cList[] = {
 #endif
 
 #ifdef XI2C_96
-  XI2C_96
+  XI2C_96,
+#endif
+
+#ifdef XI2C_97
+  XI2C_97,
+#endif
+
+#ifdef XI2C_98
+  XI2C_98
 #endif
 };
 

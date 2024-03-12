@@ -52,7 +52,6 @@ void MS5837init(void) {
       I2cSetActiveFound(MS5837_ADDR, "MS5837");
     }
   }
-  AddLog(LOG_LEVEL_DEBUG, PSTR("BME: Gas variant %d"), bme_dev[bmp_idx].variant_id);
 }
 
 #ifdef USE_WEBSERVER
@@ -75,9 +74,11 @@ void MS5837Show(bool json) {
       WSContentSend_PD(HTTP_SNS_MS5837, pressure_str, temperature_str);
 #endif  // USE_WEBSERVER
     }
+  AddLog(LOG_LEVEL_DEBUG, PSTR("BMP Pressure: %d"), ConvertPressure(bmp_sensors[1].bmp_pressure));
   if (I2cEnabled(XI2C_10)) {
-    pressure_delta = sensor_ms5837.pressure() - bmp_sensors[0].bmp_pressure;
-    inches_water = pressure_delta*0.401463078662;
+    float pressure_delta = sensor_ms5837.pressure() - ConvertPressure(bmp_sensors[1].bmp_pressure);
+    float inches_water = pressure_delta*0.401463078662;
+      AddLog(LOG_LEVEL_DEBUG, PSTR("Pressure Delta: %d | Inches Water: %d"), pressure_delta, inches_water);
   }
 }
 
