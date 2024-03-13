@@ -993,6 +993,7 @@ All notable changes to this project will be documented in this file.
 - DNS lookup for .local domains (#16273)
 - Button response delay regression from v12.0.2.4 (#16319)
 - Lost module name in GUI regression from v12.0.2.4 - 20220803 (#16324)
+- LVGL fix descriptors Berry mapping
 
 ## [12.1.0.1] 20220825
 ### Added
