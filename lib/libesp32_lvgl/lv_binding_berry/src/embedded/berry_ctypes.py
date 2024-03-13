@@ -310,7 +310,7 @@ class structure:
 
   #- ensure alignment to 1/2/4 bytes -#
   def align(self, n):
-    if n == 3:  n = 4           # 3 bytes are aligned to 4 byest boundaries
+    if n == 3:  n = 1           # 3 bytes are aligned to 4 byest boundaries
     if n != 1 and n != 2 and n != 4:
       raise Exception(f"acceptable values are 1/2/3/4 {n=}")
 

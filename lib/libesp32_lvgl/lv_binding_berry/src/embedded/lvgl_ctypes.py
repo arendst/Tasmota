@@ -96,8 +96,16 @@ lv_gradient_stop = ct.structure(lv_gradient_stop, "lv_gradient_stop")
 #                                                         * Any of LV_GRAD_DIR_HOR, LV_GRAD_DIR_VER, LV_GRAD_DIR_NONE */
 # } lv_grad_dsc_t;
 lv_grad_dsc = [            # valid LVGL9
-    [lv_gradient_stop, "stops_0"],
-    [lv_gradient_stop, "stops_1"],
+    # since it's an array and not two structures, we need to explicitly unroll it here or the alignment is wrong
+    # [lv_gradient_stop, "stops_0"],
+    [lv_color, "stops_0_color"],
+    [lv_opa, "stops_0_opa"],
+    [uint8_t, "stops_0_frac"],
+    # [lv_gradient_stop, "stops_1"],
+    [lv_color, "stops_1_color"],
+    [lv_opa, "stops_1_opa"],
+    [uint8_t, "stops_1_frac"],
+    
     [uint8_t, "stops_count"],
     [uint8_t_3, "dir"],
 ]
