@@ -901,20 +901,6 @@ extern int lvbe_theme_create(bvm *vm);
 """)
 
 # expose all extern definitions:
-# Ex:
-#
-# /* `lv_canvas` external functions definitions */
-# extern int lvbe_canvas_create(bvm *vm);
-# extern int lvbe_canvas_set_buffer(bvm *vm);
-# ...
-#
-for subtype, flv in lv.items():
-  print(f"/* `lv_{subtype}` external functions definitions */")
-  for f in sorted(flv, key=lambda x: x.be_name):
-    print(f"extern int {f.c_func_name}(bvm *vm);")
-  
-  print()
-
 for subtype, flv in lv.items():
   print(f"""extern int be_ntv_lv_{subtype}_init(bvm *vm);""")
 
