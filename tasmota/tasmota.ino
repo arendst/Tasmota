@@ -401,7 +401,6 @@ struct TasmotaGlobal_t {
   uint8_t module_type;                      // Current copy of Settings->module or user template type
   uint8_t emulated_module_type;             // Emulated module type as requested by ESP32
   uint8_t last_source;                      // Last command source
-  uint8_t last_command_source;              // Last command source
   uint8_t shutters_present;                 // Number of actual define shutters
   uint8_t discovery_counter;                // Delayed discovery counter
   uint8_t power_on_delay;                   // Delay relay power on to reduce power surge (SetOption47)

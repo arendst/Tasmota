@@ -1245,11 +1245,12 @@ bool TuyaSetPower(void)
   uint8_t dev = TasmotaGlobal.active_device-1;
   uint8_t value = bitRead(rpower, dev) ^ bitRead(TasmotaGlobal.rel_inverted, dev);
 
-  if (source != SRC_SWITCH && TuyaSerial && dpid) {  // ignore to prevent loop from pushing state from faceplate interaction
+  // Ignore the command if the source is SRC_SWITCH, to prevent loop from pushing state
+  // from faceplate interaction. (This is probably unnecessary, as we store the latest state
+  // and will not update it with the same value.)
+  if (source != SRC_SWITCH && TuyaSerial && dpid) {
     TuyaSendBool(dpid, value);
     AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: post rpower%d v%d dp%d s%d d%d"), rpower, value, dpid, source, dev);
-    // no longer needed as commands wait for ack.
-    //delay(20); // Hack when power is off and dimmer is set then both commands go too soon to Serial out.
     status = true;
   } else {
     AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: rpower%d v%d dp%d ignored s%d d%d"), rpower, value, dpid, source, dev);
@@ -1265,11 +1266,6 @@ bool TuyaSetChannels(void)
   char hex_char[15];
   bool noupd = false;
 
-  if ((SRC_SWITCH == TasmotaGlobal.last_source) || (SRC_SWITCH == TasmotaGlobal.last_command_source)) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: setchan disbl SRC_SWITCH"));
-    // but pretend we did set them
-    return true;
-  }
   AddLog(LOG_LEVEL_DEBUG, PSTR("TYA: setchan"));
 
   bool LightMode = TuyaGetDpId(TUYA_MCU_FUNC_MODESET) != 0;
@@ -1619,12 +1615,12 @@ void TuyaProcessRxedDP(uint8_t dpid, uint8_t type, uint8_t *data, int dpDataLen)
           AddLog(LOG_LEVEL_DEBUG, PSTR("T:fn%d Relay%d-->M%s T%s"), fnId, fnId - TUYA_MCU_FUNC_REL1 + 1, value?"On":"Off",bitRead(TasmotaGlobal.power, fnId - TUYA_MCU_FUNC_REL1)?"On":"Off");
           if (value != bitRead(TasmotaGlobal.power, fnId - TUYA_MCU_FUNC_REL1)) {
             if (!value) { PowerOff = true; }
-            ExecuteCommandPower(fnId - TUYA_MCU_FUNC_REL1 + 1, value, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
+            ExecuteCommandPower(fnId - TUYA_MCU_FUNC_REL1 + 1, value, SRC_SWITCH);
           }
         } else if (fnId >= TUYA_MCU_FUNC_REL1_INV && fnId <= TUYA_MCU_FUNC_REL8_INV) {
           AddLog(LOG_LEVEL_DEBUG, PSTR("T:fn%d Relay%d-Inv-->M%s T%s"), fnId, fnId - TUYA_MCU_FUNC_REL1_INV + 1, value?"Off":"On",bitRead(TasmotaGlobal.power, fnId - TUYA_MCU_FUNC_REL1_INV) ^ 1?"Off":"On");
           if (value != bitRead(TasmotaGlobal.power, fnId - TUYA_MCU_FUNC_REL1_INV) ^ 1) {
-            ExecuteCommandPower(fnId - TUYA_MCU_FUNC_REL1_INV + 1, value ^ 1, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
+            ExecuteCommandPower(fnId - TUYA_MCU_FUNC_REL1_INV + 1, value ^ 1, SRC_SWITCH);
             if (value) { PowerOff = true; }
           }
         } else if (fnId >= TUYA_MCU_FUNC_SWT1 && fnId <= TUYA_MCU_FUNC_SWT4) {
