@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 20.02.2024
+ * Updated until v9.4.0.1 - Last update 14.03.2024
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -532,27 +532,27 @@
 #define D_CONFIGURE_DALI                  "DALI - Config"
 
 // xdrv_03_energy.ino
-#define D_ENERGY_TODAY      "Energia - oggi"
-#define D_ENERGY_YESTERDAY  "Energia  - ieri"
-#define D_ENERGY_TOTAL      "Energia - totale"
+#define D_ENERGY_TODAY                    "Energia - oggi"
+#define D_ENERGY_YESTERDAY                "Energia - ieri"
+#define D_ENERGY_TOTAL                    "Energia - totale"
 
 // xsns_100_ina3221.ino
 #define  D_UNIT_CHARGE                    "Ah"
-#define  D_CHARGE                         "Charge"    
-#define  D_ENERGY                         "Energy"
+#define  D_CHARGE                         "Carica"
+#define  D_ENERGY                         "Energia"
 
 // xdrv_27_shutter.ino
-#define D_OPEN              "Apri"
-#define D_CLOSE             "Chiudi"
-#define D_DOMOTICZ_SHUTTER  "Serranda"
+#define D_OPEN                            "Apri"
+#define D_CLOSE                           "Chiudi"
+#define D_DOMOTICZ_SHUTTER                "Serranda"
 
 // xdrv_28_pcf8574.ino
-#define D_CONFIGURE_PCF8574   "PCF8574"
-#define D_PCF8574_PARAMETERS  "Parametri PCF8574"
-#define D_INVERT_PORTS        "Inverti porte"
-#define D_DEVICE              "Dispositivo"
-#define D_DEVICE_INPUT        "Ingresso"
-#define D_DEVICE_OUTPUT       "Uscita"
+#define D_CONFIGURE_PCF8574               "PCF8574"
+#define D_PCF8574_PARAMETERS              "Parametri PCF8574"
+#define D_INVERT_PORTS                    "Inverti porte"
+#define D_DEVICE                          "Dispositivo"
+#define D_DEVICE_INPUT                    "Ingresso"
+#define D_DEVICE_OUTPUT                   "Uscita"
 
 // xdrv_39_thermostat.ino, xdrv_85_esp32_ble_eq3_trv.ino
 #define D_THERMOSTAT                  "Termostato"
