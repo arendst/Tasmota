@@ -24,16 +24,16 @@
 
 #define XDRV_06                   6
 
-const uint32_t SFB_TIME_AVOID_DUPLICATE = 2000;  // Milliseconds
+#define SFB_TIME_AVOID_DUPLICATE  2000  // Milliseconds
 
 enum SonoffBridgeCommands {
   CMND_RFSYNC, CMND_RFLOW, CMND_RFHIGH, CMND_RFHOST, CMND_RFCODE };
 
-const char kSonoffBridgeCommands[] PROGMEM = "|"  // No prefix
-  D_CMND_RFSYNC "|" D_CMND_RFLOW "|" D_CMND_RFHIGH "|" D_CMND_RFHOST "|" D_CMND_RFCODE "|" D_CMND_RFKEY "|" D_CMND_RFRAW;
+const char kSonoffBridgeCommands[] PROGMEM = D_CMND_PREFIX_RF "|"  // Prefix
+  D_CMND_RFSYNC "|" D_CMND_RFLOW "|" D_CMND_RFHIGH "|" D_CMND_RFHOST "|" D_CMND_RFCODE "|" D_CMND_RFKEY "|" D_CMND_RFRAW "|" D_CMND_RFTIMEOUT;
 
 void (* const SonoffBridgeCommand[])(void) PROGMEM = {
-  &CmndRfBridge, &CmndRfBridge, &CmndRfBridge, &CmndRfBridge, &CmndRfBridge, &CmndRfKey, &CmndRfRaw };
+  &CmndRfBridge, &CmndRfBridge, &CmndRfBridge, &CmndRfBridge, &CmndRfBridge, &CmndRfKey, &CmndRfRaw, &CmndRfTimeout };
 
 struct SONOFFBRIDGE {
   uint32_t last_received_id = 0;
@@ -165,7 +165,7 @@ void SonoffBridgeReceivedRaw(void)
 
   if (0xB1 == TasmotaGlobal.serial_in_buffer[1]) { buckets = TasmotaGlobal.serial_in_buffer[2] << 1; }  // Bucket sniffing
 
-  ResponseTime_P(PSTR(",\"" D_CMND_RFRAW "\":{\"" D_JSON_DATA "\":\""));
+  ResponseTime_P(PSTR(",\"" D_CMND_PREFIX_RF D_CMND_RFRAW "\":{\"" D_JSON_DATA "\":\""));
   for (uint32_t i = 0; i < TasmotaGlobal.serial_in_byte_counter; i++) {
     ResponseAppend_P(PSTR("%02X"), TasmotaGlobal.serial_in_buffer[i]);
     if (0xB1 == TasmotaGlobal.serial_in_buffer[1]) {
@@ -176,7 +176,7 @@ void SonoffBridgeReceivedRaw(void)
     }
   }
   ResponseAppend_P(PSTR("\"}}"));
-  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_CMND_RFRAW));
+  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_CMND_PREFIX_RF D_CMND_RFRAW));
 }
 
 /********************************************************************************************/
@@ -184,8 +184,8 @@ void SonoffBridgeReceivedRaw(void)
 void SonoffBridgeLearnFailed(void)
 {
   SnfBridge.learn_active = 0;
-  Response_P(S_JSON_COMMAND_INDEX_SVALUE, D_CMND_RFKEY, SnfBridge.learn_key, D_JSON_LEARN_FAILED);
-  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_RFKEY));
+  Response_P(S_JSON_COMMAND_INDEX_SVALUE, D_CMND_PREFIX_RF D_CMND_RFKEY, SnfBridge.learn_key, D_JSON_LEARN_FAILED);
+  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_PREFIX_RF D_CMND_RFKEY));
 }
 
 void SonoffBridgeReceived(void)
@@ -210,8 +210,8 @@ void SonoffBridgeReceived(void)
       for (uint32_t i = 0; i < 9; i++) {
         Settings->rf_code[SnfBridge.learn_key][i] = TasmotaGlobal.serial_in_buffer[i +1];
       }
-      Response_P(S_JSON_COMMAND_INDEX_SVALUE, D_CMND_RFKEY, SnfBridge.learn_key, D_JSON_LEARNED);
-      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_RFKEY));
+      Response_P(S_JSON_COMMAND_INDEX_SVALUE, D_CMND_PREFIX_RF D_CMND_RFKEY, SnfBridge.learn_key, D_JSON_LEARNED);
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_PREFIX_RF D_CMND_RFKEY));
     } else {
       SonoffBridgeLearnFailed();
     }
@@ -226,7 +226,7 @@ void SonoffBridgeReceived(void)
       received_id = TasmotaGlobal.serial_in_buffer[7] << 16 | TasmotaGlobal.serial_in_buffer[8] << 8 | TasmotaGlobal.serial_in_buffer[9];
 
       unsigned long now = millis();
-      if (!((received_id == SnfBridge.last_received_id) && (now - SnfBridge.last_time < SFB_TIME_AVOID_DUPLICATE))) {
+      if (!((received_id == SnfBridge.last_received_id) && (now - SnfBridge.last_time < Settings->rf_duplicate_time))) {
         SnfBridge.last_received_id = received_id;
         SnfBridge.last_time = now;
         strncpy_P(rfkey, PSTR("\"" D_JSON_NONE "\""), sizeof(rfkey));
@@ -244,7 +244,7 @@ void SonoffBridgeReceived(void)
         } else {
           snprintf_P(stemp, sizeof(stemp), PSTR("\"%06X\""), received_id);
         }
-        ResponseTime_P(PSTR(",\"" D_JSON_RFRECEIVED "\":{\"" D_JSON_SYNC "\":%d,\"" D_JSON_LOW "\":%d,\"" D_JSON_HIGH "\":%d,\"" D_JSON_DATA "\":%s,\"" D_CMND_RFKEY "\":%s}}"),
+        ResponseTime_P(PSTR(",\"" D_JSON_RFRECEIVED "\":{\"" D_JSON_SYNC "\":%d,\"" D_JSON_LOW "\":%d,\"" D_JSON_HIGH "\":%d,\"" D_JSON_DATA "\":%s,\"" D_CMND_PREFIX_RF D_CMND_RFKEY "\":%s}}"),
           sync_time, low_time, high_time, stemp, rfkey);
         MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_RFRECEIVED));
   #ifdef USE_DOMOTICZ
@@ -504,6 +504,13 @@ void CmndRfRaw(void)
   ResponseCmndStateText(SnfBridge.receive_raw_flag);
 }
 
+void CmndRfTimeout(void) {
+  if (XdrvMailbox.payload >= 10) {
+    Settings->rf_duplicate_time = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(Settings->rf_duplicate_time);
+}
+
 #ifdef USE_WEBSERVER
 
 void SonoffBridgeAddButton(void) {
@@ -527,7 +534,7 @@ void SonoffBridgeWebGetArg(void) {
   WebGetArg(PSTR("k"), tmp, sizeof(tmp));  // 1 - 16 Pre defined RF keys
   if (strlen(tmp)) {
     char command[20];
-    snprintf_P(command, sizeof(command), PSTR(D_CMND_RFKEY "%s"), tmp);
+    snprintf_P(command, sizeof(command), PSTR(D_CMND_PREFIX_RF D_CMND_RFKEY "%s"), tmp);
     ExecuteWebCommand(command);
   }
 }
@@ -560,6 +567,9 @@ bool Xdrv06(uint32_t function)
         break;
 #endif  // USE_WEBSERVER
       case FUNC_INIT:
+        if (Settings->rf_duplicate_time < 10) {
+          Settings->rf_duplicate_time = SFB_TIME_AVOID_DUPLICATE;
+        }
         SnfBridge.receive_raw_flag = 0;
         SonoffBridgeSendCommand(0xA7);  // Stop reading RF signals enabling iTead default RF handling
         break;

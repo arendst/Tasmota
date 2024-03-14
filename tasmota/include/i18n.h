@@ -586,10 +586,11 @@
 #define D_JSON_IRRECEIVED "IrReceived"
 
 // Commands xdrv_06_snfbridge.ino
-#define D_CMND_RFCODE "RfCode"
-#define D_CMND_RFHIGH "RfHigh"
-#define D_CMND_RFHOST "RfHost"
-#define D_CMND_RFKEY "RfKey"
+#define D_CMND_PREFIX_RF "Rf"
+#define D_CMND_RFCODE "Code"
+#define D_CMND_RFHIGH "High"
+#define D_CMND_RFHOST "Host"
+#define D_CMND_RFKEY "Key"
   #define D_JSON_START_LEARNING "Start learning"
   #define D_JSON_SET_TO_DEFAULT "Set to default"
   #define D_JSON_DEFAULT_SENT "Default sent"
@@ -597,10 +598,11 @@
   #define D_JSON_LEARNING_ACTIVE "Learning active"
   #define D_JSON_LEARN_FAILED "Learn failed"
   #define D_JSON_LEARNED "Learned"
-#define D_CMND_RFLOW "RfLow"
-#define D_CMND_RFSYNC "RfSync"
+#define D_CMND_RFLOW "Low"
+#define D_CMND_RFSYNC "Sync"
   #define D_JSON_RFRECEIVED "RfReceived"
-#define D_CMND_RFRAW "RfRaw"
+#define D_CMND_RFRAW "Raw"
+#define D_CMND_RFTIMEOUT "Timeout"
 
 // Commands xdrv_08_serial_bridge.ino
 #define D_CMND_SSERIALSEND "SSerialSend"
