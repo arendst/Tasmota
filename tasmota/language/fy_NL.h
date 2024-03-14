@@ -536,6 +536,11 @@
 #define D_ENERGY_YESTERDAY "Konsumpsje juster"
 #define D_ENERGY_TOTAL "Konsumpsje totaal"
 
+// xsns_100_ina3221.ino
+#define  D_UNIT_CHARGE                    "Ah"
+#define  D_CHARGE                         "Charge"    
+#define  D_ENERGY                         "Energy"
+
 // xdrv_27_shutter.ino
 #define D_OPEN "Iepenje"
 #define D_CLOSE "Slute"

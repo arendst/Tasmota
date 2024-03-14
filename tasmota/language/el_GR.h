@@ -536,6 +536,11 @@
 #define D_ENERGY_YESTERDAY "Ενέργεια χθες"
 #define D_ENERGY_TOTAL "Ενέργεια συνολικά"
 
+// xsns_100_ina3221.ino
+#define  D_UNIT_CHARGE                    "Ah"
+#define  D_CHARGE                         "Charge"    
+#define  D_ENERGY                         "Energy"
+
 // xdrv_27_shutter.ino
 #define D_OPEN "Open"
 #define D_CLOSE "Close"

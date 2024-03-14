@@ -536,6 +536,11 @@
 #define D_ENERGY_YESTERDAY "Consumo energético de ontem"
 #define D_ENERGY_TOTAL "Consumo total de energia"
 
+// xsns_100_ina3221.ino
+#define  D_UNIT_CHARGE                    "Ah"
+#define  D_CHARGE                         "Charge"    
+#define  D_ENERGY                         "Energy"
+
 // xdrv_27_shutter.ino
 #define D_OPEN "Aberta"
 #define D_CLOSE "Fechada"

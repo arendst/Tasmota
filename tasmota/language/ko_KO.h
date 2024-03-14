@@ -536,6 +536,11 @@
 #define D_ENERGY_YESTERDAY "어제 전력 사용량"
 #define D_ENERGY_TOTAL "총 전력 사용량"
 
+// xsns_100_ina3221.ino
+#define  D_UNIT_CHARGE                    "Ah"
+#define  D_CHARGE                         "Charge"    
+#define  D_ENERGY                         "Energy"
+
 // xdrv_27_shutter.ino
 #define D_OPEN "열기"
 #define D_CLOSE "닫기"
