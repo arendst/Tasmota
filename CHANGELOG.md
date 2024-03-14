@@ -9,25 +9,25 @@ All notable changes to this project will be documented in this file.
 - HASPmota support for spangroup (styled text) (#20852)
 - HASPmota support for led (#20857)
 - HASPmota improve arc and img (#20894)
-- Berry add `string.startswith`, `string.endswith` and `%q` format
-- LVGL add `lv.draw_label_dsc` and `lv_bar.get_indic_area`
+- Berry `string.startswith`, `string.endswith` and `%q` format (#20909)
+- LVGL `lv.draw_label_dsc` and `lv_bar.get_indic_area` (#20936)
 
 ### Breaking Changed
 - Drop support for old (insecure) fingerprint format (#20842)
 - LVGL remove embedded typicons font (#20872)
-- LVGL remove `textarea` and `spinbox` from binaries
+- LVGL remove `textarea` and `spinbox` from binaries (#20916)
 
 ### Changed
 - LVGL optimize fonts and add icons (#20880)
 - LVGL improved readability of montserrat-10 (#20900)
-- HASPmota moved to a distinct library `lv_haspmota`
-- HASPmota solidify server-side
+- HASPmota moved to a distinct library `lv_haspmota` (#20929)
+- HASPmota solidify server-side (#20938)
 
 ### Fixed
 - Berry bug when parsing ternary operator (#20839)
 - HASPmota widgets line, btnmatrix, qrcode, bar, checkbox (#20881)
 - Filesystem save of JSON settings data
-- Berry fix walrus with member or index
+- Berry fix walrus with member or index (#20939)
 
 ### Removed
 

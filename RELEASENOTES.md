@@ -126,13 +126,16 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - QMC5883l check for overflow and scale reading [#20643](https://github.com/arendst/Tasmota/issues/20643)
 - Berry explicit error log when memory allocation fails [#20807](https://github.com/arendst/Tasmota/issues/20807)
 - Berry `path.rename()` [#20840](https://github.com/arendst/Tasmota/issues/20840)
+- Berry `string.startswith`, `string.endswith` and `%q` format [#20909](https://github.com/arendst/Tasmota/issues/20909)
 - LVGL and HASPmota typicons font [#20742](https://github.com/arendst/Tasmota/issues/20742)
+- LVGL `lv.draw_label_dsc` and `lv_bar.get_indic_area` [#20936](https://github.com/arendst/Tasmota/issues/20936)
 - HASPmota `p<x>b<y>.delete` to delete an object [#20735](https://github.com/arendst/Tasmota/issues/20735)
 - HASPmota improve arc and img [#20894](https://github.com/arendst/Tasmota/issues/20894)
 
 ### Breaking Changed
 - Drop support for old (insecure) fingerprint format [#20842](https://github.com/arendst/Tasmota/issues/20842)
 - LVGL remove embedded typicons font [#20872](https://github.com/arendst/Tasmota/issues/20872)
+- LVGL remove `textarea` and `spinbox` from binaries [#20916](https://github.com/arendst/Tasmota/issues/20916)
 
 ### Changed
 - ESP32 Core3 platform update from 2024.01.12 to 2024.02.10 [#20730](https://github.com/arendst/Tasmota/issues/20730)
@@ -147,6 +150,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - HASPmota more attributes [#20744](https://github.com/arendst/Tasmota/issues/20744)
 - HASPmota support for spangroup (styled text) [#20852](https://github.com/arendst/Tasmota/issues/20852)
 - HASPmota support for led [#20857](https://github.com/arendst/Tasmota/issues/20857)
+- HASPmota moved to a distinct library `lv_haspmota` [#20929](https://github.com/arendst/Tasmota/issues/20929)
+- HASPmota solidify server-side [#20938](https://github.com/arendst/Tasmota/issues/20938)
 
 ### Fixed
 - Filesystem save of JSON settings data
@@ -154,6 +159,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 PWM activity on unconfigured PWM GPIOs [#20732](https://github.com/arendst/Tasmota/issues/20732)
 - Berry Memory leak in `import re` [#20823](https://github.com/arendst/Tasmota/issues/20823)
 - Berry bug when parsing ternary operator [#20839](https://github.com/arendst/Tasmota/issues/20839)
+- Berry fix walrus with member or index [#20939](https://github.com/arendst/Tasmota/issues/20939)
 - HASPmota PSRAM memory leak [#20818](https://github.com/arendst/Tasmota/issues/20818)
 - HASPmota widgets line, btnmatrix, qrcode, bar, checkbox [#20881](https://github.com/arendst/Tasmota/issues/20881)
 
