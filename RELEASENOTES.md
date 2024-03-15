@@ -71,7 +71,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 Above binaries are also available as gzipped version allowing faster uploads.
 
 Latest released binaries can be downloaded from
-- https://github.com/arendst/Tasmota-firmware/tree/main/release-firmware
+- https://github.com/arendst/Tasmota-firmware/tree/firmware/release-firmware
 - http://ota.tasmota.com/tasmota/release
 
 Historical binaries can be downloaded from
@@ -102,7 +102,7 @@ The following binary downloads have been compiled with ESP32/Arduino library cor
 - **tasmota32c6cdc-arduino30.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C6 with serial over embedded USB CDC or hardware USB and 4M+ flash.
 
 Latest released binaries can be downloaded from
-- https://github.com/arendst/Tasmota-firmware/tree/main/release-firmware
+- https://github.com/arendst/Tasmota-firmware/tree/firmware/release-firmware
 - https://ota.tasmota.com/tasmota32/release
 
 Historical binaries can be downloaded from
