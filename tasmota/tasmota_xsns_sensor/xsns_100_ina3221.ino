@@ -220,7 +220,7 @@ bool Ina3221SetConfig(uint8_t addr)
   // write default configuration
   uint16_t config = INA3221_ENABLE_MASK |
                     INA3221_CONFIG_INIT |
-                    INA3221_MODE_BUS_VOLTAGE_CONTINUOUS;
+                    INA3221_MODE_SHUNT_AND_BUS_CONTINOUS;
   DEBUG_SENSOR_LOG(PSTR(D_INA3221 ":SetConfig: addr:0x%02X, config=0x%04X"), addr, config);
   // Set Config register
   if (!I2cWrite16(addr, INA3221_REG_CONFIG, config))
