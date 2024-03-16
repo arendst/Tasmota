@@ -20,6 +20,7 @@ extern int lv_x_member(bvm *vm);
 extern int lv_x_tostring(bvm *vm);       // generic function
 
 extern int lv_be_style_init(bvm *vm);
+extern int lv_be_style_del(bvm *vm);
 extern int lv_be_anim_init(bvm *vm);
 extern int lv_x_tostring(bvm *vm);
 
@@ -62,6 +63,7 @@ extern int be_ntv_lv_menu_init(bvm *vm);
 extern int be_ntv_lv_msgbox_init(bvm *vm);
 extern int be_ntv_lv_roller_init(bvm *vm);
 extern int be_ntv_lv_scale_init(bvm *vm);
+extern int be_ntv_lv_scale_section_init(bvm *vm);
 extern int be_ntv_lv_slider_init(bvm *vm);
 extern int be_ntv_lv_span_init(bvm *vm);
 extern int be_ntv_lv_spangroup_init(bvm *vm);
@@ -103,6 +105,7 @@ extern const bclass be_class_lv_obj;
 extern const bclass be_class_lv_qrcode;
 extern const bclass be_class_lv_roller;
 extern const bclass be_class_lv_scale;
+extern const bclass be_class_lv_scale_section;
 extern const bclass be_class_lv_slider;
 extern const bclass be_class_lv_span;
 extern const bclass be_class_lv_spangroup;
@@ -126,6 +129,7 @@ extern const bclass be_class_lv_timer;
 class be_class_lv_style (scope: global, name: lv_style, strings: weak) {
     _p, var
     init, func(lv_be_style_init)
+    del, func(lv_be_style_del)
     tostring, func(lv_x_tostring)
     member, func(lv_x_member)
 }
@@ -504,6 +508,16 @@ class be_class_lv_roller (scope: global, name: lv_roller, super: be_class_lv_obj
 class be_class_lv_scale (scope: global, name: lv_scale, super: be_class_lv_obj, strings: weak) {
     init, func(be_ntv_lv_scale_init)
     _class, comptr(&lv_scale_class)
+}
+@const_object_info_end */
+
+/********************************************************************
+** Solidified class: lv_scale_section
+********************************************************************/
+#include "be_fixed_be_class_lv_scale_section.h"
+/* @const_object_info_begin
+class be_class_lv_scale_section (scope: global, name: lv_scale_section, super: be_class_lv_obj, strings: weak) {
+    init, func(be_ntv_lv_scale_section_init)
 }
 @const_object_info_end */
 

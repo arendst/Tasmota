@@ -1489,4 +1489,6 @@ void be_load_lvgl_classes(bvm *vm)
 void lv_image_set_tasmota_logo(lv_obj_t * img)
 lv_style_t * lv_span_get_style(lv_span_t * span)
 lv_area_t * lv_bar_get_indic_area(lv_obj_t * bar)
+lv_point_t * lv_line_get_points(lv_obj_t * line)
+int lv_line_get_points_num(lv_obj_t * line)
 

@@ -35,9 +35,10 @@ lv_widgets = ['obj',
               'dropdown', 'image', 'label', 'line', 'roller', 'slider',
               'switch', 'table', 'textarea',
               # added in LVGL 9
-              'spangroup', 'span', 'scale',
+              'spangroup', 'span',
+              'scale_section', 'scale',   # 'scale_section' needs to be before 'scale' to capture more selective first
               ]
-lv_widgets_no_class = ['span']      # widgets that don't have a lv_obj class
+lv_widgets_no_class = ['span', 'scale_section']      # widgets that don't have a lv_obj class
 # extra widgets
 lv_widgets = lv_widgets + [ 'chart', 'imagebutton', 'led', 'msgbox', 'spinbox', 'spinner', 'keyboard', 'tabview', 'tileview' , 'list',
                             'animimg', 'calendar', 'menu']
@@ -349,7 +350,6 @@ class type_mapper_class:
     "lv_span_mode_t": "i",
     "lv_vector_path_t *": "c",    # treat as opaque pointer
     "lv_vector_dsc_t *": "c",     # treat as opaque pointer
-    "lv_scale_section_t *": "c",  # treat as opaque pointer
     "lv_point_t *": "c",          # treat as opaque pointer
     "lv_hit_test_info_t *": "c",  # treat as opaque pointer
     "lv_screen_load_anim_t": "i",
@@ -424,6 +424,7 @@ class type_mapper_class:
     "lv_indev_t *": "lv_indev",
     "lv_point_t []": "lv_point_arr",
     "lv_span_t *": "lv_span",
+    "lv_scale_section_t *": "lv_scale_section",  # treat as opaque pointer
     # "lv_image_header_t *": "lv_image_header",
     "lv_image_dsc_t *": "lv_image_dsc",
     "lv_ts_calibration_t *": "lv_ts_calibration",
@@ -890,6 +891,7 @@ extern int lv_x_member(bvm *vm);
 extern int lv_x_tostring(bvm *vm);       // generic function
 
 extern int lv_be_style_init(bvm *vm);
+extern int lv_be_style_del(bvm *vm);
 extern int lv_be_anim_init(bvm *vm);
 extern int lv_x_tostring(bvm *vm);
 
@@ -922,6 +924,7 @@ print("""
 class be_class_lv_style (scope: global, name: lv_style, strings: weak) {
     _p, var
     init, func(lv_be_style_init)
+    del, func(lv_be_style_del)
     tostring, func(lv_x_tostring)
     member, func(lv_x_member)
 }
