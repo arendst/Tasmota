@@ -1074,6 +1074,8 @@ const be_ntv_func_def_t lv_led_func[] = {
 /* `lv_line` methods */
 #ifdef BE_LV_WIDGET_LINE
 const be_ntv_func_def_t lv_line_func[] = {
+  { "get_points", { (const void*) &lv_line_get_points, "c", "(lv.obj)" } },
+  { "get_points_num", { (const void*) &lv_line_get_points_num, "i", "(lv.obj)" } },
   { "get_y_invert", { (const void*) &lv_line_get_y_invert, "b", "(lv.obj)" } },
   { "set_points", { (const void*) &lv_line_set_points, "", "(lv.obj)(lv.point_arr)i" } },
   { "set_y_invert", { (const void*) &lv_line_set_y_invert, "", "(lv.obj)b" } },
@@ -1149,7 +1151,7 @@ const be_ntv_func_def_t lv_roller_func[] = {
 /* `lv_scale` methods */
 #ifdef BE_LV_WIDGET_SCALE
 const be_ntv_func_def_t lv_scale_func[] = {
-  { "add_section", { (const void*) &lv_scale_add_section, "c", "(lv.obj)" } },
+  { "add_section", { (const void*) &lv_scale_add_section, "lv.scale_section", "(lv.obj)" } },
   { "get_angle_range", { (const void*) &lv_scale_get_angle_range, "i", "(lv.obj)" } },
   { "get_label_show", { (const void*) &lv_scale_get_label_show, "b", "(lv.obj)" } },
   { "get_major_tick_every", { (const void*) &lv_scale_get_major_tick_every, "i", "(lv.obj)" } },
@@ -1171,6 +1173,14 @@ const be_ntv_func_def_t lv_scale_func[] = {
   { "set_total_tick_count", { (const void*) &lv_scale_set_total_tick_count, "", "(lv.obj)i" } },
 };
 #endif // BE_LV_WIDGET_SCALE
+
+/* `lv_scale_section` methods */
+#ifdef BE_LV_WIDGET_SCALE_SECTION
+const be_ntv_func_def_t lv_scale_section_func[] = {
+  { "set_range", { (const void*) &lv_scale_section_set_range, "", "(lv.scale_section)ii" } },
+  { "set_style", { (const void*) &lv_scale_section_set_style, "", "(lv.scale_section)i(lv.style)" } },
+};
+#endif // BE_LV_WIDGET_SCALE_SECTION
 
 /* `lv_slider` methods */
 #ifdef BE_LV_WIDGET_SLIDER
@@ -1384,6 +1394,7 @@ extern const bclass be_class_lv_obj;
 extern const bclass be_class_lv_qrcode;
 extern const bclass be_class_lv_roller;
 extern const bclass be_class_lv_scale;
+extern const bclass be_class_lv_scale_section;
 extern const bclass be_class_lv_slider;
 extern const bclass be_class_lv_span;
 extern const bclass be_class_lv_spangroup;
@@ -1477,6 +1488,9 @@ const be_ntv_class_def_t lv_classes[] = {
 #ifdef BE_LV_WIDGET_SCALE
   { "lv_scale", &be_class_lv_scale, lv_scale_func, sizeof(lv_scale_func) / sizeof(lv_scale_func[0]) },
 #endif // BE_LV_WIDGET_SCALE
+#ifdef BE_LV_WIDGET_SCALE_SECTION
+  { "lv_scale_section", &be_class_lv_scale_section, lv_scale_section_func, sizeof(lv_scale_section_func) / sizeof(lv_scale_section_func[0]) },
+#endif // BE_LV_WIDGET_SCALE_SECTION
 #ifdef BE_LV_WIDGET_SLIDER
   { "lv_slider", &be_class_lv_slider, lv_slider_func, sizeof(lv_slider_func) / sizeof(lv_slider_func[0]) },
 #endif // BE_LV_WIDGET_SLIDER
@@ -1634,6 +1648,10 @@ const size_t lv_classes_size = sizeof(lv_classes) / sizeof(lv_classes[0]);
 #ifdef BE_LV_WIDGET_SCALE
   int be_ntv_lv_scale_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_scale_create, "+_p", "(lv.obj)"); }
 #endif // BE_LV_WIDGET_SCALE
+  /* `lv_scale_section` methods */
+#ifdef BE_LV_WIDGET_SCALE_SECTION
+  int be_ntv_lv_scale_section_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_scale_section_set_style, "+_p", "(lv.scale_section)i(lv.style)"); }
+#endif // BE_LV_WIDGET_SCALE_SECTION
   /* `lv_slider` methods */
 #ifdef BE_LV_WIDGET_SLIDER
   int be_ntv_lv_slider_init(bvm *vm)       { return be_call_c_func(vm, (void*) &lv_slider_create, "+_p", "(lv.obj)"); }

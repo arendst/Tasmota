@@ -139,8 +139,6 @@ const be_ntv_func_def_t lv_func[] = {
   { "point_swap", { (const void*) &lv_point_swap, "", "cc" } },
   { "point_transform", { (const void*) &lv_point_transform, "", "ciiicb" } },
   { "refr_now", { (const void*) &lv_refr_now, "", "(lv.display)" } },
-  { "scale_section_set_range", { (const void*) &lv_scale_section_set_range, "", "cii" } },
-  { "scale_section_set_style", { (const void*) &lv_scale_section_set_style, "", "ci(lv.style)" } },
   { "scr_act", { (const void*) &lv_screen_active, "lv.obj", "" } },
   { "scr_load", { (const void*) &lv_screen_load, "", "(lv.obj)" } },
   { "scr_load_anim", { (const void*) &lv_screen_load_anim, "", "(lv.obj)iiib" } },

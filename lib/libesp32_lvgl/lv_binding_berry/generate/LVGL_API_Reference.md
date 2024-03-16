@@ -117,8 +117,6 @@ point_set|comptr, int, int||[lv_point_set](https://docs.lvgl.io/9.0/search.html?
 point_swap|comptr, comptr||[lv_point_swap](https://docs.lvgl.io/9.0/search.html?q=lv_point_swap)
 point_transform|comptr, int, int, int, comptr, bool||[lv_point_transform](https://docs.lvgl.io/9.0/search.html?q=lv_point_transform)
 refr_now|lv.display||[lv_refr_now](https://docs.lvgl.io/9.0/search.html?q=lv_refr_now)
-scale_section_set_range|comptr, int, int||[lv_scale_section_set_range](https://docs.lvgl.io/9.0/search.html?q=lv_scale_section_set_range)
-scale_section_set_style|comptr, int, lv.style||[lv_scale_section_set_style](https://docs.lvgl.io/9.0/search.html?q=lv_scale_section_set_style)
 scr_act||lv.obj|[lv_screen_active](https://docs.lvgl.io/9.0/search.html?q=lv_screen_active)
 scr_load|lv.obj||[lv_screen_load](https://docs.lvgl.io/9.0/search.html?q=lv_screen_load)
 scr_load_anim|lv.obj, int, int, int, bool||[lv_screen_load_anim](https://docs.lvgl.io/9.0/search.html?q=lv_screen_load_anim)
@@ -1166,6 +1164,8 @@ set_text_static|string||[lv_label_set_text_static](https://docs.lvgl.io/9.0/sear
 
 Method|Arguments|Return type|LVGL equivalent
 :---|:---|:---|:---
+get_points||comptr|[lv_line_get_points](https://docs.lvgl.io/9.0/search.html?q=lv_line_get_points)
+get_points_num||int|[lv_line_get_points_num](https://docs.lvgl.io/9.0/search.html?q=lv_line_get_points_num)
 get_y_invert||bool|[lv_line_get_y_invert](https://docs.lvgl.io/9.0/search.html?q=lv_line_get_y_invert)
 set_points|lv.point_arr, int||[lv_line_set_points](https://docs.lvgl.io/9.0/search.html?q=lv_line_set_points)
 set_y_invert|bool||[lv_line_set_y_invert](https://docs.lvgl.io/9.0/search.html?q=lv_line_set_y_invert)
@@ -1303,11 +1303,18 @@ get_style||lv.style|[lv_span_get_style](https://docs.lvgl.io/9.0/search.html?q=l
 set_text|string||[lv_span_set_text](https://docs.lvgl.io/9.0/search.html?q=lv_span_set_text)
 set_text_static|string||[lv_span_set_text_static](https://docs.lvgl.io/9.0/search.html?q=lv_span_set_text_static)
 
+### widget `lv.scale_section`
+
+Method|Arguments|Return type|LVGL equivalent
+:---|:---|:---|:---
+set_range|int, int||[lv_scale_section_set_range](https://docs.lvgl.io/9.0/search.html?q=lv_scale_section_set_range)
+set_style|int, lv.style||[lv_scale_section_set_style](https://docs.lvgl.io/9.0/search.html?q=lv_scale_section_set_style)
+
 ### widget `lv.scale`
 
 Method|Arguments|Return type|LVGL equivalent
 :---|:---|:---|:---
-add_section||comptr|[lv_scale_add_section](https://docs.lvgl.io/9.0/search.html?q=lv_scale_add_section)
+add_section||lv.scale_section|[lv_scale_add_section](https://docs.lvgl.io/9.0/search.html?q=lv_scale_add_section)
 get_angle_range||int|[lv_scale_get_angle_range](https://docs.lvgl.io/9.0/search.html?q=lv_scale_get_angle_range)
 get_label_show||bool|[lv_scale_get_label_show](https://docs.lvgl.io/9.0/search.html?q=lv_scale_get_label_show)
 get_major_tick_every||int|[lv_scale_get_major_tick_every](https://docs.lvgl.io/9.0/search.html?q=lv_scale_get_major_tick_every)
