@@ -54,7 +54,7 @@ class lvh_root
   var id                                    # (int) object hasp id
   var _lv_obj                               # native lvgl object
   var _page                                 # parent page object
-  var _parent_lvh                               # parent HASPmota object if 'parentid' was set, or 'nil'
+  var _parent_lvh                           # parent HASPmota object if 'parentid' was set, or 'nil'
   var _meta                                 # free form metadata
 
   #====================================================================
@@ -96,6 +96,19 @@ class lvh_root
     return b
   end
 
+  #====================================================================
+  #  `delete` special attribute used to delete the object
+  #====================================================================
+  def set_delete(v)
+    raise "type_error", "you cannot assign to 'delete'"
+  end
+  def get_delete()
+    self.delete()
+  end
+  def delete()
+    # to be overriden
+  end
+ 
   #################################################################################
   # Parses a color attribute
   # 
@@ -612,10 +625,8 @@ class lvh_obj : lvh_root
   #====================================================================
   #  `delete` special attribute used to delete the object
   #====================================================================
-  def set_delete(v)
-    raise "type_error", "you cannot assign to 'delete'"
-  end
-  def get_delete()
+  # the actual delete method, overriden
+  def delete()
     # remove any rule
     self.remove_val_rule()
     self.remove_text_rule()
@@ -735,7 +746,7 @@ class lvh_obj : lvh_root
   end
 
   # mode
-  def set_mode(t)
+  def set_label_mode(t)
     var mode
     if    t == "expand" self._lv_obj.set_width(lv.SIZE_CONTENT)
     elif  t == "break"  mode = lv.LABEL_LONG_WRAP
@@ -749,7 +760,7 @@ class lvh_obj : lvh_root
       self._lv_label.set_long_mode(mode)
     end
   end
-  def get_mode()
+  def get_label_mode()
   end
 
   #====================================================================
@@ -890,8 +901,11 @@ class lvh_obj : lvh_root
   end
 
   def set_val(t)
+    import introspect
     self._val = t
-    self._lv_obj.set_value(t)
+    if introspect.contains(self._lv_obj, "set_value")
+      self._lv_obj.set_value(t)
+    end
   end
   def get_val()
     return self._lv_obj.get_value()
@@ -980,6 +994,12 @@ class lvh_obj : lvh_root
     import introspect
 
     if string.startswith(k, "set_") || string.startswith(k, "get_")   return end
+
+    # parse value in percentage
+    if string.endswith(k, "%")
+      k = k[0..-2]
+      v = lv.pct(int(v))
+    end
 
     # check if the attribute ends with 2 digits, if so remove the two suffix digits
     var style_modifier = nil
@@ -1427,6 +1447,16 @@ end
 class lvh_bar : lvh_obj
   static var _lv_class = lv.bar
   
+  def post_init()
+    super(self).post_init()
+    if isinstance(self._parent_lvh, self._page._oh.lvh_scale)
+      # if sub-object of scale, copy min and max
+      var min = self._parent_lvh._lv_obj.get_range_min_value()
+      var max = self._parent_lvh._lv_obj.get_range_max_value()
+      self._lv_obj.set_range(min, max)
+    end
+  end
+
   def set_val(t)
     self._val = t
     self._lv_obj.set_value(t, lv.ANIM_OFF)
@@ -1446,6 +1476,34 @@ class lvh_bar : lvh_obj
 end
 
 #====================================================================
+#  line
+#====================================================================
+#@ solidify:lvh_line,weak
+class lvh_line : lvh_obj
+  static var _lv_class = lv.line
+  var _lv_points          # needs to save to avoid garbage collection
+  # list of points
+  def set_points(t)
+    if isinstance(t, list)
+      var pts = []
+      for p: t
+        if (isinstance(p, list) && size(p) == 2)
+          var pt = lv.point()
+          pt.x = int(p[0])
+          pt.y = int(p[1])
+          pts.push(pt)
+        end
+      end
+      var pt_arr = lv.point_arr(pts)
+      self._lv_points = pt_arr
+      self._lv_obj.set_points(pt_arr, size(pts))
+    else
+      print(f"HSP: 'line' wrong format for 'points' {t}")
+    end
+  end
+end
+
+#====================================================================
 #  scale
 #====================================================================
 #@ solidify:lvh_scale,weak
@@ -1455,7 +1513,11 @@ class lvh_scale : lvh_obj
   var _options_arr                  # need to keep the reference alive to avoid GC
   
   def set_text_src(l)
-    if (isinstance(l, list))
+    if (isinstance(l, list) && size(l) > 0)
+      # check if the last element is empty, if not add an empty string
+      if size(l[-1]) > 0
+        l.push("")
+      end
       self._options = l
       self._options_arr = lv.str_arr(l)
       self._lv_obj.set_text_src(self._options_arr)
@@ -1478,8 +1540,185 @@ class lvh_scale : lvh_obj
   def get_max()
     return self._lv_obj.get_range_max_value()
   end
-
 end
+#====================================================================
+#  scale_section
+#====================================================================
+#@ solidify:lvh_scale_section,weak
+class lvh_scale_section : lvh_root
+  static var _lv_class = nil
+  var _style                          # style object
+  var _style10                        # style for LV_PART_INDICATOR
+  var _style30                        # style for LV_PART_ITEMS
+  var _min, _max
+
+  def post_init()
+    self._lv_obj = nil                # default to nil object, whatever it was initialized with
+    self._min = 0                     # default value by LVGL
+    self._max = 0                     # default value by LVGL
+    # check if it is the parent is a spangroup
+    if isinstance(self._parent_lvh, self._page._oh.lvh_scale)
+      # print(">>> GOOD")
+      self._lv_obj = self._parent_lvh._lv_obj.add_section()
+      self._style = lv.style()        # we create a specific lv.style object for this object
+      self._lv_obj.set_style(lv.PART_MAIN, self._style)
+      self._style10 = lv.style()        # we create a specific lv.style object for this object
+      self._lv_obj.set_style(lv.PART_INDICATOR, self._style10)
+      self._style30 = lv.style()        # we create a specific lv.style object for this object
+      self._lv_obj.set_style(lv.PART_ITEMS, self._style30)
+    else
+      print("HSP: 'scale_section' should have a parent of type 'scale'")
+    end
+    # super(self).post_init()         # call super - not needed for lvh_root
+  end
+
+  def set_min(t)
+    var min = int(t)
+    var max = self._max
+    if (max < min)  max = min   end
+    self.set_range(min, max)
+  end
+  def set_max(t)
+    var min = self._min
+    var max = int(t)
+    if (min > max)  min = max   end
+    self.set_range(min, max)
+  end
+  def set_range(min, max)
+    self._min = min
+    self._max = max
+    self._lv_obj.set_range(min, max)
+  end
+
+  #====================================================================
+  #  `delete` special attribute used to delete the object
+  #====================================================================
+  # the actual delete method, overriden
+  def delete()
+    self._style.del()
+    self._style = nil
+    self._style10.del()
+    self._style10 = nil
+    self._style30.del()
+    self._style30 = nil
+  end
+
+  #- ------------------------------------------------------------#
+  # `setmember` virtual setter
+  # trimmed down version for style only
+  #- ------------------------------------------------------------#
+  def setmember(k, v)
+    import string
+    import introspect
+
+    if string.startswith(k, "set_") || string.startswith(k, "get_")   return end
+
+    # parse value in percentage
+    if string.endswith(k, "%")
+      k = k[0..-2]
+      v = lv.pct(int(v))
+    end
+
+    # check if the attribute ends with 2 digits, if so remove the two suffix digits
+    var suffix_digits = nil
+    if size(k) >= 3
+      var char_last_1 = string.byte(k[-1])
+      var char_last_2 = string.byte(k[-2])
+      if (char_last_1 >= 0x30 && char_last_1 <= 0x39 && char_last_2 >= 0x30 && char_last_2 <= 0x39)
+        # we extract the last 2 digits
+        suffix_digits = int(k[-2..])
+        k = k[0..-3]      # remove 2 last digits
+
+        # only style modifiers allowed are `10` and `30`
+        if suffix_digits != 10 && suffix_digits != 30
+          raise "value_error", "only modifiers '10' or '30' allowed"
+        end
+      end
+    end
+
+    # if attribute name is in ignore list, abort
+    if self._attr_ignore.find(k) != nil return end
+
+    # select the right style object
+    var style = self._style
+    if suffix_digits == 10
+      style = self._style10
+    elif suffix_digits == 30
+      style = self._style30
+    end
+
+    # first check if there is a method named `set_X()`
+    var f = introspect.get(self, "set_" + k)
+    if type(f) == 'function'
+      # print(f">>>: setmember local method set_{k}")
+      f(self, v)
+      return
+    end
+
+    # simply check if a method `set_{k}` exists
+    f = introspect.get(style, "set_" + k)    # look at style
+    # print(f">>>: span name={'set_' + k} {f=}")
+    if (type(f) == 'function')
+      # if the attribute contains 'color', convert to lv_color
+      if self.is_color_attribute(k)
+        v = self.parse_color(v)
+      end
+      # invoke
+      try
+        f(style, v)
+      except .. as e, m
+        raise e, m + " for " + k
+      end
+      return nil
+    else
+      print("HSP: Could not find function set_" + k)
+    end
+
+  end
+end
+
+#====================================================================
+#  scale_line
+#====================================================================
+#@ solidify:lvh_scale_line,weak
+class lvh_scale_line : lvh_line
+  var _needle_length
+  # var _lv_points          # in superclass
+
+  def post_init()
+    # check if it is the parent is a spangroup
+    if !isinstance(self._parent_lvh, self._page._oh.lvh_scale)
+      print("HSP: 'scale_line' should have a parent of type 'scale'")
+    end
+    self._needle_length = 0
+    self._lv_points = lv.point_arr([lv.point(), lv.point()])    # create an array with 2 points
+    super(self).post_init()
+  end
+
+  def set_needle_length(t)
+    self._needle_length = int(t)
+    # force a refresh
+    if self._val != nil
+      self.set_val(self._val)
+    end
+  end
+  def get_needle_length()
+    return self._needle_length
+  end
+
+  def set_val(t)
+    super(self).set_val(t)
+    self._parent_lvh._lv_obj.set_line_needle_value(self._lv_obj, self._needle_length, self._val)
+    # work-around for points being global static
+    if (self._lv_obj.get_points_num() == 2)      # check that there are only 2 points
+      # read back the computed points
+      var p_arr = bytes(self._lv_obj.get_points(), size(self._lv_points))
+      self._lv_points.setbytes(0, p_arr)
+      self._lv_obj.set_points(self._lv_points, 2)
+    end
+  end
+end
+
 
 #====================================================================
 #  spangroup
@@ -1577,6 +1816,12 @@ class lvh_span : lvh_root
     import introspect
 
     if string.startswith(k, "set_") || string.startswith(k, "get_")   return end
+
+    # parse value in percentage
+    if string.endswith(k, "%")
+      k = k[0..-2]
+      v = lv.pct(int(v))
+    end
 
     # if attribute name is in ignore list, abort
     if self._attr_ignore.find(k) != nil return end
@@ -1689,34 +1934,6 @@ class lvh_chart : lvh_obj
 end
 
 #====================================================================
-#  line
-#====================================================================
-#@ solidify:lvh_line,weak
-class lvh_line : lvh_obj
-  static var _lv_class = lv.line
-  var _lv_points          # needs to save to avoid garbage collection
-  # list of points
-  def set_points(t)
-    if isinstance(t, list)
-      var pts = []
-      for p: t
-        if (isinstance(p, list) && size(p) == 2)
-          var pt = lv.point()
-          pt.x = int(p[0])
-          pt.y = int(p[1])
-          pts.push(pt)
-        end
-      end
-      var pt_arr = lv.point_arr(pts)
-      self._lv_points = pt_arr
-      self._lv_obj.set_points(pt_arr, size(pts))
-    else
-      print(f"HSP: 'line' wrong format for 'points' {t}")
-    end
-  end
-end
-
-#====================================================================
 #  btnmatrix
 #====================================================================
 #@ solidify:lvh_btnmatrix,weak
@@ -1726,7 +1943,11 @@ class lvh_btnmatrix : lvh_obj
   var _options_arr                  # need to keep the reference alive to avoid GC
   
   def set_options(l)
-    if (isinstance(l, list))
+    if (isinstance(l, list) && size(l) > 0)
+      # check if the last element is empty, if not add an empty string
+      if size(l[-1]) > 0
+        l.push("")
+      end
       self._options = l
       self._options_arr = lv.str_arr(l)
       self._lv_obj.set_map(self._options_arr)
@@ -1954,6 +2175,8 @@ class HASPmota
 	# static lvh_textarea = lvh_textarea    # additional?
   static lvh_led = lvh_led
   static lvh_scale = lvh_scale
+  static lvh_scale_section = lvh_scale_section
+  static lvh_scale_line = lvh_scale_line
   static lvh_spangroup = lvh_spangroup
   static lvh_span = lvh_span
   static lvh_qrcode = lvh_qrcode
