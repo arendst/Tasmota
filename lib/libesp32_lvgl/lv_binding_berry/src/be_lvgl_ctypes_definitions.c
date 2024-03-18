@@ -453,32 +453,6 @@ static be_define_ctypes_class(lv_style_transition_dsc, &be_lv_style_transition_d
 static be_define_ctypes_class(lv_timer_ntv, &be_lv_timer_ntv, &be_class_ctypes_bytes, "lv_timer_ntv");
 static be_define_ctypes_class(lv_ts_calibration, &be_lv_ts_calibration, &be_class_ctypes_bytes, "lv_ts_calibration");
 
-void be_load_ctypes_lvgl_definitions_lib(bvm *vm) {
-  ctypes_register_class(vm, &be_class_lv_area);
-  ctypes_register_class(vm, &be_class_lv_chart_cursor);
-  ctypes_register_class(vm, &be_class_lv_chart_series);
-  ctypes_register_class(vm, &be_class_lv_color_filter_dsc);
-  ctypes_register_class(vm, &be_class_lv_draw_arc_dsc);
-  ctypes_register_class(vm, &be_class_lv_draw_dsc_base);
-  ctypes_register_class(vm, &be_class_lv_draw_image_dsc);
-  ctypes_register_class(vm, &be_class_lv_draw_label_dsc);
-  ctypes_register_class(vm, &be_class_lv_draw_line_dsc);
-  ctypes_register_class(vm, &be_class_lv_draw_rect_dsc);
-  ctypes_register_class(vm, &be_class_lv_event);
-  ctypes_register_class(vm, &be_class_lv_grad_dsc);
-  ctypes_register_class(vm, &be_class_lv_gradient_stop);
-  ctypes_register_class(vm, &be_class_lv_image_dsc);
-  ctypes_register_class(vm, &be_class_lv_image_header);
-  ctypes_register_class(vm, &be_class_lv_meter_indicator);
-  ctypes_register_class(vm, &be_class_lv_meter_scale);
-  ctypes_register_class(vm, &be_class_lv_obj_class);
-  ctypes_register_class(vm, &be_class_lv_point);
-  ctypes_register_class(vm, &be_class_lv_point_precise);
-  ctypes_register_class(vm, &be_class_lv_style_transition_dsc);
-  ctypes_register_class(vm, &be_class_lv_timer_ntv);
-  ctypes_register_class(vm, &be_class_lv_ts_calibration);
-}
-
 be_ctypes_class_by_name_t be_ctypes_lvgl_classes[] = {
   { "lv_area", &be_class_lv_area },
   { "lv_chart_cursor", &be_class_lv_chart_cursor },
