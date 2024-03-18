@@ -3,7 +3,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.4.0.2]
+## [13.4.0.3]
+### Added
+
+
+### Breaking Changed
+
+
+### Changed
+
+
+### Fixed
+
+
+### Removed
+
+
+
+## [13.4.0.2] 20240318
 ### Added
 - Berry `path.rename()` (#20840)
 - HASPmota support for spangroup (styled text) (#20852)
@@ -11,7 +28,7 @@ All notable changes to this project will be documented in this file.
 - HASPmota improve arc and img (#20894)
 - Berry `string.startswith`, `string.endswith` and `%q` format (#20909)
 - LVGL `lv.draw_label_dsc` and `lv_bar.get_indic_area` (#20936)
-- HASPmota support for scale, percentages
+- HASPmota support for scale, percentages (#20974)
 
 ### Breaking Changed
 - Drop support for old (insecure) fingerprint format (#20842)
@@ -29,9 +46,6 @@ All notable changes to this project will be documented in this file.
 - HASPmota widgets line, btnmatrix, qrcode, bar, checkbox (#20881)
 - Filesystem save of JSON settings data
 - Berry fix walrus with member or index (#20939)
-
-### Removed
-
 
 ## [13.4.0.1] 20240229
 ### Added
