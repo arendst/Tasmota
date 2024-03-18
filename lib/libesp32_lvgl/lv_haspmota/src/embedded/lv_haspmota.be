@@ -794,6 +794,22 @@ class lvh_obj : lvh_root
   end
 
   #====================================================================
+  #  flex new_track
+  #
+  # Force flex child on a new line
+  #====================================================================
+  def set_flex_in_new_track(t)
+    if t
+      self._lv_obj.add_flag(lv.OBJ_FLAG_FLEX_IN_NEW_TRACK)
+    else
+      self._lv_obj.clear_flag(lv.OBJ_FLAG_FLEX_IN_NEW_TRACK)
+    end
+  end
+  def get_flex_in_new_track()
+    return self._lv_obj.has_flag(lv.OBJ_FLAG_FLEX_IN_NEW_TRACK)
+  end
+
+  #====================================================================
   #  `text_font`
   #
   # For HASPmota compatiblity, default to "robotocondensed-latin1"
@@ -1060,6 +1076,26 @@ end
 #  Other widgets
 #
 #################################################################################
+
+#====================================================================
+#  flex
+#====================================================================
+#@ solidify:lvh_flex,weak
+class lvh_flex : lvh_obj
+  # static var _lv_class = lv.obj # from parent class
+  # label do not need a sub-label
+  def post_init()
+    super(self).post_init()         # call super
+    var obj = self._lv_obj
+    obj.set_style_pad_all(0, 0)
+    obj.set_style_radius(0, 0)
+    obj.set_style_border_width(0, 0)
+    obj.set_style_margin_all(0, 0)
+    obj.set_style_bg_opa(0, 0)
+    obj.set_size(lv.pct(100), lv.pct(100))
+    obj.set_flex_flow(lv.FLEX_FLOW_ROW)
+  end
+end
 
 #====================================================================
 #  label
@@ -2149,6 +2185,7 @@ class HASPmota
   # assign lvh_page to a static attribute
   static lvh_root = lvh_root
 	static lvh_obj = lvh_obj
+  static lvh_flex = lvh_flex
   static lvh_page = lvh_page
   static lvh_scr = lvh_scr
   # assign all classes as static attributes
