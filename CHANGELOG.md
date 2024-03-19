@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [13.4.0.3]
 ### Added
-
+- Zigbee added for attributes of type `uint48` used by energy monitoring
 
 ### Breaking Changed
 

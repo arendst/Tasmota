@@ -331,6 +331,14 @@ int32_t encodeSingleAttribute(SBuffer &buf, double val_d, const char *val_str, u
       buf.add32( *((uint32_t*)&f32) );    // cast float as uint32_t
       break;
 
+    case Zuint48:       // added for energy value
+      {
+        uint64_t u64 = val_d;
+        buf.add32(u64);
+        buf.add8(u64 >> 32);
+      }
+      break;
+
     case Zstring:
     case Zstring16:
       {

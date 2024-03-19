@@ -459,7 +459,7 @@ void ZbSendReportWrite(class JsonParserToken val_pubwrite, class ZCLFrame & zcl)
         if (!attr_discrete) {
           int32_t res = encodeSingleAttribute(buf, val_d, val_str, attr.attr_type);
           if (res < 0) {
-            Response_P(PSTR("{\"%s\":\"%s'%s' 0x%02X\"}"), XdrvMailbox.command, PSTR(D_ZIGBEE_UNSUPPORTED_ATTRIBUTE_TYPE " "), key, attr.attr_type);
+            Response_P(PSTR("{\"%s\":\"%s'%s' 0x%02X\"}"), XdrvMailbox.command, PSTR(D_ZIGBEE_UNSUPPORTED_ATTRIBUTE_TYPE " "), key.getStr(), attr.attr_type);
             return;
           }
         }
