@@ -197,7 +197,8 @@ int LoRaClass::endPacket(bool async)
   if (!async) {
     // wait for TX done
     while ((readRegister(REG_IRQ_FLAGS) & IRQ_TX_DONE_MASK) == 0) {
-      yield();
+//      yield();
+      delay(0);  // Prevent watchdog crashes
     }
     // clear IRQ's
     writeRegister(REG_IRQ_FLAGS, IRQ_TX_DONE_MASK);
