@@ -540,7 +540,7 @@ typedef struct {
 
 #define SFS_MAX 4
 // global memory
-struct SCRIPT_MEM {
+typedef struct {
     TS_FLOAT *fvars; // number var pointer
     TS_FLOAT *s_fvars; // shadow var pointer
     struct T_INDEX *type; // type and index pointer
@@ -644,16 +644,88 @@ struct SCRIPT_MEM {
 #ifdef ESP8266
     uint8_t pwmpin[5];
 #endif
+
 #ifdef ESP32
     uint8_t pwmpin[8];
     uint8 esp32_beep_pin;
     TimerHandle_t beep_th;
 #endif
 
-} glob_script_mem;
+#ifdef USE_ANGLE_FUNC
+    uint32_t pulse_time_hl;
+    uint32_t pulse_time_lh;
+    uint32_t pulse_ltime_hl;
+    uint32_t pulse_ltime_lh;
+    uint8_t pt_pin;
+#endif
+
+    uint8_t specopt;
+
+#ifdef USE_GOOGLE_CHARTS
+    uint8_t chartindex;
+    uint8_t google_libs;
+    char gs_ctype;
+#endif
 
 
-uint8_t tasm_cmd_activ = 0;
+#if defined(ESP32) && defined(JPEG_PICTS) && defined(STREAM_JPEG_PICTS)
+    struct JPG_TASK {
+      char boundary[40];
+      bool draw;
+      uint8_t scale;
+      uint16_t xp;
+      uint16_t yp;
+      WiFiClient stream;
+      HTTPClient http;
+    } jpg_task;
+#endif
+
+#if defined(ESP32) && defined(USE_UFILESYS) && defined(USE_SCRIPT_ALT_DOWNLOAD)
+    ESP8266WebServer *http82_Server;
+    bool download82_busy;
+#endif
+
+#if defined(ESP32) && defined(USE_DLTASK)
+    bool script_download_busy;
+#endif
+
+#if defined(ESP32) && defined(ESP32_FAST_MUX)
+#define MUX_SIZE 128
+    struct FAST_PIN_MUX {
+      volatile uint8_t scan_cnt;
+      uint8_t scan_buff[MUX_SIZE];
+      uint8_t scan_buff_size;
+      uint8_t time;
+      uint32_t low_pins;
+      uint32_t high_pins;
+      hw_timer_t * scan_timer = NULL;
+      portMUX_TYPE scan_timerMux = portMUX_INITIALIZER_UNLOCKED;
+    } fast_pin_mux;
+#endif
+
+#if defined(ESP32) && defined(USE_SCRIPT_TASK)
+    struct ESP32_Task {
+      uint16_t task_timer;
+      TaskHandle_t task_t;
+      char *tstart;
+    } esp32_tasks[2];
+#endif
+
+    uint8_t *script_ex_ptr;
+    uint16_t uplsize;
+    uint8_t sc_state;
+
+    uint8_t tasm_cmd_activ = 0;
+
+} SCRIPT_MEM;
+
+SCRIPT_MEM glob_script_mem;
+
+
+void script_setaflg(uint8_t flg) {
+  glob_script_mem.tasm_cmd_activ = flg;
+}
+
 void flt2char(TS_FLOAT num, char *nbuff);
 
 void flt2char(TS_FLOAT num, char *nbuff) {
@@ -1196,7 +1268,8 @@ char *script;
     }
 
     // variables usage info
-    AddLog(LOG_LEVEL_INFO, PSTR("SCR: nv=%d, tv=%d, vns=%d, vmem=%d, smem=%d"), nvars, svars, index, glob_script_mem.script_mem_size, glob_script_mem.script_size);
+    uint32_t tot_mem = sizeof(glob_script_mem) + glob_script_mem.script_mem_size + glob_script_mem.script_size + index;
+    AddLog(LOG_LEVEL_INFO, PSTR("SCR: nv=%d, tv=%d, vns=%d, vmem=%d, smem=%d, gmem=%d, tmem=%d "), nvars, svars, index, glob_script_mem.script_mem_size, glob_script_mem.script_size, sizeof(glob_script_mem), tot_mem);
 
     // copy string variables
     char *cp1 = glob_script_mem.glob_snp;
@@ -2264,15 +2337,6 @@ if (hsv.S == 0) {
 #ifdef ESP32
 #ifdef JPEG_PICTS
 #ifdef STREAM_JPEG_PICTS
-struct JPG_TASK {
-  char boundary[40];
-  bool draw;
-  uint8_t scale;
-  uint16_t xp;
-  uint16_t yp;
-  WiFiClient stream;
-  HTTPClient http;
-} jpg_task;
 
 // "e8b8c539-047d-4777-a985-fbba6edff11e"
 
@@ -2285,30 +2349,30 @@ int32_t fetch_jpg(uint32_t sel, char *url, uint32_t xp, uint32_t yp, uint32_t sc
   switch (sel) {
     case 0:
       // open
-      jpg_task.boundary[0] = 0;
-      jpg_task.draw = false;
-      jpg_task.xp = xp;
-      jpg_task.yp = yp;
-      jpg_task.scale = scale;
+      glob_script_mem.jpg_task.boundary[0] = 0;
+      glob_script_mem.jpg_task.draw = false;
+      glob_script_mem.jpg_task.xp = xp;
+      glob_script_mem.jpg_task.yp = yp;
+      glob_script_mem.jpg_task.scale = scale;
       sprintf(hbuff,"http://%s", url);
-      jpg_task.http.begin(jpg_task.stream, hbuff);
-      jpg_task.http.collectHeaders(headerKeys, numberOfHeaders);
-      httpCode = jpg_task.http.GET();
+      glob_script_mem.jpg_task.http.begin(glob_script_mem.jpg_task.stream, hbuff);
+      glob_script_mem.jpg_task.http.collectHeaders(headerKeys, numberOfHeaders);
+      httpCode = glob_script_mem.jpg_task.http.GET();
       if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-        String boundary = jpg_task.http.header(headerKeys[0]);
+        String boundary = glob_script_mem.jpg_task.http.header(headerKeys[0]);
         char *cp = strchr(boundary.c_str(), '=');
         if (cp) {
-          strcpy(jpg_task.boundary,cp + 1);
+          strcpy(glob_script_mem.jpg_task.boundary,cp + 1);
         }
       } else {
-        AddLog(LOG_LEVEL_INFO,PSTR("SCR: HTTP error %d = %s"), httpCode, jpg_task.http.errorToString(httpCode).c_str());
+        AddLog(LOG_LEVEL_INFO,PSTR("SCR: HTTP error %d = %s"), httpCode, glob_script_mem.jpg_task.http.errorToString(httpCode).c_str());
       }
       return httpCode;
       break;
     case 1:
       // close
-      jpg_task.stream.stop();
-      jpg_task.http.end();
+      glob_script_mem.jpg_task.stream.stop();
+      glob_script_mem.jpg_task.http.end();
       break;
     case 2:
       // get next frame
@@ -2318,36 +2382,36 @@ int32_t fetch_jpg(uint32_t sel, char *url, uint32_t xp, uint32_t yp, uint32_t sc
         "\r\n", static_cast<int>(_jpg_buf_len));
         */
       {
-        if (jpg_task.http.connected()) {
+        if (glob_script_mem.jpg_task.http.connected()) {
           char inbuff[64];
           memset(inbuff, 0, sizeof(inbuff));
-          jpg_task.stream.readBytesUntil('\n', inbuff, sizeof(inbuff));
+          glob_script_mem.jpg_task.stream.readBytesUntil('\n', inbuff, sizeof(inbuff));
           if (inbuff[0] == '\r') {
             memset(inbuff, 0, sizeof(inbuff));
-            jpg_task.stream.readBytesUntil('\n', inbuff, sizeof(inbuff));
+            glob_script_mem.jpg_task.stream.readBytesUntil('\n', inbuff, sizeof(inbuff));
           }
           //AddLog(LOG_LEVEL_INFO, PSTR("boundary = %s"), inbuff);
           memset(inbuff, 0, sizeof(inbuff));
-          jpg_task.stream.readBytesUntil('\n', inbuff, sizeof(inbuff));
+          glob_script_mem.jpg_task.stream.readBytesUntil('\n', inbuff, sizeof(inbuff));
           //AddLog(LOG_LEVEL_INFO, PSTR("type = %s"), inbuff);
           memset(inbuff, 0, sizeof(inbuff));
-          jpg_task.stream.readBytesUntil('\n', inbuff, sizeof(inbuff));
+          glob_script_mem.jpg_task.stream.readBytesUntil('\n', inbuff, sizeof(inbuff));
           //AddLog(LOG_LEVEL_INFO, PSTR("size = %s"), inbuff);
           char *cp = strchr(inbuff, ':');
           uint16_t size = 0;
           if (cp) {
             size = atoi(cp + 1);
           }
-          jpg_task.stream.readBytesUntil('\n', inbuff, sizeof(inbuff));
+          glob_script_mem.jpg_task.stream.readBytesUntil('\n', inbuff, sizeof(inbuff));
 
           if (size > 0) {
             //AddLog(LOG_LEVEL_INFO, PSTR("size = %d"), size);
             uint8_t *buff = (uint8_t *)special_malloc(size);
             if (buff) {
-              jpg_task.stream.readBytes(buff, size);
+              glob_script_mem.jpg_task.stream.readBytes(buff, size);
             }
-            if (jpg_task.draw) {
-              Draw_jpeg(buff, size, jpg_task.xp, jpg_task.yp, jpg_task.scale);
+            if (glob_script_mem.jpg_task.draw) {
+              Draw_jpeg(buff, size, glob_script_mem.jpg_task.xp, glob_script_mem.jpg_task.yp, glob_script_mem.jpg_task.scale);
             }
             if (buff) {
               free(buff);
@@ -2359,11 +2423,11 @@ int32_t fetch_jpg(uint32_t sel, char *url, uint32_t xp, uint32_t yp, uint32_t sc
       break;
     case 3:
       // stop drawing
-      jpg_task.draw = false;
+      glob_script_mem.jpg_task.draw = false;
       break;
     case 4:
       // resume drawing
-      jpg_task.draw = true;
+      glob_script_mem.jpg_task.draw = true;
       break;
   }
   return 0;
@@ -2374,48 +2438,44 @@ int32_t fetch_jpg(uint32_t sel, char *url, uint32_t xp, uint32_t yp, uint32_t sc
 
 
 #ifdef USE_ANGLE_FUNC
-uint32_t pulse_time_hl;
-uint32_t pulse_time_lh;
-uint32_t pulse_ltime_hl;
-uint32_t pulse_ltime_lh;
-uint8_t pt_pin;
+
 
 #define MPT_DEBOUNCE 10
 
 static void IRAM_ATTR MP_Timer(void) {
-  uint32_t level = digitalRead(pt_pin&0x3f);
+  uint32_t level = digitalRead(glob_script_mem.pt_pin&0x3f);
   uint32_t ms = millis();
   uint32_t time;
   if (level) {
     // rising edge
-    pulse_ltime_lh = ms;
-    time = ms - pulse_ltime_hl;
-    if (time>MPT_DEBOUNCE) pulse_time_hl = time;
+    glob_script_mem.pulse_ltime_lh = ms;
+    time = ms - glob_script_mem.pulse_ltime_hl;
+    if (time > MPT_DEBOUNCE) glob_script_mem.pulse_time_hl = time;
   } else {
     // falling edge
-    pulse_ltime_hl = ms;
-    time = ms - pulse_ltime_lh;
-    if (time>MPT_DEBOUNCE) pulse_time_lh = time;
+    glob_script_mem.pulse_ltime_hl = ms;
+    time = ms - glob_script_mem.pulse_ltime_lh;
+    if (time > MPT_DEBOUNCE) glob_script_mem.pulse_time_lh = time;
   }
 }
 
 uint32_t MeasurePulseTime(int32_t in) {
   if (in >= 0) {
     // define pin;
-    pt_pin = in;
-    pinMode(pt_pin & 0x3f, INPUT_PULLUP);
-    attachInterrupt(pt_pin & 0x3f, MP_Timer, CHANGE);
-    pulse_ltime_lh = millis();
-    pulse_ltime_hl = millis();
+    glob_script_mem.pt_pin = in;
+    pinMode(glob_script_mem.pt_pin & 0x3f, INPUT_PULLUP);
+    attachInterrupt(glob_script_mem.pt_pin & 0x3f, MP_Timer, CHANGE);
+    glob_script_mem.pulse_ltime_lh = millis();
+    glob_script_mem.pulse_ltime_hl = millis();
     return 0;
   }
   uint32_t ptime;
   if (in==-1) {
-    ptime = pulse_time_lh;
-    pulse_time_lh = 0;
+    ptime = glob_script_mem.pulse_time_lh;
+    glob_script_mem.pulse_time_lh = 0;
   } else {
-    ptime = pulse_time_hl;
-    pulse_time_hl = 0;
+    ptime = glob_script_mem.pulse_time_hl;
+    glob_script_mem.pulse_time_hl = 0;
   }
   return ptime;
 }
@@ -7271,7 +7331,7 @@ int16_t retval;
   if (!glob_script_mem.scriptptr) {
     return -99;
   }
-  if (tasm_cmd_activ && tlen >= 0) return 0;
+  if (glob_script_mem.tasm_cmd_activ && tlen >= 0) return 0;
 
   struct GVARS gv;
   gv.jo = 0;
@@ -7287,7 +7347,7 @@ int16_t retval;
       return -99;
     }
 
-    if (tasm_cmd_activ && tlen >= 0) return 0;
+    if (glob_script_mem.tasm_cmd_activ && tlen >= 0) return 0;
 
     struct GVARS gv;
 
@@ -7850,19 +7910,19 @@ getnext:
                     else toLog(&tmp[5]);
                   } else {
                     if (!sflag) {
-                      tasm_cmd_activ = 1;
+                      glob_script_mem.tasm_cmd_activ = 1;
                       AddLog(glob_script_mem.script_loglevel&0x7f, PSTR("SCR: performs \"%s\""), tmp);
                     } else if (sflag == 2) {
                       // allow recursive call
                     } else {
-                      tasm_cmd_activ = 1;
+                      glob_script_mem.tasm_cmd_activ = 1;
                       svmqtt = Settings->flag.mqtt_enabled;  // SetOption3 - Enable MQTT
                       swll = Settings->weblog_level;
                       Settings->flag.mqtt_enabled = 0;       // SetOption3 - Enable MQTT
                       Settings->weblog_level = 0;
                     }
                     ExecuteCommand((char*)tmp, SRC_RULE);
-                    tasm_cmd_activ = 0;
+                    glob_script_mem.tasm_cmd_activ = 0;
                     if (sflag == 1) {
                       Settings->flag.mqtt_enabled = svmqtt;  // SetOption3  - Enable MQTT
                       Settings->weblog_level = swll;
@@ -8814,10 +8874,6 @@ const char S_SCRIPT_FILE_UPLOAD[] PROGMEM = D_SDCARD_UPLOAD;
 #endif // USE_SCRIPT_FATFS
 
 
-uint8_t *script_ex_ptr;
-uint16_t uplsize;
-uint8_t sc_state;
-
 // upload script and start immediately
 void script_upload_start(void) {
 
@@ -8826,7 +8882,7 @@ void script_upload_start(void) {
   HTTPUpload& upload = Webserver->upload();
   if (upload.status == UPLOAD_FILE_START) {
     //AddLog(LOG_LEVEL_INFO, PSTR("HTP: upload start"));
-    script_ex_ptr = (uint8_t*)glob_script_mem.script_ram;
+    glob_script_mem.script_ex_ptr = (uint8_t*)glob_script_mem.script_ram;
     //AddLog(LOG_LEVEL_INFO, PSTR("HTP: upload file %s, %d"),upload.filename.c_str(),upload.totalSize);
 
     if (strcmp(upload.filename.c_str(), "execute_script")) {
@@ -8839,25 +8895,25 @@ void script_upload_start(void) {
       WSSend(500, CT_PLAIN, F("500: file to large"));
       return;
     }
-    uplsize = 0;
+    glob_script_mem.uplsize = 0;
 
-    sc_state = bitRead(Settings->rule_enabled, 0);
+    glob_script_mem.sc_state = bitRead(Settings->rule_enabled, 0);
     bitWrite(Settings->rule_enabled, 0, 0);
 
   } else if(upload.status == UPLOAD_FILE_WRITE) {
     //AddLog(LOG_LEVEL_INFO, PSTR("HTP: upload write"));
     uint32_t csiz = upload.currentSize;
     uint32_t tsiz = glob_script_mem.script_size - 1;
-    if (uplsize<tsiz) {
-      if (uplsize + csiz < tsiz) {
-        memcpy(script_ex_ptr, upload.buf, csiz);
-        script_ex_ptr += csiz;
-        uplsize += csiz;
+    if (glob_script_mem.uplsize < tsiz) {
+      if (glob_script_mem.uplsize + csiz < tsiz) {
+        memcpy(glob_script_mem.script_ex_ptr, upload.buf, csiz);
+        glob_script_mem.script_ex_ptr += csiz;
+        glob_script_mem.uplsize += csiz;
       } else {
-        csiz = tsiz - uplsize;
-        memcpy(script_ex_ptr, upload.buf, csiz);
-        script_ex_ptr += csiz;
-        uplsize += csiz;
+        csiz = tsiz - glob_script_mem.uplsize;
+        memcpy(glob_script_mem.script_ex_ptr, upload.buf, csiz);
+        glob_script_mem.script_ex_ptr += csiz;
+        glob_script_mem.uplsize += csiz;
       }
     }
 
@@ -8867,8 +8923,8 @@ void script_upload_start(void) {
     if (Web.upload_error) {
       AddLog(LOG_LEVEL_INFO, PSTR("HTP: upload error"));
     } else {
-      *script_ex_ptr = 0;
-      bitWrite(Settings->rule_enabled, 0, sc_state);
+      *glob_script_mem.script_ex_ptr = 0;
+      bitWrite(Settings->rule_enabled, 0, glob_script_mem.sc_state);
       SaveScript();
       SaveScriptEnd();
       //AddLog(LOG_LEVEL_INFO, PSTR("HTP: upload success"));
@@ -9683,7 +9739,7 @@ void Script_Handle_Hue(String path) {
 bool Script_SubCmd(void) {
   if (!bitRead(Settings->rule_enabled, 0)) return false;
 
-  if (tasm_cmd_activ) return false;
+  if (glob_script_mem.tasm_cmd_activ) return false;
   //AddLog(LOG_LEVEL_INFO,PSTR(">> %s, %s, %d, %d "),XdrvMailbox.topic, XdrvMailbox.data, XdrvMailbox.payload, XdrvMailbox.index);
 
   char command[CMDSZ];
@@ -9854,7 +9910,7 @@ bool ScriptCommand(void) {
   bool serviced = true;
   uint8_t index = XdrvMailbox.index;
 
-  if (tasm_cmd_activ) return false;
+  if (glob_script_mem.tasm_cmd_activ) return false;
 
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kScriptCommands);
   if (-1 == command_code) {
@@ -10217,18 +10273,16 @@ String ScriptUnsubscribe(const char * data, int data_len)
 #define SCRIPT_DLPORT 82
 #endif
 
-ESP8266WebServer *http82_Server;
-bool download82_busy;
 
 void script_download_task82(void *path) {
   SendFile_sub((char*) path, 1);
   free(path);
-  download82_busy = false;
+  glob_script_mem.download82_busy = false;
   //AddLog(LOG_LEVEL_INFO, PSTR("UFS 82: Download finished"));
   vTaskDelete( NULL );
 }
 void ScriptServeFile82(void) {
-  String stmp = http82_Server->uri();
+  String stmp = glob_script_mem.http82_Server->uri();
 
   char *cp = strstr_P(stmp.c_str(), PSTR("/ufs/"));
   if (cp) {
@@ -10237,11 +10291,11 @@ void ScriptServeFile82(void) {
 #ifndef USE_FEXTRACT
       if (ufsp->exists(cp)) {
 #endif
-        if (download82_busy == true) {
+        if (glob_script_mem.download82_busy == true) {
           AddLog(LOG_LEVEL_INFO, PSTR("UFS: 82 Download is busy"));
           return;
         }
-        download82_busy = true;
+        glob_script_mem.download82_busy = true;
         char *path = (char*)malloc(128);
         strcpy(path, cp);
         xTaskCreatePinnedToCore(script_download_task82, "DT", 6000, (void*)path, 3, NULL, 1);
@@ -10265,27 +10319,27 @@ void Handle82Root(void) {
 }
 
 void WebServer82Loop(void) {
-  if (http82_Server != nullptr) {
-    http82_Server->handleClient();
+  if (glob_script_mem.http82_Server != nullptr) {
+    glob_script_mem.http82_Server->handleClient();
   }
 }
 
 void Send82Header(uint32_t type, const char *message) {
-  http82_Server->client().printf_P(PSTR("HTTP/1.1 %d\r\n"), type);
-  http82_Server->client().printf_P(PSTR("Content-type: text/plain\r\n\r\n"));
-  http82_Server->client().printf_P(PSTR("%s\n"), message);
+  glob_script_mem.http82_Server->client().printf_P(PSTR("HTTP/1.1 %d\r\n"), type);
+  glob_script_mem.http82_Server->client().printf_P(PSTR("Content-type: text/plain\r\n\r\n"));
+  glob_script_mem.http82_Server->client().printf_P(PSTR("%s\n"), message);
 }
 
 void WebServer82Init(void) {
-  if (http82_Server != nullptr) {
+  if (glob_script_mem.http82_Server != nullptr) {
     return;
   }
-  http82_Server = new ESP8266WebServer(SCRIPT_DLPORT);
-  if (http82_Server != nullptr) {
-    http82_Server->on(UriGlob("/ufs/*"), HTTP_GET, ScriptServeFile82);
-    http82_Server->on("/", HTTP_GET, Handle82Root);
-    http82_Server->onNotFound(Handle82NotFound);
-    http82_Server->begin();
+  glob_script_mem.http82_Server = new ESP8266WebServer(SCRIPT_DLPORT);
+  if (glob_script_mem.http82_Server != nullptr) {
+    glob_script_mem.http82_Server->on(UriGlob("/ufs/*"), HTTP_GET, ScriptServeFile82);
+    glob_script_mem.http82_Server->on("/", HTTP_GET, Handle82Root);
+    glob_script_mem.http82_Server->onNotFound(Handle82NotFound);
+    glob_script_mem.http82_Server->begin();
     AddLog(LOG_LEVEL_INFO, PSTR("SCR: HTTP DL Server started on port: %d "), SCRIPT_DLPORT);
   } else {
     AddLog(LOG_LEVEL_INFO, PSTR("SCR: HTTP DL Server failed"));
@@ -10330,7 +10384,6 @@ void ScriptServeFile(void) {
 }
 
 extern uint8_t *buffer;
-bool script_download_busy;
 
 //#define USE_DLTASK
 
@@ -10342,11 +10395,11 @@ int32_t SendFile(char *fname) {
 
 #ifdef ESP32
 #ifdef USE_DLTASK
-  if (script_download_busy == true) {
+  if (glob_script_mem.script_download_busy == true) {
     AddLog(LOG_LEVEL_INFO, PSTR("UFS: Download is busy"));
     return -1;
   }
-  script_download_busy = true;
+  glob_script_mem.script_download_busy = true;
   char *path = (char*)malloc(128);
   strcpy(path, fname);
   xTaskCreatePinnedToCore(script_download_task, "DT", 6000, (void*)path, 3, NULL, 1);
@@ -10362,7 +10415,7 @@ int32_t SendFile(char *fname) {
 void script_download_task(void *path) {
   SendFile_sub((char*) path, 0);
   free(path);
-  script_download_busy = false;
+  glob_script_mem.script_download_busy = false;
   vTaskDelete( NULL );
 }
 #endif // USE_DLTASK
@@ -10429,7 +10482,7 @@ uint32_t fsize;
     client = Webserver->client();
   } else {
 #ifdef USE_SCRIPT_ALT_DOWNLOAD
-    client = http82_Server->client();
+    client = glob_script_mem.http82_Server->client();
 #else
     client = Webserver->client();
 #endif
@@ -11049,13 +11102,6 @@ void WCS_DIV(uint8_t flag) {
 }
 
 
-uint8_t specopt;
-uint8_t chartindex;
-uint8_t google_libs;
-#ifdef USE_GOOGLE_CHARTS
-char gs_ctype;
-#endif
-
 void ScriptWebShow(char mc, uint8_t page) {
   TS_FLOAT cv_max = 0;
   TS_FLOAT cv_inc = 0;
@@ -11075,8 +11121,8 @@ void ScriptWebShow(char mc, uint8_t page) {
 
   if (glob_script_mem.section_ptr) {
 
-    chartindex = 1;
-    google_libs = 0;
+    glob_script_mem.chartindex = 1;
+    glob_script_mem.google_libs = 0;
     char *lp = glob_script_mem.section_ptr;
     if (mc == 'w') {
       while (*lp) {
@@ -11085,7 +11131,7 @@ void ScriptWebShow(char mc, uint8_t page) {
       }
     }
 
-    specopt = 0;
+    glob_script_mem.specopt = 0;
     while (lp) {
       while (*lp == SCRIPT_EOL) {
        lp++;
@@ -11130,14 +11176,14 @@ void ScriptWebShow(char mc, uint8_t page) {
           }
         } else if (!strncmp(lp, "%=#", 3)) {
           // subroutine
-          uint8_t sflg = specopt;
-          specopt = WSO_FORCEPLAIN;
+          uint8_t sflg = glob_script_mem.specopt;
+          glob_script_mem.specopt = WSO_FORCEPLAIN;
           lp = scripter_sub(lp + 1, 0);
-          specopt = sflg;
+          glob_script_mem.specopt = sflg;
           //goto nextwebline;
         } else if (!strncmp(lp, "%/", 2)) {
           // send file
-          if (mc || (specopt & WSO_FORCESUBFILE)) {
+          if (mc || (glob_script_mem.specopt & WSO_FORCESUBFILE)) {
             web_send_file(mc, lp + 1);
           }
         } else {
@@ -11218,29 +11264,29 @@ const char *gc_str;
     // set options
     TS_FLOAT var;
     lin = GetNumericArgument(lin + 3, OPER_EQU, &var, 0);
-    specopt = var;
+    glob_script_mem.specopt = var;
     WS_LINE_RETURN
   }
 
-  if (specopt & WSO_NOCENTER) {
+  if (glob_script_mem.specopt & WSO_NOCENTER) {
     center[0] = 0;
   } else {
     strcpy_P(center, PSTR("<center>"));
   }
 
-  bool dogui = ((!mc && (*lin != '$')) || (mc == 'w' && (*lin != '$'))) && (!(specopt & WSO_FORCEMAIN));
+  bool dogui = ((!mc && (*lin != '$')) || (mc == 'w' && (*lin != '$'))) && (!(glob_script_mem.specopt & WSO_FORCEMAIN));
 
   if (!strncmp(lin, "%=#", 3)) {
     // subroutine
-    uint8_t sflg = specopt;
-    specopt = WSO_FORCEPLAIN;
+    uint8_t sflg = glob_script_mem.specopt;
+    glob_script_mem.specopt = WSO_FORCEPLAIN;
     lin = scripter_sub(lin + 1, 0);
-    specopt = sflg;
+    glob_script_mem.specopt = sflg;
     WS_LINE_RETURN
   }
 
-  if ((dogui && !(specopt & WSO_FORCEGUI)) || (!dogui && (specopt & WSO_FORCEGUI))) {
-  //if ( ((!mc && (*lin != '$')) || (mc == 'w' && (*lin != '$'))) && (!(specopt & WSO_FORCEMAIN)) || (specopt & WSO_FORCEGUI)) {
+  if ((dogui && !(glob_script_mem.specopt & WSO_FORCEGUI)) || (!dogui && (glob_script_mem.specopt & WSO_FORCEGUI))) {
+  //if ( ((!mc && (*lin != '$')) || (mc == 'w' && (*lin != '$'))) && (!(glob_script_mem.specopt & WSO_FORCEMAIN)) || (glob_script_mem.specopt & WSO_FORCEGUI)) {
     // normal web section
 #ifdef SCRIPT_WEB_DEBUG    
     AddLog(LOG_LEVEL_INFO, PSTR("WEB GUI section"));
@@ -11252,7 +11298,7 @@ const char *gc_str;
       optflg = 0;
     }
 
-    if (specopt & WSO_NOCENTER) {
+    if (glob_script_mem.specopt & WSO_NOCENTER) {
       center[0] = 0;
     } else {
       strcpy_P(center, PSTR("<center>"));
@@ -11310,9 +11356,9 @@ const char *gc_str;
         cp = "";
         uval = 1;
       }
-      WCS_DIV(specopt);
+      WCS_DIV(glob_script_mem.specopt);
       WSContentSend_P(SCRIPT_MSG_CHKBOX, center, label, (char*)cp, uval, vname);
-      WCS_DIV(specopt | WSO_STOP_DIV);
+      WCS_DIV(glob_script_mem.specopt | WSO_STOP_DIV);
       lp++;
     } else if (!strncmp(lin, "pd(", 3)) {
       // pull down
@@ -11340,7 +11386,7 @@ const char *gc_str;
       } else {
         lp = slp1;
       }
-      WCS_DIV(specopt);
+      WCS_DIV(glob_script_mem.specopt);
       WSContentSend_P(SCRIPT_MSG_PULLDOWNa, center, vname, pulabel, tsiz, 1, vname, vname);
 
       // get pu labels
@@ -11385,7 +11431,7 @@ const char *gc_str;
         index++;
       }
       WSContentSend_P(SCRIPT_MSG_PULLDOWNc);
-      WCS_DIV(specopt | WSO_STOP_DIV);
+      WCS_DIV(glob_script_mem.specopt | WSO_STOP_DIV);
     } else if (!strncmp(lin, "rb(", 3)) {
       // radio buttons
       char *lp = lin + 3;
@@ -11413,7 +11459,7 @@ const char *gc_str;
         lp = slp1;
       }
 
-      WCS_DIV(specopt);
+      WCS_DIV(glob_script_mem.specopt);
       if (tsiz < 0) {
         WSContentSend_P(SCRIPT_MSG_RADIOa0, center, pulabel);
       } else {
@@ -11440,7 +11486,7 @@ const char *gc_str;
         index++;
       }
       WSContentSend_P(SCRIPT_MSG_RADIOc);
-      WCS_DIV(specopt | WSO_STOP_DIV);
+      WCS_DIV(glob_script_mem.specopt | WSO_STOP_DIV);
       WSContentFlush();
     } else if (!strncmp(lin, "bu(", 3)) {
       char *lp = lin + 3;
@@ -11524,9 +11570,9 @@ const char *gc_str;
       const char *min = PSTR("00:00");
       const char *max = PSTR("23:59");
       const char *styp = PSTR("sivat");
-      WCS_DIV(specopt);
+      WCS_DIV(glob_script_mem.specopt);
       WSContentSend_P(SCRIPT_MSG_TEXTINP_U, center, label, type, vstr, min, max, tsiz, styp, vname);
-      WCS_DIV(specopt | WSO_STOP_DIV);
+      WCS_DIV(glob_script_mem.specopt | WSO_STOP_DIV);
     }  else if (!strncmp(lin, "tx(", 3)) {
       // text
       char *lp = lin + 3;
@@ -11564,19 +11610,19 @@ const char *gc_str;
           char max[SCRIPT_MAX_SBSIZE];
           lp = GetStringArgument(lp, OPER_EQU, max, 0);
           SCRIPT_SKIP_SPACES
-          WCS_DIV(specopt);
+          WCS_DIV(glob_script_mem.specopt);
           const char *styp = PSTR("siva");
           WSContentSend_P(SCRIPT_MSG_TEXTINP_U, center, label, type, str, min, max, tsiz, styp, vname);
-          WCS_DIV(specopt | WSO_STOP_DIV);
+          WCS_DIV(glob_script_mem.specopt | WSO_STOP_DIV);
         } else {
-          WCS_DIV(specopt);
+          WCS_DIV(glob_script_mem.specopt);
           WSContentSend_P(SCRIPT_MSG_TEXTINP, center, label, str, tsiz, vname);
-          WCS_DIV(specopt | WSO_STOP_DIV);
+          WCS_DIV(glob_script_mem.specopt | WSO_STOP_DIV);
         }
       } else {
-        WCS_DIV(specopt);
+        WCS_DIV(glob_script_mem.specopt);
         WSContentSend_P(SCRIPT_MSG_TEXTINP, center, label, str, tsiz, vname);
-        WCS_DIV(specopt | WSO_STOP_DIV);
+        WCS_DIV(glob_script_mem.specopt | WSO_STOP_DIV);
       }
       lp++;
       //goto restart;
@@ -11629,16 +11675,16 @@ const char *gc_str;
         dtostrfd(max, dprec, maxstr);
         dtostrfd(step, dprec, stepstr);
       }
-      WCS_DIV(specopt);
+      WCS_DIV(glob_script_mem.specopt);
       WSContentSend_P(SCRIPT_MSG_NUMINP, center, label, minstr, maxstr, stepstr, vstr, tsiz, vname);
-      WCS_DIV(specopt | WSO_STOP_DIV);
+      WCS_DIV(glob_script_mem.specopt | WSO_STOP_DIV);
       lp++;
 
     } else {
-      if (specopt & WSO_FORCETAB) {
+      if (glob_script_mem.specopt & WSO_FORCETAB) {
         WSContentSend_P(PSTR("{s}%s{e}"), lin);
       } else {
-        if (mc == 'w' || (specopt & WSO_FORCEPLAIN)) {
+        if (mc == 'w' || (glob_script_mem.specopt & WSO_FORCEPLAIN)) {
           WSContentSend_P(PSTR("%s"), lin);
         } else {
           if (optflg) {
@@ -11655,11 +11701,11 @@ const char *gc_str;
 #ifdef SCRIPT_WEB_DEBUG    
     AddLog(LOG_LEVEL_INFO, PSTR("WEB main section"));
 #endif
-    if ( (*lin == mc) || (mc == 'z') || (specopt & WSO_FORCEMAIN)) {
+    if ( (*lin == mc) || (mc == 'z') || (glob_script_mem.specopt & WSO_FORCEMAIN)) {
 
 #ifdef USE_GOOGLE_CHARTS
       if (mc != 'z') {
-        if (!(specopt & WSO_FORCEMAIN)) {
+        if (!(glob_script_mem.specopt & WSO_FORCEMAIN)) {
           lin++;
         }
       }
@@ -11743,51 +11789,51 @@ exgc:
         uint8_t tonly = 0;
         char type = *lp;
         if (type != 'e') {
-          gs_ctype = type;
+          glob_script_mem.gs_ctype = type;
         }
         lp++;
-        if (!(google_libs & GLIBS_MAIN)) {
-          google_libs |= GLIBS_MAIN;
+        if (!(glob_script_mem.google_libs & GLIBS_MAIN)) {
+          glob_script_mem.google_libs |= GLIBS_MAIN;
           WSContentSend_P(SCRIPT_MSG_GTABLE);
         }
 
-        gc_str = GC_type(gs_ctype);
+        gc_str = GC_type(glob_script_mem.gs_ctype);
 
-        switch (gs_ctype) {
+        switch (glob_script_mem.gs_ctype) {
           case 'g':
-            if (!(google_libs & GLIBS_GAUGE)) {
-              google_libs |= GLIBS_GAUGE;
+            if (!(glob_script_mem.google_libs & GLIBS_GAUGE)) {
+              glob_script_mem.google_libs |= GLIBS_GAUGE;
               WSContentSend_P(SCRIPT_MSG_GAUGE);
             }
             break;
           case 't':
-            if (!(google_libs & GLIBS_TABLE)) {
-              google_libs |= GLIBS_TABLE;
+            if (!(glob_script_mem.google_libs & GLIBS_TABLE)) {
+              glob_script_mem.google_libs |= GLIBS_TABLE;
               WSContentSend_P(SCRIPT_MSG_TABLE);
             }
             break;
           case 'T':
-            if (!(google_libs & GLIBS_TIMELINE)) {
-              google_libs |= GLIBS_TIMELINE;
+            if (!(glob_script_mem.google_libs & GLIBS_TIMELINE)) {
+              glob_script_mem.google_libs |= GLIBS_TIMELINE;
               WSContentSend_P(SCRIPT_MSG_TIMELINE);
             }
             break;
         }
         if (type == 'e') {
-          WSContentSend_P(SCRIPT_MSG_GTABLEbx, gc_str, chartindex);
-          chartindex++;
+          WSContentSend_P(SCRIPT_MSG_GTABLEbx, gc_str, glob_script_mem.chartindex);
+          glob_script_mem.chartindex++;
           WS_LINE_RETURN
         }
 
         char stacked[6];
         strcpy_P(stacked,"false");
-        if (gs_ctype == 'l' && *lp == 'f') {
+        if (glob_script_mem.gs_ctype == 'l' && *lp == 'f') {
           lp++;
           func = PSTR(",curveType:'function'");
         } else {
           func = "";
         }
-        if (gs_ctype == 'c' && *lp == 's') {
+        if (glob_script_mem.gs_ctype == 'c' && *lp == 's') {
           lp++;
           strcpy_P(stacked,"true");
         }
@@ -11843,7 +11889,7 @@ exgc:
         // we know how many arrays and the number of entries
         //Serial.printf("arrays %d\n",anum);
         //Serial.printf("entries %d\n",entries);
-        if (gs_ctype == 'T') {
+        if (glob_script_mem.gs_ctype == 'T') {
           if (anum && !(entries & 1)) {
             WSContentSend_P(SCRIPT_MSG_GTABLEa);
             char label[SCRIPT_MAX_SBSIZE];
@@ -12021,7 +12067,7 @@ exgc:
         lp = GetStringArgument(lp, OPER_EQU, header, 0);
         SCRIPT_SKIP_SPACES
 
-        switch (gs_ctype) {
+        switch (glob_script_mem.gs_ctype) {
           case 't':
             snprintf_P(options, SCRIPT_GC_OPTIONS_SIZE, SCRIPT_MSG_GOPT2);
             break;
@@ -12047,7 +12093,7 @@ exgc:
           snprintf_P(options, SCRIPT_GC_OPTIONS_SIZE, SCRIPT_MSG_GOPT3, header, stacked, maxstr1, maxstr2, func);
         } else {
           SCRIPT_SKIP_SPACES
-          if (gs_ctype != 'g') {
+          if (glob_script_mem.gs_ctype != 'g') {
             if (*lp != ')') {
               TS_FLOAT max1;
               lp = GetNumericArgument(lp, OPER_EQU, &max1, 0);
@@ -12065,7 +12111,7 @@ exgc:
           }
         }
 
-        if (gs_ctype == 'g') {
+        if (glob_script_mem.gs_ctype == 'g') {
           TS_FLOAT yellowFrom;
           lp = GetNumericArgument(lp, OPER_EQU, &yellowFrom, 0);
           SCRIPT_SKIP_SPACES
@@ -12082,15 +12128,17 @@ exgc:
           }
         }
         WSContentSend_P(SCRIPT_MSG_GTABLEb, options);
-        WSContentSend_P(SCRIPT_MSG_GTABLEbx, gc_str, chartindex);
-        chartindex++;
+        WSContentSend_P(SCRIPT_MSG_GTABLEbx, gc_str, glob_script_mem.chartindex);
+        glob_script_mem.chartindex++;
+        if (options) free(options);
       } else {
         WSContentSend_P(PSTR("%s"), lin);
       }
+      
 #else
 
       if (mc != 'z') {
-        if (!(specopt & WSO_FORCEMAIN)) {
+        if (!(glob_script_mem.specopt & WSO_FORCEMAIN)) {
           lin++;
         }
       }
@@ -12099,7 +12147,9 @@ exgc:
           //  WSContentSend_P(PSTR("%s"),lin);
 #endif //USE_GOOGLE_CHARTS
     }
+    
   }
+  
   WS_LINE_RETURN
 }
 
@@ -12217,51 +12267,38 @@ bool RulesProcessEvent(const char *json_event) {
 #ifdef ESP32
 #ifdef ESP32_FAST_MUX
 
-#define MUX_SIZE 128
-struct FAST_PIN_MUX {
-  volatile uint8_t scan_cnt;
-  uint8_t scan_buff[MUX_SIZE];
-  uint8_t scan_buff_size;
-  uint8_t time;
-  uint32_t low_pins;
-  uint32_t high_pins;
-  hw_timer_t * scan_timer = NULL;
-  portMUX_TYPE scan_timerMux = portMUX_INITIALIZER_UNLOCKED;
-} fast_pin_mux;
-
-
 void IRAM_ATTR fast_mux_irq() {
-  portENTER_CRITICAL_ISR(&fast_pin_mux.scan_timerMux);
+  portENTER_CRITICAL_ISR(&glob_script_mem.fast_pin_mux.scan_timerMux);
   // this could be optimized for multiple pins
-  if (fast_pin_mux.scan_buff_size) {
-    while (fast_pin_mux.scan_cnt < fast_pin_mux.scan_buff_size) {
-      uint8_t iob = fast_pin_mux.scan_buff[fast_pin_mux.scan_cnt];
+  if (glob_script_mem.fast_pin_mux.scan_buff_size) {
+    while (glob_script_mem.fast_pin_mux.scan_cnt < glob_script_mem.fast_pin_mux.scan_buff_size) {
+      uint8_t iob = glob_script_mem.fast_pin_mux.scan_buff[glob_script_mem.fast_pin_mux.scan_cnt];
       if (iob & 0x20) {
         if (iob & 1) {
-          GPIO.out_w1tc = fast_pin_mux.low_pins;
+          GPIO.out_w1tc = glob_script_mem.fast_pin_mux.low_pins;
         }
         if (iob & 2) {
-          GPIO.out_w1ts = fast_pin_mux.high_pins;
+          GPIO.out_w1ts = glob_script_mem.fast_pin_mux.high_pins;
         }
         if (iob & 4) {
           // modify mux timer
           uint8_t fac = (iob & 0x1f) >> 2;
-          timerAlarmWrite(fast_pin_mux.scan_timer, fast_pin_mux.time * fac, true);
+          timerAlarmWrite(glob_script_mem.fast_pin_mux.scan_timer, glob_script_mem.fast_pin_mux.time * fac, true);
         }
       } else {
         uint8_t mode = (iob >> 6) & 1;
         digitalWrite(iob & 0x1f, mode);
       }
-      fast_pin_mux.scan_cnt++;
+      glob_script_mem.fast_pin_mux.scan_cnt++;
       if (iob & 0x80) {
         break;
       }
     }
-    if (fast_pin_mux.scan_cnt >= fast_pin_mux.scan_buff_size) {
-      fast_pin_mux.scan_cnt = 0;
+    if (glob_script_mem.fast_pin_mux.scan_cnt >= glob_script_mem.fast_pin_mux.scan_buff_size) {
+      glob_script_mem.fast_pin_mux.scan_cnt = 0;
     }
   }
-  portEXIT_CRITICAL_ISR(&fast_pin_mux.scan_timerMux);
+  portEXIT_CRITICAL_ISR(&glob_script_mem.fast_pin_mux.scan_timerMux);
 }
 
 /* uint8_t pin nr, 0x40 = value, 0x80 = next
@@ -12273,56 +12310,56 @@ int32_t retval;
     if (len > MUX_SIZE) {
       len = MUX_SIZE;
     }
-    fast_pin_mux.high_pins = 0;
-    fast_pin_mux.low_pins = 0;
+    glob_script_mem.fast_pin_mux.high_pins = 0;
+    glob_script_mem.fast_pin_mux.low_pins = 0;
     for (uint32_t cnt = 0; cnt < len; cnt++) {
       uint8_t iob = *buf++;
-      fast_pin_mux.scan_buff[cnt] = iob;
+      glob_script_mem.fast_pin_mux.scan_buff[cnt] = iob;
       uint8_t pin = iob & 0x1f;
       pinMode(pin, OUTPUT);
       if (iob & 0x40) {
         digitalWrite(pin, 1);
-        fast_pin_mux.high_pins |= (1 << pin);
+        glob_script_mem.fast_pin_mux.high_pins |= (1 << pin);
       } else {
         digitalWrite(pin, 0);
-        fast_pin_mux.low_pins |= (1 << pin);
+        glob_script_mem.fast_pin_mux.low_pins |= (1 << pin);
       }
     }
-    fast_pin_mux.scan_buff_size = 0;
+    glob_script_mem.fast_pin_mux.scan_buff_size = 0;
 
-    if (fast_pin_mux.scan_timer) {
-      timerStop(fast_pin_mux.scan_timer);
-      timerDetachInterrupt(fast_pin_mux.scan_timer);
-      timerEnd(fast_pin_mux.scan_timer);
+    if (glob_script_mem.fast_pin_mux.scan_timer) {
+      timerStop(glob_script_mem.fast_pin_mux.scan_timer);
+      timerDetachInterrupt(glob_script_mem.fast_pin_mux.scan_timer);
+      timerEnd(glob_script_mem.fast_pin_mux.scan_timer);
     }
-    fast_pin_mux.scan_timer = timerBegin(3, 1000, true);
-    if (!fast_pin_mux.scan_timer) {
+    glob_script_mem.fast_pin_mux.scan_timer = timerBegin(3, 1000, true);
+    if (!glob_script_mem.fast_pin_mux.scan_timer) {
       return -1;
     }
-    fast_pin_mux.time = time;
-    timerAttachInterrupt(fast_pin_mux.scan_timer, &fast_mux_irq, true);
-    timerSetAutoReload(fast_pin_mux.scan_timer, true);
-    timerAlarmWrite(fast_pin_mux.scan_timer, fast_pin_mux.time, true);
-    timerAlarmEnable(fast_pin_mux.scan_timer);
-    timerStart(fast_pin_mux.scan_timer);
+    glob_script_mem.fast_pin_mux.time = time;
+    timerAttachInterrupt(glob_script_mem.fast_pin_mux.scan_timer, &fast_mux_irq, true);
+    timerSetAutoReload(glob_script_mem.fast_pin_mux.scan_timer, true);
+    timerAlarmWrite(glob_script_mem.fast_pin_mux.scan_timer, glob_script_mem.fast_pin_mux.time, true);
+    timerAlarmEnable(glob_script_mem.fast_pin_mux.scan_timer);
+    timerStart(glob_script_mem.fast_pin_mux.scan_timer);
   } else if (flag == 1) {
-    if (fast_pin_mux.scan_timer) {
-      timerStop(fast_pin_mux.scan_timer);
-      timerDetachInterrupt(fast_pin_mux.scan_timer);
-      timerEnd(fast_pin_mux.scan_timer);
-      fast_pin_mux.scan_timer = 0;
+    if (glob_script_mem.fast_pin_mux.scan_timer) {
+      timerStop(glob_script_mem.fast_pin_mux.scan_timer);
+      timerDetachInterrupt(glob_script_mem.fast_pin_mux.scan_timer);
+      timerEnd(glob_script_mem.fast_pin_mux.scan_timer);
+      glob_script_mem.fast_pin_mux.scan_timer = 0;
     }
   } else if (flag == 2) {
-    portENTER_CRITICAL(&fast_pin_mux.scan_timerMux);
+    portENTER_CRITICAL(&glob_script_mem.fast_pin_mux.scan_timerMux);
     for (uint32_t cnt = 0; cnt < len; cnt++) {
-      fast_pin_mux.scan_buff[cnt] = *buf++;
+      glob_script_mem.fast_pin_mux.scan_buff[cnt] = *buf++;
     }
-    fast_pin_mux.scan_buff_size = len;
-    portEXIT_CRITICAL(&fast_pin_mux.scan_timerMux);
+    glob_script_mem.fast_pin_mux.scan_buff_size = len;
+    portEXIT_CRITICAL(&glob_script_mem.fast_pin_mux.scan_timerMux);
   } else {
-    portENTER_CRITICAL(&fast_pin_mux.scan_timerMux);
-    retval = fast_pin_mux.scan_cnt;
-    portEXIT_CRITICAL(&fast_pin_mux.scan_timerMux);
+    portENTER_CRITICAL(&glob_script_mem.fast_pin_mux.scan_timerMux);
+    retval = glob_script_mem.fast_pin_mux.scan_cnt;
+    portEXIT_CRITICAL(&glob_script_mem.fast_pin_mux.scan_timerMux);
     return retval;
   }
   return 0;
@@ -12333,31 +12370,22 @@ int32_t retval;
 #ifdef ESP32
 #ifdef USE_SCRIPT_TASK
 
-
-
-struct ESP32_Task {
-  uint16_t task_timer;
-  TaskHandle_t task_t;
-  char *tstart;
-} esp32_tasks[2];
-
-
 void script_task1(void *arg) {
   //uint32_t lastms=millis();
   //uint32_t time;
   while (1) {
     //time=millis()-lastms;
     //lastms=millis();
-    //time=esp32_tasks[0].task_timer-time;
-    //if (time<esp32_tasks[1].task_timer) {delay(time); }
-    //if (time<=esp32_tasks[0].task_timer) {vTaskDelay( pdMS_TO_TICKS( time ) ); }
+    //time=glob_script_mem.esp32_tasks[0].task_timer-time;
+    //if (time<glob_script_mem.esp32_tasks[1].task_timer) {delay(time); }
+    //if (time<=glob_script_mem.esp32_tasks[0].task_timer) {vTaskDelay( pdMS_TO_TICKS( time ) ); }
     if (bitRead(Settings->rule_enabled, 0)) {
-      if (esp32_tasks[0].tstart) Run_Scripter1(esp32_tasks[0].tstart, 0, 0);
+      if (glob_script_mem.esp32_tasks[0].tstart) Run_Scripter1(glob_script_mem.esp32_tasks[0].tstart, 0, 0);
     }
-    if (esp32_tasks[0].task_timer) {
-      delay(esp32_tasks[0].task_timer);
+    if (glob_script_mem.esp32_tasks[0].task_timer) {
+      delay(glob_script_mem.esp32_tasks[0].task_timer);
     } else {
-      esp32_tasks[0].task_t = 0;
+      glob_script_mem.esp32_tasks[0].task_t = 0;
       vTaskDelete( NULL );
     }
   }
@@ -12366,12 +12394,12 @@ void script_task1(void *arg) {
 void script_task2(void *arg) {
   while (1) {
     if (bitRead(Settings->rule_enabled, 0)) {
-      if (esp32_tasks[1].tstart) Run_Scripter1(esp32_tasks[1].tstart, 0, 0);
+      if (glob_script_mem.esp32_tasks[1].tstart) Run_Scripter1(glob_script_mem.esp32_tasks[1].tstart, 0, 0);
     }
-    if (esp32_tasks[1].task_timer) {
-      delay(esp32_tasks[1].task_timer);
+    if (glob_script_mem.esp32_tasks[1].task_timer) {
+      delay(glob_script_mem.esp32_tasks[1].task_timer);
     } else {
-      esp32_tasks[1].task_t = 0;
+      glob_script_mem.esp32_tasks[1].task_t = 0;
       vTaskDelete( NULL );
     }
   }
@@ -12383,25 +12411,25 @@ uint32_t scripter_create_task(uint32_t num, uint32_t time, uint32_t core, int32_
   if (num < 1) { num = 1; }
   if (num > 2) { num = 2; }
   num--;
-  if (esp32_tasks[num].task_t) {
-    vTaskDelete(esp32_tasks[num].task_t);
-    esp32_tasks[num].task_t = 0;
+  if (glob_script_mem.esp32_tasks[num].task_t) {
+    vTaskDelete(glob_script_mem.esp32_tasks[num].task_t);
+    glob_script_mem.esp32_tasks[num].task_t = 0;
   }
   if (prio >= 0) {
     char *sp = 0;
-    esp32_tasks[num].task_timer = time;
+    glob_script_mem.esp32_tasks[num].task_timer = time;
     if (!num) {
       if (Run_Scripter1(">t1", -3, 0) == 99) {
         sp = glob_script_mem.section_ptr + 2;
-        res = xTaskCreatePinnedToCore(script_task1, "T1", stack, NULL, prio, &esp32_tasks[num].task_t, core);
+        res = xTaskCreatePinnedToCore(script_task1, "T1", stack, NULL, prio, &glob_script_mem.esp32_tasks[num].task_t, core);
       }
     } else {
       if (Run_Scripter1(">t2", -3, 0) == 99) {
         sp = glob_script_mem.section_ptr + 2;
-        res = xTaskCreatePinnedToCore(script_task2, "T2", stack, NULL, prio, &esp32_tasks[num].task_t, core);
+        res = xTaskCreatePinnedToCore(script_task2, "T2", stack, NULL, prio, &glob_script_mem.esp32_tasks[num].task_t, core);
       }
     }
-    esp32_tasks[num].tstart = sp;
+    glob_script_mem.esp32_tasks[num].tstart = sp;
   }
   return res;
 }
@@ -13192,8 +13220,7 @@ void script_add_subpage(uint8_t num) {
 \*********************************************************************************************/
 //const esp_partition_t *esp32_part;
 
-bool Xdrv10(uint32_t function)
-{
+bool Xdrv10(uint32_t function) {
   bool result = false;
   glob_script_mem.event_handeled = false;
   char *sprt;
