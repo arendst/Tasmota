@@ -192,10 +192,10 @@ const be_ctypes_structure_t be_lv_image_header = {
 }};
 
 const be_ctypes_structure_t be_lv_draw_image_dsc = {
-  84,  /* size in bytes */
-  29,  /* number of elements */
+  100,  /* size in bytes */
+  33,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[29]) {
+  (const be_ctypes_structure_item_t[33]) {
     { "antialias", 77, 4, 1, ctypes_bf, 0 },
     { "base_dsc_size", 20, 0, 0, ctypes_u32, 0 },
     { "base_id1", 8, 0, 0, ctypes_u32, 0 },
@@ -213,6 +213,10 @@ const be_ctypes_structure_t be_lv_draw_image_dsc = {
     { "header_stride", 40, 0, 0, ctypes_u16, 0 },
     { "header_w", 36, 0, 0, ctypes_u16, 0 },
     { "opa", 76, 0, 0, ctypes_u8, 0 },
+    { "original_area_x1", 80, 0, 0, ctypes_i32, 0 },
+    { "original_area_x2", 88, 0, 0, ctypes_i32, 0 },
+    { "original_area_y1", 84, 0, 0, ctypes_i32, 0 },
+    { "original_area_y2", 92, 0, 0, ctypes_i32, 0 },
     { "pivot_x", 64, 0, 0, ctypes_i32, 0 },
     { "pivot_y", 68, 0, 0, ctypes_i32, 0 },
     { "recolor", 72, 0, 0, ctypes_u24, 1 },
@@ -223,7 +227,7 @@ const be_ctypes_structure_t be_lv_draw_image_dsc = {
     { "skew_x", 56, 0, 0, ctypes_i32, 0 },
     { "skew_y", 60, 0, 0, ctypes_i32, 0 },
     { "src", 28, 0, 0, ctypes_ptr32, 0 },
-    { "sup", 80, 0, 0, ctypes_ptr32, 0 },
+    { "sup", 96, 0, 0, ctypes_ptr32, 0 },
     { "tile", 77, 5, 1, ctypes_bf, 0 },
 }};
 
@@ -258,42 +262,6 @@ const be_ctypes_structure_t be_lv_draw_label_dsc = {
     { "sel_start", 36, 0, 0, ctypes_u32, 0 },
     { "text", 28, 0, 0, ctypes_ptr32, 0 },
     { "text_local", 76, 6, 1, ctypes_bf, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_meter_scale = {
-  40,  /* size in bytes */
-  14,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[14]) {
-    { "angle_range", 34, 0, 0, ctypes_u16, 0 },
-    { "label_gap", 20, 0, 0, ctypes_i16, 0 },
-    { "max", 28, 0, 0, ctypes_i32, 0 },
-    { "min", 24, 0, 0, ctypes_i32, 0 },
-    { "r_mod", 32, 0, 0, ctypes_i16, 0 },
-    { "rotation", 36, 0, 0, ctypes_i16, 0 },
-    { "tick_cnt", 4, 0, 0, ctypes_u16, 0 },
-    { "tick_color", 0, 0, 0, ctypes_u24, 1 },
-    { "tick_length", 6, 0, 0, ctypes_u16, 0 },
-    { "tick_major_color", 10, 0, 0, ctypes_u24, 1 },
-    { "tick_major_length", 16, 0, 0, ctypes_u16, 0 },
-    { "tick_major_nth", 14, 0, 0, ctypes_u16, 0 },
-    { "tick_major_width", 18, 0, 0, ctypes_u16, 0 },
-    { "tick_width", 8, 0, 0, ctypes_u16, 0 },
-}};
-
-const be_ctypes_structure_t be_lv_meter_indicator = {
-  28,  /* size in bytes */
-  8,  /* number of elements */
-  be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[8]) {
-    { "data0", 16, 0, 0, ctypes_ptr32, 0 },
-    { "data1", 20, 0, 0, ctypes_ptr32, 0 },
-    { "data2", 24, 0, 0, ctypes_ptr32, 0 },
-    { "end_value", 12, 0, 0, ctypes_i32, 0 },
-    { "opa", 5, 0, 0, ctypes_u8, 0 },
-    { "scale", 0, 0, 0, ctypes_ptr32, 0 },
-    { "start_value", 8, 0, 0, ctypes_i32, 0 },
-    { "type", 4, 0, 0, ctypes_u8, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_chart_series = {
@@ -362,10 +330,10 @@ const be_ctypes_structure_t be_lv_event = {
 }};
 
 const be_ctypes_structure_t be_lv_image_dsc = {
-  20,  /* size in bytes */
-  9,  /* number of elements */
+  24,  /* size in bytes */
+  10,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[9]) {
+  (const be_ctypes_structure_item_t[10]) {
     { "data", 16, 0, 0, ctypes_ptr32, 0 },
     { "data_size", 12, 0, 0, ctypes_u32, 0 },
     { "header_cf", 1, 0, 0, ctypes_u8, 0 },
@@ -375,6 +343,7 @@ const be_ctypes_structure_t be_lv_image_dsc = {
     { "header_reserved_2", 10, 0, 0, ctypes_u16, 0 },
     { "header_stride", 8, 0, 0, ctypes_u16, 0 },
     { "header_w", 4, 0, 0, ctypes_u16, 0 },
+    { "reserved", 20, 0, 0, ctypes_ptr32, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_style_transition_dsc = {
@@ -412,6 +381,16 @@ const be_ctypes_structure_t be_lv_timer_ntv = {
     { "user_data", 12, 0, 0, ctypes_ptr32, 0 },
 }};
 
+const be_ctypes_structure_t be_lv_event_dsc = {
+  12,  /* size in bytes */
+  3,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[3]) {
+    { "cb", 0, 0, 0, ctypes_ptr32, 0 },
+    { "filter", 8, 0, 0, ctypes_u32, 0 },
+    { "user_data", 4, 0, 0, ctypes_ptr32, 0 },
+}};
+
 const be_ctypes_structure_t be_lv_ts_calibration = {
   20,  /* size in bytes */
   5,  /* number of elements */
@@ -440,12 +419,11 @@ static be_define_ctypes_class(lv_draw_label_dsc, &be_lv_draw_label_dsc, &be_clas
 static be_define_ctypes_class(lv_draw_line_dsc, &be_lv_draw_line_dsc, &be_class_ctypes_bytes, "lv_draw_line_dsc");
 static be_define_ctypes_class(lv_draw_rect_dsc, &be_lv_draw_rect_dsc, &be_class_ctypes_bytes, "lv_draw_rect_dsc");
 static be_define_ctypes_class(lv_event, &be_lv_event, &be_class_ctypes_bytes, "lv_event");
+static be_define_ctypes_class(lv_event_dsc, &be_lv_event_dsc, &be_class_ctypes_bytes, "lv_event_dsc");
 static be_define_ctypes_class(lv_grad_dsc, &be_lv_grad_dsc, &be_class_ctypes_bytes, "lv_grad_dsc");
 static be_define_ctypes_class(lv_gradient_stop, &be_lv_gradient_stop, &be_class_ctypes_bytes, "lv_gradient_stop");
 static be_define_ctypes_class(lv_image_dsc, &be_lv_image_dsc, &be_class_ctypes_bytes, "lv_image_dsc");
 static be_define_ctypes_class(lv_image_header, &be_lv_image_header, &be_class_ctypes_bytes, "lv_image_header");
-static be_define_ctypes_class(lv_meter_indicator, &be_lv_meter_indicator, &be_class_ctypes_bytes, "lv_meter_indicator");
-static be_define_ctypes_class(lv_meter_scale, &be_lv_meter_scale, &be_class_ctypes_bytes, "lv_meter_scale");
 static be_define_ctypes_class(lv_obj_class, &be_lv_obj_class, &be_class_ctypes_bytes, "lv_obj_class");
 static be_define_ctypes_class(lv_point, &be_lv_point, &be_class_ctypes_bytes, "lv_point");
 static be_define_ctypes_class(lv_point_precise, &be_lv_point_precise, &be_class_ctypes_bytes, "lv_point_precise");
@@ -465,12 +443,11 @@ be_ctypes_class_by_name_t be_ctypes_lvgl_classes[] = {
   { "lv_draw_line_dsc", &be_class_lv_draw_line_dsc },
   { "lv_draw_rect_dsc", &be_class_lv_draw_rect_dsc },
   { "lv_event", &be_class_lv_event },
+  { "lv_event_dsc", &be_class_lv_event_dsc },
   { "lv_grad_dsc", &be_class_lv_grad_dsc },
   { "lv_gradient_stop", &be_class_lv_gradient_stop },
   { "lv_image_dsc", &be_class_lv_image_dsc },
   { "lv_image_header", &be_class_lv_image_header },
-  { "lv_meter_indicator", &be_class_lv_meter_indicator },
-  { "lv_meter_scale", &be_class_lv_meter_scale },
   { "lv_obj_class", &be_class_lv_obj_class },
   { "lv_point", &be_class_lv_point },
   { "lv_point_precise", &be_class_lv_point_precise },

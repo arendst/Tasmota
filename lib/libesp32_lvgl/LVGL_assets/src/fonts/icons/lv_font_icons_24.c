@@ -2059,6 +2059,7 @@ static lv_font_fmt_txt_dsc_t font_dsc = {
 };
 
 
+
 /*-----------------
  *  PUBLIC FONT
  *----------------*/
@@ -2082,7 +2083,7 @@ lv_font_t lv_font_icons_24 = {
 #endif
     .dsc = &font_dsc,          /*The custom font data. Will be accessed by `get_glyph_bitmap/dsc` */
     .fallback = NULL,
-    .user_data = NULL
+    .user_data = NULL,
 };
 
 

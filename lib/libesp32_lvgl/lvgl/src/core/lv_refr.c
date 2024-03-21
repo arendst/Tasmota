@@ -679,7 +679,13 @@ static void refr_area_part(lv_layer_t * layer)
     }
     /*If the screen is transparent initialize it when the flushing is ready*/
     if(lv_color_format_has_alpha(disp_refr->color_format)) {
-        lv_draw_buf_clear(layer->draw_buf, &disp_refr->refreshed_area);
+        lv_area_t a = disp_refr->refreshed_area;
+        if(disp_refr->render_mode == LV_DISPLAY_RENDER_MODE_PARTIAL) {
+            /*The area always starts at 0;0*/
+            lv_area_move(&a, -disp_refr->refreshed_area.x1, -disp_refr->refreshed_area.y1);
+        }
+
+        lv_draw_buf_clear(layer->draw_buf, &a);
     }
 
     lv_obj_t * top_act_scr = NULL;
@@ -820,19 +826,18 @@ static void refr_obj_and_children(lv_layer_t * layer, lv_obj_t * top_obj)
 }
 
 static lv_result_t layer_get_area(lv_layer_t * layer, lv_obj_t * obj, lv_layer_type_t layer_type,
-                                  lv_area_t * layer_area_out)
+                                  lv_area_t * layer_area_out, lv_area_t * obj_draw_size_out)
 {
     int32_t ext_draw_size = _lv_obj_get_ext_draw_size(obj);
-    lv_area_t obj_coords_ext;
-    lv_obj_get_coords(obj, &obj_coords_ext);
-    lv_area_increase(&obj_coords_ext, ext_draw_size, ext_draw_size);
+    lv_obj_get_coords(obj, obj_draw_size_out);
+    lv_area_increase(obj_draw_size_out, ext_draw_size, ext_draw_size);
 
     if(layer_type == LV_LAYER_TYPE_TRANSFORM) {
         /*Get the transformed area and clip it to the current clip area.
          *This area needs to be updated on the screen.*/
         lv_area_t clip_coords_for_obj;
-        lv_area_t tranf_coords = obj_coords_ext;
-        lv_obj_get_transformed_area(obj, &tranf_coords, false, false);
+        lv_area_t tranf_coords = *obj_draw_size_out;
+        lv_obj_get_transformed_area(obj, &tranf_coords, LV_OBJ_POINT_TRANSFORM_FLAG_NONE);
         if(!_lv_area_intersect(&clip_coords_for_obj, &layer->_clip_area, &tranf_coords)) {
             return LV_RESULT_INVALID;
         }
@@ -841,8 +846,8 @@ static lv_result_t layer_get_area(lv_layer_t * layer, lv_obj_t * obj, lv_layer_t
          *It will tell which area of the non-transformed widget needs to be redrawn
          *in order to cover transformed area after transformation.*/
         lv_area_t inverse_clip_coords_for_obj = clip_coords_for_obj;
-        lv_obj_get_transformed_area(obj, &inverse_clip_coords_for_obj, false, true);
-        if(!_lv_area_intersect(&inverse_clip_coords_for_obj, &inverse_clip_coords_for_obj, &obj_coords_ext)) {
+        lv_obj_get_transformed_area(obj, &inverse_clip_coords_for_obj, LV_OBJ_POINT_TRANSFORM_FLAG_INVERSE);
+        if(!_lv_area_intersect(&inverse_clip_coords_for_obj, &inverse_clip_coords_for_obj, obj_draw_size_out)) {
             return LV_RESULT_INVALID;
         }
 
@@ -851,7 +856,7 @@ static lv_result_t layer_get_area(lv_layer_t * layer, lv_obj_t * obj, lv_layer_t
     }
     else if(layer_type == LV_LAYER_TYPE_SIMPLE) {
         lv_area_t clip_coords_for_obj;
-        if(!_lv_area_intersect(&clip_coords_for_obj, &layer->_clip_area, &obj_coords_ext)) {
+        if(!_lv_area_intersect(&clip_coords_for_obj, &layer->_clip_area, obj_draw_size_out)) {
             return LV_RESULT_INVALID;
         }
         *layer_area_out = clip_coords_for_obj;
@@ -891,7 +896,8 @@ void refr_obj(lv_layer_t * layer, lv_obj_t * obj)
         if(opa < LV_OPA_MIN) return;
 
         lv_area_t layer_area_full;
-        lv_result_t res = layer_get_area(layer, obj, layer_type, &layer_area_full);
+        lv_area_t obj_draw_size;
+        lv_result_t res = layer_get_area(layer, obj, layer_type, &layer_area_full, &obj_draw_size);
         if(res != LV_RESULT_OK) return;
 
         /*Simple layers can be subdivied into smaller layers*/
@@ -900,8 +906,8 @@ void refr_obj(lv_layer_t * layer, lv_obj_t * obj)
         if(layer_type == LV_LAYER_TYPE_SIMPLE) {
             int32_t w = lv_area_get_width(&layer_area_full);
             uint8_t px_size = lv_color_format_get_size(disp_refr->color_format);
-            max_rgb_row_height = LV_DRAW_SW_LAYER_SIMPLE_BUF_SIZE / w / px_size;
-            max_argb_row_height = LV_DRAW_SW_LAYER_SIMPLE_BUF_SIZE / w / sizeof(lv_color32_t);
+            max_rgb_row_height = LV_DRAW_LAYER_SIMPLE_BUF_SIZE / w / px_size;
+            max_argb_row_height = LV_DRAW_LAYER_SIMPLE_BUF_SIZE / w / sizeof(lv_color32_t);
         }
 
         lv_area_t layer_area_act;
@@ -925,10 +931,22 @@ void refr_obj(lv_layer_t * layer, lv_obj_t * obj)
                                                           area_need_alpha ? LV_COLOR_FORMAT_ARGB8888 : LV_COLOR_FORMAT_NATIVE, &layer_area_act);
             lv_obj_redraw(new_layer, obj);
 
+            lv_point_t pivot = {
+                .x = lv_obj_get_style_transform_pivot_x(obj, 0),
+                .y = lv_obj_get_style_transform_pivot_y(obj, 0)
+            };
+
+            if(LV_COORD_IS_PCT(pivot.x)) {
+                pivot.x = (LV_COORD_GET_PCT(pivot.x) * lv_area_get_width(&obj->coords)) / 100;
+            }
+            if(LV_COORD_IS_PCT(pivot.y)) {
+                pivot.y = (LV_COORD_GET_PCT(pivot.y) * lv_area_get_height(&obj->coords)) / 100;
+            }
+
             lv_draw_image_dsc_t layer_draw_dsc;
             lv_draw_image_dsc_init(&layer_draw_dsc);
-            layer_draw_dsc.pivot.x = obj->coords.x1 + lv_obj_get_style_transform_pivot_x(obj, 0) - new_layer->buf_area.x1;
-            layer_draw_dsc.pivot.y = obj->coords.y1 + lv_obj_get_style_transform_pivot_y(obj, 0) - new_layer->buf_area.y1;
+            layer_draw_dsc.pivot.x = obj->coords.x1 + pivot.x - new_layer->buf_area.x1;
+            layer_draw_dsc.pivot.y = obj->coords.y1 + pivot.y - new_layer->buf_area.y1;
 
             layer_draw_dsc.opa = opa;
             layer_draw_dsc.rotation = lv_obj_get_style_transform_rotation(obj, 0);
@@ -940,6 +958,8 @@ void refr_obj(lv_layer_t * layer, lv_obj_t * obj)
             layer_draw_dsc.skew_y = lv_obj_get_style_transform_skew_y(obj, 0);
             layer_draw_dsc.blend_mode = lv_obj_get_style_blend_mode(obj, 0);
             layer_draw_dsc.antialias = disp_refr->antialiasing;
+            layer_draw_dsc.bitmap_mask_src = lv_obj_get_style_bitmap_mask_src(obj, 0);
+            layer_draw_dsc.original_area = obj_draw_size;
             layer_draw_dsc.src = new_layer;
 
             lv_draw_layer(layer, &layer_draw_dsc, &layer_area_act);
@@ -952,9 +972,9 @@ void refr_obj(lv_layer_t * layer, lv_obj_t * obj)
 static uint32_t get_max_row(lv_display_t * disp, int32_t area_w, int32_t area_h)
 {
     bool has_alpha = lv_color_format_has_alpha(disp->color_format);
-    uint32_t px_size_disp =  lv_color_format_get_size(disp->color_format);
-    uint8_t px_size_render = has_alpha ? sizeof(lv_color32_t) : px_size_disp;
-    int32_t max_row = (uint32_t)disp->buf_act->data_size / LV_MAX(px_size_render, px_size_disp) / area_w;
+    lv_color_format_t cf = has_alpha ? LV_COLOR_FORMAT_ARGB8888 : disp->color_format;
+    uint32_t stride = lv_draw_buf_width_to_stride(area_w, cf);
+    int32_t max_row = (uint32_t)disp->buf_act->data_size / stride;
 
     if(max_row > area_h) max_row = area_h;
 
@@ -1055,6 +1075,8 @@ static void wait_for_flushing(lv_display_t * disp)
     LV_PROFILER_BEGIN;
     LV_LOG_TRACE("begin");
 
+    lv_display_send_event(disp, LV_EVENT_FLUSH_WAIT_START, NULL);
+
     if(disp->flush_wait_cb) {
         disp->flush_wait_cb(disp);
     }
@@ -1062,6 +1084,8 @@ static void wait_for_flushing(lv_display_t * disp)
         while(disp->flushing);
     }
     disp->flushing_last = 0;
+
+    lv_display_send_event(disp, LV_EVENT_FLUSH_WAIT_FINISH, NULL);
 
     LV_LOG_TRACE("end");
     LV_PROFILER_END;

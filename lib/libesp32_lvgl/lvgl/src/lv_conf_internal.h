@@ -73,6 +73,11 @@
  * Start parsing lv_conf_template.h
  -----------------------------------*/
 
+/*If you need to include anything here, do it inside the `__ASSEMBLY__` guard */
+#if  0 && defined(__ASSEMBLY__)
+#include "my_include.h"
+#endif
+
 /*====================
    COLOR SETTINGS
  *====================*/
@@ -164,7 +169,7 @@
             #endif
         #endif
     #endif
-#endif  /*LV_USE_MALLOC == LV_STDLIB_BUILTIN*/
+#endif  /*LV_USE_STDLIB_MALLOC == LV_STDLIB_BUILTIN*/
 
 /*====================
    HAL SETTINGS
@@ -244,6 +249,20 @@
     #endif
 #endif
 
+/* If a widget has `style_opa < 255` (not `bg_opa`, `text_opa` etc) or not NORMAL blend mode
+ * it is buffered into a "simple" layer before rendering. The widget can be buffered in smaller chunks.
+ * "Transformed layers" (if `transform_angle/zoom` are set) use larger buffers
+ * and can't be drawn in chunks. */
+
+/*The target buffer size for simple layer chunks.*/
+#ifndef LV_DRAW_LAYER_SIMPLE_BUF_SIZE
+    #ifdef CONFIG_LV_DRAW_LAYER_SIMPLE_BUF_SIZE
+        #define LV_DRAW_LAYER_SIMPLE_BUF_SIZE CONFIG_LV_DRAW_LAYER_SIMPLE_BUF_SIZE
+    #else
+        #define LV_DRAW_LAYER_SIMPLE_BUF_SIZE    (24 * 1024)   /*[bytes]*/
+    #endif
+#endif
+
 #ifndef LV_USE_DRAW_SW
     #ifdef _LV_KCONFIG_PRESENT
         #ifdef CONFIG_LV_USE_DRAW_SW
@@ -280,20 +299,15 @@
         #endif
     #endif
 
-    /* If a widget has `style_opa < 255` (not `bg_opa`, `text_opa` etc) or not NORMAL blend mode
-     * it is buffered into a "simple" layer before rendering. The widget can be buffered in smaller chunks.
-     * "Transformed layers" (if `transform_angle/zoom` are set) use larger buffers
-     * and can't be drawn in chunks. */
-
-    /*The target buffer size for simple layer chunks.*/
-    #ifndef LV_DRAW_SW_LAYER_SIMPLE_BUF_SIZE
-        #ifdef CONFIG_LV_DRAW_SW_LAYER_SIMPLE_BUF_SIZE
-            #define LV_DRAW_SW_LAYER_SIMPLE_BUF_SIZE CONFIG_LV_DRAW_SW_LAYER_SIMPLE_BUF_SIZE
+    /* Enable native helium assembly to be compiled */
+    #ifndef LV_USE_NATIVE_HELIUM_ASM
+        #ifdef CONFIG_LV_USE_NATIVE_HELIUM_ASM
+            #define LV_USE_NATIVE_HELIUM_ASM CONFIG_LV_USE_NATIVE_HELIUM_ASM
         #else
-            #define LV_DRAW_SW_LAYER_SIMPLE_BUF_SIZE    (24 * 1024)   /*[bytes]*/
+            #define LV_USE_NATIVE_HELIUM_ASM    0
         #endif
     #endif
-
+    
     /* 0: use a simple renderer capable of drawing only simple rectangles with gradient, images, texts, and straight lines only
      * 1: use a complex renderer capable of drawing rounded corners, shadow, skew lines, and arcs too */
     #ifndef LV_DRAW_SW_COMPLEX
@@ -459,6 +473,37 @@
         #define LV_VG_LITE_USE_ASSERT CONFIG_LV_VG_LITE_USE_ASSERT
     #else
         #define LV_VG_LITE_USE_ASSERT 0
+    #endif
+#endif
+
+/* VG-Lite flush commit trigger threshold. GPU will try to batch these many draw tasks. */
+#ifndef LV_VG_LITE_FLUSH_MAX_COUNT
+    #ifdef CONFIG_LV_VG_LITE_FLUSH_MAX_COUNT
+        #define LV_VG_LITE_FLUSH_MAX_COUNT CONFIG_LV_VG_LITE_FLUSH_MAX_COUNT
+    #else
+        #define LV_VG_LITE_FLUSH_MAX_COUNT 8
+    #endif
+#endif
+
+/* Enable border to simulate shadow
+ * NOTE: which usually improves performance,
+ * but does not guarantee the same rendering quality as the software. */
+#ifndef LV_VG_LITE_USE_BOX_SHADOW
+    #ifdef CONFIG_LV_VG_LITE_USE_BOX_SHADOW
+        #define LV_VG_LITE_USE_BOX_SHADOW CONFIG_LV_VG_LITE_USE_BOX_SHADOW
+    #else
+        #define LV_VG_LITE_USE_BOX_SHADOW 0
+    #endif
+#endif
+
+/* VG-Lite gradient image maximum cache number.
+ * NOTE: The memory usage of a single gradient image is 4K bytes.
+ */
+#ifndef LV_VG_LITE_GRAD_CACHE_SIZE
+    #ifdef CONFIG_LV_VG_LITE_GRAD_CACHE_SIZE
+        #define LV_VG_LITE_GRAD_CACHE_SIZE CONFIG_LV_VG_LITE_GRAD_CACHE_SIZE
+    #else
+        #define LV_VG_LITE_GRAD_CACHE_SIZE 32
     #endif
 #endif
 
@@ -877,6 +922,15 @@
             #endif
         #else
             #define LV_VG_LITE_THORVG_16PIXELS_ALIGN 1
+        #endif
+    #endif
+
+    /*Buffer address alignment*/
+    #ifndef LV_VG_LITE_THORVG_BUF_ADDR_ALIGN
+        #ifdef CONFIG_LV_VG_LITE_THORVG_BUF_ADDR_ALIGN
+            #define LV_VG_LITE_THORVG_BUF_ADDR_ALIGN CONFIG_LV_VG_LITE_THORVG_BUF_ADDR_ALIGN
+        #else
+            #define LV_VG_LITE_THORVG_BUF_ADDR_ALIGN 64
         #endif
     #endif
 
@@ -2097,6 +2151,24 @@
     #endif
 #endif
 
+/*API for LittleFs. */
+#ifndef LV_USE_FS_LITTLEFS
+    #ifdef CONFIG_LV_USE_FS_LITTLEFS
+        #define LV_USE_FS_LITTLEFS CONFIG_LV_USE_FS_LITTLEFS
+    #else
+        #define LV_USE_FS_LITTLEFS 0
+    #endif
+#endif
+#if LV_USE_FS_LITTLEFS
+    #ifndef LV_FS_LITTLEFS_LETTER
+        #ifdef CONFIG_LV_FS_LITTLEFS_LETTER
+            #define LV_FS_LITTLEFS_LETTER CONFIG_LV_FS_LITTLEFS_LETTER
+        #else
+            #define LV_FS_LITTLEFS_LETTER '\0'     /*Set an upper cased letter on which the drive will accessible (e.g. 'A')*/
+        #endif
+    #endif
+#endif
+
 /*LODEPNG decoder library*/
 #ifndef LV_USE_LODEPNG
     #ifdef CONFIG_LV_USE_LODEPNG
@@ -2209,15 +2281,6 @@
     #endif
 #endif
 #if LV_USE_FREETYPE
-    /*Memory used by FreeType to cache characters in kilobytes*/
-    #ifndef LV_FREETYPE_CACHE_SIZE
-        #ifdef CONFIG_LV_FREETYPE_CACHE_SIZE
-            #define LV_FREETYPE_CACHE_SIZE CONFIG_LV_FREETYPE_CACHE_SIZE
-        #else
-            #define LV_FREETYPE_CACHE_SIZE 768
-        #endif
-    #endif
-
     /*Let FreeType to use LVGL memory and file porting*/
     #ifndef LV_FREETYPE_USE_LVGL_PORT
         #ifdef CONFIG_LV_FREETYPE_USE_LVGL_PORT
@@ -2227,22 +2290,8 @@
         #endif
     #endif
 
-    /* Maximum number of opened FT_Face/FT_Size objects managed by this cache instance. */
-    /* (0:use system defaults) */
-    #ifndef LV_FREETYPE_CACHE_FT_FACES
-        #ifdef CONFIG_LV_FREETYPE_CACHE_FT_FACES
-            #define LV_FREETYPE_CACHE_FT_FACES CONFIG_LV_FREETYPE_CACHE_FT_FACES
-        #else
-            #define LV_FREETYPE_CACHE_FT_FACES 8
-        #endif
-    #endif
-    #ifndef LV_FREETYPE_CACHE_FT_SIZES
-        #ifdef CONFIG_LV_FREETYPE_CACHE_FT_SIZES
-            #define LV_FREETYPE_CACHE_FT_SIZES CONFIG_LV_FREETYPE_CACHE_FT_SIZES
-        #else
-            #define LV_FREETYPE_CACHE_FT_SIZES 8
-        #endif
-    #endif
+    /*Cache count of the glyphs in FreeType. It means the number of glyphs that can be cached.
+     *The higher the value, the more memory will be used.*/
     #ifndef LV_FREETYPE_CACHE_FT_GLYPH_CNT
         #ifdef CONFIG_LV_FREETYPE_CACHE_FT_GLYPH_CNT
             #define LV_FREETYPE_CACHE_FT_GLYPH_CNT CONFIG_LV_FREETYPE_CACHE_FT_GLYPH_CNT
@@ -2304,15 +2353,6 @@
         #define LV_USE_THORVG_EXTERNAL CONFIG_LV_USE_THORVG_EXTERNAL
     #else
         #define LV_USE_THORVG_EXTERNAL 0
-    #endif
-#endif
-
-/*Enable LZ4 compress/decompress lib*/
-#ifndef LV_USE_LZ4
-    #ifdef CONFIG_LV_USE_LZ4
-        #define LV_USE_LZ4 CONFIG_LV_USE_LZ4
-    #else
-        #define LV_USE_LZ4  0
     #endif
 #endif
 
@@ -2414,7 +2454,7 @@
     #endif
 
     /*1: Show the used memory and the memory fragmentation
-     * Requires `LV_USE_BUILTIN_MALLOC = 1`
+     * Requires `LV_USE_STDLIB_MALLOC = LV_STDLIB_BUILTIN`
      * Requires `LV_USE_SYSMON = 1`*/
     #ifndef LV_USE_MEM_MONITOR
         #ifdef CONFIG_LV_USE_MEM_MONITOR
@@ -2668,14 +2708,14 @@
         #ifdef CONFIG_LV_SDL_INCLUDE_PATH
             #define LV_SDL_INCLUDE_PATH CONFIG_LV_SDL_INCLUDE_PATH
         #else
-            #define LV_SDL_INCLUDE_PATH    <SDL2/SDL.h>
+            #define LV_SDL_INCLUDE_PATH     <SDL2/SDL.h>
         #endif
     #endif
     #ifndef LV_SDL_RENDER_MODE
         #ifdef CONFIG_LV_SDL_RENDER_MODE
             #define LV_SDL_RENDER_MODE CONFIG_LV_SDL_RENDER_MODE
         #else
-            #define LV_SDL_RENDER_MODE     LV_DISPLAY_RENDER_MODE_DIRECT   /*LV_DISPLAY_RENDER_MODE_DIRECT is recommended for best performance*/
+            #define LV_SDL_RENDER_MODE      LV_DISPLAY_RENDER_MODE_DIRECT   /*LV_DISPLAY_RENDER_MODE_DIRECT is recommended for best performance*/
         #endif
     #endif
     #ifndef LV_SDL_BUF_COUNT
@@ -2686,14 +2726,14 @@
                 #define LV_SDL_BUF_COUNT 0
             #endif
         #else
-            #define LV_SDL_BUF_COUNT       1    /*1 or 2*/
+            #define LV_SDL_BUF_COUNT        1    /*1 or 2*/
         #endif
     #endif
     #ifndef LV_SDL_FULLSCREEN
         #ifdef CONFIG_LV_SDL_FULLSCREEN
             #define LV_SDL_FULLSCREEN CONFIG_LV_SDL_FULLSCREEN
         #else
-            #define LV_SDL_FULLSCREEN      0    /*1: Make the window full screen by default*/
+            #define LV_SDL_FULLSCREEN       0    /*1: Make the window full screen by default*/
         #endif
     #endif
     #ifndef LV_SDL_DIRECT_EXIT
@@ -2704,7 +2744,14 @@
                 #define LV_SDL_DIRECT_EXIT 0
             #endif
         #else
-            #define LV_SDL_DIRECT_EXIT     1    /*1: Exit the application when all SDL windows are closed*/
+            #define LV_SDL_DIRECT_EXIT      1    /*1: Exit the application when all SDL windows are closed*/
+        #endif
+    #endif
+    #ifndef LV_SDL_MOUSEWHEEL_MODE
+        #ifdef CONFIG_LV_SDL_MOUSEWHEEL_MODE
+            #define LV_SDL_MOUSEWHEEL_MODE CONFIG_LV_SDL_MOUSEWHEEL_MODE
+        #else
+            #define LV_SDL_MOUSEWHEEL_MODE  LV_SDL_MOUSEWHEEL_MODE_ENCODER  /*LV_SDL_MOUSEWHEEL_MODE_ENCODER/CROWN*/
         #endif
     #endif
 #endif
@@ -2897,6 +2944,44 @@
     #endif
 #endif
 
+/*Driver for libinput input devices*/
+#ifndef LV_USE_LIBINPUT
+    #ifdef CONFIG_LV_USE_LIBINPUT
+        #define LV_USE_LIBINPUT CONFIG_LV_USE_LIBINPUT
+    #else
+        #define LV_USE_LIBINPUT    0
+    #endif
+#endif
+
+#if LV_USE_LIBINPUT
+    #ifndef LV_LIBINPUT_BSD
+        #ifdef CONFIG_LV_LIBINPUT_BSD
+            #define LV_LIBINPUT_BSD CONFIG_LV_LIBINPUT_BSD
+        #else
+            #define LV_LIBINPUT_BSD    0
+        #endif
+    #endif
+
+    /*Full keyboard support*/
+    #ifndef LV_LIBINPUT_XKB
+        #ifdef CONFIG_LV_LIBINPUT_XKB
+            #define LV_LIBINPUT_XKB CONFIG_LV_LIBINPUT_XKB
+        #else
+            #define LV_LIBINPUT_XKB             0
+        #endif
+    #endif
+    #if LV_LIBINPUT_XKB
+        /*"setxkbmap -query" can help find the right values for your keyboard*/
+        #ifndef LV_LIBINPUT_XKB_KEY_MAP
+            #ifdef CONFIG_LV_LIBINPUT_XKB_KEY_MAP
+                #define LV_LIBINPUT_XKB_KEY_MAP CONFIG_LV_LIBINPUT_XKB_KEY_MAP
+            #else
+                #define LV_LIBINPUT_XKB_KEY_MAP { .rules = NULL, .model = "pc101", .layout = "us", .variant = NULL, .options = NULL }
+            #endif
+        #endif
+    #endif
+#endif
+
 /*Drivers for LCD devices connected via SPI/parallel port*/
 #ifndef LV_USE_ST7735
     #ifdef CONFIG_LV_USE_ST7735
@@ -2971,15 +3056,6 @@
         #define LV_USE_DEMO_WIDGETS CONFIG_LV_USE_DEMO_WIDGETS
     #else
         #define LV_USE_DEMO_WIDGETS 0
-    #endif
-#endif
-#if LV_USE_DEMO_WIDGETS
-    #ifndef LV_DEMO_WIDGETS_SLIDESHOW
-        #ifdef CONFIG_LV_DEMO_WIDGETS_SLIDESHOW
-            #define LV_DEMO_WIDGETS_SLIDESHOW CONFIG_LV_DEMO_WIDGETS_SLIDESHOW
-        #else
-            #define LV_DEMO_WIDGETS_SLIDESHOW 0
-        #endif
     #endif
 #endif
 
@@ -3136,6 +3212,13 @@ LV_EXPORT_CONST_INT(LV_DRAW_BUF_ALIGN);
     #define LV_LOG_TRACE_ANIM       0
 #endif  /*LV_USE_LOG*/
 
+#ifndef LV_USE_LZ4
+    #define LV_USE_LZ4  (LV_USE_LZ4_INTERNAL || LV_USE_LZ4_EXTERNAL)
+#endif
+
+#ifndef LV_USE_THORVG
+    #define LV_USE_THORVG  (LV_USE_THORVG_INTERNAL || LV_USE_THORVG_EXTERNAL)
+#endif
 
 /*If running without lv_conf.h add typedefs with default value*/
 #ifdef LV_CONF_SKIP

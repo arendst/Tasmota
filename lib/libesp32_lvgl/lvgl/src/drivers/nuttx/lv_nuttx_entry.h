@@ -18,6 +18,7 @@ extern "C" {
  *      INCLUDES
  *********************/
 
+#include "../../lv_conf_internal.h"
 #include "../../display/lv_display.h"
 #include "../../indev/lv_indev.h"
 
@@ -41,6 +42,15 @@ typedef struct {
     lv_indev_t * indev;
     lv_indev_t * utouch_indev;
 } lv_nuttx_result_t;
+
+typedef struct _lv_nuttx_ctx_t {
+
+#if LV_CACHE_DEF_SIZE > 0
+    void * image_cache;
+#endif
+
+} lv_nuttx_ctx_t;
+
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
@@ -67,6 +77,12 @@ void lv_nuttx_init(const lv_nuttx_dsc_t * dsc, lv_nuttx_result_t * result);
 void lv_nuttx_init_custom(const lv_nuttx_dsc_t * dsc, lv_nuttx_result_t * result);
 
 #endif /* LV_USE_NUTTX_CUSTOM_INIT */
+
+/**
+ * Get the idle percentage of the system.
+ * @return The idle percentage of the system.
+ */
+uint32_t lv_nuttx_get_idle(void);
 
 /**********************
  *      MACROS

@@ -16,7 +16,7 @@
 /*********************
  *      DEFINES
  *********************/
-#define MY_CLASS &lv_imagebutton_class
+#define MY_CLASS (&lv_imagebutton_class)
 
 /**********************
  *      TYPEDEFS
@@ -225,33 +225,21 @@ static void draw_main(lv_event_t * e)
 
     src_info = &imagebutton->src_mid[state];
     if(src_info->img_src) {
+        coords_part.x1 = coords.x1 + left_w;
+        coords_part.x2 = coords.x2 - right_w;
+        coords_part.y1 = coords.y1;
+        coords_part.y2 = coords.y2;
+
         lv_area_t clip_area_center;
-        clip_area_center.x1 = coords.x1 + left_w;
-        clip_area_center.x2 = coords.x2 - right_w;
-        clip_area_center.y1 = coords.y1;
-        clip_area_center.y2 = coords.y2;
-
-        bool comm_res;
-        comm_res = _lv_area_intersect(&clip_area_center, &clip_area_center, &layer->_clip_area);
-        if(comm_res) {
-            int32_t i;
-
-            const lv_area_t clip_area_ori = layer->_clip_area;
+        if(_lv_area_intersect(&clip_area_center, &coords_part, &layer->_clip_area)) {
+            lv_area_t clip_area_ori = layer->_clip_area;
             layer->_clip_area = clip_area_center;
-
-            coords_part.x1 = coords.x1 + left_w;
-            coords_part.y1 = coords.y1;
-            coords_part.x2 = coords_part.x1 + src_info->header.w - 1;
-            coords_part.y2 = coords_part.y1 + src_info->header.h - 1;
-
-            for(i = coords_part.x1; i < (int32_t)(clip_area_center.x2 + src_info->header.w - 1); i += src_info->header.w) {
-                img_dsc.src = src_info->img_src;
-                lv_draw_image(layer, &img_dsc, &coords_part);
-                coords_part.x1 = coords_part.x2 + 1;
-                coords_part.x2 += src_info->header.w;
-            }
+            img_dsc.src = src_info->img_src;
+            img_dsc.tile = 1;
+            lv_draw_image(layer, &img_dsc, &coords_part);
             layer->_clip_area = clip_area_ori;
         }
+
     }
 }
 

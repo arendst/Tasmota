@@ -244,7 +244,7 @@ class type_mapper_class:
   skipping_type = [
     "bvm *",                      # Berry
     "lv_global_t *",              # reading globals is not useful in Berry
-    "lv_event_dsc_t *",           # internal implementation, use functions instead
+    # "lv_event_dsc_t *",           # internal implementation, use functions instead
     "lv_draw_task_t *",           # skip low-level tasks for now
     "lv_draw_buf_t *",            # low-level
     "lv_calendar_date_t *",       # skip calendar for now
@@ -365,6 +365,7 @@ class type_mapper_class:
     "lv_menu_mode_header_t": "i",
     "lv_menu_mode_root_back_button_t": "i",
     "lv_point_precise_t []": "lv_point_arr",
+    "lv_obj_point_transform_flag_t": "i",
 
     "int32_t *": "lv_int_arr",
     "int32_t []": "lv_int_arr",
@@ -410,6 +411,7 @@ class type_mapper_class:
     "lv_draw_arc_dsc_t *": "lv_draw_arc_dsc",
     "lv_point_precise_t *": "lv_point_precise",
     "lv_draw_image_dsc_t *": "lv_draw_image_dsc",
+    "lv_event_dsc_t *": "lv_event_dsc",
 
     "_lv_obj_t *": "lv_obj",
     "lv_obj_t *": "lv_obj",

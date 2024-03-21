@@ -12,8 +12,10 @@
 
 #include <time.h>
 #include <nuttx/tls.h>
+#include <nuttx/clock.h>
 #include <syslog.h>
 #include "lv_nuttx_cache.h"
+#include "lv_nuttx_image_cache.h"
 #include "lv_nuttx_profiler.h"
 
 #include "../../../lvgl.h"
@@ -21,7 +23,7 @@
 /*********************
  *      DEFINES
  *********************/
-
+#define nuttx_ctx_p (LV_GLOBAL_DEFAULT()->nuttx_ctx)
 /**********************
  *      TYPEDEFS
  **********************/
@@ -92,12 +94,19 @@ void lv_nuttx_dsc_init(lv_nuttx_dsc_t * dsc)
 
 void lv_nuttx_init(const lv_nuttx_dsc_t * dsc, lv_nuttx_result_t * result)
 {
+    nuttx_ctx_p = lv_malloc_zeroed(sizeof(lv_nuttx_ctx_t));
+    LV_ASSERT_MALLOC(nuttx_ctx_p);
+
 #if LV_USE_LOG
     lv_log_register_print_cb(syslog_print);
 #endif
     lv_tick_set_cb(millis);
 
     lv_nuttx_cache_init();
+
+#if LV_CACHE_DEF_SIZE > 0
+    lv_nuttx_image_cache_init();
+#endif
 
 #if LV_USE_PROFILER && LV_USE_PROFILER_BUILTIN
     lv_nuttx_profiler_init();
@@ -149,6 +158,26 @@ void lv_nuttx_init(const lv_nuttx_dsc_t * dsc, lv_nuttx_result_t * result)
     lv_nuttx_init_custom(dsc, result);
 #endif
 }
+
+#ifdef CONFIG_SCHED_CPULOAD
+
+uint32_t lv_nuttx_get_idle(void)
+{
+    struct cpuload_s cpuload;
+    int ret = clock_cpuload(0, &cpuload);
+    if(ret < 0) {
+        LV_LOG_WARN("clock_cpuload failed: %d", ret);
+        return 0;
+    }
+
+    uint32_t idle = cpuload.active * 100 / cpuload.total;
+    LV_LOG_TRACE("active = %" LV_PRIu32 ", total = %" LV_PRIu32,
+                 cpuload.active, cpuload.total);
+
+    return idle;
+}
+
+#endif
 
 /**********************
  *   STATIC FUNCTIONS
