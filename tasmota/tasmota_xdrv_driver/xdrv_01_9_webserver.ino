@@ -3456,9 +3456,9 @@ int WebQuery(char *buffer) {
             if (!assume_json) { ResponseAppend_P(PSTR("\"")); }
             ResponseJsonEnd();
 #ifdef USE_SCRIPT
-            extern uint8_t tasm_cmd_activ;
             // recursive call must be possible in this case
-            tasm_cmd_activ = 0;
+            void script_setaflg(uint8_t flg);
+            script_setaflg(0);
 #endif  // USE_SCRIPT
             status = WEBCMND_VALID_RESPONSE;
           } else {
