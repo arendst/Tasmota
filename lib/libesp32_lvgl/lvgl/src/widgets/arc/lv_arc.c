@@ -18,7 +18,7 @@
 /*********************
  *      DEFINES
  *********************/
-#define MY_CLASS &lv_arc_class
+#define MY_CLASS (&lv_arc_class)
 
 #define VALUE_UNSET INT16_MIN
 #define CLICK_OUTSIDE_BG_ANGLES ((uint32_t) 0x00U)
@@ -469,11 +469,10 @@ static void lv_arc_event(const lv_obj_class_t * class_p, lv_event_t * e)
         if(arc->dragging == false) {
             int32_t indic_width = lv_obj_get_style_arc_width(obj, LV_PART_INDICATOR);
             r -= indic_width;
-            /*Add some more sensitive area if there is no advanced git testing.
+            /*Add some more sensitive area if there is no advanced hit testing.
              * (Advanced hit testing is more precise)*/
             if(lv_obj_has_flag(obj, LV_OBJ_FLAG_ADV_HITTEST)) {
                 r -= indic_width;
-
             }
             else {
                 r -= LV_MAX(r / 4, indic_width);
@@ -503,7 +502,7 @@ static void lv_arc_event(const lv_obj_class_t * class_p, lv_event_t * e)
         angle -= arc->rotation;
         angle -= arc->bg_angle_start;  /*Make the angle relative to the start angle*/
 
-        /* If we click near the bg_angle_start the angle will be close to 360° instead of an small angle */
+        /* If we click near the bg_angle_start the angle will be close to 360° instead of a small angle */
         if(angle < 0) angle += 360;
 
         const uint32_t circumference = (uint32_t)((2U * r * 314U) / 100U);  /* Equivalent to: 2r * 3.14, avoiding floats */
@@ -606,7 +605,7 @@ static void lv_arc_event(const lv_obj_class_t * class_p, lv_event_t * e)
     else if(code == LV_EVENT_KEY) {
         uint32_t c = lv_event_get_key(e);
 
-        int16_t old_value = arc->value;
+        int32_t old_value = arc->value;
         if(c == LV_KEY_RIGHT || c == LV_KEY_UP) {
             lv_arc_set_value(obj, lv_arc_get_value(obj) + 1);
         }
@@ -614,6 +613,16 @@ static void lv_arc_event(const lv_obj_class_t * class_p, lv_event_t * e)
             lv_arc_set_value(obj, lv_arc_get_value(obj) - 1);
         }
 
+        if(old_value != arc->value) {
+            res = lv_obj_send_event(obj, LV_EVENT_VALUE_CHANGED, NULL);
+            if(res != LV_RESULT_OK) return;
+        }
+    }
+    else if(code == LV_EVENT_ROTARY) {
+        int32_t r = lv_event_get_rotary_diff(e);
+
+        int32_t old_value = arc->value;
+        lv_arc_set_value(obj, lv_arc_get_value(obj) + r);
         if(old_value != arc->value) {
             res = lv_obj_send_event(obj, LV_EVENT_VALUE_CHANGED, NULL);
             if(res != LV_RESULT_OK) return;

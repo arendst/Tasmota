@@ -29,7 +29,7 @@
     #error Unsupported  LV_COLOR_DEPTH
 #endif
 
-#define MY_CLASS &lv_ffmpeg_player_class
+#define MY_CLASS (&lv_ffmpeg_player_class)
 
 #define FRAME_DEF_REFR_PERIOD   33  /*[ms]*/
 
@@ -176,6 +176,7 @@ lv_result_t lv_ffmpeg_player_set_src(lv_obj_t * obj, const char * path)
     player->imgdsc.header.h = height;
     player->imgdsc.data_size = data_size;
     player->imgdsc.header.cf = has_alpha ? LV_COLOR_FORMAT_ARGB8888 : LV_COLOR_FORMAT_NATIVE;
+    player->imgdsc.header.stride = width * lv_color_format_get_size(player->imgdsc.header.cf);
     player->imgdsc.data = ffmpeg_get_image_data(player->ffmpeg_ctx);
 
     lv_image_set_src(&player->img.obj, &(player->imgdsc));

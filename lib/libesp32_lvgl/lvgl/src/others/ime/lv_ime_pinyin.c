@@ -10,12 +10,12 @@
 #if LV_USE_IME_PINYIN != 0
 
 #include <stdio.h>
-#include "../../core/lv_global.h"
+#include "../../lvgl.h"
 
 /*********************
  *      DEFINES
  *********************/
-#define MY_CLASS    &lv_ime_pinyin_class
+#define MY_CLASS (&lv_ime_pinyin_class)
 #define cand_len LV_GLOBAL_DEFAULT()->ime_cand_len
 
 /**********************

@@ -38,11 +38,13 @@ extern "C" {
 typedef struct {
     lv_subject_t subject;
     lv_timer_t * timer;
+    bool inited;
 } lv_sysmon_backend_data_t;
 
 #if LV_USE_PERF_MONITOR
 typedef struct {
     struct {
+        bool inited;
         uint32_t refr_start;
         uint32_t refr_interval_sum;
         uint32_t refr_elaps_sum;
@@ -50,9 +52,12 @@ typedef struct {
         uint32_t render_start;
         uint32_t render_elaps_sum; /*Contains the flush time too*/
         uint32_t render_cnt;
-        uint32_t flush_start;
-        uint32_t flush_elaps_sum;
-        uint32_t flush_cnt;
+        uint32_t flush_in_render_start;
+        uint32_t flush_in_render_elaps_sum;
+        uint32_t flush_not_in_render_start;
+        uint32_t flush_not_in_render_elaps_sum;
+        uint32_t last_report_timestamp;
+        uint32_t render_in_progress : 1;
     } measured;
 
     struct {

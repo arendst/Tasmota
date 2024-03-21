@@ -25,7 +25,7 @@
 /*********************
  *      DEFINES
  *********************/
-#define MY_CLASS &lv_obj_class
+#define MY_CLASS (&lv_obj_class)
 #define LV_OBJ_DEF_WIDTH    (LV_DPX(100))
 #define LV_OBJ_DEF_HEIGHT   (LV_DPX(50))
 #define STYLE_TRANSITION_MAX 32
@@ -424,19 +424,18 @@ static void lv_obj_draw(lv_event_t * e)
                 info->res = LV_COVER_RES_NOT_COVER;
                 return;
             }
-            const lv_grad_dsc_t * grad_dsc = lv_obj_get_style_bg_grad(obj, 0);
-            if(grad_dsc) {
-                uint32_t i;
-                for(i = 0; i < grad_dsc->stops_count; i++) {
-                    if(grad_dsc->stops[i].opa < LV_OPA_MAX) {
-                        info->res = LV_COVER_RES_NOT_COVER;
-                        return;
-                    }
+        }
+        const lv_grad_dsc_t * grad_dsc = lv_obj_get_style_bg_grad(obj, 0);
+        if(grad_dsc) {
+            uint32_t i;
+            for(i = 0; i < grad_dsc->stops_count; i++) {
+                if(grad_dsc->stops[i].opa < LV_OPA_MAX) {
+                    info->res = LV_COVER_RES_NOT_COVER;
+                    return;
                 }
             }
         }
         info->res = LV_COVER_RES_COVER;
-
     }
     else if(code == LV_EVENT_DRAW_MAIN) {
         lv_layer_t * layer = lv_event_get_layer(e);
@@ -741,7 +740,7 @@ static void update_obj_state(lv_obj_t * obj, lv_state_t new_state)
     lv_obj_invalidate(obj);
 
     obj->state = new_state;
-
+    _lv_obj_update_layer_type(obj);
     _lv_obj_style_transition_dsc_t * ts = lv_malloc_zeroed(sizeof(_lv_obj_style_transition_dsc_t) * STYLE_TRANSITION_MAX);
     uint32_t tsi = 0;
     uint32_t i;

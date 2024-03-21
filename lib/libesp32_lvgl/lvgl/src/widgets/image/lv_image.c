@@ -14,7 +14,7 @@
 /*********************
  *      DEFINES
  *********************/
-#define MY_CLASS &lv_image_class
+#define MY_CLASS (&lv_image_class)
 
 /**********************
  *      TYPEDEFS
@@ -85,7 +85,7 @@ static const lv_property_ops_t properties[] = {
     {
         .id = LV_PROPERTY_IMAGE_ALIGN,
         .setter = lv_image_set_inner_align,
-        .getter = lv_image_get_align,
+        .getter = lv_image_get_inner_align,
     },
 };
 #endif
@@ -139,7 +139,7 @@ void lv_image_set_src(lv_obj_t * obj, const void * src)
     lv_image_src_t src_type = lv_image_src_get_type(src);
     lv_image_t * img = (lv_image_t *)obj;
 
-#if LV_USE_LOG && LV_LOG_LEVEL >= LV_LOG_LEVEL_INFO
+#if LV_USE_LOG && LV_LOG_LEVEL <= LV_LOG_LEVEL_INFO
     switch(src_type) {
         case LV_IMAGE_SRC_FILE:
             LV_LOG_TRACE("`LV_IMAGE_SRC_FILE` type found");
@@ -421,9 +421,16 @@ void lv_image_set_inner_align(lv_obj_t * obj, lv_image_align_t align)
     if(align == img->align) return;
 
     img->align = align;
-
     update_align(obj);
 
+    lv_obj_invalidate(obj);
+}
+
+void lv_image_set_bitmap_map_src(lv_obj_t * obj, const lv_image_dsc_t * src)
+{
+    LV_ASSERT_OBJ(obj, MY_CLASS);
+    lv_image_t * img = (lv_image_t *)obj;
+    img->bitmap_mask_src = src;
     lv_obj_invalidate(obj);
 }
 
@@ -529,6 +536,15 @@ lv_image_align_t lv_image_get_inner_align(lv_obj_t * obj)
     lv_image_t * img = (lv_image_t *)obj;
 
     return img->align;
+}
+
+const lv_image_dsc_t * lv_image_get_bitmap_map_src(lv_obj_t * obj)
+{
+    LV_ASSERT_OBJ(obj, MY_CLASS);
+
+    lv_image_t * img = (lv_image_t *)obj;
+
+    return img->bitmap_mask_src;
 }
 
 /**********************
@@ -701,6 +717,10 @@ static void draw_image(lv_event_t * e)
                 return;
             }
         }
+        if(img->bitmap_mask_src) {
+            info->res = LV_COVER_RES_NOT_COVER;
+            return;
+        }
     }
     else if(code == LV_EVENT_DRAW_MAIN) {
 
@@ -722,6 +742,7 @@ static void draw_image(lv_event_t * e)
             draw_dsc.rotation = img->rotation;
             draw_dsc.antialias = img->antialias;
             draw_dsc.blend_mode = img->blend_mode;
+            draw_dsc.bitmap_mask_src = img->bitmap_mask_src;
             draw_dsc.src = img->src;
 
             lv_area_t img_area = {obj->coords.x1, obj->coords.y1,
