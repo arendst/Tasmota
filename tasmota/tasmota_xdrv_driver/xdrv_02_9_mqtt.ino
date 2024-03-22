@@ -595,6 +595,7 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
       String mqtt_data_str= message_object.getStr("payload","");
       data_len = mqtt_data_str.length();
       strncpy(reinterpret_cast<char*>(mqtt_data),mqtt_data_str.c_str(),data_len);
+      mqtt_data[data_len] = 0;
 
   #else
   // for Azure, we read the topic from the property of the message
