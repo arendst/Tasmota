@@ -273,9 +273,11 @@ class lvh_root
   #====================================================================
   def set_text(t)
   end
+  def set_value_str(t) self.set_text(t) end
   def get_text()
     return nil
   end
+  def get_value_str() return self.get_text() end
 
   #- ------------------------------------------------------------#
   # `digits_to_style` 
