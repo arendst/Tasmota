@@ -14,7 +14,7 @@ All notable changes to this project will be documented in this file.
 - LVGL library from v9.0.0 to v9.1.0
 
 ### Fixed
-
+- Berry fix walrus bug when assigning to self
 
 ### Removed
 
