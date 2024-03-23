@@ -11121,8 +11121,11 @@ void ScriptWebShow(char mc, uint8_t page) {
 
   if (glob_script_mem.section_ptr) {
 
+#ifdef USE_GOOGLE_CHARTS
     glob_script_mem.chartindex = 1;
     glob_script_mem.google_libs = 0;
+#endif
+
     char *lp = glob_script_mem.section_ptr;
     if (mc == 'w') {
       while (*lp) {
