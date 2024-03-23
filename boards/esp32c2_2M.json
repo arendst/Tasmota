@@ -1,8 +1,5 @@
 {
     "build": {
-      "arduino":{
-        "ldscript": "esp32c2_out.ld"
-      },
       "core": "esp32",
       "extra_flags": "-DARDUINO_TASMOTA -DESP32_2M -DESP32C2",
       "f_cpu": "120000000L",

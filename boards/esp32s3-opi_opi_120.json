@@ -1,7 +1,6 @@
 {
   "build": {
     "arduino":{
-      "ldscript": "esp32s3_out.ld",
       "memory_type": "opi_opi"
     },
     "core": "esp32",
