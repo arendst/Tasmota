@@ -118,7 +118,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v13.4.0.3
 ### Added
-- Support for LoRa and LoRaWanBridge
+- Support for LoRa and EU863-870 LoRaWanBridge
 - Support for AMS5915/AMS6915 temperature and pressure sensors [#20814](https://github.com/arendst/Tasmota/issues/20814)
 - Show calculated heat index if temperature and humidity is available with ``#define USE_HEAT_INDEX`` [#4771](https://github.com/arendst/Tasmota/issues/4771)
 - IR support data larger than 64 bits [#20831](https://github.com/arendst/Tasmota/issues/20831)

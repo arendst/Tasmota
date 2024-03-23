@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [13.4.0.3]
 ### Added
 - Zigbee support for attributes of type `uint48` used by energy monitoring (#20992)
-- Support for LoRaWanBridge
+- Support for EU863-870 LoRaWanBridge
 
 ### Breaking Changed
 
