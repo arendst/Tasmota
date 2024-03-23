@@ -1,8 +1,5 @@
 {
   "build": {
-    "arduino":{
-      "ldscript": "esp32_out.ld"
-    },
     "core": "esp32",
     "extra_flags": "-DARDUINO_TASMOTA -DBOARD_HAS_PSRAM -DHAS_PSRAM_FIX -mfix-esp32-psram-cache-issue -mfix-esp32-psram-cache-strategy=memw -DESP32_4M",
     "f_cpu": "240000000L",

@@ -1,8 +1,5 @@
 {
   "build": {
-    "arduino":{
-      "ldscript": "esp32_out.ld"
-    },
     "core": "esp32",
     "extra_flags": "-DARDUINO_TASMOTA -DBOARD_HAS_PSRAM -DESP32_4M -DCORE32SOLO1",
     "f_cpu": "240000000L",
