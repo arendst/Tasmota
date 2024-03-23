@@ -39,6 +39,9 @@ volatile bool operationDone = false;
 // is transmitted or received by the module
 // IMPORTANT: this function MUST be 'void' type
 //            and MUST NOT have any arguments!
+#if defined(ESP8266) || defined(ESP32)
+  ICACHE_RAM_ATTR
+#endif
 void setFlag(void) {
   // we sent or received  packet, set the flag
   operationDone = true;

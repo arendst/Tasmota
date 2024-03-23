@@ -259,7 +259,7 @@ void loop() {
 
     uint8_t margin = 0;
     uint8_t gwCnt = 0;
-    if(node.getMacLinkCheckAns(&margin, &gwCnt)) {
+    if(node.getMacLinkCheckAns(&margin, &gwCnt) == RADIOLIB_ERR_NONE) {
       Serial.print(F("[LoRaWAN] LinkCheck margin:\t"));
       Serial.println(margin);
       Serial.print(F("[LoRaWAN] LinkCheck count:\t"));
@@ -268,10 +268,10 @@ void loop() {
 
     uint32_t networkTime = 0;
     uint8_t fracSecond = 0;
-    if(node.getMacDeviceTimeAns(&networkTime, &fracSecond, true)) {
+    if(node.getMacDeviceTimeAns(&networkTime, &fracSecond, true) == RADIOLIB_ERR_NONE) {
       Serial.print(F("[LoRaWAN] DeviceTime Unix:\t"));
       Serial.println(networkTime);
-      Serial.print(F("[LoRaWAN] LinkCheck second:\t1/"));
+      Serial.print(F("[LoRaWAN] DeviceTime second:\t1/"));
       Serial.println(fracSecond);
     }
   
@@ -283,11 +283,9 @@ void loop() {
     Serial.println(state);
   }
 
-  // on EEPROM enabled boards, you can save the current session
+  // on EEPROM enabled boards, you should save the current session
   // by calling "saveSession" which allows retrieving the session after reboot or deepsleep
-  /*
-    node.saveSession();
-  */
+  node.saveSession();
 
   // wait before sending another packet
   uint32_t minimumDelay = 60000;                  // try to send once every minute

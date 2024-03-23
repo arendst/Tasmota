@@ -21,18 +21,18 @@ int16_t CC1101::begin(float freq, float br, float freqDev, float rxBw, int8_t pw
     if((version == RADIOLIB_CC1101_VERSION_CURRENT) || (version == RADIOLIB_CC1101_VERSION_LEGACY) || (version == RADIOLIB_CC1101_VERSION_CLONE)) {
       flagFound = true;
     } else {
-      RADIOLIB_DEBUG_PRINTLN("CC1101 not found! (%d of 10 tries) RADIOLIB_CC1101_REG_VERSION == 0x%04X, expected 0x0004/0x0014", i + 1, version);
+      RADIOLIB_DEBUG_BASIC_PRINTLN("CC1101 not found! (%d of 10 tries) RADIOLIB_CC1101_REG_VERSION == 0x%04X, expected 0x0004/0x0014", i + 1, version);
       this->mod->hal->delay(10);
       i++;
     }
   }
 
   if(!flagFound) {
-    RADIOLIB_DEBUG_PRINTLN("No CC1101 found!");
+    RADIOLIB_DEBUG_BASIC_PRINTLN("No CC1101 found!");
     this->mod->term();
     return(RADIOLIB_ERR_CHIP_NOT_FOUND);
   } else {
-    RADIOLIB_DEBUG_PRINTLN("M\tCC1101");
+    RADIOLIB_DEBUG_BASIC_PRINTLN("M\tCC1101");
   }
 
   // configure settings not accessible by API
@@ -916,7 +916,6 @@ void CC1101::setRfSwitchTable(const uint32_t (&pins)[Module::RFSWITCH_MAX_PINS],
 uint8_t CC1101::randomByte() {
   // set mode to Rx
   SPIsendCommand(RADIOLIB_CC1101_CMD_RX);
-  RADIOLIB_DEBUG_PRINTLN("CC1101::randomByte");
 
   // wait a bit for the RSSI reading to stabilise
   this->mod->hal->delay(10);
@@ -1113,7 +1112,7 @@ void CC1101::SPIsendCommand(uint8_t cmd) {
   // stop transfer
   this->mod->hal->spiEndTransaction();
   this->mod->hal->digitalWrite(this->mod->getCs(), this->mod->hal->GpioLevelHigh);
-  RADIOLIB_VERBOSE_PRINTLN("CMD\tW\t%02X\t%02X", cmd, status);
+  RADIOLIB_DEBUG_SPI_PRINTLN("CMD\tW\t%02X\t%02X", cmd, status);
   (void)status;
 }
 

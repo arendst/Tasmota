@@ -1,9 +1,9 @@
 #include "Pager.h"
 #include <string.h>
 #include <math.h>
-//#if defined(ESP32)
-//#include "esp_attr.h"
-//#endif
+#if defined(ESP_PLATFORM)
+#include "esp_attr.h"
+#endif
 
 #if !RADIOLIB_EXCLUDE_PAGER
 
@@ -28,6 +28,9 @@ PagerClient::PagerClient(PhysicalLayer* phy) {
   #if !RADIOLIB_EXCLUDE_DIRECT_RECEIVE
   readBitInstance = phyLayer;
   #endif
+  filterNumAddresses = 0;
+  filterAddresses = NULL;
+  filterMasks = NULL;
 }
 
 int16_t PagerClient::begin(float base, uint16_t speed, bool invert, uint16_t shift) {
@@ -245,7 +248,24 @@ int16_t PagerClient::startReceive(uint32_t pin, uint32_t addr, uint32_t mask) {
   readBitPin = pin;
   filterAddr = addr;
   filterMask = mask;
+  filterAddresses = NULL;
+  filterMasks = NULL;
+  filterNumAddresses = 0;
+  return(startReceiveCommon());
+}
 
+int16_t PagerClient::startReceive(uint32_t pin, uint32_t *addrs, uint32_t *masks, size_t numAddresses) {
+  // save the variables
+  readBitPin = pin;
+  filterAddr = 0;
+  filterMask = 0;
+  filterAddresses = addrs;
+  filterMasks = masks;
+  filterNumAddresses = numAddresses;
+  return(startReceiveCommon());
+}
+
+int16_t PagerClient::startReceiveCommon() {
   // set the carrier frequency
   int16_t state = phyLayer->setFrequency(baseFreq);
   RADIOLIB_ASSERT(state);
@@ -260,7 +280,7 @@ int16_t PagerClient::startReceive(uint32_t pin, uint32_t addr, uint32_t mask) {
 
   // now set up the direct mode reception
   Module* mod = phyLayer->getMod();
-  mod->hal->pinMode(pin, mod->hal->GpioModeInput);
+  mod->hal->pinMode(readBitPin, mod->hal->GpioModeInput);
 
   // set direct sync word to the frame sync word
   // the logic here is inverted, because modules like SX1278
@@ -356,8 +376,7 @@ int16_t PagerClient::readData(uint8_t* data, size_t* len, uint32_t* addr) {
 
     // should be an address code word, extract the address
     uint32_t addr_found = ((cw & RADIOLIB_PAGER_ADDRESS_BITS_MASK) >> (RADIOLIB_PAGER_ADDRESS_POS - 3)) | (framePos/2);
-    if((addr_found & filterMask) == (filterAddr & filterMask)) {
-      // we have a match!
+    if (addressMatched(addr_found)) {
       match = true;
       if(addr) {
         *addr = addr_found;
@@ -460,6 +479,26 @@ int16_t PagerClient::readData(uint8_t* data, size_t* len, uint32_t* addr) {
 }
 #endif
 
+bool PagerClient::addressMatched(uint32_t addr) {
+  // check whether to match single or multiple addresses/masks
+  if(filterNumAddresses == 0) {
+    return((addr & filterMask) == (filterAddr & filterMask));
+  }
+  
+  // multiple addresses, check there are some to match
+  if((filterAddresses == NULL) || (filterMasks == NULL)) {
+    return(false);
+  }
+
+  for(size_t i = 0; i < filterNumAddresses; i++) {
+    if((filterAddresses[i] & filterMasks[i]) == (addr & filterMasks[i])) {
+      return(true);
+    }
+  }
+
+  return(false);
+}
+
 void PagerClient::write(uint32_t* data, size_t len) {
   // write code words from buffer
   for(size_t i = 0; i < len; i++) {
@@ -515,7 +554,7 @@ uint32_t PagerClient::read() {
     codeWord = ~codeWord;
   }
 
-  RADIOLIB_VERBOSE_PRINTLN("R\t%lX", codeWord);
+  RADIOLIB_DEBUG_PROTOCOL_PRINTLN("R\t%lX", codeWord);
   // TODO BCH error correction here
   return(codeWord);
 }

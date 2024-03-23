@@ -6,14 +6,14 @@
 #include "../../utils/Cryptography.h"
 
 // activation mode
-#define RADIOLIB_LORAWAN_MODE_OTAA                              (0x01AA)
+#define RADIOLIB_LORAWAN_MODE_OTAA                              (0x07AA)
 #define RADIOLIB_LORAWAN_MODE_ABP                               (0x0AB9)
 #define RADIOLIB_LORAWAN_MODE_NONE                              (0x0000)
 
 // operation mode
-#define RADIOLIB_LORAWAN_CLASS_A                                (0x00)
-#define RADIOLIB_LORAWAN_CLASS_B                                (0x01)
-#define RADIOLIB_LORAWAN_CLASS_C                                (0x02)
+#define RADIOLIB_LORAWAN_CLASS_A                                (0x0A)
+#define RADIOLIB_LORAWAN_CLASS_B                                (0x0B)
+#define RADIOLIB_LORAWAN_CLASS_C                                (0x0C)
 
 // preamble format
 #define RADIOLIB_LORAWAN_LORA_SYNC_WORD                         (0x34)
@@ -179,6 +179,12 @@
 #define RADIOLIB_LORAWAN_MAC_REJOIN_PARAM_SETUP                 (0x0F)
 #define RADIOLIB_LORAWAN_MAC_PROPRIETARY                        (0x80)
 
+// maximum allowed dwell time on bands that implement dwell time limitations
+#define RADIOLIB_LORAWAN_DWELL_TIME                             (400)
+
+// unused LoRaWAN version
+#define RADIOLIB_LORAWAN_VERSION_NONE                           (0xFF)
+
 // unused frame counter value
 #define RADIOLIB_LORAWAN_FCNT_NONE                              (0xFFFFFFFF)
 
@@ -188,10 +194,7 @@
 // the maximum number of simultaneously available channels
 #define RADIOLIB_LORAWAN_NUM_AVAILABLE_CHANNELS                 (16)
 
-// maximum allowed dwell time on bands that implement dwell time limitations
-#define RADIOLIB_LORAWAN_DWELL_TIME                             (400)
-
-// Maximum MAC command sizes
+// maximum MAC command sizes
 #define RADIOLIB_LORAWAN_MAX_MAC_COMMAND_LEN_DOWN               (5)
 #define RADIOLIB_LORAWAN_MAX_MAC_COMMAND_LEN_UP                 (2)
 #define RADIOLIB_LORAWAN_MAX_NUM_ADR_COMMANDS                   (8)
@@ -221,6 +224,56 @@ const LoRaWANMacSpec_t MacTable[RADIOLIB_LORAWAN_NUM_MAC_COMMANDS + 1] = {
   { RADIOLIB_LORAWAN_MAC_FORCE_REJOIN, 2, 0, false },
   { RADIOLIB_LORAWAN_MAC_REJOIN_PARAM_SETUP, 1, 1, false },
   { RADIOLIB_LORAWAN_MAC_PROPRIETARY, 5, 0, true  } 
+};
+
+#define RADIOLIB_LORAWAN_NONCES_VERSION_VAL (0x0001)
+
+enum LoRaWANSchemeBase_t {
+  RADIOLIB_LORAWAN_NONCES_VERSION     = 0x00, // 2 bytes
+  RADIOLIB_LORAWAN_NONCES_MODE        = 0x02, // 2 bytes
+  RADIOLIB_LORAWAN_NONCES_CLASS       = 0x04, // 1 byte
+  RADIOLIB_LORAWAN_NONCES_PLAN        = 0x05, // 1 byte
+  RADIOLIB_LORAWAN_NONCES_CHECKSUM    = 0x06, // 2 bytes
+  RADIOLIB_LORAWAN_NONCES_DEV_NONCE   = 0x08, // 2 bytes
+  RADIOLIB_LORAWAN_NONCES_JOIN_NONCE  = 0x0A, // 3 bytes
+  RADIOLIB_LORAWAN_NONCES_ACTIVE      = 0x0D, // 1 byte
+  RADIOLIB_LORAWAN_NONCES_SIGNATURE   = 0x0E, // 2 bytes
+  RADIOLIB_LORAWAN_NONCES_BUF_SIZE    = 0x10  // = 16 bytes
+};
+
+enum LoRaWANSchemeSession_t {
+  RADIOLIB_LORAWAN_SESSION_NWK_SENC_KEY       = 0x00,   // 16 bytes
+  RADIOLIB_LORAWAN_SESSION_APP_SKEY           = 0x10,   // 16 bytes
+  RADIOLIB_LORAWAN_SESSION_FNWK_SINT_KEY      = 0x20,   // 16 bytes
+  RADIOLIB_LORAWAN_SESSION_SNWK_SINT_KEY      = 0x30,   // 16 bytes
+  RADIOLIB_LORAWAN_SESSION_DEV_ADDR           = 0x40,   // 4 bytes
+  RADIOLIB_LORAWAN_SESSION_NONCES_SIGNATURE   = 0x44,   // 2 bytes
+  RADIOLIB_LORAWAN_SESSION_A_FCNT_DOWN        = 0x46, 	// 4 bytes
+  RADIOLIB_LORAWAN_SESSION_CONF_FCNT_UP       = 0x4A, 	// 4 bytes
+  RADIOLIB_LORAWAN_SESSION_CONF_FCNT_DOWN     = 0x4E, 	// 4 bytes
+  RADIOLIB_LORAWAN_SESSION_RJ_COUNT0          = 0x52, 	// 2 bytes
+  RADIOLIB_LORAWAN_SESSION_RJ_COUNT1          = 0x54, 	// 2 bytes
+  RADIOLIB_LORAWAN_SESSION_HOMENET_ID         = 0x56, 	// 4 bytes
+  RADIOLIB_LORAWAN_SESSION_VERSION            = 0x5A, 	// 1 byte
+  RADIOLIB_LORAWAN_SESSION_DUTY_CYCLE         = 0x5B, 	// 1 byte
+  RADIOLIB_LORAWAN_SESSION_RX_PARAM_SETUP     = 0x5C, 	// 4 bytes
+  RADIOLIB_LORAWAN_SESSION_RX_TIMING_SETUP    = 0x60, 	// 1 byte
+  RADIOLIB_LORAWAN_SESSION_TX_PARAM_SETUP     = 0x61, 	// 1 byte
+  RADIOLIB_LORAWAN_SESSION_ADR_PARAM_SETUP    = 0x62, 	// 1 byte
+  RADIOLIB_LORAWAN_SESSION_REJOIN_PARAM_SETUP = 0x63, 	// 1 byte
+  RADIOLIB_LORAWAN_SESSION_BEACON_FREQ        = 0x64, 	// 3 bytes
+  RADIOLIB_LORAWAN_SESSION_PING_SLOT_CHANNEL  = 0x67, 	// 4 bytes
+  RADIOLIB_LORAWAN_SESSION_PERIODICITY        = 0x6B, 	// 1 byte
+  RADIOLIB_LORAWAN_SESSION_LAST_TIME          = 0x6C, 	// 4 bytes
+  RADIOLIB_LORAWAN_SESSION_UL_CHANNELS        = 0x70, 	// 16*8 bytes
+  RADIOLIB_LORAWAN_SESSION_DL_CHANNELS        = 0xF0,   // 16*4 bytes
+  RADIOLIB_LORAWAN_SESSION_MAC_QUEUE_UL       = 0x0130, // 9*8+2 bytes
+  RADIOLIB_LORAWAN_SESSION_N_FCNT_DOWN        = 0x017A, // 4 bytes
+  RADIOLIB_LORAWAN_SESSION_ADR_FCNT           = 0x017E, // 4 bytes
+  RADIOLIB_LORAWAN_SESSION_LINK_ADR           = 0x0182, // 4 bytes
+  RADIOLIB_LORAWAN_SESSION_FCNT_UP            = 0x0186, // 4 bytes
+  RADIOLIB_LORAWAN_SESSION_SIGNATURE          = 0x018A, // 2 bytes
+  RADIOLIB_LORAWAN_SESSION_BUF_SIZE           = 0x018C  // 396 bytes
 };
 
 /*!
@@ -281,6 +334,9 @@ struct LoRaWANChannelSpan_t {
   \brief Structure to save information about LoRaWAN band
 */
 struct LoRaWANBand_t {
+  /*! \brief Identier for this band */
+  uint8_t bandNum;
+
   /*! \brief Whether the channels are fixed per specification, or dynamically allocated through the network (plus defaults) */
   uint8_t bandType;
 
@@ -412,7 +468,6 @@ class LoRaWANNode {
     */
     LoRaWANNode(PhysicalLayer* phy, const LoRaWANBand_t* band, uint8_t subBand = 0);
 
-#if !defined(RADIOLIB_EEPROM_UNSUPPORTED)
     /*!
       \brief Wipe internal persistent parameters.
       This will reset all counters and saved variables, so the device will have to rejoin the network.
@@ -420,12 +475,36 @@ class LoRaWANNode {
     void wipe();
 
     /*!
-      \brief Restore session by loading information from persistent storage.
-      \returns \ref status_codes in case of error, 
-      else LoRaWAN session mode (0 = no active session, 0xAA / 170 = OTAA, 0xAB / 171 = ABP)
+      \brief Returns the pointer to the internal buffer that holds the LW base parameters
+      \returns Pointer to uint8_t array of size RADIOLIB_LORAWAN_NONCES_BUF_SIZE
     */
-    int16_t restore();
-#endif
+    uint8_t* getBufferNonces();
+
+    /*!
+      \brief Fill the internal buffer that holds the LW base parameters with a supplied buffer
+      \param persistentBuffer Buffer that should match the internal format (previously extracted using getBufferNonces)
+      \returns \ref status_codes
+    */
+    int16_t setBufferNonces(uint8_t* persistentBuffer);
+
+    /*!
+      \brief Returns the pointer to the internal buffer that holds the LW session parameters
+      \returns Pointer to uint8_t array of size RADIOLIB_LORAWAN_SESSION_BUF_SIZE
+    */
+    uint8_t* getBufferSession();
+
+    /*!
+      \brief Fill the internal buffer that holds the LW session parameters with a supplied buffer
+      \param persistentBuffer Buffer that should match the internal format (previously extracted using getBufferSession)
+      \returns \ref status_codes
+    */
+    int16_t setBufferSession(uint8_t* persistentBuffer);
+
+    /*!
+      \brief Restore session by loading information from persistent storage.
+      \returns \ref status_codes
+    */
+    int16_t restore(uint16_t checkSum, uint16_t lwMode, uint8_t lwClass, uint8_t freqPlan);
 
     /*!
       \brief Join network by performing over-the-air activation. By this procedure,
@@ -434,12 +513,11 @@ class LoRaWANNode {
       \param devEUI 8-byte device identifier.
       \param nwkKey Pointer to the network AES-128 key.
       \param appKey Pointer to the application AES-128 key.
-      \param joinDr (OTAA:) The datarate at which to send the join-request; (ABP:) ignored
       \param force Set to true to force joining even if previously joined.
-      
+      \param joinDr The datarate at which to send the join-request and any subsequent uplinks (unless ADR is enabled)
       \returns \ref status_codes
     */
-    int16_t beginOTAA(uint64_t joinEUI, uint64_t devEUI, uint8_t* nwkKey, uint8_t* appKey, uint8_t joinDr = RADIOLIB_LORAWAN_DATA_RATE_UNUSED, bool force = false);
+    int16_t beginOTAA(uint64_t joinEUI, uint64_t devEUI, uint8_t* nwkKey, uint8_t* appKey, bool force = false, uint8_t joinDr = RADIOLIB_LORAWAN_DATA_RATE_UNUSED);
 
     /*!
       \brief Join network by performing activation by personalization.
@@ -447,19 +525,19 @@ class LoRaWANNode {
       \param addr Device address.
       \param nwkSKey Pointer to the network session AES-128 key (LoRaWAN 1.0) or MAC command network session key (LoRaWAN 1.1).
       \param appSKey Pointer to the application session AES-128 key.
-      \param fNwkSIntKey Pointer to the network session F key (LoRaWAN 1.1), unused for LoRaWAN 1.0.
-      \param sNwkSIntKey Pointer to the network session S key (LoRaWAN 1.1), unused for LoRaWAN 1.0.
+      \param fNwkSIntKey Pointer to the Forwarding network session (LoRaWAN 1.1), unused for LoRaWAN 1.0.
+      \param sNwkSIntKey Pointer to the Serving network session (LoRaWAN 1.1), unused for LoRaWAN 1.0.
       \param force Set to true to force a new session, even if one exists.
+      \param initialDr The datarate at which to send the first uplink and any subsequent uplinks (unless ADR is enabled)
       \returns \ref status_codes
     */
-    int16_t beginABP(uint32_t addr, uint8_t* nwkSKey, uint8_t* appSKey, uint8_t* fNwkSIntKey = NULL, uint8_t* sNwkSIntKey = NULL, bool force = false);
+    int16_t beginABP(uint32_t addr, uint8_t* nwkSKey, uint8_t* appSKey, uint8_t* fNwkSIntKey = NULL, uint8_t* sNwkSIntKey = NULL, bool force = false, uint8_t initialDr = RADIOLIB_LORAWAN_DATA_RATE_UNUSED);
 
     /*! \brief Whether there is an ongoing session active */
     bool isJoined();
 
     /*!
-      \brief Save the current state of the session.
-      All variables are compared to what is saved and only the differences are rewritten.
+      \brief Save the current state of the session to the session buffer.
       \returns \ref status_codes
     */
     int16_t saveSession();
@@ -530,6 +608,14 @@ class LoRaWANNode {
     */
     int16_t downlink(uint8_t* data, size_t* len, LoRaWANEvent_t* event = NULL);
 
+    /*!
+      \brief Wait for downlink, simplified to allow for simpler sendReceive
+      \param event Pointer to a structure to store extra information about the event
+      (port, frame counter, etc.). If set to NULL, no extra information will be passed to the user.
+      \returns \ref status_codes
+    */
+    int16_t downlink(LoRaWANEvent_t* event = NULL);
+
     #if defined(RADIOLIB_BUILD_ARDUINO)
     /*!
       \brief Send a message to the server and wait for a downlink during Rx1 and/or Rx2 window.
@@ -578,34 +664,57 @@ class LoRaWANNode {
     int16_t sendReceive(uint8_t* dataUp, size_t lenUp, uint8_t port, uint8_t* dataDown, size_t* lenDown, bool isConfirmed = false, LoRaWANEvent_t* eventUp = NULL, LoRaWANEvent_t* eventDown = NULL);
 
     /*!
+      \brief Send a message to the server and wait for a downlink but don't bother the user with downlink contents
+      \param dataUp Data to send.
+      \param lenUp Length of the data.
+      \param port Port number to send the message to.
+      \param isConfirmed Whether to send a confirmed uplink or not.
+      \param eventUp Pointer to a structure to store extra information about the uplink event
+      (port, frame counter, etc.). If set to NULL, no extra information will be passed to the user.
+      \param eventDown Pointer to a structure to store extra information about the downlink event
+      (port, frame counter, etc.). If set to NULL, no extra information will be passed to the user.
+      \returns \ref status_codes
+    */
+    int16_t sendReceive(uint8_t* dataUp, size_t lenUp, uint8_t port = 1, bool isConfirmed = false, LoRaWANEvent_t* eventUp = NULL, LoRaWANEvent_t* eventDown = NULL);
+
+    /*!
       \brief Set device status.
       \param battLevel Battery level to set. 0 for external power source, 1 for lowest battery,
       254 for highest battery, 255 for unable to measure.
     */
     void setDeviceStatus(uint8_t battLevel);
 
-    /*! \brief Returns the last uplink's frame counter */
+    /*! 
+        \brief Returns the last uplink's frame counter; 
+        also 0 if no uplink occured yet. 
+    */
     uint32_t getFcntUp();
 
-    /*! \brief Returns the last network downlink's frame counter */
+    /*! 
+        \brief Returns the last network downlink's frame counter; 
+        also 0 if no network downlink occured yet. 
+    */
     uint32_t getNFcntDown();
 
-    /*! \brief Returns the last application downlink's frame counter */
+    /*! 
+        \brief Returns the last application downlink's frame counter; 
+        also 0 if no application downlink occured yet. 
+    */
     uint32_t getAFcntDown();
 
-    /*! \brief Reset the downlink frame counters (application and network)
+    /*! 
+        \brief Reset the downlink frame counters (application and network)
         This is unsafe and can possibly allow replay attacks using downlinks.
-        It mainly exists as part of the TS008 Specification Verification protocol.
+        It mainly exists as part of the TS009 Specification Verification protocol.
     */
     void resetFcntDown();
 
     /*!
       \brief Set uplink datarate. This should not be used when ADR is enabled.
       \param dr Datarate to use for uplinks.
-      \param saveToEeprom Whether to save this setting to EEPROM or not (default false).
       \returns \ref status_codes
     */
-    int16_t setDatarate(uint8_t drUp, bool saveToEeprom = false);
+    int16_t setDatarate(uint8_t drUp);
 
     /*!
       \brief Toggle ADR to on or off.
@@ -651,10 +760,9 @@ class LoRaWANNode {
     /*!
       \brief Configure TX power of the radio module.
       \param txPower Output power during TX mode to be set in dBm.
-      \param saveToEeprom Whether to save this setting to EEPROM or not (default false).
       \returns \ref status_codes
     */
-    int16_t setTxPower(int8_t txPower, bool saveToEeprom = false);
+    int16_t setTxPower(int8_t txPower);
 
     /*!
       \brief Configures CSMA for LoRaWAN as per TR-13, LoRa Alliance.
@@ -697,7 +805,15 @@ class LoRaWANNode {
     PhysicalLayer* phyLayer = NULL;
     const LoRaWANBand_t* band = NULL;
 
-    void beginCommon(uint8_t joinDr = RADIOLIB_LORAWAN_DATA_RATE_UNUSED);
+    static int16_t checkBufferCommon(uint8_t *buffer, uint16_t size);
+
+    void beginCommon(uint8_t initialDr);
+
+    // a buffer that holds all LW base parameters that should persist at all times!
+    uint8_t bufferNonces[RADIOLIB_LORAWAN_NONCES_BUF_SIZE] = { 0 };
+
+    // a buffer that holds all LW session parameters that preferably persist, but can be afforded to get lost
+    uint8_t bufferSession[RADIOLIB_LORAWAN_SESSION_BUF_SIZE] = { 0 };
 
     LoRaWANMacCommandQueue_t commandsUp = { 
       .numCommands = 0,
@@ -741,7 +857,7 @@ class LoRaWANNode {
     bool FSK = false;
 
     // flag that shows whether the device is joined and there is an ongoing session (none, ABP or OTAA)
-    uint16_t activeMode = 0;
+    uint16_t activeMode = RADIOLIB_LORAWAN_MODE_NONE;
 
     // ADR is enabled by default
     bool adrEnabled = true;
@@ -798,23 +914,7 @@ class LoRaWANNode {
     bool isMACPayload = false;
 
     // save the selected sub-band in case this must be restored in ADR control
-    int8_t subBand = -1;
-
-#if !defined(RADIOLIB_EEPROM_UNSUPPORTED)
-    /*!
-      \brief Save the current uplink frame counter.
-      Note that the usable frame counter width is 'only' 30 bits for highly efficient wear-levelling.
-      \returns \ref status_codes
-    */
-    int16_t saveFcntUp();
-
-    /*!
-      \brief Restore frame counter for uplinks from persistent storage.
-      Note that the usable frame counter width is 'only' 30 bits for highly efficient wear-levelling.
-      \returns \ref status_codes
-    */
-    int16_t restoreFcntUp();
-#endif
+    uint8_t subBand = 0;
 
     // wait for, open and listen during Rx1 and Rx2 windows; only performs listening
     int16_t downlinkCommon();
@@ -859,16 +959,16 @@ class LoRaWANNode {
 
     // delete a specific MAC command from queue, indicated by the command ID
     // if a payload pointer is supplied, this returns the payload of the MAC command
-    int16_t deleteMacCommand(uint8_t cid, LoRaWANMacCommandQueue_t* queue, uint8_t payload[5] = NULL);
+    int16_t deleteMacCommand(uint8_t cid, LoRaWANMacCommandQueue_t* queue, uint8_t* payload = NULL);
 
     // execute mac command, return the number of processed bytes for sequential processing
-    bool execMacCommand(LoRaWANMacCommand_t* cmd, bool saveToEeprom = true);
+    bool execMacCommand(LoRaWANMacCommand_t* cmd);
 
     // apply a channel mask to a set of readily defined channels (dynamic bands only)
     bool applyChannelMaskDyn(uint8_t chMaskCntl, uint16_t chMask);
 
     // define or delete channels from a fixed set of channels (fixed bands only)
-    bool applyChannelMaskFix(uint8_t chMaskCntl, uint16_t chMask, bool clear);
+    bool applyChannelMaskFix(uint8_t chMaskCntl, uint16_t chMask);
 
     // get the payload length for a specific MAC command
     uint8_t getMacPayloadLength(uint8_t cid);
@@ -883,7 +983,7 @@ class LoRaWANNode {
     void processAES(uint8_t* in, size_t len, uint8_t* key, uint8_t* out, uint32_t fcnt, uint8_t dir, uint8_t ctrId, bool counter);
 
     // 16-bit checksum method that takes a uint8_t array of even length and calculates the checksum
-    static uint16_t checkSum16(uint8_t *key, uint8_t keyLen);
+    static uint16_t checkSum16(uint8_t *key, uint16_t keyLen);
 
     // network-to-host conversion method - takes data from network packet and converts it to the host endians
     template<typename T>

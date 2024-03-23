@@ -17,7 +17,7 @@ int16_t SX128x::begin(float freq, float bw, uint8_t sf, uint8_t cr, uint8_t sync
   this->mod->SPIstatusCommand = RADIOLIB_SX128X_CMD_GET_STATUS;
   this->mod->SPIstreamType = true;
   this->mod->SPIparseStatusCb = SPIparseStatus;
-  RADIOLIB_DEBUG_PRINTLN("M\tSX128x");
+  RADIOLIB_DEBUG_BASIC_PRINTLN("M\tSX128x");
 
   // initialize LoRa modulation variables
   this->bandwidthKhz = bw;
@@ -78,7 +78,7 @@ int16_t SX128x::beginGFSK(float freq, uint16_t br, float freqDev, int8_t pwr, ui
   this->mod->SPIstatusCommand = RADIOLIB_SX128X_CMD_GET_STATUS;
   this->mod->SPIstreamType = true;
   this->mod->SPIparseStatusCb = SPIparseStatus;
-  RADIOLIB_DEBUG_PRINTLN("M\tSX128x");
+  RADIOLIB_DEBUG_BASIC_PRINTLN("M\tSX128x");
 
   // initialize GFSK modulation variables
   this->bitRateKbps = br;
@@ -147,7 +147,7 @@ int16_t SX128x::beginBLE(float freq, uint16_t br, float freqDev, int8_t pwr, uin
   this->mod->SPIstatusCommand = RADIOLIB_SX128X_CMD_GET_STATUS;
   this->mod->SPIstreamType = true;
   this->mod->SPIparseStatusCb = SPIparseStatus;
-  RADIOLIB_DEBUG_PRINTLN("M\tSX128x");
+  RADIOLIB_DEBUG_BASIC_PRINTLN("M\tSX128x");
 
   // initialize BLE modulation variables
   this->bitRateKbps = br;
@@ -202,7 +202,7 @@ int16_t SX128x::beginFLRC(float freq, uint16_t br, uint8_t cr, int8_t pwr, uint1
   this->mod->SPIstatusCommand = RADIOLIB_SX128X_CMD_GET_STATUS;
   this->mod->SPIstreamType = true;
   this->mod->SPIparseStatusCb = SPIparseStatus;
-  RADIOLIB_DEBUG_PRINTLN("M\tSX128x");
+  RADIOLIB_DEBUG_BASIC_PRINTLN("M\tSX128x");
 
   // initialize FLRC modulation variables
   this->bitRateKbps = br;
@@ -308,7 +308,7 @@ int16_t SX128x::transmit(uint8_t* data, size_t len, uint8_t addr) {
   // calculate timeout (500% of expected time-on-air)
   uint32_t timeout = getTimeOnAir(len) * 5;
 
-  RADIOLIB_DEBUG_PRINTLN("Timeout in %lu us", timeout);
+  RADIOLIB_DEBUG_BASIC_PRINTLN("Timeout in %lu us", timeout);
 
   // start transmission
   state = startTransmit(data, len, addr);
@@ -341,7 +341,7 @@ int16_t SX128x::receive(uint8_t* data, size_t len) {
   // calculate timeout (1000% of expected time-on-air)
   uint32_t timeout = getTimeOnAir(len) * 10;
 
-  RADIOLIB_DEBUG_PRINTLN("Timeout in %lu us", timeout);
+  RADIOLIB_DEBUG_BASIC_PRINTLN("Timeout in %lu us", timeout);
 
   // start reception
   uint32_t timeoutValue = (uint32_t)((float)timeout / 15.625);

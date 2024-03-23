@@ -599,14 +599,14 @@ class CC1101: public PhysicalLayer {
     int16_t standby(uint8_t mode) override;
 
     /*!
-      \brief Starts direct mode transmission.
+      \brief Starts synchronous direct mode transmission.
       \param frf Raw RF frequency value. Defaults to 0, required for quick frequency shifts in RTTY.
       \returns \ref status_codes
     */
     int16_t transmitDirect(uint32_t frf = 0) override;
 
     /*!
-      \brief Starts direct mode reception.
+      \brief Starts synchronous direct mode reception.
       \returns \ref status_codes
     */
     int16_t receiveDirect() override;

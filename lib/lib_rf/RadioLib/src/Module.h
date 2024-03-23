@@ -471,19 +471,21 @@ class Module {
     #if RADIOLIB_DEBUG
     /*!
       \brief Function to dump data as hex into the debug port.
+      \param level RadioLib debug level, set to NULL to not print.
       \param data Data to dump.
       \param len Number of bytes to dump.
       \param width Word width (1 for uint8_t, 2 for uint16_t, 4 for uint32_t).
       \param be Print multi-byte data as big endian. Defaults to false.
     */
-    static void hexdump(uint8_t* data, size_t len, uint32_t offset = 0, uint8_t width = 1, bool be = false);
+    static void hexdump(const char* level, uint8_t* data, size_t len, uint32_t offset = 0, uint8_t width = 1, bool be = false);
 
     /*!
       \brief Function to dump device registers as hex into the debug port.
+      \param level RadioLib debug level, set to NULL to not print.
       \param start First address to dump.
       \param len Number of bytes to dump.
     */
-    void regdump(uint16_t start, size_t len);
+    void regdump(const char* level, uint16_t start, size_t len);
     #endif
 
     #if RADIOLIB_DEBUG and defined(RADIOLIB_BUILD_ARDUINO)

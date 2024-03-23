@@ -44,10 +44,10 @@ void Module::init() {
   this->hal->init();
   this->hal->pinMode(csPin, this->hal->GpioModeOutput);
   this->hal->digitalWrite(csPin, this->hal->GpioLevelHigh);
-  RADIOLIB_DEBUG_PRINTLN("\nRadioLib Debug Info");
-  RADIOLIB_DEBUG_PRINTLN("Version:  %d.%d.%d.%d", RADIOLIB_VERSION_MAJOR, RADIOLIB_VERSION_MINOR, RADIOLIB_VERSION_PATCH, RADIOLIB_VERSION_EXTRA);
-  RADIOLIB_DEBUG_PRINTLN("Platform: " RADIOLIB_PLATFORM);
-  RADIOLIB_DEBUG_PRINTLN("Compiled: " __DATE__ " " __TIME__ "\n");
+  RADIOLIB_DEBUG_BASIC_PRINTLN("RadioLib Debug Info");
+  RADIOLIB_DEBUG_BASIC_PRINTLN("Version:  %d.%d.%d.%d", RADIOLIB_VERSION_MAJOR, RADIOLIB_VERSION_MINOR, RADIOLIB_VERSION_PATCH, RADIOLIB_VERSION_EXTRA);
+  RADIOLIB_DEBUG_BASIC_PRINTLN("Platform: " RADIOLIB_PLATFORM);
+  RADIOLIB_DEBUG_BASIC_PRINTLN("Compiled: " __DATE__ " " __TIME__ "\n");
 }
 
 void Module::term() {
@@ -89,14 +89,14 @@ int16_t Module::SPIsetRegValue(uint16_t reg, uint8_t value, uint8_t msb, uint8_t
     }
 
     // check failed, print debug info
-    RADIOLIB_DEBUG_PRINTLN();
-    RADIOLIB_DEBUG_PRINTLN("address:\t0x%X", reg);
-    RADIOLIB_DEBUG_PRINTLN("bits:\t\t%d %d", msb, lsb);
-    RADIOLIB_DEBUG_PRINTLN("value:\t\t0x%X", value);
-    RADIOLIB_DEBUG_PRINTLN("current:\t0x%X", currentValue);
-    RADIOLIB_DEBUG_PRINTLN("mask:\t\t0x%X", mask);
-    RADIOLIB_DEBUG_PRINTLN("new:\t\t0x%X", newValue);
-    RADIOLIB_DEBUG_PRINTLN("read:\t\t0x%X", readValue);
+    RADIOLIB_DEBUG_SPI_PRINTLN();
+    RADIOLIB_DEBUG_SPI_PRINTLN("address:\t0x%X", reg);
+    RADIOLIB_DEBUG_SPI_PRINTLN("bits:\t\t%d %d", msb, lsb);
+    RADIOLIB_DEBUG_SPI_PRINTLN("value:\t\t0x%X", value);
+    RADIOLIB_DEBUG_SPI_PRINTLN("current:\t0x%X", currentValue);
+    RADIOLIB_DEBUG_SPI_PRINTLN("mask:\t\t0x%X", mask);
+    RADIOLIB_DEBUG_SPI_PRINTLN("new:\t\t0x%X", newValue);
+    RADIOLIB_DEBUG_SPI_PRINTLN("read:\t\t0x%X", readValue);
 
     return(RADIOLIB_ERR_SPI_WRITE_FAILED);
   #else
@@ -182,19 +182,19 @@ void Module::SPItransfer(uint8_t cmd, uint16_t reg, uint8_t* dataOut, uint8_t* d
   }
 
   // print debug information
-  #if RADIOLIB_VERBOSE
+  #if RADIOLIB_DEBUG_SPI
     uint8_t* debugBuffPtr = NULL;
     if(cmd == SPIwriteCommand) {
-      RADIOLIB_VERBOSE_PRINT("W\t%X\t", reg);
+      RADIOLIB_DEBUG_SPI_PRINT("W\t%X\t", reg);
       debugBuffPtr = &buffOut[this->SPIaddrWidth/8];
     } else if(cmd == SPIreadCommand) {
-      RADIOLIB_VERBOSE_PRINT("R\t%X\t", reg);
+      RADIOLIB_DEBUG_SPI_PRINT("R\t%X\t", reg);
       debugBuffPtr = &buffIn[this->SPIaddrWidth/8];
     }
     for(size_t n = 0; n < numBytes; n++) {
-      RADIOLIB_VERBOSE_PRINT("%X\t", debugBuffPtr[n]);
+      RADIOLIB_DEBUG_SPI_PRINT_NOTAG("%X\t", debugBuffPtr[n]);
     }
-    RADIOLIB_VERBOSE_PRINTLN();
+    RADIOLIB_DEBUG_SPI_PRINTLN_NOTAG();
   #endif
 
   #if !RADIOLIB_STATIC_ONLY
@@ -291,7 +291,7 @@ int16_t Module::SPItransferStream(uint8_t* cmd, uint8_t cmdLen, bool write, uint
     while(this->hal->digitalRead(this->gpioPin)) {
       this->hal->yield();
       if(this->hal->millis() - start >= timeout) {
-        RADIOLIB_DEBUG_PRINTLN("GPIO pre-transfer timeout, is it connected?");
+        RADIOLIB_DEBUG_BASIC_PRINTLN("GPIO pre-transfer timeout, is it connected?");
         #if !RADIOLIB_STATIC_ONLY
           delete[] buffOut;
           delete[] buffIn;
@@ -318,7 +318,7 @@ int16_t Module::SPItransferStream(uint8_t* cmd, uint8_t cmdLen, bool write, uint
       while(this->hal->digitalRead(this->gpioPin)) {
         this->hal->yield();
         if(this->hal->millis() - start >= timeout) {
-          RADIOLIB_DEBUG_PRINTLN("GPIO post-transfer timeout, is it connected?");
+          RADIOLIB_DEBUG_BASIC_PRINTLN("GPIO post-transfer timeout, is it connected?");
           #if !RADIOLIB_STATIC_ONLY
             delete[] buffOut;
             delete[] buffIn;
@@ -342,31 +342,34 @@ int16_t Module::SPItransferStream(uint8_t* cmd, uint8_t cmdLen, bool write, uint
   }
 
   // print debug information
-  #if RADIOLIB_VERBOSE
+  #if RADIOLIB_DEBUG_SPI
     // print command byte(s)
-    RADIOLIB_VERBOSE_PRINT("CMD");
+    RADIOLIB_DEBUG_SPI_PRINT("CMD");
     if(write) {
-      RADIOLIB_VERBOSE_PRINT("W\t");
+      RADIOLIB_DEBUG_SPI_PRINT_NOTAG("W\t");
     } else {
-      RADIOLIB_VERBOSE_PRINT("R\t");
+      RADIOLIB_DEBUG_SPI_PRINT_NOTAG("R\t");
     }
     size_t n = 0;
     for(; n < cmdLen; n++) {
-      RADIOLIB_VERBOSE_PRINT("%X\t", cmd[n]);
+      RADIOLIB_DEBUG_SPI_PRINT_NOTAG("%X\t", cmd[n]);
     }
-    RADIOLIB_VERBOSE_PRINTLN();
+    RADIOLIB_DEBUG_SPI_PRINTLN_NOTAG();
 
     // print data bytes
-    RADIOLIB_VERBOSE_PRINT("SI\t");
+    RADIOLIB_DEBUG_SPI_PRINT("SI\t");
+    for(n = 0; n < cmdLen; n++) {
+      RADIOLIB_DEBUG_SPI_PRINT_NOTAG("\t");
+    }
     for(; n < buffLen; n++) {
-      RADIOLIB_VERBOSE_PRINT("%X\t", buffOut[n]);
+      RADIOLIB_DEBUG_SPI_PRINT_NOTAG("%X\t", buffOut[n]);
     }
-    RADIOLIB_VERBOSE_PRINTLN();
-    RADIOLIB_VERBOSE_PRINT("SO\t");
-    for(n = cmdLen; n < buffLen; n++) {
-      RADIOLIB_VERBOSE_PRINT("%X\t", buffIn[n]);
+    RADIOLIB_DEBUG_SPI_PRINTLN_NOTAG();
+    RADIOLIB_DEBUG_SPI_PRINT("SO\t");
+    for(n = 0; n < buffLen; n++) {
+      RADIOLIB_DEBUG_SPI_PRINT_NOTAG("%X\t", buffIn[n]);
     }
-    RADIOLIB_VERBOSE_PRINTLN();
+    RADIOLIB_DEBUG_SPI_PRINTLN_NOTAG();
   #endif
 
   #if !RADIOLIB_STATIC_ONLY
@@ -404,7 +407,7 @@ uint32_t Module::reflect(uint32_t in, uint8_t bits) {
 }
 
 #if RADIOLIB_DEBUG
-void Module::hexdump(uint8_t* data, size_t len, uint32_t offset, uint8_t width, bool be) {
+void Module::hexdump(const char* level, uint8_t* data, size_t len, uint32_t offset, uint8_t width, bool be) {
   size_t rem_len = len;
   for(size_t i = 0; i < len; i+=16) {
     char str[80];
@@ -443,20 +446,23 @@ void Module::hexdump(uint8_t* data, size_t len, uint32_t offset, uint8_t width, 
     for(size_t j = line_len; j < 16; j++) {
       sprintf(&str[58 + j], "   ");
     }
+    if(level) {
+      RADIOLIB_DEBUG_PRINT(level);
+    }
     RADIOLIB_DEBUG_PRINT(str);
     RADIOLIB_DEBUG_PRINTLN();
     rem_len -= 16;
   }
 }
 
-void Module::regdump(uint16_t start, size_t len) {
+void Module::regdump(const char* level, uint16_t start, size_t len) {
   #if RADIOLIB_STATIC_ONLY
     uint8_t buff[RADIOLIB_STATIC_ARRAY_SIZE];
   #else
     uint8_t* buff = new uint8_t[len];
   #endif
   SPIreadRegisterBurst(start, len, buff);
-  hexdump(buff, len, start);
+  hexdump(level, buff, len, start);
   #if !RADIOLIB_STATIC_ONLY
     delete[] buff;
   #endif

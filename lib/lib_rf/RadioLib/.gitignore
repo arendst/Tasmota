@@ -23,3 +23,6 @@ extras/SX126x_Spectrum_Scan/out/*
 
 # cmake
 build/
+
+# Compote build output
+dist

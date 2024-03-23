@@ -447,6 +447,11 @@ class SX126x: public PhysicalLayer {
     */
     bool XTAL;
 
+    /*!
+      \brief Whether to use XOSC (true) or RC (false) oscillator in standby mode. Defaults to false.
+    */
+    bool standbyXOSC;
+
     // basic methods
 
     /*!

@@ -2,7 +2,21 @@
 
 #if !RADIOLIB_EXCLUDE_LORAWAN
 
+enum LoRaWANBandNum_t {
+  BandNone,
+  BandEU868,
+  BandUS915,
+  BandCN780,
+  BandEU433,
+  BandAU915,
+  BandCN500,
+  BandAS923,
+  BandKR920,
+  BandIN865
+};
+
 const LoRaWANBand_t EU868 = {
+  .bandNum = BandEU868,
   .bandType = RADIOLIB_LORAWAN_BAND_DYNAMIC,
   .payloadLenMax = {  59,  59,  59, 123, 230, 230, 230, 230,   0,   0,   0,   0,   0,   0,   0 },
   .powerMax = 16,
@@ -48,6 +62,7 @@ const LoRaWANBand_t EU868 = {
 };
 
 const LoRaWANBand_t US915 = {
+  .bandNum = BandUS915,
   .bandType = RADIOLIB_LORAWAN_BAND_FIXED,
   .payloadLenMax = {  19,  61, 133, 250, 250,   0,   0,   0,  41, 117, 230, 230, 230, 230,   0 },
   .powerMax = 30,
@@ -114,6 +129,7 @@ const LoRaWANBand_t US915 = {
 };
 
 const LoRaWANBand_t CN780 = {
+  .bandNum = BandCN780,
   .bandType = RADIOLIB_LORAWAN_BAND_DYNAMIC,
   .payloadLenMax = {  59,  59,  59, 123, 230, 230, 250, 230,   0,   0,   0,   0,   0,   0,   0 },
   .powerMax = 12,
@@ -159,6 +175,7 @@ const LoRaWANBand_t CN780 = {
 };
 
 const LoRaWANBand_t EU433 = {
+  .bandNum = BandEU433,
   .bandType = RADIOLIB_LORAWAN_BAND_DYNAMIC,
   .payloadLenMax = {  59,  59,  59, 123, 230, 230, 230, 230,   0,   0,   0,   0,   0,   0,   0 },
   .powerMax = 12,
@@ -204,6 +221,7 @@ const LoRaWANBand_t EU433 = {
 };
 
 const LoRaWANBand_t AU915 = {
+  .bandNum = BandAU915,
   .bandType = RADIOLIB_LORAWAN_BAND_FIXED,
   .payloadLenMax = {  59,  59,  59, 123, 230, 230, 230,   0,  41, 117, 230, 230, 230, 230,   0 },
   .powerMax = 30,
@@ -270,6 +288,7 @@ const LoRaWANBand_t AU915 = {
 };
 
 const LoRaWANBand_t CN500 = {
+  .bandNum = BandCN500,
   .bandType = RADIOLIB_LORAWAN_BAND_FIXED,
   .payloadLenMax = {  59,  59,  59, 123, 230, 230,   0,   0,   0,   0,   0,   0,   0,   0,   0 },
   .powerMax = 19,
@@ -329,6 +348,7 @@ const LoRaWANBand_t CN500 = {
 };
 
 const LoRaWANBand_t AS923 = {
+  .bandNum = BandAS923,
   .bandType = RADIOLIB_LORAWAN_BAND_DYNAMIC,
   .payloadLenMax = {  59,  59,  59, 123, 230, 230, 230, 230,   0,   0,   0,   0,   0,   0,   0 },
   .powerMax = 16,
@@ -374,6 +394,7 @@ const LoRaWANBand_t AS923 = {
 };
 
 const LoRaWANBand_t KR920 = {
+  .bandNum = BandKR920,
   .bandType = RADIOLIB_LORAWAN_BAND_DYNAMIC,
   .payloadLenMax = {  59,  59,  59, 123, 230, 230,   0,   0,   0,   0,   0,   0,   0,   0,   0 },
   .powerMax = 14,
@@ -419,6 +440,7 @@ const LoRaWANBand_t KR920 = {
 };
 
 const LoRaWANBand_t IN865 = {
+  .bandNum = BandIN865,
   .bandType = RADIOLIB_LORAWAN_BAND_DYNAMIC,
   .payloadLenMax = {  59,  59,  59, 123, 230, 230, 230, 230,   0,   0,   0,   0,   0,   0,   0 },
   .powerMax = 30,

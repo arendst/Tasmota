@@ -51,9 +51,6 @@ class ArduinoHal : public RadioLibHal {
     void spiEndTransaction() override;
     void spiEnd() override;
 
-    void readPersistentStorage(uint32_t addr, uint8_t* buff, size_t len) override;
-    void writePersistentStorage(uint32_t addr, uint8_t* buff, size_t len) override;
-
     // implementations of virtual RadioLibHal methods
     void init() override;
     void term() override;

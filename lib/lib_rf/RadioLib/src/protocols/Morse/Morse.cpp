@@ -85,7 +85,7 @@ int MorseClient::read(uint8_t* symbol, uint8_t* len, float low, float high) {
     if((pauseLen >= low*(float)letterSpace) && (pauseLen <= high*(float)letterSpace)) {
       return(RADIOLIB_MORSE_CHAR_COMPLETE);
     } else if(pauseLen > wordSpace) {
-      RADIOLIB_DEBUG_PRINTLN("\n<space>");
+      RADIOLIB_DEBUG_PROTOCOL_PRINTLN("\n<space>");
       return(RADIOLIB_MORSE_WORD_COMPLETE);
     }
 
@@ -96,15 +96,15 @@ int MorseClient::read(uint8_t* symbol, uint8_t* len, float low, float high) {
     uint32_t signalLen = mod->hal->millis() - signalStart;
 
     if((signalLen >= low*(float)dotLength) && (signalLen <= high*(float)dotLength)) {
-      RADIOLIB_DEBUG_PRINT(".");
+      RADIOLIB_DEBUG_PROTOCOL_PRINT(".");
       (*symbol) |= (RADIOLIB_MORSE_DOT << (*len));
       (*len)++;
     } else if((signalLen >= low*(float)dashLength) && (signalLen <= high*(float)dashLength)) {
-      RADIOLIB_DEBUG_PRINT("-");
+      RADIOLIB_DEBUG_PROTOCOL_PRINT("-");
       (*symbol) |= (RADIOLIB_MORSE_DASH << (*len));
       (*len)++;
     } else {
-      RADIOLIB_DEBUG_PRINTLN("<len=%lums>", signalLen);
+      RADIOLIB_DEBUG_PROTOCOL_PRINTLN("<len=%lums>", signalLen);
     }
   }
 
@@ -122,7 +122,7 @@ size_t MorseClient::write(uint8_t b) {
 
   // inter-word pause (space)
   if(b == ' ') {
-    RADIOLIB_DEBUG_PRINTLN("space");
+    RADIOLIB_DEBUG_PROTOCOL_PRINTLN("space");
     standby();
     mod->waitForMicroseconds(mod->hal->micros(), wordSpace*1000);
     return(1);
@@ -141,11 +141,11 @@ size_t MorseClient::write(uint8_t b) {
 
     // send dot or dash
     if (code & RADIOLIB_MORSE_DASH) {
-      RADIOLIB_DEBUG_PRINT("-");
+      RADIOLIB_DEBUG_PROTOCOL_PRINT("-");
       transmitDirect(baseFreq, baseFreqHz);
       mod->waitForMicroseconds(mod->hal->micros(), dashLength*1000);
     } else {
-      RADIOLIB_DEBUG_PRINT(".");
+      RADIOLIB_DEBUG_PROTOCOL_PRINT(".");
       transmitDirect(baseFreq, baseFreqHz);
       mod->waitForMicroseconds(mod->hal->micros(), dotLength*1000);
     }
@@ -161,7 +161,7 @@ size_t MorseClient::write(uint8_t b) {
   // letter space
   standby();
   mod->waitForMicroseconds(mod->hal->micros(), letterSpace*1000 - dotLength*1000);
-  RADIOLIB_DEBUG_PRINTLN();
+  RADIOLIB_DEBUG_PROTOCOL_PRINTLN();
 
   return(1);
 }

@@ -413,7 +413,7 @@ void PhysicalLayer::updateDirectBuffer(uint8_t bit) {
     this->syncBuffer <<= 1;
     this->syncBuffer |= bit;
 
-    RADIOLIB_VERBOSE_PRINTLN("S\t%lu", this->syncBuffer);
+    RADIOLIB_DEBUG_PROTOCOL_PRINTLN("S\t%lu", this->syncBuffer);
 
     if((this->syncBuffer & this->directSyncWordMask) == this->directSyncWord) {
       this->gotSync = true;
@@ -434,7 +434,7 @@ void PhysicalLayer::updateDirectBuffer(uint8_t bit) {
     // check complete byte
     if(this->bufferBitPos == 8) {
       this->buffer[this->bufferWritePos] = Module::reflect(this->buffer[this->bufferWritePos], 8);
-      RADIOLIB_VERBOSE_PRINTLN("R\t%X", this->buffer[this->bufferWritePos]);
+      RADIOLIB_DEBUG_PROTOCOL_PRINTLN("R\t%X", this->buffer[this->bufferWritePos]);
 
       this->bufferWritePos++;
       this->bufferBitPos = 0;

@@ -131,6 +131,16 @@ class PagerClient {
     int16_t startReceive(uint32_t pin, uint32_t addr, uint32_t mask = 0xFFFFF);
 
     /*!
+      \brief Start reception of POCSAG packets for multiple addresses and masks.
+      \param pin Pin to receive digital data on (e.g., DIO2 for SX127x).
+      \param addrs Array of addresses to receive.
+      \param masks Array of address masks to use for filtering. Masks will be applied to corresponding addresses in addr array.
+      \param numAddress Number of addresses/masks to match.
+      \returns \ref status_codes
+    */
+    int16_t startReceive(uint32_t pin, uint32_t *addrs, uint32_t *masks, size_t numAddress);
+
+    /*!
       \brief Get the number of POCSAG batches available in buffer. Limited by the size of direct mode buffer!
       \returns Number of available batches.
     */
@@ -175,10 +185,15 @@ class PagerClient {
     uint16_t bitDuration;
     uint32_t filterAddr;
     uint32_t filterMask;
+    uint32_t *filterAddresses;
+    uint32_t *filterMasks;
+    size_t filterNumAddresses;
     bool inv = false;
 
     void write(uint32_t* data, size_t len);
     void write(uint32_t codeWord);
+    int16_t startReceiveCommon();
+    bool addressMatched(uint32_t addr);
 
 #if !RADIOLIB_EXCLUDE_DIRECT_RECEIVE
     uint32_t read();

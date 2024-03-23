@@ -6,6 +6,7 @@
 SX126x::SX126x(Module* mod) : PhysicalLayer(RADIOLIB_SX126X_FREQUENCY_STEP_SIZE, RADIOLIB_SX126X_MAX_PACKET_LENGTH) {
   this->mod = mod;
   this->XTAL = false;
+  this->standbyXOSC = false;
 }
 
 int16_t SX126x::begin(uint8_t cr, uint8_t syncWord, uint16_t preambleLength, float tcxoVoltage, bool useRegulatorLDO) {
@@ -22,11 +23,11 @@ int16_t SX126x::begin(uint8_t cr, uint8_t syncWord, uint16_t preambleLength, flo
   
   // try to find the SX126x chip
   if(!SX126x::findChip(this->chipType)) {
-    RADIOLIB_DEBUG_PRINTLN("No SX126x found!");
+    RADIOLIB_DEBUG_BASIC_PRINTLN("No SX126x found!");
     this->mod->term();
     return(RADIOLIB_ERR_CHIP_NOT_FOUND);
   }
-  RADIOLIB_DEBUG_PRINTLN("M\tSX126x");
+  RADIOLIB_DEBUG_BASIC_PRINTLN("M\tSX126x");
 
   // BW in kHz and SF are required in order to calculate LDRO for setModulationParams
   // set the defaults, this will get overwritten later anyway
@@ -107,11 +108,11 @@ int16_t SX126x::beginFSK(float br, float freqDev, float rxBw, uint16_t preambleL
   
   // try to find the SX126x chip
   if(!SX126x::findChip(this->chipType)) {
-    RADIOLIB_DEBUG_PRINTLN("No SX126x found!");
+    RADIOLIB_DEBUG_BASIC_PRINTLN("No SX126x found!");
     this->mod->term();
     return(RADIOLIB_ERR_CHIP_NOT_FOUND);
   }
-  RADIOLIB_DEBUG_PRINTLN("M\tSX126x");
+  RADIOLIB_DEBUG_BASIC_PRINTLN("M\tSX126x");
 
   // initialize configuration variables (will be overwritten during public settings configuration)
   this->bitRate = 21333;                                  // 48.0 kbps
@@ -246,7 +247,7 @@ int16_t SX126x::transmit(uint8_t* data, size_t len, uint8_t addr) {
     return(RADIOLIB_ERR_UNKNOWN);
   }
 
-  RADIOLIB_DEBUG_PRINTLN("Timeout in %lu us", timeout);
+  RADIOLIB_DEBUG_BASIC_PRINTLN("Timeout in %lu us", timeout);
 
   // start transmission
   state = startTransmit(data, len, addr);
@@ -295,7 +296,7 @@ int16_t SX126x::receive(uint8_t* data, size_t len) {
     return(RADIOLIB_ERR_UNKNOWN);
   }
 
-  RADIOLIB_DEBUG_PRINTLN("Timeout in %lu us", timeout);
+  RADIOLIB_DEBUG_BASIC_PRINTLN("Timeout in %lu us", timeout);
 
   // start reception
   uint32_t timeoutValue = (uint32_t)((float)timeout / 15.625);
@@ -463,7 +464,7 @@ int16_t SX126x::sleep(bool retainConfig) {
 }
 
 int16_t SX126x::standby() {
-  return(SX126x::standby(RADIOLIB_SX126X_STANDBY_RC));
+  return(SX126x::standby(this->standbyXOSC ? RADIOLIB_SX126X_STANDBY_XOSC : RADIOLIB_SX126X_STANDBY_RC));
 }
 
 int16_t SX126x::standby(uint8_t mode, bool wakeup) {
@@ -643,7 +644,7 @@ int16_t SX126x::startReceiveDutyCycleAuto(uint16_t senderPreambleLength, uint16_
 
   uint32_t symbolLength = ((uint32_t)(10 * 1000) << this->spreadingFactor) / (10 * this->bandwidthKhz);
   uint32_t sleepPeriod = symbolLength * sleepSymbols;
-  RADIOLIB_DEBUG_PRINTLN("Auto sleep period: %lu", sleepPeriod);
+  RADIOLIB_DEBUG_BASIC_PRINTLN("Auto sleep period: %lu", sleepPeriod);
 
   // when the unit detects a preamble, it starts a timer that will timeout if it doesn't receive a header in time.
   // the duration is sleepPeriod + 2 * wakePeriod.
@@ -654,7 +655,7 @@ int16_t SX126x::startReceiveDutyCycleAuto(uint16_t senderPreambleLength, uint16_
   uint32_t wakePeriod = RADIOLIB_MAX(
     (symbolLength * (senderPreambleLength + 1) - (sleepPeriod - 1000)) / 2, // (A)
     symbolLength * (minSymbols + 1)); //(B)
-  RADIOLIB_DEBUG_PRINTLN("Auto wake period: %lu", wakePeriod);
+  RADIOLIB_DEBUG_BASIC_PRINTLN("Auto wake period: %lu", wakePeriod);
 
   // If our sleep period is shorter than our transition time, just use the standard startReceive
   if(sleepPeriod < this->tcxoDelay + 1016) {
@@ -1580,10 +1581,10 @@ int16_t SX126x::uploadPatch(const uint32_t* patch, size_t len, bool nonvolatile)
   RADIOLIB_ASSERT(state);
 
   // check the version
-  #if RADIOLIB_DEBUG
+  #if RADIOLIB_DEBUG_BASIC
   char ver_pre[16];
   this->mod->SPIreadRegisterBurst(RADIOLIB_SX126X_REG_VERSION_STRING, 16, (uint8_t*)ver_pre);
-  RADIOLIB_DEBUG_PRINTLN("Pre-update version string: %s", ver_pre);
+  RADIOLIB_DEBUG_BASIC_PRINTLN("Pre-update version string: %s", ver_pre);
   #endif
 
   // enable patch update
@@ -1612,10 +1613,10 @@ int16_t SX126x::uploadPatch(const uint32_t* patch, size_t len, bool nonvolatile)
   this->mod->SPIwriteStream(RADIOLIB_SX126X_CMD_PRAM_UPDATE, NULL, 0);
 
   // check the version again
-  #if RADIOLIB_DEBUG
+  #if RADIOLIB_DEBUG_BASIC
   char ver_post[16];
   this->mod->SPIreadRegisterBurst(RADIOLIB_SX126X_REG_VERSION_STRING, 16, (uint8_t*)ver_post);
-  RADIOLIB_DEBUG_PRINTLN("Post-update version string: %s", ver_post);
+  RADIOLIB_DEBUG_BASIC_PRINTLN("Post-update version string: %s", ver_post);
   #endif
 
   return(state);
@@ -1857,12 +1858,12 @@ int16_t SX126x::calibrateImage(float freqMin, float freqMax) {
   int16_t state = this->mod->SPIwriteStream(RADIOLIB_SX126X_CMD_CALIBRATE_IMAGE, data, 2);
 
   // if something failed, show the device errors
-  #if RADIOLIB_DEBUG
+  #if RADIOLIB_DEBUG_BASIC
   if(state != RADIOLIB_ERR_NONE) {
     // unless mode is forced to standby, device errors will be 0
     standby();
     uint16_t errors = getDeviceErrors();
-    RADIOLIB_DEBUG_PRINTLN("Calibration failed, device errors: 0x%X", errors);
+    RADIOLIB_DEBUG_BASIC_PRINTLN("Calibration failed, device errors: 0x%X", errors);
   }
   #endif
   return(state);
@@ -2086,7 +2087,7 @@ int16_t SX126x::config(uint8_t modem) {
   RADIOLIB_ASSERT(state);
 
   // set Rx/Tx fallback mode to STDBY_RC
-  data[0] = RADIOLIB_SX126X_RX_TX_FALLBACK_MODE_STDBY_RC;
+  data[0] = this->standbyXOSC ? RADIOLIB_SX126X_RX_TX_FALLBACK_MODE_STDBY_XOSC : RADIOLIB_SX126X_RX_TX_FALLBACK_MODE_STDBY_RC;
   state = this->mod->SPIwriteStream(RADIOLIB_SX126X_CMD_SET_RX_TX_FALLBACK_MODE, data, 1);
   RADIOLIB_ASSERT(state);
 
@@ -2121,12 +2122,12 @@ int16_t SX126x::config(uint8_t modem) {
   state = this->mod->SPIcheckStream();
 
   // if something failed, show the device errors
-  #if RADIOLIB_DEBUG
+  #if RADIOLIB_DEBUG_BASIC
   if(state != RADIOLIB_ERR_NONE) {
     // unless mode is forced to standby, device errors will be 0
     standby();
     uint16_t errors = getDeviceErrors();
-    RADIOLIB_DEBUG_PRINTLN("Calibration failed, device errors: 0x%X", errors);
+    RADIOLIB_DEBUG_BASIC_PRINTLN("Calibration failed, device errors: 0x%X", errors);
   }
   #endif
 
@@ -2159,15 +2160,15 @@ bool SX126x::findChip(const char* verStr) {
 
     // check version register
     if(strncmp(verStr, version, 6) == 0) {
-      RADIOLIB_DEBUG_PRINTLN("Found SX126x: RADIOLIB_SX126X_REG_VERSION_STRING:");
-      RADIOLIB_DEBUG_HEXDUMP((uint8_t*)version, 16, RADIOLIB_SX126X_REG_VERSION_STRING);
-      RADIOLIB_DEBUG_PRINTLN();
+      RADIOLIB_DEBUG_BASIC_PRINTLN("Found SX126x: RADIOLIB_SX126X_REG_VERSION_STRING:");
+      RADIOLIB_DEBUG_BASIC_HEXDUMP((uint8_t*)version, 16, RADIOLIB_SX126X_REG_VERSION_STRING);
+      RADIOLIB_DEBUG_BASIC_PRINTLN();
       flagFound = true;
     } else {
-      #if RADIOLIB_DEBUG
-        RADIOLIB_DEBUG_PRINTLN("SX126x not found! (%d of 10 tries) RADIOLIB_SX126X_REG_VERSION_STRING:", i + 1);
-        RADIOLIB_DEBUG_HEXDUMP((uint8_t*)version, 16, RADIOLIB_SX126X_REG_VERSION_STRING);
-        RADIOLIB_DEBUG_PRINTLN("Expected string: %s", verStr);
+      #if RADIOLIB_DEBUG_BASIC
+        RADIOLIB_DEBUG_BASIC_PRINTLN("SX126x not found! (%d of 10 tries) RADIOLIB_SX126X_REG_VERSION_STRING:", i + 1);
+        RADIOLIB_DEBUG_BASIC_HEXDUMP((uint8_t*)version, 16, RADIOLIB_SX126X_REG_VERSION_STRING);
+        RADIOLIB_DEBUG_BASIC_PRINTLN("Expected string: %s", verStr);
       #endif
       this->mod->hal->delay(10);
       i++;

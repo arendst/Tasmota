@@ -1,4 +1,4 @@
-# RadioLib ![Build Status](https://github.com/jgromes/RadioLib/workflows/CI/badge.svg) [![PlatformIO Registry](https://badges.registry.platformio.org/packages/jgromes/library/RadioLib.svg)](https://registry.platformio.org/libraries/jgromes/RadioLib)
+# RadioLib ![Build Status](https://github.com/jgromes/RadioLib/workflows/CI/badge.svg) [![PlatformIO Registry](https://badges.registry.platformio.org/packages/jgromes/library/RadioLib.svg)](https://registry.platformio.org/libraries/jgromes/RadioLib) [![Component Registry](https://components.espressif.com/components/jgromes/radiolib/badge.svg)](https://components.espressif.com/components/jgromes/radiolib)
 
 ### _One radio library to rule them all!_
 
