@@ -118,12 +118,15 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v13.4.0.3
 ### Added
-- Experimental support for LoRa
+- Support for LoRa and LoRaWanBridge
 - Support for AMS5915/AMS6915 temperature and pressure sensors [#20814](https://github.com/arendst/Tasmota/issues/20814)
 - Show calculated heat index if temperature and humidity is available with ``#define USE_HEAT_INDEX`` [#4771](https://github.com/arendst/Tasmota/issues/4771)
 - IR support data larger than 64 bits [#20831](https://github.com/arendst/Tasmota/issues/20831)
 - TasMesh support for LWT messages [#20392](https://github.com/arendst/Tasmota/issues/20392)
 - QMC5883l check for overflow and scale reading [#20643](https://github.com/arendst/Tasmota/issues/20643)
+- Support for MCP23S08 [#20971](https://github.com/arendst/Tasmota/issues/20971)
+- Support for ESP32-S3 120Mhz [#20973](https://github.com/arendst/Tasmota/issues/20973)
+- Zigbee support for attributes of type `uint48` used by energy monitoring [#20992](https://github.com/arendst/Tasmota/issues/20992)
 - Berry explicit error log when memory allocation fails [#20807](https://github.com/arendst/Tasmota/issues/20807)
 - Berry `path.rename()` [#20840](https://github.com/arendst/Tasmota/issues/20840)
 - Berry `string.startswith`, `string.endswith` and `%q` format [#20909](https://github.com/arendst/Tasmota/issues/20909)
@@ -140,6 +143,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Changed
 - ESP32 Core3 platform update from 2024.01.12 to 2024.02.10 [#20730](https://github.com/arendst/Tasmota/issues/20730)
+- ESP32 LVGL library from v9.0.0 to v9.1.0 [#21008](https://github.com/arendst/Tasmota/issues/21008)
+- Refactor Platformio script `post_esp32.py` [#20966](https://github.com/arendst/Tasmota/issues/20966)
 - NeoPool webUI pH alarms (4 & 5) completed (#20743)[#20743](https://github.com/arendst/Tasmota/issues/20743)
 - Prevent shutter MQTT broadcast with activated ShutterLock [#20827](https://github.com/arendst/Tasmota/issues/20827)
 - Berry class `int64` made immutable [#20727](https://github.com/arendst/Tasmota/issues/20727)
@@ -157,11 +162,16 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Fixed
 - Filesystem save of JSON settings data
 - Shutter inverted using internal commands [#20752](https://github.com/arendst/Tasmota/issues/20752)
+- TuyaV2 suppressed dimmer updates from MQTT [#20950](https://github.com/arendst/Tasmota/issues/20950)
+- Scripter google char memory leak [#20995](https://github.com/arendst/Tasmota/issues/20995)
 - ESP32 PWM activity on unconfigured PWM GPIOs [#20732](https://github.com/arendst/Tasmota/issues/20732)
+- BTHome, prep BLE5 [#20989](https://github.com/arendst/Tasmota/issues/20989)
 - Berry Memory leak in `import re` [#20823](https://github.com/arendst/Tasmota/issues/20823)
 - Berry bug when parsing ternary operator [#20839](https://github.com/arendst/Tasmota/issues/20839)
-- Berry fix walrus with member or index [#20939](https://github.com/arendst/Tasmota/issues/20939)
+- Berry walrus with member or index [#20939](https://github.com/arendst/Tasmota/issues/20939)
+- Berry walrus bug when assigning to self [#21015](https://github.com/arendst/Tasmota/issues/21015)
 - HASPmota PSRAM memory leak [#20818](https://github.com/arendst/Tasmota/issues/20818)
 - HASPmota widgets line, btnmatrix, qrcode, bar, checkbox [#20881](https://github.com/arendst/Tasmota/issues/20881)
+- HASPmota demo and robotocondensed fonts [#21014](https://github.com/arendst/Tasmota/issues/21014)
 
 ### Removed

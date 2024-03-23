@@ -5,16 +5,20 @@ All notable changes to this project will be documented in this file.
 
 ## [13.4.0.3]
 ### Added
-- Zigbee added for attributes of type `uint48` used by energy monitoring
+- Zigbee support for attributes of type `uint48` used by energy monitoring (#20992)
+- Support for LoRaWanBridge
 
 ### Breaking Changed
 
 
 ### Changed
-- LVGL library from v9.0.0 to v9.1.0
+- ESP32 LVGL library from v9.0.0 to v9.1.0 (#21008)
 
 ### Fixed
-- Berry fix walrus bug when assigning to self
+- BTHome, prep BLE5 (#20989)
+- Scripter google char memory leak (#20995)
+- HASPmota demo and robotocondensed fonts (#21014)
+- Berry walrus bug when assigning to self (#21015)
 
 ### Removed
 
@@ -29,6 +33,8 @@ All notable changes to this project will be documented in this file.
 - Berry `string.startswith`, `string.endswith` and `%q` format (#20909)
 - LVGL `lv.draw_label_dsc` and `lv_bar.get_indic_area` (#20936)
 - HASPmota support for scale, percentages (#20974)
+- Support for ESP32-S3 120Mhz (#20973)
+- Support for MCP23S08 (#20971)
 
 ### Breaking Changed
 - Drop support for old (insecure) fingerprint format (#20842)
@@ -40,16 +46,18 @@ All notable changes to this project will be documented in this file.
 - LVGL improved readability of montserrat-10 (#20900)
 - HASPmota moved to a distinct library `lv_haspmota` (#20929)
 - HASPmota solidify server-side (#20938)
+- Refactor Platformio script `post_esp32.py` (#20966)
 
 ### Fixed
 - Berry bug when parsing ternary operator (#20839)
 - HASPmota widgets line, btnmatrix, qrcode, bar, checkbox (#20881)
 - Filesystem save of JSON settings data
 - Berry fix walrus with member or index (#20939)
+- TuyaV2 suppressed dimmer updates from MQTT (#20950)
 
 ## [13.4.0.1] 20240229
 ### Added
-- Experimental support for LoRa
+- Support for LoRa
 - HASPmota `p<x>b<y>.delete` to delete an object (#20735)
 - LVGL and HASPmota typicons font (#20742)
 - HASPmota more attributes (#20744)

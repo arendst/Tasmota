@@ -16,15 +16,196 @@
 
 /*********************************************************************************************/
 
+void LoraDefaults(void) {
+  LoraSettings.frequency = TAS_LORA_FREQUENCY;
+  LoraSettings.bandwidth = TAS_LORA_BANDWIDTH;
+  LoraSettings.spreading_factor = TAS_LORA_SPREADING_FACTOR;
+  LoraSettings.coding_rate = TAS_LORA_CODING_RATE;
+  LoraSettings.sync_word = TAS_LORA_SYNC_WORD;
+  LoraSettings.output_power = TAS_LORA_OUTPUT_POWER;
+  LoraSettings.preamble_length = TAS_LORA_PREAMBLE_LENGTH;
+  LoraSettings.current_limit = TAS_LORA_CURRENT_LIMIT;
+  LoraSettings.implicit_header = TAS_LORA_HEADER;
+  LoraSettings.crc_bytes = TAS_LORA_CRC_BYTES;
+}
+
+void LoraWanDefaults(void) {
+  LoraSettings.frequency = TAS_LORAWAN_FREQUENCY;
+  LoraSettings.bandwidth = TAS_LORAWAN_BANDWIDTH;
+  LoraSettings.spreading_factor = TAS_LORAWAN_SPREADING_FACTOR;
+  LoraSettings.coding_rate = TAS_LORAWAN_CODING_RATE;
+  LoraSettings.sync_word = TAS_LORAWAN_SYNC_WORD;
+  LoraSettings.output_power = TAS_LORAWAN_OUTPUT_POWER;
+  LoraSettings.preamble_length = TAS_LORAWAN_PREAMBLE_LENGTH;
+  LoraSettings.current_limit = TAS_LORAWAN_CURRENT_LIMIT;
+  LoraSettings.implicit_header = TAS_LORAWAN_HEADER;
+  LoraSettings.crc_bytes = TAS_LORAWAN_CRC_BYTES;
+}
+
+void LoraSettings2Json(void) {
+  ResponseAppend_P(PSTR("\"" D_JSON_FREQUENCY "\":%1_f"), &LoraSettings.frequency);              // xxx.x MHz
+  ResponseAppend_P(PSTR(",\"" D_JSON_BANDWIDTH "\":%1_f"), &LoraSettings.bandwidth);             // xxx.x kHz
+  ResponseAppend_P(PSTR(",\"" D_JSON_SPREADING_FACTOR "\":%d"), LoraSettings.spreading_factor);
+  ResponseAppend_P(PSTR(",\"" D_JSON_CODINGRATE4 "\":%d"), LoraSettings.coding_rate);
+  ResponseAppend_P(PSTR(",\"" D_JSON_SYNCWORD "\":%d"), LoraSettings.sync_word);
+  ResponseAppend_P(PSTR(",\"" D_JSON_OUTPUT_POWER "\":%d"), LoraSettings.output_power);          // dBm
+  ResponseAppend_P(PSTR(",\"" D_JSON_PREAMBLE_LENGTH "\":%d"), LoraSettings.preamble_length);    // symbols
+  ResponseAppend_P(PSTR(",\"" D_JSON_CURRENT_LIMIT "\":%1_f"), &LoraSettings.current_limit);     // xx.x mA (Overcurrent Protection - OCP)
+  ResponseAppend_P(PSTR(",\"" D_JSON_IMPLICIT_HEADER "\":%d"), LoraSettings.implicit_header);    // 0 = explicit
+  ResponseAppend_P(PSTR(",\"" D_JSON_CRC_BYTES "\":%d"), LoraSettings.crc_bytes);                // bytes
+}
+
+void LoraJson2Settings(JsonParserObject root) {
+  LoraSettings.frequency = root.getFloat(PSTR(D_JSON_FREQUENCY), LoraSettings.frequency);
+  LoraSettings.bandwidth = root.getFloat(PSTR(D_JSON_BANDWIDTH), LoraSettings.bandwidth);
+  LoraSettings.spreading_factor = root.getUInt(PSTR(D_JSON_SPREADING_FACTOR), LoraSettings.spreading_factor);
+  LoraSettings.coding_rate = root.getUInt(PSTR(D_JSON_CODINGRATE4), LoraSettings.coding_rate);
+  LoraSettings.sync_word = root.getUInt(PSTR(D_JSON_SYNCWORD), LoraSettings.sync_word);
+  LoraSettings.output_power = root.getUInt(PSTR(D_JSON_OUTPUT_POWER), LoraSettings.output_power);
+  LoraSettings.preamble_length = root.getUInt(PSTR(D_JSON_PREAMBLE_LENGTH), LoraSettings.preamble_length);
+  LoraSettings.current_limit = root.getFloat(PSTR(D_JSON_CURRENT_LIMIT), LoraSettings.current_limit);
+  LoraSettings.implicit_header = root.getUInt(PSTR(D_JSON_IMPLICIT_HEADER), LoraSettings.implicit_header);
+  LoraSettings.crc_bytes = root.getUInt(PSTR(D_JSON_CRC_BYTES), LoraSettings.crc_bytes);
+}
+
+/*********************************************************************************************\
+ * Driver Settings load and save
+\*********************************************************************************************/
+
+#ifdef USE_UFILESYS
+#define XDRV_73_KEY           "drvset73"
+
+bool LoraLoadData(void) {
+  char key[] = XDRV_73_KEY;
+  String json = UfsJsonSettingsRead(key);
+  if (json.length() == 0) { return false; }
+
+  // {"Crc":1882268982,"Flags":0,"Frequency":868.1,"Bandwidth":125.0,"SpreadingFactor":7,"CodingRate4":5,"SyncWord":52,"OutputPower":10,"PreambleLength":8,"CurrentLimit":60.0,"ImplicitHeader":0,"CrcBytes":2}
+  JsonParser parser((char*)json.c_str());
+  JsonParserObject root = parser.getRootObject();
+  if (!root) { return false; }
+
+  LoraSettings.crc32 = root.getUInt(PSTR("Crc"), LoraSettings.crc32);
+  LoraSettings.flags = root.getUInt(PSTR("Flags"), LoraSettings.flags);
+  LoraJson2Settings(root);
+
+#ifdef USE_LORAWAN_BRIDGE
+  if (!LoraWanLoadData()) {
+    return false;
+  }
+#endif  // USE_LORAWAN_BRIDGE
+
+  return true;
+}
+
+bool LoraSaveData(void) {
+  Response_P(PSTR("{\"" XDRV_73_KEY "\":{"
+                   "\"Crc\":%u,"
+                   "\"Flags\":%u,"),
+                   LoraSettings.crc32,
+                   LoraSettings.flags);
+  LoraSettings2Json();
+  ResponseAppend_P(PSTR("}}"));
+
+  if (!UfsJsonSettingsWrite(ResponseData())) {
+    return false;
+  }
+#ifdef USE_LORAWAN_BRIDGE
+  if (!LoraWanSaveData()) {
+    return false;
+  }
+#endif  // USE_LORAWAN_BRIDGE
+  return true;
+}
+
+void LoraDeleteData(void) {
+  char key[] = XDRV_73_KEY;
+  UfsJsonSettingsDelete(key);  // Use defaults
+#ifdef USE_LORAWAN_BRIDGE
+  LoraWanDeleteData();
+#endif  // USE_LORAWAN_BRIDGE
+}
+#endif  // USE_UFILESYS
+
+/*********************************************************************************************/
+
+void LoraSettingsLoad(bool erase) {
+  // Called from FUNC_PRE_INIT (erase = 0) once at restart
+  // Called from FUNC_RESET_SETTINGS (erase = 1) after command reset 4, 5, or 6
+
+  // *** Start init default values in case key is not found ***
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DRV: " D_USE_DEFAULTS));
+
+  memset(&LoraSettings, 0x00, sizeof(LoraSettings));
+  // Init any other parameter in struct LoraSettings
+  LoraDefaults();
+  // *** End Init default values ***
+
+#ifndef USE_UFILESYS
+  AddLog(LOG_LEVEL_INFO, PSTR("CFG: Lora use defaults as file system not enabled"));
+#else
+  // Try to load key
+  if (erase) {
+    LoraDeleteData();
+  }
+  else if (LoraLoadData()) {
+    AddLog(LOG_LEVEL_INFO, PSTR("CFG: Lora loaded from file"));
+  }
+  else {
+    // File system not ready: No flash space reserved for file system
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CFG: Lora use defaults as file system not ready or key not found"));
+  }
+#endif  // USE_UFILESYS
+}
+
+void LoraSettingsSave(void) {
+  // Called from FUNC_SAVE_SETTINGS every SaveData second and at restart
+#ifdef USE_UFILESYS
+  uint32_t crc32 = GetCfgCrc32((uint8_t*)&LoraSettings +4, sizeof(LoraSettings) -4);  // Skip crc32
+  if (crc32 != LoraSettings.crc32) {
+    // Try to save file /.drvset122
+    LoraSettings.crc32 = crc32;
+
+    if (LoraSaveData()) {
+      AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Lora saved to file"));
+    } else {
+      // File system not ready: No flash space reserved for file system
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CFG: Lora ERROR File system not ready or unable to save file"));
+    }
+  }
+#endif  // USE_UFILESYS
+}
+
+/*********************************************************************************************/
+
+bool LoraSend(uint8_t* data, uint32_t len, bool invert) {
+  uint32_t lora_time = millis();         // Time is important for LoRaWan RX windows
+  bool result = Lora.Send(data, len, invert);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LOR: Send (%u) '%*_H', Invert %d, Time %d"),
+    lora_time, len, data, invert, TimePassedSince(lora_time));
+  return result;
+}
+
 void LoraInput(void) {
   if (!Lora.Available()) { return; }
 
-  char data[LORA_MAX_PACKET_LENGTH] = { 0 };
+  char data[TAS_LORA_MAX_PACKET_LENGTH] = { 0 };
   int packet_size = Lora.Receive(data);
   if (!packet_size) { return; }
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LOR: Rcvd (%u) '%*_H', RSSI %1_f, SNR %1_f"),
+    Lora.receive_time, packet_size, data, &Lora.rssi, &Lora.snr);
+
+#ifdef USE_LORAWAN_BRIDGE
+  if (bitRead(LoraSettings.flags, TAS_LORAWAN_BRIDGE_ENABLED)) {
+    if (LoraWanInput((uint8_t*)data, packet_size)) {
+      return;
+    }
+  }
+#endif  // USE_LORAWAN_BRIDGE
+  Lora.receive_time = 0;
 
   if (TAS_LORA_REMOTE_COMMAND == data[0]) {
-    char *payload = data +1;       // Skip TAS_LORA_REMOTE_COMMAND
+    char *payload = data +1;             // Skip TAS_LORA_REMOTE_COMMAND
     char *command_part;
     char *topic_part = strtok_r(payload, " ", &command_part);
     if (topic_part && command_part) {
@@ -32,7 +213,7 @@ void LoraInput(void) {
         ExecuteCommand(command_part, SRC_REMOTE);
         return;
       } else {
-        *--command_part = ' ';     // Restore strtok_r '/0'
+        *--command_part = ' ';           // Restore strtok_r '/0'
       }
     }
   }
@@ -63,19 +244,6 @@ void LoraInput(void) {
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR("LoRaReceived"));
 }
 
-void LoraDefaults(void) {
-  Lora.frequency = TAS_LORA_FREQUENCY;
-  Lora.bandwidth = TAS_LORA_BANDWIDTH;
-  Lora.spreading_factor = TAS_LORA_SPREADING_FACTOR;
-  Lora.coding_rate = TAS_LORA_CODING_RATE;
-  Lora.sync_word = TAS_LORA_SYNC_WORD;
-  Lora.output_power = TAS_LORA_OUTPUT_POWER;
-  Lora.preamble_length = TAS_LORA_PREAMBLE_LENGTH;
-  Lora.current_limit = TAS_LORA_CURRENT_LIMIT;
-  Lora.implicit_header = TAS_LORA_HEADER;
-  Lora.crc_bytes = TAS_LORA_CRC_BYTES;
-}
-
 void LoraInit(void) {
   if ((SPI_MOSI_MISO == TasmotaGlobal.spi_enabled) &&
       (PinUsed(GPIO_LORA_CS)) && (PinUsed(GPIO_LORA_RST))) {
@@ -86,8 +254,10 @@ void LoraInit(void) {
     SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
 #endif // ESP32
 
-    Lora.enableInterrupt = true;
-    LoraDefaults();
+#ifdef USE_LORAWAN_BRIDGE
+    LoraWanInit();
+#endif  // USE_LORAWAN_BRIDGE
+    LoraSettingsLoad(0);
 
     char hardware[20];
     strcpy_P(hardware, PSTR("Not"));
@@ -127,27 +297,42 @@ void LoraInit(void) {
  * Commands
 \*********************************************************************************************/
 
-#define D_CMND_LORASEND    "Send"
-#define D_CMND_LORACONFIG  "Config"
-#define D_CMND_LORACOMMAND "Command"
+#define D_CMND_LORASEND       "Send"
+#define D_CMND_LORACONFIG     "Config"
+#define D_CMND_LORACOMMAND    "Command"
+#define D_CMND_LORAOPTION     "Option"
 
 const char kLoraCommands[] PROGMEM = "LoRa|"  // Prefix
-  D_CMND_LORASEND "|" D_CMND_LORACONFIG "|" D_CMND_LORACOMMAND ;
+  D_CMND_LORASEND "|" D_CMND_LORACONFIG "|" D_CMND_LORACOMMAND "|" D_CMND_LORAOPTION;
 
 void (* const LoraCommand[])(void) PROGMEM = {
-  &CmndLoraSend, &CmndLoraConfig, &CmndLoraCommand };
+  &CmndLoraSend, &CmndLoraConfig, &CmndLoraCommand, &CmndLoraOption };
+
+void CmndLoraOption(void) {
+  // LoraOption1 1 - Enable LoRaWanBridge
+  // LoraOption2 1 - Enable LoRaWanBridge Join
+  // LoraOption3 1 - Enable LoRaWanBridge decoding
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 8)) {
+    uint32_t pindex = XdrvMailbox.index -1;
+    if (XdrvMailbox.payload >= 0) {
+      bitWrite(LoraSettings.flags, pindex, XdrvMailbox.payload);
+    }
+    ResponseCmndIdxChar(GetStateText(bitRead(LoraSettings.flags, pindex)));
+  }
+}
 
 void CmndLoraCommand(void) {
   // LoRaCommand <topic_of_lora_receiver> <command>
   // LoRaCommand lorareceiver power 2
   // LoRaCommand lorareceiver publish cmnd/anytopic/power 2
+  // LoRaCommand lorareceiver LoRaCommand thisreceiver status
   if (XdrvMailbox.data_len > 0) {
-    char data[LORA_MAX_PACKET_LENGTH] = { 0 };
+    char data[TAS_LORA_MAX_PACKET_LENGTH] = { 0 };
     XdrvMailbox.data_len++;       // Add Signal CmndLoraCommand to lora receiver
-    uint32_t len = (XdrvMailbox.data_len < LORA_MAX_PACKET_LENGTH -1) ? XdrvMailbox.data_len : LORA_MAX_PACKET_LENGTH -2;
+    uint32_t len = (XdrvMailbox.data_len < TAS_LORA_MAX_PACKET_LENGTH -1) ? XdrvMailbox.data_len : TAS_LORA_MAX_PACKET_LENGTH -2;
     data[0] = TAS_LORA_REMOTE_COMMAND;
     strlcpy(data +1, XdrvMailbox.data, len);
-    Lora.Send((uint8_t*)data, len);
+    LoraSend((uint8_t*)data, len, false);
     ResponseCmndDone();
   }
 }
@@ -162,14 +347,19 @@ void CmndLoraSend(void) {
   // LoRaSend4 "Hello Tiger"    - Send "Hello Tiger" and set to binary decoding
   // LoRaSend5 "AA004566"       - Send "AA004566" as hex values
   // LoRaSend6 "72,101,108,108" - Send decimals as hex values
-//  if (XdrvMailbox.index > 9) { XdrvMailbox.index -= 10; }                   // Allows leading spaces (not supported - See support_command/CommandHandler)
+  // LoRaSend15 "AA004566"      - Send "AA004566" as hex values with invert IQ
+  bool invert = false;
+  if (XdrvMailbox.index > 9) { 
+    XdrvMailbox.index -= 10;
+    invert = true;
+  }
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 6)) {
     Lora.raw = (XdrvMailbox.index > 3);                                     // Global flag set even without data
     if (XdrvMailbox.data_len > 0) {
-      char data[LORA_MAX_PACKET_LENGTH] = { 0 };
-      uint32_t len = (XdrvMailbox.data_len < LORA_MAX_PACKET_LENGTH -1) ? XdrvMailbox.data_len : LORA_MAX_PACKET_LENGTH -2;
+      char data[TAS_LORA_MAX_PACKET_LENGTH] = { 0 };
+      uint32_t len = (XdrvMailbox.data_len < TAS_LORA_MAX_PACKET_LENGTH -1) ? XdrvMailbox.data_len : TAS_LORA_MAX_PACKET_LENGTH -2;
 #ifdef USE_LORA_DEBUG
-//      AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Len %d, Send %*_H"), len, len + 2, XdrvMailbox.data);
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Len %d, Send %*_H"), len, len, XdrvMailbox.data);
 #endif
       if (1 == XdrvMailbox.index) {                                         // "Hello Tiger\n"
         memcpy(data, XdrvMailbox.data, len);
@@ -193,7 +383,7 @@ void CmndLoraSend(void) {
         while (size > 1) {
           strlcpy(stemp, codes, sizeof(stemp));
           data[len++] = strtol(stemp, &p, 16);
-          if (len > LORA_MAX_PACKET_LENGTH -2) { break; }
+          if (len > TAS_LORA_MAX_PACKET_LENGTH -2) { break; }
           size -= 2;
           codes += 2;
         }
@@ -205,14 +395,14 @@ void CmndLoraSend(void) {
         len = 0;
         for (char* str = strtok_r(values, ",", &p); str; str = strtok_r(nullptr, ",", &p)) {
           data[len++] = (uint8_t)atoi(str);
-          if (len > LORA_MAX_PACKET_LENGTH -2) { break; }
+          if (len > TAS_LORA_MAX_PACKET_LENGTH -2) { break; }
         }
       }
       else {
         len = 0;
       }
       if (len) {
-        Lora.Send((uint8_t*)data, len);
+        LoraSend((uint8_t*)data, len, invert);
       }
       ResponseCmndDone();
     }
@@ -222,41 +412,31 @@ void CmndLoraSend(void) {
 void CmndLoraConfig(void) {
   // LoRaConfig                                       - Show all parameters
   // LoRaConfig 1                                     - Set default parameters
+  // LoRaConfig 2                                     - Set default LoRaWan bridge parameters
   // LoRaConfig {"Frequency":868.0,"Bandwidth":125.0} - Enter float parameters
   // LoRaConfig {"SyncWord":18}                       - Enter decimal parameter (=0x12)
   if (XdrvMailbox.data_len > 0) {
     if (XdrvMailbox.payload == 1) {
       LoraDefaults();
       Lora.Config();
-    } else {
+    }
+    else if (XdrvMailbox.payload == 2) {
+      LoraWanDefaults();
+      Lora.Config();
+    }
+    else {
       JsonParser parser(XdrvMailbox.data);
       JsonParserObject root = parser.getRootObject();
       if (root) { 
-        Lora.frequency = root.getFloat(PSTR(D_JSON_FREQUENCY), Lora.frequency);
-        Lora.bandwidth = root.getFloat(PSTR(D_JSON_BANDWIDTH), Lora.bandwidth);
-        Lora.spreading_factor = root.getUInt(PSTR(D_JSON_SPREADING_FACTOR), Lora.spreading_factor);
-        Lora.coding_rate = root.getUInt(PSTR(D_JSON_CODINGRATE4), Lora.coding_rate);
-        Lora.sync_word = root.getUInt(PSTR(D_JSON_SYNCWORD), Lora.sync_word);
-        Lora.output_power = root.getUInt(PSTR(D_JSON_OUTPUT_POWER), Lora.output_power);
-        Lora.preamble_length = root.getUInt(PSTR(D_JSON_PREAMBLE_LENGTH), Lora.preamble_length);
-        Lora.current_limit = root.getFloat(PSTR(D_JSON_CURRENT_LIMIT), Lora.current_limit);
-        Lora.implicit_header = root.getUInt(PSTR(D_JSON_IMPLICIT_HEADER), Lora.implicit_header);
-        Lora.crc_bytes = root.getUInt(PSTR(D_JSON_CRC_BYTES), Lora.crc_bytes);
+        LoraJson2Settings(root);
         Lora.Config();
       }
     }
   }
   ResponseCmnd();  // {"LoRaConfig":
-  ResponseAppend_P(PSTR("{\"" D_JSON_FREQUENCY "\":%1_f"), &Lora.frequency);             // xxx.x MHz
-  ResponseAppend_P(PSTR(",\"" D_JSON_BANDWIDTH "\":%1_f"), &Lora.bandwidth);             // xxx.x kHz
-  ResponseAppend_P(PSTR(",\"" D_JSON_SPREADING_FACTOR "\":%d"), Lora.spreading_factor);
-  ResponseAppend_P(PSTR(",\"" D_JSON_CODINGRATE4 "\":%d"), Lora.coding_rate);
-  ResponseAppend_P(PSTR(",\"" D_JSON_SYNCWORD "\":%d"), Lora.sync_word);
-  ResponseAppend_P(PSTR(",\"" D_JSON_OUTPUT_POWER "\":%d"), Lora.output_power);          // dBm
-  ResponseAppend_P(PSTR(",\"" D_JSON_PREAMBLE_LENGTH "\":%d"), Lora.preamble_length);    // symbols
-  ResponseAppend_P(PSTR(",\"" D_JSON_CURRENT_LIMIT "\":%1_f"), &Lora.current_limit);     // xx.x mA (Overcurrent Protection - OCP)
-  ResponseAppend_P(PSTR(",\"" D_JSON_IMPLICIT_HEADER "\":%d"), Lora.implicit_header);    // 0 = explicit
-  ResponseAppend_P(PSTR(",\"" D_JSON_CRC_BYTES "\":%d}}"), Lora.crc_bytes);              // bytes
+  ResponseAppend_P(PSTR("{"));
+  LoraSettings2Json();
+  ResponseAppend_P(PSTR("}}"));
 }
 
 /*********************************************************************************************\
@@ -275,8 +455,19 @@ bool Xdrv73(uint32_t function) {
       case FUNC_SLEEP_LOOP:
         LoraInput();
         break;
+      case FUNC_RESET_SETTINGS:
+        LoraSettingsLoad(1);
+        break;
+      case FUNC_SAVE_SETTINGS:
+        LoraSettingsSave();
+        break;
       case FUNC_COMMAND:
         result = DecodeCommand(kLoraCommands, LoraCommand);
+#ifdef USE_LORAWAN_BRIDGE
+        if (!result) {
+          result = DecodeCommand(kLoraWanCommands, LoraWanCommand);
+        }
+#endif  // USE_LORAWAN_BRIDGE
         break;
       case FUNC_ACTIVE:
         result = true;
