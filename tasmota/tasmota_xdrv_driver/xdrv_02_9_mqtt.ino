@@ -593,7 +593,6 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
       JsonParser mqtt_json_data((char*) mqtt_data);
       JsonParserObject message_object = mqtt_json_data.getRootObject();
       String mqtt_data_str= message_object.getStr("payload","");
-      data_len = mqtt_data_str.length();
       strncpy(reinterpret_cast<char*>(mqtt_data),mqtt_data_str.c_str(),data_len);
       mqtt_data[data_len] = 0;
 
