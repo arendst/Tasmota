@@ -217,7 +217,7 @@ enum UserSelectablePins {
   GPIO_MAGIC_SWITCH,                    // MagicSwitch as in Sonoff BasicR4
   GPIO_PIPSOLAR_TX, GPIO_PIPSOLAR_RX,   // pipsolar inverter
   GPIO_LORA_CS, GPIO_LORA_RST, GPIO_LORA_BUSY, GPIO_LORA_DI0, GPIO_LORA_DI1, GPIO_LORA_DI2, GPIO_LORA_DI3, GPIO_LORA_DI4, GPIO_LORA_DI5,  // LoRa SPI
-  GPIO_SPI_TS_CS, GPIO_SPI_TS_RST, GPIO_SPI_TS_IRQ, // SPI for Universal Touch Screen
+  GPIO_TS_SPI_CS, GPIO_TS_RST, GPIO_TS_IRQ, // SPI for Universal Touch Screen
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -482,7 +482,7 @@ const char kSensorNames[] PROGMEM =
   D_GPIO_MAGIC_SWITCH "|"
   D_SENSOR_PIPSOLAR_TX "|" D_SENSOR_PIPSOLAR_RX "|"
   D_GPIO_LORA_CS "|" D_GPIO_LORA_RST "|" D_GPIO_LORA_BUSY "|" D_GPIO_LORA_DI "0|" D_GPIO_LORA_DI "1|" D_GPIO_LORA_DI "2|" D_GPIO_LORA_DI "3|" D_GPIO_LORA_DI "4|" D_GPIO_LORA_DI "5|"
-  D_GPIO_SPI_TS_CS "|" D_GPIO_SPI_TS_RST "|" D_GPIO_SPI_TS_IRQ "|"
+  D_GPIO_TS_SPI_CS "|" D_GPIO_TS_RST "|" D_GPIO_TS_IRQ "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -652,9 +652,9 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 
 #if defined(USE_DISPLAY) || defined(USE_LVGL)
 #ifdef USE_UNIVERSAL_TOUCH
-  AGPIO(GPIO_SPI_TS_CS),                 // Touch CS
-  AGPIO(GPIO_SPI_TS_RST),                // Touch Reset
-  AGPIO(GPIO_SPI_TS_IRQ),                // Touch IRQ
+  AGPIO(GPIO_TS_SPI_CS),                 // Touch CS
+  AGPIO(GPIO_TS_RST),                // Touch Reset
+  AGPIO(GPIO_TS_IRQ),                // Touch IRQ
 #endif // USE_UNIVERSAL_TOUCH
 #ifdef USE_DISPLAY_ILI9341
   AGPIO(GPIO_ILI9341_CS),

@@ -257,9 +257,9 @@ int8_t cs;
       if (*cp == 'S') {          // S= SPI
         cp = strchr(cp, ',');     // skip interface type
         cp++;
-        replacepin(&cp, Pin(GPIO_SPI_TS_CS));
-        replacepin(&cp, Pin(GPIO_SPI_TS_RST));
-        replacepin(&cp, Pin(GPIO_SPI_TS_IRQ));
+        replacepin(&cp, Pin(GPIO_TS_SPI_CS));
+        replacepin(&cp, Pin(GPIO_TS_RST));
+        replacepin(&cp, Pin(GPIO_TS_IRQ));
       }
     }
 
