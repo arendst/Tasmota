@@ -247,7 +247,7 @@ void utouch_Touch_Init() {
     char *name;
     utouch_found = renderer->utouch_Init(&name);
     if (utouch_found) {
-      AddLog(LOG_LEVEL_INFO, PSTR("UT: %s"), name);
+      AddLog(LOG_LEVEL_INFO, PSTR("UT : %s"), name);
     }
   }
 }
@@ -469,7 +469,7 @@ void Touch_Check(void(*rotconvert)(int16_t *x, int16_t *y)) {
 #endif // USE_TOUCH_BUTTONS
 
     rotconvert(&TSGlobal.touch_xp, &TSGlobal.touch_yp);
-    AddLog(LOG_LEVEL_DEBUG_MORE, "TS : TSGlobal.touched x=%i y=%i gest=0x%02x (raw x=%i y=%i)", TSGlobal.touch_xp, TSGlobal.touch_yp, TSGlobal.gesture, TSGlobal.raw_touch_xp, TSGlobal.raw_touch_yp);
+    AddLog(LOG_LEVEL_DEBUG_MORE, "TS : touched  x=%i y=%i gest=0x%02x (raw x=%i y=%i)", TSGlobal.touch_xp, TSGlobal.touch_yp, TSGlobal.gesture, TSGlobal.raw_touch_xp, TSGlobal.raw_touch_yp);
 
 #ifdef USE_TOUCH_BUTTONS
     CheckTouchButtons(TSGlobal.touched, TSGlobal.touch_xp, TSGlobal.touch_yp);

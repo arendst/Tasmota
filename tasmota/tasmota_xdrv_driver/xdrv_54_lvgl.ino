@@ -360,7 +360,6 @@ void lvgl_touchscreen_read(lv_indev_t *indev_drv, lv_indev_data_t *data) {
   // keep data for TS calibration
   lv_ts_calibration.state = data->state;
   if (data->state == LV_INDEV_STATE_PRESSED) {    // if not pressed, the data may be invalid
-    AddLog(LOG_LEVEL_DEBUG_MORE, "LVG: TS: %i, %i", data->point.x, data->point.y);
     lv_ts_calibration.x = data->point.x;
     lv_ts_calibration.y = data->point.y;
     lv_ts_calibration.raw_x = Touch_Status(-1);
