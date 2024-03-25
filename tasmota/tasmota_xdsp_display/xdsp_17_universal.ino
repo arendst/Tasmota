@@ -254,7 +254,14 @@ int8_t cs;
       cp++;
       cp = strchr(cp, ',');
       cp++;
-      if (*cp == 'S') {          // S= SPI
+      if (*cp == 'I') {           // I= I2C
+        cp = strchr(cp, ',');     // skip interface type
+        cp++;
+        cp = strchr(cp, ',');     // skip I2C bus number
+        cp++;
+        replacepin(&cp, Pin(GPIO_TS_RST));
+        replacepin(&cp, Pin(GPIO_TS_IRQ));
+      } else if (*cp == 'S') {    // S= SPI
         cp = strchr(cp, ',');     // skip interface type
         cp++;
         replacepin(&cp, Pin(GPIO_TS_SPI_CS));
