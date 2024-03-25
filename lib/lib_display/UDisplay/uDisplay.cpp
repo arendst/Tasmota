@@ -699,6 +699,9 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
     Serial.printf("CLK : %d\n", spi_clk);
     Serial.printf("MOSI: %d\n", spi_mosi);
     Serial.printf("DC  : %d\n", spi_dc);
+    Serial.printf("TS_CS: %d\n", ut_spi_cs);
+    Serial.printf("TS_RST: %d\n", ut_reset);
+    Serial.printf("TS_IRQ: %d\n", ut_irq);
     Serial.printf("BPAN: %d\n", bpanel);
     Serial.printf("RES : %d\n", reset);
     Serial.printf("MISO: %d\n", spi_miso);
@@ -2743,6 +2746,14 @@ void uDisplay::ut_trans(char **sp, uint8_t **code) {
       // cmp and set
       *ut_code++ = UT_CPR;
       *ut_code++ = ut_par(&cp, 0);
+     } else if (!strncmp(cp, "CPM", 3)) {
+      // cmp multiple and set
+      *ut_code++ = UT_CPM;
+      uint8_t num = ut_par(&cp, 0);
+      *ut_code++ = num;
+      for (uint32_t cnt = 0; cnt < num; cnt++) {
+        *ut_code++ = ut_par(&cp, 0);
+      }
      } else if (!strncmp(cp, "CP", 2)) {
       // cmp and set
       *ut_code++ = UT_CP;
@@ -2977,6 +2988,16 @@ uint16_t wval;
         // compare
         iob = *ut_code++;
         result = (iob == ut_array[0]);
+        break;
+
+      case UT_CPM:
+        // compare multiple
+        len = *ut_code++;
+        result = 0;
+        for (uint32_t cnt = 0; cnt < len; cnt++) {
+          iob = *ut_code++;
+          result |= (iob == ut_array[0]);
+        }
         break;
 
       case UT_CPR:
