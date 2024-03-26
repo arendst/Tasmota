@@ -687,6 +687,19 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
     ep_mode = 2;
   }
 
+
+#ifdef USE_ESP32_S3
+void UfsCheckSDCardInit(void);
+
+  if (spec_init == _UDSP_SPI) {
+    // special case, assuming sd card and display on same spi bus
+    // end spi in case it was running
+    SPI.end();
+    // reininit SD card
+    UfsCheckSDCardInit();
+  }
+#endif
+
 #ifdef UDSP_DEBUG
   Serial.printf("Device : %s\n", dname);
   Serial.printf("xs : %d\n", gxs);
