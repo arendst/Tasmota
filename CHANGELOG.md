@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Zigbee support for attributes of type `uint48` used by energy monitoring (#20992)
 - Support for EU863-870 LoRaWanBridge
 - Added GPIO for SPI for Universal Touch Screen
+- Berry added `close()` to class `serial`
 
 ### Breaking Changed
 

@@ -84,6 +84,7 @@ class be_class_serial (scope: global, name: serial) {
 
     init, func(b_serial_init)
     deinit, func(b_serial_deinit)
+    close, func(b_serial_deinit)
 
     write, func(b_serial_write)
     read, func(b_serial_read)
