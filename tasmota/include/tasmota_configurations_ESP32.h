@@ -313,13 +313,9 @@
 #define USE_I2S
 #define USE_SPI
 #define USE_LVGL
-#define USE_LVGL_HASPMOTA
-#define USE_LVGL_FREETYPE
   #undef SET_ESP32_STACK_SIZE
   #define SET_ESP32_STACK_SIZE (24 * 1024)
-#define USE_LVGL_PNG_DECODER
 #define USE_DISPLAY
-#define SHOW_SPLASH
 #define USE_MPU_ACCEL
 #define USE_RTC_CHIPS                            // Enable RTC chip support and NTP server - Select only one
   #define USE_BM8563
