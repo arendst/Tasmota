@@ -18,8 +18,8 @@
  *  which makes the use of single fixed frequency and spreadingfactor hardware like
  *  SX127x (LiliGo T3, M5 LoRa868 or RFM95W) or SX126x (LiLiGo T3S3) a challenge.
  * This driver uses one fixed frequency and spreadingfactor trying to tell the End-Device to do
- *  the same. In some cases the End-Device needs to be (serial) configured to use a single
- *  channel and fixed datarate.
+ *  the same using Over The Air Activation (OTAA). In some cases the End-Device needs to be
+ *  (serial) configured to use a single channel and fixed datarate.
  * 
  * To be able to do this:
  *  - Tasmota needs a filesystem to store persistent data (#define USE_UFILESYS)
@@ -152,13 +152,10 @@ void LoraWanTickerSend(void) {
   if (1 == Lorawan.send_buffer_step) {
     Lorawan.rx = true;                                // Always send during RX1
     Lora.receive_time = 0;                            // Reset receive timer
-    LoraWan_Send.attach_ms(TAS_LORAWAN_RECEIVE_DELAY2, LoraWanTickerSend);  // Retry after 1000 ms
+    LoraWan_Send.once_ms(TAS_LORAWAN_RECEIVE_DELAY2, LoraWanTickerSend);  // Retry after 1000 ms
   }
   if (Lorawan.rx) {                                   // If received in RX1 do not resend in RX2
     LoraSend(Lorawan.send_buffer, Lorawan.send_buffer_len, true);
-  }
-  if (Lorawan.send_buffer_step <= 0) {
-    LoraWan_Send.detach();
   }
 }
 
@@ -166,7 +163,7 @@ void LoraWanSendResponse(uint8_t* buffer, size_t len, uint32_t lorawan_delay) {
   memcpy(Lorawan.send_buffer, buffer, sizeof(Lorawan.send_buffer));
   Lorawan.send_buffer_len = len;
   Lorawan.send_buffer_step = 2;
-  LoraWan_Send.attach_ms(lorawan_delay - TimePassedSince(Lora.receive_time), LoraWanTickerSend);
+  LoraWan_Send.once_ms(lorawan_delay - TimePassedSince(Lora.receive_time), LoraWanTickerSend);
 }
 
 /*-------------------------------------------------------------------------------------------*/

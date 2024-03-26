@@ -252,6 +252,7 @@ void LoraInit(void) {
 #endif // ESP8266
 #ifdef ESP32
     SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
+//    SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
 #endif // ESP32
 
 #ifdef USE_LORAWAN_BRIDGE
@@ -266,11 +267,11 @@ void LoraInit(void) {
 #ifdef USE_LORA_SX127X
     else if (PinUsed(GPIO_LORA_DI0)) {
       // SX1276, RFM95W
-      if (LoraInitSx127x()) {
-        Lora.Config = &LoraConfigSx127x;
-        Lora.Available = &LoraAvailableSx127x;
-        Lora.Receive = &LoraReceiveSx127x;
-        Lora.Send = &LoraSendSx127x;
+      if (LoraSx127xInit()) {
+        Lora.Config = &LoraSx127xConfig;
+        Lora.Available = &LoraSx127xAvailable;
+        Lora.Receive = &LoraSx127xReceive;
+        Lora.Send = &LoraSx127xSend;
         strcpy_P(hardware, PSTR("SX127x"));
         Lora.present = true;
       }
@@ -279,11 +280,11 @@ void LoraInit(void) {
 #ifdef USE_LORA_SX126X
     else if (PinUsed(GPIO_LORA_DI1) && PinUsed(GPIO_LORA_BUSY)) {
       // SX1262, LilyGoT3S3
-      if (LoraInitSx126x()) {
-        Lora.Config = &LoraConfigSx126x;
-        Lora.Available = &LoraAvailableSx126x;
-        Lora.Receive = &LoraReceiveSx126x;
-        Lora.Send = &LoraSendSx126x;
+      if (LoraSx126xInit()) {
+        Lora.Config = &LoraSx126xConfig;
+        Lora.Available = &LoraSx126xAvailable;
+        Lora.Receive = &LoraSx126xReceive;
+        Lora.Send = &LoraSx126xSend;
         strcpy_P(hardware, PSTR("SX126x"));
         Lora.present = true;
       }
