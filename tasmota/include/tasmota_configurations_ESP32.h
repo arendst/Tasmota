@@ -320,15 +320,16 @@
 #define USE_LVGL_PNG_DECODER
 #define USE_DISPLAY
 #define SHOW_SPLASH
-#define USE_XPT2046
-#define USE_FT5206
-#define USE_GT911
-#define USE_CST816S
 #define USE_MPU_ACCEL
 #define USE_RTC_CHIPS                            // Enable RTC chip support and NTP server - Select only one
   #define USE_BM8563
 #define USE_MLX90614
 #define USE_UNIVERSAL_DISPLAY
+#define USE_UNIVERSAL_TOUCH
+#define USE_XPT2046
+#define USE_FT5206
+#define USE_GT911
+#define USE_CST816S
 #define USE_DISPLAY_LVGL_ONLY
 
 //#undef USE_DISPLAY_MODES1TO5
