@@ -1744,6 +1744,9 @@ void uDisplay::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) {
 
   if (interface == _UDSP_RGB) {
   #ifdef USE_ESP32_S3
+    if (lvgl_param.swap_color) {
+      color = color << 8 | color >> 8;
+    }
     if (cur_rot > 0) {
       while (h--) {
         drawPixel_RGB(x , y , color);
@@ -1814,6 +1817,9 @@ void uDisplay::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {
 
   if (interface == _UDSP_RGB) {
 #ifdef USE_ESP32_S3
+    if (lvgl_param.swap_color) {
+      color = color << 8 | color >> 8;
+    }
     if (cur_rot > 0) {
       while (w--) {
         drawPixel_RGB(x , y , color);
@@ -2403,6 +2409,9 @@ void uDisplay::drawPixel(int16_t x, int16_t y, uint16_t color) {
 
 #ifdef USE_ESP32_S3
   if (interface == _UDSP_RGB) {
+    if (lvgl_param.swap_color) {
+      color = color << 8 | color >> 8;
+    }
     drawPixel_RGB(x, y, color);
     return;
   }
