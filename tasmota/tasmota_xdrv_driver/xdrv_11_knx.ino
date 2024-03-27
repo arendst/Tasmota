@@ -681,26 +681,29 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       }
       else if (chan->type == KNX_ENERGY_YESTERDAY) // Reply KNX_ENERGY_YESTERDAY
       {
-        knx.answer_4byte_float(msg.received_on, Energy->yesterday_sum);
+        int32_t value = 1000.0 * Energy->yesterday_sum;
+        knx.answer_4byte_int(msg.received_on, value);
         if (Settings->flag.knx_enable_enhancement) {
-          knx.answer_4byte_float(msg.received_on, Energy->yesterday_sum);
-          knx.answer_4byte_float(msg.received_on, Energy->yesterday_sum);
+          knx.answer_4byte_int(msg.received_on, value);
+          knx.answer_4byte_int(msg.received_on, value);
         }
       }
       else if (chan->type == KNX_ENERGY_DAILY) // Reply KNX_ENERGY_DAILY
       {
-        knx.answer_4byte_float(msg.received_on, Energy->daily_sum);
+        int32_t value = 1000.0 * Energy->daily_sum;
+        knx.answer_4byte_int(msg.received_on, value);
         if (Settings->flag.knx_enable_enhancement) {
-          knx.answer_4byte_float(msg.received_on, Energy->daily_sum);
-          knx.answer_4byte_float(msg.received_on, Energy->daily_sum);
+          knx.answer_4byte_int(msg.received_on, value);
+          knx.answer_4byte_int(msg.received_on, value);
         }
       }
       else if (chan->type == KNX_ENERGY_TOTAL) // Reply KNX_ENERGY_TOTAL
       {
-        knx.answer_4byte_float(msg.received_on, Energy->total_sum);
+        int32_t value = 1000.0 * Energy->total_sum;
+        knx.answer_4byte_int(msg.received_on, value);
         if (Settings->flag.knx_enable_enhancement) {
-          knx.answer_4byte_float(msg.received_on, Energy->total_sum);
-          knx.answer_4byte_float(msg.received_on, Energy->total_sum);
+          knx.answer_4byte_int(msg.received_on, value);
+          knx.answer_4byte_int(msg.received_on, value);
         }
       }
 #endif
@@ -794,13 +797,22 @@ void KnxSensor(uint8_t sensor_type, float value)
 
   if (!(Settings->flag.knx_enabled)) { return; }
 
+  int8_t repeat = Settings->flag.knx_enable_enhancement ? 3 : 1;
+  int8_t r;
+
   uint8_t i = KNX_GA_Search(sensor_type);
   while ( i != KNX_Empty ) {
     KNX_addr.value = Settings->knx_GA_addr[i];
-    knx.write_4byte_float(KNX_addr, value);
-    if (Settings->flag.knx_enable_enhancement) {
-      knx.write_4byte_float(KNX_addr, value);
-      knx.write_4byte_float(KNX_addr, value);
+    switch(sensor_type) {
+      case KNX_ENERGY_DAILY:
+      case KNX_ENERGY_YESTERDAY:
+      case KNX_ENERGY_TOTAL:
+        for (r = repeat; r ; r--)
+          knx.write_4byte_int(KNX_addr, 1000.0 * value);
+        break;
+      default:
+        for (r = repeat; r ; r--)      
+          knx.write_4byte_float(KNX_addr, value);
     }
 
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s " D_SENT_TO " %d/%d/%d"),
