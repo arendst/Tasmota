@@ -918,30 +918,6 @@ static void primary_expr(bparser *parser, bexpdesc *e)
     }
 }
 
-/* parse a single string literal as parameter */
-static void call_single_string_expr(bparser *parser, bexpdesc *e)
-{
-    bexpdesc arg;
-    bfuncinfo *finfo = parser->finfo;
-    int base;
-
-    /* func 'string_literal' */
-    check_var(parser, e);
-    if (e->type == ETMEMBER) {
-        push_error(parser, "method not allowed for string prefix");
-    }
-    
-    base = be_code_nextreg(finfo, e); /* allocate a new base reg if not at top already */
-    simple_expr(parser, &arg);
-    be_code_nextreg(finfo, &arg);  /* move result to next reg */
-
-    be_code_call(finfo, base, 1);  /* only one arg */
-    if (e->type != ETREG) {
-        e->type = ETREG;
-        e->v.idx = base;
-    }
-}
-
 static void suffix_expr(bparser *parser, bexpdesc *e)
 {
     primary_expr(parser, e);
@@ -955,9 +931,6 @@ static void suffix_expr(bparser *parser, bexpdesc *e)
             break;
         case OptLSB: /* '[' index */
             index_expr(parser, e);
-            break;
-        case TokenString:
-            call_single_string_expr(parser, e); /* " string literal */
             break;
         default:
             return;

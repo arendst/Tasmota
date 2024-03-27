@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - Too restrictive checksum checks in Lib_teleinfo (#21033)
 
 ### Removed
+- Berry `print "a"` syntax no longer supported
 
 
 ## [13.4.0.2] 20240318
