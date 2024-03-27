@@ -134,7 +134,7 @@ void LoraSettingsLoad(bool erase) {
   // Called from FUNC_RESET_SETTINGS (erase = 1) after command reset 4, 5, or 6
 
   // *** Start init default values in case key is not found ***
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DRV: " D_USE_DEFAULTS));
+//  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CFG: Lora use defaults"));
 
   memset(&LoraSettings, 0x00, sizeof(LoraSettings));
   // Init any other parameter in struct LoraSettings

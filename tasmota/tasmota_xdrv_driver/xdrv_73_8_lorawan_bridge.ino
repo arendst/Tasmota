@@ -388,6 +388,7 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
     // 40    412E0100  80     2500         0A     6A6FEFD6A16B0C7AC37B  5F95FABC  - decrypt using AppSKey
     // 80    412E0100  80     2A00         0A     A58EF5E0D1DDE03424F0  6F2D56FA  - decrypt using AppSKey
     // 80    412E0100  80     2B00         0A     8F2F0D33E5C5027D57A6  F67C9DFE  - decrypt using AppSKey
+    // 80    909AE100  00     0800         0A     EEC4A52568A346A8684E  F2D4BF05
     // 40    412E0100  A0     1800         00     0395                  2C94B1D8  - FCtrl ADR support, Ack, FPort = 0 -> MAC commands, decrypt using NwkSKey
     // 40    412E0100  A0     7800         00     78C9                  A60D8977  - FCtrl ADR support, Ack, FPort = 0 -> MAC commands, decrypt using NwkSKey
     // 40    F3F51700  20     0100         00     2A7C                  407036A2  - FCtrl No ADR support, Ack, FPort = 0 -> MAC commands, decrypt using NwkSKey, response after LinkADRReq
@@ -505,6 +506,13 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
         }
 
         if (payload_len) {
+          // Unique parameters:
+          // node
+          // LoraSettings.end_node[node].DevEUIh
+          // LoraSettings.end_node[node].DevEUIl
+          // FPort
+          // payload_len
+          // payload_decrypted[]
           if (bitRead(LoraSettings.flags, TAS_LORAWAN_DECODE_ENABLED) &&
               (0x00161600 == LoraSettings.end_node[node].DevEUIh)) {     // MerryIoT
             if (120 == FPort) {                                          // MerryIoT door/window Sensor (DW10)

@@ -256,7 +256,8 @@ int16_t SX126x::transmit(uint8_t* data, size_t len, uint8_t addr) {
   // wait for packet transmission or timeout
   uint32_t start = this->mod->hal->micros();
   while(!this->mod->hal->digitalRead(this->mod->getIrq())) {
-    this->mod->hal->yield();
+//    this->mod->hal->yield();
+    this->mod->hal->delay(0);
     if(this->mod->hal->micros() - start > timeout) {
       finishTransmit();
       return(RADIOLIB_ERR_TX_TIMEOUT);
@@ -307,7 +308,8 @@ int16_t SX126x::receive(uint8_t* data, size_t len) {
   bool softTimeout = false;
   uint32_t start = this->mod->hal->micros();
   while(!this->mod->hal->digitalRead(this->mod->getIrq())) {
-    this->mod->hal->yield();
+//    this->mod->hal->yield();
+    this->mod->hal->delay(0);
     // safety check, the timeout should be done by the radio
     if(this->mod->hal->micros() - start > timeout) {
       softTimeout = true;
@@ -440,7 +442,8 @@ int16_t SX126x::scanChannel(uint8_t symbolNum, uint8_t detPeak, uint8_t detMin) 
 
   // wait for channel activity detected or timeout
   while(!this->mod->hal->digitalRead(this->mod->getIrq())) {
-    this->mod->hal->yield();
+//    this->mod->hal->yield();
+    this->mod->hal->delay(0);
   }
 
   // check CAD result
@@ -568,7 +571,8 @@ int16_t SX126x::startTransmit(uint8_t* data, size_t len, uint8_t addr) {
 
   // wait for BUSY to go low (= PA ramp up done)
   while(this->mod->hal->digitalRead(this->mod->getGpio())) {
-    this->mod->hal->yield();
+//    this->mod->hal->yield();
+    this->mod->hal->delay(0);
   }
 
   return(state);
@@ -2115,7 +2119,8 @@ int16_t SX126x::config(uint8_t modem) {
   // wait for calibration completion
   this->mod->hal->delay(5);
   while(this->mod->hal->digitalRead(this->mod->getGpio())) {
-    this->mod->hal->yield();
+//    this->mod->hal->yield();
+    this->mod->hal->delay(0);
   }
 
   // check calibration result
