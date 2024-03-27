@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - ESP32 LVGL library from v9.0.0 to v9.1.0 (#21008)
 - berry.exe (pre-compiled for Windows) updated to latest Berry patches (#21024)
+- Some `display.ini` to utouch (#21029)
 
 ### Fixed
 - BTHome, prep BLE5 (#20989)
@@ -24,9 +25,10 @@ All notable changes to this project will be documented in this file.
 - HASPmota demo and robotocondensed fonts (#21014)
 - Berry walrus bug when assigning to self (#21015)
 - Too restrictive checksum checks in Lib_teleinfo (#21033)
+- Color swap option for rgb displaytext (#21049)
 
 ### Removed
-- Berry `print "a"` syntax no longer supported
+- Berry `print "a"` syntax no longer supported (#21048)
 
 
 ## [13.4.0.2] 20240318

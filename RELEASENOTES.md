@@ -150,6 +150,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Refactor Platformio script `post_esp32.py` [#20966](https://github.com/arendst/Tasmota/issues/20966)
 - NeoPool webUI pH alarms (4 & 5) completed (#20743)[#20743](https://github.com/arendst/Tasmota/issues/20743)
 - Prevent shutter MQTT broadcast with activated ShutterLock [#20827](https://github.com/arendst/Tasmota/issues/20827)
+- Some `display.ini` to utouch [#21029](https://github.com/arendst/Tasmota/issues/21029)
 - berry.exe (pre-compiled for Windows) updated to latest Berry patches [#21024](https://github.com/arendst/Tasmota/issues/21024)
 - Berry class `int64` made immutable [#20727](https://github.com/arendst/Tasmota/issues/20727)
 - Matter reduce memory usage when reading with wildcards [#20809](https://github.com/arendst/Tasmota/issues/20809)
@@ -169,6 +170,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - TuyaV2 suppressed dimmer updates from MQTT [#20950](https://github.com/arendst/Tasmota/issues/20950)
 - Scripter google char memory leak [#20995](https://github.com/arendst/Tasmota/issues/20995)
 - Too restrictive checksum checks in Lib_teleinfo [#21033](https://github.com/arendst/Tasmota/issues/21033)
+- Color swap option for rgb displaytext [#21049](https://github.com/arendst/Tasmota/issues/21049)
 - ESP32 PWM activity on unconfigured PWM GPIOs [#20732](https://github.com/arendst/Tasmota/issues/20732)
 - BTHome, prep BLE5 [#20989](https://github.com/arendst/Tasmota/issues/20989)
 - Berry Memory leak in `import re` [#20823](https://github.com/arendst/Tasmota/issues/20823)
@@ -180,3 +182,4 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - HASPmota demo and robotocondensed fonts [#21014](https://github.com/arendst/Tasmota/issues/21014)
 
 ### Removed
+- Berry `print "a"` syntax no longer supported [#21048](https://github.com/arendst/Tasmota/issues/21048)
