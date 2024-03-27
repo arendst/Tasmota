@@ -7,24 +7,25 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Zigbee support for attributes of type `uint48` used by energy monitoring (#20992)
 - Support for EU863-870 LoRaWanBridge
-- Added GPIO for SPI for Universal Touch Screen
-- Berry added `close()` to class `serial`
+- Support Azure iothub direct method (#21013)
+- Added GPIO for SPI for Universal Touch Screen (#21025)
+- Berry added `close()` to class `serial` (#21042)
 
 ### Breaking Changed
 
 
 ### Changed
 - ESP32 LVGL library from v9.0.0 to v9.1.0 (#21008)
-- berry.exe (pre-compiled for Windows) updated to latest Berry patches
+- berry.exe (pre-compiled for Windows) updated to latest Berry patches (#21024)
 
 ### Fixed
 - BTHome, prep BLE5 (#20989)
 - Scripter google char memory leak (#20995)
 - HASPmota demo and robotocondensed fonts (#21014)
 - Berry walrus bug when assigning to self (#21015)
+- Too restrictive checksum checks in Lib_teleinfo (#21033)
 
 ### Removed
-
 
 
 ## [13.4.0.2] 20240318
