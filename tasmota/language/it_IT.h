@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 14.03.2024
+ * Updated until v9.4.0.1 - Last update 27.03.2024
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -712,10 +712,10 @@
 #define D_SENSOR_SPI_MOSI               "SPI - MOSI"
 #define D_SENSOR_SPI_CLK                "SPI - CLK"
 #define D_SENSOR_SDIO_CMD               "SDIO - CMD"
-#define D_GPIO_TS_SPI_CS       "TS SPI CS"
-#define D_GPIO_TS_RST          "TS RST"
-#define D_GPIO_TS_IRQ          "TS IRQ"
-#define D_SENSOR_SDIO_CMD      "SDIO CMD"
+#define D_GPIO_TS_SPI_CS                "TS - SPI CS"
+#define D_GPIO_TS_RST                   "TS - RST"
+#define D_GPIO_TS_IRQ                   "TS - IRQ"
+#define D_SENSOR_SDIO_CMD               "SDIO - CMD"
 #define D_SENSOR_SDIO_CLK               "SDIO - CLK"
 #define D_SENSOR_SDIO_D0                "SDIO - D0"
 #define D_SENSOR_SDIO_D1                "SDIO - D1"
@@ -1236,6 +1236,7 @@
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "tempo pompa superato"
 
 // xsns_106_gdk101.ino
+//#define D_AVG_RAD_DOSE                  "Average Radiation Dose"
 #define D_AVG_RAD_DOSE                    "Radiazioni"
 #define D_UNIT_US_H                       "µSv/h"
 
