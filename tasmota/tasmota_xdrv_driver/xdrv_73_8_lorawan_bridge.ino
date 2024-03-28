@@ -275,7 +275,7 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
         uint32_t JoinNonce = TAS_LORAWAN_JOINNONCE +node;
         uint32_t DevAddr = Lorawan.device_address +node;
         uint32_t NetID = TAS_LORAWAN_NETID;
-        uint8_t join_data[17] = { 0 };
+        uint8_t join_data[33] = { 0 };
         join_data[0] = TAS_LORAWAN_MTYPE_JOIN_ACCEPT << 5;
         join_data[1] = JoinNonce;
         join_data[2] = JoinNonce >> 8;
@@ -290,21 +290,21 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
         join_data[11] = LoraWanSpreadingFactorToDataRate();  // DLSettings
         join_data[12] = 1;      // RXDelay;
 
-        uint32_t NewMIC = LoraWanGenerateMIC(join_data, sizeof(data) -4, LoraSettings.end_node[node].AppKey);
+        uint32_t NewMIC = LoraWanGenerateMIC(join_data, 13, LoraSettings.end_node[node].AppKey);
         join_data[13] = NewMIC;
         join_data[14] = NewMIC >> 8;
         join_data[15] = NewMIC >> 16;
         join_data[16] = NewMIC >> 24;
-        uint8_t EncData[17];
+        uint8_t EncData[33];
         EncData[0] = join_data[0];
         RadioLibAES128Instance.init(LoraSettings.end_node[node].AppKey);
-        RadioLibAES128Instance.decryptECB(&join_data[1], sizeof(EncData) -1, &EncData[1]);
+        RadioLibAES128Instance.decryptECB(&join_data[1], 16, &EncData[1]);
 
 //        AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Join %17_H"), join_data);
 
         // 203106E5000000412E010003017CB31DD4 - Dragino
         // 203206E5000000422E010003016A210EEA - MerryIoT
-        LoraWanSendResponse(EncData, sizeof(EncData), TAS_LORAWAN_JOIN_ACCEPT_DELAY1);
+        LoraWanSendResponse(EncData, 17, TAS_LORAWAN_JOIN_ACCEPT_DELAY1);
 
         result = true;
         break;
