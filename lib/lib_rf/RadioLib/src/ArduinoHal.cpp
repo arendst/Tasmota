@@ -189,7 +189,8 @@ void inline ArduinoHal::noTone(uint32_t pin) {
 
 void inline ArduinoHal::yield() {
   #if !defined(RADIOLIB_YIELD_UNSUPPORTED)
-  ::yield();
+//  ::yield();
+  ::delay(0);
   #endif
 }
 
