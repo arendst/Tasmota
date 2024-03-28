@@ -297,8 +297,7 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
         join_data[16] = NewMIC >> 24;
         uint8_t EncData[33];
         EncData[0] = join_data[0];
-        RadioLibAES128Instance.init(LoraSettings.end_node[node].AppKey);
-        RadioLibAES128Instance.decryptECB(&join_data[1], 16, &EncData[1]);
+        LoraWanEncryptJoinAccept(LoraSettings.end_node[node].AppKey, &join_data[1], 16, &EncData[1]);
 
 //        AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Join %17_H"), join_data);
 

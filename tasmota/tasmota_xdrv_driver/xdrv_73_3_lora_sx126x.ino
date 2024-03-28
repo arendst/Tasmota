@@ -43,7 +43,8 @@ bool LoraSx126xBusy(void) {
 
 /*********************************************************************************************/
 
-void IRAM_ATTR LoraSx126xOnInterrupt(void) {
+void IRAM_ATTR LoraSx126xOnInterrupt(void);
+void LoraSx126xOnInterrupt(void) {
   // This is called after EVERY type of enabled interrupt so chk for valid receivedFlag in LoraAvailableSx126x()
   if (!Lora.sendFlag && !Lora.receivedFlag && !Lora.receive_time) {
     Lora.receive_time = millis();
