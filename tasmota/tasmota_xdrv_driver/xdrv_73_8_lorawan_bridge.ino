@@ -1,5 +1,5 @@
 /*
-  xdrv_73_8_lorawan.ino - LoRaWan EU868 support for Tasmota
+  xdrv_73_8_lorawan_bridge.ino - LoRaWan EU868 support for Tasmota
 
   SPDX-FileCopyrightText: 2024 Theo Arends
 
@@ -203,90 +203,26 @@ uint32_t LoraWanFrequencyToChannel(void) {
 
 /*********************************************************************************************/
 
-void LoraWanPublishHeader(uint32_t node) {
-  ResponseClear(); // clear string
-
-  // Do we prefix with `LwReceived`?
-  if (!Settings->flag4.remove_zbreceived &&           // SetOption100 - (Zigbee) Remove LwReceived form JSON message (1)
-      !Settings->flag5.zb_received_as_subtopic) {     // SetOption118 - (Zigbee) Move LwReceived from JSON message and into the subtopic replacing "SENSOR" default
-    if (Settings->flag5.zigbee_include_time &&        // SetOption144 - (Zigbee) Include time in `LwReceived` messages like other sensors
-       (Rtc.utc_time >= START_VALID_TIME)) {
-      // Add time if needed (and if time is valid)
-      ResponseAppendTimeFormat(Settings->flag2.time_format);  // CMND_TIME
-      ResponseAppend_P(PSTR(",\"LwReceived\":"));
-    } else {
-      ResponseAppend_P(PSTR("{\"LwReceived\":"));
-    }
-  }
-
-  if (!Settings->flag5.zb_omit_json_addr) {           // SetOption119 - (Zigbee) Remove the device addr from json payload, can be used with zb_topic_fname where the addr is already known from the topic
-    ResponseAppend_P(PSTR("{\"%s\":"), EscapeJSONString(LoraSettings.end_node[node].name.c_str()).c_str());
-  }
-  ResponseAppend_P(PSTR("{\"Node\":%d,\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\""), node +1, LoraSettings.end_node[node].DevEUIl & 0x0000FFFF);
-  if (!LoraSettings.end_node[node].name.startsWith(F("0x"))) {
-    ResponseAppend_P(PSTR(",\"" D_JSON_ZIGBEE_NAME "\":\"%s\""), EscapeJSONString(LoraSettings.end_node[node].name.c_str()).c_str());
-  }
-  ResponseAppend_P(PSTR(",\"RSSI\":%1_f,\"SNR\":%1_f"), &Lora.rssi, &Lora.snr);
-}
-
-void LoraWanPublishFooter(uint32_t node) {
-  if (!Settings->flag5.zb_omit_json_addr) {           // SetOption119 - (Zigbee) Remove the device addr from json payload, can be used with zb_topic_fname where the addr is already known from the topic
-    ResponseAppend_P(PSTR("}"));
-  }
-  if (!Settings->flag4.remove_zbreceived &&           // SetOption100 - (Zigbee) Remove LwReceived form JSON message (1)
-      !Settings->flag5.zb_received_as_subtopic) {     // SetOption118 - (Zigbee) Move LwReceived from JSON message and into the subtopic replacing "SENSOR" default
-    ResponseAppend_P(PSTR("}"));
-  }
-
-#ifdef USE_INFLUXDB
-  InfluxDbProcess(1);        // Use a copy of ResponseData
-#endif
-
-  if (Settings->flag4.zigbee_distinct_topics) {       // SetOption89  - (MQTT, Zigbee) Distinct MQTT topics per device for Zigbee (1) (#7835)
-    char subtopic[TOPSZ];
-    // Clean special characters
-    char stemp[TOPSZ];
-    strlcpy(stemp, LoraSettings.end_node[node].name.c_str(), sizeof(stemp));
-    MakeValidMqtt(0, stemp);
-    if (Settings->flag5.zigbee_hide_bridge_topic) {   // SetOption125 - (Zigbee) Hide bridge topic from zigbee topic (use with SetOption89) (1)
-      snprintf_P(subtopic, sizeof(subtopic), PSTR("%s"), stemp);
-    } else {
-      snprintf_P(subtopic, sizeof(subtopic), PSTR("%s/%s"), TasmotaGlobal.mqtt_topic, stemp);
-    }
-    char stopic[TOPSZ];
-    if (Settings->flag5.zb_received_as_subtopic)      // SetOption118 - (Zigbee) Move LwReceived from JSON message and into the subtopic replacing "SENSOR" default
-      GetTopic_P(stopic, TELE, subtopic, PSTR("LwReceived"));
-    else
-      GetTopic_P(stopic, TELE, subtopic, PSTR(D_RSLT_SENSOR));
-    MqttPublish(stopic, Settings->flag.mqtt_sensor_retain);
-  } else {
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);
-  }
-  XdrvRulesProcess(0);     // apply rules
-}
-
-/*********************************************************************************************/
-
 void LoraWanSendLinkADRReq(uint32_t node) {
   uint32_t DevAddr = Lorawan.device_address +node;
   uint16_t FCnt = LoraSettings.end_node[node].FCntDown++;
   uint8_t NwkSKey[TAS_LORAWAN_AES128_KEY_SIZE];
   LoraWanDeriveLegacyNwkSKey(node, NwkSKey);
 
-  uint8_t data[32];
-  data[0] = 0xA0;    // Confirmed data downlink
+  uint8_t data[17];
+  data[0] = TAS_LORAWAN_MTYPE_CONFIRMED_DATA_DOWNLINK << 5;
   data[1] = DevAddr;
   data[2] = DevAddr >> 8;
   data[3] = DevAddr >> 16;
   data[4] = DevAddr >> 24;
-  data[5] = 0x05;    // FCtrl with 5 FOpts
+  data[5] = 0x05;                                            // FCtrl with 5 FOpts
   data[6] = FCnt;
   data[7] = FCnt >> 8;
-  data[8] = 0x03;    // CId LinkADRReq to single channel LoraFrequency and DR LoraSpreadingFactor
+  data[8] = TAS_LORAWAN_CID_LINK_ADR_REQ;
   data[9] = LoraWanSpreadingFactorToDataRate() << 4 | 0x0F;  // DataRate 3 and unchanged TXPower
-  data[10] = 0x01 << LoraWanFrequencyToChannel();
+  data[10] = 0x01 << LoraWanFrequencyToChannel();            // Single channel
   data[11] = 0x00;
-  data[12] = 0x00;   // ChMaskCntl applies to Channels0..15, NbTrans is default (1)
+  data[12] = 0x00;                                           // ChMaskCntl applies to Channels0..15, NbTrans is default (1)
 
   uint32_t MIC = LoraWanComputeLegacyDownlinkMIC(NwkSKey, DevAddr, FCnt, data, 13);
   data[13] = MIC;
@@ -295,14 +231,14 @@ void LoraWanSendLinkADRReq(uint32_t node) {
   data[16] = MIC >> 24;
 
   // A0 F3F51700 05 0000 033F010000 0B2C1B8B
-  LoraWanSendResponse(data, 17, TAS_LORAWAN_RECEIVE_DELAY1);
+  LoraWanSendResponse(data, sizeof(data), TAS_LORAWAN_RECEIVE_DELAY1);
 }
 
 bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
   bool result = false;
   uint32_t MType = data[0] >> 5;  // Upper three bits (used to be called FType)
 
-  if (0 == MType) {  // Join request
+  if (TAS_LORAWAN_MTYPE_JOIN_REQUEST == MType) {
     // 0007010000004140A8D64A89710E4140A82893A8AD137F - Dragino
     // 000600000000161600B51F000000161600FDA5D8127912 - MerryIoT
     uint64_t JoinEUI = (uint64_t)data[ 1]        | ((uint64_t)data[ 2] <<  8) |
@@ -329,7 +265,7 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
         LoraSettings.end_node[node].DevNonce = DevNonce;
         LoraSettings.end_node[node].FCntUp = 0;
         LoraSettings.end_node[node].FCntDown = 0;
-        bitClear(LoraSettings.end_node[node].flags, TAS_LORAWAN_LINK_ADR_REQ);
+        bitClear(LoraSettings.end_node[node].flags, TAS_LORAWAN_FLAG_LINK_ADR_REQ);
         if (LoraSettings.end_node[node].name.equals(F("0x0000"))) {
           char name[10];
           ext_snprintf_P(name, sizeof(name), PSTR("0x%04X"), LoraSettings.end_node[node].DevEUIl & 0x0000FFFF);
@@ -339,8 +275,8 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
         uint32_t JoinNonce = TAS_LORAWAN_JOINNONCE +node;
         uint32_t DevAddr = Lorawan.device_address +node;
         uint32_t NetID = TAS_LORAWAN_NETID;
-        uint8_t join_data[33] = { 0 };
-        join_data[0] = 0x20;  // Join Accept
+        uint8_t join_data[17] = { 0 };
+        join_data[0] = TAS_LORAWAN_MTYPE_JOIN_ACCEPT << 5;
         join_data[1] = JoinNonce;
         join_data[2] = JoinNonce >> 8;
         join_data[3] = JoinNonce >> 16;
@@ -351,32 +287,32 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
         join_data[8] = DevAddr >> 8;
         join_data[9] = DevAddr >> 16;
         join_data[10] = DevAddr >> 24;
-        join_data[11] = 0x03;   // DLSettings
+        join_data[11] = LoraWanSpreadingFactorToDataRate();  // DLSettings
         join_data[12] = 1;      // RXDelay;
 
-        uint32_t NewMIC = LoraWanGenerateMIC(join_data, 13, LoraSettings.end_node[node].AppKey);
+        uint32_t NewMIC = LoraWanGenerateMIC(join_data, sizeof(data) -4, LoraSettings.end_node[node].AppKey);
         join_data[13] = NewMIC;
         join_data[14] = NewMIC >> 8;
         join_data[15] = NewMIC >> 16;
         join_data[16] = NewMIC >> 24;
-        uint8_t EncData[33];
+        uint8_t EncData[17];
         EncData[0] = join_data[0];
         RadioLibAES128Instance.init(LoraSettings.end_node[node].AppKey);
-        RadioLibAES128Instance.decryptECB(&join_data[1], 16, &EncData[1]);
+        RadioLibAES128Instance.decryptECB(&join_data[1], sizeof(EncData) -1, &EncData[1]);
 
 //        AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Join %17_H"), join_data);
 
         // 203106E5000000412E010003017CB31DD4 - Dragino
         // 203206E5000000422E010003016A210EEA - MerryIoT
-        LoraWanSendResponse(EncData, 17, TAS_LORAWAN_JOIN_ACCEPT_DELAY1);
+        LoraWanSendResponse(EncData, sizeof(EncData), TAS_LORAWAN_JOIN_ACCEPT_DELAY1);
 
         result = true;
         break;
       }
     }
   }
-  else if ((2 == MType) ||  // Unconfirmed data uplink
-           (4 == MType)) {  // Confirmed data uplink
+  else if ((TAS_LORAWAN_MTYPE_UNCONFIRMED_DATA_UPLINK == MType) ||
+           (TAS_LORAWAN_MTYPE_CONFIRMED_DATA_UPLINK == MType)) {
     //  0     1 2 3 4   5      6 7   8  9   8      9101112131415...     packet_size -4
     // PHYPayload --------------------------------------------------------------
     // MHDR  MACPayload ----------------------------------------------  MIC ----
@@ -456,7 +392,7 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
           uint32_t FCnt_missed = FCnt - LoraSettings.end_node[node].FCntUp;
           AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Missed frames %d"), FCnt_missed);
           if (FCnt_missed > 1) {                                         // Missed two or more frames
-            bitClear(LoraSettings.end_node[node].flags, TAS_LORAWAN_LINK_ADR_REQ);  // Resend LinkADRReq
+            bitClear(LoraSettings.end_node[node].flags, TAS_LORAWAN_FLAG_LINK_ADR_REQ);  // Resend LinkADRReq
           }
         }
         LoraSettings.end_node[node].FCntUp = FCnt;
@@ -464,37 +400,37 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
         if (FOptsLen) {
           uint32_t i = 0;
           while (i < FOptsLen) {
-            if (0x02 == FOpts[i]) {                                      // Response from LinkCheckReq (LinkCheckAns)
+            if (TAS_LORAWAN_CID_LINK_CHECK_REQ == FOpts[i]) {
               // Used by end-device to validate it's connectivity to a network
               // Need to send Margin/GWCnt
             }
-            else if (0x03 == FOpts[i]) {                                 // Response from LinkADRReq (LinkADRAns)
+            else if (TAS_LORAWAN_CID_LINK_ADR_ANS == FOpts[i]) {
               i++;
               uint8_t status = FOpts[i];
               AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: MAC LinkADRAns PowerACK %d, DataRateACK %d, ChannelMaskACK %d"), 
                 bitRead(status, 2), bitRead(status, 1), bitRead(status, 0));
-              bitSet(LoraSettings.end_node[node].flags, TAS_LORAWAN_LINK_ADR_REQ);
+              bitSet(LoraSettings.end_node[node].flags, TAS_LORAWAN_FLAG_LINK_ADR_REQ);
             }
-            else if (0x04 == FOpts[i]) {                                 // Response from DutyCycleReq (DutyCycleAns)
+            else if (TAS_LORAWAN_CID_DUTY_CYCLE_ANS == FOpts[i]) {
               i++;
             }
-            else if (0x05 == FOpts[i]) {                                 // Response from RXParamSetupReq (RXParamSetupAns)
+            else if (TAS_LORAWAN_CID_RX_PARAM_SETUP_ANS == FOpts[i]) {
               i++;
             }
-            else if (0x06 == FOpts[i]) {                                 // Response from DevStatusReq (DevStatusAns)
+            else if (TAS_LORAWAN_CID_DEV_STATUS_ANS == FOpts[i]) {
               i++;
               i++;
             }
-            else if (0x07 == FOpts[i]) {                                 // Response from NewChannelReq (NewChannelAns)
+            else if (TAS_LORAWAN_CID_NEW_CHANNEL_ANS == FOpts[i]) {
               i++;
             }
-            else if (0x08 == FOpts[i]) {                                 // Response from RXTimingSetupReq (RXTimingSetupAns)
+            else if (TAS_LORAWAN_CID_RX_TIMING_SETUP_ANS == FOpts[i]) {
             }
-            else if (0x09 == FOpts[i]) {                                 // Response from TXParamSetupReq (TXParamSetupAns)
+            else if (TAS_LORAWAN_CID_TX_PARAM_SETUP_ANS == FOpts[i]) {
             }
-            else if (0x0A == FOpts[i]) {                                 // Response from DIChannelReq (DIChannelAns)
+            else if (TAS_LORAWAN_CID_DL_CHANNEL_ANS == FOpts[i]) {
             }
-            else if (0x0D == FOpts[i]) {                                 // Response from DeviceTimeReq (DeviceTimeAns)
+            else if (TAS_LORAWAN_CID_DEVICE_TIME_REQ == FOpts[i]) {
               // Used by the end-device to request the current GPS time
               // Need to send epoch/fractional second
             }
@@ -506,92 +442,27 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
         }
 
         if (payload_len) {
-          // Unique parameters:
-          // node
-          // LoraSettings.end_node[node].DevEUIh
-          // LoraSettings.end_node[node].DevEUIl
-          // FPort
-          // payload_len
-          // payload_decrypted[]
-          if (bitRead(LoraSettings.flags, TAS_LORAWAN_DECODE_ENABLED) &&
-              (0x00161600 == LoraSettings.end_node[node].DevEUIh)) {     // MerryIoT
-            if (120 == FPort) {                                          // MerryIoT door/window Sensor (DW10)
-              if (9 == payload_len) {                                    // MerryIoT Sensor state 
-                //  1  2  3  4  5 6  7 8 9
-                // 03 0F 19 2C 8A00 040000 - button
-                // 00 0F 19 2C 0000 050000 - door
-                uint8_t status = payload_decrypted[0];
-                float battery_volt = (float)(21 + payload_decrypted[1]) / 10.0;
-                int temperature = payload_decrypted[2]; 
-                int humidity = payload_decrypted[3];
-                uint32_t elapsed_time = payload_decrypted[4] | (payload_decrypted[5] << 8);
-                uint32_t events = payload_decrypted[6] | (payload_decrypted[7] << 8) | (payload_decrypted[8] << 16);
-#ifdef USE_LORA_DEBUG
-                AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Node %d, DevEUI %08X%08X, Events %d, LastEvent %d min, DoorOpen %d, Button %d, Tamper %d, Tilt %d, Battery %1_fV, Temp %d, Hum %d"), 
-                  node +1, LoraSettings.end_node[node].DevEUIh, LoraSettings.end_node[node].DevEUIl,
-                  events, elapsed_time,
-                  bitRead(status, 0), bitRead(status, 1), bitRead(status, 2), bitRead(status, 3),
-                  &battery_volt,
-                  temperature, humidity);
-#endif  // USE_LORA_DEBUG
-                LoraWanPublishHeader(node);
-                ResponseAppend_P(PSTR(",\"Events\":%d,\"LastEvent\":%d,\"DoorOpen\":%d,\"Button\":%d,\"Tamper\":%d,\"Tilt\":%d"
-                                      ",\"Battery\":%1_f,"),
-                  events, elapsed_time,
-                  bitRead(status, 0), bitRead(status, 1), bitRead(status, 2), bitRead(status, 3),
-                  &battery_volt);
-                ResponseAppendTHD(temperature, humidity);
-                ResponseAppend_P(PSTR("}"));
-                LoraWanPublishFooter(node);
-              }
-            }
-          }
-          else if (bitRead(LoraSettings.flags, TAS_LORAWAN_DECODE_ENABLED) &&
-                  (0xA840410E == LoraSettings.end_node[node].DevEUIh)) {  // Dragino
+          LoraNodeData_t node_data;
+          node_data.rssi = Lora.rssi;
+          node_data.snr = Lora.snr;
+          node_data.payload = payload_decrypted;
+          node_data.payload_len = payload_len;
+          node_data.node = node;
+          node_data.FPort = FPort;
+          LoraWanDecode(&node_data);
+
+          if (0xA840410E == LoraSettings.end_node[node].DevEUIh) {  // Dragino
             // Dragino v1.7 fails to set DR with ADR so set it using serial interface:
             // Password 123456
             // AT+CHS=868100000
             // Start join using reset button
             // AT+CADR=0
             // AT+CDATARATE=3
-            bitSet(LoraSettings.end_node[node].flags, TAS_LORAWAN_LINK_ADR_REQ);
-            if (10 == FPort) {                                           // Dragino LDS02
-              // 8CD2 01 000010 000000 00 - Door Open, 3.282V
-              // 0CD2 01 000011 000000 00 - Door Closed
-              uint8_t status = payload_decrypted[0];
-              float battery_volt = (float)((payload_decrypted[1] | (payload_decrypted[0] << 8)) &0x3FFF) / 1000;
-              uint8_t MOD = payload_decrypted[2];  // Always 0x01
-              uint32_t events = payload_decrypted[5] | (payload_decrypted[4] << 8) | (payload_decrypted[3] << 16);
-              uint32_t open_duration = payload_decrypted[8] | (payload_decrypted[7] << 8) | (payload_decrypted[6] << 16);
-              uint8_t alarm = payload_decrypted[9];
-#ifdef USE_LORA_DEBUG
-              AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Node %d, DevEUI %08X%08X, Events %d, LastEvent %d min, DoorOpen %d, Battery %3_fV, Alarm %d"), 
-                node +1, LoraSettings.end_node[node].DevEUIh, LoraSettings.end_node[node].DevEUIl,
-                events, open_duration,
-                bitRead(status, 7),
-                &battery_volt,
-                bitRead(alarm, 0));
-#endif  // USE_LORA_DEBUG
-              LoraWanPublishHeader(node);
-              ResponseAppend_P(PSTR(",\"Events\":%d,\"LastEvent\":%d,\"DoorOpen\":%d,\"Alarm\":%d,\"Battery\":%3_f}"),
-                events, open_duration, bitRead(status, 7), bitRead(alarm, 0), &battery_volt);
-              LoraWanPublishFooter(node);
-            }
-          }
-          else {
-            // Joined device without decoding
-            LoraWanPublishHeader(node);
-            ResponseAppend_P(PSTR(",\"DevEUIh\":\"%08X\",\"DevEUIl\":\"%08X\",\"FPort\":%d,\"Payload\":["),
-              LoraSettings.end_node[node].DevEUIh, LoraSettings.end_node[node].DevEUIl, FPort);
-            for (uint32_t i = 0; i < payload_len; i++) {
-              ResponseAppend_P(PSTR("%s%d"), (0==i)?"":",", payload_decrypted[i]);
-            }
-            ResponseAppend_P(PSTR("]}"));
-            LoraWanPublishFooter(node);
+            bitSet(LoraSettings.end_node[node].flags, TAS_LORAWAN_FLAG_LINK_ADR_REQ);
           }
 
-          if (4 == MType) {   // Confirmed data uplink
-            data[0] = 0x60;   // Unconfirmed data downlink
+          if (TAS_LORAWAN_MTYPE_CONFIRMED_DATA_UPLINK == MType) {
+            data[0] = TAS_LORAWAN_MTYPE_UNCONFIRMED_DATA_DOWNLINK << 5;
             data[5] |= 0x20;  // FCtrl Set ACK bit
             uint16_t FCnt = LoraSettings.end_node[node].FCntDown++;
             data[6] = FCnt;
@@ -604,8 +475,8 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
             LoraWanSendResponse(data, packet_size, TAS_LORAWAN_RECEIVE_DELAY1);
           }
         }
-        if (2 == MType) {   // Unconfirmed data uplink
-          if (!bitRead(LoraSettings.end_node[node].flags, TAS_LORAWAN_LINK_ADR_REQ) &&
+        if (TAS_LORAWAN_MTYPE_UNCONFIRMED_DATA_UPLINK == MType) {
+          if (!bitRead(LoraSettings.end_node[node].flags, TAS_LORAWAN_FLAG_LINK_ADR_REQ) &&
               FCtrl_ADR && !FCtrl_ACK) {
             // Try to fix single channel and datarate
             LoraWanSendLinkADRReq(node);                                 // Resend LinkADRReq
@@ -662,7 +533,7 @@ void CmndLoraWanAppKey(void) {
       }
     }
     else if (0 == XdrvMailbox.payload) {
-      memset(&LoraSettings.end_node[node], 0, sizeof(tEndNode));
+      memset(&LoraSettings.end_node[node], 0, sizeof(LoraEndNode_t));
     }
     char appkey[33];
     ext_snprintf_P(appkey, sizeof(appkey), PSTR("%16_H"), LoraSettings.end_node[node].AppKey);

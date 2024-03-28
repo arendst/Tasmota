@@ -100,8 +100,6 @@ void DrvDemoSettingsLoad(bool erase) {
   // Called from FUNC_RESET_SETTINGS (erase = 1) after command reset 4, 5, or 6
 
   // *** Start init default values in case key is not found ***
-  AddLog(LOG_LEVEL_INFO, PSTR("DRV: " D_USE_DEFAULTS));
-
   memset(&DrvDemoSettings, 0x00, sizeof(DrvDemoSettings));
   // Init any other parameter in struct DrvDemoSettings
   snprintf_P(DrvDemoSettings.drv_text[0], sizeof(DrvDemoSettings.drv_text[0]), PSTR("Azalea"));
@@ -120,7 +118,7 @@ void DrvDemoSettingsLoad(bool erase) {
   }
   else {
     // File system not ready: No flash space reserved for file system
-    AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Demo use defaults as file system not ready or key not found"));
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CFG: Demo use defaults as file system not ready or key not found"));
   }
 #endif  // USE_UFILESYS
 }
@@ -137,7 +135,7 @@ void DrvDemoSettingsSave(void) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Demo saved to file"));
     } else {
       // File system not ready: No flash space reserved for file system
-      AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: ERROR Demo file system not ready or unable to save file"));
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CFG: ERROR Demo file system not ready or unable to save file"));
     }
   }
 #endif  // USE_UFILESYS

@@ -14,7 +14,7 @@
  * - LilyGo T3S3 LoRa32 868MHz ESP32S3 (uses SX1262)
  * - LilyGo TTGO T-Weigh ESP32 LoRa 868MHz HX711 (uses SX1262)
  * - Heltec (CubeCell) (uses SX1262)
- * - Waveshare
+ * - Waveshare SX1262 Lora Node (HF) and (LF)
  * 
  * Used GPIO's:
  * - SPI_CLK

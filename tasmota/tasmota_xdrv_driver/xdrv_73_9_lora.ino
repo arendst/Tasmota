@@ -134,8 +134,6 @@ void LoraSettingsLoad(bool erase) {
   // Called from FUNC_RESET_SETTINGS (erase = 1) after command reset 4, 5, or 6
 
   // *** Start init default values in case key is not found ***
-//  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CFG: Lora use defaults"));
-
   memset(&LoraSettings, 0x00, sizeof(LoraSettings));
   // Init any other parameter in struct LoraSettings
   LoraDefaults();
@@ -196,7 +194,7 @@ void LoraInput(void) {
     Lora.receive_time, packet_size, data, &Lora.rssi, &Lora.snr);
 
 #ifdef USE_LORAWAN_BRIDGE
-  if (bitRead(LoraSettings.flags, TAS_LORAWAN_BRIDGE_ENABLED)) {
+  if (bitRead(LoraSettings.flags, TAS_LORA_FLAG_BRIDGE_ENABLED)) {
     if (LoraWanInput((uint8_t*)data, packet_size)) {
       return;
     }

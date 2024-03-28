@@ -94,15 +94,67 @@
 #define TAS_LORAWAN_ENDNODES                4    // Max number od supported endnodes
 #define TAS_LORAWAN_AES128_KEY_SIZE        16    // Size in bytes
 
-enum TasLoraFlags { TAS_LORAWAN_BRIDGE_ENABLED,
-                    TAS_LORAWAN_JOIN_ENABLED,
-                    TAS_LORAWAN_DECODE_ENABLED
-                  };
+enum TasLoraFlags { 
+  TAS_LORA_FLAG_BRIDGE_ENABLED,
+  TAS_LORA_FLAG_JOIN_ENABLED,
+  TAS_LORA_FLAG_DECODE_ENABLED
+};
 
-enum TasLoraWanFlags { TAS_LORAWAN_LINK_ADR_REQ
-                     };
+enum TasLoraWanFlags { 
+  TAS_LORAWAN_FLAG_LINK_ADR_REQ
+};
 
-typedef struct {
+enum TasLoraWanMTypes { 
+  TAS_LORAWAN_MTYPE_JOIN_REQUEST,
+  TAS_LORAWAN_MTYPE_JOIN_ACCEPT,
+  TAS_LORAWAN_MTYPE_UNCONFIRMED_DATA_UPLINK,
+  TAS_LORAWAN_MTYPE_UNCONFIRMED_DATA_DOWNLINK,
+  TAS_LORAWAN_MTYPE_CONFIRMED_DATA_UPLINK,
+  TAS_LORAWAN_MTYPE_CONFIRMED_DATA_DOWNLINK,
+  TAS_LORAWAN_MTYPE_RFU,
+  TAS_LORAWAN_MTYPE_PROPRIETARY
+};
+
+enum TasLoraWanCIDNtwk { 
+  TAS_LORAWAN_CID_LINK_CHECK_ANS = 0x02,
+  TAS_LORAWAN_CID_LINK_ADR_REQ,
+  TAS_LORAWAN_CID_DUTY_CYCLE_REQ,
+  TAS_LORAWAN_CID_RX_PARAM_SETUP_REQ,
+  TAS_LORAWAN_CID_DEV_STATUS_REQ,
+  TAS_LORAWAN_CID_NEW_CHANNEL_REQ,
+  TAS_LORAWAN_CID_RX_TIMING_SETUP_REQ,
+  TAS_LORAWAN_CID_TX_PARAM_SETUP_REQ,
+  TAS_LORAWAN_CID_DL_CHANNEL_REQ,
+  TAS_LORAWAN_CID_RFU1_REQ,
+  TAS_LORAWAN_CID_RFU2_REQ,
+  TAS_LORAWAN_CID_DEVICE_TIME_ANS
+};
+
+enum TasLoraWanCIDNode { 
+  TAS_LORAWAN_CID_LINK_CHECK_REQ = 0x02,
+  TAS_LORAWAN_CID_LINK_ADR_ANS,
+  TAS_LORAWAN_CID_DUTY_CYCLE_ANS,
+  TAS_LORAWAN_CID_RX_PARAM_SETUP_ANS,
+  TAS_LORAWAN_CID_DEV_STATUS_ANS,
+  TAS_LORAWAN_CID_NEW_CHANNEL_ANS,
+  TAS_LORAWAN_CID_RX_TIMING_SETUP_ANS,
+  TAS_LORAWAN_CID_TX_PARAM_SETUP_ANS,
+  TAS_LORAWAN_CID_DL_CHANNEL_ANS,
+  TAS_LORAWAN_CID_RFU1_ANS,
+  TAS_LORAWAN_CID_RFU2_ANS,
+  TAS_LORAWAN_CID_DEVICE_TIME_REQ
+};
+
+typedef struct LoraNodeData_t {
+  float rssi;
+  float snr;
+  uint8_t* payload;
+  uint8_t payload_len;
+  uint8_t node;
+  uint8_t FPort;
+} LoraNodeData_t;
+
+typedef struct LoraEndNode_t {
   uint32_t DevEUIh;
   uint32_t DevEUIl;
   uint32_t FCntUp;
@@ -111,7 +163,7 @@ typedef struct {
   uint16_t DevNonce;
   uint16_t flags;
   uint8_t AppKey[TAS_LORAWAN_AES128_KEY_SIZE];
-} tEndNode;
+} LoraEndNode_t;
 
 // Global structure containing driver saved variables
 struct {
@@ -128,7 +180,7 @@ struct {
   uint8_t crc_bytes;                             // 2 bytes
   uint8_t flags;
 #ifdef USE_LORAWAN_BRIDGE
-  tEndNode end_node[TAS_LORAWAN_ENDNODES];       // End node parameters
+  LoraEndNode_t end_node[TAS_LORAWAN_ENDNODES];  // End node parameters
 #endif  // USE_LORAWAN_BRIDGE
 } LoraSettings;
 
