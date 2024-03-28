@@ -19,7 +19,7 @@
 */
 
 #ifdef USE_I2C
-#if defined(USE_AHT1x) || defined(USE_AHT2x)
+#if defined(USE_AHT1x) || defined(USE_AHT2x) || defined(USE_AHT3x)
 
 /*********************************************************************************************\
  * AHT10/15/20 - Temperature and Humidity
@@ -40,7 +40,10 @@
  *            and allows other I2C Devices on the bus but have only one I2C Address (0x38)
  * 14.09.2021 support AHT20 without enabling AHT1x 
  *
+ * 26.10.2023 support for AHT30 added.
+ *
  * AHT20 I2C Address: 0x38
+ * AHT30 I2C Address: 0x38
 \*********************************************************************************************/
 
 #define XSNS_63              63
@@ -56,12 +59,15 @@
 #define AHT_TEMPERATURE_OFFSET  50
 #define KILOBYTE_CONST          1048576.0f
 
-#define AHT1X_CMD_DELAY      40
-#define AHT1X_RST_DELAY      30
+#define AHT1X_CMD_DELAY      20
+#define AHT1X_RST_DELAY      10
 #define AHT1X_MEAS_DELAY     80 // over 75ms in datasheet
 
-#ifdef USE_AHT2x
-  #define AHTX_CMD     0xB1 // Cmd for AHT2x
+#ifdef USE_AHT3x
+  #define AHTX_CMD     0xBE // Cmd for AHT3x
+  const char ahtTypes[] PROGMEM = "AHT3X|AHT3X";
+#elif defined(USE_AHT2x)
+  #define AHTX_CMD     0xBE // Cmd for AHT2x
   const char ahtTypes[] PROGMEM = "AHT2X|AHT2X";
 #else
   #define AHTX_CMD     0xE1 // Cmd for AHT1x
@@ -92,6 +98,7 @@ bool AHT1XWrite(uint8_t aht1x_idx) {
   Wire.write(AHTMeasureCmd, 3);
   if (Wire.endTransmission() != 0)
     return false;
+  delay(AHT1X_MEAS_DELAY);
   return true;
 }
 
@@ -198,7 +205,7 @@ bool Xsns63(uint32_t function)
   }
   else if (aht1x.count) {
     switch (function) {
-      case FUNC_EVERY_100_MSECOND:
+      case FUNC_EVERY_SECOND:
         AHT1XPoll();
         break;
       case FUNC_JSON_APPEND:
