@@ -11,6 +11,9 @@
  * ESP32, ESP32-S2, ESP32-S3, ESP32-C2, ESP32-C3, ESP32-C6 and ESP32-H2 Support
 \*********************************************************************************************/
 
+//                                                   11b 11g 11n  11n  11ax
+const static char kWifiPhyMode[] PROGMEM = "low rate|11b|11g|HT20|HT40|HE20"; // Wi-Fi Modes
+
 #include "soc/soc.h"
 #include "soc/spi_reg.h"
 // ESP32_ARCH contains the name of the architecture (used by autoconf)
@@ -974,6 +977,11 @@ uint32_t ESP_getChipRevision(void) {
 
 String ESP_getEfuseMac(void) {
   return String(ESP.getEfuseMac());
+}
+
+String WifiGetPhyMode(void) {
+  char stemp[10];
+  return String(GetTextIndexed(stemp, sizeof(stemp), WiFi.getPhyMode(), kWifiPhyMode));
 }
 
 /*********************************************************************************************\

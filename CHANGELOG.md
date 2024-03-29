@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 LVGL library from v9.0.0 to v9.1.0 (#21008)
 - berry.exe (pre-compiled for Windows) updated to latest Berry patches (#21024)
 - Some `display.ini` to utouch (#21029)
+- ESP32 WiFi phy modes 11n and 11ax represented as HT20, HT40 and HE20 (#19350)
 
 ### Fixed
 - BTHome, prep BLE5 (#20989)

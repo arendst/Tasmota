@@ -259,8 +259,8 @@ void WifiBegin(uint8_t flag, uint8_t channel) {
     WiFi.begin(SettingsText(SET_STASSID1 + Settings->sta_active), SettingsText(SET_STAPWD1 + Settings->sta_active));
   }
   delay(500);
-  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s%s " D_IN_MODE " 11%c " D_AS " %s..."),
-    Settings->sta_active +1, SettingsText(SET_STASSID1 + Settings->sta_active), stemp, pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]), TasmotaGlobal.hostname);
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s%s " D_IN_MODE " %s " D_AS " %s..."),
+    Settings->sta_active +1, SettingsText(SET_STASSID1 + Settings->sta_active), stemp, WifiGetPhyMode().c_str(), TasmotaGlobal.hostname);
 
   if (Settings->flag5.wait_for_wifi_result) {  // SetOption142 - (Wifi) Wait 1 second for wifi connection solving some FRITZ!Box modem issues (1)
     WiFi.waitForConnectResult(1000);  // https://github.com/arendst/Tasmota/issues/14985

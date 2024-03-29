@@ -2686,7 +2686,8 @@ void CmndWifi(void)
 #endif
     WiFi.setPhyMode(WiFiPhyMode_t(XdrvMailbox.payload - 1));  // 1-B/2-BG/3-BGN
   }
-  Response_P(PSTR("{\"" D_JSON_WIFI "\":\"%s\",\"" D_JSON_WIFI_MODE "\":\"11%c\"}"), GetStateText(Settings->flag4.network_wifi), pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]) );
+  Response_P(PSTR("{\"" D_JSON_WIFI "\":\"%s\",\"" D_JSON_WIFI_MODE "\":\"%s\"}"), 
+    GetStateText(Settings->flag4.network_wifi), WifiGetPhyMode().c_str());
 }
 
 void CmndDnsTimeout(void) {

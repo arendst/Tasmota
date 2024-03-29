@@ -11,6 +11,8 @@
  * ESP8266 and ESP8285 Support
 \*********************************************************************************************/
 
+const static char kWifiPhyMode[] PROGMEM = "low rate|11b|11g|11n"; // Wi-Fi Modes
+
 extern "C" {
 extern struct rst_info resetInfo;
 }
@@ -256,6 +258,11 @@ String ESP_getEfuseMac(void) {
     }
   }
   return String(macStr);
+}
+
+String WifiGetPhyMode(void) {
+  char stemp[10];
+  return String(GetTextIndexed(stemp, sizeof(stemp), WiFi.getPhyMode() & 0x3, kWifiPhyMode));
 }
 
 /*********************************************************************************************\

@@ -126,8 +126,6 @@ const uint8_t MAX_BUTTON_TEXT = 32;         // Max number of GUI button labels
 const uint8_t MAX_GROUP_TOPICS = 4;         // Max number of Group Topics
 const uint8_t MAX_DEV_GROUP_NAMES = 4;      // Max number of Device Group names
 
-const static char kWifiPhyMode[] PROGMEM = " bgnl"; // Wi-Fi Modes
-
 #ifdef ESP8266
 const uint8_t MAX_ADCS = 1;                 // Max number of ESP8266 ADC pins
 const uint8_t MAX_SWITCHES_TXT = 8;         // Max number of switches user text
