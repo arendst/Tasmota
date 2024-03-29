@@ -1018,7 +1018,9 @@ void WiFiSetTXpowerBasedOnRssi(void) {
       threshold = WIFI_SENSITIVITY_54g;
       if (max_tx_pwr > MAX_TX_PWR_DBM_54g) max_tx_pwr = MAX_TX_PWR_DBM_54g;
       break;
-    case 3:                  // 11bgn (WIFI_PHY_MODE_11N)
+    case 3:                  // 11bgn (WIFI_PHY_MODE_HT20 = WIFI_PHY_MODE_11N)
+    case 4:                  // 11bgn (WIFI_PHY_MODE_HT40)
+    case 5:                  // 11ax  (WIFI_PHY_MODE_HE20)
       threshold = WIFI_SENSITIVITY_n;
       if (max_tx_pwr > MAX_TX_PWR_DBM_n) max_tx_pwr = MAX_TX_PWR_DBM_n;
       break;

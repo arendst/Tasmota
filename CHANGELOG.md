@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [13.4.0.3]
 ### Added
 - Zigbee support for attributes of type `uint48` used by energy monitoring (#20992)
-- Support for EU863-870 LoRaWanBridge
+- Support for single channel EU863-870 LoRaWanBridge (#17790)
 - Support Azure iothub direct method (#21013)
 - Added GPIO for SPI for Universal Touch Screen (#21025)
 - Berry added `close()` to class `serial` (#21042)
@@ -30,7 +30,6 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 - Berry `print "a"` syntax no longer supported (#21048)
-
 
 ## [13.4.0.2] 20240318
 ### Added
