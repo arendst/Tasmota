@@ -431,7 +431,7 @@ class type_mapper_class:
     "lv_image_dsc_t *": "lv_image_dsc",
     "lv_ts_calibration_t *": "lv_ts_calibration",
     "lv_style_transition_dsc_t *": "lv_style_transition_dsc",
-    "lv_layer_t *": "c",               # LVGL9
+    "lv_layer_t *": "lv_layer",               # LVGL9
     # "_lv_draw_layer_ctx_t *": "lv_draw_layer_ctx",
     "lv_grad_dsc_t *": "lv_grad_dsc",
     "lv_color_filter_dsc_t *": "lv_color_filter_dsc",

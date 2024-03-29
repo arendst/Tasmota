@@ -358,6 +358,27 @@ const be_ctypes_structure_t be_lv_style_transition_dsc = {
     { "user_data", 4, 0, 0, ctypes_ptr32, 0 },
 }};
 
+const be_ctypes_structure_t be_lv_layer = {
+  56,  /* size in bytes */
+  14,  /* number of elements */
+  be_ctypes_instance_mappings,
+  (const be_ctypes_structure_item_t[14]) {
+    { "_clip_area_x1", 24, 0, 0, ctypes_i32, 0 },
+    { "_clip_area_x2", 32, 0, 0, ctypes_i32, 0 },
+    { "_clip_area_y1", 28, 0, 0, ctypes_i32, 0 },
+    { "_clip_area_y2", 36, 0, 0, ctypes_i32, 0 },
+    { "buf_area_x1", 4, 0, 0, ctypes_i32, 0 },
+    { "buf_area_x2", 12, 0, 0, ctypes_i32, 0 },
+    { "buf_area_y1", 8, 0, 0, ctypes_i32, 0 },
+    { "buf_area_y2", 16, 0, 0, ctypes_i32, 0 },
+    { "color_format", 20, 0, 0, ctypes_u8, 0 },
+    { "draw_buf", 0, 0, 0, ctypes_ptr32, 0 },
+    { "draw_task_head", 40, 0, 0, ctypes_ptr32, 0 },
+    { "next", 48, 0, 0, ctypes_ptr32, 0 },
+    { "parent", 44, 0, 0, ctypes_ptr32, 0 },
+    { "user_data", 52, 0, 0, ctypes_ptr32, 0 },
+}};
+
 const be_ctypes_structure_t be_lv_color_filter_dsc = {
   8,  /* size in bytes */
   2,  /* number of elements */
@@ -424,6 +445,7 @@ static be_define_ctypes_class(lv_grad_dsc, &be_lv_grad_dsc, &be_class_ctypes_byt
 static be_define_ctypes_class(lv_gradient_stop, &be_lv_gradient_stop, &be_class_ctypes_bytes, "lv_gradient_stop");
 static be_define_ctypes_class(lv_image_dsc, &be_lv_image_dsc, &be_class_ctypes_bytes, "lv_image_dsc");
 static be_define_ctypes_class(lv_image_header, &be_lv_image_header, &be_class_ctypes_bytes, "lv_image_header");
+static be_define_ctypes_class(lv_layer, &be_lv_layer, &be_class_ctypes_bytes, "lv_layer");
 static be_define_ctypes_class(lv_obj_class, &be_lv_obj_class, &be_class_ctypes_bytes, "lv_obj_class");
 static be_define_ctypes_class(lv_point, &be_lv_point, &be_class_ctypes_bytes, "lv_point");
 static be_define_ctypes_class(lv_point_precise, &be_lv_point_precise, &be_class_ctypes_bytes, "lv_point_precise");
@@ -448,6 +470,7 @@ be_ctypes_class_by_name_t be_ctypes_lvgl_classes[] = {
   { "lv_gradient_stop", &be_class_lv_gradient_stop },
   { "lv_image_dsc", &be_class_lv_image_dsc },
   { "lv_image_header", &be_class_lv_image_header },
+  { "lv_layer", &be_class_lv_layer },
   { "lv_obj_class", &be_class_lv_obj_class },
   { "lv_point", &be_class_lv_point },
   { "lv_point_precise", &be_class_lv_point_precise },

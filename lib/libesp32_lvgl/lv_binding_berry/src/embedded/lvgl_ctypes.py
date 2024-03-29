@@ -550,6 +550,30 @@ lv_style_transition_dsc = [            # valid LVGL91
 ]
 lv_style_transition_dsc = ct.structure(lv_style_transition_dsc, "lv_style_transition_dsc")
 
+# typedef struct {
+#     lv_draw_buf_t * draw_buf;
+#     lv_area_t buf_area;
+#     lv_color_format_t color_format;
+#     lv_area_t _clip_area;
+#     lv_draw_task_t * draw_task_head;
+#     lv_layer_t * parent;
+#     lv_layer_t * next;
+#     bool all_tasks_added;
+#     void * user_data;
+# } lv_layer_t;
+lv_layer = [ # valid LVGL9
+    [ptr, "draw_buf"],
+    [lv_area, "buf_area"],
+    [uint8_t, "color_format"],
+    [lv_area, "_clip_area"],
+    [ptr, "draw_task_head"],
+    [ptr, "parent"],
+    [ptr, "next"],
+    [bool, "all_tasks_added"],
+    [ptr, "user_data"],
+]
+lv_layer = ct.structure(lv_layer, "lv_layer")
+
 #######################################################################
 # lv_color
 

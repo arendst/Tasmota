@@ -620,7 +620,7 @@ const be_ntv_func_def_t lv_event_func[] = {
   { "get_hit_test_info", { (const void*) &lv_event_get_hit_test_info, "c", "(lv.event)" } },
   { "get_indev", { (const void*) &lv_event_get_indev, "lv.indev", "(lv.event)" } },
   { "get_key", { (const void*) &lv_event_get_key, "i", "(lv.event)" } },
-  { "get_layer", { (const void*) &lv_event_get_layer, "c", "(lv.event)" } },
+  { "get_layer", { (const void*) &lv_event_get_layer, "lv.layer", "(lv.event)" } },
   { "get_old_size", { (const void*) &lv_event_get_old_size, "lv.area", "(lv.event)" } },
   { "get_param", { (const void*) &lv_event_get_param, "c", "(lv.event)" } },
   { "get_rotary_diff", { (const void*) &lv_event_get_rotary_diff, "i", "(lv.event)" } },
@@ -908,11 +908,11 @@ const be_ntv_func_def_t lv_calendar_func[] = {
 #ifdef BE_LV_WIDGET_CANVAS
 const be_ntv_func_def_t lv_canvas_func[] = {
   { "fill_bg", { (const void*) &lv_canvas_fill_bg, "", "(lv.obj)(lv.color)i" } },
-  { "finish_layer", { (const void*) &lv_canvas_finish_layer, "", "(lv.obj)c" } },
+  { "finish_layer", { (const void*) &lv_canvas_finish_layer, "", "(lv.obj)(lv.layer)" } },
   { "get_buf", { (const void*) &lv_canvas_get_buf, "c", "(lv.obj)" } },
   { "get_image", { (const void*) &lv_canvas_get_image, "lv.image_dsc", "(lv.obj)" } },
   { "get_px", { (const void*) &lv_canvas_get_px, "i", "(lv.obj)ii" } },
-  { "init_layer", { (const void*) &lv_canvas_init_layer, "", "(lv.obj)c" } },
+  { "init_layer", { (const void*) &lv_canvas_init_layer, "", "(lv.obj)(lv.layer)" } },
   { "set_buffer", { (const void*) &lv_canvas_set_buffer, "", "(lv.obj).iii" } },
   { "set_palette", { (const void*) &lv_canvas_set_palette, "", "(lv.obj)ii" } },
   { "set_px", { (const void*) &lv_canvas_set_px, "", "(lv.obj)ii(lv.color)i" } },
