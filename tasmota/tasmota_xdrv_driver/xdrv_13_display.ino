@@ -638,14 +638,20 @@ void DisplayText(void)
                         model = Settings->display_model;
                         fp.read((uint8_t*)fdesc, size);
                         fp.close();
-                        Renderer *svptr = renderer;
-                        Get_display(temp);
-                        renderer = svptr;
-                        if (rot >= 0) {
-                          srot = Settings->display_rotate;
-                          Settings->display_rotate = rot;
+                        if (renderer) {
+                          // save ptr
+                          Set_display(temp);
+                          renderer = nullptr;
+                        } else {
+                          Renderer *svptr = renderer;
+                          Get_display(temp);
+                          renderer = svptr;
+                          if (rot >= 0) {
+                            srot = Settings->display_rotate;
+                            Settings->display_rotate = rot;
+                          }
                         }
-                        renderer = Init_uDisplay(fdesc);
+                        renderer = Init_uDisplay(fdesc); 
                         if (rot >= 0) {
                           Settings->display_rotate = srot;
                         }
