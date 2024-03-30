@@ -38,11 +38,11 @@ void LoraSx127xOnReceive(int packet_size) {
   if (!Lora->receive_time) {
     Lora->receive_time = millis();
   }
-  Lora->packet_size = packet_size;          // we got a packet, set the flag
+  Lora->packet_size = packet_size;         // we got a packet, set the flag
 }
 
 bool LoraSx127xAvailable(void) {
-  return (Lora->packet_size > 0);           // check if the flag is set
+  return (Lora->packet_size > 0);          // check if the flag is set
 }
 
 int LoraSx127xReceive(char* data) {
@@ -55,7 +55,7 @@ int LoraSx127xReceive(char* data) {
   }
   Lora->rssi = LoRa.packetRssi();
   Lora->snr = LoRa.packetSnr();
-  Lora->packet_size = 0;                    // reset flag
+  Lora->packet_size = 0;                   // reset flag
   return packet_size;
 }
 
@@ -63,7 +63,7 @@ bool LoraSx127xSend(uint8_t* data, uint32_t len, bool invert) {
   if (invert) {
     LoRa.enableInvertIQ();                 // active invert I and Q signals
   }
-  LoRa.beginPacket(LoraSettings->implicit_header);  // start packet
+  LoRa.beginPacket(Lora->settings.implicit_header);  // start packet
   LoRa.write(data, len);                   // send message
   LoRa.endPacket();                        // finish packet and send it
   if (invert) {
@@ -74,21 +74,21 @@ bool LoraSx127xSend(uint8_t* data, uint32_t len, bool invert) {
 }
 
 bool LoraSx127xConfig(void) {
-  LoRa.setFrequency(LoraSettings->frequency * 1000 * 1000);
-  LoRa.setSignalBandwidth(LoraSettings->bandwidth * 1000);
-  LoRa.setSpreadingFactor(LoraSettings->spreading_factor);
-  LoRa.setCodingRate4(LoraSettings->coding_rate);
-  LoRa.setSyncWord(LoraSettings->sync_word);
-  LoRa.setTxPower(LoraSettings->output_power);
-  LoRa.setPreambleLength(LoraSettings->preamble_length);
-  LoRa.setOCP(LoraSettings->current_limit);
-  if (LoraSettings->crc_bytes) {
+  LoRa.setFrequency(Lora->settings.frequency * 1000 * 1000);
+  LoRa.setSignalBandwidth(Lora->settings.bandwidth * 1000);
+  LoRa.setSpreadingFactor(Lora->settings.spreading_factor);
+  LoRa.setCodingRate4(Lora->settings.coding_rate);
+  LoRa.setSyncWord(Lora->settings.sync_word);
+  LoRa.setTxPower(Lora->settings.output_power);
+  LoRa.setPreambleLength(Lora->settings.preamble_length);
+  LoRa.setOCP(Lora->settings.current_limit);
+  if (Lora->settings.crc_bytes) {
     LoRa.enableCrc();
   } else {
     LoRa.disableCrc();
   }
 /*    
-  if (LoraSettings->implicit_header) { 
+  if (Lora->settings.implicit_header) { 
     LoRa.implicitHeaderMode();
   } else { 
     LoRa.explicitHeaderMode();
@@ -100,7 +100,7 @@ bool LoraSx127xConfig(void) {
 
 bool LoraSx127xInit(void) {
   LoRa.setPins(Pin(GPIO_LORA_CS), Pin(GPIO_LORA_RST), Pin(GPIO_LORA_DI0));
-  if (LoRa.begin(LoraSettings->frequency * 1000 * 1000)) {
+  if (LoRa.begin(Lora->settings.frequency * 1000 * 1000)) {
     LoraSx127xConfig();
     LoRa.onReceive(LoraSx127xOnReceive);
     LoRa.receive();

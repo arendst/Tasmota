@@ -183,13 +183,13 @@ typedef struct LoraSettings_t {
   LoraEndNode_t end_node[TAS_LORAWAN_ENDNODES];  // End node parameters
 #endif  // USE_LORAWAN_BRIDGE
 } LoraSettings_t;
-LoraSettings_t* LoraSettings = nullptr;
 
 typedef struct Lora_t {
   bool (* Config)(void);
   bool (* Available)(void);
   int (* Receive)(char*);
   bool (* Send)(uint8_t*, uint32_t, bool);
+  LoraSettings_t settings;                       // Persistent settings
   uint32_t receive_time;
   float rssi;
   float snr;
@@ -197,19 +197,15 @@ typedef struct Lora_t {
   volatile bool received_flag;                   // flag to indicate that a packet was received
   bool send_flag;
   bool raw;
+#ifdef USE_LORAWAN_BRIDGE
+  uint32_t device_address;
+  uint8_t* send_buffer;
+  uint8_t send_buffer_step;
+  uint8_t send_buffer_len;
+  bool rx;
+#endif  // USE_LORAWAN_BRIDGE
 } Lora_t;
 Lora_t* Lora = nullptr;
-
-#ifdef USE_LORAWAN_BRIDGE
-typedef struct Lorawan_t {
-  uint32_t device_address;
-  uint32_t send_buffer_step;
-  size_t send_buffer_len;
-  uint8_t send_buffer[64];
-  bool rx;
-} Lorawan_t;
-Lorawan_t* Lorawan = nullptr;
-#endif  // USE_LORAWAN_BRIDGE
 
 #endif  // USE_SPI_LORA
 #endif  // USE_SPI

@@ -29,11 +29,11 @@ void LoraWanPublishHeader(uint32_t node) {
   }
 
   if (!Settings->flag5.zb_omit_json_addr) {           // SetOption119 - (Zigbee) Remove the device addr from json payload, can be used with zb_topic_fname where the addr is already known from the topic
-    ResponseAppend_P(PSTR("{\"%s\":"), EscapeJSONString(LoraSettings->end_node[node].name.c_str()).c_str());
+    ResponseAppend_P(PSTR("{\"%s\":"), EscapeJSONString(Lora->settings.end_node[node].name.c_str()).c_str());
   }
-  ResponseAppend_P(PSTR("{\"Node\":%d,\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\""), node +1, LoraSettings->end_node[node].DevEUIl & 0x0000FFFF);
-  if (!LoraSettings->end_node[node].name.startsWith(F("0x"))) {
-    ResponseAppend_P(PSTR(",\"" D_JSON_ZIGBEE_NAME "\":\"%s\""), EscapeJSONString(LoraSettings->end_node[node].name.c_str()).c_str());
+  ResponseAppend_P(PSTR("{\"Node\":%d,\"" D_JSON_ZIGBEE_DEVICE "\":\"0x%04X\""), node +1, Lora->settings.end_node[node].DevEUIl & 0x0000FFFF);
+  if (!Lora->settings.end_node[node].name.startsWith(F("0x"))) {
+    ResponseAppend_P(PSTR(",\"" D_JSON_ZIGBEE_NAME "\":\"%s\""), EscapeJSONString(Lora->settings.end_node[node].name.c_str()).c_str());
   }
   ResponseAppend_P(PSTR(",\"RSSI\":%1_f,\"SNR\":%1_f"), &Lora->rssi, &Lora->snr);
 }
@@ -57,7 +57,7 @@ void LoraWanPublishFooter(uint32_t node) {
     char subtopic[TOPSZ];
     // Clean special characters
     char stemp[TOPSZ];
-    strlcpy(stemp, LoraSettings->end_node[node].name.c_str(), sizeof(stemp));
+    strlcpy(stemp, Lora->settings.end_node[node].name.c_str(), sizeof(stemp));
     MakeValidMqtt(0, stemp);
     if (Settings->flag5.zigbee_hide_bridge_topic) {   // SetOption125 - (Zigbee) Hide bridge topic from zigbee topic (use with SetOption89) (1)
       snprintf_P(subtopic, sizeof(subtopic), PSTR("%s"), stemp);
@@ -87,8 +87,8 @@ void LoraWanDecode(struct LoraNodeData_t* node_data) {
     uint8_t node;
     uint8_t FPort;
   */
-  if (bitRead(LoraSettings->flags, TAS_LORA_FLAG_DECODE_ENABLED)) {            // LoraOption3 1
-    if (0x00161600 == LoraSettings->end_node[node_data->node].DevEUIh) {       // MerryIoT
+  if (bitRead(Lora->settings.flags, TAS_LORA_FLAG_DECODE_ENABLED)) {          // LoraOption3 1
+    if (0x00161600 == Lora->settings.end_node[node_data->node].DevEUIh) {     // MerryIoT
       if (120 == node_data->FPort) {                                          // MerryIoT door/window Sensor (DW10)
         if (9 == node_data->payload_len) {                                    // MerryIoT Sensor state 
           //  1  2  3  4  5 6  7 8 9
@@ -102,7 +102,7 @@ void LoraWanDecode(struct LoraNodeData_t* node_data) {
           uint32_t events = node_data->payload[6] | (node_data->payload[7] << 8) | (node_data->payload[8] << 16);
 #ifdef USE_LORA_DEBUG
           AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Node %d, DevEUI %08X%08X, Events %d, LastEvent %d min, DoorOpen %d, Button %d, Tamper %d, Tilt %d, Battery %1_fV, Temp %d, Hum %d"), 
-            node_data->node +1, LoraSettings->end_node[node_data->node].DevEUIh, LoraSettings->end_node[node_data->node].DevEUIl,
+            node_data->node +1, Lora->settings.end_node[node_data->node].DevEUIh, Lora->settings.end_node[node_data->node].DevEUIl,
             events, elapsed_time,
             bitRead(status, 0), bitRead(status, 1), bitRead(status, 2), bitRead(status, 3),
             &battery_volt,
@@ -122,7 +122,7 @@ void LoraWanDecode(struct LoraNodeData_t* node_data) {
       }
     }
 
-    else if (0xA840410E == LoraSettings->end_node[node_data->node].DevEUIh) {  // Dragino
+    else if (0xA840410E == Lora->settings.end_node[node_data->node].DevEUIh) {  // Dragino
       if (10 == node_data->FPort) {                                           // Dragino LDS02
         // 8CD2 01 000010 000000 00 - Door Open, 3.282V
         // 0CD2 01 000011 000000 00 - Door Closed
@@ -134,7 +134,7 @@ void LoraWanDecode(struct LoraNodeData_t* node_data) {
         uint8_t alarm = node_data->payload[9];
 #ifdef USE_LORA_DEBUG
         AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Node %d, DevEUI %08X%08X, Events %d, LastEvent %d min, DoorOpen %d, Battery %3_fV, Alarm %d"), 
-          node_data->node +1, LoraSettings->end_node[node_data->node].DevEUIh, LoraSettings->end_node[node_data->node].DevEUIl,
+          node_data->node +1, Lora->settings.end_node[node_data->node].DevEUIh, Lora->settings.end_node[node_data->node].DevEUIl,
           events, open_duration,
           bitRead(status, 7),
           &battery_volt,
@@ -152,7 +152,7 @@ void LoraWanDecode(struct LoraNodeData_t* node_data) {
   // Joined device without decoding
   LoraWanPublishHeader(node_data->node);
   ResponseAppend_P(PSTR(",\"DevEUIh\":\"%08X\",\"DevEUIl\":\"%08X\",\"FPort\":%d,\"Payload\":["),
-    LoraSettings->end_node[node_data->node].DevEUIh, LoraSettings->end_node[node_data->node].DevEUIl, node_data->FPort);
+    Lora->settings.end_node[node_data->node].DevEUIh, Lora->settings.end_node[node_data->node].DevEUIl, node_data->FPort);
   for (uint32_t i = 0; i < node_data->payload_len; i++) {
     ResponseAppend_P(PSTR("%s%d"), (0==i)?"":",", node_data->payload[i]);
   }
