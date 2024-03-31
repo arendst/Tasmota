@@ -26,22 +26,22 @@ def list_files(prefix, glob_list):
 def clean_source(raw):
   raw = comment_remover(raw)    # remove comments
   # convert cr/lf or cr to lf
-  raw = re.sub('\r\n ', '\n', raw)
-  raw = re.sub('\r', '\n', raw)
+  raw = re.sub(r'\r\n ', '\n', raw)
+  raw = re.sub(r'\r', '\n', raw)
   # group multilines into a single line, i.e. if line ends with '\', put in a single line
-  raw = re.sub('\\\\\n', ' ', raw)
+  raw = re.sub(r'\\\n', ' ', raw)
   # remove preprocessor directives
-  raw = re.sub('\n[ \t]*#[^\n]*(?=\n)', '', raw)
-  raw = re.sub('^[ \t]*#[^\n]*\n', '', raw)
-  raw = re.sub('\n[ \t]*#[^\n]*$', '', raw)
+  raw = re.sub(r'\n[ \t]*#[^\n]*(?=\n)', '', raw)
+  raw = re.sub(r'^[ \t]*#[^\n]*\n', '', raw)
+  raw = re.sub(r'\n[ \t]*#[^\n]*$', '', raw)
 
   # remove extern "C" {}
-  raw = re.sub('extern\s+"C"\s+{(.*)}', '\\1', raw, flags=re.DOTALL)
+  raw = re.sub(r'extern\s+"C"\s+{(.*)}', '\\1', raw, flags=re.DOTALL)
 
   # remove empty lines
-  raw = re.sub('\n[ \t]*(?=\n)', '', raw)
-  raw = re.sub('^[ \t]*\n', '', raw)  # remove first empty line
-  raw = re.sub('\n[ \t]*$', '', raw)  # remove last empty line
+  raw = re.sub(r'\n[ \t]*(?=\n)', '', raw)
+  raw = re.sub(r'^[ \t]*\n', '', raw)  # remove first empty line
+  raw = re.sub(r'\n[ \t]*$', '', raw)  # remove last empty line
   return raw
 
 # ################################################################################
@@ -115,29 +115,29 @@ for header_name in headers_names:
 
     # remove anything in '{' '}'
     while True:
-      (raw, repl) = re.subn('\{[^{]*?\}', ';', raw, flags=re.DOTALL)  # replace with ';' to make pattern matching still work
+      (raw, repl) = re.subn(r'\{[^{]*?\}', ';', raw, flags=re.DOTALL)  # replace with ';' to make pattern matching still work
       if (repl == 0): break  # no more replace, stop
 
-    raw_f = re.findall('(^|;|})\s*([^;{}]+\(.*?\))\s*(?=(;|{))', raw, flags=re.DOTALL)
+    raw_f = re.findall(r'(^|;|})\s*([^;{}]+\(.*?\))\s*(?=(;|{))', raw, flags=re.DOTALL)
     fun_defs = [ x[1] for x in raw_f]
     # remove any CRLF or multi-space
-    fun_defs = [ re.sub('[ \t\r\n]+', ' ', x) for x in fun_defs]
+    fun_defs = [ re.sub(r'[ \t\r\n]+', ' ', x) for x in fun_defs]
 
     # parse individual
     for fun in fun_defs:
       # remove LV_ATTRIBUTE_FAST_MEM 
-      fun = re.sub('LV_ATTRIBUTE_FAST_MEM ', '', fun)
+      fun = re.sub(r'LV_ATTRIBUTE_FAST_MEM ', '', fun)
       # remove LV_ATTRIBUTE_TIMER_HANDLER 
-      fun = re.sub('LV_ATTRIBUTE_TIMER_HANDLER ', '', fun)
+      fun = re.sub(r'LV_ATTRIBUTE_TIMER_HANDLER ', '', fun)
       # remove extern 
-      fun = re.sub('extern ', '', fun)
+      fun = re.sub(r'extern ', '', fun)
       exclude = False
       for exclude_prefix in ["typedef", "_LV_", "LV_"]:
         if fun.startswith(exclude_prefix): exclude = True
       if exclude: continue
 
       # extrac the function name
-      fun_name = re.search('\s(\w+)\([^\(]*$', fun)
+      fun_name = re.search(r'\s(\w+)\([^\(]*$', fun)
       if fun_name != None:
         fun_name = fun_name.group(1)    # we now have the function name
         
@@ -359,21 +359,21 @@ for header_name in headers_names:
 
     print(f"// File: {header_name}")
     # extract enums
-    enums = re.findall('enum\s+\w*\s*{(.*?)}', raw, flags=re.DOTALL)
+    enums = re.findall(r'enum\s+\w*\s*{(.*?)}', raw, flags=re.DOTALL)
     for enum in enums:  # iterate on all matches
       # exclude LV_PROPERTY_ID
       # we compile with `#define LV_USE_OBJ_PROPERTY 0`
       # and remove all instances of `LV_PROPERTY_ID(OBJ, FLAG_START,                 LV_PROPERTY_TYPE_INT,       0),`
       if re.search('LV_PROPERTY_ID', enum): continue
       # remove enums defined via a macro
-      enum = re.sub('\S+\((.*?),.*?\),', '\\1,', enum)  # turn 'LV_STYLE_PROP_INIT(LV_STYLE_SIZE, 0x0, LV_STYLE_ID_VALUE + 3, LV_STYLE_ATTR_NONE),' into 'LV_STYLE_SIZE'
+      enum = re.sub(r'\S+\((.*?),.*?\),', '\\1,', enum)  # turn 'LV_STYLE_PROP_INIT(LV_STYLE_SIZE, 0x0, LV_STYLE_ID_VALUE + 3, LV_STYLE_ATTR_NONE),' into 'LV_STYLE_SIZE'
       #
       enum_elt = enum.split(",")
       for enum_item in enum_elt:
         # remove any space
-        enum_item = re.sub('[ \t\n]', '', enum_item)
+        enum_item = re.sub(r'[ \t\n]', '', enum_item)
         # remove anything after '='
-        enum_item = re.sub('=.*$', '', enum_item)
+        enum_item = re.sub(r'=.*$', '', enum_item)
 
         # item is ready
         exclude = False
@@ -387,7 +387,7 @@ for header_name in headers_names:
         print(enum_item)
 
     # extract `LV_EXPORT_CONST_INT()` int constants
-    constints = re.findall('LV_EXPORT_CONST_INT\((\w+)\)', raw, flags=re.DOTALL)
+    constints = re.findall(r'LV_EXPORT_CONST_INT\((\w+)\)', raw, flags=re.DOTALL)
     for constint in constints:
       print(constint)
 sys.stdout.close()
