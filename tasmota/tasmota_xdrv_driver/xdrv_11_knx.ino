@@ -519,7 +519,7 @@ void KNX_INIT(void)
     }
   }
   */
-  for (uint32_t i = 0; i < TasmotaGlobal.devices_present; ++i) {
+  for (uint32_t i = 0; i < (TasmotaGlobal.devices_present <= 8 ? TasmotaGlobal.devices_present : 8); ++i) {
     device_param[i].show = true;
   }
   for (uint32_t i = 0; i < 4; i++) {
@@ -532,15 +532,6 @@ void KNX_INIT(void)
       device_param[8 + i].show = true;
     }
   }
-  if (PinUsed(GPIO_DHT11) || PinUsed(GPIO_DHT22) || PinUsed(GPIO_SI7021)) {
-    device_param[KNX_TEMPERATURE-1].show = true;
-    device_param[KNX_HUMIDITY-1].show = true;
-  }
-#ifdef USE_DS18x20
-  if (PinUsed(GPIO_DSB, GPIO_ANY)) {
-    device_param[KNX_TEMPERATURE-1].show = true;
-  }
-#endif
 
 #if defined(USE_ENERGY_SENSOR)
   // Any device with a Power Monitoring
@@ -695,15 +686,15 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       }
       else if (chan->type == KNX_ENERGY_YESTERDAY) // Reply KNX_ENERGY_YESTERDAY
       {
-        KNX_ANSWER_4BYTE_INT(msg.received_on, 1000.0 * Energy->yesterday_sum);
+        KNX_ANSWER_4BYTE_INT(msg.received_on, round(1000.0 * Energy->yesterday_sum));
       }
       else if (chan->type == KNX_ENERGY_DAILY) // Reply KNX_ENERGY_DAILY
       {
-        KNX_ANSWER_4BYTE_INT(msg.received_on, 1000.0 * Energy->daily_sum);
+        KNX_ANSWER_4BYTE_INT(msg.received_on, round(1000.0 * Energy->daily_sum));
       }
       else if (chan->type == KNX_ENERGY_TOTAL) // Reply KNX_ENERGY_TOTAL
       {
-        KNX_ANSWER_4BYTE_INT(msg.received_on, 1000.0 * Energy->total_sum);
+        KNX_ANSWER_4BYTE_INT(msg.received_on, round(1000.0 * Energy->total_sum));
       }
 #endif
 #ifdef USE_RULES
@@ -781,9 +772,12 @@ void KnxSensor(uint8_t sensor_type, float value)
   if (sensor_type == KNX_TEMPERATURE)
   {
     last_temp = value;
+    device_param[KNX_TEMPERATURE-1].show = true;
+
   } else if (sensor_type == KNX_HUMIDITY)
   {
     last_hum = value;
+    device_param[KNX_HUMIDITY-1].show = true;
   }
 
   if (!(Settings->flag.knx_enabled)) { return; }
@@ -795,7 +789,7 @@ void KnxSensor(uint8_t sensor_type, float value)
       case KNX_ENERGY_DAILY:
       case KNX_ENERGY_YESTERDAY:
       case KNX_ENERGY_TOTAL:
-        KNX_WRITE_4BYTE_INT(KNX_addr, 1000.0 * value);
+        KNX_WRITE_4BYTE_INT(KNX_addr, round(1000.0 * value));
         break;
       default:
         KNX_WRITE_4BYTE_FLOAT(KNX_addr, value);
