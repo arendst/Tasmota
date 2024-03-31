@@ -233,12 +233,12 @@ class type_mapper_class:
   # Group 1: 'void'
   # Group 2: 'lv_obj_set_parent'
   # Group 3: 'lv_obj_t * obj, lv_obj_t * parent'
-  parse_func_regex = re.compile("(.*?)\s(\w+)\((.*?)\)")
+  parse_func_regex = re.compile(r"(.*?)\s(\w+)\((.*?)\)")
   
   # parse call argument type
   # Ex: 'const lv_obj_t * parent' -> 'const ', 'lv_obj_t', ' * ', 'parent'
   # Ex: 'bool auto_fit' -> '', 'bool', ' ', 'auto_fit'
-  parse_arg_regex = re.compile("(\w+\s+)?(\w+)([\*\s]+)(\w+)(\[\])?")
+  parse_arg_regex = re.compile(r"(\w+\s+)?(\w+)([\*\s]+)(\w+)(\[\])?")
 
   # the following types are skipped without warning, because it would be too complex to adapt (so we don't map any function using or returning these types)
   skipping_type = [
@@ -508,16 +508,16 @@ class type_mapper_class:
         print(f"# mapping not used '{k}'", file=sys.stderr)
 
   def clean_c_line(self, l_raw):
-    l_raw = re.sub('//.*$', '', l_raw)                  # remove trailing comments
-    l_raw = re.sub('LV_ATTRIBUTE_FAST_MEM ', '', l_raw) # remove LV_ATTRIBUTE_FAST_MEM marker
-    l_raw = re.sub('\s+', ' ', l_raw)                   # replace any multi-space with a single space
+    l_raw = re.sub(r'//.*$', '', l_raw)                  # remove trailing comments
+    l_raw = re.sub(r'LV_ATTRIBUTE_FAST_MEM ', '', l_raw) # remove LV_ATTRIBUTE_FAST_MEM marker
+    l_raw = re.sub(r'\s+', ' ', l_raw)                   # replace any multi-space with a single space
     l_raw = l_raw.strip(" \t\n\r")                      # remove leading or trailing spaces
-    l_raw = re.sub('static ', '', l_raw)                # remove `static` qualifier
-    l_raw = re.sub('inline ', '', l_raw)                # remove `inline` qualifier
-    l_raw = re.sub('const\s+char\s*\*', 'constchar *', l_raw)
-    l_raw = re.sub('^char\s*\*', 'retchar *', l_raw)    # special case for returning a char*
-    l_raw = re.sub('const ', '', l_raw)
-    l_raw = re.sub('struct ', '', l_raw)
+    l_raw = re.sub(r'static ', '', l_raw)                # remove `static` qualifier
+    l_raw = re.sub(r'inline ', '', l_raw)                # remove `inline` qualifier
+    l_raw = re.sub(r'const\s+char\s*\*', 'constchar *', l_raw)
+    l_raw = re.sub(r'^char\s*\*', 'retchar *', l_raw)    # special case for returning a char*
+    l_raw = re.sub(r'const ', '', l_raw)
+    l_raw = re.sub(r'struct ', '', l_raw)
     return l_raw
 
   def parse_c_line(self, l_raw):
@@ -688,9 +688,9 @@ with open(lv_module_file) as f:
     l_raw = l_raw.strip(" \t\n\r")    # remove leading or trailing spaces
     if l_raw.startswith("//"):
       lv_module.append( [ None, l_raw ] )   # if key in None then add comment line
-    l_raw = re.sub('//.*$', '', l_raw) # remove trailing comments
-    l_raw = re.sub('\s+', '', l_raw) # remove all spaces
-    l_raw = re.sub(',.*$', '', l_raw) # remove comma and anything after it
+    l_raw = re.sub(r'//.*$', '', l_raw) # remove trailing comments
+    l_raw = re.sub(r'\s+', '', l_raw) # remove all spaces
+    l_raw = re.sub(r',.*$', '', l_raw) # remove comma and anything after it
     if (len(l_raw) == 0): continue
 
     k_v = l_raw.split("=")
