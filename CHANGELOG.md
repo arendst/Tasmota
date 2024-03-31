@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file.
 - Support for Domoticz non-persistent ``DzIdx5`` to ``DzIdx32`` (#21019)
 
 ### Breaking Changed
-
+- Berry loading .be file does not generated .bec anymore
 
 ### Changed
 - ESP32 LVGL library from v9.0.0 to v9.1.0 (#21008)
