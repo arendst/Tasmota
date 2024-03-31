@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Support Azure iothub direct method (#21013)
 - Added GPIO for SPI for Universal Touch Screen (#21025)
 - Berry added `close()` to class `serial` (#21042)
+- Support for Domoticz non-persistent ``DzIdx5`` to ``DzIdx32`` (#21019)
 
 ### Breaking Changed
 

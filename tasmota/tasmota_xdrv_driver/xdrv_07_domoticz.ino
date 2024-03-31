@@ -69,14 +69,17 @@ const char kDomoticzCommand[] PROGMEM = "switchlight|switchscene";
 
 char domoticz_in_topic[] = DOMOTICZ_IN_TOPIC;
 
-int domoticz_update_timer = 0;
-uint32_t domoticz_fan_debounce = 0;             // iFan02 state debounce timer
-bool domoticz_subscribe = false;
-bool domoticz_update_flag = true;
-
+typedef struct Domoticz_t {
+  uint32_t relay_idx[MAX_RELAYS_SET - MAX_DOMOTICZ_IDX];
+  uint32_t fan_debounce;             // iFan02 state debounce timer
+  int update_timer;
+  bool subscribe;
+  bool update_flag;
 #ifdef USE_SHUTTER
-bool domoticz_is_shutter = false;
+  bool is_shutter;
 #endif // USE_SHUTTER
+} Domoticz_t;
+Domoticz_t* Domoticz;
 
 int DomoticzBatteryQuality(void) {
   // Battery 0%: ESP 2.6V (minimum operating voltage is 2.5)
@@ -106,35 +109,39 @@ int DomoticzRssiQuality(void) {
   return WifiGetRssiAsQuality(WiFi.RSSI()) / 10;
 }
 
+uint32_t DomoticzRelayIdx(uint32_t relay) {
+  return (relay < MAX_DOMOTICZ_IDX) ? Settings->domoticz_relay_idx[relay] : Domoticz->relay_idx[relay -MAX_DOMOTICZ_IDX];
+}
+
 #ifdef USE_SONOFF_IFAN
 void MqttPublishDomoticzFanState(void) {
-  if (Settings->flag.mqtt_enabled && Settings->domoticz_relay_idx[1]) {  // SetOption3 - Enable MQTT
+  if (Settings->flag.mqtt_enabled && DomoticzRelayIdx(1)) {  // SetOption3 - Enable MQTT
     char svalue[8];  // Fanspeed value
 
     int fan_speed = GetFanspeed();
     snprintf_P(svalue, sizeof(svalue), PSTR("%d"), fan_speed * 10);
-    Response_P(DOMOTICZ_MESSAGE, (int)Settings->domoticz_relay_idx[1], (0 == fan_speed) ? 0 : 2, svalue, DomoticzBatteryQuality(), DomoticzRssiQuality());
+    Response_P(DOMOTICZ_MESSAGE, (int)DomoticzRelayIdx(1), (0 == fan_speed) ? 0 : 2, svalue, DomoticzBatteryQuality(), DomoticzRssiQuality());
     MqttPublish(domoticz_in_topic);
 
-    domoticz_fan_debounce = millis();
+    Domoticz->fan_debounce = millis();
   }
 }
 
 void DomoticzUpdateFanState(void) {
-  if (domoticz_update_flag) {
+  if (Domoticz->update_flag) {
     MqttPublishDomoticzFanState();
   }
-  domoticz_update_flag = true;
+  Domoticz->update_flag = true;
 }
 #endif  // USE_SONOFF_IFAN
 
 void MqttPublishDomoticzPowerState(uint8_t device) {
   if (Settings->flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
     if (device < 1) { device = 1; }
-    if ((device > TasmotaGlobal.devices_present) || (device > MAX_DOMOTICZ_IDX)) { return; }
-    if (Settings->domoticz_relay_idx[device -1]) {
+    if ((device > TasmotaGlobal.devices_present) || (device > MAX_RELAYS_SET)) { return; }
+    if (DomoticzRelayIdx(device -1)) {
 #ifdef USE_SHUTTER
-      if (domoticz_is_shutter) {
+      if (Domoticz->is_shutter) {
         // Shutter is updated by sensor update - power state should not be sent
       } else {
 #endif  // USE_SHUTTER
@@ -146,7 +153,7 @@ void MqttPublishDomoticzPowerState(uint8_t device) {
         char svalue[8];  // Dimmer value
 
         snprintf_P(svalue, sizeof(svalue), PSTR("%d"), Settings->light_dimmer);
-        Response_P(DOMOTICZ_MESSAGE, (int)Settings->domoticz_relay_idx[device -1], (TasmotaGlobal.power & (1 << (device -1))) ? 1 : 0, (TasmotaGlobal.light_type) ? svalue : "", DomoticzBatteryQuality(), DomoticzRssiQuality());
+        Response_P(DOMOTICZ_MESSAGE, (int)DomoticzRelayIdx(device -1), (TasmotaGlobal.power & (1 << (device -1))) ? 1 : 0, (TasmotaGlobal.light_type) ? svalue : "", DomoticzBatteryQuality(), DomoticzRssiQuality());
         MqttPublish(domoticz_in_topic);
 #ifdef USE_SONOFF_IFAN
       }
@@ -159,23 +166,22 @@ void MqttPublishDomoticzPowerState(uint8_t device) {
 }
 
 void DomoticzUpdatePowerState(uint8_t device) {
-  if (domoticz_update_flag) {
+  if (Domoticz->update_flag) {
     MqttPublishDomoticzPowerState(device);
   }
-  domoticz_update_flag = true;
+  Domoticz->update_flag = true;
 }
 
 void DomoticzMqttUpdate(void) {
-  if (domoticz_subscribe && (Settings->domoticz_update_timer || domoticz_update_timer)) {
-    domoticz_update_timer--;
-    if (domoticz_update_timer <= 0) {
-      domoticz_update_timer = Settings->domoticz_update_timer;
+  if (Domoticz->subscribe && (Settings->domoticz_update_timer || Domoticz->update_timer)) {
+    Domoticz->update_timer--;
+    if (Domoticz->update_timer <= 0) {
+      Domoticz->update_timer = Settings->domoticz_update_timer;
       for (uint32_t i = 1; i <= TasmotaGlobal.devices_present; i++) {
 #ifdef USE_SHUTTER
-        if (domoticz_is_shutter)
-        {
-            // no power state updates for shutters
-            break;
+        if (Domoticz->is_shutter) {
+          // no power state updates for shutters
+          break;
         }
 #endif // USE_SHUTTER
 #ifdef USE_SONOFF_IFAN
@@ -194,15 +200,23 @@ void DomoticzMqttUpdate(void) {
 }
 
 void DomoticzMqttSubscribe(void) {
-  uint8_t maxdev = (TasmotaGlobal.devices_present > MAX_DOMOTICZ_IDX) ? MAX_DOMOTICZ_IDX : TasmotaGlobal.devices_present;
+  uint8_t maxdev = (TasmotaGlobal.devices_present > MAX_RELAYS_SET) ? MAX_RELAYS_SET : TasmotaGlobal.devices_present;
+  bool any_relay = false;
   for (uint32_t i = 0; i < maxdev; i++) {
-    if (Settings->domoticz_relay_idx[i]) {
-      domoticz_subscribe = true;
-      char stopic[TOPSZ];
-      snprintf_P(stopic, sizeof(stopic), PSTR(DOMOTICZ_OUT_TOPIC "/#"));  // domoticz topic
-      MqttSubscribe(stopic);
-      return;
+    if (DomoticzRelayIdx(i)) {
+      any_relay = true;
+      break;
     }
+  }
+  char stopic[TOPSZ];
+  snprintf_P(stopic, sizeof(stopic), PSTR(DOMOTICZ_OUT_TOPIC "/#"));  // domoticz topic
+  if (Domoticz->subscribe && !any_relay) {
+    Domoticz->subscribe = false;
+    MqttUnsubscribe(stopic);
+  }
+  if (!Domoticz->subscribe && any_relay) {
+    Domoticz->subscribe = true;
+    MqttSubscribe(stopic);
   }
 }
 
@@ -210,9 +224,9 @@ int32_t DomoticzIdx2Relay(uint32_t idx) {
   if (0 == idx) {
     return -1;  // Idx not mine
   }
-  uint32_t maxdev = (TasmotaGlobal.devices_present > MAX_DOMOTICZ_IDX) ? MAX_DOMOTICZ_IDX : TasmotaGlobal.devices_present;
+  uint32_t maxdev = (TasmotaGlobal.devices_present > MAX_RELAYS_SET) ? MAX_RELAYS_SET : TasmotaGlobal.devices_present;
   for (uint32_t i = 0; i < maxdev; i++) {
-    if (idx == Settings->domoticz_relay_idx[i]) {
+    if (idx == DomoticzRelayIdx(i)) {
       return i;
     }
   }
@@ -226,7 +240,7 @@ bool DomoticzMqttData(void) {
   XdrvMailbox.data = (char*)data;
   XdrvMailbox.data_len = data_len;
 */
-  domoticz_update_flag = true;
+  Domoticz->update_flag = true;
 
   if (strncasecmp_P(XdrvMailbox.topic, PSTR(DOMOTICZ_OUT_TOPIC), strlen(DOMOTICZ_OUT_TOPIC)) != 0) {
     return false;  // Process unchanged data
@@ -268,7 +282,7 @@ bool DomoticzMqttData(void) {
     return true;  // Nvalue out of boundaries
   }
 
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_DOMOTICZ "%s, idx %d, nvalue %d"), XdrvMailbox.topic, Settings->domoticz_relay_idx[relay_index], nvalue);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_DOMOTICZ "%s, idx %d, nvalue %d"), XdrvMailbox.topic, DomoticzRelayIdx(relay_index), nvalue);
 
   bool iscolordimmer = (strcmp_P(domoticz.getStr(PSTR("dtype")), PSTR("Color Switch")) == 0);
   bool isShutter = (strcmp_P(domoticz.getStr(PSTR("dtype")), PSTR("Light/Switch")) == 0) && (strncmp_P(domoticz.getStr(PSTR("switchType")),PSTR("Blinds"), 6) == 0);
@@ -284,7 +298,7 @@ bool DomoticzMqttData(void) {
     if (GetFanspeed() == svalue) {
       return true;  // Stop as already set
     }
-    if (TimePassedSince(domoticz_fan_debounce) < 1000) {
+    if (TimePassedSince(Domoticz->fan_debounce) < 1000) {
       return true;  // Stop if device in limbo
     }
     snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_FANSPEED));
@@ -350,7 +364,7 @@ bool DomoticzMqttData(void) {
 
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_DOMOTICZ D_RECEIVED_TOPIC " %s, " D_DATA " %s"), XdrvMailbox.topic, XdrvMailbox.data);
 
-  domoticz_update_flag = false;
+  Domoticz->update_flag = false;
   return false;    // Process new data
 }
 
@@ -489,17 +503,35 @@ void DomoticzSensorP1SmartMeter(char *usage1, char *usage2, char *return1, char 
   DomoticzSensor(DZ_P1_SMART_METER, data);
 }
 
+
+/*********************************************************************************************/
+
+void DomoticzInit(void) {
+  if (Settings->flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
+    Domoticz = (Domoticz_t*)calloc(sizeof(Domoticz_t), 1);  // Need calloc to reset registers to 0/false
+    if (nullptr == Domoticz) { return; }
+
+    Domoticz->update_flag = true;
+  }
+}
+
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
 
 void CmndDomoticzIdx(void) {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_DOMOTICZ_IDX)) {
+  // DzIdx1 403  - Relate relay1 (=Power1) to Domoticz Idx 403 persistent
+  // DzIdx5 403  - Relate relay5 (=Power5) to Domoticz Idx 403 non-persistent (need a rule at boot to become persistent)
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RELAYS_SET)) {
     if (XdrvMailbox.payload >= 0) {
-      Settings->domoticz_relay_idx[XdrvMailbox.index -1] = XdrvMailbox.payload;
-      TasmotaGlobal.restart_flag = 2;
+      if (XdrvMailbox.index <= MAX_DOMOTICZ_IDX) {
+        Settings->domoticz_relay_idx[XdrvMailbox.index -1] = XdrvMailbox.payload;
+      } else {
+        Domoticz->relay_idx[XdrvMailbox.index -MAX_DOMOTICZ_IDX -1] = XdrvMailbox.payload;
+      }
+      DomoticzMqttSubscribe();
     }
-    ResponseCmndIdxNumber(Settings->domoticz_relay_idx[XdrvMailbox.index -1]);
+    ResponseCmndIdxNumber(DomoticzRelayIdx(XdrvMailbox.index -1));
   }
 }
 
@@ -602,7 +634,7 @@ void HandleDomoticzConfiguration(void) {
 
   if (Webserver->hasArg(F("save"))) {
     DomoticzSaveSettings();
-    WebRestart(1);
+    HandleConfiguration();
     return;
   }
 
@@ -668,7 +700,10 @@ void DomoticzSaveSettings(void) {
 bool Xdrv07(uint32_t function) {
   bool result = false;
 
-  if (Settings->flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
+  if (FUNC_PRE_INIT == function) {
+    DomoticzInit();
+  }
+  else if (Domoticz) {
     switch (function) {
       case FUNC_EVERY_SECOND:
         DomoticzMqttUpdate();
@@ -687,11 +722,13 @@ bool Xdrv07(uint32_t function) {
       case FUNC_MQTT_SUBSCRIBE:
         DomoticzMqttSubscribe();
 #ifdef USE_SHUTTER
-        if (Settings->domoticz_sensor_idx[DZ_SHUTTER]) { domoticz_is_shutter = true; }
+        if (Settings->domoticz_sensor_idx[DZ_SHUTTER]) { 
+          Domoticz->is_shutter = true;
+        }
 #endif // USE_SHUTTER
         break;
       case FUNC_MQTT_INIT:
-        domoticz_update_timer = 2;
+        Domoticz->update_timer = 2;
         break;
       case FUNC_SHOW_SENSOR:
 //        DomoticzSendSensor();
