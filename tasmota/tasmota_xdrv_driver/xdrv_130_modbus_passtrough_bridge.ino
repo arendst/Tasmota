@@ -73,7 +73,10 @@ void (*const ModbusBridgePTCommand[])(void) PROGMEM = {
 
 
 #include <TasmotaModbus.h>
+#include <TasmotaSerial.h>
+
 TasmotaModbus *modbusBridgePTModbus = nullptr;
+TasmotaSerial *modbusBridgePTSerial = nullptr;
 
 enum class ModbusBridgePTError
 {
@@ -139,6 +142,7 @@ struct ModbusBridgePT
   uint8_t count = 0;            // Number of values to read / write
   bool raw = false;
   uint8_t *buffer = nullptr;    // Buffer for storing read / write data
+  uint8_t *buffer2 = nullptr;    // Buffer for storing read / write data for serial§
   bool enabled = false;
 };
 
@@ -170,25 +174,42 @@ bool ModbusBridgePTBegin(void) {
     Settings->modbus_sconfig = TS_SERIAL_8N1;
   }
 
-  int result = modbusBridgePTModbus->Begin(Settings->modbus_sbaudrate * 300, ConvertSerialConfig(Settings->modbus_sconfig)); // Reinitialize modbus port with new baud rate
-  if (result) {
-    if (2 == result) {
+  int result1 = modbusBridgePTModbus->Begin(Settings->modbus_sbaudrate * 300, ConvertSerialConfig(Settings->modbus_sconfig)); // Reinitialize modbus port with new baud rate
+
+  if (result1) {
+    if (2 == result1) {// result1 of 2 is for harware serial
       ClaimSerial();
     }
 #ifdef ESP32
-    AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: Serial UART%d"), modbusBridgePTModbus->getUart());
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: Modbus Serial UART%d"), modbusBridgePTModbus->getUart());
 #endif
-    AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR %s ser init at %d baud"), (2 == result ? "HW" : "SW"), Settings->modbus_sbaudrate * 300);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR %s ser init at %d baud"), (2 == result1 ? "HW" : "SW"), Settings->modbus_sbaudrate * 300);
 
     if (nullptr == modbusBridgePT.buffer) {
       modbusBridgePT.buffer = (uint8_t *)malloc(MBRPT_RECEIVE_BUFFER_SIZE);
     }
     if (nullptr == modbusBridgePT.buffer) {
       ModbusBridgePTAllocError(PSTR("BUFFER"));
-      result = false;
+      result1 = false;
     }
   }
-  
+
+  int result2 = modbusBridgePTSerial->begin(Settings->modbus_sbaudrate * 300, ConvertSerialConfig(Settings->modbus_sconfig)); // Reinitialize serial port with new baud rate
+  if (result2) {
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MBSPT: Modbus Serial 2 UART%d"), modbusBridgePTSerial->getUart());
+#endif
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR serial2 %s ser init at %d baud"), (2 == result2 ? "HW" : "SW"), Settings->modbus_sbaudrate * 300);
+    if (nullptr == modbusBridgePT.buffer2) {
+      modbusBridgePT.buffer2 = (uint8_t *)malloc(MBRPT_RECEIVE_BUFFER_SIZE);
+    }
+    if (nullptr == modbusBridgePT.buffer2) {
+      ModbusBridgePTAllocError(PSTR("BUFFER"));
+      result2 = false;
+    }
+  }
+
+  int result = result1 && result2;
   return result;
 }
 
@@ -219,7 +240,7 @@ void ModbusBridgePTSetBaudrate(uint32_t baudrate)
 
 /********************************************************************************************/
 //
-// Handles data received from tasmota modbus wrapper and send this to (TCP and/or) MQTT client
+// Handles data received from tasmota modbus wrapper and send this to MQTT client
 //
 void ModbusBridgePTHandle(void)
 {
@@ -485,11 +506,18 @@ void ModbusBridgePTHandle(void)
 
 /********************************************************************************************/
 //
-// Inits the tasmota modbus driver, sets serialport and if TCP enabled allocates a TCP buffer
+// Inits the tasmota modbus driver, sets serialport
 //
 void ModbusBridgePTInit(void) {
   if (PinUsed(GPIO_MBRPT_RX) && PinUsed(GPIO_MBRPT_TX)) {
     modbusBridgePTModbus = new TasmotaModbus(Pin(GPIO_MBRPT_RX), Pin(GPIO_MBRPT_TX), Pin(GPIO_MBRPT_TX_ENA));
+  }
+  if (PinUsed(GPIO_MBRPT2_RX) && PinUsed(GPIO_MBRPT2_TX)) {
+    modbusBridgePTSerial = new TasmotaSerial(Pin(GPIO_MBRPT2_RX), Pin(GPIO_MBRPT2_TX)); // TODO: need to add ENABLE pin handling
+  }
+
+  if ((PinUsed(GPIO_MBRPT_RX) && PinUsed(GPIO_MBRPT_TX)) || (PinUsed(GPIO_MBRPT2_RX) && PinUsed(GPIO_MBRPT2_TX)))
+  {
     if (ModbusBridgePTBegin()) {
       modbusBridgePT.enabled = true;
     }
@@ -521,7 +549,7 @@ void CmndModbusBridgePTSend(void)
   modbusBridgePT.count = root.getUInt(PSTR(D_JSON_MODBUSPT_COUNT), 1); // Number of values to read / write
   const char *sendian = root.getStr(PSTR(D_JSON_MODBUSPT_ENDIAN), "undefined");
   modbusBridgePT.endian = ModbusBridgePTEndian::mb_undefined;
-  
+
   // If functioncode is 1, 2 or 15, the count is not the number of registers but the number
   // of bits to read or write, so calculate the number data bytes to read/write.
   if ((functionCode == 1) || (functionCode == 2) || (functionCode == 15)) 

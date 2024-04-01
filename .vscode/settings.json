@@ -73,6 +73,22 @@
     ],
     "files.associations": {
       "functional": "cpp",
-      "random": "cpp"
+      "random": "cpp",
+      "array": "cpp",
+      "deque": "cpp",
+      "list": "cpp",
+      "string": "cpp",
+      "unordered_map": "cpp",
+      "unordered_set": "cpp",
+      "vector": "cpp",
+      "string_view": "cpp",
+      "initializer_list": "cpp",
+      "*.tcc": "cpp",
+      "memory": "cpp",
+      "fstream": "cpp",
+      "istream": "cpp",
+      "ostream": "cpp",
+      "sstream": "cpp",
+      "streambuf": "cpp"
     }
   }
