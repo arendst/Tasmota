@@ -1766,6 +1766,9 @@ void SettingsDelta(void) {
     if (Settings->version < 0x0D000003) {  // 13.0.0.3
       Settings->battery_level_percent = 101;
     }
+    if (Settings->version < 0x0D040004) {  // 13.4.0.4
+      Settings->relay_lock_bitfield = 0;
+    }
 /*    
 #if (LANGUAGE_LCID == 1049)
     if (Settings->version < 0x0D020003) {  // 13.2.0.3
