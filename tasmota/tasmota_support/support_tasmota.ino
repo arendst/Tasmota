@@ -712,6 +712,11 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
   }
   TasmotaGlobal.active_device = device;
 
+  if (Settings->relay_lock_bitfield & (1 << (device-1))) {
+      AddLog(LOG_LEVEL_INFO, PSTR("Relay: %d is LOCKED"), device);
+      return;
+  }
+
   if (state != POWER_SHOW_STATE) {
     SetPulseTimer((device -1) % MAX_PULSETIMERS, 0);
   }
