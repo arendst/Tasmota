@@ -786,8 +786,8 @@ typedef struct {
   uint8_t       weight_change;             // E9F
   uint8_t       web_color2[2][3];          // EA0  Needs to be on integer / 3 distance from web_color
   uint16_t      zcdimmerset[5];            // EA6
-
-  uint8_t       free_eb0[22];              // EB0  22 bytes
+  uint32_t      relay_lock_bitfield;       // EB0
+  uint8_t       free_eb0[18];              // EB4  18 bytes
 
   uint8_t       shift595_device_count;     // EC6
   uint8_t       sta_config;                // EC7
