@@ -10,16 +10,17 @@ All notable changes to this project will be documented in this file.
 - Support Azure iothub direct method (#21013)
 - Added GPIO for SPI for Universal Touch Screen (#21025)
 - Berry added `close()` to class `serial` (#21042)
-- Support for Domoticz non-persistent ``DzIdx5`` to ``DzIdx32`` (#21019)
+- Support for Domoticz non-persistent ``DzIdx5`` to ``DzIdx32`` and disabling DOMOTICZ_OUT_TOPIC subscribe using command ``DzIdx0 0`` (#21019)
 
 ### Breaking Changed
-- Berry loading .be file does not generated .bec anymore
+- Berry loading .be file does not generated .bec anymore (#21075)
 
 ### Changed
 - ESP32 LVGL library from v9.0.0 to v9.1.0 (#21008)
 - berry.exe (pre-compiled for Windows) updated to latest Berry patches (#21024)
 - Some `display.ini` to utouch (#21029)
 - ESP32 WiFi phy modes 11n and 11ax represented as HT20, HT40 and HE20 (#19350)
+- KNX format of energy to match specifications (#21074)
 
 ### Fixed
 - BTHome, prep BLE5 (#20989)

@@ -126,7 +126,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for MCP23S08 [#20971](https://github.com/arendst/Tasmota/issues/20971)
 - Support for ESP32-S3 120Mhz [#20973](https://github.com/arendst/Tasmota/issues/20973)
 - Support Azure iothub direct method [#21013](https://github.com/arendst/Tasmota/issues/21013)
-- Support for Domoticz non-persistent ``DzIdx5`` to ``DzIdx32`` [#21019](https://github.com/arendst/Tasmota/issues/21019)
+- Support for Domoticz non-persistent ``DzIdx5`` to ``DzIdx32`` and disabling DOMOTICZ_OUT_TOPIC subscribe using command ``DzIdx0 0`` [#21019](https://github.com/arendst/Tasmota/issues/21019)
 - Support SPI GPIO configuration for Universal Touch Screen [#21025](https://github.com/arendst/Tasmota/issues/21025)
 - Zigbee support for attributes of type `uint48` used by energy monitoring [#20992](https://github.com/arendst/Tasmota/issues/20992)
 - QMC5883l check for overflow and scale reading [#20643](https://github.com/arendst/Tasmota/issues/20643)
@@ -142,6 +142,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Breaking Changed
 - Drop support for old (insecure) fingerprint format [#20842](https://github.com/arendst/Tasmota/issues/20842)
+- Berry loading .be file does not generated .bec anymore [#21075](https://github.com/arendst/Tasmota/issues/21075)
 - LVGL remove embedded typicons font [#20872](https://github.com/arendst/Tasmota/issues/20872)
 - LVGL remove `textarea` and `spinbox` from binaries [#20916](https://github.com/arendst/Tasmota/issues/20916)
 
@@ -152,6 +153,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - NeoPool webUI pH alarms (4 & 5) completed (#20743)[#20743](https://github.com/arendst/Tasmota/issues/20743)
 - Prevent shutter MQTT broadcast with activated ShutterLock [#20827](https://github.com/arendst/Tasmota/issues/20827)
 - Some `display.ini` to utouch [#21029](https://github.com/arendst/Tasmota/issues/21029)
+- KNX format of energy to match specifications [#21074](https://github.com/arendst/Tasmota/issues/21074)
 - ESP32 WiFi phy modes 11n and 11ax represented as HT20, HT40 and HE20 [#19350](https://github.com/arendst/Tasmota/issues/19350)
 - berry.exe (pre-compiled for Windows) updated to latest Berry patches [#21024](https://github.com/arendst/Tasmota/issues/21024)
 - Berry class `int64` made immutable [#20727](https://github.com/arendst/Tasmota/issues/20727)
