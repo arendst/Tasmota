@@ -2830,14 +2830,11 @@ void CmndRelayLock(void)
   // D_CMND_RELAYLOCK
   // Settings.relay_lock_bitfied = -1;
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.devices_present)) {
-    if (XdrvMailbox.payload == 0) {
-        // Setzt das Bit an der Position INDEX auf 0
-        Settings->relay_lock_bitfield &= ~(1 << (XdrvMailbox.index-1));
-    } else {
-        // Setzt das Bit an der Position INDEX auf 1
-        Settings->relay_lock_bitfield |= (1 << (XdrvMailbox.index-1));
-    }
+    bitWrite(Settings->relay_lock_bitfield, XdrvMailbox.index-1, XdrvMailbox.payload>0?1:0);
   }
+  AddLog(LOG_LEVEL_DEBUG, PSTR("Lock: %32_b"),
+    &Settings->relay_lock_bitfield);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("      32..........20........10.......1"));
   ResponseCmndNumber(Settings->relay_lock_bitfield);
 }
 
