@@ -326,13 +326,29 @@ int32_t ext_vsnprintf_P(char * out_buf, size_t buf_len, const char * fmt_P, va_l
               }
             }
             break;
-          // '%_b' outputs an unsigned int to binary
+          // '%_b' outputs a uint32_t to binary
+          // '%8_b' outputs a uint8_t to binary
           case 'b':     // Binary, decimals indicates the zero prefill
             {
               if (cur_val < min_valid_ptr) { new_val_str = ext_invalid_mem; }
               else {
-                if ((decimals < 0) || (decimals > 32)) { decimals = 1; }
+#ifdef ESP8266
+                if ((decimals < 1) || (decimals > 32)) { decimals = 1; }
                 ToBinary(*(uint32_t*)cur_val, hex, decimals);
+#endif  // ESP8266
+#ifdef ESP32
+#if ESP_IDF_VERSION_MAJOR >= 5
+                if ((decimals < 1) || (decimals > 32)) { decimals = 1; }
+                ToBinary(*(uint32_t*)cur_val, hex, decimals);
+#else
+                // Workaround ESP32 non-32-bit boundery issue
+                // '%_b' outputs a uint8_t to binary (ESP8266) but as uint32_t on ESP32!
+                if ((decimals < 1) || (decimals > 32)) { decimals = 32; }
+                uint32_t mask = (32 == decimals) ? 0xFFFFFFFF : (1 << decimals) -1;
+                uint32_t val = *(uint32_t*)cur_val & mask;
+                ToBinary(val, hex, decimals);
+#endif  // ESP_IDF_VERSION_MAJOR
+#endif  // ESP32
                 new_val_str = copyStr(hex);
                 if (new_val_str == nullptr) { goto free_allocs; }
                 allocs[alloc_idx++] = new_val_str;
