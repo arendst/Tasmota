@@ -714,7 +714,7 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
 
   if (Settings->relay_lock_bitfield & (1 << (device-1))) {
       AddLog(LOG_LEVEL_INFO, PSTR("Relay: %d is LOCKED"), device);
-      return;
+      state = POWER_SHOW_STATE;  // only show state. Make no change
   }
 
   if (state != POWER_SHOW_STATE) {
