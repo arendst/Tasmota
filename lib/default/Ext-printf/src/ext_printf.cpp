@@ -157,6 +157,26 @@ char * U64toHex(uint64_t value, char *str) {
 }
 */
 
+char * ToBinary(uint32_t value, char *str, uint32_t zeroleads) {
+  str[32] = 0;    // end of string
+  for (uint32_t i=0; i<32; i++) {       // 32 digits in uint32_t
+    str[31 - i] = (char)(value & 1)+'0';
+    value = value >> 1;
+  }
+  if (zeroleads < 32) {
+    uint32_t max_zeroes = 32 - zeroleads;
+    while (max_zeroes) {
+      if (str[0] == '0') {
+        memmove(str, str +1, strlen(str));
+      } else {
+        break;
+      }
+      max_zeroes--;
+    }
+  }
+  return str;
+}
+
 char * U64toHex(uint64_t value, char *str, uint32_t zeroleads) {
   // str must be at least 17 bytes long
   str[16] = 0;    // end of string
@@ -235,7 +255,7 @@ int32_t ext_vsnprintf_P(char * out_buf, size_t buf_len, const char * fmt_P, va_l
   const uint32_t ALLOC_SIZE = 12;
   static const char * allocs[ALLOC_SIZE] = {};     // initialized to zeroes
   uint32_t alloc_idx = 0;
-  static char hex[20];        // buffer used for 64 bits, favor RAM instead of stack to remove pressure
+  static char hex[34];          // buffer used for 64 bits, favor RAM instead of stack to remove pressure
 
 	for (; *fmt != 0; ++fmt) {
     int32_t decimals = -2;      // default to 2 decimals and remove trailing zeros
@@ -303,6 +323,19 @@ int32_t ext_vsnprintf_P(char * out_buf, size_t buf_len, const char * fmt_P, va_l
                   new_val_str = hex_char;
                   allocs[alloc_idx++] = new_val_str;
                 }
+              }
+            }
+            break;
+          // '%_b' outputs an unsigned int to binary
+          case 'b':     // Binary, decimals indicates the zero prefill
+            {
+              if (cur_val < min_valid_ptr) { new_val_str = ext_invalid_mem; }
+              else {
+                if ((decimals < 0) || (decimals > 32)) { decimals = 1; }
+                ToBinary(*(uint32_t*)cur_val, hex, decimals);
+                new_val_str = copyStr(hex);
+                if (new_val_str == nullptr) { goto free_allocs; }
+                allocs[alloc_idx++] = new_val_str;
               }
             }
             break;
