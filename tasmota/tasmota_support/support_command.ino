@@ -2827,14 +2827,12 @@ void CmndDriver(void)
 
 void CmndRelayLock(void)
 {
-  // D_CMND_RELAYLOCK
-  // Settings.relay_lock_bitfied = -1;
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.devices_present)) {
     bitWrite(Settings->relay_lock_bitfield, XdrvMailbox.index-1, XdrvMailbox.payload>0?1:0);
   }
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Lock: %32_b"),
-    &Settings->relay_lock_bitfield);
-  AddLog(LOG_LEVEL_DEBUG, PSTR("      32..........20........10.......1"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CMD:        %32_b"), &Settings->relay_lock_bitfield);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CMD: Relay: 32..28..24..20..16..12..8...4..1"));
+  //                                        10001000100010001000100010001000
   ResponseCmndNumber(Settings->relay_lock_bitfield);
 }
 
