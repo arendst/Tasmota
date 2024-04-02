@@ -157,22 +157,22 @@ char * U64toHex(uint64_t value, char *str) {
 }
 */
 
-char * ToBinary(uint32_t value, char *str, uint32_t zeroleads) {
+char * ToBinary(uint32_t value, char *str, int32_t digits) {
+  if (digits > 32) { digits = 32; }
+  if (digits < 1) { digits = 1; }
+  int32_t digits_to_one = 1;               // how many digits until we find the last `1`
   str[32] = 0;    // end of string
   for (uint32_t i=0; i<32; i++) {       // 32 digits in uint32_t
+    if ((value & 1) && (i+1 > digits_to_one)) {
+      digits_to_one = i+1;
+    }
     str[31 - i] = (char)(value & 1)+'0';
     value = value >> 1;
   }
-  if (zeroleads < 32) {
-    uint32_t max_zeroes = 32 - zeroleads;
-    while (max_zeroes) {
-      if (str[0] == '0') {
-        memmove(str, str +1, strlen(str));
-      } else {
-        break;
-      }
-      max_zeroes--;
-    }
+  // adjust digits to always show the total value
+  if (digits_to_one > digits) { digits = digits_to_one; }
+  if (digits < 32) {
+    memmove(str, str + 32 - digits, digits + 1);
   }
   return str;
 }
@@ -330,30 +330,11 @@ int32_t ext_vsnprintf_P(char * out_buf, size_t buf_len, const char * fmt_P, va_l
           // '%8_b' outputs a uint8_t to binary
           case 'b':     // Binary, decimals indicates the zero prefill
             {
-              if (cur_val < min_valid_ptr) { new_val_str = ext_invalid_mem; }
-              else {
-#ifdef ESP8266
-                if ((decimals < 1) || (decimals > 32)) { decimals = 1; }
-                ToBinary(*(uint32_t*)cur_val, hex, decimals);
-#endif  // ESP8266
-#ifdef ESP32
-#if ESP_IDF_VERSION_MAJOR >= 5
-                if ((decimals < 1) || (decimals > 32)) { decimals = 1; }
-                ToBinary(*(uint32_t*)cur_val, hex, decimals);
-#else
-                // Workaround ESP32 non-32-bit boundery issue
-                // '%_b' outputs a uint8_t to binary (ESP8266) but as uint32_t on ESP32!
-                if ((decimals < 1) || (decimals > 32)) { decimals = 32; }
-                uint32_t mask = (32 == decimals) ? 0xFFFFFFFF : (1 << decimals) -1;
-                uint32_t val = *(uint32_t*)cur_val & mask;
-                ToBinary(val, hex, decimals);
-#endif  // ESP_IDF_VERSION_MAJOR
-#endif  // ESP32
+                ToBinary(cur_val, hex, decimals);
                 new_val_str = copyStr(hex);
                 if (new_val_str == nullptr) { goto free_allocs; }
                 allocs[alloc_idx++] = new_val_str;
               }
-            }
             break;
 /*
           case 'V':     // 2-byte values, decimals indicates the length, default 2
