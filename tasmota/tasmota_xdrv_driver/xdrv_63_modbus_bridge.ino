@@ -207,6 +207,9 @@ bool ModbusBridgeBegin(void) {
     if (2 == result) {
       ClaimSerial();
     }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: Serial UART%d"), modbusBridgeModbus->getUart());
+#endif
     AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR %s ser init at %d baud"), (2 == result ? "HW" : "SW"), Settings->modbus_sbaudrate * 300);
 
     if (nullptr == modbusBridge.buffer) {
@@ -377,7 +380,11 @@ void ModbusBridgeHandle(void)
         }
         ResponseAppend_P(PSTR("]}"));
         ResponseJsonEnd();
-        MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_MODBUS_RECEIVED));
+        if (Settings->flag6.mqtt_disable_modbus ) {  // SetOption158  If it is activated, Tasmota will not publish ModbusReceived MQTT messages, but it will proccess event trigger rules
+          XdrvRulesProcess(0);
+        } else {
+          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_MODBUS_RECEIVED));
+        }
       }
       else if (modbusBridge.type == ModbusBridgeType::mb_hex)
       {
@@ -391,7 +398,11 @@ void ModbusBridgeHandle(void)
         }
         ResponseAppend_P(PSTR("]}"));
         ResponseJsonEnd();
-        MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_MODBUS_RECEIVED));
+        if (Settings->flag6.mqtt_disable_modbus ) {  // SetOption158  If it is activated, Tasmota will not publish ModbusReceived MQTT messages, but it will proccess event trigger rules
+          XdrvRulesProcess(0);
+        } else {
+          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_MODBUS_RECEIVED));
+        }
       }
       else if ((modbusBridge.buffer[1] > 0) && (modbusBridge.buffer[1] < 7))
       {
@@ -553,7 +564,11 @@ void ModbusBridgeHandle(void)
         ResponseAppend_P(PSTR("}"));
         ResponseJsonEnd();
         if (errorcode == ModbusBridgeError::noerror)
-          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_MODBUS_RECEIVED));
+          if (Settings->flag6.mqtt_disable_modbus ) {  // SetOption158  If it is activated, Tasmota will not publish ModbusReceived MQTT messages, but it will proccess event trigger rules
+            XdrvRulesProcess(0);
+          } else {
+            MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_MODBUS_RECEIVED));
+          }
       }
       else
         errorcode = ModbusBridgeError::wrongfunctioncode;
@@ -1168,6 +1183,9 @@ bool Xdrv63(uint32_t function)
         break;
       case FUNC_COMMAND:
         result = DecodeCommand(kModbusBridgeCommands, ModbusBridgeCommand);
+        break;
+      case FUNC_ACTIVE:
+        result = true;
         break;
     }
   }

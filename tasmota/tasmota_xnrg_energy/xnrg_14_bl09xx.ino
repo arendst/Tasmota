@@ -102,6 +102,7 @@ struct BL09XX {
   uint8_t address = 0;
   uint8_t model = 0;
   uint8_t rx_pin;
+  bool support_negative = 0;
   bool received = false;
 } Bl09XX;
 
@@ -187,11 +188,15 @@ bool Bl09XXDecode42(void) {
   Bl09XX.voltage    = Bl09XX.rx_buffer[6] << 16 | Bl09XX.rx_buffer[5] << 8 | Bl09XX.rx_buffer[4];        // V_RMS unsigned
   Bl09XX.current[0] = Bl09XX.rx_buffer[3]  << 16 | Bl09XX.rx_buffer[2]  << 8 | Bl09XX.rx_buffer[1];      // IA_RMS unsigned
 
-//  Bl09XX.power[0]   = Bl09XX.rx_buffer[12] << 16 | Bl09XX.rx_buffer[11] << 8 | Bl09XX.rx_buffer[10];     // WATT_A signed
-//  if (bitRead(Bl09XX.power[0], 23)) { Bl09XX.power[0] |= 0xFF000000; }                                   // Extend sign bit
-  // Above reverted in favour of https://github.com/arendst/Tasmota/issues/15374#issuecomment-1105293179
-  int32_t tmp = Bl09XX.rx_buffer[12] << 24 | Bl09XX.rx_buffer[11] << 16 | Bl09XX.rx_buffer[10] << 8;     // WATT_A signed
-  Bl09XX.power[0] = abs(tmp >> 8);
+
+  if (Bl09XX.support_negative) {
+    Bl09XX.power[0]   = Bl09XX.rx_buffer[12] << 16 | Bl09XX.rx_buffer[11] << 8 | Bl09XX.rx_buffer[10];   // WATT_A signed
+    if (bitRead(Bl09XX.power[0], 23)) { Bl09XX.power[0] |= 0xFF000000; }                                 // Extend sign bit
+    // Above reverted in favour of https://github.com/arendst/Tasmota/issues/15374#issuecomment-1105293179
+  } else {
+    int32_t tmp = Bl09XX.rx_buffer[12] << 24 | Bl09XX.rx_buffer[11] << 16 | Bl09XX.rx_buffer[10] << 8;   // WATT_A signed
+    Bl09XX.power[0] = abs(tmp >> 8);
+  }
 
 #ifdef DEBUG_BL09XX
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("BL9: U %d, I %d, P %d"),
@@ -307,6 +312,9 @@ void Bl09XXInit(void) {
     if (Bl09XXSerial->hardwareSerial()) {
       ClaimSerial();
     }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("BL9: Serial UART%d"), Bl09XXSerial->getUart());
+#endif
     if (HLW_UREF_PULSE == EnergyGetCalibration(ENERGY_VOLTAGE_CALIBRATION)) {
       for (uint32_t i = 0; i < 2; i++) {
         EnergySetCalibration(ENERGY_POWER_CALIBRATION, bl09xx_pref[Bl09XX.model], i);
@@ -358,7 +366,9 @@ void Bl09XXPreInit(void) {
     else if (PinUsed(GPIO_BL0942_RX, GPIO_ANY)) {
       Bl09XX.model = BL0942_MODEL;
       Bl09XX.rx_pin = Pin(GPIO_BL0942_RX, GPIO_ANY);
-      uint32_t baudrate = GetPin(Bl09XX.rx_pin) - AGPIO(GPIO_BL0942_RX);  // 0 .. 3
+      uint32_t option = GetPin(Bl09XX.rx_pin) - AGPIO(GPIO_BL0942_RX);  // 0 .. 7
+      Bl09XX.support_negative = (option > 3);        // 4 .. 7
+      uint32_t baudrate = option & 0x3;              // 0 .. 3 and 4 .. 7
       Bl09XX.baudrate <<= baudrate;                  // Support 1 (4800), 2 (9600), 3 (19200), 4 (38400)
     }
     if (Bl09XX.model != BL09XX_MODEL) {

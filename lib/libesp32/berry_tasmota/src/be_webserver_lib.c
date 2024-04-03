@@ -34,6 +34,7 @@ extern int w_webserver_arg(bvm *vm);
 extern int w_webserver_arg_name(bvm *vm);
 extern int w_webserver_has_arg(bvm *vm);
 
+extern int w_webserver_header(bvm *vm);
 
 // To allow a full restart of the Berry VM, we need to supplement the webserver Request Handler
 // model from Arduino framework.
@@ -160,6 +161,8 @@ module webserver (scope: global) {
     arg, func(w_webserver_arg)
     arg_name, func(w_webserver_arg_name)
     has_arg, func(w_webserver_has_arg)
+
+    header, func(w_webserver_header)
 }
 @const_object_info_end */
 #include "be_fixed_webserver.h"

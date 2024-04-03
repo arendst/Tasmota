@@ -415,6 +415,9 @@ void ExsInit(void)
       {
         ClaimSerial();
       }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("EXS: Serial UART%d"), ExsSerial->getUart());
+#endif  // ESP32
       ExsSerial->flush();
       EsxMcuStart();
       ExsSendCmd(EXS_CH_LOCK, 0);
@@ -611,6 +614,9 @@ bool Xdrv30(uint32_t function)
       result = DecodeCommand(kExsCommands, ExsCommand);
       break;
 #endif
+    case FUNC_ACTIVE:
+      result = true;
+      break;
     }
   }
   return result;

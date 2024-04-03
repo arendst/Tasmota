@@ -26,6 +26,10 @@
 #include "driver/spi_master.h"
 #endif
 
+#include <Wire.h>
+
+#include "tasmota_options.h"
+
 #undef SPRINT
 #define SPRINT(A) {char str[32];sprintf(str,"val: %d ",A);Serial.println((char*)str);}
 
@@ -147,10 +151,14 @@ enum ExternalFontFamily
 typedef uint8_t FontFlags;
 #define RA8876_FONT_FLAG_XLAT_FULLWIDTH 0x01  // Translate ASCII to Unicode fullwidth forms
 
+
+#ifndef RA8876_SPI_SPEED
 // 1MHz. TODO: Figure out actual speed to use
 // Data sheet section 5.2 says maximum SPI clock is 50MHz.
 //#define RA8876_SPI_SPEED 10000000
 #define RA8876_SPI_SPEED 25000000
+//#define RA8876_SPI_SPEED 40000000
+#endif
 
 // With SPI, the RA8876 expects an initial byte where the top two bits are meaningful. Bit 7
 // is A0, bit 6 is WR#. See data sheet section 7.3.2 and section 19.
@@ -461,7 +469,6 @@ class RA8876 : public Renderer {
   void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
   void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
 
-
   void drawCircle(int16_t x, int16_t y, int16_t radius, uint16_t color);
   void fillCircle(int16_t x, int16_t y, int16_t radius, uint16_t color);
   void drawRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h, int16_t radius, uint16_t color);
@@ -501,7 +508,13 @@ class RA8876 : public Renderer {
   void setDrawMode(uint8_t mode);
   void setDrawMode_reg(uint8_t mode);
   void dim(uint8_t contrast);
+  void dim10(uint8_t contrast, uint16_t contrast_gamma);
   void FastString(uint16_t x,uint16_t y,uint16_t tcolor, const char* str);
+
+  bool utouch_Init(char **name);
+  uint16_t touched(void);
+  int16_t getPoint_x();
+  int16_t getPoint_y();
 
  private:
   uint8_t  tabcolor;
@@ -526,6 +539,7 @@ class RA8876 : public Renderer {
  bool initPLL(void);
  bool initMemory(SdramInfo *info);
  bool initDisplay(void);
+ char ut_name[8];
 
  // Font utils
  uint8_t internalFontEncoding(enum FontEncoding enc);
@@ -539,6 +553,14 @@ class RA8876 : public Renderer {
  void drawThreePointShape(int x1, int y1, int x2, int y2, int x3, int y3, uint16_t color, uint8_t reg, uint8_t cmd);  // drawTriangle, fillTriangle
  void drawEllipseShape(int x, int y, int xrad, int yrad, uint16_t color, uint8_t cmd);  // drawCircle, fillCircle
  void drawThreePointShape1(int x1, int y1, int x2, int y2, int x3, int y3, uint16_t color, uint8_t reg, uint8_t cmd);
+
+  void TS_RotConvert(int16_t *x, int16_t *y);
+
+  TwoWire *_i2cPort;
+  int _readByte(uint8_t reg, uint8_t nbytes, uint8_t *data);
+  int _writeByte(uint8_t reg, uint8_t nbytes, uint8_t *data);
+  uint16_t ut_x;
+  uint16_t ut_y;
 
   int8_t  m_csPin, _mosi, _miso, _sclk, dimmer, _hwspi;
   uint16_t m_width;

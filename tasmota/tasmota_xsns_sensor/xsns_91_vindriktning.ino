@@ -114,6 +114,9 @@ void VindriktningInit(void) {
     VindriktningSerial = new TasmotaSerial(Pin(GPIO_VINDRIKTNING_RX), -1, 1);
     if (VindriktningSerial->begin(9600)) {
       if (VindriktningSerial->hardwareSerial()) { ClaimSerial(); }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("VDN: Serial UART%d"), VindriktningSerial->getUart());
+#endif
       Vindriktning.type = 1;
     }
   }

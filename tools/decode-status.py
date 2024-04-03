@@ -213,7 +213,9 @@ a_setoption = [[
     "(ZCDimmer) Enable rare falling Edge dimmer instead of leading edge",
     "(Sen5x) Run in passive mode when there is another I2C master (e.g. Ikea Vindstyrka), i.e. do not set up Sen5x sensor, higher polling interval",
     "(NeoPool) Output sensitive data (1)",
-    "","","","",
+    "(MQTT) Disable publish ModbusReceived MQTT messages (1), you must use event trigger rules instead",
+    "(Counter) Enable counting on both rising and falling edge (1)",
+    "","",
     "","","","",
     "","","","",
     "","","","",
@@ -302,7 +304,7 @@ a_features = [[
     "USE_SGP4X","USE_MAX17043","USE_ENS16x","USE_ENS210",
     "USE_HC8","USE_HDMI_CEC","USE_BLE_ESP32","USE_MATTER_DEVICE"
     ],[
-    "","","","",
+    "USE_MAGIC_SWITCH","USE_PIPSOLAR","USE_GPIO_VIEWER","",
     "","","","",
     "","","","",
     "","","","",
@@ -337,7 +339,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v13.2.0.2 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v13.3.0.5 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

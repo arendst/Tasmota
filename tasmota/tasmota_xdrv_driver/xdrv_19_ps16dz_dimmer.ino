@@ -190,6 +190,9 @@ void PS16DZInit(void)
     PS16DZSerial = new TasmotaSerial(Pin(GPIO_RXD), Pin(GPIO_TXD), 2);
     if (PS16DZSerial->begin(19200)) {
       if (PS16DZSerial->hardwareSerial()) { ClaimSerial(); }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("PS1: Serial UART%d"), PS16DZSerial->getUart());
+#endif  // ESP32
     }
   }
 }
@@ -224,6 +227,9 @@ bool Xdrv19(uint32_t function)
         break;
       case FUNC_MODULE_INIT:
         result = PS16DZModuleSelected();
+        break;
+      case FUNC_ACTIVE:
+        result = true;
         break;
     }
   }

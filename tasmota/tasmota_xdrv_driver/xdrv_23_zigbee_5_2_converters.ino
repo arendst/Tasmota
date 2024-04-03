@@ -931,7 +931,7 @@ void ZCLFrame::parseReadAttributes(uint16_t shortaddr, Z_attribute_list& attr_li
   Z_attribute_list attr_names;
   while (len >= 2 + i) {
     uint16_t attrid = payload.get16(i);
-    attr_numbers.add(attrid);
+    attr_numbers.add((uint32_t)attrid);
     read_attr_ids[i/2] = attrid;
 
     // find the attribute name
@@ -1304,42 +1304,36 @@ void ZCLFrame::syntheticAqaraCubeOrButton(class Z_attribute_list &attr_list, cla
 
   if (modelId.startsWith(F("lumi.sensor_cube"))) {   // only for Aqara cube
     int32_t val = attr.getInt();
-#ifdef ESP8266
-    const __FlashStringHelper *aqara_cube = F("AqaraCube");
-    const __FlashStringHelper *aqara_cube_side = F("AqaraCubeSide");
-    const __FlashStringHelper *aqara_cube_from_side = F("AqaraCubeFromSide");
-#else
-    const char *aqara_cube = "AqaraCube";
-    const char *aqara_cube_side = "AqaraCubeSide";
-    const char *aqara_cube_from_side = "AqaraCubeFromSide";
-#endif
+    static const char *aqara_cube = PSTR("AqaraCube");
+    static const char *aqara_cube_side = PSTR("AqaraCubeSide");
+    static const char *aqara_cube_from_side = PSTR("AqaraCubeFromSide");
 
     switch (val) {
       case 0:
-        attr_list.addAttribute(aqara_cube).setStr(PSTR("shake"));
+        attr_list.addAttributePMEM(aqara_cube).setStr(PSTR("shake"));
         break;
       case 2:
-        attr_list.addAttribute(aqara_cube).setStr(PSTR("wakeup"));
+        attr_list.addAttributePMEM(aqara_cube).setStr(PSTR("wakeup"));
         break;
       case 3:
-        attr_list.addAttribute(aqara_cube).setStr(PSTR("fall"));
+        attr_list.addAttributePMEM(aqara_cube).setStr(PSTR("fall"));
         break;
       case 64 ... 127:
-        attr_list.addAttribute(aqara_cube).setStr(PSTR("flip90"));
-        attr_list.addAttribute(aqara_cube_side).setInt(val % 8);
-        attr_list.addAttribute(aqara_cube_from_side).setInt((val - 64) / 8);
+        attr_list.addAttributePMEM(aqara_cube).setStr(PSTR("flip90"));
+        attr_list.addAttributePMEM(aqara_cube_side).setInt(val % 8);
+        attr_list.addAttributePMEM(aqara_cube_from_side).setInt((val - 64) / 8);
         break;
       case 128 ... 132:
-        attr_list.addAttribute(aqara_cube).setStr(PSTR("flip180"));
-        attr_list.addAttribute(aqara_cube_side).setInt(val - 128);
+        attr_list.addAttributePMEM(aqara_cube).setStr(PSTR("flip180"));
+        attr_list.addAttributePMEM(aqara_cube_side).setInt(val - 128);
         break;
       case 256 ... 261:
-        attr_list.addAttribute(aqara_cube).setStr(PSTR("slide"));
-        attr_list.addAttribute(aqara_cube_side).setInt(val - 256);
+        attr_list.addAttributePMEM(aqara_cube).setStr(PSTR("slide"));
+        attr_list.addAttributePMEM(aqara_cube_side).setInt(val - 256);
         break;
       case 512 ... 517:
-        attr_list.addAttribute(aqara_cube).setStr(PSTR("tap"));
-        attr_list.addAttribute(aqara_cube_side).setInt(val - 512);
+        attr_list.addAttributePMEM(aqara_cube).setStr(PSTR("tap"));
+        attr_list.addAttributePMEM(aqara_cube_side).setInt(val - 512);
         break;
     }
     attr_list.removeAttribute(&attr);
@@ -1363,26 +1357,21 @@ void ZCLFrame::syntheticAqaraCubeOrButton(class Z_attribute_list &attr_list, cla
     //     presentValue = x + 512 = double tap while side x is on top
   } else if (modelId.startsWith(F("lumi.remote")) || modelId.startsWith(F("lumi.sensor_swit"))) {   // only for Aqara buttons WXKG11LM & WXKG12LM, 'swit' because of #9923
     int32_t val = attr.getInt();
-#ifdef ESP8266
-    const __FlashStringHelper *aqara_click = F("click");    // deprecated
-    const __FlashStringHelper *aqara_action = F("action");  // deprecated
-#else
-    const char *aqara_click = "click";    // deprecated
-    const char *aqara_action = "action";  // deprecated
-#endif
+    static const char *aqara_click = PSTR("click");    // deprecated
+    static const char *aqara_action = PSTR("action");  // deprecated
     Z_attribute & attr_click = attr_list.addAttribute(PSTR("Click"), true);
 
     switch (val) {
       case 0:
-        attr_list.addAttribute(aqara_action).setStr(PSTR("hold"));            // deprecated
+        attr_list.addAttributePMEM(aqara_action).setStr(PSTR("hold"));            // deprecated
         attr_click.setStr(PSTR("hold"));
         break;
       case 1:
-        attr_list.addAttribute(aqara_click).setStr(PSTR("single"));            // deprecated
+        attr_list.addAttributePMEM(aqara_click).setStr(PSTR("single"));            // deprecated
         attr_click.setStr(PSTR("single"));
         break;
       case 2:
-        attr_list.addAttribute(aqara_click).setStr(PSTR("double"));            // deprecated
+        attr_list.addAttributePMEM(aqara_click).setStr(PSTR("double"));            // deprecated
         attr_click.setStr(PSTR("double"));
         break;
       case 3:
@@ -1392,23 +1381,23 @@ void ZCLFrame::syntheticAqaraCubeOrButton(class Z_attribute_list &attr_list, cla
         attr_click.setStr(PSTR("quadruple"));
         break;
       case 16:
-        attr_list.addAttribute(aqara_action).setStr(PSTR("hold"));            // deprecated
+        attr_list.addAttributePMEM(aqara_action).setStr(PSTR("hold"));            // deprecated
         attr_click.setStr(PSTR("hold"));
         break;
       case 17:
-        attr_list.addAttribute(aqara_action).setStr(PSTR("release"));            // deprecated
+        attr_list.addAttributePMEM(aqara_action).setStr(PSTR("release"));            // deprecated
         attr_click.setStr(PSTR("release"));
         break;
       case 18:
-        attr_list.addAttribute(aqara_action).setStr(PSTR("shake"));            // deprecated
+        attr_list.addAttributePMEM(aqara_action).setStr(PSTR("shake"));            // deprecated
         attr_click.setStr(PSTR("shake"));
         break;
       case 255:
-        attr_list.addAttribute(aqara_action).setStr(PSTR("release"));            // deprecated
+        attr_list.addAttributePMEM(aqara_action).setStr(PSTR("release"));            // deprecated
         attr_click.setStr(PSTR("release"));
         break;
       default:
-        attr_list.addAttribute(aqara_click).setUInt(val);
+        attr_list.addAttributePMEM(aqara_click).setUInt(val);
         attr_click.setStr(PSTR("release"));
         break;
     }

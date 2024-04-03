@@ -1533,6 +1533,9 @@ bool Xdrv81(uint32_t function) {
     case FUNC_INIT:
       if(Wc.up == 0) WcSetup(Settings->webcam_config.resolution);
       break;
+    case FUNC_ACTIVE:
+      result = true;
+      break;
 
   }
   return result;

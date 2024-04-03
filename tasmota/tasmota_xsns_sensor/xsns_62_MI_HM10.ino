@@ -698,6 +698,9 @@ void HM10SerialInit(void) {
       ClaimSerial();
       DEBUG_SENSOR_LOG(PSTR("%s: claim HW"),D_CMND_HM10);
     }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("HM1: Serial UART%d"), HM10Serial->getUart());
+#endif
     HM10_Reset();
     HM10.mode.pending_task = 1;
     HM10.mode.init = 1;
@@ -1949,7 +1952,7 @@ void CmndHM10Option(void){
 
 const char HTTP_HM10[] PROGMEM = "{s}HM10 FW%u   V0960{m}%u%s / %u{e}";
 const char HTTP_HM10_MAC[] PROGMEM = "{s}%s %s{m}%s{e}";
-const char HTTP_BATTERY[] PROGMEM = "{s}%s" " Battery" "{m}%u%%{e}";
+const char HTTP_BATTERY[] PROGMEM = "{s}%s " D_BATTERY "{m}%u%%{e}";
 const char HTTP_RSSI[] PROGMEM = "{s}%s " D_RSSI "{m}%d dBm{e}";
 const char HTTP_HM10_FLORA_DATA[] PROGMEM = "{s}%s" " Fertility" "{m}%u us/cm{e}";
 const char HTTP_HM10_HL[] PROGMEM = "{s}<hr>{m}<hr>{e}";

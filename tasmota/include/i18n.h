@@ -275,6 +275,7 @@
   #define D_STATUS13_SHUTTER "SHT"
 #define D_CMND_STATE "State"
 #define D_CMND_POWER "Power"
+#define D_CMND_TIMEDPOWER "TimedPower"
 #define D_CMND_FANSPEED "FanSpeed"
 #define D_CMND_POWERONSTATE "PowerOnState"
 #define D_CMND_PULSETIME "PulseTime"
@@ -699,6 +700,7 @@
 #define D_CMND_ZIGBEE_SCAN "Scan"
   #define D_JSON_ZIGBEE_SCAN "ZbScan"
 #define D_CMND_ZIGBEE_CIE "CIE"
+#define D_CMND_ZIGBEE_EMULATION "Emulation"
 #define D_CMND_ZIGBEE_ENROLL "Enroll"
 #define D_CMND_ZIGBEE_LOAD "Load"
 #define D_CMND_ZIGBEE_LOADDUMP "LoadDump"
@@ -808,6 +810,19 @@
 
 // xsns_71_veml7700.ino
 #define D_JSON_WHITE_CONTENT "WhiteContent"
+
+// xdrv_92_pipsolar.ino
+#define D_CMND_PIP_PREFIX "PipSolar"
+#define D_CMND_PIP_QT "QT"
+#define D_CMND_PIP_QET "QET"
+#define D_CMND_PIP_QEY "QEY"
+#define D_CMND_PIP_QEM "QEM"
+#define D_CMND_PIP_QED "QED"
+#define D_CMND_PIP_QEH "QEH"
+#define D_CMND_PIP_DAT "DAT"
+#define D_CMND_PIP_POLLVALUES "PollValues"
+#define D_CMND_PIP_BAUDRATE "BaudRate"
+#define D_CMND_PIP_SERIALCONFIG "SerialConfig"
 
 /********************************************************************************************/
 
@@ -921,6 +936,8 @@ const float kSpeedConversionFactor[] = {1,            // none
 // xdrv_02_webserver.ino
 #ifdef USE_WEBSERVER
 // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_HR[]            PROGMEM = "<tr><td colspan=2 style='font-size:2px'><hr/></td></tr>";
+const char HTTP_SNS_HR_THIN[]       PROGMEM = "<tr><td colspan=2 style='font-size:2px'><hr size=1/></td></tr>";
 const char HTTP_SNS_F_TEMP[]        PROGMEM = "{s}%s "  D_TEMPERATURE         "{m}%*_f " D_UNIT_DEGREE          "%c{e}";
 const char HTTP_SNS_F_VOLTAGE[]     PROGMEM = "{s}%s "  D_VOLTAGE             "{m}%*_f " D_UNIT_VOLT              "{e}";
 const char HTTP_SNS_F_CURRENT_MA[]  PROGMEM = "{s}%s "  D_CURRENT             "{m}%*_f " D_UNIT_MILLIAMPERE       "{e}";

@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 18.11.2023
+ * Updated until v9.4.0.1 - Last update 17.01.2024
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -57,6 +57,7 @@
 #define D_AP                   "AP"                   // Access Point
 #define D_AS                   "come"
 #define D_AUTO                 "AUTO"
+#define D_BATTERY              "Batteria"
 #define D_BATT                 "Batt"                 // Short for Battery
 #define D_BATTERY_CHARGE       "Carica"               // Battery charge in %
 #define D_BLINK                "Lampeggia"
@@ -274,7 +275,8 @@
 #define D_CONFIGURATION        "Impostazioni"
 #define D_INFORMATION          "Informazioni"
 #define D_FIRMWARE_UPGRADE     "Aggiorna firmware"
-#define D_MANAGEMENT           "Console"
+#define D_MANAGEMENT           "Strumenti"
+#define D_GPIO_VIEWER          "Visualizzatore GPIO"
 #define D_CONSOLE              "Console"
 #define D_CONFIRM_RESTART      "Conferma riavvio"
 
@@ -546,7 +548,7 @@
 #define D_DEVICE_INPUT        "Ingresso"
 #define D_DEVICE_OUTPUT       "Uscita"
 
-// xdrv_39_thermostat.ino
+// xdrv_39_thermostat.ino, xdrv_85_esp32_ble_eq3_trv.ino
 #define D_THERMOSTAT                  "Termostato"
 #define D_THERMOSTAT_SET_POINT        "Temperatura impostata"
 #define D_THERMOSTAT_SENSOR           "Temperatura attuale"
@@ -957,6 +959,7 @@
 #define D_SENSOR_BIOPDU_PZEM016_RX      "BioPDU PZEM016 - RX"
 #define D_SENSOR_BIOPDU_BIT             "BioPDU Bit"
 #define D_SENSOR_LOX_O2_RX              "LoxO2 - RX"
+#define D_GPIO_MAGIC_SWITCH             "MagicSwitch"
 
 // Units
 #define D_UNIT_AMPERE                     "A"
@@ -1218,8 +1221,11 @@
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "tempo pompa superato"
 
 // xsns_106_gdk101.ino
-#define D_AVG_RAD_DOSE                    "Dose media radiazioni"
 #define D_AVG_RAD_DOSE                    "Radiazioni"
 #define D_UNIT_US_H                       "µSv/h"
+
+// ixrv92_pipsolar.ino
+#define D_SENSOR_PIPSOLAR_TX             "Pipsolar - TX"
+#define D_SENSOR_PIPSOLAR_RX             "Pipsolar - RX"
 
 #endif  // _LANGUAGE_IT_IT_H_

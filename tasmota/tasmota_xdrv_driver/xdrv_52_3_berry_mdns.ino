@@ -239,12 +239,14 @@ extern "C" {
 
   #ifdef USE_IPV6
         // 
-        ip_addr_t *ip_addr = (ip_addr_t*) ip;
-        head->addr.type = ip_addr->type;
-        if (ip_addr->type == ESP_IPADDR_TYPE_V6) {
-          memcpy(head->addr.u_addr.ip6.addr, ip_addr->u_addr.ip6.addr, 16);
+        // ip_addr_t *ip_addr = (ip_addr_t*) ip;
+        ip_addr_t ip_addr;
+        ip.to_ip_addr_t(&ip_addr);
+        head->addr.type = ip_addr.type;
+        if (ip_addr.type == ESP_IPADDR_TYPE_V6) {
+          memcpy(head->addr.u_addr.ip6.addr, ip_addr.u_addr.ip6.addr, 16);
         } else {
-          head->addr.u_addr.ip4.addr = ip_addr->u_addr.ip4.addr;
+          head->addr.u_addr.ip4.addr = ip_addr.u_addr.ip4.addr;
         }
   #else
         head->addr.u_addr.ip4.addr = (uint32_t) ip;
@@ -332,10 +334,11 @@ extern "C" {
           } else {
             continue;
           }
+          be_pushstring(vm, IPAddress(&ip_addr).toString(true).c_str());
   #else
           uint32_t ip_addr = a->addr.u_addr.ip4.addr;
-  #endif
           be_pushstring(vm, IPAddress(ip_addr).toString().c_str());
+  #endif
           be_data_push(vm, -2);
           be_pop(vm, 1);
         }

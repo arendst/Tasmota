@@ -583,6 +583,9 @@ void Cse7761SnsInit(void) {
       SetSerial(38400, TS_SERIAL_8E1);
       ClaimSerial();
     }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("C61: Serial UART%d"), Cse7761Serial->getUart());
+#endif
 
 #ifdef CSE7761_FREQUENCY
 #ifdef CSE7761_ZEROCROSS

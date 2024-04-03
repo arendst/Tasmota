@@ -52,7 +52,7 @@ class AXP192_M5Stack_Core2 : AXP192
       #   Automatic shutdown function setting when the key duration is longer than the shutdown duration = turn on
       #   PWROK signal delay after power on = 64ms
       #   Shutdown duration setting = 4s
-      self.write8(0x34, 0x4C)
+      self.write8(0x36, 0x4C)
   
       # ADC all-on
       # Bit 7: Battery voltage ADC enable
@@ -64,15 +64,25 @@ class AXP192_M5Stack_Core2 : AXP192
       # Bit 1: APS voltage ADC enable
       # Bit 0: TS pin ADC function enable
       self.write8(0x82, 0xFF)
-  
+
+      # Disable audio as ethernet uses the same GPIO
+      self.write_gpio(2, 0)
+
       # Reset LCD Controller
       self.set_lcd_reset(false)
       tasmota.delay(100)   # wait for 100ms
       self.set_lcd_reset(true)
-      tasmota.delay(100)   # wait for 100ms
+      tasmota.delay(200)   # wait for 200ms
 
-      # bus power mode_output
-      self.set_buf_power_mode(false)
+      # Indicates whether the voltage of VBUS is higher than VHOLD when the external power supply VBUS is connected
+      if self.read8(0X00) & 0x08
+        self.write_bit(0x30, 7, true)
+        # if v-bus can use, disable M-Bus 5V output to input
+        self.set_buf_power_mode(true)
+      else
+        # if not, enable M-Bus 5V output
+        self.set_buf_power_mode(false)
+      end
 
       tasmota.add_driver(self)
     end
@@ -113,7 +123,7 @@ class AXP192_M5Stack_Core2 : AXP192
       self.write8(0x12, self.read8(0x12) & 0xBF)          # set EXTEN to disable 5v boost
       self.write8(0x90, self.read8(0x90) & 0xF8 | 0x01)   # set GPIO0 to float, using enternal pulldown resistor to enable supply from BUS_5VS
     else
-      self.write8(0x91, self.read8(0x91) & 0x0F | 0xF0)
+      self.write8(0x91, self.read8(0x91) & 0x0F | 0xF0)   # Set GPIO to 3.3V (LDO OUTPUT mode)
       self.write8(0x90, self.read8(0x90) & 0xF8 | 0x02)   # set GPIO0 to LDO OUTPUT , pullup N_VBUSEN to disable supply from BUS_5V
       self.write8(0x12, self.read8(0x12) | 0x40)          # set EXTEN to enable 5v boost
     end
@@ -135,7 +145,7 @@ class AXP192_M5Stack_Core2 : AXP192
   # respond to audio events
   def audio(cmd, idx, payload, raw)
     if cmd == "power"
-      self.set_speaker_enable(idx)
+      self.set_speaker_enable(idx ? 1 : 0)
     end
   end
 

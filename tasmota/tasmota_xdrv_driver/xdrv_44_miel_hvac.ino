@@ -161,8 +161,12 @@ struct miel_hvac_msg_update {
 #define MIEL_HVAC_UPDATE_MODE_FAN	0x07
 #define MIEL_HVAC_UPDATE_MODE_AUTO	0x08
 	uint8_t			temp;
-#define MIEL_HVAC_UPDATE_TEMP_MIN	16
+#ifndef MIEL_HVAC_UPDATE_TEMP_MIN
+#define MIEL_HVAC_UPDATE_TEMP_MIN	10
+#endif
+#ifndef MIEL_HVAC_UPDATE_TEMP_MAX
 #define MIEL_HVAC_UPDATE_TEMP_MAX	31
+#endif
 	uint8_t			fan;
 #define MIEL_HVAC_UPDATE_FAN_AUTO	0x00
 #define MIEL_HVAC_UPDATE_FAN_QUIET	0x01
@@ -329,6 +333,7 @@ enum miel_hvac_parser_state {
 struct miel_hvac_parser {
 	enum miel_hvac_parser_state
 				 p_state;
+	uint8_t			 p_tmo;
 	uint8_t			 p_type;
 	uint8_t			 p_sum;
 	uint8_t			 p_len;
@@ -386,6 +391,7 @@ miel_hvac_parse(struct miel_hvac_softc *sc, uint8_t byte)
 
 		/* reset state */
 		p->p_sum = 0;
+		p->p_tmo = 0;
 
 		nstate = MIEL_HVAC_P_TYPE;
 		break;
@@ -1084,6 +1090,9 @@ miel_hvac_pre_init(void)
 		ClaimSerial();
 		SetSerial(baudrate, TS_SERIAL_8E1);
 	}
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME ": Serial UART%d"), sc->sc_serial->getUart());
+#endif
 
 	sc->sc_device = TasmotaGlobal.devices_present;
   UpdateDevicesPresent(1);  /* claim a POWER device slot */
@@ -1231,7 +1240,19 @@ miel_hvac_tick(struct miel_hvac_softc *sc)
 		MIEL_HVAC_REQUEST_STAGE,
 	};
 
+	struct miel_hvac_parser *p = &sc->sc_parser;
 	unsigned int i;
+
+	if (p->p_state != MIEL_HVAC_P_START) {
+		if (p->p_tmo) {
+			AddLog(LOG_LEVEL_DEBUG, PSTR(MIEL_HVAC_LOGNAME
+			   ": read timeout"));
+			sc->sc_parser.p_state = MIEL_HVAC_P_START;
+		} else {
+			p->p_tmo = 1;
+			return;
+		}
+	}
 
 	if (miel_hvac_update_pending(sc)) {
 		struct miel_hvac_msg_update *update = &sc->sc_update;
@@ -1336,6 +1357,10 @@ bool Xdrv44(uint32_t function) {
 	case FUNC_COMMAND:
 		result = DecodeCommand(miel_hvac_cmnd_names, miel_hvac_cmnds);
 		break;
+
+    case FUNC_ACTIVE:
+        result = true;
+        break;
 	}
 
 	return (result);

@@ -103,13 +103,40 @@ assert(str(b) == "bytes('1122334455')")
 b = b2 + b1
 assert(str(b) == "bytes('3344551122')")
 
-#- .. -#
+#- + for string -#
+b1 = bytes("AA")
+b = b1 + ''
+assert(str(b) == "bytes('AA')")
+b = b1 + '01'
+assert(str(b) == "bytes('AA3031')")
+
+#- .. and append as synonym-#
 b1 = bytes("1122")
 b2 = bytes("334455")
 b = b1..b2
 assert(str(b1) == "bytes('1122334455')")
 assert(str(b2) == "bytes('334455')")
 assert(str(b) == "bytes('1122334455')")
+#
+b1 = bytes("1122")
+b2 = bytes("334455")
+b = b1.append(b2)
+assert(str(b1) == "bytes('1122334455')")
+assert(str(b2) == "bytes('334455')")
+assert(str(b) == "bytes('1122334455')")
+
+#- .. with string -#
+b1 = bytes("AA")
+b1 .. ''
+assert(str(b1) == "bytes('AA')")
+b1 .. '01'
+assert(str(b1) == "bytes('AA3031')")
+#
+b1 = bytes("AA")
+b1.append('')
+assert(str(b1) == "bytes('AA')")
+b1.append('01')
+assert(str(b1) == "bytes('AA3031')")
 
 #- item -#
 b = bytes("334455")
@@ -257,3 +284,8 @@ assert(!bytes())
 assert(bool(bytes("00")) == true)
 assert(bytes("01").tobool() == true)
 assert(bytes("02"))
+
+# retrieving 3-bytes little/big endian
+a = bytes("01020304")
+assert(a.get(1, 3) == 0x040302)
+assert(a.get(1, -3) == 0x020304)

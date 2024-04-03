@@ -159,6 +159,9 @@ void Rg15Init(void) {
     if (HydreonSerial) {
       if (HydreonSerial->begin(RG15_BAUDRATE)) {
         if (HydreonSerial->hardwareSerial()) { ClaimSerial(); }
+#ifdef ESP32
+        AddLog(LOG_LEVEL_DEBUG, PSTR("HRG: Serial UART%d"), HydreonSerial->getUart());
+#endif
         Rg15.init_step = 5;                  // Perform RG-15 init
       }
     }

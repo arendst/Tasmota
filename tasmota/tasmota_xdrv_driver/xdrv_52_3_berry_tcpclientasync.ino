@@ -47,6 +47,13 @@ public:
 
   }
 
+  // following is used when accepting a new connection as server
+  AsyncTCPClient(int fd) : sockfd(fd), state(AsyncTCPState::CONNECTED), _timeout_ms(1), local_port(-1) {
+    if (sockfd < 0) {
+      state = AsyncTCPState::REFUSED;
+    }
+  }
+
   ~AsyncTCPClient() {
     this->stop();
   }
@@ -179,8 +186,7 @@ public:
             stop();
             break;
           default:
-            // AddLog(LOG_LEVEL_DEBUG, "BRY: tcpclientasync unexpected: RES: %d, ERR: %d", res, errno);
-            stop();
+            // AddLog(LOG_LEVEL_DEBUG, "BRY: tcpclientasync unexpected: RES: %d, ERR: %d, sockfd=%d", res, errno, sockfd);
             break;
         }
       } else {
@@ -324,25 +330,58 @@ public:
           struct sockaddr_in6 *saddr6 = (struct sockaddr_in6 *)&local_address;
           local_port = ntohs(saddr6->sin6_port);
           if (T_IN6_IS_ADDR_V4MAPPED(saddr6->sin6_addr.un.u32_addr)) {
-              local_addr = IPAddress(IPv4, (uint8_t*)saddr6->sin6_addr.s6_addr+12);
+              local_addr = IPAddress(IPv4, (uint8_t*)saddr6->sin6_addr.s6_addr+12, 0);
           } else {
-#if ESP_IDF_VERSION_MAJOR >= 5
               local_addr = IPAddress(IPv6, (uint8_t*)(saddr6->sin6_addr.s6_addr), saddr6->sin6_scope_id);
-#else
-              local_addr = IPAddress(IPv6, (uint8_t*)(saddr6->sin6_addr.s6_addr));
-#endif
           }
       }
 #endif // USE_IPV6
     }
   }
 
+
+  IPAddress remoteIP() const {
+    struct sockaddr_storage addr;
+    socklen_t len = sizeof addr;
+    getpeername(sockfd, (struct sockaddr*)&addr, &len);
+
+    // IPv4 socket, old way
+    if (((struct sockaddr*)&addr)->sa_family == AF_INET) {
+        struct sockaddr_in *s = (struct sockaddr_in *)&addr;
+        return IPAddress((uint32_t)(s->sin_addr.s_addr));
+    }
+
+#if LWIP_IPV6
+    // IPv6, but it might be IPv4 mapped address
+    if (((struct sockaddr*)&addr)->sa_family == AF_INET6) {
+        struct sockaddr_in6 *saddr6 = (struct sockaddr_in6 *)&addr;
+        if (T_IN6_IS_ADDR_V4MAPPED(saddr6->sin6_addr.un.u32_addr)) {
+            return IPAddress(IPv4, (uint8_t*)saddr6->sin6_addr.s6_addr+12, 0);
+        } else {
+            return IPAddress(IPv6, (uint8_t*)(saddr6->sin6_addr.s6_addr), saddr6->sin6_scope_id);
+        }
+    }
+#endif
+    return (IPAddress(0,0,0,0));
+
+  }
+  uint16_t remotePort() const {
+
+    struct sockaddr_storage addr;
+    socklen_t len = sizeof addr;
+    getpeername(sockfd, (struct sockaddr*)&addr, &len);
+    struct sockaddr_in *s = (struct sockaddr_in *)&addr;
+    return ntohs(s->sin_port);
+  }
+
+  const IPAddress localIP() const { return local_addr; }
+  uint16_t localPort() const {  return local_port; }
+
+
 public:
   int           sockfd;
   AsyncTCPState state;
   uint32_t      _timeout_ms;
-  String        remota_addr;       // address in numerical format (after DNS resolution), either IPv4 or IPv6
-  uint16_t      remote_port;       // remote port number
   IPAddress     local_addr;
   int32_t       local_port;       // -1 if unknown or invalid
 };
@@ -465,8 +504,10 @@ extern "C" {
       tcp->update_local_addr_port();
       if (tcp->local_port > 0) {
         be_map_insert_int(vm, "local_port", tcp->local_port);
-        be_map_insert_str(vm, "local_addr", tcp->local_addr.toString().c_str());
+        be_map_insert_str(vm, "local_addr", tcp->local_addr.toString(true).c_str());
       }
+      be_map_insert_int(vm, "remote_port", tcp->remotePort());
+      be_map_insert_str(vm, "remote_addr", tcp->remoteIP().toString(true).c_str());
     }
     be_pop(vm, 1);
     be_return(vm);

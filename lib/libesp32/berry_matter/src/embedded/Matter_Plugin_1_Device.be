@@ -25,9 +25,9 @@ class Matter_Plugin_Device : Matter_Plugin
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
     0x0039: [3,5,0x0A,0x0F,0x11,0x12],              # Bridged Device Basic Information 9.13 p.485
-    0x0003: [0,1,0xFFFC,0xFFFD],                    # Identify 1.2 p.16
-    0x0004: [0,0xFFFC,0xFFFD],                      # Groups 1.3 p.21
-    0x0005: [0,1,2,3,4,5,0xFFFC,0xFFFD],            # Scenes 1.4 p.30 - no writable
+    0x0003: [0,1],                                  # Identify 1.2 p.16
+    0x0004: [0],                                    # Groups 1.3 p.21
+    0x0005: [0,1,2,3,4,5],                          # Scenes 1.4 p.30 - no writable
   })
   static var TYPES = { 0x0013: 1 }                  # fake type
   static var NON_BRIDGE_VENDOR = [ 0x1217, 0x1381 ] # Fabric VendorID not supporting Bridge mode
@@ -52,29 +52,16 @@ class Matter_Plugin_Device : Matter_Plugin
         return tlv_solo.set(TLV.U2, 0)      # no identification in progress
       elif attribute == 0x0001          #  ---------- IdentifyType / enum8 ----------
         return tlv_solo.set(TLV.U1, 0)      # IdentifyType = 0x00 None
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0)    # no features
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(TLV.U4, 4)    # "new data model format and notation"
       end
 
     # ====================================================================================================
     elif cluster == 0x0004              # ========== Groups 1.3 p.21 ==========
       if   attribute == 0x0000          #  ----------  ----------
         return nil                      # TODO
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0)#
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(TLV.U4, 4)# "new data model format and notation"
       end
 
     # ====================================================================================================
     elif cluster == 0x0005              # ========== Scenes 1.4 p.30 - no writable ==========
-      if   attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0)    # 0 = no Level Control for Lighting
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(TLV.U4, 4)    # 0 = no Level Control for Lighting
-      end
 
     # ====================================================================================================
     elif cluster == 0x001D              # ========== Descriptor Cluster 9.5 p.453 ==========
@@ -96,8 +83,6 @@ class Matter_Plugin_Device : Matter_Plugin
           d1.add_TLV(1, TLV.U2, 1)      # Revision
         end
         return dtl
-      else
-        return super(self).read_attribute(session, ctx, tlv_solo)
       end
 
     # ====================================================================================================
@@ -119,13 +104,10 @@ class Matter_Plugin_Device : Matter_Plugin
         return tlv_solo.set(TLV.BOOL, 1)     # by default we are reachable
       elif attribute == 0x0012          #  ---------- UniqueID / string 32 max ----------
         return tlv_solo.set(TLV.UTF1, tasmota.wifi().find("mac", ""))
-      else
-        return super(self).read_attribute(session, ctx, tlv_solo)
       end
 
-    else
-      return super(self).read_attribute(session, ctx, tlv_solo)
     end
+    return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
   #############################################################
@@ -180,6 +162,7 @@ class Matter_Plugin_Device : Matter_Plugin
   # New values need to be appended with `,"key":value` (including prefix comma)
   def append_state_json()
     import introspect
+    import json
     var ret = ""
 
     # ret: string
@@ -193,6 +176,13 @@ class Matter_Plugin_Device : Matter_Plugin
         if type(val) == 'bool'    val = int(val)  end         # transform bool into 1/0
         ret += f',"{key}":{json.dump(val)}'
       end
+    end
+
+    # If sensor with JSON_NAME using `val`
+    var json_name = introspect.get(self, 'JSON_NAME')
+    if json_name && introspect.contains(self, 'shadow_value')
+      var val = (self.shadow_value != nil) ? json.dump(self.shadow_value) : "null"
+      ret += f',"{json_name}":{val}'
     end
 
     # lights

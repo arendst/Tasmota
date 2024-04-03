@@ -70,6 +70,9 @@ void RDM6300Init() {
       if (RDM6300Serial->hardwareSerial()) {
         ClaimSerial();
       }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("RDM: Serial UART%d"), RDM6300Serial->getUart());
+#endif
     }
   }
 }

@@ -271,6 +271,9 @@ bool Xdrv90(uint32_t function) {
         result = DingtianAddKey();
         break;
 #endif
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

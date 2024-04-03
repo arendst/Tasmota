@@ -626,6 +626,9 @@ bool Xdrv59(uint32_t function) {
       case FUNC_EVERY_SECOND:
         InfluxDbLoop();
         break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

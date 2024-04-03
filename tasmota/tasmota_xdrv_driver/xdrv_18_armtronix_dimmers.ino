@@ -101,6 +101,9 @@ void ArmtronixInit(void)
   if (ArmtronixSerial->begin(115200)) {
     if (ArmtronixSerial->hardwareSerial()) { ClaimSerial(); }
     ArmtronixSerial->println("Status");
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("ARM: Serial UART%d"), ArmtronixSerial->getUart());
+#endif  // ESP32
   }
 }
 
@@ -189,6 +192,9 @@ bool Xdrv18(uint32_t function)
         break;
       case FUNC_SET_CHANNELS:
         result = ArmtronixSetChannels();
+        break;
+      case FUNC_ACTIVE:
+        result = true;
         break;
     }
   }

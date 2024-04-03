@@ -33,7 +33,7 @@ class Matter_Plugin_Bridge_Sensor_Contact : Matter_Plugin_Bridge_HTTP
   static var UPDATE_CMD = "Status 8"                # command to send for updates
 
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
-    0x0045: [0,0xFFFC,0xFFFD],                      # Boolean State p.70 - no writable
+    0x0045: [0],                                    # Boolean State p.70 - no writable
   })
   static var TYPES = { 0x0015: 1 }                  # Contact Sensor, rev 1
 
@@ -81,15 +81,10 @@ class Matter_Plugin_Bridge_Sensor_Contact : Matter_Plugin_Bridge_HTTP
         else
           return tlv_solo.set(TLV.NULL, nil)
         end
-      elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0)
-      elif attribute == 0xFFFD          #  ---------- ClusterRevision / u2 ----------
-        return tlv_solo.set(TLV.U4, 1)    # 1 = Initial release
       end
 
-    else
-      return super(self).read_attribute(session, ctx, tlv_solo)
     end
+    return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
   #############################################################

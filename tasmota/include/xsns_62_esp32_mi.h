@@ -18,6 +18,11 @@
 
 */
 #ifdef USE_MI_ESP32
+
+#pragma once
+
+#include <NimBLEDevice.h>
+
 /*********************************************************************************************\
  * structs and types
 \*********************************************************************************************/
@@ -141,6 +146,17 @@ struct ATCPacket_t{ //and PVVX
   };
 };
 
+union BTHome_info_t{
+  struct{
+    uint8_t encrypted:1;
+    uint8_t reserved:1;
+    uint8_t triggered:1;
+    uint8_t reserved2:2;
+    uint8_t version:2;
+  };
+  char byte_value;
+};
+
 struct BLERingBufferItem_t{
   uint16_t returnCharUUID;
   uint16_t handle;
@@ -156,11 +172,13 @@ struct MI32connectionContextBerry_t{
   NimBLEUUID charUUID;
   uint16_t returnCharUUID;
   uint16_t handle;
-  uint8_t MAC[6];
   uint8_t * buffer;
+  uint8_t MAC[6];
   uint8_t operation;
   uint8_t addrType;
   int error;
+  int32_t arg1;
+  bool hasArg1;
   bool oneOp;
   bool response;
 };
@@ -347,8 +365,9 @@ void (*const MI32_Commands[])(void) PROGMEM = {&CmndMi32Key, &CmndMi32Name,&Cmnd
 #define PVVX        15
 #define YLKG08      16
 #define YLAI003     17
+#define BTHOME      18
 
-#define MI32_TYPES    17 //count this manually
+#define MI32_TYPES    18 //count this manually
 
 const uint16_t kMI32DeviceID[MI32_TYPES]={ 0x0098, // Flora
                                   0x01aa, // MJ_HT_V1
@@ -367,9 +386,10 @@ const uint16_t kMI32DeviceID[MI32_TYPES]={ 0x0098, // Flora
                                   0x944a, // PVVX -> this is a fake ID
                                   0x03b6, // YLKG08 and YLKG07 - version w/wo mains
                                   0x07bf, // YLAI003
+                                  0xb770, // BTHome -> fake ID
                                   };
 
-const char kMI32DeviceType[] PROGMEM = {"Flora|MJ_HT_V1|LYWSD02|LYWSD03|CGG1|CGD1|NLIGHT|MJYD2S|YLYK01|MHOC401|MHOC303|ATC|MCCGQ02|SJWS01L|PVVX|YLKG08|YLAI003"};
+const char kMI32DeviceType[] PROGMEM = {"Flora|MJ_HT_V1|LYWSD02|LYWSD03|CGG1|CGD1|NLIGHT|MJYD2S|YLYK01|MHOC401|MHOC303|ATC|MCCGQ02|SJWS01L|PVVX|YLKG08|YLAI003|BTHOME"};
 
 const char kMI32_ConnErrorMsg[] PROGMEM = "no Error|could not connect|did disconnect|got no service|got no characteristic|can not read|can not notify|can not write|did not write|notify time out";
 

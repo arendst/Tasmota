@@ -2,7 +2,7 @@
   xnrg_12_solaxX1.ino - Solax X1 inverter RS485 support for Tasmota
 
   Copyright (C) 2021 by Pablo Zerón
-  Copyright (C) 2023 by Stefan Wershoven
+  Copyright (C) 2024 by Stefan Wershoven
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -108,7 +108,7 @@ struct SOLAXX1_LIVEDATA {
   float dc2_power = 0;
   int16_t runMode = 0;
   uint32_t errorCode = 0;
-  uint8_t SerialNumber[16] = {0x6e, 0x2f, 0x61}; // "n/a"
+  uint8_t SerialNumber[16] = {0x00};
 } solaxX1;
 
 struct SOLAXX1_GLOBALDATA {
@@ -127,15 +127,14 @@ struct SOLAXX1_SENDDATA {
   uint8_t ControlCode[1] = {0x00};
   uint8_t FunctionCode[1] = {0x00};
   uint8_t DataLength[1] = {0x00};
-  uint8_t Payload[16] = {0};
+  uint8_t Payload[16] = {0x00};
 } solaxX1_SendData;
 
 TasmotaSerial *solaxX1Serial;
 
 /*********************************************************************************************/
 
-void solaxX1_RS485Send(void)
-{
+void solaxX1_RS485Send(void) {
   uint8_t message[30];
   memcpy(message, solaxX1_SendData.Header, 2);
   memcpy(message + 2, solaxX1_SendData.Source, 2);
@@ -162,8 +161,7 @@ void solaxX1_RS485Send(void)
   AddLogBuffer(LOG_LEVEL_DEBUG_MORE, message, 9 + solaxX1_SendData.DataLength[0]);
 }
 
-bool solaxX1_RS485Receive(uint8_t *ReadBuffer)
-{
+bool solaxX1_RS485Receive(uint8_t *ReadBuffer) {
   uint8_t len = 0;
   while (solaxX1Serial->available() > 0) {
     ReadBuffer[len++] = (uint8_t)solaxX1Serial->read();
@@ -173,8 +171,7 @@ bool solaxX1_RS485Receive(uint8_t *ReadBuffer)
   return !(ReadBuffer[len - 1] == lowByte(crc) && ReadBuffer[len - 2] == highByte(crc));
 }
 
-uint16_t solaxX1_calculateCRC(uint8_t *bExternTxPackage, uint8_t bLen)
-{
+uint16_t solaxX1_calculateCRC(uint8_t *bExternTxPackage, uint8_t bLen) {
   uint8_t i;
   uint16_t wChkSum = 0;
   for (i = 0; i < bLen; i++) {
@@ -183,8 +180,7 @@ uint16_t solaxX1_calculateCRC(uint8_t *bExternTxPackage, uint8_t bLen)
   return wChkSum;
 }
 
-void solaxX1_ExtractText(uint8_t *DataIn, uint8_t *DataOut, uint8_t Begin, uint8_t End)
-{
+void solaxX1_ExtractText(uint8_t *DataIn, uint8_t *DataOut, uint8_t Begin, uint8_t End) {
   uint8_t i;
   for (i = Begin; i <= End; i++) {
     DataOut[i - Begin] = DataIn[i];
@@ -192,8 +188,7 @@ void solaxX1_ExtractText(uint8_t *DataIn, uint8_t *DataOut, uint8_t Begin, uint8
   DataOut[End - Begin + 1] = 0;
 }
 
-void solaxX1_QueryOfflineInverters(void)
-{
+void solaxX1_QueryOfflineInverters(void) {
   solaxX1_SendData.Source[0] = 0x01;
   solaxX1_SendData.Destination[0] = 0x00;
   solaxX1_SendData.Destination[1] = 0x00;
@@ -203,8 +198,7 @@ void solaxX1_QueryOfflineInverters(void)
   solaxX1_RS485Send();
 }
 
-void solaxX1_SendInverterAddress(void)
-{
+void solaxX1_SendInverterAddress(void) {
   solaxX1_SendData.Source[0] = 0x00;
   solaxX1_SendData.Destination[0] = 0x00;
   solaxX1_SendData.Destination[1] = 0x00;
@@ -215,8 +209,7 @@ void solaxX1_SendInverterAddress(void)
   solaxX1_RS485Send();
 }
 
-void solaxX1_QueryLiveData(void)
-{
+void solaxX1_QueryLiveData(void) {
   solaxX1_SendData.Source[0] = 0x01;
   solaxX1_SendData.Destination[0] = 0x00;
   solaxX1_SendData.Destination[1] = INVERTER_ADDRESS;
@@ -226,8 +219,7 @@ void solaxX1_QueryLiveData(void)
   solaxX1_RS485Send();
 }
 
-void solaxX1_QueryIDData(void)
-{
+void solaxX1_QueryIDData(void) {
   solaxX1_SendData.Source[0] = 0x01;
   solaxX1_SendData.Destination[0] = 0x00;
   solaxX1_SendData.Destination[1] = INVERTER_ADDRESS;
@@ -237,8 +229,7 @@ void solaxX1_QueryIDData(void)
   solaxX1_RS485Send();
 }
 
-void solaxX1_QueryConfigData(void)
-{
+void solaxX1_QueryConfigData(void) {
   solaxX1_SendData.Source[0] = 0x01;
   solaxX1_SendData.Destination[0] = 0x00;
   solaxX1_SendData.Destination[1] = INVERTER_ADDRESS;
@@ -248,7 +239,7 @@ void solaxX1_QueryConfigData(void)
   solaxX1_RS485Send();
 }
 
-uint8_t solaxX1_ParseErrorCode(uint32_t code){
+uint8_t solaxX1_ParseErrorCode(uint32_t code) {
   solaxX1_ErrCode.ErrMessage = code;
   if (code == 0) return 0;
   if (solaxX1_ErrCode.MainsLostFault) return 1;
@@ -264,8 +255,7 @@ uint8_t solaxX1_ParseErrorCode(uint32_t code){
 
 /*********************************************************************************************/
 
-void solaxX1_250MSecond(void) // Every 250 milliseconds
-{
+void solaxX1_250MSecond(void) { // Every 250 milliseconds
   uint8_t DataRead[80] = {0};
   uint8_t TempData[16] = {0};
   char TempDataChar[32];
@@ -296,10 +286,10 @@ void solaxX1_250MSecond(void) // Every 250 milliseconds
       Energy->voltage[0] =      ((DataRead[23] << 8) | DataRead[24]) * 0.1f; // AC Voltage
       Energy->frequency[0] =    ((DataRead[25] << 8) | DataRead[26]) * 0.01f; // AC Frequency
       Energy->active_power[0] = ((DataRead[27] << 8) | DataRead[28]); // AC Power
-      Energy->apparent_power[0] = Energy->active_power[0]; // U*I from inverter is not valid for apparent power; U*I could be lower than active power
       //temporal = (float)((DataRead[29] << 8) | DataRead[30]) * 0.1f; // Not Used
       Energy->import_active[0] = ((DataRead[31] << 24) | (DataRead[32] << 16) | (DataRead[33] << 8) | DataRead[34]) * 0.1f; // Energy Total
-      solaxX1.runtime_total =  (DataRead[35] << 24) | (DataRead[36] << 16) | (DataRead[37] << 8) | DataRead[38]; // Work Time Total
+      uint32_t runtime_total = (DataRead[35] << 24) | (DataRead[36] << 16) | (DataRead[37] << 8) | DataRead[38]; // Work Time Total
+      if (runtime_total) solaxX1.runtime_total = runtime_total; // Work Time valid
       solaxX1.runMode =        (DataRead[39] << 8) | DataRead[40]; // Work mode
       //temporal = (float)((DataRead[41] << 8) | DataRead[42]); // Grid voltage fault value 0.1V
       //temporal = (float)((DataRead[43] << 8) | DataRead[44]); // Gird frequency fault value 0.01Hz
@@ -460,16 +450,17 @@ void solaxX1_250MSecond(void) // Every 250 milliseconds
     }
   }
   solaxX1_global.SendRetry_count--;
-
 return;  
 } // end solaxX1_250MSecond
 
-void solaxX1_SnsInit(void)
-{
+void solaxX1_SnsInit(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("SX1: Init - RX-pin: %d, TX-pin: %d, RTS-pin: %d"), Pin(GPIO_SOLAXX1_RX), Pin(GPIO_SOLAXX1_TX), Pin(GPIO_SOLAXX1_RTS));
   solaxX1Serial = new TasmotaSerial(Pin(GPIO_SOLAXX1_RX), Pin(GPIO_SOLAXX1_TX), 1);
   if (solaxX1Serial->begin(SOLAXX1_SPEED)) {
     if (solaxX1Serial->hardwareSerial()) { ClaimSerial(); }
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR("SX1: Serial UART%d"), solaxX1Serial->getUart());
+#endif
   } else {
     TasmotaGlobal.energy_driver = ENERGY_NONE;
   }
@@ -478,15 +469,14 @@ void solaxX1_SnsInit(void)
   }
 }
 
-void solaxX1_DrvInit(void)
-{
+void solaxX1_DrvInit(void) {
   if (PinUsed(GPIO_SOLAXX1_RX) && PinUsed(GPIO_SOLAXX1_TX)) {
     TasmotaGlobal.energy_driver = XNRG_12;
+    Energy->type_dc = true; // Handle like DC, because U*I from inverter is not valid for apparent power; U*I could be lower than active power
   }
 }
 
-bool SolaxX1_cmd(void)
-{
+bool SolaxX1_cmd(void) {
   if (!solaxX1_global.AddressAssigned) {
     AddLog(LOG_LEVEL_INFO, PSTR("SX1: No inverter registered"));
     return false;
@@ -511,26 +501,11 @@ bool SolaxX1_cmd(void)
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_solaxX1_DATA1[] PROGMEM =
-    "{s}" D_SOLAX_X1 " " D_SOLAR_POWER "{m}%s " D_UNIT_WATT "{e}"
-    "{s}" D_SOLAX_X1 " " D_PV1_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
-    "{s}" D_SOLAX_X1 " " D_PV1_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
-    "{s}" D_SOLAX_X1 " " D_PV1_POWER "{m}%s " D_UNIT_WATT "{e}";
-#ifdef SOLAXX1_PV2
-const char HTTP_SNS_solaxX1_DATA2[] PROGMEM =
-    "{s}" D_SOLAX_X1 " " D_PV2_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
-    "{s}" D_SOLAX_X1 " " D_PV2_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
-    "{s}" D_SOLAX_X1 " " D_PV2_POWER "{m}%s " D_UNIT_WATT "{e}";
-#endif
-const char HTTP_SNS_solaxX1_DATA3[] PROGMEM =
-    "{s}" D_SOLAX_X1 " " D_UPTIME "{m}%d " D_UNIT_HOUR "{e}"
-    "{s}" D_SOLAX_X1 " " D_STATUS "{m}%s"
-    "{s}" D_SOLAX_X1 " " D_ERROR "{m}%s"
-    "{s}" D_SOLAX_X1 " Inverter SN{m}%s";
+const char HTTP_SNS_solaxX1_Num[] PROGMEM = "{s}" D_SOLAX_X1 " %s{m}</td><td style='text-align:%s'>%s{m}{m} %s{e}";
+const char HTTP_SNS_solaxX1_Str[] PROGMEM = "{s}" D_SOLAX_X1 " %s{m}%s{e}";
 #endif // USE_WEBSERVER
 
-void solaxX1_Show(bool json)
-{
+void solaxX1_Show(uint32_t function) {
   char solar_power[33];
   dtostrfd(solaxX1.dc1_power + solaxX1.dc2_power, Settings->flag2.wattage_resolution, solar_power);
   char pv1_voltage[33];
@@ -550,32 +525,49 @@ void solaxX1_Show(bool json)
   char status[33];
   GetTextIndexed(status, sizeof(status), solaxX1.runMode + 1, kSolaxMode);
 
-  if (json) {
-    ResponseAppend_P(PSTR(",\"" D_JSON_SOLAR_POWER "\":%s,\"" D_JSON_PV1_VOLTAGE "\":%s,\"" D_JSON_PV1_CURRENT "\":%s,\"" D_JSON_PV1_POWER "\":%s"),
-                                solar_power, pv1_voltage, pv1_current, pv1_power);
+  switch (function) {
+    case FUNC_JSON_APPEND:
+      ResponseAppend_P(PSTR(",\"" D_JSON_SOLAR_POWER "\":%s,\"" D_JSON_PV1_VOLTAGE "\":%s,\"" D_JSON_PV1_CURRENT "\":%s,\"" D_JSON_PV1_POWER "\":%s"),
+                                  solar_power, pv1_voltage, pv1_current, pv1_power);
 #ifdef SOLAXX1_PV2
-    ResponseAppend_P(PSTR(",\"" D_JSON_PV2_VOLTAGE "\":%s,\"" D_JSON_PV2_CURRENT "\":%s,\"" D_JSON_PV2_POWER "\":%s"),
-                                pv2_voltage, pv2_current, pv2_power);
+      ResponseAppend_P(PSTR(",\"" D_JSON_PV2_VOLTAGE "\":%s,\"" D_JSON_PV2_CURRENT "\":%s,\"" D_JSON_PV2_POWER "\":%s"),
+                                  pv2_voltage, pv2_current, pv2_power);
 #endif
-    ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%d,\"" D_JSON_RUNTIME "\":%d,\"" D_JSON_STATUS "\":\"%s\",\"" D_JSON_ERROR "\":%d"),
-                                solaxX1.temperature, solaxX1.runtime_total, status, solaxX1.errorCode);
+      ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%d,\"" D_JSON_RUNTIME "\":%d,\"" D_JSON_STATUS "\":\"%s\",\"" D_JSON_ERROR "\":%d"),
+                                  solaxX1.temperature, solaxX1.runtime_total, status, solaxX1.errorCode);
 
 #ifdef USE_DOMOTICZ
-    // Avoid bad temperature report at beginning of the day (spikes of 1200 celsius degrees)
-    if (0 == TasmotaGlobal.tele_period && solaxX1.temperature < 100) { DomoticzSensor(DZ_TEMP, solaxX1.temperature); }
+      // Avoid bad temperature report at beginning of the day (spikes of 1200 celsius degrees)
+      if (0 == TasmotaGlobal.tele_period && solaxX1.temperature < 100) { DomoticzSensor(DZ_TEMP, solaxX1.temperature); }
 #endif // USE_DOMOTICZ
-
+      break;
 #ifdef USE_WEBSERVER
-  } else {
-    WSContentSend_PD(HTTP_SNS_solaxX1_DATA1, solar_power, pv1_voltage, pv1_current, pv1_power);
+    case FUNC_WEB_COL_SENSOR: {
+      String table_align = Settings->flag5.gui_table_align?"right":"left";
+      static uint32_t LastOnlineTime;
+      if (solaxX1.runMode != -1) LastOnlineTime = TasmotaGlobal.uptime;
+      if (TasmotaGlobal.uptime < LastOnlineTime + 300) { // Hide numeric live data, when inverter is offline for more than 5 min
+        WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_SOLAR_POWER, table_align.c_str(), solar_power, D_UNIT_WATT);
+        WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV1_VOLTAGE, table_align.c_str(), pv1_voltage, D_UNIT_VOLT);
+        WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV1_CURRENT, table_align.c_str(), pv1_current, D_UNIT_AMPERE);
+        WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV1_POWER,   table_align.c_str(), pv1_power,   D_UNIT_WATT);
 #ifdef SOLAXX1_PV2
-    WSContentSend_PD(HTTP_SNS_solaxX1_DATA2, pv2_voltage, pv2_current, pv2_power);
+        WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV2_VOLTAGE, table_align.c_str(), pv2_voltage, D_UNIT_VOLT);
+        WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV2_CURRENT, table_align.c_str(), pv2_current, D_UNIT_AMPERE);
+        WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_PV2_POWER,   table_align.c_str(), pv2_power,   D_UNIT_WATT);
 #endif
-    WSContentSend_Temp(D_SOLAX_X1, solaxX1.temperature);
-    char errorCodeString[33];
-    WSContentSend_PD(HTTP_SNS_solaxX1_DATA3, solaxX1.runtime_total, status,
-      GetTextIndexed(errorCodeString, sizeof(errorCodeString), solaxX1_ParseErrorCode(solaxX1.errorCode), kSolaxError),
-      solaxX1.SerialNumber);
+        char SXTemperature[16];
+        dtostrfd(solaxX1.temperature, Settings->flag2.temperature_resolution, SXTemperature);
+        WSContentSend_PD(HTTP_SNS_solaxX1_Num, D_TEMPERATURE, table_align.c_str(), SXTemperature, D_UNIT_DEGREE D_UNIT_CELSIUS);
+      }
+      WSContentSend_P(HTTP_SNS_solaxX1_Num, D_UPTIME, table_align.c_str(), String(solaxX1.runtime_total).c_str(), D_UNIT_HOUR);
+      break; }
+    case FUNC_WEB_SENSOR:
+      char errorCodeString[33];
+      WSContentSend_P(HTTP_SNS_solaxX1_Str, D_STATUS, status);
+      WSContentSend_P(HTTP_SNS_solaxX1_Str, D_ERROR, GetTextIndexed(errorCodeString, sizeof(errorCodeString), solaxX1_ParseErrorCode(solaxX1.errorCode), kSolaxError));
+      if (solaxX1.SerialNumber[0]) WSContentSend_P(HTTP_SNS_solaxX1_Str, "Inverter SN", solaxX1.SerialNumber);
+      break;
 #endif  // USE_WEBSERVER
   }
 }
@@ -584,22 +576,20 @@ void solaxX1_Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xnrg12(uint32_t function)
-{
+bool Xnrg12(uint32_t function) {
   bool result = false;
 
   switch (function) {
     case FUNC_EVERY_250_MSECOND:
       solaxX1_250MSecond();
       break;
-    case FUNC_JSON_APPEND:
-      solaxX1_Show(1);
-      break;
 #ifdef USE_WEBSERVER
+    case FUNC_WEB_COL_SENSOR:
     case FUNC_WEB_SENSOR:
-      solaxX1_Show(0);
-      break;
 #endif  // USE_WEBSERVER
+    case FUNC_JSON_APPEND:
+      solaxX1_Show(function);
+      break;
     case FUNC_INIT:
       solaxX1_SnsInit();
       break;

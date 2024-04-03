@@ -855,6 +855,9 @@ bool Xdrv57(uint32_t function) {
         MESHdeInit();
         break;
 #endif  // USE_DEEPSLEEP
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
   return result;

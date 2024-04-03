@@ -98,6 +98,18 @@ void analogWrite(uint8_t pin, int val);
 // Extended version that also allows to change phase
 extern void analogWritePhase(uint8_t pin, uint32_t duty, uint32_t phase = 0);
 
+//
+// ledcReadDutyResolution - read the resolution
+//
+// return -1 if pin is not assigned to ledc
+int32_t ledcReadDutyResolution(uint8_t pin);
+
+//
+// ledcRead2 - read the value of PWM
+//
+// return -1 if pin is not assigned to ledc
+int32_t ledcRead2(uint8_t pin);
+
 // return the channel assigned to a GPIO, or -1 if none
 extern int32_t analogGetChannel2(uint32_t pin);
 

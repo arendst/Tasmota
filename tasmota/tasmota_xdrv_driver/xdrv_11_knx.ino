@@ -1402,6 +1402,9 @@ bool Xdrv11(uint32_t function)
         break;
 //      case FUNC_SET_POWER:
 //        break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   return result;
 }

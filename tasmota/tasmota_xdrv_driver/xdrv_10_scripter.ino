@@ -70,9 +70,13 @@ const uint8_t SCRIPT_VERS[2] = {5, 2};
 #endif // USE_SML_M
 
 #ifndef MAXFILT
-#define MAXFILT 5
+#define MAXFILT 10
 #endif
+
+#ifndef SCRIPT_SVARSIZE
 #define SCRIPT_SVARSIZE 20
+#endif
+
 #ifndef SCRIPT_MAXSSIZE
 #define SCRIPT_MAXSSIZE 48
 #endif
@@ -155,6 +159,7 @@ char *Get_esc_char(char *cp, char *esc_chr);
 #ifndef MAX_EXT_ARRAYS
 #define MAX_EXT_ARRAYS 5
 #endif
+
 
 #ifndef STASK_PRIO
 #define STASK_PRIO 1
@@ -335,8 +340,9 @@ typedef union {
   };
 } SCRIPT_TYPE;
 
+
 struct T_INDEX {
-  uint8_t index;
+  uint16_t index;
   SCRIPT_TYPE bits;
 };
 
@@ -479,7 +485,7 @@ struct SCRIPT_MEM {
     uint16_t script_size;
     uint8_t *script_pram;
     uint16_t script_pram_size;
-    uint8_t numvars;
+    uint16_t numvars;
     uint8_t arres;
     void *script_mem;
     uint16_t script_mem_size;
@@ -557,6 +563,10 @@ struct SCRIPT_MEM {
     WiFiClient tcp_client;
 #endif
 
+#ifdef SCRIPT_FULL_WEBPAGE
+    uint8_t wsp;
+#endif
+
 } glob_script_mem;
 
 
@@ -608,6 +618,7 @@ char *scripter_sub(char *lp, uint8_t fromscriptcmd);
 char *GetNumericArgument(char *lp,uint8_t lastop,TS_FLOAT *fp, struct GVARS *gv);
 char *GetStringArgument(char *lp,uint8_t lastop,char *cp, struct GVARS *gv);
 char *ForceStringVar(char *lp,char *dstr);
+char *GetLongIString(char *lp, char **dstr);
 void send_download(void);
 uint8_t UfsReject(char *name);
 #ifdef USE_UFILESYS
@@ -627,7 +638,7 @@ void ScriptEverySecond(void) {
     struct T_INDEX *vtp = glob_script_mem.type;
     TS_FLOAT delta = (millis() - glob_script_mem.script_lastmillis) / 1000.0;
     glob_script_mem.script_lastmillis = millis();
-    for (uint8_t count=0; count<glob_script_mem.numvars; count++) {
+    for (uint16_t count = 0; count < glob_script_mem.numvars; count++) {
       if (vtp[count].bits.is_timer) {
         // decrements timers
         TS_FLOAT *fp = &glob_script_mem.fvars[vtp[count].index];
@@ -741,6 +752,10 @@ char *script;
     if (!imemptr) {
       return -7;
     }
+
+#ifdef SCRIPT_FULL_WEBPAGE
+   // glob_script_mem.wsp = 0;
+#endif
 
     char *vnames = (char*)imemptr;
 
@@ -1144,7 +1159,7 @@ char *script;
     // now preset permanent vars
     TS_FLOAT *fp = (TS_FLOAT*)glob_script_mem.script_pram;
     struct T_INDEX *vtp = glob_script_mem.type;
-    for (uint8_t count = 0; count<glob_script_mem.numvars; count++) {
+    for (uint16_t count = 0; count < glob_script_mem.numvars; count++) {
       if (vtp[count].bits.is_permanent && !vtp[count].bits.is_string) {
         uint8_t index = vtp[count].index;
         if (vtp[count].bits.is_filter) {
@@ -1165,7 +1180,7 @@ char *script;
       }
     }
     sp = (char*)fp;
-    for (uint8_t count = 0; count<glob_script_mem.numvars; count++) {
+    for (uint16_t count = 0; count < glob_script_mem.numvars; count++) {
       if (vtp[count].bits.is_permanent && vtp[count].bits.is_string) {
         uint8_t index = vtp[count].index;
         char *dp = glob_script_mem.glob_snp + (index * glob_script_mem.max_ssize);
@@ -1829,6 +1844,10 @@ int32_t opt_fext(File *fp,  char *ts_from, char *ts_to, uint32_t flg) {
   return fres;
 }
 
+#ifndef FEXT_MAX_LINE_LENGTH
+#define FEXT_MAX_LINE_LENGTH 256
+#endif
+
 // assume 1. entry is timestamp, others are tab delimited values until LF
 // file reference, from timestamp, to timestampm, column offset, array pointers, array lenght, number of arrays
 int32_t extract_from_file(File *fp,  char *ts_from, char *ts_to, int8_t coffs, TS_FLOAT **a_ptr, uint16_t *a_len, uint8_t numa, int16_t accum) {
@@ -1843,7 +1862,7 @@ int32_t extract_from_file(File *fp,  char *ts_from, char *ts_to, int8_t coffs, T
       // seek to last entry
       if (cpos > 1) cpos -= 2;
       // now seek back to last line
-      uint8_t lbuff[256];
+      uint8_t lbuff[FEXT_MAX_LINE_LENGTH];
       uint8_t iob;
       uint16_t index = sizeof(lbuff) -1;
       fp->seek(cpos - sizeof(lbuff), SeekSet);
@@ -1928,6 +1947,9 @@ int32_t extract_from_file(File *fp,  char *ts_from, char *ts_to, int8_t coffs, T
     uint8_t buff[2], iob;
     fp->read(buff, 1);
     iob = buff[0];
+    TS_FLOAT fval;
+    uint16_t curpos;
+
     if (iob == '\t' || iob == ',' || iob == '\n' || iob == '\r') {
       rstr[sindex] = 0;
       sindex = 0;
@@ -1964,10 +1986,11 @@ int32_t extract_from_file(File *fp,  char *ts_from, char *ts_to, int8_t coffs, T
         } else {
           // data columns
           if (range) {
-            uint8_t curpos = colpos - coffs;
+            curpos = colpos - coffs;
             if (colpos >= coffs && curpos < numa) {
               if (a_len[curpos]) {
-                TS_FLOAT fval = CharToFloat(rstr);
+                fval = CharToFloat(rstr);
+nextcol:
                 uint8_t flg = 1;
                 if ((mflg[curpos] & 1) == 1) {
                   // absolute values, build diffs
@@ -2008,12 +2031,20 @@ int32_t extract_from_file(File *fp,  char *ts_from, char *ts_to, int8_t coffs, T
       }
       colpos++;
       if (iob == '\n' || iob == '\r') {
-        lastpos = fp->position();
-        colpos = 0;
-        lines ++;
-        if (lines == 1) {
-          if (ipos) {
-            fp->seek(ipos, SeekSet);
+        // end of line
+        if (colpos <= numa) {
+          // empty column
+          curpos = colpos - coffs;
+          fval = 0;
+          goto nextcol;
+        } else {
+          lastpos = fp->position();
+          colpos = 0;
+          lines ++;
+          if (lines == 1) {
+            if (ipos) {
+              fp->seek(ipos, SeekSet);
+            }
           }
         }
       }
@@ -2315,7 +2346,7 @@ uint32_t match_vars(char *dvnam, TS_FLOAT **fp, char **sp, uint32_t *ind) {
     uint8_t slen = strlen(cp);
     if (slen == olen && *cp == dvnam[0]) {
       if (!strncmp(cp, dvnam, olen)) {
-        uint8_t index = vtp[count].index;
+        uint16_t index = vtp[count].index;
         if (vtp[count].bits.is_string == 0) {
           if (vtp[count].bits.is_filter) {
             // error
@@ -2852,7 +2883,17 @@ chknext:
           SCRIPT_SKIP_SPACES
           uint16_t alens;
           TS_FLOAT *fps;
+          char *slp = lp;
           lp = get_array_by_name(lp, &fps, &alens, 0);
+          if (lp == 0 || fps == 0) {
+            lp = slp;
+            lp = GetNumericArgument(lp, OPER_EQU, &fvar, 0);
+            for (uint32_t cnt = 0; cnt < alend; cnt++ ) {
+              fpd[cnt] = fvar;
+            }
+            fvar = alend;
+            goto nfuncexit;
+          }
           SCRIPT_SKIP_SPACES
           if (alens < alend) {
             alend = alens;
@@ -2983,7 +3024,7 @@ chknext:
           uint8_t vtype;
           lp = isvar(lp + 4, &vtype, &ind, 0, 0, gv);
           if (!ind.bits.constant) {
-            uint8_t index = glob_script_mem.type[ind.index].index;
+            uint16_t index = glob_script_mem.type[ind.index].index;
             fvar = glob_script_mem.fvars[index] != glob_script_mem.s_fvars[index];
             glob_script_mem.s_fvars[index] = glob_script_mem.fvars[index];
           } else {
@@ -3145,7 +3186,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           uint8_t vtype;
           lp = isvar(lp + 5, &vtype, &ind, 0, 0, gv);
           if (!ind.bits.constant) {
-            uint8_t index = glob_script_mem.type[ind.index].index;
+            uint16_t index = glob_script_mem.type[ind.index].index;
             fvar = glob_script_mem.fvars[index] - glob_script_mem.s_fvars[index];
             glob_script_mem.s_fvars[index] = glob_script_mem.fvars[index];
           } else {
@@ -3341,7 +3382,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
         if (!strncmp_XP(lp, XPSTR("fr("), 3)) {
           struct T_INDEX ind;
           uint8_t vtype;
-          uint8_t sindex = 0;
+          uint16_t sindex = 0;
           lp = isvar(lp + 3, &vtype, &ind, 0, 0, gv);
           if (vtype != VAR_NV) {
             // found variable as result
@@ -3483,10 +3524,12 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           // read file from web
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
-          char url[SCRIPT_MAXSSIZE];
-          lp = ForceStringVar(lp, url);
-          SCRIPT_SKIP_SPACES
-          fvar = url2file(fvar, url);
+          char *url;
+          lp = GetLongIString(lp, &url);
+          if (url) {
+            fvar = url2file(fvar, url);
+          }
+          if (url) free(url);
           goto nfuncexit;
         }
 #endif
@@ -3747,6 +3790,70 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
             fvar = 0;
           }
           goto nfuncexit;
+        }
+
+        if (!strncmp_XP(lp, XPSTR("fcs("), 4)) {
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
+          uint8_t find = fvar;
+          SCRIPT_SKIP_SPACES
+          char delim[SCRIPT_MAXSSIZE];
+          lp = GetStringArgument(lp, OPER_EQU, delim, 0);
+          SCRIPT_SKIP_SPACES
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+          SCRIPT_SKIP_SPACES
+          uint8_t index = fvar;
+          if (!index) index = 1;
+          char delimc = 0;
+          if (*lp != ')') {
+            // get delimiter
+            delimc = *lp;
+            lp++;
+          }
+          char fstr[SCRIPT_MAXSSIZE];
+          fstr[0] = 0;
+          bool match = false;
+          uint8_t dstrlen = strlen(delim);
+          if (glob_script_mem.file_flags[find].is_open) {
+            glob_script_mem.files[find].seek(0, SeekSet);
+            uint8_t first = 0;
+            uint8_t clen = 0;
+            while (glob_script_mem.files[find].available()) {
+              uint8_t buf[1];
+              glob_script_mem.files[find].read(buf, 1);
+               // shift string
+              memmove(&fstr[0], &fstr[1], dstrlen - 1);
+              fstr[dstrlen - 1] = buf[0];
+              if (!strncmp(delim, fstr, dstrlen)) {
+                  // match
+                  //AddLog(LOG_LEVEL_INFO, PSTR(">>: %s - %s - %d - %d"), delim, fstr, dstrlen, index);
+                  index--;
+                  if (!index) {
+                    match = true;
+                    break;
+                  }
+              }
+            }
+            if (match == true) {
+              clen = 0;
+              while (glob_script_mem.files[find].available()) {
+                uint8_t buf[1];
+                glob_script_mem.files[find].read(buf, 1);
+                if (buf[0] == delimc) {
+                  break;
+                }
+                fstr[clen] = buf[0];
+                clen++;
+                if (clen >= sizeof(fstr)) {
+                  break;
+                }
+              }
+              fstr[clen] = 0;
+            }
+            if (sp) strlcpy(sp, fstr, glob_script_mem.max_ssize);
+          }
+          len = 0;
+          lp++;
+          goto strexit;
         }
 
 #endif // USE_SCRIPT_FATFS_EXT
@@ -4275,7 +4382,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           tind->bits.is_string = 0;
           return lp + len;
         }
-#ifdef USE_LVGL
+#ifdef xUSE_LVGL
         if (!strncmp_XP(lp, XPSTR("lvgl("), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           SCRIPT_SKIP_SPACES
@@ -4934,7 +5041,7 @@ extern char *SML_GetSVal(uint32_t index);
                 fvar = -1;
               } else {
                 // string result
-                uint8_t sindex = glob_script_mem.type[ind.index].index;
+                uint16_t sindex = glob_script_mem.type[ind.index].index;
                 char *cp = glob_script_mem.glob_snp + (sindex * glob_script_mem.max_ssize);
                 fvar = SML_Set_WStr(fvar1, cp);
               }
@@ -4955,6 +5062,14 @@ extern char *SML_GetSVal(uint32_t index);
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           if (fvar < 1) fvar = 1;
           SML_Decode(fvar - 1);
+          goto nfuncexit;
+        }
+        if (!strncmp_XP(lp, XPSTR("smls("), 5)) {
+          TS_FLOAT meter;
+          lp = GetNumericArgument(lp + 5, OPER_EQU, &meter, gv);
+          if (meter < 1) meter = 1;
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+          SML_Shift_Num(meter - 1, fvar);
           goto nfuncexit;
         }
         if (!strncmp_XP(lp, XPSTR("smlv["), 5)) {
@@ -5760,7 +5875,7 @@ extern char *SML_GetSVal(uint32_t index);
           goto exit;
         }
 #endif // USE_TTGO_WATCH
-#if defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47) || defined(USE_GT911)
+#if defined(USE_FT5206) || defined(USE_XPT2046) || defined(USE_LILYGO47) || defined(USE_UNIVERSAL_TOUCH) || defined(USE_CST816S) || defined(SIMPLE_RES_TOUCH) || defined(USE_GT911)
         if (!strncmp_XP(lp, XPSTR("wtch("), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
           fvar = Touch_Status(fvar);
@@ -6389,6 +6504,27 @@ struct T_INDEX ind;
     }
 }
 
+char *GetLongIString(char *lp, char **dstr) {
+  while (*lp == ' ') lp++;
+  if (*lp != '"') {
+    *dstr = (char*)malloc(SCRIPT_MAXSSIZE);
+    if (!*dstr) return lp;
+    lp = GetStringArgument(lp, OPER_EQU, *dstr, 0);
+  } else {
+    lp++;
+    char *cp = strchr(lp, '"');
+    if (cp) {
+      uint16_t slen = (uint32_t)cp - (uint32_t)lp;
+      *dstr = (char*)calloc(slen + 2, 1);
+      if (!*dstr) return lp;
+      memmove(*dstr, lp, slen);
+      lp = cp + 1;
+    } else {
+      // error
+    }
+  }
+  return lp;
+}
 
 char *ForceStringVar(char *lp, char *dstr) {
   TS_FLOAT fvar;
@@ -6424,7 +6560,7 @@ extern "C" {
 
 int32_t UpdVar(char *vname, float *fvar, uint32_t mode) {
   uint8_t type;
-  uint8_t index;
+  uint16_t index;
   if (*vname == '@') {
       vname++;
       type = *vname;
@@ -6850,12 +6986,12 @@ void esp_pwm(int32_t value, uint32 freq, uint32_t channel) {
     pwmpin[channel] = -value;
     pinMode(pwmpin[channel], OUTPUT);
     analogWriteFreq(freq);
-    analogWrite(pwmpin[channel], 0);
+    AnalogWrite(pwmpin[channel], 0);
   } else {
     if (value > 1023) {
       value = 1023;
     }
-    analogWrite(pwmpin[channel],value);
+    AnalogWrite(pwmpin[channel], value);
   }
 #endif // ESP32
 }
@@ -8304,9 +8440,9 @@ void Scripter_save_pvars(void) {
   TS_FLOAT *fp = (TS_FLOAT*)glob_script_mem.script_pram;
   mlen+=sizeof(TS_FLOAT);
   struct T_INDEX *vtp = glob_script_mem.type;
-  for (uint8_t count = 0; count<glob_script_mem.numvars; count++) {
+  for (uint16_t count = 0; count < glob_script_mem.numvars; count++) {
     if (vtp[count].bits.is_permanent && !vtp[count].bits.is_string) {
-      uint8_t index = vtp[count].index;
+      uint16_t index = vtp[count].index;
       if (vtp[count].bits.is_filter) {
         // save array
         uint16_t len = 0;
@@ -8330,7 +8466,7 @@ void Scripter_save_pvars(void) {
     }
   }
   char *cp = (char*)fp;
-  for (uint8_t count = 0; count<glob_script_mem.numvars; count++) {
+  for (uint16_t count = 0; count < glob_script_mem.numvars; count++) {
     if (vtp[count].bits.is_permanent && vtp[count].bits.is_string) {
       uint8_t index = vtp[count].index;
       char *sp = glob_script_mem.glob_snp + (index * glob_script_mem.max_ssize);
@@ -9344,13 +9480,15 @@ bool Script_SubCmd(void) {
   char cmdbuff[128];
   char *cp = cmdbuff;
   *cp++ = '#';
-  strcpy(cp, command);
+  strlcpy(cp, command, sizeof(cmdbuff) - 1);
   uint8_t tlen = strlen(command);
   cp += tlen;
   if (XdrvMailbox.data_len > 0) {
     *cp++ = '(';
-    strncpy(cp, XdrvMailbox.data,XdrvMailbox.data_len);
-    cp += XdrvMailbox.data_len;
+    uint32_t max_space = sizeof(cmdbuff) - tlen - 4;  // 4 = #()0
+    uint32_t max_len = min(XdrvMailbox.data_len, max_space);
+    strncpy(cp, XdrvMailbox.data, max_len);
+    cp += max_len;
     *cp++ = ')';
     *cp = 0;
   }
@@ -10325,7 +10463,7 @@ void ScriptFullWebpage(uint8_t page) {
   }
 
   WSContentBegin(200, CT_HTML);
-  WSContentSend_P(HTTP_HEADER1, PSTR(D_HTML_LANGUAGE), SettingsText(SET_DEVICENAME), PSTR("Full Screen"));
+  WSContentSend_P(HTTP_HEADER1, PSTR(D_HTML_LANGUAGE), SettingsTextEscaped(SET_DEVICENAME).c_str(), PSTR("Full Screen"));
   WSContentSend_P(HTTP_SCRIPT_FULLPAGE1, page , fullpage_refresh);
   WSContentSend_P(HTTP_SCRIPT_FULLPAGE2, fullpage_refresh);
   //WSContentSend_P(PSTR("<div id='l1' name='l1'></div>"));
@@ -10535,7 +10673,7 @@ uint16_t cipos = 0;
     lp = isvar(lp, &vtype, &ind, &sysvar, 0, 0);
     if (vtype != VAR_NV) {
       SCRIPT_SKIP_SPACES
-      uint8_t index = glob_script_mem.type[ind.index].index;
+      uint16_t index = glob_script_mem.type[ind.index].index;
       if ((vtype & STYPE) == 0) {
         // numeric result
         //Serial.printf("numeric %d - %d \n",ind.index,index);
@@ -10629,6 +10767,8 @@ uint32_t cnt;
 #define WSO_FORCEPLAIN 4
 #define WSO_FORCEMAIN 8
 #define WSO_FORCEGUI 16
+#define WSO_FORCETAB 32
+#define WSO_FORCESUBFILE 64
 #define WSO_STOP_DIV 0x80
 
 void WCS_DIV(uint8_t flag) {
@@ -10729,7 +10869,7 @@ void ScriptWebShow(char mc, uint8_t page) {
           //goto nextwebline;
         } else if (!strncmp(lp, "%/", 2)) {
           // send file
-          if (mc) {
+          if (mc || (specopt & WSO_FORCESUBFILE)) {
             web_send_file(mc, lp + 1);
           }
         } else {
@@ -10773,6 +10913,9 @@ int32_t web_send_file(char mc, char *fname) {
         // skip comment lines
         continue;
       }
+      if (*lp == ';') {
+       // continue;
+      }
       web_send_line(mc, lbuff);
     }
     file.close();
@@ -10811,6 +10954,15 @@ const char *gc_str;
   }
 
   bool dogui = ((!mc && (*lin != '$')) || (mc == 'w' && (*lin != '$'))) && (!(specopt & WSO_FORCEMAIN));
+
+  if (!strncmp(lin, "%=#", 3)) {
+    // subroutine
+    uint8_t sflg = specopt;
+    specopt = WSO_FORCEPLAIN;
+    lin = scripter_sub(lin + 1, 0);
+    specopt = sflg;
+    return lin;
+  }
 
   if ((dogui && !(specopt & WSO_FORCEGUI)) || (!dogui && (specopt & WSO_FORCEGUI))) {
   //if ( ((!mc && (*lin != '$')) || (mc == 'w' && (*lin != '$'))) && (!(specopt & WSO_FORCEMAIN)) || (specopt & WSO_FORCEGUI)) {
@@ -11206,13 +11358,17 @@ const char *gc_str;
       lp++;
 
     } else {
-      if (mc == 'w' || (specopt & WSO_FORCEPLAIN)) {
-        WSContentSend_P(PSTR("%s"), lin);
+      if (specopt & WSO_FORCETAB) {
+        WSContentSend_P(PSTR("{s}%s{e}"), lin);
       } else {
-        if (optflg) {
-          WSContentSend_P(PSTR("<div>%s</div>"), lin);
+        if (mc == 'w' || (specopt & WSO_FORCEPLAIN)) {
+          WSContentSend_P(PSTR("%s"), lin);
         } else {
-          WSContentSend_P(PSTR("{s}%s{e}"), lin);
+          if (optflg) {
+            WSContentSend_P(PSTR("<div>%s</div>"), lin);
+          } else {
+            WSContentSend_P(PSTR("{s}%s{e}"), lin);
+          }
         }
       }
     }
@@ -11964,6 +12120,7 @@ int32_t url2file(uint8_t fref, char *url) {
   HTTPClient http;
   int32_t httpCode = 0;
   String weburl = "http://"+UrlEncode(url);
+
   for (uint32_t retry = 0; retry < 3; retry++) {
     http.begin(http_client, weburl);
     delay(100);
@@ -12054,7 +12211,7 @@ int32_t http_req(char *host, char *request) {
 
 
   glob_script_mem.glob_error = 0;
-#endif
+#endif // USE_WEBSEND_RESPONSE
 
   http.end();
   http_client.stop();
@@ -12138,15 +12295,24 @@ int32_t call2pwl(const char *url) {
 #endif // TESLA_POWERWALL
 
 
+//#ifdef ESP8266
 #include "WiFiClientSecureLightBearSSL.h"
+//#else
+//#include <WiFiClientSecure.h>
+//#endif //ESP8266
 
 // get https info page json string
 uint32_t call2https(const char *host, const char *path) {
   //if (TasmotaGlobal.global_state.wifi_down) return 1;
   uint32_t status = 0;
 
+//#ifdef ESP32
+//  WiFiClientSecure *httpsClient;
+//  httpsClient = new WiFiClientSecure;
+//#else
   BearSSL::WiFiClientSecure_light *httpsClient;
   httpsClient = new BearSSL::WiFiClientSecure_light(1024, 1024);
+//#endif
 
   httpsClient->setTimeout(2000);
   httpsClient->setInsecure();
@@ -12271,7 +12437,7 @@ uint32_t script_i2c(uint8_t sel, uint16_t val, uint32_t val1) {
 #endif // USE_SCRIPT_I2C
 
 
-#ifdef USE_LVGL
+#ifdef xUSE_LVGL
 #include <renderer.h>
 #include "lvgl.h"
 
@@ -12685,8 +12851,12 @@ void script_add_subpage(uint8_t num) {
           wptr = ScriptFullWebpage7;
           break;
       }
-      sprintf_P(id, PSTR("/sfd%1d"), num);
-      Webserver->on(id, wptr);
+      uint8_t flag = 1 << num;
+      if (!(glob_script_mem.wsp & flag)) {
+        sprintf_P(id, PSTR("/sfd%1d"), num);
+        Webserver->on(id, wptr);
+        glob_script_mem.wsp |= flag;
+      }
       WSContentSend_P(HTTP_WEB_FULL_DISPLAY, num, bname);
   }
 }
@@ -12696,8 +12866,6 @@ void script_add_subpage(uint8_t num) {
  * Interface
 \*********************************************************************************************/
 //const esp_partition_t *esp32_part;
-
-
 
 bool Xdrv10(uint32_t function)
 {
@@ -13036,6 +13204,10 @@ bool Xdrv10(uint32_t function)
       break;
 
     case FUNC_NETWORK_UP:
+      break;
+    
+    case FUNC_ACTIVE:
+      result = true;
       break;
   }
   return result;

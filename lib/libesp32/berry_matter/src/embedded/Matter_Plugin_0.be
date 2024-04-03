@@ -36,9 +36,61 @@ class Matter_Plugin
   static var VIRTUAL = false                # set to true only for virtual devices
   var update_next                           # next timestamp for update
   # Configuration of the plugin: clusters and type
-  static var CLUSTERS = {
-    0x001D: [0,1,2,3,0xFFFC,0xFFFD],                # Descriptor Cluster 9.5 p.453
-    0x0039: [0x11],                                 # Bridged Device Basic Information 9.13 p.485
+  static var CLUSTERS = matter.consolidate_clusters(_class, {
+    0x001D: [0,1,2,3],                      # Descriptor Cluster 9.5 p.453
+  })
+  static var COMMANDS = {
+    0x001D: nil,                                    # Descriptor Cluster 9.5 p.453
+  }
+  # static var TYPES = { <device_type>: <revision> }    # needs to be defined for each endpoint
+  # `FEATURE_MAPS` contains any non-zero value per cluster, if not present default to `0`
+  static var FEATURE_MAPS = {               # feature map per cluster
+    0x0031: 0x04,                           # Put Eth for now which should work for any on-network
+    0x0102: 1 + 4,                          # Lift + PA_LF
+  }
+  # `CLUSTER_REVISIONS` contains revision numbers for each cluster, or `1` if not present
+  static var CLUSTER_REVISIONS = {
+    0x0003: 4,                              # New data model format and notation
+    0x0004: 4,                              # New data model format and notation
+    0x0005: 5,                              # "new data model format and notation"
+    0x0006: 5,                              # Addition of Dead Front behavior and associated FeatureMap entry
+    0x0008: 5,                              # "new data model format and notation"
+    0x001D: 2,                              # Semantic tag list; TagList feature
+    # 0x001F: 1,                            # Initial Release
+    0x0028: 2,                              # Added ProductAppearance attribute
+    # 0x002A: 1,                            # Initial Release
+    # 0x002B: 1,                            # Initial Release
+    # 0x002C: 1,                            # Initial Release
+    # 0x0030: 1,                            # Initial Release
+    # 0x0031: 1,                            # Initial Release
+    # 0x0032: 1,                            # Initial Release
+    # 0x0033: 1,                            # Initial Release
+    # 0x0034: 1,                            # Initial Release
+    0x0038: 2,                              #
+    # 0x003C: 1,                            # Initial Release
+    # 0x003E: 1,                            # Initial Release
+    0x003F: 2,                              # Clarify KeySetWrite validation and behavior on invalid epoch key lengths
+    # 0x0040: 1,                            # Initial Release
+    # 0x0041: 1,                            # Initial Release
+    # 0x0042: 1,                            # Initial Release
+    # 0x005B: 1,                            # Initial Release
+    # 0x005C: 1,                            # Initial Release
+    0x0101: 7,                              # Added support for European door locks (unbolt feature)
+    0x0102: 5,                              # New data model format and notation
+    0x0200: 4,                              # Added feature map
+    0x0201: 6,                              # Introduced the LTNE feature and adapted text (spec issue #5778)
+    0x0202: 4,                              # Change conformance for FanModeSe­ quenceEnum
+    0x0204: 2,                              # New data model format and notation, added "Conversion of Temperature Values for Display" section
+    0x0300: 6,                              # Added clarifications to Scenes support for Matter
+    0x0301: 4,                              # New data model format and notation
+    0x0400: 3,                              # New data model format and notation
+    0x0402: 4,                              # New data model format and notation
+    0x0403: 3,                              # New data model format and notation
+    0x0404: 3,                              # New data model format and notation
+    0x0405: 3,                              # New data model format and notation
+    0x0406: 3,                              # New data model format and notation
+    0x0407: 3,                              # New data model format and notation
+    0x0408: 3,                              # New data model format and notation
   }
   # Accepted Update commands for virtual devices
   static var UPDATE_COMMANDS = []
@@ -266,17 +318,35 @@ class Matter_Plugin
         return tlv_solo.set(TLV.U4, 1)    # "Initial Release"
       end
 
-    # ====================================================================================================
-    elif cluster == 0x0039              # ========== Bridged Device Basic Information 9.13 p.485 ==========
-
-      if   attribute == 0x0011          #  ---------- Reachable / bool ----------
-        return tlv_solo.set(TLV.BOOL, 1)     # by default we are reachable
-      else
-        return super(self).read_attribute(session, ctx, tlv_solo)   # rest is handled by 0x0028
-      end
-    else
-      return nil
     end
+
+    # Handle attributes 0xFFF8 - 0xFFFD for all clusters
+    if   attribute == 0xFFF8            # GeneratedCommandList
+      var gcl = TLV.Matter_TLV_array()
+      return gcl                        # return empty list
+    elif attribute == 0xFFF9            # AcceptedCommandList
+      var acli = TLV.Matter_TLV_array()
+      var attr_list = self.get_attribute_list(cluster)
+      var idx = 0
+      while idx < size(attr_list)
+        acli.add_TLV(nil, TLV.U2, attr_list[idx])
+        idx += 1
+      end
+      return acli                       # TODO, empty list for now
+    elif attribute == 0xFFFA            # EventList
+      var el = TLV.Matter_TLV_array()
+      return el                         # return empty list
+    elif attribute == 0xFFFB            # AttributeList
+      var al = TLV.Matter_TLV_array()
+      return al                         # TODO
+    elif attribute == 0xFFFC            # FeatureMap
+      var featuremap = self.FEATURE_MAPS.find(cluster, 0)
+      return tlv_solo.set(TLV.U4, featuremap)
+    elif attribute == 0xFFFD            # ClusterRevision
+      var clusterrevision = self.CLUSTER_REVISIONS.find(cluster, 1)
+      return tlv_solo.set(TLV.U4, clusterrevision)
+    end
+
   end
 
   #############################################################

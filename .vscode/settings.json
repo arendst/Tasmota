@@ -52,7 +52,7 @@
       },
       {
         "text": "$(arrow-right)",
-        "tooltip": "PlatformIO: Upload and Monitor",
+        "tooltip": "PlatformIO: Build, Upload and Monitor",
         "commands": "platformio-ide.uploadAndMonitor"
       },
       {

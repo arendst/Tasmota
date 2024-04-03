@@ -16,6 +16,7 @@
 #include "be_vm.h"
 #include "be_decoder.h"
 #include "be_sys.h"
+#include "be_mem.h"
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -42,6 +43,16 @@ extern const bclass be_class_map;
             be_fwrite(fout, __lbuf, strlen(__lbuf));    \
         } else {                                        \
             be_writestring(__lbuf);                     \
+        }                                               \
+    } while (0)
+
+/* minimal version without formatting and without size limit */
+#define lognofmt(__s)                                   \
+    do {                                                \
+        if (fout) {                                     \
+            be_fwrite(fout, __s, strlen(__s));          \
+        } else {                                        \
+            be_writestring(__s);                        \
         }                                               \
     } while (0)
 
@@ -200,16 +211,28 @@ static void m_solidify_bvalue(bvm *vm, bbool str_literal, bvalue * value, const 
         {
             const char * str = str(var_tostr(value));
             size_t len = strlen(str);
-            if (len >= 255) {
-                be_raise(vm, "internal_error", "Strings greater than 255 chars not supported yet");
-            }
             size_t id_len = toidentifier_length(str);
-            char id_buf[id_len];
+            char id_buf_stack[64];
+            char *id_buf = id_buf_stack;
+            if (id_len >= 64) {
+                id_buf = be_os_malloc(id_len);
+                if (!id_buf) {
+                    be_raise(vm, "memory_error", "could not allocated buffer");
+                }
+            }
             toidentifier(id_buf, str);
-            if (!str_literal) {
+            if (len >= 255) {
+                /* decompose to avoid any size limit */
+                lognofmt("be_nested_str_long(");
+                lognofmt(id_buf);
+                lognofmt(")");
+            } else if (!str_literal) {
                 logfmt("be_nested_str(%s)", id_buf);
             } else {
                 logfmt("be_nested_str_weak(%s)", id_buf);
+            }
+            if (id_buf != id_buf_stack) {
+                be_os_free(id_buf);
             }
         }
         break;

@@ -324,6 +324,27 @@ void AdcInit(void) {
   }
 }
 
+uint32_t AdcRange(void) {
+  return ANALOG_RANGE;
+}
+
+bool AdcPin(uint32_t pin) {
+  for (uint32_t idx = 0; idx < Adcs.present; idx++) {
+    if (pin == Adc[idx].pin) {
+      return true;
+    }
+  }
+  return false;
+}
+
+uint16_t AdcRead1(uint32_t pin) {
+#ifdef ESP32 
+  return analogReadMilliVolts(pin) / (ANALOG_V33*1000) * ANALOG_RANGE; // go back from mV to ADC
+#else
+  return analogRead(pin);
+#endif
+}
+
 uint16_t AdcRead(uint32_t pin, uint32_t factor) {
   // factor 1 = 2 samples
   // factor 2 = 4 samples

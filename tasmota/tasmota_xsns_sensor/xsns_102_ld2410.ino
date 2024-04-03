@@ -407,6 +407,9 @@ void Ld2410Detect(void) {
     LD2410Serial = new TasmotaSerial(Pin(GPIO_LD2410_RX), Pin(GPIO_LD2410_TX), 2);
     if (LD2410Serial->begin(256000)) {
       if (LD2410Serial->hardwareSerial()) { ClaimSerial(); }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("LD2: Serial UART%d"), LD2410Serial->getUart());
+#endif
 
       LD2410.retry = 4;
       LD2410.step = 12;

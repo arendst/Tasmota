@@ -86,7 +86,11 @@ void Ds18x20Init(void) {
   DS18X20Data.gpios = 0;
   for (uint32_t pins = 0; pins < MAX_DSB; pins++) {
     if (PinUsed(GPIO_DSB, pins)) {
-      ds18x20_gpios[pins] = new OneWire(Pin(GPIO_DSB, pins));
+      int8_t pin_out = -1;
+      if (PinUsed(GPIO_DSB_OUT, pins)) {
+        pin_out = Pin(GPIO_DSB_OUT, pins);
+      }
+      ds18x20_gpios[pins] = new OneWire(Pin(GPIO_DSB, pins), pin_out);
       DS18X20Data.gpios++;
     }
   }

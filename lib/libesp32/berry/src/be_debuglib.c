@@ -13,6 +13,7 @@
 #include "be_debug.h"
 #include "be_map.h"
 #include "be_vm.h"
+#include "be_exec.h"
 #include <string.h>
 
 #if BE_USE_DEBUG_MODULE
@@ -101,6 +102,26 @@ static int m_traceback(bvm *vm)
 {
     be_tracestack(vm);
     be_return_nil(vm);
+}
+
+static int m_caller(bvm *vm)
+{
+    int depth = 1;
+    if (be_top(vm) >= 1 && be_isint(vm, 1)) {
+        depth = be_toint(vm, 1);
+        if (depth < 0) {
+            depth = -depth;         /* take absolute value */
+        }
+    }
+    bcallframe *cf = (bcallframe*)be_stack_top(&vm->callstack) - depth;
+    bcallframe *base = be_stack_base(&vm->callstack);
+    if (cf >= base) {
+        bvalue *reg = be_incrtop(vm);
+        var_setval(reg, cf->func);
+        be_return(vm);
+    } else {
+        be_return_nil(vm);
+    }
 }
 
 #if BE_USE_DEBUG_HOOK
@@ -236,6 +257,7 @@ be_native_module_attr_table(debug) {
     be_native_module_function("varname", m_varname),
     be_native_module_function("upvname", m_upvname)
 #endif
+    be_native_module_function("caller", m_caller),
     be_native_module_function("gcdebug", m_gcdebug)
 };
 
@@ -252,6 +274,7 @@ module debug (scope: global, depend: BE_USE_DEBUG_MODULE) {
     top, func(m_top)
     varname, func(m_varname), BE_DEBUG_VAR_INFO
     upvname, func(m_upvname), BE_DEBUG_VAR_INFO
+    caller, func(m_caller)
     // individual counters
     allocs, func(m_allocs)
     frees, func(m_frees)

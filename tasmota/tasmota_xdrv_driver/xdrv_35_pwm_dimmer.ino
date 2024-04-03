@@ -194,7 +194,7 @@ void PWMDimmerSetBrightnessLeds(int32_t bri)
         SetLedPowerIdx(led, bri > level);
       } else {
         uint16_t pwm_led_bri = changeUIntScale((bri > level ? bri - level : 0), 0, step, 0, Settings->pwm_range);
-        analogWrite(Pin(GPIO_LED1, led), bitRead(TasmotaGlobal.led_inverted, led) ? Settings->pwm_range - pwm_led_bri : pwm_led_bri);
+        AnalogWrite(Pin(GPIO_LED1, led), bitRead(TasmotaGlobal.led_inverted, led) ? Settings->pwm_range - pwm_led_bri : pwm_led_bri);
       }
     }
   }
@@ -947,6 +947,10 @@ bool Xdrv35(uint32_t function)
 
     case FUNC_PRE_INIT:
       PWMModulePreInit();
+      break;
+      
+    case FUNC_ACTIVE:
+      result = true;
       break;
   }
   return result;

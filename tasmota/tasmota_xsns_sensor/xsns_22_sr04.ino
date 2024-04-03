@@ -146,6 +146,9 @@ void Sr04TModeDetect(void) {
       if (sonar_serial->hardwareSerial()) {
         ClaimSerial();
       }
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR("SR4: Serial UART%d"), sonar_serial->getUart());
+#endif
     }
   }
 

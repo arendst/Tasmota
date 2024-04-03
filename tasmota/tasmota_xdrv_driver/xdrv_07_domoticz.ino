@@ -18,10 +18,29 @@
 */
 
 #ifdef USE_DOMOTICZ
+/*********************************************************************************************\
+ * Domoticz support
+ *
+ * Adds commands:
+ * DzIdx<number> <idx>      - Set power number to Domoticz Idx allowing Domoticz to control Tasmota power
+ * DzKeyIdx<number> <idx>   - Set button number to Domoticz Idx allowing Tasmota button as input to Domoticz
+ * DzSwitchId<number> <idx> - Set switch number to Domoticz Idx allowing Tasmota switch as input to Domoticz
+ * DzSensorIdx<type> <idx>  - Set sensor type to Domoticz Idx
+ * DzUpdateTimer 0          - Send power state at teleperiod to Domoticz (default)
+ * DzUpdateTimer <seconds>  - Send power state at <seconds> interval to Domoticz
+ * DzSend1 <idx>,<values>   - {\"idx\":<idx>,\"nvalue\":0,\"svalue\":\"<values>\",\"Battery\":xx,\"RSSI\":yy}
+ *   Example: rule1 on power1#state do dzsend1 9001,%value% endon
+ * DzSend1 418,%var1%;%var2% or DzSend1 418,%var1%:%var2% - Notice colon as substitute to semi-colon
+ * DzSend2 <idx>,<values>   - USE_SHUTTER only - {\"idx\":<idx>,\"nvalue\":<position>,\"svalue\":\"<values>\",\"Battery\":xx,\"RSSI\":yy}
+ * DzSend3 <idx>,<values>   - {\"idx\":<idx>,\"nvalue\":<values>,\"Battery\":xx,\"RSSI\":yy}
+ * DzSend4 <idx>,<state>    - {\"command\":\"switchlight\",\"idx\":<idx>,\"switchcmd\":\"<state>\"}
+ * DzSend5 <idx>,<state>    - {\"command\":\"switchscene\",\"idx\":<idx>,\"switchcmd\":\"<state>\"}
+\*********************************************************************************************/
 
 #define XDRV_07             7
 
-//#define D_PRFX_DOMOTICZ "Domoticz"
+//#define USE_DOMOTICZ_DEBUG    // Enable additional debug logging
+
 #define D_PRFX_DOMOTICZ "Dz"
 #define D_CMND_IDX "Idx"
 #define D_CMND_KEYIDX "KeyIdx"
@@ -218,14 +237,19 @@ bool DomoticzMqttData(void) {
     return true;  // No valid data
   }
 
-  int32_t relay_index = -1;
+#ifdef USE_DOMOTICZ_DEBUG
+  char dom_data[XdrvMailbox.data_len +1];
+  strcpy(dom_data, XdrvMailbox.data);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_DOMOTICZ "%s = %s"), XdrvMailbox.topic, RemoveControlCharacter(dom_data));
+#endif  // USE_DOMOTICZ_DEBUG
 
   // Quick check if this is mine using topic domoticz/out/{$idx}
   if (strlen(XdrvMailbox.topic) > strlen(DOMOTICZ_OUT_TOPIC)) {
     char* topic_index = &XdrvMailbox.topic[strlen(DOMOTICZ_OUT_TOPIC) +1];
-    relay_index = DomoticzIdx2Relay(atoi(topic_index));
-    if (relay_index < 0) {
-      return true;  // Idx not mine
+    if (strchr(topic_index, '/') == nullptr) {         // Skip if topic ...floor/room
+      if (DomoticzIdx2Relay(atoi(topic_index)) < 0) {
+        return true;  // Idx not mine
+      }
     }
   }
 
@@ -235,18 +259,16 @@ bool DomoticzMqttData(void) {
   if (!domoticz) {
     return true;  // To much or invalid data
   }
+  int32_t relay_index = DomoticzIdx2Relay(domoticz.getUInt(PSTR("idx"), 0));
   if (relay_index < 0) {
-    relay_index = DomoticzIdx2Relay(domoticz.getUInt(PSTR("idx"), 0));
-    if (relay_index < 0) {
-      return true;  // Idx not mine
-    }
+    return true;  // Idx not mine
   }
   int32_t nvalue = domoticz.getInt(PSTR("nvalue"), -1);
   if ((nvalue < 0) || (nvalue > 16)) {
     return true;  // Nvalue out of boundaries
   }
 
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_DOMOTICZ "idx %d, nvalue %d"), Settings->domoticz_relay_idx[relay_index], nvalue);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_DOMOTICZ "%s, idx %d, nvalue %d"), XdrvMailbox.topic, Settings->domoticz_relay_idx[relay_index], nvalue);
 
   bool iscolordimmer = (strcmp_P(domoticz.getStr(PSTR("dtype")), PSTR("Color Switch")) == 0);
   bool isShutter = (strcmp_P(domoticz.getStr(PSTR("dtype")), PSTR("Light/Switch")) == 0) && (strncmp_P(domoticz.getStr(PSTR("switchType")),PSTR("Blinds"), 6) == 0);
@@ -635,7 +657,7 @@ void DomoticzSaveSettings(void) {
     snprintf_P(arg_idx, sizeof(arg_idx), PSTR("l%d"), i -1);
     cmnd += AddWebCommand(cmnd2, arg_idx, PSTR("0"));
   }
-  ExecuteWebCommand((char*)cmnd.c_str());  // Note: beware of max number of commands in backlog currently 30 (MAX_BACKLOG)
+  ExecuteWebCommand((char*)cmnd.c_str());
 }
 #endif  // USE_WEBSERVER
 
@@ -676,6 +698,9 @@ bool Xdrv07(uint32_t function) {
         break;
       case FUNC_COMMAND:
         result = DecodeCommand(kDomoticzCommands, DomoticzCommand);
+        break;
+      case FUNC_ACTIVE:
+        result = true;
         break;
     }
   }

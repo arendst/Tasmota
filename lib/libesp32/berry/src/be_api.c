@@ -643,6 +643,10 @@ BERRY_API bbool be_setmember(bvm *vm, int index, const char *k)
         bstring *key = be_newstr(vm, k);
         bmodule *mod = var_toobj(o);
         return be_module_setmember(vm, mod, key, v);
+    } else if (var_isclass(o)) {
+        bstring *key = be_newstr(vm, k);
+        bclass *cl = var_toobj(o);
+        return be_class_setmember(vm, cl, key, v);
     }
     return bfalse;
 }
@@ -661,6 +665,7 @@ BERRY_API bbool be_copy(bvm *vm, int index)
 }
 
 /* `onlyins` limits the search to instance, and discards module. Makes sure getmethod does not return anything for module. */
+/* may return BE_NONE */
 static int ins_member(bvm *vm, int index, const char *k, bbool onlyins)
 {
     int type = BE_NIL;
@@ -677,12 +682,12 @@ static int ins_member(bvm *vm, int index, const char *k, bbool onlyins)
         bmodule *module = var_toobj(o);
         type = be_module_attr(vm, module, be_newstr(vm, k), top);
     }
-    return type == BE_NONE ? BE_NIL : type;
+    return type;
 }
 
 BERRY_API bbool be_getmember(bvm *vm, int index, const char *k)
 {
-    return ins_member(vm, index, k, bfalse) != BE_NIL;
+    return ins_member(vm, index, k, bfalse) != BE_NONE;
 }
 
 BERRY_API bbool be_getmethod(bvm *vm, int index, const char *k)
@@ -727,10 +732,13 @@ BERRY_API bbool be_getindex(bvm *vm, int index)
 static bvalue* list_setindex(blist *list, bvalue *key)
 {
     int idx = var_toidx(key);
-    if (idx < be_list_count(list)) {
-        return be_list_at(list, idx);
+    if (idx < 0) {
+        idx = list->count + idx;
     }
-    return NULL;
+    if (idx < 0 || idx >= list->count) {
+        return NULL;
+    }
+    return be_list_at(list, idx);
 }
 
 BERRY_API bbool be_setindex(bvm *vm, int index)

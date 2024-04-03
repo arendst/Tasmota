@@ -996,6 +996,10 @@ tuyamcubr_pre_init(void)
 	if (sc->sc_serial->hardwareSerial())
 		ClaimSerial();
 
+#ifdef ESP32
+    AddLog(LOG_LEVEL_DEBUG, PSTR(TUYAMCUBR_LOGNAME ": Serial UART%d"), sc->sc_serial->getUart());
+#endif
+
 	/* commit */
 	tuyamcubr_sc = sc;
 
@@ -1110,6 +1114,10 @@ Xdrv65(uint32_t function)
 	case FUNC_COMMAND:
 		result = DecodeCommand(tuyamcubr_cmnd_names, tuyamcubr_cmnds);
 		break;
+
+    case FUNC_ACTIVE:
+        result = true;
+        break;
 	}
 
 	return (result);

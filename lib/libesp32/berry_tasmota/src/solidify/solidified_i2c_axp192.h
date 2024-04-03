@@ -655,7 +655,7 @@ be_local_closure(AXP192_web_sensor,   /* name */
     /* K2   */  be_nested_str(_X7Bs_X7DVBus_X20Current_X7Bm_X7D_X25_X2E1f_X20mA_X7Be_X7D),
     /* K3   */  be_nested_str(_X7Bs_X7DBatt_X20Voltage_X7Bm_X7D_X25_X2E3f_X20V_X7Be_X7D),
     /* K4   */  be_nested_str(_X7Bs_X7DBatt_X20Current_X7Bm_X7D_X25_X2E1f_X20mA_X7Be_X7D),
-    /* K5   */  be_nested_str(_X7Bs_X7DTemp_X20AXP_X7Bm_X7D_X25_X2E1f_X20_X26deg_X3BC_X7Be_X7D),
+    /* K5   */  be_nested_str(_X7Bs_X7DAXP_X20Temperature_X7Bm_X7D_X25_X2E1f_X20_X26deg_X3BC_X7Be_X7D),
     /* K6   */  be_nested_str(get_vbus_voltage),
     /* K7   */  be_nested_str(get_bat_voltage),
     /* K8   */  be_nested_str(get_bat_current),

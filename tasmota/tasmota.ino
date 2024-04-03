@@ -103,7 +103,9 @@
 #include "include/tasmota_types.h"
 
 #ifdef CONFIG_IDF_TARGET_ESP32
+#include "driver/gpio.h"
 #include "soc/efuse_reg.h"
+#include "bootloader_common.h"
 #endif
 
 /*********************************************************************************************\
@@ -406,12 +408,6 @@ struct TasmotaGlobal_t {
   uint8_t pwm_dimmer_led_bri;               // Adjusted brightness LED level
 #endif  // USE_PWM_DIMMER
 
-#ifndef SUPPORT_IF_STATEMENT
-  uint8_t backlog_index;                    // Command backlog index
-  uint8_t backlog_pointer;                  // Command backlog pointer
-  String backlog[MAX_BACKLOG];              // Command backlog buffer
-#endif
-
 #ifdef MQTT_DATA_STRING
   String mqtt_data;                         // Buffer filled by Response functions
 #else
@@ -432,19 +428,14 @@ struct TasmotaGlobal_t {
 #endif  // PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
 
 #ifdef USE_BERRY
-  bool berry_fast_loop_enabled = false;           // is Berry fast loop enabled, i.e. control is passed at each loop iteration
+  bool berry_fast_loop_enabled = false;     // is Berry fast loop enabled, i.e. control is passed at each loop iteration
 #endif // USE_BERRY
 } TasmotaGlobal;
 
 TSettings* Settings = nullptr;
 
-#ifdef SUPPORT_IF_STATEMENT
-  #include <LinkedList.h>
-  LinkedList<String> backlog;               // Command backlog implemented with LinkedList
-  #define BACKLOG_EMPTY (backlog.size() == 0)
-#else
-  #define BACKLOG_EMPTY (TasmotaGlobal.backlog_pointer == TasmotaGlobal.backlog_index)
-#endif
+LList<char*> backlog;                       // Command backlog implemented with TasmotaLList
+#define BACKLOG_EMPTY (backlog.isEmpty())
 
 /*********************************************************************************************\
  * Main
@@ -453,22 +444,26 @@ TSettings* Settings = nullptr;
 void setup(void) {
 #ifdef ESP32
 #ifdef CONFIG_IDF_TARGET_ESP32
+
 #ifdef DISABLE_ESP32_BROWNOUT
   DisableBrownout();      // Workaround possible weak LDO resulting in brownout detection during Wifi connection
 #endif  // DISABLE_ESP32_BROWNOUT
 
   // restore GPIO16/17 if no PSRAM is found
-  #if ESP_IDF_VERSION_MAJOR < 5       // TODO for esp-idf 5
   if (!FoundPSRAM()) {
     // test if the CPU is not pico
+#if (ESP_IDF_VERSION_MAJOR >= 5)
+    uint32_t pkg_version = bootloader_common_get_chip_ver_pkg();
+    if (pkg_version <= 3) {   // D0WD, S0WD, D2WD
+#else // ESP_IDF_VERSION_MAJOR >= 5
     uint32_t chip_ver = REG_GET_FIELD(EFUSE_BLK0_RDATA3_REG, EFUSE_RD_CHIP_VER_PKG);
     uint32_t pkg_version = chip_ver & 0x7;
     if (pkg_version <= 3) {   // D0WD, S0WD, D2WD
+#endif // ESP_IDF_VERSION_MAJOR >= 5
       gpio_reset_pin(GPIO_NUM_16);
       gpio_reset_pin(GPIO_NUM_17);
     }
   }
-  #endif
 #endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32
 
@@ -783,26 +778,42 @@ void BacklogLoop(void) {
     if (!BACKLOG_EMPTY && !TasmotaGlobal.backlog_mutex) {
       TasmotaGlobal.backlog_mutex = true;
       bool nodelay = false;
-      bool nodelay_detected = false;
-      String cmd;
       do {
-#ifdef SUPPORT_IF_STATEMENT
-        cmd = backlog.shift();
-#else
-        cmd = TasmotaGlobal.backlog[TasmotaGlobal.backlog_pointer];
-        TasmotaGlobal.backlog[TasmotaGlobal.backlog_pointer] = (const char*) nullptr;  // Force deallocation of the String internal memory
-        TasmotaGlobal.backlog_pointer++;
-        if (TasmotaGlobal.backlog_pointer >= MAX_BACKLOG) { TasmotaGlobal.backlog_pointer = 0; }
-#endif
-        nodelay_detected = !strncasecmp_P(cmd.c_str(), PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY));
-        if (nodelay_detected) { nodelay = true; }
-      } while (!BACKLOG_EMPTY && nodelay_detected);
-      if (!nodelay_detected) {
-        ExecuteCommand((char*)cmd.c_str(), SRC_BACKLOG);
+        char* cmd = *backlog.head();
+        backlog.removeHead();
+/*
+        // This adds 32 bytes
+        char* cmd = *backlog.removeHead();
+*/
+        if (!strncasecmp_P(cmd, PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY))) {
+          free(cmd);
+          nodelay = true;
+        } else {
+          ExecuteCommand(cmd, SRC_BACKLOG);
+          free(cmd);
+          if (nodelay || TasmotaGlobal.backlog_nodelay) {
+            TasmotaGlobal.backlog_timer = millis();  // Reset backlog_timer which has been set by ExecuteCommand (CommandHandler)
+          }
+          break;
+        }
+      } while (!BACKLOG_EMPTY);
+/*
+      // This adds 96 bytes
+      for (auto &cmd : backlog) {
+        backlog.remove(&cmd);
+        if (!strncasecmp_P(cmd, PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY))) {
+          free(cmd);
+          nodelay = true;
+        } else {
+          ExecuteCommand(cmd, SRC_BACKLOG);
+          free(cmd);
+          if (nodelay || TasmotaGlobal.backlog_nodelay) {
+            TasmotaGlobal.backlog_timer = millis();  // Reset backlog_timer which has been set by ExecuteCommand (CommandHandler)
+          }
+          break;
+        }
       }
-      if (nodelay || TasmotaGlobal.backlog_nodelay) {
-        TasmotaGlobal.backlog_timer = millis();  // Reset backlog_timer which has been set by ExecuteCommand (CommandHandler)
-      }
+*/
       TasmotaGlobal.backlog_mutex = false;
     }
     if (BACKLOG_EMPTY) {
@@ -849,6 +860,7 @@ void Scheduler(void) {
   static uint32_t state_50msecond = 0;             // State 50msecond timer
   if (TimeReached(state_50msecond)) {
     SetNextTimeInterval(state_50msecond, 50);
+    LoopTimedCmnd();
 #ifdef ROTARY_V1
     RotaryHandler();
 #endif  // ROTARY_V1
@@ -873,6 +885,7 @@ void Scheduler(void) {
   if (TimeReached(state_second)) {
     SetNextTimeInterval(state_second, 1000);
     PerformEverySecond();
+    XdrvCall(FUNC_ACTIVE);
     XdrvXsnsCall(FUNC_EVERY_SECOND);
   }
 
@@ -886,6 +899,10 @@ void Scheduler(void) {
   ArduinoOtaLoop();
 #endif  // USE_ARDUINO_OTA
 #endif  // ESP8266
+
+#ifndef SYSLOG_UPDATE_SECOND
+  SyslogAsync(false);
+#endif  // SYSLOG_UPDATE_SECOND
 }
 
 void loop(void) {

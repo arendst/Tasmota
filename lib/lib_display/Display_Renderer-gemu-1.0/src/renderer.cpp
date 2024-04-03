@@ -623,6 +623,22 @@ int8_t Renderer::color_type(void) {
  return 0;
 }
 
+bool Renderer::utouch_Init(char **name) {
+  return false;
+}
+
+uint16_t Renderer::touched(void) {
+  return false;
+}
+
+int16_t Renderer::getPoint_x(void) {
+  return 0;
+}
+
+int16_t Renderer::getPoint_y(void) {
+  return 0;
+}
+
 void Renderer::Splash(void) {
 
 }

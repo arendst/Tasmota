@@ -286,11 +286,18 @@ void QMC5883L_Show(uint8_t json) {
 bool Xsns33(uint32_t function) {
   if (!I2cEnabled(XI2C_71)) { return false; }
 
+  bool result = false;
+
   if (FUNC_INIT == function) {
     QMC5883L_Init();
   }
   else if (QMC5883L != nullptr) {
     switch (function) {
+    // case FUNC_COMMAND_SENSOR:
+    //   if (XSNS_33 == XdrvMailbox.index) {
+    //     result = QMC5883L_CmndSensor();
+    //   }
+    //   break;
     case FUNC_JSON_APPEND:
       QMC5883L_Show(1);
       break;
@@ -304,7 +311,7 @@ bool Xsns33(uint32_t function) {
 #endif  // USE_WEBSERVER
     }
   }
-  return true;
+  return result;
 }
 #endif  // USE_QMC5883L
 #endif  // USE_I2C

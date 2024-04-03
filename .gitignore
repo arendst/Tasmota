@@ -39,5 +39,6 @@ lib/libesp32/berry/berry
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/settings.json
+.vscode/extensions.json
 *.bak
 *.code-workspace

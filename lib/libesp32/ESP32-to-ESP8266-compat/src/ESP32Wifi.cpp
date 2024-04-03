@@ -89,10 +89,12 @@ void WiFiClass32::scrubDNS(void) {
     const IPAddress ip_dns = IPAddress(dns_getserver(i));
     // Step 1. save valid values from DNS
     if (!ip_addr_isany_val((const ip_addr_t &)ip_dns)) {
-      if (ip_dns.isV4() && has_v4) {
-        dns_save4[i] = (ip_addr_t) ip_dns;    // dns entry is populated, save it in v4 slot
-      } else if (ip_dns.isV6() && has_v6) {
-        dns_save6[i] = (ip_addr_t) ip_dns;    // dns entry is populated, save it in v6 slot
+      if (ip_dns.type() == IPv4 && has_v4) {
+        ip_dns.to_ip_addr_t(&dns_save4[i]);
+        // dns_save4[i] = (ip_addr_t) ip_dns;    // dns entry is populated, save it in v4 slot
+      } else if (has_v6) {
+        ip_dns.to_ip_addr_t(&dns_save6[i]);
+        // dns_save6[i] = (ip_addr_t) ip_dns;    // dns entry is populated, save it in v6 slot
       }
     }
 
@@ -213,7 +215,7 @@ static void wifi32_dns_found_callback(const char *name, const ip_addr_t *ipaddr,
 }
 // We need this helper method to access protected methods from WiFiGeneric
 void WiFiClass32::dnsDone(void) {
-  setStatusBits(WIFI_DNS_DONE_BIT);
+  setStatusBits(NET_DNS_DONE_BIT);
 }
 
 /**
@@ -231,7 +233,7 @@ int WiFiClass32::hostByName(const char* aHostname, IPAddress& aResult, int32_t t
 
   scrubDNS();    // internal calls to reconnect can zero the DNS servers, save DNS for future use
   ip_addr_counter++;      // increase counter, from now ignore previous responses
-  clearStatusBits(WIFI_DNS_IDLE_BIT | WIFI_DNS_DONE_BIT);
+  clearStatusBits(NET_DNS_IDLE_BIT | NET_DNS_DONE_BIT);
   uint8_t v4v6priority = LWIP_DNS_ADDRTYPE_IPV4;
 #ifdef USE_IPV6
   v4v6priority = WifiDNSGetIPv6Priority() ? LWIP_DNS_ADDRTYPE_IPV6_IPV4 : LWIP_DNS_ADDRTYPE_IPV4_IPV6;
@@ -240,18 +242,18 @@ int WiFiClass32::hostByName(const char* aHostname, IPAddress& aResult, int32_t t
   // Serial.printf("DNS: dns_gethostbyname_addrtype errg=%i counter=%i\n", err, ip_addr_counter);
   if(err == ERR_OK && !ip_addr_isany_val(dns_ipaddr)) {
 #ifdef USE_IPV6
-    aResult = dns_ipaddr;
+    aResult.from_ip_addr_t(&dns_ipaddr);
 #else // USE_IPV6
     aResult = ip_addr_get_ip4_u32(&dns_ipaddr);
 #endif // USE_IPV6
   } else if(err == ERR_INPROGRESS) {
-    waitStatusBits(WIFI_DNS_DONE_BIT, timer_ms);  //real internal timeout in lwip library is 14[s]
-    clearStatusBits(WIFI_DNS_DONE_BIT);
+    waitStatusBits(NET_DNS_DONE_BIT, timer_ms);  //real internal timeout in lwip library is 14[s]
+    clearStatusBits(NET_DNS_DONE_BIT);
   }
 
   if (!ip_addr_isany_val(dns_ipaddr)) {
 #ifdef USE_IPV6
-    aResult = dns_ipaddr;
+    aResult.from_ip_addr_t(&dns_ipaddr);
 #else // USE_IPV6
     aResult = ip_addr_get_ip4_u32(&dns_ipaddr);
 #endif // USE_IPV6
