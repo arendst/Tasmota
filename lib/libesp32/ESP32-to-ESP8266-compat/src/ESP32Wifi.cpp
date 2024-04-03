@@ -147,10 +147,13 @@ int WiFiClass32::getPhyMode() {
 }
 
 bool WiFiClass32::setPhyMode(WiFiPhyMode_t mode) {
-  uint8_t protocol_bitmap = WIFI_PROTOCOL_11B;     // 1
+  uint8_t protocol_bitmap = WIFI_PROTOCOL_11B;      // 1
   switch (mode) {
-    case 3: protocol_bitmap |= WIFI_PROTOCOL_11N;  // 4
-    case 2: protocol_bitmap |= WIFI_PROTOCOL_11G;  // 2
+#if ESP_IDF_VERSION_MAJOR >= 5
+    case 4: protocol_bitmap |= WIFI_PROTOCOL_11AX;  // 16
+#endif
+    case 3: protocol_bitmap |= WIFI_PROTOCOL_11N;   // 4
+    case 2: protocol_bitmap |= WIFI_PROTOCOL_11G;   // 2
   }
   return (ESP_OK == esp_wifi_set_protocol(WIFI_IF_STA, protocol_bitmap));
 }

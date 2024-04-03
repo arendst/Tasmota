@@ -33,6 +33,9 @@
 typedef enum WiFiPhyMode
 {
     TAS_WIFI_PHY_MODE_LR = 0, TAS_WIFI_PHY_MODE_11B = 1, TAS_WIFI_PHY_MODE_11G = 2, TAS_WIFI_PHY_MODE_11N = 3
+#if ESP_IDF_VERSION_MAJOR >= 5
+    , TAS_WIFI_PHY_MODE_11AX = 4
+#endif
 } WiFiPhyMode_t;
 
 /*

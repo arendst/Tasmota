@@ -228,7 +228,7 @@ void WifiBegin(uint8_t flag, uint8_t channel) {
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11G) { WiFi.setPhyMode(WIFI_PHY_MODE_11G); }  // B/G
 #ifdef ESP32
   if (Wifi.phy_mode) {
-    WiFi.setPhyMode(WiFiPhyMode_t(Wifi.phy_mode));  // 1-B/2-BG/3-BGN
+    WiFi.setPhyMode(WiFiPhyMode_t(Wifi.phy_mode));  // 1-B/2-BG/3-BGN/4-BGNAX
   }
 #endif
   if (!WiFi.getAutoConnect()) { WiFi.setAutoConnect(true); }
