@@ -3,7 +3,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.4.0.3]
+## [13.4.0.4]
+### Added
+- Command ``PowerLock`` to disable power control of selected outputs (#21081)
+
+### Breaking Changed
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [13.4.0.3] 20240402
 ### Added
 - Zigbee support for attributes of type `uint48` used by energy monitoring (#20992)
 - Support for single channel EU863-870 LoRaWanBridge (#17790)
