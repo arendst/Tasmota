@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Command ``PowerLock`` to disable power control of selected outputs (#21081)
 - Command ``Wifi 6`` to enable 11ax on ESP32 Core3
+- Berry add `flash.current_ota`
 
 ### Breaking Changed
 
