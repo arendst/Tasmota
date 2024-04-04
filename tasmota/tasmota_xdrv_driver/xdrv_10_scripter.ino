@@ -4461,6 +4461,18 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           }
           goto nfuncexit;
         }
+
+        if (!strncmp_XP(lp, XPSTR("in2("), 4)) {
+          // create new i2c port on bus 2
+          uint8_t sda;
+          uint8_t scl;
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
+          sda = fvar;
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+          scl = fvar;
+          fvar = script_i2c(14, sda, scl);
+          goto nfuncexit;
+        }
 #endif // USE_SCRIPT_I2C
 
 #ifdef ESP32
@@ -5887,17 +5899,42 @@ extern char *SML_GetSVal(uint32_t index);
 #endif //USE_TOUCH_BUTTONS
 #endif //USE_DISPLAY
 
+uint32_t directRead(uint32_t pin);
+void directWriteLow(uint32_t pin);
+void directWriteHigh(uint32_t pin);
+void directModeInput(uint32_t pin);
+void directModeOutput(uint32_t pin);
 
 #if 0
         if (!strncmp_XP(lp, XPSTR("test("), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
-          uint32_t cycles;
-          uint64_t accu = 0;
-          char sbuffer[32];
+          uint32_t sel = fvar;
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
+          uint32_t pin = fvar;
 
-          GT911_Touch_Init(&Wire1, -1, -1, 960, 540);
+          switch (sel) {
+            case 0:
+              fvar = directRead(pin);
+              break;
+            case 1:
+              directWriteLow(pin);
+              break;
+            case 2:
+              directWriteHigh(pin);
+              break;
+            case 3:
+              directModeInput(pin);
+              break;
+            case 4:
+              directModeOutput(pin);
+              break;
+
+          }
 
           /*
+                    uint32_t cycles;
+          uint64_t accu = 0;
+          char sbuffer[32];
           // PSTR performance test
           // this is best case since everything will be in cache
           // PSTR at least 3 times slower here, will be much slower if cache missed
@@ -11825,6 +11862,7 @@ exgc:
         if (type == 'e') {
           WSContentSend_P(SCRIPT_MSG_GTABLEbx, gc_str, glob_script_mem.chartindex);
           glob_script_mem.chartindex++;
+          if (options) free(options);
           WS_LINE_RETURN
         }
 
@@ -11877,6 +11915,7 @@ exgc:
         lp = gc_get_arrays(lp, &arrays[0], &anum, &entries, &ipos);
 
         if (anum > nanum) {
+          if (options) free(options);
           WS_LINE_RETURN
           //goto nextwebline;
         }
@@ -11944,10 +11983,11 @@ exgc:
             }
           }
           snprintf_P(options, SCRIPT_GC_OPTIONS_SIZE, SCRIPT_MSG_GOPT4);
-          free(options);
+          if (options) free(options);
         }
         if (tonly) {
           WSContentSend_P("]);");
+          if (options) free(options);
           WS_LINE_RETURN
           //goto nextwebline;
         }
@@ -12062,6 +12102,7 @@ exgc:
         // table complete
         if (tonly) {
           WSContentSend_P("]);");
+          if (options) free(options);
           WS_LINE_RETURN
           //goto nextwebline;
         }
@@ -12731,7 +12772,7 @@ uint32_t script_i2c(uint8_t sel, uint16_t val, uint32_t val1) {
   uint32_t rval = 0;
   uint8_t bytes = 1;
 
-  if (sel > 0) {
+  if (sel > 0 && sel < 14) {
     if (!glob_script_mem.script_i2c_wire) return 0;
   }
 
@@ -12786,7 +12827,17 @@ uint32_t script_i2c(uint8_t sel, uint16_t val, uint32_t val1) {
       }
       glob_script_mem.script_i2c_wire->endTransmission();
       break;
-
+    case 14:
+ #ifdef ESP32
+      Wire1.end();
+      Wire1.begin(val & 0x7f, val1);
+      glob_script_mem.script_i2c_wire = &Wire1;
+      TasmotaGlobal.i2c_enabled_2 = true;
+      if (val & 128) {
+        XsnsCall(FUNC_INIT);
+      }
+ #endif     
+      break;
   }
   return rval;
 }
