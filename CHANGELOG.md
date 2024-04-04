@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [13.4.0.4]
 ### Added
 - Command ``PowerLock`` to disable power control of selected outputs (#21081)
-- Command ``Wifi 5`` to enable 11ax on ESP32 Core3
+- Command ``Wifi 6`` to enable 11ax on ESP32 Core3
 
 ### Breaking Changed
 

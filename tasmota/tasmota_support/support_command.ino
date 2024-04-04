@@ -2692,34 +2692,44 @@ void CmndWifiPower(void) {
 }
 
 void CmndWifi(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
-    Settings->flag4.network_wifi = XdrvMailbox.payload;
-    if (Settings->flag4.network_wifi) {
+  // Wifi    - Show current state
+  // Wifi 0  - Off
+  // Wifi 1  - On
+  // Wifi 2  - B
+  // Wifi 3  - BG
+  // Wifi 4  - BGN
+  // Wifi 6  - BGNAX
+  uint32_t option = XdrvMailbox.payload -1;
+  switch (XdrvMailbox.payload) {
+    case 0:  // Wifi 0 = Off
+    case 1:  // Wifi 1 = On
+      {
+        Settings->flag4.network_wifi = XdrvMailbox.payload;
+        if (Settings->flag4.network_wifi) {
 #ifdef ESP32
-      WifiConnect();
-#else
-      WifiEnable();
-#endif
-    }
-  } else if ((XdrvMailbox.payload >= 2) &&
+          WifiConnect();
+#else   // ESP8266
+          WifiEnable();
+#endif  // ESP32
+        }
+        break;
+      }
 #ifdef ESP32
 #if ESP_IDF_VERSION_MAJOR >= 5
-             (XdrvMailbox.payload <= 5)
-#else   // ESP_IDF_VERSION_MAJOR < 5
-             (XdrvMailbox.payload <= 4)
+    case 6:  // Wifi 6 = BGNAX
+      option = 4;
 #endif  // ESP_IDF_VERSION_MAJOR
-#else   // ESP8266
-             (XdrvMailbox.payload <= 4)
 #endif  // ESP32/ESP8266
-            ) {
-    // Wifi 2 = B
-    // Wifi 3 = BG
-    // Wifi 4 = BGN
-    // Wifi 5 = BGNAX
+    case 4:  // Wifi 4 = BGN
+    case 3:  // Wifi 3 = BG
+    case 2:  // Wifi 2 = B
+      {
 #ifdef ESP32
-    Wifi.phy_mode = XdrvMailbox.payload - 1;
-#endif
-    WiFi.setPhyMode(WiFiPhyMode_t(XdrvMailbox.payload - 1));  // 1-B/2-BG/3-BGN/4-BGNAX
+        Wifi.phy_mode = option;
+#endif  // ESP32
+        WiFi.setPhyMode(WiFiPhyMode_t(option));  // 1=B/2=BG/3=BGN/4=BGNAX
+        break;
+      }
   }
   Response_P(PSTR("{\"" D_JSON_WIFI "\":\"%s\",\"" D_JSON_WIFI_MODE "\":\"%s\"}"), 
     GetStateText(Settings->flag4.network_wifi), WifiGetPhyMode().c_str());
