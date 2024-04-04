@@ -25,7 +25,6 @@
 \*********************************************************************************************/
 
 #define XFUNC_PTR_IN_ROM                    // Enable for keeping tables in ROM (PROGMEM) which seem to have access issues on some flash types
-#define MQTT_DATA_STRING                    // Use heap instead of fixed memory for TasmotaGlobal.mqtt_data
 
 /*********************************************************************************************\
  * Power Type
@@ -210,12 +209,7 @@ const uint16_t TOPSZ = 151;                 // Max number of characters in topic
 #else   // Not ESP8266
 const uint16_t LOG_BUFFER_SIZE = 6096;      // Max number of characters in logbuffer used by weblog, syslog and mqttlog
 #endif  // ESP8266
-
-#ifdef MQTT_DATA_STRING
 const uint16_t MAX_LOGSZ = LOG_BUFFER_SIZE -96;  // Max number of characters in log line - may be overruled which will truncate log entry
-#else
-const uint16_t MAX_LOGSZ = 700;             // Max number of characters in log line
-#endif
 
 const uint8_t SENSOR_MAX_MISS = 5;          // Max number of missed sensor reads before deciding it's offline
 

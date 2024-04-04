@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 ### Removed
+- Unused `#define MQTT_DATA_STRING` support
 
 ## [13.4.0.3] 20240402
 ### Added

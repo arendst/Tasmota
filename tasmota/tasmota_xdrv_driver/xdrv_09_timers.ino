@@ -490,35 +490,12 @@ void CmndTimers(void)
       Settings->flag3.timers_enable = !Settings->flag3.timers_enable;  // CMND_TIMERS
     }
   }
-#ifdef MQTT_DATA_STRING
   Response_P(PSTR("{\"" D_CMND_TIMERS "\":\"%s\""), GetStateText(Settings->flag3.timers_enable));
   for (uint32_t i = 0; i < MAX_TIMERS; i++) {
     ResponseAppend_P(PSTR(","));
     PrepShowTimer(i +1);
   }
   ResponseJsonEnd();
-#else
-  ResponseCmndStateText(Settings->flag3.timers_enable);               // CMND_TIMERS
-  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, XdrvMailbox.command);
-
-  uint32_t jsflg = 0;
-  uint32_t lines = 1;
-  for (uint32_t i = 0; i < MAX_TIMERS; i++) {
-    if (!jsflg) {
-      Response_P(PSTR("{\"" D_CMND_TIMERS "%d\":{"), lines++);
-    } else {
-      ResponseAppend_P(PSTR(","));
-    }
-    jsflg++;
-    PrepShowTimer(i +1);
-    if (jsflg > 3) {
-      ResponseJsonEndEnd();
-      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_CMND_TIMERS));
-      jsflg = 0;
-    }
-  }
-  ResponseClear();
-#endif
 }
 
 #ifdef USE_SUNRISE

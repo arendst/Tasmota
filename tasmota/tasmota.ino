@@ -408,13 +408,7 @@ struct TasmotaGlobal_t {
   uint8_t restore_powered_off_led_counter;  // Seconds before powered-off LED (LEDLink) is restored
   uint8_t pwm_dimmer_led_bri;               // Adjusted brightness LED level
 #endif  // USE_PWM_DIMMER
-
-#ifdef MQTT_DATA_STRING
   String mqtt_data;                         // Buffer filled by Response functions
-#else
-  char mqtt_data[MESSZ];                    // MQTT publish buffer
-#endif
-
   char version[16];                         // Composed version string like 255.255.255.255
   char image_name[33];                      // Code image and/or commit
   char hostname[33];                        // Composed Wifi hostname

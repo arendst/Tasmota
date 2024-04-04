@@ -12582,11 +12582,7 @@ int32_t http_req(char *host, char *header, char *request) {
 #endif
 
 #ifdef USE_WEBSEND_RESPONSE
-#ifdef MQTT_DATA_STRING
   TasmotaGlobal.mqtt_data = http.getString();
-#else
-  strlcpy(TasmotaGlobal.mqtt_data, http.getString().c_str(), ResponseSize());
-#endif
 
 //#ifdef HTTP_DEBUG
   if (debug) {
@@ -12655,12 +12651,7 @@ int32_t call2pwl(const char *url) {
     AddLog(LOG_LEVEL_INFO, PSTR("PWL: result overflow: %d"), result.length());
   }
 
-
-#ifdef MQTT_DATA_STRING
   TasmotaGlobal.mqtt_data = result;
-#else
-  strncpy(TasmotaGlobal.mqtt_data, result.c_str(), MESSZ);
-#endif
 
   // meter aggregates has also too many tokens
   char *cp = (char*)result.c_str();
