@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- NeoPool hydrolysis unit for Hidrolife, Bionet and Generic device
 
 ### Removed
 - Unused `#define MQTT_DATA_STRING` support
