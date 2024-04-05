@@ -19,7 +19,7 @@
 //
 #ifdef ESP8266
 #include "Arduino.h"
-#include "WifiHelper.h"
+#include "WiFiHelper.h"
 
 wl_status_t WiFiHelper::begin(const char* ssid, const char *passphrase, int32_t channel, const uint8_t* bssid, bool connect) {
   return WiFi.begin(ssid, passphrase, channel, bssid, connect);
