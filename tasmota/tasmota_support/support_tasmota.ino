@@ -397,11 +397,11 @@ void SetAllPower(uint32_t state, uint32_t source)
         break;
     case POWER_ON:
         // Keep locked bits and set all other to 1
-        TasmotaGlobal.power = (TasmotaGlobal.power & Settings->power_lock) | ~Settings->power_lock;
+        TasmotaGlobal.power = (TasmotaGlobal.power & Settings->power_lock) | (all_on & ~Settings->power_lock);
         break;
     case POWER_TOGGLE:
         // Keep locked bits and toggle all other
-        TasmotaGlobal.power ^= ~Settings->power_lock;
+        TasmotaGlobal.power ^= ~Settings->power_lock & all_on;
         break;
     }
     SetDevicePower(TasmotaGlobal.power, source);
