@@ -206,7 +206,7 @@ public:
 	SML_ESP32_SERIAL(uint32_t uart_index);
   virtual ~SML_ESP32_SERIAL();
   bool begin(uint32_t speed, uint32_t smode, int32_t recpin, int32_t trxpin, int32_t invert);
-  int32_t peek(void);
+  int peek(void);
   int read(void) override;
   size_t write(uint8_t byte) override;
   int available(void) override;
@@ -269,7 +269,7 @@ void SML_ESP32_SERIAL::end(void) {
   }
 }
 
-bool SML_ESP32_SERIAL::begin(uint32_t speed, uint32_t smode, int32_t recpin, int32_t trxpin, int invert) {
+bool SML_ESP32_SERIAL::begin(uint32_t speed, uint32_t smode, int32_t recpin, int32_t trxpin, int32_t invert) {
   if (!m_valid) { return false; }
 
   m_buffer = 0;
@@ -303,7 +303,7 @@ void SML_ESP32_SERIAL::flush(void) {
   }
 }
 
-int32_t SML_ESP32_SERIAL::peek(void) {
+int SML_ESP32_SERIAL::peek(void) {
   if (hws) {
     return  hws->peek();
   } else {
