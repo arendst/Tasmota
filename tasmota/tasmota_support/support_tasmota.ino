@@ -390,16 +390,21 @@ void SetAllPower(uint32_t state, uint32_t source)
   }
   if ((state >= POWER_OFF) && (state <= POWER_TOGGLE)) {
     power_t all_on = POWER_MASK >> (POWER_SIZE - TasmotaGlobal.devices_present);
+    power_t mask = ~Settings->power_lock;  
     switch (state) {
     case POWER_OFF:
-      TasmotaGlobal.power = 0;
-      break;
+        // keep loocked bits and set all other to 0
+        TasmotaGlobal.power &= ~mask;  
+        break;
     case POWER_ON:
-      TasmotaGlobal.power = all_on;
-      break;
+        // Keep locked bits and set all other to 1
+        TasmotaGlobal.power = (TasmotaGlobal.power & Settings->power_lock) | mask;
+
+        break;
     case POWER_TOGGLE:
-      TasmotaGlobal.power ^= all_on;      // Complement current state
-    }
+        // Keep locked bits and toggle all other
+        TasmotaGlobal.power ^= mask;
+        break;
     SetDevicePower(TasmotaGlobal.power, source);
   }
   if (publish_power) {
