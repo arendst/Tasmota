@@ -19,7 +19,7 @@
 #ifdef ESP32
 
 #include "Arduino.h"
-#include "WifiHelper.h"
+#include "WiFiHelper.h"
 #include <esp_wifi.h>
 
 extern void AddLog(uint32_t loglevel, PGM_P formatP, ...);
