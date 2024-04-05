@@ -146,7 +146,7 @@ void WifiSetMode(WiFiMode_t wifi_mode) {
     WiFi.hostname(TasmotaGlobal.hostname);  // ESP32 needs this here (before WiFi.mode) for core 2.0.0
 
     // See: https://github.com/esp8266/Arduino/issues/6172#issuecomment-500457407
-    WiFi.forceSleepWake(); // Make sure WiFi is really active.
+    WiFiHelper::forceSleepWake(); // Make sure WiFi is really active.
   }
 
   uint32_t retry = 2;
@@ -157,7 +157,7 @@ void WifiSetMode(WiFiMode_t wifi_mode) {
 
   if (wifi_mode == WIFI_OFF) {
     delay(1000);
-    WiFi.forceSleepBegin();
+    WiFiHelper::forceSleepBegin();
   }
   delay(100);  // Must allow for some time to init.
 }
@@ -179,9 +179,9 @@ void WiFiSetSleepMode(void)
 // Sleep explanation: https://github.com/esp8266/Arduino/blob/3f0c601cfe81439ce17e9bd5d28994a7ed144482/libraries/ESP8266WiFi/src/ESP8266WiFiGeneric.cpp#L255
 /*
   if (TasmotaGlobal.sleep && Settings->flag3.sleep_normal) {  // SetOption60 - Enable normal sleep instead of dynamic sleep
-    WiFi.setSleepMode(WIFI_LIGHT_SLEEP);        // Allow light sleep during idle times
+    WiFiHelper::setSleepMode(WIFI_LIGHT_SLEEP);        // Allow light sleep during idle times
   } else {
-    WiFi.setSleepMode(WIFI_MODEM_SLEEP);        // Disable sleep (Esp8288/Arduino core and sdk default)
+    WiFiHelper::setSleepMode(WIFI_MODEM_SLEEP);        // Disable sleep (Esp8288/Arduino core and sdk default)
   }
 */
   bool wifi_no_sleep = Settings->flag5.wifi_no_sleep;
@@ -190,13 +190,13 @@ void WiFiSetSleepMode(void)
 #endif
   if (0 == TasmotaGlobal.sleep || wifi_no_sleep) {
     if (!TasmotaGlobal.wifi_stay_asleep) {
-      WiFi.setSleepMode(WIFI_NONE_SLEEP);       // Disable sleep
+      WiFiHelper::setSleepMode(WIFI_NONE_SLEEP);       // Disable sleep
     }
   } else {
     if (Settings->flag3.sleep_normal) {         // SetOption60 - Enable normal sleep instead of dynamic sleep
-      WiFi.setSleepMode(WIFI_LIGHT_SLEEP);      // Allow light sleep during idle times
+      WiFiHelper::setSleepMode(WIFI_LIGHT_SLEEP);      // Allow light sleep during idle times
     } else {
-      WiFi.setSleepMode(WIFI_MODEM_SLEEP);      // Sleep (Esp8288/Arduino core and sdk default)
+      WiFiHelper::setSleepMode(WIFI_MODEM_SLEEP);      // Sleep (Esp8288/Arduino core and sdk default)
     }
   }
   delay(100);
@@ -224,15 +224,14 @@ void WifiBegin(uint8_t flag, uint8_t channel) {
 
   WiFiSetSleepMode();
   WifiSetOutputPower();
-//  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }  // B/G/N
-//  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11G) { WiFi.setPhyMode(WIFI_PHY_MODE_11G); }  // B/G
+//  if (WiFiHelper::getPhyMode() != WIFI_PHY_MODE_11N) { WiFiHelper::setPhyMode(WIFI_PHY_MODE_11N); }  // B/G/N
+//  if (WiFiHelper::getPhyMode() != WIFI_PHY_MODE_11G) { WiFiHelper::setPhyMode(WIFI_PHY_MODE_11G); }  // B/G
 #ifdef ESP32
   if (Wifi.phy_mode) {
-    WiFi.setPhyMode(WiFiPhyMode_t(Wifi.phy_mode));  // 1-B/2-BG/3-BGN/4-BGNAX
+    WiFiHelper::setPhyMode(WiFiPhyMode_t(Wifi.phy_mode));  // 1-B/2-BG/3-BGN/4-BGNAX
   }
 #endif
-  if (!WiFi.getAutoConnect()) { WiFi.setAutoConnect(true); }
-//  WiFi.setAutoReconnect(true);
+  WiFi.setAutoReconnect(true);
   switch (flag) {
   case 0:  // AP1
   case 1:  // AP2
@@ -321,7 +320,7 @@ void WifiBeginAfterScan(void)
         int32_t chan_scan;
         bool hidden_scan;
 
-        WiFi.getNetworkInfo(i, ssid_scan, sec_scan, rssi_scan, bssid_scan, chan_scan, hidden_scan);
+        WiFiHelper::getNetworkInfo(i, ssid_scan, sec_scan, rssi_scan, bssid_scan, chan_scan, hidden_scan);
 
         bool known = false;
         uint32_t j;
@@ -631,7 +630,7 @@ String EthernetGetIPv6LinkLocalStr(void)
 bool DNSGetIP(IPAddress *ip, uint32_t idx)
 {
 #ifdef ESP32
-  WiFi.scrubDNS();    // internal calls to reconnect can zero the DNS servers, restore the previous values
+  WiFiHelper::scrubDNS();    // internal calls to reconnect can zero the DNS servers, restore the previous values
 #endif
   const ip_addr_t *ip_dns = dns_getserver(idx);
   if (!ip_addr_isany(ip_dns)) {
@@ -990,7 +989,7 @@ float WifiGetOutputPower(void) {
 
 void WifiSetOutputPower(void) {
   if (Settings->wifi_output_power) {
-    WiFi.setOutputPower((float)(Settings->wifi_output_power) / 10);
+    WiFiHelper::setOutputPower((float)(Settings->wifi_output_power) / 10);
     delay(100);
   } else {
     AddLog(LOG_LEVEL_DEBUG, PSTR("WIF: Dynamic Tx power enabled"));  // WifiPower 0
@@ -1008,7 +1007,7 @@ void WiFiSetTXpowerBasedOnRssi(void) {
   // Range ESP8266: 0dBm - 20.5dBm
   int max_tx_pwr = MAX_TX_PWR_DBM_11b;
   int threshold = WIFI_SENSITIVITY_n;
-  int phy_mode = WiFi.getPhyMode();
+  int phy_mode = WiFiHelper::getPhyMode();
   switch (phy_mode) {
     case 1:                  // 11b (WIFI_PHY_MODE_11B)
       threshold = WIFI_SENSITIVITY_11b;
@@ -1040,7 +1039,7 @@ void WiFiSetTXpowerBasedOnRssi(void) {
   if (min_tx_pwr > max_tx_pwr) {
     min_tx_pwr = max_tx_pwr;
   }
-  WiFi.setOutputPower((float)min_tx_pwr / 10);
+  WiFiHelper::setOutputPower((float)min_tx_pwr / 10);
   delay(Wifi.last_tx_pwr < min_tx_pwr);  // If increase the TX power, give power supply of the unit some rest
 /*
   if (Wifi.last_tx_pwr != min_tx_pwr) {
@@ -1150,7 +1149,11 @@ void WifiShutdown(bool option) {
     // Courtesy of EspEasy
     // WiFi.persistent(true);    // use SDK storage of SSID/WPA parameters
     ETS_UART_INTR_DISABLE();
+#ifdef ESP8266
     wifi_station_disconnect();  // this will store empty ssid/wpa into sdk storage
+#else
+    WiFi.disconnect(true, true);
+#endif
     ETS_UART_INTR_ENABLE();
     // WiFi.persistent(false);   // Do not use SDK storage of SSID/WPA parameters
   }
@@ -1291,7 +1294,7 @@ bool WifiHostByName(const char* aHostname, IPAddress& aResult) {
 #endif // USE_IPV6
 
   uint32_t dns_start = millis();
-  bool success = WiFi.hostByName(aHostname, aResult, Settings->dns_timeout);
+  bool success = WiFiHelper::hostByName(aHostname, aResult, Settings->dns_timeout);
   uint32_t dns_end = millis();
   if (success) {
     // Host name resolved
@@ -1515,6 +1518,6 @@ void WifiEvents(arduino_event_t *event) {
     default:
       break;
   }
-  WiFi.scrubDNS();    // internal calls to reconnect can zero the DNS servers, restore the previous values
+  WiFiHelper::scrubDNS();    // internal calls to reconnect can zero the DNS servers, restore the previous values
 }
 #endif // ESP32

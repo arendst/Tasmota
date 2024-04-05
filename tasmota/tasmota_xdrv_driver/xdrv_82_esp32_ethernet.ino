@@ -145,7 +145,7 @@ void EthernetEvent(arduino_event_t *event) {
               event->event_info.got_ip.ip_info.ip.addr,
               event->event_info.got_ip.ip_info.netmask.addr,
               event->event_info.got_ip.ip_info.gw.addr);
-      WiFi.scrubDNS();    // internal calls to reconnect can zero the DNS servers, save DNS for future use
+      WiFiHelper::scrubDNS();    // internal calls to reconnect can zero the DNS servers, save DNS for future use
       break;
 
 #ifdef USE_IPV6
@@ -161,7 +161,7 @@ void EthernetEvent(arduino_event_t *event) {
         TasmotaGlobal.rules_flag.eth_connected = 1;
         TasmotaGlobal.global_state.eth_down = 0;
       }
-      WiFi.scrubDNS();    // internal calls to reconnect can zero the DNS servers, save DNS for future use
+      WiFiHelper::scrubDNS();    // internal calls to reconnect can zero the DNS servers, save DNS for future use
     }
     break;
 #endif // USE_IPV6

@@ -16,48 +16,48 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-//
+#ifdef ESP32
+
 #include "Arduino.h"
-#include <ESP8266WiFi.h>
+#include "WifiHelper.h"
 #include <esp_wifi.h>
 
 extern void AddLog(uint32_t loglevel, PGM_P formatP, ...);
 enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE};
 
-//
-// Wifi
-//
-#ifdef WiFi
-#undef WiFi
-#endif
+
+#ifdef USE_IPV6
+ip_addr_t dns_save4[DNS_MAX_SERVERS] = {};      // IPv4 DNS servers
+ip_addr_t dns_save6[DNS_MAX_SERVERS] = {};      // IPv6 DNS servers
+#endif // USE_IPV6
 
 #include "tasmota_options.h"
 #include "lwip/dns.h"
 
-wl_status_t WiFiClass32::begin(const char* wpa2_ssid, wpa2_auth_method_t method, const char* wpa2_identity, const char* wpa2_username, const char *wpa2_password, const char* ca_pem, const char* client_crt, const char* client_key, int32_t channel, const uint8_t* bssid, bool connect) {
-  scrubDNS();
-  wl_status_t ret = WiFiClass::begin(wpa2_ssid, method, wpa2_identity, wpa2_username, wpa2_password, ca_pem, client_crt, client_key, channel, bssid, connect);
-  scrubDNS();
+wl_status_t WiFiHelper::begin(const char* wpa2_ssid, wpa2_auth_method_t method, const char* wpa2_identity, const char* wpa2_username, const char *wpa2_password, const char* ca_pem, const char* client_crt, const char* client_key, int32_t channel, const uint8_t* bssid, bool connect) {
+  WiFiHelper::scrubDNS();
+  wl_status_t ret = WiFi.begin(wpa2_ssid, method, wpa2_identity, wpa2_username, wpa2_password, ca_pem, client_crt, client_key, channel, bssid, connect);
+  WiFiHelper::scrubDNS();
   return ret;
 }
 
-wl_status_t WiFiClass32::begin(const char* ssid, const char *passphrase, int32_t channel, const uint8_t* bssid, bool connect) {
-  scrubDNS();
-  wl_status_t ret = WiFiClass::begin(ssid, passphrase, channel, bssid, connect);
-  scrubDNS();
+wl_status_t WiFiHelper::begin(const char* ssid, const char *passphrase, int32_t channel, const uint8_t* bssid, bool connect) {
+  WiFiHelper::scrubDNS();
+  wl_status_t ret = WiFi.begin(ssid, passphrase, channel, bssid, connect);
+  WiFiHelper::scrubDNS();
   return ret;
 }
 
-wl_status_t WiFiClass32::begin(char* ssid, char *passphrase, int32_t channel, const uint8_t* bssid, bool connect) {
-  scrubDNS();
-  wl_status_t ret = WiFiClass::begin(ssid, passphrase, channel, bssid, connect);
-  scrubDNS();
+wl_status_t WiFiHelper::begin(char* ssid, char *passphrase, int32_t channel, const uint8_t* bssid, bool connect) {
+  WiFiHelper::scrubDNS();
+  wl_status_t ret = WiFi.begin(ssid, passphrase, channel, bssid, connect);
+  WiFiHelper::scrubDNS();
   return ret;
 }
-wl_status_t WiFiClass32::begin() {
-  scrubDNS();
-  wl_status_t ret = WiFiClass::begin();
-  scrubDNS();
+wl_status_t WiFiHelper::begin() {
+  WiFiHelper::scrubDNS();
+  wl_status_t ret = WiFi.begin();
+  WiFiHelper::scrubDNS();
   return ret;
 }
 
@@ -73,7 +73,7 @@ extern bool EthernetHasIPv4(void);
 extern bool WifiHasIPv6(void);
 extern bool EthernetHasIPv6(void);
 
-void WiFiClass32::scrubDNS(void) {
+void WiFiHelper::scrubDNS(void) {
   // String dns_entry0 = IPAddress(dns_getserver(0)).toString();
   // String dns_entry1 = IPAddress(dns_getserver(1)).toString();
   // scan DNS entries
@@ -118,12 +118,17 @@ void WiFiClass32::scrubDNS(void) {
   // AddLog(LOG_LEVEL_DEBUG, "IP>: DNS: from(%s %s) to (%s %s) has4/6:%i-%i", dns_entry0.c_str(), dns_entry1.c_str(), IPAddress(dns_getserver(0)).toString().c_str(),  IPAddress(dns_getserver(1)).toString().c_str(), has_v4, has_v6);
 }
 
-void WiFiClass32::setSleepMode(int iSleepMode) {
+
+void WiFiHelper::hostname(const char* aHostname) {
+  WiFi.setHostname(aHostname);
+}
+
+void WiFiHelper::setSleepMode(int iSleepMode) {
   // WIFI_LIGHT_SLEEP and WIFI_MODEM_SLEEP
   WiFi.setSleep(iSleepMode != WIFI_NONE_SLEEP);
 }
 
-int WiFiClass32::getPhyMode() {
+int WiFiHelper::getPhyMode() {
   /*
     typedef enum
     {
@@ -146,7 +151,7 @@ int WiFiClass32::getPhyMode() {
   return phy_mode;
 }
 
-bool WiFiClass32::setPhyMode(WiFiPhyMode_t mode) {
+bool WiFiHelper::setPhyMode(WiFiPhyMode_t mode) {
   uint8_t protocol_bitmap = WIFI_PROTOCOL_11B;      // 1
   switch (mode) {
 #if ESP_IDF_VERSION_MAJOR >= 5
@@ -158,10 +163,7 @@ bool WiFiClass32::setPhyMode(WiFiPhyMode_t mode) {
   return (ESP_OK == esp_wifi_set_protocol(WIFI_IF_STA, protocol_bitmap));
 }
 
-void WiFiClass32::wps_disable() {
-}
-
-void WiFiClass32::setOutputPower(int n) {
+void WiFiHelper::setOutputPower(int n) {
     wifi_power_t p = WIFI_POWER_2dBm;
     if (n > 19)
         p = WIFI_POWER_19_5dBm;
@@ -184,13 +186,13 @@ void WiFiClass32::setOutputPower(int n) {
     WiFi.setTxPower(p);
 }
 
-void WiFiClass32::forceSleepBegin() {
+void WiFiHelper::forceSleepBegin() {
 }
 
-void WiFiClass32::forceSleepWake() {
+void WiFiHelper::forceSleepWake() {
 }
 
-bool WiFiClass32::getNetworkInfo(uint8_t i, String &ssid, uint8_t &encType, int32_t &rssi, uint8_t *&bssid, int32_t &channel, bool &hidden_scan) {
+bool WiFiHelper::getNetworkInfo(uint8_t i, String &ssid, uint8_t &encType, int32_t &rssi, uint8_t *&bssid, int32_t &channel, bool &hidden_scan) {
     hidden_scan = false;
     return WiFi.getNetworkInfo(i, ssid, encType, rssi, bssid, channel);
 }
@@ -213,6 +215,16 @@ static volatile uint32_t ip_addr_counter = 0;   // counter for requests
 extern int32_t WifiDNSGetTimeout(void);
 extern bool WifiDNSGetIPv6Priority(void);
 
+static volatile bool dns_found = false;
+
+bool DNS_TimeReached(uint32_t timer)
+{
+  // Check if a certain timeout has been reached.
+  int32_t passed = ((int32_t) (millis() - timer));
+  return (passed >= 0);
+}
+
+
 static void wifi32_dns_found_callback(const char *name, const ip_addr_t *ipaddr, void *callback_arg)
 {
   // Serial.printf("DNS: cb name=%s ipaddr=%s arg=%i counter=%i\n", name ? name : "<null>", IPAddress(ipaddr).toString().c_str(), (int) callback_arg, ip_addr_counter);
@@ -224,12 +236,8 @@ static void wifi32_dns_found_callback(const char *name, const ip_addr_t *ipaddr,
   } else {
     dns_ipaddr = *IP4_ADDR_ANY;   // set to IPv4 0.0.0.0
   }
-  WiFiClass32::dnsDone();
+  dns_found = true;
   // AddLog(LOG_LEVEL_DEBUG, "WIF: dns_found=%s", ipaddr ? IPAddress(*ipaddr).toString().c_str() : "<null>");
-}
-// We need this helper method to access protected methods from WiFiGeneric
-void WiFiClass32::dnsDone(void) {
-  setStatusBits(NET_DNS_DONE_BIT);
 }
 
 /**
@@ -239,19 +247,22 @@ void WiFiClass32::dnsDone(void) {
  * @return 1 if aIPAddrString was successfully converted to an IP address,
  *          else error code
  */
-int WiFiClass32::hostByName(const char* aHostname, IPAddress& aResult, int32_t timer_ms)
+int WiFiHelper::hostByName(const char* aHostname, IPAddress& aResult, int32_t timer_ms)
 {
+//   return WiFi.hostByName(aHostname, aResult);
+// #if 0
   ip_addr_t addr;
   aResult = (uint32_t) 0;     // by default set to IPv4 0.0.0.0
   dns_ipaddr = *IP4_ADDR_ANY;  // by default set to IPv4 0.0.0.0
 
-  scrubDNS();    // internal calls to reconnect can zero the DNS servers, save DNS for future use
+  WiFiHelper::scrubDNS();    // internal calls to reconnect can zero the DNS servers, save DNS for future use
   ip_addr_counter++;      // increase counter, from now ignore previous responses
-  clearStatusBits(NET_DNS_IDLE_BIT | NET_DNS_DONE_BIT);
+  // clearStatusBits(NET_DNS_IDLE_BIT | NET_DNS_DONE_BIT);
   uint8_t v4v6priority = LWIP_DNS_ADDRTYPE_IPV4;
 #ifdef USE_IPV6
   v4v6priority = WifiDNSGetIPv6Priority() ? LWIP_DNS_ADDRTYPE_IPV6_IPV4 : LWIP_DNS_ADDRTYPE_IPV4_IPV6;
 #endif // USE_IPV6
+  dns_found = false;
   err_t err = dns_gethostbyname_addrtype(aHostname, &dns_ipaddr, &wifi32_dns_found_callback, (void*) ip_addr_counter, v4v6priority);
   // Serial.printf("DNS: dns_gethostbyname_addrtype errg=%i counter=%i\n", err, ip_addr_counter);
   if(err == ERR_OK && !ip_addr_isany_val(dns_ipaddr)) {
@@ -261,8 +272,10 @@ int WiFiClass32::hostByName(const char* aHostname, IPAddress& aResult, int32_t t
     aResult = ip_addr_get_ip4_u32(&dns_ipaddr);
 #endif // USE_IPV6
   } else if(err == ERR_INPROGRESS) {
-    waitStatusBits(NET_DNS_DONE_BIT, timer_ms);  //real internal timeout in lwip library is 14[s]
-    clearStatusBits(NET_DNS_DONE_BIT);
+    uint32_t deadline = millis() + timer_ms;
+    while ((!DNS_TimeReached(deadline)) && !dns_found) {
+      delay(1);
+    }
   }
 
   if (!ip_addr_isany_val(dns_ipaddr)) {
@@ -274,19 +287,12 @@ int WiFiClass32::hostByName(const char* aHostname, IPAddress& aResult, int32_t t
     return true;
   }
   return false;
+// #endif
 }
 
-int WiFiClass32::hostByName(const char* aHostname, IPAddress& aResult)
+int WiFiHelper::hostByName(const char* aHostname, IPAddress& aResult)
 {
-  return hostByName(aHostname, aResult, WifiDNSGetTimeout());
+  return WiFiHelper::hostByName(aHostname, aResult, WifiDNSGetTimeout());
 }
 
-void wifi_station_disconnect() {
-    // erase ap: empty ssid, ...
-    WiFi.disconnect(true, true);
-}
-
-void wifi_station_dhcpc_start() {
-}
-
-WiFiClass32 WiFi32;
+#endif // ESP32

@@ -40,6 +40,7 @@
 #endif
 
 // Libraries
+#include <WiFiHelper.h>
 #include <ESP8266HTTPClient.h>              // Ota
 #include <ESP8266httpUpdate.h>              // Ota
 #ifdef ESP32
