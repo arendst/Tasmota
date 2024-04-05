@@ -981,7 +981,7 @@ String ESP_getEfuseMac(void) {
 
 String WifiGetPhyMode(void) {
   char stemp[10];
-  return String(GetTextIndexed(stemp, sizeof(stemp), WiFi.getPhyMode(), kWifiPhyMode));
+  return String(GetTextIndexed(stemp, sizeof(stemp), WiFiHelper::getPhyMode(), kWifiPhyMode));
 }
 
 /*********************************************************************************************\

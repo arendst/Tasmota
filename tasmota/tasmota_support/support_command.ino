@@ -2680,7 +2680,7 @@ void CmndWifi(void) {
 #ifdef ESP32
         Wifi.phy_mode = option;
 #endif  // ESP32
-        WiFi.setPhyMode(WiFiPhyMode_t(option));  // 1=B/2=BG/3=BGN/4=BGNAX
+        WiFiHelper::setPhyMode(WiFiPhyMode_t(option));  // 1=B/2=BG/3=BGN/4=BGNAX
         break;
       }
   }
