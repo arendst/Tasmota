@@ -111,6 +111,15 @@ void EthernetEvent(arduino_event_t *event) {
       // workaround for the race condition in LWIP, see https://github.com/espressif/arduino-esp32/pull/9016#discussion_r1451774885
       {
         uint32_t i = 5;   // try 5 times only
+#if ESP_IDF_VERSION_MAJOR >= 5
+        while (esp_netif_create_ip6_linklocal(ETH.netif()) != ESP_OK) {
+          delay(1);
+          if (i-- == 0) {
+            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ETH ">>>> HELP"));
+            break;
+          }
+        }
+#else
         while (esp_netif_create_ip6_linklocal(get_esp_interface_netif(ESP_IF_ETH)) != ESP_OK) {
           delay(1);
           if (i-- == 0) {
@@ -118,6 +127,7 @@ void EthernetEvent(arduino_event_t *event) {
             break;
           }
         }
+#endif
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ETH "ESP_IF_ETH i=%i"), i);
       }
 #endif // USE_IPV6
@@ -233,6 +243,12 @@ void EthernetInit(void) {
   int eth_mdio = Pin(GPIO_ETH_PHY_MDIO);     // Ethernet SPI IRQ
   int eth_power = Pin(GPIO_ETH_PHY_POWER);   // Ethernet SPI RST
 
+#if ESP_IDF_VERSION_MAJOR >= 5
+#ifdef USE_IPV6
+  ETH.enableIPv6();   // enable Link-Local
+#endif // USE_IPV6
+#endif // ESP_IDF_VERSION_MAJOR >= 5
+
   bool init_ok = false;
 #if ESP_IDF_VERSION_MAJOR >= 5
   if (Settings->eth_type < 7) {
@@ -241,7 +257,7 @@ void EthernetInit(void) {
 #endif  // CONFIG_ETH_USE_ESP32_EMAC
   } else {
     // ETH_SPI_SUPPORTS_CUSTOM
-//    SPISettings(ETH_PHY_SPI_FREQ_MHZ * 1000 * 1000, MSBFIRST, SPI_MODE0);  // 20MHz
+    // SPISettings(ETH_PHY_SPI_FREQ_MHZ * 1000 * 1000, MSBFIRST, SPI_MODE0);  // 20MHz
     SPI.begin(Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MISO), Pin(GPIO_SPI_MOSI), -1);
     init_ok = (ETH.begin((eth_phy_type_t)eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, SPI, ETH_PHY_SPI_FREQ_MHZ));
   }
