@@ -1651,7 +1651,26 @@ bool NeoPoolIsHydrolysis(void)
 
 bool NeoPoolIsHydrolysisInPercent(void)
 {
-  return !(MBMSK_VS_FORCE_UNITS_GRH == (NeoPoolGetData(MBF_PAR_UICFG_MACH_VISUAL_STYLE) & (MBMSK_VS_FORCE_UNITS_GRH | MBMSK_VS_FORCE_UNITS_PERCENTAGE)));
+  // determine type of units are used to display the hydrolysis/electrolysis:
+  //   1. If MBMSK_VS_FORCE_UNITS_PERCENTAGE bit of MBF_PAR_UICFG_MACH_VISUAL_STYLE register is set, "%" is displayed
+  if (NeoPoolGetData(MBF_PAR_UICFG_MACH_VISUAL_STYLE) & MBMSK_VS_FORCE_UNITS_PERCENTAGE) {
+    return true;
+  }
+  //   2. If MBMSK_VS_FORCE_UNITS_GRH bit of MBF_PAR_UICFG_MACH_VISUAL_STYLE register is set, "gr/h" is displayed
+  if (NeoPoolGetData(MBF_PAR_UICFG_MACH_VISUAL_STYLE) & MBMSK_VS_FORCE_UNITS_GRH) {
+    return false;
+  }
+  //   3. If neither of the above two bits is set:
+  //      a. If MBF_PAR_UICFG_MACHINE is MACH_HIDROLIFE or MACH_BIONET, then "gr/h" is displayed
+  if (NeoPoolGetData(MBF_PAR_UICFG_MACHINE) == MBV_PAR_MACH_HIDROLIFE || NeoPoolGetData(MBF_PAR_UICFG_MACHINE) == MBV_PAR_MACH_BIONET) {
+    return false;
+  }
+  //      b. If MBF_PAR_UICFG_MACHINE is MACH_GENERIC and MBMSK_ELECTROLISIS bit of MBF_PAR_UICFG_MACH_VISUAL_STYLE is set, "gr/h" is displayed.
+  if (NeoPoolGetData(MBF_PAR_UICFG_MACHINE) == MBV_PAR_MACH_GENERIC && (NeoPoolGetData(MBF_PAR_UICFG_MACH_VISUAL_STYLE) & MBMSK_ELECTROLISIS)) {
+    return false;
+  }
+  //      c. If none of the above cases, "%" is displayed.
+  return true;
 }
 
 bool NeoPoolIspHModule(void)
