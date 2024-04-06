@@ -21,6 +21,7 @@
 #define _TASMOTA_CONFIGURATIONS_ESP32_H_
 
 #ifdef ESP32
+#include "sdkconfig.h"
 
 /*********************************************************************************************\
  * [tasmota32x-safeboot.bin]
