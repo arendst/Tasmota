@@ -150,7 +150,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - LVGL remove `textarea` and `spinbox` from binaries [#20916](https://github.com/arendst/Tasmota/issues/20916)
 
 ### Changed
-- ESP32 Core3 platform update from 2024.01.12 to 2024.02.10 [#20730](https://github.com/arendst/Tasmota/issues/20730)
+- ESP32 Core3 platform update from 2024.01.12 to 2024.04.10 [#21114](https://github.com/arendst/Tasmota/issues/21114)
 - ESP32 LVGL library from v9.0.0 to v9.1.0 [#21008](https://github.com/arendst/Tasmota/issues/21008)
 - Refactor Platformio script `post_esp32.py` [#20966](https://github.com/arendst/Tasmota/issues/20966)
 - NeoPool webUI pH alarms (4 & 5) completed (#20743)[#20743](https://github.com/arendst/Tasmota/issues/20743)
