@@ -12,10 +12,11 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
-- Refactored Wifi for ESP32 to allow for Core3
+- ESP32 refactored Wifi for ESP32 Core3 release (#21106)
 
 ### Fixed
 - NeoPool hydrolysis unit for Hidrolife, Bionet and Generic device (#21098)
+- M5Core2 LoRa868 module receive exception
 
 ### Removed
 - Unused `#define MQTT_DATA_STRING` support

@@ -157,6 +157,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Prevent shutter MQTT broadcast with activated ShutterLock [#20827](https://github.com/arendst/Tasmota/issues/20827)
 - Some `display.ini` to utouch [#21029](https://github.com/arendst/Tasmota/issues/21029)
 - KNX format of energy to match specifications [#21074](https://github.com/arendst/Tasmota/issues/21074)
+- ESP32 refactored Wifi for ESP32 Core3 release [#21106](https://github.com/arendst/Tasmota/issues/21106)
 - ESP32 WiFi phy modes 11n and 11ax represented as HT20, HT40 and HE20 [#19350](https://github.com/arendst/Tasmota/issues/19350)
 - berry.exe (pre-compiled for Windows) updated to latest Berry patches [#21024](https://github.com/arendst/Tasmota/issues/21024)
 - Berry class `int64` made immutable [#20727](https://github.com/arendst/Tasmota/issues/20727)
@@ -180,6 +181,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Color swap option for rgb displaytext [#21049](https://github.com/arendst/Tasmota/issues/21049)
 - NeoPool hydrolysis unit for Hidrolife, Bionet and Generic device [#21098](https://github.com/arendst/Tasmota/issues/21098)
 - ESP32 PWM activity on unconfigured PWM GPIOs [#20732](https://github.com/arendst/Tasmota/issues/20732)
+- M5Core2 LoRa868 module receive exception
 - BTHome, prep BLE5 [#20989](https://github.com/arendst/Tasmota/issues/20989)
 - Berry Memory leak in `import re` [#20823](https://github.com/arendst/Tasmota/issues/20823)
 - Berry bug when parsing ternary operator [#20839](https://github.com/arendst/Tasmota/issues/20839)

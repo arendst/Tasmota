@@ -38,24 +38,23 @@ void LoraSx127xOnReceive(int packet_size) {
   if (!Lora->receive_time) {
     Lora->receive_time = millis();
   }
-  Lora->packet_size = packet_size;         // we got a packet, set the flag
+  Lora->received_flag = true;              // we got a packet, set the flag
 }
 
 bool LoraSx127xAvailable(void) {
-  return (Lora->packet_size > 0);          // check if the flag is set
+  return Lora->received_flag;              // check if the flag is set
 }
 
 int LoraSx127xReceive(char* data) {
+  Lora->received_flag = false;             // reset flag
   int packet_size = 0;
-  while (Lora->Available()) {               // read packet up to LORA_MAX_PACKET_LENGTH
-    char sdata = LoRa.read();
-    if (packet_size < TAS_LORA_MAX_PACKET_LENGTH -1) {
-      data[packet_size++] = sdata;
-    }
+  int sdata = LoRa.read();
+  while ((sdata > -1) && (packet_size < TAS_LORA_MAX_PACKET_LENGTH -1)) {  // Read packet up to LORA_MAX_PACKET_LENGTH
+    data[packet_size++] = (char)sdata;
+    sdata = LoRa.read();
   }
   Lora->rssi = LoRa.packetRssi();
   Lora->snr = LoRa.packetSnr();
-  Lora->packet_size = 0;                   // reset flag
   return packet_size;
 }
 
