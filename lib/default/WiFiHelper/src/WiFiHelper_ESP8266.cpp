@@ -73,4 +73,8 @@ int WiFiHelper::hostByName(const char* aHostname, IPAddress& aResult) {
   return WiFi.hostByName(aHostname, aResult);
 }
 
+String WiFiHelper::macAddress(void) {
+  return WiFi.macAddress();
+}
+
 #endif // ESP8266

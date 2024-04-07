@@ -79,6 +79,10 @@ public:
   static int hostByName(const char* aHostname, IPAddress& aResult);
 
   static void scrubDNS(void);
+
+  // With ESP32 Core3, the WiFi mac address is not valid until the wifi is actually started
+  // this helper function always provide a valid mac address
+  static String macAddress(void);
 };
 
 

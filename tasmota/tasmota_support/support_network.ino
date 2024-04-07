@@ -117,11 +117,11 @@ String NetworkMacAddress(void) {
   }
 #endif
 #endif
-  return WiFi.macAddress();
+  return WiFiHelper::macAddress();
 }
 
 String NetworkUniqueId(void) {
-  String unique_id = WiFi.macAddress();
+  String unique_id = WiFiHelper::macAddress();
   unique_id.replace(":", "");  // Full 12 chars MAC address as ID
   return unique_id;
 }

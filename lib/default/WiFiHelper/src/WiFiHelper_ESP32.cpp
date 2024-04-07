@@ -295,4 +295,21 @@ int WiFiHelper::hostByName(const char* aHostname, IPAddress& aResult)
   return WiFiHelper::hostByName(aHostname, aResult, WifiDNSGetTimeout());
 }
 
+#if (ESP_IDF_VERSION_MAJOR >= 5)
+#include "esp_mac.h"
+#endif
+
+String WiFiHelper::macAddress(void) {
+#if (ESP_IDF_VERSION_MAJOR < 5)
+  return WiFi.macAddress();
+#else
+  uint8_t mac[6] = {0,0,0,0,0,0};
+  char macStr[18] = { 0 };
+
+  esp_read_mac(mac, ESP_MAC_WIFI_STA);
+  snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  return String(macStr);
+#endif
+}
+
 #endif // ESP32
