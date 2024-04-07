@@ -823,7 +823,7 @@ void CmndMeshPeer(void) {
       MESHaddPeer(_MAC);
       MESHcountPeers();
       ResponseCmndChar(_peerMAC);
-    } else if (WiFi.macAddress() == String(_peerMAC) || WiFi.softAPmacAddress() == String(_peerMAC)){
+    } else if (WiFiHelper::macAddress() == String(_peerMAC) || WiFi.softAPmacAddress() == String(_peerMAC)){
       // a device can be added as its own peer, but every send will result in a ESP_NOW_SEND_FAIL
       AddLog(LOG_LEVEL_DEBUG,PSTR("MSH: device %s cannot be a peer of itself"), XdrvMailbox.data, _peerMAC);
     } else {

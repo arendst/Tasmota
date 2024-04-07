@@ -946,7 +946,7 @@ void CmndStatus(void)
                           TasmotaGlobal.hostname,
                           (uint32_t)WiFi.localIP(), Settings->ipv4_address[1], Settings->ipv4_address[2],
                           DNSGetIPStr(0).c_str(), DNSGetIPStr(1).c_str(),
-                          WiFi.macAddress().c_str()
+                          WiFiHelper::macAddress().c_str()
                           ,WifiGetIPv6Str().c_str(), WifiGetIPv6LinkLocalStr().c_str());
 #else // USE_IPV6
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS5_NETWORK "\":{\"" D_CMND_HOSTNAME "\":\"%s\",\""
@@ -956,7 +956,7 @@ void CmndStatus(void)
                           TasmotaGlobal.hostname,
                           (uint32_t)WiFi.localIP(), Settings->ipv4_address[1], Settings->ipv4_address[2],
                           Settings->ipv4_address[3], Settings->ipv4_address[4],
-                          WiFi.macAddress().c_str());
+                          WiFiHelper::macAddress().c_str());
 #endif // USE_IPV6
 #ifdef USE_TASMESH
     ResponseAppend_P(PSTR(",\"SoftAPMac\":\"%s\""), WiFi.softAPmacAddress().c_str());
