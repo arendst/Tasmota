@@ -159,7 +159,7 @@ bool NimBLEService::start() {
             // Nimble requires the last characteristic to have it's uuid = 0 to indicate the end
             // of the characteristics for the service. We create 1 extra and set it to null
             // for this purpose.
-            pChr_a = new ble_gatt_chr_def[numChrs + 1];
+            pChr_a = new ble_gatt_chr_def[numChrs + 1]{};
             int i = 0;
             for(auto chr_it = m_chrVec.begin(); chr_it != m_chrVec.end(); ++chr_it) {
                 if((*chr_it)->m_removed > 0) {
