@@ -581,7 +581,7 @@ void EnergyMarginCheck(void) {
           ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHED "\":%d}"), energy_power_u);
           MqttPublishPrefixTopicRulesProcess_P(STAT, S_RSLT_WARNING);
           EnergyMqttShow();
-          SetAllPower(POWER_ALL_OFF, SRC_MAXPOWER);
+          SetAllPower(POWER_OFF_FORCE, SRC_MAXPOWER);
           if (!Energy->mplr_counter) {
             Energy->mplr_counter = Settings->param[P_MAX_POWER_RETRY] +1;  // SetOption33 - Max Power Retry count
           }
@@ -608,7 +608,7 @@ void EnergyMarginCheck(void) {
             ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHEDRETRY "\":\"%s\"}"), GetStateText(0));
             MqttPublishPrefixTopicRulesProcess_P(STAT, S_RSLT_WARNING);
             EnergyMqttShow();
-            SetAllPower(POWER_ALL_OFF, SRC_MAXPOWER);
+            SetAllPower(POWER_OFF_FORCE, SRC_MAXPOWER);
           }
         }
       }
@@ -629,7 +629,7 @@ void EnergyMarginCheck(void) {
       ResponseTime_P(PSTR(",\"" D_JSON_MAXENERGYREACHED "\":%3_f}"), &Energy->daily_sum);
       MqttPublishPrefixTopicRulesProcess_P(STAT, S_RSLT_WARNING);
       EnergyMqttShow();
-      SetAllPower(POWER_ALL_OFF, SRC_MAXENERGY);
+      SetAllPower(POWER_OFF_FORCE, SRC_MAXENERGY);
     }
   }
 #endif  // USE_ENERGY_POWER_LIMIT
@@ -656,7 +656,7 @@ void EnergyEverySecond(void) {
 
       AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Temperature %1_f"), &TasmotaGlobal.temperature_celsius);
 
-      SetAllPower(POWER_ALL_OFF, SRC_OVERTEMP);
+      SetAllPower(POWER_OFF_FORCE, SRC_OVERTEMP);
     }
   }
 

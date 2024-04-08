@@ -373,11 +373,11 @@ void RestorePower(bool publish_power, uint32_t source)
   }
 }
 
-void SetAllPower(uint32_t state, uint32_t source)
-{
+void SetAllPower(uint32_t state, uint32_t source) {
 // state 0 = POWER_OFF = Relay Off
 // state 1 = POWER_ON = Relay On (turn off after Settings->pulse_timer * 100 mSec if enabled)
 // state 2 = POWER_TOGGLE = Toggle relay
+// state 5 = POWER_OFF_FORCE = Relay Off even if locked
 // state 8 = POWER_OFF_NO_STATE = Relay Off and no publishPowerState
 // state 9 = POWER_ON_NO_STATE = Relay On and no publishPowerState
 // state 10 = POWER_TOGGLE_NO_STATE = Toggle relay and no publishPowerState
@@ -388,21 +388,25 @@ void SetAllPower(uint32_t state, uint32_t source)
     state &= 3;                           // POWER_OFF, POWER_ON or POWER_TOGGLE
     publish_power = false;
   }
-  if ((state >= POWER_OFF) && (state <= POWER_TOGGLE)) {
+  if (((state >= POWER_OFF) && (state <= POWER_TOGGLE)) || (POWER_OFF_FORCE == state))  {
     power_t all_on = POWER_MASK >> (POWER_SIZE - TasmotaGlobal.devices_present);
     switch (state) {
     case POWER_OFF:
-        // keep loocked bits and set all other to 0
-        TasmotaGlobal.power &= Settings->power_lock; 
-        break;
+      // Keep locked bits and set all other to 0
+      TasmotaGlobal.power &= Settings->power_lock; 
+      break;
     case POWER_ON:
-        // Keep locked bits and set all other to 1
-        TasmotaGlobal.power = (TasmotaGlobal.power & Settings->power_lock) | (all_on & ~Settings->power_lock);
-        break;
+      // Keep locked bits and set all other to 1
+      TasmotaGlobal.power = (TasmotaGlobal.power & Settings->power_lock) | (all_on & ~Settings->power_lock);
+      break;
     case POWER_TOGGLE:
-        // Keep locked bits and toggle all other
-        TasmotaGlobal.power ^= ~Settings->power_lock & all_on;
-        break;
+      // Keep locked bits and toggle all other
+      TasmotaGlobal.power ^= ~Settings->power_lock & all_on;
+      break;
+    case POWER_OFF_FORCE:
+      // Set all off even if locked on (Used by overtemp and overcurrent)
+      TasmotaGlobal.power = 0; 
+      break;
     }
     SetDevicePower(TasmotaGlobal.power, source);
   }
