@@ -1356,7 +1356,7 @@ int ResponseAppendTHD(float f_temperature, float f_humidity) {
                              Settings->flag2.humidity_resolution, &f_humidity,
                              Settings->flag2.temperature_resolution, &dewpoint);
 #ifdef USE_HEAT_INDEX
-  float heatindex = CalcTemHumToHeatIndex(TasmotaGlobal.temperature_celsius, TasmotaGlobal.humidity);
+  float heatindex = CalcTemHumToHeatIndex(f_temperature, f_humidity);
   int len2 = ResponseAppend_P(PSTR(",\"" D_JSON_HEATINDEX "\":%*_f"),
                               Settings->flag2.temperature_resolution, &heatindex);
   return len + len2;                              
