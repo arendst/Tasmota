@@ -49,6 +49,7 @@ struct {
   TasmotaSerial* sonar_serial = nullptr;
 } SR04[MAX_SR04];
 
+uint8_t sensor_count = 0;
 
 uint16_t Sr04TMiddleValue(uint16_t first, uint16_t second, uint16_t third) {
   uint16_t ret = first;
@@ -114,7 +115,7 @@ void Sr04TModeDetect(void) {
   for (uint32_t i = 0; i < MAX_SR04; i++) {
     SR04[i].type = SR04_MODE_NONE;
     if (!PinUsed(GPIO_SR04_ECHO, i)) { continue; }
-
+    sensor_count++;
     int sr04_echo_pin = Pin(GPIO_SR04_ECHO, i);
     int sr04_trig_pin = Pin(GPIO_SR04_TRIG, i);  // if GPIO_SR04_TRIG is not configured use single PIN mode with GPIO_SR04_TRIG as -1
     SR04[i].sonar_serial = new TasmotaSerial(sr04_echo_pin, sr04_trig_pin, 1);
@@ -195,7 +196,12 @@ void Sr04TReading(uint32_t i) {
 void Sr04Show(uint32_t i, bool json) {
   if (SR04[i].valid) {
     char types[12];
-    snprintf_P(types, sizeof(types), PSTR("SR04%c%d"), IndexSeparator(), i+1);
+    // backward compatibility check
+    if (i == 0 && sensor_count == 1) {
+      strcpy_P(types, PSTR("SR04"));
+    } else {
+      snprintf_P(types, sizeof(types), PSTR("SR04%c%d"), IndexSeparator(), i+1);
+    }
     if(json) {
       ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_DISTANCE "\":%1_f}"), types, &SR04[i].distance);
 #ifdef USE_DOMOTICZ
