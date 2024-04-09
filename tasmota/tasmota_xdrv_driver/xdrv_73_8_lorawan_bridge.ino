@@ -237,6 +237,36 @@ void LoraWanSendLinkADRReq(uint32_t node) {
   LoraWanSendResponse(data, sizeof(data), TAS_LORAWAN_RECEIVE_DELAY1);
 }
 
+void LoraWanSendMacResponse(uint32_t node, uint8_t* FOpts, uint32_t FCtrl) {
+  if (FCtrl > 15) { return; }                                // FOpts = 0..15
+ 
+  uint32_t DevAddr = Lora->device_address +node;
+  uint16_t FCnt = Lora->settings.end_node[node].FCntDown++;
+  uint8_t NwkSKey[TAS_LORAWAN_AES128_KEY_SIZE];
+  LoraWanDeriveLegacyNwkSKey(node, NwkSKey);
+
+  uint32_t data_size = 12 + FCtrl;
+  uint8_t data[data_size];
+  data[0] = TAS_LORAWAN_MTYPE_UNCONFIRMED_DATA_DOWNLINK << 5;
+  data[1] = DevAddr;
+  data[2] = DevAddr >> 8;
+  data[3] = DevAddr >> 16;
+  data[4] = DevAddr >> 24;
+  data[5] = 0x20 + FCtrl;                                    // FCtrl ACK + FOpts
+  data[6] = FCnt;
+  data[7] = FCnt >> 8;
+  for (uint32_t i = 0; i < FCtrl; i++) {
+    data[8 +i] = FOpts[i];
+  }
+  uint32_t MIC = LoraWanComputeLegacyDownlinkMIC(NwkSKey, DevAddr, FCnt, data, data_size -4);
+  data[data_size -4] = MIC;
+  data[data_size -3] = MIC >> 8;
+  data[data_size -2] = MIC >> 16;
+  data[data_size -1] = MIC >> 24;
+
+  LoraWanSendResponse(data, data_size, TAS_LORAWAN_RECEIVE_DELAY1);
+}
+
 bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
   bool result = false;
   uint32_t MType = data[0] >> 5;                             // Upper three bits (used to be called FType)
@@ -400,11 +430,20 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
         Lora->settings.end_node[node].FCntUp = FCnt;
 
         if (FOptsLen) {
+          uint8_t mac_data[16];
+          uint32_t mac_data_idx = 0;
           uint32_t i = 0;
           while (i < FOptsLen) {
             if (TAS_LORAWAN_CID_LINK_CHECK_REQ == FOpts[i]) {
               // Used by end-device to validate it's connectivity to a network
               // Need to send Margin/GWCnt
+              if (mac_data_idx < 13) {
+                mac_data[mac_data_idx++] = TAS_LORAWAN_CID_LINK_CHECK_ANS;
+                int snr = Lora->snr;
+                if (snr < 0) { snr = 0; }
+                mac_data[mac_data_idx++] = snr;                        // Margin - Demodulation margin
+                mac_data[mac_data_idx++] = 1;                          // GwCnt - Gateway count
+              }
             }
             else if (TAS_LORAWAN_CID_LINK_ADR_ANS == FOpts[i]) {
               i++;
@@ -435,11 +474,25 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
             else if (TAS_LORAWAN_CID_DEVICE_TIME_REQ == FOpts[i]) {
               // Used by the end-device to request the current GPS time
               // Need to send epoch/fractional second
+              if (mac_data_idx < 10) {
+                mac_data[mac_data_idx++] = TAS_LORAWAN_CID_DEVICE_TIME_ANS;
+                // ToDo - need to find a way how to calculate the leap seconds
+                uint32_t gps_time = UtcTime() -315964800 +18 +1;       // Time at RX1
+                mac_data[mac_data_idx++] = gps_time;
+                mac_data[mac_data_idx++] = gps_time >> 8;
+                mac_data[mac_data_idx++] = gps_time >> 16;
+                mac_data[mac_data_idx++] = gps_time >> 24;
+//                uint32_t frac_time = RtcMillis();
+                mac_data[mac_data_idx++] = 0x00;                       // Fractional-second 1/256 sec
+              }
             }
             else { 
               // RFU
             }
             i++;
+          }
+          if (mac_data_idx > 0) {
+            LoraWanSendMacResponse(node, mac_data, mac_data_idx);
           }
         }
 
