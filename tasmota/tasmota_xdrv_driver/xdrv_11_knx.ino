@@ -27,8 +27,8 @@
 Constants in tasmota.h
 -----------------------
 
-#define MAX_KNX_GA             14            Max number of KNX Group Addresses to read that can be set
-#define MAX_KNX_CB             14            Max number of KNX Group Addresses to write that can be set
+#define MAX_KNX_GA             10            Max number of KNX Group Addresses to read that can be set
+#define MAX_KNX_CB             10            Max number of KNX Group Addresses to write that can be set
                                              If you change MAX_KNX_CB you also have to change on the esp-knx-ip.h file the following:
                                                        #define MAX_CALLBACK_ASSIGNMENTS  10
                                                        #define MAX_CALLBACKS             10
