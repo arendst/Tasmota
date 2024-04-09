@@ -49,7 +49,7 @@ struct {
   TasmotaSerial* sonar_serial = nullptr;
 } SR04[MAX_SR04];
 
-uint8_t sensor_count = 0;
+uint8_t sr04_sensor_count = 0;
 
 uint16_t Sr04TMiddleValue(uint16_t first, uint16_t second, uint16_t third) {
   uint16_t ret = first;
@@ -115,7 +115,7 @@ void Sr04TModeDetect(void) {
   for (uint32_t i = 0; i < MAX_SR04; i++) {
     SR04[i].type = SR04_MODE_NONE;
     if (!PinUsed(GPIO_SR04_ECHO, i)) { continue; }
-    sensor_count++;
+    sr04_sensor_count++;
     int sr04_echo_pin = Pin(GPIO_SR04_ECHO, i);
     int sr04_trig_pin = Pin(GPIO_SR04_TRIG, i);  // if GPIO_SR04_TRIG is not configured use single PIN mode with GPIO_SR04_TRIG as -1
     SR04[i].sonar_serial = new TasmotaSerial(sr04_echo_pin, sr04_trig_pin, 1);
@@ -197,7 +197,7 @@ void Sr04Show(uint32_t i, bool json) {
   if (SR04[i].valid) {
     char types[12];
     // backward compatibility check
-    if (i == 0 && sensor_count == 1) {
+    if (i == 0 && sr04_sensor_count == 1) {
       strcpy_P(types, PSTR("SR04"));
     } else {
       snprintf_P(types, sizeof(types), PSTR("SR04%c%d"), IndexSeparator(), i+1);
@@ -224,21 +224,23 @@ void Sr04Show(uint32_t i, bool json) {
 bool Xsns22(uint32_t function) {
   bool result = false;
 
-  for (uint32_t i = 0; i < MAX_SR04; i++) {
-    if (SR04[i].type) {
-      switch (function) {
-        case FUNC_EVERY_SECOND:
-          Sr04TReading(i);
-          result = true;
-          break;
-        case FUNC_JSON_APPEND:
-          Sr04Show(i, 1);
-          break;
-  #ifdef USE_WEBSERVER
-        case FUNC_WEB_SENSOR:
-          Sr04Show(i, 0);
-          break;
-  #endif  // USE_WEBSERVER
+  if (PinUsed(GPIO_SR04_ECHO, GPIO_ANY)) { 
+    for (uint32_t i = 0; i < MAX_SR04; i++) {
+      if (SR04[i].type) {
+        switch (function) {
+          case FUNC_EVERY_SECOND:
+            Sr04TReading(i);
+            result = true;
+            break;
+          case FUNC_JSON_APPEND:
+            Sr04Show(i, 1);
+            break;
+    #ifdef USE_WEBSERVER
+          case FUNC_WEB_SENSOR:
+            Sr04Show(i, 0);
+            break;
+    #endif  // USE_WEBSERVER
+        }
       }
     }
   }
