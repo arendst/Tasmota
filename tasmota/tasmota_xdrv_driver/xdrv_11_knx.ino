@@ -215,7 +215,7 @@ const char *device_param_cb[] = {
 #define D_CMND_KNX_CB "_CB"
 #define D_CMND_KNXTXSCENE "Tx_Scene"
 
-#ifdef KNX_DPT9_CMD
+#ifdef KNX_EXTRA_CMD
 #warning *** KnxTx_DPTNine : Add command to send DPT9 values
 #define D_CMND_KNXTXVAL_DPT9 "Tx_DPTNine"
 
@@ -225,7 +225,7 @@ const char kKnxCommands[] PROGMEM = D_PRFX_KNX "|"  // Prefix
 void (* const KnxCommand[])(void) PROGMEM = {
   &CmndKnxTxCmnd, &CmndKnxTxVal, &CmndKnxEnabled, &CmndKnxEnhanced, &CmndKnxPa, &CmndKnxGa, &CmndKnxCb, &CmndKnxTxScene, &CmndKnxTxDPTNine};
 
-#else // not KNX_DPT9_CMD
+#else // not KNX_EXTRA_CMD
 const char kKnxCommands[] PROGMEM = D_PRFX_KNX "|"  // Prefix
   D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL "|" D_CMND_KNX_ENABLED "|" D_CMND_KNX_ENHANCED "|" D_CMND_KNX_PA "|" D_CMND_KNX_GA "|" D_CMND_KNX_CB "|" D_CMND_KNXTXSCENE ;
 
@@ -233,7 +233,7 @@ void (* const KnxCommand[])(void) PROGMEM = {
   &CmndKnxTxCmnd, &CmndKnxTxVal, &CmndKnxEnabled, &CmndKnxEnhanced, &CmndKnxPa, &CmndKnxGa, &CmndKnxCb, &CmndKnxTxScene };
 
 
-#endif //  KNX_DPT9_CMD
+#endif //  KNX_EXTRA_CMD
 
 #ifndef KNX_ENHANCEMENT_REPEAT
 #define KNX_ENHANCEMENT_REPEAT 3
@@ -1148,7 +1148,7 @@ void CmndKnxTxVal(void)
   }
 }
 
-#ifdef KNX_DPT9_CMD
+#ifdef KNX_EXTRA_CMD
 void CmndKnxTxDPTNine(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KNXTX_CMNDS) && (XdrvMailbox.data_len > 0) && Settings->flag.knx_enabled) {
