@@ -217,13 +217,18 @@ const char *device_param_cb[] = {
 
 #ifdef KNX_EXTRA_CMD
 #warning *** KnxTx_DPTNine : Add command to send DPT9 values
-#define D_CMND_KNXTXVAL_DPT9 "Tx_DPTNine"
+#define D_CMND_KNXTXFLOAT "Tx_Float"    // 2 bytes float (DPT9)
+#define D_CMND_KNXTXDOUBLE "Tx_Double"  // 4 bytes float (DPT14)
+#define D_CMND_KNXTXBYTE "Tx_Byte"      // 1 byte unsigned (DPT5)
+
 
 const char kKnxCommands[] PROGMEM = D_PRFX_KNX "|"  // Prefix
-  D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL "|" D_CMND_KNX_ENABLED "|" D_CMND_KNX_ENHANCED "|" D_CMND_KNX_PA "|" D_CMND_KNX_GA "|" D_CMND_KNX_CB "|" D_CMND_KNXTXSCENE "|" D_CMND_KNXTXVAL_DPT9 ;
+  D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL "|" D_CMND_KNX_ENABLED "|" D_CMND_KNX_ENHANCED "|" D_CMND_KNX_PA "|" D_CMND_KNX_GA "|" D_CMND_KNX_CB "|" D_CMND_KNXTXSCENE "|"
+  D_CMND_KNXTXFLOAT "|"  D_CMND_KNXTXDOUBLE "|"  D_CMND_KNXTXBYTE;
 
 void (* const KnxCommand[])(void) PROGMEM = {
-  &CmndKnxTxCmnd, &CmndKnxTxVal, &CmndKnxEnabled, &CmndKnxEnhanced, &CmndKnxPa, &CmndKnxGa, &CmndKnxCb, &CmndKnxTxScene, &CmndKnxTxDPTNine};
+  &CmndKnxTxCmnd, &CmndKnxTxVal, &CmndKnxEnabled, &CmndKnxEnhanced, &CmndKnxPa, &CmndKnxGa, &CmndKnxCb, &CmndKnxTxScene,
+  &CmndKnxTxFloat, &CmndKnxTxVal, &CmndKnxTxByte};
 
 #else // not KNX_EXTRA_CMD
 const char kKnxCommands[] PROGMEM = D_PRFX_KNX "|"  // Prefix
@@ -1149,7 +1154,7 @@ void CmndKnxTxVal(void)
 }
 
 #ifdef KNX_EXTRA_CMD
-void CmndKnxTxDPTNine(void)
+void CmndKnxTxFloat(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KNXTX_CMNDS) && (XdrvMailbox.data_len > 0) && Settings->flag.knx_enabled) {
     // XdrvMailbox.index <- KNX SLOT to use
@@ -1164,7 +1169,7 @@ void CmndKnxTxDPTNine(void)
 
       KNX_WRITE_2BYTE_FLOAT(KNX_addr, tempvar);
 
-      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %s " D_SENT_TO " %d/%d/%d (DPT9)"),
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %s " D_SENT_TO " %d/%d/%d (2 bytes float)"),
        device_param_ga[XdrvMailbox.index + KNX_SLOT1 -2], XdrvMailbox.data,
        KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
 
@@ -1173,6 +1178,32 @@ void CmndKnxTxDPTNine(void)
     ResponseCmndIdxChar (XdrvMailbox.data );
   }
 }
+
+void CmndKnxTxByte(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KNXTX_CMNDS) && (XdrvMailbox.data_len > 0) && Settings->flag.knx_enabled) {
+    // XdrvMailbox.index <- KNX SLOT to use
+    // XdrvMailbox.payload <- data to send
+    // Search all the registered GA that has that output (variable: KNX SLOTx) as parameter
+    uint8_t i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1);
+    while ( i != KNX_Empty ) {
+      KNX_addr.value = Settings->knx_GA_addr[i];
+
+      uint8_t tempvar = TextToInt(XdrvMailbox.data);
+      dtostrfd(tempvar,0,XdrvMailbox.data);
+
+      KNX_WRITE_1BYTE_UINT(KNX_addr, tempvar);
+
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %s " D_SENT_TO " %d/%d/%d (1 byte unsigned)"),
+       device_param_ga[XdrvMailbox.index + KNX_SLOT1 -2], XdrvMailbox.data,
+       KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
+
+      i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1, i + 1);
+    }
+    ResponseCmndIdxChar (XdrvMailbox.data );
+  }
+}
+
 #endif 
 
 void CmndKnxTxScene(void)
