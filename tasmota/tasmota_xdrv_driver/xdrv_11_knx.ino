@@ -696,11 +696,11 @@ void KNX_CB_Action(message_t const &msg, void *arg)
         KNX_Send_1bit(msg.received_on, chan->last_state, KNX_CT_ANSWER);
       else if (chan->type == KNX_TEMPERATURE) // Reply Temperature
       {
-        KNX_ANSWER_4BYTE_FLOAT(msg.received_on, last_temp);
+        KNX_ANSWER_2BYTE_FLOAT(msg.received_on, last_temp);
       }
       else if (chan->type == KNX_HUMIDITY) // Reply Humidity
       {
-        KNX_ANSWER_4BYTE_FLOAT(msg.received_on, last_hum);
+        KNX_ANSWER_2BYTE_FLOAT(msg.received_on, last_hum);
       }
 #if defined(USE_ENERGY_SENSOR)      
       else if (chan->type == KNX_ENERGY_VOLTAGE) // Reply KNX_ENERGY_VOLTAGE
@@ -826,6 +826,9 @@ void KnxSensor(uint8_t sensor_type, float value)
       case KNX_ENERGY_TOTAL:
         KNX_WRITE_4BYTE_INT(KNX_addr, round(1000.0 * value));
         break;
+      case KNX_TEMPERATURE:
+      case KNX_HUMIDITY:
+        KNX_WRITE_2BYTE_FLOAT(KNX_addr, value);
       default:
         KNX_WRITE_4BYTE_FLOAT(KNX_addr, value);
     }
