@@ -233,6 +233,8 @@ void (* const KnxCommand[])(void) PROGMEM = {
   &CmndKnxTxCmnd, &CmndKnxTxVal, &CmndKnxEnabled, &CmndKnxEnhanced, &CmndKnxPa, &CmndKnxGa, &CmndKnxCb, &CmndKnxTxScene };
 
 
+#endif //  KNX_DPT9_CMD
+
 #ifndef KNX_ENHANCEMENT_REPEAT
 #define KNX_ENHANCEMENT_REPEAT 3
 #endif
@@ -256,6 +258,15 @@ void KNX_Send_1byte_uint(address_t const &receiver, uint8_t value, knx_command_t
 #define KNX_WRITE_1BYTE_UINT(r,v) KNX_Send_1byte_uint((r),(v),KNX_CT_WRITE)
 #define KNX_ANSWER_1BYTE_UINT(r,v) KNX_Send_1byte_uint((r),(v),KNX_CT_ANSWER)
 
+void KNX_Send_2byte_float(address_t const &receiver, float value, knx_command_type_t ct) 
+{
+  uint8_t repeat = Settings->flag.knx_enable_enhancement ? KNX_ENHANCEMENT_REPEAT : 1;
+  while ( repeat-- )
+    knx.send_2byte_float(receiver, ct, value);
+}
+#define KNX_WRITE_2BYTE_FLOAT(r,v) KNX_Send_2byte_float((r),(v),KNX_CT_WRITE)
+#define KNX_ANSWER_2BYTE_FLOAT(r,v) KNX_Send_2byte_float((r),(v),KNX_CT_ANSWER)
+
 void KNX_Send_4byte_float(address_t const &receiver, float value, knx_command_type_t ct) 
 {
   uint8_t repeat = Settings->flag.knx_enable_enhancement ? KNX_ENHANCEMENT_REPEAT : 1;
@@ -273,11 +284,6 @@ void KNX_Send_4byte_int(address_t const &receiver, int value, knx_command_type_t
 }
 #define KNX_WRITE_4BYTE_INT(r,v) KNX_Send_4byte_int((r),(v),KNX_CT_WRITE)
 #define KNX_ANSWER_4BYTE_INT(r,v) KNX_Send_4byte_int((r),(v),KNX_CT_ANSWER)
-
-
-
-#endif
-
 
 uint8_t KNX_GA_Search( uint8_t param, uint8_t start = 0 )
 {
@@ -1153,11 +1159,7 @@ void CmndKnxTxDPTNine(void)
       float tempvar = CharToFloat(XdrvMailbox.data);
       dtostrfd(tempvar,2,XdrvMailbox.data);
 
-      knx.write_2byte_float(KNX_addr, tempvar);
-      if (Settings->flag.knx_enable_enhancement) {
-        knx.write_2byte_float(KNX_addr, tempvar);
-        knx.write_2byte_float(KNX_addr, tempvar);
-      }
+      KNX_WRITE_2BYTE_FLOAT(KNX_addr, tempvar);
 
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %s " D_SENT_TO " %d/%d/%d (DPT9)"),
        device_param_ga[XdrvMailbox.index + KNX_SLOT1 -2], XdrvMailbox.data,
