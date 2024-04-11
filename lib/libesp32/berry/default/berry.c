@@ -14,6 +14,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "be_mapping.h"
+
 /* using GNU/readline library */
 #if defined(USE_READLINE_LIB)
     #include <readline/readline.h>
@@ -403,6 +405,7 @@ int main(int argc, char *argv[])
 {
     int res;
     bvm *vm = be_vm_new(); /* create a virtual machine instance */
+    be_set_ctype_func_hanlder(vm, be_call_ctype_func);
     res = analysis_args(vm, argc, argv);
     be_vm_delete(vm); /* free all objects and vm */
     return res;

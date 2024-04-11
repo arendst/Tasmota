@@ -1,4 +1,4 @@
-CFLAGS      = -Wall -Wextra -std=c99 -O2 -Wno-zero-length-array -Wno-empty-translation-unit
+CFLAGS      = -Wall -Wextra -std=c99 -O2 -Wno-zero-length-array -Wno-empty-translation-unit -DUSE_BERRY_INT64
 DEBUG_FLAGS = -O0 -g -DBE_DEBUG
 TEST_FLAGS  = $(DEBUG_FLAGS) --coverage -fno-omit-frame-pointer -fsanitize=address -fsanitize=undefined
 LIBS        = -lm
@@ -7,8 +7,8 @@ CC          = clang # install clang!! gcc seems to produce a defect berry binary
 MKDIR       = mkdir
 LFLAGS      =
 
-INCPATH     = src default ../re1.5
-SRCPATH     = src default ../re1.5
+INCPATH     = src default ../re1.5 ../berry_mapping/src ../berry_int64/src generate
+SRCPATH     = src default ../re1.5 ../berry_mapping/src ../berry_int64/src
 GENERATE    = generate
 CONFIG      = default/berry_conf.h
 COC         = tools/coc/coc
