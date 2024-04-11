@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - ESP32 refactored Wifi for ESP32 Core3 release (#21106)
 - ESP32 Core3 platform update from 2024.02.10 to 2024.04.10 (#21114)
+- ESP32 Core3 platform update from 2024.04.10 to 2024.04.11 (#21142)
 
 ### Fixed
 - NeoPool hydrolysis unit for Hidrolife, Bionet and Generic device (#21098)

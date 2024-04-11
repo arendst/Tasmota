@@ -590,14 +590,25 @@ void DisplayText(void)
           case 'P':
             { char *ep = strchr(cp,':');
              if (ep) {
-               *ep = 0;
-               ep++;
-               int16_t scale = 0;
+                *ep = 0;
+                ep++;
+                int16_t scale = 0;
+                int16_t xs = 0;
+                int16_t ys = 0;
                if (isdigit(*ep)) {
                  var = atoiv(ep, &scale);
                  ep += var;
+
+                if (*ep == ':') {
+                  ep++;
+                  var = atoiv(ep, &xs);
+                  ep += var;
+                  ep++;
+                  var = atoiv(ep, &ys);
+                  ep += var;
+                }
                }
-               Draw_RGB_Bitmap(cp,disp_xpos,disp_ypos, scale, false);
+               Draw_RGB_Bitmap(cp, disp_xpos, disp_ypos, scale, false, xs, ys);
                cp = ep;
              }
             }
@@ -1066,19 +1077,29 @@ extern FS *ffsp;
 #ifdef USE_TOUCH_BUTTONS
           case 'b':
           { int16_t num, gxp, gyp, gxs, gys, outline, fill, textcolor, textsize; uint8_t dflg = 1, sbt = 0;
-            if (*cp == 'e' || *cp == 'd') {
-              // enable disable
+            if (*cp == 'e' || *cp == 'd' || *cp == 'D') {
+              // enable disable delete
               uint8_t dis = 0;
               if (*cp == 'd') dis = 1;
+              uint8_t del = 0;
+              if (*cp == 'D') {
+                del = 1;
+              }
               cp++;
               var = atoiv(cp, &num);
               num = num % MAX_TOUCH_BUTTONS;
               cp += var;
               if (buttons[num]) {
-                buttons[num]->vpower.disable = dis;
-                if (!dis) {
-                  if (buttons[num]->vpower.is_virtual) buttons[num]->xdrawButton(buttons[num]->vpower.on_off);
-                  else buttons[num]->xdrawButton(bitRead(TasmotaGlobal.power,num));
+                if (del) {
+                  if (renderer) renderer->fillRect(buttons[num]->spars.xp, buttons[num]->spars.yp, buttons[num]->spars.xs, buttons[num]->spars.ys, bg_color);
+                   delete buttons[num];
+                   buttons[num] = 0;
+                } else {
+                  buttons[num]->vpower.disable = dis;
+                  if (!dis) {
+                    if (buttons[num]->vpower.is_virtual) buttons[num]->xdrawButton(buttons[num]->vpower.on_off);
+                    else buttons[num]->xdrawButton(bitRead(TasmotaGlobal.power, num));
+                  }
                 }
               }
               break;
@@ -1091,10 +1112,10 @@ extern FS *ffsp;
               cp++;
               sbt = 1;
             }
-            var=atoiv(cp,&num);
-            cp+=var;
-            uint8_t bflags=num>>8;
-            num=num%MAX_TOUCH_BUTTONS;
+            var = atoiv(cp,&num);
+            cp += var;
+            uint8_t bflags = num >> 8;
+            num = num % MAX_TOUCH_BUTTONS;
             if (*cp == 's') {
               cp++;
               var=atoiv(cp,&gxp);
@@ -1144,7 +1165,7 @@ extern FS *ffsp;
               delete buttons[num];
             }
             if (renderer) {
-              buttons[num]= new VButton();
+              buttons[num] = new VButton();
               if (buttons[num]) {
                 if (!sbt) {
                   buttons[num]->vpower.slider = 0;
@@ -2291,7 +2312,7 @@ char ppath[16];
   } else {
     strcat(ppath, ".jpg");
   }
-  Draw_RGB_Bitmap(ppath, xp, yp, 0, inverted);
+  Draw_RGB_Bitmap(ppath, xp, yp, 0, inverted, 0, 0);
 }
 #endif  // USE_TOUCH_BUTTONS
 
@@ -2311,7 +2332,7 @@ char get_jpeg_size(unsigned char* data, unsigned int data_size, unsigned short *
 #ifdef USE_UFILESYS
 extern FS *ufsp;
 #define XBUFF_LEN 128
-void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool inverted ) {
+void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool inverted, uint16_t xs, uint16_t ys ) {
   if (!renderer) return;
   File fp;
   char *ending = 0;
@@ -2327,7 +2348,6 @@ void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool i
   for (uint32_t cnt = 0; cnt < strlen(ending); cnt++) {
     estr[cnt] = tolower(ending[cnt]);
   }
-  estr[3] = 0;
 
   if (!strcmp(estr,"rgb")) {
     // special rgb format
@@ -2337,6 +2357,16 @@ void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool i
     fp.read((uint8_t*)&xsize, 2);
     uint16_t ysize;
     fp.read((uint8_t*)&ysize, 2);
+    uint16_t xoffs;
+    uint16_t yoffs;
+    if (xs > 0) {
+      // center in area
+      xoffs = (xs - xsize) / 2;
+      yoffs = (ys - ysize) / 2;
+      xp += xoffs;
+      yp += yoffs;
+    }
+
 #ifndef SLOW_RGB16
     renderer->setAddrWindow(xp, yp, xp + xsize, yp + ysize);
     uint16_t *rgb = (uint16_t *)special_malloc(xsize * 2);
@@ -2364,7 +2394,7 @@ void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool i
     }
 #endif
     fp.close();
-  } else if (!strcmp(estr,"jpg")) {
+  } else if (!strcmp(estr,"jpg") || !strcmp(estr,"jpeg")) {
     // jpeg files on ESP32 with more memory
 #ifdef ESP32
 #ifdef JPEG_PICTS
@@ -2381,8 +2411,17 @@ void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool i
       if (res) {
         uint16_t xsize;
         uint16_t ysize;
+        uint16_t xoffs;
+        uint16_t yoffs;
         if (mem[0] == 0xff && mem[1] == 0xd8) {
           get_jpeg_size(mem, size, &xsize, &ysize);
+          if (xs > 0) {
+            // center in area
+            xoffs = (xs - xsize) / 2;
+            yoffs = (ys - ysize) / 2;
+            xp += xoffs;
+            yp += yoffs;
+          }
           //Serial.printf(" x,y,fs %d - %d - %d\n",xsize, ysize, size );
           if (xsize && ysize) {
             uint8_t *out_buf = (uint8_t *)special_malloc((xsize * ysize * 3) + 4);
@@ -2410,6 +2449,9 @@ void Draw_RGB_Bitmap(char *file, uint16_t xp, uint16_t yp, uint8_t scale, bool i
                 free(out_buf);
               }
             }
+          }
+          if (scale) {
+            if (renderer) renderer->drawRect(xp, yp, xsize, ysize, GetColorFromIndex(scale));
           }
         }
         free(mem);

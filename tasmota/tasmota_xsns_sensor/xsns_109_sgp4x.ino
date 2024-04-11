@@ -271,7 +271,9 @@ void Sgp4xShow(bool json)
       }
       ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
-      if (0 == TasmotaGlobal.tele_period) DomoticzSensor(DZ_AIRQUALITY, srawVoc);
+      if (0 == TasmotaGlobal.tele_period) {
+        DomoticzSensor(DZ_AIRQUALITY, voc_index_sgp4x);
+      }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {

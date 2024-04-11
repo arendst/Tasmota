@@ -477,7 +477,7 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
               if (mac_data_idx < 10) {
                 mac_data[mac_data_idx++] = TAS_LORAWAN_CID_DEVICE_TIME_ANS;
                 // ToDo - need to find a way how to calculate the leap seconds
-                uint32_t gps_time = UtcTime() -315964800 +18 +1;       // Time at RX1
+                uint32_t gps_time = UtcTime() -315964800 -18 +1;       // Time at RX1
                 mac_data[mac_data_idx++] = gps_time;
                 mac_data[mac_data_idx++] = gps_time >> 8;
                 mac_data[mac_data_idx++] = gps_time >> 16;
