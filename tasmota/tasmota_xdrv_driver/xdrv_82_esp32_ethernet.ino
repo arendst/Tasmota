@@ -107,19 +107,11 @@ void EthernetEvent(arduino_event_t *event) {
 
     case ARDUINO_EVENT_ETH_CONNECTED:
 #ifdef USE_IPV6
+#if ESP_IDF_VERSION_MAJOR < 5   // not needed anymore after Core3 esp-idf 5.1
       ETH.enableIPv6();   // enable Link-Local
       // workaround for the race condition in LWIP, see https://github.com/espressif/arduino-esp32/pull/9016#discussion_r1451774885
       {
         uint32_t i = 5;   // try 5 times only
-#if ESP_IDF_VERSION_MAJOR >= 5
-        while (esp_netif_create_ip6_linklocal(ETH.netif()) != ESP_OK) {
-          delay(1);
-          if (i-- == 0) {
-            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ETH ">>>> HELP"));
-            break;
-          }
-        }
-#else
         while (esp_netif_create_ip6_linklocal(get_esp_interface_netif(ESP_IF_ETH)) != ESP_OK) {
           delay(1);
           if (i-- == 0) {
@@ -127,9 +119,8 @@ void EthernetEvent(arduino_event_t *event) {
             break;
           }
         }
-#endif
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ETH "ESP_IF_ETH i=%i"), i);
       }
+#endif
 #endif // USE_IPV6
       
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_ETH D_CONNECTED " at %dMbps%s, Mac %s, Hostname %s"),
@@ -243,11 +234,11 @@ void EthernetInit(void) {
   int eth_mdio = Pin(GPIO_ETH_PHY_MDIO);     // Ethernet SPI IRQ
   int eth_power = Pin(GPIO_ETH_PHY_POWER);   // Ethernet SPI RST
 
-#if ESP_IDF_VERSION_MAJOR >= 5
 #ifdef USE_IPV6
+#if ESP_IDF_VERSION_MAJOR >= 5    // this seemed to cause a crash with Core2 when the call is made early
   ETH.enableIPv6();   // enable Link-Local
-#endif // USE_IPV6
 #endif // ESP_IDF_VERSION_MAJOR >= 5
+#endif // USE_IPV6
 
   bool init_ok = false;
 #if ESP_IDF_VERSION_MAJOR >= 5

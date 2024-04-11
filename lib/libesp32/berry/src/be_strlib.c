@@ -21,6 +21,21 @@
 #define is_digit(c)     ((c) >= '0' && (c) <= '9')
 #define skip_space(s)   while (is_space(*(s))) { ++(s); }
 
+static int str_strncasecmp(const char *s1, const char *s2, size_t n)
+{
+	if (n == 0) return 0;
+
+	while (n-- != 0 && tolower(*s1) == tolower(*s2)) {
+		if (n == 0 || *s1 == '\0' || *s2 == '\0')
+			break;
+		s1++;
+		s2++;
+	}
+
+	return tolower(*(const unsigned char *)s1)
+		- tolower(*(const unsigned char *)s2);
+}
+
 typedef bint (*str_opfunc)(const char*, const char*, bint, bint);
 
 bstring* be_strcat(bvm *vm, bstring *s1, bstring *s2)
@@ -964,7 +979,7 @@ static int str_startswith(bvm *vm)
         const char *p = be_tostring(vm, 2);
         size_t len = (size_t)be_strlen(vm, 2);
         if (case_insensitive) {
-            if (strncasecmp(s, p, len) == 0) {
+            if (str_strncasecmp(s, p, len) == 0) {
                 result = btrue;
             }
         } else {
@@ -991,7 +1006,7 @@ static int str_endswith(bvm *vm)
         const char *p = be_tostring(vm, 2);
         size_t len = (size_t)be_strlen(vm, 2);
         if (case_insensitive) {
-            if (strncasecmp(s + (int)strlen(s) - (int)len, p, len) == 0) {
+            if (str_strncasecmp(s + (int)strlen(s) - (int)len, p, len) == 0) {
                 result = btrue;
             }
         } else {
