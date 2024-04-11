@@ -244,7 +244,7 @@ be_local_closure(Animate_pulse_init,   /* name */
     /* K3   */  be_const_int(0),
     /* K4   */  be_nested_str_weak(color),
     /* K5   */  be_nested_str_weak(back_color),
-    /* K6   */  be_const_int(-16777216),
+    /* K6   */  be_const_int(4278190080),
     /* K7   */  be_nested_str_weak(pulse_size),
     /* K8   */  be_nested_str_weak(slew_size),
     /* K9   */  be_nested_str_weak(pos),
@@ -302,7 +302,7 @@ be_local_closure(Animate_pulse_paint,   /* name */
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
     /* K0   */  be_nested_str_weak(back_color),
-    /* K1   */  be_const_int(-16777216),
+    /* K1   */  be_const_int(4278190080),
     /* K2   */  be_nested_str_weak(fill_pixels),
     /* K3   */  be_nested_str_weak(pos),
     /* K4   */  be_nested_str_weak(slew_size),

@@ -300,7 +300,7 @@ be_local_closure(Animate_core_fast_loop,   /* name */
     /* K14  */  be_const_int(1),
     /* K15  */  be_nested_str_weak(layer),
     /* K16  */  be_nested_str_weak(painters),
-    /* K17  */  be_const_int(-16777216),
+    /* K17  */  be_const_int(4278190080),
     /* K18  */  be_nested_str_weak(paint),
     /* K19  */  be_nested_str_weak(blend_pixels),
     /* K20  */  be_nested_str_weak(obj),
