@@ -169,7 +169,7 @@ int be_find_global_or_module_member(bvm *vm, const char * name) {
 // if object instance, get `_p` member and convert it recursively
 intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *buf_len) {
   // berry_log_C("be_convert_single_elt(idx=%i, argtype='%s', type=%s)", idx, arg_type ? arg_type : "", be_typename(vm, idx));
-  int ret = 0;
+  intptr_t ret = 0;
   char provided_type = 0;
   idx = be_absindex(vm, idx);   // make sure we have an absolute index
   
@@ -237,7 +237,7 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *buf
     // check if the instance is a subclass of `bytes()``
     if (be_isbytes(vm, idx)) {
       size_t len;
-      intptr_t ret = (intptr_t) be_tobytes(vm, idx, &len);
+      ret = (intptr_t) be_tobytes(vm, idx, &len);
       if (buf_len) { *buf_len = (int) len; }
       return ret;
     } else {
@@ -246,7 +246,7 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *buf
         be_pop(vm, 1);    // remove `nil`
         be_getmember(vm, idx, ".p");
       } // else `nil` is on top of stack
-      int32_t ret = be_convert_single_elt(vm, -1, NULL, NULL);   // recurse
+      ret = be_convert_single_elt(vm, -1, NULL, NULL);   // recurse
       be_pop(vm, 1);
 
       if (arg_type_len > 1) {
