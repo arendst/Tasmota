@@ -10,11 +10,13 @@ All notable changes to this project will be documented in this file.
 - Berry `flash.current_ota` (#21097)
 
 ### Breaking Changed
+- Removed dedicated touch drivers in favour of Universal Touch driver (#21146)
 
 ### Changed
 - ESP32 refactored Wifi for ESP32 Core3 release (#21106)
 - ESP32 Core3 platform update from 2024.02.10 to 2024.04.10 (#21114)
 - ESP32 Core3 platform update from 2024.04.10 to 2024.04.11 (#21142)
+- SGP4x Domoticz air quality value from raw to computed (#18880)
 
 ### Fixed
 - NeoPool hydrolysis unit for Hidrolife, Bionet and Generic device (#21098)
