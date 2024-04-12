@@ -2412,7 +2412,6 @@ void calcGammaBulbs(uint16_t cur_col_10[5]) {
   if (ChannelCT() >= 0) {
     // Need to compute white_bri10 and ct_10 from cur_col_10[] for compatibility with VirtualCT
     white_bri10 = cur_col_10[cw0] + cur_col_10[cw0+1];
-    ct_10 = changeUIntScale(cur_col_10[cw0+1], 0, white_bri10, 0, 1023);
     if (white_bri10 > 1023) {
       // In white_free_cw mode, the combined brightness of cw and ww may be larger than 1023.
       // This cannot be represented in pwm_ct_mode, so we set the maximum brightness instead.
