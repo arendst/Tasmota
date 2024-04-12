@@ -1093,7 +1093,7 @@ static void sub_expr(bparser *parser, bexpdesc *e, int prio)
         }
         init_exp(&e2, ETVOID, 0);
         sub_expr(parser, &e2, binary_op_prio(op));  /* parse right side */
-        if ((e2.type == ETVOID) && (op == OptConnect)) {
+        if ((op == OptConnect) && (e2.type == ETVOID) && (e2.v.s == NULL)) {    /* 'e2.v.s == NULL' checks that it's not an undefined variable */
             init_exp(&e2, ETINT, M_IMAX);
         } else {
             check_var(parser, &e2);  /* check if valid */
