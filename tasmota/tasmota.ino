@@ -227,7 +227,9 @@ bool tasconsole_serial = false;
 #if ARDUINO_USB_MODE
 //#warning **** TasConsole ARDUINO_USB_MODE ****
 #if (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,1,3))
+#if !ARDUINO_USB_CDC_ON_BOOT
 HWCDC HWCDCSerial;
+#endif  // ARDUINO_USB_CDC_ON_BOOT
 #endif
 TASCONSOLE TasConsole{HWCDCSerial};         // ESP32C3/C6/S3 embedded USB using JTAG interface
 //#warning **** TasConsole uses HWCDC ****
@@ -539,7 +541,7 @@ void setup(void) {
 
   if (is_connected_to_USB) {
     TasConsole.setRxBufferSize(INPUT_BUFFER_SIZE);
-  //  TasConsole.setTxBufferSize(INPUT_BUFFER_SIZE);
+//    TasConsole.setTxBufferSize(INPUT_BUFFER_SIZE);
     TasConsole.begin(115200);    // Will always be 115200 bps
 #if !ARDUINO_USB_MODE
     USB.begin();                 // This needs a serial console with DTR/DSR support

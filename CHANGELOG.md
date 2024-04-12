@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Core3 platform update from 2024.02.10 to 2024.04.10 (#21114)
 - ESP32 Core3 platform update from 2024.04.10 to 2024.04.11 (#21142)
 - SGP4x Domoticz air quality value from raw to computed (#18880)
+- ESP32 Framework (Arduino Core) from v2.0.14 to v2.0.15
 
 ### Fixed
 - NeoPool hydrolysis unit for Hidrolife, Bionet and Generic device (#21098)
