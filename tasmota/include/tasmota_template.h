@@ -658,10 +658,11 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_TS_RST),                // Touch Reset
   AGPIO(GPIO_TS_IRQ),                // Touch IRQ
 #endif // USE_UNIVERSAL_TOUCH
-#ifdef USE_DISPLAY_ILI9341
-  AGPIO(GPIO_ILI9341_CS),
-  AGPIO(GPIO_ILI9341_DC),
-#endif  // USE_DISPLAY_ILI9341
+// REMOVED
+// #ifdef USE_DISPLAY_ILI9341
+//   AGPIO(GPIO_ILI9341_CS),
+//   AGPIO(GPIO_ILI9341_DC),
+// #endif  // USE_DISPLAY_ILI9341
 
 #ifdef USE_XPT2046
   AGPIO(GPIO_XPT2046_CS),               // XPT2046 SPI Chip Select

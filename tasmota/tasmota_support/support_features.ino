@@ -151,9 +151,10 @@ constexpr uint32_t feature[] = {
 #if defined(USE_I2C) && defined(USE_DISPLAY) && defined(USE_DISPLAY_MATRIX)
   0x00000200 |  // xdsp_03_matrix.ino
 #endif
-#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ILI9341)
-  0x00000400 |  // xdsp_04_ili9341.ino
-#endif
+// REMOVED
+// #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ILI9341)
+//   0x00000400 |  // xdsp_04_ili9341.ino
+// #endif
 #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_EPAPER_29)
   0x00000800 |  // xdsp_05_epaper.ino
 #endif
