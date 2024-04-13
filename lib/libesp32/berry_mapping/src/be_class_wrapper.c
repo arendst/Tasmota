@@ -14,6 +14,9 @@
 #include <string.h>
 #include <stdlib.h>
 
+/* Ubuntu 22.04 LTS seems to have an invalid or missing signature for strtok_r, forcing a correct one */
+extern char *strtok_r(char *str, const char *delim, char **saveptr);
+
 typedef intptr_t (*fn_any_callable)(intptr_t p0, intptr_t p1, intptr_t p2, intptr_t p3,
                                     intptr_t p4, intptr_t p5, intptr_t p6, intptr_t p7);
 
