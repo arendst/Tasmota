@@ -93,6 +93,7 @@ jobs:
           - tasmota32
           - tasmota32c2
           - tasmota32s2
+          - tasmota32s3
           - tasmota32-zbbrdgpro
           - tasmota-zigbee
           - tasmota32-bluetooth
