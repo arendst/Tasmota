@@ -145,9 +145,10 @@ constexpr uint32_t feature[] = {
 #if defined(USE_I2C) && defined(USE_DISPLAY) && defined(USE_DISPLAY_LCD)
   0x00000080 |  // xdsp_01_lcd.ino
 #endif
-#if defined(USE_I2C) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1306)
-  0x00000100 |  // xdsp_02_ssd1306.ino
-#endif
+// REMOVED
+// #if defined(USE_I2C) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1306)
+//   0x00000100 |  // xdsp_02_ssd1306.ino
+// #endif
 #if defined(USE_I2C) && defined(USE_DISPLAY) && defined(USE_DISPLAY_MATRIX)
   0x00000200 |  // xdsp_03_matrix.ino
 #endif
