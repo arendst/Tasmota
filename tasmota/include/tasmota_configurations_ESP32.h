@@ -194,22 +194,6 @@
 #endif  // FIRMWARE_SAFEBOOT
 
 /*********************************************************************************************\
- * FIRMWARE_ARDUINO30
- * Provide an image which compiles with WiP Arduino 3.0.x
-\*********************************************************************************************/
-
-#ifdef FIRMWARE_ARDUINO30
-
-#ifndef CODE_IMAGE_STR
-  #define CODE_IMAGE_STR "arduino30"
-#endif
-
-#define FIRMWARE_TASMOTA32
-
-#endif  // FIRMWARE_ARDUINO30
-
-
-/*********************************************************************************************\
  * [tasmota32-webcam.bin]
  * Provide an image with useful supported sensors enabled
 \*********************************************************************************************/
