@@ -668,9 +668,10 @@ constexpr uint32_t feature[] = {
 #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ST7789)
   0x00080000 |  // xdsp_12_ST7789.ino
 #endif
-#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1331)
-  0x00100000 |  // xdsp_14_SSD1331.ino
-#endif
+// REMOVED
+// #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1331)
+//   0x00100000 |  // xdsp_14_SSD1331.ino
+// #endif
 #ifdef USE_UFILESYS
   0x00200000 |  // xdrv_50_filesystem.ino
 #endif

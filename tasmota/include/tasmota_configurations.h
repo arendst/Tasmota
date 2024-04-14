@@ -368,7 +368,6 @@
   // #define USE_DISPLAY_SSD1351                    // [DisplayModel 9]
   // #define USE_DISPLAY_RA8876                     // [DisplayModel 10]
   // #define USE_DISPLAY_ST7789                     // [DisplayModel 12] Enable ST7789 module
-  // #define USE_DISPLAY_SSD1331                    // [DisplayModel 14] Enable SSD1331 module
 
 #define USE_UNIVERSAL_DISPLAY
 #define USE_UNIVERSAL_TOUCH
