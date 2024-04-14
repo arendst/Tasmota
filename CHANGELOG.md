@@ -22,11 +22,11 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - NeoPool hydrolysis unit for Hidrolife, Bionet and Generic device (#21098)
 - M5Core2 LoRa868 module receive exception
-- Fade out on CCT bulb with `SO92 1`
+- Fade out on CCT bulb with `SO92 1` (#21159)
 
 ### Removed
 - Unused `#define MQTT_DATA_STRING` support
-- ILI9341 driver replaced with uDisplay
+- ILI9341 driver replaced with uDisplay (#21169)
 
 ## [13.4.0.3] 20240402
 ### Added
