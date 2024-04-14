@@ -1119,7 +1119,7 @@ static void walrus_expr(bparser *parser, bexpdesc *e)
         expr(parser, e);
         check_var(parser, e);
         if (check_newvar(parser, &e1)) { /* new variable */
-            new_var(parser, e1.v.s, e);
+            new_var(parser, e1.v.s, &e1);
         }
         if (be_code_setvar(parser->finfo, &e1, e, btrue /* do not release register */ )) {
             parser->lexer.linenumber = line;

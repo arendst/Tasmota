@@ -70,3 +70,12 @@ class confused_walrus
 end
 var ins = confused_walrus()
 assert(ins.f() == ins)
+
+# Check overwriting a builtin (https://github.com/berry-lang/berry/issues/416)
+
+def check_overwrite_builtin()
+    print := 1
+    assert(print == 1)
+end
+
+check_overwrite_builtin()
