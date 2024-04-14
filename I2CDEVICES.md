@@ -13,7 +13,7 @@ Index | Define              | Driver   | Device   | Address(es) | Bus2 | Descrip
    2  | USE_PCF8574         | xdrv_28  | PCF8574  | 0x20 - 0x26 |      | 8-bit I/O expander (address range overridable)
    2  | USE_PCF8574         | xdrv_28  | PCF8574A | 0x39 - 0x3F |      | 8-bit I/O expander (address range overridable)
    3  | USE_DISPLAY_LCD     | xdsp_01  |          | 0x27, 0x3F  |      | LCD display
-   4  | USE_DISPLAY_SSD1306 | xdsp_02  | SSD1306  | 0x3C - 0x3D |      | Oled display
+   4  | - REMOVED           |          |          |             |      | USE_DISPLAY_SSD1306 - REMOVED
    5  | USE_DISPLAY_MATRIX  | xdsp_03  | HT16K33  | 0x70 - 0x77 |      | 8x8 led matrix
    6  | USE_DISPLAY_SH1106  | xdsp_07  | SH1106   | 0x3C - 0x3D |      | Oled display
    7  | USE_ADE7953         | xnrg_07  | ADE7953  | 0x38        |      | Energy monitor
