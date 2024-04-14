@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 - Unused `#define MQTT_DATA_STRING` support
+- ILI9341 driver replaced with uDisplay
 
 ## [13.4.0.3] 20240402
 ### Added
