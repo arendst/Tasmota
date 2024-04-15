@@ -549,7 +549,7 @@ static const char* skip2dig(const char *s)
     return s;
 }
 
-static const char* get_mode(const char *str, char *buf)
+static const char* get_mode(const char *str, char *buf, size_t buf_len)
 {
     const char *p = str;
     while (*p && strchr(FLAGES, *p)) { /* skip flags */
@@ -560,8 +560,13 @@ static const char* get_mode(const char *str, char *buf)
         p = skip2dig(++p); /* skip width (2 digits at most) */
     }
     *(buf++) = '%';
-    strncpy(buf, str, p - str + 1);
-    buf[p - str + 1] = '\0';
+    size_t mode_size = p - str + 1;
+    /* Leave 2 bytes for the leading % and the trailing '\0' */
+    if (mode_size > buf_len - 2) { 
+        mode_size = buf_len - 2;
+    }
+    strncpy(buf, str, mode_size);
+    buf[mode_size] = '\0';
     return p;
 }
 
@@ -632,7 +637,7 @@ int be_str_format(bvm *vm)
             }
             pushstr(vm, format, p - format);
             concat2(vm);
-            p = get_mode(p + 1, mode);
+            p = get_mode(p + 1, mode, sizeof(mode));
             buf[0] = '\0';
             if (index > top && *p != '%') {
                 be_raise(vm, "runtime_error", be_pushfstring(vm,

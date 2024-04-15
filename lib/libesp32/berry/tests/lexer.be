@@ -36,6 +36,10 @@ check(45.1e2, 4510)
 check(45.e2, 4500)
 check(45.e+2, 4500)
 
+# Ensure pathologically long numbers don't crash the lexer (or cause an buffer overflow)
+assert(000000000000000000000000000000000000E0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 == 0.0);
+
+
 test_source('x = 5; 0...x;', 'unexpected symbol near \'.\'')
 test_source('x = 5; 0...x;', 'unexpected symbol near \'.\'')
 test_source('0xg', 'invalid hexadecimal number')

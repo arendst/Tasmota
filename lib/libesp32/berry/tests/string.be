@@ -149,6 +149,9 @@ assert(string.format("%s", false) == 'false')
 
 assert(string.format("%q", "\ntest") == '\'\\ntest\'')
 
+# corrupt format string should not crash the VM
+string.format("%0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f", 3.5)
+
 # format is now synonym to string.format
 assert(format == string.format)
 assert(format("%.1f", 3) == '3.0')
