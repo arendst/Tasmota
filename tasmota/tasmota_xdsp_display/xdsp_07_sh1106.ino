@@ -17,179 +17,182 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_I2C
-#ifdef USE_DISPLAY
-#ifdef USE_DISPLAY_SH1106
+// REMOVED
+// DEPRECATED - USE UNIVERSAL DISPLAY INSTEAD, https://tasmota.github.io/docs/Universal-Display-Driver/#migrating-to-udisplay
 
-#define OLED_RESET 4
+// #ifdef USE_I2C
+// #ifdef USE_DISPLAY
+// #ifdef USE_DISPLAY_SH1106
 
-#define SPRINT(A) char str[32];sprintf(str,"val: %d ",A);Serial.println((char*)str);
+// #define OLED_RESET 4
 
-
-#define XDSP_07                7
-#define XI2C_06                6            // See I2CDEVICES.md
-
-#define OLED_ADDRESS1          0x3C         // Oled 128x32 I2C address
-#define OLED_ADDRESS2          0x3D         // Oled 128x64 I2C address
-
-#define OLED_BUFFER_COLS       40           // Max number of columns in display shadow buffer
-#define OLED_BUFFER_ROWS       16           // Max number of lines in display shadow buffer
-
-#define OLED_FONT_WIDTH        6
-#define OLED_FONT_HEIGTH       8
-
-#include <Wire.h>
-#include <renderer.h>
-#include <Adafruit_SH1106.h>
-
-Adafruit_SH1106 *oled1106;
-
-/*********************************************************************************************/
+// #define SPRINT(A) char str[32];sprintf(str,"val: %d ",A);Serial.println((char*)str);
 
 
-void SH1106InitDriver() {
-  if (!TasmotaGlobal.i2c_enabled) { return; }
+// #define XDSP_07                7
+// #define XI2C_06                6            // See I2CDEVICES.md
 
-  if (!Settings->display_model) {
-    if (I2cSetDevice(OLED_ADDRESS1)) {
-      Settings->display_address[0] = OLED_ADDRESS1;
-      Settings->display_model = XDSP_07;
-    }
-    else if (I2cSetDevice(OLED_ADDRESS2)) {
-      Settings->display_address[0] = OLED_ADDRESS2;
-      Settings->display_model = XDSP_07;
-    }
-  }
+// #define OLED_ADDRESS1          0x3C         // Oled 128x32 I2C address
+// #define OLED_ADDRESS2          0x3D         // Oled 128x64 I2C address
 
-  if (XDSP_07 == Settings->display_model) {
-    I2cSetActiveFound(Settings->display_address[0], "SH1106");
+// #define OLED_BUFFER_COLS       40           // Max number of columns in display shadow buffer
+// #define OLED_BUFFER_ROWS       16           // Max number of lines in display shadow buffer
 
-    if (Settings->display_width != SH1106_LCDWIDTH) {
-      Settings->display_width = SH1106_LCDWIDTH;
-    }
-    if (Settings->display_height != SH1106_LCDHEIGHT) {
-      Settings->display_height = SH1106_LCDHEIGHT;
-    }
-    // init renderer
-    oled1106 = new Adafruit_SH1106(SH1106_LCDWIDTH,SH1106_LCDHEIGHT);
-    renderer = oled1106;
-    renderer->Begin(SH1106_SWITCHCAPVCC, Settings->display_address[0],0);
-    renderer->DisplayInit(DISPLAY_INIT_MODE,Settings->display_size,Settings->display_rotate,Settings->display_font);
-    renderer->setTextColor(1,0);
+// #define OLED_FONT_WIDTH        6
+// #define OLED_FONT_HEIGTH       8
 
-#ifdef SHOW_SPLASH
-    if (!Settings->flag5.display_no_splash) {
-      renderer->setTextFont(0);
-      renderer->setTextSize(2);
-      renderer->setCursor(20,20);
-      renderer->println(F("SH1106"));
-      renderer->Updateframe();
-      renderer->DisplayOnff(1);
-    }
-#endif
+// #include <Wire.h>
+// #include <renderer.h>
+// #include <Adafruit_SH1106.h>
 
-    AddLog(LOG_LEVEL_INFO, PSTR("DSP: SH1106"));
-  }
-}
+// Adafruit_SH1106 *oled1106;
+
+// /*********************************************************************************************/
 
 
-/*********************************************************************************************/
-#ifdef USE_DISPLAY_MODES1TO5
+// void SH1106InitDriver() {
+//   if (!TasmotaGlobal.i2c_enabled) { return; }
 
-void SH1106PrintLog(void)
-{
-  disp_refresh--;
-  if (!disp_refresh) {
-    disp_refresh = Settings->display_refresh;
-    if (!disp_screen_buffer_cols) { DisplayAllocScreenBuffer(); }
+//   if (!Settings->display_model) {
+//     if (I2cSetDevice(OLED_ADDRESS1)) {
+//       Settings->display_address[0] = OLED_ADDRESS1;
+//       Settings->display_model = XDSP_07;
+//     }
+//     else if (I2cSetDevice(OLED_ADDRESS2)) {
+//       Settings->display_address[0] = OLED_ADDRESS2;
+//       Settings->display_model = XDSP_07;
+//     }
+//   }
 
-    char* txt = DisplayLogBuffer('\370');
-    if (txt != NULL) {
-      uint8_t last_row = Settings->display_rows -1;
+//   if (XDSP_07 == Settings->display_model) {
+//     I2cSetActiveFound(Settings->display_address[0], "SH1106");
 
-      renderer->clearDisplay();
-      renderer->setTextSize(Settings->display_size);
-      renderer->setCursor(0,0);
-      for (byte i = 0; i < last_row; i++) {
-        strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
-        renderer->println(disp_screen_buffer[i]);
-      }
-      strlcpy(disp_screen_buffer[last_row], txt, disp_screen_buffer_cols);
-      DisplayFillScreen(last_row);
+//     if (Settings->display_width != SH1106_LCDWIDTH) {
+//       Settings->display_width = SH1106_LCDWIDTH;
+//     }
+//     if (Settings->display_height != SH1106_LCDHEIGHT) {
+//       Settings->display_height = SH1106_LCDHEIGHT;
+//     }
+//     // init renderer
+//     oled1106 = new Adafruit_SH1106(SH1106_LCDWIDTH,SH1106_LCDHEIGHT);
+//     renderer = oled1106;
+//     renderer->Begin(SH1106_SWITCHCAPVCC, Settings->display_address[0],0);
+//     renderer->DisplayInit(DISPLAY_INIT_MODE,Settings->display_size,Settings->display_rotate,Settings->display_font);
+//     renderer->setTextColor(1,0);
 
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "[%s]"), disp_screen_buffer[last_row]);
+// #ifdef SHOW_SPLASH
+//     if (!Settings->flag5.display_no_splash) {
+//       renderer->setTextFont(0);
+//       renderer->setTextSize(2);
+//       renderer->setCursor(20,20);
+//       renderer->println(F("SH1106"));
+//       renderer->Updateframe();
+//       renderer->DisplayOnff(1);
+//     }
+// #endif
 
-      renderer->println(disp_screen_buffer[last_row]);
-      renderer->Updateframe();
-    }
-  }
-}
+//     AddLog(LOG_LEVEL_INFO, PSTR("DSP: SH1106"));
+//   }
+// }
 
-void SH1106Time(void)
-{
-  char line[12];
 
-  renderer->clearDisplay();
-  renderer->setTextSize(Settings->display_size);
-  renderer->setTextFont(Settings->display_font);
-  renderer->setCursor(0, 0);
-  snprintf_P(line, sizeof(line), PSTR(" %02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), RtcTime.hour, RtcTime.minute, RtcTime.second);  // [ 12:34:56 ]
-  renderer->println(line);
-  renderer->println();
-  snprintf_P(line, sizeof(line), PSTR("%02d" D_MONTH_DAY_SEPARATOR "%02d" D_YEAR_MONTH_SEPARATOR "%04d"), RtcTime.day_of_month, RtcTime.month, RtcTime.year);   // [01-02-2018]
-  renderer->println(line);
-  renderer->Updateframe();
-}
+// /*********************************************************************************************/
+// #ifdef USE_DISPLAY_MODES1TO5
 
-void SH1106Refresh(void)  // Every second
-{
-  if (!renderer) return;
-  if (Settings->display_mode) {  // Mode 0 is User text
-    switch (Settings->display_mode) {
-      case 1:  // Time
-        SH1106Time();
-        break;
-      case 2:  // Local
-      case 3:  // Local
-      case 4:  // Mqtt
-      case 5:  // Mqtt
-        SH1106PrintLog();
-        break;
-    }
-  }
-}
+// void SH1106PrintLog(void)
+// {
+//   disp_refresh--;
+//   if (!disp_refresh) {
+//     disp_refresh = Settings->display_refresh;
+//     if (!disp_screen_buffer_cols) { DisplayAllocScreenBuffer(); }
 
-#endif  // USE_DISPLAY_MODES1TO5
+//     char* txt = DisplayLogBuffer('\370');
+//     if (txt != NULL) {
+//       uint8_t last_row = Settings->display_rows -1;
 
-/*********************************************************************************************\
- * Interface
-\*********************************************************************************************/
+//       renderer->clearDisplay();
+//       renderer->setTextSize(Settings->display_size);
+//       renderer->setCursor(0,0);
+//       for (byte i = 0; i < last_row; i++) {
+//         strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
+//         renderer->println(disp_screen_buffer[i]);
+//       }
+//       strlcpy(disp_screen_buffer[last_row], txt, disp_screen_buffer_cols);
+//       DisplayFillScreen(last_row);
 
-bool Xdsp07(uint32_t function)
-{
-  if (!I2cEnabled(XI2C_06)) { return false; }
+//       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "[%s]"), disp_screen_buffer[last_row]);
 
-  bool result = false;
+//       renderer->println(disp_screen_buffer[last_row]);
+//       renderer->Updateframe();
+//     }
+//   }
+// }
 
-  if (FUNC_DISPLAY_INIT_DRIVER == function) {
-    SH1106InitDriver();
-  }
-  else if (XDSP_07 == Settings->display_model) {
+// void SH1106Time(void)
+// {
+//   char line[12];
 
-    switch (function) {
-      case FUNC_DISPLAY_MODEL:
-        result = true;
-        break;
-#ifdef USE_DISPLAY_MODES1TO5
-      case FUNC_DISPLAY_EVERY_SECOND:
-        SH1106Refresh();
-        break;
-#endif  // USE_DISPLAY_MODES1TO5
-    }
-  }
-  return result;
-}
+//   renderer->clearDisplay();
+//   renderer->setTextSize(Settings->display_size);
+//   renderer->setTextFont(Settings->display_font);
+//   renderer->setCursor(0, 0);
+//   snprintf_P(line, sizeof(line), PSTR(" %02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), RtcTime.hour, RtcTime.minute, RtcTime.second);  // [ 12:34:56 ]
+//   renderer->println(line);
+//   renderer->println();
+//   snprintf_P(line, sizeof(line), PSTR("%02d" D_MONTH_DAY_SEPARATOR "%02d" D_YEAR_MONTH_SEPARATOR "%04d"), RtcTime.day_of_month, RtcTime.month, RtcTime.year);   // [01-02-2018]
+//   renderer->println(line);
+//   renderer->Updateframe();
+// }
 
-#endif  // USE_DISPLAY_SH1106
-#endif  // USE_DISPLAY
-#endif  // USE_I2C
+// void SH1106Refresh(void)  // Every second
+// {
+//   if (!renderer) return;
+//   if (Settings->display_mode) {  // Mode 0 is User text
+//     switch (Settings->display_mode) {
+//       case 1:  // Time
+//         SH1106Time();
+//         break;
+//       case 2:  // Local
+//       case 3:  // Local
+//       case 4:  // Mqtt
+//       case 5:  // Mqtt
+//         SH1106PrintLog();
+//         break;
+//     }
+//   }
+// }
+
+// #endif  // USE_DISPLAY_MODES1TO5
+
+// /*********************************************************************************************\
+//  * Interface
+// \*********************************************************************************************/
+
+// bool Xdsp07(uint32_t function)
+// {
+//   if (!I2cEnabled(XI2C_06)) { return false; }
+
+//   bool result = false;
+
+//   if (FUNC_DISPLAY_INIT_DRIVER == function) {
+//     SH1106InitDriver();
+//   }
+//   else if (XDSP_07 == Settings->display_model) {
+
+//     switch (function) {
+//       case FUNC_DISPLAY_MODEL:
+//         result = true;
+//         break;
+// #ifdef USE_DISPLAY_MODES1TO5
+//       case FUNC_DISPLAY_EVERY_SECOND:
+//         SH1106Refresh();
+//         break;
+// #endif  // USE_DISPLAY_MODES1TO5
+//     }
+//   }
+//   return result;
+// }
+
+// #endif  // USE_DISPLAY_SH1106
+// #endif  // USE_DISPLAY
+// #endif  // USE_I2C

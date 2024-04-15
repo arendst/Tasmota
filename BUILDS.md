@@ -249,7 +249,6 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_DISPLAY               | -     | - / - | -     | -     | -     | x     |
 | USE_DISPLAY_LCD           | -     | - / - | -     | -     | -     | x     |
 | USE_DISPLAY_MATRIX        | -     | - / - | -     | -     | -     | x     |
-| USE_DISPLAY_SH1106        | -     | - / - | -     | -     | -     | x     |
 | USE_DISPLAY_EPAPER_29     | -     | - / - | -     | -     | -     | x     |
 | USE_DISPLAY_EPAPER_42     | -     | - / - | -     | -     | -     | x     |
 | USE_DISPLAY_SSD1351       | -     | - / - | -     | -     | -     | x     |
@@ -278,6 +277,6 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_DINGTIAN_RELAY        |       | / -   |       |       |       |       |
 | USE_MATTER_DEVICE         |       | / x   |       |       |       |       | See SetOption151            |
 
-The following specific display drivers are replaced with uDisplay, see [uDisplay/uTouch documentation](https://tasmota.github.io/docs/Universal-Display-Driver/#migrating-to-udisplay): `USE_DISPLAY_ILI9341`, `USE_DISPLAY_SSD1306`
+The following specific display drivers are replaced with uDisplay, see [uDisplay/uTouch documentation](https://tasmota.github.io/docs/Universal-Display-Driver/#migrating-to-udisplay): `USE_DISPLAY_ILI9341`, `USE_DISPLAY_SSD1306`, `USE_DISPLAY_SH1106`
 
 - USE_MQTT_TLS is enabled by default in every ESP32 variants
