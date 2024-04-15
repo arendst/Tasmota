@@ -99,6 +99,7 @@ jobs:
           - tasmota32c2-safeboot
           - tasmota32c3cdc-safeboot
           - tasmota32s2-safeboot
+          - tasmota32s2cdc-safeboot
           - tasmota32s3cdc-safeboot
           - tasmota32c2-safeboot
           - tasmota32c6cdc-safeboot
@@ -192,7 +193,6 @@ jobs:
           - tasmota32c6cdc
           - tasmota32s2
           - tasmota32s2cdc
-          - tasmota32s3
           - tasmota32s3cdc
           - tasmota32solo1
     steps:
