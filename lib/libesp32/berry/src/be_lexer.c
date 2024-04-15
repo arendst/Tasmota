@@ -354,7 +354,9 @@ static btokentype scan_decimal(blexer *lexer)
     if (has_decimal_dots || is_realexp) {
         type = TokenReal;
     }
-    lexer->buf.s[lexer->buf.len] = '\0';
+    /* use save_char to add the null terminator, */
+    /* since it handles expanding the buffer if needed. */
+    save_char(lexer, '\0');
     if (type == TokenReal) {
         setreal(lexer, be_str2real(lexbuf(lexer), NULL));
     } else {
@@ -431,7 +433,7 @@ static btokentype scan_string(blexer *lexer);   /* forward declaration */
 /* scan f-string and transpile it to `format(...)` syntax then feeding the normal lexer and parser */
 static void scan_f_string(blexer *lexer)
 {
-    char ch;
+    char ch = '\0';
     clear_buf(lexer);
     scan_string(lexer);         /* first scan the entire string in lexer->buf */
 
