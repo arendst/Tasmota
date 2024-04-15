@@ -20,13 +20,10 @@ get_spl_meas_cfg	KEYWORD2
 get_spl_cfg_reg	KEYWORD2
 get_spl_int_sts	KEYWORD2
 get_spl_fifo_sts	KEYWORD2
-get_altitude	KEYWORD2
-get_altitude_f	KEYWORD2
 
 get_traw	KEYWORD2
 get_traw_sc	KEYWORD2
 get_temp_c	KEYWORD2
-get_temp_f	KEYWORD2
 get_temperature_scale_factor	KEYWORD2
 
 

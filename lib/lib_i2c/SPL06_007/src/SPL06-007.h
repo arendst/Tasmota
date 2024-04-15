@@ -10,13 +10,10 @@ uint8_t get_spl_cfg_reg();	// Get CFG_REG Register	0x09
 uint8_t get_spl_int_sts();	// Get INT_STS Register	0x0A
 uint8_t get_spl_fifo_sts();	// Get FIFO_STS Register	0x0B
 
-double get_altitude(double pressure, double seaLevelhPa);	// get altitude in meters
-double get_altitude_f(double pressure, double seaLevelhPa);	// get altitude in feet
 
 int32_t get_traw();
 double get_traw_sc();
 double get_temp_c();
-double get_temp_f();
 double get_temperature_scale_factor();
 
 int32_t get_praw();
