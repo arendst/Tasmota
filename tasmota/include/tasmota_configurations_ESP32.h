@@ -58,7 +58,8 @@
 #undef USE_HOME_ASSISTANT                        // Disable Home Assistant
 #undef USE_TASMOTA_DISCOVERY                     // Disable Tasmota Discovery support (+2k code)
 #undef USE_TELEGRAM                              // Disable support for Telegram protocol (+49k code, +7.0k mem and +4.8k additional during connection handshake)
-//#undef USE_MQTT_TLS                              // Disable TLS support won't work as the MQTTHost is not set
+#undef USE_MQTT_TLS                              // Disable TLS support won't work as the MQTTHost is not set
+//#define USE_TLS
 #undef USE_KNX                                   // Disable KNX IP Protocol Support
 //#undef USE_WEBSERVER                             // Disable Webserver
 #undef USE_GPIO_VIEWER                           // Enable GPIO Viewer to see realtime GPIO states (+5k6 code)
