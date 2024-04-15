@@ -186,28 +186,14 @@
 #define USE_WEBSERVER
 #define USE_WEBCLIENT
 #define USE_WEBCLIENT_HTTPS
-#if CONFIG_IDF_TARGET_ESP32
-  #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge console Tee (+2k code)
-  #define USE_ETHERNET
-#endif  // CONFIG_IDF_TARGET_ESP32
+
+// FIX ME Safeboot for ESP32 and ESP32solo1 to big with Core 3.0.0
+//#if CONFIG_IDF_TARGET_ESP32
+//  #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge console Tee (+2k code)
+//  #define USE_ETHERNET
+//#endif  // CONFIG_IDF_TARGET_ESP32
 
 #endif  // FIRMWARE_SAFEBOOT
-
-/*********************************************************************************************\
- * FIRMWARE_ARDUINO30
- * Provide an image which compiles with WiP Arduino 3.0.x
-\*********************************************************************************************/
-
-#ifdef FIRMWARE_ARDUINO30
-
-#ifndef CODE_IMAGE_STR
-  #define CODE_IMAGE_STR "arduino30"
-#endif
-
-#define FIRMWARE_TASMOTA32
-
-#endif  // FIRMWARE_ARDUINO30
-
 
 /*********************************************************************************************\
  * [tasmota32-webcam.bin]

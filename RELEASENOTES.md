@@ -36,9 +36,9 @@ While fallback or downgrading is common practice it was never supported due to S
 
 This release will be supported from ESP8266/Arduino library Core version **2.7.6** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
-This release will be supported from ESP32/Arduino library Core version **2.0.15**.
+This release will be supported from ESP32/Arduino library Core version **3.0.0**.
 
-Support of ESP8266 Core versions before 2.7.6 and ESP32 Core versions before 2.0.15 have been removed.
+Support of ESP8266 Core versions before 2.7.6 and ESP32 Core versions before 3.0.0 have been removed.
 
 ## Support of TLS
 
@@ -79,12 +79,12 @@ Historical binaries can be downloaded from
 
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
-### ESP32, ESP32-C3, ESP32-S2 and ESP32-S3 based
-The following binary downloads have been compiled with ESP32/Arduino library core version **2.0.15**.
+### ESP32, ESP32-C2, ESP32-C3, ESP32-C6, ESP32-S2 and ESP32-S3 based
+The following binary downloads have been compiled with ESP32/Arduino library core version **3.0.0**.
 
 - **tasmota32.bin** = The Tasmota version with most drivers including additional sensors and KNX for 4M+ flash.  **RECOMMENDED RELEASE BINARY**
-- **tasmota32xy.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C3/S2/S3 and 4M+ flash.
-- **tasmota32xycdc.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C3/S2/S3 with serial over embedded USB CDC only and 4M+ flash.
+- **tasmota32xy.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C2/C3/C6/S2/S3 and 4M+ flash.
+- **tasmota32xycdc.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C2/C3/C6/S2/S3 with serial over embedded USB CDC only and 4M+ flash.
 - **tasmota32solo1.bin** = The Tasmota version with most drivers including additional sensors and KNX for single core ESP32 and 4M+ flash.
 - **tasmota32-AD.bin** to **tasmota32-VN.bin** = The Tasmota version in different languages for 4M+ flash.
 - **tasmota32-bluetooth.bin** = The Bluetooth version adds BLE support for 4M+ flash.
@@ -94,12 +94,6 @@ The following binary downloads have been compiled with ESP32/Arduino library cor
 - **tasmota32-nspanel.bin** = The Sonoff NSPanel Smart Scene Wall Switch version with HASPmota display support.
 - **tasmota32-webcam.bin** = The Webcam version adds webcam support for 4M+ flash.
 - **tasmota32-zbbridgepro.bin** - The Sonoff Zigbee Bridge Pro version with CC2652P firmware load support.
-
-### ESP32-C2 and ESP32-C6 based
-The following binary downloads have been compiled with ESP32/Arduino library core version **3.0.0-alpha3**.
-
-- **tasmota32c2-arduino30.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C2 and 4M+ flash.
-- **tasmota32c6cdc-arduino30.bin** = The Tasmota version with most drivers including additional sensors and KNX for ESP32-C6 with serial over embedded USB CDC or hardware USB and 4M+ flash.
 
 Latest released binaries can be downloaded from
 - https://github.com/arendst/Tasmota-firmware/tree/firmware/release-firmware
@@ -116,9 +110,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v13.4.0.4
+## Changelog v13.4.1.1
 ### Added
-- Command ``Wifi 6`` to enable 11ax on ESP32 Core3
+- Command ``Wifi 6`` to enable 11ax on ESP32
 - Command ``PowerLock`` to disable power control of selected outputs [#21081](https://github.com/arendst/Tasmota/issues/21081)
 - Support for calculated heat index if temperature and humidity is available with ``#define USE_HEAT_INDEX`` [#4771](https://github.com/arendst/Tasmota/issues/4771)
 - Support for LoRa and single channel EU863-870 LoRaWanBridge [#17790](https://github.com/arendst/Tasmota/issues/17790)
@@ -151,8 +145,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - LVGL remove `textarea` and `spinbox` from binaries [#20916](https://github.com/arendst/Tasmota/issues/20916)
 
 ### Changed
-- ESP32 Framework (Arduino Core) from v2.0.14 to v2.0.15
-- ESP32 Core3 platform update from 2024.01.12 to 2024.04.11 [#21142](https://github.com/arendst/Tasmota/issues/21142)
+- ESP32 Framework (Arduino Core) from v2.0.14 to v3.0.0
+- ESP32 platform update from 2024.01.12 to 2024.04.11 [#21142](https://github.com/arendst/Tasmota/issues/21142)
 - ESP32 LVGL library from v9.0.0 to v9.1.0 [#21008](https://github.com/arendst/Tasmota/issues/21008)
 - Refactor Platformio script `post_esp32.py` [#20966](https://github.com/arendst/Tasmota/issues/20966)
 - SGP4x Domoticz air quality value from raw to computed [#18880](https://github.com/arendst/Tasmota/issues/18880)
@@ -197,4 +191,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Removed
 - Unused `#define MQTT_DATA_STRING` support
 - ILI9341 driver replaced with uDisplay [#21169](https://github.com/arendst/Tasmota/issues/21169)
+- SSD1306 driver replaced with uDisplay [#21176](https://github.com/arendst/Tasmota/issues/21176)
+- SSD1331 driver replaced with uDisplay [#21177](https://github.com/arendst/Tasmota/issues/21177)
+- SSH1106 driver replaced with uDisplay [#21183](https://github.com/arendst/Tasmota/issues/21183)
+- Support for ESP32 Arduino Core 2 [#21180](https://github.com/arendst/Tasmota/issues/21180)
 - Berry `print "a"` syntax no longer supported [#21048](https://github.com/arendst/Tasmota/issues/21048)

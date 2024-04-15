@@ -23,14 +23,11 @@ jobs:
         variant:
           - tasmota32solo1-safeboot
           - tasmota32-safeboot
-          - tasmota32c3-safeboot
+          - tasmota32c2-safeboot
           - tasmota32c3cdc-safeboot
           - tasmota32s2-safeboot
-          - tasmota32s2cdc-safeboot
-          - tasmota32s3-safeboot
           - tasmota32s3cdc-safeboot
           - tasmota32c2-safeboot
-          - tasmota32c6-safeboot
           - tasmota32c6cdc-safeboot
     steps:
       - uses: actions/checkout@v4
@@ -44,7 +41,6 @@ jobs:
         run: |
           pip install wheel
           pip install -U platformio
-          cp ./platformio_tasmota_core3_env_sample.ini ./platformio_tasmota_core3_env.ini
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Add "release" to footer
         run: |
@@ -113,8 +109,9 @@ jobs:
           - tasmota32-display
           - tasmota32-ir
           - tasmota32-lvgl
-          - tasmota32c3
+          - tasmota32c2
           - tasmota32c3cdc
+          - tasmota32c6cdc
           - tasmota32s2
           - tasmota32s2cdc
           - tasmota32s3
