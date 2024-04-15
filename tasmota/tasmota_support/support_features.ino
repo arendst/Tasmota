@@ -660,15 +660,15 @@ constexpr uint32_t feature[] = {
 // #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ILI9488)
 //   0x00010000 |  // xdsp_08_ILI9488.ino
 // #endif
-#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1351)
-  0x00020000 |  // xdsp_09_SSD1351.ino
-#endif
+// #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1351)
+//   0x00020000 |  // xdsp_09_SSD1351.ino
+// #endif
 #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_RA8876)
   0x00040000 |  // xdsp_10_RA8876.ino
 #endif
-#if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ST7789)
-  0x00080000 |  // xdsp_12_ST7789.ino
-#endif
+// #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_ST7789)
+//   0x00080000 |  // xdsp_12_ST7789.ino
+// #endif
 // REMOVED
 // #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SSD1331)
 //   0x00100000 |  // xdsp_14_SSD1331.ino

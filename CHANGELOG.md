@@ -43,6 +43,8 @@ All notable changes to this project will be documented in this file.
 - SSD1306 driver replaced with uDisplay (#21176)
 - SSD1331 driver replaced with uDisplay (#21177)
 - SSH1106 driver replaced with uDisplay (#21183)
+- SSD1351 driver replaced with uDisplay
+- ST7789 driver replaced with uDisplay
 
 ## [13.4.0.3] 20240402
 ### Added
