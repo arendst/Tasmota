@@ -918,7 +918,10 @@ bool RulesProcessEvent(const char *json_event)
 }
 
 bool RulesProcess(void) {
-  return RulesProcessEvent(XdrvMailbox.data);
+  if ((Settings->rule_enabled || BERRY_RULES) && !Rules.busy) {  // Any rule enabled
+    return RulesProcessEvent(XdrvMailbox.data);
+  }
+  return true;
 }
 
 void RulesInit(void)
