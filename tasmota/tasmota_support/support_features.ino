@@ -159,9 +159,10 @@ constexpr uint32_t feature[] = {
 #if defined(USE_SPI) && defined(USE_DISPLAY) && defined(USE_DISPLAY_EPAPER_29)
   0x00000800 |  // xdsp_05_epaper.ino
 #endif
-#if defined(USE_I2C) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SH1106)
-  0x00001000 |  // xdsp_07_sh1106.ino
-#endif
+// REMOVED
+// #if defined(USE_I2C) && defined(USE_DISPLAY) && defined(USE_DISPLAY_SH1106)
+//   0x00001000 |  // xdsp_07_sh1106.ino
+// #endif
 #ifdef USE_MP3_PLAYER
   0x00002000 |  // xdrv_14_mp3.ino
 #endif

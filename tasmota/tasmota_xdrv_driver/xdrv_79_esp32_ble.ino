@@ -1286,7 +1286,7 @@ class BLESensorCallback : public NimBLEClientCallbacks {
     if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: onConnect %s"), ((std::string)pClient->getPeerAddress()).c_str());
 #endif
   }
-  void onDisconnect(NimBLEClient* pClient) {
+  void onDisconnect(NimBLEClient* pClient, int reason) {
 #ifdef BLE_ESP32_DEBUG
     if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: onDisconnect %s"), ((std::string)pClient->getPeerAddress()).c_str());
 #endif
@@ -1328,7 +1328,7 @@ class BLESensorCallback : public NimBLEClientCallbacks {
 static BLESensorCallback clientCB;
 
 
-class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
+class BLEAdvCallbacks: public NimBLEScanCallbacks {
   void onResult(NimBLEAdvertisedDevice* advertisedDevice) {
     TasAutoMutex localmutex(&BLEOperationsRecursiveMutex, "BLEAddCB");
     uint64_t now = esp_timer_get_time();
@@ -1660,7 +1660,7 @@ static void BLETaskStopStartNimBLE(NimBLEClient **ppClient, bool start = true){
 #endif
 
     if (ble32Scan){
-      ble32Scan->setAdvertisedDeviceCallbacks(nullptr,true);
+      ble32Scan->setScanCallbacks(nullptr,true);
       ble32Scan->stop();
       ble32Scan = nullptr;
     }
@@ -1729,7 +1729,7 @@ int BLETaskStartScan(int time){
     time = BLETriggerScan;
     BLETriggerScan = 0;
   }
-  ble32Scan->start(time, BLEscanEndedCB, (BLEScanActiveMode == 2)); // 20s scans, restarted when then finish
+  ble32Scan->start(time, true); // 20s scans, restarted when then finish
   //vTaskDelay(500/ portTICK_PERIOD_MS);
   return 0;
 }
@@ -2163,7 +2163,7 @@ static void BLEOperationTask(void *pvParameters){
         //ble32Scan->setWindow(50);
         ble32Scan->setInterval(0x40);
         ble32Scan->setWindow(0x20);
-        ble32Scan->setAdvertisedDeviceCallbacks(&BLEScanCallbacks,true);
+        ble32Scan->setScanCallbacks(&BLEScanCallbacks,true);
       }
 
       BLE_ESP32::BLETaskStartScan(20);

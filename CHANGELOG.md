@@ -27,6 +27,9 @@ All notable changes to this project will be documented in this file.
 ### Removed
 - Unused `#define MQTT_DATA_STRING` support
 - ILI9341 driver replaced with uDisplay (#21169)
+- SSD1306 driver replaced with uDisplay (#21176)
+- SSD1331 driver replaced with uDisplay (#21177)
+- SSH1106 driver replaced with uDisplay
 
 ## [13.4.0.3] 20240402
 ### Added
