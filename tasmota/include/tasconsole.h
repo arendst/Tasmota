@@ -21,7 +21,7 @@ class TASCONSOLE {
     virtual size_t printf(char *) = 0;
     virtual size_t read() = 0;
     virtual size_t setRxBufferSize(size_t) = 0;
-    virtual size_t setTxBufferSize(size_t) = 0;
+//    virtual size_t setTxBufferSize(size_t) = 0;
   };
 
 public:
@@ -66,9 +66,9 @@ public:
     return object->setRxBufferSize(rx_queue_len); 
   }
 
-  size_t setTxBufferSize(size_t rx_queue_len) {
-    return object->setTxBufferSize(rx_queue_len); 
-  }
+//  size_t setTxBufferSize(size_t rx_queue_len) {
+//    return object->setTxBufferSize(rx_queue_len); 
+//  }
 
   template< typename T >
   struct Model : Concept {
@@ -108,9 +108,9 @@ public:
 		  return object.setRxBufferSize(size);
     }
 
-    size_t setTxBufferSize(size_t size) override {
-		  return object.setTxBufferSize(size);
-    }
+//    size_t setTxBufferSize(size_t size) override {
+//		  return object.setTxBufferSize(size);
+//    }
 
   private:
     T object;
