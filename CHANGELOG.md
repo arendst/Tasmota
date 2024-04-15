@@ -3,7 +3,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.4.0.4]
+## [13.4.1.1]
+### Added
+
+### Breaking Changed
+
+### Changed
+- ESP32 Framework (Arduino Core) from v2.0.15 to v3.0.0 (#21180)
+
+### Fixed
+
+### Removed
+- Support for ESP32 Arduino Core 2 (#21180)
+
+## [13.4.0.4] 20240415
 ### Added
 - Command ``PowerLock`` to disable power control of selected outputs (#21081)
 - Command ``Wifi 6`` to enable 11ax on ESP32 Core3
@@ -29,7 +42,7 @@ All notable changes to this project will be documented in this file.
 - ILI9341 driver replaced with uDisplay (#21169)
 - SSD1306 driver replaced with uDisplay (#21176)
 - SSD1331 driver replaced with uDisplay (#21177)
-- SSH1106 driver replaced with uDisplay
+- SSH1106 driver replaced with uDisplay (#21183)
 
 ## [13.4.0.3] 20240402
 ### Added
