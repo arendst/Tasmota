@@ -258,6 +258,7 @@
 #define USE_LOX_O2                               // Add support for LuminOx LOX O2 Sensor (+0k8 code)
 #undef DEBUG_THEO                                // Disable debug code
 #undef USE_DEBUG_DRIVER                          // Disable debug code
+//#define USE_SPL06_007                            // Adds support for SPL06_007 (+10k2 code)
 #endif  // FIRMWARE_SENSORS
 
 /*********************************************************************************************\
