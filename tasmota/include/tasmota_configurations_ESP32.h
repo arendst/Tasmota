@@ -58,7 +58,7 @@
 #undef USE_HOME_ASSISTANT                        // Disable Home Assistant
 #undef USE_TASMOTA_DISCOVERY                     // Disable Tasmota Discovery support (+2k code)
 #undef USE_TELEGRAM                              // Disable support for Telegram protocol (+49k code, +7.0k mem and +4.8k additional during connection handshake)
-//#undef USE_MQTT_TLS                              // Disable TLS support won't work as the MQTTHost is not set
+#undef USE_MQTT_TLS                              // Disable TLS support won't work as the MQTTHost is not set
 #undef USE_KNX                                   // Disable KNX IP Protocol Support
 //#undef USE_WEBSERVER                             // Disable Webserver
 #undef USE_GPIO_VIEWER                           // Enable GPIO Viewer to see realtime GPIO states (+5k6 code)
@@ -187,11 +187,12 @@
 #define USE_WEBCLIENT
 #define USE_WEBCLIENT_HTTPS
 
-// FIX ME Safeboot for ESP32 and ESP32solo1 to big with Core 3.0.0
-//#if CONFIG_IDF_TARGET_ESP32
-//  #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge console Tee (+2k code)
-//  #define USE_ETHERNET
-//#endif  // CONFIG_IDF_TARGET_ESP32
+#if CONFIG_IDF_TARGET_ESP32
+#if CONFIG_FREERTOS_UNICORE
+  #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge console Tee (+2k code)
+  #define USE_ETHERNET
+#endif  // CONFIG_FREERTOS_UNICORE
+#endif  // CONFIG_IDF_TARGET_ESP32
 
 #endif  // FIRMWARE_SAFEBOOT
 
