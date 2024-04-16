@@ -1425,13 +1425,6 @@ class lvh_dropdown : lvh_obj
     return self._lv_obj.get_selected()
   end
 
-  def set_options(t)
-    self._lv_obj.set_options(t, lv.ROLLER_MODE_NORMAL)
-  end
-  def get_options()
-    return self._lv_obj.get_options()
-  end
-
   def set_text(t)
     # set_text sets a static text displayed whatever the value
     # use `nil` to set back the text of the selected value

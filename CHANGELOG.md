@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Framework (Arduino Core) from v2.0.15 to v3.0.0 (#21180)
 
 ### Fixed
+- HASPmota dropdown class "options" attribute
 
 ### Removed
 - Support for ESP32 Arduino Core 2 (#21180)
