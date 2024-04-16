@@ -6879,7 +6879,7 @@ be_local_closure(lvh_dropdown_set_show_selected,   /* name */
 ********************************************************************/
 be_local_closure(lvh_dropdown_set_val,   /* name */
   be_nested_proto(
-    5,                          /* nstack */
+    6,                          /* nstack */
     2,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
