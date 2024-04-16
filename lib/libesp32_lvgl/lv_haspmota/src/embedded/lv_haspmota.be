@@ -1419,7 +1419,7 @@ class lvh_dropdown : lvh_obj
 
   def set_val(t)
     self._val = t
-    self._lv_obj.set_selected(t, 0)    # add second parameter - no animation
+    self._lv_obj.set_selected(t)
   end
   def get_val()
     return self._lv_obj.get_selected()
