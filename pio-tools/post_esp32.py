@@ -129,7 +129,7 @@ def patch_partitions_bin(size_string):
 def esp32_create_chip_string(chip):
     tasmota_platform_org = env.subst("$BUILD_DIR").split(os.path.sep)[-1]
     tasmota_platform = tasmota_platform_org.split('-')[0]
-    if ("CORE32SOLO1" in extra_flags or "FRAMEWORK_ARDUINO_SOLO1" in build_flags) and "tasmota32solo1" not in tasmota_platform_org:
+    if ("CORE32SOLO1" in extra_flags or "FRAMEWORK_ARDUINO_SOLO1" in build_flags) and "tasmota32-safeboot" not in tasmota_platform_org and "tasmota32solo1" not in tasmota_platform_org:
         print(Fore.YELLOW + "Unexpected naming convention in this build environment:" + Fore.RED, tasmota_platform_org)
         print(Fore.YELLOW + "Expected build environment name like " + Fore.GREEN + "'tasmota32solo1-whatever-you-want'")
         print(Fore.YELLOW + "Please correct your actual build environment, to avoid undefined behavior in build process!!")
