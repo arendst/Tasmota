@@ -1562,7 +1562,7 @@ void CmndPublish(void) {
       } else {
         ResponseClear();
       }
-      MqttPublish(stemp1, (XdrvMailbox.index & 0b10), (XdrvMailbox.index & 0b01));
+      MqttPublish(stemp1, XdrvMailbox.index == 2, XdrvMailbox.index == 3);
       ResponseClear();
     }
   }
