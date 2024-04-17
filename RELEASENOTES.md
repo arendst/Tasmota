@@ -156,6 +156,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - KNX format of energy to match specifications [#21074](https://github.com/arendst/Tasmota/issues/21074)
 - ESP32 refactored Wifi for ESP32 Core3 release [#21106](https://github.com/arendst/Tasmota/issues/21106)
 - ESP32 WiFi phy modes 11n and 11ax represented as HT20, HT40 and HE20 [#19350](https://github.com/arendst/Tasmota/issues/19350)
+- ESP32 Ethernet Phy Type number for ETH_PHY_DM9051 from 4 to 10 (#21204)[#21204](https://github.com/arendst/Tasmota/issues/21204)
 - berry.exe (pre-compiled for Windows) updated to latest Berry patches [#21024](https://github.com/arendst/Tasmota/issues/21024)
 - Berry class `int64` made immutable [#20727](https://github.com/arendst/Tasmota/issues/20727)
 - Matter reduce memory usage when reading with wildcards [#20809](https://github.com/arendst/Tasmota/issues/20809)
