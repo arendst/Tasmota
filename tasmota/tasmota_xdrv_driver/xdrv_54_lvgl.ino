@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
+#ifdef ESP32
 #if defined(USE_LVGL) && defined(USE_UNIVERSAL_DISPLAY)
 
 #include <renderer.h>
@@ -542,13 +542,11 @@ File * lvgl_get_screenshot_file(void) {
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-bool Xdrv54(uint32_t function)
-{
+
+bool Xdrv54(uint32_t function) {
   bool result = false;
 
   switch (function) {
-    case FUNC_INIT:
-      break;
     case FUNC_LOOP:
       if (lvgl_glue) {
         if (TasmotaGlobal.sleep > USE_LVGL_MAX_SLEEP) {
@@ -557,29 +555,6 @@ bool Xdrv54(uint32_t function)
         lv_task_handler();
       }
       break;
-    case FUNC_EVERY_50_MSECOND:
-      break;
-    case FUNC_EVERY_100_MSECOND:
-      break;
-    case FUNC_EVERY_SECOND:
-      break;
-    case FUNC_COMMAND:
-      break;
-    case FUNC_RULES_PROCESS:
-      break;
-    case FUNC_SAVE_BEFORE_RESTART:
-      break;
-    case FUNC_MQTT_DATA:
-      break;
-    case FUNC_WEB_SENSOR:
-      break;
-
-    case FUNC_JSON_APPEND:
-      break;
-
-    case FUNC_BUTTON_PRESSED:
-      break;
-
     case FUNC_ACTIVE:
       result = true;
       break;
@@ -589,3 +564,4 @@ bool Xdrv54(uint32_t function)
 }
 
 #endif  // defined(USE_LVGL) && defined(USE_UNIVERSAL_DISPLAY)
+#endif  // ESP32

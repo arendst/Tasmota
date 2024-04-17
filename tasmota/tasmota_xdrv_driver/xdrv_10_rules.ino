@@ -226,7 +226,7 @@ char rules_vars[MAX_RULE_VARS][33] = {{ 0 }};
 // Statically allocate one String per rule
 String k_rules[MAX_RULE_SETS] = { String(), String(), String() };   // Strings are created empty
 // Unishox compressor;   // singleton
-#endif // USE_UNISHOX_COMPRESSION
+#endif  // USE_UNISHOX_COMPRESSION
 
 // Returns whether the rule is uncompressed, which means the first byte is not NULL
 inline bool IsRuleUncompressed(uint32_t idx) {
@@ -234,7 +234,7 @@ inline bool IsRuleUncompressed(uint32_t idx) {
   return Settings->rules[idx][0] ? true : false;      // first byte not NULL, the rule is not empty and not compressed
 #else
   return true;
-#endif
+#endif  // USE_UNISHOX_COMPRESSION
 }
 
 // Returns whether the rule is empty, which requires two consecutive NULL
@@ -243,7 +243,7 @@ inline bool IsRuleEmpty(uint32_t idx) {
   return (Settings->rules[idx][0] == 0) && (Settings->rules[idx][1] == 0) ? true : false;
 #else
   return (Settings->rules[idx][0] == 0) ? true : false;
-#endif
+#endif  // USE_UNISHOX_COMPRESSION
 }
 
 // Returns the approximate (+3-0) length of the rule, not counting the trailing NULL
@@ -264,9 +264,9 @@ size_t GetRuleLenStorage(uint32_t idx) {
   } else {
     return 2 + strlen(&Settings->rules[idx][1]); // skip first byte and get len of the compressed rule
   }
-#else
+#else   // No USE_UNISHOX_COMPRESSION
   return 1 + strlen(Settings->rules[idx]);
-#endif
+#endif  // USE_UNISHOX_COMPRESSION
 }
 
 #ifdef USE_UNISHOX_COMPRESSION
@@ -277,7 +277,7 @@ void GetRule_decompress(String &rule, const char *rule_head) {
 
   rule = Decompress(rule_head, buf_len);
 }
-#endif // USE_UNISHOX_COMPRESSION
+#endif  // USE_UNISHOX_COMPRESSION
 
 //
 // Read rule in memory, uncompress if needed
@@ -288,7 +288,6 @@ String GetRule(uint32_t idx) {
     return String(Settings->rules[idx]);
   } else {
 #ifdef USE_UNISHOX_COMPRESSION    // we still do #ifdef to make sure we don't link unnecessary code
-
     String rule("");
     if (Settings->rules[idx][1] == 0) { return rule; }     // the rule is empty
 
@@ -303,7 +302,7 @@ String GetRule(uint32_t idx) {
       rule = k_rules[idx];
     }
     return rule;
-#endif
+#endif  // USE_UNISHOX_COMPRESSION
   }
   return "";  // Fix GCC10 warning
 }
@@ -325,7 +324,7 @@ int32_t SetRule_compress(uint32_t idx, const char *in, size_t in_len, char *out,
   }
   return len_compressed;
 }
-#endif // USE_UNISHOX_COMPRESSION
+#endif  // USE_UNISHOX_COMPRESSION
 
 // Returns:
 //   >= 0 : the actual stored size
@@ -366,8 +365,7 @@ int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
       len_compressed = compressor.unishox_compress(Settings->rules[idx], len_uncompressed, nullptr /* dry-run */, MAX_RULE_SIZE + 8);
       AddLog(LOG_LEVEL_INFO, PSTR("RUL: Stored uncompressed, would compress from %d to %d (-%d%%)"), len_uncompressed, len_compressed, 100 - changeUIntScale(len_compressed, 0, len_uncompressed, 0, 100));
     }
-
-#endif // USE_UNISHOX_COMPRESSION
+#endif  // USE_UNISHOX_COMPRESSION
 
     return len_in + offset;
   } else {
@@ -403,10 +401,9 @@ int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
     }
     free(buf_out);
     return len_compressed;
-
-#else  // USE_UNISHOX_COMPRESSION
+#else   // No USE_UNISHOX_COMPRESSION
     return -1;                                // the rule does not fit and we can't compress
-#endif // USE_UNISHOX_COMPRESSION
+#endif  // USE_UNISHOX_COMPRESSION
   }
 
 }
@@ -490,7 +487,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
     if (rule_param.startsWith(F("%COLOR%"))) {
       rule_param = LightGetColor(scolor);
     }
-#endif
+#endif  // USE_LIGHT
 // #ifdef USE_ZIGBEE
 //     if (rule_param.startsWith(F("%ZBDEVICE%"))) {
 //       snprintf_P(stemp, sizeof(stemp), PSTR("0x%04X"), Z_GetLastDevice());
@@ -505,7 +502,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
 //     if (rule_param.startsWith(F("%ZBENDPOINT%"))) {
 //       rule_param = String(Z_GetLastEndpoint());
 //     }
-// #endif
+// #endif  // USE_ZIGBEE
     rule_param.toUpperCase();
     strlcpy(rule_svalue, rule_param.c_str(), sizeof(rule_svalue));
 
@@ -533,7 +530,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
 // Do not do below replace as it will replace escaped quote too.
 //  buf.replace("\\"," ");                               // "Disable" any escaped control character
 
-//AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RM2: RulesRuleMatch |%s|"), buf.c_str());
+//AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RM2: RulesRuleMatch '%s'"), buf.c_str());
 
   JsonParser parser((char*)buf.c_str());
   JsonParserObject obj = parser.getRootObject();
@@ -569,7 +566,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule, bool stop_all
   }
 
 #ifdef DEBUG_RULES
-  AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RM3: Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json |%s|"),
+  AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RM3: Name %s, Value '%s', TrigCnt %d, TrigSt %d, Source %s, Json '%s'"),
     rule_name.c_str(), rule_svalue, Rules.trigger_count[rule_set], bitRead(Rules.triggers[rule_set],
     Rules.trigger_count[rule_set]), event.c_str(), (str_value[0] != '\0') ? str_value : "none");
 #endif
@@ -717,7 +714,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
   delay(0);                                               // Prohibit possible loop software watchdog
 
 #ifdef DEBUG_RULES
-  AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RP1: Event = %s, Rule = %s"), event_saved.c_str(), Settings->rules[rule_set]);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RP1: Event '%s', Rule '%s'"), event_saved.c_str(), Settings->rules[rule_set]);
 #endif
 
   String rules = GetRule(rule_set);
@@ -753,7 +750,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
     String event = event_saved;
 
 #ifdef DEBUG_RULES
-    AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RP2: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
+    AddLog(LOG_LEVEL_DEBUG, PSTR("RUL-RP2: Event '%s', Rule '%s', Command(s) '%s'"), event.c_str(), event_trigger.c_str(), commands.c_str());
 #endif
 
     if (!event_trigger.startsWith(F("FILE#")) && RulesRuleMatch(rule_set, event, event_trigger, stop_all_rules)) {
@@ -811,26 +808,26 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 #if defined(USE_LIGHT)
       char scolor[LIGHT_COLOR_SIZE];
       RulesVarReplace(commands, F("%COLOR%"), LightGetColor(scolor));
-#endif
+#endif  // USE_LIGHT
 #ifdef USE_ZIGBEE
       snprintf_P(stemp, sizeof(stemp), PSTR("0x%04X"), Z_GetLastDevice());
       RulesVarReplace(commands, F("%ZBDEVICE%"), String(stemp));
       RulesVarReplace(commands, F("%ZBGROUP%"), String(Z_GetLastGroup()));
       RulesVarReplace(commands, F("%ZBCLUSTER%"), String(Z_GetLastCluster()));
       RulesVarReplace(commands, F("%ZBENDPOINT%"), String(Z_GetLastEndpoint()));
-#endif
+#endif  // USE_ZIGBEE
 
       char command[commands.length() +1];
       strlcpy(command, commands.c_str(), sizeof(command));
 
-      AddLog(LOG_LEVEL_INFO, PSTR("RUL: %s performs \"%s\""), event_trigger.c_str(), command);
+      AddLog(LOG_LEVEL_INFO, PSTR("RUL: %s performs '%s'"), event_trigger.c_str(), command);
 
 //      Response_P(S_JSON_COMMAND_SVALUE, D_CMND_RULE, D_JSON_INITIATED);
 //      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_RULE));
 #ifdef SUPPORT_IF_STATEMENT
       char *pCmd = command;
       RulesPreprocessCommand(pCmd);                       // Do pre-process for IF statement
-#endif
+#endif  // SUPPORT_IF_STATEMENT
       ExecuteCommand(command, SRC_RULE);
       serviced = true;
     }
@@ -877,7 +874,7 @@ bool RulesProcessEvent(const char *json_event)
 #ifdef USE_BERRY
   // events are passed to Berry before Rules engine
   callBerryRule(json_event, Rules.teleperiod);
-#endif
+#endif  // USE_BERRY
 
   if (Rules.busy) { return false; }
 
@@ -887,7 +884,7 @@ bool RulesProcessEvent(const char *json_event)
   SHOW_FREE_MEM(PSTR("RulesProcessEvent"));
 
 #ifdef DEBUG_RULES
-  AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: ProcessEvent |%s|"), json_event);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: RulesProcessEvent '%s'"), json_event);
 #endif
 
   String event_saved = json_event;
@@ -903,7 +900,7 @@ bool RulesProcessEvent(const char *json_event)
   event_saved.toUpperCase();
 
 #ifdef DEBUG_RULES
-  AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: Event |%s|"), event_saved.c_str());
+  AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: Event '%s'"), event_saved.c_str());
 #endif
 
   for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
@@ -918,6 +915,11 @@ bool RulesProcessEvent(const char *json_event)
 }
 
 bool RulesProcess(void) {
+
+#ifdef DEBUG_RULES
+  AddLog(LOG_LEVEL_DEBUG, PSTR("RUL: RulesProcess '%s'"), XdrvMailbox.data);
+#endif
+
   if ((Settings->rule_enabled || BERRY_RULES) && !Rules.busy) {  // Any rule enabled
     return RulesProcessEvent(XdrvMailbox.data);
   }
@@ -1484,7 +1486,7 @@ bool findNextVariableValue(char * &pVarname, float &value)
 //     value = Z_GetLastCluster();
 //   } else if (sVarName.equals(F("ZBENDPOINT"))) {
 //     value = Z_GetLastEndpoint();
-// #endif
+// #endif  // USE_ZIGBEE
   } else {
     succeed = false;
   }
@@ -2221,7 +2223,7 @@ void RulesPreprocessCommand(char *pCommands)
   }
   return;
 }
-#endif          //SUPPORT_IF_STATEMENT
+#endif  // SUPPORT_IF_STATEMENT
 
 /*********************************************************************************************\
  * Commands
