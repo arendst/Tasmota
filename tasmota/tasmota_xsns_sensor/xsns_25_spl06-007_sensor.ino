@@ -1,5 +1,5 @@
 /*
-  xsns_126_spl06-007_sensor.ino - SPL06-007 Temperature and Pressure sensor support for Tasmota
+  xsns_25_spl06-007_sensor.ino - SPL06-007 Temperature and Pressure sensor support for Tasmota
 
   Copyright (C) 2024 rai68
 
@@ -28,7 +28,7 @@
  * I2C Address: 0x76
 \*********************************************************************************************/
 
-#define XSNS_126             126
+#define XSNS_25             25
 #define XI2C_95             95  // See I2CDEVICES.md
 
 #include "SPL06-007.h"
@@ -50,11 +50,11 @@ void spl007Detect(void)
   {
     SPL_init();
     if (get_spl_id() != 16) {
-      AddLog(LOG_LEVEL_ERROR, PSTR("SPL006/7:@%02X not found error!"), SPL007_ADDRESS);
+      AddLog(LOG_LEVEL_ERROR, PSTR("SPL06-007:@%02X not found error!"), SPL007_ADDRESS);
       return;
     }
     spl007_s.valid = true;
-    I2cSetActiveFound(SPL007_ADDRESS, "SPL006/7");
+    I2cSetActiveFound(SPL007_ADDRESS, "SPL06-007");
   }
 }
 
@@ -103,7 +103,7 @@ void spl007Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns126(uint32_t function) 
+bool Xsns25(uint32_t function) 
 {
   if (!I2cEnabled(XI2C_95)) { return false; }
   bool result = false;

@@ -917,7 +917,7 @@ constexpr uint32_t feature[] = {
   0x00000010 |  // xdrv_73_9_lora.ino
 #endif
 #if defined(USE_I2C) && defined(USE_SPL06_007)
-  0x10000000 |  // xsns_126_spl006-7_sensor.ino
+  0x10000000 |  // xsns_25_spl006-7_sensor.ino
 #endif
 //  0x00000020 |  // 
 //  0x00000040 |  // 
