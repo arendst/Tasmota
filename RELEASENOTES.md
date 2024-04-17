@@ -146,7 +146,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Changed
 - ESP32 Framework (Arduino Core) from v2.0.14 to v3.0.0
-- ESP32 platform update from 2024.01.12 to 2024.04.11 [#21142](https://github.com/arendst/Tasmota/issues/21142)
+- ESP32 platform update from 2024.01.12 to 2024.04.12 [#21199](https://github.com/arendst/Tasmota/issues/21199)
 - ESP32 LVGL library from v9.0.0 to v9.1.0 [#21008](https://github.com/arendst/Tasmota/issues/21008)
 - Refactor Platformio script `post_esp32.py` [#20966](https://github.com/arendst/Tasmota/issues/20966)
 - SGP4x Domoticz air quality value from raw to computed [#18880](https://github.com/arendst/Tasmota/issues/18880)
@@ -187,6 +187,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - HASPmota PSRAM memory leak [#20818](https://github.com/arendst/Tasmota/issues/20818)
 - HASPmota widgets line, btnmatrix, qrcode, bar, checkbox [#20881](https://github.com/arendst/Tasmota/issues/20881)
 - HASPmota demo and robotocondensed fonts [#21014](https://github.com/arendst/Tasmota/issues/21014)
+- HASPmota dropdown class "options" attribute [#21203](https://github.com/arendst/Tasmota/issues/21203)
 
 ### Removed
 - Unused `#define MQTT_DATA_STRING` support
@@ -194,5 +195,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - SSD1306 driver replaced with uDisplay [#21176](https://github.com/arendst/Tasmota/issues/21176)
 - SSD1331 driver replaced with uDisplay [#21177](https://github.com/arendst/Tasmota/issues/21177)
 - SSH1106 driver replaced with uDisplay [#21183](https://github.com/arendst/Tasmota/issues/21183)
+- SSD1351 driver replaced with uDisplay [#21184](https://github.com/arendst/Tasmota/issues/21184)
+- ST7789 driver replaced with uDisplay [#21184](https://github.com/arendst/Tasmota/issues/21184)
 - Support for ESP32 Arduino Core 2 [#21180](https://github.com/arendst/Tasmota/issues/21180)
 - Berry `print "a"` syntax no longer supported [#21048](https://github.com/arendst/Tasmota/issues/21048)

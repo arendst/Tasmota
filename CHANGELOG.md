@@ -10,12 +10,15 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - ESP32 Framework (Arduino Core) from v2.0.15 to v3.0.0 (#21180)
+- ESP32 Core3 platform update from 2024.04.11 to 2024.04.12 (#21199)
 
 ### Fixed
-- HASPmota dropdown class "options" attribute
+- HASPmota dropdown class "options" attribute (#21203)
 
 ### Removed
 - Support for ESP32 Arduino Core 2 (#21180)
+- SSD1351 driver replaced with uDisplay (#21184)
+- ST7789 driver replaced with uDisplay (#21184)
 
 ## [13.4.0.4] 20240415
 ### Added
@@ -44,8 +47,6 @@ All notable changes to this project will be documented in this file.
 - SSD1306 driver replaced with uDisplay (#21176)
 - SSD1331 driver replaced with uDisplay (#21177)
 - SSH1106 driver replaced with uDisplay (#21183)
-- SSD1351 driver replaced with uDisplay
-- ST7789 driver replaced with uDisplay
 
 ## [13.4.0.3] 20240402
 ### Added
