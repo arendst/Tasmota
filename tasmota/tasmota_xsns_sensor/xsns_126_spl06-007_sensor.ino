@@ -60,8 +60,8 @@ void spl007Detect(void)
 
 void spl007Update(void)  // Perform every n second
 {
-    spl007_s.temperature = ConvertTemp((float)get_temp_c());
-    spl007_s.pressure = ConvertPressure((float) get_pressure());
+    spl007_s.temperature = ConvertTemp(get_temp_c());
+    spl007_s.pressure = ConvertPressure(get_pressure());
 }
 
 void spl007Show(bool json)

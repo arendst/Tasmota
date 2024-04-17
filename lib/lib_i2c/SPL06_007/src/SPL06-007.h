@@ -12,15 +12,15 @@ uint8_t get_spl_fifo_sts();	// Get FIFO_STS Register	0x0B
 
 
 int32_t get_traw();
-double get_traw_sc();
-double get_temp_c();
-double get_temperature_scale_factor();
+float get_traw_sc();
+float get_temp_c();
+float get_temperature_scale_factor();
 
 int32_t get_praw();
-double get_praw_sc();
-double get_pcomp();
-double get_pressure_scale_factor();
-double get_pressure();
+float get_praw_sc();
+float get_pcomp();
+float get_pressure_scale_factor();
+float get_pressure();
 
 int16_t get_c0();
 int16_t get_c1();
