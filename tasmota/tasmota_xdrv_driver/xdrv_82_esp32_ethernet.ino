@@ -198,7 +198,7 @@ void EthernetInit(void) {
   if (Settings->eth_type < 7) {
     Settings->eth_type = 8;                       // Select W5500 (SPI) for non-EMAC hardware
   }
-  eth_type = Settings->eth_type -7;               // As No EMAC support substract EMAC enums (According ETH.cpp debug info)
+  eth_type = eth_type_xtable[Settings->eth_type] -7;  // As No EMAC support substract EMAC enums (According ETH.cpp debug info)
 #endif  // CONFIG_ETH_USE_ESP32_EMAC
 
   if (Settings->eth_type < 7) {
