@@ -136,6 +136,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - HASPmota `p<x>b<y>.delete` to delete an object [#20735](https://github.com/arendst/Tasmota/issues/20735)
 - HASPmota improve arc and img [#20894](https://github.com/arendst/Tasmota/issues/20894)
 - HASPmota support for scale, percentages [#20974](https://github.com/arendst/Tasmota/issues/20974)
+- HASPmota `dropdown_list` and fixes [#21208](https://github.com/arendst/Tasmota/issues/21208)
 
 ### Breaking Changed
 - Drop support for old (insecure) fingerprint format [#20842](https://github.com/arendst/Tasmota/issues/20842)
@@ -179,6 +180,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Too restrictive checksum checks in Lib_teleinfo [#21033](https://github.com/arendst/Tasmota/issues/21033)
 - Color swap option for rgb displaytext [#21049](https://github.com/arendst/Tasmota/issues/21049)
 - NeoPool hydrolysis unit for Hidrolife, Bionet and Generic device [#21098](https://github.com/arendst/Tasmota/issues/21098)
+- ESP8266 physical button/switch control when no rules activated [#21187](https://github.com/arendst/Tasmota/issues/21187)
 - ESP32 PWM activity on unconfigured PWM GPIOs [#20732](https://github.com/arendst/Tasmota/issues/20732)
 - BTHome, prep BLE5 [#20989](https://github.com/arendst/Tasmota/issues/20989)
 - Berry Memory leak in `import re` [#20823](https://github.com/arendst/Tasmota/issues/20823)

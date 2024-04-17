@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [13.4.1.1]
 ### Added
-- HASPmota `dropdown_list` and fixes
+- HASPmota `dropdown_list` and fixes (#21208)
 
 ### Breaking Changed
 
@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - HASPmota dropdown class "options" attribute (#21203)
+- ESP8266 physical button/switch control when no rules activated (#21187)
 
 ### Removed
 - Support for ESP32 Arduino Core 2 (#21180)
