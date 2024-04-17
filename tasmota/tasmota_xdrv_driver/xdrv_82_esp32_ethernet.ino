@@ -36,14 +36,14 @@
  * GPIO12 = ETH POWER
  * GPIO18 = ETH MDIO
  * GPIO23 = ETH MDC
- * #define ETH_TYPE          ETH_PHY_LAN8720
+ * #define ETH_TYPE          0                   // LAN8720
  * #define ETH_CLKMODE       ETH_CLOCK_GPIO17_OUT
  * #define ETH_ADDRESS       0
  *
  * {"NAME":"wESP32","GPIO":[0,0,1,0,1,1,0,0,1,1,1,1,5568,5600,1,0,0,0,0,1,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
  * GPIO16 = ETH MDC
  * GPIO17 = ETH MDIO
- * #define ETH_TYPE          ETH_PHY_LAN8720
+ * #define ETH_TYPE          0                   // LAN8720
  * #define ETH_CLKMODE       ETH_CLOCK_GPIO0_IN
  * #define ETH_ADDRESS       0
  *
@@ -51,7 +51,7 @@
  * GPIO16 = Force Hi
  * GPIO18 = ETH MDIO
  * GPIO23 = ETH MDC
- * #define ETH_TYPE          ETH_PHY_LAN8720
+ * #define ETH_TYPE          0                   // LAN8720
  * #define ETH_CLKMODE       ETH_CLOCK_GPIO0_IN
  * #define ETH_ADDRESS       1
  *
@@ -78,7 +78,7 @@
 #endif
 
 #ifndef ETH_TYPE
-#define ETH_TYPE          ETH_PHY_LAN8720        // ETH.h eth_phy_type_t:   0 = ETH_PHY_LAN8720, 1 = ETH_PHY_TLK110/ETH_PHY_IP101, 2 = ETH_PHY_RTL8201, 3 = ETH_PHY_DP83848, 4 = ETH_PHY_RFU, 5 = ETH_PHY_KSZ8081, 6 = ETH_PHY_KSZ8041, 7 = ETH_PHY_JL1101, 8 = ETH_PHY_W5500, 9 = ETH_PHY_KSZ8851, 10 = ETH_PHY_DM9051
+#define ETH_TYPE          0                      // 0 = LAN8720, 1 = TLK110/IP101, 2 = RTL8201, 3 = DP83848, 4 = RFU, 5 = KSZ8081, 6 = KSZ8041, 7 = JL1101, 8 = W5500, 9 = KSZ8851, 10 = DM9051
 #endif
 
 #ifndef ETH_CLKMODE
@@ -89,17 +89,17 @@
 #include <ETH.h>
 
 const uint8_t eth_type_xtable[] = {
-  0,     // 0 = ETH_PHY_LAN8720
-  1,     // 1 = ETH_PHY_TLK110/ETH_PHY_IP101
-  2,     // 2 = ETH_PHY_RTL8201
-  4,     // 3 = ETH_PHY_DP83848 (is 4 in core3)
-  0,     // 4 = ETH_TYPE_RFU - Future Use
-  6,     // 5 = ETH_PHY_KSZ8081
-  5,     // 6 = ETH_PHY_KSZ8041
-  3,     // 7 = ETH_PHY_JL1101
-  8,     // 8 = ETH_PHY_W5500 (is new in core3 and using SPI)
-  9,     // 9 = ETH_PHY_KSZ8851 (is new in core3 and using SPI)
-  7      // 10 = ETH_PHY_DM9051 (is 7 in core3 and using SPI)
+  0,     //  0 = LAN8720
+  1,     //  1 = TLK110/IP101
+  2,     //  2 = RTL8201
+  4,     //  3 = DP83848 (is 4 in core3)
+  0,     //  4 = RFU - Reserved for Future Use
+  6,     //  5 = KSZ8081 (is 6 in core3)
+  5,     //  6 = KSZ8041 (is 5 in core3)
+  3,     //  7 = JL1101 (is 3 in core3)
+  8,     //  8 = W5500 (is new in core3 and using SPI)
+  9,     //  9 = KSZ8851 (is new in core3 and using SPI)
+  7      // 10 = DM9051 (is 7 in core3 and using SPI)
 };
 char eth_hostname[sizeof(TasmotaGlobal.hostname)];
 uint8_t eth_config_change;
@@ -191,7 +191,7 @@ void EthernetInit(void) {
 #if CONFIG_ETH_USE_ESP32_EMAC
   if (WT32_ETH01 == TasmotaGlobal.module_type) {
     Settings->eth_address = 1;                    // EthAddress
-    Settings->eth_type = 0;                       // EthType 0 = ETH_PHY_LAN8720
+    Settings->eth_type = 0;                       // EthType 0 = LAN8720
     Settings->eth_clk_mode = 0;                   // EthClockMode 0 = ETH_CLOCK_GPIO0_IN
   }
 #else  // No CONFIG_ETH_USE_ESP32_EMAC

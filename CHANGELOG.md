@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - ESP32 Framework (Arduino Core) from v2.0.15 to v3.0.0 (#21180)
 - ESP32 Core3 platform update from 2024.04.11 to 2024.04.12 (#21199)
-- ESP32 Ethernet Phy Type number for ETH_PHY_DM9051 from 4 to 10 (#21204)
+- ESP32 Ethernet Phy Type number for DM9051 from 4 to 10 (#21204)
 
 ### Fixed
 - HASPmota dropdown class "options" attribute (#21203)
