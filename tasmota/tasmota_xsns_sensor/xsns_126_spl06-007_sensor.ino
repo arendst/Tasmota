@@ -76,7 +76,7 @@ void spl007Show(bool json)
 
     if (json) {
     ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f,\"" D_JSON_PRESSURE "\":%s"),
-        "SPL006/7", Settings->flag2.temperature_resolution, &spl007_s.temperature,  str_pressure);
+        "SPL06-007", Settings->flag2.temperature_resolution, &spl007_s.temperature,  str_pressure);
     if (Settings->altitude != 0) {
         ResponseAppend_P(PSTR(",\"" D_JSON_PRESSUREATSEALEVEL "\":%s"), sea_pressure);
     }
