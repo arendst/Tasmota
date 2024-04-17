@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [13.4.1.1]
 ### Added
+- HASPmota `dropdown_list` and fixes
 
 ### Breaking Changed
 

@@ -104,8 +104,10 @@ void lv_flush_callback(lv_display_t *disp, const lv_area_t *area, uint8_t *color
   lv_disp_flush_ready(disp);
 
   if (pixels_len >= 10000 && (!renderer->lvgl_param.use_dma)) {
-    AddLog(LOG_LEVEL_DEBUG, D_LOG_LVGL "Refreshed %d pixels in %d ms (%i pix/ms)", pixels_len, chrono_time,
-            chrono_time > 0 ? pixels_len / chrono_time : -1);
+    if (HighestLogLevel() >= LOG_LEVEL_DEBUG_MORE) {
+      AddLog(LOG_LEVEL_DEBUG_MORE, D_LOG_LVGL "Refreshed %d pixels in %d ms (%i pix/ms)", pixels_len, chrono_time,
+              chrono_time > 0 ? pixels_len / chrono_time : -1);
+    }
   }
 }
 
@@ -407,10 +409,13 @@ void start_lvgl(const char * uconfig) {
   do {
     //lvgl_buffer_size = LV_HOR_RES_MAX * LV_BUFFER_ROWS;
     uint32_t flushlines = renderer->lvgl_pars()->fluslines;
-    lvgl_buffer_size = renderer->width() * (flushlines ? flushlines:LV_BUFFER_ROWS);
+    if (0 == flushlines) flushlines = LV_BUFFER_ROWS;
+
+    lvgl_buffer_size = renderer->width() * flushlines;
     if (renderer->lvgl_pars()->use_dma) {
       lvgl_buffer_size /= 2;
       if (lvgl_buffer_size < 1000000) {
+        AddLog(LOG_LEVEL_ERROR, "LVG: Allocating buffer2 %i bytes in main memory (flushlines %i)", lvgl_buffer_size * sizeof(lv_color_t), flushlines);
         lvgl_glue->lv_pixel_buf2 = new lv_color_t[lvgl_buffer_size];
       }
       if (!lvgl_glue->lv_pixel_buf2) {
@@ -419,6 +424,7 @@ void start_lvgl(const char * uconfig) {
       }
     }
 
+    AddLog(LOG_LEVEL_ERROR, "LVG: Allocating buffer1 %i KB in main memory (flushlines %i)", (lvgl_buffer_size * sizeof(lv_color_t)) / 1024, flushlines);
     lvgl_glue->lv_pixel_buf = new lv_color_t[lvgl_buffer_size];
     if (!lvgl_glue->lv_pixel_buf) {
       status_ok = false;
