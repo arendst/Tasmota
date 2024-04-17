@@ -921,7 +921,7 @@ bool RulesProcess(void) {
   if ((Settings->rule_enabled || BERRY_RULES) && !Rules.busy) {  // Any rule enabled
     return RulesProcessEvent(XdrvMailbox.data);
   }
-  return true;
+  return false;
 }
 
 void RulesInit(void)
