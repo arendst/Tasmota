@@ -1235,7 +1235,7 @@ https://rya.nc/tasmota-fingerprint.html"
     #define BE_LV_WIDGET_IMAGEBUTTON  // LVGL 9
     // #define BE_LV_WIDGET_KEYBOARD
     #define BE_LV_WIDGET_LED
-    // #define BE_LV_WIDGET_LIST
+    #define BE_LV_WIDGET_LIST
     #define BE_LV_WIDGET_METER
     #define BE_LV_WIDGET_MSGBOX
     #define BE_LV_WIDGET_QRCODE
