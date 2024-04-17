@@ -590,6 +590,33 @@ char* Trim(char* p) {
   return p;
 }
 
+size_t HexStringToBinaryString(char** source) {
+  size_t str_len = strlen(*source+2);
+  char *s = *source+2;
+  char *new_str = (char *)malloc(str_len/2);
+  for (int i = 0; i < str_len; i++) {
+        unsigned char val;
+        char cur = s[i];
+        if (cur >= 97) {
+            val = cur - 97 + 10;
+        } else if (cur >= 65) {
+            val = cur - 65 + 10;
+        } else {
+            val = cur - 48;
+        }
+        /* even characters are the first half, odd characters the second half
+         * of the current output byte */
+        if (i%2 == 0) {
+            new_str[i/2] = val << 4;
+        } else {
+            new_str[i/2] |= val;
+        }
+    }
+    memcpy(*source, new_str, str_len/2);
+    free(new_str);
+    return str_len/2;
+}
+
 String HexToString(uint8_t* data, uint32_t length) {
   if (!data || !length) { return ""; }
 

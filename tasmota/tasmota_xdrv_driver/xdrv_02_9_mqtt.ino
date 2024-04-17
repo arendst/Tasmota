@@ -737,6 +737,21 @@ void MqttPublishPayload(const char* topic, const char* payload) {
   MqttPublishPayload(topic, payload, 0, false);
 }
 
+void MqttPublish(const char* topic, bool retained, bool binary) {
+  // Publish <topic> default ResponseData string with optional retained
+  char* response_data;
+  uint32_t binary_length = 0;
+  response_data = ResponseData();
+
+  if (binary) {
+    if (strlen(response_data) > 3 && strncmp(response_data, "0x", 2) == 0) {
+      binary_length = HexStringToBinaryString(&response_data);
+    }
+  }
+
+  MqttPublishPayload(topic, response_data, binary_length, retained);
+}
+
 void MqttPublish(const char* topic, bool retained) {
   // Publish <topic> default ResponseData string with optional retained
   MqttPublishPayload(topic, ResponseData(), 0, retained);
@@ -1547,7 +1562,7 @@ void CmndPublish(void) {
       } else {
         ResponseClear();
       }
-      MqttPublish(stemp1, (XdrvMailbox.index == 2));
+      MqttPublish(stemp1, (XdrvMailbox.index & 0b10), (XdrvMailbox.index & 0b01));
       ResponseClear();
     }
   }
