@@ -3,17 +3,31 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.4.1.1]
+## [13.4.1.2]
+### Added
+
+### Breaking Changed
+- ESP32-C3 OTA binary name from `tasmota32c3cdc.bin` to `tasmota32c3.bin` with USB HWCDC and fallback to serial (#21212)
+- ESP32-C6 OTA binary name from `tasmota32c6cdc.bin` to `tasmota32c6.bin` with USB HWCDC and fallback to serial (#21212)
+- ESP32-S3 OTA binary name from `tasmota32s3cdc.bin` to `tasmota32s3.bin` with USB HWCDC and fallback to serial (#21212)
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [13.4.1.1] 20240418
 ### Added
 - HASPmota `dropdown_list` and fixes (#21208)
 - Support for SPL06_007 pressure and temperature sensor (#21185)
 
 ### Breaking Changed
+- ESP32 Ethernet Phy Type number for DM9051 from 4 to 10 (#21204)
 
 ### Changed
 - ESP32 Framework (Arduino Core) from v2.0.15 to v3.0.0 (#21180)
 - ESP32 Core3 platform update from 2024.04.11 to 2024.04.12 (#21199)
-- ESP32 Ethernet Phy Type number for DM9051 from 4 to 10 (#21204)
 
 ### Fixed
 - HASPmota dropdown class "options" attribute (#21203)
