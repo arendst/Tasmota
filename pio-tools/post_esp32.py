@@ -141,11 +141,6 @@ def esp32_create_chip_string(chip):
             print(Fore.YELLOW + "Unexpected naming convention in this build environment:" + Fore.RED, tasmota_platform_org)
             print(Fore.YELLOW + "Expected build environment name like " + Fore.GREEN + "'tasmota" + chip[3:] + "-whatever-you-want'")
             print(Fore.YELLOW + "Please correct your actual build environment, to avoid undefined behavior in build process!!")
-    if "-DUSE_USB_CDC_CONSOLE" in env.BoardConfig().get("build.extra_flags") and "cdc" not in tasmota_platform:
-        tasmota_platform += "cdc"
-        print(Fore.YELLOW + "Board definition uses CDC configuration, but environment name does not -> fix by adding 'cdc'")
-        print(Fore.YELLOW + "Expected build environment name like " + Fore.GREEN + "'tasmota" + chip[3:] + "cdc-whatever-you-want'")
-        print(Fore.YELLOW + "Please correct your actual build environment, to avoid undefined behavior in build process!!")
     return tasmota_platform
 
 def esp32_build_filesystem(fs_size):
