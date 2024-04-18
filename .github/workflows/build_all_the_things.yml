@@ -91,8 +91,13 @@ jobs:
           - tasmota-sensors
           - tasmota-zbbridge
           - tasmota32
+          - tasmota32solo1
           - tasmota32c2
+          - tasmota32c3
+          - tasmota32c6
           - tasmota32s2
+          - tasmota32s2cdc
+          - tasmota32s3
           - tasmota32-zbbrdgpro
           - tasmota-zigbee
           - tasmota32-bluetooth
@@ -100,19 +105,13 @@ jobs:
           - tasmota32-display
           - tasmota32-ir
           - tasmota32-lvgl
-          - tasmota32c3cdc
-          - tasmota32c6cdc
-          - tasmota32s2cdc
-          - tasmota32s3cdc
-          - tasmota32solo1
           - tasmota32-safeboot
           - tasmota32s2-safeboot
           - tasmota32s2cdc-safeboot
           - tasmota32s3-safeboot
           - tasmota32c2-safeboot
-          - tasmota32s3cdc-safeboot
-          - tasmota32c3cdc-safeboot
-          - tasmota32c6cdc-safeboot
+          - tasmota32c3-safeboot
+          - tasmota32c6-safeboot
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python

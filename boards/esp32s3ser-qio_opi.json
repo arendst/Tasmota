@@ -4,16 +4,10 @@
       "memory_type": "qio_opi"
     },
     "core": "esp32",
-    "extra_flags": "-DARDUINO_TASMOTA -DBOARD_HAS_PSRAM -DARDUINO_USB_MODE=1 -DUSE_USB_CDC_CONSOLE -DESP32_4M -DESP32S3",
+    "extra_flags": "-DARDUINO_TASMOTA -DBOARD_HAS_PSRAM -DESP32_4M -DESP32S3",
     "f_cpu": "240000000L",
     "f_flash": "80000000L",
     "flash_mode": "qio",
-    "hwids": [
-      [
-        "0x303A",
-        "0x1001"
-      ]
-    ],
     "mcu": "esp32s3",
     "variant": "esp32s3",
     "partitions": "partitions/esp32_partition_app2880k_fs320k.csv"
@@ -24,10 +18,6 @@
     "ethernet"
   ],
   "debug": {
-    "default_tool": "esp-builtin",
-    "onboard_tools": [
-      "esp-builtin"
-    ],
     "openocd_target": "esp32s3.cfg"
   },
   "frameworks": [
@@ -39,7 +29,7 @@
       "flash_extra_images": [
         [
           "0x10000",
-          "tasmota32s3cdc-safeboot.bin"
+          "tasmota32s3ser-safeboot.bin"
         ]
       ]
     },
@@ -47,10 +37,10 @@
     "maximum_ram_size": 327680,
     "maximum_size": 4194304,
     "require_upload_port": true,
-    "speed": 2000000
+    "speed": 460800
   },
   "download": {
-    "speed": 2000000
+    "speed": 230400
   },
   "url": "https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/hw-reference/esp32s3/",
   "vendor": "Espressif"

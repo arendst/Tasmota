@@ -98,13 +98,13 @@ jobs:
           - tasmota32solo1-safeboot
           - tasmota32c2-safeboot
           - tasmota32c3-safeboot
-          - tasmota32c3cdc-safeboot
+          - tasmota32c3ser-safeboot
           - tasmota32s2-safeboot
           - tasmota32s2cdc-safeboot
           - tasmota32s3-safeboot
-          - tasmota32s3cdc-safeboot
+          - tasmota32s3ser-safeboot
           - tasmota32c6-safeboot
-          - tasmota32c6cdc-safeboot
+          - tasmota32c6ser-safeboot
     steps:
       - uses: actions/checkout@v4
         with:
@@ -194,11 +194,11 @@ jobs:
           - tasmota32-ir
           - tasmota32-lvgl
           - tasmota32c2
-          - tasmota32c3cdc
-          - tasmota32c6cdc
+          - tasmota32c3
+          - tasmota32c6
           - tasmota32s2
           - tasmota32s2cdc
-          - tasmota32s3cdc
+          - tasmota32s3
           - tasmota32solo1
     steps:
       - uses: actions/checkout@v4
