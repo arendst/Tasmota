@@ -29,7 +29,7 @@
 \*********************************************************************************************/
 
 #define XSNS_25             25
-#define XI2C_95             95  // See I2CDEVICES.md
+#define XI2C_87             87  // See I2CDEVICES.md
 
 #include "SPL06-007.h"
 
@@ -50,7 +50,7 @@ void spl007Detect(void)
   {
     SPL_init();
     if (get_spl_id() != 16) {
-      AddLog(LOG_LEVEL_ERROR, PSTR("SPL06-007:@%02X not found error!"), SPL007_ADDRESS);
+//      AddLog(LOG_LEVEL_ERROR, PSTR("SPL: @%02X not found error!"), SPL007_ADDRESS);
       return;
     }
     spl007_s.valid = true;
@@ -105,7 +105,7 @@ void spl007Show(bool json)
 
 bool Xsns25(uint32_t function) 
 {
-  if (!I2cEnabled(XI2C_95)) { return false; }
+  if (!I2cEnabled(XI2C_87)) { return false; }
   bool result = false;
 
   if (FUNC_INIT == function) {

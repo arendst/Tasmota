@@ -124,6 +124,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support Azure iothub direct method [#21013](https://github.com/arendst/Tasmota/issues/21013)
 - Support for Domoticz non-persistent ``DzIdx5`` to ``DzIdx32`` and disabling DOMOTICZ_OUT_TOPIC subscribe using command ``DzIdx0 0`` [#21019](https://github.com/arendst/Tasmota/issues/21019)
 - Support SPI GPIO configuration for Universal Touch Screen [#21025](https://github.com/arendst/Tasmota/issues/21025)
+- Support for SPL06_007 pressure and temperature sensor [#21185](https://github.com/arendst/Tasmota/issues/21185)
 - Zigbee support for attributes of type `uint48` used by energy monitoring [#20992](https://github.com/arendst/Tasmota/issues/20992)
 - QMC5883l check for overflow and scale reading [#20643](https://github.com/arendst/Tasmota/issues/20643)
 - Berry explicit error log when memory allocation fails [#20807](https://github.com/arendst/Tasmota/issues/20807)
