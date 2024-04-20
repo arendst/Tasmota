@@ -290,7 +290,7 @@
  *Used by image decoders such as `lv_lodepng` to keep the decoded image in the memory.
  *If size is not set to 0, the decoder will fail to decode when the cache is full.
  *If size is 0, the cache function is not enabled and the decoded mem will be released immediately after use.*/
-#define LV_IMG_CACHE_DEF_SIZE_PSRAM     (1024*1024)
+#define LV_IMG_CACHE_DEF_SIZE_PSRAM     (2048*1024)
 #define LV_IMG_CACHE_DEF_SIZE_NOPSRAM   (32*1024)
 #define LV_CACHE_DEF_SIZE               1024            // TASMOTA very low value as a place-holder, the true value is adjusted later
 
