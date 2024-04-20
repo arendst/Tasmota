@@ -366,6 +366,7 @@ class type_mapper_class:
     "lv_menu_mode_root_back_button_t": "i",
     "lv_point_precise_t []": "lv_point_arr",
     "lv_obj_point_transform_flag_t": "i",
+    "lv_palette_t": "i",
 
     "int32_t *": "lv_int_arr",
     "int32_t []": "lv_int_arr",

@@ -71,6 +71,7 @@ lv_fun_globs = [
                   "misc/lv_area.h",
                   "misc/lv_color.h",
                   "misc/lv_color_op.h",
+                  "misc/lv_palette.h",
                   "misc/lv_event.h",
                   "misc/lv_style_gen.h",
                   "misc/lv_style.h",

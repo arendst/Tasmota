@@ -857,6 +857,11 @@ void lv_event_stop_bubbling(lv_event_t * e)
 void lv_event_stop_processing(lv_event_t * e)
 uint32_t lv_event_register_id(void)
 
+// ../../lvgl/src/misc/lv_palette.h
+lv_color_t lv_palette_main(lv_palette_t p)
+lv_color_t lv_palette_lighten(lv_palette_t p, uint8_t lvl)
+lv_color_t lv_palette_darken(lv_palette_t p, uint8_t lvl)
+
 // ../../lvgl/src/misc/lv_style.h
 void lv_style_init(lv_style_t * style)
 void lv_style_reset(lv_style_t * style)
