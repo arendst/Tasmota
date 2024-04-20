@@ -771,8 +771,9 @@ class lvh_obj : lvh_root
   #====================================================================
   #  `align`: `left`, `center`, `right`
   #====================================================================
-  def set_align(t)
+  def set_align(t, m)
     var align
+    if (m == 0)   m = 0 #- lv.PART_MAIN | lv.STATE_DEFAULT -#   end
     self.check_label()
     if t == 0 || t == "left"
       align = lv.TEXT_ALIGN_LEFT
@@ -781,12 +782,13 @@ class lvh_obj : lvh_root
     elif t == 2 || t == "right"
       align = lv.TEXT_ALIGN_RIGHT
     end
-    self._lv_label.set_style_text_align(align, 0 #- lv.PART_MAIN | lv.STATE_DEFAULT -#)
+    self._lv_label.set_style_text_align(align, m)
   end
 
-  def get_align()
+  def get_align(m)
+    if (m == 0)   m = 0 #- lv.PART_MAIN | lv.STATE_DEFAULT -#   end
     if self._lv_label == nil return nil end
-    var align self._lv_label.get_style_text_align(0 #- lv.PART_MAIN | lv.STATE_DEFAULT -#)
+    var align = self._lv_label.get_style_text_align(m)
     if align == lv.TEXT_ALIGN_LEFT
       return "left"
     elif align == lv.TEXT_ALIGN_CENTER
@@ -794,7 +796,7 @@ class lvh_obj : lvh_root
     elif align == lv.TEXT_ALIGN_RIGHT
       return "right"
     else
-      return nil
+      return align
     end
   end
 
