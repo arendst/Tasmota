@@ -14,6 +14,9 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- HASPmota `align` attribute and expand PNG cache
+- LVGL restore `lv_palette` functions
+- IPv6 support in safeboot
 
 ### Removed
 
@@ -58,8 +61,6 @@ All notable changes to this project will be documented in this file.
 - NeoPool hydrolysis unit for Hidrolife, Bionet and Generic device (#21098)
 - M5Core2 LoRa868 module receive exception
 - Fade out on CCT bulb with `SO92 1` (#21159)
-- HASPmota `align` attribute and expand PNG cache
-- LVGL restore `lv_palette` functions
 
 ### Removed
 - Unused `#define MQTT_DATA_STRING` support

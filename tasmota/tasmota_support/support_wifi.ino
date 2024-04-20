@@ -250,12 +250,12 @@ void WifiBegin(uint8_t flag, uint8_t channel) {
 
   char stemp[40] = { 0 };
   if (channel) {
-    WiFi.begin(SettingsText(SET_STASSID1 + Settings->sta_active), SettingsText(SET_STAPWD1 + Settings->sta_active), channel, Wifi.bssid);
+    WiFiHelper::begin(SettingsText(SET_STASSID1 + Settings->sta_active), SettingsText(SET_STAPWD1 + Settings->sta_active), channel, Wifi.bssid);
     // Add connected BSSID and channel for multi-AP installations
     char hex_char[18];
     snprintf_P(stemp, sizeof(stemp), PSTR(" Channel %d BSSId %s"), channel, ToHex_P((unsigned char*)Wifi.bssid, 6, hex_char, sizeof(hex_char), ':'));
   } else {
-    WiFi.begin(SettingsText(SET_STASSID1 + Settings->sta_active), SettingsText(SET_STAPWD1 + Settings->sta_active));
+    WiFiHelper::begin(SettingsText(SET_STASSID1 + Settings->sta_active), SettingsText(SET_STAPWD1 + Settings->sta_active));
   }
   delay(500);
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s%s " D_IN_MODE " %s " D_AS " %s..."),
@@ -818,18 +818,6 @@ void WifiCheckIp(void) {
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_WIFI D_CHECKING_CONNECTION));
   Wifi.counter = WIFI_CHECK_SEC;
 
-#ifdef USE_IPV6
-  if (WL_CONNECTED == WiFi.status()) {
-#ifdef ESP32
-    if (!Wifi.ipv6_local_link_called) {
-      WiFi.enableIPv6(true);   // TODO
-      Wifi.ipv6_local_link_called = true;
-      // AddLog(LOG_LEVEL_DEBUG, PSTR("WIF: calling enableIPV6"));
-    }
-#endif
-  }
-#endif // USE_IPV6
-
   if ((WL_CONNECTED == WiFi.status()) && WifiHasIP()) {
     WifiSetState(1);
     Wifi.counter = WIFI_CHECK_SEC;
@@ -1091,7 +1079,7 @@ void WifiConnect(void)
 {
   if (!Settings->flag4.network_wifi) { return; }
 
-#if defined(ESP32) && !defined(FIRMWARE_MINIMAL)
+#ifdef ESP32
   static bool wifi_event_registered = false;
   if (!wifi_event_registered) {
     WiFi.onEvent(WifiEvents);   // register event listener only once
@@ -1493,27 +1481,6 @@ void WifiEvents(arduino_event_t *event) {
               event->event_info.got_ip.ip_info.gw.addr);
     }
     break;
-
-    case ARDUINO_EVENT_WIFI_STA_CONNECTED:
-      // workaround for the race condition in LWIP, see https://github.com/espressif/arduino-esp32/pull/9016#discussion_r1451774885
-      {
-        uint32_t i = 5;   // try 5 times only
-        while (esp_netif_create_ip6_linklocal(get_esp_interface_netif(ESP_IF_WIFI_STA)) != ESP_OK) {
-          delay(1);
-          if (i-- == 0) {
-            break;
-          }
-        }
-      }
-
-      // WiFi.enableIPv6();
-      // AddLog(LOG_LEVEL_DEBUG, PSTR("WIF: Received ARDUINO_EVENT_WIFI_STA_CONNECTED"));
-      Wifi.ipv6_local_link_called = false;    // not sure if this is needed, make sure link-local is restored at each reconnect
-      break;
-    case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
-    case ARDUINO_EVENT_WIFI_STA_AUTHMODE_CHANGE:
-      Wifi.ipv6_local_link_called = false;
-      break;
 
     default:
       break;
