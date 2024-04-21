@@ -782,6 +782,7 @@ void HandleBerryConsole(void)
 // Display Buttons to dynamically load bec files
 void HandleBerryBECLoaderButton(void) {
   bvm * vm = berry.vm;
+  if (vm == NULL) { return; }       // Berry vm is not initialized
 
   for (int32_t i = 0; i < ARRAY_SIZE(BECCode); i++) {
     const BeBECCode_t &bec = BECCode[i];
@@ -946,7 +947,7 @@ bool Xdrv52(uint32_t function)
     case FUNC_WEB_ADD_CONSOLE_BUTTON:
       if (XdrvMailbox.index) {
         XdrvMailbox.index++;
-      } else {
+      } else if (berry.vm != NULL) {
         WSContentSend_P(HTTP_BTN_BERRY_CONSOLE);
         HandleBerryBECLoaderButton();               // display buttons to load BEC files
         callBerryEventDispatcher(PSTR("web_add_button"), nullptr, 0, nullptr);
