@@ -23,8 +23,8 @@
 #endif  // ESP32_STAGE
 #include "include/tasmota_compat.h"
 #include "include/tasmota_version.h"        // Tasmota version information
-#include "include/tasmota.h"                // Enumeration used in my_user_config.h
 #include "my_user_config.h"                 // Fixed user configurable options
+#include "include/tasmota.h"                // Enumeration used in my_user_config.h
 #ifdef USE_TLS
 #include <t_bearssl.h>                      // We need to include before "tasmota_globals.h" to take precedence over the BearSSL version in Arduino
 #endif  // USE_TLS
