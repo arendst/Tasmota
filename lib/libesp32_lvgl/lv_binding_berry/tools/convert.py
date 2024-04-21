@@ -278,6 +278,8 @@ class type_mapper_class:
     "lv_style_prop_t []",
     "lv_calendar_date_t []",
     "lv_indev_read_cb_t",
+    "lv_vector_path_t *",
+    "lv_vector_path_quality_t",
   ]
 
   return_types = {
@@ -299,7 +301,7 @@ class type_mapper_class:
     "constchar *": "s",       # special construct
     # "lv_obj_user_data_t": "i",
     "lv_result_t": "i",
-    "float": "f",
+    # "float": "f",
 
     "lv_coord_t": "i",
     "lv_opa_t": "i",
@@ -348,19 +350,19 @@ class type_mapper_class:
     "lv_scale_mode_t": "i",
     "lv_span_overflow_t": "i",
     "lv_span_mode_t": "i",
-    "lv_vector_path_t *": "c",    # treat as opaque pointer
-    "lv_vector_dsc_t *": "c",     # treat as opaque pointer
+    # "lv_vector_path_t *": "c",    # treat as opaque pointer
+    # "lv_vector_dsc_t *": "c",     # treat as opaque pointer
     "lv_point_t *": "c",          # treat as opaque pointer
     "lv_hit_test_info_t *": "c",  # treat as opaque pointer
     "lv_screen_load_anim_t": "i",
     "lv_display_render_mode_t": "i",
-    "lv_vector_gradient_spread_t": "i",
+    # "lv_vector_gradient_spread_t": "i",
     "lv_cover_res_t": "i",
-    "lv_vector_path_quality_t": "i",
-    "lv_vector_blend_t": "i",
-    "lv_vector_fill_t": "i",
-    "lv_vector_stroke_cap_t": "i",
-    "lv_vector_stroke_join_t": "i",
+    # "lv_vector_path_quality_t": "i",
+    # "lv_vector_blend_t": "i",
+    # "lv_vector_fill_t": "i",
+    # "lv_vector_stroke_cap_t": "i",
+    # "lv_vector_stroke_join_t": "i",
     "lv_font_kerning_t": "i",
     "lv_menu_mode_header_t": "i",
     "lv_menu_mode_root_back_button_t": "i",
@@ -371,7 +373,7 @@ class type_mapper_class:
     "int32_t *": "lv_int_arr",
     "int32_t []": "lv_int_arr",
     "uint32_t *": "lv_int_arr",
-    "float *": "lv_float_arr",
+    # "float *": "lv_float_arr",
     # layouts
     "lv_flex_align_t": "i",
     "lv_flex_flow_t": "i",
