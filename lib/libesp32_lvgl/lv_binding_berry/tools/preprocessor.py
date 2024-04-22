@@ -64,7 +64,7 @@ lv_fun_globs = [
                   "draw/lv_draw_mask.h",
                   "draw/lv_draw_rect.h",
                   "draw/lv_draw_triangle.h",
-                  "draw/lv_draw_vector.h",
+                  # "draw/lv_draw_vector.h",
                   "draw/lv_draw.h",
                   "display/*.h",
                   "misc/lv_anim.h",
@@ -381,6 +381,7 @@ for header_name in headers_names:
         for exclude_prefix in ["_", "LV_BIDI_DIR_", "LV_FONT_",
                                "LV_SIGNAL_", "LV_TEMPL_", "LV_TASK_PRIO_", "LV_THEME_",
                                "LV_LRU_",
+                               "LV_VECTOR_",
                                "LV_KEYBOARD_MODE_TEXT_ARABIC"]:
           if enum_item.startswith(exclude_prefix): exclude = True
         if exclude: continue

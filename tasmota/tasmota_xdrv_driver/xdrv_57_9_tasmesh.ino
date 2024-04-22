@@ -377,7 +377,7 @@ void MESHstartNode(int32_t _channel, uint8_t _role){ //we need a running broker 
 #ifdef ESP8266 // for now only ESP8266, might be added for the ESP32 later
   MESH.channel = _channel;
   WiFi.mode(WIFI_STA);
-  WiFi.begin("", "", MESH.channel, nullptr, false); //fake connection attempt to set channel
+  WiFiHelper::begin("", "", MESH.channel, nullptr, false); //fake connection attempt to set channel
   wifi_promiscuous_enable(1);
   wifi_set_channel(MESH.channel);
   wifi_promiscuous_enable(0);

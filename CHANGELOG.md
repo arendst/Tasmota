@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [13.4.1.2]
 ### Added
+- esp32_partition_app3904k_fs3392k partition scheme for 8MB ESP32S3
 
 ### Breaking Changed
 - ESP32-C3 OTA binary name from `tasmota32c3cdc.bin` to `tasmota32c3.bin` with USB HWCDC and fallback to serial (#21212)
@@ -14,8 +15,12 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- HASPmota `align` attribute and expand PNG cache
+- LVGL restore `lv_palette` functions
+- IPv6 support in safeboot
 
 ### Removed
+- LVGL disabled vector graphics
 
 ## [13.4.1.1] 20240418
 ### Added
@@ -58,8 +63,6 @@ All notable changes to this project will be documented in this file.
 - NeoPool hydrolysis unit for Hidrolife, Bionet and Generic device (#21098)
 - M5Core2 LoRa868 module receive exception
 - Fade out on CCT bulb with `SO92 1` (#21159)
-- HASPmota `align` attribute and expand PNG cache
-- LVGL restore `lv_palette` functions
 
 ### Removed
 - Unused `#define MQTT_DATA_STRING` support

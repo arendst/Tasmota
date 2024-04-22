@@ -208,7 +208,7 @@ void CmndWifiTest(void)
         AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP " %s " D_AS " %s ..."),
           ssid_test, TasmotaGlobal.hostname);
 
-        WiFi.begin(ssid_test,pswd_test);
+        WiFiHelper::begin(ssid_test,pswd_test);
       }
     } else {
       ResponseCmndChar(D_JSON_BUSY);

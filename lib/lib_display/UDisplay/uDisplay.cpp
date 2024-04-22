@@ -149,6 +149,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
   rot_t[3] = 3;
   epcoffs_full = 0;
   epcoffs_part = 0;
+  interface = 0;
 
   for (uint32_t cnt = 0; cnt < MAX_LUTS; cnt++) {
     lut_cnt[cnt] = 0;
@@ -1027,6 +1028,13 @@ exit:
 Renderer *uDisplay::Init(void) {
   extern bool UsePSRAM(void);
 
+  if (!interface) {   // no valid configuration, abort
+    #ifdef UDSP_DEBUG
+    Serial.printf("Dsp Init no valid configuration\n");
+    #endif
+    return NULL;
+  }
+
   #ifdef UDSP_DEBUG
     Serial.printf("Dsp Init 1 start \n");
   #endif
@@ -1154,6 +1162,12 @@ Renderer *uDisplay::Init(void) {
 
   if (interface == _UDSP_RGB) {
 #ifdef USE_ESP32_S3
+    if (!UsePSRAM())  {        // RGB is not supported on S3 without PSRAM
+      #ifdef UDSP_DEBUG
+      Serial.printf("Dsp RGB requires PSRAM, abort\n");
+      #endif
+      return NULL;
+    }
 
     if (bpanel >= 0) {
       analogWrite(bpanel, 32);
