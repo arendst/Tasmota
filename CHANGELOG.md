@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - IPv6 support in safeboot
 
 ### Removed
+- LVGL disabled vector graphics
 
 ## [13.4.1.1] 20240418
 ### Added
