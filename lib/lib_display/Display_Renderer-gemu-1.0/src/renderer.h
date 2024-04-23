@@ -28,7 +28,7 @@
 // b. textcolor,textbgcolor => public;
 
 typedef struct LVGL_PARAMS {
-  uint16_t fluslines;
+  uint16_t flushlines;
   union {
     uint8_t data;
     struct {

@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - HASPmota `align` attribute and expand PNG cache
 - LVGL restore `lv_palette` functions
 - IPv6 support in safeboot
+- LVGL fix memory allocation of flush buffers
 
 ### Removed
 - LVGL disabled vector graphics
