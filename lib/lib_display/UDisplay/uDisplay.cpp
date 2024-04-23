@@ -24,6 +24,10 @@
 #include "esp8266toEsp32.h"
 #endif
 
+#ifdef USE_ESP32_S3
+#include "esp_cache.h"
+#endif // USE_ESP32_S3
+
 #include "tasmota_options.h"
 
 extern int Cache_WriteBack_Addr(uint32_t addr, uint32_t size);
@@ -2197,42 +2201,67 @@ void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean not_swapped) {
   }
 
   //Serial.printf("push %x - %d - %d - %d\n", (uint32_t)data, len, not_swapped, lvgl_param.data);
-  if (not_swapped == false) {
-    // called from LVGL bytes are swapped
-    if (interface == _UDSP_RGB) {
+
+  // Isolating _UDPS_RGB to increase code sharing
+  //
+  // LVGL documentation suggest to call the following:
+  //    lv_draw_sw_rgb565_swap() to invert bytes
+  //    esp_lcd_panel_draw_bitmap() to paste bytes
+  // but it appears to be faster to include the color swap in the copy loop
+  // because the CPU is much faster than PSRAM (SPI bus), therefore
+  // swapping bytes on the fly costs zero performance
+  //
+  // not_swapped == false : called from LVGL bytes are swapped
+  // not_swapped == true : called from displaytext, no byte swap, currently no dma here
+  if (interface == _UDSP_RGB) {
 #ifdef USE_ESP32_S3
-      if (cur_rot > 0) {
-        for (uint32_t y = seta_yp1; y < seta_yp2; y++) {
-          seta_yp1++;
-          for (uint32_t x = seta_xp1; x < seta_xp2; x++) {
-            uint16_t color = *data++;
-            color = color << 8 | color >> 8;
-            drawPixel_RGB(x, y, color);
-            len--;
-            if (!len) return;         // failsafe - exist if len (pixel number) is exhausted
-          }
-        }
-      } else {
-        for (uint32_t y = seta_yp1; y < seta_yp2; y++) {
-          seta_yp1++;
-          uint16_t *fb = rgb_fb;
-          fb += (int32_t)y * _width;
-          fb += seta_xp1;
-          for (uint32_t x = seta_xp1; x < seta_xp2; x++) {
-            uint16_t color = *data++;
-            color = color << 8 | color >> 8;
-            *fb = color;
-            Cache_WriteBack_Addr((uint32_t)fb, 2);
-            fb++;
-            len--;
-            if (!len) return;         // failsafe - exist if len (pixel number) is exhausted
-          }
+    // check that bytes count matches the size of area, and remove from inner loop
+    if ((seta_yp2 - seta_yp1) * (seta_xp2 - seta_xp2) > len) { return; }
+
+    if (cur_rot > 0) {
+      for (uint32_t y = seta_yp1; y < seta_yp2; y++) {
+        seta_yp1++;
+        for (uint32_t x = seta_xp1; x < seta_xp2; x++) {
+          uint16_t color = *data++;
+          if (!not_swapped) { color = color << 8 | color >> 8; }
+          drawPixel_RGB(x, y, color);
+          len--;
+          if (!len) return;         // failsafe - exist if len (pixel number) is exhausted
         }
       }
-#endif
-      return;
+    } else {
+      uint16_t *fb_y = rgb_fb + (int32_t)seta_yp1 * _width;
+      for (uint32_t y = seta_yp1; y < seta_yp2; y++) {
+        uint16_t * fb_xy = fb_y + seta_xp1;
+        // we get the 'not_swapped' test outside of the inner loop
+        if (not_swapped) {
+          for (uint32_t x = seta_xp1; x < seta_xp2; x++) {
+            uint16_t color = *data++;
+            *fb_xy = color;
+            fb_xy++;
+          }
+        } else {
+          for (uint32_t x = seta_xp1; x < seta_xp2; x++) {
+            uint16_t color = *data++;
+            color = color << 8 | color >> 8;
+            *fb_xy = color;
+            fb_xy++;
+          }
+        }
+        fb_y += _width;
+      }
+      // using esp_cache_msync() to flush the PSRAM cache and ensure that all data is actually written to PSRAM
+      // from https://github.com/espressif/esp-idf/blob/636ff35b52f10e1a804a3760a5bd94e68f4b1b71/components/esp_lcd/rgb/esp_lcd_panel_rgb.c#L159
+      uint16_t * flush_ptr = rgb_fb + (int32_t)seta_yp1 * _width;
+      esp_cache_msync(flush_ptr, (seta_yp2 - seta_yp1) * _width * 2, 0);
     }
+#endif
+    return;
+  }
 
+
+  if (not_swapped == false) {
+    // called from LVGL bytes are swapped
     if (bpp != 16) {
       // lvgl_color_swap(data, len); -- no need to swap anymore, we have inverted the mask
       pushColorsMono(data, len, true);
@@ -2306,35 +2335,6 @@ void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean not_swapped) {
     }
   } else {
     // called from displaytext, no byte swap, currently no dma here
-    if (interface == _UDSP_RGB) {
-#ifdef USE_ESP32_S3
-      if (cur_rot > 0) {
-        for (uint32_t y = seta_yp1; y < seta_yp2; y++) {
-          seta_yp1++;
-          for (uint32_t x = seta_xp1; x < seta_xp2; x++) {
-            drawPixel_RGB(x, y, *data++);
-            len--;
-            if (!len) return;         // failsafe - exist if len (pixel number) is exhausted
-          }
-        }
-      } else {
-        for (uint32_t y = seta_yp1; y < seta_yp2; y++) {
-          seta_yp1++;
-          uint16_t *fb = rgb_fb;
-          fb += (int32_t)y * _width;
-          fb += seta_xp1;
-          for (uint32_t x = seta_xp1; x < seta_xp2; x++) {
-            *fb = *data++;
-            Cache_WriteBack_Addr((uint32_t)fb, 2);
-            fb++;
-            len--;
-            if (!len) return;         // failsafe - exist if len (pixel number) is exhausted
-          }
-        }
-      }
-#endif
-      return;
-    }
 
     if (bpp != 16) {
       pushColorsMono(data, len);
