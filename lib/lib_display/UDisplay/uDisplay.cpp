@@ -142,7 +142,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
   epc_full_cnt = 0;
   lut_num = 0;
   lvgl_param.data = 0;
-  lvgl_param.fluslines = 40;
+  lvgl_param.flushlines = 40;
   rot_t[0] = 0;
   rot_t[1] = 1;
   rot_t[2] = 2;
@@ -590,7 +590,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             lut3time = next_val(&lp1);
             break;
           case 'B':
-            lvgl_param.fluslines = next_val(&lp1);
+            lvgl_param.flushlines = next_val(&lp1);
             lvgl_param.data = next_val(&lp1);
             break;
           case 'M':
