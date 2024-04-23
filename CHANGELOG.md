@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - ESP32-S3 OTA binary name from `tasmota32s3cdc.bin` to `tasmota32s3.bin` with USB HWCDC and fallback to serial (#21212)
 
 ### Changed
+- uDisplay fast drawing on RGB displays
 
 ### Fixed
 - HASPmota `align` attribute and expand PNG cache
