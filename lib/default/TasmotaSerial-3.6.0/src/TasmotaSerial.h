@@ -40,6 +40,7 @@ class TasmotaSerial : public Stream {
     TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fallback = 0, int nwmode = 0, int buffer_size = TM_SERIAL_BUFFER_SIZE, bool invert = false);
     virtual ~TasmotaSerial();
     void setTransmitEnablePin(int tx_enable_pin);
+    void clearTransmitEnablePin(void) { m_tx_enable_pin = -1; }
 
     size_t setRxBufferSize(size_t size);
     size_t getRxBufferSize() { return serial_buffer_size; }

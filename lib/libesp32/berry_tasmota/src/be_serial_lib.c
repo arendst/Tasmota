@@ -9,6 +9,7 @@
 #include "esp_arduino_version.h"
 
 extern int b_serial_init(bvm *vm);
+extern int b_config_tx_en(bvm *vm);
 extern int b_serial_deinit(bvm *vm);
 
 extern int b_serial_write(bvm *vm);
@@ -83,6 +84,7 @@ class be_class_serial (scope: global, name: serial) {
     SERIAL_8O2, int(SERIAL_8O2)
 
     init, func(b_serial_init)
+    config_tx_en, func(b_config_tx_en)
     deinit, func(b_serial_deinit)
     close, func(b_serial_deinit)
 

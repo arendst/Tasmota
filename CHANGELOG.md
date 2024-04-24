@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [13.4.1.2]
 ### Added
 - esp32_partition_app3904k_fs3392k partition scheme for 8MB ESP32S3
+- TCP Tx En GPIO type
 
 ### Breaking Changed
 - ESP32-C3 OTA binary name from `tasmota32c3cdc.bin` to `tasmota32c3.bin` with USB HWCDC and fallback to serial (#21212)
