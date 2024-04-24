@@ -908,6 +908,7 @@
 #define D_SENSOR_ETH_PHY_MDC   "ETH MDC"
 #define D_SENSOR_ETH_PHY_MDIO  "ETH MDIO"
 #define D_SENSOR_TCP_TXD       "TCP Tx"
+#define D_SENSOR_TCP_TXD_EN    "TCP Tx En"
 #define D_SENSOR_TCP_RXD       "TCP Rx"
 #define D_SENSOR_IEM3000_TX    "iEM3000 Tx"
 #define D_SENSOR_IEM3000_RX    "iEM3000 Rx"
