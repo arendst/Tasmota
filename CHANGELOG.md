@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - uDisplay fast drawing on RGB displays
+- HDMI CEC synchronously sends messages
 
 ### Fixed
 - HASPmota `align` attribute and expand PNG cache
