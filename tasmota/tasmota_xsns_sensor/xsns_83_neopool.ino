@@ -1335,6 +1335,7 @@ void NeoPool250msSetStatus(bool status)
   neopool_poll = status;
 
   if (!status) {
+    NeoPoolModbus->flush();
     // clear rec buffer from possible prev periodical communication
     uint32_t timeoutMS = millis() + 100 * NEOPOOL_READ_TIMEOUT; // Max delay before we timeout
     while (NeoPoolModbus->available() && millis() < timeoutMS) {
