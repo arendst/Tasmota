@@ -238,14 +238,14 @@ enum NeoPoolRegister {
   // MISC page (0x06xx) - Contains the configuration parameters for the screen controllers (language, colours, sound, etc).
   MBF_PAR_UICFG_MACHINE = 0x0600,         // 0x0600*        Machine type (see MBV_PAR_MACH_* and  kNeoPoolMachineNames[])
   MBF_PAR_UICFG_LANGUAGE,                 // 0x0601*        Selected language (see MBV_PAR_LANG_*)
-  MBF_PAR_UICFG_BACKLIGHT,                // 0x0602*        Display backlight (see MBV_PAR_BACKLIGHT_*)
+  MBF_PAR_UICFG_BACKLIGHT,                // 0x0602*        Display backlight function (see MBV_PAR_BACKLIGHT_*)
   MBF_PAR_UICFG_SOUND,                    // 0x0603* mask   Audible alerts (see MBMSK_PAR_SOUND_*)
   MBF_PAR_UICFG_PASSWORD,                 // 0x0604*        System password encoded in BCD
   MBF_PAR_UICFG_VISUAL_OPTIONS,           // 0x0605* mask   Stores the different display options for the user interface menus (bitmask). Some bits allow you to hide options that are normally visible (bits 0 to 3) while other bits allow you to show options that are normally hidden (bits 9 to 15)
   MBF_PAR_UICFG_VISUAL_OPTIONS_EXT,       // 0x0606* mask   This register stores additional display options for the user interface menus (see MBMSK_VOE_*)
-  MBF_PAR_UICFG_MACH_VISUAL_STYLE,        // 0x0607* mask   This register is an expansion of register 0x0600 and 0x0605. The lower part of the register (8 bits LSB) is used to store the type of color selected when in register 0x600 has been specified that the machine is of type "generic". Colors and styles correspond to those listed in record 0x600 MBF_PAR_UICFG_MACHINE. The upper part (8-bit MSB) contains extra bits MBMSK_VS_FORCE_UNITS_GRH, MBMSK_VS_FORCE_UNITS_PERCENTAGE and MBMSK_ELECTROLISIS
-  MBF_PAR_UICFG_MACH_NAME_BOLD = 0x0608,  // 0x0608         Machine name bold part title displayed during startup (if machine type is generic). Note: Only lowercase letters (a-z) can be used. 4 register ASCIIZ string with up to 8 characters
-  MBF_PAR_UICFG_MACH_NAME_LIGHT = 0x060C, // 0x060C         Machine name normal intensity part title displayed during startup (if machine type is generic). Note: Only lowercase letters (a-z) can be used. 4 register ASCIIZ string with up to 8 characters
+  MBF_PAR_UICFG_MACH_VISUAL_STYLE,        // 0x0607* mask   This register is an expansion of register MBF_PAR_UICFG_MACHINE and MBF_PAR_UICFG_VISUAL_OPTIONS. If MBF_PAR_UICFG_MACHINE is MBV_PAR_MACH_GENERIC then the lower part (8 bits LSB) is used to store the type of color selected. Colors and styles correspond to those listed in MBF_PAR_UICFG_MACHINE (see MBV_PAR_MACH_*). The upper part (8-bit MSB) contains extra bits MBMSK_VS_FORCE_UNITS_GRH, MBMSK_VS_FORCE_UNITS_PERCENTAGE and MBMSK_ELECTROLISIS
+  MBF_PAR_UICFG_MACH_NAME_BOLD = 0x0608,  // 0x0608         Machine name bold part title displayed during startup if MBF_PAR_UICFG_MACHINE is MBV_PAR_MACH_GENERIC. Note: Only lowercase letters (a-z) can be used. 4 register (0x608 to 0x60B) ASCIIZ string with up to 8 characters
+  MBF_PAR_UICFG_MACH_NAME_LIGHT = 0x060C, // 0x060C         Machine name normal intensity part title displayed during startup if MBF_PAR_UICFG_MACHINE is MBV_PAR_MACH_GENERIC. Note: Only lowercase letters (a-z) can be used. 4 register (0x060C to 0x060F) ASCIIZ string with up to 8 characters
   MBF_PAR_UICFG_MACH_NAME_AUX1 = 0x0610,  // 0x0610         Aux1 relay name: 5 register ASCIIZ string with up to 10 characters
   MBF_PAR_UICFG_MACH_NAME_AUX2 = 0x0615,  // 0x0615         Aux2 relay name: 5 register ASCIIZ string with up to 10 characters
   MBF_PAR_UICFG_MACH_NAME_AUX3 = 0x061A,  // 0x061A         Aux3 relay name: 5 register ASCIIZ string with up to 10 characters
@@ -546,6 +546,13 @@ enum NeoPoolConstAndBitMask {
   MBMSK_VS_FORCE_UNITS_GRH                = 0x2000, // 13 Display the hydrolysis/electrolysis in units of grams per hour (gr/h).
   MBMSK_VS_FORCE_UNITS_PERCENTAGE         = 0x4000, // 14 Display the hydrolysis/electrolysis in percentage units (%).
   MBMSK_ELECTROLISIS                      = 0x8000, // 15 Display the word electrolysis instead of hydrolysis in generic mode.
+                                                    //    To determine the type of units are used to display the hydrolysis/electrolysis:
+                                                    //      1. If MBMSK_VS_FORCE_UNITS_PERCENTAGE bit is set, "%" is displayed
+                                                    //      2. If MBMSK_VS_FORCE_UNITS_GRH bit is set, "gr/h" is displayed
+                                                    //      3. If neither of the above two bits is set:
+                                                    //         a. If MBF_PAR_UICFG_MACHINE is MBV_PAR_MACH_HIDROLIFE or MBV_PAR_MACH_BIONET, then "gr/h" is displayed
+                                                    //         b. If MBF_PAR_UICFG_MACHINE is MBV_PAR_MACH_GENERIC and MBMSK_ELECTROLISIS bit is set, "gr/h" is displayed.
+                                                    //         c. If none of the above cases apply, "%" is displayed.
 
   // MBF_POWER_MODULE_REG_*
   MBV_POWER_MODULE_REG_INFO               = 0,      // ! set of 26-byte power module register stores an ASCIIZ string containing the subversion and timestamp of the module, e. g. ".57\nMay 26 2020\n01:08:10\n\0"
@@ -1328,6 +1335,7 @@ void NeoPool250msSetStatus(bool status)
   neopool_poll = status;
 
   if (!status) {
+    NeoPoolModbus->flush();
     // clear rec buffer from possible prev periodical communication
     uint32_t timeoutMS = millis() + 100 * NEOPOOL_READ_TIMEOUT; // Max delay before we timeout
     while (NeoPoolModbus->available() && millis() < timeoutMS) {
