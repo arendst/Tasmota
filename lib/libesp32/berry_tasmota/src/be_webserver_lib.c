@@ -25,6 +25,7 @@ extern int w_webserver_content_response(bvm *vm);
 extern int w_webserver_content_send_style(bvm *vm);
 extern int w_webserver_content_flush(bvm *vm);
 extern int w_webserver_content_stop(bvm *vm);
+extern int w_webserver_content_close(bvm *vm);
 extern int w_webserver_content_button(bvm *vm);
 
 extern int w_webserver_html_escape(bvm *vm);
@@ -153,6 +154,7 @@ module webserver (scope: global) {
     content_open, func(w_webserver_content_open)
     content_start, func(w_webserver_content_start)
     content_stop, func(w_webserver_content_stop)
+    content_close, func(w_webserver_content_close)
     content_button, func(w_webserver_content_button)
 
     html_escape, func(w_webserver_html_escape)
