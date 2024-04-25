@@ -1481,6 +1481,7 @@ void WifiEvents(arduino_event_t *event) {
           }
         }
       }
+    break;
 #endif // USE_IPV6
     case ARDUINO_EVENT_WIFI_STA_GOT_IP:
     {
