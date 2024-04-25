@@ -899,7 +899,7 @@ bool Xdrv52(uint32_t function)
 #ifdef USE_ETHERNET
           network_up = network_up || EthernetHasIP();
 #endif
-          if (network_up) {       // if network is already up, send a synthetic event to trigger web handlers
+          if (network_up && (Webserver != NULL)) {       // if network is already up, send a synthetic event to trigger web handlers
             callBerryEventDispatcher(PSTR("web_add_handler"), nullptr, 0, nullptr);
             berry.web_add_handler_done = true;
           }
