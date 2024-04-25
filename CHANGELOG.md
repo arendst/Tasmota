@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - LVGL restore `lv_palette` functions
 - IPv6 support in safeboot
 - LVGL fix memory allocation of flush buffers
+- Berry `web_add_handler` called before `Webserver` is initialized
 
 ### Removed
 - LVGL disabled vector graphics
