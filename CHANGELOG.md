@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - IPv6 support in safeboot
 - LVGL fix memory allocation of flush buffers
 - Berry `web_add_handler` called before `Webserver` is initialized
+- Put back wifi IPv6 workaround
 
 ### Removed
 - LVGL disabled vector graphics
