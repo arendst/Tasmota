@@ -1469,6 +1469,19 @@ void WifiEvents(arduino_event_t *event) {
              IPv6isLocal(addr) ? PSTR("Local") : PSTR("Global"), addr.toString(true).c_str());
     }
     break;
+
+    case ARDUINO_EVENT_WIFI_STA_CONNECTED:
+      // workaround for the race condition in LWIP, see https://github.com/espressif/arduino-esp32/pull/9016#discussion_r1451774885
+      {
+        uint32_t i = 5;   // try 5 times only
+        while (esp_netif_create_ip6_linklocal(get_esp_interface_netif(ESP_IF_WIFI_STA)) != ESP_OK) {
+          delay(1);
+          if (i-- == 0) {
+            break;
+          }
+        }
+      }
+    break;
 #endif // USE_IPV6
     case ARDUINO_EVENT_WIFI_STA_GOT_IP:
     {

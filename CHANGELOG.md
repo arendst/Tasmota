@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 ## [13.4.1.2]
 ### Added
 - esp32_partition_app3904k_fs3392k partition scheme for 8MB ESP32S3
+- TCP Tx En GPIO type
+- Berry `webserver.content_close()`
 
 ### Breaking Changed
 - ESP32-C3 OTA binary name from `tasmota32c3cdc.bin` to `tasmota32c3.bin` with USB HWCDC and fallback to serial (#21212)
@@ -14,12 +16,15 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - uDisplay fast drawing on RGB displays
+- HDMI CEC synchronously sends messages
 
 ### Fixed
 - HASPmota `align` attribute and expand PNG cache
 - LVGL restore `lv_palette` functions
 - IPv6 support in safeboot
 - LVGL fix memory allocation of flush buffers
+- Berry `web_add_handler` called before `Webserver` is initialized
+- Put back wifi IPv6 workaround
 
 ### Removed
 - LVGL disabled vector graphics
