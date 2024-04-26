@@ -736,6 +736,9 @@ https://rya.nc/tasmota-fingerprint.html"
 //                                                 // Both settings together allow to limit searching for INA3221 to only a subset of addresses
 //    #define  INA3221_CALC_CHARGE_AH              // calculate charge in Ah
 //    #define  INA3221_CALC_ENERGY_WH              // calculate energy in Wh
+      #define NA3221_SUPPLY_SIDE      0x7777       // the driver adds the measured Shunt Voltage to the Bus Voltage 
+                                                   // for the cannel with a negativ shunt (shunt <0) thus showing the values of the supply side (IN+) 
+                                                   // additionaly the bits set (bit 0,1,2) enable the scanning of the voltage in the according channel
 //  #define USE_PMSA003I                           // [I2cDriver78] Enable PMSA003I Air Quality Sensor (I2C address 0x12) (+1k8 code)
 //  #define USE_GDK101                             // [I2cDriver79] Enable GDK101 sensor (I2C addresses 0x18 - 0x1B) (+1k2 code)
 //    #define GDK101_SHOW_FW_VERSION
