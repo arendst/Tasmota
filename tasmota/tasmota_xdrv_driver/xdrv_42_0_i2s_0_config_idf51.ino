@@ -53,7 +53,7 @@ enum : int8_t {
 };
 
 #define I2S_SLOTS   2
-#define AUDIO_SETTINGS_VERSION  1
+#define AUDIO_SETTINGS_VERSION  2
 
 typedef struct{
   struct{
@@ -75,7 +75,7 @@ typedef struct{
     uint32_t sample_rate = 16000;   // B00-03
     uint8_t  gain = 10;             // B04 - was `volume`
     uint8_t  mode = I2S_MODE_STD;   // B05 - I2S mode standard, PDM, TDM, DAC
-    uint8_t  slot_mask = I2S_SLOT_NOCHANGE;// B06 - slot mask 
+    uint8_t  slot_mask = BIT(0) | BIT(1);  // B06 - slot mask - both slots aka stereo by default
     uint8_t  slot_config = I2S_SLOT_MSB;// B07 - slot configuration MSB = 0, PCM = 1, PHILIPS = 2
     uint8_t  channels = 2;          // B08 - mono/stereo - 1 is added for both
     bool     apll = 1;              // B09 - will be ignored on unsupported SOC's
@@ -83,11 +83,11 @@ typedef struct{
     uint8_t  spare[5];              // B0B-0F
   } tx;
   struct {
-    uint32_t sample_rate = 16000;  // B00-03
+    uint32_t sample_rate = 32000;  // B00-03 - 32000 is compatible with MP3 encoding
     uint16_t gain = 30 * 16;       // B04-05 - in Q12.4
     uint8_t  mode = I2S_MODE_PDM;  // B06 - I2S mode standard, PDM, TDM, DAC
-    uint8_t  slot_mask = I2S_SLOT_NOCHANGE;// B07 - slot mask 
-    uint8_t  slot_config = I2S_SLOT_MSB;// B08 - slot configuration MSB = 0, PCM = 1, PHILIPS = 2
+    uint8_t  slot_mask = BIT(0);   // B07 - slot mask  = left/right/both depended on mode, so BIT(0) maybe left or right
+    uint8_t  slot_bit_width = I2S_SLOT_BIT_WIDTH_32BIT;  // B08 - auto equals data_bit_width - can differ from bits per sample e.g. INMP441
     uint8_t  channels = 1;         // B09 - mono/stereo - 1 is added for both
     // filters
     uint16_t dc_filter_alpha = 0b0111111011111111;  // B0A-B0B - DC_block filter = (1-2^(-7)) Q32:1.31, or `0` if disabled
@@ -99,11 +99,17 @@ typedef struct{
     // alpha = (b) 0.100010100110111 = 0x4537
     uint16_t lowpass_alpha = 0b0100010100110111;    // B0C-B0D - lowpass filter = 3000Hz for 16000Hz sample rate
     bool     apll = 1;              // B0E - will be ignored on unsupported SOC's
-    uint8_t  spare[1];              // B0F
+    uint8_t  ws_width = 32;         // B0F - WS signal width - can differ from bits per sample - default 32 bits for INMP441
+    bool     ws_pol = false;        // B10 - WS signal polarity
+    bool     bit_shift = true;      // B11 - enable bit shift in Philips mode 
+    bool     left_align = true;     // B12 - left alignment
+    bool     big_endian = false;    // B13 - big endian
+    bool     bit_order_lsb = false; // B14 - lsb first
+    uint8_t  spare[2];              // B015/16 - padding
   } rx;
 } tI2SSettings;
 
-static_assert(sizeof(tI2SSettings) == 48, "tI2SSettings Size is not correct");
+static_assert(sizeof(tI2SSettings) == 56, "tI2SSettings Size is not correct");
 
 typedef union {
   uint8_t data;
@@ -120,7 +126,7 @@ class TasmotaI2S;
 struct AUDIO_I2S_t {
   tI2SSettings *Settings;
 
-  i2s_chan_handle_t rx_handle = nullptr;
+  // i2s_chan_handle_t rx_handle = nullptr;
   TasmotaI2S *out = nullptr;        // instance used for I2S output, or `nullptr` if none
   TasmotaI2S *in = nullptr;         // instance used for I2S input, or `nullptr` if none (it can be the same as `out` in case of full duplex)
 } audio_i2s;
