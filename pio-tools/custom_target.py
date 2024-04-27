@@ -335,6 +335,35 @@ def esp32_use_external_crashreport(*args, **kwargs):
         )
         print(Fore.YELLOW + output[0]+": \n"+output[1]+" in "+output[2])
 
+
+def reset_target(*args, **kwargs):
+    esptoolpy = join(platform.get_package_dir("tool-esptoolpy") or "", "esptool.py")
+    upload_port = join(env.get("UPLOAD_PORT", "none"))
+    if "none" in upload_port:
+        env.AutodetectUploadPort()
+        upload_port = join(env.get("UPLOAD_PORT", "none"))
+    esptoolpy_flags = [
+        "--no-stub",
+        "--chip", mcu,
+        "--port", upload_port,
+        "flash_id"
+    ]
+    esptoolpy_cmd = [env["PYTHONEXE"], esptoolpy] + esptoolpy_flags
+    print("Try to reset device")
+    subprocess.call(esptoolpy_cmd, shell=False)
+
+
+env.AddCustomTarget(
+    name="reset_target",
+    dependencies=None,
+    actions=[
+        reset_target
+    ],
+    title="Reset ESP32 target",
+    description="This command resets ESP32x target via esptoolpy",
+)
+
+
 env.AddCustomTarget(
     name="downloadfs",
     dependencies=None,
