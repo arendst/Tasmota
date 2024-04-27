@@ -236,7 +236,7 @@ protected:
   // TX
   bool      _tx_configured = false;       // true = configured, false = not configured
   uint8_t   _tx_mode = I2S_MODE_STD;      // I2S_MODE_STD / I2S_MODE_PDM / I2S_MODE_TDM / I2S_MODE_DAC
-  uint8_t   _tx_slot_mask = 0;
+  uint8_t   _tx_slot_mask = BIT(0)|BIT(1);// default stereo
   bool      _tx_running = false;          // true = enabled, false = disabled
   uint8_t   _tx_channels = 2;             // number of channels, 1 = mono, 2 = stereo -- `channels`
   i2s_chan_handle_t _tx_handle = nullptr; // I2S channel handle, automatically computed
@@ -246,12 +246,12 @@ protected:
   // RX
   bool      _rx_configured = false;       // true = configured, false = not configured
   uint8_t   _rx_mode = I2S_MODE_STD;      // I2S_MODE_STD / I2S_MODE_PDM / I2S_MODE_TDM / I2S_MODE_DAC
-  uint8_t   _rx_slot_mask = 0;
+  uint8_t   _rx_slot_mask = BIT(0);       // default mono: for PDM right, for standard left
   bool      _rx_running = false;          // true = enabled, false = disabled
   uint8_t   _rx_channels = 2;             // number of channels, 1 = mono, 2 = stereo
   i2s_chan_handle_t _rx_handle = nullptr; // I2S channel handle, automatically computed
   // uint8_t   _rx_slot_config;              // I2S slot configuration
-  uint16_t  _rx_freq = 16000;             // I2S Rx sampling frequency in Hz
+  uint16_t  _rx_freq = 32000;             // I2S Rx sampling frequency in Hz - default 32 kHz to prevent problems with Shine Encoder
   uint8_t   _rx_bps = 16;                 // bits per sample, 16 or 8
 
   uint16_t  _rx_gain = 0x10;              // Microphone gain in Q12.4 format (0x10 = 1.0)
@@ -589,9 +589,9 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
 
     i2s_chan_config_t rx_chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(_i2s_port, I2S_ROLE_MASTER);
     i2s_data_bit_width_t rx_data_bit_width = (_rx_bps == 8) ? I2S_DATA_BIT_WIDTH_8BIT : I2S_DATA_BIT_WIDTH_16BIT;
-    // change to 3 buffers of 512 samples
-    rx_chan_cfg.dma_desc_num = 3;
-    rx_chan_cfg.dma_frame_num = 1024;
+    // defaults to 3 buffers of 512 samples
+    rx_chan_cfg.dma_desc_num = audio_i2s.Settings->rx.dma_desc_num;
+    rx_chan_cfg.dma_frame_num = audio_i2s.Settings->rx.dma_frame_num;
 
     AddLog(LOG_LEVEL_DEBUG, "I2S: rx_chan_cfg id:%i role:%i dma_desc_num:%i dma_frame_num:%i auto_clear:%i",
           rx_chan_cfg.id, rx_chan_cfg.role, rx_chan_cfg.dma_desc_num, rx_chan_cfg.dma_frame_num, rx_chan_cfg.auto_clear);

@@ -238,6 +238,8 @@ void CmndI2SConfig(void) {
       cfg->rx.left_align = rx.getUInt(PSTR("LeftAlign"), cfg->rx.left_align);
       cfg->rx.big_endian = rx.getUInt(PSTR("BigEndian"), cfg->rx.big_endian);
       cfg->rx.bit_order_lsb = rx.getUInt(PSTR("LsbOrder"), cfg->rx.bit_order_lsb);
+      cfg->rx.dma_frame_num = rx.getUInt(PSTR("DMAFrame"), cfg->rx.dma_frame_num);
+      cfg->rx.dma_desc_num = rx.getUInt(PSTR("DMADesc"), cfg->rx.dma_desc_num);
     }
     I2SSettingsSave(AUDIO_CONFIG_FILENAME);
   }
@@ -284,7 +286,9 @@ void CmndI2SConfig(void) {
                     "\"BitShift\":%d,"
                     "\"LeftAlign\":%d,"
                     "\"BigEndian\":%d,"
-                    "\"LsbOrder\":%d"
+                    "\"LsbOrder\":%d,"
+                    "\"DMAFrame\":%d,"
+                    "\"DMADesc\":%d"
                   "}}}",
                   cfg->sys.version,
                   cfg->sys.duplex,
@@ -322,7 +326,9 @@ void CmndI2SConfig(void) {
                   cfg->rx.bit_shift,
                   cfg->rx.left_align,
                   cfg->rx.big_endian,
-                  cfg->rx.bit_order_lsb
+                  cfg->rx.bit_order_lsb,
+                  cfg->rx.dma_frame_num,
+                  cfg->rx.dma_desc_num
                   );
 }
 /*********************************************************************************************\
@@ -373,7 +379,7 @@ void I2sMicTask(void *arg){
   } else {
     config.mpeg.mode = STEREO;
   }
-  // config.mpeg.bitr = 128;
+  // config.mpeg.bitr = 128; - this is default anyway, but maybe we want to make it a variable in the future
   config.wave.samplerate = audio_i2s.Settings->rx.sample_rate;
   config.wave.channels = (channels)(audio_i2s.Settings->rx.channels);
 
@@ -399,6 +405,7 @@ void I2sMicTask(void *arg){
 
   ctime = TasmotaGlobal.uptime;
   timeForOneRead = 1000 / ((audio_i2s.Settings->rx.sample_rate / samples_per_pass));
+  timeForOneRead -= 1; // be very in time
 
   AddLog(LOG_LEVEL_DEBUG, PSTR("I2S: samples %u, bytesize %u, time: %u"),samples_per_pass, bytesize, timeForOneRead);
 
@@ -406,15 +413,16 @@ void I2sMicTask(void *arg){
       TickType_t xLastWakeTime = xTaskGetTickCount();
       size_t bytes_read;
 
-      bytes_read = audio_i2s.in->readMic((uint8_t*)buffer, bytesize, true /*dc_block*/, false /*apply_gain*/, true /*lowpass*/, nullptr /*peak_ptr*/);
-      // i2s_channel_read(audio_i2s.in->getRxHandle(), (void*)buffer, bytesize, &bytes_read, (10 / portTICK_PERIOD_MS));
+      // bytes_read = audio_i2s.in->readMic((uint8_t*)buffer, bytesize, true /*dc_block*/, false /*apply_gain*/, true /*lowpass*/, nullptr /*peak_ptr*/);
+      i2s_channel_read(audio_i2s.in->getRxHandle(), (void*)buffer, bytesize, &bytes_read, pdMS_TO_TICKS(3));
 
       if(bytes_read < bytesize) AddLog(LOG_LEVEL_DEBUG, PSTR("!! %u, %u"), bytes_read, bytesize);
 
       if (gain > 1) {
-        // set gain
+        // set gain the "old way"
+        int16_t _gain = gain / 16;
         for (uint32_t cnt = 0; cnt < bytes_read / 2; cnt++) {
-          buffer[cnt] *= gain;
+          buffer[cnt] *= _gain;
         }
       }
       ucp = shine_encode_buffer_interleaved(s, buffer, &written);
@@ -532,9 +540,9 @@ void I2SSettingsLoad(const char * config_filename, bool erase) {
   else if (TfsLoadFile(config_filename, (uint8_t*)audio_i2s.Settings, sizeof(tI2SSettings))) {
     AddLog(LOG_LEVEL_INFO, "I2S: config loaded from file '%s'", config_filename);
     if ((audio_i2s.Settings->sys.version == 0) || (audio_i2s.Settings->sys.version > AUDIO_SETTINGS_VERSION)) {
+      AddLog(LOG_LEVEL_DEBUG, "I2S: unsupported configuration version %u, use defaults", audio_i2s.Settings->sys.version);
       delete audio_i2s.Settings;
       audio_i2s.Settings = new tI2SSettings();
-      AddLog(LOG_LEVEL_DEBUG, "I2S: unsuppoted configuration version, use defaults");
       I2SSettingsSave(config_filename);
     }
   }

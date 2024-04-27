@@ -105,11 +105,13 @@ typedef struct{
     bool     left_align = true;     // B12 - left alignment
     bool     big_endian = false;    // B13 - big endian
     bool     bit_order_lsb = false; // B14 - lsb first
-    uint8_t  spare[2];              // B015/16 - padding
+    uint16_t dma_frame_num = 512;   // B015/16 - DMA buffer size in samples, 512 should be okay up to ~32000 bps
+    uint8_t  dma_desc_num = 3;      // B17 - number of DMA buffers, maybe increased with smaller buffers
+    uint8_t  spare[3];              // B018-20 - padding
   } rx;
 } tI2SSettings;
 
-static_assert(sizeof(tI2SSettings) == 56, "tI2SSettings Size is not correct");
+static_assert(sizeof(tI2SSettings) == 60, "tI2SSettings Size is not correct");
 
 typedef union {
   uint8_t data;
