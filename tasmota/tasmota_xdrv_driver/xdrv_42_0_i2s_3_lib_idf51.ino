@@ -103,11 +103,10 @@ public:
   void setPinout(int32_t bclk, int32_t ws, int32_t dout, int32_t mclk, int32_t din,
                  bool mclk_inv = false, bool bclk_inv = false, bool ws_inv = false, bool apll = false);
 
-  void setSlotConfig(i2s_port_t i2s_port, uint8_t tx_slot_config, uint8_t rx_slot_config,
+  void setSlotConfig(i2s_port_t i2s_port, uint8_t tx_slot_config,
                      uint8_t tx_slot_mask, uint8_t rx_slot_mask) {
     _i2s_port = i2s_port;
     _tx_slot_config = tx_slot_config;
-    _rx_slot_config = rx_slot_config;
   }
   void setRxFreq(uint16_t freq) { _rx_freq = freq; }
 
@@ -237,7 +236,7 @@ protected:
   // TX
   bool      _tx_configured = false;       // true = configured, false = not configured
   uint8_t   _tx_mode = I2S_MODE_STD;      // I2S_MODE_STD / I2S_MODE_PDM / I2S_MODE_TDM / I2S_MODE_DAC
-  uint8_t   _tx_slot_mask = I2S_SLOT_NOCHANGE;
+  uint8_t   _tx_slot_mask = BIT(0)|BIT(1);// default stereo
   bool      _tx_running = false;          // true = enabled, false = disabled
   uint8_t   _tx_channels = 2;             // number of channels, 1 = mono, 2 = stereo -- `channels`
   i2s_chan_handle_t _tx_handle = nullptr; // I2S channel handle, automatically computed
@@ -247,12 +246,12 @@ protected:
   // RX
   bool      _rx_configured = false;       // true = configured, false = not configured
   uint8_t   _rx_mode = I2S_MODE_STD;      // I2S_MODE_STD / I2S_MODE_PDM / I2S_MODE_TDM / I2S_MODE_DAC
-  uint8_t   _rx_slot_mask = I2S_SLOT_NOCHANGE;
+  uint8_t   _rx_slot_mask = BIT(0);       // default mono: for PDM right, for standard left
   bool      _rx_running = false;          // true = enabled, false = disabled
   uint8_t   _rx_channels = 2;             // number of channels, 1 = mono, 2 = stereo
   i2s_chan_handle_t _rx_handle = nullptr; // I2S channel handle, automatically computed
-  uint8_t   _rx_slot_config = I2S_SLOT_MSB;// I2S slot configuration
-  uint16_t  _rx_freq = 16000;             // I2S Rx sampling frequency in Hz
+  // uint8_t   _rx_slot_config;              // I2S slot configuration
+  uint16_t  _rx_freq = 32000;             // I2S Rx sampling frequency in Hz - default 32 kHz to prevent problems with Shine Encoder
   uint8_t   _rx_bps = 16;                 // bits per sample, 16 or 8
 
   uint16_t  _rx_gain = 0x10;              // Microphone gain in Q12.4 format (0x10 = 1.0)
@@ -539,7 +538,7 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
     } else if (_tx_slot_config == I2S_SLOT_PHILIPS) { // PHILIPS
       tx_std_cfg.slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(tx_data_bit_width, tx_slot_mode);
     }
-    if (_tx_slot_mask != I2S_SLOT_NOCHANGE) { tx_std_cfg.slot_cfg.slot_mask = (i2s_std_slot_mask_t)_tx_slot_mask; }
+    tx_std_cfg.slot_cfg.slot_mask = (i2s_std_slot_mask_t)_tx_slot_mask;
 #if SOC_I2S_SUPPORTS_APLL
     if (_apll) { tx_std_cfg.clk_cfg.clk_src = I2S_CLK_SRC_APLL; }
 #endif // SOC_I2S_SUPPORTS_APLL
@@ -590,9 +589,9 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
 
     i2s_chan_config_t rx_chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(_i2s_port, I2S_ROLE_MASTER);
     i2s_data_bit_width_t rx_data_bit_width = (_rx_bps == 8) ? I2S_DATA_BIT_WIDTH_8BIT : I2S_DATA_BIT_WIDTH_16BIT;
-    // change to 3 buffers of 512 samples
-    rx_chan_cfg.dma_desc_num = 3;
-    rx_chan_cfg.dma_frame_num = 512;
+    // defaults to 3 buffers of 512 samples
+    rx_chan_cfg.dma_desc_num = audio_i2s.Settings->rx.dma_desc_num;
+    rx_chan_cfg.dma_frame_num = audio_i2s.Settings->rx.dma_frame_num;
 
     AddLog(LOG_LEVEL_DEBUG, "I2S: rx_chan_cfg id:%i role:%i dma_desc_num:%i dma_frame_num:%i auto_clear:%i",
           rx_chan_cfg.id, rx_chan_cfg.role, rx_chan_cfg.dma_desc_num, rx_chan_cfg.dma_frame_num, rx_chan_cfg.auto_clear);
@@ -615,7 +614,7 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
               },
             },
           };
-          if (_rx_slot_mask != I2S_SLOT_NOCHANGE) { rx_pdm_cfg.slot_cfg.slot_mask = (i2s_pdm_slot_mask_t)_rx_slot_mask; }
+          rx_pdm_cfg.slot_cfg.slot_mask = (i2s_pdm_slot_mask_t)_rx_slot_mask;
 
           // AddLog(LOG_LEVEL_DEBUG, "I2S: rx_pdm_cfg clk_cfg sample_rate_hz:%i clk_src:%i mclk_multiple:%i dn_sample_mode:%i",
           //       rx_pdm_cfg.clk_cfg.sample_rate_hz, rx_pdm_cfg.clk_cfg.clk_src, rx_pdm_cfg.clk_cfg.mclk_multiple, rx_pdm_cfg.clk_cfg.dn_sample_mode);
@@ -637,10 +636,26 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
         break;
 #endif // SOC_I2S_SUPPORTS_PDM_RX
       case I2S_MODE_STD:
-        {        
+        {
+          i2s_std_slot_config_t _slot_cfg = {
+            .data_bit_width = (i2s_data_bit_width_t)bps,
+            .slot_bit_width = (i2s_slot_bit_width_t)audio_i2s.Settings->rx.slot_bit_width,
+            .slot_mode = (i2s_slot_mode_t)channels,
+            .slot_mask = (i2s_std_slot_mask_t)audio_i2s.Settings->rx.slot_mask,
+            .ws_width = audio_i2s.Settings->rx.ws_width,
+            .ws_pol = audio_i2s.Settings->rx.ws_pol,
+            .bit_shift = audio_i2s.Settings->rx.bit_shift,
+#if SOC_I2S_HW_VERSION_1    // For esp32/esp32-s2
+            .msb_right = audio_i2s.Settings->rx.bit_order_lsb, // Placeholder for now!!
+#else
+            .left_align = audio_i2s.Settings->rx.left_align,
+            .big_endian = audio_i2s.Settings->rx.big_endian,
+            .bit_order_lsb = audio_i2s.Settings->rx.bit_order_lsb,
+#endif
+          };
           i2s_std_config_t rx_std_cfg = {
             .clk_cfg  = I2S_STD_CLK_DEFAULT_CONFIG(_rx_freq),
-            .slot_cfg = I2S_STD_MSB_SLOT_DEFAULT_CONFIG(rx_data_bit_width, rx_slot_mode),
+            .slot_cfg = _slot_cfg,
             .gpio_cfg = {
               .mclk = (gpio_num_t)Pin(GPIO_I2S_MCLK),
               .bclk = (gpio_num_t)Pin(GPIO_I2S_BCLK),
@@ -654,11 +669,10 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
               },
             },
           };
-          if (_rx_slot_mask != I2S_SLOT_NOCHANGE) { rx_std_cfg.slot_cfg.slot_mask = (i2s_std_slot_mask_t)_rx_slot_mask; }
 
           err = i2s_channel_init_std_mode(_rx_handle, &rx_std_cfg);
-          AddLog(LOG_LEVEL_DEBUG, "I2S: RX i2s_channel_init_std_mode err:%i", err);
-          AddLog(LOG_LEVEL_DEBUG, "I2S: RX channel in standard mode with 16 bit width on %i channel(s) initialized", rx_slot_mode);
+          AddLog(LOG_LEVEL_DEBUG, "I2S: RX i2s_channel_init_std_mode with err:%i", err);
+          AddLog(LOG_LEVEL_DEBUG, "I2S: RX channel in standard mode with %u bit width on %i channel(s) initialized", bps, rx_slot_mode);
           if (err) {
             _rx_handle = nullptr;
             return false;
