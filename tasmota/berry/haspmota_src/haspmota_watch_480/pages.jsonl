@@ -23,7 +23,7 @@
 {"id":0,"bg_color":"#000000","bg_grad_color":"#000000","bg_grad_dir":1,"text_color":"#000000"}
 
 {"id":10,"obj":"img","src":"A:haspmota_watch_480.tapp#/ren_back_480.png","x":0,"y":0,"w":480,"h":480}
+{"id":15,"obj":"label","parentid":10,"x":367,"y":225,"w":36,"h":36,"text":"29","align":"right","text_font":"montserrat-28"}
 {"id":11,"obj":"img","parentid":10,"src":"A:/haspmota_watch_480.tapp#ren_hour_480.png","x":218,"y":94,"angle":-550}
 {"id":12,"obj":"img","parentid":10,"src":"A:/haspmota_watch_480.tapp#ren_min_480.png","angle":500}
 {"id":13,"obj":"img","parentid":10,"src":"A:/haspmota_watch_480.tapp#ren_sec_480.png","x":220,"y":20,"angle":1400,"hidden":true}
-{"id":15,"obj":"label","parentid":10,"x":367,"y":225,"w":36,"h":36,"text":"29","align":"right","text_font":"montserrat-28"}
