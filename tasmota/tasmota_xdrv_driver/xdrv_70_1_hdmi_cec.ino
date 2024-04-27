@@ -116,7 +116,14 @@ void CmndHDMISendRaw(void) {
     if (buf.len() > 0 && buf.len() < 16) {
       bool success = HDMI_CEC_device->transmitRaw(buf.buf(), buf.len());
       if (success) {
-        HDMI_CEC_device->run();
+        bool transmitting = true;
+        while (transmitting) {
+          HDMI_CEC_device->run();
+          transmitting = HDMI_CEC_device->isTransmitting();
+          if (transmitting) {
+            delay(1);  // wait until next ms
+          }
+        }
         ResponseCmndDone();
       } else {
         ResponseCmndChar_P(PSTR("Sending failed"));
@@ -166,7 +173,14 @@ void CmndHDMISend(void) {
       if (buf.len() > 0 && buf.len() < 15) {
         bool success = HDMI_CEC_device->transmitFrame(to, buf.buf(), buf.len());
         if (success) {
-          HDMI_CEC_device->run();
+          bool transmitting = true;
+          while (transmitting) {
+            HDMI_CEC_device->run();
+            transmitting = HDMI_CEC_device->isTransmitting();
+            if (transmitting) {
+              delay(1);  // wait until next ms
+            }
+          }
           ResponseCmndDone();
         } else {
           ResponseCmndChar_P(PSTR("Sending failed"));
