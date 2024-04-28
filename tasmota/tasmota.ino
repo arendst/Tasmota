@@ -474,10 +474,10 @@ void setup(void) {
 
   bool is_connected_to_USB = false;
 #if SOC_USB_SERIAL_JTAG_SUPPORTED  // Not S2
-  for (uint32_t i = 0; i < 5; i++) {  // wait up to 250 ms - maybe a shorter time is enough
-      is_connected_to_USB = usb_serial_jtag_is_connected();
+  for (uint32_t i = 0; i < 5; i++) {  // wait up to 50 ms - maybe a shorter time is enough
+      is_connected_to_USB = HWCDC::isPlugged();
       if (is_connected_to_USB) { break; }
-      delay(50);
+      delay(10);
   }
 #else
   is_connected_to_USB = true;      // S2
