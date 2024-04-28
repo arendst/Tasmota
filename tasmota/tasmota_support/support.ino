@@ -591,29 +591,37 @@ char* Trim(char* p) {
 }
 
 size_t HexStringToBinaryString(char** source) {
-  size_t str_len = strlen(*source+2);
-  char *s = *source+2;
-  char *new_str = (char *)malloc(str_len/2);
+  size_t str_len = strlen(*source);
+  char *s = *source;
+  uint8_t *d = (uint8_t *)s;
+  // Verify that string only contains 0-9 a-z or A-Z
+  if ((str_len & 1) != 0) {
+    return 0;
+  }
+  for (int i = 0; i < str_len; i++) {
+    char cur = s[i];
+    if (!((cur > 96 && cur < 123) || (cur > 64 && cur < 91) || (cur > 47 && cur < 58))) {
+        return 0;
+    }
+  }
   for (int i = 0; i < str_len; i++) {
         unsigned char val;
         char cur = s[i];
-        if (cur >= 97) {
+        if (cur > 96) {
             val = cur - 97 + 10;
-        } else if (cur >= 65) {
+        } else if (cur > 64) {
             val = cur - 65 + 10;
         } else {
             val = cur - 48;
         }
         /* even characters are the first half, odd characters the second half
          * of the current output byte */
-        if (i%2 == 0) {
-            new_str[i/2] = val << 4;
+        if ((i & 1) == 0) {
+            d[i/2] = val << 4;
         } else {
-            new_str[i/2] |= val;
+            d[i/2] |= val;
         }
     }
-    memcpy(*source, new_str, str_len/2);
-    free(new_str);
     return str_len/2;
 }
 

@@ -744,9 +744,7 @@ void MqttPublish(const char* topic, bool retained, bool binary) {
   response_data = ResponseData();
 
   if (binary) {
-    if (strlen(response_data) > 3 && strncmp(response_data, "0x", 2) == 0) {
-      binary_length = HexStringToBinaryString(&response_data);
-    }
+    binary_length = HexStringToBinaryString(&response_data);
   }
 
   MqttPublishPayload(topic, response_data, binary_length, retained);
