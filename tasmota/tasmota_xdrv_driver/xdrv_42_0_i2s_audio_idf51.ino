@@ -139,9 +139,9 @@ const char kI2SAudio_Commands[] PROGMEM = "I2S|"
 #if defined(USE_SHINE) && defined(MP3_MIC_STREAM)
   "|Stream"
 #endif // MP3_MIC_STREAM
-#ifdef I2S_BRIDGE
+#ifdef USE_I2S_BRIDGE
   "|Bridge"
-#endif // I2S_BRIDGE
+#endif // USE_I2S_BRIDGE
 ;
 
 void (* const I2SAudio_Command[])(void) PROGMEM = {
@@ -167,8 +167,8 @@ void (* const I2SAudio_Command[])(void) PROGMEM = {
 #if defined(USE_SHINE) && defined(MP3_MIC_STREAM)
   &CmndI2SMP3Stream,
 #endif // MP3_MIC_STREAM
-#ifdef I2S_BRIDGE
-  &CmndI2SI2SBridge,
+#ifdef USE_I2S_BRIDGE
+  &CmndI2SBridge,
 #endif // I2S_BRIDGE
 };
 
