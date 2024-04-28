@@ -21,7 +21,7 @@
 
 #ifdef ESP32
 #if defined(USE_I2S_AUDIO) && ESP_IDF_VERSION_MAJOR >= 5
-#ifdef I2S_BRIDGE
+#ifdef USE_I2S_BRIDGE
 
 #ifndef I2S_BRIDGE_PORT
 #define I2S_BRIDGE_PORT 6970
@@ -271,6 +271,6 @@ void I2SBridgeInit(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("I2S_bridge: command server created on port: %d "), I2S_BRIDGE_PORT + 1);
 }
 
-#endif // I2S_BRIDGE
+#endif // USE_I2S_BRIDGE
 #endif // USE_I2S_AUDIO
 #endif // ESP32
