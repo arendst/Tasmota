@@ -95,6 +95,7 @@
 #if SOC_USB_SERIAL_JTAG_SUPPORTED
 #include "hal/usb_serial_jtag_ll.h"
 #include "esp_private/rtc_clk.h"
+#include "driver/usb_serial_jtag.h"
 #endif  // SOC_USB_SERIAL_JTAG_SUPPORTED
 #ifdef CONFIG_IDF_TARGET_ESP32
 #include "driver/gpio.h"
@@ -474,10 +475,10 @@ void setup(void) {
 
   bool is_connected_to_USB = false;
 #if SOC_USB_SERIAL_JTAG_SUPPORTED  // Not S2
-  for (uint32_t i = 0; i < 5; i++) {  // wait up to 50 ms - maybe a shorter time is enough
-      is_connected_to_USB = HWCDC::isPlugged();
+  for (uint32_t i = 0; i < 5; i++) {  // wait up to 250 ms - maybe a shorter time is enough
+      is_connected_to_USB = usb_serial_jtag_is_connected();
       if (is_connected_to_USB) { break; }
-      delay(10);
+      delay(50);
   }
 #else
   is_connected_to_USB = true;      // S2
