@@ -249,6 +249,14 @@ extern "C" {
     be_return_nil(vm);
   }
 
+  // Berry: `webserver.content_close() -> nil`
+  //
+  int32_t w_webserver_content_close(struct bvm *vm);
+  int32_t w_webserver_content_close(struct bvm *vm) {
+    WSContentEnd();
+    be_return_nil(vm);
+  }
+
   // Berry: `webserver.content_button([button:int]) -> nil`
   // Default button is BUTTON_MAIN
   //

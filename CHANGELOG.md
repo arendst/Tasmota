@@ -3,18 +3,49 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.4.1.1]
+## [13.4.1.2]
 ### Added
+- esp32_partition_app3904k_fs3392k partition scheme for 8MB ESP32S3
+- TCP Tx En GPIO type
+- Berry `webserver.content_close()`
+- HASPmota demo of Renaissance Watch for 480x480 displays
 
 ### Breaking Changed
+- ESP32-C3 OTA binary name from `tasmota32c3cdc.bin` to `tasmota32c3.bin` with USB HWCDC and fallback to serial (#21212)
+- ESP32-C6 OTA binary name from `tasmota32c6cdc.bin` to `tasmota32c6.bin` with USB HWCDC and fallback to serial (#21212)
+- ESP32-S3 OTA binary name from `tasmota32s3cdc.bin` to `tasmota32s3.bin` with USB HWCDC and fallback to serial (#21212)
+
+### Changed
+- uDisplay fast drawing on RGB displays
+- HDMI CEC synchronously sends messages
+
+### Fixed
+- HASPmota `align` attribute and expand PNG cache
+- LVGL restore `lv_palette` functions
+- IPv6 support in safeboot
+- LVGL fix memory allocation of flush buffers
+- Berry `web_add_handler` called before `Webserver` is initialized
+- Put back wifi IPv6 workaround
+- Berry `math.inf`, `math.isinf()` and fixed json ouput for `inf` and `nan`
+
+### Removed
+- LVGL disabled vector graphics
+
+## [13.4.1.1] 20240418
+### Added
+- HASPmota `dropdown_list` and fixes (#21208)
+- Support for SPL06_007 pressure and temperature sensor (#21185)
+
+### Breaking Changed
+- ESP32 Ethernet Phy Type number for DM9051 from 4 to 10 (#21204)
 
 ### Changed
 - ESP32 Framework (Arduino Core) from v2.0.15 to v3.0.0 (#21180)
 - ESP32 Core3 platform update from 2024.04.11 to 2024.04.12 (#21199)
-- ESP32 Ethernet Phy Type number for DM9051 from 4 to 10 (#21204)
 
 ### Fixed
 - HASPmota dropdown class "options" attribute (#21203)
+- ESP8266 physical button/switch control when no rules activated (#21187)
 
 ### Removed
 - Support for ESP32 Arduino Core 2 (#21180)

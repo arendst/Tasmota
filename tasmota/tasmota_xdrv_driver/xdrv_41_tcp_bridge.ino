@@ -151,6 +151,10 @@ void TCPInit(void) {
     }
     TCPSerial = new TasmotaSerial(Pin(GPIO_TCP_RX), Pin(GPIO_TCP_TX), TasmotaGlobal.seriallog_level ? 1 : 2, 0, TCP_BRIDGE_BUF_SIZE);   // set a receive buffer of 256 bytes
     tcp_serial = TCPSerial->begin(Settings->tcp_baudrate * 1200, ConvertSerialConfig(0x7F & Settings->tcp_config));
+    if (PinUsed(GPIO_TCP_TX_EN)) {
+      TCPSerial->setTransmitEnablePin(Pin(GPIO_TCP_TX_EN));
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "TCP Bridge EN is used on Pin %d"), Pin(GPIO_TCP_TX_EN));
+    }
     if (tcp_serial) {
       if (TCPSerial->hardwareSerial()) {
         ClaimSerial();

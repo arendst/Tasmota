@@ -1941,7 +1941,7 @@ void HandleWifiConfiguration(void) {
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP " %s " D_AS " %s ..."),
         SettingsText(SET_STASSID1), TasmotaGlobal.hostname);
 
-      WiFi.begin(SettingsText(SET_STASSID1), SettingsText(SET_STAPWD1));
+      WiFiHelper::begin(SettingsText(SET_STASSID1), SettingsText(SET_STAPWD1));
 
       WebRestart(2);
     } else {

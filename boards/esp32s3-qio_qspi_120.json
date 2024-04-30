@@ -1,21 +1,17 @@
 {
   "build": {
     "arduino":{
-      "memory_type": "qio_opi"
+      "memory_type": "qio_qspi"
     },
     "core": "esp32",
-    "extra_flags": "-DARDUINO_TASMOTA -DBOARD_HAS_PSRAM -DARDUINO_USB_MODE=1 -DUSE_USB_CDC_CONSOLE -DESP32_4M -DESP32S3",
     "f_cpu": "240000000L",
     "f_flash": "80000000L",
+    "f_boot": "120000000L",
+    "boot": "qio",
     "flash_mode": "qio",
-    "hwids": [
-      [
-        "0x303A",
-        "0x1001"
-      ]
-    ],
     "mcu": "esp32s3",
     "variant": "esp32s3",
+    "extra_flags": "-DARDUINO_TASMOTA -DBOARD_HAS_PSRAM -DARDUINO_USB_MODE=1 -DUSE_USB_CDC_CONSOLE -DESP32_4M -DESP32S3",
     "partitions": "partitions/esp32_partition_app2880k_fs320k.csv"
   },
   "connectivity": [
@@ -33,13 +29,13 @@
   "frameworks": [
     "arduino"
   ],
-  "name": "Espressif Generic ESP32-S3 >= 4M Flash OPI PSRAM, Tasmota 2880k Code/OTA, 320k FS",
+  "name": "Espressif Generic ESP32-S3 >= 4M QIO Flash + QSPI PSRAM, Tasmota 2880k Code/OTA, 320k FS",
   "upload": {
     "arduino": {
       "flash_extra_images": [
         [
           "0x10000",
-          "tasmota32s3cdc-safeboot.bin"
+          "tasmota32s3-safeboot.bin"
         ]
       ]
     },

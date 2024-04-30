@@ -763,13 +763,17 @@ class lvh_obj : lvh_root
     end
   end
   def get_label_mode()
+    if self._lv_label != nil
+      return self._lv_label.get_long_mode()
+    end
   end
 
   #====================================================================
   #  `align`: `left`, `center`, `right`
   #====================================================================
-  def set_align(t)
+  def set_align(t, m)
     var align
+    if (m == 0)   m = 0 #- lv.PART_MAIN | lv.STATE_DEFAULT -#   end
     self.check_label()
     if t == 0 || t == "left"
       align = lv.TEXT_ALIGN_LEFT
@@ -778,12 +782,13 @@ class lvh_obj : lvh_root
     elif t == 2 || t == "right"
       align = lv.TEXT_ALIGN_RIGHT
     end
-    self._lv_label.set_style_text_align(align, 0 #- lv.PART_MAIN | lv.STATE_DEFAULT -#)
+    self._lv_label.set_style_text_align(align, m)
   end
 
-  def get_align()
+  def get_align(m)
+    if (m == 0)   m = 0 #- lv.PART_MAIN | lv.STATE_DEFAULT -#   end
     if self._lv_label == nil return nil end
-    var align self._lv_label.get_style_text_align(0 #- lv.PART_MAIN | lv.STATE_DEFAULT -#)
+    var align = self._lv_label.get_style_text_align(m)
     if align == lv.TEXT_ALIGN_LEFT
       return "left"
     elif align == lv.TEXT_ALIGN_CENTER
@@ -791,7 +796,7 @@ class lvh_obj : lvh_root
     elif align == lv.TEXT_ALIGN_RIGHT
       return "right"
     else
-      return nil
+      return align
     end
   end
 
@@ -1080,10 +1085,10 @@ end
 #################################################################################
 
 #====================================================================
-#  flex
+#  fixed - container for a box with fixed sub-objects (no placement)
 #====================================================================
-#@ solidify:lvh_flex,weak
-class lvh_flex : lvh_obj
+#@ solidify:lvh_fixed,weak
+class lvh_fixed : lvh_obj
   # static var _lv_class = lv.obj # from parent class
   # label do not need a sub-label
   def post_init()
@@ -1095,6 +1100,19 @@ class lvh_flex : lvh_obj
     obj.set_style_margin_all(0, 0)
     obj.set_style_bg_opa(0, 0)
     obj.set_size(lv.pct(100), lv.pct(100))
+  end
+end
+
+#====================================================================
+#  flex - container for sub-objects placed along with flex directives
+#====================================================================
+#@ solidify:lvh_flex,weak
+class lvh_flex : lvh_fixed
+  # static var _lv_class = lv.obj # from parent class
+  # label do not need a sub-label
+  def post_init()
+    super(self).post_init()         # call super
+    var obj = self._lv_obj
     obj.set_flex_flow(lv.FLEX_FLOW_ROW)
   end
 end
@@ -1415,6 +1433,7 @@ end
 #@ solidify:lvh_dropdown,weak
 class lvh_dropdown : lvh_obj
   static var _lv_class = lv.dropdown
+  var _symbol                         # we need to keep a reference to the string used for symbol to avoid GC
   static var _dir = [ lv.DIR_BOTTOM, lv.DIR_TOP, lv.DIR_LEFT, lv.DIR_RIGHT ] # 0 = down, 1 = up, 2 = left, 3 = right
 
   def set_val(t)
@@ -1445,8 +1464,16 @@ class lvh_dropdown : lvh_obj
 
   # direction needs a conversion from HASPmota numbers and LVGL's
   def set_direction(t)
+    t = int(t)
     # 0 = down, 1 = up, 2 = left, 3 = right
-    self._lv_obj.set_dir(self._dir[int(t)])
+    if (t < 0) || (t > 3)     t = 0   end
+    self._lv_obj.set_dir(self._dir[t])
+    if   t == 1       self._symbol = lv.SYMBOL_UP
+    elif t == 2       self._symbol = lv.SYMBOL_LEFT
+    elif t == 3       self._symbol = lv.SYMBOL_RIGHT
+    else              self._symbol = lv.SYMBOL_DOWN
+    end
+    self._lv_obj.set_symbol(self._symbol)
   end
   def get_direction()
     var dir = self._lv_obj.get_dir()
@@ -1468,6 +1495,24 @@ class lvh_dropdown : lvh_obj
   def get_show_selected()
     var static_text = self._lv_obj.get_text()
     return (static_text == nil)
+  end
+end
+#====================================================================
+#  dropdown_list (accessing the list object)
+#====================================================================
+#@ solidify:lvh_dropdown_list,weak
+class lvh_dropdown_list : lvh_obj
+  static var _lv_class = nil
+
+  def post_init()
+    self._lv_obj = nil                # default to nil object, whatever it was initialized with
+    # check if it is the parent is a spangroup
+    if isinstance(self._parent_lvh, self._page._oh.lvh_dropdown)
+      self._lv_obj = lv.list(self._parent_lvh._lv_obj.get_list()._p)
+    else
+      print("HSP: '_dropdown_list' should have a parent of type 'dropdown'")
+    end
+    # super(self).post_init()         # call super - don't call post_init to not register a callback
   end
 end
 
@@ -2180,6 +2225,7 @@ class HASPmota
   # assign lvh_page to a static attribute
   static lvh_root = lvh_root
 	static lvh_obj = lvh_obj
+  static lvh_fixed = lvh_fixed
   static lvh_flex = lvh_flex
   static lvh_page = lvh_page
   static lvh_scr = lvh_scr
@@ -2193,6 +2239,7 @@ class HASPmota
 	static lvh_line = lvh_line
 	static lvh_img = lvh_img
 	static lvh_dropdown = lvh_dropdown
+  static lvh_dropdown_list = lvh_dropdown_list
 	static lvh_roller = lvh_roller
 	static lvh_btnmatrix = lvh_btnmatrix
  	# static lvh_msgbox = lvh_msgbox

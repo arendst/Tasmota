@@ -125,5 +125,5 @@ Index | Define              | Driver   | Device   | Address(es) | Bus2 | Descrip
   85  | USE_ENS210          | xsns_112 | ENS210   | 0x43 - 0x44 |      | Temperature and humidity sensor
   86  | USE_AMSX915         | xsns_114 | AMS5915  | 0x28        |      | Pressure (absolute/differential) and temperature sensor
   86  | USE_AMSX915         | xsns_114 | AMS6915  | 0x28        |      | Pressure (absolute/differential) and temperature sensor
-  
+  87  | USE_SPL06_007       | xsns_25  | SPL06-007 | 0x76        |      | Pressure and temperature sensor
   NOTE: Bus2 supported on ESP32 only.

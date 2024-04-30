@@ -305,7 +305,7 @@ a_features = [[
     "USE_HC8","USE_HDMI_CEC","USE_BLE_ESP32","USE_MATTER_DEVICE"
     ],[
     "USE_MAGIC_SWITCH","USE_PIPSOLAR","USE_GPIO_VIEWER","USE_AMSX915",
-    "USE_SPI_LORA","","","",
+    "USE_SPI_LORA","USE_SPL06_007","","",
     "","","","",
     "","","","",
     "","","","",

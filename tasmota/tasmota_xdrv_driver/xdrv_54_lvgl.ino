@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
+#ifdef ESP32
 #if defined(USE_LVGL) && defined(USE_UNIVERSAL_DISPLAY)
 
 #include <renderer.h>
@@ -33,11 +33,10 @@
 struct LVGL_Glue {
   lv_display_t *lv_display = nullptr;
   lv_indev_t *lv_indev = nullptr;
-  lv_color_t *lv_pixel_buf = nullptr;
-  lv_color_t *lv_pixel_buf2 = nullptr;
+  void *lv_pixel_buf = nullptr;
+  void *lv_pixel_buf2 = nullptr;
   Ticker tick;
   File * screenshot = nullptr;
-  bool first_frame = true;  // Tracks if a call to `lv_flush_callback` needs to wait for DMA transfer to complete
 };
 LVGL_Glue * lvgl_glue;
 
@@ -70,10 +69,6 @@ void lv_flush_callback(lv_display_t *disp, const lv_area_t *area, uint8_t *color
     // save pixels to file
     int32_t btw = (width * height * LV_COLOR_DEPTH + 7) / 8;
     while (btw > 0) {
-#if (LV_COLOR_DEPTH == 16) && (LV_COLOR_16_SWAP == 1)
-      uint16_t * pix = (uint16_t*) color_p;
-      for (uint32_t i = 0; i < btw / 2; i++) (pix[i] = pix[i] << 8 | pix[i] >> 8);
-#endif
       if (btw > 0) {    // if we had a previous error (ex disk full) don't try to write anymore
         int32_t ret = lvgl_glue->screenshot->write((const uint8_t*) color_p, btw);
         if (ret >= 0) {
@@ -87,13 +82,6 @@ void lv_flush_callback(lv_display_t *disp, const lv_area_t *area, uint8_t *color
     return; // ok
   }
 
-  if (!lvgl_glue->first_frame) {
-      //renderer->dmaWait();  // Wait for prior DMA transfer to complete
-      //disrendererplay->endWrite(); // End transaction from any prior call
-  } else {
-      lvgl_glue->first_frame = false;
-  }
-
   uint32_t pixels_len = width * height;
   uint32_t chrono_start = millis();
   renderer->setAddrWindow(area->x1, area->y1, area->x1+width, area->y1+height);
@@ -104,8 +92,10 @@ void lv_flush_callback(lv_display_t *disp, const lv_area_t *area, uint8_t *color
   lv_disp_flush_ready(disp);
 
   if (pixels_len >= 10000 && (!renderer->lvgl_param.use_dma)) {
-    AddLog(LOG_LEVEL_DEBUG, D_LOG_LVGL "Refreshed %d pixels in %d ms (%i pix/ms)", pixels_len, chrono_time,
-            chrono_time > 0 ? pixels_len / chrono_time : -1);
+    if (HighestLogLevel() >= LOG_LEVEL_DEBUG_MORE) {
+      AddLog(LOG_LEVEL_DEBUG_MORE, D_LOG_LVGL "Refreshed %d pixels in %d ms (%i pix/ms)", pixels_len, chrono_time,
+              chrono_time > 0 ? pixels_len / chrono_time : -1);
+    }
   }
 }
 
@@ -405,13 +395,16 @@ void start_lvgl(const char * uconfig) {
   bool status_ok = true;
   size_t lvgl_buffer_size;
   do {
-    //lvgl_buffer_size = LV_HOR_RES_MAX * LV_BUFFER_ROWS;
-    uint32_t flushlines = renderer->lvgl_pars()->fluslines;
-    lvgl_buffer_size = renderer->width() * (flushlines ? flushlines:LV_BUFFER_ROWS);
+    uint32_t flushlines = renderer->lvgl_pars()->flushlines;
+    if (0 == flushlines) flushlines = LV_BUFFER_ROWS;
+
+    lvgl_buffer_size = renderer->width() * flushlines;
     if (renderer->lvgl_pars()->use_dma) {
       lvgl_buffer_size /= 2;
       if (lvgl_buffer_size < 1000000) {
-        lvgl_glue->lv_pixel_buf2 = new lv_color_t[lvgl_buffer_size];
+        // allocate preferably in internal memory which is faster than PSRAM
+        AddLog(LOG_LEVEL_DEBUG, "LVG: Allocating buffer2 %i bytes in main memory (flushlines %i)", (lvgl_buffer_size * (LV_COLOR_DEPTH / 8)) / 1024, flushlines);
+        lvgl_glue->lv_pixel_buf2 = heap_caps_malloc_prefer(lvgl_buffer_size * (LV_COLOR_DEPTH / 8), 2, MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL, MALLOC_CAP_8BIT);
       }
       if (!lvgl_glue->lv_pixel_buf2) {
         status_ok = false;
@@ -419,7 +412,9 @@ void start_lvgl(const char * uconfig) {
       }
     }
 
-    lvgl_glue->lv_pixel_buf = new lv_color_t[lvgl_buffer_size];
+    // allocate preferably in internal memory which is faster than PSRAM
+    AddLog(LOG_LEVEL_DEBUG, "LVG: Allocating buffer1 %i KB in main memory (flushlines %i)", (lvgl_buffer_size * (LV_COLOR_DEPTH / 8)) / 1024, flushlines);
+    lvgl_glue->lv_pixel_buf = heap_caps_malloc_prefer(lvgl_buffer_size * (LV_COLOR_DEPTH / 8), 2, MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL, MALLOC_CAP_8BIT);
     if (!lvgl_glue->lv_pixel_buf) {
       status_ok = false;
       break;
@@ -428,11 +423,11 @@ void start_lvgl(const char * uconfig) {
 
   if (!status_ok) {
     if (lvgl_glue->lv_pixel_buf) {
-      delete[] lvgl_glue->lv_pixel_buf;
+      free(lvgl_glue->lv_pixel_buf);
       lvgl_glue->lv_pixel_buf = NULL;
     }
     if (lvgl_glue->lv_pixel_buf2) {
-      delete[] lvgl_glue->lv_pixel_buf2;
+      free(lvgl_glue->lv_pixel_buf2);
       lvgl_glue->lv_pixel_buf2 = NULL;
     }
     delete lvgl_glue;
@@ -444,7 +439,7 @@ void start_lvgl(const char * uconfig) {
   // Initialize LvGL display driver
   lvgl_glue->lv_display = lv_display_create(renderer->width(), renderer->height());
   lv_display_set_flush_cb(lvgl_glue->lv_display, lv_flush_callback);
-  lv_display_set_buffers(lvgl_glue->lv_display, lvgl_glue->lv_pixel_buf, lvgl_glue->lv_pixel_buf2, lvgl_buffer_size, LV_DISPLAY_RENDER_MODE_PARTIAL);
+  lv_display_set_buffers(lvgl_glue->lv_display, lvgl_glue->lv_pixel_buf, lvgl_glue->lv_pixel_buf2, lvgl_buffer_size * (LV_COLOR_DEPTH / 8), LV_DISPLAY_RENDER_MODE_PARTIAL);
 
   // Initialize LvGL input device (touchscreen already started)
   lvgl_glue->lv_indev = lv_indev_create();
@@ -542,13 +537,11 @@ File * lvgl_get_screenshot_file(void) {
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-bool Xdrv54(uint32_t function)
-{
+
+bool Xdrv54(uint32_t function) {
   bool result = false;
 
   switch (function) {
-    case FUNC_INIT:
-      break;
     case FUNC_LOOP:
       if (lvgl_glue) {
         if (TasmotaGlobal.sleep > USE_LVGL_MAX_SLEEP) {
@@ -557,29 +550,6 @@ bool Xdrv54(uint32_t function)
         lv_task_handler();
       }
       break;
-    case FUNC_EVERY_50_MSECOND:
-      break;
-    case FUNC_EVERY_100_MSECOND:
-      break;
-    case FUNC_EVERY_SECOND:
-      break;
-    case FUNC_COMMAND:
-      break;
-    case FUNC_RULES_PROCESS:
-      break;
-    case FUNC_SAVE_BEFORE_RESTART:
-      break;
-    case FUNC_MQTT_DATA:
-      break;
-    case FUNC_WEB_SENSOR:
-      break;
-
-    case FUNC_JSON_APPEND:
-      break;
-
-    case FUNC_BUTTON_PRESSED:
-      break;
-
     case FUNC_ACTIVE:
       result = true;
       break;
@@ -589,3 +559,4 @@ bool Xdrv54(uint32_t function)
 }
 
 #endif  // defined(USE_LVGL) && defined(USE_UNIVERSAL_DISPLAY)
+#endif  // ESP32
