@@ -1366,4 +1366,17 @@ https://rya.nc/tasmota-fingerprint.html"
   #endif
 #endif // USE_LVGL && USE_LVGL_FREETYPE
 
+/*********************************************************************************************\
+ * Post-process I2S
+\*********************************************************************************************/
+
+#if defined(USE_I2S_ALL)
+  #define USE_I2S
+  #define USE_I2S_AUDIO
+  #define USE_I2S_MIC
+  #define USE_SHINE
+  #define MP3_MIC_STREAM
+  #define USE_I2S_AUDIO_BERRY
+#endif // USE_I2S_ALL
+
 #endif  // _MY_USER_CONFIG_H_
