@@ -493,7 +493,9 @@ void setup(void) {
     TasConsole.println();
     AddLog(LOG_LEVEL_INFO, PSTR("CMD: Using USB CDC"));
   } else {
+    #if SOC_USB_SERIAL_JTAG_SUPPORTED  // Not S2
     HWCDCSerial.~HWCDC();       // not needed, deinit CDC
+    #endif  // SOC_USB_SERIAL_JTAG_SUPPORTED
     // Init command serial console preparing for AddLog use
     Serial.begin(TasmotaGlobal.baudrate);
     Serial.println();
