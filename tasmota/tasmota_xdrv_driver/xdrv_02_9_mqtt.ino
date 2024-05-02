@@ -1986,7 +1986,6 @@ const char HTTP_FORM_MQTT2[] PROGMEM =
 
 void HandleMqttConfiguration(void)
 {
-// #ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
   if (!HttpCheckPriviledgedAccess()) { return; }
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_MQTT));
@@ -2031,7 +2030,6 @@ void MqttSaveSettings(void) {
   cmnd += Webserver->hasArg(F("b3"));  // SetOption103 - Enable MQTT TLS
 #endif
   ExecuteWebCommand((char*)cmnd.c_str());
-// #endif // FIRMWARE_MINIMAL
 }
 #endif  // USE_WEBSERVER
 
