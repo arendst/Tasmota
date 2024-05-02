@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
 - Berry `web_add_handler` called before `Webserver` is initialized
 - Put back wifi IPv6 workaround
 - Berry `math.inf`, `math.isinf()` and fixed json ouput for `inf` and `nan`
+- `EthType` for Core3
 
 ### Removed
 - LVGL disabled vector graphics
