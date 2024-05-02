@@ -96,7 +96,13 @@ const uint8_t eth_type_xtable[] = {
   ETH_PHY_TLK110,       //  1 = TLK110/IP101
   ETH_PHY_RTL8201,      //  2 = RTL8201
   ETH_PHY_DP83848,      //  3 = DP83848
+
+#if CONFIG_ETH_SPI_ETHERNET_DM9051
   ETH_PHY_DM9051  | ETH_USES_SPI, //  4 = 10 = DM9051
+#else
+  0,                    //  4 = 10 = DM9051
+#endif
+
   ETH_PHY_KSZ8081,      //  5 = KSZ8081
   ETH_PHY_KSZ8041,      //  6 = KSZ8041
   ETH_PHY_JL1101,       //  7 = JL1101
@@ -105,13 +111,29 @@ const uint8_t eth_type_xtable[] = {
   0,                    //  1 = TLK110/IP101
   0,                    //  2 = RTL8201
   0,                    //  3 = DP83848
+  
+#if CONFIG_ETH_SPI_ETHERNET_DM9051
   ETH_PHY_DM9051  | ETH_USES_SPI, //  4 = 10 = DM9051
+#else
+  0,                    //  4 = 10 = DM9051
+#endif
+
   0,                    //  5 = KSZ8081
   0,                    //  6 = KSZ8041
   0,                    //  7 = JL1101
 #endif // CONFIG_ETH_USE_ESP32_EMAC
+
+#if CONFIG_ETH_SPI_ETHERNET_W5500
   ETH_PHY_W5500   | ETH_USES_SPI,     //  8 = W5500
+#else
+  0,                    //  8 = W5500
+#endif
+
+#if CONFIG_ETH_SPI_ETHERNET_KSZ8851SNL
   ETH_PHY_KSZ8851 | ETH_USES_SPI,     //  9 = KSZ8851
+#else
+  0,                    //  9 = KSZ8851
+#endif
 };
 char eth_hostname[sizeof(TasmotaGlobal.hostname)];
 uint8_t eth_config_change;

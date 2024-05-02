@@ -29,6 +29,7 @@ All notable changes to this project will be documented in this file.
 - Put back wifi IPv6 workaround
 - Berry `math.inf`, `math.isinf()` and fixed json ouput for `inf` and `nan`
 - `EthType` for Core3
+- Compilation of Ethernet when SPI drivers are disabled
 
 ### Removed
 - LVGL disabled vector graphics
