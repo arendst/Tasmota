@@ -356,7 +356,8 @@ const be_const_member_t lv_gpio_constants[] = {
     { "ZIGBEE_RST", (int32_t) GPIO_ZIGBEE_RST },
     { "ZIGBEE_RX", (int32_t) GPIO_ZIGBEE_RX },
     { "ZIGBEE_TX", (int32_t) GPIO_ZIGBEE_TX },
-
+    { "MKSKYBLU_TX", (int32_t) GPIO_MKSKYBLU_TX },
+    { "MKSKYBLU_TR", (int32_t) GPIO_MKSKYBLU_RX },
 };
 
 const size_t lv_gpio_constants_size = sizeof(lv_gpio_constants)/sizeof(lv_gpio_constants[0]);

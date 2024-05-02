@@ -979,6 +979,8 @@
 #define D_SENSOR_BIOPDU_BIT    "BioPDU Bit"
 #define D_SENSOR_LOX_O2_RX     "LoxO2 RX"
 #define D_GPIO_MAGIC_SWITCH    "MagicSwitch"
+#define D_GPIO_MKSKYBLU_TX     "MkSkyBlu Tx"
+#define D_GPIO_MKSKYBLU_RX     "MkSkyBlu Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"

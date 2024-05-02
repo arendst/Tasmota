@@ -220,6 +220,7 @@ enum UserSelectablePins {
   GPIO_TS_SPI_CS, GPIO_TS_RST, GPIO_TS_IRQ, // SPI for Universal Touch Screen
   GPIO_RN2XX3_TX, GPIO_RN2XX3_RX, GPIO_RN2XX3_RST,  // RN2XX3 LoRaWan node Serial interface
   GPIO_TCP_TX_EN,                       // TCP to serial bridge, EN pin
+  GPIO_MKSKYBLU_TX, GPIO_MKSKYBLU_RX,   // MakeSkyBlue solar charge controller
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -487,6 +488,7 @@ const char kSensorNames[] PROGMEM =
   D_GPIO_TS_SPI_CS "|" D_GPIO_TS_RST "|" D_GPIO_TS_IRQ "|"
   D_GPIO_RN2XX3_TX "|" D_GPIO_RN2XX3_RX "|" D_GPIO_RN2XX3_RST "|"
   D_SENSOR_TCP_TXD_EN "|"
+  D_GPIO_MKSKYBLU_TX "|" D_GPIO_MKSKYBLU_RX "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -966,6 +968,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_BL6523
   AGPIO(GPIO_BL6523_TX),                // BL6523 based Watt meter Serial interface
   AGPIO(GPIO_BL6523_RX),                // BL6523 based Watt meter Serial interface
+#endif
+#ifdef USE_MAKE_SKY_BLUE
+  AGPIO(GPIO_MKSKYBLU_TX),
+  AGPIO(GPIO_MKSKYBLU_RX),
 #endif
 #endif  // USE_ENERGY_SENSOR
 
