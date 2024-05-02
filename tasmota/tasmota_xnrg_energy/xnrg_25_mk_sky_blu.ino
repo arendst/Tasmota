@@ -47,52 +47,6 @@
  * 
 \*********************************************************************************************/
 
-/* Integration proposal : */
-/* 
-tasmota_template.h
-    ...
-    enum UserSelectablePins {
-    ...
-    GPIO_MKSKYBLU_TX, GPIO_MKSKYBLU_RX,
-    ...
-    #ifdef USE_ENERGY_SENSOR
-    ...
-    #ifdef USE_MAKE_SKY_BLUE
-    AGPIO(GPIO_MKSKYBLU_TX),     // MakeSkyBlu Solar Charge Controller Serial interface
-    AGPIO(GPIO_MKSKYBLU_RX),     // MakeSkyBlu Solar Charge Controller Serial interface
-    #endif
-    ...
-    D_SENSOR_MKSKYBLU_TX "|" D_SENSOR_MKSKYBLU_RX "|"
-    ...
-
-be_gpio_defines.h (berry)
-    ...
-      { "MKSKYBLU_TX", (int32_t) GPIO_MKSKYBLU_TX },
-      { "MKSKYBLU_TR", (int32_t) GPIO_MKSKYBLU_RX },
-    ...
-
-lv_gpio_enum.h (tools)
-    ...
-    MKSKYBLU_TX = GPIO_MKSKYBLU_TX
-    MKSKYBLU_RX = GPIO_MKSKYBLU_RX
-    ...
-
-user_config_override.h
-(my_user_config.h)
-(tasmota_configurations.h)
-(tasmota_configurations_ESP32.h)
-    ...
-    #define USE_MAKE_SKY_BLUE    // Add Support for MakeSkyBlue Solar Charge Controller
-    ...
-
-\tasmota\language\*.h
-    ...
-    #define D_SENSOR_MKSKYBLU_TX     "MkSkyBlu Tx"
-    #define D_SENSOR_MKSKYBLU_RX     "MkSkyBlu Rx"
-    ...
- */
-
-
 #include <TasmotaSerial.h>
 
 #define XNRG_25                   25
@@ -299,7 +253,7 @@ bool MksbSend(uint8_t *data, uint8_t len)
   { // serial debug at LOG_LEVEL_DEBUG_MORE: Request bytes transmitted
     char hex_char[(len * 3) + 2];
     me.cntTx++;
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NRG: Serial Tx %s"), ToHex_P(data, len, hex_char, sizeof(hex_char), ' '));
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NRG: Serial Tx %s"), ToHex_P(data, len, hex_char, sizeof (hex_char), ' '));
   }
 #endif
 
@@ -320,7 +274,7 @@ bool MksbRequestStatusData(void)
                       0,
                       0,
                       0x55 }; // precalculated checksum
-  return MksbSend(data, sizeof(data));
+  return MksbSend(data, sizeof (data));
 }
 
 bool MksbRequestReadRegister(uint8_t reg)
@@ -333,8 +287,8 @@ bool MksbRequestReadRegister(uint8_t reg)
                       0,
                       0,
                       255 }; // placeholder checksum
-  data[sizeof(data)-1] = MksbChecksum(data, sizeof(data));
-  return MksbSend(data, sizeof(data));
+  data[sizeof(data)-1] = MksbChecksum(data, sizeof (data));
+  return MksbSend(data, sizeof (data));
 }
 
 bool MksbRequestWriteRegister(uint8_t reg, uint16_t value)
@@ -347,8 +301,8 @@ bool MksbRequestWriteRegister(uint8_t reg, uint16_t value)
                       0,
                       0,
                       255 }; // placeholder checksum
-  data[sizeof(data)-1] = MksbChecksum(data, sizeof(data));
-  return MksbSend(data, sizeof(data));
+  data[sizeof (data)-1] = MksbChecksum(data, sizeof (data));
+  return MksbSend(data, sizeof (data));
 }
 
 bool MksbRequestPowerOn(void)
@@ -359,8 +313,8 @@ bool MksbRequestPowerOn(void)
                       0,
                       0,
                       255 }; // placeholder checksum
-  data[sizeof(data)-1] = MksbChecksum(data, sizeof(data));
-  return MksbSend(data, sizeof(data));
+  data[sizeof (data)-1] = MksbChecksum(data, sizeof (data));
+  return MksbSend(data, sizeof (data));
 }
 
 bool MksbRequestPowerOff(void)
@@ -371,8 +325,8 @@ bool MksbRequestPowerOff(void)
                       2,
                       0,
                       255 }; // placeholder checksum
-  data[sizeof(data)-1] = MksbChecksum(data, sizeof(data));
-  return MksbSend(data, sizeof(data));
+  data[sizeof (data)-1] = MksbChecksum(data, sizeof (data));
+  return MksbSend(data, sizeof (data));
 }
 
 /********************************************************************************************/
@@ -405,10 +359,10 @@ void MksbParseStatusDataResponse(uint8_t len)
   me.temperature = (float)MksbExtractUint(me.pRxBuffer, 10, 11) / 10.0f;    // temperature     [0.1degC]
 
 #if _VARIANT_ENERGY_IMPORT == 1 /* import only once after restart: jitter only every restart */
-  if( !me.energy_for_import ) {
+  if ( !me.energy_for_import ) {
     me.energy_for_import++;
     u16 = MksbExtractUint(me.pRxBuffer, 12, 13);                             // solar energy    [1.0kWh]
-    if( u16 ) {
+    if ( u16 ) {
       me.energy_for_import = u16;
       Energy->import_active[0] = (float)u16;
       Energy->import_active[1] = 0.0f; // there is no energy generated from the battery
@@ -417,7 +371,7 @@ void MksbParseStatusDataResponse(uint8_t len)
   }
 #elif _VARIANT_ENERGY_IMPORT == 2 /* import every full kWh integer resolution: jitter during runtime */
   u16 = MksbExtractUint(me.pRxBuffer, 12, 13);                              // solar energy    [1.0kWh]
-  if( me.energy_for_import != u16 ) {
+  if ( me.energy_for_import != u16 ) {
     me.energy_for_import = u16;
     Energy->import_active[0] = (float)u16;
     Energy->import_active[1] = 0.0f; // there is no energy generated from the battery
@@ -510,7 +464,7 @@ void MksbSerialInput(void)
 #ifdef _WITH_SERIAL_DEBUGGING
       { // serial debug at LOG_LEVEL_DEBUG_MORE: Request bytes transmitted
         char hex_char[(me.rxCnt * 3) + 2];
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NRG: Serial Rx %s"), ToHex_P( (uint8_t *)me.pRxBuffer, me.rxCnt, hex_char, sizeof(hex_char), ' '));
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NRG: Serial Rx %s"), ToHex_P( (uint8_t *)me.pRxBuffer, me.rxCnt, hex_char, sizeof (hex_char), ' '));
       }
 #endif
     if ( me.rxCnt >= 6) { // shortest response
@@ -554,7 +508,7 @@ void MksbEverySecond(void)
 
   if (me.timeout) { // busy, waiting for answer
     me.timeout--;
-    if( me.timeout == 0 ) {
+    if ( me.timeout == 0 ) {
       MKSB_COM_RX_IncrementCnt(MKSB_COM_ERR_RX_TIMEOUT);
     }
   } else { // available
@@ -572,8 +526,8 @@ void MksbEverySecond(void)
       AddLog(LOG_LEVEL_INFO, PSTR("NRG: Serial Tx %u, Rx-good %u"), 
         me.cntTx, 
         me.cntRx[MKSB_COM_RX_GOOD] );
-      for( i = 1; i < MKSB_COM_RX_COUNTER; i++ ) { // check all errors
-        if( me.cntRx[i] ) { // reports only if there are errors 
+      for ( i = 1; i < MKSB_COM_RX_COUNTER; i++ ) { // check all errors
+        if ( me.cntRx[i] ) { // reports only if there are errors 
           AddLog(LOG_LEVEL_ERROR, PSTR("NRG: Serial Rx-error-%s %u"), 
             mksb_rx_counter_names[i], me.cntRx[i]);
         }
