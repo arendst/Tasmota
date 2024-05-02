@@ -1986,6 +1986,7 @@ const char HTTP_FORM_MQTT2[] PROGMEM =
 
 void HandleMqttConfiguration(void)
 {
+// #ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
   if (!HttpCheckPriviledgedAccess()) { return; }
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_CONFIGURE_MQTT));
@@ -2030,6 +2031,7 @@ void MqttSaveSettings(void) {
   cmnd += Webserver->hasArg(F("b3"));  // SetOption103 - Enable MQTT TLS
 #endif
   ExecuteWebCommand((char*)cmnd.c_str());
+// #endif // FIRMWARE_MINIMAL
 }
 #endif  // USE_WEBSERVER
 
@@ -2047,12 +2049,14 @@ bool Xdrv02(uint32_t function)
         MqttClient.loop();
         break;
 #ifdef USE_WEBSERVER
+#ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
       case FUNC_WEB_ADD_BUTTON:
         WSContentSend_P(HTTP_BTN_MENU_MQTT);
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer_on(PSTR("/" WEB_HANDLE_MQTT), HandleMqttConfiguration);
         break;
+#endif // FIRMWARE_MINIMAL
 #endif  // USE_WEBSERVER
       case FUNC_COMMAND:
         result = DecodeCommand(kMqttCommands, MqttCommand, kMqttSynonyms);
