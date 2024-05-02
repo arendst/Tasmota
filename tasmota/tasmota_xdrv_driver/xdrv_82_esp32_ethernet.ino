@@ -78,7 +78,7 @@
 #endif
 
 #ifndef ETH_TYPE
-#define ETH_TYPE          0                      // 0 = LAN8720, 1 = TLK110/IP101, 2 = RTL8201, 3 = DP83848, 4 = DM9051, 5 = KSZ8081, 6 = KSZ8041, 7 = JL1101, 8 = W5500, 9 = KSZ8851
+#define ETH_TYPE          0                      // 0 = LAN8720, 1 = TLK110/IP101, 2 = RTL8201, 3 = DP83848, 4 = reserved, 5 = KSZ8081, 6 = KSZ8041, 7 = JL1101, 8 = W5500, 9 = KSZ8851, 10 = DM9051
 #endif
 
 #ifndef ETH_CLKMODE
