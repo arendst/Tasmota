@@ -985,6 +985,7 @@ void SettingsDefaultSet2(void) {
   flag.stop_flash_rotate |= APP_FLASH_CYCLE;
   flag.global_state |= APP_ENABLE_LEDLINK;
   flag3.sleep_normal |= APP_NORMAL_SLEEP;
+#ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
   flag3.no_power_feedback |= APP_NO_RELAY_SCAN;
   flag3.fast_power_cycle_disable |= APP_DISABLE_POWERCYCLE;
   flag3.bootcount_update |= DEEPSLEEP_BOOTCOUNT;
@@ -993,13 +994,12 @@ void SettingsDefaultSet2(void) {
   Settings->param[P_BACKLOG_DELAY] = MIN_BACKLOG_DELAY;
   Settings->param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;  // SetOption36
   Settings->param[P_RGB_REMAP] = RGB_REMAP_RGBW;
-  Settings->sleep = APP_SLEEP;
-  if (Settings->sleep < 50) {
-    Settings->sleep = 50;                // Default to 50 for sleep, for now
-  }
+#endif // FIRMWARE_MINIMAL
+  Settings->sleep = TASMOTA_SLEEP;
   Settings->battery_level_percent = 101;
 
   // Module
+#ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
   flag.interlock |= APP_INTERLOCK_MODE;
   Settings->interlock[0] = APP_INTERLOCK_GROUP_1;
   Settings->interlock[1] = APP_INTERLOCK_GROUP_2;
@@ -1007,12 +1007,15 @@ void SettingsDefaultSet2(void) {
   Settings->interlock[3] = APP_INTERLOCK_GROUP_4;
   Settings->module = MODULE;
   Settings->fallback_module = FALLBACK_MODULE;
+#endif // FIRMWARE_MINIMAL
   ModuleDefault(WEMOS);
 //  for (uint32_t i = 0; i < nitems(Settings->my_gp.io); i++) { Settings->my_gp.io[i] = GPIO_NONE; }
   SettingsUpdateText(SET_FRIENDLYNAME1, PSTR(FRIENDLY_NAME));
+#ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
   SettingsUpdateText(SET_FRIENDLYNAME2, PSTR(FRIENDLY_NAME"2"));
   SettingsUpdateText(SET_FRIENDLYNAME3, PSTR(FRIENDLY_NAME"3"));
   SettingsUpdateText(SET_FRIENDLYNAME4, PSTR(FRIENDLY_NAME"4"));
+#endif // FIRMWARE_MINIMAL
   #ifdef DEVICE_NAME
   SettingsUpdateText(SET_DEVICENAME, PSTR(DEVICE_NAME));
   #else
@@ -1021,6 +1024,7 @@ void SettingsDefaultSet2(void) {
   SettingsUpdateText(SET_OTAURL, PSTR(OTA_URL));
 
   // Power
+#ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
   flag.save_state |= SAVE_STATE;
   Settings->power = APP_POWER;
   Settings->poweronstate = APP_POWERON_STATE;
@@ -1034,6 +1038,7 @@ void SettingsDefaultSet2(void) {
   Settings->pulse_timer[0] = APP_PULSETIME;
 //  for (uint32_t i = 1; i < MAX_PULSETIMERS; i++) { Settings->pulse_timer[i] = 0; }
   Settings->param[P_BISTABLE_PULSE] = APP_BISTABLE_PULSE;
+#endif // FIRMWARE_MINIMAL
 
   // Serial
   Settings->serial_config = TS_SERIAL_8N1;
@@ -1079,13 +1084,17 @@ void SettingsDefaultSet2(void) {
   flag5.wifi_no_sleep |= WIFI_NO_SLEEP;
 
   // Syslog
+#ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
   SettingsUpdateText(SET_SYSLOG_HOST, PSTR(SYS_LOG_HOST));
   Settings->syslog_port = SYS_LOG_PORT;
   Settings->syslog_level = SYS_LOG_LEVEL;
+#endif // FIRMWARE_MINIMAL
 
   // Webserver
+#ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
   flag2.emulation |= EMULATION;
   flag4.alexa_gen_1 |= EMULATION_HUE_1ST_GEN;
+#endif // FIRMWARE_MINIMAL
   flag3.gui_hostname_ip |= GUI_SHOW_HOSTNAME;
   flag3.mdns_enabled |= MDNS_ENABLED;
   Settings->webserver = WEB_SERVER;
@@ -1097,7 +1106,9 @@ void SettingsDefaultSet2(void) {
 #else
   flag5.disable_referer_chk |= true;
 #endif
+
   // Button
+#ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
   flag.button_restrict |= KEY_DISABLE_MULTIPRESS;
   flag.button_swap |= KEY_SWAP_DOUBLE_PRESS;
   flag.button_single |= KEY_ONLY_SINGLE_PRESS;
@@ -1105,11 +1116,15 @@ void SettingsDefaultSet2(void) {
 #if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
   Settings->touch_threshold = ESP32_TOUCH_THRESHOLD;
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
+#endif // FIRMWARE_MINIMAL
 
   // Switch
+#ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
   for (uint32_t i = 0; i < MAX_SWITCHES_SET; i++) { Settings->switchmode[i] = SWITCH_MODE; }
+#endif // FIRMWARE_MINIMAL
 
   // MQTT
+#ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
   flag.mqtt_enabled |= MQTT_USE;
   flag.mqtt_response |= MQTT_RESULT_COMMAND;
   flag.mqtt_offline |= MQTT_LWT_MESSAGE;
@@ -1156,8 +1171,10 @@ void SettingsDefaultSet2(void) {
   Settings->mqtt_keepalive = MQTT_KEEPALIVE;
   Settings->mqtt_socket_timeout = MQTT_SOCKET_TIMEOUT;
   Settings->mqtt_wifi_timeout = MQTT_WIFI_CLIENT_TIMEOUT / 100;
+#endif // FIRMWARE_MINIMAL
 
   // Energy
+#ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
   flag.no_power_on_check |= ENERGY_VOLTAGE_ALWAYS;
   flag2.current_resolution |= 3;
 //  flag2.voltage_resolution |= 0;
@@ -1205,19 +1222,25 @@ void SettingsDefaultSet2(void) {
 //  memset((char*)&Settings->energy_usage, 0x00, sizeof(Settings->energy_usage));
   memset((char*)&RtcSettings.energy_usage, 0x00, sizeof(RtcSettings.energy_usage));
   Settings->param[P_OVER_TEMP] = ENERGY_OVERTEMP;
+#endif // FIRMWARE_MINIMAL
 
   // IRRemote
+#ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
   flag.ir_receive_decimal |= IR_DATA_RADIX;
   flag3.receive_raw |= IR_ADD_RAW_DATA;
   Settings->param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
   Settings->param[P_IR_TOLERANCE] = IR_RCV_TOLERANCE;
+#endif // FIRMWARE_MINIMAL
 
   // RF Bridge
+#ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
   flag.rf_receive_decimal |= RF_DATA_RADIX;
 //  for (uint32_t i = 0; i < 17; i++) { Settings->rf_code[i][0] = 0; }
   memcpy_P(Settings->rf_code[0], kDefaultRfCode, 9);
+#endif // FIRMWARE_MINIMAL
 
   // Domoticz
+#ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
   Settings->domoticz_update_timer = DOMOTICZ_UPDATE_TIMER;
 //  for (uint32_t i = 0; i < MAX_DOMOTICZ_IDX; i++) {
 //    Settings->domoticz_relay_idx[i] = 0;
@@ -1227,8 +1250,10 @@ void SettingsDefaultSet2(void) {
 //  for (uint32_t i = 0; i < MAX_DOMOTICZ_SNS_IDX; i++) {
 //    Settings->domoticz_sensor_idx[i] = 0;
 //  }
+#endif // FIRMWARE_MINIMAL
 
   // Sensor
+#ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
   flag.temperature_conversion |= TEMP_CONVERSION;
   flag.pressure_conversion |= PRESSURE_CONVERSION;
   flag2.pressure_resolution |= PRESSURE_RESOLUTION;
@@ -1269,6 +1294,7 @@ void SettingsDefaultSet2(void) {
   flag4.white_blend_mode |= LIGHT_WHITE_BLEND_MODE;
   flag4.virtual_ct |= LIGHT_VIRTUAL_CT;
   flag4.virtual_ct_cw |= LIGHT_VIRTUAL_CT_CW;
+#endif // FIRMWARE_MINIMAL
 
   Settings->pwm_frequency = PWM_FREQ;
   Settings->pwm_range = PWM_RANGE;
@@ -1285,6 +1311,7 @@ void SettingsDefaultSet2(void) {
 //  Settings->light_wakeup = 0;
   Settings->light_pixels = WS2812_LEDS;
 //  Settings->light_rotation = 0;
+#ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
   Settings->ws_width[WS_SECOND] = 1;
   Settings->ws_color[WS_SECOND][WS_RED] = 255;
 //  Settings->ws_color[WS_SECOND][WS_GREEN] = 0;
@@ -1305,8 +1332,10 @@ void SettingsDefaultSet2(void) {
 
   // Device Groups
   *(uint32_t *)&Settings->device_group_tie = 0x04030201;
+#endif // FIRMWARE_MINIMAL
 
   // Display
+#ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
 //  Settings->display_model = 0;
   Settings->display_mode = 0;
   Settings->display_refresh = 2;
@@ -1325,6 +1354,7 @@ void SettingsDefaultSet2(void) {
   Settings->display_address[5] = MTX_ADDRESS6;
   Settings->display_address[6] = MTX_ADDRESS7;
   Settings->display_address[7] = MTX_ADDRESS8;
+#endif // FIRMWARE_MINIMAL
 
   // Time
   if (((APP_TIMEZONE > -14) && (APP_TIMEZONE < 15)) || (99 == APP_TIMEZONE)) {
@@ -1340,6 +1370,8 @@ void SettingsDefaultSet2(void) {
   for (uint32_t i = 0; i < MAX_NTP_SERVERS; i++) {
     SettingsUpdateText(SET_NTPSERVER1 +i, ReplaceCommaWithDot(SettingsText(SET_NTPSERVER1 +i)));
   }
+
+#ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
   Settings->latitude = (int)((double)LATITUDE * 1000000);
   Settings->longitude = (int)((double)LONGITUDE * 1000000);
   SettingsResetStd();
@@ -1357,13 +1389,17 @@ void SettingsDefaultSet2(void) {
   }
 
   Settings->novasds_startingoffset = STARTING_OFFSET;
+#endif // FIRMWARE_MINIMAL
 
   SettingsDefaultWebColor();
 
   memset(&Settings->sensors, 0xFF, 32);  // Enable all possible sensors
+#ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
   SettingsEnableAllI2cDrivers();
+#endif // FIRMWARE_MINIMAL
 
   // Tuya
+#ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
   flag3.tuya_apply_o20 |= TUYA_SETOPTION_20;
   flag5.tuya_allow_dimmer_0 |= TUYA_ALLOW_DIMMER_0;
   flag5.tuya_exclude_from_mqtt |= TUYA_SETOPTION_137;
@@ -1387,6 +1423,7 @@ void SettingsDefaultSet2(void) {
   #ifdef BLE_ESP32_ENABLE
   flag5.mi32_enable |= BLE_ESP32_ENABLE;
   #endif
+#endif // FIRMWARE_MINIMAL
 
   Settings->flag = flag;
   Settings->flag2 = flag2;

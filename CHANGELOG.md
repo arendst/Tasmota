@@ -18,6 +18,9 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - uDisplay fast drawing on RGB displays
 - HDMI CEC synchronously sends messages
+- Zigbee startup event triggered after plugins are loaded
+- Reduced safeboot size by 2.9KB
+- Changed internal macro `APP_SLEEP` to `TASMOTA_SLEEP` to specify default sleep in ms
 
 ### Fixed
 - HASPmota `align` attribute and expand PNG cache
@@ -27,6 +30,8 @@ All notable changes to this project will be documented in this file.
 - Berry `web_add_handler` called before `Webserver` is initialized
 - Put back wifi IPv6 workaround
 - Berry `math.inf`, `math.isinf()` and fixed json ouput for `inf` and `nan`
+- `EthType` for Core3
+- Compilation of Ethernet when SPI drivers are disabled
 
 ### Removed
 - LVGL disabled vector graphics

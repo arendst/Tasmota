@@ -532,14 +532,14 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     // Correctly configured and running, enable all Tasmota features
     // ======================================================================
   ZI_LABEL(ZIGBEE_LABEL_READY)
-    ZI_MQTT_STATE(ZIGBEE_STATUS_OK, kStarted)
-    ZI_LOG(LOG_LEVEL_INFO, kZigbeeStarted)
-    ZI_CALL(&Z_State_Ready, 1)                    // Now accept incoming messages
     ZI_CALL(&Z_Prepare_Storage, 0)
     ZI_CALL(&Z_Load_Devices, 0)
     ZI_CALL(&Z_Load_Data, 0)
     ZI_CALL(&Z_Set_Save_Data_Timer, 0)
     ZI_CALL(&Z_ZbAutoload, 0)
+    ZI_MQTT_STATE(ZIGBEE_STATUS_OK, kStarted)
+    ZI_LOG(LOG_LEVEL_INFO, kZigbeeStarted)
+    ZI_CALL(&Z_State_Ready, 1)                    // Now accept incoming messages
     ZI_CALL(&Z_Query_Bulbs, 0)
 
   ZI_LABEL(ZIGBEE_LABEL_MAIN_LOOP)
@@ -979,14 +979,14 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_SEND(ZBS_SET_MCAST_ENTRY)        ZI_WAIT_RECV(2500, ZBR_SET_MCAST_ENTRY)
 
   // ZI_LABEL(ZIGBEE_LABEL_READY)
-    ZI_MQTT_STATE(ZIGBEE_STATUS_OK, kStarted)
-    ZI_LOG(LOG_LEVEL_INFO, kZigbeeStarted)
-    ZI_CALL(&Z_State_Ready, 1)                    // Now accept incoming messages
     ZI_CALL(&Z_Prepare_Storage, 0)
     ZI_CALL(&Z_Load_Devices, 0)
     ZI_CALL(&Z_Load_Data, 0)
     ZI_CALL(&Z_Set_Save_Data_Timer, 0)
     ZI_CALL(&Z_ZbAutoload, 0)
+    ZI_MQTT_STATE(ZIGBEE_STATUS_OK, kStarted)
+    ZI_LOG(LOG_LEVEL_INFO, kZigbeeStarted)
+    ZI_CALL(&Z_State_Ready, 1)                    // Now accept incoming messages
     ZI_CALL(&Z_Query_Bulbs, 0)
 
   ZI_LABEL(ZIGBEE_LABEL_MAIN_LOOP)
