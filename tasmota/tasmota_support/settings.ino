@@ -995,10 +995,7 @@ void SettingsDefaultSet2(void) {
   Settings->param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;  // SetOption36
   Settings->param[P_RGB_REMAP] = RGB_REMAP_RGBW;
 #endif // FIRMWARE_MINIMAL
-  Settings->sleep = APP_SLEEP;
-  if (Settings->sleep < 50) {
-    Settings->sleep = 50;                // Default to 50 for sleep, for now
-  }
+  Settings->sleep = TASMOTA_SLEEP;
   Settings->battery_level_percent = 101;
 
   // Module
