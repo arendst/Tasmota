@@ -1,6 +1,6 @@
 Import('env')
 
-build_flags = ''.join([element.replace("-D", " ") for element in env.GetProjectOption("build_flags")])
+build_flags = " ".join(env.GetProjectOption("build_flags"))
 
 #
 # Dump build environment (for debug)
