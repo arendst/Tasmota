@@ -17,6 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef FIRMWARE_SAFEBOOT
+
 #ifdef USE_ADC
 /*********************************************************************************************\
  * ADC support for ESP8266 GPIO17 (=PIN_A0) and ESP32 up to 8 channels on GPIO32 to GPIO39
@@ -932,3 +934,4 @@ bool Xsns02(uint32_t function) {
 }
 
 #endif  // USE_ADC
+#endif  // FIRMWARE_SAFEBOOT
