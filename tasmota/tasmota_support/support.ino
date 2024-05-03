@@ -611,16 +611,15 @@ String HexToString(uint8_t* data, uint32_t length) {
 // Converts a Hex string (case insensitive) into an array of bytes
 // Returns the number of bytes in the array, or -1 if an error occured
 // The `out` buffer must be at least half the size of hex string
-int32_t HexToBytes(const char* hex, uint8_t* out, size_t* outLen) {
+int32_t HexToBytes(const char* hex, uint8_t* out, size_t outLen) {
   size_t len = strlen_P(hex);
-  *outLen = 0;
   if (len % 2 != 0) {
     return -1;
   }
 
   size_t outLength = len / 2;
   
-  for(size_t i = 0; i < outLength; i++) {
+  for (size_t i = 0; i < outLength && i < outLen; i++) {
     char byte[3];
     byte[0] = hex[i*2];
     byte[1] = hex[i*2 + 1];

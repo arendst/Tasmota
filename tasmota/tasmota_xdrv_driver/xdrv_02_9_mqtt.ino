@@ -742,6 +742,25 @@ void MqttPublish(const char* topic, bool retained) {
   MqttPublishPayload(topic, ResponseData(), 0, retained);
 }
 
+void MqttPublish(const char* topic, bool retained, bool binary) {
+  int32_t binary_length = 0;
+  char *response_data = ResponseData();
+  if (binary) {
+    // Binary data will be half of the size of a text packet
+    uint8_t binary_payload[MQTT_MAX_PACKET_SIZE / 2];
+    binary_length = HexToBytes(response_data, binary_payload, MQTT_MAX_PACKET_SIZE / 2);
+    if (binary_length == -1) {
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Invalid hex: %s"), response_data);
+    } else {
+      // Conversion was successful
+      MqttPublishPayload(topic, (const char *)binary_payload, binary_length, retained);
+    }
+  } else {
+    // Publish <topic> default ResponseData string with optional retained
+    MqttPublishPayload(topic, response_data, 0, retained);
+  }
+}
+
 void MqttPublish(const char* topic) {
   // Publish <topic> default ResponseData string no retained
   MqttPublish(topic, false);
@@ -1547,7 +1566,7 @@ void CmndPublish(void) {
       } else {
         ResponseClear();
       }
-      MqttPublish(stemp1, (XdrvMailbox.index == 2));
+      MqttPublish(stemp1, (XdrvMailbox.index == 2), (XdrvMailbox.index == 3));
       ResponseClear();
     }
   }
