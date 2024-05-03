@@ -190,7 +190,7 @@
 #if CONFIG_IDF_TARGET_ESP32
 #if CONFIG_FREERTOS_UNICORE
   #undef USE_MQTT_TLS
-//  #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge console Tee (+2k code)
+//  #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge console Tee (+4.5k code)
   #define USE_ETHERNET
 #endif  // CONFIG_FREERTOS_UNICORE
 #endif  // CONFIG_IDF_TARGET_ESP32
