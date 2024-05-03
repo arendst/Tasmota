@@ -812,7 +812,9 @@ void CmndStatus(void)
   if (payload > MAX_STATUS) { return; }  // {"Command":"Error"}
   if (!Settings->flag.mqtt_enabled && (6 == payload)) { return; }  // SetOption3 - Enable MQTT
   if (!TasmotaGlobal.energy_driver && (9 == payload)) { return; }
+  #ifndef FIRMWARE_SAFEBOOT
   if (!CrashFlag() && (12 == payload)) { return; }
+  #endif // FIRMWARE_SAFEBOOT
   if (!Settings->flag3.shutter_mode && (13 == payload)) { return; }
 
   char stemp[200];
@@ -1042,6 +1044,7 @@ void CmndStatus(void)
     CmndStatusResponse(11);
   }
 
+#ifndef FIRMWARE_SAFEBOOT
   if (CrashFlag()) {
     if ((0 == payload) || (12 == payload)) {
       Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS12_STATUS "\":"));
@@ -1050,6 +1053,7 @@ void CmndStatus(void)
       CmndStatusResponse(12);
     }
   }
+#endif // FIRMWARE_SAFEBOOT
 
 #ifdef USE_SHUTTER
   if ((0 == payload) || (13 == payload)) {
@@ -1252,6 +1256,7 @@ void CmndRestart(void)
     TasmotaGlobal.restart_deepsleep = true;
     ResponseCmndChar(PSTR("Go to sleep"));
     break;
+#ifndef FIRMWARE_SAFEBOOT
   case -1:
     CmndCrash();    // force a crash
     break;
@@ -1261,6 +1266,7 @@ void CmndRestart(void)
   case -3:
     CmndBlockedLoop();
     break;
+#endif // FIRMWARE_SAFEBOOT
   case 99:
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
     EspRestart();
