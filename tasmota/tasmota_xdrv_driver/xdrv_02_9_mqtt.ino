@@ -1018,9 +1018,12 @@ void MqttConnected(void) {
       }
 #endif  // USE_WEBSERVER
       Response_P(PSTR("{\"Info3\":{\"" D_JSON_RESTARTREASON "\":"));
+#ifndef FIRMWARE_SAFEBOOT
       if (CrashFlag()) {
         CrashDump();
-      } else {
+      } else
+#endif // FIRMWARE_SAFEBOOT
+      {
         ResponseAppend_P(PSTR("\"%s\""), GetResetReason().c_str());
       }
       ResponseAppend_P(PSTR(",\"" D_JSON_BOOTCOUNT "\":%d}}"), Settings->bootcount +1);

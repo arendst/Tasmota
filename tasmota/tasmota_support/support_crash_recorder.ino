@@ -17,6 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef FIRMWARE_SAFEBOOT
+
 // Generate a crash to test the crash recorder
 void CmndCrash(void)
 {
@@ -359,5 +361,7 @@ void CrashDump(void)
 {
 }
 
-#endif 
 #endif
+#endif
+
+#endif  //  FIRMWARE_SAFEBOOT
