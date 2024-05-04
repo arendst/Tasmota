@@ -742,7 +742,7 @@ void MqttPublish(const char* topic, bool retained) {
   MqttPublishPayload(topic, ResponseData(), 0, retained);
 }
 
-void MqttPublish(const char* topic, bool retained, bool binary) {
+void MqttPublishBinary(const char* topic, bool retained, bool binary) {
   int32_t binary_length = 0;
   char *response_data = ResponseData();
   if (binary) {
@@ -1569,7 +1569,12 @@ void CmndPublish(void) {
       } else {
         ResponseClear();
       }
-      MqttPublish(stemp1, (XdrvMailbox.index == 2), (XdrvMailbox.index == 3));
+#ifndef FIRMWARE_MINIMAL
+      // Publish3 binary is not enabled in MINIMAL
+      MqttPublishBinary(stemp1, (XdrvMailbox.index == 2), (XdrvMailbox.index == 3));
+#else
+      MqttPublish(stemp1, (XdrvMailbox.index == 2));
+#endif
       ResponseClear();
     }
   }

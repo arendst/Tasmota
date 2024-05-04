@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - TCP Tx En GPIO type
 - Berry `webserver.content_close()`
 - HASPmota demo of Renaissance Watch for 480x480 displays
+- ``Publish3`` to send binary data encoded as Hex, disabled in safeboot
 
 ### Breaking Changed
 - ESP32-C3 OTA binary name from `tasmota32c3cdc.bin` to `tasmota32c3.bin` with USB HWCDC and fallback to serial (#21212)
