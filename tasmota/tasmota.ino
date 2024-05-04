@@ -473,9 +473,9 @@ void setup(void) {
 #ifdef USE_USB_CDC_CONSOLE
 
   bool is_connected_to_USB = false;
-#if SOC_USB_SERIAL_JTAG_SUPPORTED  // Not S2
   TasConsole.setRxBufferSize(INPUT_BUFFER_SIZE);
-  TasConsole.begin(115200); // always start CDC to test plugged cable
+  TasConsole.begin(115200);           // always start CDC to test plugged cable
+#if SOC_USB_SERIAL_JTAG_SUPPORTED  // Not S2
   for (uint32_t i = 0; i < 5; i++) {  // wait up to 250 ms - maybe a shorter time is enough
       is_connected_to_USB = HWCDCSerial.isPlugged();
       if (is_connected_to_USB) { break; }
