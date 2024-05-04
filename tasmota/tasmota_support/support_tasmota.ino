@@ -1021,7 +1021,7 @@ bool MqttShowSensor(bool call_show_sensor) {
 
   GetSensorValues();
 
-#ifndef FIRMWARE_SAFEBOOT
+#ifndef FIRMWARE_MINIMAL
   if (TasmotaGlobal.global_update && Settings->flag.mqtt_add_global_info) {  // SetOption2 (MQTT) Add global temperature/humidity/pressure info to JSON sensor message
     if ((TasmotaGlobal.humidity > 0) || !isnan(TasmotaGlobal.temperature_celsius) || (TasmotaGlobal.pressure_hpa != 0)) {
       uint32_t add_comma = 0;
@@ -1056,7 +1056,7 @@ bool MqttShowSensor(bool call_show_sensor) {
       ResponseJsonEnd();
     }
   }
-#endif // FIRMWARE_SAFEBOOT
+#endif // FIRMWARE_MINIMAL
 
   bool json_data_available = (ResponseLength() - json_data_start);
   MqttAppendSensorUnits();

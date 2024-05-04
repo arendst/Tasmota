@@ -1018,11 +1018,11 @@ void MqttConnected(void) {
       }
 #endif  // USE_WEBSERVER
       Response_P(PSTR("{\"Info3\":{\"" D_JSON_RESTARTREASON "\":"));
-#ifndef FIRMWARE_SAFEBOOT
+#ifndef FIRMWARE_MINIMAL
       if (CrashFlag()) {
         CrashDump();
       } else
-#endif // FIRMWARE_SAFEBOOT
+#endif // FIRMWARE_MINIMAL
       {
         ResponseAppend_P(PSTR("\"%s\""), GetResetReason().c_str());
       }

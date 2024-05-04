@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef FIRMWARE_SAFEBOOT
+#ifndef FIRMWARE_MINIMAL
 
 #ifdef USE_ADC
 /*********************************************************************************************\
@@ -934,4 +934,4 @@ bool Xsns02(uint32_t function) {
 }
 
 #endif  // USE_ADC
-#endif  // FIRMWARE_SAFEBOOT
+#endif  // FIRMWARE_MINIMAL
