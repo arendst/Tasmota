@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Zigbee startup event triggered after plugins are loaded
 - Reduced safeboot size by 2.9KB
 - Changed internal macro `APP_SLEEP` to `TASMOTA_SLEEP` to specify default sleep in ms
+- ESP32 Core3 platform update from 2024.04.12 to 2024.05.10 (#21347)
 
 ### Fixed
 - HASPmota `align` attribute and expand PNG cache
