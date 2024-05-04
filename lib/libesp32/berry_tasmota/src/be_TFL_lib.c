@@ -27,9 +27,6 @@ BE_FUNC_CTYPE_DECLARE(be_TFL_input, "b", "@(bytes)~");
 extern bbool be_TFL_output(struct bvm *vm, const uint8_t *buf, size_t size);
 BE_FUNC_CTYPE_DECLARE(be_TFL_output, "b", "@(bytes)~");
 
-extern void be_TFL_rec(struct bvm *vm, const char* filename, size_t seconds);
-BE_FUNC_CTYPE_DECLARE(be_TFL_rec, "", "@si");
-
 #include "be_fixed_TFL.h"
 
 /* @const_object_info_begin
@@ -40,7 +37,6 @@ module TFL (scope: global) {
   output,       ctype_func(be_TFL_output)
   log,          ctype_func(be_TFL_log)
   stats,        ctype_func(be_TFL_stats)
-  rec,          ctype_func(be_TFL_rec)
 }
 @const_object_info_end */
 
