@@ -380,7 +380,7 @@ struct TasmotaGlobal_t {
 #ifdef USE_BERRY
   bool berry_fast_loop_enabled = false;     // is Berry fast loop enabled, i.e. control is passed at each loop iteration
 #endif  // USE_BERRY
-} TasmotaGlobal;
+} TasmotaGlobal = { 0 };
 
 TSettings* Settings = nullptr;
 
@@ -418,7 +418,6 @@ void setup(void) {
   EmergencyReset();
 #endif  // USE_EMERGENCY_RESET
 
-  memset(&TasmotaGlobal, 0, sizeof(TasmotaGlobal));
   TasmotaGlobal.baudrate = APP_BAUDRATE;
   TasmotaGlobal.seriallog_timer = SERIALLOG_TIMER;
   TasmotaGlobal.temperature_celsius = NAN;
@@ -454,7 +453,7 @@ void setup(void) {
   // Init settings and logging preparing for AddLog use
 #ifdef PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
   ESP.setIramHeap();
-  Settings = (TSettings*)malloc(sizeof(TSettings));             // Allocate in "new" 16k heap space
+  Settings = (TSettings*)calloc(sizeof(TSettings), 1);          // Allocate in "new" 16k heap space
   TasmotaGlobal.log_buffer = (char*)malloc(LOG_BUFFER_SIZE);    // Allocate in "new" 16k heap space
   ESP.resetHeap();
   if (TasmotaGlobal.log_buffer == nullptr) {
@@ -465,7 +464,7 @@ void setup(void) {
   }
 #endif  // PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
   if (Settings == nullptr) {
-    Settings = (TSettings*)malloc(sizeof(TSettings));
+    Settings = (TSettings*)calloc(sizeof(TSettings), 1);
   }
 
 #ifdef ESP32
