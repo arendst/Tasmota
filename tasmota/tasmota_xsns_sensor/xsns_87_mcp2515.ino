@@ -63,10 +63,12 @@
 
 #ifndef MCP2515_BMS_CLIENT
   #define MCP2515_BMS_CLIENT
-  // Look for Freedom Won BMS data in CAN message
-  #ifndef MCP2515_BMS_FREEDWON
-    #define MCP2515_BMS_FREEDWON
-  #endif  // MCP2515_BMS_FREEDWON
+  // Look for SMA or Freedom Won BMS data in CAN message
+  // 11-Bit Identifiers
+  // 500kBit/sec
+  #ifndef MCP2515_BMS_SMA
+    #define MCP2515_BMS_SMA
+  #endif  // MCP2515_BMS_SMA
 #endif // MCP2515_BMS_CLIENT
 
 #include "mcp2515.h"
@@ -88,9 +90,11 @@
   #define BMS_FIRMWARE_VER     0x1000
   #define BMS_MANUFACTURER     0x2000
   #define BMS_SERIAL           0x4000
+  #define BMS_MODULES_OK       0x8000
+  #define BMS_CELL_VOLT_TEMP  0x10000
 
 struct BMS_Struct {
-  uint16_t  setFields; // Bitwise fields set list
+  uint32_t  setFields; // Bitwise fields set list
   char      name[17];
   uint16_t  stateOfCharge;
   uint16_t  stateOfHealth;
@@ -106,6 +110,14 @@ struct BMS_Struct {
   uint16_t  firmwareVer;
   char      manuf[9];
   char      serialNr[17];
+  uint16_t  nrModulesOk;
+  uint16_t  nrModulesBlockingCharge;
+  uint16_t  nrModulesBlocking;
+  uint16_t  nrModulesOffline;
+  uint16_t  minCellVolt;
+  uint16_t  maxCellVolt;
+  uint16_t  cellTempLow;
+  uint16_t  cellTempHigh;
 } bms;
 
 #endif
@@ -130,7 +142,7 @@ void MCP2515_FrameSizeError(uint8_t len, uint32_t id) {
 
 void MCP2515_Init(void) {
   if (PinUsed(GPIO_MCP2515_CS, GPIO_ANY) && TasmotaGlobal.spi_enabled) {
-    mcp2515 = new MCP2515(5);
+    mcp2515 = new MCP2515(Pin(GPIO_MCP2515_CS, GPIO_ANY));
     if (MCP2515::ERROR_OK != mcp2515->reset()) {
       AddLog(LOG_LEVEL_INFO, PSTR("CAN: Failed to reset module"));
       return;
@@ -143,12 +155,20 @@ void MCP2515_Init(void) {
       AddLog(LOG_LEVEL_INFO, PSTR("CAN: Failed to set normal mode"));
       return;
     }
-    AddLog(LOG_LEVEL_INFO, PSTR("CAN: Initialized"));
+    AddLog(LOG_LEVEL_INFO, PSTR("CAN: Initialized on GPIO%d"), Pin(GPIO_MCP2515_CS, GPIO_ANY));
+    Mcp2515.init_status = 1;
 
-#ifdef MCP2515_BMS_FREEDWON
-  // TODO: Filter CAN bus messages
-  //mcp2515->setFilterMask();
-  //mcp2515->setFilter();
+#ifdef MCP2515_BMS_SMA
+    /*
+    mcp2515->setFilterMask(MCP2515::MASK0, false, 0x0200);
+    mcp2515->setFilterMask(MCP2515::MASK1, false, 0x0200);
+    mcp2515->setFilter(MCP2515::RXF0, false, 0x7ff);
+    mcp2515->setFilter(MCP2515::RXF1, false, 0x7ff);
+    mcp2515->setFilter(MCP2515::RXF2, false, 0x7ff);
+    mcp2515->setFilter(MCP2515::RXF3, false, 0x7ff);
+    mcp2515->setFilter(MCP2515::RXF4, false, 0x7ff);
+    mcp2515->setFilter(MCP2515::RXF5, false, 0x7ff);
+    */
 #endif
   }
 }
@@ -165,8 +185,11 @@ void MCP2515_Read() {
     if (mcp2515->readMessage(&canFrame) == MCP2515::ERROR_OK) {
       Mcp2515.lastFrameRecv = TasmotaGlobal.uptime;
 #ifdef MCP2515_BMS_CLIENT
-#ifdef MCP2515_BMS_FREEDWON
+#ifdef MCP2515_BMS_SMA
     switch (canFrame.can_id) {
+      // Keep alive from inverter to BMS
+      case 0x305:
+        break;
       // Charge/Discharge parameters
       case 0x351:
         if (8 == canFrame.can_dlc) {
@@ -200,6 +223,9 @@ void MCP2515_Read() {
           MCP2515_FrameSizeError(canFrame.can_dlc, canFrame.can_id);
         }
         break;
+      // Alarms
+      case 0x35A:
+        break;
       // Manufacturer name
       case 0x35E:
         for (int i = 0; i < canFrame.can_dlc; i++) {
@@ -232,8 +258,28 @@ void MCP2515_Read() {
         break;
       // Modules status
       case 0x372:
+        if (4 == canFrame.can_dlc) {
+          bms.nrModulesOk             = (canFrame.data[1] << 8) | canFrame.data[0];
+          bms.nrModulesBlockingCharge = (canFrame.data[3] << 8) | canFrame.data[2];
+          bms.nrModulesBlocking       = (canFrame.data[5] << 8) | canFrame.data[4];
+          bms.nrModulesOffline        = (canFrame.data[7] << 8) | canFrame.data[6];
+          bms.setFields              |= BMS_MODULES_OK;
+        } else {
+          MCP2515_FrameSizeError(canFrame.can_dlc, canFrame.can_id);
+        }
+        break;
       // Min/Max cell voltage/temperature
       case 0x373:
+        if (4 == canFrame.can_dlc) {
+          bms.minCellVolt  = (canFrame.data[1] << 8) | canFrame.data[0];
+          bms.maxCellVolt  = (canFrame.data[3] << 8) | canFrame.data[2];
+          bms.cellTempLow  = (canFrame.data[5] << 8) | canFrame.data[4];
+          bms.cellTempHigh = (canFrame.data[7] << 8) | canFrame.data[6];
+          bms.setFields   |= BMS_CELL_VOLT_TEMP;
+        } else {
+          MCP2515_FrameSizeError(canFrame.can_dlc, canFrame.can_id);
+        }
+        break;
       // Min. cell voltage id string
       case 0x374:
       // Max. cell voltage id string
@@ -274,20 +320,19 @@ void MCP2515_Read() {
         if (canFrame.can_dlc > 0) {
           canMsg[(canFrame.can_dlc - 1) * 2 + 2] = 0;
         }
-        AddLog(LOG_LEVEL_DEBUG, PSTR("CAN: Received message 0x%s from ID 0x%x"), canMsg, (uint32_t)canFrame.can_id);
+        AddLog(LOG_LEVEL_INFO, PSTR("CAN: Received message 0x%s from ID 0x%x"), canMsg, (uint32_t)canFrame.can_id);
         break;
     }
-#endif // MCP2515_BMS_FREEDWON
+#endif // MCP2515_BMS_SMA
 #endif // MCP2515_BMS_CLIENT
     } else if (mcp2515->checkError()) {
       uint8_t errFlags = mcp2515->getErrorFlags();
-        mcp2515->clearRXnOVRFlags();
-        AddLog(LOG_LEVEL_DEBUG, PSTR("CAN: Received error %d"), errFlags);
-        break;
+      mcp2515->clearRXnOVRFlags();
+      AddLog(LOG_LEVEL_DEBUG, PSTR("CAN: Received error %d"), errFlags);
     }
   }
 
-#ifdef MCP2515_BMS_FREEDWON
+#ifdef MCP2515_BMS_SMA
   if (!(TasmotaGlobal.uptime%CAN_KEEP_ALIVE_SECS) && TasmotaGlobal.uptime>60) {
     canFrame.can_id  = 0x305;
     canFrame.can_dlc = 0;
@@ -393,6 +438,18 @@ void MCP2515_Show(bool Json) {
         char ampStr[6];
         dtostrf((float(bms.maxDischargeCurrent) / 10), 5, 1, ampStr);
         WSContentSend_PD(PSTR("{s}%s Max Discharge Current{m}%s " D_UNIT_AMPERE "{e}"), bms.manuf, ampStr);
+      }
+      if (bms.setFields & BMS_MODULES_OK) {
+        WSContentSend_PD(PSTR("{s}%s Modules OK{m}%d {e}"), bms.manuf, bms.nrModulesOk);
+        WSContentSend_PD(PSTR("{s}%s Modules Blocking Charge{m}%d {e}"), bms.manuf, bms.nrModulesBlockingCharge);
+        WSContentSend_PD(PSTR("{s}%s Modules Blocking{m}%d {e}"), bms.manuf, bms.nrModulesBlocking);
+        WSContentSend_PD(PSTR("{s}%s Modules Offline{m}%d {e}"), bms.manuf, bms.nrModulesOffline);
+      }
+      if (bms.setFields & BMS_CELL_VOLT_TEMP) {
+        WSContentSend_PD(PSTR("{s}%s Cell Voltage Min{m}%d " D_UNIT_MILLIVOLT "{e}"), bms.manuf, bms.minCellVolt);
+        WSContentSend_PD(PSTR("{s}%s Cell Voltage Max{m}%d " D_UNIT_MILLIVOLT "{e}"), bms.manuf, bms.maxCellVolt );
+        WSContentSend_PD(PSTR("{s}%s Cell Temp Low{m}%d " D_UNIT_KELVIN "{e}"), bms.manuf, bms.cellTempLow);
+        WSContentSend_PD(PSTR("{s}%s Cell Temp High{m}%d " D_UNIT_KELVIN "{e}"), bms.manuf, bms.cellTempHigh);
       }
 
     } else {
