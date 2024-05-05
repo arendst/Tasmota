@@ -44,6 +44,7 @@ All notable changes to this project will be documented in this file.
 - Berry `math.inf`, `math.isinf()` and fixed json ouput for `inf` and `nan` (#21304)
 - Compilation of Ethernet when SPI drivers are disabled (#21321)
 - Conflicting log_level definitions in NimBLE (#21337)
+- Avoid unwanted OTA upgrade when safeboot starts for the first time
 
 ### Removed
 - LVGL disabled vector graphics (#21242)

@@ -177,7 +177,7 @@ void QPCWrite(const void *pSettings, unsigned nSettingsLen) {
 }
 
 bool OtaFactoryRead(void) {
-  uint32_t pOtaLoader;
+  uint32_t pOtaLoader = 0;
   NvmLoad("otal", "otal", &pOtaLoader, sizeof(pOtaLoader));
   return pOtaLoader;
 }
