@@ -1,7 +1,7 @@
 /*
   xsns_33_qmc5883l.ino - QMC5883L 3-Axis Digital Compass sensor support for Tasmota
 
-  Copyright (C) 2022  Helge Scheunemann + fb-pilot 2024-2-18,2024-4-29
+  Copyright (C) 2022  Helge Scheunemann + fb-pilot
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
