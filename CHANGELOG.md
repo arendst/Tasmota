@@ -48,6 +48,7 @@ All notable changes to this project will be documented in this file.
 - Compilation of Ethernet when SPI drivers are disabled (#21321)
 - Conflicting log_level definitions in NimBLE (#21337)
 - Avoid unwanted OTA upgrade when safeboot starts for the first time
+- Matter broken NOCStruct types preventing pairing with HA
 
 ### Removed
 - LVGL disabled vector graphics (#21242)
