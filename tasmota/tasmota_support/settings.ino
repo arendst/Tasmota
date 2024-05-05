@@ -434,7 +434,7 @@ bool SettingsBufferAlloc(uint32_t upload_size) {
 
   }
 
-  if (!(settings_buffer = (uint8_t *)calloc(settings_size, 1))) {
+  if (!(settings_buffer = (uint8_t *)calloc(1, settings_size))) {
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_UPLOAD_ERR_2));  // Not enough (memory) space
     return false;
   }

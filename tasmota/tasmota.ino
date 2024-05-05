@@ -453,7 +453,7 @@ void setup(void) {
   // Init settings and logging preparing for AddLog use
 #ifdef PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
   ESP.setIramHeap();
-  Settings = (TSettings*)calloc(sizeof(TSettings), 1);          // Allocate in "new" 16k heap space
+  Settings = (TSettings*)calloc(1, sizeof(TSettings));          // Allocate in "new" 16k heap space
   TasmotaGlobal.log_buffer = (char*)malloc(LOG_BUFFER_SIZE);    // Allocate in "new" 16k heap space
   ESP.resetHeap();
   if (TasmotaGlobal.log_buffer == nullptr) {
@@ -464,7 +464,7 @@ void setup(void) {
   }
 #endif  // PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
   if (Settings == nullptr) {
-    Settings = (TSettings*)calloc(sizeof(TSettings), 1);
+    Settings = (TSettings*)calloc(1, sizeof(TSettings));
   }
 
 #ifdef ESP32
