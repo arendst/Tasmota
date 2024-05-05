@@ -159,7 +159,7 @@ class Matter_Plugin_Root : Matter_Plugin
           var nocs = nocl.add_struct(nil)
           nocs.add_TLV(1, TLV.B2, loc_fabric.get_noc())      # NOC
           nocs.add_TLV(2, TLV.B2, loc_fabric.get_icac())     # ICAC
-          nocs.add_TLV(matter.AGGREGATOR_ENDPOINT, TLV.U2, loc_fabric.get_fabric_index())    # Label
+          nocs.add_TLV(0xFE, TLV.U2, loc_fabric.get_fabric_index())    # Label
         end
         return nocl
       elif attribute == 0x0001          #  ---------- Fabrics / list[FabricDescriptorStruct] ----------
