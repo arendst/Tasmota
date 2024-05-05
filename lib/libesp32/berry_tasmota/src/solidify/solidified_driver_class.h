@@ -70,7 +70,7 @@ be_local_closure(Driver_add_cmd,   /* name */
 ** Solidified class: Driver
 ********************************************************************/
 be_local_class(Driver,
-    13,
+    14,
     NULL,
     be_nested_map(14,
     ( (struct bmapnode*) &(const bmapnode[]) {
@@ -87,6 +87,7 @@ be_local_class(Driver,
         { be_const_key(web_add_management_button, 0), be_const_var(5) },
         { be_const_key(every_100ms, 13), be_const_var(1) },
         { be_const_key(json_append, -1), be_const_var(10) },
+        { be_const_key(after_teleperiod, -1), be_const_var(13) },
         { be_const_key(web_add_button, -1), be_const_var(3) },
     })),
     (bstring*) &be_const_str_Driver
