@@ -8,11 +8,13 @@ All notable changes to this project will be documented in this file.
 - ESP32 esp32_partition_app3904k_fs3392k partition scheme for 8MB ESP32S3 (#21241)
 - TCP Serial bridge GPIO type `TCP Tx En` (#21269)
 - Berry `webserver.content_close()` (#21276)
+- ESP32 Compile option disabling PSRam check to avoid "blinking" of GPIO 16/17 at startup (#21282)
 - HASPmota demo of Renaissance Watch for 480x480 displays (#21290)
 - PlatformIO target reset (#21292)
 - Support for AHT30 Temperature and Humidity Sensor (#19922)
 - Berry wave file recorder (#21315)
 - Command ``Publish3`` to send binary data encoded as Hex, disabled in safeboot (21329)
+- Support for compile time hostname with `#define WIFI_DEFAULT_HOSTNAME` (#21236)
 
 ### Breaking Changed
 - ESP32-C3 OTA binary name from `tasmota32c3cdc.bin` to `tasmota32c3.bin` with USB HWCDC and fallback to serial (#21212)
@@ -46,7 +48,6 @@ All notable changes to this project will be documented in this file.
 ### Removed
 - LVGL disabled vector graphics (#21242)
 - ESP32 IDF 4.4 based I2S code (#21188)
-- ESP32 PSRam check to avoid "blinking" of GPIO 16/17 at startup (#21282)
 - Crash recorder from safeboot (#21332)
 
 ## [13.4.1.1] 20240418

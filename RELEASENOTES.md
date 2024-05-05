@@ -116,13 +116,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v13.4.1.2
 ### Added
-- PlatformIO target reset (#21292)
-
+- PlatformIO target reset [#21292](https://github.com/arendst/Tasmota/issues/21292)
 - Command ``Wifi 6`` to enable 11ax on ESP32
 - Command ``PowerLock`` to disable power control of selected outputs [#21081](https://github.com/arendst/Tasmota/issues/21081)
-
-- Command ``Publish3`` to send binary data encoded as Hex, disabled in safeboot (21329)
-
+- Command ``Publish3`` to send binary data encoded as Hex, disabled in safeboot [#21329](https://github.com/arendst/Tasmota/issues/21329)
 - Support for calculated heat index if temperature and humidity is available with ``#define USE_HEAT_INDEX`` [#4771](https://github.com/arendst/Tasmota/issues/4771)
 - Support for LoRa and single channel EU863-870 LoRaWanBridge [#17790](https://github.com/arendst/Tasmota/issues/17790)
 - Support for AMS5915/AMS6915 temperature and pressure sensors [#20814](https://github.com/arendst/Tasmota/issues/20814)
@@ -134,37 +131,31 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for Domoticz non-persistent ``DzIdx5`` to ``DzIdx32`` and disabling DOMOTICZ_OUT_TOPIC subscribe using command ``DzIdx0 0`` [#21019](https://github.com/arendst/Tasmota/issues/21019)
 - Support SPI GPIO configuration for Universal Touch Screen [#21025](https://github.com/arendst/Tasmota/issues/21025)
 - Support for SPL06_007 pressure and temperature sensor [#21185](https://github.com/arendst/Tasmota/issues/21185)
-
-- Support for AHT30 Temperature and Humidity Sensor (#19922)
-
+- Support for AHT30 Temperature and Humidity Sensor [#19922](https://github.com/arendst/Tasmota/issues/19922)
+- Support for compile time hostname with `#define WIFI_DEFAULT_HOSTNAME` (#21236)[#21236](https://github.com/arendst/Tasmota/issues/21236)
 - Zigbee support for attributes of type `uint48` used by energy monitoring [#20992](https://github.com/arendst/Tasmota/issues/20992)
 - QMC5883l check for overflow and scale reading [#20643](https://github.com/arendst/Tasmota/issues/20643)
-
-- TCP Serial bridge GPIO type `TCP Tx En` (#21269)
-- ESP32 esp32_partition_app3904k_fs3392k partition scheme for 8MB ESP32S3 (#21241)
-
+- TCP Serial bridge GPIO type `TCP Tx En` [#21269](https://github.com/arendst/Tasmota/issues/21269)
+- ESP32 esp32_partition_app3904k_fs3392k partition scheme for 8MB ESP32S3 [#21241](https://github.com/arendst/Tasmota/issues/21241)
+- ESP32 Compile option disabling PSRam check to avoid "blinking" of GPIO 16/17 at startup [#21282](https://github.com/arendst/Tasmota/issues/21282)
 - Berry explicit error log when memory allocation fails [#20807](https://github.com/arendst/Tasmota/issues/20807)
 - Berry `path.rename()` [#20840](https://github.com/arendst/Tasmota/issues/20840)
 - Berry `string.startswith`, `string.endswith` and `%q` format [#20909](https://github.com/arendst/Tasmota/issues/20909)
 - Berry `close()` to class `serial` [#21042](https://github.com/arendst/Tasmota/issues/21042)
 - Berry `flash.current_ota` [#21097](https://github.com/arendst/Tasmota/issues/21097)
-
-- Berry `webserver.content_close()` (#21276)
-- Berry wave file recorder (#21315)
-
+- Berry `webserver.content_close()` [#21276](https://github.com/arendst/Tasmota/issues/21276)
+- Berry wave file recorder [#21315](https://github.com/arendst/Tasmota/issues/21315)
 - LVGL and HASPmota typicons font [#20742](https://github.com/arendst/Tasmota/issues/20742)
 - LVGL `lv.draw_label_dsc` and `lv_bar.get_indic_area` [#20936](https://github.com/arendst/Tasmota/issues/20936)
 - HASPmota `p<x>b<y>.delete` to delete an object [#20735](https://github.com/arendst/Tasmota/issues/20735)
 - HASPmota improve arc and img [#20894](https://github.com/arendst/Tasmota/issues/20894)
 - HASPmota support for scale, percentages [#20974](https://github.com/arendst/Tasmota/issues/20974)
 - HASPmota `dropdown_list` and fixes [#21208](https://github.com/arendst/Tasmota/issues/21208)
-
-- HASPmota demo of Renaissance Watch for 480x480 displays (#21290)
+- HASPmota demo of Renaissance Watch for 480x480 displays [#21290](https://github.com/arendst/Tasmota/issues/21290)
 
 ### Breaking Changed
 - Drop support for old (insecure) fingerprint format [#20842](https://github.com/arendst/Tasmota/issues/20842)
 - Removed dedicated touch drivers in favour of Universal Touch driver [#21146](https://github.com/arendst/Tasmota/issues/21146)
-- ESP32 Ethernet Phy Type number for DM9051 from 4 to 10 (#21204)[#21204](https://github.com/arendst/Tasmota/issues/21204)
 - ESP32-C3 OTA binary name from `tasmota32c3cdc.bin` to `tasmota32c3.bin` with USB HWCDC and fallback to serial [#21212](https://github.com/arendst/Tasmota/issues/21212)
 - ESP32-C6 OTA binary name from `tasmota32c6cdc.bin` to `tasmota32c6.bin` with USB HWCDC and fallback to serial [#21212](https://github.com/arendst/Tasmota/issues/21212)
 - ESP32-S3 OTA binary name from `tasmota32s3cdc.bin` to `tasmota32s3.bin` with USB HWCDC and fallback to serial [#21212](https://github.com/arendst/Tasmota/issues/21212)
@@ -243,7 +234,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - SSD1351 driver replaced with uDisplay [#21184](https://github.com/arendst/Tasmota/issues/21184)
 - ST7789 driver replaced with uDisplay [#21184](https://github.com/arendst/Tasmota/issues/21184)
 - ESP32 IDF 4.4 based I2S code [#21188](https://github.com/arendst/Tasmota/issues/21188)
-- ESP32 PSRam check to avoid "blinking" of GPIO 16/17 at startup [#21282](https://github.com/arendst/Tasmota/issues/21282)
 - Crash recorder from safeboot [#21332](https://github.com/arendst/Tasmota/issues/21332)
 - Berry `print "a"` syntax no longer supported [#21048](https://github.com/arendst/Tasmota/issues/21048)
 - LVGL disabled vector graphics [#21242](https://github.com/arendst/Tasmota/issues/21242)

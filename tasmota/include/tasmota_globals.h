@@ -69,6 +69,12 @@ String EthernetMacAddress(void);
 
 #include "include/tasmota_configurations.h"            // Preconfigured configurations
 
+/*********************************************************************************************\
+ * Finale overrides
+\*********************************************************************************************/
+
+const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_config_override.h
+
 /*-------------------------------------------------------------------------------------------*\
  * ESP8266 and ESP32 build time definitions
 \*-------------------------------------------------------------------------------------------*/
@@ -79,7 +85,7 @@ String EthernetMacAddress(void);
 #elif (CONFIG_TASMOTA_FLASHMODE_QIO)
   #define D_TASMOTA_FLASHMODE "QIO"
 #elif defined(CONFIG_TASMOTA_FLASHMODE_QOUT)
-   #define D_TASMOTA_FLASHMODE "QOUT"
+  #define D_TASMOTA_FLASHMODE "QOUT"
 #elif defined(CONFIG_TASMOTA_FLASHMODE_DIO)
   #define D_TASMOTA_FLASHMODE "DIO"
 #elif defined(CONFIG_TASMOTA_FLASHMODE_DOUT)
