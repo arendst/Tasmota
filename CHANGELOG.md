@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - Berry wave file recorder (#21315)
 - Command ``Publish3`` to send binary data encoded as Hex, disabled in safeboot (21329)
 - Support for compile time hostname with `#define WIFI_DEFAULT_HOSTNAME` (#21236)
+- Berry added `after_teleperiod` event matching `FUNC_AFTER_TELEPERIOD` (#21351)
 
 ### Breaking Changed
 - ESP32-C3 OTA binary name from `tasmota32c3cdc.bin` to `tasmota32c3.bin` with USB HWCDC and fallback to serial (#21212)
