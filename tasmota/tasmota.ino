@@ -427,7 +427,7 @@ void setup(void) {
   TasmotaGlobal.active_device = 1;
   TasmotaGlobal.global_state.data = 0xF;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
   TasmotaGlobal.maxlog_level = LOG_LEVEL_DEBUG_MORE;
-  TasmotaGlobal.seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
+  TasmotaGlobal.seriallog_level = SERIAL_LOG_LEVEL;  // Allow specific serial messages until config loaded
   TasmotaGlobal.power_latching = 0x80000000;
 
   RtcRebootLoad();
