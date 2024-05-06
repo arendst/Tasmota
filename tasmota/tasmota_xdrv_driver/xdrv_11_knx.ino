@@ -442,54 +442,54 @@ void KNX_DEL_CB( uint8_t CBnum )
 }
 
 
-bool KNX_CONFIG_NOT_MATCH(void)
-{
-  // Check for configured parameters that the device does not have (module changed)
-  for (uint32_t i = 0; i < KNX_MAX_device_param; ++i)
-  {
-    if ( !device_param[i].show ) { // device has this parameter ?
-      // if not, search for all registered group address to this parameter for deletion
+// bool KNX_CONFIG_NOT_MATCH(void)
+// {
+//   // Check for configured parameters that the device does not have (module changed)
+//   for (uint32_t i = 0; i < KNX_MAX_device_param; ++i)
+//   {
+//     if ( !device_param[i].show ) { // device has this parameter ?
+//       // if not, search for all registered group address to this parameter for deletion
 
-      // Checks all GA
-      if ( KNX_GA_Search(i+1) != KNX_Empty ) { return true; }
-      // Check all CB
-      if ( i < 8 ) // check relays (i from 8 to 15 are toggle relays parameters)
-      {
-        if ( KNX_CB_Search(i+1) != KNX_Empty ) { return true; }
-        if ( KNX_CB_Search(i+9) != KNX_Empty ) { return true; }
-      }
-      // check sensors and others
-      if ( i > 15 )
-      {
-        if ( KNX_CB_Search(i+1) != KNX_Empty ) { return true; }
-      }
-    }
-  }
+//       // Checks all GA
+//       if ( KNX_GA_Search(i+1) != KNX_Empty ) { return true; }
+//       // Check all CB
+//       if ( i < 8 ) // check relays (i from 8 to 15 are toggle relays parameters)
+//       {
+//         if ( KNX_CB_Search(i+1) != KNX_Empty ) { return true; }
+//         if ( KNX_CB_Search(i+9) != KNX_Empty ) { return true; }
+//       }
+//       // check sensors and others
+//       if ( i > 15 )
+//       {
+//         if ( KNX_CB_Search(i+1) != KNX_Empty ) { return true; }
+//       }
+//     }
+//   }
 
-  // Check for invalid or erroneous configuration (tasmota flashed without clearing the memory)
-  for (uint32_t i = 0; i < Settings->knx_GA_registered; ++i)
-  {
-    if ( Settings->knx_GA_param[i] != 0 ) // the GA[i] have a parameter defined?
-    {
-      if ( Settings->knx_GA_addr[i] == 0 ) // the GA[i] with parameter have the 0/0/0 as address?
-      {
-         return true; // So, it is invalid. Reset KNX configuration
-      }
-    }
-  }
-  for (uint32_t i = 0; i < Settings->knx_CB_registered; ++i)
-  {
-    if ( Settings->knx_CB_param[i] != 0 ) // the CB[i] have a parameter defined?
-    {
-      if ( Settings->knx_CB_addr[i] == 0 ) // the CB[i] with parameter have the 0/0/0 as address?
-      {
-         return true; // So, it is invalid. Reset KNX configuration
-      }
-    }
-  }
+//   // Check for invalid or erroneous configuration (tasmota flashed without clearing the memory)
+//   for (uint32_t i = 0; i < Settings->knx_GA_registered; ++i)
+//   {
+//     if ( Settings->knx_GA_param[i] != 0 ) // the GA[i] have a parameter defined?
+//     {
+//       if ( Settings->knx_GA_addr[i] == 0 ) // the GA[i] with parameter have the 0/0/0 as address?
+//       {
+//          return true; // So, it is invalid. Reset KNX configuration
+//       }
+//     }
+//   }
+//   for (uint32_t i = 0; i < Settings->knx_CB_registered; ++i)
+//   {
+//     if ( Settings->knx_CB_param[i] != 0 ) // the CB[i] have a parameter defined?
+//     {
+//       if ( Settings->knx_CB_addr[i] == 0 ) // the CB[i] with parameter have the 0/0/0 as address?
+//       {
+//          return true; // So, it is invalid. Reset KNX configuration
+//       }
+//     }
+//   }
 
-  return false;
-}
+//   return false;
+// }
 
 
 void KNXStart(void)
@@ -556,11 +556,11 @@ void KNX_INIT(void)
 #endif
 
   // Delete from KNX settings all configuration is not anymore related to this device
-  if (KNX_CONFIG_NOT_MATCH()) {
-    Settings->knx_GA_registered = 0;
-    Settings->knx_CB_registered = 0;
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX D_DELETE " " D_KNX_PARAMETERS));
-  }
+  // if (KNX_CONFIG_NOT_MATCH()) {
+  //   Settings->knx_GA_registered = 0;
+  //   Settings->knx_CB_registered = 0;
+  //   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX D_DELETE " " D_KNX_PARAMETERS));
+  // }
 
   // Register Group Addresses to listen to
   //     Search on the settings if there is a group address set for receive KNX messages for the type: device_param[j].type
