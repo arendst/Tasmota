@@ -336,6 +336,8 @@ void Bme280Read(uint8_t bmp_idx) {
   p = ((p + var1 + var2) >> 8) + (((int64_t)Bme280CalibrationData[bmp_idx].dig_P7) << 4);
   bmp_sensors[bmp_idx].bmp_pressure = (float)p / 25600.0f;
 
+  AddLog(LOG_LEVEL_DEBUG, PSTR("BMP_data{pressure:%f,temperature:%f,bmp_idx:%d}"), bmp_sensors[bmp_idx].bmp_pressure, bmp_sensors[bmp_idx].bmp_temperature, bmp_idx);
+
   if (BMP280_CHIPID == bmp_sensors[bmp_idx].bmp_type) { return; }
 
   int32_t adc_H = I2cRead16(address, BME280_REGISTER_HUMIDDATA, bus);
