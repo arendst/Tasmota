@@ -75,7 +75,7 @@ Latest released binaries can be downloaded from
 - http://ota.tasmota.com/tasmota/release
 
 Historical binaries can be downloaded from
-- http://ota.tasmota.com/tasmota/release-13.3.0
+- http://ota.tasmota.com/tasmota/release-13.4.0
 
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
@@ -104,7 +104,7 @@ Latest released binaries can be downloaded from
 - https://ota.tasmota.com/tasmota32/release
 
 Historical binaries can be downloaded from
-- https://ota.tasmota.com/tasmota32/release-13.3.0
+- https://ota.tasmota.com/tasmota32/release-13.4.0
 
 The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasmota.com/tasmota32/release/tasmota32.bin``
 
@@ -145,6 +145,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `flash.current_ota` [#21097](https://github.com/arendst/Tasmota/issues/21097)
 - Berry `webserver.content_close()` [#21276](https://github.com/arendst/Tasmota/issues/21276)
 - Berry wave file recorder [#21315](https://github.com/arendst/Tasmota/issues/21315)
+- Berry `after_teleperiod` event matching `FUNC_AFTER_TELEPERIOD` [#21351](https://github.com/arendst/Tasmota/issues/21351)
 - LVGL and HASPmota typicons font [#20742](https://github.com/arendst/Tasmota/issues/20742)
 - LVGL `lv.draw_label_dsc` and `lv_bar.get_indic_area` [#20936](https://github.com/arendst/Tasmota/issues/20936)
 - HASPmota `p<x>b<y>.delete` to delete an object [#20735](https://github.com/arendst/Tasmota/issues/20735)
@@ -167,6 +168,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 Framework (Arduino Core) from v2.0.14 to v3.0.0
 - ESP32 platform update from 2024.01.12 to 2024.05.01 [#21347](https://github.com/arendst/Tasmota/issues/21347)
 - ESP32 LVGL library from v9.0.0 to v9.1.0 [#21008](https://github.com/arendst/Tasmota/issues/21008)
+- Seriallog set to `SERIAL_LOG_LEVEL` at boot [#21363](https://github.com/arendst/Tasmota/issues/21363)
+- TLS Letsencrypt replace R3 CA with long-term ISRG_Root_X1 CA, which works with R3 and R10-R14 [#21352](https://github.com/arendst/Tasmota/issues/21352)
 - Command ``EthType`` option selection [#21317](https://github.com/arendst/Tasmota/issues/21317)
 - Refactor Platformio script `post_esp32.py` [#20966](https://github.com/arendst/Tasmota/issues/20966)
 - SGP4x Domoticz air quality value from raw to computed [#18880](https://github.com/arendst/Tasmota/issues/18880)
@@ -208,6 +211,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Async HMDI CEC [#21287](https://github.com/arendst/Tasmota/issues/21287)
 - ESP8266 physical button/switch control when no rules activated [#21187](https://github.com/arendst/Tasmota/issues/21187)
 - ESP32 PWM activity on unconfigured PWM GPIOs [#20732](https://github.com/arendst/Tasmota/issues/20732)
+- Avoid unwanted OTA upgrade when safeboot starts for the first time [#21360](https://github.com/arendst/Tasmota/issues/21360)
 - BTHome, prep BLE5 [#20989](https://github.com/arendst/Tasmota/issues/20989)
 - Conflicting log_level definitions in NimBLE [#21337](https://github.com/arendst/Tasmota/issues/21337)
 - Berry Memory leak in `import re` [#20823](https://github.com/arendst/Tasmota/issues/20823)
@@ -216,6 +220,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry walrus bug when assigning to self [#21015](https://github.com/arendst/Tasmota/issues/21015)
 - Berry `web_add_handler` called before `Webserver` is initialized [#21272](https://github.com/arendst/Tasmota/issues/21272)
 - Berry `math.inf`, `math.isinf()` and fixed json ouput for `inf` and `nan` [#21304](https://github.com/arendst/Tasmota/issues/21304)
+- Matter broken NOCStruct types preventing pairing with HA [#21365](https://github.com/arendst/Tasmota/issues/21365)
 - LVGL restore `lv_palette` functions [#21232](https://github.com/arendst/Tasmota/issues/21232)
 - LVGL fix memory allocation of flush buffers [#21256](https://github.com/arendst/Tasmota/issues/21256)
 - HASPmota PSRAM memory leak [#20818](https://github.com/arendst/Tasmota/issues/20818)

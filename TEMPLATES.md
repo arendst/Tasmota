@@ -5,7 +5,7 @@
 
 # Templates
 
-Find below the available templates as of February 2024. More template information can be found in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates)
+Find below the available templates as of May 2024. More template information can be found in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates)
 
 ## Adapter Board
 ```
@@ -281,7 +281,7 @@ TOMZN 1P 63A Circuit Breaker  {"NAME":"TOB8-63WiFi","GPIO":[32,0,0,3104,0,0,0,0,
 TOMZN 2P 63A/80A Circuit Breaker  {"NAME":"TOWBC-2P-T","GPIO":[0,0,0,0,0,0,0,0,64,224,0,0,288,0],"FLAG":0,"BASE":18}
 TOMZN 4P 80A Circuit Breaker  {"NAME":"TOWBC-4P-T","GPIO":[288,0,0,0,0,0,0,0,32,224,0,0,0,0],"FLAG":0,"BASE":18}
 TOMZN 4P 80A Circuit Breaker  {"NAME":"TOMZN4","GPIO":[32,0,0,0,0,0,0,0,224,288,0,0,0,0],"FLAG":0,"BASE":18}
-Tongou 2P 63A Circuit Breaker  {"NAME":"RCD_CONTACTOR","GPIO":[32,224,0,0,0,0,0,0,288,544,0,0,0,0],"FLAG":0,"BASE":18}
+Tongou 2P 63A Circuit Breaker  {"NAME":"RCD_CONTACTOR","GPIO":[32,224,0,3104,0,0,0,0,288,544,0,0,0,0],"FLAG":0,"BASE":18}
 ```
 
 ## Dehumidifier
@@ -622,7 +622,7 @@ Antsig Universal Remote Controller  {"NAME":"Antsig Smart Wi-Fi IR","GPIO":[1,1,
 Athom                        {"NAME":"Athom_IR_Remote","GPIO":[32,0,0,0,1056,1088,0,0,0,576,0,0,0,0],"FLAG":0,"BASE":18}
 Automate Things IR Bridge    {"NAME":"AT-IRBR-1.0","GPIO":[0,0,0,0,1056,1088,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18,"CMND":"Module 0"}
 Automate Things IR Bridge    {"NAME":"AT-IRBR-1.4","GPIO":[1088,0,0,0,1056,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18,"CMND":"Module 0"}
-auvisio S06                  {"NAME":"NX-4519-675","GPIO":[0,0,0,0,288,1088,0,0,0,0,1056,0,0,0],"FLAG":0,"BASE":18}
+auvisio S06                  {"NAME":"NX-4519-675","GPIO":[0,0,0,0,288,1088,0,0,0,32,1056,0,0,0],"FLAG":0,"BASE":18}
 Avatto Temperature and Humidity Sensor and  {"NAME":"S08Pro","GPIO":[0,640,0,608,288,1088,0,0,0,32,1056,0,0,0],"FLAG":0,"BASE":18}
 BlitzWolf BW-RC1             {"NAME":"BW-RC1","GPIO":[0,0,0,0,320,1088,0,0,0,32,1056,0,0,0],"FLAG":0,"BASE":62}
 Connect SmartHome Universal Remote  {"NAME":"CSH IR Controller","GPIO":[1,1,1,1,320,1088,0,0,0,32,1056,0,0,0],"FLAG":0,"BASE":62}
@@ -1250,7 +1250,7 @@ Geeni Spot                   {"NAME":"Geeni Spot","GPIO":[576,0,0,0,320,0,0,0,0,
 Geeni Spot Glo               {"NAME":"Geeni Glo","GPIO":[0,0,0,0,320,0,0,0,224,32,225,0,0,0],"FLAG":0,"BASE":18}
 Geeni SWITCH                 {"NAME":"Geeni Switch","GPIO":[0,0,0,0,288,321,0,0,224,32,0,0,0,0],"FLAG":0,"BASE":18}
 Geeni Switch Duo             {"NAME":"Geeni Duo","GPIO":[0,0,0,0,33,225,0,0,32,288,224,0,289,0],"FLAG":0,"BASE":18}
-GHome EP2-A                  {"NAME":"GHome EP2-A","GPIO":[320,0,576,0,2656,2720,0,0,2624,32,0,224,0,0],"FLAG":0,"BASE":45}
+GHome EP2-A                  {"NAME":"GHome EP2-A","GPIO":[576,0,320,0,2656,2720,0,0,2624,32,0,224,0,0],"FLAG":0,"BASE":45}
 Girier 16A                   {"NAME":"Girier - JR-PM01","GPIO":[0,544,0,2624,2720,2656,0,0,224,32,320,0,0,0],"FLAG":0,"BASE":68}
 Globe 15A                    {"NAME":"Globe 50329","GPIO":[0,0,0,0,320,0,0,0,224,0,32,0,0,0],"FLAG":0,"BASE":18}
 Globe 2 Outlet               {"NAME":"Globe 50020","GPIO":[0,576,0,321,33,32,0,0,224,320,225,0,0,0],"FLAG":0,"BASE":18}
@@ -1624,7 +1624,7 @@ Vettora Smart Plug           {"NAME":"Vettora","GPIO":[0,0,0,32,0,0,0,0,0,320,22
 Vingo                        {"NAME":"Karpal-01","GPIO":[0,0,0,0,0,320,0,0,224,32,0,0,0,0],"FLAG":0,"BASE":18}
 Vivanco 39625 Smart Home Power Adapter  {"NAME":"Vivianco","GPIO":[0,0,0,32,2688,2656,0,0,2624,288,224,0,0,0],"FLAG":0,"BASE":18}
 Vivitar                      {"NAME":"Vivitar HA1003","GPIO":[576,0,320,0,0,0,0,0,0,32,0,224,0,0],"FLAG":0,"BASE":18}
-Vivitar                      {"NAME":"Vivitar HA1004","GPIO":[576,0,0,0,0,320,0,0,224,0,0,0,0,0],"FLAG":0,"BASE":18}
+Vivitar                      {"NAME":"Vivitar HA-1004","GPIO":[320,0,321,0,0,0,0,0,0,32,0,224,0,0],"FLAG":0,"BASE":18}
 Vivitar HA-1006              {"NAME":"HA-1006","GPIO":[0,0,0,0,320,0,0,0,224,64,0,0,0,0],"FLAG":0,"BASE":18}
 Vivitar HA-1006-AU           {"NAME":"HA-1006-AU","GPIO":[0,0,0,0,320,0,0,0,224,64,0,0,0,0],"FLAG":0,"BASE":18}
 Vivitar Plug                 {"NAME":"HA-1005N-AU","GPIO":[0,0,0,0,544,0,0,0,224,64,0,0,0,0],"FLAG":0,"BASE":18}
@@ -2693,7 +2693,6 @@ TreatLife 3-Way              {"NAME":"Treatlife 3-Way","GPIO":[0,0,0,0,224,576,0
 TreatLife Single Pole ON/OFF  {"NAME":"Treatlife SS02","GPIO":[0,0,0,0,288,576,0,0,224,32,0,0,0,0],"FLAG":0,"BASE":18}
 Tuya 20A                     {"NAME":"DS-161","GPIO":[544,0,0,32,0,0,0,0,0,224,288,0,0,0],"FLAG":0,"BASE":1}
 Tuya 3 Gang                  {"NAME":"KING-Tuya-key","GPIO":[0,0,0,0,226,225,0,0,224,32,34,0,33,0],"FLAG":0,"BASE":18}
-Tuya 4 Gang                  {"NAME":"Tuya 4 Gang Switch","GPIO":[1,34,224,32,33,0,0,0,225,576,0,0,0,0,0,0,0,0,226,227,35,1],"FLAG":0,"BASE":1}
 Tuya T1 2 Gang No Neutral    {"NAME":"Tuya T1 Wifi 2 Gang No Neutral Switch","GPIO":[32,0,0,0,0,225,33,0,224,544,0,0,0,0],"FLAG":0,"BASE":18}
 Tuya T1 3 Gang No Neutral    {"NAME":"Tuya T1 Wifi 3 Gang No Neutral Switch","GPIO":[32,0,0,0,226,225,33,34,224,544,0,0,0,0],"FLAG":0,"BASE":18}
 TY-US-L1-W                   {"NAME":"TY-US-L1-W","GPIO":[0,0,0,0,0,32,0,0,0,224,0,0,576,0],"FLAG":0,"BASE":18}

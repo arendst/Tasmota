@@ -15,7 +15,7 @@ All notable changes to this project will be documented in this file.
 - Berry wave file recorder (#21315)
 - Command ``Publish3`` to send binary data encoded as Hex, disabled in safeboot (21329)
 - Support for compile time hostname with `#define WIFI_DEFAULT_HOSTNAME` (#21236)
-- Berry added `after_teleperiod` event matching `FUNC_AFTER_TELEPERIOD` (#21351)
+- Berry `after_teleperiod` event matching `FUNC_AFTER_TELEPERIOD` (#21351)
 
 ### Breaking Changed
 - ESP32-C3 OTA binary name from `tasmota32c3cdc.bin` to `tasmota32c3.bin` with USB HWCDC and fallback to serial (#21212)
@@ -32,7 +32,7 @@ All notable changes to this project will be documented in this file.
 - Internal macro `APP_SLEEP` to `TASMOTA_SLEEP` to specify default sleep in ms (#21324)
 - ESP32 Core3 platform update from 2024.04.12 to 2024.05.10 (#21347)
 - Refactor Tensorflow (#21327)
-- Seriallog set to `SERIAL_LOG_LEVEL` at boot
+- Seriallog set to `SERIAL_LOG_LEVEL` at boot (#21363)
 - TLS Letsencrypt replace R3 CA with long-term ISRG_Root_X1 CA, which works with R3 and R10-R14 (#21352)
 
 ### Fixed
@@ -47,8 +47,8 @@ All notable changes to this project will be documented in this file.
 - Berry `math.inf`, `math.isinf()` and fixed json ouput for `inf` and `nan` (#21304)
 - Compilation of Ethernet when SPI drivers are disabled (#21321)
 - Conflicting log_level definitions in NimBLE (#21337)
-- Avoid unwanted OTA upgrade when safeboot starts for the first time
-- Matter broken NOCStruct types preventing pairing with HA
+- Avoid unwanted OTA upgrade when safeboot starts for the first time (#21360)
+- Matter broken NOCStruct types preventing pairing with HA (#21365)
 
 ### Removed
 - LVGL disabled vector graphics (#21242)
