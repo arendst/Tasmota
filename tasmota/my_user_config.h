@@ -730,7 +730,7 @@ https://rya.nc/tasmota-fingerprint.html"
 //    #define QMC5883L_TEMP_SHIFT       23         // sensor temperature are not calibrated (only relativ measurement) and need an absolute ground value in °C (see datasheet)
 //    #define QMC5883L_OVERSAMPLE       0          // 0 .. 3 => 512(default), 256, 128, 64
 //    #define QMC5883L_GAUSS            1          // 0,1(default) => 2GAUSS, 8GAUSS(default)
-//    #define QMC5883L_FILTER           0          // 0 .. 3 => 10HZ(default), 50HZ, 109HZ, 200HZ
+//    #define QMC5883L_FILTER           0          // 0 .. 3 => 10HZ(default), 50HZ, 100HZ, 200HZ
 //  #define USE_INA3221                            // [I2CDriver72] Enable INA3221 3-channel DC voltage and current sensor (I2C address 0x40-0x44) (+3.2k code)
 //    #define INA3221_ADDRESS1                     // allow to change the 1st address to search for INA3221 to 0x41..0x43
 //    #define INA3221_MAX_COUNT                    // change the number of devices to search for (default 4).
