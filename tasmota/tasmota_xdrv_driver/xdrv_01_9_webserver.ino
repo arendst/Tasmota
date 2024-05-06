@@ -3321,7 +3321,7 @@ bool CaptivePortal(void)
 /*********************************************************************************************/
 
 enum {QUERY_DEFAULT=0, QUERY_RUN};
-int WebQueryWithFunction(char *buffer, int query_function);
+int WebQuery(char *buffer, int query_function);
 
 #ifdef USE_WEBRUN
 char *WebRunBuffer = nullptr;
@@ -3363,7 +3363,7 @@ void WebRunInit(const char *command_buffer)
 #endif // #ifdef USE_WEBRUN
 
 
-int WebQueryWithFunction(char *buffer, int query_function)
+int WebQuery(char *buffer, int query_function = 0)
 {
   // http://192.168.1.1/path GET                                         -> Sends HTTP GET http://192.168.1.1/path
   // http://192.168.1.1/path POST {"some":"message"}                     -> Sends HTTP POST to http://192.168.1.1/path with body {"some":"message"}
@@ -3480,11 +3480,6 @@ int WebQueryWithFunction(char *buffer, int query_function)
     }
   }
   return status;
-}
-
-int WebQuery(char *buffer)
-{
-  return WebQueryWithFunction(buffer, 0); 
 }
 
 
@@ -3806,7 +3801,7 @@ void CmndWebQuery(void) {
 #ifdef USE_WEBRUN
 void CmndWebRun(void) {
   if (XdrvMailbox.data_len > 0) {
-    uint32_t result = WebQueryWithFunction(XdrvMailbox.data, QUERY_RUN);
+    uint32_t result = WebQuery(XdrvMailbox.data, QUERY_RUN);
     if (result != WEBCMND_VALID_RESPONSE) {
       char stemp1[20];
       ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebCmndStatus));
