@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Command ``Publish3`` to send binary data encoded as Hex, disabled in safeboot (21329)
 - Support for compile time hostname with `#define WIFI_DEFAULT_HOSTNAME` (#21236)
 - Berry `after_teleperiod` event matching `FUNC_AFTER_TELEPERIOD` (#21351)
+- GPIOViewer pin mode support
 
 ### Breaking Changed
 - ESP32-C3 OTA binary name from `tasmota32c3cdc.bin` to `tasmota32c3.bin` with USB HWCDC and fallback to serial (#21212)
@@ -34,6 +35,7 @@ All notable changes to this project will be documented in this file.
 - Refactor Tensorflow (#21327)
 - Seriallog set to `SERIAL_LOG_LEVEL` at boot (#21363)
 - TLS Letsencrypt replace R3 CA with long-term ISRG_Root_X1 CA, which works with R3 and R10-R14 (#21352)
+- GPIOViewer from v1.5.0 to v1.5.2
 
 ### Fixed
 - HASPmota `align` attribute and expand PNG cache (#21228)

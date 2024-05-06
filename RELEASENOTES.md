@@ -133,6 +133,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for SPL06_007 pressure and temperature sensor [#21185](https://github.com/arendst/Tasmota/issues/21185)
 - Support for AHT30 Temperature and Humidity Sensor [#19922](https://github.com/arendst/Tasmota/issues/19922)
 - Support for compile time hostname with `#define WIFI_DEFAULT_HOSTNAME` (#21236)[#21236](https://github.com/arendst/Tasmota/issues/21236)
+- GPIOViewer pin mode support
 - Zigbee support for attributes of type `uint48` used by energy monitoring [#20992](https://github.com/arendst/Tasmota/issues/20992)
 - QMC5883l check for overflow and scale reading [#20643](https://github.com/arendst/Tasmota/issues/20643)
 - TCP Serial bridge GPIO type `TCP Tx En` [#21269](https://github.com/arendst/Tasmota/issues/21269)
@@ -168,6 +169,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 Framework (Arduino Core) from v2.0.14 to v3.0.0
 - ESP32 platform update from 2024.01.12 to 2024.05.01 [#21347](https://github.com/arendst/Tasmota/issues/21347)
 - ESP32 LVGL library from v9.0.0 to v9.1.0 [#21008](https://github.com/arendst/Tasmota/issues/21008)
+- GPIOViewer from v1.5.0 to v1.5.2
 - Seriallog set to `SERIAL_LOG_LEVEL` at boot [#21363](https://github.com/arendst/Tasmota/issues/21363)
 - TLS Letsencrypt replace R3 CA with long-term ISRG_Root_X1 CA, which works with R3 and R10-R14 [#21352](https://github.com/arendst/Tasmota/issues/21352)
 - Command ``EthType`` option selection [#21317](https://github.com/arendst/Tasmota/issues/21317)
