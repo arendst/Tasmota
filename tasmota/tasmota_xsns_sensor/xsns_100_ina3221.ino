@@ -1,7 +1,7 @@
 /*
   xsns_100_ina3221.ino - INA3221 3-channels Current Sensor support for Tasmota
 
-  Copyright (C) 2021  Barbudor and Theo Arends + fb-pilot 2024-4-4, 2024-4-20
+  Copyright (C) 2021  Barbudor and Theo Arends + fb-pilot
   Based on Barbudor's CircuitPython_INA3221
 
   This program is free software: you can redistribute it and/or modify
@@ -472,12 +472,14 @@ bool Ina3221CmndSensor(void)
       float shunt = CharToFloat(ArgV(argument,2+channel));
       Ina3221SetShunt(device, channel, shunt);
     }
+#ifdef INA3221_SUPPLY_SIDE
     if (!Ina3221WriteConfig(device)){
       #ifdef DEBUG_TASMOTA_SENSOR
       DEBUG_SENSOR_LOG(D_INA3221 "error write configuration %d", device+1);
       #endif
       return false;
 	}
+#endif
   }
   Response_P(INA3221_SENSORCMND_START, XSNS_100, device +1, Ina3221Data[device].i2caddr);
   for (int channel = 0 ; channel < INA3221_NB_CHAN ; channel++ ) {

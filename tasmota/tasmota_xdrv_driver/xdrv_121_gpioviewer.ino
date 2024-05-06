@@ -29,11 +29,21 @@
  *   GvUrl                  - Show current url
  *   GvUrl 1                - Select default url (GV_BASE_URL)
  *   GvUrl https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer_1_5/
+ * 
+ * Note 20240506
+ * - Tasmota v14.0.0
+ * - GVRelease 1.5.2
+ * - Function pinmode is not fully implemented by gpio_viewer_1_5:
+ *   Only INPUT_PULLUP and INPUT_PULLDOWN are reported as INPUT
+ *   Only OUTPUT and OUTPUT_OPEN_DRAIN are reported as OUTPUT
+ *   All other pin modes are reported as UNKNOWN
+ * - This driver is forcing INPUT_PULLUP for ANALOG and INPUT
+ * - Execute once command GvUrl https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer_1_5/
+ * - Clear browser cache to use new functionality
 \*********************************************************************************************/
 
 #define XDRV_121              121
 
-//#define GV_INPUT_DETECTION                 // Report type of digital input
 #define GV_USE_ESPINFO                     // Provide ESP info
 
 #ifndef GV_PORT
@@ -43,13 +53,30 @@
 #define GV_SAMPLING_INTERVAL  100          // [GvSampling] milliseconds - Use Tasmota Scheduler (100) or Ticker (20..99,101..1000)
 #endif
 #ifndef GV_BASE_URL
-//#define GV_BASE_URL           "https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer_1_5/"  // [GvUrl]
-#define GV_BASE_URL           "https://ota.tasmota.com/tasmota/gpioviewer/gpio_viewer_13_4_0/"  // [GvUrl]
+#define GV_BASE_URL           "https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer_1_5/"  // [GvUrl]
+//#define GV_BASE_URL           "https://ota.tasmota.com/tasmota/gpioviewer/gpio_viewer_13_4_0/"  // [GvUrl]
 #endif
 
 #define GV_KEEP_ALIVE         1000         // milliseconds - If no activity after this do a heap size event anyway
 
-const char *GVRelease = "1.5.0";
+const char *GVRelease = "1.5.2";
+
+/*********************************************************************************************/
+
+// GPIO FUNCTIONS as defined by esp32-hal-gpio.h to be used by ESP8266 too, which uses different numbers
+// Also defined in gpio_viewer_1_5 const.ts
+#define GV_UNAVAILABLE        -2           // Addition by gpio_viewer_1_5
+#define GV_NOT_SET            -1           // Addition by gpio_viewer_1_5
+#define GV_NOT_USED           0            // Addition by this driver
+#define GV_INPUT              0x01         // Not defined in gpio_viewer_1_5 !?!
+#define GV_OUTPUT             0x03
+#define GV_PULLUP             0x04
+#define GV_INPUT_PULLUP       0x05
+#define GV_PULLDOWN           0x08
+#define GV_INPUT_PULLDOWN     0x09
+#define GV_OPEN_DRAIN         0x10
+#define GV_OUTPUT_OPEN_DRAIN  0x13
+#define GV_ANALOG             0xC0
 
 #ifdef USE_UNISHOX_COMPRESSION
   #include "./html_compressed/HTTP_GV_PAGE.h"
@@ -67,10 +94,7 @@ const char HTTP_GV_EVENT[] PROGMEM =
 enum GVPinTypes {
   GV_DigitalPin = 0,
   GV_PWMPin = 1,
-  GV_AnalogPin = 2,
-  GV_InputPin = 3,
-  GV_InputPullUp = 4,
-  GV_InputPullDn = 5
+  GV_AnalogPin = 2
 };
 
 typedef struct {
@@ -78,6 +102,7 @@ typedef struct {
   Ticker ticker;
   String baseUrl;
   int lastPinStates[MAX_GPIO_PIN];
+  int pinmode[MAX_GPIO_PIN];
   uint32_t lastSentWithNoActivity;
   uint32_t freeHeap;
   uint32_t freePSRAM;
@@ -90,30 +115,30 @@ typedef struct {
 tGV* GV = nullptr;
 WiFiClient GVWebClient;
 
-#ifdef GV_INPUT_DETECTION
+/*********************************************************************************************/
 
 int GetPinMode(uint32_t pin) {
 #ifdef ESP8266  
-  if (pin > MAX_GPIO_PIN -2) { return -1; }                // Skip GPIO16 and Analog0
+//  if (17 == pin) { return GV_ANALOG; }    
+  if (17 == pin) { return GV_INPUT_PULLUP; }  // See Note 20240506
+  if (16 == pin) { return GV_NOT_USED; }      // Skip GPIO16
 #endif  // ESP8266
-#ifdef ESP32  
-  if (pin > MAX_GPIO_PIN) { return -1; }
-#endif  // ESP32
 
   uint32_t bit = digitalPinToBitMask(pin);
   uint32_t port = digitalPinToPort(pin);
   volatile uint32_t *reg = portModeRegister(port);
-  if (*reg & bit) { return OUTPUT; }                       // ESP8266 = 0x01, ESP32 = 0x03
+  if (*reg & bit) { return GV_OUTPUT; }       // ESP8266 = 0x01, ESP32 = 0x03
   // Detecting INPUT_PULLUP doesn't function consistently
-  volatile uint32_t *out = portOutputRegister(port);
-  return ((*out & bit) ? INPUT_PULLUP : INPUT);            // ESP8266 = 0x02 : 0x00, ESP32 = 0x05 : x01
+//  volatile uint32_t *out = portOutputRegister(port);
+//  return ((*out & bit) ? GV_INPUT_PULLUP : GV_INPUT);  // ESP8266 = 0x02 : 0x00, ESP32 = 0x05 : x01
+  return GV_INPUT_PULLUP;                     // ESP8266 = 0x02 : 0x00, ESP32 = 0x05 : x01
 }
 
-#endif  // GV_INPUT_DETECTION
+/*********************************************************************************************/
 
 bool GVInit(void) {
   if (!GV) {
-    GV = (tGV*)calloc(sizeof(tGV), 1);
+    GV = (tGV*)calloc(1, sizeof(tGV));
     if (GV) {
       GV->sampling = (GV_SAMPLING_INTERVAL < 20) ? 20 : GV_SAMPLING_INTERVAL;
       GV->baseUrl = GV_BASE_URL;
@@ -146,10 +171,13 @@ void GVBegin(void) {
     GV->WebServer->on("/sampling", GVHandleSampling);
     GV->WebServer->on("/espinfo", GVHandleEspInfo);
     GV->WebServer->on("/partition", GVHandlePartition);
+    GV->WebServer->on("/pinmodes", GVHandlePinModes);
     GV->WebServer->on("/events", GVHandleEvents);
     GV->WebServer->begin();
   }
 }
+
+/*********************************************************************************************/
 
 void GVHandleRoot(void) {
   GVCloseEvent();
@@ -241,7 +269,7 @@ void GVHandlePartition(void) {
     // Add comma before the next entry if it's not the first
     if (!firstEntry)
     {
-        jsonResponse += ",";
+      jsonResponse += ",";
     }
     firstEntry = false;
 
@@ -266,6 +294,27 @@ void GVHandlePartition(void) {
   GVWebserverSendJson(jsonResponse);
 }
 
+void GVHandlePinModes(void) {
+  String jsonResponse = "["; // Start of JSON array
+  bool firstEntry = true;    // Used to format the JSON array correctly
+
+  for (int i = 0; i < MAX_GPIO_PIN; i++) {
+    if (GV->pinmode[i] != GV_NOT_USED) {
+      if (!firstEntry)
+      {
+        jsonResponse += ",";
+      }
+      firstEntry = false;
+      jsonResponse += "{";
+      jsonResponse += "\"pin\":\"" + String(i) + "\",";
+      jsonResponse += "\"mode\":\"" + String(GV->pinmode[i]) + "\"";
+      jsonResponse += "}";
+    }
+  }
+  jsonResponse += "]"; // End of JSON array
+  GVWebserverSendJson(jsonResponse);
+}
+
 void GVHandleEvents(void) {
   GVWebClient = GV->WebServer->client();
   GVWebClient.setNoDelay(true);
@@ -280,6 +329,8 @@ void GVHandleEvents(void) {
   }
   AddLog(LOG_LEVEL_DEBUG, PSTR("IOV: Connected"));
 }
+
+/*********************************************************************************************/
 
 void GVEventDisconnected(void) {
   if (GV->sse_ready) {
@@ -307,6 +358,8 @@ void GVEventSend(const char *message, const char *event, uint32_t id) {
   }
 }
 
+/*********************************************************************************************/
+
 void GVMonitorTask(void) {
   // Monitor GPIO Values
   if (GV->mutex) { return; }
@@ -318,6 +371,7 @@ void GVMonitorTask(void) {
 
   String jsonMessage = "{";
   for (uint32_t pin = 0; pin < MAX_GPIO_PIN; pin++) {
+    int pinmode = GV_NOT_USED;
     int currentState = 0;
 
 #ifdef ESP32
@@ -325,6 +379,7 @@ void GVMonitorTask(void) {
     int pwm_resolution = ledcReadDutyResolution(pin);
     if (pwm_resolution > 0) {
       pintype = GV_PWMPin;
+      pinmode = GV_OUTPUT;
       originalValue = ledcRead2(pin);
       currentState = changeUIntScale(originalValue, 0, pwm_resolution, 0, 255);   // Bring back to 0..255
     }
@@ -335,6 +390,7 @@ void GVMonitorTask(void) {
     int pwm_value = AnalogRead(pin);
     if (pwm_value > -1) {
       pintype = GV_PWMPin;
+      pinmode = GV_OUTPUT;
       originalValue = pwm_value;
       currentState = changeUIntScale(originalValue, 0, Settings->pwm_range, 0, 255);  // Bring back to 0..255
     }
@@ -344,6 +400,8 @@ void GVMonitorTask(void) {
     else if (AdcPin(pin)) {
       // Read Analog (ADC) GPIO
       pintype = GV_AnalogPin;
+//      pinmode = GV_ANALOG;
+      pinmode = GV_INPUT_PULLUP;  // See Note 20240506
 /*
 #ifdef ESP32
       originalValue = AdcRead(pin, 2);
@@ -367,12 +425,8 @@ void GVMonitorTask(void) {
 //      } else {
 //        currentState = 0;
       }
-#ifdef GV_INPUT_DETECTION      
-      int pin_mode = GetPinMode(pin);
-      pintype = (INPUT == pin_mode) ? GV_InputPin : (INPUT_PULLUP == pin_mode) ? GV_InputPullUp : GV_DigitalPin;
-#else
       pintype = GV_DigitalPin;
-#endif      
+      pinmode = GetPinMode(pin);
     }
 
     if (GV->init_done) {
@@ -380,6 +434,7 @@ void GVMonitorTask(void) {
       GV->lastPinStates[pin] = (pin_type != GPIO_NONE) ? -1 : originalValue;  // During init provide configured GPIOs fixing slow browsers
     }
     if (originalValue != GV->lastPinStates[pin]) { 
+      GV->pinmode[pin] = pinmode;
       if (hasChanges) { jsonMessage += ","; }
       jsonMessage += "\"" + String(pin) + "\":{\"s\":" + currentState + ",\"v\":" + originalValue + ",\"t\":" + pintype + "}";
       GV->lastPinStates[pin] = originalValue;
