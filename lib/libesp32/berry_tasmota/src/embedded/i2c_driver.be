@@ -84,6 +84,16 @@ class I2C_Driver
     var buf = self.wire.read_bytes(self.addr, reg, 2)
     return (buf[0] << 5) + buf[1]
   end
+  # read 14 bits
+  def read14(reg)
+    var buf = self.wire.read_bytes(self.addr, reg, 2)
+    return (buf[0] << 6) + buf[1]
+  end
+  # read 16 bits
+  def read16(reg)
+    var buf = self.wire.read_bytes(self.addr, reg, 2)
+    return (buf[0] << 8) + buf[1]
+  end
   # read 24 bits
   def read24(reg)
     var buf = self.wire.read_bytes(self.addr, reg, 3)

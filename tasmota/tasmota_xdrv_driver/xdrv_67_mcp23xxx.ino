@@ -136,7 +136,7 @@ typedef struct {
   uint8_t olatb;
   uint8_t address;
   uint8_t interface;
-  uint8_t pins;                                        // 8 (MCP23008) or 16 (MCP23017 / MCP23S17)
+  uint8_t pins;                                        // 8 (MCP23x08) or 16 (MCP23x17)
   int8_t pin_cs;
   int8_t pin_int;
 } tMcp23xDevice;
@@ -312,7 +312,7 @@ void MCP23xUpdate(uint8_t pin, bool pin_value, uint8_t reg_addr) {
 /*********************************************************************************************/
 
 uint32_t MCP23xSetChip(uint8_t pin) {
-  // Calculate chip based on number of pins per chip. 8 for MCP23008, 16 for MCP23x17
+  // Calculate chip based on number of pins per chip. 8 for MCP23x08, 16 for MCP23x17
   // pin 0 - 63
   for (Mcp23x.chip = 0; Mcp23x.chip < Mcp23x.max_devices; Mcp23x.chip++) {
     if (Mcp23x.device[Mcp23x.chip].pins > pin) { break; }
@@ -608,11 +608,23 @@ void MCP23xModuleInit(void) {
       pinMode(Mcp23x.device[Mcp23x.chip].pin_cs, OUTPUT);
       Mcp23x.device[Mcp23x.chip].interface = MCP23X_SPI;
       Mcp23x.device[Mcp23x.chip].address = MCP23XXX_ADDR_START << 1;
-      AddLog(LOG_LEVEL_INFO, PSTR("SPI: MCP23S17 found at CS%d"), Mcp23x.chip +1);
-      Mcp23x.device[Mcp23x.chip].pins = 16;
-      MCP23xWrite(MCP23X17_IOCONA, 0b01011000);    // Enable INT mirror, Slew rate disabled, HAEN pins for addressing
-      Mcp23x.device[Mcp23x.chip].olata = MCP23xRead(MCP23X17_OLATA);
-      Mcp23x.device[Mcp23x.chip].olatb = MCP23xRead(MCP23X17_OLATB);
+
+      MCP23xWrite(MCP23X08_IOCON, 0x80);               // Attempt to set bank mode - this will only work on MCP23x17, so its the best way to detect the different chips 23x08 vs 23x17
+      uint8_t buffer;
+      if (MCP23xValidRead(MCP23X08_IOCON, &buffer)) {
+        if (0x00 == buffer) { // MCP23S08
+          AddLog(LOG_LEVEL_INFO, PSTR("SPI: MCP23S08 found at CS%d"), Mcp23x.chip +1);
+          Mcp23x.device[Mcp23x.chip].pins = 8;
+          MCP23xWrite(MCP23X08_IOCON, 0b00011000);    // Enable INT mirror, Slew rate disabled, HAEN pins for addressing
+          Mcp23x.device[Mcp23x.chip].olata = MCP23xRead(MCP23X08_OLAT);
+        } else if (0x80 == buffer) { // MCP23S17
+          AddLog(LOG_LEVEL_INFO, PSTR("SPI: MCP23S17 found at CS%d"), Mcp23x.chip +1);
+          Mcp23x.device[Mcp23x.chip].pins = 16;
+          MCP23xWrite(MCP23X17_IOCONA, 0b01011000);    // Enable INT mirror, Slew rate disabled, HAEN pins for addressing
+          Mcp23x.device[Mcp23x.chip].olata = MCP23xRead(MCP23X17_OLATA);
+          Mcp23x.device[Mcp23x.chip].olatb = MCP23xRead(MCP23X17_OLATB);
+        }
+      }
       Mcp23x.max_devices++;
 
       Mcp23x.max_pins += Mcp23x.device[Mcp23x.chip].pins;
@@ -630,7 +642,7 @@ void MCP23xModuleInit(void) {
         Mcp23x.device[Mcp23x.chip].interface = MCP23X_I2C;
         Mcp23x.device[Mcp23x.chip].address = mcp23xxx_address;
 
-        MCP23xWrite(MCP23X08_IOCON, 0x80);               // Attempt to set bank mode - this will only work on MCP23017, so its the best way to detect the different chips 23008 vs 23017
+        MCP23xWrite(MCP23X08_IOCON, 0x80);               // Attempt to set bank mode - this will only work on MCP23x17, so its the best way to detect the different chips 23x08 vs 23x17
         uint8_t buffer;
         if (MCP23xValidRead(MCP23X08_IOCON, &buffer)) {
           if (0x00 == buffer) {
@@ -690,7 +702,7 @@ void MCP23xServiceInput(void) {
   uint32_t gpio;
   for (Mcp23x.chip = 0; Mcp23x.chip < Mcp23x.max_devices; Mcp23x.chip++) {
     if (8 == Mcp23x.device[Mcp23x.chip].pins) {
-      gpio = MCP23xRead(MCP23X08_GPIO);                // Read MCP23008 gpio
+      gpio = MCP23xRead(MCP23X08_GPIO);                // Read MCP23x08 gpio
     } else {
       gpio = MCP23xRead16(MCP23X17_GPIOA);             // Read MCP23x17 gpio
     }
@@ -725,7 +737,7 @@ void MCP23xInit(void) {
     for (Mcp23x.chip = 0; Mcp23x.chip < Mcp23x.max_devices; Mcp23x.chip++) {
       if (Mcp23x.device[Mcp23x.chip].pin_int > -1) {
         if (8 == Mcp23x.device[Mcp23x.chip].pins) {
-          gpio = MCP23xRead(MCP23X08_GPIO);            // Clear MCP23008 interrupt
+          gpio = MCP23xRead(MCP23X08_GPIO);            // Clear MCP23x08 interrupt
         } else {
           gpio = MCP23xRead16(MCP23X17_GPIOA);         // Clear MCP23x17 interrupt
         }

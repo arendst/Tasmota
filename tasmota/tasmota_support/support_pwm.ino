@@ -183,6 +183,7 @@ void ResetPwm(void)
     TasmotaGlobal.pwm_value[i] = 0;
   }
   PwmApplyGPIO(true);
+  analogDetachAll();     // Fix PWM activity on unconfigured PWM GPIOs after restart
 }
 
 void CmndPwmfrequency(void)

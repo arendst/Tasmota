@@ -19,11 +19,14 @@ import os
 import tasmotapiolib
 import subprocess
 import shutil
+import json
+from colorama import Fore, Back, Style
 
 Import("env")
 platform = env.PioPlatform()
 board = env.BoardConfig()
 mcu = board.get("build.mcu", "esp32")
+IS_WINDOWS = sys.platform.startswith("win")
 
 
 class FSType(Enum):
@@ -287,6 +290,80 @@ def upload_factory(*args, **kwargs):
         print("Flash firmware at address 0x0")
         subprocess.call(esptoolpy_cmd, shell=False)
 
+def esp32_use_external_crashreport(*args, **kwargs):
+    try:
+        crash_report = env.GetProjectOption("custom_crash_report")
+    except:
+        print(Fore.RED + "Did not find custom_crash_report section in the current environment!!")
+        return
+    try:
+        crash_report = json.loads(crash_report)
+    except:
+        print(Fore.RED + "No valid JSON, please use output of STATUS 12 in the console!!")
+        return
+    print(Fore.GREEN + "Use external crash report (STATUS 12) for debugging:\n", json.dumps(crash_report, sort_keys=True, indent=4))
+    epc = crash_report['StatusSTK']['EPC']
+    callchain = crash_report['StatusSTK']['CallChain']
+    addr2line = ""
+    for p in platform.get_installed_packages():
+        if "toolchain" in p.path:
+            files = os.listdir(join(p.path,"bin"))
+            for f in files:
+                if "addr2line" in f:
+                    addr2line = join(p.path,"bin",f)
+    elf_file = join(env.subst("$BUILD_DIR"),env.subst("${PROGNAME}.elf"))
+    if isfile(elf_file) is False:
+        print(Fore.RED+"Did not find firmware.elf ... please build the current environment first!!")
+        return
+    enc = "mbcs" if IS_WINDOWS else "utf-8"
+    output = (
+    subprocess.check_output([addr2line,"-e",elf_file,"-fC","-a",epc])
+    .decode(enc)
+    .strip()
+    .splitlines()
+    )
+    print(Fore.YELLOW + "There is no way to check, if this data is valid for the given firmware!!")
+    print(Fore.GREEN + "Crash at:")
+    print(Fore.YELLOW + output[0] + ": \n" + output[1] + " in " + output[2])
+    print(Fore.GREEN + "Callchain:")
+    for call in callchain:
+        output = (
+        subprocess.check_output([addr2line,"-e",elf_file,"-fC","-a",call])
+        .decode(enc)
+        .strip()
+        .splitlines()
+        )
+        print(Fore.YELLOW + output[0]+": \n"+output[1]+" in "+output[2])
+
+
+def reset_target(*args, **kwargs):
+    esptoolpy = join(platform.get_package_dir("tool-esptoolpy") or "", "esptool.py")
+    upload_port = join(env.get("UPLOAD_PORT", "none"))
+    if "none" in upload_port:
+        env.AutodetectUploadPort()
+        upload_port = join(env.get("UPLOAD_PORT", "none"))
+    esptoolpy_flags = [
+        "--no-stub",
+        "--chip", mcu,
+        "--port", upload_port,
+        "flash_id"
+    ]
+    esptoolpy_cmd = [env["PYTHONEXE"], esptoolpy] + esptoolpy_flags
+    print("Try to reset device")
+    subprocess.call(esptoolpy_cmd, shell=False)
+
+
+env.AddCustomTarget(
+    name="reset_target",
+    dependencies=None,
+    actions=[
+        reset_target
+    ],
+    title="Reset ESP32 target",
+    description="This command resets ESP32x target via esptoolpy",
+)
+
+
 env.AddCustomTarget(
     name="downloadfs",
     dependencies=None,
@@ -305,4 +382,14 @@ env.AddCustomTarget(
     ],
     title="Flash factory",
     description="Flash factory firmware"
+)
+
+env.AddCustomTarget(
+    name="external_crashreport",
+    dependencies=None,
+    actions=[
+        esp32_use_external_crashreport
+    ],
+    title="External crash report",
+    description="Use external crashreport from Tasmotas console output of STATUS 12"
 )

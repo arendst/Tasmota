@@ -180,6 +180,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     add_driver, closure(Tasmota_add_driver_closure)
     remove_driver, closure(Tasmota_remove_driver_closure)
     load, closure(Tasmota_load_closure)
+    compile, closure(Tasmota_compile_closure)
     wire_scan, closure(Tasmota_wire_scan_closure)
     time_str, closure(Tasmota_time_str_closure)
     urlfetch, closure(Tasmota_urlfetch_closure)

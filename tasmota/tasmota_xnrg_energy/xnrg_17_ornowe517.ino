@@ -31,7 +31,7 @@
 
 // can be user defined in my_user_config.h
 #ifndef WE517_SPEED
-  #define WE517_SPEED      9600    // default WE517 Modbus address
+  #define WE517_SPEED      9600    // default WE517 baudrate
 #endif
 // can be user defined in my_user_config.h
 #ifndef WE517_ADDR

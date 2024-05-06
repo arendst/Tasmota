@@ -194,11 +194,10 @@ uint16_t SendMail(char *buffer) {
 
 #ifdef DEBUG_EMAIL_PORT
                 smtp->debug(true);
+                smtp->callback(smtpCallback);
 #else
                 smtp->debug(false);
 #endif
-
-              //  smtp->callback(smtpCallback);
 
                 SMTP_Message message;
                 email_mptr = &message;
@@ -390,14 +389,19 @@ void send_message_txt(char *txt) {
 /* Callback function to get the Email sending status */
 void smtpCallback(SMTP_Status status) {
   /* Print the current status */
-  Serial.println(status.info());
+  //Serial.println(status.info());
+  AddLog(LOG_LEVEL_INFO, PSTR("MAI: %s"),status.info());
 
   /* Print the sending result */
   if (status.success()) {
-    Serial.println("----------------");
-    Serial.printf("Message sent success: %d\n", status.completedCount());
-    Serial.printf("Message sent failled: %d\n", status.failedCount());
-    Serial.println("----------------\n");
+    //Serial.println("----------------");
+    //Serial.printf("Message sent success: %d\n", status.completedCount());
+    AddLog(LOG_LEVEL_INFO, PSTR("MAI: Message sent success: %d"),status.completedCount());
+
+    //Serial.printf("Message sent failled: %d\n", status.failedCount());
+    AddLog(LOG_LEVEL_INFO, PSTR("MAI: Message sent failed: %d"),status.failedCount());
+
+    //Serial.println("----------------\n");
     struct tm dt;
 
     for (size_t i = 0; i < smtp->sendingResult.size(); i++) {
@@ -405,13 +409,20 @@ void smtpCallback(SMTP_Status status) {
       SMTP_Result result = smtp->sendingResult.getItem(i);
       localtime_r((time_t*)&result.timestamp, &dt);
 
-      Serial.printf("Message No: %d\n", i + 1);
-      Serial.printf("Status: %s\n", result.completed ? "success" : "failed");
-      Serial.printf("Date/Time: %d/%d/%d %d:%d:%d\n", dt.tm_year + 1900, dt.tm_mon + 1, dt.tm_mday, dt.tm_hour, dt.tm_min, dt.tm_sec);
-      Serial.printf("Recipient: %s\n", result.recipients);
-      Serial.printf("Subject: %s\n", result.subject);
+      //Serial.printf("Message No: %d\n", i + 1);
+      AddLog(LOG_LEVEL_INFO, PSTR("MAI: Message No: %d"),i + 1);
+
+      //Serial.printf("Status: %s\n", result.completed ? "success" : "failed");
+      AddLog(LOG_LEVEL_INFO, PSTR("MAI: Status: %s"),result.completed ? "success" : "failed");
+
+      //Serial.printf("Date/Time: %d/%d/%d %d:%d:%d\n", dt.tm_year + 1900, dt.tm_mon + 1, dt.tm_mday, dt.tm_hour, dt.tm_min, dt.tm_sec);
+      AddLog(LOG_LEVEL_INFO, PSTR("MAI: Date/Time: %d/%d/%d %d:%d:%d"), dt.tm_year + 1900, dt.tm_mon + 1, dt.tm_mday, dt.tm_hour, dt.tm_min, dt.tm_sec);
+      //Serial.printf("Recipient: %s\n", result.recipients);
+      AddLog(LOG_LEVEL_INFO, PSTR("MAI: Recipient: %s"),result.recipients.c_str());
+      //Serial.printf("Subject: %s\n", result.subject);
+      AddLog(LOG_LEVEL_INFO, PSTR("MAI: Subject: %s"),result.subject.c_str());
     }
-    Serial.println("----------------\n");
+    //Serial.println("----------------\n");
   }
 }
 

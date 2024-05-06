@@ -241,7 +241,7 @@ extern "C" {
       be_newobject(vm, "map");
       // (-2) map instance, (-1) map
     }
-    be_map_insert_str(vm, "mac", WiFi.macAddress().c_str());
+    be_map_insert_str(vm, "mac", WiFiHelper::macAddress().c_str());
     be_map_insert_bool(vm, "up", WifiHasIP());
     if (Settings->flag4.network_wifi) {
       int32_t rssi = WiFi.RSSI();

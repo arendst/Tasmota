@@ -24,6 +24,7 @@
 #include <Arduino.h>
 #ifdef ESP32
   #include <HTTPClient.h>
+  #include <WiFi.h>
 #else
   #include <ESP8266HTTPClient.h>
 #endif

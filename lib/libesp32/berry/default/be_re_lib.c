@@ -8,6 +8,7 @@
 #include "be_constobj.h"
 #include "be_mem.h"
 #include "be_object.h"
+#include "be_exec.h"
 #include "../../re1.5/re1.5.h"
 
 /********************************************************************
@@ -46,6 +47,9 @@ int be_re_compile(bvm *vm) {
     }
 
     ByteProg *code = be_os_malloc(sizeof(ByteProg) + sz);
+    if (code == NULL) {
+      be_throw(vm, BE_MALLOC_FAIL);   /* lack of heap space */
+    }
     int ret = re1_5_compilecode(code, regex_str);
     if (ret != 0) {
       be_raise(vm, "internal_error", "error in regex");
@@ -113,11 +117,16 @@ int be_re_match_search(bvm *vm, bbool is_anchored, bbool size_only) {
     }
 
     ByteProg *code = be_os_malloc(sizeof(ByteProg) + sz);
+    if (code == NULL) {
+      be_throw(vm, BE_MALLOC_FAIL);   /* lack of heap space */
+    }
     int ret = re1_5_compilecode(code, regex_str);
     if (ret != 0) {
+      be_os_free(code);
       be_raise(vm, "internal_error", "error in regex");
     }
     be_re_match_search_run(vm, code, hay, is_anchored, size_only);
+    be_os_free(code);
     be_return(vm);
   }
   be_raise(vm, "type_error", NULL);
@@ -138,8 +147,12 @@ int be_re_match_search_all(bvm *vm, bbool is_anchored) {
     }
 
     ByteProg *code = be_os_malloc(sizeof(ByteProg) + sz);
+    if (code == NULL) {
+      be_throw(vm, BE_MALLOC_FAIL);   /* lack of heap space */
+    }
     int ret = re1_5_compilecode(code, regex_str);
     if (ret != 0) {
+      be_os_free(code);
       be_raise(vm, "internal_error", "error in regex");
     }
 
@@ -152,6 +165,7 @@ int be_re_match_search_all(bvm *vm, bbool is_anchored) {
       be_pop(vm, 1);
     }
     be_pop(vm, 1);
+    be_os_free(code);
     be_return(vm);
   }
   be_raise(vm, "type_error", NULL);
@@ -328,11 +342,17 @@ int be_re_split(bvm *vm) {
     }
 
     ByteProg *code = be_os_malloc(sizeof(ByteProg) + sz);
+    if (code == NULL) {
+      be_throw(vm, BE_MALLOC_FAIL);   /* lack of heap space */
+    }
     int ret = re1_5_compilecode(code, regex_str);
     if (ret != 0) {
+      be_os_free(code);
       be_raise(vm, "internal_error", "error in regex");
     }
-    return re_pattern_split_run(vm, code, hay, split_limit);
+    ret = re_pattern_split_run(vm, code, hay, split_limit);
+    be_os_free(code);
+    return ret;
   }
   be_raise(vm, "type_error", NULL);
 }

@@ -21,6 +21,7 @@
 #define _TASMOTA_CONFIGURATIONS_ESP32_H_
 
 #ifdef ESP32
+#include "sdkconfig.h"
 
 /*********************************************************************************************\
  * [tasmota32x-safeboot.bin]
@@ -185,26 +186,17 @@
 #define USE_WEBSERVER
 #define USE_WEBCLIENT
 #define USE_WEBCLIENT_HTTPS
-#define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge console Tee (+2k code)
-#define USE_ETHERNET
+
+#if CONFIG_IDF_TARGET_ESP32
+#if CONFIG_FREERTOS_UNICORE
+  #undef USE_MQTT_TLS
+//  #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge console Tee (+4.5k code)
+  #define USE_SPI                                    // Make SPI Ethernet adapters useable (+124 bytes)
+  #define USE_ETHERNET
+#endif  // CONFIG_FREERTOS_UNICORE
+#endif  // CONFIG_IDF_TARGET_ESP32
 
 #endif  // FIRMWARE_SAFEBOOT
-
-/*********************************************************************************************\
- * FIRMWARE_ARDUINO30
- * Provide an image which compiles with WiP Arduino 3.0.x
-\*********************************************************************************************/
-
-#ifdef FIRMWARE_ARDUINO30
-
-#ifndef CODE_IMAGE_STR
-  #define CODE_IMAGE_STR "arduino30"
-#endif
-
-#define FIRMWARE_TASMOTA32
-
-#endif  // FIRMWARE_ARDUINO30
-
 
 /*********************************************************************************************\
  * [tasmota32-webcam.bin]
@@ -313,27 +305,23 @@
 #define USE_I2S
 #define USE_SPI
 #define USE_LVGL
-#define USE_LVGL_HASPMOTA
-#define USE_LVGL_FREETYPE
   #undef SET_ESP32_STACK_SIZE
   #define SET_ESP32_STACK_SIZE (24 * 1024)
-#define USE_LVGL_PNG_DECODER
 #define USE_DISPLAY
-#define SHOW_SPLASH
-#define USE_XPT2046
-#define USE_FT5206
-#define USE_GT911
-#define USE_CST816S
 #define USE_MPU_ACCEL
 #define USE_RTC_CHIPS                            // Enable RTC chip support and NTP server - Select only one
   #define USE_BM8563
 #define USE_MLX90614
 #define USE_UNIVERSAL_DISPLAY
+#define USE_UNIVERSAL_TOUCH
+//#define USE_XPT2046
+//#define USE_FT5206
+//#define USE_GT911
+//#define USE_CST816S
 #define USE_DISPLAY_LVGL_ONLY
 
 //#undef USE_DISPLAY_MODES1TO5
 #undef USE_DISPLAY_LCD
-#undef USE_DISPLAY_SSD1306
 #undef USE_DISPLAY_MATRIX
 #undef USE_DISPLAY_SEVENSEG
 

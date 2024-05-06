@@ -147,6 +147,11 @@ assert(string.format("%s", nil) == 'nil')
 assert(string.format("%s", true) == 'true')
 assert(string.format("%s", false) == 'false')
 
+assert(string.format("%q", "\ntest") == '\'\\ntest\'')
+
+# corrupt format string should not crash the VM
+string.format("%0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f", 3.5)
+
 # format is now synonym to string.format
 assert(format == string.format)
 assert(format("%.1f", 3) == '3.0')
@@ -169,3 +174,42 @@ var a = 'foobar{0}'
 assert(f"S = {a}" == 'S = foobar{0}')
 assert(f"S = {a:i}" == 'S = 0')
 assert(f"{a=}" == 'a=foobar{0}')
+
+# startswith case sensitive
+assert(string.startswith("", "") == true)
+assert(string.startswith("qwerty", "qw") == true)
+assert(string.startswith("qwerty", "qwerty") == true)
+assert(string.startswith("qwerty", "") == true)
+assert(string.startswith("qwerty", "qW") == false)
+assert(string.startswith("qwerty", "QW") == false)
+assert(string.startswith("qwerty", "qz") == false)
+assert(string.startswith("qwerty", "qwertyw") == false)
+
+# startswith case insensitive
+assert(string.startswith("qwerty", "qw", true) == true)
+assert(string.startswith("qwerty", "qwerty", true) == true)
+assert(string.startswith("qwerty", "", true) == true)
+assert(string.startswith("qwerty", "qW", true) == true)
+assert(string.startswith("qwerty", "QW", true) == true)
+assert(string.startswith("qwerty", "qz", true) == false)
+assert(string.startswith("qwerty", "qwertyw", true) == false)
+
+# endswith case sensitive
+assert(string.endswith("", "") == true)
+assert(string.endswith("qwerty", "ty") == true)
+assert(string.endswith("qwerty", "qwerty") == true)
+assert(string.endswith("qwerty", "") == true)
+assert(string.endswith("qwerty", "tY") == false)
+assert(string.endswith("qwerty", "TY") == false)
+assert(string.endswith("qwerty", "tr") == false)
+assert(string.endswith("qwerty", "qwertyw") == false)
+
+# endswith case insensitive
+assert(string.endswith("", "", true) == true)
+assert(string.endswith("qwerty", "ty", true) == true)
+assert(string.endswith("qwerty", "qwerty", true) == true)
+assert(string.endswith("qwerty", "", true) == true)
+assert(string.endswith("qwerty", "tY", true) == true)
+assert(string.endswith("qwerty", "TY", true) == true)
+assert(string.endswith("qwerty", "tr", true) == false)
+assert(string.endswith("qwerty", "qwertyw", true) == false)

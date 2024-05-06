@@ -195,7 +195,7 @@ HTTPUpdateResult HTTPUpdateLight::handleUpdate(HTTPClientLight& http, const Stri
     http.setFollowRedirects(_followRedirects);
     http.setUserAgent("ESP32-http-Update");
     http.addHeader("Cache-Control", "no-cache");
-    http.addHeader("x-ESP32-STA-MAC", WiFi.macAddress());
+    http.addHeader("x-ESP32-STA-MAC", WiFiHelper::macAddress());
     http.addHeader("x-ESP32-AP-MAC", WiFi.softAPmacAddress());
     http.addHeader("x-ESP32-free-space", String(ESP.getFreeSketchSpace()));
     http.addHeader("x-ESP32-sketch-size", String(ESP.getSketchSize()));

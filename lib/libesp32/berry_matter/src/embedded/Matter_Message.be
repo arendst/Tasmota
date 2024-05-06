@@ -379,7 +379,7 @@ class Matter_Frame
     n.add(self.flags, 1)
     n.add(self.message_counter, 4)
     if self.source_node_id
-      n .. source_node_id
+      n .. self.source_node_id
     else
       if session.peer_node_id
         n .. session.peer_node_id

@@ -1088,7 +1088,7 @@ bool XdrvRulesProcess(bool teleperiod, const char* event) {
   // events are sent to Berry in Rules driver, or here if USE_RULES is not defined (only on a subset)
   bool berry_handled = XdrvCallDriver(52, FUNC_RULES_PROCESS);
   rule_handled |= berry_handled;
-#endif
+#endif  // USE_BERRY and No USE_RULES
   XdrvMailbox.data = data_save;
   return rule_handled;
 }
@@ -1154,10 +1154,10 @@ bool XdrvCall(uint32_t function) {
 #else
       uint32_t index = kXdrvList[x];
 #endif
-      if (52 == index) {  // Skip berry
-        WSContentSeparator(3);
+      if (52 == index) {        // Skip berry
+        WSContentSeparator(3);  // Don't print separator on next WSContentSeparator(1)
       } else {
-        WSContentSeparator(1);
+        WSContentSeparator(1);  // Print separator if needed
       }
     }  // Show separator if needed
 #endif // USE_WEBSERVER

@@ -228,7 +228,15 @@ static int32_t _vglite_evaluate(lv_draw_unit_t * u, lv_draw_task_t * t)
                 const lv_draw_image_dsc_t * draw_dsc = (lv_draw_image_dsc_t *) t->draw_dsc;
                 lv_layer_t * layer_to_draw = (lv_layer_t *)draw_dsc->src;
 
-                if(!_vglite_src_cf_supported(layer_to_draw->color_format))
+#if LV_USE_VGLITE_BLIT_SPLIT
+                bool has_transform = (draw_dsc->rotation != 0 || draw_dsc->scale_x != LV_SCALE_NONE ||
+                                      draw_dsc->scale_y != LV_SCALE_NONE);
+#endif
+                if(!_vglite_src_cf_supported(layer_to_draw->color_format)
+#if LV_USE_VGLITE_BLIT_SPLIT
+                   || has_transform
+#endif
+                  )
                     return 0;
 
                 if(t->preference_score > 80) {
@@ -352,10 +360,13 @@ static void _vglite_execute_drawing(lv_draw_vglite_unit_t * u)
         return; /*Fully clipped, nothing to do*/
 
     /* Invalidate the drawing area */
-    lv_draw_buf_invalidate_cache(draw_buf->data, draw_buf->header.stride, draw_buf->header.cf, &draw_area);
+    lv_draw_buf_invalidate_cache(draw_buf, &draw_area);
 
-    /* Set scissor area */
-    vglite_set_scissor(&clip_area);
+    /* Set scissor area, excluding the split blit case */
+#if LV_USE_VGLITE_BLIT_SPLIT
+    if(t->type != LV_DRAW_TASK_TYPE_IMAGE || t->type != LV_DRAW_TASK_TYPE_LAYER)
+#endif
+        vglite_set_scissor(&clip_area);
 
     switch(t->type) {
         case LV_DRAW_TASK_TYPE_LABEL:

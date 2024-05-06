@@ -11,6 +11,9 @@
  * ESP32, ESP32-S2, ESP32-S3, ESP32-C2, ESP32-C3, ESP32-C6 and ESP32-H2 Support
 \*********************************************************************************************/
 
+//                                                   11b 11g 11n  11n  11ax
+const static char kWifiPhyMode[] PROGMEM = "low rate|11b|11g|HT20|HT40|HE20"; // Wi-Fi Modes
+
 #include "soc/soc.h"
 #include "soc/spi_reg.h"
 // ESP32_ARCH contains the name of the architecture (used by autoconf)
@@ -37,27 +40,23 @@
 #endif
 
 // See libraries\ESP32\examples\ResetReason.ino
-#if ESP_IDF_VERSION_MAJOR > 3      // IDF 4+
-  #include "esp_chip_info.h"
-  #if CONFIG_IDF_TARGET_ESP32      // ESP32/PICO-D4
-    #include "esp32/rom/rtc.h"
-  #elif CONFIG_IDF_TARGET_ESP32S2  // ESP32-S2
-    #include "esp32s2/rom/rtc.h"
-  #elif CONFIG_IDF_TARGET_ESP32S3  // ESP32-S3
-    #include "esp32s3/rom/rtc.h"
-  #elif CONFIG_IDF_TARGET_ESP32C2  // ESP32-C2
-    #include "esp32c2/rom/rtc.h"
-  #elif CONFIG_IDF_TARGET_ESP32C3  // ESP32-C3
-    #include "esp32c3/rom/rtc.h"
-  #elif CONFIG_IDF_TARGET_ESP32C6  // ESP32-C6
-    #include "esp32c6/rom/rtc.h"
-  #elif CONFIG_IDF_TARGET_ESP32H2  // ESP32-H2
-    #include "esp32h2/rom/rtc.h"
-  #else
-    #error Target CONFIG_IDF_TARGET is not supported
-  #endif
-#else // ESP32 Before IDF 4.0
-  #include "rom/rtc.h"
+#include "esp_chip_info.h"
+#if CONFIG_IDF_TARGET_ESP32      // ESP32/PICO-D4
+  #include "esp32/rom/rtc.h"
+#elif CONFIG_IDF_TARGET_ESP32S2  // ESP32-S2
+  #include "esp32s2/rom/rtc.h"
+#elif CONFIG_IDF_TARGET_ESP32S3  // ESP32-S3
+  #include "esp32s3/rom/rtc.h"
+#elif CONFIG_IDF_TARGET_ESP32C2  // ESP32-C2
+  #include "esp32c2/rom/rtc.h"
+#elif CONFIG_IDF_TARGET_ESP32C3  // ESP32-C3
+  #include "esp32c3/rom/rtc.h"
+#elif CONFIG_IDF_TARGET_ESP32C6  // ESP32-C6
+  #include "esp32c6/rom/rtc.h"
+#elif CONFIG_IDF_TARGET_ESP32H2  // ESP32-H2
+  #include "esp32h2/rom/rtc.h"
+#else
+  #error Target CONFIG_IDF_TARGET is not supported
 #endif
 
 // Set the Stacksize for Arduino core. Default is 8192, some builds may need a bigger one
@@ -178,7 +177,7 @@ void QPCWrite(const void *pSettings, unsigned nSettingsLen) {
 }
 
 bool OtaFactoryRead(void) {
-  uint32_t pOtaLoader;
+  uint32_t pOtaLoader = 0;
   NvmLoad("otal", "otal", &pOtaLoader, sizeof(pOtaLoader));
   return pOtaLoader;
 }
@@ -201,12 +200,7 @@ void NvsInfo(void) {
 
 // See Esp.cpp
 #include "Esp.h"
-#if ESP_IDF_VERSION_MAJOR >= 5
-  // esp_spi_flash.h is deprecated, please use spi_flash_mmap.h instead
-  #include "spi_flash_mmap.h"
-#else
-  #include "esp_spi_flash.h"
-#endif
+#include "spi_flash_mmap.h"
 #include <memory>
 #include <soc/soc.h>
 #include <soc/efuse_reg.h>
@@ -217,38 +211,33 @@ extern "C" {
 }
 #include "esp_system.h"
 #include "esp_flash.h"
-#if ESP_IDF_VERSION_MAJOR > 3       // IDF 4+
-  #if CONFIG_IDF_TARGET_ESP32       // ESP32/PICO-D4
-    #include "esp32/rom/spi_flash.h"
-    #define ESP_FLASH_IMAGE_BASE 0x1000     // Flash offset containing magic flash size and spi mode
-  #elif CONFIG_IDF_TARGET_ESP32S2   // ESP32-S2
-    #include "esp32s2/rom/spi_flash.h"
-    #define ESP_FLASH_IMAGE_BASE 0x1000     // Flash offset containing magic flash size and spi mode
-  #elif CONFIG_IDF_TARGET_ESP32S3   // ESP32-S3
-    #include "esp32s3/rom/spi_flash.h"
-    #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32s3 is located at 0x0000
-  #elif CONFIG_IDF_TARGET_ESP32C2   // ESP32-C2
-    #include "esp32c2/rom/spi_flash.h"
-    #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c2 is located at 0x0000
-  #elif CONFIG_IDF_TARGET_ESP32C3   // ESP32-C3
-    #include "esp32c3/rom/spi_flash.h"
-    #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c3 is located at 0x0000
-  #elif CONFIG_IDF_TARGET_ESP32C6   // ESP32-C6
-    #include "esp32c6/rom/spi_flash.h"
-    #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c6 is located at 0x0000
-  #elif CONFIG_IDF_TARGET_ESP32H2   // ESP32-H2
-    #include "esp32h2/rom/spi_flash.h"
-    #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32h2 is located at 0x0000
-  #else
+
+#if CONFIG_IDF_TARGET_ESP32       // ESP32/PICO-D4
+  #include "esp32/rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x1000     // Flash offset containing magic flash size and spi mode
+#elif CONFIG_IDF_TARGET_ESP32S2   // ESP32-S2
+  #include "esp32s2/rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x1000     // Flash offset containing magic flash size and spi mode
+#elif CONFIG_IDF_TARGET_ESP32S3   // ESP32-S3
+  #include "esp32s3/rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32s3 is located at 0x0000
+#elif CONFIG_IDF_TARGET_ESP32C2   // ESP32-C2
+  #include "esp32c2/rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c2 is located at 0x0000
+#elif CONFIG_IDF_TARGET_ESP32C3   // ESP32-C3
+  #include "esp32c3/rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c3 is located at 0x0000
+#elif CONFIG_IDF_TARGET_ESP32C6   // ESP32-C6
+  #include "esp32c6/rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32c6 is located at 0x0000
+#elif CONFIG_IDF_TARGET_ESP32H2   // ESP32-H2
+  #include "esp32h2/rom/spi_flash.h"
+  #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32h2 is located at 0x0000
+#else
     #error Target CONFIG_IDF_TARGET is not supported
-  #endif
-#else // ESP32 Before IDF 4.0
-  #include "rom/spi_flash.h"
-  #define ESP_FLASH_IMAGE_BASE 0x1000
 #endif
-#if ESP_IDF_VERSION_MAJOR >= 5
-  #include "bootloader_common.h"
-#endif
+
+#include "bootloader_common.h"
 
 uint32_t EspProgramSize(const char *label) {
   const esp_partition_t *part = esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_ANY, label);
@@ -459,7 +448,7 @@ uint32_t ESP_getFlashChipMagicSize(void) {
 }
 
 uint32_t ESP_magicFlashChipSize(uint8_t spi_size) {
-/*  
+/*
     switch(spi_size & 0x0F) {
     case 0x0: // 8 MBit (1MB)
         return 1048576;
@@ -474,7 +463,7 @@ uint32_t ESP_magicFlashChipSize(uint8_t spi_size) {
     case 0x5: // 256 MBit (32MB)
         return 33554432;
     default:  // fail so return (1KB)
-        return 1024;      
+        return 1024;
     }
 */
   // When spi_size is bigger than 11 will return 0 (0x100000000 = 0x00000000)
@@ -587,14 +576,10 @@ extern "C" {
 // `psramFound()` can return true even if no PSRAM is actually installed
 // This new version also checks `esp_spiram_is_initialized` to know if the PSRAM is initialized
 bool FoundPSRAM(void) {
-#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || DISABLE_PSRAMCHECK || CORE32SOLO1
   return psramFound();
 #else
-  #if ESP_IDF_VERSION_MAJOR >= 5
-    return psramFound() && esp_psram_is_initialized();
-  #else
-    return psramFound() && esp_spiram_is_initialized();
-  #endif
+  return psramFound() && esp_psram_is_initialized();
 #endif
 }
 
@@ -771,9 +756,6 @@ typedef struct {
       - Peripherals include capacitive touch sensors, Hall sensor, SD card interface, Ethernet, high-speed SPI, UART, I2S and I2C
       */
 #ifdef CONFIG_IDF_TARGET_ESP32
-#if (ESP_IDF_VERSION_MAJOR < 5)
-      pkg_version = REG_GET_FIELD(EFUSE_BLK0_RDATA3_REG, EFUSE_RD_CHIP_VER_PKG) & 0x7;
-#endif
 
 //      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HDW: ESP32 Model %d, Revision %d, Core %d"), chip_info.model, chip_revision, chip_info.cores);
 
@@ -813,9 +795,6 @@ typedef struct {
       - Availability of common cloud connectivity agents and common product features shortens the time to market
       */
 #ifdef CONFIG_IDF_TARGET_ESP32S2
-#if (ESP_IDF_VERSION_MAJOR < 5)
-      pkg_version = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_FLASH_VERSION) & 0xF;
-#endif
       uint32_t psram_ver = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_PSRAM_VERSION);
       pkg_version += ((psram_ver & 0xF) * 100);
 
@@ -843,9 +822,6 @@ typedef struct {
       - Rich set of peripheral interfaces and GPIOs, ideal for various scenarios and complex applications
       */
 #ifdef CONFIG_IDF_TARGET_ESP32C3
-#if (ESP_IDF_VERSION_MAJOR < 5)
-      pkg_version = REG_GET_FIELD(EFUSE_RD_MAC_SPI_SYS_3_REG, EFUSE_PKG_VERSION) & 0x7;
-#endif
       switch (pkg_version) {
         case 0:              return F("ESP32-C3");           // Max 160MHz, Single core, QFN 5*5, ESP32-C3-WROOM-02, ESP32-C3-DevKitC-02
 //        case 1:              return F("ESP32-C3FH4");        // Max 160MHz, Single core, QFN 5*5, 4MB embedded flash, ESP32-C3-MINI-1, ESP32-C3-DevKitM-1
@@ -869,12 +845,10 @@ typedef struct {
       - Reliable security features ensured by RSA-based secure boot, AES-XTS-based flash encryption, the innovative digital signature and the HMAC peripheral, “World Controller”
       */
 #ifdef CONFIG_IDF_TARGET_ESP32S3
-#if (ESP_IDF_VERSION_MAJOR >= 5)
       switch (pkg_version) {
         case 0:              return F("ESP32-S3");           // QFN56
         case 1:              return F("ESP32-S3-PICO-1");    // LGA56
       }
-#endif
 #endif  // CONFIG_IDF_TARGET_ESP32S3
       return F("ESP32-S3");                                  // Max 240MHz, Dual core, QFN 7*7, ESP32-S3-WROOM-1, ESP32-S3-DevKitC-1
     }
@@ -976,34 +950,23 @@ String ESP_getEfuseMac(void) {
   return String(ESP.getEfuseMac());
 }
 
+String WifiGetPhyMode(void) {
+  char stemp[10];
+  return String(GetTextIndexed(stemp, sizeof(stemp), WiFiHelper::getPhyMode(), kWifiPhyMode));
+}
+
 /*********************************************************************************************\
  * High entropy hardware random generator
  * Thanks to DigitalAlchemist
 \*********************************************************************************************/
 
-#if ESP_IDF_VERSION_MAJOR >= 5
 #include <esp_random.h>
-#endif
 
 // Based on code from https://raw.githubusercontent.com/espressif/esp-idf/master/components/esp32/hw_random.c
 uint32_t HwRandom(void) {
-#if ESP_IDF_VERSION_MAJOR >= 5
   // See for more info on the HW RNG:
   // https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/api-reference/system/random.html
   return esp_random();
-#else
-  #define _RAND_ADDR 0x3FF75144UL
-  static uint32_t last_ccount = 0;
-  uint32_t ccount;
-  uint32_t result = 0;
-  do {
-    ccount = ESP.getCycleCount();
-    result ^= *(volatile uint32_t *)_RAND_ADDR;
-  } while (ccount - last_ccount < 64);
-  last_ccount = ccount;
-  return result ^ *(volatile uint32_t *)_RAND_ADDR;
-  #undef _RAND_ADDR
-#endif  // ESP_IDF_VERSION_MAJOR >= 5
 }
 
 /********************************************************************************************/

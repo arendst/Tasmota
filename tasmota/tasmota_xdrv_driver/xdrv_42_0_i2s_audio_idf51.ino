@@ -139,9 +139,9 @@ const char kI2SAudio_Commands[] PROGMEM = "I2S|"
 #if defined(USE_SHINE) && defined(MP3_MIC_STREAM)
   "|Stream"
 #endif // MP3_MIC_STREAM
-#ifdef I2S_BRIDGE
+#ifdef USE_I2S_BRIDGE
   "|Bridge"
-#endif // I2S_BRIDGE
+#endif // USE_I2S_BRIDGE
 ;
 
 void (* const I2SAudio_Command[])(void) PROGMEM = {
@@ -167,8 +167,8 @@ void (* const I2SAudio_Command[])(void) PROGMEM = {
 #if defined(USE_SHINE) && defined(MP3_MIC_STREAM)
   &CmndI2SMP3Stream,
 #endif // MP3_MIC_STREAM
-#ifdef I2S_BRIDGE
-  &CmndI2SI2SBridge,
+#ifdef USE_I2S_BRIDGE
+  &CmndI2SBridge,
 #endif // I2S_BRIDGE
 };
 
@@ -227,11 +227,19 @@ void CmndI2SConfig(void) {
       // cfg->rx.gain = rx.getUInt(PSTR("Gain"), cfg->rx.gain);
       cfg->rx.mode = rx.getUInt(PSTR("Mode"), cfg->rx.mode);
       cfg->rx.slot_mask = rx.getUInt(PSTR("SlotMask"), cfg->rx.slot_mask);
-      cfg->rx.slot_config = rx.getUInt(PSTR("SlotConfig"), cfg->rx.slot_config);
+      cfg->rx.slot_bit_width = rx.getUInt(PSTR("SlotWidth"), cfg->rx.slot_bit_width);
       cfg->rx.channels = rx.getUInt(PSTR("Channels"), cfg->rx.channels);
       cfg->rx.dc_filter_alpha = rx.getUInt(PSTR("DCFilterAlpha"), cfg->rx.dc_filter_alpha);
       cfg->rx.lowpass_alpha = rx.getUInt(PSTR("LowpassAlpha"), cfg->rx.lowpass_alpha);
       cfg->rx.apll = rx.getUInt(PSTR("APLL"), cfg->rx.apll);
+      cfg->rx.ws_width = rx.getUInt(PSTR("WsWidth"), cfg->rx.ws_width);
+      cfg->rx.ws_pol = rx.getUInt(PSTR("WsPol"), cfg->rx.ws_pol);
+      cfg->rx.bit_shift = rx.getUInt(PSTR("BitShift"), cfg->rx.bit_shift);
+      cfg->rx.left_align = rx.getUInt(PSTR("LeftAlign"), cfg->rx.left_align);
+      cfg->rx.big_endian = rx.getUInt(PSTR("BigEndian"), cfg->rx.big_endian);
+      cfg->rx.bit_order_lsb = rx.getUInt(PSTR("LsbOrder"), cfg->rx.bit_order_lsb);
+      cfg->rx.dma_frame_num = rx.getUInt(PSTR("DMAFrame"), cfg->rx.dma_frame_num);
+      cfg->rx.dma_desc_num = rx.getUInt(PSTR("DMADesc"), cfg->rx.dma_desc_num);
     }
     I2SSettingsSave(AUDIO_CONFIG_FILENAME);
   }
@@ -268,11 +276,19 @@ void CmndI2SConfig(void) {
                     // "\"Gain\":%d,"
                     "\"Mode\":%d,"
                     "\"SlotMask\":%d,"
-                    "\"SlotConfig\":%d,"
+                    "\"SlotWidth\":%d,"
                     "\"Channels\":%d,"
                     "\"DCFilterAlpha\":%d,"
                     "\"LowpassAlpha\":%d,"
-                    "\"APLL\":%d"
+                    "\"APLL\":%d,"
+                    "\"WsWidth\":%d,"
+                    "\"WsPol\":%d,"
+                    "\"BitShift\":%d,"
+                    "\"LeftAlign\":%d,"
+                    "\"BigEndian\":%d,"
+                    "\"LsbOrder\":%d,"
+                    "\"DMAFrame\":%d,"
+                    "\"DMADesc\":%d"
                   "}}}",
                   cfg->sys.version,
                   cfg->sys.duplex,
@@ -300,11 +316,19 @@ void CmndI2SConfig(void) {
                   // cfg->rx.gain,
                   cfg->rx.mode,
                   cfg->rx.slot_mask,
-                  cfg->rx.slot_config,
+                  cfg->rx.slot_bit_width,
                   cfg->rx.channels,
                   cfg->rx.dc_filter_alpha,
                   cfg->rx.lowpass_alpha,
-                  cfg->rx.apll
+                  cfg->rx.apll,
+                  cfg->rx.ws_width,
+                  cfg->rx.ws_pol,
+                  cfg->rx.bit_shift,
+                  cfg->rx.left_align,
+                  cfg->rx.big_endian,
+                  cfg->rx.bit_order_lsb,
+                  cfg->rx.dma_frame_num,
+                  cfg->rx.dma_desc_num
                   );
 }
 /*********************************************************************************************\
@@ -325,6 +349,7 @@ void I2sMicTask(void *arg){
   uint16_t bwritten;
   uint32_t ctime;
   uint32_t gain = audio_i2s.Settings->rx.gain;
+  uint32_t timeForOneRead;
 
   if (!audio_i2s_mp3.use_stream) {
     mp3_out = ufsp->open(audio_i2s_mp3.mic_path, "w");
@@ -354,7 +379,7 @@ void I2sMicTask(void *arg){
   } else {
     config.mpeg.mode = STEREO;
   }
-  config.mpeg.bitr = 128;
+  // config.mpeg.bitr = 128; - this is default anyway, but maybe we want to make it a variable in the future
   config.wave.samplerate = audio_i2s.Settings->rx.sample_rate;
   config.wave.channels = (channels)(audio_i2s.Settings->rx.channels);
 
@@ -379,16 +404,25 @@ void I2sMicTask(void *arg){
   }
 
   ctime = TasmotaGlobal.uptime;
+  timeForOneRead = 1000 / ((audio_i2s.Settings->rx.sample_rate / samples_per_pass));
+  timeForOneRead -= 1; // be very in time
 
+  AddLog(LOG_LEVEL_DEBUG, PSTR("I2S: samples %u, bytesize %u, time: %u"),samples_per_pass, bytesize, timeForOneRead);
 
   while (!audio_i2s_mp3.mic_stop) {
+      TickType_t xLastWakeTime = xTaskGetTickCount();
       size_t bytes_read;
-      i2s_channel_read(audio_i2s.rx_handle, (void*)buffer, bytesize, &bytes_read, (100 / portTICK_PERIOD_MS));
+
+      // bytes_read = audio_i2s.in->readMic((uint8_t*)buffer, bytesize, true /*dc_block*/, false /*apply_gain*/, true /*lowpass*/, nullptr /*peak_ptr*/);
+      i2s_channel_read(audio_i2s.in->getRxHandle(), (void*)buffer, bytesize, &bytes_read, pdMS_TO_TICKS(3));
+
+      if(bytes_read < bytesize) AddLog(LOG_LEVEL_DEBUG, PSTR("!! %u, %u"), bytes_read, bytesize);
 
       if (gain > 1) {
-        // set gain
+        // set gain the "old way"
+        int16_t _gain = gain / 16;
         for (uint32_t cnt = 0; cnt < bytes_read / 2; cnt++) {
-          buffer[cnt] *= gain;
+          buffer[cnt] *= _gain;
         }
       }
       ucp = shine_encode_buffer_interleaved(s, buffer, &written);
@@ -406,6 +440,8 @@ void I2sMicTask(void *arg){
         }
       }
       audio_i2s_mp3.recdur = TasmotaGlobal.uptime - ctime;
+      
+      vTaskDelayUntil( &xLastWakeTime, pdMS_TO_TICKS(timeForOneRead));
   }
 
   ucp = shine_flush(s, &written);
@@ -433,7 +469,7 @@ exit:
     audio_i2s_mp3.client.stop();
   }
 
-  audio_i2s.out->stopRx();
+  audio_i2s.in->stopRx();
   audio_i2s_mp3.mic_stop = 0;
   audio_i2s_mp3.mic_error = error;
   AddLog(LOG_LEVEL_INFO, PSTR("mp3task result code: %d"), error);
@@ -453,13 +489,10 @@ int32_t I2sRecordShine(char *path) {
 
   strlcpy(audio_i2s_mp3.mic_path, path, sizeof(audio_i2s_mp3.mic_path));
   audio_i2s_mp3.mic_stop = 0;
-  uint32_t stack = 4096;
+  uint32_t stack = 8000;
   audio_i2s_mp3.use_stream = !strcmp(audio_i2s_mp3.mic_path, "stream.mp3");
 
-  if (audio_i2s_mp3.use_stream) {
-    stack = 8000;
-  }
-  audio_i2s.out->startRx();
+  audio_i2s.in->startRx();
 
   err = xTaskCreatePinnedToCore(I2sMicTask, "MIC", stack, NULL, 3, &audio_i2s_mp3.mic_task_handle, 1);
 
@@ -507,9 +540,9 @@ void I2SSettingsLoad(const char * config_filename, bool erase) {
   else if (TfsLoadFile(config_filename, (uint8_t*)audio_i2s.Settings, sizeof(tI2SSettings))) {
     AddLog(LOG_LEVEL_INFO, "I2S: config loaded from file '%s'", config_filename);
     if ((audio_i2s.Settings->sys.version == 0) || (audio_i2s.Settings->sys.version > AUDIO_SETTINGS_VERSION)) {
+      AddLog(LOG_LEVEL_DEBUG, "I2S: unsupported configuration version %u, use defaults", audio_i2s.Settings->sys.version);
       delete audio_i2s.Settings;
       audio_i2s.Settings = new tI2SSettings();
-      AddLog(LOG_LEVEL_DEBUG, "I2S: unsuppoted configuration version, use defaults");
       I2SSettingsSave(config_filename);
     }
   }
@@ -671,7 +704,7 @@ void I2sInit(void) {
     i2s->setPinout(bclk, ws, dout, mclk, din,
                     audio_i2s.Settings->sys.mclk_inv[0], audio_i2s.Settings->sys.bclk_inv[0],
                     audio_i2s.Settings->sys.ws_inv[0], audio_i2s.Settings->tx.apll);
-    i2s->setSlotConfig((i2s_port_t)port, audio_i2s.Settings->tx.slot_config, audio_i2s.Settings->rx.slot_config,
+    i2s->setSlotConfig((i2s_port_t)port, audio_i2s.Settings->tx.slot_config,
                       audio_i2s.Settings->tx.slot_mask, audio_i2s.Settings->rx.slot_mask);
     if (tx) {
       i2s->setTxMode(audio_i2s.Settings->tx.mode);
@@ -1063,8 +1096,8 @@ bool Xdrv42(uint32_t function) {
       break;
     case FUNC_WEB_ADD_HANDLER:
 #if defined(USE_SHINE) && defined(MP3_MIC_STREAM)
-      audio_i2s.Settings->tx.stream_enable = 1;
-      I2sMp3Init(1);
+      // audio_i2s.Settings->tx.stream_enable = 1;
+      // I2sMp3Init(1);
 #endif
 #if defined(I2S_BRIDGE)
       I2SBridgeInit();

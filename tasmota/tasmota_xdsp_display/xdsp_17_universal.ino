@@ -247,6 +247,29 @@ int8_t cs;
       }
     }
 
+    cp = strstr(ddesc, ":UTI");
+    if (cp) {
+      cp += 4;                  // skip ":UTI"
+      cp = strchr(cp, ',');     // skip device name
+      cp++;
+      cp = strchr(cp, ',');
+      cp++;
+      if (*cp == 'I') {           // I= I2C
+        cp = strchr(cp, ',');     // skip interface type
+        cp++;
+        cp = strchr(cp, ',');     // skip I2C bus number
+        cp++;
+        replacepin(&cp, Pin(GPIO_TS_RST));
+        replacepin(&cp, Pin(GPIO_TS_IRQ));
+      } else if (*cp == 'S') {    // S= SPI
+        cp = strchr(cp, ',');     // skip interface type
+        cp++;
+        replacepin(&cp, Pin(GPIO_TS_SPI_CS));
+        replacepin(&cp, Pin(GPIO_TS_RST));
+        replacepin(&cp, Pin(GPIO_TS_IRQ));
+      }
+    }
+
     uint16_t xs, ys;
     // we need screen size for gt911 touch controler
     cp = strstr(ddesc, ":H,");
@@ -501,7 +524,7 @@ int8_t cs;
 
 /*********************************************************************************************/
 
-int8_t replacepin(char **cp, uint16_t pin) {
+int8_t replacepin(char **cp, int16_t pin) {
   int8_t res = 0;
   char *lp = *cp;
   if (*lp == ',') lp++;

@@ -36,6 +36,9 @@ static int m_path_mkdir(bvm *vm) {
 static int m_path_rmdir(bvm *vm) {
     return _m_path_action(vm, MPATH_RMDIR);
 }
+static int m_path_rename(bvm *vm) {
+    return _m_path_action(vm, MPATH_RENAME);
+}
 static int m_path_exists(bvm *vm) {
     return _m_path_action(vm, MPATH_EXISTS);
 }
@@ -69,6 +72,7 @@ module path (scope: global, file: tasmota_path) {
     format, func(m_path_format)
     mkdir, func(m_path_mkdir)
     rmdir, func(m_path_rmdir)
+    rename, func(m_path_rename)
 }
 @const_object_info_end */
 #include "be_fixed_tasmota_path.h"

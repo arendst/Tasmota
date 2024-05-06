@@ -157,6 +157,26 @@ char * U64toHex(uint64_t value, char *str) {
 }
 */
 
+char * ToBinary(uint32_t value, char *str, int32_t digits) {
+  if (digits > 32) { digits = 32; }
+  if (digits < 1) { digits = 1; }
+  int32_t digits_to_one = 1;               // how many digits until we find the last `1`
+  str[32] = 0;    // end of string
+  for (uint32_t i=0; i<32; i++) {       // 32 digits in uint32_t
+    if ((value & 1) && (i+1 > digits_to_one)) {
+      digits_to_one = i+1;
+    }
+    str[31 - i] = (char)(value & 1)+'0';
+    value = value >> 1;
+  }
+  // adjust digits to always show the total value
+  if (digits_to_one > digits) { digits = digits_to_one; }
+  if (digits < 32) {
+    memmove(str, str + 32 - digits, digits + 1);
+  }
+  return str;
+}
+
 char * U64toHex(uint64_t value, char *str, uint32_t zeroleads) {
   // str must be at least 17 bytes long
   str[16] = 0;    // end of string
@@ -235,7 +255,7 @@ int32_t ext_vsnprintf_P(char * out_buf, size_t buf_len, const char * fmt_P, va_l
   const uint32_t ALLOC_SIZE = 12;
   static const char * allocs[ALLOC_SIZE] = {};     // initialized to zeroes
   uint32_t alloc_idx = 0;
-  static char hex[20];        // buffer used for 64 bits, favor RAM instead of stack to remove pressure
+  static char hex[34];          // buffer used for 64 bits, favor RAM instead of stack to remove pressure
 
 	for (; *fmt != 0; ++fmt) {
     int32_t decimals = -2;      // default to 2 decimals and remove trailing zeros
@@ -305,6 +325,16 @@ int32_t ext_vsnprintf_P(char * out_buf, size_t buf_len, const char * fmt_P, va_l
                 }
               }
             }
+            break;
+          // '%_b' outputs a uint32_t to binary
+          // '%8_b' outputs a uint8_t to binary
+          case 'b':     // Binary, decimals indicates the zero prefill
+            {
+                ToBinary(cur_val, hex, decimals);
+                new_val_str = copyStr(hex);
+                if (new_val_str == nullptr) { goto free_allocs; }
+                allocs[alloc_idx++] = new_val_str;
+              }
             break;
 /*
           case 'V':     // 2-byte values, decimals indicates the length, default 2

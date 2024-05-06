@@ -216,6 +216,10 @@ enum UserSelectablePins {
   GPIO_I2S_DAC,                         // Audio DAC support for ESP32 and ESP32S2
   GPIO_MAGIC_SWITCH,                    // MagicSwitch as in Sonoff BasicR4
   GPIO_PIPSOLAR_TX, GPIO_PIPSOLAR_RX,   // pipsolar inverter
+  GPIO_LORA_CS, GPIO_LORA_RST, GPIO_LORA_BUSY, GPIO_LORA_DI0, GPIO_LORA_DI1, GPIO_LORA_DI2, GPIO_LORA_DI3, GPIO_LORA_DI4, GPIO_LORA_DI5,  // LoRa SPI
+  GPIO_TS_SPI_CS, GPIO_TS_RST, GPIO_TS_IRQ, // SPI for Universal Touch Screen
+  GPIO_RN2XX3_TX, GPIO_RN2XX3_RX, GPIO_RN2XX3_RST,  // RN2XX3 LoRaWan node Serial interface
+  GPIO_TCP_TX_EN,                       // TCP to serial bridge, EN pin
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -479,6 +483,10 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_I2S_DAC "|"
   D_GPIO_MAGIC_SWITCH "|"
   D_SENSOR_PIPSOLAR_TX "|" D_SENSOR_PIPSOLAR_RX "|"
+  D_GPIO_LORA_CS "|" D_GPIO_LORA_RST "|" D_GPIO_LORA_BUSY "|" D_GPIO_LORA_DI "0|" D_GPIO_LORA_DI "1|" D_GPIO_LORA_DI "2|" D_GPIO_LORA_DI "3|" D_GPIO_LORA_DI "4|" D_GPIO_LORA_DI "5|"
+  D_GPIO_TS_SPI_CS "|" D_GPIO_TS_RST "|" D_GPIO_TS_IRQ "|"
+  D_GPIO_RN2XX3_TX "|" D_GPIO_RN2XX3_RX "|" D_GPIO_RN2XX3_RST "|"
+  D_SENSOR_TCP_TXD_EN "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -618,6 +626,17 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_MCP23XXX_DRV
   AGPIO(GPIO_MCP23SXX_CS) + MAX_MCP23XXX,
 #endif  // USE_MCP23XXX_DRV
+#ifdef USE_SPI_LORA
+  AGPIO(GPIO_LORA_CS),
+  AGPIO(GPIO_LORA_RST),
+  AGPIO(GPIO_LORA_BUSY),
+  AGPIO(GPIO_LORA_DI0),
+  AGPIO(GPIO_LORA_DI1),
+  AGPIO(GPIO_LORA_DI2),
+  AGPIO(GPIO_LORA_DI3),
+  AGPIO(GPIO_LORA_DI4),
+  AGPIO(GPIO_LORA_DI5),
+#endif  // USE_SPI_LORA
 #endif  // USE_SPI
 
 #if defined(USE_SDCARD) && defined(ESP32)
@@ -636,10 +655,16 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SSPI_DC),                  // Software SPI Data or Command
 
 #if defined(USE_DISPLAY) || defined(USE_LVGL)
-#ifdef USE_DISPLAY_ILI9341
-  AGPIO(GPIO_ILI9341_CS),
-  AGPIO(GPIO_ILI9341_DC),
-#endif  // USE_DISPLAY_ILI9341
+#ifdef USE_UNIVERSAL_TOUCH
+  AGPIO(GPIO_TS_SPI_CS),                 // Touch CS
+  AGPIO(GPIO_TS_RST),                // Touch Reset
+  AGPIO(GPIO_TS_IRQ),                // Touch IRQ
+#endif // USE_UNIVERSAL_TOUCH
+// REMOVED
+// #ifdef USE_DISPLAY_ILI9341
+//   AGPIO(GPIO_ILI9341_CS),
+//   AGPIO(GPIO_ILI9341_DC),
+// #endif  // USE_DISPLAY_ILI9341
 
 #ifdef USE_XPT2046
   AGPIO(GPIO_XPT2046_CS),               // XPT2046 SPI Chip Select
@@ -654,21 +679,24 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_DISPLAY_EPAPER_42
   AGPIO(GPIO_EPAPER42_CS),
 #endif  // USE_DISPLAY_EPAPER_42
-#ifdef USE_DISPLAY_SSD1351
-  AGPIO(GPIO_SSD1351_CS),
-  AGPIO(GPIO_SSD1351_DC),
-#endif  // USE_DISPLAY_SSD1351
+// REMOVED
+// #ifdef USE_DISPLAY_SSD1351
+//   AGPIO(GPIO_SSD1351_CS),
+//   AGPIO(GPIO_SSD1351_DC),
+// #endif  // USE_DISPLAY_SSD1351
 #ifdef USE_DISPLAY_RA8876
   AGPIO(GPIO_RA8876_CS),
 #endif  // USE_DISPLAY_RA8876
-#ifdef USE_DISPLAY_ST7789
-  AGPIO(GPIO_ST7789_CS),
-  AGPIO(GPIO_ST7789_DC),
-#endif  // USE_DISPLAY_ST7789
-#ifdef USE_DISPLAY_SSD1331
-  AGPIO(GPIO_SSD1331_CS),
-  AGPIO(GPIO_SSD1331_DC),
-#endif  // USE_DISPLAY_SSD1331
+// REMOVED
+// #ifdef USE_DISPLAY_ST7789
+//   AGPIO(GPIO_ST7789_CS),
+//   AGPIO(GPIO_ST7789_DC),
+// #endif  // USE_DISPLAY_ST7789
+// REMOVED
+// #ifdef USE_DISPLAY_SSD1331
+//   AGPIO(GPIO_SSD1331_CS),
+//   AGPIO(GPIO_SSD1331_DC),
+// #endif  // USE_DISPLAY_SSD1331
 #ifdef USE_DISPLAY_MAX7219_MATRIX
   #undef USE_DISPLAY_MAX7219
   #undef USE_DISPLAY_TM1637
@@ -813,8 +841,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_RF_SENSOR),                // Rf receiver with sensor decoding
 #endif
 #ifdef USE_SR04
-  AGPIO(GPIO_SR04_TRIG),                // SR04 Tri/TXgger pin
-  AGPIO(GPIO_SR04_ECHO),                // SR04 Ech/RXo pin
+  AGPIO(GPIO_SR04_TRIG) + MAX_SR04,                // SR04 Tri/TXgger pin
+  AGPIO(GPIO_SR04_ECHO) + MAX_SR04,                // SR04 Ech/RXo pin
 #endif
 #ifdef USE_ME007
   AGPIO(GPIO_ME007_TRIG),              // ME007 Trigger pin (xsns_23_me007.ino)
@@ -957,6 +985,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_TCP_BRIDGE
   AGPIO(GPIO_TCP_TX),                   // TCP Serial bridge
   AGPIO(GPIO_TCP_RX),                   // TCP Serial bridge
+  AGPIO(GPIO_TCP_TX_EN),                // TCP Serial bridge EN
 #endif
 #ifdef USE_ZIGBEE
   AGPIO(GPIO_ZIGBEE_TX),                // Zigbee Serial interface
@@ -1057,6 +1086,11 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_LOX_O2                       // xsns_105_lox_o2.ino
   AGPIO(GPIO_LOX_O2_RX),                // LuminOx Oxygen Sensor LOX-O2 Serial interface
+#endif
+#ifdef USE_LORAWAN_RN2XX3
+  AGPIO(GPIO_RN2XX3_TX),
+  AGPIO(GPIO_RN2XX3_RX),
+  AGPIO(GPIO_RN2XX3_RST),               // RN2XX3 LoRaWan node Serial interface
 #endif
 
 /*-------------------------------------------------------------------------------------------*\

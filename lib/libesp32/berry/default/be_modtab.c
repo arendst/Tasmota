@@ -308,10 +308,11 @@ BERRY_LOCAL bclass_array be_class_table = {
     &be_native_class(AudioOpusDecoder),
     &be_native_class(AudioInputI2S),
 #endif // defined(USE_I2S_AUDIO_BERRY) && (ESP_IDF_VERSION_MAJOR >= 5)
+#endif // TASMOTA
+
 #if defined(USE_BERRY_INT64) || defined(USE_MATTER_DEVICE)
     &be_native_class(int64),
 #endif
-#endif // TASMOTA
     NULL, /* do not remove */
 };
 

@@ -1286,7 +1286,7 @@ class BLESensorCallback : public NimBLEClientCallbacks {
     if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: onConnect %s"), ((std::string)pClient->getPeerAddress()).c_str());
 #endif
   }
-  void onDisconnect(NimBLEClient* pClient) {
+  void onDisconnect(NimBLEClient* pClient, int reason) {
 #ifdef BLE_ESP32_DEBUG
     if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: onDisconnect %s"), ((std::string)pClient->getPeerAddress()).c_str());
 #endif
@@ -1328,7 +1328,7 @@ class BLESensorCallback : public NimBLEClientCallbacks {
 static BLESensorCallback clientCB;
 
 
-class BLEAdvCallbacks: public NimBLEAdvertisedDeviceCallbacks {
+class BLEAdvCallbacks: public NimBLEScanCallbacks {
   void onResult(NimBLEAdvertisedDevice* advertisedDevice) {
     TasAutoMutex localmutex(&BLEOperationsRecursiveMutex, "BLEAddCB");
     uint64_t now = esp_timer_get_time();
@@ -1660,7 +1660,7 @@ static void BLETaskStopStartNimBLE(NimBLEClient **ppClient, bool start = true){
 #endif
 
     if (ble32Scan){
-      ble32Scan->setAdvertisedDeviceCallbacks(nullptr,true);
+      ble32Scan->setScanCallbacks(nullptr,true);
       ble32Scan->stop();
       ble32Scan = nullptr;
     }
@@ -1729,7 +1729,7 @@ int BLETaskStartScan(int time){
     time = BLETriggerScan;
     BLETriggerScan = 0;
   }
-  ble32Scan->start(time, BLEscanEndedCB, (BLEScanActiveMode == 2)); // 20s scans, restarted when then finish
+  ble32Scan->start(time, true); // 20s scans, restarted when then finish
   //vTaskDelay(500/ portTICK_PERIOD_MS);
   return 0;
 }
@@ -2163,7 +2163,7 @@ static void BLEOperationTask(void *pvParameters){
         //ble32Scan->setWindow(50);
         ble32Scan->setInterval(0x40);
         ble32Scan->setWindow(0x20);
-        ble32Scan->setAdvertisedDeviceCallbacks(&BLEScanCallbacks,true);
+        ble32Scan->setScanCallbacks(&BLEScanCallbacks,true);
       }
 
       BLE_ESP32::BLETaskStartScan(20);
@@ -3123,7 +3123,6 @@ static void BLEPostMQTTSeenDevices(int type) {
   int remains = 0;
   nextSeenDev = 0;
 
-#ifdef MQTT_DATA_STRING
   int maxlen = 1024;
   char dest[maxlen];
   do {
@@ -3132,20 +3131,6 @@ static void BLEPostMQTTSeenDevices(int type) {
     // no retain - this is present devices, not historic
     MqttPublishPrefixTopicRulesProcess_P((1 == type) ? TELE : STAT, PSTR("BLE"));
   } while (remains);
-#else
-  memset(TasmotaGlobal.mqtt_data, 0, sizeof(TasmotaGlobal.mqtt_data));
-  int timelen = ResponseTime_P(PSTR(""));
-  char *dest = TasmotaGlobal.mqtt_data + timelen;
-  int maxlen = ResponseSize() -20 -timelen;
-
-//  if (!TasmotaGlobal.ota_state_flag){
-  do {
-    remains = getSeenDevicesToJson(dest, maxlen);
-    // no retain - this is present devices, not historic
-    MqttPublishPrefixTopicRulesProcess_P((1== type) ? TELE : STAT, PSTR("BLE"));
-  } while (remains);
-//  }
-#endif
 }
 
 static void BLEPostMQTT(bool onlycompleted) {

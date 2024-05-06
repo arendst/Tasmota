@@ -342,7 +342,7 @@ void MqttInit(void) {
       String endpoint="https://global.azure-devices-provisioning.net/";
     #endif //USE_MQTT_AZURE_DPS_SCOPE_ENDPOINT
 
-    String MACAddress = WiFi.macAddress();
+    String MACAddress = WiFiHelper::macAddress();
     MACAddress.replace(":", "");
 
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "DPS register for %s, scope %s to %s."), MACAddress.c_str(), dPSScopeId.c_str(), endpoint.c_str());
@@ -476,6 +476,7 @@ void MqttSubscribeLib(const char *topic) {
   String realTopicString = "devices/" + String(SettingsText(SET_MQTT_CLIENT));
   realTopicString += "/messages/devicebound/#";
   MqttClient.subscribe(realTopicString.c_str());
+  MqttClient.subscribe("$iothub/methods/POST/#");
   SettingsUpdateText(SET_MQTT_FULLTOPIC, SettingsText(SET_MQTT_CLIENT));
   SettingsUpdateText(SET_MQTT_TOPIC, SettingsText(SET_MQTT_CLIENT));
 #else
@@ -577,6 +578,25 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
 
   char topic[TOPSZ];
 #ifdef USE_MQTT_AZURE_IOT
+  #ifdef USE_AZURE_DIRECT_METHOD 
+      String fullTopicString = String(mqtt_topic);
+      int startOfMethod = fullTopicString.indexOf("methods/POST");
+      int endofMethod = fullTopicString.indexOf("/?$rid");
+      String req_id = fullTopicString.substring(endofMethod + 7);
+      if (startOfMethod == -1){
+        AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_MQTT "Azure IoT Hub message without a method."));
+        return;
+      }
+      String newMethod = fullTopicString.substring(startOfMethod + 12,endofMethod);
+      strlcpy(topic, newMethod.c_str(), sizeof(topic));
+      mqtt_data[data_len] = 0;
+      JsonParser mqtt_json_data((char*) mqtt_data);
+      JsonParserObject message_object = mqtt_json_data.getRootObject();
+      String mqtt_data_str= message_object.getStr("payload","");
+      strncpy(reinterpret_cast<char*>(mqtt_data),mqtt_data_str.c_str(),data_len);
+      mqtt_data[data_len] = 0;
+
+  #else
   // for Azure, we read the topic from the property of the message
   String fullTopicString = String(mqtt_topic);
   String toppicUpper = fullTopicString;
@@ -593,6 +613,7 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
     return;
   }
   strlcpy(topic, newTopic.c_str(), sizeof(topic));
+  #endif
 #else
   strlcpy(topic, mqtt_topic, sizeof(topic));
 #endif  // USE_MQTT_AZURE_IOT
@@ -624,6 +645,11 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
   if (Mqtt.disable_logging) {
     TasmotaGlobal.masterlog_level = LOG_LEVEL_NONE;  // Enable logging
   }
+  #ifdef USE_AZURE_DIRECT_METHOD // Send response for the direct method
+  String response_topic = "$iothub/methods/res/200/?$rid=" + req_id;
+  String payload = "{\"status\": \"success\"}";
+  MqttClient.publish(response_topic.c_str(),payload.c_str());
+  #endif
 }
 
 /*********************************************************************************************/
@@ -714,6 +740,25 @@ void MqttPublishPayload(const char* topic, const char* payload) {
 void MqttPublish(const char* topic, bool retained) {
   // Publish <topic> default ResponseData string with optional retained
   MqttPublishPayload(topic, ResponseData(), 0, retained);
+}
+
+void MqttPublishBinary(const char* topic, bool retained, bool binary) {
+  int32_t binary_length = 0;
+  char *response_data = ResponseData();
+  if (binary) {
+    // Binary data will be half of the size of a text packet
+    uint8_t binary_payload[MQTT_MAX_PACKET_SIZE / 2];
+    binary_length = HexToBytes(response_data, binary_payload, MQTT_MAX_PACKET_SIZE / 2);
+    if (binary_length == -1) {
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Invalid hex: %s"), response_data);
+    } else {
+      // Conversion was successful
+      MqttPublishPayload(topic, (const char *)binary_payload, binary_length, retained);
+    }
+  } else {
+    // Publish <topic> default ResponseData string with optional retained
+    MqttPublishPayload(topic, response_data, 0, retained);
+  }
 }
 
 void MqttPublish(const char* topic) {
@@ -980,7 +1025,8 @@ void MqttConnected(void) {
           ResponseAppend_P(PSTR(",\"" D_JSON_IP6_LOCAL "\":\"%s\""), WifiGetIPv6LinkLocalStr().c_str());
 #endif  // USE_IPV6
         }
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+//#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+#if defined(ESP32) && defined(USE_ETHERNET)
         if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
           ResponseAppend_P(PSTR(",\"Ethernet\":{\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%_I\"}"),
             EthernetHostname(), (uint32_t)EthernetLocalIP());
@@ -991,9 +1037,12 @@ void MqttConnected(void) {
       }
 #endif  // USE_WEBSERVER
       Response_P(PSTR("{\"Info3\":{\"" D_JSON_RESTARTREASON "\":"));
+#ifndef FIRMWARE_MINIMAL
       if (CrashFlag()) {
         CrashDump();
-      } else {
+      } else
+#endif // FIRMWARE_MINIMAL
+      {
         ResponseAppend_P(PSTR("\"%s\""), GetResetReason().c_str());
       }
       ResponseAppend_P(PSTR(",\"" D_JSON_BOOTCOUNT "\":%d}}"), Settings->bootcount +1);
@@ -1520,7 +1569,12 @@ void CmndPublish(void) {
       } else {
         ResponseClear();
       }
+#ifndef FIRMWARE_MINIMAL
+      // Publish3 binary is not enabled in MINIMAL
+      MqttPublishBinary(stemp1, (XdrvMailbox.index == 2), (XdrvMailbox.index == 3));
+#else
       MqttPublish(stemp1, (XdrvMailbox.index == 2));
+#endif
       ResponseClear();
     }
   }
@@ -2020,12 +2074,14 @@ bool Xdrv02(uint32_t function)
         MqttClient.loop();
         break;
 #ifdef USE_WEBSERVER
+#ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
       case FUNC_WEB_ADD_BUTTON:
         WSContentSend_P(HTTP_BTN_MENU_MQTT);
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer_on(PSTR("/" WEB_HANDLE_MQTT), HandleMqttConfiguration);
         break;
+#endif // FIRMWARE_MINIMAL
 #endif  // USE_WEBSERVER
       case FUNC_COMMAND:
         result = DecodeCommand(kMqttCommands, MqttCommand, kMqttSynonyms);

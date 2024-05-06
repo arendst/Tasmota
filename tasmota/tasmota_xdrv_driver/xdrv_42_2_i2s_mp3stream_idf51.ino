@@ -26,10 +26,6 @@
 
 
 void Stream_mp3(void) {
-  if (!audio_i2s.Settings->tx.stream_enable) {
-    return;
-  }
-
   if (audio_i2s_mp3.stream_active) {
     return;
   }
@@ -37,7 +33,8 @@ void Stream_mp3(void) {
   audio_i2s_mp3.stream_active = 1;
   audio_i2s_mp3.client = audio_i2s_mp3.MP3Server->client();
   AddLog(LOG_LEVEL_INFO, PSTR("I2S: Create client"));
-  i2s_record_shine((char*)"stream.mp3");
+  // i2s_record_shine((char*)"stream.mp3");
+  I2sRecordShine((char*)"stream.mp3");
 }
 
 void I2sMp3Loop(void) {
@@ -60,6 +57,7 @@ void I2sMp3Init(uint32_t on) {
       audio_i2s_mp3.MP3Server->stop();
       delete audio_i2s_mp3.MP3Server;
       audio_i2s_mp3.MP3Server = nullptr;
+      audio_i2s_mp3.mic_stop = 1;
       AddLog(LOG_LEVEL_INFO, PSTR("MP3: server deleted"));
     }
   }

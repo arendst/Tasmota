@@ -14,6 +14,16 @@
 #include "../stdlib/lv_string.h"
 #include <stdbool.h>
 #include <math.h>
+#include <float.h>
+
+#define MATH_PI  3.14159265358979323846f
+#define MATH_HALF_PI 1.57079632679489661923f
+
+#define DEG_TO_RAD 0.017453292519943295769236907684886f
+#define RAD_TO_DEG 57.295779513082320876798154814105f
+
+#define MATH_RADIANS(deg) ((deg) * DEG_TO_RAD)
+#define MATH_DEGRESS(rad) ((rad) * RAD_TO_DEG)
 
 /*********************
 *      DEFINES
@@ -195,6 +205,24 @@ void lv_matrix_multiply(lv_matrix_t * matrix, const lv_matrix_t * m)
     _multiply_matrix(matrix, m);
 }
 
+void lv_matrix_transform_point(const lv_matrix_t * matrix, lv_fpoint_t * point)
+{
+    float x = point->x;
+    float y = point->y;
+
+    point->x = x * matrix->m[0][0] + y * matrix->m[1][0] + matrix->m[0][2];
+    point->y = x * matrix->m[0][1] + y * matrix->m[1][1] + matrix->m[1][2];
+}
+
+void lv_matrix_transform_path(const lv_matrix_t * matrix, lv_vector_path_t * path)
+{
+    lv_fpoint_t * pt = lv_array_front(&path->points);
+    uint32_t size = lv_array_size(&path->points);
+    for(uint32_t i = 0; i < size; i++) {
+        lv_matrix_transform_point(matrix, &pt[i]);
+    }
+}
+
 /* path functions */
 lv_vector_path_t * lv_vector_path_create(lv_vector_path_quality_t quality)
 {
@@ -293,6 +321,36 @@ void lv_vector_path_close(lv_vector_path_t * path)
 
     uint8_t op = LV_VECTOR_PATH_OP_CLOSE;
     lv_array_push_back(&path->ops, &op);
+}
+
+void lv_vector_path_get_bounding(const lv_vector_path_t * path, lv_area_t * area)
+{
+    LV_ASSERT_NULL(path);
+    LV_ASSERT_NULL(area);
+
+    uint32_t len = lv_array_size(&path->points);
+    if(len == 0) {
+        lv_memzero(area, sizeof(lv_area_t));
+        return;
+    }
+
+    lv_fpoint_t * p = lv_array_front(&path->points);
+    float x1 = p[0].x;
+    float x2 = p[0].x;
+    float y1 = p[0].y;
+    float y2 = p[0].y;
+
+    for(uint32_t i = 1; i < len; i++) {
+        if(p[i].x < x1) x1 = p[i].x;
+        if(p[i].y < y1) y1 = p[i].y;
+        if(p[i].x > x2) x2 = p[i].x;
+        if(p[i].y > y2) y2 = p[i].y;
+    }
+
+    area->x1 = (int32_t)x1;
+    area->y1 = (int32_t)y1;
+    area->x2 = (int32_t)x2;
+    area->y2 = (int32_t)y2;
 }
 
 void lv_vector_path_append_rect(lv_vector_path_t * path, const lv_area_t * rect, float rx, float ry)
@@ -428,6 +486,87 @@ void lv_vector_path_append_circle(lv_vector_path_t * path, const lv_fpoint_t * c
     lv_vector_path_cubic_to(path, &pt, &pt2, &pt3);
 
     lv_vector_path_close(path);
+}
+
+/**
+ * Add a arc to the path
+ * @param path              pointer to a path
+ * @param c                 pointer to a `lv_fpoint_t` variable for center of the circle
+ * @param radius            the radius for arc
+ * @param start_angle       the start angle for arc
+ * @param sweep             the sweep angle for arc, could be negative
+ * @param pie               true: draw a pie, false: draw a arc
+ */
+void lv_vector_path_append_arc(lv_vector_path_t * path, const lv_fpoint_t * c, float radius, float start_angle,
+                               float sweep, bool pie)
+{
+    float cx = c->x;
+    float cy = c->y;
+
+    /* just circle */
+    if(sweep >= 360.0f || sweep <= -360.0f) {
+        lv_vector_path_append_circle(path, c, radius, radius);
+        return;
+    }
+
+    start_angle = MATH_RADIANS(start_angle);
+    sweep = MATH_RADIANS(sweep);
+
+    int n_curves = (int)ceil(fabsf(sweep / MATH_HALF_PI));
+    float sweep_sign = sweep < 0 ? -1.f : 1.f;
+    float fract = fmodf(sweep, MATH_HALF_PI);
+    fract = (fabsf(fract) < FLT_EPSILON) ? MATH_HALF_PI * sweep_sign : fract;
+
+    /* Start from here */
+    lv_fpoint_t start = {
+        .x = radius * cosf(start_angle),
+        .y = radius * sinf(start_angle),
+    };
+
+    if(pie) {
+        lv_vector_path_move_to(path, &(lv_fpoint_t) {
+            cx, cy
+        });
+        lv_vector_path_line_to(path, &(lv_fpoint_t) {
+            start.x + cx, start.y + cy
+        });
+    }
+
+    for(int i = 0; i < n_curves; ++i) {
+        float end_angle = start_angle + ((i != n_curves - 1) ? MATH_HALF_PI * sweep_sign : fract);
+        float end_x = radius * cosf(end_angle);
+        float end_y = radius * sinf(end_angle);
+
+        /* variables needed to calculate bezier control points */
+
+        /** get bezier control points using article:
+         * (http://itc.ktu.lt/index.php/ITC/article/view/11812/6479)
+         */
+        float ax = start.x;
+        float ay = start.y;
+        float bx = end_x;
+        float by = end_y;
+        float q1 = ax * ax + ay * ay;
+        float q2 = ax * bx + ay * by + q1;
+        float k2 = (4.0f / 3.0f) * ((sqrtf(2 * q1 * q2) - q2) / (ax * by - ay * bx));
+
+        /* Next start point is the current end point */
+        start.x = end_x;
+        start.y = end_y;
+
+        end_x += cx;
+        end_y += cy;
+
+        lv_fpoint_t ctrl1 = {ax - k2 * ay + cx, ay + k2 * ax + cy};
+        lv_fpoint_t ctrl2 = {bx + k2 * by + cx, by - k2 * bx + cy};
+        lv_fpoint_t end = {end_x, end_y};
+        lv_vector_path_cubic_to(path, &ctrl1, &ctrl2, &end);
+        start_angle = end_angle;
+    }
+
+    if(pie) {
+        lv_vector_path_close(path);
+    }
 }
 
 void lv_vector_path_append_path(lv_vector_path_t * path, const lv_vector_path_t * subpath)
@@ -682,6 +821,7 @@ void lv_vector_clear_area(lv_vector_dsc_t * dsc, const lv_area_t * rect)
     lv_memset(new_task, 0, sizeof(_lv_vector_draw_task));
 
     new_task->dsc.fill_dsc.color = dsc->current_dsc.fill_dsc.color;
+    new_task->dsc.fill_dsc.opa = dsc->current_dsc.fill_dsc.opa;
     lv_area_copy(&(new_task->dsc.scissor_area), rect);
 }
 

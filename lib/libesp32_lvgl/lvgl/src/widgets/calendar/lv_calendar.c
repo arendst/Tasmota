@@ -18,7 +18,7 @@
 #define LV_CALENDAR_CTRL_TODAY      LV_BUTTONMATRIX_CTRL_CUSTOM_1
 #define LV_CALENDAR_CTRL_HIGHLIGHT  LV_BUTTONMATRIX_CTRL_CUSTOM_2
 
-#define MY_CLASS &lv_calendar_class
+#define MY_CLASS (&lv_calendar_class)
 
 /**********************
  *      TYPEDEFS
@@ -245,15 +245,13 @@ static void lv_calendar_constructor(const lv_obj_class_t * class_p, lv_obj_t * o
 
     /*Initialize the allocated 'ext'*/
 
-#if LV_WIDGETS_HAS_DEFAULT_VALUE
-    calendar->today.year  = 2020;
+    calendar->today.year  = 2024;
     calendar->today.month = 1;
     calendar->today.day   = 1;
 
-    calendar->showed_date.year  = 2020;
+    calendar->showed_date.year  = 2024;
     calendar->showed_date.month = 1;
     calendar->showed_date.day   = 1;
-#endif
 
     calendar->highlighted_dates      = NULL;
     calendar->highlighted_dates_num  = 0;
@@ -287,11 +285,8 @@ static void lv_calendar_constructor(const lv_obj_class_t * class_p, lv_obj_t * o
     lv_obj_set_flex_flow(obj, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_grow(calendar->btnm, 1);
 
-#if LV_WIDGETS_HAS_DEFAULT_VALUE
     lv_calendar_set_showed_date(obj, calendar->showed_date.year, calendar->showed_date.month);
     lv_calendar_set_today_date(obj, calendar->today.year, calendar->today.month, calendar->today.day);
-#endif
-
 }
 
 static void draw_task_added_event_cb(lv_event_t * e)
@@ -300,16 +295,10 @@ static void draw_task_added_event_cb(lv_event_t * e)
     lv_draw_task_t * draw_task = lv_event_get_param(e);
     if(((lv_draw_dsc_base_t *)draw_task->draw_dsc)->part != LV_PART_ITEMS) return;
 
-    lv_draw_fill_dsc_t * fill_draw_dsc = NULL;
-    lv_draw_border_dsc_t * border_draw_dsc = NULL;
+    lv_draw_fill_dsc_t * fill_draw_dsc = lv_draw_task_get_fill_dsc(draw_task);
+    lv_draw_border_dsc_t * border_draw_dsc = lv_draw_task_get_border_dsc(draw_task);
 
-    if(draw_task->type == LV_DRAW_TASK_TYPE_FILL) {
-        fill_draw_dsc = draw_task->draw_dsc;
-    }
-    else if(draw_task->type == LV_DRAW_TASK_TYPE_BORDER) {
-        border_draw_dsc = draw_task->draw_dsc;
-    }
-    else {
+    if(!fill_draw_dsc && !border_draw_dsc) {
         return;
     }
 

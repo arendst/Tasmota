@@ -95,7 +95,7 @@ struct SHUTTERSETTINGS {
   uint16_t      shutter_opentime[MAX_SHUTTERS_ESP32];
   uint16_t      shutter_closetime[MAX_SHUTTERS_ESP32];
   int16_t       shuttercoeff[5][MAX_SHUTTERS_ESP32];
-  uint8_t       shutter_options[MAX_SHUTTERS_ESP32];
+  uint8_t       shutter_options[MAX_SHUTTERS_ESP32];       // bit1:INVERT bit2: LOCK  bit3: ExtraEndStop bit4: INVert WebButtons bit5: extraStopRelay
   uint8_t       shutter_set50percent[MAX_SHUTTERS_ESP32];
   uint8_t       shutter_position[MAX_SHUTTERS_ESP32];
   uint8_t       shutter_startrelay[MAX_SHUTTERS_ESP32];
@@ -132,7 +132,8 @@ const char kShutterCommands[] PROGMEM = D_PRFX_SHUTTER "|"
   D_CMND_SHUTTER_SETHALFWAY "|" D_CMND_SHUTTER_SETCLOSE "|" D_CMND_SHUTTER_SETOPEN "|" D_CMND_SHUTTER_INVERT "|" D_CMND_SHUTTER_CLIBRATION "|"
   D_CMND_SHUTTER_MOTORDELAY "|" D_CMND_SHUTTER_FREQUENCY "|" D_CMND_SHUTTER_BUTTON "|" D_CMND_SHUTTER_LOCK "|" D_CMND_SHUTTER_ENABLEENDSTOPTIME "|" D_CMND_SHUTTER_INVERTWEBBUTTONS "|"
   D_CMND_SHUTTER_STOPOPEN "|" D_CMND_SHUTTER_STOPCLOSE "|" D_CMND_SHUTTER_STOPTOGGLE "|" D_CMND_SHUTTER_STOPTOGGLEDIR "|" D_CMND_SHUTTER_STOPPOSITION "|" D_CMND_SHUTTER_INCDEC "|"
-  D_CMND_SHUTTER_UNITTEST "|" D_CMND_SHUTTER_TILTCONFIG "|" D_CMND_SHUTTER_SETTILT "|" D_CMND_SHUTTER_TILTINCDEC "|" D_CMND_SHUTTER_MOTORSTOP "|" D_CMND_SHUTTER_SETUP;
+  D_CMND_SHUTTER_UNITTEST "|" D_CMND_SHUTTER_TILTCONFIG "|" D_CMND_SHUTTER_SETTILT "|" D_CMND_SHUTTER_TILTINCDEC "|" D_CMND_SHUTTER_MOTORSTOP "|" D_CMND_SHUTTER_SETUP "|"
+  D_CMD_SHUTTER_EXTRASTOPRELAY;
 
 void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterOpen, &CmndShutterClose, &CmndShutterToggle, &CmndShutterToggleDir, &CmndShutterStop, &CmndShutterPosition,
@@ -140,7 +141,7 @@ void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterSetHalfway, &CmndShutterSetClose, &CmndShutterSetOpen, &CmndShutterInvert, &CmndShutterCalibration , &CmndShutterMotorDelay,
   &CmndShutterFrequency, &CmndShutterButton, &CmndShutterLock, &CmndShutterEnableEndStopTime, &CmndShutterInvertWebButtons,
   &CmndShutterStopOpen, &CmndShutterStopClose, &CmndShutterStopToggle, &CmndShutterStopToggleDir, &CmndShutterStopPosition, &CmndShutterIncDec,
-  &CmndShutterUnitTest,&CmndShutterTiltConfig,&CmndShutterSetTilt,&CmndShutterTiltIncDec,&CmndShutterMotorStop,&CmndShutterSetup
+  &CmndShutterUnitTest,&CmndShutterTiltConfig,&CmndShutterSetTilt,&CmndShutterTiltIncDec,&CmndShutterMotorStop,&CmndShutterSetup,&CmndShutterExtraStopPulseRelay
   };
 
   const char JSON_SHUTTER_POS[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Position\":%d,\"Direction\":%d,\"Target\":%d,\"Tilt\":%d}";
@@ -293,7 +294,7 @@ bool ShutterButtonHandlerMulti(void)
 
       // reset button to default
       Button.press_counter[button_index] = 0;
-        
+
       CmndShutterPosition();
     }
 
@@ -302,7 +303,7 @@ bool ShutterButtonHandlerMulti(void)
       char scommand[CMDSZ];
       char stopic[TOPSZ];
       for (uint32_t i = 0; i < MAX_SHUTTERS_ESP32; i++) {
-        if ((i==shutter_index) || (ShutterSettings.shutter_button[button_index].mqtt_all)) {
+        if (((i==shutter_index) || (ShutterSettings.shutter_button[button_index].mqtt_all))  && 0 == (ShutterSettings.shutter_options[i] & 2) ) {
           snprintf_P(scommand, sizeof(scommand),PSTR("ShutterPosition%d"), i+1);
           GetGroupTopic_P(stopic, scommand, SET_MQTT_GRP_TOPIC);
           Response_P("%d", position);
@@ -317,7 +318,7 @@ bool ShutterButtonHandlerMulti(void)
   ResponseAppend_P(JSON_SHUTTER_BUTTON, shutter_index+1, Shutter[shutter_index].button_simu_pressed ? 0 : button_index+1, button_press_counter);
   ResponseJsonEnd();
   MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));
-  
+
   // reset simu pressed record
   Shutter[shutter_index].button_simu_pressed = 0;
 
@@ -804,7 +805,11 @@ void ShutterPowerOff(uint8_t i)
         case SRC_PULSETIMER:
         case SRC_SHUTTER:
         case SRC_WEBGUI:
-          ExecuteCommandPowerShutter(cur_relay, 1, SRC_SHUTTER);
+          if (ShutterSettings.shutter_options[i] & 16) {  // There is a special STOP Relay
+            ExecuteCommandPowerShutter(ShutterSettings.shutter_startrelay[i] + 2, 1, SRC_SHUTTER);
+          } else {
+            ExecuteCommandPowerShutter(cur_relay, 1, SRC_SHUTTER);
+          }
           // switch off direction relay to make it power less
           if (((1 << (ShutterSettings.shutter_startrelay[i])) & TasmotaGlobal.power)  && ShutterSettings.shutter_startrelay[i] + 1 != cur_relay) {
             ExecuteCommandPowerShutter(ShutterSettings.shutter_startrelay[i] + 1, 0, SRC_SHUTTER);
@@ -1703,6 +1708,11 @@ void CmndShutterEnableEndStopTime(void)
   ShutterOptionsSetHelper(4);
 }
 
+void CmndShutterExtraStopPulseRelay(void)
+{
+  ShutterOptionsSetHelper(16);
+}
+
 void CmndShutterFrequency(void)
 {
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 20000)) {
@@ -1824,13 +1834,14 @@ void CmndShutterPosition(void)
         }
       }
 
+      // special handling fo UP,DOWN,TOGGLE,STOP and similar commands  
+      if ( XdrvMailbox.data_len > 0 ) {
+        // set len to 0 to avoid loop 
+        uint32_t data_len_save = XdrvMailbox.data_len;
+        int32_t  payload_save  = XdrvMailbox.payload;
+        XdrvMailbox.data_len   = 0;
+        XdrvMailbox.payload    = -99;
 
-      // value 0 with data_len > 0 can mean Open
-      // special handling fo UP,DOWN,TOGGLE,STOP command comming with payload -99
-      // STOP will come with payload 0 because predefined value in TASMOTA
-      if ((XdrvMailbox.data_len > 3) && (XdrvMailbox.payload <= 0)) {
-        // set len to 0 to avoid loop on close where payload is 0
-        XdrvMailbox.data_len = 0;
         if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_UP) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_OPEN) || ((Shutter[index].direction==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPOPEN))) {
           CmndShutterOpen();
           return;
@@ -1848,12 +1859,12 @@ void CmndShutterPosition(void)
           return;
         }
         if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOP) || ((Shutter[index].direction) && (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPOPEN) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOPCLOSE)))) {
-          // Back to normal: all -99 if not a clear position
-          XdrvMailbox.payload = -99;
           CmndShutterStop();
           return;
         }
-
+        // restore values
+        XdrvMailbox.payload  = payload_save;
+        XdrvMailbox.data_len = data_len_save;
       }
 
       int8_t target_pos_percent = (XdrvMailbox.payload < 0) ? (XdrvMailbox.payload == -99 ? ShutterRealToPercentPosition(Shutter[index].real_position, index) : 0) : ((XdrvMailbox.payload > 100) ? 100 : XdrvMailbox.payload);

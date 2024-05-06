@@ -206,7 +206,7 @@ public:
 	SML_ESP32_SERIAL(uint32_t uart_index);
   virtual ~SML_ESP32_SERIAL();
   bool begin(uint32_t speed, uint32_t smode, int32_t recpin, int32_t trxpin, int32_t invert);
-  int32_t peek(void);
+  int peek(void);
   int read(void) override;
   size_t write(uint8_t byte) override;
   int available(void) override;
@@ -256,7 +256,11 @@ SML_ESP32_SERIAL::~SML_ESP32_SERIAL(void) {
 }
 
 void SML_ESP32_SERIAL::setbaud(uint32_t speed) {
+#ifdef __riscv
+  m_bit_time = 1000000 / speed;
+#else
   m_bit_time = ESP.getCpuFreqMHz() * 1000000 / speed;
+#endif
 }
 
 void SML_ESP32_SERIAL::end(void) {
@@ -265,7 +269,7 @@ void SML_ESP32_SERIAL::end(void) {
   }
 }
 
-bool SML_ESP32_SERIAL::begin(uint32_t speed, uint32_t smode, int32_t recpin, int32_t trxpin, int invert) {
+bool SML_ESP32_SERIAL::begin(uint32_t speed, uint32_t smode, int32_t recpin, int32_t trxpin, int32_t invert) {
   if (!m_valid) { return false; }
 
   m_buffer = 0;
@@ -299,7 +303,7 @@ void SML_ESP32_SERIAL::flush(void) {
   }
 }
 
-int32_t SML_ESP32_SERIAL::peek(void) {
+int SML_ESP32_SERIAL::peek(void) {
   if (hws) {
     return  hws->peek();
   } else {
@@ -366,13 +370,21 @@ void IRAM_ATTR SML_ESP32_SERIAL::rxRead(void) {
 
   if (!level && !ss_index) {
     // start condition
+#ifdef __riscv
+    ss_bstart = micros() - (m_bit_time / 4);
+#else
     ss_bstart = ESP.getCycleCount() - (m_bit_time / 4);
+#endif
     ss_byte = 0;
     ss_index++;
   } else {
     // now any bit changes go here
     // calc bit number
+#ifdef __riscv
+    diff = (micros() - ss_bstart) / m_bit_time;
+#else
     diff = (ESP.getCycleCount() - ss_bstart) / m_bit_time;
+#endif
 
     if (!level && diff > SML_LASTBIT) {
       // start bit of next byte, store  and restart
@@ -385,8 +397,11 @@ void IRAM_ATTR SML_ESP32_SERIAL::rxRead(void) {
         m_buffer[m_in_pos] = ss_byte >> 1;
         m_in_pos = next;
       }
-
+#ifdef __riscv
+      ss_bstart = micros() - (m_bit_time / 4);
+#else
       ss_bstart = ESP.getCycleCount() - (m_bit_time / 4);
+#endif
       ss_byte = 0;
       ss_index = 1;
       return;

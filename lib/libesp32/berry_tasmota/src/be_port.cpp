@@ -119,7 +119,8 @@ extern "C" {
                 break;
         }
 
-        if (be_top(vm) >= 1 && be_isstring(vm, 1)) {
+        int argc = be_top(vm);
+        if (argc >= 1 && be_isstring(vm, 1)) {
             const char *path = be_tostring(vm, 1);
             if (path != nullptr) {
                 switch (action){
@@ -134,6 +135,16 @@ extern "C" {
                         break;
                     case MPATH_MKDIR:
                         res = zip_ufsp.mkdir(path);
+                        break;
+                    case MPATH_RENAME:
+                        {
+                            if (argc >= 2 && be_isstring(vm, 2)) {
+                                const char *path2 = be_tostring(vm, 2);
+                                res = zip_ufsp.rename(path, path2);
+                            } else {
+                                res = -1;
+                            }
+                        }
                         break;
                     case MPATH_LISTDIR:
                         be_newobject(vm, "list"); // add our list object and fall through

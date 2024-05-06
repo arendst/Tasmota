@@ -34,12 +34,9 @@
 
 #define DRV_DEMO_MAX_DRV_TEXT  16
 
-const uint16_t DRV_DEMO_VERSION = 0x0105;       // Latest driver version (See settings deltas below)
-
 // Global structure containing driver saved variables
 struct {
   uint32_t  crc32;    // To detect file changes
-  uint16_t  version;  // To detect driver function changes
   char      drv_text[DRV_DEMO_MAX_DRV_TEXT][10];
 } DrvDemoSettings;
 
@@ -54,6 +51,7 @@ struct {
 
 #define XDRV_122_KEY           "drvset122"
 
+#ifdef USE_UFILESYS
 bool DrvDemoLoadData(void) {
   char key[] = XDRV_122_KEY;
   String json = UfsJsonSettingsRead(key);
@@ -64,7 +62,6 @@ bool DrvDemoLoadData(void) {
   if (!root) { return false; }
 
   DrvDemoSettings.crc32 = root.getUInt(PSTR("Crc"), DrvDemoSettings.crc32);
-  DrvDemoSettings.version = root.getUInt(PSTR("Version"), DrvDemoSettings.version);
   JsonParserArray arr = root[PSTR("Text")];
   if (arr) {
     for (uint32_t i = 0; i < DRV_DEMO_MAX_DRV_TEXT; i++) {
@@ -79,10 +76,8 @@ bool DrvDemoLoadData(void) {
 bool DrvDemoSaveData(void) {
   Response_P(PSTR("{\"" XDRV_122_KEY "\":{"
                    "\"Crc\":%u,"
-                   "\"Version\":%u,"
                    "\"Text\":["),
-                   DrvDemoSettings.crc32,
-                   DrvDemoSettings.version);
+                   DrvDemoSettings.crc32);
   for (uint32_t i = 0; i < DRV_DEMO_MAX_DRV_TEXT; i++) {
     ResponseAppend_P(PSTR("%s\"%s\""),
                           (i)?",":"",
@@ -96,6 +91,7 @@ void DrvDemoDeleteData(void) {
   char key[] = XDRV_122_KEY;
   UfsJsonSettingsDelete(key);  // Use defaults
 }
+#endif  // USE_UFILESYS
 
 /*********************************************************************************************/
 
@@ -104,10 +100,7 @@ void DrvDemoSettingsLoad(bool erase) {
   // Called from FUNC_RESET_SETTINGS (erase = 1) after command reset 4, 5, or 6
 
   // *** Start init default values in case key is not found ***
-  AddLog(LOG_LEVEL_INFO, PSTR("DRV: " D_USE_DEFAULTS));
-
   memset(&DrvDemoSettings, 0x00, sizeof(DrvDemoSettings));
-  DrvDemoSettings.version = DRV_DEMO_VERSION;
   // Init any other parameter in struct DrvDemoSettings
   snprintf_P(DrvDemoSettings.drv_text[0], sizeof(DrvDemoSettings.drv_text[0]), PSTR("Azalea"));
 
@@ -121,30 +114,11 @@ void DrvDemoSettingsLoad(bool erase) {
     DrvDemoDeleteData();
   }
   else if (DrvDemoLoadData()) {
-    if (DrvDemoSettings.version != DRV_DEMO_VERSION) {      // Fix version dependent changes
-
-      // *** Start fix possible setting deltas ***
-      if (DrvDemoSettings.version < 0x0103) {
-        AddLog(LOG_LEVEL_INFO, PSTR("CFG: Update oldest version restore"));
-
-        snprintf_P(DrvDemoSettings.drv_text[1], sizeof(DrvDemoSettings.drv_text[1]), PSTR("Begonia"));
-      }
-      if (DrvDemoSettings.version < 0x0104) {
-        AddLog(LOG_LEVEL_INFO, PSTR("CFG: Update old version restore"));
-
-      }
-
-      // *** End setting deltas ***
-
-      // Set current version and save settings
-      DrvDemoSettings.version = DRV_DEMO_VERSION;
-      DrvDemoSettingsSave();
-    }
     AddLog(LOG_LEVEL_INFO, PSTR("CFG: Demo loaded from file"));
   }
   else {
     // File system not ready: No flash space reserved for file system
-    AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Demo use defaults as file system not ready or key not found"));
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CFG: Demo use defaults as file system not ready or key not found"));
   }
 #endif  // USE_UFILESYS
 }
@@ -161,7 +135,7 @@ void DrvDemoSettingsSave(void) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: Demo saved to file"));
     } else {
       // File system not ready: No flash space reserved for file system
-      AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: ERROR Demo file system not ready or unable to save file"));
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CFG: ERROR Demo file system not ready or unable to save file"));
     }
   }
 #endif  // USE_UFILESYS

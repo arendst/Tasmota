@@ -18,7 +18,7 @@
 #endif
 
 enum {
-  UT_RD,UT_RDM,UT_CP,UT_RTF,UT_MV,UT_MVB,UT_RT,UT_RTT,UT_RDW,UT_RDWM,UT_WR,UT_WRW,UT_CPR,UT_AND,UT_SCALE,UT_LIM,UT_DBG,UT_GSRT,UT_XPT,UT_END
+  UT_RD,UT_RDM,UT_CP,UT_RTF,UT_MV,UT_MVB,UT_RT,UT_RTT,UT_RDW,UT_RDWM,UT_WR,UT_WRW,UT_CPR,UT_AND,UT_SCALE,UT_LIM,UT_DBG,UT_GSRT,UT_XPT,UT_CPM,UT_END
 };
 
 #define RA8876_DATA_WRITE  0x80
@@ -456,18 +456,18 @@ class uDisplay : public Renderer {
 
   uint8_t ut_array[16];
   uint8_t ut_i2caddr;
-  uint8_t ut_spi_cs;
-  int8_t ut_reset;
-  int8_t ut_irq;
+  uint8_t ut_spi_cs = -1;
+  int8_t ut_reset = -1;
+  int8_t ut_irq = -1;
   uint8_t ut_spi_nr;
-  TwoWire *ut_wire;
-  SPIClass *ut_spi;
+  TwoWire *ut_wire = nullptr;;
+  SPIClass *ut_spi = nullptr;;
   SPISettings ut_spiSettings;
   char ut_name[8];
-  uint8_t *ut_init_code;
-  uint8_t *ut_touch_code;
-  uint8_t *ut_getx_code;
-  uint8_t *ut_gety_code;
+  uint8_t *ut_init_code = nullptr;
+  uint8_t *ut_touch_code = nullptr;
+  uint8_t *ut_getx_code = nullptr;
+  uint8_t *ut_gety_code = nullptr;
 
 #endif // USE_UNIVERSAL_TOUCH
 };
