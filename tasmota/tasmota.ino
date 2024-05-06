@@ -380,7 +380,7 @@ struct TasmotaGlobal_t {
 #ifdef USE_BERRY
   bool berry_fast_loop_enabled = false;     // is Berry fast loop enabled, i.e. control is passed at each loop iteration
 #endif  // USE_BERRY
-} TasmotaGlobal;
+} TasmotaGlobal = { 0 };
 
 TSettings* Settings = nullptr;
 
@@ -418,7 +418,6 @@ void setup(void) {
   EmergencyReset();
 #endif  // USE_EMERGENCY_RESET
 
-  memset(&TasmotaGlobal, 0, sizeof(TasmotaGlobal));
   TasmotaGlobal.baudrate = APP_BAUDRATE;
   TasmotaGlobal.seriallog_timer = SERIALLOG_TIMER;
   TasmotaGlobal.temperature_celsius = NAN;
@@ -428,7 +427,7 @@ void setup(void) {
   TasmotaGlobal.active_device = 1;
   TasmotaGlobal.global_state.data = 0xF;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
   TasmotaGlobal.maxlog_level = LOG_LEVEL_DEBUG_MORE;
-  TasmotaGlobal.seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
+  TasmotaGlobal.seriallog_level = (SERIAL_LOG_LEVEL > LOG_LEVEL_INFO) ? SERIAL_LOG_LEVEL : LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded and allow more logging than INFO
   TasmotaGlobal.power_latching = 0x80000000;
 
   RtcRebootLoad();
@@ -454,7 +453,7 @@ void setup(void) {
   // Init settings and logging preparing for AddLog use
 #ifdef PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
   ESP.setIramHeap();
-  Settings = (TSettings*)malloc(sizeof(TSettings));             // Allocate in "new" 16k heap space
+  Settings = (TSettings*)calloc(1, sizeof(TSettings));          // Allocate in "new" 16k heap space
   TasmotaGlobal.log_buffer = (char*)malloc(LOG_BUFFER_SIZE);    // Allocate in "new" 16k heap space
   ESP.resetHeap();
   if (TasmotaGlobal.log_buffer == nullptr) {
@@ -465,7 +464,7 @@ void setup(void) {
   }
 #endif  // PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED
   if (Settings == nullptr) {
-    Settings = (TSettings*)malloc(sizeof(TSettings));
+    Settings = (TSettings*)calloc(1, sizeof(TSettings));
   }
 
 #ifdef ESP32
@@ -473,9 +472,9 @@ void setup(void) {
 #ifdef USE_USB_CDC_CONSOLE
 
   bool is_connected_to_USB = false;
-#if SOC_USB_SERIAL_JTAG_SUPPORTED  // Not S2
   TasConsole.setRxBufferSize(INPUT_BUFFER_SIZE);
-  TasConsole.begin(115200); // always start CDC to test plugged cable
+  TasConsole.begin(115200);           // always start CDC to test plugged cable
+#if SOC_USB_SERIAL_JTAG_SUPPORTED  // Not S2
   for (uint32_t i = 0; i < 5; i++) {  // wait up to 250 ms - maybe a shorter time is enough
       is_connected_to_USB = HWCDCSerial.isPlugged();
       if (is_connected_to_USB) { break; }

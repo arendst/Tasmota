@@ -93,7 +93,7 @@ bool LoraWanLoadData(void) {
     app_key = root.getStr(PSTR(D_JSON_APPKEY), nullptr);
     if (strlen(app_key)) {
       size_t out_len = TAS_LORAWAN_AES128_KEY_SIZE;
-      HexToBytes(app_key, Lora->settings.end_node[n].AppKey, &out_len);
+      HexToBytes(app_key, Lora->settings.end_node[n].AppKey, out_len);
     }
     Lora->settings.end_node[n].DevEUIh = root.getUInt(PSTR(D_JSON_DEVEUI "h"), Lora->settings.end_node[n].DevEUIh);
     Lora->settings.end_node[n].DevEUIl = root.getUInt(PSTR(D_JSON_DEVEUI "l"), Lora->settings.end_node[n].DevEUIl);
@@ -581,8 +581,8 @@ void CmndLoraWanAppKey(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TAS_LORAWAN_ENDNODES)) {
     uint32_t node = XdrvMailbox.index -1;
     if (32 == XdrvMailbox.data_len) {
-      size_t out_len = 16;
-      HexToBytes(XdrvMailbox.data, Lora->settings.end_node[node].AppKey, &out_len);
+      size_t out_len = TAS_LORAWAN_AES128_KEY_SIZE;
+      HexToBytes(XdrvMailbox.data, Lora->settings.end_node[node].AppKey, out_len);
       if (0 == Lora->settings.end_node[node].name.length()) {
         Lora->settings.end_node[node].name = F("0x0000");
       }

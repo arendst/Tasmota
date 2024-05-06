@@ -529,7 +529,7 @@ void DomoticzSensorP1SmartMeter(char *usage1, char *usage2, char *return1, char 
 
 void DomoticzInit(void) {
   if (Settings->flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
-    Domoticz = (Domoticz_t*)calloc(sizeof(Domoticz_t), 1);  // Need calloc to reset registers to 0/false
+    Domoticz = (Domoticz_t*)calloc(1, sizeof(Domoticz_t));  // Need calloc to reset registers to 0/false
     if (nullptr == Domoticz) { return; }
 
     Domoticz->update_flag = true;

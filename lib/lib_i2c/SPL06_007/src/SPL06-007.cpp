@@ -365,7 +365,7 @@ uint8_t i2c_eeprom_read_uint8_t(  uint8_t deviceaddress, uint8_t eeaddress )
     Wire.write(eeaddress); 
     Wire.endTransmission(false); // false to not release the line
     
-    Wire.requestFrom(deviceaddress,1);
+    Wire.requestFrom(deviceaddress, (uint8_t)1);
     if (Wire.available()) rdata = Wire.read();
     return rdata;
 }

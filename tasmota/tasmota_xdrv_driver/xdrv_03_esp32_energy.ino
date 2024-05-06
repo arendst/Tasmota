@@ -1375,7 +1375,7 @@ void CmndMaxEnergyStart(void) {
 /********************************************************************************************/
 
 void EnergyDrvInit(void) {
-  Energy = (tEnergy*)calloc(sizeof(tEnergy), 1);    // Need calloc to reset registers to 0/false
+  Energy = (tEnergy*)calloc(1, sizeof(tEnergy));    // Need calloc to reset registers to 0/false
   if (!Energy) { return; }
 
   Energy->value = nullptr;

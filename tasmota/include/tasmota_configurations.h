@@ -694,9 +694,6 @@
   #define CODE_IMAGE_STR "lite"
 #endif
 
-#undef APP_SLEEP
-#define APP_SLEEP 1                              // Default to sleep = 1 for FIRMWARE_LITE
-
 #undef USE_ARDUINO_OTA                           // Disable support for Arduino OTA
 #undef USE_DOMOTICZ                              // Disable Domoticz
 #undef USE_HOME_ASSISTANT                        // Disable Home Assistant

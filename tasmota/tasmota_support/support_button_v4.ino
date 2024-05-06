@@ -407,12 +407,14 @@ void ButtonHandler(void) {
 
     }
 #ifdef USE_ADC
+#ifndef FIRMWARE_MINIMAL
     else if (PinUsed(GPIO_ADC_BUTTON, button_index)) {
       button = AdcGetButton(Pin(GPIO_ADC_BUTTON, button_index));
     }
     else if (PinUsed(GPIO_ADC_BUTTON_INV, button_index)) {
       button = AdcGetButton(Pin(GPIO_ADC_BUTTON_INV, button_index));
     }
+#endif  // FIRMWARE_MINIMAL
 #endif  // USE_ADC
 
     XdrvMailbox.index = button_index;

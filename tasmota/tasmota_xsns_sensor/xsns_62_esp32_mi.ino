@@ -60,13 +60,6 @@
 
 #define XSNS_62                    62
 
-// undefine "trash" from the NimBLE stack, that collides with Tasmotas enum
-#undef LOG_LEVEL_DEBUG
-#undef LOG_LEVEL_NONE
-#undef LOG_LEVEL_ERROR
-#undef LOG_LEVEL_INFO
-#undef LOG_LEVEL_DEBUG
-#undef LOG_LEVEL_DEBUG_MORE
 #include <vector>
 #include "freertos/ringbuf.h"
 

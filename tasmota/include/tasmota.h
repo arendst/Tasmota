@@ -146,7 +146,6 @@ const uint8_t MAX_ROTARIES = 2;             // Max number of Rotary Encoders
 
 const char MQTT_TOKEN_PREFIX[] PROGMEM = "%prefix%";  // To be substituted by mqtt_prefix[x]
 const char MQTT_TOKEN_TOPIC[] PROGMEM = "%topic%";    // To be substituted by mqtt_topic, mqtt_grptopic, mqtt_buttontopic, mqtt_switchtopic
-const char WIFI_HOSTNAME[] = "%s-%04d";     // Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
 
 const uint8_t CONFIG_FILE_SIGN = 0xA5;      // Configuration file signature
 const uint8_t CONFIG_FILE_XOR = 0x5A;       // Configuration file xor (0 = No Xor)

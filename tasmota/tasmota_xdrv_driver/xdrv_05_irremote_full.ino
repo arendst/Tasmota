@@ -654,7 +654,7 @@ uint32_t IrRemoteCmndIrSendJson(void)
     }
 
     uint8_t data_bytes[num_bytes];        // allocate on stack since it's small enough
-    if (HexToBytes(data_hex, data_bytes, &num_bytes) <= 0) { return IE_INVALID_HEXDATA; }
+    if (HexToBytes(data_hex, data_bytes, num_bytes) <= 0) { return IE_INVALID_HEXDATA; }
 
     if (lsb) {
       reverseBits(data_bytes, bits);
