@@ -33,11 +33,13 @@
  * Note 20240506
  * - Tasmota v14.0.0
  * - GVRelease 1.5.2
- * - Function pinmode is reduced implemented by GPIOViewerVueApplication
+ * - Function pinmode is not fully implemented by gpio_viewer_1_5:
  *   Only INPUT_PULLUP and INPUT_PULLDOWN are reported as INPUT
  *   Only OUTPUT and OUTPUT_OPEN_DRAIN are reported as OUTPUT
  *   All other pin modes are reported as UNKNOWN
  * - This driver is forcing INPUT_PULLUP for ANALOG and INPUT
+ * - Execute once command GvUrl https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer_1_5/
+ * - Clear browser cache to use new functionality
 \*********************************************************************************************/
 
 #define XDRV_121              121
@@ -62,11 +64,11 @@ const char *GVRelease = "1.5.2";
 /*********************************************************************************************/
 
 // GPIO FUNCTIONS as defined by esp32-hal-gpio.h to be used by ESP8266 too, which uses different numbers
-// Also defined in GPIOViewerVueApplication const.ts
-#define GV_UNAVAILABLE        -2           // Addition by GPIOViewerVueApplication
-#define GV_NOT_SET            -1           // Addition by GPIOViewerVueApplication
+// Also defined in gpio_viewer_1_5 const.ts
+#define GV_UNAVAILABLE        -2           // Addition by gpio_viewer_1_5
+#define GV_NOT_SET            -1           // Addition by gpio_viewer_1_5
 #define GV_NOT_USED           0            // Addition by this driver
-#define GV_INPUT              0x01         // Not defined in GPIOViewerVueApplication !?!
+#define GV_INPUT              0x01         // Not defined in gpio_viewer_1_5 !?!
 #define GV_OUTPUT             0x03
 #define GV_PULLUP             0x04
 #define GV_INPUT_PULLUP       0x05
