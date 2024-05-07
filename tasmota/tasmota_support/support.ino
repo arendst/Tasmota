@@ -27,11 +27,21 @@ extern struct rst_info resetInfo;
 #ifdef ESP32
 // Watchdog - yield() resets the watchdog
 #ifdef USE_ESP32_WDT
+
 extern "C"
 void yield(void) {
   vPortYield();         // was originally in `__yield`
   feedLoopWDT();
 }
+
+// patching delay(uint32_t ms)
+extern "C" void __real_delay(uint32_t ms);
+
+extern "C" void __wrap_delay(uint32_t ms) {
+  __real_delay(ms);
+  feedLoopWDT();
+}
+
 #endif // USE_ESP32_WDT
 #endif // ESP32
 
