@@ -70,6 +70,15 @@ size_t getArduinoLoopTaskStackSize(void) {
 
 #include <nvs.h>
 
+bool NvmExists(const char *sNvsName) {
+  nvs_handle_t handle;
+  if (nvs_open(sNvsName, NVS_READONLY, &handle) != ESP_OK) {
+    return false;
+  }
+  nvs_close(handle);
+  return true;
+}
+
 bool NvmLoad(const char *sNvsName, const char *sName, void *pSettings, unsigned nSettingsLen) {
   nvs_handle_t handle;
   esp_err_t result = nvs_open(sNvsName, NVS_READONLY, &handle);
@@ -178,7 +187,11 @@ void QPCWrite(const void *pSettings, unsigned nSettingsLen) {
 
 bool OtaFactoryRead(void) {
   uint32_t pOtaLoader = 0;
-  NvmLoad("otal", "otal", &pOtaLoader, sizeof(pOtaLoader));
+  if (NvmExists("otal")) {
+    NvmLoad("otal", "otal", &pOtaLoader, sizeof(pOtaLoader));
+  } else {
+    OtaFactoryWrite(pOtaLoader);
+  }
   return pOtaLoader;
 }
 
