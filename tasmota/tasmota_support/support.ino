@@ -22,6 +22,20 @@ extern struct rst_info resetInfo;
 }
 
 /*********************************************************************************************\
+ * ESP32 Watchdog
+\*********************************************************************************************/
+#ifdef ESP32
+// Watchdog - yield() resets the watchdog
+#ifdef USE_ESP32_WDT
+extern "C"
+void yield(void) {
+  vPortYield();         // was originally in `__yield`
+  feedLoopWDT();
+}
+#endif // USE_ESP32_WDT
+#endif // ESP32
+
+/*********************************************************************************************\
  * Watchdog extension (https://github.com/esp8266/Arduino/issues/1532)
 \*********************************************************************************************/
 

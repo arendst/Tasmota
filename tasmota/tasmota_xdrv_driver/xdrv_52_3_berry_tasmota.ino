@@ -404,7 +404,8 @@ extern "C" {
   // ESP object
   int32_t l_yield(bvm *vm);
   int32_t l_yield(bvm *vm) {
-    return be_call_c_func(vm, (void*) &BrTimeoutYield, NULL, "-");
+    BrTimeoutYield();
+    be_return_nil(vm);
   }
 
   // Berry: tasmota.scale_uint(int * 5) -> int
