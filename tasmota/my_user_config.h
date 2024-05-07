@@ -728,9 +728,9 @@ https://rya.nc/tasmota-fingerprint.html"
 //  #define USE_QMC5883L                           // [I2CDriver71] Enable QMC5883L magnetic induction sensor (I2C address 0x0D) (+0k8 code)
 //  #define USE_HMC5883L                           // [I2CDriver73] Enable HMC5883L magnetic induction sensor (I2C address 0x1E) (+1k3 code)
 //    #define QMC5883L_TEMP_SHIFT       23         // sensor temperature are not calibrated (only relativ measurement) and need an absolute ground value in °C (see datasheet)
-//    #define QMC5883L_OVERSAMPLE       1          // 0 .. 3 => 512, 256(default), 128, 64
-//    #define QMC5883L_GAUSS            0          // 0,1(default) => 2GAUSS, 8GAUSS(default)
-//    #define QMC5883L_FILTER           2          // 0 .. 3 => 10HZ, 50HZ, 109HZ(default), 200HZ
+//    #define QMC5883L_OVERSAMPLE       0          // 0 .. 3 => 512(default), 256, 128, 64
+//    #define QMC5883L_GAUSS            1          // 0,1(default) => 2GAUSS, 8GAUSS(default)
+//    #define QMC5883L_FILTER           0          // 0 .. 3 => 10HZ(default), 50HZ, 100HZ, 200HZ
 //  #define USE_INA3221                            // [I2CDriver72] Enable INA3221 3-channel DC voltage and current sensor (I2C address 0x40-0x44) (+3.2k code)
 //    #define INA3221_ADDRESS1                     // allow to change the 1st address to search for INA3221 to 0x41..0x43
 //    #define INA3221_MAX_COUNT                    // change the number of devices to search for (default 4).
