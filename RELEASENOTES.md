@@ -167,7 +167,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Changed
 - ESP32 Framework (Arduino Core) from v2.0.14 to v3.0.0
-- ESP32 platform update from 2024.01.12 to 2024.05.01 [#21347](https://github.com/arendst/Tasmota/issues/21347)
+- ESP32 platform update from 2024.01.12 to 2024.05.11 [#21381](https://github.com/arendst/Tasmota/issues/21381)
 - ESP32 LVGL library from v9.0.0 to v9.1.0 [#21008](https://github.com/arendst/Tasmota/issues/21008)
 - GPIOViewer from v1.5.0 to v1.5.2
 - Seriallog set to `SERIAL_LOG_LEVEL` at boot [#21363](https://github.com/arendst/Tasmota/issues/21363)
