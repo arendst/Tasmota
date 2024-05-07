@@ -241,6 +241,10 @@ extern "C" {
     analogWritePhase(pin, duty, hpoint);
   }
 
+  void gp_set_frequency(int32_t pin, int32_t frequency) {
+    analogWriteFreq(frequency, pin);
+  }
+
   // gpio.counter_read(counter:int) -> int or nil
   //
   // Read counter value, or return nil if counter is not used

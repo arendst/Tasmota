@@ -27,6 +27,7 @@ extern int gp_get_pin_index(int32_t pin);               BE_FUNC_CTYPE_DECLARE(gp
 
 // esp_err_tledc_set_duty_and_update(ledc_mode_tspeed_mode, ledc_channel_tchannel, uint32_t duty, uint32_t hpoint)
 extern void gp_set_duty(int32_t pin, int32_t duty, int32_t hpoint);   BE_FUNC_CTYPE_DECLARE(gp_set_duty, "", "ii[i]");
+extern void gp_set_frequency(int32_t pin, int32_t frequency);   BE_FUNC_CTYPE_DECLARE(gp_set_frequency, "", "ii");
 
 extern int gp_get_duty(int32_t pin);               BE_FUNC_CTYPE_DECLARE(gp_get_duty, "i", "i");
 extern int gp_get_duty_resolution(int32_t pin);    BE_FUNC_CTYPE_DECLARE(gp_get_duty_resolution, "i", "i");
@@ -49,6 +50,7 @@ module gpio (scope: global) {
     pin, func(gp_pin)
 
     set_pwm, ctype_func(gp_set_duty)
+    set_pwm_freq, ctype_func(gp_set_frequency)
     read_pwm, ctype_func(gp_get_duty)
     read_pwm_resolution, ctype_func(gp_get_duty_resolution)
 }
