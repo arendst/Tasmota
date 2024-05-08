@@ -212,6 +212,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Neopool prevent possible multiple bus requests [#21267](https://github.com/arendst/Tasmota/issues/21267)
 - Async HMDI CEC [#21287](https://github.com/arendst/Tasmota/issues/21287)
 - ESP8266 physical button/switch control when no rules activated [#21187](https://github.com/arendst/Tasmota/issues/21187)
+- jpeg compile core3 [#21387](https://github.com/arendst/Tasmota/issues/21387)
 - ESP32 PWM activity on unconfigured PWM GPIOs [#20732](https://github.com/arendst/Tasmota/issues/20732)
 - Avoid unwanted OTA upgrade when safeboot starts for the first time [#21360](https://github.com/arendst/Tasmota/issues/21360)
 - BTHome, prep BLE5 [#20989](https://github.com/arendst/Tasmota/issues/20989)
