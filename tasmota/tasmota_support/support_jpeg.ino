@@ -66,7 +66,7 @@ typedef struct {
 } rgb_jpg_decoder;
 
 //input buffer
-static uint32_t _jpg_read(void * arg, size_t index, uint8_t *buf, size_t len)
+static size_t _jpg_read(void * arg, size_t index, uint8_t *buf, size_t len)
 {
     rgb_jpg_decoder * jpeg = (rgb_jpg_decoder *)arg;
     if(buf) {

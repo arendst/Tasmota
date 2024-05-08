@@ -55,6 +55,7 @@ All notable changes to this project will be documented in this file.
 - Conflicting log_level definitions in NimBLE (#21337)
 - Avoid unwanted OTA upgrade when safeboot starts for the first time (#21360)
 - Matter broken NOCStruct types preventing pairing with HA (#21365)
+- jpeg compile core3 (#21387)
 
 ### Removed
 - LVGL disabled vector graphics (#21242)
