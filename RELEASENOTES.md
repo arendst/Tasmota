@@ -185,6 +185,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Refactor I2S [#21291](https://github.com/arendst/Tasmota/issues/21291)
 - Zigbee startup event triggered after plugins are loaded [#21320](https://github.com/arendst/Tasmota/issues/21320)
 - Refactor Tensorflow [#21327](https://github.com/arendst/Tasmota/issues/21327)
+- ESP8266 removed SPI check for valid SPI Chip Select [#21393](https://github.com/arendst/Tasmota/issues/21393)
 - ESP32 refactored Wifi for ESP32 Core3 release [#21106](https://github.com/arendst/Tasmota/issues/21106)
 - ESP32 WiFi phy modes 11n and 11ax represented as HT20, HT40 and HE20 [#19350](https://github.com/arendst/Tasmota/issues/19350)
 - berry.exe (pre-compiled for Windows) updated to latest Berry patches [#21024](https://github.com/arendst/Tasmota/issues/21024)

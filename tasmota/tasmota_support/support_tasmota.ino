@@ -2121,6 +2121,7 @@ void GpioInit(void)
     uint32_t spi_mosi = (14 == Pin(GPIO_SPI_CLK)) && (13 == Pin(GPIO_SPI_MOSI)) ? SPI_MOSI : SPI_NONE;
     uint32_t spi_miso = (14 == Pin(GPIO_SPI_CLK)) && (12 == Pin(GPIO_SPI_MISO)) ? SPI_MISO : SPI_NONE;
     TasmotaGlobal.spi_enabled = spi_mosi + spi_miso;
+/*
     if (!TasmotaGlobal.spi_enabled) {
       bool valid_cs = (ValidSpiPinUsed(GPIO_SPI_CS) ||
                       ValidSpiPinUsed(GPIO_RC522_CS) ||
@@ -2141,6 +2142,7 @@ void GpioInit(void)
       // If SPI_CS and/or SPI_DC is used they must be valid
       TasmotaGlobal.spi_enabled = (valid_cs) ? SPI_MOSI_MISO : SPI_NONE;
     }
+*/
     if (TasmotaGlobal.spi_enabled) {
       TasmotaGlobal.my_module.io[12] = AGPIO(GPIO_SPI_MISO);
       SetPin(12, AGPIO(GPIO_SPI_MISO));
