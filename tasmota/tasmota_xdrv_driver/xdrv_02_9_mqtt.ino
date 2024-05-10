@@ -470,6 +470,8 @@ void MqttDisconnect(void) {
   }
 }
 
+String Topico_subscribe;
+
 void MqttSubscribeLib(const char *topic) {
 #ifdef USE_MQTT_AZURE_IOT
   // Azure IoT Hub currently does not support custom topics: https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-mqtt-support
@@ -479,7 +481,28 @@ void MqttSubscribeLib(const char *topic) {
   SettingsUpdateText(SET_MQTT_FULLTOPIC, SettingsText(SET_MQTT_CLIENT));
   SettingsUpdateText(SET_MQTT_TOPIC, SettingsText(SET_MQTT_CLIENT));
 #else
-  MqttClient.subscribe(topic);
+  
+      String Sub_topic=TasmotaGlobal.mqtt_topic;
+    int topic_dimension = sizeof(Sub_topic);
+    String datoT[topic_dimension];
+    
+
+    for (int i = 0; i < topic_dimension; i++)
+        {
+            int index = Sub_topic.indexOf('/');
+            datoT[i] = Sub_topic.substring(0, index);
+            Sub_topic = Sub_topic.substring(index + 1);
+        }
+    
+    //Serial.println(datoT[2]);
+     Topico_subscribe = datoT[0]+'/'+datoT[1]+"/subscribe/"+datoT[3]+'/'+datoT[4];
+    Serial.println(Topico_subscribe);
+    
+  MqttClient.subscribe(Topico_subscribe.c_str());
+  // Serial.print("failed, rc=");
+  // Serial.print(MqttClient.state());
+  // Serial.println(" try again in 5 seconds");
+  //MqttClient.subscribe(topic);
 #endif  // USE_MQTT_AZURE_IOT
   MqttClient.loop();  // Solve LmacRxBlk:1 messages
 }
@@ -554,7 +577,17 @@ bool MqttPublishLib(const char* topic, const uint8_t* payload, unsigned int plen
   return true;
 }
 
+
 void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len) {
+  String fullTopicString = "channels/2360618/subscribe/fields/field1";
+  strlcpy(mqtt_topic, Topico_subscribe.c_str(), sizeof(mqtt_topic));
+  Serial.print("DataHandlers: ");
+
+  for (int i = 0; i < sizeof(mqtt_data); i++) {
+    Serial.print(mqtt_data[i], DEC);
+    Serial.print(" ");
+  }
+
   SHOW_FREE_MEM(PSTR("MqttDataHandler"));
 
   // Do not allow more data than would be feasable within stack space
@@ -619,6 +652,8 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
 
   ShowSource(SRC_MQTT);
 
+  String newTopic = fullTopicString + "/power";
+  strlcpy(topic, newTopic.c_str(), sizeof(topic));
   CommandHandler(topic, (char*)mqtt_data, data_len);
 
   if (Mqtt.disable_logging) {
@@ -825,6 +860,8 @@ void MqttPublishTeleSensor(void) {
   MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
 }
 
+
+
 void MqttPublishPowerState(uint32_t device) {
   char stopic[TOPSZ];
   char scommand[33];
@@ -865,6 +902,8 @@ void MqttPublishPowerState(uint32_t device) {
     Serial.print(GetStateText(bitRead(TasmotaGlobal.power, device - 1)));
     Serial.print(" estadoPower: ");
     Serial.println(estadoPower);
+
+
     ///////////////////////////////Mia Linea//////////////////////////////////////////
 
     if (!Settings->flag4.only_json_message) {  // SetOption90 - Disable non-json MQTT response
@@ -963,14 +1002,14 @@ void MqttConnected(void) {
     }
 
     GetTopic_P(stopic, CMND, TasmotaGlobal.mqtt_topic, PSTR("#"));
-    //MqttSubscribe(stopic);
+    MqttSubscribe(TasmotaGlobal.mqtt_topic);
     if (strstr_P(SettingsText(SET_MQTT_FULLTOPIC), MQTT_TOKEN_TOPIC) != nullptr) {
       uint32_t real_index = SET_MQTT_GRP_TOPIC;
       for (uint32_t i = 0; i < MAX_GROUP_TOPICS; i++) {
         if (1 == i) { real_index = SET_MQTT_GRP_TOPIC2 -1; }
         if (strlen(SettingsText(real_index +i))) {
           GetGroupTopic_P(stopic, PSTR("#"), real_index +i);  // SetOption75 0: %prefix%/nothing/%topic% = cmnd/nothing/<grouptopic>/# or SetOption75 1: cmnd/<grouptopic>
-          //c(stopic);
+          //MqttSubscribe(stopic);
         }
       }
       GetFallbackTopic_P(stopic, PSTR("#"));
