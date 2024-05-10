@@ -533,6 +533,21 @@ void KNX_INIT(void)
     }
   }
 
+  if (PinUsed(GPIO_DHT11) || PinUsed(GPIO_DHT22) || PinUsed(GPIO_SI7021)) {
+    device_param[KNX_TEMPERATURE-1].show = true;
+    device_param[KNX_HUMIDITY-1].show = true;
+  }
+  for (uint32_t i = 0; i < MAX_ADCS; i++) {
+    if (PinUsed(GPIO_ADC_TEMP, i)) {
+      device_param[KNX_TEMPERATURE-1].show = true;
+    }
+  }
+#ifdef USE_DS18x20
+  if (PinUsed(GPIO_DSB, GPIO_ANY)) {
+    device_param[KNX_TEMPERATURE-1].show = true;
+  }
+#endif
+
 #if defined(USE_ENERGY_SENSOR)
   // Any device with a Power Monitoring
   if ( TasmotaGlobal.energy_driver != ENERGY_NONE ) {
@@ -772,12 +787,9 @@ void KnxSensor(uint8_t sensor_type, float value)
   if (sensor_type == KNX_TEMPERATURE)
   {
     last_temp = value;
-    device_param[KNX_TEMPERATURE-1].show = true;
-
   } else if (sensor_type == KNX_HUMIDITY)
   {
     last_hum = value;
-    device_param[KNX_HUMIDITY-1].show = true;
   }
 
   if (!(Settings->flag.knx_enabled)) { return; }
