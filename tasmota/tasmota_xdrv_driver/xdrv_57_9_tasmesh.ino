@@ -51,11 +51,16 @@ void CB_MESHDataSent(const uint8_t *MAC, esp_now_send_status_t sendStatus) {
   AddLog(LOG_LEVEL_DEBUG, PSTR("MSH: Sent to %s status %d"), _destMAC, sendStatus);
 }
 
-void CB_MESHDataReceived(const uint8_t *MAC, const uint8_t *packet, int len) {
+//void CB_MESHDataReceived(const uint8_t *MAC, const uint8_t *packet, int len) {
+void CB_MESHDataReceived(const esp_now_recv_info_t *esp_now_info, const uint8_t *packet, int len);
+void CB_MESHDataReceived(const esp_now_recv_info_t *esp_now_info, const uint8_t *packet, int len) {
   static bool _locked = false;
   if (_locked) { return; }
 
   _locked = true;
+
+  uint8_t *MAC = esp_now_info->src_addr;
+
   char _srcMAC[18];
   ToHex_P(MAC, 6, _srcMAC, 18, ':');
   AddLog(LOG_LEVEL_DEBUG, PSTR("MSH: Rcvd from %s"), _srcMAC);
