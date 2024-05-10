@@ -40,6 +40,11 @@ This release will be supported from ESP32/Arduino library Core version **3.0.0**
 
 Support of ESP8266 Core versions before 2.7.6 and ESP32 Core versions before 3.0.0 have been removed.
 
+### Known issues
+
+Due to the change from ESP32 Arduino Core2/IDF4 to Arduino Core3/IDF5 not all functionality has been restored. The following features are known not to work on ESP32:
+- Wifi Range Extender
+
 ## Support of TLS
 
 In addition to TLS using fingerprints now also user supplied CA certs, AWS IoT and Azure IoT is supported. Read [full documentation](https://tasmota.github.io/docs/AWS-IoT)
