@@ -562,8 +562,10 @@ void MESHevery50MSecond(void) {
 //          AddLog(LOG_LEVEL_INFO, PSTR("MSH: %*_H), MESH.packetToConsume.front().chunkSize, (uint8_t *)&MESH.packetToConsume.front().payload);
         }
         break;
+#ifdef USE_TASMESH_HEARTBEAT
       case PACKET_TYPE_HEARTBEAT:
         break;
+#endif  // USE_TASMESH_HEARTBEAT
 
       default:
         AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&MESH.packetToConsume.front(), MESH.packetToConsume.front().chunkSize +5);
