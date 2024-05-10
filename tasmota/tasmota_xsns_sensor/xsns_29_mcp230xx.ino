@@ -31,6 +31,10 @@
 #define XSNS_29                   29
 #define XI2C_22                   22  // See I2CDEVICES.md
 
+#ifndef USE_MCP230xx_ADDR
+#define USE_MCP230xx_ADDR 0x20        // Enable MCP23008/MCP23017 I2C Address to use (Must be within range 0x20 through 0x27 - set according to your wired setup)
+#endif
+
 /*
    Default register locations for MCP23008 - They change for MCP23017 in default bank mode
 */
