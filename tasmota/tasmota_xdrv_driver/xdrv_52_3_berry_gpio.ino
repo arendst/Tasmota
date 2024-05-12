@@ -40,6 +40,9 @@
 extern "C" {
 
   #include "berry/include/be_gpio_defines.h"
+#if   defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2)
+  #include "soc/dac_channel.h"
+#endif // defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2)
 
   // virtual member
   int gp_member(bvm *vm);
@@ -62,44 +65,11 @@ extern "C" {
           // synthetic mode
           if (-1 == mode) {
             // DAC
-#if   defined(CONFIG_IDF_TARGET_ESP32)
-            if (25 == pin || 26 == pin) {
-#if ESP_IDF_VERSION_MAJOR >= 5
-              dac_oneshot_handle_t channel_handle;
-              const dac_channel_t channel = (25 == pin) ? DAC_CHAN_0 : DAC_CHAN_1;
-              dac_oneshot_config_t channel_cfg = {
-                .chan_id = channel,
-              };
-              esp_err_t err = dac_oneshot_new_channel(&channel_cfg, &channel_handle);
-#else
-              dac_channel_t channel = (25 == pin) ? DAC_CHANNEL_1 : DAC_CHANNEL_2;
-              esp_err_t err = dac_output_enable(channel);
-#endif
-              if (err) {
-                be_raisef(vm, "value_error", "Error: dac_output_enable(%i) -> %i", channel, err);
-              }
-            } else {
-              be_raise(vm, "value_error", "DAC only supported on GPIO25-26");
+#if   defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2)
+            if (pin != DAC_CHAN0_GPIO_NUM && pin != DAC_CHAN1_GPIO_NUM) {
+              be_raisef(vm, "value_error", "DAC only supported on GPIO%i-%i", DAC_CHAN0_GPIO_NUM, DAC_CHAN1_GPIO_NUM);
             }
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
-            if (17 == pin || 18 == pin) {
-#if ESP_IDF_VERSION_MAJOR >= 5
-              dac_oneshot_handle_t channel_handle;
-              const dac_channel_t channel = (17 == pin) ? DAC_CHAN_0 : DAC_CHAN_1;
-              dac_oneshot_config_t channel_cfg = {
-                .chan_id = channel,
-              };
-              esp_err_t err = dac_oneshot_new_channel(&channel_cfg, &channel_handle);
-#else
-              dac_channel_t channel = (17 == pin) ? DAC_CHANNEL_1 : DAC_CHANNEL_2;
-              esp_err_t err = dac_output_enable(channel);
-#endif
-              if (err) {
-                be_raisef(vm, "value_error", "Error: dac_output_enable(%i) -> %i", channel, err);
-              }
-            } else {
-              be_raise(vm, "value_error", "DAC only supported on GPIO17-18");
-            }
+            // DEPRECATED - this is not needed anymore, the GPIO is configured when first write occurs
 #else
             be_raise(vm, "value_error", "DAC unsupported in this chip");
 #endif
@@ -143,59 +113,26 @@ extern "C" {
 
   int gp_dac_voltage(bvm *vm);
   int gp_dac_voltage(bvm *vm) {
+#if   defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2)
     int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc == 2 && be_isint(vm, 1) && be_isint(vm, 2)) {
+    if (argc == 2 && be_isint(vm, 1) && be_isnumber(vm, 2)) {
       int32_t pin = be_toint(vm, 1);
       int32_t mV = be_toint(vm, 2);
+      if (pin != DAC_CHAN0_GPIO_NUM && pin != DAC_CHAN1_GPIO_NUM) {
+        be_raisef(vm, "value_error", "DAC only supported on GPIO%i-%i", DAC_CHAN0_GPIO_NUM, DAC_CHAN1_GPIO_NUM);
+      }
       if (mV < 0) { mV = 0; }
       uint32_t dac_value = changeUIntScale(mV, 0, 3300, 0, 255);    // convert from 0..3300 ms to 0..255
-#if   defined(CONFIG_IDF_TARGET_ESP32)
-      if (25 == pin || 26 == pin) {
-#if ESP_IDF_VERSION_MAJOR >= 5
-        dac_oneshot_handle_t channel_handle;
-        const dac_channel_t channel = (25 == pin) ? DAC_CHAN_0 : DAC_CHAN_1;
-        dac_oneshot_config_t channel_cfg = {
-          .chan_id = channel,
-        };
-        esp_err_t err =  dac_oneshot_new_channel(&channel_cfg, &channel_handle);
-#else
-        dac_channel_t channel = (25 == pin) ? DAC_CHANNEL_1 : DAC_CHANNEL_2;
-        esp_err_t err = dac_output_voltage(channel, dac_value);
-        // err = dac_output_enable(channel);
-#endif
-        if (err) {
-          be_raisef(vm, "internal_error", "Error: esp_err_tdac_output_voltage(%i, %i) -> %i", channel, dac_value, err);
-        }
-      } else {
-        be_raise(vm, "value_error", "DAC only supported on GPIO25-26");
+      if (!dacWrite(pin, dac_value)) {
+        be_raise(vm, "value_error", "Error: dacWrite failed");
       }
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
-      if (17 == pin || 18 == pin) {
-#if ESP_IDF_VERSION_MAJOR >= 5
-        dac_oneshot_handle_t channel_handle;
-        const dac_channel_t channel = (17 == pin) ? DAC_CHAN_0 : DAC_CHAN_1;
-        dac_oneshot_config_t channel_cfg = {
-          .chan_id = channel,
-        };
-        esp_err_t err =  dac_oneshot_new_channel(&channel_cfg, &channel_handle);
-#else
-        dac_channel_t channel = (17 == pin) ? DAC_CHANNEL_1 : DAC_CHANNEL_2;
-        esp_err_t err = dac_output_voltage(channel, dac_value);
-        // err = dac_output_enable(channel);
-#endif
-        if (err) {
-          be_raisef(vm, "internal_error", "Error: esp_err_tdac_output_voltage(%i, %i) -> %i", channel, dac_value, err);
-        }
-      } else {
-        be_raise(vm, "value_error", "DAC only supported on GPIO17-18");
-      }
-#else
-      be_raise(vm, "value_error", "DAC unsupported in this chip");
-#endif
-      be_pushint(vm, changeUIntScale(dac_value, 0, 255, 0, 3300));
+      be_pushint(vm, changeUIntScale(dac_value, 0, 255, 0, 3300));  // convert back to mV to indicate the actual value
       be_return(vm);
     }
     be_raise(vm, kTypeError, nullptr);
+#else // defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2)
+    be_raise(vm, "value_error", "DAC unsupported in this chip");
+#endif // defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2)
   }
 
 // Tasmota specific
