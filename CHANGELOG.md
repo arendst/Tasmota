@@ -37,6 +37,7 @@ All notable changes to this project will be documented in this file.
 - TLS Letsencrypt replace R3 CA with long-term ISRG_Root_X1 CA, which works with R3 and R10-R14 (#21352)
 - GPIOViewer from v1.5.0 to v1.5.2
 - ESP32 Core3 platform update from 2024.05.10 to 2024.05.11 (#21381)
+- Berry `Leds` uses native WS2812 driver by default
 
 ### Fixed
 - HASPmota `align` attribute and expand PNG cache (#21228)
