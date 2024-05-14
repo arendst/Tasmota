@@ -3,7 +3,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [13.4.1.2]
+## [14.0.0.1]
+### Added
+
+
+### Breaking Changed
+
+### Changed
+
+### Fixed
+
+### Removed
+
+
+## [Released]
+
+## [14.0.0] 20240515
+- Release Rodney
+
+## [13.4.1.2] 20240515
 ### Added
 - ESP32 esp32_partition_app3904k_fs3392k partition scheme for 8MB ESP32S3 (#21241)
 - TCP Serial bridge GPIO type `TCP Tx En` (#21269)
@@ -200,8 +218,6 @@ All notable changes to this project will be documented in this file.
 - Shutter inverted using internal commands (#20752)
 - HASPmota PSRAM memory leak (#20818)
 - Berry Memory leak in `import re` (#20823)
-
-## [Released]
 
 ## [13.4.0] 20240214
 - Release Quinta
