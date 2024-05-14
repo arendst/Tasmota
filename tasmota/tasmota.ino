@@ -411,6 +411,10 @@ void setup(void) {
 #endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32
 
+#ifdef USE_ESP32_WDT
+  enableLoopWDT();          // enabled WDT Watchdog on Arduino `loop()` - must return before 5s or called `feedLoopWDT();` - included in `yield()`
+#endif // USE_ESP32_WDT
+
   RtcPreInit();
   SettingsInit();
 
