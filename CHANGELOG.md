@@ -3,10 +3,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Released]
 
-## [14.0.0] 20240517
+## [14.0.0] 20240515
 - Release Rodney
 
-## [13.4.1.2] 20240517
+## [13.4.1.2] 20240515
 ### Added
 - ESP32 esp32_partition_app3904k_fs3392k partition scheme for 8MB ESP32S3 (#21241)
 - TCP Serial bridge GPIO type `TCP Tx En` (#21269)
