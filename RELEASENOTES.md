@@ -40,10 +40,10 @@ This release will be supported from ESP32/Arduino library Core version **3.0.0**
 
 Support of ESP8266 Core versions before 2.7.6 and ESP32 Core versions before 3.0.0 have been removed.
 
-### Known issues
+### Known issues with v14.0.0
 
 Due to the change from ESP32 Arduino Core2/IDF4 to Arduino Core3/IDF5 not all functionality has been restored. The following features are known not to work on ESP32:
-- Wifi Range Extender
+- Wifi Range Extender [#21200](https://github.com/arendst/Tasmota/issues/21200)
 
 ## Support of TLS
 
@@ -177,6 +177,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - GPIOViewer from v1.5.0 to v1.5.2
 - Seriallog set to `SERIAL_LOG_LEVEL` at boot [#21363](https://github.com/arendst/Tasmota/issues/21363)
 - TLS Letsencrypt replace R3 CA with long-term ISRG_Root_X1 CA, which works with R3 and R10-R14 [#21352](https://github.com/arendst/Tasmota/issues/21352)
+- Command ``Pixels`` initiates a restart before activation due to changed NeoPixelBus library [#21406](https://github.com/arendst/Tasmota/issues/21406)
 - Command ``EthType`` option selection [#21317](https://github.com/arendst/Tasmota/issues/21317)
 - Refactor Platformio script `post_esp32.py` [#20966](https://github.com/arendst/Tasmota/issues/20966)
 - SGP4x Domoticz air quality value from raw to computed [#18880](https://github.com/arendst/Tasmota/issues/18880)
@@ -194,6 +195,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 WiFi phy modes 11n and 11ax represented as HT20, HT40 and HE20 [#19350](https://github.com/arendst/Tasmota/issues/19350)
 - berry.exe (pre-compiled for Windows) updated to latest Berry patches [#21024](https://github.com/arendst/Tasmota/issues/21024)
 - Berry class `int64` made immutable [#20727](https://github.com/arendst/Tasmota/issues/20727)
+- Berry `Leds` uses native WS2812 driver by default [#21406](https://github.com/arendst/Tasmota/issues/21406)
 - Matter reduce memory usage when reading with wildcards [#20809](https://github.com/arendst/Tasmota/issues/20809)
 - LVGL make lv_touch_3_buttons more responsive [#20728](https://github.com/arendst/Tasmota/issues/20728)
 - LVGL optimize fonts and add icons [#20880](https://github.com/arendst/Tasmota/issues/20880)
@@ -228,6 +230,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry walrus bug when assigning to self [#21015](https://github.com/arendst/Tasmota/issues/21015)
 - Berry `web_add_handler` called before `Webserver` is initialized [#21272](https://github.com/arendst/Tasmota/issues/21272)
 - Berry `math.inf`, `math.isinf()` and fixed json ouput for `inf` and `nan` [#21304](https://github.com/arendst/Tasmota/issues/21304)
+- Berry `gpio.dac_voltage()` [#21403](https://github.com/arendst/Tasmota/issues/21403)
 - Matter broken NOCStruct types preventing pairing with HA [#21365](https://github.com/arendst/Tasmota/issues/21365)
 - LVGL restore `lv_palette` functions [#21232](https://github.com/arendst/Tasmota/issues/21232)
 - LVGL fix memory allocation of flush buffers [#21256](https://github.com/arendst/Tasmota/issues/21256)

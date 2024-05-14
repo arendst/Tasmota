@@ -722,6 +722,8 @@ void Ws2812ModuleSelected(void)
   }
 }
 
+#ifdef ESP32
+#ifdef USE_BERRY
 /********************************************************************************************/
 // Callbacks for Berry driver
 //
@@ -828,6 +830,9 @@ uint32_t Ws2812GetPixelColor(uint32_t idx) {
   return 0;
 }
 
+#endif  // ESP32
+#endif  // USE_BERRY
+
 /********************************************************************************************/
 
 void CmndLed(void)
@@ -856,11 +861,16 @@ void CmndLed(void)
 void CmndPixels(void)
 {
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= WS2812_MAX_LEDS)) {
+/*
     Settings->light_pixels = XdrvMailbox.payload;
     Settings->light_rotation = 0;
-    // Ws2812ReinitStrip();   -- does not work
-    TasmotaGlobal.restart_flag = 2;    // reboot instead
+    Ws2812ReinitStrip();   -- does not work with latest NeoPixelBus driver
     Light.update = true;
+*/
+    Ws2812Clear();                     // Clear all known pixels
+    Settings->light_pixels = XdrvMailbox.payload;
+    Settings->light_rotation = 0;
+    TasmotaGlobal.restart_flag = 2;    // reboot instead
   }
   ResponseCmndNumber(Settings->light_pixels);
 }
