@@ -15,7 +15,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 ### Removed
-
+- Drop support of old insecure fingerprint algorithm (deprecated since v8.4.0)
 
 ## [Released]
 

@@ -103,20 +103,6 @@
 
 #define MQTT_HOST              ""                // [MqttHost]
 
-// XXX temporary - leave for a few releases so people compiling in
-// fingerprints have a chance to update their configuration files
-#if !defined(USE_MQTT_TLS_DROP_OLD_FINGERPRINT) && defined(MQTT_FINGERPRINT1) || defined(MQTT_FINGERPRINT2)
-#error "The old TLS fingerprint format is being removed.\n\
-Please ensure your TLS fingerprint(s) are using the new version, then add\n\
-\n\
-#define USE_MQTT_TLS_DROP_OLD_FINGERPRINT\n\
-\n\
-to your user_config_override.h file.\n\
-\n\
-An online tool to calculate TLS fingerprints is available here at:\n\
-https://rya.nc/tasmota-fingerprint.html"
-#endif
-
 #define MQTT_FINGERPRINT1      0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00  // [MqttFingerprint1] (auto-learn)
 #define MQTT_FINGERPRINT2      0xDA,0x39,0xA3,0xEE,0x5E,0x6B,0x4B,0x0D,0x32,0x55,0xBF,0xEF,0x95,0x60,0x18,0x90,0xAF,0xD8,0x07,0x09  // [MqttFingerprint2] (invalid - value from sha1(""))
 #define MQTT_PORT              1883              // [MqttPort] MQTT port (10123 on CloudMQTT)
@@ -462,9 +448,6 @@ https://rya.nc/tasmota-fingerprint.html"
 //  #define USE_MQTT_AWS_IOT                       // [Deprecated] Enable MQTT for AWS IoT - requires a private key (+11.9k code, +0.4k mem)
                                                  //   Note: you need to generate a private key + certificate per device and update 'tasmota/tasmota_aws_iot.cpp'
                                                  //   Full documentation here: https://github.com/arendst/Tasmota/wiki/AWS-IoT
- #define USE_MQTT_TLS_DROP_OLD_FINGERPRINT          // If you use fingerprint (i.e. not CA) validation, the algorithm changed to a more secure one.
-                                                   // Any valid fingerprint with the old algo will be automatically updated to the new algo.
-                                                   // Enable this if you want to disable the old algo check, which should be more secure
 //  for USE_4K_RSA (support for 4096 bits certificates, instead of 2048), you need to uncommend `-DUSE_4K_RSA` in `build_flags` from `platform.ini` or `platform_override.ini`
 
 // -- MQTT - TLS - Azure IoT & IoT Central ---------
