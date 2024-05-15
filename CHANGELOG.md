@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- ESP32 compiler option from `target-align` to `no-target-align` (#21407)
 
 ### Fixed
 
