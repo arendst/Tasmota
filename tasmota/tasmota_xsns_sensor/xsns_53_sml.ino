@@ -2738,7 +2738,8 @@ struct SML_COUNTER {
 uint8_t sml_counter_pinstate;
 uint8_t sml_cnt_index[MAX_COUNTERS] =  { 0, 1, 2, 3 };
 
-void IRAM_ATTR SML_CounterIsr(void *arg) {
+void IRAM_ATTR SML_CounterIsr(void *arg);
+void SML_CounterIsr(void *arg) {
   uint32_t index = *static_cast<uint8_t*>(arg);
 
   uint32_t time = millis();
