@@ -813,25 +813,6 @@ extern "C" {
   // Return 0 on validation success, !0 on validation error
   static unsigned pubkeyfingerprint_end_chain(const br_x509_class **ctx) {
     br_x509_pubkeyfingerprint_context *xc = (br_x509_pubkeyfingerprint_context *)ctx;
-// **** Start patch Castellucci
-/*
-    br_sha1_context sha1_context;
-    pubkeyfingerprint_pubkey_fingerprint(&sha1_context, xc->ctx.pkey.key.rsa);
-    br_sha1_out(&sha1_context, xc->pubkey_recv_fingerprint); // copy to fingerprint
-
-    if (!xc->fingerprint_all) {
-      if (0 == memcmp_P(xc->pubkey_recv_fingerprint, xc->fingerprint1, 20)) {
-        return 0;
-      }
-      if (0 == memcmp_P(xc->pubkey_recv_fingerprint, xc->fingerprint2, 20)) {
-        return 0;
-      }
-      return 1; // no match, error
-    } else {
-      // Default (no validation at all) or no errors in prior checks = success.
-      return 0;
-    }
-*/
     // set fingerprint status byte to zero
     // FIXME: find a better way to pass this information
     xc->pubkey_recv_fingerprint[20] = 0;
@@ -844,45 +825,7 @@ extern "C" {
       if (0 == memcmp_P(xc->pubkey_recv_fingerprint, xc->fingerprint2, 20)) {
         return 0;
       }
-
-#ifndef USE_MQTT_TLS_DROP_OLD_FINGERPRINT
-      // No match under new algorithm, do some basic checking on the key.
-      //
-      // RSA keys normally have an e value of 65537, which is three bytes long.
-      // Other e values are suspicious, but if the modulus is a standard size
-      // (multiple of 512 bits/64 bytes), any public exponent up to eight bytes
-      // long will be allowed.
-      //
-      // A legitimate key could possibly be marked as bad by this check, but
-      // the user would have had to really worked at making a strange key.
-      if (!(xc->ctx.pkey.key.rsa.elen == 3
-            && xc->ctx.pkey.key.rsa.e[0] == 1
-            && xc->ctx.pkey.key.rsa.e[1] == 0
-            && xc->ctx.pkey.key.rsa.e[2] == 1)) {
-        if (xc->ctx.pkey.key.rsa.nlen & 63 != 0 || xc->ctx.pkey.key.rsa.elen > 8) {
-          return 2; // suspicious key, return error
-        }
-      }
-
-      // try the old algorithm and potentially mark for update
-      pubkeyfingerprint_pubkey_fingerprint(xc, true);
-      if (0 == memcmp_P(xc->pubkey_recv_fingerprint, xc->fingerprint1, 20)) {
-        xc->pubkey_recv_fingerprint[20] |= 1; // mark for update
-      }
-      if (0 == memcmp_P(xc->pubkey_recv_fingerprint, xc->fingerprint2, 20)) {
-        xc->pubkey_recv_fingerprint[20] |= 2; // mark for update
-      }
-      if (!xc->pubkey_recv_fingerprint[20]) {
-        return 1; // not marked for update because no match, error
-      }
-
-      // the old fingerprint format matched, recompute new one for update
-      pubkeyfingerprint_pubkey_fingerprint(xc, false);
-
-      return 0;
-#else   // USE_TLS_OLD_FINGERPRINT_COMPAT
       return 1;   // no match, error
-#endif  // USE_TLS_OLD_FINGERPRINT_COMPAT
     } else {
       // Default (no validation at all) or no errors in prior checks = success.
       return 0;
