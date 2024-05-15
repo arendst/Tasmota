@@ -27,14 +27,10 @@ bool I2cBegin(int sda, int scl, uint32_t frequency) {
   Wire.begin(sda, scl);
 #endif
 #ifdef ESP32
-#if ESP_IDF_VERSION_MAJOR > 3  // Core 2.x uses a different I2C library
   static bool reinit = false;
   if (reinit) { Wire.end(); }
-#endif  // ESP_IDF_VERSION_MAJOR > 3
   result = Wire.begin(sda, scl, frequency);
-#if ESP_IDF_VERSION_MAJOR > 3  // Core 2.x uses a different I2C library
   reinit = result;
-#endif  // ESP_IDF_VERSION_MAJOR > 3
 #endif
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Bus1 %d"), result);
   return result;

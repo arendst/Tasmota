@@ -189,9 +189,9 @@ bool RtcRebootValid(void) {
 
 extern "C" {
 #include "spi_flash.h"
-#if ESP_IDF_VERSION_MAJOR >= 5
-  #include "spi_flash_mmap.h"
-#endif
+#ifdef ESP32
+#include "spi_flash_mmap.h"
+#endif  // ESP32
 }
 
 #ifdef ESP8266

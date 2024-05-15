@@ -2674,11 +2674,9 @@ void CmndWifi(void) {
         break;
       }
 #ifdef ESP32
-#if ESP_IDF_VERSION_MAJOR >= 5
     case 6:  // Wifi 6 = BGNAX
       option = 4;
-#endif  // ESP_IDF_VERSION_MAJOR
-#endif  // ESP32/ESP8266
+#endif  // ESP32
     case 4:  // Wifi 4 = BGN
     case 3:  // Wifi 3 = BG
     case 2:  // Wifi 2 = B

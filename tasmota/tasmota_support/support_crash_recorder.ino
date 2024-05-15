@@ -162,14 +162,8 @@ void CrashDumpClear(void)
 // esp_err_t IRAM_ATTR esp_backtrace_print(int depth)
 
 #include "freertos/xtensa_api.h"
-#if   ESP_IDF_VERSION_MAJOR >= 5
-  #include "esp_debug_helpers.h"
-  #include "esp_cpu_utils.h"
-#elif ESP_IDF_VERSION_MAJOR >= 4
-  #include "esp_debug_helpers.h"
-#else  // IDF 3.x
-  #include "esp_panic.h"
-#endif
+#include "esp_debug_helpers.h"
+#include "esp_cpu_utils.h"
 extern "C" {
   // esp-idf 3.x
   void __real_panicHandler(XtExcFrame *frame);
