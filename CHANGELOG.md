@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [14.0.0.1]
 ### Added
-- Enabled watchdog for ESP32 and variants
+
 
 ### Breaking Changed
 
