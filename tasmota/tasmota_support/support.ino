@@ -26,7 +26,6 @@ extern struct rst_info resetInfo;
 \*********************************************************************************************/
 #ifdef ESP32
 // Watchdog - yield() resets the watchdog
-#ifdef USE_ESP32_WDT
 
 extern "C" void __yield(void);              // original function from Arduino Core
 extern "C"
@@ -48,7 +47,6 @@ extern "C" void __wrap_delay(uint32_t ms) {
 #endif
 }
 
-#endif // USE_ESP32_WDT
 #endif // ESP32
 
 /*********************************************************************************************\
