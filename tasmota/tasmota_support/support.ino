@@ -39,9 +39,13 @@ void yield(void) {
 extern "C" void __real_delay(uint32_t ms);  // original function from Arduino Core
 
 extern "C" void __wrap_delay(uint32_t ms) {
+#ifdef USE_ESP32_WDT
   if (ms) { feedLoopWDT(); }
   __real_delay(ms);
   feedLoopWDT();
+#else
+  __real_delay(ms);
+#endif
 }
 
 #endif // USE_ESP32_WDT
