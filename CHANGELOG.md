@@ -13,9 +13,10 @@ All notable changes to this project will be documented in this file.
 - ESP32 compiler option from `target-align` to `no-target-align` (#21407)
 
 ### Fixed
+- Domoticz re-subscribe on MQTT reconnect. Regression from v13.4.0.3 (#21281)
 
 ### Removed
-- Support of old insecure fingerprint algorithm - deprecated since v8.4.0 (#21417)
+- Support of old insecure fingerprint algorithm. Deprecated since v8.4.0 (#21417)
 
 ## [Released]
 

@@ -128,6 +128,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 compiler option from `target-align` to `no-target-align` [#21407](https://github.com/arendst/Tasmota/issues/21407)
 
 ### Fixed
+- Domoticz re-subscribe on MQTT reconnect. Regression from v13.4.0.3 [#21281](https://github.com/arendst/Tasmota/issues/21281)
 
 ### Removed
-- Support of old insecure fingerprint algorithm - deprecated since v8.4.0 [#21417](https://github.com/arendst/Tasmota/issues/21417)
+- Support of old insecure fingerprint algorithm. Deprecated since v8.4.0 [#21417](https://github.com/arendst/Tasmota/issues/21417)
