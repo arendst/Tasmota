@@ -76,4 +76,4 @@
 #ifdef __cplusplus
 extern "C"
 #endif // _cplusplus
-void  delay(unsigned long ms) __attribute__((noinline)) __attribute__ ((noclone));
+void  delay(__UINT32_TYPE__ ms) __attribute__((noinline)) __attribute__ ((noclone));
