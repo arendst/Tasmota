@@ -1166,7 +1166,7 @@ bool HTTPClientLight::connect(void)
     } else {
         IPAddress remote_addr;
         // Add include "ESP8266WiFi.h" for this to work
-        if (!WiFi.hostByName(_host.c_str(), remote_addr)) {
+        if (!WiFiHelper::hostByName(_host.c_str(), remote_addr)) {
             return false;
         }
         if(!_client->connect(remote_addr, _port, _connectTimeout)) {

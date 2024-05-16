@@ -60,13 +60,6 @@
 
 #define XSNS_62                    62
 
-// undefine "trash" from the NimBLE stack, that collides with Tasmotas enum
-#undef LOG_LEVEL_DEBUG
-#undef LOG_LEVEL_NONE
-#undef LOG_LEVEL_ERROR
-#undef LOG_LEVEL_INFO
-#undef LOG_LEVEL_DEBUG
-#undef LOG_LEVEL_DEBUG_MORE
 #include <vector>
 #include "freertos/ringbuf.h"
 
@@ -74,16 +67,17 @@
 
 #include "include/xsns_62_esp32_mi.h"
 
-void MI32scanEndedCB(NimBLEScanResults results);
 void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify);
 void MI32AddKey(mi_bindKey_t keyMAC);
 
 std::vector<mi_sensor_t> MIBLEsensors;
 RingbufHandle_t BLERingBufferQueue = nullptr;
+
 static BLEScan* MI32Scan;
+static NimBLEClient* MI32Client;
 
 /*********************************************************************************************\
- * Callback Classes
+ * BLE Callback Classes
 \*********************************************************************************************/
 
 class MI32SensorCallback : public NimBLEClientCallbacks {
@@ -105,6 +99,12 @@ class MI32SensorCallback : public NimBLEClientCallbacks {
 };
 
 class MI32AdvCallbacks: public NimBLEScanCallbacks {
+  void onScanEnd(NimBLEScanResults results) {
+    MI32.infoMsg = MI32_SCAN_ENDED;
+    MI32.mode.runningScan = 0;
+    MI32.mode.deleteScanTask = 1; // if scan ended dew to a BLE controller error, make sure we stop the task
+  }
+
   void IRAM_ATTR onResult(NimBLEAdvertisedDevice* advertisedDevice) {
     static bool _mutex = false;
     if(_mutex) return;
@@ -173,7 +173,11 @@ class MI32ServerCallbacks: public NimBLEServerCallbacks {
         memset(MI32.conCtx->MAC,0,6);
         xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t), pdMS_TO_TICKS(1));
         MI32.infoMsg = MI32_SERV_CLIENT_DISCONNECTED;
+#ifdef CONFIG_BT_NIMBLE_EXT_ADV
+        NimBLEDevice::startAdvertising(0);
+#else
         NimBLEDevice::startAdvertising();
+#endif
     };
 };
 
@@ -230,20 +234,6 @@ class MI32CharacteristicCallbacks: public NimBLECharacteristicCallbacks {
 };
 
 
-static MI32AdvCallbacks MI32ScanCallbacks;
-static MI32SensorCallback MI32SensorCB;
-static MI32CharacteristicCallbacks MI32ChrCallback;
-static NimBLEClient* MI32Client;
-
-/*********************************************************************************************\
- * BLE callback functions
-\*********************************************************************************************/
-
-void MI32scanEndedCB(NimBLEScanResults results){
-  MI32.infoMsg = MI32_SCAN_ENDED;
-  MI32.mode.runningScan = 0;
-}
-
 void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify){
   if(isNotify){
     struct{
@@ -261,6 +251,11 @@ void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pD
     return;
   }
 }
+
+static MI32AdvCallbacks MI32ScanCallbacks;
+static MI32SensorCallback MI32SensorCB;
+static MI32CharacteristicCallbacks MI32ChrCallback;
+
 /*********************************************************************************************\
  * Helper functions
 \*********************************************************************************************/
@@ -457,7 +452,7 @@ uint32_t MIBLEgetSensorSlot(uint8_t * _MAC, uint16_t _type, uint8_t counter){
     if(memcmp(_MAC,MIBLEsensors[i].MAC,6)==0){
       DEBUG_SENSOR_LOG(PSTR("%s: known sensor at slot: %u"),D_CMND_MI32, i);
       // AddLog(LOG_LEVEL_DEBUG,PSTR("Counters: %x %x"),MIBLEsensors[i].lastCnt, counter);
-      if(MIBLEsensors[i].lastCnt==counter) {
+      if(MIBLEsensors[i].lastCnt==counter && counter!=0) {
         // AddLog(LOG_LEVEL_DEBUG,PSTR("Old packet"));
         return 0xff; // packet received before, stop here
       }
@@ -479,16 +474,14 @@ uint32_t MIBLEgetSensorSlot(uint8_t * _MAC, uint16_t _type, uint8_t counter){
   _newSensor.feature.raw = 0;
   _newSensor.status.raw = 0;
   _newSensor.temp = NAN;
-  _newSensor.temp_history = (uint8_t*) calloc(24,1);
   _newSensor.bat=0x00;
   _newSensor.RSSI=0;
   _newSensor.lux = 0x00ffffff;
-  _newSensor.lux_history = (uint8_t*) calloc(24,1);
   _newSensor.key = nullptr;
   switch (_type)
     {
-    case UNKNOWN_MI:
-      _newSensor.hum_history = (uint8_t*) calloc(24,1);
+    case UNKNOWN_MI: case BTHOME:
+      _newSensor.feature.raw = 0;
       break;
     case FLORA:
       _newSensor.moisture =0xff;
@@ -537,7 +530,6 @@ uint32_t MIBLEgetSensorSlot(uint8_t * _MAC, uint16_t _type, uint8_t counter){
       break;
     default:
       _newSensor.hum=NAN;
-      _newSensor.hum_history = (uint8_t*) calloc(24,1);
       _newSensor.feature.temp=1;
       _newSensor.feature.hum=1;
       _newSensor.feature.tempHum=1;
@@ -577,8 +569,8 @@ void MI32StatusInfo() {
  * @param value - value as float, this
  * @param type  - internal type. for BLE: 0 - temperature, 1 - humidity, 2 - illuminance, for internal sensors: 100 - wattage
  */
-void MI32addHistory(uint8_t *history, float value, uint32_t type){
-  uint32_t _hour = (LocalTime()%SECS_PER_DAY)/SECS_PER_HOUR;
+void MI32addHistory(uint8_t history[24], float value, const uint32_t type){
+  const uint32_t _hour = (LocalTime()%SECS_PER_DAY)/SECS_PER_HOUR;
   // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: history hour: %u"),_hour);
   switch(type){
     case 0:  //temperature
@@ -595,7 +587,7 @@ void MI32addHistory(uint8_t *history, float value, uint32_t type){
 #ifdef USE_MI_ESP32_ENERGY
     case 100: // energy
       if(value == 0.0f) value = 1.0f;
-      uint8_t _watt = ((MI32ln(value)*2) + 0b10000000); //watt
+      const uint8_t _watt = ((MI32ln(value)*2) + 0b10000000); //watt
       history[_hour] = _watt;
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: history energy: %u for value:%u"),history[_hour], value); //still playing with the mapping
       break;
@@ -604,16 +596,14 @@ void MI32addHistory(uint8_t *history, float value, uint32_t type){
 }
 
 /**
- * @brief Returns a value betwenn 0-21 for use as a data point in the history graph of the extended web UI
+ * @brief Returns a value between 0-21 for use as a data point in the history graph of the extended web UI
  *
  * @param history - pointer to uint8_t[23]
  * @param hour  - hour of datapoint
  * @return uint8_t  - value for the y-axis, should be between 0-21
  */
-uint8_t MI32fetchHistory(uint8_t *history, uint32_t hour){
-    if(hour>23) {
-      return 0;} //should never happen
-    if(bitRead(history[hour],7) == 0) {
+uint8_t MI32fetchHistory(uint8_t history[24], uint32_t hour){
+    if((hour>23 || bitRead(history[hour],7)) == 0) {
       return 0; //invalidated data
     }
     return (history[hour]) - 0b10000000;
@@ -685,8 +675,10 @@ void MI32Init(void) {
   }
 
   if (!MI32.mode.init) {
-    // NimBLEDevice::setScanFilterMode(1); //CONFIG_BTDM_SCAN_DUPL_TYPE_DATA
-    // NimBLEDevice::setScanDuplicateCacheSize(40); // will not be perfect for every situation (few vs many BLE devices nearby)
+  #ifdef CONFIG_BTDM_BLE_SCAN_DUPL
+    // NimBLEDevice::setScanFilterMode(2); //CONFIG_BTDM_SCAN_DUPL_TYPE_DATA_DEVICE
+    // NimBLEDevice::setScanDuplicateCacheSize(10); // will not be perfect for every situation (few vs many BLE devices nearby)
+  #endif
     const std::string name(TasmotaGlobal.hostname);
     NimBLEDevice::init(name);
     AddLog(LOG_LEVEL_INFO,PSTR("M32: Init BLE device: %s"),TasmotaGlobal.hostname);
@@ -694,11 +686,7 @@ void MI32Init(void) {
     MI32.mode.readyForNextConnJob = 1;
     MI32StartTask(MI32_TASK_SCAN); // Let's get started !!
   }
-#ifdef USE_MI_EXT_GUI
-#ifdef USE_MI_ESP32_ENERGY
-  MI32.energy_history = (uint8_t*) calloc(24,1);
-#endif //USE_MI_ESP32_ENERGY
-#endif //USE_MI_EXT_GUI
+
   return;
 }
 
@@ -1092,6 +1080,8 @@ void MI32ScanTask(void *pvParameters){
 
   MI32Scan->setActiveScan(MI32.option.activeScan == 1);
   MI32Scan->setMaxResults(0);
+  // MI32Scan->setInterval(30);
+  // MI32Scan->setWindow(25);
   MI32Scan->start(0, false); // never stop scanning, will pause automatically while connecting
   MI32.infoMsg = MI32.option.activeScan?MI32_START_SCANNING_ACTIVE:MI32_START_SCANNING_PASSIVE;
 
@@ -1112,6 +1102,7 @@ void MI32ScanTask(void *pvParameters){
       MI32.infoMsg = MI32.option.activeScan?MI32_START_SCANNING_ACTIVE:MI32_START_SCANNING_PASSIVE;
     }
   }
+  MI32.mode.deleteScanTask = 0;
   vTaskDelete( NULL );
 }
 
@@ -1234,7 +1225,12 @@ bool MI32StartConnectionTask(){
 void MI32ConnectionTask(void *pvParameters){
 #if !defined(CONFIG_IDF_TARGET_ESP32C3) || !defined(CONFIG_IDF_TARGET_ESP32C6) //needs more testing ...
     // NimBLEDevice::setOwnAddrType(BLE_OWN_ADDR_RANDOM,false); //seems to be important for i.e. xbox controller, hopefully not breaking other things
-    // NimBLEDevice::setSecurityAuth(true, true, true);
+#ifdef CONFIG_BT_NIMBLE_NVS_PERSIST
+    NimBLEDevice::setSecurityAuth(true, true, true);
+#else
+    NimBLEDevice::setSecurityAuth(false, true, true);
+#endif
+
 #endif //CONFIG_IDF_TARGET_ESP32C3
     MI32.conCtx->error = MI32_CONN_NO_ERROR;
     if (MI32ConnectActiveSensor()){
@@ -1455,14 +1451,23 @@ void MI32ServerSetAdv(NimBLEServer *pServer, std::vector<NimBLEService*>& servic
  * @param shallStartServices - true only for the first call, which will finish the construction of the server by starting all services
  */
 void MI32ServerSetAdv(NimBLEServer *pServer, std::vector<NimBLEService*>& servicesToStart, bool &shallStartServices){
+#ifdef CONFIG_BT_NIMBLE_EXT_ADV
+  NimBLEExtAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
+#else
   NimBLEAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
+#endif
   /**  optional argument arg1
     BLE_GAP_CONN_MODE_NON (0) - not connectable advertising
     BLE_GAP_CONN_MODE_DIR (1) - directed connectable advertising
     BLE_GAP_CONN_MODE_UND (2) - undirected connectable advertising
    */
   if(MI32.conCtx->hasArg1){
+#ifdef CONFIG_BT_NIMBLE_EXT_ADV
+    //TODO
+#else
     pAdvertising->setAdvertisementType(MI32.conCtx->arg1);
+    // AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: AdvertisementType: %u"),MI32.conCtx->arg1);
+#endif
     // AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: AdvertisementType: %u"),MI32.conCtx->arg1);
   }
   struct{
@@ -1492,6 +1497,21 @@ void MI32ServerSetAdv(NimBLEServer *pServer, std::vector<NimBLEService*>& servic
     }
     servicesToStart.clear(); // release vector
   }
+#ifdef CONFIG_BT_NIMBLE_EXT_ADV
+  NimBLEExtAdvertisement adv;
+  adv.setLegacyAdvertising(true); // use legacy for the start
+  adv.setData((const uint8_t*)&MI32.conCtx->buffer[1], MI32.conCtx->buffer[0]);
+  pAdvertising->setInstanceData(0,adv); // instance id 0
+  if(MI32.conCtx->operation == BLE_OP_SET_ADV){
+    if(pAdvertising->isAdvertising() == false && !shallStartServices){ // first advertisement
+      vTaskDelay(1000/ portTICK_PERIOD_MS);   // work around to prevent crash on start
+      pAdvertising->start(0);
+    }
+  } else
+  {
+    pAdvertising->setScanResponseData(0, adv); // instance id 0
+  }
+#else
   NimBLEAdvertisementData adv;
   adv.addData((char *)&MI32.conCtx->buffer[1], MI32.conCtx->buffer[0]);
   if(MI32.conCtx->operation == BLE_OP_SET_ADV){
@@ -1505,6 +1525,7 @@ void MI32ServerSetAdv(NimBLEServer *pServer, std::vector<NimBLEService*>& servic
     pAdvertising->setScanResponseData(adv);
     pAdvertising->setScanResponse(true);
   }
+#endif //CONFIG_BT_NIMBLE_EXT_ADV
 
   MI32.infoMsg = MI32_SERV_SCANRESPONSE_ADDED + (MI32.conCtx->operation - BLE_OP_SET_SCAN_RESP); // .. ADV or SCAN RESPONSE
   item.header.type = MI32.conCtx->operation;
@@ -1819,54 +1840,60 @@ if(decryptRet!=0){
 }
 
 void MI32parseBTHomePacket(char * _buf, uint32_t length, uint8_t addr[6], int RSSI, const char* optionalName){
-  uint32_t _slot;
-  _slot = MIBLEgetSensorSlot(addr, 0xb770, 0); // fake ID, constant fake counter
+  const uint32_t _slot = MIBLEgetSensorSlot(addr, 0xb770, 0); // fake ID, constant fake counter
+  if(_slot==0xff) return;
+
   if (optionalName[0] != '\0'){
       AddLog(LOG_LEVEL_DEBUG,PSTR("%s at slot %u"), optionalName,_slot);
   }
-  MIBLEsensors[_slot].RSSI = RSSI;
-  MIBLEsensors[_slot].lastTime = millis();
+  const auto _sensor =  &MIBLEsensors[_slot];
+  _sensor->RSSI = RSSI;
+  _sensor->lastTime = millis();
 
   BTHome_info_t info;
   info.byte_value = _buf[0];
-  MIBLEsensors[_slot].feature.needsKey = info.encrypted;
+  _sensor->feature.needsKey = info.encrypted;
 
   uint32_t idx = 1;
   while(idx < length - 1){
     switch(_buf[idx]){
-      case 0:
-        if(_buf[idx+1] == MIBLEsensors[_slot].lastCnt){
+      case 0x00:
+        if(_buf[idx+1] == _sensor->lastCnt){
           return; // known packet
         }
-        MIBLEsensors[_slot].lastCnt = _buf[idx+1];
+        _sensor->lastCnt = _buf[idx+1];
         idx += 2;
         break;
-      case 1:
-        MIBLEsensors[_slot].bat = _buf[idx+1];
-        MIBLEsensors[_slot].eventType.bat = 1;
-        MIBLEsensors[_slot].feature.bat = 1;
+      case 0x01:
+        _sensor->bat = _buf[idx+1];
+        _sensor->eventType.bat = 1;
+        _sensor->feature.bat = 1;
         idx += 2;
       break;
-      case 2:
-        MIBLEsensors[_slot].temp = (int16_t)(_buf[idx+1]|_buf[idx+2] << 8)/100.0f;
-        MIBLEsensors[_slot].eventType.temp = 1;
-        MIBLEsensors[_slot].feature.temp = 1;
-        MI32addHistory(MIBLEsensors[_slot].temp_history, (float)MIBLEsensors[_slot].temp, 0);
+      case 0x02:
+        _sensor->temp = (int16_t)(_buf[idx+1]|_buf[idx+2] << 8)/100.0f;
+        _sensor->eventType.temp = 1;
+        _sensor->feature.temp = 1;
+        MI32addHistory(_sensor->temp_history, _sensor->temp, 0);
         idx += 3;
         break;
-      case 3:
-        MIBLEsensors[_slot].hum = (uint16_t)(_buf[idx+1]|_buf[idx+2] << 8)/100.0f;
-        MIBLEsensors[_slot].eventType.hum = 1;
-        MIBLEsensors[_slot].feature.hum = 1;
-        MI32addHistory(MIBLEsensors[_slot].hum_history, (float)MIBLEsensors[_slot].hum, 1);
-        idx += 3;
-        break;
+      case 0x03:
+       _sensor->hum = (uint16_t)(_buf[idx+1]|_buf[idx+2] << 8)/100.0f;
+       _sensor->eventType.hum = 1;
+       _sensor->feature.hum = 1;
+       MI32addHistory(_sensor->hum_history, _sensor->hum, 1);
+       idx += 3;
+       break;
       case 0x0b:
         // power ??
-        idx += 2;
+        idx += 4;
         break;
       case 0x0c:
         //voltage
+        idx += 3;
+        break;
+      case 0x10:
+        // binary power on/off??
         idx += 2;
         break;
       default:
@@ -1879,7 +1906,7 @@ void MI32parseBTHomePacket(char * _buf, uint32_t length, uint8_t addr[6], int RS
 #ifdef USE_MI_EXT_GUI
   bitSet(MI32.widgetSlot,_slot);
 #endif //USE_MI_EXT_GUI
-  MIBLEsensors[_slot].shallSendMQTT = 1;
+ _sensor->shallSendMQTT = 1;
   if(MI32.option.directBridgeMode) MI32.mode.shallTriggerTele = 1;
 }
 
@@ -2098,6 +2125,12 @@ void MI32EverySecond(bool restart){
       MIBLEsensors[i].NMT++;
     }
   }
+
+  // should not be needed with a stable BLE stack
+  if(MI32.role == 1 && MI32.mode.runningScan == 0){
+    AddLog(LOG_LEVEL_INFO,PSTR("BLE: probably controller error ... restart scan"));
+    MI32StartTask(MI32_TASK_SCAN);
+  }
 }
 
 /*********************************************************************************************\
@@ -2193,6 +2226,12 @@ void CmndMi32Option(void){
         onOff = MI32.option.activeScan;
       }
       break;
+#ifdef CONFIG_BT_NIMBLE_NVS_PERSIST
+    case 99: // TODO: should be moved to some reset command, i.e. "reset 6"
+       NimBLEDevice::deleteAllBonds();
+       AddLog(LOG_LEVEL_DEBUG,PSTR("NVS: deleteAllBonds"));
+      break;
+#endif //CONFIG_BT_NIMBLE_NVS_PERSIST
   }
   ResponseCmndIdxNumber(onOff?1:0);
 }
@@ -2299,6 +2338,9 @@ void MI32sendWidget(uint32_t slot){
       snprintf_P(_key,32,PSTR("!! not paired !!"));
       _opacity=0;
     }
+  }
+  if(_sensor.feature.raw == 0){ //no known data types to show
+    _opacity=0;
   }
 
   char _bat[24];
@@ -2672,6 +2714,7 @@ int ExtStopBLE(){
       if(Settings->flag5.mi32_enable == 0) return 0;
       if (MI32.ScanTask != nullptr){
         MI32.mode.deleteScanTask = 1;
+        MI32.role = 0;
         AddLog(LOG_LEVEL_INFO,PSTR("M32: stop BLE"));
         while (MI32.mode.runningScan == 1) delay(5);
       }

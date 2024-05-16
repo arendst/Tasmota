@@ -1,6 +1,6 @@
 {
   "name": "LibTeleinfo",
-  "version": "1.1.5",
+  "version": "1.1.7",
   "keywords": "teleinfo, french, meter, power, erdf, linky, tic",
   "description": "Decoder for Teleinfo (aka TIC) from French smart power meters",
   "repository":

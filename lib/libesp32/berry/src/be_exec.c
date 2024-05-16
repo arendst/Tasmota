@@ -79,6 +79,10 @@ void be_throw(bvm *vm, int errorcode)
 #if BE_USE_PERF_COUNTERS
     vm->counter_exc++;
 #endif
+    /* if BE_MALLOC_FAIL then call */
+    if (errorcode == BE_MALLOC_FAIL) {
+        if (vm->obshook != NULL) (*vm->obshook)(vm, BE_OBS_MALLOC_FAIL, vm->gc.usage);
+    }
     if (vm->errjmp) {
         vm->errjmp->status = errorcode;
         exec_throw(vm->errjmp);

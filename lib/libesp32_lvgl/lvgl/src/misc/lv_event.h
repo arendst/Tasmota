@@ -57,6 +57,7 @@ typedef enum {
     LV_EVENT_SCROLL,              /**< Scrolling*/
     LV_EVENT_GESTURE,             /**< A gesture is detected. Get the gesture with `lv_indev_get_gesture_dir(lv_indev_active());` */
     LV_EVENT_KEY,                 /**< A key is sent to the object. Get the key with `lv_indev_get_key(lv_indev_active());`*/
+    LV_EVENT_ROTARY,              /**< An encoder or wheel was rotated. Get the rotation count with `lv_event_get_rotary_diff(e);`*/
     LV_EVENT_FOCUSED,             /**< The object is focused*/
     LV_EVENT_DEFOCUSED,           /**< The object is defocused*/
     LV_EVENT_LEAVE,               /**< The object is defocused but still selected*/
@@ -107,6 +108,8 @@ typedef enum {
     LV_EVENT_RENDER_READY,
     LV_EVENT_FLUSH_START,
     LV_EVENT_FLUSH_FINISH,
+    LV_EVENT_FLUSH_WAIT_START,
+    LV_EVENT_FLUSH_WAIT_FINISH,
 
     LV_EVENT_VSYNC,
 
@@ -146,7 +149,8 @@ void _lv_event_pop(lv_event_t * e);
 
 lv_result_t lv_event_send(lv_event_list_t * list, lv_event_t * e, bool preprocess);
 
-void lv_event_add(lv_event_list_t * list, lv_event_cb_t cb, lv_event_code_t filter, void * user_data);
+lv_event_dsc_t * lv_event_add(lv_event_list_t * list, lv_event_cb_t cb, lv_event_code_t filter, void * user_data);
+bool lv_event_remove_dsc(lv_event_list_t * list, lv_event_dsc_t * dsc);
 
 uint32_t lv_event_get_count(lv_event_list_t * list);
 

@@ -33,23 +33,27 @@ class Leds : Leds_ntv
   # typ:int (optional) = Type of LED, defaults to WS2812 RGB
   # rmt:int (optional) = RMT hardware channel to use, leave default unless you have a good reason 
   def init(leds, gpio_phy, typ, rmt)   # rmt is optional
+    import gpio
     self.gamma = true     # gamma is enabled by default, it should be disabled explicitly if needed
-    self.leds = int(leds)
-    self.bri = 127        # 50% brightness by default
+    if (gpio_phy == nil) || (gpio_phy == gpio.pin(gpio.WS2812, 0))
+      # use native driver
+      self.ctor()           # no parameters
+      self.leds = self.pixel_count()
+      import light
+      self.bri = light.get()['bri']
+    else
+      # use pure Berry driver
+      self.leds = int(leds)
+      self.bri = 127        # 50% brightness by default
 
-    # if no GPIO, abort
-    if gpio_phy == nil
-      raise "valuer_error", "no GPIO specified for neopixelbus"
+      # initialize the structure
+      self.ctor(self.leds, gpio_phy, typ, rmt)
     end
-
-    # initialize the structure
-    self.ctor(self.leds, gpio_phy, typ, rmt)
 
     if self._p == nil raise "internal_error", "couldn't not initialize noepixelbus" end
 
     # call begin
     self.begin()
-
   end
 
   # assign RMT
@@ -106,13 +110,17 @@ class Leds : Leds_ntv
   end
 
   def ctor(leds, gpio_phy, typ, rmt)
-    if typ == nil
-      typ = self.WS2812_GRB
+    if gpio_phy == nil
+      self.call_native(0)   # native driver
+    else
+      if typ == nil
+        typ = self.WS2812_GRB
+      end
+      if rmt == nil
+        rmt = self.assign_rmt(gpio_phy)
+      end
+      self.call_native(0, leds, gpio_phy, typ, rmt)
     end
-    if rmt == nil
-      rmt = self.assign_rmt(gpio_phy)
-    end
-    self.call_native(0, leds, gpio_phy, typ, rmt)
   end
   def begin()
     self.call_native(1)

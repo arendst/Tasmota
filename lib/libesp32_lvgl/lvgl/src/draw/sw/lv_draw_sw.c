@@ -15,7 +15,7 @@
 #include "../../stdlib/lv_string.h"
 #include "../../core/lv_global.h"
 
-#if LV_USE_VECTOR_GRAPHIC && (LV_USE_THORVG_EXTERNAL || LV_USE_THORVG_INTERNAL)
+#if LV_USE_VECTOR_GRAPHIC && LV_USE_THORVG
     #if LV_USE_THORVG_EXTERNAL
         #include <thorvg_capi.h>
     #else
@@ -147,14 +147,14 @@ void lv_draw_sw_init(void)
 #endif
     }
 
-#if LV_USE_VECTOR_GRAPHIC && (LV_USE_THORVG_EXTERNAL || LV_USE_THORVG_INTERNAL)
+#if LV_USE_VECTOR_GRAPHIC && LV_USE_THORVG
     tvg_engine_init(TVG_ENGINE_SW, 0);
 #endif
 }
 
 void lv_draw_sw_deinit(void)
 {
-#if LV_USE_VECTOR_GRAPHIC && (LV_USE_THORVG_EXTERNAL || LV_USE_THORVG_INTERNAL)
+#if LV_USE_VECTOR_GRAPHIC && LV_USE_THORVG
     tvg_engine_term(TVG_ENGINE_SW);
 #endif
 
@@ -262,6 +262,17 @@ static int32_t evaluate(lv_draw_unit_t * draw_unit, lv_draw_task_t * task)
 
                 /* not support skew */
                 if(draw_dsc->skew_x != 0 || draw_dsc->skew_y != 0) {
+                    return 0;
+                }
+
+                bool transformed = draw_dsc->rotation != 0 || draw_dsc->scale_x != LV_SCALE_NONE ||
+                                   draw_dsc->scale_y != LV_SCALE_NONE ? true : false;
+
+                bool masked = draw_dsc->bitmap_mask_src != NULL;
+                if(masked && transformed)  return 0;
+
+                lv_color_format_t cf = draw_dsc->header.cf;
+                if(masked && (cf == LV_COLOR_FORMAT_A8 || cf == LV_COLOR_FORMAT_RGB565A8)) {
                     return 0;
                 }
             }
@@ -383,7 +394,7 @@ static void execute_drawing(lv_draw_sw_unit_t * u)
         case LV_DRAW_TASK_TYPE_MASK_RECTANGLE:
             lv_draw_sw_mask_rect((lv_draw_unit_t *)u, t->draw_dsc, &t->area);
             break;
-#if LV_USE_VECTOR_GRAPHIC && (LV_USE_THORVG_EXTERNAL || LV_USE_THORVG_INTERNAL)
+#if LV_USE_VECTOR_GRAPHIC && LV_USE_THORVG
         case LV_DRAW_TASK_TYPE_VECTOR:
             lv_draw_sw_vector((lv_draw_unit_t *)u, t->draw_dsc);
             break;
@@ -462,12 +473,12 @@ static void rotate90_argb8888(const uint32_t * src, uint32_t * dst, int32_t srcW
 static void rotate180_argb8888(const uint32_t * src, uint32_t * dst, int32_t width, int32_t height, int32_t src_stride,
                                int32_t dest_stride)
 {
+    LV_UNUSED(dest_stride);
     if(LV_RESULT_OK == LV_DRAW_SW_ROTATE180_ARGB8888(src, dst, srcWidth, srcHeight, srcStride, dstStride)) {
         return ;
     }
 
     src_stride /= sizeof(uint32_t);
-    dest_stride /= sizeof(uint32_t);
 
     for(int32_t y = 0; y < height; ++y) {
         int32_t dstIndex = (height - y - 1) * src_stride;

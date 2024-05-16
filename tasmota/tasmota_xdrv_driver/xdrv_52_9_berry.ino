@@ -298,6 +298,12 @@ void BerryObservability(bvm *vm, int event...) {
         }
       }
       break;
+    case BE_OBS_MALLOC_FAIL:
+      {
+        int32_t vm_usage2 = va_arg(param, int32_t);
+        AddLog(LOG_LEVEL_ERROR, D_LOG_BERRY "*** MEMORY ALLOCATION FAILED *** usage %i bytes", vm_usage2);
+      }
+      break;
     default:
       break;
   }
@@ -776,6 +782,7 @@ void HandleBerryConsole(void)
 // Display Buttons to dynamically load bec files
 void HandleBerryBECLoaderButton(void) {
   bvm * vm = berry.vm;
+  if (vm == NULL) { return; }       // Berry vm is not initialized
 
   for (int32_t i = 0; i < ARRAY_SIZE(BECCode); i++) {
     const BeBECCode_t &bec = BECCode[i];
@@ -892,7 +899,7 @@ bool Xdrv52(uint32_t function)
 #ifdef USE_ETHERNET
           network_up = network_up || EthernetHasIP();
 #endif
-          if (network_up) {       // if network is already up, send a synthetic event to trigger web handlers
+          if (network_up && (Webserver != NULL)) {       // if network is already up, send a synthetic event to trigger web handlers
             callBerryEventDispatcher(PSTR("web_add_handler"), nullptr, 0, nullptr);
             berry.web_add_handler_done = true;
           }
@@ -940,7 +947,7 @@ bool Xdrv52(uint32_t function)
     case FUNC_WEB_ADD_CONSOLE_BUTTON:
       if (XdrvMailbox.index) {
         XdrvMailbox.index++;
-      } else {
+      } else if (berry.vm != NULL) {
         WSContentSend_P(HTTP_BTN_BERRY_CONSOLE);
         HandleBerryBECLoaderButton();               // display buttons to load BEC files
         callBerryEventDispatcher(PSTR("web_add_button"), nullptr, 0, nullptr);
@@ -977,6 +984,9 @@ bool Xdrv52(uint32_t function)
 
     case FUNC_JSON_APPEND:
       callBerryEventDispatcher(PSTR("json_append"), nullptr, 0, nullptr);
+      break;
+    case FUNC_AFTER_TELEPERIOD:
+      callBerryEventDispatcher(PSTR("after_teleperiod"), nullptr, 0, nullptr);
       break;
 
     case FUNC_BUTTON_PRESSED:

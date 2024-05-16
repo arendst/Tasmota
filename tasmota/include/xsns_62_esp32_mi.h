@@ -235,7 +235,7 @@ struct {
 #ifdef USE_MI_EXT_GUI
   uint32_t widgetSlot;
 #ifdef USE_ENERGY_SENSOR
-  uint8_t *energy_history;
+  uint8_t energy_history[24];
 #endif //USE_ENERGY_SENSOR
 #endif //USE_MI_EXT_GUI
 
@@ -305,9 +305,9 @@ struct mi_sensor_t{
   int RSSI;
   uint32_t lastTime;
   uint32_t lux;
-  uint8_t *lux_history;
+  uint8_t lux_history[24];
   float temp; //Flora, MJ_HT_V1, LYWSD0x, CGx
-  uint8_t *temp_history;
+  uint8_t temp_history[24];
   union {
     struct {
       uint8_t moisture;
@@ -316,8 +316,8 @@ struct mi_sensor_t{
     }; // Flora
     struct {
       float hum;
-      uint8_t *hum_history;
-    }; // MJ_HT_V1, LYWSD0x
+      uint8_t hum_history[24];
+    };
     struct {
       uint16_t events; //"alarms" since boot
       uint32_t NMT;    // no motion time in seconds for the MJYD2S and NLIGHT
@@ -486,7 +486,8 @@ const char HTTP_MI32_SCRIPT_1[] PROGMEM =
         "var d=document.createElement('div');"
         "d.innerHTML=r.trim();"
         "var old=eb(d.firstChild.id);"
-        "old.parentNode.replaceChild(d.firstChild, old);"
+        "if(old == null){eb('pr').appendChild(d.firstChild);}"
+        "else{old.parentNode.replaceChild(d.firstChild, old);}"
       "}"
     "})"
     //".catch((e) => {console.error(e);});" //optional
@@ -512,7 +513,7 @@ const char HTTP_MI32_STYLE_SVG[] PROGMEM =
 const char HTTP_MI32_PARENT_BLE_ROLE[] PROGMEM = "None|Observer|Peripheral|Central";
 
 const char HTTP_MI32_PARENT_START[] PROGMEM =
-  "<div class='parent'>"
+  "<div class='parent'id='pr'>"
       "<div class='box tall'><h2>MI32 Bridge</h2>"
           "Observing <span id='numDev'>%u</span> devices<br><br>"
           "Uptime: <span class='Ti'>%u</span> seconds<br><br>"

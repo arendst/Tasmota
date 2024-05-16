@@ -17,162 +17,165 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_SPI
-#ifdef USE_DISPLAY
-#ifdef USE_DISPLAY_SSD1351
+// REMOVED
+// DEPRECATED - USE UNIVERSAL DISPLAY INSTEAD, https://tasmota.github.io/docs/Universal-Display-Driver/#migrating-to-udisplay
 
-#define XDSP_09                9
+// #ifdef USE_SPI
+// #ifdef USE_DISPLAY
+// #ifdef USE_DISPLAY_SSD1351
 
-#define COLORED                1
-#define UNCOLORED              0
+// #define XDSP_09                9
 
-// uses about 1.9k flash + renderer class
-// using font 8 is opional (num=3)
-// very badly readable, but may be useful for graphs
-#define USE_TINY_FONT
+// #define COLORED                1
+// #define UNCOLORED              0
 
-#include <SSD1351.h>
+// // uses about 1.9k flash + renderer class
+// // using font 8 is opional (num=3)
+// // very badly readable, but may be useful for graphs
+// #define USE_TINY_FONT
 
-bool ssd1351_init_done = false;
-extern uint8_t color_type;
-SSD1351 *ssd1351;
+// #include <SSD1351.h>
 
-/*********************************************************************************************/
+// bool ssd1351_init_done = false;
+// extern uint8_t color_type;
+// SSD1351 *ssd1351;
 
-void SSD1351_InitDriver() {
-  if (PinUsed(GPIO_SSD1351_CS) &&
-     ((TasmotaGlobal.soft_spi_enabled & SPI_MOSI) || (TasmotaGlobal.spi_enabled & SPI_MOSI))) {
+// /*********************************************************************************************/
 
-    Settings->display_model = XDSP_09;
+// void SSD1351_InitDriver() {
+//   if (PinUsed(GPIO_SSD1351_CS) &&
+//      ((TasmotaGlobal.soft_spi_enabled & SPI_MOSI) || (TasmotaGlobal.spi_enabled & SPI_MOSI))) {
 
-    if (Settings->display_width != SSD1351_WIDTH) {
-      Settings->display_width = SSD1351_WIDTH;
-    }
-    if (Settings->display_height != SSD1351_HEIGHT) {
-      Settings->display_height = SSD1351_HEIGHT;
-    }
+//     Settings->display_model = XDSP_09;
 
-    // default colors
-    fg_color = SSD1351_WHITE;
-    bg_color = SSD1351_BLACK;
+//     if (Settings->display_width != SSD1351_WIDTH) {
+//       Settings->display_width = SSD1351_WIDTH;
+//     }
+//     if (Settings->display_height != SSD1351_HEIGHT) {
+//       Settings->display_height = SSD1351_HEIGHT;
+//     }
 
-    // init renderer
-    if (TasmotaGlobal.soft_spi_enabled){
-      ssd1351 = new SSD1351(Pin(GPIO_SSD1351_CS), Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_SCLK), Pin(GPIO_SSD1351_DC));
-    }
-    else if (TasmotaGlobal.spi_enabled) {
-      ssd1351 = new SSD1351(Pin(GPIO_SSD1351_CS), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_CLK), Pin(GPIO_SSD1351_DC));
-    }
+//     // default colors
+//     fg_color = SSD1351_WHITE;
+//     bg_color = SSD1351_BLACK;
 
-    delay(100);
-    ssd1351->begin();
-    renderer = ssd1351;
-    renderer->DisplayInit(DISPLAY_INIT_MODE,Settings->display_size,Settings->display_rotate,Settings->display_font);
-    renderer->dim(GetDisplayDimmer16());
+//     // init renderer
+//     if (TasmotaGlobal.soft_spi_enabled){
+//       ssd1351 = new SSD1351(Pin(GPIO_SSD1351_CS), Pin(GPIO_SSPI_MOSI), Pin(GPIO_SSPI_SCLK), Pin(GPIO_SSD1351_DC));
+//     }
+//     else if (TasmotaGlobal.spi_enabled) {
+//       ssd1351 = new SSD1351(Pin(GPIO_SSD1351_CS), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_CLK), Pin(GPIO_SSD1351_DC));
+//     }
 
-#ifdef SHOW_SPLASH
-    if (!Settings->flag5.display_no_splash) {
-      // Welcome text
-      renderer->setTextFont(2);
-      renderer->setTextColor(SSD1351_WHITE,SSD1351_BLACK);
-      renderer->DrawStringAt(10, 60, "SSD1351", SSD1351_RED,0);
-      delay(1000);
-    }
+//     delay(100);
+//     ssd1351->begin();
+//     renderer = ssd1351;
+//     renderer->DisplayInit(DISPLAY_INIT_MODE,Settings->display_size,Settings->display_rotate,Settings->display_font);
+//     renderer->dim(GetDisplayDimmer16());
 
-#endif
-    color_type = COLOR_COLOR;
+// #ifdef SHOW_SPLASH
+//     if (!Settings->flag5.display_no_splash) {
+//       // Welcome text
+//       renderer->setTextFont(2);
+//       renderer->setTextColor(SSD1351_WHITE,SSD1351_BLACK);
+//       renderer->DrawStringAt(10, 60, "SSD1351", SSD1351_RED,0);
+//       delay(1000);
+//     }
 
-    ssd1351_init_done = true;
-    AddLog(LOG_LEVEL_INFO, PSTR("DSP: SSD1351"));
-  }
-}
+// #endif
+//     color_type = COLOR_COLOR;
 
-#ifdef USE_DISPLAY_MODES1TO5
+//     ssd1351_init_done = true;
+//     AddLog(LOG_LEVEL_INFO, PSTR("DSP: SSD1351"));
+//   }
+// }
 
-void SSD1351PrintLog(void) {
-  disp_refresh--;
-  if (!disp_refresh) {
-    disp_refresh = Settings->display_refresh;
-    if (!disp_screen_buffer_cols) { DisplayAllocScreenBuffer(); }
+// #ifdef USE_DISPLAY_MODES1TO5
 
-    char* txt = DisplayLogBuffer('\370');
-    if (txt != NULL) {
-      uint8_t last_row = Settings->display_rows -1;
+// void SSD1351PrintLog(void) {
+//   disp_refresh--;
+//   if (!disp_refresh) {
+//     disp_refresh = Settings->display_refresh;
+//     if (!disp_screen_buffer_cols) { DisplayAllocScreenBuffer(); }
 
-      renderer->clearDisplay();
-      renderer->setTextSize(Settings->display_size);
-      renderer->setCursor(0,0);
-      for (byte i = 0; i < last_row; i++) {
-        strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
-        renderer->println(disp_screen_buffer[i]);
-      }
-      strlcpy(disp_screen_buffer[last_row], txt, disp_screen_buffer_cols);
-      DisplayFillScreen(last_row);
+//     char* txt = DisplayLogBuffer('\370');
+//     if (txt != NULL) {
+//       uint8_t last_row = Settings->display_rows -1;
 
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "[%s]"), disp_screen_buffer[last_row]);
+//       renderer->clearDisplay();
+//       renderer->setTextSize(Settings->display_size);
+//       renderer->setCursor(0,0);
+//       for (byte i = 0; i < last_row; i++) {
+//         strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
+//         renderer->println(disp_screen_buffer[i]);
+//       }
+//       strlcpy(disp_screen_buffer[last_row], txt, disp_screen_buffer_cols);
+//       DisplayFillScreen(last_row);
 
-      renderer->println(disp_screen_buffer[last_row]);
-      renderer->Updateframe();
-    }
-  }
-}
+//       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "[%s]"), disp_screen_buffer[last_row]);
 
-void SSD1351Time(void) {
-  char line[12];
+//       renderer->println(disp_screen_buffer[last_row]);
+//       renderer->Updateframe();
+//     }
+//   }
+// }
 
-  renderer->clearDisplay();
-  renderer->setTextSize(2);
-  renderer->setCursor(0, 0);
-  snprintf_P(line, sizeof(line), PSTR(" %02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), RtcTime.hour, RtcTime.minute, RtcTime.second);  // [ 12:34:56 ]
-  renderer->println(line);
-  renderer->println();
-  snprintf_P(line, sizeof(line), PSTR("%02d" D_MONTH_DAY_SEPARATOR "%02d" D_YEAR_MONTH_SEPARATOR "%04d"), RtcTime.day_of_month, RtcTime.month, RtcTime.year);   // [01-02-2018]
-  renderer->println(line);
-  renderer->Updateframe();
-}
+// void SSD1351Time(void) {
+//   char line[12];
 
-void SSD1351Refresh(void) {     // Every second
-  if (Settings->display_mode) {  // Mode 0 is User text
-    switch (Settings->display_mode) {
-      case 1:  // Time
-        SSD1351Time();
-        break;
-      case 2:  // Local
-      case 3:  // Local
-      case 4:  // Mqtt
-      case 5:  // Mqtt
-        SSD1351PrintLog();
-        break;
-    }
-  }
-}
+//   renderer->clearDisplay();
+//   renderer->setTextSize(2);
+//   renderer->setCursor(0, 0);
+//   snprintf_P(line, sizeof(line), PSTR(" %02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), RtcTime.hour, RtcTime.minute, RtcTime.second);  // [ 12:34:56 ]
+//   renderer->println(line);
+//   renderer->println();
+//   snprintf_P(line, sizeof(line), PSTR("%02d" D_MONTH_DAY_SEPARATOR "%02d" D_YEAR_MONTH_SEPARATOR "%04d"), RtcTime.day_of_month, RtcTime.month, RtcTime.year);   // [01-02-2018]
+//   renderer->println(line);
+//   renderer->Updateframe();
+// }
 
-#endif  // USE_DISPLAY_MODES1TO5
+// void SSD1351Refresh(void) {     // Every second
+//   if (Settings->display_mode) {  // Mode 0 is User text
+//     switch (Settings->display_mode) {
+//       case 1:  // Time
+//         SSD1351Time();
+//         break;
+//       case 2:  // Local
+//       case 3:  // Local
+//       case 4:  // Mqtt
+//       case 5:  // Mqtt
+//         SSD1351PrintLog();
+//         break;
+//     }
+//   }
+// }
 
-/*********************************************************************************************\
- * Interface
-\*********************************************************************************************/
+// #endif  // USE_DISPLAY_MODES1TO5
 
-bool Xdsp09(uint32_t function) {
-  bool result = false;
+// /*********************************************************************************************\
+//  * Interface
+// \*********************************************************************************************/
 
-  if (FUNC_DISPLAY_INIT_DRIVER == function) {
-      SSD1351_InitDriver();
-  }
-  else if (ssd1351_init_done && (XDSP_09 == Settings->display_model)) {
-    switch (function) {
-      case FUNC_DISPLAY_MODEL:
-        result = true;
-        break;
-#ifdef USE_DISPLAY_MODES1TO5
-      case FUNC_DISPLAY_EVERY_SECOND:
-        SSD1351Refresh();
-        break;
-#endif  // USE_DISPLAY_MODES1TO5
-    }
-  }
-  return result;
-}
-#endif  // USE_DISPLAY_SSD1351
-#endif  // USE_DISPLAY
-#endif  // USE_SPI
+// bool Xdsp09(uint32_t function) {
+//   bool result = false;
+
+//   if (FUNC_DISPLAY_INIT_DRIVER == function) {
+//       SSD1351_InitDriver();
+//   }
+//   else if (ssd1351_init_done && (XDSP_09 == Settings->display_model)) {
+//     switch (function) {
+//       case FUNC_DISPLAY_MODEL:
+//         result = true;
+//         break;
+// #ifdef USE_DISPLAY_MODES1TO5
+//       case FUNC_DISPLAY_EVERY_SECOND:
+//         SSD1351Refresh();
+//         break;
+// #endif  // USE_DISPLAY_MODES1TO5
+//     }
+//   }
+//   return result;
+// }
+// #endif  // USE_DISPLAY_SSD1351
+// #endif  // USE_DISPLAY
+// #endif  // USE_SPI

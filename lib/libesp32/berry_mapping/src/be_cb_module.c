@@ -280,7 +280,7 @@ void be_cb_deinit(bvm *vm) {
   for (int32_t slot = 0; slot < BE_MAX_CB; slot++) {
     if (be_cb_hooks[slot].vm == vm) {
       be_cb_hooks[slot].vm = NULL;
-      be_cb_hooks[slot].f.type == BE_NIL;
+      be_cb_hooks[slot].f.type = BE_NIL;
     }
   }
   // remove the vm gen_cb for this vm

@@ -373,11 +373,11 @@ void RestorePower(bool publish_power, uint32_t source)
   }
 }
 
-void SetAllPower(uint32_t state, uint32_t source)
-{
+void SetAllPower(uint32_t state, uint32_t source) {
 // state 0 = POWER_OFF = Relay Off
 // state 1 = POWER_ON = Relay On (turn off after Settings->pulse_timer * 100 mSec if enabled)
 // state 2 = POWER_TOGGLE = Toggle relay
+// state 5 = POWER_OFF_FORCE = Relay Off even if locked
 // state 8 = POWER_OFF_NO_STATE = Relay Off and no publishPowerState
 // state 9 = POWER_ON_NO_STATE = Relay On and no publishPowerState
 // state 10 = POWER_TOGGLE_NO_STATE = Toggle relay and no publishPowerState
@@ -388,17 +388,25 @@ void SetAllPower(uint32_t state, uint32_t source)
     state &= 3;                           // POWER_OFF, POWER_ON or POWER_TOGGLE
     publish_power = false;
   }
-  if ((state >= POWER_OFF) && (state <= POWER_TOGGLE)) {
+  if (((state >= POWER_OFF) && (state <= POWER_TOGGLE)) || (POWER_OFF_FORCE == state))  {
     power_t all_on = POWER_MASK >> (POWER_SIZE - TasmotaGlobal.devices_present);
     switch (state) {
     case POWER_OFF:
-      TasmotaGlobal.power = 0;
+      // Keep locked bits and set all other to 0
+      TasmotaGlobal.power &= Settings->power_lock; 
       break;
     case POWER_ON:
-      TasmotaGlobal.power = all_on;
+      // Keep locked bits and set all other to 1
+      TasmotaGlobal.power = (TasmotaGlobal.power & Settings->power_lock) | (all_on & ~Settings->power_lock);
       break;
     case POWER_TOGGLE:
-      TasmotaGlobal.power ^= all_on;      // Complement current state
+      // Keep locked bits and toggle all other
+      TasmotaGlobal.power ^= ~Settings->power_lock & all_on;
+      break;
+    case POWER_OFF_FORCE:
+      // Set all off even if locked on (Used by overtemp and overcurrent)
+      TasmotaGlobal.power = 0; 
+      break;
     }
     SetDevicePower(TasmotaGlobal.power, source);
   }
@@ -693,9 +701,9 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
 
 #ifdef USE_SONOFF_IFAN
   if (IsModuleIfan()) {
-    TasmotaGlobal.blink_mask &= 1;   // No blinking on the fan relays
-    Settings->flag.interlock = 0;     // No interlock mode as it is already done by the microcontroller - CMND_INTERLOCK - Enable/disable interlock
-    Settings->pulse_timer[1] = 0;     // No pulsetimers on the fan relays
+    TasmotaGlobal.blink_mask &= 1;       // No blinking on the fan relays
+    Settings->flag.interlock = 0;        // No interlock mode as it is already done by the microcontroller - CMND_INTERLOCK - Enable/disable interlock
+    Settings->pulse_timer[1] = 0;        // No pulsetimers on the fan relays
     Settings->pulse_timer[2] = 0;
     Settings->pulse_timer[3] = 0;
   }
@@ -703,7 +711,7 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
 
   bool publish_power = true;
   if ((state >= POWER_OFF_NO_STATE) && (state <= POWER_TOGGLE_NO_STATE)) {
-    state &= 3;                      // POWER_OFF, POWER_ON or POWER_TOGGLE
+    state &= 3;                          // POWER_OFF, POWER_ON or POWER_TOGGLE
     publish_power = false;
   }
 
@@ -712,26 +720,31 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
   }
   TasmotaGlobal.active_device = device;
 
+  if (bitRead(Settings->power_lock, device -1)) {
+    AddLog(LOG_LEVEL_INFO, PSTR("CMD: Power%d is LOCKED"), device);
+    state = POWER_SHOW_STATE;            // Only show state. Make no change
+  }
+
   if (state != POWER_SHOW_STATE) {
     SetPulseTimer((device -1) % MAX_PULSETIMERS, 0);
   }
 
-  static bool interlock_mutex = false;    // Interlock power command pending
-  power_t mask = 1 << (device -1);        // Device to control
+  static bool interlock_mutex = false;   // Interlock power command pending
+  power_t mask = 1 << (device -1);       // Device to control
   if (state <= POWER_TOGGLE) {
     if ((TasmotaGlobal.blink_mask & mask)) {
       TasmotaGlobal.blink_mask &= (POWER_MASK ^ mask);  // Clear device mask
       MqttPublishPowerBlinkState(device);
     }
 
-    if (Settings->flag.interlock &&        // CMND_INTERLOCK - Enable/disable interlock
+    if (Settings->flag.interlock &&      // CMND_INTERLOCK - Enable/disable interlock
         !interlock_mutex &&
         ((POWER_ON == state) || ((POWER_TOGGLE == state) && !(TasmotaGlobal.power & mask)))
        ) {
-      interlock_mutex = true;                           // Clear all but masked relay in interlock group if new set requested
+      interlock_mutex = true;            // Clear all but masked relay in interlock group if new set requested
       bool perform_interlock_delay = false;
       for (uint32_t i = 0; i < MAX_INTERLOCKS; i++) {
-        if (Settings->interlock[i] & mask) {             // Find interlock group
+        if (Settings->interlock[i] & mask) {  // Find interlock group
           for (uint32_t j = 0; j < TasmotaGlobal.devices_present; j++) {
             power_t imask = 1 << j;
             if ((Settings->interlock[i] & imask) && (TasmotaGlobal.power & imask) && (mask != imask)) {
@@ -739,11 +752,11 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
               perform_interlock_delay = true;
             }
           }
-          break;                                        // An interlocked relay is only present in one group so quit
+          break;                         // An interlocked relay is only present in one group so quit
         }
       }
       if (perform_interlock_delay) {
-        delay(50);                                // Add some delay to make sure never have more than one relay on
+        delay(50);                       // Add some delay to make sure never have more than one relay on
       }
       interlock_mutex = false;
     }
@@ -791,7 +804,7 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
     }
     TasmotaGlobal.blink_timer = millis() + 100;
     TasmotaGlobal.blink_counter = ((!Settings->blinkcount) ? 64000 : (Settings->blinkcount *2)) +1;
-    TasmotaGlobal.blink_mask |= mask;  // Set device mask
+    TasmotaGlobal.blink_mask |= mask;    // Set device mask
     MqttPublishPowerBlinkState(device);
     return;
   }
@@ -877,9 +890,9 @@ void MqttShowState(void)
 
   if (!TasmotaGlobal.global_state.wifi_down) {
     int32_t rssi = WiFi.RSSI();
-    ResponseAppend_P(PSTR(",\"" D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d,\"" D_JSON_SSID "\":\"%s\",\"" D_JSON_BSSID "\":\"%s\",\"" D_JSON_CHANNEL "\":%d,\"" D_JSON_WIFI_MODE "\":\"11%c\",\"" D_JSON_RSSI "\":%d,\"" D_JSON_SIGNAL "\":%d,\"" D_JSON_LINK_COUNT "\":%d,\"" D_JSON_DOWNTIME "\":\"%s\"}"),
+    ResponseAppend_P(PSTR(",\"" D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d,\"" D_JSON_SSID "\":\"%s\",\"" D_JSON_BSSID "\":\"%s\",\"" D_JSON_CHANNEL "\":%d,\"" D_JSON_WIFI_MODE "\":\"%s\",\"" D_JSON_RSSI "\":%d,\"" D_JSON_SIGNAL "\":%d,\"" D_JSON_LINK_COUNT "\":%d,\"" D_JSON_DOWNTIME "\":\"%s\"}"),
       Settings->sta_active +1, EscapeJSONString(SettingsText(SET_STASSID1 + Settings->sta_active)).c_str(), WiFi.BSSIDstr().c_str(), WiFi.channel(),
-      pgm_read_byte(&kWifiPhyMode[WiFi.getPhyMode() & 0x3]), WifiGetRssiAsQuality(rssi), rssi,
+      WifiGetPhyMode().c_str(), WifiGetRssiAsQuality(rssi), rssi,
       WifiLinkCount(), WifiDowntime().c_str());
   }
 
@@ -1008,6 +1021,7 @@ bool MqttShowSensor(bool call_show_sensor) {
 
   GetSensorValues();
 
+#ifndef FIRMWARE_MINIMAL
   if (TasmotaGlobal.global_update && Settings->flag.mqtt_add_global_info) {  // SetOption2 (MQTT) Add global temperature/humidity/pressure info to JSON sensor message
     if ((TasmotaGlobal.humidity > 0) || !isnan(TasmotaGlobal.temperature_celsius) || (TasmotaGlobal.pressure_hpa != 0)) {
       uint32_t add_comma = 0;
@@ -1025,8 +1039,13 @@ bool MqttShowSensor(bool call_show_sensor) {
       }
       if (2 == add_comma) {
         float dewpoint = CalcTempHumToDew(TasmotaGlobal.temperature_celsius, TasmotaGlobal.humidity);
-        ResponseAppend_P(PSTR("%s\"" D_JSON_DEWPOINT "\":%*_f"),
-          (add_comma)?",":"", Settings->flag2.temperature_resolution, &dewpoint);
+        ResponseAppend_P(PSTR(",\"" D_JSON_DEWPOINT "\":%*_f"),
+          Settings->flag2.temperature_resolution, &dewpoint);
+#ifdef USE_HEAT_INDEX
+        float heatindex = CalcTemHumToHeatIndex(TasmotaGlobal.temperature_celsius, TasmotaGlobal.humidity);
+        ResponseAppend_P(PSTR(",\"" D_JSON_HEATINDEX "\":%*_f"),
+          Settings->flag2.temperature_resolution, &heatindex);
+#endif  // USE_HEAT_INDEX
       }
       if (TasmotaGlobal.pressure_hpa != 0) {
         float p = ConvertPressure(TasmotaGlobal.pressure_hpa);
@@ -1037,6 +1056,7 @@ bool MqttShowSensor(bool call_show_sensor) {
       ResponseJsonEnd();
     }
   }
+#endif // FIRMWARE_MINIMAL
 
   bool json_data_available = (ResponseLength() - json_data_start);
   MqttAppendSensorUnits();
@@ -2098,24 +2118,29 @@ void GpioInit(void)
 #ifdef USE_SPI
 #ifdef ESP8266
   if (!TasmotaGlobal.soft_spi_enabled) {
-    bool valid_cs = (ValidSpiPinUsed(GPIO_SPI_CS) ||
-                     ValidSpiPinUsed(GPIO_RC522_CS) ||
-                     (ValidSpiPinUsed(GPIO_NRF24_CS) && ValidSpiPinUsed(GPIO_NRF24_DC)) ||
-                     ValidSpiPinUsed(GPIO_ILI9341_CS) ||
-                     ValidSpiPinUsed(GPIO_ILI9341_DC) || // there are also boards without cs
-                     ValidSpiPinUsed(GPIO_EPAPER29_CS) ||
-                     ValidSpiPinUsed(GPIO_EPAPER42_CS) ||
-                     ValidSpiPinUsed(GPIO_ILI9488_CS) ||
-                     ValidSpiPinUsed(GPIO_SSD1351_CS) ||
-                     ValidSpiPinUsed(GPIO_RA8876_CS) ||
-                     ValidSpiPinUsed(GPIO_ST7789_DC) ||  // ST7789 CS may be omitted so chk DC too
-                     ValidSpiPinUsed(GPIO_ST7789_CS) ||
-                     (ValidSpiPinUsed(GPIO_SSD1331_CS) && ValidSpiPinUsed(GPIO_SSD1331_DC)) ||
-                     ValidSpiPinUsed(GPIO_SDCARD_CS) ||
-                     ValidSpiPinUsed(GPIO_MCP2515_CS)
-                    );
-    // If SPI_CS and/or SPI_DC is used they must be valid
-    TasmotaGlobal.spi_enabled = (valid_cs) ? SPI_MOSI_MISO : SPI_NONE;
+    uint32_t spi_mosi = (14 == Pin(GPIO_SPI_CLK)) && (13 == Pin(GPIO_SPI_MOSI)) ? SPI_MOSI : SPI_NONE;
+    uint32_t spi_miso = (14 == Pin(GPIO_SPI_CLK)) && (12 == Pin(GPIO_SPI_MISO)) ? SPI_MISO : SPI_NONE;
+    TasmotaGlobal.spi_enabled = spi_mosi + spi_miso;
+    if (!TasmotaGlobal.spi_enabled) {
+      bool valid_cs = (ValidSpiPinUsed(GPIO_SPI_CS) ||
+                      ValidSpiPinUsed(GPIO_RC522_CS) ||
+                      (ValidSpiPinUsed(GPIO_NRF24_CS) && ValidSpiPinUsed(GPIO_NRF24_DC)) ||
+                      ValidSpiPinUsed(GPIO_ILI9341_CS) ||
+                      ValidSpiPinUsed(GPIO_ILI9341_DC) || // there are also boards without cs
+                      ValidSpiPinUsed(GPIO_EPAPER29_CS) ||
+                      ValidSpiPinUsed(GPIO_EPAPER42_CS) ||
+                      ValidSpiPinUsed(GPIO_ILI9488_CS) ||
+                      ValidSpiPinUsed(GPIO_SSD1351_CS) ||
+                      ValidSpiPinUsed(GPIO_RA8876_CS) ||
+                      ValidSpiPinUsed(GPIO_ST7789_DC) ||  // ST7789 CS may be omitted so chk DC too
+                      ValidSpiPinUsed(GPIO_ST7789_CS) ||
+                      (ValidSpiPinUsed(GPIO_SSD1331_CS) && ValidSpiPinUsed(GPIO_SSD1331_DC)) ||
+                      ValidSpiPinUsed(GPIO_SDCARD_CS) ||
+                      ValidSpiPinUsed(GPIO_MCP2515_CS)
+                      );
+      // If SPI_CS and/or SPI_DC is used they must be valid
+      TasmotaGlobal.spi_enabled = (valid_cs) ? SPI_MOSI_MISO : SPI_NONE;
+    }
     if (TasmotaGlobal.spi_enabled) {
       TasmotaGlobal.my_module.io[12] = AGPIO(GPIO_SPI_MISO);
       SetPin(12, AGPIO(GPIO_SPI_MISO));

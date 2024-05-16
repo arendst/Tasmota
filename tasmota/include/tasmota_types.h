@@ -857,9 +857,7 @@ typedef struct {
   uint16_t      flowratemeter_calibration[2];// F78
   int32_t       energy_kWhexport_ph[3];    // F7C
   uint32_t      eth_ipv4_address[5];       // F88
-
-  uint32_t      ex_energy_kWhtotal;        // F9C
-
+  uint32_t      power_lock;                // F9C
   SBitfield1    sbflag1;                   // FA0
   TeleinfoCfg   teleinfo;                  // FA4
   uint64_t      rf_protocol_mask;          // FA8

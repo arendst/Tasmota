@@ -44,7 +44,7 @@ be_local_closure(Rule_Matcher_Key_tostring,   /* name */
 ********************************************************************/
 be_local_closure(Rule_Matcher_Key_find_key_i,   /* name */
   be_nested_proto(
-    10,                          /* nstack */
+    11,                          /* nstack */
     2,                          /* argc */
     4,                          /* varg */
     0,                          /* has upvals */
@@ -61,7 +61,7 @@ be_local_closure(Rule_Matcher_Key_find_key_i,   /* name */
     }),
     &be_const_str_find_key_i,
     &be_const_str_solidified,
-    ( &(const binstruction[29]) {  /* code */
+    ( &(const binstruction[31]) {  /* code */
       0x58080000,  //  0000  LDCONST	R2	K0
       0xA40E0200,  //  0001  IMPORT	R3	K1
       0x8C100702,  //  0002  GETMET	R4	R3	K2
@@ -71,26 +71,28 @@ be_local_closure(Rule_Matcher_Key_find_key_i,   /* name */
       0x5C180000,  //  0006  MOVE	R6	R0
       0x601C0013,  //  0007  GETGBL	R7	G19
       0x7C140400,  //  0008  CALL	R5	2
-      0x78160011,  //  0009  JMPF	R5	#001C
+      0x78160013,  //  0009  JMPF	R5	#001E
       0x60140010,  //  000A  GETGBL	R5	G16
       0x8C180103,  //  000B  GETMET	R6	R0	K3
       0x7C180200,  //  000C  CALL	R6	1
       0x7C140200,  //  000D  CALL	R5	1
-      0xA8020009,  //  000E  EXBLK	0	#0019
+      0xA802000B,  //  000E  EXBLK	0	#001B
       0x5C180A00,  //  000F  MOVE	R6	R5
       0x7C180000,  //  0010  CALL	R6	0
       0x8C1C0702,  //  0011  GETMET	R7	R3	K2
-      0x5C240C00,  //  0012  MOVE	R9	R6
-      0x7C1C0400,  //  0013  CALL	R7	2
-      0x1C1C0E04,  //  0014  EQ	R7	R7	R4
-      0x781E0001,  //  0015  JMPF	R7	#0018
-      0xA8040001,  //  0016  EXBLK	1	1
-      0x80040C00,  //  0017  RET	1	R6
-      0x7001FFF5,  //  0018  JMP		#000F
-      0x58140004,  //  0019  LDCONST	R5	K4
-      0xAC140200,  //  001A  CATCH	R5	1	0
-      0xB0080000,  //  001B  RAISE	2	R0	R0
-      0x80000000,  //  001C  RET	0
+      0x60240008,  //  0012  GETGBL	R9	G8
+      0x5C280C00,  //  0013  MOVE	R10	R6
+      0x7C240200,  //  0014  CALL	R9	1
+      0x7C1C0400,  //  0015  CALL	R7	2
+      0x1C1C0E04,  //  0016  EQ	R7	R7	R4
+      0x781E0001,  //  0017  JMPF	R7	#001A
+      0xA8040001,  //  0018  EXBLK	1	1
+      0x80040C00,  //  0019  RET	1	R6
+      0x7001FFF3,  //  001A  JMP		#000F
+      0x58140004,  //  001B  LDCONST	R5	K4
+      0xAC140200,  //  001C  CATCH	R5	1	0
+      0xB0080000,  //  001D  RAISE	2	R0	R0
+      0x80000000,  //  001E  RET	0
     })
   )
 );

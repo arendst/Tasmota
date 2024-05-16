@@ -32,6 +32,7 @@ import requests
 import shutil
 import subprocess
 import codecs
+from colorama import Fore, Back, Style
 from SCons.Script import COMMAND_LINE_TARGETS
 
 sys.path.append(join(platform.get_package_dir("tool-esptoolpy")))
@@ -102,7 +103,7 @@ def esp32_detect_flashsize():
                         return size, True
             return "4MB",False
         except subprocess.CalledProcessError as exc:
-            print("Did get chip info failed with " + str(exc))
+            print(Fore.YELLOW + "Did get chip info failed with " + str(exc))
             return "4MB",False
 
 flash_size_from_esp, flash_size_was_overridden = esp32_detect_flashsize()
@@ -126,11 +127,20 @@ def patch_partitions_bin(size_string):
         print("New partition hash:",result.digest().hex())
 
 def esp32_create_chip_string(chip):
-    tasmota_platform = env.subst("$BUILD_DIR").split(os.path.sep)[-1]
-    tasmota_platform = tasmota_platform.split('-')[0]
-    if 'tasmota' + chip[3:] not in tasmota_platform: # quick check for a valid name like 'tasmota' + '32c3'
-        print('Unexpected naming conventions in this build environment -> Undefined behavior for further build process!!')
-        print("Expected build environment name like 'tasmota32-whatever-you-want'")
+    tasmota_platform_org = env.subst("$BUILD_DIR").split(os.path.sep)[-1]
+    tasmota_platform = tasmota_platform_org.split('-')[0]
+    if ("CORE32SOLO1" in extra_flags or "FRAMEWORK_ARDUINO_SOLO1" in build_flags) and "tasmota32-safeboot" not in tasmota_platform_org and "tasmota32solo1" not in tasmota_platform_org:
+        print(Fore.YELLOW + "Unexpected naming convention in this build environment:" + Fore.RED, tasmota_platform_org)
+        print(Fore.YELLOW + "Expected build environment name like " + Fore.GREEN + "'tasmota32solo1-whatever-you-want'")
+        print(Fore.YELLOW + "Please correct your actual build environment, to avoid undefined behavior in build process!!")
+        tasmota_platform = "tasmota32solo1"
+        return tasmota_platform
+    if "tasmota" + chip[3:] not in tasmota_platform: # check + fix for a valid name like 'tasmota' + '32c3'
+        tasmota_platform = "tasmota" + chip[3:]
+        if "-DUSE_USB_CDC_CONSOLE" not in env.BoardConfig().get("build.extra_flags"):
+            print(Fore.YELLOW + "Unexpected naming convention in this build environment:" + Fore.RED, tasmota_platform_org)
+            print(Fore.YELLOW + "Expected build environment name like " + Fore.GREEN + "'tasmota" + chip[3:] + "-whatever-you-want'")
+            print(Fore.YELLOW + "Please correct your actual build environment, to avoid undefined behavior in build process!!")
     return tasmota_platform
 
 def esp32_build_filesystem(fs_size):
@@ -151,7 +161,7 @@ def esp32_build_filesystem(fs_size):
                     print("Renaming",(file.split(os.path.sep)[-1]).split(" ")[0],"to",file.split(" ")[1])
                 open(target, "wb").write(response.content)
             else:
-                print("Failed to download: ",file)
+                print(Fore.RED + "Failed to download: ",file)
             continue
         if os.path.isdir(file):
             shutil.copytree(file, filesystem_dir, dirs_exist_ok=True)
@@ -160,8 +170,7 @@ def esp32_build_filesystem(fs_size):
     if not os.listdir(filesystem_dir):
         print("No files added -> will NOT create littlefs.bin and NOT overwrite fs partition!")
         return False
-    env.Replace( MKSPIFFSTOOL=platform.get_package_dir("tool-mklittlefs") + '/mklittlefs' )
-    tool = env.subst(env["MKSPIFFSTOOL"])
+    tool = env.subst(env["MKFSTOOL"])
     cmd = (tool,"-c",filesystem_dir,"-s",fs_size,join(env.subst("$BUILD_DIR"),"littlefs.bin"))
     returncode = subprocess.call(cmd, shell=False)
     # print(returncode)
@@ -223,10 +232,6 @@ def esp32_create_combined_bin(source, target, env):
     firmware_name = env.subst("$BUILD_DIR/${PROGNAME}.bin")
     tasmota_platform = esp32_create_chip_string(chip)
 
-    if "-DUSE_USB_CDC_CONSOLE" in env.BoardConfig().get("build.extra_flags") and "cdc" not in tasmota_platform:
-        tasmota_platform += "cdc"
-        print("WARNING: board definition uses CDC configuration, but environment name does not -> changing tasmota safeboot binary to:", tasmota_platform + "-safeboot.bin")
-
     if not os.path.exists(variants_dir):
         os.makedirs(variants_dir)
     if "safeboot" in firmware_name:
@@ -235,16 +240,9 @@ def esp32_create_combined_bin(source, target, env):
         esp32_fetch_safeboot_bin(tasmota_platform)
 
     flash_size = env.BoardConfig().get("upload.flash_size", "4MB")
-    flash_freq = env.BoardConfig().get("build.f_flash", "40000000L")
-    flash_freq = str(flash_freq).replace("L", "")
-    flash_freq = str(int(int(flash_freq) / 1000000)) + "m"
-    flash_mode = env.BoardConfig().get("build.flash_mode", "dio")
-    memory_type = env.BoardConfig().get("build.arduino.memory_type", "qio_qspi")
+    flash_mode = env["__get_board_flash_mode"](env)
+    flash_freq = env["__get_board_f_flash"](env)
 
-    if flash_mode == "qio" or flash_mode == "qout":
-        flash_mode = "dio"
-    if memory_type == "opi_opi" or memory_type == "opi_qspi":
-        flash_mode = "dout"
     cmd = [
         "--chip",
         chip,

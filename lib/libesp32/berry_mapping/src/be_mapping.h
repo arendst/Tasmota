@@ -23,7 +23,6 @@ typedef const void* be_constptr;
       .v.nf = (const void*) &ctype_func_def##_f,                  \
       .type = BE_CTYPE_FUNC                                       \
   }
-typedef const void* be_constptr;
   #define be_const_static_ctype_func(_f) {                        \
       .v.nf = (const void*) &ctype_func_def##_f,                  \
       .type = BE_CTYPE_FUNC | BE_STATIC                           \

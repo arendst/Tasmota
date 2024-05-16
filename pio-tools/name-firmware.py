@@ -5,6 +5,7 @@ import shutil
 import pathlib
 import tasmotapiolib
 from os.path import join
+from colorama import Fore, Back, Style
 
 
 def bin_map_copy(source, target, env):
@@ -17,6 +18,13 @@ def bin_map_copy(source, target, env):
     firmware_name = env.subst("$BUILD_DIR/${PROGNAME}.bin")
 
     if env["PIOPLATFORM"] == "espressif32":
+        if("safeboot" in firmware_name):
+            SAFEBOOT_SIZE = firsttarget.stat().st_size
+            if SAFEBOOT_SIZE > 851967:
+                print(Fore.RED + "!!! Tasmota safeboot size is too big with {} bytes. Max size is 851967 bytes !!! ".format(
+                        SAFEBOOT_SIZE
+                    )
+                )
         if("safeboot" not in firmware_name):
             factory_tmp = pathlib.Path(firsttarget).with_suffix("")
             factory = factory_tmp.with_suffix(factory_tmp.suffix + ".factory.bin")

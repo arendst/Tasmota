@@ -993,7 +993,7 @@ const char HTTP_EQ3_ALIAS[]        PROGMEM = "{s}EQ3 %d Alias{m}%s{e}";
 const char HTTP_EQ3_MAC[]          PROGMEM = "{s}EQ3 %d " D_MAC_ADDRESS "{m}%s{e}";
 const char HTTP_EQ3_RSSI[]         PROGMEM = "{s}EQ3 %d " D_RSSI "{m}%d dBm{e}";
 const char HTTP_EQ3_TEMPERATURE[]  PROGMEM = "{s}EQ3 %d %s{m}%*_f " D_UNIT_DEGREE "%c{e}";
-const char HTTP_EQ3_DUTY_CYCLE[]   PROGMEM = "{s}EQ3 %d " D_THERMOSTAT_DUTY_CYCLE "{m}%d " D_UNIT_PERCENT "{e}";
+const char HTTP_EQ3_DUTY_CYCLE[]   PROGMEM = "{s}EQ3 %d " D_THERMOSTAT_VALVE_POSITION "{m}%d " D_UNIT_PERCENT "{e}";
 const char HTTP_EQ3_BATTERY[]      PROGMEM = "{s}EQ3 %d " D_BATTERY "{m}%s{e}";
 
 void EQ3Show(void)

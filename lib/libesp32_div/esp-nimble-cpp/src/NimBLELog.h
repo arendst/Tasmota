@@ -38,6 +38,19 @@
 #  define NIMBLE_LOGC(tag, format, ...) \
      NIMBLE_CPP_LOG_PRINT(ESP_LOG_ERROR, tag, format, ##__VA_ARGS__)
 
+// These defines pollute the global namespace and conflict with Tasmota and basically always turn on `seriallog 3`
+#ifdef LOG_LEVEL_DEBUG
+#undef LOG_LEVEL_DEBUG
+#endif
+
+#ifdef LOG_LEVEL_INFO
+#undef LOG_LEVEL_INFO
+#endif
+
+#ifdef LOG_LEVEL_ERROR
+#undef LOG_LEVEL_ERROR
+#endif
+
 #else // using Arduino
 #  include "nimble/porting/nimble/include/syscfg/syscfg.h"
 #  include "nimble/console/console.h"

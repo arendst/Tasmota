@@ -98,7 +98,7 @@
  * GPIO32 - Blue status led2
  * GPIO33 - Yellow error led3
  * GPIO35 - Button
- * #define ETH_TYPE          ETH_PHY_LAN8720
+ * #define ETH_TYPE          0        // LAN8720
  * #define ETH_CLKMODE       ETH_CLOCK_GPIO17_OUT
  * #define ETH_ADDRESS       0
  *
@@ -1946,7 +1946,7 @@ void SSPMInit(void) {
 #if CONFIG_IDF_TARGET_ESP32
 #ifdef USE_ETHERNET
   Settings->eth_address = 0;                      // EthAddress
-  Settings->eth_type = ETH_PHY_LAN8720;           // EthType
+  Settings->eth_type = 0;                         // EthType LAN8720
   Settings->eth_clk_mode = ETH_CLOCK_GPIO17_OUT;  // EthClockMode
 #endif
 #endif

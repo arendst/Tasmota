@@ -187,12 +187,6 @@ def print_classes(module_name):
     print(f"static be_define_ctypes_class({elt}, &be_{elt}, &be_class_ctypes_bytes, \"{elt}\");")
 
   print()
-  print(f"void be_load_ctypes_{module_name}_definitions_lib(bvm *vm) {{")
-  for elt in global_classes:
-    print(f"  ctypes_register_class(vm, &be_class_{elt});")
-
-  print("}")
-  print()
   print("be_ctypes_class_by_name_t be_ctypes_lvgl_classes[] = {")
   for elt in global_classes:
     print(f"  {{ \"{elt}\", &be_class_{elt} }},")
@@ -310,7 +304,7 @@ class structure:
 
   #- ensure alignment to 1/2/4 bytes -#
   def align(self, n):
-    if n == 3:  n = 4           # 3 bytes are aligned to 4 byest boundaries
+    if n == 3:  n = 1           # 3 bytes are aligned to 4 byest boundaries
     if n != 1 and n != 2 and n != 4:
       raise Exception(f"acceptable values are 1/2/3/4 {n=}")
 

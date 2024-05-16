@@ -24,6 +24,10 @@
 #include "esp8266toEsp32.h"
 #endif
 
+#ifdef USE_ESP32_S3
+#include "esp_cache.h"
+#endif // USE_ESP32_S3
+
 #include "tasmota_options.h"
 
 extern int Cache_WriteBack_Addr(uint32_t addr, uint32_t size);
@@ -142,13 +146,14 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
   epc_full_cnt = 0;
   lut_num = 0;
   lvgl_param.data = 0;
-  lvgl_param.fluslines = 40;
+  lvgl_param.flushlines = 40;
   rot_t[0] = 0;
   rot_t[1] = 1;
   rot_t[2] = 2;
   rot_t[3] = 3;
   epcoffs_full = 0;
   epcoffs_part = 0;
+  interface = 0;
 
   for (uint32_t cnt = 0; cnt < MAX_LUTS; cnt++) {
     lut_cnt[cnt] = 0;
@@ -589,7 +594,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             lut3time = next_val(&lp1);
             break;
           case 'B':
-            lvgl_param.fluslines = next_val(&lp1);
+            lvgl_param.flushlines = next_val(&lp1);
             lvgl_param.data = next_val(&lp1);
             break;
           case 'M':
@@ -687,6 +692,19 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
     ep_mode = 2;
   }
 
+
+#ifdef USE_ESP32_S3
+void UfsCheckSDCardInit(void);
+
+  if (spec_init == _UDSP_SPI) {
+    // special case, assuming sd card and display on same spi bus
+    // end spi in case it was running
+    SPI.end();
+    // reininit SD card
+    UfsCheckSDCardInit();
+  }
+#endif
+
 #ifdef UDSP_DEBUG
   Serial.printf("Device : %s\n", dname);
   Serial.printf("xs : %d\n", gxs);
@@ -699,6 +717,9 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
     Serial.printf("CLK : %d\n", spi_clk);
     Serial.printf("MOSI: %d\n", spi_mosi);
     Serial.printf("DC  : %d\n", spi_dc);
+    Serial.printf("TS_CS: %d\n", ut_spi_cs);
+    Serial.printf("TS_RST: %d\n", ut_reset);
+    Serial.printf("TS_IRQ: %d\n", ut_irq);
     Serial.printf("BPAN: %d\n", bpanel);
     Serial.printf("RES : %d\n", reset);
     Serial.printf("MISO: %d\n", spi_miso);
@@ -1011,6 +1032,13 @@ exit:
 Renderer *uDisplay::Init(void) {
   extern bool UsePSRAM(void);
 
+  if (!interface) {   // no valid configuration, abort
+    #ifdef UDSP_DEBUG
+    Serial.printf("Dsp Init no valid configuration\n");
+    #endif
+    return NULL;
+  }
+
   #ifdef UDSP_DEBUG
     Serial.printf("Dsp Init 1 start \n");
   #endif
@@ -1138,6 +1166,12 @@ Renderer *uDisplay::Init(void) {
 
   if (interface == _UDSP_RGB) {
 #ifdef USE_ESP32_S3
+    if (!UsePSRAM())  {        // RGB is not supported on S3 without PSRAM
+      #ifdef UDSP_DEBUG
+      Serial.printf("Dsp RGB requires PSRAM, abort\n");
+      #endif
+      return NULL;
+    }
 
     if (bpanel >= 0) {
       analogWrite(bpanel, 32);
@@ -1728,6 +1762,9 @@ void uDisplay::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) {
 
   if (interface == _UDSP_RGB) {
   #ifdef USE_ESP32_S3
+    if (lvgl_param.swap_color) {
+      color = color << 8 | color >> 8;
+    }
     if (cur_rot > 0) {
       while (h--) {
         drawPixel_RGB(x , y , color);
@@ -1798,6 +1835,9 @@ void uDisplay::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {
 
   if (interface == _UDSP_RGB) {
 #ifdef USE_ESP32_S3
+    if (lvgl_param.swap_color) {
+      color = color << 8 | color >> 8;
+    }
     if (cur_rot > 0) {
       while (w--) {
         drawPixel_RGB(x , y , color);
@@ -2161,42 +2201,67 @@ void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean not_swapped) {
   }
 
   //Serial.printf("push %x - %d - %d - %d\n", (uint32_t)data, len, not_swapped, lvgl_param.data);
-  if (not_swapped == false) {
-    // called from LVGL bytes are swapped
-    if (interface == _UDSP_RGB) {
+
+  // Isolating _UDPS_RGB to increase code sharing
+  //
+  // LVGL documentation suggest to call the following:
+  //    lv_draw_sw_rgb565_swap() to invert bytes
+  //    esp_lcd_panel_draw_bitmap() to paste bytes
+  // but it appears to be faster to include the color swap in the copy loop
+  // because the CPU is much faster than PSRAM (SPI bus), therefore
+  // swapping bytes on the fly costs zero performance
+  //
+  // not_swapped == false : called from LVGL bytes are swapped
+  // not_swapped == true : called from displaytext, no byte swap, currently no dma here
+  if (interface == _UDSP_RGB) {
 #ifdef USE_ESP32_S3
-      if (cur_rot > 0) {
-        for (uint32_t y = seta_yp1; y < seta_yp2; y++) {
-          seta_yp1++;
-          for (uint32_t x = seta_xp1; x < seta_xp2; x++) {
-            uint16_t color = *data++;
-            color = color << 8 | color >> 8;
-            drawPixel_RGB(x, y, color);
-            len--;
-            if (!len) return;         // failsafe - exist if len (pixel number) is exhausted
-          }
-        }
-      } else {
-        for (uint32_t y = seta_yp1; y < seta_yp2; y++) {
-          seta_yp1++;
-          uint16_t *fb = rgb_fb;
-          fb += (int32_t)y * _width;
-          fb += seta_xp1;
-          for (uint32_t x = seta_xp1; x < seta_xp2; x++) {
-            uint16_t color = *data++;
-            color = color << 8 | color >> 8;
-            *fb = color;
-            Cache_WriteBack_Addr((uint32_t)fb, 2);
-            fb++;
-            len--;
-            if (!len) return;         // failsafe - exist if len (pixel number) is exhausted
-          }
+    // check that bytes count matches the size of area, and remove from inner loop
+    if ((seta_yp2 - seta_yp1) * (seta_xp2 - seta_xp2) > len) { return; }
+
+    if (cur_rot > 0) {
+      for (uint32_t y = seta_yp1; y < seta_yp2; y++) {
+        seta_yp1++;
+        for (uint32_t x = seta_xp1; x < seta_xp2; x++) {
+          uint16_t color = *data++;
+          if (!not_swapped) { color = color << 8 | color >> 8; }
+          drawPixel_RGB(x, y, color);
+          len--;
+          if (!len) return;         // failsafe - exist if len (pixel number) is exhausted
         }
       }
-#endif
-      return;
+    } else {
+      uint16_t *fb_y = rgb_fb + (int32_t)seta_yp1 * _width;
+      for (uint32_t y = seta_yp1; y < seta_yp2; y++) {
+        uint16_t * fb_xy = fb_y + seta_xp1;
+        // we get the 'not_swapped' test outside of the inner loop
+        if (not_swapped) {
+          for (uint32_t x = seta_xp1; x < seta_xp2; x++) {
+            uint16_t color = *data++;
+            *fb_xy = color;
+            fb_xy++;
+          }
+        } else {
+          for (uint32_t x = seta_xp1; x < seta_xp2; x++) {
+            uint16_t color = *data++;
+            color = color << 8 | color >> 8;
+            *fb_xy = color;
+            fb_xy++;
+          }
+        }
+        fb_y += _width;
+      }
+      // using esp_cache_msync() to flush the PSRAM cache and ensure that all data is actually written to PSRAM
+      // from https://github.com/espressif/esp-idf/blob/636ff35b52f10e1a804a3760a5bd94e68f4b1b71/components/esp_lcd/rgb/esp_lcd_panel_rgb.c#L159
+      uint16_t * flush_ptr = rgb_fb + (int32_t)seta_yp1 * _width;
+      esp_cache_msync(flush_ptr, (seta_yp2 - seta_yp1) * _width * 2, 0);
     }
+#endif
+    return;
+  }
 
+
+  if (not_swapped == false) {
+    // called from LVGL bytes are swapped
     if (bpp != 16) {
       // lvgl_color_swap(data, len); -- no need to swap anymore, we have inverted the mask
       pushColorsMono(data, len, true);
@@ -2270,35 +2335,6 @@ void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean not_swapped) {
     }
   } else {
     // called from displaytext, no byte swap, currently no dma here
-    if (interface == _UDSP_RGB) {
-#ifdef USE_ESP32_S3
-      if (cur_rot > 0) {
-        for (uint32_t y = seta_yp1; y < seta_yp2; y++) {
-          seta_yp1++;
-          for (uint32_t x = seta_xp1; x < seta_xp2; x++) {
-            drawPixel_RGB(x, y, *data++);
-            len--;
-            if (!len) return;         // failsafe - exist if len (pixel number) is exhausted
-          }
-        }
-      } else {
-        for (uint32_t y = seta_yp1; y < seta_yp2; y++) {
-          seta_yp1++;
-          uint16_t *fb = rgb_fb;
-          fb += (int32_t)y * _width;
-          fb += seta_xp1;
-          for (uint32_t x = seta_xp1; x < seta_xp2; x++) {
-            *fb = *data++;
-            Cache_WriteBack_Addr((uint32_t)fb, 2);
-            fb++;
-            len--;
-            if (!len) return;         // failsafe - exist if len (pixel number) is exhausted
-          }
-        }
-      }
-#endif
-      return;
-    }
 
     if (bpp != 16) {
       pushColorsMono(data, len);
@@ -2387,6 +2423,9 @@ void uDisplay::drawPixel(int16_t x, int16_t y, uint16_t color) {
 
 #ifdef USE_ESP32_S3
   if (interface == _UDSP_RGB) {
+    if (lvgl_param.swap_color) {
+      color = color << 8 | color >> 8;
+    }
     drawPixel_RGB(x, y, color);
     return;
   }
@@ -2743,6 +2782,14 @@ void uDisplay::ut_trans(char **sp, uint8_t **code) {
       // cmp and set
       *ut_code++ = UT_CPR;
       *ut_code++ = ut_par(&cp, 0);
+     } else if (!strncmp(cp, "CPM", 3)) {
+      // cmp multiple and set
+      *ut_code++ = UT_CPM;
+      uint8_t num = ut_par(&cp, 0);
+      *ut_code++ = num;
+      for (uint32_t cnt = 0; cnt < num; cnt++) {
+        *ut_code++ = ut_par(&cp, 0);
+      }
      } else if (!strncmp(cp, "CP", 2)) {
       // cmp and set
       *ut_code++ = UT_CP;
@@ -2977,6 +3024,16 @@ uint16_t wval;
         // compare
         iob = *ut_code++;
         result = (iob == ut_array[0]);
+        break;
+
+      case UT_CPM:
+        // compare multiple
+        len = *ut_code++;
+        result = 0;
+        for (uint32_t cnt = 0; cnt < len; cnt++) {
+          iob = *ut_code++;
+          result |= (iob == ut_array[0]);
+        }
         break;
 
       case UT_CPR:

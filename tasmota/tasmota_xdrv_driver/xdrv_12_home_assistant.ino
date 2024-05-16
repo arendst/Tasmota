@@ -229,7 +229,8 @@ int hass_tele_period = 0;
 void HassDiscoverMessage(void) {
   uint32_t ip_address = (uint32_t)WiFi.localIP();
   char* hostname = TasmotaGlobal.hostname;
-#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+//#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
+#if defined(ESP32) && defined(USE_ETHERNET)
   if (static_cast<uint32_t>(EthernetLocalIP()) != 0) {
     ip_address = (uint32_t)EthernetLocalIP();
     hostname = EthernetHostname();
@@ -444,7 +445,6 @@ void NewHAssDiscovery(void) {
 \*********************************************************************************************/
 
 void TryResponseAppend_P(const char *format, ...) {
-#ifdef MQTT_DATA_STRING
   va_list arg;
   va_start(arg, format);
   char* mqtt_data = ext_vsnprintf_malloc_P(format, arg);
@@ -453,29 +453,6 @@ void TryResponseAppend_P(const char *format, ...) {
     TasmotaGlobal.mqtt_data += mqtt_data;
     free(mqtt_data);
   }
-#else
-  va_list args;
-  va_start(args, format);
-  char dummy[2];
-  int dlen = vsnprintf_P(dummy, 1, format, args);
-
-  int mlen = ResponseLength();
-  int slen = ResponseSize() - 1 - mlen;
-  if (dlen >= slen)
-  {
-    AddLog(LOG_LEVEL_ERROR, PSTR("%s (%u/%u):"), kHAssError1, dlen, slen);
-    va_start(args, format);
-    char log_data[MAX_LOGSZ];
-    vsnprintf_P(log_data, sizeof(log_data), format, args);
-    AddLogData(LOG_LEVEL_ERROR, log_data);
-  }
-  else
-  {
-    va_start(args, format);
-    vsnprintf_P(TasmotaGlobal.mqtt_data + mlen, slen, format, args);
-  }
-  va_end(args);
-#endif
 }
 
 void HAssAnnounceRelayLight(void)

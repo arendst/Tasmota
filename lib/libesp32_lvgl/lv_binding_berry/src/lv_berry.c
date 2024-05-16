@@ -82,11 +82,24 @@ int lv_be_style_init(bvm *vm) {
     if (style == NULL) {
         be_throw(vm, BE_MALLOC_FAIL);
     }
-    if (style != NULL) {
-      lv_style_init(style);
-    }
+    lv_style_init(style);
   }
   be_pushcomptr(vm, style);
+  be_setmember(vm, 1, "_p");
+  be_return_nil(vm);
+}
+/*********************************************************************************************\
+ * Delete style
+ * 
+ * Use with caution, it shouldn't be referenced after this call
+\*********************************************************************************************/
+int lv_be_style_del(bvm *vm) {
+  be_getmember(vm, 1, "_p");
+  lv_style_t * style = be_tocomptr(vm, -1);
+  if (style != NULL) {
+    be_free(vm, style, sizeof(lv_style_t));
+  }
+  be_pushcomptr(vm, NULL);
   be_setmember(vm, 1, "_p");
   be_return_nil(vm);
 }
@@ -353,4 +366,41 @@ int lv0_member(bvm *vm) {
   }
   be_module_load(vm, be_newstr(vm, "undefined"));
   be_return(vm);
+}
+
+/*********************************************************************************************\
+ * Return a hash of all LV int constants
+\*********************************************************************************************/
+int lv0_constants_as_hash(bvm *vm) {
+  be_newobject(vm, "map");
+
+  for (int i = 0; i < lv0_constants_size; i++) {
+    char first_char = lv0_constants[i].name[0];
+    if ( !(first_char >= 'a' && first_char <='z') && !(first_char >= 'A' && first_char <='Z') ) {
+      continue;
+    }
+    be_pushstring(vm, lv0_constants[i].name);
+    be_pushint(vm, lv0_constants[i].value);
+    be_data_insert(vm, -3);
+    be_pop(vm, 2);
+  }
+  be_pop(vm, 1);
+  be_return(vm);
+}
+
+/*********************************************************************************************\
+ * temporarily fix lv_span_get_style()
+\*********************************************************************************************/
+lv_style_t * lv_span_get_style(lv_span_t * span) {
+  return &span->style;
+}
+lv_area_t * lv_bar_get_indic_area(lv_obj_t * bar) {
+  return &((lv_bar_t*)bar)->indic_area;
+}
+// add accessor for lv_line points array
+lv_point_t * lv_line_get_points(lv_obj_t * line) {
+  return &((lv_line_t*)line)->point_array[0];
+}
+int lv_line_get_points_num(lv_obj_t * line) {
+  return ((lv_line_t*)line)->point_num;
 }

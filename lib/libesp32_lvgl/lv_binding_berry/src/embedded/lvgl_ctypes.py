@@ -24,6 +24,9 @@ lv_opa = ct.u8
 lv_blend_mode = ct.u8
 lv_align = ct.u8
 lv_bidi_dir = ct.u8
+lv_base_dir = ct.u8
+lv_text_align = ct.u8
+lv_text_flag = ct.u8
 lv_txt_flag = ct.u8
 lv_text_decor = ct.u8
 lv_font = ct.u32
@@ -79,7 +82,7 @@ lv_area = ct.structure(lv_area, "lv_area")
 #     lv_opa_t   opa;     /**< The opacity of the color*/
 #     uint8_t    frac;    /**< The stop position in 1/255 unit */
 # } lv_gradient_stop_t;
-lv_gradient_stop = [            # valid LVGL9
+lv_gradient_stop = [            # valid LVGL91
     [lv_color, "color"],
     [lv_opa, "opa"],
     [uint8_t, "frac"],
@@ -92,9 +95,17 @@ lv_gradient_stop = ct.structure(lv_gradient_stop, "lv_gradient_stop")
 #     lv_grad_dir_t        dir : 3;                      /**< The gradient direction.
 #                                                         * Any of LV_GRAD_DIR_HOR, LV_GRAD_DIR_VER, LV_GRAD_DIR_NONE */
 # } lv_grad_dsc_t;
-lv_grad_dsc = [            # valid LVGL9
-    [lv_gradient_stop, "stops_0"],
-    [lv_gradient_stop, "stops_1"],
+lv_grad_dsc = [            # valid LVGL91
+    # since it's an array and not two structures, we need to explicitly unroll it here or the alignment is wrong
+    # [lv_gradient_stop, "stops_0"],
+    [lv_color, "stops_0_color"],
+    [lv_opa, "stops_0_opa"],
+    [uint8_t, "stops_0_frac"],
+    # [lv_gradient_stop, "stops_1"],
+    [lv_color, "stops_1_color"],
+    [lv_opa, "stops_1_opa"],
+    [uint8_t, "stops_1_frac"],
+    
     [uint8_t, "stops_count"],
     [uint8_t_3, "dir"],
 ]
@@ -110,7 +121,7 @@ lv_grad_dsc = ct.structure(lv_grad_dsc, "lv_grad_dsc")
 #     size_t dsc_size;
 #     void * user_data;
 # } lv_draw_dsc_base_t;
-lv_draw_dsc_base = [            # valid LVGL9
+lv_draw_dsc_base = [            # valid LVGL91
     [ptr, "obj"],
     [uint32_t, "part"],
     [uint32_t, "id1"],
@@ -160,7 +171,7 @@ lv_draw_dsc_base = ct.structure(lv_draw_dsc_base, "lv_draw_dsc_base")
 #     int32_t shadow_spread;
 #     lv_opa_t shadow_opa;
 # } lv_draw_rect_dsc_t;
-lv_draw_rect_dsc = [            # valid LVGL9
+lv_draw_rect_dsc = [            # valid LVGL91
     [lv_draw_dsc_base, "base"],
 
     [int32_t, "radius"],
@@ -216,7 +227,7 @@ lv_draw_rect_dsc = ct.structure(lv_draw_rect_dsc, "lv_draw_rect_dsc")
 #     uint8_t round_end   : 1;
 #     uint8_t raw_end     : 1;    /*Do not bother with perpendicular line ending if it's not visible for any reason*/
 # } lv_draw_line_dsc_t;
-lv_draw_line_dsc = [            # valid LVGL9
+lv_draw_line_dsc = [            # valid LVGL91
     [lv_draw_dsc_base, "base"],
 
     [lv_point_precise, "p1"],
@@ -246,7 +257,7 @@ lv_draw_line_dsc = ct.structure(lv_draw_line_dsc, "lv_draw_line_dsc")
 #     lv_opa_t opa;
 #     uint8_t rounded : 1;
 # } lv_draw_arc_dsc_t;
-lv_draw_arc_dsc = [            # valid LVGL8.3
+lv_draw_arc_dsc = [            # valid LVGL91
     [lv_draw_dsc_base, "base"],
 
     [lv_color, "color"],
@@ -272,8 +283,7 @@ lv_draw_arc_dsc = ct.structure(lv_draw_arc_dsc, "lv_draw_arc_dsc")
 #     uint32_t stride: 16;        /*Number of bytes in a row*/
 #     uint32_t reserved_2: 16;    /*Reserved to be used later*/
 # } lv_image_header_t;
-
-lv_image_header = [            # valid LVGL9
+lv_image_header = [            # valid LVGL91
     [uint8_t, "magic"],
     [uint8_t, "cf"],
     [uint16_t, "flags"],
@@ -304,11 +314,16 @@ lv_image_header = ct.structure(lv_image_header, "lv_image_header")
 #     lv_opa_t opa;
 #     lv_blend_mode_t blend_mode : 4;
 
-#     uint16_t antialias      : 1;
-#     uint16_t tile           : 1;
+#     uint16_t antialias          : 1;
+#     uint16_t tile               : 1;
 #     lv_draw_image_sup_t * sup;
+
+#     /** Might be used to indicate the original size of the image if only a small portion is rendered now.
+#      * Used when a part of a layer is rendered to show the total layer size*/
+#     lv_area_t original_area;
+#     const lv_image_dsc_t * bitmap_mask_src;
 # } lv_draw_image_dsc_t;
-lv_draw_image_dsc = [            # valid LVGL9
+lv_draw_image_dsc = [            # valid LVGL91
     [lv_draw_dsc_base, "base"],
 
     [ptr, "src"],
@@ -328,276 +343,60 @@ lv_draw_image_dsc = [            # valid LVGL9
     [uint8_t_4, "blend_mode"],
     [uint8_t_1, "antialias"],
     [uint8_t_1, "tile"],
+    [lv_area, "original_area"],
     [ptr, "sup"],
 ]
 lv_draw_image_dsc = ct.structure(lv_draw_image_dsc, "lv_draw_image_dsc")
 
-# lv_obj_draw_part_dsc = [            # valid LVGL8.3
-#     [ptr, "draw_ctx"],
-#     [ptr, "class_p"],
-#     [uint32_t, "type"],
-#     [ptr, "draw_area"],
-#     [ptr, "rect_dsc"],
-#     [ptr, "label_dsc"],
-#     [ptr, "line_dsc"],
-#     [ptr, "img_dsc"],
-#     [ptr, "arc_dsc"],
-#     [ptr, "p1"],
-#     [ptr, "p2"],
-#     [ptr, "text"],
-#     [uint32_t, "text_length"],
-#     [uint32_t, "part"],
-#     [uint32_t, "id"],
-#     [lv_coord_t, "radius"],
-#     [int32_t, "value"],
-#     [ptr, "sub_part_ptr"],
-# ]
-# lv_obj_draw_part_dsc = ct.structure(lv_obj_draw_part_dsc, "lv_obj_draw_part_dsc")
+# typedef struct {
+#     lv_draw_dsc_base_t base;
 
-# lv_draw_layer_ctx = [            # valid LVGL8.3
-#     [lv_area, "area_full"],
-#     [lv_area, "area_act"],
-#     [lv_coord_t, "max_row_with_alpha"],
-#     [lv_coord_t, "max_row_with_no_alpha"],
-#     [ptr, "buf"],
-#     [ptr, "clip_area"],
-#     [ptr, "buf_area"],
-#     [ptr, "buf"],
-#     [uint8_t, "screen_transp"],
-# ]
-# lv_draw_layer_ctx = ct.structure(lv_draw_layer_ctx, "lv_draw_layer_ctx")
-
-#- --------- lv_mask --------- -#
-# lv_draw_mask_xcb = ptr    # callback
-# lv_draw_mask_type = ct.u8
-# lv_draw_mask_line_side = ct.u8
-
-# lv_draw_mask_common_dsc = [            # valid LVGL8.3
-#     [lv_draw_mask_xcb, "cb"],
-#     [lv_draw_mask_type, "type"],
-# ]
-# lv_draw_mask_common_dsc = ct.structure(lv_draw_mask_common_dsc, "lv_draw_mask_common_dsc")
-
-# lv_draw_mask_line_param_cfg = [            # valid LVGL8.3
-#     #/*First point */
-#     [lv_point, "p1"],
-
-#     #/*Second point*/
-#     [lv_point, "p2"],
-
-#     #/*Which side to keep?*/
-#     [uint8_t_2, "side"],
-# ]
-# lv_draw_mask_line_param_cfg = ct.structure(lv_draw_mask_line_param_cfg, "lv_draw_mask_line_param_cfg")
-
-# lv_draw_mask_line_param = [            # valid LVGL8.3
-#     #/*The first element must be the common descriptor*/
-#     [lv_draw_mask_common_dsc, "dsc"],
-#     [lv_draw_mask_line_param_cfg, "cfg"],
-#     #/*A point of the line*/
-#     [lv_point, "origo"],
-#     #/* X / (1024*Y) steepness (X is 0..1023 range). What is the change of X in 1024 Y?*/
-#     [int32_t, "xy_steep"],
-#     #/* Y / (1024*X) steepness (Y is 0..1023 range). What is the change of Y in 1024 X?*/
-#     [int32_t, "yx_steep"],
-#     #/*Helper which stores yx_steep for flat lines and xy_steep for steep (non flat) lines */
-#     [int32_t, "steep"],
-#     #/*Steepness in 1 px in 0..255 range. Used only by flat lines. */
-#     [int32_t, "spx"],
-#     #/*1: It's a flat line? (Near to horizontal)*/
-#     [uint8_t_1, "flat"],
-#     #/* Invert the mask. The default is: Keep the left part.
-#     # * It is used to select left/right/top/bottom*/
-#     [uint8_t_1, "inv"],
-# ]
-# lv_draw_mask_line_param = ct.structure(lv_draw_mask_line_param, "lv_draw_mask_line_param")
-
-# lv_draw_mask_angle_param_cfg = [            # valid LVGL8.3
-#     [lv_point, "vertex_p"],
-#     [lv_coord_t, "start_angle"],
-#     [lv_coord_t, "end_angle"],
-# ]
-# lv_draw_mask_angle_param_cfg = ct.structure(lv_draw_mask_angle_param_cfg, "lv_draw_mask_angle_param_cfg")
-
-# lv_draw_mask_angle_param = [            # valid LVGL8.3
-#     #/*The first element must be the common descriptor*/
-#     [lv_draw_mask_common_dsc, "dsc"],
-#     [lv_draw_mask_angle_param_cfg, "cfg"],
-
-#     [lv_draw_mask_line_param, "start_line"],
-#     [lv_draw_mask_line_param, "end_line"],
-#     [uint16_t, "delta_deg"],
-# ]
-# lv_draw_mask_angle_param = ct.structure(lv_draw_mask_angle_param, "lv_draw_mask_angle_param")
-
-
-# lv_draw_mask_radius_param_cfg = [            # valid LVGL8.3
-#     [lv_area, "rect"],
-#     [lv_coord_t, "radius"],
-#     [uint8_t_1, "outer"],
-# ]
-# lv_draw_mask_radius_param_cfg = ct.structure(lv_draw_mask_radius_param_cfg, "lv_draw_mask_radius_param_cfg")
-
-# lv_draw_mask_radius_circle_dsc = [            # valid LVGL8.3
-#     [ptr, "buf"],
-#     [ptr, "cir_opa"],
-#     [ptr, "x_start_on_y"],
-#     [ptr, "opa_start_on_y"],
-#     [int32_t, "life"],
-#     [uint32_t, "used_cnt"],
-#     [lv_coord_t, "radius"],
-# ]
-# lv_draw_mask_radius_circle_dsc = ct.structure(lv_draw_mask_radius_circle_dsc, "lv_draw_mask_radius_circle_dsc")
-
-# lv_draw_mask_radius_param = [            # valid LVGL8.3
-#     #/*The first element must be the common descriptor*/
-#     [lv_draw_mask_common_dsc, "dsc"],
-#     [lv_draw_mask_radius_param_cfg, "cfg"],
-#     [lv_draw_mask_radius_circle_dsc, "circle"],
-# ]
-# lv_draw_mask_radius_param = ct.structure(lv_draw_mask_radius_param, "lv_draw_mask_radius_param")
-
-
-# lv_draw_mask_fade_param_cfg = [            # valid LVGL8.3
-#     [lv_area, "coords"],
-#     [lv_coord_t, "y_top"],
-#     [lv_coord_t, "y_bottom"],
-#     [lv_opa, "opa_top"],
-#     [lv_opa, "opa_bottom"],
-# ]
-# lv_draw_mask_fade_param_cfg = ct.structure(lv_draw_mask_fade_param_cfg, "lv_draw_mask_fade_param_cfg")
-
-# lv_draw_mask_fade_param = [            # valid LVGL8.3
-#     # /*The first element must be the common descriptor*/
-#     [lv_draw_mask_common_dsc, "dsc"],
-#     [lv_draw_mask_fade_param_cfg, "cfg"],
-# ]
-# lv_draw_mask_fade_param = ct.structure(lv_draw_mask_fade_param, "lv_draw_mask_fade_param")
-
-
-# lv_draw_mask_map_param_cfg = [            # valid LVGL8.3
-#     [lv_area, "coords"],
-#     [ptr, "map"],
-# ]
-# lv_draw_mask_map_param_cfg = ct.structure(lv_draw_mask_map_param_cfg, "lv_draw_mask_map_param_cfg")
-
-# lv_draw_mask_map_param = [            # valid LVGL8.3
-#     [lv_draw_mask_common_dsc, "dsc"],
-#     [lv_draw_mask_map_param_cfg, "cfg"],
-# ]
-# lv_draw_mask_map_param = ct.structure(lv_draw_mask_map_param, "lv_draw_mask_map_param")
-
-
-# lv_draw_mask_polygon_param_cfg = [            # valid LVGL8.3
-#     [ptr, "points"],
-#     [uint16_t, "point_cnt"],
-# ]
-# lv_draw_mask_polygon_param_cfg = ct.structure(lv_draw_mask_polygon_param_cfg, "lv_draw_mask_polygon_param_cfg")
-
-# lv_draw_mask_polygon_param = [            # valid LVGL8.3
-#     [lv_draw_mask_common_dsc, "dsc"],
-#     [lv_draw_mask_polygon_param_cfg, "cfg"],
-# ]
-# lv_draw_mask_polygon_param = ct.structure(lv_draw_mask_polygon_param, "lv_draw_mask_polygon_param")
-
-
-# lv_draw_mask_saved = [            # valid LVGL8.3
-#     [ptr, "param"],
-#     [ptr, "custom_id"],
-# ]
-# lv_draw_mask_saved = ct.structure(lv_draw_mask_saved, "lv_draw_mask_saved")
-
-# lv_meter
-
-# lv_meter_scale_t
-lv_meter_scale = [            # valid LVGL8.3
-    [lv_color, "tick_color"],
-    [uint16_t, "tick_cnt"],
-    [uint16_t, "tick_length"],
-    [uint16_t, "tick_width"],
-
-    [lv_color, "tick_major_color"],
-    [uint16_t, "tick_major_nth"],
-    [uint16_t, "tick_major_length"],
-    [uint16_t, "tick_major_width"],
-
-    [int16_t, "label_gap"],
-
-    [int32_t, "min"],
-    [int32_t, "max"],
-    [int16_t, "r_mod"],
-    [uint16_t, "angle_range"],
-    [int16_t, "rotation"],
-]
-lv_meter_scale = ct.structure(lv_meter_scale, "lv_meter_scale")
-
-# lv_meter_indicator_t
-lv_meter_indicator = [            # valid LVGL8.3
-    [ptr, "scale"],
-    [lv_meter_indicator_type_t, "type"],
+#     const char * text;
+#     const lv_font_t * font;
+#     uint32_t sel_start;
+#     uint32_t sel_end;
+#     lv_color_t color;
+#     lv_color_t sel_color;
+#     lv_color_t sel_bg_color;
+#     int32_t line_space;
+#     int32_t letter_space;
+#     int32_t ofs_x;
+#     int32_t ofs_y;
+#     lv_opa_t opa;
+#     lv_base_dir_t bidi_dir;
+#     lv_text_align_t align;
+#     lv_text_flag_t flag;
+#     lv_text_decor_t decor : 3;
+#     lv_blend_mode_t blend_mode : 3;
+#     /**
+#      * < 1: malloc buffer and copy `text` there.
+#      * 0: `text` is const and it's pointer will be valid during rendering.*/
+#     uint8_t text_local : 1;
+#     lv_draw_label_hint_t * hint;
+# } lv_draw_label_dsc_t;
+lv_draw_label_dsc = [            # valid LVGL91
+    [lv_draw_dsc_base, "base"],
+    [ptr, "text"],
+    [ptr, "font"],
+    [uint32_t, "sel_start"],
+    [uint32_t, "sel_end"],
+    [lv_color, "color"],
+    [lv_color, "sel_color"],
+    [lv_color, "sel_bg_color"],
+    [int32_t, "line_space"],
+    [int32_t, "letter_space"],
+    [int32_t, "ofs_x"],
+    [int32_t, "ofs_y"],
     [lv_opa, "opa"],
-    [int32_t, "start_value"],
-    [int32_t, "end_value"],
-    # more unions here that we can hardly manage simply
-    [ptr, "data0"],
-    [ptr, "data1"],
-    [ptr, "data2"],
+    [lv_base_dir, "bidi_dir"],
+    [lv_text_align, "align"],
+    [lv_text_flag, "flag"],
+    [uint8_t_3, "decor"],
+    [uint8_t_3, "blend_mode"],
+    [uint8_t_1, "text_local"],
+    [ptr, "hint"],
 ]
-lv_meter_indicator = ct.structure(lv_meter_indicator, "lv_meter_indicator")
-
-# # variants
-# lv_meter_indicator_needle_img = [            # valid LVGL8.2
-#     [ptr, "scale"],
-#     [lv_meter_indicator_type_t, "type"],
-#     [lv_opa, "opa"],
-#     [int32_t, "start_value"],
-#     [int32_t, "end_value"],
-#     # specifc portion
-#     [ptr, "src"],
-#     [lv_point, "pivot"],
-# ]
-# lv_meter_indicator_needle_img = ct.structure(lv_meter_indicator_needle_img, "lv_meter_indicator_needle_img")
-
-# lv_meter_indicator_needle_line = [            # valid LVGL8.2
-#     [ptr, "scale"],
-#     [lv_meter_indicator_type_t, "type"],
-#     [lv_opa, "opa"],
-#     [int32_t, "start_value"],
-#     [int32_t, "end_value"],
-#     # specifc portion
-#     [uint16_t, "width"],
-#     [int16_t, "r_mod"],
-#     [lv_color, "color"],
-# ]
-# lv_meter_indicator_needle_line = ct.structure(lv_meter_indicator_needle_line, "lv_meter_indicator_needle_line")
-
-# lv_meter_indicator_arc = [            # valid LVGL8.2
-#     [ptr, "scale"],
-#     [lv_meter_indicator_type_t, "type"],
-#     [lv_opa, "opa"],
-#     [int32_t, "start_value"],
-#     [int32_t, "end_value"],
-#     # specifc portion
-#     [uint16_t, "width"],
-#     [ptr, "src"],
-#     [lv_color, "color"],
-#     [int16_t, "r_mod"],
-# ]
-# lv_meter_indicator_arc = ct.structure(lv_meter_indicator_arc, "lv_meter_indicator_arc")
-
-# lv_meter_indicator_scale_lines = [            # valid LVGL8.2
-#     [ptr, "scale"],
-#     [lv_meter_indicator_type_t, "type"],
-#     [lv_opa, "opa"],
-#     [int32_t, "start_value"],
-#     [int32_t, "end_value"],
-#     # specifc portion
-#     [int16_t, "width_mod"],
-#     [lv_color, "color_start"],
-#     [lv_color, "color_end"],
-#     [uint8_t_1, "local_grad"],
-# ]
-# lv_meter_indicator_scale_lines = ct.structure(lv_meter_indicator_scale_lines, "lv_meter_indicator_scale_lines")
+lv_draw_label_dsc = ct.structure(lv_draw_label_dsc, "lv_draw_label_dsc")
 
 # typedef struct {
 #     int32_t * x_points;
@@ -610,7 +409,7 @@ lv_meter_indicator = ct.structure(lv_meter_indicator, "lv_meter_indicator")
 #     uint32_t x_axis_sec : 1;
 #     uint32_t y_axis_sec : 1;
 # } lv_chart_series_t;
-lv_chart_series = [            # valid LVGL9
+lv_chart_series = [            # valid LVGL91
     [ptr, "x_points"],
     [ptr, "y_points"],
     [lv_color, "color"],
@@ -631,7 +430,7 @@ lv_chart_series = ct.structure(lv_chart_series, "lv_chart_series")
 #     lv_dir_t dir;
 #     uint32_t pos_set: 1; /*1: pos is set; 0: point_id is set*/
 # } lv_chart_cursor_t;
-lv_chart_cursor = [            # valid LVGL9
+lv_chart_cursor = [            # valid LVGL91
     [lv_point, "pos"],
     [int32_t, "point_id"],
     [lv_color, "color"],
@@ -640,17 +439,6 @@ lv_chart_cursor = [            # valid LVGL9
     [uint8_t_1, "pos_set"],
 ]
 lv_chart_cursor = ct.structure(lv_chart_cursor, "lv_chart_cursor")
-
-# lv_chart_tick_dsc = [            # valid LVGL8.3
-#     [lv_coord_t, "major_len"],
-#     [lv_coord_t, "minor_len"],
-#     [lv_coord_t, "draw_size"],
-#     [uint16_t_15, "minor_cnt"],
-#     [uint16_t_15, "major_cnt"],
-#     [uint8_t_1, "label_en"],
-# ]
-# lv_chart_tick_dsc = ct.structure(lv_chart_tick_dsc, "lv_chart_tick_dsc")
-
 
 #- --------- class system --------- -#
 lv_obj_class_ptr = ptr
@@ -686,7 +474,7 @@ lv_event_code = ct.i32
 #     uint32_t instance_size : 16;
 #     uint32_t theme_inheritable : 1;    /**< Value from ::lv_obj_class_theme_inheritable_t*/
 # };
-lv_obj_class = [            # valid LVGL9
+lv_obj_class = [            # valid LVGL91
     [lv_obj_class_ptr, "base_class"],
     [constructor_cb, "constructor_cb"],
     [destructor_cb, "destructor_cb"],
@@ -713,7 +501,7 @@ lv_obj_class = ct.structure(lv_obj_class, "lv_obj_class")
 #     uint8_t stop_processing : 1;
 #     uint8_t stop_bubbling : 1;
 # };
-lv_event = [            # valid LVGL9
+lv_event = [            # valid LVGL91
     [lv_obj_ptr, "target"],
     [lv_obj_ptr, "current_target"],
     [lv_event_code, "code"],
@@ -730,19 +518,22 @@ lv_event = ct.structure(lv_event, "lv_event")
 # lv_image structures
 
 # typedef struct {
-#     lv_image_header_t header; /**< A header describing the basics of the image*/
-#     uint32_t data_size;     /**< Size of the image in bytes*/
-#     const uint8_t * data;   /**< Pointer to the data of the image*/
+#     lv_image_header_t header;   /**< A header describing the basics of the image*/
+#     uint32_t data_size;         /**< Size of the image in bytes*/
+#     const uint8_t * data;       /**< Pointer to the data of the image*/
+#     const void * reserved;      /**< A reserved field to make it has same size as lv_draw_buf_t*/
 # } lv_image_dsc_t;
-lv_image_dsc = [            # valid LVGL9
+lv_image_dsc = [                        # valid LVGL91
     [lv_image_header, "header"],
     [uint32_t, "data_size"],
     [ptr, "data"],
+    [ptr, "reserved"],
 ]
 lv_image_dsc = ct.structure(lv_image_dsc, "lv_image_dsc")
 
 #######################################################################
 # lv_style
+
 # typedef struct {
 #     const lv_style_prop_t * props; /**< An array with the properties to animate.*/
 #     void * user_data;              /**< A custom user data that will be passed to the animation's user_data */
@@ -750,7 +541,7 @@ lv_image_dsc = ct.structure(lv_image_dsc, "lv_image_dsc")
 #     uint32_t time;                 /**< Duration of the transition in [ms]*/
 #     uint32_t delay;                /**< Delay before the transition in [ms]*/
 # } lv_style_transition_dsc_t;
-lv_style_transition_dsc = [            # valid LVGL9
+lv_style_transition_dsc = [            # valid LVGL91
     [ptr, "props"],
     [ptr, "user_data"],
     [ptr, "path_xcb"],
@@ -759,20 +550,38 @@ lv_style_transition_dsc = [            # valid LVGL9
 ]
 lv_style_transition_dsc = ct.structure(lv_style_transition_dsc, "lv_style_transition_dsc")
 
+# typedef struct {
+#     lv_draw_buf_t * draw_buf;
+#     lv_area_t buf_area;
+#     lv_color_format_t color_format;
+#     lv_area_t _clip_area;
+#     lv_draw_task_t * draw_task_head;
+#     lv_layer_t * parent;
+#     lv_layer_t * next;
+#     bool all_tasks_added;
+#     void * user_data;
+# } lv_layer_t;
+lv_layer = [ # valid LVGL9
+    [ptr, "draw_buf"],
+    [lv_area, "buf_area"],
+    [uint8_t, "color_format"],
+    [lv_area, "_clip_area"],
+    [ptr, "draw_task_head"],
+    [ptr, "parent"],
+    [ptr, "next"],
+    [bool, "all_tasks_added"],
+    [ptr, "user_data"],
+]
+lv_layer = ct.structure(lv_layer, "lv_layer")
+
 #######################################################################
 # lv_color
-# lv_color_hsv = [            # valid LVGL8
-#     [uint16_t, "h"],
-#     [uint8_t, "s"],
-#     [uint8_t, "v"],
-# ]
-# lv_color_hsv = ct.structure(lv_color_hsv, "lv_color_hsv")
 
 # typedef struct _lv_color_filter_dsc_t {
 #     lv_color_filter_cb_t filter_cb;
 #     void * user_data;
 # } lv_color_filter_dsc_t;
-lv_color_filter_dsc = [            # valid LVGL9
+lv_color_filter_dsc = [            # valid LVGL91
     [ptr, "filter_cb"],
     [ptr, "user_data"],
 ]
@@ -790,7 +599,7 @@ lv_color_filter_dsc = ct.structure(lv_color_filter_dsc, "lv_color_filter_dsc")
 #     uint32_t paused : 1;
 #     uint32_t auto_delete : 1;
 # };
-lv_timer_ntv = [            # valid LVGL9
+lv_timer_ntv = [                    # valid LVGL91
     [uint32_t, "period"],
     [uint32_t, "last_run"],
     [ptr, "timer_cb"],
@@ -801,115 +610,25 @@ lv_timer_ntv = [            # valid LVGL9
 ]
 lv_timer_ntv = ct.structure(lv_timer_ntv, "lv_timer_ntv")
 
-# #######################################################################
-# lv_anim native structure, is superseded by lv_anim
-
-# /** Describes an animation*/
-# struct _lv_anim_t {
-#     void * var;                                 /**<Variable to animate*/
-#     lv_anim_exec_xcb_t exec_cb;                 /**< Function to execute to animate*/
-#     lv_anim_custom_exec_cb_t custom_exec_cb;/**< Function to execute to animate,
-#                                                  same purpose as exec_cb but different parameters*/
-#     lv_anim_start_cb_t start_cb;         /**< Call it when the animation is starts (considering `delay`)*/
-#     lv_anim_completed_cb_t completed_cb; /**< Call it when the animation is fully completed*/
-#     lv_anim_deleted_cb_t deleted_cb;     /**< Call it when the animation is deleted*/
-#     lv_anim_get_value_cb_t get_value_cb; /**< Get the current value in relative mode*/
-#     void * user_data;                    /**< Custom user data*/
-#     lv_anim_path_cb_t path_cb;         /**< Describe the path (curve) of animations*/
-#     int32_t start_value;               /**< Start value*/
-#     int32_t current_value;             /**< Current value*/
-#     int32_t end_value;                 /**< End value*/
-#     int32_t duration;                /**< Animation time in ms*/
-#     int32_t act_time;            /**< Current time in animation. Set to negative to make delay.*/
-#     uint32_t playback_delay;     /**< Wait before play back*/
-#     uint32_t playback_duration;      /**< Duration of playback animation*/
-#     uint32_t repeat_delay;       /**< Wait before repeat*/
-#     uint16_t repeat_cnt;         /**< Repeat count for the animation*/
-#     union _lv_anim_path_para_t {
-#         lv_anim_bezier3_para_t bezier3; /**< Parameter used when path is custom_bezier*/
-#     } parameter;
-
-#     uint8_t early_apply  : 1;    /**< 1: Apply start value immediately even is there is `delay`*/
-
-#     /*Animation system use these - user shouldn't set*/
-#     uint32_t last_timer_run;
-#     uint8_t playback_now : 1; /**< Play back is in progress*/
-#     uint8_t run_round : 1;    /**< Indicates the animation has run in this round*/
-#     uint8_t start_cb_called : 1;    /**< Indicates that the `start_cb` was already called*/
-# };
-# typedef struct _lv_anim_bezier3_para_t {
-#     int16_t x1;
-#     int16_t y1;
-#     int16_t x2;
-#     int16_t y2;
-# } lv_anim_bezier3_para_t; /**< Parameter used when path is custom_bezier*/
-# lv_anim_ntv = [            # valid LVGL8.3
-#     [ptr, "var"],
-#     [ptr, "exec_cb"],
-#     [ptr, "custom_exec_cb"],
-#     [ptr, "start_cb"],
-#     [ptr, "completed_cb"],
-#     [ptr, "deleted_cb"],
-#     [ptr, "get_value_cb"],
-
-#     [ptr, "user_data"],
-
-#     [ptr, "path_cb"],
-#     [int32_t, "start_value"],
-#     [int32_t, "current_value"],
-#     [int32_t, "end_value"],
-#     [int32_t, "duration"],
-#     [int32_t, "act_time"],
-#     [uint32_t, "playback_delay"],
-#     [uint32_t, "playback_duration"],
-#     [uint32_t, "repeat_delay"],
-#     [uint32_t, "repeat_cnt"],
-
-#     [int16_t, "bezier3_x1"],
-#     [int16_t, "bezier3_y1"],
-#     [int16_t, "bezier3_x2"],
-#     [int16_t, "bezier3_y2"],
-
-#     [uint8_t_1, "early_apply"],
-
-#     [uint32_t, "last_timer_run"],
-#     [uint8_t_1, "playback_now"],
-#     [uint8_t_1, "run_round"],
-#     [uint8_t_1, "start_cb_called"],
-    
-# ]
-# lv_anim_ntv = ct.structure(lv_anim_ntv, "lv_anim_ntv")
 
 #######################################################################
-# lv_draw_ctx
-# lv_draw_ctx = [            # valid LVGL8.3
-#     [ptr, "buf"],
-#     [lv_area, "buf_area"],
-#     [lv_area, "clip_area"],
-#     [ptr, "draw_rect"],
-#     [ptr, "draw_arc"],
-#     [ptr, "draw_img_decoded"],
-#     [ptr, "draw_img"],
-#     [ptr, "draw_letter"],
-#     [ptr, "draw_line"],
-#     [ptr, "draw_polygon"],
-#     [ptr, "draw_transform"],
-#     [ptr, "draw_bg"],
-#     [ptr, "wait_for_finish"],
-#     [ptr, "buffer_copy"],
-#     [ptr, "layer_init"],
-#     [ptr, "layer_adjust"],
-#     [ptr, "layer_blend"],
-#     [ptr, "layer_destroy"],
-#     [uint32_t, "layer_instance_size"],
-#     [ptr, "user_data"],
-# ]
-# lv_draw_ctx = ct.structure(lv_draw_ctx, "lv_draw_ctx")
+# lv_event_dsc
+# typedef struct {
+#     lv_event_cb_t cb;
+#     void * user_data;
+#     uint32_t filter;
+# } lv_event_dsc_t;
+lv_event_dsc = [            # valid LVGL91
+    [ptr, "cb"],
+    [ptr, "user_data"],
+    [uint32_t, "filter"],
+]
+lv_event_dsc = ct.structure(lv_event_dsc, "lv_event_dsc")
 
 #######################################################################
 # Special structure used to calibrate resistive touchscreens
 #######################################################################
-lv_ts_calibration = [            # valid LVGL8.3
+lv_ts_calibration = [            # valid LVGL91
     [lv_coord_t, "raw_x"],
     [lv_coord_t, "raw_y"],
     [lv_coord_t, "x"],

@@ -8,6 +8,7 @@
 #include "be_object.h"
 #include "be_mem.h"
 #include <string.h>
+#include <math.h>
 
 #if BE_USE_JSON_MODULE
 
@@ -515,6 +516,15 @@ static void value_dump(bvm *vm, int *indent, int idx, int fmt)
     } else if (be_isnil(vm, idx)) { /* convert to json null */
         be_stack_require(vm, 1 + BE_STACK_FREE_MIN); 
         be_pushstring(vm, "null");
+    } else if (be_isreal(vm, idx)) {
+        be_stack_require(vm, 1 + BE_STACK_FREE_MIN);
+        breal v = be_toreal(vm, idx);
+        if (isnan(v) || isinf(v)) {
+            be_pushstring(vm, "null");
+        } else {
+            be_tostring(vm, idx);
+            be_pushvalue(vm, idx); /* push to top */
+        };
     } else if (be_isnumber(vm, idx) || be_isbool(vm, idx)) { /* convert to json number and boolean */
         be_stack_require(vm, 1 + BE_STACK_FREE_MIN); 
         be_tostring(vm, idx);

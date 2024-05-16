@@ -54,13 +54,13 @@ void InfluxDbProcess(bool use_copy = false);
 #endif
 
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32       // ESP32/PICO-D4
+//#if CONFIG_IDF_TARGET_ESP32       // ESP32/PICO-D4
 #ifdef USE_ETHERNET
 IPAddress EthernetLocalIP(void);
 char* EthernetHostname(void);
 String EthernetMacAddress(void);
 #endif  // USE_ETHERNET
-#endif  // CONFIG_IDF_TARGET_ESP32
+//#endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32
 
 /*********************************************************************************************\
@@ -68,6 +68,12 @@ String EthernetMacAddress(void);
 \*********************************************************************************************/
 
 #include "include/tasmota_configurations.h"            // Preconfigured configurations
+
+/*********************************************************************************************\
+ * Finale overrides
+\*********************************************************************************************/
+
+const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_config_override.h
 
 /*-------------------------------------------------------------------------------------------*\
  * ESP8266 and ESP32 build time definitions
@@ -79,7 +85,7 @@ String EthernetMacAddress(void);
 #elif (CONFIG_TASMOTA_FLASHMODE_QIO)
   #define D_TASMOTA_FLASHMODE "QIO"
 #elif defined(CONFIG_TASMOTA_FLASHMODE_QOUT)
-   #define D_TASMOTA_FLASHMODE "QOUT"
+  #define D_TASMOTA_FLASHMODE "QOUT"
 #elif defined(CONFIG_TASMOTA_FLASHMODE_DIO)
   #define D_TASMOTA_FLASHMODE "DIO"
 #elif defined(CONFIG_TASMOTA_FLASHMODE_DOUT)
@@ -129,9 +135,9 @@ String EthernetMacAddress(void);
 
 
 #else   // Disable features not present in other ESP32 like ESP32C3, ESP32S2, ESP32S3 etc.
-#ifdef USE_ETHERNET
-#undef USE_ETHERNET                                // All non-ESP32 do not support ethernet
-#endif
+//#ifdef USE_ETHERNET
+//#undef USE_ETHERNET                                // All non-ESP32 do not support ethernet
+//#endif
 #endif  // CONFIG_IDF_TARGET_ESP32
 
 /*-------------------------------------------------------------------------------------------*\

@@ -29,13 +29,12 @@
 
 #define D_CMND_RFSEND "Send"
 #define D_CMND_RFPROTOCOL "Protocol"
-#define D_CMND_RFTIMEOUT "TimeOut"
 
 #define D_JSON_RF_PULSE "Pulse"
 #define D_JSON_RF_REPEAT "Repeat"
 #define D_JSON_NONE_ENABLED "None Enabled"
 
-const char kRfCommands[] PROGMEM = "Rf|"  // No prefix
+const char kRfCommands[] PROGMEM = D_CMND_PREFIX_RF "|"  // Prefix
   D_CMND_RFSEND "|" D_CMND_RFPROTOCOL "|" D_CMND_RFTIMEOUT;
 
 void (* const RfCommands[])(void) PROGMEM = {

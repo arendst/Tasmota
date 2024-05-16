@@ -9,12 +9,13 @@
 #include "lv_file_explorer.h"
 #if LV_USE_FILE_EXPLORER != 0
 
+#include "../../lvgl.h"
 #include "../../core/lv_global.h"
 
 /*********************
  *      DEFINES
  *********************/
-#define MY_CLASS &lv_file_explorer_class
+#define MY_CLASS (&lv_file_explorer_class)
 
 #define FILE_EXPLORER_QUICK_ACCESS_AREA_WIDTH       (22)
 #define FILE_EXPLORER_BROWSER_AREA_WIDTH            (100 - FILE_EXPLORER_QUICK_ACCESS_AREA_WIDTH)
@@ -174,15 +175,6 @@ lv_obj_t * lv_file_explorer_get_header(lv_obj_t * obj)
     return explorer->head_area;
 }
 
-lv_obj_t * lv_file_explorer_get_quick_access_area(lv_obj_t * obj)
-{
-    LV_ASSERT_OBJ(obj, MY_CLASS);
-
-    lv_file_explorer_t * explorer = (lv_file_explorer_t *)obj;
-
-    return explorer->quick_access_area;
-}
-
 lv_obj_t * lv_file_explorer_get_path_label(lv_obj_t * obj)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
@@ -193,6 +185,15 @@ lv_obj_t * lv_file_explorer_get_path_label(lv_obj_t * obj)
 }
 
 #if LV_FILE_EXPLORER_QUICK_ACCESS
+lv_obj_t * lv_file_explorer_get_quick_access_area(lv_obj_t * obj)
+{
+    LV_ASSERT_OBJ(obj, MY_CLASS);
+
+    lv_file_explorer_t * explorer = (lv_file_explorer_t *)obj;
+
+    return explorer->quick_access_area;
+}
+
 lv_obj_t * lv_file_explorer_get_places_list(lv_obj_t * obj)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
@@ -563,7 +564,8 @@ static void show_dir(lv_obj_t * obj, const char * path)
             lv_table_set_cell_value_fmt(explorer->file_table, index, 0, LV_SYMBOL_IMAGE "  %s", fn);
             lv_table_set_cell_value(explorer->file_table, index, 1, "1");
         }
-        else if((is_end_with(fn, ".mp3") == true) || (is_end_with(fn, ".MP3") == true)) {
+        else if((is_end_with(fn, ".mp3") == true) || (is_end_with(fn, ".MP3") == true) || \
+                (is_end_with(fn, ".wav") == true) || (is_end_with(fn, ".WAV") == true)) {
             lv_table_set_cell_value_fmt(explorer->file_table, index, 0, LV_SYMBOL_AUDIO "  %s", fn);
             lv_table_set_cell_value(explorer->file_table, index, 1, "2");
         }

@@ -493,7 +493,7 @@ void RA8876::DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font) {
 
 bool RA8876::initDisplay() {
 
-  lvgl_param.fluslines = 10;
+  lvgl_param.flushlines = 10;
 
   SPI.beginTransaction(m_spiSettings);
 

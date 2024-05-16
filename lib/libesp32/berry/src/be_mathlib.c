@@ -45,6 +45,17 @@ static int m_isnan(bvm *vm)
     be_return(vm);
 }
 
+static int m_isinf(bvm *vm)
+{
+    if (be_top(vm) >= 1 && be_isreal(vm, 1)) {
+        breal x = be_toreal(vm, 1);
+        be_pushbool(vm, isinf(x));
+    } else {
+        be_pushbool(vm, bfalse);
+    }
+    be_return(vm);
+}
+
 static int m_abs(bvm *vm)
 {
     if (be_top(vm) >= 1 && be_isnumber(vm, 1)) {
@@ -284,6 +295,7 @@ static int m_rand(bvm *vm)
 #if !BE_USE_PRECOMPILED_OBJECT
 be_native_module_attr_table(math) {
     be_native_module_function("isnan", m_isnan),
+    be_native_module_function("isinf", m_isinf),
     be_native_module_function("abs", m_abs),
     be_native_module_function("ceil", m_ceil),
     be_native_module_function("floor", m_floor),
@@ -308,6 +320,7 @@ be_native_module_attr_table(math) {
     be_native_module_function("rand", m_rand),
     be_native_module_real("pi", M_PI),
     be_native_module_real("nan", NAN),
+    be_native_module_real("inf", INFINITY),
     be_native_module_int("imax", M_IMAX),
     be_native_module_int("imin", M_IMIN),
 };
@@ -317,6 +330,7 @@ be_define_native_module(math, NULL);
 /* @const_object_info_begin
 module math (scope: global, depend: BE_USE_MATH_MODULE) {
     isnan, func(m_isnan)
+    isinf, func(m_isinf)
     abs, func(m_abs)
     ceil, func(m_ceil)
     floor, func(m_floor)
@@ -341,6 +355,7 @@ module math (scope: global, depend: BE_USE_MATH_MODULE) {
     rand, func(m_rand)
     pi, real(M_PI)
     nan, real(NAN)
+    inf, real(INFINITY)
     imax, int(M_IMAX)
     imin, int(M_IMIN)
 }

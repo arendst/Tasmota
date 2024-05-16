@@ -9,8 +9,6 @@
 #include "lv_linux_drm.h"
 #if LV_USE_LINUX_DRM
 
-#include "../../../lv_api_map.h"
-
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
@@ -26,7 +24,7 @@
  *      DEFINES
  *********************/
 #if LV_COLOR_DEPTH == 32
-    #define DRM_FOURCC DRM_FORMAT_ARGB8888
+    #define DRM_FOURCC DRM_FORMAT_XRGB8888
 #elif LV_COLOR_DEPTH == 16
     #define DRM_FOURCC DRM_FORMAT_RGB565
 #else
