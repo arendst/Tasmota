@@ -237,6 +237,61 @@ const char kKnxCommands[] PROGMEM = D_PRFX_KNX "|"  // Prefix
 void (* const KnxCommand[])(void) PROGMEM = {
   &CmndKnxTxCmnd, &CmndKnxTxVal, &CmndKnxEnabled, &CmndKnxEnhanced, &CmndKnxPa, &CmndKnxGa, &CmndKnxCb, &CmndKnxTxScene };
 
+
+#endif //  KNX_EXTRA_CMD
+
+#ifndef KNX_ENHANCEMENT_REPEAT
+#define KNX_ENHANCEMENT_REPEAT 3
+#endif
+
+
+void KNX_Send_1bit(address_t const &receiver, uint8_t value, knx_command_type_t ct) 
+{
+  uint8_t repeat = Settings->flag.knx_enable_enhancement ? KNX_ENHANCEMENT_REPEAT : 1;
+  while ( repeat-- )
+    knx.send_1bit(receiver, ct, value);
+}
+#define KNX_WRITE_1BIT(r,v) KNX_Send_1bit((r),(v),KNX_CT_WRITE)
+#define KNX_ANSWER_1BIT(r,v) KNX_Send_1bit((r),(v),KNX_CT_ANSWER)
+
+void KNX_Send_1byte_uint(address_t const &receiver, uint8_t value, knx_command_type_t ct) 
+{
+  uint8_t repeat = Settings->flag.knx_enable_enhancement ? KNX_ENHANCEMENT_REPEAT : 1;
+  while ( repeat-- )
+    knx.send_1byte_uint(receiver, ct, value);
+}
+#define KNX_WRITE_1BYTE_UINT(r,v) KNX_Send_1byte_uint((r),(v),KNX_CT_WRITE)
+#define KNX_ANSWER_1BYTE_UINT(r,v) KNX_Send_1byte_uint((r),(v),KNX_CT_ANSWER)
+
+void KNX_Send_2byte_float(address_t const &receiver, float value, knx_command_type_t ct) 
+{
+  uint8_t repeat = Settings->flag.knx_enable_enhancement ? KNX_ENHANCEMENT_REPEAT : 1;
+  while ( repeat-- )
+    knx.send_2byte_float(receiver, ct, value);
+}
+#define KNX_WRITE_2BYTE_FLOAT(r,v) KNX_Send_2byte_float((r),(v),KNX_CT_WRITE)
+#define KNX_ANSWER_2BYTE_FLOAT(r,v) KNX_Send_2byte_float((r),(v),KNX_CT_ANSWER)
+
+void KNX_Send_4byte_float(address_t const &receiver, float value, knx_command_type_t ct) 
+{
+  uint8_t repeat = Settings->flag.knx_enable_enhancement ? KNX_ENHANCEMENT_REPEAT : 1;
+  while ( repeat-- )
+    knx.send_4byte_float(receiver, ct, value);
+}
+#define KNX_WRITE_4BYTE_FLOAT(r,v) KNX_Send_4byte_float((r),(v),KNX_CT_WRITE)
+#define KNX_ANSWER_4BYTE_FLOAT(r,v) KNX_Send_4byte_float((r),(v),KNX_CT_ANSWER)
+
+void KNX_Send_4byte_int(address_t const &receiver, int value, knx_command_type_t ct) 
+{
+  uint8_t repeat = Settings->flag.knx_enable_enhancement ? KNX_ENHANCEMENT_REPEAT : 1;
+  while ( repeat-- )
+    knx.send_4byte_int(receiver, ct, value);
+}
+#define KNX_WRITE_4BYTE_INT(r,v) KNX_Send_4byte_int((r),(v),KNX_CT_WRITE)
+#define KNX_ANSWER_4BYTE_INT(r,v) KNX_Send_4byte_int((r),(v),KNX_CT_ANSWER)
+
+
+
 uint8_t KNX_GA_Search( uint8_t param, uint8_t start = 0 )
 {
   for (uint32_t i = start; i < Settings->knx_GA_registered; ++i)
