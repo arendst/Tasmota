@@ -187,6 +187,8 @@
 #define USE_WEBCLIENT
 #define USE_WEBCLIENT_HTTPS
 
+#undef USE_ESP32_WDT                                  // disable watchdog on SAFEBOOT until more testing is done
+
 #if CONFIG_IDF_TARGET_ESP32
 #if CONFIG_FREERTOS_UNICORE
   #undef USE_MQTT_TLS
