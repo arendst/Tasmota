@@ -130,3 +130,4 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Fixed
 
 ### Removed
+- Support of old insecure fingerprint algorithm - deprecated since v8.4.0 [#21417](https://github.com/arendst/Tasmota/issues/21417)
