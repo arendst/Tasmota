@@ -37,10 +37,15 @@ void CmndWDT(void)
 }
 
 // This will trigger the os watch after OSWATCH_RESET_TIME (=120) seconds
+// or normal WDT on ESP32
 void CmndBlockedLoop(void)
 {
   while (1) {
+#ifdef ESP32
+    delay(10000);   // 10s on ESP32 so that the normal WDT fires after 5s. There is no OSWATCH_RESET_TIME on ESP32
+#else
     delay(1000);
+#endif
   }
 }
 
