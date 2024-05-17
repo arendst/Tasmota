@@ -497,7 +497,11 @@ void DisplayText(void)
         }
       } else {
         // copy chars
-        if (dp < (linebuf + DISPLAY_BUFFER_COLS)) { *dp++ = *cp++; }
+        if (dp < (linebuf + DISPLAY_BUFFER_COLS)) {
+          *dp++ = *cp++;
+        } else {
+          break;
+        }
       }
     } else {
       // check escapes

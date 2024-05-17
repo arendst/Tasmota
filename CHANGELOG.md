@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [14.0.0.1]
 ### Added
-- Enabled watchdog for ESP32 and variants
+- Enabled watchdog for ESP32 and variants (#21422)
 
 ### Breaking Changed
 
@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Domoticz re-subscribe on MQTT reconnect. Regression from v13.4.0.3 (#21281)
+- Watchdog restart or freeze if ``displaytext`` is more than 128 characters (#21401)
 
 ### Removed
 - Support of old insecure fingerprint algorithm. Deprecated since v8.4.0 (#21417)
