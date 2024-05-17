@@ -37,6 +37,7 @@ extern "C" {
 #include "be_vm.h"
 #include "ZipReadFS.h"
 #include "ccronexpr.h"
+#include "berry_custom.h"
 
 extern "C" {
   extern void be_load_custom_libs(bvm *vm);
