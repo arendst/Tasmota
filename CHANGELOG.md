@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - ESP32 compiler option from `target-align` to `no-target-align` (#21407)
+- On universal display remove default backlight power if a PWM channel is used for backlight
 
 ### Fixed
 - Domoticz re-subscribe on MQTT reconnect. Regression from v13.4.0.3 (#21281)
