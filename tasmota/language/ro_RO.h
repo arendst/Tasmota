@@ -76,6 +76,7 @@
 #define D_COMMAND "Comandă"
 #define D_CONNECTED "Conectat"
 #define D_CORS_DOMAIN "Domeniu CORS"
+#define D_COLOR "Color"
 #define D_COUNT "Numărătoare"
 #define D_COUNTER "Contor"
 #define D_CT_POWER "Putere Transformată"

@@ -75,6 +75,7 @@
 #define D_COLDLIGHT "Ψυχρό"
 #define D_COMMAND "Εντολή"
 #define D_CONNECTED "Συνδεδεμένο"
+#define D_COLOR "Color"
 #define D_COUNT "Μέτρηση"
 #define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNTER "Μετρητής"

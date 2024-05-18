@@ -1549,6 +1549,9 @@ void LightPreparePower(power_t channels = 0xFFFFFFFF) {    // 1 = only RGB, 2 = 
   #ifdef USE_DOMOTICZ
         DomoticzUpdatePowerState(Light.device + i);
   #endif  // USE_DOMOTICZ
+  #ifdef USE_KNX
+        KnxUpdateLight();
+  #endif
       }
     }
   } else {
@@ -1585,6 +1588,9 @@ void LightPreparePower(power_t channels = 0xFFFFFFFF) {    // 1 = only RGB, 2 = 
 #ifdef USE_DOMOTICZ
     DomoticzUpdatePowerState(Light.device);
 #endif  // USE_DOMOTICZ
+#ifdef USE_KNX
+    KnxUpdateLight();
+#endif
   }
 
   if (Settings->flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT

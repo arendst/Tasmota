@@ -76,6 +76,7 @@
 #define D_COMMAND "Dòng Lệnh"
 #define D_CONNECTED "Đã kết nối"
 #define D_CORS_DOMAIN "CORS Domain"
+#define D_COLOR "Color"
 #define D_COUNT "Đếm"
 #define D_COUNTER "Bộ đếm"
 #define D_CT_POWER "CT Power"

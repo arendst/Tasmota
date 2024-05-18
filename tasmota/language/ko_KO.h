@@ -75,6 +75,7 @@
 #define D_COLDLIGHT "차갑게"
 #define D_COMMAND "커맨드"
 #define D_CONNECTED "연결됨"
+#define D_COLOR "Color"
 #define D_COUNT "횟수"
 #define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNTER "Counter"

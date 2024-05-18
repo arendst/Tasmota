@@ -76,6 +76,7 @@
 #define D_COMMAND "Comando"
 #define D_CONNECTED "Conectado"
 #define D_CORS_DOMAIN "Sitio WEB para CORS"
+#define D_COLOR "Color"
 #define D_COUNT "Conteo"
 #define D_COUNTER "Contador"
 #define D_CT_POWER "CT Power"

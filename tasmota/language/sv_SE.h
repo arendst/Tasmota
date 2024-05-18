@@ -76,6 +76,7 @@
 #define D_COMMAND "Kommando"
 #define D_CONNECTED "Ansluten"
 #define D_CORS_DOMAIN "CORS Domain"
+#define D_COLOR "Color"
 #define D_COUNT "Räkna"
 #define D_COUNTER "Räknare"
 #define D_CT_POWER "CT Power"
