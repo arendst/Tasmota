@@ -76,6 +76,7 @@
 #define D_COMMAND "Parancs"
 #define D_CONNECTED "Csatlakoztatva"
 #define D_CORS_DOMAIN "CORS Domain"
+#define D_COLOR "Color"
 #define D_COUNT "Szám"
 #define D_COUNTER "Számláló"
 #define D_CT_POWER "CT erősség"

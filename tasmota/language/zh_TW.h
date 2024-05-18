@@ -76,6 +76,7 @@
 #define D_COMMAND "命令:"
 #define D_CONNECTED "已連線"
 #define D_CORS_DOMAIN "跨來源資源共享的網域(CORS Domain)"
+#define D_COLOR "Color"
 #define D_COUNT "數量:"
 #define D_COUNTER "Counter"
 #define D_CT_POWER "CT Power"

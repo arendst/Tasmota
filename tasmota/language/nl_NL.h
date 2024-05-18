@@ -75,6 +75,7 @@
 #define D_COLDLIGHT "Koud"
 #define D_COMMAND "Opdracht"
 #define D_CONNECTED "Verbonden"
+#define D_COLOR "Color"
 #define D_COUNT "Aantal"
 #define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNTER "Teller"

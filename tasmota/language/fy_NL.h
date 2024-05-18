@@ -76,6 +76,7 @@
 #define D_COMMAND "Oarder"
 #define D_CONNECTED "Ferbûn"
 #define D_CORS_DOMAIN "CORS Domain"
+#define D_COLOR "Color"
 #define D_COUNT "Nûmer"
 #define D_COUNTER "Teller"
 #define D_CT_POWER "CT Power"

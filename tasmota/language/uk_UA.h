@@ -76,6 +76,7 @@
 #define D_COMMAND "Команда"
 #define D_CONNECTED "Під'єднано"
 #define D_CORS_DOMAIN "Домен CORS"
+#define D_COLOR "Color"
 #define D_COUNT "разів"
 #define D_COUNTER "Лічильник"
 #define D_CT_POWER "CT Power"

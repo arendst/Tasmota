@@ -76,6 +76,7 @@
 #define D_COMMAND "Príkaz"
 #define D_CONNECTED "...pripojené"
 #define D_CORS_DOMAIN "CORS Domain"
+#define D_COLOR "Color"
 #define D_COUNT "Počítaj"
 #define D_COUNTER "Počítadlo"
 #define D_CT_POWER "CT Power"

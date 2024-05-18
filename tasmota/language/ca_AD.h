@@ -76,6 +76,7 @@
 #define D_COMMAND "Ordre"
 #define D_CONNECTED "Connectat"
 #define D_CORS_DOMAIN "Domini CORS"
+#define D_COLOR "Color"
 #define D_COUNT "Compta"
 #define D_COUNTER "Comptador"
 #define D_CT_POWER "Energia CT"

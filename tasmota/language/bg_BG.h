@@ -76,6 +76,7 @@
 #define D_COMMAND "Команда"
 #define D_CONNECTED "Свързан"
 #define D_CORS_DOMAIN "Домейн на CORS"
+#define D_COLOR "Color"
 #define D_COUNT "Брой"
 #define D_COUNTER "Брояч"
 #define D_CT_POWER "ТТ Мощност"

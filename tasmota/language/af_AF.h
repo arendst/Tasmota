@@ -76,6 +76,7 @@
 #define D_COMMAND "Bevel"
 #define D_CONNECTED "Gekoppel"
 #define D_CORS_DOMAIN "CORS Domain"
+#define D_COLOR "Color"
 #define D_COUNT "Telling"
 #define D_COUNTER "Opnemer"
 #define D_CT_POWER "CT Power"

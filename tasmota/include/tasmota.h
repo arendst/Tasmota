@@ -283,7 +283,9 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
 #define KNX_SLOT4              29
 #define KNX_SLOT5              30
 #define KNX_SCENE              31
-#define KNX_MAX_device_param   31
+#define KNX_DIMMER             32   // aka DPT_Scaling 5.001
+#define KNX_COLOUR             33   // aka DPT_Colour_RGB 232.600 or DPT_Colour_RGBW 251.600
+#define KNX_MAX_device_param   33
 #define MAX_KNXTX_CMNDS        5
 
 // XPT2046 resistive touch driver min/max raw values
