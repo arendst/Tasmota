@@ -404,7 +404,7 @@ void I2sMicTask(void *arg){
   }
 
   ctime = TasmotaGlobal.uptime;
-  timeForOneRead = 1000 / ((audio_i2s.Settings->rx.sample_rate / samples_per_pass));
+  timeForOneRead = 1000 / ((audio_i2s.Settings->rx.sample_rate / (samples_per_pass * audio_i2s.Settings->rx.channels )));
   timeForOneRead -= 1; // be very in time
 
   AddLog(LOG_LEVEL_DEBUG, PSTR("I2S: samples %u, bytesize %u, time: %u"),samples_per_pass, bytesize, timeForOneRead);
@@ -1027,7 +1027,11 @@ void CmndI2SI2SRtttl(void) {
 }
 
 void CmndI2SMicRec(void) {
-  if (audio_i2s.Settings->sys.mp3_preallocate == 1) {
+  if (audio_i2s_mp3.mp3ram == nullptr){
+    AddLog(LOG_LEVEL_DEBUG,PSTR("I2S: try late buffer allocation for mp3 encoder"));
+    audio_i2s_mp3.mp3ram = special_malloc(preallocateCodecSize);
+  }
+  if (audio_i2s_mp3.mp3ram != nullptr) {
     if (XdrvMailbox.data_len > 0) {
       if (!strncmp(XdrvMailbox.data, "-?", 2)) {
         Response_P("{\"I2SREC-duration\":%d}", audio_i2s_mp3.recdur);

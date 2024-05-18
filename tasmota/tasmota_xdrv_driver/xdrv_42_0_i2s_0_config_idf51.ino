@@ -85,7 +85,11 @@ typedef struct{
   struct {
     uint32_t sample_rate = 32000;  // B00-03 - 32000 is compatible with MP3 encoding
     uint16_t gain = 30 * 16;       // B04-05 - in Q12.4
+#if SOC_I2S_SUPPORTS_PDM_RX
     uint8_t  mode = I2S_MODE_PDM;  // B06 - I2S mode standard, PDM, TDM, DAC
+#else
+    uint8_t  mode = I2S_MODE_STD;  // B06 - I2S mode standard, PDM, TDM, DAC
+#endif
     uint8_t  slot_mask = BIT(0);   // B07 - slot mask  = left/right/both depended on mode, so BIT(0) maybe left or right
     uint8_t  slot_bit_width = I2S_SLOT_BIT_WIDTH_32BIT;  // B08 - auto equals data_bit_width - can differ from bits per sample e.g. INMP441
     uint8_t  channels = 1;         // B09 - mono/stereo - 1 is added for both
