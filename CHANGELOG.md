@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Domoticz re-subscribe on MQTT reconnect. Regression from v13.4.0.3 (#21281)
 - Watchdog restart or freeze if ``displaytext`` is more than 128 characters (#21401)
 - Avoid connection errors when switching to safeboot to upload OTA firmware
+- Berry Leds matrix alternate more and error about 'bri' attribute
 
 ### Removed
 - Support of old insecure fingerprint algorithm. Deprecated since v8.4.0 (#21417)
