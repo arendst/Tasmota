@@ -3320,6 +3320,169 @@ bool CaptivePortal(void)
 
 /*********************************************************************************************/
 
+enum {QUERY_DEFAULT=0, QUERY_RUN};
+int WebQuery(char *buffer, int query_function);
+
+#ifdef USE_WEBRUN
+char *WebRunBuffer = nullptr;
+char *WebRunContext = nullptr;
+bool WebRunMutex = false;
+
+void WebRunLoop(void)
+{
+  if (WebRunBuffer && !WebRunMutex && BACKLOG_EMPTY) {
+    WebRunMutex = true;
+    char *command = strtok_r(WebRunContext, "\n\r", &WebRunContext);
+    if (command) {
+      while (isspace(*command)) command++; // skip space
+      if (*command && ';' != *command)
+        ExecuteCommand(command, SRC_WEB);
+    } else {
+      free(WebRunBuffer);
+      WebRunBuffer = WebRunContext = nullptr;
+    }
+    WebRunMutex = false;
+  }
+}
+
+void WebRunInit(const char *command_buffer)
+{
+  if (!WebRunBuffer) {
+    int len = strlen(command_buffer);
+    WebRunContext = WebRunBuffer = (char*)malloc(len+1);
+    if (WebRunBuffer) {
+      memcpy(WebRunBuffer, command_buffer, len);
+      WebRunBuffer[len] = 0;
+    } else {
+      AddLog(LOG_LEVEL_DEBUG, PSTR("WEBRUN: not enough memory"));
+    }
+  } else {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("WEBRUN: previous not completed"));
+  }
+}
+#endif // #ifdef USE_WEBRUN
+
+
+int WebQuery(char *buffer, int query_function = 0)
+{
+  // http://192.168.1.1/path GET                                         -> Sends HTTP GET http://192.168.1.1/path
+  // http://192.168.1.1/path POST {"some":"message"}                     -> Sends HTTP POST to http://192.168.1.1/path with body {"some":"message"}
+  // http://192.168.1.1/path PUT [Autorization: Bearer abcdxyz] potato   -> Sends HTTP PUT to http://192.168.1.1/path with authorization header and body "potato"
+  // http://192.168.1.1/path PATCH patchInfo                             -> Sends HTTP PATCH to http://192.168.1.1/path with body "potato"
+
+  // Valid HTTP Commands: GET, POST, PUT, and PATCH
+  // An unlimited number of headers can be sent per request, and a body can be sent for all command types
+  // The body will be ignored if sending a GET command
+
+#if defined(ESP32) && defined(USE_WEBCLIENT_HTTPS)
+  HTTPClientLight http;
+#else // HTTP only
+  WiFiClient http_client;
+  HTTPClient http;
+#endif
+
+  int status = WEBCMND_WRONG_PARAMETERS;
+
+  char *temp;
+  const char *url = strtok_r(buffer, " ", &temp);
+  const char *method = strtok_r(temp, " ", &temp);
+
+  if (url) {
+#if defined(ESP32) && defined(USE_WEBCLIENT_HTTPS)
+    if (http.begin(UrlEncode(url))) {
+#else // HTTP only
+    if (http.begin(http_client, UrlEncode(url))) {
+#endif
+      char empty_body[1] = { 0 };
+      char *body = empty_body;
+      if (temp) {                             // There is a body and/or header
+        if (temp[0] == '[') {                 // Header information was sent; decode it
+          temp += 1;
+          temp = strtok_r(temp, "]", &body);
+          bool headerFound = true;
+          while (headerFound) {
+            char *header = strtok_r(temp, ":", &temp);
+            if (header) {
+              char *headerBody = strtok_r(temp, "|", &temp);
+              if (headerBody) {
+                http.addHeader(header, headerBody);
+              }
+              else headerFound = false;
+            }
+            else headerFound = false;
+          }
+        } else {                              // No header information was sent, but there was a body
+          body = temp;
+        }
+      }
+
+      int http_code;
+      if ((!method) || 0 == strcasecmp_P(method, PSTR("GET"))) { http_code = http.GET(); }
+      else if (0 == strcasecmp_P(method, PSTR("POST"))) { http_code = http.POST(body); }
+      else if (0 == strcasecmp_P(method, PSTR("PUT"))) { http_code = http.PUT(body); }
+      else if (0 == strcasecmp_P(method, PSTR("PATCH"))) { http_code = http.PATCH(body); }
+      else return status;
+
+      if (http_code > 0) {                    // http_code will be negative on error
+#if defined(USE_WEBSEND_RESPONSE) || defined(USE_WEBRUN)
+        if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
+          // Return received data to the user - Adds 900+ bytes to the code
+          String response = http.getString(); // File found at server - may need lot of ram or trigger out of memory!
+          const char* read = response.c_str();
+//          uint32_t len = response.length() + 1;
+//          AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Response '%*_H' = %s"), len, (uint8_t*)read, read);
+#ifdef USE_WEBRUN
+          if (QUERY_RUN == query_function)
+            WebRunInit(read);
+#endif
+#ifdef USE_WEBSEND_RESPONSE
+          char text[3] = { 0 };               // Make room foor double %
+          text[0] = *read++;
+          if (text[0] != '\0') {
+            Response_P(PSTR("{\"" D_CMND_WEBQUERY "\":"));
+            bool assume_json = (text[0] == '{') || (text[0] == '[');
+            if (!assume_json) { ResponseAppend_P(PSTR("\"")); }
+            while (text[0] != '\0') {
+              if (text[0] > 31) {             // Remove control characters like linefeed
+                if ('%' == text[0]) {         // Fix char string formatting for %
+                  text[1] = '%';
+                }
+                if (assume_json) {
+                  if (ResponseAppend_P(text) == ResponseSize()) { break; };
+                } else {
+                  if (ResponseAppend_P(EscapeJSONString(text).c_str()) == ResponseSize()) { break; };
+                }
+              }
+              text[0] = *read++;
+              text[1] = '\0';
+            }
+            if (!assume_json) { ResponseAppend_P(PSTR("\"")); }
+            ResponseJsonEnd();
+#ifdef USE_SCRIPT
+            // recursive call must be possible in this case
+            void script_setaflg(uint8_t flg);
+            script_setaflg(0);
+#endif  // USE_SCRIPT
+            status = WEBCMND_VALID_RESPONSE;
+          } else {
+#endif  // USE_WEBSEND_RESPONSE
+            status = WEBCMND_DONE;
+          }
+        } else
+#endif  // USE_WEBSEND_RESPONSE || USE_WEBRUN
+        status = WEBCMND_DONE;
+      } else {
+        status = WEBCMND_CONNECT_FAILED;
+      }
+      http.end();                             // Clean up connection data
+    } else {
+      status = WEBCMND_HOST_NOT_FOUND;
+    }
+  }
+  return status;
+}
+
+
 int WebSend(char *buffer)
 {
   // [tasmota] POWER1 ON                                               --> Sends http://tasmota/cm?cmnd=POWER1 ON
@@ -3360,120 +3523,6 @@ int WebSend(char *buffer)
 
     DEBUG_CORE_LOG(PSTR("WEB: Uri '%s'"), url.c_str());
     status = WebQuery(const_cast<char*>(url.c_str()));
-  }
-  return status;
-}
-
-int WebQuery(char *buffer) {
-  // http://192.168.1.1/path GET                                         -> Sends HTTP GET http://192.168.1.1/path
-  // http://192.168.1.1/path POST {"some":"message"}                     -> Sends HTTP POST to http://192.168.1.1/path with body {"some":"message"}
-  // http://192.168.1.1/path PUT [Autorization: Bearer abcdxyz] potato   -> Sends HTTP PUT to http://192.168.1.1/path with authorization header and body "potato"
-  // http://192.168.1.1/path PATCH patchInfo                             -> Sends HTTP PATCH to http://192.168.1.1/path with body "potato"
-
-  // Valid HTTP Commands: GET, POST, PUT, and PATCH
-  // An unlimited number of headers can be sent per request, and a body can be sent for all command types
-  // The body will be ignored if sending a GET command
-
-#if defined(ESP32) && defined(USE_WEBCLIENT_HTTPS)
-  HTTPClientLight http;
-#else // HTTP only
-  WiFiClient http_client;
-  HTTPClient http;
-#endif
-
-  int status = WEBCMND_WRONG_PARAMETERS;
-
-  char *temp;
-  char *url = strtok_r(buffer, " ", &temp);
-  char *method = strtok_r(temp, " ", &temp);
-
-  if (url && method) {
-#if defined(ESP32) && defined(USE_WEBCLIENT_HTTPS)
-    if (http.begin(UrlEncode(url))) {
-#else // HTTP only
-    if (http.begin(http_client, UrlEncode(url))) {
-#endif
-      char empty_body[1] = { 0 };
-      char *body = empty_body;
-      if (temp) {                             // There is a body and/or header
-        if (temp[0] == '[') {                 // Header information was sent; decode it
-          temp += 1;
-          temp = strtok_r(temp, "]", &body);
-          bool headerFound = true;
-          while (headerFound) {
-            char *header = strtok_r(temp, ":", &temp);
-            if (header) {
-              char *headerBody = strtok_r(temp, "|", &temp);
-              if (headerBody) {
-                http.addHeader(header, headerBody);
-              }
-              else headerFound = false;
-            }
-            else headerFound = false;
-          }
-        } else {                              // No header information was sent, but there was a body
-          body = temp;
-        }
-      }
-
-      int http_code;
-      if (0 == strcasecmp_P(method, PSTR("GET"))) { http_code = http.GET(); }
-      else if (0 == strcasecmp_P(method, PSTR("POST"))) { http_code = http.POST(body); }
-      else if (0 == strcasecmp_P(method, PSTR("PUT"))) { http_code = http.PUT(body); }
-      else if (0 == strcasecmp_P(method, PSTR("PATCH"))) { http_code = http.PATCH(body); }
-      else return status;
-
-      if (http_code > 0) {                    // http_code will be negative on error
-#ifdef USE_WEBSEND_RESPONSE
-        if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
-          // Return received data to the user - Adds 900+ bytes to the code
-          String response = http.getString(); // File found at server - may need lot of ram or trigger out of memory!
-          const char* read = response.c_str();
-
-//          uint32_t len = response.length() + 1;
-//          AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Response '%*_H' = %s"), len, (uint8_t*)read, read);
-
-          char text[3] = { 0 };               // Make room foor double %
-          text[0] = *read++;
-          if (text[0] != '\0') {
-            Response_P(PSTR("{\"" D_CMND_WEBQUERY "\":"));
-            bool assume_json = (text[0] == '{') || (text[0] == '[');
-            if (!assume_json) { ResponseAppend_P(PSTR("\"")); }
-            while (text[0] != '\0') {
-              if (text[0] > 31) {             // Remove control characters like linefeed
-                if ('%' == text[0]) {         // Fix char string formatting for %
-                  text[1] = '%';
-                }
-                if (assume_json) {
-                  if (ResponseAppend_P(text) == ResponseSize()) { break; };
-                } else {
-                  if (ResponseAppend_P(EscapeJSONString(text).c_str()) == ResponseSize()) { break; };
-                }
-              }
-              text[0] = *read++;
-              text[1] = '\0';
-            }
-            if (!assume_json) { ResponseAppend_P(PSTR("\"")); }
-            ResponseJsonEnd();
-#ifdef USE_SCRIPT
-            // recursive call must be possible in this case
-            void script_setaflg(uint8_t flg);
-            script_setaflg(0);
-#endif  // USE_SCRIPT
-            status = WEBCMND_VALID_RESPONSE;
-          } else {
-            status = WEBCMND_DONE;
-          }
-        } else
-#endif  // USE_WEBSEND_RESPONSE
-        status = WEBCMND_DONE;
-      } else {
-        status = WEBCMND_CONNECT_FAILED;
-      }
-      http.end();                             // Clean up connection data
-    } else {
-      status = WEBCMND_HOST_NOT_FOUND;
-    }
   }
   return status;
 }
@@ -3597,6 +3646,9 @@ const char kWebCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_WEBGETCONFIG
   "|" D_CMND_WEBGETCONFIG
 #endif
+#ifdef USE_WEBRUN
+  "|" D_CMND_WEBRUN
+#endif
 #ifdef USE_CORS
   "|" D_CMND_CORS
 #endif
@@ -3617,6 +3669,9 @@ void (* const WebCommand[])(void) PROGMEM = {
   &CmndWebColor, &CmndWebSensor, &CmndWebButton, &CmndWebCanvas
 #ifdef USE_WEBGETCONFIG
   , &CmndWebGetConfig
+#endif
+#ifdef USE_WEBRUN
+  , &CmndWebRun
 #endif
 #ifdef USE_CORS
   , &CmndCors
@@ -3742,6 +3797,18 @@ void CmndWebQuery(void) {
     }
   }
 }
+
+#ifdef USE_WEBRUN
+void CmndWebRun(void) {
+  if (XdrvMailbox.data_len > 0) {
+    uint32_t result = WebQuery(XdrvMailbox.data, QUERY_RUN);
+    if (result != WEBCMND_VALID_RESPONSE) {
+      char stemp1[20];
+      ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebCmndStatus));
+    }
+  }
+}
+#endif // #ifdef USE_WEBRUN
 
 #ifdef USE_WEBGETCONFIG
 void CmndWebGetConfig(void) {
@@ -3875,6 +3942,9 @@ bool Xdrv01(uint32_t function)
   switch (function) {
     case FUNC_LOOP:
       PollDnsWebserver();
+#ifdef USE_WEBRUN
+      WebRunLoop();
+#endif // #ifdef USE_WEBRUN
 #ifdef USE_EMULATION
       if (Settings->flag2.emulation) { PollUdp(); }
 #endif  // USE_EMULATION
