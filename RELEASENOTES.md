@@ -126,12 +126,16 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Breaking Changed
 
 ### Changed
+- GPIOViewer from v1.5.2 to v1.5.3
 - On universal display remove default backlight power if a PWM channel is used for backlight
 - ESP32 compiler option from `target-align` to `no-target-align` [#21407](https://github.com/arendst/Tasmota/issues/21407)
+- Berry binary compiled with gcc [#21426](https://github.com/arendst/Tasmota/issues/21426)
 
 ### Fixed
 - Domoticz re-subscribe on MQTT reconnect. Regression from v13.4.0.3 [#21281](https://github.com/arendst/Tasmota/issues/21281)
-- Watchdog restart or freeze if ``displaytext`` is more than 128 characters (#21401)[#21401](https://github.com/arendst/Tasmota/issues/21401)
+- Watchdog restart or freeze if ``displaytext`` is more than 128 characters [#21401](https://github.com/arendst/Tasmota/issues/21401)
+- Avoid connection errors when switching to safeboot to upload OTA firmware [#21428](https://github.com/arendst/Tasmota/issues/21428)
+- Berry Leds matrix alternate more and error about 'bri' attribute [#21431](https://github.com/arendst/Tasmota/issues/21431)
 
 ### Removed
 - Support of old insecure fingerprint algorithm. Deprecated since v8.4.0 [#21417](https://github.com/arendst/Tasmota/issues/21417)

@@ -12,13 +12,14 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - ESP32 compiler option from `target-align` to `no-target-align` (#21407)
 - On universal display remove default backlight power if a PWM channel is used for backlight
-- Berry binary compiled with gcc
+- Berry binary compiled with gcc (#21426)
+- GPIOViewer from v1.5.2 to v1.5.3 (No functional change)
 
 ### Fixed
 - Domoticz re-subscribe on MQTT reconnect. Regression from v13.4.0.3 (#21281)
 - Watchdog restart or freeze if ``displaytext`` is more than 128 characters (#21401)
-- Avoid connection errors when switching to safeboot to upload OTA firmware
-- Berry Leds matrix alternate more and error about 'bri' attribute
+- Avoid connection errors when switching to safeboot to upload OTA firmware (#21428)
+- Berry Leds matrix alternate more and error about 'bri' attribute (#21431)
 
 ### Removed
 - Support of old insecure fingerprint algorithm. Deprecated since v8.4.0 (#21417)
