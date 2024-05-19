@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 26.04.2024
+ * Updated until v9.4.0.1 - Last update 19.05.2024
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -76,7 +76,7 @@
 #define D_COMMAND              "Comando"
 #define D_CONNECTED            "Connesso"
 #define D_CORS_DOMAIN          "Dominio CORS"
-#define D_COLOR "Color"
+#define D_COLOR                "Colore"
 #define D_COUNT                "Conteggio"
 #define D_COUNTER              "Contatore"
 #define D_CT_POWER             "Alimentazione CT"
