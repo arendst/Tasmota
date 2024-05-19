@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - Watchdog restart or freeze if ``displaytext`` is more than 128 characters (#21401)
 - Avoid connection errors when switching to safeboot to upload OTA firmware (#21428)
 - Berry Leds matrix alternate more and error about 'bri' attribute (#21431)
+- Wrong timeout in `WebQuery` and `webclient` since Core3
 
 ### Removed
 - Support of old insecure fingerprint algorithm. Deprecated since v8.4.0 (#21417)
