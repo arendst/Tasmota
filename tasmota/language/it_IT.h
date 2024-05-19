@@ -791,6 +791,8 @@
 #define D_GPIO_RN2XX3_RX                "RN2XX3 - RX"
 #define D_GPIO_RN2XX3_RST               "RN2XX3 - Rst"
 #define D_GPIO_LORA_CS                  "LoRa - CS"
+#define D_GPIO_ASR650X_TX               "ASR650x - TX"
+#define D_GPIO_ASR650X_RX               "ASR650x - RX"
 #define D_GPIO_LORA_RST                 "LoRa - Rst"
 #define D_GPIO_LORA_BUSY                "LoRa - Busy"
 #define D_GPIO_LORA_DI                  "LoRa - DIO"    // Suffix "0","1","2"
