@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 ## [14.0.0.1]
 ### Added
 - Enabled watchdog for ESP32 and variants (#21422)
+- Optional command ``WebRun`` (as WebQuery extension) (#21364)
+- Knx dimmer and color (#21434)
 
 ### Breaking Changed
 
@@ -14,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - On universal display remove default backlight power if a PWM channel is used for backlight
 - Berry binary compiled with gcc (#21426)
 - GPIOViewer from v1.5.2 to v1.5.3 (No functional change)
+- ESP32 I2S audio improvements (#21433)
 
 ### Fixed
 - Domoticz re-subscribe on MQTT reconnect. Regression from v13.4.0.3 (#21281)

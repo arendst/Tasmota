@@ -121,6 +121,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v14.0.0.1
 ### Added
+- Optional command ``WebRun`` (as WebQuery extension) [#21364](https://github.com/arendst/Tasmota/issues/21364)
+- Knx dimmer and color [#21434](https://github.com/arendst/Tasmota/issues/21434)
 - Enabled watchdog for ESP32 and variants [#21422](https://github.com/arendst/Tasmota/issues/21422)
 
 ### Breaking Changed
@@ -129,6 +131,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - GPIOViewer from v1.5.2 to v1.5.3
 - On universal display remove default backlight power if a PWM channel is used for backlight
 - ESP32 compiler option from `target-align` to `no-target-align` [#21407](https://github.com/arendst/Tasmota/issues/21407)
+- ESP32 I2S audio improvements [#21433](https://github.com/arendst/Tasmota/issues/21433)
 - Berry binary compiled with gcc [#21426](https://github.com/arendst/Tasmota/issues/21426)
 
 ### Fixed
