@@ -26,8 +26,6 @@ void Rtttl(char *buffer);
 
 void Rtttl(char *buffer) {
 
-  if (!audio_i2s.out) return;
-
   AudioGeneratorRTTTL *rtttl;
   AudioFileSourcePROGMEM *file = NULL;
 

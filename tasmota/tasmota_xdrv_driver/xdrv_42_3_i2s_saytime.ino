@@ -120,7 +120,7 @@ AudioGeneratorTalkie *talkie = nullptr;
 }
 
 void Cmd_Time(void) {
-  if (!audio_i2s.out) return;
+  if (I2SPrepareTx() != I2S_OK) return;
   sayTime(RtcTime.hour, RtcTime.minute);
   ResponseCmndDone();
 }

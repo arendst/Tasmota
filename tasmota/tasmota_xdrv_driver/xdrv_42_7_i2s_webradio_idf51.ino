@@ -83,7 +83,7 @@ void Webradio(const char *url) {
   }
 
   AddLog(LOG_LEVEL_DEBUG,PSTR("I2S: will launch webradio task"));
-  xTaskCreatePinnedToCore(I2sMp3Task2, "MP3-2", 8192, NULL, 3, &audio_i2s_mp3.mp3_task_handle, 1);
+  xTaskCreatePinnedToCore(I2sMp3WrTask, "MP3-WR", 8192, NULL, 3, &audio_i2s_mp3.mp3_task_handle, 1);
 }
 
 #ifdef USE_WEBSERVER
