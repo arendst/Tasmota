@@ -847,7 +847,6 @@ void I2sMp3WrTask(void *arg){
     if (audio_i2s_mp3.decoder && audio_i2s_mp3.decoder->isRunning()) {
       if (!audio_i2s_mp3.decoder->loop()) {
         audio_i2s_mp3.task_running = false;
-        //retryms = millis() + 2000;
       }
       vTaskDelay(pdMS_TO_TICKS(1));
     }
