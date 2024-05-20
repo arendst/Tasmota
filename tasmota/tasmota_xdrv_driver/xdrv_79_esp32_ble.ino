@@ -151,8 +151,12 @@ i.e. the Bluetooth of the ESP can be shared without conflict.
 #include "NimBLEEddystoneTLM.h"
 #include "NimBLEBeacon.h"
 
+// assume this hack is still valid.
+#define DEPENDSONNIMBLEARDUINO 1
+#ifdef DEPENDSONNIMBLEARDUINO        
 // from ble_gap.c
 extern "C" void ble_gap_conn_broken(uint16_t conn_handle, int reason);
+#endif
 
 #ifdef BLE_ESP32_EXAMPLES
 void installExamples();
@@ -1329,6 +1333,10 @@ static BLESensorCallback clientCB;
 
 
 class BLEAdvCallbacks: public NimBLEScanCallbacks {
+  void onScanEnd(NimBLEScanResults results) {
+    BLEscanEndedCB(results);
+  }
+
   void onResult(NimBLEAdvertisedDevice* advertisedDevice) {
     TasAutoMutex localmutex(&BLEOperationsRecursiveMutex, "BLEAddCB");
     uint64_t now = esp_timer_get_time();
@@ -1684,7 +1692,9 @@ static void BLETaskStopStartNimBLE(NimBLEClient **ppClient, bool start = true){
      */
     (*ppClient)->setConnectionParams(12,12,0,51);
     /** Set how long we are willing to wait for the connection to complete (seconds), default is 30. */
-    (*ppClient)->setConnectTimeout(15);
+    // this is now in ms!!!! despite docs.
+    // let's just leave it at the default 30s?
+    //(*ppClient)->setConnectTimeout(15 * 1000);
   }
 
   uint64_t now = esp_timer_get_time();
@@ -1719,7 +1729,8 @@ int BLETaskStartScan(int time){
 #endif
   //vTaskDelay(500/ portTICK_PERIOD_MS);
   ble32Scan->setActiveScan(BLEScanActiveMode ? 1: 0);
-
+  // we read the results dynamically as they come in.
+  ble32Scan->setMaxResults(0);
 
   // seems we could get the callback within the start call....
   // so set these before starting
@@ -1729,7 +1740,11 @@ int BLETaskStartScan(int time){
     time = BLETriggerScan;
     BLETriggerScan = 0;
   }
-  ble32Scan->start(time, true); // 20s scans, restarted when then finish
+
+  // note: this is documented as being seconds.  However, experience and Apache docs tells us ms.
+  time = time * 1000;
+  ble32Scan->start(time, false); // 20s scans, restarted when then finish
+  
   //vTaskDelay(500/ portTICK_PERIOD_MS);
   return 0;
 }
@@ -2037,9 +2052,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
 
   } else { // connect itself failed
     newstate = GEN_STATE_FAILED_CONNECT;
-//#define NIMBLE_CLIENT_HAS_RESULT 1
-#ifdef NIMBLE_CLIENT_HAS_RESULT
-    int rc = pClient->m_result;
+    int rc = pClient->getLastError();
 
     switch (rc){
       case (0x0200+BLE_ERR_CONN_LIMIT ):
@@ -2056,10 +2069,8 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
     if (rc){
       AddLog(LOG_LEVEL_ERROR,PSTR("BLE: failed to connect to device low level rc 0x%x"), rc);
     }
-#else
     // failed to connect
     AddLog(LOG_LEVEL_ERROR,PSTR("BLE: failed to connect to device"));
-#endif
   }
   op->state = newstate;
 }
@@ -2091,7 +2102,9 @@ static void BLETaskRunTaskDoneOperation(BLE_ESP32::generic_sensor_t** op, NimBLE
       waits++;
       if (waits == 5){
         int conn_id = (*ppClient)->getConnId();
+#ifdef DEPENDSONNIMBLEARDUINO        
         ble_gap_conn_broken(conn_id, -1);
+#endif        
 #ifdef BLE_ESP32_DEBUG
         AddLog(LOG_LEVEL_ERROR,PSTR("BLE: wait discon%d - kill connection"), waits);
 #endif
