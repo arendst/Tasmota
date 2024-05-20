@@ -1688,7 +1688,9 @@ static void BLETaskStopStartNimBLE(NimBLEClient **ppClient, bool start = true){
      */
     (*ppClient)->setConnectionParams(12,12,0,51);
     /** Set how long we are willing to wait for the connection to complete (seconds), default is 30. */
-    (*ppClient)->setConnectTimeout(15);
+    // this is now in ms!!!! despite docs.
+    // let's just leave it at the default 30s?
+    //(*ppClient)->setConnectTimeout(15 * 1000);
   }
 
   uint64_t now = esp_timer_get_time();
@@ -2046,9 +2048,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
 
   } else { // connect itself failed
     newstate = GEN_STATE_FAILED_CONNECT;
-//#define NIMBLE_CLIENT_HAS_RESULT 1
-#ifdef NIMBLE_CLIENT_HAS_RESULT
-    int rc = pClient->m_result;
+    int rc = pClient->getLastError();
 
     switch (rc){
       case (0x0200+BLE_ERR_CONN_LIMIT ):
@@ -2065,10 +2065,8 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
     if (rc){
       AddLog(LOG_LEVEL_ERROR,PSTR("BLE: failed to connect to device low level rc 0x%x"), rc);
     }
-#else
     // failed to connect
     AddLog(LOG_LEVEL_ERROR,PSTR("BLE: failed to connect to device"));
-#endif
   }
   op->state = newstate;
 }
