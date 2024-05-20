@@ -190,7 +190,7 @@ public:
      */
     void setTimeout(uint32_t timeoutSec)
     {
-        _tcp_client->setTimeout(timeoutSec);
+        _tcp_client->setTimeout(timeoutSec * 1000);
     }
 
     /**  Set the BearSSL IO buffer size.
