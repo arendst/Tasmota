@@ -1329,6 +1329,10 @@ static BLESensorCallback clientCB;
 
 
 class BLEAdvCallbacks: public NimBLEScanCallbacks {
+  void onScanEnd(NimBLEScanResults results) {
+    BLEscanEndedCB(results);
+  }
+
   void onResult(NimBLEAdvertisedDevice* advertisedDevice) {
     TasAutoMutex localmutex(&BLEOperationsRecursiveMutex, "BLEAddCB");
     uint64_t now = esp_timer_get_time();
