@@ -1723,7 +1723,8 @@ int BLETaskStartScan(int time){
 #endif
   //vTaskDelay(500/ portTICK_PERIOD_MS);
   ble32Scan->setActiveScan(BLEScanActiveMode ? 1: 0);
-
+  // we read the results dynamically as they come in.
+  ble32Scan->setMaxResults(0);
 
   // seems we could get the callback within the start call....
   // so set these before starting
@@ -1733,7 +1734,11 @@ int BLETaskStartScan(int time){
     time = BLETriggerScan;
     BLETriggerScan = 0;
   }
-  ble32Scan->start(time, true); // 20s scans, restarted when then finish
+
+  // note: this is documented as being seconds.  However, experience and Apache docs tells us ms.
+  time = time * 1000;
+  ble32Scan->start(time, false); // 20s scans, restarted when then finish
+  
   //vTaskDelay(500/ portTICK_PERIOD_MS);
   return 0;
 }
