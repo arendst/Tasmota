@@ -323,7 +323,7 @@ bool Z_Device::setEPName(uint8_t ep, const char * name) {
 }
 
 void Z_Device::setStringAttribute(char*& attr, const char * str) {
-  if (nullptr == str)  { str = PSTR(""); }    // nullptr is considered empty string
+  if (nullptr == str)  { str = ""; }    // nullptr is considered empty string, don't use PROGMEM to avoid crash
   size_t str_len = strlen(str);
 
   if ((nullptr == attr) && (0 == str_len)) { return; } // if both empty, don't do anything
