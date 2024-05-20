@@ -151,8 +151,12 @@ i.e. the Bluetooth of the ESP can be shared without conflict.
 #include "NimBLEEddystoneTLM.h"
 #include "NimBLEBeacon.h"
 
+// assume this hack is still valid.
+#define DEPENDSONNIMBLEARDUINO 1
+#ifdef DEPENDSONNIMBLEARDUINO        
 // from ble_gap.c
 extern "C" void ble_gap_conn_broken(uint16_t conn_handle, int reason);
+#endif
 
 #ifdef BLE_ESP32_EXAMPLES
 void installExamples();
@@ -2098,7 +2102,9 @@ static void BLETaskRunTaskDoneOperation(BLE_ESP32::generic_sensor_t** op, NimBLE
       waits++;
       if (waits == 5){
         int conn_id = (*ppClient)->getConnId();
+#ifdef DEPENDSONNIMBLEARDUINO        
         ble_gap_conn_broken(conn_id, -1);
+#endif        
 #ifdef BLE_ESP32_DEBUG
         AddLog(LOG_LEVEL_ERROR,PSTR("BLE: wait discon%d - kill connection"), waits);
 #endif
