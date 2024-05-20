@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 - Avoid connection errors when switching to safeboot to upload OTA firmware (#21428)
 - Berry Leds matrix alternate more and error about 'bri' attribute (#21431)
 - Wrong timeout in `WebQuery` and `webclient` since Core3
+- Zigbee crash when removing `ZbName`
 
 ### Removed
 - Support of old insecure fingerprint algorithm. Deprecated since v8.4.0 (#21417)
