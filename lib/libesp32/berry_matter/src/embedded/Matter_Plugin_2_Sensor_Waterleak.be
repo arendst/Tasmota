@@ -104,7 +104,7 @@ class Matter_Plugin_Sensor_Waterleak : Matter_Plugin_Device
   #
   # Update internal state for virtual devices
   def update_virtual(payload_json)
-    var val_onoff = payload_json.find("Contact")
+    var val_onoff = payload_json.find("Waterleak")
     if val_onoff != nil
       val_onoff = bool(val_onoff)
       if self.shadow_leak != val_onoff
