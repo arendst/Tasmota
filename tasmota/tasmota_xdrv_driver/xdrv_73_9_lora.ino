@@ -213,10 +213,10 @@ void LoraInput(void) {
         }
       } else {
         *--command_part = ' ';           // Restore strtok_r '/0'
-        rcvd_data++;                     // Remove TAS_LORA_REMOTE_COMMAND header
-        packet_size--;
       }
     }
+    rcvd_data++;                         // Remove TAS_LORA_REMOTE_COMMAND header
+    packet_size--;                       // Adjust packet size
   }
 
   bool raw = Lora->raw;
