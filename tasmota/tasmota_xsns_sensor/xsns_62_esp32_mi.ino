@@ -2661,8 +2661,8 @@ void MI32Show(bool json)
         char _MAC[18];
         ToHex_P(MIBLEsensors[i].MAC,6,_MAC,18,':');
         const char * _sensorName = MI32getDeviceName(i);
-        WSContentSend_PD(HTTP_MI32_MAC, _sensorName, D_MAC_ADDRESS, _MAC);
-        WSContentSend_PD(HTTP_RSSI, _sensorName, MIBLEsensors[i].RSSI);
+        WSContentSend_P(HTTP_MI32_MAC, _sensorName, D_MAC_ADDRESS, _MAC);
+        WSContentSend_P(HTTP_RSSI, _sensorName, MIBLEsensors[i].RSSI);
         if (MIBLEsensors[i].type==FLORA) {
           if (!isnan(MIBLEsensors[i].temp)) {
             WSContentSend_Temp(_sensorName, MIBLEsensors[i].temp);
