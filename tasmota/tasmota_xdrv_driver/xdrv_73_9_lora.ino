@@ -212,6 +212,7 @@ void LoraInput(void) {
         }
       } else {
         *--command_part = ' ';           // Restore strtok_r '/0'
+        data[0] = ' ';                   // Remove TAS_LORA_REMOTE_COMMAND header
       }
     }
   }
