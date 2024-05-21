@@ -2789,7 +2789,7 @@ void HandleMI32Key(){
 
   WSContentSend_P(HTTP_KEY_ADDED, mac, key);
 
-  strncat(key, mac, sizeof(key));
+  strcat(key, mac);
   MI32AddKey(key, nullptr);
 
 //  WSContentSpaceButton(BUTTON_CONFIGURATION);
