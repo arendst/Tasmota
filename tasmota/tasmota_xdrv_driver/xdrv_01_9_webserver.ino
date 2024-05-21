@@ -3112,6 +3112,7 @@ void HandleSwitchBootPartition(void)
 
   // apply the change in flash and return result
   if (switch_factory || switch_ota) {
+    XsnsXdrvCall(FUNC_ABOUT_TO_RESTART);
     SettingsSaveAll();
     if (switch_factory) {
       EspPrepRestartToSafeBoot();

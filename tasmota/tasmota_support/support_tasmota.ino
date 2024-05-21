@@ -1436,6 +1436,7 @@ void Every250mSeconds(void)
             OtaFactoryWrite(true);
 #endif
             RtcSettings.ota_loader = 1;                 // Try safeboot image next
+            XsnsXdrvCall(FUNC_ABOUT_TO_RESTART);
             SettingsSaveAll();
             AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
             EspPrepRestartToSafeBoot();
@@ -1583,6 +1584,7 @@ void Every250mSeconds(void)
       }
 
       if (2 == TasmotaGlobal.restart_flag) {              // Restart 1
+        XsnsXdrvCall(FUNC_ABOUT_TO_RESTART);
         SettingsSaveAll();
       }
 
