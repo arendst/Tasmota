@@ -253,8 +253,10 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_2_Sensor_Occupancy.h"
 #include "solidify/solidified_Matter_Plugin_2_Sensor_OnOff.h"
 #include "solidify/solidified_Matter_Plugin_2_Sensor_Contact.h"
+#include "solidify/solidified_Matter_Plugin_2_Sensor_Waterleak.h"
 #include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Contact.h"
 #include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Occupancy.h"
+#include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Waterleak.h"
 #include "solidify/solidified_Matter_Plugin_2_Bridge_HTTP.h"
 #include "solidify/solidified_Matter_Plugin_4_Bridge_OnOff.h"
 #include "solidify/solidified_Matter_Plugin_3_Bridge_Light0.h"
@@ -269,6 +271,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_3_Bridge_Sensor_Occupancy.h"
 #include "solidify/solidified_Matter_Plugin_3_Bridge_Sensor_Contact.h"
 #include "solidify/solidified_Matter_Plugin_4_Bridge_Sensor_Flow.h"
+#include "solidify/solidified_Matter_Plugin_3_Bridge_Sensor_Waterleak.h"
 #include "solidify/solidified_Matter_Plugin_z_All.h"
 #include "solidify/solidified_Matter_zz_Device.h"
 
