@@ -638,10 +638,10 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
       case I2S_MODE_STD:
         {
           i2s_std_slot_config_t _slot_cfg = {
-            .data_bit_width = (i2s_data_bit_width_t)bps,
+            .data_bit_width = rx_data_bit_width,
             .slot_bit_width = (i2s_slot_bit_width_t)audio_i2s.Settings->rx.slot_bit_width,
-            .slot_mode = (i2s_slot_mode_t)channels,
-            .slot_mask = (i2s_std_slot_mask_t)audio_i2s.Settings->rx.slot_mask,
+            .slot_mode =  rx_slot_mode,
+            .slot_mask =  (i2s_std_slot_mask_t)_rx_slot_mask,
             .ws_width = audio_i2s.Settings->rx.ws_width,
             .ws_pol = audio_i2s.Settings->rx.ws_pol,
             .bit_shift = audio_i2s.Settings->rx.bit_shift,
@@ -669,7 +669,9 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
               },
             },
           };
-
+          if(audio_i2s.Settings->rx.apll == 1){
+              rx_std_cfg.clk_cfg.clk_src = I2S_CLK_SRC_APLL;
+          }
           err = i2s_channel_init_std_mode(_rx_handle, &rx_std_cfg);
           AddLog(LOG_LEVEL_DEBUG, "I2S: RX i2s_channel_init_std_mode with err:%i", err);
           AddLog(LOG_LEVEL_DEBUG, "I2S: RX channel in standard mode with %u bit width on %i channel(s) initialized", bps, rx_slot_mode);
