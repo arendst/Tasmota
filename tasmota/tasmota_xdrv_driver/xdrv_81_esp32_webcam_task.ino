@@ -22,7 +22,6 @@
 // defining USE_WEBCAM_V2 will this file rather than xdrv_81_esp32_webcam.ino
 #ifdef USE_WEBCAM_V2
 
-#undef WEBCAM_DEV_DEBUG
 
 /*********************************************************************************************\
  * ESP32 webcam based on example in Arduino-ESP32 library
@@ -3012,6 +3011,8 @@ bool Xdrv99(uint32_t function) {
       WcSetStreamserver(Settings->webcam_config.stream);
       WCStartOperationTask();
       break;
+/*  let's NOT trigger off this, as it's used in many places via settingssaveAll(), and so when called the camer dies for the duration
+    because this code is designed to kill the cam and keep it dead ready for reboot.
     case FUNC_SAVE_BEFORE_RESTART: {
       // stop cam clock
 #ifdef WEBCAM_DEV_DEBUG  
@@ -3037,6 +3038,7 @@ bool Xdrv99(uint32_t function) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: FUNC_SAVE_BEFORE_RESTART after delay"));
 #endif      
     } break;
+  */
     case FUNC_ACTIVE:
       result = true;
       break;
