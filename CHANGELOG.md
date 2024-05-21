@@ -7,7 +7,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Enabled watchdog for ESP32 and variants (#21422)
 - Optional command ``WebRun`` (as WebQuery extension) (#21364)
-- Knx dimmer and color (#21434)
+- Support for Knx dimmer and color (#21434)
+- Support for Matter 1.3 Water leak detectors (#21456)
 
 ### Breaking Changed
 
@@ -23,8 +24,10 @@ All notable changes to this project will be documented in this file.
 - Watchdog restart or freeze if ``displaytext`` is more than 128 characters (#21401)
 - Avoid connection errors when switching to safeboot to upload OTA firmware (#21428)
 - Berry Leds matrix alternate more and error about 'bri' attribute (#21431)
-- Wrong timeout in `WebQuery` and `webclient` since Core3
-- Zigbee crash when removing `ZbName`
+- Wrong timeout in `WebQuery` and `webclient` since Core3 (#21442)
+- Webradio crash with invalid url (#21446)
+- Zigbee crash when removing `ZbName` (#21449)
+- ESP32 BLE fix scanning (#21451)
 
 ### Removed
 - Support of old insecure fingerprint algorithm. Deprecated since v8.4.0 (#21417)
