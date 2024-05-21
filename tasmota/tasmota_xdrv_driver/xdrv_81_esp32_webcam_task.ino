@@ -3012,7 +3012,10 @@ bool Xdrv99(uint32_t function) {
       WcSetStreamserver(Settings->webcam_config.stream);
       WCStartOperationTask();
       break;
-    case FUNC_SAVE_BEFORE_RESTART: {
+
+    case FUNC_ABOUT_TO_RESTART: {
+      // this code will kill off the cam completely, allowing nice clean restarts
+
       // stop cam clock
 #ifdef WEBCAM_DEV_DEBUG  
       AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: FUNC_SAVE_BEFORE_RESTART"));
@@ -3037,6 +3040,7 @@ bool Xdrv99(uint32_t function) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: FUNC_SAVE_BEFORE_RESTART after delay"));
 #endif      
     } break;
+
     case FUNC_ACTIVE:
       result = true;
       break;
