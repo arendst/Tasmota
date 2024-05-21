@@ -206,8 +206,10 @@ void LoraInput(void) {
     char *topic_part = strtok_r(payload, " ", &command_part);
     if (topic_part && command_part) {
       if (!strcasecmp(topic_part, SettingsText(SET_MQTT_TOPIC))) {  // Is it mine
-        ExecuteCommand(command_part, SRC_REMOTE);
-        return;
+        if (bitRead(Lora->settings.flags, TAS_LORA_COMMAND_ENABLED)) {
+          ExecuteCommand(command_part, SRC_REMOTE);
+          return;
+        }
       } else {
         *--command_part = ' ';           // Restore strtok_r '/0'
       }
@@ -318,6 +320,7 @@ void CmndLoraOption(void) {
   // LoraOption1 1 - Enable LoRaWanBridge
   // LoraOption2 1 - Enable LoRaWanBridge Join
   // LoraOption3 1 - Enable LoRaWanBridge decoding
+  // LoraOption4 1 - Enable LoRaCommand reception
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 8)) {
     uint32_t pindex = XdrvMailbox.index -1;
     if (XdrvMailbox.payload >= 0) {
