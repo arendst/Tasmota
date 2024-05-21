@@ -2150,33 +2150,19 @@ void GpioInit(void)
       SetPin(14, AGPIO(GPIO_SPI_CLK));
     }
   }
+  AddLogSpi(1, Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_MISO));
 #endif  // ESP8266
 #ifdef ESP32
-/*
-  if (PinUsed(GPIO_SPI_CS) ||
-      PinUsed(GPIO_RC522_CS) ||
-      PinUsed(GPIO_NRF24_CS) ||
-      PinUsed(GPIO_ILI9341_CS) ||
-      PinUsed(GPIO_EPAPER29_CS) ||
-      PinUsed(GPIO_EPAPER42_CS) ||
-      PinUsed(GPIO_ILI9488_CS) ||
-      PinUsed(GPIO_SSD1351_CS) ||
-      PinUsed(GPIO_RA8876_CS) ||
-      PinUsed(GPIO_ST7789_DC) ||  // ST7789 CS may be omitted so chk DC too
-      PinUsed(GPIO_ST7789_CS) ||
-      PinUsed(GPIO_SSD1331_CS) ||
-      PinUsed(GPIO_SDCARD_CS)
-     ) {
-    uint32_t spi_mosi = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MOSI)) ? SPI_MOSI : SPI_NONE;
-    uint32_t spi_miso = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MISO)) ? SPI_MISO : SPI_NONE;
-    TasmotaGlobal.spi_enabled = spi_mosi + spi_miso;
-  }
-*/
   uint32_t spi_mosi = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MOSI)) ? SPI_MOSI : SPI_NONE;
   uint32_t spi_miso = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MISO)) ? SPI_MISO : SPI_NONE;
   TasmotaGlobal.spi_enabled = spi_mosi + spi_miso;
-#endif  // ESP32
   AddLogSpi(1, Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_MISO));
+
+  spi_mosi = (PinUsed(GPIO_SPI_CLK, 1) && PinUsed(GPIO_SPI_MOSI, 1)) ? SPI_MOSI : SPI_NONE;
+  spi_miso = (PinUsed(GPIO_SPI_CLK, 1) && PinUsed(GPIO_SPI_MISO, 1)) ? SPI_MISO : SPI_NONE;
+  TasmotaGlobal.spi_enabled2 = spi_mosi + spi_miso;
+  AddLogSpi(2, Pin(GPIO_SPI_CLK, 1), Pin(GPIO_SPI_MOSI, 1), Pin(GPIO_SPI_MISO, 1));
+#endif  // ESP32
 #endif  // USE_SPI
 
   for (uint32_t i = 0; i < nitems(TasmotaGlobal.my_module.io); i++) {
