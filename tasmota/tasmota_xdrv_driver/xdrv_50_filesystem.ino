@@ -950,34 +950,32 @@ public:
 };
 
 void UFSServe(void) {
+  bool result = false;
   if (XdrvMailbox.data_len > 0) {
-    bool result = false;
     char *fpath = strtok(XdrvMailbox.data, ",");
     char *url = strtok(nullptr, ",");
     char *noauth = strtok(nullptr, ",");
     if (fpath && url) {
-      char t[] = "";
-      StaticRequestHandlerAuth *staticHandler;
-      if (noauth && *noauth == '1'){
-        staticHandler = (StaticRequestHandlerAuth *) new StaticRequestHandler(*ffsp, fpath, url, (char *)nullptr);
-      } else {
-        staticHandler = new StaticRequestHandlerAuth(*ffsp, fpath, url, (char *)nullptr);
-      }
-      if (staticHandler) {
-        //Webserver->serveStatic(url, *ffsp, fpath);
-        Webserver->addHandler(staticHandler);
-        Webserver->enableCORS(true);
-        result = true;
-      } else {
-        // could this happen?  only lack of memory.
-        result = false;
+      if (Webserver) { // fail if no Webserver yet.
+        StaticRequestHandlerAuth *staticHandler;
+        if (noauth && *noauth == '1'){
+          staticHandler = (StaticRequestHandlerAuth *) new StaticRequestHandler(*ffsp, fpath, url, (char *)nullptr);
+        } else {
+          staticHandler = new StaticRequestHandlerAuth(*ffsp, fpath, url, (char *)nullptr);
+        }
+        if (staticHandler) {
+          //Webserver->serveStatic(url, *ffsp, fpath);
+          Webserver->addHandler(staticHandler);
+          Webserver->enableCORS(true);
+          result = true;
+        }
       }
     }
-    if (!result) {
-      ResponseCmndFailed();
-    } else {
-      ResponseCmndDone();
-    }
+  }
+  if (!result) {
+    ResponseCmndFailed();
+  } else {
+    ResponseCmndDone();
   }
 }
 #endif // UFILESYS_STATIC_SERVING
