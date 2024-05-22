@@ -247,6 +247,9 @@ uint16_t SendMail(char *buffer) {
 
                 /* Connect to server with the session config */
                 delay(0);
+
+                smtp->closeSession();  // Fix watchdog due to long connection time (#21454)
+
                 if (smtp->connect(&session)) {
                   /* Start sending the Email and close the session */
                   delay(0);
@@ -264,7 +267,8 @@ uint16_t SendMail(char *buffer) {
     }
   }
 
-  if (smtp) { delete smtp; }
+  if (smtp) { delete smtp;
+  }
   for (uint32_t cnt = 0; cnt < MAX_ATTCHMENTS; cnt++) {
     if (attachments[cnt]) {
       free(attachments[cnt]);

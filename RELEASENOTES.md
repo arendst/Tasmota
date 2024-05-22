@@ -141,6 +141,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Wrong timeout in `WebQuery` and `webclient` since Core3 [#21442](https://github.com/arendst/Tasmota/issues/21442)
 - Zigbee crash when removing `ZbName` [#21449](https://github.com/arendst/Tasmota/issues/21449)
 - Avoid connection errors when switching to safeboot to upload OTA firmware [#21428](https://github.com/arendst/Tasmota/issues/21428)
+- `SendMail` watchdog restart during reconnect to SMTP server [#21454](https://github.com/arendst/Tasmota/issues/21454)
 - ESP32 BLE fix scanning [#21451](https://github.com/arendst/Tasmota/issues/21451)
 - Webradio crash with invalid url [#21446](https://github.com/arendst/Tasmota/issues/21446)
 - Berry Leds matrix alternate more and error about 'bri' attribute [#21431](https://github.com/arendst/Tasmota/issues/21431)
