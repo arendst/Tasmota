@@ -194,15 +194,21 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
-  // Berry: `webserver.content_send(string) -> nil`
+  // Berry: `webserver.content_send(string or bytes) -> nil`
   //
   int32_t w_webserver_content_send(struct bvm *vm);
   int32_t w_webserver_content_send(struct bvm *vm) {
     int32_t argc = be_top(vm); // Get the number of arguments
-    if (argc >= 1 && (be_isstring(vm, 1) || be_iscomptr(vm, 1))) {
+    if (argc >= 1 && (be_isstring(vm, 1) || be_iscomptr(vm, 1) || be_isbytes(vm, 1))) {
       const char * html;
       if (be_isstring(vm, 1)) {
         html = be_tostring(vm, 1);
+      }
+      else if(be_isbytes(vm, 1)) {
+        size_t buf_len;
+        const char* buf_ptr = (const char*) be_tobytes(vm, 1, &buf_len);
+        WSContentSend(buf_ptr, buf_len);
+        be_return_nil(vm);
       } else {
         html = (const char*) be_tocomptr(vm, 1);
       }
