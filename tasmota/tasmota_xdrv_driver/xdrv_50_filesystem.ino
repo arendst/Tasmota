@@ -1319,6 +1319,8 @@ void UfsListDir(char *path, uint8_t depth) {
                           HtmlEscape(name).c_str(), tstr.c_str(), entry.size(), delpath, editpath);
         }
         entry.close();
+
+        yield(); // trigger watchdog reset
       }
     }
     dir.close();
