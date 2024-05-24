@@ -669,9 +669,11 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
               },
             },
           };
+#if SOC_I2S_SUPPORTS_APLL
           if(audio_i2s.Settings->rx.apll == 1){
               rx_std_cfg.clk_cfg.clk_src = I2S_CLK_SRC_APLL;
           }
+#endif //SOC_I2S_SUPPORTS_APLL
           err = i2s_channel_init_std_mode(_rx_handle, &rx_std_cfg);
           AddLog(LOG_LEVEL_DEBUG, "I2S: RX i2s_channel_init_std_mode with err:%i", err);
           AddLog(LOG_LEVEL_DEBUG, "I2S: RX channel in standard mode with %u bit width on %i channel(s) initialized", bps, rx_slot_mode);
