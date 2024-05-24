@@ -9,7 +9,8 @@ extern const bclass be_class_Matter_Plugin_Light1;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Matter_Plugin_Light1_init,   /* name */
+extern const bclass be_class_Matter_Plugin_Light1;
+be_local_closure(class_Matter_Plugin_Light1_init,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     4,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Matter_Plugin_Light1_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Light1, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -49,7 +50,8 @@ be_local_closure(Matter_Plugin_Light1_init,   /* name */
 /********************************************************************
 ** Solidified function: invoke_request
 ********************************************************************/
-be_local_closure(Matter_Plugin_Light1_invoke_request,   /* name */
+extern const bclass be_class_Matter_Plugin_Light1;
+be_local_closure(class_Matter_Plugin_Light1_invoke_request,   /* name */
   be_nested_proto(
     22,                          /* nstack */
     4,                          /* argc */
@@ -57,7 +59,7 @@ be_local_closure(Matter_Plugin_Light1_invoke_request,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Light1, 
     1,                          /* has constants */
     ( &(const bvalue[23]) {     /* constants */
     /* K0   */  be_nested_str_weak(light),
@@ -263,7 +265,8 @@ be_local_closure(Matter_Plugin_Light1_invoke_request,   /* name */
 /********************************************************************
 ** Solidified function: set_onoff
 ********************************************************************/
-be_local_closure(Matter_Plugin_Light1_set_onoff,   /* name */
+extern const bclass be_class_Matter_Plugin_Light1;
+be_local_closure(class_Matter_Plugin_Light1_set_onoff,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -271,7 +274,7 @@ be_local_closure(Matter_Plugin_Light1_set_onoff,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Light1, 
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(VIRTUAL),
@@ -315,7 +318,8 @@ be_local_closure(Matter_Plugin_Light1_set_onoff,   /* name */
 /********************************************************************
 ** Solidified function: update_shadow
 ********************************************************************/
-be_local_closure(Matter_Plugin_Light1_update_shadow,   /* name */
+extern const bclass be_class_Matter_Plugin_Light1;
+be_local_closure(class_Matter_Plugin_Light1_update_shadow,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     1,                          /* argc */
@@ -323,7 +327,7 @@ be_local_closure(Matter_Plugin_Light1_update_shadow,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Light1, 
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
     /* K0   */  be_nested_str_weak(VIRTUAL),
@@ -402,7 +406,8 @@ be_local_closure(Matter_Plugin_Light1_update_shadow,   /* name */
 /********************************************************************
 ** Solidified function: update_virtual
 ********************************************************************/
-be_local_closure(Matter_Plugin_Light1_update_virtual,   /* name */
+extern const bclass be_class_Matter_Plugin_Light1;
+be_local_closure(class_Matter_Plugin_Light1_update_virtual,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     2,                          /* argc */
@@ -410,7 +415,7 @@ be_local_closure(Matter_Plugin_Light1_update_virtual,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Light1, 
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(find),
@@ -464,7 +469,8 @@ be_local_closure(Matter_Plugin_Light1_update_virtual,   /* name */
 /********************************************************************
 ** Solidified function: read_attribute
 ********************************************************************/
-be_local_closure(Matter_Plugin_Light1_read_attribute,   /* name */
+extern const bclass be_class_Matter_Plugin_Light1;
+be_local_closure(class_Matter_Plugin_Light1_read_attribute,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     4,                          /* argc */
@@ -472,7 +478,7 @@ be_local_closure(Matter_Plugin_Light1_read_attribute,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Light1, 
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -574,7 +580,8 @@ be_local_closure(Matter_Plugin_Light1_read_attribute,   /* name */
 /********************************************************************
 ** Solidified function: set_bri
 ********************************************************************/
-be_local_closure(Matter_Plugin_Light1_set_bri,   /* name */
+extern const bclass be_class_Matter_Plugin_Light1;
+be_local_closure(class_Matter_Plugin_Light1_set_bri,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     3,                          /* argc */
@@ -582,7 +589,7 @@ be_local_closure(Matter_Plugin_Light1_set_bri,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Light1, 
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -681,12 +688,12 @@ be_local_class(Matter_Plugin_Light1,
     &be_class_Matter_Plugin_Device,
     be_nested_map(15,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(init, -1), be_const_closure(Matter_Plugin_Light1_init_closure) },
-        { be_const_key_weak(update_shadow, -1), be_const_closure(Matter_Plugin_Light1_update_shadow_closure) },
-        { be_const_key_weak(invoke_request, -1), be_const_closure(Matter_Plugin_Light1_invoke_request_closure) },
-        { be_const_key_weak(set_onoff, -1), be_const_closure(Matter_Plugin_Light1_set_onoff_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_Matter_Plugin_Light1_init_closure) },
+        { be_const_key_weak(update_shadow, -1), be_const_closure(class_Matter_Plugin_Light1_update_shadow_closure) },
+        { be_const_key_weak(invoke_request, -1), be_const_closure(class_Matter_Plugin_Light1_invoke_request_closure) },
+        { be_const_key_weak(set_onoff, -1), be_const_closure(class_Matter_Plugin_Light1_set_onoff_closure) },
         { be_const_key_weak(TYPE, 10), be_nested_str_weak(light1) },
-        { be_const_key_weak(update_virtual, 11), be_const_closure(Matter_Plugin_Light1_update_virtual_closure) },
+        { be_const_key_weak(update_virtual, 11), be_const_closure(class_Matter_Plugin_Light1_update_virtual_closure) },
         { be_const_key_weak(UPDATE_TIME, 8), be_const_int(250) },
         { be_const_key_weak(shadow_bri, 1), be_const_var(1) },
         { be_const_key_weak(DISPLAY_NAME, -1), be_nested_str_weak(Light_X201_X20Dimmer) },
@@ -800,18 +807,11 @@ be_local_class(Matter_Plugin_Light1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(257, -1), be_const_int(2) },
     }))    ) } )) },
-        { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_Light1_read_attribute_closure) },
+        { be_const_key_weak(read_attribute, -1), be_const_closure(class_Matter_Plugin_Light1_read_attribute_closure) },
         { be_const_key_weak(shadow_onoff, -1), be_const_var(0) },
-        { be_const_key_weak(set_bri, -1), be_const_closure(Matter_Plugin_Light1_set_bri_closure) },
+        { be_const_key_weak(set_bri, -1), be_const_closure(class_Matter_Plugin_Light1_set_bri_closure) },
     })),
     be_str_weak(Matter_Plugin_Light1)
 );
-/*******************************************************************/
-
-void be_load_Matter_Plugin_Light1_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_Plugin_Light1);
-    be_setglobal(vm, "Matter_Plugin_Light1");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

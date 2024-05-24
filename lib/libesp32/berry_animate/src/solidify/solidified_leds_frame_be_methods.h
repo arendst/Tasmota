@@ -9,7 +9,8 @@ extern const bclass be_class_Leds_frame_be;
 /********************************************************************
 ** Solidified function: setitem
 ********************************************************************/
-be_local_closure(Leds_frame_be_setitem,   /* name */
+extern const bclass be_class_Leds_frame_be;
+be_local_closure(class_Leds_frame_be_setitem,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     3,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Leds_frame_be_setitem,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Leds_frame_be, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(set),
@@ -41,7 +42,8 @@ be_local_closure(Leds_frame_be_setitem,   /* name */
 /********************************************************************
 ** Solidified function: set_pixel
 ********************************************************************/
-be_local_closure(Leds_frame_be_set_pixel,   /* name */
+extern const bclass be_class_Leds_frame_be;
+be_local_closure(class_Leds_frame_be_set_pixel,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     6,                          /* argc */
@@ -49,7 +51,7 @@ be_local_closure(Leds_frame_be_set_pixel,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Leds_frame_be, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -93,7 +95,8 @@ be_local_closure(Leds_frame_be_set_pixel,   /* name */
 /********************************************************************
 ** Solidified function: item
 ********************************************************************/
-be_local_closure(Leds_frame_be_item,   /* name */
+extern const bclass be_class_Leds_frame_be;
+be_local_closure(class_Leds_frame_be_item,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -101,7 +104,7 @@ be_local_closure(Leds_frame_be_item,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Leds_frame_be, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(get),
@@ -124,7 +127,8 @@ be_local_closure(Leds_frame_be_item,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Leds_frame_be_init,   /* name */
+extern const bclass be_class_Leds_frame_be;
+be_local_closure(class_Leds_frame_be_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -132,7 +136,7 @@ be_local_closure(Leds_frame_be_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Leds_frame_be, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -168,19 +172,12 @@ be_local_class(Leds_frame_be,
     NULL,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(setitem, 1), be_const_closure(Leds_frame_be_setitem_closure) },
-        { be_const_key(set_pixel, -1), be_const_closure(Leds_frame_be_set_pixel_closure) },
-        { be_const_key(item, -1), be_const_closure(Leds_frame_be_item_closure) },
-        { be_const_key(init, -1), be_const_closure(Leds_frame_be_init_closure) },
+        { be_const_key(setitem, 1), be_const_closure(class_Leds_frame_be_setitem_closure) },
+        { be_const_key(set_pixel, -1), be_const_closure(class_Leds_frame_be_set_pixel_closure) },
+        { be_const_key(item, -1), be_const_closure(class_Leds_frame_be_item_closure) },
+        { be_const_key(init, -1), be_const_closure(class_Leds_frame_be_init_closure) },
     })),
     (bstring*) &be_const_str_Leds_frame_be
 );
-/*******************************************************************/
-
-void be_load_Leds_frame_be_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Leds_frame_be);
-    be_setglobal(vm, "Leds_frame_be");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

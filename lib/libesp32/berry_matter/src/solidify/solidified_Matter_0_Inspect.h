@@ -7,7 +7,7 @@
 /********************************************************************
 ** Solidified function: sort
 ********************************************************************/
-be_local_closure(matter_sort,   /* name */
+be_local_closure(module_matter_sort,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
@@ -15,7 +15,7 @@ be_local_closure(matter_sort,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_const_int(1),
@@ -63,7 +63,7 @@ be_local_closure(matter_sort,   /* name */
 /********************************************************************
 ** Solidified function: jitter
 ********************************************************************/
-be_local_closure(matter_jitter,   /* name */
+be_local_closure(module_matter_jitter,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
@@ -71,7 +71,7 @@ be_local_closure(matter_jitter,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(crypto),
@@ -108,7 +108,7 @@ be_local_closure(matter_jitter,   /* name */
 /********************************************************************
 ** Solidified function: inspect
 ********************************************************************/
-be_local_closure(matter_inspect,   /* name */
+be_local_closure(module_matter_inspect,   /* name */
   be_nested_proto(
     14,                          /* nstack */
     1,                          /* argc */
@@ -116,7 +116,7 @@ be_local_closure(matter_inspect,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     1,                          /* has constants */
     ( &(const bvalue[15]) {     /* constants */
     /* K0   */  be_nested_str_weak(introspect),
@@ -231,7 +231,7 @@ be_local_closure(matter_inspect,   /* name */
 /********************************************************************
 ** Solidified function: consolidate_clusters
 ********************************************************************/
-be_local_closure(matter_consolidate_clusters,   /* name */
+be_local_closure(module_matter_consolidate_clusters,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     2,                          /* argc */
@@ -239,7 +239,7 @@ be_local_closure(matter_consolidate_clusters,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(CLUSTERS),
@@ -361,7 +361,7 @@ be_local_closure(matter_consolidate_clusters,   /* name */
 /********************************************************************
 ** Solidified function: UC_LIST
 ********************************************************************/
-be_local_closure(matter_UC_LIST,   /* name */
+be_local_closure(module_matter_UC_LIST,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     2,                          /* argc */
@@ -369,7 +369,7 @@ be_local_closure(matter_UC_LIST,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(UPDATE_COMMANDS),

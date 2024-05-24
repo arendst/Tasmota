@@ -9,7 +9,8 @@ extern const bclass be_class_Matter_Plugin_Root;
 /********************************************************************
 ** Solidified function: read_attribute
 ********************************************************************/
-be_local_closure(Matter_Plugin_Root_read_attribute,   /* name */
+extern const bclass be_class_Matter_Plugin_Root;
+be_local_closure(class_Matter_Plugin_Root_read_attribute,   /* name */
   be_nested_proto(
     25,                          /* nstack */
     4,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Matter_Plugin_Root_read_attribute,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Root, 
     1,                          /* has constants */
     ( &(const bvalue[94]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),
@@ -1063,7 +1064,8 @@ be_local_closure(Matter_Plugin_Root_read_attribute,   /* name */
 /********************************************************************
 ** Solidified function: write_attribute
 ********************************************************************/
-be_local_closure(Matter_Plugin_Root_write_attribute,   /* name */
+extern const bclass be_class_Matter_Plugin_Root;
+be_local_closure(class_Matter_Plugin_Root_write_attribute,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     4,                          /* argc */
@@ -1071,7 +1073,7 @@ be_local_closure(Matter_Plugin_Root_write_attribute,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Root, 
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -1200,7 +1202,8 @@ be_local_closure(Matter_Plugin_Root_write_attribute,   /* name */
 /********************************************************************
 ** Solidified function: invoke_request
 ********************************************************************/
-be_local_closure(Matter_Plugin_Root_invoke_request,   /* name */
+extern const bclass be_class_Matter_Plugin_Root;
+be_local_closure(class_Matter_Plugin_Root_invoke_request,   /* name */
   be_nested_proto(
     31,                          /* nstack */
     4,                          /* argc */
@@ -1208,7 +1211,7 @@ be_local_closure(Matter_Plugin_Root_invoke_request,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 1]) {
+    ( &(const struct bproto*[ 2]) {
       be_nested_proto(
         3,                          /* nstack */
         0,                          /* argc */
@@ -1219,7 +1222,7 @@ be_local_closure(Matter_Plugin_Root_invoke_request,   /* name */
           be_local_const_upval(1, 10),
         }),
         0,                          /* has sup protos */
-        NULL,                       /* no sub protos */
+        NULL, 
         1,                          /* has constants */
         ( &(const bvalue[ 2]) {     /* constants */
         /* K0   */  be_nested_str_weak(device),
@@ -1236,6 +1239,7 @@ be_local_closure(Matter_Plugin_Root_invoke_request,   /* name */
           0x80000000,  //  0005  RET	0
         })
       ),
+    &be_class_Matter_Plugin_Root, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[102]) {     /* constants */
@@ -2105,15 +2109,15 @@ be_local_class(Matter_Plugin_Root,
     &be_class_Matter_Plugin,
     be_nested_map(7,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(read_attribute, 1), be_const_closure(Matter_Plugin_Root_read_attribute_closure) },
-        { be_const_key_weak(invoke_request, 6), be_const_closure(Matter_Plugin_Root_invoke_request_closure) },
+        { be_const_key_weak(read_attribute, 1), be_const_closure(class_Matter_Plugin_Root_read_attribute_closure) },
+        { be_const_key_weak(invoke_request, 6), be_const_closure(class_Matter_Plugin_Root_invoke_request_closure) },
         { be_const_key_weak(TYPE, -1), be_nested_str_weak(root) },
         { be_const_key_weak(TYPES, 2), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(22, -1), be_const_int(1) },
     }))    ) } )) },
-        { be_const_key_weak(write_attribute, -1), be_const_closure(Matter_Plugin_Root_write_attribute_closure) },
+        { be_const_key_weak(write_attribute, -1), be_const_closure(class_Matter_Plugin_Root_write_attribute_closure) },
         { be_const_key_weak(DISPLAY_NAME, -1), be_nested_str_weak(Root_X20node) },
         { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(14,
@@ -2313,12 +2317,5 @@ be_local_class(Matter_Plugin_Root,
     })),
     be_str_weak(Matter_Plugin_Root)
 );
-/*******************************************************************/
-
-void be_load_Matter_Plugin_Root_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_Plugin_Root);
-    be_setglobal(vm, "Matter_Plugin_Root");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

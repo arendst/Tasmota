@@ -9,7 +9,8 @@ extern const bclass be_class_Matter_IM_Subscription;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Matter_IM_Subscription_init,   /* name */
+extern const bclass be_class_Matter_IM_Subscription;
+be_local_closure(class_Matter_IM_Subscription_init,   /* name */
   be_nested_proto(
     13,                          /* nstack */
     5,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Matter_IM_Subscription_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Subscription, 
     1,                          /* has constants */
     ( &(const bvalue[22]) {     /* constants */
     /* K0   */  be_nested_str_weak(subs_shop),
@@ -116,7 +117,8 @@ be_local_closure(Matter_IM_Subscription_init,   /* name */
 /********************************************************************
 ** Solidified function: _add_attribute_unique_path
 ********************************************************************/
-be_local_closure(Matter_IM_Subscription__add_attribute_unique_path,   /* name */
+extern const bclass be_class_Matter_IM_Subscription;
+be_local_closure(class_Matter_IM_Subscription__add_attribute_unique_path,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -124,7 +126,7 @@ be_local_closure(Matter_IM_Subscription__add_attribute_unique_path,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Subscription, 
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -175,7 +177,8 @@ be_local_closure(Matter_IM_Subscription__add_attribute_unique_path,   /* name */
 /********************************************************************
 ** Solidified function: remove_self
 ********************************************************************/
-be_local_closure(Matter_IM_Subscription_remove_self,   /* name */
+extern const bclass be_class_Matter_IM_Subscription;
+be_local_closure(class_Matter_IM_Subscription_remove_self,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -183,7 +186,7 @@ be_local_closure(Matter_IM_Subscription_remove_self,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Subscription, 
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota),
@@ -219,7 +222,8 @@ be_local_closure(Matter_IM_Subscription_remove_self,   /* name */
 /********************************************************************
 ** Solidified function: clear_before_arm
 ********************************************************************/
-be_local_closure(Matter_IM_Subscription_clear_before_arm,   /* name */
+extern const bclass be_class_Matter_IM_Subscription;
+be_local_closure(class_Matter_IM_Subscription_clear_before_arm,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -227,7 +231,7 @@ be_local_closure(Matter_IM_Subscription_clear_before_arm,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Subscription, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(updates),
@@ -252,7 +256,8 @@ be_local_closure(Matter_IM_Subscription_clear_before_arm,   /* name */
 /********************************************************************
 ** Solidified function: attribute_updated_ctx
 ********************************************************************/
-be_local_closure(Matter_IM_Subscription_attribute_updated_ctx,   /* name */
+extern const bclass be_class_Matter_IM_Subscription;
+be_local_closure(class_Matter_IM_Subscription_attribute_updated_ctx,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     3,                          /* argc */
@@ -260,7 +265,7 @@ be_local_closure(Matter_IM_Subscription_attribute_updated_ctx,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Subscription, 
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -321,7 +326,8 @@ be_local_closure(Matter_IM_Subscription_attribute_updated_ctx,   /* name */
 /********************************************************************
 ** Solidified function: re_arm
 ********************************************************************/
-be_local_closure(Matter_IM_Subscription_re_arm,   /* name */
+extern const bclass be_class_Matter_IM_Subscription;
+be_local_closure(class_Matter_IM_Subscription_re_arm,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -329,7 +335,7 @@ be_local_closure(Matter_IM_Subscription_re_arm,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Subscription, 
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_nested_str_weak(wait_status),
@@ -394,41 +400,35 @@ be_local_class(Matter_IM_Subscription,
     be_nested_map(19,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(not_before, -1), be_const_var(7) },
-        { be_const_key_weak(init, -1), be_const_closure(Matter_IM_Subscription_init_closure) },
-        { be_const_key_weak(attribute_updated_ctx, -1), be_const_closure(Matter_IM_Subscription_attribute_updated_ctx_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_Matter_IM_Subscription_init_closure) },
+        { be_const_key_weak(attribute_updated_ctx, -1), be_const_closure(class_Matter_IM_Subscription_attribute_updated_ctx_closure) },
         { be_const_key_weak(updates, -1), be_const_var(11) },
         { be_const_key_weak(min_interval, -1), be_const_var(4) },
         { be_const_key_weak(expiration, -1), be_const_var(8) },
         { be_const_key_weak(subscription_id, 3), be_const_var(1) },
         { be_const_key_weak(subs_shop, -1), be_const_var(0) },
         { be_const_key_weak(max_interval, -1), be_const_var(5) },
-        { be_const_key_weak(remove_self, 1), be_const_closure(Matter_IM_Subscription_remove_self_closure) },
+        { be_const_key_weak(remove_self, 1), be_const_closure(class_Matter_IM_Subscription_remove_self_closure) },
         { be_const_key_weak(MAX_INTERVAL_MARGIN, -1), be_const_int(5) },
         { be_const_key_weak(fabric_filtered, 7), be_const_var(6) },
-        { be_const_key_weak(_add_attribute_unique_path, 11), be_const_closure(Matter_IM_Subscription__add_attribute_unique_path_closure) },
+        { be_const_key_weak(_add_attribute_unique_path, 11), be_const_closure(class_Matter_IM_Subscription__add_attribute_unique_path_closure) },
         { be_const_key_weak(path_list, 9), be_const_var(3) },
         { be_const_key_weak(is_keep_alive, -1), be_const_var(10) },
-        { be_const_key_weak(clear_before_arm, -1), be_const_closure(Matter_IM_Subscription_clear_before_arm_closure) },
+        { be_const_key_weak(clear_before_arm, -1), be_const_closure(class_Matter_IM_Subscription_clear_before_arm_closure) },
         { be_const_key_weak(session, 2), be_const_var(2) },
-        { be_const_key_weak(re_arm, -1), be_const_closure(Matter_IM_Subscription_re_arm_closure) },
+        { be_const_key_weak(re_arm, -1), be_const_closure(class_Matter_IM_Subscription_re_arm_closure) },
         { be_const_key_weak(wait_status, 0), be_const_var(9) },
     })),
     be_str_weak(Matter_IM_Subscription)
 );
-/*******************************************************************/
-
-void be_load_Matter_IM_Subscription_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_IM_Subscription);
-    be_setglobal(vm, "Matter_IM_Subscription");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_IM_Subscription_Shop;
 
 /********************************************************************
 ** Solidified function: every_250ms
 ********************************************************************/
-be_local_closure(Matter_IM_Subscription_Shop_every_250ms,   /* name */
+extern const bclass be_class_Matter_IM_Subscription_Shop;
+be_local_closure(class_Matter_IM_Subscription_Shop_every_250ms,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
@@ -436,7 +436,7 @@ be_local_closure(Matter_IM_Subscription_Shop_every_250ms,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Subscription_Shop, 
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -520,7 +520,8 @@ be_local_closure(Matter_IM_Subscription_Shop_every_250ms,   /* name */
 /********************************************************************
 ** Solidified function: get_by_id
 ********************************************************************/
-be_local_closure(Matter_IM_Subscription_Shop_get_by_id,   /* name */
+extern const bclass be_class_Matter_IM_Subscription_Shop;
+be_local_closure(class_Matter_IM_Subscription_Shop_get_by_id,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -528,7 +529,7 @@ be_local_closure(Matter_IM_Subscription_Shop_get_by_id,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Subscription_Shop, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -565,7 +566,8 @@ be_local_closure(Matter_IM_Subscription_Shop_get_by_id,   /* name */
 /********************************************************************
 ** Solidified function: new_subscription
 ********************************************************************/
-be_local_closure(Matter_IM_Subscription_Shop_new_subscription,   /* name */
+extern const bclass be_class_Matter_IM_Subscription_Shop;
+be_local_closure(class_Matter_IM_Subscription_Shop_new_subscription,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     3,                          /* argc */
@@ -573,7 +575,7 @@ be_local_closure(Matter_IM_Subscription_Shop_new_subscription,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Subscription_Shop, 
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str_weak(crypto),
@@ -632,7 +634,8 @@ be_local_closure(Matter_IM_Subscription_Shop_new_subscription,   /* name */
 /********************************************************************
 ** Solidified function: remove_sub
 ********************************************************************/
-be_local_closure(Matter_IM_Subscription_Shop_remove_sub,   /* name */
+extern const bclass be_class_Matter_IM_Subscription_Shop;
+be_local_closure(class_Matter_IM_Subscription_Shop_remove_sub,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -640,7 +643,7 @@ be_local_closure(Matter_IM_Subscription_Shop_remove_sub,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Subscription_Shop, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -678,7 +681,8 @@ be_local_closure(Matter_IM_Subscription_Shop_remove_sub,   /* name */
 /********************************************************************
 ** Solidified function: attribute_updated_ctx
 ********************************************************************/
-be_local_closure(Matter_IM_Subscription_Shop_attribute_updated_ctx,   /* name */
+extern const bclass be_class_Matter_IM_Subscription_Shop;
+be_local_closure(class_Matter_IM_Subscription_Shop_attribute_updated_ctx,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     3,                          /* argc */
@@ -686,7 +690,7 @@ be_local_closure(Matter_IM_Subscription_Shop_attribute_updated_ctx,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Subscription_Shop, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -721,7 +725,8 @@ be_local_closure(Matter_IM_Subscription_Shop_attribute_updated_ctx,   /* name */
 /********************************************************************
 ** Solidified function: remove_by_session
 ********************************************************************/
-be_local_closure(Matter_IM_Subscription_Shop_remove_by_session,   /* name */
+extern const bclass be_class_Matter_IM_Subscription_Shop;
+be_local_closure(class_Matter_IM_Subscription_Shop_remove_by_session,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -729,7 +734,7 @@ be_local_closure(Matter_IM_Subscription_Shop_remove_by_session,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Subscription_Shop, 
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -769,7 +774,8 @@ be_local_closure(Matter_IM_Subscription_Shop_remove_by_session,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Matter_IM_Subscription_Shop_init,   /* name */
+extern const bclass be_class_Matter_IM_Subscription_Shop;
+be_local_closure(class_Matter_IM_Subscription_Shop_init,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     2,                          /* argc */
@@ -777,7 +783,7 @@ be_local_closure(Matter_IM_Subscription_Shop_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Subscription_Shop, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(im),
@@ -800,7 +806,8 @@ be_local_closure(Matter_IM_Subscription_Shop_init,   /* name */
 /********************************************************************
 ** Solidified function: remove_by_fabric
 ********************************************************************/
-be_local_closure(Matter_IM_Subscription_Shop_remove_by_fabric,   /* name */
+extern const bclass be_class_Matter_IM_Subscription_Shop;
+be_local_closure(class_Matter_IM_Subscription_Shop_remove_by_fabric,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -808,7 +815,7 @@ be_local_closure(Matter_IM_Subscription_Shop_remove_by_fabric,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Subscription_Shop, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_sessions),
@@ -846,25 +853,18 @@ be_local_class(Matter_IM_Subscription_Shop,
     NULL,
     be_nested_map(10,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(every_250ms, -1), be_const_closure(Matter_IM_Subscription_Shop_every_250ms_closure) },
-        { be_const_key_weak(get_by_id, -1), be_const_closure(Matter_IM_Subscription_Shop_get_by_id_closure) },
-        { be_const_key_weak(attribute_updated_ctx, -1), be_const_closure(Matter_IM_Subscription_Shop_attribute_updated_ctx_closure) },
-        { be_const_key_weak(init, 2), be_const_closure(Matter_IM_Subscription_Shop_init_closure) },
-        { be_const_key_weak(remove_sub, -1), be_const_closure(Matter_IM_Subscription_Shop_remove_sub_closure) },
-        { be_const_key_weak(new_subscription, 3), be_const_closure(Matter_IM_Subscription_Shop_new_subscription_closure) },
+        { be_const_key_weak(every_250ms, -1), be_const_closure(class_Matter_IM_Subscription_Shop_every_250ms_closure) },
+        { be_const_key_weak(get_by_id, -1), be_const_closure(class_Matter_IM_Subscription_Shop_get_by_id_closure) },
+        { be_const_key_weak(attribute_updated_ctx, -1), be_const_closure(class_Matter_IM_Subscription_Shop_attribute_updated_ctx_closure) },
+        { be_const_key_weak(init, 2), be_const_closure(class_Matter_IM_Subscription_Shop_init_closure) },
+        { be_const_key_weak(remove_sub, -1), be_const_closure(class_Matter_IM_Subscription_Shop_remove_sub_closure) },
+        { be_const_key_weak(new_subscription, 3), be_const_closure(class_Matter_IM_Subscription_Shop_new_subscription_closure) },
         { be_const_key_weak(subs, 8), be_const_var(0) },
         { be_const_key_weak(im, -1), be_const_var(1) },
-        { be_const_key_weak(remove_by_session, -1), be_const_closure(Matter_IM_Subscription_Shop_remove_by_session_closure) },
-        { be_const_key_weak(remove_by_fabric, -1), be_const_closure(Matter_IM_Subscription_Shop_remove_by_fabric_closure) },
+        { be_const_key_weak(remove_by_session, -1), be_const_closure(class_Matter_IM_Subscription_Shop_remove_by_session_closure) },
+        { be_const_key_weak(remove_by_fabric, -1), be_const_closure(class_Matter_IM_Subscription_Shop_remove_by_fabric_closure) },
     })),
     be_str_weak(Matter_IM_Subscription_Shop)
 );
-/*******************************************************************/
-
-void be_load_Matter_IM_Subscription_Shop_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_IM_Subscription_Shop);
-    be_setglobal(vm, "Matter_IM_Subscription_Shop");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

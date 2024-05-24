@@ -9,7 +9,8 @@ extern const bclass be_class_Matter_Plugin_Shutter;
 /********************************************************************
 ** Solidified function: parse_configuration
 ********************************************************************/
-be_local_closure(Matter_Plugin_Shutter_parse_configuration,   /* name */
+extern const bclass be_class_Matter_Plugin_Shutter;
+be_local_closure(class_Matter_Plugin_Shutter_parse_configuration,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Matter_Plugin_Shutter_parse_configuration,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Shutter, 
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota_shutter_index),
@@ -50,7 +51,8 @@ be_local_closure(Matter_Plugin_Shutter_parse_configuration,   /* name */
 /********************************************************************
 ** Solidified function: invoke_request
 ********************************************************************/
-be_local_closure(Matter_Plugin_Shutter_invoke_request,   /* name */
+extern const bclass be_class_Matter_Plugin_Shutter;
+be_local_closure(class_Matter_Plugin_Shutter_invoke_request,   /* name */
   be_nested_proto(
     14,                          /* nstack */
     4,                          /* argc */
@@ -58,7 +60,7 @@ be_local_closure(Matter_Plugin_Shutter_invoke_request,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Shutter, 
     1,                          /* has constants */
     ( &(const bvalue[24]) {     /* constants */
     /* K0   */  be_nested_str_weak(light),
@@ -214,7 +216,8 @@ be_local_closure(Matter_Plugin_Shutter_invoke_request,   /* name */
 /********************************************************************
 ** Solidified function: read_attribute
 ********************************************************************/
-be_local_closure(Matter_Plugin_Shutter_read_attribute,   /* name */
+extern const bclass be_class_Matter_Plugin_Shutter;
+be_local_closure(class_Matter_Plugin_Shutter_read_attribute,   /* name */
   be_nested_proto(
     13,                          /* nstack */
     4,                          /* argc */
@@ -222,7 +225,7 @@ be_local_closure(Matter_Plugin_Shutter_read_attribute,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Shutter, 
     1,                          /* has constants */
     ( &(const bvalue[17]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -386,7 +389,7 @@ be_local_closure(Matter_Plugin_Shutter_read_attribute,   /* name */
 /********************************************************************
 ** Solidified function: <lambda>
 ********************************************************************/
-be_local_closure(Matter_Plugin_Shutter__X3Clambda_X3E,   /* name */
+be_local_closure(class_Matter_Plugin_Shutter__X3Clambda_X3E,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -394,7 +397,7 @@ be_local_closure(Matter_Plugin_Shutter__X3Clambda_X3E,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(_X3Clambda_X3E),
@@ -413,7 +416,8 @@ be_local_closure(Matter_Plugin_Shutter__X3Clambda_X3E,   /* name */
 /********************************************************************
 ** Solidified function: parse_sensors
 ********************************************************************/
-be_local_closure(Matter_Plugin_Shutter_parse_sensors,   /* name */
+extern const bclass be_class_Matter_Plugin_Shutter;
+be_local_closure(class_Matter_Plugin_Shutter_parse_sensors,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     2,                          /* argc */
@@ -421,7 +425,7 @@ be_local_closure(Matter_Plugin_Shutter_parse_sensors,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Shutter, 
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str_weak(Shutter),
@@ -502,7 +506,8 @@ be_local_closure(Matter_Plugin_Shutter_parse_sensors,   /* name */
 /********************************************************************
 ** Solidified function: update_inverted
 ********************************************************************/
-be_local_closure(Matter_Plugin_Shutter_update_inverted,   /* name */
+extern const bclass be_class_Matter_Plugin_Shutter;
+be_local_closure(class_Matter_Plugin_Shutter_update_inverted,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
@@ -510,7 +515,7 @@ be_local_closure(Matter_Plugin_Shutter_update_inverted,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Shutter, 
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str_weak(shadow_shutter_inverted),
@@ -574,7 +579,8 @@ be_local_closure(Matter_Plugin_Shutter_update_inverted,   /* name */
 /********************************************************************
 ** Solidified function: update_shadow
 ********************************************************************/
-be_local_closure(Matter_Plugin_Shutter_update_shadow,   /* name */
+extern const bclass be_class_Matter_Plugin_Shutter;
+be_local_closure(class_Matter_Plugin_Shutter_update_shadow,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -582,7 +588,7 @@ be_local_closure(Matter_Plugin_Shutter_update_shadow,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Shutter, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(VIRTUAL),
@@ -735,28 +741,21 @@ be_local_class(Matter_Plugin_Shutter,
         be_const_int(65533),
     }))    ) } )) },
     }))    ) } )) },
-        { be_const_key_weak(invoke_request, 3), be_const_closure(Matter_Plugin_Shutter_invoke_request_closure) },
-        { be_const_key_weak(read_attribute, 11), be_const_closure(Matter_Plugin_Shutter_read_attribute_closure) },
-        { be_const_key_weak(parse_configuration, 14), be_const_closure(Matter_Plugin_Shutter_parse_configuration_closure) },
+        { be_const_key_weak(invoke_request, 3), be_const_closure(class_Matter_Plugin_Shutter_invoke_request_closure) },
+        { be_const_key_weak(read_attribute, 11), be_const_closure(class_Matter_Plugin_Shutter_read_attribute_closure) },
+        { be_const_key_weak(parse_configuration, 14), be_const_closure(class_Matter_Plugin_Shutter_parse_configuration_closure) },
         { be_const_key_weak(shadow_shutter_pos, -1), be_const_var(1) },
         { be_const_key_weak(ARG, 13), be_nested_str_weak(shutter) },
-        { be_const_key_weak(ARG_TYPE, -1), be_const_static_closure(Matter_Plugin_Shutter__X3Clambda_X3E_closure) },
-        { be_const_key_weak(parse_sensors, -1), be_const_closure(Matter_Plugin_Shutter_parse_sensors_closure) },
-        { be_const_key_weak(update_inverted, -1), be_const_closure(Matter_Plugin_Shutter_update_inverted_closure) },
+        { be_const_key_weak(ARG_TYPE, -1), be_const_static_closure(class_Matter_Plugin_Shutter__X3Clambda_X3E_closure) },
+        { be_const_key_weak(parse_sensors, -1), be_const_closure(class_Matter_Plugin_Shutter_parse_sensors_closure) },
+        { be_const_key_weak(update_inverted, -1), be_const_closure(class_Matter_Plugin_Shutter_update_inverted_closure) },
         { be_const_key_weak(ARG_HINT, 16), be_nested_str_weak(Relay_X3Cx_X3E_X20number) },
-        { be_const_key_weak(update_shadow, 0), be_const_closure(Matter_Plugin_Shutter_update_shadow_closure) },
+        { be_const_key_weak(update_shadow, 0), be_const_closure(class_Matter_Plugin_Shutter_update_shadow_closure) },
         { be_const_key_weak(tasmota_shutter_index, -1), be_const_var(0) },
         { be_const_key_weak(DISPLAY_NAME, -1), be_nested_str_weak(Shutter) },
         { be_const_key_weak(shadow_shutter_direction, -1), be_const_var(3) },
     })),
     be_str_weak(Matter_Plugin_Shutter)
 );
-/*******************************************************************/
-
-void be_load_Matter_Plugin_Shutter_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_Plugin_Shutter);
-    be_setglobal(vm, "Matter_Plugin_Shutter");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

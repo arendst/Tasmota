@@ -9,7 +9,8 @@ extern const bclass be_class_MQTT;
 /********************************************************************
 ** Solidified function: mqtt_data
 ********************************************************************/
-be_local_closure(MQTT_mqtt_data,   /* name */
+extern const bclass be_class_MQTT;
+be_local_closure(class_MQTT_mqtt_data,   /* name */
   be_nested_proto(
     14,                          /* nstack */
     5,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(MQTT_mqtt_data,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_MQTT, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str(topics),
@@ -68,7 +69,8 @@ be_local_closure(MQTT_mqtt_data,   /* name */
 /********************************************************************
 ** Solidified function: lazy_init
 ********************************************************************/
-be_local_closure(MQTT_lazy_init,   /* name */
+extern const bclass be_class_MQTT;
+be_local_closure(class_MQTT_lazy_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -76,7 +78,7 @@ be_local_closure(MQTT_lazy_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 1]) {
+    ( &(const struct bproto*[ 2]) {
       be_nested_proto(
         2,                          /* nstack */
         0,                          /* argc */
@@ -86,7 +88,7 @@ be_local_closure(MQTT_lazy_init,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL,                       /* no sub protos */
+        NULL, 
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str(mqtt_connect),
@@ -100,6 +102,7 @@ be_local_closure(MQTT_lazy_init,   /* name */
           0x80040000,  //  0003  RET	1	R0
         })
       ),
+    &be_class_MQTT, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
@@ -139,7 +142,8 @@ be_local_closure(MQTT_lazy_init,   /* name */
 /********************************************************************
 ** Solidified function: unsubscribe
 ********************************************************************/
-be_local_closure(MQTT_unsubscribe,   /* name */
+extern const bclass be_class_MQTT;
+be_local_closure(class_MQTT_unsubscribe,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -147,7 +151,7 @@ be_local_closure(MQTT_unsubscribe,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_MQTT, 
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(topics),
@@ -210,7 +214,8 @@ be_local_closure(MQTT_unsubscribe,   /* name */
 /********************************************************************
 ** Solidified function: mqtt_connect
 ********************************************************************/
-be_local_closure(MQTT_mqtt_connect,   /* name */
+extern const bclass be_class_MQTT;
+be_local_closure(class_MQTT_mqtt_connect,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -218,7 +223,7 @@ be_local_closure(MQTT_mqtt_connect,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_MQTT, 
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str(tasmota),
@@ -265,7 +270,8 @@ extern const bclass be_class_mqtt_listener;
 /********************************************************************
 ** Solidified function: tostring
 ********************************************************************/
-be_local_closure(mqtt_listener_tostring,   /* name */
+extern const bclass be_class_mqtt_listener;
+be_local_closure(class_mqtt_listener_tostring,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -273,7 +279,7 @@ be_local_closure(mqtt_listener_tostring,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_mqtt_listener, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(_X3Cinstance_X3A_X20_X25s_X28_X27_X25s_X27_X29_X3E),
@@ -299,7 +305,8 @@ be_local_closure(mqtt_listener_tostring,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(mqtt_listener_init,   /* name */
+extern const bclass be_class_mqtt_listener;
+be_local_closure(class_mqtt_listener_init,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     3,                          /* argc */
@@ -307,7 +314,7 @@ be_local_closure(mqtt_listener_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_mqtt_listener, 
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(string),
@@ -338,7 +345,8 @@ be_local_closure(mqtt_listener_init,   /* name */
 /********************************************************************
 ** Solidified function: mqtt_data
 ********************************************************************/
-be_local_closure(mqtt_listener_mqtt_data,   /* name */
+extern const bclass be_class_mqtt_listener;
+be_local_closure(class_mqtt_listener_mqtt_data,   /* name */
   be_nested_proto(
     17,                          /* nstack */
     5,                          /* argc */
@@ -346,7 +354,7 @@ be_local_closure(mqtt_listener_mqtt_data,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_mqtt_listener, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str(string),
@@ -429,10 +437,10 @@ be_local_class(mqtt_listener,
     NULL,
     be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(mqtt_data, -1), be_const_closure(mqtt_listener_mqtt_data_closure) },
-        { be_const_key(tostring, -1), be_const_closure(mqtt_listener_tostring_closure) },
+        { be_const_key(mqtt_data, -1), be_const_closure(class_mqtt_listener_mqtt_data_closure) },
+        { be_const_key(tostring, -1), be_const_closure(class_mqtt_listener_tostring_closure) },
         { be_const_key(topic, -1), be_const_var(0) },
-        { be_const_key(init, -1), be_const_closure(mqtt_listener_init_closure) },
+        { be_const_key(init, -1), be_const_closure(class_mqtt_listener_init_closure) },
         { be_const_key(closure, 0), be_const_var(2) },
         { be_const_key(fulltopic, -1), be_const_var(1) },
     })),
@@ -442,7 +450,8 @@ be_local_class(mqtt_listener,
 /********************************************************************
 ** Solidified function: mqtt_listener_class
 ********************************************************************/
-be_local_closure(MQTT_mqtt_listener_class,   /* name */
+extern const bclass be_class_MQTT;
+be_local_closure(class_MQTT_mqtt_listener_class,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -450,7 +459,7 @@ be_local_closure(MQTT_mqtt_listener_class,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_MQTT, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_const_class(be_class_mqtt_listener),
@@ -471,7 +480,8 @@ be_local_closure(MQTT_mqtt_listener_class,   /* name */
 /********************************************************************
 ** Solidified function: subscribe
 ********************************************************************/
-be_local_closure(MQTT_subscribe,   /* name */
+extern const bclass be_class_MQTT;
+be_local_closure(class_MQTT_subscribe,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     3,                          /* argc */
@@ -479,7 +489,7 @@ be_local_closure(MQTT_subscribe,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_MQTT, 
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str(lazy_init),
@@ -562,22 +572,15 @@ be_local_class(MQTT,
     &be_class_MQTT_ntv,
     be_nested_map(7,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(mqtt_connect, -1), be_const_closure(MQTT_mqtt_connect_closure) },
-        { be_const_key(mqtt_data, -1), be_const_closure(MQTT_mqtt_data_closure) },
-        { be_const_key(lazy_init, -1), be_const_closure(MQTT_lazy_init_closure) },
-        { be_const_key(unsubscribe, -1), be_const_closure(MQTT_unsubscribe_closure) },
+        { be_const_key(mqtt_connect, -1), be_const_closure(class_MQTT_mqtt_connect_closure) },
+        { be_const_key(mqtt_data, -1), be_const_closure(class_MQTT_mqtt_data_closure) },
+        { be_const_key(lazy_init, -1), be_const_closure(class_MQTT_lazy_init_closure) },
+        { be_const_key(unsubscribe, -1), be_const_closure(class_MQTT_unsubscribe_closure) },
         { be_const_key(topics, 0), be_const_var(0) },
-        { be_const_key(mqtt_listener_class, -1), be_const_closure(MQTT_mqtt_listener_class_closure) },
-        { be_const_key(subscribe, -1), be_const_closure(MQTT_subscribe_closure) },
+        { be_const_key(mqtt_listener_class, -1), be_const_closure(class_MQTT_mqtt_listener_class_closure) },
+        { be_const_key(subscribe, -1), be_const_closure(class_MQTT_subscribe_closure) },
     })),
     (bstring*) &be_const_str_MQTT
 );
-/*******************************************************************/
-
-void be_load_MQTT_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_MQTT);
-    be_setglobal(vm, "MQTT");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

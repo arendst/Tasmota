@@ -9,7 +9,8 @@ extern const bclass be_class_Driver;
 /********************************************************************
 ** Solidified function: add_cmd
 ********************************************************************/
-be_local_closure(Driver_add_cmd,   /* name */
+extern const bclass be_class_Driver;
+be_local_closure(class_Driver_add_cmd,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     3,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Driver_add_cmd,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 1]) {
+    ( &(const struct bproto*[ 2]) {
       be_nested_proto(
         10,                          /* nstack */
         4,                          /* argc */
@@ -28,7 +29,7 @@ be_local_closure(Driver_add_cmd,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL,                       /* no sub protos */
+        NULL, 
         0,                          /* has constants */
         NULL,                       /* no const */
         &be_const_str__X3Clambda_X3E,
@@ -44,6 +45,7 @@ be_local_closure(Driver_add_cmd,   /* name */
           0x80040800,  //  0007  RET	1	R4
         })
       ),
+    &be_class_Driver, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
@@ -78,7 +80,7 @@ be_local_class(Driver,
         { be_const_key(web_add_main_button, -1), be_const_var(4) },
         { be_const_key(web_add_handler, 10), be_const_var(2) },
         { be_const_key(save_before_restart, 5), be_const_var(8) },
-        { be_const_key(add_cmd, -1), be_const_closure(Driver_add_cmd_closure) },
+        { be_const_key(add_cmd, -1), be_const_closure(class_Driver_add_cmd_closure) },
         { be_const_key(web_add_button, -1), be_const_var(3) },
         { be_const_key(web_add_management_button, -1), be_const_var(5) },
         { be_const_key(display, -1), be_const_var(13) },
@@ -92,12 +94,5 @@ be_local_class(Driver,
     })),
     (bstring*) &be_const_str_Driver
 );
-/*******************************************************************/
-
-void be_load_Driver_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Driver);
-    be_setglobal(vm, "Driver");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

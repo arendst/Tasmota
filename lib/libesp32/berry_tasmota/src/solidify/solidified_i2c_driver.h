@@ -9,7 +9,8 @@ extern const bclass be_class_I2C_Driver;
 /********************************************************************
 ** Solidified function: write_bit
 ********************************************************************/
-be_local_closure(I2C_Driver_write_bit,   /* name */
+extern const bclass be_class_I2C_Driver;
+be_local_closure(class_I2C_Driver_write_bit,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     4,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(I2C_Driver_write_bit,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_I2C_Driver, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -63,7 +64,8 @@ be_local_closure(I2C_Driver_write_bit,   /* name */
 /********************************************************************
 ** Solidified function: read32
 ********************************************************************/
-be_local_closure(I2C_Driver_read32,   /* name */
+extern const bclass be_class_I2C_Driver;
+be_local_closure(class_I2C_Driver_read32,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -71,7 +73,7 @@ be_local_closure(I2C_Driver_read32,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_I2C_Driver, 
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str(wire),
@@ -114,7 +116,8 @@ be_local_closure(I2C_Driver_read32,   /* name */
 /********************************************************************
 ** Solidified function: read13
 ********************************************************************/
-be_local_closure(I2C_Driver_read13,   /* name */
+extern const bclass be_class_I2C_Driver;
+be_local_closure(class_I2C_Driver_read13,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -122,7 +125,7 @@ be_local_closure(I2C_Driver_read13,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_I2C_Driver, 
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(wire),
@@ -156,7 +159,8 @@ be_local_closure(I2C_Driver_read13,   /* name */
 /********************************************************************
 ** Solidified function: read24
 ********************************************************************/
-be_local_closure(I2C_Driver_read24,   /* name */
+extern const bclass be_class_I2C_Driver;
+be_local_closure(class_I2C_Driver_read24,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -164,7 +168,7 @@ be_local_closure(I2C_Driver_read24,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_I2C_Driver, 
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str(wire),
@@ -203,7 +207,8 @@ be_local_closure(I2C_Driver_read24,   /* name */
 /********************************************************************
 ** Solidified function: read14
 ********************************************************************/
-be_local_closure(I2C_Driver_read14,   /* name */
+extern const bclass be_class_I2C_Driver;
+be_local_closure(class_I2C_Driver_read14,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -211,7 +216,7 @@ be_local_closure(I2C_Driver_read14,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_I2C_Driver, 
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(wire),
@@ -245,7 +250,8 @@ be_local_closure(I2C_Driver_read14,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(I2C_Driver_init,   /* name */
+extern const bclass be_class_I2C_Driver;
+be_local_closure(class_I2C_Driver_init,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     4,                          /* argc */
@@ -253,7 +259,7 @@ be_local_closure(I2C_Driver_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_I2C_Driver, 
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str(tasmota),
@@ -323,7 +329,8 @@ be_local_closure(I2C_Driver_init,   /* name */
 /********************************************************************
 ** Solidified function: write8
 ********************************************************************/
-be_local_closure(I2C_Driver_write8,   /* name */
+extern const bclass be_class_I2C_Driver;
+be_local_closure(class_I2C_Driver_write8,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     3,                          /* argc */
@@ -331,7 +338,7 @@ be_local_closure(I2C_Driver_write8,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_I2C_Driver, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str(wire),
@@ -359,7 +366,8 @@ be_local_closure(I2C_Driver_write8,   /* name */
 /********************************************************************
 ** Solidified function: read8
 ********************************************************************/
-be_local_closure(I2C_Driver_read8,   /* name */
+extern const bclass be_class_I2C_Driver;
+be_local_closure(class_I2C_Driver_read8,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -367,7 +375,7 @@ be_local_closure(I2C_Driver_read8,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_I2C_Driver, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str(wire),
@@ -394,7 +402,8 @@ be_local_closure(I2C_Driver_read8,   /* name */
 /********************************************************************
 ** Solidified function: read12
 ********************************************************************/
-be_local_closure(I2C_Driver_read12,   /* name */
+extern const bclass be_class_I2C_Driver;
+be_local_closure(class_I2C_Driver_read12,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -402,7 +411,7 @@ be_local_closure(I2C_Driver_read12,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_I2C_Driver, 
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(wire),
@@ -436,7 +445,8 @@ be_local_closure(I2C_Driver_read12,   /* name */
 /********************************************************************
 ** Solidified function: read16
 ********************************************************************/
-be_local_closure(I2C_Driver_read16,   /* name */
+extern const bclass be_class_I2C_Driver;
+be_local_closure(class_I2C_Driver_read16,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -444,7 +454,7 @@ be_local_closure(I2C_Driver_read16,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_I2C_Driver, 
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(wire),
@@ -483,28 +493,21 @@ be_local_class(I2C_Driver,
     NULL,
     be_nested_map(13,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(write_bit, -1), be_const_closure(I2C_Driver_write_bit_closure) },
+        { be_const_key(write_bit, -1), be_const_closure(class_I2C_Driver_write_bit_closure) },
         { be_const_key(addr, -1), be_const_var(1) },
-        { be_const_key(read32, -1), be_const_closure(I2C_Driver_read32_closure) },
-        { be_const_key(read13, -1), be_const_closure(I2C_Driver_read13_closure) },
-        { be_const_key(read16, -1), be_const_closure(I2C_Driver_read16_closure) },
-        { be_const_key(read14, -1), be_const_closure(I2C_Driver_read14_closure) },
-        { be_const_key(read24, 12), be_const_closure(I2C_Driver_read24_closure) },
+        { be_const_key(read32, -1), be_const_closure(class_I2C_Driver_read32_closure) },
+        { be_const_key(read13, -1), be_const_closure(class_I2C_Driver_read13_closure) },
+        { be_const_key(read16, -1), be_const_closure(class_I2C_Driver_read16_closure) },
+        { be_const_key(read14, -1), be_const_closure(class_I2C_Driver_read14_closure) },
+        { be_const_key(read24, 12), be_const_closure(class_I2C_Driver_read24_closure) },
         { be_const_key(name, 4), be_const_var(2) },
-        { be_const_key(write8, -1), be_const_closure(I2C_Driver_write8_closure) },
+        { be_const_key(write8, -1), be_const_closure(class_I2C_Driver_write8_closure) },
         { be_const_key(wire, 8), be_const_var(0) },
-        { be_const_key(read8, -1), be_const_closure(I2C_Driver_read8_closure) },
-        { be_const_key(read12, -1), be_const_closure(I2C_Driver_read12_closure) },
-        { be_const_key(init, -1), be_const_closure(I2C_Driver_init_closure) },
+        { be_const_key(read8, -1), be_const_closure(class_I2C_Driver_read8_closure) },
+        { be_const_key(read12, -1), be_const_closure(class_I2C_Driver_read12_closure) },
+        { be_const_key(init, -1), be_const_closure(class_I2C_Driver_init_closure) },
     })),
     (bstring*) &be_const_str_I2C_Driver
 );
-/*******************************************************************/
-
-void be_load_I2C_Driver_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_I2C_Driver);
-    be_setglobal(vm, "I2C_Driver");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

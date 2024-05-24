@@ -9,7 +9,8 @@ extern const bclass be_class_Tapp;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Tapp_init,   /* name */
+extern const bclass be_class_Tapp;
+be_local_closure(class_Tapp_init,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Tapp_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Tapp, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(tasmota),
@@ -40,7 +41,8 @@ be_local_closure(Tapp_init,   /* name */
 /********************************************************************
 ** Solidified function: autoexec
 ********************************************************************/
-be_local_closure(Tapp_autoexec,   /* name */
+extern const bclass be_class_Tapp;
+be_local_closure(class_Tapp_autoexec,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     1,                          /* argc */
@@ -48,7 +50,7 @@ be_local_closure(Tapp_autoexec,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Tapp, 
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_nested_str(path),
@@ -117,8 +119,8 @@ be_local_class(Tapp,
     NULL,
     be_nested_map(2,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(autoexec, -1), be_const_closure(Tapp_autoexec_closure) },
-        { be_const_key(init, 0), be_const_closure(Tapp_init_closure) },
+        { be_const_key(autoexec, -1), be_const_closure(class_Tapp_autoexec_closure) },
+        { be_const_key(init, 0), be_const_closure(class_Tapp_init_closure) },
     })),
     (bstring*) &be_const_str_Tapp
 );
@@ -126,7 +128,7 @@ be_local_class(Tapp,
 /********************************************************************
 ** Solidified function: _anonymous_
 ********************************************************************/
-be_local_closure(tapp__anonymous_,   /* name */
+be_local_closure(_anonymous_,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -134,7 +136,7 @@ be_local_closure(tapp__anonymous_,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_const_class(be_class_Tapp),
@@ -160,7 +162,7 @@ be_local_module(tapp,
     "tapp",
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(init, -1), be_const_closure(tapp__anonymous__closure) },
+        { be_const_key(init, -1), be_const_closure(_anonymous__closure) },
     }))
 );
 BE_EXPORT_VARIABLE be_define_const_native_module(tapp);

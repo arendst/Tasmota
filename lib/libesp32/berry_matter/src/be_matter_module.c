@@ -310,8 +310,8 @@ module matter (scope: global, strings: weak) {
 
   Verhoeff, class(be_class_Matter_Verhoeff)
   Counter, class(be_class_Matter_Counter)
-  setmember, closure(matter_setmember_closure)
-  member, closure(matter_member_closure)
+  setmember, closure(module_matter_setmember_closure)
+  member, closure(module_matter_member_closure)
   get_ip_bytes, ctype_func(matter_get_ip_bytes)
   publish_command, func(matter_publish_command)
 
@@ -323,11 +323,11 @@ module matter (scope: global, strings: weak) {
   get_command_name, ctype_func(matter_get_command_name)
   get_opcode_name, ctype_func(matter_get_opcode_name)
   TLV, class(be_class_Matter_TLV)
-  sort, closure(matter_sort_closure)
-  jitter, closure(matter_jitter_closure)
-  inspect, closure(matter_inspect_closure)
-  consolidate_clusters, closure(matter_consolidate_clusters_closure)
-  UC_LIST, closure(matter_UC_LIST_closure)
+  sort, closure(module_matter_sort_closure)
+  jitter, closure(module_matter_jitter_closure)
+  inspect, closure(module_matter_inspect_closure)
+  consolidate_clusters, closure(module_matter_consolidate_clusters_closure)
+  UC_LIST, closure(module_matter_UC_LIST_closure)
   Profiler, class(be_class_Matter_Profiler)
 
   // Status codes

@@ -9,7 +9,8 @@ extern const bclass be_class_Matter_PathGenerator;
 /********************************************************************
 ** Solidified function: next
 ********************************************************************/
-be_local_closure(Matter_PathGenerator_next,   /* name */
+extern const bclass be_class_Matter_PathGenerator;
+be_local_closure(class_Matter_PathGenerator_next,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Matter_PathGenerator_next,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_PathGenerator, 
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_nested_str_weak(path_in),
@@ -109,7 +110,8 @@ be_local_closure(Matter_PathGenerator_next,   /* name */
 /********************************************************************
 ** Solidified function: _next_cluster
 ********************************************************************/
-be_local_closure(Matter_PathGenerator__next_cluster,   /* name */
+extern const bclass be_class_Matter_PathGenerator;
+be_local_closure(class_Matter_PathGenerator__next_cluster,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -117,7 +119,7 @@ be_local_closure(Matter_PathGenerator__next_cluster,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_PathGenerator, 
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(cluster),
@@ -184,7 +186,8 @@ be_local_closure(Matter_PathGenerator__next_cluster,   /* name */
 /********************************************************************
 ** Solidified function: start
 ********************************************************************/
-be_local_closure(Matter_PathGenerator_start,   /* name */
+extern const bclass be_class_Matter_PathGenerator;
+be_local_closure(class_Matter_PathGenerator_start,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     3,                          /* argc */
@@ -192,7 +195,7 @@ be_local_closure(Matter_PathGenerator_start,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_PathGenerator, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(path_concrete),
@@ -232,7 +235,8 @@ be_local_closure(Matter_PathGenerator_start,   /* name */
 /********************************************************************
 ** Solidified function: get_pi
 ********************************************************************/
-be_local_closure(Matter_PathGenerator_get_pi,   /* name */
+extern const bclass be_class_Matter_PathGenerator;
+be_local_closure(class_Matter_PathGenerator_get_pi,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
@@ -240,7 +244,7 @@ be_local_closure(Matter_PathGenerator_get_pi,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_PathGenerator, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(pi),
@@ -259,7 +263,8 @@ be_local_closure(Matter_PathGenerator_get_pi,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Matter_PathGenerator_init,   /* name */
+extern const bclass be_class_Matter_PathGenerator;
+be_local_closure(class_Matter_PathGenerator_init,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     2,                          /* argc */
@@ -267,7 +272,7 @@ be_local_closure(Matter_PathGenerator_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_PathGenerator, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(device),
@@ -286,7 +291,8 @@ be_local_closure(Matter_PathGenerator_init,   /* name */
 /********************************************************************
 ** Solidified function: reset
 ********************************************************************/
-be_local_closure(Matter_PathGenerator_reset,   /* name */
+extern const bclass be_class_Matter_PathGenerator;
+be_local_closure(class_Matter_PathGenerator_reset,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -294,7 +300,7 @@ be_local_closure(Matter_PathGenerator_reset,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_PathGenerator, 
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(path_in),
@@ -330,7 +336,8 @@ be_local_closure(Matter_PathGenerator_reset,   /* name */
 /********************************************************************
 ** Solidified function: _next_endpoint
 ********************************************************************/
-be_local_closure(Matter_PathGenerator__next_endpoint,   /* name */
+extern const bclass be_class_Matter_PathGenerator;
+be_local_closure(class_Matter_PathGenerator__next_endpoint,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -338,7 +345,7 @@ be_local_closure(Matter_PathGenerator__next_endpoint,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_PathGenerator, 
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str_weak(pi),
@@ -420,7 +427,8 @@ be_local_closure(Matter_PathGenerator__next_endpoint,   /* name */
 /********************************************************************
 ** Solidified function: _next_attribute
 ********************************************************************/
-be_local_closure(Matter_PathGenerator__next_attribute,   /* name */
+extern const bclass be_class_Matter_PathGenerator;
+be_local_closure(class_Matter_PathGenerator__next_attribute,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -428,7 +436,7 @@ be_local_closure(Matter_PathGenerator__next_attribute,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_PathGenerator, 
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(attribute),
@@ -502,12 +510,12 @@ be_local_class(Matter_PathGenerator,
     NULL,
     be_nested_map(19,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(_next_cluster, -1), be_const_closure(Matter_PathGenerator__next_cluster_closure) },
-        { be_const_key_weak(_next_endpoint, -1), be_const_closure(Matter_PathGenerator__next_endpoint_closure) },
+        { be_const_key_weak(_next_cluster, -1), be_const_closure(class_Matter_PathGenerator__next_cluster_closure) },
+        { be_const_key_weak(_next_endpoint, -1), be_const_closure(class_Matter_PathGenerator__next_endpoint_closure) },
         { be_const_key_weak(endpoint_found, 0), be_const_var(7) },
-        { be_const_key_weak(start, -1), be_const_closure(Matter_PathGenerator_start_closure) },
+        { be_const_key_weak(start, -1), be_const_closure(class_Matter_PathGenerator_start_closure) },
         { be_const_key_weak(session, -1), be_const_var(2) },
-        { be_const_key_weak(get_pi, 12), be_const_closure(Matter_PathGenerator_get_pi_closure) },
+        { be_const_key_weak(get_pi, 12), be_const_closure(class_Matter_PathGenerator_get_pi_closure) },
         { be_const_key_weak(pi, -1), be_const_var(3) },
         { be_const_key_weak(attribute, 10), be_const_var(5) },
         { be_const_key_weak(cluster_found, 14), be_const_var(8) },
@@ -515,21 +523,14 @@ be_local_class(Matter_PathGenerator,
         { be_const_key_weak(attribute_found, -1), be_const_var(9) },
         { be_const_key_weak(clusters, -1), be_const_var(6) },
         { be_const_key_weak(path_in, -1), be_const_var(1) },
-        { be_const_key_weak(init, 11), be_const_closure(Matter_PathGenerator_init_closure) },
+        { be_const_key_weak(init, 11), be_const_closure(class_Matter_PathGenerator_init_closure) },
         { be_const_key_weak(path_concrete, -1), be_const_var(10) },
-        { be_const_key_weak(next, 9), be_const_closure(Matter_PathGenerator_next_closure) },
+        { be_const_key_weak(next, 9), be_const_closure(class_Matter_PathGenerator_next_closure) },
         { be_const_key_weak(cluster, 4), be_const_var(4) },
-        { be_const_key_weak(reset, 1), be_const_closure(Matter_PathGenerator_reset_closure) },
-        { be_const_key_weak(_next_attribute, -1), be_const_closure(Matter_PathGenerator__next_attribute_closure) },
+        { be_const_key_weak(reset, 1), be_const_closure(class_Matter_PathGenerator_reset_closure) },
+        { be_const_key_weak(_next_attribute, -1), be_const_closure(class_Matter_PathGenerator__next_attribute_closure) },
     })),
     be_str_weak(Matter_PathGenerator)
 );
-/*******************************************************************/
-
-void be_load_Matter_PathGenerator_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_PathGenerator);
-    be_setglobal(vm, "Matter_PathGenerator");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */
