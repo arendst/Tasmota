@@ -452,7 +452,7 @@ static void m_solidify_closure(bvm *vm, bbool str_literal, const bclosure *clo, 
         char parentclass_prefix[strlen(parentclass_name) + 10];
         snprintf(parentclass_prefix, sizeof(parentclass_prefix), "class_%s", parentclass_name);
         if (strcmp(parentclass_prefix, prefixname) != 0) {
-            logfmt("//--> Borrowed method from another class parentclass='%s' prefix='%s'<---\n", parentclass_prefix, prefixname);
+            logfmt("// Borrowed method '%s' from class '%s'\n", func_name, parentclass_prefix);
             logfmt("extern bclosure *%s_%s;\n", parentclass_prefix, func_name);
             return;
         }
