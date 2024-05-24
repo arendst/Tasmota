@@ -9,7 +9,8 @@ extern const bclass be_class_AXP192;
 /********************************************************************
 ** Solidified function: set_dcdc_enable
 ********************************************************************/
-be_local_closure(AXP192_set_dcdc_enable,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_set_dcdc_enable,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     3,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(AXP192_set_dcdc_enable,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_const_int(1),
@@ -60,7 +61,8 @@ be_local_closure(AXP192_set_dcdc_enable,   /* name */
 /********************************************************************
 ** Solidified function: get_bat_power
 ********************************************************************/
-be_local_closure(AXP192_get_bat_power,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_get_bat_power,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -68,7 +70,7 @@ be_local_closure(AXP192_get_bat_power,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(read24),
@@ -91,7 +93,8 @@ be_local_closure(AXP192_get_bat_power,   /* name */
 /********************************************************************
 ** Solidified function: get_bat_voltage
 ********************************************************************/
-be_local_closure(AXP192_get_bat_voltage,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_get_bat_voltage,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -99,7 +102,7 @@ be_local_closure(AXP192_get_bat_voltage,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(read12),
@@ -122,7 +125,8 @@ be_local_closure(AXP192_get_bat_voltage,   /* name */
 /********************************************************************
 ** Solidified function: get_vbus_current
 ********************************************************************/
-be_local_closure(AXP192_get_vbus_current,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_get_vbus_current,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -130,7 +134,7 @@ be_local_closure(AXP192_get_vbus_current,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(read12),
@@ -153,7 +157,8 @@ be_local_closure(AXP192_get_vbus_current,   /* name */
 /********************************************************************
 ** Solidified function: get_warning_level
 ********************************************************************/
-be_local_closure(AXP192_get_warning_level,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_get_warning_level,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -161,7 +166,7 @@ be_local_closure(AXP192_get_warning_level,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(read12),
@@ -184,7 +189,8 @@ be_local_closure(AXP192_get_warning_level,   /* name */
 /********************************************************************
 ** Solidified function: set_ldo_enable
 ********************************************************************/
-be_local_closure(AXP192_set_ldo_enable,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_set_ldo_enable,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     3,                          /* argc */
@@ -192,7 +198,7 @@ be_local_closure(AXP192_set_ldo_enable,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_const_int(2),
@@ -226,7 +232,8 @@ be_local_closure(AXP192_set_ldo_enable,   /* name */
 /********************************************************************
 ** Solidified function: get_input_power_status
 ********************************************************************/
-be_local_closure(AXP192_get_input_power_status,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_get_input_power_status,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
@@ -234,7 +241,7 @@ be_local_closure(AXP192_get_input_power_status,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str(wire),
@@ -262,7 +269,8 @@ be_local_closure(AXP192_get_input_power_status,   /* name */
 /********************************************************************
 ** Solidified function: get_aps_voltage
 ********************************************************************/
-be_local_closure(AXP192_get_aps_voltage,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_get_aps_voltage,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -270,7 +278,7 @@ be_local_closure(AXP192_get_aps_voltage,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(read12),
@@ -293,7 +301,8 @@ be_local_closure(AXP192_get_aps_voltage,   /* name */
 /********************************************************************
 ** Solidified function: set_exten
 ********************************************************************/
-be_local_closure(AXP192_set_exten,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_set_exten,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -301,7 +310,7 @@ be_local_closure(AXP192_set_exten,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(write_bit),
@@ -324,7 +333,8 @@ be_local_closure(AXP192_set_exten,   /* name */
 /********************************************************************
 ** Solidified function: battery_present
 ********************************************************************/
-be_local_closure(AXP192_battery_present,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_battery_present,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
@@ -332,7 +342,7 @@ be_local_closure(AXP192_battery_present,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str(wire),
@@ -367,7 +377,8 @@ be_local_closure(AXP192_battery_present,   /* name */
 /********************************************************************
 ** Solidified function: get_vbus_voltage
 ********************************************************************/
-be_local_closure(AXP192_get_vbus_voltage,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_get_vbus_voltage,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -375,7 +386,7 @@ be_local_closure(AXP192_get_vbus_voltage,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(read12),
@@ -398,7 +409,8 @@ be_local_closure(AXP192_get_vbus_voltage,   /* name */
 /********************************************************************
 ** Solidified function: write_gpio
 ********************************************************************/
-be_local_closure(AXP192_write_gpio,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_write_gpio,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     3,                          /* argc */
@@ -406,7 +418,7 @@ be_local_closure(AXP192_write_gpio,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -447,7 +459,8 @@ be_local_closure(AXP192_write_gpio,   /* name */
 /********************************************************************
 ** Solidified function: set_ldo_voltage
 ********************************************************************/
-be_local_closure(AXP192_set_ldo_voltage,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_set_ldo_voltage,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     3,                          /* argc */
@@ -455,7 +468,7 @@ be_local_closure(AXP192_set_ldo_voltage,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_const_int(2),
@@ -514,7 +527,8 @@ be_local_closure(AXP192_set_ldo_voltage,   /* name */
 /********************************************************************
 ** Solidified function: json_append
 ********************************************************************/
-be_local_closure(AXP192_json_append,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_json_append,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     1,                          /* argc */
@@ -522,7 +536,7 @@ be_local_closure(AXP192_json_append,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str(wire),
@@ -568,7 +582,8 @@ be_local_closure(AXP192_json_append,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(AXP192_init,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -576,7 +591,7 @@ be_local_closure(AXP192_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(I2C_Driver),
@@ -604,7 +619,8 @@ be_local_closure(AXP192_init,   /* name */
 /********************************************************************
 ** Solidified function: get_bat_current
 ********************************************************************/
-be_local_closure(AXP192_get_bat_current,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_get_bat_current,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -612,7 +628,7 @@ be_local_closure(AXP192_get_bat_current,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(read13),
@@ -639,7 +655,8 @@ be_local_closure(AXP192_get_bat_current,   /* name */
 /********************************************************************
 ** Solidified function: web_sensor
 ********************************************************************/
-be_local_closure(AXP192_web_sensor,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_web_sensor,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     1,                          /* argc */
@@ -647,7 +664,7 @@ be_local_closure(AXP192_web_sensor,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str(wire),
@@ -700,7 +717,8 @@ be_local_closure(AXP192_web_sensor,   /* name */
 /********************************************************************
 ** Solidified function: set_chg_current
 ********************************************************************/
-be_local_closure(AXP192_set_chg_current,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_set_chg_current,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     2,                          /* argc */
@@ -708,7 +726,7 @@ be_local_closure(AXP192_set_chg_current,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(write8),
@@ -738,7 +756,8 @@ be_local_closure(AXP192_set_chg_current,   /* name */
 /********************************************************************
 ** Solidified function: get_temp
 ********************************************************************/
-be_local_closure(AXP192_get_temp,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_get_temp,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -746,7 +765,7 @@ be_local_closure(AXP192_get_temp,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(read12),
@@ -771,7 +790,8 @@ be_local_closure(AXP192_get_temp,   /* name */
 /********************************************************************
 ** Solidified function: set_dc_voltage
 ********************************************************************/
-be_local_closure(AXP192_set_dc_voltage,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_set_dc_voltage,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     3,                          /* argc */
@@ -779,7 +799,7 @@ be_local_closure(AXP192_set_dc_voltage,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_const_int(1),
@@ -849,7 +869,8 @@ be_local_closure(AXP192_set_dc_voltage,   /* name */
 /********************************************************************
 ** Solidified function: power_off
 ********************************************************************/
-be_local_closure(AXP192_power_off,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_power_off,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
@@ -857,7 +878,7 @@ be_local_closure(AXP192_power_off,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(write_bit),
@@ -881,7 +902,8 @@ be_local_closure(AXP192_power_off,   /* name */
 /********************************************************************
 ** Solidified function: get_battery_chargin_status
 ********************************************************************/
-be_local_closure(AXP192_get_battery_chargin_status,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_get_battery_chargin_status,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
@@ -889,7 +911,7 @@ be_local_closure(AXP192_get_battery_chargin_status,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str(wire),
@@ -916,7 +938,8 @@ be_local_closure(AXP192_get_battery_chargin_status,   /* name */
 /********************************************************************
 ** Solidified function: get_bat_charge_current
 ********************************************************************/
-be_local_closure(AXP192_get_bat_charge_current,   /* name */
+extern const bclass be_class_AXP192;
+be_local_closure(class_AXP192_get_bat_charge_current,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -924,7 +947,7 @@ be_local_closure(AXP192_get_bat_charge_current,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_AXP192, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(read13),
@@ -953,38 +976,31 @@ be_local_class(AXP192,
     &be_class_I2C_Driver,
     be_nested_map(23,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(set_dcdc_enable, -1), be_const_closure(AXP192_set_dcdc_enable_closure) },
-        { be_const_key(get_bat_power, -1), be_const_closure(AXP192_get_bat_power_closure) },
-        { be_const_key(get_bat_charge_current, 3), be_const_closure(AXP192_get_bat_charge_current_closure) },
-        { be_const_key(get_battery_chargin_status, -1), be_const_closure(AXP192_get_battery_chargin_status_closure) },
-        { be_const_key(get_warning_level, -1), be_const_closure(AXP192_get_warning_level_closure) },
-        { be_const_key(power_off, -1), be_const_closure(AXP192_power_off_closure) },
-        { be_const_key(get_vbus_current, 22), be_const_closure(AXP192_get_vbus_current_closure) },
-        { be_const_key(get_aps_voltage, -1), be_const_closure(AXP192_get_aps_voltage_closure) },
-        { be_const_key(set_exten, -1), be_const_closure(AXP192_set_exten_closure) },
-        { be_const_key(battery_present, -1), be_const_closure(AXP192_battery_present_closure) },
-        { be_const_key(get_vbus_voltage, -1), be_const_closure(AXP192_get_vbus_voltage_closure) },
-        { be_const_key(write_gpio, -1), be_const_closure(AXP192_write_gpio_closure) },
-        { be_const_key(set_ldo_voltage, -1), be_const_closure(AXP192_set_ldo_voltage_closure) },
-        { be_const_key(set_ldo_enable, 21), be_const_closure(AXP192_set_ldo_enable_closure) },
-        { be_const_key(init, 2), be_const_closure(AXP192_init_closure) },
-        { be_const_key(get_bat_current, -1), be_const_closure(AXP192_get_bat_current_closure) },
-        { be_const_key(web_sensor, -1), be_const_closure(AXP192_web_sensor_closure) },
-        { be_const_key(set_dc_voltage, -1), be_const_closure(AXP192_set_dc_voltage_closure) },
-        { be_const_key(get_temp, -1), be_const_closure(AXP192_get_temp_closure) },
-        { be_const_key(set_chg_current, 17), be_const_closure(AXP192_set_chg_current_closure) },
-        { be_const_key(get_bat_voltage, 5), be_const_closure(AXP192_get_bat_voltage_closure) },
-        { be_const_key(json_append, -1), be_const_closure(AXP192_json_append_closure) },
-        { be_const_key(get_input_power_status, -1), be_const_closure(AXP192_get_input_power_status_closure) },
+        { be_const_key(set_dcdc_enable, -1), be_const_closure(class_AXP192_set_dcdc_enable_closure) },
+        { be_const_key(get_bat_power, -1), be_const_closure(class_AXP192_get_bat_power_closure) },
+        { be_const_key(get_bat_charge_current, 3), be_const_closure(class_AXP192_get_bat_charge_current_closure) },
+        { be_const_key(get_battery_chargin_status, -1), be_const_closure(class_AXP192_get_battery_chargin_status_closure) },
+        { be_const_key(get_warning_level, -1), be_const_closure(class_AXP192_get_warning_level_closure) },
+        { be_const_key(power_off, -1), be_const_closure(class_AXP192_power_off_closure) },
+        { be_const_key(get_vbus_current, 22), be_const_closure(class_AXP192_get_vbus_current_closure) },
+        { be_const_key(get_aps_voltage, -1), be_const_closure(class_AXP192_get_aps_voltage_closure) },
+        { be_const_key(set_exten, -1), be_const_closure(class_AXP192_set_exten_closure) },
+        { be_const_key(battery_present, -1), be_const_closure(class_AXP192_battery_present_closure) },
+        { be_const_key(get_vbus_voltage, -1), be_const_closure(class_AXP192_get_vbus_voltage_closure) },
+        { be_const_key(write_gpio, -1), be_const_closure(class_AXP192_write_gpio_closure) },
+        { be_const_key(set_ldo_voltage, -1), be_const_closure(class_AXP192_set_ldo_voltage_closure) },
+        { be_const_key(set_ldo_enable, 21), be_const_closure(class_AXP192_set_ldo_enable_closure) },
+        { be_const_key(init, 2), be_const_closure(class_AXP192_init_closure) },
+        { be_const_key(get_bat_current, -1), be_const_closure(class_AXP192_get_bat_current_closure) },
+        { be_const_key(web_sensor, -1), be_const_closure(class_AXP192_web_sensor_closure) },
+        { be_const_key(set_dc_voltage, -1), be_const_closure(class_AXP192_set_dc_voltage_closure) },
+        { be_const_key(get_temp, -1), be_const_closure(class_AXP192_get_temp_closure) },
+        { be_const_key(set_chg_current, 17), be_const_closure(class_AXP192_set_chg_current_closure) },
+        { be_const_key(get_bat_voltage, 5), be_const_closure(class_AXP192_get_bat_voltage_closure) },
+        { be_const_key(json_append, -1), be_const_closure(class_AXP192_json_append_closure) },
+        { be_const_key(get_input_power_status, -1), be_const_closure(class_AXP192_get_input_power_status_closure) },
     })),
     (bstring*) &be_const_str_AXP192
 );
-/*******************************************************************/
-
-void be_load_AXP192_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_AXP192);
-    be_setglobal(vm, "AXP192");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

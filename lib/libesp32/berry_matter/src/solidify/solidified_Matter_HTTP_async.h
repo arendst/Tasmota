@@ -9,7 +9,8 @@ extern const bclass be_class_Matter_HTTP_async;
 /********************************************************************
 ** Solidified function: parse_http_payload
 ********************************************************************/
-be_local_closure(Matter_HTTP_async_parse_http_payload,   /* name */
+extern const bclass be_class_Matter_HTTP_async;
+be_local_closure(class_Matter_HTTP_async_parse_http_payload,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Matter_HTTP_async_parse_http_payload,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_async, 
     1,                          /* has constants */
     ( &(const bvalue[16]) {     /* constants */
     /* K0   */  be_nested_str_weak(is_chunked),
@@ -131,7 +132,8 @@ be_local_closure(Matter_HTTP_async_parse_http_payload,   /* name */
 /********************************************************************
 ** Solidified function: event_http_finished
 ********************************************************************/
-be_local_closure(Matter_HTTP_async_event_http_finished,   /* name */
+extern const bclass be_class_Matter_HTTP_async;
+be_local_closure(class_Matter_HTTP_async_event_http_finished,   /* name */
   be_nested_proto(
     1,                          /* nstack */
     1,                          /* argc */
@@ -139,7 +141,7 @@ be_local_closure(Matter_HTTP_async_event_http_finished,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_async, 
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(event_http_finished),
@@ -155,7 +157,8 @@ be_local_closure(Matter_HTTP_async_event_http_finished,   /* name */
 /********************************************************************
 ** Solidified function: event_http_header
 ********************************************************************/
-be_local_closure(Matter_HTTP_async_event_http_header,   /* name */
+extern const bclass be_class_Matter_HTTP_async;
+be_local_closure(class_Matter_HTTP_async_event_http_header,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     3,                          /* argc */
@@ -163,7 +166,7 @@ be_local_closure(Matter_HTTP_async_event_http_header,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_async, 
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),
@@ -203,7 +206,8 @@ be_local_closure(Matter_HTTP_async_event_http_header,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Matter_HTTP_async_init,   /* name */
+extern const bclass be_class_Matter_HTTP_async;
+be_local_closure(class_Matter_HTTP_async_init,   /* name */
   be_nested_proto(
     13,                          /* nstack */
     5,                          /* argc */
@@ -211,7 +215,7 @@ be_local_closure(Matter_HTTP_async_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_async, 
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),
@@ -274,7 +278,8 @@ be_local_closure(Matter_HTTP_async_init,   /* name */
 /********************************************************************
 ** Solidified function: event_http_failed
 ********************************************************************/
-be_local_closure(Matter_HTTP_async_event_http_failed,   /* name */
+extern const bclass be_class_Matter_HTTP_async;
+be_local_closure(class_Matter_HTTP_async_event_http_failed,   /* name */
   be_nested_proto(
     1,                          /* nstack */
     1,                          /* argc */
@@ -282,7 +287,7 @@ be_local_closure(Matter_HTTP_async_event_http_failed,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_async, 
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(event_http_failed),
@@ -298,7 +303,8 @@ be_local_closure(Matter_HTTP_async_event_http_failed,   /* name */
 /********************************************************************
 ** Solidified function: parse_http_response
 ********************************************************************/
-be_local_closure(Matter_HTTP_async_parse_http_response,   /* name */
+extern const bclass be_class_Matter_HTTP_async;
+be_local_closure(class_Matter_HTTP_async_parse_http_response,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -306,7 +312,7 @@ be_local_closure(Matter_HTTP_async_parse_http_response,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_async, 
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(phase),
@@ -347,7 +353,8 @@ be_local_closure(Matter_HTTP_async_parse_http_response,   /* name */
 /********************************************************************
 ** Solidified function: event_refused
 ********************************************************************/
-be_local_closure(Matter_HTTP_async_event_refused,   /* name */
+extern const bclass be_class_Matter_HTTP_async;
+be_local_closure(class_Matter_HTTP_async_event_refused,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -355,7 +362,7 @@ be_local_closure(Matter_HTTP_async_event_refused,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_async, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(http_status),
@@ -378,7 +385,8 @@ be_local_closure(Matter_HTTP_async_event_refused,   /* name */
 /********************************************************************
 ** Solidified function: reset
 ********************************************************************/
-be_local_closure(Matter_HTTP_async_reset,   /* name */
+extern const bclass be_class_Matter_HTTP_async;
+be_local_closure(class_Matter_HTTP_async_reset,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -386,7 +394,7 @@ be_local_closure(Matter_HTTP_async_reset,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_async, 
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str_weak(reset),
@@ -431,7 +439,8 @@ be_local_closure(Matter_HTTP_async_reset,   /* name */
 /********************************************************************
 ** Solidified function: begin
 ********************************************************************/
-be_local_closure(Matter_HTTP_async_begin,   /* name */
+extern const bclass be_class_Matter_HTTP_async;
+be_local_closure(class_Matter_HTTP_async_begin,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     2,                          /* argc */
@@ -439,7 +448,7 @@ be_local_closure(Matter_HTTP_async_begin,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_async, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(begin),
@@ -464,7 +473,8 @@ be_local_closure(Matter_HTTP_async_begin,   /* name */
 /********************************************************************
 ** Solidified function: event_established
 ********************************************************************/
-be_local_closure(Matter_HTTP_async_event_established,   /* name */
+extern const bclass be_class_Matter_HTTP_async;
+be_local_closure(class_Matter_HTTP_async_event_established,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -472,7 +482,7 @@ be_local_closure(Matter_HTTP_async_event_established,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_async, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(send_http),
@@ -492,7 +502,8 @@ be_local_closure(Matter_HTTP_async_event_established,   /* name */
 /********************************************************************
 ** Solidified function: parse_http_headers
 ********************************************************************/
-be_local_closure(Matter_HTTP_async_parse_http_headers,   /* name */
+extern const bclass be_class_Matter_HTTP_async;
+be_local_closure(class_Matter_HTTP_async_parse_http_headers,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
@@ -500,7 +511,7 @@ be_local_closure(Matter_HTTP_async_parse_http_headers,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_async, 
     1,                          /* has constants */
     ( &(const bvalue[17]) {     /* constants */
     /* K0   */  be_nested_str_weak(global),
@@ -580,7 +591,8 @@ be_local_closure(Matter_HTTP_async_parse_http_headers,   /* name */
 /********************************************************************
 ** Solidified function: event_available
 ********************************************************************/
-be_local_closure(Matter_HTTP_async_event_available,   /* name */
+extern const bclass be_class_Matter_HTTP_async;
+be_local_closure(class_Matter_HTTP_async_event_available,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -588,7 +600,7 @@ be_local_closure(Matter_HTTP_async_event_available,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_async, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(receive),
@@ -608,7 +620,8 @@ be_local_closure(Matter_HTTP_async_event_available,   /* name */
 /********************************************************************
 ** Solidified function: event_timeout
 ********************************************************************/
-be_local_closure(Matter_HTTP_async_event_timeout,   /* name */
+extern const bclass be_class_Matter_HTTP_async;
+be_local_closure(class_Matter_HTTP_async_event_timeout,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -616,7 +629,7 @@ be_local_closure(Matter_HTTP_async_event_timeout,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_async, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(http_status),
@@ -639,7 +652,8 @@ be_local_closure(Matter_HTTP_async_event_timeout,   /* name */
 /********************************************************************
 ** Solidified function: compile_re
 ********************************************************************/
-be_local_closure(Matter_HTTP_async_compile_re,   /* name */
+extern const bclass be_class_Matter_HTTP_async;
+be_local_closure(class_Matter_HTTP_async_compile_re,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
@@ -647,7 +661,7 @@ be_local_closure(Matter_HTTP_async_compile_re,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_async, 
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str_weak(re),
@@ -702,7 +716,8 @@ be_local_closure(Matter_HTTP_async_compile_re,   /* name */
 /********************************************************************
 ** Solidified function: event_closed
 ********************************************************************/
-be_local_closure(Matter_HTTP_async_event_closed,   /* name */
+extern const bclass be_class_Matter_HTTP_async;
+be_local_closure(class_Matter_HTTP_async_event_closed,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -710,7 +725,7 @@ be_local_closure(Matter_HTTP_async_event_closed,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_async, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(http_status),
@@ -737,7 +752,8 @@ be_local_closure(Matter_HTTP_async_event_closed,   /* name */
 /********************************************************************
 ** Solidified function: begin_sync
 ********************************************************************/
-be_local_closure(Matter_HTTP_async_begin_sync,   /* name */
+extern const bclass be_class_Matter_HTTP_async;
+be_local_closure(class_Matter_HTTP_async_begin_sync,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     3,                          /* argc */
@@ -745,7 +761,7 @@ be_local_closure(Matter_HTTP_async_begin_sync,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_async, 
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str_weak(timeout),
@@ -804,7 +820,8 @@ be_local_closure(Matter_HTTP_async_begin_sync,   /* name */
 /********************************************************************
 ** Solidified function: send_http
 ********************************************************************/
-be_local_closure(Matter_HTTP_async_send_http,   /* name */
+extern const bclass be_class_Matter_HTTP_async;
+be_local_closure(class_Matter_HTTP_async_send_http,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     1,                          /* argc */
@@ -812,7 +829,7 @@ be_local_closure(Matter_HTTP_async_send_http,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_async, 
     1,                          /* has constants */
     ( &(const bvalue[19]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),
@@ -897,7 +914,8 @@ be_local_closure(Matter_HTTP_async_send_http,   /* name */
 /********************************************************************
 ** Solidified function: event_http_headers_end
 ********************************************************************/
-be_local_closure(Matter_HTTP_async_event_http_headers_end,   /* name */
+extern const bclass be_class_Matter_HTTP_async;
+be_local_closure(class_Matter_HTTP_async_event_http_headers_end,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -905,7 +923,7 @@ be_local_closure(Matter_HTTP_async_event_http_headers_end,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_async, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(response_offset),
@@ -935,7 +953,8 @@ be_local_closure(Matter_HTTP_async_event_http_headers_end,   /* name */
 /********************************************************************
 ** Solidified function: event_http_status_code
 ********************************************************************/
-be_local_closure(Matter_HTTP_async_event_http_status_code,   /* name */
+extern const bclass be_class_Matter_HTTP_async;
+be_local_closure(class_Matter_HTTP_async_event_http_status_code,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     3,                          /* argc */
@@ -943,7 +962,7 @@ be_local_closure(Matter_HTTP_async_event_http_status_code,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_async, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(status_code),
@@ -962,7 +981,8 @@ be_local_closure(Matter_HTTP_async_event_http_status_code,   /* name */
 /********************************************************************
 ** Solidified function: parse_http_status_line
 ********************************************************************/
-be_local_closure(Matter_HTTP_async_parse_http_status_line,   /* name */
+extern const bclass be_class_Matter_HTTP_async;
+be_local_closure(class_Matter_HTTP_async_parse_http_status_line,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -970,7 +990,7 @@ be_local_closure(Matter_HTTP_async_parse_http_status_line,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_async, 
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str_weak(global),
@@ -1026,7 +1046,8 @@ be_local_closure(Matter_HTTP_async_parse_http_status_line,   /* name */
 /********************************************************************
 ** Solidified function: event_http_timeout
 ********************************************************************/
-be_local_closure(Matter_HTTP_async_event_http_timeout,   /* name */
+extern const bclass be_class_Matter_HTTP_async;
+be_local_closure(class_Matter_HTTP_async_event_http_timeout,   /* name */
   be_nested_proto(
     1,                          /* nstack */
     1,                          /* argc */
@@ -1034,7 +1055,7 @@ be_local_closure(Matter_HTTP_async_event_http_timeout,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_async, 
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(event_http_timeout),
@@ -1050,7 +1071,8 @@ be_local_closure(Matter_HTTP_async_event_http_timeout,   /* name */
 /********************************************************************
 ** Solidified function: receive
 ********************************************************************/
-be_local_closure(Matter_HTTP_async_receive,   /* name */
+extern const bclass be_class_Matter_HTTP_async;
+be_local_closure(class_Matter_HTTP_async_receive,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
@@ -1058,7 +1080,7 @@ be_local_closure(Matter_HTTP_async_receive,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_async, 
     1,                          /* has constants */
     ( &(const bvalue[15]) {     /* constants */
     /* K0   */  be_nested_str_weak(tcp_connected),
@@ -1144,53 +1166,46 @@ be_local_class(Matter_HTTP_async,
     be_nested_map(39,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(response, -1), be_const_var(2) },
-        { be_const_key_weak(parse_http_payload, -1), be_const_closure(Matter_HTTP_async_parse_http_payload_closure) },
-        { be_const_key_weak(receive, 10), be_const_closure(Matter_HTTP_async_receive_closure) },
-        { be_const_key_weak(event_http_finished, 22), be_const_closure(Matter_HTTP_async_event_http_finished_closure) },
+        { be_const_key_weak(parse_http_payload, -1), be_const_closure(class_Matter_HTTP_async_parse_http_payload_closure) },
+        { be_const_key_weak(receive, 10), be_const_closure(class_Matter_HTTP_async_receive_closure) },
+        { be_const_key_weak(event_http_finished, 22), be_const_closure(class_Matter_HTTP_async_event_http_finished_closure) },
         { be_const_key_weak(HTTP_BODY_REGEX, -1), be_nested_str_weak(_X0D_X0A) },
         { be_const_key_weak(HTTP_GET_AUTH, -1), be_nested_str_weak(GET_X20_X25s_X20HTTP_X2F1_X2E1_X0D_X0AHost_X20_X25s_X3A_X25s_X0D_X0AAuthorization_X3A_X20Basic_X20_X25s_X0D_X0AConnection_X3A_X20close_X0D_X0A_X0D_X0A) },
-        { be_const_key_weak(init, -1), be_const_closure(Matter_HTTP_async_init_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_Matter_HTTP_async_init_closure) },
         { be_const_key_weak(response_offset, 23), be_const_var(3) },
-        { be_const_key_weak(parse_http_response, -1), be_const_closure(Matter_HTTP_async_parse_http_response_closure) },
-        { be_const_key_weak(event_refused, -1), be_const_closure(Matter_HTTP_async_event_refused_closure) },
-        { be_const_key_weak(event_http_timeout, -1), be_const_closure(Matter_HTTP_async_event_http_timeout_closure) },
+        { be_const_key_weak(parse_http_response, -1), be_const_closure(class_Matter_HTTP_async_parse_http_response_closure) },
+        { be_const_key_weak(event_refused, -1), be_const_closure(class_Matter_HTTP_async_event_refused_closure) },
+        { be_const_key_weak(event_http_timeout, -1), be_const_closure(class_Matter_HTTP_async_event_http_timeout_closure) },
         { be_const_key_weak(HTTP_STATUS_REGEX, -1), be_nested_str_weak(HTTP_X2F1_X5C_X2E_X5B0_X2D1_X5D_X20_X28_X5Cd_X2B_X29_X20_X2E_X2A_X3F_X0D_X0A) },
         { be_const_key_weak(cmd, -1), be_const_var(1) },
-        { be_const_key_weak(event_http_status_code, -1), be_const_closure(Matter_HTTP_async_event_http_status_code_closure) },
+        { be_const_key_weak(event_http_status_code, -1), be_const_closure(class_Matter_HTTP_async_event_http_status_code_closure) },
         { be_const_key_weak(payload, -1), be_const_var(5) },
         { be_const_key_weak(is_chunked, -1), be_const_var(8) },
         { be_const_key_weak(HTTP_GET, -1), be_nested_str_weak(GET_X20_X25s_X20HTTP_X2F1_X2E1_X0D_X0AHost_X20_X25s_X3A_X25s_X0D_X0AConnection_X3A_X20close_X0D_X0A_X0D_X0A) },
         { be_const_key_weak(chunk_size, 16), be_const_var(9) },
         { be_const_key_weak(auth, 35), be_const_var(0) },
-        { be_const_key_weak(parse_http_headers, 26), be_const_closure(Matter_HTTP_async_parse_http_headers_closure) },
-        { be_const_key_weak(event_available, -1), be_const_closure(Matter_HTTP_async_event_available_closure) },
+        { be_const_key_weak(parse_http_headers, 26), be_const_closure(class_Matter_HTTP_async_parse_http_headers_closure) },
+        { be_const_key_weak(event_available, -1), be_const_closure(class_Matter_HTTP_async_event_available_closure) },
         { be_const_key_weak(status_code, 11), be_const_var(4) },
         { be_const_key_weak(phase, 36), be_const_var(7) },
-        { be_const_key_weak(event_http_headers_end, -1), be_const_closure(Matter_HTTP_async_event_http_headers_end_closure) },
-        { be_const_key_weak(reset, 31), be_const_closure(Matter_HTTP_async_reset_closure) },
-        { be_const_key_weak(begin_sync, -1), be_const_closure(Matter_HTTP_async_begin_sync_closure) },
-        { be_const_key_weak(send_http, -1), be_const_closure(Matter_HTTP_async_send_http_closure) },
-        { be_const_key_weak(event_timeout, 28), be_const_closure(Matter_HTTP_async_event_timeout_closure) },
+        { be_const_key_weak(event_http_headers_end, -1), be_const_closure(class_Matter_HTTP_async_event_http_headers_end_closure) },
+        { be_const_key_weak(reset, 31), be_const_closure(class_Matter_HTTP_async_reset_closure) },
+        { be_const_key_weak(begin_sync, -1), be_const_closure(class_Matter_HTTP_async_begin_sync_closure) },
+        { be_const_key_weak(send_http, -1), be_const_closure(class_Matter_HTTP_async_send_http_closure) },
+        { be_const_key_weak(event_timeout, 28), be_const_closure(class_Matter_HTTP_async_event_timeout_closure) },
         { be_const_key_weak(HTTP_CHUNK_REGEX, -1), be_nested_str_weak(_X0D_X0A_X28_X5BA_X2DFa_X2Df0_X2D9_X5D_X2B_X29_X5B_X20_X09_X5D_X2A_X2E_X2A_X3F_X0D_X0A) },
-        { be_const_key_weak(compile_re, 7), be_const_closure(Matter_HTTP_async_compile_re_closure) },
+        { be_const_key_weak(compile_re, 7), be_const_closure(class_Matter_HTTP_async_compile_re_closure) },
         { be_const_key_weak(HTTP_HEADER_REGEX, -1), be_nested_str_weak(_X28_X5BA_X2DZa_X2Dz0_X2D9_X2D_X5D_X2B_X29_X3A_X20_X28_X2E_X2A_X3F_X29_X0D_X0A) },
-        { be_const_key_weak(event_closed, 30), be_const_closure(Matter_HTTP_async_event_closed_closure) },
-        { be_const_key_weak(event_http_header, 14), be_const_closure(Matter_HTTP_async_event_http_header_closure) },
-        { be_const_key_weak(event_http_failed, 13), be_const_closure(Matter_HTTP_async_event_http_failed_closure) },
-        { be_const_key_weak(parse_http_status_line, -1), be_const_closure(Matter_HTTP_async_parse_http_status_line_closure) },
-        { be_const_key_weak(event_established, -1), be_const_closure(Matter_HTTP_async_event_established_closure) },
-        { be_const_key_weak(begin, 4), be_const_closure(Matter_HTTP_async_begin_closure) },
+        { be_const_key_weak(event_closed, 30), be_const_closure(class_Matter_HTTP_async_event_closed_closure) },
+        { be_const_key_weak(event_http_header, 14), be_const_closure(class_Matter_HTTP_async_event_http_header_closure) },
+        { be_const_key_weak(event_http_failed, 13), be_const_closure(class_Matter_HTTP_async_event_http_failed_closure) },
+        { be_const_key_weak(parse_http_status_line, -1), be_const_closure(class_Matter_HTTP_async_parse_http_status_line_closure) },
+        { be_const_key_weak(event_established, -1), be_const_closure(class_Matter_HTTP_async_event_established_closure) },
+        { be_const_key_weak(begin, 4), be_const_closure(class_Matter_HTTP_async_begin_closure) },
         { be_const_key_weak(http_status, -1), be_const_var(6) },
         { be_const_key_weak(SPINLOCK, 2), be_const_int(5) },
     })),
     be_str_weak(Matter_HTTP_async)
 );
-/*******************************************************************/
-
-void be_load_Matter_HTTP_async_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_HTTP_async);
-    be_setglobal(vm, "Matter_HTTP_async");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

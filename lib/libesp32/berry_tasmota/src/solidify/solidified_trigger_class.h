@@ -9,7 +9,8 @@ extern const bclass be_class_Trigger;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Trigger_init,   /* name */
+extern const bclass be_class_Trigger;
+be_local_closure(class_Trigger_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     5,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Trigger_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Trigger, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str(trig),
@@ -42,7 +43,8 @@ be_local_closure(Trigger_init,   /* name */
 /********************************************************************
 ** Solidified function: tostring
 ********************************************************************/
-be_local_closure(Trigger_tostring,   /* name */
+extern const bclass be_class_Trigger;
+be_local_closure(class_Trigger_tostring,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     1,                          /* argc */
@@ -50,7 +52,7 @@ be_local_closure(Trigger_tostring,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Trigger, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str(_X3Cinstance_X3A_X20_X25s_X28_X25s_X2C_X20_X25s_X2C_X20_X25s_X29),
@@ -88,7 +90,8 @@ be_local_closure(Trigger_tostring,   /* name */
 /********************************************************************
 ** Solidified function: time_reached
 ********************************************************************/
-be_local_closure(Trigger_time_reached,   /* name */
+extern const bclass be_class_Trigger;
+be_local_closure(class_Trigger_time_reached,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -96,7 +99,7 @@ be_local_closure(Trigger_time_reached,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Trigger, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str(o),
@@ -128,7 +131,8 @@ be_local_closure(Trigger_time_reached,   /* name */
 /********************************************************************
 ** Solidified function: next
 ********************************************************************/
-be_local_closure(Trigger_next,   /* name */
+extern const bclass be_class_Trigger;
+be_local_closure(class_Trigger_next,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -136,7 +140,7 @@ be_local_closure(Trigger_next,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Trigger, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(o),
@@ -168,21 +172,14 @@ be_local_class(Trigger,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key(id, 2), be_const_var(2) },
         { be_const_key(f, -1), be_const_var(1) },
-        { be_const_key(next, -1), be_const_closure(Trigger_next_closure) },
+        { be_const_key(next, -1), be_const_closure(class_Trigger_next_closure) },
         { be_const_key(trig, 7), be_const_var(0) },
-        { be_const_key(time_reached, -1), be_const_closure(Trigger_time_reached_closure) },
-        { be_const_key(tostring, 4), be_const_closure(Trigger_tostring_closure) },
+        { be_const_key(time_reached, -1), be_const_closure(class_Trigger_time_reached_closure) },
+        { be_const_key(tostring, 4), be_const_closure(class_Trigger_tostring_closure) },
         { be_const_key(o, -1), be_const_var(3) },
-        { be_const_key(init, -1), be_const_closure(Trigger_init_closure) },
+        { be_const_key(init, -1), be_const_closure(class_Trigger_init_closure) },
     })),
     (bstring*) &be_const_str_Trigger
 );
-/*******************************************************************/
-
-void be_load_Trigger_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Trigger);
-    be_setglobal(vm, "Trigger");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

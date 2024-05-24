@@ -9,7 +9,8 @@ extern const bclass be_class_Animate_animator;
 /********************************************************************
 ** Solidified function: is_running
 ********************************************************************/
-be_local_closure(Animate_animator_is_running,   /* name */
+extern const bclass be_class_Animate_animator;
+be_local_closure(class_Animate_animator_is_running,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Animate_animator_is_running,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_animator, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(running),
@@ -38,7 +39,8 @@ be_local_closure(Animate_animator_is_running,   /* name */
 /********************************************************************
 ** Solidified function: beat
 ********************************************************************/
-be_local_closure(Animate_animator_beat,   /* name */
+extern const bclass be_class_Animate_animator;
+be_local_closure(class_Animate_animator_beat,   /* name */
   be_nested_proto(
     1,                          /* nstack */
     1,                          /* argc */
@@ -46,7 +48,7 @@ be_local_closure(Animate_animator_beat,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_animator, 
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(beat),
@@ -62,7 +64,8 @@ be_local_closure(Animate_animator_beat,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Animate_animator_init,   /* name */
+extern const bclass be_class_Animate_animator;
+be_local_closure(class_Animate_animator_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -70,7 +73,7 @@ be_local_closure(Animate_animator_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_animator, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(global),
@@ -98,7 +101,8 @@ be_local_closure(Animate_animator_init,   /* name */
 /********************************************************************
 ** Solidified function: stop
 ********************************************************************/
-be_local_closure(Animate_animator_stop,   /* name */
+extern const bclass be_class_Animate_animator;
+be_local_closure(class_Animate_animator_stop,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
@@ -106,7 +110,7 @@ be_local_closure(Animate_animator_stop,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_animator, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(origin),
@@ -129,7 +133,8 @@ be_local_closure(Animate_animator_stop,   /* name */
 /********************************************************************
 ** Solidified function: set_duration_ms
 ********************************************************************/
-be_local_closure(Animate_animator_set_duration_ms,   /* name */
+extern const bclass be_class_Animate_animator;
+be_local_closure(class_Animate_animator_set_duration_ms,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     2,                          /* argc */
@@ -137,7 +142,7 @@ be_local_closure(Animate_animator_set_duration_ms,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_animator, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(duration_ms),
@@ -156,7 +161,8 @@ be_local_closure(Animate_animator_set_duration_ms,   /* name */
 /********************************************************************
 ** Solidified function: set_cb
 ********************************************************************/
-be_local_closure(Animate_animator_set_cb,   /* name */
+extern const bclass be_class_Animate_animator;
+be_local_closure(class_Animate_animator_set_cb,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     3,                          /* argc */
@@ -164,7 +170,7 @@ be_local_closure(Animate_animator_set_cb,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_animator, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(obj),
@@ -185,7 +191,8 @@ be_local_closure(Animate_animator_set_cb,   /* name */
 /********************************************************************
 ** Solidified function: start
 ********************************************************************/
-be_local_closure(Animate_animator_start,   /* name */
+extern const bclass be_class_Animate_animator;
+be_local_closure(class_Animate_animator_start,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     2,                          /* argc */
@@ -193,7 +200,7 @@ be_local_closure(Animate_animator_start,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_animator, 
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(duration_ms),
@@ -236,34 +243,28 @@ be_local_class(Animate_animator,
     be_nested_map(12,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(running, 4), be_const_var(0) },
-        { be_const_key_weak(is_running, 2), be_const_closure(Animate_animator_is_running_closure) },
-        { be_const_key_weak(beat, -1), be_const_closure(Animate_animator_beat_closure) },
-        { be_const_key_weak(init, -1), be_const_closure(Animate_animator_init_closure) },
+        { be_const_key_weak(is_running, 2), be_const_closure(class_Animate_animator_is_running_closure) },
+        { be_const_key_weak(beat, -1), be_const_closure(class_Animate_animator_beat_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_Animate_animator_init_closure) },
         { be_const_key_weak(mth, -1), be_const_var(4) },
-        { be_const_key_weak(stop, -1), be_const_closure(Animate_animator_stop_closure) },
+        { be_const_key_weak(stop, -1), be_const_closure(class_Animate_animator_stop_closure) },
         { be_const_key_weak(duration_ms, -1), be_const_var(1) },
         { be_const_key_weak(origin, -1), be_const_var(2) },
-        { be_const_key_weak(set_cb, -1), be_const_closure(Animate_animator_set_cb_closure) },
-        { be_const_key_weak(set_duration_ms, 8), be_const_closure(Animate_animator_set_duration_ms_closure) },
+        { be_const_key_weak(set_cb, -1), be_const_closure(class_Animate_animator_set_cb_closure) },
+        { be_const_key_weak(set_duration_ms, 8), be_const_closure(class_Animate_animator_set_duration_ms_closure) },
         { be_const_key_weak(obj, -1), be_const_var(3) },
-        { be_const_key_weak(start, -1), be_const_closure(Animate_animator_start_closure) },
+        { be_const_key_weak(start, -1), be_const_closure(class_Animate_animator_start_closure) },
     })),
     be_str_weak(Animate_animator)
 );
-/*******************************************************************/
-
-void be_load_Animate_animator_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Animate_animator);
-    be_setglobal(vm, "Animate_animator");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Animate_palette;
 
 /********************************************************************
 ** Solidified function: ptr_to_palette
 ********************************************************************/
-be_local_closure(Animate_palette_ptr_to_palette,   /* name */
+extern const bclass be_class_Animate_palette;
+be_local_closure(class_Animate_palette_ptr_to_palette,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     1,                          /* argc */
@@ -271,7 +272,7 @@ be_local_closure(Animate_palette_ptr_to_palette,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_palette, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_const_class(be_class_Animate_palette),
@@ -336,7 +337,8 @@ be_local_closure(Animate_palette_ptr_to_palette,   /* name */
 /********************************************************************
 ** Solidified function: animate
 ********************************************************************/
-be_local_closure(Animate_palette_animate,   /* name */
+extern const bclass be_class_Animate_palette;
+be_local_closure(class_Animate_palette_animate,   /* name */
   be_nested_proto(
     26,                          /* nstack */
     2,                          /* argc */
@@ -344,7 +346,7 @@ be_local_closure(Animate_palette_animate,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_palette, 
     1,                          /* has constants */
     ( &(const bvalue[21]) {     /* constants */
     /* K0   */  be_nested_str_weak(duration_ms),
@@ -574,7 +576,8 @@ be_local_closure(Animate_palette_animate,   /* name */
 /********************************************************************
 ** Solidified function: set_palette
 ********************************************************************/
-be_local_closure(Animate_palette_set_palette,   /* name */
+extern const bclass be_class_Animate_palette;
+be_local_closure(class_Animate_palette_set_palette,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -582,7 +585,7 @@ be_local_closure(Animate_palette_set_palette,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_palette, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(ptr),
@@ -644,7 +647,8 @@ be_local_closure(Animate_palette_set_palette,   /* name */
 /********************************************************************
 ** Solidified function: to_css_gradient
 ********************************************************************/
-be_local_closure(Animate_palette_to_css_gradient,   /* name */
+extern const bclass be_class_Animate_palette;
+be_local_closure(class_Animate_palette_to_css_gradient,   /* name */
   be_nested_proto(
     17,                          /* nstack */
     1,                          /* argc */
@@ -652,7 +656,7 @@ be_local_closure(Animate_palette_to_css_gradient,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_palette, 
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_const_class(be_class_Animate_palette),
@@ -724,7 +728,8 @@ be_local_closure(Animate_palette_to_css_gradient,   /* name */
 /********************************************************************
 ** Solidified function: set_bri
 ********************************************************************/
-be_local_closure(Animate_palette_set_bri,   /* name */
+extern const bclass be_class_Animate_palette;
+be_local_closure(class_Animate_palette_set_bri,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     2,                          /* argc */
@@ -732,7 +737,7 @@ be_local_closure(Animate_palette_set_bri,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_palette, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(bri),
@@ -754,7 +759,8 @@ be_local_closure(Animate_palette_set_bri,   /* name */
 /********************************************************************
 ** Solidified function: parse_palette
 ********************************************************************/
-be_local_closure(Animate_palette_parse_palette,   /* name */
+extern const bclass be_class_Animate_palette;
+be_local_closure(class_Animate_palette_parse_palette,   /* name */
   be_nested_proto(
     15,                          /* nstack */
     3,                          /* argc */
@@ -762,7 +768,7 @@ be_local_closure(Animate_palette_parse_palette,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_palette, 
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(slots),
@@ -857,7 +863,8 @@ be_local_closure(Animate_palette_parse_palette,   /* name */
 /********************************************************************
 ** Solidified function: set_range
 ********************************************************************/
-be_local_closure(Animate_palette_set_range,   /* name */
+extern const bclass be_class_Animate_palette;
+be_local_closure(class_Animate_palette_set_range,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     3,                          /* argc */
@@ -865,7 +872,7 @@ be_local_closure(Animate_palette_set_range,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_palette, 
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(value_error),
@@ -898,7 +905,8 @@ be_local_closure(Animate_palette_set_range,   /* name */
 /********************************************************************
 ** Solidified function: set_value
 ********************************************************************/
-be_local_closure(Animate_palette_set_value,   /* name */
+extern const bclass be_class_Animate_palette;
+be_local_closure(class_Animate_palette_set_value,   /* name */
   be_nested_proto(
     18,                          /* nstack */
     2,                          /* argc */
@@ -906,7 +914,7 @@ be_local_closure(Animate_palette_set_value,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_palette, 
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
     /* K0   */  be_nested_str_weak(range_min),
@@ -1031,7 +1039,8 @@ be_local_closure(Animate_palette_set_value,   /* name */
 /********************************************************************
 ** Solidified function: set_duration
 ********************************************************************/
-be_local_closure(Animate_palette_set_duration,   /* name */
+extern const bclass be_class_Animate_palette;
+be_local_closure(class_Animate_palette_set_duration,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -1039,7 +1048,7 @@ be_local_closure(Animate_palette_set_duration,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_palette, 
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -1076,7 +1085,8 @@ be_local_closure(Animate_palette_set_duration,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Animate_palette_init,   /* name */
+extern const bclass be_class_Animate_palette;
+be_local_closure(class_Animate_palette_init,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     3,                          /* argc */
@@ -1084,7 +1094,7 @@ be_local_closure(Animate_palette_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_palette, 
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -1135,38 +1145,32 @@ be_local_class(Animate_palette,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(color, 13), be_const_var(6) },
         { be_const_key_weak(slots, -1), be_const_var(2) },
-        { be_const_key_weak(animate, 11), be_const_closure(Animate_palette_animate_closure) },
+        { be_const_key_weak(animate, 11), be_const_closure(class_Animate_palette_animate_closure) },
         { be_const_key_weak(range_max, 10), be_const_var(4) },
-        { be_const_key_weak(set_palette, -1), be_const_closure(Animate_palette_set_palette_closure) },
-        { be_const_key_weak(set_bri, -1), be_const_closure(Animate_palette_set_bri_closure) },
+        { be_const_key_weak(set_palette, -1), be_const_closure(class_Animate_palette_set_palette_closure) },
+        { be_const_key_weak(set_bri, -1), be_const_closure(class_Animate_palette_set_bri_closure) },
         { be_const_key_weak(bri, -1), be_const_var(5) },
-        { be_const_key_weak(to_css_gradient, 12), be_const_static_closure(Animate_palette_to_css_gradient_closure) },
+        { be_const_key_weak(to_css_gradient, 12), be_const_static_closure(class_Animate_palette_to_css_gradient_closure) },
         { be_const_key_weak(slots_arr, 1), be_const_var(1) },
         { be_const_key_weak(range_min, 5), be_const_var(3) },
-        { be_const_key_weak(set_value, -1), be_const_closure(Animate_palette_set_value_closure) },
-        { be_const_key_weak(set_range, -1), be_const_closure(Animate_palette_set_range_closure) },
-        { be_const_key_weak(parse_palette, -1), be_const_closure(Animate_palette_parse_palette_closure) },
+        { be_const_key_weak(set_value, -1), be_const_closure(class_Animate_palette_set_value_closure) },
+        { be_const_key_weak(set_range, -1), be_const_closure(class_Animate_palette_set_range_closure) },
+        { be_const_key_weak(parse_palette, -1), be_const_closure(class_Animate_palette_parse_palette_closure) },
         { be_const_key_weak(palette, -1), be_const_var(0) },
-        { be_const_key_weak(set_duration, -1), be_const_closure(Animate_palette_set_duration_closure) },
-        { be_const_key_weak(init, -1), be_const_closure(Animate_palette_init_closure) },
-        { be_const_key_weak(ptr_to_palette, 0), be_const_static_closure(Animate_palette_ptr_to_palette_closure) },
+        { be_const_key_weak(set_duration, -1), be_const_closure(class_Animate_palette_set_duration_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_Animate_palette_init_closure) },
+        { be_const_key_weak(ptr_to_palette, 0), be_const_static_closure(class_Animate_palette_ptr_to_palette_closure) },
     })),
     be_str_weak(Animate_palette)
 );
-/*******************************************************************/
-
-void be_load_Animate_palette_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Animate_palette);
-    be_setglobal(vm, "Animate_palette");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Animate_oscillator;
 
 /********************************************************************
 ** Solidified function: set_duty_cycle
 ********************************************************************/
-be_local_closure(Animate_oscillator_set_duty_cycle,   /* name */
+extern const bclass be_class_Animate_oscillator;
+be_local_closure(class_Animate_oscillator_set_duty_cycle,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     2,                          /* argc */
@@ -1174,7 +1178,7 @@ be_local_closure(Animate_oscillator_set_duty_cycle,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_oscillator, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -1201,7 +1205,8 @@ be_local_closure(Animate_oscillator_set_duty_cycle,   /* name */
 /********************************************************************
 ** Solidified function: set_a
 ********************************************************************/
-be_local_closure(Animate_oscillator_set_a,   /* name */
+extern const bclass be_class_Animate_oscillator;
+be_local_closure(class_Animate_oscillator_set_a,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     2,                          /* argc */
@@ -1209,7 +1214,7 @@ be_local_closure(Animate_oscillator_set_a,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_oscillator, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(a),
@@ -1228,7 +1233,8 @@ be_local_closure(Animate_oscillator_set_a,   /* name */
 /********************************************************************
 ** Solidified function: set_b
 ********************************************************************/
-be_local_closure(Animate_oscillator_set_b,   /* name */
+extern const bclass be_class_Animate_oscillator;
+be_local_closure(class_Animate_oscillator_set_b,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     2,                          /* argc */
@@ -1236,7 +1242,7 @@ be_local_closure(Animate_oscillator_set_b,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_oscillator, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(b),
@@ -1255,7 +1261,8 @@ be_local_closure(Animate_oscillator_set_b,   /* name */
 /********************************************************************
 ** Solidified function: set_form
 ********************************************************************/
-be_local_closure(Animate_oscillator_set_form,   /* name */
+extern const bclass be_class_Animate_oscillator;
+be_local_closure(class_Animate_oscillator_set_form,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     2,                          /* argc */
@@ -1263,7 +1270,7 @@ be_local_closure(Animate_oscillator_set_form,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_oscillator, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_const_int(1),
@@ -1287,7 +1294,8 @@ be_local_closure(Animate_oscillator_set_form,   /* name */
 /********************************************************************
 ** Solidified function: set_phase
 ********************************************************************/
-be_local_closure(Animate_oscillator_set_phase,   /* name */
+extern const bclass be_class_Animate_oscillator;
+be_local_closure(class_Animate_oscillator_set_phase,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     2,                          /* argc */
@@ -1295,7 +1303,7 @@ be_local_closure(Animate_oscillator_set_phase,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_oscillator, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -1322,7 +1330,8 @@ be_local_closure(Animate_oscillator_set_phase,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Animate_oscillator_init,   /* name */
+extern const bclass be_class_Animate_oscillator;
+be_local_closure(class_Animate_oscillator_init,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     5,                          /* argc */
@@ -1330,7 +1339,7 @@ be_local_closure(Animate_oscillator_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_oscillator, 
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -1374,7 +1383,8 @@ be_local_closure(Animate_oscillator_init,   /* name */
 /********************************************************************
 ** Solidified function: animate
 ********************************************************************/
-be_local_closure(Animate_oscillator_animate,   /* name */
+extern const bclass be_class_Animate_oscillator;
+be_local_closure(class_Animate_oscillator_animate,   /* name */
   be_nested_proto(
     18,                          /* nstack */
     2,                          /* argc */
@@ -1382,7 +1392,7 @@ be_local_closure(Animate_oscillator_animate,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Animate_oscillator, 
     1,                          /* has constants */
     ( &(const bvalue[20]) {     /* constants */
     /* K0   */  be_nested_str_weak(duration_ms),
@@ -1565,28 +1575,21 @@ be_local_class(Animate_oscillator,
     &be_class_Animate_animator,
     be_nested_map(13,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(animate, -1), be_const_closure(Animate_oscillator_animate_closure) },
+        { be_const_key_weak(animate, -1), be_const_closure(class_Animate_oscillator_animate_closure) },
         { be_const_key_weak(a, -1), be_const_var(2) },
-        { be_const_key_weak(init, 11), be_const_closure(Animate_oscillator_init_closure) },
+        { be_const_key_weak(init, 11), be_const_closure(class_Animate_oscillator_init_closure) },
         { be_const_key_weak(duty_cycle, 10), be_const_var(1) },
         { be_const_key_weak(b, -1), be_const_var(3) },
         { be_const_key_weak(value, -1), be_const_var(5) },
-        { be_const_key_weak(set_duty_cycle, 2), be_const_closure(Animate_oscillator_set_duty_cycle_closure) },
-        { be_const_key_weak(set_a, -1), be_const_closure(Animate_oscillator_set_a_closure) },
-        { be_const_key_weak(set_b, -1), be_const_closure(Animate_oscillator_set_b_closure) },
-        { be_const_key_weak(set_form, -1), be_const_closure(Animate_oscillator_set_form_closure) },
+        { be_const_key_weak(set_duty_cycle, 2), be_const_closure(class_Animate_oscillator_set_duty_cycle_closure) },
+        { be_const_key_weak(set_a, -1), be_const_closure(class_Animate_oscillator_set_a_closure) },
+        { be_const_key_weak(set_b, -1), be_const_closure(class_Animate_oscillator_set_b_closure) },
+        { be_const_key_weak(set_form, -1), be_const_closure(class_Animate_oscillator_set_form_closure) },
         { be_const_key_weak(phase, -1), be_const_var(0) },
         { be_const_key_weak(form, -1), be_const_var(4) },
-        { be_const_key_weak(set_phase, 0), be_const_closure(Animate_oscillator_set_phase_closure) },
+        { be_const_key_weak(set_phase, 0), be_const_closure(class_Animate_oscillator_set_phase_closure) },
     })),
     be_str_weak(Animate_oscillator)
 );
-/*******************************************************************/
-
-void be_load_Animate_oscillator_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Animate_oscillator);
-    be_setglobal(vm, "Animate_oscillator");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

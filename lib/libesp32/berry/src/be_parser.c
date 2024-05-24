@@ -311,7 +311,7 @@ static void setupvals(bfuncinfo *finfo)
 }
 
 /* Function is complete, finalize bproto */
-static void end_func(bparser *parser)
+static void end_func(bparser *parser, bclass *c)
 {
     bvm *vm = parser->vm;
     bfuncinfo *finfo = parser->finfo;
@@ -324,8 +324,14 @@ static void end_func(bparser *parser)
     proto->codesize = finfo->pc;
     proto->ktab = be_vector_release(vm, &finfo->kvec);
     proto->nconst = be_vector_count(&finfo->kvec);
-    proto->ptab = be_vector_release(vm, &finfo->pvec);
+    /* special case here */
     proto->nproto = be_vector_count(&finfo->pvec);
+    if (proto->nproto == 0) {
+        proto->ptab = (void*) c;
+    } else {
+        be_vector_push_c(vm, &finfo->pvec, (void*) &c);
+        proto->ptab = be_vector_release(vm, &finfo->pvec);
+    }
 #if BE_USE_MEM_ALIGNED
     proto->code = be_move_to_aligned(vm, proto->code, proto->codesize * sizeof(binstruction));     /* move `code` to 4-bytes aligned memory region */
     proto->ktab = be_move_to_aligned(vm, proto->ktab, proto->nconst * sizeof(bvalue));     /* move `ktab` to 4-bytes aligned memory region */
@@ -638,7 +644,7 @@ static bproto* funcbody(bparser *parser, bstring *name, bclass *c, int type)
         finfo.proto->varg |= BE_VA_STATICMETHOD;
     }
     stmtlist(parser); /* parse statement without final `end` */
-    end_func(parser); /* close function context */
+    end_func(parser, c); /* close function context */
     match_token(parser, KeyEnd); /* skip 'end' */
     return finfo.proto; /* return fully constructed `bproto` */
 }
@@ -694,7 +700,7 @@ static void lambda_expr(bparser *parser, bexpdesc *e)
     expr(parser, &e1);
     check_var(parser, &e1);
     be_code_ret(parser->finfo, &e1);
-    end_func(parser);
+    end_func(parser, NULL);
     init_exp(e, ETPROTO, be_code_proto(parser->finfo, finfo.proto));
     be_stackpop(parser->vm, 1);
 }
@@ -1810,7 +1816,7 @@ static void mainfunc(bparser *parser, bclosure *cl)
     cl->proto = finfo.proto;
     be_remove(parser->vm, -3);  /* pop proto from stack */
     stmtlist(parser);
-    end_func(parser);
+    end_func(parser, NULL);
     match_token(parser, TokenEOS); /* skip EOS */
 }
 

@@ -9,7 +9,8 @@ extern const bclass be_class_Matter_Plugin_Bridge_Sensor;
 /********************************************************************
 ** Solidified function: parse_configuration
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_Sensor_parse_configuration,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_Sensor;
+be_local_closure(class_Matter_Plugin_Bridge_Sensor_parse_configuration,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_parse_configuration,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_Sensor, 
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota_sensor_filter),
@@ -61,7 +62,8 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_parse_configuration,   /* name */
 /********************************************************************
 ** Solidified function: value_changed
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_Sensor_value_changed,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_Sensor;
+be_local_closure(class_Matter_Plugin_Bridge_Sensor_value_changed,   /* name */
   be_nested_proto(
     1,                          /* nstack */
     1,                          /* argc */
@@ -69,7 +71,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_value_changed,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_Sensor, 
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(value_changed),
@@ -85,7 +87,8 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_value_changed,   /* name */
 /********************************************************************
 ** Solidified function: web_values_prefix
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_Sensor_web_values_prefix,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_Sensor;
+be_local_closure(class_Matter_Plugin_Bridge_Sensor_web_values_prefix,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     1,                          /* argc */
@@ -93,7 +96,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_web_values_prefix,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_Sensor, 
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),
@@ -136,7 +139,8 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_web_values_prefix,   /* name */
 /********************************************************************
 ** Solidified function: parse_update
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_Sensor_parse_update,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_Sensor;
+be_local_closure(class_Matter_Plugin_Bridge_Sensor_parse_update,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     3,                          /* argc */
@@ -144,7 +148,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_parse_update,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_Sensor, 
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str_weak(contains),
@@ -205,7 +209,8 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_parse_update,   /* name */
 /********************************************************************
 ** Solidified function: filter_name_html
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_Sensor_filter_name_html,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_Sensor;
+be_local_closure(class_Matter_Plugin_Bridge_Sensor_filter_name_html,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     1,                          /* argc */
@@ -213,7 +218,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_filter_name_html,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_Sensor, 
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota_sensor_filter),
@@ -250,7 +255,8 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_filter_name_html,   /* name */
 /********************************************************************
 ** Solidified function: pre_value
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_Sensor_pre_value,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_Sensor;
+be_local_closure(class_Matter_Plugin_Bridge_Sensor_pre_value,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     2,                          /* argc */
@@ -258,7 +264,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_pre_value,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_Sensor, 
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(pre_value),
@@ -283,34 +289,27 @@ be_local_class(Matter_Plugin_Bridge_Sensor,
         { be_const_key_weak(tasmota_sensor_filter, -1), be_const_var(0) },
         { be_const_key_weak(ARG_HINT, -1), be_nested_str_weak(Filter_X20pattern) },
         { be_const_key_weak(shadow_value, -1), be_const_var(2) },
-        { be_const_key_weak(pre_value, 10), be_const_closure(Matter_Plugin_Bridge_Sensor_pre_value_closure) },
+        { be_const_key_weak(pre_value, 10), be_const_closure(class_Matter_Plugin_Bridge_Sensor_pre_value_closure) },
         { be_const_key_weak(ARG_HTTP, -1), be_nested_str_weak(url) },
         { be_const_key_weak(pressure_unit, -1), be_const_var(4) },
         { be_const_key_weak(tasmota_sensor_matcher, -1), be_const_var(1) },
         { be_const_key_weak(ARG, -1), be_nested_str_weak(filter) },
         { be_const_key_weak(PRESSURE_MMHG, -1), be_nested_str_weak(mmHg) },
-        { be_const_key_weak(value_changed, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_value_changed_closure) },
-        { be_const_key_weak(parse_update, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_parse_update_closure) },
+        { be_const_key_weak(value_changed, -1), be_const_closure(class_Matter_Plugin_Bridge_Sensor_value_changed_closure) },
+        { be_const_key_weak(parse_update, -1), be_const_closure(class_Matter_Plugin_Bridge_Sensor_parse_update_closure) },
         { be_const_key_weak(TEMP_C, -1), be_nested_str_weak(C) },
         { be_const_key_weak(temp_unit, 4), be_const_var(3) },
         { be_const_key_weak(PRESSURE_INHG, -1), be_nested_str_weak(inHg) },
         { be_const_key_weak(PRESSURE_HPA, 18), be_nested_str_weak(hPa) },
         { be_const_key_weak(PROBE_TIMEOUT, 16), be_const_int(1700) },
-        { be_const_key_weak(web_values_prefix, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_web_values_prefix_closure) },
+        { be_const_key_weak(web_values_prefix, -1), be_const_closure(class_Matter_Plugin_Bridge_Sensor_web_values_prefix_closure) },
         { be_const_key_weak(UPDATE_CMD, 13), be_nested_str_weak(Status_X208) },
         { be_const_key_weak(TEMP_F, -1), be_nested_str_weak(F) },
-        { be_const_key_weak(filter_name_html, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_filter_name_html_closure) },
+        { be_const_key_weak(filter_name_html, -1), be_const_closure(class_Matter_Plugin_Bridge_Sensor_filter_name_html_closure) },
         { be_const_key_weak(UPDATE_TIME, 3), be_const_int(5000) },
-        { be_const_key_weak(parse_configuration, 2), be_const_closure(Matter_Plugin_Bridge_Sensor_parse_configuration_closure) },
+        { be_const_key_weak(parse_configuration, 2), be_const_closure(class_Matter_Plugin_Bridge_Sensor_parse_configuration_closure) },
     })),
     be_str_weak(Matter_Plugin_Bridge_Sensor)
 );
-/*******************************************************************/
-
-void be_load_Matter_Plugin_Bridge_Sensor_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_Plugin_Bridge_Sensor);
-    be_setglobal(vm, "Matter_Plugin_Bridge_Sensor");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

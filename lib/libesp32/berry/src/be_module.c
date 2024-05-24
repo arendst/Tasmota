@@ -396,7 +396,7 @@ bbool be_module_setmember(bvm *vm, bmodule *module, bstring *attr, bvalue *src)
     return bfalse;
 }
 
-const char* be_module_name(bmodule *module)
+const char* be_module_name(const bmodule *module)
 {
     if (gc_isconst(module)) {
         return module->info.name;

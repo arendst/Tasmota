@@ -9,7 +9,8 @@ extern const bclass be_class_Matter_TCP_async;
 /********************************************************************
 ** Solidified function: read
 ********************************************************************/
-be_local_closure(Matter_TCP_async_read,   /* name */
+extern const bclass be_class_Matter_TCP_async;
+be_local_closure(class_Matter_TCP_async_read,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Matter_TCP_async_read,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_TCP_async, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(tcp_connected),
@@ -44,7 +45,8 @@ be_local_closure(Matter_TCP_async_read,   /* name */
 /********************************************************************
 ** Solidified function: begin
 ********************************************************************/
-be_local_closure(Matter_TCP_async_begin,   /* name */
+extern const bclass be_class_Matter_TCP_async;
+be_local_closure(class_Matter_TCP_async_begin,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -52,7 +54,7 @@ be_local_closure(Matter_TCP_async_begin,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_TCP_async, 
     1,                          /* has constants */
     ( &(const bvalue[23]) {     /* constants */
     /* K0   */  be_nested_str_weak(reset),
@@ -154,7 +156,8 @@ be_local_closure(Matter_TCP_async_begin,   /* name */
 /********************************************************************
 ** Solidified function: readbytes
 ********************************************************************/
-be_local_closure(Matter_TCP_async_readbytes,   /* name */
+extern const bclass be_class_Matter_TCP_async;
+be_local_closure(class_Matter_TCP_async_readbytes,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -162,7 +165,7 @@ be_local_closure(Matter_TCP_async_readbytes,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_TCP_async, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(tcp_connected),
@@ -189,7 +192,8 @@ be_local_closure(Matter_TCP_async_readbytes,   /* name */
 /********************************************************************
 ** Solidified function: event_closed
 ********************************************************************/
-be_local_closure(Matter_TCP_async_event_closed,   /* name */
+extern const bclass be_class_Matter_TCP_async;
+be_local_closure(class_Matter_TCP_async_event_closed,   /* name */
   be_nested_proto(
     1,                          /* nstack */
     1,                          /* argc */
@@ -197,7 +201,7 @@ be_local_closure(Matter_TCP_async_event_closed,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_TCP_async, 
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(event_closed),
@@ -213,7 +217,8 @@ be_local_closure(Matter_TCP_async_event_closed,   /* name */
 /********************************************************************
 ** Solidified function: available
 ********************************************************************/
-be_local_closure(Matter_TCP_async_available,   /* name */
+extern const bclass be_class_Matter_TCP_async;
+be_local_closure(class_Matter_TCP_async_available,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -221,7 +226,7 @@ be_local_closure(Matter_TCP_async_available,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_TCP_async, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(tcp_connected),
@@ -248,7 +253,8 @@ be_local_closure(Matter_TCP_async_available,   /* name */
 /********************************************************************
 ** Solidified function: event_listening
 ********************************************************************/
-be_local_closure(Matter_TCP_async_event_listening,   /* name */
+extern const bclass be_class_Matter_TCP_async;
+be_local_closure(class_Matter_TCP_async_event_listening,   /* name */
   be_nested_proto(
     1,                          /* nstack */
     1,                          /* argc */
@@ -256,7 +262,7 @@ be_local_closure(Matter_TCP_async_event_listening,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_TCP_async, 
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(event_listening),
@@ -272,7 +278,8 @@ be_local_closure(Matter_TCP_async_event_listening,   /* name */
 /********************************************************************
 ** Solidified function: get_timeout
 ********************************************************************/
-be_local_closure(Matter_TCP_async_get_timeout,   /* name */
+extern const bclass be_class_Matter_TCP_async;
+be_local_closure(class_Matter_TCP_async_get_timeout,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
@@ -280,7 +287,7 @@ be_local_closure(Matter_TCP_async_get_timeout,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_TCP_async, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(timeout),
@@ -299,7 +306,8 @@ be_local_closure(Matter_TCP_async_get_timeout,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Matter_TCP_async_init,   /* name */
+extern const bclass be_class_Matter_TCP_async;
+be_local_closure(class_Matter_TCP_async_init,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     5,                          /* argc */
@@ -307,7 +315,7 @@ be_local_closure(Matter_TCP_async_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 1]) {
+    ( &(const struct bproto*[ 2]) {
       be_nested_proto(
         2,                          /* nstack */
         0,                          /* argc */
@@ -317,7 +325,7 @@ be_local_closure(Matter_TCP_async_init,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL,                       /* no sub protos */
+        NULL, 
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str_weak(loop),
@@ -331,6 +339,7 @@ be_local_closure(Matter_TCP_async_init,   /* name */
           0x80040000,  //  0003  RET	1	R0
         })
       ),
+    &be_class_Matter_TCP_async, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
@@ -379,7 +388,8 @@ be_local_closure(Matter_TCP_async_init,   /* name */
 /********************************************************************
 ** Solidified function: every_50ms
 ********************************************************************/
-be_local_closure(Matter_TCP_async_every_50ms,   /* name */
+extern const bclass be_class_Matter_TCP_async;
+be_local_closure(class_Matter_TCP_async_every_50ms,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -387,7 +397,7 @@ be_local_closure(Matter_TCP_async_every_50ms,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_TCP_async, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(loop),
@@ -407,7 +417,8 @@ be_local_closure(Matter_TCP_async_every_50ms,   /* name */
 /********************************************************************
 ** Solidified function: event_timeout
 ********************************************************************/
-be_local_closure(Matter_TCP_async_event_timeout,   /* name */
+extern const bclass be_class_Matter_TCP_async;
+be_local_closure(class_Matter_TCP_async_event_timeout,   /* name */
   be_nested_proto(
     1,                          /* nstack */
     1,                          /* argc */
@@ -415,7 +426,7 @@ be_local_closure(Matter_TCP_async_event_timeout,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_TCP_async, 
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(event_timeout),
@@ -431,7 +442,8 @@ be_local_closure(Matter_TCP_async_event_timeout,   /* name */
 /********************************************************************
 ** Solidified function: event_available
 ********************************************************************/
-be_local_closure(Matter_TCP_async_event_available,   /* name */
+extern const bclass be_class_Matter_TCP_async;
+be_local_closure(class_Matter_TCP_async_event_available,   /* name */
   be_nested_proto(
     1,                          /* nstack */
     1,                          /* argc */
@@ -439,7 +451,7 @@ be_local_closure(Matter_TCP_async_event_available,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_TCP_async, 
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(event_available),
@@ -455,7 +467,8 @@ be_local_closure(Matter_TCP_async_event_available,   /* name */
 /********************************************************************
 ** Solidified function: write
 ********************************************************************/
-be_local_closure(Matter_TCP_async_write,   /* name */
+extern const bclass be_class_Matter_TCP_async;
+be_local_closure(class_Matter_TCP_async_write,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -463,7 +476,7 @@ be_local_closure(Matter_TCP_async_write,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_TCP_async, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(tcp_connected),
@@ -491,7 +504,8 @@ be_local_closure(Matter_TCP_async_write,   /* name */
 /********************************************************************
 ** Solidified function: event_established
 ********************************************************************/
-be_local_closure(Matter_TCP_async_event_established,   /* name */
+extern const bclass be_class_Matter_TCP_async;
+be_local_closure(class_Matter_TCP_async_event_established,   /* name */
   be_nested_proto(
     1,                          /* nstack */
     1,                          /* argc */
@@ -499,7 +513,7 @@ be_local_closure(Matter_TCP_async_event_established,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_TCP_async, 
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(event_established),
@@ -515,7 +529,8 @@ be_local_closure(Matter_TCP_async_event_established,   /* name */
 /********************************************************************
 ** Solidified function: reset
 ********************************************************************/
-be_local_closure(Matter_TCP_async_reset,   /* name */
+extern const bclass be_class_Matter_TCP_async;
+be_local_closure(class_Matter_TCP_async_reset,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -523,7 +538,7 @@ be_local_closure(Matter_TCP_async_reset,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_TCP_async, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(tcp),
@@ -548,7 +563,8 @@ be_local_closure(Matter_TCP_async_reset,   /* name */
 /********************************************************************
 ** Solidified function: loop
 ********************************************************************/
-be_local_closure(Matter_TCP_async_loop,   /* name */
+extern const bclass be_class_Matter_TCP_async;
+be_local_closure(class_Matter_TCP_async_loop,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -556,7 +572,7 @@ be_local_closure(Matter_TCP_async_loop,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_TCP_async, 
     1,                          /* has constants */
     ( &(const bvalue[18]) {     /* constants */
     /* K0   */  be_nested_str_weak(tcp_connected),
@@ -679,7 +695,8 @@ be_local_closure(Matter_TCP_async_loop,   /* name */
 /********************************************************************
 ** Solidified function: listening
 ********************************************************************/
-be_local_closure(Matter_TCP_async_listening,   /* name */
+extern const bclass be_class_Matter_TCP_async;
+be_local_closure(class_Matter_TCP_async_listening,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -687,7 +704,7 @@ be_local_closure(Matter_TCP_async_listening,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_TCP_async, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(tcp_connected),
@@ -714,7 +731,8 @@ be_local_closure(Matter_TCP_async_listening,   /* name */
 /********************************************************************
 ** Solidified function: set_timeout
 ********************************************************************/
-be_local_closure(Matter_TCP_async_set_timeout,   /* name */
+extern const bclass be_class_Matter_TCP_async;
+be_local_closure(class_Matter_TCP_async_set_timeout,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     2,                          /* argc */
@@ -722,7 +740,7 @@ be_local_closure(Matter_TCP_async_set_timeout,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_TCP_async, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(TIMEOUT),
@@ -746,7 +764,8 @@ be_local_closure(Matter_TCP_async_set_timeout,   /* name */
 /********************************************************************
 ** Solidified function: event_dnsfailed
 ********************************************************************/
-be_local_closure(Matter_TCP_async_event_dnsfailed,   /* name */
+extern const bclass be_class_Matter_TCP_async;
+be_local_closure(class_Matter_TCP_async_event_dnsfailed,   /* name */
   be_nested_proto(
     1,                          /* nstack */
     1,                          /* argc */
@@ -754,7 +773,7 @@ be_local_closure(Matter_TCP_async_event_dnsfailed,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_TCP_async, 
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(event_dnsfailed),
@@ -770,7 +789,8 @@ be_local_closure(Matter_TCP_async_event_dnsfailed,   /* name */
 /********************************************************************
 ** Solidified function: close
 ********************************************************************/
-be_local_closure(Matter_TCP_async_close,   /* name */
+extern const bclass be_class_Matter_TCP_async;
+be_local_closure(class_Matter_TCP_async_close,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -778,7 +798,7 @@ be_local_closure(Matter_TCP_async_close,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_TCP_async, 
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(tcp),
@@ -825,7 +845,8 @@ be_local_closure(Matter_TCP_async_close,   /* name */
 /********************************************************************
 ** Solidified function: event_refused
 ********************************************************************/
-be_local_closure(Matter_TCP_async_event_refused,   /* name */
+extern const bclass be_class_Matter_TCP_async;
+be_local_closure(class_Matter_TCP_async_event_refused,   /* name */
   be_nested_proto(
     1,                          /* nstack */
     1,                          /* argc */
@@ -833,7 +854,7 @@ be_local_closure(Matter_TCP_async_event_refused,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_TCP_async, 
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(event_refused),
@@ -854,44 +875,37 @@ be_local_class(Matter_TCP_async,
     NULL,
     be_nested_map(29,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(read, 13), be_const_closure(Matter_TCP_async_read_closure) },
+        { be_const_key_weak(read, 13), be_const_closure(class_Matter_TCP_async_read_closure) },
         { be_const_key_weak(addr, -1), be_const_var(0) },
-        { be_const_key_weak(event_refused, -1), be_const_closure(Matter_TCP_async_event_refused_closure) },
-        { be_const_key_weak(begin, -1), be_const_closure(Matter_TCP_async_begin_closure) },
-        { be_const_key_weak(readbytes, -1), be_const_closure(Matter_TCP_async_readbytes_closure) },
-        { be_const_key_weak(event_closed, 11), be_const_closure(Matter_TCP_async_event_closed_closure) },
-        { be_const_key_weak(event_listening, -1), be_const_closure(Matter_TCP_async_event_listening_closure) },
+        { be_const_key_weak(event_refused, -1), be_const_closure(class_Matter_TCP_async_event_refused_closure) },
+        { be_const_key_weak(begin, -1), be_const_closure(class_Matter_TCP_async_begin_closure) },
+        { be_const_key_weak(readbytes, -1), be_const_closure(class_Matter_TCP_async_readbytes_closure) },
+        { be_const_key_weak(event_closed, 11), be_const_closure(class_Matter_TCP_async_event_closed_closure) },
+        { be_const_key_weak(event_listening, -1), be_const_closure(class_Matter_TCP_async_event_listening_closure) },
         { be_const_key_weak(tcp_connected, -1), be_const_var(5) },
-        { be_const_key_weak(get_timeout, -1), be_const_closure(Matter_TCP_async_get_timeout_closure) },
+        { be_const_key_weak(get_timeout, -1), be_const_closure(class_Matter_TCP_async_get_timeout_closure) },
         { be_const_key_weak(timeout, 18), be_const_var(2) },
-        { be_const_key_weak(init, -1), be_const_closure(Matter_TCP_async_init_closure) },
-        { be_const_key_weak(event_timeout, 6), be_const_closure(Matter_TCP_async_event_timeout_closure) },
-        { be_const_key_weak(set_timeout, -1), be_const_closure(Matter_TCP_async_set_timeout_closure) },
-        { be_const_key_weak(listening, 23), be_const_closure(Matter_TCP_async_listening_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_Matter_TCP_async_init_closure) },
+        { be_const_key_weak(event_timeout, 6), be_const_closure(class_Matter_TCP_async_event_timeout_closure) },
+        { be_const_key_weak(set_timeout, -1), be_const_closure(class_Matter_TCP_async_set_timeout_closure) },
+        { be_const_key_weak(listening, 23), be_const_closure(class_Matter_TCP_async_listening_closure) },
         { be_const_key_weak(tcp, -1), be_const_var(3) },
-        { be_const_key_weak(event_available, -1), be_const_closure(Matter_TCP_async_event_available_closure) },
-        { be_const_key_weak(write, -1), be_const_closure(Matter_TCP_async_write_closure) },
-        { be_const_key_weak(event_established, -1), be_const_closure(Matter_TCP_async_event_established_closure) },
+        { be_const_key_weak(event_available, -1), be_const_closure(class_Matter_TCP_async_event_available_closure) },
+        { be_const_key_weak(write, -1), be_const_closure(class_Matter_TCP_async_write_closure) },
+        { be_const_key_weak(event_established, -1), be_const_closure(class_Matter_TCP_async_event_established_closure) },
         { be_const_key_weak(TIMEOUT, 7), be_const_int(1000) },
         { be_const_key_weak(time_start, 22), be_const_var(4) },
-        { be_const_key_weak(reset, -1), be_const_closure(Matter_TCP_async_reset_closure) },
-        { be_const_key_weak(loop, -1), be_const_closure(Matter_TCP_async_loop_closure) },
+        { be_const_key_weak(reset, -1), be_const_closure(class_Matter_TCP_async_reset_closure) },
+        { be_const_key_weak(loop, -1), be_const_closure(class_Matter_TCP_async_loop_closure) },
         { be_const_key_weak(status, -1), be_const_var(6) },
         { be_const_key_weak(port, -1), be_const_var(1) },
-        { be_const_key_weak(every_50ms, 12), be_const_closure(Matter_TCP_async_every_50ms_closure) },
+        { be_const_key_weak(every_50ms, 12), be_const_closure(class_Matter_TCP_async_every_50ms_closure) },
         { be_const_key_weak(fast_loop, -1), be_const_var(7) },
-        { be_const_key_weak(event_dnsfailed, -1), be_const_closure(Matter_TCP_async_event_dnsfailed_closure) },
-        { be_const_key_weak(close, -1), be_const_closure(Matter_TCP_async_close_closure) },
-        { be_const_key_weak(available, 2), be_const_closure(Matter_TCP_async_available_closure) },
+        { be_const_key_weak(event_dnsfailed, -1), be_const_closure(class_Matter_TCP_async_event_dnsfailed_closure) },
+        { be_const_key_weak(close, -1), be_const_closure(class_Matter_TCP_async_close_closure) },
+        { be_const_key_weak(available, 2), be_const_closure(class_Matter_TCP_async_available_closure) },
     })),
     be_str_weak(Matter_TCP_async)
 );
-/*******************************************************************/
-
-void be_load_Matter_TCP_async_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_TCP_async);
-    be_setglobal(vm, "Matter_TCP_async");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

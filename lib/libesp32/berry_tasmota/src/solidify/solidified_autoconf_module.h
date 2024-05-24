@@ -9,7 +9,8 @@ extern const bclass be_class_Autoconf;
 /********************************************************************
 ** Solidified function: page_autoconf_ctl
 ********************************************************************/
-be_local_closure(Autoconf_page_autoconf_ctl,   /* name */
+extern const bclass be_class_Autoconf;
+be_local_closure(class_Autoconf_page_autoconf_ctl,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     1,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Autoconf_page_autoconf_ctl,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Autoconf, 
     1,                          /* has constants */
     ( &(const bvalue[39]) {     /* constants */
     /* K0   */  be_nested_str(webserver),
@@ -188,7 +189,8 @@ be_local_closure(Autoconf_page_autoconf_ctl,   /* name */
 /********************************************************************
 ** Solidified function: autoexec
 ********************************************************************/
-be_local_closure(Autoconf_autoexec,   /* name */
+extern const bclass be_class_Autoconf;
+be_local_closure(class_Autoconf_autoexec,   /* name */
   be_nested_proto(
     13,                          /* nstack */
     1,                          /* argc */
@@ -196,7 +198,7 @@ be_local_closure(Autoconf_autoexec,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Autoconf, 
     1,                          /* has constants */
     ( &(const bvalue[30]) {     /* constants */
     /* K0   */  be_nested_str(_archive),
@@ -389,7 +391,8 @@ be_local_closure(Autoconf_autoexec,   /* name */
 /********************************************************************
 ** Solidified function: run_bat
 ********************************************************************/
-be_local_closure(Autoconf_run_bat,   /* name */
+extern const bclass be_class_Autoconf;
+be_local_closure(class_Autoconf_run_bat,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     2,                          /* argc */
@@ -397,7 +400,7 @@ be_local_closure(Autoconf_run_bat,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Autoconf, 
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str(r),
@@ -492,7 +495,8 @@ be_local_closure(Autoconf_run_bat,   /* name */
 /********************************************************************
 ** Solidified function: page_autoconf_mgr
 ********************************************************************/
-be_local_closure(Autoconf_page_autoconf_mgr,   /* name */
+extern const bclass be_class_Autoconf;
+be_local_closure(class_Autoconf_page_autoconf_mgr,   /* name */
   be_nested_proto(
     18,                          /* nstack */
     1,                          /* argc */
@@ -500,7 +504,7 @@ be_local_closure(Autoconf_page_autoconf_mgr,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Autoconf, 
     1,                          /* has constants */
     ( &(const bvalue[38]) {     /* constants */
     /* K0   */  be_nested_str(webserver),
@@ -678,7 +682,8 @@ be_local_closure(Autoconf_page_autoconf_mgr,   /* name */
 /********************************************************************
 ** Solidified function: get_current_module_name
 ********************************************************************/
-be_local_closure(Autoconf_get_current_module_name,   /* name */
+extern const bclass be_class_Autoconf;
+be_local_closure(class_Autoconf_get_current_module_name,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -686,7 +691,7 @@ be_local_closure(Autoconf_get_current_module_name,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Autoconf, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(_archive),
@@ -709,7 +714,8 @@ be_local_closure(Autoconf_get_current_module_name,   /* name */
 /********************************************************************
 ** Solidified function: delete_all_configs
 ********************************************************************/
-be_local_closure(Autoconf_delete_all_configs,   /* name */
+extern const bclass be_class_Autoconf;
+be_local_closure(class_Autoconf_delete_all_configs,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     1,                          /* argc */
@@ -717,7 +723,7 @@ be_local_closure(Autoconf_delete_all_configs,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Autoconf, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str(path),
@@ -767,7 +773,8 @@ be_local_closure(Autoconf_delete_all_configs,   /* name */
 /********************************************************************
 ** Solidified function: set_first_time
 ********************************************************************/
-be_local_closure(Autoconf_set_first_time,   /* name */
+extern const bclass be_class_Autoconf;
+be_local_closure(class_Autoconf_set_first_time,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -775,7 +782,7 @@ be_local_closure(Autoconf_set_first_time,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Autoconf, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(_X2F_X2Eautoconf),
@@ -801,7 +808,8 @@ be_local_closure(Autoconf_set_first_time,   /* name */
 /********************************************************************
 ** Solidified function: load_templates
 ********************************************************************/
-be_local_closure(Autoconf_load_templates,   /* name */
+extern const bclass be_class_Autoconf;
+be_local_closure(class_Autoconf_load_templates,   /* name */
   be_nested_proto(
     13,                          /* nstack */
     1,                          /* argc */
@@ -809,7 +817,7 @@ be_local_closure(Autoconf_load_templates,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Autoconf, 
     1,                          /* has constants */
     ( &(const bvalue[19]) {     /* constants */
     /* K0   */  be_nested_str(json),
@@ -929,7 +937,8 @@ be_local_closure(Autoconf_load_templates,   /* name */
 /********************************************************************
 ** Solidified function: web_add_config_button
 ********************************************************************/
-be_local_closure(Autoconf_web_add_config_button,   /* name */
+extern const bclass be_class_Autoconf;
+be_local_closure(class_Autoconf_web_add_config_button,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -937,7 +946,7 @@ be_local_closure(Autoconf_web_add_config_button,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Autoconf, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(webserver),
@@ -961,7 +970,8 @@ be_local_closure(Autoconf_web_add_config_button,   /* name */
 /********************************************************************
 ** Solidified function: is_first_time
 ********************************************************************/
-be_local_closure(Autoconf_is_first_time,   /* name */
+extern const bclass be_class_Autoconf;
+be_local_closure(class_Autoconf_is_first_time,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -969,7 +979,7 @@ be_local_closure(Autoconf_is_first_time,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Autoconf, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(path),
@@ -996,7 +1006,8 @@ be_local_closure(Autoconf_is_first_time,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Autoconf_init,   /* name */
+extern const bclass be_class_Autoconf;
+be_local_closure(class_Autoconf_init,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     1,                          /* argc */
@@ -1004,7 +1015,7 @@ be_local_closure(Autoconf_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Autoconf, 
     1,                          /* has constants */
     ( &(const bvalue[17]) {     /* constants */
     /* K0   */  be_nested_str(path),
@@ -1090,7 +1101,8 @@ be_local_closure(Autoconf_init,   /* name */
 /********************************************************************
 ** Solidified function: preinit
 ********************************************************************/
-be_local_closure(Autoconf_preinit,   /* name */
+extern const bclass be_class_Autoconf;
+be_local_closure(class_Autoconf_preinit,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -1098,7 +1110,7 @@ be_local_closure(Autoconf_preinit,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Autoconf, 
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str(_archive),
@@ -1150,7 +1162,8 @@ be_local_closure(Autoconf_preinit,   /* name */
 /********************************************************************
 ** Solidified function: reset
 ********************************************************************/
-be_local_closure(Autoconf_reset,   /* name */
+extern const bclass be_class_Autoconf;
+be_local_closure(class_Autoconf_reset,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     1,                          /* argc */
@@ -1158,7 +1171,7 @@ be_local_closure(Autoconf_reset,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Autoconf, 
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str(path),
@@ -1221,7 +1234,8 @@ be_local_closure(Autoconf_reset,   /* name */
 /********************************************************************
 ** Solidified function: web_add_handler
 ********************************************************************/
-be_local_closure(Autoconf_web_add_handler,   /* name */
+extern const bclass be_class_Autoconf;
+be_local_closure(class_Autoconf_web_add_handler,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -1229,7 +1243,7 @@ be_local_closure(Autoconf_web_add_handler,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 3]) {
       be_nested_proto(
         2,                          /* nstack */
         0,                          /* argc */
@@ -1239,7 +1253,7 @@ be_local_closure(Autoconf_web_add_handler,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL,                       /* no sub protos */
+        NULL, 
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str(page_autoconf_mgr),
@@ -1262,7 +1276,7 @@ be_local_closure(Autoconf_web_add_handler,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL,                       /* no sub protos */
+        NULL, 
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str(page_autoconf_ctl),
@@ -1276,6 +1290,7 @@ be_local_closure(Autoconf_web_add_handler,   /* name */
           0x80040000,  //  0003  RET	1	R0
         })
       ),
+    &be_class_Autoconf, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
@@ -1310,7 +1325,8 @@ be_local_closure(Autoconf_web_add_handler,   /* name */
 /********************************************************************
 ** Solidified function: clear_first_time
 ********************************************************************/
-be_local_closure(Autoconf_clear_first_time,   /* name */
+extern const bclass be_class_Autoconf;
+be_local_closure(class_Autoconf_clear_first_time,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -1318,7 +1334,7 @@ be_local_closure(Autoconf_clear_first_time,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Autoconf, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(path),
@@ -1342,7 +1358,8 @@ be_local_closure(Autoconf_clear_first_time,   /* name */
 /********************************************************************
 ** Solidified function: get_current_module_path
 ********************************************************************/
-be_local_closure(Autoconf_get_current_module_path,   /* name */
+extern const bclass be_class_Autoconf;
+be_local_closure(class_Autoconf_get_current_module_path,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
@@ -1350,7 +1367,7 @@ be_local_closure(Autoconf_get_current_module_path,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Autoconf, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(_archive),
@@ -1374,24 +1391,24 @@ be_local_class(Autoconf,
     NULL,
     be_nested_map(18,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(page_autoconf_ctl, -1), be_const_closure(Autoconf_page_autoconf_ctl_closure) },
-        { be_const_key(autoexec, -1), be_const_closure(Autoconf_autoexec_closure) },
-        { be_const_key(run_bat, 17), be_const_closure(Autoconf_run_bat_closure) },
-        { be_const_key(page_autoconf_mgr, -1), be_const_closure(Autoconf_page_autoconf_mgr_closure) },
-        { be_const_key(get_current_module_path, 13), be_const_closure(Autoconf_get_current_module_path_closure) },
-        { be_const_key(preinit, -1), be_const_closure(Autoconf_preinit_closure) },
-        { be_const_key(clear_first_time, -1), be_const_closure(Autoconf_clear_first_time_closure) },
-        { be_const_key(load_templates, -1), be_const_closure(Autoconf_load_templates_closure) },
+        { be_const_key(page_autoconf_ctl, -1), be_const_closure(class_Autoconf_page_autoconf_ctl_closure) },
+        { be_const_key(autoexec, -1), be_const_closure(class_Autoconf_autoexec_closure) },
+        { be_const_key(run_bat, 17), be_const_closure(class_Autoconf_run_bat_closure) },
+        { be_const_key(page_autoconf_mgr, -1), be_const_closure(class_Autoconf_page_autoconf_mgr_closure) },
+        { be_const_key(get_current_module_path, 13), be_const_closure(class_Autoconf_get_current_module_path_closure) },
+        { be_const_key(preinit, -1), be_const_closure(class_Autoconf_preinit_closure) },
+        { be_const_key(clear_first_time, -1), be_const_closure(class_Autoconf_clear_first_time_closure) },
+        { be_const_key(load_templates, -1), be_const_closure(class_Autoconf_load_templates_closure) },
         { be_const_key(_archive, -1), be_const_var(0) },
-        { be_const_key(web_add_config_button, -1), be_const_closure(Autoconf_web_add_config_button_closure) },
-        { be_const_key(is_first_time, -1), be_const_closure(Autoconf_is_first_time_closure) },
-        { be_const_key(web_add_handler, -1), be_const_closure(Autoconf_web_add_handler_closure) },
-        { be_const_key(delete_all_configs, 4), be_const_closure(Autoconf_delete_all_configs_closure) },
-        { be_const_key(reset, 5), be_const_closure(Autoconf_reset_closure) },
-        { be_const_key(get_current_module_name, 11), be_const_closure(Autoconf_get_current_module_name_closure) },
-        { be_const_key(init, 6), be_const_closure(Autoconf_init_closure) },
+        { be_const_key(web_add_config_button, -1), be_const_closure(class_Autoconf_web_add_config_button_closure) },
+        { be_const_key(is_first_time, -1), be_const_closure(class_Autoconf_is_first_time_closure) },
+        { be_const_key(web_add_handler, -1), be_const_closure(class_Autoconf_web_add_handler_closure) },
+        { be_const_key(delete_all_configs, 4), be_const_closure(class_Autoconf_delete_all_configs_closure) },
+        { be_const_key(reset, 5), be_const_closure(class_Autoconf_reset_closure) },
+        { be_const_key(get_current_module_name, 11), be_const_closure(class_Autoconf_get_current_module_name_closure) },
+        { be_const_key(init, 6), be_const_closure(class_Autoconf_init_closure) },
         { be_const_key(_error, -1), be_const_var(1) },
-        { be_const_key(set_first_time, -1), be_const_closure(Autoconf_set_first_time_closure) },
+        { be_const_key(set_first_time, -1), be_const_closure(class_Autoconf_set_first_time_closure) },
     })),
     (bstring*) &be_const_str_Autoconf
 );
@@ -1399,7 +1416,7 @@ be_local_class(Autoconf,
 /********************************************************************
 ** Solidified function: _anonymous_
 ********************************************************************/
-be_local_closure(autoconf__anonymous_,   /* name */
+be_local_closure(_anonymous_,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -1407,7 +1424,7 @@ be_local_closure(autoconf__anonymous_,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_const_class(be_class_Autoconf),
@@ -1433,7 +1450,7 @@ be_local_module(autoconf,
     "autoconf",
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(init, -1), be_const_closure(autoconf__anonymous__closure) },
+        { be_const_key(init, -1), be_const_closure(_anonymous__closure) },
     }))
 );
 BE_EXPORT_VARIABLE be_define_const_native_module(autoconf);

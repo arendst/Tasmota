@@ -9,7 +9,8 @@ extern const bclass be_class_Matter_Control_Message;
 /********************************************************************
 ** Solidified function: parse_MsgCounterSyncRsp
 ********************************************************************/
-be_local_closure(Matter_Control_Message_parse_MsgCounterSyncRsp,   /* name */
+extern const bclass be_class_Matter_Control_Message;
+be_local_closure(class_Matter_Control_Message_parse_MsgCounterSyncRsp,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     2,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Matter_Control_Message_parse_MsgCounterSyncRsp,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Control_Message, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(session),
@@ -58,7 +59,8 @@ be_local_closure(Matter_Control_Message_parse_MsgCounterSyncRsp,   /* name */
 /********************************************************************
 ** Solidified function: parse_MsgCounterSyncReq
 ********************************************************************/
-be_local_closure(Matter_Control_Message_parse_MsgCounterSyncReq,   /* name */
+extern const bclass be_class_Matter_Control_Message;
+be_local_closure(class_Matter_Control_Message_parse_MsgCounterSyncReq,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     2,                          /* argc */
@@ -66,7 +68,7 @@ be_local_closure(Matter_Control_Message_parse_MsgCounterSyncReq,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Control_Message, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(session),
@@ -107,7 +109,8 @@ be_local_closure(Matter_Control_Message_parse_MsgCounterSyncReq,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Matter_Control_Message_init,   /* name */
+extern const bclass be_class_Matter_Control_Message;
+be_local_closure(class_Matter_Control_Message_init,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     2,                          /* argc */
@@ -115,7 +118,7 @@ be_local_closure(Matter_Control_Message_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Control_Message, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(crypto),
@@ -139,7 +142,8 @@ be_local_closure(Matter_Control_Message_init,   /* name */
 /********************************************************************
 ** Solidified function: process_incoming_control_message
 ********************************************************************/
-be_local_closure(Matter_Control_Message_process_incoming_control_message,   /* name */
+extern const bclass be_class_Matter_Control_Message;
+be_local_closure(class_Matter_Control_Message_process_incoming_control_message,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -147,7 +151,7 @@ be_local_closure(Matter_Control_Message_process_incoming_control_message,   /* n
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Control_Message, 
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota),
@@ -218,21 +222,14 @@ be_local_class(Matter_Control_Message,
     NULL,
     be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(parse_MsgCounterSyncRsp, -1), be_const_closure(Matter_Control_Message_parse_MsgCounterSyncRsp_closure) },
+        { be_const_key_weak(parse_MsgCounterSyncRsp, -1), be_const_closure(class_Matter_Control_Message_parse_MsgCounterSyncRsp_closure) },
         { be_const_key_weak(responder, 2), be_const_var(0) },
-        { be_const_key_weak(parse_MsgCounterSyncReq, -1), be_const_closure(Matter_Control_Message_parse_MsgCounterSyncReq_closure) },
-        { be_const_key_weak(init, 4), be_const_closure(Matter_Control_Message_init_closure) },
+        { be_const_key_weak(parse_MsgCounterSyncReq, -1), be_const_closure(class_Matter_Control_Message_parse_MsgCounterSyncReq_closure) },
+        { be_const_key_weak(init, 4), be_const_closure(class_Matter_Control_Message_init_closure) },
         { be_const_key_weak(device, -1), be_const_var(1) },
-        { be_const_key_weak(process_incoming_control_message, -1), be_const_closure(Matter_Control_Message_process_incoming_control_message_closure) },
+        { be_const_key_weak(process_incoming_control_message, -1), be_const_closure(class_Matter_Control_Message_process_incoming_control_message_closure) },
     })),
     be_str_weak(Matter_Control_Message)
 );
-/*******************************************************************/
-
-void be_load_Matter_Control_Message_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_Control_Message);
-    be_setglobal(vm, "Matter_Control_Message");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

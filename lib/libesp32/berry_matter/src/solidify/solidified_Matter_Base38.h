@@ -9,7 +9,8 @@ extern const bclass be_class_Matter_Base38;
 /********************************************************************
 ** Solidified function: encode
 ********************************************************************/
-be_local_closure(Matter_Base38_encode,   /* name */
+extern const bclass be_class_Matter_Base38;
+be_local_closure(class_Matter_Base38_encode,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     1,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Matter_Base38_encode,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 1]) {
+    ( &(const struct bproto*[ 2]) {
       be_nested_proto(
         6,                          /* nstack */
         2,                          /* argc */
@@ -25,7 +26,7 @@ be_local_closure(Matter_Base38_encode,   /* name */
         0,                          /* has upvals */
         NULL,                       /* no upvals */
         0,                          /* has sup protos */
-        NULL,                       /* no sub protos */
+        NULL, 
         1,                          /* has constants */
         ( &(const bvalue[ 4]) {     /* constants */
         /* K0   */  be_nested_str_weak(0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_X2D_X2E),
@@ -52,6 +53,7 @@ be_local_closure(Matter_Base38_encode,   /* name */
           0x80040800,  //  000D  RET	1	R4
         })
       ),
+    &be_class_Matter_Base38, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
@@ -137,16 +139,9 @@ be_local_class(Matter_Base38,
     NULL,
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(encode, -1), be_const_static_closure(Matter_Base38_encode_closure) },
+        { be_const_key_weak(encode, -1), be_const_static_closure(class_Matter_Base38_encode_closure) },
     })),
     be_str_weak(Matter_Base38)
 );
-/*******************************************************************/
-
-void be_load_Matter_Base38_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_Base38);
-    be_setglobal(vm, "Matter_Base38");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

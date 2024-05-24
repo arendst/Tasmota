@@ -9,7 +9,8 @@ extern const bclass be_class_FT3663;
 /********************************************************************
 ** Solidified function: every_100ms
 ********************************************************************/
-be_local_closure(FT3663_every_100ms,   /* name */
+extern const bclass be_class_FT3663;
+be_local_closure(class_FT3663_every_100ms,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(FT3663_every_100ms,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_FT3663, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(wire),
@@ -40,7 +41,8 @@ be_local_closure(FT3663_every_100ms,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(FT3663_init,   /* name */
+extern const bclass be_class_FT3663;
+be_local_closure(class_FT3663_init,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -48,7 +50,7 @@ be_local_closure(FT3663_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_FT3663, 
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str(init),
@@ -126,7 +128,8 @@ be_local_closure(FT3663_init,   /* name */
 /********************************************************************
 ** Solidified function: ts_loop
 ********************************************************************/
-be_local_closure(FT3663_ts_loop,   /* name */
+extern const bclass be_class_FT3663;
+be_local_closure(class_FT3663_ts_loop,   /* name */
   be_nested_proto(
     17,                          /* nstack */
     1,                          /* argc */
@@ -134,7 +137,7 @@ be_local_closure(FT3663_ts_loop,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_FT3663, 
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str(wire),
@@ -230,8 +233,8 @@ be_local_class(FT3663,
     &be_class_I2C_Driver,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(every_100ms, -1), be_const_closure(FT3663_every_100ms_closure) },
-        { be_const_key(ts_loop, 2), be_const_closure(FT3663_ts_loop_closure) },
+        { be_const_key(every_100ms, -1), be_const_closure(class_FT3663_every_100ms_closure) },
+        { be_const_key(ts_loop, 2), be_const_closure(class_FT3663_ts_loop_closure) },
         { be_const_key(gest_id_codes, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(7,
     ( (struct bmapnode*) &(const bmapnode[]) {
@@ -243,16 +246,9 @@ be_local_class(FT3663,
         { be_const_key_int(24, -1), be_const_int(17) },
         { be_const_key_int(20, -1), be_const_int(19) },
     }))    ) } )) },
-        { be_const_key(init, 1), be_const_closure(FT3663_init_closure) },
+        { be_const_key(init, 1), be_const_closure(class_FT3663_init_closure) },
     })),
     (bstring*) &be_const_str_FT3663
 );
-/*******************************************************************/
-
-void be_load_FT3663_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_FT3663);
-    be_setglobal(vm, "FT3663");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

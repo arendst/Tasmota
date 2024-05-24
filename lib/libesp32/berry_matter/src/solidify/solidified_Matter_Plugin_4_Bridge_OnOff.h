@@ -9,7 +9,8 @@ extern const bclass be_class_Matter_Plugin_Bridge_OnOff;
 /********************************************************************
 ** Solidified function: web_values
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_OnOff_web_values,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_OnOff;
+be_local_closure(class_Matter_Plugin_Bridge_OnOff_web_values,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     1,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Matter_Plugin_Bridge_OnOff_web_values,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_OnOff, 
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),
@@ -65,18 +66,11 @@ be_local_class(Matter_Plugin_Bridge_OnOff,
         { be_const_key_int(266, -1), be_const_int(2) },
     }))    ) } )) },
         { be_const_key_weak(DISPLAY_NAME, -1), be_nested_str_weak(Relay) },
-        { be_const_key_weak(web_values, -1), be_const_closure(Matter_Plugin_Bridge_OnOff_web_values_closure) },
+        { be_const_key_weak(web_values, -1), be_const_closure(class_Matter_Plugin_Bridge_OnOff_web_values_closure) },
         { be_const_key_weak(ARG_HINT, -1), be_nested_str_weak(Relay_X3Cx_X3E_X20number) },
         { be_const_key_weak(TYPE, -1), be_nested_str_weak(http_relay) },
     })),
     be_str_weak(Matter_Plugin_Bridge_OnOff)
 );
-/*******************************************************************/
-
-void be_load_Matter_Plugin_Bridge_OnOff_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_Plugin_Bridge_OnOff);
-    be_setglobal(vm, "Matter_Plugin_Bridge_OnOff");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

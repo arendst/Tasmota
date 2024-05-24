@@ -9,7 +9,8 @@ extern const bclass be_class_GetOptionReader;
 /********************************************************************
 ** Solidified function: getoption
 ********************************************************************/
-be_local_closure(GetOptionReader_getoption,   /* name */
+extern const bclass be_class_GetOptionReader;
+be_local_closure(class_GetOptionReader_getoption,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(GetOptionReader_getoption,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_GetOptionReader, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(flag),
@@ -107,7 +108,8 @@ be_local_closure(GetOptionReader_getoption,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(GetOptionReader_init,   /* name */
+extern const bclass be_class_GetOptionReader;
+be_local_closure(class_GetOptionReader_init,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -115,7 +117,7 @@ be_local_closure(GetOptionReader_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_GetOptionReader, 
     1,                          /* has constants */
     ( &(const bvalue[15]) {     /* constants */
     /* K0   */  be_nested_str_weak(value_error),
@@ -207,8 +209,8 @@ be_local_class(GetOptionReader,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(flag2, -1), be_const_var(1) },
         { be_const_key_weak(flag4, -1), be_const_var(3) },
-        { be_const_key_weak(getoption, -1), be_const_closure(GetOptionReader_getoption_closure) },
-        { be_const_key_weak(init, 5), be_const_closure(GetOptionReader_init_closure) },
+        { be_const_key_weak(getoption, -1), be_const_closure(class_GetOptionReader_getoption_closure) },
+        { be_const_key_weak(init, 5), be_const_closure(class_GetOptionReader_init_closure) },
         { be_const_key_weak(flag3, -1), be_const_var(2) },
         { be_const_key_weak(flag6, -1), be_const_var(5) },
         { be_const_key_weak(flag5, -1), be_const_var(4) },
@@ -216,20 +218,14 @@ be_local_class(GetOptionReader,
     })),
     be_str_weak(GetOptionReader)
 );
-/*******************************************************************/
-
-void be_load_GetOptionReader_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_GetOptionReader);
-    be_setglobal(vm, "GetOptionReader");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_Plugin_Bridge_HTTP;
 
 /********************************************************************
 ** Solidified function: call_remote_sync
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_HTTP_call_remote_sync,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_HTTP;
+be_local_closure(class_Matter_Plugin_Bridge_HTTP_call_remote_sync,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     3,                          /* argc */
@@ -237,7 +233,7 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_call_remote_sync,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_HTTP, 
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_nested_str_weak(json),
@@ -309,7 +305,8 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_call_remote_sync,   /* name */
 /********************************************************************
 ** Solidified function: web_value_onoff
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_HTTP_web_value_onoff,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_HTTP;
+be_local_closure(class_Matter_Plugin_Bridge_HTTP_web_value_onoff,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     2,                          /* argc */
@@ -317,7 +314,7 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_web_value_onoff,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_HTTP, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_X3Cb_X3EOn_X3C_X2Fb_X3E),
@@ -346,7 +343,8 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_web_value_onoff,   /* name */
 /********************************************************************
 ** Solidified function: parse_http_response
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_HTTP_parse_http_response,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_HTTP;
+be_local_closure(class_Matter_Plugin_Bridge_HTTP_parse_http_response,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     4,                          /* argc */
@@ -354,7 +352,7 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_parse_http_response,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_HTTP, 
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -421,7 +419,8 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_parse_http_response,   /* name */
 /********************************************************************
 ** Solidified function: web_values
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_HTTP_web_values,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_HTTP;
+be_local_closure(class_Matter_Plugin_Bridge_HTTP_web_values,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -429,7 +428,7 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_web_values,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_HTTP, 
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),
@@ -460,7 +459,8 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_web_values,   /* name */
 /********************************************************************
 ** Solidified function: is_local_device
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_HTTP_is_local_device,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_HTTP;
+be_local_closure(class_Matter_Plugin_Bridge_HTTP_is_local_device,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
@@ -468,7 +468,7 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_is_local_device,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_HTTP, 
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(is_local_device),
@@ -485,7 +485,8 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_is_local_device,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_HTTP_init,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_HTTP;
+be_local_closure(class_Matter_Plugin_Bridge_HTTP_init,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     4,                          /* argc */
@@ -493,7 +494,7 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_HTTP, 
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -537,7 +538,8 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_init,   /* name */
 /********************************************************************
 ** Solidified function: parse_update
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_HTTP_parse_update,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_HTTP;
+be_local_closure(class_Matter_Plugin_Bridge_HTTP_parse_update,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     3,                          /* argc */
@@ -545,7 +547,7 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_parse_update,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_HTTP, 
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(parse_update),
@@ -561,7 +563,8 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_parse_update,   /* name */
 /********************************************************************
 ** Solidified function: read_attribute
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_HTTP_read_attribute,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_HTTP;
+be_local_closure(class_Matter_Plugin_Bridge_HTTP_read_attribute,   /* name */
   be_nested_proto(
     14,                          /* nstack */
     4,                          /* argc */
@@ -569,7 +572,7 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_read_attribute,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_HTTP, 
     1,                          /* has constants */
     ( &(const bvalue[21]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -709,7 +712,8 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_read_attribute,   /* name */
 /********************************************************************
 ** Solidified function: web_values_prefix
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_HTTP_web_values_prefix,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_HTTP;
+be_local_closure(class_Matter_Plugin_Bridge_HTTP_web_values_prefix,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     1,                          /* argc */
@@ -717,7 +721,7 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_web_values_prefix,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_HTTP, 
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),
@@ -754,7 +758,8 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_web_values_prefix,   /* name */
 /********************************************************************
 ** Solidified function: register_cmd_cb
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_HTTP_register_cmd_cb,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_HTTP;
+be_local_closure(class_Matter_Plugin_Bridge_HTTP_register_cmd_cb,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
@@ -762,7 +767,7 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_register_cmd_cb,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 1]) {
+    ( &(const struct bproto*[ 2]) {
       be_nested_proto(
         8,                          /* nstack */
         3,                          /* argc */
@@ -772,7 +777,7 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_register_cmd_cb,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL,                       /* no sub protos */
+        NULL, 
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str_weak(parse_http_response),
@@ -789,6 +794,7 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_register_cmd_cb,   /* name */
           0x80040600,  //  0006  RET	1	R3
         })
       ),
+    &be_class_Matter_Plugin_Bridge_HTTP, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
@@ -817,7 +823,8 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_register_cmd_cb,   /* name */
 /********************************************************************
 ** Solidified function: update_shadow
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_HTTP_update_shadow,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_HTTP;
+be_local_closure(class_Matter_Plugin_Bridge_HTTP_update_shadow,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -825,7 +832,7 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_update_shadow,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_HTTP, 
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(tick),
@@ -860,7 +867,8 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_update_shadow,   /* name */
 /********************************************************************
 ** Solidified function: every_250ms
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_HTTP_every_250ms,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_HTTP;
+be_local_closure(class_Matter_Plugin_Bridge_HTTP_every_250ms,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -868,7 +876,7 @@ be_local_closure(Matter_Plugin_Bridge_HTTP_every_250ms,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_HTTP, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(http_remote),
@@ -897,37 +905,30 @@ be_local_class(Matter_Plugin_Bridge_HTTP,
     be_nested_map(23,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(UPDATE_CMD, -1), be_nested_str_weak(Status_X2011) },
-        { be_const_key_weak(every_250ms, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_every_250ms_closure) },
+        { be_const_key_weak(every_250ms, -1), be_const_closure(class_Matter_Plugin_Bridge_HTTP_every_250ms_closure) },
         { be_const_key_weak(ARG, -1), be_nested_str_weak() },
-        { be_const_key_weak(call_remote_sync, 22), be_const_closure(Matter_Plugin_Bridge_HTTP_call_remote_sync_closure) },
-        { be_const_key_weak(web_value_onoff, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_web_value_onoff_closure) },
-        { be_const_key_weak(update_shadow, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_update_shadow_closure) },
+        { be_const_key_weak(call_remote_sync, 22), be_const_closure(class_Matter_Plugin_Bridge_HTTP_call_remote_sync_closure) },
+        { be_const_key_weak(web_value_onoff, -1), be_const_closure(class_Matter_Plugin_Bridge_HTTP_web_value_onoff_closure) },
+        { be_const_key_weak(update_shadow, -1), be_const_closure(class_Matter_Plugin_Bridge_HTTP_update_shadow_closure) },
         { be_const_key_weak(UPDATE_TIME, -1), be_const_int(3000) },
         { be_const_key_weak(GetOptionReader, 5), be_const_class(be_class_GetOptionReader) },
-        { be_const_key_weak(parse_http_response, 21), be_const_closure(Matter_Plugin_Bridge_HTTP_parse_http_response_closure) },
-        { be_const_key_weak(parse_update, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_parse_update_closure) },
+        { be_const_key_weak(parse_http_response, 21), be_const_closure(class_Matter_Plugin_Bridge_HTTP_parse_http_response_closure) },
+        { be_const_key_weak(parse_update, -1), be_const_closure(class_Matter_Plugin_Bridge_HTTP_parse_update_closure) },
         { be_const_key_weak(SYNC_TIMEOUT, 18), be_const_int(500) },
-        { be_const_key_weak(is_local_device, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_is_local_device_closure) },
+        { be_const_key_weak(is_local_device, -1), be_const_closure(class_Matter_Plugin_Bridge_HTTP_is_local_device_closure) },
         { be_const_key_weak(PREFIX, 17), be_nested_str_weak(_X7C_X20_X3Ci_X3E_X25s_X3C_X2Fi_X3E_X20) },
         { be_const_key_weak(http_remote, 1), be_const_var(0) },
-        { be_const_key_weak(init, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_init_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_Matter_Plugin_Bridge_HTTP_init_closure) },
         { be_const_key_weak(ARG_HTTP, -1), be_nested_str_weak(url) },
         { be_const_key_weak(DISPLAY_NAME, 9), be_nested_str_weak() },
-        { be_const_key_weak(web_values_prefix, 19), be_const_closure(Matter_Plugin_Bridge_HTTP_web_values_prefix_closure) },
-        { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_read_attribute_closure) },
+        { be_const_key_weak(web_values_prefix, 19), be_const_closure(class_Matter_Plugin_Bridge_HTTP_web_values_prefix_closure) },
+        { be_const_key_weak(read_attribute, -1), be_const_closure(class_Matter_Plugin_Bridge_HTTP_read_attribute_closure) },
         { be_const_key_weak(PROBE_TIMEOUT, -1), be_const_int(1700) },
-        { be_const_key_weak(register_cmd_cb, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_register_cmd_cb_closure) },
-        { be_const_key_weak(web_values, -1), be_const_closure(Matter_Plugin_Bridge_HTTP_web_values_closure) },
+        { be_const_key_weak(register_cmd_cb, -1), be_const_closure(class_Matter_Plugin_Bridge_HTTP_register_cmd_cb_closure) },
+        { be_const_key_weak(web_values, -1), be_const_closure(class_Matter_Plugin_Bridge_HTTP_web_values_closure) },
         { be_const_key_weak(TYPE, -1), be_nested_str_weak() },
     })),
     be_str_weak(Matter_Plugin_Bridge_HTTP)
 );
-/*******************************************************************/
-
-void be_load_Matter_Plugin_Bridge_HTTP_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_Plugin_Bridge_HTTP);
-    be_setglobal(vm, "Matter_Plugin_Bridge_HTTP");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

@@ -7,7 +7,7 @@
 /********************************************************************
 ** Solidified function: setmember
 ********************************************************************/
-be_local_closure(matter_setmember,   /* name */
+be_local_closure(module_matter_setmember,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -15,7 +15,7 @@ be_local_closure(matter_setmember,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(global),
@@ -45,7 +45,7 @@ be_local_closure(matter_setmember,   /* name */
 /********************************************************************
 ** Solidified function: member
 ********************************************************************/
-be_local_closure(matter_member,   /* name */
+be_local_closure(module_matter_member,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
@@ -53,7 +53,7 @@ be_local_closure(matter_member,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(global),

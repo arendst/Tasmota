@@ -22,13 +22,13 @@ extern int lv0_load_freetype_font(bvm *vm);
 
 /* @const_object_info_begin
 module lv_tasmota (scope: global, strings: weak) {
-    init, closure(lv_tasmota_init_closure)
+    init, closure(module_lv_tasmota_init_closure)
     _constants, func(lv0_constants_as_hash)
 
     start, func(lv0_start)
-    splash, closure(lv_tasmota_splash_closure)
-    splash_init, closure(lv_tasmota_splash_init_closure)
-    splash_remove, closure(lv_tasmota_splash_remove_closure)
+    splash, closure(module_lv_tasmota_splash_closure)
+    splash_init, closure(module_lv_tasmota_splash_init_closure)
+    splash_remove, closure(module_lv_tasmota_splash_remove_closure)
 
     font_montserrat, func(lv0_load_montserrat_font)
     montserrat_font, func(lv0_load_montserrat_font)

@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - GPIOViewer from v1.5.2 to v1.5.3 (No functional change)
 - ESP32 I2S audio improvements (#21433)
 - Support W5500 SPI ethernet using four SPI GPIOs only without IRQ and RESET
+- Berry change internal storage of parent class for methods
 
 ### Fixed
 - Domoticz re-subscribe on MQTT reconnect. Regression from v13.4.0.3 (#21281)

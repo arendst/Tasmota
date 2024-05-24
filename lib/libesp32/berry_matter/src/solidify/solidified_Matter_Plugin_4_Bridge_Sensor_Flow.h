@@ -9,7 +9,8 @@ extern const bclass be_class_Matter_Plugin_Bridge_Sensor_Flow;
 /********************************************************************
 ** Solidified function: pre_value
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_Sensor_Flow_pre_value,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_Sensor_Flow;
+be_local_closure(class_Matter_Plugin_Bridge_Sensor_Flow_pre_value,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     2,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Flow_pre_value,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_Sensor_Flow, 
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(pre_value),
@@ -42,7 +43,8 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Flow_pre_value,   /* name */
 /********************************************************************
 ** Solidified function: value_changed
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_Sensor_Flow_value_changed,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_Sensor_Flow;
+be_local_closure(class_Matter_Plugin_Bridge_Sensor_Flow_value_changed,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -50,7 +52,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Flow_value_changed,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_Sensor_Flow, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(attribute_updated),
@@ -73,7 +75,8 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Flow_value_changed,   /* name */
 /********************************************************************
 ** Solidified function: read_attribute
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_Sensor_Flow_read_attribute,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_Sensor_Flow;
+be_local_closure(class_Matter_Plugin_Bridge_Sensor_Flow_read_attribute,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     4,                          /* argc */
@@ -81,7 +84,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Flow_read_attribute,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_Sensor_Flow, 
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -160,7 +163,8 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Flow_read_attribute,   /* name */
 /********************************************************************
 ** Solidified function: web_values
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_Sensor_Flow_web_values,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_Sensor_Flow;
+be_local_closure(class_Matter_Plugin_Bridge_Sensor_Flow_web_values,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     1,                          /* argc */
@@ -168,7 +172,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Flow_web_values,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_Sensor_Flow, 
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),
@@ -207,15 +211,15 @@ be_local_class(Matter_Plugin_Bridge_Sensor_Flow,
     &be_class_Matter_Plugin_Bridge_Sensor,
     be_nested_map(8,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(pre_value, 1), be_const_closure(Matter_Plugin_Bridge_Sensor_Flow_pre_value_closure) },
-        { be_const_key_weak(web_values, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_Flow_web_values_closure) },
+        { be_const_key_weak(pre_value, 1), be_const_closure(class_Matter_Plugin_Bridge_Sensor_Flow_pre_value_closure) },
+        { be_const_key_weak(web_values, -1), be_const_closure(class_Matter_Plugin_Bridge_Sensor_Flow_web_values_closure) },
         { be_const_key_weak(TYPES, 3), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(774, -1), be_const_int(1) },
     }))    ) } )) },
-        { be_const_key_weak(read_attribute, 7), be_const_closure(Matter_Plugin_Bridge_Sensor_Flow_read_attribute_closure) },
-        { be_const_key_weak(value_changed, 6), be_const_closure(Matter_Plugin_Bridge_Sensor_Flow_value_changed_closure) },
+        { be_const_key_weak(read_attribute, 7), be_const_closure(class_Matter_Plugin_Bridge_Sensor_Flow_read_attribute_closure) },
+        { be_const_key_weak(value_changed, 6), be_const_closure(class_Matter_Plugin_Bridge_Sensor_Flow_value_changed_closure) },
         { be_const_key_weak(DISPLAY_NAME, 4), be_nested_str_weak(Flow) },
         { be_const_key_weak(TYPE, -1), be_nested_str_weak(http_flow) },
         { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
@@ -307,12 +311,5 @@ be_local_class(Matter_Plugin_Bridge_Sensor_Flow,
     })),
     be_str_weak(Matter_Plugin_Bridge_Sensor_Flow)
 );
-/*******************************************************************/
-
-void be_load_Matter_Plugin_Bridge_Sensor_Flow_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_Plugin_Bridge_Sensor_Flow);
-    be_setglobal(vm, "Matter_Plugin_Bridge_Sensor_Flow");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

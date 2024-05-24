@@ -9,7 +9,8 @@ extern const bclass be_class_Matter_IM_base;
 /********************************************************************
 ** Solidified function: to_TLV_array
 ********************************************************************/
-be_local_closure(Matter_IM_base_to_TLV_array,   /* name */
+extern const bclass be_class_Matter_IM_base;
+be_local_closure(class_Matter_IM_base_to_TLV_array,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     4,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Matter_IM_base_to_TLV_array,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_base, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(add_array),
@@ -59,7 +60,8 @@ be_local_closure(Matter_IM_base_to_TLV_array,   /* name */
 /********************************************************************
 ** Solidified function: tostring
 ********************************************************************/
-be_local_closure(Matter_IM_base_tostring,   /* name */
+extern const bclass be_class_Matter_IM_base;
+be_local_closure(class_Matter_IM_base_tostring,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -67,7 +69,7 @@ be_local_closure(Matter_IM_base_tostring,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_base, 
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_X3C),
@@ -100,7 +102,8 @@ be_local_closure(Matter_IM_base_tostring,   /* name */
 /********************************************************************
 ** Solidified function: from_TLV_array
 ********************************************************************/
-be_local_closure(Matter_IM_base_from_TLV_array,   /* name */
+extern const bclass be_class_Matter_IM_base;
+be_local_closure(class_Matter_IM_base_from_TLV_array,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     3,                          /* argc */
@@ -108,7 +111,7 @@ be_local_closure(Matter_IM_base_from_TLV_array,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_base, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(push),
@@ -157,26 +160,20 @@ be_local_class(Matter_IM_base,
     NULL,
     be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(from_TLV_array, -1), be_const_closure(Matter_IM_base_from_TLV_array_closure) },
-        { be_const_key_weak(tostring, -1), be_const_closure(Matter_IM_base_tostring_closure) },
-        { be_const_key_weak(to_TLV_array, 0), be_const_closure(Matter_IM_base_to_TLV_array_closure) },
+        { be_const_key_weak(from_TLV_array, -1), be_const_closure(class_Matter_IM_base_from_TLV_array_closure) },
+        { be_const_key_weak(tostring, -1), be_const_closure(class_Matter_IM_base_tostring_closure) },
+        { be_const_key_weak(to_TLV_array, 0), be_const_closure(class_Matter_IM_base_to_TLV_array_closure) },
     })),
     be_str_weak(Matter_IM_base)
 );
-/*******************************************************************/
-
-void be_load_Matter_IM_base_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_IM_base);
-    be_setglobal(vm, "Matter_IM_base");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_IM_Message_base;
 
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Matter_IM_Message_base_init,   /* name */
+extern const bclass be_class_Matter_IM_Message_base;
+be_local_closure(class_Matter_IM_Message_base_init,   /* name */
   be_nested_proto(
     1,                          /* nstack */
     1,                          /* argc */
@@ -184,7 +181,7 @@ be_local_closure(Matter_IM_Message_base_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Message_base, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(InteractionModelRevision),
@@ -210,25 +207,19 @@ be_local_class(Matter_IM_Message_base,
     &be_class_Matter_IM_base,
     be_nested_map(2,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(init, -1), be_const_closure(Matter_IM_Message_base_init_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_Matter_IM_Message_base_init_closure) },
         { be_const_key_weak(InteractionModelRevision, 0), be_const_var(0) },
     })),
     be_str_weak(Matter_IM_Message_base)
 );
-/*******************************************************************/
-
-void be_load_Matter_IM_Message_base_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_IM_Message_base);
-    be_setglobal(vm, "Matter_IM_Message_base");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_AttributePathIB;
 
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_AttributePathIB_to_TLV,   /* name */
+extern const bclass be_class_Matter_AttributePathIB;
+be_local_closure(class_Matter_AttributePathIB_to_TLV,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     1,                          /* argc */
@@ -236,7 +227,7 @@ be_local_closure(Matter_AttributePathIB_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_AttributePathIB, 
     1,                          /* has constants */
     ( &(const bvalue[18]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -305,7 +296,8 @@ be_local_closure(Matter_AttributePathIB_to_TLV,   /* name */
 /********************************************************************
 ** Solidified function: tostring
 ********************************************************************/
-be_local_closure(Matter_AttributePathIB_tostring,   /* name */
+extern const bclass be_class_Matter_AttributePathIB;
+be_local_closure(class_Matter_AttributePathIB_tostring,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
@@ -313,7 +305,7 @@ be_local_closure(Matter_AttributePathIB_tostring,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_AttributePathIB, 
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_nested_str_weak(),
@@ -404,7 +396,8 @@ be_local_closure(Matter_AttributePathIB_tostring,   /* name */
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_AttributePathIB_from_TLV,   /* name */
+extern const bclass be_class_Matter_AttributePathIB;
+be_local_closure(class_Matter_AttributePathIB_from_TLV,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -412,7 +405,7 @@ be_local_closure(Matter_AttributePathIB_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_AttributePathIB, 
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str_weak(tag_compression),
@@ -475,32 +468,26 @@ be_local_class(Matter_AttributePathIB,
     &be_class_Matter_IM_base,
     be_nested_map(9,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(tostring, -1), be_const_closure(Matter_AttributePathIB_tostring_closure) },
+        { be_const_key_weak(tostring, -1), be_const_closure(class_Matter_AttributePathIB_tostring_closure) },
         { be_const_key_weak(tag_compression, 0), be_const_var(0) },
         { be_const_key_weak(cluster, -1), be_const_var(3) },
         { be_const_key_weak(attribute, -1), be_const_var(4) },
-        { be_const_key_weak(to_TLV, 2), be_const_closure(Matter_AttributePathIB_to_TLV_closure) },
+        { be_const_key_weak(to_TLV, 2), be_const_closure(class_Matter_AttributePathIB_to_TLV_closure) },
         { be_const_key_weak(list_index, 3), be_const_var(5) },
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_AttributePathIB_from_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_AttributePathIB_from_TLV_closure) },
         { be_const_key_weak(endpoint, 1), be_const_var(2) },
         { be_const_key_weak(node, -1), be_const_var(1) },
     })),
     be_str_weak(Matter_AttributePathIB)
 );
-/*******************************************************************/
-
-void be_load_Matter_AttributePathIB_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_AttributePathIB);
-    be_setglobal(vm, "Matter_AttributePathIB");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_ClusterPathIB;
 
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_ClusterPathIB_from_TLV,   /* name */
+extern const bclass be_class_Matter_ClusterPathIB;
+be_local_closure(class_Matter_ClusterPathIB_from_TLV,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -508,7 +495,7 @@ be_local_closure(Matter_ClusterPathIB_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_ClusterPathIB, 
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(node),
@@ -549,7 +536,8 @@ be_local_closure(Matter_ClusterPathIB_from_TLV,   /* name */
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_ClusterPathIB_to_TLV,   /* name */
+extern const bclass be_class_Matter_ClusterPathIB;
+be_local_closure(class_Matter_ClusterPathIB_to_TLV,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     1,                          /* argc */
@@ -557,7 +545,7 @@ be_local_closure(Matter_ClusterPathIB_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_ClusterPathIB, 
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -612,28 +600,22 @@ be_local_class(Matter_ClusterPathIB,
     &be_class_Matter_IM_base,
     be_nested_map(5,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_ClusterPathIB_from_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_ClusterPathIB_from_TLV_closure) },
         { be_const_key_weak(node, -1), be_const_var(0) },
         { be_const_key_weak(cluster, -1), be_const_var(2) },
         { be_const_key_weak(endpoint, 0), be_const_var(1) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_ClusterPathIB_to_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_ClusterPathIB_to_TLV_closure) },
     })),
     be_str_weak(Matter_ClusterPathIB)
 );
-/*******************************************************************/
-
-void be_load_Matter_ClusterPathIB_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_ClusterPathIB);
-    be_setglobal(vm, "Matter_ClusterPathIB");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_DataVersionFilterIB;
 
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_DataVersionFilterIB_from_TLV,   /* name */
+extern const bclass be_class_Matter_DataVersionFilterIB;
+be_local_closure(class_Matter_DataVersionFilterIB_from_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -641,7 +623,7 @@ be_local_closure(Matter_DataVersionFilterIB_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_DataVersionFilterIB, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(path),
@@ -685,7 +667,8 @@ be_local_closure(Matter_DataVersionFilterIB_from_TLV,   /* name */
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_DataVersionFilterIB_to_TLV,   /* name */
+extern const bclass be_class_Matter_DataVersionFilterIB;
+be_local_closure(class_Matter_DataVersionFilterIB_to_TLV,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     1,                          /* argc */
@@ -693,7 +676,7 @@ be_local_closure(Matter_DataVersionFilterIB_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_DataVersionFilterIB, 
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -739,27 +722,21 @@ be_local_class(Matter_DataVersionFilterIB,
     &be_class_Matter_IM_base,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_DataVersionFilterIB_from_TLV_closure) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_DataVersionFilterIB_to_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_DataVersionFilterIB_from_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_DataVersionFilterIB_to_TLV_closure) },
         { be_const_key_weak(path, 3), be_const_var(0) },
         { be_const_key_weak(data_version, -1), be_const_var(1) },
     })),
     be_str_weak(Matter_DataVersionFilterIB)
 );
-/*******************************************************************/
-
-void be_load_Matter_DataVersionFilterIB_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_DataVersionFilterIB);
-    be_setglobal(vm, "Matter_DataVersionFilterIB");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_AttributeDataIB;
 
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_AttributeDataIB_from_TLV,   /* name */
+extern const bclass be_class_Matter_AttributeDataIB;
+be_local_closure(class_Matter_AttributeDataIB_from_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -767,7 +744,7 @@ be_local_closure(Matter_AttributeDataIB_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_AttributeDataIB, 
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str_weak(data_version),
@@ -817,7 +794,8 @@ be_local_closure(Matter_AttributeDataIB_from_TLV,   /* name */
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_AttributeDataIB_to_TLV,   /* name */
+extern const bclass be_class_Matter_AttributeDataIB;
+be_local_closure(class_Matter_AttributeDataIB_to_TLV,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     1,                          /* argc */
@@ -825,7 +803,7 @@ be_local_closure(Matter_AttributeDataIB_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_AttributeDataIB, 
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -879,26 +857,20 @@ be_local_class(Matter_AttributeDataIB,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(data_version, -1), be_const_var(0) },
         { be_const_key_weak(data, -1), be_const_var(2) },
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_AttributeDataIB_from_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_AttributeDataIB_from_TLV_closure) },
         { be_const_key_weak(path, 2), be_const_var(1) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_AttributeDataIB_to_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_AttributeDataIB_to_TLV_closure) },
     })),
     be_str_weak(Matter_AttributeDataIB)
 );
-/*******************************************************************/
-
-void be_load_Matter_AttributeDataIB_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_AttributeDataIB);
-    be_setglobal(vm, "Matter_AttributeDataIB");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_AttributeReportIB;
 
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_AttributeReportIB_to_TLV,   /* name */
+extern const bclass be_class_Matter_AttributeReportIB;
+be_local_closure(class_Matter_AttributeReportIB_to_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -906,7 +878,7 @@ be_local_closure(Matter_AttributeReportIB_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_AttributeReportIB, 
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -943,7 +915,8 @@ be_local_closure(Matter_AttributeReportIB_to_TLV,   /* name */
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_AttributeReportIB_from_TLV,   /* name */
+extern const bclass be_class_Matter_AttributeReportIB;
+be_local_closure(class_Matter_AttributeReportIB_from_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -951,7 +924,7 @@ be_local_closure(Matter_AttributeReportIB_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_AttributeReportIB, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(attribute_status),
@@ -1007,26 +980,20 @@ be_local_class(Matter_AttributeReportIB,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(attribute_data, 3), be_const_var(1) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_AttributeReportIB_to_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_AttributeReportIB_to_TLV_closure) },
         { be_const_key_weak(attribute_status, -1), be_const_var(0) },
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_AttributeReportIB_from_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_AttributeReportIB_from_TLV_closure) },
     })),
     be_str_weak(Matter_AttributeReportIB)
 );
-/*******************************************************************/
-
-void be_load_Matter_AttributeReportIB_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_AttributeReportIB);
-    be_setglobal(vm, "Matter_AttributeReportIB");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_EventFilterIB;
 
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_EventFilterIB_from_TLV,   /* name */
+extern const bclass be_class_Matter_EventFilterIB;
+be_local_closure(class_Matter_EventFilterIB_from_TLV,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -1034,7 +1001,7 @@ be_local_closure(Matter_EventFilterIB_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_EventFilterIB, 
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(node),
@@ -1069,7 +1036,8 @@ be_local_closure(Matter_EventFilterIB_from_TLV,   /* name */
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_EventFilterIB_to_TLV,   /* name */
+extern const bclass be_class_Matter_EventFilterIB;
+be_local_closure(class_Matter_EventFilterIB_to_TLV,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     1,                          /* argc */
@@ -1077,7 +1045,7 @@ be_local_closure(Matter_EventFilterIB_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_EventFilterIB, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -1125,25 +1093,19 @@ be_local_class(Matter_EventFilterIB,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(event_min, 3), be_const_var(1) },
         { be_const_key_weak(node, 2), be_const_var(0) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_EventFilterIB_to_TLV_closure) },
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_EventFilterIB_from_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_EventFilterIB_to_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_EventFilterIB_from_TLV_closure) },
     })),
     be_str_weak(Matter_EventFilterIB)
 );
-/*******************************************************************/
-
-void be_load_Matter_EventFilterIB_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_EventFilterIB);
-    be_setglobal(vm, "Matter_EventFilterIB");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_EventPathIB;
 
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_EventPathIB_from_TLV,   /* name */
+extern const bclass be_class_Matter_EventPathIB;
+be_local_closure(class_Matter_EventPathIB_from_TLV,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -1151,7 +1113,7 @@ be_local_closure(Matter_EventPathIB_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_EventPathIB, 
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str_weak(node),
@@ -1203,7 +1165,8 @@ be_local_closure(Matter_EventPathIB_from_TLV,   /* name */
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_EventPathIB_to_TLV,   /* name */
+extern const bclass be_class_Matter_EventPathIB;
+be_local_closure(class_Matter_EventPathIB_to_TLV,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     2,                          /* argc */
@@ -1211,7 +1174,7 @@ be_local_closure(Matter_EventPathIB_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_EventPathIB, 
     1,                          /* has constants */
     ( &(const bvalue[17]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -1285,8 +1248,8 @@ be_local_class(Matter_EventPathIB,
     be_nested_map(7,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(endpoint, 5), be_const_var(1) },
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_EventPathIB_from_TLV_closure) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_EventPathIB_to_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_EventPathIB_from_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_EventPathIB_to_TLV_closure) },
         { be_const_key_weak(is_urgent, -1), be_const_var(4) },
         { be_const_key_weak(event, -1), be_const_var(3) },
         { be_const_key_weak(cluster, 3), be_const_var(2) },
@@ -1294,20 +1257,14 @@ be_local_class(Matter_EventPathIB,
     })),
     be_str_weak(Matter_EventPathIB)
 );
-/*******************************************************************/
-
-void be_load_Matter_EventPathIB_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_EventPathIB);
-    be_setglobal(vm, "Matter_EventPathIB");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_EventDataIB;
 
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_EventDataIB_from_TLV,   /* name */
+extern const bclass be_class_Matter_EventDataIB;
+be_local_closure(class_Matter_EventDataIB_from_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -1315,7 +1272,7 @@ be_local_closure(Matter_EventDataIB_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_EventDataIB, 
     1,                          /* has constants */
     ( &(const bvalue[17]) {     /* constants */
     /* K0   */  be_nested_str_weak(path),
@@ -1391,7 +1348,8 @@ be_local_closure(Matter_EventDataIB_from_TLV,   /* name */
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_EventDataIB_to_TLV,   /* name */
+extern const bclass be_class_Matter_EventDataIB;
+be_local_closure(class_Matter_EventDataIB_to_TLV,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     2,                          /* argc */
@@ -1399,7 +1357,7 @@ be_local_closure(Matter_EventDataIB_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_EventDataIB, 
     1,                          /* has constants */
     ( &(const bvalue[21]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -1495,8 +1453,8 @@ be_local_class(Matter_EventDataIB,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(delta_system_timestamp, -1), be_const_var(6) },
         { be_const_key_weak(data, -1), be_const_var(7) },
-        { be_const_key_weak(to_TLV, 6), be_const_closure(Matter_EventDataIB_to_TLV_closure) },
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_EventDataIB_from_TLV_closure) },
+        { be_const_key_weak(to_TLV, 6), be_const_closure(class_Matter_EventDataIB_to_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_EventDataIB_from_TLV_closure) },
         { be_const_key_weak(delta_epoch_timestamp, -1), be_const_var(5) },
         { be_const_key_weak(epoch_timestamp, -1), be_const_var(3) },
         { be_const_key_weak(system_timestamp, -1), be_const_var(4) },
@@ -1506,20 +1464,14 @@ be_local_class(Matter_EventDataIB,
     })),
     be_str_weak(Matter_EventDataIB)
 );
-/*******************************************************************/
-
-void be_load_Matter_EventDataIB_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_EventDataIB);
-    be_setglobal(vm, "Matter_EventDataIB");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_EventReportIB;
 
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_EventReportIB_to_TLV,   /* name */
+extern const bclass be_class_Matter_EventReportIB;
+be_local_closure(class_Matter_EventReportIB_to_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -1527,7 +1479,7 @@ be_local_closure(Matter_EventReportIB_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_EventReportIB, 
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -1564,7 +1516,8 @@ be_local_closure(Matter_EventReportIB_to_TLV,   /* name */
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_EventReportIB_from_TLV,   /* name */
+extern const bclass be_class_Matter_EventReportIB;
+be_local_closure(class_Matter_EventReportIB_from_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -1572,7 +1525,7 @@ be_local_closure(Matter_EventReportIB_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_EventReportIB, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(event_status),
@@ -1628,26 +1581,20 @@ be_local_class(Matter_EventReportIB,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(event_data, 3), be_const_var(1) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_EventReportIB_to_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_EventReportIB_to_TLV_closure) },
         { be_const_key_weak(event_status, -1), be_const_var(0) },
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_EventReportIB_from_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_EventReportIB_from_TLV_closure) },
     })),
     be_str_weak(Matter_EventReportIB)
 );
-/*******************************************************************/
-
-void be_load_Matter_EventReportIB_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_EventReportIB);
-    be_setglobal(vm, "Matter_EventReportIB");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_CommandPathIB;
 
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_CommandPathIB_from_TLV,   /* name */
+extern const bclass be_class_Matter_CommandPathIB;
+be_local_closure(class_Matter_CommandPathIB_from_TLV,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -1655,7 +1602,7 @@ be_local_closure(Matter_CommandPathIB_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_CommandPathIB, 
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(endpoint),
@@ -1696,7 +1643,8 @@ be_local_closure(Matter_CommandPathIB_from_TLV,   /* name */
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_CommandPathIB_to_TLV,   /* name */
+extern const bclass be_class_Matter_CommandPathIB;
+be_local_closure(class_Matter_CommandPathIB_to_TLV,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     1,                          /* argc */
@@ -1704,7 +1652,7 @@ be_local_closure(Matter_CommandPathIB_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_CommandPathIB, 
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -1759,27 +1707,21 @@ be_local_class(Matter_CommandPathIB,
     be_nested_map(5,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(endpoint, -1), be_const_var(0) },
-        { be_const_key_weak(from_TLV, 0), be_const_closure(Matter_CommandPathIB_from_TLV_closure) },
+        { be_const_key_weak(from_TLV, 0), be_const_closure(class_Matter_CommandPathIB_from_TLV_closure) },
         { be_const_key_weak(cluster, -1), be_const_var(1) },
         { be_const_key_weak(command, 1), be_const_var(2) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_CommandPathIB_to_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_CommandPathIB_to_TLV_closure) },
     })),
     be_str_weak(Matter_CommandPathIB)
 );
-/*******************************************************************/
-
-void be_load_Matter_CommandPathIB_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_CommandPathIB);
-    be_setglobal(vm, "Matter_CommandPathIB");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_CommandDataIB;
 
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_CommandDataIB_to_TLV,   /* name */
+extern const bclass be_class_Matter_CommandDataIB;
+be_local_closure(class_Matter_CommandDataIB_to_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -1787,7 +1729,7 @@ be_local_closure(Matter_CommandDataIB_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_CommandDataIB, 
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -1824,7 +1766,8 @@ be_local_closure(Matter_CommandDataIB_to_TLV,   /* name */
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_CommandDataIB_from_TLV,   /* name */
+extern const bclass be_class_Matter_CommandDataIB;
+be_local_closure(class_Matter_CommandDataIB_from_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -1832,7 +1775,7 @@ be_local_closure(Matter_CommandDataIB_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_CommandDataIB, 
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(command_path),
@@ -1882,26 +1825,20 @@ be_local_class(Matter_CommandDataIB,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(command_path, 3), be_const_var(0) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_CommandDataIB_to_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_CommandDataIB_to_TLV_closure) },
         { be_const_key_weak(command_fields, -1), be_const_var(1) },
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_CommandDataIB_from_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_CommandDataIB_from_TLV_closure) },
     })),
     be_str_weak(Matter_CommandDataIB)
 );
-/*******************************************************************/
-
-void be_load_Matter_CommandDataIB_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_CommandDataIB);
-    be_setglobal(vm, "Matter_CommandDataIB");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_InvokeResponseIB;
 
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_InvokeResponseIB_from_TLV,   /* name */
+extern const bclass be_class_Matter_InvokeResponseIB;
+be_local_closure(class_Matter_InvokeResponseIB_from_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -1909,7 +1846,7 @@ be_local_closure(Matter_InvokeResponseIB_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_InvokeResponseIB, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(command),
@@ -1958,7 +1895,8 @@ be_local_closure(Matter_InvokeResponseIB_from_TLV,   /* name */
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_InvokeResponseIB_to_TLV,   /* name */
+extern const bclass be_class_Matter_InvokeResponseIB;
+be_local_closure(class_Matter_InvokeResponseIB_to_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -1966,7 +1904,7 @@ be_local_closure(Matter_InvokeResponseIB_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_InvokeResponseIB, 
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -2009,27 +1947,21 @@ be_local_class(Matter_InvokeResponseIB,
     &be_class_Matter_IM_base,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_InvokeResponseIB_from_TLV_closure) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_InvokeResponseIB_to_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_InvokeResponseIB_from_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_InvokeResponseIB_to_TLV_closure) },
         { be_const_key_weak(command, -1), be_const_var(0) },
         { be_const_key_weak(status, -1), be_const_var(1) },
     })),
     be_str_weak(Matter_InvokeResponseIB)
 );
-/*******************************************************************/
-
-void be_load_Matter_InvokeResponseIB_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_InvokeResponseIB);
-    be_setglobal(vm, "Matter_InvokeResponseIB");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_CommandStatusIB;
 
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_CommandStatusIB_to_TLV,   /* name */
+extern const bclass be_class_Matter_CommandStatusIB;
+be_local_closure(class_Matter_CommandStatusIB_to_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -2037,7 +1969,7 @@ be_local_closure(Matter_CommandStatusIB_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_CommandStatusIB, 
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -2074,7 +2006,8 @@ be_local_closure(Matter_CommandStatusIB_to_TLV,   /* name */
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_CommandStatusIB_from_TLV,   /* name */
+extern const bclass be_class_Matter_CommandStatusIB;
+be_local_closure(class_Matter_CommandStatusIB_from_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -2082,7 +2015,7 @@ be_local_closure(Matter_CommandStatusIB_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_CommandStatusIB, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(command_path),
@@ -2138,26 +2071,20 @@ be_local_class(Matter_CommandStatusIB,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(command_path, 2), be_const_var(0) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_CommandStatusIB_to_TLV_closure) },
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_CommandStatusIB_from_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_CommandStatusIB_to_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_CommandStatusIB_from_TLV_closure) },
         { be_const_key_weak(status, -1), be_const_var(1) },
     })),
     be_str_weak(Matter_CommandStatusIB)
 );
-/*******************************************************************/
-
-void be_load_Matter_CommandStatusIB_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_CommandStatusIB);
-    be_setglobal(vm, "Matter_CommandStatusIB");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_EventStatusIB;
 
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_EventStatusIB_from_TLV,   /* name */
+extern const bclass be_class_Matter_EventStatusIB;
+be_local_closure(class_Matter_EventStatusIB_from_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -2165,7 +2092,7 @@ be_local_closure(Matter_EventStatusIB_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_EventStatusIB, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(path),
@@ -2214,7 +2141,8 @@ be_local_closure(Matter_EventStatusIB_from_TLV,   /* name */
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_EventStatusIB_to_TLV,   /* name */
+extern const bclass be_class_Matter_EventStatusIB;
+be_local_closure(class_Matter_EventStatusIB_to_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -2222,7 +2150,7 @@ be_local_closure(Matter_EventStatusIB_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_EventStatusIB, 
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -2265,27 +2193,21 @@ be_local_class(Matter_EventStatusIB,
     &be_class_Matter_IM_base,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_EventStatusIB_from_TLV_closure) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_EventStatusIB_to_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_EventStatusIB_from_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_EventStatusIB_to_TLV_closure) },
         { be_const_key_weak(path, -1), be_const_var(0) },
         { be_const_key_weak(status, -1), be_const_var(1) },
     })),
     be_str_weak(Matter_EventStatusIB)
 );
-/*******************************************************************/
-
-void be_load_Matter_EventStatusIB_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_EventStatusIB);
-    be_setglobal(vm, "Matter_EventStatusIB");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_AttributeStatusIB;
 
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_AttributeStatusIB_from_TLV,   /* name */
+extern const bclass be_class_Matter_AttributeStatusIB;
+be_local_closure(class_Matter_AttributeStatusIB_from_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -2293,7 +2215,7 @@ be_local_closure(Matter_AttributeStatusIB_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_AttributeStatusIB, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(path),
@@ -2342,7 +2264,8 @@ be_local_closure(Matter_AttributeStatusIB_from_TLV,   /* name */
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_AttributeStatusIB_to_TLV,   /* name */
+extern const bclass be_class_Matter_AttributeStatusIB;
+be_local_closure(class_Matter_AttributeStatusIB_to_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -2350,7 +2273,7 @@ be_local_closure(Matter_AttributeStatusIB_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_AttributeStatusIB, 
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -2393,27 +2316,21 @@ be_local_class(Matter_AttributeStatusIB,
     &be_class_Matter_IM_base,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_AttributeStatusIB_from_TLV_closure) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_AttributeStatusIB_to_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_AttributeStatusIB_from_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_AttributeStatusIB_to_TLV_closure) },
         { be_const_key_weak(path, -1), be_const_var(0) },
         { be_const_key_weak(status, -1), be_const_var(1) },
     })),
     be_str_weak(Matter_AttributeStatusIB)
 );
-/*******************************************************************/
-
-void be_load_Matter_AttributeStatusIB_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_AttributeStatusIB);
-    be_setglobal(vm, "Matter_AttributeStatusIB");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_StatusIB;
 
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_StatusIB_to_TLV,   /* name */
+extern const bclass be_class_Matter_StatusIB;
+be_local_closure(class_Matter_StatusIB_to_TLV,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     1,                          /* argc */
@@ -2421,7 +2338,7 @@ be_local_closure(Matter_StatusIB_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_StatusIB, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -2461,7 +2378,8 @@ be_local_closure(Matter_StatusIB_to_TLV,   /* name */
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_StatusIB_from_TLV,   /* name */
+extern const bclass be_class_Matter_StatusIB;
+be_local_closure(class_Matter_StatusIB_from_TLV,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -2469,7 +2387,7 @@ be_local_closure(Matter_StatusIB_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_StatusIB, 
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(status),
@@ -2511,26 +2429,20 @@ be_local_class(Matter_StatusIB,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(cluster_status, 2), be_const_var(1) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_StatusIB_to_TLV_closure) },
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_StatusIB_from_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_StatusIB_to_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_StatusIB_from_TLV_closure) },
         { be_const_key_weak(status, -1), be_const_var(0) },
     })),
     be_str_weak(Matter_StatusIB)
 );
-/*******************************************************************/
-
-void be_load_Matter_StatusIB_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_StatusIB);
-    be_setglobal(vm, "Matter_StatusIB");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_StatusResponseMessage;
 
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_StatusResponseMessage_from_TLV,   /* name */
+extern const bclass be_class_Matter_StatusResponseMessage;
+be_local_closure(class_Matter_StatusResponseMessage_from_TLV,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -2538,7 +2450,7 @@ be_local_closure(Matter_StatusResponseMessage_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_StatusResponseMessage, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(status),
@@ -2567,7 +2479,8 @@ be_local_closure(Matter_StatusResponseMessage_from_TLV,   /* name */
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_StatusResponseMessage_to_TLV,   /* name */
+extern const bclass be_class_Matter_StatusResponseMessage;
+be_local_closure(class_Matter_StatusResponseMessage_to_TLV,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     1,                          /* argc */
@@ -2575,7 +2488,7 @@ be_local_closure(Matter_StatusResponseMessage_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_StatusResponseMessage, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -2621,26 +2534,20 @@ be_local_class(Matter_StatusResponseMessage,
     &be_class_Matter_IM_Message_base,
     be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_StatusResponseMessage_from_TLV_closure) },
-        { be_const_key_weak(to_TLV, 2), be_const_closure(Matter_StatusResponseMessage_to_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_StatusResponseMessage_from_TLV_closure) },
+        { be_const_key_weak(to_TLV, 2), be_const_closure(class_Matter_StatusResponseMessage_to_TLV_closure) },
         { be_const_key_weak(status, -1), be_const_var(0) },
     })),
     be_str_weak(Matter_StatusResponseMessage)
 );
-/*******************************************************************/
-
-void be_load_Matter_StatusResponseMessage_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_StatusResponseMessage);
-    be_setglobal(vm, "Matter_StatusResponseMessage");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_ReadRequestMessage;
 
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_ReadRequestMessage_from_TLV,   /* name */
+extern const bclass be_class_Matter_ReadRequestMessage;
+be_local_closure(class_Matter_ReadRequestMessage_from_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -2648,7 +2555,7 @@ be_local_closure(Matter_ReadRequestMessage_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_ReadRequestMessage, 
     1,                          /* has constants */
     ( &(const bvalue[16]) {     /* constants */
     /* K0   */  be_nested_str_weak(attributes_requests),
@@ -2722,7 +2629,8 @@ be_local_closure(Matter_ReadRequestMessage_from_TLV,   /* name */
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_ReadRequestMessage_to_TLV,   /* name */
+extern const bclass be_class_Matter_ReadRequestMessage;
+be_local_closure(class_Matter_ReadRequestMessage_to_TLV,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     1,                          /* argc */
@@ -2730,7 +2638,7 @@ be_local_closure(Matter_ReadRequestMessage_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_ReadRequestMessage, 
     1,                          /* has constants */
     ( &(const bvalue[17]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -2806,28 +2714,22 @@ be_local_class(Matter_ReadRequestMessage,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(event_filters, -1), be_const_var(2) },
         { be_const_key_weak(fabric_filtered, 3), be_const_var(3) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_ReadRequestMessage_to_TLV_closure) },
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_ReadRequestMessage_from_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_ReadRequestMessage_to_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_ReadRequestMessage_from_TLV_closure) },
         { be_const_key_weak(data_version_filters, -1), be_const_var(4) },
         { be_const_key_weak(attributes_requests, -1), be_const_var(0) },
         { be_const_key_weak(event_requests, 0), be_const_var(1) },
     })),
     be_str_weak(Matter_ReadRequestMessage)
 );
-/*******************************************************************/
-
-void be_load_Matter_ReadRequestMessage_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_ReadRequestMessage);
-    be_setglobal(vm, "Matter_ReadRequestMessage");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_ReadRequestMessage_solo;
 
 /********************************************************************
 ** Solidified function: from_raw
 ********************************************************************/
-be_local_closure(Matter_ReadRequestMessage_solo_from_raw,   /* name */
+extern const bclass be_class_Matter_ReadRequestMessage_solo;
+be_local_closure(class_Matter_ReadRequestMessage_solo_from_raw,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     3,                          /* argc */
@@ -2835,7 +2737,7 @@ be_local_closure(Matter_ReadRequestMessage_solo_from_raw,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_ReadRequestMessage_solo, 
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str_weak(reset),
@@ -2998,24 +2900,18 @@ be_local_class(Matter_ReadRequestMessage_solo,
     &be_class_Matter_Path,
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(from_raw, -1), be_const_closure(Matter_ReadRequestMessage_solo_from_raw_closure) },
+        { be_const_key_weak(from_raw, -1), be_const_closure(class_Matter_ReadRequestMessage_solo_from_raw_closure) },
     })),
     be_str_weak(Matter_ReadRequestMessage_solo)
 );
-/*******************************************************************/
-
-void be_load_Matter_ReadRequestMessage_solo_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_ReadRequestMessage_solo);
-    be_setglobal(vm, "Matter_ReadRequestMessage_solo");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_ReportDataMessage;
 
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_ReportDataMessage_from_TLV,   /* name */
+extern const bclass be_class_Matter_ReportDataMessage;
+be_local_closure(class_Matter_ReportDataMessage_from_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -3023,7 +2919,7 @@ be_local_closure(Matter_ReportDataMessage_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_ReportDataMessage, 
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_nested_str_weak(subscription_id),
@@ -3087,7 +2983,8 @@ be_local_closure(Matter_ReportDataMessage_from_TLV,   /* name */
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_ReportDataMessage_to_TLV,   /* name */
+extern const bclass be_class_Matter_ReportDataMessage;
+be_local_closure(class_Matter_ReportDataMessage_to_TLV,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     1,                          /* argc */
@@ -3095,7 +2992,7 @@ be_local_closure(Matter_ReportDataMessage_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_ReportDataMessage, 
     1,                          /* has constants */
     ( &(const bvalue[18]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -3171,8 +3068,8 @@ be_local_class(Matter_ReportDataMessage,
     be_nested_map(7,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(attribute_reports, -1), be_const_var(1) },
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_ReportDataMessage_from_TLV_closure) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_ReportDataMessage_to_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_ReportDataMessage_from_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_ReportDataMessage_to_TLV_closure) },
         { be_const_key_weak(more_chunked_messages, -1), be_const_var(3) },
         { be_const_key_weak(event_reports, -1), be_const_var(2) },
         { be_const_key_weak(suppress_response, -1), be_const_var(4) },
@@ -3180,20 +3077,14 @@ be_local_class(Matter_ReportDataMessage,
     })),
     be_str_weak(Matter_ReportDataMessage)
 );
-/*******************************************************************/
-
-void be_load_Matter_ReportDataMessage_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_ReportDataMessage);
-    be_setglobal(vm, "Matter_ReportDataMessage");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_SubscribeRequestMessage;
 
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_SubscribeRequestMessage_from_TLV,   /* name */
+extern const bclass be_class_Matter_SubscribeRequestMessage;
+be_local_closure(class_Matter_SubscribeRequestMessage_from_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -3201,7 +3092,7 @@ be_local_closure(Matter_SubscribeRequestMessage_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_SubscribeRequestMessage, 
     1,                          /* has constants */
     ( &(const bvalue[19]) {     /* constants */
     /* K0   */  be_nested_str_weak(keep_subscriptions),
@@ -3294,7 +3185,8 @@ be_local_closure(Matter_SubscribeRequestMessage_from_TLV,   /* name */
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_SubscribeRequestMessage_to_TLV,   /* name */
+extern const bclass be_class_Matter_SubscribeRequestMessage;
+be_local_closure(class_Matter_SubscribeRequestMessage_to_TLV,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     1,                          /* argc */
@@ -3302,7 +3194,7 @@ be_local_closure(Matter_SubscribeRequestMessage_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_SubscribeRequestMessage, 
     1,                          /* has constants */
     ( &(const bvalue[21]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -3395,7 +3287,7 @@ be_local_class(Matter_SubscribeRequestMessage,
     &be_class_Matter_IM_Message_base,
     be_nested_map(10,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_SubscribeRequestMessage_to_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_SubscribeRequestMessage_to_TLV_closure) },
         { be_const_key_weak(attributes_requests, 7), be_const_var(3) },
         { be_const_key_weak(fabric_filtered, 6), be_const_var(6) },
         { be_const_key_weak(min_interval_floor, -1), be_const_var(1) },
@@ -3403,25 +3295,19 @@ be_local_class(Matter_SubscribeRequestMessage,
         { be_const_key_weak(max_interval_ceiling, -1), be_const_var(2) },
         { be_const_key_weak(event_requests, 3), be_const_var(4) },
         { be_const_key_weak(event_filters, -1), be_const_var(5) },
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_SubscribeRequestMessage_from_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_SubscribeRequestMessage_from_TLV_closure) },
         { be_const_key_weak(keep_subscriptions, 0), be_const_var(0) },
     })),
     be_str_weak(Matter_SubscribeRequestMessage)
 );
-/*******************************************************************/
-
-void be_load_Matter_SubscribeRequestMessage_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_SubscribeRequestMessage);
-    be_setglobal(vm, "Matter_SubscribeRequestMessage");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_SubscribeResponseMessage;
 
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_SubscribeResponseMessage_to_TLV,   /* name */
+extern const bclass be_class_Matter_SubscribeResponseMessage;
+be_local_closure(class_Matter_SubscribeResponseMessage_to_TLV,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     1,                          /* argc */
@@ -3429,7 +3315,7 @@ be_local_closure(Matter_SubscribeResponseMessage_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_SubscribeResponseMessage, 
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -3477,7 +3363,8 @@ be_local_closure(Matter_SubscribeResponseMessage_to_TLV,   /* name */
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_SubscribeResponseMessage_from_TLV,   /* name */
+extern const bclass be_class_Matter_SubscribeResponseMessage;
+be_local_closure(class_Matter_SubscribeResponseMessage_from_TLV,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -3485,7 +3372,7 @@ be_local_closure(Matter_SubscribeResponseMessage_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_SubscribeResponseMessage, 
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(subscription_id),
@@ -3527,26 +3414,20 @@ be_local_class(Matter_SubscribeResponseMessage,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(subscription_id, 2), be_const_var(0) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_SubscribeResponseMessage_to_TLV_closure) },
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_SubscribeResponseMessage_from_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_SubscribeResponseMessage_to_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_SubscribeResponseMessage_from_TLV_closure) },
         { be_const_key_weak(max_interval, -1), be_const_var(1) },
     })),
     be_str_weak(Matter_SubscribeResponseMessage)
 );
-/*******************************************************************/
-
-void be_load_Matter_SubscribeResponseMessage_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_SubscribeResponseMessage);
-    be_setglobal(vm, "Matter_SubscribeResponseMessage");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_WriteRequestMessage;
 
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_WriteRequestMessage_to_TLV,   /* name */
+extern const bclass be_class_Matter_WriteRequestMessage;
+be_local_closure(class_Matter_WriteRequestMessage_to_TLV,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     1,                          /* argc */
@@ -3554,7 +3435,7 @@ be_local_closure(Matter_WriteRequestMessage_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_WriteRequestMessage, 
     1,                          /* has constants */
     ( &(const bvalue[16]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -3616,7 +3497,8 @@ be_local_closure(Matter_WriteRequestMessage_to_TLV,   /* name */
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_WriteRequestMessage_from_TLV,   /* name */
+extern const bclass be_class_Matter_WriteRequestMessage;
+be_local_closure(class_Matter_WriteRequestMessage_from_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -3624,7 +3506,7 @@ be_local_closure(Matter_WriteRequestMessage_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_WriteRequestMessage, 
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str_weak(suppress_response),
@@ -3685,28 +3567,22 @@ be_local_class(Matter_WriteRequestMessage,
     be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(suppress_response, 5), be_const_var(0) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_WriteRequestMessage_to_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_WriteRequestMessage_to_TLV_closure) },
         { be_const_key_weak(timed_request, -1), be_const_var(1) },
         { be_const_key_weak(write_requests, -1), be_const_var(2) },
         { be_const_key_weak(more_chunked_messages, -1), be_const_var(3) },
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_WriteRequestMessage_from_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_WriteRequestMessage_from_TLV_closure) },
     })),
     be_str_weak(Matter_WriteRequestMessage)
 );
-/*******************************************************************/
-
-void be_load_Matter_WriteRequestMessage_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_WriteRequestMessage);
-    be_setglobal(vm, "Matter_WriteRequestMessage");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_WriteResponseMessage;
 
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_WriteResponseMessage_from_TLV,   /* name */
+extern const bclass be_class_Matter_WriteResponseMessage;
+be_local_closure(class_Matter_WriteResponseMessage_from_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -3714,7 +3590,7 @@ be_local_closure(Matter_WriteResponseMessage_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_WriteResponseMessage, 
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(write_requests),
@@ -3750,7 +3626,8 @@ be_local_closure(Matter_WriteResponseMessage_from_TLV,   /* name */
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_WriteResponseMessage_to_TLV,   /* name */
+extern const bclass be_class_Matter_WriteResponseMessage;
+be_local_closure(class_Matter_WriteResponseMessage_to_TLV,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     1,                          /* argc */
@@ -3758,7 +3635,7 @@ be_local_closure(Matter_WriteResponseMessage_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_WriteResponseMessage, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -3804,26 +3681,20 @@ be_local_class(Matter_WriteResponseMessage,
     &be_class_Matter_IM_Message_base,
     be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(from_TLV, 2), be_const_closure(Matter_WriteResponseMessage_from_TLV_closure) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_WriteResponseMessage_to_TLV_closure) },
+        { be_const_key_weak(from_TLV, 2), be_const_closure(class_Matter_WriteResponseMessage_from_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_WriteResponseMessage_to_TLV_closure) },
         { be_const_key_weak(write_responses, -1), be_const_var(0) },
     })),
     be_str_weak(Matter_WriteResponseMessage)
 );
-/*******************************************************************/
-
-void be_load_Matter_WriteResponseMessage_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_WriteResponseMessage);
-    be_setglobal(vm, "Matter_WriteResponseMessage");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_TimedRequestMessage;
 
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_TimedRequestMessage_from_TLV,   /* name */
+extern const bclass be_class_Matter_TimedRequestMessage;
+be_local_closure(class_Matter_TimedRequestMessage_from_TLV,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -3831,7 +3702,7 @@ be_local_closure(Matter_TimedRequestMessage_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_TimedRequestMessage, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(timeout),
@@ -3860,7 +3731,8 @@ be_local_closure(Matter_TimedRequestMessage_from_TLV,   /* name */
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_TimedRequestMessage_to_TLV,   /* name */
+extern const bclass be_class_Matter_TimedRequestMessage;
+be_local_closure(class_Matter_TimedRequestMessage_to_TLV,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     1,                          /* argc */
@@ -3868,7 +3740,7 @@ be_local_closure(Matter_TimedRequestMessage_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_TimedRequestMessage, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -3914,26 +3786,20 @@ be_local_class(Matter_TimedRequestMessage,
     &be_class_Matter_IM_Message_base,
     be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_TimedRequestMessage_from_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_TimedRequestMessage_from_TLV_closure) },
         { be_const_key_weak(timeout, 2), be_const_var(0) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_TimedRequestMessage_to_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_TimedRequestMessage_to_TLV_closure) },
     })),
     be_str_weak(Matter_TimedRequestMessage)
 );
-/*******************************************************************/
-
-void be_load_Matter_TimedRequestMessage_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_TimedRequestMessage);
-    be_setglobal(vm, "Matter_TimedRequestMessage");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_InvokeRequestMessage;
 
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_InvokeRequestMessage_from_TLV,   /* name */
+extern const bclass be_class_Matter_InvokeRequestMessage;
+be_local_closure(class_Matter_InvokeRequestMessage_from_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -3941,7 +3807,7 @@ be_local_closure(Matter_InvokeRequestMessage_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_InvokeRequestMessage, 
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str_weak(suppress_response),
@@ -3989,7 +3855,8 @@ be_local_closure(Matter_InvokeRequestMessage_from_TLV,   /* name */
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_InvokeRequestMessage_to_TLV,   /* name */
+extern const bclass be_class_Matter_InvokeRequestMessage;
+be_local_closure(class_Matter_InvokeRequestMessage_to_TLV,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     1,                          /* argc */
@@ -3997,7 +3864,7 @@ be_local_closure(Matter_InvokeRequestMessage_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_InvokeRequestMessage, 
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -4061,25 +3928,19 @@ be_local_class(Matter_InvokeRequestMessage,
         { be_const_key_weak(invoke_requests, -1), be_const_var(2) },
         { be_const_key_weak(suppress_response, 2), be_const_var(0) },
         { be_const_key_weak(timed_request, -1), be_const_var(1) },
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_InvokeRequestMessage_from_TLV_closure) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_InvokeRequestMessage_to_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_InvokeRequestMessage_from_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_InvokeRequestMessage_to_TLV_closure) },
     })),
     be_str_weak(Matter_InvokeRequestMessage)
 );
-/*******************************************************************/
-
-void be_load_Matter_InvokeRequestMessage_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_InvokeRequestMessage);
-    be_setglobal(vm, "Matter_InvokeRequestMessage");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_InvokeRequestMessage_solo;
 
 /********************************************************************
 ** Solidified function: reset
 ********************************************************************/
-be_local_closure(Matter_InvokeRequestMessage_solo_reset,   /* name */
+extern const bclass be_class_Matter_InvokeRequestMessage_solo;
+be_local_closure(class_Matter_InvokeRequestMessage_solo_reset,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -4087,7 +3948,7 @@ be_local_closure(Matter_InvokeRequestMessage_solo_reset,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_InvokeRequestMessage_solo, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(reset),
@@ -4117,7 +3978,8 @@ be_local_closure(Matter_InvokeRequestMessage_solo_reset,   /* name */
 /********************************************************************
 ** Solidified function: from_raw
 ********************************************************************/
-be_local_closure(Matter_InvokeRequestMessage_solo_from_raw,   /* name */
+extern const bclass be_class_Matter_InvokeRequestMessage_solo;
+be_local_closure(class_Matter_InvokeRequestMessage_solo_from_raw,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     3,                          /* argc */
@@ -4125,7 +3987,7 @@ be_local_closure(Matter_InvokeRequestMessage_solo_from_raw,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_InvokeRequestMessage_solo, 
     1,                          /* has constants */
     ( &(const bvalue[16]) {     /* constants */
     /* K0   */  be_nested_str_weak(reset),
@@ -4335,26 +4197,20 @@ be_local_class(Matter_InvokeRequestMessage_solo,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(SuppressResponse, 4), be_const_var(0) },
         { be_const_key_weak(command_fields, 3), be_const_var(2) },
-        { be_const_key_weak(reset, -1), be_const_closure(Matter_InvokeRequestMessage_solo_reset_closure) },
-        { be_const_key_weak(from_raw, -1), be_const_closure(Matter_InvokeRequestMessage_solo_from_raw_closure) },
+        { be_const_key_weak(reset, -1), be_const_closure(class_Matter_InvokeRequestMessage_solo_reset_closure) },
+        { be_const_key_weak(from_raw, -1), be_const_closure(class_Matter_InvokeRequestMessage_solo_from_raw_closure) },
         { be_const_key_weak(TimedRequest, -1), be_const_var(1) },
     })),
     be_str_weak(Matter_InvokeRequestMessage_solo)
 );
-/*******************************************************************/
-
-void be_load_Matter_InvokeRequestMessage_solo_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_InvokeRequestMessage_solo);
-    be_setglobal(vm, "Matter_InvokeRequestMessage_solo");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_InvokeResponseMessage;
 
 /********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
-be_local_closure(Matter_InvokeResponseMessage_to_TLV,   /* name */
+extern const bclass be_class_Matter_InvokeResponseMessage;
+be_local_closure(class_Matter_InvokeResponseMessage_to_TLV,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     1,                          /* argc */
@@ -4362,7 +4218,7 @@ be_local_closure(Matter_InvokeResponseMessage_to_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_InvokeResponseMessage, 
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -4410,7 +4266,8 @@ be_local_closure(Matter_InvokeResponseMessage_to_TLV,   /* name */
 /********************************************************************
 ** Solidified function: from_TLV
 ********************************************************************/
-be_local_closure(Matter_InvokeResponseMessage_from_TLV,   /* name */
+extern const bclass be_class_Matter_InvokeResponseMessage;
+be_local_closure(class_Matter_InvokeResponseMessage_from_TLV,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -4418,7 +4275,7 @@ be_local_closure(Matter_InvokeResponseMessage_from_TLV,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_InvokeResponseMessage, 
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(suppress_response),
@@ -4467,18 +4324,11 @@ be_local_class(Matter_InvokeResponseMessage,
     be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(suppress_response, 3), be_const_var(0) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(Matter_InvokeResponseMessage_to_TLV_closure) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_InvokeResponseMessage_to_TLV_closure) },
         { be_const_key_weak(invoke_responses, -1), be_const_var(1) },
-        { be_const_key_weak(from_TLV, -1), be_const_closure(Matter_InvokeResponseMessage_from_TLV_closure) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_InvokeResponseMessage_from_TLV_closure) },
     })),
     be_str_weak(Matter_InvokeResponseMessage)
 );
-/*******************************************************************/
-
-void be_load_Matter_InvokeResponseMessage_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_InvokeResponseMessage);
-    be_setglobal(vm, "Matter_InvokeResponseMessage");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

@@ -32,8 +32,8 @@
 \*********************************************************************************************/
 extern "C" {
 
-  int32_t energy_update_total(struct bvm *vm);
-  int32_t energy_update_total(struct bvm *vm) {
+  int32_t module_energy_update_total(struct bvm *vm);
+  int32_t module_energy_update_total(struct bvm *vm) {
     EnergyUpdateTotal();
     be_return_nil(vm);
   }

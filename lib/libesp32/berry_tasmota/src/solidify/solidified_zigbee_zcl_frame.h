@@ -9,7 +9,8 @@ extern const bclass be_class_zcl_frame;
 /********************************************************************
 ** Solidified function: member
 ********************************************************************/
-be_local_closure(zcl_frame_member,   /* name */
+extern const bclass be_class_zcl_frame;
+be_local_closure(class_zcl_frame_member,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(zcl_frame_member,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_zcl_frame, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(payload),
@@ -52,7 +53,8 @@ be_local_closure(zcl_frame_member,   /* name */
 /********************************************************************
 ** Solidified function: setmember
 ********************************************************************/
-be_local_closure(zcl_frame_setmember,   /* name */
+extern const bclass be_class_zcl_frame;
+be_local_closure(class_zcl_frame_setmember,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     3,                          /* argc */
@@ -60,7 +62,7 @@ be_local_closure(zcl_frame_setmember,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_zcl_frame, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(payload),
@@ -97,7 +99,8 @@ be_local_closure(zcl_frame_setmember,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(zcl_frame_init,   /* name */
+extern const bclass be_class_zcl_frame;
+be_local_closure(class_zcl_frame_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -105,7 +108,7 @@ be_local_closure(zcl_frame_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_zcl_frame, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -133,7 +136,8 @@ be_local_closure(zcl_frame_init,   /* name */
 /********************************************************************
 ** Solidified function: tomap
 ********************************************************************/
-be_local_closure(zcl_frame_tomap,   /* name */
+extern const bclass be_class_zcl_frame;
+be_local_closure(class_zcl_frame_tomap,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -141,7 +145,7 @@ be_local_closure(zcl_frame_tomap,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_zcl_frame, 
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(tomap),
@@ -175,7 +179,8 @@ be_local_closure(zcl_frame_tomap,   /* name */
 /********************************************************************
 ** Solidified function: tostring
 ********************************************************************/
-be_local_closure(zcl_frame_tostring,   /* name */
+extern const bclass be_class_zcl_frame;
+be_local_closure(class_zcl_frame_tostring,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -183,7 +188,7 @@ be_local_closure(zcl_frame_tostring,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_zcl_frame, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(tomap),
@@ -213,20 +218,13 @@ be_local_class(zcl_frame,
     be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(no_bytes, -1), be_const_var(0) },
-        { be_const_key_weak(member, 2), be_const_closure(zcl_frame_member_closure) },
-        { be_const_key_weak(tostring, 5), be_const_closure(zcl_frame_tostring_closure) },
-        { be_const_key_weak(init, -1), be_const_closure(zcl_frame_init_closure) },
-        { be_const_key_weak(tomap, -1), be_const_closure(zcl_frame_tomap_closure) },
-        { be_const_key_weak(setmember, -1), be_const_closure(zcl_frame_setmember_closure) },
+        { be_const_key_weak(member, 2), be_const_closure(class_zcl_frame_member_closure) },
+        { be_const_key_weak(tostring, 5), be_const_closure(class_zcl_frame_tostring_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_zcl_frame_init_closure) },
+        { be_const_key_weak(tomap, -1), be_const_closure(class_zcl_frame_tomap_closure) },
+        { be_const_key_weak(setmember, -1), be_const_closure(class_zcl_frame_setmember_closure) },
     })),
     be_str_weak(zcl_frame)
 );
-/*******************************************************************/
-
-void be_load_zcl_frame_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_zcl_frame);
-    be_setglobal(vm, "zcl_frame");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */
