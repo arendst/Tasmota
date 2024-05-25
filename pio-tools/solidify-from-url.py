@@ -39,10 +39,12 @@ def cleanFolder():
         os.remove(join(BERRY_SOLIDIFY_DIR,"src",file))
     tempfiles = [f for f in os.listdir(join(BERRY_SOLIDIFY_DIR,"src","embedded")) if ".gitignore" not in f]
     for file in tempfiles:
-        os.remove(join(BERRY_SOLIDIFY_DIR,"src","embedded",file))
+        if file != ".keep":
+            os.remove(join(BERRY_SOLIDIFY_DIR,"src","embedded",file))
     tempfiles = [f for f in os.listdir(join(BERRY_SOLIDIFY_DIR,"src","solidify")) if ".gitignore" not in f]
     for file in tempfiles:
-        os.remove(join(BERRY_SOLIDIFY_DIR,"src","solidify",file))
+        if file != ".keep":
+            os.remove(join(BERRY_SOLIDIFY_DIR,"src","solidify",file))
     
 
 def addEntryToModtab(source): 
