@@ -1768,6 +1768,15 @@ void SML_Decode(uint8_t index) {
     return;
   }
 
+
+  struct METER_DESC *md = &meter_desc[index];
+  // start of serial source buffer
+  cp = md->sbuff;
+  if (md->flag & 32 && md->type == 's' && *cp != SML_SYNC) {
+    // fast exit when not in sync
+    return;
+  }
+
   while (mp != NULL) {
     // check list of defines
     if (*mp == 0) break;
