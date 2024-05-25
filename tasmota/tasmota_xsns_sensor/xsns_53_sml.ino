@@ -3633,7 +3633,11 @@ next_line:
   sml_globs.sml_mf = (struct SML_MEDIAN_FILTER*)calloc(sml_globs.maxvars, sizeof(struct SML_MEDIAN_FILTER));
 #endif
 
-  if (!sml_globs.maxvars || !sml_globs.meter_vars || !sml_globs.dvalid || !sml_globs.sml_mf) {
+  if (!sml_globs.maxvars || !sml_globs.meter_vars || !sml_globs.dvalid
+#ifdef USE_SML_MEDIAN_FILTER
+   || !sml_globs.sml_mf
+#endif
+  ) {
     AddLog(LOG_LEVEL_INFO, PSTR("sml memory error!"));
     return;
   }
