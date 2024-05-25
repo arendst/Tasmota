@@ -1278,6 +1278,7 @@ bool WifiHostByName(const char* aHostname, IPAddress& aResult) {
 #if ESP_IDF_VERSION_MAJOR >= 5
   // try converting directly to IP
   if (aResult.fromString(aHostname)) {
+    WiFiHelper::IPv6ZoneAutoFix(aResult, aHostname);
     return true;   // we're done
   }
 #endif
