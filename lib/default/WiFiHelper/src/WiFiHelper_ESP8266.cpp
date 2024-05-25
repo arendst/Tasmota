@@ -77,4 +77,6 @@ String WiFiHelper::macAddress(void) {
   return WiFi.macAddress();
 }
 
+void WiFiHelper::IPv6ZoneAutoFix(IPAddress &addr, const char* aHostname) {
+}
 #endif // ESP8266
