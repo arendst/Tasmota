@@ -30,6 +30,7 @@ All notable changes to this project will be documented in this file.
 - Webradio crash with invalid url (#21446)
 - Zigbee crash when removing `ZbName` (#21449)
 - ESP32 BLE fix scanning (#21451)
+- Matter auto-fix IPv6 link-local zone id when network reconnects
 
 ### Removed
 - Support of old insecure fingerprint algorithm. Deprecated since v8.4.0 (#21417)

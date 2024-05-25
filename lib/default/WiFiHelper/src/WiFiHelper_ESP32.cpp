@@ -240,6 +240,44 @@ static void wifi32_dns_found_callback(const char *name, const ip_addr_t *ipaddr,
   // AddLog(LOG_LEVEL_DEBUG, "WIF: dns_found=%s", ipaddr ? IPAddress(*ipaddr).toString().c_str() : "<null>");
 }
 
+// Auto-fix zone
+//
+// After a reconnect, the zone id may not be valid anymore
+// In such case we detect any "%st<n>" or "%en<n>" zone identifier
+// and replace with the current zone id
+extern bool WifiGetIPv6LinkLocal(IPAddress *ip);
+extern bool EthernetGetIPv6LinkLocal(IPAddress *ip);
+void WiFiHelper::IPv6ZoneAutoFix(IPAddress &addr, const char* aHostname) {
+#ifdef USE_IPV6
+  if ((addr.type() == IPv6) && (addr.zone() == 0)) {
+    // check if hostname contains '%'
+    const char *zone_identifier = strchr(aHostname, '%');
+    if (zone_identifier != nullptr) {
+      uint8_t zone_id = 0;
+      // check if zone id is valid
+      if (strncmp(zone_identifier, "%st", 3) == 0) {
+        IPAddress wifi_link_local;
+        if (WifiGetIPv6LinkLocal(&wifi_link_local)) {
+          zone_id = wifi_link_local.zone();
+        }
+      } else if (strncmp(zone_identifier, "%en", 3) == 0) {
+        IPAddress eth_link_local;
+        if (EthernetGetIPv6LinkLocal(&eth_link_local)) {
+          zone_id = eth_link_local.zone();
+        }
+      }
+      if (zone_id) {
+        // convert to ip_addr_t which is currently the only way to change the zone_id
+        ip_addr_t ip_addr;
+        addr.to_ip_addr_t(&ip_addr);
+        ip_addr.u_addr.ip6.zone = zone_id;
+        addr = IPAddress(&ip_addr);
+      }
+    }
+  }
+#endif
+}
+
 /**
  * Resolve the given hostname to an IP address.
  * @param aHostname     Name to be resolved
@@ -281,6 +319,7 @@ int WiFiHelper::hostByName(const char* aHostname, IPAddress& aResult, int32_t ti
   if (!ip_addr_isany_val(dns_ipaddr)) {
 #ifdef USE_IPV6
     aResult.from_ip_addr_t(&dns_ipaddr);
+    WiFiHelper::IPv6ZoneAutoFix(aResult, aHostname);
 #else // USE_IPV6
     aResult = ip_addr_get_ip4_u32(&dns_ipaddr);
 #endif // USE_IPV6
