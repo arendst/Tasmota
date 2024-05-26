@@ -1480,6 +1480,11 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
     case 's':
       // binary obis = sml
       mp->sbuff[mp->sbsiz - 1] = iob;
+      if (mp->sbuff[0] != SML_SYNC && ((mp->flag & 32) == 0)) {
+        // Skip decoding, when buffer does not start with sync byte (0x77)
+        sb_counter++;
+        return;
+      }
       break;
     case 'r':
       // raw with shift
@@ -1765,15 +1770,6 @@ void SML_Decode(uint8_t index) {
   delay(0);
 
   if (!sml_globs.ready) {
-    return;
-  }
-
-
-  struct METER_DESC *md = &meter_desc[index];
-  // start of serial source buffer
-  cp = md->sbuff;
-  if (md->flag & 32 && md->type == 's' && *cp != SML_SYNC) {
-    // fast exit when not in sync
     return;
   }
 
