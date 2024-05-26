@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Optional command ``WebRun`` (as WebQuery extension) (#21364)
 - Support for Knx dimmer and color (#21434)
 - Support for Matter 1.3 Water leak detectors (#21456)
+- Berry add reuse of methods for interface-like code reuse
 
 ### Breaking Changed
 
