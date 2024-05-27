@@ -312,7 +312,7 @@ void ShowValues(void) {
     ResponseAppend_P(PSTR("\"CycleTime\":%d,"),cycleTimes[i]);
     ResponseAppend_P(PSTR("\"DeadTime\":%d,"),deadTimes[i]);
     ResponseAppend_P(PSTR("\"OutputInvert\":%d,"),opInverts[i]);
-    ResponseAppend_P(PSTR("\"FallbackPower\":%.2f,"),fallbacks[i]);
+    ResponseAppend_P(PSTR("\"FallbackPower\":%2_f,"),&fallbacks[i]);
     ResponseAppend_P(PSTR("\"MaxUpdateInterval\":%d"),maxIntervals[i]);
     ResponseAppend_P(i<TIMEPROP_NUM_OUTPUTS-1 ? PSTR("},") : PSTR("}"));
   }
