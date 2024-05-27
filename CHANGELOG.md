@@ -3,15 +3,26 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.0.0.1]
+## [14.0.0.2]
+### Added
+- Disabled watchdog for ESP32 and variants (#21509)
+
+### Breaking Changed
+
+### Changed
+
+### Fixed
+
+### Removed
+
+
+## [14.0.0.1] 20240527
 ### Added
 - Enabled watchdog for ESP32 and variants (#21422)
 - Optional command ``WebRun`` (as WebQuery extension) (#21364)
 - Support for Knx dimmer and color (#21434)
 - Support for Matter 1.3 Water leak detectors (#21456)
 - Berry add reuse of methods for interface-like code reuse (#21500)
-
-### Breaking Changed
 
 ### Changed
 - ESP32 compiler option from `target-align` to `no-target-align` (#21407)
@@ -37,6 +48,7 @@ All notable changes to this project will be documented in this file.
 - UfsServe watchdog on large folder (#21486)
 - Matter auto-fix IPv6 link-local zone id when network reconnects (#21494)
 - SML compile error when median-filter is disabled (#21495)
+- Hydreon RG15 malformed JSON string (#21508)
 
 ### Removed
 - Support of old insecure fingerprint algorithm. Deprecated since v8.4.0 (#21417)

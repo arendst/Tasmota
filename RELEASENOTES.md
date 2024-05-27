@@ -119,11 +119,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v14.0.0.1
+## Changelog v14.0.0.2
 ### Added
 - Optional command ``WebRun`` (as WebQuery extension) [#21364](https://github.com/arendst/Tasmota/issues/21364)
 - Support for Knx dimmer and color [#21434](https://github.com/arendst/Tasmota/issues/21434)
-- Enabled watchdog for ESP32 and variants [#21422](https://github.com/arendst/Tasmota/issues/21422)
 - Berry add reuse of methods for interface-like code reuse [#21500](https://github.com/arendst/Tasmota/issues/21500)
 - Support for Matter 1.3 Water leak detectors [#21456](https://github.com/arendst/Tasmota/issues/21456)
 
@@ -146,6 +145,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Wrong timeout in `WebQuery` and `webclient` since Core3 [#21442](https://github.com/arendst/Tasmota/issues/21442)
 - UfsServe watchdog on large folder [#21486](https://github.com/arendst/Tasmota/issues/21486)
 - SML compile error when median-filter is disabled [#21495](https://github.com/arendst/Tasmota/issues/21495)
+- Hydreon RG15 malformed JSON string [#21508](https://github.com/arendst/Tasmota/issues/21508)
 - Zigbee crash when removing `ZbName` [#21449](https://github.com/arendst/Tasmota/issues/21449)
 - Avoid connection errors when switching to safeboot to upload OTA firmware [#21428](https://github.com/arendst/Tasmota/issues/21428)
 - ESP32 BLE fix scanning [#21451](https://github.com/arendst/Tasmota/issues/21451)
