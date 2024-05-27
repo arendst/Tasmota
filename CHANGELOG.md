@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- Update Telegram CA (Go Daddy Root Certificate Authority - G2)
 
 ### Fixed
 
