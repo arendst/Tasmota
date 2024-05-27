@@ -83,11 +83,11 @@ bool TelegramInit(void) {
     if (!telegramClient) {
       telegramClient = new BearSSL::WiFiClientSecure_light(tls_rx_size, tls_tx_size);
 
-      if (Settings->flag5.tls_use_fingerprint) {  // SetOption132 - (TLS) Use fingerprint validation instead of CA based
-        telegramClient->setPubKeyFingerprint(Telegram_Fingerprint, Telegram_Fingerprint, false); // check server fingerprint
-      } else {
-        telegramClient->setTrustAnchor(&GoDaddyCAG2_TA, 1);
-      }
+      // if (Settings->flag5.tls_use_fingerprint) {  // SetOption132 - (TLS) Use fingerprint validation instead of CA based
+      telegramClient->setPubKeyFingerprint(Telegram_Fingerprint, Telegram_Fingerprint, false); // check server fingerprint
+      // } else {
+      //   telegramClient->setTrustAnchor(&GoDaddyCAG2_TA, 1);
+      // }
 
       Telegram.message_count = 0;     // Number of received messages
       Telegram.next_update_id = 0;    // Code of last read Message
@@ -113,8 +113,8 @@ String TelegramConnectToTelegram(const String &command) {
   uint32_t tls_connect_time = millis();
   if (telegramClient->connect(host.c_str(), 443)) {
 
-//    AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Connected in %d ms, max ThunkStack used %d"), millis() - tls_connect_time, telegramClient->getMaxThunkStackUse());
-
+    AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Connected in %d ms, max ThunkStack used %d"), millis() - tls_connect_time, telegramClient->getMaxThunkStackUse());
+    
 //    telegramClient->println("GET /"+command);  // Fails after 20210621
     String request = "GET /" + command + " HTTP/1.1\r\nHost: " + host + "\r\nConnection: close\r\n\r\n";
     telegramClient->print(request);
@@ -155,6 +155,14 @@ String TelegramConnectToTelegram(const String &command) {
     }
 
     telegramClient->stop();
+  } else {
+    AddLog(LOG_LEVEL_INFO, PSTR("TGM: TLS connection error: %d"), telegramClient->getLastError());
+
+    const uint8_t *recv_fingerprint = telegramClient->getRecvPubKeyFingerprint();
+    // create a printable version of the fingerprint received
+    char buf_fingerprint[64];
+    ToHex_P(recv_fingerprint, 20, buf_fingerprint, sizeof(buf_fingerprint), ' ');
+    AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Telegram fingerprint: %s"), buf_fingerprint);
   }
 
   return response;
