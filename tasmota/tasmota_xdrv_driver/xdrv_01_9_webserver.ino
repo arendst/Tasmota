@@ -1987,7 +1987,11 @@ void HandleWifiConfiguration(void) {
 #ifdef USE_EMULATION
       UdpDisconnect();
 #endif  // USE_EMULATION
-      int n = WiFi.scanNetworks();
+      int n = WiFi.scanNetworks(true);
+      while(n<0){
+        delay(50); // some magic number - maybe non optimal
+        n = WiFi.scanComplete();
+      }
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_SCAN_DONE));
 
       if (0 == n) {
