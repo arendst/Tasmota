@@ -460,7 +460,7 @@
 
 // -- Telegram Protocol ---------------------------
 //#define USE_TELEGRAM                             // Support for Telegram protocol (+49k code, +7.0k mem and +4.8k additional during connection handshake)
-  #define USE_TELEGRAM_FINGERPRINT "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // Telegram api.telegram.org TLS public key fingerpring
+  #define USE_TELEGRAM_FINGERPRINT "\x4E\x7F\xF5\x6D\x1E\x29\x40\x58\xAB\x84\xDE\x63\x69\x7B\xCD\xDF\x44\x2E\xD2\xF6" // Telegram api.telegram.org TLS public key fingerpring
 
 // -- KNX IP Protocol -----------------------------
 //#define USE_KNX                                  // Enable KNX IP Protocol Support (+9.4k code, +3k7 mem)
