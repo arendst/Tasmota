@@ -118,6 +118,11 @@ void CmndI2SWebRadio(void) {
 
 
 void I2sWebRadioStopPlaying() {
+  if(audio_i2s_mp3.decoder) {
+    audio_i2s_mp3.decoder->stop();
+    delete audio_i2s_mp3.decoder;
+    audio_i2s_mp3.decoder = nullptr;
+  }
   if (Audio_webradio.buff) {
     Audio_webradio.buff->close();
     delete Audio_webradio.buff;

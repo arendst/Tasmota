@@ -27,6 +27,7 @@
 
 void Stream_mp3(void) {
   if (audio_i2s_mp3.stream_active) {
+    AddLog(LOG_LEVEL_INFO, PSTR("I2S: can not handle client - other MP3 task active"));
     return;
   }
   AddLog(LOG_LEVEL_INFO, PSTR("I2S: Handle mp3server"));
@@ -58,6 +59,7 @@ void I2sMp3Init(uint32_t on) {
       delete audio_i2s_mp3.MP3Server;
       audio_i2s_mp3.MP3Server = nullptr;
       audio_i2s_mp3.mic_stop = 1;
+      audio_i2s_mp3.stream_active = 0;
       AddLog(LOG_LEVEL_INFO, PSTR("MP3: server deleted"));
     }
   }
