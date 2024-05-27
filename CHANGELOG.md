@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file.
 - Update Telegram CA (Go Daddy Root Certificate Authority - G2)
 
 ### Fixed
-- Telegram TLS fingerprint, remove CA validation
+- Telegram TLS fingerprint, remove CA validation (#21514)
 
 ### Removed
 

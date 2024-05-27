@@ -146,6 +146,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - UfsServe watchdog on large folder [#21486](https://github.com/arendst/Tasmota/issues/21486)
 - SML compile error when median-filter is disabled [#21495](https://github.com/arendst/Tasmota/issues/21495)
 - Hydreon RG15 malformed JSON string [#21508](https://github.com/arendst/Tasmota/issues/21508)
+- Telegram TLS fingerprint, remove CA validation [#21514](https://github.com/arendst/Tasmota/issues/21514)
 - Zigbee crash when removing `ZbName` [#21449](https://github.com/arendst/Tasmota/issues/21449)
 - Avoid connection errors when switching to safeboot to upload OTA firmware [#21428](https://github.com/arendst/Tasmota/issues/21428)
 - ESP32 BLE fix scanning [#21451](https://github.com/arendst/Tasmota/issues/21451)

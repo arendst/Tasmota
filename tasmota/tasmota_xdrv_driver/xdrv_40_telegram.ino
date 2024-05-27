@@ -35,7 +35,7 @@
  *
  * Tested with defines
  * #define USE_TELEGRAM                             // Support for Telegram protocol
- * #define USE_TELEGRAM_FINGERPRINT "\xB2\x72\x47\xA6\x69\x8C\x3C\x69\xF9\x58\x6C\xF3\x60\x02\xFB\x83\xFA\x8B\x1F\x23" // Telegram api.telegram.org TLS public key fingerpring
+ * #define USE_TELEGRAM_FINGERPRINT "\x4E\x7F\xF5\x6D\x1E\x29\x40\x58\xAB\x84\xDE\x63\x69\x7B\xCD\xDF\x44\x2E\xD2\xF6" // Telegram api.telegram.org TLS public key fingerpring
 \*********************************************************************************************/
 
 #define XDRV_40                    40
@@ -113,7 +113,7 @@ String TelegramConnectToTelegram(const String &command) {
   uint32_t tls_connect_time = millis();
   if (telegramClient->connect(host.c_str(), 443)) {
 
-    AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Connected in %d ms, max ThunkStack used %d"), millis() - tls_connect_time, telegramClient->getMaxThunkStackUse());
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TGM: Connected in %d ms, max ThunkStack used %d"), millis() - tls_connect_time, telegramClient->getMaxThunkStackUse());
     
 //    telegramClient->println("GET /"+command);  // Fails after 20210621
     String request = "GET /" + command + " HTTP/1.1\r\nHost: " + host + "\r\nConnection: close\r\n\r\n";
@@ -156,13 +156,13 @@ String TelegramConnectToTelegram(const String &command) {
 
     telegramClient->stop();
   } else {
-    AddLog(LOG_LEVEL_INFO, PSTR("TGM: TLS connection error: %d"), telegramClient->getLastError());
+    AddLog(LOG_LEVEL_INFO, PSTR("TGM: TLS connection error %d"), telegramClient->getLastError());
 
     const uint8_t *recv_fingerprint = telegramClient->getRecvPubKeyFingerprint();
     // create a printable version of the fingerprint received
     char buf_fingerprint[64];
     ToHex_P(recv_fingerprint, 20, buf_fingerprint, sizeof(buf_fingerprint), ' ');
-    AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Telegram fingerprint: %s"), buf_fingerprint);
+    AddLog(LOG_LEVEL_DEBUG, PSTR("TGM: Telegram fingerprint %s"), buf_fingerprint);
   }
 
   return response;
