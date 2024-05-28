@@ -3,23 +3,39 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.0.0.1]
+## [14.0.0.2]
+### Added
+- Disabled watchdog for ESP32 and variants (#21509)
+
+### Breaking Changed
+
+### Changed
+- Update Telegram CA (Go Daddy Root Certificate Authority - G2)
+
+### Fixed
+- Telegram TLS fingerprint, remove CA validation (#21514)
+
+### Removed
+
+
+## [14.0.0.1] 20240527
 ### Added
 - Enabled watchdog for ESP32 and variants (#21422)
 - Optional command ``WebRun`` (as WebQuery extension) (#21364)
 - Support for Knx dimmer and color (#21434)
 - Support for Matter 1.3 Water leak detectors (#21456)
-
-### Breaking Changed
+- Berry add reuse of methods for interface-like code reuse (#21500)
 
 ### Changed
 - ESP32 compiler option from `target-align` to `no-target-align` (#21407)
 - On universal display remove default backlight power if a PWM channel is used for backlight
 - Berry binary compiled with gcc (#21426)
 - GPIOViewer from v1.5.2 to v1.5.3 (No functional change)
+- Berry allow easy solidification of external Berry (#21430)
 - ESP32 I2S audio improvements (#21433)
 - Support W5500 SPI ethernet using four SPI GPIOs only without IRQ and RESET
-- Berry change internal storage of parent class for methods
+- Berry change internal storage of parent class for methods (#21490)
+- ESP32 Core3 platform update from 2024.05.11 to 2024.05.12 (#21493)
 
 ### Fixed
 - Domoticz re-subscribe on MQTT reconnect. Regression from v13.4.0.3 (#21281)
@@ -30,7 +46,11 @@ All notable changes to this project will be documented in this file.
 - Webradio crash with invalid url (#21446)
 - Zigbee crash when removing `ZbName` (#21449)
 - ESP32 BLE fix scanning (#21451)
-- Matter auto-fix IPv6 link-local zone id when network reconnects
+- I2S APLL not supported on all SOCs (#21483)
+- UfsServe watchdog on large folder (#21486)
+- Matter auto-fix IPv6 link-local zone id when network reconnects (#21494)
+- SML compile error when median-filter is disabled (#21495)
+- Hydreon RG15 malformed JSON string (#21508)
 
 ### Removed
 - Support of old insecure fingerprint algorithm. Deprecated since v8.4.0 (#21417)

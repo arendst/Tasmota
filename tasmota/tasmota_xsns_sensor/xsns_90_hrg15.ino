@@ -216,10 +216,10 @@ void Rg15Show(bool json) {
     // if the parsing wasn't completely successful then skip the update
     if( !isnan(Rg15.acc) && !isnan(Rg15.event) && !isnan(Rg15.total) && !isnan(Rg15.rate) ) {
       ResponseAppend_P(PSTR(",\"" RG15_NAME "\":{"));
-      ResponseAppend_P(PSTR("\"%s\":%.2f, "), D_JSON_ACTIVE, Rg15.acc);
-      ResponseAppend_P(PSTR("\"%s\":%.2f, "), D_JSON_EVENT, Rg15.event);
-      ResponseAppend_P(PSTR("\"%s\":%.2f, "), D_JSON_TOTAL, Rg15.total);
-      ResponseAppend_P(PSTR("\"%s\":%.2f"), D_JSON_FLOWRATE, Rg15.rate);
+      ResponseAppend_P(PSTR("\"%s\":%2_f,"), D_JSON_ACTIVE, &Rg15.acc);
+      ResponseAppend_P(PSTR("\"%s\":%2_f,"), D_JSON_EVENT, &Rg15.event);
+      ResponseAppend_P(PSTR("\"%s\":%2_f,"), D_JSON_TOTAL, &Rg15.total);
+      ResponseAppend_P(PSTR("\"%s\":%2_f"), D_JSON_FLOWRATE, &Rg15.rate);
       ResponseAppend_P(PSTR("}"));
     }
 #ifdef USE_WEBSERVER
