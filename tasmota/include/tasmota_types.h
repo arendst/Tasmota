@@ -287,7 +287,7 @@ typedef union {
     uint32_t local_ntp_server : 1;         // bit 9  (v11.0.0.4) - CMND_RTCNTPSERVER - Enable local NTP server
     uint32_t influxdb_sensor : 1;          // bit 10 (v11.0.0.5) - CMND_IFXSENSOR - Enable sensor support in addition to teleperiod support
     uint32_t serbridge_console : 1;        // bit 11 (v11.1.0.4) - CMND_SSERIALSEND9 - Enable logging tee to serialbridge
-    uint32_t spare12 : 1;                  // bit 12
+    uint32_t telegram_disable_af : 1;      // bit 12 (v14.0.0.2) - CMND_TMSTATE 6/7 - Disable Telegram auto-fingerprint fix
     uint32_t spare13 : 1;                  // bit 13
     uint32_t spare14 : 1;                  // bit 14
     uint32_t spare15 : 1;                  // bit 15
