@@ -3,20 +3,29 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.0.0.2]
+## [14.0.0.3]
 ### Added
-- Disabled watchdog for ESP32 and variants (#21509)
 
 ### Breaking Changed
+
+### Changed
+- ESP32 Core3 platform update from 2024.05.12 to 2024.05.13 (#21524)
+
+### Fixed
+- ESP32 slow response when using UDP as in emulation (#21470)
+
+### Removed
+
+## [14.0.0.2] 20240529
+### Added
+- Disabled watchdog for ESP32 and variants (#21509)
 
 ### Changed
 - Update Telegram CA (Go Daddy Root Certificate Authority - G2)
 
 ### Fixed
 - Telegram TLS fingerprint, remove CA validation (#21514)
-
-### Removed
-
+- ESP32 I2S multiple fixes (#21511)
 
 ## [14.0.0.1] 20240527
 ### Added
