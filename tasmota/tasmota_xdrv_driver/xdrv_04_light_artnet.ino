@@ -245,7 +245,8 @@ void ArtNetLoop(void)
       uint8_t packet_buffer[WS2812_ARTNET_UDP_BUFFER_SIZE];     // buffer to hold incoming UDP/SSDP packet
 
       packet_len = ArtNetUdp->read(packet_buffer, WS2812_ARTNET_UDP_BUFFER_SIZE);
-      ArtNetUdp->flush();   // Finish reading the current packet
+//      ArtNetUdp->flush();   // Finish reading the current packet
+      ArtNetUdp->clear();   // New with core3. Does what flush() did in core2;
 #endif
       // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet %*_H (%d)"), 32, packet_buffer, packet_len);
       if (artnet_conf.on) {
