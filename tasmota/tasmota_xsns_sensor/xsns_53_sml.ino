@@ -1550,11 +1550,7 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
             memmove(&mp->sbuff[0], &mp->sbuff[6], mp->sbsiz - 6);
             SML_Decode(meters);
             if (mp->client) {
-#ifdef ESP8266
               mp->client->flush();
-#else
-              mp->client->clear();  // New with core3. Does what flush() did in core2;
-#endif
             }
             //Hexdump(mp->sbuff + 6, 10);
           }

@@ -184,7 +184,7 @@ extern "C" {
     if (argc >= 2 && be_isint(vm, 1) && be_isstring(vm, 2)) {
       int32_t httpcode = be_toint(vm, 1);
       const char * mimetype = be_tostring(vm, 2);
-      Webserver->client().clear();  // New with core3. Does what flush() did in core2;
+      Webserver->client().flush();
       WSHeaderSend();
       Webserver->setContentLength(CONTENT_LENGTH_UNKNOWN);
       Webserver->send(httpcode, mimetype, "");
