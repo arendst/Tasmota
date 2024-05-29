@@ -212,7 +212,7 @@ void CmndTCPStart(void) {
 }
 
 void CmndTCPBaudrate(void) {
-  if ((XdrvMailbox.payload >= 1200) && (XdrvMailbox.payload <= 115200)) {
+  if ((XdrvMailbox.payload >= 1200)) {
     XdrvMailbox.payload /= 1200;  // Make it a valid baudrate
     if (Settings->tcp_baudrate != XdrvMailbox.payload) {
       Settings->tcp_baudrate = XdrvMailbox.payload;
