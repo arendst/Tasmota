@@ -14,8 +14,6 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Telegram TLS fingerprint, remove CA validation (#21514)
-- ESP32 I2S multiple fixes (#21511)
-- ESP32 slow response when using UDP as in emulation (#21470)
 
 ### Removed
 

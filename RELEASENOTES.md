@@ -149,7 +149,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Telegram TLS fingerprint, remove CA validation [#21514](https://github.com/arendst/Tasmota/issues/21514)
 - Zigbee crash when removing `ZbName` [#21449](https://github.com/arendst/Tasmota/issues/21449)
 - Avoid connection errors when switching to safeboot to upload OTA firmware [#21428](https://github.com/arendst/Tasmota/issues/21428)
-- ESP32 slow response when using UDP as in emulation [#21470](https://github.com/arendst/Tasmota/issues/21470)
 - ESP32 BLE fix scanning [#21451](https://github.com/arendst/Tasmota/issues/21451)
 - I2S APLL not supported on all SOCs [#21483](https://github.com/arendst/Tasmota/issues/21483)
 - Webradio crash with invalid url [#21446](https://github.com/arendst/Tasmota/issues/21446)
