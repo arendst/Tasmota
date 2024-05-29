@@ -1387,9 +1387,6 @@ int32_t udp_call(char *url, uint32_t port, char *sbuf) {
   udp.write((const uint8_t*)sbuf, strlen(sbuf));
   udp.endPacket();
   udp.flush();
-#ifdef ESP32
-  udp.clear();   // New with core3. Does what flush() did in core2;
-#endif
   udp.stop();
   return 0;
 }

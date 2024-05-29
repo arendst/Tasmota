@@ -208,9 +208,6 @@ void DeviceGroupsStart()
 void DeviceGroupsStop()
 {
   device_groups_udp.flush();
-#ifdef ESP32
-  device_groups_udp.clear();   // New with core3. Does what flush() did in core2;
-#endif
   device_groups_up = false;
 }
 
