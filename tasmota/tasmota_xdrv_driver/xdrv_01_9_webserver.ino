@@ -775,7 +775,11 @@ void WSSend(int code, int ctype, const String& content)
 **********************************************************************************************/
 
 void WSContentBegin(int code, int ctype) {
+#ifdef ESP8266
   Webserver->client().flush();
+#else
+  Webserver->client().clear();  // New with core3. Does what flush() did in core2;
+#endif
   WSHeaderSend();
   Webserver->setContentLength(CONTENT_LENGTH_UNKNOWN);
   WSSend(code, ctype, "");                         // Signal start of chunked content
@@ -3085,7 +3089,7 @@ void HandlePreflightRequest(void)
 // return a simple status page as text/plain code 200
 static void WSReturnSimpleString(const char *msg) {
   if (nullptr == msg) { msg = ""; }
-  Webserver->client().flush();
+  Webserver->client().clear();  // New with core3. Does what flush() did in core2;
   WSHeaderSend();
   Webserver->send(200, "text/plain", msg);
 }

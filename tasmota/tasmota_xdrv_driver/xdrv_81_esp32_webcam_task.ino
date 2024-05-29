@@ -1888,7 +1888,7 @@ static void WCOperationTask(void *pvParameters){
                       WcStats.clientfail++;
                     }
                     if (1 == client->active) {
-                      client->client.flush();
+                      client->client.clear();  // New with core3. Does what flush() did in core2;
                       client->client.setTimeout(3);
 #ifdef WEBCAM_DEV_DEBUG  
                       AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Start stream"));

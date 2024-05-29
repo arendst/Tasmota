@@ -311,7 +311,11 @@ void ModbusBridgeHandle(void)
           client.write(modbusBridge.buffer + 2, 4); // Don't send CRC
           nrOfBytes += 4;
         }
+#ifdef ESP8266
         client.flush();
+#else
+        client.clear();  // New with core3. Does what flush() did in core2;
+#endif        
         AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBRTCP from Modbus deviceAddress %d, writing %d bytes to client"), modbusBridge.buffer[0], nrOfBytes);
       }
     }

@@ -1386,8 +1386,9 @@ int32_t udp_call(char *url, uint32_t port, char *sbuf) {
   udp.beginPacket(adr, port);
   udp.write((const uint8_t*)sbuf, strlen(sbuf));
   udp.endPacket();
+#ifdef ESP8266
   udp.flush();
-#ifdef ESP32
+#else
   udp.clear();   // New with core3. Does what flush() did in core2;
 #endif
   udp.stop();
@@ -1408,8 +1409,9 @@ void Restart_globvars(void) {
 void Script_Stop_UDP(void) {
   if (!glob_script_mem.udp_flags.udp_used) return;
   if (glob_script_mem.udp_flags.udp_connected) {
+#ifdef ESP8266    
     glob_script_mem.Script_PortUdp.flush();
-#ifdef ESP32
+#else
     glob_script_mem.Script_PortUdp.clear();  // New with core3. Does what flush() did in core2;
 #endif
     glob_script_mem.Script_PortUdp.stop();
@@ -6392,7 +6394,11 @@ void tmod_directModeOutput(uint32_t pin);
           fvar = -1;
           if (glob_script_mem.tcp_server) {
             if (glob_script_mem.tcp_client.connected()) {
+#ifdef ESP8266
               glob_script_mem.tcp_client.flush();
+#else
+              glob_script_mem.tcp_client.clear();
+#endif
               fvar = 0;
             }
           }

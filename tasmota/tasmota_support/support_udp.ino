@@ -60,12 +60,11 @@ bool UdpDisconnect(void)
 {
   if (udp_connected) {
     // flush any outgoing packet
-    PortUdp.flush();  // Does nothing in core3
-#ifdef ESP32
-    PortUdp.clear();  // New with core3. Does what flush() did in core2;
-#endif
 #ifdef ESP8266
+    PortUdp.flush();
     UdpCtx.disconnect();
+#else
+    PortUdp.clear();  // New with core3. Does what flush() did in core2;
 #endif
 #ifdef USE_DEVICE_GROUPS
     // stop
@@ -133,7 +132,6 @@ void PollUdp(void)
 
       int32_t len = PortUdp.read(packet_buffer, UDP_BUFFER_SIZE -1);
       packet_buffer[len] = 0;
-//      PortUdp.flush();
       PortUdp.clear();  // New with core3. Does what flush() did in core2;
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet (%d/%d)"), len, pack_len);
 #endif  // ESP32

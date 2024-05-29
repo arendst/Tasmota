@@ -884,7 +884,7 @@ void HandleImageBasic(void) {
   }
 
   if (_jpg_buf_len) {
-    Webserver->client().flush();
+    Webserver->client().clear();  // New with core3. Does what flush() did in core2;
     WSHeaderSend();
     Webserver->sendHeader(F("Content-disposition"), F("inline; filename=snapshot.jpg"));
     Webserver->send_P(200, "image/jpeg", (char *)_jpg_buf, _jpg_buf_len);
@@ -925,7 +925,7 @@ void HandleWebcamMjpegTask(void) {
     WcStats.clientfail++;
   }
   if (1 == Wc.stream_active) {
-    Wc.client.flush();
+    Wc.client.clear();  // New with core3. Does what flush() did in core2;
     Wc.client.setTimeout(3);
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Start stream"));
     Wc.client.print("HTTP/1.1 200 OK\r\n"
@@ -990,7 +990,7 @@ void HandleWebcamMjpegTask(void) {
   }
   if (0 == Wc.stream_active) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Stream exit"));
-    Wc.client.flush();
+    Wc.client.clear();  // New with core3. Does what flush() did in core2;
     Wc.client.stop();
   }
 }
