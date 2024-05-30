@@ -1289,6 +1289,7 @@ Renderer *uDisplay::Init(void) {
     esp_lcd_i80_bus_config_t bus_config = {
         .dc_gpio_num = par_rs,
         .wr_gpio_num = par_wr,
+        .clk_src = LCD_CLK_SRC_DEFAULT,
         .bus_width = bus_width,
         .max_transfer_bytes = 32768
     };
