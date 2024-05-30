@@ -482,11 +482,6 @@ int8_t cs;
     bg_color = renderer->bgcol();
     color_type = renderer->color_type();
 
-#ifdef USE_M5STACK_CORE2
-    renderer->SetPwrCB(Core2DisplayPower);
-    renderer->SetDimCB(Core2DisplayDim);
-#endif // USE_M5STACK_CORE2
-
     renderer->DisplayInit(DISPLAY_INIT_MODE, Settings->display_size, inirot, Settings->display_font);
 
     Settings->display_width = renderer->width();

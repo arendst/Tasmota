@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - uDisplay Parallel display on Core3 (#21529)
 
 ### Removed
+- Deprecated code from drivers, `USE_TTGO_WATCH` and `USE_M5STACK_CORE2`
 
 ## [14.0.0.3] 20240530
 ### Changed
