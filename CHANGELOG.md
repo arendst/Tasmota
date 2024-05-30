@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - TCP bridge increased baudrate selection (#21528)
 
 ### Fixed
+- uDisplay Parallel display on Core3 (#21529)
 
 ### Removed
 
@@ -21,7 +22,6 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - ESP32 slow response when using UDP as in emulation (#21470)
-- uDisplay Parallel display on Core3
 
 ## [14.0.0.2] 20240529
 ### Added
