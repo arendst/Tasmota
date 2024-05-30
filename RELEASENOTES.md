@@ -123,6 +123,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Added
 - Optional command ``WebRun`` (as WebQuery extension) [#21364](https://github.com/arendst/Tasmota/issues/21364)
 - Support for Knx dimmer and color [#21434](https://github.com/arendst/Tasmota/issues/21434)
+- SML FastExit for binary SML parsing [#21497](https://github.com/arendst/Tasmota/issues/21497)
 - Berry add reuse of methods for interface-like code reuse [#21500](https://github.com/arendst/Tasmota/issues/21500)
 - Support for Matter 1.3 Water leak detectors [#21456](https://github.com/arendst/Tasmota/issues/21456)
 
