@@ -554,6 +554,12 @@ struct METER_DESC {
 
 #define TCP_MODE_FLG 0x7f
 
+// Meter flags
+#define PULLUP_FLG 0x01
+#define ANALOG_FLG 0x02
+#define MEDIAN_FILTER_FLG 0x10
+#define NO_SYNC_FLG 0x20
+
 struct METER_DESC  meter_desc[MAX_METERS];
 
 
@@ -1480,6 +1486,11 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
     case 's':
       // binary obis = sml
       mp->sbuff[mp->sbsiz - 1] = iob;
+      if (mp->sbuff[0] != SML_SYNC && ((mp->flag & NO_SYNC_FLG) == 0)) {
+        // Skip decoding, when buffer does not start with sync byte (0x77)
+        sb_counter++;
+        return;
+      }
       break;
     case 'r':
       // raw with shift
@@ -1892,7 +1903,7 @@ void SML_Decode(uint8_t index) {
               // differece is only valid after 2. calculation
               sml_globs.dvalid[vindex] = 2;
 #ifdef USE_SML_MEDIAN_FILTER
-              if (sml_globs.mp[mindex].flag & 16) {
+              if (sml_globs.mp[mindex].flag & MEDIAN_FILTER_FLG) {
                 sml_globs.meter_vars[vindex] = sml_median(&sml_globs.sml_mf[vindex], dres);
               } else {
                 sml_globs.meter_vars[vindex] = dres;
@@ -2439,7 +2450,7 @@ void SML_Decode(uint8_t index) {
             }
           }
 #ifdef USE_SML_MEDIAN_FILTER
-          if (sml_globs.mp[mindex].flag & 16) {
+          if (sml_globs.mp[mindex].flag & MEDIAN_FILTER_FLG) {
             sml_globs.meter_vars[vindex] = sml_median(&sml_globs.sml_mf[vindex], dval);
           } else {
             sml_globs.meter_vars[vindex] = dval;
@@ -3390,11 +3401,11 @@ next_line:
   for (uint8_t meters = 0; meters < sml_globs.meters_used; meters++) {
     METER_DESC *mp = &meter_desc[meters];
     if (mp->type == 'c') {
-        if (mp->flag & 2) {
+        if (mp->flag & ANALOG_FLG) {
 
         } else {
           // counters, set to input with pullup
-          if (mp->flag & 1) {
+          if (mp->flag & PULLUP_FLG) {
             pinMode(mp->srcpin, INPUT_PULLUP);
           } else {
             pinMode(mp->srcpin, INPUT);
@@ -3877,7 +3888,7 @@ uint32_t ctime = millis();
         if (ctime - sml_counters[cindex].sml_cnt_last_ts > sml_globs.mp[meters].params) {
           sml_counters[cindex].sml_cnt_last_ts = ctime;
 
-          if (sml_globs.mp[meters].flag & 2) {
+          if (sml_globs.mp[meters].flag & ANALOG_FLG) {
             // analog mode, get next value
           } else {
             // poll digital input
