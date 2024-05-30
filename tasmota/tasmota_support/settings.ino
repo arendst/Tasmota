@@ -1813,6 +1813,9 @@ void SettingsDelta(void) {
     if (Settings->version < 0x0D040004) {  // 13.4.0.4
       Settings->power_lock = 0;
     }
+    if (Settings->version < 0x0E000004) {  // 14.0.0.4
+      Settings->tcp_baudrate = Settings->ex_tcp_baudrate / 4;
+    }
 
     Settings->version = TASMOTA_VERSION;
     SettingsSave(1);

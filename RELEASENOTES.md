@@ -119,7 +119,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v14.0.0.3
+## Changelog v14.0.0.4
 ### Added
 - Optional command ``WebRun`` (as WebQuery extension) [#21364](https://github.com/arendst/Tasmota/issues/21364)
 - Support for Knx dimmer and color [#21434](https://github.com/arendst/Tasmota/issues/21434)
@@ -132,6 +132,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 Core3 platform update from 2024.05.11 to 2024.05.13 [#21524](https://github.com/arendst/Tasmota/issues/21524)
 - GPIOViewer from v1.5.2 to v1.5.3
 - On universal display remove default backlight power if a PWM channel is used for backlight
+- TCP bridge increased baudrate selection [#21528](https://github.com/arendst/Tasmota/issues/21528)
 - Support W5500 SPI ethernet using four SPI GPIOs only without IRQ and RESET
 - ESP32 compiler option from `target-align` to `no-target-align` [#21407](https://github.com/arendst/Tasmota/issues/21407)
 - ESP32 I2S audio improvements [#21433](https://github.com/arendst/Tasmota/issues/21433)

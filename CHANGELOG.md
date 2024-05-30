@@ -3,18 +3,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.0.0.3]
+## [14.0.0.4]
 ### Added
 
 ### Breaking Changed
 
 ### Changed
+- TCP bridge increased baudrate selection (#21528)
+
+### Fixed
+
+### Removed
+
+## [14.0.0.3] 20240530
+### Changed
 - ESP32 Core3 platform update from 2024.05.12 to 2024.05.13 (#21524)
 
 ### Fixed
 - ESP32 slow response when using UDP as in emulation (#21470)
-
-### Removed
 
 ## [14.0.0.2] 20240529
 ### Added
