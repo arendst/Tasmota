@@ -162,3 +162,4 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Removed
 - Support of old insecure fingerprint algorithm. Deprecated since v8.4.0 [#21417](https://github.com/arendst/Tasmota/issues/21417)
+- Deprecated code from drivers, `USE_TTGO_WATCH` and `USE_M5STACK_CORE2` [#21533](https://github.com/arendst/Tasmota/issues/21533)
