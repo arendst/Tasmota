@@ -599,9 +599,9 @@ constexpr uint32_t feature[] = {
 #if defined(USE_I2C) && defined(USE_EZOPH)
   0x10000000 |  // xsns_78_ezoph.ino
 #endif
-#if defined(ESP32) && defined(USE_TTGO_WATCH)
-  0x20000000 |  // xdrv_83_esp32watch.ino
-#endif
+// #if defined(ESP32) && defined(USE_TTGO_WATCH)
+//   0x20000000 |  // xdrv_83_esp32watch.ino
+// #endif
 #if defined(ESP32) && defined(USE_ETHERNET)
   0x40000000 |  // xdrv_82_ethernet.ino
 #endif
