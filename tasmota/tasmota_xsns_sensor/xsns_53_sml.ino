@@ -2033,7 +2033,7 @@ void SML_Decode(uint8_t index) {
               } else {
                 mp++;
                 if (isdigit(*mp)) {
-                  uint8_t skip = strtol((char*)mp, (char**)&mp, 10);
+                  uint16_t skip = strtol((char*)mp, (char**)&mp, 10);
                   cp += skip;
                 }
               }
