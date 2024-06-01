@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - TCP bridge increased baudrate selection (#21528)
+- Berry coc parser keeps order of variables
 
 ### Fixed
 - uDisplay Parallel display on Core3 (#21529)
