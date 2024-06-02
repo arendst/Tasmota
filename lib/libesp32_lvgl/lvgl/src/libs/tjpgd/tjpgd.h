@@ -1,6 +1,7 @@
 /*----------------------------------------------------------------------------/
 / TJpgDec - Tiny JPEG Decompressor R0.03 include file         (C)ChaN, 2021
 /----------------------------------------------------------------------------*/
+#ifndef TASMOTA // has tjpegd in ROM
 #ifndef DEF_TJPGDEC
 #define DEF_TJPGDEC
 
@@ -101,3 +102,4 @@ JRESULT jd_restart(JDEC * jd, uint16_t rstn);
 #endif
 
 #endif /* _TJPGDEC */
+#endif // TASMOTA
