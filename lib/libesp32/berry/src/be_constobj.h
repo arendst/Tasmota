@@ -19,6 +19,7 @@ extern "C" {
 #include "be_class.h"
 #include "be_string.h"
 #include "be_module.h"
+#include "be_byteslib.h"
 
 #ifndef __cplusplus
 
@@ -26,6 +27,25 @@ extern "C" {
     .next = NULL,                                               \
     .type = (_t),                                               \
     .marked = GC_CONST
+
+#define be_define_const_bytes(_name, ...)                       \
+    const uint8_t be_const_bin_##_name[] = { __VA_ARGS__ }
+
+#define be_const_bytes_instance(_bytes) {                       \
+    .v.c = (                                                    \
+        & (const binstance_arg3)  {                             \
+            be_const_header(BE_INSTANCE),                       \
+            .super = NULL,                                      \
+            .sub = NULL,                                        \
+            ._class = (bclass*) &be_class_bytes,                \
+            .members = {                                        \
+                be_const_comptr(&be_const_bin_##_bytes),        \
+                be_const_int(sizeof(#_bytes) / 2),              \
+                be_const_int(BYTES_SIZE_SOLIDIFIED)             \
+            }                                                   \
+        }),                                                     \
+    .type = BE_INSTANCE                                         \
+}
 
 #define be_define_const_str_weak(_name, _s, _len)               \
     const bcstring be_const_str_##_name = {                     \
@@ -232,6 +252,27 @@ const bntvmodule_t be_native_module(_module) = {                  \
     .members = _members                                         \
   }
 
+#define be_nested_simple_instance_1_arg(_class_ptr, arg0) \
+  & (const binstance)  {                                        \
+    be_const_header(BE_INSTANCE),                               \
+    .super = NULL,                                              \
+    .sub = NULL,                                                \
+    ._class = (bclass*) _class_ptr,                             \
+    .members = { arg0 }                                         \
+  }
+
+
+/* only instances with no super and no sub instance are supported */
+/* primarily for `list` and `map`*/
+#define be_nested_simple_instance_3_args(_class_ptr, arg0, arg1, arg2) \
+  & (const binstance_arg3)  {                                   \
+    be_const_header(BE_INSTANCE),                               \
+    .super = NULL,                                              \
+    .sub = NULL,                                                \
+    ._class = (bclass*) _class_ptr,                             \
+    .members = { arg0, arg1, arg2 }                             \
+  }
+
 #define be_nested_map(_size, _slots)                            \
   & (const bmap) {                                              \
     be_const_header(BE_MAP),                                    \
@@ -297,6 +338,9 @@ const bntvmodule_t be_native_module(_module) = {                  \
   }
 
 #else
+
+#define be_define_const_bytes(_name, ...)                    \
+    const uint8_t be_const_bin_##_name[] = { __VA_ARGS__ }
 
 #define be_define_const_str_weak(_name, _s, _len)               \
 const bcstring be_const_str_##_name = {                         \
@@ -440,6 +484,7 @@ const bntvmodule_t be_native_module_##_module = {               \
 /* provide pointers to map and list classes for solidified code */
 extern const bclass be_class_list;
 extern const bclass be_class_map;
+extern const bclass be_class_bytes;
 
 #ifdef __cplusplus
 }

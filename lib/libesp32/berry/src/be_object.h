@@ -62,6 +62,7 @@ typedef struct bclosure bclosure;
 typedef struct bntvclos bntvclos;
 typedef struct bclass bclass;
 typedef struct binstance binstance;
+typedef struct binstance_arg3 binstance_arg3;
 typedef struct blist blist;
 typedef struct bmap bmap;
 typedef struct bupval bupval;

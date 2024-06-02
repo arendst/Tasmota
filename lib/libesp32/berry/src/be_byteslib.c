@@ -1829,6 +1829,9 @@ void be_load_byteslib(bvm *vm)
     be_regclass(vm, "bytes", members);
 }
 #else
+
+#include "../generate/be_const_bytes_def.h"
+
 /* @const_object_info_begin
 class be_class_bytes (scope: global, name: bytes) {
     .p, var

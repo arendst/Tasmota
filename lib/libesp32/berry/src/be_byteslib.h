@@ -37,4 +37,8 @@ typedef struct buf_impl {
 
 size_t be_bytes_tohex(char * out, size_t outsz, const uint8_t * in, size_t insz);
 
+#if BE_USE_PRECOMPILED_OBJECT
+#include "../generate/be_const_bytes.h"
+#endif
+
 #endif
