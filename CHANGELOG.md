@@ -11,10 +11,11 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - TCP bridge increased baudrate selection (#21528)
-- Berry coc parser keeps order of variables
+- Berry coc parser keeps order of variables (#21542)
 
 ### Fixed
 - uDisplay Parallel display on Core3 (#21529)
+- LVGL exception when using tjpegd (#21544)
 
 ### Removed
 - Deprecated code from drivers, `USE_TTGO_WATCH` and `USE_M5STACK_CORE2` (#21533)

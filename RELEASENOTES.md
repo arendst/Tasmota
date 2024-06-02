@@ -140,6 +140,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry binary compiled with gcc [#21426](https://github.com/arendst/Tasmota/issues/21426)
 - Berry allow easy solidification of external Berry [#21430](https://github.com/arendst/Tasmota/issues/21430)
 - Berry change internal storage of parent class for methods [#21490](https://github.com/arendst/Tasmota/issues/21490)
+- Berry coc parser keeps order of variables [#21542](https://github.com/arendst/Tasmota/issues/21542)
 
 ### Fixed
 - Domoticz re-subscribe on MQTT reconnect. Regression from v13.4.0.3 [#21281](https://github.com/arendst/Tasmota/issues/21281)
@@ -158,6 +159,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - I2S APLL not supported on all SOCs [#21483](https://github.com/arendst/Tasmota/issues/21483)
 - Webradio crash with invalid url [#21446](https://github.com/arendst/Tasmota/issues/21446)
 - Berry Leds matrix alternate more and error about 'bri' attribute [#21431](https://github.com/arendst/Tasmota/issues/21431)
+- LVGL exception when using tjpegd [#21544](https://github.com/arendst/Tasmota/issues/21544)
 - Matter auto-fix IPv6 link-local zone id when network reconnects [#21494](https://github.com/arendst/Tasmota/issues/21494)
 
 ### Removed
