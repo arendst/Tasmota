@@ -200,38 +200,43 @@ void LoraInput(void) {
 #endif  // USE_LORAWAN_BRIDGE
   Lora->receive_time = 0;
 
+  char *rcvd_data = data;
   if (TAS_LORA_REMOTE_COMMAND == data[0]) {
     char *payload = data +1;             // Skip TAS_LORA_REMOTE_COMMAND
     char *command_part;
     char *topic_part = strtok_r(payload, " ", &command_part);
     if (topic_part && command_part) {
       if (!strcasecmp(topic_part, SettingsText(SET_MQTT_TOPIC))) {  // Is it mine
-        ExecuteCommand(command_part, SRC_REMOTE);
-        return;
+        if (bitRead(Lora->settings.flags, TAS_LORA_COMMAND_ENABLED)) {
+          ExecuteCommand(command_part, SRC_REMOTE);
+          return;
+        }
       } else {
         *--command_part = ' ';           // Restore strtok_r '/0'
       }
     }
+    rcvd_data++;                         // Remove TAS_LORA_REMOTE_COMMAND header
+    packet_size--;                       // Adjust packet size
   }
 
   bool raw = Lora->raw;
   // Set raw mode if zeroes within data
   for (uint32_t i = 0; i < packet_size; i++) {
-    if (0 == data[i]) {
+    if (0 == rcvd_data[i]) {
       raw = true;
       break;
     }
   }
-  bool assume_json = (!raw && (data[0] == '{'));
+  bool assume_json = (!raw && (rcvd_data[0] == '{'));
   Response_P(PSTR("{\"LoRaReceived\":"));
   if (assume_json) {
-    ResponseAppend_P(data);
+    ResponseAppend_P(rcvd_data);
   } else {
     ResponseAppend_P(PSTR("\""));
     if (raw) {
-      ResponseAppend_P(PSTR("%*_H"), packet_size, data);
+      ResponseAppend_P(PSTR("%*_H"), packet_size, rcvd_data);
     } else {
-      ResponseAppend_P(EscapeJSONString(data).c_str());
+      ResponseAppend_P(EscapeJSONString(rcvd_data).c_str());
     }
     ResponseAppend_P(PSTR("\""));
   }
@@ -318,6 +323,7 @@ void CmndLoraOption(void) {
   // LoraOption1 1 - Enable LoRaWanBridge
   // LoraOption2 1 - Enable LoRaWanBridge Join
   // LoraOption3 1 - Enable LoRaWanBridge decoding
+  // LoraOption4 1 - Enable LoRaCommand reception
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 8)) {
     uint32_t pindex = XdrvMailbox.index -1;
     if (XdrvMailbox.payload >= 0) {

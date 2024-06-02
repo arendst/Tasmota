@@ -9,7 +9,8 @@ extern const bclass be_class_zb_coord;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(zb_coord_init,   /* name */
+extern const bclass be_class_zb_coord;
+be_local_closure(class_zb_coord_init,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(zb_coord_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_zb_coord, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -40,7 +41,8 @@ be_local_closure(zb_coord_init,   /* name */
 /********************************************************************
 ** Solidified function: add_handler
 ********************************************************************/
-be_local_closure(zb_coord_add_handler,   /* name */
+extern const bclass be_class_zb_coord;
+be_local_closure(class_zb_coord_add_handler,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -48,7 +50,7 @@ be_local_closure(zb_coord_add_handler,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_zb_coord, 
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(instance),
@@ -95,7 +97,8 @@ be_local_closure(zb_coord_add_handler,   /* name */
 /********************************************************************
 ** Solidified function: dispatch
 ********************************************************************/
-be_local_closure(zb_coord_dispatch,   /* name */
+extern const bclass be_class_zb_coord;
+be_local_closure(class_zb_coord_dispatch,   /* name */
   be_nested_proto(
     19,                          /* nstack */
     5,                          /* argc */
@@ -103,7 +106,7 @@ be_local_closure(zb_coord_dispatch,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_zb_coord, 
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_nested_str_weak(_handlers),
@@ -203,7 +206,8 @@ be_local_closure(zb_coord_dispatch,   /* name */
 /********************************************************************
 ** Solidified function: remove_handler
 ********************************************************************/
-be_local_closure(zb_coord_remove_handler,   /* name */
+extern const bclass be_class_zb_coord;
+be_local_closure(class_zb_coord_remove_handler,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -211,7 +215,7 @@ be_local_closure(zb_coord_remove_handler,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_zb_coord, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_handlers),
@@ -250,20 +254,13 @@ be_local_class(zb_coord,
     &be_class_zb_coord_ntv,
     be_nested_map(5,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(init, -1), be_const_closure(zb_coord_init_closure) },
-        { be_const_key_weak(remove_handler, 2), be_const_closure(zb_coord_remove_handler_closure) },
-        { be_const_key_weak(add_handler, -1), be_const_closure(zb_coord_add_handler_closure) },
-        { be_const_key_weak(dispatch, -1), be_const_closure(zb_coord_dispatch_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_zb_coord_init_closure) },
+        { be_const_key_weak(remove_handler, 2), be_const_closure(class_zb_coord_remove_handler_closure) },
+        { be_const_key_weak(add_handler, -1), be_const_closure(class_zb_coord_add_handler_closure) },
+        { be_const_key_weak(dispatch, -1), be_const_closure(class_zb_coord_dispatch_closure) },
         { be_const_key_weak(_handlers, 1), be_const_var(0) },
     })),
     be_str_weak(zb_coord)
 );
-/*******************************************************************/
-
-void be_load_zb_coord_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_zb_coord);
-    be_setglobal(vm, "zb_coord");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

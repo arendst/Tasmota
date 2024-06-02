@@ -67,6 +67,11 @@ def parse_file(fname, prefix_out)
       o = o.(subname)
       cl_name = obj_name
       obj_name = subname
+      if   (type(o) == 'class')
+        obj_name = 'class_' + obj_name
+      elif (type(o) == 'module')
+        obj_name = 'module_' + obj_name
+      end
     end
     solidify.dump(o, weak, fout, cl_name)
   end

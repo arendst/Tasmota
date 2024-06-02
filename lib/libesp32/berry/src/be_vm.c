@@ -969,7 +969,7 @@ newframe: /* a new call frame */
                     }
                 } else if (var_isclass(a)) {
                     /* in this case we have a class in a static or non-static member */
-                    /* it's always treated like a statif function */
+                    /* it's always treated like a static function */
                     a[1] = result;
                     var_settype(a, NOT_METHOD);
                 } else {
@@ -994,6 +994,7 @@ newframe: /* a new call frame */
             }
             dispatch();
         }
+        opcase(SETMET):
         opcase(SETMBR): {
 #if BE_USE_PERF_COUNTERS
             vm->counter_set++;
@@ -1020,7 +1021,7 @@ newframe: /* a new call frame */
                 bclass *obj = var_toobj(a);
                 bstring *attr = var_tostr(b);
                 bvalue result = *c;
-                if (var_isfunction(&result)) {
+                if (var_isfunction(&result) && (IGET_OP(ins) == OP_SETMBR)) {   /* don't mark as static if SETMET was used */
                     var_markstatic(&result);
                 }
                 if (!be_class_setmember(vm, obj, attr, &result)) {

@@ -46,8 +46,8 @@ class be_class_Wire (scope: global, name: Wire) {
     detect, func(b_wire_detect)
     enabled, func(b_wire_enabled)
 
-    read_bytes, closure(Wire_read_bytes_closure)
-    write_bytes, closure(Wire_write_bytes_closure)
+    read_bytes, closure(class_Wire_read_bytes_closure)
+    write_bytes, closure(class_Wire_write_bytes_closure)
 }
 @const_object_info_end */
 

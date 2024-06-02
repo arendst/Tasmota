@@ -26,23 +26,27 @@ extern struct rst_info resetInfo;
 \*********************************************************************************************/
 #ifdef ESP32
 // Watchdog - yield() resets the watchdog
-#ifdef USE_ESP32_WDT
 
+extern "C" void __yield(void);              // original function from Arduino Core
 extern "C"
 void yield(void) {
-  vPortYield();         // was originally in `__yield`
+  __yield();
   feedLoopWDT();
 }
 
 // patching delay(uint32_t ms)
-extern "C" void __real_delay(uint32_t ms);
+extern "C" void __real_delay(uint32_t ms);  // original function from Arduino Core
 
 extern "C" void __wrap_delay(uint32_t ms) {
+#ifdef USE_ESP32_WDT
+  if (ms) { feedLoopWDT(); }
   __real_delay(ms);
   feedLoopWDT();
+#else
+  __real_delay(ms);
+#endif
 }
 
-#endif // USE_ESP32_WDT
 #endif // ESP32
 
 /*********************************************************************************************\
@@ -2647,21 +2651,34 @@ void AddLogMissed(const char *sensor, uint32_t misses)
   AddLog(LOG_LEVEL_DEBUG, PSTR("SNS: %s missed %d"), sensor, SENSOR_MAX_MISS - misses);
 }
 
-void AddLogSpi(bool hardware, uint32_t clk, uint32_t mosi, uint32_t miso) {
-  // Needs optimization
-  uint32_t enabled = (hardware) ? TasmotaGlobal.spi_enabled : TasmotaGlobal.soft_spi_enabled;
+void AddLogSpi(uint32_t hardware, int clk, int mosi, int miso) {
+  uint32_t enabled = TasmotaGlobal.soft_spi_enabled;
+  char hwswbus[8];
+  if (hardware) {
+#ifdef ESP8266
+    strcpy_P(hwswbus, PSTR("Hard"));
+    enabled = TasmotaGlobal.spi_enabled;
+#endif      
+#ifdef ESP32
+    strcpy_P(hwswbus, PSTR("Bus0"));
+    hwswbus[3] += (char)hardware;
+    enabled = (1 == hardware) ? TasmotaGlobal.spi_enabled : TasmotaGlobal.spi_enabled2;
+#endif
+  } else {
+    strcpy_P(hwswbus, PSTR("Soft"));
+  }
   switch(enabled) {
     case SPI_MOSI:
       AddLog(LOG_LEVEL_INFO, PSTR("SPI: %s using GPIO%02d(CLK) and GPIO%02d(MOSI)"),
-        (hardware) ? PSTR("Hardware") : PSTR("Software"), clk, mosi);
+        hwswbus, clk, mosi);
       break;
     case SPI_MISO:
       AddLog(LOG_LEVEL_INFO, PSTR("SPI: %s using GPIO%02d(CLK) and GPIO%02d(MISO)"),
-        (hardware) ? PSTR("Hardware") : PSTR("Software"), clk, miso);
+        hwswbus, clk, miso);
       break;
     case SPI_MOSI_MISO:
       AddLog(LOG_LEVEL_INFO, PSTR("SPI: %s using GPIO%02d(CLK), GPIO%02d(MOSI) and GPIO%02d(MISO)"),
-        (hardware) ? PSTR("Hardware") : PSTR("Software"), clk, mosi, miso);
+        hwswbus, clk, mosi, miso);
       break;
   }
 }

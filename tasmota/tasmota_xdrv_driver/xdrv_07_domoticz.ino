@@ -232,7 +232,8 @@ void DomoticzMqttSubscribe(void) {
     Domoticz->subscribe = false;
     MqttUnsubscribe(stopic);
   }
-  if (!Domoticz->subscribe && any_relay) {
+//  if (!Domoticz->subscribe && any_relay) {  // Fails on MQTT server reconnect
+  if (any_relay) {
     Domoticz->subscribe = true;
     MqttSubscribe(stopic);
   }

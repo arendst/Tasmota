@@ -70,3 +70,10 @@
 #define SPI_MOSI_DLEN_REG(x) SPI_MS_DLEN_REG(x)
 
 #endif // TARGET
+
+// This trick makes sure that 'lto' optimizer does not inline `delay()
+// so we can override it with `-Wl,--wrap=delay` linker directive
+#ifdef __cplusplus
+extern "C"
+#endif // _cplusplus
+void  delay(__UINT32_TYPE__ ms) __attribute__((noinline)) __attribute__ ((noclone));

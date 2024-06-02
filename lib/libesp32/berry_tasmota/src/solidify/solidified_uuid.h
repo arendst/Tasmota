@@ -7,7 +7,7 @@
 /********************************************************************
 ** Solidified function: _anonymous_
 ********************************************************************/
-be_local_closure(uuid__anonymous_,   /* name */
+be_local_closure(_anonymous_,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     0,                          /* argc */
@@ -15,7 +15,7 @@ be_local_closure(uuid__anonymous_,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(math),
@@ -67,7 +67,7 @@ be_local_module(uuid,
     "uuid",
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(uuid4, -1), be_const_closure(uuid__anonymous__closure) },
+        { be_const_key(uuid4, -1), be_const_closure(_anonymous__closure) },
     }))
 );
 BE_EXPORT_VARIABLE be_define_const_native_module(uuid);

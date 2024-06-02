@@ -417,7 +417,7 @@ int MI32_decryptPacket(char * _buf, uint16_t _bufSize, uint8_t * _payload, uint3
   br_ccm_run(&ctx, 0, _payload, dataLen);
 
   if(br_ccm_check_tag(&ctx, &tag)) return 0;
-  // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: decrypted in %.2f mSec"),enctime);
+  // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: decrypted in %2_f mSec"), &enctime);
   // AddLogBuffer(LOG_LEVEL_DEBUG,(uint8_t*) _payload, dataLen);
   if(_version == 3 && _payload[1] == 0x10) return 0; // no known way to really verify decryption, but 0x10 is expected here for button events
   return -1; // wrong key ... maybe corrupt data packet too
@@ -2661,8 +2661,8 @@ void MI32Show(bool json)
         char _MAC[18];
         ToHex_P(MIBLEsensors[i].MAC,6,_MAC,18,':');
         const char * _sensorName = MI32getDeviceName(i);
-        WSContentSend_PD(HTTP_MI32_MAC, _sensorName, D_MAC_ADDRESS, _MAC);
-        WSContentSend_PD(HTTP_RSSI, _sensorName, MIBLEsensors[i].RSSI);
+        WSContentSend_P(HTTP_MI32_MAC, _sensorName, D_MAC_ADDRESS, _MAC);
+        WSContentSend_P(HTTP_RSSI, _sensorName, MIBLEsensors[i].RSSI);
         if (MIBLEsensors[i].type==FLORA) {
           if (!isnan(MIBLEsensors[i].temp)) {
             WSContentSend_Temp(_sensorName, MIBLEsensors[i].temp);

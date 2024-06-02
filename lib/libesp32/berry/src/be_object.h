@@ -21,7 +21,7 @@
 #define BE_FUNCTION     6
 
 #define BE_GCOBJECT     16      /* from this type can be gced */
-#define BE_GCOBJECT_MAX (3<<5)  /* from this type can't be gced */
+#define BE_GCOBJECT_MAX (3<<5)  /* 96 - from this type can't be gced */
 
 #define BE_STRING       16
 #define BE_CLASS        17
@@ -32,15 +32,11 @@
 #define BE_MODULE       22
 #define BE_COMOBJ       23      /* common object */
 
-#define BE_NTVFUNC      ((0 << 5) | BE_FUNCTION)
-#define BE_CLOSURE      ((1 << 5) | BE_FUNCTION)
-#define BE_NTVCLOS      ((2 << 5) | BE_FUNCTION)
-#define BE_CTYPE_FUNC   ((3 << 5) | BE_FUNCTION)
-#define BE_STATIC       (1 << 7)
-
-#define func_isstatic(o)       (((o)->type & BE_STATIC) != 0)
-#define func_setstatic(o)      ((o)->type |= BE_STATIC)
-#define func_clearstatic(o)    ((o)->type &= ~BE_STATIC)
+#define BE_NTVFUNC      ((0 << 5) | BE_FUNCTION)    /* 6 - cannot be gced */
+#define BE_CLOSURE      ((1 << 5) | BE_FUNCTION)    /* 38 - can be gced */
+#define BE_NTVCLOS      ((2 << 5) | BE_FUNCTION)    /* 70 - can be gced*/
+#define BE_CTYPE_FUNC   ((3 << 5) | BE_FUNCTION)    /* 102 - cannot be gced */
+#define BE_STATIC       (1 << 7)                    /* 128 */
 
 /* values for bproto.varg */
 #define BE_VA_VARARG            (1 << 0)    /* function has variable number of arguments */

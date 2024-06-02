@@ -24,6 +24,7 @@
 /                     Some performance improvement.
 /----------------------------------------------------------------------------*/
 
+#ifndef TASMOTA // has tjpegd in ROM
 #include "tjpgd.h"
 
 
@@ -1135,3 +1136,5 @@ JRESULT jd_decomp(
 
     return rc;
 }
+#endif // TASMOTA
+

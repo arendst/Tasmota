@@ -325,7 +325,8 @@ struct TasmotaGlobal_t {
   uint8_t busy_time;                        // Time in ms to allow executing of time critical functions
   uint8_t init_state;                       // Tasmota init state
   uint8_t heartbeat_inverted;               // Heartbeat pulse inverted flag
-  uint8_t spi_enabled;                      // SPI configured
+  uint8_t spi_enabled;                      // SPI configured (bus1)
+  uint8_t spi_enabled2;                     // SPI configured (bus2)
   uint8_t soft_spi_enabled;                 // Software SPI configured
   uint8_t blinks;                           // Number of LED blinks
   uint8_t restart_flag;                     // Tasmota restart flag

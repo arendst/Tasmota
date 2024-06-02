@@ -267,7 +267,6 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_WEBCAM                |       | / -   |       |       |       |       |
 | USE_ETHERNET              |       | / x   |       |       |       |       |
 | USE_I2S_AUDIO             |       | / -   |       |       |       |       |
-| USE_TTGO_WATCH            |       | / -   |       |       |       |       |
 | USE_SONOFF_SPM            |       | / x   |       |       |       |       |
 | USE_DISPLAY_TM1621_SONOFF |       | / x   |       |       |       |       |
 | USE_SHELLY_PRO            |       | / x   |       |       |       |       |

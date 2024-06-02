@@ -9,7 +9,8 @@ extern const bclass be_class_Matter_IM_Message;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Matter_IM_Message_init,   /* name */
+extern const bclass be_class_Matter_IM_Message;
+be_local_closure(class_Matter_IM_Message_init,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     4,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Matter_IM_Message_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Message, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(reset),
@@ -40,7 +41,8 @@ be_local_closure(Matter_IM_Message_init,   /* name */
 /********************************************************************
 ** Solidified function: get_exchangeid
 ********************************************************************/
-be_local_closure(Matter_IM_Message_get_exchangeid,   /* name */
+extern const bclass be_class_Matter_IM_Message;
+be_local_closure(class_Matter_IM_Message_get_exchangeid,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
@@ -48,7 +50,7 @@ be_local_closure(Matter_IM_Message_get_exchangeid,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Message, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(resp),
@@ -69,7 +71,8 @@ be_local_closure(Matter_IM_Message_get_exchangeid,   /* name */
 /********************************************************************
 ** Solidified function: send_im
 ********************************************************************/
-be_local_closure(Matter_IM_Message_send_im,   /* name */
+extern const bclass be_class_Matter_IM_Message;
+be_local_closure(class_Matter_IM_Message_send_im,   /* name */
   be_nested_proto(
     13,                          /* nstack */
     2,                          /* argc */
@@ -77,7 +80,7 @@ be_local_closure(Matter_IM_Message_send_im,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Message, 
     1,                          /* has constants */
     ( &(const bvalue[19]) {     /* constants */
     /* K0   */  be_nested_str_weak(ready),
@@ -152,7 +155,8 @@ be_local_closure(Matter_IM_Message_send_im,   /* name */
 /********************************************************************
 ** Solidified function: status_error_received
 ********************************************************************/
-be_local_closure(Matter_IM_Message_status_error_received,   /* name */
+extern const bclass be_class_Matter_IM_Message;
+be_local_closure(class_Matter_IM_Message_status_error_received,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     2,                          /* argc */
@@ -160,7 +164,7 @@ be_local_closure(Matter_IM_Message_status_error_received,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Message, 
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(status_error_received),
@@ -176,7 +180,8 @@ be_local_closure(Matter_IM_Message_status_error_received,   /* name */
 /********************************************************************
 ** Solidified function: reset
 ********************************************************************/
-be_local_closure(Matter_IM_Message_reset,   /* name */
+extern const bclass be_class_Matter_IM_Message;
+be_local_closure(class_Matter_IM_Message_reset,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     4,                          /* argc */
@@ -184,7 +189,7 @@ be_local_closure(Matter_IM_Message_reset,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Message, 
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str_weak(resp),
@@ -230,7 +235,8 @@ be_local_closure(Matter_IM_Message_reset,   /* name */
 /********************************************************************
 ** Solidified function: reached_timeout
 ********************************************************************/
-be_local_closure(Matter_IM_Message_reached_timeout,   /* name */
+extern const bclass be_class_Matter_IM_Message;
+be_local_closure(class_Matter_IM_Message_reached_timeout,   /* name */
   be_nested_proto(
     1,                          /* nstack */
     1,                          /* argc */
@@ -238,7 +244,7 @@ be_local_closure(Matter_IM_Message_reached_timeout,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Message, 
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(reached_timeout),
@@ -254,7 +260,8 @@ be_local_closure(Matter_IM_Message_reached_timeout,   /* name */
 /********************************************************************
 ** Solidified function: status_ok_received
 ********************************************************************/
-be_local_closure(Matter_IM_Message_status_ok_received,   /* name */
+extern const bclass be_class_Matter_IM_Message;
+be_local_closure(class_Matter_IM_Message_status_ok_received,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -262,7 +269,7 @@ be_local_closure(Matter_IM_Message_status_ok_received,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Message, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(expiration),
@@ -306,7 +313,8 @@ be_local_closure(Matter_IM_Message_status_ok_received,   /* name */
 /********************************************************************
 ** Solidified function: ack_received
 ********************************************************************/
-be_local_closure(Matter_IM_Message_ack_received,   /* name */
+extern const bclass be_class_Matter_IM_Message;
+be_local_closure(class_Matter_IM_Message_ack_received,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     2,                          /* argc */
@@ -314,7 +322,7 @@ be_local_closure(Matter_IM_Message_ack_received,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Message, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(expiration),
@@ -347,38 +355,32 @@ be_local_class(Matter_IM_Message,
     NULL,
     be_nested_map(15,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(init, 11), be_const_closure(Matter_IM_Message_init_closure) },
-        { be_const_key_weak(get_exchangeid, 10), be_const_closure(Matter_IM_Message_get_exchangeid_closure) },
-        { be_const_key_weak(reset, -1), be_const_closure(Matter_IM_Message_reset_closure) },
-        { be_const_key_weak(send_im, -1), be_const_closure(Matter_IM_Message_send_im_closure) },
-        { be_const_key_weak(status_error_received, -1), be_const_closure(Matter_IM_Message_status_error_received_closure) },
+        { be_const_key_weak(init, 11), be_const_closure(class_Matter_IM_Message_init_closure) },
+        { be_const_key_weak(get_exchangeid, 10), be_const_closure(class_Matter_IM_Message_get_exchangeid_closure) },
+        { be_const_key_weak(reset, -1), be_const_closure(class_Matter_IM_Message_reset_closure) },
+        { be_const_key_weak(send_im, -1), be_const_closure(class_Matter_IM_Message_send_im_closure) },
+        { be_const_key_weak(status_error_received, -1), be_const_closure(class_Matter_IM_Message_status_error_received_closure) },
         { be_const_key_weak(finish, -1), be_const_var(3) },
-        { be_const_key_weak(status_ok_received, 2), be_const_closure(Matter_IM_Message_status_ok_received_closure) },
+        { be_const_key_weak(status_ok_received, 2), be_const_closure(class_Matter_IM_Message_status_ok_received_closure) },
         { be_const_key_weak(last_counter, -1), be_const_var(5) },
-        { be_const_key_weak(reached_timeout, -1), be_const_closure(Matter_IM_Message_reached_timeout_closure) },
+        { be_const_key_weak(reached_timeout, -1), be_const_closure(class_Matter_IM_Message_reached_timeout_closure) },
         { be_const_key_weak(resp, -1), be_const_var(1) },
         { be_const_key_weak(data, -1), be_const_var(4) },
         { be_const_key_weak(expiration, -1), be_const_var(0) },
         { be_const_key_weak(ready, 6), be_const_var(2) },
         { be_const_key_weak(MSG_TIMEOUT, 5), be_const_int(5000) },
-        { be_const_key_weak(ack_received, -1), be_const_closure(Matter_IM_Message_ack_received_closure) },
+        { be_const_key_weak(ack_received, -1), be_const_closure(class_Matter_IM_Message_ack_received_closure) },
     })),
     be_str_weak(Matter_IM_Message)
 );
-/*******************************************************************/
-
-void be_load_Matter_IM_Message_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_IM_Message);
-    be_setglobal(vm, "Matter_IM_Message");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_IM_Status;
 
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Matter_IM_Status_init,   /* name */
+extern const bclass be_class_Matter_IM_Status;
+be_local_closure(class_Matter_IM_Status_init,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     3,                          /* argc */
@@ -386,7 +388,7 @@ be_local_closure(Matter_IM_Status_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_Status, 
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -428,24 +430,18 @@ be_local_class(Matter_IM_Status,
     &be_class_Matter_IM_Message,
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(init, -1), be_const_closure(Matter_IM_Status_init_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_Matter_IM_Status_init_closure) },
     })),
     be_str_weak(Matter_IM_Status)
 );
-/*******************************************************************/
-
-void be_load_Matter_IM_Status_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_IM_Status);
-    be_setglobal(vm, "Matter_IM_Status");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_IM_InvokeResponse;
 
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Matter_IM_InvokeResponse_init,   /* name */
+extern const bclass be_class_Matter_IM_InvokeResponse;
+be_local_closure(class_Matter_IM_InvokeResponse_init,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     3,                          /* argc */
@@ -453,7 +449,7 @@ be_local_closure(Matter_IM_InvokeResponse_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_InvokeResponse, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -487,24 +483,18 @@ be_local_class(Matter_IM_InvokeResponse,
     &be_class_Matter_IM_Message,
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(init, -1), be_const_closure(Matter_IM_InvokeResponse_init_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_Matter_IM_InvokeResponse_init_closure) },
     })),
     be_str_weak(Matter_IM_InvokeResponse)
 );
-/*******************************************************************/
-
-void be_load_Matter_IM_InvokeResponse_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_IM_InvokeResponse);
-    be_setglobal(vm, "Matter_IM_InvokeResponse");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_IM_WriteResponse;
 
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Matter_IM_WriteResponse_init,   /* name */
+extern const bclass be_class_Matter_IM_WriteResponse;
+be_local_closure(class_Matter_IM_WriteResponse_init,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     3,                          /* argc */
@@ -512,7 +502,7 @@ be_local_closure(Matter_IM_WriteResponse_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_WriteResponse, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -546,24 +536,18 @@ be_local_class(Matter_IM_WriteResponse,
     &be_class_Matter_IM_Message,
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(init, -1), be_const_closure(Matter_IM_WriteResponse_init_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_Matter_IM_WriteResponse_init_closure) },
     })),
     be_str_weak(Matter_IM_WriteResponse)
 );
-/*******************************************************************/
-
-void be_load_Matter_IM_WriteResponse_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_IM_WriteResponse);
-    be_setglobal(vm, "Matter_IM_WriteResponse");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_IM_ReportData;
 
 /********************************************************************
 ** Solidified function: send_im
 ********************************************************************/
-be_local_closure(Matter_IM_ReportData_send_im,   /* name */
+extern const bclass be_class_Matter_IM_ReportData;
+be_local_closure(class_Matter_IM_ReportData_send_im,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     2,                          /* argc */
@@ -571,7 +555,7 @@ be_local_closure(Matter_IM_ReportData_send_im,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_ReportData, 
     1,                          /* has constants */
     ( &(const bvalue[17]) {     /* constants */
     /* K0   */  be_nested_str_weak(ready),
@@ -671,7 +655,8 @@ be_local_closure(Matter_IM_ReportData_send_im,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Matter_IM_ReportData_init,   /* name */
+extern const bclass be_class_Matter_IM_ReportData;
+be_local_closure(class_Matter_IM_ReportData_init,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     3,                          /* argc */
@@ -679,7 +664,7 @@ be_local_closure(Matter_IM_ReportData_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_ReportData, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -713,26 +698,20 @@ be_local_class(Matter_IM_ReportData,
     &be_class_Matter_IM_Message,
     be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(send_im, 1), be_const_closure(Matter_IM_ReportData_send_im_closure) },
-        { be_const_key_weak(init, -1), be_const_closure(Matter_IM_ReportData_init_closure) },
+        { be_const_key_weak(send_im, 1), be_const_closure(class_Matter_IM_ReportData_send_im_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_Matter_IM_ReportData_init_closure) },
         { be_const_key_weak(MAX_MESSAGE, -1), be_const_int(1200) },
     })),
     be_str_weak(Matter_IM_ReportData)
 );
-/*******************************************************************/
-
-void be_load_Matter_IM_ReportData_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_IM_ReportData);
-    be_setglobal(vm, "Matter_IM_ReportData");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_IM_ReportDataSubscribed;
 
 /********************************************************************
 ** Solidified function: ack_received
 ********************************************************************/
-be_local_closure(Matter_IM_ReportDataSubscribed_ack_received,   /* name */
+extern const bclass be_class_Matter_IM_ReportDataSubscribed;
+be_local_closure(class_Matter_IM_ReportDataSubscribed_ack_received,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -740,7 +719,7 @@ be_local_closure(Matter_IM_ReportDataSubscribed_ack_received,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_ReportDataSubscribed, 
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(ack_received),
@@ -781,7 +760,8 @@ be_local_closure(Matter_IM_ReportDataSubscribed_ack_received,   /* name */
 /********************************************************************
 ** Solidified function: send_im
 ********************************************************************/
-be_local_closure(Matter_IM_ReportDataSubscribed_send_im,   /* name */
+extern const bclass be_class_Matter_IM_ReportDataSubscribed;
+be_local_closure(class_Matter_IM_ReportDataSubscribed_send_im,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     2,                          /* argc */
@@ -789,7 +769,7 @@ be_local_closure(Matter_IM_ReportDataSubscribed_send_im,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_ReportDataSubscribed, 
     1,                          /* has constants */
     ( &(const bvalue[21]) {     /* constants */
     /* K0   */  be_nested_str_weak(ready),
@@ -900,7 +880,8 @@ be_local_closure(Matter_IM_ReportDataSubscribed_send_im,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Matter_IM_ReportDataSubscribed_init,   /* name */
+extern const bclass be_class_Matter_IM_ReportDataSubscribed;
+be_local_closure(class_Matter_IM_ReportDataSubscribed_init,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     5,                          /* argc */
@@ -908,7 +889,7 @@ be_local_closure(Matter_IM_ReportDataSubscribed_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_ReportDataSubscribed, 
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str_weak(resp),
@@ -958,7 +939,8 @@ be_local_closure(Matter_IM_ReportDataSubscribed_init,   /* name */
 /********************************************************************
 ** Solidified function: status_error_received
 ********************************************************************/
-be_local_closure(Matter_IM_ReportDataSubscribed_status_error_received,   /* name */
+extern const bclass be_class_Matter_IM_ReportDataSubscribed;
+be_local_closure(class_Matter_IM_ReportDataSubscribed_status_error_received,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     2,                          /* argc */
@@ -966,7 +948,7 @@ be_local_closure(Matter_IM_ReportDataSubscribed_status_error_received,   /* name
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_ReportDataSubscribed, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(sub),
@@ -988,7 +970,8 @@ be_local_closure(Matter_IM_ReportDataSubscribed_status_error_received,   /* name
 /********************************************************************
 ** Solidified function: reached_timeout
 ********************************************************************/
-be_local_closure(Matter_IM_ReportDataSubscribed_reached_timeout,   /* name */
+extern const bclass be_class_Matter_IM_ReportDataSubscribed;
+be_local_closure(class_Matter_IM_ReportDataSubscribed_reached_timeout,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -996,7 +979,7 @@ be_local_closure(Matter_IM_ReportDataSubscribed_reached_timeout,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_ReportDataSubscribed, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(sub),
@@ -1018,7 +1001,8 @@ be_local_closure(Matter_IM_ReportDataSubscribed_reached_timeout,   /* name */
 /********************************************************************
 ** Solidified function: status_ok_received
 ********************************************************************/
-be_local_closure(Matter_IM_ReportDataSubscribed_status_ok_received,   /* name */
+extern const bclass be_class_Matter_IM_ReportDataSubscribed;
+be_local_closure(class_Matter_IM_ReportDataSubscribed_status_ok_received,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -1026,7 +1010,7 @@ be_local_closure(Matter_IM_ReportDataSubscribed_status_ok_received,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_ReportDataSubscribed, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(report_data_phase),
@@ -1074,31 +1058,25 @@ be_local_class(Matter_IM_ReportDataSubscribed,
     &be_class_Matter_IM_ReportData,
     be_nested_map(8,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(ack_received, 1), be_const_closure(Matter_IM_ReportDataSubscribed_ack_received_closure) },
-        { be_const_key_weak(status_ok_received, -1), be_const_closure(Matter_IM_ReportDataSubscribed_status_ok_received_closure) },
-        { be_const_key_weak(send_im, -1), be_const_closure(Matter_IM_ReportDataSubscribed_send_im_closure) },
-        { be_const_key_weak(init, -1), be_const_closure(Matter_IM_ReportDataSubscribed_init_closure) },
+        { be_const_key_weak(ack_received, 1), be_const_closure(class_Matter_IM_ReportDataSubscribed_ack_received_closure) },
+        { be_const_key_weak(status_ok_received, -1), be_const_closure(class_Matter_IM_ReportDataSubscribed_status_ok_received_closure) },
+        { be_const_key_weak(send_im, -1), be_const_closure(class_Matter_IM_ReportDataSubscribed_send_im_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_Matter_IM_ReportDataSubscribed_init_closure) },
         { be_const_key_weak(report_data_phase, 7), be_const_var(1) },
         { be_const_key_weak(sub, 6), be_const_var(0) },
-        { be_const_key_weak(reached_timeout, -1), be_const_closure(Matter_IM_ReportDataSubscribed_reached_timeout_closure) },
-        { be_const_key_weak(status_error_received, -1), be_const_closure(Matter_IM_ReportDataSubscribed_status_error_received_closure) },
+        { be_const_key_weak(reached_timeout, -1), be_const_closure(class_Matter_IM_ReportDataSubscribed_reached_timeout_closure) },
+        { be_const_key_weak(status_error_received, -1), be_const_closure(class_Matter_IM_ReportDataSubscribed_status_error_received_closure) },
     })),
     be_str_weak(Matter_IM_ReportDataSubscribed)
 );
-/*******************************************************************/
-
-void be_load_Matter_IM_ReportDataSubscribed_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_IM_ReportDataSubscribed);
-    be_setglobal(vm, "Matter_IM_ReportDataSubscribed");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_IM_SubscribedHeartbeat;
 
 /********************************************************************
 ** Solidified function: status_error_received
 ********************************************************************/
-be_local_closure(Matter_IM_SubscribedHeartbeat_status_error_received,   /* name */
+extern const bclass be_class_Matter_IM_SubscribedHeartbeat;
+be_local_closure(class_Matter_IM_SubscribedHeartbeat_status_error_received,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     2,                          /* argc */
@@ -1106,7 +1084,7 @@ be_local_closure(Matter_IM_SubscribedHeartbeat_status_error_received,   /* name 
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_SubscribedHeartbeat, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(sub),
@@ -1129,7 +1107,8 @@ be_local_closure(Matter_IM_SubscribedHeartbeat_status_error_received,   /* name 
 /********************************************************************
 ** Solidified function: send_im
 ********************************************************************/
-be_local_closure(Matter_IM_SubscribedHeartbeat_send_im,   /* name */
+extern const bclass be_class_Matter_IM_SubscribedHeartbeat;
+be_local_closure(class_Matter_IM_SubscribedHeartbeat_send_im,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -1137,7 +1116,7 @@ be_local_closure(Matter_IM_SubscribedHeartbeat_send_im,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_SubscribedHeartbeat, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(ready),
@@ -1168,7 +1147,8 @@ be_local_closure(Matter_IM_SubscribedHeartbeat_send_im,   /* name */
 /********************************************************************
 ** Solidified function: ack_received
 ********************************************************************/
-be_local_closure(Matter_IM_SubscribedHeartbeat_ack_received,   /* name */
+extern const bclass be_class_Matter_IM_SubscribedHeartbeat;
+be_local_closure(class_Matter_IM_SubscribedHeartbeat_ack_received,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -1176,7 +1156,7 @@ be_local_closure(Matter_IM_SubscribedHeartbeat_ack_received,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_SubscribedHeartbeat, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(ack_received),
@@ -1204,7 +1184,8 @@ be_local_closure(Matter_IM_SubscribedHeartbeat_ack_received,   /* name */
 /********************************************************************
 ** Solidified function: reached_timeout
 ********************************************************************/
-be_local_closure(Matter_IM_SubscribedHeartbeat_reached_timeout,   /* name */
+extern const bclass be_class_Matter_IM_SubscribedHeartbeat;
+be_local_closure(class_Matter_IM_SubscribedHeartbeat_reached_timeout,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -1212,7 +1193,7 @@ be_local_closure(Matter_IM_SubscribedHeartbeat_reached_timeout,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_SubscribedHeartbeat, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(sub),
@@ -1234,7 +1215,8 @@ be_local_closure(Matter_IM_SubscribedHeartbeat_reached_timeout,   /* name */
 /********************************************************************
 ** Solidified function: status_ok_received
 ********************************************************************/
-be_local_closure(Matter_IM_SubscribedHeartbeat_status_ok_received,   /* name */
+extern const bclass be_class_Matter_IM_SubscribedHeartbeat;
+be_local_closure(class_Matter_IM_SubscribedHeartbeat_status_ok_received,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     2,                          /* argc */
@@ -1242,7 +1224,7 @@ be_local_closure(Matter_IM_SubscribedHeartbeat_status_ok_received,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_SubscribedHeartbeat, 
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(status_ok_received),
@@ -1259,7 +1241,8 @@ be_local_closure(Matter_IM_SubscribedHeartbeat_status_ok_received,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Matter_IM_SubscribedHeartbeat_init,   /* name */
+extern const bclass be_class_Matter_IM_SubscribedHeartbeat;
+be_local_closure(class_Matter_IM_SubscribedHeartbeat_init,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     5,                          /* argc */
@@ -1267,7 +1250,7 @@ be_local_closure(Matter_IM_SubscribedHeartbeat_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_SubscribedHeartbeat, 
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str_weak(resp),
@@ -1320,30 +1303,24 @@ be_local_class(Matter_IM_SubscribedHeartbeat,
     &be_class_Matter_IM_ReportData,
     be_nested_map(7,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(init, 1), be_const_closure(Matter_IM_SubscribedHeartbeat_init_closure) },
-        { be_const_key_weak(status_ok_received, -1), be_const_closure(Matter_IM_SubscribedHeartbeat_status_ok_received_closure) },
+        { be_const_key_weak(init, 1), be_const_closure(class_Matter_IM_SubscribedHeartbeat_init_closure) },
+        { be_const_key_weak(status_ok_received, -1), be_const_closure(class_Matter_IM_SubscribedHeartbeat_status_ok_received_closure) },
         { be_const_key_weak(sub, 6), be_const_var(0) },
-        { be_const_key_weak(ack_received, -1), be_const_closure(Matter_IM_SubscribedHeartbeat_ack_received_closure) },
-        { be_const_key_weak(reached_timeout, -1), be_const_closure(Matter_IM_SubscribedHeartbeat_reached_timeout_closure) },
-        { be_const_key_weak(status_error_received, 0), be_const_closure(Matter_IM_SubscribedHeartbeat_status_error_received_closure) },
-        { be_const_key_weak(send_im, -1), be_const_closure(Matter_IM_SubscribedHeartbeat_send_im_closure) },
+        { be_const_key_weak(ack_received, -1), be_const_closure(class_Matter_IM_SubscribedHeartbeat_ack_received_closure) },
+        { be_const_key_weak(reached_timeout, -1), be_const_closure(class_Matter_IM_SubscribedHeartbeat_reached_timeout_closure) },
+        { be_const_key_weak(status_error_received, 0), be_const_closure(class_Matter_IM_SubscribedHeartbeat_status_error_received_closure) },
+        { be_const_key_weak(send_im, -1), be_const_closure(class_Matter_IM_SubscribedHeartbeat_send_im_closure) },
     })),
     be_str_weak(Matter_IM_SubscribedHeartbeat)
 );
-/*******************************************************************/
-
-void be_load_Matter_IM_SubscribedHeartbeat_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_IM_SubscribedHeartbeat);
-    be_setglobal(vm, "Matter_IM_SubscribedHeartbeat");
-    be_pop(vm, 1);
-}
 
 extern const bclass be_class_Matter_IM_SubscribeResponse;
 
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Matter_IM_SubscribeResponse_init,   /* name */
+extern const bclass be_class_Matter_IM_SubscribeResponse;
+be_local_closure(class_Matter_IM_SubscribeResponse_init,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     4,                          /* argc */
@@ -1351,7 +1328,7 @@ be_local_closure(Matter_IM_SubscribeResponse_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_SubscribeResponse, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -1381,7 +1358,8 @@ be_local_closure(Matter_IM_SubscribeResponse_init,   /* name */
 /********************************************************************
 ** Solidified function: status_ok_received
 ********************************************************************/
-be_local_closure(Matter_IM_SubscribeResponse_status_ok_received,   /* name */
+extern const bclass be_class_Matter_IM_SubscribeResponse;
+be_local_closure(class_Matter_IM_SubscribeResponse_status_ok_received,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     2,                          /* argc */
@@ -1389,7 +1367,7 @@ be_local_closure(Matter_IM_SubscribeResponse_status_ok_received,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_SubscribeResponse, 
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota),
@@ -1438,7 +1416,8 @@ be_local_closure(Matter_IM_SubscribeResponse_status_ok_received,   /* name */
 /********************************************************************
 ** Solidified function: send_im
 ********************************************************************/
-be_local_closure(Matter_IM_SubscribeResponse_send_im,   /* name */
+extern const bclass be_class_Matter_IM_SubscribeResponse;
+be_local_closure(class_Matter_IM_SubscribeResponse_send_im,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     2,                          /* argc */
@@ -1446,7 +1425,7 @@ be_local_closure(Matter_IM_SubscribeResponse_send_im,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_IM_SubscribeResponse, 
     1,                          /* has constants */
     ( &(const bvalue[19]) {     /* constants */
     /* K0   */  be_nested_str_weak(ready),
@@ -1540,20 +1519,13 @@ be_local_class(Matter_IM_SubscribeResponse,
     &be_class_Matter_IM_ReportData,
     be_nested_map(5,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(init, 4), be_const_closure(Matter_IM_SubscribeResponse_init_closure) },
+        { be_const_key_weak(init, 4), be_const_closure(class_Matter_IM_SubscribeResponse_init_closure) },
         { be_const_key_weak(sub, -1), be_const_var(0) },
-        { be_const_key_weak(status_ok_received, -1), be_const_closure(Matter_IM_SubscribeResponse_status_ok_received_closure) },
-        { be_const_key_weak(send_im, -1), be_const_closure(Matter_IM_SubscribeResponse_send_im_closure) },
+        { be_const_key_weak(status_ok_received, -1), be_const_closure(class_Matter_IM_SubscribeResponse_status_ok_received_closure) },
+        { be_const_key_weak(send_im, -1), be_const_closure(class_Matter_IM_SubscribeResponse_send_im_closure) },
         { be_const_key_weak(report_data_phase, -1), be_const_var(1) },
     })),
     be_str_weak(Matter_IM_SubscribeResponse)
 );
-/*******************************************************************/
-
-void be_load_Matter_IM_SubscribeResponse_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_IM_SubscribeResponse);
-    be_setglobal(vm, "Matter_IM_SubscribeResponse");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

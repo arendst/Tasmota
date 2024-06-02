@@ -17,7 +17,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#if (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH) || defined(USE_M5STACK_CORE2) || defined(ESP32S3_BOX))
+#if (defined(USE_I2S_AUDIO) || defined(ESP32S3_BOX))
 #ifdef USE_I2S_RTTTL
 #include "AudioFileSourcePROGMEM.h"
 #include "AudioGeneratorRTTTL.h"
@@ -25,8 +25,6 @@
 void Rtttl(char *buffer);
 
 void Rtttl(char *buffer) {
-
-  if (!audio_i2s.out) return;
 
   AudioGeneratorRTTTL *rtttl;
   AudioFileSourcePROGMEM *file = NULL;

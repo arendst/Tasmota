@@ -7,7 +7,7 @@
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(lv_tasmota_init,   /* name */
+be_local_closure(module_lv_tasmota_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -15,7 +15,7 @@ be_local_closure(lv_tasmota_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     1,                          /* has constants */
     ( &(const bvalue[36]) {     /* constants */
     /* K0   */  be_nested_str_weak(lv),
@@ -127,7 +127,8 @@ extern const bclass be_class_splash_runner;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(splash_runner_init,   /* name */
+extern const bclass be_class_splash_runner;
+be_local_closure(class_splash_runner_init,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -135,7 +136,7 @@ be_local_closure(splash_runner_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_splash_runner, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota),
@@ -158,7 +159,8 @@ be_local_closure(splash_runner_init,   /* name */
 /********************************************************************
 ** Solidified function: display
 ********************************************************************/
-be_local_closure(splash_runner_display,   /* name */
+extern const bclass be_class_splash_runner;
+be_local_closure(class_splash_runner_display,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     5,                          /* argc */
@@ -166,7 +168,7 @@ be_local_closure(splash_runner_display,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_splash_runner, 
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(display),
@@ -208,8 +210,8 @@ be_local_class(splash_runner,
     NULL,
     be_nested_map(2,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(display, -1), be_const_closure(splash_runner_display_closure) },
-        { be_const_key_weak(init, 0), be_const_closure(splash_runner_init_closure) },
+        { be_const_key_weak(display, -1), be_const_closure(class_splash_runner_display_closure) },
+        { be_const_key_weak(init, 0), be_const_closure(class_splash_runner_init_closure) },
     })),
     be_str_weak(splash_runner)
 );
@@ -217,7 +219,7 @@ be_local_class(splash_runner,
 /********************************************************************
 ** Solidified function: splash_init
 ********************************************************************/
-be_local_closure(lv_tasmota_splash_init,   /* name */
+be_local_closure(module_lv_tasmota_splash_init,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     0,                          /* argc */
@@ -225,7 +227,7 @@ be_local_closure(lv_tasmota_splash_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(display),
@@ -259,7 +261,7 @@ be_local_closure(lv_tasmota_splash_init,   /* name */
 /********************************************************************
 ** Solidified function: splash_remove
 ********************************************************************/
-be_local_closure(lv_tasmota_splash_remove,   /* name */
+be_local_closure(module_lv_tasmota_splash_remove,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     0,                          /* argc */
@@ -267,7 +269,7 @@ be_local_closure(lv_tasmota_splash_remove,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(lv),
@@ -295,7 +297,7 @@ be_local_closure(lv_tasmota_splash_remove,   /* name */
 /********************************************************************
 ** Solidified function: splash
 ********************************************************************/
-be_local_closure(lv_tasmota_splash,   /* name */
+be_local_closure(module_lv_tasmota_splash,   /* name */
   be_nested_proto(
     14,                          /* nstack */
     0,                          /* argc */
@@ -303,7 +305,7 @@ be_local_closure(lv_tasmota_splash,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     1,                          /* has constants */
     ( &(const bvalue[43]) {     /* constants */
     /* K0   */  be_nested_str_weak(display),

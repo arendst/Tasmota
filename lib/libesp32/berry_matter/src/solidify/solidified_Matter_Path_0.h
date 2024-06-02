@@ -9,7 +9,8 @@ extern const bclass be_class_Matter_Path;
 /********************************************************************
 ** Solidified function: tostring
 ********************************************************************/
-be_local_closure(Matter_Path_tostring,   /* name */
+extern const bclass be_class_Matter_Path;
+be_local_closure(class_Matter_Path_tostring,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Matter_Path_tostring,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Path, 
     1,                          /* has constants */
     ( &(const bvalue[15]) {     /* constants */
     /* K0   */  be_nested_str_weak(),
@@ -125,7 +126,8 @@ be_local_closure(Matter_Path_tostring,   /* name */
 /********************************************************************
 ** Solidified function: reset
 ********************************************************************/
-be_local_closure(Matter_Path_reset,   /* name */
+extern const bclass be_class_Matter_Path;
+be_local_closure(class_Matter_Path_reset,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
@@ -133,7 +135,7 @@ be_local_closure(Matter_Path_reset,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Path, 
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(endpoint),
@@ -177,20 +179,13 @@ be_local_class(Matter_Path,
         { be_const_key_weak(fabric_filtered, 6), be_const_var(3) },
         { be_const_key_weak(command, -1), be_const_var(4) },
         { be_const_key_weak(msg, -1), be_const_var(7) },
-        { be_const_key_weak(tostring, -1), be_const_closure(Matter_Path_tostring_closure) },
-        { be_const_key_weak(reset, -1), be_const_closure(Matter_Path_reset_closure) },
+        { be_const_key_weak(tostring, -1), be_const_closure(class_Matter_Path_tostring_closure) },
+        { be_const_key_weak(reset, -1), be_const_closure(class_Matter_Path_reset_closure) },
         { be_const_key_weak(cluster, -1), be_const_var(1) },
         { be_const_key_weak(endpoint, 3), be_const_var(0) },
         { be_const_key_weak(status, -1), be_const_var(5) },
     })),
     be_str_weak(Matter_Path)
 );
-/*******************************************************************/
-
-void be_load_Matter_Path_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_Path);
-    be_setglobal(vm, "Matter_Path");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

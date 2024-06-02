@@ -287,7 +287,7 @@ typedef union {
     uint32_t local_ntp_server : 1;         // bit 9  (v11.0.0.4) - CMND_RTCNTPSERVER - Enable local NTP server
     uint32_t influxdb_sensor : 1;          // bit 10 (v11.0.0.5) - CMND_IFXSENSOR - Enable sensor support in addition to teleperiod support
     uint32_t serbridge_console : 1;        // bit 11 (v11.1.0.4) - CMND_SSERIALSEND9 - Enable logging tee to serialbridge
-    uint32_t spare12 : 1;                  // bit 12
+    uint32_t telegram_disable_af : 1;      // bit 12 (v14.0.0.2) - CMND_TMSTATE 6/7 - Disable Telegram auto-fingerprint fix
     uint32_t spare13 : 1;                  // bit 13
     uint32_t spare14 : 1;                  // bit 14
     uint32_t spare15 : 1;                  // bit 15
@@ -697,8 +697,9 @@ typedef struct {
   uint8_t       mqtt_wifi_timeout;         // 530
   uint8_t       ina219_mode;               // 531
 
-  uint16_t      ex_pulse_timer[8];         // 532  ex_pulse_timer free since 11.0.0.3
+  uint16_t      ex_pulse_timer[7];         // 532  ex_pulse_timer free since 11.0.0.3
 
+  uint16_t      tcp_baudrate;              // 540 
   uint16_t      button_debounce;           // 542
   uint32_t      ipv4_address[5];           // 544
   uint32_t      ipv4_rgx_address;          // 558
@@ -742,7 +743,6 @@ typedef struct {
   uint16_t      shutter_motorstop;         // 738
   uint8_t       battery_level_percent;     // 73A
   uint8_t       hdmi_addr[2];              // 73B  HDMI CEC physical address - warning this is a non-aligned uint16
-
   uint8_t       novasds_startingoffset;    // 73D
   uint8_t       web_color[18][3];          // 73E
   uint16_t      display_width;             // 774
@@ -832,7 +832,9 @@ typedef struct {
   uint8_t       windmeter_tele_pchange;    // F3E
   uint8_t       ledpwm_on;                 // F3F
   uint8_t       ledpwm_off;                // F40
-  uint8_t       tcp_baudrate;              // F41
+
+  uint8_t       ex_tcp_baudrate;           // F41  ex_tcp_baudrate, free since v14.0.0.4 
+
   uint8_t       fallback_module;           // F42
   uint8_t       shutter_mode;              // F43
   uint16_t      energy_power_delta[3];     // F44
@@ -843,9 +845,7 @@ typedef struct {
   uint8_t       shd_warmup_time;           // F5E
   uint8_t       tcp_config;                // F5F
   uint8_t       light_step_pixels;				 // F60
-
   uint8_t       hdmi_cec_device_type;      // F61  - v13.1.0.1 (was ex_modbus_sbaudrate v12.2.0.5)
-
   uint8_t       modbus_sconfig;            // F62
   uint8_t       windmeter_measure_intvl;   // F63
 

@@ -7,7 +7,7 @@
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(energy_init,   /* name */
+be_local_closure(module_energy_init,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -15,7 +15,7 @@ be_local_closure(energy_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(global),
@@ -37,7 +37,7 @@ be_local_closure(energy_init,   /* name */
 /********************************************************************
 ** Solidified function: _deref
 ********************************************************************/
-be_local_closure(energy__deref,   /* name */
+be_local_closure(module_energy__deref,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     0,                          /* argc */
@@ -45,7 +45,7 @@ be_local_closure(energy__deref,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str(global),
@@ -95,7 +95,7 @@ be_local_closure(energy__deref,   /* name */
 /********************************************************************
 ** Solidified function: read
 ********************************************************************/
-be_local_closure(energy_read,   /* name */
+be_local_closure(module_energy_read,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     0,                          /* argc */
@@ -103,7 +103,7 @@ be_local_closure(energy_read,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str(energy),
@@ -135,7 +135,7 @@ be_local_closure(energy_read,   /* name */
 /********************************************************************
 ** Solidified function: member
 ********************************************************************/
-be_local_closure(energy_member,   /* name */
+be_local_closure(module_energy_member,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -143,7 +143,7 @@ be_local_closure(energy_member,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str(energy),
@@ -173,7 +173,7 @@ be_local_closure(energy_member,   /* name */
 /********************************************************************
 ** Solidified function: setmember
 ********************************************************************/
-be_local_closure(energy_setmember,   /* name */
+be_local_closure(module_energy_setmember,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     2,                          /* argc */
@@ -181,7 +181,7 @@ be_local_closure(energy_setmember,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str(energy),

@@ -9,7 +9,7 @@ extern const bclass be_class_Matter_Plugin_Sensor_Occupancy;
 /********************************************************************
 ** Solidified function: <lambda>
 ********************************************************************/
-be_local_closure(Matter_Plugin_Sensor_Occupancy__X3Clambda_X3E,   /* name */
+be_local_closure(class_Matter_Plugin_Sensor_Occupancy__X3Clambda_X3E,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -17,7 +17,7 @@ be_local_closure(Matter_Plugin_Sensor_Occupancy__X3Clambda_X3E,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(_X3Clambda_X3E),
@@ -36,7 +36,8 @@ be_local_closure(Matter_Plugin_Sensor_Occupancy__X3Clambda_X3E,   /* name */
 /********************************************************************
 ** Solidified function: update_virtual
 ********************************************************************/
-be_local_closure(Matter_Plugin_Sensor_Occupancy_update_virtual,   /* name */
+extern const bclass be_class_Matter_Plugin_Sensor_Occupancy;
+be_local_closure(class_Matter_Plugin_Sensor_Occupancy_update_virtual,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -44,7 +45,7 @@ be_local_closure(Matter_Plugin_Sensor_Occupancy_update_virtual,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Sensor_Occupancy, 
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(find),
@@ -91,7 +92,8 @@ be_local_closure(Matter_Plugin_Sensor_Occupancy_update_virtual,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Matter_Plugin_Sensor_Occupancy_init,   /* name */
+extern const bclass be_class_Matter_Plugin_Sensor_Occupancy;
+be_local_closure(class_Matter_Plugin_Sensor_Occupancy_init,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     4,                          /* argc */
@@ -99,7 +101,7 @@ be_local_closure(Matter_Plugin_Sensor_Occupancy_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Sensor_Occupancy, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -128,7 +130,8 @@ be_local_closure(Matter_Plugin_Sensor_Occupancy_init,   /* name */
 /********************************************************************
 ** Solidified function: update_shadow
 ********************************************************************/
-be_local_closure(Matter_Plugin_Sensor_Occupancy_update_shadow,   /* name */
+extern const bclass be_class_Matter_Plugin_Sensor_Occupancy;
+be_local_closure(class_Matter_Plugin_Sensor_Occupancy_update_shadow,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     1,                          /* argc */
@@ -136,7 +139,7 @@ be_local_closure(Matter_Plugin_Sensor_Occupancy_update_shadow,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Sensor_Occupancy, 
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_nested_str_weak(update_shadow),
@@ -209,7 +212,8 @@ be_local_closure(Matter_Plugin_Sensor_Occupancy_update_shadow,   /* name */
 /********************************************************************
 ** Solidified function: parse_configuration
 ********************************************************************/
-be_local_closure(Matter_Plugin_Sensor_Occupancy_parse_configuration,   /* name */
+extern const bclass be_class_Matter_Plugin_Sensor_Occupancy;
+be_local_closure(class_Matter_Plugin_Sensor_Occupancy_parse_configuration,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
@@ -217,7 +221,7 @@ be_local_closure(Matter_Plugin_Sensor_Occupancy_parse_configuration,   /* name *
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Sensor_Occupancy, 
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota_switch_index),
@@ -250,7 +254,8 @@ be_local_closure(Matter_Plugin_Sensor_Occupancy_parse_configuration,   /* name *
 /********************************************************************
 ** Solidified function: read_attribute
 ********************************************************************/
-be_local_closure(Matter_Plugin_Sensor_Occupancy_read_attribute,   /* name */
+extern const bclass be_class_Matter_Plugin_Sensor_Occupancy;
+be_local_closure(class_Matter_Plugin_Sensor_Occupancy_read_attribute,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     4,                          /* argc */
@@ -258,7 +263,7 @@ be_local_closure(Matter_Plugin_Sensor_Occupancy_read_attribute,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Sensor_Occupancy, 
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -342,12 +347,12 @@ be_local_class(Matter_Plugin_Sensor_Occupancy,
     &be_class_Matter_Plugin_Device,
     be_nested_map(16,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(ARG_TYPE, 2), be_const_static_closure(Matter_Plugin_Sensor_Occupancy__X3Clambda_X3E_closure) },
+        { be_const_key_weak(ARG_TYPE, 2), be_const_static_closure(class_Matter_Plugin_Sensor_Occupancy__X3Clambda_X3E_closure) },
         { be_const_key_weak(ARG_HINT, -1), be_nested_str_weak(Switch_X3Cx_X3E_X20number) },
-        { be_const_key_weak(update_virtual, -1), be_const_closure(Matter_Plugin_Sensor_Occupancy_update_virtual_closure) },
-        { be_const_key_weak(init, -1), be_const_closure(Matter_Plugin_Sensor_Occupancy_init_closure) },
+        { be_const_key_weak(update_virtual, -1), be_const_closure(class_Matter_Plugin_Sensor_Occupancy_update_virtual_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_Matter_Plugin_Sensor_Occupancy_init_closure) },
         { be_const_key_weak(tasmota_switch_index, 9), be_const_var(0) },
-        { be_const_key_weak(update_shadow, 14), be_const_closure(Matter_Plugin_Sensor_Occupancy_update_shadow_closure) },
+        { be_const_key_weak(update_shadow, 14), be_const_closure(class_Matter_Plugin_Sensor_Occupancy_update_shadow_closure) },
         { be_const_key_weak(DISPLAY_NAME, -1), be_nested_str_weak(Occupancy) },
         { be_const_key_weak(ARG, 12), be_nested_str_weak(switch) },
         { be_const_key_weak(UPDATE_TIME, -1), be_const_int(750) },
@@ -437,7 +442,7 @@ be_local_class(Matter_Plugin_Sensor_Occupancy,
         be_const_int(65533),
     }))    ) } )) },
     }))    ) } )) },
-        { be_const_key_weak(read_attribute, 4), be_const_closure(Matter_Plugin_Sensor_Occupancy_read_attribute_closure) },
+        { be_const_key_weak(read_attribute, 4), be_const_closure(class_Matter_Plugin_Sensor_Occupancy_read_attribute_closure) },
         { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
@@ -449,17 +454,10 @@ be_local_class(Matter_Plugin_Sensor_Occupancy,
         be_nested_str_weak(Occupancy),
     }))    ) } )) },
         { be_const_key_weak(TYPE, 6), be_nested_str_weak(occupancy) },
-        { be_const_key_weak(parse_configuration, -1), be_const_closure(Matter_Plugin_Sensor_Occupancy_parse_configuration_closure) },
+        { be_const_key_weak(parse_configuration, -1), be_const_closure(class_Matter_Plugin_Sensor_Occupancy_parse_configuration_closure) },
         { be_const_key_weak(shadow_occupancy, -1), be_const_var(1) },
     })),
     be_str_weak(Matter_Plugin_Sensor_Occupancy)
 );
-/*******************************************************************/
-
-void be_load_Matter_Plugin_Sensor_Occupancy_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_Plugin_Sensor_Occupancy);
-    be_setglobal(vm, "Matter_Plugin_Sensor_Occupancy");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

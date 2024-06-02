@@ -27,9 +27,7 @@
 #define XSNS_02                       2
 
 #ifdef ESP32
-  #if ESP_IDF_VERSION_MAJOR >= 5
-    #include "esp32-hal-adc.h"
-  #endif
+#include "esp32-hal-adc.h"
 #endif
 
 #ifdef ESP8266
@@ -179,16 +177,13 @@ struct {
   int indexOfPointer = -1;
 } Adc[MAX_ADCS];
 
-#ifdef ESP8266
 bool adcAttachPin(uint8_t pin) {
+#ifdef ESP8266
   return (ADC0_PIN == pin);
+#else  // ESP32
+  return true;
+#endif  // ESP32  
 }
-#endif
-#if defined(ESP32) && (ESP_IDF_VERSION_MAJOR >= 5)
-  bool adcAttachPin(uint8_t pin) {
-    return true;                        // TODO - no more needed?
-  }
-#endif
 
 void AdcSaveSettings(uint32_t idx) {
   char parameters[32];
@@ -310,9 +305,6 @@ void AdcInit(void) {
 
   if (Adcs.present) {
 #ifdef ESP32
-#if ESP_IDF_VERSION_MAJOR < 5
-    analogSetClockDiv(1);               // Default 1
-#endif
 #if CONFIG_IDF_TARGET_ESP32
     analogSetWidth(ANALOG_RESOLUTION);  // Default 12 bits (0 - 4095)
 #endif  // CONFIG_IDF_TARGET_ESP32

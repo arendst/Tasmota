@@ -23,12 +23,5 @@ be_local_class(Matter_Plugin_Virt_OnOff,
     })),
     be_str_weak(Matter_Plugin_Virt_OnOff)
 );
-/*******************************************************************/
-
-void be_load_Matter_Plugin_Virt_OnOff_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_Plugin_Virt_OnOff);
-    be_setglobal(vm, "Matter_Plugin_Virt_OnOff");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

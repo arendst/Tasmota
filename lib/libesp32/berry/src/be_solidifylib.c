@@ -112,9 +112,25 @@ static void toidentifier(char *to, const char *p)
     *to = 0;      // final NULL
 }
 
-static void m_solidify_bvalue(bvm *vm, bbool str_literal, bvalue * value, const char *classname, const char *key, void* fout);
+/* return the parent class of a function, encoded in ptab, or NULL if none */
+static const bclass *m_solidify_get_parentclass(const bproto *pr)
+{
+    const bclass *cla;
+    if (pr->nproto > 0) {
+        cla = (const bclass*) pr->ptab[pr->nproto];
+    } else {
+        cla = (const bclass*) pr->ptab;
+    }
+    if (cla && var_basetype(cla) == BE_CLASS) {
+        return cla;
+    } else {
+        return NULL;
+    }
+}
 
-static void m_solidify_map(bvm *vm, bbool str_literal, bmap * map, const char *class_name, void* fout)
+static void m_solidify_bvalue(bvm *vm, bbool str_literal, const bvalue * value, const char *prefixname, const char *key, void* fout);
+
+static void m_solidify_map(bvm *vm, bbool str_literal, const bmap * map, const char *prefixname, void* fout)
 {
     // compact first
     be_map_compact(vm, map);
@@ -142,14 +158,14 @@ static void m_solidify_map(bvm *vm, bbool str_literal, bmap * map, const char *c
             } else {
                 logfmt("        { be_const_key_weak(%s, %i), ", id_buf, key_next);
             }
-            m_solidify_bvalue(vm, str_literal, &node->value, class_name, str(node->key.v.s), fout);
+            m_solidify_bvalue(vm, str_literal, &node->value, prefixname, str(node->key.v.s), fout);
         } else if (node->key.type == BE_INT) {
 #if BE_INTGER_TYPE == 2
             logfmt("        { be_const_key_int(%lli, %i), ", node->key.v.i, key_next);
 #else
             logfmt("        { be_const_key_int(%i, %i), ", node->key.v.i, key_next);
 #endif
-            m_solidify_bvalue(vm, str_literal, &node->value, class_name, NULL, fout);
+            m_solidify_bvalue(vm, str_literal, &node->value, prefixname, NULL, fout);
         } else {
             char error[64];
             snprintf(error, sizeof(error), "Unsupported type in key: %i", node->key.type);
@@ -162,21 +178,21 @@ static void m_solidify_map(bvm *vm, bbool str_literal, bmap * map, const char *c
 
 }
 
-static void m_solidify_list(bvm *vm, bbool str_literal, blist * list, const char *class_name, void* fout)
+static void m_solidify_list(bvm *vm, bbool str_literal, const blist * list, const char *prefixname, void* fout)
 {
     logfmt("    be_nested_list(%i,\n", list->count);
 
     logfmt("    ( (struct bvalue*) &(const bvalue[]) {\n");
     for (int i = 0; i < list->count; i++) {
         logfmt("        ");
-        m_solidify_bvalue(vm, str_literal, &list->data[i], class_name, "", fout);
+        m_solidify_bvalue(vm, str_literal, &list->data[i], prefixname, "", fout);
         logfmt(",\n");
     }
     logfmt("    }))");        // TODO need terminal comma?
 }
 
 // pass key name in case of class, or NULL if none
-static void m_solidify_bvalue(bvm *vm, bbool str_literal, bvalue * value, const char *classname, const char *key, void* fout)
+static void m_solidify_bvalue(bvm *vm, bbool str_literal, const bvalue * value, const char *prefixname, const char *key, void* fout)
 {
     int type = var_primetype(value);
     switch (type) {
@@ -238,13 +254,20 @@ static void m_solidify_bvalue(bvm *vm, bbool str_literal, bvalue * value, const 
         break;
     case BE_CLOSURE:
         {
-            const char * func_name = str(((bclosure*) var_toobj(value))->proto->name);
+            bclosure *clo = (bclosure*) var_toobj(value);
+            const char * func_name = str(clo->proto->name);
             size_t id_len = toidentifier_length(func_name);
             char func_name_id[id_len];
             toidentifier(func_name_id, func_name);
-            logfmt("be_const_%sclosure(%s%s%s_closure)",
+            /* get parent class name if any */
+            const bclass *parentclass = m_solidify_get_parentclass(clo->proto);
+            const char *parentclass_name = parentclass ? str(parentclass->name) : NULL;
+            const char *actualprefix = parentclass_name ? parentclass_name : prefixname;
+            
+            logfmt("be_const_%sclosure(%s%s%s%s_closure)",
                 var_isstatic(value) ? "static_" : "",
-                classname ? classname : "", classname ? "_" : "",
+                parentclass_name ? "class_" : "",
+                actualprefix ? actualprefix : "", actualprefix ? "_" : "",
                 func_name_id);
         }
         break;
@@ -252,12 +275,12 @@ static void m_solidify_bvalue(bvm *vm, bbool str_literal, bvalue * value, const 
         logfmt("be_const_class(be_class_%s)", str(((bclass*) var_toobj(value))->name));
         break;
     case BE_COMPTR:
-        logfmt("be_const_comptr(&be_ntv_%s_%s)", classname ? classname : "unknown", key ? key : "unknown");
+        logfmt("be_const_comptr(&be_ntv_%s_%s)", prefixname ? prefixname : "unknown", key ? key : "unknown");
         break;
     case BE_NTVFUNC:
         logfmt("be_const_%sfunc(be_ntv_%s_%s)",
             var_isstatic(value) ? "static_" : "",
-            classname ? classname : "unknown", key ? key : "unknown");
+            prefixname ? prefixname : "unknown", key ? key : "unknown");
         break;
     case BE_INSTANCE:
     {
@@ -277,16 +300,16 @@ static void m_solidify_bvalue(bvm *vm, bbool str_literal, bvalue * value, const 
             } else {
                 logfmt("        be_const_list( * ");
             }
-            m_solidify_bvalue(vm, str_literal, &ins->members[0], classname, key, fout);
+            m_solidify_bvalue(vm, str_literal, &ins->members[0], prefixname, key, fout);
             logfmt("    ) } ))");
         }
     }
         break;
     case BE_MAP:
-        m_solidify_map(vm, str_literal, (bmap *) var_toobj(value), classname, fout);
+        m_solidify_map(vm, str_literal, (bmap *) var_toobj(value), prefixname, fout);
         break;
     case BE_LIST:
-        m_solidify_list(vm, str_literal, (blist *) var_toobj(value), classname, fout);
+        m_solidify_list(vm, str_literal, (blist *) var_toobj(value), prefixname, fout);
         break;
     default:
         {
@@ -297,10 +320,10 @@ static void m_solidify_bvalue(bvm *vm, bbool str_literal, bvalue * value, const 
     }
 }
 
-static void m_solidify_subclass(bvm *vm, bbool str_literal, bclass *cl, void* fout);
+static void m_solidify_subclass(bvm *vm, bbool str_literal, const bclass *cl, void* fout);
 
 /* solidify any inner class */
-static void m_solidify_proto_inner_class(bvm *vm, bbool str_literal, bproto *pr, void* fout)
+static void m_solidify_proto_inner_class(bvm *vm, bbool str_literal, const bproto *pr, void* fout)
 {
     // parse any class in constants to output it first
     if (pr->nconst > 0) {
@@ -317,11 +340,11 @@ static void m_solidify_proto_inner_class(bvm *vm, bbool str_literal, bproto *pr,
     }
 }
 
-
-static void m_solidify_proto(bvm *vm, bbool str_literal, bproto *pr, const char * func_name, int indent, void* fout)
+static void m_solidify_proto(bvm *vm, bbool str_literal, const bproto *pr, const char * func_name, const char *prefixname, int indent, void* fout)
 {
-    // const char * func_name = str(pr->name);
-    // const char * func_source = str(pr->source);
+    /* get parent class name if any */
+    const bclass *parentclass = m_solidify_get_parentclass(pr);
+    const char *parentclass_name = parentclass ? str(parentclass->name) : NULL;
 
     logfmt("%*sbe_nested_proto(\n", indent, "");
     indent += 2;
@@ -343,18 +366,28 @@ static void m_solidify_proto(bvm *vm, bbool str_literal, bproto *pr, const char 
 
     logfmt("%*s%d,                          /* has sup protos */\n", indent, "", (pr->nproto > 0) ? 1 : 0);
     if (pr->nproto > 0) {
-        logfmt("%*s( &(const struct bproto*[%2d]) {\n", indent, "", pr->nproto);
+        // if pr->nproto is not zero, we add a last value that is either NULL or the parent class
+        logfmt("%*s( &(const struct bproto*[%2d]) {\n", indent, "", pr->nproto + 1);    /* one more slot */
         for (int32_t i = 0; i < pr->nproto; i++) {
             size_t sub_len = strlen(func_name) + 10;
             char sub_name[sub_len];
             snprintf(sub_name, sizeof(sub_name), "%s_%"PRId32, func_name, i);
-            m_solidify_proto(vm, str_literal, pr->ptab[i], sub_name, indent+2, fout);
+            m_solidify_proto(vm, str_literal, pr->ptab[i], sub_name, NULL, indent+2, fout);
             logfmt(",\n");
+        }
+        if (parentclass_name) {
+            logfmt("%*s&be_class_%s, \n", indent, "", parentclass_name);
+        } else {
+            logfmt("%*sNULL, \n", indent, "");
         }
         logfmt("%*s}),\n", indent, "");
     } else {
-        logfmt("%*sNULL,                       /* no sub protos */\n", indent, "");
-    }
+        if (parentclass_name) {
+            logfmt("%*s&be_class_%s, \n", indent, "", parentclass_name);
+        } else {
+            logfmt("%*sNULL, \n", indent, "");
+        }
+    }   
 
     logfmt("%*s%d,                          /* has constants */\n", indent, "", (pr->nconst > 0) ? 1 : 0);
     if (pr->nconst > 0) {
@@ -404,12 +437,28 @@ static void m_solidify_proto(bvm *vm, bbool str_literal, bproto *pr, const char 
 
 }
 
-static void m_solidify_closure(bvm *vm, bbool str_literal, bclosure *cl, const char * classname, void* fout)
+static void m_solidify_closure(bvm *vm, bbool str_literal, const bclosure *clo, const char * prefixname, void* fout)
 {   
-    bproto *pr = cl->proto;
+    bproto *pr = clo->proto;
     const char * func_name = str(pr->name);
 
-    if (cl->nupvals > 0) {
+    /* get parent class name if any */
+    const bclass *parentclass = m_solidify_get_parentclass(pr);
+    const char *parentclass_name = parentclass ? str(parentclass->name) : NULL;
+    if (parentclass_name) {
+        /* check that the class name is the same as the prefix */
+        /* meaning that we are solidifying a method from its own class */
+        /* if they don't match, then the method is borrowed to another class and we don't export it */
+        char parentclass_prefix[strlen(parentclass_name) + 10];
+        snprintf(parentclass_prefix, sizeof(parentclass_prefix), "class_%s", parentclass_name);
+        if (strcmp(parentclass_prefix, prefixname) != 0) {
+            logfmt("// Borrowed method '%s' from class '%s'\n", func_name, parentclass_prefix);
+            logfmt("extern bclosure *%s_%s;\n", parentclass_prefix, func_name);
+            return;
+        }
+    }
+
+    if (clo->nupvals > 0) {
         logfmt("--> Unsupported upvals in closure <---");
         // be_raise(vm, "internal_error", "Unsupported upvals in closure");
     }
@@ -423,16 +472,21 @@ static void m_solidify_closure(bvm *vm, bbool str_literal, bclosure *cl, const c
     logfmt("** Solidified function: %s\n", func_name);
     logfmt("********************************************************************/\n");
 
+    if (parentclass_name) {
+        /* declare exten so we can have a pointer */
+        logfmt("extern const bclass be_class_%s;\n", parentclass_name);
+    }
+
     {
         size_t id_len = toidentifier_length(func_name);
         char func_name_id[id_len];
         toidentifier(func_name_id, func_name);
         logfmt("be_local_closure(%s%s%s,   /* name */\n",
-            classname ? classname : "", classname ? "_" : "",
+            prefixname ? prefixname : "", prefixname ? "_" : "",
             func_name_id);
     }
 
-    m_solidify_proto(vm, str_literal, pr, func_name, indent, fout);
+    m_solidify_proto(vm, str_literal, pr, func_name, prefixname, indent, fout);
     logfmt("\n");
 
     // closure
@@ -440,21 +494,22 @@ static void m_solidify_closure(bvm *vm, bbool str_literal, bclosure *cl, const c
     logfmt("/*******************************************************************/\n\n");
 }
 
-static void m_solidify_subclass(bvm *vm, bbool str_literal, bclass *cl, void* fout)
+static void m_solidify_subclass(bvm *vm, bbool str_literal, const bclass *cla, void* fout)
 {
-    const char * class_name = str(cl->name);
-
+    const char * classname = str(cla->name);
+    char prefixname[strlen(classname) + 10];
+    snprintf(prefixname, sizeof(prefixname), "class_%s", classname);
     /* pre-declare class to support '_class' implicit variable */
-    logfmt("\nextern const bclass be_class_%s;\n", class_name);
+    logfmt("\nextern const bclass be_class_%s;\n", classname);
 
     /* iterate on members to dump closures */
-    if (cl->members) {
+    if (cla->members) {
         bmapnode *node;
         bmapiter iter = be_map_iter();
-        while ((node = be_map_next(cl->members, &iter)) != NULL) {
+        while ((node = be_map_next(cla->members, &iter)) != NULL) {
             if (var_isstr(&node->key) && var_isclosure(&node->value)) {
                 bclosure *f = var_toobj(&node->value);
-                m_solidify_closure(vm, str_literal, f, class_name, fout);
+                m_solidify_closure(vm, str_literal, f, prefixname, fout);
             }
         }
     }
@@ -462,57 +517,50 @@ static void m_solidify_subclass(bvm *vm, bbool str_literal, bclass *cl, void* fo
 
     logfmt("\n");
     logfmt("/********************************************************************\n");
-    logfmt("** Solidified class: %s\n", class_name);
+    logfmt("** Solidified class: %s\n", classname);
     logfmt("********************************************************************/\n");
 
-    if (cl->super) {
-        logfmt("extern const bclass be_class_%s;\n", str(cl->super->name));
+    if (cla->super) {
+        logfmt("extern const bclass be_class_%s;\n", str(cla->super->name));
     }
 
-    logfmt("be_local_class(%s,\n", class_name);
-    logfmt("    %i,\n", cl->nvar);
-    if (cl->super) {
-        logfmt("    &be_class_%s,\n", str(cl->super->name));
+    logfmt("be_local_class(%s,\n", classname);
+    logfmt("    %i,\n", cla->nvar);
+    if (cla->super) {
+        logfmt("    &be_class_%s,\n", str(cla->super->name));
     } else {
         logfmt("    NULL,\n");
     }
 
-    if (cl->members) {
-        m_solidify_map(vm, str_literal, cl->members, class_name, fout);
+    if (cla->members) {
+        m_solidify_map(vm, str_literal, cla->members, prefixname, fout);
         logfmt(",\n");
     } else {
         logfmt("    NULL,\n");
     }
 
-    size_t id_len = toidentifier_length(class_name);
+    size_t id_len = toidentifier_length(classname);
     char id_buf[id_len];
-    toidentifier(id_buf, class_name);
+    toidentifier(id_buf, classname);
     if (!str_literal) {
         logfmt("    (bstring*) &be_const_str_%s\n", id_buf);
     } else {
         logfmt("    be_str_weak(%s)\n", id_buf);
     }
     logfmt(");\n");
-
 }
 
-static void m_solidify_class(bvm *vm, bbool str_literal, bclass *cl, void* fout)
+static void m_solidify_class(bvm *vm, bbool str_literal, const bclass *cl, void* fout)
 {
-    const char * class_name = str(cl->name);
     m_solidify_subclass(vm, str_literal, cl, fout);
-    logfmt("/*******************************************************************/\n\n");
-
-    logfmt("void be_load_%s_class(bvm *vm) {\n", class_name);
-    logfmt("    be_pushntvclass(vm, &be_class_%s);\n", class_name);
-    logfmt("    be_setglobal(vm, \"%s\");\n", class_name);
-    logfmt("    be_pop(vm, 1);\n");
-    logfmt("}\n");
 }
 
-static void m_solidify_module(bvm *vm, bbool str_literal, bmodule *ml, void* fout)
+static void m_solidify_module(bvm *vm, bbool str_literal, const bmodule *ml, void* fout)
 {
-    const char * module_name = be_module_name(ml);
-    if (!module_name) { module_name = ""; }
+    const char * modulename = be_module_name(ml);
+    if (!modulename) { modulename = ""; }
+    // char prefixname[strlen(modulename) + 10];
+    // snprintf(prefixname, sizeof(prefixname), "module_%s", modulename);
 
     /* iterate on members to dump closures and classes */
     if (ml->table) {
@@ -521,7 +569,7 @@ static void m_solidify_module(bvm *vm, bbool str_literal, bmodule *ml, void* fou
         while ((node = be_map_next(ml->table, &iter)) != NULL) {
             if (var_isstr(&node->key) && var_isclosure(&node->value)) {
                 bclosure *f = var_toobj(&node->value);
-                m_solidify_closure(vm, str_literal, f, module_name, fout);
+                m_solidify_closure(vm, str_literal, f, NULL, fout);
             }
             if (var_isstr(&node->key) && var_isclass(&node->value)) {
                 bclass *cl = var_toobj(&node->value);
@@ -533,20 +581,20 @@ static void m_solidify_module(bvm *vm, bbool str_literal, bmodule *ml, void* fou
 
     logfmt("\n");
     logfmt("/********************************************************************\n");
-    logfmt("** Solidified module: %s\n", module_name);
+    logfmt("** Solidified module: %s\n", modulename);
     logfmt("********************************************************************/\n");
 
-    logfmt("be_local_module(%s,\n", module_name);
-    logfmt("    \"%s\",\n", module_name);
+    logfmt("be_local_module(%s,\n", modulename);
+    logfmt("    \"%s\",\n", modulename);
 
     if (ml->table) {
-        m_solidify_map(vm, str_literal, ml->table, module_name, fout);
+        m_solidify_map(vm, str_literal, ml->table, NULL, fout);
         logfmt("\n");
     } else {
         logfmt("    NULL,\n");
     }
     logfmt(");\n");
-    logfmt("BE_EXPORT_VARIABLE be_define_const_native_module(%s);\n", module_name);
+    logfmt("BE_EXPORT_VARIABLE be_define_const_native_module(%s);\n", modulename);
     logfmt("/********************************************************************/\n");
 
 }
@@ -568,12 +616,12 @@ static int m_dump(bvm *vm)
             }
             be_pop(vm, 1);
         }
-        const char *classname = NULL;  /* allow to specify an explicit prefix */
+        const char *prefixname = NULL;  /* allow to specify an explicit prefix */
         if (top >= 4 && be_isstring(vm, 4)) {
-            classname = be_tostring(vm, 4);
+            prefixname = be_tostring(vm, 4);
         }
         if (var_isclosure(v)) {
-            m_solidify_closure(vm, str_literal, var_toobj(v), classname, fout);
+            m_solidify_closure(vm, str_literal, var_toobj(v), prefixname, fout);
         } else if (var_isclass(v)) {
             m_solidify_class(vm, str_literal, var_toobj(v), fout);
         } else if (var_ismodule(v)) {

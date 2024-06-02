@@ -9,7 +9,7 @@ extern const bclass be_class_Matter_Plugin_Bridge_Sensor_Contact;
 /********************************************************************
 ** Solidified function: <lambda>
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_Sensor_Contact__X3Clambda_X3E,   /* name */
+be_local_closure(class_Matter_Plugin_Bridge_Sensor_Contact__X3Clambda_X3E,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -17,7 +17,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Contact__X3Clambda_X3E,   /* name *
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(_X3Clambda_X3E),
@@ -36,7 +36,8 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Contact__X3Clambda_X3E,   /* name *
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_Sensor_Contact_init,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_Sensor_Contact;
+be_local_closure(class_Matter_Plugin_Bridge_Sensor_Contact_init,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     4,                          /* argc */
@@ -44,7 +45,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Contact_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_Sensor_Contact, 
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -86,7 +87,8 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Contact_init,   /* name */
 /********************************************************************
 ** Solidified function: web_values_prefix
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_Sensor_Contact_web_values_prefix,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_Sensor_Contact;
+be_local_closure(class_Matter_Plugin_Bridge_Sensor_Contact_web_values_prefix,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     1,                          /* argc */
@@ -94,7 +96,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Contact_web_values_prefix,   /* nam
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_Sensor_Contact, 
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),
@@ -140,7 +142,8 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Contact_web_values_prefix,   /* nam
 /********************************************************************
 ** Solidified function: parse_update
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_Sensor_Contact_parse_update,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_Sensor_Contact;
+be_local_closure(class_Matter_Plugin_Bridge_Sensor_Contact_parse_update,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     3,                          /* argc */
@@ -148,7 +151,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Contact_parse_update,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_Sensor_Contact, 
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(find),
@@ -199,7 +202,8 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Contact_parse_update,   /* name */
 /********************************************************************
 ** Solidified function: read_attribute
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_Sensor_Contact_read_attribute,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_Sensor_Contact;
+be_local_closure(class_Matter_Plugin_Bridge_Sensor_Contact_read_attribute,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     4,                          /* argc */
@@ -207,7 +211,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Contact_read_attribute,   /* name *
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_Sensor_Contact, 
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -266,7 +270,8 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Contact_read_attribute,   /* name *
 /********************************************************************
 ** Solidified function: web_values
 ********************************************************************/
-be_local_closure(Matter_Plugin_Bridge_Sensor_Contact_web_values,   /* name */
+extern const bclass be_class_Matter_Plugin_Bridge_Sensor_Contact;
+be_local_closure(class_Matter_Plugin_Bridge_Sensor_Contact_web_values,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     1,                          /* argc */
@@ -274,7 +279,7 @@ be_local_closure(Matter_Plugin_Bridge_Sensor_Contact_web_values,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Bridge_Sensor_Contact, 
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),
@@ -316,16 +321,16 @@ be_local_class(Matter_Plugin_Bridge_Sensor_Contact,
     &be_class_Matter_Plugin_Bridge_HTTP,
     be_nested_map(16,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(ARG_TYPE, 5), be_const_static_closure(Matter_Plugin_Bridge_Sensor_Contact__X3Clambda_X3E_closure) },
+        { be_const_key_weak(ARG_TYPE, 5), be_const_static_closure(class_Matter_Plugin_Bridge_Sensor_Contact__X3Clambda_X3E_closure) },
         { be_const_key_weak(ARG_HINT, 4), be_nested_str_weak(Switch_X3Cx_X3E_X20number) },
         { be_const_key_weak(shadow_contact, -1), be_const_var(1) },
-        { be_const_key_weak(init, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_Contact_init_closure) },
-        { be_const_key_weak(web_values_prefix, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_Contact_web_values_prefix_closure) },
-        { be_const_key_weak(web_values, -1), be_const_closure(Matter_Plugin_Bridge_Sensor_Contact_web_values_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_Matter_Plugin_Bridge_Sensor_Contact_init_closure) },
+        { be_const_key_weak(web_values_prefix, -1), be_const_closure(class_Matter_Plugin_Bridge_Sensor_Contact_web_values_prefix_closure) },
+        { be_const_key_weak(web_values, -1), be_const_closure(class_Matter_Plugin_Bridge_Sensor_Contact_web_values_closure) },
         { be_const_key_weak(DISPLAY_NAME, -1), be_nested_str_weak(Contact) },
         { be_const_key_weak(ARG, -1), be_nested_str_weak(switch) },
-        { be_const_key_weak(parse_update, 11), be_const_closure(Matter_Plugin_Bridge_Sensor_Contact_parse_update_closure) },
-        { be_const_key_weak(read_attribute, 12), be_const_closure(Matter_Plugin_Bridge_Sensor_Contact_read_attribute_closure) },
+        { be_const_key_weak(parse_update, 11), be_const_closure(class_Matter_Plugin_Bridge_Sensor_Contact_parse_update_closure) },
+        { be_const_key_weak(read_attribute, 12), be_const_closure(class_Matter_Plugin_Bridge_Sensor_Contact_read_attribute_closure) },
         { be_const_key_weak(CLUSTERS, 9), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
@@ -422,12 +427,5 @@ be_local_class(Matter_Plugin_Bridge_Sensor_Contact,
     })),
     be_str_weak(Matter_Plugin_Bridge_Sensor_Contact)
 );
-/*******************************************************************/
-
-void be_load_Matter_Plugin_Bridge_Sensor_Contact_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_Plugin_Bridge_Sensor_Contact);
-    be_setglobal(vm, "Matter_Plugin_Bridge_Sensor_Contact");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

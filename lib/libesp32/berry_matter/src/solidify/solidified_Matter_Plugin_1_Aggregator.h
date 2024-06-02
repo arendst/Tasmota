@@ -9,7 +9,8 @@ extern const bclass be_class_Matter_Plugin_Aggregator;
 /********************************************************************
 ** Solidified function: read_attribute
 ********************************************************************/
-be_local_closure(Matter_Plugin_Aggregator_read_attribute,   /* name */
+extern const bclass be_class_Matter_Plugin_Aggregator;
+be_local_closure(class_Matter_Plugin_Aggregator_read_attribute,   /* name */
   be_nested_proto(
     16,                          /* nstack */
     4,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Matter_Plugin_Aggregator_read_attribute,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Aggregator, 
     1,                          /* has constants */
     ( &(const bvalue[18]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -124,7 +125,8 @@ be_local_closure(Matter_Plugin_Aggregator_read_attribute,   /* name */
 /********************************************************************
 ** Solidified function: invoke_request
 ********************************************************************/
-be_local_closure(Matter_Plugin_Aggregator_invoke_request,   /* name */
+extern const bclass be_class_Matter_Plugin_Aggregator;
+be_local_closure(class_Matter_Plugin_Aggregator_invoke_request,   /* name */
   be_nested_proto(
     13,                          /* nstack */
     4,                          /* argc */
@@ -132,7 +134,7 @@ be_local_closure(Matter_Plugin_Aggregator_invoke_request,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_Plugin_Aggregator, 
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -204,7 +206,7 @@ be_local_class(Matter_Plugin_Aggregator,
     &be_class_Matter_Plugin,
     be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(read_attribute, -1), be_const_closure(Matter_Plugin_Aggregator_read_attribute_closure) },
+        { be_const_key_weak(read_attribute, -1), be_const_closure(class_Matter_Plugin_Aggregator_read_attribute_closure) },
         { be_const_key_weak(TYPE, -1), be_nested_str_weak(aggregator) },
         { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
@@ -242,16 +244,9 @@ be_local_class(Matter_Plugin_Aggregator,
         be_const_int(65533),
     }))    ) } )) },
     }))    ) } )) },
-        { be_const_key_weak(invoke_request, -1), be_const_closure(Matter_Plugin_Aggregator_invoke_request_closure) },
+        { be_const_key_weak(invoke_request, -1), be_const_closure(class_Matter_Plugin_Aggregator_invoke_request_closure) },
     })),
     be_str_weak(Matter_Plugin_Aggregator)
 );
-/*******************************************************************/
-
-void be_load_Matter_Plugin_Aggregator_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_Plugin_Aggregator);
-    be_setglobal(vm, "Matter_Plugin_Aggregator");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

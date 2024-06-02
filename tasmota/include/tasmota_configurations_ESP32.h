@@ -187,6 +187,8 @@
 #define USE_WEBCLIENT
 #define USE_WEBCLIENT_HTTPS
 
+#undef USE_ESP32_WDT                                  // disable watchdog on SAFEBOOT until more testing is done
+
 #if CONFIG_IDF_TARGET_ESP32
 #if CONFIG_FREERTOS_UNICORE
   #undef USE_MQTT_TLS
@@ -698,6 +700,10 @@
 //#define USE_CANSNIFFER                         // Add support for can bus sniffer using MCP2515 (+5k code)
 #define USE_MCP23XXX_DRV                         // [I2cDriver77] Enable MCP23xxx support as virtual switch/button/relay (+3k(I2C)/+5k(SPI) code)
 #define USE_SHELLY_PRO                           // Add support for Shelly Pro
+#define USE_SPI_LORA                           // Add support for LoRaSend and LoRaCommand (+4k code)
+  #define USE_LORA_SX126X                      // Add driver support for LoRa on SX126x based devices like LiliGo T3S3 Lora32 (+16k code)
+  #define USE_LORA_SX127X                      // Add driver support for LoRa on SX127x based devices like M5Stack LoRa868, RFM95W (+5k code)
+  #define USE_LORAWAN_BRIDGE                   // Add support for LoRaWan bridge (+8k code)
 
 #define USE_MHZ19                                // Add support for MH-Z19 CO2 sensor (+2k code)
 #define USE_SENSEAIR                             // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)

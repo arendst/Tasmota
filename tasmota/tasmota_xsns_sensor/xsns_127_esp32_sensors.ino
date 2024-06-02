@@ -1,5 +1,5 @@
 /*
-  xsns_127_esp32_sensors.ino - ESP32 Temperature and Hall Effect sensor for Tasmota
+  xsns_127_esp32_sensors.ino - ESP32 Temperature sensor for Tasmota
 
   Copyright (C) 2021  Theo Arends
 
@@ -20,38 +20,13 @@
 #ifdef ESP32
 #ifdef USE_ESP32_SENSORS
 /*********************************************************************************************\
- * ESP32 CPU Temperature and optional Hall Effect sensor
+ * ESP32 CPU Temperature sensor
  *
  * To allow for not updating the global temperature by the ESP32 temperature sensor this
  *   driver needs to be the highest numbered driver (currently 127)
- *
- * ESP32 internal Hall Effect sensor connected to both GPIO36 and GPIO39
- * To enable set
- * GPIO36 as HallEffect 1
- * GPIO39 as HallEffect 2
 \*********************************************************************************************/
 
 #define XSNS_127                 127
-
-#if CONFIG_IDF_TARGET_ESP32 && (ESP_IDF_VERSION_MAJOR < 5)         // Hall sensor is no more supported in esp-idf 5
-
-#define HALLEFFECT_SAMPLE_COUNT  32   // 32 takes about 12 mS at 80MHz CPU frequency
-
-struct {
-  bool present = false;
-} HEData;
-
-void Esp32SensorInit(void) {
-  if (PinUsed(GPIO_HALLEFFECT) && PinUsed(GPIO_HALLEFFECT, 1)) {
-    if (((36 == Pin(GPIO_HALLEFFECT)) && (39 == Pin(GPIO_HALLEFFECT, 1))) ||
-        ((39 == Pin(GPIO_HALLEFFECT)) && (36 == Pin(GPIO_HALLEFFECT, 1)))) {
-      HEData.present = true;
-      hallRead();
-    }
-  }
-}
-
-#endif  // CONFIG_IDF_TARGET_ESP32 && (ESP_IDF_VERSION_MAJOR < 5)
 
 void Esp32SensorShow(bool json) {
   bool json_end = false;
@@ -84,39 +59,6 @@ void Esp32SensorShow(bool json) {
     }
   }
 
-#if CONFIG_IDF_TARGET_ESP32 && (ESP_IDF_VERSION_MAJOR < 5)         // Hall sensor is no more supported in esp-idf 5
-  if (HEData.present) {
-    int value = 0;
-    for (uint32_t i = 0; i < HALLEFFECT_SAMPLE_COUNT; i++) {
-      value += hallRead();
-    }
-    value /= HALLEFFECT_SAMPLE_COUNT;
-
-    if (json) {
-      if (!json_end) {
-        ResponseAppend_P(PSTR(",\"ESP32\":{"));
-      } else {
-        ResponseAppend_P(PSTR(","));
-      }
-      ResponseAppend_P(PSTR("\"" D_JSON_HALLEFFECT "\":%d"), value);
-      json_end = true;
-
-#ifdef USE_DOMOTICZ
-//    Instead of below code use a rule like 'on tele-esp32#halleffect do dzsend1 9988,%value% endon'
-//      where 9988 is the domoticz sensor Idx
-//    if (0 == TasmotaGlobal.tele_period) {
-//      DomoticzSensor(DZ_COUNT, value);
-//    }
-#endif  // USE_DOMOTICZ
-
-#ifdef USE_WEBSERVER
-    } else {
-      WSContentSend_P(HTTP_SNS_HALL_EFFECT, "ESP32", value);
-#endif  // USE_WEBSERVER
-    }
-  }
-#endif  // CONFIG_IDF_TARGET_ESP32 && (ESP_IDF_VERSION_MAJOR < 5)
-
   if (json_end) {
     ResponseJsonEnd();
   }
@@ -138,11 +80,6 @@ bool Xsns127(uint32_t function) {
       Esp32SensorShow(0);
       break;
 #endif  // USE_WEBSERVER
-#if CONFIG_IDF_TARGET_ESP32 && (ESP_IDF_VERSION_MAJOR < 5)         // Hall sensor is no more supported in esp-idf 5
-    case FUNC_INIT:
-      Esp32SensorInit();
-      break;
-#endif  // CONFIG_IDF_TARGET_ESP32 && (ESP_IDF_VERSION_MAJOR < 5)
   }
   return result;
 }

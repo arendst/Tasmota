@@ -37,10 +37,15 @@ void CmndWDT(void)
 }
 
 // This will trigger the os watch after OSWATCH_RESET_TIME (=120) seconds
+// or normal WDT on ESP32
 void CmndBlockedLoop(void)
 {
   while (1) {
+#ifdef ESP32
+    delay(10000);   // 10s on ESP32 so that the normal WDT fires after 5s. There is no OSWATCH_RESET_TIME on ESP32
+#else
     delay(1000);
+#endif
   }
 }
 
@@ -162,14 +167,8 @@ void CrashDumpClear(void)
 // esp_err_t IRAM_ATTR esp_backtrace_print(int depth)
 
 #include "freertos/xtensa_api.h"
-#if   ESP_IDF_VERSION_MAJOR >= 5
-  #include "esp_debug_helpers.h"
-  #include "esp_cpu_utils.h"
-#elif ESP_IDF_VERSION_MAJOR >= 4
-  #include "esp_debug_helpers.h"
-#else  // IDF 3.x
-  #include "esp_panic.h"
-#endif
+#include "esp_debug_helpers.h"
+#include "esp_cpu_utils.h"
 extern "C" {
   // esp-idf 3.x
   void __real_panicHandler(XtExcFrame *frame);

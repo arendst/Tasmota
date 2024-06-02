@@ -220,6 +220,7 @@ enum UserSelectablePins {
   GPIO_TS_SPI_CS, GPIO_TS_RST, GPIO_TS_IRQ, // SPI for Universal Touch Screen
   GPIO_RN2XX3_TX, GPIO_RN2XX3_RX, GPIO_RN2XX3_RST,  // RN2XX3 LoRaWan node Serial interface
   GPIO_TCP_TX_EN,                       // TCP to serial bridge, EN pin
+  GPIO_ASR650X_TX, GPIO_ASR650X_RX,     // ASR650X LoRaWan node Serial interface
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -487,6 +488,7 @@ const char kSensorNames[] PROGMEM =
   D_GPIO_TS_SPI_CS "|" D_GPIO_TS_RST "|" D_GPIO_TS_IRQ "|"
   D_GPIO_RN2XX3_TX "|" D_GPIO_RN2XX3_RX "|" D_GPIO_RN2XX3_RST "|"
   D_SENSOR_TCP_TXD_EN "|"
+  D_GPIO_ASR650X_TX "|" D_GPIO_ASR650X_RX "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -1091,6 +1093,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_RN2XX3_TX),
   AGPIO(GPIO_RN2XX3_RX),
   AGPIO(GPIO_RN2XX3_RST),               // RN2XX3 LoRaWan node Serial interface
+#endif
+#ifdef USE_LORAWAN_ASR650X
+  AGPIO(GPIO_ASR650X_TX),
+  AGPIO(GPIO_ASR650X_RX),               // ASR650X LoRaWan node Serial interface
 #endif
 
 /*-------------------------------------------------------------------------------------------*\
@@ -3229,8 +3235,6 @@ enum SupportedModulesESP32 {
   ODROID_GO,
   ESP32_SOLO,
   WT32_ETH01,
-  TTGO_WATCH,
-  M5STACK_CORE2,
   MAXMODULE };
 
 // Default module settings
@@ -3248,12 +3252,6 @@ const uint8_t kModuleNiceList[] PROGMEM = {
 #ifdef USE_WT32_ETH01
   WT32_ETH01,
 #endif  // USE_WT32_ETH01
-#ifdef USE_TTGO_WATCH
-//  TTGO_WATCH,                // To be defined
-#endif  // USE_TTGO_WATCH
-#ifdef USE_M5STACK_CORE2
-  M5STACK_CORE2,
-#endif  // USE_M5STACK_CORE2
 };
 
 // !!! Update this list in the same order as kModuleNiceList !!!
@@ -3271,12 +3269,6 @@ const char kModuleNames[] PROGMEM =
 #ifdef USE_WT32_ETH01
   "WT32-Eth01|"
 #endif  // USE_WT32_ETH01
-#ifdef USE_TTGO_WATCH
-//  "TTGO Watch|"              // To be defined
-#endif  // USE_TTGO_WATCH
-#ifdef USE_M5STACK_CORE2
-  "M5Stack Core2|"
-#endif  // USE_M5STACK_CORE2
   ;
 
 // !!! Update this list in the same order as SupportedModulesESP32 !!!
@@ -3468,56 +3460,6 @@ const mytmplt kModules[] PROGMEM = {
   },
 #endif  // USE_WT32_ETH01
 
-#ifdef USE_TTGO_WATCH
-//  {                              // TTGO Watch (ESP32) - To be defined
-//  },
-#endif  // USE_TTGO_WATCH
-
-#ifdef USE_M5STACK_CORE2
-  {                              // M5STACK CORE2 - (ESP32)
-    AGPIO(GPIO_USER),            // 0       (I)O                GPIO0, SPKR_LRCK
-    AGPIO(GPIO_USER),            // 1       IO     TXD0         GPIO1, U0TXD
-    AGPIO(GPIO_USER),            // 2       IO                  GPIO2, SPKR_DATA
-    AGPIO(GPIO_USER),            // 3       IO     RXD0         GPIO3, U0RXD
-    AGPIO(GPIO_SDCARD_CS),       // 4       IO                  GPIO4, SPI_CS_CARD
-    AGPIO(GPIO_ILI9341_CS),      // 5       IO                  GPIO5, SPI_CS_LCD
-                                 // 6       IO                  Remapped to 28
-                                 // 7       IO                  Remapped to 29
-                                 // 8       IO                  Remapped to 30
-    0,                           // 9       IO                  GPIO9, Flash D2, PSRAM_D3
-    0,                           // 10      IO                  GPIO10, Flash D3, PSRAM_D2
-                                 // 11      IO                  Remapped to 31
-    0,                           // 12      (I)O                GPIO12, SPKR_CLK
-    AGPIO(GPIO_USER),            // 13      IO                  GPIO13, ADC2_CH4, TOUCH4, RTC_GPIO14, MTCK, HSPID, HS2_DATA3, SD_DATA3, EMAC_RX_ER
-    AGPIO(GPIO_USER),            // 14      IO                  GPIO14, ADC2_CH6, TOUCH6, RTC_GPIO16, MTMS, HSPICLK, HS2_CLK, SD_CLK, EMAC_TXD2
-    AGPIO(GPIO_ILI9341_DC),      // 15      (I)O                GPIO15, SPI_DC_LCD
-    0,                           // 16      IO                  GPIO16, PSRAM_CS
-    0,                           // 17      IO                  GPIO17, PSRAM_CLK
-    AGPIO(GPIO_SPI_CLK),         // 18      IO                  GPIO18, SPI_CLK
-    AGPIO(GPIO_USER),            // 19      IO                  GPIO19, VSPIQ, U0CTS, EMAC_TXD0
-    0,                           // 20
-    0,                           // 21      IO                  GPIO21, I2C_SDA_INTERNAL
-    0,                           // 22      IO      LED         GPIO22, I2C_SCL_INTERNAL
-    AGPIO(GPIO_SPI_MOSI),        // 23      IO                  GPIO23, SPI_MOSI
-    0,                           // 24
-    AGPIO(GPIO_USER),            // 25      IO                  GPIO25, DAC_1, ADC2_CH8, RTC_GPIO6, EMAC_RXD0
-    AGPIO(GPIO_USER),            // 26      IO                  GPIO26, DAC_2, ADC2_CH9, RTC_GPIO7, EMAC_RXD1
-    AGPIO(GPIO_USER),            // 27      IO                  GPIO27, ADC2_CH7, TOUCH7, RTC_GPIO17, EMAC_RX_DV
-    0,                           // 6       IO                  GPIO6, Flash CLK
-    0,                           // 7       IO                  GPIO7, Flash D0
-    0,                           // 8       IO                  GPIO8, Flash D1
-    0,                           // 11      IO                  GPIO11, Flash CMD
-    AGPIO(GPIO_I2C_SDA),         // 32      IO                  GPIO32, I2C_SDA
-    AGPIO(GPIO_I2C_SCL),         // 33      IO                  GPIO33, I2C_SCL
-    AGPIO(GPIO_USER),            // 34      I   NO PULLUP       GPIO34, ADC1_CH6, RTC_GPIO4
-    AGPIO(GPIO_USER),            // 35      I   NO PULLUP       GPIO35, ADC1_CH7, RTC_GPIO5
-    AGPIO(GPIO_USER),            // 36      I   NO PULLUP       GPIO36, SENSOR_VP, ADC_H, ADC1_CH0, RTC_GPIO0
-    0,                           // 37          NO PULLUP
-    AGPIO(GPIO_SPI_MISO),        // 38          NO PULLUP       GPIO38, SPI_MISO
-    0,                           // 39      I   NO PULLUP       GPIO39, INT_TOUCHPAD
-    0                            // Flag
-  }
-#endif  // USE_M5STACK_CORE2
 };
 
 /*********************************************************************************************\

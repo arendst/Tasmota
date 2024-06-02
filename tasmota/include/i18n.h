@@ -461,6 +461,7 @@
 #define D_CMND_WEBTIME "WebTime"
 #define D_CMND_WEBSENSOR "WebSensor"
 #define D_CMND_WEBGETCONFIG "WebGetConfig"
+#define D_CMND_WEBRUN "WebRun"
 #define D_CMND_EMULATION "Emulation"
 #define D_CMND_SENDMAIL "Sendmail"
 #define D_CMND_CORS "CORS"

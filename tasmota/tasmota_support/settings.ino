@@ -189,9 +189,9 @@ bool RtcRebootValid(void) {
 
 extern "C" {
 #include "spi_flash.h"
-#if ESP_IDF_VERSION_MAJOR >= 5
-  #include "spi_flash_mmap.h"
-#endif
+#ifdef ESP32
+#include "spi_flash_mmap.h"
+#endif  // ESP32
 }
 
 #ifdef ESP8266
@@ -1812,6 +1812,9 @@ void SettingsDelta(void) {
 */
     if (Settings->version < 0x0D040004) {  // 13.4.0.4
       Settings->power_lock = 0;
+    }
+    if (Settings->version < 0x0E000004) {  // 14.0.0.4
+      Settings->tcp_baudrate = (uint16_t)Settings->ex_tcp_baudrate * 4;
     }
 
     Settings->version = TASMOTA_VERSION;

@@ -21,11 +21,11 @@ BE_EXPORT_VARIABLE extern const bclass be_class_bytes;
 class be_class_Leds_frame (scope: global, name: Leds_frame, super:be_class_bytes, strings: weak) {
   pixel_size, var
 
-  init, closure(Leds_frame_be_init_closure)
+  init, closure(class_Leds_frame_be_init_closure)
 
-  item, closure(Leds_frame_be_item_closure)
-  setitem, closure(Leds_frame_be_setitem_closure)
-  set_pixel, closure(Leds_frame_be_set_pixel_closure)
+  item, closure(class_Leds_frame_be_item_closure)
+  setitem, closure(class_Leds_frame_be_setitem_closure)
+  set_pixel, closure(class_Leds_frame_be_set_pixel_closure)
 
   // the following are on buffers
   blend, static_func(be_leds_blend)

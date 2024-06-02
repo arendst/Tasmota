@@ -1007,7 +1007,7 @@ void EQ3Show(void)
       FirstSensorShown = true;
       const char *alias = BLE_ESP32::getAlias(EQ3Devices[i].addr);
       if (alias && *alias){
-        WSContentSend_PD(HTTP_EQ3_ALIAS, i + 1, alias);
+        WSContentSend_P(HTTP_EQ3_ALIAS, i + 1, alias);
       }
       WSContentSend_P(HTTP_EQ3_MAC, i + 1, addrStr(EQ3Devices[i].addr));
       WSContentSend_PD(HTTP_EQ3_RSSI, i + 1, EQ3Devices[i].RSSI);

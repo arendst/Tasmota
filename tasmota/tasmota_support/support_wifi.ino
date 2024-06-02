@@ -42,9 +42,9 @@ const uint8_t WIFI_RETRY_OFFSET_SEC = WIFI_RETRY_SECONDS;  // seconds
 
 #include <ESP8266WiFi.h>                   // Wifi, MQTT, Ota, WifiManager
 #include "lwip/dns.h"
-#if ESP_IDF_VERSION_MAJOR >= 5
+#ifdef ESP32
   #include "esp_netif.h"
-#endif
+#endif  // ESP32
 
 int WifiGetRssiAsQuality(int rssi) {
   int quality = 0;
@@ -1278,6 +1278,7 @@ bool WifiHostByName(const char* aHostname, IPAddress& aResult) {
 #if ESP_IDF_VERSION_MAJOR >= 5
   // try converting directly to IP
   if (aResult.fromString(aHostname)) {
+    WiFiHelper::IPv6ZoneAutoFix(aResult, aHostname);
     return true;   // we're done
   }
 #endif

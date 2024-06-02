@@ -117,6 +117,8 @@ device_parameters_t device_param[] = {
   { KNX_SLOT4 , false, false, KNX_Empty },
   { KNX_SLOT5 , false, false, KNX_Empty },
   { KNX_SCENE , false, false, KNX_Empty },
+  { KNX_DIMMER , false, false, KNX_Empty },
+  { KNX_COLOUR , false, false, KNX_Empty },
   { KNX_Empty, false, false, KNX_Empty}
 };
 
@@ -153,6 +155,8 @@ const char * device_param_ga[] = {
   D_KNX_TX_SLOT   " 4",
   D_KNX_TX_SLOT   " 5",
   D_KNX_TX_SCENE      ,
+  D_BRIGHTLIGHT       ,
+  D_COLOR             ,
   nullptr
 };
 
@@ -189,7 +193,9 @@ const char *device_param_cb[] = {
   D_KNX_RX_SLOT   " 4",
   D_KNX_RX_SLOT   " 5",
   D_KNX_RX_SCENE      ,
-  nullptr
+  D_BRIGHTLIGHT       ,
+  D_COLOR             ,
+nullptr
 };
 
 // Commands
@@ -243,7 +249,7 @@ void KNX_Send_4byte_float(address_t const &receiver, float value, knx_command_ty
 #define KNX_WRITE_4BYTE_FLOAT(r,v) KNX_Send_4byte_float((r),(v),KNX_CT_WRITE)
 #define KNX_ANSWER_4BYTE_FLOAT(r,v) KNX_Send_4byte_float((r),(v),KNX_CT_ANSWER)
 
-void KNX_Send_4byte_int(address_t const &receiver, int value, knx_command_type_t ct) 
+void KNX_Send_4byte_int(address_t const &receiver, int32_t value, knx_command_type_t ct) 
 {
   uint8_t repeat = Settings->flag.knx_enable_enhancement ? KNX_ENHANCEMENT_REPEAT : 1;
   while ( repeat-- )
@@ -252,6 +258,34 @@ void KNX_Send_4byte_int(address_t const &receiver, int value, knx_command_type_t
 #define KNX_WRITE_4BYTE_INT(r,v) KNX_Send_4byte_int((r),(v),KNX_CT_WRITE)
 #define KNX_ANSWER_4BYTE_INT(r,v) KNX_Send_4byte_int((r),(v),KNX_CT_ANSWER)
 
+void KNX_Send_4byte_uint(address_t const &receiver, uint32_t value, knx_command_type_t ct) 
+{
+  uint8_t repeat = Settings->flag.knx_enable_enhancement ? KNX_ENHANCEMENT_REPEAT : 1;
+  while ( repeat-- )
+    knx.send_4byte_uint(receiver, ct, value);
+}
+#define KNX_WRITE_4BYTE_UINT(r,v) KNX_Send_4byte_uint((r),(v),KNX_CT_WRITE)
+#define KNX_ANSWER_4BYTE_UINT(r,v) KNX_Send_4byte_uint((r),(v),KNX_CT_ANSWER)
+
+void KNX_Send_3byte_color(address_t const &receiver, uint8_t* color, knx_command_type_t ct) 
+{
+  uint8_t buf[] = {0x00, color[0], color[1], color[2]};
+  uint8_t repeat = Settings->flag.knx_enable_enhancement ? KNX_ENHANCEMENT_REPEAT : 1;
+  while ( repeat-- )
+    knx.send(receiver, ct, 4, buf);
+}
+#define KNX_WRITE_3BYTE_COLOR(r,rgb) KNX_Send_3byte_color((r),(rgb),KNX_CT_WRITE)
+#define KNX_ANSWER_3BYTE_COLOR(r,rgb) KNX_Send_3byte_color((r),(rgb),KNX_CT_ANSWER)
+
+void KNX_Send_6byte_color(address_t const &receiver, uint8_t* color, knx_command_type_t ct) 
+{
+  uint8_t buf[] = {0x00, color[0], color[1], color[2], color[3], 0x00, 0x0F};
+  uint8_t repeat = Settings->flag.knx_enable_enhancement ? KNX_ENHANCEMENT_REPEAT : 1;
+  while ( repeat-- )
+    knx.send(receiver, ct, 7, buf);
+}
+#define KNX_WRITE_6BYTE_COLOR(r,rgbw) KNX_Send_6byte_color((r),(rgbw),KNX_CT_WRITE)
+#define KNX_ANSWER_6BYTE_COLOR(r,rgbw) KNX_Send_6byte_color((r),(rgbw),KNX_CT_ANSWER)
 
 
 uint8_t KNX_GA_Search( uint8_t param, uint8_t start = 0 )
@@ -559,7 +593,7 @@ void KNX_INIT(void)
     device_param[KNX_ENERGY_CURRENT-1].show = true;
     device_param[KNX_ENERGY_POWERFACTOR-1].show = true;
   }
-#endif
+#endif // USE_ENERGY_SENSOR
 
 #ifdef USE_RULES
   device_param[KNX_SLOT1-1].show = true;
@@ -568,7 +602,15 @@ void KNX_INIT(void)
   device_param[KNX_SLOT4-1].show = true;
   device_param[KNX_SLOT5-1].show = true;
   device_param[KNX_SCENE-1].show = true;
-#endif
+#endif // USE_RULES
+
+#ifdef USE_LIGHT
+  if (Light.subtype > LST_NONE) {
+    device_param[KNX_DIMMER-1].show = true;
+    if ((LST_RGB == Light.subtype) || (LST_RGBW == Light.subtype))
+      device_param[KNX_COLOUR-1].show = true;
+  }
+#endif // USE_LIGHT
 
   // Delete from KNX settings all configuration is not anymore related to this device
   if (KNX_CONFIG_NOT_MATCH()) {
@@ -611,6 +653,15 @@ void KNX_CB_Action(message_t const &msg, void *arg)
     // VALUE
     uint8_t tempvar = knx.data_to_1byte_uint(msg.data);
     dtostrfd(tempvar,0,tempchar);
+#ifdef USE_LIGHT
+  } else if (chan->type == KNX_DIMMER) {
+    // VALUE
+    uint8_t tempvar = changeUIntScale(knx.data_to_1byte_uint(msg.data),0, 255, 0, 100);
+    dtostrfd(tempvar,0,tempchar);
+  } else if (chan->type == KNX_COLOUR) {
+    // VALUE
+    snprintf_P(tempchar, sizeof(tempchar), (Light.subtype == LST_RGB) ? PSTR("%02X%02X%02X"):PSTR("%02X%02X%02X%02X"), msg.data[1], msg.data[2], msg.data[3]);
+#endif // USE_LIGHT
   } else {
     // VALUE
     float tempvar = knx.data_to_4byte_float(msg.data);
@@ -668,7 +719,33 @@ void KNX_CB_Action(message_t const &msg, void *arg)
           }
         }
       }
-#endif
+#endif // USE_RULES
+#ifdef USE_LIGHT
+      else if (chan->type == KNX_DIMMER)  // KNX RX DIMMER SLOT (write command)
+      {
+        if (!toggle_inhibit) {
+          char command[25];
+          // Value received
+          snprintf_P(command, sizeof(command), PSTR("Dimmer %s"), tempchar);
+          ExecuteCommand(command, SRC_KNX);
+          if (Settings->flag.knx_enable_enhancement) {
+            toggle_inhibit = TOGGLE_INHIBIT_TIME;
+          }
+        }
+      }
+      else if (chan->type == KNX_COLOUR)  // KNX RX COLOUR_RGB/RGBW SLOT (write command)
+      {
+        if (!toggle_inhibit) {
+          char command[25];
+          // Value received
+          snprintf_P(command, sizeof(command), PSTR("Color #%s"), tempchar);
+          ExecuteCommand(command, SRC_KNX);
+          if (Settings->flag.knx_enable_enhancement) {
+            toggle_inhibit = TOGGLE_INHIBIT_TIME;
+          }
+        }
+      }
+#endif // USE_LIGHT
       break;
 
     case KNX_CT_READ:
@@ -711,7 +788,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       {
         KNX_ANSWER_4BYTE_INT(msg.received_on, round(1000.0 * Energy->total_sum));
       }
-#endif
+#endif // USE_ENERGY_SENSOR
 #ifdef USE_RULES
       else if ((chan->type >= KNX_SLOT1) && (chan->type <= KNX_SLOT5)) // KNX RX SLOTs (read command)
       {
@@ -724,7 +801,22 @@ void KNX_CB_Action(message_t const &msg, void *arg)
           }
         }
       }
-#endif
+#endif // USE_RULES
+#ifdef USE_LIGHT
+      else if (chan->type == KNX_DIMMER) // Reply KNX_DIMMER
+      {
+        uint8_t dimmer = changeUIntScale(light_state.getDimmer(), 0, 100, 0, 255);
+        KNX_ANSWER_1BYTE_UINT(msg.received_on, dimmer);
+      }
+      else if (chan->type == KNX_COLOUR) // Reply KNX_COLOUR
+      {
+        if ( Light.subtype == LST_RGB) {
+          KNX_ANSWER_3BYTE_COLOR(msg.received_on, Light.current_color);
+        } else if ( Light.subtype == LST_RGBW) {
+          KNX_ANSWER_6BYTE_COLOR(msg.received_on, Light.current_color);
+        }
+      }
+#endif // USE_LIGHT
       break;
   }
 }
@@ -750,6 +842,43 @@ void KnxUpdatePowerState(uint8_t device, power_t state)
   }
 }
 
+
+#ifdef USE_LIGHT
+void KnxUpdateLight()
+{
+  if (!(Settings->flag.knx_enabled)) { return; }
+
+  uint8_t dimmer = light_state.getDimmer();
+  uint8_t dim_knx = changeUIntScale(dimmer, 0, 100, 0, 255);
+
+  for (uint32_t i = 0; i < Settings->knx_GA_registered; ++i)
+  {
+    KNX_addr.value = Settings->knx_GA_addr[i];
+    if ( KNX_addr.value != 0 ) {
+      switch(Settings->knx_GA_param[i]) {
+        case KNX_DIMMER:
+          KNX_WRITE_1BYTE_UINT(KNX_addr, dim_knx);
+          AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s %d " D_SENT_TO " %d/%d/%d"),
+            device_param_ga[KNX_DIMMER -1],
+            dimmer,
+            KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
+          break;
+        case KNX_COLOUR:
+          if ( Light.subtype == LST_RGB) {
+            KNX_WRITE_3BYTE_COLOR(KNX_addr, Light.current_color);
+          } else if ( Light.subtype == LST_RGBW) {
+            KNX_WRITE_6BYTE_COLOR(KNX_addr, Light.current_color);
+          }
+          AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s %d,%d,%d,%d " D_SENT_TO " %d/%d/%d"),
+            device_param_ga[KNX_COLOUR -1],
+            Light.current_color[0], Light.current_color[1], Light.current_color[2], Light.current_color[3],
+            KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
+          break;
+      }
+    }
+  }
+}
+#endif // USE_LIGHT
 
 void KnxSendButtonPower(void)
 {

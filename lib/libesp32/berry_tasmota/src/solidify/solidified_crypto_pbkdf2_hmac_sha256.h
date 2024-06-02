@@ -15,7 +15,7 @@ be_local_closure(_f,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 1]) {
+    ( &(const struct bproto*[ 2]) {
       be_nested_proto(
         6,                          /* nstack */
         2,                          /* argc */
@@ -23,7 +23,7 @@ be_local_closure(_f,   /* name */
         0,                          /* has upvals */
         NULL,                       /* no upvals */
         0,                          /* has sup protos */
-        NULL,                       /* no sub protos */
+        NULL, 
         1,                          /* has constants */
         ( &(const bvalue[ 3]) {     /* constants */
         /* K0   */  be_nested_str_weak(size),
@@ -54,6 +54,7 @@ be_local_closure(_f,   /* name */
           0x80000000,  //  0012  RET	0
         })
       ),
+    NULL, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
@@ -125,7 +126,7 @@ be_local_closure(PBKDF2_HMAC_SHA256,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),

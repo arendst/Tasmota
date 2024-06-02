@@ -9,7 +9,8 @@ extern const bclass be_class_Matter_HTTP_remote;
 /********************************************************************
 ** Solidified function: device_is_alive
 ********************************************************************/
-be_local_closure(Matter_HTTP_remote_device_is_alive,   /* name */
+extern const bclass be_class_Matter_HTTP_remote;
+be_local_closure(class_Matter_HTTP_remote_device_is_alive,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     2,                          /* argc */
@@ -17,7 +18,7 @@ be_local_closure(Matter_HTTP_remote_device_is_alive,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_remote, 
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(reachable),
@@ -48,7 +49,8 @@ be_local_closure(Matter_HTTP_remote_device_is_alive,   /* name */
 /********************************************************************
 ** Solidified function: parse_update
 ********************************************************************/
-be_local_closure(Matter_HTTP_remote_parse_update,   /* name */
+extern const bclass be_class_Matter_HTTP_remote;
+be_local_closure(class_Matter_HTTP_remote_parse_update,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     3,                          /* argc */
@@ -56,7 +58,7 @@ be_local_closure(Matter_HTTP_remote_parse_update,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_remote, 
     1,                          /* has constants */
     ( &(const bvalue[28]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -245,7 +247,8 @@ be_local_closure(Matter_HTTP_remote_parse_update,   /* name */
 /********************************************************************
 ** Solidified function: call_sync
 ********************************************************************/
-be_local_closure(Matter_HTTP_remote_call_sync,   /* name */
+extern const bclass be_class_Matter_HTTP_remote;
+be_local_closure(class_Matter_HTTP_remote_call_sync,   /* name */
   be_nested_proto(
     16,                          /* nstack */
     3,                          /* argc */
@@ -253,7 +256,7 @@ be_local_closure(Matter_HTTP_remote_call_sync,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_remote, 
     1,                          /* has constants */
     ( &(const bvalue[24]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),
@@ -365,7 +368,8 @@ be_local_closure(Matter_HTTP_remote_call_sync,   /* name */
 /********************************************************************
 ** Solidified function: event_http_finished
 ********************************************************************/
-be_local_closure(Matter_HTTP_remote_event_http_finished,   /* name */
+extern const bclass be_class_Matter_HTTP_remote;
+be_local_closure(class_Matter_HTTP_remote_event_http_finished,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     1,                          /* argc */
@@ -373,7 +377,7 @@ be_local_closure(Matter_HTTP_remote_event_http_finished,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_remote, 
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_nested_str_weak(current_cmd),
@@ -448,7 +452,8 @@ be_local_closure(Matter_HTTP_remote_event_http_finished,   /* name */
 /********************************************************************
 ** Solidified function: web_last_seen
 ********************************************************************/
-be_local_closure(Matter_HTTP_remote_web_last_seen,   /* name */
+extern const bclass be_class_Matter_HTTP_remote;
+be_local_closure(class_Matter_HTTP_remote_web_last_seen,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
@@ -456,7 +461,7 @@ be_local_closure(Matter_HTTP_remote_web_last_seen,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_remote, 
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),
@@ -495,7 +500,8 @@ be_local_closure(Matter_HTTP_remote_web_last_seen,   /* name */
 /********************************************************************
 ** Solidified function: event_http_failed
 ********************************************************************/
-be_local_closure(Matter_HTTP_remote_event_http_failed,   /* name */
+extern const bclass be_class_Matter_HTTP_remote;
+be_local_closure(class_Matter_HTTP_remote_event_http_failed,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
@@ -503,7 +509,7 @@ be_local_closure(Matter_HTTP_remote_event_http_failed,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_remote, 
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(current_cmd),
@@ -541,7 +547,8 @@ be_local_closure(Matter_HTTP_remote_event_http_failed,   /* name */
 /********************************************************************
 ** Solidified function: parse_status_response
 ********************************************************************/
-be_local_closure(Matter_HTTP_remote_parse_status_response,   /* name */
+extern const bclass be_class_Matter_HTTP_remote;
+be_local_closure(class_Matter_HTTP_remote_parse_status_response,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     4,                          /* argc */
@@ -549,7 +556,7 @@ be_local_closure(Matter_HTTP_remote_parse_status_response,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_remote, 
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -614,7 +621,8 @@ be_local_closure(Matter_HTTP_remote_parse_status_response,   /* name */
 /********************************************************************
 ** Solidified function: get_info
 ********************************************************************/
-be_local_closure(Matter_HTTP_remote_get_info,   /* name */
+extern const bclass be_class_Matter_HTTP_remote;
+be_local_closure(class_Matter_HTTP_remote_get_info,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
@@ -622,7 +630,7 @@ be_local_closure(Matter_HTTP_remote_get_info,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_remote, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(info),
@@ -641,7 +649,8 @@ be_local_closure(Matter_HTTP_remote_get_info,   /* name */
 /********************************************************************
 ** Solidified function: event_http_timeout
 ********************************************************************/
-be_local_closure(Matter_HTTP_remote_event_http_timeout,   /* name */
+extern const bclass be_class_Matter_HTTP_remote;
+be_local_closure(class_Matter_HTTP_remote_event_http_timeout,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     1,                          /* argc */
@@ -649,7 +658,7 @@ be_local_closure(Matter_HTTP_remote_event_http_timeout,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_remote, 
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str_weak(current_cmd),
@@ -698,7 +707,8 @@ be_local_closure(Matter_HTTP_remote_event_http_timeout,   /* name */
 /********************************************************************
 ** Solidified function: info_changed
 ********************************************************************/
-be_local_closure(Matter_HTTP_remote_info_changed,   /* name */
+extern const bclass be_class_Matter_HTTP_remote;
+be_local_closure(class_Matter_HTTP_remote_info_changed,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -706,7 +716,7 @@ be_local_closure(Matter_HTTP_remote_info_changed,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_remote, 
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(device),
@@ -728,7 +738,8 @@ be_local_closure(Matter_HTTP_remote_info_changed,   /* name */
 /********************************************************************
 ** Solidified function: scheduler
 ********************************************************************/
-be_local_closure(Matter_HTTP_remote_scheduler,   /* name */
+extern const bclass be_class_Matter_HTTP_remote;
+be_local_closure(class_Matter_HTTP_remote_scheduler,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
@@ -736,7 +747,7 @@ be_local_closure(Matter_HTTP_remote_scheduler,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_remote, 
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str_weak(probe_next_timestamp_map),
@@ -828,7 +839,8 @@ be_local_closure(Matter_HTTP_remote_scheduler,   /* name */
 /********************************************************************
 ** Solidified function: add_schedule
 ********************************************************************/
-be_local_closure(Matter_HTTP_remote_add_schedule,   /* name */
+extern const bclass be_class_Matter_HTTP_remote;
+be_local_closure(class_Matter_HTTP_remote_add_schedule,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     4,                          /* argc */
@@ -836,7 +848,7 @@ be_local_closure(Matter_HTTP_remote_add_schedule,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_remote, 
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(probe_update_time_map),
@@ -883,7 +895,8 @@ be_local_closure(Matter_HTTP_remote_add_schedule,   /* name */
 /********************************************************************
 ** Solidified function: probe_async
 ********************************************************************/
-be_local_closure(Matter_HTTP_remote_probe_async,   /* name */
+extern const bclass be_class_Matter_HTTP_remote;
+be_local_closure(class_Matter_HTTP_remote_probe_async,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     2,                          /* argc */
@@ -891,7 +904,7 @@ be_local_closure(Matter_HTTP_remote_probe_async,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_remote, 
     1,                          /* has constants */
     ( &(const bvalue[17]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),
@@ -959,7 +972,8 @@ be_local_closure(Matter_HTTP_remote_probe_async,   /* name */
 /********************************************************************
 ** Solidified function: add_async_cb
 ********************************************************************/
-be_local_closure(Matter_HTTP_remote_add_async_cb,   /* name */
+extern const bclass be_class_Matter_HTTP_remote;
+be_local_closure(class_Matter_HTTP_remote_add_async_cb,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     3,                          /* argc */
@@ -967,7 +981,7 @@ be_local_closure(Matter_HTTP_remote_add_async_cb,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_remote, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(async_cb_map),
@@ -987,7 +1001,8 @@ be_local_closure(Matter_HTTP_remote_add_async_cb,   /* name */
 /********************************************************************
 ** Solidified function: set_info
 ********************************************************************/
-be_local_closure(Matter_HTTP_remote_set_info,   /* name */
+extern const bclass be_class_Matter_HTTP_remote;
+be_local_closure(class_Matter_HTTP_remote_set_info,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     2,                          /* argc */
@@ -995,7 +1010,7 @@ be_local_closure(Matter_HTTP_remote_set_info,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_remote, 
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(info),
@@ -1014,7 +1029,8 @@ be_local_closure(Matter_HTTP_remote_set_info,   /* name */
 /********************************************************************
 ** Solidified function: dispatch_cb
 ********************************************************************/
-be_local_closure(Matter_HTTP_remote_dispatch_cb,   /* name */
+extern const bclass be_class_Matter_HTTP_remote;
+be_local_closure(class_Matter_HTTP_remote_dispatch_cb,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     3,                          /* argc */
@@ -1022,7 +1038,7 @@ be_local_closure(Matter_HTTP_remote_dispatch_cb,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_remote, 
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -1070,7 +1086,8 @@ be_local_closure(Matter_HTTP_remote_dispatch_cb,   /* name */
 /********************************************************************
 ** Solidified function: change_schedule
 ********************************************************************/
-be_local_closure(Matter_HTTP_remote_change_schedule,   /* name */
+extern const bclass be_class_Matter_HTTP_remote;
+be_local_closure(class_Matter_HTTP_remote_change_schedule,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     3,                          /* argc */
@@ -1078,7 +1095,7 @@ be_local_closure(Matter_HTTP_remote_change_schedule,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    &be_class_Matter_HTTP_remote, 
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(probe_update_time_map),
@@ -1113,7 +1130,8 @@ be_local_closure(Matter_HTTP_remote_change_schedule,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(Matter_HTTP_remote_init,   /* name */
+extern const bclass be_class_Matter_HTTP_remote;
+be_local_closure(class_Matter_HTTP_remote_init,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     5,                          /* argc */
@@ -1121,7 +1139,7 @@ be_local_closure(Matter_HTTP_remote_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 3]) {
+    ( &(const struct bproto*[ 4]) {
       be_nested_proto(
         8,                          /* nstack */
         3,                          /* argc */
@@ -1131,7 +1149,7 @@ be_local_closure(Matter_HTTP_remote_init,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL,                       /* no sub protos */
+        NULL, 
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str_weak(parse_status_response),
@@ -1157,7 +1175,7 @@ be_local_closure(Matter_HTTP_remote_init,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL,                       /* no sub protos */
+        NULL, 
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str_weak(parse_status_response),
@@ -1183,7 +1201,7 @@ be_local_closure(Matter_HTTP_remote_init,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL,                       /* no sub protos */
+        NULL, 
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str_weak(parse_status_response),
@@ -1200,6 +1218,7 @@ be_local_closure(Matter_HTTP_remote_init,   /* name */
           0x80040600,  //  0006  RET	1	R3
         })
       ),
+    &be_class_Matter_HTTP_remote, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
@@ -1280,46 +1299,39 @@ be_local_class(Matter_HTTP_remote,
     &be_class_Matter_HTTP_async,
     be_nested_map(31,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(device_is_alive, -1), be_const_closure(Matter_HTTP_remote_device_is_alive_closure) },
+        { be_const_key_weak(device_is_alive, -1), be_const_closure(class_Matter_HTTP_remote_device_is_alive_closure) },
         { be_const_key_weak(reachable, 21), be_const_var(5) },
-        { be_const_key_weak(parse_update, -1), be_const_closure(Matter_HTTP_remote_parse_update_closure) },
+        { be_const_key_weak(parse_update, -1), be_const_closure(class_Matter_HTTP_remote_parse_update_closure) },
         { be_const_key_weak(UPDATE_TIME, 7), be_const_int(5000) },
-        { be_const_key_weak(web_last_seen, 30), be_const_closure(Matter_HTTP_remote_web_last_seen_closure) },
-        { be_const_key_weak(call_sync, 4), be_const_closure(Matter_HTTP_remote_call_sync_closure) },
-        { be_const_key_weak(change_schedule, 19), be_const_closure(Matter_HTTP_remote_change_schedule_closure) },
+        { be_const_key_weak(web_last_seen, 30), be_const_closure(class_Matter_HTTP_remote_web_last_seen_closure) },
+        { be_const_key_weak(call_sync, 4), be_const_closure(class_Matter_HTTP_remote_call_sync_closure) },
+        { be_const_key_weak(change_schedule, 19), be_const_closure(class_Matter_HTTP_remote_change_schedule_closure) },
         { be_const_key_weak(device, -1), be_const_var(0) },
         { be_const_key_weak(UPDATE_CMD5, -1), be_nested_str_weak(Status_X205) },
-        { be_const_key_weak(get_info, 17), be_const_closure(Matter_HTTP_remote_get_info_closure) },
+        { be_const_key_weak(get_info, 17), be_const_closure(class_Matter_HTTP_remote_get_info_closure) },
         { be_const_key_weak(info, -1), be_const_var(7) },
-        { be_const_key_weak(event_http_timeout, -1), be_const_closure(Matter_HTTP_remote_event_http_timeout_closure) },
-        { be_const_key_weak(info_changed, -1), be_const_closure(Matter_HTTP_remote_info_changed_closure) },
-        { be_const_key_weak(add_schedule, -1), be_const_closure(Matter_HTTP_remote_add_schedule_closure) },
+        { be_const_key_weak(event_http_timeout, -1), be_const_closure(class_Matter_HTTP_remote_event_http_timeout_closure) },
+        { be_const_key_weak(info_changed, -1), be_const_closure(class_Matter_HTTP_remote_info_changed_closure) },
+        { be_const_key_weak(add_schedule, -1), be_const_closure(class_Matter_HTTP_remote_add_schedule_closure) },
         { be_const_key_weak(UPDATE_TIME2, -1), be_const_int(300000) },
-        { be_const_key_weak(scheduler, -1), be_const_closure(Matter_HTTP_remote_scheduler_closure) },
-        { be_const_key_weak(parse_status_response, 13), be_const_closure(Matter_HTTP_remote_parse_status_response_closure) },
-        { be_const_key_weak(probe_async, 18), be_const_closure(Matter_HTTP_remote_probe_async_closure) },
+        { be_const_key_weak(scheduler, -1), be_const_closure(class_Matter_HTTP_remote_scheduler_closure) },
+        { be_const_key_weak(parse_status_response, 13), be_const_closure(class_Matter_HTTP_remote_parse_status_response_closure) },
+        { be_const_key_weak(probe_async, 18), be_const_closure(class_Matter_HTTP_remote_probe_async_closure) },
         { be_const_key_weak(probe_update_time_map, -1), be_const_var(1) },
         { be_const_key_weak(reachable_utc, -1), be_const_var(6) },
         { be_const_key_weak(probe_next_timestamp_map, -1), be_const_var(2) },
         { be_const_key_weak(async_cb_map, -1), be_const_var(3) },
         { be_const_key_weak(current_cmd, -1), be_const_var(4) },
-        { be_const_key_weak(set_info, -1), be_const_closure(Matter_HTTP_remote_set_info_closure) },
-        { be_const_key_weak(dispatch_cb, -1), be_const_closure(Matter_HTTP_remote_dispatch_cb_closure) },
+        { be_const_key_weak(set_info, -1), be_const_closure(class_Matter_HTTP_remote_set_info_closure) },
+        { be_const_key_weak(dispatch_cb, -1), be_const_closure(class_Matter_HTTP_remote_dispatch_cb_closure) },
         { be_const_key_weak(UPDATE_CMD2, -1), be_nested_str_weak(Status_X202) },
         { be_const_key_weak(UPDATE_CMD0, -1), be_nested_str_weak(Status) },
-        { be_const_key_weak(event_http_failed, 3), be_const_closure(Matter_HTTP_remote_event_http_failed_closure) },
-        { be_const_key_weak(add_async_cb, 6), be_const_closure(Matter_HTTP_remote_add_async_cb_closure) },
-        { be_const_key_weak(init, -1), be_const_closure(Matter_HTTP_remote_init_closure) },
-        { be_const_key_weak(event_http_finished, -1), be_const_closure(Matter_HTTP_remote_event_http_finished_closure) },
+        { be_const_key_weak(event_http_failed, 3), be_const_closure(class_Matter_HTTP_remote_event_http_failed_closure) },
+        { be_const_key_weak(add_async_cb, 6), be_const_closure(class_Matter_HTTP_remote_add_async_cb_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_Matter_HTTP_remote_init_closure) },
+        { be_const_key_weak(event_http_finished, -1), be_const_closure(class_Matter_HTTP_remote_event_http_finished_closure) },
     })),
     be_str_weak(Matter_HTTP_remote)
 );
-/*******************************************************************/
-
-void be_load_Matter_HTTP_remote_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_HTTP_remote);
-    be_setglobal(vm, "Matter_HTTP_remote");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

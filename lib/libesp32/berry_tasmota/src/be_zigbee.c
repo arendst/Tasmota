@@ -98,7 +98,7 @@ class be_class_zb_device (scope: global, name: zb_device, strings: weak) {
 
   member, func(zd_member)
 
-  tostring, closure(zb_device_tostring_closure)
+  tostring, closure(class_zb_device_tostring_closure)
 }
 @const_object_info_end */
 

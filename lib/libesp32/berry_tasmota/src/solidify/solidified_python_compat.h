@@ -7,7 +7,7 @@
 /********************************************************************
 ** Solidified function: _anonymous_
 ********************************************************************/
-be_local_closure(python_compat__anonymous_,   /* name */
+be_local_closure(_anonymous_,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -15,7 +15,7 @@ be_local_closure(python_compat__anonymous_,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    NULL, 
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str(global),
@@ -50,7 +50,7 @@ be_local_module(python_compat,
     "python_compat",
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(init, -1), be_const_closure(python_compat__anonymous__closure) },
+        { be_const_key(init, -1), be_const_closure(_anonymous__closure) },
     }))
 );
 BE_EXPORT_VARIABLE be_define_const_native_module(python_compat);

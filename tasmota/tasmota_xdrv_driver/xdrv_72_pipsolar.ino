@@ -1001,7 +1001,8 @@ void PIPSOLARShow(bool json)
       PIPSOLARShowWeb(setting);
     }
     float percentError = 100.0 * PIPSOLAR.errorPoll / (PIPSOLAR.errorPoll + PIPSOLAR.successPoll);
-    WSContentSend_PD(PSTR("{s}<h2>ERROR</h2>{m}Success: %u<br>Error: %u<br>CurrentError: %u<br>Max CurrentError: %u<br>ErrorRate %.2f %%{e}"), PIPSOLAR.successPoll, PIPSOLAR.errorPoll, PIPSOLAR.currentErrorPoll, PIPSOLAR.maxCurrentErrorPoll, percentError);
+    WSContentSend_PD(PSTR("{s}<h2>ERROR</h2>{m}Success: %u<br>Error: %u<br>CurrentError: %u<br>Max CurrentError: %u<br>ErrorRate %2_f %%{e}"),
+      PIPSOLAR.successPoll, PIPSOLAR.errorPoll, PIPSOLAR.currentErrorPoll, PIPSOLAR.maxCurrentErrorPoll, &percentError);
 #endif // USE_WEBSERVER
   }
 }

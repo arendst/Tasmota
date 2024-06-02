@@ -2789,7 +2789,7 @@ void HandleMI32Key(){
 
   WSContentSend_P(HTTP_KEY_ADDED, mac, key);
 
-  strncat(key, mac, sizeof(key));
+  strcat(key, mac);
   MI32AddKey(key, nullptr);
 
 //  WSContentSpaceButton(BUTTON_CONFIGURATION);
@@ -3527,7 +3527,7 @@ void MI32Show(bool json)
       const char *typeName = kMI32DeviceType[p->type-1];
       const char *alias = BLE_ESP32::getAlias(p->MAC);
       if (alias && *alias){
-        WSContentSend_PD(HTTP_MI32_ALIAS, typeName, alias);
+        WSContentSend_P(HTTP_MI32_ALIAS, typeName, alias);
       }
       char _MAC[18];
       ToHex_P(p->MAC,6,_MAC,18);//,':');
