@@ -3,11 +3,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.0.0.4]
+## [14.1.0.1]
 ### Added
-- SML FastExit for binary SML parsing (#21497)
 
 ### Breaking Changed
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [Released]
+
+## [14.1.0] 20240603
+- Release Rachel
+
+## [14.0.0.4] 20240603
+### Added
+- SML FastExit for binary SML parsing (#21497)
 
 ### Changed
 - GPIOViewer from v1.5.3 to v1.5.4 (No functional change)
@@ -75,8 +89,6 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 - Support of old insecure fingerprint algorithm. Deprecated since v8.4.0 (#21417)
-
-## [Released]
 
 ## [14.0.0] 20240515
 - Release Rodney
