@@ -269,7 +269,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Contact_read_attribute,   /* name */
 extern const bclass be_class_Matter_Plugin_Sensor_Contact;
 be_local_closure(class_Matter_Plugin_Sensor_Contact_update_virtual,   /* name */
   be_nested_proto(
-    7,                          /* nstack */
+    10,                          /* nstack */
     2,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -277,42 +277,32 @@ be_local_closure(class_Matter_Plugin_Sensor_Contact_update_virtual,   /* name */
     0,                          /* has sup protos */
     &be_class_Matter_Plugin_Sensor_Contact, 
     1,                          /* has constants */
-    ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_str_weak(find),
-    /* K1   */  be_nested_str_weak(Contact),
-    /* K2   */  be_nested_str_weak(shadow_contact),
-    /* K3   */  be_nested_str_weak(attribute_updated),
-    /* K4   */  be_const_int(0),
-    /* K5   */  be_nested_str_weak(update_virtual),
+    ( &(const bvalue[ 5]) {     /* constants */
+    /* K0   */  be_nested_str_weak(shadow_contact),
+    /* K1   */  be_nested_str_weak(_parse_update_virtual),
+    /* K2   */  be_nested_str_weak(Contact),
+    /* K3   */  be_const_int(0),
+    /* K4   */  be_nested_str_weak(update_virtual),
     }),
     be_str_weak(update_virtual),
     &be_const_str_solidified,
-    ( &(const binstruction[25]) {  /* code */
-      0x8C080300,  //  0000  GETMET	R2	R1	K0
-      0x58100001,  //  0001  LDCONST	R4	K1
-      0x7C080400,  //  0002  CALL	R2	2
-      0x4C0C0000,  //  0003  LDNIL	R3
-      0x200C0403,  //  0004  NE	R3	R2	R3
-      0x780E000B,  //  0005  JMPF	R3	#0012
-      0x600C0017,  //  0006  GETGBL	R3	G23
-      0x5C100400,  //  0007  MOVE	R4	R2
-      0x7C0C0200,  //  0008  CALL	R3	1
-      0x5C080600,  //  0009  MOVE	R2	R3
-      0x880C0102,  //  000A  GETMBR	R3	R0	K2
-      0x200C0602,  //  000B  NE	R3	R3	R2
-      0x780E0004,  //  000C  JMPF	R3	#0012
-      0x8C0C0103,  //  000D  GETMET	R3	R0	K3
-      0x54160044,  //  000E  LDINT	R5	69
-      0x58180004,  //  000F  LDCONST	R6	K4
-      0x7C0C0600,  //  0010  CALL	R3	3
-      0x90020402,  //  0011  SETMBR	R0	K2	R2
-      0x600C0003,  //  0012  GETGBL	R3	G3
-      0x5C100000,  //  0013  MOVE	R4	R0
-      0x7C0C0200,  //  0014  CALL	R3	1
-      0x8C0C0705,  //  0015  GETMET	R3	R3	K5
-      0x5C140200,  //  0016  MOVE	R5	R1
-      0x7C0C0400,  //  0017  CALL	R3	2
-      0x80000000,  //  0018  RET	0
+    ( &(const binstruction[16]) {  /* code */
+      0x8C080101,  //  0000  GETMET	R2	R0	K1
+      0x5C100200,  //  0001  MOVE	R4	R1
+      0x58140002,  //  0002  LDCONST	R5	K2
+      0x88180100,  //  0003  GETMBR	R6	R0	K0
+      0x601C0017,  //  0004  GETGBL	R7	G23
+      0x54220044,  //  0005  LDINT	R8	69
+      0x58240003,  //  0006  LDCONST	R9	K3
+      0x7C080E00,  //  0007  CALL	R2	7
+      0x90020002,  //  0008  SETMBR	R0	K0	R2
+      0x60080003,  //  0009  GETGBL	R2	G3
+      0x5C0C0000,  //  000A  MOVE	R3	R0
+      0x7C080200,  //  000B  CALL	R2	1
+      0x8C080504,  //  000C  GETMET	R2	R2	K4
+      0x5C100200,  //  000D  MOVE	R4	R1
+      0x7C080400,  //  000E  CALL	R2	2
+      0x80000000,  //  000F  RET	0
     })
   )
 );

@@ -141,6 +141,20 @@ class Matter_TLV
         return self
       end
     end
+
+    #############################################################
+    # set value, equivalent to create_TLV() without allocation
+    #
+    # if value is `nil` replace with TLV.NULL
+    def set_or_nil(t, value)
+      self.reset()
+      if (value == nil)   t = 0x14  end   # force TLV.NULL
+      if value != nil || t == 0x14 #-t == matter.TLV.NULL-#   # put the actual number for performance
+        self.typ = t
+        self.val = value
+        return self
+      end
+    end
     
     #############################################################
     # neutral converter

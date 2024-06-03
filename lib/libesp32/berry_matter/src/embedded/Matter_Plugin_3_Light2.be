@@ -120,7 +120,7 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
     if   cluster == 0x0300              # ========== Color Control 3.2 p.111 ==========
       self.update_shadow_lazy()
       if   attribute == 0x0007          #  ---------- ColorTemperatureMireds / u2 ----------
-        return tlv_solo.set(TLV.U1, self.shadow_ct)
+        return tlv_solo.set_or_nil(TLV.U1, self.shadow_ct)   # if `nil` it is replaced with TLV.NULL
       elif attribute == 0x0008          #  ---------- ColorMode / u1 ----------
         return tlv_solo.set(TLV.U1, 2)# 2 = ColorTemperatureMireds
       elif attribute == 0x000F          #  ---------- Options / u1 ----------
@@ -179,12 +179,12 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
   # update_virtual
   #
   # Update internal state for virtual devices
-  def update_virtual(payload_json)
-    var val_ct = int(payload_json.find("CT"))         # int or nil
+  def update_virtual(payload)
+    var val_ct = int(payload.find("CT"))         # int or nil
     if (val_ct != nil)
       self.set_ct(val_ct)
     end
-    super(self).update_virtual(payload_json)
+    super(self).update_virtual(payload)
   end
 
 end

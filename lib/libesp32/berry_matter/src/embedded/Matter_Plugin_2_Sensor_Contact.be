@@ -102,16 +102,9 @@ class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
   # update_virtual
   #
   # Update internal state for virtual devices
-  def update_virtual(payload_json)
-    var val_onoff = payload_json.find("Contact")
-    if val_onoff != nil
-      val_onoff = bool(val_onoff)
-      if self.shadow_contact != val_onoff
-        self.attribute_updated(0x0045, 0x0000)
-        self.shadow_contact = val_onoff
-      end
-    end
-    super(self).update_virtual(payload_json)
+  def update_virtual(payload)
+    self.shadow_contact = self._parse_update_virtual(payload, "Contact", self.shadow_contact, bool, 0x0045, 0x0000)
+    super(self).update_virtual(payload)
   end
 
 end

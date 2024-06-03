@@ -480,10 +480,38 @@ class Matter_Plugin
   # The map is pre-cleaned and contains only keys declared in
   # `self.UPDATE_COMMANDS` with the adequate case
   # (no need to handle case-insensitive)
-  def update_virtual(payload_json)
+  def update_virtual(payload)
     # pass
   end
 
+  #######################################################################
+  # _parse_update_virtual: parse a single value out of MtrUpdate JSON
+  #
+  # Used internally by `update_virtual`
+  #
+  # Args
+  #   payload: the native payload (converted from JSON) from MtrUpdate
+  #   key: key name in the JSON payload to read from, do nothing if key does not exist or content is `null`
+  #   old_val: previous value, used to detect a change or return the value unchanged
+  #   type_func: type enforcer for value, typically `int`, `bool`, `str`, `number`, `real`
+  #   cluster/attribute: in case the value has change, publish a change to cluster/attribute
+  #
+  # Returns:
+  #   `old_val` if key does not exist, JSON value is `null`, or value is unchanged
+  #   or new value from JSON (which is the new shadow value)
+  #
+  def _parse_update_virtual(payload, key, old_val, type_func, cluster, attribute)
+    var val = payload.find(key)
+    if (val != nil)
+      val = type_func(val)
+      if (val != old_val)
+        self.attribute_updated(cluster, attribute)
+      end
+      return val
+    end
+    return old_val
+  end
+  
 end
 
 matter.Plugin = Matter_Plugin

@@ -230,16 +230,16 @@ class Matter_Plugin_Light1 : Matter_Plugin_Device
   # update_virtual
   #
   # Update internal state for virtual devices
-  def update_virtual(payload_json)
-    var val_onoff = payload_json.find("Power")
-    var val_bri = payload_json.find("Bri")
+  def update_virtual(payload)
+    var val_onoff = payload.find("Power")
+    var val_bri = payload.find("Bri")
     if val_bri != nil
       self.set_bri(int(val_bri), val_onoff)
       return    # don't call super() because we already handeld 'Power'
     elif val_onoff != nil
       self.set_onoff(bool(val_onoff))
     end
-    super(self).update_virtual(payload_json)
+    super(self).update_virtual(payload)
   end
 
 end

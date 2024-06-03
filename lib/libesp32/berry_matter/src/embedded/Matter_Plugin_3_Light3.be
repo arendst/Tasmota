@@ -127,9 +127,9 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
     if   cluster == 0x0300              # ========== Color Control 3.2 p.111 ==========
       self.update_shadow_lazy()
       if   attribute == 0x0000          #  ---------- CurrentHue / u1 ----------
-        return tlv_solo.set(TLV.U1, self.shadow_hue)
+        return tlv_solo.set_or_nil(TLV.U1, self.shadow_hue)
       elif attribute == 0x0001          #  ---------- CurrentSaturation / u2 ----------
-        return tlv_solo.set(TLV.U1, self.shadow_sat)
+        return tlv_solo.set_or_nil(TLV.U1, self.shadow_sat)
       elif attribute == 0x0007          #  ---------- ColorTemperatureMireds / u2 ----------
         return tlv_solo.set(TLV.U1, 0)
       elif attribute == 0x0008          #  ---------- ColorMode / u1 ----------
@@ -213,13 +213,13 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
   # update_virtual
   #
   # Update internal state for virtual devices
-  def update_virtual(payload_json)
-    var val_hue = int(payload_json.find("Hue"))         # int or nil
-    var val_sat = int(payload_json.find("Sat"))         # int or nil
+  def update_virtual(payload)
+    var val_hue = int(payload.find("Hue"))         # int or nil
+    var val_sat = int(payload.find("Sat"))         # int or nil
     if (val_hue != nil) || (val_sat != nil)
       self.set_hue_sat(val_hue, val_sat)
     end
-    super(self).update_virtual(payload_json)
+    super(self).update_virtual(payload)
   end
 
 end

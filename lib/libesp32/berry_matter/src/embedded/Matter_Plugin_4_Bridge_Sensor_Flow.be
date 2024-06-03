@@ -53,28 +53,7 @@ class Matter_Plugin_Bridge_Sensor_Flow : Matter_Plugin_Bridge_Sensor
   #############################################################
   # read an attribute
   #
-  def read_attribute(session, ctx, tlv_solo)
-    var TLV = matter.TLV
-    var cluster = ctx.cluster
-    var attribute = ctx.attribute
-
-    # ====================================================================================================
-    if   cluster == 0x0404              # ========== Flow Measurement 2.1.2 p.127 ==========
-      if   attribute == 0x0000          #  ---------- MeasuredValue / i16 ----------
-        if self.shadow_value != nil
-          return tlv_solo.set(TLV.U2, int(self.shadow_value)) # MeasuredValue represents 10 x flow in m3/h.
-        else
-          return tlv_solo.set(TLV.NULL, nil)
-        end
-      elif attribute == 0x0001          #  ---------- MinMeasuredValue / i16 ----------
-        return tlv_solo.set(TLV.U2, 0)  # 0 m3/h
-      elif attribute == 0x0002          #  ---------- MaxMeasuredValue / i16 ----------
-        return tlv_solo.set(TLV.U2, 65534)  # 65534 m3/h
-      end
-
-    end
-    return super(self).read_attribute(session, ctx, tlv_solo)
-  end
+  static var read_attribute = matter.Plugin_Sensor_Flow.read_attribute
 
   #############################################################
   # web_values

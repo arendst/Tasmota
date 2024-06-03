@@ -92,45 +92,7 @@ class Matter_Plugin_Bridge_Light3 : Matter_Plugin_Bridge_Light1
   #############################################################
   # read an attribute
   #
-  def read_attribute(session, ctx, tlv_solo)
-    var TLV = matter.TLV
-    var cluster = ctx.cluster
-    var attribute = ctx.attribute
-
-    # ====================================================================================================
-    if   cluster == 0x0300              # ========== Color Control 3.2 p.111 ==========
-      self.update_shadow_lazy()
-      if   attribute == 0x0000          #  ---------- CurrentHue / u1 ----------
-        if self.shadow_hue != nil
-          return tlv_solo.set(TLV.U1, self.shadow_hue)
-        else
-          return tlv_solo.set(TLV.NULL, nil)
-        end
-      elif attribute == 0x0001          #  ---------- CurrentSaturation / u2 ----------
-        if self.shadow_sat != nil
-          return tlv_solo.set(TLV.U1, self.shadow_sat)
-        else
-          return tlv_solo.set(TLV.NULL, nil)
-        end
-      elif attribute == 0x0007          #  ---------- ColorTemperatureMireds / u2 ----------
-        return tlv_solo.set(TLV.U1, 0)
-      elif attribute == 0x0008          #  ---------- ColorMode / u1 ----------
-        return tlv_solo.set(TLV.U1, 0)# 0 = CurrentHue and CurrentSaturation
-      elif attribute == 0x000F          #  ---------- Options / u1 ----------
-        return tlv_solo.set(TLV.U1, 0)
-      elif attribute == 0x4001          #  ---------- EnhancedColorMode / u1 ----------
-        return tlv_solo.set(TLV.U1, 0)
-      elif attribute == 0x400A          #  ---------- ColorCapabilities / map32 ----------
-        return tlv_solo.set(TLV.U4, 0x01)    # HS
-
-      # Defined Primaries Information Attribute Set
-      elif attribute == 0x0010          #  ---------- NumberOfPrimaries / u1 ----------
-        return tlv_solo.set(TLV.U1, 0)
-      end
-
-    end
-    return super(self).read_attribute(session, ctx, tlv_solo)
-  end
+  def read_attribute = matter.Plugin_Light3.read_attribute
 
   #############################################################
   # Invoke a command

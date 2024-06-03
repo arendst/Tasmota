@@ -328,7 +328,7 @@ be_local_closure(class_Matter_Plugin_Device_append_state_json,   /* name */
     &be_class_Matter_Plugin_Device, 
     }),
     1,                          /* has constants */
-    ( &(const bvalue[30]) {     /* constants */
+    ( &(const bvalue[42]) {     /* constants */
     /* K0   */  be_nested_str_weak(introspect),
     /* K1   */  be_nested_str_weak(json),
     /* K2   */  be_nested_str_weak(),
@@ -359,10 +359,22 @@ be_local_closure(class_Matter_Plugin_Device_append_state_json,   /* name */
     /* K27  */  be_nested_str_weak(Contact),
     /* K28  */  be_nested_str_weak(shadow_occupancy),
     /* K29  */  be_nested_str_weak(Occupancy),
+    /* K30  */  be_nested_str_weak(shadow_air_quality),
+    /* K31  */  be_nested_str_weak(AirQuality),
+    /* K32  */  be_nested_str_weak(shadow_co2),
+    /* K33  */  be_nested_str_weak(CO2),
+    /* K34  */  be_nested_str_weak(shadow_pm1),
+    /* K35  */  be_nested_str_weak(PM1),
+    /* K36  */  be_nested_str_weak(shadow_pm2_5),
+    /* K37  */  be_nested_str_weak(PM2_X2E5),
+    /* K38  */  be_nested_str_weak(shadow_pm10),
+    /* K39  */  be_nested_str_weak(PM10),
+    /* K40  */  be_nested_str_weak(shadow_tvoc),
+    /* K41  */  be_nested_str_weak(TVOC),
     }),
     be_str_weak(append_state_json),
     &be_const_str_solidified,
-    ( &(const binstruction[71]) {  /* code */
+    ( &(const binstruction[95]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0xA40A0200,  //  0001  IMPORT	R2	K1
       0x580C0002,  //  0002  LDCONST	R3	K2
@@ -432,8 +444,77 @@ be_local_closure(class_Matter_Plugin_Device_append_state_json,   /* name */
       0x581C001C,  //  0042  LDCONST	R7	K28
       0x5820001D,  //  0043  LDCONST	R8	K29
       0x7C180400,  //  0044  CALL	R6	2
-      0xA0000000,  //  0045  CLOSE	R0
-      0x80040600,  //  0046  RET	1	R3
+      0x5C180800,  //  0045  MOVE	R6	R4
+      0x581C001E,  //  0046  LDCONST	R7	K30
+      0x5820001F,  //  0047  LDCONST	R8	K31
+      0x7C180400,  //  0048  CALL	R6	2
+      0x5C180800,  //  0049  MOVE	R6	R4
+      0x581C0020,  //  004A  LDCONST	R7	K32
+      0x58200021,  //  004B  LDCONST	R8	K33
+      0x7C180400,  //  004C  CALL	R6	2
+      0x5C180800,  //  004D  MOVE	R6	R4
+      0x581C0022,  //  004E  LDCONST	R7	K34
+      0x58200023,  //  004F  LDCONST	R8	K35
+      0x7C180400,  //  0050  CALL	R6	2
+      0x5C180800,  //  0051  MOVE	R6	R4
+      0x581C0024,  //  0052  LDCONST	R7	K36
+      0x58200025,  //  0053  LDCONST	R8	K37
+      0x7C180400,  //  0054  CALL	R6	2
+      0x5C180800,  //  0055  MOVE	R6	R4
+      0x581C0026,  //  0056  LDCONST	R7	K38
+      0x58200027,  //  0057  LDCONST	R8	K39
+      0x7C180400,  //  0058  CALL	R6	2
+      0x5C180800,  //  0059  MOVE	R6	R4
+      0x581C0028,  //  005A  LDCONST	R7	K40
+      0x58200029,  //  005B  LDCONST	R8	K41
+      0x7C180400,  //  005C  CALL	R6	2
+      0xA0000000,  //  005D  CLOSE	R0
+      0x80040600,  //  005E  RET	1	R3
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: _parse_sensor_entry
+********************************************************************/
+extern const bclass be_class_Matter_Plugin_Device;
+be_local_closure(class_Matter_Plugin_Device__parse_sensor_entry,   /* name */
+  be_nested_proto(
+    12,                          /* nstack */
+    7,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    &be_class_Matter_Plugin_Device, 
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(find),
+    /* K1   */  be_nested_str_weak(attribute_updated),
+    }),
+    be_str_weak(_parse_sensor_entry),
+    &be_const_str_solidified,
+    ( &(const binstruction[18]) {  /* code */
+      0x8C1C0300,  //  0000  GETMET	R7	R1	K0
+      0x5C240400,  //  0001  MOVE	R9	R2
+      0x7C1C0400,  //  0002  CALL	R7	2
+      0x4C200000,  //  0003  LDNIL	R8
+      0x20200E08,  //  0004  NE	R8	R7	R8
+      0x7822000A,  //  0005  JMPF	R8	#0011
+      0x5C200800,  //  0006  MOVE	R8	R4
+      0x5C240E00,  //  0007  MOVE	R9	R7
+      0x7C200200,  //  0008  CALL	R8	1
+      0x5C1C1000,  //  0009  MOVE	R7	R8
+      0x20200E03,  //  000A  NE	R8	R7	R3
+      0x78220003,  //  000B  JMPF	R8	#0010
+      0x8C200101,  //  000C  GETMET	R8	R0	K1
+      0x5C280A00,  //  000D  MOVE	R10	R5
+      0x5C2C0C00,  //  000E  MOVE	R11	R6
+      0x7C200600,  //  000F  CALL	R8	3
+      0x80040E00,  //  0010  RET	1	R7
+      0x80040600,  //  0011  RET	1	R3
     })
   )
 );
@@ -534,17 +615,18 @@ extern const bclass be_class_Matter_Plugin;
 be_local_class(Matter_Plugin_Device,
     0,
     &be_class_Matter_Plugin,
-    be_nested_map(6,
+    be_nested_map(7,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(read_attribute, -1), be_const_closure(class_Matter_Plugin_Device_read_attribute_closure) },
-        { be_const_key_weak(invoke_request, -1), be_const_closure(class_Matter_Plugin_Device_invoke_request_closure) },
-        { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(1,
-    ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_int(19, -1), be_const_int(1) },
-    }))    ) } )) },
+        { be_const_key_weak(read_attribute, 1), be_const_closure(class_Matter_Plugin_Device_read_attribute_closure) },
+        { be_const_key_weak(invoke_request, 4), be_const_closure(class_Matter_Plugin_Device_invoke_request_closure) },
         { be_const_key_weak(append_state_json, -1), be_const_closure(class_Matter_Plugin_Device_append_state_json_closure) },
-        { be_const_key_weak(CLUSTERS, 3), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        { be_const_key_weak(NON_BRIDGE_VENDOR, 5), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
+        be_const_list( *     be_nested_list(2,
+    ( (struct bvalue*) &(const bvalue[]) {
+        be_const_int(4631),
+        be_const_int(4993),
+    }))    ) } )) },
+        { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(5,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(5, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
@@ -617,12 +699,12 @@ be_local_class(Matter_Plugin_Device,
         be_const_int(65533),
     }))    ) } )) },
     }))    ) } )) },
-        { be_const_key_weak(NON_BRIDGE_VENDOR, 1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
-        be_const_list( *     be_nested_list(2,
-    ( (struct bvalue*) &(const bvalue[]) {
-        be_const_int(4631),
-        be_const_int(4993),
+        { be_const_key_weak(TYPES, 6), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        be_const_map( *     be_nested_map(1,
+    ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_int(19, -1), be_const_int(1) },
     }))    ) } )) },
+        { be_const_key_weak(_parse_sensor_entry, -1), be_const_closure(class_Matter_Plugin_Device__parse_sensor_entry_closure) },
     })),
     be_str_weak(Matter_Plugin_Device)
 );
