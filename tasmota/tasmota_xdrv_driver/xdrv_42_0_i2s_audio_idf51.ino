@@ -1052,6 +1052,10 @@ void CmndI2SI2SRtttl(void) {
 }
 
 void CmndI2SMicRec(void) {
+  if (I2SPrepareRx()) {
+    ResponseCmndChar("I2S Mic not configured");
+    return;
+  }
   if (audio_i2s_mp3.mp3ram == nullptr){
     AddLog(LOG_LEVEL_DEBUG,PSTR("I2S: try late buffer allocation for mp3 encoder"));
     audio_i2s_mp3.mp3ram = special_malloc(preallocateCodecSize);
