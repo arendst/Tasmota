@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [14.1.0.1]
 ### Added
+- Berry solidification of `bytes` instances
 
 ### Breaking Changed
 
