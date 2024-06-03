@@ -40,7 +40,7 @@ This release will be supported from ESP32/Arduino library Core version **3.0.0**
 
 Support of ESP8266 Core versions before 2.7.6 and ESP32 Core versions before 3.0.0 have been removed.
 
-### Known issues with v14.0.0
+### Known issues with v14.1.0
 
 Due to the change from ESP32 Arduino Core2/IDF4 to Arduino Core3/IDF5 not all functionality has been restored. The following features are known not to work on ESP32:
 - Wifi Range Extender [#21200](https://github.com/arendst/Tasmota/issues/21200)
@@ -80,7 +80,7 @@ Latest released binaries can be downloaded from
 - http://ota.tasmota.com/tasmota/release
 
 Historical binaries can be downloaded from
-- http://ota.tasmota.com/tasmota/release-14.0.0
+- http://ota.tasmota.com/tasmota/release-14.1.0
 
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
@@ -109,7 +109,7 @@ Latest released binaries can be downloaded from
 - https://ota.tasmota.com/tasmota32/release
 
 Historical binaries can be downloaded from
-- https://ota.tasmota.com/tasmota32/release-14.0.0
+- https://ota.tasmota.com/tasmota32/release-14.1.0
 
 The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasmota.com/tasmota32/release/tasmota32.bin``
 
@@ -119,49 +119,11 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v14.0.0.4
+## Changelog v14.1.0.1
 ### Added
-- Optional command ``WebRun`` (as WebQuery extension) [#21364](https://github.com/arendst/Tasmota/issues/21364)
-- Support for Knx dimmer and color [#21434](https://github.com/arendst/Tasmota/issues/21434)
-- SML FastExit for binary SML parsing [#21497](https://github.com/arendst/Tasmota/issues/21497)
-- Berry add reuse of methods for interface-like code reuse [#21500](https://github.com/arendst/Tasmota/issues/21500)
-- Support for Matter 1.3 Water leak detectors [#21456](https://github.com/arendst/Tasmota/issues/21456)
-
-### Breaking Changed
 
 ### Changed
-- ESP32 Core3 platform update from 2024.05.11 to 2024.05.13 [#21524](https://github.com/arendst/Tasmota/issues/21524)
-- GPIOViewer from v1.5.2 to v1.5.3
-- On universal display remove default backlight power if a PWM channel is used for backlight
-- TCP bridge increased baudrate selection [#21528](https://github.com/arendst/Tasmota/issues/21528)
-- Support W5500 SPI ethernet using four SPI GPIOs only without IRQ and RESET
-- ESP32 compiler option from `target-align` to `no-target-align` [#21407](https://github.com/arendst/Tasmota/issues/21407)
-- ESP32 I2S audio improvements [#21433](https://github.com/arendst/Tasmota/issues/21433)
-- Berry binary compiled with gcc [#21426](https://github.com/arendst/Tasmota/issues/21426)
-- Berry allow easy solidification of external Berry [#21430](https://github.com/arendst/Tasmota/issues/21430)
-- Berry change internal storage of parent class for methods [#21490](https://github.com/arendst/Tasmota/issues/21490)
-- Berry coc parser keeps order of variables [#21542](https://github.com/arendst/Tasmota/issues/21542)
 
 ### Fixed
-- Domoticz re-subscribe on MQTT reconnect. Regression from v13.4.0.3 [#21281](https://github.com/arendst/Tasmota/issues/21281)
-- Watchdog restart or freeze if ``displaytext`` is more than 128 characters [#21401](https://github.com/arendst/Tasmota/issues/21401)
-- Wrong timeout in `WebQuery` and `webclient` since Core3 [#21442](https://github.com/arendst/Tasmota/issues/21442)
-- uDisplay Parallel display on Core3 [#21529](https://github.com/arendst/Tasmota/issues/21529)
-- UfsServe watchdog on large folder [#21486](https://github.com/arendst/Tasmota/issues/21486)
-- SML compile error when median-filter is disabled [#21495](https://github.com/arendst/Tasmota/issues/21495)
-- Hydreon RG15 malformed JSON string [#21508](https://github.com/arendst/Tasmota/issues/21508)
-- Telegram TLS fingerprint, remove CA validation [#21514](https://github.com/arendst/Tasmota/issues/21514)
-- Zigbee crash when removing `ZbName` [#21449](https://github.com/arendst/Tasmota/issues/21449)
-- Avoid connection errors when switching to safeboot to upload OTA firmware [#21428](https://github.com/arendst/Tasmota/issues/21428)
-- ESP32 slow response when using UDP as in emulation [#21470](https://github.com/arendst/Tasmota/issues/21470)
-- ESP32 BLE fix scanning [#21451](https://github.com/arendst/Tasmota/issues/21451)
-- ESP32 I2S multiple fixes [#21511](https://github.com/arendst/Tasmota/issues/21511)
-- I2S APLL not supported on all SOCs [#21483](https://github.com/arendst/Tasmota/issues/21483)
-- Webradio crash with invalid url [#21446](https://github.com/arendst/Tasmota/issues/21446)
-- Berry Leds matrix alternate more and error about 'bri' attribute [#21431](https://github.com/arendst/Tasmota/issues/21431)
-- LVGL exception when using tjpegd [#21544](https://github.com/arendst/Tasmota/issues/21544)
-- Matter auto-fix IPv6 link-local zone id when network reconnects [#21494](https://github.com/arendst/Tasmota/issues/21494)
 
 ### Removed
-- Support of old insecure fingerprint algorithm. Deprecated since v8.4.0 [#21417](https://github.com/arendst/Tasmota/issues/21417)
-- Deprecated code from drivers, `USE_TTGO_WATCH` and `USE_M5STACK_CORE2` [#21533](https://github.com/arendst/Tasmota/issues/21533)

@@ -136,7 +136,12 @@ bool TasmotaSerial::isValidGPIOpin(int pin) {
 }
 
 void TasmotaSerial::setTransmitEnablePin(int tx_enable_pin) {
+#ifdef ESP8266
+  if ((tx_enable_pin > -1) && (isValidGPIOpin(tx_enable_pin) || (16 == tx_enable_pin))) {
+#endif
+#ifdef ESP32
   if ((tx_enable_pin > -1) && isValidGPIOpin(tx_enable_pin)) {
+#endif
     m_tx_enable_pin = tx_enable_pin;
     pinMode(m_tx_enable_pin, OUTPUT);
     digitalWrite(m_tx_enable_pin, LOW);
