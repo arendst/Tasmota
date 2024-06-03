@@ -92,36 +92,7 @@ class Matter_Plugin_Bridge_Light2 : Matter_Plugin_Bridge_Light1
   #############################################################
   # read an attribute
   #
-  def read_attribute(session, ctx, tlv_solo)
-    var TLV = matter.TLV
-    var cluster = ctx.cluster
-    var attribute = ctx.attribute
-
-    # ====================================================================================================
-    if   cluster == 0x0300              # ========== Color Control 3.2 p.111 ==========
-      self.update_shadow_lazy()
-      if   attribute == 0x0007          #  ---------- ColorTemperatureMireds / u2 ----------
-        if self.shadow_ct != nil
-          return tlv_solo.set(TLV.U1, self.shadow_ct)
-        else
-          return tlv_solo.set(TLV.NULL, nil)
-        end
-      elif attribute == 0x0008          #  ---------- ColorMode / u1 ----------
-        return tlv_solo.set(TLV.U1, 2)# 2 = ColorTemperatureMireds
-      elif attribute == 0x000F          #  ---------- Options / u1 ----------
-        return tlv_solo.set(TLV.U1, 0)
-      elif attribute == 0x400B          #  ---------- ColorTempPhysicalMinMireds / u2 ----------
-        return tlv_solo.set(TLV.U1, self.ct_min)
-      elif attribute == 0x400C          #  ---------- ColorTempPhysicalMaxMireds / u2 ----------
-        return tlv_solo.set(TLV.U1, self.ct_max)
-      
-      elif attribute == 0x400A          #  ---------- ColorCapabilities / map32 ----------
-        return tlv_solo.set(TLV.U4, 0x10)    # CT
-      end
-      
-    end
-    return super(self).read_attribute(session, ctx, tlv_solo)
-  end
+  def read_attribute = matter.Plugin_Light2.read_attribute
 
   #############################################################
   # Invoke a command

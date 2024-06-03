@@ -200,8 +200,45 @@ class Matter_Plugin_Device : Matter_Plugin
     # sensors
     _stats_json_inner("shadow_contact",    "Contact")
     _stats_json_inner("shadow_occupancy",  "Occupancy")
+
+    # air quality
+    _stats_json_inner("shadow_air_quality",     "AirQuality")
+    _stats_json_inner("shadow_co2",             "CO2")
+    _stats_json_inner("shadow_pm1",             "PM1")
+    _stats_json_inner("shadow_pm2_5",           "PM2.5")
+    _stats_json_inner("shadow_pm10",            "PM10")
+    _stats_json_inner("shadow_tvoc",            "TVOC")
+    
     # print(ret)
     return ret
+  end
+
+  #######################################################################
+  # _parse_sensor_entry: internal helper function
+  #
+  # Used internally by `update_virtual`
+  #
+  # Args
+  #   payload: the native payload (converted from JSON) from MtrUpdate
+  #   key: key name in the JSON payload to read from, do nothing if key does not exist or content is `null`
+  #   type_func: type enforcer for value, typically `int`, `bool`, `str`, `number`, `real`
+  #   old_val: previous value, used to detect a change or return the value unchanged
+  #   cluster/attribute: in case the value has change, publish a change to cluster/attribute
+  #
+  # Returns:
+  #   `old_val` if key does not exist, JSON value is `null`, or value is unchanged
+  #   or new value from JSON (which is the new shadow value)
+  #
+  def _parse_sensor_entry(payload, key, old_val, type_func, cluster, attribute)
+    var val = payload.find(key)
+    if (val != nil)
+      val = type_func(val)
+      if val != old_val
+        self.attribute_updated(cluster, attribute)   # CurrentPositionTiltPercent100ths
+      end
+      return val
+    end
+    return old_val
   end
 
 end

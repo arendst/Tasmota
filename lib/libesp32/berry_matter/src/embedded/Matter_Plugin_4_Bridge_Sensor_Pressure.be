@@ -53,28 +53,7 @@ class Matter_Plugin_Bridge_Sensor_Pressure : Matter_Plugin_Bridge_Sensor
   #############################################################
   # read an attribute
   #
-  def read_attribute(session, ctx, tlv_solo)
-    var TLV = matter.TLV
-    var cluster = ctx.cluster
-    var attribute = ctx.attribute
-
-    # ====================================================================================================
-    if   cluster == 0x0403              # ========== Pressure Measurement 2.4 p.98 ==========
-      if   attribute == 0x0000          #  ---------- MeasuredValue / i16 ----------
-        if self.shadow_value != nil
-          return tlv_solo.set(TLV.I2, int(self.shadow_value))
-        else
-          return tlv_solo.set(TLV.NULL, nil)
-        end
-      elif attribute == 0x0001          #  ---------- MinMeasuredValue / i16 ----------
-        return tlv_solo.set(TLV.I2, 500)  # 500 hPA
-      elif attribute == 0x0002          #  ---------- MaxMeasuredValue / i16 ----------
-        return tlv_solo.set(TLV.I2, 1500)  # 1500 hPA
-      end
-
-    end
-    return super(self).read_attribute(session, ctx, tlv_solo)
-  end
+  def read_attribute = matter.Plugin_Sensor_Pressure.read_attribute
 
   #############################################################
   # web_values

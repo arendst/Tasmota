@@ -93,8 +93,8 @@ class Matter_Plugin_Sensor : Matter_Plugin_Device
   # update_virtual
   #
   # Update internal state for virtual devices
-  def update_virtual(payload_json)
-    var val = payload_json.find(self.JSON_NAME)
+  def update_virtual(payload)
+    var val = payload.find(self.JSON_NAME)
     if val != nil
       if type(val) == 'bool'    val = int(val)    end
       
@@ -103,7 +103,7 @@ class Matter_Plugin_Sensor : Matter_Plugin_Device
         self.shadow_value = val
       end
     end
-    super(self).update_virtual(payload_json)
+    super(self).update_virtual(payload)
   end
 
 end

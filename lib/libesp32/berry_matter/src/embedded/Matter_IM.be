@@ -830,7 +830,7 @@ class Matter_IM
     tasmota.log(format("MTR: >Subscribe (%6i) %s (min=%i, max=%i, keep=%i) sub=%i fabric_filtered=%s",
                               msg.session.local_session_id, attr_req.concat(" "), sub.min_interval, sub.max_interval, query.keep_subscriptions ? 1 : 0, sub.subscription_id, query.fabric_filtered), 3)
     if query.event_requests != nil && size(query.event_requests) > 0
-      tasmota.log(f"MTR: >Subscribe (%6i) event_requests_size={size(query.event_requests)}", 3)
+      tasmota.log(f"MTR: >Subscribe ({msg.session.local_session_id:6i}) event_requests_size={size(query.event_requests)}", 3)
     end
 
     var ret = self._inner_process_read_request(msg.session, query, msg, true #-no_log-#)

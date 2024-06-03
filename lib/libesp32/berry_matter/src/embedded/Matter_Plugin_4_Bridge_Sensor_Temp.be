@@ -56,28 +56,7 @@ class Matter_Plugin_Bridge_Sensor_Temp : Matter_Plugin_Bridge_Sensor
   #############################################################
   # read an attribute
   #
-  def read_attribute(session, ctx, tlv_solo)
-    var TLV = matter.TLV
-    var cluster = ctx.cluster
-    var attribute = ctx.attribute
-
-    # ====================================================================================================
-    if   cluster == 0x0402              # ========== Temperature Measurement 2.3 p.97 ==========
-      if   attribute == 0x0000          #  ---------- MeasuredValue / i16 (*100) ----------
-        if self.shadow_value != nil
-          return tlv_solo.set(TLV.I2, self.shadow_value)
-        else
-          return tlv_solo.set(TLV.NULL, nil)
-        end
-      elif attribute == 0x0001          #  ---------- MinMeasuredValue / i16 (*100) ----------
-        return tlv_solo.set(TLV.I2, -5000)  # -50 °C
-      elif attribute == 0x0002          #  ---------- MaxMeasuredValue / i16 (*100) ----------
-        return tlv_solo.set(TLV.I2, 15000)  # 150 °C
-      end
-
-    end
-    return super(self).read_attribute(session, ctx, tlv_solo)
-  end
+  def read_attribute = matter.Plugin_Sensor_Temp.read_attribute
 
   #############################################################
   # web_values

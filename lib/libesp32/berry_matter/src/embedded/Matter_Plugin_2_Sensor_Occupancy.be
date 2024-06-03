@@ -106,16 +106,9 @@ class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Device
   # update_virtual
   #
   # Update internal state for virtual devices
-  def update_virtual(payload_json)
-    var val_onoff = payload_json.find("Occupancy")
-    if val_onoff != nil
-      val_onoff = bool(val_onoff)
-      if self.shadow_occupancy != val_onoff
-        self.attribute_updated(0x0406, 0x0000)
-        self.shadow_occupancy = val_onoff
-      end
-    end
-    super(self).update_virtual(payload_json)
+  def update_virtual(payload)
+    self.val_onoff = self._parse_update_virtual(payload, "Occupancy", self.val_onoff, bool, 0x0406, 0x0000)
+    super(self).update_virtual(payload)
   end
 
 end
