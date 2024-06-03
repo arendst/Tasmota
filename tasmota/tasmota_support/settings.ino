@@ -1425,6 +1425,9 @@ void SettingsDefaultSet2(void) {
   #endif
 #endif // FIRMWARE_MINIMAL
 
+  // Matter
+  flag6.matter_enabled |= MATTER_ENABLED;
+
   Settings->flag = flag;
   Settings->flag2 = flag2;
   Settings->flag3 = flag3;

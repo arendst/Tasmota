@@ -1014,6 +1014,9 @@
   #define USE_ZIGBEE_MAXTIME_LIGHT          60*60     // 1h
   #define USE_ZIGBEE_MAXTIME_LIFT           4*60*60   // 4h
 
+// -- Matter support (ESP32 and variants) ----------------------------
+#define MATTER_ENABLED    false                    // Is Matter enabled by default (ie `SO151 1`)
+
 // -- Other sensors/drivers -----------------------
 
 //#define USE_SHIFT595                             // Add support for 74xx595 8-bit shift registers (+0k7 code)
@@ -1238,6 +1241,10 @@
     #define BE_LV_WIDGET_SPAN
     // #define BE_LV_WIDGET_TABVIEW
     // #define BE_LV_WIDGET_TILEVIEW
+
+// -- Matter protocol ---------------------------------
+  // #define USE_MATTER_DEVICE                      // Enable Matter device support (+420KB)
+                                                    // Enabled by default in standard ESP32 binary
 
 #endif  // ESP32
 
