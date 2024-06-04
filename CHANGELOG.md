@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- Berry `input()` returns empty string and does not crash
 
 ### Removed
 
