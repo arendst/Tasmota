@@ -121,6 +121,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v14.1.0.1
 ### Added
+- Berry solidification of `bytes` instances [#21558](https://github.com/arendst/Tasmota/issues/21558)
+- Matter support for Air Quality sensors [#21559](https://github.com/arendst/Tasmota/issues/21559)
 
 ### Changed
 
