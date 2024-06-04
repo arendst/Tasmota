@@ -216,7 +216,10 @@ extern "C" {
 
 BERRY_API char* be_readstring(char *buffer, size_t size)
 {
-    return be_fgets(stdin, buffer, (int)size);
+    if ((size > 0) && (buffer != NULL)) {
+        *buffer = 0;
+    }
+    return buffer;
 }
 
 /* use the standard library implementation file API. */
