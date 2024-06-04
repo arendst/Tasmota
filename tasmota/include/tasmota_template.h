@@ -166,8 +166,8 @@ enum UserSelectablePins {
 #ifdef ESP32
   GPIO_KEY1_PD, GPIO_KEY1_INV_PD, GPIO_SWT1_PD,
 #endif
-  GPIO_I2S_DOUT, GPIO_I2S_BCLK, GPIO_I2S_WS,
-  GPIO_I2S_DIN,  GPIO_I2S_BCLK_IN,  GPIO_I2S_WS_IN,
+  GPIO_I2S_DOUT, GPIO_I2S_BCLK, GPIO_I2S_WS, GPIO_I2S_DIN,
+  GPIO_I2S_BCLK_IN,  GPIO_I2S_WS_IN,   // Spare since 20240603
   GPIO_INTERRUPT,
   GPIO_MCP2515_CS,                     // MCP2515 Chip Select
   GPIO_HRG15_TX, GPIO_HRG15_RX,        // Hydreon RG-15 rain sensor serial interface
@@ -429,8 +429,8 @@ const char kSensorNames[] PROGMEM =
 #ifdef ESP32
   D_SENSOR_BUTTON "_d|" D_SENSOR_BUTTON "_id|" D_SENSOR_SWITCH "_d|"
 #endif
-  D_SENSOR_I2S_DOUT "|" D_SENSOR_I2S_BCLK "|" D_SENSOR_I2S_WS "|"
-  D_SENSOR_I2S_DIN "|" D_SENSOR_I2S_BCLK_IN "|" D_SENSOR_I2S_WS_IN "|"
+  D_SENSOR_I2S_DOUT "|" D_SENSOR_I2S_BCLK "|" D_SENSOR_I2S_WS "|" D_SENSOR_I2S_DIN "|"
+  D_SENSOR_I2S_BCLK_IN "|" D_SENSOR_I2S_WS_IN "|"
   D_SENSOR_INTERRUPT "|"
   D_SENSOR_MCP2515_CS "|"
   D_SENSOR_HRG15_TX "|" D_SENSOR_HRG15_RX "|"
@@ -599,10 +599,6 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_I2S_DAC) + 2,              // I2S DAC Output
   AGPIO(GPIO_I2S_WS) + MAX_I2S,         // I2S word select
   AGPIO(GPIO_I2S_DIN) + MAX_I2S,        // I2S IN Data
-#endif
-#ifdef USE_I2S
-  AGPIO(GPIO_I2S_BCLK_IN) + MAX_I2S,    // I2S bit clock in
-  AGPIO(GPIO_I2S_WS_IN) + MAX_I2S,      // I2S word select in
 #endif
 
 #ifdef USE_SPI
