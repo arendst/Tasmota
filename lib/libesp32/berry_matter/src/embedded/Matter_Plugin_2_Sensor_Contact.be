@@ -63,7 +63,7 @@ class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
     if !self.VIRTUAL
       var switch_str = "Switch" + str(self.tasmota_switch_index)
 
-      var j = tasmota.cmd("Status 8", true)
+      var j = tasmota.cmd("Status 10", true)
       if j != nil   j = j.find("StatusSNS") end
       if j != nil && j.contains(switch_str)
         var state = (j.find(switch_str) == "ON")
@@ -107,5 +107,46 @@ class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
     super(self).update_virtual(payload)
   end
 
+  #############################################################
+  # For Bridge devices
+  #############################################################
+  #############################################################
+  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
+  #
+  # This call is synnchronous and blocking.
+  def parse_status(data, index)
+    if index == 10                             # Status 10
+      var state = false
+
+      state = (data.find("Switch" + str(self.tasmota_switch_index)) == "ON")
+
+      if self.shadow_contact != nil && self.shadow_contact != bool(state)
+        self.attribute_updated(0x0045, 0x0000)
+      end
+      self.shadow_contact = state
+    end
+  end
+
+  #############################################################
+  # web_values
+  #
+  # Show values of the remote device as HTML
+  def web_values()
+    import webserver
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(format("Contact%i %s", self.tasmota_switch_index, self.web_value_onoff(self.shadow_contact)))
+  end
+
+  # Show prefix before web value
+  def web_values_prefix()
+    import webserver
+    var name = self.get_name()
+    if !name
+      name = "Switch" + str(self.tasmota_switch_index)
+    end
+    webserver.content_send(format(self.PREFIX, name ? webserver.html_escape(name) : ""))
+  end
+  #############################################################
+  #############################################################
 end
 matter.Plugin_Sensor_Contact = Matter_Plugin_Sensor_Contact

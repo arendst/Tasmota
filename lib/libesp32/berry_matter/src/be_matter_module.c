@@ -227,11 +227,11 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_1_Root.h"
 #include "solidify/solidified_Matter_Plugin_1_Aggregator.h"
 #include "solidify/solidified_Matter_Plugin_1_Device.h"
-#include "solidify/solidified_Matter_Plugin_2_OnOff.h"
+#include "solidify/solidified_Matter_Plugin_3_OnOff.h"
 #include "solidify/solidified_Matter_Plugin_9_Virt_OnOff.h"
 #include "solidify/solidified_Matter_Plugin_2_Sensor_Air_Quality.h"
 #include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Air_Quality.h"
-#include "solidify/solidified_Matter_Plugin_3_Light0.h"
+#include "solidify/solidified_Matter_Plugin_2_Light0.h"
 #include "solidify/solidified_Matter_Plugin_9_Virt_Light0.h"
 #include "solidify/solidified_Matter_Plugin_2_Light1.h"
 #include "solidify/solidified_Matter_Plugin_9_Virt_Light1.h"
@@ -259,22 +259,20 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Contact.h"
 #include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Occupancy.h"
 #include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Waterleak.h"
-#include "solidify/solidified_Matter_Plugin_2_Bridge_HTTP.h"
-#include "solidify/solidified_Matter_Plugin_4_Bridge_OnOff.h"
-#include "solidify/solidified_Matter_Plugin_3_Bridge_Light0.h"
-#include "solidify/solidified_Matter_Plugin_4_Bridge_Light1.h"
-#include "solidify/solidified_Matter_Plugin_5_Bridge_Light2.h"
-#include "solidify/solidified_Matter_Plugin_5_Bridge_Light3.h"
-#include "solidify/solidified_Matter_Plugin_3_Bridge_Sensor.h"
-#include "solidify/solidified_Matter_Plugin_4_Bridge_Sensor_Pressure.h"
-#include "solidify/solidified_Matter_Plugin_4_Bridge_Sensor_Temp.h"
-#include "solidify/solidified_Matter_Plugin_4_Bridge_Sensor_Illuminance.h"
-#include "solidify/solidified_Matter_Plugin_4_Bridge_Sensor_Humidity.h"
-#include "solidify/solidified_Matter_Plugin_3_Bridge_Sensor_Occupancy.h"
-#include "solidify/solidified_Matter_Plugin_3_Bridge_Sensor_Contact.h"
-#include "solidify/solidified_Matter_Plugin_4_Bridge_Sensor_Flow.h"
-#include "solidify/solidified_Matter_Plugin_3_Bridge_Sensor_Air_Quality.h"
-#include "solidify/solidified_Matter_Plugin_3_Bridge_Sensor_Waterleak.h"
+#include "solidify/solidified_Matter_Plugin_8_Bridge_OnOff.h"
+#include "solidify/solidified_Matter_Plugin_8_Bridge_Light0.h"
+#include "solidify/solidified_Matter_Plugin_8_Bridge_Light1.h"
+#include "solidify/solidified_Matter_Plugin_8_Bridge_Light2.h"
+#include "solidify/solidified_Matter_Plugin_8_Bridge_Light3.h"
+#include "solidify/solidified_Matter_Plugin_8_Bridge_Sensor_Pressure.h"
+#include "solidify/solidified_Matter_Plugin_8_Bridge_Sensor_Temp.h"
+#include "solidify/solidified_Matter_Plugin_8_Bridge_Sensor_Illuminance.h"
+#include "solidify/solidified_Matter_Plugin_8_Bridge_Sensor_Humidity.h"
+#include "solidify/solidified_Matter_Plugin_8_Bridge_Sensor_Occupancy.h"
+#include "solidify/solidified_Matter_Plugin_8_Bridge_Sensor_Contact.h"
+#include "solidify/solidified_Matter_Plugin_8_Bridge_Sensor_Flow.h"
+#include "solidify/solidified_Matter_Plugin_8_Bridge_Sensor_Air_Quality.h"
+#include "solidify/solidified_Matter_Plugin_8_Bridge_Sensor_Waterleak.h"
 #include "solidify/solidified_Matter_Plugin_z_All.h"
 #include "solidify/solidified_Matter_zz_Device.h"
 
@@ -462,7 +460,7 @@ module matter (scope: global, strings: weak) {
   // Plugins - only the core classes, all others are taken from `matter_device.plugins_classes`
   Plugin_Root, class(be_class_Matter_Plugin_Root)       // Generic behavior common to all devices
   Plugin_Aggregator, class(be_class_Matter_Plugin_Aggregator) // Aggregator
-  Plugin_Bridge_HTTP, class(be_class_Matter_Plugin_Bridge_HTTP)     // HTTP bridge superclass
+  Plugin_Device, class(be_class_Matter_Plugin_Device)       // Device
 }
 
 @const_object_info_end */

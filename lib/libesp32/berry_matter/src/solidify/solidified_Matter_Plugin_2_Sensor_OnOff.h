@@ -54,7 +54,7 @@ be_local_closure(class_Matter_Plugin_Sensor_OnOff_update_shadow,   /* name */
     /* K3   */  be_nested_str_weak(tasmota_switch_index),
     /* K4   */  be_nested_str_weak(tasmota),
     /* K5   */  be_nested_str_weak(cmd),
-    /* K6   */  be_nested_str_weak(Status_X208),
+    /* K6   */  be_nested_str_weak(Status_X2010),
     /* K7   */  be_nested_str_weak(find),
     /* K8   */  be_nested_str_weak(StatusSNS),
     /* K9   */  be_nested_str_weak(contains),

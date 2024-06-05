@@ -39,10 +39,18 @@ class Matter_Plugin_Sensor_Temp : Matter_Plugin_Sensor
   # This must be overriden.
   # This allows to convert the raw sensor value to the target one, typically int
   def pre_value(val)
-    if tasmota.get_option(8) == 1         # Fahrenheit
-      val = (val - 32) / 1.8
+    # TODO simplify
+    if self.BRIDGE
+      if self.temp_unit == self.TEMP_F          # Fahrenheit
+        val = (val - 32) / 1.8
+      end
+      return val != nil ? int(val * 100) : nil
+    else
+      if tasmota.get_option(8) == 1         # Fahrenheit
+        val = (val - 32) / 1.8
+      end
+      return val != nil ? int(val * 100) : nil
     end
-    return val != nil ? int(val * 100) : nil
   end
 
   #############################################################
@@ -79,6 +87,22 @@ class Matter_Plugin_Sensor_Temp : Matter_Plugin_Sensor
     end
     return super(self).read_attribute(session, ctx, tlv_solo)
   end
+
+  #############################################################
+  # For Bridge devices
+  #############################################################
+  #############################################################
+  # web_values
+  #
+  # Show values of the remote device as HTML
+  def web_values()
+    import webserver
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(format("&#x2600;&#xFE0F; %.1f °C",
+                                         self.shadow_value != nil ? real(self.shadow_value) / 100 : nil))
+  end
+  #############################################################
+  #############################################################
 
 end
 matter.Plugin_Sensor_Temp = Matter_Plugin_Sensor_Temp

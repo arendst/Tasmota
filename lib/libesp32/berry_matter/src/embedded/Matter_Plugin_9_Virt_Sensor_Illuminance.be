@@ -29,6 +29,5 @@ class Matter_Plugin_Virt_Sensor_Illuminance : Matter_Plugin_Sensor_Illuminance
   static var ARG  = ""                              # no arg for virtual device
   static var ARG_HINT = "_Not used_"                # Hint for entering the Argument (inside 'placeholder')
   static var VIRTUAL = true                         # virtual device
-
 end
 matter.Plugin_Virt_Sensor_Illuminance = Matter_Plugin_Virt_Sensor_Illuminance

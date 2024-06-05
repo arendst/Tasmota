@@ -77,5 +77,20 @@ class Matter_Plugin_Sensor_Flow : Matter_Plugin_Sensor
     return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
+  #############################################################
+  # For Bridge devices
+  #############################################################
+  #############################################################
+  # web_values
+  #
+  # Show values of the remote device as HTML
+  def web_values()
+    import webserver
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(format("&#x26C5; %i m&sup3;/h",
+                                         int(self.shadow_value)))
+  end
+  #############################################################
+  #############################################################
 end
 matter.Plugin_Sensor_Flow = Matter_Plugin_Sensor_Flow

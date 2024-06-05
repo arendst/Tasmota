@@ -84,5 +84,21 @@ class Matter_Plugin_Sensor_Illuminance : Matter_Plugin_Sensor
     return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
+  #############################################################
+  # For Bridge devices
+  #############################################################
+  #############################################################
+  # web_values
+  #
+  # Show values of the remote device as HTML
+  def web_values()
+    import webserver
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(format("&#128261; %i lux",
+                                         int(self.shadow_value)))
+  end
+  #############################################################
+  #############################################################
+
 end
 matter.Plugin_Sensor_Illuminance = Matter_Plugin_Sensor_Illuminance

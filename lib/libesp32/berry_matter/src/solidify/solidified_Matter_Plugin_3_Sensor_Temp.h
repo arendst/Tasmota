@@ -138,20 +138,23 @@ be_local_closure(class_Matter_Plugin_Sensor_Temp_pre_value,   /* name */
     0,                          /* has sup protos */
     &be_class_Matter_Plugin_Sensor_Temp, 
     1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_weak(tasmota),
-    /* K1   */  be_nested_str_weak(get_option),
-    /* K2   */  be_const_int(1),
+    ( &(const bvalue[ 7]) {     /* constants */
+    /* K0   */  be_nested_str_weak(BRIDGE),
+    /* K1   */  be_nested_str_weak(temp_unit),
+    /* K2   */  be_nested_str_weak(TEMP_F),
     /* K3   */  be_const_real_hex(0x3FE66666),
+    /* K4   */  be_nested_str_weak(tasmota),
+    /* K5   */  be_nested_str_weak(get_option),
+    /* K6   */  be_const_int(1),
     }),
     be_str_weak(pre_value),
     &be_const_str_solidified,
-    ( &(const binstruction[20]) {  /* code */
-      0xB80A0000,  //  0000  GETNGBL	R2	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x54120007,  //  0002  LDINT	R4	8
-      0x7C080400,  //  0003  CALL	R2	2
-      0x1C080502,  //  0004  EQ	R2	R2	K2
+    ( &(const binstruction[42]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x780A0012,  //  0001  JMPF	R2	#0015
+      0x88080101,  //  0002  GETMBR	R2	R0	K1
+      0x880C0102,  //  0003  GETMBR	R3	R0	K2
+      0x1C080403,  //  0004  EQ	R2	R2	R3
       0x780A0003,  //  0005  JMPF	R2	#000A
       0x540A001F,  //  0006  LDINT	R2	32
       0x04080202,  //  0007  SUB	R2	R1	R2
@@ -167,6 +170,78 @@ be_local_closure(class_Matter_Plugin_Sensor_Temp_pre_value,   /* name */
       0x70020000,  //  0011  JMP		#0013
       0x4C080000,  //  0012  LDNIL	R2
       0x80040400,  //  0013  RET	1	R2
+      0x70020013,  //  0014  JMP		#0029
+      0xB80A0800,  //  0015  GETNGBL	R2	K4
+      0x8C080505,  //  0016  GETMET	R2	R2	K5
+      0x54120007,  //  0017  LDINT	R4	8
+      0x7C080400,  //  0018  CALL	R2	2
+      0x1C080506,  //  0019  EQ	R2	R2	K6
+      0x780A0003,  //  001A  JMPF	R2	#001F
+      0x540A001F,  //  001B  LDINT	R2	32
+      0x04080202,  //  001C  SUB	R2	R1	R2
+      0x0C080503,  //  001D  DIV	R2	R2	K3
+      0x5C040400,  //  001E  MOVE	R1	R2
+      0x4C080000,  //  001F  LDNIL	R2
+      0x20080202,  //  0020  NE	R2	R1	R2
+      0x780A0004,  //  0021  JMPF	R2	#0027
+      0x60080009,  //  0022  GETGBL	R2	G9
+      0x540E0063,  //  0023  LDINT	R3	100
+      0x080C0203,  //  0024  MUL	R3	R1	R3
+      0x7C080200,  //  0025  CALL	R2	1
+      0x70020000,  //  0026  JMP		#0028
+      0x4C080000,  //  0027  LDNIL	R2
+      0x80040400,  //  0028  RET	1	R2
+      0x80000000,  //  0029  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: web_values
+********************************************************************/
+extern const bclass be_class_Matter_Plugin_Sensor_Temp;
+be_local_closure(class_Matter_Plugin_Sensor_Temp_web_values,   /* name */
+  be_nested_proto(
+    8,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    &be_class_Matter_Plugin_Sensor_Temp, 
+    1,                          /* has constants */
+    ( &(const bvalue[ 5]) {     /* constants */
+    /* K0   */  be_nested_str_weak(webserver),
+    /* K1   */  be_nested_str_weak(web_values_prefix),
+    /* K2   */  be_nested_str_weak(content_send),
+    /* K3   */  be_nested_str_weak(_X26_X23x2600_X3B_X26_X23xFE0F_X3B_X20_X25_X2E1f_X20_XC2_XB0C),
+    /* K4   */  be_nested_str_weak(shadow_value),
+    }),
+    be_str_weak(web_values),
+    &be_const_str_solidified,
+    ( &(const binstruction[20]) {  /* code */
+      0xA4060000,  //  0000  IMPORT	R1	K0
+      0x8C080101,  //  0001  GETMET	R2	R0	K1
+      0x7C080200,  //  0002  CALL	R2	1
+      0x8C080302,  //  0003  GETMET	R2	R1	K2
+      0x60100018,  //  0004  GETGBL	R4	G24
+      0x58140003,  //  0005  LDCONST	R5	K3
+      0x88180104,  //  0006  GETMBR	R6	R0	K4
+      0x4C1C0000,  //  0007  LDNIL	R7
+      0x20180C07,  //  0008  NE	R6	R6	R7
+      0x781A0005,  //  0009  JMPF	R6	#0010
+      0x6018000A,  //  000A  GETGBL	R6	G10
+      0x881C0104,  //  000B  GETMBR	R7	R0	K4
+      0x7C180200,  //  000C  CALL	R6	1
+      0x541E0063,  //  000D  LDINT	R7	100
+      0x0C180C07,  //  000E  DIV	R6	R6	R7
+      0x70020000,  //  000F  JMP		#0011
+      0x4C180000,  //  0010  LDNIL	R6
+      0x7C100400,  //  0011  CALL	R4	2
+      0x7C080400,  //  0012  CALL	R2	2
+      0x80000000,  //  0013  RET	0
     })
   )
 );
@@ -180,23 +255,20 @@ extern const bclass be_class_Matter_Plugin_Sensor;
 be_local_class(Matter_Plugin_Sensor_Temp,
     0,
     &be_class_Matter_Plugin_Sensor,
-    be_nested_map(9,
+    be_nested_map(10,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(DISPLAY_NAME, -1), be_nested_str_weak(Temperature) },
-        { be_const_key_weak(TYPE, -1), be_nested_str_weak(temperature) },
-        { be_const_key_weak(TYPES, 8), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(770, -1), be_const_int(2) },
     }))    ) } )) },
+        { be_const_key_weak(value_changed, 8), be_const_closure(class_Matter_Plugin_Sensor_Temp_value_changed_closure) },
+        { be_const_key_weak(read_attribute, 7), be_const_closure(class_Matter_Plugin_Sensor_Temp_read_attribute_closure) },
         { be_const_key_weak(UPDATE_COMMANDS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
         be_const_list( *     be_nested_list(1,
     ( (struct bvalue*) &(const bvalue[]) {
         be_nested_str_weak(Temperature),
     }))    ) } )) },
-        { be_const_key_weak(value_changed, 7), be_const_closure(class_Matter_Plugin_Sensor_Temp_value_changed_closure) },
-        { be_const_key_weak(JSON_NAME, -1), be_nested_str_weak(Temperature) },
-        { be_const_key_weak(read_attribute, -1), be_const_closure(class_Matter_Plugin_Sensor_Temp_read_attribute_closure) },
         { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
@@ -283,7 +355,11 @@ be_local_class(Matter_Plugin_Sensor_Temp,
         be_const_int(65533),
     }))    ) } )) },
     }))    ) } )) },
+        { be_const_key_weak(JSON_NAME, -1), be_nested_str_weak(Temperature) },
         { be_const_key_weak(pre_value, -1), be_const_closure(class_Matter_Plugin_Sensor_Temp_pre_value_closure) },
+        { be_const_key_weak(web_values, -1), be_const_closure(class_Matter_Plugin_Sensor_Temp_web_values_closure) },
+        { be_const_key_weak(DISPLAY_NAME, -1), be_nested_str_weak(Temperature) },
+        { be_const_key_weak(TYPE, 3), be_nested_str_weak(temperature) },
     })),
     be_str_weak(Matter_Plugin_Sensor_Temp)
 );

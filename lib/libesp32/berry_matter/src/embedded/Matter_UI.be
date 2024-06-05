@@ -559,11 +559,11 @@ class Matter_UI
   end
 
   #---------------------------------------------------------------------- -#
-  # Generate configuration map from Status 8 and Status 11
+  # Generate configuration map from Status 10 and Status 11
   #
   # Returns a list of maps: [ {"type":"temperature", "filter":"ESP32#Temperature"} ]
   #---------------------------------------------------------------------- -#
-  def generate_config_from_status(status8, status11)
+  def generate_config_from_status(status10, status11)
     var config_list = []
 
     # count `Power` and `Power<x>`
@@ -614,7 +614,7 @@ class Matter_UI
 
 
     # detect sensors
-    config_list += self.device.autoconf_sensors_list(status8)
+    config_list += self.device.autoconf_sensors_list(status10)
 
     return config_list
   end
@@ -627,24 +627,24 @@ class Matter_UI
     import json
 
     if url == ''  return end
-    var timeout = matter.Plugin_Bridge_HTTP.PROBE_TIMEOUT
+    var timeout = matter.Plugin_Device.PROBE_TIMEOUT
     var http_remote = matter.HTTP_remote(nil, url, timeout)
-    # Status 8
-    var status8 = http_remote.call_sync('Status 8', timeout)
-    if status8 != nil   status8 = json.load(status8)                end
-    if status8 != nil   status8 = status8.find('StatusSNS')         end
+    # Status 10
+    var status10 = http_remote.call_sync('Status 10', timeout)
+    if status10 != nil   status10 = json.load(status10)                end
+    if status10 != nil   status10 = status10.find('StatusSNS')         end
     # Status 11
     var status11
-    if status8 != nil
+    if status10 != nil
       status11 = http_remote.call_sync('Status 11', timeout)
       if status11 != nil   status11 = json.load(status11)           end
       if status11 != nil   status11 = status11.find('StatusSTS')     end
     end
     
-    if status8 != nil && status11 != nil
-      tasmota.log(format("MTR: probed '%s' status8=%s satus11=%s", url, str(status8), str(status11)), 3)
+    if status10 != nil && status11 != nil
+      tasmota.log(format("MTR: probed '%s' status10=%s satus11=%s", url, str(status10), str(status11)), 3)
 
-      var config_list = self.generate_config_from_status(status8, status11)
+      var config_list = self.generate_config_from_status(status10, status11)
 
       self.show_plugins_hints_js(self._CLASSES_TYPES2)
 
@@ -1028,7 +1028,7 @@ class Matter_UI
     while idx < size(self.device.plugins)
       var plg = self.device.plugins[idx]
 
-      if isinstance(plg, matter.Plugin_Bridge_HTTP)
+      if plg.BRIDGE
         if bridge_plugin_by_host == nil     bridge_plugin_by_host = {}   end
         var host = plg.http_remote.addr
 
