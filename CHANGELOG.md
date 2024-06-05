@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- Matter refactoring of bridged devices
 
 ### Fixed
 - Berry `input()` returns empty string and does not crash

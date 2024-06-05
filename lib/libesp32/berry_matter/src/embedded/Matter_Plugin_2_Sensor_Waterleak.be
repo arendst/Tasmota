@@ -64,7 +64,7 @@ class Matter_Plugin_Sensor_Waterleak : Matter_Plugin_Device
     if !self.VIRTUAL
       var switch_str = "Switch" + str(self.tasmota_switch_index)
 
-      var j = tasmota.cmd("Status 8", true)
+      var j = tasmota.cmd("Status 10", true)
       if j != nil   j = j.find("StatusSNS") end
       if j != nil && j.contains(switch_str)
         var state = (j.find(switch_str) == "ON")
@@ -88,11 +88,7 @@ class Matter_Plugin_Sensor_Waterleak : Matter_Plugin_Device
     # ====================================================================================================
     if   cluster == 0x0045              # ========== Boolean State ==========
       if   attribute == 0x0000          #  ---------- StateValue / bool ----------
-        if self.shadow_leak != nil
-          return tlv_solo.set(TLV.BOOL, self.shadow_leak)
-        else
-          return tlv_solo.set(TLV.NULL, nil)
-        end
+        return tlv_solo.set(TLV.BOOL, self.shadow_leak)
       end
 
     end
@@ -114,6 +110,48 @@ class Matter_Plugin_Sensor_Waterleak : Matter_Plugin_Device
     end
     super(self).update_virtual(payload_json)
   end
+
+  #############################################################
+  # For Bridge devices
+  #############################################################
+  #############################################################
+  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
+  #
+  # This call is synnchronous and blocking.
+  def parse_status(data, index)
+    if index == 10                             # Status 10
+      var state = false
+
+      state = (data.find("Switch" + str(self.tasmota_switch_index)) == "ON")
+
+      if self.shadow_leak != nil && self.shadow_leak != bool(state)
+        self.attribute_updated(0x0045, 0x0000)
+      end
+      self.shadow_leak = state
+    end
+  end
+
+  #############################################################
+  # web_values
+  #
+  # Show values of the remote device as HTML
+  def web_values()
+    import webserver
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(format("Waterleak%i %s", self.tasmota_switch_index, self.web_value_onoff(self.shadow_leak)))
+  end
+
+  # Show prefix before web value
+  def web_values_prefix()
+    import webserver
+    var name = self.get_name()
+    if !name
+      name = "Switch" + str(self.tasmota_switch_index)
+    end
+    webserver.content_send(format(self.PREFIX, name ? webserver.html_escape(name) : ""))
+  end
+  #############################################################
+  #############################################################
 
 end
 matter.Plugin_Sensor_Waterleak = Matter_Plugin_Sensor_Waterleak

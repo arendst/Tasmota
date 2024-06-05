@@ -19,9 +19,23 @@
 
 import matter
 
+#@ solidify:Matter_Plugin_Device.GetOptionReader,weak
 #@ solidify:Matter_Plugin_Device,weak
 
 class Matter_Plugin_Device : Matter_Plugin
+  # Following arguments are specific to bridge devices
+  # static var TYPE = ""                              # name of the plug-in in json
+  # static var DISPLAY_NAME = ""                      # display name of the plug-in
+  # static var ARG  = ""                              # additional argument name (or empty if none)
+  static var ARG_HTTP = "url"                       # domain name
+  # static var UPDATE_TIME = 3000                     # update every 3s
+  static var UPDATE_CMD = "Status 11"               # command to send for updates
+  static var PROBE_TIMEOUT = 1700                   # timeout of 1800 ms for probing, which gives at least 1s for TCP recovery
+  static var SYNC_TIMEOUT = 500                     # timeout of 700 ms for probing
+
+  var http_remote                                   # instance of Matter_HTTP_remote
+
+  # clusters for general devices
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited                             # Descriptor Cluster 9.5 p.453
     0x0039: [3,5,0x0A,0x0F,0x11,0x12],              # Bridged Device Basic Information 9.13 p.485
@@ -37,6 +51,18 @@ class Matter_Plugin_Device : Matter_Plugin
   # var clusters                                      # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
   # var tick                                          # tick value when it was last updated
   # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
+
+  #############################################################
+  # Constructor
+  def init(device, endpoint, arguments)
+    super(self).init(device, endpoint, arguments)
+
+    if self.BRIDGE
+      var addr = arguments.find(self.ARG_HTTP)
+      self.http_remote = self.device.register_http_remote(addr, self.PROBE_TIMEOUT)
+      self.register_cmd_cb()
+    end
+  end
 
   #############################################################
   # read an attribute
@@ -86,24 +112,55 @@ class Matter_Plugin_Device : Matter_Plugin
       end
 
     # ====================================================================================================
-    elif cluster == 0x0039              # ========== Bridged Device Basic Information 9.13 p.485 ==========
+    elif cluster == 0x0039             # ========== Bridged Device Basic Information 9.13 p.485 ==========
       import string
 
       if   attribute == 0x0003          #  ---------- ProductName / string ----------
-        return tlv_solo.set(TLV.UTF1, tasmota.cmd("DeviceName", true)['DeviceName'])
+        if self.BRIDGE
+          var name = self.http_remote.get_info().find("name")
+          if name
+            return tlv_solo.set(TLV.UTF1, name)
+          else
+            return tlv_solo.set(TLV.NULL, nil)
+          end
+        else
+          return tlv_solo.set(TLV.UTF1, tasmota.cmd("DeviceName", true)['DeviceName'])
+        end
       elif attribute == 0x0005          #  ---------- NodeLabel / string ----------
         return tlv_solo.set(TLV.UTF1, self.get_name())
       elif attribute == 0x000A          #  ---------- SoftwareVersionString / string ----------
-        var version_full = tasmota.cmd("Status 2", true)['StatusFWR']['Version']
-        var version_end = string.find(version_full, '(')
-        if version_end > 0    version_full = version_full[0..version_end - 1]   end
-        return tlv_solo.set(TLV.UTF1, version_full)
-      elif attribute == 0x000F          #  ---------- SerialNumber / string ----------
-        return tlv_solo.set(TLV.UTF1, tasmota.wifi().find("mac", ""))
+        if self.BRIDGE
+          var version_full = self.http_remote.get_info().find("version")
+          if version_full
+            var version_end = string.find(version_full, '(')
+            if version_end > 0    version_full = version_full[0..version_end - 1]   end
+            return tlv_solo.set(TLV.UTF1, version_full)
+          else
+            return tlv_solo.set(TLV.NULL, nil)
+          end
+        else
+          var version_full = tasmota.cmd("Status 2", true)['StatusFWR']['Version']
+          var version_end = string.find(version_full, '(')
+          if version_end > 0    version_full = version_full[0..version_end - 1]   end
+          return tlv_solo.set(TLV.UTF1, version_full)
+        end
+      elif attribute == 0x000F || attribute == 0x0012          #  ---------- SerialNumber / string ----------
+        if self.BRIDGE
+          var mac = self.http_remote.get_info().find("mac")
+          if mac
+            return tlv_solo.set(TLV.UTF1, mac)
+          else
+            return tlv_solo.set(TLV.NULL, nil)
+          end
+        else
+          return tlv_solo.set(TLV.UTF1, tasmota.wifi().find("mac", ""))
+        end
       elif attribute == 0x0011          #  ---------- Reachable / bool ----------
-        return tlv_solo.set(TLV.BOOL, 1)     # by default we are reachable
-      elif attribute == 0x0012          #  ---------- UniqueID / string 32 max ----------
-        return tlv_solo.set(TLV.UTF1, tasmota.wifi().find("mac", ""))
+        if self.BRIDGE
+          return tlv_solo.set(TLV.BOOL, self.http_remote.reachable)     # TODO find a way to do a ping
+        else
+          return tlv_solo.set(TLV.BOOL, 1)     # by default we are reachable
+        end
       end
 
     end
@@ -212,6 +269,154 @@ class Matter_Plugin_Device : Matter_Plugin
     # print(ret)
     return ret
   end
+
+  #############################################################
+  # For Bridge devices
+  #############################################################
+  #############################################################
+  # register_cmd_cb
+  #
+  # Register recurrent command and callback
+  # Defined as a separate method to allow override
+  def register_cmd_cb()
+    self.http_remote.add_schedule(self.UPDATE_CMD, self.UPDATE_TIME,
+                                  / status,payload,cmd -> self.parse_http_response(status,payload,cmd))
+  end
+
+  #############################################################
+  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
+  #
+  # This method should collect the data from the local or remote device
+  # and call `parse_status(<data>, <index>)` when data is available.
+  def update_shadow()
+    if self.BRIDGE && self.tick != self.device.tick     # don't force an update if we just received it
+      var ret = self.call_remote_sync(self.UPDATE_CMD)
+      if ret
+        self.parse_http_response(1, ret, self.UPDATE_CMD)
+      end
+    end
+    self.tick = self.device.tick
+  end
+
+  #############################################################
+  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
+  #
+  # TO BE OVERRIDDEN
+  def parse_status(data, index)
+  end
+
+  #############################################################
+  # call_remote_sync
+  #
+  # Call a remote Tasmota device, returns Berry native map or nil
+  # arg can be nil, in this case `cmd` has it all
+  def call_remote_sync(cmd, arg)
+    if self.BRIDGE
+      # if !self.http_remote  return nil  end
+      import json
+
+      var retry = 2         # try 2 times if first failed
+      if arg != nil     cmd = cmd + ' ' + str(arg)      end
+      while retry > 0
+        var ret = self.http_remote.call_sync(cmd, self.SYNC_TIMEOUT)
+        if ret != nil
+          self.http_remote.device_is_alive(true)
+          var j = json.load(ret)
+          return j
+        end
+        retry -= 1
+        tasmota.log("MTR: HTTP GET retrying", 3)
+      end
+      self.http_remote.device_is_alive(false)
+      return nil
+    end
+  end
+
+  #############################################################
+  # parse_http_response
+  #
+  # Parse response from HTTP API and update shadows
+  # We support:
+  #     `Status  8`: {"StatusSNS":{ [...] }}
+  #     `Status 11`: {"StatusSTS":{ [...] }}
+  #     `Status 13`: {"StatusSHT":{ [...] }}
+  def parse_http_response(status, payload, cmd)
+    if self.BRIDGE
+      self.tick = self.device.tick        # avoid new force update in same tick
+      self.http_remote.parse_status_response_and_call_method(status, payload, cmd, self, self.parse_status)
+    end
+  end
+
+  #############################################################
+  # every_250ms
+  #
+  # check if the timer expired and update_shadow() needs to be called
+  def every_250ms()
+    if self.BRIDGE
+      self.http_remote.scheduler()          # defer to HTTP scheduler
+      # avoid calling update_shadow() since it's not applicable for HTTP remote
+  else
+      super(self).every_250ms()
+    end
+  end
+
+  #############################################################
+  # web_values
+  #
+  # Show values of the remote device as HTML
+  static var PREFIX = "| <i>%s</i> "
+  def web_values()
+    import webserver
+    self.web_values_prefix()
+    webserver.content_send("&lt;-- (" + self.DISPLAY_NAME + ") --&gt;")
+  end
+
+  # Show prefix before web value
+  def web_values_prefix()
+    import webserver
+    var name = self.get_name()
+    webserver.content_send(format(self.PREFIX, name ? webserver.html_escape(name) : ""))
+  end
+
+  # Show on/off value as html
+  def web_value_onoff(onoff)
+    var onoff_html = (onoff != nil ? (onoff ? "<b>On</b>" : "Off") : "")
+    return onoff_html
+  end
+
+  #############################################################
+  # GetOption reader to decode `SetOption<x>` values from `Status 3`
+  static class GetOptionReader
+    var flag, flag2, flag3, flag4, flag5, flag6
+
+    def init(j)
+      if j == nil  raise "value_error", "invalid json"  end
+      var so = j['SetOption']
+      self.flag  = bytes().fromhex(so[0]).reverse()
+      self.flag2 = bytes().fromhex(so[1])
+      self.flag3 = bytes().fromhex(so[2]).reverse()
+      self.flag4 = bytes().fromhex(so[3]).reverse()
+      self.flag5 = bytes().fromhex(so[4]).reverse()
+      self.flag6 = bytes().fromhex(so[5]).reverse()
+    end
+    def getoption(x)
+      if   x < 32  # SetOption0 .. 31 = Settings->flag
+        return self.flag.getbits(x, 1)
+      elif x < 50  # SetOption32 .. 49 = Settings->param
+        return self.flag2.get(x - 32, 1)
+      elif x < 82  # SetOption50 .. 81 = Settings->flag3
+        return self.flag3.getbits(x - 50, 1)
+      elif x < 114 # SetOption82 .. 113 = Settings->flag4
+        return self.flag4.getbits(x - 82, 1)
+      elif x < 146 # SetOption114 .. 145 = Settings->flag5
+        return self.flag5.getbits(x - 114, 1)
+      elif x < 178 # SetOption146 .. 177 = Settings->flag6
+        return self.flag6.getbits(x - 146, 1)
+      end
+    end
+  end
+  #############################################################
+  #############################################################
 
   #######################################################################
   # _parse_sensor_entry: internal helper function

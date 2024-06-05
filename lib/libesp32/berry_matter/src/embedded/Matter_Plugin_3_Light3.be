@@ -62,9 +62,9 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
   # Update shadow
   #
   def update_shadow()
-    super(self).update_shadow()
-    if !self.VIRTUAL
+    if !self.VIRTUAL && !self.BRIDGE
       import light
+      super(self).update_shadow()
       var light_status = light.get()
       if light_status != nil
         var hue = light_status.find('hue', nil)
@@ -74,6 +74,8 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
         if hue != self.shadow_hue   self.attribute_updated(0x0300, 0x0000)   self.shadow_hue = hue   end
         if sat != self.shadow_sat   self.attribute_updated(0x0300, 0x0001)   self.shadow_sat = sat   end
       end
+    else
+      super(self).update_shadow()
     end
   end
 
@@ -93,7 +95,29 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
       if sat_254 > 254    sat_254 = 254   end
     end
 
-    if !self.VIRTUAL
+    if self.BRIDGE
+      if hue_254 != nil
+        var hue_360 = tasmota.scale_uint(hue_254, 0, 254, 0, 360)
+        var ret = self.call_remote_sync("HSBColor1", hue_360)
+        if ret != nil
+          self.parse_status(ret, 11)        # update shadow from return value
+        end
+      end
+      if sat_254 != nil
+        var sat_100 = tasmota.scale_uint(sat_254, 0, 254, 0, 100)
+        var ret = self.call_remote_sync("HSBColor2", sat_100)
+        if ret != nil
+          self.parse_status(ret, 11)        # update shadow from return value
+        end
+      end
+    elif self.VIRTUAL
+      if hue_254 != nil
+        if hue_254 != self.shadow_hue   self.attribute_updated(0x0300, 0x0000)   self.shadow_hue = hue_254   end
+      end
+      if sat_254 != nil
+        if sat_254 != self.shadow_sat   self.attribute_updated(0x0300, 0x0001)   self.shadow_sat = sat_254   end
+      end
+    else
       var hue_360 = (hue_254 != nil) ? tasmota.scale_uint(hue_254, 0, 254, 0, 360) : nil
       var sat_255 = (sat_254 != nil) ? tasmota.scale_uint(sat_254, 0, 254, 0, 255) : nil
 
@@ -105,13 +129,6 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
         light.set({'sat': sat_255})
       end
       self.update_shadow()
-    else
-      if hue_254 != nil
-        if hue_254 != self.shadow_hue   self.attribute_updated(0x0300, 0x0000)   self.shadow_hue = hue_254   end
-      end
-      if sat_254 != nil
-        if sat_254 != self.shadow_sat   self.attribute_updated(0x0300, 0x0001)   self.shadow_sat = sat_254   end
-      end
     end
   end
 
@@ -221,6 +238,60 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
     end
     super(self).update_virtual(payload)
   end
+
+  #############################################################
+  # For Bridge devices
+  #############################################################
+  #############################################################
+  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
+  #
+  # This call is synnchronous and blocking.
+  def parse_status(data, index)
+    super(self).parse_status(data, index)
+
+    if index == 11                              # Status 11
+      var hsb = data.find("HSBColor")
+      if hsb
+        import string
+        var hsb_list = string.split(hsb, ",")
+        var hue = int(hsb_list[0])
+        var sat = int(hsb_list[1])
+        # dimmer is already available
+
+        if hue != nil     hue = tasmota.scale_uint(hue, 0, 360, 0, 254)   else hue = self.shadow_hue      end
+        if sat != nil     sat = tasmota.scale_uint(sat, 0, 100, 0, 254)   else sat = self.shadow_sat      end
+        if hue != self.shadow_hue   self.attribute_updated(0x0300, 0x0000)   self.shadow_hue = hue   end
+        if sat != self.shadow_sat   self.attribute_updated(0x0300, 0x0001)   self.shadow_sat = sat   end
+      end
+    end
+  end
+  
+  #############################################################
+  # web_values
+  #
+  # Show values of the remote device as HTML
+  def web_values()
+    import webserver
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(format("%s %s %s",
+                              self.web_value_onoff(self.shadow_onoff), self.web_value_dimmer(),
+                              self.web_value_RGB()))
+  end
+
+  # Show on/off value as html
+  def web_value_RGB()
+    if self.shadow_hue != nil && self.shadow_sat != nil
+      var l = light_state(3)      # RGB virtual light state object
+      l.set_bri(255)              # set full brightness to get full range RGB
+      l.set_huesat(tasmota.scale_uint(self.shadow_hue, 0, 254, 0, 360), tasmota.scale_uint(self.shadow_sat, 0, 254, 0, 255))
+      var rgb_hex = format("#%02X%02X%02X", l.r, l.g, l.b)
+      var rgb_html = format('<i class="bxm" style="--cl:%s"></i>%s', rgb_hex, rgb_hex)
+      return rgb_html
+    end
+    return ""
+  end
+  #############################################################
+  #############################################################
 
 end
 matter.Plugin_Light3 = Matter_Plugin_Light3

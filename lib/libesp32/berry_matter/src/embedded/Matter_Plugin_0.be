@@ -34,6 +34,7 @@ class Matter_Plugin
   # Behavior of the plugin, frequency at which `update_shadow()` is called
   static var UPDATE_TIME = 5000             # default is every 5 seconds
   static var VIRTUAL = false                # set to true only for virtual devices
+  static var BRIDGE = false                 # set to true only for bridged devices (ESP8266 or OpenBK)
   var update_next                           # next timestamp for update
   # Configuration of the plugin: clusters and type
   static var CLUSTERS = matter.consolidate_clusters(_class, {
@@ -143,14 +144,14 @@ class Matter_Plugin
   # Returns true if it's a local device, or false for a
   # remotely device controlled via HTTP
   def is_local_device()
-    return true
+    return !(self.BRIDGE)
   end
 
   #############################################################
   # Stub for updating shadow values (local copies of what we published to the Matter gateway)
   #
   # This method should collect the data from the local or remote device
-  # and call `parse_update(<data>)` when data is available.
+  # and call `parse_status(<data>)` when data is available.
   #
   # TO BE OVERRIDDEN
   # This call is synnchronous and blocking.

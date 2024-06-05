@@ -53,7 +53,9 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
   # Constructor
   def init(device, endpoint, arguments)
     super(self).init(device, endpoint, arguments)
-    self.shadow_ct = 325
+    if !self.BRIDGE                                 # in BRIDGE mode keep default to nil
+      self.shadow_ct = 325
+    end
     self.update_ct_minmax()                         # read SetOption to adjust ct min/max
   end
 
@@ -61,7 +63,7 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
   # Update shadow
   #
   def update_shadow()
-    if !self.VIRTUAL
+    if !self.VIRTUAL && !self.BRIDGE
       import light
       self.update_ct_minmax()
       super(self).update_shadow()
@@ -96,15 +98,20 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
   def set_ct(ct)
     if ct < self.ct_min  ct = self.ct_min   end
     if ct > self.ct_max  ct = self.ct_max   end
-    if !self.VIRTUAL
-      import light
-      light.set({'ct': ct})
-      self.update_shadow()
-    else
+    if self.BRIDGE
+      var ret = self.call_remote_sync("CT", str(ct))
+      if ret != nil
+        self.parse_status(ret, 11)        # update shadow from return value
+      end
+    elif self.VIRTUAL
       if ct  != self.shadow_ct
         self.attribute_updated(0x0300, 0x0007)
         self.shadow_ct = ct
       end
+    else
+      import light
+      light.set({'ct': ct})
+      self.update_shadow()
     end
   end
 
@@ -144,7 +151,6 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
   # returns a TLV object if successful, contains the response
   #   or an `int` to indicate a status
   def invoke_request(session, val, ctx)
-    import light
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var command = ctx.command
@@ -154,6 +160,8 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
       self.update_shadow_lazy()
       if   command == 0x000A            # ---------- MoveToColorTemperature ----------
         var ct_in = val.findsubval(0)  # CT
+        if ct_in < self.ct_min  ct_in = self.ct_min   end
+        if ct_in > self.ct_max  ct_in = self.ct_max   end
         self.set_ct(ct_in)
         ctx.log = "ct:"+str(ct_in)
         self.publish_command('CT', ct_in)
@@ -186,6 +194,54 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
     end
     super(self).update_virtual(payload)
   end
+
+  #############################################################
+  # For Bridge devices
+  #############################################################
+  #############################################################
+  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
+  #
+  # TO BE OVERRIDDEN
+  # This call is synnchronous and blocking.
+  def parse_status(data, index)
+    super(self).parse_status(data, index)
+
+    if index == 11                              # Status 11
+      var ct = int(data.find("CT"))             # 153..500
+      if ct != nil
+        if ct != self.shadow_ct
+          if ct < self.ct_min   ct = self.ct_min    end
+          if ct > self.ct_max   ct = self.ct_max    end
+          self.attribute_updated(0x0300, 0x0007)
+          self.shadow_ct = ct
+        end
+      end
+    end
+  end
+
+  #############################################################
+  # web_values
+  #
+  # Show values of the remote device as HTML
+  def web_values()
+    import webserver
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(format("%s %s %s",
+                              self.web_value_onoff(self.shadow_onoff), self.web_value_dimmer(),
+                              self.web_value_ct()))
+  end
+
+  # Show on/off value as html
+  def web_value_ct()
+    var ct_html = ""
+    if self.shadow_ct != nil
+      var ct_k = (((1000000 / self.shadow_ct) + 25) / 50) * 50      # convert in Kelvin
+      ct_html = format("%iK", ct_k)
+    end
+    return  "&#9898; " + ct_html;
+  end
+  #############################################################
+  #############################################################
 
 end
 matter.Plugin_Light2 = Matter_Plugin_Light2

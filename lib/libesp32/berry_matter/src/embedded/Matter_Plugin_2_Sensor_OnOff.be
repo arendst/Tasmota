@@ -53,7 +53,7 @@ class Matter_Plugin_Sensor_OnOff : Matter_Plugin_Device
     if !self.VIRTUAL
       var switch_str = "Switch" + str(self.tasmota_switch_index)
 
-      var j = tasmota.cmd("Status 8", true)
+      var j = tasmota.cmd("Status 10", true)
       if j != nil   j = j.find("StatusSNS") end
       if j != nil && j.contains(switch_str)
         var state = (j.find(switch_str) == "ON")

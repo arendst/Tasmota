@@ -77,5 +77,21 @@ class Matter_Plugin_Sensor_Humidity : Matter_Plugin_Sensor
     return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
+  #############################################################
+  # For Bridge devices
+  #############################################################
+  #############################################################
+  # web_values
+  #
+  # Show values of the remote device as HTML
+  def web_values()
+    import webserver
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(format("&#x1F4A7; %2.0f%%",
+                                         self.shadow_value != nil ? real(self.shadow_value) / 100 : nil))
+  end
+  #############################################################
+  #############################################################
+
 end
 matter.Plugin_Sensor_Humidity = Matter_Plugin_Sensor_Humidity

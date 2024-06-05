@@ -23,19 +23,19 @@ import matter
 
 #@ solidify:Matter_Plugin_Light1,weak
 
-class Matter_Plugin_Light1 : Matter_Plugin_Device
+class Matter_Plugin_Light1 : Matter_Plugin_Light0
   static var TYPE = "light1"                                # name of the plug-in in json
   static var DISPLAY_NAME = "Light 1 Dimmer"                        # display name of the plug-in
-  static var UPDATE_TIME = 250                      # update every 250ms
+  # static var UPDATE_TIME = 250                      # update every 250ms
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited                                     # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                                     # Identify 1.2 p.16
     # 0x0004: inherited                                     # Groups 1.3 p.21
     # 0x0005: inherited                                     # Scenes 1.4 p.30 - no writable
-    0x0006: [0],                                    # On/Off 1.5 p.48
+    # 0x0006: [0],                                    # On/Off 1.5 p.48
     0x0008: [0,2,3,0x0F,0x11],                      # Level Control 1.6 p.57
   })
-  static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Power", "Bri")
+  static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Bri")
   static var TYPES = { 0x0101: 2 }                  # Dimmable Light
 
   # Inherited
@@ -44,22 +44,34 @@ class Matter_Plugin_Light1 : Matter_Plugin_Device
   # var clusters                                      # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
   # var tick                                          # tick value when it was last updated
   # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
-  var shadow_onoff                                  # (bool) status of the light power on/off
+  # var tasmota_relay_index                             # Relay number in Tasmota (1 based), nil for internal light
+  # var shadow_onoff                                  # (bool) status of the light power on/off
   var shadow_bri                                    # (int 0..254) brightness before Gamma correction - as per Matter 255 is not allowed
 
   #############################################################
   # Constructor
   def init(device, endpoint, arguments)
     super(self).init(device, endpoint, arguments)
-    self.shadow_onoff = false
     self.shadow_bri = 0
+  end
+
+  #############################################################
+  # parse_configuration
+  #
+  # Parse configuration map
+  def parse_configuration(config)
+    # with Light0 we always need relay number but we don't for Light1/2/3 so self.tasmota_relay_index may be `nil`
+    if self.BRIDGE
+      self.tasmota_relay_index = int(config.find(self.ARG #-'relay'-#, nil))
+      if (self.tasmota_relay_index != nil && self.tasmota_relay_index <= 0)    self.tasmota_relay_index = 1    end
+    end
   end
 
   #############################################################
   # Update shadow
   #
   def update_shadow()
-    if !self.VIRTUAL
+    if !self.VIRTUAL && !self.BRIDGE
       import light
       var light_status = light.get()
       if light_status != nil
@@ -81,19 +93,6 @@ class Matter_Plugin_Light1 : Matter_Plugin_Device
     super(self).update_shadow()     # superclass manages 'power'
   end
 
-  def set_onoff(pow)
-    if !self.VIRTUAL
-      import light
-      light.set({'power':pow})
-      self.update_shadow()
-    else
-      if pow != self.shadow_onoff
-        self.attribute_updated(0x0006, 0x0000)
-        self.shadow_onoff = pow
-      end
-    end
-  end
-
   #############################################################
   # Set Bri
   #
@@ -103,16 +102,13 @@ class Matter_Plugin_Light1 : Matter_Plugin_Device
     if (bri_254 < 0)    bri_254 = 0     end
     if (bri_254 > 254)  bri_254 = 254   end
     pow = (pow != nil) ? bool(pow) : nil        # nil or bool
-    if !self.VIRTUAL
-      import light
-      var bri_255 = tasmota.scale_uint(bri_254, 0, 254, 0, 255)
-      if pow == nil
-        light.set({'bri': bri_255})
-      else
-        light.set({'bri': bri_255, 'power': pow})
+    if self.BRIDGE
+      var dimmer = tasmota.scale_uint(bri_254, 0, 254, 0, 100)
+      var ret = self.call_remote_sync("Dimmer", str(dimmer))
+      if ret != nil
+        self.parse_status(ret, 11)        # update shadow from return value
       end
-      self.update_shadow()
-    else
+    elif self.VIRTUAL
       if (pow != nil) && (pow != self.shadow_onoff)
         self.attribute_updated(0x0006, 0x0000)
         self.shadow_onoff = pow
@@ -121,6 +117,15 @@ class Matter_Plugin_Light1 : Matter_Plugin_Device
         self.attribute_updated(0x0008, 0x0000)
         self.shadow_bri = bri_254
       end
+    else
+      import light
+      var bri_255 = tasmota.scale_uint(bri_254, 0, 254, 0, 255)
+      if pow == nil
+        light.set({'bri': bri_255})
+      else
+        light.set({'bri': bri_255, 'power': pow})
+      end
+      self.update_shadow()
     end
   end
 
@@ -133,14 +138,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Device
     var attribute = ctx.attribute
 
     # ====================================================================================================
-    if   cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
-      self.update_shadow_lazy()
-      if   attribute == 0x0000          #  ---------- OnOff / bool ----------
-        return tlv_solo.set(TLV.BOOL, self.shadow_onoff)
-      end
-
-    # ====================================================================================================
-    elif cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
+    if   cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
       self.update_shadow_lazy()
       if   attribute == 0x0000          #  ---------- CurrentLevel / u1 ----------
         return tlv_solo.set(TLV.U1, self.shadow_bri)
@@ -170,23 +168,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Device
     var command = ctx.command
 
     # ====================================================================================================
-    if   cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
-      self.update_shadow_lazy()
-      if   command == 0x0000            # ---------- Off ----------
-        self.set_onoff(false)
-        self.publish_command('Power', 0)
-        return true
-      elif command == 0x0001            # ---------- On ----------
-        self.set_onoff(true)
-        self.publish_command('Power', 1)
-        return true
-      elif command == 0x0002            # ---------- Toggle ----------
-        self.set_onoff(!self.shadow_onoff)
-        self.publish_command('Power', self.shadow_onoff ? 1 : 0)
-        return true
-      end
-    # ====================================================================================================
-    elif cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
+    if   cluster == 0x0008              # ========== Level Control 1.6 p.57 ==========
       self.update_shadow_lazy()
       if   command == 0x0000            # ---------- MoveToLevel ----------
         var bri_254 = val.findsubval(0)  # Hue 0..254
@@ -236,11 +218,53 @@ class Matter_Plugin_Light1 : Matter_Plugin_Device
     if val_bri != nil
       self.set_bri(int(val_bri), val_onoff)
       return    # don't call super() because we already handeld 'Power'
-    elif val_onoff != nil
-      self.set_onoff(bool(val_onoff))
     end
     super(self).update_virtual(payload)
   end
+
+  #############################################################
+  # For Bridge devices
+  #############################################################
+  #############################################################
+  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
+  #
+  # This call is synnchronous and blocking.
+  def parse_status(data, index)
+    super(self).parse_status(data, index)
+
+    if index == 11                              # Status 11
+      var dimmer = int(data.find("Dimmer"))     # 0..100
+      if dimmer != nil
+        var bri = tasmota.scale_uint(dimmer, 0, 100, 0, 254)
+        if bri != self.shadow_bri
+          self.attribute_updated(0x0008, 0x0000)
+          self.shadow_bri = bri
+        end
+      end
+    end
+  end
+
+  #############################################################
+  # web_values
+  #
+  # Show values of the remote device as HTML
+  def web_values()
+    import webserver
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(format("%s %s", self.web_value_onoff(self.shadow_onoff), self.web_value_dimmer()))
+  end
+
+  # Show on/off value as html
+  def web_value_dimmer()
+    var bri_html = ""
+    if self.shadow_bri != nil
+      var bri = tasmota.scale_uint(self.shadow_bri, 0, 254, 0, 100)
+      bri_html = format("%i%%", bri)
+    end
+    return  "&#128261; " + bri_html;
+  end
+  #############################################################
+  #############################################################
 
 end
 matter.Plugin_Light1 = Matter_Plugin_Light1
