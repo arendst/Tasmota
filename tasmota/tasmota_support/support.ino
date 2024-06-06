@@ -646,7 +646,7 @@ int32_t HexToBytes(const char* hex, uint8_t* out, size_t out_len) {
   }
 
   size_t bytes_out = len / 2;
-  if (bytes_out < out_len) {
+  if (bytes_out > out_len) {
     bytes_out = out_len;
   }
   
