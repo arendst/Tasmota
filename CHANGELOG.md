@@ -11,10 +11,11 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
-- Matter refactoring of bridged devices
+- Matter refactoring of bridged devices (#21575)
+- ESP32 Core3 platform update from 2024.05.13 to 2024.06.10 (#21569)
 
 ### Fixed
-- Berry `input()` returns empty string and does not crash
+- Berry `input()` returns empty string and does not crash (#21565)
 
 ### Removed
 

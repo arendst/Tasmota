@@ -36,9 +36,9 @@ While fallback or downgrading is common practice it was never supported due to S
 
 This release will be supported from ESP8266/Arduino library Core version **2.7.6** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
-This release will be supported from ESP32/Arduino library Core version **3.0.0**.
+This release will be supported from ESP32/Arduino library Core version **3.0.1**.
 
-Support of ESP8266 Core versions before 2.7.6 and ESP32 Core versions before 3.0.0 have been removed.
+Support of ESP8266 Core versions before 2.7.6 and ESP32 Core versions before 3.0.1 have been removed.
 
 ### Known issues with v14.1.0
 
@@ -85,7 +85,7 @@ Historical binaries can be downloaded from
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
 ### ESP32, ESP32-C2, ESP32-C3, ESP32-C6, ESP32-S2 and ESP32-S3 based
-The following binary downloads have been compiled with ESP32/Arduino library core version **3.0.0**.
+The following binary downloads have been compiled with ESP32/Arduino library core version **3.0.1**.
 
 - **tasmota32.bin** = The Tasmota version with most drivers including additional sensors and KNX for 4M+ flash.  **RECOMMENDED RELEASE BINARY**
 - **tasmota32solo1.bin** = The Tasmota version with most drivers including additional sensors and KNX for single core ESP32 and 4M+ flash.
@@ -125,7 +125,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Matter support for Air Quality sensors [#21559](https://github.com/arendst/Tasmota/issues/21559)
 
 ### Changed
+- ESP32 Core3 platform update from 2024.05.13 to 2024.06.10 [#21569](https://github.com/arendst/Tasmota/issues/21569)
+- Matter refactoring of bridged devices [#21575](https://github.com/arendst/Tasmota/issues/21575)
 
 ### Fixed
+- Berry `input()` returns empty string and does not crash [#21565](https://github.com/arendst/Tasmota/issues/21565)
 
 ### Removed
