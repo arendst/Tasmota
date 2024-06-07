@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Matter refactoring of bridged devices (#21575)
 - ESP32 Core3 platform update from 2024.05.13 to 2024.06.10 (#21569)
 - Optional MQTT_TELE_RETAIN to Energy Margins message replaced by ``SensorRetain``
+- Matter filter suffix automatically added for sensors
 
 ### Fixed
 - Berry `input()` returns empty string and does not crash (#21565)
