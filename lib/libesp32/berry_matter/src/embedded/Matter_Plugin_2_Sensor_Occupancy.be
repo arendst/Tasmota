@@ -87,11 +87,7 @@ class Matter_Plugin_Sensor_Occupancy : Matter_Plugin_Device
     # ====================================================================================================
     if   cluster == 0x0406              # ========== Occupancy Sensing ==========
       if   attribute == 0x0000          #  ---------- Occupancy / U8 ----------
-        if self.shadow_occupancy != nil
-          return tlv_solo.set(TLV.U1, self.shadow_occupancy)
-        else
-          return tlv_solo.set(TLV.NULL, nil)
-        end
+        return tlv_solo.set_or_nil(TLV.U1, self.shadow_occupancy)
       elif attribute == 0x0001          #  ---------- OccupancySensorType / enum8 ----------
         return tlv_solo.set(TLV.U1, 3)  # physical contact
       elif attribute == 0x0002          #  ---------- OccupancySensorTypeBitmap / u8 ----------

@@ -52,24 +52,24 @@ class Matter_IM
     if   opcode == 0x02   # Read Request
       var read_request_solo = self.read_request_solo.from_raw(msg.raw, msg.app_payload_idx)
       if read_request_solo != nil
-        # tasmota.log(f"MTR: process_incoming {read_request_solo=}")
+        # log(f"MTR: process_incoming {read_request_solo=}")
         return self.process_read_request_solo(msg, read_request_solo)
       end
     elif opcode == 0x08   # Invoke Request
       var invoke_request_solo = self.invoke_request_solo.from_raw(msg.raw, msg.app_payload_idx)
-      # tasmota.log(f"MTR: {invoke_request_solo=} {msg.raw[msg.app_payload_idx .. ].tohex()} {msg.app_payload_idx=} {msg.raw.tohex()}")
+      # log(f"MTR: {invoke_request_solo=} {msg.raw[msg.app_payload_idx .. ].tohex()} {msg.app_payload_idx=} {msg.raw.tohex()}")
       if invoke_request_solo != nil
         return self.process_invoke_request_solo(msg, invoke_request_solo)
       end
     end
 
-    # tasmota.log("MTR: received IM message " + matter.inspect(msg), 3)
+    # log("MTR: received IM message " + matter.inspect(msg), 3)
     var val = matter.TLV.parse(msg.raw, msg.app_payload_idx)
 
-    # tasmota.log("MTR: IM TLV: " + str(val), 3)
+    # log("MTR: IM TLV: " + str(val), 3)
 
     # var InteractionModelRevision = val.findsubval(0xFF)
-    # tasmota.log("MTR: InteractionModelRevision=" + (InteractionModelRevision != nil ? str(InteractionModelRevision) : "nil"), 4)
+    # log("MTR: InteractionModelRevision=" + (InteractionModelRevision != nil ? str(InteractionModelRevision) : "nil"), 4)
 
     if   opcode == 0x01   # Status Response
       return self.process_status_response(msg, val)
@@ -108,7 +108,7 @@ class Matter_IM
   def process_incoming_ack(msg)
     # check if there is an exchange_id interested in receiving this
     var message = self.find_sendqueue_by_exchangeid(msg.exchange_id)
-    # tasmota.log(format("MTR: process_incoming_ack exch=%i message=%i", msg.exchange_id, message != nil ? 1 : 0), 4)
+    # log(format("MTR: process_incoming_ack exch=%i message=%i", msg.exchange_id, message != nil ? 1 : 0), 4)
     if message
       return message.ack_received(msg)                # dispatch to IM_Message
     end
@@ -139,7 +139,7 @@ class Matter_IM
       end
 
       if message.finish
-        tasmota.log("MTR: remove IM message exch="+str(message.resp.exchange_id), 4)
+        log("MTR: remove IM message exch="+str(message.resp.exchange_id), 4)
         self.send_queue.remove(idx)
       else
         idx += 1
@@ -208,11 +208,11 @@ class Matter_IM
       if message
         return message.status_ok_received(msg)         # re-arm the sending of next packets for the same exchange
       else
-        tasmota.log(format("MTR: >OK        (%6i) exch=%i not found", msg.session.local_session_id, msg.exchange_id), 4)      # don't show 'SUCCESS' to not overflow logs with non-information
+        log(format("MTR: >OK        (%6i) exch=%i not found", msg.session.local_session_id, msg.exchange_id), 4)      # don't show 'SUCCESS' to not overflow logs with non-information
       end
     else
       # error
-      tasmota.log(format("MTR: >Status    ERROR = 0x%02X", status), 3)
+      log(format("MTR: >Status    ERROR = 0x%02X", status), 3)
       if message
         message.status_error_received(msg)
         self.remove_sendqueue_by_exchangeid(msg.exchange_id)
@@ -253,23 +253,23 @@ class Matter_IM
 
         # check if too big to encode as a single packet
         if (res.is_list || res.is_array) && res.encode_len() > matter.IM_ReportData.MAX_MESSAGE
-          # tasmota.log(f"MTR: >>>>>> long response", 3)
+          # log(f"MTR: >>>>>> long response", 3)
           a1_raw_or_list = []         # we return a list of block
           var a1_raw = bytes(48)
           var empty_list = TLV.Matter_TLV_array()
           self.attributedata2raw(a1_raw, ctx, empty_list, false)
           a1_raw_or_list.push(a1_raw)
-          # tasmota.log(f"MTR: >>>>>> long response global DELETE {a1_raw.tohex()}", 3)
+          # log(f"MTR: >>>>>> long response global DELETE {a1_raw.tohex()}", 3)
 
           for elt:res.val
             a1_raw = bytes(48)
             # var list_item = TLV.Matter_TLV_array()
             # list_item.val.push(elt)
             self.attributedata2raw(a1_raw, ctx, elt, true #- add ListIndex:null -#)
-            # tasmota.log(f"MTR: >>>>>> long response global ADD {a1_raw.tohex()}", 3)
+            # log(f"MTR: >>>>>> long response global ADD {a1_raw.tohex()}", 3)
             a1_raw_or_list.push(a1_raw)
           end
-          # tasmota.log(f"MTR: >>>>>> long response global {a1_raw_or_list}", 3)
+          # log(f"MTR: >>>>>> long response global {a1_raw_or_list}", 3)
         else
           # normal encoding
           # encode directly raw bytes()
@@ -278,7 +278,7 @@ class Matter_IM
         end
 
         if !no_log
-          tasmota.log(f"MTR: >Read_Attr ({session.local_session_id:6i}) {ctx}{attr_name} - {res_str}", 3)
+          log(f"MTR: >Read_Attr ({session.local_session_id:6i}) {ctx}{attr_name} - {res_str}", 3)
         end          
       elif ctx.status != nil
         if direct                           # we report an error only if a concrete direct read, not with wildcards
@@ -287,12 +287,12 @@ class Matter_IM
           self.attributestatus2raw(a1_raw_or_list, ctx, ctx.status)
 
           if tasmota.loglevel(3)
-            tasmota.log(format("MTR: >Read_Attr (%6i) %s%s - STATUS: 0x%02X %s", session.local_session_id, str(ctx), attr_name, ctx.status, ctx.status == matter.UNSUPPORTED_ATTRIBUTE ? "UNSUPPORTED_ATTRIBUTE" : ""), 3)
+            log(format("MTR: >Read_Attr (%6i) %s%s - STATUS: 0x%02X %s", session.local_session_id, str(ctx), attr_name, ctx.status, ctx.status == matter.UNSUPPORTED_ATTRIBUTE ? "UNSUPPORTED_ATTRIBUTE" : ""), 3)
           end
         end
       else
         if !no_log
-          tasmota.log(format("MTR: >Read_Attr (%6i) %s%s - IGNORED", session.local_session_id, str(ctx), attr_name), 3)
+          log(format("MTR: >Read_Attr (%6i) %s%s - IGNORED", session.local_session_id, str(ctx), attr_name), 3)
         end
         # ignore if content is nil and status is undefined
         if direct
@@ -368,9 +368,9 @@ class Matter_IM
         # we need expansion, log first
         if ctx.cluster != nil && ctx.attribute != nil
           var attr_name = matter.get_attribute_name(ctx.cluster, ctx.attribute)
-          tasmota.log(format("MTR: >Read_Attr (%6i) %s", session.local_session_id, str(ctx) + (attr_name ? " (" + attr_name + ")" : "")), 3)
+          log(format("MTR: >Read_Attr (%6i) %s", session.local_session_id, str(ctx) + (attr_name ? " (" + attr_name + ")" : "")), 3)
         else
-          tasmota.log(format("MTR: >Read_Attr (%6i) %s", session.local_session_id, str(ctx)), 3)
+          log(format("MTR: >Read_Attr (%6i) %s", session.local_session_id, str(ctx)), 3)
         end
         
       end
@@ -381,8 +381,8 @@ class Matter_IM
       )
     end
 
-    # tasmota.log("MTR: ReportDataMessage=" + str(ret), 3)
-    # tasmota.log("MTR: ReportDataMessageTLV=" + str(ret.to_TLV()), 3)
+    # log("MTR: ReportDataMessage=" + str(ret), 3)
+    # log("MTR: ReportDataMessageTLV=" + str(ret.to_TLV()), 3)
 
     return ret
   end
@@ -705,7 +705,7 @@ class Matter_IM
     var pi = self.device.process_attribute_read_solo(ctx)
     var res = nil
     # matter.profiler.log("read_request_solo pi ok")
-    # tasmota.log(f"MTR: process_read_request_solo {pi=}")
+    # log(f"MTR: process_read_request_solo {pi=}")
 
     var raw                      # this is the bytes() block we need to add to response (or nil)
     if pi != nil
@@ -721,7 +721,7 @@ class Matter_IM
         # revert to standard 
         # the attribute will be read again, but it's hard to avoid it
         res = nil       # indicated to GC that we don't need it again
-        tasmota.log(f"MTR:                     Response to big, revert to non-solo", 3)
+        log(f"MTR:                     Response to big, revert to non-solo", 3)
         var val = matter.TLV.parse(msg.raw, msg.app_payload_idx)
         return self.process_read_request(msg, val)
       end
@@ -752,7 +752,7 @@ class Matter_IM
       raw.add(0x18, 1)               # add 18
 
     else
-      tasmota.log(f"MTR: >Read_Attr ({msg.session.local_session_id:6i}) {ctx} - IGNORED", 3)
+      log(f"MTR: >Read_Attr ({msg.session.local_session_id:6i}) {ctx} - IGNORED", 3)
       return false
     end
 
@@ -765,7 +765,7 @@ class Matter_IM
     resp.encode_frame(raw, msg_raw)    # payload in cleartext
     resp.encrypt()
     if tasmota.loglevel(4)
-      tasmota.log(format("MTR: <snd       (%6i) id=%i exch=%i rack=%s", resp.session.local_session_id, resp.message_counter, resp.exchange_id, resp.ack_message_counter), 4)
+      log(format("MTR: <snd       (%6i) id=%i exch=%i rack=%s", resp.session.local_session_id, resp.message_counter, resp.exchange_id, resp.ack_message_counter), 4)
     end
 
     responder.send_response_frame(resp)
@@ -779,23 +779,23 @@ class Matter_IM
     if res != nil
       if tasmota.loglevel(3)
         var res_str = res.to_str_val()  # get the value with anonymous tag before it is tagged, for logging
-        tasmota.log(f"MTR: >Read_Attr1({msg.session.local_session_id:6i}) {ctx}{attr_name} - {res_str}", 3)
-        # tasmota.log(f"MTR: {res.tlv2raw().tohex()}", 3)
+        log(f"MTR: >Read_Attr1({msg.session.local_session_id:6i}) {ctx}{attr_name} - {res_str}", 3)
+        # log(f"MTR: {res.tlv2raw().tohex()}", 3)
       end
       # if matter.profiler.active && tasmota.loglevel(3)
-      #   tasmota.log(f"MTR:            {raw=}", 3)    # TODO remove before flight
+      #   log(f"MTR:            {raw=}", 3)    # TODO remove before flight
       # end
     elif ctx.status != nil
       var unsupported_attribute = (ctx.status == matter.UNSUPPORTED_ATTRIBUTE ? "UNSUPPORTED_ATTRIBUTE" : "")
       if tasmota.loglevel(3)
-        tasmota.log(f"MTR: >Read_Attr1({msg.session.local_session_id:6i}) {ctx}{attr_name} - STATUS: 0x{ctx.status:02X} {unsupported_attribute}", 3)
+        log(f"MTR: >Read_Attr1({msg.session.local_session_id:6i}) {ctx}{attr_name} - STATUS: 0x{ctx.status:02X} {unsupported_attribute}", 3)
       end
       # if matter.profiler.active && tasmota.loglevel(3)
-      #   tasmota.log(f"MTR:            {raw=}", 3)    # TODO remove before flight
+      #   log(f"MTR:            {raw=}", 3)    # TODO remove before flight
       # end
     else
       if tasmota.loglevel(3)
-        tasmota.log(f"MTR: >Read_Attr1({msg.session.local_session_id:6i}) {ctx}{attr_name} - IGNORED", 3)
+        log(f"MTR: >Read_Attr1({msg.session.local_session_id:6i}) {ctx}{attr_name} - IGNORED", 3)
       end
     end
 
@@ -813,7 +813,7 @@ class Matter_IM
       self.subs_shop.remove_by_session(msg.session)      # if `keep_subscriptions`, kill all subscriptions from current session
     end
 
-    # tasmota.log("MTR: received SubscribeRequestMessage=" + str(query), 3)
+    # log("MTR: received SubscribeRequestMessage=" + str(query), 3)
 
     var sub = self.subs_shop.new_subscription(msg.session, query)
 
@@ -827,10 +827,10 @@ class Matter_IM
       ctx.attribute = q.attribute
       attr_req.push(str(ctx))
     end
-    tasmota.log(format("MTR: >Subscribe (%6i) %s (min=%i, max=%i, keep=%i) sub=%i fabric_filtered=%s",
+    log(format("MTR: >Subscribe (%6i) %s (min=%i, max=%i, keep=%i) sub=%i fabric_filtered=%s",
                               msg.session.local_session_id, attr_req.concat(" "), sub.min_interval, sub.max_interval, query.keep_subscriptions ? 1 : 0, sub.subscription_id, query.fabric_filtered), 3)
     if query.event_requests != nil && size(query.event_requests) > 0
-      tasmota.log(f"MTR: >Subscribe ({msg.session.local_session_id:6i}) event_requests_size={size(query.event_requests)}", 3)
+      log(f"MTR: >Subscribe ({msg.session.local_session_id:6i}) event_requests_size={size(query.event_requests)}", 3)
     end
 
     var ret = self._inner_process_read_request(msg.session, query, msg, true #-no_log-#)
@@ -849,7 +849,7 @@ class Matter_IM
   def process_invoke_request(msg, val)
     # import debug
     # structure is `ReadRequestMessage` 10.6.2 p.558
-    # tasmota.log("MTR: IM:invoke_request processing start", 4)
+    # log("MTR: IM:invoke_request processing start", 4)
     matter.profiler.log("invoke_request_start")
     var ctx = matter.Path()
     ctx.msg = msg
@@ -872,8 +872,8 @@ class Matter_IM
         var res = self.device.invoke_request(msg.session, q.command_fields, ctx)
         matter.profiler.log("COMMAND DONE")
         var params_log = (ctx.log != nil) ? "(" + str(ctx.log) + ") " : ""
-        tasmota.log(format("MTR: >Command   (%6i) %s %s %s", msg.session.local_session_id, ctx_str, cmd_name ? cmd_name : "", params_log), 3)
-        # tasmota.log("MTR: Perf/Command = " + str(debug.counters()), 4)
+        log(format("MTR: >Command   (%6i) %s %s %s", msg.session.local_session_id, ctx_str, cmd_name ? cmd_name : "", params_log), 3)
+        # log("MTR: Perf/Command = " + str(debug.counters()), 4)
         ctx.log = nil
         var raw = bytes(32)
         # var a1 = matter.InvokeResponseIB()
@@ -882,7 +882,7 @@ class Matter_IM
           self.invokeresponse2raw(raw, ctx, nil)
           ret.invoke_responses.push(raw)
           if tasmota.loglevel(3)
-            tasmota.log(f"MTR: <Replied   ({msg.session.local_session_id:6i}) OK exch={msg.exchange_id:i}", 3)
+            log(f"MTR: <Replied   ({msg.session.local_session_id:6i}) OK exch={msg.exchange_id:i}", 3)
           end
         elif res != nil
           self.invokeresponse2raw(raw, ctx, res)
@@ -891,17 +891,17 @@ class Matter_IM
           cmd_name = matter.get_command_name(ctx.cluster, ctx.command)
           if !cmd_name  cmd_name = "" end
           if tasmota.loglevel(3)
-            tasmota.log(f"MTR: <Replied   ({msg.session.local_session_id:6i}) {ctx} {cmd_name}", 3)
+            log(f"MTR: <Replied   ({msg.session.local_session_id:6i}) {ctx} {cmd_name}", 3)
           end
         elif ctx.status != nil
           self.invokeresponse2raw(raw, ctx, nil)
           ret.invoke_responses.push(raw)
           if tasmota.loglevel(3)
-            tasmota.log(f"MTR: <Replied   ({msg.session.local_session_id:6i}) Status=0x{ctx.status:02X} exch={msg.exchange_id:i}", 3)
+            log(f"MTR: <Replied   ({msg.session.local_session_id:6i}) Status=0x{ctx.status:02X} exch={msg.exchange_id:i}", 3)
           end
         else
           if tasmota.loglevel(3)
-            tasmota.log(f"MTR: _Ignore    ({msg.session.local_session_id:6i}) exch={msg.exchange_id:i}", 3)
+            log(f"MTR: _Ignore    ({msg.session.local_session_id:6i}) exch={msg.exchange_id:i}", 3)
           end
           # ignore if content is nil and status is undefined
         end
@@ -934,9 +934,9 @@ class Matter_IM
     matter.profiler.log("COMMAND DONE")
     var params_log = (ctx.log != nil) ? "(" + str(ctx.log) + ") " : ""
     if tasmota.loglevel(3)
-      tasmota.log(format("MTR: >Command1  (%6i) %s %s %s", msg.session.local_session_id, ctx_str, cmd_name ? cmd_name : "", params_log), 3)
+      log(format("MTR: >Command1  (%6i) %s %s %s", msg.session.local_session_id, ctx_str, cmd_name ? cmd_name : "", params_log), 3)
     end
-    # tasmota.log("MTR: Perf/Command = " + str(debug.counters()), 4)
+    # log("MTR: Perf/Command = " + str(debug.counters()), 4)
     ctx.log = nil
     var raw = bytes(48)
 
@@ -948,24 +948,24 @@ class Matter_IM
       self.invokeresponse2raw(raw, ctx, nil)
 
       if tasmota.loglevel(3)
-        tasmota.log(f"MTR: <Replied   ({msg.session.local_session_id:6i}) OK exch={msg.exchange_id:i}", 3)
+        log(f"MTR: <Replied   ({msg.session.local_session_id:6i}) OK exch={msg.exchange_id:i}", 3)
       end
     elif res != nil
       self.invokeresponse2raw(raw, ctx, res)
 
       if !cmd_name  cmd_name = "" end
       if tasmota.loglevel(3)
-        tasmota.log(f"MTR: <Replied   ({msg.session.local_session_id:6i}) {ctx} {cmd_name}", 3)
+        log(f"MTR: <Replied   ({msg.session.local_session_id:6i}) {ctx} {cmd_name}", 3)
       end
     elif ctx.status != nil
       self.invokeresponse2raw(raw, ctx, nil)
 
       if tasmota.loglevel(3)
-        tasmota.log(f"MTR: <Replied   ({msg.session.local_session_id:6i}) Status=0x{ctx.status:02X} exch={msg.exchange_id:i}", 3)
+        log(f"MTR: <Replied   ({msg.session.local_session_id:6i}) Status=0x{ctx.status:02X} exch={msg.exchange_id:i}", 3)
       end
     else
       if tasmota.loglevel(3)
-        tasmota.log(f"MTR: _Ignore    ({msg.session.local_session_id:6i}) exch={msg.exchange_id:i}", 3)
+        log(f"MTR: _Ignore    ({msg.session.local_session_id:6i}) exch={msg.exchange_id:i}", 3)
       end
       # ignore if content is nil and status is undefined
       return false
@@ -974,7 +974,7 @@ class Matter_IM
     raw.add(0x1824FF01, -4)       # add 1824FF01
     raw.add(0x18, 1)              # add 18
 
-    # tasmota.log(f"MTR: raw={raw.tohex()}", 3)
+    # log(f"MTR: raw={raw.tohex()}", 3)
     var resp = msg.build_response(0x09 #-Invoke Response-#, true)
     var responder = self.device.message_handler
     var msg_raw = msg.raw
@@ -992,7 +992,7 @@ class Matter_IM
   #
   def subscribe_response(msg, val)
     var query = matter.SubscribeResponseMessage().from_TLV(val)
-    # tasmota.log("MTR: received SubscribeResponsetMessage=" + str(query), 4)
+    # log("MTR: received SubscribeResponsetMessage=" + str(query), 4)
     return false
   end
 
@@ -1001,7 +1001,7 @@ class Matter_IM
   #
   def report_data(msg, val)
     var query = matter.ReportDataMessage().from_TLV(val)
-    # tasmota.log("MTR: received ReportDataMessage=" + str(query), 4)
+    # log("MTR: received ReportDataMessage=" + str(query), 4)
     return false
   end
 
@@ -1010,7 +1010,7 @@ class Matter_IM
   #
   def process_write_request(msg, val)
     var query = matter.WriteRequestMessage().from_TLV(val)
-    # tasmota.log("MTR: received WriteRequestMessage=" + str(query), 3)
+    # log("MTR: received WriteRequestMessage=" + str(query), 3)
 
     var suppress_response = query.suppress_response
     # var timed_request = query.timed_request   # TODO not supported
@@ -1030,7 +1030,7 @@ class Matter_IM
     def write_single_attribute(ret, pi, ctx, write_data, direct)
       var attr_name = matter.get_attribute_name(ctx.cluster, ctx.attribute)
       attr_name = attr_name ? " (" + attr_name + ")" : ""
-      # tasmota.log(format("MTR: Read Attribute " + str(ctx) + (attr_name ? " (" + attr_name + ")" : ""), 2)
+      # log(format("MTR: Read Attribute " + str(ctx) + (attr_name ? " (" + attr_name + ")" : ""), 2)
       # Special case to report unsupported item, if pi==nil
       ctx.status = matter.UNSUPPORTED_WRITE
       var res = (pi != nil) ? pi.write_attribute(msg.session, ctx, write_data) : nil
@@ -1046,17 +1046,17 @@ class Matter_IM
           a1.status.status = ctx.status
 
           ret.write_responses.push(a1)
-          tasmota.log(format("MTR: Write_Attr %s%s - STATUS: 0x%02X %s", str(ctx), attr_name, ctx.status, ctx.status == matter.SUCCESS ? "SUCCESS" : ""), (ctx.endpoint != 0) ? 2 : 3)
+          log(format("MTR: Write_Attr %s%s - STATUS: 0x%02X %s", str(ctx), attr_name, ctx.status, ctx.status == matter.SUCCESS ? "SUCCESS" : ""), (ctx.endpoint != 0) ? 2 : 3)
           return true
         end
       else
-        tasmota.log(format("MTR: Write_Attr %s%s - IGNORED", str(ctx), attr_name), 3)
+        log(format("MTR: Write_Attr %s%s - IGNORED", str(ctx), attr_name), 3)
         # ignore if content is nil and status is undefined
       end
     end
 
     # structure is `ReadRequestMessage` 10.6.2 p.558
-    # tasmota.log("MTR: IM:write_request processing start", 4)
+    # log("MTR: IM:write_request processing start", 4)
     var ctx = matter.Path()
     ctx.msg = msg
 
@@ -1087,7 +1087,7 @@ class Matter_IM
         if ctx.endpoint == nil
           # we need expansion, log first
           var attr_name = matter.get_attribute_name(ctx.cluster, ctx.attribute)
-          tasmota.log("MTR: Write_Attr " + str(ctx) + (attr_name ? " (" + attr_name + ")" : ""), 3)
+          log("MTR: Write_Attr " + str(ctx) + (attr_name ? " (" + attr_name + ")" : ""), 3)
         end
 
         # implement concrete expansion
@@ -1096,8 +1096,8 @@ class Matter_IM
         )
       end
 
-      # tasmota.log("MTR: ReportWriteMessage=" + str(ret), 4)
-      # tasmota.log("MTR: ReportWriteMessageTLV=" + str(ret.to_TLV()), 3)
+      # log("MTR: ReportWriteMessage=" + str(ret), 4)
+      # log("MTR: ReportWriteMessageTLV=" + str(ret.to_TLV()), 3)
 
       # send the reponse that may need to be chunked if too large to fit in a single UDP message
       if !suppress_response
@@ -1112,7 +1112,7 @@ class Matter_IM
   #
   def process_write_response(msg, val)
     var query = matter.WriteResponseMessage().from_TLV(val)
-    # tasmota.log("MTR: received WriteResponseMessage=" + str(query), 4)
+    # log("MTR: received WriteResponseMessage=" + str(query), 4)
     return false
   end
 
@@ -1121,7 +1121,7 @@ class Matter_IM
   #
   def process_invoke_response(msg, val)
     var query = matter.InvokeResponseMessage().from_TLV(val)
-    # tasmota.log("MTR: received InvokeResponseMessage=" + str(query), 4)
+    # log("MTR: received InvokeResponseMessage=" + str(query), 4)
     return false
   end
 
@@ -1130,9 +1130,9 @@ class Matter_IM
   #
   def process_timed_request(msg, val)
     var query = matter.TimedRequestMessage().from_TLV(val)
-    # tasmota.log("MTR: received TimedRequestMessage=" + str(query), 3)
+    # log("MTR: received TimedRequestMessage=" + str(query), 3)
 
-    tasmota.log(format("MTR: >Command   (%6i) TimedRequest=%i", msg.session.local_session_id, query.timeout), 3)
+    log(format("MTR: >Command   (%6i) TimedRequest=%i", msg.session.local_session_id, query.timeout), 3)
     
     # Send success status report
     self.send_status(msg, matter.SUCCESS)
@@ -1159,7 +1159,7 @@ class Matter_IM
       fake_read.attributes_requests.push(p1)
     end
 
-    tasmota.log(format("MTR: <Sub_Data  (%6i) sub=%i", session.local_session_id, sub.subscription_id), 3)
+    log(format("MTR: <Sub_Data  (%6i) sub=%i", session.local_session_id, sub.subscription_id), 3)
     sub.is_keep_alive = false             # sending an actual data update
 
     var ret = self._inner_process_read_request(session, fake_read, nil #-no msg-#)
@@ -1177,7 +1177,7 @@ class Matter_IM
   def send_subscribe_heartbeat(sub)
     var session = sub.session
     
-    tasmota.log(format("MTR: <Sub_Alive (%6i) sub=%i", session.local_session_id, sub.subscription_id), 3)
+    log(format("MTR: <Sub_Alive (%6i) sub=%i", session.local_session_id, sub.subscription_id), 3)
     sub.is_keep_alive = true              # sending keep-alive
 
     # prepare the response

@@ -118,11 +118,7 @@ class Matter_Plugin_Device : Matter_Plugin
       if   attribute == 0x0003          #  ---------- ProductName / string ----------
         if self.BRIDGE
           var name = self.http_remote.get_info().find("name")
-          if name
-            return tlv_solo.set(TLV.UTF1, name)
-          else
-            return tlv_solo.set(TLV.NULL, nil)
-          end
+          return tlv_solo.set_or_nil(TLV.UTF1, name)
         else
           return tlv_solo.set(TLV.UTF1, tasmota.cmd("DeviceName", true)['DeviceName'])
         end
@@ -147,11 +143,7 @@ class Matter_Plugin_Device : Matter_Plugin
       elif attribute == 0x000F || attribute == 0x0012          #  ---------- SerialNumber / string ----------
         if self.BRIDGE
           var mac = self.http_remote.get_info().find("mac")
-          if mac
-            return tlv_solo.set(TLV.UTF1, mac)
-          else
-            return tlv_solo.set(TLV.NULL, nil)
-          end
+          return tlv_solo.set_or_nil(TLV.UTF1, mac)
         else
           return tlv_solo.set(TLV.UTF1, tasmota.wifi().find("mac", ""))
         end
@@ -325,7 +317,7 @@ class Matter_Plugin_Device : Matter_Plugin
           return j
         end
         retry -= 1
-        tasmota.log("MTR: HTTP GET retrying", 3)
+        log("MTR: HTTP GET retrying", 3)
       end
       self.http_remote.device_is_alive(false)
       return nil

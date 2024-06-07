@@ -1004,7 +1004,7 @@ be_local_closure(class_Matter_Session_is_CASE,   /* name */
 extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_before_remove,   /* name */
   be_nested_proto(
-    6,                          /* nstack */
+    5,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -1012,25 +1012,23 @@ be_local_closure(class_Matter_Session_before_remove,   /* name */
     0,                          /* has sup protos */
     &be_class_Matter_Session, 
     1,                          /* has constants */
-    ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_weak(tasmota),
-    /* K1   */  be_nested_str_weak(log),
-    /* K2   */  be_nested_str_weak(MTR_X3A_X20_X2DSession_X20_X20_X20_X28_X256i_X29_X20_X28removed_X29),
-    /* K3   */  be_nested_str_weak(local_session_id),
-    /* K4   */  be_const_int(3),
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_nested_str_weak(log),
+    /* K1   */  be_nested_str_weak(MTR_X3A_X20_X2DSession_X20_X20_X20_X28_X256i_X29_X20_X28removed_X29),
+    /* K2   */  be_nested_str_weak(local_session_id),
+    /* K3   */  be_const_int(3),
     }),
     be_str_weak(before_remove),
     &be_const_str_solidified,
-    ( &(const binstruction[ 9]) {  /* code */
+    ( &(const binstruction[ 8]) {  /* code */
       0xB8060000,  //  0000  GETNGBL	R1	K0
-      0x8C040301,  //  0001  GETMET	R1	R1	K1
-      0x600C0018,  //  0002  GETGBL	R3	G24
-      0x58100002,  //  0003  LDCONST	R4	K2
-      0x88140103,  //  0004  GETMBR	R5	R0	K3
-      0x7C0C0400,  //  0005  CALL	R3	2
-      0x58100004,  //  0006  LDCONST	R4	K4
-      0x7C040600,  //  0007  CALL	R1	3
-      0x80000000,  //  0008  RET	0
+      0x60080018,  //  0001  GETGBL	R2	G24
+      0x580C0001,  //  0002  LDCONST	R3	K1
+      0x88100102,  //  0003  GETMBR	R4	R0	K2
+      0x7C080400,  //  0004  CALL	R2	2
+      0x580C0003,  //  0005  LDCONST	R3	K3
+      0x7C040400,  //  0006  CALL	R1	2
+      0x80000000,  //  0007  RET	0
     })
   )
 );

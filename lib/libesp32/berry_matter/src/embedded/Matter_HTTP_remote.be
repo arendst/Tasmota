@@ -137,7 +137,7 @@ class Matter_HTTP_remote : Matter_HTTP_async
         # dispatch to method in charge of converting to shadow values
         method(obj, j, code)
       else
-        tasmota.log(f"MTR: *** failed to parse JSON response {payload=}", 3)
+        log(f"MTR: *** failed to parse JSON response {payload=}", 3)
       end
     end
   end
@@ -159,7 +159,7 @@ class Matter_HTTP_remote : Matter_HTTP_async
         else
           self.info.remove("name")
         end
-        tasmota.log(f"MTR: update '{self.addr}' name='{device_name}'", 3)
+        log(f"MTR: update '{self.addr}' name='{device_name}'", 3)
         changed = true
       end
 
@@ -175,7 +175,7 @@ class Matter_HTTP_remote : Matter_HTTP_async
         else
           self.info.remove('version')
         end
-        tasmota.log(f"MTR: update '{self.addr}' version='{version}'", 3)
+        log(f"MTR: update '{self.addr}' version='{version}'", 3)
         changed = true
       end
 
@@ -185,7 +185,7 @@ class Matter_HTTP_remote : Matter_HTTP_async
         else
           self.info.remove('hardware')
         end
-        tasmota.log(f"MTR: update '{self.addr}' hardware='{hardware}'", 3)
+        log(f"MTR: update '{self.addr}' hardware='{hardware}'", 3)
         changed = true
       end
 
@@ -201,7 +201,7 @@ class Matter_HTTP_remote : Matter_HTTP_async
         else
           self.info.remove("mac")
         end
-        tasmota.log(f"MTR: update '{self.addr}' mac='{mac}'", 3)
+        log(f"MTR: update '{self.addr}' mac='{mac}'", 3)
         changed = true
       end
 
@@ -283,7 +283,7 @@ class Matter_HTTP_remote : Matter_HTTP_async
 
     self.current_cmd = cmd
     var cmd_url = "/cm?cmnd=" + string.tr(cmd, ' ', '+')
-    tasmota.log(format("MTR: HTTP async request 'http://%s:%i%s'", self.addr, self.port, cmd_url), 4)
+    log(format("MTR: HTTP async request 'http://%s:%i%s'", self.addr, self.port, cmd_url), 4)
     var ret = self.begin(cmd_url)
   end
 
@@ -302,11 +302,11 @@ class Matter_HTTP_remote : Matter_HTTP_async
 
     self.current_cmd = nil
     var cmd_url = "/cm?cmnd=" + string.tr(cmd, ' ', '+')
-    tasmota.log(format("MTR: HTTP sync request 'http://%s:%i%s'", self.addr, self.port, cmd_url), 4)
+    log(format("MTR: HTTP sync request 'http://%s:%i%s'", self.addr, self.port, cmd_url), 4)
     var ret = super(self).begin_sync(cmd_url, timeout)
     var payload_short = (ret) ? ret : 'nil'
     if size(payload_short) > 30   payload_short = payload_short[0..29] + '...'   end
-    tasmota.log(format("MTR: HTTP sync-resp  in %i ms from %s: [%i] '%s'", tasmota.millis() - self.time_start, self.addr, size(self.payload), payload_short), 3)
+    log(format("MTR: HTTP sync-resp  in %i ms from %s: [%i] '%s'", tasmota.millis() - self.time_start, self.addr, size(self.payload), payload_short), 3)
     return ret
   end
 
@@ -314,17 +314,17 @@ class Matter_HTTP_remote : Matter_HTTP_async
     if self.current_cmd == nil    return  end       # do nothing if sync request
     var payload_short = (self.payload != nil) ? self.payload : 'nil'
     if size(payload_short) > 30   payload_short = payload_short[0..29] + '...'   end
-    tasmota.log(format("MTR: HTTP async-resp in %i ms from %s: [%i] '%s'", tasmota.millis() - self.time_start, self.addr, size(self.payload), payload_short), 3)
+    log(format("MTR: HTTP async-resp in %i ms from %s: [%i] '%s'", tasmota.millis() - self.time_start, self.addr, size(self.payload), payload_short), 3)
     self.dispatch_cb(self.http_status, self.payload)
   end
   def event_http_failed()
     if self.current_cmd == nil    return  end       # do nothing if sync request
-    tasmota.log("MTR: HTTP failed", 3)
+    log("MTR: HTTP failed", 3)
     self.dispatch_cb(self.http_status, nil)
   end
   def event_http_timeout()
     if self.current_cmd == nil    return  end       # do nothing if sync request
-    tasmota.log(format("MTR: HTTP timeout http_status=%i phase=%i tcp_status=%i size_payload=%i", self.http_status, self.phase, self.status, size(self.payload)), 3)
+    log(format("MTR: HTTP timeout http_status=%i phase=%i tcp_status=%i size_payload=%i", self.http_status, self.phase, self.status, size(self.payload)), 3)
     self.dispatch_cb(self.http_status, nil)
   end
 
