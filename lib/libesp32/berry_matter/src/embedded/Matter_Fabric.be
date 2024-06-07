@@ -193,7 +193,7 @@ class Matter_Fabric : Matter_Expirable
   #
   def counter_group_data_snd_next()
     var next = self._counter_group_data_snd_impl.next()
-    tasmota.log(f"MTR: .          Counter_group_data_snd={next:i}", 3)
+    log(f"MTR: .          Counter_group_data_snd={next:i}", 3)
     if matter.Counter.is_greater(next, self.counter_group_data_snd)
       self.counter_group_data_snd = next + self._GROUP_SND_INCR
       if self.does_persist()
@@ -208,7 +208,7 @@ class Matter_Fabric : Matter_Expirable
   #
   def counter_group_ctrl_snd_next()
     var next = self._counter_group_ctrl_snd_impl.next()
-    tasmota.log(f"MTR: .          Counter_group_ctrl_snd={next:i}", 3)
+    log(f"MTR: .          Counter_group_ctrl_snd={next:i}", 3)
     if matter.Counter.is_greater(next, self.counter_group_ctrl_snd)
       self.counter_group_ctrl_snd = next + self._GROUP_SND_INCR
       if self.does_persist()
@@ -222,13 +222,13 @@ class Matter_Fabric : Matter_Expirable
   #############################################################
   # Called before removal
   def log_new_fabric()
-    tasmota.log(format("MTR: +Fabric    fab='%s' vendorid=%s", self.get_fabric_id().copy().reverse().tohex(), self.get_admin_vendor_name()), 3)
+    log(format("MTR: +Fabric    fab='%s' vendorid=%s", self.get_fabric_id().copy().reverse().tohex(), self.get_admin_vendor_name()), 3)
   end
 
   #############################################################
   # Called before removal
   def before_remove()
-    tasmota.log(format("MTR: -Fabric    fab='%s' (removed)", self.get_fabric_id().copy().reverse().tohex()), 3)
+    log(format("MTR: -Fabric    fab='%s' (removed)", self.get_fabric_id().copy().reverse().tohex()), 3)
   end
 
   #############################################################

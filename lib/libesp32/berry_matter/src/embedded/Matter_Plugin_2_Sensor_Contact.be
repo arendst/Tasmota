@@ -87,11 +87,7 @@ class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
     # ====================================================================================================
     if   cluster == 0x0045              # ========== Boolean State ==========
       if   attribute == 0x0000          #  ---------- StateValue / bool ----------
-        if self.shadow_contact != nil
-          return tlv_solo.set(TLV.BOOL, self.shadow_contact)
-        else
-          return tlv_solo.set(TLV.NULL, nil)
-        end
+        return tlv_solo.set_or_nil(TLV.BOOL, self.shadow_contact)
       end
 
     end

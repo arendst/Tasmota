@@ -304,7 +304,7 @@ class Matter_Frame
     if resp.local_session_id == 0
       var op_name = matter.get_opcode_name(resp.opcode)
       if !op_name   op_name = format("0x%02X", resp.opcode) end
-      tasmota.log(format("MTR: <Replied   (%6i) %s", resp.session.local_session_id, op_name), 3)
+      log(format("MTR: <Replied   (%6i) %s", resp.session.local_session_id, op_name), 3)
     end
     return resp
   end
@@ -363,7 +363,7 @@ class Matter_Frame
     # check privacy flag, p.127
     if self.sec_p
       # compute privacy key, p.71
-      tasmota.log("MTR: >>>>>>>>>>>>>>>>>>>> Compute Privacy TODO", 2)
+      log("MTR: >>>>>>>>>>>>>>>>>>>> Compute Privacy TODO", 2)
       var k = session.get_i2r_privacy()
       var mic = raw[-16..]      # take last 16 bytes as signature
       var n = bytes().add(self.local_session_id, -2) + mic[5..15]   # session in Big Endian
@@ -387,13 +387,13 @@ class Matter_Frame
       n.resize(13)        # add zeros
     end
 
-    # tasmota.log("MTR: ******************************", 4)
-    # tasmota.log("MTR: raw         =" + raw.tohex(), 4)
-    # tasmota.log("MTR: i2r         =" + i2r.tohex(), 4)
-    # tasmota.log("MTR: p           =" + raw[payload_idx .. -17].tohex(), 4)
-    # tasmota.log("MTR: a           =" + raw[0 .. payload_idx - 1].tohex(), 4)
-    # tasmota.log("MTR: n           =" + n.tohex(), 4)
-    # tasmota.log("MTR: mic         =" + raw[-16..].tohex(), 4)
+    # log("MTR: ******************************", 4)
+    # log("MTR: raw         =" + raw.tohex(), 4)
+    # log("MTR: i2r         =" + i2r.tohex(), 4)
+    # log("MTR: p           =" + raw[payload_idx .. -17].tohex(), 4)
+    # log("MTR: a           =" + raw[0 .. payload_idx - 1].tohex(), 4)
+    # log("MTR: n           =" + n.tohex(), 4)
+    # log("MTR: mic         =" + raw[-16..].tohex(), 4)
 
     # decrypt
     var ret = crypto.AES_CCM.decrypt1(i2r,                    # secret key
@@ -405,7 +405,7 @@ class Matter_Frame
       # succcess
       raw.resize(size(raw) - tag_len)   # remove MIC
     else
-      tasmota.log("MTR: rejected packet due to invalid MIC", 3)
+      log("MTR: rejected packet due to invalid MIC", 3)
     end
     return ret
   end
@@ -451,7 +451,7 @@ class Matter_Frame
     var r = matter.Frame(self.message_handler, raw)
     r.decode_header()
     r.decode_payload()
-    # tasmota.log("MTR: sending decode: " + matter.inspect(r), 4)
+    # log("MTR: sending decode: " + matter.inspect(r), 4)
   end
 end
 matter.Frame = Matter_Frame

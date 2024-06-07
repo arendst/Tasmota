@@ -368,7 +368,7 @@ class Matter_UI
       end
     end
     self.device.sort_distinct(remotes)
-    # tasmota.log("MTR: remotes: "+str(remotes), 4)
+    # log("MTR: remotes: "+str(remotes), 4)
 
     for remote: remotes
 
@@ -642,7 +642,7 @@ class Matter_UI
     end
     
     if status10 != nil && status11 != nil
-      tasmota.log(format("MTR: probed '%s' status10=%s satus11=%s", url, str(status10), str(status11)), 3)
+      log(format("MTR: probed '%s' status10=%s satus11=%s", url, str(status10), str(status11)), 3)
 
       var config_list = self.generate_config_from_status(status10, status11)
 
@@ -752,14 +752,14 @@ class Matter_UI
 
       # debug information about parameters
       # for i:0..webserver.arg_size()-1
-      #   tasmota.log(format("MTR: Arg%i '%s' = '%s'", i, webserver.arg_name(i), webserver.arg(i)))
+      #   log(format("MTR: Arg%i '%s' = '%s'", i, webserver.arg_name(i), webserver.arg(i)))
       # end
 
       #---------------------------------------------------------------------#
       # Change Passcode and/or Passcode
       #---------------------------------------------------------------------#
       if webserver.has_arg("passcode") || webserver.has_arg("discriminator")
-        tasmota.log(format("MTR: /matterc received '%s' command", 'passcode'), 3)
+        log(format("MTR: /matterc received '%s' command", 'passcode'), 3)
         if webserver.has_arg("passcode")
           self.device.root_passcode = int(webserver.arg("passcode"))
         end
@@ -783,10 +783,10 @@ class Matter_UI
 
         if matter_enabled_requested != self.matter_enabled()
           if matter_enabled_requested
-            tasmota.log(format("MTR: /matterc received '%s' command", 'enable'), 3)
+            log(format("MTR: /matterc received '%s' command", 'enable'), 3)
             tasmota.cmd("SetOption" + str(matter.MATTER_OPTION) + " 1")
           else
-            tasmota.log(format("MTR: /matterc received '%s' command", 'disable'), 3)
+            log(format("MTR: /matterc received '%s' command", 'disable'), 3)
             tasmota.cmd("SetOption" + str(matter.MATTER_OPTION) + " 0")
           end
           #- and force restart -#
@@ -808,7 +808,7 @@ class Matter_UI
       # Delete Fabric
       #---------------------------------------------------------------------#
       elif webserver.has_arg("del_fabric")
-        tasmota.log(format("MTR: /matterc received '%s' command", 'del_fabric'), 3)
+        log(format("MTR: /matterc received '%s' command", 'del_fabric'), 3)
         var del_fabric = int(webserver.arg("del_fabric"))
         var idx = 0
         var fabrics = self.device.sessions.fabrics
@@ -827,7 +827,7 @@ class Matter_UI
       # Reset to default auto-configuration
       #---------------------------------------------------------------------#
       elif webserver.has_arg("auto")
-        tasmota.log(format("MTR: /matterc received '%s' command", 'auto'), 3)
+        log(format("MTR: /matterc received '%s' command", 'auto'), 3)
         self.device.plugins_persist = false
         self.device.save_param()
         #- and force restart -#
@@ -837,7 +837,7 @@ class Matter_UI
       # Apply new configuration template
       #---------------------------------------------------------------------#
       elif webserver.has_arg("config")
-        tasmota.log(format("MTR: /matterc received '%s' command", 'config'), 3)
+        log(format("MTR: /matterc received '%s' command", 'config'), 3)
         var needs_saving = false
         # iterate by endpoint number
         for i:0..webserver.arg_size()-1
@@ -851,25 +851,25 @@ class Matter_UI
             if conf_ep != nil     # found
               var typ_class = self.device.plugins_classes.find(conf_ep.find('type', ''))
               if typ_class != nil
-                tasmota.log(format("MTR: ep=%i arg=%s", arg_ep, arg), 3)
+                log(format("MTR: ep=%i arg=%s", arg_ep, arg), 3)
                 # compute the actual value
                 var prev_arg = typ_class.ui_conf_to_string(typ_class, conf_ep)
                 var changed = (prev_arg != arg)
-                tasmota.log(format("MTR: ep=%i prev_arg='%s' arg='%s' %s", arg_ep, prev_arg, arg, prev_arg != arg ? "changed" : ""), 3)
+                log(format("MTR: ep=%i prev_arg='%s' arg='%s' %s", arg_ep, prev_arg, arg, prev_arg != arg ? "changed" : ""), 3)
 
                 if changed
                   needs_saving = true
                   typ_class.ui_string_to_conf(typ_class, conf_ep, arg)
                   var pl = self.device.find_plugin_by_endpoint(arg_ep)
                   if pl
-                    tasmota.log(format("MTR: apply conf '%s' (%i) to %s", conf_ep, arg_ep, pl), 3)
+                    log(format("MTR: apply conf '%s' (%i) to %s", conf_ep, arg_ep, pl), 3)
                     pl.parse_configuration(conf_ep)
                   end
                 end
 
               end
             else            
-              tasmota.log(format("MTR: ep=%i not found", arg_ep), 3)
+              log(format("MTR: ep=%i not found", arg_ep), 3)
             end
           elif string.find(arg_name, "nam") == 0    # 'nam<i>' with i being the endpoint
             var nam_ep = int(arg_name[3..])         # target endpoint as int
@@ -891,7 +891,7 @@ class Matter_UI
                   else
                     conf_ep.remove('name')
                   end
-                  tasmota.log(format("MTR: apply name '%s' (%i) to %s", conf_ep, nam_ep, pl), 3)
+                  log(format("MTR: apply name '%s' (%i) to %s", conf_ep, nam_ep, pl), 3)
                   pl.parse_configuration(conf_ep)
                 end
               end
@@ -899,10 +899,10 @@ class Matter_UI
           end
         end
 
-        tasmota.log(format("MTR: config = %s", str(self.device.plugins_config)), 3)
+        log(format("MTR: config = %s", str(self.device.plugins_config)), 3)
 
         if error
-          tasmota.log(format("MTR: config error = %s", error), 3)
+          log(format("MTR: config error = %s", error), 3)
         else
           if needs_saving || !self.device.plugins_persist
             self.device.plugins_persist = true
@@ -918,7 +918,7 @@ class Matter_UI
         var typ = webserver.arg('pi')
         var arg = webserver.arg('arg')
         var nam = webserver.arg('nam')
-        tasmota.log(format("MTR: add endpoint typ='%s' arg='%s'", typ, arg), 3)
+        log(format("MTR: add endpoint typ='%s' arg='%s'", typ, arg), 3)
 
         # check if type exists
         var typ_class = self.device.plugins_classes.find(typ)
@@ -958,12 +958,12 @@ class Matter_UI
               # check if configuration is already present
               var duplicate = false
               for c: self.device.plugins_config   # iterate on values, not on keys()
-                # tasmota.log(format("MTR: map_compare '%s' ?= '%s' -> %s", str(c), str(config), str(self.equal_map(c,config))), 3)
+                # log(format("MTR: map_compare '%s' ?= '%s' -> %s", str(c), str(config), str(self.equal_map(c,config))), 3)
                 if self.equal_map(c,config)   duplicate = true  break   end
               end
               # not a duplicate, add it
               if !duplicate
-                tasmota.log(format("MTR: remote add url='%s' type='%s' arg='%s'", url, typ, arg), 3)
+                log(format("MTR: remote add url='%s' type='%s' arg='%s'", url, typ, arg), 3)
                 self.device.bridge_add_endpoint(typ, config)
               end
             end
@@ -1004,7 +1004,7 @@ class Matter_UI
       end
 
     except .. as e, m
-      tasmota.log(format("BRY: Exception> '%s' - %s", e, m), 2)
+      log(format("BRY: Exception> '%s' - %s", e, m), 2)
       #- display error page -#
       webserver.content_start("Parameter error")           #- title of the web page -#
       webserver.content_send_style()                  #- send standard Tasmota styles -#

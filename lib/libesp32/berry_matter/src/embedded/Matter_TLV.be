@@ -275,9 +275,9 @@ class Matter_TLV
       elif item_type == TLV.NULL                       # null
         # do nothing
       elif item_type == TLV.EOC
-        tasmota.log("MTR: unexpected eoc", 3)
+        log("MTR: unexpected eoc", 3)
       else
-        tasmota.log("MTR: unexpected type: " + str(item_type), 3)
+        log("MTR: unexpected type: " + str(item_type), 3)
       end
       self.next_idx = idx
       return idx

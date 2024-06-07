@@ -135,11 +135,7 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
     def handle_value(shadow_value, unit)
       if (unit == nil) unit = 0 end     # default unit is `0` = PPM
       if   attribute == 0x0000          #  ---------- Measured­ Value / float ----------
-        if shadow_value != nil
-          return tlv_solo.set(TLV.FLOAT, shadow_value)
-        else
-          return tlv_solo.set(TLV.NULL, nil)
-        end
+        return tlv_solo.set_or_nil(TLV.FLOAT, shadow_value)
       elif attribute == 0x0001          #  ---------- MinMeasured Value / float ----------
         return tlv_solo.set(TLV.NULL, nil)
       elif attribute == 0x0002          #  ---------- MaxMeasured Value / float ----------
@@ -157,11 +153,7 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
     # ====================================================================================================
     if   cluster == 0x005B              # ========== Air Quality ==========
       if   attribute == 0x0000          #  ---------- AirQuality / U8 ----------
-        if self.shadow_air_quality != nil
-          return tlv_solo.set(TLV.U1, self.shadow_air_quality)
-        else
-          return tlv_solo.set(TLV.NULL, nil)
-        end
+        return tlv_solo.set_or_nil(TLV.U1, self.shadow_air_quality)
       # elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
       #   return tlv_solo.set(TLV.U4, 0)  #
       end

@@ -118,7 +118,7 @@ class Matter_Session : Matter_Expirable
   #############################################################
   # Called before removal
   def before_remove()
-    tasmota.log(format("MTR: -Session   (%6i) (removed)", self.local_session_id), 3)
+    log(format("MTR: -Session   (%6i) (removed)", self.local_session_id), 3)
   end
 
   #############################################################
@@ -128,7 +128,7 @@ class Matter_Session : Matter_Expirable
   #
   def counter_snd_next()
     var next = self._counter_snd_impl.next()
-    # tasmota.log(format("MTR: .          Counter_snd=%i", next), 4)
+    # log(format("MTR: .          Counter_snd=%i", next), 4)
     if matter.Counter.is_greater(next, self.counter_snd)
       self.counter_snd = next + self._COUNTER_SND_INCR
       if self.does_persist()
