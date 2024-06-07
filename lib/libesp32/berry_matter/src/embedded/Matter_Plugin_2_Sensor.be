@@ -72,12 +72,14 @@ class Matter_Plugin_Sensor : Matter_Plugin_Device
   # it to json.
   def parse_sensors(payload)
     if !self.VIRTUAL && self.tasmota_sensor_matcher
-      var val = self.pre_value(real(self.tasmota_sensor_matcher.match(payload)))
-      if val != nil
-        if val != self.shadow_value
-          self.value_changed()
-          self.shadow_value = val
-        end
+      var val = self.tasmota_sensor_matcher.match(payload)
+      if isinstance(val, map)           # if the filter returns a map, we use the default JSON_NAME like "Temperature"
+        val = val.find(self.JSON_NAME)
+      end
+      val = self.pre_value(real(val))
+      if (val != nil) && (val != self.shadow_value)
+        self.value_changed()
+        self.shadow_value = val
       end
     end
   end
