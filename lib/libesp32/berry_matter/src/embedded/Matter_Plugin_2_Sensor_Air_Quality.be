@@ -30,7 +30,7 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
   static var ARG_HINT = "Device key (ex: SCD40)"
 #   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var JSON_NAME = "AirQuality"               # Name of the sensor attribute in JSON payloads
-  static var UPDATE_TIME = 30000                    # update every 30 s
+  static var UPDATE_TIME = 10000                    # update every 10 s
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "AirQuality", "CO2", "PM1", "PM2.5", "PM10", "TVOC", "NO2")
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     0x005B: [0],                                    # Air Quality - no writable
@@ -69,6 +69,7 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
   def init(device, endpoint, config)
     super(self).init(device, endpoint, config)
     self.shadow_air_quality = false
+    device.add_read_sensors_schedule(self.UPDATE_TIME)
   end
 
   #############################################################
@@ -85,10 +86,11 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
   #
   # parse the output from `ShutterPosition`
   # Ex: `{"Shutter1":{"Position":50,"Direction":0,"Target":50,"Tilt":30}}`
-  def _parse_sensor_entry(v, key, old_val, cluster, attribute)
+  def _parse_sensor_entry(v, key, old_val, func, cluster, attribute)
     var val = v.find(key)
     if (val != nil)
-      if val != old_val
+      val = func(val)
+      if (val != nil) && (val != old_val)
         self.attribute_updated(cluster, attribute)   # CurrentPositionTiltPercent100ths
       end
       return val
