@@ -29,10 +29,6 @@
 //#define USE_ENERGY_MARGIN_DETECTION
 //  #define USE_ENERGY_POWER_LIMIT
 
-#ifndef MQTT_TELE_RETAIN
-#define MQTT_TELE_RETAIN       0
-#endif
-
 #define ENERGY_NONE            0
 #define ENERGY_WATCHDOG        4        // Allow up to 4 seconds before deciding no valid data present
 
@@ -564,7 +560,7 @@ void EnergyMarginCheck(void) {
   }
   if (jsonflg) {
     ResponseJsonEndEnd();
-    MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_MARGINS), MQTT_TELE_RETAIN);
+    MqttPublishTele(PSTR(D_RSLT_MARGINS));
     EnergyMqttShow();
     Energy->margin_stable = 3;  // Allow 2 seconds to stabilize before reporting
   }

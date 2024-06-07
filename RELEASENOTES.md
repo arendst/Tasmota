@@ -125,6 +125,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Matter support for Air Quality sensors [#21559](https://github.com/arendst/Tasmota/issues/21559)
 
 ### Changed
+- Optional MQTT_TELE_RETAIN to Energy Margins message replaced by ``SensorRetain``
 - ESP32 Core3 platform update from 2024.05.13 to 2024.06.10 [#21569](https://github.com/arendst/Tasmota/issues/21569)
 - Matter refactoring of bridged devices [#21575](https://github.com/arendst/Tasmota/issues/21575)
 
