@@ -446,8 +446,7 @@
 //  #define USE_MQTT_TLS_CA_CERT                   // [DEPRECATED] Now TLS supports dual mode using SetOption132 - this flag is now ignored
 //  #define USE_MQTT_AWS_IOT_LIGHT                 // Enable MQTT for AWS IoT in light mode, with user/password instead of private certificate
 //  #define USE_MQTT_AWS_IOT                       // [Deprecated] Enable MQTT for AWS IoT - requires a private key (+11.9k code, +0.4k mem)
-                                                 //   Note: you need to generate a private key + certificate per device and update 'tasmota/tasmota_aws_iot.cpp'
-                                                 //   Full documentation here: https://github.com/arendst/Tasmota/wiki/AWS-IoT
+                                                   //   Full documentation here: https://github.com/arendst/Tasmota/wiki/AWS-IoT
 //  for USE_4K_RSA (support for 4096 bits certificates, instead of 2048), you need to uncommend `-DUSE_4K_RSA` in `build_flags` from `platform.ini` or `platform_override.ini`
 
 // -- MQTT - TLS - Azure IoT & IoT Central ---------
