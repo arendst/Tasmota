@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Berry solidification of `bytes` instances (#21558)
 - Matter support for Air Quality sensors (#21559)
+- HASPmota rounds to nearest int values passed as 'real'
 
 ### Breaking Changed
 
