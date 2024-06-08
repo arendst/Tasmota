@@ -7,13 +7,118 @@
 extern const bclass be_class_Matter_Plugin_Sensor_Air_Quality;
 
 /********************************************************************
-** Solidified function: _parse_sensor_entry
+** Solidified function: web_values
 ********************************************************************/
 extern const bclass be_class_Matter_Plugin_Sensor_Air_Quality;
-be_local_closure(class_Matter_Plugin_Sensor_Air_Quality__parse_sensor_entry,   /* name */
+be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_web_values,   /* name */
   be_nested_proto(
-    12,                          /* nstack */
-    7,                          /* argc */
+    5,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    1,                          /* has sup protos */
+    ( &(const struct bproto*[ 2]) {
+      be_nested_proto(
+        9,                          /* nstack */
+        2,                          /* argc */
+        0,                          /* varg */
+        0,                          /* has upvals */
+        NULL,                       /* no upvals */
+        0,                          /* has sup protos */
+        NULL, 
+        1,                          /* has constants */
+        ( &(const bvalue[ 3]) {     /* constants */
+        /* K0   */  be_nested_str_weak(webserver),
+        /* K1   */  be_nested_str_weak(content_send),
+        /* K2   */  be_nested_str_weak(_X25s_X3A_X25i_X20),
+        }),
+        be_str_weak(web_values_single),
+        &be_const_str_solidified,
+        ( &(const binstruction[12]) {  /* code */
+          0x4C080000,  //  0000  LDNIL	R2
+          0x20080202,  //  0001  NE	R2	R1	R2
+          0x780A0007,  //  0002  JMPF	R2	#000B
+          0xA40A0000,  //  0003  IMPORT	R2	K0
+          0x8C0C0501,  //  0004  GETMET	R3	R2	K1
+          0x60140018,  //  0005  GETGBL	R5	G24
+          0x58180002,  //  0006  LDCONST	R6	K2
+          0x5C1C0000,  //  0007  MOVE	R7	R0
+          0x5C200200,  //  0008  MOVE	R8	R1
+          0x7C140600,  //  0009  CALL	R5	3
+          0x7C0C0400,  //  000A  CALL	R3	2
+          0x80000000,  //  000B  RET	0
+        })
+      ),
+    &be_class_Matter_Plugin_Sensor_Air_Quality, 
+    }),
+    1,                          /* has constants */
+    ( &(const bvalue[15]) {     /* constants */
+    /* K0   */  be_nested_str_weak(web_values_prefix),
+    /* K1   */  be_nested_str_weak(Air),
+    /* K2   */  be_nested_str_weak(shadow_air_quality),
+    /* K3   */  be_nested_str_weak(PM1),
+    /* K4   */  be_nested_str_weak(shadow_pm1),
+    /* K5   */  be_nested_str_weak(PM2_X2E5),
+    /* K6   */  be_nested_str_weak(shadow_pm2_5),
+    /* K7   */  be_nested_str_weak(PM10),
+    /* K8   */  be_nested_str_weak(shadow_pm10),
+    /* K9   */  be_nested_str_weak(CO2),
+    /* K10  */  be_nested_str_weak(shadow_co2),
+    /* K11  */  be_nested_str_weak(NO2),
+    /* K12  */  be_nested_str_weak(shadow_no2),
+    /* K13  */  be_nested_str_weak(TVOC),
+    /* K14  */  be_nested_str_weak(shadow_tvoc),
+    }),
+    be_str_weak(web_values),
+    &be_const_str_solidified,
+    ( &(const binstruction[32]) {  /* code */
+      0x84040000,  //  0000  CLOSURE	R1	P0
+      0x8C080100,  //  0001  GETMET	R2	R0	K0
+      0x7C080200,  //  0002  CALL	R2	1
+      0x5C080200,  //  0003  MOVE	R2	R1
+      0x580C0001,  //  0004  LDCONST	R3	K1
+      0x88100102,  //  0005  GETMBR	R4	R0	K2
+      0x7C080400,  //  0006  CALL	R2	2
+      0x5C080200,  //  0007  MOVE	R2	R1
+      0x580C0003,  //  0008  LDCONST	R3	K3
+      0x88100104,  //  0009  GETMBR	R4	R0	K4
+      0x7C080400,  //  000A  CALL	R2	2
+      0x5C080200,  //  000B  MOVE	R2	R1
+      0x580C0005,  //  000C  LDCONST	R3	K5
+      0x88100106,  //  000D  GETMBR	R4	R0	K6
+      0x7C080400,  //  000E  CALL	R2	2
+      0x5C080200,  //  000F  MOVE	R2	R1
+      0x580C0007,  //  0010  LDCONST	R3	K7
+      0x88100108,  //  0011  GETMBR	R4	R0	K8
+      0x7C080400,  //  0012  CALL	R2	2
+      0x5C080200,  //  0013  MOVE	R2	R1
+      0x580C0009,  //  0014  LDCONST	R3	K9
+      0x8810010A,  //  0015  GETMBR	R4	R0	K10
+      0x7C080400,  //  0016  CALL	R2	2
+      0x5C080200,  //  0017  MOVE	R2	R1
+      0x580C000B,  //  0018  LDCONST	R3	K11
+      0x8810010C,  //  0019  GETMBR	R4	R0	K12
+      0x7C080400,  //  001A  CALL	R2	2
+      0x5C080200,  //  001B  MOVE	R2	R1
+      0x580C000D,  //  001C  LDCONST	R3	K13
+      0x8810010E,  //  001D  GETMBR	R4	R0	K14
+      0x7C080400,  //  001E  CALL	R2	2
+      0x80000000,  //  001F  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: parse_status
+********************************************************************/
+extern const bclass be_class_Matter_Plugin_Sensor_Air_Quality;
+be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_status,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    3,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -22,32 +127,18 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality__parse_sensor_entry,   /
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(find),
-    /* K1   */  be_nested_str_weak(attribute_updated),
+    /* K1   */  be_nested_str_weak(prefix),
     }),
-    be_str_weak(_parse_sensor_entry),
+    be_str_weak(parse_status),
     &be_const_str_solidified,
-    ( &(const binstruction[21]) {  /* code */
-      0x8C1C0300,  //  0000  GETMET	R7	R1	K0
-      0x5C240400,  //  0001  MOVE	R9	R2
-      0x7C1C0400,  //  0002  CALL	R7	2
-      0x4C200000,  //  0003  LDNIL	R8
-      0x20200E08,  //  0004  NE	R8	R7	R8
-      0x7822000D,  //  0005  JMPF	R8	#0014
-      0x5C200800,  //  0006  MOVE	R8	R4
-      0x5C240E00,  //  0007  MOVE	R9	R7
-      0x7C200200,  //  0008  CALL	R8	1
-      0x5C1C1000,  //  0009  MOVE	R7	R8
-      0x4C200000,  //  000A  LDNIL	R8
-      0x20200E08,  //  000B  NE	R8	R7	R8
-      0x78220005,  //  000C  JMPF	R8	#0013
-      0x20200E03,  //  000D  NE	R8	R7	R3
-      0x78220003,  //  000E  JMPF	R8	#0013
-      0x8C200101,  //  000F  GETMET	R8	R0	K1
-      0x5C280A00,  //  0010  MOVE	R10	R5
-      0x5C2C0C00,  //  0011  MOVE	R11	R6
-      0x7C200600,  //  0012  CALL	R8	3
-      0x80040E00,  //  0013  RET	1	R7
-      0x80040600,  //  0014  RET	1	R3
+    ( &(const binstruction[ 7]) {  /* code */
+      0x540E0009,  //  0000  LDINT	R3	10
+      0x1C0C0403,  //  0001  EQ	R3	R2	R3
+      0x780E0002,  //  0002  JMPF	R3	#0006
+      0x8C0C0300,  //  0003  GETMET	R3	R1	K0
+      0x88140101,  //  0004  GETMBR	R5	R0	K1
+      0x7C0C0400,  //  0005  CALL	R3	2
+      0x80000000,  //  0006  RET	0
     })
   )
 );
@@ -156,108 +247,42 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_update_virtual,   /* nam
 
 
 /********************************************************************
-** Solidified function: parse_sensors
+** Solidified function: init
 ********************************************************************/
 extern const bclass be_class_Matter_Plugin_Sensor_Air_Quality;
-be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_sensors,   /* name */
+be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_init,   /* name */
   be_nested_proto(
-    11,                          /* nstack */
-    2,                          /* argc */
+    9,                          /* nstack */
+    4,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     &be_class_Matter_Plugin_Sensor_Air_Quality, 
     1,                          /* has constants */
-    ( &(const bvalue[17]) {     /* constants */
-    /* K0   */  be_nested_str_weak(find),
-    /* K1   */  be_nested_str_weak(prefix),
-    /* K2   */  be_nested_str_weak(shadow_co2),
-    /* K3   */  be_nested_str_weak(_parse_sensor_entry),
-    /* K4   */  be_nested_str_weak(CarbonDioxide),
-    /* K5   */  be_const_int(0),
-    /* K6   */  be_nested_str_weak(shadow_pm1),
-    /* K7   */  be_nested_str_weak(PM1),
-    /* K8   */  be_nested_str_weak(shadow_pm2_5),
-    /* K9   */  be_nested_str_weak(PM2_X2E5),
-    /* K10  */  be_nested_str_weak(shadow_pm10),
-    /* K11  */  be_nested_str_weak(PM10),
-    /* K12  */  be_nested_str_weak(shadow_tvoc),
-    /* K13  */  be_nested_str_weak(TVOC),
-    /* K14  */  be_nested_str_weak(shadow_no2),
-    /* K15  */  be_nested_str_weak(NO2),
-    /* K16  */  be_nested_str_weak(parse_sensors),
+    ( &(const bvalue[ 4]) {     /* constants */
+    /* K0   */  be_nested_str_weak(init),
+    /* K1   */  be_nested_str_weak(shadow_air_quality),
+    /* K2   */  be_nested_str_weak(add_read_sensors_schedule),
+    /* K3   */  be_nested_str_weak(UPDATE_TIME),
     }),
-    be_str_weak(parse_sensors),
+    be_str_weak(init),
     &be_const_str_solidified,
-    ( &(const binstruction[67]) {  /* code */
-      0x8C080300,  //  0000  GETMET	R2	R1	K0
-      0x88100101,  //  0001  GETMBR	R4	R0	K1
-      0x7C080400,  //  0002  CALL	R2	2
-      0x4C0C0000,  //  0003  LDNIL	R3
-      0x200C0403,  //  0004  NE	R3	R2	R3
-      0x780E0035,  //  0005  JMPF	R3	#003C
-      0x8C0C0103,  //  0006  GETMET	R3	R0	K3
-      0x5C140400,  //  0007  MOVE	R5	R2
-      0x58180004,  //  0008  LDCONST	R6	K4
-      0x881C0102,  //  0009  GETMBR	R7	R0	K2
-      0x60200007,  //  000A  GETGBL	R8	G7
-      0x5426040C,  //  000B  LDINT	R9	1037
-      0x58280005,  //  000C  LDCONST	R10	K5
-      0x7C0C0E00,  //  000D  CALL	R3	7
-      0x90020403,  //  000E  SETMBR	R0	K2	R3
-      0x8C0C0103,  //  000F  GETMET	R3	R0	K3
-      0x5C140400,  //  0010  MOVE	R5	R2
-      0x58180007,  //  0011  LDCONST	R6	K7
-      0x881C0106,  //  0012  GETMBR	R7	R0	K6
-      0x60200007,  //  0013  GETGBL	R8	G7
-      0x5426042B,  //  0014  LDINT	R9	1068
-      0x58280005,  //  0015  LDCONST	R10	K5
-      0x7C0C0E00,  //  0016  CALL	R3	7
-      0x90020C03,  //  0017  SETMBR	R0	K6	R3
-      0x8C0C0103,  //  0018  GETMET	R3	R0	K3
-      0x5C140400,  //  0019  MOVE	R5	R2
-      0x58180009,  //  001A  LDCONST	R6	K9
-      0x881C0108,  //  001B  GETMBR	R7	R0	K8
-      0x60200007,  //  001C  GETGBL	R8	G7
-      0x54260429,  //  001D  LDINT	R9	1066
-      0x58280005,  //  001E  LDCONST	R10	K5
-      0x7C0C0E00,  //  001F  CALL	R3	7
-      0x90021003,  //  0020  SETMBR	R0	K8	R3
-      0x8C0C0103,  //  0021  GETMET	R3	R0	K3
-      0x5C140400,  //  0022  MOVE	R5	R2
-      0x5818000B,  //  0023  LDCONST	R6	K11
-      0x881C010A,  //  0024  GETMBR	R7	R0	K10
-      0x60200007,  //  0025  GETGBL	R8	G7
-      0x5426042C,  //  0026  LDINT	R9	1069
-      0x58280005,  //  0027  LDCONST	R10	K5
-      0x7C0C0E00,  //  0028  CALL	R3	7
-      0x90021403,  //  0029  SETMBR	R0	K10	R3
-      0x8C0C0103,  //  002A  GETMET	R3	R0	K3
-      0x5C140400,  //  002B  MOVE	R5	R2
-      0x5818000D,  //  002C  LDCONST	R6	K13
-      0x881C010C,  //  002D  GETMBR	R7	R0	K12
-      0x60200007,  //  002E  GETGBL	R8	G7
-      0x5426042D,  //  002F  LDINT	R9	1070
-      0x58280005,  //  0030  LDCONST	R10	K5
-      0x7C0C0E00,  //  0031  CALL	R3	7
-      0x90021803,  //  0032  SETMBR	R0	K12	R3
-      0x8C0C0103,  //  0033  GETMET	R3	R0	K3
-      0x5C140400,  //  0034  MOVE	R5	R2
-      0x5818000F,  //  0035  LDCONST	R6	K15
-      0x881C010E,  //  0036  GETMBR	R7	R0	K14
-      0x60200007,  //  0037  GETGBL	R8	G7
-      0x54260412,  //  0038  LDINT	R9	1043
-      0x58280005,  //  0039  LDCONST	R10	K5
-      0x7C0C0E00,  //  003A  CALL	R3	7
-      0x90021C03,  //  003B  SETMBR	R0	K14	R3
-      0x600C0003,  //  003C  GETGBL	R3	G3
-      0x5C100000,  //  003D  MOVE	R4	R0
-      0x7C0C0200,  //  003E  CALL	R3	1
-      0x8C0C0710,  //  003F  GETMET	R3	R3	K16
-      0x5C140200,  //  0040  MOVE	R5	R1
-      0x7C0C0400,  //  0041  CALL	R3	2
-      0x80000000,  //  0042  RET	0
+    ( &(const binstruction[14]) {  /* code */
+      0x60100003,  //  0000  GETGBL	R4	G3
+      0x5C140000,  //  0001  MOVE	R5	R0
+      0x7C100200,  //  0002  CALL	R4	1
+      0x8C100900,  //  0003  GETMET	R4	R4	K0
+      0x5C180200,  //  0004  MOVE	R6	R1
+      0x5C1C0400,  //  0005  MOVE	R7	R2
+      0x5C200600,  //  0006  MOVE	R8	R3
+      0x7C100800,  //  0007  CALL	R4	4
+      0x50100000,  //  0008  LDBOOL	R4	0	0
+      0x90020204,  //  0009  SETMBR	R0	K1	R4
+      0x8C100302,  //  000A  GETMET	R4	R1	K2
+      0x88180103,  //  000B  GETMBR	R6	R0	K3
+      0x7C100400,  //  000C  CALL	R4	2
+      0x80000000,  //  000D  RET	0
     })
   )
 );
@@ -538,42 +563,156 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_configuration,   /
 
 
 /********************************************************************
-** Solidified function: init
+** Solidified function: parse_sensors
 ********************************************************************/
 extern const bclass be_class_Matter_Plugin_Sensor_Air_Quality;
-be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_init,   /* name */
+be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_sensors,   /* name */
   be_nested_proto(
-    9,                          /* nstack */
-    4,                          /* argc */
+    11,                          /* nstack */
+    2,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     &be_class_Matter_Plugin_Sensor_Air_Quality, 
     1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_weak(init),
-    /* K1   */  be_nested_str_weak(shadow_air_quality),
-    /* K2   */  be_nested_str_weak(add_read_sensors_schedule),
-    /* K3   */  be_nested_str_weak(UPDATE_TIME),
+    ( &(const bvalue[17]) {     /* constants */
+    /* K0   */  be_nested_str_weak(find),
+    /* K1   */  be_nested_str_weak(prefix),
+    /* K2   */  be_nested_str_weak(shadow_co2),
+    /* K3   */  be_nested_str_weak(_parse_sensor_entry),
+    /* K4   */  be_nested_str_weak(CarbonDioxide),
+    /* K5   */  be_const_int(0),
+    /* K6   */  be_nested_str_weak(shadow_pm1),
+    /* K7   */  be_nested_str_weak(PM1),
+    /* K8   */  be_nested_str_weak(shadow_pm2_5),
+    /* K9   */  be_nested_str_weak(PM2_X2E5),
+    /* K10  */  be_nested_str_weak(shadow_pm10),
+    /* K11  */  be_nested_str_weak(PM10),
+    /* K12  */  be_nested_str_weak(shadow_tvoc),
+    /* K13  */  be_nested_str_weak(TVOC),
+    /* K14  */  be_nested_str_weak(shadow_no2),
+    /* K15  */  be_nested_str_weak(NO2),
+    /* K16  */  be_nested_str_weak(parse_sensors),
     }),
-    be_str_weak(init),
+    be_str_weak(parse_sensors),
     &be_const_str_solidified,
-    ( &(const binstruction[14]) {  /* code */
-      0x60100003,  //  0000  GETGBL	R4	G3
-      0x5C140000,  //  0001  MOVE	R5	R0
-      0x7C100200,  //  0002  CALL	R4	1
-      0x8C100900,  //  0003  GETMET	R4	R4	K0
-      0x5C180200,  //  0004  MOVE	R6	R1
-      0x5C1C0400,  //  0005  MOVE	R7	R2
-      0x5C200600,  //  0006  MOVE	R8	R3
-      0x7C100800,  //  0007  CALL	R4	4
-      0x50100000,  //  0008  LDBOOL	R4	0	0
-      0x90020204,  //  0009  SETMBR	R0	K1	R4
-      0x8C100302,  //  000A  GETMET	R4	R1	K2
-      0x88180103,  //  000B  GETMBR	R6	R0	K3
-      0x7C100400,  //  000C  CALL	R4	2
-      0x80000000,  //  000D  RET	0
+    ( &(const binstruction[67]) {  /* code */
+      0x8C080300,  //  0000  GETMET	R2	R1	K0
+      0x88100101,  //  0001  GETMBR	R4	R0	K1
+      0x7C080400,  //  0002  CALL	R2	2
+      0x4C0C0000,  //  0003  LDNIL	R3
+      0x200C0403,  //  0004  NE	R3	R2	R3
+      0x780E0035,  //  0005  JMPF	R3	#003C
+      0x8C0C0103,  //  0006  GETMET	R3	R0	K3
+      0x5C140400,  //  0007  MOVE	R5	R2
+      0x58180004,  //  0008  LDCONST	R6	K4
+      0x881C0102,  //  0009  GETMBR	R7	R0	K2
+      0x60200007,  //  000A  GETGBL	R8	G7
+      0x5426040C,  //  000B  LDINT	R9	1037
+      0x58280005,  //  000C  LDCONST	R10	K5
+      0x7C0C0E00,  //  000D  CALL	R3	7
+      0x90020403,  //  000E  SETMBR	R0	K2	R3
+      0x8C0C0103,  //  000F  GETMET	R3	R0	K3
+      0x5C140400,  //  0010  MOVE	R5	R2
+      0x58180007,  //  0011  LDCONST	R6	K7
+      0x881C0106,  //  0012  GETMBR	R7	R0	K6
+      0x60200007,  //  0013  GETGBL	R8	G7
+      0x5426042B,  //  0014  LDINT	R9	1068
+      0x58280005,  //  0015  LDCONST	R10	K5
+      0x7C0C0E00,  //  0016  CALL	R3	7
+      0x90020C03,  //  0017  SETMBR	R0	K6	R3
+      0x8C0C0103,  //  0018  GETMET	R3	R0	K3
+      0x5C140400,  //  0019  MOVE	R5	R2
+      0x58180009,  //  001A  LDCONST	R6	K9
+      0x881C0108,  //  001B  GETMBR	R7	R0	K8
+      0x60200007,  //  001C  GETGBL	R8	G7
+      0x54260429,  //  001D  LDINT	R9	1066
+      0x58280005,  //  001E  LDCONST	R10	K5
+      0x7C0C0E00,  //  001F  CALL	R3	7
+      0x90021003,  //  0020  SETMBR	R0	K8	R3
+      0x8C0C0103,  //  0021  GETMET	R3	R0	K3
+      0x5C140400,  //  0022  MOVE	R5	R2
+      0x5818000B,  //  0023  LDCONST	R6	K11
+      0x881C010A,  //  0024  GETMBR	R7	R0	K10
+      0x60200007,  //  0025  GETGBL	R8	G7
+      0x5426042C,  //  0026  LDINT	R9	1069
+      0x58280005,  //  0027  LDCONST	R10	K5
+      0x7C0C0E00,  //  0028  CALL	R3	7
+      0x90021403,  //  0029  SETMBR	R0	K10	R3
+      0x8C0C0103,  //  002A  GETMET	R3	R0	K3
+      0x5C140400,  //  002B  MOVE	R5	R2
+      0x5818000D,  //  002C  LDCONST	R6	K13
+      0x881C010C,  //  002D  GETMBR	R7	R0	K12
+      0x60200007,  //  002E  GETGBL	R8	G7
+      0x5426042D,  //  002F  LDINT	R9	1070
+      0x58280005,  //  0030  LDCONST	R10	K5
+      0x7C0C0E00,  //  0031  CALL	R3	7
+      0x90021803,  //  0032  SETMBR	R0	K12	R3
+      0x8C0C0103,  //  0033  GETMET	R3	R0	K3
+      0x5C140400,  //  0034  MOVE	R5	R2
+      0x5818000F,  //  0035  LDCONST	R6	K15
+      0x881C010E,  //  0036  GETMBR	R7	R0	K14
+      0x60200007,  //  0037  GETGBL	R8	G7
+      0x54260412,  //  0038  LDINT	R9	1043
+      0x58280005,  //  0039  LDCONST	R10	K5
+      0x7C0C0E00,  //  003A  CALL	R3	7
+      0x90021C03,  //  003B  SETMBR	R0	K14	R3
+      0x600C0003,  //  003C  GETGBL	R3	G3
+      0x5C100000,  //  003D  MOVE	R4	R0
+      0x7C0C0200,  //  003E  CALL	R3	1
+      0x8C0C0710,  //  003F  GETMET	R3	R3	K16
+      0x5C140200,  //  0040  MOVE	R5	R1
+      0x7C0C0400,  //  0041  CALL	R3	2
+      0x80000000,  //  0042  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: _parse_sensor_entry
+********************************************************************/
+extern const bclass be_class_Matter_Plugin_Sensor_Air_Quality;
+be_local_closure(class_Matter_Plugin_Sensor_Air_Quality__parse_sensor_entry,   /* name */
+  be_nested_proto(
+    12,                          /* nstack */
+    7,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    &be_class_Matter_Plugin_Sensor_Air_Quality, 
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(find),
+    /* K1   */  be_nested_str_weak(attribute_updated),
+    }),
+    be_str_weak(_parse_sensor_entry),
+    &be_const_str_solidified,
+    ( &(const binstruction[21]) {  /* code */
+      0x8C1C0300,  //  0000  GETMET	R7	R1	K0
+      0x5C240400,  //  0001  MOVE	R9	R2
+      0x7C1C0400,  //  0002  CALL	R7	2
+      0x4C200000,  //  0003  LDNIL	R8
+      0x20200E08,  //  0004  NE	R8	R7	R8
+      0x7822000D,  //  0005  JMPF	R8	#0014
+      0x5C200800,  //  0006  MOVE	R8	R4
+      0x5C240E00,  //  0007  MOVE	R9	R7
+      0x7C200200,  //  0008  CALL	R8	1
+      0x5C1C1000,  //  0009  MOVE	R7	R8
+      0x4C200000,  //  000A  LDNIL	R8
+      0x20200E08,  //  000B  NE	R8	R7	R8
+      0x78220005,  //  000C  JMPF	R8	#0013
+      0x20200E03,  //  000D  NE	R8	R7	R3
+      0x78220003,  //  000E  JMPF	R8	#0013
+      0x8C200101,  //  000F  GETMET	R8	R0	K1
+      0x5C280A00,  //  0010  MOVE	R10	R5
+      0x5C2C0C00,  //  0011  MOVE	R11	R6
+      0x7C200600,  //  0012  CALL	R8	3
+      0x80040E00,  //  0013  RET	1	R7
+      0x80040600,  //  0014  RET	1	R3
     })
   )
 );
@@ -587,16 +726,18 @@ extern const bclass be_class_Matter_Plugin_Device;
 be_local_class(Matter_Plugin_Sensor_Air_Quality,
     8,
     &be_class_Matter_Plugin_Device,
-    be_nested_map(23,
+    be_nested_map(25,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(update_virtual, -1), be_const_closure(class_Matter_Plugin_Sensor_Air_Quality_update_virtual_closure) },
-        { be_const_key_weak(shadow_pm10, 0), be_const_var(4) },
-        { be_const_key_weak(ARG, 1), be_nested_str_weak(airquality) },
-        { be_const_key_weak(TYPE, -1), be_nested_str_weak(airquality) },
-        { be_const_key_weak(parse_configuration, 21), be_const_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_configuration_closure) },
-        { be_const_key_weak(shadow_no2, -1), be_const_var(6) },
+        { be_const_key_weak(JSON_NAME, -1), be_nested_str_weak(AirQuality) },
+        { be_const_key_weak(DISPLAY_NAME, -1), be_nested_str_weak(Air_X20Quality) },
+        { be_const_key_weak(web_values, 16), be_const_closure(class_Matter_Plugin_Sensor_Air_Quality_web_values_closure) },
+        { be_const_key_weak(parse_status, -1), be_const_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_status_closure) },
+        { be_const_key_weak(_parse_sensor_entry, -1), be_const_closure(class_Matter_Plugin_Sensor_Air_Quality__parse_sensor_entry_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_Matter_Plugin_Sensor_Air_Quality_init_closure) },
         { be_const_key_weak(UPDATE_TIME, -1), be_const_int(10000) },
-        { be_const_key_weak(UPDATE_COMMANDS, 13), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
+        { be_const_key_weak(shadow_no2, -1), be_const_var(6) },
+        { be_const_key_weak(shadow_air_quality, 13), be_const_var(1) },
+        { be_const_key_weak(UPDATE_COMMANDS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
         be_const_list( *     be_nested_list(7,
     ( (struct bvalue*) &(const bvalue[]) {
         be_nested_str_weak(AirQuality),
@@ -607,24 +748,25 @@ be_local_class(Matter_Plugin_Sensor_Air_Quality,
         be_nested_str_weak(TVOC),
         be_nested_str_weak(NO2),
     }))    ) } )) },
-        { be_const_key_weak(shadow_pm2_5, -1), be_const_var(3) },
-        { be_const_key_weak(shadow_air_quality, -1), be_const_var(1) },
-        { be_const_key_weak(read_attribute, -1), be_const_closure(class_Matter_Plugin_Sensor_Air_Quality_read_attribute_closure) },
-        { be_const_key_weak(shadow_tvoc, -1), be_const_var(7) },
         { be_const_key_weak(prefix, -1), be_const_var(0) },
-        { be_const_key_weak(TYPES, 4), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        { be_const_key_weak(shadow_pm10, -1), be_const_var(4) },
+        { be_const_key_weak(read_attribute, -1), be_const_closure(class_Matter_Plugin_Sensor_Air_Quality_read_attribute_closure) },
+        { be_const_key_weak(parse_sensors, -1), be_const_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_sensors_closure) },
+        { be_const_key_weak(TYPE, 10), be_nested_str_weak(airquality) },
+        { be_const_key_weak(update_virtual, 23), be_const_closure(class_Matter_Plugin_Sensor_Air_Quality_update_virtual_closure) },
+        { be_const_key_weak(shadow_tvoc, -1), be_const_var(7) },
+        { be_const_key_weak(shadow_pm1, -1), be_const_var(2) },
+        { be_const_key_weak(ARG, -1), be_nested_str_weak(airquality) },
+        { be_const_key_weak(parse_configuration, 18), be_const_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_configuration_closure) },
+        { be_const_key_weak(ARG_HINT, -1), be_nested_str_weak(Device_X20key_X20_X28ex_X3A_X20SCD40_X29) },
+        { be_const_key_weak(shadow_co2, 8), be_const_var(5) },
+        { be_const_key_weak(shadow_pm2_5, -1), be_const_var(3) },
+        { be_const_key_weak(TYPES, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(44, -1), be_const_int(1) },
     }))    ) } )) },
-        { be_const_key_weak(_parse_sensor_entry, 19), be_const_closure(class_Matter_Plugin_Sensor_Air_Quality__parse_sensor_entry_closure) },
-        { be_const_key_weak(shadow_pm1, 9), be_const_var(2) },
-        { be_const_key_weak(DISPLAY_NAME, -1), be_nested_str_weak(Air_X20Quality) },
-        { be_const_key_weak(parse_sensors, 7), be_const_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_sensors_closure) },
-        { be_const_key_weak(shadow_co2, -1), be_const_var(5) },
-        { be_const_key_weak(init, -1), be_const_closure(class_Matter_Plugin_Sensor_Air_Quality_init_closure) },
-        { be_const_key_weak(ARG_HINT, -1), be_nested_str_weak(Device_X20key_X20_X28ex_X3A_X20SCD40_X29) },
-        { be_const_key_weak(CLUSTERS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        { be_const_key_weak(CLUSTERS, 4), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(12,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(1068, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
@@ -798,7 +940,6 @@ be_local_class(Matter_Plugin_Sensor_Air_Quality,
         be_const_int(65533),
     }))    ) } )) },
     }))    ) } )) },
-        { be_const_key_weak(JSON_NAME, -1), be_nested_str_weak(AirQuality) },
     })),
     be_str_weak(Matter_Plugin_Sensor_Air_Quality)
 );

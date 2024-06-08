@@ -209,5 +209,41 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
     super(self).update_virtual(payload)
   end
 
+  #############################################################
+  # For Bridge devices
+  #############################################################
+  #############################################################
+  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
+  #
+  # This call is synnchronous and blocking.
+  def parse_status(data, index)
+    if index == 10                             # Status 10
+      var values = data.find(self.prefix)
+    end
+  end
+
+  #############################################################
+  # web_values
+  #
+  # Show values of the remote device as HTML
+  def web_values()
+    def web_values_single(name, val)
+      if val != nil
+        import webserver
+        webserver.content_send(f"{name}:{val:i} ")
+      end
+    end
+
+    self.web_values_prefix()        # display '| ' and name if present
+    web_values_single("Air", self.shadow_air_quality)
+    web_values_single("PM1", self.shadow_pm1)
+    web_values_single("PM2.5", self.shadow_pm2_5)
+    web_values_single("PM10", self.shadow_pm10)
+    web_values_single("CO2", self.shadow_co2)
+    web_values_single("NO2", self.shadow_no2)
+    web_values_single("TVOC", self.shadow_tvoc)
+  end
+  #############################################################
+  #############################################################
 end
 matter.Plugin_Sensor_Air_Quality = Matter_Plugin_Sensor_Air_Quality
