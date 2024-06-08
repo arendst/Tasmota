@@ -41,6 +41,7 @@ class Matter_UI
   static var _CLASSES_TYPES2= "|http_relay|http_light0|http_light1|http_light2|http_light3"
                               "|http_temperature|http_pressure|http_illuminance|http_humidity"
                               "|http_occupancy|http_contact|http_flow|http_waterleak"
+                              "|http_airquality"
   var device
 
   # ####################################################################################################

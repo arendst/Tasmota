@@ -3385,7 +3385,7 @@ be_local_class(Matter_UI,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(equal_map, -1), be_const_static_closure(class_Matter_UI_equal_map_closure) },
         { be_const_key_weak(page_part_mgr_adv, -1), be_const_closure(class_Matter_UI_page_part_mgr_adv_closure) },
-        { be_const_key_weak(_CLASSES_TYPES2, -1), be_nested_str_weak(_X7Chttp_relay_X7Chttp_light0_X7Chttp_light1_X7Chttp_light2_X7Chttp_light3_X7Chttp_temperature_X7Chttp_pressure_X7Chttp_illuminance_X7Chttp_humidity_X7Chttp_occupancy_X7Chttp_contact_X7Chttp_flow_X7Chttp_waterleak) },
+        { be_const_key_weak(_CLASSES_TYPES2, -1), be_nested_str_weak(_X7Chttp_relay_X7Chttp_light0_X7Chttp_light1_X7Chttp_light2_X7Chttp_light3_X7Chttp_temperature_X7Chttp_pressure_X7Chttp_illuminance_X7Chttp_humidity_X7Chttp_occupancy_X7Chttp_contact_X7Chttp_flow_X7Chttp_waterleak_X7Chttp_airquality) },
         { be_const_key_weak(page_part_mgr, 25), be_const_closure(class_Matter_UI_page_part_mgr_closure) },
         { be_const_key_weak(show_plugins_hints_js, -1), be_const_closure(class_Matter_UI_show_plugins_hints_js_closure) },
         { be_const_key_weak(show_enable, -1), be_const_closure(class_Matter_UI_show_enable_closure) },
