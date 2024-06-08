@@ -483,6 +483,7 @@ int8_t cs;
     color_type = renderer->color_type();
 
     renderer->DisplayInit(DISPLAY_INIT_MODE, Settings->display_size, inirot, Settings->display_font);
+    renderer->clearDisplay();
 
     Settings->display_width = renderer->width();
     Settings->display_height = renderer->height();
@@ -504,7 +505,7 @@ int8_t cs;
     ApplyDisplayDimmer();
 
 #ifdef SHOW_SPLASH
-    if (!Settings->flag5.display_no_splash) {
+    if (!Settings->flag5.display_no_splash) {  // SetOption135 - (Display & LVGL) force disabling default splash screen
       renderer->Splash();
     }
 #endif // SHOW_SPLASH

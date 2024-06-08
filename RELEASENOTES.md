@@ -126,8 +126,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Changed
 - Optional MQTT_TELE_RETAIN to Energy Margins message replaced by ``SensorRetain``
+- Display timing splash screen with display modes 1 to 5
 - ESP32 Core3 platform update from 2024.05.13 to 2024.06.10 [#21569](https://github.com/arendst/Tasmota/issues/21569)
 - Matter refactoring of bridged devices [#21575](https://github.com/arendst/Tasmota/issues/21575)
+- Matter filter suffix automatically added for sensors [#21589](https://github.com/arendst/Tasmota/issues/21589)
 
 ### Fixed
 - Berry `input()` returns empty string and does not crash [#21565](https://github.com/arendst/Tasmota/issues/21565)

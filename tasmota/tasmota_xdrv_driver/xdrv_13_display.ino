@@ -2943,8 +2943,7 @@ void AddValue(uint8_t num,float fval) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv13(uint32_t function)
-{
+bool Xdrv13(uint32_t function) {
   bool result = false;
 
   if (XdspPresent()) {
@@ -2958,7 +2957,9 @@ bool Xdrv13(uint32_t function)
         }
         break;
       case FUNC_EVERY_50_MSECOND:
-        if (Settings->display_model) { XdspCall(FUNC_DISPLAY_EVERY_50_MSECOND); }
+        if (Settings->display_model) { 
+          XdspCall(FUNC_DISPLAY_EVERY_50_MSECOND);
+        }
         break;
       case FUNC_SET_POWER:
         DisplaySetPower();
@@ -2966,20 +2967,27 @@ bool Xdrv13(uint32_t function)
       case FUNC_EVERY_SECOND:
 #ifdef USE_GRAPH
         DisplayCheckGraph();
-#endif
+#endif  // USE_GRAPH
 #ifdef USE_DT_VARS
         get_dt_mqtt();
         draw_dt_vars();
-#endif // USE_DT_VARS
-
+#endif  // USE_DT_VARS
 #ifdef USE_DISPLAY_MODES1TO5
-        if (Settings->display_model && Settings->display_mode) { XdspCall(FUNC_DISPLAY_EVERY_SECOND); }
-#endif
+        if (Settings->display_model && Settings->display_mode) {
+          uint32_t wait = 0;
+          if (!Settings->flag5.display_no_splash) {  // SetOption135 - (Display & LVGL) force disabling default 5 second splash screen
+            wait = 6;
+          }
+          if (TasmotaGlobal.uptime > wait) {         // Allow time to display splash screen
+            XdspCall(FUNC_DISPLAY_EVERY_SECOND);
+          }
+        }
+#endif  // USE_DISPLAY_MODES1TO5
         break;
       case FUNC_AFTER_TELEPERIOD:
 #ifdef USE_DT_VARS
         DisplayDTVarsTeleperiod();
-#endif // USE_DT_VARS
+#endif  // USE_DT_VARS
         break;
 #ifdef USE_DISPLAY_MODES1TO5
       case FUNC_MQTT_SUBSCRIBE:
