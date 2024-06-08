@@ -553,7 +553,7 @@ void UDISP_PrintLog(void)
     if (txt != NULL) {
       uint8_t last_row = Settings->display_rows -1;
 
-      renderer->clearDisplay();
+//      renderer->clearDisplay();
       renderer->setTextSize(Settings->display_size);
       renderer->setCursor(0,0);
       for (byte i = 0; i < last_row; i++) {
@@ -575,7 +575,7 @@ void UDISP_Time(void)
 {
   char line[12];
 
-  renderer->clearDisplay();
+//  renderer->clearDisplay();
   renderer->setTextSize(Settings->display_size);
   renderer->setTextFont(Settings->display_font);
   renderer->setCursor(0, 0);

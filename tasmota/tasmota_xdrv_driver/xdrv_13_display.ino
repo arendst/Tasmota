@@ -268,30 +268,35 @@ bool disp_subscribed = false;
 
 /*********************************************************************************************/
 
-void DisplayInit(uint8_t mode)
-{
-  if (renderer)  {
-    renderer->DisplayInit(mode, Settings->display_size, Settings->display_rotate, Settings->display_font);
+void DisplayClear(void) {
+  if (renderer) {
+    renderer->fillScreen(bg_color);
+  } else {
+    XdspCall(FUNC_DISPLAY_CLEAR);
   }
-  else {
+}
+
+void DisplayInit(uint8_t mode) {
+  if (renderer) {
+    renderer->DisplayInit(mode, Settings->display_size, Settings->display_rotate, Settings->display_font);
+  } else {
     dsp_init = mode;
     XdspCall(FUNC_DISPLAY_INIT);
   }
+  DisplayClear();
 }
 
-void DisplayClear(void)
-{
-  XdspCall(FUNC_DISPLAY_CLEAR);
-}
-
-void DisplayDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint8_t flag)
-{
-  dsp_x = x;
-  dsp_y = y;
-  dsp_str = str;
-  dsp_color = color;
-  dsp_flag = flag;
-  XdspCall(FUNC_DISPLAY_DRAW_STRING);
+void DisplayDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint8_t flag) {
+  if (renderer) {
+    renderer->DrawStringAt(x, y, str, color, flag);
+  } else {
+    dsp_x = x;
+    dsp_y = y;
+    dsp_str = str;
+    dsp_color = color;
+    dsp_flag = flag;
+    XdspCall(FUNC_DISPLAY_DRAW_STRING);
+  }
 }
 
 void DisplayOnOff(uint8_t on) {
@@ -482,15 +487,21 @@ void DisplayText(void)
         dp -= decode_te(linebuf);
         if ((uint32_t)dp - (uint32_t)linebuf) {
           if (!fill) { *dp = 0; }
+#ifdef USE_DISPLAY_MODES1TO5
+          if (!Settings->display_mode) {
+#endif  // USE_DISPLAY_MODES1TO5
           if (col > 0 && lin > 0) {
             // use col and lin
-            if (!renderer) DisplayDrawStringAt(col, lin, linebuf, fg_color, 1);
-            else renderer->DrawStringAt(col, lin, linebuf, fg_color, 1);
+            DisplayDrawStringAt(col, lin, linebuf, fg_color, 1);
           } else {
             // use disp_xpos, disp_ypos
-            if (!renderer) DisplayDrawStringAt(disp_xpos, disp_ypos, linebuf, fg_color, 0);
-            else renderer->DrawStringAt(disp_xpos, disp_ypos, linebuf, fg_color, 0);
+            DisplayDrawStringAt(disp_xpos, disp_ypos, linebuf, fg_color, 0);
           }
+#ifdef USE_DISPLAY_MODES1TO5
+          } else {
+            DisplayLogBufferAdd(linebuf);
+          }
+#endif  // USE_DISPLAY_MODES1TO5
           memset(linebuf, ' ', sizeof(linebuf));
           linebuf[sizeof(linebuf)-1] = 0;
           dp = linebuf;
@@ -513,8 +524,7 @@ void DisplayText(void)
         switch (*cp++) {
           case 'z':
             // clear display
-            if (!renderer) DisplayClear();
-            else renderer->fillScreen(bg_color);
+            DisplayClear();
             disp_xpos = 0;
             disp_ypos = 0;
             col = 0;
@@ -1225,15 +1235,21 @@ extern FS *ffsp;
         // right align
         alignright(linebuf);
       }
+#ifdef USE_DISPLAY_MODES1TO5
+      if (!Settings->display_mode) {
+#endif  // USE_DISPLAY_MODES1TO5
       if (col > 0 && lin > 0) {
         // use col and lin
-        if (!renderer) DisplayDrawStringAt(col, lin, linebuf, fg_color, 1);
-        else renderer->DrawStringAt(col, lin, linebuf, fg_color, 1);
+        DisplayDrawStringAt(col, lin, linebuf, fg_color, 1);
       } else {
         // use disp_xpos, disp_ypos
-        if (!renderer) DisplayDrawStringAt(disp_xpos, disp_ypos, linebuf, fg_color, 0);
-        else renderer->DrawStringAt(disp_xpos, disp_ypos, linebuf, fg_color, 0);
+        DisplayDrawStringAt(disp_xpos, disp_ypos, linebuf, fg_color, 0);
       }
+#ifdef USE_DISPLAY_MODES1TO5
+      } else {
+        DisplayLogBufferAdd(linebuf);
+      }
+#endif  // USE_DISPLAY_MODES1TO5
     }
     // draw buffer
     if (auto_draw&1) {
@@ -1241,8 +1257,6 @@ extern FS *ffsp;
       //else DisplayDrawFrame();
     }
 }
-
-
 
 #ifdef USE_UFILESYS
 void Display_Text_From_File(const char *file) {
@@ -2016,14 +2030,10 @@ void CmndDisplayMode(void) {
     if (disp_subscribed != (Settings->display_mode &0x04)) {
       TasmotaGlobal.restart_flag = 2;  // Restart to Add/Remove MQTT subscribe
     } else {
-      if (last_display_mode && !Settings->display_mode) {  // Switch to mode 0
-        DisplayInit(DISPLAY_INIT_MODE);
-        if (renderer) renderer->fillScreen(bg_color);
-        else DisplayClear();
-      } else {
+      if (Settings->display_mode) {  // Switch to non mode 0
         DisplayLogBufferInit();
-        DisplayInit(DISPLAY_INIT_MODE);
       }
+      DisplayInit(DISPLAY_INIT_MODE);
     }
   }
 #endif  // USE_DISPLAY_MODES1TO5
@@ -2068,6 +2078,7 @@ void CmndDisplayDimmer(void) {
 void CmndDisplaySize(void) {
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= TXT_MAX_SFAC)) {
     Settings->display_size = XdrvMailbox.payload;
+    DisplayClear();
     if (renderer) renderer->setTextSize(Settings->display_size);
     //else DisplaySetSize(Settings->display_size);
   }
@@ -2077,6 +2088,7 @@ void CmndDisplaySize(void) {
 void CmndDisplayFont(void) {
   if ((XdrvMailbox.payload >=0) && (XdrvMailbox.payload <= 4)) {
     Settings->display_font = XdrvMailbox.payload;
+    DisplayClear();
     if (renderer) renderer->setTextFont(Settings->display_font);
     //else DisplaySetFont(Settings->display_font);
   }
@@ -2179,17 +2191,11 @@ void CmndDisplayBatch(void) {
 
 void CmndDisplayText(void) {
   if (disp_device && XdrvMailbox.data_len > 0) {
-#ifndef USE_DISPLAY_MODES1TO5
-    DisplayText();
-#else
     if(Settings->display_model == 15 || Settings->display_model == 20) {
       XdspCall(FUNC_DISPLAY_SEVENSEG_TEXT);
-    } else if (!Settings->display_mode) {
-      DisplayText();
     } else {
-      DisplayLogBufferAdd(XdrvMailbox.data);
+      DisplayText();
     }
-#endif  // USE_DISPLAY_MODES1TO5
     ResponseCmndChar(XdrvMailbox.data);
   }
 }
@@ -2199,8 +2205,7 @@ void CmndDisplayText(void) {
 \*********************************************************************************************/
 
 void CmndDisplayClear(void) {
-  if (!renderer)
-    XdspCall(FUNC_DISPLAY_CLEAR);
+  DisplayClear();
   ResponseCmndChar(XdrvMailbox.data);
 }
 
