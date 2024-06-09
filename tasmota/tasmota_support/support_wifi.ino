@@ -923,6 +923,10 @@ void WifiCheck(uint8_t param)
     if (Wifi.config_counter) {
       Wifi.config_counter--;
       Wifi.counter = Wifi.config_counter +5;
+      if (!Wifi.config_counter) {
+//        SettingsSdkErase();  //  Disabled v6.1.0b due to possible bad wifi connects
+        TasmotaGlobal.restart_flag = 2;
+      }
     } else {
       if (Wifi.counter <= 0) {
         WifiCheckIp();
