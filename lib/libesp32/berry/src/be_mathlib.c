@@ -89,6 +89,17 @@ static int m_floor(bvm *vm)
     be_return(vm);
 }
 
+static int m_round(bvm *vm)
+{
+    if (be_top(vm) >= 1 && be_isnumber(vm, 1)) {
+        breal x = be_toreal(vm, 1);
+        be_pushreal(vm, mathfunc(round)(x));
+    } else {
+        be_pushreal(vm, (breal)0.0);
+    }
+    be_return(vm);
+}
+
 static int m_sin(bvm *vm)
 {
     if (be_top(vm) >= 1 && be_isnumber(vm, 1)) {
@@ -299,6 +310,7 @@ be_native_module_attr_table(math) {
     be_native_module_function("abs", m_abs),
     be_native_module_function("ceil", m_ceil),
     be_native_module_function("floor", m_floor),
+    be_native_module_function("round", m_round),
     be_native_module_function("sin", m_sin),
     be_native_module_function("cos", m_cos),
     be_native_module_function("tan", m_tan),
@@ -334,6 +346,7 @@ module math (scope: global, depend: BE_USE_MATH_MODULE) {
     abs, func(m_abs)
     ceil, func(m_ceil)
     floor, func(m_floor)
+    round, func(m_round)
     sin, func(m_sin)
     cos, func(m_cos)
     tan, func(m_tan)

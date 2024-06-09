@@ -44,3 +44,17 @@ m_inf2 = {"v": -math.inf}
 assert(json.dump(m_inf2) == '{"v":null}')
 m_v = {"v": 3.5}
 assert(json.dump(m_v) == '{"v":3.5}')
+
+# math.round
+assert(math.round(3) == 3)
+assert(math.round(3.2) == 3)
+assert(math.round(3.5) == 4)
+assert(math.round(3.6) == 4)
+
+assert(math.round(-3) == -3)
+assert(math.round(-3.2) == -3)
+assert(math.round(-3.5) == -4)
+assert(math.round(-3.6) == -4)
+
+assert(math.round() == 0)
+
