@@ -1667,91 +1667,73 @@ void DisplayLogBufferInit(void)
 \*********************************************************************************************/
 
 enum SensorQuantity {
-  JSON_TEMPERATURE,
-  JSON_HUMIDITY, JSON_LIGHT, JSON_NOISE, JSON_AIRQUALITY,
+  JSON_TEMPERATURE, JSON_DEWPOINT, JSON_HEATINDEX,
   JSON_PRESSURE, JSON_PRESSUREATSEALEVEL,
+  JSON_POWERFACTOR, JSON_COUNTER, JSON_ANALOG_INPUT, JSON_UV_LEVEL,
+  JSON_HUMIDITY, JSON_LIGHT, JSON_NOISE, JSON_AIRQUALITY,
   JSON_ILLUMINANCE,
   JSON_GAS,
   JSON_YESTERDAY, JSON_TOTAL, JSON_TODAY,
   JSON_PERIOD,
-  JSON_POWERFACTOR, JSON_COUNTER, JSON_ANALOG_INPUT, JSON_UV_LEVEL,
   JSON_CURRENT,
   JSON_VOLTAGE,
   JSON_POWERUSAGE,
   JSON_CO2,
   JSON_FREQUENCY };
 const char kSensorQuantity[] PROGMEM =
-  D_JSON_TEMPERATURE "|"                                                        // degrees
-  D_JSON_HUMIDITY "|" D_JSON_LIGHT "|" D_JSON_NOISE "|" D_JSON_AIRQUALITY "|"   // percentage
+  D_JSON_TEMPERATURE "|" D_JSON_DEWPOINT "|" D_JSON_HEATINDEX "|"               // degrees
   D_JSON_PRESSURE "|" D_JSON_PRESSUREATSEALEVEL "|"                             // hPa
+  D_JSON_POWERFACTOR "|" D_JSON_COUNTER "|" D_JSON_ANALOG_INPUT "|" D_JSON_UV_LEVEL "|" // No unit
+  D_JSON_HUMIDITY "|" D_JSON_LIGHT "|" D_JSON_NOISE "|" D_JSON_AIRQUALITY "|"   // percentage
   D_JSON_ILLUMINANCE "|"                                                        // lx
   D_JSON_GAS "|"                                                                // kOhm
   D_JSON_YESTERDAY "|" D_JSON_TOTAL "|" D_JSON_TODAY "|"                        // kWh
   D_JSON_PERIOD "|"                                                             // Wh
-  D_JSON_POWERFACTOR "|" D_JSON_COUNTER "|" D_JSON_ANALOG_INPUT "|" D_JSON_UV_LEVEL "|"                 // No unit
   D_JSON_CURRENT "|"                                                            // Ampere
   D_JSON_VOLTAGE "|"                                                            // Volt
   D_JSON_POWERUSAGE "|"                                                         // Watt
   D_JSON_CO2 "|"                                                                // ppm
-  D_JSON_FREQUENCY ;                                                            // Hz
+  D_JSON_FREQUENCY;                                                             // Hz
+const char kSensorUnit[] PROGMEM =
+  "|||"                                                                         // degrees Celsius or Fahrenheit
+  "||"                                                                          // pressure hPa or mmHg
+  "||||"                                                                        // No unit
+  "%|%|%|%|"                                                                    // percentage
+  D_UNIT_LUX "|"                                                                // lx
+  D_UNIT_KILOOHM "|"                                                            // kOhm
+  D_UNIT_KILOWATTHOUR "|" D_UNIT_KILOWATTHOUR "|" D_UNIT_KILOWATTHOUR "|"       // kWh
+  D_UNIT_WATTHOUR "|"                                                           // Wh
+  D_UNIT_AMPERE "|"                                                             // A
+  D_UNIT_VOLT "|"                                                               // V
+  D_UNIT_WATT "|"                                                               // W
+  D_UNIT_PARTS_PER_MILLION "|"                                                  // ppm
+  D_UNIT_HERTZ;                                                                 // Hz
 
-void DisplayJsonValue(const char* topic, const char* device, const char* mkey, const char* value)
-{
-  char quantity[TOPSZ];
-  char buffer[Settings->display_cols[0] +1];
-  char spaces[Settings->display_cols[0]];
-  char source[Settings->display_cols[0] - Settings->display_cols[1]];
-  char svalue[Settings->display_cols[1] +1];
-
+void DisplayJsonValue(const char* topic, const char* device, const char* mkey, const char* value) {
   SHOW_FREE_MEM(PSTR("DisplayJsonValue"));
 
-  memset(spaces, 0x20, sizeof(spaces));
-  spaces[sizeof(spaces) -1] = '\0';
-  snprintf_P(source, sizeof(source), PSTR("%s%s%s%s"), topic, (strlen(topic))?"/":"", mkey, spaces);  // pow1/Voltage or Voltage if topic is empty (local sensor)
+  char temp[TOPSZ];
+  int quantity_code = GetCommandCode(temp, sizeof(temp), mkey, kSensorQuantity);
+  if ((-1 == quantity_code) || !strcmp_P(mkey, S_RSLT_POWER)) {           // Ok: Power, Not ok: POWER
+    return;                                                               // Display value not supported
+  }
 
-  int quantity_code = GetCommandCode(quantity, sizeof(quantity), mkey, kSensorQuantity);
-  if ((-1 == quantity_code) || !strcmp_P(mkey, S_RSLT_POWER)) {  // Ok: Power, Not ok: POWER
-    return;
+  char svalue[Settings->display_cols[1] +1];                              // Max sized unit string
+  if (quantity_code <= JSON_HEATINDEX) {                                  // Temperature
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s~%s"), value, disp_temp);  // Used by DisplayLogBuffer replace degrees character (276 octal)
   }
-  if (JSON_TEMPERATURE == quantity_code) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s~%s"), value, disp_temp);
+  else if (quantity_code <= JSON_PRESSUREATSEALEVEL) {                    // Pressure
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s%s"), value, disp_pres);   // hPa or mmHg
   }
-  else if ((quantity_code >= JSON_HUMIDITY) && (quantity_code <= JSON_AIRQUALITY)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s%%"), value);
+  else {
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s%s"), value, GetTextIndexed(temp, sizeof(temp), quantity_code, kSensorUnit));
   }
-  else if ((quantity_code >= JSON_PRESSURE) && (quantity_code <= JSON_PRESSUREATSEALEVEL)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s%s"), value, disp_pres);
-  }
-  else if (JSON_ILLUMINANCE == quantity_code) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s" D_UNIT_LUX), value);
-  }
-  else if (JSON_GAS == quantity_code) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s" D_UNIT_KILOOHM), value);
-  }
-  else if ((quantity_code >= JSON_YESTERDAY) && (quantity_code <= JSON_TODAY)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s" D_UNIT_KILOWATTHOUR), value);
-  }
-  else if (JSON_PERIOD == quantity_code) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s" D_UNIT_WATTHOUR), value);
-  }
-  else if ((quantity_code >= JSON_POWERFACTOR) && (quantity_code <= JSON_UV_LEVEL)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s"), value);
-  }
-  else if (JSON_CURRENT == quantity_code) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s" D_UNIT_AMPERE), value);
-  }
-  else if (JSON_VOLTAGE == quantity_code) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s" D_UNIT_VOLT), value);
-  }
-  else if (JSON_POWERUSAGE == quantity_code) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s" D_UNIT_WATT), value);
-  }
-  else if (JSON_CO2 == quantity_code) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s" D_UNIT_PARTS_PER_MILLION), value);
-  }
-  else if (JSON_FREQUENCY == quantity_code) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s" D_UNIT_HERTZ), value);
-  }
+
+  char buffer[Settings->display_cols[0] +1];                              // Max sized buffer string
+  memset(buffer, 0x20, sizeof(buffer));                                   // Temporarily use for spaces
+  buffer[sizeof(buffer) -1] = '\0';
+  char source[Settings->display_cols[0] - Settings->display_cols[1]];     // Max sized source string
+  snprintf_P(source, sizeof(source), PSTR("%s%s%s%s"), topic, (strlen(topic))?"/":"", mkey, buffer);  // pow1/Voltage or Voltage if topic is empty (local sensor)
   snprintf_P(buffer, sizeof(buffer), PSTR("%s %s"), source, svalue);
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "mkey [%s], source [%s], value [%s], quantity_code %d, log_buffer [%s]"), mkey, source, value, quantity_code, buffer);
@@ -1878,7 +1860,6 @@ void DisplayLocalSensor(void)
 }
 
 #endif  // USE_DISPLAY_MODES1TO5
-
 
 /*********************************************************************************************\
  * Public
