@@ -93,9 +93,9 @@ static int m_round(bvm *vm)
 {
     if (be_top(vm) >= 1 && be_isnumber(vm, 1)) {
         breal x = be_toreal(vm, 1);
-        be_pushint(vm, mathfunc(round)(x));
+        be_pushreal(vm, mathfunc(round)(x));
     } else {
-        be_pushint(vm, 0);
+        be_pushreal(vm, (breal)0.0);
     }
     be_return(vm);
 }
