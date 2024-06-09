@@ -122,7 +122,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ## Changelog v14.1.0.1
 ### Added
 - Berry solidification of `bytes` instances [#21558](https://github.com/arendst/Tasmota/issues/21558)
+- HASPmota rounds to nearest int values passed as 'real' [#21599](https://github.com/arendst/Tasmota/issues/21599)
 - Matter support for Air Quality sensors [#21559](https://github.com/arendst/Tasmota/issues/21559)
+- Matter support for bridged Air Quality (#21597)[#21597](https://github.com/arendst/Tasmota/issues/21597)
 
 ### Changed
 - Optional MQTT_TELE_RETAIN to Energy Margins message replaced by ``SensorRetain``
