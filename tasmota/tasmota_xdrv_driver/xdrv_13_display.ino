@@ -497,14 +497,12 @@ void DisplayText(void)
             // use disp_xpos, disp_ypos
             DisplayDrawStringAt(disp_xpos, disp_ypos, linebuf, fg_color, 0);
           }
-#ifdef USE_DISPLAY_MODES1TO5
-          } else {
-            DisplayLogBufferAdd(linebuf);
-          }
-#endif  // USE_DISPLAY_MODES1TO5
           memset(linebuf, ' ', sizeof(linebuf));
           linebuf[sizeof(linebuf)-1] = 0;
           dp = linebuf;
+#ifdef USE_DISPLAY_MODES1TO5
+          }
+#endif  // USE_DISPLAY_MODES1TO5
         }
       } else {
         // copy chars
@@ -1236,7 +1234,9 @@ extern FS *ffsp;
         alignright(linebuf);
       }
 #ifdef USE_DISPLAY_MODES1TO5
-      if (!Settings->display_mode) {
+      if (Settings->display_mode) {
+        DisplayLogBufferAdd(linebuf);
+      } else
 #endif  // USE_DISPLAY_MODES1TO5
       if (col > 0 && lin > 0) {
         // use col and lin
@@ -1245,11 +1245,6 @@ extern FS *ffsp;
         // use disp_xpos, disp_ypos
         DisplayDrawStringAt(disp_xpos, disp_ypos, linebuf, fg_color, 0);
       }
-#ifdef USE_DISPLAY_MODES1TO5
-      } else {
-        DisplayLogBufferAdd(linebuf);
-      }
-#endif  // USE_DISPLAY_MODES1TO5
     }
     // draw buffer
     if (auto_draw&1) {
@@ -1597,6 +1592,8 @@ void DisplayAllocLogBuffer(void)
     if (disp_log_buffer != nullptr) {
       disp_log_buffer_cols = Settings->display_cols[0] +1;
       DisplayClearLogBuffer();
+      DisplayClearScreenBuffer();
+      DisplayClear();
     }
   }
 }
@@ -1818,35 +1815,37 @@ void DisplayAnalyzeJson(char *topic, const char *json)
   }
 }
 
-void DisplayMqttSubscribe(void)
-{
+void DisplayMqttSubscribe(void) {
 /* Subscribe to tele messages only
  * Supports the following FullTopic formats
  * - %prefix%/%topic%
  * - home/%prefix%/%topic%
  * - home/level2/%prefix%/%topic% etc.
  */
-  if (Settings->display_model && (Settings->display_mode &0x04)) {
-
-    char stopic[TOPSZ];
-    char ntopic[TOPSZ];
-
-    ntopic[0] = '\0';
-    strlcpy(stopic, SettingsText(SET_MQTT_FULLTOPIC), sizeof(stopic));
-    char *tp = strtok(stopic, "/");
-    while (tp != nullptr) {
-      if (!strcmp_P(tp, MQTT_TOKEN_PREFIX)) {
-        break;
-      }
-      strncat_P(ntopic, PSTR("+/"), sizeof(ntopic) - strlen(ntopic) -1);           // Add single-level wildcards
-      tp = strtok(nullptr, "/");
+  char stopic[TOPSZ];
+  strlcpy(stopic, SettingsText(SET_MQTT_FULLTOPIC), sizeof(stopic));
+  char *tp = strtok(stopic, "/");
+  char ntopic[TOPSZ];
+  ntopic[0] = '\0';
+  while (tp != nullptr) {
+    if (!strcmp_P(tp, MQTT_TOKEN_PREFIX)) {
+      break;
     }
-    strncat(ntopic, SettingsText(SET_MQTTPREFIX3), sizeof(ntopic) - strlen(ntopic) -1);  // Subscribe to tele messages
-    strncat_P(ntopic, PSTR("/#"), sizeof(ntopic) - strlen(ntopic) -1);             // Add multi-level wildcard
-    MqttSubscribe(ntopic);
-    disp_subscribed = true;
+    strncat_P(ntopic, PSTR("+/"), sizeof(ntopic) - strlen(ntopic) -1);           // Add single-level wildcards
+    tp = strtok(nullptr, "/");
+  }
+  strncat(ntopic, SettingsText(SET_MQTTPREFIX3), sizeof(ntopic) - strlen(ntopic) -1);  // Subscribe to tele messages
+  strncat_P(ntopic, PSTR("/#"), sizeof(ntopic) - strlen(ntopic) -1);             // Add multi-level wildcard
+  if (Settings->display_model && (Settings->display_mode &0x04)) {
+    if (!disp_subscribed) {
+      disp_subscribed = true;
+      MqttSubscribe(ntopic);
+    }
   } else {
-    disp_subscribed = false;
+    if (disp_subscribed) {
+      disp_subscribed = false;
+      MqttUnsubscribe(ntopic);
+    }
   }
 }
 
@@ -2026,14 +2025,18 @@ void CmndDisplayMode(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 5)) {
     uint32_t last_display_mode = Settings->display_mode;
     Settings->display_mode = XdrvMailbox.payload;
-
-    if (disp_subscribed != (Settings->display_mode &0x04)) {
-      TasmotaGlobal.restart_flag = 2;  // Restart to Add/Remove MQTT subscribe
-    } else {
-      if (Settings->display_mode) {  // Switch to non mode 0
+    if (last_display_mode != Settings->display_mode) {       // Switch to different mode
+      if ((!last_display_mode && Settings->display_mode) ||  // Switch to mode 1, 2, 3 or 4
+          (last_display_mode && !Settings->display_mode)) {  // Switch to mode 0
+        DisplayInit(DISPLAY_INIT_MODE);
+      }
+      if (1 == Settings->display_mode) {                     // Switch to mode 1
+        DisplayClear();
+      }
+      else if (Settings->display_mode > 1) {                 // Switch to mode 2, 3 or 4
         DisplayLogBufferInit();
       }
-      DisplayInit(DISPLAY_INIT_MODE);
+      DisplayMqttSubscribe();
     }
   }
 #endif  // USE_DISPLAY_MODES1TO5
