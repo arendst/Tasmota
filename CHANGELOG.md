@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Matter support for bridged Air Quality (#21597)
 - HASPmota rounds to nearest int values passed as 'real' (#21599)
 - Berry automatic rounding of float to int when calling C mapped functions
+- Berry add `math.round`
 
 ### Breaking Changed
 
