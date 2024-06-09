@@ -1021,7 +1021,7 @@ class lvh_obj : lvh_root
     # if value is 'real', round to nearest int
     if type(v) == 'real'
       import math
-      v = math.floor(v + 0.5)
+      v = int(math.round(v))
     end
 
     # parse value in percentage
