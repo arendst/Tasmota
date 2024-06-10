@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - Optional MQTT_TELE_RETAIN to Energy Margins message replaced by ``SensorRetain``
 - Matter filter suffix automatically added for sensors (#21589)
 - Display timing splash screen with display modes 1 to 5
+- ESP32 MI32 refactoring, bugfixes, generic device scanning (#21603)
 
 ### Fixed
 - Berry `input()` returns empty string and does not crash (#21565)
