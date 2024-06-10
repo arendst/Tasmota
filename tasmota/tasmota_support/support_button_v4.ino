@@ -547,7 +547,28 @@ void ButtonHandler(void) {
 //                    }
                   if (!Settings->flag3.mqtt_buttons) {       // SetOption73 - Detach buttons from relays and enable MQTT action state for multipress
                     if (Button.press_counter[button_index] == 1) {  // By default first press always send a TOGGLE (2)
-                      ExecuteCommandPower(button_index + Button.press_counter[button_index], POWER_TOGGLE, SRC_BUTTON);
+                      #ifdef BLINX
+                        if ((button_index == 2 || button_index == 3)){
+                          if((Settings->display_mode == 6)){
+                            DisplayClear();
+                            uint16_t newDimmer = 0;
+                            if(infoConfigBlinx.canShow){
+                              infoConfigBlinx.canShow = false;
+                            } else {
+                              infoConfigBlinx.timeDisplayDmmer = millis() + 600000;
+                              infoConfigBlinx.canShow = true;
+                              newDimmer = 100;
+                            }
+                            SetDisplayDimmer(newDimmer);
+                            ApplyDisplayDimmer();
+                            Response_P(S_JSON_COMMAND_NVALUE, "DisplayDimmer", newDimmer);
+                          }
+                        } else{
+                          ExecuteCommandPower(button_index + Button.press_counter[button_index], POWER_TOGGLE, SRC_BUTTON);
+                        }
+                      #else
+                        ExecuteCommandPower(button_index + Button.press_counter[button_index], POWER_TOGGLE, SRC_BUTTON);
+                      #endif // BLINX
                     } else {
                       SendKey(KEY_BUTTON, button_index +1, Button.press_counter[button_index] +9);    // 2,3,4 and 5 press send just the key value (11,12,13 and 14) for rules
                       if (0 == button_index) {               // BUTTON1 can toggle up to 5 relays if present. If a relay is not present will send out the key value (2,11,12,13 and 14) for rules
