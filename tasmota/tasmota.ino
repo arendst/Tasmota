@@ -115,6 +115,50 @@
 
 #ifdef BLINX
 
+// normaly define on the build
+#define SIZE_BUFFER_50MS 50
+#define SIZE_BUFFER_1S 30
+#define SIZE_BUFFER_10S 30
+#define SIZE_BUFFER_1M 30
+#define SIZE_BUFFER_10M 30
+#define SIZE_BUFFER_1H 30
+
+using FunctionType = void (*)(uint16_t);
+
+struct bufferTime {
+  uint16_t* buffer = nullptr;
+  uint8_t index = 0;
+  uint8_t size;
+  uint8_t diff;
+
+
+  bufferTime(uint8_t _size, uint8_t _diff) : diff(_diff), size(_size){
+    buffer = new uint16_t[size];
+    for (int i = 0; i < size; i++){
+      buffer[i] = 0;
+    }
+  }
+  bufferTime() {
+    diff = 0;
+    size = 0;
+  }
+
+  void save(uint16_t value){
+      buffer[index] = value;
+      index++;
+      if (index >= size) {
+          index = 0;
+      }
+  }
+
+  void getData(uint8_t ind, FunctionType func){
+      uint8_t max_ind = size;
+      uint8_t index_data = (index+ind)%max_ind;
+
+      (*func)(buffer[index_data]);
+  }
+};
+
 struct {
   uint32_t time[6] = {0,0,0,0,0,0};
   bool displayWifi = true;
