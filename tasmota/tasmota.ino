@@ -112,6 +112,32 @@
  * Global variables
 \*********************************************************************************************/
 
+
+#ifdef BLINX
+
+struct {
+  uint32_t time[6] = {0,0,0,0,0,0};
+  bool displayWifi = true;
+  bool canShow = true;
+  uint32_t timeDisplayDmmer = millis() + 600000;
+  bool encapsulation = false;
+
+  void updateTime(uint8_t stop){
+    uint32_t new_time =  millis(); // Rtc.millis();, rtc isn't define here, we will need to change the location of this function
+    for (uint8_t i = 0; i < stop; i ++){
+      time[i] = new_time;
+    }
+  }
+
+  uint32_t getTime(uint8_t ind, uint8_t offset, uint8_t index, uint8_t millis_second){
+    return time[ind] + millis_second * ( - offset + index );
+  }
+
+} infoConfigBlinx;
+
+#endif // BLINX
+
+
 const uint32_t VERSION_MARKER[] PROGMEM = { 0x5AA55AA5, 0xFFFFFFFF, 0xA55AA55A };
 
 struct WIFI {
