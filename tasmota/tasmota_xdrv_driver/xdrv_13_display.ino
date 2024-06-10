@@ -1556,6 +1556,76 @@ void DisplayAllocLogBuffer(void)
   }
 }
 
+#ifdef BLINX
+
+void DisplayBlinxGetData(void){
+  if(disp_log_buffer_ptr == 0 || disp_log_buffer_ptr == disp_log_buffer_idx){
+    DisplayClearLogBuffer();
+    disp_log_buffer_idx = 0;
+    disp_log_buffer_ptr = 0;
+
+    ResponseClear();
+    ResponseAppendTime();
+
+    // for input sensor : analog + i2c
+    XsnsXdrvCall(FUNC_JSON_APPEND);
+
+    // for the on off
+    if (TasmotaGlobal.devices_present) {
+        ResponseAppend_P(PSTR(",\"DEVICE\":{"));
+        for (uint32_t idx = 1; idx <= TasmotaGlobal.devices_present; idx++) {
+          ResponseAppend_P(PSTR("\"DEVICE_%d\":{\"Power\":%d}"),idx, bitRead(TasmotaGlobal.power, idx -1));
+
+          if (idx < TasmotaGlobal.devices_present){
+            ResponseAppend_P(PSTR(","));
+          }
+        }
+        ResponseAppend_P(PSTR("}"));
+    }
+    
+
+    // for the pwm
+    uint32_t number_pwm = 0;
+    for (uint32_t i = 0; i < MAX_PWMS; i++) {
+      if (PinUsed(GPIO_PWM1, i)) {
+        number_pwm ++;
+      }
+    }
+    if (number_pwm > 0){
+      uint32_t see_pwm = 0;
+      
+      ResponseAppend_P(PSTR(",\"PWM\":{"));
+      for (uint32_t i = 0; i < MAX_PWMS; i++) {
+        if (PinUsed(GPIO_PWM1, i)) {
+          see_pwm ++;
+          int32_t pin = Pin(GPIO_PWM1, i);
+          int32_t chan = analogGetChannel2(pin);
+
+          ResponseAppend_P(PSTR("\"PWM_%d\":{\"value\":%d,\"phase\":%d,\"freq\":%d}"),
+            i,
+            TasmotaGlobal.pwm_cur_value[i],
+            TasmotaGlobal.pwm_cur_phase[i],
+            ledcReadFreq2(chan)
+          );
+
+          if (see_pwm < number_pwm){
+            ResponseAppend_P(PSTR(","));
+          }
+        }
+      }
+      ResponseAppend_P(PSTR("}"));
+    }
+    
+    MqttAppendSensorUnits();
+    ResponseJsonEnd();
+    
+    char no_topic[1] = { 0 };
+    DisplayAnalyzeJson(no_topic, ResponseData());
+  }
+}
+
+#endif // BLINX
+
 void DisplayReAllocLogBuffer(void)
 {
   DisplayFreeLogBuffer();
@@ -1590,6 +1660,7 @@ char* DisplayLogBuffer(char temp_code)
 void DisplayLogBufferInit(void)
 {
   if (Settings->display_mode) {
+    DisplayClear();
     disp_log_buffer_idx = 0;
     disp_log_buffer_ptr = 0;
     disp_refresh = Settings->display_refresh;
@@ -1637,7 +1708,15 @@ enum SensorQuantity {
   JSON_VOLTAGE,
   JSON_POWERUSAGE,
   JSON_CO2,
-  JSON_FREQUENCY };
+  JSON_FREQUENCY,
+  JSON_BLINX_ANALOG1,
+  JSON_BLINX_ANALOG2,
+  JSON_BLINX_ANALOG3,
+  JSON_BLINX_ANALOG4,
+  JSON_BLINX_PWM_VALUE,
+  JSON_BLINX_PWM_PHASE,
+  JSON_BLINX_PWM_FREQ,
+  JSON_BLINX_POWER };
 const char kSensorQuantity[] PROGMEM =
   D_JSON_TEMPERATURE "|"                                                        // degrees
   D_JSON_HUMIDITY "|" D_JSON_LIGHT "|" D_JSON_NOISE "|" D_JSON_AIRQUALITY "|"   // percentage
@@ -1653,21 +1732,53 @@ const char kSensorQuantity[] PROGMEM =
   D_JSON_CO2 "|"                                                                // ppm
   D_JSON_FREQUENCY ;                                                            // Hz
 
+#ifdef BLINX
+const char kSensorQuantityBlinx[] PROGMEM =
+  D_JSON_TEMPERATURE "|"                                                        // degrees
+  D_JSON_HUMIDITY "|" D_JSON_LIGHT "|" D_JSON_NOISE "|" D_JSON_AIRQUALITY "|"   // percentage
+  D_JSON_PRESSURE "|" D_JSON_PRESSUREATSEALEVEL "|"                             // hPa
+  D_JSON_ILLUMINANCE "|"                                                        // lx
+  D_JSON_GAS "|"                                                                // kOhm
+  D_JSON_YESTERDAY "|" D_JSON_TOTAL "|" D_JSON_TODAY "|"                        // kWh
+  D_JSON_PERIOD "|"                                                             // Wh
+  D_JSON_POWERFACTOR "|" D_JSON_COUNTER "|" D_JSON_ANALOG_INPUT "|" D_JSON_UV_LEVEL "|"                 // No unit
+  D_JSON_CURRENT "|"                                                            // Ampere
+  D_JSON_VOLTAGE "|"                                                            // Volt
+  D_JSON_POWERUSAGE "|"                                                         // Watt
+  D_JSON_CO2 "|"                                                                // ppm
+  D_JSON_FREQUENCY "|"                                                          // Hz
+  D_JSON_BLINX_ANALOG1 "|" D_JSON_BLINX_ANALOG2 "|" D_JSON_BLINX_ANALOG3 "|"
+  D_JSON_BLINX_ANALOG4 "|" D_JSON_BLINX_PWM_VALUE "|"
+  D_JSON_BLINX_PWM_PHASE "|" D_JSON_BLINX_PWM_FREQ ;    // other, blinx
+#endif // BLINX
+
 void DisplayJsonValue(const char* topic, const char* device, const char* mkey, const char* value)
 {
+
   char quantity[TOPSZ];
   char buffer[Settings->display_cols[0] +1];
   char spaces[Settings->display_cols[0]];
   char source[Settings->display_cols[0] - Settings->display_cols[1]];
-  char svalue[Settings->display_cols[1] +1];
+  char svalue[Settings->display_cols[1]];
 
   SHOW_FREE_MEM(PSTR("DisplayJsonValue"));
 
   memset(spaces, 0x20, sizeof(spaces));
   spaces[sizeof(spaces) -1] = '\0';
-  snprintf_P(source, sizeof(source), PSTR("%s%s%s%s"), topic, (strlen(topic))?"/":"", mkey, spaces);  // pow1/Voltage or Voltage if topic is empty (local sensor)
 
-  int quantity_code = GetCommandCode(quantity, sizeof(quantity), mkey, kSensorQuantity);
+  int quantity_code;
+  #ifdef BLINX
+  snprintf_P(source, sizeof(source), PSTR("%s%s%s%s"), device, (strlen(device))?"/":"", mkey, spaces);  // pow1/Voltage or Voltage if topic is empty (local sensor)
+  if(Settings->display_mode == 6){
+    quantity_code = GetCommandCode(quantity, sizeof(quantity), mkey, kSensorQuantityBlinx);
+  } else{
+    quantity_code = GetCommandCode(quantity, sizeof(quantity), mkey, kSensorQuantity);
+  }
+  #else
+  snprintf_P(source, sizeof(source), PSTR("%s%s%s%s"), topic, (strlen(topic))?"/":"", mkey, spaces);  // pow1/Voltage or Voltage if topic is empty (local sensor)
+  quantity_code = GetCommandCode(quantity, sizeof(quantity), mkey, kSensorQuantity);
+  #endif // BLINX
+
   if ((-1 == quantity_code) || !strcmp_P(mkey, S_RSLT_POWER)) {  // Ok: Power, Not ok: POWER
     return;
   }
@@ -1707,8 +1818,15 @@ void DisplayJsonValue(const char* topic, const char* device, const char* mkey, c
   else if (JSON_CO2 == quantity_code) {
     snprintf_P(svalue, sizeof(svalue), PSTR("%s" D_UNIT_PARTS_PER_MILLION), value);
   }
-  else if (JSON_FREQUENCY == quantity_code) {
+  else if (JSON_FREQUENCY == quantity_code
+  #ifdef BLINX
+  || JSON_BLINX_PWM_FREQ == quantity_code
+  #endif // BLINX
+  ) {
     snprintf_P(svalue, sizeof(svalue), PSTR("%s" D_UNIT_HERTZ), value);
+  }
+   else {
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s"), value);
   }
   snprintf_P(buffer, sizeof(buffer), PSTR("%s %s"), source, svalue);
 
@@ -1973,8 +2091,15 @@ void CmndDisplayMode(void) {
  * 3 = Day                  Local sensors and time               Local sensors and time
  * 4 = Mqtt left and time   Mqtt (incl local) sensors            Mqtt (incl local) sensors
  * 5 = Mqtt up and time     Mqtt (incl local) sensors and time   Mqtt (incl local) sensors and time
+ * 6 = Blinx                Local sensors, name, ssid   Local sensors, name, ssid
 */
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 5)) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 
+#ifdef BLINX
+    6
+#else
+    5
+#endif // BLINX
+  )) {
     uint32_t last_display_mode = Settings->display_mode;
     Settings->display_mode = XdrvMailbox.payload;
 
@@ -1990,6 +2115,14 @@ void CmndDisplayMode(void) {
         DisplayInit(DISPLAY_INIT_MODE);
       }
     }
+
+    #ifdef BLINX
+    if (XdrvMailbox.payload == 6){
+      infoConfigBlinx.timeDisplayDmmer = millis() + 600000;
+      disp_log_buffer_ptr = 0;
+      DisplayBlinxGetData();
+    }
+    #endif // BLINX
   }
 #endif  // USE_DISPLAY_MODES1TO5
   ResponseCmndNumber(Settings->display_mode);
