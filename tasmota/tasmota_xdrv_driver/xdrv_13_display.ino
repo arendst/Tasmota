@@ -1556,6 +1556,76 @@ void DisplayAllocLogBuffer(void)
   }
 }
 
+#ifdef BLINX
+
+void DisplayBlinxGetData(void){
+  if(disp_log_buffer_ptr == 0 || disp_log_buffer_ptr == disp_log_buffer_idx){
+    DisplayClearLogBuffer();
+    disp_log_buffer_idx = 0;
+    disp_log_buffer_ptr = 0;
+
+    ResponseClear();
+    ResponseAppendTime();
+
+    // for input sensor : analog + i2c
+    XsnsXdrvCall(FUNC_JSON_APPEND);
+
+    // for the on off
+    if (TasmotaGlobal.devices_present) {
+        ResponseAppend_P(PSTR(",\"DEVICE\":{"));
+        for (uint32_t idx = 1; idx <= TasmotaGlobal.devices_present; idx++) {
+          ResponseAppend_P(PSTR("\"DEVICE_%d\":{\"Power\":%d}"),idx, bitRead(TasmotaGlobal.power, idx -1));
+
+          if (idx < TasmotaGlobal.devices_present){
+            ResponseAppend_P(PSTR(","));
+          }
+        }
+        ResponseAppend_P(PSTR("}"));
+    }
+    
+
+    // for the pwm
+    uint32_t number_pwm = 0;
+    for (uint32_t i = 0; i < MAX_PWMS; i++) {
+      if (PinUsed(GPIO_PWM1, i)) {
+        number_pwm ++;
+      }
+    }
+    if (number_pwm > 0){
+      uint32_t see_pwm = 0;
+      
+      ResponseAppend_P(PSTR(",\"PWM\":{"));
+      for (uint32_t i = 0; i < MAX_PWMS; i++) {
+        if (PinUsed(GPIO_PWM1, i)) {
+          see_pwm ++;
+          int32_t pin = Pin(GPIO_PWM1, i);
+          int32_t chan = analogGetChannel2(pin);
+
+          ResponseAppend_P(PSTR("\"PWM_%d\":{\"value\":%d,\"phase\":%d,\"freq\":%d}"),
+            i,
+            TasmotaGlobal.pwm_cur_value[i],
+            TasmotaGlobal.pwm_cur_phase[i],
+            ledcReadFreq2(chan)
+          );
+
+          if (see_pwm < number_pwm){
+            ResponseAppend_P(PSTR(","));
+          }
+        }
+      }
+      ResponseAppend_P(PSTR("}"));
+    }
+    
+    MqttAppendSensorUnits();
+    ResponseJsonEnd();
+    
+    char no_topic[1] = { 0 };
+    DisplayAnalyzeJson(no_topic, ResponseData());
+  }
+}
+
+#endif // BLINX
+
 void DisplayReAllocLogBuffer(void)
 {
   DisplayFreeLogBuffer();
