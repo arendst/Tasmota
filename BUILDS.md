@@ -8,7 +8,7 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | ------------------------- | ----- | ----- | ----- | ----- | ----- | ----- | --------------------------- |
 | MY_LANGUAGE en_GB         | x     | x / x | x     | x     | x     | x     |
 | USE_IMPROV                | x     | x / x | x     | x     | x     | x     |
-| USE_UFILESYS              | -     | - / x | -     | -     | -     | -     |
+| USE_UFILESYS              | -     | - / x | -     | -     | -     | -     | Every ESP8266 > 1MB         |
 | USE_ARDUINO_OTA           | -     | - / - | -     | -     | -     | -     |
 | USE_DOMOTICZ              | -     | x / x | x     | x     | x     | -     |
 | USE_HOME_ASSISTANT        | -     | - / - | -     | -     | -     | -     |
@@ -30,11 +30,14 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_SUNRISE               | x     | x / x | x     | x     | x     | x     |
 | USE_RULES                 | x     | x / x | x     | x     | x     | x     |
 | USE_SCRIPT                | -     | - / - | -     | -     | -     | -     |
-| USE_EXPRESSION            | -     | - / x | -     | -     | -     | -     | Every ESP32 + ESP8266 > 1MB |
-| SUPPORT_IF_STATEMENT      | -     | - / x | -     | -     | -     | -     | Every ESP32 + ESP8266 > 1MB |
+| USE_EXPRESSION            | -     | x / x | -     | -     | -     | -     |
+| SUPPORT_IF_STATEMENT      | -     | x / x | -     | -     | -     | -     |
 | USE_HOTPLUG               | -     | - / - | -     | -     | -     | -     |
 | USE_PROMETHEUS            | -     | - / - | -     | -     | -     | -     |
 | USE_PING                  | -     | - / - | -     | -     | -     | -     |
+| USE_HDMI_CEC              | -     | - / - | -     | -     | -     | -     |
+| USE_MAGIC_SWITCH          | -     | - / x | -     | -     | -     | -     |
+| USE_GPIO_VIEWER           | -     | - / x | -     | -     | -     | -     |
 |                           |       |       |       |       |       |       |
 | **Feature or Sensor**     | **l** | **t** | **k** | **s** | **i** | **d** | **Remarks**                 |
 | ROTARY_V1                 | -     | x / x | -     | x     | -     | -     |
@@ -105,6 +108,9 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_HTU                   | -     | - / x | -     | x     | -     | -     |
 | USE_BMP                   | -     | - / x | -     | x     | -     | -     |
 | USE_BME68X                | -     | - / x | -     | x     | -     | -     |
+| USE_AMSX915               | -     | - / - | -     | -     | -     | -     |
+| USE_SPL06_007             | -     | - / - | -     | -     | -     | -     |
+| USE_QMP6988               | -     | - / - | -     | -     | -     | -     |
 | USE_BH1750                | -     | - / x | -     | x     | -     | -     |
 | USE_VEML6070              | -     | - / x | -     | x     | -     | -     |
 | USE_ADS1115               | -     | - / x | -     | x     | -     | -     |
@@ -192,11 +198,13 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_LUXV30B               | -     | - / - | -     | -     | -     | -     |
 | USE_HMC5883L              | -     | - / - | -     | -     | -     | -     |
 | USE_QMC5883L              | -     | - / - | -     | -     | -     | -     |
+| USE_MAX17043              | -     | - / - | -     | -     | -     | -     |
 |                           |       |       |       |       |       |       |
 | **Feature or Sensor**     | **l** | **t** | **k** | **s** | **i** | **d** | **Remarks**                 |
-| USE_SPI                   | -     | - / - | -     | -     | -     | x     |
+| USE_SPI                   | -     | - / x | -     | -     | -     | x     |
 | USE_RC522                 | -     | - / - | -     | -     | -     | -     |
 | USE_CANSNIFFER            | -     | - / - | -     | -     | -     | -     |
+| USE_SPI_LORA              | -     | - / x | -     | -     | -     | -     |
 | USE_MHZ19                 | -     | - / x | -     | x     | -     | -     |
 | USE_SENSEAIR              | -     | - / x | -     | x     | -     | -     |
 | USE_PMS5003               | -     | - / x | -     | x     | -     | -     |
@@ -220,6 +228,8 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_LD2410                | -     | - / - | -     | -     | -     | -     |
 | USE_GM861                 | -     | - / - | -     | -     | -     | -     |
 | USE_TCP_BRIDGE            | -     | - / - | -     | -     | -     | -     | zbbridge / zbbrdgpro        |
+| USE_HC8                   | -     | - / - | -     | -     | -     | -     |
+| USE_PIPSOLAR              | -     | - / - | -     | -     | -     | -     |
 |                           |       |       |       |       |       |       |
 | USE_NRF24                 | -     | - / - | -     | -     | -     | -     |
 | USE_MIBLE                 | -     | - / - | -     | -     | -     | -     |

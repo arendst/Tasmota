@@ -421,7 +421,6 @@
 #define MQTT_LWT_OFFLINE       "Offline"         // MQTT LWT offline topic message
 #define MQTT_LWT_ONLINE        "Online"          // MQTT LWT online topic message
 
-#define MQTT_TELE_RETAIN       0                 // Tele messages may send retain flag (0 = off, 1 = on)
 #define MQTT_CLEAN_SESSION     1                 // Mqtt clean session connection (0 = No clean session, 1 = Clean session (default))
 #define MQTT_DISABLE_SSERIALRECEIVED 0           // 1 = Disable sserialreceived mqtt messages, 0 = Enable sserialreceived mqtt messages (default)
 #define MQTT_DISABLE_MODBUSRECEIVED  0           // 1 = Disable ModbusReceived mqtt messages, 0 = Enable ModbusReceived mqtt messages (default)
@@ -446,7 +445,8 @@
 //  #define USE_MQTT_TLS_CA_CERT                   // [DEPRECATED] Now TLS supports dual mode using SetOption132 - this flag is now ignored
 //  #define USE_MQTT_AWS_IOT_LIGHT                 // Enable MQTT for AWS IoT in light mode, with user/password instead of private certificate
 //  #define USE_MQTT_AWS_IOT                       // [Deprecated] Enable MQTT for AWS IoT - requires a private key (+11.9k code, +0.4k mem)
-                                                   //   Full documentation here: https://github.com/arendst/Tasmota/wiki/AWS-IoT
+                                                 //   Note: you need to generate a private key + certificate per device and update 'tasmota/tasmota_aws_iot.cpp'
+                                                 //   Full documentation here: https://github.com/arendst/Tasmota/wiki/AWS-IoT
 //  for USE_4K_RSA (support for 4096 bits certificates, instead of 2048), you need to uncommend `-DUSE_4K_RSA` in `build_flags` from `platform.ini` or `platform_override.ini`
 
 // -- MQTT - TLS - Azure IoT & IoT Central ---------
@@ -738,6 +738,7 @@
 //  #define MAX17043_ALERT_THRESHOLD 32            // [I2cDriver83] Define the alert threshold for low battery level percentage 1-32
 //  #define USE_AMSX915                            // [I2CDriver86] Enable AMS5915/AMS6915 pressure/temperature sensor (+1k2 code)
 //  #define USE_SPL06_007                          // [I2cDriver87] Enable SPL06_007 pressure and temperature sensor (I2C addresses 0x76) (+2k5 code)
+//  #define USE_QMP6988                            // [I2cDriver88] Enable QMP6988 pressure and temperature sensor (I2C address 0x56 or 0x70) (+2k9 code)
 
 //  #define USE_RTC_CHIPS                          // Enable RTC chip support and NTP server - Select only one
 //    #define USE_DS3231                           // [I2cDriver26] Enable DS3231 RTC (I2C address 0x68) (+1k2 code)
