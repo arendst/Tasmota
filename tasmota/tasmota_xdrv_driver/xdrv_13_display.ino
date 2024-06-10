@@ -1660,6 +1660,7 @@ char* DisplayLogBuffer(char temp_code)
 void DisplayLogBufferInit(void)
 {
   if (Settings->display_mode) {
+    DisplayClear();
     disp_log_buffer_idx = 0;
     disp_log_buffer_ptr = 0;
     disp_refresh = Settings->display_refresh;
@@ -1707,7 +1708,15 @@ enum SensorQuantity {
   JSON_VOLTAGE,
   JSON_POWERUSAGE,
   JSON_CO2,
-  JSON_FREQUENCY };
+  JSON_FREQUENCY,
+  JSON_BLINX_ANALOG1,
+  JSON_BLINX_ANALOG2,
+  JSON_BLINX_ANALOG3,
+  JSON_BLINX_ANALOG4,
+  JSON_BLINX_PWM_VALUE,
+  JSON_BLINX_PWM_PHASE,
+  JSON_BLINX_PWM_FREQ,
+  JSON_BLINX_POWER };
 const char kSensorQuantity[] PROGMEM =
   D_JSON_TEMPERATURE "|"                                                        // degrees
   D_JSON_HUMIDITY "|" D_JSON_LIGHT "|" D_JSON_NOISE "|" D_JSON_AIRQUALITY "|"   // percentage
@@ -1722,6 +1731,26 @@ const char kSensorQuantity[] PROGMEM =
   D_JSON_POWERUSAGE "|"                                                         // Watt
   D_JSON_CO2 "|"                                                                // ppm
   D_JSON_FREQUENCY ;                                                            // Hz
+
+#ifdef BLINX
+const char kSensorQuantityBlinx[] PROGMEM =
+  D_JSON_TEMPERATURE "|"                                                        // degrees
+  D_JSON_HUMIDITY "|" D_JSON_LIGHT "|" D_JSON_NOISE "|" D_JSON_AIRQUALITY "|"   // percentage
+  D_JSON_PRESSURE "|" D_JSON_PRESSUREATSEALEVEL "|"                             // hPa
+  D_JSON_ILLUMINANCE "|"                                                        // lx
+  D_JSON_GAS "|"                                                                // kOhm
+  D_JSON_YESTERDAY "|" D_JSON_TOTAL "|" D_JSON_TODAY "|"                        // kWh
+  D_JSON_PERIOD "|"                                                             // Wh
+  D_JSON_POWERFACTOR "|" D_JSON_COUNTER "|" D_JSON_ANALOG_INPUT "|" D_JSON_UV_LEVEL "|"                 // No unit
+  D_JSON_CURRENT "|"                                                            // Ampere
+  D_JSON_VOLTAGE "|"                                                            // Volt
+  D_JSON_POWERUSAGE "|"                                                         // Watt
+  D_JSON_CO2 "|"                                                                // ppm
+  D_JSON_FREQUENCY "|"                                                          // Hz
+  D_JSON_BLINX_ANALOG1 "|" D_JSON_BLINX_ANALOG2 "|" D_JSON_BLINX_ANALOG3 "|"
+  D_JSON_BLINX_ANALOG4 "|" D_JSON_BLINX_PWM_VALUE "|"
+  D_JSON_BLINX_PWM_PHASE "|" D_JSON_BLINX_PWM_FREQ ;    // other, blinx
+#endif // BLINX
 
 void DisplayJsonValue(const char* topic, const char* device, const char* mkey, const char* value)
 {

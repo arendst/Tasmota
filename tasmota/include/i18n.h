@@ -252,6 +252,16 @@
 #define D_RSLT_WARNING "WARNING"
 #define D_RSLT_COMMAND "COMMAND"
 
+#ifdef BLINX
+#define D_JSON_BLINX_ANALOG1 "A1"
+#define D_JSON_BLINX_ANALOG2 "A2"
+#define D_JSON_BLINX_ANALOG3 "A3"
+#define D_JSON_BLINX_ANALOG4 "A4"
+#define D_JSON_BLINX_PWM_VALUE "value"
+#define D_JSON_BLINX_PWM_PHASE "phase"
+#define D_JSON_BLINX_PWM_FREQ "freq"
+#endif // BLINX
+
 #define D_LOG_SOME_SETTINGS_RESET "Some settings have been reset"
 
 // Commands tasmota.ino
