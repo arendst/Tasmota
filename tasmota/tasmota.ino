@@ -115,6 +115,99 @@
 
 #ifdef BLINX
 
+// normaly define on the build
+#define SIZE_BUFFER_50MS 50
+#define SIZE_BUFFER_1S 30
+#define SIZE_BUFFER_10S 30
+#define SIZE_BUFFER_1M 30
+#define SIZE_BUFFER_10M 30
+#define SIZE_BUFFER_1H 30
+
+using FunctionType = void (*)(uint16_t);
+
+struct bufferTime {
+  uint16_t* buffer = nullptr;
+  uint8_t index = 0;
+  uint8_t size;
+  uint8_t diff;
+
+
+  bufferTime(uint8_t _size, uint8_t _diff) : diff(_diff), size(_size){
+    buffer = new uint16_t[size];
+    for (int i = 0; i < size; i++){
+      buffer[i] = 0;
+    }
+  }
+  bufferTime() {
+    diff = 0;
+    size = 0;
+  }
+
+  void save(uint16_t value){
+      buffer[index] = value;
+      index++;
+      if (index >= size) {
+          index = 0;
+      }
+  }
+
+  void getData(uint8_t ind, FunctionType func){
+      uint8_t max_ind = size;
+      uint8_t index_data = (index+ind)%max_ind;
+
+      (*func)(buffer[index_data]);
+  }
+};
+
+struct bufferSensor {
+  bufferTime* buffer;
+  uint8_t size;
+
+  bufferSensor(uint8_t _size) : buffer(nullptr), size(_size) {
+    buffer = new bufferTime[size];
+  }
+
+  void activate(uint8_t ind, uint8_t size, uint8_t diff){
+    buffer[ind] = bufferTime(size, diff);
+  }
+
+  void save(uint8_t ind){
+      if (buffer[ind-1].buffer != nullptr) {
+        uint32_t sum = 0;
+        uint8_t index = buffer[ind-1].index;
+        uint8_t indexDiff = index - buffer[ind].diff;
+
+        if (indexDiff >= 0){
+          for (uint32_t y = indexDiff; y < index; y++) {
+            sum += buffer[ind-1].buffer[y];
+          }
+        } else {
+          for (uint32_t y = 0; y < index; y++) {
+            sum += buffer[ind-1].buffer[y];
+          }
+          for (uint32_t y = (index + indexDiff); y < index; y++) {
+            sum += buffer[ind-1].buffer[y];
+          }
+        }
+        buffer[ind].save((uint16_t)(sum / buffer[ind].diff));
+      }
+  }
+
+  void mapData(uint8_t ind, FunctionType func){
+      uint8_t max_ind = buffer[ind].size;
+      uint8_t index = (buffer[ind].index+1)%max_ind;
+
+      for (uint32_t y = 0; y < max_ind; y++) {
+        (*func)(buffer[ind].buffer[index]);
+
+        index = (index+1);
+        if(index == max_ind){
+          index = 0;
+        }
+      }
+  }
+};
+
 struct {
   uint32_t time[6] = {0,0,0,0,0,0};
   bool displayWifi = true;
