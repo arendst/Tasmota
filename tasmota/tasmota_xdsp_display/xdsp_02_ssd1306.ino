@@ -142,6 +142,67 @@ void Ssd1306Time(void)
   renderer->Updateframe();
 }
 
+
+
+#ifdef BLINX
+void Ssd1306PrintBlinx(bool updateFirstLine)
+{
+  if(infoConfigBlinx.canShow){
+    if(TimeReached(infoConfigBlinx.timeDisplayDmmer)){
+      infoConfigBlinx.canShow = false;
+      DisplayClear();
+      SetDisplayDimmer(0);
+      ApplyDisplayDimmer();
+      Response_P(S_JSON_COMMAND_NVALUE, "DisplayDimmer", 0);
+      return;
+    }
+    if (GetDisplayDimmer() == 0){
+      SetDisplayDimmer(100);
+      ApplyDisplayDimmer();
+      Response_P(S_JSON_COMMAND_NVALUE, "DisplayDimmer", 100);
+
+    }
+
+    disp_refresh--;
+    if (!disp_refresh) {
+      disp_refresh = Settings->display_refresh;
+      if (!disp_screen_buffer_cols) { DisplayAllocScreenBuffer(); }
+      DisplayBlinxGetData();
+
+      uint8_t last_row = Settings->display_rows -1;
+
+      char buffer[40];
+      renderer->clearDisplay();
+      renderer->setTextSize(Settings->display_size);
+      renderer->setCursor(0,0);
+
+      if (infoConfigBlinx.displayWifi && !TasmotaGlobal.global_state.wifi_down) {
+        snprintf_P(buffer, sizeof(buffer), PSTR("ssid %s"), SettingsText(SET_STASSID1 + Settings->sta_active));
+      } else{
+        snprintf_P(buffer, sizeof(buffer), PSTR("name %s"), NetworkHostname());
+      }
+      strlcpy(disp_screen_buffer[0], buffer, disp_screen_buffer_cols);
+      renderer->println(buffer);
+
+      for (byte i = 1; i < Settings->display_rows; i++) {
+        char* txt = DisplayLogBuffer('\370');
+        if (txt != NULL) {
+          strlcpy(disp_screen_buffer[i], txt, disp_screen_buffer_cols);
+          renderer->println(disp_screen_buffer[i]);
+        }
+      }
+      
+      renderer->Updateframe();
+      //DisplayFillScreen(last_row);
+
+      if(updateFirstLine){
+        infoConfigBlinx.displayWifi = !infoConfigBlinx.displayWifi;
+      }
+    }
+  }
+}
+#endif // BLINX
+
 void Ssd1306Refresh(void)  // Every second
 {
   if (!renderer) return;
@@ -157,6 +218,11 @@ void Ssd1306Refresh(void)  // Every second
       case 5:  // Mqtt
         Ssd1306PrintLog();
         break;
+#ifdef BLINX
+      case 6:  // Blinx
+        Ssd1306PrintBlinx(true);
+        break;
+#endif // BLINX
     }
   }
 }
