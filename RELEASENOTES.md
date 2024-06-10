@@ -123,6 +123,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Added
 - Berry solidification of `bytes` instances [#21558](https://github.com/arendst/Tasmota/issues/21558)
 - Berry automatic rounding of float to int when calling C mapped functions [#21601](https://github.com/arendst/Tasmota/issues/21601)
+- Berry add `math.round` [#21602](https://github.com/arendst/Tasmota/issues/21602)
 - HASPmota rounds to nearest int values passed as 'real' [#21599](https://github.com/arendst/Tasmota/issues/21599)
 - Matter support for Air Quality sensors [#21559](https://github.com/arendst/Tasmota/issues/21559)
 - Matter support for bridged Air Quality (#21597)[#21597](https://github.com/arendst/Tasmota/issues/21597)
