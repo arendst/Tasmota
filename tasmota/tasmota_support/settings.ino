@@ -1310,8 +1310,20 @@ void SettingsDefaultSet2(void) {
 //  Settings->display_model = 0;
   Settings->display_mode = 0;
   Settings->display_refresh = 2;
-  Settings->display_rows = 2;
-  Settings->display_cols[0] = 16;
+  Settings->display_rows = 
+  #ifdef BLINX
+  4
+  #else
+  2
+  #endif // BLINX
+  ;
+  Settings->display_cols[0] = 
+  #ifdef BLINX
+  22
+  #else
+  16
+  #endif // BLINX
+  ;
   Settings->display_cols[1] = 8;
   Settings->display_dimmer_protected = -50;  // 50%
   Settings->display_size = 1;
