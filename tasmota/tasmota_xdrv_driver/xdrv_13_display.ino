@@ -1754,19 +1754,31 @@ const char kSensorQuantityBlinx[] PROGMEM =
 
 void DisplayJsonValue(const char* topic, const char* device, const char* mkey, const char* value)
 {
+
   char quantity[TOPSZ];
   char buffer[Settings->display_cols[0] +1];
   char spaces[Settings->display_cols[0]];
   char source[Settings->display_cols[0] - Settings->display_cols[1]];
-  char svalue[Settings->display_cols[1] +1];
+  char svalue[Settings->display_cols[1]];
 
   SHOW_FREE_MEM(PSTR("DisplayJsonValue"));
 
   memset(spaces, 0x20, sizeof(spaces));
   spaces[sizeof(spaces) -1] = '\0';
-  snprintf_P(source, sizeof(source), PSTR("%s%s%s%s"), topic, (strlen(topic))?"/":"", mkey, spaces);  // pow1/Voltage or Voltage if topic is empty (local sensor)
 
-  int quantity_code = GetCommandCode(quantity, sizeof(quantity), mkey, kSensorQuantity);
+  int quantity_code;
+  #ifdef BLINX
+  snprintf_P(source, sizeof(source), PSTR("%s%s%s%s"), device, (strlen(device))?"/":"", mkey, spaces);  // pow1/Voltage or Voltage if topic is empty (local sensor)
+  if(Settings->display_mode == 6){
+    quantity_code = GetCommandCode(quantity, sizeof(quantity), mkey, kSensorQuantityBlinx);
+  } else{
+    quantity_code = GetCommandCode(quantity, sizeof(quantity), mkey, kSensorQuantity);
+  }
+  #else
+  snprintf_P(source, sizeof(source), PSTR("%s%s%s%s"), topic, (strlen(topic))?"/":"", mkey, spaces);  // pow1/Voltage or Voltage if topic is empty (local sensor)
+  quantity_code = GetCommandCode(quantity, sizeof(quantity), mkey, kSensorQuantity);
+  #endif // BLINX
+
   if ((-1 == quantity_code) || !strcmp_P(mkey, S_RSLT_POWER)) {  // Ok: Power, Not ok: POWER
     return;
   }
@@ -1806,8 +1818,15 @@ void DisplayJsonValue(const char* topic, const char* device, const char* mkey, c
   else if (JSON_CO2 == quantity_code) {
     snprintf_P(svalue, sizeof(svalue), PSTR("%s" D_UNIT_PARTS_PER_MILLION), value);
   }
-  else if (JSON_FREQUENCY == quantity_code) {
+  else if (JSON_FREQUENCY == quantity_code
+  #ifdef BLINX
+  || JSON_BLINX_PWM_FREQ == quantity_code
+  #endif // BLINX
+  ) {
     snprintf_P(svalue, sizeof(svalue), PSTR("%s" D_UNIT_HERTZ), value);
+  }
+   else {
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s"), value);
   }
   snprintf_P(buffer, sizeof(buffer), PSTR("%s %s"), source, svalue);
 
@@ -2072,8 +2091,15 @@ void CmndDisplayMode(void) {
  * 3 = Day                  Local sensors and time               Local sensors and time
  * 4 = Mqtt left and time   Mqtt (incl local) sensors            Mqtt (incl local) sensors
  * 5 = Mqtt up and time     Mqtt (incl local) sensors and time   Mqtt (incl local) sensors and time
+ * 6 = Blinx                Local sensors, name, ssid   Local sensors, name, ssid
 */
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 5)) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 
+#ifdef BLINX
+    6
+#else
+    5
+#endif // BLINX
+  )) {
     uint32_t last_display_mode = Settings->display_mode;
     Settings->display_mode = XdrvMailbox.payload;
 
@@ -2089,6 +2115,14 @@ void CmndDisplayMode(void) {
         DisplayInit(DISPLAY_INIT_MODE);
       }
     }
+
+    #ifdef BLINX
+    if (XdrvMailbox.payload == 6){
+      infoConfigBlinx.timeDisplayDmmer = millis() + 600000;
+      disp_log_buffer_ptr = 0;
+      DisplayBlinxGetData();
+    }
+    #endif // BLINX
   }
 #endif  // USE_DISPLAY_MODES1TO5
   ResponseCmndNumber(Settings->display_mode);
