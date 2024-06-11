@@ -256,6 +256,7 @@ char **disp_log_buffer;
 char **disp_screen_buffer;
 char disp_temp[2];    // C or F
 char disp_pres[5];   // hPa or mmHg
+char disp_topic[TOPSZ];
 
 uint8_t disp_log_buffer_cols = 0;
 uint8_t disp_log_buffer_idx = 0;
@@ -1497,8 +1498,7 @@ void free_dt_vars(void) {
 
 #ifdef USE_DISPLAY_MODES1TO5
 
-void DisplayClearScreenBuffer(void)
-{
+void DisplayClearScreenBuffer(void) {
   if (disp_screen_buffer_cols) {
     for (uint32_t i = 0; i < disp_screen_buffer_rows; i++) {
       memset(disp_screen_buffer[i], 0, disp_screen_buffer_cols);
@@ -1506,8 +1506,7 @@ void DisplayClearScreenBuffer(void)
   }
 }
 
-void DisplayFreeScreenBuffer(void)
-{
+void DisplayFreeScreenBuffer(void) {
   if (disp_screen_buffer != nullptr) {
     for (uint32_t i = 0; i < disp_screen_buffer_rows; i++) {
       if (disp_screen_buffer[i] != nullptr) { free(disp_screen_buffer[i]); }
@@ -1518,14 +1517,13 @@ void DisplayFreeScreenBuffer(void)
   }
 }
 
-void DisplayAllocScreenBuffer(void)
-{
+void DisplayAllocScreenBuffer(void) {
   if (!disp_screen_buffer_cols) {
     disp_screen_buffer_rows = Settings->display_rows;
-    disp_screen_buffer = (char**)malloc(sizeof(*disp_screen_buffer) * disp_screen_buffer_rows);
+    disp_screen_buffer = (char**)calloc(sizeof(*disp_screen_buffer) * disp_screen_buffer_rows, 1);
     if (disp_screen_buffer != nullptr) {
       for (uint32_t i = 0; i < disp_screen_buffer_rows; i++) {
-        disp_screen_buffer[i] = (char*)malloc(sizeof(*disp_screen_buffer[i]) * (Settings->display_cols[0] +1));
+        disp_screen_buffer[i] = (char*)calloc(sizeof(*disp_screen_buffer[i]) * (Settings->display_cols[0] +1), 1);
         if (disp_screen_buffer[i] == nullptr) {
           DisplayFreeScreenBuffer();
           break;
@@ -1539,14 +1537,12 @@ void DisplayAllocScreenBuffer(void)
   }
 }
 
-void DisplayReAllocScreenBuffer(void)
-{
+void DisplayReAllocScreenBuffer(void) {
   DisplayFreeScreenBuffer();
   DisplayAllocScreenBuffer();
 }
 
-void DisplayFillScreen(uint32_t line)
-{
+void DisplayFillScreen(uint32_t line) {
   uint32_t len = disp_screen_buffer_cols - strlen(disp_screen_buffer[line]);
   if (len) {
     memset(disp_screen_buffer[line] + strlen(disp_screen_buffer[line]), 0x20, len);
@@ -1556,17 +1552,7 @@ void DisplayFillScreen(uint32_t line)
 
 /*-------------------------------------------------------------------------------------------*/
 
-void DisplayClearLogBuffer(void)
-{
-  if (disp_log_buffer_cols) {
-    for (uint32_t i = 0; i < DISPLAY_LOG_ROWS; i++) {
-      memset(disp_log_buffer[i], 0, disp_log_buffer_cols);
-    }
-  }
-}
-
-void DisplayFreeLogBuffer(void)
-{
+void DisplayFreeLogBuffer(void) {
   if (disp_log_buffer != nullptr) {
     for (uint32_t i = 0; i < DISPLAY_LOG_ROWS; i++) {
       if (disp_log_buffer[i] != nullptr) { free(disp_log_buffer[i]); }
@@ -1576,13 +1562,12 @@ void DisplayFreeLogBuffer(void)
   }
 }
 
-void DisplayAllocLogBuffer(void)
-{
+void DisplayAllocLogBuffer(void) {
   if (!disp_log_buffer_cols) {
-    disp_log_buffer = (char**)malloc(sizeof(*disp_log_buffer) * DISPLAY_LOG_ROWS);
+    disp_log_buffer = (char**)calloc(sizeof(*disp_log_buffer) * DISPLAY_LOG_ROWS, 1);
     if (disp_log_buffer != nullptr) {
       for (uint32_t i = 0; i < DISPLAY_LOG_ROWS; i++) {
-        disp_log_buffer[i] = (char*)malloc(sizeof(*disp_log_buffer[i]) * (Settings->display_cols[0] +1));
+        disp_log_buffer[i] = (char*)calloc(sizeof(*disp_log_buffer[i]) * (Settings->display_cols[0] +1), 1);
         if (disp_log_buffer[i] == nullptr) {
           DisplayFreeLogBuffer();
           break;
@@ -1591,46 +1576,42 @@ void DisplayAllocLogBuffer(void)
     }
     if (disp_log_buffer != nullptr) {
       disp_log_buffer_cols = Settings->display_cols[0] +1;
-      DisplayClearLogBuffer();
       DisplayClearScreenBuffer();
       DisplayClear();
     }
   }
 }
 
-void DisplayReAllocLogBuffer(void)
-{
+void DisplayReAllocLogBuffer(void) {
   DisplayFreeLogBuffer();
   DisplayAllocLogBuffer();
 }
 
-void DisplayLogBufferAdd(char* txt)
-{
+void DisplayLogBufferAdd(char* txt) {
   if (disp_log_buffer_cols) {
-    strlcpy(disp_log_buffer[disp_log_buffer_idx], txt, disp_log_buffer_cols);  // This preserves the % sign where printf won't
-    disp_log_buffer_idx++;
+    strlcpy(disp_log_buffer[disp_log_buffer_idx++], txt, disp_log_buffer_cols);  // This preserves the % sign where printf won't
     if (DISPLAY_LOG_ROWS == disp_log_buffer_idx) { disp_log_buffer_idx = 0; }
   }
 }
 
-char* DisplayLogBuffer(char temp_code)
-{
+char* DisplayLogBuffer(char temp_code) {
   char* result = nullptr;
   if (disp_log_buffer_cols) {
     if (disp_log_buffer_idx != disp_log_buffer_ptr) {
-      result = disp_log_buffer[disp_log_buffer_ptr];
-      disp_log_buffer_ptr++;
+      uint32_t log_buffer_ptr = disp_log_buffer_ptr;
+      result = disp_log_buffer[disp_log_buffer_ptr++];
       if (DISPLAY_LOG_ROWS == disp_log_buffer_ptr) { disp_log_buffer_ptr = 0; }
 
       char *pch = strchr(result, '~');  // = 0x7E (~) Replace degrees character (276 octal)
       if (pch != nullptr) { result[pch - result] = temp_code; }
+
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DSP: %02d %s"), log_buffer_ptr, result);
     }
   }
   return result;
 }
 
-void DisplayLogBufferInit(void)
-{
+void DisplayLogBufferInit(void) {
   if (Settings->display_mode) {
     disp_log_buffer_idx = 0;
     disp_log_buffer_ptr = 0;
@@ -1730,19 +1711,31 @@ void DisplayJsonValue(const char* topic, const char* device, const char* mkey, c
   }
 
   char buffer[Settings->display_cols[0] +1];                              // Max sized buffer string
-  memset(buffer, 0x20, sizeof(buffer));                                   // Temporarily use for spaces
+  uint32_t size = strlen(topic);
+  if ((Settings->display_rows > 4) && size) {                             // Skip header if less than five rows
+    if (strcmp(topic, disp_topic)) {                                      // Show topic header only once
+      strcpy(disp_topic, topic);
+      char buffer2[Settings->display_cols[0] +1];                         // Max sized buffer string
+      memset(buffer2, '-', sizeof(buffer2));                              // Set to -
+      buffer2[sizeof(buffer2) -1] = '\0';
+      snprintf_P(buffer, sizeof(buffer), PSTR("- %s %s"), topic, buffer2);  // - pow1 -------------
+      DisplayLogBufferAdd(buffer);
+    }
+    size = 0;                                                             // Remove topic from source
+  }
+  memset(buffer, ' ', sizeof(buffer));                                    // Temporarily use for spaces
   buffer[sizeof(buffer) -1] = '\0';
   char source[Settings->display_cols[0] - Settings->display_cols[1]];     // Max sized source string
-  snprintf_P(source, sizeof(source), PSTR("%s%s%s%s"), topic, (strlen(topic))?"/":"", mkey, buffer);  // pow1/Voltage or Voltage if topic is empty (local sensor)
+  snprintf_P(source, sizeof(source), PSTR("%s%s%s%s"), (size)?topic:"", (size)?"/":"", mkey, buffer);  // pow1/Voltage or Voltage if topic is empty (local sensor or header)
   snprintf_P(buffer, sizeof(buffer), PSTR("%s %s"), source, svalue);
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "mkey [%s], source [%s], value [%s], quantity_code %d, log_buffer [%s]"), mkey, source, value, quantity_code, buffer);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "topic [%s], device [%s], mkey [%s], source [%s], value [%s], quantity_code %d, log_buffer [%s]"),
+//    topic, device, mkey, source, value, quantity_code, buffer);
 
   DisplayLogBufferAdd(buffer);
 }
 
-void DisplayAnalyzeJson(char *topic, const char *json)
-{
+void DisplayAnalyzeJson(char *topic, const char *json) {
 // //tele/pow2/STATE    {"Time":"2017-09-20T11:53:03", "Uptime":10, "Vcc":3.123, "POWER":"ON", "Wifi":{"AP":2, "SSId":"indebuurt2", "RSSI":68, "APMac":"00:22:6B:FE:8E:20"}}
 // //tele/pow2/ENERGY   {"Time":"2017-09-20T11:53:03", "Total":6.522, "Yesterday":0.150, "Today":0.073, "Period":0.5, "Power":12.1, "Factor":0.56, "Voltage":210.1, "Current":0.102}
 
@@ -1819,10 +1812,8 @@ void DisplayMqttSubscribe(void) {
   strncat(ntopic, SettingsText(SET_MQTTPREFIX3), sizeof(ntopic) - strlen(ntopic) -1);  // Subscribe to tele messages
   strncat_P(ntopic, PSTR("/#"), sizeof(ntopic) - strlen(ntopic) -1);             // Add multi-level wildcard
   if (Settings->display_model && (Settings->display_mode &0x04)) {
-    if (!disp_subscribed) {
-      disp_subscribed = true;
-      MqttSubscribe(ntopic);
-    }
+    disp_subscribed = true;
+    MqttSubscribe(ntopic);
   } else {
     if (disp_subscribed) {
       disp_subscribed = false;
@@ -1831,8 +1822,7 @@ void DisplayMqttSubscribe(void) {
   }
 }
 
-bool DisplayMqttData(void)
-{
+bool DisplayMqttData(void) {
   if (disp_subscribed) {
     char stopic[TOPSZ];
 
