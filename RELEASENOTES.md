@@ -132,6 +132,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Changed
 - Optional MQTT_TELE_RETAIN to Energy Margins message replaced by ``SensorRetain``
 - Display timing splash screen with display modes 1 to 5
+- Allow receive or send using SerialBridge
 - ESP32 Core3 platform update from 2024.05.13 to 2024.06.10 [#21569](https://github.com/arendst/Tasmota/issues/21569)
 - ESP32 MI32 refactoring, bugfixes, generic device scanning [#21603](https://github.com/arendst/Tasmota/issues/21603)
 - Matter refactoring of bridged devices [#21575](https://github.com/arendst/Tasmota/issues/21575)

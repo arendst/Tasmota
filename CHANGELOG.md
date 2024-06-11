@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Matter filter suffix automatically added for sensors (#21589)
 - Display timing splash screen with display modes 1 to 5
 - ESP32 MI32 refactoring, bugfixes, generic device scanning (#21603)
+- Allow receive or send using SerialBridge
 
 ### Fixed
 - Berry `input()` returns empty string and does not crash (#21565)

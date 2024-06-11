@@ -20,6 +20,24 @@
 #ifdef USE_SERIAL_BRIDGE
 /*********************************************************************************************\
  * Serial Bridge using Software Serial library (TasmotaSerial)
+ * 
+ * SBaudrate <baudrate>          - Set baudrate
+ * SBaudrate 9600
+ * SSerialConfig <config>        - Set serial config
+ * SSerialConfig 8N1
+ * SSerialBuffer <size>          - Set serial receive buffer
+ * SSerialSend "Hello Tiger"     - Send "Hello Tiger\n"
+ * SSerialSend                   - Set to text decoding
+ * SSerialSend1 "Hello Tiger"    - Send "Hello Tiger\n"
+ * SSerialSend2 "Hello Tiger"    - Send "Hello Tiger"
+ * SSerialSend3 "Hello Tiger"    - Send "Hello Tiger\f"
+ * SSerialSend4                  - Set to binary decoding
+ * SSerialSend4 "Hello Tiger"    - Send "Hello Tiger" and set to binary decoding
+ * SSerialSend5 "AA004566"       - Send "AA004566" as hex values
+ * SSerialSend6 "72,101,108,108" - Send decimals as hex values
+ * SerialDelimiter 255           - Receive data between 32 and 127 only
+ * SerialDelimiter 254           - Receive hexadecimal data
+ * SerialDelimiter 128           - Receive no data between 32 and 127
 \*********************************************************************************************/
 
 #define XDRV_08                    8
@@ -91,7 +109,7 @@ void SerialBridgeInput(void) {
     uint8_t serial_in_byte = SerialBridgeSerial->read();
 
 #ifdef USE_SERIAL_BRIDGE_TEE
-    if (Settings->sbflag1.serbridge_console) {
+    if (Settings->sbflag1.serbridge_console) {                                   // CMND_SSERIALSEND9 - Enable logging tee to serialbridge
       static bool serial_bridge_overrun = false;
 
       if (isprint(serial_in_byte)) {                                             // Any char between 32 and 127
@@ -117,7 +135,7 @@ void SerialBridgeInput(void) {
       }
     } else {
 #endif  // USE_SERIAL_BRIDGE_TEE
-      serial_bridge_raw = (254 == Settings->serial_delimiter);
+      serial_bridge_raw = (254 == Settings->serial_delimiter);                   // SerialDelimiter
       if ((serial_in_byte > 127) && !serial_bridge_raw) {                        // Discard binary data above 127 if no raw reception allowed
         serial_bridge_in_byte_counter = 0;
         SerialBridgeSerial->flush();
@@ -147,17 +165,17 @@ void SerialBridgeInput(void) {
   }
 
 #ifdef USE_SERIAL_BRIDGE_TEE
-  if (Settings->sbflag1.serbridge_console) {
+  if (Settings->sbflag1.serbridge_console) {                                     // CMND_SSERIALSEND9 - Enable logging tee to serialbridge
     return;
   }
 #endif  // USE_SERIAL_BRIDGE_TEE
 
   if (serial_bridge_in_byte_counter && (millis() > (serial_bridge_polling_window + SERIAL_POLLING))) {
-    serial_bridge_buffer[serial_bridge_in_byte_counter] = 0;                   // Serial data completed
+    serial_bridge_buffer[serial_bridge_in_byte_counter] = 0;                     // Serial data completed
     bool assume_json = (!serial_bridge_raw && (serial_bridge_buffer[0] == '{'));
 
-    TasmotaGlobal.serial_skip++;                       // SetOption35  Skip number of serial messages received (default 0)
-    if (TasmotaGlobal.serial_skip > Settings->param[P_SERIAL_SKIP]) {  // Handle intermediate changes to SetOption35
+    TasmotaGlobal.serial_skip++;                                                 // SetOption35  Skip number of serial messages received (default 0)
+    if (TasmotaGlobal.serial_skip > Settings->param[P_SERIAL_SKIP]) {            // Handle intermediate changes to SetOption35
       TasmotaGlobal.serial_skip = 0;
 
       Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":"));
@@ -188,7 +206,7 @@ void SerialBridgeInput(void) {
 /********************************************************************************************/
 
 void SerialBridgeInit(void) {
-  if (PinUsed(GPIO_SBR_RX) && PinUsed(GPIO_SBR_TX)) {
+  if (PinUsed(GPIO_SBR_RX) || PinUsed(GPIO_SBR_TX)) {
 //    SerialBridgeSerial = new TasmotaSerial(Pin(GPIO_SBR_RX), Pin(GPIO_SBR_TX), HARDWARE_FALLBACK);  // Default TM_SERIAL_BUFFER_SIZE (=64) size
     SerialBridgeSerial = new TasmotaSerial(Pin(GPIO_SBR_RX), Pin(GPIO_SBR_TX), HARDWARE_FALLBACK, 0, MIN_INPUT_BUFFER_SIZE);  // 256
     if (SetSSerialBegin()) {
