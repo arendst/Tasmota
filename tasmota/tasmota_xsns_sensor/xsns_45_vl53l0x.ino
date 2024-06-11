@@ -291,7 +291,7 @@ bool Xsns45(uint32_t function) {
         case FUNC_EVERY_HOUR:
             Vl53l0_global(5);
           break;
-#endif BLINX
+#endif // BLINX
         case FUNC_EVERY_250_MSECOND:
           Vl53l0Every_250MSecond();
           break;
