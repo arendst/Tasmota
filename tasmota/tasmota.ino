@@ -83,7 +83,9 @@
 #include <LittleFS.h>
 #ifdef USE_SDCARD
 #include <SD.h>
+#ifdef SOC_SDMMC_HOST_SUPPORTED
 #include <SD_MMC.h>
+#endif  // SOC_SDMMC_HOST_SUPPORTED
 #endif  // USE_SDCARD
 #include "FFat.h"
 #include "FS.h"
