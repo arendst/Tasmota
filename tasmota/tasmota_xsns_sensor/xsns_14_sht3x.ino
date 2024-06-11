@@ -197,6 +197,62 @@ void Sht3xGeneral(uint8_t ind) {
 }
 
 
+
+char types_blinx_sht3x[11];
+
+void sendFunction_sht3x_tem(uint16_t val){
+    WSContentSend_Temp(types_blinx_sht3x, val);
+}
+void sendFunction_sht3x_hum(uint16_t val){
+    char parameter[FLOATSZ];
+    dtostrfd(val, Settings->flag2.humidity_resolution, parameter);
+    WSContentSend_PD(HTTP_SNS_HUM, types_blinx_sht3x, parameter);
+}
+
+void Sht3xShow_blinx(uint8_t temp, uint8_t ind, uint32_t index_csv) {
+  if (temp == 0){
+    Sht3xShow_blinx(1, ind, index_csv);
+    Sht3xShow_blinx(2, ind, index_csv);
+    return;
+  }
+
+  uint8_t temp_humi = temp - 1;
+
+  
+  char name[5];
+  if(temp_humi == 0){
+    strcpy(name, "temp");
+  } else {
+    strcpy(name, "humi");
+  }
+
+  if (index_csv == 0){
+    char types_blinx_sht3x[11];
+    for (uint32_t i = 0; i < sht3x_count; i++) {
+      if(sht3x_count == MAX_NB_SENSORS){ break; }
+      if (bufferSensor_Sht3x[temp_humi][i] == nullptr) { continue; }
+
+      strlcpy(types_blinx_sht3x, sht3x_sensors[i].types, sizeof(types_blinx_sht3x));
+
+      WSContentSend_P(PSTR(",sht3x_%s_%s"), name, types_blinx_sht3x);
+    }
+  } else{
+    for (uint32_t i = 0; i < sht3x_count; i++) {
+      if(sht3x_count == MAX_NB_SENSORS){ break; }
+      if (bufferSensor_Sht3x[temp_humi][i] == nullptr) { continue; }
+
+
+      WSContentSend_P(PSTR(","));
+      if (temp_humi == 0){
+        bufferSensor_Sht3x[temp_humi][i]->buffer[ind].getData(index_csv, &sendFunction_sht3x_tem);
+      } else {
+        bufferSensor_Sht3x[temp_humi][i]->buffer[ind].getData(index_csv, &sendFunction_sht3x_hum);
+      }
+    }
+  }
+}
+
+
 #endif
 
 void Sht3xShow(bool json) {
@@ -260,6 +316,38 @@ bool Xsns14(uint32_t function) {
   }
   return result;
 }
+
+#ifdef BLINX
+bool Xsns14(uint32_t function, uint32_t index_csv, uint32_t phantom = 0) {
+  if (!I2cEnabled(XI2C_15)) { return false; }
+
+  bool result = false;
+
+  if (FUNC_INIT == function) {
+    Sht3xDetect();
+  }
+  else if (sht3x_count) {
+    switch (function) {
+        case FUNC_WEB_SENSOR_BLINX_1s:
+          Sht3xShow_blinx(phantom, 0, index_csv);
+          break;
+        case FUNC_WEB_SENSOR_BLINX_10s:
+          Sht3xShow_blinx(phantom, 1, index_csv);
+          break;
+        case FUNC_WEB_SENSOR_BLINX_1m:
+          Sht3xShow_blinx(phantom, 2, index_csv);
+          break;
+        case FUNC_WEB_SENSOR_BLINX_10m:
+          Sht3xShow_blinx(phantom, 3, index_csv);
+          break;
+        case FUNC_WEB_SENSOR_BLINX_1h:
+          Sht3xShow_blinx(phantom, 4, index_csv);
+          break;
+    }
+  }
+  return result;
+}
+#endif  // BLINX
 
 #endif  // USE_SHT3X
 #endif  // USE_I2C
