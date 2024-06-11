@@ -173,6 +173,29 @@ void Vl53l0_global(uint8_t ind) {
   }
 }
 
+void sendFunction_Vl53l0(uint16_t val){
+    float distance = (val == 9999) ? NAN : (float)val / 10; // cm
+    WSContentSend_P(PSTR("%1_f,"), &distance);
+}
+
+void Vl53l0Show_blinx(uint8_t ind, uint32_t index_csv) {
+  if (index_csv == 0){
+    for (uint32_t i = 0; i < VL53LXX_MAX_SENSORS; i++) {
+      if (Vl53l0x_data[i].bufferBlinx == nullptr) { continue; }
+      if (PinUsed(GPIO_VL53LXX_XSHUT1, i) || (!VL53L0X_xshut)) {
+        WSContentSend_P(PSTR(",VL53L0X_%d"), i);
+      }
+    }
+  } else{
+    for (uint32_t i = 0; i < VL53LXX_MAX_SENSORS; i++) {
+      if (Vl53l0x_data[i].bufferBlinx == nullptr) { continue; }
+      if (PinUsed(GPIO_VL53LXX_XSHUT1, i) || (!VL53L0X_xshut)) {
+        WSContentSend_P(PSTR(","));
+        Vl53l0x_data[i].bufferBlinx->buffer[ind].getData(index_csv, &sendFunction_Vl53l0);
+      }
+    }
+  }
+}
 #endif // BLINX
 
 void Vl53l0Every_250MSecond(void) {
@@ -228,7 +251,6 @@ void Vl53l0Every_Second(void) {
 #endif  // USE_DOMOTICZ
 
 void Vl53l0Show(boolean json) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("show vl53 %s"), json);
   for (uint32_t i = 0; i < VL53LXX_MAX_SENSORS; i++) {
     char types[12] = "VL53L0X";
     if (VL53L0X_xshut) {
@@ -312,6 +334,38 @@ bool Xsns45(uint32_t function) {
   }
   return result;
 }
+
+#ifdef BLINX
+bool Xsns45(uint32_t function, uint32_t index_csv, uint32_t phantom = 0) {
+  if (!I2cEnabled(XI2C_31)) { return false; }
+
+  bool result = false;
+
+  if (FUNC_INIT == function) {
+    Vl53l0Detect();
+  }
+  else if (VL53L0X_detected) {
+      switch (function) {
+        case FUNC_WEB_SENSOR_BLINX_1s:
+          Vl53l0Show_blinx(0, index_csv);
+          break;
+        case FUNC_WEB_SENSOR_BLINX_10s:
+          Vl53l0Show_blinx(1, index_csv);
+          break;
+        case FUNC_WEB_SENSOR_BLINX_1m:
+          Vl53l0Show_blinx(2, index_csv);
+          break;
+        case FUNC_WEB_SENSOR_BLINX_10m:
+          Vl53l0Show_blinx(3, index_csv);
+          break;
+        case FUNC_WEB_SENSOR_BLINX_1h:
+          Vl53l0Show_blinx(4, index_csv);
+          break;
+    }
+  }
+  return result;
+}
+#endif  // BLINX
 
 #endif  // USE_VL53L0X
 #endif  // USE_I2C
