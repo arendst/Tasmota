@@ -976,6 +976,72 @@ void Scheduler(void) {
 #endif  // USE_DEVICE_GROUPS
   BacklogLoop();
 
+
+  #ifdef BLINX
+
+  static uint16_t whatTime = -1;
+
+  static uint32_t state_50msecond_before = 0;             // State 50msecond timer
+  static uint32_t state_second_before = 0;                // State second timer
+  static uint32_t state_10second_before = 0;                // State 10 second timer
+  static uint32_t state_1minute_before = 0;                // State minute timer
+  static uint32_t state_10minute_before = 0;                // State 10 minute timer
+  static uint32_t state_1hour_before = 0;                // State hour timer
+  
+  if (TimeReached(state_1hour_before)) {
+    infoConfigBlinx.updateTime(6);
+
+    SetNextTimeInterval(state_1hour_before, 3600000);
+    SetNextTimeInterval(state_10minute_before, 600000);
+    SetNextTimeInterval(state_1minute_before, 60000);
+    SetNextTimeInterval(state_10second_before, 10000);
+    SetNextTimeInterval(state_second_before, 1000);
+    SetNextTimeInterval(state_50msecond_before, 50);
+    XsnsCall(FUNC_PREP_DATA);
+    whatTime = FUNC_EVERY_HOUR;
+  } else if (TimeReached(state_10minute_before)) {
+    infoConfigBlinx.updateTime(5);
+
+    SetNextTimeInterval(state_1minute_before, 60000);
+    SetNextTimeInterval(state_10second_before, 10000);
+    SetNextTimeInterval(state_second_before, 1000);
+    SetNextTimeInterval(state_50msecond_before, 50);
+    XsnsCall(FUNC_PREP_DATA);
+    whatTime = FUNC_EVERY_10_MINUTE;
+  } else if (TimeReached(state_1minute_before)) {
+    infoConfigBlinx.updateTime(4);
+
+    SetNextTimeInterval(state_1minute_before, 60000);
+    SetNextTimeInterval(state_10second_before, 10000);
+    SetNextTimeInterval(state_second_before, 1000);
+    SetNextTimeInterval(state_50msecond_before, 50);
+    XsnsCall(FUNC_PREP_DATA);
+    whatTime = FUNC_EVERY_MINUTE;
+  } else if (TimeReached(state_10second_before)) {
+    infoConfigBlinx.updateTime(3);
+
+    SetNextTimeInterval(state_10second_before, 10000);
+    SetNextTimeInterval(state_second_before, 1000);
+    SetNextTimeInterval(state_50msecond_before, 50);
+    XsnsCall(FUNC_PREP_DATA);
+    whatTime = FUNC_EVERY_10_SECOND;
+  } else if (TimeReached(state_second_before)) {
+    infoConfigBlinx.updateTime(2);
+
+    SetNextTimeInterval(state_second_before, 1000);
+    SetNextTimeInterval(state_50msecond_before, 50);
+    XsnsCall(FUNC_PREP_DATA);
+    whatTime = FUNC_EVERY_SECOND;
+  } else if (TimeReached(state_50msecond_before)) {
+    infoConfigBlinx.updateTime(1);
+
+    SetNextTimeInterval(state_50msecond_before, 50);
+    XsnsCall(FUNC_PREP_DATA);
+    whatTime = FUNC_EVERY_50_MSECOND;
+  }
+
+  #endif // BLINX
+
   static uint32_t state_50msecond = 0;             // State 50msecond timer
   if (TimeReached(state_50msecond)) {
     SetNextTimeInterval(state_50msecond, 50);
@@ -983,7 +1049,12 @@ void Scheduler(void) {
 #ifdef ROTARY_V1
     RotaryHandler();
 #endif  // ROTARY_V1
+
+  #ifdef BLINX
+    XdrvCall(FUNC_EVERY_50_MSECOND);
+  #else
     XdrvXsnsCall(FUNC_EVERY_50_MSECOND);
+  #endif // BLINX
   }
 
   static uint32_t state_100msecond = 0;            // State 100msecond timer
@@ -1005,8 +1076,21 @@ void Scheduler(void) {
     SetNextTimeInterval(state_second, 1000);
     PerformEverySecond();
     XdrvCall(FUNC_ACTIVE);
+
+  #ifdef BLINX
+    XdrvCall(FUNC_EVERY_SECOND);
+  #else
     XdrvXsnsCall(FUNC_EVERY_SECOND);
+  #endif // BLINX
   }
+
+
+  #ifdef BLINX
+    if (whatTime != -1){
+      XsnsCall(whatTime);
+      whatTime = -1;
+    }
+  #endif // BLINX
 
   if (!TasmotaGlobal.serial_local) { SerialInput(); }
 #ifdef ESP32
