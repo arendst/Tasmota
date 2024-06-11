@@ -1,3 +1,5 @@
+#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+
 #include "JPEGSamples.h"
 
 #ifdef INCLUDE_SIMDATA
@@ -3325,3 +3327,5 @@ unsigned const char octo_jpg[] = {
 unsigned int octo_jpg_len = 14817;
 
 #endif
+
+#endif  // CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3

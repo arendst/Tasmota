@@ -1,3 +1,5 @@
+#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+
 #pragma once
 
 #include "CStreamer.h"
@@ -13,3 +15,5 @@ public:
 
     virtual void    streamImage(uint32_t curMsec);
 };
+
+#endif  // CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3

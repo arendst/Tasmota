@@ -1,3 +1,5 @@
+#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+
 #pragma once
 
 #ifdef ARDUINO_ARCH_ESP32
@@ -5,3 +7,5 @@
 #else
 #include "platglue-posix.h"
 #endif
+
+#endif  // CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3

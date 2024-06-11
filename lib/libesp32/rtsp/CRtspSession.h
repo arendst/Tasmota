@@ -1,3 +1,5 @@
+#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+
 #pragma once
 
 #include "CStreamer.h"
@@ -78,3 +80,5 @@ private:
     char Response[1024];
     char OBuf[256];
 };
+
+#endif  // CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3

@@ -1,3 +1,5 @@
+#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+
 #pragma once
 
 #include <sys/socket.h>
@@ -109,3 +111,5 @@ inline int socketread(SOCKET sock, char *buf, size_t buflen, int timeoutmsec)
             return 0; // unknown error, just claim client dropped it
     };
 }
+
+#endif  // CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3

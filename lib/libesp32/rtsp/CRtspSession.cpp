@@ -1,3 +1,5 @@
+#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+
 #include "CRtspSession.h"
 #include <stdio.h>
 #include <time.h>
@@ -418,3 +420,5 @@ void CRtspSession::broadcastCurrentFrame(uint32_t curMsec) {
         m_Streamer->streamImage(curMsec);
     }
 }
+
+#endif  // CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3

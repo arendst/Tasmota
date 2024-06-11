@@ -1,3 +1,5 @@
+#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+
 #include "OV2640.h"
 
 #define TAG "OV2640"
@@ -191,3 +193,5 @@ esp_err_t OV2640::init(camera_config_t config)
 
     return ESP_OK;
 }
+
+#endif  // CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3

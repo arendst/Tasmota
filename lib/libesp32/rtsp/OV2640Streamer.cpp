@@ -1,3 +1,4 @@
+#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
 
 #include "OV2640Streamer.h"
 #include <assert.h>
@@ -17,3 +18,5 @@ void OV2640Streamer::streamImage(uint32_t curMsec)
     streamFrame(bytes, m_cam.getSize(), curMsec);
 //    Serial.printf("get frame: %d\n",m_cam.getSize());
 }
+
+#endif  // CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
