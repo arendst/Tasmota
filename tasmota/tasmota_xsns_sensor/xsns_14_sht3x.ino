@@ -115,6 +115,13 @@ bool Sht3xRead(uint32_t sensor, float &t, float &h) {
 
 /********************************************************************************************/
 
+
+#ifdef BLINX
+
+bufferSensor* bufferSensor_Sht3x[2][SHT3X_ADDRESSES] = {};
+
+#endif // BLINX
+
 void Sht3xDetect(void) {
   float t;
   float h;
@@ -129,6 +136,15 @@ void Sht3xDetect(void) {
         if (Sht3xRead(sht3x_count, t, h)) {
           GetTextIndexed(sht3x_sensors[sht3x_count].types, sizeof(sht3x_sensors[sht3x_count].types), sht3x_sensors[sht3x_count].type, kSht3xTypes);
           I2cSetActiveFound(sht3x_sensors[sht3x_count].address, sht3x_sensors[sht3x_count].types, sht3x_sensors[sht3x_count].bus);
+
+          #ifdef BLINX
+          for (uint8_t y = 0; y < 2; y++){
+            if (bufferSensor_Sht3x[y][sht3x_count] == nullptr) {
+              bufferSensor_Sht3x[y][sht3x_count] = initBufferSensor(5);
+            }
+          }
+          #endif // BLINX
+
           sht3x_count++;
           if (SHT3X_ADDRESSES == sht3x_count) {
             return;
@@ -138,6 +154,50 @@ void Sht3xDetect(void) {
     }
   }
 }
+
+
+#ifdef BLINX
+
+void Sht3xGetData() {
+  float t;
+  float h;
+  char types[11];
+
+  for (uint32_t i = 0; i < sht3x_count; i++) {
+    if (Sht3xRead(i, t, h)) {
+      t = ConvertTemp(t);
+      h = ConvertHumidity(h);
+      strlcpy(types, sht3x_sensors[i].types, sizeof(types));
+      if (sht3x_count > 1) {
+        snprintf_P(types, sizeof(types), PSTR("%s%c%02X"), sht3x_sensors[i].types, IndexSeparator(), sht3x_sensors[i].address);  // "SHT3X-0xXX"
+      }
+      bufferSensor_Sht3x[0][i]->buffer->save(t);
+      bufferSensor_Sht3x[1][i]->buffer->save(h);
+    }
+  }
+}
+
+void Sht3xGeneral(uint8_t ind) {
+  if(ind == 0){
+    Sht3xGetData();
+    return;
+  }
+
+  for (uint32_t i = 0; i < sht3x_count; i++) {
+    if(sht3x_count == MAX_NB_SENSORS){ break; }
+    for (uint8_t y = 0; y < 2; y++){
+      if (bufferSensor_Sht3x[y][i] == nullptr) {
+        bufferSensor_Sht3x[y][i] = initBufferSensor(5);
+        bufferSensor_Sht3x[y][i]->buffer[ind].save(0);
+      } else{
+        bufferSensor_Sht3x[y][i]->save(ind);
+      }
+    }
+  }
+}
+
+
+#endif
 
 void Sht3xShow(bool json) {
   float t;
@@ -171,6 +231,23 @@ bool Xsns14(uint32_t function) {
   }
   else if (sht3x_count) {
     switch (function) {
+  #ifdef BLINX
+        case FUNC_EVERY_SECOND:
+          Sht3xGeneral(0);
+          break;
+        case FUNC_EVERY_10_SECOND:
+          Sht3xGeneral(1);
+          break;
+        case FUNC_EVERY_MINUTE:
+          Sht3xGeneral(2);
+          break;
+        case FUNC_EVERY_10_MINUTE:
+          Sht3xGeneral(3);
+          break;
+        case FUNC_EVERY_HOUR:
+          Sht3xGeneral(4);
+          break;
+  #endif  // BLINX
       case FUNC_JSON_APPEND:
         Sht3xShow(1);
         break;
