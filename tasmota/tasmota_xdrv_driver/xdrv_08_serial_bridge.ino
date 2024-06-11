@@ -35,6 +35,10 @@
  * SSerialSend4 "Hello Tiger"    - Send "Hello Tiger" and set to binary decoding
  * SSerialSend5 "AA004566"       - Send "AA004566" as hex values
  * SSerialSend6 "72,101,108,108" - Send decimals as hex values
+ * SSerialMode 0                 - Default mode (Console tee off, 115200bps, 8N1)
+ * SSerialMode 1                 - Enable console tee
+ * SSerialMode 2                 - Enable dump of serial data in log level 4
+ * SSerialMode 3                 - Enable Sonoff WTS01 sensor decoding (ESP32 only)
  * SerialDelimiter 255           - Receive data between 32 and 127 only
  * SerialDelimiter 254           - Receive hexadecimal data
  * SerialDelimiter 128           - Receive no data between 32 and 127
@@ -44,6 +48,10 @@
 #define HARDWARE_FALLBACK          2
 
 #define USE_SERIAL_BRIDGE_TEE
+
+#ifdef ESP32
+#define USE_SERIAL_BRIDGE_WTS01
+#endif  // ESP32
 
 #ifdef SERIAL_BRIDGE_BUFFER_SIZE
 const uint16_t SERIAL_BRIDGE_BUFSIZE = SERIAL_BRIDGE_BUFFER_SIZE;
@@ -55,19 +63,25 @@ const uint16_t SERIAL_BRIDGE_BUFSIZE = INPUT_BUFFER_SIZE;         // 800
 #endif  // ESP32
 #endif  // SERIAL_BRIDGE_BUFFER_SIZE
 
+enum SerialBridgeModes { SB_NONE, SB_TEE, SB_DUMP, SB_WTS01 };
+
 const char kSerialBridgeCommands[] PROGMEM = "|"  // No prefix
-  D_CMND_SSERIALSEND "|" D_CMND_SBAUDRATE "|" D_CMND_SSERIALBUFFER "|" D_CMND_SSERIALCONFIG;
+  D_CMND_SSERIALSEND "|" D_CMND_SBAUDRATE "|" D_CMND_SSERIALBUFFER "|" D_CMND_SSERIALCONFIG "|" D_CMND_SSERIALMODE;
 
 void (* const SerialBridgeCommand[])(void) PROGMEM = {
-  &CmndSSerialSend, &CmndSBaudrate, &CmndSSerialBuffer, &CmndSSerialConfig };
+  &CmndSSerialSend, &CmndSBaudrate, &CmndSSerialBuffer, &CmndSSerialConfig, &CmndSSerialMode };
 
 #include <TasmotaSerial.h>
 TasmotaSerial *SerialBridgeSerial = nullptr;
 
-unsigned long serial_bridge_polling_window = 0;
 char *serial_bridge_buffer = nullptr;
-int serial_bridge_in_byte_counter = 0;
-bool serial_bridge_raw = false;
+
+struct {
+  uint32_t polling_window;
+  int      in_byte_counter = 0;
+  float    temperature;
+  bool     raw = false;
+} SBridge;
 
 /********************************************************************************************/
 
@@ -87,7 +101,7 @@ void SetSSerialConfig(uint32_t serial_config) {
 
 void SerialBridgePrintf(PGM_P formatP, ...) {
 #ifdef USE_SERIAL_BRIDGE_TEE
-  if (Settings->sbflag1.serbridge_console && serial_bridge_buffer) {
+  if ((SB_TEE == Settings->sserial_mode) && serial_bridge_buffer) {
     va_list arg;
     va_start(arg, formatP);
     char* data = ext_vsnprintf_malloc_P(formatP, arg);
@@ -109,18 +123,18 @@ void SerialBridgeInput(void) {
     uint8_t serial_in_byte = SerialBridgeSerial->read();
 
 #ifdef USE_SERIAL_BRIDGE_TEE
-    if (Settings->sbflag1.serbridge_console) {                                   // CMND_SSERIALSEND9 - Enable logging tee to serialbridge
+    if (SB_TEE == Settings->sserial_mode) {                                   // CMND_SSERIALSEND9 - Enable logging tee to serialbridge
       static bool serial_bridge_overrun = false;
 
       if (isprint(serial_in_byte)) {                                             // Any char between 32 and 127
-        if (serial_bridge_in_byte_counter < SERIAL_BRIDGE_BUFSIZE -1) {          // Add char to string if it still fits
-          serial_bridge_buffer[serial_bridge_in_byte_counter++] = serial_in_byte;
+        if (SBridge.in_byte_counter < SERIAL_BRIDGE_BUFSIZE -1) {                // Add char to string if it still fits
+          serial_bridge_buffer[SBridge.in_byte_counter++] = serial_in_byte;
         } else {
           serial_bridge_overrun = true;                                          // Signal overrun but continue reading input to flush until '\n' (EOL)
         }
       }
       else if (serial_in_byte == '\n') {
-        serial_bridge_buffer[serial_bridge_in_byte_counter] = 0;                 // Serial data completed
+        serial_bridge_buffer[SBridge.in_byte_counter] = 0;                       // Serial data completed
         TasmotaGlobal.seriallog_level = (Settings->seriallog_level < LOG_LEVEL_INFO) ? (uint8_t)LOG_LEVEL_INFO : Settings->seriallog_level;
         if (serial_bridge_overrun) {
           AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "SSerial buffer overrun"));
@@ -128,78 +142,98 @@ void SerialBridgeInput(void) {
           AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), serial_bridge_buffer);
           ExecuteCommand(serial_bridge_buffer, SRC_SSERIAL);
         }
-        serial_bridge_in_byte_counter = 0;
+        SBridge.in_byte_counter = 0;
         serial_bridge_overrun = false;
         SerialBridgeSerial->flush();
         return;
       }
     } else {
 #endif  // USE_SERIAL_BRIDGE_TEE
-      serial_bridge_raw = (254 == Settings->serial_delimiter);                   // SerialDelimiter
-      if ((serial_in_byte > 127) && !serial_bridge_raw) {                        // Discard binary data above 127 if no raw reception allowed
-        serial_bridge_in_byte_counter = 0;
+      SBridge.raw = (Settings->sserial_mode > SB_TEE) ? true : (254 == Settings->serial_delimiter); // SerialDelimiter
+      if ((serial_in_byte > 127) && !SBridge.raw) {                              // Discard binary data above 127 if no raw reception allowed
+        SBridge.in_byte_counter = 0;
         SerialBridgeSerial->flush();
         return;
       }
-      if (serial_in_byte || serial_bridge_raw) {                                 // Any char between 1 and 127 or any char (0 - 255)
+      if (serial_in_byte || SBridge.raw) {                                       // Any char between 1 and 127 or any char (0 - 255)
         bool in_byte_is_delimiter =                                              // Char is delimiter when...
           (((Settings->serial_delimiter < 128) && (serial_in_byte == Settings->serial_delimiter)) || // Any char between 1 and 127 and being delimiter
           ((Settings->serial_delimiter == 128) && !isprint(serial_in_byte))) &&  // Any char not between 32 and 127
-          !serial_bridge_raw;                                                    // In raw mode (CMND_SERIALSEND3) there is never a delimiter
+          !SBridge.raw;                                                          // In raw mode (CMND_SERIALSEND3) there is never a delimiter
 
-        if ((serial_bridge_in_byte_counter < SERIAL_BRIDGE_BUFSIZE -1) &&        // Add char to string if it still fits and ...
+        if ((SBridge.in_byte_counter < SERIAL_BRIDGE_BUFSIZE -1) &&              // Add char to string if it still fits and ...
             !in_byte_is_delimiter) {                                             // Char is not a delimiter
-          serial_bridge_buffer[serial_bridge_in_byte_counter++] = serial_in_byte;
+          serial_bridge_buffer[SBridge.in_byte_counter++] = serial_in_byte;
         }
 
-        if ((serial_bridge_in_byte_counter >= SERIAL_BRIDGE_BUFSIZE -1) ||       // Send message when buffer is full or ...
+        if ((SBridge.in_byte_counter >= SERIAL_BRIDGE_BUFSIZE -1) ||             // Send message when buffer is full or ...
             in_byte_is_delimiter) {                                              // Char is delimiter
-          serial_bridge_polling_window = 0;                                      // Publish now
+          SBridge.polling_window = 0;                                            // Publish now
           break;
         }
       }
-      serial_bridge_polling_window = millis();                                   // Wait for more data
+      SBridge.polling_window = millis();                                         // Wait for more data
 #ifdef USE_SERIAL_BRIDGE_TEE
     }
 #endif  // USE_SERIAL_BRIDGE_TEE
   }
 
 #ifdef USE_SERIAL_BRIDGE_TEE
-  if (Settings->sbflag1.serbridge_console) {                                     // CMND_SSERIALSEND9 - Enable logging tee to serialbridge
+  if (SB_TEE == Settings->sserial_mode) {                                     // CMND_SSERIALSEND9 - Enable logging tee to serialbridge
     return;
   }
 #endif  // USE_SERIAL_BRIDGE_TEE
 
-  if (serial_bridge_in_byte_counter && (millis() > (serial_bridge_polling_window + SERIAL_POLLING))) {
-    serial_bridge_buffer[serial_bridge_in_byte_counter] = 0;                     // Serial data completed
-    bool assume_json = (!serial_bridge_raw && (serial_bridge_buffer[0] == '{'));
+  if (SBridge.in_byte_counter && (millis() > (SBridge.polling_window + SERIAL_POLLING))) {
+    serial_bridge_buffer[SBridge.in_byte_counter] = 0;                           // Serial data completed
 
-    TasmotaGlobal.serial_skip++;                                                 // SetOption35  Skip number of serial messages received (default 0)
-    if (TasmotaGlobal.serial_skip > Settings->param[P_SERIAL_SKIP]) {            // Handle intermediate changes to SetOption35
-      TasmotaGlobal.serial_skip = 0;
-
-      Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":"));
-      if (assume_json) {
-        ResponseAppend_P(serial_bridge_buffer);
-      } else {
-        ResponseAppend_P(PSTR("\""));
-        if (serial_bridge_raw) {
-          ResponseAppend_P(PSTR("%*_H"), serial_bridge_in_byte_counter, serial_bridge_buffer);
+    if (SB_NONE == Settings->sserial_mode) {
+      bool assume_json = (!SBridge.raw && (serial_bridge_buffer[0] == '{'));
+      TasmotaGlobal.serial_skip++;                                               // SetOption35  Skip number of serial messages received (default 0)
+      if (TasmotaGlobal.serial_skip > Settings->param[P_SERIAL_SKIP]) {          // Handle intermediate changes to SetOption35
+        TasmotaGlobal.serial_skip = 0;
+        Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":"));
+        if (assume_json) {
+          ResponseAppend_P(serial_bridge_buffer);
         } else {
-          ResponseAppend_P(EscapeJSONString(serial_bridge_buffer).c_str());
+          ResponseAppend_P(PSTR("\""));
+          if (SBridge.raw) {
+            ResponseAppend_P(PSTR("%*_H"), SBridge.in_byte_counter, serial_bridge_buffer);
+          } else {
+            ResponseAppend_P(EscapeJSONString(serial_bridge_buffer).c_str());
+          }
+          ResponseAppend_P(PSTR("\""));
         }
-        ResponseAppend_P(PSTR("\""));
-      }
-      ResponseJsonEnd();
+        ResponseJsonEnd();
 
-      if (Settings->flag6.mqtt_disable_sserialrec ) {  // SetOption147  If it is activated, Tasmota will not publish SSerialReceived MQTT messages, but it will proccess event trigger rules
-        XdrvRulesProcess(0);
-      } else {
-        MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
+        if (Settings->flag6.mqtt_disable_sserialrec ) {  // SetOption147  If it is activated, Tasmota will not publish SSerialReceived MQTT messages, but it will proccess event trigger rules
+          XdrvRulesProcess(0);
+        } else {
+          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
+        }
       }
     }
 
-    serial_bridge_in_byte_counter = 0;
+    if (Settings->sserial_mode > SB_TEE) {
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SBR: Rcvd '%*_H'"), SBridge.in_byte_counter, serial_bridge_buffer);
+    }
+
+#ifdef USE_SERIAL_BRIDGE_WTS01
+    // Sonoff WTS01 9600bps, 8N1 datagram every second
+    //  0  1  2  3  4  5  6  7  8
+    // 55 01 01 04 01 11 16 12 95
+    // header            T  Td Ck  - T = Temperature, Td = Temperature decimal, Ck = Checksum
+    if (SB_WTS01 == Settings->sserial_mode) {
+      if (9 == SBridge.in_byte_counter) {
+        uint32_t *header = (uint32_t*)serial_bridge_buffer;
+        if (0x04010155 == *header) {
+          SBridge.temperature = (float)serial_bridge_buffer[6] + ((float)serial_bridge_buffer[7] / 100.0f);
+        }
+      }
+    }
+#endif  // USE_SERIAL_BRIDGE_WTS01
+
+    SBridge.in_byte_counter = 0;
   }
 }
 
@@ -230,10 +264,10 @@ void SerialBridgeInit(void) {
 \*********************************************************************************************/
 
 void CmndSSerialSend(void) {
+  if (Settings->sserial_mode > SB_DUMP) { return; }                         // Not supported in receive only mode
   if (XdrvMailbox.index > 9) { XdrvMailbox.index -= 10; }
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 6)) {
-    serial_bridge_raw = (XdrvMailbox.index > 3);
-    Settings->sbflag1.serbridge_console = 0;                                // Disable console Tee
+    SBridge.raw = (XdrvMailbox.index > 3);
     if (XdrvMailbox.data_len > 0) {
       if (1 == XdrvMailbox.index) {
         SerialBridgeSerial->write(XdrvMailbox.data, XdrvMailbox.data_len);  // "Hello Tiger"
@@ -273,14 +307,6 @@ void CmndSSerialSend(void) {
       ResponseCmndDone();
     }
   }
-#ifdef USE_SERIAL_BRIDGE_TEE
-  if (9 == XdrvMailbox.index) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
-      Settings->sbflag1.serbridge_console = XdrvMailbox.payload;
-    }
-    ResponseCmndStateText(Settings->sbflag1.serbridge_console);
-  }
-#endif  // USE_SERIAL_BRIDGE_TEE
 }
 
 void CmndSBaudrate(void) {
@@ -335,6 +361,66 @@ void CmndSSerialConfig(void) {
   ResponseCmndChar(GetSerialConfig(Settings->sserial_config).c_str());
 }
 
+void CmndSSerialMode(void) {
+  // SSerialMode 0  - Default mode (Tee off, 115200bps, 8N1)
+  // SSerialMode 1  - Toggle console tee
+  // SSerialMode 2  - Dump hex data to log level 4 for analysis
+  // SSerialMode 3  - Sonoff WTS01 decode
+  if (XdrvMailbox.payload >= 0) {
+    switch (XdrvMailbox.payload) {
+      case SB_NONE:
+        Settings->sserial_mode = XdrvMailbox.payload;
+  //      Settings->serial_delimiter = 255;
+        Settings->sbaudrate = 115200 / 300;        // 115200bps
+        SetSSerialConfig(3);                       // 8N1
+        break;
+#ifdef USE_SERIAL_BRIDGE_TEE
+      case SB_TEE:
+        Settings->sserial_mode = XdrvMailbox.payload;
+        break;
+#endif  // USE_SERIAL_BRIDGE_TEE
+      case SB_DUMP:
+        Settings->sserial_mode = XdrvMailbox.payload;
+        break;
+#ifdef USE_SERIAL_BRIDGE_WTS01
+      case SB_WTS01:
+        Settings->sserial_mode = XdrvMailbox.payload;
+        Settings->sbaudrate = 9600 / 300;          // 9600bps
+        SetSSerialConfig(3);                       // 8N1
+        break;
+#endif  // USE_SERIAL_BRIDGE_WTS01
+      default:
+        return;                                    // Not supported
+    }
+  }
+  ResponseCmndNumber(Settings->sserial_mode);
+}
+
+/*********************************************************************************************\
+ * Presentation
+\*********************************************************************************************/
+
+void SerialBridgeShow(bool json) {
+#ifdef USE_SERIAL_BRIDGE_WTS01
+  if (SB_WTS01 == Settings->sserial_mode) {
+    float temperature = ConvertTemp(SBridge.temperature);
+    if (json) {
+      ResponseAppend_P(PSTR(",\"WTS01\":{\"" D_JSON_TEMPERATURE "\":%*_f}"), Settings->flag2.temperature_resolution, &temperature);
+  #ifdef USE_DOMOTICZ
+      if (0 == TasmotaGlobal.tele_period) { DomoticzFloatSensor(DZ_TEMP, temperature); }
+  #endif  // USE_DOMOTICZ
+  #ifdef USE_KNX
+      if (0 == TasmotaGlobal.tele_period) { KnxSensor(KNX_TEMPERATURE, temperature); }
+  #endif  // USE_KNX
+  #ifdef USE_WEBSERVER
+    } else {
+      WSContentSend_Temp("WTS01", temperature);
+  #endif  // USE_WEBSERVER
+    }
+  }
+#endif  // USE_SERIAL_BRIDGE_WTS01
+}
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -351,6 +437,14 @@ bool Xdrv08(uint32_t function) {
       case FUNC_SLEEP_LOOP:
         SerialBridgeInput();
         break;
+      case FUNC_JSON_APPEND:
+        SerialBridgeShow(1);
+        break;
+#ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        SerialBridgeShow(0);
+        break;
+#endif  // USE_WEBSERVER
       case FUNC_COMMAND:
         result = DecodeCommand(kSerialBridgeCommands, SerialBridgeCommand);
         break;

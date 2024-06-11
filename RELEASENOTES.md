@@ -119,7 +119,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v14.1.0.1
+## Changelog v14.1.0.2
 ### Added
 - Support for QMP6988 temperature and pressure sensor
 - Berry solidification of `bytes` instances [#21558](https://github.com/arendst/Tasmota/issues/21558)
@@ -133,6 +133,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Optional MQTT_TELE_RETAIN to Energy Margins message replaced by ``SensorRetain``
 - Display timing splash screen with display modes 1 to 5
 - Allow receive or send using SerialBridge
+- SerialBridge command ``SSerialSend9`` replaced by ``SSerialMode``
 - ESP32 Core3 platform update from 2024.05.13 to 2024.06.10 [#21569](https://github.com/arendst/Tasmota/issues/21569)
 - ESP32 MI32 refactoring, bugfixes, generic device scanning [#21603](https://github.com/arendst/Tasmota/issues/21603)
 - Matter refactoring of bridged devices [#21575](https://github.com/arendst/Tasmota/issues/21575)

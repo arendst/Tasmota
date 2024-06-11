@@ -1817,7 +1817,10 @@ void SettingsDelta(void) {
       Settings->power_lock = 0;
     }
     if (Settings->version < 0x0E000004) {  // 14.0.0.4
-      Settings->tcp_baudrate = (uint16_t)Settings->ex_tcp_baudrate * 4;
+      Settings->tcp_baudrate = (uint16_t)Settings->sserial_mode * 4;
+    }
+    if (Settings->version < 0x0E010002) {  // 14.1.0.2
+      Settings->sserial_mode = Settings->sbflag1.ex_serbridge_console;
     }
 
     Settings->version = TASMOTA_VERSION;

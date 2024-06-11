@@ -3,7 +3,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.1.0.1]
+## [14.1.0.2]
+### Added
+
+### Breaking Changed
+
+### Changed
+- SerialBridge command ``SSerialSend9`` replaced by ``SSerialMode``
+
+### Fixed
+
+### Removed
+
+## [14.1.0.1] 20240611
 ### Added
 - Berry solidification of `bytes` instances (#21558)
 - Matter support for Air Quality sensors (#21559)
@@ -12,8 +24,6 @@ All notable changes to this project will be documented in this file.
 - Berry automatic rounding of float to int when calling C mapped functions (#21601)
 - Berry add `math.round` (#21602)
 - Support for QMP6988 temperature and pressure sensor
-
-### Breaking Changed
 
 ### Changed
 - Matter refactoring of bridged devices (#21575)
@@ -26,8 +36,6 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Berry `input()` returns empty string and does not crash (#21565)
-
-### Removed
 
 ## [Released]
 

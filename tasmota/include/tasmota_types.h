@@ -286,7 +286,7 @@ typedef union {
     uint32_t sspm_display : 1;             // bit 8  (v10.0.0.4) - CMND_SSPMDISPLAY - Enable gui display of powered on relays only
     uint32_t local_ntp_server : 1;         // bit 9  (v11.0.0.4) - CMND_RTCNTPSERVER - Enable local NTP server
     uint32_t influxdb_sensor : 1;          // bit 10 (v11.0.0.5) - CMND_IFXSENSOR - Enable sensor support in addition to teleperiod support
-    uint32_t serbridge_console : 1;        // bit 11 (v11.1.0.4) - CMND_SSERIALSEND9 - Enable logging tee to serialbridge
+    uint32_t ex_serbridge_console : 1;     // bit 11 (v11.1.0.4) - (v14.1.0.2) Replaced by CMND_SSERIALMODE
     uint32_t telegram_disable_af : 1;      // bit 12 (v14.0.0.2) - CMND_TMSTATE 6/7 - Disable Telegram auto-fingerprint fix
     uint32_t spare13 : 1;                  // bit 13
     uint32_t spare14 : 1;                  // bit 14
@@ -515,6 +515,7 @@ typedef struct {
   uint8_t       text_pool_290[66];         // 290
 
   // End of single char array of 698 chars max ****************
+
   uint8_t       display_model;             // 2D2
   uint8_t       display_mode;              // 2D3
   uint8_t       display_refresh;           // 2D4
@@ -832,9 +833,7 @@ typedef struct {
   uint8_t       windmeter_tele_pchange;    // F3E
   uint8_t       ledpwm_on;                 // F3F
   uint8_t       ledpwm_off;                // F40
-
-  uint8_t       ex_tcp_baudrate;           // F41  ex_tcp_baudrate, free since v14.0.0.4 
-
+  uint8_t       sserial_mode;              // F41
   uint8_t       fallback_module;           // F42
   uint8_t       shutter_mode;              // F43
   uint16_t      energy_power_delta[3];     // F44
