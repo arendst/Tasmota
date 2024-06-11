@@ -433,8 +433,8 @@ const char kButtonAction[] PROGMEM =
   "cs";
 const char kButtonConfirm[] PROGMEM = D_CONFIRM_RESTART "|" D_CONFIRM_RESET_CONFIGURATION;
 
-enum CTypes { CT_HTML, CT_PLAIN, CT_XML, CT_STREAM, CT_APP_JSON, CT_APP_STREAM };
-const char kContentTypes[] PROGMEM = "text/html|text/plain|text/xml|text/event-stream|application/json|application/octet-stream";
+enum CTypes { CT_HTML, CT_PLAIN, CT_XML, CT_STREAM, CT_APP_JSON, CT_APP_STREAM, CT_APP_CSV };
+const char kContentTypes[] PROGMEM = "text/html|text/plain|text/xml|text/event-stream|application/json|application/octet-stream|text/csv";
 
 const char kLoggingOptions[] PROGMEM = D_SERIAL_LOG_LEVEL "|" D_WEB_LOG_LEVEL "|" D_MQTT_LOG_LEVEL "|" D_SYS_LOG_LEVEL;
 const char kLoggingLevels[] PROGMEM = D_NONE "|" D_ERROR "|" D_INFO "|" D_DEBUG "|" D_MORE_DEBUG;
@@ -582,6 +582,9 @@ const WebServerDispatch_t WebServerDispatch[] PROGMEM = {
 #ifndef FIRMWARE_MINIMAL_ONLY
   { "in", HTTP_ANY, HandleInformation },
 #endif  // Not FIRMWARE_MINIMAL_ONLY
+#ifdef BLINX
+  { "bg", HTTP_ANY, HandleHttpRequestBlinxGet },
+#endif // BLINX
 };
 
 void WebServer_on(const char * prefix, void (*func)(void), uint8_t method = HTTP_ANY) {
@@ -3190,6 +3193,94 @@ void HandleHttpCommand(void)
   }
   WSContentEnd();
 }
+
+#ifdef BLINX
+
+/*-------------------------------------------------------------------------------------------*/
+
+
+
+
+void HandleHttpRequestBlinxGet(void)
+{
+  String time_ask = Webserver->arg(F("time"));
+
+  uint32_t function, size_buffer;
+  if (time_ask == "50ms") {
+    function = FUNC_WEB_SENSOR_BLINX_50Ms;
+    size_buffer = SIZE_BUFFER_50MS;
+  } else if (time_ask == "1s") {
+    function = FUNC_WEB_SENSOR_BLINX_1s;
+    size_buffer = SIZE_BUFFER_1S;
+  } else if (time_ask == "10s") {
+    function = FUNC_WEB_SENSOR_BLINX_10s;
+    size_buffer = SIZE_BUFFER_10S;
+  } else if (time_ask == "1m") {
+    function = FUNC_WEB_SENSOR_BLINX_1m;
+    size_buffer = SIZE_BUFFER_1M;
+  } else if (time_ask == "10m") {
+    function = FUNC_WEB_SENSOR_BLINX_10m;
+    size_buffer = SIZE_BUFFER_10M;
+  } else if (time_ask == "1h") {
+    function = FUNC_WEB_SENSOR_BLINX_1h;
+    size_buffer = SIZE_BUFFER_1H;
+  } else {
+    return;
+  }
+
+
+  WSContentBegin(200, CT_HTML); // to get csv : CT_APP_CSV
+
+  if(Webserver->hasArg(F("sensor"))){
+    String sensor_ask = Webserver->arg(F("sensor"));
+    
+    String currentArg;
+    std::vector<String> vector_sensor_ask;
+    for (char c : sensor_ask) {
+        if (c != ',') {
+            currentArg += c;
+        } else {
+            vector_sensor_ask.push_back(currentArg);
+            //blinx_getsensor(function, currentArg);
+            currentArg = "";
+        }
+    }
+    if (currentArg != ""){
+      vector_sensor_ask.push_back(currentArg);
+      //blinx_getsensor(function, currentArg);
+    }
+
+    for (uint32_t i = 0; i < size_buffer+1; i++){
+      if (i == 0){
+        WSContentSend_P(PSTR("Time"));
+      } else{
+        WSContentSend_P(PSTR("0"));
+      }
+
+      for (auto &name_sensor : vector_sensor_ask){
+        blinx_getsensor(function, name_sensor, i);
+      }
+      WSContentSend_P(PSTR("\n"));
+    }
+    
+  } else{
+    for (uint32_t i = 0; i < size_buffer+1; i++){
+      if (i == 0){
+        WSContentSend_P(PSTR("Time"));
+      } else{
+        WSContentSend_P(PSTR("0"));
+      }
+      XsnsXdrvCall(function, i);
+      WSContentSend_P(PSTR("\n"));
+    }
+  }
+
+  WSContentEnd();
+
+  return;
+}
+
+#endif // BLINX
 
 /*-------------------------------------------------------------------------------------------*/
 
