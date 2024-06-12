@@ -122,9 +122,11 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ## Changelog v14.1.0.2
 ### Added
 - Support for QMP6988 temperature and pressure sensor
+- Support for Sonoff WTS01 temperature sensor using SerialBridge in ``SSerialMode 3``
 - Berry solidification of `bytes` instances [#21558](https://github.com/arendst/Tasmota/issues/21558)
 - Berry automatic rounding of float to int when calling C mapped functions [#21601](https://github.com/arendst/Tasmota/issues/21601)
 - Berry add `math.round` [#21602](https://github.com/arendst/Tasmota/issues/21602)
+- Berry `classof` extended to class methods [#21615](https://github.com/arendst/Tasmota/issues/21615)
 - HASPmota rounds to nearest int values passed as 'real' [#21599](https://github.com/arendst/Tasmota/issues/21599)
 - Matter support for Air Quality sensors [#21559](https://github.com/arendst/Tasmota/issues/21559)
 - Matter support for bridged Air Quality (#21597)[#21597](https://github.com/arendst/Tasmota/issues/21597)
