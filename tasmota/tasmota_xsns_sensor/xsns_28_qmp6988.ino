@@ -125,11 +125,18 @@ qmp6988_data_t *Qmp6988 = nullptr;
 /*********************************************************************************************/
 
 bool QMP6988I2cReadBuffer(uint8_t reg, uint8_t *reg_data, uint16_t len) {
-  return I2cReadBuffer(Qmp6988->address, reg, reg_data, len, Qmp6988->bus);
+  bool ret = !I2cReadBuffer(Qmp6988->address, reg, reg_data, len, Qmp6988->bus);
+
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("QMP: Rd %02X '%*_H', Rslt %d"), reg, len, reg_data, ret);
+
+  return ret;
 }
 
-uint8_t QMP6988I2cWrite(uint8_t reg, uint32_t val) {
-  uint8_t ret = I2cWrite8(Qmp6988->address, reg, val, Qmp6988->bus);
+bool QMP6988I2cWrite(uint8_t reg, uint32_t val) {
+  bool ret = I2cWrite8(Qmp6988->address, reg, val, Qmp6988->bus);
+
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("QMP: Wr %02X '%02X', Rslt %d"), reg, val, ret);
+
   delay(20);
   return ret;
 }
@@ -272,7 +279,7 @@ int QMP6988GetPressure02e(qmp6988_ik_data_t* ik, int dp, int16_t tx) {
 void QMP6988Reset(void) {
   uint8_t ret = QMP6988I2cWrite(QMP6988_RESET_REG, 0xe6);
   if (0 == ret) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("QMP: Reset fail"));
+    QMP6988_LOG("reset fail!!! \r\n");
   }
   QMP6988I2cWrite(QMP6988_RESET_REG, 0x00);
 }
@@ -322,7 +329,7 @@ bool QMP6988ValidChip(void) {
   uint8_t data;
   QMP6988I2cReadBuffer(QMP6988_CHIP_ID_REG, &data, 1);
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("QMP: Chip Id 0x%02X"), data);
+  QMP6988_LOG("chip id=0x%x \r\n", data);
 
   return (QMP6988_CHIP_ID == data);
 }
@@ -345,7 +352,7 @@ void QMP6988CalcPressureAndTemperature(void) {
   int P_int = QMP6988GetPressure02e(&(Qmp6988->ik), P_raw, T_int);
 
   Qmp6988->temperature = (float)T_int / 256.0f;
-  Qmp6988->pressure    = (float)P_int / 16.0f;
+  Qmp6988->pressure    = (float)P_int / 1600.0f;
 }
 
 void Qmp6988Detect(void) {
