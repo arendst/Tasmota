@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - SerialBridge command ``SSerialSend9`` replaced by ``SSerialMode``
+- NeoPool using temperature as only frequently changing value for NPTeleperiod
 
 ### Fixed
 

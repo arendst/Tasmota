@@ -632,15 +632,15 @@ const uint16_t NeoPoolRegCheck[] PROGMEM = {
   // MBF_CELL_RUNTIME_POL_CHANGES_HIGH,
 
   // measured values delayed (set bit 15 to indicate often value changes)
-  MBF_ION_CURRENT          | 0x8000,
-  MBF_MEASURE_CL           | 0x8000,
-  MBF_MEASURE_CONDUCTIVITY | 0x8000,
-  MBF_MEASURE_PH           | 0x8000,
-  MBF_MEASURE_RX           | 0x8000,
   MBF_MEASURE_TEMPERATURE  | 0x8000,
-  MBF_HIDRO_CURRENT        | 0x8000,
 
   // undelayed measured values
+  MBF_MEASURE_CL,
+  MBF_MEASURE_CONDUCTIVITY,
+  MBF_MEASURE_PH,
+  MBF_MEASURE_RX,
+  MBF_ION_CURRENT,
+  MBF_HIDRO_CURRENT,
   MBF_HIDRO_STATUS,
   MBF_PH_STATUS,
   MBF_RELAY_STATE,
