@@ -143,6 +143,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 MI32 refactoring, bugfixes, generic device scanning [#21603](https://github.com/arendst/Tasmota/issues/21603)
 - Matter refactoring of bridged devices [#21575](https://github.com/arendst/Tasmota/issues/21575)
 - Matter filter suffix automatically added for sensors [#21589](https://github.com/arendst/Tasmota/issues/21589)
+- Matter support for Rain sensor [#21633](https://github.com/arendst/Tasmota/issues/21633)
 
 ### Fixed
 - Berry `input()` returns empty string and does not crash [#21565](https://github.com/arendst/Tasmota/issues/21565)

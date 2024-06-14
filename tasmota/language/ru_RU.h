@@ -1007,6 +1007,7 @@
 #define D_UNIT_LITERS "л"
 #define D_UNIT_LITERS_PER_MIN "л/мин"
 #define D_UNIT_LUX "лк"
+#define D_UNIT_METER "m"
 #define D_UNIT_MICROGRAM_PER_CUBIC_METER "мкг/м³"
 #define D_UNIT_MICROMETER "мкм"
 #define D_UNIT_MICROSECOND "мкс"

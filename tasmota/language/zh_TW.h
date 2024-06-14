@@ -1006,6 +1006,7 @@
 #define D_UNIT_LITERS "L"
 #define D_UNIT_LITERS_PER_MIN "L/m"
 #define D_UNIT_LUX "lux"
+#define D_UNIT_METER "m"
 #define D_UNIT_MICROGRAM_PER_CUBIC_METER "微克/立方公尺"
 #define D_UNIT_MICROMETER "微米"
 #define D_UNIT_MICROSECOND "微秒"
