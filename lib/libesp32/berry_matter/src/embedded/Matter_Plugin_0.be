@@ -116,7 +116,7 @@ class Matter_Plugin
   def init(device, endpoint, config)
     self.device = device
     self.endpoint = endpoint
-    self.clusters = self.consolidate_clusters()
+    self.clusters = self.get_clusters()
     self.parse_configuration(config)
     self.node_label = config.find("name", "")
   end
@@ -179,11 +179,11 @@ class Matter_Plugin
   end
 
   #############################################################
-  # consolidate_clusters
+  # get_clusters
   #
   # Build a consolidated map of all the `CLUSTERS` static vars
   # from the inheritance hierarchy
-  def consolidate_clusters()
+  def get_clusters()
     return self.CLUSTERS
     # def real_super(o) return super(o) end   # enclose `super()` in a static function to disable special behavior for super in instances
     # var ret = {}
@@ -255,12 +255,6 @@ class Matter_Plugin
       end
     end
     return false
-  end
-
-  #############################################################
-  # Does it handle this endpoint and this cluster
-  def has(cluster, endpoint)
-    return self.clusters.contains(cluster) && self.endpoints.find(endpoint) != nil
   end
 
   def set_name(n)

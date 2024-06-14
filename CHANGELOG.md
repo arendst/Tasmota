@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Support for Sonoff WTS01 temperature sensor using SerialBridge in ``SSerialMode 3``
 - Berry `classof` extended to class methods (#21615)
 - Extend command ``SetOption147 1`` to disable publish of IRReceived MQTT messages (#21574)
+- Matter support for Rain sensor
 
 ### Breaking Changed
 
