@@ -1137,7 +1137,7 @@ void SettingsDefaultSet2(void) {
   flag5.mqtt_status_retain |= MQTT_STATUS_RETAIN;
   flag5.mqtt_switches |= MQTT_SWITCHES;
   flag5.mqtt_persistent |= ~MQTT_CLEAN_SESSION;
-  flag6.mqtt_disable_sserialrec |= MQTT_DISABLE_SSERIALRECEIVED;
+  flag6.mqtt_disable_publish |= MQTT_DISABLE_SSERIALRECEIVED;
   flag6.mqtt_disable_modbus |= MQTT_DISABLE_MODBUSRECEIVED;
 //  flag.mqtt_serial |= 0;
   flag.device_index_enable |= MQTT_POWER_FORMAT;

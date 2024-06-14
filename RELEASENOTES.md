@@ -123,6 +123,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Added
 - Support for QMP6988 temperature and pressure sensor
 - Support for Sonoff WTS01 temperature sensor using SerialBridge in ``SSerialMode 3``
+- Extend command ``SetOption147 1`` to disable publish of IRReceived MQTT messages [#21574](https://github.com/arendst/Tasmota/issues/21574)
 - Berry solidification of `bytes` instances [#21558](https://github.com/arendst/Tasmota/issues/21558)
 - Berry automatic rounding of float to int when calling C mapped functions [#21601](https://github.com/arendst/Tasmota/issues/21601)
 - Berry add `math.round` [#21602](https://github.com/arendst/Tasmota/issues/21602)

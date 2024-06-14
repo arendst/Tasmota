@@ -205,8 +205,7 @@ void SerialBridgeInput(void) {
           ResponseAppend_P(PSTR("\""));
         }
         ResponseJsonEnd();
-
-        if (Settings->flag6.mqtt_disable_sserialrec ) {  // SetOption147  If it is activated, Tasmota will not publish SSerialReceived MQTT messages, but it will proccess event trigger rules
+        if (Settings->flag6.mqtt_disable_publish ) {  // SetOption147 - If it is activated, Tasmota will not publish SSerialReceived MQTT messages, but it will proccess event trigger rules
           XdrvRulesProcess(0);
         } else {
           MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
