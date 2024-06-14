@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Sensor_Contact.be - implements the behavior for a Contact Sensor
+# Matter_Plugin_3_Sensor_Contact.be - implements the behavior for a Contact Sensor
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -23,57 +23,29 @@ import matter
 
 #@ solidify:Matter_Plugin_Sensor_Contact,weak
 
-class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
+class Matter_Plugin_Sensor_Contact : Matter_Plugin_Sensor_Boolean
   static var TYPE = "contact"                       # name of the plug-in in json
   static var DISPLAY_NAME = "Contact"                       # display name of the plug-in
-  static var ARG  = "switch"                        # additional argument name (or empty if none)
-  static var ARG_HINT = "Switch<x> number"
-  static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
-  static var UPDATE_TIME = 750                      # update every 750ms
+  # static var ARG  = "switch"                        # additional argument name (or empty if none)
+  # static var ARG_HINT = "Switch<x> number"
+  # static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
+  # static var UPDATE_TIME = 750                      # update every 750ms
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Contact")
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     0x0045: [0],                                    # Boolean State p.70 - no writable
   })
   static var TYPES = { 0x0015: 1 }                  # Contact Sensor, rev 1
 
-  var tasmota_switch_index                          # Switch number in Tasmota (one based)
-  var shadow_contact
+  # var tasmota_switch_index                          # Switch number in Tasmota (one based)
+  # var shadow_bool_value
 
   #############################################################
-  # Constructor
-  def init(device, endpoint, config)
-    super(self).init(device, endpoint, config)
-    self.shadow_contact = false
-  end
-
-  #############################################################
-  # parse_configuration
+  # value_updated
   #
-  # Parse configuration map
-  def parse_configuration(config)
-    self.tasmota_switch_index = int(config.find(self.ARG #-'switch'-#, 1))
-    if self.tasmota_switch_index <= 0    self.tasmota_switch_index = 1    end
-  end
-
-  #############################################################
-  # Update shadow
-  #
-  def update_shadow()
-    super(self).update_shadow()
-    if !self.VIRTUAL
-      var switch_str = "Switch" + str(self.tasmota_switch_index)
-
-      var j = tasmota.cmd("Status 10", true)
-      if j != nil   j = j.find("StatusSNS") end
-      if j != nil && j.contains(switch_str)
-        var state = (j.find(switch_str) == "ON")
-
-        if (self.shadow_contact != state)
-          self.attribute_updated(0x0045, 0x0000)
-        end
-        self.shadow_contact = state
-      end
-    end
+  # This is triggered when a new value is changed, for subscription
+  # This method is meant to be overloaded and maximize shared code
+  def value_updated()
+    self.attribute_updated(0x0045, 0x0000)
   end
 
   #############################################################
@@ -87,7 +59,7 @@ class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
     # ====================================================================================================
     if   cluster == 0x0045              # ========== Boolean State ==========
       if   attribute == 0x0000          #  ---------- StateValue / bool ----------
-        return tlv_solo.set_or_nil(TLV.BOOL, self.shadow_contact)
+        return tlv_solo.set_or_nil(TLV.BOOL, self.shadow_bool_value)
       end
 
     end
@@ -99,7 +71,7 @@ class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
   #
   # Update internal state for virtual devices
   def update_virtual(payload)
-    self.shadow_contact = self._parse_update_virtual(payload, "Contact", self.shadow_contact, bool, 0x0045, 0x0000)
+    self.shadow_bool_value = self._parse_update_virtual(payload, "Contact", self.shadow_bool_value, bool, 0x0045, 0x0000)
     super(self).update_virtual(payload)
   end
 
@@ -107,30 +79,13 @@ class Matter_Plugin_Sensor_Contact : Matter_Plugin_Device
   # For Bridge devices
   #############################################################
   #############################################################
-  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
-  #
-  # This call is synnchronous and blocking.
-  def parse_status(data, index)
-    if index == 10                             # Status 10
-      var state = false
-
-      state = (data.find("Switch" + str(self.tasmota_switch_index)) == "ON")
-
-      if self.shadow_contact != nil && self.shadow_contact != bool(state)
-        self.attribute_updated(0x0045, 0x0000)
-      end
-      self.shadow_contact = state
-    end
-  end
-
-  #############################################################
   # web_values
   #
   # Show values of the remote device as HTML
   def web_values()
     import webserver
     self.web_values_prefix()        # display '| ' and name if present
-    webserver.content_send(format("Contact%i %s", self.tasmota_switch_index, self.web_value_onoff(self.shadow_contact)))
+    webserver.content_send(format("Contact%i %s", self.tasmota_switch_index, self.web_value_onoff(self.shadow_bool_value)))
   end
 
   # Show prefix before web value

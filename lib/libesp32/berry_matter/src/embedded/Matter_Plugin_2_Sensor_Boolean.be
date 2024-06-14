@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Sensor_OnOff.be - implements the behavior for a Occupany Switch
+# Matter_Plugin_Sensor_Boolean.be - implements the behavior for an abstract boolean sensor - to be inherited
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -17,31 +17,36 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import matter
+
 # Matter plug-in for core behavior
 
-#@ solidify:Matter_Plugin_Sensor_OnOff,weak
+#@ solidify:Matter_Plugin_Sensor_Boolean,weak
 
-class Matter_Plugin_Sensor_OnOff : Matter_Plugin_Device
-  static var TYPE = "onoff"                         # name of the plug-in in json
-  static var DISPLAY_NAME = "OnOff Sensor"                  # display name of the plug-in
+class Matter_Plugin_Sensor_Boolean : Matter_Plugin_Device
+  # static var TYPE = ""                              # name of the plug-in in json
+  # static var DISPLAY_NAME = ""                      # display name of the plug-in
   static var ARG  = "switch"                        # additional argument name (or empty if none)
   static var ARG_HINT = "Switch<x> number"
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var UPDATE_TIME = 750                      # update every 750ms
-  static var CLUSTERS  = matter.consolidate_clusters(_class, {
-    0x0006: [0],                                    # On/Off 1.5 p.48
-  })
-  static var TYPES = { 0x0850: 2 }                  # OnOff Sensor, rev 2
 
   var tasmota_switch_index                          # Switch number in Tasmota (one based)
-  var shadow_onoff
+  var shadow_bool_value
+
+  #############################################################
+  # Constructor
+  def init(device, endpoint, config)
+    super(self).init(device, endpoint, config)
+    self.shadow_bool_value = false
+  end
 
   #############################################################
   # parse_configuration
   #
   # Parse configuration map
   def parse_configuration(config)
-    self.tasmota_switch_index = int(config.find(self.ARG #-'relay'-#, 1))
+    self.tasmota_switch_index = int(config.find(self.ARG #-'switch'-#, 1))
     if self.tasmota_switch_index <= 0    self.tasmota_switch_index = 1    end
   end
 
@@ -58,43 +63,42 @@ class Matter_Plugin_Sensor_OnOff : Matter_Plugin_Device
       if j != nil && j.contains(switch_str)
         var state = (j.find(switch_str) == "ON")
 
-        if (self.shadow_onoff != state)
-          self.attribute_updated(0x0006, 0x0000)
+        if (self.shadow_bool_value != state)
+          self.value_updated()
         end
-        self.shadow_onoff = state
+        self.shadow_bool_value = state
       end
     end
   end
 
   #############################################################
-  # read an attribute
+  # value_updated
   #
-  def read_attribute(session, ctx, tlv_solo)
-    var TLV = matter.TLV
-    var cluster = ctx.cluster
-    var attribute = ctx.attribute
-
-    # ====================================================================================================
-    if   cluster == 0x0006              # ========== On/Off 1.5 p.48 ==========
-      self.update_shadow_lazy()
-      if   attribute == 0x0000          #  ---------- OnOff / bool ----------
-        return tlv_solo.set(TLV.BOOL, self.shadow_onoff)
-      end
-
-    end
-    return super(self).read_attribute(session, ctx, tlv_solo)
+  # This is triggered when a new value is changed, for subscription
+  # This method is meant to be overloaded and maximize shared code
+  def value_updated()
   end
 
   #############################################################
-  # append_state_json
+  # For Bridge devices
+  #############################################################
+  #############################################################
+  # Stub for updating shadow values (local copies of what we published to the Matter gateway)
   #
-  # Output the current state in JSON
-  # New values need to be appended with `,"key":value` (including prefix comma)
-  #
-  # Override the default behavior to use the key `OnOff` instead of `Power`
-  def append_state_json()
-    return f',"OnOff":{int(self.shadow_onoff)}'
-  end
+  # This call is synnchronous and blocking.
+  def parse_status(data, index)
+    if index == 10                             # Status 10
+      var state = false
 
+      state = (data.find("Switch" + str(self.tasmota_switch_index)) == "ON")
+
+      if self.shadow_bool_value != nil && self.shadow_bool_value != bool(state)
+        self.value_updated()
+      end
+      self.shadow_bool_value = state
+    end
+  end
+  #############################################################
+  #############################################################
 end
-matter.Plugin_Sensor_OnOff = Matter_Plugin_Sensor_OnOff
+matter.Plugin_Sensor_Boolean = Matter_Plugin_Sensor_Boolean

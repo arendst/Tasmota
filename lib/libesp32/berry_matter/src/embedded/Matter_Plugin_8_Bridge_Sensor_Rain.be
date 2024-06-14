@@ -1,6 +1,5 @@
-
 #
-# Matter_Plugin_9_Virt_Sensor_Waterleak.be - implements the behavior for a Virtual Waterleak Sensor
+# Matter_Plugin_Bridge_8_Sensor_Rain.be - implements Rain Sensor via HTTP to Tasmota
 #
 # Copyright (C) 2024  Stephan Hadinger & Theo Arends
 #
@@ -22,13 +21,12 @@ import matter
 
 # Matter plug-in for core behavior
 
-#@ solidify:Matter_Plugin_Virt_Sensor_Waterleak,weak
+#@ solidify:Matter_Plugin_Bridge_Sensor_Rain,weak
 
-class Matter_Plugin_Virt_Sensor_Waterleak : Matter_Plugin_Virt_Sensor_Waterleak
-  static var TYPE = "v_waterleak"                       # name of the plug-in in json
-  static var DISPLAY_NAME = "v.Waterleak"                     # display name of the plug-in
-  static var ARG  = ""                              # no arg for virtual device
-  static var ARG_HINT = "_Not used_"          # Hint for entering the Argument (inside 'placeholder')
-  static var VIRTUAL = true                         # virtual device
+class Matter_Plugin_Bridge_Sensor_Rain : Matter_Plugin_Sensor_Rain
+  static var BRIDGE = true
+  static var TYPE = "http_rain"                  # name of the plug-in in json
+  static var UPDATE_TIME = 5000                     # update every 5s
+  static var UPDATE_CMD = "Status 10"               # command to send for updates
 end
-matter.Plugin_Virt_Sensor_Waterleak  = Matter_Plugin_Virt_Sensor_Waterleak 
+matter.Plugin_Bridge_Sensor_Rain = Matter_Plugin_Bridge_Sensor_Rain
