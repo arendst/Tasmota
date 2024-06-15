@@ -156,6 +156,7 @@ class Matter_Plugin_Fan : Matter_Plugin_Device
       if   attribute == 0x0000          #  ---------- FanMode / enum8 ----------
         if type(write_data) == 'int'
           self.set_fan_mode(write_data)
+          self.publish_command('FanMode', self.shadow_fan_mode, 'FanSpeed', self.shadow_fan_speed_pct)
           return true
         else
           ctx.status = matter.CONSTRAINT_ERROR
@@ -164,6 +165,7 @@ class Matter_Plugin_Fan : Matter_Plugin_Device
       elif attribute == 0x0002          #  ---------- PercentSetting / enum8 ----------
         if type(write_data) == 'int'
           self.set_fan_speed_pct(write_data)
+          self.publish_command('FanMode', self.shadow_fan_mode, 'FanSpeed', self.shadow_fan_speed_pct)
           return true
         else
           ctx.status = matter.CONSTRAINT_ERROR
