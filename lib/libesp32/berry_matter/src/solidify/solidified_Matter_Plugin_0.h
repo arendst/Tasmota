@@ -1359,10 +1359,11 @@ be_local_class(Matter_Plugin,
     be_nested_map(51,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(FEATURE_MAPS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
-        be_const_map( *     be_nested_map(2,
+        be_const_map( *     be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(258, -1), be_const_int(5) },
-        { be_const_key_int(49, -1), be_const_int(4) },
+        { be_const_key_int(49, 2), be_const_int(4) },
+        { be_const_key_int(514, -1), be_const_int(2) },
     }))    ) } )) },
         { be_const_key_weak(append_state_json, -1), be_const_closure(class_Matter_Plugin_append_state_json_closure) },
         { be_const_key_weak(parse_configuration, -1), be_const_closure(class_Matter_Plugin_parse_configuration_closure) },

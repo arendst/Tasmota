@@ -1,5 +1,5 @@
 #
-# Matter_Plugin.be - generic superclass for all Matter plugins, used to define specific behaviors (light, switch, media...)
+# Matter_Plugin_0.be - generic superclass for all Matter plugins, used to define specific behaviors (light, switch, media...)
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -48,6 +48,7 @@ class Matter_Plugin
   static var FEATURE_MAPS = {               # feature map per cluster
     0x0031: 0x04,                           # Put Eth for now which should work for any on-network
     0x0102: 1 + 4,                          # Lift + PA_LF
+    0x0202: 2,                              # Fan: Auto
   }
   # `CLUSTER_REVISIONS` contains revision numbers for each cluster, or `1` if not present
   static var CLUSTER_REVISIONS = {
