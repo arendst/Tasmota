@@ -1,7 +1,7 @@
 #
-# Matter_Plugin_Bridge_Sensor_Rain.be - implements Rain Sensor via HTTP to Tasmota
+# Matter_Plugin_Virt_Fan.be - implements the behavior for a Virtual Fan
 #
-# Copyright (C) 2024  Stephan Hadinger & Theo Arends
+# Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,12 +21,13 @@ import matter
 
 # Matter plug-in for core behavior
 
-#@ solidify:Matter_Plugin_Bridge_Sensor_Rain,weak
+#@ solidify:Matter_Plugin_Virt_Fan,weak
 
-class Matter_Plugin_Bridge_Sensor_Rain : Matter_Plugin_Sensor_Rain
-  static var BRIDGE = true
-  static var TYPE = "http_rain"                  # name of the plug-in in json
-  static var UPDATE_TIME = 5000                     # update every 5s
-  static var UPDATE_CMD = "Status 10"               # command to send for updates
+class Matter_Plugin_Virt_Fan : Matter_Plugin_Fan
+  static var TYPE = "v_fan"                     # name of the plug-in in json
+  static var DISPLAY_NAME = "v.Fan"             # display name of the plug-in
+  static var ARG  = ""                          # no arg for virtual device
+  static var ARG_HINT = "_Not used_"            # Hint for entering the Argument (inside 'placeholder')
+  static var VIRTUAL = true                     # virtual device
 end
-matter.Plugin_Bridge_Sensor_Rain = Matter_Plugin_Bridge_Sensor_Rain
+matter.Plugin_Virt_Fan = Matter_Plugin_Virt_Fan

@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Device.be - implements the behavior for a standard Device
+# Matter_Plugin_1_Device.be - implements the behavior for a standard Device
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

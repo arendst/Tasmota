@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_3_Sensor_Waterleak.be - implements the behavior for a Water leak Sensor
+# Matter_Plugin_2_Sensor_Waterleak.be - implements the behavior for a Water leak Sensor
 #
 # Copyright (C) 2024  Stephan Hadinger & Theo Arends
 #

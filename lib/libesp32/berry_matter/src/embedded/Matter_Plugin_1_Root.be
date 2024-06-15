@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Root.be - implements the core features that a Matter device must implemment
+# Matter_Plugin_1_Root.be - implements the core features that a Matter device must implemment
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
