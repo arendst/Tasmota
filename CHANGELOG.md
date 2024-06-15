@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Matter interverted attributes 0xFFF9 and 0xFFFB (#21636)
+- Matter CASE Sigma1 resumption mode for faster reconnection
 
 ### Removed
 
