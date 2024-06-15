@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 19.05.2024
+ * Updated until v9.4.0.1 - Last update 15.06.2024
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -76,7 +76,6 @@
 #define D_COMMAND              "Comando"
 #define D_CONNECTED            "Connesso"
 #define D_CORS_DOMAIN          "Dominio CORS"
-
 #define D_COLOR                "Colore"
 #define D_COUNT                "Conteggio"
 #define D_COUNTER              "Contatore"
@@ -794,8 +793,6 @@
 #define D_GPIO_ASR650X_TX               "ASR650X - Tx"
 #define D_GPIO_ASR650X_RX               "ASR650X - Rx"
 #define D_GPIO_LORA_CS                  "LoRa - CS"
-#define D_GPIO_ASR650X_TX               "ASR650x - TX"
-#define D_GPIO_ASR650X_RX               "ASR650x - RX"
 #define D_GPIO_LORA_RST                 "LoRa - Rst"
 #define D_GPIO_LORA_BUSY                "LoRa - Busy"
 #define D_GPIO_LORA_DI                  "LoRa - DIO"    // Suffix "0","1","2"
@@ -810,6 +807,8 @@
 #define D_SENSOR_CSE7761_RX             "CSE7761 - RX"
 #define D_SENSOR_CSE7766_TX             "CSE7766 - TX"
 #define D_SENSOR_CSE7766_RX             "CSE7766 - RX"
+#define D_SENSOR_BL0939_RX              "BL0939 - RX"
+#define D_SENSOR_BL0942_RX              "BL0942 - RX"
 #define D_SENSOR_HM330X_SET             "HM330X - SET"
 #define D_SENSOR_PN532_TX               "PN532 - TX"
 #define D_SENSOR_PN532_RX               "PN532 - RX"
@@ -877,8 +876,6 @@
 #define D_SENSOR_LE01MR_RX              "LE-01MR - RX"
 #define D_SENSOR_LE01MR_TX              "LE-01MR - TX"
 #define D_SENSOR_BL0940_RX              "BL0940 - RX"
-#define D_SENSOR_BL0939_RX              "BL0939 - RX"
-#define D_SENSOR_BL0942_RX              "BL0942 - RX"
 #define D_SENSOR_CC1101_GDO0            "CC1101 - GDO0"
 #define D_SENSOR_CC1101_GDO2            "CC1101 - GDO2"
 #define D_SENSOR_HRXL_RX                "HRXL - RX"
