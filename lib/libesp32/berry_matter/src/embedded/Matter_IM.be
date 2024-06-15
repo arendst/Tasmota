@@ -833,7 +833,7 @@ class Matter_IM
       log(f"MTR: >Subscribe ({msg.session.local_session_id:6i}) event_requests_size={size(query.event_requests)}", 3)
     end
 
-    var ret = self._inner_process_read_request(msg.session, query, msg, true #-no_log-#)
+    var ret = self._inner_process_read_request(msg.session, query, msg, !self.device.debug #-log only if debug enabled-#)
     # ret is of type `Matter_ReportDataMessage`
     ret.subscription_id = sub.subscription_id     # enrich with subscription id TODO
     self.send_subscribe_response(msg, ret, sub)

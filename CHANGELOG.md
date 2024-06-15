@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Berry `classof` extended to class methods (#21615)
 - Extend command ``SetOption147 1`` to disable publish of IRReceived MQTT messages (#21574)
 - Matter support for Rain sensor (#21633)
+- Matter add internal debug option
 
 ### Breaking Changed
 

@@ -66,6 +66,7 @@ class Matter_Device
   var ipv4only                        # advertize only IPv4 addresses (no IPv6)
   var disable_bridge_mode             # default is bridge mode, this flag disables this mode for some non-compliant controllers
   var next_ep                         # next endpoint to be allocated for bridge, start at 1
+  var debug                           # debug mode, output all values when responding to read request with wildcard
   # context for PBKDF
   var root_iterations                 # PBKDF number of iterations
   # PBKDF information used only during PASE (freed afterwards)
@@ -649,11 +650,14 @@ class Matter_Device
     self.update_remotes_info()    # update self.plugins_config_remotes
 
     var j = format('{"distinguish":%i,"passcode":%i,"ipv4only":%s,"disable_bridge_mode":%s,"nextep":%i', self.root_discriminator, self.root_passcode, self.ipv4only ? 'true':'false', self.disable_bridge_mode ? 'true':'false', self.next_ep)
+    if self.debug
+      j += ',"debug":true'
+    end
     if self.plugins_persist
-      j += ',"config":'
+      j += ',\n"config":'
       j += json.dump(self.plugins_config)
       if size(self.plugins_config_remotes) > 0
-        j += ',"remotes":'
+        j += ',\n"remotes":'
         j += json.dump(self.plugins_config_remotes)
       end
     end
@@ -717,6 +721,7 @@ class Matter_Device
       self.disable_bridge_mode = bool(j.find("disable_bridge_mode", false))
       self.next_ep = j.find("nextep", self.next_ep)
       self.plugins_config = j.find("config")
+      self.debug = bool(j.find("debug"))    # bool converts nil to false
       if self.plugins_config != nil
         log(f"MTR: Load_config = {self.plugins_config}", 3)
         self.adjust_next_ep()
