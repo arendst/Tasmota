@@ -856,30 +856,22 @@ void UBXLoop(void)
 #endif //USE_FLOG
   const char HTTP_SNS_NTPSERVER[] PROGMEM = "{s} NTP server {m}active{e}";
 
-  const char HTTP_SNS_GPS[] PROGMEM = "{s} GPS latitude {m}%s{e}"
-                                      "{s} GPS longitude {m}%s{e}"
-                                      "{s} GPS altitude {m}%s   m{e}"
-                                      "{s} GPS hor. Accuracy {m}%s   m{e}"
-                                      "{s} GPS vert. Accuracy {m}%s   m{e}"
-                                      "{s} GPS sat-fix status {m}%s{e}"
+  const char HTTP_SNS_GPS[] PROGMEM = "{s}GPS " D_LATITUDE "{m}%s{e}"
+                                      "{s}GPS " D_LONGITUDE "{m}%s{e}"
+                                      "{s}GPS " D_ALTITUDE "{m}%3_f " D_UNIT_METER "{e}"
+                                      "{s}GPS " D_HORIZONTAL_ACCURACY "{m}%3_f " D_UNIT_METER "{e}"
+                                      "{s}GPS " D_VERTICAL_ACCURACY "{m}%3_f " D_UNIT_METER "{e}"
+                                      "{s}GPS " D_SAT_FIX "{m}%s{e}";
 #ifdef USE_GPS_VELOCITY
-                                      "{s} GPS Speed {m}%s{e}"
-                                      "{s} GPS Heading {m}%s{e}"
-                                      "{s} GPS Heading Acc {m}%s{e}"
-                                      "{s} GPS Speed Acc {m}%s{e}"
+  const char HTTP_SNS_GPS2[] PROGMEM = "{s}GPS " D_SPEED "{m}%1_f{e}"
+                                       "{s}GPS " D_HEADING "{m}%1_f{e}"
+                                       "{s}GPS " D_HEADING_ACCURACY "{m}%2_f{e}"
+                                       "{s}GPS " D_SPEED_ACCURACY "{m}%2_f{e}";
 #endif
-                                      ;
 
-  const char kGPSFix0[] PROGMEM = "no fix";
-  const char kGPSFix1[] PROGMEM = "dead reckoning only";
-  const char kGPSFix2[] PROGMEM = "2D-fix";
-  const char kGPSFix3[] PROGMEM = "3D-fix";
-  const char kGPSFix4[] PROGMEM = "GPS + dead reckoning combined";
-  const char kGPSFix5[] PROGMEM = "Time only fix";
-  const char * kGPSFix[] PROGMEM ={kGPSFix0, kGPSFix1, kGPSFix2, kGPSFix3, kGPSFix4, kGPSFix5};
+const char kGPSFix[] PROGMEM = D_SAT_FIX_NO_FIX "|" D_SAT_FIX_DEAD_RECK "|" D_SAT_FIX_2D "|" D_SAT_FIX_3D "|" D_SAT_FIX_GPS_DEAD "|" D_SAT_FIX_TIME;
 
 //  const char UBX_GOOGLE_MAPS[] ="<iframe width='100%%' src='https://maps.google.com/maps?width=&amp;height=&amp;hl=en&amp;q=%s %s+(Tasmota)&amp;ie=UTF8&amp;t=&amp;z=10&amp;iwloc=B&amp;output=embed' frameborder='0' scrolling='no' marginheight='0' marginwidth='0'></iframe>";
-
 
 #endif  // USE_WEBSERVER
 
@@ -888,51 +880,44 @@ void UBXLoop(void)
 void UBXShow(bool json)
 {
   char lat[12];
-  char lon[12];
-  char alt[12];
-  char hAcc[12];
-  char vAcc[12];
-  #ifdef USE_GPS_VELOCITY
-  char spd[12];
-  char hdng[12];
-  char cAcc[12];
-  char sAcc[12];
-  #endif
   dtostrfd((double)UBX.rec_buffer.values.lat/10000000.0f,7,lat);
+  char lon[12];
   dtostrfd((double)UBX.rec_buffer.values.lon/10000000.0f,7,lon);
-  dtostrfd((double)UBX.state.last_alt/1000.0f,3,alt);
-  dtostrfd((double)UBX.state.last_vAcc/1000.0f,3,hAcc);
-  dtostrfd((double)UBX.state.last_hAcc/1000.0f,3,vAcc);
-  #ifdef USE_GPS_VELOCITY
-  dtostrfd((double)UBX.Message.navVel.gSpeed/27.778f,1,spd);
-  dtostrfd((double)UBX.Message.navVel.heading/100000.0f,1,hdng);
-  dtostrfd((double)UBX.Message.navVel.cAcc/100000.0f,2,cAcc);
-  dtostrfd((double)UBX.Message.navVel.sAcc/100000.0f,2,sAcc);
-  #endif
+  float alt = (float)UBX.state.last_alt / 1000.0f;
+  float hAcc = (float)UBX.state.last_vAcc / 1000.0f;
+  float vAcc = (float)UBX.state.last_hAcc / 1000.0f;
+  char fix[32];
+  GetTextIndexed(fix, sizeof(fix), UBX.state.gpsFix, kGPSFix);
+#ifdef USE_GPS_VELOCITY
+  float spd = (float)UBX.Message.navVel.gSpeed / 27.778f;
+  float hdng = (float)UBX.Message.navVel.heading / 100000.0f;
+  float cAcc = (float)UBX.Message.navVel.cAcc / 100000.0f;
+  float sAcc = (float)UBX.Message.navVel.sAcc / 100000.0f;
+#endif
 
   if (json) {
     ResponseAppend_P(PSTR(",\"GPS\":{"));
     if (UBX.mode.send_UI_only) {
       uint32_t i = UBX.state.log_interval / 10;
-      ResponseAppend_P(PSTR("\"fil\":%u,\"int\":%u}"), UBX.mode.filter_noise, i);
+      ResponseAppend_P(PSTR("\"Fil\":%u,\"Int\":%u}"), UBX.mode.filter_noise, i);
     } else {
-      ResponseAppend_P(PSTR("\"lat\":%s,\"lon\":%s,\"alt\":%s,\"hAcc\":%s,\"vAcc\":%s,\"fix\":\"%s\""), lat, lon, alt, hAcc, vAcc, kGPSFix[UBX.state.gpsFix]);
+      ResponseAppend_P(PSTR("\"Lat\":%s,\"Lon\":%s,\"Alt\":%3_f,\"hAcc\":%3_f,\"vAcc\":%3_f,\"Fix\":\"%s\""),
+        lat, lon, &alt, &hAcc, &vAcc, fix);
 #ifdef USE_GPS_VELOCITY
-      ResponseAppend_P(PSTR(,\"spd\":%s,\"hdng\":%s,\"cAcc\":%s,\"sAcc\":%s"), spd, hdng, cAcc, sAcc);
+      ResponseAppend_P(PSTR(",\"Spd\":%1_f,\"Hdng\":%1_f,\"cAcc\":%2_f,\"sAcc\":%2_f"), 
+        &spd, &hdng, &cAcc, &sAcc);
 #endif
       ResponseAppend_P(PSTR("}"));
     }
 #ifdef USE_FLOG
-    ResponseAppend_P(PSTR(",\"FLOG\":{\"rec\":%u,\"mode\":%u,\"sec\":%u}"), Flog->recording, Flog->mode, Flog->sectors_left);
+    ResponseAppend_P(PSTR(",\"FLOG\":{\"Rec\":%u,\"Mode\":%u,\"Sec\":%u}"), Flog->recording, Flog->mode, Flog->sectors_left);
 #endif //USE_FLOG
     UBX.mode.send_UI_only = false;
 #ifdef USE_WEBSERVER
   } else {
+      WSContentSend_PD(HTTP_SNS_GPS, lat, lon, &alt, &hAcc, &vAcc, fix);
 #ifdef USE_GPS_VELOCITY
-      WSContentSend_PD(HTTP_SNS_GPS, lat, lon, alt, hAcc, vAcc, kGPSFix[UBX.state.gpsFix], spd, hdng, cAcc, sAcc);
-#endif
-#ifndef USE_GPS_VELOCITY
-      WSContentSend_PD(HTTP_SNS_GPS, lat, lon, alt, hAcc, vAcc, kGPSFix[UBX.state.gpsFix]);
+      WSContentSend_PD(HTTP_SNS_GPS2, &spd, &hdng, &cAcc, &sAcc);
 #endif
       //WSContentSend_P(UBX_GOOGLE_MAPS, lat, lon);
 #ifdef DEBUG_TASMOTA_SENSOR
