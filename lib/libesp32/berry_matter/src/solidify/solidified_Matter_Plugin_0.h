@@ -1278,7 +1278,7 @@ be_local_closure(class_Matter_Plugin_read_attribute,   /* name */
       0x7C1C0200,  //  005C  CALL	R7	1
       0x80040E00,  //  005D  RET	1	R7
       0x7002003F,  //  005E  JMP		#009F
-      0x541EFFF8,  //  005F  LDINT	R7	65529
+      0x541EFFFA,  //  005F  LDINT	R7	65531
       0x1C1C0C07,  //  0060  EQ	R7	R6	R7
       0x781E0013,  //  0061  JMPF	R7	#0076
       0x8C1C0905,  //  0062  GETMET	R7	R4	K5
@@ -1308,7 +1308,7 @@ be_local_closure(class_Matter_Plugin_read_attribute,   /* name */
       0x7C1C0200,  //  007A  CALL	R7	1
       0x80040E00,  //  007B  RET	1	R7
       0x70020021,  //  007C  JMP		#009F
-      0x541EFFFA,  //  007D  LDINT	R7	65531
+      0x541EFFF8,  //  007D  LDINT	R7	65529
       0x1C1C0C07,  //  007E  EQ	R7	R6	R7
       0x781E0003,  //  007F  JMPF	R7	#0084
       0x8C1C0905,  //  0080  GETMET	R7	R4	K5

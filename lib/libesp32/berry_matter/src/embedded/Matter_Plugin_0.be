@@ -315,7 +315,7 @@ class Matter_Plugin
     if   attribute == 0xFFF8            # GeneratedCommandList
       var gcl = TLV.Matter_TLV_array()
       return gcl                        # return empty list
-    elif attribute == 0xFFF9            # AcceptedCommandList
+    elif attribute == 0xFFFB            # AttributeList
       var acli = TLV.Matter_TLV_array()
       var attr_list = self.get_attribute_list(cluster)
       var idx = 0
@@ -327,7 +327,7 @@ class Matter_Plugin
     elif attribute == 0xFFFA            # EventList
       var el = TLV.Matter_TLV_array()
       return el                         # return empty list
-    elif attribute == 0xFFFB            # AttributeList
+    elif attribute == 0xFFF9            # AcceptedCommandList
       var al = TLV.Matter_TLV_array()
       return al                         # TODO
     elif attribute == 0xFFFC            # FeatureMap

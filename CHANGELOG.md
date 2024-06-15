@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - NeoPool using temperature as only frequently changing value for NPTeleperiod (#21628)
 
 ### Fixed
+- Matter interverted attributes 0xFFF9 and 0xFFFB
 
 ### Removed
 
