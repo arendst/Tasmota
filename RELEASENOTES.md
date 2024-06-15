@@ -131,6 +131,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - HASPmota rounds to nearest int values passed as 'real' [#21599](https://github.com/arendst/Tasmota/issues/21599)
 - Matter support for Air Quality sensors [#21559](https://github.com/arendst/Tasmota/issues/21559)
 - Matter support for bridged Air Quality [#21597](https://github.com/arendst/Tasmota/issues/21597)
+- Matter add internal debug option [#21634](https://github.com/arendst/Tasmota/issues/21634)
+- Matter add Fan support (virtual only) [#21637](https://github.com/arendst/Tasmota/issues/21637)
 
 ### Changed
 - Optional MQTT_TELE_RETAIN to Energy Margins message replaced by ``SensorRetain``
@@ -147,5 +149,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Fixed
 - Berry `input()` returns empty string and does not crash [#21565](https://github.com/arendst/Tasmota/issues/21565)
+- Matter interverted attributes 0xFFF9 and 0xFFFB [#21636](https://github.com/arendst/Tasmota/issues/21636)
 
 ### Removed
