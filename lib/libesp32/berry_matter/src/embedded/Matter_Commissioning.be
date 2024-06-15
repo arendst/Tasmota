@@ -334,9 +334,6 @@ class Matter_Commisioning_Context
 
     # find session
     var is_resumption = (sigma1.resumptionID != nil && sigma1.initiatorResumeMIC != nil)
-    # log(format("MTR: is_resumption=%i", is_resumption ? 1 : 0), 4)
-    # TODO disable resumption until fixed
-    is_resumption = false
 
     # Check that it's a resumption
     var session_resumption
@@ -344,6 +341,7 @@ class Matter_Commisioning_Context
       session_resumption = self.device.sessions.find_session_by_resumption_id(sigma1.resumptionID)
       # log(format("MTR: session_resumption found session=%s session_resumption=%s", matter.inspect(session), matter.inspect(session_resumption)), 4)
       if session_resumption == nil || session_resumption._fabric == nil
+        log(f"MTR:                     Sigma1 Resumption FAILED, session not found resumption_id={sigma1.resumptionID}", 3)
         is_resumption = false
       end
     end
@@ -363,6 +361,8 @@ class Matter_Commisioning_Context
       var decrypted_tag = ec.tag()
 
       # log("****************************************", 4)
+      # log("MTR: * initiatorRandom   = " + sigma1.initiatorRandom.tohex(), 4)
+      # log("MTR: * ResumptionID      = " + session_resumption.resumption_id.tohex(), 4)
       # log("MTR: * s1rk              = " + s1rk.tohex(), 4)
       # log("MTR: * tag               = " + tag.tohex(), 4)
       # log("MTR: * Resume1MICPayload = " + Resume1MICPayload.tohex(), 4)
@@ -392,8 +392,8 @@ class Matter_Commisioning_Context
 
         var sigma2resume = matter.Sigma2Resume()
         sigma2resume.resumptionID = session.resumption_id
-        sigma2resume.responderSessionID = session.__future_local_session_id
         sigma2resume.sigma2ResumeMIC = Resume2MIC
+        sigma2resume.responderSessionID = session.__future_local_session_id
 
         # log("****************************************", 4)
         # log("MTR: * s2rk              = " + s2rk.tohex(), 4)
@@ -403,8 +403,10 @@ class Matter_Commisioning_Context
         # log("MTR: * sigma2ResumeMIC   = " + Resume2MIC.tohex(), 4)
         # log("****************************************", 4)
         # # compute session key, p.178
+        var salt_sessions = sigma1.initiatorRandom + session_resumption.resumption_id
+        # log("MTR: * salt_session      = " + salt_sessions.tohex(), 4)
         var session_keys = crypto.HKDF_SHA256().derive(session.shared_secret #- input key -#,
-                                                      sigma1.initiatorRandom + session.resumption_id #- salt -#,
+                                                      salt_sessions #- salt -#,
                                                       bytes().fromstring("SessionResumptionKeys") #- info -#,
                                                       48)
         var i2r = session_keys[0..15]
@@ -431,6 +433,7 @@ class Matter_Commisioning_Context
 
         session.close()
         session.set_keys(i2r, r2i, ac, created)
+        session.peer_node_id = session_resumption.peer_node_id    # copy peer_node_id from session
         
         # CASE Session completed, persist it
         session._breadcrumb = 0       # clear breadcrumb
@@ -440,8 +443,10 @@ class Matter_Commisioning_Context
         session.persist_to_fabric()
         session.save()
 
+        log("MTR:                     Sigma1 Resumption SUCCEEDED", 3)
         return true
       else
+        log("MTR:                     Sigma1 Resumption FAILED, switching to CASE", 3)
         is_resumption = false
         # fall through normal sigma1 (non-resumption)
       end
