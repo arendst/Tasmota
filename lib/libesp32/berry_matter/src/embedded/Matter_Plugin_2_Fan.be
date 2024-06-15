@@ -34,7 +34,7 @@ class Matter_Plugin_Fan : Matter_Plugin_Device
     # 0x0005: inherited                             # Scenes 1.4 p.30 - no writable
     0x0202: [0,1,2,3],                              # Fan
   })
-  static var UPDATE_COMMANDS = matter.UC_LIST(_class, "FanMode", "FanSpeed")
+  static var UPDATE_COMMANDS = matter.UC_LIST(_class, "FanMode", "FanSpeed", "FanSpeed255")
   static var TYPES = { 0x002B: 2 }                  # Fan
 
   # Inherited
@@ -156,7 +156,7 @@ class Matter_Plugin_Fan : Matter_Plugin_Device
       if   attribute == 0x0000          #  ---------- FanMode / enum8 ----------
         if type(write_data) == 'int'
           self.set_fan_mode(write_data)
-          self.publish_command('FanMode', self.shadow_fan_mode, 'FanSpeed', self.shadow_fan_speed_pct)
+          self.publish_command('FanMode', self.shadow_fan_mode, 'FanSpeed', self.shadow_fan_speed_pct, 'FanSpeed255', tasmota.scale_uint(self.shadow_fan_speed_pct, 0, 100, 0, 255))
           return true
         else
           ctx.status = matter.CONSTRAINT_ERROR
@@ -165,7 +165,7 @@ class Matter_Plugin_Fan : Matter_Plugin_Device
       elif attribute == 0x0002          #  ---------- PercentSetting / enum8 ----------
         if type(write_data) == 'int'
           self.set_fan_speed_pct(write_data)
-          self.publish_command('FanMode', self.shadow_fan_mode, 'FanSpeed', self.shadow_fan_speed_pct)
+          self.publish_command('FanMode', self.shadow_fan_mode, 'FanSpeed', self.shadow_fan_speed_pct, 'FanSpeed255', tasmota.scale_uint(self.shadow_fan_speed_pct, 0, 100, 0, 255))
           return true
         else
           ctx.status = matter.CONSTRAINT_ERROR
@@ -186,6 +186,10 @@ class Matter_Plugin_Fan : Matter_Plugin_Device
     var val_fan_mode = payload.find("FanMode")
     if val_fan_mode != nil
       self.set_fan_mode(int(val_fan_mode))
+    end
+    var val_fan_speed255 = payload.find("FanSpeed255")
+    if val_fan_speed255 != nil
+      self.set_fan_speed_pct(tasmota.scale_uint(int(val_fan_speed255), 0, 255, 0, 100))
     end
     var val_fan_speed = payload.find("FanSpeed")
     if val_fan_speed != nil
