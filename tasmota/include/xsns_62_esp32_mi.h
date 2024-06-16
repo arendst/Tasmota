@@ -44,8 +44,7 @@ struct frame_crtl_t{
 };
 
 struct mi_payload_t{
-  uint8_t type;
-  uint8_t ten;
+  uint16_t type;
   uint8_t size;
   union {
     struct{ //0d
@@ -61,6 +60,7 @@ struct mi_payload_t{
     uint8_t leak; //14
     uint32_t NMT; //17
     uint8_t door; //19
+    uint16_t objID; //0x0002
     struct{ //01
       uint8_t num;
       uint8_t value;
@@ -274,7 +274,7 @@ struct mi_sensor_t{
       uint32_t leak:1;
       uint32_t payload:1;
     };
-    uint32_t raw;
+    uint32_t raw = 0;
   } feature;
   union {
     struct {
@@ -295,18 +295,18 @@ struct mi_sensor_t{
       uint32_t leak:1;
       uint32_t payload:1;
     };
-    uint32_t raw;
+    uint32_t raw = 0;
   } eventType;
   union{
     struct{
       uint8_t hasWrongKey:1;
       uint8_t isUnbounded:1;
     };
-    uint8_t raw;
+    uint8_t raw = 0;
   } status;
 
-  int RSSI;
-  uint32_t lastTime;
+  int RSSI = 0;
+  uint32_t lastTime = 0;
   uint32_t lux;
   uint8_t lux_history[24];
   float temp; //Flora, MJ_HT_V1, LYWSD0x, CGx
