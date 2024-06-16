@@ -199,7 +199,9 @@ class Matter_Plugin
     var event_name = matter.get_event_name(cluster, event)
     event_name = (event_name != nil) ? "(" + event_name + ") " : ""
     log(f"MTR: +Add_Event ({priority_str}{event_ib.event_number:8s}) [{event_path.endpoint:02X}]{event_path.cluster:04X}/{event_path.event:02X} {event_name}- {event_ib.data}", 2)
-    log(f"MTR: Publishing event {event_ib}", 4)
+    if tasmota.loglevel(4)
+      log(f"MTR: Publishing event {event_ib}", 4)
+    end
 
     self.device.events.queue_event(event_ib)
   end
