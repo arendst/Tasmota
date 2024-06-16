@@ -61,19 +61,35 @@
 #endif
 
 
+#ifndef NEOPOOL_READ_REGISTER
 #define NEOPOOL_READ_REGISTER        0x04   // Function code used to read register
+#endif
+#ifndef NEOPOOL_WRITE_REGISTER
 #define NEOPOOL_WRITE_REGISTER       0x10   // Function code used to write register
+#endif
+#ifndef NEOPOOL_READ_TIMEOUT
 #define NEOPOOL_READ_TIMEOUT           25   // read data timeout in ms
+#endif
+#ifndef NEOPOOL_CACHE_INVALID_TIME
 #define NEOPOOL_CACHE_INVALID_TIME     30   // data cache invalidation time in s
+#endif
 
 
 // Pool LED RGB lights with different programs, the individual programs can be selected
 // by switching them off and on again for a defined time when the LED is switched on.
 // Default timings for LED light program step sequence (NPLight 3)
+#ifndef NEOPOOL_LIGHT_PRG_WAIT
 #define NEOPOOL_LIGHT_PRG_WAIT       30     // delay before start prg light if light was off (in ms)
+#endif
+#ifndef NEOPOOL_LIGHT_PRG_DELAY
 #define NEOPOOL_LIGHT_PRG_DELAY      15     // default next light prg delay (in ms)
+#endif
+#ifndef NEOPOOL_LIGHT_PRG_DELAY_MIN
 #define NEOPOOL_LIGHT_PRG_DELAY_MIN  5      // next light prg delay min (in ms)
+#endif
+#ifndef NEOPOOL_LIGHT_PRG_DELAY_MAX
 #define NEOPOOL_LIGHT_PRG_DELAY_MAX  100    // next light prg delay max (in ms)
+#endif
 
 
 /*********************************************************************************************\
