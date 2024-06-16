@@ -216,6 +216,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_IM_Message.h"
 #include "solidify/solidified_Matter_IM_Subscription.h"
 #include "solidify/solidified_Matter_IM.h"
+#include "solidify/solidified_Matter_EventHandler.h"
 #include "solidify/solidified_Matter_Control_Message.h"
 #include "solidify/solidified_Matter_Plugin_0.h"
 #include "solidify/solidified_Matter_Base38.h"
@@ -259,6 +260,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Plugin_3_Sensor_Rain.h"
 #include "solidify/solidified_Matter_Plugin_3_Sensor_Waterleak.h"
 #include "solidify/solidified_Matter_Plugin_2_Fan.h"
+#include "solidify/solidified_Matter_Plugin_2_Sensor_GenericSwitch.h"
 #include "solidify/solidified_Matter_Plugin_9_Virt_Fan.h"
 #include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Contact.h"
 #include "solidify/solidified_Matter_Plugin_9_Virt_Sensor_Occupancy.h"
@@ -336,6 +338,11 @@ module matter (scope: global, strings: weak) {
   consolidate_clusters, closure(module_matter_consolidate_clusters_closure)
   UC_LIST, closure(module_matter_UC_LIST_closure)
   Profiler, class(be_class_Matter_Profiler)
+
+  // EVents priority levels
+  EVENT_DEBUG, int(0)
+  EVENT_INFO, int(1)
+  EVENT_CRITICAL, int(2)
 
   // Status codes
   SUCCESS, int(0x00)
@@ -428,6 +435,10 @@ module matter (scope: global, strings: weak) {
   // Message Handler
   Frame, class(be_class_Matter_Frame)
   MessageHandler, class(be_class_Matter_MessageHandler)
+
+  // Event Handler
+  EventHandler, class(be_class_Matter_EventHandler)
+  EventQueued, class(be_class_Matter_EventQueued)
 
   // Interation Model
   Path, class(be_class_Matter_Path)

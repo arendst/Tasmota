@@ -445,6 +445,14 @@ class Matter_Frame
   end
 
   #############################################################
+  # compute the node_id for this message, via session and fabric
+  #
+  # returns bytes(8)
+  def get_node_id()
+    return self.session ? self.session.get_node_id() : nil
+  end
+
+  #############################################################
   # Decode a message we are about to send, to ease debug
   def debug(raw)
     return      # disable logging for now
