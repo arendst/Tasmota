@@ -195,10 +195,18 @@ class Matter_Plugin
     event_ib.epoch_timestamp = tasmota.rtc('utc')
     if (event_ib.epoch_timestamp < 1700000000)    event_ib.epoch_timestamp = nil  end    # no valid time
     event_ib.data = data
-    var priority_str = (priority == 2) ? "CRIT  " : (priority == 1) ? "INFO  " : "DEBUG "
-    var event_name = matter.get_event_name(cluster, event)
-    event_name = (event_name != nil) ? "(" + event_name + ") " : ""
-    log(f"MTR: +Add_Event ({priority_str}{event_ib.event_number:8s}) [{event_path.endpoint:02X}]{event_path.cluster:04X}/{event_path.event:02X} {event_name}- {event_ib.data}", 2)
+    if tasmota.loglevel(3)
+      var data_str = str(event_ib.data)
+      if (cluster == 0x0028) && (event == 0x00)
+        # put the software version in a readable format
+        var val = event_ib.data.val
+        data_str = format("%i.%i.%i.%i", (val >> 24) & 0xFF, (val >> 16) & 0xFF, (val >> 8) & 0xFF, val & 0xFF)
+      end
+      var priority_str = (priority == 2) ? "CRIT  " : (priority == 1) ? "INFO  " : "DEBUG "
+      var event_name = matter.get_event_name(cluster, event)
+      event_name = (event_name != nil) ? "(" + event_name + ") " : ""
+      log(f"MTR: +Add_Event ({priority_str}{event_ib.event_number:8s}) [{event_path.endpoint:02X}]{event_path.cluster:04X}/{event_path.event:02X} {event_name}- {data_str}", 2)
+    end
     if tasmota.loglevel(4)
       log(f"MTR: Publishing event {event_ib}", 4)
     end
