@@ -260,6 +260,7 @@ class Matter_Session : Matter_Expirable
   def get_fabric_label()      return self._fabric ? self._fabric.fabric_label : nil     end
   def get_admin_subject()     return self._fabric ? self._fabric.admin_subject : nil    end
   def get_admin_vendor()      return self._fabric ? self._fabric.admin_vendor : nil     end
+  def get_node_id()           return self._fabric ? self._fabric.device_id : nil        end
 
   #############################################################
   # Get operational key pair (private key)

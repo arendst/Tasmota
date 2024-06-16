@@ -69,6 +69,7 @@ class Matter_Plugin
     # 0x0033: 1,                            # Initial Release
     # 0x0034: 1,                            # Initial Release
     0x0038: 2,                              #
+    # 0x003B: 1,                            # Initial Release
     # 0x003C: 1,                            # Initial Release
     # 0x003E: 1,                            # Initial Release
     0x003F: 2,                              # Clarify KeySetWrite validation and behavior on invalid epoch key lengths
@@ -180,7 +181,59 @@ class Matter_Plugin
   end
 
   #############################################################
-  # get_clusters
+  # generate a new event
+  #
+  def publish_event(cluster, event, priority, data)
+    var event_ib = matter.EventDataIB()
+    var event_path = matter.EventPathIB()
+    event_path.endpoint = self.endpoint
+    event_path.cluster = cluster
+    event_path.event = event
+    event_ib.path = event_path
+    event_ib.priority = priority
+    event_ib.event_number = self.device.events.get_next_event_no()
+    event_ib.epoch_timestamp = tasmota.rtc('utc')
+    if (event_ib.epoch_timestamp < 1700000000)    event_ib.epoch_timestamp = nil  end    # no valid time
+    event_ib.data = data
+    var priority_str = (priority == 2) ? "CRIT  " : (priority == 1) ? "INFO  " : "DEBUG "
+    log(f"MTR: +Add_Event ({priority_str}) [{event_path.endpoint:02X}]{event_path.cluster:04X}/{event_path.event:04X} ({event_ib.event_number:5i}) - {event_ib.data}", 2)
+    log(f"MTR: Publishing event {event_ib}", 4)
+
+    self.device.events.queue_event(event_ib)
+  end
+#- testing
+
+var root = matter_device.plugins[0]
+var tlv_solo = matter.TLV.Matter_TLV_item()
+tlv_solo.set(matter.TLV.U4, 42)
+root.publish_event(0x001D, 0, matter.EVENT_CRITICAL, tlv_solo)
+matter_device.events.dump()
+
+-#
+
+# elements are made of `Matter_EventDataIB`
+# var path                        # 
+    # var node                        # u64 as bytes
+    # var endpoint                    # u16
+    # var cluster                     # u32
+    # var event                       # u32
+    # var is_urgent                   # bool
+# var event_number                # u64 as bytes
+# var priority                    # u8
+# # one of
+# var epoch_timestamp             # u64
+# var system_timestamp            # u64
+# var delta_epoch_timestamp       # u64
+# var delta_system_timestamp      # u64
+# # data
+# var data                        # any TLV
+
+# EVENT_DEBUG=0
+# EVENT_INFO=1
+# EVENT_CRITICAL=2
+
+  #############################################################
+  # consolidate_clusters
   #
   # Build a consolidated map of all the `CLUSTERS` static vars
   # from the inheritance hierarchy

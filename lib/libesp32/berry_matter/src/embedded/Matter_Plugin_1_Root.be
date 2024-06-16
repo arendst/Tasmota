@@ -47,9 +47,12 @@ class Matter_Plugin_Root : Matter_Plugin
 
   #############################################################
   # Constructor
-  # def init(device, endpoint, config)
-  #   super(self).init(device, endpoint, config)
-  # end
+  def init(device, endpoint, config)
+    super(self).init(device, endpoint, config)
+
+    self.publish_event(0x0028, 0x00, matter.EVENT_CRITICAL, matter.TLV.Matter_TLV_item().set(matter.TLV.U4, tasmota.version()))   # Event StartUp - Software Version
+    self.publish_event(0x0033, 0x03, matter.EVENT_CRITICAL, matter.TLV.Matter_TLV_item().set(matter.TLV.U1, 1))   # Event BootReason - PowerOnReboot - TODO if we need to refine
+  end
 
   #############################################################
   # read an attribute
@@ -233,7 +236,7 @@ class Matter_Plugin_Root : Matter_Plugin
       elif attribute == 0x0008          #  ---------- HardwareVersionString / string ----------
         return tlv_solo.set(TLV.UTF1, tasmota.cmd("Status 2", true)['StatusFWR']['Hardware'])
       elif attribute == 0x0009          #  ---------- SoftwareVersion / u32 ----------
-        return tlv_solo.set(TLV.U2, 1)
+        return tlv_solo.set(TLV.U4, tasmota.version())
       elif attribute == 0x000A          #  ---------- SoftwareVersionString / string ----------
         var version_full = tasmota.cmd("Status 2", true)['StatusFWR']['Version']
         var version_end = string.find(version_full, '(')

@@ -40,6 +40,8 @@ class Matter_Device
   var sessions                        # `matter.Session_Store()` objet
   var ui
   var tick                            # increment at each tick, avoids to repeat too frequently some actions
+  # Events
+  var events                          # Event handler
   # Commissioning open
   var commissioning_open              # timestamp for timeout of commissioning (millis()) or `nil` if closed
   var commissioning_iterations        # current PBKDF number of iterations
@@ -105,6 +107,7 @@ class Matter_Device
     self.sessions = matter.Session_Store(self)
     self.sessions.load_fabrics()
     self.message_handler = matter.MessageHandler(self)
+    self.events = matter.EventHandler(self)
     self.ui = matter.UI(self)
 
     if tasmota.wifi()['up'] || tasmota.eth()['up']
@@ -561,7 +564,7 @@ class Matter_Device
   # Optimized version for a single endpoint/cluster/attribute
   #
   # Retrieve the plugin for a read
-  def process_attribute_read_solo(ctx)
+  def resolve_attribute_read_solo(ctx)
     var endpoint = ctx.endpoint
     # var endpoint_found = false                # did any endpoint match
     var cluster = ctx.cluster
@@ -768,11 +771,10 @@ class Matter_Device
   #   {'32': {'filter': 'AXP192#Temperature', 'type': 'temperature'}, '40': {'filter': 'BMP280#Pressure', 'type': 'pressure'}, '34': {'filter': 'SHT3X#Temperature', 'type': 'temperature'}, '33': {'filter': 'BMP280#Temperature', 'type': 'temperature'}, '1': {'relay': 0, 'type': 'relay'}, '56': {'filter': 'SHT3X#Humidity', 'type': 'humidity'}, '0': {'type': 'root'}}
   def _instantiate_plugins_from_config(config)
     var endpoints = self.k2l_num(config)
-    # log("MTR: endpoints to be configured "+str(endpoints), 4)
-    log("MTR: Configuring endpoints", 2)
 
     # start with mandatory endpoint 0 for root node
     self.plugins.push(matter.Plugin_Root(self, 0, {}))
+    log("MTR: Configuring endpoints", 2)
     log(format("MTR:   endpoint = %5i type:%s%s", 0, 'root', ''), 2)
 
     # always include an aggregator for dynamic endpoints
