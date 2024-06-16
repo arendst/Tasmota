@@ -1668,7 +1668,7 @@ if(_beacon->frame.isEncrypted){
   }
 else{
   uint32_t _offset = (_beacon->frame.includesCapability)?0:1;
-  uint32_t _payloadSize = (_beacon->frame.includesCapability)?_beacon->payload.size:_beacon->payload.ten;
+  size_t _payloadSize = *(uint8_t*)(&_beacon->payload.size - _offset);
   if(_beacon->frame.includesMAC && _beacon->frame.includesObj) {
       // AddLog(LOG_LEVEL_DEBUG,PSTR("M32: offset %u, size: %u"),_offset,_payloadSize);
       memcpy((uint8_t*)&_payload,(uint8_t*)(&_beacon->payload)-_offset, _payloadSize + 3);
@@ -1676,14 +1676,17 @@ else{
       }
   }
 if(decryptRet!=0){
-  AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Decryption failed with error: %d"),decryptRet);
+  AddLog(LOG_LEVEL_DEBUG,PSTR("M32: Decryption failed with error: %d for %u"),decryptRet, _slot);
   if (decryptRet == -1) MIBLEsensors[_slot].status.hasWrongKey = 1;
   return;
 }
 
   // AddLog(LOG_LEVEL_DEBUG,PSTR("%s at slot %u with payload type: %02x"), MI32getDeviceName(_slot),_slot,_payload.type);
   switch(_payload.type){
-    case 0x01:
+    case 0x0002:
+      AddLog(LOG_LEVEL_DEBUG_MORE,PSTR("M32: obj id to pair: %02x"),_payload.objID); // pretty pointless for Tasmota
+      break;
+    case 0x1001:
       MIBLEsensors[_slot].feature.Btn = 1;
       if(_payload.Btn.type == 4){     //dimmer knob rotation
         MIBLEsensors[_slot].eventType.knob = 1;
@@ -1716,7 +1719,7 @@ if(decryptRet!=0){
       MI32.mode.shallTriggerTele = 1;
       // AddLog(LOG_LEVEL_DEBUG,PSTR("Mode 1: U16:  %u Button"), MIBLEsensors[_slot].Btn );
     break;
-    case 0x04:
+    case 0x1004:
        MIBLEsensors[_slot].feature.temp = 1;
       _tempFloat=(float)(_payload.temp)/10.0f;
       if(_tempFloat<60){
@@ -1729,7 +1732,7 @@ if(decryptRet!=0){
 #endif //USE_MI_EXT_GUI
       // AddLog(LOG_LEVEL_DEBUG,PSTR("Mode 4: U16:  %u Temp"), _payload.temp );
     break;
-    case 0x06:
+    case 0x1006:
       MIBLEsensors[_slot].feature.hum = 1;
       _tempFloat=(float)(_payload.hum)/10.0f;
       if(_tempFloat<101){
@@ -1742,7 +1745,7 @@ if(decryptRet!=0){
 #endif //USE_MI_EXT_GUI
       // AddLog(LOG_LEVEL_DEBUG,PSTR("Mode 6: U16:  %u Hum"), _payload.hum);
     break;
-    case 0x07:
+    case 0x1007:
       MIBLEsensors[_slot].feature.lux = 1;
       MIBLEsensors[_slot].lux=_payload.lux & 0x00ffffff;
       if(MIBLEsensors[_slot].type==MJYD2S){
@@ -1754,21 +1757,21 @@ if(decryptRet!=0){
 #endif //USE_MI_EXT_GUI
       // AddLog(LOG_LEVEL_DEBUG,PSTR("Mode 7: U24: %u Lux"), _payload.lux & 0x00ffffff);
     break;
-    case 0x08:
+    case 0x1008:
       MIBLEsensors[_slot].feature.moist = 1;
       MIBLEsensors[_slot].moisture=_payload.moist;
       MIBLEsensors[_slot].eventType.moist  = 1;
       DEBUG_SENSOR_LOG(PSTR("Mode 8: moisture updated"));
       // AddLog(LOG_LEVEL_DEBUG,PSTR("Mode 8: U8: %u Moisture"), _payload.moist);
     break;
-    case 0x09:
+    case 0x1009:
       MIBLEsensors[_slot].feature.fert = 1;
       MIBLEsensors[_slot].fertility=_payload.fert;
       MIBLEsensors[_slot].eventType.fert  = 1;
       DEBUG_SENSOR_LOG(PSTR("Mode 9: fertility updated"));
       // AddLog(LOG_LEVEL_DEBUG,PSTR("Mode 9: U16: %u Fertility"), _payload.fert);
     break;
-    case 0x0a:
+    case 0x100a: case 0x4803:
       MIBLEsensors[_slot].feature.bat = 1;
       if(MI32.option.ignoreBogusBattery){
         if(MIBLEsensors[_slot].type==LYWSD03MMC || MIBLEsensors[_slot].type==MHOC401){
@@ -1782,7 +1785,7 @@ if(decryptRet!=0){
       }
       // AddLog(LOG_LEVEL_DEBUG,PSTR("Mode a: U8: %u %%"), _payload.bat);
     break;
-    case 0x0d:
+    case 0x100d:
       _tempFloat=(float)(_payload.HT.temp)/10.0f;
       if(_tempFloat<60){
           MIBLEsensors[_slot].temp = _tempFloat;
@@ -1797,8 +1800,8 @@ if(decryptRet!=0){
       // AddLog(LOG_LEVEL_DEBUG,PSTR("Mode d: U16:  %x Temp U16: %x Hum"), _payload.HT.temp,  _payload.HT.hum);
     break;
 
-    case 0x0f:
-    if (_payload.ten!=0) break;
+    case 0x000f:
+    // if (_payload.ten!=0) break;
       MIBLEsensors[_slot].feature.motion = 1;
       MIBLEsensors[_slot].feature.NMT = 1; //only driver based
       MIBLEsensors[_slot].eventType.motion = 1;
@@ -1812,20 +1815,20 @@ if(decryptRet!=0){
 #endif //USE_MI_EXT_GUI
       // AddLog(LOG_LEVEL_DEBUG,PSTR("motion: primary"),MIBLEsensors[_slot].lux );
     break;
-    case 0x14:
+    case 0x1014:
       MIBLEsensors[_slot].feature.leak = 1;
       MIBLEsensors[_slot].leak = _payload.leak;
       MIBLEsensors[_slot].eventType.leak = 1;
       if(_payload.leak>0) MI32.mode.shallTriggerTele = 1;
       break;
-    case 0x17:
+    case 0x1017:
       MIBLEsensors[_slot].feature.NMT = 1;
       MIBLEsensors[_slot].NMT = _payload.NMT;
       MIBLEsensors[_slot].eventType.NMT = 1;
       MI32.mode.shallTriggerTele = 1;
       // AddLog(LOG_LEVEL_DEBUG,PSTR("Mode 17: NMT: %u seconds"), _payload.NMT);
     break;
-    case 0x19:
+    case 0x1019:
       MIBLEsensors[_slot].feature.door = 1;
       MIBLEsensors[_slot].door = _payload.door;
       MIBLEsensors[_slot].eventType.door = 1;
@@ -1833,7 +1836,27 @@ if(decryptRet!=0){
       MI32.mode.shallTriggerTele = 1;
       // AddLog(LOG_LEVEL_DEBUG,PSTR("Mode 19: %u"), _payload.door);
     break;
-
+    case 0x4e0c:
+      MIBLEsensors[_slot].feature.Btn = 1;
+      MIBLEsensors[_slot].Btn = _payload.size; // a guess, makes sense for the XMWXKG01LM
+      MIBLEsensors[_slot].BtnType = 0;
+      MIBLEsensors[_slot].eventType.Btn = 1;
+      MI32.mode.shallTriggerTele = 1;
+      break;
+    case 0x4e0d:
+      MIBLEsensors[_slot].feature.Btn = 1;
+      MIBLEsensors[_slot].Btn = _payload.size;
+      MIBLEsensors[_slot].BtnType = 1;
+      MIBLEsensors[_slot].eventType.Btn = 1;
+      MI32.mode.shallTriggerTele = 1;
+      break;
+    case 0x4e0e:
+      MIBLEsensors[_slot].feature.Btn = 1;
+      MIBLEsensors[_slot].Btn = _payload.size;
+      MIBLEsensors[_slot].BtnType = 2;
+      MIBLEsensors[_slot].eventType.Btn = 1;
+      MI32.mode.shallTriggerTele = 1;
+      break;
     default:
       if (MIBLEsensors[_slot].type==NLIGHT){
         MIBLEsensors[_slot].eventType.motion = 1; //motion
@@ -1844,6 +1867,7 @@ if(decryptRet!=0){
       else{
         //unknown payload
         AddLogBuffer(LOG_LEVEL_DEBUG,(uint8_t*)_buf,_bufSize);
+        AddLogBuffer(LOG_LEVEL_DEBUG,(uint8_t*)&_payload,_payload.size + 2);
       }
     break;
   }
@@ -1856,45 +1880,47 @@ void MI32parseBTHomePacket(char * _buf, uint32_t length, uint8_t addr[6], int RS
   const uint32_t _slot = MIBLEgetSensorSlot(addr, 0xb770, 0); // fake ID, constant fake counter
   if(_slot==0xff) return;
 
+  auto &_sensor =  MIBLEsensors[_slot];
   if (optionalName[0] != '\0'){
-      AddLog(LOG_LEVEL_DEBUG,PSTR("%s at slot %u"), optionalName,_slot);
+    if(_sensor.name == nullptr){
+      _sensor.name = new char[strlen(optionalName) + 1];
+      strcpy(_sensor.name, optionalName);
+    }
   }
-  const auto _sensor =  &MIBLEsensors[_slot];
-  _sensor->RSSI = RSSI;
-  // _sensor->lastTime = Rtc.local_time;
+  _sensor.RSSI = RSSI;
 
   BTHome_info_t info;
   info.byte_value = _buf[0];
-  _sensor->feature.needsKey = info.encrypted;
+  _sensor.feature.needsKey = info.encrypted;
 
   uint32_t idx = 1;
   while(idx < length - 1){
     switch(_buf[idx]){
       case 0x00:
-        if(_buf[idx+1] == _sensor->lastCnt){
+        if(_buf[idx+1] == _sensor.lastCnt){
           return; // known packet
         }
-        _sensor->lastCnt = _buf[idx+1];
+        _sensor.lastCnt = _buf[idx+1];
         idx += 2;
         break;
       case 0x01:
-        _sensor->bat = _buf[idx+1];
-        _sensor->eventType.bat = 1;
-        _sensor->feature.bat = 1;
+        _sensor.bat = _buf[idx+1];
+        _sensor.eventType.bat = 1;
+        _sensor.feature.bat = 1;
         idx += 2;
       break;
       case 0x02:
-        _sensor->temp = (int16_t)(_buf[idx+1]|_buf[idx+2] << 8)/100.0f;
-        _sensor->eventType.temp = 1;
-        _sensor->feature.temp = 1;
-        MI32addHistory(_sensor->temp_history, _sensor->temp, 0);
+        _sensor.temp = (int16_t)(_buf[idx+1]|_buf[idx+2] << 8)/100.0f;
+        _sensor.eventType.temp = 1;
+        _sensor.feature.temp = 1;
+        MI32addHistory(_sensor.temp_history, _sensor.temp, 0);
         idx += 3;
         break;
       case 0x03:
-       _sensor->hum = (uint16_t)(_buf[idx+1]|_buf[idx+2] << 8)/100.0f;
-       _sensor->eventType.hum = 1;
-       _sensor->feature.hum = 1;
-       MI32addHistory(_sensor->hum_history, _sensor->hum, 1);
+       _sensor.hum = (uint16_t)(_buf[idx+1]|_buf[idx+2] << 8)/100.0f;
+       _sensor.eventType.hum = 1;
+       _sensor.feature.hum = 1;
+       MI32addHistory(_sensor.hum_history, _sensor.hum, 1);
        idx += 3;
        break;
       case 0x0b:
@@ -1919,7 +1945,7 @@ void MI32parseBTHomePacket(char * _buf, uint32_t length, uint8_t addr[6], int RS
 #ifdef USE_MI_EXT_GUI
   bitSet(MI32.widgetSlot,_slot);
 #endif //USE_MI_EXT_GUI
- _sensor->shallSendMQTT = 1;
+ _sensor.shallSendMQTT = 1;
   if(MI32.option.directBridgeMode == 1) MI32.mode.shallTriggerTele = 1;
 }
 
@@ -2402,7 +2428,7 @@ void MI32sendWidget(uint32_t slot){
   if (_sensor.bat == 0) _bat[9] = 0;
   WSContentSend_P(HTTP_MI32_WIDGET,slot+1,_opacity,_MAC,_sensor.RSSI,_bat,_key,MI32getDeviceName(slot));
 
-  if(_sensor.feature.temp && _sensor.feature.hum){
+  if(_sensor.feature.temp == 1 && _sensor.feature.hum == 1){
     if(!isnan(_sensor.temp)){
       char _polyline[176];
       MI32createPolyline(_polyline,_sensor.temp_history);
@@ -2421,7 +2447,7 @@ void MI32sendWidget(uint32_t slot){
       WSContentSend_P(PSTR("" D_JSON_DEWPOINT ": %.1f °C"),CalcTempHumToDew(_sensor.temp,_sensor.hum));
     }
   }
-  else if(_sensor.feature.temp){
+  else if(_sensor.feature.temp == 1){
     if(!isnan(_sensor.temp)){
       char _polyline[176];
       MI32createPolyline(_polyline,_sensor.temp_history);
@@ -2430,7 +2456,7 @@ void MI32sendWidget(uint32_t slot){
       WSContentSend_P(PSTR("</p>"));
     }
   }
-  if(_sensor.feature.lux){
+  if(_sensor.feature.lux == 1){
     if(_sensor.lux!=0x00ffffff){
       char _polyline[176];
       MI32createPolyline(_polyline,_sensor.lux_history);
@@ -2439,7 +2465,7 @@ void MI32sendWidget(uint32_t slot){
       WSContentSend_P(PSTR("</p>"));
     }
   }
-  if(_sensor.feature.knob){
+  if(_sensor.feature.knob == 1){
       if(_sensor.pressed == 0) {
         WSContentSend_P(PSTR("<p>Dimmer Steps: %d</p>"),_sensor.dimmer);
       }
@@ -2448,16 +2474,16 @@ void MI32sendWidget(uint32_t slot){
       }
       WSContentSend_P(PSTR("<p>Hold: %u</p>"),_sensor.longpress);
   }
-  if(_sensor.feature.Btn){
+  if(_sensor.feature.Btn == 1){
       char _message[16];
       GetTextIndexed(_message, sizeof(_message), _sensor.BtnType, kMI32_ButtonMsg);
       if(_sensor.Btn<12) WSContentSend_P(PSTR("<p>Button%u: %s</p>"),_sensor.Btn,_message);
   }
-  if(_sensor.feature.motion){
+  if(_sensor.feature.motion == 1){
       WSContentSend_P(PSTR("<p>Events: %u</p>"),_sensor.events);
       WSContentSend_P(PSTR("<p>No motion for > <span class='Ti'>%u</span> seconds</p>"),_sensor.NMT);
   }
-  if(_sensor.feature.door){
+  if(_sensor.feature.door == 1){
     if(_sensor.door!=255){
       if(_sensor.door==1){
         WSContentSend_P(PSTR("<p>Contact open</p>"));
@@ -2468,7 +2494,7 @@ void MI32sendWidget(uint32_t slot){
       WSContentSend_P(PSTR("<p>Events: %u</p>"),_sensor.events);
     }
   }
-  if(_sensor.feature.leak){
+  if(_sensor.feature.leak == 1){
     if(_sensor.leak==1){
       WSContentSend_P(PSTR("<p>Leak !!!</p>"));
     }
@@ -2576,8 +2602,8 @@ void MI32Show(bool json)
 
       if(MI32.mode.triggeredTele == 1){
         bool tempHumSended = false;
-        if(MIBLEsensors[i].feature.tempHum){
-          if(MIBLEsensors[i].eventType.tempHum || MI32.mode.triggeredTele == 0 || MI32.option.allwaysAggregate == 1){
+        if(MIBLEsensors[i].feature.tempHum == 1){
+          if(MIBLEsensors[i].eventType.tempHum == 1 || MI32.mode.triggeredTele == 0 || MI32.option.allwaysAggregate == 1){
             if (!isnan(MIBLEsensors[i].hum) && !isnan(MIBLEsensors[i].temp)) {
               MI32ShowContinuation(&commaflg);
               ResponseAppendTHD(MIBLEsensors[i].temp, MIBLEsensors[i].hum);
@@ -2585,8 +2611,8 @@ void MI32Show(bool json)
             }
           }
         }
-        if(MIBLEsensors[i].feature.temp && !tempHumSended){
-          if(MIBLEsensors[i].eventType.temp || MI32.mode.triggeredTele == 0 || MI32.option.allwaysAggregate == 1) {
+        if(MIBLEsensors[i].feature.temp == 1 && !tempHumSended){
+          if(MIBLEsensors[i].eventType.temp == 1 || MI32.mode.triggeredTele == 0 || MI32.option.allwaysAggregate == 1) {
             if (!isnan(MIBLEsensors[i].temp)) {
               MI32ShowContinuation(&commaflg);
               ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "\":%*_f"),
@@ -2594,8 +2620,8 @@ void MI32Show(bool json)
             }
           }
         }
-        if(MIBLEsensors[i].feature.hum && !tempHumSended){
-          if(MIBLEsensors[i].eventType.hum || MI32.mode.triggeredTele == 0 || MI32.option.allwaysAggregate == 1) {
+        if(MIBLEsensors[i].feature.hum == 1 && !tempHumSended){
+          if(MIBLEsensors[i].eventType.hum == 1 || MI32.mode.triggeredTele == 0 || MI32.option.allwaysAggregate == 1) {
             if (!isnan(MIBLEsensors[i].hum)) {
               char hum[FLOATSZ];
               dtostrfd(MIBLEsensors[i].hum, Settings->flag2.humidity_resolution, hum);
@@ -2604,16 +2630,16 @@ void MI32Show(bool json)
             }
           }
         }
-        if (MIBLEsensors[i].feature.lux){
-          if(MIBLEsensors[i].eventType.lux || MI32.mode.triggeredTele == 0 || MI32.option.allwaysAggregate == 1){
+        if (MIBLEsensors[i].feature.lux == 1){
+          if(MIBLEsensors[i].eventType.lux == 1 || MI32.mode.triggeredTele == 0 || MI32.option.allwaysAggregate == 1){
             if ((MIBLEsensors[i].lux != 0x0ffffff)) { // this is the error code -> no lux
               MI32ShowContinuation(&commaflg);
               ResponseAppend_P(PSTR("\"" D_JSON_ILLUMINANCE "\":%u"), MIBLEsensors[i].lux);
             }
           }
         }
-        if (MIBLEsensors[i].feature.moist){
-          if(MIBLEsensors[i].eventType.moist || MI32.mode.triggeredTele == 0 || MI32.option.allwaysAggregate == 1){
+        if (MIBLEsensors[i].feature.moist == 1){
+          if(MIBLEsensors[i].eventType.moist == 1 || MI32.mode.triggeredTele == 0 || MI32.option.allwaysAggregate == 1){
             if ((MIBLEsensors[i].moisture != 0xff)) {
               MI32ShowContinuation(&commaflg);
               ResponseAppend_P(PSTR("\"" D_JSON_MOISTURE "\":%u"), MIBLEsensors[i].moisture);
@@ -2628,14 +2654,14 @@ void MI32Show(bool json)
             }
           }
         }
-        if (MIBLEsensors[i].feature.Btn){
-          if(MIBLEsensors[i].eventType.Btn){
+        if (MIBLEsensors[i].feature.Btn == 1){
+          if(MIBLEsensors[i].eventType.Btn == 1){
             MI32ShowContinuation(&commaflg);
             ResponseAppend_P(PSTR("\"Button%u\":%u"),MIBLEsensors[i].Btn,MIBLEsensors[i].BtnType + 1); //internal type is Xiaomi/Homekit 0,1,2 -> Tasmota 1,2,3
           }
         }
-        if (MIBLEsensors[i].feature.knob){
-          if(MIBLEsensors[i].eventType.knob){
+        if (MIBLEsensors[i].feature.knob == 1){
+          if(MIBLEsensors[i].eventType.knob == 1){
             MI32ShowContinuation(&commaflg);
             char _pressed[3] = {'_','P',0};
             if (MIBLEsensors[i].pressed == 0){
@@ -2643,15 +2669,15 @@ void MI32Show(bool json)
             }
             ResponseAppend_P(PSTR("\"Dimmer%s\":%d"),_pressed, MIBLEsensors[i].dimmer);
           }
-          if(MIBLEsensors[i].eventType.longpress){
+          if(MIBLEsensors[i].eventType.longpress == 1){
             MI32ShowContinuation(&commaflg);
             ResponseAppend_P(PSTR("\"Hold\":%d"), MIBLEsensors[i].longpress);
           }
         }
       } // minimal summary
-      if (MIBLEsensors[i].feature.motion){
-        if(MIBLEsensors[i].eventType.motion || MI32.mode.triggeredTele == 0){
-          if(MI32.mode.triggeredTele) {
+      if (MIBLEsensors[i].feature.motion == 1){
+        if(MIBLEsensors[i].eventType.motion == 1 || MI32.mode.triggeredTele == 0){
+          if(MI32.mode.triggeredTele == 1) {
             MI32ShowContinuation(&commaflg);
             ResponseAppend_P(PSTR("\"Motion\":1")); // only real-time
           }
@@ -2664,9 +2690,9 @@ void MI32Show(bool json)
         }
       }
 
-      if (MIBLEsensors[i].feature.door){
-        if(MIBLEsensors[i].eventType.door || MI32.mode.triggeredTele == 0){
-          if(MI32.mode.triggeredTele) {
+      if (MIBLEsensors[i].feature.door == 1){
+        if(MIBLEsensors[i].eventType.door == 1 || MI32.mode.triggeredTele == 0){
+          if(MI32.mode.triggeredTele == 1) {
             MI32ShowContinuation(&commaflg);
             ResponseAppend_P(PSTR("\"Door\":%u"),MIBLEsensors[i].door);
           }
@@ -2682,8 +2708,8 @@ void MI32Show(bool json)
         }
       }
 
-      if (MIBLEsensors[i].feature.NMT || MI32.mode.triggeredTele == 0){
-        if(MIBLEsensors[i].eventType.NMT){
+      if (MIBLEsensors[i].feature.NMT  == 1|| MI32.mode.triggeredTele == 0){
+        if(MIBLEsensors[i].eventType.NMT == 1){
           MI32ShowContinuation(&commaflg);
           ResponseAppend_P(PSTR("\"NMT\":%u"), MIBLEsensors[i].NMT);
         }
@@ -2758,11 +2784,11 @@ void MI32Show(bool json)
             WSContentSend_THD(_sensorName, MIBLEsensors[i].temp, MIBLEsensors[i].hum);
           }
         }
-        if (MIBLEsensors[i].feature.needsKey) {
+        if (MIBLEsensors[i].feature.needsKey == 1) {
           if(MIBLEsensors[i].key == nullptr){
             WSContentSend_PD(PSTR("{s}No known Key!!{m} can not decrypt messages{e}"));
           }
-          else if(MIBLEsensors[i].status.hasWrongKey){
+          else if(MIBLEsensors[i].status.hasWrongKey == 1){
             WSContentSend_PD(PSTR("{s}Wrong Key!!{m} can not decrypt messages{e}"));
           }
         }
