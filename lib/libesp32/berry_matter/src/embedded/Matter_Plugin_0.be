@@ -196,7 +196,9 @@ class Matter_Plugin
     if (event_ib.epoch_timestamp < 1700000000)    event_ib.epoch_timestamp = nil  end    # no valid time
     event_ib.data = data
     var priority_str = (priority == 2) ? "CRIT  " : (priority == 1) ? "INFO  " : "DEBUG "
-    log(f"MTR: +Add_Event ({priority_str}) [{event_path.endpoint:02X}]{event_path.cluster:04X}/{event_path.event:04X} ({event_ib.event_number:5i}) - {event_ib.data}", 2)
+    var event_name = matter.get_event_name(cluster, event)
+    event_name = (event_name != nil) ? "(" + event_name + ") " : ""
+    log(f"MTR: +Add_Event ({priority_str}{event_ib.event_number:8s}) [{event_path.endpoint:02X}]{event_path.cluster:04X}/{event_path.event:02X} {event_name}- {event_ib.data}", 2)
     log(f"MTR: Publishing event {event_ib}", 4)
 
     self.device.events.queue_event(event_ib)

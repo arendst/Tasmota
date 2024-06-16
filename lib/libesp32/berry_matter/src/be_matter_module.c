@@ -85,6 +85,7 @@ extern const bclass be_class_Matter_QRCode;
 #include "solidify/solidified_Matter_Module.h"
 
 #include "../generate/be_matter_clusters.h"
+#include "../generate/be_matter_events.h"
 #include "../generate/be_matter_opcodes.h"
 #include "../generate/be_matter_vendors.h"
 
@@ -187,6 +188,16 @@ const char* matter_get_command_name(uint16_t cluster, uint16_t command) {
   return NULL;
 }
 BE_FUNC_CTYPE_DECLARE(matter_get_command_name, "s", "ii")
+
+const char* matter_get_event_name(uint16_t cluster, uint8_t event) {
+  for (const matter_event_t * ev = matter_Events; ev->cluster != 0xFFFF; ev++) {
+    if (ev->cluster == cluster && ev->event == event) {
+      return ev->name;
+    }
+  }
+  return NULL;
+}
+BE_FUNC_CTYPE_DECLARE(matter_get_event_name, "s", "ii")
 
 // Convert an IP address from string to raw bytes
 extern const void* matter_get_ip_bytes(const char* ip_str, size_t* ret_len);
@@ -330,6 +341,7 @@ module matter (scope: global, strings: weak) {
   is_attribute_writable, ctype_func(matter_is_attribute_writable)
   is_attribute_reportable, ctype_func(matter_is_attribute_reportable)
   get_command_name, ctype_func(matter_get_command_name)
+  get_event_name, ctype_func(matter_get_event_name)
   get_opcode_name, ctype_func(matter_get_opcode_name)
   TLV, class(be_class_Matter_TLV)
   sort, closure(module_matter_sort_closure)
