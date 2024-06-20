@@ -2600,12 +2600,19 @@ char *isargs(char *lp, uint32_t isind) {
     if (glob_script_mem.si_num[isind] > MAX_SARRAY_NUM) {
       glob_script_mem.si_num[isind] = MAX_SARRAY_NUM;
     }
+    //glob_script_mem.last_index_string[isind] = (char*)calloc(glob_script_mem.max_ssize * glob_script_mem.si_num[isind], 1);
+    uint32_t sasize = glob_script_mem.max_ssize * glob_script_mem.si_num[isind];
+    glob_script_mem.last_index_string[isind] = (char*)special_malloc(sasize);
+    if (glob_script_mem.last_index_string[isind]) {
+      memset(glob_script_mem.last_index_string[isind], 0, sasize);
+      for (uint32_t cnt = 0; cnt < glob_script_mem.siro_num[isind]; cnt++) {
+        char str[SCRIPT_MAX_SBSIZE];
+        GetTextIndexed(str, sizeof(str), cnt, sstart);
+        strlcpy(glob_script_mem.last_index_string[isind] + (cnt * glob_script_mem.max_ssize), str, glob_script_mem.max_ssize);
+      }
+    } else {
+      // memory error
 
-    glob_script_mem.last_index_string[isind] = (char*)calloc(glob_script_mem.max_ssize * glob_script_mem.si_num[isind], 1);
-    for (uint32_t cnt = 0; cnt < glob_script_mem.siro_num[isind]; cnt++) {
-      char str[SCRIPT_MAX_SBSIZE];
-      GetTextIndexed(str, sizeof(str), cnt, sstart);
-      strlcpy(glob_script_mem.last_index_string[isind] + (cnt * glob_script_mem.max_ssize), str, glob_script_mem.max_ssize);
     }
   } else {
     glob_script_mem.last_index_string[isind] = sstart;
@@ -3439,7 +3446,7 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           FS *cfp = script_file_path(str);
           while (*lp == ' ') lp++;
           uint8_t mode = 0;
-          if ((*lp == 'r') || (*lp == 'w') || (*lp == 'a')) {
+          if ((*lp == 'r') || (*lp == 'w') || (*lp == 'a') || (*lp == 'u')) {
             switch (*lp) {
               case 'r':
                 mode = 0;
@@ -3449,6 +3456,12 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
                 break;
               case 'a':
                 mode = 2;
+                break;
+              case 'u':
+                mode = 3;
+                break;
+              case 'U':
+                mode = 4;
                 break;
             }
             lp++;
@@ -3477,10 +3490,20 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #ifdef DEBUG_FS
                   AddLog(LOG_LEVEL_INFO, PSTR("SCR: open file for write %d"), cnt);
 #endif
-                } else {
+                } else if (mode == 2) {
                   glob_script_mem.files[cnt] = cfp->open(str,FS_FILE_APPEND);
 #ifdef DEBUG_FS
                   AddLog(LOG_LEVEL_INFO, PSTR("SCR: open file for append %d"), cnt);
+#endif
+                } else if (mode == 3) {
+                  glob_script_mem.files[cnt] = cfp->open(str, "w+");
+#ifdef DEBUG_FS
+                  AddLog(LOG_LEVEL_INFO, PSTR("SCR: open file for write update %d"), cnt);
+#endif
+                }  else {
+                  glob_script_mem.files[cnt] = cfp->open(str, "r+");
+#ifdef DEBUG_FS
+                  AddLog(LOG_LEVEL_INFO, PSTR("SCR: open file for read update %d"), cnt);
 #endif
                 }
               }
@@ -4744,7 +4767,8 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           len = 0;
           goto exit;
         }
-#ifdef USE_MORITZ
+#ifdef USE_BINPLUGINS
+char *Plugin_Query(uint8_t, uint8_t);
         if (!strncmp_XP(lp, XPSTR("mo("), 3)) {
           TS_FLOAT fvar1;
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar1, gv);
@@ -4752,14 +4776,21 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           TS_FLOAT fvar2;
           lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
           SCRIPT_SKIP_SPACES
-          char rbuff[64];
-          fvar = mo_getvars(fvar1, fvar2, rbuff);
+          char *rbuff = Plugin_Query(fvar1, fvar2);
+          if (rbuff) {
+            if (sp) strlcpy(sp, rbuff, glob_script_mem.max_ssize);
+            free (rbuff);
+          } else {
+            if (sp) {
+              strcpy_P(sp, PSTR("not found"));
+            }
+          }
           lp++;
-          if (sp) strlcpy(sp, rbuff, glob_script_mem.max_ssize);
           len = 0;
           goto strexit;
         }
-#endif //USE_MORITZ
+#endif //USE_BINPLUGINS
+
 #ifdef ESP32_FAST_MUX
         if (!strncmp_XP(lp, XPSTR("mux("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
@@ -6219,16 +6250,24 @@ void tmod_directModeOutput(uint32_t pin);
         if (!strncmp_XP(lp, XPSTR("wso("), 4)) {
           TS_FLOAT port;
           lp = GetNumericArgument(lp + 4, OPER_EQU, &port, gv);
-          glob_script_mem.tcp_server = new WiFiServer(port);
-          fvar = 0;
-          if (!glob_script_mem.tcp_server) {
-            fvar = -1;
-          } else  {
-            AddLog(LOG_LEVEL_INFO, PSTR("tcp server started"));
+          if (TasmotaGlobal.global_state.wifi_down) {
+            fvar = - 2;
+          } else {
+            if (glob_script_mem.tcp_server) {
+              glob_script_mem.tcp_client.stop();
+              glob_script_mem.tcp_server->stop();
+              delete glob_script_mem.tcp_server;
+            }
+            glob_script_mem.tcp_server = new WiFiServer(port);
+            fvar = 0;
+            if (!glob_script_mem.tcp_server) {
+              fvar = -1;
+            } else  {
+              glob_script_mem.tcp_server->begin();
+              glob_script_mem.tcp_server->setNoDelay(true);
+              AddLog(LOG_LEVEL_INFO, PSTR("tcp server started"));
+            }
           }
-          glob_script_mem.tcp_server->begin();
-          glob_script_mem.tcp_server->setNoDelay(true);
-
           goto nfuncexit;
         }
         if (!strncmp_XP(lp, XPSTR("wsc("), 4)) {
@@ -12055,7 +12094,6 @@ exgc:
             }
           }
           snprintf_P(options, SCRIPT_GC_OPTIONS_SIZE, SCRIPT_MSG_GOPT4);
-          if (options) free(options);
         }
         if (tonly) {
           WSContentSend_P("]);");
