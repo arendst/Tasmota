@@ -12,5 +12,5 @@ build_flags = env['BUILD_FLAGS']
 chip = env.get("BOARD_MCU").lower()
 
 if "c" in chip:
-  popped_item = build_flags.pop(build_flags.index("-mno-target-align"))
-  popped_item = build_flags.pop(build_flags.index("-mtarget-align"))
+  build_flags.pop(build_flags.index("-mno-target-align"))
+  build_flags.pop(build_flags.index("-mtarget-align"))
