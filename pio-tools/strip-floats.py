@@ -1,21 +1,26 @@
 Import('env')
 
-build_flags = " ".join(env.GetProjectOption("build_flags"))
+link_flags = " ".join(env['LINKFLAGS'])
+build_flags = " ".join(env['BUILD_FLAGS'])
+
+print("---------------------------------------")
+
+print("build_flags: ", build_flags)
 
 #
 # Dump build environment (for debug)
-#print env.Dump()
+#print(env.Dump())
 #
 
-flags = " ".join(env['LINKFLAGS'])
-flags = flags.replace("-u _printf_float", "")
-flags = flags.replace("-u _scanf_float", "")
+link_flags = link_flags.replace("-u _printf_float", "")
+link_flags = link_flags.replace("-u _scanf_float", "")
 if "FIRMWARE_SAFEBOOT" in build_flags:
   # Crash Recorder is not included in safeboot firmware -> remove Linker wrap
-  flags = flags.replace("-Wl,--wrap=panicHandler", "")
-  flags = flags.replace("-Wl,--wrap=xt_unhandled_exception", "")
-newflags = flags.split()
+  link_flags = link_flags.replace("-Wl,--wrap=panicHandler", "")
+  link_flags = link_flags.replace("-Wl,--wrap=xt_unhandled_exception", "")
+
+new_link_flags = link_flags.split()
 
 env.Replace(
-  LINKFLAGS=newflags
+  LINKFLAGS=new_link_flags
 )
