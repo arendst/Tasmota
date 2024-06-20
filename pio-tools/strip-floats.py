@@ -3,10 +3,6 @@ Import('env')
 link_flags = " ".join(env['LINKFLAGS'])
 build_flags = " ".join(env['BUILD_FLAGS'])
 
-print("---------------------------------------")
-
-print("build_flags: ", build_flags)
-
 #
 # Dump build environment (for debug)
 #print(env.Dump())

@@ -8,21 +8,9 @@ env.Append(CFLAGS=["-Wno-discarded-qualifiers", "-Wno-implicit-function-declarat
 
 
 # Remove build flags which are not valid for risc-v
-build_flags = " ".join(env['BUILD_FLAGS'])
+build_flags = env['BUILD_FLAGS']
 chip = env.get("BOARD_MCU").lower()
 
-print("build_flags: ", build_flags)
-#print(env.Dump())
-
 if "c" in chip:
-  print("**************** risc-v *****************")
-  build_flags = build_flags.replace(" -mno-target-align", "")
-  build_flags = build_flags.replace(" -mtarget-align", "")
-
-new_buildflags = build_flags.split()
-print("build_flags: ", build_flags)
-
-
-env.Replace(
-  BUILD_FLAGS=new_buildflags
-)
+  popped_item = build_flags.pop(build_flags.index("-mno-target-align"))
+  popped_item = build_flags.pop(build_flags.index("-mtarget-align"))
