@@ -12,5 +12,11 @@ build_flags = env['BUILD_FLAGS']
 chip = env.get("BOARD_MCU").lower()
 
 if chip in ("esp32c2", "esp32c3", "esp32c6", "esp32h2"):
-  build_flags.pop(build_flags.index("-mno-target-align"))
-  build_flags.pop(build_flags.index("-mtarget-align"))
+  try:
+    build_flags.pop(build_flags.index("-mno-target-align"))
+  except:
+    do_nothing=""
+  try:
+    build_flags.pop(build_flags.index("-mtarget-align"))
+  except:
+    do_nothing=""
