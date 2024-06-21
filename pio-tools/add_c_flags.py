@@ -11,6 +11,6 @@ env.Append(CFLAGS=["-Wno-discarded-qualifiers", "-Wno-implicit-function-declarat
 build_flags = env['BUILD_FLAGS']
 chip = env.get("BOARD_MCU").lower()
 
-if "c" in chip:
+if chip in ("esp32c2", "esp32c3", "esp32c6", "esp32h2"):
   build_flags.pop(build_flags.index("-mno-target-align"))
   build_flags.pop(build_flags.index("-mtarget-align"))
