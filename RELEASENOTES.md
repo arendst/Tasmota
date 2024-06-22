@@ -151,6 +151,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Matter refactoring of bridged devices [#21575](https://github.com/arendst/Tasmota/issues/21575)
 - Matter filter suffix automatically added for sensors [#21589](https://github.com/arendst/Tasmota/issues/21589)
 - Matter support for Rain sensor [#21633](https://github.com/arendst/Tasmota/issues/21633)
+- Matter refactor reading of multiple attributes to reduce memory pressure [#21675](https://github.com/arendst/Tasmota/issues/21675)
 
 ### Fixed
 - Shutter MQTT on inverted shutter [#21663](https://github.com/arendst/Tasmota/issues/21663)
