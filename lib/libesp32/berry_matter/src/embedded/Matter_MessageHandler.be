@@ -50,6 +50,8 @@ class Matter_MessageHandler
   def send_simple_ack(frame, reliable)
     if frame.x_flag_r                   # nothing to respond, check if we need a standalone ack
       var resp = frame.build_standalone_ack(reliable)
+      # special case, the local_session_id is not the one from the session
+      resp.local_session_id = frame.local_session_id
       resp.encode_frame()
       if tasmota.loglevel(4)
         log(format("MTR: <Ack       (%6i) ack=%i id=%i %s", resp.session.local_session_id, resp.ack_message_counter, resp.message_counter, reliable ? '{reliable}' : ''), 4)
@@ -125,7 +127,8 @@ class Matter_MessageHandler
           var op_name = matter.get_opcode_name(frame.opcode)
           if !op_name   op_name = format("0x%02X", frame.opcode) end
           if tasmota.loglevel(3)
-            log(format("MTR: >Received  (%6i) %s rid=%i exch=%i from [%s]:%i", session.local_session_id, op_name, frame.message_counter, frame.exchange_id, addr, port), 3)
+            log(format("MTR: >Received  (%6i) %s from [%s]:%i", session.local_session_id, op_name, addr, port), 3)
+            # log(format("MTR: >Received  (%6i) %s rid=%i exch=%i from [%s]:%i", session.local_session_id, op_name, frame.message_counter, frame.exchange_id, addr, port), 3)
           end
         else
           if tasmota.loglevel(4)

@@ -293,6 +293,13 @@ class Matter_TLV
 
       if self.typ == TLV.RAW  b..self.val return b   end
 
+      # special case for U8/I8 if we have an int, simplify to smaller size
+      if (self.typ == TLV.I8 || self.typ == TLV.U8) && (type(self.val) == 'int')    # don't change if instance of `int64`
+        if self.typ == TLV.I8     self.typ = TLV.I4         # we can safely cast to I4
+        else                      self.typ = TLV.U4         # or to U4, and let further reduction happen below
+        end
+      end
+
       # special case for bool
       # we need to change the type according to the value
       if self.typ == TLV.BFALSE || self.typ == TLV.BTRUE
@@ -344,7 +351,11 @@ class Matter_TLV
         elif isinstance(i64, int64)
           i64 = i64.tobytes()             # bytes(8)
         else
-          i64 = int64(int(i64)).tobytes()  # bytes(8)
+          if (self.typ == TLV.I8)             # signed
+            i64 = int64(int(i64)).tobytes()   # bytes(8)
+          else                                # unsigned
+            i64 = int64.fromu32(int(i64)).tobytes()   # bytes(8)
+          end
         end
         b .. i64
       elif self.typ == TLV.BFALSE || self.typ == TLV.BTRUE

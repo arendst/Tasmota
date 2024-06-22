@@ -36,6 +36,14 @@ class Matter_Path
   var log                     # any string that needs to be logged (used to show significant parameters for commands)
   var msg                     # reference of the original message
 
+  # copy from an aobject that has also endpoint/cluster/attribute variables
+  def copy(c)
+    self.reset()
+    self.endpoint = c.endpoint
+    self.cluster = c.cluster
+    self.attribute = c.attribute
+  end
+
   # reset the object, allows reuse of the same object
   def reset()
     var n = nil         # it's actually more compact code to load `nil` into a register and assign all members
