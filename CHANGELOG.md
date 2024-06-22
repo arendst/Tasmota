@@ -32,6 +32,7 @@ All notable changes to this project will be documented in this file.
 - Scripter TCP server (#21660)
 - Matter TLV.U8 unsigned encoding (#21672)
 - Matter resumption final ack (#21673)
+- ESP32 allow use of UART0 with enabled USB_CDC_CONSOLE (#21496)
 
 ### Removed
 

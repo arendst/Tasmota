@@ -34,11 +34,11 @@ While fallback or downgrading is common practice it was never supported due to S
 
 ## Supported Core versions
 
-This release will be supported from ESP8266/Arduino library Core version **2.7.6** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
+This release will be supported from ESP8266/Arduino library Core version **2.7.7** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
 This release will be supported from ESP32/Arduino library Core version **3.0.1**.
 
-Support of ESP8266 Core versions before 2.7.6 and ESP32 Core versions before 3.0.1 have been removed.
+Support of ESP8266 Core versions before 2.7.7 and ESP32 Core versions before 3.0.1 have been removed.
 
 ### Known issues with v14.1.0
 
@@ -60,7 +60,7 @@ Easy initial installation of Tasmota can be performed using the [Tasmota WebInst
 ## Provided Binary Downloads
 
 ### ESP8266 or ESP8285 based
-The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.6**.
+The following binary downloads have been compiled with ESP8266/Arduino library core version **2.7.7**.
 
 - **tasmota.bin** = The Tasmota version with most drivers for 1M+ flash. **RECOMMENDED RELEASE BINARY**
 - **tasmota-4M.bin** = The Tasmota version with most drivers and filesystem for 4M+ flash.
@@ -156,6 +156,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Fixed
 - Shutter MQTT on inverted shutter [#21663](https://github.com/arendst/Tasmota/issues/21663)
 - Scripter TCP server [#21660](https://github.com/arendst/Tasmota/issues/21660)
+- ESP32 allow use of UART0 with enabled USB_CDC_CONSOLE [#21496](https://github.com/arendst/Tasmota/issues/21496)
 - Berry `input()` returns empty string and does not crash [#21565](https://github.com/arendst/Tasmota/issues/21565)
 - Matter interverted attributes 0xFFF9 and 0xFFFB [#21636](https://github.com/arendst/Tasmota/issues/21636)
 - Matter CASE Sigma1 resumption mode for faster reconnection [#21644](https://github.com/arendst/Tasmota/issues/21644)
