@@ -133,22 +133,32 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Matter support for bridged Air Quality [#21597](https://github.com/arendst/Tasmota/issues/21597)
 - Matter add internal debug option [#21634](https://github.com/arendst/Tasmota/issues/21634)
 - Matter add Fan support (virtual only) [#21637](https://github.com/arendst/Tasmota/issues/21637)
+- Matter show event name in logs [#21649](https://github.com/arendst/Tasmota/issues/21649)
 
 ### Changed
+- ESP8266 platform update from 2024.01.01 to 2024.06.00 [#21668](https://github.com/arendst/Tasmota/issues/21668)
+- ESP8266 Framework (Arduino Core) from v2.7.6 to v2.7.7 [#21668](https://github.com/arendst/Tasmota/issues/21668)
 - Optional MQTT_TELE_RETAIN to Energy Margins message replaced by ``SensorRetain``
 - Display timing splash screen with display modes 1 to 5
 - Allow receive or send using SerialBridge
 - SerialBridge command ``SSerialSend9`` replaced by ``SSerialMode``
 - SML replace vars in descriptor and line [#21622](https://github.com/arendst/Tasmota/issues/21622)
 - NeoPool using temperature as only frequently changing value for NPTeleperiod [#21628](https://github.com/arendst/Tasmota/issues/21628)
+- NeoPool make compiler setting available by `user_config_override.h` [#21645](https://github.com/arendst/Tasmota/issues/21645)
 - ESP32 Core3 platform update from 2024.05.13 to 2024.06.10 [#21569](https://github.com/arendst/Tasmota/issues/21569)
 - ESP32 MI32 refactoring, bugfixes, generic device scanning [#21603](https://github.com/arendst/Tasmota/issues/21603)
+- ESP32 MI32 improve parser [#21648](https://github.com/arendst/Tasmota/issues/21648)
 - Matter refactoring of bridged devices [#21575](https://github.com/arendst/Tasmota/issues/21575)
 - Matter filter suffix automatically added for sensors [#21589](https://github.com/arendst/Tasmota/issues/21589)
 - Matter support for Rain sensor [#21633](https://github.com/arendst/Tasmota/issues/21633)
 
 ### Fixed
+- Shutter MQTT on inverted shutter [#21663](https://github.com/arendst/Tasmota/issues/21663)
+- Scripter TCP server [#21660](https://github.com/arendst/Tasmota/issues/21660)
 - Berry `input()` returns empty string and does not crash [#21565](https://github.com/arendst/Tasmota/issues/21565)
 - Matter interverted attributes 0xFFF9 and 0xFFFB [#21636](https://github.com/arendst/Tasmota/issues/21636)
+- Matter CASE Sigma1 resumption mode for faster reconnection [#21644](https://github.com/arendst/Tasmota/issues/21644)
+- Matter TLV.U8 unsigned encoding [#21672](https://github.com/arendst/Tasmota/issues/21672)
+- Matter resumption final ack [#21673](https://github.com/arendst/Tasmota/issues/21673)
 
 ### Removed
