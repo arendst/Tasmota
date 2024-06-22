@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - SML replace vars in descriptor and line (#21622)
 - NeoPool using temperature as only frequently changing value for NPTeleperiod (#21628)
 - NeoPool make compiler setting available by user_config_override.h
+- Matter refactor reading of multiple attributes to reduce memory pressure
 
 ### Fixed
 - Matter interverted attributes 0xFFF9 and 0xFFFB (#21636)

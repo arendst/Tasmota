@@ -837,7 +837,7 @@ be_local_closure(class_Matter_Device_event_fabrics_saved,   /* name */
 extern const bclass be_class_Matter_Device;
 be_local_closure(class_Matter_Device_process_attribute_expansion,   /* name */
   be_nested_proto(
-    16,                          /* nstack */
+    12,                          /* nstack */
     3,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -845,100 +845,48 @@ be_local_closure(class_Matter_Device_process_attribute_expansion,   /* name */
     0,                          /* has sup protos */
     &be_class_Matter_Device, 
     1,                          /* has constants */
-    ( &(const bvalue[16]) {     /* constants */
+    ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(endpoint),
     /* K1   */  be_nested_str_weak(cluster),
     /* K2   */  be_nested_str_weak(attribute),
     /* K3   */  be_nested_str_weak(matter),
     /* K4   */  be_nested_str_weak(PathGenerator),
     /* K5   */  be_nested_str_weak(start),
-    /* K6   */  be_nested_str_weak(next),
-    /* K7   */  be_nested_str_weak(get_pi),
-    /* K8   */  be_nested_str_weak(endpoint_found),
-    /* K9   */  be_nested_str_weak(status),
-    /* K10  */  be_nested_str_weak(UNSUPPORTED_ENDPOINT),
-    /* K11  */  be_nested_str_weak(cluster_found),
-    /* K12  */  be_nested_str_weak(UNSUPPORTED_CLUSTER),
-    /* K13  */  be_nested_str_weak(attribute_found),
-    /* K14  */  be_nested_str_weak(UNSUPPORTED_ATTRIBUTE),
-    /* K15  */  be_nested_str_weak(UNREPORTABLE_ATTRIBUTE),
+    /* K6   */  be_nested_str_weak(is_direct),
+    /* K7   */  be_nested_str_weak(next),
+    /* K8   */  be_nested_str_weak(get_pi),
     }),
     be_str_weak(process_attribute_expansion),
     &be_const_str_solidified,
-    ( &(const binstruction[73]) {  /* code */
+    ( &(const binstruction[28]) {  /* code */
       0x880C0300,  //  0000  GETMBR	R3	R1	K0
       0x88100301,  //  0001  GETMBR	R4	R1	K1
       0x88140302,  //  0002  GETMBR	R5	R1	K2
-      0x50180000,  //  0003  LDBOOL	R6	0	0
-      0x501C0000,  //  0004  LDBOOL	R7	0	0
-      0x50200000,  //  0005  LDBOOL	R8	0	0
-      0x88240300,  //  0006  GETMBR	R9	R1	K0
-      0x4C280000,  //  0007  LDNIL	R10
-      0x2024120A,  //  0008  NE	R9	R9	R10
-      0x78260007,  //  0009  JMPF	R9	#0012
-      0x88240301,  //  000A  GETMBR	R9	R1	K1
-      0x4C280000,  //  000B  LDNIL	R10
-      0x2024120A,  //  000C  NE	R9	R9	R10
-      0x78260003,  //  000D  JMPF	R9	#0012
-      0x88240302,  //  000E  GETMBR	R9	R1	K2
-      0x4C280000,  //  000F  LDNIL	R10
-      0x2024120A,  //  0010  NE	R9	R9	R10
-      0x74260000,  //  0011  JMPT	R9	#0013
-      0x50240001,  //  0012  LDBOOL	R9	0	1
-      0x50240200,  //  0013  LDBOOL	R9	1	0
-      0xB82A0600,  //  0014  GETNGBL	R10	K3
-      0x8C281504,  //  0015  GETMET	R10	R10	K4
-      0x5C300000,  //  0016  MOVE	R12	R0
-      0x7C280400,  //  0017  CALL	R10	2
-      0x8C2C1505,  //  0018  GETMET	R11	R10	K5
-      0x5C340200,  //  0019  MOVE	R13	R1
-      0x4C380000,  //  001A  LDNIL	R14
-      0x7C2C0600,  //  001B  CALL	R11	3
-      0x4C2C0000,  //  001C  LDNIL	R11
-      0x8C301506,  //  001D  GETMET	R12	R10	K6
-      0x7C300200,  //  001E  CALL	R12	1
-      0x5C2C1800,  //  001F  MOVE	R11	R12
-      0x4C340000,  //  0020  LDNIL	R13
-      0x2030180D,  //  0021  NE	R12	R12	R13
-      0x78320009,  //  0022  JMPF	R12	#002D
-      0x5C300400,  //  0023  MOVE	R12	R2
-      0x8C341507,  //  0024  GETMET	R13	R10	K7
-      0x7C340200,  //  0025  CALL	R13	1
-      0x5C381600,  //  0026  MOVE	R14	R11
-      0x5C3C1200,  //  0027  MOVE	R15	R9
-      0x7C300600,  //  0028  CALL	R12	3
-      0x78260001,  //  0029  JMPF	R9	#002C
-      0x78320000,  //  002A  JMPF	R12	#002C
-      0x80001A00,  //  002B  RET	0
-      0x7001FFEF,  //  002C  JMP		#001D
-      0x78260019,  //  002D  JMPF	R9	#0048
-      0x88301508,  //  002E  GETMBR	R12	R10	K8
-      0x74320003,  //  002F  JMPT	R12	#0034
-      0xB8320600,  //  0030  GETNGBL	R12	K3
-      0x8830190A,  //  0031  GETMBR	R12	R12	K10
-      0x9006120C,  //  0032  SETMBR	R1	K9	R12
-      0x7002000E,  //  0033  JMP		#0043
-      0x8830150B,  //  0034  GETMBR	R12	R10	K11
-      0x74320003,  //  0035  JMPT	R12	#003A
-      0xB8320600,  //  0036  GETNGBL	R12	K3
-      0x8830190C,  //  0037  GETMBR	R12	R12	K12
-      0x9006120C,  //  0038  SETMBR	R1	K9	R12
-      0x70020008,  //  0039  JMP		#0043
-      0x8830150D,  //  003A  GETMBR	R12	R10	K13
-      0x74320003,  //  003B  JMPT	R12	#0040
-      0xB8320600,  //  003C  GETNGBL	R12	K3
-      0x8830190E,  //  003D  GETMBR	R12	R12	K14
-      0x9006120C,  //  003E  SETMBR	R1	K9	R12
-      0x70020002,  //  003F  JMP		#0043
-      0xB8320600,  //  0040  GETNGBL	R12	K3
-      0x8830190F,  //  0041  GETMBR	R12	R12	K15
-      0x9006120C,  //  0042  SETMBR	R1	K9	R12
-      0x5C300400,  //  0043  MOVE	R12	R2
-      0x4C340000,  //  0044  LDNIL	R13
-      0x5C380200,  //  0045  MOVE	R14	R1
-      0x503C0200,  //  0046  LDBOOL	R15	1	0
-      0x7C300600,  //  0047  CALL	R12	3
-      0x80000000,  //  0048  RET	0
+      0xB81A0600,  //  0003  GETNGBL	R6	K3
+      0x8C180D04,  //  0004  GETMET	R6	R6	K4
+      0x5C200000,  //  0005  MOVE	R8	R0
+      0x7C180400,  //  0006  CALL	R6	2
+      0x8C1C0D05,  //  0007  GETMET	R7	R6	K5
+      0x5C240600,  //  0008  MOVE	R9	R3
+      0x5C280800,  //  0009  MOVE	R10	R4
+      0x5C2C0A00,  //  000A  MOVE	R11	R5
+      0x7C1C0800,  //  000B  CALL	R7	4
+      0x8C1C0D06,  //  000C  GETMET	R7	R6	K6
+      0x7C1C0200,  //  000D  CALL	R7	1
+      0x4C200000,  //  000E  LDNIL	R8
+      0x8C240D07,  //  000F  GETMET	R9	R6	K7
+      0x7C240200,  //  0010  CALL	R9	1
+      0x5C201200,  //  0011  MOVE	R8	R9
+      0x4C280000,  //  0012  LDNIL	R10
+      0x2024120A,  //  0013  NE	R9	R9	R10
+      0x78260005,  //  0014  JMPF	R9	#001B
+      0x5C240400,  //  0015  MOVE	R9	R2
+      0x8C280D08,  //  0016  GETMET	R10	R6	K8
+      0x7C280200,  //  0017  CALL	R10	1
+      0x5C2C1000,  //  0018  MOVE	R11	R8
+      0x7C240400,  //  0019  CALL	R9	2
+      0x7001FFF3,  //  001A  JMP		#000F
+      0x80000000,  //  001B  RET	0
     })
   )
 );
@@ -2093,7 +2041,7 @@ be_local_closure(class_Matter_Device_resolve_attribute_read_solo,   /* name */
     }),
     be_str_weak(resolve_attribute_read_solo),
     &be_const_str_solidified,
-    ( &(const binstruction[45]) {  /* code */
+    ( &(const binstruction[47]) {  /* code */
       0x88080300,  //  0000  GETMBR	R2	R1	K0
       0x880C0301,  //  0001  GETMBR	R3	R1	K1
       0x88100302,  //  0002  GETMBR	R4	R1	K2
@@ -2113,32 +2061,34 @@ be_local_closure(class_Matter_Device_resolve_attribute_read_solo,   /* name */
       0x7C140400,  //  0010  CALL	R5	2
       0x4C180000,  //  0011  LDNIL	R6
       0x1C180A06,  //  0012  EQ	R6	R5	R6
-      0x781A0004,  //  0013  JMPF	R6	#0019
+      0x781A0005,  //  0013  JMPF	R6	#001A
       0xB81A0A00,  //  0014  GETNGBL	R6	K5
       0x88180D06,  //  0015  GETMBR	R6	R6	K6
       0x90060806,  //  0016  SETMBR	R1	K4	R6
       0x4C180000,  //  0017  LDNIL	R6
       0x80040C00,  //  0018  RET	1	R6
-      0x8C180B07,  //  0019  GETMET	R6	R5	K7
-      0x5C200600,  //  001A  MOVE	R8	R3
-      0x7C180400,  //  001B  CALL	R6	2
-      0x741A0004,  //  001C  JMPT	R6	#0022
-      0xB81A0A00,  //  001D  GETNGBL	R6	K5
-      0x88180D08,  //  001E  GETMBR	R6	R6	K8
-      0x90060806,  //  001F  SETMBR	R1	K4	R6
-      0x4C180000,  //  0020  LDNIL	R6
-      0x80040C00,  //  0021  RET	1	R6
-      0x8C180B09,  //  0022  GETMET	R6	R5	K9
-      0x5C200600,  //  0023  MOVE	R8	R3
-      0x5C240800,  //  0024  MOVE	R9	R4
-      0x7C180600,  //  0025  CALL	R6	3
-      0x741A0004,  //  0026  JMPT	R6	#002C
-      0xB81A0A00,  //  0027  GETNGBL	R6	K5
-      0x88180D0A,  //  0028  GETMBR	R6	R6	K10
-      0x90060806,  //  0029  SETMBR	R1	K4	R6
-      0x4C180000,  //  002A  LDNIL	R6
-      0x80040C00,  //  002B  RET	1	R6
-      0x80040A00,  //  002C  RET	1	R5
+      0x70020013,  //  0019  JMP		#002E
+      0x8C180B07,  //  001A  GETMET	R6	R5	K7
+      0x5C200600,  //  001B  MOVE	R8	R3
+      0x7C180400,  //  001C  CALL	R6	2
+      0x741A0005,  //  001D  JMPT	R6	#0024
+      0xB81A0A00,  //  001E  GETNGBL	R6	K5
+      0x88180D08,  //  001F  GETMBR	R6	R6	K8
+      0x90060806,  //  0020  SETMBR	R1	K4	R6
+      0x4C180000,  //  0021  LDNIL	R6
+      0x80040C00,  //  0022  RET	1	R6
+      0x70020009,  //  0023  JMP		#002E
+      0x8C180B09,  //  0024  GETMET	R6	R5	K9
+      0x5C200600,  //  0025  MOVE	R8	R3
+      0x5C240800,  //  0026  MOVE	R9	R4
+      0x7C180600,  //  0027  CALL	R6	3
+      0x741A0004,  //  0028  JMPT	R6	#002E
+      0xB81A0A00,  //  0029  GETNGBL	R6	K5
+      0x88180D0A,  //  002A  GETMBR	R6	R6	K10
+      0x90060806,  //  002B  SETMBR	R1	K4	R6
+      0x4C180000,  //  002C  LDNIL	R6
+      0x80040C00,  //  002D  RET	1	R6
+      0x80040A00,  //  002E  RET	1	R5
     })
   )
 );
@@ -6163,25 +6113,25 @@ be_local_class(Matter_Device,
         { be_const_key_weak(http_rain, -1), be_const_class(be_class_Matter_Plugin_Bridge_Sensor_Rain) },
         { be_const_key_weak(http_pressure, 32), be_const_class(be_class_Matter_Plugin_Bridge_Sensor_Pressure) },
         { be_const_key_weak(v_light2, -1), be_const_class(be_class_Matter_Plugin_Virt_Light2) },
-        { be_const_key_weak(temperature, -1), be_const_class(be_class_Matter_Plugin_Sensor_Temp) },
+        { be_const_key_weak(pressure, -1), be_const_class(be_class_Matter_Plugin_Sensor_Pressure) },
         { be_const_key_weak(relay, -1), be_const_class(be_class_Matter_Plugin_OnOff) },
         { be_const_key_weak(v_illuminance, 15), be_const_class(be_class_Matter_Plugin_Virt_Sensor_Illuminance) },
         { be_const_key_weak(contact, 1), be_const_class(be_class_Matter_Plugin_Sensor_Contact) },
-        { be_const_key_weak(http_relay, 12), be_const_class(be_class_Matter_Plugin_Bridge_OnOff) },
+        { be_const_key_weak(temperature, 27), be_const_class(be_class_Matter_Plugin_Sensor_Temp) },
         { be_const_key_weak(waterleak, -1), be_const_class(be_class_Matter_Plugin_Sensor_Waterleak) },
         { be_const_key_weak(v_fan, -1), be_const_class(be_class_Matter_Plugin_Virt_Fan) },
         { be_const_key_weak(http_occupancy, 6), be_const_class(be_class_Matter_Plugin_Bridge_Sensor_Occupancy) },
-        { be_const_key_weak(v_airquality, -1), be_const_class(be_class_Matter_Plugin_Virt_Sensor_Air_Quality) },
+        { be_const_key_weak(shutter_X2Btilt, -1), be_const_class(be_class_Matter_Plugin_ShutterTilt) },
         { be_const_key_weak(fan, -1), be_const_class(be_class_Matter_Plugin_Fan) },
         { be_const_key_weak(light1, -1), be_const_class(be_class_Matter_Plugin_Light1) },
         { be_const_key_weak(root, -1), be_const_class(be_class_Matter_Plugin_Root) },
         { be_const_key_weak(illuminance, -1), be_const_class(be_class_Matter_Plugin_Sensor_Illuminance) },
-        { be_const_key_weak(v_temp, 20), be_const_class(be_class_Matter_Plugin_Virt_Sensor_Temp) },
+        { be_const_key_weak(v_temp, 41), be_const_class(be_class_Matter_Plugin_Virt_Sensor_Temp) },
         { be_const_key_weak(v_light1, -1), be_const_class(be_class_Matter_Plugin_Virt_Light1) },
-        { be_const_key_weak(v_waterleak, -1), be_const_class(be_class_Matter_Plugin_Virt_Sensor_Waterleak) },
+        { be_const_key_weak(http_relay, -1), be_const_class(be_class_Matter_Plugin_Bridge_OnOff) },
         { be_const_key_weak(v_relay, -1), be_const_class(be_class_Matter_Plugin_Virt_OnOff) },
-        { be_const_key_weak(pressure, -1), be_const_class(be_class_Matter_Plugin_Sensor_Pressure) },
-        { be_const_key_weak(light2, 27), be_const_class(be_class_Matter_Plugin_Light2) },
+        { be_const_key_weak(v_waterleak, -1), be_const_class(be_class_Matter_Plugin_Virt_Sensor_Waterleak) },
+        { be_const_key_weak(light2, 29), be_const_class(be_class_Matter_Plugin_Light2) },
         { be_const_key_weak(http_light1, -1), be_const_class(be_class_Matter_Plugin_Bridge_Light1) },
         { be_const_key_weak(v_flow, -1), be_const_class(be_class_Matter_Plugin_Virt_Sensor_Flow) },
         { be_const_key_weak(onoff, -1), be_const_class(be_class_Matter_Plugin_Sensor_OnOff) },
@@ -6192,14 +6142,14 @@ be_local_class(Matter_Device,
         { be_const_key_weak(v_rain, 43), be_const_class(be_class_Matter_Plugin_Virt_Sensor_Rain) },
         { be_const_key_weak(http_light0, -1), be_const_class(be_class_Matter_Plugin_Bridge_Light0) },
         { be_const_key_weak(http_waterleak, 45), be_const_class(be_class_Matter_Plugin_Bridge_Sensor_Waterleak) },
-        { be_const_key_weak(shutter_X2Btilt, -1), be_const_class(be_class_Matter_Plugin_ShutterTilt) },
+        { be_const_key_weak(v_airquality, -1), be_const_class(be_class_Matter_Plugin_Virt_Sensor_Air_Quality) },
         { be_const_key_weak(v_light3, -1), be_const_class(be_class_Matter_Plugin_Virt_Light3) },
         { be_const_key_weak(airquality, 35), be_const_class(be_class_Matter_Plugin_Sensor_Air_Quality) },
         { be_const_key_weak(http_flow, -1), be_const_class(be_class_Matter_Plugin_Bridge_Sensor_Flow) },
         { be_const_key_weak(humidity, -1), be_const_class(be_class_Matter_Plugin_Sensor_Humidity) },
-        { be_const_key_weak(http_temperature, 41), be_const_class(be_class_Matter_Plugin_Bridge_Sensor_Temp) },
+        { be_const_key_weak(http_temperature, 20), be_const_class(be_class_Matter_Plugin_Bridge_Sensor_Temp) },
         { be_const_key_weak(http_light3, -1), be_const_class(be_class_Matter_Plugin_Bridge_Light3) },
-        { be_const_key_weak(v_humidity, 29), be_const_class(be_class_Matter_Plugin_Virt_Sensor_Humidity) },
+        { be_const_key_weak(v_humidity, 12), be_const_class(be_class_Matter_Plugin_Virt_Sensor_Humidity) },
         { be_const_key_weak(http_airquality, -1), be_const_class(be_class_Matter_Plugin_Bridge_Sensor_Air_Quality) },
         { be_const_key_weak(aggregator, 11), be_const_class(be_class_Matter_Plugin_Aggregator) },
         { be_const_key_weak(rain, -1), be_const_class(be_class_Matter_Plugin_Sensor_Rain) },

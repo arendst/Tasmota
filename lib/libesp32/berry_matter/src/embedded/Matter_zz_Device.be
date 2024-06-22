@@ -518,8 +518,6 @@ class Matter_Device
   #############################################################
   # Proceed to attribute expansion (used for Attribute Read/Write/Subscribe)
   #
-  # Called only when expansion is needed, so we don't need to report any error since they are ignored
-  #
   # calls `cb(pi, ctx, direct)` for each attribute expanded.
   # `pi`: plugin instance targeted by the attribute (via endpoint). Note: nothing is sent if the attribute is not declared in supported attributes in plugin.
   # `ctx`: context object with `endpoint`, `cluster`, `attribute` (no `command`)
@@ -530,68 +528,44 @@ class Matter_Device
     var endpoint = ctx.endpoint
     var cluster = ctx.cluster
     var attribute = ctx.attribute
-    var endpoint_found = false                # did any endpoint match
-    var cluster_found = false
-    var attribute_found = false
-
-    var direct = (ctx.endpoint != nil) && (ctx.cluster != nil) && (ctx.attribute != nil) # true if the target is a precise attribute, false if it results from an expansion and error are ignored
-
-    # log(f"MTR: process_attribute_expansion {str(ctx))}", 4)
 
     # build the generator for all endpoint/cluster/attributes candidates
     var path_generator = matter.PathGenerator(self)
-    path_generator.start(ctx, nil)      # TODO add session if we think it's needed later
+    path_generator.start(endpoint, cluster, attribute)
 
+    var direct = path_generator.is_direct()
     var concrete_path
     while ((concrete_path := path_generator.next()) != nil)
-      var finished = cb(path_generator.get_pi(), concrete_path, direct)   # call the callback with the plugin and the context
-      if direct && finished     return end
-    end
-
-    # we didn't have any successful match, report an error if direct (non-expansion request)
-    if direct
-      # since it's a direct request, ctx has already the correct endpoint/cluster/attribute
-      if   !path_generator.endpoint_found      ctx.status = matter.UNSUPPORTED_ENDPOINT
-      elif !path_generator.cluster_found       ctx.status = matter.UNSUPPORTED_CLUSTER
-      elif !path_generator.attribute_found     ctx.status = matter.UNSUPPORTED_ATTRIBUTE
-      else                      ctx.status = matter.UNREPORTABLE_ATTRIBUTE
-      end
-      cb(nil, ctx, true)
+      var finished = cb(path_generator.get_pi(), concrete_path)   # call the callback with the plugin and the context
     end
   end
 
   #############################################################
   # Optimized version for a single endpoint/cluster/attribute
   #
-  # Retrieve the plugin for a read
+  # Retrieve the plugin for a read, or nil if not found
+  # In case of error, ctx.status is updated accordingly
   def resolve_attribute_read_solo(ctx)
     var endpoint = ctx.endpoint
-    # var endpoint_found = false                # did any endpoint match
     var cluster = ctx.cluster
-    # var cluster_found = false
     var attribute = ctx.attribute
-    # var attribute_found = false
 
     # all 3 elements must be non-nil
-    if endpoint == nil || cluster == nil || attribute == nil      return nil    end
+    if (endpoint == nil) || (cluster == nil) || (attribute == nil)      return nil    end
 
     # look for plugin
     var pi = self.find_plugin_by_endpoint(endpoint)
-    if pi == nil                                # endpoint not found
+    if (pi == nil)
       ctx.status = matter.UNSUPPORTED_ENDPOINT
       return nil
-    end
-
-    # check cluster
-    if !pi.contains_cluster(cluster)
-      ctx.status = matter.UNSUPPORTED_CLUSTER
-      return nil
-    end
-
-    # attribute list
-    if !pi.contains_attribute(cluster, attribute)
-      ctx.status = matter.UNSUPPORTED_ATTRIBUTE
-      return nil
+    else
+      if   !pi.contains_cluster(cluster)
+        ctx.status = matter.UNSUPPORTED_CLUSTER
+        return nil
+      elif !pi.contains_attribute(cluster, attribute)
+        ctx.status = matter.UNSUPPORTED_ATTRIBUTE
+        return nil
+      end
     end
 
     # all good

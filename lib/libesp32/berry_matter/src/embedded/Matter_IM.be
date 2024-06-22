@@ -75,14 +75,16 @@ class Matter_IM
       return self.process_status_response(msg, val)
     elif opcode == 0x02   # Read Request
       # self.send_ack_now(msg)      # to improve latency, we don't automatically Ack on invoke request
-      return self.process_read_request(msg, val)
+      return self.process_read_request_pull(msg, val)
     elif opcode == 0x03   # Subscribe Request
       self.send_ack_now(msg)
       return self.subscribe_request(msg, val)
     elif opcode == 0x04   # Subscribe Response
-      return self.subscribe_response(msg, val)
+      # return self.subscribe_response(msg, val)
+      return false                                    # not implemented for Matter device
     elif opcode == 0x05   # Report Data
-      return self.report_data(msg, val)
+      # return self.report_data(msg, val)
+      return false                                    # not implemented for Matter device
     elif opcode == 0x06   # Write Request
       self.send_ack_now(msg)
       return self.process_write_request(msg, val)
@@ -92,7 +94,8 @@ class Matter_IM
       # self.send_ack_now(msg)      # to improve latency, we don't automatically Ack on invoke request
       return self.process_invoke_request(msg, val)
     elif opcode == 0x09   # Invoke Response
-      return self.process_invoke_response(msg, val)
+      # return self.process_invoke_response(msg, val)
+      return false                                    # not implemented for Matter device
     elif opcode == 0x0A   # Timed Request
       return self.process_timed_request(msg, val)
     end
@@ -222,210 +225,83 @@ class Matter_IM
   end
 
   #############################################################
-  # Inner code shared between read_attributes and subscribe_request
+  # read_single_attribute_to_bytes
   #
-  # query: `ReadRequestMessage` or `SubscribeRequestMessage`
-  def _inner_process_read_request(session, query, msg, no_log)
+  # Takes a concrete context (endpoint/cluster/attribute)
+  # and a plugin reference, return either the bytes object
+  # or an array of bytes() if the response does not fit in
+  # a single packet
+  #
+  # `pi` is the plugin object
+  #      if `pi` is nil, just report the status for ctx.status
+  # `ctx` is the context with endpoint/cluster/attribute, `cts.status` is non-nil for direct request and contains the error message to show
+  # `session` is the current session
+  # `force_log` is false, then don't log normal values - typically used to not log wildcard requests
+  #
+  # return `true` if 
+  def read_single_attribute_to_bytes(pi, ctx, session, force_log)
+    var TLV = matter.TLV
+    var attr_name 
+    if tasmota.loglevel(3)
+      attr_name = matter.get_attribute_name(ctx.cluster, ctx.attribute)
+      attr_name = attr_name ? " (" + attr_name + ")" : ""
+    end
 
-    ### Inner function to be iterated upon
-    # ret is the ReportDataMessage list to send back
-    # ctx is the context with endpoint/cluster/attribute
-    # direct is true if error is reported, false if error is silently ignored
-    #
-    # if `pi` is nil, just report the status for ctx.status
-    #
-    # should return true if answered, false if passing to next handler
-    def read_single_attribute(ret, pi, ctx, direct)
-      var TLV = matter.TLV
-      var attr_name 
-      if tasmota.loglevel(3)
-        attr_name = matter.get_attribute_name(ctx.cluster, ctx.attribute)
-        attr_name = attr_name ? " (" + attr_name + ")" : ""
+    # Special case to report unsupported item, if pi==nil
+    var direct = (ctx.status != nil)  # memorize if the request is 'direct', ctx.status may be changed later
+    var res
+    var ret_raw_or_list              # contains either a bytes() buffer to append, or a list of bytes(), or nil
+    if (pi != nil)
+      res = pi.read_attribute(session, ctx, self.tlv_solo)
+    end
+
+    # dispatch depending on the result of the `read_attribute` method
+    if res != nil             # we got an actual value
+      # get the value with anonymous tag before it is tagged, for logging
+      var res_str = ""
+      if tasmota.loglevel(3) && force_log
+        res_str = res.to_str_val()
       end
 
-      # Special case to report unsupported item, if pi==nil
-      ctx.status = nil                # reset status, just in case
-      var res = (pi != nil) ? pi.read_attribute(session, ctx, self.tlv_solo) : nil
-      var found = true                # stop expansion since we have a value
-      var a1_raw_or_list              # contains either a bytes() buffer to append, or a list of bytes(), or nil
-      if res != nil
-        var res_str = ""
-        if !no_log
-          res_str = res.to_str_val()  # get the value with anonymous tag before it is tagged, for logging
-        end
+      # check if too big to encode as a single packet, only for list and array
+      if (res.is_list || res.is_array) && (res.encode_len() > matter.IM_ReportData_Pull.MAX_MESSAGE)
+        ret_raw_or_list = []         # we return a list of block
+        var a1_raw = bytes(48)
+        var empty_list = TLV.Matter_TLV_array()
+        self.attributedata2raw(a1_raw, ctx, empty_list, false)
+        ret_raw_or_list.push(a1_raw)
 
-        # check if too big to encode as a single packet
-        if (res.is_list || res.is_array) && res.encode_len() > matter.IM_ReportData.MAX_MESSAGE
-          # log(f"MTR: >>>>>> long response", 3)
-          a1_raw_or_list = []         # we return a list of block
-          var a1_raw = bytes(48)
-          var empty_list = TLV.Matter_TLV_array()
-          self.attributedata2raw(a1_raw, ctx, empty_list, false)
-          a1_raw_or_list.push(a1_raw)
-          # log(f"MTR: >>>>>> long response global DELETE {a1_raw.tohex()}", 3)
-
-          for elt:res.val
-            a1_raw = bytes(48)
-            # var list_item = TLV.Matter_TLV_array()
-            # list_item.val.push(elt)
-            self.attributedata2raw(a1_raw, ctx, elt, true #- add ListIndex:null -#)
-            # log(f"MTR: >>>>>> long response global ADD {a1_raw.tohex()}", 3)
-            a1_raw_or_list.push(a1_raw)
-          end
-          # log(f"MTR: >>>>>> long response global {a1_raw_or_list}", 3)
-        else
-          # normal encoding
-          # encode directly raw bytes()
-          a1_raw_or_list = bytes(48)      # pre-reserve 48 bytes
-          self.attributedata2raw(a1_raw_or_list, ctx, res)
-        end
-
-        if tasmota.loglevel(3) && !no_log
-          log(f"MTR: >Read_Attr ({session.local_session_id:6i}) {ctx}{attr_name} - {res_str}", 3)
-        end          
-      elif ctx.status != nil
-        if direct                           # we report an error only if a concrete direct read, not with wildcards
-          # encode directly raw bytes()
-          a1_raw_or_list = bytes(48)      # pre-reserve 48 bytes
-          self.attributestatus2raw(a1_raw_or_list, ctx, ctx.status)
-
-          if tasmota.loglevel(3)
-            log(format("MTR: >Read_Attr (%6i) %s%s - STATUS: 0x%02X %s", session.local_session_id, str(ctx), attr_name, ctx.status, ctx.status == matter.UNSUPPORTED_ATTRIBUTE ? "UNSUPPORTED_ATTRIBUTE" : ""), 3)
-          end
+        for elt : res.val
+          a1_raw = bytes(48)
+          # var list_item = TLV.Matter_TLV_array()
+          # list_item.val.push(elt)
+          self.attributedata2raw(a1_raw, ctx, elt, true #- add ListIndex:null -#)
+          ret_raw_or_list.push(a1_raw)
         end
       else
-        if tasmota.loglevel(3) && !no_log
-          log(format("MTR: >Read_Attr (%6i) %s%s - IGNORED", session.local_session_id, str(ctx), attr_name), 3)
-        end
-        # ignore if content is nil and status is undefined
-        if direct
-          found = false
-        end
+        # normal encoding
+        # encode directly raw bytes()
+        ret_raw_or_list = bytes(48)      # pre-reserve 48 bytes
+        self.attributedata2raw(ret_raw_or_list, ctx, res)
       end
 
-      # a1_raw_or_list if either nil, bytes(), of list(bytes())
-      var idx = isinstance(a1_raw_or_list, list) ? 0 : nil      # index in list, or nil if non-list
-      while a1_raw_or_list != nil
-        var elt = (idx == nil) ? a1_raw_or_list : a1_raw_or_list[idx]   # dereference
-
-        if size(ret.attribute_reports) == 0
-          ret.attribute_reports.push(elt)                       # push raw binary instead of a TLV
-        else    # already blocks present, see if we can add to the latest, or need to create a new block
-          var last_block = ret.attribute_reports[-1]
-          if size(last_block) + size(elt) <= matter.IM_ReportData.MAX_MESSAGE
-            # add to last block
-            last_block .. elt
-          else
-            ret.attribute_reports.push(elt)      # push raw binary instead of a TLV
-          end
-        end
-
-        if idx == nil
-          a1_raw_or_list = nil                    # stop loop
-        else
-          idx += 1
-          if idx >= size(a1_raw_or_list)
-            a1_raw_or_list = nil                    # stop loop
-          end
-        end
+      if tasmota.loglevel(3) && force_log
+        log(f"MTR: >Read_Attr ({session.local_session_id:6i}) {ctx}{attr_name} - {res_str}", 3)
       end
+    # below, we didn't have a response from `read_attribute`, check if ctx.status contains some information
+    elif ctx.status != nil
+      if direct                           # we report an error only if a concrete direct read, not with wildcards
+        # encode directly raw bytes()
+        ret_raw_or_list = bytes(48)       # pre-reserve 48 bytes
+        self.attributestatus2raw(ret_raw_or_list, ctx, ctx.status)
 
-      # check if we still have enough room in last block
-      # if a1_raw_or_list         # do we have bytes to add, and it's not zero size
-      #   if size(ret.attribute_reports) == 0
-      #     ret.attribute_reports.push(a1_raw_or_list)      # push raw binary instead of a TLV
-      #   else    # already blocks present, see if we can add to the latest, or need to create a new block
-      #     var last_block = ret.attribute_reports[-1]
-      #     if size(last_block) + size(a1_raw_or_list) <= matter.IM_ReportData.MAX_MESSAGE
-      #       # add to last block
-      #       last_block .. a1_raw_or_list
-      #     else
-      #       ret.attribute_reports.push(a1_raw_or_list)      # push raw binary instead of a TLV
-      #     end
-      #   end
-      # end
-
-      return found          # return true if we had a match
-    end
-
-    var endpoints = self.device.get_active_endpoints()
-    # structure is `ReadRequestMessage` 10.6.2 p.558
-    var ctx = matter.Path()
-    ctx.msg = msg
-    var node_id = (msg != nil) ? msg.get_node_id() : nil
-
-    # prepare the response
-    var ret = matter.ReportDataMessage()
-    # ret.suppress_response = true
-    ret.attribute_reports = []
-
-    for q:query.attributes_requests
-      # need to do expansion here
-      ctx.endpoint = q.endpoint
-      ctx.cluster = q.cluster
-      ctx.attribute = q.attribute
-      ctx.fabric_filtered = query.fabric_filtered
-      ctx.status = matter.UNSUPPORTED_ATTRIBUTE   #default error if returned `nil`
-      
-      # expand endpoint
-      if ctx.endpoint == nil || ctx.cluster == nil || ctx.attribute == nil
-        # we need expansion, log first
         if tasmota.loglevel(3)
-          if ctx.cluster != nil && ctx.attribute != nil
-            var attr_name = matter.get_attribute_name(ctx.cluster, ctx.attribute)
-            log(format("MTR: >Read_Attr (%6i) %s", session.local_session_id, str(ctx) + (attr_name ? " (" + attr_name + ")" : "")), 3)
-          else
-            log(format("MTR: >Read_Attr (%6i) %s", session.local_session_id, str(ctx)), 3)
-          end
-        end
-        
-      end
-
-      # implement concrete expansion
-      self.device.process_attribute_expansion(ctx,
-      / pi, ctx, direct -> read_single_attribute(ret, pi, ctx, direct)
-      )
-    end
-
-    # tasmota.log(f">>>: event_1")
-    var event_requests = query.event_requests
-    var event_filters = query.event_filters
-    var event_no_min = nil            # do we have a filter for minimum event_no (int64 or nil)
-    if event_requests                 # if not `nil` and not empty list
-      # read event minimum
-      if event_filters
-        for filter: event_filters      # filter is an instance of `EventFilterIB`
-          tasmota.log(f"MTR: EventFilter {filter=} {node_id=}", 3)
-          var filter_node = int64.toint64(filter.node)     # nil or int64
-          if filter_node                # there is a filter on node-id
-            if filter.node.tobytes() != node_id   # the node id doesn't match
-              tasmota.log(f"MTR: node_id filter {filter_node.tobytes().tohex()} doesn't match {node_id.tohex()}")
-              continue
-            end
-            # specified minimum value
-            var new_event_no_min = int64.toint64(filter.event_min)
-            if (event_no_min != nil) || (event_no_min < new_event_no_min)
-              event_no_min = new_event_no_min
-            end
-          end
+          log(format("MTR: >Read_Attr (%6i) %s%s - STATUS: 0x%02X %s", session.local_session_id, str(ctx), attr_name, ctx.status, ctx.status == matter.UNSUPPORTED_ATTRIBUTE ? "UNSUPPORTED_ATTRIBUTE" : ""), 3)
         end
       end
-      # event_no_min is either `nil` or has an `int64` value
-
-      ret.event_reports = []
-      for q: event_requests
-        # need to do expansion here
-        ctx.endpoint = q.endpoint
-        ctx.cluster = q.cluster
-        ctx.attribute = q.event
-        #TODO
-        tasmota.log(f"MTR: >Read_Event({session.local_session_id:%6i}) {ctx}", 3)
-      end
     end
-    # tasmota.log("MTR: ReportDataMessage=" + str(ret), 3)
-    # tasmota.log("MTR: ReportDataMessageTLV=" + str(ret.to_TLV()), 3)
 
-    return ret
+    return ret_raw_or_list
   end
 
   #############################################################
@@ -713,20 +589,75 @@ class Matter_IM
   end
 
   #############################################################
-  # process IM 0x02 Read Request
+  # process IM 0x02 Read Request (Pull Mode)
   #
   # val is the TLV structure
   #
+  # This version lazily reads attributes when building the response packets
+  #
   # returns `true` if processed, `false` if silently ignored,
   # or raises an exception
-  def process_read_request(msg, val)
-    matter.profiler.log("read_request_start")
+  def process_read_request_pull(msg, val)
+    matter.profiler.log("read_request_start_pull")
     var query = matter.ReadRequestMessage().from_TLV(val)
+    var generator_or_arr = self.process_read_or_subscribe_request_pull(query, msg)
+
+    self.send_report_data_pull(msg, generator_or_arr)   # pack into a response structure that will read attributes when expansion is triggered
+
+    return true
+  end
+
+
+  #############################################################
+  # process_read_or_subscribe_request_pull
+  #
+  # This version lazily reads attributes when building the response packets
+  #
+  # returns `true` if processed, `false` if silently ignored,
+  # or raises an exception
+  def process_read_or_subscribe_request_pull(query, msg)
     if query.attributes_requests != nil
-      var ret = self._inner_process_read_request(msg.session, query, msg)
-      self.send_report_data(msg, ret)
+      var generator_or_arr                                # single path generator (common case) or array of generators
+      var node_id = (msg != nil) ? msg.get_node_id() : nil
+
+      # structure is `ReadRequestMessage` 10.6.2 p.558  
+      if size(query.attributes_requests) > 1
+        generator_or_arr = []
+      end
+
+      for q : query.attributes_requests
+        var gen = matter.PathGenerator(self.device)
+        gen.start(q.endpoint, q.cluster, q.attribute, query.fabric_filtered)
+
+        if size(query.attributes_requests) > 1
+          generator_or_arr.push(gen)
+        else
+          generator_or_arr = gen
+        end
+        
+        if tasmota.loglevel(3)
+        # log read request if it contains expansion (wildcard), single reads are logged at concrete time
+          if q.endpoint == nil || q.cluster == nil || q.attribute == nil
+            # we need expansion, log first
+            var ctx = matter.Path()
+            ctx.endpoint = q.endpoint
+            ctx.cluster = q.cluster
+            ctx.attribute = q.attribute
+            ctx.fabric_filtered = query.fabric_filtered
+            var ctx_str = str(ctx)
+
+            if q.cluster != nil && q.attribute != nil
+              var attr_name = matter.get_attribute_name(q.cluster, q.attribute)
+              log(format("MTR: >Read_Attr (%6i) %s", msg.session.local_session_id, ctx_str + (attr_name ? " (" + attr_name + ")" : "")), 3)
+            else
+              log(format("MTR: >Read_Attr (%6i) %s", msg.session.local_session_id, ctx_str), 3)
+            end
+          end
+        end
+      end
+      return generator_or_arr
     end
-    return true                                     # always consider succesful even if empty
+    return nil
   end
 
   #############################################################
@@ -755,13 +686,13 @@ class Matter_IM
     if res != nil
 
       # check if the payload is a complex structure and too long to fit in a single response packet
-      if (res.is_list || res.is_array) && (res.encode_len() > matter.IM_ReportData.MAX_MESSAGE)
+      if (res.is_list || res.is_array) && (res.encode_len() > matter.IM_ReportData_Pull.MAX_MESSAGE)
         # revert to standard 
         # the attribute will be read again, but it's hard to avoid it
         res = nil       # indicated to GC that we don't need it again
         log(f"MTR:                     Response to big, revert to non-solo", 3)
         var val = matter.TLV.parse(msg.raw, msg.app_payload_idx)
-        return self.process_read_request(msg, val)
+        return self.process_read_request_pull(msg, val)
       end
       # encode directly raw bytes()
       raw = bytes(48)      # pre-reserve 48 bytes
@@ -850,6 +781,7 @@ class Matter_IM
     var query = matter.SubscribeRequestMessage().from_TLV(val)
 
     if !query.keep_subscriptions
+      # log(f"MTR: remove all subscriptions for session {msg.session}", 3)
       self.subs_shop.remove_by_session(msg.session)      # if `keep_subscriptions`, kill all subscriptions from current session
     end
 
@@ -858,26 +790,27 @@ class Matter_IM
     var sub = self.subs_shop.new_subscription(msg.session, query)
 
     # expand a string with all attributes requested
-    var attr_req = []
-    var ctx = matter.Path()
-    ctx.msg = msg
-    for q:query.attributes_requests
-      ctx.endpoint = q.endpoint
-      ctx.cluster = q.cluster
-      ctx.attribute = q.attribute
-      attr_req.push(str(ctx))
+    if tasmota.loglevel(3)
+      var attr_req = []
+      var ctx = matter.Path()
+      ctx.msg = msg
+      for q:query.attributes_requests
+        ctx.endpoint = q.endpoint
+        ctx.cluster = q.cluster
+        ctx.attribute = q.attribute
+        attr_req.push(str(ctx))
+      end
+      log(format("MTR: >Subscribe (%6i) %s (min=%i, max=%i, keep=%i) sub=%i fabric_filtered=%s attr_req=%s event_req=%s",
+                                msg.session.local_session_id, attr_req.concat(" "), sub.min_interval, sub.max_interval, query.keep_subscriptions ? 1 : 0,
+                                sub.subscription_id, query.fabric_filtered,
+                                query.attributes_requests != nil ? size(query.attributes_requests) : "-",
+                                query.event_requests != nil ? size(query.event_requests) : "-"), 3)
     end
-    log(format("MTR: >Subscribe (%6i) %s (min=%i, max=%i, keep=%i) sub=%i fabric_filtered=%s attr_req=%s event_req=%s",
-                              msg.session.local_session_id, attr_req.concat(" "), sub.min_interval, sub.max_interval, query.keep_subscriptions ? 1 : 0,
-                              sub.subscription_id, query.fabric_filtered,
-                              query.attributes_requests != nil ? size(query.attributes_requests) : "-",
-                              query.event_requests != nil ? size(query.event_requests) : "-"), 3)
 
-    var ret = self._inner_process_read_request(msg.session, query, msg, !self.device.debug #-log only if debug enabled-#)
-    # ret is of type `Matter_ReportDataMessage`
-    ret.subscription_id = sub.subscription_id     # enrich with subscription id TODO
-    self.send_subscribe_response(msg, ret, sub)
+    var generator_or_arr = self.process_read_or_subscribe_request_pull(query, msg)
+    self.send_subscribe_response_pull(msg, generator_or_arr, sub)   # pack into a response structure that will read attributes when expansion is triggered
     return true
+
   end
 
   #############################################################
@@ -1030,19 +963,53 @@ class Matter_IM
   #############################################################
   # process IM 0x04 Subscribe Response
   #
-  def subscribe_response(msg, val)
-    var query = matter.SubscribeResponseMessage().from_TLV(val)
-    # log("MTR: received SubscribeResponsetMessage=" + str(query), 4)
-    return false
-  end
+  # def subscribe_response(msg, val)
+  #   var query = matter.SubscribeResponseMessage().from_TLV(val)
+  #   # log("MTR: received SubscribeResponsetMessage=" + str(query), 4)
+  #   return false
+  # end
 
   #############################################################
   # process IM 0x05 ReportData
   #
-  def report_data(msg, val)
-    var query = matter.ReportDataMessage().from_TLV(val)
-    # log("MTR: received ReportDataMessage=" + str(query), 4)
-    return false
+  # def report_data(msg, val)
+  #   var query = matter.ReportDataMessage().from_TLV(val)
+  #   # log("MTR: received ReportDataMessage=" + str(query), 4)
+  #   return false
+  # end
+
+
+  #############################################################
+  # write_single_attribute_status_to_bytes
+  #
+  # Takes a concrete context (endpoint/cluster/attribute)
+  # and a status, and completes the WriteResponseMessage (in ret)
+  #
+  # `ret` is the array WriteResponseMessage.write_responses
+  # `ctx` is the context with endpoint/cluster/attribute, `cts.status` is non-nil for direct request and contains the error message to show
+  # `write_data` the data written, only for logging
+  #
+  def write_single_attribute_status_to_bytes(ret, ctx, write_data)
+    var TLV = matter.TLV
+    var attr_name = matter.get_attribute_name(ctx.cluster, ctx.attribute)
+    attr_name = attr_name ? " (" + attr_name + ")" : ""
+
+    # output only if there is a status
+    if ctx.status != nil
+      var a1 = matter.AttributeStatusIB()
+      a1.path = matter.AttributePathIB()
+      a1.status = matter.StatusIB()
+      a1.path.endpoint = ctx.endpoint
+      a1.path.cluster = ctx.cluster
+      a1.path.attribute = ctx.attribute
+      a1.status.status = ctx.status
+
+      ret.write_responses.push(a1)
+      log(format("MTR: >Write_Attr%s%s - %s STATUS: 0x%02X %s", str(ctx), attr_name, write_data, ctx.status, ctx.status == matter.SUCCESS ? "SUCCESS" : ""), (ctx.endpoint != 0) ? 2 : 3)
+    elif tasmota.loglevel(3)
+      log(format("MTR: >Write_Attr%s%s - IGNORED", str(ctx), attr_name), 3)
+      # ignore if content is nil and status is undefined
+    end
   end
 
   #############################################################
@@ -1051,93 +1018,59 @@ class Matter_IM
   def process_write_request(msg, val)
     var query = matter.WriteRequestMessage().from_TLV(val)
     # log("MTR: received WriteRequestMessage=" + str(query), 3)
+    var ctx_log = matter.Path()         # pre-allocate object for logging
 
     var suppress_response = query.suppress_response
     # var timed_request = query.timed_request   # TODO not supported
     # var more_chunked_messages = query.more_chunked_messages # TODO not supported
-
-    var endpoints = self.device.get_active_endpoints()
-
-    ### Inner function to be iterated upon
-    # ret is the ReportDataMessage list to send back
-    # ctx is the context with endpoint/cluster/attribute
-    # val is the TLV object containing the value
-    # direct is true if error is reported, false if error is silently ignored
-    #
-    # if `pi` is nil, just report the status for ctx.status
-    #
-    # should return true if answered, false if failed
-    def write_single_attribute(ret, pi, ctx, write_data, direct)
-      var attr_name = matter.get_attribute_name(ctx.cluster, ctx.attribute)
-      attr_name = attr_name ? " (" + attr_name + ")" : ""
-      # log(format("MTR: Read Attribute " + str(ctx) + (attr_name ? " (" + attr_name + ")" : ""), 2)
-      # Special case to report unsupported item, if pi==nil
-      ctx.status = matter.UNSUPPORTED_WRITE
-      var res = (pi != nil) ? pi.write_attribute(msg.session, ctx, write_data) : nil
-      if res    ctx.status = matter.SUCCESS   end     # if the cb returns true, the request was processed
-      if ctx.status != nil
-        if direct
-          var a1 = matter.AttributeStatusIB()
-          a1.path = matter.AttributePathIB()
-          a1.status = matter.StatusIB()
-          a1.path.endpoint = ctx.endpoint
-          a1.path.cluster = ctx.cluster
-          a1.path.attribute = ctx.attribute
-          a1.status.status = ctx.status
-
-          ret.write_responses.push(a1)
-          log(format("MTR: Write_Attr %s%s - STATUS: 0x%02X %s", str(ctx), attr_name, ctx.status, ctx.status == matter.SUCCESS ? "SUCCESS" : ""), (ctx.endpoint != 0) ? 2 : 3)
-          return true
-        end
-      else
-        log(format("MTR: Write_Attr %s%s - IGNORED", str(ctx), attr_name), 3)
-        # ignore if content is nil and status is undefined
-      end
-    end
-
-    # structure is `ReadRequestMessage` 10.6.2 p.558
-    # log("MTR: IM:write_request processing start", 4)
-    var ctx = matter.Path()
-    ctx.msg = msg
 
     if query.write_requests != nil
       # prepare the response
       var ret = matter.WriteResponseMessage()
       # ret.suppress_response = true
       ret.write_responses = []
+      var generator = matter.PathGenerator(self.device)
 
       for q:query.write_requests      # q is AttributeDataIB
-        var path = q.path
+        var write_path = q.path
         var write_data = q.data
-        # need to do expansion here
-        ctx.endpoint = path.endpoint
-        ctx.cluster = path.cluster
-        ctx.attribute = path.attribute
-        ctx.status = matter.UNSUPPORTED_ATTRIBUTE   #default error if returned `nil`
+        ctx_log.copy(write_path)          # copy endpoint/cluster/attribute in ctx_log for pretty logging
         
         # return an error if the expansion is illegal
-        if ctx.cluster == nil || ctx.attribute == nil
-          # force INVALID_ACTION reporting
-          ctx.status = matter.INVALID_ACTION
-          write_single_attribute(ret, nil, ctx, nil, true)
+        if write_path.cluster == nil || write_path.attribute == nil
+          ctx_log.status = matter.INVALID_ACTION
+          self.write_single_attribute_status_to_bytes(ret, ctx_log, nil)
           continue
         end
 
-        # expand endpoint
-        if tasmota.loglevel(3) && (ctx.endpoint == nil)
-          # we need expansion, log first
-          var attr_name = matter.get_attribute_name(ctx.cluster, ctx.attribute)
-          log("MTR: Write_Attr " + str(ctx) + (attr_name ? " (" + attr_name + ")" : ""), 3)
+        # expansion is only allowed on endpoint number, log if it happens
+        if (write_path.endpoint == nil) && tasmota.loglevel(3)
+          var attr_name = matter.get_attribute_name(write_path.cluster, write_path.attribute)
+          log("MTR: Write_Attr " + str(ctx_log) + (attr_name ? " (" + attr_name + ")" : ""), 3)
         end
 
-        # implement concrete expansion
-        self.device.process_attribute_expansion(ctx,
-        / pi, ctx, direct -> write_single_attribute(ret, pi, ctx, write_data, direct)
-        )
-      end
+        generator.start(write_path.endpoint, write_path.cluster, write_path.attribute)
+        var direct = generator.is_direct()
+        var ctx
+        while (ctx := generator.next())
+          ctx.msg = msg                     # enrich with message
+          if ctx.status != nil              # no match, return error because it was direct
+            ctx.status = nil                # remove status to silence output
+            self.write_single_attribute_status_to_bytes(ret, ctx, write_data)
 
-      # log("MTR: ReportWriteMessage=" + str(ret), 4)
-      # log("MTR: ReportWriteMessageTLV=" + str(ret.to_TLV()), 3)
+          else                              #  ctx.status is nil, it exists
+
+            var pi = generator.get_pi()
+            ctx.status = matter.UNSUPPORTED_WRITE
+            #   ctx.status = matter.UNSUPPORTED_WRITE
+            var res = (pi != nil) ? pi.write_attribute(msg.session, ctx, write_data) : nil
+            if (res)    ctx.status = matter.SUCCESS   end     # if the cb returns true, the request was processed
+
+            self.write_single_attribute_status_to_bytes(ret, ctx, write_data)
+          end
+        end
+
+      end
 
       # send the reponse that may need to be chunked if too large to fit in a single UDP message
       if !suppress_response
@@ -1159,11 +1092,11 @@ class Matter_IM
   #############################################################
   # process IM 0x09 Invoke Response
   #
-  def process_invoke_response(msg, val)
-    var query = matter.InvokeResponseMessage().from_TLV(val)
-    # log("MTR: received InvokeResponseMessage=" + str(query), 4)
-    return false
-  end
+  # def process_invoke_response(msg, val)
+  #   var query = matter.InvokeResponseMessage().from_TLV(val)
+  #   # log("MTR: received InvokeResponseMessage=" + str(query), 4)
+  #   return false
+  # end
 
   #############################################################
   # process IM 0x0A Timed Request
@@ -1202,11 +1135,9 @@ class Matter_IM
     log(format("MTR: <Sub_Data  (%6i) sub=%i", session.local_session_id, sub.subscription_id), 3)
     sub.is_keep_alive = false             # sending an actual data update
 
-    var ret = self._inner_process_read_request(session, fake_read, nil #-no msg-#)
-    ret.suppress_response = false
-    ret.subscription_id = sub.subscription_id
+    var generator_or_arr = self.process_read_or_subscribe_request_pull(fake_read, nil #-no msg-#)
 
-    var report_data_msg = matter.IM_ReportDataSubscribed(session._message_handler, session, ret, sub)
+    var report_data_msg = matter.IM_ReportDataSubscribed_Pull(session._message_handler, session, generator_or_arr, sub)
     self.send_queue.push(report_data_msg)           # push message to queue
     self.send_enqueued(session._message_handler)    # and send queued messages now
   end
@@ -1217,15 +1148,10 @@ class Matter_IM
   def send_subscribe_heartbeat(sub)
     var session = sub.session
     
-    log(format("MTR: <Sub_Alive (%6i) sub=%i", session.local_session_id, sub.subscription_id), 3)
+    log(f"MTR: <Sub_Alive ({session.local_session_id:6i}) sub={sub.subscription_id}", 3)
     sub.is_keep_alive = true              # sending keep-alive
 
-    # prepare the response
-    var ret = matter.ReportDataMessage()
-    ret.suppress_response = true
-    ret.subscription_id = sub.subscription_id
-
-    var report_data_msg = matter.IM_SubscribedHeartbeat(session._message_handler, session, ret, sub)
+    var report_data_msg = matter.IM_SubscribedHeartbeat(session._message_handler, session, sub)
     self.send_queue.push(report_data_msg)           # push message to queue
     self.send_enqueued(session._message_handler)    # and send queued messages now
   end
@@ -1252,17 +1178,17 @@ class Matter_IM
   end
 
   #############################################################
-  # send_report_data
+  # send_report_data_pull
   #
-  def send_report_data(msg, data)
-    self.send_queue.push(matter.IM_ReportData(msg, data))
+  def send_report_data_pull(msg, ctx_generator_or_arr)
+    self.send_queue.push(matter.IM_ReportData_Pull(msg, ctx_generator_or_arr))
   end
 
   #############################################################
-  # send_report_data
+  # send_subscribe_response_pull
   #
-  def send_subscribe_response(msg, data, sub)
-    self.send_queue.push(matter.IM_SubscribeResponse(msg, data, sub))
+  def send_subscribe_response_pull(msg, data, sub)
+    self.send_queue.push(matter.IM_SubscribeResponse_Pull(msg, data, sub))
   end
 
   #############################################################

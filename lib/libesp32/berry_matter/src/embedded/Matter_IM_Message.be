@@ -23,10 +23,10 @@ import matter
 #@ solidify:Matter_IM_Status,weak
 #@ solidify:Matter_IM_InvokeResponse,weak
 #@ solidify:Matter_IM_WriteResponse,weak
-#@ solidify:Matter_IM_ReportData,weak
-#@ solidify:Matter_IM_ReportDataSubscribed,weak
+#@ solidify:Matter_IM_ReportData_Pull,weak
+#@ solidify:Matter_IM_ReportDataSubscribed_Pull,weak
 #@ solidify:Matter_IM_SubscribedHeartbeat,weak
-#@ solidify:Matter_IM_SubscribeResponse,weak
+#@ solidify:Matter_IM_SubscribeResponse_Pull,weak
 
 #################################################################################
 # Matter_IM_Message
@@ -48,7 +48,7 @@ class Matter_IM_Message
   end
 
   def reset(msg, opcode, reliable)
-    self.resp = msg.build_response(opcode, reliable)
+    self.resp = (msg != nil) ? msg.build_response(opcode, reliable) : nil # is nil for spontaneous reports
     self.ready = true                # by default send immediately
     self.expiration = tasmota.millis() + self.MSG_TIMEOUT
     self.last_counter = 0            # avoid `nil` value
@@ -159,53 +159,91 @@ end
 matter.IM_WriteResponse = Matter_IM_WriteResponse
 
 #################################################################################
-# Matter_IM_ReportData
+# Matter_IM_ReportData_Pull
 #
 # Report Data for a Read Request
+#
+# This version pull the attributes in lazy mode, only when response is computed
 #################################################################################
-class Matter_IM_ReportData : Matter_IM_Message
+class Matter_IM_ReportData_Pull : Matter_IM_Message
   static var MAX_MESSAGE = 1200       # max bytes size for a single TLV worklaod
                                       # the maximum MTU is 1280, which leaves 80 bytes for the rest of the message
                                       # section 4.4.4 (p. 114)
+  # note: `self.data` (bytes or nil) is containing any remaining responses that could not fit in previous packets
+  var generator_or_arr                # a PathGenerator or an array of PathGenerator
+  var subscription_id                 # if not `nil`, subscription_id in response
+  var suppress_response               # if not `nil`, suppress_response attribute
 
-  def init(msg, data)
+  def init(msg, ctx_generator_or_arr)
     super(self).init(msg, 0x05 #-Report Data-#, true)
-    self.data = data
+    self.generator_or_arr = ctx_generator_or_arr
+  end
+
+  def set_subscription_id(subscription_id)
+    self.subscription_id = subscription_id
+  end
+
+  def set_suppress_response(suppress_response)
+    self.suppress_response = suppress_response
   end
 
   # default responder for data
   def send_im(responder)
-    # log(format("MTR: IM_ReportData send_im exch=%i ready=%i", self.resp.exchange_id, self.ready ? 1 : 0), 3)
+    # log(format(">>>: Matter_IM_ReportData_Pull send_im exch=%i ready=%i", self.resp.exchange_id, self.ready ? 1 : 0), 3)
     if !self.ready   return false  end
-    var resp = self.resp                          # response frame object
-    var data = self.data                          # TLV data of the response (if any)
-    var was_chunked = data.more_chunked_messages  # is this following a chunked packet?
+    var resp = self.resp                                # response frame object
+    var data = (self.data != nil) ? self.data : bytes() # bytes() object of the TLV encoded response
+    self.data = nil                                     # we remove the data that was saved for next packet
 
-    # the message were grouped by right-sized binaries upfront, we just need to send one block at time
-    var elements = 1                # number of elements added
+    var not_full = true                                 # marker used to exit imbricated loops
 
-    # log(format("MTR: exch=%i elements=%i msg_sz=%i total=%i", self.get_exchangeid(), elements, msg_sz, sz_attribute_reports), 3)
-    var next_elemnts
-    if data.attribute_reports != nil
-      next_elemnts = data.attribute_reports[elements .. ]
-      data.attribute_reports = data.attribute_reports[0 .. elements - 1]
-      data.more_chunked_messages = (size(next_elemnts) > 0)
-    else
-      data.more_chunked_messages = false
-    end
 
-    if was_chunked
-      # log(format("MTR: .Read_Attr next_chunk exch=%i", self.get_exchangeid()), 4)
-    end
-    if data.more_chunked_messages
-      if !was_chunked
-        # log(format("MTR: .Read_Attr first_chunk exch=%i", self.get_exchangeid()), 4)
+    while not_full && (self.generator_or_arr != nil)
+      # get the current generator (first element of list or single object)
+      var current_generator = isinstance(self.generator_or_arr, list) ? self.generator_or_arr[0] : self.generator_or_arr
+      # log(f">>>: ReportData_Pull send_im start {current_generator.path_in_endpoint}/{current_generator.path_in_cluster}/{current_generator.path_in_attribute}",3)
+
+      var ctx
+      while not_full && (ctx := current_generator.next())   # 'not_full' must be first to avoid removing an item when we don't want
+        # log(f">>>: ReportData_Pull {ctx=}", 3)
+        var debug = responder.device.debug
+        var force_log = current_generator.is_direct() || debug
+        var elt_bytes = responder.im.read_single_attribute_to_bytes(current_generator.get_pi(), ctx, resp.session, force_log)   # TODO adapt no_log
+        if (elt_bytes == nil)   continue    end         # silently ignored, iterate to next
+        # check if we overflow
+        if (size(data) + size(elt_bytes) > self.MAX_MESSAGE)
+          self.data = elt_bytes                         # save response for later
+          not_full = false
+        else
+          data.append(elt_bytes)                        # append response since we have enough room
+        end
       end
-      # log("MTR: sending TLV" + str(data), 4)
+
+      # if we are here, then we exhausted the current generator, and we need to move to the next one
+      if not_full
+        # log(f">>>: ReportData_Pull remove current generator",3)
+        if isinstance(self.generator_or_arr, list)
+          self.generator_or_arr.remove(0)               # remove first element
+          if size(self.generator_or_arr) == 0
+            self.generator_or_arr = nil                 # empty array so we put nil
+          end
+        else
+          self.generator_or_arr = nil                   # there was a single entry, so replace with nil
+        end
+      end
+
     end
+
+    # prepare the response
+    var ret = matter.ReportDataMessage()
+    ret.subscription_id = self.subscription_id
+    ret.suppress_response = self.suppress_response
+    # ret.suppress_response = true
+    ret.attribute_reports = [data]
+    ret.more_chunked_messages = (self.data != nil)    # we got more data to send
 
     # print(">>>>> send elements before encode")
-    var raw_tlv = self.data.to_TLV()
+    var raw_tlv = ret.to_TLV()
     # print(">>>>> send elements before encode 2")
     var encoded_tlv = raw_tlv.tlv2raw(bytes(self.MAX_MESSAGE))    # takes time
     # print(">>>>> send elements before encode 3")
@@ -217,37 +255,49 @@ class Matter_IM_ReportData : Matter_IM_Message
     responder.send_response_frame(resp)
     self.last_counter = resp.message_counter
 
-    if next_elemnts != nil && size(next_elemnts) > 0
-      data.attribute_reports = next_elemnts
-      # log(format("MTR: to_be_sent_later size=%i exch=%i", size(data.attribute_reports), resp.exchange_id), 4)
+    if ret.more_chunked_messages                 # we have more to send
       self.ready = false    # wait for Status Report before continuing sending
       # keep alive
     else
+      # log(f">>>: ReportData_Pull finished",3)
       self.finish = true         # finished, remove
     end
+
   end
 
 end
-matter.IM_ReportData = Matter_IM_ReportData
-
+matter.IM_ReportData_Pull = Matter_IM_ReportData_Pull
 
 #################################################################################
-# Matter_IM_ReportDataSubscribed
+# Matter_IM_ReportDataSubscribed_Pull
 #
 # Main difference is that we are the spontaneous initiator
 #################################################################################
-class Matter_IM_ReportDataSubscribed : Matter_IM_ReportData
+class Matter_IM_ReportDataSubscribed_Pull : Matter_IM_ReportData_Pull
+  #   inherited from Matter_IM_Message
+  # static var MSG_TIMEOUT = 5000       # 5s
+  # var expiration                      # expiration time for the reporting 
+  # var resp                            # response Frame object
+  # var ready                           # bool: ready to send (true) or wait (false)
+  # var finish                          # if true, the message is removed from the queue
+  # var data                            # TLV data of the response (if any)
+  # var last_counter                    # counter value of last sent packet (to match ack)
+  #   inherited from Matter_IM_ReportData_Pull
+  # static var MAX_MESSAGE = 1200       # max bytes size for a single TLV worklaod
+  # var generator_or_arr                # a PathGenerator or an array of PathGenerator
+  # var subscription_id                 # if not `nil`, subscription_id in response
   var sub                         # subscription object
   var report_data_phase           # true during reportdata
 
-  def init(message_handler, session, data, sub)
+  def init(message_handler, session, ctx_generator_or_arr, sub)
+    super(self).init(nil, ctx_generator_or_arr)     # send msg=nil to avoid creating a reponse
+    # we need to initiate a new virtual response, because it's a spontaneous message
     self.resp = matter.Frame.initiate_response(message_handler, session, 0x05 #-Report Data-#, true)
-    self.data = data
-    self.ready = true                # by default send immediately
-    self.expiration = tasmota.millis() + self.MSG_TIMEOUT
     #
     self.sub = sub
     self.report_data_phase = true
+    self.set_subscription_id(sub.subscription_id)
+    self.set_suppress_response(false)
   end
 
   def reached_timeout()
@@ -256,7 +306,7 @@ class Matter_IM_ReportDataSubscribed : Matter_IM_ReportData
 
   # ack received, confirm the heartbeat
   def ack_received(msg)
-    # log(format("MTR: IM_ReportDataSubscribed ack_received sub=%i", self.sub.subscription_id), 3)
+    # log(format("MTR: IM_ReportDataSubscribed_Pull ack_received sub=%i", self.sub.subscription_id), 3)
     super(self).ack_received(msg)
     if !self.report_data_phase
       # if ack is received while all data is sent, means that it finished without error
@@ -271,14 +321,14 @@ class Matter_IM_ReportDataSubscribed : Matter_IM_ReportData
 
   # we received an ACK error, remove subscription
   def status_error_received(msg)
-    # log(format("MTR: IM_ReportDataSubscribed status_error_received sub=%i exch=%i", self.sub.subscription_id, self.resp.exchange_id), 3)
+    # log(format("MTR: IM_ReportDataSubscribed_Pull status_error_received sub=%i exch=%i", self.sub.subscription_id, self.resp.exchange_id), 3)
     self.sub.remove_self()
   end
 
   # ack received for previous message, proceed to next (if any)
   # return true if we manage the ack ourselves, false if it needs to be done upper
   def status_ok_received(msg)
-    # log(format("MTR: IM_ReportDataSubscribed status_ok_received sub=%i exch=%i", self.sub.subscription_id, self.resp.exchange_id), 3)
+    # log(format("MTR: IM_ReportDataSubscribed_Pull status_ok_received sub=%i exch=%i", self.sub.subscription_id, self.resp.exchange_id), 3)
     if self.report_data_phase
       return super(self).status_ok_received(msg)
     else
@@ -291,10 +341,11 @@ class Matter_IM_ReportDataSubscribed : Matter_IM_ReportData
   # returns true if transaction is complete (remove object from queue)
   # default responder for data
   def send_im(responder)
-    # log(format("MTR: IM_ReportDataSubscribed send sub=%i exch=%i ready=%i", self.sub.subscription_id, self.resp.exchange_id, self.ready ? 1 : 0), 3)
+    # log(format("MTR: IM_ReportDataSubscribed_Pull send sub=%i exch=%i ready=%i", self.sub.subscription_id, self.resp.exchange_id, self.ready ? 1 : 0), 3)
     # log(format("MTR: ReportDataSubscribed::send_im size(self.data.attribute_reports)=%i ready=%s report_data_phase=%s", size(self.data.attribute_reports), str(self.ready), str(self.report_data_phase)), 3)
     if !self.ready   return false  end
-    if size(self.data.attribute_reports) > 0      # do we have still attributes to send
+
+    if (self.generator_or_arr != nil)             # do we have still attributes to send
       if self.report_data_phase
         super(self).send_im(responder)
         # log(format("MTR: ReportDataSubscribed::send_im called super finish=%i", self.finish), 3)
@@ -327,7 +378,7 @@ class Matter_IM_ReportDataSubscribed : Matter_IM_ReportData
     end
   end
 end
-matter.IM_ReportDataSubscribed = Matter_IM_ReportDataSubscribed
+matter.IM_ReportDataSubscribed_Pull = Matter_IM_ReportDataSubscribed_Pull
 
 #################################################################################
 # Matter_IM_SubscribedHeartbeat
@@ -336,16 +387,17 @@ matter.IM_ReportDataSubscribed = Matter_IM_ReportDataSubscribed
 #
 # Main difference is that we are the spontaneous initiator
 #################################################################################
-class Matter_IM_SubscribedHeartbeat : Matter_IM_ReportData
+class Matter_IM_SubscribedHeartbeat : Matter_IM_ReportData_Pull
   var sub                         # subscription object
 
-  def init(message_handler, session, data, sub)
+  def init(message_handler, session, sub)
+    super(self).init(nil, nil #-no ctx_generator_or_arr-#)     # send msg=nil to avoid creating a reponse
+    # we need to initiate a new virtual response, because it's a spontaneous message
     self.resp = matter.Frame.initiate_response(message_handler, session, 0x05 #-Report Data-#, true)
-    self.data = data
-    self.ready = true                # by default send immediately
-    self.expiration = tasmota.millis() + self.MSG_TIMEOUT
     #
     self.sub = sub
+    self.set_subscription_id(sub.subscription_id)
+    self.set_suppress_response(true)
   end
 
   def reached_timeout()
@@ -386,18 +438,22 @@ end
 matter.IM_SubscribedHeartbeat = Matter_IM_SubscribedHeartbeat
 
 #################################################################################
-# Matter_IM_SubscribeResponse
+# Matter_IM_SubscribeResponse_Pull
 #
-# Report Data for a Read Request
+# Report Data for a Read Request - pull (lazy) mode
 #################################################################################
-class Matter_IM_SubscribeResponse : Matter_IM_ReportData
+class Matter_IM_SubscribeResponse_Pull : Matter_IM_ReportData_Pull
+  # inherited
+  # static var MAX_MESSAGE = 1200       # max bytes size for a single TLV worklaod
+  # var generator_or_arr                # a PathGenerator or an array of PathGenerator
   var sub                         # subscription object
   var report_data_phase           # true during reportdata
 
-  def init(msg, data, sub)
-    super(self).init(msg, data)
+  def init(msg, ctx_generator_or_arr, sub)
+    super(self).init(msg, ctx_generator_or_arr)
     self.sub = sub
     self.report_data_phase = true
+    self.set_subscription_id(sub.subscription_id)
   end
 
   # default responder for data
@@ -414,6 +470,7 @@ class Matter_IM_SubscribeResponse : Matter_IM_ReportData
       self.ready = false    # wait for Status Report before continuing sending
 
     else
+
       # send the final SubscribeReponse
       var resp = self.resp
       var sr = matter.SubscribeResponseMessage()
@@ -440,6 +497,6 @@ class Matter_IM_SubscribeResponse : Matter_IM_ReportData
     end
     return super(self).status_ok_received(msg)
   end
-    
+
 end
-matter.IM_SubscribeResponse = Matter_IM_SubscribeResponse
+matter.IM_SubscribeResponse_Pull = Matter_IM_SubscribeResponse_Pull
