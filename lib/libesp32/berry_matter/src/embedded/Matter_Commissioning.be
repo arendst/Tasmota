@@ -349,6 +349,7 @@ class Matter_Commisioning_Context
     # Check that it's a resumption
     if   is_resumption
       # Resumption p.169
+      log("MTR:                     Sigma1 Resumption", 3)
       var s1rk_salt = sigma1.initiatorRandom + sigma1.resumptionID
       var s1rk_info = bytes().fromstring("Sigma1_Resume")
       var s1rk = crypto.HKDF_SHA256().derive(session_resumption.shared_secret, s1rk_salt, s1rk_info, 16)
@@ -696,7 +697,8 @@ class Matter_Commisioning_Context
   # placeholder, nothing to run for now
   def parse_StatusReport(msg)
     var session = msg.session
-    log("MTR: >Status    "+msg.raw[msg.app_payload_idx..].tohex(), 3)
+    var status_msg = msg.raw[msg.app_payload_idx..].tohex()
+    log(f"MTR: >Status    {status_msg}", (status_msg != "0000000000000000") ? 3 : 4)
     return false      # we don't explicitly ack the message
   end
 
