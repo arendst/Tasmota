@@ -21,7 +21,7 @@
 #if defined(ESP32) && defined(USE_FLOG)
   #undef USE_FLOG
   #warning FLOG deactivated on ESP32
-#endif //ESP32
+#endif  // ESP32
 /*********************************************************************************************\
   --------------------------------------------------------------------------------------------
   Version Date      Action    Description
@@ -156,7 +156,7 @@ const char UBLOX_INIT[] PROGMEM = {
   0xB5,0x62,0x06,0x01,0x08,0x00,0x01,0x21,0x00,0x00,0x00,0x00,0x00,0x00,0x31,0x92, //NAV-TIMEUTC off
 #ifdef USE_GPS_VELOCITY
   0xB5,0x62,0x06,0x01,0x08,0x00,0x01,0x12,0x00,0x00,0x00,0x00,0x00,0x00,0x22,0x29, //NAV-VELNED off
-#endif
+#endif  // USE_GPS_VELOCITY
 
   // Enable UBX
   // 0xB5,0x62,0x06,0x01,0x08,0x00,0x01,0x07,0x00,0x01,0x00,0x00,0x00,0x00,0x18,0xE1, //NAV-PVT on
@@ -165,7 +165,7 @@ const char UBLOX_INIT[] PROGMEM = {
   0xB5,0x62,0x06,0x01,0x08,0x00,0x01,0x21,0x00,0x01,0x00,0x00,0x00,0x00,0x32,0x97, //NAV-TIMEUTC on
 #ifdef USE_GPS_VELOCITY
   0xB5,0x62,0x06,0x01,0x08,0x00,0x01,0x12,0x00,0x01,0x00,0x00,0x00,0x00,0x23,0x2E, //NAV-VELNED on
-#endif
+#endif  // USE_GPS_VELOCITY
   // Rate - we will not reset it for the moment after restart
   //  0xB5,0x62,0x06,0x08,0x06,0x00,0x64,0x00,0x01,0x00,0x01,0x00,0x7A,0x12, //(10Hz)
   //  0xB5,0x62,0x06,0x08,0x06,0x00,0xC8,0x00,0x01,0x00,0x01,0x00,0xDE,0x6A, //(5Hz)
@@ -181,19 +181,22 @@ struct UBX_t {
   const char NAV_STATUS_HEADER[2] = { 0x01, 0x03 };
   const char NAV_TIME_HEADER[2]   = { 0x01, 0x21 };
 #ifdef USE_GPS_VELOCITY
-  const char NAV_VEL_HEADER[2]   = { 0x01, 0x12 };
-#endif
+  const char NAV_VEL_HEADER[2]    = { 0x01, 0x12 };
+#endif  // USE_GPS_VELOCITY
+
+  int32_t lat;
+  int32_t lon;
 
   struct entry_t {
-          int32_t lat;    //raw sensor value
-          int32_t lon;    //raw sensor value
-          uint32_t time;  //local time from system (maybe provided by the sensor)
-    };
+    int32_t lat;               // raw sensor value
+    int32_t lon;               // raw sensor value
+    uint32_t time;             // local time from system (maybe provided by the sensor)
+  };
 
   union {
     entry_t values;
     uint8_t bytes[sizeof(entry_t)];
-    } rec_buffer;
+  } rec_buffer;
 
   struct POLL_MSG {
     uint8_t cls;
@@ -202,76 +205,78 @@ struct UBX_t {
   };
 
   struct NAV_POSLLH {
-    uint8_t cls;
-    uint8_t id;
-    uint16_t len;
-    uint32_t iTOW;
-    int32_t lon;
-    int32_t lat;
-    int32_t alt;
-    int32_t hMSL;
-    uint32_t hAcc;
-    uint32_t vAcc;
-    };
+    uint8_t cls;               // 0x01
+    uint8_t id;                // 0x02
+    uint16_t len;              // 28 bytes
+    uint32_t iTOW;             // ms
+    int32_t lon;               // 1e-7, degree
+    int32_t lat;               // 1e-7, degree
+    int32_t alt;               // mm
+    int32_t hMSL;              // mm
+    uint32_t hAcc;             // mm
+    uint32_t vAcc;             // mm
+  };
 
   struct NAV_STATUS {
-    uint8_t cls;
-    uint8_t id;
-    uint16_t len;
-    uint32_t iTOW;
-    uint8_t gpsFix;
-    uint8_t flags; //bit 0 - gpsfix valid
-    uint8_t fixStat;
-    uint8_t flags2;
-    uint32_t ttff;
-    uint32_t msss;
-    };
+    uint8_t cls;               // 0x01
+    uint8_t id;                // 0x03
+    uint16_t len;              // 16 bytes
+    uint32_t iTOW;             // ms
+    uint8_t gpsFix;            //
+    uint8_t flags;             // bit 0 - gpsfix valid
+    uint8_t fixStat;           //
+    uint8_t flags2;            //
+    uint32_t ttff;             // ms
+    uint32_t msss;             // ms
+  };
 
   struct NAV_TIME_UTC {
-    uint8_t cls;
-    uint8_t id;
-    uint16_t len;
-    uint32_t iTOW;
-    uint32_t tAcc;
-    int32_t nano;       // Nanoseconds of second, range -1e9 .. 1e9 (UTC)
-    uint16_t year;
-    uint8_t month;
-    uint8_t day;
-    uint8_t hour;
-    uint8_t min;
-    uint8_t sec;
+    uint8_t cls;               // 0x01
+    uint8_t id;                // 0x21
+    uint16_t len;              // 20 bytes
+    uint32_t iTOW;             // ms
+    uint32_t tAcc;             // ns
+    int32_t nano;              // Nanoseconds of second, range -1e9 .. 1e9 (UTC)
+    uint16_t year;             // y
+    uint8_t month;             // month
+    uint8_t day;               // d
+    uint8_t hour;              // h
+    uint8_t min;               // min
+    uint8_t sec;               // s
     struct {
       uint8_t UTC:1;
-      uint8_t WKN:1;    // week number
-      uint8_t TOW:1;    // time of week
+      uint8_t WKN:1;           // week number
+      uint8_t TOW:1;           // time of week
       uint8_t padding:5;
-      } valid;
-    };
+    } valid;
+  };
+
 #ifdef USE_GPS_VELOCITY
   struct NAV_VEL {
-    uint8_t cls;
-    uint8_t id;
-    uint16_t len;
-    uint32_t iTOW;
-    int32_t velN;
-    int32_t velE; //bit 0 - gpsfix valid
-    int32_t velD;
-    uint32_t speed;
-    uint32_t gSpeed;
-    int32_t heading;
-    uint32_t sAcc;
-    uint32_t cAcc;
-    };
-#endif
+    uint8_t cls;               // 0x01
+    uint8_t id;                // 0x12
+    uint16_t len;              // 36 bytes
+    uint32_t iTOW;             // ms
+    int32_t velN;              // cm/s
+    int32_t velE;              // cm/s
+    int32_t velD;              // cm/s
+    uint32_t speed;            // cm/s
+    uint32_t gSpeed;           // cm/s
+    int32_t heading;           // 1e-5, degree
+    uint32_t sAcc;             // cm/s
+    uint32_t cAcc;             // 1e-5, degree
+  };
+#endif  // USE_GPS_VELOCITY
+
   struct CFG_RATE {
-    uint8_t cls; //0x06
-    uint8_t id; //0x08
-    uint16_t len; // 6 bytes
-    uint16_t measRate; // in every ms -> 1 Hz = 1000 ms; 10 Hz = 100 ms -> x = 1000 ms / Hz
-    uint16_t navRate; //  x measurements for 1 navigation event
-    uint16_t timeRef; //  align to time system: 0= UTC, 1 = GPS, 2 = GLONASS, ...
-    char CK[2]; // checksum
-    };
+    uint8_t cls;               // 0x06
+    uint8_t id;                // 0x08
+    uint16_t len;              // 6 bytes
+    uint16_t measRate;         // in every ms -> 1 Hz = 1000 ms; 10 Hz = 100 ms -> x = 1000 ms / Hz
+    uint16_t navRate;          //  x measurements for 1 navigation event
+    uint16_t timeRef;          //  align to time system: 0= UTC, 1 = GPS, 2 = GLONASS, ...
+    char CK[2];                // checksum
+  };
 
   struct {
     uint32_t last_iTOW;
@@ -287,7 +292,7 @@ struct UBX_t {
   struct {
     uint32_t init:1;
     uint32_t filter_noise:1;
-    uint32_t send_when_new:1; // no teleinterval
+    uint32_t send_when_new:1;  // no teleinterval
     uint32_t send_UI_only:1;
     uint32_t runningNTP:1;
     // uint32_t blockedNTP:1;
@@ -302,10 +307,10 @@ struct UBX_t {
     NAV_TIME_UTC navTime;
 #ifdef USE_GPS_VELOCITY
     NAV_VEL navVel;
-#endif
+#endif  // USE_GPS_VELOCITY
     POLL_MSG pollMsg;
     CFG_RATE cfgRate;
-    } Message;
+  } Message;
 
   uint32_t utc_time;
 
@@ -320,13 +325,13 @@ enum UBXMsgType {
   MT_NAV_TIME,
 #ifdef USE_GPS_VELOCITY
   MT_NAV_VEL,
-#endif
+#endif  // USE_GPS_VELOCITY
   MT_POLL
 };
 
 #ifdef USE_FLOG
 FLOG *Flog = nullptr;
-#endif //USE_FLOG
+#endif  // USE_FLOG
 TasmotaSerial *UBXSerial;
 
 NtpServer timeServer(PortUdp);
@@ -400,7 +405,7 @@ void UBXDetect(void)
     Flog = new FLOG;            // init Flash Log
     Flog->init();
   }
-#endif // USE_FLOG
+#endif  // USE_FLOG
 
   UBX.state.log_interval = 10;  // 1 second
   UBX.mode.send_UI_only = true; // send UI data ...
@@ -465,7 +470,7 @@ uint32_t UBXprocessGPS()
           payloadSize = sizeof(UBX_t::NAV_VEL);
           DEBUG_SENSOR_LOG(PSTR("UBX: got NAV_VEL"));
         }
-#endif
+#endif  // USE_GPS_VELOCITY
         else {
           // unknown message type, bail
           fpos = 0;
@@ -558,7 +563,7 @@ void UBXsendFile(void)
   if (!HttpCheckPriviledgedAccess()) { return; }
   Flog->startDownload(sizeof(UBX.rec_buffer),UBXsendHeader,UBXsendRecord,UBXsendFooter);
 }
-#endif //USE_FLOG
+#endif  // USE_FLOG
 
 /********************************************************************************************/
 
@@ -616,7 +621,7 @@ void UBXSelectMode(uint16_t mode)
       }
       AddLog(LOG_LEVEL_INFO, PSTR("UBX: stop recording"));
       break;
-#endif //USE_FLOG
+#endif  // USE_FLOG
     case 7:
       UBX.mode.send_when_new = 1; // send mqtt on new postion + TELE -> consider to set TELE to a very high value
       break;
@@ -634,11 +639,10 @@ void UBXSelectMode(uint16_t mode)
       UBXsendCFGLine(11); //NAV-POSLLH on
       UBXsendCFGLine(12); //NAV-STATUS on
       UBXsendCFGLine(14); //NAV-VELNED on
-#endif
-#ifndef USE_GPS_VELOCITY
+#else
       UBXsendCFGLine(10); //NAV-POSLLH on
       UBXsendCFGLine(11); //NAV-STATUS on
-#endif
+#endif  // USE_GPS_VELOCITY
       break;
     case 11:
       UBX.mode.forceUTCupdate = true;
@@ -691,11 +695,11 @@ bool UBXHandlePOSLLH()
       MqttPublishTeleperiodSensor();
     }
     if (UBX.mode.runningNTP){ // after receiving pos-data at least once -> go to pure NTP-mode
-      UBXsendCFGLine(7); //NAV-POSLLH off
-      UBXsendCFGLine(8); //NAV-STATUS off
+      UBXsendCFGLine(7);      // NAV-POSLLH off
+      UBXsendCFGLine(8);      // NAV-STATUS off
 #ifdef USE_GPS_VELOCITY
-      UBXsendCFGLine(10); //NAV-VELNED off
-#endif
+      UBXsendCFGLine(10);     // NAV-VELNED off
+#endif  // USE_GPS_VELOCITY
     }
     //UBX_LAT_LON_THRESHOLD = 20 * UBX.Message.navPosllh.hAcc;
     return true; // new position
@@ -717,7 +721,7 @@ void UBXHandleVEL()
     }
   
 }
-#endif
+#endif  // USE_GPS_VELOCITY
 
 void UBXHandleSTATUS()
 {
@@ -813,7 +817,7 @@ void UBXLoop(void)
     case MT_NAV_VEL:
       UBXHandleVEL();
       break;
-#endif
+#endif  // USE_GPS_VELOCITY
     default:
       UBXHandleOther();
       break;
@@ -827,7 +831,7 @@ void UBXLoop(void)
       counter = 0;
     }
   }
-#endif // USE_FLOG
+#endif  // USE_FLOG
 
   counter++;
 }
@@ -836,64 +840,63 @@ void UBXLoop(void)
 // normaly in i18n.h
 
 #ifdef USE_WEBSERVER
-  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+// {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
 #ifdef USE_FLOG
 #ifdef DEBUG_TASMOTA_SENSOR
-  const char HTTP_SNS_FLOGVER[] PROGMEM =  "{s}<hr>{m}<hr>{e}{s} FLOG with %u sectors: {m}%u bytes{e}"
-                                          "{s} FLOG next sector for REC: {m} %u {e}"
-                                          "{s} %u sector(s) with data at sector: {m} %u {e}";
-  const char HTTP_SNS_FLOGREC[] PROGMEM = "{s} RECORDING (bytes in buffer) {m}%u{e}";
+const char HTTP_SNS_FLOGVER[] PROGMEM = "{s}FLOG with %u sectors:{m}%u bytes{e}"
+                                        "{s}FLOG next sector for REC:{m} %u {e}"
+                                        "{s}%u sector(s) with data at sector:{m}%u{e}";
+const char HTTP_SNS_FLOGREC[] PROGMEM = "{s}RECORDING (bytes in buffer){m}%u{e}";
 #endif  // DEBUG_TASMOTA_SENSOR
 
-  const char HTTP_SNS_FLOG[] PROGMEM = "{s}<hr>{m}<hr>{e}{s} Flash-Log {m} %s{e}";
-  const char kFLOG_STATE0[] PROGMEM = "ready";
-  const char kFLOG_STATE1[] PROGMEM = "recording";
-  const char * kFLOG_STATE[] ={kFLOG_STATE0, kFLOG_STATE1};
+const char HTTP_SNS_FLOG[] PROGMEM = "{s}GPS Logging{m}%s{e}";
+const char kFLOGstate[] PROGMEM = "Ready|Recording";
+const char HTTP_BTN_FLOG_DL[] PROGMEM = "<button><a href='/UBX'>Download GPX-File</a></button>";
+#endif  // USE_FLOG
 
-  const char HTTP_BTN_FLOG_DL[] PROGMEM = "<button><a href='/UBX'>Download GPX-File</a></button>";
+const char HTTP_SNS_NTPSERVER[] PROGMEM = "{s}GPS NTP server{m}Active{e}";
 
-#endif //USE_FLOG
-  const char HTTP_SNS_NTPSERVER[] PROGMEM = "{s} NTP server {m}active{e}";
-
-  const char HTTP_SNS_GPS[] PROGMEM = "{s}GPS " D_LATITUDE "{m}%s{e}"
-                                      "{s}GPS " D_LONGITUDE "{m}%s{e}"
-                                      "{s}GPS " D_ALTITUDE "{m}%3_f " D_UNIT_METER "{e}"
-                                      "{s}GPS " D_HORIZONTAL_ACCURACY "{m}%3_f " D_UNIT_METER "{e}"
-                                      "{s}GPS " D_VERTICAL_ACCURACY "{m}%3_f " D_UNIT_METER "{e}"
-                                      "{s}GPS " D_SAT_FIX "{m}%s{e}";
+const char HTTP_SNS_GPS[] PROGMEM = "{s}GPS " D_SAT_FIX "{m}%s{e}"
+                                    "{s}GPS " D_LATITUDE "{m}%s{e}"
+                                    "{s}GPS " D_LONGITUDE "{m}%s{e}"
+                                    "{s}GPS " D_HORIZONTAL_ACCURACY "{m}%3_f " D_UNIT_METER "{e}"
+                                    "{s}GPS " D_ALTITUDE "{m}%3_f " D_UNIT_METER "{e}"
+                                    "{s}GPS " D_VERTICAL_ACCURACY "{m}%3_f " D_UNIT_METER "{e}";
 #ifdef USE_GPS_VELOCITY
-  const char HTTP_SNS_GPS2[] PROGMEM = "{s}GPS " D_SPEED "{m}%1_f{e}"
-                                       "{s}GPS " D_HEADING "{m}%1_f{e}"
-                                       "{s}GPS " D_HEADING_ACCURACY "{m}%2_f{e}"
-                                       "{s}GPS " D_SPEED_ACCURACY "{m}%2_f{e}";
-#endif
+const char HTTP_SNS_GPS2[] PROGMEM = "{s}GPS " D_SPEED "{m}%2_f " D_UNIT_KILOMETER_PER_HOUR "{e}"
+                                     "{s}GPS " D_SPEED_ACCURACY "{m}%2_f " D_UNIT_KILOMETER_PER_HOUR "{e}"
+                                     "{s}GPS " D_HEADING "{m}%1_f{e}"
+                                     "{s}GPS " D_HEADING_ACCURACY "{m}%1_f{e}";
+#endif  // USE_GPS_VELOCITY
 
 const char kGPSFix[] PROGMEM = D_SAT_FIX_NO_FIX "|" D_SAT_FIX_DEAD_RECK "|" D_SAT_FIX_2D "|" D_SAT_FIX_3D "|" D_SAT_FIX_GPS_DEAD "|" D_SAT_FIX_TIME;
 
-//  const char UBX_GOOGLE_MAPS[] ="<iframe width='100%%' src='https://maps.google.com/maps?width=&amp;height=&amp;hl=en&amp;q=%s %s+(Tasmota)&amp;ie=UTF8&amp;t=&amp;z=10&amp;iwloc=B&amp;output=embed' frameborder='0' scrolling='no' marginheight='0' marginwidth='0'></iframe>";
+#ifdef USE_GPS_MAPS
+const char UBX_GOOGLE_MAPS[] ="<iframe width='100%%' src='https://maps.google.com/maps?width=&amp;height=&amp;hl=en&amp;q=%s %s+(Tasmota)&amp;ie=UTF8&amp;t=&amp;z=10&amp;iwloc=B&amp;output=embed' frameborder='0' scrolling='no' marginheight='0' marginwidth='0'></iframe>";
+#endif  // USE_GPS_MAPS
 
 #endif  // USE_WEBSERVER
 
 /********************************************************************************************/
 
-void UBXShow(bool json)
-{
-  char lat[12];
-  dtostrfd((double)UBX.rec_buffer.values.lat/10000000.0f,7,lat);
-  char lon[12];
-  dtostrfd((double)UBX.rec_buffer.values.lon/10000000.0f,7,lon);
-  float alt = (float)UBX.state.last_alt / 1000.0f;
-  float hAcc = (float)UBX.state.last_vAcc / 1000.0f;
-  float vAcc = (float)UBX.state.last_hAcc / 1000.0f;
+void UBXShow(bool json) {
   char fix[32];
   GetTextIndexed(fix, sizeof(fix), UBX.state.gpsFix, kGPSFix);
+  char lat[12];
+  dtostrfd((double)UBX.rec_buffer.values.lat / 10000000.0f, 7, lat);  // degrees
+  char lon[12];
+  dtostrfd((double)UBX.rec_buffer.values.lon / 10000000.0f, 7, lon);  // degrees
+  float hAcc = (float)UBX.state.last_vAcc / 1000.0f;                  // mm -> meters
+  float alt = (float)UBX.state.last_alt / 1000.0f;                    // mm -> meters
+  float vAcc = (float)UBX.state.last_hAcc / 1000.0f;                  // mm -> meters
 #ifdef USE_GPS_VELOCITY
-  float spd = (float)UBX.Message.navVel.gSpeed / 27.778f;
-  float hdng = (float)UBX.Message.navVel.heading / 100000.0f;
-  float cAcc = (float)UBX.Message.navVel.cAcc / 100000.0f;
-  float sAcc = (float)UBX.Message.navVel.sAcc / 100000.0f;
-#endif
+  float spd = (float)UBX.Message.navVel.gSpeed / 27.778f;             // cm/s -> km/h
+  float sAcc = (float)UBX.Message.navVel.sAcc / 27.778f;              // cm/s -> km/h
+  float hdng = (float)UBX.Message.navVel.heading / 100000.0f;         // degrees
+  float cAcc = (float)UBX.Message.navVel.cAcc / 100000.0f;            // degrees
+  if (cAcc > 360) { cAcc = 0; }
+#endif  // USE_GPS_VELOCITY
 
   if (json) {
     ResponseAppend_P(PSTR(",\"GPS\":{"));
@@ -904,41 +907,54 @@ void UBXShow(bool json)
       ResponseAppend_P(PSTR("\"Lat\":%s,\"Lon\":%s,\"Alt\":%3_f,\"hAcc\":%3_f,\"vAcc\":%3_f,\"Fix\":\"%s\""),
         lat, lon, &alt, &hAcc, &vAcc, fix);
 #ifdef USE_GPS_VELOCITY
-      ResponseAppend_P(PSTR(",\"Spd\":%1_f,\"Hdng\":%1_f,\"cAcc\":%2_f,\"sAcc\":%2_f"), 
-        &spd, &hdng, &cAcc, &sAcc);
-#endif
+      ResponseAppend_P(PSTR(",\"Spd\":%2_f,\"Hdng\":%1_f,\"sAcc\":%2_f,\"cAcc\":%1_f"), 
+        &spd, &hdng, &sAcc, &cAcc);
+#endif  // USE_GPS_VELOCITY
       ResponseAppend_P(PSTR("}"));
     }
 #ifdef USE_FLOG
     ResponseAppend_P(PSTR(",\"FLOG\":{\"Rec\":%u,\"Mode\":%u,\"Sec\":%u}"), Flog->recording, Flog->mode, Flog->sectors_left);
-#endif //USE_FLOG
+#endif  // USE_FLOG
     UBX.mode.send_UI_only = false;
 #ifdef USE_WEBSERVER
   } else {
-      WSContentSend_PD(HTTP_SNS_GPS, lat, lon, &alt, &hAcc, &vAcc, fix);
+    WSContentSend_PD(HTTP_SNS_GPS, fix, lat, lon, &hAcc, &alt, &vAcc);
 #ifdef USE_GPS_VELOCITY
-      WSContentSend_PD(HTTP_SNS_GPS2, &spd, &hdng, &cAcc, &sAcc);
-#endif
-      //WSContentSend_P(UBX_GOOGLE_MAPS, lat, lon);
-#ifdef DEBUG_TASMOTA_SENSOR
+    WSContentSend_PD(HTTP_SNS_GPS2, &spd, &sAcc, &hdng, &cAcc);
+#endif  // USE_GPS_VELOCITY
+
+#ifdef USE_GPS_MAPS
+    int32_t lat_diff = UBX.rec_buffer.values.lat - UBX.lat;
+    int32_t lon_diff = UBX.rec_buffer.values.lon - UBX.lon;
+    if ((lat_diff > 1000) || (lon_diff > 1000)) {
+      UBX.lat = UBX.rec_buffer.values.lat;
+      UBX.lon = UBX.rec_buffer.values.lon;
+      WSContentSend_P(UBX_GOOGLE_MAPS, lat, lon);
+    }
+#endif  // USE_GPS_MAPS
+
 #ifdef USE_FLOG
+    WSContentSeparator(0);
+#ifdef DEBUG_TASMOTA_SENSOR
     WSContentSend_PD(HTTP_SNS_FLOGVER, Flog->num_sectors, Flog->size, Flog->current_sector, Flog->sectors_left, Flog->sector.header.physical_start_sector);
     if (Flog->recording) {
       WSContentSend_PD(HTTP_SNS_FLOGREC, Flog->sector.header.buf_pointer - 8);
     }
-#endif //USE_FLOG
-#endif // DEBUG_TASMOTA_SENSOR
-#ifdef USE_FLOG
+#endif  // DEBUG_TASMOTA_SENSOR
     if (Flog->ready) {
-      WSContentSend_P(HTTP_SNS_FLOG,kFLOG_STATE[Flog->recording]);
+      char flog_state[32];
+      WSContentSend_P(HTTP_SNS_FLOG, GetTextIndexed(flog_state, sizeof(flog_state), Flog->recording, kFLOGstate));
     }
     if (!Flog->recording && Flog->found_saved_data) {
       WSContentSend_P(HTTP_BTN_FLOG_DL);
     }
-#endif //USE_FLOG
+#endif  // USE_FLOG
+
     if (UBX.mode.runningNTP) {
+      WSContentSeparator(0);
       WSContentSend_P(HTTP_SNS_NTPSERVER);
     }
+
 #endif  // USE_WEBSERVER
   }
 }
@@ -982,7 +998,7 @@ bool Xsns60(uint32_t function)
       case FUNC_EVERY_100_MSECOND:
 #ifdef USE_FLOG
         if (!Flog->running_download)
-#endif //USE_FLOG
+#endif  // USE_FLOG
         {
           UBXLoop();
         }
@@ -991,7 +1007,7 @@ bool Xsns60(uint32_t function)
       case FUNC_WEB_ADD_HANDLER:
         WebServer_on(PSTR("/UBX"), UBXsendFile);
         break;
-#endif //USE_FLOG
+#endif  // USE_FLOG
       case FUNC_JSON_APPEND:
         UBXShow(1);
         break;
@@ -999,7 +1015,7 @@ bool Xsns60(uint32_t function)
       case FUNC_WEB_SENSOR:
 #ifdef USE_FLOG
         if (!Flog->running_download)
-#endif //USE_FLOG
+#endif  // USE_FLOG
         {
           UBXShow(0);
         }
