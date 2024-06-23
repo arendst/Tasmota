@@ -184,9 +184,13 @@ def esp32_fetch_safeboot_bin(tasmota_platform):
         return
     print("Will download safeboot binary from URL:")
     print(safeboot_fw_url)
-    response = requests.get(safeboot_fw_url)
-    open(safeboot_fw_name, "wb").write(response.content)
-    print("safeboot binary written to variants dir.")
+    try:
+        response = requests.get(safeboot_fw_url)
+        open(safeboot_fw_name, "wb").write(response.content)
+        print("safeboot binary written to variants dir.")
+    except:
+        print(Fore.RED + "Download of safeboot binary failed. Check your Internet connection.")
+        print(Fore.RED + "Creation of Tasmota" + tasmota_platform + "-factory.bin failed")
 
 def esp32_copy_new_safeboot_bin(tasmota_platform,new_local_safeboot_fw):
     print("Copy new local safeboot firmware to variants dir -> using it for further flashing operations")
