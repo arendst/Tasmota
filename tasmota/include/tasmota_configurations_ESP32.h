@@ -825,5 +825,13 @@
 
 #endif // USE_MATTER_DEVICE
 
+/*********************************************************************************************\
+ * Post-process compile options for esp32-c2
+\*********************************************************************************************/
+
+#ifdef CONFIG_IDF_TARGET_ESP32C2
+  #undef USE_ETHERNET
+#endif  // CONFIG_IDF_TARGET_ESP32C2
+
 #endif  // ESP32
 #endif  // _TASMOTA_CONFIGURATIONS_ESP32_H_
