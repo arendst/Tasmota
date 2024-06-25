@@ -18,10 +18,6 @@
 */
 
 #ifdef USE_GPS
-#if defined(ESP32) && defined(USE_FLOG)
-  #undef USE_FLOG
-  #warning FLOG deactivated on ESP32
-#endif  // ESP32
 /*********************************************************************************************\
   --------------------------------------------------------------------------------------------
   Version Date      Action    Description
