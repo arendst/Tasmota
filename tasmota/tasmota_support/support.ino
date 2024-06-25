@@ -2709,6 +2709,10 @@ String HtmlEscape(const String unescaped) {
   return result;
 }
 
+String SettingsTextEscaped(uint32_t index) {
+  return HtmlEscape(SettingsText(index));
+}
+
 String UrlEscape(const char *unescaped) {
   static const char *hex = "0123456789ABCDEF";
   String result;

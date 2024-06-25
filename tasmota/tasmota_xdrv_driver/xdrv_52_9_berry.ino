@@ -894,6 +894,7 @@ bool Xdrv52(uint32_t function)
         BrLoad("autoexec.be");   // run autoexec.be at first tick, so we know all modules are initialized
         berry.autoexec_done = true;
 
+#ifdef USE_WEBSERVER
         // check if `web_add_handler` was missed, for example because of Berry VM restart
         if (!berry.web_add_handler_done) {
           bool network_up = WifiHasIP();
@@ -905,6 +906,7 @@ bool Xdrv52(uint32_t function)
             berry.web_add_handler_done = true;
           }
         }
+#endif  // USE_WEBSERVER
       }
       if (TasmotaGlobal.berry_fast_loop_enabled) {    // call only if enabled at global level
         callBerryFastLoop(false);      // call `tasmota.fast_loop()` optimized for minimal performance impact

@@ -477,10 +477,6 @@ static void WebGetArg(const char* arg, char* out, size_t max)
 //  out[max-1] = '\0';  // Ensure terminating NUL
 }
 
-String SettingsTextEscaped(uint32_t index) {
-  return HtmlEscape(SettingsText(index));
-}
-
 String AddWebCommand(const char* command, const char* arg, const char* dflt) {
 /*
   // OK but fixed max argument

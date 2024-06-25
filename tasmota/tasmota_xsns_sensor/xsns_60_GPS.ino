@@ -870,13 +870,13 @@ const char HTTP_SNS_GPS2[] PROGMEM = "{s}GPS " D_SPEED "{m}%2_f " D_UNIT_KILOMET
                                      "{s}GPS " D_HEADING_ACCURACY "{m}%1_f{e}";
 #endif  // USE_GPS_VELOCITY
 
-const char kGPSFix[] PROGMEM = D_SAT_FIX_NO_FIX "|" D_SAT_FIX_DEAD_RECK "|" D_SAT_FIX_2D "|" D_SAT_FIX_3D "|" D_SAT_FIX_GPS_DEAD "|" D_SAT_FIX_TIME;
-
 #ifdef USE_GPS_MAPS
 const char UBX_GOOGLE_MAPS[] ="<iframe width='100%%' src='https://maps.google.com/maps?width=&amp;height=&amp;hl=en&amp;q=%s %s+(Tasmota)&amp;ie=UTF8&amp;t=&amp;z=10&amp;iwloc=B&amp;output=embed' frameborder='0' scrolling='no' marginheight='0' marginwidth='0'></iframe>";
 #endif  // USE_GPS_MAPS
 
 #endif  // USE_WEBSERVER
+
+const char kGPSFix[] PROGMEM = D_SAT_FIX_NO_FIX "|" D_SAT_FIX_DEAD_RECK "|" D_SAT_FIX_2D "|" D_SAT_FIX_3D "|" D_SAT_FIX_GPS_DEAD "|" D_SAT_FIX_TIME;
 
 /********************************************************************************************/
 
