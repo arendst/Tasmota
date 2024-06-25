@@ -18,7 +18,7 @@
 */
 
 #ifdef ESP32
-//#if CONFIG_IDF_TARGET_ESP32
+#ifndef CONFIG_IDF_TARGET_ESP32C2
 #ifdef USE_ETHERNET
 /*********************************************************************************************\
  * Ethernet support for ESP32
@@ -445,5 +445,5 @@ bool Xdrv82(uint32_t function) {
 }
 
 #endif  // USE_ETHERNET
-//#endif  // CONFIG_IDF_TARGET_ESP32
+#endif  // CONFIG_IDF_TARGET_ESP32C2
 #endif  // ESP32
