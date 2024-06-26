@@ -36,6 +36,12 @@ class Matter_Path
   var log                     # any string that needs to be logged (used to show significant parameters for commands)
   var msg                     # reference of the original message
 
+  def init(endpoint, cluster, attribute)    # fast initialization
+    self.endpoint = endpoint
+    self.cluster = cluster
+    self.attribute = attribute
+  end
+
   # copy from an aobject that has also endpoint/cluster/attribute variables
   def copy(c)
     self.reset()

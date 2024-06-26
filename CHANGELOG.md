@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Matter add internal debug option (#21634)
 - Matter add Fan support (virtual only) (#21637)
 - Matter show event name in logs (#21649)
+- Matter full support of events
 
 ### Breaking Changed
 

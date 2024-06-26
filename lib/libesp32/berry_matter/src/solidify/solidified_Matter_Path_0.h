@@ -7,6 +7,81 @@
 extern const bclass be_class_Matter_Path;
 
 /********************************************************************
+** Solidified function: reset
+********************************************************************/
+extern const bclass be_class_Matter_Path;
+be_local_closure(class_Matter_Path_reset,   /* name */
+  be_nested_proto(
+    2,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    &be_class_Matter_Path, 
+    1,                          /* has constants */
+    ( &(const bvalue[ 8]) {     /* constants */
+    /* K0   */  be_nested_str_weak(endpoint),
+    /* K1   */  be_nested_str_weak(cluster),
+    /* K2   */  be_nested_str_weak(attribute),
+    /* K3   */  be_nested_str_weak(fabric_filtered),
+    /* K4   */  be_nested_str_weak(command),
+    /* K5   */  be_nested_str_weak(status),
+    /* K6   */  be_nested_str_weak(log),
+    /* K7   */  be_nested_str_weak(msg),
+    }),
+    be_str_weak(reset),
+    &be_const_str_solidified,
+    ( &(const binstruction[10]) {  /* code */
+      0x4C040000,  //  0000  LDNIL	R1
+      0x90020001,  //  0001  SETMBR	R0	K0	R1
+      0x90020201,  //  0002  SETMBR	R0	K1	R1
+      0x90020401,  //  0003  SETMBR	R0	K2	R1
+      0x90020601,  //  0004  SETMBR	R0	K3	R1
+      0x90020801,  //  0005  SETMBR	R0	K4	R1
+      0x90020A01,  //  0006  SETMBR	R0	K5	R1
+      0x90020C01,  //  0007  SETMBR	R0	K6	R1
+      0x90020E01,  //  0008  SETMBR	R0	K7	R1
+      0x80000000,  //  0009  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: init
+********************************************************************/
+extern const bclass be_class_Matter_Path;
+be_local_closure(class_Matter_Path_init,   /* name */
+  be_nested_proto(
+    4,                          /* nstack */
+    4,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    &be_class_Matter_Path, 
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(endpoint),
+    /* K1   */  be_nested_str_weak(cluster),
+    /* K2   */  be_nested_str_weak(attribute),
+    }),
+    be_str_weak(init),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 4]) {  /* code */
+      0x90020001,  //  0000  SETMBR	R0	K0	R1
+      0x90020202,  //  0001  SETMBR	R0	K1	R2
+      0x90020403,  //  0002  SETMBR	R0	K2	R3
+      0x80000000,  //  0003  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: tostring
 ********************************************************************/
 extern const bclass be_class_Matter_Path;
@@ -162,67 +237,25 @@ be_local_closure(class_Matter_Path_copy,   /* name */
 
 
 /********************************************************************
-** Solidified function: reset
-********************************************************************/
-extern const bclass be_class_Matter_Path;
-be_local_closure(class_Matter_Path_reset,   /* name */
-  be_nested_proto(
-    2,                          /* nstack */
-    1,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    &be_class_Matter_Path, 
-    1,                          /* has constants */
-    ( &(const bvalue[ 8]) {     /* constants */
-    /* K0   */  be_nested_str_weak(endpoint),
-    /* K1   */  be_nested_str_weak(cluster),
-    /* K2   */  be_nested_str_weak(attribute),
-    /* K3   */  be_nested_str_weak(fabric_filtered),
-    /* K4   */  be_nested_str_weak(command),
-    /* K5   */  be_nested_str_weak(status),
-    /* K6   */  be_nested_str_weak(log),
-    /* K7   */  be_nested_str_weak(msg),
-    }),
-    be_str_weak(reset),
-    &be_const_str_solidified,
-    ( &(const binstruction[10]) {  /* code */
-      0x4C040000,  //  0000  LDNIL	R1
-      0x90020001,  //  0001  SETMBR	R0	K0	R1
-      0x90020201,  //  0002  SETMBR	R0	K1	R1
-      0x90020401,  //  0003  SETMBR	R0	K2	R1
-      0x90020601,  //  0004  SETMBR	R0	K3	R1
-      0x90020801,  //  0005  SETMBR	R0	K4	R1
-      0x90020A01,  //  0006  SETMBR	R0	K5	R1
-      0x90020C01,  //  0007  SETMBR	R0	K6	R1
-      0x90020E01,  //  0008  SETMBR	R0	K7	R1
-      0x80000000,  //  0009  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified class: Matter_Path
 ********************************************************************/
 be_local_class(Matter_Path,
     8,
     NULL,
-    be_nested_map(11,
+    be_nested_map(12,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(command, -1), be_const_var(4) },
-        { be_const_key_weak(cluster, 5), be_const_var(1) },
-        { be_const_key_weak(attribute, -1), be_const_var(2) },
-        { be_const_key_weak(tostring, 9), be_const_closure(class_Matter_Path_tostring_closure) },
-        { be_const_key_weak(log, -1), be_const_var(6) },
-        { be_const_key_weak(status, 2), be_const_var(5) },
-        { be_const_key_weak(endpoint, -1), be_const_var(0) },
-        { be_const_key_weak(msg, 6), be_const_var(7) },
-        { be_const_key_weak(fabric_filtered, -1), be_const_var(3) },
-        { be_const_key_weak(copy, -1), be_const_closure(class_Matter_Path_copy_closure) },
         { be_const_key_weak(reset, -1), be_const_closure(class_Matter_Path_reset_closure) },
+        { be_const_key_weak(cluster, 5), be_const_var(1) },
+        { be_const_key_weak(fabric_filtered, 6), be_const_var(3) },
+        { be_const_key_weak(init, -1), be_const_closure(class_Matter_Path_init_closure) },
+        { be_const_key_weak(endpoint, -1), be_const_var(0) },
+        { be_const_key_weak(tostring, -1), be_const_closure(class_Matter_Path_tostring_closure) },
+        { be_const_key_weak(command, 10), be_const_var(4) },
+        { be_const_key_weak(status, -1), be_const_var(5) },
+        { be_const_key_weak(copy, -1), be_const_closure(class_Matter_Path_copy_closure) },
+        { be_const_key_weak(log, -1), be_const_var(6) },
+        { be_const_key_weak(msg, -1), be_const_var(7) },
+        { be_const_key_weak(attribute, -1), be_const_var(2) },
     })),
     be_str_weak(Matter_Path)
 );

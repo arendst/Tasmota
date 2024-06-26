@@ -601,8 +601,9 @@ class Matter_IM
     matter.profiler.log("read_request_start_pull")
     var query = matter.ReadRequestMessage().from_TLV(val)
     var generator_or_arr = self.process_read_or_subscribe_request_pull(query, msg)
+    var event_generator_or_arr = self.process_read_or_subscribe_request_event_pull(query, msg)
 
-    self.send_report_data_pull(msg, generator_or_arr)   # pack into a response structure that will read attributes when expansion is triggered
+    self.send_queue.push(matter.IM_ReportData_Pull(msg, generator_or_arr, event_generator_or_arr))
 
     return true
   end
@@ -613,15 +614,14 @@ class Matter_IM
   #
   # This version lazily reads attributes when building the response packets
   #
-  # returns `true` if processed, `false` if silently ignored,
-  # or raises an exception
   def process_read_or_subscribe_request_pull(query, msg)
-    if query.attributes_requests != nil
+    if (query.attributes_requests != nil)
       var generator_or_arr                                # single path generator (common case) or array of generators
-      var node_id = (msg != nil) ? msg.get_node_id() : nil
 
-      # structure is `ReadRequestMessage` 10.6.2 p.558  
-      if size(query.attributes_requests) > 1
+      # structure is `ReadRequestMessage` 10.6.2 p.558
+      var size_requests = (query.attributes_requests ? size(query.attributes_requests) : 0)
+      # log(f"MTR: process_read_or_subscribe_request_pull {size_requests=}")
+      if (size_requests > 1)
         generator_or_arr = []
       end
 
@@ -629,7 +629,7 @@ class Matter_IM
         var gen = matter.PathGenerator(self.device)
         gen.start(q.endpoint, q.cluster, q.attribute, query.fabric_filtered)
 
-        if size(query.attributes_requests) > 1
+        if (size_requests > 1)
           generator_or_arr.push(gen)
         else
           generator_or_arr = gen
@@ -655,6 +655,88 @@ class Matter_IM
           end
         end
       end
+
+      return generator_or_arr
+    end
+    return nil
+  end
+
+  #############################################################
+  # parse_event_filters_min_no
+  #
+  # Parse an object EventFilters and extract the minimum event
+  # number (as int64) or nil if none
+  static def parse_event_filters_min_no(event_filters, node_id)
+    var event_no_min = nil                              # do we have a filter for minimum event_no (int64 or nil)
+    if event_filters != nil
+      for filter: event_filters                         # filter is an instance of `EventFilterIB`
+        # tasmota.log(f"MTR: EventFilter {filter=} {node_id=}", 3)
+        var filter_node = int64.toint64(filter.node)    # nil or int64
+        if (filter_node && node_id)                     # there is a filter on node-id
+          if filter.node.tobytes() != node_id           # the node id doesn't match
+            tasmota.log(f"MTR: node_id filter {filter_node.tobytes().tohex()} doesn't match {node_id.tohex()}")
+            continue
+          end
+        end
+        # specified minimum value
+        var new_event_no_min = int64.toint64(filter.event_min)
+        if (event_no_min == nil) || (event_no_min < new_event_no_min)
+          event_no_min = new_event_no_min
+        end
+      end
+    end
+    return event_no_min
+  end
+
+  #############################################################
+  # process_read_or_subscribe_request_event_pull
+  #
+  # This version converts event request to an EventGenerator, a list of EventGenerator or nil
+  #
+  # or raises an exception
+  def process_read_or_subscribe_request_event_pull(query, msg)
+    if (query.event_requests != nil)
+      var generator_or_arr                                # single path generator (common case) or array of generators
+      var node_id = (msg != nil) ? msg.get_node_id() : nil
+
+      # structure is `ReadRequestMessage` 10.6.2 p.558
+      var size_requests = (query.event_requests ? size(query.event_requests) : 0)
+      # log(f"MTR: process_read_or_subscribe_request_pull {size_requests=}")
+      if (size_requests > 1)
+        generator_or_arr = []
+      end
+
+      # parse event requests
+      # scan event filters
+      var event_no_min = self.parse_event_filters_min_no(query.event_filters, node_id)
+
+      # scan event filters
+      if query.event_requests
+        for q : query.event_requests
+          var gen = matter.EventGenerator(self.device)
+          gen.start(q.endpoint, q.cluster, q.event, event_no_min)
+
+          if (size_requests > 1)
+            generator_or_arr.push(gen)
+          else
+            generator_or_arr = gen
+          end
+          
+          if tasmota.loglevel(3)
+            var event_name = ""
+            if (q.cluster != nil) && (q.event != nil)
+              event_name = matter.get_event_name(q.cluster, q.event)
+              event_name = (event_name != nil) ? "(" + event_name + ") " : ""
+            end
+            var ep_str = (q.endpoint != nil) ? f"{q.endpoint:02X}" : "**"
+            var cl_str = (q.cluster != nil) ? f"{q.cluster:04X}" : "****"
+            var ev_str = (q.event != nil) ? f"{q.event:02X}" : "**"
+            var event_no_min_str = (event_no_min != nil) ? f" (>{event_no_min})" : ""
+            log(f"MTR: >Read_Event({msg.session.local_session_id:6i}) [{ep_str}]{cl_str}/{ev_str} {event_name}{event_no_min_str}", 3)
+          end
+        end
+      end
+      
       return generator_or_arr
     end
     return nil
@@ -785,12 +867,10 @@ class Matter_IM
       self.subs_shop.remove_by_session(msg.session)      # if `keep_subscriptions`, kill all subscriptions from current session
     end
 
-    # log("MTR: received SubscribeRequestMessage=" + str(query), 3)
-
     var sub = self.subs_shop.new_subscription(msg.session, query)
-
+    
     # expand a string with all attributes requested
-    if tasmota.loglevel(3)
+    if tasmota.loglevel(3) && (query.attributes_requests != nil)
       var attr_req = []
       var ctx = matter.Path()
       ctx.msg = msg
@@ -800,15 +880,17 @@ class Matter_IM
         ctx.attribute = q.attribute
         attr_req.push(str(ctx))
       end
-      log(format("MTR: >Subscribe (%6i) %s (min=%i, max=%i, keep=%i) sub=%i fabric_filtered=%s attr_req=%s event_req=%s",
+      log(format("MTR: >Subscribe (%6i) %s (min=%i, max=%i, keep=%i) sub=%i fabric_filtered=%s",
                                 msg.session.local_session_id, attr_req.concat(" "), sub.min_interval, sub.max_interval, query.keep_subscriptions ? 1 : 0,
-                                sub.subscription_id, query.fabric_filtered,
-                                query.attributes_requests != nil ? size(query.attributes_requests) : "-",
-                                query.event_requests != nil ? size(query.event_requests) : "-"), 3)
+                                sub.subscription_id, query.fabric_filtered), 3)
     end
 
     var generator_or_arr = self.process_read_or_subscribe_request_pull(query, msg)
-    self.send_subscribe_response_pull(msg, generator_or_arr, sub)   # pack into a response structure that will read attributes when expansion is triggered
+    var event_generator_or_arr = self.process_read_or_subscribe_request_event_pull(query, msg)
+
+    sub.set_event_generator_or_arr(event_generator_or_arr)
+
+    self.send_queue.push(matter.IM_SubscribeResponse_Pull(msg, generator_or_arr, event_generator_or_arr, sub))
     return true
 
   end
@@ -881,7 +963,7 @@ class Matter_IM
       end
 
       if size(ret.invoke_responses) > 0
-        self.send_invoke_response(msg, ret)
+        self.send_queue.push(matter.IM_InvokeResponse(msg, ret))
       else
         return false        # we don't send anything, hence the responder sends a simple packet ack
       end
@@ -1052,7 +1134,7 @@ class Matter_IM
         generator.start(write_path.endpoint, write_path.cluster, write_path.attribute)
         var direct = generator.is_direct()
         var ctx
-        while (ctx := generator.next())
+        while (ctx := generator.next_attribute())
           ctx.msg = msg                     # enrich with message
           if ctx.status != nil              # no match, return error because it was direct
             ctx.status = nil                # remove status to silence output
@@ -1074,7 +1156,7 @@ class Matter_IM
 
       # send the reponse that may need to be chunked if too large to fit in a single UDP message
       if !suppress_response
-        self.send_write_response(msg, ret)
+        self.send_queue.push(matter.IM_WriteResponse(msg, ret))
       end
     end
     return true
@@ -1123,7 +1205,7 @@ class Matter_IM
     var fake_read = matter.ReadRequestMessage()
     fake_read.fabric_filtered = false
     fake_read.attributes_requests = []
-
+    # build fake read request containing single read requests for all attributes that were changed
     for ctx: sub.updates
       var p1 = matter.AttributePathIB()
       p1.endpoint = ctx.endpoint
@@ -1136,8 +1218,9 @@ class Matter_IM
     sub.is_keep_alive = false             # sending an actual data update
 
     var generator_or_arr = self.process_read_or_subscribe_request_pull(fake_read, nil #-no msg-#)
+    var event_generator_or_arr = sub.update_event_generator_array()
 
-    var report_data_msg = matter.IM_ReportDataSubscribed_Pull(session._message_handler, session, generator_or_arr, sub)
+    var report_data_msg = matter.IM_ReportDataSubscribed_Pull(session._message_handler, session, generator_or_arr, event_generator_or_arr, sub)
     self.send_queue.push(report_data_msg)           # push message to queue
     self.send_enqueued(session._message_handler)    # and send queued messages now
   end
@@ -1148,12 +1231,13 @@ class Matter_IM
   def send_subscribe_heartbeat(sub)
     var session = sub.session
     
-    log(f"MTR: <Sub_Alive ({session.local_session_id:6i}) sub={sub.subscription_id}", 3)
-    sub.is_keep_alive = true              # sending keep-alive
+    if tasmota.loglevel(3)
+      log(f"MTR: <Sub_Alive ({session.local_session_id:6i}) sub={sub.subscription_id}", 3)
+    end
 
-    var report_data_msg = matter.IM_SubscribedHeartbeat(session._message_handler, session, sub)
-    self.send_queue.push(report_data_msg)           # push message to queue
-    self.send_enqueued(session._message_handler)    # and send queued messages now
+    sub.is_keep_alive = true                                                                      # sending keep-alive
+    self.send_queue.push(matter.IM_SubscribedHeartbeat(session._message_handler, session, sub))   # push message to queue
+    self.send_enqueued(session._message_handler)                                                  # and send queued messages now
   end
   
   #############################################################
@@ -1164,43 +1248,15 @@ class Matter_IM
   end
 
   #############################################################
-  # send_invoke_response
-  #
-  def send_invoke_response(msg, data)
-    self.send_queue.push(matter.IM_InvokeResponse(msg, data))
-  end
-
-  #############################################################
-  # send_invoke_response
-  #
-  def send_write_response(msg, data)
-    self.send_queue.push(matter.IM_WriteResponse(msg, data))
-  end
-
-  #############################################################
-  # send_report_data_pull
-  #
-  def send_report_data_pull(msg, ctx_generator_or_arr)
-    self.send_queue.push(matter.IM_ReportData_Pull(msg, ctx_generator_or_arr))
-  end
-
-  #############################################################
-  # send_subscribe_response_pull
-  #
-  def send_subscribe_response_pull(msg, data, sub)
-    self.send_queue.push(matter.IM_SubscribeResponse_Pull(msg, data, sub))
-  end
-
-  #############################################################
   # placeholder, nothing to run for now
   def every_second()
     self.expire_sendqueue()
   end
 
   #############################################################
-  # dispatch every 250ms click to sub-objects that need it
-  def every_250ms()
-    self.subs_shop.every_250ms()
+  # dispatch every 50ms click to sub-objects that need it
+  def every_50ms()
+    self.subs_shop.every_50ms()
   end
 
 end

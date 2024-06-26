@@ -49,7 +49,6 @@ class Matter_Plugin_Root : Matter_Plugin
   # Constructor
   def init(device, endpoint, config)
     super(self).init(device, endpoint, config)
-
     self.publish_event(0x0028, 0x00, matter.EVENT_CRITICAL, matter.TLV.Matter_TLV_item().set(matter.TLV.U4, tasmota.version()))   # Event StartUp - Software Version
     self.publish_event(0x0033, 0x03, matter.EVENT_CRITICAL, matter.TLV.Matter_TLV_item().set(matter.TLV.U1, 1))   # Event BootReason - PowerOnReboot - TODO if we need to refine
   end
