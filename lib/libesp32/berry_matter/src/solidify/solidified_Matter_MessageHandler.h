@@ -695,10 +695,10 @@ be_local_closure(class_Matter_MessageHandler_send_simple_ack,   /* name */
 
 
 /********************************************************************
-** Solidified function: every_250ms
+** Solidified function: every_50ms
 ********************************************************************/
 extern const bclass be_class_Matter_MessageHandler;
-be_local_closure(class_Matter_MessageHandler_every_250ms,   /* name */
+be_local_closure(class_Matter_MessageHandler_every_50ms,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -710,9 +710,9 @@ be_local_closure(class_Matter_MessageHandler_every_250ms,   /* name */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(im),
-    /* K1   */  be_nested_str_weak(every_250ms),
+    /* K1   */  be_nested_str_weak(every_50ms),
     }),
-    be_str_weak(every_250ms),
+    be_str_weak(every_50ms),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -775,7 +775,7 @@ be_local_class(Matter_MessageHandler,
         { be_const_key_weak(msg_received, -1), be_const_closure(class_Matter_MessageHandler_msg_received_closure) },
         { be_const_key_weak(im, 11), be_const_var(2) },
         { be_const_key_weak(every_second, -1), be_const_closure(class_Matter_MessageHandler_every_second_closure) },
-        { be_const_key_weak(every_250ms, -1), be_const_closure(class_Matter_MessageHandler_every_250ms_closure) },
+        { be_const_key_weak(every_50ms, -1), be_const_closure(class_Matter_MessageHandler_every_50ms_closure) },
         { be_const_key_weak(send_simple_ack, 1), be_const_closure(class_Matter_MessageHandler_send_simple_ack_closure) },
         { be_const_key_weak(send_response_frame, 6), be_const_closure(class_Matter_MessageHandler_send_response_frame_closure) },
         { be_const_key_weak(control_message, -1), be_const_var(3) },

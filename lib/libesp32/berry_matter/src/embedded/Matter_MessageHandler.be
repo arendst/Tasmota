@@ -262,9 +262,9 @@ class Matter_MessageHandler
   end
 
   #############################################################
-  # dispatch every 250ms click to sub-objects that need it
-  def every_250ms()
-    self.im.every_250ms()
+  # dispatch every 50ms click to sub-objects that need it
+  def every_50ms()
+    self.im.every_50ms()
   end
 
 end

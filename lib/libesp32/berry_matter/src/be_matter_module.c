@@ -209,7 +209,8 @@ extern int matter_publish_command(bvm *vm);
 
 extern const bclass be_class_Matter_TLV;   // need to declare it upfront because of circular reference
 #include "solidify/solidified_Matter_Path_0.h"
-#include "solidify/solidified_Matter_Path_1_Generator.h"
+#include "solidify/solidified_Matter_Path_1_PathGenerator.h"
+#include "solidify/solidified_Matter_Path_1_EventGenerator.h"
 #include "solidify/solidified_Matter_TLV.h"
 #include "solidify/solidified_Matter_IM_Data.h"
 #include "solidify/solidified_Matter_UDPServer.h"
@@ -455,6 +456,7 @@ module matter (scope: global, strings: weak) {
   // Interation Model
   Path, class(be_class_Matter_Path)
   PathGenerator, class(be_class_Matter_PathGenerator)
+  EventGenerator, class(be_class_Matter_EventGenerator)
   IM_Status, class(be_class_Matter_IM_Status)
   IM_InvokeResponse, class(be_class_Matter_IM_InvokeResponse)
   IM_WriteResponse, class(be_class_Matter_IM_WriteResponse)

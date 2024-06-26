@@ -224,7 +224,6 @@ class Matter_Frame
       raw .. payload
     end
 
-    # self.debug(raw)
     self.raw = raw
     return raw
   end

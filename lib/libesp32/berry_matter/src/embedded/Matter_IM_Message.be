@@ -171,12 +171,15 @@ class Matter_IM_ReportData_Pull : Matter_IM_Message
                                       # section 4.4.4 (p. 114)
   # note: `self.data` (bytes or nil) is containing any remaining responses that could not fit in previous packets
   var generator_or_arr                # a PathGenerator or an array of PathGenerator
+  var event_generator_or_arr          # a EventGenerator, or array of EventGenerator, or nil
   var subscription_id                 # if not `nil`, subscription_id in response
   var suppress_response               # if not `nil`, suppress_response attribute
+  var data_ev                         # left-overs of events, mirroring of data for attributes
 
-  def init(msg, ctx_generator_or_arr)
+  def init(msg, ctx_generator_or_arr, event_generator_or_arr)
     super(self).init(msg, 0x05 #-Report Data-#, true)
     self.generator_or_arr = ctx_generator_or_arr
+    self.event_generator_or_arr = event_generator_or_arr
   end
 
   def set_subscription_id(subscription_id)
@@ -196,17 +199,20 @@ class Matter_IM_ReportData_Pull : Matter_IM_Message
     self.data = nil                                     # we remove the data that was saved for next packet
 
     var not_full = true                                 # marker used to exit imbricated loops
+    var debug = responder.device.debug
 
+    var data_ev = (self.data_ev != nil) ? self.data_ev : ((self.event_generator_or_arr != nil) ? bytes() : nil)  # bytes for events or nil if no event generators
+                                                        # if event_generator_or_arr != nil then data_ev contains a bytes() object
 
+    ########## Attributes
     while not_full && (self.generator_or_arr != nil)
       # get the current generator (first element of list or single object)
       var current_generator = isinstance(self.generator_or_arr, list) ? self.generator_or_arr[0] : self.generator_or_arr
       # log(f">>>: ReportData_Pull send_im start {current_generator.path_in_endpoint}/{current_generator.path_in_cluster}/{current_generator.path_in_attribute}",3)
 
       var ctx
-      while not_full && (ctx := current_generator.next())   # 'not_full' must be first to avoid removing an item when we don't want
+      while not_full && (ctx := current_generator.next_attribute())   # 'not_full' must be first to avoid removing an item when we don't want
         # log(f">>>: ReportData_Pull {ctx=}", 3)
-        var debug = responder.device.debug
         var force_log = current_generator.is_direct() || debug
         var elt_bytes = responder.im.read_single_attribute_to_bytes(current_generator.get_pi(), ctx, resp.session, force_log)   # TODO adapt no_log
         if (elt_bytes == nil)   continue    end         # silently ignored, iterate to next
@@ -234,23 +240,75 @@ class Matter_IM_ReportData_Pull : Matter_IM_Message
 
     end
 
+    # do we have left-overs from events, i.e. self.data_ev is non-empty bytes()
+    if not_full && (self.data_ev != nil) && (size(self.data_ev) > 0)
+      # try to add self.data_ev
+      if (size(data) + size(self.data_ev) > self.MAX_MESSAGE)
+        not_full = false                              # skip until next iteration
+        data_ev = nil                                 # don't output any value
+      else
+        self.data_ev = nil                            # we could add it, so remove from left-overs
+      end
+    end
+
+    ########## Events
+    while not_full && (self.event_generator_or_arr != nil)
+      # get the current generator (first element of list or single object)
+      var current_generator = isinstance(self.event_generator_or_arr, list) ? self.event_generator_or_arr[0] : self.event_generator_or_arr
+      # now events
+      var ev
+      while not_full && (ev := current_generator.next_event())   # 'not_full' must be first to avoid removing an item when we don't want
+        # conditional logging
+        if debug && tasmota.loglevel(3)
+          var data_str = ''
+          if (ev.data0 != nil)   data_str = " - " + str(ev.data0)             end
+          if (ev.data1 != nil)   data_str += ", " + str(ev.data1)     end
+          if (ev.data2 != nil)   data_str += ", " + str(ev.data2)     end
+          log(f"MTR: >Read_Event({resp.session.local_session_id:6i}|{ev.event_no:8s}) [{ev.endpoint:02X}]{ev.cluster:04X}/{ev.event_id:02X}{data_str}", 3)
+        end
+        # send bytes
+        var ev_bytes = ev.to_raw_bytes()
+        if (size(data) + size(data_ev) + size(ev_bytes) > self.MAX_MESSAGE)
+          self.data_ev = ev_bytes                     # save for next iteration
+          not_full = false
+        else
+          data_ev.append(ev_bytes)                    # append response since we have enough room
+        end
+      end
+
+      # if we are here, then we exhausted the current generator, and we need to move to the next one
+      if not_full
+        if isinstance(self.event_generator_or_arr, list)
+          self.event_generator_or_arr.remove(0)               # remove first element
+          if size(self.event_generator_or_arr) == 0
+            self.event_generator_or_arr = nil                 # empty array so we put nil
+          end
+        else
+          self.event_generator_or_arr = nil                   # there was a single entry, so replace with nil
+        end
+      end
+
+    end
+
+    ########## Response
     # prepare the response
     var ret = matter.ReportDataMessage()
     ret.subscription_id = self.subscription_id
     ret.suppress_response = self.suppress_response
     # ret.suppress_response = true
-    ret.attribute_reports = [data]
-    ret.more_chunked_messages = (self.data != nil)    # we got more data to send
+    if (data != nil && size(data) > 0)
+      ret.attribute_reports = [data]
+    end
+    if (data_ev != nil && size(data_ev) > 0)
+      ret.event_reports = [data_ev]
+    end
+    ret.more_chunked_messages = (self.data != nil) || (self.data_ev != nil)    # we got more data to send
 
     # print(">>>>> send elements before encode")
     var raw_tlv = ret.to_TLV()
-    # print(">>>>> send elements before encode 2")
     var encoded_tlv = raw_tlv.tlv2raw(bytes(self.MAX_MESSAGE))    # takes time
-    # print(">>>>> send elements before encode 3")
     resp.encode_frame(encoded_tlv)    # payload in cleartext, pre-allocate max buffer
-    # print(">>>>> send elements after encode")
     resp.encrypt()
-    # print(">>>>> send elements after encrypt")
     # log(format("MTR: <snd       (%6i) id=%i exch=%i rack=%s", resp.session.local_session_id, resp.message_counter, resp.exchange_id, resp.ack_message_counter), 4)
     responder.send_response_frame(resp)
     self.last_counter = resp.message_counter
@@ -285,12 +343,13 @@ class Matter_IM_ReportDataSubscribed_Pull : Matter_IM_ReportData_Pull
   #   inherited from Matter_IM_ReportData_Pull
   # static var MAX_MESSAGE = 1200       # max bytes size for a single TLV worklaod
   # var generator_or_arr                # a PathGenerator or an array of PathGenerator
+  # var event_generator_or_arr          # a EventGenerator, or array of EventGenerator, or nil
   # var subscription_id                 # if not `nil`, subscription_id in response
   var sub                         # subscription object
   var report_data_phase           # true during reportdata
 
-  def init(message_handler, session, ctx_generator_or_arr, sub)
-    super(self).init(nil, ctx_generator_or_arr)     # send msg=nil to avoid creating a reponse
+  def init(message_handler, session, ctx_generator_or_arr, event_generator_or_arr, sub)
+    super(self).init(nil, ctx_generator_or_arr, event_generator_or_arr)     # send msg=nil to avoid creating a reponse
     # we need to initiate a new virtual response, because it's a spontaneous message
     self.resp = matter.Frame.initiate_response(message_handler, session, 0x05 #-Report Data-#, true)
     #
@@ -345,7 +404,7 @@ class Matter_IM_ReportDataSubscribed_Pull : Matter_IM_ReportData_Pull
     # log(format("MTR: ReportDataSubscribed::send_im size(self.data.attribute_reports)=%i ready=%s report_data_phase=%s", size(self.data.attribute_reports), str(self.ready), str(self.report_data_phase)), 3)
     if !self.ready   return false  end
 
-    if (self.generator_or_arr != nil)             # do we have still attributes to send
+    if (self.generator_or_arr != nil) || (self.event_generator_or_arr != nil)             # do we have still attributes or events to send
       if self.report_data_phase
         super(self).send_im(responder)
         # log(format("MTR: ReportDataSubscribed::send_im called super finish=%i", self.finish), 3)
@@ -365,6 +424,7 @@ class Matter_IM_ReportDataSubscribed_Pull : Matter_IM_ReportData_Pull
         responder.send_response_frame(resp)
         self.last_counter = resp.message_counter
         self.finish = true
+        self.sub.re_arm()           # signal that we can proceed to next sub report
       end
 
     else
@@ -374,6 +434,7 @@ class Matter_IM_ReportDataSubscribed_Pull : Matter_IM_ReportData_Pull
         self.report_data_phase = false
       else
         self.finish = true
+        self.sub.re_arm()           # signal that we can proceed to next sub report
       end
     end
   end
@@ -391,7 +452,7 @@ class Matter_IM_SubscribedHeartbeat : Matter_IM_ReportData_Pull
   var sub                         # subscription object
 
   def init(message_handler, session, sub)
-    super(self).init(nil, nil #-no ctx_generator_or_arr-#)     # send msg=nil to avoid creating a reponse
+    super(self).init(nil, nil #-no ctx_generator_or_arr-#, nil #-no event_generator_or_arr-#)     # send msg=nil to avoid creating a reponse
     # we need to initiate a new virtual response, because it's a spontaneous message
     self.resp = matter.Frame.initiate_response(message_handler, session, 0x05 #-Report Data-#, true)
     #
@@ -449,8 +510,8 @@ class Matter_IM_SubscribeResponse_Pull : Matter_IM_ReportData_Pull
   var sub                         # subscription object
   var report_data_phase           # true during reportdata
 
-  def init(msg, ctx_generator_or_arr, sub)
-    super(self).init(msg, ctx_generator_or_arr)
+  def init(msg, ctx_generator_or_arr, event_generator_or_arr, sub)
+    super(self).init(msg, ctx_generator_or_arr, event_generator_or_arr)
     self.sub = sub
     self.report_data_phase = true
     self.set_subscription_id(sub.subscription_id)

@@ -313,6 +313,7 @@ class Matter_Device
   def every_second()
     self.sessions.every_second()
     self.message_handler.every_second()
+    self.events.every_second()      # periodically remove bytes() representation of events
     if self.commissioning_open != nil && tasmota.time_reached(self.commissioning_open)    # timeout reached, close provisioning
       self.commissioning_open = nil
     end
@@ -321,7 +322,6 @@ class Matter_Device
   #############################################################
   # dispatch every 250ms to all plugins
   def every_250ms()
-    self.message_handler.every_250ms()
     # call read_sensors if needed
     self.read_sensors_scheduler()
     # call all plugins, use a manual loop to avoid creating a new object
@@ -380,9 +380,11 @@ class Matter_Device
   end
 
   #############################################################
+  # dispatch every 50ms
   # ticks
   def every_50ms()
     self.tick += 1
+    self.message_handler.every_50ms()
   end
 
   #############################################################
@@ -535,7 +537,7 @@ class Matter_Device
 
     var direct = path_generator.is_direct()
     var concrete_path
-    while ((concrete_path := path_generator.next()) != nil)
+    while ((concrete_path := path_generator.next_attribute()) != nil)
       var finished = cb(path_generator.get_pi(), concrete_path)   # call the callback with the plugin and the context
     end
   end

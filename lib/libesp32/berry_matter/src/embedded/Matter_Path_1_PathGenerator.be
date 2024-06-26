@@ -1,5 +1,5 @@
 #
-# Matter_IM_Path_1.be - suppport for Matter concrete path generator
+# Matter_Path_1_Generator.be - suppport for Matter concrete path generator
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -104,11 +104,11 @@ class Matter_PathGenerator
   end
 
   ################################################################################
-  # default_status_error
+  # _default_status_error
   #
   # Get the default error if the read or write fails.
   # This error is only reported if `direct` is true
-  def default_status_error()
+  def _default_status_error()
     if self.is_direct()
       if (!self.endpoint_found)     return matter.UNSUPPORTED_ENDPOINT      end
       if (!self.cluster_found)      return matter.UNSUPPORTED_CLUSTER       end
@@ -119,15 +119,15 @@ class Matter_PathGenerator
   end
 
   ################################################################################
-  # finished
+  # is_finished
   #
   # Returns `true` if we have exhausted the generator
-  def finished()
+  def is_finished()
     return (self.pi != false)
   end
 
   ################################################################################
-  # finished
+  # get_pi
   #
   # Returns the endpoint object for the last context returned, or `nil` if not found or exhausted
   def get_pi()
@@ -135,14 +135,14 @@ class Matter_PathGenerator
   end
 
   ################################################################################
-  # next
+  # next_attribute
   #
   # Generate next concrete path
   # Returns:
   # - a path object (that is valid until next call)
   # - if 'direct' (concrete path), ctx.status contains the appropriate error code if the path value is not supported
   # - `nil` if no more objects
-  def next()
+  def next_attribute()
     if (self.pi == true) || (self.pi != nil && self.is_direct())    # if we already answered a succesful or missing context for direct request, abort on second call
       self.reset()
       return nil
@@ -188,7 +188,7 @@ class Matter_PathGenerator
       path_concrete.cluster = self.path_in_cluster
       path_concrete.attribute = self.path_in_attribute
       path_concrete.fabric_filtered = self.path_in_fabric_filtered
-      path_concrete.status = self.default_status_error()
+      path_concrete.status = self._default_status_error()
       self.pi = true                        # next call will trigger Generator exhausted
       # log(f">>>: PathGenerator next path_concrete:{path_concrete} direct", 3)
       return path_concrete
@@ -298,7 +298,7 @@ var gen = matter.PathGenerator(matter_device)
 def gen_path_dump(endpoint, cluster, attribute)
   gen.start(endpoint, cluster, attribute)
   var cp
-  while (cp := gen.next())
+  while (cp := gen.next_attribute())
     print(cp)
   end
 end

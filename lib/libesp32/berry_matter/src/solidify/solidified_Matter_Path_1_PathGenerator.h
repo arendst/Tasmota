@@ -1,4 +1,4 @@
-/* Solidification of Matter_Path_1_Generator.h */
+/* Solidification of Matter_Path_1_PathGenerator.h */
 /********************************************************************\
 * Generated code, don't edit                                         *
 \********************************************************************/
@@ -119,10 +119,10 @@ be_local_closure(class_Matter_PathGenerator_is_direct,   /* name */
 
 
 /********************************************************************
-** Solidified function: default_status_error
+** Solidified function: is_finished
 ********************************************************************/
 extern const bclass be_class_Matter_PathGenerator;
-be_local_closure(class_Matter_PathGenerator_default_status_error,   /* name */
+be_local_closure(class_Matter_PathGenerator_is_finished,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -132,43 +132,16 @@ be_local_closure(class_Matter_PathGenerator_default_status_error,   /* name */
     0,                          /* has sup protos */
     &be_class_Matter_PathGenerator, 
     1,                          /* has constants */
-    ( &(const bvalue[ 9]) {     /* constants */
-    /* K0   */  be_nested_str_weak(is_direct),
-    /* K1   */  be_nested_str_weak(endpoint_found),
-    /* K2   */  be_nested_str_weak(matter),
-    /* K3   */  be_nested_str_weak(UNSUPPORTED_ENDPOINT),
-    /* K4   */  be_nested_str_weak(cluster_found),
-    /* K5   */  be_nested_str_weak(UNSUPPORTED_CLUSTER),
-    /* K6   */  be_nested_str_weak(attribute_found),
-    /* K7   */  be_nested_str_weak(UNSUPPORTED_ATTRIBUTE),
-    /* K8   */  be_nested_str_weak(UNREPORTABLE_ATTRIBUTE),
+    ( &(const bvalue[ 1]) {     /* constants */
+    /* K0   */  be_nested_str_weak(pi),
     }),
-    be_str_weak(default_status_error),
+    be_str_weak(is_finished),
     &be_const_str_solidified,
-    ( &(const binstruction[23]) {  /* code */
-      0x8C040100,  //  0000  GETMET	R1	R0	K0
-      0x7C040200,  //  0001  CALL	R1	1
-      0x78060011,  //  0002  JMPF	R1	#0015
-      0x88040101,  //  0003  GETMBR	R1	R0	K1
-      0x74060002,  //  0004  JMPT	R1	#0008
-      0xB8060400,  //  0005  GETNGBL	R1	K2
-      0x88040303,  //  0006  GETMBR	R1	R1	K3
-      0x80040200,  //  0007  RET	1	R1
-      0x88040104,  //  0008  GETMBR	R1	R0	K4
-      0x74060002,  //  0009  JMPT	R1	#000D
-      0xB8060400,  //  000A  GETNGBL	R1	K2
-      0x88040305,  //  000B  GETMBR	R1	R1	K5
-      0x80040200,  //  000C  RET	1	R1
-      0x88040106,  //  000D  GETMBR	R1	R0	K6
-      0x74060002,  //  000E  JMPT	R1	#0012
-      0xB8060400,  //  000F  GETNGBL	R1	K2
-      0x88040307,  //  0010  GETMBR	R1	R1	K7
-      0x80040200,  //  0011  RET	1	R1
-      0xB8060400,  //  0012  GETNGBL	R1	K2
-      0x88040308,  //  0013  GETMBR	R1	R1	K8
-      0x80040200,  //  0014  RET	1	R1
-      0x4C040000,  //  0015  LDNIL	R1
-      0x80040200,  //  0016  RET	1	R1
+    ( &(const binstruction[ 4]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x50080000,  //  0001  LDBOOL	R2	0	0
+      0x20040202,  //  0002  NE	R1	R1	R2
+      0x80040200,  //  0003  RET	1	R1
     })
   )
 );
@@ -176,10 +149,10 @@ be_local_closure(class_Matter_PathGenerator_default_status_error,   /* name */
 
 
 /********************************************************************
-** Solidified function: next
+** Solidified function: next_attribute
 ********************************************************************/
 extern const bclass be_class_Matter_PathGenerator;
-be_local_closure(class_Matter_PathGenerator_next,   /* name */
+be_local_closure(class_Matter_PathGenerator_next_attribute,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -210,9 +183,9 @@ be_local_closure(class_Matter_PathGenerator_next,   /* name */
     /* K17  */  be_nested_str_weak(path_in_endpoint),
     /* K18  */  be_nested_str_weak(path_in_cluster),
     /* K19  */  be_nested_str_weak(path_in_attribute),
-    /* K20  */  be_nested_str_weak(default_status_error),
+    /* K20  */  be_nested_str_weak(_default_status_error),
     }),
-    be_str_weak(next),
+    be_str_weak(next_attribute),
     &be_const_str_solidified,
     ( &(const binstruction[95]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -392,10 +365,10 @@ be_local_closure(class_Matter_PathGenerator__next_cluster,   /* name */
 
 
 /********************************************************************
-** Solidified function: finished
+** Solidified function: _default_status_error
 ********************************************************************/
 extern const bclass be_class_Matter_PathGenerator;
-be_local_closure(class_Matter_PathGenerator_finished,   /* name */
+be_local_closure(class_Matter_PathGenerator__default_status_error,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -405,16 +378,43 @@ be_local_closure(class_Matter_PathGenerator_finished,   /* name */
     0,                          /* has sup protos */
     &be_class_Matter_PathGenerator, 
     1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(pi),
+    ( &(const bvalue[ 9]) {     /* constants */
+    /* K0   */  be_nested_str_weak(is_direct),
+    /* K1   */  be_nested_str_weak(endpoint_found),
+    /* K2   */  be_nested_str_weak(matter),
+    /* K3   */  be_nested_str_weak(UNSUPPORTED_ENDPOINT),
+    /* K4   */  be_nested_str_weak(cluster_found),
+    /* K5   */  be_nested_str_weak(UNSUPPORTED_CLUSTER),
+    /* K6   */  be_nested_str_weak(attribute_found),
+    /* K7   */  be_nested_str_weak(UNSUPPORTED_ATTRIBUTE),
+    /* K8   */  be_nested_str_weak(UNREPORTABLE_ATTRIBUTE),
     }),
-    be_str_weak(finished),
+    be_str_weak(_default_status_error),
     &be_const_str_solidified,
-    ( &(const binstruction[ 4]) {  /* code */
-      0x88040100,  //  0000  GETMBR	R1	R0	K0
-      0x50080000,  //  0001  LDBOOL	R2	0	0
-      0x20040202,  //  0002  NE	R1	R1	R2
-      0x80040200,  //  0003  RET	1	R1
+    ( &(const binstruction[23]) {  /* code */
+      0x8C040100,  //  0000  GETMET	R1	R0	K0
+      0x7C040200,  //  0001  CALL	R1	1
+      0x78060011,  //  0002  JMPF	R1	#0015
+      0x88040101,  //  0003  GETMBR	R1	R0	K1
+      0x74060002,  //  0004  JMPT	R1	#0008
+      0xB8060400,  //  0005  GETNGBL	R1	K2
+      0x88040303,  //  0006  GETMBR	R1	R1	K3
+      0x80040200,  //  0007  RET	1	R1
+      0x88040104,  //  0008  GETMBR	R1	R0	K4
+      0x74060002,  //  0009  JMPT	R1	#000D
+      0xB8060400,  //  000A  GETNGBL	R1	K2
+      0x88040305,  //  000B  GETMBR	R1	R1	K5
+      0x80040200,  //  000C  RET	1	R1
+      0x88040106,  //  000D  GETMBR	R1	R0	K6
+      0x74060002,  //  000E  JMPT	R1	#0012
+      0xB8060400,  //  000F  GETNGBL	R1	K2
+      0x88040307,  //  0010  GETMBR	R1	R1	K7
+      0x80040200,  //  0011  RET	1	R1
+      0xB8060400,  //  0012  GETNGBL	R1	K2
+      0x88040308,  //  0013  GETMBR	R1	R1	K8
+      0x80040200,  //  0014  RET	1	R1
+      0x4C040000,  //  0015  LDNIL	R1
+      0x80040200,  //  0016  RET	1	R1
     })
   )
 );
@@ -699,9 +699,9 @@ be_local_class(Matter_PathGenerator,
         { be_const_key_weak(path_in_endpoint, -1), be_const_var(1) },
         { be_const_key_weak(path_in_cluster, -1), be_const_var(2) },
         { be_const_key_weak(get_pi, -1), be_const_closure(class_Matter_PathGenerator_get_pi_closure) },
-        { be_const_key_weak(is_direct, 22), be_const_closure(class_Matter_PathGenerator_is_direct_closure) },
-        { be_const_key_weak(default_status_error, 9), be_const_closure(class_Matter_PathGenerator_default_status_error_closure) },
-        { be_const_key_weak(next, -1), be_const_closure(class_Matter_PathGenerator_next_closure) },
+        { be_const_key_weak(is_direct, 9), be_const_closure(class_Matter_PathGenerator_is_direct_closure) },
+        { be_const_key_weak(is_finished, -1), be_const_closure(class_Matter_PathGenerator_is_finished_closure) },
+        { be_const_key_weak(next_attribute, 22), be_const_closure(class_Matter_PathGenerator_next_attribute_closure) },
         { be_const_key_weak(cluster_found, 17), be_const_var(10) },
         { be_const_key_weak(endpoint_found, 6), be_const_var(9) },
         { be_const_key_weak(_next_attribute, -1), be_const_closure(class_Matter_PathGenerator__next_attribute_closure) },
@@ -711,7 +711,7 @@ be_local_class(Matter_PathGenerator,
         { be_const_key_weak(path_concrete, -1), be_const_var(12) },
         { be_const_key_weak(clusters, -1), be_const_var(8) },
         { be_const_key_weak(path_in_fabric_filtered, -1), be_const_var(4) },
-        { be_const_key_weak(finished, -1), be_const_closure(class_Matter_PathGenerator_finished_closure) },
+        { be_const_key_weak(_default_status_error, -1), be_const_closure(class_Matter_PathGenerator__default_status_error_closure) },
         { be_const_key_weak(attribute_found, 12), be_const_var(11) },
         { be_const_key_weak(_next_endpoint, -1), be_const_closure(class_Matter_PathGenerator__next_endpoint_closure) },
         { be_const_key_weak(path_in_attribute, -1), be_const_var(3) },

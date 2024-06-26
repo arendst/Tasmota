@@ -38,20 +38,70 @@ class Matter_EventQueued
   var event_id
   var is_urgent
   var priority
+  var data0, data1, data2
   var event_no
+  var epoch_timestamp
   var raw_tlv                           # content encoded as full TLV
 
-  def init(event_ib)
-    self.endpoint = event_ib.path.endpoint
-    self.cluster  = event_ib.path.cluster
-    self.event_id = event_ib.path.event
-    self.is_urgent = event_ib.path.is_urgent
-    self.priority = event_ib.priority
+  def init(event_no, endpoint, cluster, event_id, is_urgent, priority, data0, data1, data2)
+    self.event_no = event_no
+    self.endpoint = endpoint
+    self.cluster = cluster
+    self.event_id = event_id
+    self.is_urgent = is_urgent
+    self.priority = priority
+    # priority
     if (self.priority < 0)                        self.priority = 0                       end
     if (self.priority > matter.EVENT_CRITICAL)    self.priority = matter.EVENT_CRITICAL   end
-    self.event_no = int64.toint64(event_ib.event_number)    # int64
-    self.raw_tlv = event_ib.to_TLV().tlv2raw()                # bytes()
+    # epoch_time
+    self.epoch_timestamp = tasmota.rtc('utc')
+    if (self.epoch_timestamp < 1700000000)
+      self.epoch_timestamp = tasmota.rtc('config_time')    # no valid time, take the last config time
+    end
+    self.data0 = data0
+    self.data1 = data1
+    self.data2 = data2
   end
+
+  #################################################################################
+  # to_raw_bytes
+  #
+  # Computes a complete EventReportIB structure as bytes()
+  #
+  # It is memoized in self.raw_tlv, but is cleaned after sending messages to
+  # free up some space
+  def to_raw_bytes()
+    if (self.raw_tlv == nil)
+      var event_report = matter.EventReportIB()
+      var event_ib = matter.EventDataIB()
+      event_report.event_data = event_ib
+      var event_path = matter.EventPathIB()
+      event_path.endpoint = self.endpoint
+      event_path.cluster = self.cluster
+      event_path.event = self.event_id
+      event_path.is_urgent = self.is_urgent
+      event_ib.path = event_path
+      event_ib.priority = self.priority
+      event_ib.event_number = self.event_no
+      event_ib.epoch_timestamp = self.epoch_timestamp
+      event_ib.data = matter.TLV.Matter_TLV_struct()
+      if (self.data0 != nil)   event_ib.data.add_obj(0, self.data0)   end
+      if (self.data1 != nil)   event_ib.data.add_obj(1, self.data1)   end
+      if (self.data2 != nil)   event_ib.data.add_obj(2, self.data2)   end
+
+      self.raw_tlv = event_report.to_TLV().tlv2raw()     # bytes()
+    end
+    return self.raw_tlv
+  end
+
+  #################################################################################
+  # compact
+  #
+  # Remove the local cache of `raw_tlv` to save space (it can always be recreated)
+  def compact()
+    self.raw_tlv = nil
+  end
+
 end
 matter.EventQueued = Matter_EventQueued
 
@@ -77,11 +127,16 @@ matter.EventQueued = Matter_EventQueued
 # EVENT_CRITICAL=2
 
 #################################################################################
-# Matter_IM class
+# Matter_EventHandler class
+#
+# Keep track of events in 3 queues for DEBUG/INFO/CRITICAL levels
+#
+# Invariants:
+#    All 3 queues (debug/info/critical) have events in sorted order by `event_no`
 #################################################################################
 class Matter_EventHandler
-  static var EVENT_NO_INCR = 1000       # counter increased when persisting
-  static var EVENT_NO_FILENAME = "_matter_event_no"
+  static var EVENT_NO_INCR = 1000       # counter increased when persisting, default value from Matter spec
+  static var EVENT_NO_KEY = "_matter_event_no"
   static var EVENT_QUEUE_SIZE_MAX = 10  # each queue is 10 elements depth
 
   # circular buffers
@@ -109,22 +164,20 @@ class Matter_EventHandler
   # with a predefined gap `self.EVENT_NO_INCR` (default 1000)
   def load_event_no_persisted()
     import persist
-    var event_no_str = str(persist.find(self.EVENT_NO_FILENAME, "0"))
+    var event_no_str = str(persist.find(self.EVENT_NO_KEY, "0"))
     self.counter_event_no = int64.fromstring(event_no_str)
     self.counter_event_no_persisted = self.counter_event_no.add(self.EVENT_NO_INCR)
     # save back next slot
-    persist.setmember(self.EVENT_NO_FILENAME, self.counter_event_no_persisted.tostring())
+    persist.setmember(self.EVENT_NO_KEY, self.counter_event_no_persisted.tostring())
     persist.save()
   end
 
   #####################################################################
   # Enqueue event
   #
-  # Takes `Matter_EventDataIB`
+  # Takes `EventQueued`
   #####################################################################
-  def queue_event(ev_ib)
-    var ev_queued = matter.EventQueued(ev_ib)
-
+  def queue_event(ev_queued)
     var cur_prio = ev_queued.priority
 
     # we reuse the same logic as connectedhomeip
@@ -183,10 +236,37 @@ class Matter_EventHandler
     end
   end
 
+  #############################################################
+  # dispatch every second click to sub-objects that need it
+  def every_second()
+    self.compact()
+  end
+
+  #####################################################################
+  # Enqueue event
+  #
+  # Remove the cached `raw_tlv` from all events in queues
+  # to save some space
+  def compact()
+    def compact_queue(q)
+      var i = 0
+      while i < size(q)
+        q[i].compact()
+        i += 1
+      end
+    end
+    compact_queue(self.queue_debug)
+    compact_queue(self.queue_info)
+    compact_queue(self.queue_critical)
+  end
+
   #####################################################################
   # Events handling
   #####################################################################
   # Get next event number
+  #
+  # Also make sure that we don't go above the persisted last number,
+  # in such case increase the persisted number and use the next chunk
   def get_next_event_no()
     self.counter_event_no = self.counter_event_no.add(1)
     if self.counter_event_no >= self.counter_event_no_persisted
@@ -194,7 +274,10 @@ class Matter_EventHandler
     end
     return self.counter_event_no
   end
-
+  # Get last event number (all events sent up to now are lower or equal than this value)
+  def get_last_event_no()
+    return self.counter_event_no
+  end
 
   #####################################################################
   # Dump events for debugging
@@ -206,6 +289,91 @@ class Matter_EventHandler
     for ev: self.queue_info       cnt[ev.priority] += 1   end
     for ev: self.queue_critical   cnt[ev.priority] += 1   end
     tasmota.log(f"MTR: Events by types: critical {cnt[2]}, info {cnt[1]}, debug {cnt[0]}", 2)
+  end
+
+  #####################################################################
+  # find_min_no
+  #
+  # Find the next event number just above the provided value,
+  # or the smallest if nil is passed
+  #
+  # Arg:
+  #   - event_min: minimal event number (strictly above),
+  #                or `nil` if smallest number
+  #
+  # Returns:
+  #   - event_no (int) or `nil` of none found
+  #####################################################################
+  def find_min_no(event_min_no)
+    # fail fast if `event_min_no` is the same as `counter_event_no`
+    # meaning that we dont have any more events since last report
+    if (event_min_no != nil) && (event_min_no >= self.counter_event_no)
+      return nil
+    end
+
+    #####################################################################
+    # Find the next available event right above `event_min_no`
+    #
+    # TODO: since queues are sorted, we can abort searching when we reach
+    # an event below `event_min_no`
+    #
+    # Arg
+    #   - event_smallest: the event found up to now (from previous queues)
+    #   - q: the queue oject
+    #   - event_min_no: minimum acceptable event number (int64) or nil if any
+    def find_in_queue(event_smallest, q, event_min_no)
+      var i = size(q) - 1
+      while i >= 0 
+        var cur_event = q[i]
+        # fail fast: since queues are sorted, we can abort searching when we reach an event below `event_min_no`
+        if (event_min_no != nil) && (cur_event.event_no <= event_min_no)
+          return event_smallest
+        end
+
+        # we know that event_no is in acceptable range, is it smaller?
+        if (event_smallest == nil) || (cur_event.event_no < event_smallest.event_no)
+          event_smallest = cur_event
+        end
+
+        i -= 1
+      end
+      return event_smallest
+    end
+
+    var event
+    # look in debug
+    event = find_in_queue(event, self.queue_debug, event_min_no)
+    # look in info
+    event = find_in_queue(event, self.queue_info, event_min_no)
+    # look in critical
+    event = find_in_queue(event, self.queue_critical, event_min_no)
+
+    return event
+  end
+
+  #############################################################
+  # generate a new event
+  #
+  def publish_event(endpoint, cluster, event_id, is_urgent, priority, data0, data1, data2)
+    var new_event = matter.EventQueued(self.get_next_event_no(), endpoint, cluster, event_id, is_urgent, priority, data0, data1, data2)
+    if tasmota.loglevel(3)
+      var data_str = ''
+      if (data0 != nil)   data_str = str(data0)             end
+      if (data1 != nil)   data_str += ", " + str(data1)     end
+      if (data2 != nil)   data_str += ", " + str(data2)     end
+      if (cluster == 0x0028) && (event_id == 0x00)
+        # put the software version in a readable format
+        var val = data0.val
+        data_str = format("%i.%i.%i.%i", (val >> 24) & 0xFF, (val >> 16) & 0xFF, (val >> 8) & 0xFF, val & 0xFF)
+      end
+      var priority_str = (priority == 2) ? "CRIT  " : (priority == 1) ? "INFO  " : "DEBUG "
+      var event_name = matter.get_event_name(cluster, event_id)
+      event_name = (event_name != nil) ? "(" + event_name + ") " : ""
+      log(f"MTR: +Add_Event ({priority_str}{new_event.event_no:8s}) [{new_event.endpoint:02X}]{new_event.cluster:04X}/{new_event.event_id:02X} {event_name}- {data_str}", 2)
+    end
+    self.queue_event(new_event)
+    # check if we have an subscription interested in this new event
+    self.device.message_handler.im.subs_shop.event_published(new_event)
   end
 
 end
