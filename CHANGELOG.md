@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [14.1.0.3]
 ### Added
 - ESP32 support for power and energy limit checks, like ``MaxEnergy2`` per phase (#21695)
+- Berry `tasmota.rtc("config_time")`
 
 ### Breaking Changed
 
