@@ -690,6 +690,7 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
 // state 2 = POWER_TOGGLE = Toggle relay
 // state 3 = POWER_BLINK = Blink relay
 // state 4 = POWER_BLINK_STOP = Stop blinking relay
+// state 5 = POWER_OFF_FORCE = Relay off even if locked
 // state 8 = POWER_OFF_NO_STATE = Relay Off and no publishPowerState
 // state 9 = POWER_ON_NO_STATE = Relay On and no publishPowerState
 // state 10 = POWER_TOGGLE_NO_STATE = Toggle relay and no publishPowerState
@@ -709,6 +710,12 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
   }
 #endif  // USE_SONOFF_IFAN
 
+  bool force_power_off = false;
+  if (POWER_OFF_FORCE == state) {
+    force_power_off = true;
+    state = POWER_OFF;
+  }
+
   bool publish_power = true;
   if ((state >= POWER_OFF_NO_STATE) && (state <= POWER_TOGGLE_NO_STATE)) {
     state &= 3;                          // POWER_OFF, POWER_ON or POWER_TOGGLE
@@ -720,7 +727,7 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
   }
   TasmotaGlobal.active_device = device;
 
-  if (bitRead(Settings->power_lock, device -1)) {
+  if (!force_power_off && bitRead(Settings->power_lock, device -1)) {
     AddLog(LOG_LEVEL_INFO, PSTR("CMD: Power%d is LOCKED"), device);
     state = POWER_SHOW_STATE;            // Only show state. Make no change
   }

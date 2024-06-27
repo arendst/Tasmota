@@ -3,7 +3,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.1.0.2]
+## [14.1.0.3]
+### Added
+- ESP32 support for power and energy limit checks, like ``MaxEnergy2`` per phase (#21695)
+
+### Breaking Changed
+
+### Changed
+- ESP32 support for energy margin checks, like ``MaxPower2`` per phase (#21695)
+
+### Fixed
+
+### Removed
+
+## [14.1.0.2] 20240627
 ### Added
 - Support for Sonoff WTS01 temperature sensor using SerialBridge in ``SSerialMode 3``
 - Berry `classof` extended to class methods (#21615)
@@ -13,8 +26,6 @@ All notable changes to this project will be documented in this file.
 - Matter Fan support (virtual only) (#21637)
 - Matter show event name in logs (#21649)
 - Matter full support of events (#21698)
-
-### Breaking Changed
 
 ### Changed
 - SerialBridge command ``SSerialSend9`` replaced by ``SSerialMode``
@@ -36,8 +47,6 @@ All notable changes to this project will be documented in this file.
 - Matter TLV.U8 unsigned encoding (#21672)
 - Matter resumption final ack (#21673)
 - ESP32 allow use of UART0 with enabled USB_CDC_CONSOLE (#21496)
-
-### Removed
 
 ## [14.1.0.1] 20240611
 ### Added
