@@ -9,10 +9,10 @@ All notable changes to this project will be documented in this file.
 - Berry `classof` extended to class methods (#21615)
 - Extend command ``SetOption147 1`` to disable publish of IRReceived MQTT messages (#21574)
 - Matter support for Rain sensor (#21633)
-- Matter add internal debug option (#21634)
-- Matter add Fan support (virtual only) (#21637)
+- Matter internal debug option (#21634)
+- Matter Fan support (virtual only) (#21637)
 - Matter show event name in logs (#21649)
-- Matter full support of events
+- Matter full support of events (#21698)
 
 ### Breaking Changed
 

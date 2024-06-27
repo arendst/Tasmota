@@ -131,9 +131,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - HASPmota rounds to nearest int values passed as 'real' [#21599](https://github.com/arendst/Tasmota/issues/21599)
 - Matter support for Air Quality sensors [#21559](https://github.com/arendst/Tasmota/issues/21559)
 - Matter support for bridged Air Quality [#21597](https://github.com/arendst/Tasmota/issues/21597)
-- Matter add internal debug option [#21634](https://github.com/arendst/Tasmota/issues/21634)
-- Matter add Fan support (virtual only) [#21637](https://github.com/arendst/Tasmota/issues/21637)
+- Matter internal debug option [#21634](https://github.com/arendst/Tasmota/issues/21634)
+- Matter Fan support (virtual only) [#21637](https://github.com/arendst/Tasmota/issues/21637)
 - Matter show event name in logs [#21649](https://github.com/arendst/Tasmota/issues/21649)
+- Matter full support of events [#21698](https://github.com/arendst/Tasmota/issues/21698)
 
 ### Changed
 - ESP8266 platform update from 2024.01.01 to 2024.06.00 [#21668](https://github.com/arendst/Tasmota/issues/21668)
