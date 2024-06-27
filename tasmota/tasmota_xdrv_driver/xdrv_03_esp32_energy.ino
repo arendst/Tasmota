@@ -311,6 +311,10 @@ void EnergySettingsLoad(bool erase) {
     Energy->Settings.phase[i].max_current = Settings->energy_max_current;
     Energy->Settings.phase[i].min_power = Settings->energy_min_power;
     Energy->Settings.phase[i].max_power = Settings->energy_max_power;
+    Energy->Settings.phase[i].max_power_limit_hold = MAX_POWER_HOLD;
+    Energy->Settings.phase[i].max_power_limit_window = MAX_POWER_WINDOW;
+    Energy->Settings.phase[i].max_power_safe_limit_hold = SAFE_POWER_HOLD;
+    Energy->Settings.phase[i].max_power_safe_limit_window = SAFE_POWER_WINDOW;
   }
   Energy->Settings.power_calibration[1] = Settings->energy_power_calibration2;
   Energy->Settings.voltage_calibration[1] = Settings->energy_voltage_calibration2;
