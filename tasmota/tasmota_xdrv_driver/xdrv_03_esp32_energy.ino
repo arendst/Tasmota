@@ -1345,17 +1345,9 @@ void ResponseAppendMargin(uint16_t* start, uint32_t step_size) {
 }
 
 void EnergyMarginStatus(void) {
-/*
-  Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS9_MARGIN "\":{\"" D_CMND_POWERDELTA "\":["));
-  for (uint32_t i = 0; i < Energy->phase_count; i++) {
-    ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Energy->Settings.power_delta[i]);
-  }
-  ResponseAppend_P(PSTR("],\"" D_CMND_POWERLOW "\":"));
-*/
   Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS9_MARGIN "\":{\"" D_CMND_POWERDELTA "\":"));
   ResponseAppendMargin(&Energy->Settings.power_delta[0], 1);
   ResponseAppend_P(PSTR(",\"" D_CMND_POWERLOW "\":"));
-
   ResponseAppendMargin(&Energy->Settings.phase[0].min_power);
   ResponseAppend_P(PSTR(",\"" D_CMND_POWERHIGH "\":"));
   ResponseAppendMargin(&Energy->Settings.phase[0].max_power);
@@ -1413,14 +1405,6 @@ bool ResponseCmndEnergyMargin(uint16_t* start, uint32_t max_value, uint32_t defa
 }
 
 void CmndPowerDelta(void) {
-/*
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= ENERGY_MAX_PHASES)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 32000)) {
-      Energy->Settings.power_delta[XdrvMailbox.index -1] = XdrvMailbox.payload;
-    }
-    ResponseCmndIdxNumber(Energy->Settings.power_delta[XdrvMailbox.index -1]);
-  }
-*/
   ResponseCmndEnergyMargin(&Energy->Settings.power_delta[0], 32000, 1, 1);
 }
 
