@@ -62,7 +62,6 @@ const char kEnergyCommands[] PROGMEM = "|"  // No prefix
   D_CMND_POWERDELTA "|" D_CMND_POWERLOW "|" D_CMND_POWERHIGH "|" D_CMND_VOLTAGELOW "|" D_CMND_VOLTAGEHIGH "|" D_CMND_CURRENTLOW "|" D_CMND_CURRENTHIGH "|"
   D_CMND_MAXENERGY "|" D_CMND_MAXENERGYSTART "|"
   D_CMND_MAXPOWER "|" D_CMND_MAXPOWERHOLD "|" D_CMND_MAXPOWERWINDOW "|"
-  D_CMND_SAFEPOWER "|" D_CMND_SAFEPOWERHOLD "|"  D_CMND_SAFEPOWERWINDOW "|"
   D_CMND_ENERGYTODAY "|" D_CMND_ENERGYYESTERDAY "|" D_CMND_ENERGYTOTAL "|" D_CMND_ENERGYEXPORTACTIVE "|" D_CMND_ENERGYUSAGE "|" D_CMND_ENERGYEXPORT "|"
   D_CMND_TARIFF "|" D_CMND_ENERGYDISPLAY "|" D_CMND_ENERGYCOLS ;
 
@@ -72,7 +71,6 @@ void (* const EnergyCommand[])(void) PROGMEM = {
   &CmndPowerDelta, &CmndPowerLow, &CmndPowerHigh, &CmndVoltageLow, &CmndVoltageHigh, &CmndCurrentLow, &CmndCurrentHigh,
   &CmndMaxEnergy, &CmndMaxEnergyStart,
   &CmndMaxPower, &CmndMaxPowerHold, &CmndMaxPowerWindow,
-  &CmndSafePower, &CmndSafePowerHold, &CmndSafePowerWindow,
   &CmndEnergyToday, &CmndEnergyYesterday, &CmndEnergyTotal, &CmndEnergyExportActive, &CmndEnergyUsage, &CmndEnergyExport,
   &CmndTariff, &CmndEnergyDisplay, &CmndEnergyCols };
 
@@ -117,9 +115,6 @@ typedef struct {
   uint16_t  max_power_limit;              // MaxPower
   uint16_t  max_power_limit_hold;         // MaxPowerHold
   uint16_t  max_power_limit_window;       // MaxPowerWindow
-  uint16_t  max_power_safe_limit;         // SafePower
-  uint16_t  max_power_safe_limit_hold;    // SafePowerHold
-  uint16_t  max_power_safe_limit_window;  // SafePowerWindow
   uint16_t  max_energy;                   // MaxEnergy
   uint16_t  max_energy_start;             // MaxEnergyStart
 } tPhase;
@@ -313,8 +308,7 @@ void EnergySettingsLoad(bool erase) {
     Energy->Settings.phase[i].max_power = Settings->energy_max_power;
     Energy->Settings.phase[i].max_power_limit_hold = Settings->energy_max_power_limit_hold;
     Energy->Settings.phase[i].max_power_limit_window = Settings->energy_max_power_limit_window;
-    Energy->Settings.phase[i].max_power_safe_limit_hold = Settings->energy_max_power_safe_limit_hold;
-    Energy->Settings.phase[i].max_power_safe_limit_window = Settings->energy_max_power_safe_limit_window;
+    Energy->Settings.phase[i].max_energy_start = Settings->energy_max_energy_start;
   }
   Energy->Settings.power_calibration[1] = Settings->energy_power_calibration2;
   Energy->Settings.voltage_calibration[1] = Settings->energy_voltage_calibration2;
@@ -322,9 +316,7 @@ void EnergySettingsLoad(bool erase) {
 
   // Only restore phase 1 for backward compatibility (all power off)
   Energy->Settings.phase[0].max_power_limit = Settings->energy_max_power_limit;
-  Energy->Settings.phase[0].max_power_safe_limit = Settings->energy_max_power_safe_limit;
   Energy->Settings.phase[0].max_energy = Settings->energy_max_energy;
-  Energy->Settings.phase[0].max_energy_start = Settings->energy_max_energy_start;
 /*
   RtcEnergySettings.energy_total_kWh[0] = 0;
   RtcEnergySettings.energy_total_kWh[1] = 0;
@@ -1457,27 +1449,6 @@ void CmndMaxPowerWindow(void) {
     }
     ResponseCmndIdxNumber(Energy->Settings.phase[XdrvMailbox.index -1].max_power_limit_window);
   }
-}
-
-void CmndSafePower(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-    Settings->energy_max_power_safe_limit = XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_power_safe_limit);
-}
-
-void CmndSafePowerHold(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-    Settings->energy_max_power_safe_limit_hold = (1 == XdrvMailbox.payload) ? SAFE_POWER_HOLD : XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_power_safe_limit_hold);
-}
-
-void CmndSafePowerWindow(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 1440)) {
-    Settings->energy_max_power_safe_limit_window = (1 == XdrvMailbox.payload) ? SAFE_POWER_WINDOW : XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_power_safe_limit_window);
 }
 
 void CmndMaxEnergy(void) {
