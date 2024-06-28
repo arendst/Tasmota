@@ -1329,145 +1329,145 @@ void CmndEnergyConfig(void) {
  * USE_ENERGY_MARGIN_DETECTION and USE_ENERGY_POWER_LIMIT
 \*********************************************************************************************/
 
+void ResponseAppendMargin(uint16_t* start, uint32_t step_size = 0);
+void ResponseAppendMargin(uint16_t* start, uint32_t step_size) {
+  if (Energy->phase_count > 1) {
+    if (0 == step_size) {
+      step_size = sizeof(tPhase) / sizeof(uint16_t);
+    }
+    for (uint32_t i = 0; i < Energy->phase_count; i++) {
+      ResponseAppend_P(PSTR("%c%d"), (i)?',':'[', start[i * step_size]);
+    }
+    ResponseAppend_P(PSTR("]"));
+  } else {
+    ResponseAppend_P(PSTR("%d"), start[0]);
+  }
+}
+
 void EnergyMarginStatus(void) {
+/*
   Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS9_MARGIN "\":{\"" D_CMND_POWERDELTA "\":["));
   for (uint32_t i = 0; i < Energy->phase_count; i++) {
     ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Energy->Settings.power_delta[i]);
   }
-  ResponseAppend_P(PSTR("],\"" D_CMND_POWERLOW "\":["));
-  for (uint32_t i = 0; i < Energy->phase_count; i++) {
-    ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Energy->Settings.phase[i].min_power);
+  ResponseAppend_P(PSTR("],\"" D_CMND_POWERLOW "\":"));
+*/
+  Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS9_MARGIN "\":{\"" D_CMND_POWERDELTA "\":"));
+  ResponseAppendMargin(&Energy->Settings.power_delta[0], 1);
+  ResponseAppend_P(PSTR(",\"" D_CMND_POWERLOW "\":"));
+
+  ResponseAppendMargin(&Energy->Settings.phase[0].min_power);
+  ResponseAppend_P(PSTR(",\"" D_CMND_POWERHIGH "\":"));
+  ResponseAppendMargin(&Energy->Settings.phase[0].max_power);
+  ResponseAppend_P(PSTR(",\"" D_CMND_VOLTAGELOW "\":"));
+  ResponseAppendMargin(&Energy->Settings.phase[0].min_voltage);
+  ResponseAppend_P(PSTR(",\"" D_CMND_VOLTAGEHIGH "\":"));
+  ResponseAppendMargin(&Energy->Settings.phase[0].max_voltage);
+  ResponseAppend_P(PSTR(",\"" D_CMND_CURRENTLOW "\":"));
+  ResponseAppendMargin(&Energy->Settings.phase[0].min_current);
+  ResponseAppend_P(PSTR(",\"" D_CMND_CURRENTHIGH "\":"));
+  ResponseAppendMargin(&Energy->Settings.phase[0].max_current);
+  ResponseAppend_P(PSTR(",\"" D_CMND_MAXPOWER "\":"));
+  ResponseAppendMargin(&Energy->Settings.phase[0].max_power_limit);
+  ResponseAppend_P(PSTR(",\"" D_CMND_MAXPOWERHOLD "\":"));
+  ResponseAppendMargin(&Energy->Settings.phase[0].max_power_limit_hold);
+  ResponseAppend_P(PSTR(",\"" D_CMND_MAXPOWERWINDOW "\":"));
+  ResponseAppendMargin(&Energy->Settings.phase[0].max_power_limit_window);
+  ResponseAppend_P(PSTR(",\"" D_CMND_MAXENERGY "\":"));
+  ResponseAppendMargin(&Energy->Settings.phase[0].max_energy);
+  ResponseAppend_P(PSTR(",\"" D_CMND_MAXENERGYSTART "\":"));
+  ResponseAppendMargin(&Energy->Settings.phase[0].max_energy_start);
+  ResponseJsonEndEnd();
+}
+
+bool ResponseCmndEnergyMargin(uint16_t* start, uint32_t max_value, uint32_t default_value = 1, uint32_t step_size = 0);
+bool ResponseCmndEnergyMargin(uint16_t* start, uint32_t max_value, uint32_t default_value, uint32_t step_size) {
+  bool value_changed = false;
+  if ((XdrvMailbox.index >= 0) && (XdrvMailbox.index <= ENERGY_MAX_PHASES)) {
+    if (0 == step_size) {
+      step_size = sizeof(tPhase) / sizeof(uint16_t);
+    }
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= max_value)) {
+      if (0 == XdrvMailbox.index) {
+        // PowerLow0 10
+        for (uint32_t i = 0; i < Energy->phase_count; i++) {
+          start[i * step_size] = (1 == XdrvMailbox.payload) ? default_value : XdrvMailbox.payload;
+        }
+      } else {
+        // PowerLow 10 = PowerLow1 10 .. PowerLow8 10
+        start[(XdrvMailbox.index -1) * step_size] = (1 == XdrvMailbox.payload) ? default_value : XdrvMailbox.payload;
+      }
+      value_changed = true;
+    }
+    if (0 == XdrvMailbox.index) {
+      // PowerLow0, PowerLow0 10
+      ResponseCmnd();
+      ResponseAppendMargin(start, step_size);
+      ResponseJsonEnd();
+    } else {
+      // PowerLow = PowerLow1 .. PowerLow8
+      ResponseCmndIdxNumber(start[(XdrvMailbox.index -1) * step_size]);
+    }
   }
-  ResponseAppend_P(PSTR("],\"" D_CMND_POWERHIGH "\":["));
-  for (uint32_t i = 0; i < Energy->phase_count; i++) {
-    ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Energy->Settings.phase[i].max_power);
-  }
-  ResponseAppend_P(PSTR("],\"" D_CMND_VOLTAGELOW "\":["));
-  for (uint32_t i = 0; i < Energy->phase_count; i++) {
-    ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Energy->Settings.phase[i].min_voltage);
-  }
-  ResponseAppend_P(PSTR("],\"" D_CMND_VOLTAGEHIGH "\":["));
-  for (uint32_t i = 0; i < Energy->phase_count; i++) {
-    ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Energy->Settings.phase[i].max_voltage);
-  }
-  ResponseAppend_P(PSTR("],\"" D_CMND_CURRENTLOW "\":["));
-  for (uint32_t i = 0; i < Energy->phase_count; i++) {
-    ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Energy->Settings.phase[i].min_current);
-  }
-  ResponseAppend_P(PSTR("],\"" D_CMND_CURRENTHIGH "\":["));
-  for (uint32_t i = 0; i < Energy->phase_count; i++) {
-    ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Energy->Settings.phase[i].max_current);
-  }
-  ResponseAppend_P(PSTR("]}}"));
+  return value_changed;
 }
 
 void CmndPowerDelta(void) {
+/*
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= ENERGY_MAX_PHASES)) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 32000)) {
       Energy->Settings.power_delta[XdrvMailbox.index -1] = XdrvMailbox.payload;
     }
     ResponseCmndIdxNumber(Energy->Settings.power_delta[XdrvMailbox.index -1]);
   }
+*/
+  ResponseCmndEnergyMargin(&Energy->Settings.power_delta[0], 32000, 1, 1);
 }
 
 void CmndPowerLow(void) {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= ENERGY_MAX_PHASES)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-      Energy->Settings.phase[XdrvMailbox.index -1].min_power = XdrvMailbox.payload;
-    }
-    ResponseCmndIdxNumber(Energy->Settings.phase[XdrvMailbox.index -1].min_power);
-  }
+  ResponseCmndEnergyMargin(&Energy->Settings.phase[0].min_power, 6000);
 }
 
 void CmndPowerHigh(void) {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= ENERGY_MAX_PHASES)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-      Energy->Settings.phase[XdrvMailbox.index -1].max_power = XdrvMailbox.payload;
-    }
-    ResponseCmndIdxNumber(Energy->Settings.phase[XdrvMailbox.index -1].max_power);
-  }
+  ResponseCmndEnergyMargin(&Energy->Settings.phase[0].max_power, 6000);
 }
 
 void CmndVoltageLow(void) {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= ENERGY_MAX_PHASES)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 500)) {
-      Energy->Settings.phase[XdrvMailbox.index -1].min_voltage = XdrvMailbox.payload;
-    }
-    ResponseCmndIdxNumber(Energy->Settings.phase[XdrvMailbox.index -1].min_voltage);
-  }
+  ResponseCmndEnergyMargin(&Energy->Settings.phase[0].min_voltage, 500);
 }
 
 void CmndVoltageHigh(void) {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= ENERGY_MAX_PHASES)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 500)) {
-      Energy->Settings.phase[XdrvMailbox.index -1].max_voltage = XdrvMailbox.payload;
-    }
-    ResponseCmndIdxNumber(Energy->Settings.phase[XdrvMailbox.index -1].max_voltage);
-  }
+  ResponseCmndEnergyMargin(&Energy->Settings.phase[0].max_voltage, 500);
 }
 
 void CmndCurrentLow(void) {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= ENERGY_MAX_PHASES)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 25000)) {
-      Energy->Settings.phase[XdrvMailbox.index -1].min_current = XdrvMailbox.payload;
-    }
-    ResponseCmndIdxNumber(Energy->Settings.phase[XdrvMailbox.index -1].min_current);
-  }
+  ResponseCmndEnergyMargin(&Energy->Settings.phase[0].min_current, 25000);
 }
 
 void CmndCurrentHigh(void) {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= ENERGY_MAX_PHASES)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 25000)) {
-      Energy->Settings.phase[XdrvMailbox.index -1].max_current = XdrvMailbox.payload;
-    }
-    ResponseCmndIdxNumber(Energy->Settings.phase[XdrvMailbox.index -1].max_current);
-  }
+  ResponseCmndEnergyMargin(&Energy->Settings.phase[0].max_current, 25000);
 }
 
 void CmndMaxPower(void) {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= ENERGY_MAX_PHASES)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-      Energy->Settings.phase[XdrvMailbox.index -1].max_power_limit = XdrvMailbox.payload;
-    }
-    ResponseCmndIdxNumber(Energy->Settings.phase[XdrvMailbox.index -1].max_power_limit);
-  }
+  ResponseCmndEnergyMargin(&Energy->Settings.phase[0].max_power_limit, 6000);
 }
 
 void CmndMaxPowerHold(void) {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= ENERGY_MAX_PHASES)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-      Energy->Settings.phase[XdrvMailbox.index -1].max_power_limit_hold = (1 == XdrvMailbox.payload) ? MAX_POWER_HOLD : XdrvMailbox.payload;
-    }
-    ResponseCmndIdxNumber(Energy->Settings.phase[XdrvMailbox.index -1].max_power_limit_hold);
-  }
+  ResponseCmndEnergyMargin(&Energy->Settings.phase[0].max_power_limit_hold, 6000, MAX_POWER_HOLD);
 }
 
 void CmndMaxPowerWindow(void) {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= ENERGY_MAX_PHASES)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-      Energy->Settings.phase[XdrvMailbox.index -1].max_power_limit_window = (1 == XdrvMailbox.payload) ? MAX_POWER_WINDOW : XdrvMailbox.payload;
-    }
-    ResponseCmndIdxNumber(Energy->Settings.phase[XdrvMailbox.index -1].max_power_limit_window);
-  }
+  ResponseCmndEnergyMargin(&Energy->Settings.phase[0].max_power_limit_window, 6000, MAX_POWER_WINDOW);
 }
 
 void CmndMaxEnergy(void) {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= ENERGY_MAX_PHASES)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-      Energy->Settings.phase[XdrvMailbox.index -1].max_energy = XdrvMailbox.payload;
-      Energy->max_energy_state[XdrvMailbox.index -1] = 3;
-    }
-    ResponseCmndIdxNumber(Energy->Settings.phase[XdrvMailbox.index -1].max_energy);
+  if (ResponseCmndEnergyMargin(&Energy->Settings.phase[0].max_energy, 6000)) {
+    Energy->max_energy_state[XdrvMailbox.index -1] = 3;
   }
 }
 
 void CmndMaxEnergyStart(void) {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= ENERGY_MAX_PHASES)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 24)) {
-      Energy->Settings.phase[XdrvMailbox.index -1].max_energy_start = XdrvMailbox.payload;
-    }
-    ResponseCmndIdxNumber(Energy->Settings.phase[XdrvMailbox.index -1].max_energy_start);
-  }
+  ResponseCmndEnergyMargin(&Energy->Settings.phase[0].max_energy_start, 23);
 }
 
 /********************************************************************************************/
