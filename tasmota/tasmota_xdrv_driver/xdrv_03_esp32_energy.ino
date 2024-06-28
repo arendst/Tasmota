@@ -114,12 +114,12 @@ typedef struct {
   uint16_t  max_current;                  // CurrentHigh
   uint16_t  min_power;                    // PowerLow
   uint16_t  max_power;                    // PowerHigh
-  uint16_t  max_power_limit;              // MaxPowerLimit
-  uint16_t  max_power_limit_hold;         // MaxPowerLimitHold
-  uint16_t  max_power_limit_window;       // MaxPowerLimitWindow
-  uint16_t  max_power_safe_limit;         // MaxSafePowerLimit
-  uint16_t  max_power_safe_limit_hold;    // MaxSafePowerLimitHold
-  uint16_t  max_power_safe_limit_window;  // MaxSafePowerLimitWindow
+  uint16_t  max_power_limit;              // MaxPower
+  uint16_t  max_power_limit_hold;         // MaxPowerHold
+  uint16_t  max_power_limit_window;       // MaxPowerWindow
+  uint16_t  max_power_safe_limit;         // SafePower
+  uint16_t  max_power_safe_limit_hold;    // SafePowerHold
+  uint16_t  max_power_safe_limit_window;  // SafePowerWindow
   uint16_t  max_energy;                   // MaxEnergy
   uint16_t  max_energy_start;             // MaxEnergyStart
 } tPhase;
@@ -311,10 +311,10 @@ void EnergySettingsLoad(bool erase) {
     Energy->Settings.phase[i].max_current = Settings->energy_max_current;
     Energy->Settings.phase[i].min_power = Settings->energy_min_power;
     Energy->Settings.phase[i].max_power = Settings->energy_max_power;
-    Energy->Settings.phase[i].max_power_limit_hold = MAX_POWER_HOLD;
-    Energy->Settings.phase[i].max_power_limit_window = MAX_POWER_WINDOW;
-    Energy->Settings.phase[i].max_power_safe_limit_hold = SAFE_POWER_HOLD;
-    Energy->Settings.phase[i].max_power_safe_limit_window = SAFE_POWER_WINDOW;
+    Energy->Settings.phase[i].max_power_limit_hold = Settings->energy_max_power_limit_hold;
+    Energy->Settings.phase[i].max_power_limit_window = Settings->energy_max_power_limit_window;
+    Energy->Settings.phase[i].max_power_safe_limit_hold = Settings->energy_max_power_safe_limit_hold;
+    Energy->Settings.phase[i].max_power_safe_limit_window = Settings->energy_max_power_safe_limit_window;
   }
   Energy->Settings.power_calibration[1] = Settings->energy_power_calibration2;
   Energy->Settings.voltage_calibration[1] = Settings->energy_voltage_calibration2;
@@ -322,11 +322,7 @@ void EnergySettingsLoad(bool erase) {
 
   // Only restore phase 1 for backward compatibility (all power off)
   Energy->Settings.phase[0].max_power_limit = Settings->energy_max_power_limit;
-  Energy->Settings.phase[0].max_power_limit_hold = Settings->energy_max_power_limit_hold;
-  Energy->Settings.phase[0].max_power_limit_window = Settings->energy_max_power_limit_window;
   Energy->Settings.phase[0].max_power_safe_limit = Settings->energy_max_power_safe_limit;
-  Energy->Settings.phase[0].max_power_safe_limit_hold = Settings->energy_max_power_safe_limit_hold;
-  Energy->Settings.phase[0].max_power_safe_limit_window = Settings->energy_max_power_safe_limit_window;
   Energy->Settings.phase[0].max_energy = Settings->energy_max_energy;
   Energy->Settings.phase[0].max_energy_start = Settings->energy_max_energy_start;
 /*
@@ -727,10 +723,8 @@ void EnergySaveState(void) {
 }
 
 bool EnergyMargin(bool type, uint16_t margin, uint16_t value, bool &flag, bool &save_flag) {
-  bool change;
-
-  if (!margin) return false;
-  change = save_flag;
+  if (!margin) { return false; }
+  bool change = save_flag;
   if (type) {
     flag = (value > margin);
   } else {
@@ -750,6 +744,7 @@ void EnergyMarginCheck(void) {
   bool jsonflg = false;
   Response_P(PSTR("{\"" D_RSLT_MARGINS "\":{"));
 
+  // PowerDelta
   int16_t power_diff[ENERGY_MAX_PHASES] = { 0 };
   for (uint32_t phase = 0; phase < Energy->phase_count; phase++) {
     uint16_t active_power = (uint16_t)(Energy->active_power[phase]);
@@ -794,6 +789,7 @@ void EnergyMarginCheck(void) {
     ResponseAppend_P(PSTR("\"" D_CMND_POWERDELTA "\":%s"), EnergyFmt(power_diff_f, 0));
   }
 
+  // PowerMargins
   uint16_t energy_power_u;
   if (Energy->power_on) {
     bool flag;
@@ -802,43 +798,29 @@ void EnergyMarginCheck(void) {
       uint16_t energy_voltage_u = (uint16_t)(Energy->voltage[phase]);
       uint16_t energy_current_u = (uint16_t)(Energy->current[phase] * 1000);
 
-      DEBUG_DRIVER_LOG(PSTR("NRG: W %d, U %d, I %d"), energy_power_u, energy_voltage_u, energy_current_u);
-
-      if (Energy->Settings.phase[phase].min_power) {
-        if (EnergyMargin(false, Energy->Settings.phase[phase].min_power, energy_power_u, flag, Energy->min_power_flag[phase])) {
-          ResponseAppend_P(PSTR("%s\"" D_CMND_POWERLOW "%d\":\"%s\""), (jsonflg)?",":"", phase +1, GetStateText(flag));
-          jsonflg = true;
-        }
+      if (EnergyMargin(false, Energy->Settings.phase[phase].min_power, energy_power_u, flag, Energy->min_power_flag[phase])) {
+        ResponseAppend_P(PSTR("%s\"" D_CMND_POWERLOW "%d\":\"%s\""), (jsonflg)?",":"", phase +1, GetStateText(flag));
+        jsonflg = true;
       }
-      if (Energy->Settings.phase[phase].max_power) {
-        if (EnergyMargin(true, Energy->Settings.phase[phase].max_power, energy_power_u, flag, Energy->max_power_flag[phase])) {
-          ResponseAppend_P(PSTR("%s\"" D_CMND_POWERHIGH "%d\":\"%s\""), (jsonflg)?",":"", phase +1, GetStateText(flag));
-          jsonflg = true;
-        }
+      if (EnergyMargin(true, Energy->Settings.phase[phase].max_power, energy_power_u, flag, Energy->max_power_flag[phase])) {
+        ResponseAppend_P(PSTR("%s\"" D_CMND_POWERHIGH "%d\":\"%s\""), (jsonflg)?",":"", phase +1, GetStateText(flag));
+        jsonflg = true;
       }
-      if (Energy->Settings.phase[phase].min_voltage) {
-        if (EnergyMargin(false, Energy->Settings.phase[phase].min_voltage, energy_voltage_u, flag, Energy->min_voltage_flag[phase])) {
-          ResponseAppend_P(PSTR("%s\"" D_CMND_VOLTAGELOW "%d\":\"%s\""), (jsonflg)?",":"", phase +1, GetStateText(flag));
-          jsonflg = true;
-        }
+      if (EnergyMargin(false, Energy->Settings.phase[phase].min_voltage, energy_voltage_u, flag, Energy->min_voltage_flag[phase])) {
+        ResponseAppend_P(PSTR("%s\"" D_CMND_VOLTAGELOW "%d\":\"%s\""), (jsonflg)?",":"", phase +1, GetStateText(flag));
+        jsonflg = true;
       }
-      if (Energy->Settings.phase[phase].max_voltage) {
-        if (EnergyMargin(true, Energy->Settings.phase[phase].max_voltage, energy_voltage_u, flag, Energy->max_voltage_flag[phase])) {
-          ResponseAppend_P(PSTR("%s\"" D_CMND_VOLTAGEHIGH "%d\":\"%s\""), (jsonflg)?",":"", phase +1, GetStateText(flag));
-          jsonflg = true;
-        }
+      if (EnergyMargin(true, Energy->Settings.phase[phase].max_voltage, energy_voltage_u, flag, Energy->max_voltage_flag[phase])) {
+        ResponseAppend_P(PSTR("%s\"" D_CMND_VOLTAGEHIGH "%d\":\"%s\""), (jsonflg)?",":"", phase +1, GetStateText(flag));
+        jsonflg = true;
       }
-      if (Energy->Settings.phase[phase].min_current) {
-        if (EnergyMargin(false, Energy->Settings.phase[phase].min_current, energy_current_u, flag, Energy->min_current_flag[phase])) {
-          ResponseAppend_P(PSTR("%s\"" D_CMND_CURRENTLOW "%d\":\"%s\""), (jsonflg)?",":"", phase +1, GetStateText(flag));
-          jsonflg = true;
-        }
+      if (EnergyMargin(false, Energy->Settings.phase[phase].min_current, energy_current_u, flag, Energy->min_current_flag[phase])) {
+        ResponseAppend_P(PSTR("%s\"" D_CMND_CURRENTLOW "%d\":\"%s\""), (jsonflg)?",":"", phase +1, GetStateText(flag));
+        jsonflg = true;
       }
-      if (Energy->Settings.phase[phase].max_current) {
-        if (EnergyMargin(true, Energy->Settings.phase[phase].max_current, energy_current_u, flag, Energy->max_current_flag[phase])) {
-          ResponseAppend_P(PSTR("%s\"" D_CMND_CURRENTHIGH "%d\":\"%s\""), (jsonflg)?",":"", phase +1, GetStateText(flag));
-          jsonflg = true;
-        }
+      if (EnergyMargin(true, Energy->Settings.phase[phase].max_current, energy_current_u, flag, Energy->max_current_flag[phase])) {
+        ResponseAppend_P(PSTR("%s\"" D_CMND_CURRENTHIGH "%d\":\"%s\""), (jsonflg)?",":"", phase +1, GetStateText(flag));
+        jsonflg = true;
       }
     }
     if (jsonflg) {
@@ -887,7 +869,6 @@ void EnergyMarginCheck(void) {
         Energy->mplr_counter[phase] = 0;
         Energy->mplw_counter[phase] = 0;
       }
-
       if (!power_on) {
         if (Energy->mplw_counter[phase]) {
           Energy->mplw_counter[phase]--;
