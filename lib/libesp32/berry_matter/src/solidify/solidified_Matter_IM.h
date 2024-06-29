@@ -78,7 +78,7 @@ be_local_closure(class_Matter_IM_process_read_request_pull,   /* name */
 extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_process_incoming_ack,   /* name */
   be_nested_proto(
-    6,                          /* nstack */
+    7,                          /* nstack */
     2,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -86,24 +86,31 @@ be_local_closure(class_Matter_IM_process_incoming_ack,   /* name */
     0,                          /* has sup protos */
     &be_class_Matter_IM, 
     1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
+    ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(find_sendqueue_by_exchangeid),
     /* K1   */  be_nested_str_weak(exchange_id),
     /* K2   */  be_nested_str_weak(ack_received),
+    /* K3   */  be_nested_str_weak(finished),
+    /* K4   */  be_nested_str_weak(remove_sendqueue_by_exchangeid),
     }),
     be_str_weak(process_incoming_ack),
     &be_const_str_solidified,
-    ( &(const binstruction[10]) {  /* code */
+    ( &(const binstruction[15]) {  /* code */
       0x8C080100,  //  0000  GETMET	R2	R0	K0
       0x88100301,  //  0001  GETMBR	R4	R1	K1
       0x7C080400,  //  0002  CALL	R2	2
-      0x780A0003,  //  0003  JMPF	R2	#0008
+      0x780A0008,  //  0003  JMPF	R2	#000D
       0x8C0C0502,  //  0004  GETMET	R3	R2	K2
       0x5C140200,  //  0005  MOVE	R5	R1
       0x7C0C0400,  //  0006  CALL	R3	2
-      0x80040600,  //  0007  RET	1	R3
-      0x500C0000,  //  0008  LDBOOL	R3	0	0
-      0x80040600,  //  0009  RET	1	R3
+      0x88100503,  //  0007  GETMBR	R4	R2	K3
+      0x78120002,  //  0008  JMPF	R4	#000C
+      0x8C100104,  //  0009  GETMET	R4	R0	K4
+      0x88180301,  //  000A  GETMBR	R6	R1	K1
+      0x7C100400,  //  000B  CALL	R4	2
+      0x80040600,  //  000C  RET	1	R3
+      0x500C0000,  //  000D  LDBOOL	R3	0	0
+      0x80040600,  //  000E  RET	1	R3
     })
   )
 );
@@ -1564,28 +1571,26 @@ be_local_closure(class_Matter_IM_send_enqueued,   /* name */
     0,                          /* has sup protos */
     &be_class_Matter_IM, 
     1,                          /* has constants */
-    ( &(const bvalue[11]) {     /* constants */
+    ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_const_int(0),
     /* K1   */  be_nested_str_weak(send_queue),
-    /* K2   */  be_nested_str_weak(finish),
+    /* K2   */  be_nested_str_weak(finished),
     /* K3   */  be_nested_str_weak(ready),
     /* K4   */  be_nested_str_weak(send_im),
-    /* K5   */  be_nested_str_weak(log),
-    /* K6   */  be_nested_str_weak(MTR_X3A_X20remove_X20IM_X20message_X20exch_X3D),
-    /* K7   */  be_nested_str_weak(resp),
-    /* K8   */  be_nested_str_weak(exchange_id),
-    /* K9   */  be_nested_str_weak(remove),
-    /* K10  */  be_const_int(1),
+    /* K5   */  be_nested_str_weak(remove_sendqueue_by_exchangeid),
+    /* K6   */  be_nested_str_weak(resp),
+    /* K7   */  be_nested_str_weak(exchange_id),
+    /* K8   */  be_const_int(1),
     }),
     be_str_weak(send_enqueued),
     &be_const_str_solidified,
-    ( &(const binstruction[33]) {  /* code */
+    ( &(const binstruction[25]) {  /* code */
       0x58080000,  //  0000  LDCONST	R2	K0
       0x600C000C,  //  0001  GETGBL	R3	G12
       0x88100101,  //  0002  GETMBR	R4	R0	K1
       0x7C0C0200,  //  0003  CALL	R3	1
       0x140C0403,  //  0004  LT	R3	R2	R3
-      0x780E0019,  //  0005  JMPF	R3	#0020
+      0x780E0011,  //  0005  JMPF	R3	#0018
       0x880C0101,  //  0006  GETMBR	R3	R0	K1
       0x940C0602,  //  0007  GETIDX	R3	R3	R2
       0x88100702,  //  0008  GETMBR	R4	R3	K2
@@ -1596,23 +1601,15 @@ be_local_closure(class_Matter_IM_send_enqueued,   /* name */
       0x5C180200,  //  000D  MOVE	R6	R1
       0x7C100400,  //  000E  CALL	R4	2
       0x88100702,  //  000F  GETMBR	R4	R3	K2
-      0x7812000C,  //  0010  JMPF	R4	#001E
-      0xB8120A00,  //  0011  GETNGBL	R4	K5
-      0x60140008,  //  0012  GETGBL	R5	G8
-      0x88180707,  //  0013  GETMBR	R6	R3	K7
-      0x88180D08,  //  0014  GETMBR	R6	R6	K8
-      0x7C140200,  //  0015  CALL	R5	1
-      0x00160C05,  //  0016  ADD	R5	K6	R5
-      0x541A0003,  //  0017  LDINT	R6	4
-      0x7C100400,  //  0018  CALL	R4	2
-      0x88100101,  //  0019  GETMBR	R4	R0	K1
-      0x8C100909,  //  001A  GETMET	R4	R4	K9
-      0x5C180400,  //  001B  MOVE	R6	R2
-      0x7C100400,  //  001C  CALL	R4	2
-      0x70020000,  //  001D  JMP		#001F
-      0x0008050A,  //  001E  ADD	R2	R2	K10
-      0x7001FFE0,  //  001F  JMP		#0001
-      0x80000000,  //  0020  RET	0
+      0x78120004,  //  0010  JMPF	R4	#0016
+      0x8C100105,  //  0011  GETMET	R4	R0	K5
+      0x88180706,  //  0012  GETMBR	R6	R3	K6
+      0x88180D07,  //  0013  GETMBR	R6	R6	K7
+      0x7C100400,  //  0014  CALL	R4	2
+      0x70020000,  //  0015  JMP		#0017
+      0x00080508,  //  0016  ADD	R2	R2	K8
+      0x7001FFE8,  //  0017  JMP		#0001
+      0x80000000,  //  0018  RET	0
     })
   )
 );

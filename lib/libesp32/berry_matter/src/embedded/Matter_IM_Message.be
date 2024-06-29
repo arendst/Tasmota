@@ -38,40 +38,57 @@ class Matter_IM_Message
   var expiration                      # expiration time for the reporting 
   var resp                            # response Frame object
   var ready                           # bool: ready to send (true) or wait (false)
-  var finish                          # if true, the message is removed from the queue
+  var finishing                       # we have sent all packet, just wait for a final Ack
+  var finished                        # if true, the message is removed from the queue
   var data                            # TLV data of the response (if any)
   var last_counter                    # counter value of last sent packet (to match ack)
 
+  #################################################################################
   # build a response message stub
+  #
+  # Args:
+  #   - msg: the message object
+  #   - opcode: (int) the Matter opcode of the response
+  #   - reliable: (bool) if true, then we send the response as reliable, i.e. we expect a Ack to confirm it was received
   def init(msg, opcode, reliable)
     self.reset(msg, opcode, reliable)
   end
 
+  #################################################################################
   def reset(msg, opcode, reliable)
     self.resp = (msg != nil) ? msg.build_response(opcode, reliable) : nil # is nil for spontaneous reports
     self.ready = true                # by default send immediately
     self.expiration = tasmota.millis() + self.MSG_TIMEOUT
     self.last_counter = 0            # avoid `nil` value
-    self.finish = false
+    self.finishing = false
+    self.finished = false
     self.data = nil
   end
 
+  #################################################################################
   # the message is being removed due to expiration
   def reached_timeout()
+    # log(f"MTR: IM_Message reached_timeout exch={self.resp.exchange_id}", 3)
   end
 
+  #################################################################################
   # ack received for previous message, proceed to next (if any)
   # return true if we manage the ack ourselves, false if it needs to be done upper
   def ack_received(msg)
-    # log("MTR: IM_Message ack_received exch="+str(self.resp.exchange_id), 3)
-    self.expiration = tasmota.millis() + self.MSG_TIMEOUT     # give more time
-    return false
+    # log(f"MTR: IM_Message ack_received exch={self.resp.exchange_id} {self.finishing=} {self.finished=}", 3)
+    if self.finishing                 # if finishing, we are waiting for final Ack before removing from queue
+      self.finished = true            # remove exchange 
+    else
+      self.expiration = tasmota.millis() + self.MSG_TIMEOUT     # else give more time to the timer
+    end
+    return false                      # return false to indicate that we didn't answer ourselves
   end
 
+  #################################################################################
   # Status Report OK received for previous message, proceed to next (if any)
   # return true if we manage the ack ourselves, false if it needs to be done upper
   def status_ok_received(msg)
-    # log(format("MTR: IM_Message status_ok_received exch=%i", self.resp.exchange_id), 3)
+    # log(f"MTR: IM_Message status_ok_received exch={self.resp.exchange_id}", 3)
     self.expiration = tasmota.millis() + self.MSG_TIMEOUT     # give more time
     if msg
       self.resp = msg.build_response(self.resp.opcode, self.resp.x_flag_r, self.resp)   # update packet
@@ -80,34 +97,45 @@ class Matter_IM_Message
     return true
   end
 
+  #################################################################################
   # we received an ACK error, do any necessary cleaning
+  #
+  # Arg:
+  #   - msg: the message received
+  #
+  # No return value
   def status_error_received(msg)
   end
 
+  #################################################################################
   # get the exchange-id for this message
+  #
+  # No return value
   def get_exchangeid()
     return self.resp.exchange_id
   end
 
+  #################################################################################
   # default responder for data
+  #
+  # This is the main entry point for seding the next response.
+  # This is called only when `ready` is `true`
+  #
+  # Arg:
+  #   - responder: instance of MessageHandler to create the response object
   def send_im(responder)
-    # log(format("MTR: IM_Message send_im exch=%i ready=%i", self.resp.exchange_id, self.ready ? 1 : 0), 3)
-    if !self.ready   return false  end
-    # import debug
+    # log(f"MTR: IM_Message send_im exch={self.resp.exchange_id}", 3)
+    # if !self.ready   return false  end    # we're not supposed to be called if ready is false - dead code
     var resp = self.resp
-    var data_tlv = self.data.to_TLV()
-    # matter.profiler.log(str(data_tlv))
-    var data_raw = data_tlv.tlv2raw()    # payload in cleartext
-    # matter.profiler.log(data_raw.tohex())
+    var data_raw = self.data.to_TLV().tlv2raw()    # payload in cleartext
     resp.encode_frame(data_raw)    # payload in cleartext
     resp.encrypt()
     if tasmota.loglevel(4)
-      log(format("MTR: <snd       (%6i) id=%i exch=%i rack=%s", resp.session.local_session_id, resp.message_counter, resp.exchange_id, resp.ack_message_counter), 4)
+      log(f"MTR: <snd       ({resp.session.local_session_id:6i}) id={resp.message_counter} exch={resp.exchange_id} rack={resp.ack_message_counter}", 4)
     end
-    # log("MTR: Perf/Send = " + str(debug.counters()), 4)
     responder.send_response_frame(resp)
     self.last_counter = resp.message_counter
-    self.finish = true              # by default we remove the packet after it is sent
+    self.finishing = true              # we wait for final ack
   end
 
 end
@@ -120,11 +148,12 @@ matter.IM_Message = Matter_IM_Message
 #################################################################################
 class Matter_IM_Status : Matter_IM_Message
 
+  #################################################################################
   def init(msg, status)
     super(self).init(msg, 0x01 #-Status Response-#, true #-reliable-#)
-    var sr  = matter.StatusResponseMessage()
+    var sr = matter.StatusResponseMessage()
     sr.status = status
-    self.data = sr
+    self.data = sr              # prepare the context in `self.data` that will be sent
   end
 end
 matter.IM_Status = Matter_IM_Status
@@ -136,6 +165,7 @@ matter.IM_Status = Matter_IM_Status
 #################################################################################
 class Matter_IM_InvokeResponse : Matter_IM_Message
 
+  #################################################################################
   def init(msg, data)
     super(self).init(msg, 0x09 #-Invoke Response-#, true)
     self.data = data
@@ -150,6 +180,7 @@ matter.IM_InvokeResponse = Matter_IM_InvokeResponse
 #################################################################################
 class Matter_IM_WriteResponse : Matter_IM_Message
 
+  #################################################################################
   def init(msg, data)
     super(self).init(msg, 0x07 #-Write Response-#, true)
     self.data = data
@@ -176,30 +207,48 @@ class Matter_IM_ReportData_Pull : Matter_IM_Message
   var suppress_response               # if not `nil`, suppress_response attribute
   var data_ev                         # left-overs of events, mirroring of data for attributes
 
+  #################################################################################
+  #
+  # Args
+  #   - msg: message object
+  #   - ctx_generator_or_arr: generator(s) for attributes (array, single instance, or nil)
+  #   - event_generator_or_arr: generator(s) for events (array, single instance, or nil)
   def init(msg, ctx_generator_or_arr, event_generator_or_arr)
     super(self).init(msg, 0x05 #-Report Data-#, true)
     self.generator_or_arr = ctx_generator_or_arr
     self.event_generator_or_arr = event_generator_or_arr
   end
 
+  #################################################################################
+  # set_subscription_id
+  #
+  # Sets the SubscriptionId of the exchange (to be used by subclasses)
   def set_subscription_id(subscription_id)
     self.subscription_id = subscription_id
   end
 
+  #################################################################################
+  # set_suppress_response
+  #
+  # Sets the SuppressReponse attribute (bool or nil)
+  #
+  # If false, the controller must respond with StatusReport
+  # If true, the controller must not respond (only a Ack to confirm reliable message)
+  # `nil` means the default value which is `false` as per Matter spec
   def set_suppress_response(suppress_response)
     self.suppress_response = suppress_response
   end
 
+  #################################################################################
   # default responder for data
   def send_im(responder)
     # log(format(">>>: Matter_IM_ReportData_Pull send_im exch=%i ready=%i", self.resp.exchange_id, self.ready ? 1 : 0), 3)
-    if !self.ready   return false  end
     var resp = self.resp                                # response frame object
     var data = (self.data != nil) ? self.data : bytes() # bytes() object of the TLV encoded response
     self.data = nil                                     # we remove the data that was saved for next packet
 
     var not_full = true                                 # marker used to exit imbricated loops
-    var debug = responder.device.debug
+    var debug = responder.device.debug                  # set debug flag in local variable to ease access below
 
     var data_ev = (self.data_ev != nil) ? self.data_ev : ((self.event_generator_or_arr != nil) ? bytes() : nil)  # bytes for events or nil if no event generators
                                                         # if event_generator_or_arr != nil then data_ev contains a bytes() object
@@ -305,8 +354,7 @@ class Matter_IM_ReportData_Pull : Matter_IM_Message
     ret.more_chunked_messages = (self.data != nil) || (self.data_ev != nil)    # we got more data to send
 
     # print(">>>>> send elements before encode")
-    var raw_tlv = ret.to_TLV()
-    var encoded_tlv = raw_tlv.tlv2raw(bytes(self.MAX_MESSAGE))    # takes time
+    var encoded_tlv = ret.to_TLV().tlv2raw(bytes(self.MAX_MESSAGE))    # takes time
     resp.encode_frame(encoded_tlv)    # payload in cleartext, pre-allocate max buffer
     resp.encrypt()
     # log(format("MTR: <snd       (%6i) id=%i exch=%i rack=%s", resp.session.local_session_id, resp.message_counter, resp.exchange_id, resp.ack_message_counter), 4)
@@ -318,7 +366,7 @@ class Matter_IM_ReportData_Pull : Matter_IM_Message
       # keep alive
     else
       # log(f">>>: ReportData_Pull finished",3)
-      self.finish = true         # finished, remove
+      self.finishing = true         # finishing, remove after final Ack
     end
 
   end
@@ -337,7 +385,7 @@ class Matter_IM_ReportDataSubscribed_Pull : Matter_IM_ReportData_Pull
   # var expiration                      # expiration time for the reporting 
   # var resp                            # response Frame object
   # var ready                           # bool: ready to send (true) or wait (false)
-  # var finish                          # if true, the message is removed from the queue
+  # var finished                          # if true, the message is removed from the queue
   # var data                            # TLV data of the response (if any)
   # var last_counter                    # counter value of last sent packet (to match ack)
   #   inherited from Matter_IM_ReportData_Pull
@@ -348,6 +396,7 @@ class Matter_IM_ReportDataSubscribed_Pull : Matter_IM_ReportData_Pull
   var sub                         # subscription object
   var report_data_phase           # true during reportdata
 
+  #################################################################################
   def init(message_handler, session, ctx_generator_or_arr, event_generator_or_arr, sub)
     super(self).init(nil, ctx_generator_or_arr, event_generator_or_arr)     # send msg=nil to avoid creating a reponse
     # we need to initiate a new virtual response, because it's a spontaneous message
@@ -359,35 +408,40 @@ class Matter_IM_ReportDataSubscribed_Pull : Matter_IM_ReportData_Pull
     self.set_suppress_response(false)
   end
 
+  #################################################################################
   def reached_timeout()
+    # log(f"MTR: IM_ReportDataSubscribed_Pull reached_timeout()", 3)
     self.sub.remove_self()
   end
 
+  #################################################################################
   # ack received, confirm the heartbeat
   def ack_received(msg)
-    # log(format("MTR: IM_ReportDataSubscribed_Pull ack_received sub=%i", self.sub.subscription_id), 3)
+    # log(f"MTR: IM_ReportDataSubscribed_Pull ack_received sub={self.sub.subscription_id}", 3)
     super(self).ack_received(msg)
     if !self.report_data_phase
       # if ack is received while all data is sent, means that it finished without error
       if self.sub.is_keep_alive   # only if keep-alive, for normal reports, re_arm is called at last StatusReport
         self.sub.re_arm()           # signal that we can proceed to next sub report
       end
-      return true                       # proceed to calling send() which removes the message
+      return false                      # proceed to calling send() which removes the message
     else
       return false                      # do nothing
     end
   end
 
+  #################################################################################
   # we received an ACK error, remove subscription
   def status_error_received(msg)
-    # log(format("MTR: IM_ReportDataSubscribed_Pull status_error_received sub=%i exch=%i", self.sub.subscription_id, self.resp.exchange_id), 3)
+    # log(f"MTR: IM_ReportDataSubscribed_Pull status_error_received sub={self.sub.subscription_id} exch={self.resp.exchange_id}", 3)
     self.sub.remove_self()
   end
 
+  #################################################################################
   # ack received for previous message, proceed to next (if any)
   # return true if we manage the ack ourselves, false if it needs to be done upper
   def status_ok_received(msg)
-    # log(format("MTR: IM_ReportDataSubscribed_Pull status_ok_received sub=%i exch=%i", self.sub.subscription_id, self.resp.exchange_id), 3)
+    # log(f"MTR: IM_ReportDataSubscribed_Pull status_ok_received sub={self.sub.subscription_id} exch={self.resp.exchange_id}", 3)
     if self.report_data_phase
       return super(self).status_ok_received(msg)
     else
@@ -397,22 +451,22 @@ class Matter_IM_ReportDataSubscribed_Pull : Matter_IM_ReportData_Pull
     end
   end
 
+  #################################################################################
   # returns true if transaction is complete (remove object from queue)
   # default responder for data
   def send_im(responder)
     # log(format("MTR: IM_ReportDataSubscribed_Pull send sub=%i exch=%i ready=%i", self.sub.subscription_id, self.resp.exchange_id, self.ready ? 1 : 0), 3)
-    # log(format("MTR: ReportDataSubscribed::send_im size(self.data.attribute_reports)=%i ready=%s report_data_phase=%s", size(self.data.attribute_reports), str(self.ready), str(self.report_data_phase)), 3)
     if !self.ready   return false  end
 
     if (self.generator_or_arr != nil) || (self.event_generator_or_arr != nil)             # do we have still attributes or events to send
       if self.report_data_phase
         super(self).send_im(responder)
-        # log(format("MTR: ReportDataSubscribed::send_im called super finish=%i", self.finish), 3)
-        if !self.finish return end              # ReportData needs to continue
+        # log(format("MTR: ReportDataSubscribed::send_im called super finished=%i", self.finished), 3)
+        if !self.finishing return end              # ReportData needs to continue
         # ReportData is finished
         self.report_data_phase = false
         self.ready = false
-        self.finish = false                     # while a ReadReport would stop here, we continue for subscription
+        self.finished = false                     # while a ReadReport would stop here, we continue for subscription
       else
         # send a simple ACK
         var resp = self.resp.build_standalone_ack(false)
@@ -423,7 +477,7 @@ class Matter_IM_ReportDataSubscribed_Pull : Matter_IM_ReportData_Pull
         end
         responder.send_response_frame(resp)
         self.last_counter = resp.message_counter
-        self.finish = true
+        # self.finished = true
         self.sub.re_arm()           # signal that we can proceed to next sub report
       end
 
@@ -433,7 +487,7 @@ class Matter_IM_ReportDataSubscribed_Pull : Matter_IM_ReportData_Pull
         super(self).send_im(responder)
         self.report_data_phase = false
       else
-        self.finish = true
+        # self.finished = true
         self.sub.re_arm()           # signal that we can proceed to next sub report
       end
     end
@@ -451,6 +505,7 @@ matter.IM_ReportDataSubscribed_Pull = Matter_IM_ReportDataSubscribed_Pull
 class Matter_IM_SubscribedHeartbeat : Matter_IM_ReportData_Pull
   var sub                         # subscription object
 
+  #################################################################################
   def init(message_handler, session, sub)
     super(self).init(nil, nil #-no ctx_generator_or_arr-#, nil #-no event_generator_or_arr-#)     # send msg=nil to avoid creating a reponse
     # we need to initiate a new virtual response, because it's a spontaneous message
@@ -458,40 +513,48 @@ class Matter_IM_SubscribedHeartbeat : Matter_IM_ReportData_Pull
     #
     self.sub = sub
     self.set_subscription_id(sub.subscription_id)
-    self.set_suppress_response(true)
+    self.set_suppress_response(true)                # as per Matter definition, heartbeat requires no StatusReport, only a simple Ack
   end
 
+  #################################################################################
+  # reached_timeout
+  #
+  # The heartbeat was not acked within 5 seconds, and after all retries,
+  # then the controller is not expecting any more answers,
+  # remove the subscription 
   def reached_timeout()
+    # log(f"MTR: IM_SubscribedHeartbeat reached_timeout()", 3)
     self.sub.remove_self()
   end
 
-  # ack received, confirm the heartbeat
+  #################################################################################
+  # ack received, confirm the heartbeat and remove the packet from the queue
   def ack_received(msg)
-    # log(format("MTR: Matter_IM_SubscribedHeartbeat ack_received sub=%i", self.sub.subscription_id), 3)
+    # log(format("MTR: IM_SubscribedHeartbeat ack_received sub=%i", self.sub.subscription_id), 3)
     super(self).ack_received(msg)
-    self.finish = true
-    return true                       # proceed to calling send() which removes the message
+    return false                            # no further response
   end
 
+  #################################################################################
   # we received an ACK error, remove subscription
   def status_error_received(msg)
-    # log(format("MTR: Matter_IM_SubscribedHeartbeat status_error_received sub=%i exch=%i", self.sub.subscription_id, self.resp.exchange_id), 3)
+    # log(format("MTR: IM_SubscribedHeartbeat status_error_received sub=%i exch=%i", self.sub.subscription_id, self.resp.exchange_id), 3)
     self.sub.remove_self()
     return false                            # let the caller to the ack
   end
 
+  #################################################################################
   # ack received for previous message, proceed to next (if any)
   # return true if we manage the ack ourselves, false if it needs to be done upper
   def status_ok_received(msg)
-    # log(format("MTR: Matter_IM_SubscribedHeartbeat status_ok_received sub=%i exch=%i", self.sub.subscription_id, self.resp.exchange_id), 3)
+    # log(format("MTR: IM_SubscribedHeartbeat status_ok_received sub=%i exch=%i", self.sub.subscription_id, self.resp.exchange_id), 3)
     return false                            # let the caller to the ack
   end
 
+  #################################################################################
   # default responder for data
   def send_im(responder)
-    # log(format("MTR: Matter_IM_SubscribedHeartbeat send sub=%i exch=%i ready=%i", self.sub.subscription_id, self.resp.exchange_id, self.ready ? 1 : 0), 3)
-    if !self.ready   return false  end
-
+    # log(format("MTR: IM_SubscribedHeartbeat send sub=%i exch=%i ready=%i", self.sub.subscription_id, self.resp.exchange_id, self.ready ? 1 : 0), 3)
     super(self).send_im(responder)
     self.ready = false
   end
@@ -510,6 +573,7 @@ class Matter_IM_SubscribeResponse_Pull : Matter_IM_ReportData_Pull
   var sub                         # subscription object
   var report_data_phase           # true during reportdata
 
+  #################################################################################
   def init(msg, ctx_generator_or_arr, event_generator_or_arr, sub)
     super(self).init(msg, ctx_generator_or_arr, event_generator_or_arr)
     self.sub = sub
@@ -517,16 +581,16 @@ class Matter_IM_SubscribeResponse_Pull : Matter_IM_ReportData_Pull
     self.set_subscription_id(sub.subscription_id)
   end
 
+  #################################################################################
   # default responder for data
   def send_im(responder)
-    # log(format("MTR: Matter_IM_SubscribeResponse send sub=%i ready=%i", self.sub.subscription_id, self.ready ? 1 : 0), 3)
-    if !self.ready   return false  end
+    # log(format("MTR: Matter_IM_SubscribeResponse send sub=%i ready=%i report_data_phase=%s", self.sub.subscription_id, self.ready ? 1 : 0, self.report_data_phase), 3)
     if self.report_data_phase
       super(self).send_im(responder)
-      if self.finish
+      if self.finishing
         # finished reporting of data, we still need to send SubscribeResponseMessage after next StatusReport
         self.report_data_phase = false
-        self.finish = false       # we continue to subscribe response
+        self.finishing = false       # we continue to subscribe response
       end
       self.ready = false    # wait for Status Report before continuing sending
 
@@ -543,20 +607,23 @@ class Matter_IM_SubscribeResponse_Pull : Matter_IM_ReportData_Pull
       resp.encrypt()
       responder.send_response_frame(resp)
       self.last_counter = resp.message_counter
-      # log(format("MTR: Send SubscribeResponseMessage sub=%i id=%i", self.sub.subscription_id, resp.message_counter), 3)
+      # log(f"MTR: Send SubscribeResponseMessage sub={self.sub.subscription_id} id={resp.message_counter}", 3)
       self.sub.re_arm()
-      self.finish = true          # remove exchange
+      self.finishing = true          # remove exchange
     end
   end
 
   # Status ok received
   def status_ok_received(msg)
-    # log(format("MTR: IM_SubscribeResponse status_ok_received sub=%i exch=%i ack=%i last_counter=%i", self.sub.subscription_id, self.resp.exchange_id, msg.ack_message_counter ? msg.ack_message_counter : 0 , self.last_counter), 3)
+    # log(format("MTR: IM_SubscribeResponse status_ok_received sub=%i exch=%i ack=%i last_counter=%i finished=%s", self.sub.subscription_id, self.resp.exchange_id, msg.ack_message_counter ? msg.ack_message_counter : 0 , self.last_counter, self.finished), 3)
     # once we receive ack, open flow for subscriptions
     if tasmota.loglevel(3)
       log(format("MTR: >Sub_OK    (%6i) sub=%i", msg.session.local_session_id, self.sub.subscription_id), 3)
     end
     return super(self).status_ok_received(msg)
+    if !self.report_data_phase
+      self.finishing = true
+    end
   end
 
 end
