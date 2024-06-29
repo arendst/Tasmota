@@ -111,9 +111,13 @@ class Matter_IM
   def process_incoming_ack(msg)
     # check if there is an exchange_id interested in receiving this
     var message = self.find_sendqueue_by_exchangeid(msg.exchange_id)
-    # log(format("MTR: process_incoming_ack exch=%i message=%i", msg.exchange_id, message != nil ? 1 : 0), 4)
+    # log(format("MTR: process_incoming_ack exch=%i message=%i", msg.exchange_id, message != nil ? 1 : 0), 3)
     if message
-      return message.ack_received(msg)                # dispatch to IM_Message
+      var ret = message.ack_received(msg)                # dispatch to IM_Message
+      if message.finished
+        self.remove_sendqueue_by_exchangeid(msg.exchange_id)
+      end
+      return ret
     end
     return false
   end
@@ -137,13 +141,12 @@ class Matter_IM
     while idx < size(self.send_queue)
       var message = self.send_queue[idx]
 
-      if !message.finish && message.ready
+      if !message.finished && message.ready
         message.send_im(responder)         # send message
       end
 
-      if message.finish
-        log("MTR: remove IM message exch="+str(message.resp.exchange_id), 4)
-        self.send_queue.remove(idx)
+      if message.finished
+        self.remove_sendqueue_by_exchangeid(message.resp.exchange_id)
       else
         idx += 1
       end
@@ -169,11 +172,12 @@ class Matter_IM
   #############################################################
   # find in send_queue by exchangeid
   #
-  def remove_sendqueue_by_exchangeid(exchangeid)
-    if exchangeid == nil    return end
+  def remove_sendqueue_by_exchangeid(exchange_id)
+    if exchange_id == nil    return end
     var idx = 0
     while idx < size(self.send_queue)
-      if self.send_queue[idx].get_exchangeid() == exchangeid
+      if self.send_queue[idx].get_exchangeid() == exchange_id
+        # log(f"MTR: remove IM message exch={exchange_id}", 3)
         self.send_queue.remove(idx)
       else
         idx += 1
