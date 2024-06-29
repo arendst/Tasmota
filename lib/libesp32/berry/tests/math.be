@@ -58,3 +58,28 @@ assert(math.round(-3.6) == -4)
 
 assert(math.round() == 0)
 
+#- min and max -#
+def assert_error(f, error_type)
+    try
+        f()
+        assert(false, 'unexpected execution flow')
+    except .. as e, m
+        assert(e == error_type)
+    end
+end
+
+assert(math.min() == nil)
+assert(math.min(0) == 0)
+assert(math.min(0,2,10,56) == 0)
+assert(math.min(4, 2, -10, 3) == -10)
+assert(math.min(4, 2) == 2)
+
+# result is int unless one of the parameters is real
+assert(type(math.min(4, 2, -10, 3)) == 'int')
+assert(type(math.min(4, 2, -10.0, 3)) == 'real')
+
+assert(math.min(-3.4, 5) == -3.4)
+
+# test invalid parameters
+assert_error(def () return math.min(4, nil) end, 'type_error')
+assert_error(def () return math.min(4, "", 4.5) end, 'type_error')

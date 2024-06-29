@@ -303,6 +303,61 @@ static int m_rand(bvm *vm)
     be_return(vm);
 }
 
+/* check that all arguments are either int or real, and return true if at least one is real */
+static int m_check_int_or_has_real(bvm *vm)
+{
+    int argc = be_top(vm);
+    int has_real = 0;
+    for (int i = 1; i <= argc; ++i) {
+        if (be_isreal(vm, i)) {
+            has_real = 1;
+        } else if (!be_isint(vm, i)) {
+            be_raise(vm, "type_error", "arguments must be numbers");
+        }
+    }
+    return has_real;
+}
+
+static int m_min_max(bvm *vm, int is_min) {
+    int argc = be_top(vm);
+    if (argc > 0) {
+        /* see if at least one argument is float, else they are all ints */
+        int has_real = m_check_int_or_has_real(vm);
+        if (has_real) {
+            breal bound = be_toreal(vm, 1);
+            for (int i = 2; i <= argc; ++i) {
+                breal x = be_toreal(vm, i);
+                if (is_min ? (x < bound) : (x > bound)) {
+                    bound = x;
+                }
+            }
+            be_pushreal(vm, bound);
+        } else {
+            bint bound = be_toint(vm, 1);
+            for (int i = 2; i <= argc; ++i) {
+                bint x = be_toint(vm, i);
+                if (is_min ? (x < bound) : (x > bound)) {
+                    bound = x;
+                }
+            }
+            be_pushint(vm, bound);
+        }
+        be_return(vm);
+    }
+    be_return_nil(vm);
+
+}
+
+int m_min(bvm *vm)
+{
+    return m_min_max(vm, 1);
+}
+
+int m_max(bvm *vm)
+{
+    return m_min_max(vm, 0);
+}
+
 #if !BE_USE_PRECOMPILED_OBJECT
 be_native_module_attr_table(math) {
     be_native_module_function("isnan", m_isnan),
@@ -330,6 +385,8 @@ be_native_module_attr_table(math) {
     be_native_module_function("pow", m_pow),
     be_native_module_function("srand", m_srand),
     be_native_module_function("rand", m_rand),
+    be_native_module_function("min", m_min),
+    be_native_module_function("max", m_max),
     be_native_module_real("pi", M_PI),
     be_native_module_real("nan", NAN),
     be_native_module_real("inf", INFINITY),
@@ -366,6 +423,8 @@ module math (scope: global, depend: BE_USE_MATH_MODULE) {
     pow, func(m_pow)
     srand, func(m_srand)
     rand, func(m_rand)
+    min, func(m_min)
+    max, func(m_max)
     pi, real(M_PI)
     nan, real(NAN)
     inf, real(INFINITY)
