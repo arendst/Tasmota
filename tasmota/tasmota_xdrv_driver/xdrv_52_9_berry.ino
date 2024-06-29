@@ -946,6 +946,28 @@ bool Xdrv52(uint32_t function)
     case FUNC_SET_DEVICE_POWER:
       result = callBerryEventDispatcher(PSTR("set_power_handler"), nullptr, XdrvMailbox.index, nullptr);
       break;
+    case FUNC_ANY_KEY:
+      // XdrvMailbox.payload = device_save << 24 | key << 16 | state << 8 | device;
+      // key 0 = KEY_BUTTON = button_topic
+      // key 1 = KEY_SWITCH = switch_topic
+      // state 0 = POWER_OFF = off
+      // state 1 = POWER_ON = on
+      // state 2 = POWER_TOGGLE = toggle
+      // state 3 = POWER_HOLD = hold
+      // state 4 = POWER_INCREMENT = button still pressed
+      // state 5 = POWER_INV = button released
+      // state 6 = POWER_CLEAR = button released
+      // state 7 = POWER_RELEASE = button released
+      // state 9 = CLEAR_RETAIN = clear retain flag
+      // state 10 = POWER_DELAYED = button released delayed
+      // Button Multipress
+      // state 10 = SINGLE
+      // state 11 = DOUBLE
+      // state 12 = TRIPLE
+      // state 13 = QUAD
+      // state 14 = PENTA
+      result = callBerryEventDispatcher("any_key", nullptr, XdrvMailbox.payload, nullptr);
+      break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_ADD_CONSOLE_BUTTON:
       if (XdrvMailbox.index) {
