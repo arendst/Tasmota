@@ -7,8 +7,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 - ESP32 support for power and energy limit checks, like ``MaxEnergy2`` per phase (#21695)
 - Berry `tasmota.rtc("config_time")` (#21698)
-- Berry `math.min()` and `math.max()`
-- Berry `FUNC_ANY_KEY` event calling `any_key()`
+- Berry `math.min()` and `math.max()` (#21705)
+- Berry `FUNC_ANY_KEY` event calling `any_key()` (#21708)
 
 ### Breaking Changed
 
