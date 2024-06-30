@@ -624,7 +624,7 @@ bool Cse7761Command(void) {
   }
   else if (CMND_POWERSET == Energy->command_code) {
     if (XdrvMailbox.data_len && CSE7761Data.active_power[channel]) {
-      if ((value > 100) && (value < 200000)) {  // Between 1W and 2000W
+      if ((value > 100) && (value < 2000000)) {  // Between 1W and 20000W
         XdrvMailbox.payload = ((CSE7761Data.active_power[channel]) / value) * 100;
       }
     }
@@ -635,7 +635,7 @@ bool Cse7761Command(void) {
   }
   else if (CMND_VOLTAGESET == Energy->command_code) {
     if (XdrvMailbox.data_len && CSE7761Data.voltage_rms) {
-      if ((value > 10000) && (value < 26000)) {  // Between 100V and 260V
+      if ((value > 10000) && (value < 40000)) {  // Between 100V and 400V
         XdrvMailbox.payload = (CSE7761Data.voltage_rms * 100) / value;
       }
     }
@@ -646,7 +646,7 @@ bool Cse7761Command(void) {
   }
   else if (CMND_CURRENTSET == Energy->command_code) {
     if (XdrvMailbox.data_len && CSE7761Data.current_rms[channel]) {
-      if ((value > 1000) && (value < 1000000)) {  // Between 10mA and 10A
+      if ((value > 1000) && (value < 10000000)) {  // Between 10mA and 100A
         XdrvMailbox.payload = ((CSE7761Data.current_rms[channel] * 100) / value) * 1000;
       }
     }
