@@ -947,13 +947,17 @@ bool Xdrv52(uint32_t function)
       result = callBerryEventDispatcher(PSTR("set_power_handler"), nullptr, XdrvMailbox.index, nullptr);
       break;
     case FUNC_BUTTON_PRESSED:
-      // XdrvMailbox.index = button_index;
-      // XdrvMailbox.payload = button;
-      // XdrvMailbox.command_code = Button.last_state[button_index];
-      if (XdrvMailbox.payload != XdrvMailbox.command_code) {    // fire event only when state changes
-        result = callBerryEventDispatcher(PSTR("button_pressed"), nullptr, 
-                                              (XdrvMailbox.payload & 0xFF) << 16 | (XdrvMailbox.command_code & 0xFF) << 8 | (XdrvMailbox.index & 0xFF) ,
-                                              nullptr);
+      {
+        static uint32_t timer_last_button_sent = 0;
+        // XdrvMailbox.index = button_index;
+        // XdrvMailbox.payload = button;
+        // XdrvMailbox.command_code = Button.last_state[button_index];
+        if ((XdrvMailbox.payload != XdrvMailbox.command_code) || TimeReached(timer_last_button_sent)) {    // fire event only when state changes
+          timer_last_button_sent = millis() + 1000;     // wait for 1 second
+          result = callBerryEventDispatcher(PSTR("button_pressed"), nullptr, 
+                                                (XdrvMailbox.payload & 0xFF) << 16 | (XdrvMailbox.command_code & 0xFF) << 8 | (XdrvMailbox.index & 0xFF) ,
+                                                nullptr);
+        }
       }
       break;
     case FUNC_BUTTON_MULTI_PRESSED:
