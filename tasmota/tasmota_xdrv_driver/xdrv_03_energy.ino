@@ -59,7 +59,6 @@ const char kEnergyCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_ENERGY_POWER_LIMIT
   D_CMND_MAXENERGY "|" D_CMND_MAXENERGYSTART "|"
   D_CMND_MAXPOWER "|" D_CMND_MAXPOWERHOLD "|" D_CMND_MAXPOWERWINDOW "|"
-  D_CMND_SAFEPOWER "|" D_CMND_SAFEPOWERHOLD "|"  D_CMND_SAFEPOWERWINDOW "|"
 #endif  // USE_ENERGY_POWER_LIMIT
 #endif  // USE_ENERGY_MARGIN_DETECTION
   D_CMND_ENERGYTODAY "|" D_CMND_ENERGYYESTERDAY "|" D_CMND_ENERGYTOTAL "|" D_CMND_ENERGYEXPORTACTIVE "|" D_CMND_ENERGYUSAGE "|" D_CMND_ENERGYEXPORT "|" D_CMND_TARIFF;
@@ -72,7 +71,6 @@ void (* const EnergyCommand[])(void) PROGMEM = {
 #ifdef USE_ENERGY_POWER_LIMIT
   &CmndMaxEnergy, &CmndMaxEnergyStart,
   &CmndMaxPower, &CmndMaxPowerHold, &CmndMaxPowerWindow,
-  &CmndSafePower, &CmndSafePowerHold, &CmndSafePowerWindow,
 #endif  // USE_ENERGY_POWER_LIMIT
 #endif  // USE_ENERGY_MARGIN_DETECTION
   &CmndEnergyToday, &CmndEnergyYesterday, &CmndEnergyTotal, &CmndEnergyExportActive, &CmndEnergyUsage, &CmndEnergyExport, &CmndTariff};
@@ -1018,10 +1016,30 @@ void CmndEnergyConfig(void) {
 \*********************************************************************************************/
 
 void EnergyMarginStatus(void) {
-  Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS9_MARGIN "\":{\"" D_CMND_POWERDELTA "\":[%d,%d,%d],\"" D_CMND_POWERLOW "\":%d,\"" D_CMND_POWERHIGH "\":%d,\""
-                        D_CMND_VOLTAGELOW "\":%d,\"" D_CMND_VOLTAGEHIGH "\":%d,\"" D_CMND_CURRENTLOW "\":%d,\"" D_CMND_CURRENTHIGH "\":%d}}"),
-                        Settings->energy_power_delta[0], Settings->energy_power_delta[1], Settings->energy_power_delta[2], Settings->energy_min_power, Settings->energy_max_power,
-                        Settings->energy_min_voltage, Settings->energy_max_voltage, Settings->energy_min_current, Settings->energy_max_current);
+  Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS9_MARGIN "\":{\"" D_CMND_POWERDELTA "\":"));
+  if (Energy->phase_count > 1) {
+    for (uint32_t i = 0; i < Energy->phase_count; i++) {
+      ResponseAppend_P(PSTR("%c%d"), (i)?',':'[', Settings->energy_power_delta[i]);
+    }
+    ResponseAppend_P(PSTR("]"));
+  } else {
+    ResponseAppend_P(PSTR("%d"), Settings->energy_power_delta[0]);
+  }
+  ResponseAppend_P(PSTR(",\"" D_CMND_POWERLOW "\":%d,\"" D_CMND_POWERHIGH "\":%d,\""
+                              D_CMND_VOLTAGELOW "\":%d,\"" D_CMND_VOLTAGEHIGH "\":%d,\"" 
+                              D_CMND_CURRENTLOW "\":%d,\"" D_CMND_CURRENTHIGH "\":%d"),
+                              Settings->energy_min_power, Settings->energy_max_power,
+                              Settings->energy_min_voltage, Settings->energy_max_voltage,
+                              Settings->energy_min_current, Settings->energy_max_current);
+#ifdef USE_ENERGY_POWER_LIMIT
+  ResponseAppend_P(PSTR(",\"" D_CMND_MAXPOWER "\":%d,\""
+                              D_CMND_MAXPOWERHOLD "\":%d,\"" D_CMND_MAXPOWERWINDOW "\":%d,\"" 
+                              D_CMND_MAXENERGY "\":%d,\"" D_CMND_MAXENERGYSTART "\":%d"),
+                              Settings->energy_max_power_limit,
+                              Settings->energy_max_power_limit_hold, Settings->energy_max_power_limit_window,
+                              Settings->energy_max_energy, Settings->energy_max_energy_start);
+#endif  // USE_ENERGY_POWER_LIMIT
+  ResponseJsonEndEnd();
 }
 
 void CmndPowerDelta(void) {
@@ -1033,104 +1051,62 @@ void CmndPowerDelta(void) {
   }
 }
 
-void CmndPowerLow(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-    Settings->energy_min_power = XdrvMailbox.payload;
+bool ResponseCmndEnergyMargin(uint16_t* value, uint32_t max_value, uint32_t default_value = 1);
+bool ResponseCmndEnergyMargin(uint16_t* value, uint32_t max_value, uint32_t default_value) {
+  bool value_changed = false;
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= max_value)) {
+    *value = (1 == XdrvMailbox.payload) ? default_value : XdrvMailbox.payload;
+    value_changed = true;
   }
-  ResponseCmndNumber(Settings->energy_min_power);
+  ResponseCmndNumber(*value);
+  return value_changed;
+}
+
+void CmndPowerLow(void) {
+  ResponseCmndEnergyMargin(&Settings->energy_min_power, 6000);
 }
 
 void CmndPowerHigh(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-    Settings->energy_max_power = XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_power);
+  ResponseCmndEnergyMargin(&Settings->energy_max_power, 6000);
 }
 
 void CmndVoltageLow(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 500)) {
-    Settings->energy_min_voltage = XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_min_voltage);
+  ResponseCmndEnergyMargin(&Settings->energy_min_voltage, 500);
 }
 
 void CmndVoltageHigh(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 500)) {
-    Settings->energy_max_voltage = XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_voltage);
+  ResponseCmndEnergyMargin(&Settings->energy_max_voltage, 500);
 }
 
 void CmndCurrentLow(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 25000)) {
-    Settings->energy_min_current = XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_min_current);
+  ResponseCmndEnergyMargin(&Settings->energy_min_current, 25000);
 }
 
 void CmndCurrentHigh(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 25000)) {
-    Settings->energy_max_current = XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_current);
+  ResponseCmndEnergyMargin(&Settings->energy_max_current, 25000);
 }
 
 #ifdef USE_ENERGY_POWER_LIMIT
 void CmndMaxPower(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-    Settings->energy_max_power_limit = XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_power_limit);
+  ResponseCmndEnergyMargin(&Settings->energy_max_power_limit, 6000);
 }
 
 void CmndMaxPowerHold(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-    Settings->energy_max_power_limit_hold = (1 == XdrvMailbox.payload) ? MAX_POWER_HOLD : XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_power_limit_hold);
+  ResponseCmndEnergyMargin(&Settings->energy_max_power_limit_hold, 6000, MAX_POWER_HOLD);
 }
 
 void CmndMaxPowerWindow(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-    Settings->energy_max_power_limit_window = (1 == XdrvMailbox.payload) ? MAX_POWER_WINDOW : XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_power_limit_window);
-}
-
-void CmndSafePower(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-    Settings->energy_max_power_safe_limit = XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_power_safe_limit);
-}
-
-void CmndSafePowerHold(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-    Settings->energy_max_power_safe_limit_hold = (1 == XdrvMailbox.payload) ? SAFE_POWER_HOLD : XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_power_safe_limit_hold);
-}
-
-void CmndSafePowerWindow(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 1440)) {
-    Settings->energy_max_power_safe_limit_window = (1 == XdrvMailbox.payload) ? SAFE_POWER_WINDOW : XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_power_safe_limit_window);
+  ResponseCmndEnergyMargin(&Settings->energy_max_power_limit_window, 6000, MAX_POWER_WINDOW);
 }
 
 void CmndMaxEnergy(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-    Settings->energy_max_energy = XdrvMailbox.payload;
+  if (ResponseCmndEnergyMargin(&Settings->energy_max_energy, 6000)) {
     Energy->max_energy_state  = 3;
   }
-  ResponseCmndNumber(Settings->energy_max_energy);
 }
 
 void CmndMaxEnergyStart(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 24)) {
-    Settings->energy_max_energy_start = XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_energy_start);
+  ResponseCmndEnergyMargin(&Settings->energy_max_energy_start, 23);
 }
 #endif  // USE_ENERGY_POWER_LIMIT
 #endif  // USE_ENERGY_MARGIN_DETECTION

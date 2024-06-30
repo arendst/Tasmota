@@ -1208,9 +1208,9 @@ void SettingsDefaultSet2(void) {
 //  Settings->energy_max_power_limit = 0;                            // MaxPowerLimit
   Settings->energy_max_power_limit_hold = MAX_POWER_HOLD;
   Settings->energy_max_power_limit_window = MAX_POWER_WINDOW;
-//  Settings->energy_max_power_safe_limit = 0;                       // MaxSafePowerLimit
-  Settings->energy_max_power_safe_limit_hold = SAFE_POWER_HOLD;
-  Settings->energy_max_power_safe_limit_window = SAFE_POWER_WINDOW;
+//  Settings->ex_energy_max_power_safe_limit = 0;                    // MaxSafePowerLimit
+//  Settings->ex_energy_max_power_safe_limit_hold = SAFE_POWER_HOLD;
+//  Settings->ex_energy_max_power_safe_limit_window = SAFE_POWER_WINDOW;
 //  Settings->energy_max_energy = 0;                                 // MaxEnergy
 //  Settings->energy_max_energy_start = 0;                           // MaxEnergyStart
 //  Settings->energy_kWhtotal_ph[0] = 0;

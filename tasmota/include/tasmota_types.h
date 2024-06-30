@@ -562,9 +562,9 @@ typedef struct {
   uint16_t      energy_max_power_limit;              // 386  MaxPowerLimit
   uint16_t      energy_max_power_limit_hold;         // 388  MaxPowerLimitHold
   uint16_t      energy_max_power_limit_window;       // 38A  MaxPowerLimitWindow
-  uint16_t      energy_max_power_safe_limit;         // 38C  MaxSafePowerLimit
-  uint16_t      energy_max_power_safe_limit_hold;    // 38E  MaxSafePowerLimitHold
-  uint16_t      energy_max_power_safe_limit_window;  // 390  MaxSafePowerLimitWindow
+  uint16_t      ex_energy_max_power_safe_limit;         // 38C  MaxSafePowerLimit - Free since 14.1.0.3
+  uint16_t      ex_energy_max_power_safe_limit_hold;    // 38E  MaxSafePowerLimitHold - Free since 14.1.0.3
+  uint16_t      ex_energy_max_power_safe_limit_window;  // 390  MaxSafePowerLimitWindow - Free since 14.1.0.3
   uint16_t      energy_max_energy;         // 392  MaxEnergy
   uint16_t      energy_max_energy_start;   // 394  MaxEnergyStart
   uint16_t      mqtt_retry;                // 396
