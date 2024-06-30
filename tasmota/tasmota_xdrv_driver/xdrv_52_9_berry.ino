@@ -946,6 +946,23 @@ bool Xdrv52(uint32_t function)
     case FUNC_SET_DEVICE_POWER:
       result = callBerryEventDispatcher(PSTR("set_power_handler"), nullptr, XdrvMailbox.index, nullptr);
       break;
+    case FUNC_BUTTON_PRESSED:
+      // XdrvMailbox.index = button_index;
+      // XdrvMailbox.payload = button;
+      // XdrvMailbox.command_code = Button.last_state[button_index];
+      if (XdrvMailbox.payload != XdrvMailbox.command_code) {    // fire event only when state changes
+        result = callBerryEventDispatcher(PSTR("button_pressed"), nullptr, 
+                                              (XdrvMailbox.payload & 0xFF) << 16 | (XdrvMailbox.command_code & 0xFF) << 8 | (XdrvMailbox.index & 0xFF) ,
+                                              nullptr);
+      }
+      break;
+    case FUNC_BUTTON_MULTI_PRESSED:
+      // XdrvMailbox.index = button_index;
+      // XdrvMailbox.payload = Button.press_counter[button_index];
+      result = callBerryEventDispatcher(PSTR("button_multi_pressed"), nullptr, 
+                                             (XdrvMailbox.payload & 0xFF) << 8 | (XdrvMailbox.index & 0xFF) ,
+                                             nullptr);
+      break;
     case FUNC_ANY_KEY:
       // XdrvMailbox.payload = device_save << 24 | key << 16 | state << 8 | device;
       // key 0 = KEY_BUTTON = button_topic
@@ -1012,10 +1029,6 @@ bool Xdrv52(uint32_t function)
       break;
     case FUNC_AFTER_TELEPERIOD:
       callBerryEventDispatcher(PSTR("after_teleperiod"), nullptr, 0, nullptr);
-      break;
-
-    case FUNC_BUTTON_PRESSED:
-      callBerryEventDispatcher(PSTR("button_pressed"), nullptr, 0, nullptr);
       break;
 
     case FUNC_ACTIVE:
