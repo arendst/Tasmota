@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 TM1621 number overflow from "9999" to "12E3" (#21131)
 
 ### Fixed
+- Berry `bytes.resize()` for large sizes
 
 ### Removed
 
