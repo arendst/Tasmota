@@ -56,10 +56,10 @@ enum Tm1621Units  { TM1621_NONE, TM1621_TEMPERATURE, TM1621_HUMIDITY, TM1621_VOL
 
 const uint8_t tm1621_commands[] = { TM1621_SYS_EN, TM1621_LCD_ON, TM1621_BIAS, TM1621_TIMER_DIS, TM1621_WDT_DIS, TM1621_TONE_OFF, TM1621_IRQ_DIS };
 
-const char tm1621_kchar[] PROGMEM = { "0|1|2|3|4|5|6|7|8|9|-| " };
-//                                          0     1     2     3     4     5     6     7     8     9     -     off
-const uint8_t tm1621_digit_row[2][12] = {{ 0x5F, 0x50, 0x3D, 0x79, 0x72, 0x6B, 0x6F, 0x51, 0x7F, 0x7B, 0x20, 0x00 },
-                                         { 0xF5, 0x05, 0xB6, 0x97, 0x47, 0xD3, 0xF3, 0x85, 0xF7, 0xD7, 0x02, 0x00 }};
+const char tm1621_kchar[] PROGMEM = { "0|1|2|3|4|5|6|7|8|9|-|E| " };
+//                                          0     1     2     3     4     5     6     7     8     9     -     E     off
+const uint8_t tm1621_digit_row[2][13] = {{ 0x5F, 0x50, 0x3D, 0x79, 0x72, 0x6B, 0x6F, 0x51, 0x7F, 0x7B, 0x20, 0x2F, 0x00 },
+                                         { 0xF5, 0x05, 0xB6, 0x97, 0x47, 0xD3, 0xF3, 0x85, 0xF7, 0xD7, 0x02, 0xF2, 0x00 }};
 
 struct Tm1621 {
   uint8_t buffer[8];
@@ -230,23 +230,26 @@ void TM1621SendCommon(uint8_t common) {
 
 void TM1621SendRows(void) {
   // Tm1621.row[x] = "text", "----", "    " or a number with one decimal like "0.4", "237.5", "123456.7"
-  // "123456.7" will be shown as "9999" being a four digit overflow
+  // "123456.7" will be shown as "12E4" being a four digit overflow
 
 //  AddLog(LOG_LEVEL_DEBUG, PSTR("TM1: Row1 '%s', Row2 '%s'"), Tm1621.row[0], Tm1621.row[1]);
 
   uint8_t buffer[8] = { 0 };  // TM1621 16-segment 4-bit common buffer
   char row[4];
   for (uint32_t j = 0; j < 2; j++) {
-    // 0.4V => "  04", 0.0A => "  ", 1234.5V => "1234"
+    // 0.4V => "  04", 0.0A => "  ", 1234.5V => "1234", 12345.6V => "12E3"
     uint32_t len = strlen(Tm1621.row[j]);
     char *dp = nullptr;           // Expect number larger than "123"
     int row_idx = len -3;         // "1234.5"
     if (len <= 5) {               // "----", "    ", "0.4", "237.5"
       dp = strchr(Tm1621.row[j], '.');
       row_idx = len -1;
-    }
-    else if (len > 6) {           // "12345.6"
-      snprintf_P(Tm1621.row[j], sizeof(Tm1621.row[j]), PSTR("9999"));
+    } else {                      // "12345.6" = "12E3"
+      if (len > 13) {             // "123456789012.3" = "12E9"
+        len = 13;
+      }
+      Tm1621.row[j][2] = 'E';
+      Tm1621.row[j][3] = '0' + len -4;
       row_idx = 3;
     }
     row[3] = (row_idx >= 0) ? Tm1621.row[j][row_idx--] : ' ';

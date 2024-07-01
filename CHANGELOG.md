@@ -9,12 +9,13 @@ All notable changes to this project will be documented in this file.
 - Berry `tasmota.rtc("config_time")` (#21698)
 - Berry `math.min()` and `math.max()` (#21705)
 - Berry `FUNC_ANY_KEY` event calling `any_key()` (#21708)
-- Berry `FUNC_BUTTON_MULTI_PRESSED` event and make `FUNC_BUTTON_PRESSED` called only on state changes and once per second
+- Berry `FUNC_BUTTON_MULTI_PRESSED` event and make `FUNC_BUTTON_PRESSED` called only on state changes and once per second (#21711)
 
 ### Breaking Changed
 
 ### Changed
 - ESP32 support for energy margin checks, like ``MaxPower2`` per phase (#21695)
+- ESP32 TM1621 number overflow from "9999" to "12E3" (#21131)
 
 ### Fixed
 
