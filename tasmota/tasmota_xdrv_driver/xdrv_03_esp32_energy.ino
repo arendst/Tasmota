@@ -181,8 +181,8 @@ typedef struct {
   float daily_sum_export_balanced;              // 123.123 kWh
 
   uint16_t power_history[ENERGY_MAX_PHASES][3];
-  uint16_t mplh_counter[ENERGY_MAX_PHASES];
-  uint16_t mplw_counter[ENERGY_MAX_PHASES];
+  uint16_t mpl_hold_counter[ENERGY_MAX_PHASES];
+  uint16_t mpl_window_counter[ENERGY_MAX_PHASES];
 
   uint8_t data_valid[ENERGY_MAX_PHASES];
   uint8_t phase_count;                          // Number of phases active
@@ -190,7 +190,7 @@ typedef struct {
   uint8_t command_code;
   uint8_t power_steady_counter;                 // Allow for power on stabilization
   uint8_t margin_stable;
-  uint8_t mplr_counter[ENERGY_MAX_PHASES];
+  uint8_t mpl_retry_counter[ENERGY_MAX_PHASES];
   uint8_t max_energy_state[ENERGY_MAX_PHASES];
   uint8_t hour;
 
@@ -837,11 +837,11 @@ void EnergyMarginCheck(void) {
       bool power_on = (TasmotaGlobal.power & (1 << phase));
 //      if (Energy->active_power[phase] > Energy->Settings.phase[phase].max_power_limit) {
       if (energy_power_u > Energy->Settings.phase[phase].max_power_limit) {
-        if (!Energy->mplh_counter[phase]) {
-          Energy->mplh_counter[phase] = Energy->Settings.phase[phase].max_power_limit_hold +1;
+        if (!Energy->mpl_hold_counter[phase]) {
+          Energy->mpl_hold_counter[phase] = Energy->Settings.phase[phase].max_power_limit_hold +1;
         }
-        Energy->mplh_counter[phase]--;
-        if (!Energy->mplh_counter[phase]) {
+        Energy->mpl_hold_counter[phase]--;
+        if (!Energy->mpl_hold_counter[phase]) {
           ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHED "%d\":%d}"), phase +1, energy_power_u);
           MqttPublishPrefixTopicRulesProcess_P(STAT, S_RSLT_WARNING);
           EnergyMqttShow();
@@ -850,24 +850,24 @@ void EnergyMarginCheck(void) {
           } else {
             ExecuteCommandPower(phase +1, POWER_OFF_FORCE, SRC_MAXPOWER);
           }
-          if (!Energy->mplr_counter[phase]) {
-            Energy->mplr_counter[phase] = Settings->param[P_MAX_POWER_RETRY] +1;  // SetOption33 - Max Power Retry count
+          if (!Energy->mpl_retry_counter[phase]) {
+            Energy->mpl_retry_counter[phase] = Settings->param[P_MAX_POWER_RETRY] +1;  // SetOption33 - Max Power Retry count
           }
-          Energy->mplw_counter[phase] = Energy->Settings.phase[phase].max_power_limit_window;
+          Energy->mpl_window_counter[phase] = Energy->Settings.phase[phase].max_power_limit_window;
         }
       }
       else if (power_on && (energy_power_u <= Energy->Settings.phase[phase].max_power_limit)) {
-        Energy->mplh_counter[phase] = 0;
-        Energy->mplr_counter[phase] = 0;
-        Energy->mplw_counter[phase] = 0;
+        Energy->mpl_hold_counter[phase] = 0;
+        Energy->mpl_retry_counter[phase] = 0;
+        Energy->mpl_window_counter[phase] = 0;
       }
       if (!power_on) {
-        if (Energy->mplw_counter[phase]) {
-          Energy->mplw_counter[phase]--;
+        if (Energy->mpl_window_counter[phase]) {
+          Energy->mpl_window_counter[phase]--;
         } else {
-          if (Energy->mplr_counter[phase]) {
-            Energy->mplr_counter[phase]--;
-            if (Energy->mplr_counter[phase]) {
+          if (Energy->mpl_retry_counter[phase]) {
+            Energy->mpl_retry_counter[phase]--;
+            if (Energy->mpl_retry_counter[phase]) {
               ResponseTime_P(PSTR(",\"" D_JSON_POWERMONITOR "%d\":\"%s\"}"), phase +1, GetStateText(1));
               MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_JSON_POWERMONITOR));
               if (set_all_power) {

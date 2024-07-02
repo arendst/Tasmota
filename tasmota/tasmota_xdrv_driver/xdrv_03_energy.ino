@@ -131,9 +131,9 @@ typedef struct {
   bool max_current_flag;
 
 #ifdef USE_ENERGY_POWER_LIMIT
-  uint16_t mplh_counter;
-  uint16_t mplw_counter;
-  uint8_t mplr_counter;
+  uint16_t mpl_hold_counter;
+  uint16_t mpl_window_counter;
+  uint8_t mpl_retry_counter;
   uint8_t max_energy_state;
 #endif  // USE_ENERGY_POWER_LIMIT
 #endif  // USE_ENERGY_MARGIN_DETECTION
@@ -567,34 +567,34 @@ void EnergyMarginCheck(void) {
   // Max Power
   if (Settings->energy_max_power_limit) {
     if (Energy->active_power[0] > Settings->energy_max_power_limit) {
-      if (!Energy->mplh_counter) {
-        Energy->mplh_counter = Settings->energy_max_power_limit_hold;
+      if (!Energy->mpl_hold_counter) {
+        Energy->mpl_hold_counter = Settings->energy_max_power_limit_hold;
       } else {
-        Energy->mplh_counter--;
-        if (!Energy->mplh_counter) {
+        Energy->mpl_hold_counter--;
+        if (!Energy->mpl_hold_counter) {
           ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHED "\":%d}"), energy_power_u);
           MqttPublishPrefixTopicRulesProcess_P(STAT, S_RSLT_WARNING);
           EnergyMqttShow();
           SetAllPower(POWER_OFF_FORCE, SRC_MAXPOWER);
-          if (!Energy->mplr_counter) {
-            Energy->mplr_counter = Settings->param[P_MAX_POWER_RETRY] +1;  // SetOption33 - Max Power Retry count
+          if (!Energy->mpl_retry_counter) {
+            Energy->mpl_retry_counter = Settings->param[P_MAX_POWER_RETRY] +1;  // SetOption33 - Max Power Retry count
           }
-          Energy->mplw_counter = Settings->energy_max_power_limit_window;
+          Energy->mpl_window_counter = Settings->energy_max_power_limit_window;
         }
       }
     }
     else if (TasmotaGlobal.power && (energy_power_u <= Settings->energy_max_power_limit)) {
-      Energy->mplh_counter = 0;
-      Energy->mplr_counter = 0;
-      Energy->mplw_counter = 0;
+      Energy->mpl_hold_counter = 0;
+      Energy->mpl_retry_counter = 0;
+      Energy->mpl_window_counter = 0;
     }
     if (!TasmotaGlobal.power) {
-      if (Energy->mplw_counter) {
-        Energy->mplw_counter--;
+      if (Energy->mpl_window_counter) {
+        Energy->mpl_window_counter--;
       } else {
-        if (Energy->mplr_counter) {
-          Energy->mplr_counter--;
-          if (Energy->mplr_counter) {
+        if (Energy->mpl_retry_counter) {
+          Energy->mpl_retry_counter--;
+          if (Energy->mpl_retry_counter) {
             ResponseTime_P(PSTR(",\"" D_JSON_POWERMONITOR "\":\"%s\"}"), GetStateText(1));
             MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_JSON_POWERMONITOR));
             RestorePower(true, SRC_MAXPOWER);
