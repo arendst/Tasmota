@@ -509,6 +509,7 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_DINGTIAN_SHIFT  4
 #define MAX_MAGIC_SWITCH_MODES   2
 #define MAX_BL0942_RX    8              // Baudrates 1/5 (4800), 2/6 (9600), 3/7 (19200), 4/8 (38400), Support Positive values only 1..4, Support also negative values 5..8
+#define MAX_CSE7761      2              // Model 1/2 (DUALR3), 2/2 (POWCT)
 
 const uint16_t kGpioNiceList[] PROGMEM = {
   GPIO_NONE,                            // Not used
@@ -886,7 +887,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif  // USE_ADE7953
 #ifdef USE_CSE7761
   AGPIO(GPIO_CSE7761_TX),               // CSE7761 Serial interface (Dual R3)
-  AGPIO(GPIO_CSE7761_RX),               // CSE7761 Serial interface (Dual R3)
+  AGPIO(GPIO_CSE7761_RX) + MAX_CSE7761,  // CSE7761 Serial interface (1 = Dual R3, 2 = POWCT)
 #endif
 #ifdef USE_CSE7766
   AGPIO(GPIO_CSE7766_TX),               // CSE7766 Serial interface (S31 and Pow R2)
