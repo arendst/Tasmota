@@ -56,10 +56,13 @@ enum Tm1621Units  { TM1621_NONE, TM1621_TEMPERATURE, TM1621_HUMIDITY, TM1621_VOL
 
 const uint8_t tm1621_commands[] = { TM1621_SYS_EN, TM1621_LCD_ON, TM1621_BIAS, TM1621_TIMER_DIS, TM1621_WDT_DIS, TM1621_TONE_OFF, TM1621_IRQ_DIS };
 
-const char tm1621_kchar[] PROGMEM = { "0|1|2|3|4|5|6|7|8|9|-|E| " };
-//                                          0     1     2     3     4     5     6     7     8     9     -     E     off
-const uint8_t tm1621_digit_row[2][13] = {{ 0x5F, 0x50, 0x3D, 0x79, 0x72, 0x6B, 0x6F, 0x51, 0x7F, 0x7B, 0x20, 0x2F, 0x00 },
-                                         { 0xF5, 0x05, 0xB6, 0x97, 0x47, 0xD3, 0xF3, 0x85, 0xF7, 0xD7, 0x02, 0xF2, 0x00 }};
+const char tm1621_kchar[] PROGMEM = { " |0|1|2|3|4|5|6|7|8|9|-|E" };
+//    b0 ---
+//   b1 /  / b4
+//      --- b5
+//  b2 /  / b6
+// b3  ---                        off   0     1     2     3     4     5     6     7     8     9     -     E
+const uint8_t tm1621_digit[] = { 0x00, 0x5F, 0x50, 0x3D, 0x79, 0x72, 0x6B, 0x6F, 0x51, 0x7F, 0x7B, 0x20, 0x2F };
 
 struct Tm1621 {
   uint8_t buffer[8];
@@ -228,6 +231,19 @@ void TM1621SendCommon(uint8_t common) {
   }
 }
 
+uint32_t TM1621Row2(uint32_t row1) {
+  uint32_t row2 = 0;
+  bitWrite(row2, 0, bitRead(row1, 6));
+  bitWrite(row2, 1, bitRead(row1, 5));
+  bitWrite(row2, 2, bitRead(row1, 4));
+  bitWrite(row2, 3, bitRead(row1, 7));
+  bitWrite(row2, 4, bitRead(row1, 3));
+  bitWrite(row2, 5, bitRead(row1, 2));
+  bitWrite(row2, 6, bitRead(row1, 1));
+  bitWrite(row2, 7, bitRead(row1, 0));
+  return row2;  
+}
+
 void TM1621SendRows(void) {
   // Tm1621.row[x] = "text", "----", "    " or a number with one decimal like "0.4", "237.5", "123456.7"
   // "123456.7" will be shown as "12E4" being a four digit overflow
@@ -265,16 +281,11 @@ void TM1621SendRows(void) {
     for (uint32_t i = 0; i < 4; i++) {
       needle[0] = row[i];
       int index = GetCommandCode(command, sizeof(command), (const char*)needle, tm1621_kchar);
-      if (-1 == index) { index = 12; }    // Off
-      uint32_t bidx = (0 == j) ? i : 7 -i;
-      buffer[bidx] = tm1621_digit_row[j][index];
-    }
-    if (dp) {
-      if (0 == j) {
-        buffer[2] |= 0x80;   // Row 1 decimal point
-      } else {
-        buffer[5] |= 0x08;   // Row 2 decimal point
-      }
+      if (-1 == index) { index = 0; }         // Off
+      uint32_t digit = tm1621_digit[index];
+      if ((2 == i) && dp) { digit |= 0x80; }  // Decimal point
+      uint32_t bidx = (!j) ? i : 7 -i;
+      buffer[bidx] = (j) ? TM1621Row2(digit) : digit;
     }
   }
 
