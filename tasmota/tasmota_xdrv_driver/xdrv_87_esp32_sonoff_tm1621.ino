@@ -9,7 +9,7 @@
 #ifdef ESP32
 #ifdef USE_DISPLAY_TM1621_SONOFF
 /*********************************************************************************************\
- * Sonoff POWR3xxD and THR3xxD LCD support
+ * Sonoff POWR3xxD, POWCT and THR3xxD LCD support
  *
  * {"NAME":"Sonoff POWR316D","GPIO":[32,0,0,0,0,576,0,0,0,224,9280,0,3104,0,320,0,0,0,0,0,0,9184,9248,9216,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
  * {"NAME":"Sonoff POWR320D","GPIO":[32,0,9313,0,9312,576,0,0,0,0,9280,0,3104,0,320,0,0,0,0,0,0,9184,9248,9216,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
@@ -265,7 +265,7 @@ void TM1621SendRows(void) {
     for (uint32_t i = 0; i < 4; i++) {
       needle[0] = row[i];
       int index = GetCommandCode(command, sizeof(command), (const char*)needle, tm1621_kchar);
-      if (-1 == index) { index = 11; }
+      if (-1 == index) { index = 12; }    // Off
       uint32_t bidx = (0 == j) ? i : 7 -i;
       buffer[bidx] = tm1621_digit_row[j][index];
     }

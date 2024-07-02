@@ -167,6 +167,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Scripter TCP server [#21660](https://github.com/arendst/Tasmota/issues/21660)
 - ESP32 allow use of UART0 with enabled USB_CDC_CONSOLE [#21496](https://github.com/arendst/Tasmota/issues/21496)
 - Berry `input()` returns empty string and does not crash [#21565](https://github.com/arendst/Tasmota/issues/21565)
+- Berry `bytes.resize()` for large sizes [#21716](https://github.com/arendst/Tasmota/issues/21716)
 - Matter interverted attributes 0xFFF9 and 0xFFFB [#21636](https://github.com/arendst/Tasmota/issues/21636)
 - Matter CASE Sigma1 resumption mode for faster reconnection [#21644](https://github.com/arendst/Tasmota/issues/21644)
 - Matter TLV.U8 unsigned encoding [#21672](https://github.com/arendst/Tasmota/issues/21672)
