@@ -434,6 +434,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             break;
           case 'f':
             // epaper full update cmds
+            ep_mode = 3;
             if (!epcoffs_full) {
               epcoffs_full = dsp_ncmds;
               epc_full_cnt = 0;
@@ -449,6 +450,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             break;
           case 'p':
             // epaper partial update cmds
+            ep_mode = 3;
             if (!epcoffs_part) {
               epcoffs_part = dsp_ncmds + epc_full_cnt;
               epc_part_cnt = 0;
@@ -907,7 +909,7 @@ uint16_t index = 0;
     SPI_CS_LOW
     iob = dsp_cmds[cmd_offset++];
     index++;
-    if (ep_mode == 1 && iob >= EP_RESET) {
+    if ((ep_mode == 1 || ep_mode == 3) && iob >= EP_RESET) {
       // epaper pseudo opcodes
       uint8_t args = dsp_cmds[cmd_offset++];
       index++;
@@ -3429,6 +3431,9 @@ void uDisplay::Init_EPD(int8_t p) {
   if (ep_mode == 1) {
     ClearFrameMemory(0xFF);
     Updateframe_EPD();
+  } else if (ep_mode == 3) {
+    ClearFrameMemory(0xFF);
+    Updateframe_EPD();
   } else {
     ClearFrame_42();
   }
@@ -3518,7 +3523,7 @@ void uDisplay::SetLut(const unsigned char* lut) {
 }
 
 void uDisplay::Updateframe_EPD(void) {
-  if (ep_mode == 1) {
+  if (ep_mode == 1 || ep_mode == 3) {
     switch (ep_update_mode) {
       case DISPLAY_INIT_PARTIAL:
         if (epc_part_cnt) {
@@ -3547,15 +3552,32 @@ void uDisplay::DisplayFrame_29(void) {
 }
 
 void uDisplay::SetMemoryArea(int x_start, int y_start, int x_end, int y_end) {
-    spi_command_EPD(SET_RAM_X_ADDRESS_START_END_POSITION);
-    /* x point must be the multiple of 8 or the last 3 bits will be ignored */
-    spi_data8_EPD((x_start >> 3) & 0xFF);
-    spi_data8_EPD((x_end >> 3) & 0xFF);
-    spi_command_EPD(SET_RAM_Y_ADDRESS_START_END_POSITION);
-    spi_data8_EPD(y_start & 0xFF);
-    spi_data8_EPD((y_start >> 8) & 0xFF);
-    spi_data8_EPD(y_end & 0xFF);
-    spi_data8_EPD((y_end >> 8) & 0xFF);
+    int x_start1 = (x_start >> 3) & 0xFF;
+    int x_end1 = (x_end >> 3) & 0xFF;
+    int y_start1 = y_start & 0xFF;
+    int y_start2 = (y_start >> 8) & 0xFF;
+    int y_end1 = y_end & 0xFF;
+    int y_end2 = (y_end >> 8) & 0xFF;
+
+    if (ep_mode == 3) {
+        spi_command_EPD(SET_RAM_X_ADDRESS_START_END_POSITION);
+        spi_data8_EPD(x_start1);
+        spi_data8_EPD(x_end1);
+        spi_command_EPD(SET_RAM_Y_ADDRESS_START_END_POSITION);
+        spi_data8_EPD(y_end1);
+        spi_data8_EPD(y_end2);
+        spi_data8_EPD(y_start1);
+        spi_data8_EPD(y_start2);
+    } else {
+        spi_command_EPD(SET_RAM_X_ADDRESS_START_END_POSITION);
+        spi_data8_EPD(x_start1);
+        spi_data8_EPD(x_end1);
+        spi_command_EPD(SET_RAM_Y_ADDRESS_START_END_POSITION);
+        spi_data8_EPD(y_start1);
+        spi_data8_EPD(y_start2);
+        spi_data8_EPD(y_end1);
+        spi_data8_EPD(y_end2);
+    }
 }
 
 void uDisplay::SetFrameMemory(const unsigned char* image_buffer) {
@@ -3569,12 +3591,27 @@ void uDisplay::SetFrameMemory(const unsigned char* image_buffer) {
 }
 
 void uDisplay::SetMemoryPointer(int x, int y) {
+    int x1;
+    int y1;
+    int y2;
+
+    if (ep_mode == 3) {
+        x1 = (x >> 3) & 0xFF;
+        y--;
+        y1 = y & 0xFF;
+        y2 = (y >> 8) & 0xFF;
+    } else {
+        x1 = (x >> 3) & 0xFF;
+        y1 = y & 0xFF;
+        y2 = (y >> 8) & 0xFF;
+    }
+
     spi_command_EPD(SET_RAM_X_ADDRESS_COUNTER);
     /* x point must be the multiple of 8 or the last 3 bits will be ignored */
-    spi_data8_EPD((x >> 3) & 0xFF);
+    spi_data8_EPD(x1);
     spi_command_EPD(SET_RAM_Y_ADDRESS_COUNTER);
-    spi_data8_EPD(y & 0xFF);
-    spi_data8_EPD((y >> 8) & 0xFF);
+    spi_data8_EPD(y1);
+    spi_data8_EPD(y2);
 }
 
 #if 0
