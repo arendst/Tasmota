@@ -835,25 +835,25 @@ void EnergyMarginCheck(void) {
     if (Energy->Settings.phase[phase].max_power_limit) {
       energy_power_u = (uint16_t)(Energy->active_power[phase]);
       bool power_on = (TasmotaGlobal.power & (1 << phase));
-      if (Energy->active_power[phase] > Energy->Settings.phase[phase].max_power_limit) {
+//      if (Energy->active_power[phase] > Energy->Settings.phase[phase].max_power_limit) {
+      if (energy_power_u > Energy->Settings.phase[phase].max_power_limit) {
         if (!Energy->mplh_counter[phase]) {
-          Energy->mplh_counter[phase] = Energy->Settings.phase[phase].max_power_limit_hold;
-        } else {
-          Energy->mplh_counter[phase]--;
-          if (!Energy->mplh_counter[phase]) {
-            ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHED "%d\":%d}"), phase +1, energy_power_u);
-            MqttPublishPrefixTopicRulesProcess_P(STAT, S_RSLT_WARNING);
-            EnergyMqttShow();
-            if (set_all_power) {
-              SetAllPower(POWER_OFF_FORCE, SRC_MAXPOWER);
-            } else {
-              ExecuteCommandPower(phase +1, POWER_OFF_FORCE, SRC_MAXPOWER);
-            }
-            if (!Energy->mplr_counter[phase]) {
-              Energy->mplr_counter[phase] = Settings->param[P_MAX_POWER_RETRY] +1;  // SetOption33 - Max Power Retry count
-            }
-            Energy->mplw_counter[phase] = Energy->Settings.phase[phase].max_power_limit_window;
+          Energy->mplh_counter[phase] = Energy->Settings.phase[phase].max_power_limit_hold +1;
+        }
+        Energy->mplh_counter[phase]--;
+        if (!Energy->mplh_counter[phase]) {
+          ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHED "%d\":%d}"), phase +1, energy_power_u);
+          MqttPublishPrefixTopicRulesProcess_P(STAT, S_RSLT_WARNING);
+          EnergyMqttShow();
+          if (set_all_power) {
+            SetAllPower(POWER_OFF_FORCE, SRC_MAXPOWER);
+          } else {
+            ExecuteCommandPower(phase +1, POWER_OFF_FORCE, SRC_MAXPOWER);
           }
+          if (!Energy->mplr_counter[phase]) {
+            Energy->mplr_counter[phase] = Settings->param[P_MAX_POWER_RETRY] +1;  // SetOption33 - Max Power Retry count
+          }
+          Energy->mplw_counter[phase] = Energy->Settings.phase[phase].max_power_limit_window;
         }
       }
       else if (power_on && (energy_power_u <= Energy->Settings.phase[phase].max_power_limit)) {
