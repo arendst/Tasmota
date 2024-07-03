@@ -835,23 +835,27 @@ void EnergyMarginCheck(void) {
     if (Energy->Settings.phase[phase].max_power_limit) {
       energy_power_u = (uint16_t)(Energy->active_power[phase]);
       bool power_on = (TasmotaGlobal.power & (1 << phase));
-//      if (Energy->active_power[phase] > Energy->Settings.phase[phase].max_power_limit) {
       if (energy_power_u > Energy->Settings.phase[phase].max_power_limit) {
         if (!Energy->mpl_hold_counter[phase]) {
           Energy->mpl_hold_counter[phase] = Energy->Settings.phase[phase].max_power_limit_hold +1;
         }
         Energy->mpl_hold_counter[phase]--;
         if (!Energy->mpl_hold_counter[phase]) {
-          ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHED "%d\":%d}"), phase +1, energy_power_u);
+          if (!Energy->mpl_retry_counter[phase]) {
+            Energy->mpl_retry_counter[phase] = Settings->param[P_MAX_POWER_RETRY] +1;  // SetOption33 - Max Power Retry count
+          }
+          Energy->mpl_retry_counter[phase]--;
+          if (Energy->mpl_retry_counter[phase]) {
+            ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHED "%d\":%d}"), phase +1, energy_power_u);
+          } else {
+            ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHEDRETRY "%d\":\"%s\"}"), phase +1, GetStateText(0));
+          }
           MqttPublishPrefixTopicRulesProcess_P(STAT, S_RSLT_WARNING);
           EnergyMqttShow();
           if (set_all_power) {
             SetAllPower(POWER_OFF_FORCE, SRC_MAXPOWER);
           } else {
             ExecuteCommandPower(phase +1, POWER_OFF_FORCE, SRC_MAXPOWER);
-          }
-          if (!Energy->mpl_retry_counter[phase]) {
-            Energy->mpl_retry_counter[phase] = Settings->param[P_MAX_POWER_RETRY] +1;  // SetOption33 - Max Power Retry count
           }
           Energy->mpl_window_counter[phase] = Energy->Settings.phase[phase].max_power_limit_window;
         }
@@ -866,24 +870,12 @@ void EnergyMarginCheck(void) {
           Energy->mpl_window_counter[phase]--;
         } else {
           if (Energy->mpl_retry_counter[phase]) {
-            Energy->mpl_retry_counter[phase]--;
-            if (Energy->mpl_retry_counter[phase]) {
-              ResponseTime_P(PSTR(",\"" D_JSON_POWERMONITOR "%d\":\"%s\"}"), phase +1, GetStateText(1));
-              MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_JSON_POWERMONITOR));
-              if (set_all_power) {
-                RestorePower(true, SRC_MAXPOWER);
-              } else {
-                ExecuteCommandPower(phase +1, POWER_ON, SRC_MAXPOWER);
-              }
+            ResponseTime_P(PSTR(",\"" D_JSON_POWERMONITOR "%d\":\"%s\"}"), phase +1, GetStateText(1));
+            MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_JSON_POWERMONITOR));
+            if (set_all_power) {
+              RestorePower(true, SRC_MAXPOWER);
             } else {
-              ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHEDRETRY "%d\":\"%s\"}"), phase +1, GetStateText(0));
-              MqttPublishPrefixTopicRulesProcess_P(STAT, S_RSLT_WARNING);
-              EnergyMqttShow();
-              if (set_all_power) {
-                SetAllPower(POWER_OFF_FORCE, SRC_MAXPOWER);
-              } else {
-                ExecuteCommandPower(phase +1, POWER_OFF_FORCE, SRC_MAXPOWER);
-              }
+              ExecuteCommandPower(phase +1, POWER_ON, SRC_MAXPOWER);
             }
           }
         }

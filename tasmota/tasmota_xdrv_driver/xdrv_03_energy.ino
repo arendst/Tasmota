@@ -572,13 +572,18 @@ void EnergyMarginCheck(void) {
       }
       Energy->mpl_hold_counter--;
       if (!Energy->mpl_hold_counter) {
-        ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHED "\":%d}"), energy_power_u);
-        MqttPublishPrefixTopicRulesProcess_P(STAT, S_RSLT_WARNING);
-        EnergyMqttShow();
-        SetAllPower(POWER_OFF_FORCE, SRC_MAXPOWER);
         if (!Energy->mpl_retry_counter) {
           Energy->mpl_retry_counter = Settings->param[P_MAX_POWER_RETRY] +1;  // SetOption33 - Max Power Retry count
         }
+        Energy->mpl_retry_counter--;
+        if (Energy->mpl_retry_counter) {
+          ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHED "\":%d}"), energy_power_u);
+        } else {
+          ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHEDRETRY "\":\"%s\"}"), GetStateText(0));
+        }
+        MqttPublishPrefixTopicRulesProcess_P(STAT, S_RSLT_WARNING);
+        EnergyMqttShow();
+        SetAllPower(POWER_OFF_FORCE, SRC_MAXPOWER);
         Energy->mpl_window_counter = Settings->energy_max_power_limit_window;
       }
     }
@@ -592,17 +597,9 @@ void EnergyMarginCheck(void) {
         Energy->mpl_window_counter--;
       } else {
         if (Energy->mpl_retry_counter) {
-          Energy->mpl_retry_counter--;
-          if (Energy->mpl_retry_counter) {
-            ResponseTime_P(PSTR(",\"" D_JSON_POWERMONITOR "\":\"%s\"}"), GetStateText(1));
-            MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_JSON_POWERMONITOR));
-            RestorePower(true, SRC_MAXPOWER);
-          } else {
-            ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHEDRETRY "\":\"%s\"}"), GetStateText(0));
-            MqttPublishPrefixTopicRulesProcess_P(STAT, S_RSLT_WARNING);
-            EnergyMqttShow();
-            SetAllPower(POWER_OFF_FORCE, SRC_MAXPOWER);
-          }
+          ResponseTime_P(PSTR(",\"" D_JSON_POWERMONITOR "\":\"%s\"}"), GetStateText(1));
+          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_JSON_POWERMONITOR));
+          RestorePower(true, SRC_MAXPOWER);
         }
       }
     }
