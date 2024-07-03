@@ -566,21 +566,20 @@ void EnergyMarginCheck(void) {
 #ifdef USE_ENERGY_POWER_LIMIT
   // Max Power
   if (Settings->energy_max_power_limit) {
-    if (Energy->active_power[0] > Settings->energy_max_power_limit) {
+    if (energy_power_u > Settings->energy_max_power_limit) {
       if (!Energy->mpl_hold_counter) {
-        Energy->mpl_hold_counter = Settings->energy_max_power_limit_hold;
-      } else {
-        Energy->mpl_hold_counter--;
-        if (!Energy->mpl_hold_counter) {
-          ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHED "\":%d}"), energy_power_u);
-          MqttPublishPrefixTopicRulesProcess_P(STAT, S_RSLT_WARNING);
-          EnergyMqttShow();
-          SetAllPower(POWER_OFF_FORCE, SRC_MAXPOWER);
-          if (!Energy->mpl_retry_counter) {
-            Energy->mpl_retry_counter = Settings->param[P_MAX_POWER_RETRY] +1;  // SetOption33 - Max Power Retry count
-          }
-          Energy->mpl_window_counter = Settings->energy_max_power_limit_window;
+        Energy->mpl_hold_counter = Settings->energy_max_power_limit_hold +1;
+      }
+      Energy->mpl_hold_counter--;
+      if (!Energy->mpl_hold_counter) {
+        ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHED "\":%d}"), energy_power_u);
+        MqttPublishPrefixTopicRulesProcess_P(STAT, S_RSLT_WARNING);
+        EnergyMqttShow();
+        SetAllPower(POWER_OFF_FORCE, SRC_MAXPOWER);
+        if (!Energy->mpl_retry_counter) {
+          Energy->mpl_retry_counter = Settings->param[P_MAX_POWER_RETRY] +1;  // SetOption33 - Max Power Retry count
         }
+        Energy->mpl_window_counter = Settings->energy_max_power_limit_window;
       }
     }
     else if (TasmotaGlobal.power && (energy_power_u <= Settings->energy_max_power_limit)) {
