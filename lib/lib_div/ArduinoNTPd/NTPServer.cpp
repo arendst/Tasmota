@@ -75,9 +75,9 @@ bool NtpServer::processOneRequest(uint32_t utc, uint32_t millisecs)
       packet.receiveTimestampFraction = recvFract;
 
       // ...and the transmit time.
-      // the latency has been between 135 and 175 microseconds in internal testing, so we harcode 150
-      //uint32_t transFract = recvFract+(150*(10^3)/(2^32)); // microsec/((10^3)/(2^32))
-      uint32_t transFract = recvFract+(150000/429496729); // 150 microsec/((10^3)/(2^32))
+      // the latency has been between 135 and 175 microseconds in internal testing, so we hardcode 150
+      constexpr uint32_t latency = (150*1000) / (1LL << 32);
+      uint32_t transFract = recvFract + latency;
       if (recvFract>transFract){
         recvSecs++; //overflow
       }
