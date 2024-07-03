@@ -17,6 +17,7 @@
  * {"NAME":"Sonoff THR316D GPIO26","GPIO":[32,0,0,0,225,9280,0,0,0,321,0,576,320,9184,9216,0,0,224,0,9248,0,1,1,3840,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
  * {"NAME":"Sonoff THR320D","GPIO":[32,0,0,0,226,9280,0,0,0,321,0,576,320,9184,9216,9312,0,0,9313,9248,0,1,0,3840,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
  * {"NAME":"Sonoff THR320D GPIO26","GPIO":[32,0,0,0,226,9280,0,0,0,321,0,576,320,9184,9216,9312,0,0,9313,9248,0,1,1,3840,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
+ * {"NAME":"Sonoff POWCT","GPIO":[32,0,0,0,0,9280,0,0,0,320,0,576,0,9184,9216,0,0,224,0,9248,0,7329,7296,0,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
  *
  * DspSpeed 2..127 = Display rotation speed in seconds if more than one value is requested
  * DspLine<1|2> <index>,<unit>,<index>,<unit>,... = Display specific JSON value and rotate between them
@@ -51,12 +52,14 @@
 #define TM1621_BIAS          0x29  // 0b00101001 = LCD 1/3 bias 4 commons option
 #define TM1621_IRQ_DIS       0x80  // 0b100x0xxx
 
-enum Tm1621Device { TM1621_USER, TM1621_POWR316D, TM1621_THR316D };
+enum Tm1621Device { TM1621_USER, TM1621_POWR316D, TM1621_THR316D, TM1621_POWCT };
+const char tm1621_device PROGMEM[] = "User|PowR3|THR3|PowCT";
+
 enum Tm1621Units  { TM1621_NONE, TM1621_TEMPERATURE, TM1621_HUMIDITY, TM1621_VOLTAGE_CURRENT, TM1621_ENERGY_POWER };
 
 const uint8_t tm1621_commands[] = { TM1621_SYS_EN, TM1621_LCD_ON, TM1621_BIAS, TM1621_TIMER_DIS, TM1621_WDT_DIS, TM1621_TONE_OFF, TM1621_IRQ_DIS };
 
-const char tm1621_kchar[] PROGMEM = { " |0|1|2|3|4|5|6|7|8|9|-|E" };
+const char tm1621_kchar[] PROGMEM = " |0|1|2|3|4|5|6|7|8|9|-|E";
 //    b0 ---
 //   b1 /  / b4
 //      --- b5
@@ -307,7 +310,18 @@ void TM1621SendRows(void) {
 void TM1621PreInit(void) {
   if (!PinUsed(GPIO_TM1621_CS) || !PinUsed(GPIO_TM1621_WR) || !PinUsed(GPIO_TM1621_RD) || !PinUsed(GPIO_TM1621_DAT)) { return; }
 
-  Tm1621.device = (14 == Pin(GPIO_TM1621_DAT)) ? TM1621_POWR316D : (5 == Pin(GPIO_TM1621_DAT)) ? TM1621_THR316D : TM1621_USER;
+  Tm1621.device = TM1621_USER;
+  uint32_t pin_tm1621_dat = Pin(GPIO_TM1621_DAT);
+  if (5 == Pin(GPIO_TM1621_DAT)) {
+    if (25 == Pin(GPIO_CSE7761_RX, 1)) {
+      Tm1621.device = TM1621_POWCT;
+    } else {
+      Tm1621.device = TM1621_THR316D;
+    }
+  }
+  else if (14 == Pin(GPIO_TM1621_DAT)) {
+    Tm1621.device = TM1621_POWR316D;
+  }
   Tm1621.present = true;
   Tm1621.pin_da = Pin(GPIO_TM1621_DAT);
   Tm1621.pin_cs = Pin(GPIO_TM1621_CS);
@@ -326,7 +340,9 @@ void TM1621PreInit(void) {
 
   Tm1621.state = 200;
 
-  AddLog(LOG_LEVEL_INFO, PSTR("DSP: TM1621"));
+  char stemp[8];
+  AddLog(LOG_LEVEL_INFO, PSTR("DSP: TM1621 for %s"), 
+    GetTextIndexed(stemp, sizeof(stemp), Tm1621.device, tm1621_device));
 }
 
 void TM1621Init(void) {
@@ -452,7 +468,8 @@ void TM1621Show(void) {
   }
 
 #ifdef USE_ENERGY_SENSOR
-  if (TM1621_POWR316D == Tm1621.device) {
+  if ((TM1621_POWR316D == Tm1621.device) ||
+      (TM1621_POWCT == Tm1621.device)) {
     if (0 == Tm1621.display_rotate) {
       ext_snprintf_P(Tm1621.row[0], sizeof(Tm1621.row[0]), PSTR("%1_f"), &Energy->voltage[0]);
       ext_snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("%1_f"), &Energy->current[0]);

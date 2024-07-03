@@ -20,7 +20,7 @@
 #ifdef USE_ENERGY_SENSOR
 #ifdef USE_CSE7761
 /*********************************************************************************************\
- * CSE7761 - Energy  (Sonoff Dual R3 Pow and Pox CT)
+ * CSE7761 - Energy  (Sonoff Dual R3 and Pow CT)
  *
  * Without zero-cross detection
  * {"NAME":"Sonoff Dual R3","GPIO":[32,0,0,0,0,0,0,0,0,576,225,0,0,0,0,0,0,0,0,0,0,7296,7328,224,0,0,0,0,160,161,0,0,0,0,0,0],"FLAG":0,"BASE":1}
@@ -28,6 +28,8 @@
  * With zero-cross detection
  * {"NAME":"Sonoff Dual R3 (ZCD)","GPIO":[32,0,0,0,7552,0,0,0,0,576,225,0,0,0,0,0,0,0,0,0,0,7296,7328,224,0,0,0,0,160,161,0,0,0,0,0,0],"FLAG":0,"BASE":1}
  *
+ * {"NAME":"Sonoff POWCT","GPIO":[32,0,0,0,0,9280,0,0,0,320,0,576,0,9184,9216,0,0,224,0,9248,0,7329,7296,0,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
+ * 
  * Based on datasheet from ChipSea and analysing serial data
  * See https://github.com/arendst/Tasmota/discussions/10793
  * https://goldenrelay.en.alibaba.com/product/62119012875-811845870/GOLDEN_GI_1A_5LH_SPST_5V_5A_10A_250VAC_NO_18_5_10_5_15_3mm_sealed_type_all_certificate_compliances_class_F_SPDT_Form_available.html
