@@ -220,6 +220,17 @@ class Matter_IM_ReportData_Pull : Matter_IM_Message
   end
 
   #################################################################################
+  # Status Report OK received for previous message, proceed to next (if any)
+  # return true if we manage the ack ourselves, false if it needs to be done upper
+  def status_ok_received(msg)
+    super(self).status_ok_received(msg)
+    if !self.finishing
+      msg.session._message_handler.send_encrypted_ack(msg, false #-not reliable-#)
+    end
+    return true
+  end
+
+  #################################################################################
   # set_subscription_id
   #
   # Sets the SubscriptionId of the exchange (to be used by subclasses)
