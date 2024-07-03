@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Berry `FUNC_ANY_KEY` event calling `any_key()` (#21708)
 - Berry `FUNC_BUTTON_MULTI_PRESSED` event and make `FUNC_BUTTON_PRESSED` called only on state changes and once per second (#21711)
 - Support for Sonoff POWCT Ring (#21131)
+- `FUNC_BUTTON_PRESSED` now contains `press_counter` encoded in `XdrvMailbox.command_code`
 
 ### Breaking Changed
 
