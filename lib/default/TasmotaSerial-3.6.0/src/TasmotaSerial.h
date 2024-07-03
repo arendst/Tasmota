@@ -109,7 +109,7 @@ class TasmotaSerial : public Stream {
     uint32_t m_speed;
     uint32_t m_config;
     HardwareSerial *TSerial;
-    int m_uart = 0;
+    uart_port_t m_uart = uart_port_t(0);
 #endif
 
 };

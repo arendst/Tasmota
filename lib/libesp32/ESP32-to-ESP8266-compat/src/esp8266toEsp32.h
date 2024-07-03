@@ -183,5 +183,19 @@ typedef int SerConfu8;
 
 #define STATION_IF 0
 
+
+// ESP32 needed define to support IDF 5.2 based Arduino builds
+
+// Name has changed
+#ifdef LCD_CAM_LCD_UPDATE_M
+#define LCD_CAM_LCD_UPDATE_REG LCD_CAM_LCD_UPDATE_M
+#endif // LCD_CAM_LCD_UPDATE_M
+
+// IDF 5.2 has changed counting UART channels, SOC_UART_NUM includes now LP UARTS too
+#ifdef SOC_UART_HP_NUM
+#undef SOC_UART_NUM
+#define SOC_UART_NUM SOC_UART_HP_NUM
+#endif
+
 #endif // ESP32
 #endif // __ESP8266TOESP32_H__
