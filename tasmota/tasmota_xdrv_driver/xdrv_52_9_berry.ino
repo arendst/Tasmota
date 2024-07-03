@@ -952,10 +952,12 @@ bool Xdrv52(uint32_t function)
         // XdrvMailbox.index = button_index;
         // XdrvMailbox.payload = button;
         // XdrvMailbox.command_code = Button.last_state[button_index];
-        if ((XdrvMailbox.payload != XdrvMailbox.command_code) || TimeReached(timer_last_button_sent)) {    // fire event only when state changes
+        uint8_t state = (XdrvMailbox.command_code & 0xFF);
+        uint8_t multipress_state = (XdrvMailbox.command_code >> 8) & 0xFF;
+        if ((XdrvMailbox.payload != state) || TimeReached(timer_last_button_sent)) {    // fire event only when state changes
           timer_last_button_sent = millis() + 1000;     // wait for 1 second
           result = callBerryEventDispatcher(PSTR("button_pressed"), nullptr, 
-                                                (XdrvMailbox.payload & 0xFF) << 16 | (XdrvMailbox.command_code & 0xFF) << 8 | (XdrvMailbox.index & 0xFF) ,
+                                                (multipress_state & 0xFF) << 24 | (XdrvMailbox.payload & 0xFF) << 16 | (XdrvMailbox.command_code & 0xFF) << 8 | (XdrvMailbox.index & 0xFF) ,
                                                 nullptr);
         }
       }
