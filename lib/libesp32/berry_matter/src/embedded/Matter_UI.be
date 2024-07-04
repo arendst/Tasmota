@@ -33,6 +33,7 @@ import matter
 #################################################################################
 class Matter_UI
   static var _CLASSES_TYPES = "|relay|light0|light1|light2|light3|shutter|shutter+tilt"
+                              "|gensw_btn"
                               "|temperature|pressure|illuminance|humidity|occupancy|onoff|contact|flow|rain|waterleak"
                               "|airquality"
                               "|-virtual|v_relay|v_light0|v_light1|v_light2|v_light3"
