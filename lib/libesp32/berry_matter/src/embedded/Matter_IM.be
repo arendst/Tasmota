@@ -318,7 +318,7 @@ class Matter_IM
   #     0 = EnableTagCompression bool opt
   #     1 = Node
   #     2 = Endpoint
-  #     3 = Cluste
+  #     3 = Cluster
   #     4 = Attribute
   #     5 = ListIndex (opt)
   #
@@ -602,7 +602,6 @@ class Matter_IM
   # returns `true` if processed, `false` if silently ignored,
   # or raises an exception
   def process_read_request_pull(msg, val)
-    matter.profiler.log("read_request_start_pull")
     var query = matter.ReadRequestMessage().from_TLV(val)
     var generator_or_arr = self.process_read_or_subscribe_request_pull(query, msg)
     var event_generator_or_arr = self.process_read_or_subscribe_request_event_pull(query, msg)
@@ -767,7 +766,6 @@ class Matter_IM
       ctx.status = matter.UNSUPPORTED_ATTRIBUTE    # new fallback error
       res = pi.read_attribute(msg.session, ctx, self.tlv_solo)
     end
-    matter.profiler.log("read_request_solo read done")
 
     if res != nil
 
@@ -826,8 +824,6 @@ class Matter_IM
     responder.send_response_frame(resp)
 
     # postpone lengthy operations after sending back response
-    matter.profiler.log("RESPONSE SENT")
-
     var attr_name
     if tasmota.loglevel(3)
       attr_name = matter.get_attribute_name(ctx.cluster, ctx.attribute)
@@ -909,7 +905,6 @@ class Matter_IM
     # import debug
     # structure is `ReadRequestMessage` 10.6.2 p.558
     # log("MTR: IM:invoke_request processing start", 4)
-    matter.profiler.log("invoke_request_start")
     var ctx = matter.Path()
     ctx.msg = msg
 
@@ -929,7 +924,6 @@ class Matter_IM
         var cmd_name = matter.get_command_name(ctx.cluster, ctx.command)
         var ctx_str = str(ctx)                    # keep string before invoking, it is modified by response
         var res = self.device.invoke_request(msg.session, q.command_fields, ctx)
-        matter.profiler.log("COMMAND DONE")
         var params_log = (ctx.log != nil) ? "(" + str(ctx.log) + ") " : ""
         log(format("MTR: >Command   (%6i) %s %s %s", msg.session.local_session_id, ctx_str, cmd_name ? cmd_name : "", params_log), 3)
         # log("MTR: Perf/Command = " + str(debug.counters()), 4)
@@ -983,14 +977,12 @@ class Matter_IM
   # or raises an exception
   def process_invoke_request_solo(msg, ctx)
     # import debug
-    matter.profiler.log("invoke_request_solo_start")
     ctx.msg = msg
     ctx.status = matter.UNSUPPORTED_COMMAND   #default error if returned `nil`
 
     var cmd_name = matter.get_command_name(ctx.cluster, ctx.command)
     var ctx_str = str(ctx)                    # keep string before invoking, it is modified by response
     var res = self.device.invoke_request(msg.session, ctx.command_fields, ctx)
-    matter.profiler.log("COMMAND DONE")
     var params_log = (ctx.log != nil) ? "(" + str(ctx.log) + ") " : ""
     if tasmota.loglevel(3)
       log(format("MTR: >Command1  (%6i) %s %s %s", msg.session.local_session_id, ctx_str, cmd_name ? cmd_name : "", params_log), 3)
@@ -1041,7 +1033,6 @@ class Matter_IM
     resp.encode_frame(raw, msg_raw)    # payload in cleartext
     resp.encrypt()
     responder.send_response_frame(resp)
-    matter.profiler.log("RESPONSE SENT")
 
     return true
   end
@@ -1225,6 +1216,7 @@ class Matter_IM
     var event_generator_or_arr = sub.update_event_generator_array()
 
     var report_data_msg = matter.IM_ReportDataSubscribed_Pull(session._message_handler, session, generator_or_arr, event_generator_or_arr, sub)
+
     self.send_queue.push(report_data_msg)           # push message to queue
     self.send_enqueued(session._message_handler)    # and send queued messages now
   end

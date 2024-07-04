@@ -100,7 +100,7 @@ be_local_closure(class_Matter_Plugin_Root_read_attribute,   /* name */
     /* K76  */  be_nested_str_weak(commissioning_admin_fabric),
     /* K77  */  be_nested_str_weak(set_or_nil),
     /* K78  */  be_nested_str_weak(Tasmota),
-    /* K79  */  be_nested_str_weak(vendorid),
+    /* K79  */  be_nested_str_weak(VENDOR_ID),
     /* K80  */  be_nested_str_weak(DeviceName),
     /* K81  */  be_nested_str_weak(FriendlyName),
     /* K82  */  be_nested_str_weak(FriendlyName1),

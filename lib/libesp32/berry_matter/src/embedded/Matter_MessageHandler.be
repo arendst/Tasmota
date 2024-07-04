@@ -86,7 +86,6 @@ class Matter_MessageHandler
   def msg_received(raw, addr, port)
     var ret = false
 
-    matter.profiler.log("msg_received")
     try
       # log("MTR: MessageHandler::msg_received raw="+raw.tohex(), 4)
       var frame = matter.Frame(self, raw, addr, port)
@@ -170,7 +169,7 @@ class Matter_MessageHandler
         end
         
         var decrypt_ok = frame.decrypt()
-        matter.profiler.log("msg_received_header_frame_decrypted")
+        # matter.profiler.log("msg_received_header_frame_decrypted")
         if !decrypt_ok     return false end
 
         # matter.profiler.log("msg_received_payload_undecoded")
@@ -201,9 +200,7 @@ class Matter_MessageHandler
           ret = true
         elif protocol_id == 0x0001  # PROTOCOL_ID_INTERACTION_MODEL
           # dispatch to IM Protocol Messages
-          matter.profiler.log("process_IM_start")
           ret = self.im.process_incoming(frame)
-          matter.profiler.log("process_IM_end")
           # if `ret` is true, we have something to send
           if ret
             self.im.send_enqueued(self)
@@ -250,7 +247,6 @@ class Matter_MessageHandler
   #   msg.exchange_id:      exchange id (int)
   #   msg.local_session_id: local session (for logging)
   def send_response_frame(msg)
-    matter.profiler.log("send_response_frame")
     self.device.msg_send(msg)
   end
 

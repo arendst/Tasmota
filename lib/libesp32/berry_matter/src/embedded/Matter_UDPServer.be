@@ -139,7 +139,7 @@ class Matter_UDPServer
       end
       # log("MTR: Perf/UDP_received = " + str(debug.counters()), 4)
       if self.dispatch_cb
-        profiler.log("udp_loop_dispatch")
+        # profiler.log("udp_loop_dispatch")
         self.dispatch_cb(packet, from_addr, from_port)
       end
       profiler.dump(2)

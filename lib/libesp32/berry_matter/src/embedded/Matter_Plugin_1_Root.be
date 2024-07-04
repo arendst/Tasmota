@@ -221,7 +221,7 @@ class Matter_Plugin_Root : Matter_Plugin
       elif attribute == 0x0001          #  ---------- VendorName / string ----------
         return tlv_solo.set(TLV.UTF1, "Tasmota")
       elif attribute == 0x0002          #  ---------- VendorID / vendor-id ----------
-        return tlv_solo.set(TLV.U2, self.device.vendorid)    # Vendor ID reserved for development
+        return tlv_solo.set(TLV.U2, self.device.VENDOR_ID)    # Vendor ID reserved for development
       elif attribute == 0x0003          #  ---------- ProductName / string ----------
         return tlv_solo.set(TLV.UTF1, tasmota.cmd("DeviceName", true)['DeviceName'])
       elif attribute == 0x0004          #  ---------- ProductID / u16 (opt) ----------
