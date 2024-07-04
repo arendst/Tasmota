@@ -554,73 +554,6 @@ be_local_class(Matter_IM_WriteResponse,
 extern const bclass be_class_Matter_IM_ReportData_Pull;
 
 /********************************************************************
-** Solidified function: set_subscription_id
-********************************************************************/
-extern const bclass be_class_Matter_IM_ReportData_Pull;
-be_local_closure(class_Matter_IM_ReportData_Pull_set_subscription_id,   /* name */
-  be_nested_proto(
-    2,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    &be_class_Matter_IM_ReportData_Pull, 
-    1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(subscription_id),
-    }),
-    be_str_weak(set_subscription_id),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 2]) {  /* code */
-      0x90020001,  //  0000  SETMBR	R0	K0	R1
-      0x80000000,  //  0001  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: init
-********************************************************************/
-extern const bclass be_class_Matter_IM_ReportData_Pull;
-be_local_closure(class_Matter_IM_ReportData_Pull_init,   /* name */
-  be_nested_proto(
-    9,                          /* nstack */
-    4,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    &be_class_Matter_IM_ReportData_Pull, 
-    1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_weak(init),
-    /* K1   */  be_nested_str_weak(generator_or_arr),
-    /* K2   */  be_nested_str_weak(event_generator_or_arr),
-    }),
-    be_str_weak(init),
-    &be_const_str_solidified,
-    ( &(const binstruction[11]) {  /* code */
-      0x60100003,  //  0000  GETGBL	R4	G3
-      0x5C140000,  //  0001  MOVE	R5	R0
-      0x7C100200,  //  0002  CALL	R4	1
-      0x8C100900,  //  0003  GETMET	R4	R4	K0
-      0x5C180200,  //  0004  MOVE	R6	R1
-      0x541E0004,  //  0005  LDINT	R7	5
-      0x50200200,  //  0006  LDBOOL	R8	1	0
-      0x7C100800,  //  0007  CALL	R4	4
-      0x90020202,  //  0008  SETMBR	R0	K1	R2
-      0x90020403,  //  0009  SETMBR	R0	K2	R3
-      0x80000000,  //  000A  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: send_im
 ********************************************************************/
 extern const bclass be_class_Matter_IM_ReportData_Pull;
@@ -1004,6 +937,80 @@ be_local_closure(class_Matter_IM_ReportData_Pull_send_im,   /* name */
 
 
 /********************************************************************
+** Solidified function: status_ok_received
+********************************************************************/
+extern const bclass be_class_Matter_IM_ReportData_Pull;
+be_local_closure(class_Matter_IM_ReportData_Pull_status_ok_received,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    &be_class_Matter_IM_ReportData_Pull, 
+    1,                          /* has constants */
+    ( &(const bvalue[ 5]) {     /* constants */
+    /* K0   */  be_nested_str_weak(status_ok_received),
+    /* K1   */  be_nested_str_weak(finishing),
+    /* K2   */  be_nested_str_weak(session),
+    /* K3   */  be_nested_str_weak(_message_handler),
+    /* K4   */  be_nested_str_weak(send_encrypted_ack),
+    }),
+    be_str_weak(status_ok_received),
+    &be_const_str_solidified,
+    ( &(const binstruction[16]) {  /* code */
+      0x60080003,  //  0000  GETGBL	R2	G3
+      0x5C0C0000,  //  0001  MOVE	R3	R0
+      0x7C080200,  //  0002  CALL	R2	1
+      0x8C080500,  //  0003  GETMET	R2	R2	K0
+      0x5C100200,  //  0004  MOVE	R4	R1
+      0x7C080400,  //  0005  CALL	R2	2
+      0x88080101,  //  0006  GETMBR	R2	R0	K1
+      0x740A0005,  //  0007  JMPT	R2	#000E
+      0x88080302,  //  0008  GETMBR	R2	R1	K2
+      0x88080503,  //  0009  GETMBR	R2	R2	K3
+      0x8C080504,  //  000A  GETMET	R2	R2	K4
+      0x5C100200,  //  000B  MOVE	R4	R1
+      0x50140000,  //  000C  LDBOOL	R5	0	0
+      0x7C080600,  //  000D  CALL	R2	3
+      0x50080200,  //  000E  LDBOOL	R2	1	0
+      0x80040400,  //  000F  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_subscription_id
+********************************************************************/
+extern const bclass be_class_Matter_IM_ReportData_Pull;
+be_local_closure(class_Matter_IM_ReportData_Pull_set_subscription_id,   /* name */
+  be_nested_proto(
+    2,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    &be_class_Matter_IM_ReportData_Pull, 
+    1,                          /* has constants */
+    ( &(const bvalue[ 1]) {     /* constants */
+    /* K0   */  be_nested_str_weak(subscription_id),
+    }),
+    be_str_weak(set_subscription_id),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 2]) {  /* code */
+      0x90020001,  //  0000  SETMBR	R0	K0	R1
+      0x80000000,  //  0001  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: set_suppress_response
 ********************************************************************/
 extern const bclass be_class_Matter_IM_ReportData_Pull;
@@ -1032,24 +1039,64 @@ be_local_closure(class_Matter_IM_ReportData_Pull_set_suppress_response,   /* nam
 
 
 /********************************************************************
+** Solidified function: init
+********************************************************************/
+extern const bclass be_class_Matter_IM_ReportData_Pull;
+be_local_closure(class_Matter_IM_ReportData_Pull_init,   /* name */
+  be_nested_proto(
+    9,                          /* nstack */
+    4,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    &be_class_Matter_IM_ReportData_Pull, 
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(init),
+    /* K1   */  be_nested_str_weak(generator_or_arr),
+    /* K2   */  be_nested_str_weak(event_generator_or_arr),
+    }),
+    be_str_weak(init),
+    &be_const_str_solidified,
+    ( &(const binstruction[11]) {  /* code */
+      0x60100003,  //  0000  GETGBL	R4	G3
+      0x5C140000,  //  0001  MOVE	R5	R0
+      0x7C100200,  //  0002  CALL	R4	1
+      0x8C100900,  //  0003  GETMET	R4	R4	K0
+      0x5C180200,  //  0004  MOVE	R6	R1
+      0x541E0004,  //  0005  LDINT	R7	5
+      0x50200200,  //  0006  LDBOOL	R8	1	0
+      0x7C100800,  //  0007  CALL	R4	4
+      0x90020202,  //  0008  SETMBR	R0	K1	R2
+      0x90020403,  //  0009  SETMBR	R0	K2	R3
+      0x80000000,  //  000A  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified class: Matter_IM_ReportData_Pull
 ********************************************************************/
 extern const bclass be_class_Matter_IM_Message;
 be_local_class(Matter_IM_ReportData_Pull,
     5,
     &be_class_Matter_IM_Message,
-    be_nested_map(10,
+    be_nested_map(11,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(set_suppress_response, 2), be_const_closure(class_Matter_IM_ReportData_Pull_set_suppress_response_closure) },
-        { be_const_key_weak(data_ev, -1), be_const_var(4) },
-        { be_const_key_weak(event_generator_or_arr, -1), be_const_var(1) },
-        { be_const_key_weak(MAX_MESSAGE, -1), be_const_int(1200) },
-        { be_const_key_weak(subscription_id, -1), be_const_var(2) },
-        { be_const_key_weak(init, -1), be_const_closure(class_Matter_IM_ReportData_Pull_init_closure) },
-        { be_const_key_weak(generator_or_arr, 9), be_const_var(0) },
-        { be_const_key_weak(set_subscription_id, 0), be_const_closure(class_Matter_IM_ReportData_Pull_set_subscription_id_closure) },
         { be_const_key_weak(send_im, -1), be_const_closure(class_Matter_IM_ReportData_Pull_send_im_closure) },
-        { be_const_key_weak(suppress_response, -1), be_const_var(3) },
+        { be_const_key_weak(status_ok_received, -1), be_const_closure(class_Matter_IM_ReportData_Pull_status_ok_received_closure) },
+        { be_const_key_weak(data_ev, -1), be_const_var(4) },
+        { be_const_key_weak(suppress_response, 8), be_const_var(3) },
+        { be_const_key_weak(MAX_MESSAGE, -1), be_const_int(1200) },
+        { be_const_key_weak(set_suppress_response, -1), be_const_closure(class_Matter_IM_ReportData_Pull_set_suppress_response_closure) },
+        { be_const_key_weak(set_subscription_id, -1), be_const_closure(class_Matter_IM_ReportData_Pull_set_subscription_id_closure) },
+        { be_const_key_weak(generator_or_arr, 5), be_const_var(0) },
+        { be_const_key_weak(event_generator_or_arr, 4), be_const_var(1) },
+        { be_const_key_weak(init, -1), be_const_closure(class_Matter_IM_ReportData_Pull_init_closure) },
+        { be_const_key_weak(subscription_id, -1), be_const_var(2) },
     })),
     be_str_weak(Matter_IM_ReportData_Pull)
 );

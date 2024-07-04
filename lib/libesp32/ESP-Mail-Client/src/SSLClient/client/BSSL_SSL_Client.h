@@ -96,6 +96,10 @@ public:
 
     int connect(const char *host, uint16_t port) override;
 
+    int connect(IPAddress ip, uint16_t port, int32_t timeout) { return connect(ip, port, 0);}
+
+    int connect(const char *host, uint16_t port, int32_t timeout) { return connect(host, port, 0);}
+
     uint8_t connected() override;
 
     void validate(const char *host, uint16_t port);

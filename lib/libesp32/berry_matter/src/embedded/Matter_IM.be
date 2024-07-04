@@ -74,7 +74,7 @@ class Matter_IM
     if   opcode == 0x01   # Status Response
       return self.process_status_response(msg, val)
     elif opcode == 0x02   # Read Request
-      # self.send_ack_now(msg)      # to improve latency, we don't automatically Ack on invoke request
+      self.send_ack_now(msg)
       return self.process_read_request_pull(msg, val)
     elif opcode == 0x03   # Subscribe Request
       self.send_ack_now(msg)
