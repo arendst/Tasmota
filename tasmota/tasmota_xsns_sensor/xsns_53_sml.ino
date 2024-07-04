@@ -3125,7 +3125,7 @@ void SML_Init(void) {
 	uint16_t memory = 0;
 
 #ifdef ESP32
-  uint32_t uart_index = SOC_UART_NUM - 1;
+  uint32_t uart_index = SOC_UART_HP_NUM - 1;
 #endif
 
   sml_globs.sml_send_blocks = 0;

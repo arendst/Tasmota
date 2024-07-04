@@ -150,7 +150,7 @@ void TasmotaSerial::setTransmitEnablePin(int tx_enable_pin) {
 
 #ifdef ESP32
 bool TasmotaSerial::freeUart(void) {
-  for (uint32_t i = SOC_UART_NUM -1; i >= 0; i--) {
+  for (uint32_t i = SOC_UART_HP_NUM -1; i >= 0; i--) {
     if (0 == bitRead(tasmota_serial_uart_bitmap, i)) {
       m_uart = uart_port_t(i);
       bitSet(tasmota_serial_uart_bitmap, m_uart);

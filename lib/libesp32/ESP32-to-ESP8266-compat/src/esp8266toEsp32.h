@@ -191,11 +191,5 @@ typedef int SerConfu8;
 #define LCD_CAM_LCD_UPDATE_REG LCD_CAM_LCD_UPDATE_M
 #endif // LCD_CAM_LCD_UPDATE_M
 
-// IDF 5.2 has changed counting UART channels, SOC_UART_NUM includes now LP UARTS too
-#ifdef SOC_UART_HP_NUM
-#undef SOC_UART_NUM
-#define SOC_UART_NUM SOC_UART_HP_NUM
-#endif
-
 #endif // ESP32
 #endif // __ESP8266TOESP32_H__
