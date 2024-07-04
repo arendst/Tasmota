@@ -55,8 +55,6 @@ class Matter_Device
   var commissioning_instance_eth      # random instance name for commissioning (mDNS)
   var hostname_wifi                   # MAC-derived hostname for commissioning
   var hostname_eth                    # MAC-derived hostname for commissioning
-  var vendorid
-  var productid
   # mDNS active announces
   var mdns_pase_eth                   # do we have an active PASE mDNS announce for eth
   var mdns_pase_wifi                  # do we have an active PASE mDNS announce for wifi
@@ -69,12 +67,6 @@ class Matter_Device
   var disable_bridge_mode             # default is bridge mode, this flag disables this mode for some non-compliant controllers
   var next_ep                         # next endpoint to be allocated for bridge, start at 1
   var debug                           # debug mode, output all values when responding to read request with wildcard
-  # context for PBKDF
-  var root_iterations                 # PBKDF number of iterations
-  # PBKDF information used only during PASE (freed afterwards)
-  var root_salt
-  var root_w0
-  var root_L
   # cron equivalent to call `read_sensors()` regularly and dispatch to all entpoints
   var probe_sensor_time               # number of milliseconds to wait between each `read_sensors()` or `nil` if none active
   var probe_sensor_timestamp          # timestamp for `read_sensors()` probe (in millis())
@@ -95,11 +87,7 @@ class Matter_Device
     self.plugins = []
     self.plugins_persist = false                  # plugins need to saved only when the first fabric is associated
     self.plugins_config_remotes = {}
-    self.vendorid = self.VENDOR_ID
-    self.productid = self.PRODUCT_ID
-    self.root_iterations = self.PBKDF_ITERATIONS
-    self.next_ep = 1                              # start at endpoint 1 for dynamically allocated endpoints
-    self.root_salt = crypto.random(16)
+    self.next_ep = 2                              # start at endpoint 2 for dynamically allocated endpoints (1 reserved for aggregator)
     self.ipv4only = false
     self.disable_bridge_mode = false
     self.load_param()
@@ -173,8 +161,21 @@ class Matter_Device
     tasmota.publish_result(format('{"Matter":{"Commissioning":1,"PairingCode":"%s","QRCode":"%s"}}', pairing_code, qr_code), 'Matter')
 
     # compute PBKDF
-    self._compute_pbkdf(self.root_passcode, self.root_iterations, self.root_salt)
-    self.start_basic_commissioning(timeout_s, self.root_iterations, self.root_discriminator, self.root_salt, self.root_w0, #-self.root_w1,-# self.root_L, nil)
+    import crypto
+    var root_salt = crypto.random(16)
+
+    # Compute the PBKDF parameters for SPAKE2+ from root parameters
+    var passcode = bytes().add(self.root_passcode, 4)
+
+    var tv = crypto.PBKDF2_HMAC_SHA256().derive(passcode, root_salt, self.PBKDF_ITERATIONS, 80)
+    var w0s = tv[0..39]
+    var w1s = tv[40..79]
+
+    var root_w0 = crypto.EC_P256().mod(w0s)
+    var w1 = crypto.EC_P256().mod(w1s)    # w1 is temporarily computed then discarded
+    # self.root_w1 = crypto.EC_P256().mod(w1s)
+    var root_L = crypto.EC_P256().public_key(w1)
+    self.start_basic_commissioning(timeout_s, self.PBKDF_ITERATIONS, self.root_discriminator, root_salt, root_w0, #-self.root_w1,-# root_L, nil)
   end
 
   #####################################################################
@@ -255,36 +256,12 @@ class Matter_Device
   end
   
   #############################################################
-  # (internal) Compute the PBKDF parameters for SPAKE2+ from root parameters
-  #
-  def _compute_pbkdf(passcode_int, iterations, salt)
-    import crypto
-    var passcode = bytes().add(passcode_int, 4)
-
-    var tv = crypto.PBKDF2_HMAC_SHA256().derive(passcode, salt, iterations, 80)
-    var w0s = tv[0..39]
-    var w1s = tv[40..79]
-
-    self.root_w0 = crypto.EC_P256().mod(w0s)
-    var w1 = crypto.EC_P256().mod(w1s)    # w1 is temporarily computed then discarded
-    # self.root_w1 = crypto.EC_P256().mod(w1s)
-    self.root_L = crypto.EC_P256().public_key(w1)
-
-    # log("MTR: ******************************", 4)
-    # log("MTR: salt          = " + self.root_salt.tohex(), 4)
-    # log("MTR: passcode_hex  = " + passcode.tohex(), 4)
-    # log("MTR: w0            = " + self.root_w0.tohex(), 4)
-    # log("MTR: L             = " + self.root_L.tohex(), 4)
-    # log("MTR: ******************************", 4)
-  end
-
-  #############################################################
   # Compute QR Code content - can be done only for root PASE
   def compute_qrcode_content()
     var raw = bytes().resize(11)    # we don't use TLV Data so it's only 88 bits or 11 bytes
     # version is `000` dont touch
-    raw.setbits(3, 16, self.vendorid)
-    raw.setbits(19, 16, self.productid)
+    raw.setbits(3, 16, self.VENDOR_ID)
+    raw.setbits(19, 16, self.PRODUCT_ID)
     # custom flow = 0 (offset=35, len=2)
     raw.setbits(37, 8, 0x04)        # already on IP network
     raw.setbits(45, 12, self.root_discriminator & 0xFFF)
@@ -452,10 +429,6 @@ class Matter_Device
     import mdns
 
     self.stop_basic_commissioning()    # close all PASE commissioning information
-    # clear any PBKDF information to free memory
-    self.root_w0 = nil
-    # self.root_w1 = nil
-    self.root_L = nil
 
     self.mdns_announce_op_discovery(fabric)
   end
@@ -878,7 +851,7 @@ class Matter_Device
     import crypto
 
     var services = {
-      "VP":str(self.vendorid) + "+" + str(self.productid),
+      "VP": f"{self.VENDOR_ID}+{self.PRODUCT_ID}",
       "D": self.commissioning_discriminator,
       "CM":1,                           # requires passcode
       "T":0,                            # no support for TCP
@@ -904,7 +877,7 @@ class Matter_Device
         subtype = "_S" + str((self.commissioning_discriminator & 0xF00) >> 8)
         log("MTR: adding subtype: "+subtype, 3)
         mdns.add_subtype("_matterc", "_udp", self.commissioning_instance_eth, self.hostname_eth, subtype)
-        subtype = "_V" + str(self.vendorid)
+        subtype = "_V" + str(self.VENDOR_ID)
         log("MTR: adding subtype: "+subtype, 3)
         mdns.add_subtype("_matterc", "_udp", self.commissioning_instance_eth, self.hostname_eth, subtype)
         subtype = "_CM1"
@@ -926,7 +899,7 @@ class Matter_Device
         subtype = "_S" + str((self.commissioning_discriminator & 0xF00) >> 8)
         log("MTR: adding subtype: "+subtype, 3)
         mdns.add_subtype("_matterc", "_udp", self.commissioning_instance_wifi, self.hostname_wifi, subtype)
-        subtype = "_V" + str(self.vendorid)
+        subtype = "_V" + str(self.VENDOR_ID)
         log("MTR: adding subtype: "+subtype, 3)
         mdns.add_subtype("_matterc", "_udp", self.commissioning_instance_wifi, self.hostname_wifi, subtype)
         subtype = "_CM1"
