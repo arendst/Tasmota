@@ -285,6 +285,44 @@ class Matter_Device
     return ret
   end
 
+  #####################################################################
+  # Driver handling of buttons
+  #####################################################################
+  # Attach driver `button_pressed`
+  def button_pressed(cmd, idx)
+  	var state = (idx >> 16) & 0xFF
+  	var last_state = (idx >> 8) & 0xFF
+  	var index = (idx & 0xFF)
+    var press_counter = (idx >> 24) & 0xFF
+    self.button_handler(index + 1, (state != last_state) ? 1 : 0, state ? 0 : 1, press_counter)  # invert state, originally '0' means press, turn it into '1'
+  end
+  # Attach driver `button_multi_pressed`
+  def button_multi_pressed(cmd, idx)
+    var press_counter = (idx >> 8) & 0xFF
+    var index = (idx & 0xFF)
+    self.button_handler(index + 1, 2, 0, press_counter)
+  end
+  #####################################################################
+  # Centralize to a single call
+  #
+  # Args:
+  #   - button: (int) button number (base 1)
+  #   - mode: (int) 0=static report every second, 1=button state changed (immediate), 2=multi-press status (delayed)
+  #   - state: 1=button pressed, 0=button released, 2..5+=multi-press complete
+  def button_handler(button, mode, state, press_counter)
+    # log(f"MTR: button_handler({button=}, {mode=}, {state=})", 3)
+    # call all plugins, use a manual loop to avoid creating a new object
+    var idx = 0
+    import introspect
+    while idx < size(self.plugins)
+      var pi = self.plugins[idx]
+      if introspect.contains(pi, "button_handler")
+        self.plugins[idx].button_handler(button, mode, state, press_counter)
+      end
+      idx += 1
+    end
+  end
+
   #############################################################
   # dispatch every second click to sub-objects that need it
   def every_second()

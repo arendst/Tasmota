@@ -72,26 +72,137 @@ class Matter_EventQueued
   # free up some space
   def to_raw_bytes()
     if (self.raw_tlv == nil)
-      var event_report = matter.EventReportIB()
-      var event_ib = matter.EventDataIB()
-      event_report.event_data = event_ib
-      var event_path = matter.EventPathIB()
-      event_path.endpoint = self.endpoint
-      event_path.cluster = self.cluster
-      event_path.event = self.event_id
-      event_path.is_urgent = self.is_urgent
-      event_ib.path = event_path
-      event_ib.priority = self.priority
-      event_ib.event_number = self.event_no
-      event_ib.epoch_timestamp = self.epoch_timestamp
-      event_ib.data = matter.TLV.Matter_TLV_struct()
-      if (self.data0 != nil)   event_ib.data.add_obj(0, self.data0)   end
-      if (self.data1 != nil)   event_ib.data.add_obj(1, self.data1)   end
-      if (self.data2 != nil)   event_ib.data.add_obj(2, self.data2)   end
+      self.raw_tlv = bytes(64)
+      self.eventreport2raw(self.raw_tlv, self.endpoint, self.cluster, self.event_id, self.is_urgent, self.priority, self.event_no, self.epoch_timestamp, self.data0, self.data1, self.data2)
+      # var event_report = matter.EventReportIB()
+      # var event_ib = matter.EventDataIB()
+      # event_report.event_data = event_ib
+      # var event_path = matter.EventPathIB()
+      # event_path.endpoint = self.endpoint
+      # event_path.cluster = self.cluster
+      # event_path.event = self.event_id
+      # event_path.is_urgent = self.is_urgent
+      # event_ib.path = event_path
+      # event_ib.priority = self.priority
+      # event_ib.event_number = self.event_no
+      # event_ib.epoch_timestamp = self.epoch_timestamp
+      # event_ib.data = matter.TLV.Matter_TLV_struct()
+      # if (self.data0 != nil)   event_ib.data.add_obj(0, self.data0)   end
+      # if (self.data1 != nil)   event_ib.data.add_obj(1, self.data1)   end
+      # if (self.data2 != nil)   event_ib.data.add_obj(2, self.data2)   end
 
-      self.raw_tlv = event_report.to_TLV().tlv2raw()     # bytes()
+      # self.raw_tlv = event_report.to_TLV().tlv2raw()     # bytes()
     end
     return self.raw_tlv
+  end
+
+  #############################################################
+  # eventreport2raw
+  #
+  # 15 = EventReportIB
+  #   3501 = EventDataIB
+  #     
+  def eventreport2raw(raw, endpoint, cluster, event, is_urgent, priority, event_no, epoch_timestamp, data0, data1, data2)
+    # open struct EventReportIB
+    raw.add(0x15, 1)              # add 15
+    # open sturct EventDataIB
+    raw.add(0x3501, -2)           # add 3501
+    # add path
+    self.eventpath2raw(raw, endpoint, cluster, event, is_urgent)
+    # add EventNumber
+    raw.add(0x2701, -2)           # 2701 FFFFFFFFFFFFFFFF
+    raw.add(event_no.low32(), 4)  # int64 low part
+    raw.add(event_no.high32(), 4) # int64 high part
+    # priority
+    raw.add(0x2402, -2)           # add 2402
+    raw.add(priority, 1)          # add priority as one byte
+    # EpochTimestamp
+    raw.add(0x2603, -2)           # add 2603
+    raw.add(epoch_timestamp, 4)   # add epoch as 32 bits
+    # Data struct
+    raw.add(0x3507, -2)           # add 3507
+
+    # data0
+    if (data0 != nil)
+      data0.tag_sub = 0
+      data0.tlv2raw(raw)
+    end
+    # data1
+    if (data1 != nil)
+      data1.tag_sub = 1
+      data1.tlv2raw(raw)
+    end
+    # data2
+    if (data2 != nil)
+      data2.tag_sub = 2
+      data2.tlv2raw(raw)
+    end
+
+    # close struct Data
+    raw.add(0x18, 1)           # add 18
+    # close struct EventDataIB
+    raw.add(0x18, 1)           # add 18
+    # close struct EventReportIB
+    raw.add(0x18, 1)           # add 18
+  end
+
+  #############################################################
+  # eventpath2raw
+  #
+  # Encodes endpoint/cluster/attribute as `EventPathIB` elements
+  # Takes sub-tag
+  #
+  #   1 = EventPathIB
+  #     0 = Node
+  #     1 = Endpoint
+  #     2 = Cluster
+  #     3 = Event
+  #     4 = IsUrgent
+  #
+  #     3700 		0 = LIST
+  #       2401 01   1 = 1U (U1)
+  #       2402 39 	2 = 0x39U (U1)
+  #       2403 11 	3 = 0x11U (U1)
+  #       2904      4 = true
+  #     18
+  def eventpath2raw(raw, endpoint, cluster, event, is_urgent)
+    # open struct
+    raw.add(0x3700, -2)           # add 3700
+    # add endpoint
+    if endpoint <= 0xFF       # endpoint is 16 bits max
+      raw.add(0x2401, -2)         # add 2401
+      raw.add(endpoint, 1)
+    else
+      raw.add(0x2501, -2)         # add 2501
+      raw.add(endpoint, 2)
+    end
+    # add cluster
+    if cluster <= 0xFF        # cluster is 32 bits max
+      raw.add(0x2402, -2)         # add 2402
+      raw.add(cluster, 1)
+    elif cluster <= 0xFFFF
+      raw.add(0x2502, -2)         # add 2502
+      raw.add(cluster, 2)
+    else
+      raw.add(0x2602, -2)         # add 2602
+      raw.add(cluster, 4)
+    end
+    # add event
+    if event <= 0xFF       # cluster is 32 bits max
+      raw.add(0x2403, -2)          # add 2403
+      raw.add(event, 1)
+    else
+      raw.add(0x2503, -2)          # add 2503
+      raw.add(event, 2)
+    end
+    # IsUrgent
+    if is_urgent
+      raw.add(0x2904, -2)          # add 2904
+    else
+      raw.add(0x2804, -2)          # add 2804
+    end
+    # close
+    raw.add(0x18, 1)               # add 18
   end
 
   #################################################################################
@@ -372,7 +483,7 @@ class Matter_EventHandler
       log(f"MTR: +Add_Event ({priority_str}{new_event.event_no:8s}) [{new_event.endpoint:02X}]{new_event.cluster:04X}/{new_event.event_id:02X} {event_name}- {data_str}", 2)
     end
     self.queue_event(new_event)
-    # check if we have an subscription interested in this new event
+    # check if we have a subscription interested in this new event
     self.device.message_handler.im.subs_shop.event_published(new_event)
   end
 

@@ -352,27 +352,73 @@ class Matter_IM_ReportData_Pull : Matter_IM_Message
 
     ########## Response
     # prepare the response
-    var ret = matter.ReportDataMessage()
-    ret.subscription_id = self.subscription_id
-    ret.suppress_response = self.suppress_response
-    # ret.suppress_response = true
-    if (data != nil && size(data) > 0)
-      ret.attribute_reports = [data]
-    end
-    if (data_ev != nil && size(data_ev) > 0)
-      ret.event_reports = [data_ev]
-    end
-    ret.more_chunked_messages = (self.data != nil) || (self.data_ev != nil)    # we got more data to send
+    # Manually craft payload
+    var more_chunked_messages = (self.data != nil) || (self.data_ev != nil)
+    var raw = bytes(self.MAX_MESSAGE)
 
-    # print(">>>>> send elements before encode")
-    var encoded_tlv = ret.to_TLV().tlv2raw(bytes(self.MAX_MESSAGE))    # takes time
-    resp.encode_frame(encoded_tlv)    # payload in cleartext, pre-allocate max buffer
+    # open struct ReportDataMessage
+    raw.add(0x15, 1)                  # add 15
+    # open sturct EventDataIB
+    if (self.subscription_id != nil)
+      raw.add(0x2500, -2)               # add 2500
+      raw.add(self.subscription_id, 2)  # add subscription_id as 16 bits
+    end
+    # do we have attributes?
+    if (data != nil && size(data) > 0)
+      raw.add(0x3601, -2)             # add 3601
+      raw.append(data)
+      raw.add(0x18, 1)           # add 18
+    end
+    # do we have events?
+    if (data_ev != nil && size(data_ev) > 0)
+      raw.add(0x3602, -2)             # add 3601
+      raw.append(data_ev)
+      raw.add(0x18, 1)           # add 18
+    end
+    # MoreChunkedMessages
+    if more_chunked_messages    # we got more data to send
+      raw.add(0x2903, -2)             # add 2903
+    else
+      raw.add(0x2803, -2)             # add 2803
+    end
+    # SuppressResponse
+    if (self.suppress_response != nil)
+      if self.suppress_response
+        raw.add(0x2904, -2)             # add 2904
+      else
+        raw.add(0x2804, -2)             # add 2804
+      end
+    end
+    # InteractionModelRevision
+    raw.add(0x24FF, -2)               # add 24FF
+    raw.add(0x01, 1)                  # add 01
+    # close struct ReportDataMessage
+    raw.add(0x18, 1)                  # add 18
+    # log(f">>>: {raw.tohex()}", 3)
+
+    # ##### Previous code
+    # var ret = matter.ReportDataMessage()
+    # ret.subscription_id = self.subscription_id
+    # ret.suppress_response = self.suppress_response
+    # if (data != nil && size(data) > 0)
+    #   ret.attribute_reports = [data]
+    # end
+    # if (data_ev != nil && size(data_ev) > 0)
+    #   ret.event_reports = [data_ev]
+    # end
+    # ret.more_chunked_messages = (self.data != nil) || (self.data_ev != nil)    # we got more data to send
+    # var encoded_tlv = ret.to_TLV().tlv2raw(bytes(self.MAX_MESSAGE))    # takes time
+    # resp.encode_frame(encoded_tlv)    # payload in cleartext, pre-allocate max buffer
+    # log(f">>>: {encoded_tlv.tohex()}", 3)
+    # ##### Previous code
+
+    resp.encode_frame(raw)    # payload in cleartext, pre-allocate max buffer
     resp.encrypt()
     # log(format("MTR: <snd       (%6i) id=%i exch=%i rack=%s", resp.session.local_session_id, resp.message_counter, resp.exchange_id, resp.ack_message_counter), 4)
     responder.send_response_frame(resp)
     self.last_counter = resp.message_counter
 
-    if ret.more_chunked_messages                 # we have more to send
+    if more_chunked_messages                 # we have more to send
       self.ready = false    # wait for Status Report before continuing sending
       # keep alive
     else
