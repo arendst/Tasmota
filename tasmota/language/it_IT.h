@@ -1000,6 +1000,7 @@
 #define D_SENSOR_BIOPDU_BIT             "BioPDU Bit"
 #define D_SENSOR_LOX_O2_RX              "LoxO2 - RX"
 #define D_GPIO_MAGIC_SWITCH             "MagicSwitch"
+#define D_SENSOR_WOOLIIS_RX             "Wooliis RX"
 
 // Units
 #define D_UNIT_AMPERE                     "A"

@@ -350,6 +350,7 @@ const be_const_member_t lv_gpio_constants[] = {
     { "WIEGAND_D0", (int32_t) GPIO_WIEGAND_D0 },
     { "WIEGAND_D1", (int32_t) GPIO_WIEGAND_D1 },
     { "WINDMETER_SPEED", (int32_t) GPIO_WINDMETER_SPEED },
+    { "WOOLIIS_RX", (int32_t) GPIO_WOOLIIS_RX },
     { "WS2812", (int32_t) GPIO_WS2812 },
     { "XPT2046_CS", (int32_t) GPIO_XPT2046_CS },
     { "ZEROCROSS", (int32_t) GPIO_ZEROCROSS },
