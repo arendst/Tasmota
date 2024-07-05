@@ -13,8 +13,8 @@ All notable changes to this project will be documented in this file.
 - Support for Sonoff POWCT Ring (#21131)
 - NeoPool data validation and communication statistics default enabled for ESP32 only (#21721)
 - `FUNC_BUTTON_PRESSED` now contains `press_counter` encoded in `XdrvMailbox.command_code` (#21724)
-- Berry `int64` added `low32()` and `high32()` methods, used in Matter
-- Matter support for 'Generic Switch' based on Tasmota Buttons
+- Berry `int64` added `low32()` and `high32()` methods, used in Matter (#21728)
+- Matter support for 'Generic Switch' based on Tasmota Buttons (#21731)
 
 ### Breaking Changed
 
