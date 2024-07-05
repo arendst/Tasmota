@@ -1892,12 +1892,11 @@ void DisplayInitDriver(void) {
 
     UpdateDevicesPresent(1);
     if (!PinUsed(GPIO_BACKLIGHT)) {
-//      if (TasmotaGlobal.light_type && (4 == Settings->display_model)) {
-      if (TasmotaGlobal.light_type &&         // Assume PWM channel
-          ((4 == Settings->display_model) ||  // ILI9341 legacy
-           (17 == Settings->display_model))   // Universal
+      if ((LT_PWM1 == TasmotaGlobal.light_type) &&  // Single PWM light channel
+          ((4 == Settings->display_model) ||        // ILI9341 legacy
+           (17 == Settings->display_model))         // Universal
          ) {
-        UpdateDevicesPresent(-1);  // Assume PWM channel is used for backlight
+        UpdateDevicesPresent(-1);                   // Assume PWM channel is used for backlight
       }
     }
     disp_device = TasmotaGlobal.devices_present;
