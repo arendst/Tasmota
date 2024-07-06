@@ -434,7 +434,6 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             break;
           case 'f':
             // epaper full update cmds
-            ep_mode = 3;
             if (!epcoffs_full) {
               epcoffs_full = dsp_ncmds;
               epc_full_cnt = 0;
@@ -450,7 +449,6 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
             break;
           case 'p':
             // epaper partial update cmds
-            ep_mode = 3;
             if (!epcoffs_part) {
               epcoffs_part = dsp_ncmds + epc_full_cnt;
               epc_part_cnt = 0;
@@ -708,6 +706,11 @@ void UfsCheckSDCardInit(void);
     UfsCheckSDCardInit();
   }
 #endif
+
+  if ((epcoffs_full || epcoffs_part) && !(lutfsize || lutpsize)) {
+    // no lutfsize or lutpsize, but epcoffs_full or epcoffs_part
+    ep_mode = 3;
+  }
 
 #ifdef UDSP_DEBUG
   Serial.printf("Device : %s\n", dname);
@@ -3558,6 +3561,7 @@ void uDisplay::SetMemoryArea(int x_start, int y_start, int x_end, int y_end) {
     int y_start2 = (y_start >> 8) & 0xFF;
     int y_end1 = y_end & 0xFF;
     int y_end2 = (y_end >> 8) & 0xFF;
+    /* x point must be the multiple of 8 or the last 3 bits will be ignored */
 
     if (ep_mode == 3) {
         spi_command_EPD(SET_RAM_X_ADDRESS_START_END_POSITION);
