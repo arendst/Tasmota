@@ -88,7 +88,7 @@ class Matter_Plugin_Sensor_GenericSwitch_Btn : Matter_Plugin_Device
         return tlv_solo.set(TLV.U1, 5)  # up to penta press
 
       elif attribute == 0xFFFC          #  ---------- FeatureMap / map32 ----------
-        return tlv_solo.set(TLV.U4, 0x02 | 0x04 | 0x08 | 0x10)    # MomentarySwitch + MomentarySwitchRelease + MomentarySwitchLongPress + MomentarySwitchMultiPress
+        return tlv_solo.set(TLV.U4, 0x16 #-0x02 | 0x04 | 0x10-#)    # MomentarySwitch + MomentarySwitchRelease + MomentarySwitchMultiPress
       end
 
     end
