@@ -56,6 +56,9 @@ be_extern_native_module(mdns);
 #ifdef USE_ZIGBEE
 be_extern_native_module(zigbee);
 #endif // USE_ZIGBEE
+#ifdef USE_BERRY_CAM
+be_extern_native_module(cam);
+#endif // USE_BERRY_CAM
 // BLE
 be_extern_native_module(MI32);
 be_extern_native_module(BLE);
@@ -183,6 +186,9 @@ BERRY_LOCAL const bntvmodule_t* const be_module_table[] = {
     &be_native_module(MI32),
     &be_native_module(BLE),
 #endif //USE_MI_ESP32
+#ifdef USE_BERRY_CAM
+    &be_native_module(cam),
+#endif 
 #ifdef USE_DISCOVERY
     &be_native_module(mdns),
 #endif // USE_DISCOVERY
@@ -243,6 +249,10 @@ be_extern_native_class(lv_clock_icon);
 
 be_extern_native_class(int64);
 
+#ifdef USE_BERRY_IMAGE
+be_extern_native_class(img);
+#endif // USE_BERRY_IMAGE
+
 BERRY_LOCAL bclass_array be_class_table = {
 #ifdef TASMOTA
     /* first list are direct classes */
@@ -297,6 +307,10 @@ BERRY_LOCAL bclass_array be_class_table = {
     &be_native_class(lv_clock),
     &be_native_class(lv_clock_icon),
 #endif // USE_LVGL
+
+#ifdef USE_BERRY_IMAGE
+    &be_native_class(img),
+#endif // USE_BERRY_IMAGE
 
 #if defined(USE_I2S_AUDIO_BERRY) && (ESP_IDF_VERSION_MAJOR >= 5)
     &be_native_class(AudioGenerator),

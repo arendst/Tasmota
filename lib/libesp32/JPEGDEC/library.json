@@ -1,0 +1,20 @@
+{
+  "name": "JPEGDEC",
+  "version": "1.2.7",
+  "description": "A fast JPEG library with a unique set of functions to make viewing image on microcontrollers easy. Includes fast downscaling options and the ability to view Exif embedded thumbnails. Supports baseline grayscale and color images with Huffman encoding.",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/bitbank2/JPEGDEC"
+  },
+  "authors":
+  [
+    {
+      "name": "Larry Bank"
+    }
+  ],
+  "license": "Apache License 2.0",
+  "homepage": "https://github.com/bitbank2/JPEGDEC",
+  "frameworks": "*",
+  "platforms": "*"
+}
