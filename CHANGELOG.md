@@ -16,6 +16,8 @@ All notable changes to this project will be documented in this file.
 - Berry `int64` added `low32()` and `high32()` methods, used in Matter (#21728)
 - Matter support for 'Generic Switch' based on Tasmota Buttons (#21731)
 - Berry cam module and img class (#21743)
+- Skip MQTT response if command is prefixed with underscore (#21740)
+- Skip MQTT response if commands are executed prefixed with ``Backlog2`` (no delay) or ``Backlog3`` (#21740)
 
 ### Breaking Changed
 

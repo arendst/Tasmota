@@ -374,7 +374,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
   }
 
   char stemp1[TOPSZ];
-  GetFallbackTopic_P(stemp1, "");  // Full Fallback topic = cmnd/DVES_xxxxxxxx_fb/
+  GetFallbackTopic_P(stemp1, "");        // Full Fallback topic = cmnd/DVES_xxxxxxxx_fb/
   TasmotaGlobal.fallback_topic_flag = (!strncmp(topicBuf, stemp1, strlen(stemp1)));
 
   char *type = strrchr(topicBuf, '/');   // Last part of received topic is always the command (type)
@@ -384,13 +384,13 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
   if (type != nullptr) {
     type++;
     uint32_t i;
-    int nLen; // strlen(type)
+    int nLen;                            // strlen(type)
     char *s = type;
     for (nLen = 0; *s; s++, nLen++) {
       *s=toupper(*s);
     }
     i = nLen;
-    if (i > 0) { // may be 0
+    if (i > 0) {                         // may be 0
       while (isdigit(type[i-1])) {
         i--;
       }
@@ -400,13 +400,17 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
       user_index = true;
     }
     type[i] = '\0';
+    if ((i > 1) && ('_' == type[0])) {
+      type++;                            // Skip leading _ in command
+      TasmotaGlobal.no_mqtt_response = true;
+    }
 
-    bool binary_data = (index > 299);        // Suppose binary data on topic index > 299
+    bool binary_data = (index > 299);    // Suppose binary data on topic index > 299
     if (!binary_data) {
       bool keep_spaces = ((strstr_P(type, PSTR("SERIALSEND")) != nullptr) && (index > 9));  // Do not skip leading spaces on (s)serialsend10 and up
       if (!keep_spaces) {
         while (*dataBuf && isspace(*dataBuf)) {
-          dataBuf++;                           // Skip leading spaces in data
+          dataBuf++;                     // Skip leading spaces in data
           data_len--;
         }
       }
