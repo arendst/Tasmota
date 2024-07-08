@@ -305,8 +305,10 @@ struct TasmotaGlobal_t {
 
   bool serial_local;                        // Handle serial locally
   bool fallback_topic_flag;                 // Use Topic or FallbackTopic
+  bool no_mqtt_response;                    // Respond with rule processing only
   bool backlog_nodelay;                     // Execute all backlog commands with no delay
   bool backlog_mutex;                       // Command backlog pending
+  bool backlog_no_mqtt_response;            // Set respond with rule processing only
   bool stop_flash_rotate;                   // Allow flash configuration rotation
   bool blinkstate;                          // LED state
   bool pwm_present;                         // Any PWM channel configured with SetOption15 0
@@ -711,6 +713,7 @@ void BacklogLoop(void) {
           free(cmd);
           nodelay = true;
         } else {
+          TasmotaGlobal.no_mqtt_response = TasmotaGlobal.backlog_no_mqtt_response;
           ExecuteCommand(cmd, SRC_BACKLOG);
           free(cmd);
           if (nodelay || TasmotaGlobal.backlog_nodelay) {
@@ -719,23 +722,6 @@ void BacklogLoop(void) {
           break;
         }
       } while (!BACKLOG_EMPTY);
-/*
-      // This adds 96 bytes
-      for (auto &cmd : backlog) {
-        backlog.remove(&cmd);
-        if (!strncasecmp_P(cmd, PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY))) {
-          free(cmd);
-          nodelay = true;
-        } else {
-          ExecuteCommand(cmd, SRC_BACKLOG);
-          free(cmd);
-          if (nodelay || TasmotaGlobal.backlog_nodelay) {
-            TasmotaGlobal.backlog_timer = millis();  // Reset backlog_timer which has been set by ExecuteCommand (CommandHandler)
-          }
-          break;
-        }
-      }
-*/
       TasmotaGlobal.backlog_mutex = false;
     }
     if (BACKLOG_EMPTY) {

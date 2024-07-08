@@ -474,19 +474,25 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
   }
 
   if (ResponseLength()) {
-    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, type);
+    if (TasmotaGlobal.no_mqtt_response){  // If it is activated, Tasmota will not publish MQTT messages, but it will proccess event trigger rules
+      XdrvRulesProcess(0);
+    } else {
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, type);
+    }
   }
   TasmotaGlobal.fallback_topic_flag = false;
+  TasmotaGlobal.no_mqtt_response = false;
 }
 
 void CmndBacklog(void) {
   // Backlog command1;command2;..   Execute commands in sequence with a delay in between set with SetOption34
   // Backlog0 command1;command2;..  Execute commands in sequence with no delay
+  // Backlog2 command1;command2;..  Execute commands in sequence with no delay and no response but rule processing only
+  // Backlog3 command1;command2;..  Execute commands in sequence with a delay but no response but rule processing only
 
   if (XdrvMailbox.data_len) {
-    if (0 == XdrvMailbox.index) {
-      TasmotaGlobal.backlog_nodelay = true;
-    }
+    TasmotaGlobal.backlog_nodelay = (0 == (XdrvMailbox.index & 0x01));           // Backlog0, Backlog2
+    TasmotaGlobal.backlog_no_mqtt_response = (2 == (XdrvMailbox.index & 0x02));  // Backlog2, Backlog3
 
     char *blcommand = strtok(XdrvMailbox.data, ";");
     while (blcommand != nullptr) {
