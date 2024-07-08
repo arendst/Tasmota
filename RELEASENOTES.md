@@ -136,6 +136,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `FUNC_ANY_KEY` event calling `any_key()` [#21708](https://github.com/arendst/Tasmota/issues/21708)
 - Berry `FUNC_BUTTON_MULTI_PRESSED` event and make `FUNC_BUTTON_PRESSED` called only on state changes and once per second [#21711](https://github.com/arendst/Tasmota/issues/21711)
 - Berry `int64` added `low32()` and `high32()` methods, used in Matter [#21728](https://github.com/arendst/Tasmota/issues/21728)
+- Berry cam module and img class [#21743](https://github.com/arendst/Tasmota/issues/21743)
 - HASPmota rounds to nearest int values passed as 'real' [#21599](https://github.com/arendst/Tasmota/issues/21599)
 - Matter support for Air Quality sensors [#21559](https://github.com/arendst/Tasmota/issues/21559)
 - Matter support for bridged Air Quality [#21597](https://github.com/arendst/Tasmota/issues/21597)
@@ -148,7 +149,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Changed
 - ESP8266 platform update from 2024.01.01 to 2024.06.00 [#21668](https://github.com/arendst/Tasmota/issues/21668)
 - ESP8266 Framework (Arduino Core) from v2.7.6 to v2.7.7 [#21668](https://github.com/arendst/Tasmota/issues/21668)
-- ESP32 platform update from 2024.05.13 to 2024.06.11 [#21694](https://github.com/arendst/Tasmota/issues/21694)
+- ESP32 platform update from 2024.05.13 to 2024.07.10 [#21745](https://github.com/arendst/Tasmota/issues/21745)
 - ESP32 Framework (Arduino Core) from v3.0.0 to v3.0.2 [#21694](https://github.com/arendst/Tasmota/issues/21694)
 - Optional MQTT_TELE_RETAIN to Energy Margins message replaced by ``SensorRetain``
 - Display timing splash screen with display modes 1 to 5

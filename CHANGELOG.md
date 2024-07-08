@@ -15,12 +15,14 @@ All notable changes to this project will be documented in this file.
 - `FUNC_BUTTON_PRESSED` now contains `press_counter` encoded in `XdrvMailbox.command_code` (#21724)
 - Berry `int64` added `low32()` and `high32()` methods, used in Matter (#21728)
 - Matter support for 'Generic Switch' based on Tasmota Buttons (#21731)
+- Berry cam module and img class (#21743)
 
 ### Breaking Changed
 
 ### Changed
 - ESP32 support for energy margin checks, like ``MaxPower2`` per phase (#21695)
 - ESP32 TM1621 number overflow from "9999" to "12E3" (#21131)
+- ESP32 platform update from 2024.06.11 to 2024.07.10 (#21745)
 
 ### Fixed
 - Berry `bytes.resize()` for large sizes (#21716)
