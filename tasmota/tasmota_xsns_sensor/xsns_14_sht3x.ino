@@ -25,19 +25,19 @@
  * This driver supports the following sensors:
  * - SHT3x series: SHT30, SHT31, SHT35 (addresses: A: 0x44, B: 0x45)
  * - SHTC series:  SHTC1, SHTC3 (address: 0x70)
- * - SHT4x series: SHT40, SHT41, SHT45 (addresses: A: 0x44, B: 0x45)
+ * - SHT4x series: SHT40, SHT41, SHT45 (addresses: A: 0x44, B: 0x45, C: 0x46)
 \*********************************************************************************************/
 
 #define XSNS_14             14
 #define XI2C_15             15         // See I2CDEVICES.md
 
 #define SHT3X_TYPES         3          // SHT3X, SHTCX and SHT4X
-#define SHT3X_ADDRESSES     3          // 0x44, 0x45 and 0x70
+#define SHT3X_ADDRESSES     4          // 0x44, 0x45, 0x46 and 0x70
 
 enum SHT3X_Types { SHT3X_TYPE_SHT3X, SHT3X_TYPE_SHTCX, SHT3X_TYPE_SHT4X };
 const char kSht3xTypes[] PROGMEM = "SHT3X|SHTC3|SHT4X";
 
-uint8_t sht3x_addresses[] = { 0x44, 0x45, 0x70 };
+uint8_t sht3x_addresses[] = { 0x44, 0x45, 0x46, 0x70 };
 
 uint8_t sht3x_count = 0;
 struct SHT3XSTRUCT {
