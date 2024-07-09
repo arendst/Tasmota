@@ -28,23 +28,38 @@ extern "C" {
     .type = (_t),                                               \
     .marked = GC_CONST
 
-#define be_define_const_bytes(_name, ...)                       \
-    const uint8_t be_const_bin_##_name[] = { __VA_ARGS__ }
+#define be_define_const_bytes(_name, ...)                               \
+    const binstance_arg3 be_const_instance_##_name = {                  \
+        be_const_header(BE_INSTANCE),                                   \
+        .super = NULL,                                                  \
+        .sub = NULL,                                                    \
+        ._class = (bclass*) &be_class_bytes,                            \
+        .members = {                                                    \
+            {.v.c = (const void*) & (const uint8_t[]) { __VA_ARGS__ },  \
+            .type = BE_COMPTR },                                        \
+            be_const_int(sizeof(#_name) / 2),                           \
+            be_const_int(BYTES_SIZE_SOLIDIFIED)                         \
+        }                                                               \
+    }
 
-#define be_const_bytes_instance(_bytes) {                       \
-    .v.c = (                                                    \
-        & (const binstance_arg3)  {                             \
-            be_const_header(BE_INSTANCE),                       \
-            .super = NULL,                                      \
-            .sub = NULL,                                        \
-            ._class = (bclass*) &be_class_bytes,                \
-            .members = {                                        \
-                be_const_comptr(&be_const_bin_##_bytes),        \
-                be_const_int(sizeof(#_bytes) / 2),              \
-                be_const_int(BYTES_SIZE_SOLIDIFIED)             \
-            }                                                   \
-        }),                                                     \
-    .type = BE_INSTANCE                                         \
+/* special version to define a default empty bytes */
+#define be_define_const_bytes_empty()                                   \
+    const binstance_arg3 be_const_instance_ = {                         \
+        be_const_header(BE_INSTANCE),                                   \
+        .super = NULL,                                                  \
+        .sub = NULL,                                                    \
+        ._class = (bclass*) &be_class_bytes,                            \
+        .members = {                                                    \
+            {.v.c = (const void*) & (const uint8_t[]) { 0x00 },         \
+            .type = BE_COMPTR },                                        \
+            be_const_int(0),                                            \
+            be_const_int(BYTES_SIZE_SOLIDIFIED)                         \
+        }                                                               \
+    }
+
+#define be_const_bytes_instance(_bytes) {                               \
+    .v.c = &be_const_instance_##_bytes,                                 \
+    .type = BE_INSTANCE                                                 \
 }
 
 #define be_define_const_str_weak(_name, _s, _len)               \
@@ -339,8 +354,8 @@ const bntvmodule_t be_native_module(_module) = {                  \
 
 #else
 
-#define be_define_const_bytes(_name, ...)                    \
-    const uint8_t be_const_bin_##_name[] = { __VA_ARGS__ }
+// #define be_define_const_bytes(_name, ...)                    \
+//     const uint8_t be_const_bin_##_name[] = { __VA_ARGS__ }
 
 #define be_define_const_str_weak(_name, _s, _len)               \
 const bcstring be_const_str_##_name = {                         \
