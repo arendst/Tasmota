@@ -32,7 +32,7 @@ Index | Define              | Driver   | Device   | Address(es) | Bus2 | Descrip
   13  | USE_ADS1115         | xsns_12  | ADS1115  | 0x48 - 0x4B | Yes  | 4-channel 16-bit A/D converter
   14  | USE_INA219          | xsns_13  | INA219   | 0x40 - 0x41, 0x44 - 0x45 |      | Low voltage current sensor
   15  | USE_SHT3X           | xsns_14  | SHT3X    | 0x44 - 0x45 | Yes  | Temperature and Humidity sensor
-  15  | USE_SHT3X           | xsns_14  | SHT4X    | 0x44 - 0x45 | Yes  | Temperature and Humidity sensor
+  15  | USE_SHT3X           | xsns_14  | SHT4X    | 0x44 - 0x46 | Yes  | Temperature and Humidity sensor
   15  | USE_SHT3X           | xsns_14  | SHTCX    | 0x70        | Yes  | Temperature and Humidity sensor
   16  | USE_TSL2561         | xsns_16  | TSL2561  | 0x29, 0x39, 0x49 |      | Light intensity sensor
   17  | USE_MGS             | xsns_19  | Grove    | 0x04        |      | Multichannel gas sensor
