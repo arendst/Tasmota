@@ -89,7 +89,8 @@ class Matter_IM
       self.send_ack_now(msg)
       return self.process_write_request(msg, val)
     elif opcode == 0x07   # Write Response
-      return self.process_write_response(msg, val)
+      # return self.process_write_response(msg, val)  # not implemented for Matter device
+      return false
     elif opcode == 0x08   # Invoke Request
       # self.send_ack_now(msg)      # to improve latency, we don't automatically Ack on invoke request
       return self.process_invoke_request(msg, val)
@@ -1160,11 +1161,11 @@ class Matter_IM
   #############################################################
   # process IM 0x07 Write Response
   #
-  def process_write_response(msg, val)
-    var query = matter.WriteResponseMessage().from_TLV(val)
-    # log("MTR: received WriteResponseMessage=" + str(query), 4)
-    return false
-  end
+  # def process_write_response(msg, val)
+  #   var query = matter.WriteResponseMessage().from_TLV(val)
+  #   # log("MTR: received WriteResponseMessage=" + str(query), 4)
+  #   return false
+  # end
 
   #############################################################
   # process IM 0x09 Invoke Response
