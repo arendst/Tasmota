@@ -132,7 +132,7 @@ static const bclass *m_solidify_get_parentclass(const bproto *pr)
 
 static void m_solidify_bvalue(bvm *vm, bbool str_literal, const bvalue * value, const char *prefixname, const char *key, void* fout);
 
-static void m_solidify_map(bvm *vm, bbool str_literal, const bmap * map, const char *prefixname, void* fout)
+static void m_solidify_map(bvm *vm, bbool str_literal, bmap * map, const char *prefixname, void* fout)
 {
     // compact first
     be_map_compact(vm, map);
@@ -288,34 +288,32 @@ static void m_solidify_bvalue(bvm *vm, bbool str_literal, const bvalue * value, 
     {
         binstance * ins = (binstance *) var_toobj(value);
         bclass * cl = ins->_class;
-        if (ins->super || ins->sub) {
+
+        if (cl ==  &be_class_bytes) {
+            const void * bufptr = var_toobj(&ins->members[0]);
+            int32_t len = var_toint(&ins->members[1]);
+            size_t hex_len = len * 2 + 1;
+
+            char * hex_out = be_pushbuffer(vm, hex_len);
+            be_bytes_tohex(hex_out, hex_len, bufptr, len);
+            logfmt("be_const_bytes_instance(%s)", hex_out);
+            be_pop(vm, 1);
+        } else if (ins->super || ins->sub) {
             be_raise(vm, "internal_error", "instance must not have a super/sub class");
-        } else if ((cl != &be_class_map && cl != &be_class_list) || 1) {   // TODO
+        } else {
             const char * cl_ptr = "";
             if (cl == &be_class_map) { cl_ptr = "map"; }
             else if (cl == &be_class_list) { cl_ptr = "list"; }
-            else if (cl == &be_class_bytes) { cl_ptr = "bytes"; }
             else { be_raise(vm, "internal_error", "unsupported class"); }
 
-            if (cl == &be_class_bytes) {
-                const void * bufptr = var_toobj(&ins->members[0]);
-                int32_t len = var_toint(&ins->members[1]);                
-                size_t hex_len = len * 2 + 1;
-
-                char * hex_out = be_pushbuffer(vm, hex_len);
-                be_bytes_tohex(hex_out, hex_len, bufptr, len);
-                logfmt("be_const_bytes_instance(%s)", hex_out);
-                be_pop(vm, 1);
+            logfmt("be_const_simple_instance(be_nested_simple_instance(&be_class_%s, {\n", cl_ptr);
+            if (cl == &be_class_map) {
+                logfmt("        be_const_map( * ");
             } else {
-                logfmt("be_const_simple_instance(be_nested_simple_instance(&be_class_%s, {\n", cl_ptr);
-                if (cl == &be_class_map) {
-                    logfmt("        be_const_map( * ");
-                } else {
-                    logfmt("        be_const_list( * ");
-                }
-                m_solidify_bvalue(vm, str_literal, &ins->members[0], prefixname, key, fout);
-                logfmt("    ) } ))");
+                logfmt("        be_const_list( * ");
             }
+            m_solidify_bvalue(vm, str_literal, &ins->members[0], prefixname, key, fout);
+            logfmt("    ) } ))");
         }
     }
         break;
@@ -354,7 +352,7 @@ static void m_solidify_proto_inner_class(bvm *vm, bbool str_literal, const bprot
     }
 }
 
-static void m_solidify_proto(bvm *vm, bbool str_literal, const bproto *pr, const char * func_name, const char *prefixname, int indent, void* fout)
+static void m_solidify_proto(bvm *vm, bbool str_literal, const bproto *pr, const char * func_name, int indent, void* fout)
 {
     /* get parent class name if any */
     const bclass *parentclass = m_solidify_get_parentclass(pr);
@@ -386,7 +384,7 @@ static void m_solidify_proto(bvm *vm, bbool str_literal, const bproto *pr, const
             size_t sub_len = strlen(func_name) + 10;
             char sub_name[sub_len];
             snprintf(sub_name, sizeof(sub_name), "%s_%"PRId32, func_name, i);
-            m_solidify_proto(vm, str_literal, pr->ptab[i], sub_name, NULL, indent+2, fout);
+            m_solidify_proto(vm, str_literal, pr->ptab[i], sub_name, indent+2, fout);
             logfmt(",\n");
         }
         if (parentclass_name) {
@@ -500,7 +498,7 @@ static void m_solidify_closure(bvm *vm, bbool str_literal, const bclosure *clo, 
             func_name_id);
     }
 
-    m_solidify_proto(vm, str_literal, pr, func_name, prefixname, indent, fout);
+    m_solidify_proto(vm, str_literal, pr, func_name, indent, fout);
     logfmt("\n");
 
     // closure
@@ -564,12 +562,12 @@ static void m_solidify_subclass(bvm *vm, bbool str_literal, const bclass *cla, v
     logfmt(");\n");
 }
 
-static void m_solidify_class(bvm *vm, bbool str_literal, const bclass *cl, void* fout)
+static void m_solidify_class(bvm *vm, bbool str_literal, bclass *cl, void* fout)
 {
     m_solidify_subclass(vm, str_literal, cl, fout);
 }
 
-static void m_solidify_module(bvm *vm, bbool str_literal, const bmodule *ml, void* fout)
+static void m_solidify_module(bvm *vm, bbool str_literal, bmodule *ml, void* fout)
 {
     const char * modulename = be_module_name(ml);
     if (!modulename) { modulename = ""; }

@@ -23,7 +23,7 @@ class bytes_build:
     def build_bytes_def(self):
         ostr = ""
         ostr += "/* binary arrays */\n"
-        ostr += "be_define_const_bytes(,);\n"
+        ostr += "be_define_const_bytes_empty();\n"
         for k in self.map:
             ostr += "be_define_const_bytes("
             ostr += k + ", " + ", ".join( [ "0x" + k[i:i+2] for i in range(0, len(k), 2)] )
@@ -34,8 +34,8 @@ class bytes_build:
     def build_bytes_ext(self):
         ostr = ""
         ostr += "/* extern binary arrays */\n"
-        ostr += "extern const uint8_t be_const_bin_[];\n"
+        ostr += "extern const binstance_arg3 be_const_instance_;\n"
         for k in self.map:
-            ostr += "extern const uint8_t be_const_bin_" + k + "[];\n"
+            ostr += "extern const binstance_arg3 be_const_instance_" + k + ";\n"
 
         return ostr
