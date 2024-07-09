@@ -1273,8 +1273,6 @@
 
 // xsns_115_wooliis.ino
 #define D_CHARGING                        "Charging"
-#define D_INGRESS                         "Ingress"
-#define D_EGRESS                          "Egress"
 #define D_CAPACITY                        "Capacity"
 
 #endif  // _LANGUAGE_EN_GB_H_

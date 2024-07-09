@@ -1271,4 +1271,8 @@
 #define D_SENSOR_PIPSOLAR_TX             "Pipsolar TX"
 #define D_SENSOR_PIPSOLAR_RX             "Pipsolar RX"
 
+// xsns_115_wooliis.ino
+#define D_CHARGING                        "Charging"
+#define D_CAPACITY                        "Capacity"
+
 #endif  // _LANGUAGE_RU_RU_H_

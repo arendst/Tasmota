@@ -54,21 +54,28 @@
 
 #define XSNS_115             115
 
+#define D_IMPORT "Import"
+#define D_EXPORT "Export"
+#define D_JSON_CAPACITY "Capacity"
+#define D_JSON_CHARGING "Charging"
+
 #include <TasmotaSerial.h>
 
-TasmotaSerial *WooliisSerial = NULL;
+TasmotaSerial *WooliisSerial = nullptr;
 
-struct WOOLIIS {
-  uint8_t valid = 0;
-  uint8_t ready = 0;
-  uint8_t charge_percent;
+typedef struct wooliis_data_t {
   float   remaining_capacity;
   float   voltage;
   float   current;
   float   energy_in;
   float   energy_out;
   uint8_t status;
-} Wooliis;
+  uint8_t valid = 0;
+  uint8_t ready = 0;
+  uint8_t charge_percent;
+} wooliis_data_t;
+
+wooliis_data_t *Wooliis = nullptr;
 
 /*********************************************************************************************/
 
@@ -83,7 +90,7 @@ void WooliisReadData() // process the data sent by Wooliis battery capacity moni
   uint8_t buffer[21];
   WooliisSerial->readBytes(buffer, 21);
   if (buffer[0] != 0xb5 && buffer[1] != 0x5b && buffer[2] == 0x01 && buffer[3] == 0x01) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("Wooliis: Flushing serial"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("WLS: Flushing serial"));
     WooliisSerial->flush();  // Out of sync or wrong sensor connected
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, 21);
     return;
@@ -95,22 +102,22 @@ void WooliisReadData() // process the data sent by Wooliis battery capacity moni
   }
   checksum = 255 - checksum;
   if (checksum != buffer[20]) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("Wooliis: " D_CHECKSUM_FAILURE));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("WLS: " D_CHECKSUM_FAILURE));
     return;
   }
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("Wooliis: message received correctly!"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("WLS: message received correctly!"));
   AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, 21);
 
-  Wooliis.charge_percent = buffer[4];
-  Wooliis.remaining_capacity = 0.1f * ((uint16_t)buffer[5]<<8 | buffer[6]);
-  Wooliis.voltage = 0.1f * ((uint16_t)buffer[7]<<8 | buffer[8]);
-  Wooliis.current = (buffer[19] ? -0.1f : 0.1f) * ((uint16_t)buffer[9]<<8 | buffer[10]);
-  Wooliis.energy_in = 0.1f * ((uint32_t)buffer[11]<<16 | (uint16_t)buffer[12]<<8 | buffer[13]);
-  Wooliis.energy_out = 0.1f * ((uint32_t)buffer[14]<<16 | (uint16_t)buffer[15]<<8 | buffer[16]);
-  Wooliis.status = buffer[19];
+  Wooliis->charge_percent = buffer[4];
+  Wooliis->remaining_capacity = 0.1f * ((uint16_t)buffer[5]<<8 | buffer[6]);
+  Wooliis->voltage = 0.1f * ((uint16_t)buffer[7]<<8 | buffer[8]);
+  Wooliis->current = (buffer[19] ? -0.1f : 0.1f) * ((uint16_t)buffer[9]<<8 | buffer[10]);
+  Wooliis->energy_in = 0.1f * ((uint32_t)buffer[11]<<16 | (uint16_t)buffer[12]<<8 | buffer[13]);
+  Wooliis->energy_out = 0.1f * ((uint32_t)buffer[14]<<16 | (uint16_t)buffer[15]<<8 | buffer[16]);
+  Wooliis->status = buffer[19];
 
-  Wooliis.valid = 1;
+  Wooliis->valid = 1;
 
   return;
 }
@@ -119,7 +126,7 @@ void WooliisReadData() // process the data sent by Wooliis battery capacity moni
 
 void WooliisSecond(void)                 // Every second
 {
-  if (Wooliis.ready)
+  if (Wooliis->ready)
     WooliisReadData();
 }
 
@@ -131,70 +138,59 @@ void WooliisInit(void) {
     if (WooliisSerial->begin(9600)) {
       if (WooliisSerial->hardwareSerial()) { ClaimSerial(); }
       WooliisSerial->flush();  // Clear serial buffer
-      Wooliis.ready = 1;
-      AddLog(LOG_LEVEL_DEBUG, PSTR("Wooliis: Serial ready"));
+      Wooliis = (wooliis_data_t*)calloc(sizeof(wooliis_data_t), 1);
+      if (nullptr == Wooliis) { return; }
+      Wooliis->ready = 1;
+      AddLog(LOG_LEVEL_DEBUG, PSTR("WLS: Serial ready"));
     }
   }
-  Wooliis.valid = 0;
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_WOOLIIS_BCP[] = "{s}%s " D_BATTERY_CHARGE "{m}%d " D_UNIT_PERCENT "{e}";
-const char HTTP_SNS_WOOLIIS_CAP[] = "{s}%s " D_CAPACITY "{m}%s " D_UNIT_CHARGE "{e}";
-const char HTTP_SNS_WOOLIIS_CHG[] = "{s}%s " D_CHARGING "{m}%s{e}";
-const char HTTP_SNS_WOOLIIS_VOL[] = "{s}%s " D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}";
-const char HTTP_SNS_WOOLIIS_CUR[] = "{s}%s " D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}";
-const char HTTP_SNS_WOOLIIS_POW[] = "{s}%s " D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}";
-const char HTTP_SNS_WOOLIIS_EIN[] = "{s}%s " D_ENERGY " " D_INGRESS "{m}%s " D_UNIT_WATTHOUR "{e}";
-const char HTTP_SNS_WOOLIIS_EEG[] = "{s}%s " D_ENERGY " " D_EGRESS "{m}%s " D_UNIT_WATTHOUR "{e}";
+const char HTTP_SNS_WOOLIIS_BCP[] = "{s}%s " D_BATTERY_CHARGE "{m}%d "   D_UNIT_PERCENT  "{e}";
+const char HTTP_SNS_WOOLIIS_CAP[] = "{s}%s " D_CAPACITY       "{m}%*_f " D_UNIT_CHARGE   "{e}";
+const char HTTP_SNS_WOOLIIS_CHG[] = "{s}%s " D_CHARGING       "{m}%s{e}";
+const char HTTP_SNS_WOOLIIS_VOL[] = "{s}%s " D_VOLTAGE        "{m}%*_f " D_UNIT_VOLT     "{e}";
+const char HTTP_SNS_WOOLIIS_CUR[] = "{s}%s " D_CURRENT        "{m}%*_f " D_UNIT_AMPERE   "{e}";
+const char HTTP_SNS_WOOLIIS_POW[] = "{s}%s " D_POWERUSAGE     "{m}%*_f " D_UNIT_WATT     "{e}";
+const char HTTP_SNS_WOOLIIS_IMP[] = "{s}%s " D_IMPORT         "{m}%*_f " D_UNIT_WATTHOUR "{e}";
+const char HTTP_SNS_WOOLIIS_EXP[] = "{s}%s " D_EXPORT         "{m}%*_f " D_UNIT_WATTHOUR "{e}";
 #endif  // USE_WEBSERVER
 
 void WooliisShow(bool json) {
-  char float_str[8];
-  if (Wooliis.valid) {
+  if (Wooliis->valid) {
+    float power = Wooliis->voltage*Wooliis->current;
     if (json) {
-      ResponseAppend_P(PSTR(",\"%s\":{"), D_WOOLIIS);
-      dtostrfd(Wooliis.remaining_capacity, 1, float_str);
-      ResponseAppend_P(PSTR("\"%s\":%s,"), D_CAPACITY, float_str);
-      ResponseAppend_P(PSTR("\"%s\":%d,"), D_CHARGING, (Wooliis.status ? 1 : 0));
-      dtostrfd(Wooliis.voltage, 1, float_str);
-      ResponseAppend_P(PSTR("\"%s\":%s,"), D_VOLTAGE, float_str);
-      dtostrfd(Wooliis.current, 1, float_str);
-      ResponseAppend_P(PSTR("\"%s\":%s,"), D_CURRENT, float_str);
-      dtostrfd(Wooliis.voltage*Wooliis.current, 1, float_str);
-      ResponseAppend_P(PSTR("\"%s\":%s,"), D_POWERUSAGE, float_str);
-      dtostrfd(Wooliis.energy_out, 1, float_str);
-      ResponseAppend_P(PSTR("\"%s\":%s"), D_ENERGY, float_str);
-      dtostrfd(Wooliis.energy_in, 1, float_str);
-      ResponseAppend_P(PSTR("\"%s\":%s,"), D_ENERGY "_returned", float_str);
+      ResponseAppend_P(PSTR(",\"%s\":{"),    D_WOOLIIS);
+      ResponseAppend_P(PSTR("\"%s\":%*_f,"), D_JSON_CAPACITY,   Settings->flag2.energy_resolution,  &Wooliis->remaining_capacity);
+      ResponseAppend_P(PSTR("\"%s\":%d,"),   D_JSON_CHARGING,   (Wooliis->status ? 1 : 0));
+      ResponseAppend_P(PSTR("\"%s\":%*_f,"), D_JSON_VOLTAGE,    Settings->flag2.voltage_resolution, &Wooliis->voltage);
+      ResponseAppend_P(PSTR("\"%s\":%*_f,"), D_JSON_CURRENT,    Settings->flag2.current_resolution, &Wooliis->current);
+      ResponseAppend_P(PSTR("\"%s\":%*_f,"), D_JSON_POWERUSAGE, Settings->flag2.wattage_resolution, &power);
+      ResponseAppend_P(PSTR("\"%s\":%*_f,"), D_JSON_IMPORT,     Settings->flag2.energy_resolution,  &Wooliis->energy_in);
+      ResponseAppend_P(PSTR("\"%s\":%*_f"),  D_JSON_EXPORT,     Settings->flag2.energy_resolution,  &Wooliis->energy_out);
       ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) {
         char pe[16];
-        snprintf_P(pe, sizeof(pe), PSTR("%d;%d"), Wooliis.voltage*Wooliis.current, Wooliis.energy_out);
-        DomoticzSensor(DZ_COUNT, Wooliis.charge_percent);
-        DomoticzSensor(DZ_VOLTAGE, Wooliis.voltage);
-        DomoticzSensor(DZ_CURRENT, Wooliis.current);
+        snprintf_P(pe, sizeof(pe), PSTR("%d;%d"), Wooliis->voltage*Wooliis->current, Wooliis->energy_out);
+        DomoticzSensor(DZ_COUNT, Wooliis->charge_percent);
+        DomoticzSensor(DZ_VOLTAGE, Wooliis->voltage);
+        DomoticzSensor(DZ_CURRENT, Wooliis->current);
         DomoticzSensor(DZ_POWER_ENERGY, pe);
       }
 #endif  // USE_DOMOTICZ
     }   // if json
 #ifdef USE_WEBSERVER
     else {
-      WSContentSend_PD(HTTP_SNS_WOOLIIS_BCP, D_BATTERY, Wooliis.charge_percent);
-      dtostrfd(Wooliis.remaining_capacity, 1, float_str);
-      WSContentSend_PD(HTTP_SNS_WOOLIIS_CAP, D_BATTERY, float_str);
-      WSContentSend_PD(HTTP_SNS_WOOLIIS_CHG, D_BATTERY, (Wooliis.status ? D_TRUE : D_FALSE));
-      dtostrfd(Wooliis.voltage, 1, float_str);
-      WSContentSend_PD(HTTP_SNS_WOOLIIS_VOL, D_BATTERY, float_str);
-      dtostrfd(Wooliis.current, 1, float_str);
-      WSContentSend_PD(HTTP_SNS_WOOLIIS_CUR, D_BATTERY, float_str);
-      dtostrfd(Wooliis.voltage*Wooliis.current, 1, float_str);
-      WSContentSend_PD(HTTP_SNS_WOOLIIS_POW, D_BATTERY, float_str);
-      dtostrfd(Wooliis.energy_in, 1, float_str);
-      WSContentSend_PD(HTTP_SNS_WOOLIIS_EIN, D_BATTERY, float_str);
-      dtostrfd(Wooliis.energy_out, 1, float_str);
-      WSContentSend_PD(HTTP_SNS_WOOLIIS_EEG, D_BATTERY, float_str);
+      WSContentSend_PD(HTTP_SNS_WOOLIIS_BCP, D_BATTERY, Wooliis->charge_percent);
+      WSContentSend_PD(HTTP_SNS_WOOLIIS_CAP, D_BATTERY, Settings->flag2.energy_resolution,  &Wooliis->remaining_capacity);
+      WSContentSend_PD(HTTP_SNS_WOOLIIS_CHG, D_BATTERY, (Wooliis->status ? D_TRUE : D_FALSE));
+      WSContentSend_PD(HTTP_SNS_WOOLIIS_VOL, D_BATTERY, Settings->flag2.voltage_resolution, &Wooliis->voltage);
+      WSContentSend_PD(HTTP_SNS_WOOLIIS_CUR, D_BATTERY, Settings->flag2.current_resolution, &Wooliis->current);
+      WSContentSend_PD(HTTP_SNS_WOOLIIS_POW, D_BATTERY, Settings->flag2.wattage_resolution, &power);
+      WSContentSend_PD(HTTP_SNS_WOOLIIS_IMP, D_BATTERY, Settings->flag2.energy_resolution,  &Wooliis->energy_in);
+      WSContentSend_PD(HTTP_SNS_WOOLIIS_EXP, D_BATTERY, Settings->flag2.energy_resolution,  &Wooliis->energy_out);
     }
 #endif  // USE_WEBSERVER
   }
@@ -208,21 +204,23 @@ bool Xsns115(uint32_t function)
 {
   bool result = false;
 
-  switch (function) {
-    case FUNC_EVERY_SECOND:
-      WooliisSecond();
-      break;
-    case FUNC_JSON_APPEND:
-      WooliisShow(1);
-      break;
-#ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      WooliisShow(0);
-      break;
-#endif  // USE_WEBSERVER
-    case FUNC_INIT:
+  if (FUNC_INIT == function) {
       WooliisInit();
-      break;
+  }
+  else if (Wooliis) {
+    switch (function) {
+      case FUNC_EVERY_SECOND:
+        WooliisSecond();
+        break;
+      case FUNC_JSON_APPEND:
+        WooliisShow(1);
+        break;
+#ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        WooliisShow(0);
+        break;
+#endif  // USE_WEBSERVER
+    }
   }
   return result;
 }
