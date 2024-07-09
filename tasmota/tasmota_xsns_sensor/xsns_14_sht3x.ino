@@ -40,6 +40,7 @@ const char kSht3xTypes[] PROGMEM = "SHT3X|SHTC3|SHT4X";
 uint8_t sht3x_addresses[] = { 0x44, 0x45, 0x46, 0x70 };
 
 uint8_t sht3x_count = 0;
+uint8_t bus_count = 0;
 struct SHT3XSTRUCT {
   uint8_t type;        // Sensor type
   uint8_t address;     // I2C bus address
@@ -120,6 +121,7 @@ void Sht3xDetect(void) {
   float h;
 
   for (uint32_t bus = 0; bus < 2; bus++) {
+    bus_count++;
     for (uint32_t k = 0; k < SHT3X_TYPES; k++) {
       for (uint32_t i = 0; i < SHT3X_ADDRESSES; i++) {
         if (!I2cSetDevice(sht3x_addresses[i], bus)) { continue; }
@@ -150,7 +152,12 @@ void Sht3xShow(bool json) {
       h = ConvertHumidity(h);
       strlcpy(types, sht3x_sensors[i].types, sizeof(types));
       if (sht3x_count > 1) {
-        snprintf_P(types, sizeof(types), PSTR("%s%c%02X"), sht3x_sensors[i].types, IndexSeparator(), sht3x_sensors[i].address);  // "SHT3X-0xXX"
+        if (bus_count > 1) {
+          snprintf_P(types, sizeof(types), PSTR("%s%c%d%c%02X"), sht3x_sensors[i].types, IndexSeparator(), sht3x_sensors[i].bus, IndexSeparator(), sht3x_sensors[i].address);  // "SHT3X-X-0xXX"          
+        }
+        else {
+          snprintf_P(types, sizeof(types), PSTR("%s%c%02X"), sht3x_sensors[i].types, IndexSeparator(), sht3x_sensors[i].address);  // "SHT3X-0xXX"  
+        }
       }
       TempHumDewShow(json, ((0 == TasmotaGlobal.tele_period) && (0 == i)), types, t, h);
     }
