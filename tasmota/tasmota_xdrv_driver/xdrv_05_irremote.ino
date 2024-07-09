@@ -68,7 +68,7 @@ def ir_expand(ir_compact):
 #define IR_RCV_WHILE_SENDING  0
 #endif
 
-enum IrErrors { IE_NO_ERROR, IE_INVALID_RAWDATA, IE_INVALID_JSON, IE_SYNTAX_IRSEND, IE_PROTO_UNSUPPORTED };
+enum IrErrors { IE_NO_ERROR, IE_INVALID_RAWDATA, IE_INVALID_JSON, IE_SYNTAX_IRSEND, IE_PROTO_UNSUPPORTED, IE_GPIO_NOT_CONFIGURED };
 
 const char kIrRemoteCommands[] PROGMEM = "|" D_CMND_IRSEND ;
 
@@ -384,16 +384,20 @@ uint32_t IrRemoteCmndIrSendJson(void)
 
 void CmndIrSend(void)
 {
-  uint8_t error = IE_SYNTAX_IRSEND;
+  if (PinUsed(GPIO_IRSEND)) {
+    uint8_t error = IE_SYNTAX_IRSEND;
 
-  if (XdrvMailbox.data_len) {
-    if (strchr(XdrvMailbox.data, '{') == nullptr) {
-      error = IE_INVALID_JSON;
-    } else {
-      error = IrRemoteCmndIrSendJson();
+    if (XdrvMailbox.data_len) {
+      if (strchr(XdrvMailbox.data, '{') == nullptr) {
+        error = IE_INVALID_JSON;
+      } else {
+        error = IrRemoteCmndIrSendJson();
+      }
     }
+    IrRemoteCmndResponse(error);
+  } else {
+    IrRemoteCmndResponse(IE_GPIO_NOT_CONFIGURED);
   }
-  IrRemoteCmndResponse(error);
 }
 
 void IrRemoteCmndResponse(uint32_t error)
@@ -406,10 +410,13 @@ void IrRemoteCmndResponse(uint32_t error)
       ResponseCmndChar_P(PSTR(D_JSON_INVALID_JSON));
       break;
     case IE_PROTO_UNSUPPORTED:
-      ResponseCmndChar(D_JSON_PROTOCOL_NOT_SUPPORTED);
+      ResponseCmndChar_P(PSTR(D_JSON_PROTOCOL_NOT_SUPPORTED));
       break;
     case IE_SYNTAX_IRSEND:
       Response_P(PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_NO " " D_JSON_IR_PROTOCOL ", " D_JSON_IR_BITS " " D_JSON_OR " " D_JSON_IR_DATA "\"}"));
+      break;
+    case IE_GPIO_NOT_CONFIGURED:
+      ResponseCmndChar_P(PSTR(D_JSON_IRSEND_NOT_CONFIGURED));
       break;
     default:  // IE_NO_ERROR
       ResponseCmndDone();
@@ -424,34 +431,32 @@ bool Xdrv05(uint32_t function)
 {
   bool result = false;
 
-  if (PinUsed(GPIO_IRSEND) || PinUsed(GPIO_IRRECV)) {
-    switch (function) {
-      case FUNC_PRE_INIT:
-        if (PinUsed(GPIO_IRSEND)) {
-          IrSendInit();
-        }
+  switch (function) {
+    case FUNC_PRE_INIT:
+      if (PinUsed(GPIO_IRSEND)) {
+        IrSendInit();
+      }
 #ifdef USE_IR_RECEIVE
-        if (PinUsed(GPIO_IRRECV)) {
-          IrReceiveInit();
-        }
+      if (PinUsed(GPIO_IRRECV)) {
+        IrReceiveInit();
+      }
 #endif  // USE_IR_RECEIVE
-        break;
-      case FUNC_EVERY_50_MSECOND:
+      break;
+    case FUNC_EVERY_50_MSECOND:
 #ifdef USE_IR_RECEIVE
-        if (PinUsed(GPIO_IRRECV)) {
-          IrReceiveCheck();  // check if there's anything on IR side
-        }
+      if (PinUsed(GPIO_IRRECV)) {
+        IrReceiveCheck();  // check if there's anything on IR side
+      }
 #endif  // USE_IR_RECEIVE
-        break;
-      case FUNC_COMMAND:
-        if (PinUsed(GPIO_IRSEND)) {
-          result = DecodeCommand(kIrRemoteCommands, IrRemoteCommand);
-        }
-        break;
-      case FUNC_ACTIVE:
+      break;
+    case FUNC_COMMAND:
+      result = DecodeCommand(kIrRemoteCommands, IrRemoteCommand);
+      break;
+    case FUNC_ACTIVE:
+      if (PinUsed(GPIO_IRSEND) || PinUsed(GPIO_IRRECV)) {
         result = true;
-        break;
-    }
+      }
+      break;
   }
   return result;
 }

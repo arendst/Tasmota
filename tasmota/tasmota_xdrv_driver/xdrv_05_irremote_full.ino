@@ -18,7 +18,7 @@
 */
 
 /*
-Below is the Pyhton3 code to decompress IR comact format.
+Below is the Python3 code to decompress IR comact format.
 
 ======================================================================
 import re
@@ -72,7 +72,7 @@ def ir_expand(ir_compact):
 #endif
 
 enum IrErrors { IE_RESPONSE_PROVIDED, IE_NO_ERROR, IE_INVALID_RAWDATA, IE_INVALID_JSON, IE_SYNTAX_IRSEND, IE_SYNTAX_IRHVAC,
-                IE_UNSUPPORTED_HVAC, IE_UNSUPPORTED_PROTOCOL, IE_MEMORY, IE_INVALID_HEXDATA };
+                IE_UNSUPPORTED_HVAC, IE_UNSUPPORTED_PROTOCOL, IE_MEMORY, IE_INVALID_HEXDATA, IE_GPIO_NOT_CONFIGURED };
 
 const char kIrRemoteCommands[] PROGMEM = "|"
   D_CMND_IRHVAC "|" D_CMND_IRSEND ; // No prefix
@@ -540,12 +540,16 @@ uint32_t IrRemoteCmndIrHvacJson(void)
 
 void CmndIrHvac(void)
 {
-  uint8_t error = IE_SYNTAX_IRHVAC;
+  if (ir_send_active) {
+    uint8_t error = IE_SYNTAX_IRHVAC;
 
-  if (XdrvMailbox.data_len) {
-    error = IrRemoteCmndIrHvacJson();
+    if (XdrvMailbox.data_len) {
+      error = IrRemoteCmndIrHvacJson();
+    }
+    if (error != IE_RESPONSE_PROVIDED) { IrRemoteCmndResponse(error); }    // otherwise response was already provided
+  } else {
+    IrRemoteCmndResponse(IE_GPIO_NOT_CONFIGURED);
   }
-  if (error != IE_RESPONSE_PROVIDED) { IrRemoteCmndResponse(error); }    // otherwise response was already provided
 }
 
 // Helper function
@@ -917,16 +921,20 @@ uint32_t IrRemoteCmndIrSendRaw(void)
 }
 
 void CmndIrSend(void) {
-  uint8_t error = IE_SYNTAX_IRSEND;
+  if (ir_send_active) {
+    uint8_t error = IE_SYNTAX_IRSEND;
 
-  if (XdrvMailbox.data_len) {
-    if (strchr(XdrvMailbox.data, '{') == nullptr) {
-      error = IrRemoteCmndIrSendRaw();
-    } else {
-      error = IrRemoteCmndIrSendJson();
+    if (XdrvMailbox.data_len) {
+      if (strchr(XdrvMailbox.data, '{') == nullptr) {
+        error = IrRemoteCmndIrSendRaw();
+      } else {
+        error = IrRemoteCmndIrSendJson();
+      }
     }
+    IrRemoteCmndResponse(error);
+  } else {
+    IrRemoteCmndResponse(IE_GPIO_NOT_CONFIGURED);
   }
-  IrRemoteCmndResponse(error);
 }
 
 void IrRemoteCmndResponse(uint32_t error)
@@ -955,6 +963,9 @@ void IrRemoteCmndResponse(uint32_t error)
       break;
     case IE_MEMORY:
       ResponseCmndChar_P(PSTR(D_JSON_MEMORY_ERROR));
+      break;
+    case IE_GPIO_NOT_CONFIGURED:
+      ResponseCmndChar_P(PSTR(D_JSON_IRSEND_NOT_CONFIGURED));
       break;
     default:  // IE_NO_ERROR
       ResponseCmndDone();
@@ -994,9 +1005,7 @@ bool Xdrv05(uint32_t function)
       }
       break;
     case FUNC_COMMAND:
-      if (ir_send_active) {
-        result = DecodeCommand(kIrRemoteCommands, IrRemoteCommand);
-      }
+      result = DecodeCommand(kIrRemoteCommands, IrRemoteCommand);
       break;
     case FUNC_ACTIVE:
       if (ir_recv_active || ir_recv_active) {

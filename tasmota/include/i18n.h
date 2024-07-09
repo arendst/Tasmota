@@ -542,6 +542,7 @@
 
 // Commands xdrv_05_irremote.ino
 #define D_CMND_IRSEND "IRSend"
+  #define D_JSON_IRSEND_NOT_CONFIGURED "IRsend GPIO not configured"
   #define D_JSON_INVALID_JSON "Invalid JSON"
   #define D_JSON_INVALID_HEXDATA "Invalid Hex data"
   #define D_JSON_INVALID_RAWDATA "Invalid RawData"

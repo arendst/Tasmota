@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 support for energy margin checks, like ``MaxPower2`` per phase (#21695)
 - ESP32 TM1621 number overflow from "9999" to "12E3" (#21131)
 - ESP32 platform update from 2024.06.11 to 2024.07.10 (#21745)
+- IR changed error message when GPIO is not configured
 
 ### Fixed
 - Berry `bytes.resize()` for large sizes (#21716)
