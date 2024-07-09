@@ -235,21 +235,22 @@ class Matter_Device
   #############################################################
   # Stop PASE commissioning, mostly called when CASE is about to start
   def stop_basic_commissioning()
+    var n = nil
     if self.is_root_commissioning_open()
       tasmota.publish_result('{"Matter":{"Commissioning":0}}', 'Matter')
     end
-    self.commissioning_open = nil
+    self.commissioning_open = n
 
     self.mdns_remove_PASE()
 
     # clear any PBKDF information to free memory
-    self.commissioning_iterations = nil
-    self.commissioning_discriminator = nil
-    self.commissioning_salt = nil
-    self.commissioning_w0 = nil
+    self.commissioning_iterations = n
+    self.commissioning_discriminator = n
+    self.commissioning_salt = n
+    self.commissioning_w0 = n
     # self.commissioning_w1 = nil
-    self.commissioning_L = nil
-    self.commissioning_admin_fabric = nil
+    self.commissioning_L = n
+    self.commissioning_admin_fabric = n
   end
   def is_commissioning_open()
     return self.commissioning_open != nil

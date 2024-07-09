@@ -2428,7 +2428,7 @@ be_local_closure(class_Matter_Device_process_attribute_expansion,   /* name */
 extern const bclass be_class_Matter_Device;
 be_local_closure(class_Matter_Device_stop_basic_commissioning,   /* name */
   be_nested_proto(
-    5,                          /* nstack */
+    6,                          /* nstack */
     1,                          /* argc */
     2,                          /* varg */
     0,                          /* has upvals */
@@ -2453,32 +2453,26 @@ be_local_closure(class_Matter_Device_stop_basic_commissioning,   /* name */
     }),
     be_str_weak(stop_basic_commissioning),
     &be_const_str_solidified,
-    ( &(const binstruction[25]) {  /* code */
-      0x8C040100,  //  0000  GETMET	R1	R0	K0
-      0x7C040200,  //  0001  CALL	R1	1
-      0x78060004,  //  0002  JMPF	R1	#0008
-      0xB8060200,  //  0003  GETNGBL	R1	K1
-      0x8C040302,  //  0004  GETMET	R1	R1	K2
-      0x580C0003,  //  0005  LDCONST	R3	K3
-      0x58100004,  //  0006  LDCONST	R4	K4
-      0x7C040600,  //  0007  CALL	R1	3
-      0x4C040000,  //  0008  LDNIL	R1
+    ( &(const binstruction[19]) {  /* code */
+      0x4C040000,  //  0000  LDNIL	R1
+      0x8C080100,  //  0001  GETMET	R2	R0	K0
+      0x7C080200,  //  0002  CALL	R2	1
+      0x780A0004,  //  0003  JMPF	R2	#0009
+      0xB80A0200,  //  0004  GETNGBL	R2	K1
+      0x8C080502,  //  0005  GETMET	R2	R2	K2
+      0x58100003,  //  0006  LDCONST	R4	K3
+      0x58140004,  //  0007  LDCONST	R5	K4
+      0x7C080600,  //  0008  CALL	R2	3
       0x90020A01,  //  0009  SETMBR	R0	K5	R1
-      0x8C040106,  //  000A  GETMET	R1	R0	K6
-      0x7C040200,  //  000B  CALL	R1	1
-      0x4C040000,  //  000C  LDNIL	R1
-      0x90020E01,  //  000D  SETMBR	R0	K7	R1
-      0x4C040000,  //  000E  LDNIL	R1
-      0x90021001,  //  000F  SETMBR	R0	K8	R1
-      0x4C040000,  //  0010  LDNIL	R1
-      0x90021201,  //  0011  SETMBR	R0	K9	R1
-      0x4C040000,  //  0012  LDNIL	R1
-      0x90021401,  //  0013  SETMBR	R0	K10	R1
-      0x4C040000,  //  0014  LDNIL	R1
-      0x90021601,  //  0015  SETMBR	R0	K11	R1
-      0x4C040000,  //  0016  LDNIL	R1
-      0x90021801,  //  0017  SETMBR	R0	K12	R1
-      0x80000000,  //  0018  RET	0
+      0x8C080106,  //  000A  GETMET	R2	R0	K6
+      0x7C080200,  //  000B  CALL	R2	1
+      0x90020E01,  //  000C  SETMBR	R0	K7	R1
+      0x90021001,  //  000D  SETMBR	R0	K8	R1
+      0x90021201,  //  000E  SETMBR	R0	K9	R1
+      0x90021401,  //  000F  SETMBR	R0	K10	R1
+      0x90021601,  //  0010  SETMBR	R0	K11	R1
+      0x90021801,  //  0011  SETMBR	R0	K12	R1
+      0x80000000,  //  0012  RET	0
     })
   )
 );

@@ -2627,98 +2627,20 @@ be_local_closure(class_Matter_ReadRequestMessage_from_TLV,   /* name */
 
 
 /********************************************************************
-** Solidified function: to_TLV
-********************************************************************/
-extern const bclass be_class_Matter_ReadRequestMessage;
-be_local_closure(class_Matter_ReadRequestMessage_to_TLV,   /* name */
-  be_nested_proto(
-    8,                          /* nstack */
-    1,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    &be_class_Matter_ReadRequestMessage, 
-    1,                          /* has constants */
-    ( &(const bvalue[17]) {     /* constants */
-    /* K0   */  be_nested_str_weak(matter),
-    /* K1   */  be_nested_str_weak(TLV),
-    /* K2   */  be_nested_str_weak(Matter_TLV_struct),
-    /* K3   */  be_nested_str_weak(to_TLV_array),
-    /* K4   */  be_const_int(0),
-    /* K5   */  be_nested_str_weak(attributes_requests),
-    /* K6   */  be_const_int(1),
-    /* K7   */  be_nested_str_weak(event_requests),
-    /* K8   */  be_const_int(2),
-    /* K9   */  be_nested_str_weak(event_filters),
-    /* K10  */  be_nested_str_weak(add_TLV),
-    /* K11  */  be_const_int(3),
-    /* K12  */  be_nested_str_weak(BOOL),
-    /* K13  */  be_nested_str_weak(fabric_filtered),
-    /* K14  */  be_nested_str_weak(data_version_filters),
-    /* K15  */  be_nested_str_weak(U1),
-    /* K16  */  be_nested_str_weak(InteractionModelRevision),
-    }),
-    be_str_weak(to_TLV),
-    &be_const_str_solidified,
-    ( &(const binstruction[35]) {  /* code */
-      0xB8060000,  //  0000  GETNGBL	R1	K0
-      0x88040301,  //  0001  GETMBR	R1	R1	K1
-      0x8C080302,  //  0002  GETMET	R2	R1	K2
-      0x7C080200,  //  0003  CALL	R2	1
-      0x8C0C0103,  //  0004  GETMET	R3	R0	K3
-      0x5C140400,  //  0005  MOVE	R5	R2
-      0x58180004,  //  0006  LDCONST	R6	K4
-      0x881C0105,  //  0007  GETMBR	R7	R0	K5
-      0x7C0C0800,  //  0008  CALL	R3	4
-      0x8C0C0103,  //  0009  GETMET	R3	R0	K3
-      0x5C140400,  //  000A  MOVE	R5	R2
-      0x58180006,  //  000B  LDCONST	R6	K6
-      0x881C0107,  //  000C  GETMBR	R7	R0	K7
-      0x7C0C0800,  //  000D  CALL	R3	4
-      0x8C0C0103,  //  000E  GETMET	R3	R0	K3
-      0x5C140400,  //  000F  MOVE	R5	R2
-      0x58180008,  //  0010  LDCONST	R6	K8
-      0x881C0109,  //  0011  GETMBR	R7	R0	K9
-      0x7C0C0800,  //  0012  CALL	R3	4
-      0x8C0C050A,  //  0013  GETMET	R3	R2	K10
-      0x5814000B,  //  0014  LDCONST	R5	K11
-      0x8818030C,  //  0015  GETMBR	R6	R1	K12
-      0x881C010D,  //  0016  GETMBR	R7	R0	K13
-      0x7C0C0800,  //  0017  CALL	R3	4
-      0x8C0C0103,  //  0018  GETMET	R3	R0	K3
-      0x5C140400,  //  0019  MOVE	R5	R2
-      0x541A0003,  //  001A  LDINT	R6	4
-      0x881C010E,  //  001B  GETMBR	R7	R0	K14
-      0x7C0C0800,  //  001C  CALL	R3	4
-      0x8C0C050A,  //  001D  GETMET	R3	R2	K10
-      0x541600FE,  //  001E  LDINT	R5	255
-      0x8818030F,  //  001F  GETMBR	R6	R1	K15
-      0x881C0110,  //  0020  GETMBR	R7	R0	K16
-      0x7C0C0800,  //  0021  CALL	R3	4
-      0x80040400,  //  0022  RET	1	R2
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified class: Matter_ReadRequestMessage
 ********************************************************************/
 extern const bclass be_class_Matter_IM_Message_base;
 be_local_class(Matter_ReadRequestMessage,
     5,
     &be_class_Matter_IM_Message_base,
-    be_nested_map(7,
+    be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(event_filters, -1), be_const_var(2) },
-        { be_const_key_weak(fabric_filtered, 3), be_const_var(3) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_ReadRequestMessage_to_TLV_closure) },
         { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_ReadRequestMessage_from_TLV_closure) },
+        { be_const_key_weak(event_filters, -1), be_const_var(2) },
+        { be_const_key_weak(fabric_filtered, -1), be_const_var(3) },
         { be_const_key_weak(data_version_filters, -1), be_const_var(4) },
+        { be_const_key_weak(event_requests, 3), be_const_var(1) },
         { be_const_key_weak(attributes_requests, -1), be_const_var(0) },
-        { be_const_key_weak(event_requests, 0), be_const_var(1) },
     })),
     be_str_weak(Matter_ReadRequestMessage)
 );
@@ -2908,79 +2830,6 @@ be_local_class(Matter_ReadRequestMessage_solo,
 extern const bclass be_class_Matter_ReportDataMessage;
 
 /********************************************************************
-** Solidified function: from_TLV
-********************************************************************/
-extern const bclass be_class_Matter_ReportDataMessage;
-be_local_closure(class_Matter_ReportDataMessage_from_TLV,   /* name */
-  be_nested_proto(
-    7,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    &be_class_Matter_ReportDataMessage, 
-    1,                          /* has constants */
-    ( &(const bvalue[14]) {     /* constants */
-    /* K0   */  be_nested_str_weak(subscription_id),
-    /* K1   */  be_nested_str_weak(findsubval),
-    /* K2   */  be_const_int(0),
-    /* K3   */  be_nested_str_weak(attribute_reports),
-    /* K4   */  be_nested_str_weak(from_TLV_array),
-    /* K5   */  be_const_int(1),
-    /* K6   */  be_nested_str_weak(matter),
-    /* K7   */  be_nested_str_weak(AttributeReportIB),
-    /* K8   */  be_nested_str_weak(event_reports),
-    /* K9   */  be_const_int(2),
-    /* K10  */  be_nested_str_weak(EventReportIB),
-    /* K11  */  be_nested_str_weak(more_chunked_messages),
-    /* K12  */  be_const_int(3),
-    /* K13  */  be_nested_str_weak(suppress_response),
-    }),
-    be_str_weak(from_TLV),
-    &be_const_str_solidified,
-    ( &(const binstruction[34]) {  /* code */
-      0x4C080000,  //  0000  LDNIL	R2
-      0x1C080202,  //  0001  EQ	R2	R1	R2
-      0x780A0001,  //  0002  JMPF	R2	#0005
-      0x4C080000,  //  0003  LDNIL	R2
-      0x80040400,  //  0004  RET	1	R2
-      0x8C080301,  //  0005  GETMET	R2	R1	K1
-      0x58100002,  //  0006  LDCONST	R4	K2
-      0x7C080400,  //  0007  CALL	R2	2
-      0x90020002,  //  0008  SETMBR	R0	K0	R2
-      0x8C080104,  //  0009  GETMET	R2	R0	K4
-      0x8C100301,  //  000A  GETMET	R4	R1	K1
-      0x58180005,  //  000B  LDCONST	R6	K5
-      0x7C100400,  //  000C  CALL	R4	2
-      0xB8160C00,  //  000D  GETNGBL	R5	K6
-      0x88140B07,  //  000E  GETMBR	R5	R5	K7
-      0x7C080600,  //  000F  CALL	R2	3
-      0x90020602,  //  0010  SETMBR	R0	K3	R2
-      0x8C080104,  //  0011  GETMET	R2	R0	K4
-      0x8C100301,  //  0012  GETMET	R4	R1	K1
-      0x58180009,  //  0013  LDCONST	R6	K9
-      0x7C100400,  //  0014  CALL	R4	2
-      0xB8160C00,  //  0015  GETNGBL	R5	K6
-      0x88140B0A,  //  0016  GETMBR	R5	R5	K10
-      0x7C080600,  //  0017  CALL	R2	3
-      0x90021002,  //  0018  SETMBR	R0	K8	R2
-      0x8C080301,  //  0019  GETMET	R2	R1	K1
-      0x5810000C,  //  001A  LDCONST	R4	K12
-      0x7C080400,  //  001B  CALL	R2	2
-      0x90021602,  //  001C  SETMBR	R0	K11	R2
-      0x8C080301,  //  001D  GETMET	R2	R1	K1
-      0x54120003,  //  001E  LDINT	R4	4
-      0x7C080400,  //  001F  CALL	R2	2
-      0x90021A02,  //  0020  SETMBR	R0	K13	R2
-      0x80040000,  //  0021  RET	1	R0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: to_TLV
 ********************************************************************/
 extern const bclass be_class_Matter_ReportDataMessage;
@@ -3065,15 +2914,14 @@ extern const bclass be_class_Matter_IM_Message_base;
 be_local_class(Matter_ReportDataMessage,
     5,
     &be_class_Matter_IM_Message_base,
-    be_nested_map(7,
+    be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(attribute_reports, -1), be_const_var(1) },
-        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_ReportDataMessage_from_TLV_closure) },
+        { be_const_key_weak(suppress_response, -1), be_const_var(4) },
+        { be_const_key_weak(event_reports, 3), be_const_var(2) },
+        { be_const_key_weak(subscription_id, -1), be_const_var(0) },
         { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_ReportDataMessage_to_TLV_closure) },
         { be_const_key_weak(more_chunked_messages, -1), be_const_var(3) },
-        { be_const_key_weak(event_reports, -1), be_const_var(2) },
-        { be_const_key_weak(suppress_response, -1), be_const_var(4) },
-        { be_const_key_weak(subscription_id, 5), be_const_var(0) },
+        { be_const_key_weak(attribute_reports, -1), be_const_var(1) },
     })),
     be_str_weak(Matter_ReportDataMessage)
 );
@@ -3183,120 +3031,23 @@ be_local_closure(class_Matter_SubscribeRequestMessage_from_TLV,   /* name */
 
 
 /********************************************************************
-** Solidified function: to_TLV
-********************************************************************/
-extern const bclass be_class_Matter_SubscribeRequestMessage;
-be_local_closure(class_Matter_SubscribeRequestMessage_to_TLV,   /* name */
-  be_nested_proto(
-    8,                          /* nstack */
-    1,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    &be_class_Matter_SubscribeRequestMessage, 
-    1,                          /* has constants */
-    ( &(const bvalue[21]) {     /* constants */
-    /* K0   */  be_nested_str_weak(matter),
-    /* K1   */  be_nested_str_weak(TLV),
-    /* K2   */  be_nested_str_weak(Matter_TLV_struct),
-    /* K3   */  be_nested_str_weak(add_TLV),
-    /* K4   */  be_const_int(0),
-    /* K5   */  be_nested_str_weak(BOOL),
-    /* K6   */  be_nested_str_weak(keep_subscriptions),
-    /* K7   */  be_const_int(1),
-    /* K8   */  be_nested_str_weak(U2),
-    /* K9   */  be_nested_str_weak(min_interval_floor),
-    /* K10  */  be_const_int(2),
-    /* K11  */  be_nested_str_weak(max_interval_ceiling),
-    /* K12  */  be_nested_str_weak(to_TLV_array),
-    /* K13  */  be_const_int(3),
-    /* K14  */  be_nested_str_weak(attributes_requests),
-    /* K15  */  be_nested_str_weak(event_requests),
-    /* K16  */  be_nested_str_weak(event_filters),
-    /* K17  */  be_nested_str_weak(fabric_filtered),
-    /* K18  */  be_nested_str_weak(data_version_filters),
-    /* K19  */  be_nested_str_weak(U1),
-    /* K20  */  be_nested_str_weak(InteractionModelRevision),
-    }),
-    be_str_weak(to_TLV),
-    &be_const_str_solidified,
-    ( &(const binstruction[50]) {  /* code */
-      0xB8060000,  //  0000  GETNGBL	R1	K0
-      0x88040301,  //  0001  GETMBR	R1	R1	K1
-      0x8C080302,  //  0002  GETMET	R2	R1	K2
-      0x7C080200,  //  0003  CALL	R2	1
-      0x8C0C0503,  //  0004  GETMET	R3	R2	K3
-      0x58140004,  //  0005  LDCONST	R5	K4
-      0x88180305,  //  0006  GETMBR	R6	R1	K5
-      0x881C0106,  //  0007  GETMBR	R7	R0	K6
-      0x7C0C0800,  //  0008  CALL	R3	4
-      0x8C0C0503,  //  0009  GETMET	R3	R2	K3
-      0x58140007,  //  000A  LDCONST	R5	K7
-      0x88180308,  //  000B  GETMBR	R6	R1	K8
-      0x881C0109,  //  000C  GETMBR	R7	R0	K9
-      0x7C0C0800,  //  000D  CALL	R3	4
-      0x8C0C0503,  //  000E  GETMET	R3	R2	K3
-      0x5814000A,  //  000F  LDCONST	R5	K10
-      0x88180308,  //  0010  GETMBR	R6	R1	K8
-      0x881C010B,  //  0011  GETMBR	R7	R0	K11
-      0x7C0C0800,  //  0012  CALL	R3	4
-      0x8C0C010C,  //  0013  GETMET	R3	R0	K12
-      0x5C140400,  //  0014  MOVE	R5	R2
-      0x5818000D,  //  0015  LDCONST	R6	K13
-      0x881C010E,  //  0016  GETMBR	R7	R0	K14
-      0x7C0C0800,  //  0017  CALL	R3	4
-      0x8C0C010C,  //  0018  GETMET	R3	R0	K12
-      0x5C140400,  //  0019  MOVE	R5	R2
-      0x541A0003,  //  001A  LDINT	R6	4
-      0x881C010F,  //  001B  GETMBR	R7	R0	K15
-      0x7C0C0800,  //  001C  CALL	R3	4
-      0x8C0C010C,  //  001D  GETMET	R3	R0	K12
-      0x5C140400,  //  001E  MOVE	R5	R2
-      0x541A0004,  //  001F  LDINT	R6	5
-      0x881C0110,  //  0020  GETMBR	R7	R0	K16
-      0x7C0C0800,  //  0021  CALL	R3	4
-      0x8C0C0503,  //  0022  GETMET	R3	R2	K3
-      0x54160006,  //  0023  LDINT	R5	7
-      0x88180305,  //  0024  GETMBR	R6	R1	K5
-      0x881C0111,  //  0025  GETMBR	R7	R0	K17
-      0x7C0C0800,  //  0026  CALL	R3	4
-      0x8C0C010C,  //  0027  GETMET	R3	R0	K12
-      0x5C140400,  //  0028  MOVE	R5	R2
-      0x541A0007,  //  0029  LDINT	R6	8
-      0x881C0112,  //  002A  GETMBR	R7	R0	K18
-      0x7C0C0800,  //  002B  CALL	R3	4
-      0x8C0C0503,  //  002C  GETMET	R3	R2	K3
-      0x541600FE,  //  002D  LDINT	R5	255
-      0x88180313,  //  002E  GETMBR	R6	R1	K19
-      0x881C0114,  //  002F  GETMBR	R7	R0	K20
-      0x7C0C0800,  //  0030  CALL	R3	4
-      0x80040400,  //  0031  RET	1	R2
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified class: Matter_SubscribeRequestMessage
 ********************************************************************/
 extern const bclass be_class_Matter_IM_Message_base;
 be_local_class(Matter_SubscribeRequestMessage,
     8,
     &be_class_Matter_IM_Message_base,
-    be_nested_map(10,
+    be_nested_map(9,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_SubscribeRequestMessage_to_TLV_closure) },
-        { be_const_key_weak(attributes_requests, 7), be_const_var(3) },
-        { be_const_key_weak(fabric_filtered, 6), be_const_var(6) },
+        { be_const_key_weak(attributes_requests, -1), be_const_var(3) },
+        { be_const_key_weak(event_requests, -1), be_const_var(4) },
         { be_const_key_weak(min_interval_floor, -1), be_const_var(1) },
+        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_SubscribeRequestMessage_from_TLV_closure) },
+        { be_const_key_weak(event_filters, -1), be_const_var(5) },
+        { be_const_key_weak(fabric_filtered, 0), be_const_var(6) },
+        { be_const_key_weak(keep_subscriptions, 3), be_const_var(0) },
         { be_const_key_weak(data_version_filters, -1), be_const_var(7) },
         { be_const_key_weak(max_interval_ceiling, -1), be_const_var(2) },
-        { be_const_key_weak(event_requests, 3), be_const_var(4) },
-        { be_const_key_weak(event_filters, -1), be_const_var(5) },
-        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_SubscribeRequestMessage_from_TLV_closure) },
-        { be_const_key_weak(keep_subscriptions, 0), be_const_var(0) },
     })),
     be_str_weak(Matter_SubscribeRequestMessage)
 );
@@ -3361,138 +3112,22 @@ be_local_closure(class_Matter_SubscribeResponseMessage_to_TLV,   /* name */
 
 
 /********************************************************************
-** Solidified function: from_TLV
-********************************************************************/
-extern const bclass be_class_Matter_SubscribeResponseMessage;
-be_local_closure(class_Matter_SubscribeResponseMessage_from_TLV,   /* name */
-  be_nested_proto(
-    5,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    &be_class_Matter_SubscribeResponseMessage, 
-    1,                          /* has constants */
-    ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_weak(subscription_id),
-    /* K1   */  be_nested_str_weak(findsubval),
-    /* K2   */  be_const_int(0),
-    /* K3   */  be_nested_str_weak(max_interval),
-    /* K4   */  be_const_int(2),
-    }),
-    be_str_weak(from_TLV),
-    &be_const_str_solidified,
-    ( &(const binstruction[14]) {  /* code */
-      0x4C080000,  //  0000  LDNIL	R2
-      0x1C080202,  //  0001  EQ	R2	R1	R2
-      0x780A0001,  //  0002  JMPF	R2	#0005
-      0x4C080000,  //  0003  LDNIL	R2
-      0x80040400,  //  0004  RET	1	R2
-      0x8C080301,  //  0005  GETMET	R2	R1	K1
-      0x58100002,  //  0006  LDCONST	R4	K2
-      0x7C080400,  //  0007  CALL	R2	2
-      0x90020002,  //  0008  SETMBR	R0	K0	R2
-      0x8C080301,  //  0009  GETMET	R2	R1	K1
-      0x58100004,  //  000A  LDCONST	R4	K4
-      0x7C080400,  //  000B  CALL	R2	2
-      0x90020602,  //  000C  SETMBR	R0	K3	R2
-      0x80040000,  //  000D  RET	1	R0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified class: Matter_SubscribeResponseMessage
 ********************************************************************/
 extern const bclass be_class_Matter_IM_Message_base;
 be_local_class(Matter_SubscribeResponseMessage,
     2,
     &be_class_Matter_IM_Message_base,
-    be_nested_map(4,
+    be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(subscription_id, 2), be_const_var(0) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_SubscribeResponseMessage_to_TLV_closure) },
-        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_SubscribeResponseMessage_from_TLV_closure) },
         { be_const_key_weak(max_interval, -1), be_const_var(1) },
+        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_SubscribeResponseMessage_to_TLV_closure) },
+        { be_const_key_weak(subscription_id, -1), be_const_var(0) },
     })),
     be_str_weak(Matter_SubscribeResponseMessage)
 );
 
 extern const bclass be_class_Matter_WriteRequestMessage;
-
-/********************************************************************
-** Solidified function: to_TLV
-********************************************************************/
-extern const bclass be_class_Matter_WriteRequestMessage;
-be_local_closure(class_Matter_WriteRequestMessage_to_TLV,   /* name */
-  be_nested_proto(
-    8,                          /* nstack */
-    1,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    &be_class_Matter_WriteRequestMessage, 
-    1,                          /* has constants */
-    ( &(const bvalue[16]) {     /* constants */
-    /* K0   */  be_nested_str_weak(matter),
-    /* K1   */  be_nested_str_weak(TLV),
-    /* K2   */  be_nested_str_weak(Matter_TLV_struct),
-    /* K3   */  be_nested_str_weak(add_TLV),
-    /* K4   */  be_const_int(0),
-    /* K5   */  be_nested_str_weak(BOOL),
-    /* K6   */  be_nested_str_weak(suppress_response),
-    /* K7   */  be_const_int(1),
-    /* K8   */  be_nested_str_weak(timed_request),
-    /* K9   */  be_nested_str_weak(to_TLV_array),
-    /* K10  */  be_const_int(2),
-    /* K11  */  be_nested_str_weak(write_requests),
-    /* K12  */  be_const_int(3),
-    /* K13  */  be_nested_str_weak(more_chunked_messages),
-    /* K14  */  be_nested_str_weak(U1),
-    /* K15  */  be_nested_str_weak(InteractionModelRevision),
-    }),
-    be_str_weak(to_TLV),
-    &be_const_str_solidified,
-    ( &(const binstruction[30]) {  /* code */
-      0xB8060000,  //  0000  GETNGBL	R1	K0
-      0x88040301,  //  0001  GETMBR	R1	R1	K1
-      0x8C080302,  //  0002  GETMET	R2	R1	K2
-      0x7C080200,  //  0003  CALL	R2	1
-      0x8C0C0503,  //  0004  GETMET	R3	R2	K3
-      0x58140004,  //  0005  LDCONST	R5	K4
-      0x88180305,  //  0006  GETMBR	R6	R1	K5
-      0x881C0106,  //  0007  GETMBR	R7	R0	K6
-      0x7C0C0800,  //  0008  CALL	R3	4
-      0x8C0C0503,  //  0009  GETMET	R3	R2	K3
-      0x58140007,  //  000A  LDCONST	R5	K7
-      0x88180305,  //  000B  GETMBR	R6	R1	K5
-      0x881C0108,  //  000C  GETMBR	R7	R0	K8
-      0x7C0C0800,  //  000D  CALL	R3	4
-      0x8C0C0109,  //  000E  GETMET	R3	R0	K9
-      0x5C140400,  //  000F  MOVE	R5	R2
-      0x5818000A,  //  0010  LDCONST	R6	K10
-      0x881C010B,  //  0011  GETMBR	R7	R0	K11
-      0x7C0C0800,  //  0012  CALL	R3	4
-      0x8C0C0503,  //  0013  GETMET	R3	R2	K3
-      0x5814000C,  //  0014  LDCONST	R5	K12
-      0x88180305,  //  0015  GETMBR	R6	R1	K5
-      0x881C010D,  //  0016  GETMBR	R7	R0	K13
-      0x7C0C0800,  //  0017  CALL	R3	4
-      0x8C0C0503,  //  0018  GETMET	R3	R2	K3
-      0x541600FE,  //  0019  LDINT	R5	255
-      0x8818030E,  //  001A  GETMBR	R6	R1	K14
-      0x881C010F,  //  001B  GETMBR	R7	R0	K15
-      0x7C0C0800,  //  001C  CALL	R3	4
-      0x80040400,  //  001D  RET	1	R2
-    })
-  )
-);
-/*******************************************************************/
-
 
 /********************************************************************
 ** Solidified function: from_TLV
@@ -3564,64 +3199,18 @@ extern const bclass be_class_Matter_IM_Message_base;
 be_local_class(Matter_WriteRequestMessage,
     4,
     &be_class_Matter_IM_Message_base,
-    be_nested_map(6,
+    be_nested_map(5,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(suppress_response, 5), be_const_var(0) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_WriteRequestMessage_to_TLV_closure) },
-        { be_const_key_weak(timed_request, -1), be_const_var(1) },
         { be_const_key_weak(write_requests, -1), be_const_var(2) },
-        { be_const_key_weak(more_chunked_messages, -1), be_const_var(3) },
+        { be_const_key_weak(suppress_response, 2), be_const_var(0) },
+        { be_const_key_weak(timed_request, -1), be_const_var(1) },
         { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_WriteRequestMessage_from_TLV_closure) },
+        { be_const_key_weak(more_chunked_messages, -1), be_const_var(3) },
     })),
     be_str_weak(Matter_WriteRequestMessage)
 );
 
 extern const bclass be_class_Matter_WriteResponseMessage;
-
-/********************************************************************
-** Solidified function: from_TLV
-********************************************************************/
-extern const bclass be_class_Matter_WriteResponseMessage;
-be_local_closure(class_Matter_WriteResponseMessage_from_TLV,   /* name */
-  be_nested_proto(
-    7,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    &be_class_Matter_WriteResponseMessage, 
-    1,                          /* has constants */
-    ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_str_weak(write_requests),
-    /* K1   */  be_nested_str_weak(from_TLV_array),
-    /* K2   */  be_nested_str_weak(findsubval),
-    /* K3   */  be_const_int(0),
-    /* K4   */  be_nested_str_weak(matter),
-    /* K5   */  be_nested_str_weak(AttributeStatusIB),
-    }),
-    be_str_weak(from_TLV),
-    &be_const_str_solidified,
-    ( &(const binstruction[14]) {  /* code */
-      0x4C080000,  //  0000  LDNIL	R2
-      0x1C080202,  //  0001  EQ	R2	R1	R2
-      0x780A0001,  //  0002  JMPF	R2	#0005
-      0x4C080000,  //  0003  LDNIL	R2
-      0x80040400,  //  0004  RET	1	R2
-      0x8C080101,  //  0005  GETMET	R2	R0	K1
-      0x8C100302,  //  0006  GETMET	R4	R1	K2
-      0x58180003,  //  0007  LDCONST	R6	K3
-      0x7C100400,  //  0008  CALL	R4	2
-      0xB8160800,  //  0009  GETNGBL	R5	K4
-      0x88140B05,  //  000A  GETMBR	R5	R5	K5
-      0x7C080600,  //  000B  CALL	R2	3
-      0x90020002,  //  000C  SETMBR	R0	K0	R2
-      0x80040000,  //  000D  RET	1	R0
-    })
-  )
-);
-/*******************************************************************/
-
 
 /********************************************************************
 ** Solidified function: to_TLV
@@ -3679,11 +3268,10 @@ extern const bclass be_class_Matter_IM_Message_base;
 be_local_class(Matter_WriteResponseMessage,
     1,
     &be_class_Matter_IM_Message_base,
-    be_nested_map(3,
+    be_nested_map(2,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(from_TLV, 2), be_const_closure(class_Matter_WriteResponseMessage_from_TLV_closure) },
         { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_WriteResponseMessage_to_TLV_closure) },
-        { be_const_key_weak(write_responses, -1), be_const_var(0) },
+        { be_const_key_weak(write_responses, 0), be_const_var(0) },
     })),
     be_str_weak(Matter_WriteResponseMessage)
 );
@@ -3729,66 +3317,16 @@ be_local_closure(class_Matter_TimedRequestMessage_from_TLV,   /* name */
 
 
 /********************************************************************
-** Solidified function: to_TLV
-********************************************************************/
-extern const bclass be_class_Matter_TimedRequestMessage;
-be_local_closure(class_Matter_TimedRequestMessage_to_TLV,   /* name */
-  be_nested_proto(
-    8,                          /* nstack */
-    1,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    &be_class_Matter_TimedRequestMessage, 
-    1,                          /* has constants */
-    ( &(const bvalue[ 9]) {     /* constants */
-    /* K0   */  be_nested_str_weak(matter),
-    /* K1   */  be_nested_str_weak(TLV),
-    /* K2   */  be_nested_str_weak(Matter_TLV_struct),
-    /* K3   */  be_nested_str_weak(add_TLV),
-    /* K4   */  be_const_int(0),
-    /* K5   */  be_nested_str_weak(U2),
-    /* K6   */  be_nested_str_weak(timeout),
-    /* K7   */  be_nested_str_weak(U1),
-    /* K8   */  be_nested_str_weak(InteractionModelRevision),
-    }),
-    be_str_weak(to_TLV),
-    &be_const_str_solidified,
-    ( &(const binstruction[15]) {  /* code */
-      0xB8060000,  //  0000  GETNGBL	R1	K0
-      0x88040301,  //  0001  GETMBR	R1	R1	K1
-      0x8C080302,  //  0002  GETMET	R2	R1	K2
-      0x7C080200,  //  0003  CALL	R2	1
-      0x8C0C0503,  //  0004  GETMET	R3	R2	K3
-      0x58140004,  //  0005  LDCONST	R5	K4
-      0x88180305,  //  0006  GETMBR	R6	R1	K5
-      0x881C0106,  //  0007  GETMBR	R7	R0	K6
-      0x7C0C0800,  //  0008  CALL	R3	4
-      0x8C0C0503,  //  0009  GETMET	R3	R2	K3
-      0x541600FE,  //  000A  LDINT	R5	255
-      0x88180307,  //  000B  GETMBR	R6	R1	K7
-      0x881C0108,  //  000C  GETMBR	R7	R0	K8
-      0x7C0C0800,  //  000D  CALL	R3	4
-      0x80040400,  //  000E  RET	1	R2
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified class: Matter_TimedRequestMessage
 ********************************************************************/
 extern const bclass be_class_Matter_IM_Message_base;
 be_local_class(Matter_TimedRequestMessage,
     1,
     &be_class_Matter_IM_Message_base,
-    be_nested_map(3,
+    be_nested_map(2,
     ( (struct bmapnode*) &(const bmapnode[]) {
+        { be_const_key_weak(timeout, 1), be_const_var(0) },
         { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_TimedRequestMessage_from_TLV_closure) },
-        { be_const_key_weak(timeout, 2), be_const_var(0) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_TimedRequestMessage_to_TLV_closure) },
     })),
     be_str_weak(Matter_TimedRequestMessage)
 );
@@ -3853,83 +3391,18 @@ be_local_closure(class_Matter_InvokeRequestMessage_from_TLV,   /* name */
 
 
 /********************************************************************
-** Solidified function: to_TLV
-********************************************************************/
-extern const bclass be_class_Matter_InvokeRequestMessage;
-be_local_closure(class_Matter_InvokeRequestMessage_to_TLV,   /* name */
-  be_nested_proto(
-    8,                          /* nstack */
-    1,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    &be_class_Matter_InvokeRequestMessage, 
-    1,                          /* has constants */
-    ( &(const bvalue[14]) {     /* constants */
-    /* K0   */  be_nested_str_weak(matter),
-    /* K1   */  be_nested_str_weak(TLV),
-    /* K2   */  be_nested_str_weak(Matter_TLV_struct),
-    /* K3   */  be_nested_str_weak(add_TLV),
-    /* K4   */  be_const_int(0),
-    /* K5   */  be_nested_str_weak(BOOL),
-    /* K6   */  be_nested_str_weak(suppress_response),
-    /* K7   */  be_const_int(1),
-    /* K8   */  be_nested_str_weak(timed_request),
-    /* K9   */  be_nested_str_weak(to_TLV_array),
-    /* K10  */  be_const_int(2),
-    /* K11  */  be_nested_str_weak(invoke_requests),
-    /* K12  */  be_nested_str_weak(U1),
-    /* K13  */  be_nested_str_weak(InteractionModelRevision),
-    }),
-    be_str_weak(to_TLV),
-    &be_const_str_solidified,
-    ( &(const binstruction[25]) {  /* code */
-      0xB8060000,  //  0000  GETNGBL	R1	K0
-      0x88040301,  //  0001  GETMBR	R1	R1	K1
-      0x8C080302,  //  0002  GETMET	R2	R1	K2
-      0x7C080200,  //  0003  CALL	R2	1
-      0x8C0C0503,  //  0004  GETMET	R3	R2	K3
-      0x58140004,  //  0005  LDCONST	R5	K4
-      0x88180305,  //  0006  GETMBR	R6	R1	K5
-      0x881C0106,  //  0007  GETMBR	R7	R0	K6
-      0x7C0C0800,  //  0008  CALL	R3	4
-      0x8C0C0503,  //  0009  GETMET	R3	R2	K3
-      0x58140007,  //  000A  LDCONST	R5	K7
-      0x88180305,  //  000B  GETMBR	R6	R1	K5
-      0x881C0108,  //  000C  GETMBR	R7	R0	K8
-      0x7C0C0800,  //  000D  CALL	R3	4
-      0x8C0C0109,  //  000E  GETMET	R3	R0	K9
-      0x5C140400,  //  000F  MOVE	R5	R2
-      0x5818000A,  //  0010  LDCONST	R6	K10
-      0x881C010B,  //  0011  GETMBR	R7	R0	K11
-      0x7C0C0800,  //  0012  CALL	R3	4
-      0x8C0C0503,  //  0013  GETMET	R3	R2	K3
-      0x541600FE,  //  0014  LDINT	R5	255
-      0x8818030C,  //  0015  GETMBR	R6	R1	K12
-      0x881C010D,  //  0016  GETMBR	R7	R0	K13
-      0x7C0C0800,  //  0017  CALL	R3	4
-      0x80040400,  //  0018  RET	1	R2
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified class: Matter_InvokeRequestMessage
 ********************************************************************/
 extern const bclass be_class_Matter_IM_Message_base;
 be_local_class(Matter_InvokeRequestMessage,
     3,
     &be_class_Matter_IM_Message_base,
-    be_nested_map(5,
+    be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(invoke_requests, -1), be_const_var(2) },
-        { be_const_key_weak(suppress_response, 2), be_const_var(0) },
+        { be_const_key_weak(suppress_response, 1), be_const_var(0) },
+        { be_const_key_weak(from_TLV, 3), be_const_closure(class_Matter_InvokeRequestMessage_from_TLV_closure) },
         { be_const_key_weak(timed_request, -1), be_const_var(1) },
-        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_InvokeRequestMessage_from_TLV_closure) },
-        { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_InvokeRequestMessage_to_TLV_closure) },
+        { be_const_key_weak(invoke_requests, -1), be_const_var(2) },
     })),
     be_str_weak(Matter_InvokeRequestMessage)
 );
@@ -4264,69 +3737,17 @@ be_local_closure(class_Matter_InvokeResponseMessage_to_TLV,   /* name */
 
 
 /********************************************************************
-** Solidified function: from_TLV
-********************************************************************/
-extern const bclass be_class_Matter_InvokeResponseMessage;
-be_local_closure(class_Matter_InvokeResponseMessage_from_TLV,   /* name */
-  be_nested_proto(
-    7,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    &be_class_Matter_InvokeResponseMessage, 
-    1,                          /* has constants */
-    ( &(const bvalue[ 8]) {     /* constants */
-    /* K0   */  be_nested_str_weak(suppress_response),
-    /* K1   */  be_nested_str_weak(findsubval),
-    /* K2   */  be_const_int(0),
-    /* K3   */  be_nested_str_weak(invoke_responses),
-    /* K4   */  be_nested_str_weak(from_TLV_array),
-    /* K5   */  be_const_int(1),
-    /* K6   */  be_nested_str_weak(matter),
-    /* K7   */  be_nested_str_weak(InvokeResponseIB),
-    }),
-    be_str_weak(from_TLV),
-    &be_const_str_solidified,
-    ( &(const binstruction[18]) {  /* code */
-      0x4C080000,  //  0000  LDNIL	R2
-      0x1C080202,  //  0001  EQ	R2	R1	R2
-      0x780A0001,  //  0002  JMPF	R2	#0005
-      0x4C080000,  //  0003  LDNIL	R2
-      0x80040400,  //  0004  RET	1	R2
-      0x8C080301,  //  0005  GETMET	R2	R1	K1
-      0x58100002,  //  0006  LDCONST	R4	K2
-      0x7C080400,  //  0007  CALL	R2	2
-      0x90020002,  //  0008  SETMBR	R0	K0	R2
-      0x8C080104,  //  0009  GETMET	R2	R0	K4
-      0x8C100301,  //  000A  GETMET	R4	R1	K1
-      0x58180005,  //  000B  LDCONST	R6	K5
-      0x7C100400,  //  000C  CALL	R4	2
-      0xB8160C00,  //  000D  GETNGBL	R5	K6
-      0x88140B07,  //  000E  GETMBR	R5	R5	K7
-      0x7C080600,  //  000F  CALL	R2	3
-      0x90020602,  //  0010  SETMBR	R0	K3	R2
-      0x80040000,  //  0011  RET	1	R0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified class: Matter_InvokeResponseMessage
 ********************************************************************/
 extern const bclass be_class_Matter_IM_Message_base;
 be_local_class(Matter_InvokeResponseMessage,
     2,
     &be_class_Matter_IM_Message_base,
-    be_nested_map(4,
+    be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(suppress_response, 3), be_const_var(0) },
+        { be_const_key_weak(suppress_response, -1), be_const_var(0) },
         { be_const_key_weak(to_TLV, -1), be_const_closure(class_Matter_InvokeResponseMessage_to_TLV_closure) },
         { be_const_key_weak(invoke_responses, -1), be_const_var(1) },
-        { be_const_key_weak(from_TLV, -1), be_const_closure(class_Matter_InvokeResponseMessage_from_TLV_closure) },
     })),
     be_str_weak(Matter_InvokeResponseMessage)
 );
