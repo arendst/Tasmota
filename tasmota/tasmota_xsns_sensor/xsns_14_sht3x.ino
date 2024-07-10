@@ -155,7 +155,7 @@ void Sht3xShow(bool json) {
       strlcpy(types, sht3x_sensors[i].types, sizeof(types));
       if (sht3x_count > 1) {
         if (two_buses) {
-          snprintf_P(types, sizeof(types), PSTR("%s%c%02Xc%d%"), sht3x_sensors[i].types, IndexSeparator(), sht3x_sensors[i].address, IndexSeparator(), ssht3x_sensors[i].bus);  // "SHT3X-0xXX-X"  
+          snprintf_P(types, sizeof(types), PSTR("%s%c%02Xc%d%"), sht3x_sensors[i].types, IndexSeparator(), sht3x_sensors[i].address, IndexSeparator(), sht3x_sensors[i].bus);  // "SHT3X-0xXX-X"  
         }
         else {
           snprintf_P(types, sizeof(types), PSTR("%s%c%02X"), sht3x_sensors[i].types, IndexSeparator(), sht3x_sensors[i].address);  // "SHT3X-0xXX"  
