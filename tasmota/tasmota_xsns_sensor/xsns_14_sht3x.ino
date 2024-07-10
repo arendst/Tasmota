@@ -40,7 +40,7 @@ const char kSht3xTypes[] PROGMEM = "SHT3X|SHTC3|SHT4X";
 uint8_t sht3x_addresses[] = { 0x44, 0x45, 0x46, 0x70 };
 
 uint8_t sht3x_count = 0;
-uint8_t bus_count = 0;
+bool two_buses = false;
 struct SHT3XSTRUCT {
   uint8_t type;        // Sensor type
   uint8_t address;     // I2C bus address
@@ -132,7 +132,7 @@ void Sht3xDetect(void) {
           GetTextIndexed(sht3x_sensors[sht3x_count].types, sizeof(sht3x_sensors[sht3x_count].types), sht3x_sensors[sht3x_count].type, kSht3xTypes);
           I2cSetActiveFound(sht3x_sensors[sht3x_count].address, sht3x_sensors[sht3x_count].types, sht3x_sensors[sht3x_count].bus);
           if (sht3x_count > 0 && sht3x_sensors[sht3x_count-1].bus != sht3x_sensors[sht3x_count].bus) {
-            bus_count = 2;
+            two_buses = true;
           }
           sht3x_count++;
           if (SHT3X_ADDRESSES == sht3x_count) {
@@ -155,7 +155,7 @@ void Sht3xShow(bool json) {
       h = ConvertHumidity(h);
       strlcpy(types, sht3x_sensors[i].types, sizeof(types));
       if (sht3x_count > 1) {
-        if (bus_count > 1) {
+        if (two_buses) {
           snprintf_P(types, sizeof(types), PSTR("%s%c%02Xc%d%"), sht3x_sensors[i].types, IndexSeparator(), sht3x_sensors[i].address, IndexSeparator(), ssht3x_sensors[i].bus);  // "SHT3X-0xXX-X"  
         }
         else {
