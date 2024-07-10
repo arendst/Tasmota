@@ -149,13 +149,13 @@ void Sht3xShow(bool json) {
       t = ConvertTemp(t);
       h = ConvertHumidity(h);
       strlcpy(types, sht3x_sensors[idx].types, sizeof(types));
-      if (sht3x_count > 1) {
-        snprintf_P(types, sizeof(types), PSTR("%s%c%02X"), sht3x_sensors[idx].types, IndexSeparator(), sht3x_sensors[idx].address);  // "SHT3X-0xXX"  
+      if (sht3x_count > 0) {
+        snprintf_P(types, sizeof(types), PSTR("%s%c%02X"), types, IndexSeparator(), sht3x_sensors[idx].address);  // "SHT3X-0xXX"  
 #ifdef ESP32
         if (TasmotaGlobal.i2c_enabled_2) {
           for (uint32_t i = 1; i < sht3x_count; i++) {
             if (sht3x_sensors[0].bus != sht3x_sensors[i].bus) {
-              snprintf_P(types, sizeof(types), PSTR("%s%c%02X%c%d"), sht3x_sensors[idx].types, IndexSeparator(), sht3x_sensors[idx].address, IndexSeparator(), sht3x_sensors[idx].bus + 1);
+              snprintf_P(types, sizeof(types), PSTR("%s%c%d"), types, IndexSeparator(), sht3x_sensors[idx].bus + 1); // "SHT3X-0xXX-X"  
               break;
             }
           }
