@@ -1,7 +1,7 @@
 /*
   xsns_14_sht3x.ino - SHT3X, SHT4X and SHTCX temperature and humidity sensor support for Tasmota
 
-  Copyright (C) 2022  Theo Arends, Stefan Tibus
+  Copyright (C) 2024  Theo Arends, Stefan Tibus, Jan-David Förster
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -40,7 +40,6 @@ const char kSht3xTypes[] PROGMEM = "SHT3X|SHTC3|SHT4X";
 uint8_t sht3x_addresses[] = { 0x44, 0x45, 0x46, 0x70 };
 
 uint8_t sht3x_count = 0;
-bool two_buses = false;
 struct SHT3XSTRUCT {
   uint8_t type;        // Sensor type
   uint8_t address;     // I2C bus address
@@ -130,9 +129,6 @@ void Sht3xDetect(void) {
         if (Sht3xRead(sht3x_count, t, h)) {
           GetTextIndexed(sht3x_sensors[sht3x_count].types, sizeof(sht3x_sensors[sht3x_count].types), sht3x_sensors[sht3x_count].type, kSht3xTypes);
           I2cSetActiveFound(sht3x_sensors[sht3x_count].address, sht3x_sensors[sht3x_count].types, sht3x_sensors[sht3x_count].bus);
-          if (sht3x_count > 0 && sht3x_sensors[sht3x_count-1].bus != sht3x_sensors[sht3x_count].bus) {
-            two_buses = true;
-          }
           sht3x_count++;
           if (SHT3X_ADDRESSES == sht3x_count) {
             return;
@@ -148,20 +144,25 @@ void Sht3xShow(bool json) {
   float h;
   char types[11];
 
-  for (uint32_t i = 0; i < sht3x_count; i++) {
-    if (Sht3xRead(i, t, h)) {
+  for (uint32_t idx = 0; idx < sht3x_count; idx++) {
+    if (Sht3xRead(idx, t, h)) {
       t = ConvertTemp(t);
       h = ConvertHumidity(h);
-      strlcpy(types, sht3x_sensors[i].types, sizeof(types));
+      strlcpy(types, sht3x_sensors[idx].types, sizeof(types));
       if (sht3x_count > 1) {
-        if (two_buses) {
-          snprintf_P(types, sizeof(types), PSTR("%s%c%02X%c%d"), sht3x_sensors[i].types, IndexSeparator(), sht3x_sensors[i].address, IndexSeparator(), sht3x_sensors[i].bus);  // "SHT3X-0xXX-X"  
+        snprintf_P(types, sizeof(types), PSTR("%s%c%02X"), sht3x_sensors[idx].types, IndexSeparator(), sht3x_sensors[idx].address);  // "SHT3X-0xXX"  
+#ifdef ESP32
+        if (TasmotaGlobal.i2c_enabled_2) {
+          for (uint32_t i = 1; i < sht3x_count; i++) {
+            if (sht3x_sensors[0].bus != sht3x_sensors[i].bus) {
+              snprintf_P(types, sizeof(types), PSTR("%s%c%02X%c%d"), sht3x_sensors[idx].types, IndexSeparator(), sht3x_sensors[idx].address, IndexSeparator(), sht3x_sensors[idx].bus + 1);
+              break;
+            }
+          }
         }
-        else {
-          snprintf_P(types, sizeof(types), PSTR("%s%c%02X"), sht3x_sensors[i].types, IndexSeparator(), sht3x_sensors[i].address);  // "SHT3X-0xXX"  
-        }
+#endif
       }
-      TempHumDewShow(json, ((0 == TasmotaGlobal.tele_period) && (0 == i)), types, t, h);
+      TempHumDewShow(json, ((0 == TasmotaGlobal.tele_period) && (0 == idx)), types, t, h);
     }
   }
 }
