@@ -131,6 +131,9 @@ void Sht3xDetect(void) {
         if (Sht3xRead(sht3x_count, t, h)) {
           GetTextIndexed(sht3x_sensors[sht3x_count].types, sizeof(sht3x_sensors[sht3x_count].types), sht3x_sensors[sht3x_count].type, kSht3xTypes);
           I2cSetActiveFound(sht3x_sensors[sht3x_count].address, sht3x_sensors[sht3x_count].types, sht3x_sensors[sht3x_count].bus);
+          if (sht3x_count > 0 && sht3x_sensors[sht3x_count-1].bus != sht3x_sensors[sht3x_count].bus) {
+            bus_count = 2;
+          }
           sht3x_count++;
           if (SHT3X_ADDRESSES == sht3x_count) {
             return;
@@ -153,7 +156,7 @@ void Sht3xShow(bool json) {
       strlcpy(types, sht3x_sensors[i].types, sizeof(types));
       if (sht3x_count > 1) {
         if (bus_count > 1) {
-          snprintf_P(types, sizeof(types), PSTR("%s%c%d%c%02X"), sht3x_sensors[i].types, IndexSeparator(), sht3x_sensors[i].bus, IndexSeparator(), sht3x_sensors[i].address);  // "SHT3X-X-0xXX"          
+          snprintf_P(types, sizeof(types), PSTR("%s%c%02Xc%d%"), sht3x_sensors[i].types, IndexSeparator(), sht3x_sensors[i].address, IndexSeparator(), ssht3x_sensors[i].bus);  // "SHT3X-0xXX-X"  
         }
         else {
           snprintf_P(types, sizeof(types), PSTR("%s%c%02X"), sht3x_sensors[i].types, IndexSeparator(), sht3x_sensors[i].address);  // "SHT3X-0xXX"  
