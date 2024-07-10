@@ -121,7 +121,6 @@ void Sht3xDetect(void) {
   float h;
 
   for (uint32_t bus = 0; bus < 2; bus++) {
-    bus_count++;
     for (uint32_t k = 0; k < SHT3X_TYPES; k++) {
       for (uint32_t i = 0; i < SHT3X_ADDRESSES; i++) {
         if (!I2cSetDevice(sht3x_addresses[i], bus)) { continue; }
