@@ -2381,6 +2381,7 @@ void MI32sendEnergyWidget(){
 #endif //USE_MI_ESP32_ENERGY
 #ifdef USE_WEBCAM
 void MI32sendCamWidget(){
+#ifndef USE_BERRY_CAM
     if (Wc.CamServer && Wc.up) {
       WSContentSend_P(PSTR("<div class='box"));
       if(Settings->webcam_config.resolution>7){
@@ -2389,6 +2390,7 @@ void MI32sendCamWidget(){
       WSContentSend_P(PSTR("' id='cam' style='background-image:url(http://%_I:81/stream);background-repeat:no-repeat;background-size:cover;'></div>"),
         (uint32_t)WiFi.localIP());
     }
+#endif //USE_BERRY_CAM
 }
 #endif //USE_WEBCAM
 
