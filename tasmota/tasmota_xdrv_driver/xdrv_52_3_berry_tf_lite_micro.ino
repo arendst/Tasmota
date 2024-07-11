@@ -114,7 +114,7 @@ TfLiteTensor* output = nullptr;
 int8_t *berry_output_buf = nullptr;
 size_t berry_output_bufsize;
 int TensorArenaSize = 2000;
-uint8_t max_invocations;    // max. invocations per second
+uint8_t max_invocations = 4;    // max. invocations per second
 
 TaskHandle_t loop_task = nullptr;
 // QueueHandle_t loop_queue = nullptr;
@@ -532,7 +532,7 @@ extern "C" {
       AddLog(LOG_LEVEL_DEBUG, PSTR("TFL: context deleted"));
       return btrue;
     }
-    TFL = new TFL_ctx_t;
+    TFL = new TFL_ctx_t{};
     TFL->options = 0;
 
     if(*(uint32_t*)type == 0x00465542){ //BUF
