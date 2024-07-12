@@ -171,9 +171,11 @@ int8_t cs;
       }
       //,3c,22,21,-1
       uint8_t i2caddr = strtol(cp, &cp, 16);
-      int8_t scl, sda;
-      scl = replacepin(&cp, Pin(GPIO_I2C_SCL, wire_n - 1));
-      sda = replacepin(&cp, Pin(GPIO_I2C_SDA, wire_n - 1));
+      //,22,21,-1
+      cp++;
+      //22,21,-1
+      int8_t scl = replacepin(&cp, Pin(GPIO_I2C_SCL, wire_n - 1));
+      int8_t sda = replacepin(&cp, Pin(GPIO_I2C_SDA, wire_n - 1));
       replacepin(&cp, Pin(GPIO_OLED_RESET));
 
       if (wire_n == 1) {
@@ -346,19 +348,17 @@ int8_t cs;
       cp += 2;
 
       uint8_t i2caddr = strtol(cp, &cp, 16);
-      int8_t scl, sda, irq = -1, rst = -1;
-      scl = replacepin(&cp, Pin(GPIO_I2C_SCL, wire_n));
-      sda = replacepin(&cp, Pin(GPIO_I2C_SDA, wire_n));
+      cp++;
+      int8_t scl = replacepin(&cp, Pin(GPIO_I2C_SCL, wire_n));
+      int8_t sda = replacepin(&cp, Pin(GPIO_I2C_SDA, wire_n));
+      int8_t irq = -1;
       if (*(cp - 1) == ',') {
         irq = strtol(cp, &cp, 10);
-      } else {
-        irq = -1;
       }
+      int8_t rst = -1;
       if (*cp == ',') {
         cp++;
         rst = strtol(cp, &cp, 10);
-      } else {
-        rst = -1;
       }
 
       if (wire_n == 0) {
@@ -523,16 +523,21 @@ int8_t cs;
 int8_t replacepin(char **cp, int16_t pin) {
   int8_t res = 0;
   char *lp = *cp;
-  if (*lp == ',') lp++;
-  if (*lp == '*') {
+  // cp = 6,*,* and pin = 4 => lp = 6,*,* and cp = *,*
+  // cp = *,*,* and pin = 4 => lp = 4,*,* and cp = *,*
+  // cp = ,*,* and pin = 4 => lp = 4,*,* and cp = *,*
+  if ((*lp == '*') || (*lp == ',')) {
     char val[8];
     itoa(pin, val, 10);
     uint16_t slen = strlen(val);
     //AddLog(LOG_LEVEL_INFO, PSTR("replace pin: %d"), pin);
-    memmove(lp + slen, lp + 1, strlen(lp));
+    uint32_t idx = 0;
+    if (*lp == '*') { idx++; }
+    memmove(lp + slen, lp + idx, strlen(lp));
     memmove(lp, val, slen);
   }
-  res= strtol(lp, 0, 10);
+
+  res = strtol(lp, 0, 10);
   char *np = strchr(lp, ',');
   if (np) {
     *cp = np + 1;
