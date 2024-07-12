@@ -158,8 +158,23 @@ int8_t cs;
       return 0;
     }
 
+    char display_name[16] = { 0 };  // Loosly related to dname in uDisplay.h
+    char *cp = strstr(ddesc, ":H,");
+    if (cp) {
+      cp += 3;
+      char *lp = strchr(cp, ',');
+      if (lp) {
+        uint32_t len = lp - cp +1;
+        if (len >= sizeof(display_name)) { len = sizeof(display_name) -1; }
+        strlcpy(display_name, cp, len);
+      }
+    }
+    if (!strlen(display_name)) {
+      strcpy_P(display_name, PSTR("Display"));
+    }
+
     // now replace tasmota vars before passing to driver
-    char *cp = strstr(ddesc, "I2C");
+    cp = strstr(ddesc, "I2C");
     if (cp) {
       cp += 3;
       uint8_t wire_n = 1;
@@ -189,16 +204,11 @@ int8_t cs;
           I2c2Begin(sda, scl);
         }
       }
-      if (I2cSetDevice(i2caddr, wire_n - 1)) {
-        I2cSetActiveFound(i2caddr, "DSP-I2C", wire_n - 1);
-      }
 #endif // ESP32
-
-#ifdef ESP8266
-      if (I2cSetDevice(i2caddr)) {
-        I2cSetActiveFound(i2caddr, "DSP-I2C");
+      if (I2cSetDevice(i2caddr, wire_n - 1)) {
+        I2cSetActiveFound(i2caddr, display_name, wire_n - 1);
       }
-#endif // ESP8266
+
       //AddLog(LOG_LEVEL_INFO, PSTR("DSP: i2c %x, %d, %d, %d!"), i2caddr, wire_n, scl, sda);
     }
 
