@@ -1074,7 +1074,9 @@ Renderer *uDisplay::Init(void) {
       wire = &Wire1;
     }
 #endif // ESP32
-    wire->begin(i2c_sda, i2c_scl);    // TODO: aren't I2C buses already initialized? Shouldn't this be moved to display driver?
+    if (i2c_sda != i2c_scl) {
+      wire->begin(i2c_sda, i2c_scl);    // TODO: aren't I2C buses already initialized? Shouldn't this be moved to display driver?
+    }
 
 #ifdef UDSP_DEBUG
     Serial.printf("I2C cmds: %d\n", dsp_ncmds);
