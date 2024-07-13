@@ -17,8 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
-#if defined(USE_DISPLAY)
+#ifdef USE_DISPLAY
 #ifdef USE_UNIVERSAL_DISPLAY
 
 #define XDSP_17                17
@@ -27,7 +26,6 @@
 
 bool udisp_init_done = false;
 uint8_t ctouch_counter;
-
 
 #ifdef USE_UFILESYS
 extern FS *ffsp;
@@ -38,8 +36,7 @@ extern FS *ffsp;
 #undef CST816S_address
 #define CST816S_address 0x15
 
-enum {GPIO_DP_RES=GPIO_SENSOR_END-1,GPIO_DP_CS,GPIO_DP_RS,GPIO_DP_WR,GPIO_DP_RD,GPIO_DPAR0,GPIO_DPAR1,GPIO_DPAR2,GPIO_DPAR3,GPIO_DPAR4,GPIO_DPAR5,GPIO_DPAR6,GPIO_DPAR7,GPIO_DPAR8,GPIO_DPAR9,GPIO_DPAR10,GPIO_DPAR11,GPIO_DPAR12,GPIO_DPAR13,GPIO_DPAR14,GPIO_DPAR15};
-
+enum { GPIO_DP_RES = GPIO_SENSOR_END-1,GPIO_DP_CS,GPIO_DP_RS,GPIO_DP_WR,GPIO_DP_RD,GPIO_DPAR0,GPIO_DPAR1,GPIO_DPAR2,GPIO_DPAR3,GPIO_DPAR4,GPIO_DPAR5,GPIO_DPAR6,GPIO_DPAR7,GPIO_DPAR8,GPIO_DPAR9,GPIO_DPAR10,GPIO_DPAR11,GPIO_DPAR12,GPIO_DPAR13,GPIO_DPAR14,GPIO_DPAR15};
 
 #ifndef USE_DISPLAY
 uint8_t color_type;
@@ -72,10 +69,9 @@ const char DSP_SAMPLE_DESC[] PROGMEM = DSP_ROM_DESC;
 #endif // DSP_ROM_DESC
 /*********************************************************************************************/
 Renderer *Init_uDisplay(const char *desc) {
-char *ddesc = 0;
-char *fbuff;
-uDisplay *udisp;
-int8_t cs;
+  char *ddesc = 0;
+  char *fbuff;
+  uDisplay *udisp;
 
   if (TasmotaGlobal.gpio_optiona.udisplay_driver || desc) {
 
@@ -90,7 +86,6 @@ int8_t cs;
       ddesc = fbuff;
       AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: const char descriptor used"));
     }
-
 
 #ifdef USE_UFILESYS
     if (ffsp  && !TasmotaGlobal.no_autoexec && !ddesc) {
@@ -110,7 +105,6 @@ int8_t cs;
       }
     }
 #endif // USE_UFILESYS
-
 
 #ifdef USE_SCRIPT
     if (bitRead(Settings->rule_enabled, 0) && !ddesc) {
@@ -143,7 +137,6 @@ int8_t cs;
     }
 #endif // USE_RULES
 
-
 #ifdef DSP_ROM_DESC
     if (!ddesc) {
       memcpy_P(fbuff, DSP_SAMPLE_DESC, sizeof(DSP_SAMPLE_DESC));
@@ -158,98 +151,87 @@ int8_t cs;
       return 0;
     }
 
-    char display_name[16] = { 0 };  // Loosly related to dname in uDisplay.h
-    char *cp = strstr(ddesc, ":H,");
+    // Replace tasmota vars before passing to driver uDisplay.cpp
+    char *cp = strstr(ddesc, "I2C");
     if (cp) {
+      // I2C,3c,22,21,*
+      // I2C1,3c,22,21,*
+      // I2C2,3c,22,21,*
       cp += 3;
-      char *lp = strchr(cp, ',');
-      if (lp) {
-        uint32_t len = lp - cp +1;
-        if (len >= sizeof(display_name)) { len = sizeof(display_name) -1; }
-        strlcpy(display_name, cp, len);
-      }
-    }
-    if (!strlen(display_name)) {
-      strcpy_P(display_name, PSTR("Display"));
-    }
-
-    // now replace tasmota vars before passing to driver
-    cp = strstr(ddesc, "I2C");
-    if (cp) {
-      cp += 3;
-      uint8_t wire_n = 1;
+      // ,3c,22,21,*
+      // 1,3c,22,21,*
+      // 2,3c,22,21,*
+      uint8_t wire_n = 0;
       if (*cp == '1' || *cp == '2') {
-        wire_n = *cp & 3;
+        wire_n = (*cp & 3) - 1;
         cp += 2;
       } else {
         cp++;
       }
-      //,3c,22,21,-1
+      // 3c,22,21,-1
       uint8_t i2caddr = strtol(cp, &cp, 16);
-      //,22,21,-1
+      // ,22,21,-1
       cp++;
-      //22,21,-1
-      int8_t scl = replacepin(&cp, Pin(GPIO_I2C_SCL, wire_n - 1));
-      int8_t sda = replacepin(&cp, Pin(GPIO_I2C_SDA, wire_n - 1));
+      // 22,21,-1
+      int8_t scl = replacepin(&cp, Pin(GPIO_I2C_SCL, wire_n));
+      int8_t sda = replacepin(&cp, Pin(GPIO_I2C_SDA, wire_n));
       replacepin(&cp, Pin(GPIO_OLED_RESET));
 
-      if (wire_n == 1) {
+      if (wire_n == 0) {
         if (!TasmotaGlobal.i2c_enabled) {
           I2cBegin(sda, scl);
         }
       }
 #ifdef ESP32
-      if (wire_n == 2) {
+      if (wire_n == 1) {
         if (!TasmotaGlobal.i2c_enabled_2) {
           I2c2Begin(sda, scl);
         }
       }
 #endif // ESP32
-      if (I2cSetDevice(i2caddr, wire_n - 1)) {
-        I2cSetActiveFound(i2caddr, display_name, wire_n - 1);
+      if (I2cSetDevice(i2caddr, wire_n)) {
+        char display_name[16] = { 0 };  // Loosly related to dname in uDisplay.h
+        strcpy_P(display_name, PSTR("Display"));
+        cp = strstr(ddesc, ":H,");
+        if (cp) {
+          // :H,SH1106,128,64,1,I2C,3c,22,21,*
+          cp += 3;
+          char *lp = strchr(cp, ',');
+          if (lp) {
+            uint32_t len = lp - cp +1;
+            if (len < sizeof(display_name)) { 
+              strlcpy(display_name, cp, len);
+            }
+          }
+        }
+        I2cSetActiveFound(i2caddr, display_name, wire_n);
       }
-
-      //AddLog(LOG_LEVEL_INFO, PSTR("DSP: i2c %x, %d, %d, %d!"), i2caddr, wire_n, scl, sda);
     }
 
     cp = strstr(ddesc, "SPI,");
     if (cp) {
+      // 9 params nr,cs,sclk,mosi,dc,bl,reset,miso,mhz
+      // SPI,1,*,*,*,*,*,*,*,80
+      // SPI,*,*,*,*,*,*,*,*,40
       cp += 4;
-      //; 7 params nr,cs,sclk,mosi,dc,bl,reset,miso
-      //SPI,*,*,*,*,*,*,*
-      switch (*cp) {
-        case '1':
-          cs = Pin(GPIO_SPI_CS);
-          break;
-        case '2':
-          cs = Pin(GPIO_SPI_CS, 1);
-          break;
-        default:
-          cs = Pin(GPIO_SSPI_CS);
-          break;
+      // 1,*,*,*,*,*,*,*,80
+      uint32_t spi_type = 10;  // SPI,* = Software SPI
+      if (isdigit(*cp) && (*cp != '0')) {
+        spi_type = *cp - '1';  // SPI,1 = 0, SPI,2 = 1, SPI,3 = 2
       }
-      if (*cp == '1') {
-        cp+=2;
-        replacepin(&cp, cs);
-        replacepin(&cp, Pin(GPIO_SPI_CLK));
-        replacepin(&cp, Pin(GPIO_SPI_MOSI));
-        replacepin(&cp, Pin(GPIO_SPI_DC));
+      cp += 2;
+      // *,*,*,*,*,*,*,80
+      if (spi_type < 10) {
+        replacepin(&cp, Pin(GPIO_SPI_CS, spi_type));
+        replacepin(&cp, Pin(GPIO_SPI_CLK, spi_type));
+        replacepin(&cp, Pin(GPIO_SPI_MOSI, spi_type));
+        replacepin(&cp, Pin(GPIO_SPI_DC, spi_type));
         replacepin(&cp, Pin(GPIO_BACKLIGHT));
         replacepin(&cp, Pin(GPIO_OLED_RESET));
-        replacepin(&cp, Pin(GPIO_SPI_MISO));
-      } else if (*cp == '2') {
-        cp+=2;
-        replacepin(&cp, cs);
-        replacepin(&cp, Pin(GPIO_SPI_CLK, 1));
-        replacepin(&cp, Pin(GPIO_SPI_MOSI, 1));
-        replacepin(&cp, Pin(GPIO_SPI_DC, 1));
-        replacepin(&cp, Pin(GPIO_BACKLIGHT));
-        replacepin(&cp, Pin(GPIO_OLED_RESET));
-        replacepin(&cp, Pin(GPIO_SPI_MISO, 1));
+        replacepin(&cp, Pin(GPIO_SPI_MISO, spi_type));
       } else {
-        // soft spi pins
-        cp+=2;
-        replacepin(&cp, cs);
+        // Soft spi pins
+        replacepin(&cp, Pin(GPIO_SSPI_CS));
         replacepin(&cp, Pin(GPIO_SSPI_SCLK));
         replacepin(&cp, Pin(GPIO_SSPI_MOSI));
         replacepin(&cp, Pin(GPIO_SSPI_DC));
@@ -259,23 +241,36 @@ int8_t cs;
       }
     }
 
-    cp = strstr(ddesc, ":UTI");
+    cp = strstr(ddesc, ":UTI,");
     if (cp) {
-      cp += 4;                  // skip ":UTI"
-      cp = strchr(cp, ',');     // skip device name
+      // :UTI,FT3267,I1,38,-1,-1
+      // :UTI,FT5206,I1,38,-1,-1
+      // :UTI,FT5206,I2,38,*,*
+      // :UTI,FT6236,I1,38,-1,-1
+      // :UTI,FT6336U,I2,38,-1,-1
+      // :UTI,FT6336U,I1,38,*,*
+      // :UTI,GT911,I1,5d,-1,-1
+      // :UTI,XPT2046,S1,*,*,*
+      // :UTI,SRES,R
+      cp += 5;                    // Skip ":UTI,"
+      // FT5206,I1,38,-1,-1
+      cp = strchr(cp, ',');       // Skip name
+      // ,I1,38,-1,-1
       cp++;
-      cp = strchr(cp, ',');
-      cp++;
-      if (*cp == 'I') {           // I= I2C
-        cp = strchr(cp, ',');     // skip interface type
+      // I1,38,-1,-1
+      // S1,*,*,*
+      if (*cp == 'I') {           // I = I2C
+        cp += 3;                  // Skip interface type and bus
+        // 38,-1,-1
+        cp = strchr(cp, ',');     // Skip I2C address
+        // ,-1,-1
         cp++;
-        cp = strchr(cp, ',');     // skip I2C bus number
-        cp++;
+        // -1,-1
         replacepin(&cp, Pin(GPIO_TS_RST));
         replacepin(&cp, Pin(GPIO_TS_IRQ));
-      } else if (*cp == 'S') {    // S= SPI
-        cp = strchr(cp, ',');     // skip interface type
-        cp++;
+      } else if (*cp == 'S') {    // S = SPI
+        cp += 3;                  // Skip interface type and bus
+        // *,*,*
         replacepin(&cp, Pin(GPIO_TS_SPI_CS));
         replacepin(&cp, Pin(GPIO_TS_RST));
         replacepin(&cp, Pin(GPIO_TS_IRQ));
@@ -299,11 +294,14 @@ int8_t cs;
 
     cp = strstr(ddesc, "PAR,");
     if (cp) {
+      // PAR,8,41,40,39,38,42,-1,8,9,10,11,12,13,14,15,20
+      // PAR,16,-1,37,36,35,48,45,47,21,14,13,12,11,10,9,3,8,16,15,7,6,5,4,20
       cp += 4;
+      // 8,41,40,39,38,42,-1,8,9,10,11,12,13,14,15,20
       // 8 or 16 bus
       uint8_t mode = strtol(cp, &cp, 10);
       cp++;
-
+      // 41,40,39,38,42,-1,8,9,10,11,12,13,14,15,20
       replacepin(&cp, Pin(GPIO_DP_RES));
       xm = replacepin(&cp, Pin(GPIO_DP_CS));
       yp = replacepin(&cp, Pin(GPIO_DP_RS));
@@ -346,19 +344,22 @@ int8_t cs;
       AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: reinit"));
     }
 
-    udisp  = new uDisplay(ddesc);
+    udisp = new uDisplay(ddesc);
 
-    // checck for touch option TI1 or TI2
+    // check for touch option TI1 or TI2
 #if defined (USE_CST816S) || defined(USE_FT5206) || defined(USE_GT911)
     cp = strstr(ddesc, ":TI");
     if (cp) {
-      uint8_t wire_n = 1;
+      // :TI1,38,39,38
+      // :TI2,38,22,21
       cp += 3;
-      wire_n = (*cp & 3) - 1;
+      // 1,38,39,38
+      uint8_t wire_n = (*cp & 3) - 1;
       cp += 2;
-
+      // 38,39,38
       uint8_t i2caddr = strtol(cp, &cp, 16);
       cp++;
+      // 39,38
       int8_t scl = replacepin(&cp, Pin(GPIO_I2C_SCL, wire_n));
       int8_t sda = replacepin(&cp, Pin(GPIO_I2C_SDA, wire_n));
       int8_t irq = -1;
@@ -382,6 +383,7 @@ int8_t cs;
           I2c2Begin(sda, scl, 400000);
         }
       }
+#endif // ESP32
       if (I2cSetDevice(i2caddr, wire_n)) {
         if (i2caddr == GT911_address) {
           I2cSetActiveFound(i2caddr, "GT911", wire_n);
@@ -391,63 +393,44 @@ int8_t cs;
           I2cSetActiveFound(i2caddr, "FT5206", wire_n);
         }
       }
-#endif // ESP32
 
-#ifdef ESP8266
-      //AddLog(LOG_LEVEL_INFO, PSTR("DSP: touch %x, %d, %d, %d!"), i2caddr, wire_n, scl, sda);
-      if (I2cSetDevice(i2caddr)) {
-        if (i2caddr == GT911_address) {
-          I2cSetActiveFound(i2caddr, "GT911");
-        } else if (i2caddr == CST816S_address) {
-          I2cSetActiveFound(i2caddr, "CST816S");
-        } else {
-          I2cSetActiveFound(i2caddr, "FT5206");
-        }
-      }
-#endif // ESP8266
-
-      // start digitizer
-
-#ifdef ESP32
+      // Start digitizer
       if (i2caddr == GT911_address) {
 #ifdef USE_GT911
-        if (!wire_n) GT911_Touch_Init(&Wire, irq, rst, xs, ys);
-        else GT911_Touch_Init(&Wire1, irq, rst, xs, ys);
-#endif
-      } else if (i2caddr == CST816S_address) {
+        if (!wire_n) {
+          GT911_Touch_Init(&Wire, irq, rst, xs, ys);
+        }
+#ifdef ESP32
+        else {
+          GT911_Touch_Init(&Wire1, irq, rst, xs, ys);
+        }
+#endif  // ESP32
+#endif  // USE_GT911
+      } 
+      else if (i2caddr == CST816S_address) {
 #ifdef USE_CST816S
         CST816S_Touch_Init(wire_n, irq, rst);
-#endif
-      } else {
+#endif  // USE_CST816S
+      } 
+      else {
 #ifdef USE_FT5206
-        if (!wire_n) FT5206_Touch_Init(Wire);
-        else FT5206_Touch_Init(Wire1);
-#endif
+        if (!wire_n) { 
+          FT5206_Touch_Init(Wire);
+        }
+#ifdef ESP32
+        else {
+          FT5206_Touch_Init(Wire1);
+        }
+#endif  // ESP32
+#endif  // USE_FT5206
       }
-
-#else
-
-      if (i2caddr == GT911_address) {
-#ifdef USE_GT911
-      if (!wire_n) GT911_Touch_Init(&Wire, irq, rst, xs, ys);
-#endif
-      } else if (i2caddr == CST816S_address) {
-#ifdef USE_CST816S
-      CST816S_Touch_Init(wire_n, irq, rst);
-#endif
-      } else {
-#ifdef USE_FT5206
-      if (!wire_n) FT5206_Touch_Init(Wire);
-#endif
-      }
-#endif // ESP32
-
     }
 #endif // USE_FT5206 || GT911
 
 #ifdef USE_XPT2046
     cp = strstr(ddesc, ":TS,");
     if (cp) {
+      // :TS,16
       cp += 4;
       uint8_t touch_cs = replacepin(&cp, Pin(GPIO_XPT2046_CS));
       int8_t irqpin = -1;
@@ -531,11 +514,10 @@ int8_t cs;
 /*********************************************************************************************/
 
 int8_t replacepin(char **cp, int16_t pin) {
-  int8_t res = 0;
-  char *lp = *cp;
   // cp = 6,*,* and pin = 4 => lp = 6,*,* and cp = *,*
   // cp = *,*,* and pin = 4 => lp = 4,*,* and cp = *,*
   // cp = ,*,* and pin = 4 => lp = 4,*,* and cp = *,*
+  char *lp = *cp;
   if ((*lp == '*') || (*lp == ',')) {
     char val[8];
     itoa(pin, val, 10);
@@ -546,8 +528,7 @@ int8_t replacepin(char **cp, int16_t pin) {
     memmove(lp + slen, lp + idx, strlen(lp));
     memmove(lp, val, slen);
   }
-
-  res = strtol(lp, 0, 10);
+  int8_t res = strtol(lp, 0, 10);
   char *np = strchr(lp, ',');
   if (np) {
     *cp = np + 1;
@@ -557,8 +538,7 @@ int8_t replacepin(char **cp, int16_t pin) {
 
 #ifdef USE_DISPLAY_MODES1TO5
 
-void UDISP_PrintLog(void)
-{
+void UDISP_PrintLog(void) {
   disp_refresh--;
   if (!disp_refresh) {
     disp_refresh = Settings->display_refresh;
@@ -583,8 +563,7 @@ void UDISP_PrintLog(void)
   }
 }
 
-void UDISP_Time(void)
-{
+void UDISP_Time(void) {
   char line[12];
 
 //  renderer->clearDisplay();
@@ -599,8 +578,7 @@ void UDISP_Time(void)
   renderer->Updateframe();
 }
 
-void UDISP_Refresh(void)  // Every second
-{
+void UDISP_Refresh(void) {  // Every second
   if (!renderer) return;
   if (Settings->display_mode) {  // Mode 0 is User text
     switch (Settings->display_mode) {
