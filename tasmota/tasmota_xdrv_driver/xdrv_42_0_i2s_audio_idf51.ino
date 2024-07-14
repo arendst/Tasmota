@@ -179,6 +179,10 @@ void (* const I2SAudio_Command[])(void) PROGMEM = {
 \*********************************************************************************************/
 
 void CmndI2SConfig(void) {
+  if(!audio_i2s.Settings){
+    ResponseCmndChar_P(PSTR("no valid settings"));
+    return;
+  }
   tI2SSettings * cfg = audio_i2s.Settings;
 
   // if (zigbee.init_phase) { ResponseCmndChar_P(PSTR(D_ZIGBEE_NOT_STARTED)); return; }
