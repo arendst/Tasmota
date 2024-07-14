@@ -215,13 +215,13 @@ Renderer *Init_uDisplay(const char *desc) {
       // SPI,*,*,*,*,*,*,*,*,40
       cp += 4;
       // 1,*,*,*,*,*,*,*,80
-      uint32_t spi_type = 10;  // SPI,* = Software SPI
+      uint32_t spi_type = 10;  // SPI,3 = Software SPI
       if (isdigit(*cp) && (*cp != '0')) {
-        spi_type = *cp - '1';  // SPI,1 = 0, SPI,2 = 1, SPI,3 = 2
+        spi_type = *cp - '1';  // SPI,1 = 0, SPI,2 = 1
       }
       cp += 2;
       // *,*,*,*,*,*,*,80
-      if (spi_type < 10) {
+      if (spi_type < 2) {
         replacepin(&cp, Pin(GPIO_SPI_CS, spi_type));
         replacepin(&cp, Pin(GPIO_SPI_CLK, spi_type));
         replacepin(&cp, Pin(GPIO_SPI_MOSI, spi_type));
