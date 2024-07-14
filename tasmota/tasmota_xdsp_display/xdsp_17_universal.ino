@@ -69,22 +69,18 @@ const char DSP_SAMPLE_DESC[] PROGMEM = DSP_ROM_DESC;
 #endif // DSP_ROM_DESC
 /*********************************************************************************************/
 Renderer *Init_uDisplay(const char *desc) {
-  char *ddesc = 0;
-  char *fbuff;
-  uDisplay *udisp;
-
   if (TasmotaGlobal.gpio_optiona.udisplay_driver || desc) {
 
     Settings->display_model = XDSP_17;
 
-
-    fbuff = (char*)calloc(DISPDESC_SIZE, 1);
+    char *fbuff = (char*)calloc(DISPDESC_SIZE, 1);
     if (!fbuff) return 0;
 
+    char *ddesc = nullptr;
     if (desc) {
       memcpy_P(fbuff, desc, DISPDESC_SIZE - 1);
       ddesc = fbuff;
-      AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: const char descriptor used"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: Const char descriptor used"));
     }
 
 #ifdef USE_UFILESYS
@@ -131,7 +127,7 @@ Renderer *Init_uDisplay(const char *desc) {
           if (fbuff[cnt] == ' ') fbuff[cnt] = '\n';
         }
         ddesc = fbuff;
-        AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: Rule 3 descriptor used"));
+        AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: Rule3 descriptor used"));
       }
 
     }
@@ -147,7 +143,9 @@ Renderer *Init_uDisplay(const char *desc) {
 
     if (!ddesc) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: No valid descriptor found"));
-      if (fbuff) free(fbuff);
+      if (fbuff) {
+        free(fbuff);
+      }
       return 0;
     }
 
@@ -343,7 +341,7 @@ Renderer *Init_uDisplay(const char *desc) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("DSP: reinit"));
     }
 
-    udisp = new uDisplay(ddesc);
+    uDisplay *udisp = new uDisplay(ddesc);
 
     // check for touch option TI1 or TI2
 #if defined (USE_CST816S) || defined(USE_FT5206) || defined(USE_GT911)
@@ -503,7 +501,7 @@ Renderer *Init_uDisplay(const char *desc) {
 #endif // SHOW_SPLASH
 
     udisp_init_done = true;
-    AddLog(LOG_LEVEL_INFO, PSTR("DSP: Configured display '%s'"), renderer->devname());
+    AddLog(LOG_LEVEL_INFO, PSTR("DSP: %s initialized"), renderer->devname());
 
     return renderer;
   }
