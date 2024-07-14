@@ -25,10 +25,12 @@ All notable changes to this project will be documented in this file.
 - ESP32 support for energy margin checks, like ``MaxPower2`` per phase (#21695)
 - ESP32 TM1621 number overflow from "9999" to "12E3" (#21131)
 - ESP32 platform update from 2024.06.11 to 2024.07.10 (#21745)
+- ESP32 platform update from 2024.07.10 to 2024.07.11 (#21765)
 
 ### Fixed
 - Berry `bytes.resize()` for large sizes (#21716)
 - On universal display remove default backlight power if a single PWM channel is used for backlight. Regression from 14.0.0.1 (#21726)
+- ESP32 I2S fixes (#21770)
 
 ### Removed
 

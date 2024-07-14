@@ -212,16 +212,16 @@ Renderer *Init_uDisplay(const char *desc) {
     if (cp) {
       // 9 params nr,cs,sclk,mosi,dc,bl,reset,miso,mhz
       // SPI,1,*,*,*,*,*,*,*,80
-      // SPI,*,*,*,*,*,*,*,*,40
+      // SPI,3,*,*,*,*,*,*,*,40
       cp += 4;
       // 1,*,*,*,*,*,*,*,80
-      uint32_t spi_type = 10;  // SPI,3 = Software SPI
-      if (isdigit(*cp) && (*cp != '0')) {
-        spi_type = *cp - '1';  // SPI,1 = 0, SPI,2 = 1
+      uint32_t spi_type = 2;   // SPI,3 = Software SPI
+      if ((*cp == '1') || (*cp == '2')) {
+        spi_type = *cp - '1';  // SPI,1 = 0, SPI,2 = 1 etc
       }
       cp += 2;
       // *,*,*,*,*,*,*,80
-      if (spi_type < 2) {
+      if (spi_type < 2) {      // SPI,1 or SPI,2
         replacepin(&cp, Pin(GPIO_SPI_CS, spi_type));
         replacepin(&cp, Pin(GPIO_SPI_CLK, spi_type));
         replacepin(&cp, Pin(GPIO_SPI_MOSI, spi_type));
@@ -229,8 +229,7 @@ Renderer *Init_uDisplay(const char *desc) {
         replacepin(&cp, Pin(GPIO_BACKLIGHT));
         replacepin(&cp, Pin(GPIO_OLED_RESET));
         replacepin(&cp, Pin(GPIO_SPI_MISO, spi_type));
-      } else {
-        // Soft spi pins
+      } else {                 // SPI,3 is software SPI
         replacepin(&cp, Pin(GPIO_SSPI_CS));
         replacepin(&cp, Pin(GPIO_SSPI_SCLK));
         replacepin(&cp, Pin(GPIO_SSPI_MOSI));
