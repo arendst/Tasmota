@@ -24,7 +24,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_UPGRADE "|" D_CMND_UPLOAD "|" D_CMND_OTAURL "|" D_CMND_SERIALLOG "|" D_CMND_RESTART "|"
 #ifndef FIRMWARE_MINIMAL_ONLY
   D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_POWERLOCK "|" D_CMND_TIMEDPOWER "|" D_CMND_STATUS "|" D_CMND_STATE "|" D_CMND_SLEEP "|"
-  D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|" D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SAVEDATA "|"
+  D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|" D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_STATETEXT "|" D_CMND_SAVEDATA "|"
   D_CMND_SO "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|" D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|"
   D_CMND_VOLTAGE_RESOLUTION "|" D_CMND_FREQUENCY_RESOLUTION "|" D_CMND_CURRENT_RESOLUTION "|" D_CMND_ENERGY_RESOLUTION "|" D_CMND_WEIGHT_RESOLUTION "|"
   D_CMND_MODULE "|" D_CMND_MODULES "|" D_CMND_GPIO "|" D_CMND_GPIOREAD "|" D_CMND_GPIOS "|" D_CMND_TEMPLATE "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|"
@@ -64,7 +64,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndUpgrade, &CmndUpgrade, &CmndOtaUrl, &CmndSeriallog, &CmndRestart,
 #ifndef FIRMWARE_MINIMAL_ONLY
   &CmndBacklog, &CmndDelay, &CmndPower, &CmndPowerLock, &CmndTimedPower, &CmndStatus, &CmndState, &CmndSleep,
-  &CmndPowerOnState, &CmndPulsetime, &CmndBlinktime, &CmndBlinkcount, &CmndSavedata,
+  &CmndPowerOnState, &CmndPulsetime, &CmndBlinktime, &CmndBlinkcount, &CmndStateText, &CmndSavedata,
   &CmndSetoption, &CmndSetoption, &CmndTemperatureResolution, &CmndHumidityResolution, &CmndPressureResolution, &CmndPowerResolution,
   &CmndVoltageResolution, &CmndFrequencyResolution, &CmndCurrentResolution, &CmndEnergyResolution, &CmndWeightResolution,
   &CmndModule, &CmndModules, &CmndGpio, &CmndGpioRead, &CmndGpios, &CmndTemplate, &CmndPwm, &CmndPwmfrequency, &CmndPwmrange,
@@ -1375,6 +1375,22 @@ void CmndBlinkcount(void)
     if (TasmotaGlobal.blink_counter) { TasmotaGlobal.blink_counter = Settings->blinkcount *2; }
   }
   ResponseCmndNumber(Settings->blinkcount);
+}
+
+void CmndStateText(void) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_STATE_TEXT)) {
+    if (!XdrvMailbox.usridx) {
+      ResponseCmndAll(SET_STATE_TXT1, MAX_STATE_TEXT);
+    } else {
+      if (XdrvMailbox.data_len > 0) {
+        for (uint32_t i = 0; i <= XdrvMailbox.data_len; i++) {
+          if (XdrvMailbox.data[i] == ' ') XdrvMailbox.data[i] = '_';
+        }
+        SettingsUpdateText(SET_STATE_TXT1 + XdrvMailbox.index -1, XdrvMailbox.data);
+      }
+      ResponseCmndIdxChar(GetStateText(XdrvMailbox.index -1));
+    }
+  }
 }
 
 void CmndSavedata(void)
