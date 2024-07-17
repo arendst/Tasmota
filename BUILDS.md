@@ -230,6 +230,7 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_TCP_BRIDGE            | -     | - / - | -     | -     | -     | -     | zbbridge / zbbrdgpro        |
 | USE_HC8                   | -     | - / - | -     | -     | -     | -     |
 | USE_PIPSOLAR              | -     | - / - | -     | -     | -     | -     |
+| USE_WOOLIIS               | -     | - / - | -     | -     | -     | -     |
 |                           |       |       |       |       |       |       |
 | USE_NRF24                 | -     | - / - | -     | -     | -     | -     |
 | USE_MIBLE                 | -     | - / - | -     | -     | -     | -     |

@@ -1272,6 +1272,8 @@
 #define D_SENSOR_PIPSOLAR_RX             "Pipsolar RX"
 
 // xsns_115_wooliis.ino
+#define D_IMPORT                          "Import"
+#define D_EXPORT                          "Export"
 #define D_CHARGING                        "En charge"
 #define D_CAPACITY                        "Capacité"
 

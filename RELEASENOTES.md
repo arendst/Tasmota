@@ -124,6 +124,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for QMP6988 temperature and pressure sensor
 - Support for Sonoff WTS01 temperature sensor using SerialBridge in ``SSerialMode 3``
 - Support for Sonoff POWCT Ring [#21131](https://github.com/arendst/Tasmota/issues/21131)
+- Support for Wooliis Hall Effect Coulometer or Battery capacity monitor [#21732](https://github.com/arendst/Tasmota/issues/21732)
 - Skip MQTT response if command is prefixed with underscore [#21740](https://github.com/arendst/Tasmota/issues/21740)
 - Skip MQTT response if commands are executed prefixed with ``Backlog2`` (no delay) or ``Backlog3`` [#21740](https://github.com/arendst/Tasmota/issues/21740)
 - Extend command ``SetOption147 1`` to disable publish of IRReceived MQTT messages [#21574](https://github.com/arendst/Tasmota/issues/21574)

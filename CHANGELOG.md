@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Berry cam module and img class (#21743)
 - Skip MQTT response if command is prefixed with underscore (#21740)
 - Skip MQTT response if commands are executed prefixed with ``Backlog2`` (no delay) or ``Backlog3`` (#21740)
+- Support for Wooliis Hall Effect Coulometer or Battery capacity monitor (#21732)
 
 ### Breaking Changed
 
