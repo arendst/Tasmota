@@ -922,7 +922,9 @@ constexpr uint32_t feature[] = {
 #if defined(USE_I2C) && defined(USE_QMP6988)
   0x00000040 |  // xsns_28_qmp6988.ino
 #endif
-//  0x00000080 |  // 
+#ifdef USE_WOOLIIS
+  0x00000080 |  // xsns_115_wooliis.ino
+#endif
 //  0x00000100 |  // 
 //  0x00000200 |  // 
 //  0x00000400 |  // 

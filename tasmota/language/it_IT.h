@@ -1000,6 +1000,7 @@
 #define D_SENSOR_BIOPDU_BIT             "BioPDU Bit"
 #define D_SENSOR_LOX_O2_RX              "LoxO2 - RX"
 #define D_GPIO_MAGIC_SWITCH             "MagicSwitch"
+#define D_SENSOR_WOOLIIS_RX             "Wooliis RX"
 
 // Units
 #define D_UNIT_AMPERE                     "A"
@@ -1269,5 +1270,9 @@
 // ixrv92_pipsolar.ino
 #define D_SENSOR_PIPSOLAR_TX             "Pipsolar - TX"
 #define D_SENSOR_PIPSOLAR_RX             "Pipsolar - RX"
+
+// xsns_115_wooliis.ino
+#define D_CHARGING                        "In carica"
+#define D_CAPACITY                        "Capacità"
 
 #endif  // _LANGUAGE_IT_IT_H_

@@ -229,6 +229,7 @@ In addition to @arendst the following code is mainly owned by:
 | xsns_112_ens210              | Christoph Friese
 | xsns_113_hc8                 | Daniel Maier
 | xsns_114_amsx915             | Bastian Urschel
+| xsns_115_wooliis             | Luca Melette
 |                              |
 | xsns_127_esp32_sensors       | @arendst
 |                              |
