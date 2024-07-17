@@ -533,31 +533,40 @@ int8_t replacepin(char **cp, int16_t pin) {
   return res;
 }
 
+/*********************************************************************************************/
+
 #ifdef USE_DISPLAY_MODES1TO5
 
 void UDISP_PrintLog(void) {
-  disp_refresh--;
-  if (!disp_refresh) {
-    disp_refresh = Settings->display_refresh;
-    if (!disp_screen_buffer_cols) { DisplayAllocScreenBuffer(); }
+  // This can take over 3 seconds depending on renderer->Updateframe() speed
+  //   due to not connected busy pin (configure as MISO)
+  static bool printlog_mutex = false;
 
-    char* txt = DisplayLogBuffer('\370');
-    if (txt != nullptr) {
-      uint8_t last_row = Settings->display_rows -1;
+  if (disp_refresh) { disp_refresh--; }
+  if (disp_refresh || printlog_mutex || TasmotaGlobal.restart_flag || TasmotaGlobal.ota_state_flag) {
+    return;
+  }
+  printlog_mutex = true;
+  disp_refresh = Settings->display_refresh;
+  if (!disp_screen_buffer_cols) { DisplayAllocScreenBuffer(); }
+
+  char* txt = DisplayLogBuffer('\370');
+  if (txt != nullptr) {
+    uint8_t last_row = Settings->display_rows -1;
 
 //      renderer->clearDisplay();
-      renderer->setTextSize(Settings->display_size);
-      renderer->setCursor(0,0);
-      for (byte i = 0; i < last_row; i++) {
-        strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
-        renderer->println(disp_screen_buffer[i]);
-      }
-      strlcpy(disp_screen_buffer[last_row], txt, disp_screen_buffer_cols);
-      DisplayFillScreen(last_row);
-      renderer->println(disp_screen_buffer[last_row]);
-      renderer->Updateframe();
+    renderer->setTextSize(Settings->display_size);
+    renderer->setCursor(0,0);
+    for (byte i = 0; i < last_row; i++) {
+      strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
+      renderer->println(disp_screen_buffer[i]);
     }
+    strlcpy(disp_screen_buffer[last_row], txt, disp_screen_buffer_cols);
+    DisplayFillScreen(last_row);
+    renderer->println(disp_screen_buffer[last_row]);
+    renderer->Updateframe();
   }
+  printlog_mutex = false;
 }
 
 void UDISP_Time(void) {
