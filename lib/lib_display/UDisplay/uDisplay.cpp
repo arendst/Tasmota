@@ -2213,7 +2213,7 @@ void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean not_swapped) {
 
   //Serial.printf("push %x - %d - %d - %d\n", (uint32_t)data, len, not_swapped, lvgl_param.data);
 
-  // Isolating _UDPS_RGB to increase code sharing
+  // Isolating _UDSP_RGB to increase code sharing
   //
   // LVGL documentation suggest to call the following:
   //    lv_draw_sw_rgb565_swap() to invert bytes
@@ -2229,6 +2229,8 @@ void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean not_swapped) {
     // check that bytes count matches the size of area, and remove from inner loop
     if ((seta_yp2 - seta_yp1) * (seta_xp2 - seta_xp2) > len) { return; }
 
+    uint16_t lenc = len;
+
     if (cur_rot > 0) {
       for (uint32_t y = seta_yp1; y < seta_yp2; y++) {
         seta_yp1++;
@@ -2236,13 +2238,14 @@ void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean not_swapped) {
           uint16_t color = *data++;
           if (!not_swapped) { color = color << 8 | color >> 8; }
           drawPixel_RGB(x, y, color);
-          len--;
-          if (!len) return;         // failsafe - exist if len (pixel number) is exhausted
+          lenc--;
+          if (!lenc) return;         // failsafe - exist if len (pixel number) is exhausted
         }
       }
     } else {
       uint16_t *fb_y = rgb_fb + (int32_t)seta_yp1 * _width;
       for (uint32_t y = seta_yp1; y < seta_yp2; y++) {
+        seta_yp1++;
         uint16_t * fb_xy = fb_y + seta_xp1;
         // we get the 'not_swapped' test outside of the inner loop
         if (not_swapped) {
@@ -2250,6 +2253,8 @@ void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean not_swapped) {
             uint16_t color = *data++;
             *fb_xy = color;
             fb_xy++;
+            lenc--;
+            if (!lenc) goto update_cache;         // failsafe - exist if len (pixel number) is exhausted
           }
         } else {
           for (uint32_t x = seta_xp1; x < seta_xp2; x++) {
@@ -2257,14 +2262,17 @@ void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean not_swapped) {
             color = color << 8 | color >> 8;
             *fb_xy = color;
             fb_xy++;
+            lenc--;
+            if (!lenc) goto update_cache;         // failsafe - exist if len (pixel number) is exhausted
           }
         }
         fb_y += _width;
       }
       // using esp_cache_msync() to flush the PSRAM cache and ensure that all data is actually written to PSRAM
       // from https://github.com/espressif/esp-idf/blob/636ff35b52f10e1a804a3760a5bd94e68f4b1b71/components/esp_lcd/rgb/esp_lcd_panel_rgb.c#L159
+update_cache:
       uint16_t * flush_ptr = rgb_fb + (int32_t)seta_yp1 * _width;
-      esp_cache_msync(flush_ptr, (seta_yp2 - seta_yp1) * _width * 2, 0);
+      esp_cache_msync(flush_ptr, len * 2, 0);
     }
 #endif
     return;
