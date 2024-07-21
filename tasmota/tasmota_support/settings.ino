@@ -1726,6 +1726,13 @@ void SettingsDelta(void) {
     if (Settings->version < 0x0A010003) {  // 10.1.0.3
       Settings->sserial_config = Settings->serial_config;
     }
+
+    // Change CalVer (2022.01.1-4 = 0x14160101) to SemVer (10.1.0.4-7 = 0x0A010004)
+    uint32_t version2022 = Settings->version & 0x00FF0000;
+    if (0x00160000 == version2022) {       // Version x.22.x.x is not likely to appear
+      Settings->version = 0x0A010005;      // Choose this as 0x0A010006 has a change following
+    }
+
     if (Settings->version < 0x0A010006) {  // 10.1.0.6
       Settings->web_time_start = 0;
       Settings->web_time_end = 0;
