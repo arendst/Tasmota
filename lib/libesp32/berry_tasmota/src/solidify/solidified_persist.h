@@ -111,181 +111,6 @@ be_local_closure(class_Persist_json_fdump_map,   /* name */
 
 
 /********************************************************************
-** Solidified function: setmember
-********************************************************************/
-extern const bclass be_class_Persist;
-be_local_closure(class_Persist_setmember,   /* name */
-  be_nested_proto(
-    4,                          /* nstack */
-    3,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    &be_class_Persist, 
-    1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str(_p),
-    /* K1   */  be_nested_str(_dirty),
-    }),
-    &be_const_str_setmember,
-    &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
-      0x880C0100,  //  0000  GETMBR	R3	R0	K0
-      0x980C0202,  //  0001  SETIDX	R3	R1	R2
-      0x500C0200,  //  0002  LDBOOL	R3	1	0
-      0x90020203,  //  0003  SETMBR	R0	K1	R3
-      0x80000000,  //  0004  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: zero
-********************************************************************/
-extern const bclass be_class_Persist;
-be_local_closure(class_Persist_zero,   /* name */
-  be_nested_proto(
-    2,                          /* nstack */
-    1,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    &be_class_Persist, 
-    1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str(_p),
-    /* K1   */  be_nested_str(_dirty),
-    }),
-    &be_const_str_zero,
-    &be_const_str_solidified,
-    ( &(const binstruction[ 6]) {  /* code */
-      0x60040013,  //  0000  GETGBL	R1	G19
-      0x7C040000,  //  0001  CALL	R1	0
-      0x90020001,  //  0002  SETMBR	R0	K0	R1
-      0x50040200,  //  0003  LDBOOL	R1	1	0
-      0x90020201,  //  0004  SETMBR	R0	K1	R1
-      0x80000000,  //  0005  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: member
-********************************************************************/
-extern const bclass be_class_Persist;
-be_local_closure(class_Persist_member,   /* name */
-  be_nested_proto(
-    5,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    &be_class_Persist, 
-    1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str(_p),
-    /* K1   */  be_nested_str(find),
-    }),
-    &be_const_str_member,
-    &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x5C100200,  //  0002  MOVE	R4	R1
-      0x7C080400,  //  0003  CALL	R2	2
-      0x80040400,  //  0004  RET	1	R2
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: json_fdump
-********************************************************************/
-extern const bclass be_class_Persist;
-be_local_closure(class_Persist_json_fdump,   /* name */
-  be_nested_proto(
-    7,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    &be_class_Persist, 
-    1,                          /* has constants */
-    ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str(json),
-    /* K1   */  be_nested_str(_p),
-    /* K2   */  be_nested_str(json_fdump_map),
-    /* K3   */  be_nested_str(internal_error),
-    /* K4   */  be_nested_str(persist_X2E_p_X20is_X20not_X20a_X20map),
-    }),
-    &be_const_str_json_fdump,
-    &be_const_str_solidified,
-    ( &(const binstruction[13]) {  /* code */
-      0xA40A0000,  //  0000  IMPORT	R2	K0
-      0x600C000F,  //  0001  GETGBL	R3	G15
-      0x88100101,  //  0002  GETMBR	R4	R0	K1
-      0x60140013,  //  0003  GETGBL	R5	G19
-      0x7C0C0400,  //  0004  CALL	R3	2
-      0x780E0004,  //  0005  JMPF	R3	#000B
-      0x8C0C0102,  //  0006  GETMET	R3	R0	K2
-      0x5C140200,  //  0007  MOVE	R5	R1
-      0x88180101,  //  0008  GETMBR	R6	R0	K1
-      0x7C0C0600,  //  0009  CALL	R3	3
-      0x70020000,  //  000A  JMP		#000C
-      0xB0060704,  //  000B  RAISE	1	K3	K4
-      0x80000000,  //  000C  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: remove
-********************************************************************/
-extern const bclass be_class_Persist;
-be_local_closure(class_Persist_remove,   /* name */
-  be_nested_proto(
-    5,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    &be_class_Persist, 
-    1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str(_p),
-    /* K1   */  be_nested_str(remove),
-    /* K2   */  be_nested_str(_dirty),
-    }),
-    &be_const_str_remove,
-    &be_const_str_solidified,
-    ( &(const binstruction[ 7]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x5C100200,  //  0002  MOVE	R4	R1
-      0x7C080400,  //  0003  CALL	R2	2
-      0x50080200,  //  0004  LDBOOL	R2	1	0
-      0x90020402,  //  0005  SETMBR	R0	K2	R2
-      0x80000000,  //  0006  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
 ** Solidified function: json_fdump_any
 ********************************************************************/
 extern const bclass be_class_Persist;
@@ -343,6 +168,42 @@ be_local_closure(class_Persist_json_fdump_any,   /* name */
 
 
 /********************************************************************
+** Solidified function: init
+********************************************************************/
+extern const bclass be_class_Persist;
+be_local_closure(class_Persist_init,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    &be_class_Persist, 
+    1,                          /* has constants */
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str(_p),
+    /* K1   */  be_nested_str(_dirty),
+    /* K2   */  be_nested_str(load),
+    }),
+    &be_const_str_init,
+    &be_const_str_solidified,
+    ( &(const binstruction[ 8]) {  /* code */
+      0x60040013,  //  0000  GETGBL	R1	G19
+      0x7C040000,  //  0001  CALL	R1	0
+      0x90020001,  //  0002  SETMBR	R0	K0	R1
+      0x50040000,  //  0003  LDBOOL	R1	0	0
+      0x90020201,  //  0004  SETMBR	R0	K1	R1
+      0x8C040102,  //  0005  GETMET	R1	R0	K2
+      0x7C040200,  //  0006  CALL	R1	1
+      0x80000000,  //  0007  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified function: save
 ********************************************************************/
 extern const bclass be_class_Persist;
@@ -357,65 +218,362 @@ be_local_closure(class_Persist_save,   /* name */
     &be_class_Persist, 
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_str(_filename),
-    /* K1   */  be_nested_str(w),
-    /* K2   */  be_nested_str(json_fdump),
-    /* K3   */  be_nested_str(close),
-    /* K4   */  be_nested_str(write),
-    /* K5   */  be_nested_str(_X7B_X7D),
-    /* K6   */  be_nested_str(_dirty),
+    /* K0   */  be_nested_str(_dirty),
+    /* K1   */  be_nested_str(_filename),
+    /* K2   */  be_nested_str(w),
+    /* K3   */  be_nested_str(json_fdump),
+    /* K4   */  be_nested_str(close),
+    /* K5   */  be_nested_str(write),
+    /* K6   */  be_nested_str(_X7B_X7D),
     }),
     &be_const_str_save,
     &be_const_str_solidified,
-    ( &(const binstruction[48]) {  /* code */
-      0x4C040000,  //  0000  LDNIL	R1
-      0xA802000B,  //  0001  EXBLK	0	#000E
-      0x60080011,  //  0002  GETGBL	R2	G17
-      0x880C0100,  //  0003  GETMBR	R3	R0	K0
-      0x58100001,  //  0004  LDCONST	R4	K1
-      0x7C080400,  //  0005  CALL	R2	2
-      0x5C040400,  //  0006  MOVE	R1	R2
-      0x8C080102,  //  0007  GETMET	R2	R0	K2
-      0x5C100200,  //  0008  MOVE	R4	R1
-      0x7C080400,  //  0009  CALL	R2	2
-      0x8C080303,  //  000A  GETMET	R2	R1	K3
-      0x7C080200,  //  000B  CALL	R2	1
-      0xA8040001,  //  000C  EXBLK	1	1
-      0x7002001E,  //  000D  JMP		#002D
-      0xAC080002,  //  000E  CATCH	R2	0	2
-      0x7002001B,  //  000F  JMP		#002C
-      0x4C100000,  //  0010  LDNIL	R4
-      0x20100204,  //  0011  NE	R4	R1	R4
-      0x78120001,  //  0012  JMPF	R4	#0015
-      0x8C100303,  //  0013  GETMET	R4	R1	K3
-      0x7C100200,  //  0014  CALL	R4	1
-      0x4C040000,  //  0015  LDNIL	R1
-      0xA8020009,  //  0016  EXBLK	0	#0021
-      0x60100011,  //  0017  GETGBL	R4	G17
-      0x88140100,  //  0018  GETMBR	R5	R0	K0
-      0x58180001,  //  0019  LDCONST	R6	K1
-      0x7C100400,  //  001A  CALL	R4	2
-      0x5C040800,  //  001B  MOVE	R1	R4
-      0x8C100304,  //  001C  GETMET	R4	R1	K4
-      0x58180005,  //  001D  LDCONST	R6	K5
-      0x7C100400,  //  001E  CALL	R4	2
-      0xA8040001,  //  001F  EXBLK	1	1
-      0x70020003,  //  0020  JMP		#0025
-      0xAC100000,  //  0021  CATCH	R4	0	0
-      0x70020000,  //  0022  JMP		#0024
-      0x70020000,  //  0023  JMP		#0025
-      0xB0080000,  //  0024  RAISE	2	R0	R0
-      0x4C100000,  //  0025  LDNIL	R4
-      0x20100204,  //  0026  NE	R4	R1	R4
-      0x78120001,  //  0027  JMPF	R4	#002A
-      0x8C100303,  //  0028  GETMET	R4	R1	K3
-      0x7C100200,  //  0029  CALL	R4	1
-      0xB0040403,  //  002A  RAISE	1	R2	R3
-      0x70020000,  //  002B  JMP		#002D
-      0xB0080000,  //  002C  RAISE	2	R0	R0
-      0x50080000,  //  002D  LDBOOL	R2	0	0
-      0x90020C02,  //  002E  SETMBR	R0	K6	R2
-      0x80000000,  //  002F  RET	0
+    ( &(const binstruction[50]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x7806002E,  //  0001  JMPF	R1	#0031
+      0x4C040000,  //  0002  LDNIL	R1
+      0xA802000B,  //  0003  EXBLK	0	#0010
+      0x60080011,  //  0004  GETGBL	R2	G17
+      0x880C0101,  //  0005  GETMBR	R3	R0	K1
+      0x58100002,  //  0006  LDCONST	R4	K2
+      0x7C080400,  //  0007  CALL	R2	2
+      0x5C040400,  //  0008  MOVE	R1	R2
+      0x8C080103,  //  0009  GETMET	R2	R0	K3
+      0x5C100200,  //  000A  MOVE	R4	R1
+      0x7C080400,  //  000B  CALL	R2	2
+      0x8C080304,  //  000C  GETMET	R2	R1	K4
+      0x7C080200,  //  000D  CALL	R2	1
+      0xA8040001,  //  000E  EXBLK	1	1
+      0x7002001E,  //  000F  JMP		#002F
+      0xAC080002,  //  0010  CATCH	R2	0	2
+      0x7002001B,  //  0011  JMP		#002E
+      0x4C100000,  //  0012  LDNIL	R4
+      0x20100204,  //  0013  NE	R4	R1	R4
+      0x78120001,  //  0014  JMPF	R4	#0017
+      0x8C100304,  //  0015  GETMET	R4	R1	K4
+      0x7C100200,  //  0016  CALL	R4	1
+      0x4C040000,  //  0017  LDNIL	R1
+      0xA8020009,  //  0018  EXBLK	0	#0023
+      0x60100011,  //  0019  GETGBL	R4	G17
+      0x88140101,  //  001A  GETMBR	R5	R0	K1
+      0x58180002,  //  001B  LDCONST	R6	K2
+      0x7C100400,  //  001C  CALL	R4	2
+      0x5C040800,  //  001D  MOVE	R1	R4
+      0x8C100305,  //  001E  GETMET	R4	R1	K5
+      0x58180006,  //  001F  LDCONST	R6	K6
+      0x7C100400,  //  0020  CALL	R4	2
+      0xA8040001,  //  0021  EXBLK	1	1
+      0x70020003,  //  0022  JMP		#0027
+      0xAC100000,  //  0023  CATCH	R4	0	0
+      0x70020000,  //  0024  JMP		#0026
+      0x70020000,  //  0025  JMP		#0027
+      0xB0080000,  //  0026  RAISE	2	R0	R0
+      0x4C100000,  //  0027  LDNIL	R4
+      0x20100204,  //  0028  NE	R4	R1	R4
+      0x78120001,  //  0029  JMPF	R4	#002C
+      0x8C100304,  //  002A  GETMET	R4	R1	K4
+      0x7C100200,  //  002B  CALL	R4	1
+      0xB0040403,  //  002C  RAISE	1	R2	R3
+      0x70020000,  //  002D  JMP		#002F
+      0xB0080000,  //  002E  RAISE	2	R0	R0
+      0x50080000,  //  002F  LDBOOL	R2	0	0
+      0x90020002,  //  0030  SETMBR	R0	K0	R2
+      0x80000000,  //  0031  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: zero
+********************************************************************/
+extern const bclass be_class_Persist;
+be_local_closure(class_Persist_zero,   /* name */
+  be_nested_proto(
+    2,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    &be_class_Persist, 
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str(_p),
+    /* K1   */  be_nested_str(_dirty),
+    }),
+    &be_const_str_zero,
+    &be_const_str_solidified,
+    ( &(const binstruction[ 6]) {  /* code */
+      0x60040013,  //  0000  GETGBL	R1	G19
+      0x7C040000,  //  0001  CALL	R1	0
+      0x90020001,  //  0002  SETMBR	R0	K0	R1
+      0x50040200,  //  0003  LDBOOL	R1	1	0
+      0x90020201,  //  0004  SETMBR	R0	K1	R1
+      0x80000000,  //  0005  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: find
+********************************************************************/
+extern const bclass be_class_Persist;
+be_local_closure(class_Persist_find,   /* name */
+  be_nested_proto(
+    7,                          /* nstack */
+    3,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    &be_class_Persist, 
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str(_p),
+    /* K1   */  be_nested_str(find),
+    }),
+    &be_const_str_find,
+    &be_const_str_solidified,
+    ( &(const binstruction[ 6]) {  /* code */
+      0x880C0100,  //  0000  GETMBR	R3	R0	K0
+      0x8C0C0701,  //  0001  GETMET	R3	R3	K1
+      0x5C140200,  //  0002  MOVE	R5	R1
+      0x5C180400,  //  0003  MOVE	R6	R2
+      0x7C0C0600,  //  0004  CALL	R3	3
+      0x80040600,  //  0005  RET	1	R3
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: has
+********************************************************************/
+extern const bclass be_class_Persist;
+be_local_closure(class_Persist_has,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    &be_class_Persist, 
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str(_p),
+    /* K1   */  be_nested_str(contains),
+    }),
+    &be_const_str_has,
+    &be_const_str_solidified,
+    ( &(const binstruction[ 5]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x5C100200,  //  0002  MOVE	R4	R1
+      0x7C080400,  //  0003  CALL	R2	2
+      0x80040400,  //  0004  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: json_fdump_list
+********************************************************************/
+extern const bclass be_class_Persist;
+be_local_closure(class_Persist_json_fdump_list,   /* name */
+  be_nested_proto(
+    9,                          /* nstack */
+    3,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    &be_class_Persist, 
+    1,                          /* has constants */
+    ( &(const bvalue[ 8]) {     /* constants */
+    /* K0   */  be_nested_str(json),
+    /* K1   */  be_nested_str(write),
+    /* K2   */  be_nested_str(_X5B),
+    /* K3   */  be_const_int(0),
+    /* K4   */  be_nested_str(_X2C),
+    /* K5   */  be_nested_str(json_fdump_any),
+    /* K6   */  be_const_int(1),
+    /* K7   */  be_nested_str(_X5D),
+    }),
+    &be_const_str_json_fdump_list,
+    &be_const_str_solidified,
+    ( &(const binstruction[25]) {  /* code */
+      0xA40E0000,  //  0000  IMPORT	R3	K0
+      0x8C100301,  //  0001  GETMET	R4	R1	K1
+      0x58180002,  //  0002  LDCONST	R6	K2
+      0x7C100400,  //  0003  CALL	R4	2
+      0x58100003,  //  0004  LDCONST	R4	K3
+      0x6014000C,  //  0005  GETGBL	R5	G12
+      0x5C180400,  //  0006  MOVE	R6	R2
+      0x7C140200,  //  0007  CALL	R5	1
+      0x14140805,  //  0008  LT	R5	R4	R5
+      0x7816000A,  //  0009  JMPF	R5	#0015
+      0x24140903,  //  000A  GT	R5	R4	K3
+      0x78160002,  //  000B  JMPF	R5	#000F
+      0x8C140301,  //  000C  GETMET	R5	R1	K1
+      0x581C0004,  //  000D  LDCONST	R7	K4
+      0x7C140400,  //  000E  CALL	R5	2
+      0x8C140105,  //  000F  GETMET	R5	R0	K5
+      0x5C1C0200,  //  0010  MOVE	R7	R1
+      0x94200404,  //  0011  GETIDX	R8	R2	R4
+      0x7C140600,  //  0012  CALL	R5	3
+      0x00100906,  //  0013  ADD	R4	R4	K6
+      0x7001FFEF,  //  0014  JMP		#0005
+      0x8C140301,  //  0015  GETMET	R5	R1	K1
+      0x581C0007,  //  0016  LDCONST	R7	K7
+      0x7C140400,  //  0017  CALL	R5	2
+      0x80000000,  //  0018  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: member
+********************************************************************/
+extern const bclass be_class_Persist;
+be_local_closure(class_Persist_member,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    &be_class_Persist, 
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str(_p),
+    /* K1   */  be_nested_str(find),
+    }),
+    &be_const_str_member,
+    &be_const_str_solidified,
+    ( &(const binstruction[ 5]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x5C100200,  //  0002  MOVE	R4	R1
+      0x7C080400,  //  0003  CALL	R2	2
+      0x80040400,  //  0004  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: setmember
+********************************************************************/
+extern const bclass be_class_Persist;
+be_local_closure(class_Persist_setmember,   /* name */
+  be_nested_proto(
+    4,                          /* nstack */
+    3,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    &be_class_Persist, 
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str(_p),
+    /* K1   */  be_nested_str(_dirty),
+    }),
+    &be_const_str_setmember,
+    &be_const_str_solidified,
+    ( &(const binstruction[ 5]) {  /* code */
+      0x880C0100,  //  0000  GETMBR	R3	R0	K0
+      0x980C0202,  //  0001  SETIDX	R3	R1	R2
+      0x500C0200,  //  0002  LDBOOL	R3	1	0
+      0x90020203,  //  0003  SETMBR	R0	K1	R3
+      0x80000000,  //  0004  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: contains
+********************************************************************/
+extern const bclass be_class_Persist;
+be_local_closure(class_Persist_contains,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    &be_class_Persist, 
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str(_p),
+    /* K1   */  be_nested_str(contains),
+    }),
+    &be_const_str_contains,
+    &be_const_str_solidified,
+    ( &(const binstruction[ 5]) {  /* code */
+      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x5C100200,  //  0002  MOVE	R4	R1
+      0x7C080400,  //  0003  CALL	R2	2
+      0x80040400,  //  0004  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: json_fdump
+********************************************************************/
+extern const bclass be_class_Persist;
+be_local_closure(class_Persist_json_fdump,   /* name */
+  be_nested_proto(
+    7,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    &be_class_Persist, 
+    1,                          /* has constants */
+    ( &(const bvalue[ 5]) {     /* constants */
+    /* K0   */  be_nested_str(json),
+    /* K1   */  be_nested_str(_p),
+    /* K2   */  be_nested_str(json_fdump_map),
+    /* K3   */  be_nested_str(internal_error),
+    /* K4   */  be_nested_str(persist_X2E_p_X20is_X20not_X20a_X20map),
+    }),
+    &be_const_str_json_fdump,
+    &be_const_str_solidified,
+    ( &(const binstruction[13]) {  /* code */
+      0xA40A0000,  //  0000  IMPORT	R2	K0
+      0x600C000F,  //  0001  GETGBL	R3	G15
+      0x88100101,  //  0002  GETMBR	R4	R0	K1
+      0x60140013,  //  0003  GETGBL	R5	G19
+      0x7C0C0400,  //  0004  CALL	R3	2
+      0x780E0004,  //  0005  JMPF	R3	#000B
+      0x8C0C0102,  //  0006  GETMET	R3	R0	K2
+      0x5C140200,  //  0007  MOVE	R5	R1
+      0x88180101,  //  0008  GETMBR	R6	R0	K1
+      0x7C0C0600,  //  0009  CALL	R3	3
+      0x70020000,  //  000A  JMP		#000C
+      0xB0060704,  //  000B  RAISE	1	K3	K4
+      0x80000000,  //  000C  RET	0
     })
   )
 );
@@ -509,150 +667,10 @@ be_local_closure(class_Persist_load,   /* name */
 
 
 /********************************************************************
-** Solidified function: find
+** Solidified function: remove
 ********************************************************************/
 extern const bclass be_class_Persist;
-be_local_closure(class_Persist_find,   /* name */
-  be_nested_proto(
-    7,                          /* nstack */
-    3,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    &be_class_Persist, 
-    1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str(_p),
-    /* K1   */  be_nested_str(find),
-    }),
-    &be_const_str_find,
-    &be_const_str_solidified,
-    ( &(const binstruction[ 6]) {  /* code */
-      0x880C0100,  //  0000  GETMBR	R3	R0	K0
-      0x8C0C0701,  //  0001  GETMET	R3	R3	K1
-      0x5C140200,  //  0002  MOVE	R5	R1
-      0x5C180400,  //  0003  MOVE	R6	R2
-      0x7C0C0600,  //  0004  CALL	R3	3
-      0x80040600,  //  0005  RET	1	R3
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: init
-********************************************************************/
-extern const bclass be_class_Persist;
-be_local_closure(class_Persist_init,   /* name */
-  be_nested_proto(
-    6,                          /* nstack */
-    2,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    &be_class_Persist, 
-    1,                          /* has constants */
-    ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str(_p),
-    /* K1   */  be_nested_str(copy),
-    /* K2   */  be_nested_str(load),
-    /* K3   */  be_nested_str(_filename),
-    /* K4   */  be_nested_str(_dirty),
-    }),
-    &be_const_str_init,
-    &be_const_str_solidified,
-    ( &(const binstruction[19]) {  /* code */
-      0x6008000F,  //  0000  GETGBL	R2	G15
-      0x5C0C0200,  //  0001  MOVE	R3	R1
-      0x60100013,  //  0002  GETGBL	R4	G19
-      0x7C080400,  //  0003  CALL	R2	2
-      0x780A0003,  //  0004  JMPF	R2	#0009
-      0x8C080301,  //  0005  GETMET	R2	R1	K1
-      0x7C080200,  //  0006  CALL	R2	1
-      0x90020002,  //  0007  SETMBR	R0	K0	R2
-      0x70020002,  //  0008  JMP		#000C
-      0x60080013,  //  0009  GETGBL	R2	G19
-      0x7C080000,  //  000A  CALL	R2	0
-      0x90020002,  //  000B  SETMBR	R0	K0	R2
-      0x8C080102,  //  000C  GETMET	R2	R0	K2
-      0x88100100,  //  000D  GETMBR	R4	R0	K0
-      0x88140103,  //  000E  GETMBR	R5	R0	K3
-      0x7C080600,  //  000F  CALL	R2	3
-      0x50080000,  //  0010  LDBOOL	R2	0	0
-      0x90020802,  //  0011  SETMBR	R0	K4	R2
-      0x80000000,  //  0012  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: json_fdump_list
-********************************************************************/
-extern const bclass be_class_Persist;
-be_local_closure(class_Persist_json_fdump_list,   /* name */
-  be_nested_proto(
-    9,                          /* nstack */
-    3,                          /* argc */
-    2,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    &be_class_Persist, 
-    1,                          /* has constants */
-    ( &(const bvalue[ 8]) {     /* constants */
-    /* K0   */  be_nested_str(json),
-    /* K1   */  be_nested_str(write),
-    /* K2   */  be_nested_str(_X5B),
-    /* K3   */  be_const_int(0),
-    /* K4   */  be_nested_str(_X2C),
-    /* K5   */  be_nested_str(json_fdump_any),
-    /* K6   */  be_const_int(1),
-    /* K7   */  be_nested_str(_X5D),
-    }),
-    &be_const_str_json_fdump_list,
-    &be_const_str_solidified,
-    ( &(const binstruction[25]) {  /* code */
-      0xA40E0000,  //  0000  IMPORT	R3	K0
-      0x8C100301,  //  0001  GETMET	R4	R1	K1
-      0x58180002,  //  0002  LDCONST	R6	K2
-      0x7C100400,  //  0003  CALL	R4	2
-      0x58100003,  //  0004  LDCONST	R4	K3
-      0x6014000C,  //  0005  GETGBL	R5	G12
-      0x5C180400,  //  0006  MOVE	R6	R2
-      0x7C140200,  //  0007  CALL	R5	1
-      0x14140805,  //  0008  LT	R5	R4	R5
-      0x7816000A,  //  0009  JMPF	R5	#0015
-      0x24140903,  //  000A  GT	R5	R4	K3
-      0x78160002,  //  000B  JMPF	R5	#000F
-      0x8C140301,  //  000C  GETMET	R5	R1	K1
-      0x581C0004,  //  000D  LDCONST	R7	K4
-      0x7C140400,  //  000E  CALL	R5	2
-      0x8C140105,  //  000F  GETMET	R5	R0	K5
-      0x5C1C0200,  //  0010  MOVE	R7	R1
-      0x94200404,  //  0011  GETIDX	R8	R2	R4
-      0x7C140600,  //  0012  CALL	R5	3
-      0x00100906,  //  0013  ADD	R4	R4	K6
-      0x7001FFEF,  //  0014  JMP		#0005
-      0x8C140301,  //  0015  GETMET	R5	R1	K1
-      0x581C0007,  //  0016  LDCONST	R7	K7
-      0x7C140400,  //  0017  CALL	R5	2
-      0x80000000,  //  0018  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: has
-********************************************************************/
-extern const bclass be_class_Persist;
-be_local_closure(class_Persist_has,   /* name */
+be_local_closure(class_Persist_remove,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
@@ -662,18 +680,21 @@ be_local_closure(class_Persist_has,   /* name */
     0,                          /* has sup protos */
     &be_class_Persist, 
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
+    ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(_p),
-    /* K1   */  be_nested_str(has),
+    /* K1   */  be_nested_str(remove),
+    /* K2   */  be_nested_str(_dirty),
     }),
-    &be_const_str_has,
+    &be_const_str_remove,
     &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
+    ( &(const binstruction[ 7]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
       0x8C080501,  //  0001  GETMET	R2	R2	K1
       0x5C100200,  //  0002  MOVE	R4	R1
       0x7C080400,  //  0003  CALL	R2	2
-      0x80040400,  //  0004  RET	1	R2
+      0x50080200,  //  0004  LDBOOL	R2	1	0
+      0x90020402,  //  0005  SETMBR	R0	K2	R2
+      0x80000000,  //  0006  RET	0
     })
   )
 );
@@ -686,24 +707,25 @@ be_local_closure(class_Persist_has,   /* name */
 be_local_class(Persist,
     2,
     NULL,
-    be_nested_map(16,
+    be_nested_map(17,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key(has, 6), be_const_closure(class_Persist_has_closure) },
-        { be_const_key(setmember, -1), be_const_closure(class_Persist_setmember_closure) },
         { be_const_key(remove, -1), be_const_closure(class_Persist_remove_closure) },
-        { be_const_key(zero, 0), be_const_closure(class_Persist_zero_closure) },
-        { be_const_key(json_fdump, -1), be_const_closure(class_Persist_json_fdump_closure) },
-        { be_const_key(json_fdump_list, 2), be_const_closure(class_Persist_json_fdump_list_closure) },
-        { be_const_key(init, 15), be_const_closure(class_Persist_init_closure) },
-        { be_const_key(find, -1), be_const_closure(class_Persist_find_closure) },
-        { be_const_key(save, -1), be_const_closure(class_Persist_save_closure) },
-        { be_const_key(json_fdump_any, 12), be_const_closure(class_Persist_json_fdump_any_closure) },
-        { be_const_key(_p, 7), be_const_var(0) },
         { be_const_key(_filename, -1), be_nested_str(_persist_X2Ejson) },
-        { be_const_key(load, -1), be_const_closure(class_Persist_load_closure) },
-        { be_const_key(json_fdump_map, 5), be_const_closure(class_Persist_json_fdump_map_closure) },
-        { be_const_key(_dirty, -1), be_const_var(1) },
+        { be_const_key(json_fdump_any, 4), be_const_closure(class_Persist_json_fdump_any_closure) },
+        { be_const_key(load, 16), be_const_closure(class_Persist_load_closure) },
+        { be_const_key(zero, -1), be_const_closure(class_Persist_zero_closure) },
+        { be_const_key(json_fdump_list, -1), be_const_closure(class_Persist_json_fdump_list_closure) },
+        { be_const_key(find, 5), be_const_closure(class_Persist_find_closure) },
+        { be_const_key(has, -1), be_const_closure(class_Persist_has_closure) },
         { be_const_key(member, -1), be_const_closure(class_Persist_member_closure) },
+        { be_const_key(setmember, 8), be_const_closure(class_Persist_setmember_closure) },
+        { be_const_key(_dirty, 0), be_const_var(1) },
+        { be_const_key(save, 9), be_const_closure(class_Persist_save_closure) },
+        { be_const_key(contains, -1), be_const_closure(class_Persist_contains_closure) },
+        { be_const_key(_p, -1), be_const_var(0) },
+        { be_const_key(json_fdump, -1), be_const_closure(class_Persist_json_fdump_closure) },
+        { be_const_key(json_fdump_map, 3), be_const_closure(class_Persist_json_fdump_map_closure) },
+        { be_const_key(init, -1), be_const_closure(class_Persist_init_closure) },
     })),
     (bstring*) &be_const_str_Persist
 );
