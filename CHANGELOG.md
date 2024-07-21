@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 TM1621 number overflow from "9999" to "12E3" (#21131)
 - ESP32 platform update from 2024.06.11 to 2024.07.10 (#21745)
 - ESP32 platform update from 2024.07.10 to 2024.07.11 (#21765)
+- Berry simplified `module persist`
 
 ### Fixed
 - Berry `bytes.resize()` for large sizes (#21716)

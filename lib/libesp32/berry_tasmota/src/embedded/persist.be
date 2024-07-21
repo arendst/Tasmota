@@ -15,17 +15,10 @@ class Persist
   var _p
   var _dirty
 
-  #- persist can be initialized with pre-existing values. The map is not copied so any change will be reflected -#
-  def init(m)
-    # print("Persist init")
-    if isinstance(m,map)
-      self._p = m.copy()   # need to copy instead?
-    else
-      self._p = {}
-    end
-    self.load(self._p, self._filename)
+  def init()
+    self._p = {}
     self._dirty = false
-    # print("Persist init")
+    self.load()
   end
 
   #- virtual member getter, if a key does not exists return `nil` instead of exception -#
@@ -50,8 +43,12 @@ class Persist
       self._dirty = true
   end
 
-  def has(k)
-      return self._p.has(k)
+  def contains(k)
+      return self._p.contains(k)
+  end
+
+  def has(k)      # deprecated, use contains instead
+    return self._p.contains(k)
   end
 
   def find(k, d)
@@ -74,7 +71,7 @@ class Persist
         raise e, m
       end
       if isinstance(val, map)
-        self._p = val     # sucess
+        self._p = val     # success
       else
         print("BRY: failed to load _persist.json")
       end
@@ -87,24 +84,25 @@ class Persist
   end
 
   def save()
-    var f       # file object
-    try
-      f = open(self._filename, "w")
-      self.json_fdump(f)
-      f.close()
-    except .. as e, m
-      if f != nil f.close() end
-      f = nil
+    if self._dirty    # do not save if not dirty
+      var f       # file object
       try
         f = open(self._filename, "w")
-        f.write('{}')   # fallback write empty map
-      except ..
+        self.json_fdump(f)
+        f.close()
+      except .. as e, m
+        if (f != nil) f.close() end
+        f = nil
+        try
+          f = open(self._filename, "w")
+          f.write('{}')   # fallback write empty map
+        except ..
+        end
+        if f != nil f.close() end
+        raise e, m
       end
-      if f != nil f.close() end
-      raise e, m
+      self._dirty = false
     end
-    self._dirty = false
-    # print("Saving")
   end
 
   def json_fdump_any(f, v)
