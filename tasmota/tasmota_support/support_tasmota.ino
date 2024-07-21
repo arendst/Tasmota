@@ -1618,12 +1618,12 @@ void Every250mSeconds(void)
 #ifdef ESP32
         if (OtaFactoryRead()) {
           OtaFactoryWrite(false);
-          TasmotaGlobal.ota_state_flag = 3;
-          AddLog(LOG_LEVEL_DEBUG, PSTR("OTA: Propagating upload"));
+          RtcSettings.ota_loader = 1;
         }
 #endif
         if (1 == RtcSettings.ota_loader) {
           RtcSettings.ota_loader = 0;
+          AddLog(LOG_LEVEL_DEBUG, PSTR("OTA: Propagating upload"));
           TasmotaGlobal.ota_state_flag = 3;
         }
 #endif  // FIRMWARE_MINIMAL
