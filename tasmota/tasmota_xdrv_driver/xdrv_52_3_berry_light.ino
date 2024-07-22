@@ -130,7 +130,7 @@ extern "C" {
     int32_t top = be_top(vm); // Get the number of arguments
     if (top == 0 || (top == 1 && be_isint(vm, 1))) {
       int32_t light_num = 0;
-      if (top > 1) {
+      if (top > 0) {
         light_num = be_toint(vm, 1);
       }
       push_getlight(vm, light_num);

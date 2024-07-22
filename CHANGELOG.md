@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- Berry fix `light.get` for separate RGB/CT
 
 ### Removed
 
