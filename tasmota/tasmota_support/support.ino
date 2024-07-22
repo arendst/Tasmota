@@ -1796,6 +1796,7 @@ bool ValidSpiPinUsed(uint32_t gpio) {
 }
 
 #ifdef ESP32
+#ifndef FIRMWARE_SAFEBOOT
 SPIClass *Init_SPI_Bus(uint32 bus) {
   SPIClass *spi;
   if (1 == bus) {
@@ -1814,6 +1815,7 @@ SPIClass *Init_SPI_Bus(uint32 bus) {
   }
   return nullptr;
 }
+#endif // FIRMWARE_SAFEBOOT
 #endif // ESP32
 
 bool JsonTemplate(char* dataBuf)
