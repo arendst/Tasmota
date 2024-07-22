@@ -1,7 +1,7 @@
 /*
   xsns_14_sht3x.ino - SHT3X, SHT4X and SHTCX temperature and humidity sensor support for Tasmota
 
-  Copyright (C) 2022  Theo Arends, Stefan Tibus
+  Copyright (C) 2024  Theo Arends, Stefan Tibus, Jan-David Förster
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
