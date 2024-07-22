@@ -1,5 +1,5 @@
 /*
-  xdrv_22_sonoff_ifan.ino - sonoff iFan02 and iFan03 support for Tasmota
+  xdrv_22_sonoff_ifan.ino - sonoff iFan02, iFan03 and iFan04 support for Tasmota
 
   Copyright (C) 2021  Theo Arends
 
@@ -19,7 +19,10 @@
 
 #ifdef USE_SONOFF_IFAN
 /*********************************************************************************************\
-  Sonoff iFan02 and iFan03
+ * Sonoff iFan02, iFan03 and iFan04
+ * 
+ * For iFan04 activate below template
+ * {"NAME":"Sonoff iFan04-H","GPIO":[32,3200,5735,3232,0,0,256,512,226,320,225,227,0,0],"FLAG":0,"BASE":71}
 \*********************************************************************************************/
 
 #define XDRV_22                   22
@@ -28,7 +31,9 @@ const uint8_t MAX_FAN_SPEED = 4;            // Max number of iFan02 fan speeds (
 
 const uint8_t kIFan02Speed[MAX_FAN_SPEED] = { 0x00, 0x01, 0x03, 0x05 };
 const uint8_t kIFan03Speed[MAX_FAN_SPEED +2] = { 0x00, 0x01, 0x03, 0x04, 0x05, 0x06 };
+const uint8_t kIFan04Speed[MAX_FAN_SPEED +2] = { 0x00, 0x01, 0x02, 0x04, 0x05, 0x06 };
 const uint8_t kIFan03Sequence[MAX_FAN_SPEED][MAX_FAN_SPEED] = {{0, 2, 2, 2}, {0, 1, 2, 4}, {1, 1, 2, 5}, {4, 4, 5, 3}};
+const uint8_t kIFan04Sequence[MAX_FAN_SPEED][MAX_FAN_SPEED] = {{0, 4, 5, 3}, {0, 1, 2, 3}, {0, 1, 2, 3}, {0, 4, 5, 3}};
 
 const char kSonoffIfanCommands[] PROGMEM = "|"  // No prefix
   D_CMND_FANSPEED;
@@ -84,7 +89,7 @@ void SonoffIFanSetFanspeed(uint8_t fanspeed, bool sequence)
   uint8_t fans = kIFan02Speed[fanspeed];
   if (SONOFF_IFAN03 == TasmotaGlobal.module_type) {
     if (sequence) {
-      fanspeed = kIFan03Sequence[fanspeed_now][ifan_fanspeed_goal];
+      fanspeed = (TasmotaGlobal.gpio_optiona.ifan04_h) ? kIFan04Sequence[fanspeed_now][ifan_fanspeed_goal] : kIFan03Sequence[fanspeed_now][ifan_fanspeed_goal];
       if (fanspeed != ifan_fanspeed_goal) {
         if (0 == fanspeed_now) {
           ifan_fanspeed_timer = 20;                // Need extra time to power up fan
@@ -93,7 +98,7 @@ void SonoffIFanSetFanspeed(uint8_t fanspeed, bool sequence)
         }
       }
     }
-    fans = kIFan03Speed[fanspeed];
+    fans = (TasmotaGlobal.gpio_optiona.ifan04_h) ? kIFan04Speed[fanspeed] : kIFan03Speed[fanspeed];
   }
   for (uint32_t i = 2; i < 5; i++) {
     uint8_t state = (fans &1) + POWER_OFF_NO_STATE;  // Add no publishPowerState
