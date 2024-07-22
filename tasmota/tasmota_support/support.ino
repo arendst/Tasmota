@@ -1784,6 +1784,7 @@ bool ValidGPIO(uint32_t pin, uint32_t gpio) {
   return (GPIO_USER == ValidPin(pin, BGPIO(gpio)));  // Only allow GPIO_USER pins
 }
 
+
 bool ValidSpiPinUsed(uint32_t gpio) {
   // ESP8266: If SPI pin selected chk if it's not one of the three Hardware SPI pins (12..14)
   bool result = false;
@@ -1793,6 +1794,27 @@ bool ValidSpiPinUsed(uint32_t gpio) {
   }
   return result;
 }
+
+#ifdef ESP32
+SPIClass *Init_SPI_Bus(uint32 bus) {
+  SPIClass *spi;
+  if (1 == bus) {
+    if (TasmotaGlobal.spi_enabled) {
+      spi = &SPI;
+      spi->begin(Pin(GPIO_SPI_CLK, 0), Pin(GPIO_SPI_MISO, 0), Pin(GPIO_SPI_MOSI, 0), -1);
+      return spi;
+    }
+  }
+  if (2 == bus) {
+    if (TasmotaGlobal.spi_enabled2) {
+      spi = new SPIClass(HSPI);
+      spi->begin(Pin(GPIO_SPI_CLK, 1), Pin(GPIO_SPI_MISO, 1), Pin(GPIO_SPI_MOSI, 1), -1);
+      return spi;
+    }
+  }
+  return nullptr;
+}
+#endif // ESP32
 
 bool JsonTemplate(char* dataBuf)
 {
