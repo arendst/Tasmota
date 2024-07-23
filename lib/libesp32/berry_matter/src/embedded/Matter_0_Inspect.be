@@ -55,9 +55,15 @@ def inspect(p)
     import introspect
 
     var keys = []
-    for k : introspect.members(p)
-      var v = introspect.get(p, k)
-      if type(v) != 'function'    keys.push(k) end
+    var o = p
+    while (o != nil)
+      for k : introspect.members(p)
+        var v = introspect.get(p, k)
+        if (type(v) != 'function') && (keys.find(k) == nil)
+          keys.push(k)
+        end
+      end
+      o = super(o)      # move to superclass
     end
     keys = matter.sort(keys)
 
