@@ -6,15 +6,15 @@ All notable changes to this project will be documented in this file.
 ## [14.1.0.4]
 ### Added
 - Support for Sonoff iFan04-H using template (#16402)
-- Matter improve internal `inspect`for superclasses
-- Matter support for split lights (`SetOption68 1` and `SetOption37 128`)
+- Matter improve internal `inspect`for superclasses (#21824)
+- Matter support for split lights (`SetOption68 1` and `SetOption37 128`) (#21834)
 
 ### Breaking Changed
 
 ### Changed
 
 ### Fixed
-- Berry fix `light.get` for separate RGB/CT
+- Berry `light.get` for separate RGB/CT (#21818)
 
 ### Removed
 
