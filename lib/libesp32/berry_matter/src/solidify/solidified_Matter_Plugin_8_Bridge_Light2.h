@@ -40,13 +40,14 @@ extern const bclass be_class_Matter_Plugin_Light2;
 be_local_class(Matter_Plugin_Bridge_Light2,
     0,
     &be_class_Matter_Plugin_Light2,
-    be_nested_map(5,
+    be_nested_map(6,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(TYPE, 3), be_nested_str_weak(http_light2) },
-        { be_const_key_weak(UPDATE_TIME, 2), be_const_int(3000) },
+        { be_const_key_weak(UPDATE_TIME, -1), be_const_int(3000) },
+        { be_const_key_weak(TYPE, -1), be_nested_str_weak(http_light2) },
         { be_const_key_weak(BRIDGE, -1), be_const_bool(1) },
+        { be_const_key_weak(ARG_HINT, 5), be_nested_str_weak(Relay_X3Cx_X3E_X20number) },
+        { be_const_key_weak(ARG_TYPE, -1), be_const_static_closure(class_Matter_Plugin_Bridge_Light2__X3Clambda_X3E_closure) },
         { be_const_key_weak(ARG, -1), be_nested_str_weak(relay) },
-        { be_const_key_weak(ARG_TYPE, 0), be_const_static_closure(class_Matter_Plugin_Bridge_Light2__X3Clambda_X3E_closure) },
     })),
     be_str_weak(Matter_Plugin_Bridge_Light2)
 );

@@ -25,7 +25,9 @@ import matter
 
 class Matter_Plugin_Light3 : Matter_Plugin_Light1
   static var TYPE = "light3"                                # name of the plug-in in json
-  static var DISPLAY_NAME = "Light 3 RGB"                           # display name of the plug-in
+  static var DISPLAY_NAME = "Light 3 RGB"                    # display name of the plug-in
+  static var ARG  = ""                                      # no arg for native light
+  static var ARG_HINT = "_Not used_"                        # Hint for entering the Argument (inside 'placeholder')
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited                                     # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                                     # Identify 1.2 p.16
@@ -65,7 +67,7 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
     if !self.VIRTUAL && !self.BRIDGE
       import light
       super(self).update_shadow()
-      var light_status = light.get()
+      var light_status = light.get(self.light_index)
       if light_status != nil
         var hue = light_status.find('hue', nil)
         var sat = light_status.find('sat', nil)
@@ -122,11 +124,11 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
       var sat_255 = (sat_254 != nil) ? tasmota.scale_uint(sat_254, 0, 254, 0, 255) : nil
 
       if (hue_360 != nil) && (sat_255 != nil)
-        light.set({'hue': hue_360, 'sat': sat_255})
+        light.set({'hue': hue_360, 'sat': sat_255}, self.light_index)
       elif (hue_360 != nil)
-        light.set({'hue': hue_360})
+        light.set({'hue': hue_360}, self.light_index)
       else
-        light.set({'sat': sat_255})
+        light.set({'sat': sat_255}, self.light_index)
       end
       self.update_shadow()
     end
@@ -176,7 +178,6 @@ class Matter_Plugin_Light3 : Matter_Plugin_Light1
   # returns a TLV object if successful, contains the response
   #   or an `int` to indicate a status
   def invoke_request(session, val, ctx)
-    import light
     var TLV = matter.TLV
     var cluster = ctx.cluster
     var command = ctx.command

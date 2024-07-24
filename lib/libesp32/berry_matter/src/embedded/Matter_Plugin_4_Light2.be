@@ -25,7 +25,9 @@ import matter
 
 class Matter_Plugin_Light2 : Matter_Plugin_Light1
   static var TYPE = "light2"                                # name of the plug-in in json
-  static var DISPLAY_NAME = "Light 2 CT"                            # display name of the plug-in
+  static var DISPLAY_NAME = "Light 2 CT"                    # display name of the plug-in
+  static var ARG  = ""                                      # no arg for native light
+  static var ARG_HINT = "_Not used_"                        # Hint for entering the Argument (inside 'placeholder')
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited                                     # Descriptor Cluster 9.5 p.453
     # 0x0003: inherited                                     # Identify 1.2 p.16
@@ -46,6 +48,7 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
   # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
   # var shadow_onoff                                  # (bool) status of the light power on/off
   # var shadow_bri                                    # (int 0..254) brightness before Gamma correction - as per Matter 255 is not allowed
+  # var light_index                                   # index number when using `light.get()` and `light.set()`
   var shadow_ct                                     # (int 153..500, default 325) Color Temperatur in mireds
   var ct_min, ct_max                                # min and max value allowed for CT, Alexa emulation requires to have a narrower range 200..380
 
@@ -55,6 +58,10 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
     super(self).init(device, endpoint, arguments)
     if !self.BRIDGE                                 # in BRIDGE mode keep default to nil
       self.shadow_ct = 325
+      import light
+      if (light.get(1) != nil)
+        self.light_index = 1                        # default value is `0` from superclass
+      end
     end
     self.update_ct_minmax()                         # read SetOption to adjust ct min/max
   end
@@ -67,7 +74,8 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
       import light
       self.update_ct_minmax()
       super(self).update_shadow()
-      var light_status = light.get()
+      # check if the light RGB/CT with split mode, i.e. CT is in `light.get(1)`
+      var light_status = light.get(self.light_index)
       if light_status != nil
         var ct = light_status.find('ct', nil)
         if ct  == nil     ct = self.shadow_ct      end
@@ -110,7 +118,7 @@ class Matter_Plugin_Light2 : Matter_Plugin_Light1
       end
     else
       import light
-      light.set({'ct': ct})
+      light.set({'ct': ct}, self.light_index)
       self.update_shadow()
     end
   end

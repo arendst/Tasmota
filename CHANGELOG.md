@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Support for Sonoff iFan04-H using template (#16402)
 - Matter improve internal `inspect`for superclasses
+- Matter support for split lights (`SetOption68 1` and `SetOption37 128`)
 
 ### Breaking Changed
 

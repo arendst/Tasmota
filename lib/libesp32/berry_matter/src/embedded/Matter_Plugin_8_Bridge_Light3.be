@@ -28,6 +28,7 @@ class Matter_Plugin_Bridge_Light3 : Matter_Plugin_Light3
   static var TYPE = "http_light3"                   # name of the plug-in in json
   # static var DISPLAY_NAME = "Light 3 RGB"         # display name of the plug-in
   static var ARG  = "relay"                         # additional argument name (or empty if none)
+  static var ARG_HINT = "Relay<x> number"
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var UPDATE_TIME = 3000                     # update every 3s
 end
