@@ -149,14 +149,14 @@ be_local_closure(module_matter_inspect,   /* name */
       0x78120022,  //  0007  JMPF	R4	#002B
       0x60100010,  //  0008  GETGBL	R4	G16
       0x8C140301,  //  0009  GETMET	R5	R1	K1
-      0x5C1C0000,  //  000A  MOVE	R7	R0
+      0x5C1C0600,  //  000A  MOVE	R7	R3
       0x7C140400,  //  000B  CALL	R5	2
       0x7C100200,  //  000C  CALL	R4	1
       0xA8020014,  //  000D  EXBLK	0	#0023
       0x5C140800,  //  000E  MOVE	R5	R4
       0x7C140000,  //  000F  CALL	R5	0
       0x8C180302,  //  0010  GETMET	R6	R1	K2
-      0x5C200000,  //  0011  MOVE	R8	R0
+      0x5C200600,  //  0011  MOVE	R8	R3
       0x5C240A00,  //  0012  MOVE	R9	R5
       0x7C180600,  //  0013  CALL	R6	3
       0x601C0004,  //  0014  GETGBL	R7	G4
