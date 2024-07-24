@@ -11,7 +11,6 @@ extern const bclass be_class_Leds_segment;
 /********************************************************************
 ** Solidified function: pixel_offset
 ********************************************************************/
-extern const bclass be_class_Leds_segment;
 be_local_closure(class_Leds_segment_pixel_offset,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -20,7 +19,7 @@ be_local_closure(class_Leds_segment_pixel_offset,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_segment, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(offset),
@@ -39,7 +38,6 @@ be_local_closure(class_Leds_segment_pixel_offset,   /* name */
 /********************************************************************
 ** Solidified function: clear_to
 ********************************************************************/
-extern const bclass be_class_Leds_segment;
 be_local_closure(class_Leds_segment_clear_to,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -48,7 +46,7 @@ be_local_closure(class_Leds_segment_clear_to,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_segment, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(bri),
@@ -86,7 +84,6 @@ be_local_closure(class_Leds_segment_clear_to,   /* name */
 /********************************************************************
 ** Solidified function: pixel_count
 ********************************************************************/
-extern const bclass be_class_Leds_segment;
 be_local_closure(class_Leds_segment_pixel_count,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -95,7 +92,7 @@ be_local_closure(class_Leds_segment_pixel_count,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_segment, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(leds),
@@ -114,7 +111,6 @@ be_local_closure(class_Leds_segment_pixel_count,   /* name */
 /********************************************************************
 ** Solidified function: pixels_buffer
 ********************************************************************/
-extern const bclass be_class_Leds_segment;
 be_local_closure(class_Leds_segment_pixels_buffer,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -123,7 +119,7 @@ be_local_closure(class_Leds_segment_pixels_buffer,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_segment, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     &be_const_str_pixels_buffer,
@@ -140,7 +136,6 @@ be_local_closure(class_Leds_segment_pixels_buffer,   /* name */
 /********************************************************************
 ** Solidified function: dirty
 ********************************************************************/
-extern const bclass be_class_Leds_segment;
 be_local_closure(class_Leds_segment_dirty,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -149,7 +144,7 @@ be_local_closure(class_Leds_segment_dirty,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_segment, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(strip),
@@ -171,7 +166,6 @@ be_local_closure(class_Leds_segment_dirty,   /* name */
 /********************************************************************
 ** Solidified function: can_show
 ********************************************************************/
-extern const bclass be_class_Leds_segment;
 be_local_closure(class_Leds_segment_can_show,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -180,7 +174,7 @@ be_local_closure(class_Leds_segment_can_show,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_segment, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(strip),
@@ -202,7 +196,6 @@ be_local_closure(class_Leds_segment_can_show,   /* name */
 /********************************************************************
 ** Solidified function: set_pixel_color
 ********************************************************************/
-extern const bclass be_class_Leds_segment;
 be_local_closure(class_Leds_segment_set_pixel_color,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -211,7 +204,7 @@ be_local_closure(class_Leds_segment_set_pixel_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_segment, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str(bri),
@@ -243,7 +236,6 @@ be_local_closure(class_Leds_segment_set_pixel_color,   /* name */
 /********************************************************************
 ** Solidified function: is_dirty
 ********************************************************************/
-extern const bclass be_class_Leds_segment;
 be_local_closure(class_Leds_segment_is_dirty,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -252,7 +244,7 @@ be_local_closure(class_Leds_segment_is_dirty,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_segment, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(strip),
@@ -274,7 +266,6 @@ be_local_closure(class_Leds_segment_is_dirty,   /* name */
 /********************************************************************
 ** Solidified function: clear
 ********************************************************************/
-extern const bclass be_class_Leds_segment;
 be_local_closure(class_Leds_segment_clear,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -283,7 +274,7 @@ be_local_closure(class_Leds_segment_clear,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_segment, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(clear_to),
@@ -308,7 +299,6 @@ be_local_closure(class_Leds_segment_clear,   /* name */
 /********************************************************************
 ** Solidified function: begin
 ********************************************************************/
-extern const bclass be_class_Leds_segment;
 be_local_closure(class_Leds_segment_begin,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -317,7 +307,7 @@ be_local_closure(class_Leds_segment_begin,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_segment, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     &be_const_str_begin,
@@ -333,7 +323,6 @@ be_local_closure(class_Leds_segment_begin,   /* name */
 /********************************************************************
 ** Solidified function: get_pixel_color
 ********************************************************************/
-extern const bclass be_class_Leds_segment;
 be_local_closure(class_Leds_segment_get_pixel_color,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -342,7 +331,7 @@ be_local_closure(class_Leds_segment_get_pixel_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_segment, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(strip),
@@ -367,7 +356,6 @@ be_local_closure(class_Leds_segment_get_pixel_color,   /* name */
 /********************************************************************
 ** Solidified function: pixel_size
 ********************************************************************/
-extern const bclass be_class_Leds_segment;
 be_local_closure(class_Leds_segment_pixel_size,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -376,7 +364,7 @@ be_local_closure(class_Leds_segment_pixel_size,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_segment, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(strip),
@@ -398,7 +386,6 @@ be_local_closure(class_Leds_segment_pixel_size,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Leds_segment;
 be_local_closure(class_Leds_segment_init,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -407,7 +394,7 @@ be_local_closure(class_Leds_segment_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_segment, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(strip),
@@ -436,7 +423,6 @@ be_local_closure(class_Leds_segment_init,   /* name */
 /********************************************************************
 ** Solidified function: show
 ********************************************************************/
-extern const bclass be_class_Leds_segment;
 be_local_closure(class_Leds_segment_show,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -445,7 +431,7 @@ be_local_closure(class_Leds_segment_show,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_segment, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str(offset),
@@ -511,7 +497,6 @@ be_local_class(Leds_segment,
 /********************************************************************
 ** Solidified function: create_segment
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_create_segment,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -520,7 +505,7 @@ be_local_closure(class_Leds_create_segment,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str(leds),
@@ -564,7 +549,6 @@ be_local_closure(class_Leds_create_segment,   /* name */
 /********************************************************************
 ** Solidified function: set_bri
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_set_bri,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -573,7 +557,7 @@ be_local_closure(class_Leds_set_bri,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -600,7 +584,6 @@ be_local_closure(class_Leds_set_bri,   /* name */
 /********************************************************************
 ** Solidified function: begin
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_begin,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -609,7 +592,7 @@ be_local_closure(class_Leds_begin,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(call_native),
@@ -631,7 +614,6 @@ be_local_closure(class_Leds_begin,   /* name */
 /********************************************************************
 ** Solidified function: clear
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_clear,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -640,7 +622,7 @@ be_local_closure(class_Leds_clear,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(clear_to),
@@ -665,7 +647,6 @@ be_local_closure(class_Leds_clear,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_init,   /* name */
   be_nested_proto(
     12,                          /* nstack */
@@ -674,7 +655,7 @@ be_local_closure(class_Leds_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[15]) {     /* constants */
     /* K0   */  be_nested_str(gpio),
@@ -748,7 +729,6 @@ be_local_closure(class_Leds_init,   /* name */
 /********************************************************************
 ** Solidified function: to_gamma
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_to_gamma,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -757,7 +737,7 @@ be_local_closure(class_Leds_to_gamma,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(bri),
@@ -786,7 +766,6 @@ be_local_closure(class_Leds_to_gamma,   /* name */
 /********************************************************************
 ** Solidified function: show
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_show,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -795,7 +774,7 @@ be_local_closure(class_Leds_show,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(call_native),
@@ -817,7 +796,6 @@ be_local_closure(class_Leds_show,   /* name */
 /********************************************************************
 ** Solidified function: pixel_count
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_pixel_count,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -826,7 +804,7 @@ be_local_closure(class_Leds_pixel_count,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(call_native),
@@ -847,7 +825,6 @@ be_local_closure(class_Leds_pixel_count,   /* name */
 /********************************************************************
 ** Solidified function: get_bri
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_get_bri,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -856,7 +833,7 @@ be_local_closure(class_Leds_get_bri,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(bri),
@@ -875,7 +852,6 @@ be_local_closure(class_Leds_get_bri,   /* name */
 /********************************************************************
 ** Solidified function: set_gamma
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_set_gamma,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -884,7 +860,7 @@ be_local_closure(class_Leds_set_gamma,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(gamma),
@@ -906,7 +882,6 @@ be_local_closure(class_Leds_set_gamma,   /* name */
 /********************************************************************
 ** Solidified function: get_pixel_color
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_get_pixel_color,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -915,7 +890,7 @@ be_local_closure(class_Leds_get_pixel_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(call_native),
@@ -937,7 +912,6 @@ be_local_closure(class_Leds_get_pixel_color,   /* name */
 /********************************************************************
 ** Solidified function: dirty
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_dirty,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -946,7 +920,7 @@ be_local_closure(class_Leds_dirty,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(call_native),
@@ -967,7 +941,6 @@ be_local_closure(class_Leds_dirty,   /* name */
 /********************************************************************
 ** Solidified function: matrix
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_matrix,   /* name */
   be_nested_proto(
     11,                          /* nstack */
@@ -976,7 +949,7 @@ be_local_closure(class_Leds_matrix,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_const_class(be_class_Leds),
@@ -1008,7 +981,6 @@ be_local_closure(class_Leds_matrix,   /* name */
 /********************************************************************
 ** Solidified function: pixel_offset
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_pixel_offset,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -1017,7 +989,7 @@ be_local_closure(class_Leds_pixel_offset,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -1035,7 +1007,6 @@ be_local_closure(class_Leds_pixel_offset,   /* name */
 /********************************************************************
 ** Solidified function: clear_to
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_clear_to,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -1044,7 +1015,7 @@ be_local_closure(class_Leds_clear_to,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(bri),
@@ -1075,7 +1046,6 @@ be_local_closure(class_Leds_clear_to,   /* name */
 /********************************************************************
 ** Solidified function: set_pixel_color
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_set_pixel_color,   /* name */
   be_nested_proto(
     12,                          /* nstack */
@@ -1084,7 +1054,7 @@ be_local_closure(class_Leds_set_pixel_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(bri),
@@ -1116,7 +1086,6 @@ be_local_closure(class_Leds_set_pixel_color,   /* name */
 /********************************************************************
 ** Solidified function: pixel_size
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_pixel_size,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -1125,7 +1094,7 @@ be_local_closure(class_Leds_pixel_size,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(call_native),
@@ -1148,7 +1117,6 @@ extern const bclass be_class_Leds_matrix;
 /********************************************************************
 ** Solidified function: clear_to
 ********************************************************************/
-extern const bclass be_class_Leds_matrix;
 be_local_closure(class_Leds_matrix_clear_to,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -1157,7 +1125,7 @@ be_local_closure(class_Leds_matrix_clear_to,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_matrix, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str(strip),
@@ -1199,7 +1167,6 @@ be_local_closure(class_Leds_matrix_clear_to,   /* name */
 /********************************************************************
 ** Solidified function: show
 ********************************************************************/
-extern const bclass be_class_Leds_matrix;
 be_local_closure(class_Leds_matrix_show,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -1208,7 +1175,7 @@ be_local_closure(class_Leds_matrix_show,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_matrix, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str(offset),
@@ -1256,7 +1223,6 @@ be_local_closure(class_Leds_matrix_show,   /* name */
 /********************************************************************
 ** Solidified function: pixel_size
 ********************************************************************/
-extern const bclass be_class_Leds_matrix;
 be_local_closure(class_Leds_matrix_pixel_size,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -1265,7 +1231,7 @@ be_local_closure(class_Leds_matrix_pixel_size,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_matrix, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(pix_size),
@@ -1284,7 +1250,6 @@ be_local_closure(class_Leds_matrix_pixel_size,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Leds_matrix;
 be_local_closure(class_Leds_matrix_init,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -1293,7 +1258,7 @@ be_local_closure(class_Leds_matrix_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_matrix, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str(strip),
@@ -1333,7 +1298,6 @@ be_local_closure(class_Leds_matrix_init,   /* name */
 /********************************************************************
 ** Solidified function: set_pixel_color
 ********************************************************************/
-extern const bclass be_class_Leds_matrix;
 be_local_closure(class_Leds_matrix_set_pixel_color,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -1342,7 +1306,7 @@ be_local_closure(class_Leds_matrix_set_pixel_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_matrix, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str(strip),
@@ -1375,7 +1339,6 @@ be_local_closure(class_Leds_matrix_set_pixel_color,   /* name */
 /********************************************************************
 ** Solidified function: pixels_buffer
 ********************************************************************/
-extern const bclass be_class_Leds_matrix;
 be_local_closure(class_Leds_matrix_pixels_buffer,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -1384,7 +1347,7 @@ be_local_closure(class_Leds_matrix_pixels_buffer,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_matrix, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(strip),
@@ -1406,7 +1369,6 @@ be_local_closure(class_Leds_matrix_pixels_buffer,   /* name */
 /********************************************************************
 ** Solidified function: dirty
 ********************************************************************/
-extern const bclass be_class_Leds_matrix;
 be_local_closure(class_Leds_matrix_dirty,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -1415,7 +1377,7 @@ be_local_closure(class_Leds_matrix_dirty,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_matrix, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(strip),
@@ -1437,7 +1399,6 @@ be_local_closure(class_Leds_matrix_dirty,   /* name */
 /********************************************************************
 ** Solidified function: set_matrix_pixel_color
 ********************************************************************/
-extern const bclass be_class_Leds_matrix;
 be_local_closure(class_Leds_matrix_set_matrix_pixel_color,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -1446,7 +1407,7 @@ be_local_closure(class_Leds_matrix_set_matrix_pixel_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_matrix, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str(strip),
@@ -1504,7 +1465,6 @@ be_local_closure(class_Leds_matrix_set_matrix_pixel_color,   /* name */
 /********************************************************************
 ** Solidified function: is_dirty
 ********************************************************************/
-extern const bclass be_class_Leds_matrix;
 be_local_closure(class_Leds_matrix_is_dirty,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -1513,7 +1473,7 @@ be_local_closure(class_Leds_matrix_is_dirty,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_matrix, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(strip),
@@ -1535,7 +1495,6 @@ be_local_closure(class_Leds_matrix_is_dirty,   /* name */
 /********************************************************************
 ** Solidified function: set_alternate
 ********************************************************************/
-extern const bclass be_class_Leds_matrix;
 be_local_closure(class_Leds_matrix_set_alternate,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -1544,7 +1503,7 @@ be_local_closure(class_Leds_matrix_set_alternate,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_matrix, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(alternate),
@@ -1563,7 +1522,6 @@ be_local_closure(class_Leds_matrix_set_alternate,   /* name */
 /********************************************************************
 ** Solidified function: begin
 ********************************************************************/
-extern const bclass be_class_Leds_matrix;
 be_local_closure(class_Leds_matrix_begin,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -1572,7 +1530,7 @@ be_local_closure(class_Leds_matrix_begin,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_matrix, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     &be_const_str_begin,
@@ -1588,7 +1546,6 @@ be_local_closure(class_Leds_matrix_begin,   /* name */
 /********************************************************************
 ** Solidified function: pixel_count
 ********************************************************************/
-extern const bclass be_class_Leds_matrix;
 be_local_closure(class_Leds_matrix_pixel_count,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -1597,7 +1554,7 @@ be_local_closure(class_Leds_matrix_pixel_count,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_matrix, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(w),
@@ -1619,7 +1576,6 @@ be_local_closure(class_Leds_matrix_pixel_count,   /* name */
 /********************************************************************
 ** Solidified function: get_alternate
 ********************************************************************/
-extern const bclass be_class_Leds_matrix;
 be_local_closure(class_Leds_matrix_get_alternate,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -1628,7 +1584,7 @@ be_local_closure(class_Leds_matrix_get_alternate,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_matrix, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(alternate),
@@ -1647,7 +1603,6 @@ be_local_closure(class_Leds_matrix_get_alternate,   /* name */
 /********************************************************************
 ** Solidified function: pixel_offset
 ********************************************************************/
-extern const bclass be_class_Leds_matrix;
 be_local_closure(class_Leds_matrix_pixel_offset,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -1656,7 +1611,7 @@ be_local_closure(class_Leds_matrix_pixel_offset,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_matrix, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(offset),
@@ -1675,7 +1630,6 @@ be_local_closure(class_Leds_matrix_pixel_offset,   /* name */
 /********************************************************************
 ** Solidified function: can_show
 ********************************************************************/
-extern const bclass be_class_Leds_matrix;
 be_local_closure(class_Leds_matrix_can_show,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -1684,7 +1638,7 @@ be_local_closure(class_Leds_matrix_can_show,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_matrix, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(strip),
@@ -1706,7 +1660,6 @@ be_local_closure(class_Leds_matrix_can_show,   /* name */
 /********************************************************************
 ** Solidified function: set_bytes
 ********************************************************************/
-extern const bclass be_class_Leds_matrix;
 be_local_closure(class_Leds_matrix_set_bytes,   /* name */
   be_nested_proto(
     13,                          /* nstack */
@@ -1715,7 +1668,7 @@ be_local_closure(class_Leds_matrix_set_bytes,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_matrix, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str(h),
@@ -1753,7 +1706,6 @@ be_local_closure(class_Leds_matrix_set_bytes,   /* name */
 /********************************************************************
 ** Solidified function: get_pixel_color
 ********************************************************************/
-extern const bclass be_class_Leds_matrix;
 be_local_closure(class_Leds_matrix_get_pixel_color,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -1762,7 +1714,7 @@ be_local_closure(class_Leds_matrix_get_pixel_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_matrix, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(strip),
@@ -1787,7 +1739,6 @@ be_local_closure(class_Leds_matrix_get_pixel_color,   /* name */
 /********************************************************************
 ** Solidified function: clear
 ********************************************************************/
-extern const bclass be_class_Leds_matrix;
 be_local_closure(class_Leds_matrix_clear,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -1796,7 +1747,7 @@ be_local_closure(class_Leds_matrix_clear,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds_matrix, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(clear_to),
@@ -1858,7 +1809,6 @@ be_local_class(Leds_matrix,
 /********************************************************************
 ** Solidified function: create_matrix
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_create_matrix,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -1867,7 +1817,7 @@ be_local_closure(class_Leds_create_matrix,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -1925,7 +1875,6 @@ be_local_closure(class_Leds_create_matrix,   /* name */
 /********************************************************************
 ** Solidified function: get_gamma
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_get_gamma,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -1934,7 +1883,7 @@ be_local_closure(class_Leds_get_gamma,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(gamma),
@@ -1953,7 +1902,6 @@ be_local_closure(class_Leds_get_gamma,   /* name */
 /********************************************************************
 ** Solidified function: is_dirty
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_is_dirty,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -1962,7 +1910,7 @@ be_local_closure(class_Leds_is_dirty,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(call_native),
@@ -1983,7 +1931,6 @@ be_local_closure(class_Leds_is_dirty,   /* name */
 /********************************************************************
 ** Solidified function: can_show
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_can_show,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -1992,7 +1939,7 @@ be_local_closure(class_Leds_can_show,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(call_native),
@@ -2014,7 +1961,6 @@ be_local_closure(class_Leds_can_show,   /* name */
 /********************************************************************
 ** Solidified function: assign_rmt
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_assign_rmt,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -2023,7 +1969,7 @@ be_local_closure(class_Leds_assign_rmt,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[17]) {     /* constants */
     /* K0   */  be_const_class(be_class_Leds),
@@ -2128,7 +2074,6 @@ be_local_closure(class_Leds_assign_rmt,   /* name */
 /********************************************************************
 ** Solidified function: ctor
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_ctor,   /* name */
   be_nested_proto(
     12,                          /* nstack */
@@ -2137,7 +2082,7 @@ be_local_closure(class_Leds_ctor,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str(call_native),
@@ -2183,7 +2128,6 @@ be_local_closure(class_Leds_ctor,   /* name */
 /********************************************************************
 ** Solidified function: pixels_buffer
 ********************************************************************/
-extern const bclass be_class_Leds;
 be_local_closure(class_Leds_pixels_buffer,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -2192,7 +2136,7 @@ be_local_closure(class_Leds_pixels_buffer,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Leds, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str(call_native),

@@ -9,7 +9,6 @@ extern const bclass be_class_Matter_EventHandler;
 /********************************************************************
 ** Solidified function: dump
 ********************************************************************/
-extern const bclass be_class_Matter_EventHandler;
 be_local_closure(class_Matter_EventHandler_dump,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Matter_EventHandler_dump,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_EventHandler, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota),
@@ -120,7 +119,6 @@ be_local_closure(class_Matter_EventHandler_dump,   /* name */
 /********************************************************************
 ** Solidified function: get_last_event_no
 ********************************************************************/
-extern const bclass be_class_Matter_EventHandler;
 be_local_closure(class_Matter_EventHandler_get_last_event_no,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -129,7 +127,7 @@ be_local_closure(class_Matter_EventHandler_get_last_event_no,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_EventHandler, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(counter_event_no),
@@ -148,7 +146,6 @@ be_local_closure(class_Matter_EventHandler_get_last_event_no,   /* name */
 /********************************************************************
 ** Solidified function: get_next_event_no
 ********************************************************************/
-extern const bclass be_class_Matter_EventHandler;
 be_local_closure(class_Matter_EventHandler_get_next_event_no,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -157,7 +154,7 @@ be_local_closure(class_Matter_EventHandler_get_next_event_no,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_EventHandler, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(counter_event_no),
@@ -191,7 +188,6 @@ be_local_closure(class_Matter_EventHandler_get_next_event_no,   /* name */
 /********************************************************************
 ** Solidified function: load_event_no_persisted
 ********************************************************************/
-extern const bclass be_class_Matter_EventHandler;
 be_local_closure(class_Matter_EventHandler_load_event_no_persisted,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -200,7 +196,7 @@ be_local_closure(class_Matter_EventHandler_load_event_no_persisted,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_EventHandler, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
     /* K0   */  be_nested_str_weak(persist),
@@ -255,7 +251,6 @@ be_local_closure(class_Matter_EventHandler_load_event_no_persisted,   /* name */
 /********************************************************************
 ** Solidified function: queue_event
 ********************************************************************/
-extern const bclass be_class_Matter_EventHandler;
 be_local_closure(class_Matter_EventHandler_queue_event,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -264,7 +259,7 @@ be_local_closure(class_Matter_EventHandler_queue_event,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_EventHandler, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str_weak(priority),
@@ -345,7 +340,6 @@ be_local_closure(class_Matter_EventHandler_queue_event,   /* name */
 /********************************************************************
 ** Solidified function: every_second
 ********************************************************************/
-extern const bclass be_class_Matter_EventHandler;
 be_local_closure(class_Matter_EventHandler_every_second,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -354,7 +348,7 @@ be_local_closure(class_Matter_EventHandler_every_second,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_EventHandler, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(compact),
@@ -374,7 +368,6 @@ be_local_closure(class_Matter_EventHandler_every_second,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Matter_EventHandler;
 be_local_closure(class_Matter_EventHandler_init,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -383,7 +376,7 @@ be_local_closure(class_Matter_EventHandler_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_EventHandler, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(device),
@@ -417,7 +410,6 @@ be_local_closure(class_Matter_EventHandler_init,   /* name */
 /********************************************************************
 ** Solidified function: find_min_no
 ********************************************************************/
-extern const bclass be_class_Matter_EventHandler;
 be_local_closure(class_Matter_EventHandler_find_min_no,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -426,7 +418,7 @@ be_local_closure(class_Matter_EventHandler_find_min_no,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 1]) {
       be_nested_proto(
         7,                          /* nstack */
         3,                          /* argc */
@@ -434,7 +426,7 @@ be_local_closure(class_Matter_EventHandler_find_min_no,   /* name */
         0,                          /* has upvals */
         NULL,                       /* no upvals */
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 3]) {     /* constants */
         /* K0   */  be_const_int(1),
@@ -471,7 +463,6 @@ be_local_closure(class_Matter_EventHandler_find_min_no,   /* name */
           0x80040000,  //  0018  RET	1	R0
         })
       ),
-    &be_class_Matter_EventHandler, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
@@ -521,7 +512,6 @@ be_local_closure(class_Matter_EventHandler_find_min_no,   /* name */
 /********************************************************************
 ** Solidified function: publish_event
 ********************************************************************/
-extern const bclass be_class_Matter_EventHandler;
 be_local_closure(class_Matter_EventHandler_publish_event,   /* name */
   be_nested_proto(
     23,                          /* nstack */
@@ -530,7 +520,7 @@ be_local_closure(class_Matter_EventHandler_publish_event,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_EventHandler, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[31]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -689,7 +679,6 @@ be_local_closure(class_Matter_EventHandler_publish_event,   /* name */
 /********************************************************************
 ** Solidified function: compact
 ********************************************************************/
-extern const bclass be_class_Matter_EventHandler;
 be_local_closure(class_Matter_EventHandler_compact,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -698,7 +687,7 @@ be_local_closure(class_Matter_EventHandler_compact,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 1]) {
       be_nested_proto(
         4,                          /* nstack */
         1,                          /* argc */
@@ -706,7 +695,7 @@ be_local_closure(class_Matter_EventHandler_compact,   /* name */
         0,                          /* has upvals */
         NULL,                       /* no upvals */
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 3]) {     /* constants */
         /* K0   */  be_const_int(0),
@@ -730,7 +719,6 @@ be_local_closure(class_Matter_EventHandler_compact,   /* name */
           0x80000000,  //  000B  RET	0
         })
       ),
-    &be_class_Matter_EventHandler, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
@@ -794,7 +782,6 @@ extern const bclass be_class_Matter_EventQueued;
 /********************************************************************
 ** Solidified function: to_raw_bytes
 ********************************************************************/
-extern const bclass be_class_Matter_EventQueued;
 be_local_closure(class_Matter_EventQueued_to_raw_bytes,   /* name */
   be_nested_proto(
     14,                          /* nstack */
@@ -803,7 +790,7 @@ be_local_closure(class_Matter_EventQueued_to_raw_bytes,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_EventQueued, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str_weak(raw_tlv),
@@ -854,7 +841,6 @@ be_local_closure(class_Matter_EventQueued_to_raw_bytes,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Matter_EventQueued;
 be_local_closure(class_Matter_EventQueued_init,   /* name */
   be_nested_proto(
     13,                          /* nstack */
@@ -863,7 +849,7 @@ be_local_closure(class_Matter_EventQueued_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_EventQueued, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[18]) {     /* constants */
     /* K0   */  be_nested_str_weak(event_no),
@@ -932,7 +918,6 @@ be_local_closure(class_Matter_EventQueued_init,   /* name */
 /********************************************************************
 ** Solidified function: compact
 ********************************************************************/
-extern const bclass be_class_Matter_EventQueued;
 be_local_closure(class_Matter_EventQueued_compact,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -941,7 +926,7 @@ be_local_closure(class_Matter_EventQueued_compact,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_EventQueued, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(raw_tlv),
@@ -961,7 +946,6 @@ be_local_closure(class_Matter_EventQueued_compact,   /* name */
 /********************************************************************
 ** Solidified function: eventpath2raw
 ********************************************************************/
-extern const bclass be_class_Matter_EventQueued;
 be_local_closure(class_Matter_EventQueued_eventpath2raw,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -970,7 +954,7 @@ be_local_closure(class_Matter_EventQueued_eventpath2raw,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_EventQueued, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(add),
@@ -1080,7 +1064,6 @@ be_local_closure(class_Matter_EventQueued_eventpath2raw,   /* name */
 /********************************************************************
 ** Solidified function: eventreport2raw
 ********************************************************************/
-extern const bclass be_class_Matter_EventQueued;
 be_local_closure(class_Matter_EventQueued_eventreport2raw,   /* name */
   be_nested_proto(
     19,                          /* nstack */
@@ -1089,7 +1072,7 @@ be_local_closure(class_Matter_EventQueued_eventreport2raw,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_EventQueued, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(add),

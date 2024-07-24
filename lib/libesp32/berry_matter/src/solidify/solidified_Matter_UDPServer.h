@@ -9,7 +9,6 @@ extern const bclass be_class_Matter_UDPPacket_sent;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Matter_UDPPacket_sent;
 be_local_closure(class_Matter_UDPPacket_sent_init,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Matter_UDPPacket_sent_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_UDPPacket_sent, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[19]) {     /* constants */
     /* K0   */  be_nested_str_weak(raw),
@@ -116,7 +115,6 @@ extern const bclass be_class_Matter_UDPServer;
 /********************************************************************
 ** Solidified function: every_50ms
 ********************************************************************/
-extern const bclass be_class_Matter_UDPServer;
 be_local_closure(class_Matter_UDPServer_every_50ms,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -125,7 +123,7 @@ be_local_closure(class_Matter_UDPServer_every_50ms,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_UDPServer, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(loop),
@@ -145,7 +143,6 @@ be_local_closure(class_Matter_UDPServer_every_50ms,   /* name */
 /********************************************************************
 ** Solidified function: send_UDP
 ********************************************************************/
-extern const bclass be_class_Matter_UDPServer;
 be_local_closure(class_Matter_UDPServer_send_UDP,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -154,7 +151,7 @@ be_local_closure(class_Matter_UDPServer_send_UDP,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_UDPServer, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -190,7 +187,6 @@ be_local_closure(class_Matter_UDPServer_send_UDP,   /* name */
 /********************************************************************
 ** Solidified function: received_ack
 ********************************************************************/
-extern const bclass be_class_Matter_UDPServer;
 be_local_closure(class_Matter_UDPServer_received_ack,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -199,7 +195,7 @@ be_local_closure(class_Matter_UDPServer_received_ack,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_UDPServer, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str_weak(ack_message_counter),
@@ -266,7 +262,6 @@ be_local_closure(class_Matter_UDPServer_received_ack,   /* name */
 /********************************************************************
 ** Solidified function: start
 ********************************************************************/
-extern const bclass be_class_Matter_UDPServer;
 be_local_closure(class_Matter_UDPServer_start,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -275,7 +270,7 @@ be_local_closure(class_Matter_UDPServer_start,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_UDPServer, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str_weak(listening),
@@ -324,7 +319,6 @@ be_local_closure(class_Matter_UDPServer_start,   /* name */
 /********************************************************************
 ** Solidified function: send
 ********************************************************************/
-extern const bclass be_class_Matter_UDPServer;
 be_local_closure(class_Matter_UDPServer_send,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -333,7 +327,7 @@ be_local_closure(class_Matter_UDPServer_send,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_UDPServer, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
     /* K0   */  be_nested_str_weak(udp_socket),
@@ -407,7 +401,6 @@ be_local_closure(class_Matter_UDPServer_send,   /* name */
 /********************************************************************
 ** Solidified function: stop
 ********************************************************************/
-extern const bclass be_class_Matter_UDPServer;
 be_local_closure(class_Matter_UDPServer_stop,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -416,7 +409,7 @@ be_local_closure(class_Matter_UDPServer_stop,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_UDPServer, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(listening),
@@ -450,7 +443,6 @@ be_local_closure(class_Matter_UDPServer_stop,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Matter_UDPServer;
 be_local_closure(class_Matter_UDPServer_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -459,7 +451,7 @@ be_local_closure(class_Matter_UDPServer_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 1]) {
       be_nested_proto(
         2,                          /* nstack */
         0,                          /* argc */
@@ -469,7 +461,7 @@ be_local_closure(class_Matter_UDPServer_init,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str_weak(loop),
@@ -483,7 +475,6 @@ be_local_closure(class_Matter_UDPServer_init,   /* name */
           0x80000000,  //  0003  RET	0
         })
       ),
-    &be_class_Matter_UDPServer, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
@@ -527,7 +518,6 @@ be_local_closure(class_Matter_UDPServer_init,   /* name */
 /********************************************************************
 ** Solidified function: _resend_packets
 ********************************************************************/
-extern const bclass be_class_Matter_UDPServer;
 be_local_closure(class_Matter_UDPServer__resend_packets,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -536,7 +526,7 @@ be_local_closure(class_Matter_UDPServer__resend_packets,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_UDPServer, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[20]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -630,7 +620,6 @@ be_local_closure(class_Matter_UDPServer__resend_packets,   /* name */
 /********************************************************************
 ** Solidified function: _backoff_time
 ********************************************************************/
-extern const bclass be_class_Matter_UDPServer;
 be_local_closure(class_Matter_UDPServer__backoff_time,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -639,7 +628,7 @@ be_local_closure(class_Matter_UDPServer__backoff_time,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 1]) {
       be_nested_proto(
         4,                          /* nstack */
         2,                          /* argc */
@@ -647,7 +636,7 @@ be_local_closure(class_Matter_UDPServer__backoff_time,   /* name */
         0,                          /* has upvals */
         NULL,                       /* no upvals */
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 2]) {     /* constants */
         /* K0   */  be_const_int(1),
@@ -665,7 +654,6 @@ be_local_closure(class_Matter_UDPServer__backoff_time,   /* name */
           0x80040400,  //  0006  RET	1	R2
         })
       ),
-    &be_class_Matter_UDPServer, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
@@ -719,7 +707,6 @@ be_local_closure(class_Matter_UDPServer__backoff_time,   /* name */
 /********************************************************************
 ** Solidified function: loop
 ********************************************************************/
-extern const bclass be_class_Matter_UDPServer;
 be_local_closure(class_Matter_UDPServer_loop,   /* name */
   be_nested_proto(
     11,                          /* nstack */
@@ -728,7 +715,7 @@ be_local_closure(class_Matter_UDPServer_loop,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_UDPServer, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[19]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -822,7 +809,6 @@ be_local_closure(class_Matter_UDPServer_loop,   /* name */
 /********************************************************************
 ** Solidified function: every_second
 ********************************************************************/
-extern const bclass be_class_Matter_UDPServer;
 be_local_closure(class_Matter_UDPServer_every_second,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -831,7 +817,7 @@ be_local_closure(class_Matter_UDPServer_every_second,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_UDPServer, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(every_second),

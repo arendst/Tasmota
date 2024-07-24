@@ -18,7 +18,7 @@ All notable changes to this project will be documented in this file.
 - Berry fix `bytes` setters and getters with negative offsets
 
 ### Removed
-
+- Berry internal: remove class from closure to simplify code
 
 ## [14.1.0.3] 20240722
 ### Added

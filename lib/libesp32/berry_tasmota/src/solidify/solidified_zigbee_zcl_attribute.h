@@ -9,7 +9,6 @@ extern const bclass be_class_zcl_attribute;
 /********************************************************************
 ** Solidified function: tomap
 ********************************************************************/
-extern const bclass be_class_zcl_attribute;
 be_local_closure(class_zcl_attribute_tomap,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_zcl_attribute_tomap,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_zcl_attribute, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(tomap),
@@ -59,7 +58,6 @@ be_local_closure(class_zcl_attribute_tomap,   /* name */
 /********************************************************************
 ** Solidified function: key_tostring
 ********************************************************************/
-extern const bclass be_class_zcl_attribute;
 be_local_closure(class_zcl_attribute_key_tostring,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -68,7 +66,7 @@ be_local_closure(class_zcl_attribute_key_tostring,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_zcl_attribute, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
     /* K0   */  be_nested_str_weak(_X3Cundefined_X3E),
@@ -166,7 +164,6 @@ be_local_closure(class_zcl_attribute_key_tostring,   /* name */
 /********************************************************************
 ** Solidified function: setmember
 ********************************************************************/
-extern const bclass be_class_zcl_attribute;
 be_local_closure(class_zcl_attribute_setmember,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -175,7 +172,7 @@ be_local_closure(class_zcl_attribute_setmember,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_zcl_attribute, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[16]) {     /* constants */
     /* K0   */  be_nested_str_weak(cluster),
@@ -273,7 +270,6 @@ be_local_closure(class_zcl_attribute_setmember,   /* name */
 /********************************************************************
 ** Solidified function: tostring
 ********************************************************************/
-extern const bclass be_class_zcl_attribute;
 be_local_closure(class_zcl_attribute_tostring,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -282,7 +278,7 @@ be_local_closure(class_zcl_attribute_tostring,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_zcl_attribute, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
     /* K0   */  be_nested_str_weak(introspect),
@@ -361,7 +357,6 @@ be_local_closure(class_zcl_attribute_tostring,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_zcl_attribute;
 be_local_closure(class_zcl_attribute_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -370,7 +365,7 @@ be_local_closure(class_zcl_attribute_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_zcl_attribute, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -400,7 +395,6 @@ be_local_closure(class_zcl_attribute_init,   /* name */
 /********************************************************************
 ** Solidified function: deinit
 ********************************************************************/
-extern const bclass be_class_zcl_attribute;
 be_local_closure(class_zcl_attribute_deinit,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -409,7 +403,7 @@ be_local_closure(class_zcl_attribute_deinit,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_zcl_attribute, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(ismapped),
@@ -433,7 +427,6 @@ be_local_closure(class_zcl_attribute_deinit,   /* name */
 /********************************************************************
 ** Solidified function: member
 ********************************************************************/
-extern const bclass be_class_zcl_attribute;
 be_local_closure(class_zcl_attribute_member,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -442,7 +435,7 @@ be_local_closure(class_zcl_attribute_member,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_zcl_attribute, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[17]) {     /* constants */
     /* K0   */  be_nested_str_weak(cluster),
@@ -572,7 +565,6 @@ extern const bclass be_class_zcl_attribute_list;
 /********************************************************************
 ** Solidified function: member
 ********************************************************************/
-extern const bclass be_class_zcl_attribute_list;
 be_local_closure(class_zcl_attribute_list_member,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -581,7 +573,7 @@ be_local_closure(class_zcl_attribute_list_member,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_zcl_attribute_list, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(groupaddr),
@@ -645,7 +637,6 @@ be_local_closure(class_zcl_attribute_list_member,   /* name */
 /********************************************************************
 ** Solidified function: setmember
 ********************************************************************/
-extern const bclass be_class_zcl_attribute_list;
 be_local_closure(class_zcl_attribute_list_setmember,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -654,7 +645,7 @@ be_local_closure(class_zcl_attribute_list_setmember,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_zcl_attribute_list, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(groupaddr),
@@ -715,7 +706,6 @@ be_local_closure(class_zcl_attribute_list_setmember,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_zcl_attribute_list;
 be_local_closure(class_zcl_attribute_list_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -724,7 +714,7 @@ be_local_closure(class_zcl_attribute_list_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_zcl_attribute_list, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -754,7 +744,6 @@ be_local_closure(class_zcl_attribute_list_init,   /* name */
 /********************************************************************
 ** Solidified function: deinit
 ********************************************************************/
-extern const bclass be_class_zcl_attribute_list;
 be_local_closure(class_zcl_attribute_list_deinit,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -763,7 +752,7 @@ be_local_closure(class_zcl_attribute_list_deinit,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_zcl_attribute_list, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(ismapped),
@@ -787,7 +776,6 @@ be_local_closure(class_zcl_attribute_list_deinit,   /* name */
 /********************************************************************
 ** Solidified function: tostring
 ********************************************************************/
-extern const bclass be_class_zcl_attribute_list;
 be_local_closure(class_zcl_attribute_list_tostring,   /* name */
   be_nested_proto(
     11,                          /* nstack */
@@ -796,7 +784,7 @@ be_local_closure(class_zcl_attribute_list_tostring,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_zcl_attribute_list, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[18]) {     /* constants */
     /* K0   */  be_nested_str_weak(json),

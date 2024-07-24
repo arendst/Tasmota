@@ -9,7 +9,6 @@ extern const bclass be_class_Matter_Plugin_Sensor_GenericSwitch_Btn;
 /********************************************************************
 ** Solidified function: read_attribute
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_GenericSwitch_Btn;
 be_local_closure(class_Matter_Plugin_Sensor_GenericSwitch_Btn_read_attribute,   /* name */
   be_nested_proto(
     12,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Matter_Plugin_Sensor_GenericSwitch_Btn_read_attribute,   
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_GenericSwitch_Btn, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -103,7 +102,7 @@ be_local_closure(class_Matter_Plugin_Sensor_GenericSwitch_Btn__X3Clambda_X3E,   
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(_X3Clambda_X3E),
@@ -122,7 +121,6 @@ be_local_closure(class_Matter_Plugin_Sensor_GenericSwitch_Btn__X3Clambda_X3E,   
 /********************************************************************
 ** Solidified function: set_position
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_GenericSwitch_Btn;
 be_local_closure(class_Matter_Plugin_Sensor_GenericSwitch_Btn_set_position,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -131,7 +129,7 @@ be_local_closure(class_Matter_Plugin_Sensor_GenericSwitch_Btn_set_position,   /*
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_GenericSwitch_Btn, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(shadow_position),
@@ -159,7 +157,6 @@ be_local_closure(class_Matter_Plugin_Sensor_GenericSwitch_Btn_set_position,   /*
 /********************************************************************
 ** Solidified function: parse_configuration
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_GenericSwitch_Btn;
 be_local_closure(class_Matter_Plugin_Sensor_GenericSwitch_Btn_parse_configuration,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -168,7 +165,7 @@ be_local_closure(class_Matter_Plugin_Sensor_GenericSwitch_Btn_parse_configuratio
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_GenericSwitch_Btn, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota_switch_index),
@@ -201,7 +198,6 @@ be_local_closure(class_Matter_Plugin_Sensor_GenericSwitch_Btn_parse_configuratio
 /********************************************************************
 ** Solidified function: append_state_json
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_GenericSwitch_Btn;
 be_local_closure(class_Matter_Plugin_Sensor_GenericSwitch_Btn_append_state_json,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -210,7 +206,7 @@ be_local_closure(class_Matter_Plugin_Sensor_GenericSwitch_Btn_append_state_json,
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_GenericSwitch_Btn, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_X2C_X22Switch_X22_X3A_X25s),
@@ -235,7 +231,6 @@ be_local_closure(class_Matter_Plugin_Sensor_GenericSwitch_Btn_append_state_json,
 /********************************************************************
 ** Solidified function: button_handler
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_GenericSwitch_Btn;
 be_local_closure(class_Matter_Plugin_Sensor_GenericSwitch_Btn_button_handler,   /* name */
   be_nested_proto(
     15,                          /* nstack */
@@ -244,7 +239,7 @@ be_local_closure(class_Matter_Plugin_Sensor_GenericSwitch_Btn_button_handler,   
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_GenericSwitch_Btn, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_const_int(0),

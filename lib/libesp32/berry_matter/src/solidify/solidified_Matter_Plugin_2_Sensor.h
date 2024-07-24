@@ -9,7 +9,6 @@ extern const bclass be_class_Matter_Plugin_Sensor;
 /********************************************************************
 ** Solidified function: parse_status
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor;
 be_local_closure(class_Matter_Plugin_Sensor_parse_status,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Matter_Plugin_Sensor_parse_status,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str_weak(contains),
@@ -79,7 +78,6 @@ be_local_closure(class_Matter_Plugin_Sensor_parse_status,   /* name */
 /********************************************************************
 ** Solidified function: parse_configuration
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor;
 be_local_closure(class_Matter_Plugin_Sensor_parse_configuration,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -88,7 +86,7 @@ be_local_closure(class_Matter_Plugin_Sensor_parse_configuration,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota_sensor_filter),
@@ -132,7 +130,6 @@ be_local_closure(class_Matter_Plugin_Sensor_parse_configuration,   /* name */
 /********************************************************************
 ** Solidified function: pre_value
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor;
 be_local_closure(class_Matter_Plugin_Sensor_pre_value,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -141,7 +138,7 @@ be_local_closure(class_Matter_Plugin_Sensor_pre_value,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(pre_value),
@@ -157,7 +154,6 @@ be_local_closure(class_Matter_Plugin_Sensor_pre_value,   /* name */
 /********************************************************************
 ** Solidified function: parse_sensors
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor;
 be_local_closure(class_Matter_Plugin_Sensor_parse_sensors,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -166,7 +162,7 @@ be_local_closure(class_Matter_Plugin_Sensor_parse_sensors,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(VIRTUAL),
@@ -223,7 +219,6 @@ be_local_closure(class_Matter_Plugin_Sensor_parse_sensors,   /* name */
 /********************************************************************
 ** Solidified function: value_changed
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor;
 be_local_closure(class_Matter_Plugin_Sensor_value_changed,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -232,7 +227,7 @@ be_local_closure(class_Matter_Plugin_Sensor_value_changed,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(value_changed),
@@ -248,7 +243,6 @@ be_local_closure(class_Matter_Plugin_Sensor_value_changed,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor;
 be_local_closure(class_Matter_Plugin_Sensor_init,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -257,7 +251,7 @@ be_local_closure(class_Matter_Plugin_Sensor_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -288,7 +282,6 @@ be_local_closure(class_Matter_Plugin_Sensor_init,   /* name */
 /********************************************************************
 ** Solidified function: filter_name_html
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor;
 be_local_closure(class_Matter_Plugin_Sensor_filter_name_html,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -297,7 +290,7 @@ be_local_closure(class_Matter_Plugin_Sensor_filter_name_html,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota_sensor_filter),
@@ -334,7 +327,6 @@ be_local_closure(class_Matter_Plugin_Sensor_filter_name_html,   /* name */
 /********************************************************************
 ** Solidified function: web_values_prefix
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor;
 be_local_closure(class_Matter_Plugin_Sensor_web_values_prefix,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -343,7 +335,7 @@ be_local_closure(class_Matter_Plugin_Sensor_web_values_prefix,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),
@@ -386,7 +378,6 @@ be_local_closure(class_Matter_Plugin_Sensor_web_values_prefix,   /* name */
 /********************************************************************
 ** Solidified function: update_virtual
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor;
 be_local_closure(class_Matter_Plugin_Sensor_update_virtual,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -395,7 +386,7 @@ be_local_closure(class_Matter_Plugin_Sensor_update_virtual,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(find),

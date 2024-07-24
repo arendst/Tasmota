@@ -9,7 +9,6 @@ extern const bclass be_class_zcl_frame;
 /********************************************************************
 ** Solidified function: member
 ********************************************************************/
-extern const bclass be_class_zcl_frame;
 be_local_closure(class_zcl_frame_member,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_zcl_frame_member,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_zcl_frame, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(payload),
@@ -53,7 +52,6 @@ be_local_closure(class_zcl_frame_member,   /* name */
 /********************************************************************
 ** Solidified function: setmember
 ********************************************************************/
-extern const bclass be_class_zcl_frame;
 be_local_closure(class_zcl_frame_setmember,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -62,7 +60,7 @@ be_local_closure(class_zcl_frame_setmember,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_zcl_frame, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(payload),
@@ -99,7 +97,6 @@ be_local_closure(class_zcl_frame_setmember,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_zcl_frame;
 be_local_closure(class_zcl_frame_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -108,7 +105,7 @@ be_local_closure(class_zcl_frame_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_zcl_frame, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -136,7 +133,6 @@ be_local_closure(class_zcl_frame_init,   /* name */
 /********************************************************************
 ** Solidified function: tomap
 ********************************************************************/
-extern const bclass be_class_zcl_frame;
 be_local_closure(class_zcl_frame_tomap,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -145,7 +141,7 @@ be_local_closure(class_zcl_frame_tomap,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_zcl_frame, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(tomap),
@@ -179,7 +175,6 @@ be_local_closure(class_zcl_frame_tomap,   /* name */
 /********************************************************************
 ** Solidified function: tostring
 ********************************************************************/
-extern const bclass be_class_zcl_frame;
 be_local_closure(class_zcl_frame_tostring,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -188,7 +183,7 @@ be_local_closure(class_zcl_frame_tostring,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_zcl_frame, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(tomap),

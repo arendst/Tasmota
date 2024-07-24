@@ -9,7 +9,6 @@ extern const bclass be_class_Matter_Plugin_Sensor_Temp;
 /********************************************************************
 ** Solidified function: value_changed
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Temp;
 be_local_closure(class_Matter_Plugin_Sensor_Temp_value_changed,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Temp_value_changed,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_Temp, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(attribute_updated),
@@ -41,7 +40,6 @@ be_local_closure(class_Matter_Plugin_Sensor_Temp_value_changed,   /* name */
 /********************************************************************
 ** Solidified function: read_attribute
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Temp;
 be_local_closure(class_Matter_Plugin_Sensor_Temp_read_attribute,   /* name */
   be_nested_proto(
     12,                          /* nstack */
@@ -50,7 +48,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Temp_read_attribute,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_Temp, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -117,7 +115,6 @@ be_local_closure(class_Matter_Plugin_Sensor_Temp_read_attribute,   /* name */
 /********************************************************************
 ** Solidified function: pre_value
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Temp;
 be_local_closure(class_Matter_Plugin_Sensor_Temp_pre_value,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -126,7 +123,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Temp_pre_value,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_Temp, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(BRIDGE),
@@ -191,7 +188,6 @@ be_local_closure(class_Matter_Plugin_Sensor_Temp_pre_value,   /* name */
 /********************************************************************
 ** Solidified function: web_values
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Temp;
 be_local_closure(class_Matter_Plugin_Sensor_Temp_web_values,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -200,7 +196,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Temp_web_values,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_Temp, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),

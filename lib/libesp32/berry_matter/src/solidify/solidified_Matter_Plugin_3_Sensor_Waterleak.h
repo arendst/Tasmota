@@ -9,7 +9,6 @@ extern const bclass be_class_Matter_Plugin_Sensor_Waterleak;
 /********************************************************************
 ** Solidified function: update_virtual
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Waterleak;
 be_local_closure(class_Matter_Plugin_Sensor_Waterleak_update_virtual,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Waterleak_update_virtual,   /* name 
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_Waterleak, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(shadow_bool_value),
@@ -51,13 +50,66 @@ be_local_closure(class_Matter_Plugin_Sensor_Waterleak_update_virtual,   /* name 
 );
 /*******************************************************************/
 
-// Borrowed method 'read_attribute' from class 'class_Matter_Plugin_Sensor_Rain'
-extern bclosure *class_Matter_Plugin_Sensor_Rain_read_attribute;
+
+/********************************************************************
+** Solidified function: read_attribute
+********************************************************************/
+be_local_closure(class_Matter_Plugin_Sensor_Waterleak_read_attribute,   /* name */
+  be_nested_proto(
+    12,                          /* nstack */
+    4,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 9]) {     /* constants */
+    /* K0   */  be_nested_str_weak(matter),
+    /* K1   */  be_nested_str_weak(TLV),
+    /* K2   */  be_nested_str_weak(cluster),
+    /* K3   */  be_nested_str_weak(attribute),
+    /* K4   */  be_const_int(0),
+    /* K5   */  be_nested_str_weak(set),
+    /* K6   */  be_nested_str_weak(BOOL),
+    /* K7   */  be_nested_str_weak(shadow_bool_value),
+    /* K8   */  be_nested_str_weak(read_attribute),
+    }),
+    be_str_weak(read_attribute),
+    &be_const_str_solidified,
+    ( &(const binstruction[23]) {  /* code */
+      0xB8120000,  //  0000  GETNGBL	R4	K0
+      0x88100901,  //  0001  GETMBR	R4	R4	K1
+      0x88140502,  //  0002  GETMBR	R5	R2	K2
+      0x88180503,  //  0003  GETMBR	R6	R2	K3
+      0x541E0044,  //  0004  LDINT	R7	69
+      0x1C1C0A07,  //  0005  EQ	R7	R5	R7
+      0x781E0006,  //  0006  JMPF	R7	#000E
+      0x1C1C0D04,  //  0007  EQ	R7	R6	K4
+      0x781E0004,  //  0008  JMPF	R7	#000E
+      0x8C1C0705,  //  0009  GETMET	R7	R3	K5
+      0x88240906,  //  000A  GETMBR	R9	R4	K6
+      0x88280107,  //  000B  GETMBR	R10	R0	K7
+      0x7C1C0600,  //  000C  CALL	R7	3
+      0x80040E00,  //  000D  RET	1	R7
+      0x601C0003,  //  000E  GETGBL	R7	G3
+      0x5C200000,  //  000F  MOVE	R8	R0
+      0x7C1C0200,  //  0010  CALL	R7	1
+      0x8C1C0F08,  //  0011  GETMET	R7	R7	K8
+      0x5C240200,  //  0012  MOVE	R9	R1
+      0x5C280400,  //  0013  MOVE	R10	R2
+      0x5C2C0600,  //  0014  MOVE	R11	R3
+      0x7C1C0800,  //  0015  CALL	R7	4
+      0x80040E00,  //  0016  RET	1	R7
+    })
+  )
+);
+/*******************************************************************/
+
 
 /********************************************************************
 ** Solidified function: web_values
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Waterleak;
 be_local_closure(class_Matter_Plugin_Sensor_Waterleak_web_values,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -66,7 +118,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Waterleak_web_values,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_Waterleak, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),
@@ -102,7 +154,6 @@ be_local_closure(class_Matter_Plugin_Sensor_Waterleak_web_values,   /* name */
 /********************************************************************
 ** Solidified function: web_values_prefix
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Waterleak;
 be_local_closure(class_Matter_Plugin_Sensor_Waterleak_web_values_prefix,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -111,7 +162,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Waterleak_web_values_prefix,   /* na
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_Waterleak, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),
@@ -153,8 +204,37 @@ be_local_closure(class_Matter_Plugin_Sensor_Waterleak_web_values_prefix,   /* na
 );
 /*******************************************************************/
 
-// Borrowed method 'value_updated' from class 'class_Matter_Plugin_Sensor_Rain'
-extern bclosure *class_Matter_Plugin_Sensor_Rain_value_updated;
+
+/********************************************************************
+** Solidified function: value_updated
+********************************************************************/
+be_local_closure(class_Matter_Plugin_Sensor_Waterleak_value_updated,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(attribute_updated),
+    /* K1   */  be_const_int(0),
+    }),
+    be_str_weak(value_updated),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 5]) {  /* code */
+      0x8C040100,  //  0000  GETMET	R1	R0	K0
+      0x540E0044,  //  0001  LDINT	R3	69
+      0x58100001,  //  0002  LDCONST	R4	K1
+      0x7C040600,  //  0003  CALL	R1	3
+      0x80000000,  //  0004  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
 
 /********************************************************************
 ** Solidified class: Matter_Plugin_Sensor_Waterleak
@@ -167,7 +247,7 @@ be_local_class(Matter_Plugin_Sensor_Waterleak,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(update_virtual, 6), be_const_closure(class_Matter_Plugin_Sensor_Waterleak_update_virtual_closure) },
         { be_const_key_weak(DISPLAY_NAME, -1), be_nested_str_weak(Waterleak) },
-        { be_const_key_weak(read_attribute, 5), be_const_closure(class_Matter_Plugin_Sensor_Rain_read_attribute_closure) },
+        { be_const_key_weak(read_attribute, 5), be_const_closure(class_Matter_Plugin_Sensor_Waterleak_read_attribute_closure) },
         { be_const_key_weak(UPDATE_COMMANDS, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_list, {
         be_const_list( *     be_nested_list(1,
     ( (struct bvalue*) &(const bvalue[]) {
@@ -264,7 +344,7 @@ be_local_class(Matter_Plugin_Sensor_Waterleak,
         { be_const_key_int(67, -1), be_const_int(1) },
     }))    ) } )) },
         { be_const_key_weak(web_values_prefix, -1), be_const_closure(class_Matter_Plugin_Sensor_Waterleak_web_values_prefix_closure) },
-        { be_const_key_weak(value_updated, -1), be_const_closure(class_Matter_Plugin_Sensor_Rain_value_updated_closure) },
+        { be_const_key_weak(value_updated, -1), be_const_closure(class_Matter_Plugin_Sensor_Waterleak_value_updated_closure) },
         { be_const_key_weak(TYPE, 3), be_nested_str_weak(waterleak) },
     })),
     be_str_weak(Matter_Plugin_Sensor_Waterleak)

@@ -9,7 +9,6 @@ extern const bclass be_class_hue_bridge_monad;
 /********************************************************************
 ** Solidified function: full_status
 ********************************************************************/
-extern const bclass be_class_hue_bridge_monad;
 be_local_closure(class_hue_bridge_monad_full_status,   /* name */
   be_nested_proto(
     11,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_hue_bridge_monad_full_status,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_hue_bridge_monad, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str(hue_ntv),
@@ -59,7 +58,6 @@ be_local_closure(class_hue_bridge_monad_full_status,   /* name */
 /********************************************************************
 ** Solidified function: hue_status
 ********************************************************************/
-extern const bclass be_class_hue_bridge_monad;
 be_local_closure(class_hue_bridge_monad_hue_status,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -68,7 +66,7 @@ be_local_closure(class_hue_bridge_monad_hue_status,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_hue_bridge_monad, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str(hue_ntv),
@@ -102,7 +100,6 @@ be_local_closure(class_hue_bridge_monad_hue_status,   /* name */
 /********************************************************************
 ** Solidified function: add_light
 ********************************************************************/
-extern const bclass be_class_hue_bridge_monad;
 be_local_closure(class_hue_bridge_monad_add_light,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -111,7 +108,7 @@ be_local_closure(class_hue_bridge_monad_add_light,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_hue_bridge_monad, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_nested_str(int),
@@ -184,7 +181,6 @@ be_local_closure(class_hue_bridge_monad_add_light,   /* name */
 /********************************************************************
 ** Solidified function: remove_light
 ********************************************************************/
-extern const bclass be_class_hue_bridge_monad;
 be_local_closure(class_hue_bridge_monad_remove_light,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -193,7 +189,7 @@ be_local_closure(class_hue_bridge_monad_remove_light,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_hue_bridge_monad, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(lights),
@@ -216,7 +212,6 @@ be_local_closure(class_hue_bridge_monad_remove_light,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_hue_bridge_monad;
 be_local_closure(class_hue_bridge_monad_init,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -225,7 +220,7 @@ be_local_closure(class_hue_bridge_monad_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_hue_bridge_monad, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(lights),
@@ -246,7 +241,6 @@ be_local_closure(class_hue_bridge_monad_init,   /* name */
 /********************************************************************
 ** Solidified function: discover
 ********************************************************************/
-extern const bclass be_class_hue_bridge_monad;
 be_local_closure(class_hue_bridge_monad_discover,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -255,7 +249,7 @@ be_local_closure(class_hue_bridge_monad_discover,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_hue_bridge_monad, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str(hue_ntv),
@@ -322,7 +316,6 @@ be_local_closure(class_hue_bridge_monad_discover,   /* name */
 /********************************************************************
 ** Solidified function: light_to_id
 ********************************************************************/
-extern const bclass be_class_hue_bridge_monad;
 be_local_closure(class_hue_bridge_monad_light_to_id,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -331,7 +324,7 @@ be_local_closure(class_hue_bridge_monad_light_to_id,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_hue_bridge_monad, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str(lights),
@@ -371,7 +364,6 @@ be_local_closure(class_hue_bridge_monad_light_to_id,   /* name */
 /********************************************************************
 ** Solidified function: cmd
 ********************************************************************/
-extern const bclass be_class_hue_bridge_monad;
 be_local_closure(class_hue_bridge_monad_cmd,   /* name */
   be_nested_proto(
     18,                          /* nstack */
@@ -380,7 +372,7 @@ be_local_closure(class_hue_bridge_monad_cmd,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_hue_bridge_monad, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[31]) {     /* constants */
     /* K0   */  be_nested_str(json),
@@ -594,7 +586,6 @@ be_local_closure(class_hue_bridge_monad_cmd,   /* name */
 /********************************************************************
 ** Solidified function: groups
 ********************************************************************/
-extern const bclass be_class_hue_bridge_monad;
 be_local_closure(class_hue_bridge_monad_groups,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -603,7 +594,7 @@ be_local_closure(class_hue_bridge_monad_groups,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_hue_bridge_monad, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str(lights),
@@ -688,7 +679,7 @@ be_local_closure(_anonymous_,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_const_class(be_class_hue_bridge_monad),

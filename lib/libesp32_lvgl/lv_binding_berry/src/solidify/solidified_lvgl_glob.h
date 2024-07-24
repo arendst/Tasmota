@@ -9,7 +9,6 @@ extern const bclass be_class_LVGL_glob;
 /********************************************************************
 ** Solidified function: get_event_cb
 ********************************************************************/
-extern const bclass be_class_LVGL_glob;
 be_local_closure(class_LVGL_glob_get_event_cb,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_LVGL_glob_get_event_cb,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 1]) {
       be_nested_proto(
         5,                          /* nstack */
         1,                          /* argc */
@@ -29,7 +28,7 @@ be_local_closure(class_LVGL_glob_get_event_cb,   /* name */
           be_local_const_upval(1, 4),
         }),
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str_weak(lvgl_event_dispatch),
@@ -45,7 +44,6 @@ be_local_closure(class_LVGL_glob_get_event_cb,   /* name */
           0x80040200,  //  0005  RET	1	R1
         })
       ),
-    &be_class_LVGL_glob, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
@@ -99,7 +97,6 @@ be_local_closure(class_LVGL_glob_get_event_cb,   /* name */
 /********************************************************************
 ** Solidified function: add_cb_event_closure
 ********************************************************************/
-extern const bclass be_class_LVGL_glob;
 be_local_closure(class_LVGL_glob_add_cb_event_closure,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -108,7 +105,7 @@ be_local_closure(class_LVGL_glob_add_cb_event_closure,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_LVGL_glob, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(cb_event_closure),
@@ -173,7 +170,6 @@ be_local_closure(class_LVGL_glob_add_cb_event_closure,   /* name */
 /********************************************************************
 ** Solidified function: make_cb
 ********************************************************************/
-extern const bclass be_class_LVGL_glob;
 be_local_closure(class_LVGL_glob_make_cb,   /* name */
   be_nested_proto(
     11,                          /* nstack */
@@ -182,7 +178,7 @@ be_local_closure(class_LVGL_glob_make_cb,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 3]) {
+    ( &(const struct bproto*[ 2]) {
       be_nested_proto(
         4,                          /* nstack */
         1,                          /* argc */
@@ -192,7 +188,7 @@ be_local_closure(class_LVGL_glob_make_cb,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str_weak(remove_cb),
@@ -216,7 +212,7 @@ be_local_closure(class_LVGL_glob_make_cb,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str_weak(lvgl_timer_dispatch),
@@ -231,7 +227,6 @@ be_local_closure(class_LVGL_glob_make_cb,   /* name */
           0x80040200,  //  0004  RET	1	R1
         })
       ),
-    &be_class_LVGL_glob, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[17]) {     /* constants */
@@ -335,7 +330,6 @@ be_local_closure(class_LVGL_glob_make_cb,   /* name */
 /********************************************************************
 ** Solidified function: lvgl_timer_dispatch
 ********************************************************************/
-extern const bclass be_class_LVGL_glob;
 be_local_closure(class_LVGL_glob_lvgl_timer_dispatch,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -344,7 +338,7 @@ be_local_closure(class_LVGL_glob_lvgl_timer_dispatch,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_LVGL_glob, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(introspect),
@@ -393,7 +387,6 @@ be_local_closure(class_LVGL_glob_lvgl_timer_dispatch,   /* name */
 /********************************************************************
 ** Solidified function: lvgl_event_dispatch
 ********************************************************************/
-extern const bclass be_class_LVGL_glob;
 be_local_closure(class_LVGL_glob_lvgl_event_dispatch,   /* name */
   be_nested_proto(
     11,                          /* nstack */
@@ -402,7 +395,7 @@ be_local_closure(class_LVGL_glob_lvgl_event_dispatch,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_LVGL_glob, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str_weak(introspect),
@@ -470,7 +463,6 @@ be_local_closure(class_LVGL_glob_lvgl_event_dispatch,   /* name */
 /********************************************************************
 ** Solidified function: deregister_obj
 ********************************************************************/
-extern const bclass be_class_LVGL_glob;
 be_local_closure(class_LVGL_glob_deregister_obj,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -479,7 +471,7 @@ be_local_closure(class_LVGL_glob_deregister_obj,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_LVGL_glob, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(cb_obj),
@@ -515,7 +507,6 @@ be_local_closure(class_LVGL_glob_deregister_obj,   /* name */
 /********************************************************************
 ** Solidified function: register_obj
 ********************************************************************/
-extern const bclass be_class_LVGL_glob;
 be_local_closure(class_LVGL_glob_register_obj,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -524,7 +515,7 @@ be_local_closure(class_LVGL_glob_register_obj,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_LVGL_glob, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(cb_obj),
@@ -564,7 +555,6 @@ be_local_closure(class_LVGL_glob_register_obj,   /* name */
 /********************************************************************
 ** Solidified function: widget_event_impl
 ********************************************************************/
-extern const bclass be_class_LVGL_glob;
 be_local_closure(class_LVGL_glob_widget_event_impl,   /* name */
   be_nested_proto(
     12,                          /* nstack */
@@ -573,7 +563,7 @@ be_local_closure(class_LVGL_glob_widget_event_impl,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_LVGL_glob, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_nested_str_weak(introspect),
@@ -650,7 +640,6 @@ be_local_closure(class_LVGL_glob_widget_event_impl,   /* name */
 /********************************************************************
 ** Solidified function: widget_dtor_impl
 ********************************************************************/
-extern const bclass be_class_LVGL_glob;
 be_local_closure(class_LVGL_glob_widget_dtor_impl,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -659,7 +648,7 @@ be_local_closure(class_LVGL_glob_widget_dtor_impl,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_LVGL_glob, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(introspect),
@@ -704,7 +693,6 @@ be_local_closure(class_LVGL_glob_widget_dtor_impl,   /* name */
 /********************************************************************
 ** Solidified function: widget_ctor_impl
 ********************************************************************/
-extern const bclass be_class_LVGL_glob;
 be_local_closure(class_LVGL_glob_widget_ctor_impl,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -713,7 +701,7 @@ be_local_closure(class_LVGL_glob_widget_ctor_impl,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_LVGL_glob, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(introspect),
@@ -775,7 +763,7 @@ be_local_closure(class_LVGL_glob__anonymous_,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(LVG_X3A_X20call_X20to_X20unsupported_X20callback),
@@ -796,7 +784,6 @@ be_local_closure(class_LVGL_glob__anonymous_,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_LVGL_glob;
 be_local_closure(class_LVGL_glob_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -805,7 +792,7 @@ be_local_closure(class_LVGL_glob_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 1]) {
       be_nested_proto(
         8,                          /* nstack */
         3,                          /* argc */
@@ -815,7 +802,7 @@ be_local_closure(class_LVGL_glob_init,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str_weak(make_cb),
@@ -832,7 +819,6 @@ be_local_closure(class_LVGL_glob_init,   /* name */
           0x80040600,  //  0006  RET	1	R3
         })
       ),
-    &be_class_LVGL_glob, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
@@ -859,7 +845,6 @@ be_local_closure(class_LVGL_glob_init,   /* name */
 /********************************************************************
 ** Solidified function: get_object_from_ptr
 ********************************************************************/
-extern const bclass be_class_LVGL_glob;
 be_local_closure(class_LVGL_glob_get_object_from_ptr,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -868,7 +853,7 @@ be_local_closure(class_LVGL_glob_get_object_from_ptr,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_LVGL_glob, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(cb_obj),
@@ -896,7 +881,6 @@ be_local_closure(class_LVGL_glob_get_object_from_ptr,   /* name */
 /********************************************************************
 ** Solidified function: create_custom_widget
 ********************************************************************/
-extern const bclass be_class_LVGL_glob;
 be_local_closure(class_LVGL_glob_create_custom_widget,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -905,7 +889,7 @@ be_local_closure(class_LVGL_glob_create_custom_widget,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_LVGL_glob, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[27]) {     /* constants */
     /* K0   */  be_nested_str_weak(introspect),
@@ -1034,7 +1018,6 @@ be_local_closure(class_LVGL_glob_create_custom_widget,   /* name */
 /********************************************************************
 ** Solidified function: widget_cb
 ********************************************************************/
-extern const bclass be_class_LVGL_glob;
 be_local_closure(class_LVGL_glob_widget_cb,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -1043,7 +1026,7 @@ be_local_closure(class_LVGL_glob_widget_cb,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 4]) {
+    ( &(const struct bproto*[ 3]) {
       be_nested_proto(
         6,                          /* nstack */
         2,                          /* argc */
@@ -1053,7 +1036,7 @@ be_local_closure(class_LVGL_glob_widget_cb,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str_weak(widget_ctor_impl),
@@ -1078,7 +1061,7 @@ be_local_closure(class_LVGL_glob_widget_cb,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str_weak(widget_dtor_impl),
@@ -1103,7 +1086,7 @@ be_local_closure(class_LVGL_glob_widget_cb,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str_weak(widget_event_impl),
@@ -1119,7 +1102,6 @@ be_local_closure(class_LVGL_glob_widget_cb,   /* name */
           0x80040400,  //  0005  RET	1	R2
         })
       ),
-    &be_class_LVGL_glob, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[15]) {     /* constants */
@@ -1205,7 +1187,6 @@ be_local_closure(class_LVGL_glob_widget_cb,   /* name */
 /********************************************************************
 ** Solidified function: remove_cb
 ********************************************************************/
-extern const bclass be_class_LVGL_glob;
 be_local_closure(class_LVGL_glob_remove_cb,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -1214,7 +1195,7 @@ be_local_closure(class_LVGL_glob_remove_cb,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_LVGL_glob, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(introspect),

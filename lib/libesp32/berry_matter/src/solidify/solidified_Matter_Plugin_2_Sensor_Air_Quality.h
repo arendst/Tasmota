@@ -9,7 +9,6 @@ extern const bclass be_class_Matter_Plugin_Sensor_Air_Quality;
 /********************************************************************
 ** Solidified function: web_values
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Air_Quality;
 be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_web_values,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_web_values,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 1]) {
       be_nested_proto(
         9,                          /* nstack */
         2,                          /* argc */
@@ -26,7 +25,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_web_values,   /* name */
         0,                          /* has upvals */
         NULL,                       /* no upvals */
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 3]) {     /* constants */
         /* K0   */  be_nested_str_weak(webserver),
@@ -50,7 +49,6 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_web_values,   /* name */
           0x80000000,  //  000B  RET	0
         })
       ),
-    &be_class_Matter_Plugin_Sensor_Air_Quality, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[15]) {     /* constants */
@@ -114,7 +112,6 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_web_values,   /* name */
 /********************************************************************
 ** Solidified function: parse_status
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Air_Quality;
 be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_status,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -123,7 +120,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_status,   /* name 
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_Air_Quality, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(find),
@@ -148,7 +145,6 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_status,   /* name 
 /********************************************************************
 ** Solidified function: update_virtual
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Air_Quality;
 be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_update_virtual,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -157,7 +153,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_update_virtual,   /* nam
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_Air_Quality, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[15]) {     /* constants */
     /* K0   */  be_nested_str_weak(shadow_air_quality),
@@ -249,7 +245,6 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_update_virtual,   /* nam
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Air_Quality;
 be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_init,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -258,7 +253,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_Air_Quality, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -292,7 +287,6 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_init,   /* name */
 /********************************************************************
 ** Solidified function: read_attribute
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Air_Quality;
 be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_read_attribute,   /* name */
   be_nested_proto(
     14,                          /* nstack */
@@ -301,7 +295,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_read_attribute,   /* nam
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 1]) {
       be_nested_proto(
         6,                          /* nstack */
         2,                          /* argc */
@@ -313,7 +307,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_read_attribute,   /* nam
           be_local_const_upval(1, 4),
         }),
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 9]) {     /* constants */
         /* K0   */  be_const_int(0),
@@ -405,7 +399,6 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_read_attribute,   /* nam
           0x80040400,  //  0049  RET	1	R2
         })
       ),
-    &be_class_Matter_Plugin_Sensor_Air_Quality, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[15]) {     /* constants */
@@ -530,7 +523,6 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_read_attribute,   /* nam
 /********************************************************************
 ** Solidified function: parse_configuration
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Air_Quality;
 be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_configuration,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -539,7 +531,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_configuration,   /
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_Air_Quality, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(prefix),
@@ -565,7 +557,6 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_configuration,   /
 /********************************************************************
 ** Solidified function: parse_sensors
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Air_Quality;
 be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_sensors,   /* name */
   be_nested_proto(
     11,                          /* nstack */
@@ -574,7 +565,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_sensors,   /* name
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_Air_Quality, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[17]) {     /* constants */
     /* K0   */  be_nested_str_weak(find),
@@ -674,7 +665,6 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_sensors,   /* name
 /********************************************************************
 ** Solidified function: _parse_sensor_entry
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Air_Quality;
 be_local_closure(class_Matter_Plugin_Sensor_Air_Quality__parse_sensor_entry,   /* name */
   be_nested_proto(
     12,                          /* nstack */
@@ -683,7 +673,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality__parse_sensor_entry,   /
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_Air_Quality, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(find),

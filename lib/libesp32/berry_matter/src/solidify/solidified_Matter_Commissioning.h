@@ -9,7 +9,6 @@ extern const bclass be_class_Matter_Commisioning_Context;
 /********************************************************************
 ** Solidified function: parse_StatusReport
 ********************************************************************/
-extern const bclass be_class_Matter_Commisioning_Context;
 be_local_closure(class_Matter_Commisioning_Context_parse_StatusReport,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Matter_Commisioning_Context_parse_StatusReport,   /* name
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Commisioning_Context, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(session),
@@ -63,7 +62,6 @@ be_local_closure(class_Matter_Commisioning_Context_parse_StatusReport,   /* name
 /********************************************************************
 ** Solidified function: find_fabric_by_destination_id
 ********************************************************************/
-extern const bclass be_class_Matter_Commisioning_Context;
 be_local_closure(class_Matter_Commisioning_Context_find_fabric_by_destination_id,   /* name */
   be_nested_proto(
     13,                          /* nstack */
@@ -72,7 +70,7 @@ be_local_closure(class_Matter_Commisioning_Context_find_fabric_by_destination_id
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Commisioning_Context, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[19]) {     /* constants */
     /* K0   */  be_nested_str_weak(crypto),
@@ -178,7 +176,6 @@ be_local_closure(class_Matter_Commisioning_Context_find_fabric_by_destination_id
 /********************************************************************
 ** Solidified function: every_second
 ********************************************************************/
-extern const bclass be_class_Matter_Commisioning_Context;
 be_local_closure(class_Matter_Commisioning_Context_every_second,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -187,7 +184,7 @@ be_local_closure(class_Matter_Commisioning_Context_every_second,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Commisioning_Context, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(every_second),
@@ -203,7 +200,6 @@ be_local_closure(class_Matter_Commisioning_Context_every_second,   /* name */
 /********************************************************************
 ** Solidified function: add_session
 ********************************************************************/
-extern const bclass be_class_Matter_Commisioning_Context;
 be_local_closure(class_Matter_Commisioning_Context_add_session,   /* name */
   be_nested_proto(
     12,                          /* nstack */
@@ -212,7 +208,7 @@ be_local_closure(class_Matter_Commisioning_Context_add_session,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Commisioning_Context, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(log),
@@ -254,7 +250,6 @@ be_local_closure(class_Matter_Commisioning_Context_add_session,   /* name */
 /********************************************************************
 ** Solidified function: parse_PBKDFParamRequest
 ********************************************************************/
-extern const bclass be_class_Matter_Commisioning_Context;
 be_local_closure(class_Matter_Commisioning_Context_parse_PBKDFParamRequest,   /* name */
   be_nested_proto(
     12,                          /* nstack */
@@ -263,7 +258,7 @@ be_local_closure(class_Matter_Commisioning_Context_parse_PBKDFParamRequest,   /*
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Commisioning_Context, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[47]) {     /* constants */
     /* K0   */  be_nested_str_weak(crypto),
@@ -439,7 +434,6 @@ be_local_closure(class_Matter_Commisioning_Context_parse_PBKDFParamRequest,   /*
 /********************************************************************
 ** Solidified function: send_status_report
 ********************************************************************/
-extern const bclass be_class_Matter_Commisioning_Context;
 be_local_closure(class_Matter_Commisioning_Context_send_status_report,   /* name */
   be_nested_proto(
     12,                          /* nstack */
@@ -448,7 +442,7 @@ be_local_closure(class_Matter_Commisioning_Context_send_status_report,   /* name
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Commisioning_Context, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(build_response),
@@ -496,7 +490,6 @@ be_local_closure(class_Matter_Commisioning_Context_send_status_report,   /* name
 /********************************************************************
 ** Solidified function: parse_Pake1
 ********************************************************************/
-extern const bclass be_class_Matter_Commisioning_Context;
 be_local_closure(class_Matter_Commisioning_Context_parse_Pake1,   /* name */
   be_nested_proto(
     20,                          /* nstack */
@@ -505,7 +498,7 @@ be_local_closure(class_Matter_Commisioning_Context_parse_Pake1,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Commisioning_Context, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[51]) {     /* constants */
     /* K0   */  be_nested_str_weak(crypto),
@@ -684,7 +677,6 @@ be_local_closure(class_Matter_Commisioning_Context_parse_Pake1,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Matter_Commisioning_Context;
 be_local_closure(class_Matter_Commisioning_Context_init,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -693,7 +685,7 @@ be_local_closure(class_Matter_Commisioning_Context_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Commisioning_Context, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(crypto),
@@ -717,7 +709,6 @@ be_local_closure(class_Matter_Commisioning_Context_init,   /* name */
 /********************************************************************
 ** Solidified function: parse_Pake3
 ********************************************************************/
-extern const bclass be_class_Matter_Commisioning_Context;
 be_local_closure(class_Matter_Commisioning_Context_parse_Pake3,   /* name */
   be_nested_proto(
     19,                          /* nstack */
@@ -726,7 +717,7 @@ be_local_closure(class_Matter_Commisioning_Context_parse_Pake3,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Commisioning_Context, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[31]) {     /* constants */
     /* K0   */  be_nested_str_weak(crypto),
@@ -874,7 +865,6 @@ be_local_closure(class_Matter_Commisioning_Context_parse_Pake3,   /* name */
 /********************************************************************
 ** Solidified function: parse_Sigma3
 ********************************************************************/
-extern const bclass be_class_Matter_Commisioning_Context;
 be_local_closure(class_Matter_Commisioning_Context_parse_Sigma3,   /* name */
   be_nested_proto(
     36,                          /* nstack */
@@ -883,7 +873,7 @@ be_local_closure(class_Matter_Commisioning_Context_parse_Sigma3,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Commisioning_Context, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[66]) {     /* constants */
     /* K0   */  be_nested_str_weak(crypto),
@@ -1245,7 +1235,6 @@ be_local_closure(class_Matter_Commisioning_Context_parse_Sigma3,   /* name */
 /********************************************************************
 ** Solidified function: process_incoming
 ********************************************************************/
-extern const bclass be_class_Matter_Commisioning_Context;
 be_local_closure(class_Matter_Commisioning_Context_process_incoming,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -1254,7 +1243,7 @@ be_local_closure(class_Matter_Commisioning_Context_process_incoming,   /* name *
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Commisioning_Context, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
     /* K0   */  be_nested_str_weak(device),
@@ -1371,7 +1360,6 @@ be_local_closure(class_Matter_Commisioning_Context_process_incoming,   /* name *
 /********************************************************************
 ** Solidified function: parse_Sigma1
 ********************************************************************/
-extern const bclass be_class_Matter_Commisioning_Context;
 be_local_closure(class_Matter_Commisioning_Context_parse_Sigma1,   /* name */
   be_nested_proto(
     37,                          /* nstack */
@@ -1380,7 +1368,7 @@ be_local_closure(class_Matter_Commisioning_Context_parse_Sigma1,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Commisioning_Context, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[108]) {     /* constants */
     /* K0   */  be_nested_str_weak(crypto),

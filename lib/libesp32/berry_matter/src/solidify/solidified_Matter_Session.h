@@ -9,7 +9,6 @@ extern const bclass be_class_Matter_Session;
 /********************************************************************
 ** Solidified function: get_device_id
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_device_id,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Matter_Session_get_device_id,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_fabric),
@@ -43,7 +42,6 @@ be_local_closure(class_Matter_Session_get_device_id,   /* name */
 /********************************************************************
 ** Solidified function: before_remove
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_before_remove,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -52,7 +50,7 @@ be_local_closure(class_Matter_Session_before_remove,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(log),
@@ -80,7 +78,6 @@ be_local_closure(class_Matter_Session_before_remove,   /* name */
 /********************************************************************
 ** Solidified function: set_mode_CASE
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_set_mode_CASE,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -89,7 +86,7 @@ be_local_closure(class_Matter_Session_set_mode_CASE,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(set_mode),
@@ -111,7 +108,6 @@ be_local_closure(class_Matter_Session_set_mode_CASE,   /* name */
 /********************************************************************
 ** Solidified function: is_CASE
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_is_CASE,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -120,7 +116,7 @@ be_local_closure(class_Matter_Session_is_CASE,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(mode),
@@ -142,7 +138,6 @@ be_local_closure(class_Matter_Session_is_CASE,   /* name */
 /********************************************************************
 ** Solidified function: persist_to_fabric
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_persist_to_fabric,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -151,7 +146,7 @@ be_local_closure(class_Matter_Session_persist_to_fabric,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_fabric),
@@ -174,7 +169,6 @@ be_local_closure(class_Matter_Session_persist_to_fabric,   /* name */
 /********************************************************************
 ** Solidified function: get_noc
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_noc,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -183,7 +177,7 @@ be_local_closure(class_Matter_Session_get_noc,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_fabric),
@@ -204,7 +198,6 @@ be_local_closure(class_Matter_Session_get_noc,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_init,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -213,7 +206,7 @@ be_local_closure(class_Matter_Session_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[23]) {     /* constants */
     /* K0   */  be_nested_str_weak(crypto),
@@ -293,7 +286,6 @@ be_local_closure(class_Matter_Session_init,   /* name */
 /********************************************************************
 ** Solidified function: get_admin_vendor
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_admin_vendor,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -302,7 +294,7 @@ be_local_closure(class_Matter_Session_get_admin_vendor,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_fabric),
@@ -327,7 +319,6 @@ be_local_closure(class_Matter_Session_get_admin_vendor,   /* name */
 /********************************************************************
 ** Solidified function: get_i2r
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_i2r,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -336,7 +327,7 @@ be_local_closure(class_Matter_Session_get_i2r,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(i2rkey),
@@ -355,7 +346,6 @@ be_local_closure(class_Matter_Session_get_i2r,   /* name */
 /********************************************************************
 ** Solidified function: counter_rcv_validate
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_counter_rcv_validate,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -364,7 +354,7 @@ be_local_closure(class_Matter_Session_counter_rcv_validate,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_counter_rcv_impl),
@@ -395,7 +385,6 @@ be_local_closure(class_Matter_Session_counter_rcv_validate,   /* name */
 /********************************************************************
 ** Solidified function: get_ca
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_ca,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -404,7 +393,7 @@ be_local_closure(class_Matter_Session_get_ca,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_fabric),
@@ -425,7 +414,6 @@ be_local_closure(class_Matter_Session_get_ca,   /* name */
 /********************************************************************
 ** Solidified function: get_fabric_index
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_fabric_index,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -434,7 +422,7 @@ be_local_closure(class_Matter_Session_get_fabric_index,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_fabric),
@@ -459,7 +447,6 @@ be_local_closure(class_Matter_Session_get_fabric_index,   /* name */
 /********************************************************************
 ** Solidified function: get_r2i
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_r2i,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -468,7 +455,7 @@ be_local_closure(class_Matter_Session_get_r2i,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(r2ikey),
@@ -487,7 +474,6 @@ be_local_closure(class_Matter_Session_get_r2i,   /* name */
 /********************************************************************
 ** Solidified function: counter_snd_next
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_counter_snd_next,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -496,7 +482,7 @@ be_local_closure(class_Matter_Session_counter_snd_next,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(_counter_snd_impl),
@@ -540,7 +526,6 @@ be_local_closure(class_Matter_Session_counter_snd_next,   /* name */
 /********************************************************************
 ** Solidified function: get_temp_ca_pub
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_temp_ca_pub,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -549,7 +534,7 @@ be_local_closure(class_Matter_Session_get_temp_ca_pub,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_temp_root_ca_certificate),
@@ -582,7 +567,6 @@ be_local_closure(class_Matter_Session_get_temp_ca_pub,   /* name */
 /********************************************************************
 ** Solidified function: get_temp_ca
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_temp_ca,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -591,7 +575,7 @@ be_local_closure(class_Matter_Session_get_temp_ca,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_temp_root_ca_certificate),
@@ -610,7 +594,6 @@ be_local_closure(class_Matter_Session_get_temp_ca,   /* name */
 /********************************************************************
 ** Solidified function: get_fabric_id
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_fabric_id,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -619,7 +602,7 @@ be_local_closure(class_Matter_Session_get_fabric_id,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_fabric),
@@ -640,7 +623,6 @@ be_local_closure(class_Matter_Session_get_fabric_id,   /* name */
 /********************************************************************
 ** Solidified function: set_mode_PASE
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_set_mode_PASE,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -649,7 +631,7 @@ be_local_closure(class_Matter_Session_set_mode_PASE,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(set_mode),
@@ -671,7 +653,6 @@ be_local_closure(class_Matter_Session_set_mode_PASE,   /* name */
 /********************************************************************
 ** Solidified function: get_fabric_label
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_fabric_label,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -680,7 +661,7 @@ be_local_closure(class_Matter_Session_get_fabric_label,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_fabric),
@@ -705,7 +686,6 @@ be_local_closure(class_Matter_Session_get_fabric_label,   /* name */
 /********************************************************************
 ** Solidified function: update
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_update,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -714,7 +694,7 @@ be_local_closure(class_Matter_Session_update,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(last_used),
@@ -738,7 +718,6 @@ be_local_closure(class_Matter_Session_update,   /* name */
 /********************************************************************
 ** Solidified function: get_icac
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_icac,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -747,7 +726,7 @@ be_local_closure(class_Matter_Session_get_icac,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_fabric),
@@ -768,7 +747,6 @@ be_local_closure(class_Matter_Session_get_icac,   /* name */
 /********************************************************************
 ** Solidified function: is_PASE
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_is_PASE,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -777,7 +755,7 @@ be_local_closure(class_Matter_Session_is_PASE,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(mode),
@@ -799,7 +777,6 @@ be_local_closure(class_Matter_Session_is_PASE,   /* name */
 /********************************************************************
 ** Solidified function: set_fabric_label
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_set_fabric_label,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -808,7 +785,7 @@ be_local_closure(class_Matter_Session_set_fabric_label,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),
@@ -835,7 +812,6 @@ be_local_closure(class_Matter_Session_set_fabric_label,   /* name */
 /********************************************************************
 ** Solidified function: get_node_id
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_node_id,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -844,7 +820,7 @@ be_local_closure(class_Matter_Session_get_node_id,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_fabric),
@@ -869,7 +845,6 @@ be_local_closure(class_Matter_Session_get_node_id,   /* name */
 /********************************************************************
 ** Solidified function: get_ca_pub
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_ca_pub,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -878,7 +853,7 @@ be_local_closure(class_Matter_Session_get_ca_pub,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_fabric),
@@ -900,7 +875,6 @@ be_local_closure(class_Matter_Session_get_ca_pub,   /* name */
 /********************************************************************
 ** Solidified function: get_pk
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_pk,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -909,7 +883,7 @@ be_local_closure(class_Matter_Session_get_pk,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_fabric),
@@ -947,7 +921,6 @@ be_local_closure(class_Matter_Session_get_pk,   /* name */
 /********************************************************************
 ** Solidified function: tojson
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_tojson,   /* name */
   be_nested_proto(
     16,                          /* nstack */
@@ -956,7 +929,7 @@ be_local_closure(class_Matter_Session_tojson,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[22]) {     /* constants */
     /* K0   */  be_nested_str_weak(json),
@@ -1089,7 +1062,6 @@ be_local_closure(class_Matter_Session_tojson,   /* name */
 /********************************************************************
 ** Solidified function: close
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_close,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -1098,7 +1070,7 @@ be_local_closure(class_Matter_Session_close,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[23]) {     /* constants */
     /* K0   */  be_nested_str_weak(local_session_id),
@@ -1196,7 +1168,6 @@ be_local_closure(class_Matter_Session_close,   /* name */
 /********************************************************************
 ** Solidified function: get_ac
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_ac,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -1205,7 +1176,7 @@ be_local_closure(class_Matter_Session_get_ac,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(attestation_challenge),
@@ -1224,7 +1195,6 @@ be_local_closure(class_Matter_Session_get_ac,   /* name */
 /********************************************************************
 ** Solidified function: get_fabric
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_fabric,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -1233,7 +1203,7 @@ be_local_closure(class_Matter_Session_get_fabric,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_fabric),
@@ -1252,7 +1222,6 @@ be_local_closure(class_Matter_Session_get_fabric,   /* name */
 /********************************************************************
 ** Solidified function: get_i2r_privacy
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_i2r_privacy,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -1261,7 +1230,7 @@ be_local_closure(class_Matter_Session_get_i2r_privacy,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(_i2r_privacy),
@@ -1306,7 +1275,6 @@ be_local_closure(class_Matter_Session_get_i2r_privacy,   /* name */
 /********************************************************************
 ** Solidified function: fromjson
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_fromjson,   /* name */
   be_nested_proto(
     17,                          /* nstack */
@@ -1315,7 +1283,7 @@ be_local_closure(class_Matter_Session_fromjson,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[17]) {     /* constants */
     /* K0   */  be_const_class(be_class_Matter_Session),
@@ -1423,7 +1391,6 @@ be_local_closure(class_Matter_Session_fromjson,   /* name */
 /********************************************************************
 ** Solidified function: save
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_save,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -1432,7 +1399,7 @@ be_local_closure(class_Matter_Session_save,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_store),
@@ -1454,7 +1421,6 @@ be_local_closure(class_Matter_Session_save,   /* name */
 /********************************************************************
 ** Solidified function: hydrate_post
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_hydrate_post,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -1463,7 +1429,7 @@ be_local_closure(class_Matter_Session_hydrate_post,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(_counter_snd_impl),
@@ -1502,7 +1468,6 @@ be_local_closure(class_Matter_Session_hydrate_post,   /* name */
 /********************************************************************
 ** Solidified function: get_admin_subject
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_admin_subject,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -1511,7 +1476,7 @@ be_local_closure(class_Matter_Session_get_admin_subject,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_fabric),
@@ -1536,7 +1501,6 @@ be_local_closure(class_Matter_Session_get_admin_subject,   /* name */
 /********************************************************************
 ** Solidified function: get_ipk_epoch_key
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_ipk_epoch_key,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -1545,7 +1509,7 @@ be_local_closure(class_Matter_Session_get_ipk_epoch_key,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_fabric),
@@ -1566,7 +1530,6 @@ be_local_closure(class_Matter_Session_get_ipk_epoch_key,   /* name */
 /********************************************************************
 ** Solidified function: get_fabric_compressed
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_fabric_compressed,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -1575,7 +1538,7 @@ be_local_closure(class_Matter_Session_get_fabric_compressed,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_fabric),
@@ -1600,7 +1563,6 @@ be_local_closure(class_Matter_Session_get_fabric_compressed,   /* name */
 /********************************************************************
 ** Solidified function: get_mode
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_mode,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -1609,7 +1571,7 @@ be_local_closure(class_Matter_Session_get_mode,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(mode),
@@ -1628,7 +1590,6 @@ be_local_closure(class_Matter_Session_get_mode,   /* name */
 /********************************************************************
 ** Solidified function: set_temp_ca
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_set_temp_ca,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -1637,7 +1598,7 @@ be_local_closure(class_Matter_Session_set_temp_ca,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_temp_root_ca_certificate),
@@ -1656,7 +1617,6 @@ be_local_closure(class_Matter_Session_set_temp_ca,   /* name */
 /********************************************************************
 ** Solidified function: set_mode
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_set_mode,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -1665,7 +1625,7 @@ be_local_closure(class_Matter_Session_set_mode,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(mode),
@@ -1684,7 +1644,6 @@ be_local_closure(class_Matter_Session_set_mode,   /* name */
 /********************************************************************
 ** Solidified function: set_keys
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_set_keys,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -1693,7 +1652,7 @@ be_local_closure(class_Matter_Session_set_keys,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(i2rkey),
@@ -1721,7 +1680,6 @@ be_local_closure(class_Matter_Session_set_keys,   /* name */
 /********************************************************************
 ** Solidified function: gen_CSR
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_gen_CSR,   /* name */
   be_nested_proto(
     15,                          /* nstack */
@@ -1730,7 +1688,7 @@ be_local_closure(class_Matter_Session_gen_CSR,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str_weak(get_pk),
@@ -1831,7 +1789,6 @@ be_local_closure(class_Matter_Session_gen_CSR,   /* name */
 /********************************************************************
 ** Solidified function: get_ipk_group_key
 ********************************************************************/
-extern const bclass be_class_Matter_Session;
 be_local_closure(class_Matter_Session_get_ipk_group_key,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -1840,7 +1797,7 @@ be_local_closure(class_Matter_Session_get_ipk_group_key,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Session, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_fabric),

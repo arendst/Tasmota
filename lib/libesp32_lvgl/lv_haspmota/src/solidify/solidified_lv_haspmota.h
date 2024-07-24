@@ -9,7 +9,6 @@ extern const bclass be_class_lvh_root;
 /********************************************************************
 ** Solidified function: get_text
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_get_text,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_lvh_root_get_text,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(get_text),
@@ -35,7 +34,6 @@ be_local_closure(class_lvh_root_get_text,   /* name */
 /********************************************************************
 ** Solidified function: get_text_rule_formula
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_get_text_rule_formula,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -44,7 +42,7 @@ be_local_closure(class_lvh_root_get_text_rule_formula,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_text_rule_formula),
@@ -63,7 +61,6 @@ be_local_closure(class_lvh_root_get_text_rule_formula,   /* name */
 /********************************************************************
 ** Solidified function: set_text_rule_formula
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_set_text_rule_formula,   /* name */
   be_nested_proto(
     11,                          /* nstack */
@@ -72,7 +69,7 @@ be_local_closure(class_lvh_root_set_text_rule_formula,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_text_rule_formula),
@@ -122,7 +119,6 @@ be_local_closure(class_lvh_root_set_text_rule_formula,   /* name */
 /********************************************************************
 ** Solidified function: get_text_rule
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_get_text_rule,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -131,7 +127,7 @@ be_local_closure(class_lvh_root_get_text_rule,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_text_rule),
@@ -150,7 +146,6 @@ be_local_closure(class_lvh_root_get_text_rule,   /* name */
 /********************************************************************
 ** Solidified function: set_text
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_set_text,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -159,7 +154,7 @@ be_local_closure(class_lvh_root_set_text,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(set_text),
@@ -175,7 +170,6 @@ be_local_closure(class_lvh_root_set_text,   /* name */
 /********************************************************************
 ** Solidified function: val_rule_matched
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_val_rule_matched,   /* name */
   be_nested_proto(
     11,                          /* nstack */
@@ -184,7 +178,7 @@ be_local_closure(class_lvh_root_val_rule_matched,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_val_rule_function),
@@ -239,7 +233,6 @@ be_local_closure(class_lvh_root_val_rule_matched,   /* name */
 /********************************************************************
 ** Solidified function: parse_font
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_parse_font,   /* name */
   be_nested_proto(
     15,                          /* nstack */
@@ -248,7 +241,7 @@ be_local_closure(class_lvh_root_parse_font,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[18]) {     /* constants */
     /* K0   */  be_nested_str_weak(int),
@@ -430,7 +423,6 @@ be_local_closure(class_lvh_root_parse_font,   /* name */
 /********************************************************************
 ** Solidified function: get_val_rule_formula
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_get_val_rule_formula,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -439,7 +431,7 @@ be_local_closure(class_lvh_root_get_val_rule_formula,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_val_rule_formula),
@@ -458,7 +450,6 @@ be_local_closure(class_lvh_root_get_val_rule_formula,   /* name */
 /********************************************************************
 ** Solidified function: post_config
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_post_config,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -467,7 +458,7 @@ be_local_closure(class_lvh_root_post_config,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_val),
@@ -493,7 +484,6 @@ be_local_closure(class_lvh_root_post_config,   /* name */
 /********************************************************************
 ** Solidified function: text_rule_matched
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_text_rule_matched,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -502,7 +492,7 @@ be_local_closure(class_lvh_root_text_rule_matched,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(int),
@@ -572,7 +562,6 @@ be_local_closure(class_lvh_root_text_rule_matched,   /* name */
 /********************************************************************
 ** Solidified function: get_meta
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_get_meta,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -581,7 +570,7 @@ be_local_closure(class_lvh_root_get_meta,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_meta),
@@ -600,7 +589,6 @@ be_local_closure(class_lvh_root_get_meta,   /* name */
 /********************************************************************
 ** Solidified function: set_value_str
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_set_value_str,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -609,7 +597,7 @@ be_local_closure(class_lvh_root_set_value_str,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(set_text),
@@ -630,7 +618,6 @@ be_local_closure(class_lvh_root_set_value_str,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_init,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -639,7 +626,7 @@ be_local_closure(class_lvh_root_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_page),
@@ -677,7 +664,6 @@ be_local_closure(class_lvh_root_init,   /* name */
 /********************************************************************
 ** Solidified function: get_delete
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_get_delete,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -686,7 +672,7 @@ be_local_closure(class_lvh_root_get_delete,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(delete),
@@ -706,7 +692,6 @@ be_local_closure(class_lvh_root_get_delete,   /* name */
 /********************************************************************
 ** Solidified function: remove_trailing_zeroes
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_remove_trailing_zeroes,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -715,7 +700,7 @@ be_local_closure(class_lvh_root_remove_trailing_zeroes,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_const_class(be_class_lvh_root),
@@ -759,7 +744,6 @@ be_local_closure(class_lvh_root_remove_trailing_zeroes,   /* name */
 /********************************************************************
 ** Solidified function: set_val_rule
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_set_val_rule,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -768,7 +752,7 @@ be_local_closure(class_lvh_root_set_val_rule,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 1]) {
       be_nested_proto(
         4,                          /* nstack */
         1,                          /* argc */
@@ -778,7 +762,7 @@ be_local_closure(class_lvh_root_set_val_rule,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str_weak(val_rule_matched),
@@ -793,7 +777,6 @@ be_local_closure(class_lvh_root_set_val_rule,   /* name */
           0x80040200,  //  0004  RET	1	R1
         })
       ),
-    &be_class_lvh_root, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
@@ -828,7 +811,6 @@ be_local_closure(class_lvh_root_set_val_rule,   /* name */
 /********************************************************************
 ** Solidified function: get_val_rule
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_get_val_rule,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -837,7 +819,7 @@ be_local_closure(class_lvh_root_get_val_rule,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_val_rule),
@@ -856,7 +838,6 @@ be_local_closure(class_lvh_root_get_val_rule,   /* name */
 /********************************************************************
 ** Solidified function: digits_to_style
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_digits_to_style,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -865,7 +846,7 @@ be_local_closure(class_lvh_root_digits_to_style,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -930,7 +911,6 @@ be_local_closure(class_lvh_root_digits_to_style,   /* name */
 /********************************************************************
 ** Solidified function: set_text_rule_format
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_set_text_rule_format,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -939,7 +919,7 @@ be_local_closure(class_lvh_root_set_text_rule_format,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_text_rule_format),
@@ -961,7 +941,6 @@ be_local_closure(class_lvh_root_set_text_rule_format,   /* name */
 /********************************************************************
 ** Solidified function: remove_val_rule
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_remove_val_rule,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -970,7 +949,7 @@ be_local_closure(class_lvh_root_remove_val_rule,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_val_rule),
@@ -999,7 +978,6 @@ be_local_closure(class_lvh_root_remove_val_rule,   /* name */
 /********************************************************************
 ** Solidified function: delete
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_delete,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -1008,7 +986,7 @@ be_local_closure(class_lvh_root_delete,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(delete),
@@ -1024,7 +1002,6 @@ be_local_closure(class_lvh_root_delete,   /* name */
 /********************************************************************
 ** Solidified function: get_obj
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_get_obj,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -1033,7 +1010,7 @@ be_local_closure(class_lvh_root_get_obj,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -1052,7 +1029,6 @@ be_local_closure(class_lvh_root_get_obj,   /* name */
 /********************************************************************
 ** Solidified function: is_color_attribute
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_is_color_attribute,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -1061,7 +1037,7 @@ be_local_closure(class_lvh_root_is_color_attribute,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),
@@ -1088,7 +1064,6 @@ be_local_closure(class_lvh_root_is_color_attribute,   /* name */
 /********************************************************************
 ** Solidified function: set_meta
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_set_meta,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -1097,7 +1072,7 @@ be_local_closure(class_lvh_root_set_meta,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_meta),
@@ -1116,7 +1091,6 @@ be_local_closure(class_lvh_root_set_meta,   /* name */
 /********************************************************************
 ** Solidified function: set_delete
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_set_delete,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -1125,7 +1099,7 @@ be_local_closure(class_lvh_root_set_delete,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(type_error),
@@ -1145,7 +1119,6 @@ be_local_closure(class_lvh_root_set_delete,   /* name */
 /********************************************************************
 ** Solidified function: get_value_str
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_get_value_str,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -1154,7 +1127,7 @@ be_local_closure(class_lvh_root_get_value_str,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(get_text),
@@ -1174,7 +1147,6 @@ be_local_closure(class_lvh_root_get_value_str,   /* name */
 /********************************************************************
 ** Solidified function: parse_color
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_parse_color,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -1183,7 +1155,7 @@ be_local_closure(class_lvh_root_parse_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 1]) {
       be_nested_proto(
         10,                          /* nstack */
         1,                          /* argc */
@@ -1191,7 +1163,7 @@ be_local_closure(class_lvh_root_parse_color,   /* name */
         0,                          /* has upvals */
         NULL,                       /* no upvals */
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[14]) {     /* constants */
         /* K0   */  be_nested_str_weak(string),
@@ -1281,7 +1253,6 @@ be_local_closure(class_lvh_root_parse_color,   /* name */
           0x80040400,  //  0042  RET	1	R2
         })
       ),
-    &be_class_lvh_root, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
@@ -1348,7 +1319,6 @@ be_local_closure(class_lvh_root_parse_color,   /* name */
 /********************************************************************
 ** Solidified function: get_text_rule_format
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_get_text_rule_format,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -1357,7 +1327,7 @@ be_local_closure(class_lvh_root_get_text_rule_format,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_text_rule_format),
@@ -1376,7 +1346,6 @@ be_local_closure(class_lvh_root_get_text_rule_format,   /* name */
 /********************************************************************
 ** Solidified function: remove_text_rule
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_remove_text_rule,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -1385,7 +1354,7 @@ be_local_closure(class_lvh_root_remove_text_rule,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_text_rule),
@@ -1414,7 +1383,6 @@ be_local_closure(class_lvh_root_remove_text_rule,   /* name */
 /********************************************************************
 ** Solidified function: set_val_rule_formula
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_set_val_rule_formula,   /* name */
   be_nested_proto(
     11,                          /* nstack */
@@ -1423,7 +1391,7 @@ be_local_closure(class_lvh_root_set_val_rule_formula,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_root, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_val_rule_formula),
@@ -1473,7 +1441,6 @@ be_local_closure(class_lvh_root_set_val_rule_formula,   /* name */
 /********************************************************************
 ** Solidified function: set_text_rule
 ********************************************************************/
-extern const bclass be_class_lvh_root;
 be_local_closure(class_lvh_root_set_text_rule,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -1482,7 +1449,7 @@ be_local_closure(class_lvh_root_set_text_rule,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 1]) {
       be_nested_proto(
         4,                          /* nstack */
         1,                          /* argc */
@@ -1492,7 +1459,7 @@ be_local_closure(class_lvh_root_set_text_rule,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str_weak(text_rule_matched),
@@ -1507,7 +1474,6 @@ be_local_closure(class_lvh_root_set_text_rule,   /* name */
           0x80040200,  //  0004  RET	1	R1
         })
       ),
-    &be_class_lvh_root, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
@@ -1648,7 +1614,6 @@ extern const bclass be_class_lvh_obj;
 /********************************************************************
 ** Solidified function: set_pad_bottom2
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_pad_bottom2,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -1657,7 +1622,7 @@ be_local_closure(class_lvh_obj_set_pad_bottom2,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_part2_selector),
@@ -1693,7 +1658,6 @@ be_local_closure(class_lvh_obj_set_pad_bottom2,   /* name */
 /********************************************************************
 ** Solidified function: set_toggle
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_toggle,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -1702,7 +1666,7 @@ be_local_closure(class_lvh_obj_set_toggle,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),
@@ -1759,7 +1723,6 @@ be_local_closure(class_lvh_obj_set_toggle,   /* name */
 /********************************************************************
 ** Solidified function: set_pad_left2
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_pad_left2,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -1768,7 +1731,7 @@ be_local_closure(class_lvh_obj_set_pad_left2,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_part2_selector),
@@ -1804,7 +1767,6 @@ be_local_closure(class_lvh_obj_set_pad_left2,   /* name */
 /********************************************************************
 ** Solidified function: get_pad_top
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_pad_top,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -1813,7 +1775,7 @@ be_local_closure(class_lvh_obj_get_pad_top,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_part2_selector),
@@ -1847,7 +1809,6 @@ be_local_closure(class_lvh_obj_get_pad_top,   /* name */
 /********************************************************************
 ** Solidified function: get_line_width
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_line_width,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -1856,7 +1817,7 @@ be_local_closure(class_lvh_obj_get_line_width,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -1879,7 +1840,6 @@ be_local_closure(class_lvh_obj_get_line_width,   /* name */
 /********************************************************************
 ** Solidified function: get_adjustable
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_adjustable,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -1888,7 +1848,7 @@ be_local_closure(class_lvh_obj_get_adjustable,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -1914,7 +1874,6 @@ be_local_closure(class_lvh_obj_get_adjustable,   /* name */
 /********************************************************************
 ** Solidified function: get_text
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_text,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -1923,7 +1882,7 @@ be_local_closure(class_lvh_obj_get_text,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_label),
@@ -1951,7 +1910,6 @@ be_local_closure(class_lvh_obj_get_text,   /* name */
 /********************************************************************
 ** Solidified function: set_line_width
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_line_width,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -1960,7 +1918,7 @@ be_local_closure(class_lvh_obj_set_line_width,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -1986,7 +1944,6 @@ be_local_closure(class_lvh_obj_set_line_width,   /* name */
 /********************************************************************
 ** Solidified function: set_text
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_text,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -1995,7 +1952,7 @@ be_local_closure(class_lvh_obj_set_text,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(check_label),
@@ -2023,7 +1980,6 @@ be_local_closure(class_lvh_obj_set_text,   /* name */
 /********************************************************************
 ** Solidified function: set_align
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_align,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -2032,7 +1988,7 @@ be_local_closure(class_lvh_obj_set_align,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -2093,7 +2049,6 @@ be_local_closure(class_lvh_obj_set_align,   /* name */
 /********************************************************************
 ** Solidified function: get_value_color
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_value_color,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -2102,7 +2057,7 @@ be_local_closure(class_lvh_obj_get_value_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(get_value_color),
@@ -2122,7 +2077,6 @@ be_local_closure(class_lvh_obj_get_value_color,   /* name */
 /********************************************************************
 ** Solidified function: get_pad_right
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_pad_right,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -2131,7 +2085,7 @@ be_local_closure(class_lvh_obj_get_pad_right,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_part2_selector),
@@ -2165,7 +2119,6 @@ be_local_closure(class_lvh_obj_get_pad_right,   /* name */
 /********************************************************************
 ** Solidified function: get_text_color
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_text_color,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -2174,7 +2127,7 @@ be_local_closure(class_lvh_obj_get_text_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -2197,7 +2150,6 @@ be_local_closure(class_lvh_obj_get_text_color,   /* name */
 /********************************************************************
 ** Solidified function: get_action
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_action,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -2206,7 +2158,7 @@ be_local_closure(class_lvh_obj_get_action,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_action),
@@ -2230,7 +2182,6 @@ be_local_closure(class_lvh_obj_get_action,   /* name */
 /********************************************************************
 ** Solidified function: get_value_ofs_y
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_value_ofs_y,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -2239,7 +2190,7 @@ be_local_closure(class_lvh_obj_get_value_ofs_y,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_label),
@@ -2261,7 +2212,6 @@ be_local_closure(class_lvh_obj_get_value_ofs_y,   /* name */
 /********************************************************************
 ** Solidified function: set_pad_all2
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_pad_all2,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -2270,7 +2220,7 @@ be_local_closure(class_lvh_obj_set_pad_all2,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_part2_selector),
@@ -2306,7 +2256,6 @@ be_local_closure(class_lvh_obj_set_pad_all2,   /* name */
 /********************************************************************
 ** Solidified function: check_label
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_check_label,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -2315,7 +2264,7 @@ be_local_closure(class_lvh_obj_check_label,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_label),
@@ -2366,7 +2315,6 @@ be_local_closure(class_lvh_obj_check_label,   /* name */
 /********************************************************************
 ** Solidified function: set_value_color
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_value_color,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -2375,7 +2323,7 @@ be_local_closure(class_lvh_obj_set_value_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(set_text_color),
@@ -2396,7 +2344,6 @@ be_local_closure(class_lvh_obj_set_value_color,   /* name */
 /********************************************************************
 ** Solidified function: get_flex_in_new_track
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_flex_in_new_track,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -2405,7 +2352,7 @@ be_local_closure(class_lvh_obj_get_flex_in_new_track,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -2431,7 +2378,6 @@ be_local_closure(class_lvh_obj_get_flex_in_new_track,   /* name */
 /********************************************************************
 ** Solidified function: delete
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_delete,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -2440,7 +2386,7 @@ be_local_closure(class_lvh_obj_delete,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(remove_val_rule),
@@ -2487,7 +2433,6 @@ be_local_closure(class_lvh_obj_delete,   /* name */
 /********************************************************************
 ** Solidified function: get_value_ofs_x
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_value_ofs_x,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -2496,7 +2441,7 @@ be_local_closure(class_lvh_obj_get_value_ofs_x,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_label),
@@ -2518,7 +2463,6 @@ be_local_closure(class_lvh_obj_get_value_ofs_x,   /* name */
 /********************************************************************
 ** Solidified function: set_pad_top2
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_pad_top2,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -2527,7 +2471,7 @@ be_local_closure(class_lvh_obj_set_pad_top2,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_part2_selector),
@@ -2563,7 +2507,6 @@ be_local_closure(class_lvh_obj_set_pad_top2,   /* name */
 /********************************************************************
 ** Solidified function: set_click
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_click,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -2572,7 +2515,7 @@ be_local_closure(class_lvh_obj_set_click,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(set_enabled),
@@ -2593,7 +2536,6 @@ be_local_closure(class_lvh_obj_set_click,   /* name */
 /********************************************************************
 ** Solidified function: set_adjustable
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_adjustable,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -2602,7 +2544,7 @@ be_local_closure(class_lvh_obj_set_adjustable,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -2636,7 +2578,6 @@ be_local_closure(class_lvh_obj_set_adjustable,   /* name */
 /********************************************************************
 ** Solidified function: event_cb
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_event_cb,   /* name */
   be_nested_proto(
     13,                          /* nstack */
@@ -2645,7 +2586,7 @@ be_local_closure(class_lvh_obj_event_cb,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 3]) {
+    ( &(const struct bproto*[ 2]) {
       be_nested_proto(
         4,                          /* nstack */
         0,                          /* argc */
@@ -2657,7 +2598,7 @@ be_local_closure(class_lvh_obj_event_cb,   /* name */
           be_local_const_upval(1, 3),
         }),
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str_weak(do_action),
@@ -2682,7 +2623,7 @@ be_local_closure(class_lvh_obj_event_cb,   /* name */
           be_local_const_upval(1, 7),
         }),
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 2]) {     /* constants */
         /* K0   */  be_nested_str_weak(tasmota),
@@ -2698,7 +2639,6 @@ be_local_closure(class_lvh_obj_event_cb,   /* name */
           0x80040000,  //  0004  RET	1	R0
         })
       ),
-    &be_class_lvh_obj, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[22]) {     /* constants */
@@ -2809,7 +2749,6 @@ be_local_closure(class_lvh_obj_event_cb,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_init,   /* name */
   be_nested_proto(
     13,                          /* nstack */
@@ -2818,7 +2757,7 @@ be_local_closure(class_lvh_obj_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -2846,7 +2785,6 @@ be_local_closure(class_lvh_obj_init,   /* name */
 /********************************************************************
 ** Solidified function: get_enabled
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_enabled,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -2855,7 +2793,7 @@ be_local_closure(class_lvh_obj_get_enabled,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -2884,7 +2822,6 @@ be_local_closure(class_lvh_obj_get_enabled,   /* name */
 /********************************************************************
 ** Solidified function: get_click
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_click,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -2893,7 +2830,7 @@ be_local_closure(class_lvh_obj_get_click,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(get_enabled),
@@ -2913,7 +2850,6 @@ be_local_closure(class_lvh_obj_get_click,   /* name */
 /********************************************************************
 ** Solidified function: get_label_mode
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_label_mode,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -2922,7 +2858,7 @@ be_local_closure(class_lvh_obj_get_label_mode,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_label),
@@ -2949,7 +2885,6 @@ be_local_closure(class_lvh_obj_get_label_mode,   /* name */
 /********************************************************************
 ** Solidified function: get_toggle
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_toggle,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -2958,7 +2893,7 @@ be_local_closure(class_lvh_obj_get_toggle,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -2984,7 +2919,6 @@ be_local_closure(class_lvh_obj_get_toggle,   /* name */
 /********************************************************************
 ** Solidified function: get_hidden
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_hidden,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -2993,7 +2927,7 @@ be_local_closure(class_lvh_obj_get_hidden,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -3019,7 +2953,6 @@ be_local_closure(class_lvh_obj_get_hidden,   /* name */
 /********************************************************************
 ** Solidified function: set_value_font
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_value_font,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -3028,7 +2961,7 @@ be_local_closure(class_lvh_obj_set_value_font,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(set_text_font),
@@ -3049,7 +2982,6 @@ be_local_closure(class_lvh_obj_set_value_font,   /* name */
 /********************************************************************
 ** Solidified function: get_value_font
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_value_font,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -3058,7 +2990,7 @@ be_local_closure(class_lvh_obj_get_value_font,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(get_text_font),
@@ -3078,7 +3010,6 @@ be_local_closure(class_lvh_obj_get_value_font,   /* name */
 /********************************************************************
 ** Solidified function: set_val
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_val,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -3087,7 +3018,7 @@ be_local_closure(class_lvh_obj_set_val,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(introspect),
@@ -3120,7 +3051,6 @@ be_local_closure(class_lvh_obj_set_val,   /* name */
 /********************************************************************
 ** Solidified function: set_text_color
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_text_color,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -3129,7 +3059,7 @@ be_local_closure(class_lvh_obj_set_text_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -3156,7 +3086,6 @@ be_local_closure(class_lvh_obj_set_text_color,   /* name */
 /********************************************************************
 ** Solidified function: set_action
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_action,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -3165,7 +3094,7 @@ be_local_closure(class_lvh_obj_set_action,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_action),
@@ -3187,7 +3116,6 @@ be_local_closure(class_lvh_obj_set_action,   /* name */
 /********************************************************************
 ** Solidified function: get_radius2
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_radius2,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -3196,7 +3124,7 @@ be_local_closure(class_lvh_obj_get_radius2,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_part2_selector),
@@ -3230,7 +3158,6 @@ be_local_closure(class_lvh_obj_get_radius2,   /* name */
 /********************************************************************
 ** Solidified function: set_pad_right2
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_pad_right2,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -3239,7 +3166,7 @@ be_local_closure(class_lvh_obj_set_pad_right2,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_part2_selector),
@@ -3275,7 +3202,6 @@ be_local_closure(class_lvh_obj_set_pad_right2,   /* name */
 /********************************************************************
 ** Solidified function: set_label_mode
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_label_mode,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -3284,7 +3210,7 @@ be_local_closure(class_lvh_obj_set_label_mode,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[18]) {     /* constants */
     /* K0   */  be_nested_str_weak(expand),
@@ -3361,7 +3287,6 @@ be_local_closure(class_lvh_obj_set_label_mode,   /* name */
 /********************************************************************
 ** Solidified function: setmember
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_setmember,   /* name */
   be_nested_proto(
     12,                          /* nstack */
@@ -3370,7 +3295,7 @@ be_local_closure(class_lvh_obj_setmember,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[27]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),
@@ -3577,7 +3502,6 @@ be_local_closure(class_lvh_obj_setmember,   /* name */
 /********************************************************************
 ** Solidified function: set_enabled
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_enabled,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -3586,7 +3510,7 @@ be_local_closure(class_lvh_obj_set_enabled,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -3620,7 +3544,6 @@ be_local_closure(class_lvh_obj_set_enabled,   /* name */
 /********************************************************************
 ** Solidified function: get_align
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_align,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -3629,7 +3552,7 @@ be_local_closure(class_lvh_obj_get_align,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -3688,7 +3611,6 @@ be_local_closure(class_lvh_obj_get_align,   /* name */
 /********************************************************************
 ** Solidified function: get_pad_left
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_pad_left,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -3697,7 +3619,7 @@ be_local_closure(class_lvh_obj_get_pad_left,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_part2_selector),
@@ -3731,7 +3653,6 @@ be_local_closure(class_lvh_obj_get_pad_left,   /* name */
 /********************************************************************
 ** Solidified function: set_value_ofs_x
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_value_ofs_x,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -3740,7 +3661,7 @@ be_local_closure(class_lvh_obj_set_value_ofs_x,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(check_label),
@@ -3768,7 +3689,6 @@ be_local_closure(class_lvh_obj_set_value_ofs_x,   /* name */
 /********************************************************************
 ** Solidified function: set_flex_in_new_track
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_flex_in_new_track,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -3777,7 +3697,7 @@ be_local_closure(class_lvh_obj_set_flex_in_new_track,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -3811,7 +3731,6 @@ be_local_closure(class_lvh_obj_set_flex_in_new_track,   /* name */
 /********************************************************************
 ** Solidified function: member
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_member,   /* name */
   be_nested_proto(
     11,                          /* nstack */
@@ -3820,7 +3739,7 @@ be_local_closure(class_lvh_obj_member,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[18]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),
@@ -3979,7 +3898,6 @@ be_local_closure(class_lvh_obj_member,   /* name */
 /********************************************************************
 ** Solidified function: get_text_font
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_text_font,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -3988,7 +3906,7 @@ be_local_closure(class_lvh_obj_get_text_font,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(get_text_font),
@@ -4004,7 +3922,6 @@ be_local_closure(class_lvh_obj_get_text_font,   /* name */
 /********************************************************************
 ** Solidified function: set_value_ofs_y
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_value_ofs_y,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -4013,7 +3930,7 @@ be_local_closure(class_lvh_obj_set_value_ofs_y,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(check_label),
@@ -4041,7 +3958,6 @@ be_local_closure(class_lvh_obj_set_value_ofs_y,   /* name */
 /********************************************************************
 ** Solidified function: set_radius2
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_radius2,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -4050,7 +3966,7 @@ be_local_closure(class_lvh_obj_set_radius2,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_part2_selector),
@@ -4086,7 +4002,6 @@ be_local_closure(class_lvh_obj_set_radius2,   /* name */
 /********************************************************************
 ** Solidified function: set_hidden
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_hidden,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -4095,7 +4010,7 @@ be_local_closure(class_lvh_obj_set_hidden,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -4129,7 +4044,6 @@ be_local_closure(class_lvh_obj_set_hidden,   /* name */
 /********************************************************************
 ** Solidified function: register_event_cb
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_register_event_cb,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -4138,7 +4052,7 @@ be_local_closure(class_lvh_obj_register_event_cb,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(_page),
@@ -4179,7 +4093,6 @@ be_local_closure(class_lvh_obj_register_event_cb,   /* name */
 /********************************************************************
 ** Solidified function: set_text_font
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_set_text_font,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -4188,7 +4101,7 @@ be_local_closure(class_lvh_obj_set_text_font,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(parse_font),
@@ -4220,7 +4133,6 @@ be_local_closure(class_lvh_obj_set_text_font,   /* name */
 /********************************************************************
 ** Solidified function: get_pad_bottom
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_pad_bottom,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -4229,7 +4141,7 @@ be_local_closure(class_lvh_obj_get_pad_bottom,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_part2_selector),
@@ -4263,7 +4175,6 @@ be_local_closure(class_lvh_obj_get_pad_bottom,   /* name */
 /********************************************************************
 ** Solidified function: get_pad_all
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_pad_all,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -4272,7 +4183,7 @@ be_local_closure(class_lvh_obj_get_pad_all,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(get_pad_all),
@@ -4288,7 +4199,6 @@ be_local_closure(class_lvh_obj_get_pad_all,   /* name */
 /********************************************************************
 ** Solidified function: get_val
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_get_val,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -4297,7 +4207,7 @@ be_local_closure(class_lvh_obj_get_val,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -4319,7 +4229,6 @@ be_local_closure(class_lvh_obj_get_val,   /* name */
 /********************************************************************
 ** Solidified function: post_init
 ********************************************************************/
-extern const bclass be_class_lvh_obj;
 be_local_closure(class_lvh_obj_post_init,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -4328,7 +4237,7 @@ be_local_closure(class_lvh_obj_post_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_obj, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(register_event_cb),
@@ -4434,7 +4343,6 @@ extern const bclass be_class_lvh_fixed;
 /********************************************************************
 ** Solidified function: post_init
 ********************************************************************/
-extern const bclass be_class_lvh_fixed;
 be_local_closure(class_lvh_fixed_post_init,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -4443,7 +4351,7 @@ be_local_closure(class_lvh_fixed_post_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_fixed, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str_weak(post_init),
@@ -4523,7 +4431,6 @@ extern const bclass be_class_lvh_flex;
 /********************************************************************
 ** Solidified function: post_init
 ********************************************************************/
-extern const bclass be_class_lvh_flex;
 be_local_closure(class_lvh_flex_post_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -4532,7 +4439,7 @@ be_local_closure(class_lvh_flex_post_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_flex, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(post_init),
@@ -4580,7 +4487,6 @@ extern const bclass be_class_lvh_label;
 /********************************************************************
 ** Solidified function: post_init
 ********************************************************************/
-extern const bclass be_class_lvh_label;
 be_local_closure(class_lvh_label_post_init,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -4589,7 +4495,7 @@ be_local_closure(class_lvh_label_post_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_label, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_label),
@@ -4633,7 +4539,6 @@ extern const bclass be_class_lvh_arc;
 /********************************************************************
 ** Solidified function: get_type
 ********************************************************************/
-extern const bclass be_class_lvh_arc;
 be_local_closure(class_lvh_arc_get_type,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -4642,7 +4547,7 @@ be_local_closure(class_lvh_arc_get_type,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_arc, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -4664,7 +4569,6 @@ be_local_closure(class_lvh_arc_get_type,   /* name */
 /********************************************************************
 ** Solidified function: refresh_label_to_angle
 ********************************************************************/
-extern const bclass be_class_lvh_arc;
 be_local_closure(class_lvh_arc_refresh_label_to_angle,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -4673,7 +4577,7 @@ be_local_closure(class_lvh_arc_refresh_label_to_angle,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_arc, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_label_angle),
@@ -4707,7 +4611,6 @@ be_local_closure(class_lvh_arc_refresh_label_to_angle,   /* name */
 /********************************************************************
 ** Solidified function: set_min
 ********************************************************************/
-extern const bclass be_class_lvh_arc;
 be_local_closure(class_lvh_arc_set_min,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -4716,7 +4619,7 @@ be_local_closure(class_lvh_arc_set_min,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_arc, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -4747,7 +4650,6 @@ be_local_closure(class_lvh_arc_set_min,   /* name */
 /********************************************************************
 ** Solidified function: get_line_width1
 ********************************************************************/
-extern const bclass be_class_lvh_arc;
 be_local_closure(class_lvh_arc_get_line_width1,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -4756,7 +4658,7 @@ be_local_closure(class_lvh_arc_get_line_width1,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_arc, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -4786,7 +4688,6 @@ be_local_closure(class_lvh_arc_get_line_width1,   /* name */
 /********************************************************************
 ** Solidified function: set_type
 ********************************************************************/
-extern const bclass be_class_lvh_arc;
 be_local_closure(class_lvh_arc_set_type,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -4795,7 +4696,7 @@ be_local_closure(class_lvh_arc_set_type,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_arc, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -4843,7 +4744,6 @@ be_local_closure(class_lvh_arc_set_type,   /* name */
 /********************************************************************
 ** Solidified function: set_line_width1
 ********************************************************************/
-extern const bclass be_class_lvh_arc;
 be_local_closure(class_lvh_arc_set_line_width1,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -4852,7 +4752,7 @@ be_local_closure(class_lvh_arc_set_line_width1,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_arc, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -4885,7 +4785,6 @@ be_local_closure(class_lvh_arc_set_line_width1,   /* name */
 /********************************************************************
 ** Solidified function: get_min
 ********************************************************************/
-extern const bclass be_class_lvh_arc;
 be_local_closure(class_lvh_arc_get_min,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -4894,7 +4793,7 @@ be_local_closure(class_lvh_arc_get_min,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_arc, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -4916,7 +4815,6 @@ be_local_closure(class_lvh_arc_get_min,   /* name */
 /********************************************************************
 ** Solidified function: set_line_width
 ********************************************************************/
-extern const bclass be_class_lvh_arc;
 be_local_closure(class_lvh_arc_set_line_width,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -4925,7 +4823,7 @@ be_local_closure(class_lvh_arc_set_line_width,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_arc, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -4951,7 +4849,6 @@ be_local_closure(class_lvh_arc_set_line_width,   /* name */
 /********************************************************************
 ** Solidified function: get_max
 ********************************************************************/
-extern const bclass be_class_lvh_arc;
 be_local_closure(class_lvh_arc_get_max,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -4960,7 +4857,7 @@ be_local_closure(class_lvh_arc_get_max,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_arc, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -4982,7 +4879,6 @@ be_local_closure(class_lvh_arc_get_max,   /* name */
 /********************************************************************
 ** Solidified function: set_label_to_angle
 ********************************************************************/
-extern const bclass be_class_lvh_arc;
 be_local_closure(class_lvh_arc_set_label_to_angle,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -4991,7 +4887,7 @@ be_local_closure(class_lvh_arc_set_label_to_angle,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_arc, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_label_angle),
@@ -5016,7 +4912,6 @@ be_local_closure(class_lvh_arc_set_label_to_angle,   /* name */
 /********************************************************************
 ** Solidified function: set_val
 ********************************************************************/
-extern const bclass be_class_lvh_arc;
 be_local_closure(class_lvh_arc_set_val,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -5025,7 +4920,7 @@ be_local_closure(class_lvh_arc_set_val,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_arc, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(set_val),
@@ -5052,7 +4947,6 @@ be_local_closure(class_lvh_arc_set_val,   /* name */
 /********************************************************************
 ** Solidified function: post_config
 ********************************************************************/
-extern const bclass be_class_lvh_arc;
 be_local_closure(class_lvh_arc_post_config,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -5061,7 +4955,7 @@ be_local_closure(class_lvh_arc_post_config,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_arc, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(post_config),
@@ -5087,7 +4981,6 @@ be_local_closure(class_lvh_arc_post_config,   /* name */
 /********************************************************************
 ** Solidified function: get_line_width
 ********************************************************************/
-extern const bclass be_class_lvh_arc;
 be_local_closure(class_lvh_arc_get_line_width,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -5096,7 +4989,7 @@ be_local_closure(class_lvh_arc_get_line_width,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_arc, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -5119,7 +5012,6 @@ be_local_closure(class_lvh_arc_get_line_width,   /* name */
 /********************************************************************
 ** Solidified function: set_max
 ********************************************************************/
-extern const bclass be_class_lvh_arc;
 be_local_closure(class_lvh_arc_set_max,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -5128,7 +5020,7 @@ be_local_closure(class_lvh_arc_set_max,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_arc, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -5159,7 +5051,6 @@ be_local_closure(class_lvh_arc_set_max,   /* name */
 /********************************************************************
 ** Solidified function: set_text
 ********************************************************************/
-extern const bclass be_class_lvh_arc;
 be_local_closure(class_lvh_arc_set_text,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -5168,7 +5059,7 @@ be_local_closure(class_lvh_arc_set_text,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_arc, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(set_text),
@@ -5228,7 +5119,6 @@ extern const bclass be_class_lvh_switch;
 /********************************************************************
 ** Solidified function: set_val
 ********************************************************************/
-extern const bclass be_class_lvh_switch;
 be_local_closure(class_lvh_switch_set_val,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -5237,7 +5127,7 @@ be_local_closure(class_lvh_switch_set_val,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_switch, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_val),
@@ -5260,7 +5150,6 @@ be_local_closure(class_lvh_switch_set_val,   /* name */
 /********************************************************************
 ** Solidified function: get_val
 ********************************************************************/
-extern const bclass be_class_lvh_switch;
 be_local_closure(class_lvh_switch_get_val,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -5269,7 +5158,7 @@ be_local_closure(class_lvh_switch_get_val,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_switch, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(get_toggle),
@@ -5308,7 +5197,6 @@ extern const bclass be_class_lvh_spinner;
 /********************************************************************
 ** Solidified function: set_angle
 ********************************************************************/
-extern const bclass be_class_lvh_spinner;
 be_local_closure(class_lvh_spinner_set_angle,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -5317,7 +5205,7 @@ be_local_closure(class_lvh_spinner_set_angle,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_spinner, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(set_angle),
@@ -5333,7 +5221,6 @@ be_local_closure(class_lvh_spinner_set_angle,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_lvh_spinner;
 be_local_closure(class_lvh_spinner_init,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -5342,7 +5229,7 @@ be_local_closure(class_lvh_spinner_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_spinner, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(_page),
@@ -5389,7 +5276,6 @@ be_local_closure(class_lvh_spinner_init,   /* name */
 /********************************************************************
 ** Solidified function: get_speed
 ********************************************************************/
-extern const bclass be_class_lvh_spinner;
 be_local_closure(class_lvh_spinner_get_speed,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -5398,7 +5284,7 @@ be_local_closure(class_lvh_spinner_get_speed,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_spinner, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(get_speed),
@@ -5414,7 +5300,6 @@ be_local_closure(class_lvh_spinner_get_speed,   /* name */
 /********************************************************************
 ** Solidified function: get_angle
 ********************************************************************/
-extern const bclass be_class_lvh_spinner;
 be_local_closure(class_lvh_spinner_get_angle,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -5423,7 +5308,7 @@ be_local_closure(class_lvh_spinner_get_angle,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_spinner, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(get_angle),
@@ -5439,7 +5324,6 @@ be_local_closure(class_lvh_spinner_get_angle,   /* name */
 /********************************************************************
 ** Solidified function: set_speed
 ********************************************************************/
-extern const bclass be_class_lvh_spinner;
 be_local_closure(class_lvh_spinner_set_speed,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -5448,7 +5332,7 @@ be_local_closure(class_lvh_spinner_set_speed,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_spinner, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(set_speed),
@@ -5487,7 +5371,6 @@ extern const bclass be_class_lvh_img;
 /********************************************************************
 ** Solidified function: set_src
 ********************************************************************/
-extern const bclass be_class_lvh_img;
 be_local_closure(class_lvh_img_set_src,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -5496,7 +5379,7 @@ be_local_closure(class_lvh_img_set_src,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_img, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota_logo),
@@ -5527,7 +5410,6 @@ be_local_closure(class_lvh_img_set_src,   /* name */
 /********************************************************************
 ** Solidified function: get_auto_size
 ********************************************************************/
-extern const bclass be_class_lvh_img;
 be_local_closure(class_lvh_img_get_auto_size,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -5536,7 +5418,7 @@ be_local_closure(class_lvh_img_get_auto_size,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_img, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(get_auto_size),
@@ -5552,7 +5434,6 @@ be_local_closure(class_lvh_img_get_auto_size,   /* name */
 /********************************************************************
 ** Solidified function: set_auto_size
 ********************************************************************/
-extern const bclass be_class_lvh_img;
 be_local_closure(class_lvh_img_set_auto_size,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -5561,7 +5442,7 @@ be_local_closure(class_lvh_img_set_auto_size,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_img, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -5588,7 +5469,6 @@ be_local_closure(class_lvh_img_set_auto_size,   /* name */
 /********************************************************************
 ** Solidified function: set_angle
 ********************************************************************/
-extern const bclass be_class_lvh_img;
 be_local_closure(class_lvh_img_set_angle,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -5597,7 +5477,7 @@ be_local_closure(class_lvh_img_set_angle,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_img, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -5624,7 +5504,6 @@ be_local_closure(class_lvh_img_set_angle,   /* name */
 /********************************************************************
 ** Solidified function: get_angle
 ********************************************************************/
-extern const bclass be_class_lvh_img;
 be_local_closure(class_lvh_img_get_angle,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -5633,7 +5512,7 @@ be_local_closure(class_lvh_img_get_angle,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_img, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -5655,7 +5534,6 @@ be_local_closure(class_lvh_img_get_angle,   /* name */
 /********************************************************************
 ** Solidified function: set_raw
 ********************************************************************/
-extern const bclass be_class_lvh_img;
 be_local_closure(class_lvh_img_set_raw,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -5664,7 +5542,7 @@ be_local_closure(class_lvh_img_set_raw,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_img, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str_weak(_raw),
@@ -5742,7 +5620,6 @@ extern const bclass be_class_lvh_qrcode;
 /********************************************************************
 ** Solidified function: get_qr_dark_color
 ********************************************************************/
-extern const bclass be_class_lvh_qrcode;
 be_local_closure(class_lvh_qrcode_get_qr_dark_color,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -5751,7 +5628,7 @@ be_local_closure(class_lvh_qrcode_get_qr_dark_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_qrcode, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(get_qr_dark_color),
@@ -5767,7 +5644,6 @@ be_local_closure(class_lvh_qrcode_get_qr_dark_color,   /* name */
 /********************************************************************
 ** Solidified function: set_qr_text
 ********************************************************************/
-extern const bclass be_class_lvh_qrcode;
 be_local_closure(class_lvh_qrcode_set_qr_text,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -5776,7 +5652,7 @@ be_local_closure(class_lvh_qrcode_set_qr_text,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_qrcode, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(qr_text),
@@ -5801,7 +5677,6 @@ be_local_closure(class_lvh_qrcode_set_qr_text,   /* name */
 /********************************************************************
 ** Solidified function: set_light_color
 ********************************************************************/
-extern const bclass be_class_lvh_qrcode;
 be_local_closure(class_lvh_qrcode_set_light_color,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -5810,7 +5685,7 @@ be_local_closure(class_lvh_qrcode_set_light_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_qrcode, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -5839,7 +5714,6 @@ be_local_closure(class_lvh_qrcode_set_light_color,   /* name */
 /********************************************************************
 ** Solidified function: get_dark_color
 ********************************************************************/
-extern const bclass be_class_lvh_qrcode;
 be_local_closure(class_lvh_qrcode_get_dark_color,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -5848,7 +5722,7 @@ be_local_closure(class_lvh_qrcode_get_dark_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_qrcode, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(get_dark_color),
@@ -5864,7 +5738,6 @@ be_local_closure(class_lvh_qrcode_get_dark_color,   /* name */
 /********************************************************************
 ** Solidified function: set_qr_light_color
 ********************************************************************/
-extern const bclass be_class_lvh_qrcode;
 be_local_closure(class_lvh_qrcode_set_qr_light_color,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -5873,7 +5746,7 @@ be_local_closure(class_lvh_qrcode_set_qr_light_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_qrcode, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -5902,7 +5775,6 @@ be_local_closure(class_lvh_qrcode_set_qr_light_color,   /* name */
 /********************************************************************
 ** Solidified function: get_qr_light_color
 ********************************************************************/
-extern const bclass be_class_lvh_qrcode;
 be_local_closure(class_lvh_qrcode_get_qr_light_color,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -5911,7 +5783,7 @@ be_local_closure(class_lvh_qrcode_get_qr_light_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_qrcode, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(get_qr_light_color),
@@ -5927,7 +5799,6 @@ be_local_closure(class_lvh_qrcode_get_qr_light_color,   /* name */
 /********************************************************************
 ** Solidified function: set_qr_size
 ********************************************************************/
-extern const bclass be_class_lvh_qrcode;
 be_local_closure(class_lvh_qrcode_set_qr_size,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -5936,7 +5807,7 @@ be_local_closure(class_lvh_qrcode_set_qr_size,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_qrcode, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -5962,7 +5833,6 @@ be_local_closure(class_lvh_qrcode_set_qr_size,   /* name */
 /********************************************************************
 ** Solidified function: get_light_color
 ********************************************************************/
-extern const bclass be_class_lvh_qrcode;
 be_local_closure(class_lvh_qrcode_get_light_color,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -5971,7 +5841,7 @@ be_local_closure(class_lvh_qrcode_get_light_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_qrcode, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(get_light_color),
@@ -5987,7 +5857,6 @@ be_local_closure(class_lvh_qrcode_get_light_color,   /* name */
 /********************************************************************
 ** Solidified function: set_size
 ********************************************************************/
-extern const bclass be_class_lvh_qrcode;
 be_local_closure(class_lvh_qrcode_set_size,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -5996,7 +5865,7 @@ be_local_closure(class_lvh_qrcode_set_size,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_qrcode, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -6022,7 +5891,6 @@ be_local_closure(class_lvh_qrcode_set_size,   /* name */
 /********************************************************************
 ** Solidified function: set_qr_dark_color
 ********************************************************************/
-extern const bclass be_class_lvh_qrcode;
 be_local_closure(class_lvh_qrcode_set_qr_dark_color,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -6031,7 +5899,7 @@ be_local_closure(class_lvh_qrcode_set_qr_dark_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_qrcode, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -6060,7 +5928,6 @@ be_local_closure(class_lvh_qrcode_set_qr_dark_color,   /* name */
 /********************************************************************
 ** Solidified function: get_qr_text
 ********************************************************************/
-extern const bclass be_class_lvh_qrcode;
 be_local_closure(class_lvh_qrcode_get_qr_text,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -6069,7 +5936,7 @@ be_local_closure(class_lvh_qrcode_get_qr_text,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_qrcode, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(get_qr_text),
@@ -6085,7 +5952,6 @@ be_local_closure(class_lvh_qrcode_get_qr_text,   /* name */
 /********************************************************************
 ** Solidified function: set_dark_color
 ********************************************************************/
-extern const bclass be_class_lvh_qrcode;
 be_local_closure(class_lvh_qrcode_set_dark_color,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -6094,7 +5960,7 @@ be_local_closure(class_lvh_qrcode_set_dark_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_qrcode, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -6123,7 +5989,6 @@ be_local_closure(class_lvh_qrcode_set_dark_color,   /* name */
 /********************************************************************
 ** Solidified function: get_size
 ********************************************************************/
-extern const bclass be_class_lvh_qrcode;
 be_local_closure(class_lvh_qrcode_get_size,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -6132,7 +5997,7 @@ be_local_closure(class_lvh_qrcode_get_size,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_qrcode, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(get_size),
@@ -6148,7 +6013,6 @@ be_local_closure(class_lvh_qrcode_get_size,   /* name */
 /********************************************************************
 ** Solidified function: post_config
 ********************************************************************/
-extern const bclass be_class_lvh_qrcode;
 be_local_closure(class_lvh_qrcode_post_config,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -6157,7 +6021,7 @@ be_local_closure(class_lvh_qrcode_post_config,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_qrcode, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(post_config),
@@ -6183,7 +6047,6 @@ be_local_closure(class_lvh_qrcode_post_config,   /* name */
 /********************************************************************
 ** Solidified function: _update
 ********************************************************************/
-extern const bclass be_class_lvh_qrcode;
 be_local_closure(class_lvh_qrcode__update,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -6192,7 +6055,7 @@ be_local_closure(class_lvh_qrcode__update,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_qrcode, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(qr_text),
@@ -6223,7 +6086,6 @@ be_local_closure(class_lvh_qrcode__update,   /* name */
 /********************************************************************
 ** Solidified function: get_qr_size
 ********************************************************************/
-extern const bclass be_class_lvh_qrcode;
 be_local_closure(class_lvh_qrcode_get_qr_size,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -6232,7 +6094,7 @@ be_local_closure(class_lvh_qrcode_get_qr_size,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_qrcode, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(get_qr_size),
@@ -6281,7 +6143,6 @@ extern const bclass be_class_lvh_slider;
 /********************************************************************
 ** Solidified function: set_max
 ********************************************************************/
-extern const bclass be_class_lvh_slider;
 be_local_closure(class_lvh_slider_set_max,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -6290,7 +6151,7 @@ be_local_closure(class_lvh_slider_set_max,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_slider, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -6318,7 +6179,6 @@ be_local_closure(class_lvh_slider_set_max,   /* name */
 /********************************************************************
 ** Solidified function: get_min
 ********************************************************************/
-extern const bclass be_class_lvh_slider;
 be_local_closure(class_lvh_slider_get_min,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -6327,7 +6187,7 @@ be_local_closure(class_lvh_slider_get_min,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_slider, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -6349,7 +6209,6 @@ be_local_closure(class_lvh_slider_get_min,   /* name */
 /********************************************************************
 ** Solidified function: set_val
 ********************************************************************/
-extern const bclass be_class_lvh_slider;
 be_local_closure(class_lvh_slider_set_val,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -6358,7 +6217,7 @@ be_local_closure(class_lvh_slider_set_val,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_slider, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_val),
@@ -6385,7 +6244,6 @@ be_local_closure(class_lvh_slider_set_val,   /* name */
 /********************************************************************
 ** Solidified function: get_max
 ********************************************************************/
-extern const bclass be_class_lvh_slider;
 be_local_closure(class_lvh_slider_get_max,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -6394,7 +6252,7 @@ be_local_closure(class_lvh_slider_get_max,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_slider, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -6416,7 +6274,6 @@ be_local_closure(class_lvh_slider_get_max,   /* name */
 /********************************************************************
 ** Solidified function: set_min
 ********************************************************************/
-extern const bclass be_class_lvh_slider;
 be_local_closure(class_lvh_slider_set_min,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -6425,7 +6282,7 @@ be_local_closure(class_lvh_slider_set_min,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_slider, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -6474,7 +6331,6 @@ extern const bclass be_class_lvh_roller;
 /********************************************************************
 ** Solidified function: set_options
 ********************************************************************/
-extern const bclass be_class_lvh_roller;
 be_local_closure(class_lvh_roller_set_options,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -6483,7 +6339,7 @@ be_local_closure(class_lvh_roller_set_options,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_roller, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -6510,7 +6366,6 @@ be_local_closure(class_lvh_roller_set_options,   /* name */
 /********************************************************************
 ** Solidified function: get_text
 ********************************************************************/
-extern const bclass be_class_lvh_roller;
 be_local_closure(class_lvh_roller_get_text,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -6519,7 +6374,7 @@ be_local_closure(class_lvh_roller_get_text,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_roller, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(resize),
@@ -6559,7 +6414,6 @@ be_local_closure(class_lvh_roller_get_text,   /* name */
 /********************************************************************
 ** Solidified function: get_options
 ********************************************************************/
-extern const bclass be_class_lvh_roller;
 be_local_closure(class_lvh_roller_get_options,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -6568,7 +6422,7 @@ be_local_closure(class_lvh_roller_get_options,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_roller, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -6590,7 +6444,6 @@ be_local_closure(class_lvh_roller_get_options,   /* name */
 /********************************************************************
 ** Solidified function: set_val
 ********************************************************************/
-extern const bclass be_class_lvh_roller;
 be_local_closure(class_lvh_roller_set_val,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -6599,7 +6452,7 @@ be_local_closure(class_lvh_roller_set_val,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_roller, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_val),
@@ -6626,7 +6479,6 @@ be_local_closure(class_lvh_roller_set_val,   /* name */
 /********************************************************************
 ** Solidified function: set_text
 ********************************************************************/
-extern const bclass be_class_lvh_roller;
 be_local_closure(class_lvh_roller_set_text,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -6635,7 +6487,7 @@ be_local_closure(class_lvh_roller_set_text,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_roller, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(attribute_error),
@@ -6655,7 +6507,6 @@ be_local_closure(class_lvh_roller_set_text,   /* name */
 /********************************************************************
 ** Solidified function: get_val
 ********************************************************************/
-extern const bclass be_class_lvh_roller;
 be_local_closure(class_lvh_roller_get_val,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -6664,7 +6515,7 @@ be_local_closure(class_lvh_roller_get_val,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_roller, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -6708,7 +6559,6 @@ extern const bclass be_class_lvh_led;
 /********************************************************************
 ** Solidified function: set_val
 ********************************************************************/
-extern const bclass be_class_lvh_led;
 be_local_closure(class_lvh_led_set_val,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -6717,7 +6567,7 @@ be_local_closure(class_lvh_led_set_val,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_led, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_val),
@@ -6742,7 +6592,6 @@ be_local_closure(class_lvh_led_set_val,   /* name */
 /********************************************************************
 ** Solidified function: get_color
 ********************************************************************/
-extern const bclass be_class_lvh_led;
 be_local_closure(class_lvh_led_get_color,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -6751,7 +6600,7 @@ be_local_closure(class_lvh_led_get_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_led, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(get_color),
@@ -6767,7 +6616,6 @@ be_local_closure(class_lvh_led_get_color,   /* name */
 /********************************************************************
 ** Solidified function: get_val
 ********************************************************************/
-extern const bclass be_class_lvh_led;
 be_local_closure(class_lvh_led_get_val,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -6776,7 +6624,7 @@ be_local_closure(class_lvh_led_get_val,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_led, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -6798,7 +6646,6 @@ be_local_closure(class_lvh_led_get_val,   /* name */
 /********************************************************************
 ** Solidified function: set_color
 ********************************************************************/
-extern const bclass be_class_lvh_led;
 be_local_closure(class_lvh_led_set_color,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -6807,7 +6654,7 @@ be_local_closure(class_lvh_led_set_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_led, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(parse_color),
@@ -6854,7 +6701,6 @@ extern const bclass be_class_lvh_dropdown;
 /********************************************************************
 ** Solidified function: get_val
 ********************************************************************/
-extern const bclass be_class_lvh_dropdown;
 be_local_closure(class_lvh_dropdown_get_val,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -6863,7 +6709,7 @@ be_local_closure(class_lvh_dropdown_get_val,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_dropdown, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -6885,7 +6731,6 @@ be_local_closure(class_lvh_dropdown_get_val,   /* name */
 /********************************************************************
 ** Solidified function: set_text
 ********************************************************************/
-extern const bclass be_class_lvh_dropdown;
 be_local_closure(class_lvh_dropdown_set_text,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -6894,7 +6739,7 @@ be_local_closure(class_lvh_dropdown_set_text,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_dropdown, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -6917,7 +6762,6 @@ be_local_closure(class_lvh_dropdown_set_text,   /* name */
 /********************************************************************
 ** Solidified function: set_direction
 ********************************************************************/
-extern const bclass be_class_lvh_dropdown;
 be_local_closure(class_lvh_dropdown_set_direction,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -6926,7 +6770,7 @@ be_local_closure(class_lvh_dropdown_set_direction,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_dropdown, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -6996,7 +6840,6 @@ be_local_closure(class_lvh_dropdown_set_direction,   /* name */
 /********************************************************************
 ** Solidified function: get_direction
 ********************************************************************/
-extern const bclass be_class_lvh_dropdown;
 be_local_closure(class_lvh_dropdown_get_direction,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -7005,7 +6848,7 @@ be_local_closure(class_lvh_dropdown_get_direction,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_dropdown, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -7044,7 +6887,6 @@ be_local_closure(class_lvh_dropdown_get_direction,   /* name */
 /********************************************************************
 ** Solidified function: set_show_selected
 ********************************************************************/
-extern const bclass be_class_lvh_dropdown;
 be_local_closure(class_lvh_dropdown_set_show_selected,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -7053,7 +6895,7 @@ be_local_closure(class_lvh_dropdown_set_show_selected,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_dropdown, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -7077,7 +6919,6 @@ be_local_closure(class_lvh_dropdown_set_show_selected,   /* name */
 /********************************************************************
 ** Solidified function: set_val
 ********************************************************************/
-extern const bclass be_class_lvh_dropdown;
 be_local_closure(class_lvh_dropdown_set_val,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -7086,7 +6927,7 @@ be_local_closure(class_lvh_dropdown_set_val,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_dropdown, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_val),
@@ -7111,7 +6952,6 @@ be_local_closure(class_lvh_dropdown_set_val,   /* name */
 /********************************************************************
 ** Solidified function: get_text
 ********************************************************************/
-extern const bclass be_class_lvh_dropdown;
 be_local_closure(class_lvh_dropdown_get_text,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -7120,7 +6960,7 @@ be_local_closure(class_lvh_dropdown_get_text,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_dropdown, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -7170,7 +7010,6 @@ be_local_closure(class_lvh_dropdown_get_text,   /* name */
 /********************************************************************
 ** Solidified function: get_show_selected
 ********************************************************************/
-extern const bclass be_class_lvh_dropdown;
 be_local_closure(class_lvh_dropdown_get_show_selected,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -7179,7 +7018,7 @@ be_local_closure(class_lvh_dropdown_get_show_selected,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_dropdown, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -7236,7 +7075,6 @@ extern const bclass be_class_lvh_dropdown_list;
 /********************************************************************
 ** Solidified function: post_init
 ********************************************************************/
-extern const bclass be_class_lvh_dropdown_list;
 be_local_closure(class_lvh_dropdown_list_post_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -7245,7 +7083,7 @@ be_local_closure(class_lvh_dropdown_list_post_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_dropdown_list, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -7311,7 +7149,6 @@ extern const bclass be_class_lvh_bar;
 /********************************************************************
 ** Solidified function: get_max
 ********************************************************************/
-extern const bclass be_class_lvh_bar;
 be_local_closure(class_lvh_bar_get_max,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -7320,7 +7157,7 @@ be_local_closure(class_lvh_bar_get_max,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_bar, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -7342,7 +7179,6 @@ be_local_closure(class_lvh_bar_get_max,   /* name */
 /********************************************************************
 ** Solidified function: set_max
 ********************************************************************/
-extern const bclass be_class_lvh_bar;
 be_local_closure(class_lvh_bar_set_max,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -7351,7 +7187,7 @@ be_local_closure(class_lvh_bar_set_max,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_bar, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -7380,7 +7216,6 @@ be_local_closure(class_lvh_bar_set_max,   /* name */
 /********************************************************************
 ** Solidified function: post_init
 ********************************************************************/
-extern const bclass be_class_lvh_bar;
 be_local_closure(class_lvh_bar_post_init,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -7389,7 +7224,7 @@ be_local_closure(class_lvh_bar_post_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_bar, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(post_init),
@@ -7440,7 +7275,6 @@ be_local_closure(class_lvh_bar_post_init,   /* name */
 /********************************************************************
 ** Solidified function: get_min
 ********************************************************************/
-extern const bclass be_class_lvh_bar;
 be_local_closure(class_lvh_bar_get_min,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -7449,7 +7283,7 @@ be_local_closure(class_lvh_bar_get_min,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_bar, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -7471,7 +7305,6 @@ be_local_closure(class_lvh_bar_get_min,   /* name */
 /********************************************************************
 ** Solidified function: set_min
 ********************************************************************/
-extern const bclass be_class_lvh_bar;
 be_local_closure(class_lvh_bar_set_min,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -7480,7 +7313,7 @@ be_local_closure(class_lvh_bar_set_min,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_bar, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -7509,7 +7342,6 @@ be_local_closure(class_lvh_bar_set_min,   /* name */
 /********************************************************************
 ** Solidified function: set_val
 ********************************************************************/
-extern const bclass be_class_lvh_bar;
 be_local_closure(class_lvh_bar_set_val,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -7518,7 +7350,7 @@ be_local_closure(class_lvh_bar_set_val,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_bar, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_val),
@@ -7569,7 +7401,6 @@ extern const bclass be_class_lvh_line;
 /********************************************************************
 ** Solidified function: set_points
 ********************************************************************/
-extern const bclass be_class_lvh_line;
 be_local_closure(class_lvh_line_set_points,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -7578,7 +7409,7 @@ be_local_closure(class_lvh_line_set_points,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_line, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_const_int(2),
@@ -7687,7 +7518,6 @@ extern const bclass be_class_lvh_scale;
 /********************************************************************
 ** Solidified function: set_text_src
 ********************************************************************/
-extern const bclass be_class_lvh_scale;
 be_local_closure(class_lvh_scale_set_text_src,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -7696,7 +7526,7 @@ be_local_closure(class_lvh_scale_set_text_src,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_scale, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -7756,7 +7586,6 @@ be_local_closure(class_lvh_scale_set_text_src,   /* name */
 /********************************************************************
 ** Solidified function: get_max
 ********************************************************************/
-extern const bclass be_class_lvh_scale;
 be_local_closure(class_lvh_scale_get_max,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -7765,7 +7594,7 @@ be_local_closure(class_lvh_scale_get_max,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_scale, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -7787,7 +7616,6 @@ be_local_closure(class_lvh_scale_get_max,   /* name */
 /********************************************************************
 ** Solidified function: set_min
 ********************************************************************/
-extern const bclass be_class_lvh_scale;
 be_local_closure(class_lvh_scale_set_min,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -7796,7 +7624,7 @@ be_local_closure(class_lvh_scale_set_min,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_scale, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -7825,7 +7653,6 @@ be_local_closure(class_lvh_scale_set_min,   /* name */
 /********************************************************************
 ** Solidified function: get_text_src
 ********************************************************************/
-extern const bclass be_class_lvh_scale;
 be_local_closure(class_lvh_scale_get_text_src,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -7834,7 +7661,7 @@ be_local_closure(class_lvh_scale_get_text_src,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_scale, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_options),
@@ -7853,7 +7680,6 @@ be_local_closure(class_lvh_scale_get_text_src,   /* name */
 /********************************************************************
 ** Solidified function: set_max
 ********************************************************************/
-extern const bclass be_class_lvh_scale;
 be_local_closure(class_lvh_scale_set_max,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -7862,7 +7688,7 @@ be_local_closure(class_lvh_scale_set_max,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_scale, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -7891,7 +7717,6 @@ be_local_closure(class_lvh_scale_set_max,   /* name */
 /********************************************************************
 ** Solidified function: get_min
 ********************************************************************/
-extern const bclass be_class_lvh_scale;
 be_local_closure(class_lvh_scale_get_min,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -7900,7 +7725,7 @@ be_local_closure(class_lvh_scale_get_min,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_scale, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -7946,7 +7771,6 @@ extern const bclass be_class_lvh_scale_section;
 /********************************************************************
 ** Solidified function: setmember
 ********************************************************************/
-extern const bclass be_class_lvh_scale_section;
 be_local_closure(class_lvh_scale_section_setmember,   /* name */
   be_nested_proto(
     12,                          /* nstack */
@@ -7955,7 +7779,7 @@ be_local_closure(class_lvh_scale_section_setmember,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_scale_section, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[26]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),
@@ -8138,7 +7962,6 @@ be_local_closure(class_lvh_scale_section_setmember,   /* name */
 /********************************************************************
 ** Solidified function: post_init
 ********************************************************************/
-extern const bclass be_class_lvh_scale_section;
 be_local_closure(class_lvh_scale_section_post_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -8147,7 +7970,7 @@ be_local_closure(class_lvh_scale_section_post_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_scale_section, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[19]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -8233,7 +8056,6 @@ be_local_closure(class_lvh_scale_section_post_init,   /* name */
 /********************************************************************
 ** Solidified function: set_min
 ********************************************************************/
-extern const bclass be_class_lvh_scale_section;
 be_local_closure(class_lvh_scale_section_set_min,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -8242,7 +8064,7 @@ be_local_closure(class_lvh_scale_section_set_min,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_scale_section, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_max),
@@ -8272,7 +8094,6 @@ be_local_closure(class_lvh_scale_section_set_min,   /* name */
 /********************************************************************
 ** Solidified function: set_max
 ********************************************************************/
-extern const bclass be_class_lvh_scale_section;
 be_local_closure(class_lvh_scale_section_set_max,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -8281,7 +8102,7 @@ be_local_closure(class_lvh_scale_section_set_max,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_scale_section, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_min),
@@ -8311,7 +8132,6 @@ be_local_closure(class_lvh_scale_section_set_max,   /* name */
 /********************************************************************
 ** Solidified function: set_range
 ********************************************************************/
-extern const bclass be_class_lvh_scale_section;
 be_local_closure(class_lvh_scale_section_set_range,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -8320,7 +8140,7 @@ be_local_closure(class_lvh_scale_section_set_range,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_scale_section, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_min),
@@ -8348,7 +8168,6 @@ be_local_closure(class_lvh_scale_section_set_range,   /* name */
 /********************************************************************
 ** Solidified function: delete
 ********************************************************************/
-extern const bclass be_class_lvh_scale_section;
 be_local_closure(class_lvh_scale_section_delete,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -8357,7 +8176,7 @@ be_local_closure(class_lvh_scale_section_delete,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_scale_section, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_style),
@@ -8420,7 +8239,6 @@ extern const bclass be_class_lvh_scale_line;
 /********************************************************************
 ** Solidified function: set_val
 ********************************************************************/
-extern const bclass be_class_lvh_scale_line;
 be_local_closure(class_lvh_scale_line_set_val,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -8429,7 +8247,7 @@ be_local_closure(class_lvh_scale_line_set_val,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_scale_line, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
     /* K0   */  be_nested_str_weak(set_val),
@@ -8495,7 +8313,6 @@ be_local_closure(class_lvh_scale_line_set_val,   /* name */
 /********************************************************************
 ** Solidified function: post_init
 ********************************************************************/
-extern const bclass be_class_lvh_scale_line;
 be_local_closure(class_lvh_scale_line_post_init,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -8504,7 +8321,7 @@ be_local_closure(class_lvh_scale_line_post_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_scale_line, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str_weak(_parent_lvh),
@@ -8563,7 +8380,6 @@ be_local_closure(class_lvh_scale_line_post_init,   /* name */
 /********************************************************************
 ** Solidified function: get_needle_length
 ********************************************************************/
-extern const bclass be_class_lvh_scale_line;
 be_local_closure(class_lvh_scale_line_get_needle_length,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -8572,7 +8388,7 @@ be_local_closure(class_lvh_scale_line_get_needle_length,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_scale_line, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_needle_length),
@@ -8591,7 +8407,6 @@ be_local_closure(class_lvh_scale_line_get_needle_length,   /* name */
 /********************************************************************
 ** Solidified function: set_needle_length
 ********************************************************************/
-extern const bclass be_class_lvh_scale_line;
 be_local_closure(class_lvh_scale_line_set_needle_length,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -8600,7 +8415,7 @@ be_local_closure(class_lvh_scale_line_set_needle_length,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_scale_line, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_needle_length),
@@ -8651,7 +8466,6 @@ extern const bclass be_class_lvh_spangroup;
 /********************************************************************
 ** Solidified function: post_init
 ********************************************************************/
-extern const bclass be_class_lvh_spangroup;
 be_local_closure(class_lvh_spangroup_post_init,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -8660,7 +8474,7 @@ be_local_closure(class_lvh_spangroup_post_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_spangroup, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -8696,7 +8510,6 @@ be_local_closure(class_lvh_spangroup_post_init,   /* name */
 /********************************************************************
 ** Solidified function: refr_mode
 ********************************************************************/
-extern const bclass be_class_lvh_spangroup;
 be_local_closure(class_lvh_spangroup_refr_mode,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -8705,7 +8518,7 @@ be_local_closure(class_lvh_spangroup_refr_mode,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_spangroup, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -8745,7 +8558,6 @@ extern const bclass be_class_lvh_span;
 /********************************************************************
 ** Solidified function: setmember
 ********************************************************************/
-extern const bclass be_class_lvh_span;
 be_local_closure(class_lvh_span_setmember,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -8754,7 +8566,7 @@ be_local_closure(class_lvh_span_setmember,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_span, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[21]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),
@@ -8883,7 +8695,6 @@ be_local_closure(class_lvh_span_setmember,   /* name */
 /********************************************************************
 ** Solidified function: post_init
 ********************************************************************/
-extern const bclass be_class_lvh_span;
 be_local_closure(class_lvh_span_post_init,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -8892,7 +8703,7 @@ be_local_closure(class_lvh_span_post_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_span, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -8935,7 +8746,6 @@ be_local_closure(class_lvh_span_post_init,   /* name */
 /********************************************************************
 ** Solidified function: set_text_font
 ********************************************************************/
-extern const bclass be_class_lvh_span;
 be_local_closure(class_lvh_span_set_text_font,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -8944,7 +8754,7 @@ be_local_closure(class_lvh_span_set_text_font,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_span, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(parse_font),
@@ -8979,7 +8789,6 @@ be_local_closure(class_lvh_span_set_text_font,   /* name */
 /********************************************************************
 ** Solidified function: set_text
 ********************************************************************/
-extern const bclass be_class_lvh_span;
 be_local_closure(class_lvh_span_set_text,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -8988,7 +8797,7 @@ be_local_closure(class_lvh_span_set_text,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_span, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -9034,7 +8843,6 @@ extern const bclass be_class_lvh_chart;
 /********************************************************************
 ** Solidified function: get_y_min
 ********************************************************************/
-extern const bclass be_class_lvh_chart;
 be_local_closure(class_lvh_chart_get_y_min,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -9043,7 +8851,7 @@ be_local_closure(class_lvh_chart_get_y_min,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_chart, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_y_min),
@@ -9062,7 +8870,6 @@ be_local_closure(class_lvh_chart_get_y_min,   /* name */
 /********************************************************************
 ** Solidified function: add_point
 ********************************************************************/
-extern const bclass be_class_lvh_chart;
 be_local_closure(class_lvh_chart_add_point,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -9071,7 +8878,7 @@ be_local_closure(class_lvh_chart_add_point,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_chart, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -9096,7 +8903,6 @@ be_local_closure(class_lvh_chart_add_point,   /* name */
 /********************************************************************
 ** Solidified function: set_val2
 ********************************************************************/
-extern const bclass be_class_lvh_chart;
 be_local_closure(class_lvh_chart_set_val2,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -9105,7 +8911,7 @@ be_local_closure(class_lvh_chart_set_val2,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_chart, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(add_point2),
@@ -9126,7 +8932,6 @@ be_local_closure(class_lvh_chart_set_val2,   /* name */
 /********************************************************************
 ** Solidified function: set_y_min
 ********************************************************************/
-extern const bclass be_class_lvh_chart;
 be_local_closure(class_lvh_chart_set_y_min,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -9135,7 +8940,7 @@ be_local_closure(class_lvh_chart_set_y_min,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_chart, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(_y_min),
@@ -9166,7 +8971,6 @@ be_local_closure(class_lvh_chart_set_y_min,   /* name */
 /********************************************************************
 ** Solidified function: add_point2
 ********************************************************************/
-extern const bclass be_class_lvh_chart;
 be_local_closure(class_lvh_chart_add_point2,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -9175,7 +8979,7 @@ be_local_closure(class_lvh_chart_add_point2,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_chart, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -9200,7 +9004,6 @@ be_local_closure(class_lvh_chart_add_point2,   /* name */
 /********************************************************************
 ** Solidified function: set_series1_color
 ********************************************************************/
-extern const bclass be_class_lvh_chart;
 be_local_closure(class_lvh_chart_set_series1_color,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -9209,7 +9012,7 @@ be_local_closure(class_lvh_chart_set_series1_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_chart, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -9234,7 +9037,6 @@ be_local_closure(class_lvh_chart_set_series1_color,   /* name */
 /********************************************************************
 ** Solidified function: set_series2_color
 ********************************************************************/
-extern const bclass be_class_lvh_chart;
 be_local_closure(class_lvh_chart_set_series2_color,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -9243,7 +9045,7 @@ be_local_closure(class_lvh_chart_set_series2_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_chart, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_obj),
@@ -9268,7 +9070,6 @@ be_local_closure(class_lvh_chart_set_series2_color,   /* name */
 /********************************************************************
 ** Solidified function: set_y_max
 ********************************************************************/
-extern const bclass be_class_lvh_chart;
 be_local_closure(class_lvh_chart_set_y_max,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -9277,7 +9078,7 @@ be_local_closure(class_lvh_chart_set_y_max,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_chart, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(_y_max),
@@ -9308,7 +9109,6 @@ be_local_closure(class_lvh_chart_set_y_max,   /* name */
 /********************************************************************
 ** Solidified function: post_init
 ********************************************************************/
-extern const bclass be_class_lvh_chart;
 be_local_closure(class_lvh_chart_post_init,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -9317,7 +9117,7 @@ be_local_closure(class_lvh_chart_post_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_chart, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[17]) {     /* constants */
     /* K0   */  be_nested_str_weak(_y_min),
@@ -9382,7 +9182,6 @@ be_local_closure(class_lvh_chart_post_init,   /* name */
 /********************************************************************
 ** Solidified function: get_y_max
 ********************************************************************/
-extern const bclass be_class_lvh_chart;
 be_local_closure(class_lvh_chart_get_y_max,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -9391,7 +9190,7 @@ be_local_closure(class_lvh_chart_get_y_max,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_chart, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_y_max),
@@ -9410,7 +9209,6 @@ be_local_closure(class_lvh_chart_get_y_max,   /* name */
 /********************************************************************
 ** Solidified function: set_val
 ********************************************************************/
-extern const bclass be_class_lvh_chart;
 be_local_closure(class_lvh_chart_set_val,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -9419,7 +9217,7 @@ be_local_closure(class_lvh_chart_set_val,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_chart, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_val),
@@ -9442,7 +9240,6 @@ be_local_closure(class_lvh_chart_set_val,   /* name */
 /********************************************************************
 ** Solidified function: set_v_div_line_count
 ********************************************************************/
-extern const bclass be_class_lvh_chart;
 be_local_closure(class_lvh_chart_set_v_div_line_count,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -9451,7 +9248,7 @@ be_local_closure(class_lvh_chart_set_v_div_line_count,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_chart, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_v_div),
@@ -9478,7 +9275,6 @@ be_local_closure(class_lvh_chart_set_v_div_line_count,   /* name */
 /********************************************************************
 ** Solidified function: set_h_div_line_count
 ********************************************************************/
-extern const bclass be_class_lvh_chart;
 be_local_closure(class_lvh_chart_set_h_div_line_count,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -9487,7 +9283,7 @@ be_local_closure(class_lvh_chart_set_h_div_line_count,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_chart, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(_h_div),
@@ -9549,7 +9345,6 @@ extern const bclass be_class_lvh_btnmatrix;
 /********************************************************************
 ** Solidified function: set_options
 ********************************************************************/
-extern const bclass be_class_lvh_btnmatrix;
 be_local_closure(class_lvh_btnmatrix_set_options,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -9558,7 +9353,7 @@ be_local_closure(class_lvh_btnmatrix_set_options,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_btnmatrix, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -9618,7 +9413,6 @@ be_local_closure(class_lvh_btnmatrix_set_options,   /* name */
 /********************************************************************
 ** Solidified function: get_options
 ********************************************************************/
-extern const bclass be_class_lvh_btnmatrix;
 be_local_closure(class_lvh_btnmatrix_get_options,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -9627,7 +9421,7 @@ be_local_closure(class_lvh_btnmatrix_get_options,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_btnmatrix, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_options),
@@ -9714,7 +9508,6 @@ extern const bclass be_class_lvh_page;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_lvh_page;
 be_local_closure(class_lvh_page_init,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -9723,7 +9516,7 @@ be_local_closure(class_lvh_page_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_page, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[16]) {     /* constants */
     /* K0   */  be_nested_str_weak(global),
@@ -9821,7 +9614,6 @@ be_local_closure(class_lvh_page_init,   /* name */
 /********************************************************************
 ** Solidified function: show
 ********************************************************************/
-extern const bclass be_class_lvh_page;
 be_local_closure(class_lvh_page_show,   /* name */
   be_nested_proto(
     13,                          /* nstack */
@@ -9830,7 +9622,7 @@ be_local_closure(class_lvh_page_show,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 3]) {
+    ( &(const struct bproto*[ 2]) {
       be_nested_proto(
         3,                          /* nstack */
         0,                          /* argc */
@@ -9840,7 +9632,7 @@ be_local_closure(class_lvh_page_show,   /* name */
           be_local_const_upval(1, 3),
         }),
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 2]) {     /* constants */
         /* K0   */  be_nested_str_weak(tasmota),
@@ -9865,7 +9657,7 @@ be_local_closure(class_lvh_page_show,   /* name */
           be_local_const_upval(1, 4),
         }),
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 2]) {     /* constants */
         /* K0   */  be_nested_str_weak(tasmota),
@@ -9881,7 +9673,6 @@ be_local_closure(class_lvh_page_show,   /* name */
           0x80040000,  //  0004  RET	1	R0
         })
       ),
-    &be_class_lvh_page, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[18]) {     /* constants */
@@ -9982,7 +9773,6 @@ be_local_closure(class_lvh_page_show,   /* name */
 /********************************************************************
 ** Solidified function: id
 ********************************************************************/
-extern const bclass be_class_lvh_page;
 be_local_closure(class_lvh_page_id,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -9991,7 +9781,7 @@ be_local_closure(class_lvh_page_id,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_page, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_page_id),
@@ -10010,7 +9800,6 @@ be_local_closure(class_lvh_page_id,   /* name */
 /********************************************************************
 ** Solidified function: get_scr
 ********************************************************************/
-extern const bclass be_class_lvh_page;
 be_local_closure(class_lvh_page_get_scr,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -10019,7 +9808,7 @@ be_local_closure(class_lvh_page_get_scr,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_page, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_lv_scr),
@@ -10038,7 +9827,6 @@ be_local_closure(class_lvh_page_get_scr,   /* name */
 /********************************************************************
 ** Solidified function: get_obj
 ********************************************************************/
-extern const bclass be_class_lvh_page;
 be_local_closure(class_lvh_page_get_obj,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -10047,7 +9835,7 @@ be_local_closure(class_lvh_page_get_obj,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_page, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_obj_id),
@@ -10070,7 +9858,6 @@ be_local_closure(class_lvh_page_get_obj,   /* name */
 /********************************************************************
 ** Solidified function: add_obj
 ********************************************************************/
-extern const bclass be_class_lvh_page;
 be_local_closure(class_lvh_page_add_obj,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -10079,7 +9866,7 @@ be_local_closure(class_lvh_page_add_obj,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_page, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(_obj_id),
@@ -10112,7 +9899,6 @@ be_local_closure(class_lvh_page_add_obj,   /* name */
 /********************************************************************
 ** Solidified function: remove_obj
 ********************************************************************/
-extern const bclass be_class_lvh_page;
 be_local_closure(class_lvh_page_remove_obj,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -10121,7 +9907,7 @@ be_local_closure(class_lvh_page_remove_obj,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lvh_page, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(_obj_id),
@@ -10201,7 +9987,6 @@ extern const bclass be_class_HASPmota;
 /********************************************************************
 ** Solidified function: _load
 ********************************************************************/
-extern const bclass be_class_HASPmota;
 be_local_closure(class_HASPmota__load,   /* name */
   be_nested_proto(
     15,                          /* nstack */
@@ -10210,7 +9995,7 @@ be_local_closure(class_HASPmota__load,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_HASPmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[26]) {     /* constants */
     /* K0   */  be_nested_str_weak(string),
@@ -10337,7 +10122,6 @@ be_local_closure(class_HASPmota__load,   /* name */
 /********************************************************************
 ** Solidified function: page_show
 ********************************************************************/
-extern const bclass be_class_HASPmota;
 be_local_closure(class_HASPmota_page_show,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -10346,7 +10130,7 @@ be_local_closure(class_HASPmota_page_show,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_HASPmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str_weak(lvh_pages),
@@ -10441,7 +10225,6 @@ be_local_closure(class_HASPmota_page_show,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_HASPmota;
 be_local_closure(class_HASPmota_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -10450,7 +10233,7 @@ be_local_closure(class_HASPmota_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_HASPmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(fix_lv_version),
@@ -10479,7 +10262,6 @@ be_local_closure(class_HASPmota_init,   /* name */
 /********************************************************************
 ** Solidified function: event_dispatch
 ********************************************************************/
-extern const bclass be_class_HASPmota;
 be_local_closure(class_HASPmota_event_dispatch,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -10488,7 +10270,7 @@ be_local_closure(class_HASPmota_event_dispatch,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_HASPmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str_weak(introspect),
@@ -10549,7 +10331,6 @@ be_local_closure(class_HASPmota_event_dispatch,   /* name */
 /********************************************************************
 ** Solidified function: pages_list_sorted
 ********************************************************************/
-extern const bclass be_class_HASPmota;
 be_local_closure(class_HASPmota_pages_list_sorted,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -10558,7 +10339,7 @@ be_local_closure(class_HASPmota_pages_list_sorted,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_HASPmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -10630,7 +10411,6 @@ be_local_closure(class_HASPmota_pages_list_sorted,   /* name */
 /********************************************************************
 ** Solidified function: get_page_cur
 ********************************************************************/
-extern const bclass be_class_HASPmota;
 be_local_closure(class_HASPmota_get_page_cur,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -10639,7 +10419,7 @@ be_local_closure(class_HASPmota_get_page_cur,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_HASPmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(lvh_pages),
@@ -10661,7 +10441,6 @@ be_local_closure(class_HASPmota_get_page_cur,   /* name */
 /********************************************************************
 ** Solidified function: fix_lv_version
 ********************************************************************/
-extern const bclass be_class_HASPmota;
 be_local_closure(class_HASPmota_fix_lv_version,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -10670,7 +10449,7 @@ be_local_closure(class_HASPmota_fix_lv_version,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_HASPmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_const_class(be_class_HASPmota),
@@ -10707,7 +10486,6 @@ be_local_closure(class_HASPmota_fix_lv_version,   /* name */
 /********************************************************************
 ** Solidified function: do_action
 ********************************************************************/
-extern const bclass be_class_HASPmota;
 be_local_closure(class_HASPmota_do_action,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -10716,7 +10494,7 @@ be_local_closure(class_HASPmota_do_action,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_HASPmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(lv),
@@ -10745,7 +10523,6 @@ be_local_closure(class_HASPmota_do_action,   /* name */
 /********************************************************************
 ** Solidified function: parse
 ********************************************************************/
-extern const bclass be_class_HASPmota;
 be_local_closure(class_HASPmota_parse,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -10754,7 +10531,7 @@ be_local_closure(class_HASPmota_parse,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_HASPmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(json),
@@ -10800,7 +10577,6 @@ be_local_closure(class_HASPmota_parse,   /* name */
 /********************************************************************
 ** Solidified function: register_event
 ********************************************************************/
-extern const bclass be_class_HASPmota;
 be_local_closure(class_HASPmota_register_event,   /* name */
   be_nested_proto(
     13,                          /* nstack */
@@ -10809,7 +10585,7 @@ be_local_closure(class_HASPmota_register_event,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 1]) {
       be_nested_proto(
         4,                          /* nstack */
         1,                          /* argc */
@@ -10819,7 +10595,7 @@ be_local_closure(class_HASPmota_register_event,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str_weak(event_dispatch),
@@ -10834,7 +10610,6 @@ be_local_closure(class_HASPmota_register_event,   /* name */
           0x80040200,  //  0004  RET	1	R1
         })
       ),
-    &be_class_HASPmota, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
@@ -10878,7 +10653,6 @@ be_local_closure(class_HASPmota_register_event,   /* name */
 /********************************************************************
 ** Solidified function: page_dir_to
 ********************************************************************/
-extern const bclass be_class_HASPmota;
 be_local_closure(class_HASPmota_page_dir_to,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -10887,7 +10661,7 @@ be_local_closure(class_HASPmota_page_dir_to,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_HASPmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(pages_list_sorted),
@@ -10940,7 +10714,6 @@ be_local_closure(class_HASPmota_page_dir_to,   /* name */
 /********************************************************************
 ** Solidified function: parse_page
 ********************************************************************/
-extern const bclass be_class_HASPmota;
 be_local_closure(class_HASPmota_parse_page,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -10949,7 +10722,7 @@ be_local_closure(class_HASPmota_parse_page,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_HASPmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_nested_str_weak(has),
@@ -11033,7 +10806,6 @@ be_local_closure(class_HASPmota_parse_page,   /* name */
 /********************************************************************
 ** Solidified function: sort
 ********************************************************************/
-extern const bclass be_class_HASPmota;
 be_local_closure(class_HASPmota_sort,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -11042,7 +10814,7 @@ be_local_closure(class_HASPmota_sort,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_HASPmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_const_class(be_class_HASPmota),
@@ -11092,7 +10864,6 @@ be_local_closure(class_HASPmota_sort,   /* name */
 /********************************************************************
 ** Solidified function: start
 ********************************************************************/
-extern const bclass be_class_HASPmota;
 be_local_closure(class_HASPmota_start,   /* name */
   be_nested_proto(
     11,                          /* nstack */
@@ -11101,7 +10872,7 @@ be_local_closure(class_HASPmota_start,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_HASPmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[33]) {     /* constants */
     /* K0   */  be_nested_str_weak(path),
@@ -11255,7 +11026,6 @@ be_local_closure(class_HASPmota_start,   /* name */
 /********************************************************************
 ** Solidified function: parse_obj
 ********************************************************************/
-extern const bclass be_class_HASPmota;
 be_local_closure(class_HASPmota_parse_obj,   /* name */
   be_nested_proto(
     22,                          /* nstack */
@@ -11264,7 +11034,7 @@ be_local_closure(class_HASPmota_parse_obj,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_HASPmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[30]) {     /* constants */
     /* K0   */  be_nested_str_weak(global),
@@ -11599,7 +11369,7 @@ be_local_closure(_anonymous_,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(HASPmota),

@@ -9,7 +9,6 @@ extern const bclass be_class_lv_clock;
 /********************************************************************
 ** Solidified function: set_time
 ********************************************************************/
-extern const bclass be_class_lv_clock;
 be_local_closure(class_lv_clock_set_time,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_lv_clock_set_time,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_clock, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(hour),
@@ -68,7 +67,6 @@ be_local_closure(class_lv_clock_set_time,   /* name */
 /********************************************************************
 ** Solidified function: every_second
 ********************************************************************/
-extern const bclass be_class_lv_clock;
 be_local_closure(class_lv_clock_every_second,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -77,7 +75,7 @@ be_local_closure(class_lv_clock_every_second,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_clock, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota),
@@ -119,7 +117,6 @@ be_local_closure(class_lv_clock_every_second,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_lv_clock;
 be_local_closure(class_lv_clock_init,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -128,7 +125,7 @@ be_local_closure(class_lv_clock_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 1]) {
       be_nested_proto(
         2,                          /* nstack */
         0,                          /* argc */
@@ -138,7 +135,7 @@ be_local_closure(class_lv_clock_init,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str_weak(before_del),
@@ -152,7 +149,6 @@ be_local_closure(class_lv_clock_init,   /* name */
           0x80040000,  //  0003  RET	1	R0
         })
       ),
-    &be_class_lv_clock, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
@@ -218,7 +214,6 @@ be_local_closure(class_lv_clock_init,   /* name */
 /********************************************************************
 ** Solidified function: before_del
 ********************************************************************/
-extern const bclass be_class_lv_clock;
 be_local_closure(class_lv_clock_before_del,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -227,7 +222,7 @@ be_local_closure(class_lv_clock_before_del,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_clock, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota),
@@ -272,7 +267,6 @@ extern const bclass be_class_lv_clock_icon;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_lv_clock_icon;
 be_local_closure(class_lv_clock_icon_init,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -281,7 +275,7 @@ be_local_closure(class_lv_clock_icon_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_clock_icon, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[16]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -389,7 +383,6 @@ extern const bclass be_class_lv_signal_arcs;
 /********************************************************************
 ** Solidified function: widget_event
 ********************************************************************/
-extern const bclass be_class_lv_signal_arcs;
 be_local_closure(class_lv_signal_arcs_widget_event,   /* name */
   be_nested_proto(
     28,                          /* nstack */
@@ -398,7 +391,7 @@ be_local_closure(class_lv_signal_arcs_widget_event,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 1]) {
       be_nested_proto(
         2,                          /* nstack */
         1,                          /* argc */
@@ -406,7 +399,7 @@ be_local_closure(class_lv_signal_arcs_widget_event,   /* name */
         0,                          /* has upvals */
         NULL,                       /* no upvals */
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_const_int(1),
@@ -422,7 +415,6 @@ be_local_closure(class_lv_signal_arcs_widget_event,   /* name */
           0x80000000,  //  0005  RET	0
         })
       ),
-    &be_class_lv_signal_arcs, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[35]) {     /* constants */
@@ -635,7 +627,6 @@ be_local_closure(class_lv_signal_arcs_widget_event,   /* name */
 /********************************************************************
 ** Solidified function: get_percentage
 ********************************************************************/
-extern const bclass be_class_lv_signal_arcs;
 be_local_closure(class_lv_signal_arcs_get_percentage,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -644,7 +635,7 @@ be_local_closure(class_lv_signal_arcs_get_percentage,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_signal_arcs, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(percentage),
@@ -663,7 +654,6 @@ be_local_closure(class_lv_signal_arcs_get_percentage,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_lv_signal_arcs;
 be_local_closure(class_lv_signal_arcs_init,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -672,7 +662,7 @@ be_local_closure(class_lv_signal_arcs_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_signal_arcs, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -736,7 +726,6 @@ be_local_closure(class_lv_signal_arcs_init,   /* name */
 /********************************************************************
 ** Solidified function: set_percentage
 ********************************************************************/
-extern const bclass be_class_lv_signal_arcs;
 be_local_closure(class_lv_signal_arcs_set_percentage,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -745,7 +734,7 @@ be_local_closure(class_lv_signal_arcs_set_percentage,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_signal_arcs, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(percentage),
@@ -804,7 +793,6 @@ extern const bclass be_class_lv_wifi_arcs;
 /********************************************************************
 ** Solidified function: before_del
 ********************************************************************/
-extern const bclass be_class_lv_wifi_arcs;
 be_local_closure(class_lv_wifi_arcs_before_del,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -813,7 +801,7 @@ be_local_closure(class_lv_wifi_arcs_before_del,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_wifi_arcs, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota),
@@ -836,7 +824,6 @@ be_local_closure(class_lv_wifi_arcs_before_del,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_lv_wifi_arcs;
 be_local_closure(class_lv_wifi_arcs_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -845,7 +832,7 @@ be_local_closure(class_lv_wifi_arcs_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_wifi_arcs, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -880,7 +867,6 @@ be_local_closure(class_lv_wifi_arcs_init,   /* name */
 /********************************************************************
 ** Solidified function: every_second
 ********************************************************************/
-extern const bclass be_class_lv_wifi_arcs;
 be_local_closure(class_lv_wifi_arcs_every_second,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -889,7 +875,7 @@ be_local_closure(class_lv_wifi_arcs_every_second,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_wifi_arcs, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota),
@@ -953,7 +939,6 @@ extern const bclass be_class_lv_wifi_arcs_icon;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_lv_wifi_arcs_icon;
 be_local_closure(class_lv_wifi_arcs_icon_init,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -962,7 +947,7 @@ be_local_closure(class_lv_wifi_arcs_icon_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_wifi_arcs_icon, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[18]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -1079,7 +1064,6 @@ extern const bclass be_class_lv_signal_bars;
 /********************************************************************
 ** Solidified function: set_percentage
 ********************************************************************/
-extern const bclass be_class_lv_signal_bars;
 be_local_closure(class_lv_signal_bars_set_percentage,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -1088,7 +1072,7 @@ be_local_closure(class_lv_signal_bars_set_percentage,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_signal_bars, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(percentage),
@@ -1125,7 +1109,6 @@ be_local_closure(class_lv_signal_bars_set_percentage,   /* name */
 /********************************************************************
 ** Solidified function: get_percentage
 ********************************************************************/
-extern const bclass be_class_lv_signal_bars;
 be_local_closure(class_lv_signal_bars_get_percentage,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -1134,7 +1117,7 @@ be_local_closure(class_lv_signal_bars_get_percentage,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_signal_bars, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(percentage),
@@ -1153,7 +1136,6 @@ be_local_closure(class_lv_signal_bars_get_percentage,   /* name */
 /********************************************************************
 ** Solidified function: widget_event
 ********************************************************************/
-extern const bclass be_class_lv_signal_bars;
 be_local_closure(class_lv_signal_bars_widget_event,   /* name */
   be_nested_proto(
     22,                          /* nstack */
@@ -1162,7 +1144,7 @@ be_local_closure(class_lv_signal_bars_widget_event,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 1]) {
       be_nested_proto(
         2,                          /* nstack */
         1,                          /* argc */
@@ -1170,7 +1152,7 @@ be_local_closure(class_lv_signal_bars_widget_event,   /* name */
         0,                          /* has upvals */
         NULL,                       /* no upvals */
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_const_int(1),
@@ -1186,7 +1168,6 @@ be_local_closure(class_lv_signal_bars_widget_event,   /* name */
           0x80000000,  //  0005  RET	0
         })
       ),
-    &be_class_lv_signal_bars, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[33]) {     /* constants */
@@ -1341,7 +1322,6 @@ be_local_closure(class_lv_signal_bars_widget_event,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_lv_signal_bars;
 be_local_closure(class_lv_signal_bars_init,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -1350,7 +1330,7 @@ be_local_closure(class_lv_signal_bars_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_signal_bars, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -1431,7 +1411,6 @@ extern const bclass be_class_lv_wifi_bars;
 /********************************************************************
 ** Solidified function: before_del
 ********************************************************************/
-extern const bclass be_class_lv_wifi_bars;
 be_local_closure(class_lv_wifi_bars_before_del,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -1440,7 +1419,7 @@ be_local_closure(class_lv_wifi_bars_before_del,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_wifi_bars, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota),
@@ -1463,7 +1442,6 @@ be_local_closure(class_lv_wifi_bars_before_del,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_lv_wifi_bars;
 be_local_closure(class_lv_wifi_bars_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -1472,7 +1450,7 @@ be_local_closure(class_lv_wifi_bars_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_wifi_bars, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -1507,7 +1485,6 @@ be_local_closure(class_lv_wifi_bars_init,   /* name */
 /********************************************************************
 ** Solidified function: every_second
 ********************************************************************/
-extern const bclass be_class_lv_wifi_bars;
 be_local_closure(class_lv_wifi_bars_every_second,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -1516,7 +1493,7 @@ be_local_closure(class_lv_wifi_bars_every_second,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_wifi_bars, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota),
@@ -1580,7 +1557,6 @@ extern const bclass be_class_lv_wifi_bars_icon;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_lv_wifi_bars_icon;
 be_local_closure(class_lv_wifi_bars_icon_init,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -1589,7 +1565,7 @@ be_local_closure(class_lv_wifi_bars_icon_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_wifi_bars_icon, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[17]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),

@@ -7,7 +7,6 @@
 /********************************************************************
 ** Solidified function: tostring
 ********************************************************************/
-extern const bclass be_class_zb_device;
 be_local_closure(class_zb_device_tostring,   /* name */
   be_nested_proto(
     12,                          /* nstack */
@@ -16,7 +15,7 @@ be_local_closure(class_zb_device_tostring,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_zb_device, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(json),

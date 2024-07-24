@@ -9,7 +9,6 @@ extern const bclass be_class_Matter_Plugin_Sensor_Occupancy;
 /********************************************************************
 ** Solidified function: update_virtual
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Occupancy;
 be_local_closure(class_Matter_Plugin_Sensor_Occupancy_update_virtual,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Occupancy_update_virtual,   /* name 
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_Occupancy, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(shadow_bool_value),
@@ -55,7 +54,6 @@ be_local_closure(class_Matter_Plugin_Sensor_Occupancy_update_virtual,   /* name 
 /********************************************************************
 ** Solidified function: read_attribute
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Occupancy;
 be_local_closure(class_Matter_Plugin_Sensor_Occupancy_read_attribute,   /* name */
   be_nested_proto(
     12,                          /* nstack */
@@ -64,7 +62,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Occupancy_read_attribute,   /* name 
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_Occupancy, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -132,7 +130,6 @@ be_local_closure(class_Matter_Plugin_Sensor_Occupancy_read_attribute,   /* name 
 /********************************************************************
 ** Solidified function: web_values
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Occupancy;
 be_local_closure(class_Matter_Plugin_Sensor_Occupancy_web_values,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -141,7 +138,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Occupancy_web_values,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_Occupancy, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),
@@ -177,7 +174,6 @@ be_local_closure(class_Matter_Plugin_Sensor_Occupancy_web_values,   /* name */
 /********************************************************************
 ** Solidified function: web_values_prefix
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Occupancy;
 be_local_closure(class_Matter_Plugin_Sensor_Occupancy_web_values_prefix,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -186,7 +182,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Occupancy_web_values_prefix,   /* na
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_Occupancy, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),
@@ -232,7 +228,6 @@ be_local_closure(class_Matter_Plugin_Sensor_Occupancy_web_values_prefix,   /* na
 /********************************************************************
 ** Solidified function: value_updated
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Occupancy;
 be_local_closure(class_Matter_Plugin_Sensor_Occupancy_value_updated,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -241,7 +236,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Occupancy_value_updated,   /* name *
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_Occupancy, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(attribute_updated),

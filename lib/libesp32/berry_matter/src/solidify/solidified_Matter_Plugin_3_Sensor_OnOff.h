@@ -9,7 +9,6 @@ extern const bclass be_class_Matter_Plugin_Sensor_OnOff;
 /********************************************************************
 ** Solidified function: read_attribute
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_OnOff;
 be_local_closure(class_Matter_Plugin_Sensor_OnOff_read_attribute,   /* name */
   be_nested_proto(
     12,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Matter_Plugin_Sensor_OnOff_read_attribute,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_OnOff, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -69,7 +68,6 @@ be_local_closure(class_Matter_Plugin_Sensor_OnOff_read_attribute,   /* name */
 /********************************************************************
 ** Solidified function: append_state_json
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_OnOff;
 be_local_closure(class_Matter_Plugin_Sensor_OnOff_append_state_json,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -78,7 +76,7 @@ be_local_closure(class_Matter_Plugin_Sensor_OnOff_append_state_json,   /* name *
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_OnOff, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(_X2C_X22OnOff_X22_X3A_X25s),
@@ -103,7 +101,6 @@ be_local_closure(class_Matter_Plugin_Sensor_OnOff_append_state_json,   /* name *
 /********************************************************************
 ** Solidified function: value_updated
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_OnOff;
 be_local_closure(class_Matter_Plugin_Sensor_OnOff_value_updated,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -112,7 +109,7 @@ be_local_closure(class_Matter_Plugin_Sensor_OnOff_value_updated,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_OnOff, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(attribute_updated),

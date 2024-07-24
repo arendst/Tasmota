@@ -9,7 +9,6 @@ extern const bclass be_class_Matter_Path;
 /********************************************************************
 ** Solidified function: reset
 ********************************************************************/
-extern const bclass be_class_Matter_Path;
 be_local_closure(class_Matter_Path_reset,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Matter_Path_reset,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Path, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(endpoint),
@@ -52,7 +51,6 @@ be_local_closure(class_Matter_Path_reset,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Matter_Path;
 be_local_closure(class_Matter_Path_init,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -61,7 +59,7 @@ be_local_closure(class_Matter_Path_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Path, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(endpoint),
@@ -84,7 +82,6 @@ be_local_closure(class_Matter_Path_init,   /* name */
 /********************************************************************
 ** Solidified function: tostring
 ********************************************************************/
-extern const bclass be_class_Matter_Path;
 be_local_closure(class_Matter_Path_tostring,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -93,7 +90,7 @@ be_local_closure(class_Matter_Path_tostring,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Path, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[15]) {     /* constants */
     /* K0   */  be_nested_str_weak(),
@@ -201,7 +198,6 @@ be_local_closure(class_Matter_Path_tostring,   /* name */
 /********************************************************************
 ** Solidified function: copy
 ********************************************************************/
-extern const bclass be_class_Matter_Path;
 be_local_closure(class_Matter_Path_copy,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -210,7 +206,7 @@ be_local_closure(class_Matter_Path_copy,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Path, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(reset),

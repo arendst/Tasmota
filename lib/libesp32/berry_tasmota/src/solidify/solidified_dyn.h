@@ -9,7 +9,6 @@ extern const bclass be_class_dyn;
 /********************************************************************
 ** Solidified function: tostring
 ********************************************************************/
-extern const bclass be_class_dyn;
 be_local_closure(class_dyn_tostring,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_dyn_tostring,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_dyn, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(_attr),
@@ -40,7 +39,6 @@ be_local_closure(class_dyn_tostring,   /* name */
 /********************************************************************
 ** Solidified function: member
 ********************************************************************/
-extern const bclass be_class_dyn;
 be_local_closure(class_dyn_member,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -49,7 +47,7 @@ be_local_closure(class_dyn_member,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_dyn, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(_attr),
@@ -80,7 +78,6 @@ be_local_closure(class_dyn_member,   /* name */
 /********************************************************************
 ** Solidified function: setmember
 ********************************************************************/
-extern const bclass be_class_dyn;
 be_local_closure(class_dyn_setmember,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -89,7 +86,7 @@ be_local_closure(class_dyn_setmember,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_dyn, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(_attr),
@@ -109,7 +106,6 @@ be_local_closure(class_dyn_setmember,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_dyn;
 be_local_closure(class_dyn_init,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -118,7 +114,7 @@ be_local_closure(class_dyn_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_dyn, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(_attr),

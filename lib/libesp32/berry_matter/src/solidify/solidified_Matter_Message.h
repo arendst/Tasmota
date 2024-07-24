@@ -9,7 +9,6 @@ extern const bclass be_class_Matter_Frame;
 /********************************************************************
 ** Solidified function: get_node_id
 ********************************************************************/
-extern const bclass be_class_Matter_Frame;
 be_local_closure(class_Matter_Frame_get_node_id,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Matter_Frame_get_node_id,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Frame, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(session),
@@ -44,7 +43,6 @@ be_local_closure(class_Matter_Frame_get_node_id,   /* name */
 /********************************************************************
 ** Solidified function: encrypt
 ********************************************************************/
-extern const bclass be_class_Matter_Frame;
 be_local_closure(class_Matter_Frame_encrypt,   /* name */
   be_nested_proto(
     23,                          /* nstack */
@@ -53,7 +51,7 @@ be_local_closure(class_Matter_Frame_encrypt,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Frame, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[18]) {     /* constants */
     /* K0   */  be_nested_str_weak(crypto),
@@ -150,7 +148,6 @@ be_local_closure(class_Matter_Frame_encrypt,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Matter_Frame;
 be_local_closure(class_Matter_Frame_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -159,7 +156,7 @@ be_local_closure(class_Matter_Frame_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Frame, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(message_handler),
@@ -184,7 +181,6 @@ be_local_closure(class_Matter_Frame_init,   /* name */
 /********************************************************************
 ** Solidified function: encode_frame
 ********************************************************************/
-extern const bclass be_class_Matter_Frame;
 be_local_closure(class_Matter_Frame_encode_frame,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -193,7 +189,7 @@ be_local_closure(class_Matter_Frame_encode_frame,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Frame, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[29]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -399,7 +395,6 @@ be_local_closure(class_Matter_Frame_encode_frame,   /* name */
 /********************************************************************
 ** Solidified function: decode_header
 ********************************************************************/
-extern const bclass be_class_Matter_Frame;
 be_local_closure(class_Matter_Frame_decode_header,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -408,7 +403,7 @@ be_local_closure(class_Matter_Frame_decode_header,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Frame, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[21]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -566,7 +561,6 @@ be_local_closure(class_Matter_Frame_decode_header,   /* name */
 /********************************************************************
 ** Solidified function: debug
 ********************************************************************/
-extern const bclass be_class_Matter_Frame;
 be_local_closure(class_Matter_Frame_debug,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -575,7 +569,7 @@ be_local_closure(class_Matter_Frame_debug,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Frame, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -606,7 +600,6 @@ be_local_closure(class_Matter_Frame_debug,   /* name */
 /********************************************************************
 ** Solidified function: build_response
 ********************************************************************/
-extern const bclass be_class_Matter_Frame;
 be_local_closure(class_Matter_Frame_build_response,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -615,7 +608,7 @@ be_local_closure(class_Matter_Frame_build_response,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Frame, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[29]) {     /* constants */
     /* K0   */  be_nested_str_weak(message_handler),
@@ -750,7 +743,6 @@ be_local_closure(class_Matter_Frame_build_response,   /* name */
 /********************************************************************
 ** Solidified function: decrypt
 ********************************************************************/
-extern const bclass be_class_Matter_Frame;
 be_local_closure(class_Matter_Frame_decrypt,   /* name */
   be_nested_proto(
     23,                          /* nstack */
@@ -759,7 +751,7 @@ be_local_closure(class_Matter_Frame_decrypt,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Frame, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[29]) {     /* constants */
     /* K0   */  be_nested_str_weak(crypto),
@@ -919,7 +911,6 @@ be_local_closure(class_Matter_Frame_decrypt,   /* name */
 /********************************************************************
 ** Solidified function: build_standalone_ack
 ********************************************************************/
-extern const bclass be_class_Matter_Frame;
 be_local_closure(class_Matter_Frame_build_standalone_ack,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -928,7 +919,7 @@ be_local_closure(class_Matter_Frame_build_standalone_ack,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Frame, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[21]) {     /* constants */
     /* K0   */  be_nested_str_weak(message_handler),
@@ -1010,7 +1001,6 @@ be_local_closure(class_Matter_Frame_build_standalone_ack,   /* name */
 /********************************************************************
 ** Solidified function: initiate_response
 ********************************************************************/
-extern const bclass be_class_Matter_Frame;
 be_local_closure(class_Matter_Frame_initiate_response,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -1019,7 +1009,7 @@ be_local_closure(class_Matter_Frame_initiate_response,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Frame, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[23]) {     /* constants */
     /* K0   */  be_const_class(be_class_Matter_Frame),
@@ -1104,7 +1094,6 @@ be_local_closure(class_Matter_Frame_initiate_response,   /* name */
 /********************************************************************
 ** Solidified function: decode_payload
 ********************************************************************/
-extern const bclass be_class_Matter_Frame;
 be_local_closure(class_Matter_Frame_decode_payload,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -1113,7 +1102,7 @@ be_local_closure(class_Matter_Frame_decode_payload,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Frame, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[19]) {     /* constants */
     /* K0   */  be_nested_str_weak(payload_idx),

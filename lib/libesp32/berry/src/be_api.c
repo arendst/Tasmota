@@ -544,22 +544,6 @@ BERRY_API bbool be_classof(bvm *vm, int index)
         binstance *ins = var_toobj(v);
         var_setclass(top, be_instance_class(ins));
         return btrue;
-    } else if (var_isclosure(v)) {
-        bclosure *cl = var_toobj(v);
-        bproto *pr = cl->proto;
-        if (pr != NULL) {
-            bclass *cla;
-            if (pr->nproto > 0) {
-                cla = (bclass*) pr->ptab[pr->nproto];
-            } else {
-                cla = (bclass*) pr->ptab;
-            }
-            if (cla && var_basetype(cla) == BE_CLASS) {
-                bvalue *top = be_incrtop(vm);
-                var_setclass(top, cla);
-                return btrue;
-            }
-        }
     }
     return bfalse;
 }

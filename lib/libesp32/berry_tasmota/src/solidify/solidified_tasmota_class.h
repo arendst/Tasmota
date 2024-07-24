@@ -9,7 +9,6 @@ extern const bclass be_class_Tasmota;
 /********************************************************************
 ** Solidified function: cmd
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_cmd,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Tasmota_cmd,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str(cmd_res),
@@ -68,7 +67,6 @@ be_local_closure(class_Tasmota_cmd,   /* name */
 /********************************************************************
 ** Solidified function: check_not_method
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_check_not_method,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -77,7 +75,7 @@ be_local_closure(class_Tasmota_check_not_method,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(introspect),
@@ -114,7 +112,6 @@ be_local_closure(class_Tasmota_check_not_method,   /* name */
 /********************************************************************
 ** Solidified function: remove_driver
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_remove_driver,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -123,7 +120,7 @@ be_local_closure(class_Tasmota_remove_driver,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(_drivers),
@@ -156,7 +153,6 @@ be_local_closure(class_Tasmota_remove_driver,   /* name */
 /********************************************************************
 ** Solidified function: event
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_event,   /* name */
   be_nested_proto(
     19,                          /* nstack */
@@ -165,7 +161,7 @@ be_local_closure(class_Tasmota_event,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[25]) {     /* constants */
     /* K0   */  be_nested_str(introspect),
@@ -314,7 +310,6 @@ be_local_closure(class_Tasmota_event,   /* name */
 /********************************************************************
 ** Solidified function: exec_cmd
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_exec_cmd,   /* name */
   be_nested_proto(
     12,                          /* nstack */
@@ -323,7 +318,7 @@ be_local_closure(class_Tasmota_exec_cmd,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str(_ccmd),
@@ -371,7 +366,6 @@ be_local_closure(class_Tasmota_exec_cmd,   /* name */
 /********************************************************************
 ** Solidified function: set_light
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_set_light,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -380,7 +374,7 @@ be_local_closure(class_Tasmota_set_light,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(tasmota_X2Eset_light_X28_X29_X20is_X20deprecated_X2C_X20use_X20light_X2Eset_X28_X29),
@@ -417,7 +411,6 @@ be_local_closure(class_Tasmota_set_light,   /* name */
 /********************************************************************
 ** Solidified function: run_cron
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_run_cron,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -426,7 +419,7 @@ be_local_closure(class_Tasmota_run_cron,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str(_crons),
@@ -486,7 +479,6 @@ be_local_closure(class_Tasmota_run_cron,   /* name */
 /********************************************************************
 ** Solidified function: set_timer
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_set_timer,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -495,7 +487,7 @@ be_local_closure(class_Tasmota_set_timer,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str(check_not_method),
@@ -537,7 +529,6 @@ be_local_closure(class_Tasmota_set_timer,   /* name */
 /********************************************************************
 ** Solidified function: add_driver
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_add_driver,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -546,7 +537,7 @@ be_local_closure(class_Tasmota_add_driver,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(instance),
@@ -593,7 +584,6 @@ be_local_closure(class_Tasmota_add_driver,   /* name */
 /********************************************************************
 ** Solidified function: next_cron
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_next_cron,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -602,7 +592,7 @@ be_local_closure(class_Tasmota_next_cron,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(_crons),
@@ -641,7 +631,6 @@ be_local_closure(class_Tasmota_next_cron,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_init,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -650,7 +639,7 @@ be_local_closure(class_Tasmota_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 1]) {
       be_nested_proto(
         10,                          /* nstack */
         4,                          /* argc */
@@ -660,7 +649,7 @@ be_local_closure(class_Tasmota_init,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str(urlfetch_cmd),
@@ -678,7 +667,6 @@ be_local_closure(class_Tasmota_init,   /* name */
           0x80000000,  //  0007  RET	0
         })
       ),
-    &be_class_Tasmota, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[18]) {     /* constants */
@@ -747,7 +735,6 @@ be_local_closure(class_Tasmota_init,   /* name */
 /********************************************************************
 ** Solidified function: add_rule
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_add_rule,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -756,7 +743,7 @@ be_local_closure(class_Tasmota_add_rule,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str(check_not_method),
@@ -810,7 +797,6 @@ be_local_closure(class_Tasmota_add_rule,   /* name */
 /********************************************************************
 ** Solidified function: try_rule
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_try_rule,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -819,7 +805,7 @@ be_local_closure(class_Tasmota_try_rule,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(match),
@@ -855,7 +841,6 @@ be_local_closure(class_Tasmota_try_rule,   /* name */
 /********************************************************************
 ** Solidified function: find_op
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_find_op,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -864,7 +849,7 @@ be_local_closure(class_Tasmota_find_op,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str(_find_op),
@@ -915,7 +900,6 @@ be_local_closure(class_Tasmota_find_op,   /* name */
 /********************************************************************
 ** Solidified function: remove_cmd
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_remove_cmd,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -924,7 +908,7 @@ be_local_closure(class_Tasmota_remove_cmd,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(_ccmd),
@@ -949,7 +933,6 @@ be_local_closure(class_Tasmota_remove_cmd,   /* name */
 /********************************************************************
 ** Solidified function: gc
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_gc,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -958,7 +941,7 @@ be_local_closure(class_Tasmota_gc,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(gc),
@@ -983,7 +966,6 @@ be_local_closure(class_Tasmota_gc,   /* name */
 /********************************************************************
 ** Solidified function: find_list_i
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_find_list_i,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -992,7 +974,7 @@ be_local_closure(class_Tasmota_find_list_i,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str(string),
@@ -1032,7 +1014,6 @@ be_local_closure(class_Tasmota_find_list_i,   /* name */
 /********************************************************************
 ** Solidified function: remove_fast_loop
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_remove_fast_loop,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -1041,7 +1022,7 @@ be_local_closure(class_Tasmota_remove_fast_loop,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(_fl),
@@ -1075,7 +1056,6 @@ be_local_closure(class_Tasmota_remove_fast_loop,   /* name */
 /********************************************************************
 ** Solidified function: exec_rules
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_exec_rules,   /* name */
   be_nested_proto(
     14,                          /* nstack */
@@ -1084,7 +1064,7 @@ be_local_closure(class_Tasmota_exec_rules,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str(cmd_res),
@@ -1162,7 +1142,6 @@ be_local_closure(class_Tasmota_exec_rules,   /* name */
 /********************************************************************
 ** Solidified function: run_deferred
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_run_deferred,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -1171,7 +1150,7 @@ be_local_closure(class_Tasmota_run_deferred,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str(_timers),
@@ -1220,7 +1199,6 @@ be_local_closure(class_Tasmota_run_deferred,   /* name */
 /********************************************************************
 ** Solidified function: compile
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_compile,   /* name */
   be_nested_proto(
     12,                          /* nstack */
@@ -1229,7 +1207,7 @@ be_local_closure(class_Tasmota_compile,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_nested_str(string),
@@ -1343,7 +1321,6 @@ be_local_closure(class_Tasmota_compile,   /* name */
 /********************************************************************
 ** Solidified function: remove_timer
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_remove_timer,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -1352,7 +1329,7 @@ be_local_closure(class_Tasmota_remove_timer,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(_timers),
@@ -1392,7 +1369,6 @@ be_local_closure(class_Tasmota_remove_timer,   /* name */
 /********************************************************************
 ** Solidified function: remove_rule
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_remove_rule,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -1401,7 +1377,7 @@ be_local_closure(class_Tasmota_remove_rule,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str(_rules),
@@ -1451,7 +1427,6 @@ be_local_closure(class_Tasmota_remove_rule,   /* name */
 /********************************************************************
 ** Solidified function: exec_tele
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_exec_tele,   /* name */
   be_nested_proto(
     12,                          /* nstack */
@@ -1460,7 +1435,7 @@ be_local_closure(class_Tasmota_exec_tele,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str(_rules),
@@ -1529,7 +1504,6 @@ be_local_closure(class_Tasmota_exec_tele,   /* name */
 /********************************************************************
 ** Solidified function: add_cmd
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_add_cmd,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -1538,7 +1512,7 @@ be_local_closure(class_Tasmota_add_cmd,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str(check_not_method),
@@ -1579,7 +1553,6 @@ be_local_closure(class_Tasmota_add_cmd,   /* name */
 /********************************************************************
 ** Solidified function: wire_scan
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_wire_scan,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -1588,7 +1561,7 @@ be_local_closure(class_Tasmota_wire_scan,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str(i2c_enabled),
@@ -1642,7 +1615,6 @@ be_local_closure(class_Tasmota_wire_scan,   /* name */
 /********************************************************************
 ** Solidified function: find_key_i
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_find_key_i,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -1651,7 +1623,7 @@ be_local_closure(class_Tasmota_find_key_i,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str(string),
@@ -1702,7 +1674,6 @@ be_local_closure(class_Tasmota_find_key_i,   /* name */
 /********************************************************************
 ** Solidified function: urlfetch
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_urlfetch,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -1711,7 +1682,7 @@ be_local_closure(class_Tasmota_urlfetch,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[17]) {     /* constants */
     /* K0   */  be_nested_str(string),
@@ -1792,7 +1763,6 @@ be_local_closure(class_Tasmota_urlfetch,   /* name */
 /********************************************************************
 ** Solidified function: fast_loop
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_fast_loop,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -1801,7 +1771,7 @@ be_local_closure(class_Tasmota_fast_loop,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(_fl),
@@ -1835,7 +1805,6 @@ be_local_closure(class_Tasmota_fast_loop,   /* name */
 /********************************************************************
 ** Solidified function: gen_cb
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_gen_cb,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -1844,7 +1813,7 @@ be_local_closure(class_Tasmota_gen_cb,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(cb),
@@ -1867,7 +1836,6 @@ be_local_closure(class_Tasmota_gen_cb,   /* name */
 /********************************************************************
 ** Solidified function: time_str
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_time_str,   /* name */
   be_nested_proto(
     11,                          /* nstack */
@@ -1876,7 +1844,7 @@ be_local_closure(class_Tasmota_time_str,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str(time_dump),
@@ -1913,7 +1881,6 @@ be_local_closure(class_Tasmota_time_str,   /* name */
 /********************************************************************
 ** Solidified function: add_fast_loop
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_add_fast_loop,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -1922,7 +1889,7 @@ be_local_closure(class_Tasmota_add_fast_loop,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str(check_not_method),
@@ -1970,7 +1937,6 @@ be_local_closure(class_Tasmota_add_fast_loop,   /* name */
 /********************************************************************
 ** Solidified function: get_light
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_get_light,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -1979,7 +1945,7 @@ be_local_closure(class_Tasmota_get_light,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(tasmota_X2Eget_light_X28_X29_X20is_X20deprecated_X2C_X20use_X20light_X2Eget_X28_X29),
@@ -2014,7 +1980,6 @@ be_local_closure(class_Tasmota_get_light,   /* name */
 /********************************************************************
 ** Solidified function: add_cron
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_add_cron,   /* name */
   be_nested_proto(
     13,                          /* nstack */
@@ -2023,7 +1988,7 @@ be_local_closure(class_Tasmota_add_cron,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(check_not_method),
@@ -2072,7 +2037,6 @@ be_local_closure(class_Tasmota_add_cron,   /* name */
 /********************************************************************
 ** Solidified function: hs2rgb
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_hs2rgb,   /* name */
   be_nested_proto(
     17,                          /* nstack */
@@ -2081,7 +2045,7 @@ be_local_closure(class_Tasmota_hs2rgb,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -2171,7 +2135,6 @@ be_local_closure(class_Tasmota_hs2rgb,   /* name */
 /********************************************************************
 ** Solidified function: remove_cron
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_remove_cron,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -2180,7 +2143,7 @@ be_local_closure(class_Tasmota_remove_cron,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(_crons),
@@ -2220,7 +2183,6 @@ be_local_closure(class_Tasmota_remove_cron,   /* name */
 /********************************************************************
 ** Solidified function: load
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_load,   /* name */
   be_nested_proto(
     26,                          /* nstack */
@@ -2229,7 +2191,7 @@ be_local_closure(class_Tasmota_load,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 7]) {
+    ( &(const struct bproto*[ 6]) {
       be_nested_proto(
         6,                          /* nstack */
         1,                          /* argc */
@@ -2237,7 +2199,7 @@ be_local_closure(class_Tasmota_load,   /* name */
         0,                          /* has upvals */
         NULL,                       /* no upvals */
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 4]) {     /* constants */
         /* K0   */  be_nested_str(sys),
@@ -2270,7 +2232,7 @@ be_local_closure(class_Tasmota_load,   /* name */
         0,                          /* has upvals */
         NULL,                       /* no upvals */
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 4]) {     /* constants */
         /* K0   */  be_nested_str(sys),
@@ -2303,7 +2265,7 @@ be_local_closure(class_Tasmota_load,   /* name */
         0,                          /* has upvals */
         NULL,                       /* no upvals */
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 8]) {     /* constants */
         /* K0   */  be_nested_str(r),
@@ -2370,7 +2332,7 @@ be_local_closure(class_Tasmota_load,   /* name */
         0,                          /* has upvals */
         NULL,                       /* no upvals */
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 2]) {     /* constants */
         /* K0   */  be_nested_str(path),
@@ -2403,7 +2365,7 @@ be_local_closure(class_Tasmota_load,   /* name */
         0,                          /* has upvals */
         NULL,                       /* no upvals */
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 2]) {     /* constants */
         /* K0   */  be_nested_str(file),
@@ -2446,7 +2408,7 @@ be_local_closure(class_Tasmota_load,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 4]) {     /* constants */
         /* K0   */  be_nested_str(BRY_X3A_X20failed_X20to_X20run_X20compiled_X20code_X20_X28_X25s_X20_X2D_X20_X25s_X29),
@@ -2489,7 +2451,6 @@ be_local_closure(class_Tasmota_load,   /* name */
           0x80040200,  //  001D  RET	1	R1
         })
       ),
-    &be_class_Tasmota, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[20]) {     /* constants */
@@ -2690,7 +2651,6 @@ be_local_closure(class_Tasmota_load,   /* name */
 /********************************************************************
 ** Solidified function: urlfetch_cmd
 ********************************************************************/
-extern const bclass be_class_Tasmota;
 be_local_closure(class_Tasmota_urlfetch_cmd,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -2699,7 +2659,7 @@ be_local_closure(class_Tasmota_urlfetch_cmd,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tasmota, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str(string),
