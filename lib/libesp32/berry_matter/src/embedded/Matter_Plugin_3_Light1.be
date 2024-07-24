@@ -25,7 +25,9 @@ import matter
 
 class Matter_Plugin_Light1 : Matter_Plugin_Light0
   static var TYPE = "light1"                                # name of the plug-in in json
-  static var DISPLAY_NAME = "Light 1 Dimmer"                        # display name of the plug-in
+  static var DISPLAY_NAME = "Light 1 Dimmer"                # display name of the plug-in
+  static var ARG  = "light"                         # additional argument name (or empty if none)
+  static var ARG_HINT = "(opt) Light number"
   # static var UPDATE_TIME = 250                      # update every 250ms
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     # 0x001D: inherited                                     # Descriptor Cluster 9.5 p.453
@@ -46,13 +48,14 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
   # var tasmota_relay_index                             # Relay number in Tasmota (1 based), nil for internal light
   # var shadow_onoff                                  # (bool) status of the light power on/off
+  # var light_index                                   # index number when using `light.get()` and `light.set()`
   var shadow_bri                                    # (int 0..254) brightness before Gamma correction - as per Matter 255 is not allowed
 
   #############################################################
   # Constructor
   def init(device, endpoint, arguments)
-    super(self).init(device, endpoint, arguments)
     self.shadow_bri = 0
+    super(self).init(device, endpoint, arguments)
   end
 
   #############################################################
@@ -64,6 +67,20 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
     if self.BRIDGE
       self.tasmota_relay_index = int(config.find(self.ARG #-'relay'-#, nil))
       if (self.tasmota_relay_index != nil && self.tasmota_relay_index <= 0)    self.tasmota_relay_index = 1    end
+    else
+      if (self.tasmota_relay_index == nil) && (self.TYPE == "light1")   # only if `light1` and not for subclasses
+        var light_index_arg = config.find(self.ARG #-'light'-#)
+        if (light_index_arg == nil)
+          if (tasmota.get_option(68) == 0)    # if default mode, and `SO68 0`, check if we have split RGB/W
+            import light
+            if (light.get(1) != nil)
+              self.light_index = 1                        # default value is `0` from superclass
+            end
+          end
+        else
+          self.light_index = int(light_index_arg) - 1     # internal is 0-based
+        end
+      end
     end
   end
 
@@ -73,7 +90,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   def update_shadow()
     if !self.VIRTUAL && !self.BRIDGE
       import light
-      var light_status = light.get()
+      var light_status = light.get(self.light_index)
       if light_status != nil
         var pow = light_status.find('power', nil)
         if pow != self.shadow_onoff
@@ -121,9 +138,9 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
       import light
       var bri_255 = tasmota.scale_uint(bri_254, 0, 254, 0, 255)
       if pow == nil
-        light.set({'bri': bri_255})
+        light.set({'bri': bri_255}, self.light_index)
       else
-        light.set({'bri': bri_255, 'power': pow})
+        light.set({'bri': bri_255, 'power': pow}, self.light_index)
       end
       self.update_shadow()
     end

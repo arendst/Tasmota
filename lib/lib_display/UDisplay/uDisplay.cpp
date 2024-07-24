@@ -2196,6 +2196,7 @@ void uDisplay::pushColorsMono(uint16_t *data, uint16_t len, bool rgb16_swap) {
   uint16_t rgb16_to_mono_mask = rgb16_swap ? RGB16_SWAP_TO_MONO : RGB16_TO_MONO;
 
   for (uint32_t y = seta_yp1; y < seta_yp2; y++) {
+    seta_yp1++;
     for (uint32_t x = seta_xp1; x < seta_xp2; x++) {
       uint16_t color = *data++;
       if (bpp == 1) color = (color & rgb16_to_mono_mask) ? 1 : 0;
