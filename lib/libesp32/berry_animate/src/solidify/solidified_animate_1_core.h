@@ -9,7 +9,6 @@ extern const bclass be_class_Animate_core;
 /********************************************************************
 ** Solidified function: clear
 ********************************************************************/
-extern const bclass be_class_Animate_core;
 be_local_closure(class_Animate_core_clear,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Animate_core_clear,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_core, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(stop),
@@ -43,7 +42,6 @@ be_local_closure(class_Animate_core_clear,   /* name */
 /********************************************************************
 ** Solidified function: set_strip_bri
 ********************************************************************/
-extern const bclass be_class_Animate_core;
 be_local_closure(class_Animate_core_set_strip_bri,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -52,7 +50,7 @@ be_local_closure(class_Animate_core_set_strip_bri,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_core, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(strip),
@@ -86,7 +84,6 @@ be_local_closure(class_Animate_core_set_strip_bri,   /* name */
 /********************************************************************
 ** Solidified function: remove_painter
 ********************************************************************/
-extern const bclass be_class_Animate_core;
 be_local_closure(class_Animate_core_remove_painter,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -95,7 +92,7 @@ be_local_closure(class_Animate_core_remove_painter,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_core, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(painters),
@@ -128,7 +125,6 @@ be_local_closure(class_Animate_core_remove_painter,   /* name */
 /********************************************************************
 ** Solidified function: stop
 ********************************************************************/
-extern const bclass be_class_Animate_core;
 be_local_closure(class_Animate_core_stop,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -137,7 +133,7 @@ be_local_closure(class_Animate_core_stop,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_core, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(running),
@@ -180,7 +176,6 @@ be_local_closure(class_Animate_core_stop,   /* name */
 /********************************************************************
 ** Solidified function: get_bri
 ********************************************************************/
-extern const bclass be_class_Animate_core;
 be_local_closure(class_Animate_core_get_bri,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -189,7 +184,7 @@ be_local_closure(class_Animate_core_get_bri,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_core, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(bri),
@@ -208,7 +203,6 @@ be_local_closure(class_Animate_core_get_bri,   /* name */
 /********************************************************************
 ** Solidified function: set_bri
 ********************************************************************/
-extern const bclass be_class_Animate_core;
 be_local_closure(class_Animate_core_set_bri,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -217,7 +211,7 @@ be_local_closure(class_Animate_core_set_bri,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_core, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(bri),
@@ -239,7 +233,6 @@ be_local_closure(class_Animate_core_set_bri,   /* name */
 /********************************************************************
 ** Solidified function: add_painter
 ********************************************************************/
-extern const bclass be_class_Animate_core;
 be_local_closure(class_Animate_core_add_painter,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -248,7 +241,7 @@ be_local_closure(class_Animate_core_add_painter,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_core, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(painters),
@@ -279,7 +272,6 @@ be_local_closure(class_Animate_core_add_painter,   /* name */
 /********************************************************************
 ** Solidified function: fast_loop
 ********************************************************************/
-extern const bclass be_class_Animate_core;
 be_local_closure(class_Animate_core_fast_loop,   /* name */
   be_nested_proto(
     13,                          /* nstack */
@@ -288,7 +280,7 @@ be_local_closure(class_Animate_core_fast_loop,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_core, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[28]) {     /* constants */
     /* K0   */  be_nested_str_weak(running),
@@ -416,7 +408,6 @@ be_local_closure(class_Animate_core_fast_loop,   /* name */
 /********************************************************************
 ** Solidified function: remove_animator
 ********************************************************************/
-extern const bclass be_class_Animate_core;
 be_local_closure(class_Animate_core_remove_animator,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -425,7 +416,7 @@ be_local_closure(class_Animate_core_remove_animator,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_core, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(animators),
@@ -458,7 +449,6 @@ be_local_closure(class_Animate_core_remove_animator,   /* name */
 /********************************************************************
 ** Solidified function: animate
 ********************************************************************/
-extern const bclass be_class_Animate_core;
 be_local_closure(class_Animate_core_animate,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -467,7 +457,7 @@ be_local_closure(class_Animate_core_animate,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_core, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(animate),
@@ -483,7 +473,6 @@ be_local_closure(class_Animate_core_animate,   /* name */
 /********************************************************************
 ** Solidified function: set_current
 ********************************************************************/
-extern const bclass be_class_Animate_core;
 be_local_closure(class_Animate_core_set_current,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -492,7 +481,7 @@ be_local_closure(class_Animate_core_set_current,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_core, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(global),
@@ -513,7 +502,6 @@ be_local_closure(class_Animate_core_set_current,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Animate_core;
 be_local_closure(class_Animate_core_init,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -522,7 +510,7 @@ be_local_closure(class_Animate_core_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 1]) {
       be_nested_proto(
         2,                          /* nstack */
         0,                          /* argc */
@@ -532,7 +520,7 @@ be_local_closure(class_Animate_core_init,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str_weak(fast_loop),
@@ -546,7 +534,6 @@ be_local_closure(class_Animate_core_init,   /* name */
           0x80000000,  //  0003  RET	0
         })
       ),
-    &be_class_Animate_core, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[15]) {     /* constants */
@@ -615,7 +602,6 @@ be_local_closure(class_Animate_core_init,   /* name */
 /********************************************************************
 ** Solidified function: set_cb
 ********************************************************************/
-extern const bclass be_class_Animate_core;
 be_local_closure(class_Animate_core_set_cb,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -624,7 +610,7 @@ be_local_closure(class_Animate_core_set_cb,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_core, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(obj),
@@ -645,7 +631,6 @@ be_local_closure(class_Animate_core_set_cb,   /* name */
 /********************************************************************
 ** Solidified function: set_back_color
 ********************************************************************/
-extern const bclass be_class_Animate_core;
 be_local_closure(class_Animate_core_set_back_color,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -654,7 +639,7 @@ be_local_closure(class_Animate_core_set_back_color,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_core, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(back_color),
@@ -673,7 +658,6 @@ be_local_closure(class_Animate_core_set_back_color,   /* name */
 /********************************************************************
 ** Solidified function: add_background_animator
 ********************************************************************/
-extern const bclass be_class_Animate_core;
 be_local_closure(class_Animate_core_add_background_animator,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -682,7 +666,7 @@ be_local_closure(class_Animate_core_add_background_animator,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_core, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(set_cb),
@@ -709,7 +693,6 @@ be_local_closure(class_Animate_core_add_background_animator,   /* name */
 /********************************************************************
 ** Solidified function: add_animator
 ********************************************************************/
-extern const bclass be_class_Animate_core;
 be_local_closure(class_Animate_core_add_animator,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -718,7 +701,7 @@ be_local_closure(class_Animate_core_add_animator,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_core, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(animators),
@@ -749,7 +732,6 @@ be_local_closure(class_Animate_core_add_animator,   /* name */
 /********************************************************************
 ** Solidified function: remove
 ********************************************************************/
-extern const bclass be_class_Animate_core;
 be_local_closure(class_Animate_core_remove,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -758,7 +740,7 @@ be_local_closure(class_Animate_core_remove,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_core, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(clear),
@@ -785,7 +767,6 @@ be_local_closure(class_Animate_core_remove,   /* name */
 /********************************************************************
 ** Solidified function: start
 ********************************************************************/
-extern const bclass be_class_Animate_core;
 be_local_closure(class_Animate_core_start,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -794,7 +775,7 @@ be_local_closure(class_Animate_core_start,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_core, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(running),

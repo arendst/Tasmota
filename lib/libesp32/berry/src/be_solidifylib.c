@@ -114,22 +114,6 @@ static void toidentifier(char *to, const char *p)
     *to = 0;      // final NULL
 }
 
-/* return the parent class of a function, encoded in ptab, or NULL if none */
-static const bclass *m_solidify_get_parentclass(const bproto *pr)
-{
-    const bclass *cla;
-    if (pr->nproto > 0) {
-        cla = (const bclass*) pr->ptab[pr->nproto];
-    } else {
-        cla = (const bclass*) pr->ptab;
-    }
-    if (cla && var_basetype(cla) == BE_CLASS) {
-        return cla;
-    } else {
-        return NULL;
-    }
-}
-
 static void m_solidify_bvalue(bvm *vm, bbool str_literal, const bvalue * value, const char *prefixname, const char *key, void* fout);
 
 static void m_solidify_map(bvm *vm, bbool str_literal, bmap * map, const char *prefixname, void* fout)
@@ -261,15 +245,9 @@ static void m_solidify_bvalue(bvm *vm, bbool str_literal, const bvalue * value, 
             size_t id_len = toidentifier_length(func_name);
             char func_name_id[id_len];
             toidentifier(func_name_id, func_name);
-            /* get parent class name if any */
-            const bclass *parentclass = m_solidify_get_parentclass(clo->proto);
-            const char *parentclass_name = parentclass ? str(parentclass->name) : NULL;
-            const char *actualprefix = parentclass_name ? parentclass_name : prefixname;
-            
-            logfmt("be_const_%sclosure(%s%s%s%s_closure)",
+            logfmt("be_const_%sclosure(%s%s%s_closure)",
                 var_isstatic(value) ? "static_" : "",
-                parentclass_name ? "class_" : "",
-                actualprefix ? actualprefix : "", actualprefix ? "_" : "",
+                prefixname ? prefixname : "", prefixname ? "_" : "",
                 func_name_id);
         }
         break;
@@ -354,10 +332,6 @@ static void m_solidify_proto_inner_class(bvm *vm, bbool str_literal, const bprot
 
 static void m_solidify_proto(bvm *vm, bbool str_literal, const bproto *pr, const char * func_name, int indent, void* fout)
 {
-    /* get parent class name if any */
-    const bclass *parentclass = m_solidify_get_parentclass(pr);
-    const char *parentclass_name = parentclass ? str(parentclass->name) : NULL;
-
     logfmt("%*sbe_nested_proto(\n", indent, "");
     indent += 2;
 
@@ -378,8 +352,7 @@ static void m_solidify_proto(bvm *vm, bbool str_literal, const bproto *pr, const
 
     logfmt("%*s%d,                          /* has sup protos */\n", indent, "", (pr->nproto > 0) ? 1 : 0);
     if (pr->nproto > 0) {
-        // if pr->nproto is not zero, we add a last value that is either NULL or the parent class
-        logfmt("%*s( &(const struct bproto*[%2d]) {\n", indent, "", pr->nproto + 1);    /* one more slot */
+        logfmt("%*s( &(const struct bproto*[%2d]) {\n", indent, "", pr->nproto);
         for (int32_t i = 0; i < pr->nproto; i++) {
             size_t sub_len = strlen(func_name) + 10;
             char sub_name[sub_len];
@@ -387,19 +360,10 @@ static void m_solidify_proto(bvm *vm, bbool str_literal, const bproto *pr, const
             m_solidify_proto(vm, str_literal, pr->ptab[i], sub_name, indent+2, fout);
             logfmt(",\n");
         }
-        if (parentclass_name) {
-            logfmt("%*s&be_class_%s, \n", indent, "", parentclass_name);
-        } else {
-            logfmt("%*sNULL, \n", indent, "");
-        }
         logfmt("%*s}),\n", indent, "");
     } else {
-        if (parentclass_name) {
-            logfmt("%*s&be_class_%s, \n", indent, "", parentclass_name);
-        } else {
-            logfmt("%*sNULL, \n", indent, "");
-        }
-    }   
+        logfmt("%*sNULL,                       /* no sub protos */\n", indent, "");
+    }
 
     logfmt("%*s%d,                          /* has constants */\n", indent, "", (pr->nconst > 0) ? 1 : 0);
     if (pr->nconst > 0) {
@@ -454,22 +418,6 @@ static void m_solidify_closure(bvm *vm, bbool str_literal, const bclosure *clo, 
     bproto *pr = clo->proto;
     const char * func_name = str(pr->name);
 
-    /* get parent class name if any */
-    const bclass *parentclass = m_solidify_get_parentclass(pr);
-    const char *parentclass_name = parentclass ? str(parentclass->name) : NULL;
-    if (parentclass_name) {
-        /* check that the class name is the same as the prefix */
-        /* meaning that we are solidifying a method from its own class */
-        /* if they don't match, then the method is borrowed to another class and we don't export it */
-        char parentclass_prefix[strlen(parentclass_name) + 10];
-        snprintf(parentclass_prefix, sizeof(parentclass_prefix), "class_%s", parentclass_name);
-        if (strcmp(parentclass_prefix, prefixname) != 0) {
-            logfmt("// Borrowed method '%s' from class '%s'\n", func_name, parentclass_prefix);
-            logfmt("extern bclosure *%s_%s;\n", parentclass_prefix, func_name);
-            return;
-        }
-    }
-
     if (clo->nupvals > 0) {
         logfmt("--> Unsupported upvals in closure <---");
         // be_raise(vm, "internal_error", "Unsupported upvals in closure");
@@ -483,11 +431,6 @@ static void m_solidify_closure(bvm *vm, bbool str_literal, const bclosure *clo, 
     logfmt("/********************************************************************\n");
     logfmt("** Solidified function: %s\n", func_name);
     logfmt("********************************************************************/\n");
-
-    if (parentclass_name) {
-        /* declare exten so we can have a pointer */
-        logfmt("extern const bclass be_class_%s;\n", parentclass_name);
-    }
 
     {
         size_t id_len = toidentifier_length(func_name);

@@ -9,7 +9,6 @@ extern const bclass be_class_Matter_Plugin_Aggregator;
 /********************************************************************
 ** Solidified function: read_attribute
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Aggregator;
 be_local_closure(class_Matter_Plugin_Aggregator_read_attribute,   /* name */
   be_nested_proto(
     16,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Matter_Plugin_Aggregator_read_attribute,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Aggregator, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[18]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -125,7 +124,6 @@ be_local_closure(class_Matter_Plugin_Aggregator_read_attribute,   /* name */
 /********************************************************************
 ** Solidified function: invoke_request
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Aggregator;
 be_local_closure(class_Matter_Plugin_Aggregator_invoke_request,   /* name */
   be_nested_proto(
     13,                          /* nstack */
@@ -134,7 +132,7 @@ be_local_closure(class_Matter_Plugin_Aggregator_invoke_request,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Aggregator, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),

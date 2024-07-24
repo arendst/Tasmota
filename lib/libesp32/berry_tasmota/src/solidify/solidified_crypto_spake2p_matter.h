@@ -9,7 +9,6 @@ extern const bclass be_class_SPAKE2P_Matter;
 /********************************************************************
 ** Solidified function: compute_pB
 ********************************************************************/
-extern const bclass be_class_SPAKE2P_Matter;
 be_local_closure(class_SPAKE2P_Matter_compute_pB,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_SPAKE2P_Matter_compute_pB,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_SPAKE2P_Matter, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(crypto),
@@ -69,7 +68,6 @@ extern const bclass be_class_SPAKE_Hasher;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_SPAKE_Hasher;
 be_local_closure(class_SPAKE_Hasher_init,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -78,7 +76,7 @@ be_local_closure(class_SPAKE_Hasher_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_SPAKE_Hasher, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(crypto),
@@ -102,7 +100,6 @@ be_local_closure(class_SPAKE_Hasher_init,   /* name */
 /********************************************************************
 ** Solidified function: add_item
 ********************************************************************/
-extern const bclass be_class_SPAKE_Hasher;
 be_local_closure(class_SPAKE_Hasher_add_item,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -111,7 +108,7 @@ be_local_closure(class_SPAKE_Hasher_add_item,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_SPAKE_Hasher, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(size),
@@ -153,7 +150,6 @@ be_local_closure(class_SPAKE_Hasher_add_item,   /* name */
 /********************************************************************
 ** Solidified function: out
 ********************************************************************/
-extern const bclass be_class_SPAKE_Hasher;
 be_local_closure(class_SPAKE_Hasher_out,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -162,7 +158,7 @@ be_local_closure(class_SPAKE_Hasher_out,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_SPAKE_Hasher, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(hash),
@@ -200,7 +196,6 @@ be_local_class(SPAKE_Hasher,
 /********************************************************************
 ** Solidified function: compute_TT_hash
 ********************************************************************/
-extern const bclass be_class_SPAKE2P_Matter;
 be_local_closure(class_SPAKE2P_Matter_compute_TT_hash,   /* name */
   be_nested_proto(
     14,                          /* nstack */
@@ -209,7 +204,7 @@ be_local_closure(class_SPAKE2P_Matter_compute_TT_hash,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_SPAKE2P_Matter, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[29]) {     /* constants */
     /* K0   */  be_const_class(be_class_SPAKE_Hasher),
@@ -369,7 +364,6 @@ be_local_closure(class_SPAKE2P_Matter_compute_TT_hash,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_SPAKE2P_Matter;
 be_local_closure(class_SPAKE2P_Matter_init,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -378,7 +372,7 @@ be_local_closure(class_SPAKE2P_Matter_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_SPAKE2P_Matter, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(M),
@@ -418,7 +412,6 @@ be_local_closure(class_SPAKE2P_Matter_init,   /* name */
 /********************************************************************
 ** Solidified function: compute_pA
 ********************************************************************/
-extern const bclass be_class_SPAKE2P_Matter;
 be_local_closure(class_SPAKE2P_Matter_compute_pA,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -427,7 +420,7 @@ be_local_closure(class_SPAKE2P_Matter_compute_pA,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_SPAKE2P_Matter, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(crypto),
@@ -476,7 +469,6 @@ be_local_closure(class_SPAKE2P_Matter_compute_pA,   /* name */
 /********************************************************************
 ** Solidified function: set_context
 ********************************************************************/
-extern const bclass be_class_SPAKE2P_Matter;
 be_local_closure(class_SPAKE2P_Matter_set_context,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -485,7 +477,7 @@ be_local_closure(class_SPAKE2P_Matter_set_context,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_SPAKE2P_Matter, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(Context),
@@ -520,7 +512,6 @@ be_local_closure(class_SPAKE2P_Matter_set_context,   /* name */
 /********************************************************************
 ** Solidified function: compute_ZV_verifier
 ********************************************************************/
-extern const bclass be_class_SPAKE2P_Matter;
 be_local_closure(class_SPAKE2P_Matter_compute_ZV_verifier,   /* name */
   be_nested_proto(
     11,                          /* nstack */
@@ -529,7 +520,7 @@ be_local_closure(class_SPAKE2P_Matter_compute_ZV_verifier,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_SPAKE2P_Matter, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
     /* K0   */  be_nested_str_weak(crypto),
@@ -584,7 +575,6 @@ be_local_closure(class_SPAKE2P_Matter_compute_ZV_verifier,   /* name */
 /********************************************************************
 ** Solidified function: compute_ZV_prover
 ********************************************************************/
-extern const bclass be_class_SPAKE2P_Matter;
 be_local_closure(class_SPAKE2P_Matter_compute_ZV_prover,   /* name */
   be_nested_proto(
     11,                          /* nstack */
@@ -593,7 +583,7 @@ be_local_closure(class_SPAKE2P_Matter_compute_ZV_prover,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_SPAKE2P_Matter, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[13]) {     /* constants */
     /* K0   */  be_nested_str_weak(crypto),

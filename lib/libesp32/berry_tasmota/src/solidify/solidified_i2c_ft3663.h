@@ -9,7 +9,6 @@ extern const bclass be_class_FT3663;
 /********************************************************************
 ** Solidified function: every_100ms
 ********************************************************************/
-extern const bclass be_class_FT3663;
 be_local_closure(class_FT3663_every_100ms,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_FT3663_every_100ms,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_FT3663, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(wire),
@@ -41,7 +40,6 @@ be_local_closure(class_FT3663_every_100ms,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_FT3663;
 be_local_closure(class_FT3663_init,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -50,7 +48,7 @@ be_local_closure(class_FT3663_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_FT3663, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str(init),
@@ -128,7 +126,6 @@ be_local_closure(class_FT3663_init,   /* name */
 /********************************************************************
 ** Solidified function: ts_loop
 ********************************************************************/
-extern const bclass be_class_FT3663;
 be_local_closure(class_FT3663_ts_loop,   /* name */
   be_nested_proto(
     17,                          /* nstack */
@@ -137,7 +134,7 @@ be_local_closure(class_FT3663_ts_loop,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_FT3663, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str(wire),

@@ -15,7 +15,7 @@ be_local_closure(_anonymous_,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(Persist),
@@ -37,7 +37,6 @@ extern const bclass be_class_Persist;
 /********************************************************************
 ** Solidified function: json_fdump_map
 ********************************************************************/
-extern const bclass be_class_Persist;
 be_local_closure(class_Persist_json_fdump_map,   /* name */
   be_nested_proto(
     13,                          /* nstack */
@@ -46,7 +45,7 @@ be_local_closure(class_Persist_json_fdump_map,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Persist, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str(json),
@@ -113,7 +112,6 @@ be_local_closure(class_Persist_json_fdump_map,   /* name */
 /********************************************************************
 ** Solidified function: json_fdump_any
 ********************************************************************/
-extern const bclass be_class_Persist;
 be_local_closure(class_Persist_json_fdump_any,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -122,7 +120,7 @@ be_local_closure(class_Persist_json_fdump_any,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Persist, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str(json),
@@ -170,7 +168,6 @@ be_local_closure(class_Persist_json_fdump_any,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Persist;
 be_local_closure(class_Persist_init,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -179,7 +176,7 @@ be_local_closure(class_Persist_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Persist, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(_p),
@@ -206,7 +203,6 @@ be_local_closure(class_Persist_init,   /* name */
 /********************************************************************
 ** Solidified function: save
 ********************************************************************/
-extern const bclass be_class_Persist;
 be_local_closure(class_Persist_save,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -215,7 +211,7 @@ be_local_closure(class_Persist_save,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Persist, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str(_dirty),
@@ -288,7 +284,6 @@ be_local_closure(class_Persist_save,   /* name */
 /********************************************************************
 ** Solidified function: zero
 ********************************************************************/
-extern const bclass be_class_Persist;
 be_local_closure(class_Persist_zero,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -297,7 +292,7 @@ be_local_closure(class_Persist_zero,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Persist, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(_p),
@@ -321,7 +316,6 @@ be_local_closure(class_Persist_zero,   /* name */
 /********************************************************************
 ** Solidified function: find
 ********************************************************************/
-extern const bclass be_class_Persist;
 be_local_closure(class_Persist_find,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -330,7 +324,7 @@ be_local_closure(class_Persist_find,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Persist, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(_p),
@@ -354,7 +348,6 @@ be_local_closure(class_Persist_find,   /* name */
 /********************************************************************
 ** Solidified function: has
 ********************************************************************/
-extern const bclass be_class_Persist;
 be_local_closure(class_Persist_has,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -363,7 +356,7 @@ be_local_closure(class_Persist_has,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Persist, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(_p),
@@ -386,7 +379,6 @@ be_local_closure(class_Persist_has,   /* name */
 /********************************************************************
 ** Solidified function: json_fdump_list
 ********************************************************************/
-extern const bclass be_class_Persist;
 be_local_closure(class_Persist_json_fdump_list,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -395,7 +387,7 @@ be_local_closure(class_Persist_json_fdump_list,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Persist, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str(json),
@@ -444,7 +436,6 @@ be_local_closure(class_Persist_json_fdump_list,   /* name */
 /********************************************************************
 ** Solidified function: member
 ********************************************************************/
-extern const bclass be_class_Persist;
 be_local_closure(class_Persist_member,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -453,7 +444,7 @@ be_local_closure(class_Persist_member,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Persist, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(_p),
@@ -476,7 +467,6 @@ be_local_closure(class_Persist_member,   /* name */
 /********************************************************************
 ** Solidified function: setmember
 ********************************************************************/
-extern const bclass be_class_Persist;
 be_local_closure(class_Persist_setmember,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -485,7 +475,7 @@ be_local_closure(class_Persist_setmember,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Persist, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(_p),
@@ -508,7 +498,6 @@ be_local_closure(class_Persist_setmember,   /* name */
 /********************************************************************
 ** Solidified function: contains
 ********************************************************************/
-extern const bclass be_class_Persist;
 be_local_closure(class_Persist_contains,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -517,7 +506,7 @@ be_local_closure(class_Persist_contains,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Persist, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(_p),
@@ -540,7 +529,6 @@ be_local_closure(class_Persist_contains,   /* name */
 /********************************************************************
 ** Solidified function: json_fdump
 ********************************************************************/
-extern const bclass be_class_Persist;
 be_local_closure(class_Persist_json_fdump,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -549,7 +537,7 @@ be_local_closure(class_Persist_json_fdump,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Persist, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str(json),
@@ -583,7 +571,6 @@ be_local_closure(class_Persist_json_fdump,   /* name */
 /********************************************************************
 ** Solidified function: load
 ********************************************************************/
-extern const bclass be_class_Persist;
 be_local_closure(class_Persist_load,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -592,7 +579,7 @@ be_local_closure(class_Persist_load,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Persist, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str(json),
@@ -669,7 +656,6 @@ be_local_closure(class_Persist_load,   /* name */
 /********************************************************************
 ** Solidified function: remove
 ********************************************************************/
-extern const bclass be_class_Persist;
 be_local_closure(class_Persist_remove,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -678,7 +664,7 @@ be_local_closure(class_Persist_remove,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Persist, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(_p),

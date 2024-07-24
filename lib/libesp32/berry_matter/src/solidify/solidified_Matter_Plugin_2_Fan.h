@@ -9,7 +9,6 @@ extern const bclass be_class_Matter_Plugin_Fan;
 /********************************************************************
 ** Solidified function: set_fan_mode
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Fan;
 be_local_closure(class_Matter_Plugin_Fan_set_fan_mode,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Matter_Plugin_Fan_set_fan_mode,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Fan, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -90,7 +89,6 @@ be_local_closure(class_Matter_Plugin_Fan_set_fan_mode,   /* name */
 /********************************************************************
 ** Solidified function: update_virtual
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Fan;
 be_local_closure(class_Matter_Plugin_Fan_update_virtual,   /* name */
   be_nested_proto(
     13,                          /* nstack */
@@ -99,7 +97,7 @@ be_local_closure(class_Matter_Plugin_Fan_update_virtual,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Fan, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(find),
@@ -165,7 +163,6 @@ be_local_closure(class_Matter_Plugin_Fan_update_virtual,   /* name */
 /********************************************************************
 ** Solidified function: set_fan_speed_pct
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Fan;
 be_local_closure(class_Matter_Plugin_Fan_set_fan_speed_pct,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -174,7 +171,7 @@ be_local_closure(class_Matter_Plugin_Fan_set_fan_speed_pct,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Fan, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -241,7 +238,6 @@ be_local_closure(class_Matter_Plugin_Fan_set_fan_speed_pct,   /* name */
 /********************************************************************
 ** Solidified function: write_attribute
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Fan;
 be_local_closure(class_Matter_Plugin_Fan_write_attribute,   /* name */
   be_nested_proto(
     21,                          /* nstack */
@@ -250,7 +246,7 @@ be_local_closure(class_Matter_Plugin_Fan_write_attribute,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Fan, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[20]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -364,7 +360,6 @@ be_local_closure(class_Matter_Plugin_Fan_write_attribute,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Fan;
 be_local_closure(class_Matter_Plugin_Fan_init,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -373,7 +368,7 @@ be_local_closure(class_Matter_Plugin_Fan_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Fan, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -404,7 +399,6 @@ be_local_closure(class_Matter_Plugin_Fan_init,   /* name */
 /********************************************************************
 ** Solidified function: read_attribute
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Fan;
 be_local_closure(class_Matter_Plugin_Fan_read_attribute,   /* name */
   be_nested_proto(
     12,                          /* nstack */
@@ -413,7 +407,7 @@ be_local_closure(class_Matter_Plugin_Fan_read_attribute,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Fan, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),

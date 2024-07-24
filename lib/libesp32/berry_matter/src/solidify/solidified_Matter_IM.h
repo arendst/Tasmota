@@ -9,7 +9,6 @@ extern const bclass be_class_Matter_IM;
 /********************************************************************
 ** Solidified function: process_write_request
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_process_write_request,   /* name */
   be_nested_proto(
     21,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Matter_IM_process_write_request,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[41]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -220,7 +219,6 @@ be_local_closure(class_Matter_IM_process_write_request,   /* name */
 /********************************************************************
 ** Solidified function: path2raw
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_path2raw,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -229,7 +227,7 @@ be_local_closure(class_Matter_IM_path2raw,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(add),
@@ -358,7 +356,6 @@ be_local_closure(class_Matter_IM_path2raw,   /* name */
 /********************************************************************
 ** Solidified function: attributedata2raw
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_attributedata2raw,   /* name */
   be_nested_proto(
     11,                          /* nstack */
@@ -367,7 +364,7 @@ be_local_closure(class_Matter_IM_attributedata2raw,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(add),
@@ -413,7 +410,6 @@ be_local_closure(class_Matter_IM_attributedata2raw,   /* name */
 /********************************************************************
 ** Solidified function: send_subscribe_update
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_send_subscribe_update,   /* name */
   be_nested_proto(
     13,                          /* nstack */
@@ -422,7 +418,7 @@ be_local_closure(class_Matter_IM_send_subscribe_update,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[24]) {     /* constants */
     /* K0   */  be_nested_str_weak(session),
@@ -526,7 +522,6 @@ be_local_closure(class_Matter_IM_send_subscribe_update,   /* name */
 /********************************************************************
 ** Solidified function: process_read_request_pull
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_process_read_request_pull,   /* name */
   be_nested_proto(
     13,                          /* nstack */
@@ -535,7 +530,7 @@ be_local_closure(class_Matter_IM_process_read_request_pull,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -584,7 +579,6 @@ be_local_closure(class_Matter_IM_process_read_request_pull,   /* name */
 /********************************************************************
 ** Solidified function: process_read_or_subscribe_request_pull
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_process_read_or_subscribe_request_pull,   /* name */
   be_nested_proto(
     16,                          /* nstack */
@@ -593,7 +587,7 @@ be_local_closure(class_Matter_IM_process_read_or_subscribe_request_pull,   /* na
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[25]) {     /* constants */
     /* K0   */  be_nested_str_weak(attributes_requests),
@@ -749,7 +743,6 @@ be_local_closure(class_Matter_IM_process_read_or_subscribe_request_pull,   /* na
 /********************************************************************
 ** Solidified function: process_timed_request
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_process_timed_request,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -758,7 +751,7 @@ be_local_closure(class_Matter_IM_process_timed_request,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -807,7 +800,6 @@ be_local_closure(class_Matter_IM_process_timed_request,   /* name */
 /********************************************************************
 ** Solidified function: every_50ms
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_every_50ms,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -816,7 +808,7 @@ be_local_closure(class_Matter_IM_every_50ms,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(subs_shop),
@@ -838,7 +830,6 @@ be_local_closure(class_Matter_IM_every_50ms,   /* name */
 /********************************************************************
 ** Solidified function: process_invoke_request
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_process_invoke_request,   /* name */
   be_nested_proto(
     19,                          /* nstack */
@@ -847,7 +838,7 @@ be_local_closure(class_Matter_IM_process_invoke_request,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[41]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -1126,7 +1117,6 @@ be_local_closure(class_Matter_IM_process_invoke_request,   /* name */
 /********************************************************************
 ** Solidified function: process_read_or_subscribe_request_event_pull
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_process_read_or_subscribe_request_event_pull,   /* name */
   be_nested_proto(
     24,                          /* nstack */
@@ -1135,7 +1125,7 @@ be_local_closure(class_Matter_IM_process_read_or_subscribe_request_event_pull,  
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[31]) {     /* constants */
     /* K0   */  be_nested_str_weak(event_requests),
@@ -1322,7 +1312,6 @@ be_local_closure(class_Matter_IM_process_read_or_subscribe_request_event_pull,  
 /********************************************************************
 ** Solidified function: send_enqueued
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_send_enqueued,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -1331,7 +1320,7 @@ be_local_closure(class_Matter_IM_send_enqueued,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -1381,7 +1370,6 @@ be_local_closure(class_Matter_IM_send_enqueued,   /* name */
 /********************************************************************
 ** Solidified function: subscribe_request
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_subscribe_request,   /* name */
   be_nested_proto(
     17,                          /* nstack */
@@ -1390,7 +1378,7 @@ be_local_closure(class_Matter_IM_subscribe_request,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[35]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -1537,7 +1525,6 @@ be_local_closure(class_Matter_IM_subscribe_request,   /* name */
 /********************************************************************
 ** Solidified function: send_ack_now
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_send_ack_now,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -1546,7 +1533,7 @@ be_local_closure(class_Matter_IM_send_ack_now,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(session),
@@ -1576,7 +1563,6 @@ be_local_closure(class_Matter_IM_send_ack_now,   /* name */
 /********************************************************************
 ** Solidified function: expire_sendqueue
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_expire_sendqueue,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -1585,7 +1571,7 @@ be_local_closure(class_Matter_IM_expire_sendqueue,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -1633,7 +1619,6 @@ be_local_closure(class_Matter_IM_expire_sendqueue,   /* name */
 /********************************************************************
 ** Solidified function: process_incoming_ack
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_process_incoming_ack,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -1642,7 +1627,7 @@ be_local_closure(class_Matter_IM_process_incoming_ack,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str_weak(find_sendqueue_by_exchangeid),
@@ -1678,7 +1663,6 @@ be_local_closure(class_Matter_IM_process_incoming_ack,   /* name */
 /********************************************************************
 ** Solidified function: remove_sendqueue_by_exchangeid
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_remove_sendqueue_by_exchangeid,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -1687,7 +1671,7 @@ be_local_closure(class_Matter_IM_remove_sendqueue_by_exchangeid,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -1732,7 +1716,6 @@ be_local_closure(class_Matter_IM_remove_sendqueue_by_exchangeid,   /* name */
 /********************************************************************
 ** Solidified function: write_single_attribute_status_to_bytes
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_write_single_attribute_status_to_bytes,   /* name */
   be_nested_proto(
     16,                          /* nstack */
@@ -1741,7 +1724,7 @@ be_local_closure(class_Matter_IM_write_single_attribute_status_to_bytes,   /* na
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[25]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -1868,7 +1851,6 @@ be_local_closure(class_Matter_IM_write_single_attribute_status_to_bytes,   /* na
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -1877,7 +1859,7 @@ be_local_closure(class_Matter_IM_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str_weak(device),
@@ -1928,7 +1910,6 @@ be_local_closure(class_Matter_IM_init,   /* name */
 /********************************************************************
 ** Solidified function: every_second
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_every_second,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -1937,7 +1918,7 @@ be_local_closure(class_Matter_IM_every_second,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(expire_sendqueue),
@@ -1957,7 +1938,6 @@ be_local_closure(class_Matter_IM_every_second,   /* name */
 /********************************************************************
 ** Solidified function: process_invoke_request_solo
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_process_invoke_request_solo,   /* name */
   be_nested_proto(
     15,                          /* nstack */
@@ -1966,7 +1946,7 @@ be_local_closure(class_Matter_IM_process_invoke_request_solo,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[38]) {     /* constants */
     /* K0   */  be_nested_str_weak(msg),
@@ -2208,7 +2188,6 @@ be_local_closure(class_Matter_IM_process_invoke_request_solo,   /* name */
 /********************************************************************
 ** Solidified function: send_subscribe_heartbeat
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_send_subscribe_heartbeat,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -2217,7 +2196,7 @@ be_local_closure(class_Matter_IM_send_subscribe_heartbeat,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[15]) {     /* constants */
     /* K0   */  be_nested_str_weak(session),
@@ -2277,7 +2256,6 @@ be_local_closure(class_Matter_IM_send_subscribe_heartbeat,   /* name */
 /********************************************************************
 ** Solidified function: find_sendqueue_by_exchangeid
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_find_sendqueue_by_exchangeid,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -2286,7 +2264,7 @@ be_local_closure(class_Matter_IM_find_sendqueue_by_exchangeid,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -2328,7 +2306,6 @@ be_local_closure(class_Matter_IM_find_sendqueue_by_exchangeid,   /* name */
 /********************************************************************
 ** Solidified function: process_read_request_solo
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_process_read_request_solo,   /* name */
   be_nested_proto(
     19,                          /* nstack */
@@ -2337,7 +2314,7 @@ be_local_closure(class_Matter_IM_process_read_request_solo,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[52]) {     /* constants */
     /* K0   */  be_nested_str_weak(status),
@@ -2647,7 +2624,6 @@ be_local_closure(class_Matter_IM_process_read_request_solo,   /* name */
 /********************************************************************
 ** Solidified function: parse_event_filters_min_no
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_parse_event_filters_min_no,   /* name */
   be_nested_proto(
     14,                          /* nstack */
@@ -2656,7 +2632,7 @@ be_local_closure(class_Matter_IM_parse_event_filters_min_no,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_const_class(be_class_Matter_IM),
@@ -2733,7 +2709,6 @@ be_local_closure(class_Matter_IM_parse_event_filters_min_no,   /* name */
 /********************************************************************
 ** Solidified function: invokeresponse2raw
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_invokeresponse2raw,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -2742,7 +2717,7 @@ be_local_closure(class_Matter_IM_invokeresponse2raw,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str_weak(add),
@@ -2917,7 +2892,6 @@ be_local_closure(class_Matter_IM_invokeresponse2raw,   /* name */
 /********************************************************************
 ** Solidified function: process_status_response
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_process_status_response,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -2926,7 +2900,7 @@ be_local_closure(class_Matter_IM_process_status_response,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[15]) {     /* constants */
     /* K0   */  be_nested_str_weak(findsubval),
@@ -3000,7 +2974,6 @@ be_local_closure(class_Matter_IM_process_status_response,   /* name */
 /********************************************************************
 ** Solidified function: attributestatus2raw
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_attributestatus2raw,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -3009,7 +2982,7 @@ be_local_closure(class_Matter_IM_attributestatus2raw,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(add),
@@ -3078,7 +3051,6 @@ be_local_closure(class_Matter_IM_attributestatus2raw,   /* name */
 /********************************************************************
 ** Solidified function: read_single_attribute_to_bytes
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_read_single_attribute_to_bytes,   /* name */
   be_nested_proto(
     21,                          /* nstack */
@@ -3087,7 +3059,7 @@ be_local_closure(class_Matter_IM_read_single_attribute_to_bytes,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[31]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -3299,7 +3271,6 @@ be_local_closure(class_Matter_IM_read_single_attribute_to_bytes,   /* name */
 /********************************************************************
 ** Solidified function: send_status
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_send_status,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -3308,7 +3279,7 @@ be_local_closure(class_Matter_IM_send_status,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str_weak(send_queue),
@@ -3337,7 +3308,6 @@ be_local_closure(class_Matter_IM_send_status,   /* name */
 /********************************************************************
 ** Solidified function: process_incoming
 ********************************************************************/
-extern const bclass be_class_Matter_IM;
 be_local_closure(class_Matter_IM_process_incoming,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -3346,7 +3316,7 @@ be_local_closure(class_Matter_IM_process_incoming,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_IM, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[21]) {     /* constants */
     /* K0   */  be_nested_str_weak(opcode),

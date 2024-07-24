@@ -9,7 +9,6 @@ extern const bclass be_class_zb_coord;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_zb_coord;
 be_local_closure(class_zb_coord_init,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_zb_coord_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_zb_coord, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(init),
@@ -41,7 +40,6 @@ be_local_closure(class_zb_coord_init,   /* name */
 /********************************************************************
 ** Solidified function: add_handler
 ********************************************************************/
-extern const bclass be_class_zb_coord;
 be_local_closure(class_zb_coord_add_handler,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -50,7 +48,7 @@ be_local_closure(class_zb_coord_add_handler,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_zb_coord, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(instance),
@@ -97,7 +95,6 @@ be_local_closure(class_zb_coord_add_handler,   /* name */
 /********************************************************************
 ** Solidified function: dispatch
 ********************************************************************/
-extern const bclass be_class_zb_coord;
 be_local_closure(class_zb_coord_dispatch,   /* name */
   be_nested_proto(
     19,                          /* nstack */
@@ -106,7 +103,7 @@ be_local_closure(class_zb_coord_dispatch,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_zb_coord, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_nested_str_weak(_handlers),
@@ -206,7 +203,6 @@ be_local_closure(class_zb_coord_dispatch,   /* name */
 /********************************************************************
 ** Solidified function: remove_handler
 ********************************************************************/
-extern const bclass be_class_zb_coord;
 be_local_closure(class_zb_coord_remove_handler,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -215,7 +211,7 @@ be_local_closure(class_zb_coord_remove_handler,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_zb_coord, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(_handlers),

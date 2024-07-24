@@ -9,7 +9,6 @@ extern const bclass be_class_Matter_MessageHandler;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Matter_MessageHandler;
 be_local_closure(class_Matter_MessageHandler_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Matter_MessageHandler_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_MessageHandler, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(device),
@@ -64,7 +63,6 @@ be_local_closure(class_Matter_MessageHandler_init,   /* name */
 /********************************************************************
 ** Solidified function: send_encrypted_ack
 ********************************************************************/
-extern const bclass be_class_Matter_MessageHandler;
 be_local_closure(class_Matter_MessageHandler_send_encrypted_ack,   /* name */
   be_nested_proto(
     11,                          /* nstack */
@@ -73,7 +71,7 @@ be_local_closure(class_Matter_MessageHandler_send_encrypted_ack,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_MessageHandler, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[15]) {     /* constants */
     /* K0   */  be_nested_str_weak(x_flag_r),
@@ -136,7 +134,6 @@ be_local_closure(class_Matter_MessageHandler_send_encrypted_ack,   /* name */
 /********************************************************************
 ** Solidified function: msg_received
 ********************************************************************/
-extern const bclass be_class_Matter_MessageHandler;
 be_local_closure(class_Matter_MessageHandler_msg_received,   /* name */
   be_nested_proto(
     18,                          /* nstack */
@@ -145,7 +142,7 @@ be_local_closure(class_Matter_MessageHandler_msg_received,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_MessageHandler, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[65]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -560,7 +557,6 @@ be_local_closure(class_Matter_MessageHandler_msg_received,   /* name */
 /********************************************************************
 ** Solidified function: send_response_frame
 ********************************************************************/
-extern const bclass be_class_Matter_MessageHandler;
 be_local_closure(class_Matter_MessageHandler_send_response_frame,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -569,7 +565,7 @@ be_local_closure(class_Matter_MessageHandler_send_response_frame,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_MessageHandler, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(device),
@@ -592,7 +588,6 @@ be_local_closure(class_Matter_MessageHandler_send_response_frame,   /* name */
 /********************************************************************
 ** Solidified function: send_simple_ack
 ********************************************************************/
-extern const bclass be_class_Matter_MessageHandler;
 be_local_closure(class_Matter_MessageHandler_send_simple_ack,   /* name */
   be_nested_proto(
     11,                          /* nstack */
@@ -601,7 +596,7 @@ be_local_closure(class_Matter_MessageHandler_send_simple_ack,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_MessageHandler, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_nested_str_weak(x_flag_r),
@@ -663,7 +658,6 @@ be_local_closure(class_Matter_MessageHandler_send_simple_ack,   /* name */
 /********************************************************************
 ** Solidified function: every_50ms
 ********************************************************************/
-extern const bclass be_class_Matter_MessageHandler;
 be_local_closure(class_Matter_MessageHandler_every_50ms,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -672,7 +666,7 @@ be_local_closure(class_Matter_MessageHandler_every_50ms,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_MessageHandler, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str_weak(im),
@@ -694,7 +688,6 @@ be_local_closure(class_Matter_MessageHandler_every_50ms,   /* name */
 /********************************************************************
 ** Solidified function: every_second
 ********************************************************************/
-extern const bclass be_class_Matter_MessageHandler;
 be_local_closure(class_Matter_MessageHandler_every_second,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -703,7 +696,7 @@ be_local_closure(class_Matter_MessageHandler_every_second,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_MessageHandler, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(commissioning),

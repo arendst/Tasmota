@@ -9,7 +9,6 @@ extern const bclass be_class_Partition_otadata;
 /********************************************************************
 ** Solidified function: save
 ********************************************************************/
-extern const bclass be_class_Partition_otadata;
 be_local_closure(class_Partition_otadata_save,   /* name */
   be_nested_proto(
     11,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Partition_otadata_save,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition_otadata, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str(flash),
@@ -98,7 +97,6 @@ be_local_closure(class_Partition_otadata_save,   /* name */
 /********************************************************************
 ** Solidified function: tostring
 ********************************************************************/
-extern const bclass be_class_Partition_otadata;
 be_local_closure(class_Partition_otadata_tostring,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -107,7 +105,7 @@ be_local_closure(class_Partition_otadata_tostring,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition_otadata, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str(_X3Cinstance_X3A_X20Partition_otadata_X28ota_active_X3A_X25s_X2C_X20ota_seq_X3D_X5B_X25d_X2C_X25d_X5D_X2C_X20ota_max_X3D_X25d_X29_X3E),
@@ -147,7 +145,6 @@ be_local_closure(class_Partition_otadata_tostring,   /* name */
 /********************************************************************
 ** Solidified function: _validate
 ********************************************************************/
-extern const bclass be_class_Partition_otadata;
 be_local_closure(class_Partition_otadata__validate,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -156,7 +153,7 @@ be_local_closure(class_Partition_otadata__validate,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition_otadata, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str(active_otadata),
@@ -214,7 +211,6 @@ be_local_closure(class_Partition_otadata__validate,   /* name */
 /********************************************************************
 ** Solidified function: set_ota_max
 ********************************************************************/
-extern const bclass be_class_Partition_otadata;
 be_local_closure(class_Partition_otadata_set_ota_max,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -223,7 +219,7 @@ be_local_closure(class_Partition_otadata_set_ota_max,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition_otadata, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(maxota),
@@ -242,7 +238,6 @@ be_local_closure(class_Partition_otadata_set_ota_max,   /* name */
 /********************************************************************
 ** Solidified function: load
 ********************************************************************/
-extern const bclass be_class_Partition_otadata;
 be_local_closure(class_Partition_otadata_load,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -251,7 +246,7 @@ be_local_closure(class_Partition_otadata_load,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition_otadata, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str(flash),
@@ -324,7 +319,6 @@ be_local_closure(class_Partition_otadata_load,   /* name */
 /********************************************************************
 ** Solidified function: crc32_ota_seq
 ********************************************************************/
-extern const bclass be_class_Partition_otadata;
 be_local_closure(class_Partition_otadata_crc32_ota_seq,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -333,7 +327,7 @@ be_local_closure(class_Partition_otadata_crc32_ota_seq,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition_otadata, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_const_class(be_class_Partition_otadata),
@@ -365,7 +359,6 @@ be_local_closure(class_Partition_otadata_crc32_ota_seq,   /* name */
 /********************************************************************
 ** Solidified function: set_active
 ********************************************************************/
-extern const bclass be_class_Partition_otadata;
 be_local_closure(class_Partition_otadata_set_active,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -374,7 +367,7 @@ be_local_closure(class_Partition_otadata_set_active,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition_otadata, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -437,7 +430,6 @@ be_local_closure(class_Partition_otadata_set_active,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Partition_otadata;
 be_local_closure(class_Partition_otadata_init,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -446,7 +438,7 @@ be_local_closure(class_Partition_otadata_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition_otadata, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(maxota),
@@ -515,7 +507,6 @@ extern const bclass be_class_Partition;
 /********************************************************************
 ** Solidified function: save
 ********************************************************************/
-extern const bclass be_class_Partition;
 be_local_closure(class_Partition_save,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -524,7 +515,7 @@ be_local_closure(class_Partition_save,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(flash),
@@ -561,7 +552,6 @@ be_local_closure(class_Partition_save,   /* name */
 /********************************************************************
 ** Solidified function: load
 ********************************************************************/
-extern const bclass be_class_Partition;
 be_local_closure(class_Partition_load,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -570,7 +560,7 @@ be_local_closure(class_Partition_load,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(flash),
@@ -596,7 +586,6 @@ be_local_closure(class_Partition_load,   /* name */
 /********************************************************************
 ** Solidified function: get_active
 ********************************************************************/
-extern const bclass be_class_Partition;
 be_local_closure(class_Partition_get_active,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -605,7 +594,7 @@ be_local_closure(class_Partition_get_active,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(otadata),
@@ -626,7 +615,6 @@ be_local_closure(class_Partition_get_active,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Partition;
 be_local_closure(class_Partition_init,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -635,7 +623,7 @@ be_local_closure(class_Partition_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_nested_str(slots),
@@ -665,7 +653,6 @@ be_local_closure(class_Partition_init,   /* name */
 /********************************************************************
 ** Solidified function: parse
 ********************************************************************/
-extern const bclass be_class_Partition;
 be_local_closure(class_Partition_parse,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -674,7 +661,7 @@ be_local_closure(class_Partition_parse,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -758,7 +745,6 @@ be_local_closure(class_Partition_parse,   /* name */
 /********************************************************************
 ** Solidified function: get_max_flash_size_k
 ********************************************************************/
-extern const bclass be_class_Partition;
 be_local_closure(class_Partition_get_max_flash_size_k,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -767,7 +753,7 @@ be_local_closure(class_Partition_get_max_flash_size_k,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(tasmota),
@@ -809,7 +795,6 @@ be_local_closure(class_Partition_get_max_flash_size_k,   /* name */
 /********************************************************************
 ** Solidified function: resize_max_flash_size_k
 ********************************************************************/
-extern const bclass be_class_Partition;
 be_local_closure(class_Partition_resize_max_flash_size_k,   /* name */
   be_nested_proto(
     16,                          /* nstack */
@@ -818,7 +803,7 @@ be_local_closure(class_Partition_resize_max_flash_size_k,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[16]) {     /* constants */
     /* K0   */  be_nested_str(tasmota),
@@ -944,7 +929,6 @@ be_local_closure(class_Partition_resize_max_flash_size_k,   /* name */
 /********************************************************************
 ** Solidified function: get_flash_definition_sector
 ********************************************************************/
-extern const bclass be_class_Partition;
 be_local_closure(class_Partition_get_flash_definition_sector,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -953,7 +937,7 @@ be_local_closure(class_Partition_get_flash_definition_sector,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_const_class(be_class_Partition),
@@ -1002,7 +986,6 @@ be_local_closure(class_Partition_get_flash_definition_sector,   /* name */
 /********************************************************************
 ** Solidified function: resize_fs_to_max
 ********************************************************************/
-extern const bclass be_class_Partition;
 be_local_closure(class_Partition_resize_fs_to_max,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -1011,7 +994,7 @@ be_local_closure(class_Partition_resize_fs_to_max,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_nested_str(get_unallocated_k),
@@ -1093,7 +1076,6 @@ be_local_closure(class_Partition_resize_fs_to_max,   /* name */
 /********************************************************************
 ** Solidified function: switch_factory
 ********************************************************************/
-extern const bclass be_class_Partition;
 be_local_closure(class_Partition_switch_factory,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -1102,7 +1084,7 @@ be_local_closure(class_Partition_switch_factory,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(flash),
@@ -1125,7 +1107,6 @@ be_local_closure(class_Partition_switch_factory,   /* name */
 /********************************************************************
 ** Solidified function: load_otadata
 ********************************************************************/
-extern const bclass be_class_Partition;
 be_local_closure(class_Partition_load_otadata,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -1134,7 +1115,7 @@ be_local_closure(class_Partition_load_otadata,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str(ota_max),
@@ -1191,7 +1172,6 @@ be_local_closure(class_Partition_load_otadata,   /* name */
 /********************************************************************
 ** Solidified function: tostring
 ********************************************************************/
-extern const bclass be_class_Partition;
 be_local_closure(class_Partition_tostring,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -1200,7 +1180,7 @@ be_local_closure(class_Partition_tostring,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str(_X3Cinstance_X3A_X20Partition_X28_X5B_X0A),
@@ -1248,7 +1228,6 @@ be_local_closure(class_Partition_tostring,   /* name */
 /********************************************************************
 ** Solidified function: has_factory
 ********************************************************************/
-extern const bclass be_class_Partition;
 be_local_closure(class_Partition_has_factory,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -1257,7 +1236,7 @@ be_local_closure(class_Partition_has_factory,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str(get_factory_slot),
@@ -1279,7 +1258,6 @@ be_local_closure(class_Partition_has_factory,   /* name */
 /********************************************************************
 ** Solidified function: tobytes
 ********************************************************************/
-extern const bclass be_class_Partition;
 be_local_closure(class_Partition_tobytes,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -1288,7 +1266,7 @@ be_local_closure(class_Partition_tobytes,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str(slots),
@@ -1348,7 +1326,6 @@ be_local_closure(class_Partition_tobytes,   /* name */
 /********************************************************************
 ** Solidified function: ota_max
 ********************************************************************/
-extern const bclass be_class_Partition;
 be_local_closure(class_Partition_ota_max,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -1357,7 +1334,7 @@ be_local_closure(class_Partition_ota_max,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_nested_str(slots),
@@ -1410,7 +1387,6 @@ be_local_closure(class_Partition_ota_max,   /* name */
 /********************************************************************
 ** Solidified function: invalidate_spiffs
 ********************************************************************/
-extern const bclass be_class_Partition;
 be_local_closure(class_Partition_invalidate_spiffs,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -1419,7 +1395,7 @@ be_local_closure(class_Partition_invalidate_spiffs,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str(flash),
@@ -1465,7 +1441,6 @@ be_local_closure(class_Partition_invalidate_spiffs,   /* name */
 /********************************************************************
 ** Solidified function: get_factory_slot
 ********************************************************************/
-extern const bclass be_class_Partition;
 be_local_closure(class_Partition_get_factory_slot,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -1474,7 +1449,7 @@ be_local_closure(class_Partition_get_factory_slot,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(slots),
@@ -1509,7 +1484,6 @@ be_local_closure(class_Partition_get_factory_slot,   /* name */
 /********************************************************************
 ** Solidified function: set_active
 ********************************************************************/
-extern const bclass be_class_Partition;
 be_local_closure(class_Partition_set_active,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -1518,7 +1492,7 @@ be_local_closure(class_Partition_set_active,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -1558,7 +1532,6 @@ be_local_closure(class_Partition_set_active,   /* name */
 /********************************************************************
 ** Solidified function: get_unallocated_k
 ********************************************************************/
-extern const bclass be_class_Partition;
 be_local_closure(class_Partition_get_unallocated_k,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -1567,7 +1540,7 @@ be_local_closure(class_Partition_get_unallocated_k,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(slots),
@@ -1607,7 +1580,6 @@ be_local_closure(class_Partition_get_unallocated_k,   /* name */
 /********************************************************************
 ** Solidified function: get_ota_slot
 ********************************************************************/
-extern const bclass be_class_Partition;
 be_local_closure(class_Partition_get_ota_slot,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -1616,7 +1588,7 @@ be_local_closure(class_Partition_get_ota_slot,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(slots),
@@ -1691,7 +1663,6 @@ extern const bclass be_class_Partition_info;
 /********************************************************************
 ** Solidified function: is_factory
 ********************************************************************/
-extern const bclass be_class_Partition_info;
 be_local_closure(class_Partition_info_is_factory,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -1700,7 +1671,7 @@ be_local_closure(class_Partition_info_is_factory,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition_info, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(type),
@@ -1728,7 +1699,6 @@ be_local_closure(class_Partition_info_is_factory,   /* name */
 /********************************************************************
 ** Solidified function: type_to_string
 ********************************************************************/
-extern const bclass be_class_Partition_info;
 be_local_closure(class_Partition_info_type_to_string,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -1737,7 +1707,7 @@ be_local_closure(class_Partition_info_type_to_string,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition_info, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(type),
@@ -1773,7 +1743,6 @@ be_local_closure(class_Partition_info_type_to_string,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Partition_info;
 be_local_closure(class_Partition_info_init,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -1782,7 +1751,7 @@ be_local_closure(class_Partition_info_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition_info, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[16]) {     /* constants */
     /* K0   */  be_nested_str(type),
@@ -1874,7 +1843,6 @@ be_local_closure(class_Partition_info_init,   /* name */
 /********************************************************************
 ** Solidified function: subtype_to_string
 ********************************************************************/
-extern const bclass be_class_Partition_info;
 be_local_closure(class_Partition_info_subtype_to_string,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -1883,7 +1851,7 @@ be_local_closure(class_Partition_info_subtype_to_string,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition_info, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[19]) {     /* constants */
     /* K0   */  be_nested_str(type),
@@ -2005,7 +1973,6 @@ be_local_closure(class_Partition_info_subtype_to_string,   /* name */
 /********************************************************************
 ** Solidified function: tostring
 ********************************************************************/
-extern const bclass be_class_Partition_info;
 be_local_closure(class_Partition_info_tostring,   /* name */
   be_nested_proto(
     13,                          /* nstack */
@@ -2014,7 +1981,7 @@ be_local_closure(class_Partition_info_tostring,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition_info, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str(type_to_string),
@@ -2068,7 +2035,6 @@ be_local_closure(class_Partition_info_tostring,   /* name */
 /********************************************************************
 ** Solidified function: is_ota
 ********************************************************************/
-extern const bclass be_class_Partition_info;
 be_local_closure(class_Partition_info_is_ota,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -2077,7 +2043,7 @@ be_local_closure(class_Partition_info_is_ota,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition_info, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(subtype),
@@ -2110,7 +2076,6 @@ be_local_closure(class_Partition_info_is_ota,   /* name */
 /********************************************************************
 ** Solidified function: tobytes
 ********************************************************************/
-extern const bclass be_class_Partition_info;
 be_local_closure(class_Partition_info_tobytes,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -2119,7 +2084,7 @@ be_local_closure(class_Partition_info_tobytes,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition_info, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str(AA50),
@@ -2186,7 +2151,6 @@ be_local_closure(class_Partition_info_tobytes,   /* name */
 /********************************************************************
 ** Solidified function: remove_trailing_zeroes
 ********************************************************************/
-extern const bclass be_class_Partition_info;
 be_local_closure(class_Partition_info_remove_trailing_zeroes,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -2195,7 +2159,7 @@ be_local_closure(class_Partition_info_remove_trailing_zeroes,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition_info, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 4]) {     /* constants */
     /* K0   */  be_const_class(be_class_Partition_info),
@@ -2239,7 +2203,6 @@ be_local_closure(class_Partition_info_remove_trailing_zeroes,   /* name */
 /********************************************************************
 ** Solidified function: is_spiffs
 ********************************************************************/
-extern const bclass be_class_Partition_info;
 be_local_closure(class_Partition_info_is_spiffs,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -2248,7 +2211,7 @@ be_local_closure(class_Partition_info_is_spiffs,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition_info, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(type),
@@ -2277,7 +2240,6 @@ be_local_closure(class_Partition_info_is_spiffs,   /* name */
 /********************************************************************
 ** Solidified function: get_image_size
 ********************************************************************/
-extern const bclass be_class_Partition_info;
 be_local_closure(class_Partition_info_get_image_size,   /* name */
   be_nested_proto(
     14,                          /* nstack */
@@ -2286,7 +2248,7 @@ be_local_closure(class_Partition_info_get_image_size,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Partition_info, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_nested_str(flash),
@@ -2437,7 +2399,7 @@ be_local_closure(init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(global),

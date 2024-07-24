@@ -9,7 +9,6 @@ extern const bclass be_class_Matter_Profiler;
 /********************************************************************
 ** Solidified function: start
 ********************************************************************/
-extern const bclass be_class_Matter_Profiler;
 be_local_closure(class_Matter_Profiler_start,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Matter_Profiler_start,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Profiler, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str_weak(active),
@@ -68,7 +67,6 @@ be_local_closure(class_Matter_Profiler_start,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Matter_Profiler;
 be_local_closure(class_Matter_Profiler_init,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -77,7 +75,7 @@ be_local_closure(class_Matter_Profiler_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Profiler, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 9]) {     /* constants */
     /* K0   */  be_nested_str_weak(active),
@@ -134,7 +132,6 @@ be_local_closure(class_Matter_Profiler_init,   /* name */
 /********************************************************************
 ** Solidified function: set_active
 ********************************************************************/
-extern const bclass be_class_Matter_Profiler;
 be_local_closure(class_Matter_Profiler_set_active,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -143,7 +140,7 @@ be_local_closure(class_Matter_Profiler_set_active,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Profiler, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(active),
@@ -165,7 +162,6 @@ be_local_closure(class_Matter_Profiler_set_active,   /* name */
 /********************************************************************
 ** Solidified function: log
 ********************************************************************/
-extern const bclass be_class_Matter_Profiler;
 be_local_closure(class_Matter_Profiler_log,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -174,7 +170,7 @@ be_local_closure(class_Matter_Profiler_log,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Profiler, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[10]) {     /* constants */
     /* K0   */  be_nested_str_weak(active),
@@ -228,7 +224,6 @@ be_local_closure(class_Matter_Profiler_log,   /* name */
 /********************************************************************
 ** Solidified function: dump
 ********************************************************************/
-extern const bclass be_class_Matter_Profiler;
 be_local_closure(class_Matter_Profiler_dump,   /* name */
   be_nested_proto(
     12,                          /* nstack */
@@ -237,7 +232,7 @@ be_local_closure(class_Matter_Profiler_dump,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Profiler, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str_weak(active),

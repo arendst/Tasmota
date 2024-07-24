@@ -9,7 +9,6 @@ extern const bclass be_class_Tapp;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Tapp;
 be_local_closure(class_Tapp_init,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Tapp_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tapp, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
     /* K0   */  be_nested_str(tasmota),
@@ -41,7 +40,6 @@ be_local_closure(class_Tapp_init,   /* name */
 /********************************************************************
 ** Solidified function: autoexec
 ********************************************************************/
-extern const bclass be_class_Tapp;
 be_local_closure(class_Tapp_autoexec,   /* name */
   be_nested_proto(
     11,                          /* nstack */
@@ -50,7 +48,7 @@ be_local_closure(class_Tapp_autoexec,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Tapp, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[14]) {     /* constants */
     /* K0   */  be_nested_str(path),
@@ -136,7 +134,7 @@ be_local_closure(_anonymous_,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_const_class(be_class_Tapp),

@@ -524,8 +524,8 @@ static void load_proto_table(bvm *vm, void *fp, bproto *proto, int info, int ver
 {
     int size = (int)load_long(fp); /* proto count */
     if (size) {
-        bproto **p = be_malloc(vm, sizeof(bproto *) * (size + 1));
-        memset(p, 0, sizeof(bproto *) * (size + 1));
+        bproto **p = be_malloc(vm, sizeof(bproto *) * size);
+        memset(p, 0, sizeof(bproto *) * size);
         proto->ptab = p;
         proto->nproto = size;
         while (size--) {

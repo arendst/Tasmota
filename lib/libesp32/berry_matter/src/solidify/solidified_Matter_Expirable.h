@@ -9,7 +9,6 @@ extern const bclass be_class_Matter_Expirable;
 /********************************************************************
 ** Solidified function: before_remove
 ********************************************************************/
-extern const bclass be_class_Matter_Expirable;
 be_local_closure(class_Matter_Expirable_before_remove,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Matter_Expirable_before_remove,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Expirable, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(before_remove),
@@ -34,7 +33,6 @@ be_local_closure(class_Matter_Expirable_before_remove,   /* name */
 /********************************************************************
 ** Solidified function: set_no_expiration
 ********************************************************************/
-extern const bclass be_class_Matter_Expirable;
 be_local_closure(class_Matter_Expirable_set_no_expiration,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -43,7 +41,7 @@ be_local_closure(class_Matter_Expirable_set_no_expiration,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Expirable, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_expiration),
@@ -63,7 +61,6 @@ be_local_closure(class_Matter_Expirable_set_no_expiration,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Matter_Expirable;
 be_local_closure(class_Matter_Expirable_init,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -72,7 +69,7 @@ be_local_closure(class_Matter_Expirable_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Expirable, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_persist),
@@ -92,7 +89,6 @@ be_local_closure(class_Matter_Expirable_init,   /* name */
 /********************************************************************
 ** Solidified function: set_expire_time
 ********************************************************************/
-extern const bclass be_class_Matter_Expirable;
 be_local_closure(class_Matter_Expirable_set_expire_time,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -101,7 +97,7 @@ be_local_closure(class_Matter_Expirable_set_expire_time,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Expirable, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_expiration),
@@ -123,7 +119,6 @@ be_local_closure(class_Matter_Expirable_set_expire_time,   /* name */
 /********************************************************************
 ** Solidified function: has_expired
 ********************************************************************/
-extern const bclass be_class_Matter_Expirable;
 be_local_closure(class_Matter_Expirable_has_expired,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -132,7 +127,7 @@ be_local_closure(class_Matter_Expirable_has_expired,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Expirable, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota),
@@ -167,7 +162,6 @@ be_local_closure(class_Matter_Expirable_has_expired,   /* name */
 /********************************************************************
 ** Solidified function: set_parent_list
 ********************************************************************/
-extern const bclass be_class_Matter_Expirable;
 be_local_closure(class_Matter_Expirable_set_parent_list,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -176,7 +170,7 @@ be_local_closure(class_Matter_Expirable_set_parent_list,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Expirable, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_list),
@@ -195,7 +189,6 @@ be_local_closure(class_Matter_Expirable_set_parent_list,   /* name */
 /********************************************************************
 ** Solidified function: hydrate_post
 ********************************************************************/
-extern const bclass be_class_Matter_Expirable;
 be_local_closure(class_Matter_Expirable_hydrate_post,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -204,7 +197,7 @@ be_local_closure(class_Matter_Expirable_hydrate_post,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Expirable, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(hydrate_post),
@@ -220,7 +213,6 @@ be_local_closure(class_Matter_Expirable_hydrate_post,   /* name */
 /********************************************************************
 ** Solidified function: set_expire_in_seconds
 ********************************************************************/
-extern const bclass be_class_Matter_Expirable;
 be_local_closure(class_Matter_Expirable_set_expire_in_seconds,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -229,7 +221,7 @@ be_local_closure(class_Matter_Expirable_set_expire_in_seconds,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Expirable, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(tasmota),
@@ -263,7 +255,6 @@ be_local_closure(class_Matter_Expirable_set_expire_in_seconds,   /* name */
 /********************************************************************
 ** Solidified function: get_parent_list
 ********************************************************************/
-extern const bclass be_class_Matter_Expirable;
 be_local_closure(class_Matter_Expirable_get_parent_list,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -272,7 +263,7 @@ be_local_closure(class_Matter_Expirable_get_parent_list,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Expirable, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_list),
@@ -291,7 +282,6 @@ be_local_closure(class_Matter_Expirable_get_parent_list,   /* name */
 /********************************************************************
 ** Solidified function: does_persist
 ********************************************************************/
-extern const bclass be_class_Matter_Expirable;
 be_local_closure(class_Matter_Expirable_does_persist,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -300,7 +290,7 @@ be_local_closure(class_Matter_Expirable_does_persist,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Expirable, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_persist),
@@ -319,7 +309,6 @@ be_local_closure(class_Matter_Expirable_does_persist,   /* name */
 /********************************************************************
 ** Solidified function: set_persist
 ********************************************************************/
-extern const bclass be_class_Matter_Expirable;
 be_local_closure(class_Matter_Expirable_set_persist,   /* name */
   be_nested_proto(
     4,                          /* nstack */
@@ -328,7 +317,7 @@ be_local_closure(class_Matter_Expirable_set_persist,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Expirable, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(_persist),
@@ -350,7 +339,6 @@ be_local_closure(class_Matter_Expirable_set_persist,   /* name */
 /********************************************************************
 ** Solidified function: persist_pre
 ********************************************************************/
-extern const bclass be_class_Matter_Expirable;
 be_local_closure(class_Matter_Expirable_persist_pre,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -359,7 +347,7 @@ be_local_closure(class_Matter_Expirable_persist_pre,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Expirable, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(persist_pre),
@@ -375,7 +363,6 @@ be_local_closure(class_Matter_Expirable_persist_pre,   /* name */
 /********************************************************************
 ** Solidified function: persist_post
 ********************************************************************/
-extern const bclass be_class_Matter_Expirable;
 be_local_closure(class_Matter_Expirable_persist_post,   /* name */
   be_nested_proto(
     1,                          /* nstack */
@@ -384,7 +371,7 @@ be_local_closure(class_Matter_Expirable_persist_post,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Expirable, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(persist_post),
@@ -430,7 +417,6 @@ extern const bclass be_class_Matter_Expirable_list;
 /********************************************************************
 ** Solidified function: count_persistables
 ********************************************************************/
-extern const bclass be_class_Matter_Expirable_list;
 be_local_closure(class_Matter_Expirable_list_count_persistables,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -439,7 +425,7 @@ be_local_closure(class_Matter_Expirable_list_count_persistables,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Expirable_list, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -472,7 +458,6 @@ be_local_closure(class_Matter_Expirable_list_count_persistables,   /* name */
 /********************************************************************
 ** Solidified function: remove
 ********************************************************************/
-extern const bclass be_class_Matter_Expirable_list;
 be_local_closure(class_Matter_Expirable_list_remove,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -481,7 +466,7 @@ be_local_closure(class_Matter_Expirable_list_remove,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Expirable_list, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -521,7 +506,6 @@ be_local_closure(class_Matter_Expirable_list_remove,   /* name */
 /********************************************************************
 ** Solidified function: push
 ********************************************************************/
-extern const bclass be_class_Matter_Expirable_list;
 be_local_closure(class_Matter_Expirable_list_push,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -530,7 +514,7 @@ be_local_closure(class_Matter_Expirable_list_push,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Expirable_list, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
@@ -569,7 +553,6 @@ be_local_closure(class_Matter_Expirable_list_push,   /* name */
 /********************************************************************
 ** Solidified function: every_second
 ********************************************************************/
-extern const bclass be_class_Matter_Expirable_list;
 be_local_closure(class_Matter_Expirable_list_every_second,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -578,7 +561,7 @@ be_local_closure(class_Matter_Expirable_list_every_second,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Expirable_list, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(remove_expired),
@@ -598,7 +581,6 @@ be_local_closure(class_Matter_Expirable_list_every_second,   /* name */
 /********************************************************************
 ** Solidified function: remove_expired
 ********************************************************************/
-extern const bclass be_class_Matter_Expirable_list;
 be_local_closure(class_Matter_Expirable_list_remove_expired,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -607,7 +589,7 @@ be_local_closure(class_Matter_Expirable_list_remove_expired,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Expirable_list, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 5]) {     /* constants */
     /* K0   */  be_const_int(0),
@@ -650,7 +632,6 @@ be_local_closure(class_Matter_Expirable_list_remove_expired,   /* name */
 /********************************************************************
 ** Solidified function: persistables
 ********************************************************************/
-extern const bclass be_class_Matter_Expirable_list;
 be_local_closure(class_Matter_Expirable_list_persistables,   /* name */
   be_nested_proto(
     3,                          /* nstack */
@@ -659,7 +640,7 @@ be_local_closure(class_Matter_Expirable_list_persistables,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 1]) {
       be_nested_proto(
         2,                          /* nstack */
         0,                          /* argc */
@@ -669,7 +650,7 @@ be_local_closure(class_Matter_Expirable_list_persistables,   /* name */
           be_local_const_upval(1, 1),
         }),
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str_weak(_persist),
@@ -688,7 +669,6 @@ be_local_closure(class_Matter_Expirable_list_persistables,   /* name */
           0x80000000,  //  0008  RET	0
         })
       ),
-    &be_class_Matter_Expirable_list, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
@@ -711,7 +691,6 @@ be_local_closure(class_Matter_Expirable_list_persistables,   /* name */
 /********************************************************************
 ** Solidified function: setitem
 ********************************************************************/
-extern const bclass be_class_Matter_Expirable_list;
 be_local_closure(class_Matter_Expirable_list_setitem,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -720,7 +699,7 @@ be_local_closure(class_Matter_Expirable_list_setitem,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Expirable_list, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(matter),
