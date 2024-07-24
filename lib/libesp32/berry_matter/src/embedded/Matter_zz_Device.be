@@ -1090,22 +1090,52 @@ class Matter_Device
 
     # check if we have a light
     var endpoint = matter.START_ENDPOINT
-    var light_present = false
+    var light_present = 0
 
     import light
-    var light_status = light.get()
+    var light_status = light.get(0)
     if light_status != nil
       var channels_count = size(light_status.find('channels', ""))
+      light_present = 1
       if channels_count > 0
         if   channels_count == 1
           m[str(endpoint)] = {'type':'light1'}
+          endpoint += 1
+          # check if we have secondary Dimmer lights (SetOption68 1)
+          var idx = 1
+          var light_status_i
+          while (light_status_i := light.get(idx)) != nil
+            m[str(endpoint)] = {'type':'light1','light':idx + 1}    # arg is 1-based so add 1
+            endpoint += 1
+            light_present += 1
+            idx += 1
+          end
         elif channels_count == 2
           m[str(endpoint)] = {'type':'light2'}
-        else
+          endpoint += 1
+        elif channels_count == 3
           m[str(endpoint)] = {'type':'light3'}
+          endpoint += 1
+          # check if we have a split second light (SetOption37 128) with 4/5 channels
+          var light_status1 = light.get(1)
+          if (light_status1 != nil)
+            var channels_count1 = size(light_status1.find('channels', ""))
+
+            if (channels_count1 == 1)
+              m[str(endpoint)] = {'type':'light1'}
+              endpoint += 1
+              light_present += 1
+            elif (channels_count1 == 2)
+              m[str(endpoint)] = {'type':'light2'}
+              endpoint += 1
+              light_present += 1
+            end
+          end
+        elif channels_count == 4
+          # not supported yet
+        else # only option left is 5 channels
+          # not supported yet
         end
-        light_present = true
-        endpoint += 1
       end
     end
 
@@ -1144,7 +1174,7 @@ class Matter_Device
     # how many relays are present
     var relay_count = size(tasmota.get_power())
     var relay_index = 0         # start at index 0
-    if light_present    relay_count -= 1  end       # last power is taken for lights
+    relay_count -= light_present  # last power(s) taken for lights
 
     while relay_index < relay_count
       if relays_reserved.find(relay_index) == nil   # if relay is actual relay

@@ -47,13 +47,15 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
   # var tick                                          # tick value when it was last updated
   # var node_label                                    # name of the endpoint, used only in bridge mode, "" if none
   var tasmota_relay_index                             # Relay number in Tasmota (1 based), may be nil for Lights 1/2/3 internal
+  var light_index                                   # index number when using `light.get()` and `light.set()`
   var shadow_onoff                                    # (bool) status of the light power on/off
 
   #############################################################
   # Constructor
   def init(device, endpoint, config)
-    super(self).init(device, endpoint, config)
     self.shadow_onoff = false
+    self.light_index = 0                              # default is 0 for light object
+    super(self).init(device, endpoint, config)
   end
 
   #############################################################
@@ -105,7 +107,7 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
         self.update_shadow()
       else
         import light
-        light.set({'power':pow})
+        light.set({'power':pow}, self.light_index)
         self.update_shadow()
       end
     end
