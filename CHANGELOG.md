@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Berry fix `light.get` for separate RGB/CT
+- Berry fix `bytes` setters and getters with negative offsets
 
 ### Removed
 

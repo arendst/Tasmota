@@ -868,9 +868,15 @@ static int m_get(bvm *vm, bbool sign)
         if (argc >= 3 && be_isint(vm, 3)) {
             vsize = be_toint(vm, 3);
         }
+        if (idx < 0) {
+            idx = attr.len + idx;       /* if index is negative, count from end */
+        }
+        if (idx < 0) {
+            vsize = 0;                  /* if still negative, then invalid, return 0 */
+        }
         int ret = 0;
         switch (vsize) {
-            case 0:                                     break;
+            case 0:     break;
             case -1:    /* fallback below */
             case 1:     ret = buf_get1(&attr, idx);
                         if (sign) { ret = (int8_t)(uint8_t) ret; }
@@ -892,11 +898,7 @@ static int m_get(bvm *vm, bbool sign)
             default:    be_raise(vm, "type_error", "size must be -4, -3, -2, -1, 0, 1, 2, 3 or 4.");
         }
         be_pop(vm, argc - 1);
-        if (vsize != 0) {
-            be_pushint(vm, ret);
-        } else {
-            be_pushnil(vm);
-        }
+        be_pushint(vm, ret);
         be_return(vm);
     }
     be_return_nil(vm);
@@ -913,14 +915,20 @@ static int m_getfloat(bvm *vm)
     check_ptr(vm, &attr);
     if (argc >=2 && be_isint(vm, 2)) {
         int32_t idx = be_toint(vm, 2);
-        bbool be = bfalse;             /* little endian? */
-        if (argc >= 3) {
-            be = be_tobool(vm, 3);
+        float ret_f = 0;
+        if (idx < 0) {
+            idx = attr.len + idx;       /* if index is negative, count from end */
         }
-        int32_t ret_i = be ? buf_get4_be(&attr, idx) : buf_get4_le(&attr, idx);
-        float* ret_f = (float*) &ret_i;
+        if (idx >= 0) {
+            bbool be = bfalse;             /* little endian? */
+            if (argc >= 3) {
+                be = be_tobool(vm, 3);
+            }
+            int32_t ret_i = be ? buf_get4_be(&attr, idx) : buf_get4_le(&attr, idx);
+            ret_f = *(float*) &ret_i;
+        }
         be_pop(vm, argc - 1);
-        be_pushreal(vm, *ret_f);
+        be_pushreal(vm, ret_f);
         be_return(vm);
     }
     be_return_nil(vm);
@@ -958,8 +966,14 @@ static int m_set(bvm *vm)
         if (argc >= 4 && be_isint(vm, 4)) {
             vsize = be_toint(vm, 4);
         }
+        if (idx < 0) {
+            idx = attr.len + idx;       /* if index is negative, count from end */
+        }
+        if (idx < 0) {
+            vsize = 0;                  /* if still negative, then invalid, do nothing */
+        }
         switch (vsize) {
-            case 0:                                       break;
+            case 0:     break;
             case -1:    /* fallback below */
             case 1:     buf_set1(&attr, idx, value);      break;
             case 2:     buf_set2_le(&attr, idx, value);   break;
@@ -971,7 +985,7 @@ static int m_set(bvm *vm)
             default:    be_raise(vm, "type_error", "size must be -4, -3, -2, -1, 0, 1, 2, 3 or 4.");
         }
         be_pop(vm, argc - 1);
-        m_write_attributes(vm, 1, &attr);  /* update attributes */
+        // m_write_attributes(vm, 1, &attr);  /* update attributes */
         be_return_nil(vm);
     }
     be_return_nil(vm);
@@ -989,15 +1003,20 @@ static int m_setfloat(bvm *vm)
     check_ptr_modifiable(vm, &attr);
     if (argc >=3 && be_isint(vm, 2) && (be_isint(vm, 3) || be_isreal(vm, 3))) {
         int32_t idx = be_toint(vm, 2);
-        float val_f = (float) be_toreal(vm, 3);
-        int32_t* val_i = (int32_t*) &val_f;
-        bbool be = bfalse;
-        if (argc >= 4) {
-            be = be_tobool(vm, 4);
+        if (idx < 0) {
+            idx = attr.len + idx;       /* if index is negative, count from end */
         }
-        if (be) { buf_set4_be(&attr, idx, *val_i); } else { buf_set4_le(&attr, idx, *val_i); }
-        be_pop(vm, argc - 1);
-        m_write_attributes(vm, 1, &attr);  /* update attributes */
+        if (idx >= 0) {
+            float val_f = (float) be_toreal(vm, 3);
+            int32_t* val_i = (int32_t*) &val_f;
+            bbool be = bfalse;
+            if (argc >= 4) {
+                be = be_tobool(vm, 4);
+            }
+            if (be) { buf_set4_be(&attr, idx, *val_i); } else { buf_set4_le(&attr, idx, *val_i); }
+            be_pop(vm, argc - 1);
+            // m_write_attributes(vm, 1, &attr);  /* update attributes */
+        }
         be_return_nil(vm);
     }
     be_return_nil(vm);
@@ -1046,7 +1065,10 @@ static int m_setbytes(bvm *vm)
         int32_t idx = be_toint(vm, 2);
         size_t from_len_total;
         const uint8_t* buf_ptr = (const uint8_t*) be_tobytes(vm, 3, &from_len_total);
-        if (idx < 0) { idx = 0; }
+        if (idx < 0) {
+            idx = attr.len + idx;       /* if index is negative, count from end */
+        }
+        if (idx < 0) { idx = 0; }       /* if still negative, start from offset 0 */
         if (idx >= attr.len) { idx = attr.len; }
 
         int32_t from_byte = 0;
@@ -1093,6 +1115,7 @@ static int m_reverse(bvm *vm)
 
     if (argc >= 2 && be_isint(vm, 2)) {
         idx = be_toint(vm, 2);
+        if (idx < 0) { idx = attr.len + idx; }  /* if negative, count from end */
         if (idx < 0) { idx = 0; }               /* railguards */
         if (idx > attr.len) { idx = attr.len; }
     }
@@ -1140,9 +1163,12 @@ static int m_setitem(bvm *vm)
     if (argc >=3 && be_isint(vm, 2) && be_isint(vm, 3)) {
         int index = be_toint(vm, 2);
         int val = be_toint(vm, 3);
+        if (index < 0) {
+            index += attr.len;       /* if index is negative, count from end */
+        }
         if (index >= 0 && index < attr.len) {
             buf_set1(&attr, index, val);
-            m_write_attributes(vm, 1, &attr);  /* update attributes */
+            // m_write_attributes(vm, 1, &attr);  /* update attributes */
             be_return_nil(vm);
         }
     }
