@@ -57,8 +57,8 @@ def inspect(p)
     var keys = []
     var o = p
     while (o != nil)
-      for k : introspect.members(p)
-        var v = introspect.get(p, k)
+      for k : introspect.members(o)
+        var v = introspect.get(o, k)
         if (type(v) != 'function') && (keys.find(k) == nil)
           keys.push(k)
         end
