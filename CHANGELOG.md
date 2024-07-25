@@ -15,10 +15,10 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Berry `light.get` for separate RGB/CT (#21818)
-- Berry fix `bytes` setters and getters with negative offsets
+- Berry `bytes` setters and getters with negative offsets (#21835)
 
 ### Removed
-- Berry internal: remove class from closure to simplify code
+- Berry internal: remove class from closure to simplify code (#21839)
 
 ## [14.1.0.3] 20240722
 ### Added
