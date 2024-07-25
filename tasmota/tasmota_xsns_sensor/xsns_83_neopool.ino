@@ -2137,16 +2137,16 @@ void NeoPoolShow(bool json)
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_RELAY_CL  "\":%d"), (NeoPoolGetData(MBF_RELAY_STATE) >> (NeoPoolGetData(MBF_PAR_CL_RELAY_GPIO)-1)) & 1);
     }
     if (0 != NeoPoolGetData(MBF_PAR_CD_RELAY_GPIO)) {
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_RELAY_CD "\":%d"), (NeoPoolGetData(MBF_RELAY_STATE) >> NeoPoolGetData(MBF_PAR_CD_RELAY_GPIO)) & 1);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_RELAY_CD "\":%d"), (NeoPoolGetData(MBF_RELAY_STATE) >> (NeoPoolGetData(MBF_PAR_CD_RELAY_GPIO)-1)) & 1);
     }
     if (0 != NeoPoolGetData(MBF_PAR_HEATING_GPIO)) {
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_RELAY_HEATING "\":%d"), (NeoPoolGetData(MBF_RELAY_STATE) >> NeoPoolGetData(MBF_PAR_HEATING_GPIO)) & 1);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_RELAY_HEATING "\":%d"), (NeoPoolGetData(MBF_RELAY_STATE) >> (NeoPoolGetData(MBF_PAR_HEATING_GPIO)-1)) & 1);
     }
     if (0 != NeoPoolGetData(MBF_PAR_UV_RELAY_GPIO)) {
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_RELAY_UV "\":%d"), (NeoPoolGetData(MBF_RELAY_STATE) >> NeoPoolGetData(MBF_PAR_UV_RELAY_GPIO)) & 1);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_RELAY_UV "\":%d"), (NeoPoolGetData(MBF_RELAY_STATE) >> (NeoPoolGetData(MBF_PAR_UV_RELAY_GPIO)-1)) & 1);
     }
     if (0 != NeoPoolGetData(MBF_PAR_FILTVALVE_GPIO)) {
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_RELAY_FILTVALVE "\":%d"), (NeoPoolGetData(MBF_RELAY_STATE) >> NeoPoolGetData(MBF_PAR_FILTVALVE_GPIO)) & 1);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_RELAY_FILTVALVE "\":%d"), (NeoPoolGetData(MBF_RELAY_STATE) >> (NeoPoolGetData(MBF_PAR_FILTVALVE_GPIO)-1)) & 1);
     }
     ResponseJsonEnd();
 
