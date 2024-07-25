@@ -3,6 +3,89 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
+// compact class 'Matter_HTTP_async' ktab size: 79, total: 152 (saved 584 bytes)
+static const bvalue be_ktab_class_Matter_HTTP_async[79] = {
+  /* K0   */  be_nested_str_weak(is_chunked),
+  /* K1   */  be_nested_str_weak(chunk_size),
+  /* K2   */  be_nested_str_weak(global),
+  /* K3   */  be_nested_str_weak(_re_http_chunk),
+  /* K4   */  be_nested_str_weak(match2),
+  /* K5   */  be_nested_str_weak(response),
+  /* K6   */  be_nested_str_weak(response_offset),
+  /* K7   */  be_const_int(0),
+  /* K8   */  be_nested_str_weak(0x),
+  /* K9   */  be_const_int(1),
+  /* K10  */  be_nested_str_weak(status),
+  /* K11  */  be_const_int(2),
+  /* K12  */  be_nested_str_weak(),
+  /* K13  */  be_nested_str_weak(close),
+  /* K14  */  be_nested_str_weak(payload),
+  /* K15  */  be_const_int(2147483647),
+  /* K16  */  be_nested_str_weak(string),
+  /* K17  */  be_nested_str_weak(tolower),
+  /* K18  */  be_nested_str_weak(transfer_X2Dencoding),
+  /* K19  */  be_nested_str_weak(chunked),
+  /* K20  */  be_nested_str_weak(find),
+  /* K21  */  be_nested_str_weak(_X40),
+  /* K22  */  be_const_int(0),
+  /* K23  */  be_nested_str_weak(auth),
+  /* K24  */  be_nested_str_weak(fromstring),
+  /* K25  */  be_const_int(1),
+  /* K26  */  be_nested_str_weak(tob64),
+  /* K27  */  be_nested_str_weak(init),
+  /* K28  */  be_nested_str_weak(compile_re),
+  /* K29  */  be_nested_str_weak(phase),
+  /* K30  */  be_nested_str_weak(parse_http_status_line),
+  /* K31  */  be_nested_str_weak(parse_http_headers),
+  /* K32  */  be_const_int(2),
+  /* K33  */  be_nested_str_weak(parse_http_payload),
+  /* K34  */  be_nested_str_weak(http_status),
+  /* K35  */  be_nested_str_weak(event_http_failed),
+  /* K36  */  be_nested_str_weak(reset),
+  /* K37  */  be_nested_str_weak(cmd),
+  /* K38  */  be_nested_str_weak(begin),
+  /* K39  */  be_nested_str_weak(send_http),
+  /* K40  */  be_nested_str_weak(_re_http_header),
+  /* K41  */  be_nested_str_weak(event_http_header),
+  /* K42  */  be_nested_str_weak(_re_http_body),
+  /* K43  */  be_nested_str_weak(event_http_headers_end),
+  /* K44  */  be_nested_str_weak(receive),
+  /* K45  */  be_nested_str_weak(event_http_timeout),
+  /* K46  */  be_nested_str_weak(re),
+  /* K47  */  be_nested_str_weak(contains),
+  /* K48  */  be_nested_str_weak(_re_http_status),
+  /* K49  */  be_nested_str_weak(compile),
+  /* K50  */  be_nested_str_weak(HTTP_STATUS_REGEX),
+  /* K51  */  be_nested_str_weak(HTTP_HEADER_REGEX),
+  /* K52  */  be_nested_str_weak(HTTP_BODY_REGEX),
+  /* K53  */  be_nested_str_weak(HTTP_CHUNK_REGEX),
+  /* K54  */  be_nested_str_weak(event_http_finished),
+  /* K55  */  be_nested_str_weak(timeout),
+  /* K56  */  be_nested_str_weak(set_timeout),
+  /* K57  */  be_nested_str_weak(SPINLOCK),
+  /* K58  */  be_nested_str_weak(loop),
+  /* K59  */  be_nested_str_weak(tasmota),
+  /* K60  */  be_nested_str_weak(delay),
+  /* K61  */  be_nested_str_weak(addr),
+  /* K62  */  be_nested_str_weak(_X3A),
+  /* K63  */  be_nested_str_weak(_X5B),
+  /* K64  */  be_nested_str_weak(_X5D),
+  /* K65  */  be_nested_str_weak(HTTP_GET),
+  /* K66  */  be_nested_str_weak(port),
+  /* K67  */  be_nested_str_weak(HTTP_GET_AUTH),
+  /* K68  */  be_nested_str_weak(write),
+  /* K69  */  be_const_int(2147483647),
+  /* K70  */  be_nested_str_weak(status_code),
+  /* K71  */  be_const_int(1),
+  /* K72  */  be_nested_str_weak(tcp_connected),
+  /* K73  */  be_nested_str_weak(millis),
+  /* K74  */  be_nested_str_weak(time_start),
+  /* K75  */  be_nested_str_weak(tcp),
+  /* K76  */  be_nested_str_weak(available),
+  /* K77  */  be_nested_str_weak(read),
+  /* K78  */  be_nested_str_weak(parse_http_response),
+};
+
 
 extern const bclass be_class_Matter_HTTP_async;
 
@@ -13,30 +96,13 @@ be_local_closure(class_Matter_HTTP_async_parse_http_payload,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[16]) {     /* constants */
-    /* K0   */  be_nested_str_weak(is_chunked),
-    /* K1   */  be_nested_str_weak(chunk_size),
-    /* K2   */  be_nested_str_weak(global),
-    /* K3   */  be_nested_str_weak(_re_http_chunk),
-    /* K4   */  be_nested_str_weak(match2),
-    /* K5   */  be_nested_str_weak(response),
-    /* K6   */  be_nested_str_weak(response_offset),
-    /* K7   */  be_const_int(0),
-    /* K8   */  be_nested_str_weak(0x),
-    /* K9   */  be_const_int(1),
-    /* K10  */  be_nested_str_weak(status),
-    /* K11  */  be_const_int(2),
-    /* K12  */  be_nested_str_weak(),
-    /* K13  */  be_nested_str_weak(close),
-    /* K14  */  be_nested_str_weak(payload),
-    /* K15  */  be_const_int(2147483647),
-    }),
+    &be_ktab_class_Matter_HTTP_async,     /* shared constants */
     be_str_weak(parse_http_payload),
     &be_const_str_solidified,
     ( &(const binstruction[82]) {  /* code */
@@ -135,13 +201,13 @@ be_local_closure(class_Matter_HTTP_async_event_http_finished,   /* name */
   be_nested_proto(
     1,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
+    1,                          /* has constants */
+    &be_ktab_class_Matter_HTTP_async,     /* shared constants */
     be_str_weak(event_http_finished),
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
@@ -159,40 +225,34 @@ be_local_closure(class_Matter_HTTP_async_event_http_header,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     3,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_weak(string),
-    /* K1   */  be_nested_str_weak(tolower),
-    /* K2   */  be_nested_str_weak(transfer_X2Dencoding),
-    /* K3   */  be_nested_str_weak(chunked),
-    /* K4   */  be_nested_str_weak(is_chunked),
-    }),
+    &be_ktab_class_Matter_HTTP_async,     /* shared constants */
     be_str_weak(event_http_header),
     &be_const_str_solidified,
     ( &(const binstruction[19]) {  /* code */
-      0xA40E0000,  //  0000  IMPORT	R3	K0
-      0x8C100701,  //  0001  GETMET	R4	R3	K1
+      0xA40E2000,  //  0000  IMPORT	R3	K16
+      0x8C100711,  //  0001  GETMET	R4	R3	K17
       0x5C180200,  //  0002  MOVE	R6	R1
       0x7C100400,  //  0003  CALL	R4	2
       0x5C040800,  //  0004  MOVE	R1	R4
-      0x8C100701,  //  0005  GETMET	R4	R3	K1
+      0x8C100711,  //  0005  GETMET	R4	R3	K17
       0x5C180400,  //  0006  MOVE	R6	R2
       0x7C100400,  //  0007  CALL	R4	2
       0x5C080800,  //  0008  MOVE	R2	R4
-      0x1C100302,  //  0009  EQ	R4	R1	K2
+      0x1C100312,  //  0009  EQ	R4	R1	K18
       0x78120006,  //  000A  JMPF	R4	#0012
-      0x8C100701,  //  000B  GETMET	R4	R3	K1
+      0x8C100711,  //  000B  GETMET	R4	R3	K17
       0x5C180400,  //  000C  MOVE	R6	R2
       0x7C100400,  //  000D  CALL	R4	2
-      0x1C100903,  //  000E  EQ	R4	R4	K3
+      0x1C100913,  //  000E  EQ	R4	R4	K19
       0x78120001,  //  000F  JMPF	R4	#0012
       0x50100200,  //  0010  LDBOOL	R4	1	0
-      0x90020804,  //  0011  SETMBR	R0	K4	R4
+      0x90020004,  //  0011  SETMBR	R0	K0	R4
       0x80000000,  //  0012  RET	0
     })
   )
@@ -207,62 +267,50 @@ be_local_closure(class_Matter_HTTP_async_init,   /* name */
   be_nested_proto(
     13,                          /* nstack */
     5,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[11]) {     /* constants */
-    /* K0   */  be_nested_str_weak(string),
-    /* K1   */  be_nested_str_weak(find),
-    /* K2   */  be_nested_str_weak(_X40),
-    /* K3   */  be_const_int(0),
-    /* K4   */  be_nested_str_weak(auth),
-    /* K5   */  be_nested_str_weak(fromstring),
-    /* K6   */  be_const_int(1),
-    /* K7   */  be_nested_str_weak(tob64),
-    /* K8   */  be_const_int(2147483647),
-    /* K9   */  be_nested_str_weak(init),
-    /* K10  */  be_nested_str_weak(compile_re),
-    }),
+    &be_ktab_class_Matter_HTTP_async,     /* shared constants */
     be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[36]) {  /* code */
-      0xA4160000,  //  0000  IMPORT	R5	K0
+      0xA4162000,  //  0000  IMPORT	R5	K16
       0x60180008,  //  0001  GETGBL	R6	G8
       0x5C1C0200,  //  0002  MOVE	R7	R1
       0x7C180200,  //  0003  CALL	R6	1
       0x5C040C00,  //  0004  MOVE	R1	R6
-      0x8C180B01,  //  0005  GETMET	R6	R5	K1
+      0x8C180B14,  //  0005  GETMET	R6	R5	K20
       0x5C200200,  //  0006  MOVE	R8	R1
-      0x58240002,  //  0007  LDCONST	R9	K2
+      0x58240015,  //  0007  LDCONST	R9	K21
       0x7C180600,  //  0008  CALL	R6	3
-      0x281C0D03,  //  0009  GE	R7	R6	K3
+      0x281C0D16,  //  0009  GE	R7	R6	K22
       0x781E000C,  //  000A  JMPF	R7	#0018
       0x601C0015,  //  000B  GETGBL	R7	G21
       0x7C1C0000,  //  000C  CALL	R7	0
-      0x8C1C0F05,  //  000D  GETMET	R7	R7	K5
-      0x04240D06,  //  000E  SUB	R9	R6	K6
-      0x40260609,  //  000F  CONNECT	R9	K3	R9
+      0x8C1C0F18,  //  000D  GETMET	R7	R7	K24
+      0x04240D19,  //  000E  SUB	R9	R6	K25
+      0x40262C09,  //  000F  CONNECT	R9	K22	R9
       0x94240209,  //  0010  GETIDX	R9	R1	R9
       0x7C1C0400,  //  0011  CALL	R7	2
-      0x8C1C0F07,  //  0012  GETMET	R7	R7	K7
+      0x8C1C0F1A,  //  0012  GETMET	R7	R7	K26
       0x7C1C0200,  //  0013  CALL	R7	1
-      0x90020807,  //  0014  SETMBR	R0	K4	R7
-      0x001C0D06,  //  0015  ADD	R7	R6	K6
-      0x401C0F08,  //  0016  CONNECT	R7	R7	K8
+      0x90022E07,  //  0014  SETMBR	R0	K23	R7
+      0x001C0D19,  //  0015  ADD	R7	R6	K25
+      0x401C0F0F,  //  0016  CONNECT	R7	R7	K15
       0x94040207,  //  0017  GETIDX	R1	R1	R7
       0x601C0003,  //  0018  GETGBL	R7	G3
       0x5C200000,  //  0019  MOVE	R8	R0
       0x7C1C0200,  //  001A  CALL	R7	1
-      0x8C1C0F09,  //  001B  GETMET	R7	R7	K9
+      0x8C1C0F1B,  //  001B  GETMET	R7	R7	K27
       0x5C240200,  //  001C  MOVE	R9	R1
       0x5C280400,  //  001D  MOVE	R10	R2
       0x5C2C0600,  //  001E  MOVE	R11	R3
       0x5C300800,  //  001F  MOVE	R12	R4
       0x7C1C0A00,  //  0020  CALL	R7	5
-      0x8C1C010A,  //  0021  GETMET	R7	R0	K10
+      0x8C1C011C,  //  0021  GETMET	R7	R0	K28
       0x7C1C0200,  //  0022  CALL	R7	1
       0x80000000,  //  0023  RET	0
     })
@@ -278,13 +326,13 @@ be_local_closure(class_Matter_HTTP_async_event_http_failed,   /* name */
   be_nested_proto(
     1,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
+    1,                          /* has constants */
+    &be_ktab_class_Matter_HTTP_async,     /* shared constants */
     be_str_weak(event_http_failed),
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
@@ -302,40 +350,32 @@ be_local_closure(class_Matter_HTTP_async_parse_http_response,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_str_weak(phase),
-    /* K1   */  be_const_int(0),
-    /* K2   */  be_nested_str_weak(parse_http_status_line),
-    /* K3   */  be_const_int(1),
-    /* K4   */  be_nested_str_weak(parse_http_headers),
-    /* K5   */  be_const_int(2),
-    /* K6   */  be_nested_str_weak(parse_http_payload),
-    }),
+    &be_ktab_class_Matter_HTTP_async,     /* shared constants */
     be_str_weak(parse_http_response),
     &be_const_str_solidified,
     ( &(const binstruction[18]) {  /* code */
-      0x88040100,  //  0000  GETMBR	R1	R0	K0
-      0x1C040301,  //  0001  EQ	R1	R1	K1
+      0x8804011D,  //  0000  GETMBR	R1	R0	K29
+      0x1C040316,  //  0001  EQ	R1	R1	K22
       0x78060002,  //  0002  JMPF	R1	#0006
-      0x8C040102,  //  0003  GETMET	R1	R0	K2
+      0x8C04011E,  //  0003  GETMET	R1	R0	K30
       0x7C040200,  //  0004  CALL	R1	1
       0x7002000A,  //  0005  JMP		#0011
-      0x88040100,  //  0006  GETMBR	R1	R0	K0
-      0x1C040303,  //  0007  EQ	R1	R1	K3
+      0x8804011D,  //  0006  GETMBR	R1	R0	K29
+      0x1C040319,  //  0007  EQ	R1	R1	K25
       0x78060002,  //  0008  JMPF	R1	#000C
-      0x8C040104,  //  0009  GETMET	R1	R0	K4
+      0x8C04011F,  //  0009  GETMET	R1	R0	K31
       0x7C040200,  //  000A  CALL	R1	1
       0x70020004,  //  000B  JMP		#0011
-      0x88040100,  //  000C  GETMBR	R1	R0	K0
-      0x1C040305,  //  000D  EQ	R1	R1	K5
+      0x8804011D,  //  000C  GETMBR	R1	R0	K29
+      0x1C040320,  //  000D  EQ	R1	R1	K32
       0x78060001,  //  000E  JMPF	R1	#0011
-      0x8C040106,  //  000F  GETMET	R1	R0	K6
+      0x8C040121,  //  000F  GETMET	R1	R0	K33
       0x7C040200,  //  0010  CALL	R1	1
       0x80000000,  //  0011  RET	0
     })
@@ -351,22 +391,19 @@ be_local_closure(class_Matter_HTTP_async_event_refused,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(http_status),
-    /* K1   */  be_nested_str_weak(event_http_failed),
-    }),
+    &be_ktab_class_Matter_HTTP_async,     /* shared constants */
     be_str_weak(event_refused),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x5405FFFE,  //  0000  LDINT	R1	-1
-      0x90020001,  //  0001  SETMBR	R0	K0	R1
-      0x8C040101,  //  0002  GETMET	R1	R0	K1
+      0x90024401,  //  0001  SETMBR	R0	K34	R1
+      0x8C040123,  //  0002  GETMET	R1	R0	K35
       0x7C040200,  //  0003  CALL	R1	1
       0x80000000,  //  0004  RET	0
     })
@@ -382,45 +419,33 @@ be_local_closure(class_Matter_HTTP_async_reset,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[11]) {     /* constants */
-    /* K0   */  be_nested_str_weak(reset),
-    /* K1   */  be_nested_str_weak(cmd),
-    /* K2   */  be_nested_str_weak(response),
-    /* K3   */  be_nested_str_weak(response_offset),
-    /* K4   */  be_const_int(0),
-    /* K5   */  be_nested_str_weak(payload),
-    /* K6   */  be_nested_str_weak(),
-    /* K7   */  be_nested_str_weak(phase),
-    /* K8   */  be_nested_str_weak(http_status),
-    /* K9   */  be_nested_str_weak(is_chunked),
-    /* K10  */  be_nested_str_weak(chunk_size),
-    }),
+    &be_ktab_class_Matter_HTTP_async,     /* shared constants */
     be_str_weak(reset),
     &be_const_str_solidified,
     ( &(const binstruction[18]) {  /* code */
       0x60040003,  //  0000  GETGBL	R1	G3
       0x5C080000,  //  0001  MOVE	R2	R0
       0x7C040200,  //  0002  CALL	R1	1
-      0x8C040300,  //  0003  GETMET	R1	R1	K0
+      0x8C040324,  //  0003  GETMET	R1	R1	K36
       0x7C040200,  //  0004  CALL	R1	1
       0x4C040000,  //  0005  LDNIL	R1
-      0x90020201,  //  0006  SETMBR	R0	K1	R1
+      0x90024A01,  //  0006  SETMBR	R0	K37	R1
       0x4C040000,  //  0007  LDNIL	R1
-      0x90020401,  //  0008  SETMBR	R0	K2	R1
-      0x90020704,  //  0009  SETMBR	R0	K3	K4
-      0x90020B06,  //  000A  SETMBR	R0	K5	K6
-      0x90020F04,  //  000B  SETMBR	R0	K7	K4
-      0x90021104,  //  000C  SETMBR	R0	K8	K4
+      0x90020A01,  //  0008  SETMBR	R0	K5	R1
+      0x90020D16,  //  0009  SETMBR	R0	K6	K22
+      0x90021D0C,  //  000A  SETMBR	R0	K14	K12
+      0x90023B16,  //  000B  SETMBR	R0	K29	K22
+      0x90024516,  //  000C  SETMBR	R0	K34	K22
       0x50040000,  //  000D  LDBOOL	R1	0	0
-      0x90021201,  //  000E  SETMBR	R0	K9	R1
+      0x90020001,  //  000E  SETMBR	R0	K0	R1
       0x4C040000,  //  000F  LDNIL	R1
-      0x90021401,  //  0010  SETMBR	R0	K10	R1
+      0x90020201,  //  0010  SETMBR	R0	K1	R1
       0x80000000,  //  0011  RET	0
     })
   )
@@ -435,25 +460,22 @@ be_local_closure(class_Matter_HTTP_async_begin,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(begin),
-    /* K1   */  be_nested_str_weak(cmd),
-    }),
+    &be_ktab_class_Matter_HTTP_async,     /* shared constants */
     be_str_weak(begin),
     &be_const_str_solidified,
     ( &(const binstruction[ 7]) {  /* code */
       0x60080003,  //  0000  GETGBL	R2	G3
       0x5C0C0000,  //  0001  MOVE	R3	R0
       0x7C080200,  //  0002  CALL	R2	1
-      0x8C080500,  //  0003  GETMET	R2	R2	K0
+      0x8C080526,  //  0003  GETMET	R2	R2	K38
       0x7C080200,  //  0004  CALL	R2	1
-      0x90020201,  //  0005  SETMBR	R0	K1	R1
+      0x90024A01,  //  0005  SETMBR	R0	K37	R1
       0x80040400,  //  0006  RET	1	R2
     })
   )
@@ -468,19 +490,17 @@ be_local_closure(class_Matter_HTTP_async_event_established,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(send_http),
-    }),
+    &be_ktab_class_Matter_HTTP_async,     /* shared constants */
     be_str_weak(event_established),
     &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
-      0x8C040100,  //  0000  GETMET	R1	R0	K0
+      0x8C040127,  //  0000  GETMET	R1	R0	K39
       0x7C040200,  //  0001  CALL	R1	1
       0x80000000,  //  0002  RET	0
     })
@@ -496,66 +516,48 @@ be_local_closure(class_Matter_HTTP_async_parse_http_headers,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[17]) {     /* constants */
-    /* K0   */  be_nested_str_weak(global),
-    /* K1   */  be_nested_str_weak(_re_http_header),
-    /* K2   */  be_nested_str_weak(match2),
-    /* K3   */  be_nested_str_weak(response),
-    /* K4   */  be_nested_str_weak(response_offset),
-    /* K5   */  be_nested_str_weak(event_http_header),
-    /* K6   */  be_const_int(1),
-    /* K7   */  be_const_int(2),
-    /* K8   */  be_const_int(0),
-    /* K9   */  be_nested_str_weak(_re_http_body),
-    /* K10  */  be_nested_str_weak(event_http_headers_end),
-    /* K11  */  be_nested_str_weak(phase),
-    /* K12  */  be_nested_str_weak(parse_http_payload),
-    /* K13  */  be_nested_str_weak(close),
-    /* K14  */  be_nested_str_weak(status),
-    /* K15  */  be_nested_str_weak(http_status),
-    /* K16  */  be_nested_str_weak(event_http_failed),
-    }),
+    &be_ktab_class_Matter_HTTP_async,     /* shared constants */
     be_str_weak(parse_http_headers),
     &be_const_str_solidified,
     ( &(const binstruction[47]) {  /* code */
       0x50040200,  //  0000  LDBOOL	R1	1	0
       0x7806002B,  //  0001  JMPF	R1	#002E
-      0xB8060000,  //  0002  GETNGBL	R1	K0
-      0x88040301,  //  0003  GETMBR	R1	R1	K1
-      0x8C040302,  //  0004  GETMET	R1	R1	K2
-      0x880C0103,  //  0005  GETMBR	R3	R0	K3
-      0x88100104,  //  0006  GETMBR	R4	R0	K4
+      0xB8060400,  //  0002  GETNGBL	R1	K2
+      0x88040328,  //  0003  GETMBR	R1	R1	K40
+      0x8C040304,  //  0004  GETMET	R1	R1	K4
+      0x880C0105,  //  0005  GETMBR	R3	R0	K5
+      0x88100106,  //  0006  GETMBR	R4	R0	K6
       0x7C040600,  //  0007  CALL	R1	3
       0x78060008,  //  0008  JMPF	R1	#0012
-      0x8C080105,  //  0009  GETMET	R2	R0	K5
-      0x94100306,  //  000A  GETIDX	R4	R1	K6
-      0x94140307,  //  000B  GETIDX	R5	R1	K7
+      0x8C080129,  //  0009  GETMET	R2	R0	K41
+      0x94100319,  //  000A  GETIDX	R4	R1	K25
+      0x94140320,  //  000B  GETIDX	R5	R1	K32
       0x7C080600,  //  000C  CALL	R2	3
-      0x88080104,  //  000D  GETMBR	R2	R0	K4
-      0x940C0308,  //  000E  GETIDX	R3	R1	K8
+      0x88080106,  //  000D  GETMBR	R2	R0	K6
+      0x940C0307,  //  000E  GETIDX	R3	R1	K7
       0x00080403,  //  000F  ADD	R2	R2	R3
-      0x90020802,  //  0010  SETMBR	R0	K4	R2
+      0x90020C02,  //  0010  SETMBR	R0	K6	R2
       0x7002001A,  //  0011  JMP		#002D
-      0xB80A0000,  //  0012  GETNGBL	R2	K0
-      0x88080509,  //  0013  GETMBR	R2	R2	K9
-      0x8C080502,  //  0014  GETMET	R2	R2	K2
-      0x88100103,  //  0015  GETMBR	R4	R0	K3
-      0x88140104,  //  0016  GETMBR	R5	R0	K4
+      0xB80A0400,  //  0012  GETNGBL	R2	K2
+      0x8808052A,  //  0013  GETMBR	R2	R2	K42
+      0x8C080504,  //  0014  GETMET	R2	R2	K4
+      0x88100105,  //  0015  GETMBR	R4	R0	K5
+      0x88140106,  //  0016  GETMBR	R5	R0	K6
       0x7C080600,  //  0017  CALL	R2	3
       0x780A0004,  //  0018  JMPF	R2	#001E
-      0x8C0C010A,  //  0019  GETMET	R3	R0	K10
+      0x8C0C012B,  //  0019  GETMET	R3	R0	K43
       0x7C0C0200,  //  001A  CALL	R3	1
-      0x90021707,  //  001B  SETMBR	R0	K11	K7
-      0x8C0C010C,  //  001C  GETMET	R3	R0	K12
+      0x90023B20,  //  001B  SETMBR	R0	K29	K32
+      0x8C0C0121,  //  001C  GETMET	R3	R0	K33
       0x7C0C0200,  //  001D  CALL	R3	1
       0x600C000C,  //  001E  GETGBL	R3	G12
-      0x88100103,  //  001F  GETMBR	R4	R0	K3
+      0x88100105,  //  001F  GETMBR	R4	R0	K5
       0x7C0C0200,  //  0020  CALL	R3	1
       0x541203FF,  //  0021  LDINT	R4	1024
       0x240C0604,  //  0022  GT	R3	R3	R4
@@ -563,10 +565,10 @@ be_local_closure(class_Matter_HTTP_async_parse_http_headers,   /* name */
       0x8C0C010D,  //  0024  GETMET	R3	R0	K13
       0x7C0C0200,  //  0025  CALL	R3	1
       0x540DFFFB,  //  0026  LDINT	R3	-4
-      0x90021C03,  //  0027  SETMBR	R0	K14	R3
+      0x90021403,  //  0027  SETMBR	R0	K10	R3
       0x540DFFFE,  //  0028  LDINT	R3	-1
-      0x90021E03,  //  0029  SETMBR	R0	K15	R3
-      0x8C0C0110,  //  002A  GETMET	R3	R0	K16
+      0x90024403,  //  0029  SETMBR	R0	K34	R3
+      0x8C0C0123,  //  002A  GETMET	R3	R0	K35
       0x7C0C0200,  //  002B  CALL	R3	1
       0x80000600,  //  002C  RET	0
       0x7001FFD1,  //  002D  JMP		#0000
@@ -584,19 +586,17 @@ be_local_closure(class_Matter_HTTP_async_event_available,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(receive),
-    }),
+    &be_ktab_class_Matter_HTTP_async,     /* shared constants */
     be_str_weak(event_available),
     &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
-      0x8C040100,  //  0000  GETMET	R1	R0	K0
+      0x8C04012C,  //  0000  GETMET	R1	R0	K44
       0x7C040200,  //  0001  CALL	R1	1
       0x80000000,  //  0002  RET	0
     })
@@ -612,22 +612,19 @@ be_local_closure(class_Matter_HTTP_async_event_timeout,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(http_status),
-    /* K1   */  be_nested_str_weak(event_http_timeout),
-    }),
+    &be_ktab_class_Matter_HTTP_async,     /* shared constants */
     be_str_weak(event_timeout),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x5405FFFD,  //  0000  LDINT	R1	-2
-      0x90020001,  //  0001  SETMBR	R0	K0	R1
-      0x8C040101,  //  0002  GETMET	R1	R0	K1
+      0x90024401,  //  0001  SETMBR	R0	K34	R1
+      0x8C04012D,  //  0002  GETMET	R1	R0	K45
       0x7C040200,  //  0003  CALL	R1	1
       0x80000000,  //  0004  RET	0
     })
@@ -643,55 +640,42 @@ be_local_closure(class_Matter_HTTP_async_compile_re,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[12]) {     /* constants */
-    /* K0   */  be_nested_str_weak(re),
-    /* K1   */  be_nested_str_weak(global),
-    /* K2   */  be_nested_str_weak(contains),
-    /* K3   */  be_nested_str_weak(_re_http_status),
-    /* K4   */  be_nested_str_weak(compile),
-    /* K5   */  be_nested_str_weak(HTTP_STATUS_REGEX),
-    /* K6   */  be_nested_str_weak(_re_http_header),
-    /* K7   */  be_nested_str_weak(HTTP_HEADER_REGEX),
-    /* K8   */  be_nested_str_weak(_re_http_body),
-    /* K9   */  be_nested_str_weak(HTTP_BODY_REGEX),
-    /* K10  */  be_nested_str_weak(_re_http_chunk),
-    /* K11  */  be_nested_str_weak(HTTP_CHUNK_REGEX),
-    }),
+    &be_ktab_class_Matter_HTTP_async,     /* shared constants */
     be_str_weak(compile_re),
     &be_const_str_solidified,
     ( &(const binstruction[27]) {  /* code */
-      0xA4060000,  //  0000  IMPORT	R1	K0
-      0xB80A0200,  //  0001  GETNGBL	R2	K1
-      0x8C080502,  //  0002  GETMET	R2	R2	K2
-      0x58100003,  //  0003  LDCONST	R4	K3
+      0xA4065C00,  //  0000  IMPORT	R1	K46
+      0xB80A0400,  //  0001  GETNGBL	R2	K2
+      0x8C08052F,  //  0002  GETMET	R2	R2	K47
+      0x58100030,  //  0003  LDCONST	R4	K48
       0x7C080400,  //  0004  CALL	R2	2
       0x740A0013,  //  0005  JMPT	R2	#001A
-      0xB80A0200,  //  0006  GETNGBL	R2	K1
-      0x8C0C0304,  //  0007  GETMET	R3	R1	K4
-      0x88140105,  //  0008  GETMBR	R5	R0	K5
+      0xB80A0400,  //  0006  GETNGBL	R2	K2
+      0x8C0C0331,  //  0007  GETMET	R3	R1	K49
+      0x88140132,  //  0008  GETMBR	R5	R0	K50
       0x7C0C0400,  //  0009  CALL	R3	2
-      0x900A0603,  //  000A  SETMBR	R2	K3	R3
-      0xB80A0200,  //  000B  GETNGBL	R2	K1
-      0x8C0C0304,  //  000C  GETMET	R3	R1	K4
-      0x88140107,  //  000D  GETMBR	R5	R0	K7
+      0x900A6003,  //  000A  SETMBR	R2	K48	R3
+      0xB80A0400,  //  000B  GETNGBL	R2	K2
+      0x8C0C0331,  //  000C  GETMET	R3	R1	K49
+      0x88140133,  //  000D  GETMBR	R5	R0	K51
       0x7C0C0400,  //  000E  CALL	R3	2
-      0x900A0C03,  //  000F  SETMBR	R2	K6	R3
-      0xB80A0200,  //  0010  GETNGBL	R2	K1
-      0x8C0C0304,  //  0011  GETMET	R3	R1	K4
-      0x88140109,  //  0012  GETMBR	R5	R0	K9
+      0x900A5003,  //  000F  SETMBR	R2	K40	R3
+      0xB80A0400,  //  0010  GETNGBL	R2	K2
+      0x8C0C0331,  //  0011  GETMET	R3	R1	K49
+      0x88140134,  //  0012  GETMBR	R5	R0	K52
       0x7C0C0400,  //  0013  CALL	R3	2
-      0x900A1003,  //  0014  SETMBR	R2	K8	R3
-      0xB80A0200,  //  0015  GETNGBL	R2	K1
-      0x8C0C0304,  //  0016  GETMET	R3	R1	K4
-      0x8814010B,  //  0017  GETMBR	R5	R0	K11
+      0x900A5403,  //  0014  SETMBR	R2	K42	R3
+      0xB80A0400,  //  0015  GETNGBL	R2	K2
+      0x8C0C0331,  //  0016  GETMET	R3	R1	K49
+      0x88140135,  //  0017  GETMBR	R5	R0	K53
       0x7C0C0400,  //  0018  CALL	R3	2
-      0x900A1403,  //  0019  SETMBR	R2	K10	R3
+      0x900A0603,  //  0019  SETMBR	R2	K3	R3
       0x80000000,  //  001A  RET	0
     })
   )
@@ -706,26 +690,21 @@ be_local_closure(class_Matter_HTTP_async_event_closed,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_weak(http_status),
-    /* K1   */  be_const_int(0),
-    /* K2   */  be_const_int(1),
-    /* K3   */  be_nested_str_weak(event_http_finished),
-    }),
+    &be_ktab_class_Matter_HTTP_async,     /* shared constants */
     be_str_weak(event_closed),
     &be_const_str_solidified,
     ( &(const binstruction[ 7]) {  /* code */
-      0x88040100,  //  0000  GETMBR	R1	R0	K0
-      0x1C040301,  //  0001  EQ	R1	R1	K1
+      0x88040122,  //  0000  GETMBR	R1	R0	K34
+      0x1C040316,  //  0001  EQ	R1	R1	K22
       0x78060002,  //  0002  JMPF	R1	#0006
-      0x90020102,  //  0003  SETMBR	R0	K0	K2
-      0x8C040103,  //  0004  GETMET	R1	R0	K3
+      0x90024509,  //  0003  SETMBR	R0	K34	K9
+      0x8C040136,  //  0004  GETMET	R1	R0	K54
       0x7C040200,  //  0005  CALL	R1	1
       0x80000000,  //  0006  RET	0
     })
@@ -741,57 +720,46 @@ be_local_closure(class_Matter_HTTP_async_begin_sync,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     3,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[10]) {     /* constants */
-    /* K0   */  be_nested_str_weak(timeout),
-    /* K1   */  be_nested_str_weak(set_timeout),
-    /* K2   */  be_nested_str_weak(SPINLOCK),
-    /* K3   */  be_nested_str_weak(begin),
-    /* K4   */  be_nested_str_weak(http_status),
-    /* K5   */  be_const_int(0),
-    /* K6   */  be_nested_str_weak(loop),
-    /* K7   */  be_nested_str_weak(tasmota),
-    /* K8   */  be_nested_str_weak(delay),
-    /* K9   */  be_nested_str_weak(payload),
-    }),
+    &be_ktab_class_Matter_HTTP_async,     /* shared constants */
     be_str_weak(begin_sync),
     &be_const_str_solidified,
     ( &(const binstruction[33]) {  /* code */
-      0x880C0100,  //  0000  GETMBR	R3	R0	K0
+      0x880C0137,  //  0000  GETMBR	R3	R0	K55
       0x4C100000,  //  0001  LDNIL	R4
       0x20100404,  //  0002  NE	R4	R2	R4
       0x78120002,  //  0003  JMPF	R4	#0007
-      0x8C100101,  //  0004  GETMET	R4	R0	K1
+      0x8C100138,  //  0004  GETMET	R4	R0	K56
       0x5C180400,  //  0005  MOVE	R6	R2
       0x7C100400,  //  0006  CALL	R4	2
       0x4C100000,  //  0007  LDNIL	R4
-      0x88140102,  //  0008  GETMBR	R5	R0	K2
-      0x8C180103,  //  0009  GETMET	R6	R0	K3
+      0x88140139,  //  0008  GETMBR	R5	R0	K57
+      0x8C180126,  //  0009  GETMET	R6	R0	K38
       0x5C200200,  //  000A  MOVE	R8	R1
       0x7C180400,  //  000B  CALL	R6	2
       0x781A0009,  //  000C  JMPF	R6	#0017
-      0x881C0104,  //  000D  GETMBR	R7	R0	K4
-      0x1C1C0F05,  //  000E  EQ	R7	R7	K5
+      0x881C0122,  //  000D  GETMBR	R7	R0	K34
+      0x1C1C0F16,  //  000E  EQ	R7	R7	K22
       0x781E0006,  //  000F  JMPF	R7	#0017
-      0x8C1C0106,  //  0010  GETMET	R7	R0	K6
+      0x8C1C013A,  //  0010  GETMET	R7	R0	K58
       0x7C1C0200,  //  0011  CALL	R7	1
-      0xB81E0E00,  //  0012  GETNGBL	R7	K7
-      0x8C1C0F08,  //  0013  GETMET	R7	R7	K8
+      0xB81E7600,  //  0012  GETNGBL	R7	K59
+      0x8C1C0F3C,  //  0013  GETMET	R7	R7	K60
       0x5C240A00,  //  0014  MOVE	R9	R5
       0x7C1C0400,  //  0015  CALL	R7	2
       0x7001FFF5,  //  0016  JMP		#000D
-      0x8C1C0101,  //  0017  GETMET	R7	R0	K1
+      0x8C1C0138,  //  0017  GETMET	R7	R0	K56
       0x5C240600,  //  0018  MOVE	R9	R3
       0x7C1C0400,  //  0019  CALL	R7	2
-      0x881C0104,  //  001A  GETMBR	R7	R0	K4
-      0x241C0F05,  //  001B  GT	R7	R7	K5
+      0x881C0122,  //  001A  GETMBR	R7	R0	K34
+      0x241C0F16,  //  001B  GT	R7	R7	K22
       0x781E0001,  //  001C  JMPF	R7	#001F
-      0x881C0109,  //  001D  GETMBR	R7	R0	K9
+      0x881C010E,  //  001D  GETMBR	R7	R0	K14
       0x70020000,  //  001E  JMP		#0020
       0x4C1C0000,  //  001F  LDNIL	R7
       0x80040E00,  //  0020  RET	1	R7
@@ -808,70 +776,50 @@ be_local_closure(class_Matter_HTTP_async_send_http,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[19]) {     /* constants */
-    /* K0   */  be_nested_str_weak(string),
-    /* K1   */  be_nested_str_weak(response),
-    /* K2   */  be_nested_str_weak(),
-    /* K3   */  be_nested_str_weak(addr),
-    /* K4   */  be_nested_str_weak(find),
-    /* K5   */  be_nested_str_weak(_X3A),
-    /* K6   */  be_const_int(0),
-    /* K7   */  be_nested_str_weak(_X5B),
-    /* K8   */  be_nested_str_weak(_X5D),
-    /* K9   */  be_nested_str_weak(auth),
-    /* K10  */  be_nested_str_weak(HTTP_GET),
-    /* K11  */  be_nested_str_weak(cmd),
-    /* K12  */  be_nested_str_weak(port),
-    /* K13  */  be_nested_str_weak(HTTP_GET_AUTH),
-    /* K14  */  be_nested_str_weak(write),
-    /* K15  */  be_nested_str_weak(close),
-    /* K16  */  be_nested_str_weak(status),
-    /* K17  */  be_nested_str_weak(http_status),
-    /* K18  */  be_nested_str_weak(event_http_failed),
-    }),
+    &be_ktab_class_Matter_HTTP_async,     /* shared constants */
     be_str_weak(send_http),
     &be_const_str_solidified,
     ( &(const binstruction[50]) {  /* code */
-      0xA4060000,  //  0000  IMPORT	R1	K0
-      0x90020302,  //  0001  SETMBR	R0	K1	K2
-      0x88080103,  //  0002  GETMBR	R2	R0	K3
-      0x8C0C0304,  //  0003  GETMET	R3	R1	K4
+      0xA4062000,  //  0000  IMPORT	R1	K16
+      0x90020B0C,  //  0001  SETMBR	R0	K5	K12
+      0x8808013D,  //  0002  GETMBR	R2	R0	K61
+      0x8C0C0314,  //  0003  GETMET	R3	R1	K20
       0x5C140400,  //  0004  MOVE	R5	R2
-      0x58180005,  //  0005  LDCONST	R6	K5
+      0x5818003E,  //  0005  LDCONST	R6	K62
       0x7C0C0600,  //  0006  CALL	R3	3
-      0x280C0706,  //  0007  GE	R3	R3	K6
+      0x280C0707,  //  0007  GE	R3	R3	K7
       0x780E0002,  //  0008  JMPF	R3	#000C
-      0x000E0E02,  //  0009  ADD	R3	K7	R2
-      0x000C0708,  //  000A  ADD	R3	R3	K8
+      0x000E7E02,  //  0009  ADD	R3	K63	R2
+      0x000C0740,  //  000A  ADD	R3	R3	K64
       0x5C080600,  //  000B  MOVE	R2	R3
       0x4C0C0000,  //  000C  LDNIL	R3
-      0x88100109,  //  000D  GETMBR	R4	R0	K9
+      0x88100117,  //  000D  GETMBR	R4	R0	K23
       0x4C140000,  //  000E  LDNIL	R5
       0x1C100805,  //  000F  EQ	R4	R4	R5
       0x78120007,  //  0010  JMPF	R4	#0019
       0x60100018,  //  0011  GETGBL	R4	G24
-      0x8814010A,  //  0012  GETMBR	R5	R0	K10
-      0x8818010B,  //  0013  GETMBR	R6	R0	K11
+      0x88140141,  //  0012  GETMBR	R5	R0	K65
+      0x88180125,  //  0013  GETMBR	R6	R0	K37
       0x5C1C0400,  //  0014  MOVE	R7	R2
-      0x8820010C,  //  0015  GETMBR	R8	R0	K12
+      0x88200142,  //  0015  GETMBR	R8	R0	K66
       0x7C100800,  //  0016  CALL	R4	4
       0x5C0C0800,  //  0017  MOVE	R3	R4
       0x70020007,  //  0018  JMP		#0021
       0x60100018,  //  0019  GETGBL	R4	G24
-      0x8814010D,  //  001A  GETMBR	R5	R0	K13
-      0x8818010B,  //  001B  GETMBR	R6	R0	K11
+      0x88140143,  //  001A  GETMBR	R5	R0	K67
+      0x88180125,  //  001B  GETMBR	R6	R0	K37
       0x5C1C0400,  //  001C  MOVE	R7	R2
-      0x8820010C,  //  001D  GETMBR	R8	R0	K12
-      0x88240109,  //  001E  GETMBR	R9	R0	K9
+      0x88200142,  //  001D  GETMBR	R8	R0	K66
+      0x88240117,  //  001E  GETMBR	R9	R0	K23
       0x7C100A00,  //  001F  CALL	R4	5
       0x5C0C0800,  //  0020  MOVE	R3	R4
-      0x8C10010E,  //  0021  GETMET	R4	R0	K14
+      0x8C100144,  //  0021  GETMET	R4	R0	K68
       0x5C180600,  //  0022  MOVE	R6	R3
       0x7C100400,  //  0023  CALL	R4	2
       0x6014000C,  //  0024  GETGBL	R5	G12
@@ -879,13 +827,13 @@ be_local_closure(class_Matter_HTTP_async_send_http,   /* name */
       0x7C140200,  //  0026  CALL	R5	1
       0x20140805,  //  0027  NE	R5	R4	R5
       0x78160007,  //  0028  JMPF	R5	#0031
-      0x8C14010F,  //  0029  GETMET	R5	R0	K15
+      0x8C14010D,  //  0029  GETMET	R5	R0	K13
       0x7C140200,  //  002A  CALL	R5	1
       0x5415FFFB,  //  002B  LDINT	R5	-4
-      0x90022005,  //  002C  SETMBR	R0	K16	R5
+      0x90021405,  //  002C  SETMBR	R0	K10	R5
       0x5415FFFE,  //  002D  LDINT	R5	-1
-      0x90022205,  //  002E  SETMBR	R0	K17	R5
-      0x8C140112,  //  002F  GETMET	R5	R0	K18
+      0x90024405,  //  002E  SETMBR	R0	K34	R5
+      0x8C140123,  //  002F  GETMET	R5	R0	K35
       0x7C140200,  //  0030  CALL	R5	1
       0x80000000,  //  0031  RET	0
     })
@@ -901,30 +849,25 @@ be_local_closure(class_Matter_HTTP_async_event_http_headers_end,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str_weak(response_offset),
-    /* K1   */  be_const_int(0),
-    /* K2   */  be_nested_str_weak(response),
-    /* K3   */  be_const_int(2147483647),
-    }),
+    &be_ktab_class_Matter_HTTP_async,     /* shared constants */
     be_str_weak(event_http_headers_end),
     &be_const_str_solidified,
     ( &(const binstruction[10]) {  /* code */
-      0x88040100,  //  0000  GETMBR	R1	R0	K0
-      0x24040301,  //  0001  GT	R1	R1	K1
+      0x88040106,  //  0000  GETMBR	R1	R0	K6
+      0x24040316,  //  0001  GT	R1	R1	K22
       0x78060005,  //  0002  JMPF	R1	#0009
-      0x88040100,  //  0003  GETMBR	R1	R0	K0
-      0x40040303,  //  0004  CONNECT	R1	R1	K3
-      0x88080102,  //  0005  GETMBR	R2	R0	K2
+      0x88040106,  //  0003  GETMBR	R1	R0	K6
+      0x40040345,  //  0004  CONNECT	R1	R1	K69
+      0x88080105,  //  0005  GETMBR	R2	R0	K5
       0x94040401,  //  0006  GETIDX	R1	R2	R1
-      0x90020401,  //  0007  SETMBR	R0	K2	R1
-      0x90020101,  //  0008  SETMBR	R0	K0	K1
+      0x90020A01,  //  0007  SETMBR	R0	K5	R1
+      0x90020D16,  //  0008  SETMBR	R0	K6	K22
       0x80000000,  //  0009  RET	0
     })
   )
@@ -939,19 +882,17 @@ be_local_closure(class_Matter_HTTP_async_event_http_status_code,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     3,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(status_code),
-    }),
+    &be_ktab_class_Matter_HTTP_async,     /* shared constants */
     be_str_weak(event_http_status_code),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
-      0x90020001,  //  0000  SETMBR	R0	K0	R1
+      0x90028C01,  //  0000  SETMBR	R0	K70	R1
       0x80000000,  //  0001  RET	0
     })
   )
@@ -966,56 +907,43 @@ be_local_closure(class_Matter_HTTP_async_parse_http_status_line,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[12]) {     /* constants */
-    /* K0   */  be_nested_str_weak(global),
-    /* K1   */  be_nested_str_weak(_re_http_status),
-    /* K2   */  be_nested_str_weak(match2),
-    /* K3   */  be_nested_str_weak(response),
-    /* K4   */  be_nested_str_weak(response_offset),
-    /* K5   */  be_const_int(0),
-    /* K6   */  be_nested_str_weak(status_code),
-    /* K7   */  be_const_int(1),
-    /* K8   */  be_nested_str_weak(phase),
-    /* K9   */  be_nested_str_weak(parse_http_headers),
-    /* K10  */  be_nested_str_weak(close),
-    /* K11  */  be_nested_str_weak(status),
-    }),
+    &be_ktab_class_Matter_HTTP_async,     /* shared constants */
     be_str_weak(parse_http_status_line),
     &be_const_str_solidified,
     ( &(const binstruction[28]) {  /* code */
-      0xB8060000,  //  0000  GETNGBL	R1	K0
-      0x88040301,  //  0001  GETMBR	R1	R1	K1
-      0x8C040302,  //  0002  GETMET	R1	R1	K2
-      0x880C0103,  //  0003  GETMBR	R3	R0	K3
-      0x88100104,  //  0004  GETMBR	R4	R0	K4
+      0xB8060400,  //  0000  GETNGBL	R1	K2
+      0x88040330,  //  0001  GETMBR	R1	R1	K48
+      0x8C040304,  //  0002  GETMET	R1	R1	K4
+      0x880C0105,  //  0003  GETMBR	R3	R0	K5
+      0x88100106,  //  0004  GETMBR	R4	R0	K6
       0x7C040600,  //  0005  CALL	R1	3
       0x78060009,  //  0006  JMPF	R1	#0011
-      0x94080305,  //  0007  GETIDX	R2	R1	K5
-      0x90020802,  //  0008  SETMBR	R0	K4	R2
+      0x94080307,  //  0007  GETIDX	R2	R1	K7
+      0x90020C02,  //  0008  SETMBR	R0	K6	R2
       0x60080009,  //  0009  GETGBL	R2	G9
-      0x940C0307,  //  000A  GETIDX	R3	R1	K7
+      0x940C0347,  //  000A  GETIDX	R3	R1	K71
       0x7C080200,  //  000B  CALL	R2	1
-      0x90020C02,  //  000C  SETMBR	R0	K6	R2
-      0x90021107,  //  000D  SETMBR	R0	K8	K7
-      0x8C080109,  //  000E  GETMET	R2	R0	K9
+      0x90028C02,  //  000C  SETMBR	R0	K70	R2
+      0x90023B47,  //  000D  SETMBR	R0	K29	K71
+      0x8C08011F,  //  000E  GETMET	R2	R0	K31
       0x7C080200,  //  000F  CALL	R2	1
       0x70020009,  //  0010  JMP		#001B
       0x6008000C,  //  0011  GETGBL	R2	G12
-      0x880C0103,  //  0012  GETMBR	R3	R0	K3
+      0x880C0105,  //  0012  GETMBR	R3	R0	K5
       0x7C080200,  //  0013  CALL	R2	1
       0x540E0063,  //  0014  LDINT	R3	100
       0x24080403,  //  0015  GT	R2	R2	R3
       0x780A0003,  //  0016  JMPF	R2	#001B
-      0x8C08010A,  //  0017  GETMET	R2	R0	K10
+      0x8C08010D,  //  0017  GETMET	R2	R0	K13
       0x7C080200,  //  0018  CALL	R2	1
       0x5409FFFB,  //  0019  LDINT	R2	-4
-      0x90021602,  //  001A  SETMBR	R0	K11	R2
+      0x90021402,  //  001A  SETMBR	R0	K10	R2
       0x80000000,  //  001B  RET	0
     })
   )
@@ -1030,13 +958,13 @@ be_local_closure(class_Matter_HTTP_async_event_http_timeout,   /* name */
   be_nested_proto(
     1,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
-    0,                          /* has constants */
-    NULL,                       /* no const */
+    1,                          /* has constants */
+    &be_ktab_class_Matter_HTTP_async,     /* shared constants */
     be_str_weak(event_http_timeout),
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
@@ -1054,78 +982,62 @@ be_local_closure(class_Matter_HTTP_async_receive,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[15]) {     /* constants */
-    /* K0   */  be_nested_str_weak(tcp_connected),
-    /* K1   */  be_nested_str_weak(tasmota),
-    /* K2   */  be_nested_str_weak(millis),
-    /* K3   */  be_nested_str_weak(time_start),
-    /* K4   */  be_nested_str_weak(timeout),
-    /* K5   */  be_nested_str_weak(status),
-    /* K6   */  be_nested_str_weak(close),
-    /* K7   */  be_nested_str_weak(http_status),
-    /* K8   */  be_nested_str_weak(event_http_timeout),
-    /* K9   */  be_nested_str_weak(tcp),
-    /* K10  */  be_nested_str_weak(available),
-    /* K11  */  be_const_int(0),
-    /* K12  */  be_nested_str_weak(read),
-    /* K13  */  be_nested_str_weak(response),
-    /* K14  */  be_nested_str_weak(parse_http_response),
-    }),
+    &be_ktab_class_Matter_HTTP_async,     /* shared constants */
     be_str_weak(receive),
     &be_const_str_solidified,
     ( &(const binstruction[48]) {  /* code */
-      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x88040148,  //  0000  GETMBR	R1	R0	K72
       0x50080200,  //  0001  LDBOOL	R2	1	0
       0x20040202,  //  0002  NE	R1	R1	R2
       0x78060000,  //  0003  JMPF	R1	#0005
       0x80000200,  //  0004  RET	0
-      0xB8060200,  //  0005  GETNGBL	R1	K1
-      0x8C040302,  //  0006  GETMET	R1	R1	K2
+      0xB8067600,  //  0005  GETNGBL	R1	K59
+      0x8C040349,  //  0006  GETMET	R1	R1	K73
       0x7C040200,  //  0007  CALL	R1	1
-      0x88080103,  //  0008  GETMBR	R2	R0	K3
+      0x8808014A,  //  0008  GETMBR	R2	R0	K74
       0x04040202,  //  0009  SUB	R1	R1	R2
-      0x88080104,  //  000A  GETMBR	R2	R0	K4
+      0x88080137,  //  000A  GETMBR	R2	R0	K55
       0x24040202,  //  000B  GT	R1	R1	R2
       0x78060008,  //  000C  JMPF	R1	#0016
       0x5405FFFC,  //  000D  LDINT	R1	-3
-      0x90020A01,  //  000E  SETMBR	R0	K5	R1
-      0x8C040106,  //  000F  GETMET	R1	R0	K6
+      0x90021401,  //  000E  SETMBR	R0	K10	R1
+      0x8C04010D,  //  000F  GETMET	R1	R0	K13
       0x7C040200,  //  0010  CALL	R1	1
       0x5405FFFD,  //  0011  LDINT	R1	-2
-      0x90020E01,  //  0012  SETMBR	R0	K7	R1
-      0x8C040108,  //  0013  GETMET	R1	R0	K8
+      0x90024401,  //  0012  SETMBR	R0	K34	R1
+      0x8C04012D,  //  0013  GETMET	R1	R0	K45
       0x7C040200,  //  0014  CALL	R1	1
       0x70020018,  //  0015  JMP		#002F
-      0x88040109,  //  0016  GETMBR	R1	R0	K9
-      0x8C04030A,  //  0017  GETMET	R1	R1	K10
+      0x8804014B,  //  0016  GETMBR	R1	R0	K75
+      0x8C04034C,  //  0017  GETMET	R1	R1	K76
       0x7C040200,  //  0018  CALL	R1	1
-      0x5808000B,  //  0019  LDCONST	R2	K11
-      0x240C030B,  //  001A  GT	R3	R1	K11
+      0x58080016,  //  0019  LDCONST	R2	K22
+      0x240C0316,  //  001A  GT	R3	R1	K22
       0x780E000E,  //  001B  JMPF	R3	#002B
-      0x880C0109,  //  001C  GETMBR	R3	R0	K9
-      0x8C0C070C,  //  001D  GETMET	R3	R3	K12
+      0x880C014B,  //  001C  GETMBR	R3	R0	K75
+      0x8C0C074D,  //  001D  GETMET	R3	R3	K77
       0x7C0C0200,  //  001E  CALL	R3	1
-      0x8810010D,  //  001F  GETMBR	R4	R0	K13
+      0x88100105,  //  001F  GETMBR	R4	R0	K5
       0x00100803,  //  0020  ADD	R4	R4	R3
-      0x90021A04,  //  0021  SETMBR	R0	K13	R4
+      0x90020A04,  //  0021  SETMBR	R0	K5	R4
       0x6010000C,  //  0022  GETGBL	R4	G12
       0x5C140600,  //  0023  MOVE	R5	R3
       0x7C100200,  //  0024  CALL	R4	1
       0x00080404,  //  0025  ADD	R2	R2	R4
-      0x88100109,  //  0026  GETMBR	R4	R0	K9
-      0x8C10090A,  //  0027  GETMET	R4	R4	K10
+      0x8810014B,  //  0026  GETMBR	R4	R0	K75
+      0x8C10094C,  //  0027  GETMET	R4	R4	K76
       0x7C100200,  //  0028  CALL	R4	1
       0x5C040800,  //  0029  MOVE	R1	R4
       0x7001FFEE,  //  002A  JMP		#001A
-      0x240C050B,  //  002B  GT	R3	R2	K11
+      0x240C0516,  //  002B  GT	R3	R2	K22
       0x780E0001,  //  002C  JMPF	R3	#002F
-      0x8C0C010E,  //  002D  GETMET	R3	R0	K14
+      0x8C0C014E,  //  002D  GETMET	R3	R0	K78
       0x7C0C0200,  //  002E  CALL	R3	1
       0x80000000,  //  002F  RET	0
     })

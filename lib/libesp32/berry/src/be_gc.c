@@ -320,7 +320,11 @@ static void free_proto(bvm *vm, bgcobject *obj)
     bproto *proto = cast_proto(obj);
     gc_try (proto != NULL) {
         be_free(vm, proto->upvals, proto->nupvals * sizeof(bupvaldesc));
-        be_free(vm, proto->ktab, proto->nconst * sizeof(bvalue));
+        if (!(proto->varg & BE_VA_SHARED_KTAB)) {       /* do not free shared ktab */
+                                                        /*caveat: the shared ktab is never GCed, in practice this is not a problem */
+                                                        /* since shared ktab are primarily meant for solidification hence not gc-able */
+            be_free(vm, proto->ktab, proto->nconst * sizeof(bvalue));
+        }
         be_free(vm, proto->ptab, proto->nproto * sizeof(bproto*));
         be_free(vm, proto->code, proto->codesize * sizeof(binstruction));
 #if BE_DEBUG_RUNTIME_INFO

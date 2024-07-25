@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- Berry consolidated constants for solidified classes reduces Flash size
 
 ### Fixed
 - Berry `light.get` for separate RGB/CT (#21818)

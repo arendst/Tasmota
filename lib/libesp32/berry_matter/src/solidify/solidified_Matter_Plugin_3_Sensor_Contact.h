@@ -3,6 +3,34 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
+// compact class 'Matter_Plugin_Sensor_Contact' ktab size: 24, total: 31 (saved 56 bytes)
+static const bvalue be_ktab_class_Matter_Plugin_Sensor_Contact[24] = {
+  /* K0   */  be_nested_str_weak(shadow_bool_value),
+  /* K1   */  be_nested_str_weak(_parse_update_virtual),
+  /* K2   */  be_nested_str_weak(Contact),
+  /* K3   */  be_const_int(0),
+  /* K4   */  be_nested_str_weak(update_virtual),
+  /* K5   */  be_nested_str_weak(matter),
+  /* K6   */  be_nested_str_weak(TLV),
+  /* K7   */  be_nested_str_weak(cluster),
+  /* K8   */  be_nested_str_weak(attribute),
+  /* K9   */  be_nested_str_weak(set_or_nil),
+  /* K10  */  be_nested_str_weak(BOOL),
+  /* K11  */  be_nested_str_weak(read_attribute),
+  /* K12  */  be_nested_str_weak(webserver),
+  /* K13  */  be_nested_str_weak(web_values_prefix),
+  /* K14  */  be_nested_str_weak(content_send),
+  /* K15  */  be_nested_str_weak(Contact_X25i_X20_X25s),
+  /* K16  */  be_nested_str_weak(tasmota_switch_index),
+  /* K17  */  be_nested_str_weak(web_value_onoff),
+  /* K18  */  be_nested_str_weak(get_name),
+  /* K19  */  be_nested_str_weak(Switch),
+  /* K20  */  be_nested_str_weak(PREFIX),
+  /* K21  */  be_nested_str_weak(html_escape),
+  /* K22  */  be_nested_str_weak(),
+  /* K23  */  be_nested_str_weak(attribute_updated),
+};
+
 
 extern const bclass be_class_Matter_Plugin_Sensor_Contact;
 
@@ -13,19 +41,13 @@ be_local_closure(class_Matter_Plugin_Sensor_Contact_update_virtual,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_weak(shadow_bool_value),
-    /* K1   */  be_nested_str_weak(_parse_update_virtual),
-    /* K2   */  be_nested_str_weak(Contact),
-    /* K3   */  be_const_int(0),
-    /* K4   */  be_nested_str_weak(update_virtual),
-    }),
+    &be_ktab_class_Matter_Plugin_Sensor_Contact,     /* shared constants */
     be_str_weak(update_virtual),
     &be_const_str_solidified,
     ( &(const binstruction[16]) {  /* code */
@@ -58,44 +80,34 @@ be_local_closure(class_Matter_Plugin_Sensor_Contact_read_attribute,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     4,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 9]) {     /* constants */
-    /* K0   */  be_nested_str_weak(matter),
-    /* K1   */  be_nested_str_weak(TLV),
-    /* K2   */  be_nested_str_weak(cluster),
-    /* K3   */  be_nested_str_weak(attribute),
-    /* K4   */  be_const_int(0),
-    /* K5   */  be_nested_str_weak(set_or_nil),
-    /* K6   */  be_nested_str_weak(BOOL),
-    /* K7   */  be_nested_str_weak(shadow_bool_value),
-    /* K8   */  be_nested_str_weak(read_attribute),
-    }),
+    &be_ktab_class_Matter_Plugin_Sensor_Contact,     /* shared constants */
     be_str_weak(read_attribute),
     &be_const_str_solidified,
     ( &(const binstruction[23]) {  /* code */
-      0xB8120000,  //  0000  GETNGBL	R4	K0
-      0x88100901,  //  0001  GETMBR	R4	R4	K1
-      0x88140502,  //  0002  GETMBR	R5	R2	K2
-      0x88180503,  //  0003  GETMBR	R6	R2	K3
+      0xB8120A00,  //  0000  GETNGBL	R4	K5
+      0x88100906,  //  0001  GETMBR	R4	R4	K6
+      0x88140507,  //  0002  GETMBR	R5	R2	K7
+      0x88180508,  //  0003  GETMBR	R6	R2	K8
       0x541E0044,  //  0004  LDINT	R7	69
       0x1C1C0A07,  //  0005  EQ	R7	R5	R7
       0x781E0006,  //  0006  JMPF	R7	#000E
-      0x1C1C0D04,  //  0007  EQ	R7	R6	K4
+      0x1C1C0D03,  //  0007  EQ	R7	R6	K3
       0x781E0004,  //  0008  JMPF	R7	#000E
-      0x8C1C0705,  //  0009  GETMET	R7	R3	K5
-      0x88240906,  //  000A  GETMBR	R9	R4	K6
-      0x88280107,  //  000B  GETMBR	R10	R0	K7
+      0x8C1C0709,  //  0009  GETMET	R7	R3	K9
+      0x8824090A,  //  000A  GETMBR	R9	R4	K10
+      0x88280100,  //  000B  GETMBR	R10	R0	K0
       0x7C1C0600,  //  000C  CALL	R7	3
       0x80040E00,  //  000D  RET	1	R7
       0x601C0003,  //  000E  GETGBL	R7	G3
       0x5C200000,  //  000F  MOVE	R8	R0
       0x7C1C0200,  //  0010  CALL	R7	1
-      0x8C1C0F08,  //  0011  GETMET	R7	R7	K8
+      0x8C1C0F0B,  //  0011  GETMET	R7	R7	K11
       0x5C240200,  //  0012  MOVE	R9	R1
       0x5C280400,  //  0013  MOVE	R10	R2
       0x5C2C0600,  //  0014  MOVE	R11	R3
@@ -114,33 +126,25 @@ be_local_closure(class_Matter_Plugin_Sensor_Contact_web_values,   /* name */
   be_nested_proto(
     10,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_str_weak(webserver),
-    /* K1   */  be_nested_str_weak(web_values_prefix),
-    /* K2   */  be_nested_str_weak(content_send),
-    /* K3   */  be_nested_str_weak(Contact_X25i_X20_X25s),
-    /* K4   */  be_nested_str_weak(tasmota_switch_index),
-    /* K5   */  be_nested_str_weak(web_value_onoff),
-    /* K6   */  be_nested_str_weak(shadow_bool_value),
-    }),
+    &be_ktab_class_Matter_Plugin_Sensor_Contact,     /* shared constants */
     be_str_weak(web_values),
     &be_const_str_solidified,
     ( &(const binstruction[13]) {  /* code */
-      0xA4060000,  //  0000  IMPORT	R1	K0
-      0x8C080101,  //  0001  GETMET	R2	R0	K1
+      0xA4061800,  //  0000  IMPORT	R1	K12
+      0x8C08010D,  //  0001  GETMET	R2	R0	K13
       0x7C080200,  //  0002  CALL	R2	1
-      0x8C080302,  //  0003  GETMET	R2	R1	K2
+      0x8C08030E,  //  0003  GETMET	R2	R1	K14
       0x60100018,  //  0004  GETGBL	R4	G24
-      0x58140003,  //  0005  LDCONST	R5	K3
-      0x88180104,  //  0006  GETMBR	R6	R0	K4
-      0x8C1C0105,  //  0007  GETMET	R7	R0	K5
-      0x88240106,  //  0008  GETMBR	R9	R0	K6
+      0x5814000F,  //  0005  LDCONST	R5	K15
+      0x88180110,  //  0006  GETMBR	R6	R0	K16
+      0x8C1C0111,  //  0007  GETMET	R7	R0	K17
+      0x88240100,  //  0008  GETMBR	R9	R0	K0
       0x7C1C0400,  //  0009  CALL	R7	2
       0x7C100600,  //  000A  CALL	R4	3
       0x7C080400,  //  000B  CALL	R2	2
@@ -158,44 +162,35 @@ be_local_closure(class_Matter_Plugin_Sensor_Contact_web_values_prefix,   /* name
   be_nested_proto(
     10,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 8]) {     /* constants */
-    /* K0   */  be_nested_str_weak(webserver),
-    /* K1   */  be_nested_str_weak(get_name),
-    /* K2   */  be_nested_str_weak(Switch),
-    /* K3   */  be_nested_str_weak(tasmota_switch_index),
-    /* K4   */  be_nested_str_weak(content_send),
-    /* K5   */  be_nested_str_weak(PREFIX),
-    /* K6   */  be_nested_str_weak(html_escape),
-    /* K7   */  be_nested_str_weak(),
-    }),
+    &be_ktab_class_Matter_Plugin_Sensor_Contact,     /* shared constants */
     be_str_weak(web_values_prefix),
     &be_const_str_solidified,
     ( &(const binstruction[22]) {  /* code */
-      0xA4060000,  //  0000  IMPORT	R1	K0
-      0x8C080101,  //  0001  GETMET	R2	R0	K1
+      0xA4061800,  //  0000  IMPORT	R1	K12
+      0x8C080112,  //  0001  GETMET	R2	R0	K18
       0x7C080200,  //  0002  CALL	R2	1
       0x5C0C0400,  //  0003  MOVE	R3	R2
       0x740E0004,  //  0004  JMPT	R3	#000A
       0x600C0008,  //  0005  GETGBL	R3	G8
-      0x88100103,  //  0006  GETMBR	R4	R0	K3
+      0x88100110,  //  0006  GETMBR	R4	R0	K16
       0x7C0C0200,  //  0007  CALL	R3	1
-      0x000E0403,  //  0008  ADD	R3	K2	R3
+      0x000E2603,  //  0008  ADD	R3	K19	R3
       0x5C080600,  //  0009  MOVE	R2	R3
-      0x8C0C0304,  //  000A  GETMET	R3	R1	K4
+      0x8C0C030E,  //  000A  GETMET	R3	R1	K14
       0x60140018,  //  000B  GETGBL	R5	G24
-      0x88180105,  //  000C  GETMBR	R6	R0	K5
+      0x88180114,  //  000C  GETMBR	R6	R0	K20
       0x780A0003,  //  000D  JMPF	R2	#0012
-      0x8C1C0306,  //  000E  GETMET	R7	R1	K6
+      0x8C1C0315,  //  000E  GETMET	R7	R1	K21
       0x5C240400,  //  000F  MOVE	R9	R2
       0x7C1C0400,  //  0010  CALL	R7	2
       0x70020000,  //  0011  JMP		#0013
-      0x581C0007,  //  0012  LDCONST	R7	K7
+      0x581C0016,  //  0012  LDCONST	R7	K22
       0x7C140400,  //  0013  CALL	R5	2
       0x7C0C0400,  //  0014  CALL	R3	2
       0x80000000,  //  0015  RET	0
@@ -212,22 +207,19 @@ be_local_closure(class_Matter_Plugin_Sensor_Contact_value_updated,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(attribute_updated),
-    /* K1   */  be_const_int(0),
-    }),
+    &be_ktab_class_Matter_Plugin_Sensor_Contact,     /* shared constants */
     be_str_weak(value_updated),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
-      0x8C040100,  //  0000  GETMET	R1	R0	K0
+      0x8C040117,  //  0000  GETMET	R1	R0	K23
       0x540E0044,  //  0001  LDINT	R3	69
-      0x58100001,  //  0002  LDCONST	R4	K1
+      0x58100003,  //  0002  LDCONST	R4	K3
       0x7C040600,  //  0003  CALL	R1	3
       0x80000000,  //  0004  RET	0
     })

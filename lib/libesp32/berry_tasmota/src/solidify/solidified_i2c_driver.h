@@ -3,6 +3,32 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
+// compact class 'I2C_Driver' ktab size: 22, total: 60 (saved 304 bytes)
+static const bvalue be_ktab_class_I2C_Driver[22] = {
+  /* K0   */  be_const_int(0),
+  /* K1   */  be_const_int(1),
+  /* K2   */  be_nested_str(write8),
+  /* K3   */  be_nested_str(read8),
+  /* K4   */  be_nested_str(wire),
+  /* K5   */  be_nested_str(read_bytes),
+  /* K6   */  be_nested_str(addr),
+  /* K7   */  be_const_int(1),
+  /* K8   */  be_const_int(2),
+  /* K9   */  be_const_int(3),
+  /* K10  */  be_const_int(3),
+  /* K11  */  be_const_int(2),
+  /* K12  */  be_nested_str(tasmota),
+  /* K13  */  be_nested_str(i2c_enabled),
+  /* K14  */  be_nested_str(wire_scan),
+  /* K15  */  be_nested_str(function),
+  /* K16  */  be_nested_str(name),
+  /* K17  */  be_nested_str(I2C_X3A),
+  /* K18  */  be_nested_str(detected_X20on_X20bus),
+  /* K19  */  be_nested_str(bus),
+  /* K20  */  be_nested_str(write),
+  /* K21  */  be_nested_str(read),
+};
+
 
 extern const bclass be_class_I2C_Driver;
 
@@ -13,18 +39,13 @@ be_local_closure(class_I2C_Driver_write_bit,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     4,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_const_int(0),
-    /* K1   */  be_const_int(1),
-    /* K2   */  be_nested_str(write8),
-    /* K3   */  be_nested_str(read8),
-    }),
+    &be_ktab_class_I2C_Driver,     /* shared constants */
     &be_const_str_write_bit,
     &be_const_str_solidified,
     ( &(const binstruction[26]) {  /* code */
@@ -67,42 +88,34 @@ be_local_closure(class_I2C_Driver_read32,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_str(wire),
-    /* K1   */  be_nested_str(read_bytes),
-    /* K2   */  be_nested_str(addr),
-    /* K3   */  be_const_int(0),
-    /* K4   */  be_const_int(1),
-    /* K5   */  be_const_int(2),
-    /* K6   */  be_const_int(3),
-    }),
+    &be_ktab_class_I2C_Driver,     /* shared constants */
     &be_const_str_read32,
     &be_const_str_solidified,
     ( &(const binstruction[20]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x88100102,  //  0002  GETMBR	R4	R0	K2
+      0x88080104,  //  0000  GETMBR	R2	R0	K4
+      0x8C080505,  //  0001  GETMET	R2	R2	K5
+      0x88100106,  //  0002  GETMBR	R4	R0	K6
       0x5C140200,  //  0003  MOVE	R5	R1
       0x541A0003,  //  0004  LDINT	R6	4
       0x7C080800,  //  0005  CALL	R2	4
-      0x940C0503,  //  0006  GETIDX	R3	R2	K3
+      0x940C0500,  //  0006  GETIDX	R3	R2	K0
       0x54120017,  //  0007  LDINT	R4	24
       0x380C0604,  //  0008  SHL	R3	R3	R4
-      0x94100504,  //  0009  GETIDX	R4	R2	K4
+      0x94100507,  //  0009  GETIDX	R4	R2	K7
       0x5416000F,  //  000A  LDINT	R5	16
       0x38100805,  //  000B  SHL	R4	R4	R5
       0x000C0604,  //  000C  ADD	R3	R3	R4
-      0x94100505,  //  000D  GETIDX	R4	R2	K5
+      0x94100508,  //  000D  GETIDX	R4	R2	K8
       0x54160007,  //  000E  LDINT	R5	8
       0x38100805,  //  000F  SHL	R4	R4	R5
       0x000C0604,  //  0010  ADD	R3	R3	R4
-      0x94100506,  //  0011  GETIDX	R4	R2	K6
+      0x94100509,  //  0011  GETIDX	R4	R2	K9
       0x000C0604,  //  0012  ADD	R3	R3	R4
       0x80040600,  //  0013  RET	1	R3
     })
@@ -118,33 +131,26 @@ be_local_closure(class_I2C_Driver_read13,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_str(wire),
-    /* K1   */  be_nested_str(read_bytes),
-    /* K2   */  be_nested_str(addr),
-    /* K3   */  be_const_int(2),
-    /* K4   */  be_const_int(0),
-    /* K5   */  be_const_int(1),
-    }),
+    &be_ktab_class_I2C_Driver,     /* shared constants */
     &be_const_str_read13,
     &be_const_str_solidified,
     ( &(const binstruction[12]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x88100102,  //  0002  GETMBR	R4	R0	K2
+      0x88080104,  //  0000  GETMBR	R2	R0	K4
+      0x8C080505,  //  0001  GETMET	R2	R2	K5
+      0x88100106,  //  0002  GETMBR	R4	R0	K6
       0x5C140200,  //  0003  MOVE	R5	R1
-      0x58180003,  //  0004  LDCONST	R6	K3
+      0x58180008,  //  0004  LDCONST	R6	K8
       0x7C080800,  //  0005  CALL	R2	4
-      0x940C0504,  //  0006  GETIDX	R3	R2	K4
+      0x940C0500,  //  0006  GETIDX	R3	R2	K0
       0x54120004,  //  0007  LDINT	R4	5
       0x380C0604,  //  0008  SHL	R3	R3	R4
-      0x94100505,  //  0009  GETIDX	R4	R2	K5
+      0x94100507,  //  0009  GETIDX	R4	R2	K7
       0x000C0604,  //  000A  ADD	R3	R3	R4
       0x80040600,  //  000B  RET	1	R3
     })
@@ -160,38 +166,30 @@ be_local_closure(class_I2C_Driver_read24,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_str(wire),
-    /* K1   */  be_nested_str(read_bytes),
-    /* K2   */  be_nested_str(addr),
-    /* K3   */  be_const_int(3),
-    /* K4   */  be_const_int(0),
-    /* K5   */  be_const_int(1),
-    /* K6   */  be_const_int(2),
-    }),
+    &be_ktab_class_I2C_Driver,     /* shared constants */
     &be_const_str_read24,
     &be_const_str_solidified,
     ( &(const binstruction[16]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x88100102,  //  0002  GETMBR	R4	R0	K2
+      0x88080104,  //  0000  GETMBR	R2	R0	K4
+      0x8C080505,  //  0001  GETMET	R2	R2	K5
+      0x88100106,  //  0002  GETMBR	R4	R0	K6
       0x5C140200,  //  0003  MOVE	R5	R1
-      0x58180003,  //  0004  LDCONST	R6	K3
+      0x5818000A,  //  0004  LDCONST	R6	K10
       0x7C080800,  //  0005  CALL	R2	4
-      0x940C0504,  //  0006  GETIDX	R3	R2	K4
+      0x940C0500,  //  0006  GETIDX	R3	R2	K0
       0x5412000F,  //  0007  LDINT	R4	16
       0x380C0604,  //  0008  SHL	R3	R3	R4
-      0x94100505,  //  0009  GETIDX	R4	R2	K5
+      0x94100507,  //  0009  GETIDX	R4	R2	K7
       0x54160007,  //  000A  LDINT	R5	8
       0x38100805,  //  000B  SHL	R4	R4	R5
       0x000C0604,  //  000C  ADD	R3	R3	R4
-      0x94100506,  //  000D  GETIDX	R4	R2	K6
+      0x9410050B,  //  000D  GETIDX	R4	R2	K11
       0x000C0604,  //  000E  ADD	R3	R3	R4
       0x80040600,  //  000F  RET	1	R3
     })
@@ -207,33 +205,26 @@ be_local_closure(class_I2C_Driver_read14,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_str(wire),
-    /* K1   */  be_nested_str(read_bytes),
-    /* K2   */  be_nested_str(addr),
-    /* K3   */  be_const_int(2),
-    /* K4   */  be_const_int(0),
-    /* K5   */  be_const_int(1),
-    }),
+    &be_ktab_class_I2C_Driver,     /* shared constants */
     &be_const_str_read14,
     &be_const_str_solidified,
     ( &(const binstruction[12]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x88100102,  //  0002  GETMBR	R4	R0	K2
+      0x88080104,  //  0000  GETMBR	R2	R0	K4
+      0x8C080505,  //  0001  GETMET	R2	R2	K5
+      0x88100106,  //  0002  GETMBR	R4	R0	K6
       0x5C140200,  //  0003  MOVE	R5	R1
-      0x58180003,  //  0004  LDCONST	R6	K3
+      0x58180008,  //  0004  LDCONST	R6	K8
       0x7C080800,  //  0005  CALL	R2	4
-      0x940C0504,  //  0006  GETIDX	R3	R2	K4
+      0x940C0500,  //  0006  GETIDX	R3	R2	K0
       0x54120005,  //  0007  LDINT	R4	6
       0x380C0604,  //  0008  SHL	R3	R3	R4
-      0x94100505,  //  0009  GETIDX	R4	R2	K5
+      0x94100507,  //  0009  GETIDX	R4	R2	K7
       0x000C0604,  //  000A  ADD	R3	R3	R4
       0x80040600,  //  000B  RET	1	R3
     })
@@ -249,69 +240,58 @@ be_local_closure(class_I2C_Driver_init,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     4,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[10]) {     /* constants */
-    /* K0   */  be_nested_str(tasmota),
-    /* K1   */  be_nested_str(i2c_enabled),
-    /* K2   */  be_nested_str(addr),
-    /* K3   */  be_nested_str(wire),
-    /* K4   */  be_nested_str(wire_scan),
-    /* K5   */  be_nested_str(function),
-    /* K6   */  be_nested_str(name),
-    /* K7   */  be_nested_str(I2C_X3A),
-    /* K8   */  be_nested_str(detected_X20on_X20bus),
-    /* K9   */  be_nested_str(bus),
-    }),
+    &be_ktab_class_I2C_Driver,     /* shared constants */
     &be_const_str_init,
     &be_const_str_solidified,
     ( &(const binstruction[44]) {  /* code */
       0x4C100000,  //  0000  LDNIL	R4
       0x20100604,  //  0001  NE	R4	R3	R4
       0x78120005,  //  0002  JMPF	R4	#0009
-      0xB8120000,  //  0003  GETNGBL	R4	K0
-      0x8C100901,  //  0004  GETMET	R4	R4	K1
+      0xB8121800,  //  0003  GETNGBL	R4	K12
+      0x8C10090D,  //  0004  GETMET	R4	R4	K13
       0x5C180600,  //  0005  MOVE	R6	R3
       0x7C100400,  //  0006  CALL	R4	2
       0x74120000,  //  0007  JMPT	R4	#0009
       0x80000800,  //  0008  RET	0
-      0x90020402,  //  0009  SETMBR	R0	K2	R2
-      0xB8120000,  //  000A  GETNGBL	R4	K0
-      0x8C100904,  //  000B  GETMET	R4	R4	K4
-      0x88180102,  //  000C  GETMBR	R6	R0	K2
+      0x90020C02,  //  0009  SETMBR	R0	K6	R2
+      0xB8121800,  //  000A  GETNGBL	R4	K12
+      0x8C10090E,  //  000B  GETMET	R4	R4	K14
+      0x88180106,  //  000C  GETMBR	R6	R0	K6
       0x7C100400,  //  000D  CALL	R4	2
-      0x90020604,  //  000E  SETMBR	R0	K3	R4
-      0x88100103,  //  000F  GETMBR	R4	R0	K3
+      0x90020804,  //  000E  SETMBR	R0	K4	R4
+      0x88100104,  //  000F  GETMBR	R4	R0	K4
       0x78120019,  //  0010  JMPF	R4	#002B
       0x60100004,  //  0011  GETGBL	R4	G4
       0x5C140200,  //  0012  MOVE	R5	R1
       0x7C100200,  //  0013  CALL	R4	1
-      0x1C100905,  //  0014  EQ	R4	R4	K5
+      0x1C10090F,  //  0014  EQ	R4	R4	K15
       0x78120004,  //  0015  JMPF	R4	#001B
       0x5C100200,  //  0016  MOVE	R4	R1
       0x5C140000,  //  0017  MOVE	R5	R0
       0x7C100200,  //  0018  CALL	R4	1
-      0x90020C04,  //  0019  SETMBR	R0	K6	R4
+      0x90022004,  //  0019  SETMBR	R0	K16	R4
       0x70020000,  //  001A  JMP		#001C
-      0x90020C01,  //  001B  SETMBR	R0	K6	R1
-      0x88100106,  //  001C  GETMBR	R4	R0	K6
+      0x90022001,  //  001B  SETMBR	R0	K16	R1
+      0x88100110,  //  001C  GETMBR	R4	R0	K16
       0x4C140000,  //  001D  LDNIL	R5
       0x1C100805,  //  001E  EQ	R4	R4	R5
       0x78120001,  //  001F  JMPF	R4	#0022
       0x4C100000,  //  0020  LDNIL	R4
-      0x90020604,  //  0021  SETMBR	R0	K3	R4
-      0x88100103,  //  0022  GETMBR	R4	R0	K3
+      0x90020804,  //  0021  SETMBR	R0	K4	R4
+      0x88100104,  //  0022  GETMBR	R4	R0	K4
       0x78120006,  //  0023  JMPF	R4	#002B
       0x60100001,  //  0024  GETGBL	R4	G1
-      0x58140007,  //  0025  LDCONST	R5	K7
-      0x88180106,  //  0026  GETMBR	R6	R0	K6
-      0x581C0008,  //  0027  LDCONST	R7	K8
-      0x88200103,  //  0028  GETMBR	R8	R0	K3
-      0x88201109,  //  0029  GETMBR	R8	R8	K9
+      0x58140011,  //  0025  LDCONST	R5	K17
+      0x88180110,  //  0026  GETMBR	R6	R0	K16
+      0x581C0012,  //  0027  LDCONST	R7	K18
+      0x88200104,  //  0028  GETMBR	R8	R0	K4
+      0x88201113,  //  0029  GETMBR	R8	R8	K19
       0x7C100800,  //  002A  CALL	R4	4
       0x80000000,  //  002B  RET	0
     })
@@ -327,27 +307,22 @@ be_local_closure(class_I2C_Driver_write8,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     3,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str(wire),
-    /* K1   */  be_nested_str(write),
-    /* K2   */  be_nested_str(addr),
-    /* K3   */  be_const_int(1),
-    }),
+    &be_ktab_class_I2C_Driver,     /* shared constants */
     &be_const_str_write8,
     &be_const_str_solidified,
     ( &(const binstruction[ 8]) {  /* code */
-      0x880C0100,  //  0000  GETMBR	R3	R0	K0
-      0x8C0C0701,  //  0001  GETMET	R3	R3	K1
-      0x88140102,  //  0002  GETMBR	R5	R0	K2
+      0x880C0104,  //  0000  GETMBR	R3	R0	K4
+      0x8C0C0714,  //  0001  GETMET	R3	R3	K20
+      0x88140106,  //  0002  GETMBR	R5	R0	K6
       0x5C180200,  //  0003  MOVE	R6	R1
       0x5C1C0400,  //  0004  MOVE	R7	R2
-      0x58200003,  //  0005  LDCONST	R8	K3
+      0x58200001,  //  0005  LDCONST	R8	K1
       0x7C0C0A00,  //  0006  CALL	R3	5
       0x80040600,  //  0007  RET	1	R3
     })
@@ -363,26 +338,21 @@ be_local_closure(class_I2C_Driver_read8,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str(wire),
-    /* K1   */  be_nested_str(read),
-    /* K2   */  be_nested_str(addr),
-    /* K3   */  be_const_int(1),
-    }),
+    &be_ktab_class_I2C_Driver,     /* shared constants */
     &be_const_str_read8,
     &be_const_str_solidified,
     ( &(const binstruction[ 7]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x88100102,  //  0002  GETMBR	R4	R0	K2
+      0x88080104,  //  0000  GETMBR	R2	R0	K4
+      0x8C080515,  //  0001  GETMET	R2	R2	K21
+      0x88100106,  //  0002  GETMBR	R4	R0	K6
       0x5C140200,  //  0003  MOVE	R5	R1
-      0x58180003,  //  0004  LDCONST	R6	K3
+      0x58180007,  //  0004  LDCONST	R6	K7
       0x7C080800,  //  0005  CALL	R2	4
       0x80040400,  //  0006  RET	1	R2
     })
@@ -398,33 +368,26 @@ be_local_closure(class_I2C_Driver_read12,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_str(wire),
-    /* K1   */  be_nested_str(read_bytes),
-    /* K2   */  be_nested_str(addr),
-    /* K3   */  be_const_int(2),
-    /* K4   */  be_const_int(0),
-    /* K5   */  be_const_int(1),
-    }),
+    &be_ktab_class_I2C_Driver,     /* shared constants */
     &be_const_str_read12,
     &be_const_str_solidified,
     ( &(const binstruction[12]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x88100102,  //  0002  GETMBR	R4	R0	K2
+      0x88080104,  //  0000  GETMBR	R2	R0	K4
+      0x8C080505,  //  0001  GETMET	R2	R2	K5
+      0x88100106,  //  0002  GETMBR	R4	R0	K6
       0x5C140200,  //  0003  MOVE	R5	R1
-      0x58180003,  //  0004  LDCONST	R6	K3
+      0x58180008,  //  0004  LDCONST	R6	K8
       0x7C080800,  //  0005  CALL	R2	4
-      0x940C0504,  //  0006  GETIDX	R3	R2	K4
+      0x940C0500,  //  0006  GETIDX	R3	R2	K0
       0x54120003,  //  0007  LDINT	R4	4
       0x380C0604,  //  0008  SHL	R3	R3	R4
-      0x94100505,  //  0009  GETIDX	R4	R2	K5
+      0x94100507,  //  0009  GETIDX	R4	R2	K7
       0x000C0604,  //  000A  ADD	R3	R3	R4
       0x80040600,  //  000B  RET	1	R3
     })
@@ -440,33 +403,26 @@ be_local_closure(class_I2C_Driver_read16,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 6]) {     /* constants */
-    /* K0   */  be_nested_str(wire),
-    /* K1   */  be_nested_str(read_bytes),
-    /* K2   */  be_nested_str(addr),
-    /* K3   */  be_const_int(2),
-    /* K4   */  be_const_int(0),
-    /* K5   */  be_const_int(1),
-    }),
+    &be_ktab_class_I2C_Driver,     /* shared constants */
     &be_const_str_read16,
     &be_const_str_solidified,
     ( &(const binstruction[12]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
-      0x88100102,  //  0002  GETMBR	R4	R0	K2
+      0x88080104,  //  0000  GETMBR	R2	R0	K4
+      0x8C080505,  //  0001  GETMET	R2	R2	K5
+      0x88100106,  //  0002  GETMBR	R4	R0	K6
       0x5C140200,  //  0003  MOVE	R5	R1
-      0x58180003,  //  0004  LDCONST	R6	K3
+      0x58180008,  //  0004  LDCONST	R6	K8
       0x7C080800,  //  0005  CALL	R2	4
-      0x940C0504,  //  0006  GETIDX	R3	R2	K4
+      0x940C0500,  //  0006  GETIDX	R3	R2	K0
       0x54120007,  //  0007  LDINT	R4	8
       0x380C0604,  //  0008  SHL	R3	R3	R4
-      0x94100505,  //  0009  GETIDX	R4	R2	K5
+      0x94100507,  //  0009  GETIDX	R4	R2	K7
       0x000C0604,  //  000A  ADD	R3	R3	R4
       0x80040600,  //  000B  RET	1	R3
     })
