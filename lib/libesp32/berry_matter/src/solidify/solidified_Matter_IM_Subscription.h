@@ -25,35 +25,35 @@ static const bvalue be_ktab_class_Matter_IM_Subscription[50] = {
   /* K17  */  be_nested_str_weak(subscription_id),
   /* K18  */  be_nested_str_weak(session),
   /* K19  */  be_nested_str_weak(min_interval_floor),
-  /* K20  */  be_const_int(0),
-  /* K21  */  be_nested_str_weak(min_interval),
-  /* K22  */  be_nested_str_weak(max_interval_ceiling),
-  /* K23  */  be_nested_str_weak(max_interval),
-  /* K24  */  be_nested_str_weak(fabric_filtered),
-  /* K25  */  be_nested_str_weak(im),
-  /* K26  */  be_nested_str_weak(device),
-  /* K27  */  be_nested_str_weak(attributes_requests),
-  /* K28  */  be_nested_str_weak(push),
-  /* K29  */  be_nested_str_weak(matter),
-  /* K30  */  be_nested_str_weak(Path),
-  /* K31  */  be_nested_str_weak(stop_iteration),
-  /* K32  */  be_nested_str_weak(IM),
-  /* K33  */  be_nested_str_weak(parse_event_filters_min_no),
-  /* K34  */  be_nested_str_weak(event_filters),
-  /* K35  */  be_nested_str_weak(clear_before_arm),
-  /* K36  */  be_nested_str_weak(is_keep_alive),
-  /* K37  */  be_nested_str_weak(restart_from),
-  /* K38  */  be_nested_str_weak(resize),
-  /* K39  */  be_nested_str_weak(tasmota),
-  /* K40  */  be_nested_str_weak(millis),
-  /* K41  */  be_nested_str_weak(expiration),
-  /* K42  */  be_nested_str_weak(MAX_INTERVAL_MARGIN),
-  /* K43  */  be_nested_str_weak(not_before),
-  /* K44  */  be_const_int(1),
-  /* K45  */  be_nested_str_weak(log),
-  /* K46  */  be_nested_str_weak(MTR_X3A_X20_X2ESub_Done_X20_X20_X28_X20_X20_X20_X20_X20_X20_X29_X20sub_X3D_X25i),
-  /* K47  */  be_const_int(3),
-  /* K48  */  be_nested_str_weak(MTR_X3A_X20_X2DSub_Del_X20_X20_X20_X28_X20_X20_X20_X20_X20_X20_X29_X20sub_X3D),
+  /* K20  */  be_nested_str_weak(min_interval),
+  /* K21  */  be_nested_str_weak(max_interval_ceiling),
+  /* K22  */  be_nested_str_weak(max_interval),
+  /* K23  */  be_nested_str_weak(fabric_filtered),
+  /* K24  */  be_nested_str_weak(im),
+  /* K25  */  be_nested_str_weak(device),
+  /* K26  */  be_nested_str_weak(attributes_requests),
+  /* K27  */  be_nested_str_weak(push),
+  /* K28  */  be_nested_str_weak(matter),
+  /* K29  */  be_nested_str_weak(Path),
+  /* K30  */  be_nested_str_weak(stop_iteration),
+  /* K31  */  be_nested_str_weak(IM),
+  /* K32  */  be_nested_str_weak(parse_event_filters_min_no),
+  /* K33  */  be_nested_str_weak(event_filters),
+  /* K34  */  be_nested_str_weak(clear_before_arm),
+  /* K35  */  be_nested_str_weak(is_keep_alive),
+  /* K36  */  be_nested_str_weak(restart_from),
+  /* K37  */  be_nested_str_weak(resize),
+  /* K38  */  be_nested_str_weak(tasmota),
+  /* K39  */  be_nested_str_weak(millis),
+  /* K40  */  be_nested_str_weak(expiration),
+  /* K41  */  be_nested_str_weak(MAX_INTERVAL_MARGIN),
+  /* K42  */  be_nested_str_weak(not_before),
+  /* K43  */  be_const_int(1),
+  /* K44  */  be_nested_str_weak(log),
+  /* K45  */  be_nested_str_weak(MTR_X3A_X20_X2ESub_Done_X20_X20_X28_X20_X20_X20_X20_X20_X20_X29_X20sub_X3D_X25i),
+  /* K46  */  be_const_int(3),
+  /* K47  */  be_nested_str_weak(MTR_X3A_X20_X2DSub_Del_X20_X20_X20_X28_X20_X20_X20_X20_X20_X20_X29_X20sub_X3D),
+  /* K48  */  be_const_int(3),
   /* K49  */  be_nested_str_weak(remove_sub),
 };
 
@@ -220,15 +220,15 @@ be_local_closure(class_Matter_IM_Subscription_init,   /* name */
       0x90022202,  //  0001  SETMBR	R0	K17	R2
       0x90022403,  //  0002  SETMBR	R0	K18	R3
       0x88140913,  //  0003  GETMBR	R5	R4	K19
-      0x14180B14,  //  0004  LT	R6	R5	K20
+      0x14180B01,  //  0004  LT	R6	R5	K1
       0x781A0000,  //  0005  JMPF	R6	#0007
-      0x58140014,  //  0006  LDCONST	R5	K20
+      0x58140001,  //  0006  LDCONST	R5	K1
       0x541A003B,  //  0007  LDINT	R6	60
       0x24180A06,  //  0008  GT	R6	R5	R6
       0x781A0000,  //  0009  JMPF	R6	#000B
       0x5416003B,  //  000A  LDINT	R5	60
-      0x90022A05,  //  000B  SETMBR	R0	K21	R5
-      0x88180916,  //  000C  GETMBR	R6	R4	K22
+      0x90022805,  //  000B  SETMBR	R0	K20	R5
+      0x88180915,  //  000C  GETMBR	R6	R4	K21
       0x541E003B,  //  000D  LDINT	R7	60
       0x141C0C07,  //  000E  LT	R7	R6	R7
       0x781E0000,  //  000F  JMPF	R7	#0011
@@ -238,52 +238,52 @@ be_local_closure(class_Matter_IM_Subscription_init,   /* name */
       0x781E0000,  //  0013  JMPF	R7	#0015
       0x541A0E0F,  //  0014  LDINT	R6	3600
       0x541A003B,  //  0015  LDINT	R6	60
-      0x90022E06,  //  0016  SETMBR	R0	K23	R6
+      0x90022C06,  //  0016  SETMBR	R0	K22	R6
       0x501C0000,  //  0017  LDBOOL	R7	0	0
       0x90021E07,  //  0018  SETMBR	R0	K15	R7
-      0x881C0918,  //  0019  GETMBR	R7	R4	K24
-      0x90023007,  //  001A  SETMBR	R0	K24	R7
-      0x881C0319,  //  001B  GETMBR	R7	R1	K25
-      0x881C0F1A,  //  001C  GETMBR	R7	R7	K26
+      0x881C0917,  //  0019  GETMBR	R7	R4	K23
+      0x90022E07,  //  001A  SETMBR	R0	K23	R7
+      0x881C0318,  //  001B  GETMBR	R7	R1	K24
+      0x881C0F19,  //  001C  GETMBR	R7	R7	K25
       0x60200012,  //  001D  GETGBL	R8	G18
       0x7C200000,  //  001E  CALL	R8	0
       0x90021008,  //  001F  SETMBR	R0	K8	R8
-      0x8820091B,  //  0020  GETMBR	R8	R4	K27
+      0x8820091A,  //  0020  GETMBR	R8	R4	K26
       0x4C240000,  //  0021  LDNIL	R9
       0x20201009,  //  0022  NE	R8	R8	R9
       0x78220012,  //  0023  JMPF	R8	#0037
       0x60200010,  //  0024  GETGBL	R8	G16
-      0x8824091B,  //  0025  GETMBR	R9	R4	K27
+      0x8824091A,  //  0025  GETMBR	R9	R4	K26
       0x7C200200,  //  0026  CALL	R8	1
       0xA802000B,  //  0027  EXBLK	0	#0034
       0x5C241000,  //  0028  MOVE	R9	R8
       0x7C240000,  //  0029  CALL	R9	0
       0x88280108,  //  002A  GETMBR	R10	R0	K8
-      0x8C28151C,  //  002B  GETMET	R10	R10	K28
-      0xB8323A00,  //  002C  GETNGBL	R12	K29
-      0x8C30191E,  //  002D  GETMET	R12	R12	K30
+      0x8C28151B,  //  002B  GETMET	R10	R10	K27
+      0xB8323800,  //  002C  GETNGBL	R12	K28
+      0x8C30191D,  //  002D  GETMET	R12	R12	K29
       0x88381309,  //  002E  GETMBR	R14	R9	K9
       0x883C130A,  //  002F  GETMBR	R15	R9	K10
       0x8840130B,  //  0030  GETMBR	R16	R9	K11
       0x7C300800,  //  0031  CALL	R12	4
       0x7C280400,  //  0032  CALL	R10	2
       0x7001FFF3,  //  0033  JMP		#0028
-      0x5820001F,  //  0034  LDCONST	R8	K31
+      0x5820001E,  //  0034  LDCONST	R8	K30
       0xAC200200,  //  0035  CATCH	R8	1	0
       0xB0080000,  //  0036  RAISE	2	R0	R0
-      0xB8223A00,  //  0037  GETNGBL	R8	K29
-      0x88201120,  //  0038  GETMBR	R8	R8	K32
-      0x8C201121,  //  0039  GETMET	R8	R8	K33
-      0x88280922,  //  003A  GETMBR	R10	R4	K34
+      0xB8223800,  //  0037  GETNGBL	R8	K28
+      0x8820111F,  //  0038  GETMBR	R8	R8	K31
+      0x8C201120,  //  0039  GETMET	R8	R8	K32
+      0x88280921,  //  003A  GETMBR	R10	R4	K33
       0x4C2C0000,  //  003B  LDNIL	R11
       0x7C200600,  //  003C  CALL	R8	3
       0x60240012,  //  003D  GETGBL	R9	G18
       0x7C240000,  //  003E  CALL	R9	0
       0x90021A09,  //  003F  SETMBR	R0	K13	R9
-      0x8C240123,  //  0040  GETMET	R9	R0	K35
+      0x8C240122,  //  0040  GETMET	R9	R0	K34
       0x7C240200,  //  0041  CALL	R9	1
       0x50240000,  //  0042  LDBOOL	R9	0	0
-      0x90024809,  //  0043  SETMBR	R0	K36	R9
+      0x90024609,  //  0043  SETMBR	R0	K35	R9
       0x80000000,  //  0044  RET	0
     })
   )
@@ -332,7 +332,7 @@ be_local_closure(class_Matter_IM_Subscription__add_attribute_unique_path,   /* n
       0x00080506,  //  0015  ADD	R2	R2	K6
       0x7001FFE9,  //  0016  JMP		#0001
       0x880C010D,  //  0017  GETMBR	R3	R0	K13
-      0x8C0C071C,  //  0018  GETMET	R3	R3	K28
+      0x8C0C071B,  //  0018  GETMET	R3	R3	K27
       0x5C140200,  //  0019  MOVE	R5	R1
       0x7C0C0400,  //  001A  CALL	R3	2
       0x80000000,  //  001B  RET	0
@@ -374,7 +374,7 @@ be_local_closure(class_Matter_IM_Subscription_update_event_generator_array,   /*
       0x78060008,  //  000C  JMPF	R1	#0016
       0x88040102,  //  000D  GETMBR	R1	R0	K2
       0x94040307,  //  000E  GETIDX	R1	R1	K7
-      0x8C040325,  //  000F  GETMET	R1	R1	K37
+      0x8C040324,  //  000F  GETMET	R1	R1	K36
       0x880C0100,  //  0010  GETMBR	R3	R0	K0
       0x7C040400,  //  0011  CALL	R1	2
       0x88040102,  //  0012  GETMBR	R1	R0	K2
@@ -383,7 +383,7 @@ be_local_closure(class_Matter_IM_Subscription_update_event_generator_array,   /*
       0x70020016,  //  0015  JMP		#002D
       0x60040012,  //  0016  GETGBL	R1	G18
       0x7C040000,  //  0017  CALL	R1	0
-      0x8C080326,  //  0018  GETMET	R2	R1	K38
+      0x8C080325,  //  0018  GETMET	R2	R1	K37
       0x6010000C,  //  0019  GETGBL	R4	G12
       0x88140102,  //  001A  GETMBR	R5	R0	K2
       0x7C100200,  //  001B  CALL	R4	1
@@ -396,7 +396,7 @@ be_local_closure(class_Matter_IM_Subscription_update_event_generator_array,   /*
       0x780E0009,  //  0022  JMPF	R3	#002D
       0x880C0102,  //  0023  GETMBR	R3	R0	K2
       0x940C0602,  //  0024  GETIDX	R3	R3	R2
-      0x8C0C0725,  //  0025  GETMET	R3	R3	K37
+      0x8C0C0724,  //  0025  GETMET	R3	R3	K36
       0x88140100,  //  0026  GETMBR	R5	R0	K0
       0x7C0C0400,  //  0027  CALL	R3	2
       0x880C0102,  //  0028  GETMBR	R3	R0	K2
@@ -433,30 +433,30 @@ be_local_closure(class_Matter_IM_Subscription_re_arm,   /* name */
       0x80000200,  //  0002  RET	0
       0x50040000,  //  0003  LDBOOL	R1	0	0
       0x90021E01,  //  0004  SETMBR	R0	K15	R1
-      0xB8064E00,  //  0005  GETNGBL	R1	K39
-      0x8C040328,  //  0006  GETMET	R1	R1	K40
+      0xB8064C00,  //  0005  GETNGBL	R1	K38
+      0x8C040327,  //  0006  GETMET	R1	R1	K39
       0x7C040200,  //  0007  CALL	R1	1
-      0x88080117,  //  0008  GETMBR	R2	R0	K23
-      0x880C012A,  //  0009  GETMBR	R3	R0	K42
+      0x88080116,  //  0008  GETMBR	R2	R0	K22
+      0x880C0129,  //  0009  GETMBR	R3	R0	K41
       0x04080403,  //  000A  SUB	R2	R2	R3
       0x540E03E7,  //  000B  LDINT	R3	1000
       0x08080403,  //  000C  MUL	R2	R2	R3
       0x00080202,  //  000D  ADD	R2	R1	R2
-      0x90025202,  //  000E  SETMBR	R0	K41	R2
-      0x88080115,  //  000F  GETMBR	R2	R0	K21
+      0x90025002,  //  000E  SETMBR	R0	K40	R2
+      0x88080114,  //  000F  GETMBR	R2	R0	K20
       0x540E03E7,  //  0010  LDINT	R3	1000
       0x08080403,  //  0011  MUL	R2	R2	R3
       0x00080202,  //  0012  ADD	R2	R1	R2
-      0x0408052C,  //  0013  SUB	R2	R2	K44
-      0x90025602,  //  0014  SETMBR	R0	K43	R2
-      0x88080124,  //  0015  GETMBR	R2	R0	K36
+      0x0408052B,  //  0013  SUB	R2	R2	K43
+      0x90025402,  //  0014  SETMBR	R0	K42	R2
+      0x88080123,  //  0015  GETMBR	R2	R0	K35
       0x740A0006,  //  0016  JMPT	R2	#001E
-      0xB80A5A00,  //  0017  GETNGBL	R2	K45
+      0xB80A5800,  //  0017  GETNGBL	R2	K44
       0x600C0018,  //  0018  GETGBL	R3	G24
-      0x5810002E,  //  0019  LDCONST	R4	K46
+      0x5810002D,  //  0019  LDCONST	R4	K45
       0x88140111,  //  001A  GETMBR	R5	R0	K17
       0x7C0C0400,  //  001B  CALL	R3	2
-      0x5810002F,  //  001C  LDCONST	R4	K47
+      0x5810002E,  //  001C  LDCONST	R4	K46
       0x7C080400,  //  001D  CALL	R2	2
       0x80000000,  //  001E  RET	0
     })
@@ -524,12 +524,12 @@ be_local_closure(class_Matter_IM_Subscription_remove_self,   /* name */
     be_str_weak(remove_self),
     &be_const_str_solidified,
     ( &(const binstruction[12]) {  /* code */
-      0xB8065A00,  //  0000  GETNGBL	R1	K45
+      0xB8065800,  //  0000  GETNGBL	R1	K44
       0x60080008,  //  0001  GETGBL	R2	G8
       0x880C0111,  //  0002  GETMBR	R3	R0	K17
       0x7C080200,  //  0003  CALL	R2	1
-      0x000A6002,  //  0004  ADD	R2	K48	R2
-      0x580C002F,  //  0005  LDCONST	R3	K47
+      0x000A5E02,  //  0004  ADD	R2	K47	R2
+      0x580C0030,  //  0005  LDCONST	R3	K48
       0x7C040400,  //  0006  CALL	R1	2
       0x88040110,  //  0007  GETMBR	R1	R0	K16
       0x8C040331,  //  0008  GETMET	R1	R1	K49
@@ -577,8 +577,8 @@ be_local_class(Matter_IM_Subscription,
     })),
     be_str_weak(Matter_IM_Subscription)
 );
-// compact class 'Matter_IM_Subscription_Shop' ktab size: 33, total: 51 (saved 144 bytes)
-static const bvalue be_ktab_class_Matter_IM_Subscription_Shop[33] = {
+// compact class 'Matter_IM_Subscription_Shop' ktab size: 34, total: 51 (saved 136 bytes)
+static const bvalue be_ktab_class_Matter_IM_Subscription_Shop[34] = {
   /* K0   */  be_const_int(0),
   /* K1   */  be_nested_str_weak(subs),
   /* K2   */  be_nested_str_weak(wait_status),
@@ -594,10 +594,10 @@ static const bvalue be_ktab_class_Matter_IM_Subscription_Shop[33] = {
   /* K12  */  be_nested_str_weak(expiration),
   /* K13  */  be_nested_str_weak(send_subscribe_heartbeat),
   /* K14  */  be_nested_str_weak(re_arm),
-  /* K15  */  be_nested_str_weak(attribute_updated_ctx),
-  /* K16  */  be_const_int(1),
-  /* K17  */  be_const_int(0),
-  /* K18  */  be_nested_str_weak(remove),
+  /* K15  */  be_const_int(0),
+  /* K16  */  be_nested_str_weak(attribute_updated_ctx),
+  /* K17  */  be_nested_str_weak(remove),
+  /* K18  */  be_const_int(1),
   /* K19  */  be_nested_str_weak(crypto),
   /* K20  */  be_nested_str_weak(random),
   /* K21  */  be_const_int(2),
@@ -608,10 +608,11 @@ static const bvalue be_ktab_class_Matter_IM_Subscription_Shop[33] = {
   /* K26  */  be_nested_str_weak(push),
   /* K27  */  be_nested_str_weak(event_published),
   /* K28  */  be_nested_str_weak(session),
-  /* K29  */  be_nested_str_weak(_sessions),
-  /* K30  */  be_nested_str_weak(remove_by_session),
-  /* K31  */  be_nested_str_weak(stop_iteration),
-  /* K32  */  be_nested_str_weak(subscription_id),
+  /* K29  */  be_const_int(1),
+  /* K30  */  be_nested_str_weak(_sessions),
+  /* K31  */  be_nested_str_weak(remove_by_session),
+  /* K32  */  be_nested_str_weak(stop_iteration),
+  /* K33  */  be_nested_str_weak(subscription_id),
 };
 
 
@@ -743,7 +744,7 @@ be_local_closure(class_Matter_IM_Subscription_Shop_attribute_updated_ctx,   /* n
     be_str_weak(attribute_updated_ctx),
     &be_const_str_solidified,
     ( &(const binstruction[15]) {  /* code */
-      0x580C0000,  //  0000  LDCONST	R3	K0
+      0x580C000F,  //  0000  LDCONST	R3	K15
       0x6010000C,  //  0001  GETGBL	R4	G12
       0x88140101,  //  0002  GETMBR	R5	R0	K1
       0x7C100200,  //  0003  CALL	R4	1
@@ -751,11 +752,11 @@ be_local_closure(class_Matter_IM_Subscription_Shop_attribute_updated_ctx,   /* n
       0x78120007,  //  0005  JMPF	R4	#000E
       0x88100101,  //  0006  GETMBR	R4	R0	K1
       0x94100803,  //  0007  GETIDX	R4	R4	R3
-      0x8C10090F,  //  0008  GETMET	R4	R4	K15
+      0x8C100910,  //  0008  GETMET	R4	R4	K16
       0x5C180200,  //  0009  MOVE	R6	R1
       0x5C1C0400,  //  000A  MOVE	R7	R2
       0x7C100600,  //  000B  CALL	R4	3
-      0x000C0710,  //  000C  ADD	R3	R3	K16
+      0x000C070B,  //  000C  ADD	R3	R3	K11
       0x7001FFF2,  //  000D  JMP		#0001
       0x80000000,  //  000E  RET	0
     })
@@ -781,7 +782,7 @@ be_local_closure(class_Matter_IM_Subscription_Shop_remove_sub,   /* name */
     be_str_weak(remove_sub),
     &be_const_str_solidified,
     ( &(const binstruction[18]) {  /* code */
-      0x58080011,  //  0000  LDCONST	R2	K17
+      0x5808000F,  //  0000  LDCONST	R2	K15
       0x600C000C,  //  0001  GETGBL	R3	G12
       0x88100101,  //  0002  GETMBR	R4	R0	K1
       0x7C0C0200,  //  0003  CALL	R3	1
@@ -792,11 +793,11 @@ be_local_closure(class_Matter_IM_Subscription_Shop_remove_sub,   /* name */
       0x1C0C0601,  //  0008  EQ	R3	R3	R1
       0x780E0004,  //  0009  JMPF	R3	#000F
       0x880C0101,  //  000A  GETMBR	R3	R0	K1
-      0x8C0C0712,  //  000B  GETMET	R3	R3	K18
+      0x8C0C0711,  //  000B  GETMET	R3	R3	K17
       0x5C140400,  //  000C  MOVE	R5	R2
       0x7C0C0400,  //  000D  CALL	R3	2
       0x70020000,  //  000E  JMP		#0010
-      0x0008050B,  //  000F  ADD	R2	R2	K11
+      0x00080512,  //  000F  ADD	R2	R2	K18
       0x7001FFEF,  //  0010  JMP		#0001
       0x80000000,  //  0011  RET	0
     })
@@ -827,7 +828,7 @@ be_local_closure(class_Matter_IM_Subscription_Shop_new_subscription,   /* name *
       0x581C0015,  //  0002  LDCONST	R7	K21
       0x7C140400,  //  0003  CALL	R5	2
       0x8C140B16,  //  0004  GETMET	R5	R5	K22
-      0x581C0000,  //  0005  LDCONST	R7	K0
+      0x581C000F,  //  0005  LDCONST	R7	K15
       0x58200015,  //  0006  LDCONST	R8	K21
       0x7C140600,  //  0007  CALL	R5	3
       0x8C180117,  //  0008  GETMET	R6	R0	K23
@@ -838,7 +839,7 @@ be_local_closure(class_Matter_IM_Subscription_Shop_new_subscription,   /* name *
       0x58200015,  //  000D  LDCONST	R8	K21
       0x7C180400,  //  000E  CALL	R6	2
       0x8C180D16,  //  000F  GETMET	R6	R6	K22
-      0x58200000,  //  0010  LDCONST	R8	K0
+      0x5820000F,  //  0010  LDCONST	R8	K15
       0x58240015,  //  0011  LDCONST	R9	K21
       0x7C180600,  //  0012  CALL	R6	3
       0x5C140C00,  //  0013  MOVE	R5	R6
@@ -879,7 +880,7 @@ be_local_closure(class_Matter_IM_Subscription_Shop_event_published,   /* name */
     be_str_weak(event_published),
     &be_const_str_solidified,
     ( &(const binstruction[14]) {  /* code */
-      0x58080011,  //  0000  LDCONST	R2	K17
+      0x5808000F,  //  0000  LDCONST	R2	K15
       0x600C000C,  //  0001  GETGBL	R3	G12
       0x88100101,  //  0002  GETMBR	R4	R0	K1
       0x7C0C0200,  //  0003  CALL	R3	1
@@ -890,7 +891,7 @@ be_local_closure(class_Matter_IM_Subscription_Shop_event_published,   /* name */
       0x8C0C071B,  //  0008  GETMET	R3	R3	K27
       0x5C140200,  //  0009  MOVE	R5	R1
       0x7C0C0400,  //  000A  CALL	R3	2
-      0x00080510,  //  000B  ADD	R2	R2	K16
+      0x0008050B,  //  000B  ADD	R2	R2	K11
       0x7001FFF3,  //  000C  JMP		#0001
       0x80000000,  //  000D  RET	0
     })
@@ -916,7 +917,7 @@ be_local_closure(class_Matter_IM_Subscription_Shop_remove_by_session,   /* name 
     be_str_weak(remove_by_session),
     &be_const_str_solidified,
     ( &(const binstruction[19]) {  /* code */
-      0x58080011,  //  0000  LDCONST	R2	K17
+      0x5808000F,  //  0000  LDCONST	R2	K15
       0x600C000C,  //  0001  GETGBL	R3	G12
       0x88100101,  //  0002  GETMBR	R4	R0	K1
       0x7C0C0200,  //  0003  CALL	R3	1
@@ -928,11 +929,11 @@ be_local_closure(class_Matter_IM_Subscription_Shop_remove_by_session,   /* name 
       0x1C0C0601,  //  0009  EQ	R3	R3	R1
       0x780E0004,  //  000A  JMPF	R3	#0010
       0x880C0101,  //  000B  GETMBR	R3	R0	K1
-      0x8C0C0712,  //  000C  GETMET	R3	R3	K18
+      0x8C0C0711,  //  000C  GETMET	R3	R3	K17
       0x5C140400,  //  000D  MOVE	R5	R2
       0x7C0C0400,  //  000E  CALL	R3	2
       0x70020000,  //  000F  JMP		#0011
-      0x0008050B,  //  0010  ADD	R2	R2	K11
+      0x0008051D,  //  0010  ADD	R2	R2	K29
       0x7001FFEE,  //  0011  JMP		#0001
       0x80000000,  //  0012  RET	0
     })
@@ -959,16 +960,16 @@ be_local_closure(class_Matter_IM_Subscription_Shop_remove_by_fabric,   /* name *
     &be_const_str_solidified,
     ( &(const binstruction[14]) {  /* code */
       0x60080010,  //  0000  GETGBL	R2	G16
-      0x880C031D,  //  0001  GETMBR	R3	R1	K29
+      0x880C031E,  //  0001  GETMBR	R3	R1	K30
       0x7C080200,  //  0002  CALL	R2	1
       0xA8020005,  //  0003  EXBLK	0	#000A
       0x5C0C0400,  //  0004  MOVE	R3	R2
       0x7C0C0000,  //  0005  CALL	R3	0
-      0x8C10011E,  //  0006  GETMET	R4	R0	K30
+      0x8C10011F,  //  0006  GETMET	R4	R0	K31
       0x5C180600,  //  0007  MOVE	R6	R3
       0x7C100400,  //  0008  CALL	R4	2
       0x7001FFF9,  //  0009  JMP		#0004
-      0x5808001F,  //  000A  LDCONST	R2	K31
+      0x58080020,  //  000A  LDCONST	R2	K32
       0xAC080200,  //  000B  CATCH	R2	1	0
       0xB0080000,  //  000C  RAISE	2	R0	R0
       0x80000000,  //  000D  RET	0
@@ -995,7 +996,7 @@ be_local_closure(class_Matter_IM_Subscription_Shop_get_by_id,   /* name */
     be_str_weak(get_by_id),
     &be_const_str_solidified,
     ( &(const binstruction[17]) {  /* code */
-      0x58080011,  //  0000  LDCONST	R2	K17
+      0x5808000F,  //  0000  LDCONST	R2	K15
       0x600C000C,  //  0001  GETGBL	R3	G12
       0x88100101,  //  0002  GETMBR	R4	R0	K1
       0x7C0C0200,  //  0003  CALL	R3	1
@@ -1003,7 +1004,7 @@ be_local_closure(class_Matter_IM_Subscription_Shop_get_by_id,   /* name */
       0x780E0009,  //  0005  JMPF	R3	#0010
       0x880C0101,  //  0006  GETMBR	R3	R0	K1
       0x940C0602,  //  0007  GETIDX	R3	R3	R2
-      0x880C0720,  //  0008  GETMBR	R3	R3	K32
+      0x880C0721,  //  0008  GETMBR	R3	R3	K33
       0x1C0C0601,  //  0009  EQ	R3	R3	R1
       0x780E0002,  //  000A  JMPF	R3	#000E
       0x880C0101,  //  000B  GETMBR	R3	R0	K1

@@ -404,16 +404,16 @@ static const bvalue be_ktab_class_Matter_Expirable_list[17] = {
   /* K0   */  be_const_int(0),
   /* K1   */  be_nested_str_weak(_persist),
   /* K2   */  be_const_int(1),
-  /* K3   */  be_nested_str_weak(before_remove),
-  /* K4   */  be_nested_str_weak(remove),
-  /* K5   */  be_nested_str_weak(matter),
-  /* K6   */  be_nested_str_weak(Expirable),
-  /* K7   */  be_nested_str_weak(type_error),
-  /* K8   */  be_nested_str_weak(argument_X20must_X20be_X20of_X20class_X20_X27Expirable_X27),
-  /* K9   */  be_nested_str_weak(set_parent_list),
-  /* K10  */  be_nested_str_weak(push),
-  /* K11  */  be_nested_str_weak(remove_expired),
-  /* K12  */  be_const_int(0),
+  /* K3   */  be_const_int(0),
+  /* K4   */  be_nested_str_weak(before_remove),
+  /* K5   */  be_nested_str_weak(remove),
+  /* K6   */  be_nested_str_weak(matter),
+  /* K7   */  be_nested_str_weak(Expirable),
+  /* K8   */  be_nested_str_weak(type_error),
+  /* K9   */  be_nested_str_weak(argument_X20must_X20be_X20of_X20class_X20_X27Expirable_X27),
+  /* K10  */  be_nested_str_weak(set_parent_list),
+  /* K11  */  be_nested_str_weak(push),
+  /* K12  */  be_nested_str_weak(remove_expired),
   /* K13  */  be_nested_str_weak(has_expired),
   /* K14  */  be_const_int(1),
   /* K15  */  be_nested_str_weak(iter),
@@ -480,7 +480,7 @@ be_local_closure(class_Matter_Expirable_list_remove,   /* name */
       0x4C080000,  //  0000  LDNIL	R2
       0x20080202,  //  0001  NE	R2	R1	R2
       0x780A0010,  //  0002  JMPF	R2	#0014
-      0x28080300,  //  0003  GE	R2	R1	K0
+      0x28080303,  //  0003  GE	R2	R1	K3
       0x780A0007,  //  0004  JMPF	R2	#000D
       0x6008000C,  //  0005  GETGBL	R2	G12
       0x5C0C0000,  //  0006  MOVE	R3	R0
@@ -488,12 +488,12 @@ be_local_closure(class_Matter_Expirable_list_remove,   /* name */
       0x14080202,  //  0008  LT	R2	R1	R2
       0x780A0002,  //  0009  JMPF	R2	#000D
       0x94080001,  //  000A  GETIDX	R2	R0	R1
-      0x8C080503,  //  000B  GETMET	R2	R2	K3
+      0x8C080504,  //  000B  GETMET	R2	R2	K4
       0x7C080200,  //  000C  CALL	R2	1
       0x60080003,  //  000D  GETGBL	R2	G3
       0x5C0C0000,  //  000E  MOVE	R3	R0
       0x7C080200,  //  000F  CALL	R2	1
-      0x8C080504,  //  0010  GETMET	R2	R2	K4
+      0x8C080505,  //  0010  GETMET	R2	R2	K5
       0x5C100200,  //  0011  MOVE	R4	R1
       0x7C080400,  //  0012  CALL	R2	2
       0x80040400,  //  0013  RET	1	R2
@@ -523,18 +523,18 @@ be_local_closure(class_Matter_Expirable_list_push,   /* name */
     ( &(const binstruction[17]) {  /* code */
       0x6008000F,  //  0000  GETGBL	R2	G15
       0x5C0C0200,  //  0001  MOVE	R3	R1
-      0xB8120A00,  //  0002  GETNGBL	R4	K5
-      0x88100906,  //  0003  GETMBR	R4	R4	K6
+      0xB8120C00,  //  0002  GETNGBL	R4	K6
+      0x88100907,  //  0003  GETMBR	R4	R4	K7
       0x7C080400,  //  0004  CALL	R2	2
       0x740A0000,  //  0005  JMPT	R2	#0007
-      0xB0060F08,  //  0006  RAISE	1	K7	K8
-      0x8C080309,  //  0007  GETMET	R2	R1	K9
+      0xB0061109,  //  0006  RAISE	1	K8	K9
+      0x8C08030A,  //  0007  GETMET	R2	R1	K10
       0x5C100000,  //  0008  MOVE	R4	R0
       0x7C080400,  //  0009  CALL	R2	2
       0x60080003,  //  000A  GETGBL	R2	G3
       0x5C0C0000,  //  000B  MOVE	R3	R0
       0x7C080200,  //  000C  CALL	R2	1
-      0x8C08050A,  //  000D  GETMET	R2	R2	K10
+      0x8C08050B,  //  000D  GETMET	R2	R2	K11
       0x5C100200,  //  000E  MOVE	R4	R1
       0x7C080400,  //  000F  CALL	R2	2
       0x80040400,  //  0010  RET	1	R2
@@ -561,7 +561,7 @@ be_local_closure(class_Matter_Expirable_list_every_second,   /* name */
     be_str_weak(every_second),
     &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
-      0x8C04010B,  //  0000  GETMET	R1	R0	K11
+      0x8C04010C,  //  0000  GETMET	R1	R0	K12
       0x7C040200,  //  0001  CALL	R1	1
       0x80000000,  //  0002  RET	0
     })
@@ -588,7 +588,7 @@ be_local_closure(class_Matter_Expirable_list_remove_expired,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[22]) {  /* code */
       0x50040000,  //  0000  LDBOOL	R1	0	0
-      0x5808000C,  //  0001  LDCONST	R2	K12
+      0x58080000,  //  0001  LDCONST	R2	K0
       0x600C000C,  //  0002  GETGBL	R3	G12
       0x5C100000,  //  0003  MOVE	R4	R0
       0x7C0C0200,  //  0004  CALL	R3	1
@@ -602,7 +602,7 @@ be_local_closure(class_Matter_Expirable_list_remove_expired,   /* name */
       0x880C0701,  //  000C  GETMBR	R3	R3	K1
       0x780E0000,  //  000D  JMPF	R3	#000F
       0x50040200,  //  000E  LDBOOL	R1	1	0
-      0x8C0C0104,  //  000F  GETMET	R3	R0	K4
+      0x8C0C0105,  //  000F  GETMET	R3	R0	K5
       0x5C140400,  //  0010  MOVE	R5	R2
       0x7C0C0400,  //  0011  CALL	R3	2
       0x70020000,  //  0012  JMP		#0014
@@ -691,12 +691,12 @@ be_local_closure(class_Matter_Expirable_list_setitem,   /* name */
     ( &(const binstruction[18]) {  /* code */
       0x600C000F,  //  0000  GETGBL	R3	G15
       0x5C100400,  //  0001  MOVE	R4	R2
-      0xB8160A00,  //  0002  GETNGBL	R5	K5
-      0x88140B06,  //  0003  GETMBR	R5	R5	K6
+      0xB8160C00,  //  0002  GETNGBL	R5	K6
+      0x88140B07,  //  0003  GETMBR	R5	R5	K7
       0x7C0C0400,  //  0004  CALL	R3	2
       0x740E0000,  //  0005  JMPT	R3	#0007
-      0xB0060F08,  //  0006  RAISE	1	K7	K8
-      0x8C0C0509,  //  0007  GETMET	R3	R2	K9
+      0xB0061109,  //  0006  RAISE	1	K8	K9
+      0x8C0C050A,  //  0007  GETMET	R3	R2	K10
       0x5C140000,  //  0008  MOVE	R5	R0
       0x7C0C0400,  //  0009  CALL	R3	2
       0x600C0003,  //  000A  GETGBL	R3	G3

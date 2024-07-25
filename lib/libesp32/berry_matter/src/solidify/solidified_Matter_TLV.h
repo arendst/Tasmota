@@ -51,30 +51,30 @@ static const bvalue be_ktab_class_Matter_TLV_item[93] = {
   /* K42  */  be_nested_str_weak(0x_X2504X_X3A_X3A),
   /* K43  */  be_nested_str_weak(0x_X2504X_X3A),
   /* K44  */  be_nested_str_weak(_X25i_X20),
-  /* K45  */  be_const_int(0),
-  /* K46  */  be_nested_str_weak(_X3D_X20),
-  /* K47  */  be_nested_str_weak(int),
-  /* K48  */  be_nested_str_weak(_X25i),
-  /* K49  */  be_nested_str_weak(U),
-  /* K50  */  be_nested_str_weak(bool),
-  /* K51  */  be_nested_str_weak(true),
-  /* K52  */  be_nested_str_weak(false),
-  /* K53  */  be_nested_str_weak(null),
-  /* K54  */  be_nested_str_weak(real),
-  /* K55  */  be_nested_str_weak(_X25g),
-  /* K56  */  be_nested_str_weak(string),
-  /* K57  */  be_nested_str_weak(_X22_X25s_X22),
-  /* K58  */  be_nested_str_weak(int64),
-  /* K59  */  be_nested_str_weak(tostring),
-  /* K60  */  be_nested_str_weak(instance),
-  /* K61  */  be_nested_str_weak(_X25s),
-  /* K62  */  be_nested_str_weak(tohex),
-  /* K63  */  be_nested_str_weak(_X20),
-  /* K64  */  be_nested_str_weak(_len),
-  /* K65  */  be_nested_str_weak(frombytes),
-  /* K66  */  be_nested_str_weak(geti),
-  /* K67  */  be_nested_str_weak(get),
-  /* K68  */  be_nested_str_weak(getfloat),
+  /* K45  */  be_nested_str_weak(_X3D_X20),
+  /* K46  */  be_nested_str_weak(int),
+  /* K47  */  be_nested_str_weak(_X25i),
+  /* K48  */  be_nested_str_weak(U),
+  /* K49  */  be_nested_str_weak(bool),
+  /* K50  */  be_nested_str_weak(true),
+  /* K51  */  be_nested_str_weak(false),
+  /* K52  */  be_nested_str_weak(null),
+  /* K53  */  be_nested_str_weak(real),
+  /* K54  */  be_nested_str_weak(_X25g),
+  /* K55  */  be_nested_str_weak(string),
+  /* K56  */  be_nested_str_weak(_X22_X25s_X22),
+  /* K57  */  be_nested_str_weak(int64),
+  /* K58  */  be_nested_str_weak(tostring),
+  /* K59  */  be_nested_str_weak(instance),
+  /* K60  */  be_nested_str_weak(_X25s),
+  /* K61  */  be_nested_str_weak(tohex),
+  /* K62  */  be_nested_str_weak(_X20),
+  /* K63  */  be_nested_str_weak(_len),
+  /* K64  */  be_nested_str_weak(frombytes),
+  /* K65  */  be_nested_str_weak(geti),
+  /* K66  */  be_nested_str_weak(get),
+  /* K67  */  be_nested_str_weak(getfloat),
+  /* K68  */  be_const_int(1),
   /* K69  */  be_nested_str_weak(asstring),
   /* K70  */  be_nested_str_weak(EOC),
   /* K71  */  be_nested_str_weak(log),
@@ -83,22 +83,22 @@ static const bvalue be_ktab_class_Matter_TLV_item[93] = {
   /* K74  */  be_nested_str_weak(MTR_X3A_X20unexpected_X20type_X3A_X20),
   /* K75  */  be_nested_str_weak(set_fulltag),
   /* K76  */  be_nested_str_weak(add),
-  /* K77  */  be_const_class(be_class_Matter_TLV_item),
-  /* K78  */  be_const_int(1),
-  /* K79  */  be_nested_str_weak(_cmp_gt),
-  /* K80  */  be_nested_str_weak(stop_iteration),
-  /* K81  */  be_nested_str_weak(_encode_tag),
-  /* K82  */  be_nested_str_weak(copy),
-  /* K83  */  be_nested_str_weak(resize),
-  /* K84  */  be_nested_str_weak(tobytes),
-  /* K85  */  be_nested_str_weak(fromu32),
-  /* K86  */  be_nested_str_weak(setfloat),
-  /* K87  */  be_nested_str_weak(string_X20too_X20big),
-  /* K88  */  be_nested_str_weak(fromstring),
-  /* K89  */  be_nested_str_weak(frostring),
-  /* K90  */  be_nested_str_weak(bytes_X20too_X20big),
-  /* K91  */  be_const_int(3),
-  /* K92  */  be_const_int(2),
+  /* K77  */  be_const_int(2),
+  /* K78  */  be_const_class(be_class_Matter_TLV_item),
+  /* K79  */  be_const_int(0),
+  /* K80  */  be_nested_str_weak(_cmp_gt),
+  /* K81  */  be_nested_str_weak(stop_iteration),
+  /* K82  */  be_nested_str_weak(_encode_tag),
+  /* K83  */  be_nested_str_weak(copy),
+  /* K84  */  be_nested_str_weak(resize),
+  /* K85  */  be_nested_str_weak(tobytes),
+  /* K86  */  be_nested_str_weak(fromu32),
+  /* K87  */  be_nested_str_weak(setfloat),
+  /* K88  */  be_nested_str_weak(string_X20too_X20big),
+  /* K89  */  be_nested_str_weak(fromstring),
+  /* K90  */  be_nested_str_weak(frostring),
+  /* K91  */  be_nested_str_weak(bytes_X20too_X20big),
+  /* K92  */  be_const_int(3),
 };
 
 
@@ -592,16 +592,16 @@ be_local_closure(class_Matter_TLV_item_tostring,   /* name */
       0x600C000C,  //  0038  GETGBL	R3	G12
       0x5C100400,  //  0039  MOVE	R4	R2
       0x7C0C0200,  //  003A  CALL	R3	1
-      0x240C072D,  //  003B  GT	R3	R3	K45
+      0x240C070A,  //  003B  GT	R3	R3	K10
       0x780E0000,  //  003C  JMPF	R3	#003E
-      0x0008052E,  //  003D  ADD	R2	R2	K46
+      0x0008052D,  //  003D  ADD	R2	R2	K45
       0x600C0004,  //  003E  GETGBL	R3	G4
       0x88100107,  //  003F  GETMBR	R4	R0	K7
       0x7C0C0200,  //  0040  CALL	R3	1
-      0x1C0C072F,  //  0041  EQ	R3	R3	K47
+      0x1C0C072E,  //  0041  EQ	R3	R3	K46
       0x780E0010,  //  0042  JMPF	R3	#0054
       0x600C0018,  //  0043  GETGBL	R3	G24
-      0x58100030,  //  0044  LDCONST	R4	K48
+      0x5810002F,  //  0044  LDCONST	R4	K47
       0x88140107,  //  0045  GETMBR	R5	R0	K7
       0x7C0C0400,  //  0046  CALL	R3	2
       0x00080403,  //  0047  ADD	R2	R2	R3
@@ -615,33 +615,33 @@ be_local_closure(class_Matter_TLV_item_tostring,   /* name */
       0x88100920,  //  004F  GETMBR	R4	R4	K32
       0x180C0604,  //  0050  LE	R3	R3	R4
       0x780E0000,  //  0051  JMPF	R3	#0053
-      0x00080531,  //  0052  ADD	R2	R2	K49
+      0x00080530,  //  0052  ADD	R2	R2	K48
       0x70020048,  //  0053  JMP		#009D
       0x600C0004,  //  0054  GETGBL	R3	G4
       0x88100107,  //  0055  GETMBR	R4	R0	K7
       0x7C0C0200,  //  0056  CALL	R3	1
-      0x1C0C0732,  //  0057  EQ	R3	R3	K50
+      0x1C0C0731,  //  0057  EQ	R3	R3	K49
       0x780E0006,  //  0058  JMPF	R3	#0060
       0x880C0107,  //  0059  GETMBR	R3	R0	K7
       0x780E0001,  //  005A  JMPF	R3	#005D
-      0x580C0033,  //  005B  LDCONST	R3	K51
+      0x580C0032,  //  005B  LDCONST	R3	K50
       0x70020000,  //  005C  JMP		#005E
-      0x580C0034,  //  005D  LDCONST	R3	K52
+      0x580C0033,  //  005D  LDCONST	R3	K51
       0x00080403,  //  005E  ADD	R2	R2	R3
       0x7002003C,  //  005F  JMP		#009D
       0x880C0107,  //  0060  GETMBR	R3	R0	K7
       0x4C100000,  //  0061  LDNIL	R4
       0x1C0C0604,  //  0062  EQ	R3	R3	R4
       0x780E0001,  //  0063  JMPF	R3	#0066
-      0x00080535,  //  0064  ADD	R2	R2	K53
+      0x00080534,  //  0064  ADD	R2	R2	K52
       0x70020036,  //  0065  JMP		#009D
       0x600C0004,  //  0066  GETGBL	R3	G4
       0x88100107,  //  0067  GETMBR	R4	R0	K7
       0x7C0C0200,  //  0068  CALL	R3	1
-      0x1C0C0736,  //  0069  EQ	R3	R3	K54
+      0x1C0C0735,  //  0069  EQ	R3	R3	K53
       0x780E0005,  //  006A  JMPF	R3	#0071
       0x600C0018,  //  006B  GETGBL	R3	G24
-      0x58100037,  //  006C  LDCONST	R4	K55
+      0x58100036,  //  006C  LDCONST	R4	K54
       0x88140107,  //  006D  GETMBR	R5	R0	K7
       0x7C0C0400,  //  006E  CALL	R3	2
       0x00080403,  //  006F  ADD	R2	R2	R3
@@ -649,21 +649,21 @@ be_local_closure(class_Matter_TLV_item_tostring,   /* name */
       0x600C0004,  //  0071  GETGBL	R3	G4
       0x88100107,  //  0072  GETMBR	R4	R0	K7
       0x7C0C0200,  //  0073  CALL	R3	1
-      0x1C0C0738,  //  0074  EQ	R3	R3	K56
+      0x1C0C0737,  //  0074  EQ	R3	R3	K55
       0x780E0005,  //  0075  JMPF	R3	#007C
       0x600C0018,  //  0076  GETGBL	R3	G24
-      0x58100039,  //  0077  LDCONST	R4	K57
+      0x58100038,  //  0077  LDCONST	R4	K56
       0x88140107,  //  0078  GETMBR	R5	R0	K7
       0x7C0C0400,  //  0079  CALL	R3	2
       0x00080403,  //  007A  ADD	R2	R2	R3
       0x70020020,  //  007B  JMP		#009D
       0x600C000F,  //  007C  GETGBL	R3	G15
       0x88100107,  //  007D  GETMBR	R4	R0	K7
-      0xB8167400,  //  007E  GETNGBL	R5	K58
+      0xB8167200,  //  007E  GETNGBL	R5	K57
       0x7C0C0400,  //  007F  CALL	R3	2
       0x780E000F,  //  0080  JMPF	R3	#0091
       0x880C0107,  //  0081  GETMBR	R3	R0	K7
-      0x8C0C073B,  //  0082  GETMET	R3	R3	K59
+      0x8C0C073A,  //  0082  GETMET	R3	R3	K58
       0x7C0C0200,  //  0083  CALL	R3	1
       0x00080403,  //  0084  ADD	R2	R2	R3
       0x880C0106,  //  0085  GETMBR	R3	R0	K6
@@ -676,17 +676,17 @@ be_local_closure(class_Matter_TLV_item_tostring,   /* name */
       0x88100920,  //  008C  GETMBR	R4	R4	K32
       0x180C0604,  //  008D  LE	R3	R3	R4
       0x780E0000,  //  008E  JMPF	R3	#0090
-      0x00080531,  //  008F  ADD	R2	R2	K49
+      0x00080530,  //  008F  ADD	R2	R2	K48
       0x7002000B,  //  0090  JMP		#009D
       0x600C0004,  //  0091  GETGBL	R3	G4
       0x88100107,  //  0092  GETMBR	R4	R0	K7
       0x7C0C0200,  //  0093  CALL	R3	1
-      0x1C0C073C,  //  0094  EQ	R3	R3	K60
+      0x1C0C073B,  //  0094  EQ	R3	R3	K59
       0x780E0006,  //  0095  JMPF	R3	#009D
       0x600C0018,  //  0096  GETGBL	R3	G24
-      0x5810003D,  //  0097  LDCONST	R4	K61
+      0x5810003C,  //  0097  LDCONST	R4	K60
       0x88140107,  //  0098  GETMBR	R5	R0	K7
-      0x8C140B3E,  //  0099  GETMET	R5	R5	K62
+      0x8C140B3D,  //  0099  GETMET	R5	R5	K61
       0x7C140200,  //  009A  CALL	R5	1
       0x7C0C0400,  //  009B  CALL	R3	2
       0x00080403,  //  009C  ADD	R2	R2	R3
@@ -694,7 +694,7 @@ be_local_closure(class_Matter_TLV_item_tostring,   /* name */
       0x70020006,  //  009E  JMP		#00A6
       0xAC0C0002,  //  009F  CATCH	R3	0	2
       0x70020003,  //  00A0  JMP		#00A5
-      0x0014073F,  //  00A1  ADD	R5	R3	K63
+      0x0014073E,  //  00A1  ADD	R5	R3	K62
       0x00140A04,  //  00A2  ADD	R5	R5	R4
       0x80040A00,  //  00A3  RET	1	R5
       0x70020000,  //  00A4  JMP		#00A6
@@ -726,7 +726,7 @@ be_local_closure(class_Matter_TLV_item_to_str_val,   /* name */
       0x60040004,  //  0000  GETGBL	R1	G4
       0x88080107,  //  0001  GETMBR	R2	R0	K7
       0x7C040200,  //  0002  CALL	R1	1
-      0x1C04032F,  //  0003  EQ	R1	R1	K47
+      0x1C04032E,  //  0003  EQ	R1	R1	K46
       0x78060014,  //  0004  JMPF	R1	#001A
       0x88040106,  //  0005  GETMBR	R1	R0	K6
       0x88080109,  //  0006  GETMBR	R2	R0	K9
@@ -741,7 +741,7 @@ be_local_closure(class_Matter_TLV_item_to_str_val,   /* name */
       0x60040008,  //  000F  GETGBL	R1	G8
       0x88080107,  //  0010  GETMBR	R2	R0	K7
       0x7C040200,  //  0011  CALL	R1	1
-      0x00040331,  //  0012  ADD	R1	R1	K49
+      0x00040330,  //  0012  ADD	R1	R1	K48
       0x80040200,  //  0013  RET	1	R1
       0x70020003,  //  0014  JMP		#0019
       0x60040008,  //  0015  GETGBL	R1	G8
@@ -752,25 +752,25 @@ be_local_closure(class_Matter_TLV_item_to_str_val,   /* name */
       0x60040004,  //  001A  GETGBL	R1	G4
       0x88080107,  //  001B  GETMBR	R2	R0	K7
       0x7C040200,  //  001C  CALL	R1	1
-      0x1C040332,  //  001D  EQ	R1	R1	K50
+      0x1C040331,  //  001D  EQ	R1	R1	K49
       0x78060006,  //  001E  JMPF	R1	#0026
       0x88040107,  //  001F  GETMBR	R1	R0	K7
       0x78060001,  //  0020  JMPF	R1	#0023
-      0x58040033,  //  0021  LDCONST	R1	K51
+      0x58040032,  //  0021  LDCONST	R1	K50
       0x70020000,  //  0022  JMP		#0024
-      0x58040034,  //  0023  LDCONST	R1	K52
+      0x58040033,  //  0023  LDCONST	R1	K51
       0x80040200,  //  0024  RET	1	R1
       0x7002003A,  //  0025  JMP		#0061
       0x88040107,  //  0026  GETMBR	R1	R0	K7
       0x4C080000,  //  0027  LDNIL	R2
       0x1C040202,  //  0028  EQ	R1	R1	R2
       0x78060001,  //  0029  JMPF	R1	#002C
-      0x80066A00,  //  002A  RET	1	K53
+      0x80066800,  //  002A  RET	1	K52
       0x70020034,  //  002B  JMP		#0061
       0x60040004,  //  002C  GETGBL	R1	G4
       0x88080107,  //  002D  GETMBR	R2	R0	K7
       0x7C040200,  //  002E  CALL	R1	1
-      0x1C040336,  //  002F  EQ	R1	R1	K54
+      0x1C040335,  //  002F  EQ	R1	R1	K53
       0x78060004,  //  0030  JMPF	R1	#0036
       0x60040008,  //  0031  GETGBL	R1	G8
       0x88080107,  //  0032  GETMBR	R2	R0	K7
@@ -780,14 +780,14 @@ be_local_closure(class_Matter_TLV_item_to_str_val,   /* name */
       0x60040004,  //  0036  GETGBL	R1	G4
       0x88080107,  //  0037  GETMBR	R2	R0	K7
       0x7C040200,  //  0038  CALL	R1	1
-      0x1C040338,  //  0039  EQ	R1	R1	K56
+      0x1C040337,  //  0039  EQ	R1	R1	K55
       0x78060002,  //  003A  JMPF	R1	#003E
       0x88040107,  //  003B  GETMBR	R1	R0	K7
       0x80040200,  //  003C  RET	1	R1
       0x70020022,  //  003D  JMP		#0061
       0x6004000F,  //  003E  GETGBL	R1	G15
       0x88080107,  //  003F  GETMBR	R2	R0	K7
-      0xB80E7400,  //  0040  GETNGBL	R3	K58
+      0xB80E7200,  //  0040  GETNGBL	R3	K57
       0x7C040400,  //  0041  CALL	R1	2
       0x78060014,  //  0042  JMPF	R1	#0058
       0x88040106,  //  0043  GETMBR	R1	R0	K6
@@ -801,22 +801,22 @@ be_local_closure(class_Matter_TLV_item_to_str_val,   /* name */
       0x18040202,  //  004B  LE	R1	R1	R2
       0x78060005,  //  004C  JMPF	R1	#0053
       0x88040107,  //  004D  GETMBR	R1	R0	K7
-      0x8C04033B,  //  004E  GETMET	R1	R1	K59
+      0x8C04033A,  //  004E  GETMET	R1	R1	K58
       0x7C040200,  //  004F  CALL	R1	1
-      0x00040331,  //  0050  ADD	R1	R1	K49
+      0x00040330,  //  0050  ADD	R1	R1	K48
       0x80040200,  //  0051  RET	1	R1
       0x70020003,  //  0052  JMP		#0057
       0x88040107,  //  0053  GETMBR	R1	R0	K7
-      0x8C04033B,  //  0054  GETMET	R1	R1	K59
+      0x8C04033A,  //  0054  GETMET	R1	R1	K58
       0x7C040200,  //  0055  CALL	R1	1
       0x80040200,  //  0056  RET	1	R1
       0x70020008,  //  0057  JMP		#0061
       0x60040004,  //  0058  GETGBL	R1	G4
       0x88080107,  //  0059  GETMBR	R2	R0	K7
       0x7C040200,  //  005A  CALL	R1	1
-      0x1C04033C,  //  005B  EQ	R1	R1	K60
+      0x1C04033B,  //  005B  EQ	R1	R1	K59
       0x78060003,  //  005C  JMPF	R1	#0061
-      0x8C04013B,  //  005D  GETMET	R1	R0	K59
+      0x8C04013A,  //  005D  GETMET	R1	R0	K58
       0x500C0200,  //  005E  LDBOOL	R3	1	0
       0x7C040400,  //  005F  CALL	R1	2
       0x80040200,  //  0060  RET	1	R1
@@ -884,13 +884,13 @@ be_local_closure(class_Matter_TLV_item_parse,   /* name */
     ( &(const binstruction[101]) {  /* code */
       0x880C0106,  //  0000  GETMBR	R3	R0	K6
       0x88100109,  //  0001  GETMBR	R4	R0	K9
-      0x88140940,  //  0002  GETMBR	R5	R4	K64
+      0x8814093F,  //  0002  GETMBR	R5	R4	K63
       0x94140A03,  //  0003  GETIDX	R5	R5	R3
       0x541A0007,  //  0004  LDINT	R6	8
       0x1C180A06,  //  0005  EQ	R6	R5	R6
       0x781A0008,  //  0006  JMPF	R6	#0010
-      0xB81A7400,  //  0007  GETNGBL	R6	K58
-      0x8C180D41,  //  0008  GETMET	R6	R6	K65
+      0xB81A7200,  //  0007  GETNGBL	R6	K57
+      0x8C180D40,  //  0008  GETMET	R6	R6	K64
       0x5C200200,  //  0009  MOVE	R8	R1
       0x5C240400,  //  000A  MOVE	R9	R2
       0x7C180600,  //  000B  CALL	R6	3
@@ -914,12 +914,12 @@ be_local_closure(class_Matter_TLV_item_parse,   /* name */
       0x8818091F,  //  001D  GETMBR	R6	R4	K31
       0x18180606,  //  001E  LE	R6	R3	R6
       0x781A0004,  //  001F  JMPF	R6	#0025
-      0x8C180342,  //  0020  GETMET	R6	R1	K66
+      0x8C180341,  //  0020  GETMET	R6	R1	K65
       0x5C200400,  //  0021  MOVE	R8	R2
       0x5C240A00,  //  0022  MOVE	R9	R5
       0x7C180600,  //  0023  CALL	R6	3
       0x70020003,  //  0024  JMP		#0029
-      0x8C180343,  //  0025  GETMET	R6	R1	K67
+      0x8C180342,  //  0025  GETMET	R6	R1	K66
       0x5C200400,  //  0026  MOVE	R8	R2
       0x5C240A00,  //  0027  MOVE	R9	R5
       0x7C180600,  //  0028  CALL	R6	3
@@ -929,7 +929,7 @@ be_local_closure(class_Matter_TLV_item_parse,   /* name */
       0x88180921,  //  002C  GETMBR	R6	R4	K33
       0x1C180606,  //  002D  EQ	R6	R3	R6
       0x781A0006,  //  002E  JMPF	R6	#0036
-      0x8C180344,  //  002F  GETMET	R6	R1	K68
+      0x8C180343,  //  002F  GETMET	R6	R1	K67
       0x5C200400,  //  0030  MOVE	R8	R2
       0x7C180400,  //  0031  CALL	R6	2
       0x90020E06,  //  0032  SETMBR	R0	K7	R6
@@ -942,14 +942,14 @@ be_local_closure(class_Matter_TLV_item_parse,   /* name */
       0x5419FFFE,  //  0039  LDINT	R6	-1
       0x18180A06,  //  003A  LE	R6	R5	R6
       0x781A0013,  //  003B  JMPF	R6	#0050
-      0x8C180343,  //  003C  GETMET	R6	R1	K67
+      0x8C180342,  //  003C  GETMET	R6	R1	K66
       0x5C200400,  //  003D  MOVE	R8	R2
       0x44240A00,  //  003E  NEG	R9	R5
       0x7C180600,  //  003F  CALL	R6	3
       0x441C0A00,  //  0040  NEG	R7	R5
       0x00080407,  //  0041  ADD	R2	R2	R7
       0x001C0406,  //  0042  ADD	R7	R2	R6
-      0x041C0F1D,  //  0043  SUB	R7	R7	K29
+      0x041C0F44,  //  0043  SUB	R7	R7	K68
       0x401C0407,  //  0044  CONNECT	R7	R2	R7
       0x941C0207,  //  0045  GETIDX	R7	R1	R7
       0x90020E07,  //  0046  SETMBR	R0	K7	R7
@@ -1041,15 +1041,15 @@ be_local_closure(class_Matter_TLV_item__encode_tag,   /* name */
       0x780A0001,  //  0003  JMPF	R2	#0006
       0x88080104,  //  0004  GETMBR	R2	R0	K4
       0x70020000,  //  0005  JMP		#0007
-      0x5808002D,  //  0006  LDCONST	R2	K45
+      0x5808000A,  //  0006  LDCONST	R2	K10
       0x540EFFFF,  //  0007  LDINT	R3	65536
       0x280C0403,  //  0008  GE	R3	R2	R3
       0x740E0002,  //  0009  JMPT	R3	#000D
-      0x140C052D,  //  000A  LT	R3	R2	K45
+      0x140C050A,  //  000A  LT	R3	R2	K10
       0x740E0000,  //  000B  JMPT	R3	#000D
       0x500C0001,  //  000C  LDBOOL	R3	0	1
       0x500C0200,  //  000D  LDBOOL	R3	1	0
-      0x5810002D,  //  000E  LDCONST	R4	K45
+      0x5810000A,  //  000E  LDCONST	R4	K10
       0x88140102,  //  000F  GETMBR	R5	R0	K2
       0x4C180000,  //  0010  LDNIL	R6
       0x20140A06,  //  0011  NE	R5	R5	R6
@@ -1059,15 +1059,15 @@ be_local_closure(class_Matter_TLV_item__encode_tag,   /* name */
       0x541E00DF,  //  0015  LDINT	R7	224
       0x88200106,  //  0016  GETMBR	R8	R0	K6
       0x001C0E08,  //  0017  ADD	R7	R7	R8
-      0x5820001D,  //  0018  LDCONST	R8	K29
+      0x58200044,  //  0018  LDCONST	R8	K68
       0x7C140600,  //  0019  CALL	R5	3
       0x8C14034C,  //  001A  GETMET	R5	R1	K76
       0x881C0102,  //  001B  GETMBR	R7	R0	K2
-      0x5820001E,  //  001C  LDCONST	R8	K30
+      0x5820004D,  //  001C  LDCONST	R8	K77
       0x7C140600,  //  001D  CALL	R5	3
       0x8C14034C,  //  001E  GETMET	R5	R1	K76
       0x881C0103,  //  001F  GETMBR	R7	R0	K3
-      0x5820001E,  //  0020  LDCONST	R8	K30
+      0x5820004D,  //  0020  LDCONST	R8	K77
       0x7C140600,  //  0021  CALL	R5	3
       0x8C14034C,  //  0022  GETMET	R5	R1	K76
       0x881C0104,  //  0023  GETMBR	R7	R0	K4
@@ -1078,19 +1078,19 @@ be_local_closure(class_Matter_TLV_item__encode_tag,   /* name */
       0x541E00BF,  //  0028  LDINT	R7	192
       0x88200106,  //  0029  GETMBR	R8	R0	K6
       0x001C0E08,  //  002A  ADD	R7	R7	R8
-      0x5820001D,  //  002B  LDCONST	R8	K29
+      0x58200044,  //  002B  LDCONST	R8	K68
       0x7C140600,  //  002C  CALL	R5	3
       0x8C14034C,  //  002D  GETMET	R5	R1	K76
       0x881C0102,  //  002E  GETMBR	R7	R0	K2
-      0x5820001E,  //  002F  LDCONST	R8	K30
+      0x5820004D,  //  002F  LDCONST	R8	K77
       0x7C140600,  //  0030  CALL	R5	3
       0x8C14034C,  //  0031  GETMET	R5	R1	K76
       0x881C0103,  //  0032  GETMBR	R7	R0	K3
-      0x5820001E,  //  0033  LDCONST	R8	K30
+      0x5820004D,  //  0033  LDCONST	R8	K77
       0x7C140600,  //  0034  CALL	R5	3
       0x8C14034C,  //  0035  GETMET	R5	R1	K76
       0x881C0104,  //  0036  GETMBR	R7	R0	K4
-      0x5820001E,  //  0037  LDCONST	R8	K30
+      0x5820004D,  //  0037  LDCONST	R8	K77
       0x7C140600,  //  0038  CALL	R5	3
       0x70020049,  //  0039  JMP		#0084
       0x88140103,  //  003A  GETMBR	R5	R0	K3
@@ -1102,7 +1102,7 @@ be_local_closure(class_Matter_TLV_item__encode_tag,   /* name */
       0x541E005F,  //  0040  LDINT	R7	96
       0x88200106,  //  0041  GETMBR	R8	R0	K6
       0x001C0E08,  //  0042  ADD	R7	R7	R8
-      0x5820001D,  //  0043  LDCONST	R8	K29
+      0x58200044,  //  0043  LDCONST	R8	K68
       0x7C140600,  //  0044  CALL	R5	3
       0x8C14034C,  //  0045  GETMET	R5	R1	K76
       0x881C0104,  //  0046  GETMBR	R7	R0	K4
@@ -1113,11 +1113,11 @@ be_local_closure(class_Matter_TLV_item__encode_tag,   /* name */
       0x541E003F,  //  004B  LDINT	R7	64
       0x88200106,  //  004C  GETMBR	R8	R0	K6
       0x001C0E08,  //  004D  ADD	R7	R7	R8
-      0x5820001D,  //  004E  LDCONST	R8	K29
+      0x58200044,  //  004E  LDCONST	R8	K68
       0x7C140600,  //  004F  CALL	R5	3
       0x8C14034C,  //  0050  GETMET	R5	R1	K76
       0x881C0104,  //  0051  GETMBR	R7	R0	K4
-      0x5820001E,  //  0052  LDCONST	R8	K30
+      0x5820004D,  //  0052  LDCONST	R8	K77
       0x7C140600,  //  0053  CALL	R5	3
       0x7002002E,  //  0054  JMP		#0084
       0x88140103,  //  0055  GETMBR	R5	R0	K3
@@ -1129,7 +1129,7 @@ be_local_closure(class_Matter_TLV_item__encode_tag,   /* name */
       0x541E009F,  //  005B  LDINT	R7	160
       0x88200106,  //  005C  GETMBR	R8	R0	K6
       0x001C0E08,  //  005D  ADD	R7	R7	R8
-      0x5820001D,  //  005E  LDCONST	R8	K29
+      0x58200044,  //  005E  LDCONST	R8	K68
       0x7C140600,  //  005F  CALL	R5	3
       0x8C14034C,  //  0060  GETMET	R5	R1	K76
       0x881C0104,  //  0061  GETMBR	R7	R0	K4
@@ -1140,11 +1140,11 @@ be_local_closure(class_Matter_TLV_item__encode_tag,   /* name */
       0x541E007F,  //  0066  LDINT	R7	128
       0x88200106,  //  0067  GETMBR	R8	R0	K6
       0x001C0E08,  //  0068  ADD	R7	R7	R8
-      0x5820001D,  //  0069  LDCONST	R8	K29
+      0x58200044,  //  0069  LDCONST	R8	K68
       0x7C140600,  //  006A  CALL	R5	3
       0x8C14034C,  //  006B  GETMET	R5	R1	K76
       0x881C0104,  //  006C  GETMBR	R7	R0	K4
-      0x5820001E,  //  006D  LDCONST	R8	K30
+      0x5820004D,  //  006D  LDCONST	R8	K77
       0x7C140600,  //  006E  CALL	R5	3
       0x70020013,  //  006F  JMP		#0084
       0x88140105,  //  0070  GETMBR	R5	R0	K5
@@ -1155,17 +1155,17 @@ be_local_closure(class_Matter_TLV_item__encode_tag,   /* name */
       0x541E001F,  //  0075  LDINT	R7	32
       0x88200106,  //  0076  GETMBR	R8	R0	K6
       0x001C0E08,  //  0077  ADD	R7	R7	R8
-      0x5820001D,  //  0078  LDCONST	R8	K29
+      0x58200044,  //  0078  LDCONST	R8	K68
       0x7C140600,  //  0079  CALL	R5	3
       0x8C14034C,  //  007A  GETMET	R5	R1	K76
       0x881C0105,  //  007B  GETMBR	R7	R0	K5
-      0x5820001D,  //  007C  LDCONST	R8	K29
+      0x58200044,  //  007C  LDCONST	R8	K68
       0x7C140600,  //  007D  CALL	R5	3
       0x70020004,  //  007E  JMP		#0084
       0x8C14034C,  //  007F  GETMET	R5	R1	K76
       0x881C0106,  //  0080  GETMBR	R7	R0	K6
-      0x001E5A07,  //  0081  ADD	R7	K45	R7
-      0x5820001D,  //  0082  LDCONST	R8	K29
+      0x001E1407,  //  0081  ADD	R7	K10	R7
+      0x58200044,  //  0082  LDCONST	R8	K68
       0x7C140600,  //  0083  CALL	R5	3
       0x80000000,  //  0084  RET	0
     })
@@ -1191,36 +1191,36 @@ be_local_closure(class_Matter_TLV_item_sort,   /* name */
     be_str_weak(sort),
     &be_const_str_solidified,
     ( &(const binstruction[33]) {  /* code */
-      0x5804004D,  //  0000  LDCONST	R1	K77
+      0x5804004E,  //  0000  LDCONST	R1	K78
       0x60080010,  //  0001  GETGBL	R2	G16
       0x600C000C,  //  0002  GETGBL	R3	G12
       0x5C100000,  //  0003  MOVE	R4	R0
       0x7C0C0200,  //  0004  CALL	R3	1
-      0x040C074E,  //  0005  SUB	R3	R3	K78
-      0x400E9C03,  //  0006  CONNECT	R3	K78	R3
+      0x040C0744,  //  0005  SUB	R3	R3	K68
+      0x400E8803,  //  0006  CONNECT	R3	K68	R3
       0x7C080200,  //  0007  CALL	R2	1
       0xA8020013,  //  0008  EXBLK	0	#001D
       0x5C0C0400,  //  0009  MOVE	R3	R2
       0x7C0C0000,  //  000A  CALL	R3	0
       0x94100003,  //  000B  GETIDX	R4	R0	R3
       0x5C140600,  //  000C  MOVE	R5	R3
-      0x24180B2D,  //  000D  GT	R6	R5	K45
+      0x24180B4F,  //  000D  GT	R6	R5	K79
       0x781A000B,  //  000E  JMPF	R6	#001B
-      0x04180B4E,  //  000F  SUB	R6	R5	K78
+      0x04180B44,  //  000F  SUB	R6	R5	K68
       0x94180006,  //  0010  GETIDX	R6	R0	R6
-      0x8C180D4F,  //  0011  GETMET	R6	R6	K79
+      0x8C180D50,  //  0011  GETMET	R6	R6	K80
       0x5C200800,  //  0012  MOVE	R8	R4
       0x7C180400,  //  0013  CALL	R6	2
-      0x24180D2D,  //  0014  GT	R6	R6	K45
+      0x24180D4F,  //  0014  GT	R6	R6	K79
       0x781A0004,  //  0015  JMPF	R6	#001B
-      0x04180B4E,  //  0016  SUB	R6	R5	K78
+      0x04180B44,  //  0016  SUB	R6	R5	K68
       0x94180006,  //  0017  GETIDX	R6	R0	R6
       0x98000A06,  //  0018  SETIDX	R0	R5	R6
-      0x04140B4E,  //  0019  SUB	R5	R5	K78
+      0x04140B44,  //  0019  SUB	R5	R5	K68
       0x7001FFF1,  //  001A  JMP		#000D
       0x98000A04,  //  001B  SETIDX	R0	R5	R4
       0x7001FFEB,  //  001C  JMP		#0009
-      0x58080050,  //  001D  LDCONST	R2	K80
+      0x58080051,  //  001D  LDCONST	R2	K81
       0xAC080200,  //  001E  CATCH	R2	1	0
       0xB0080000,  //  001F  RAISE	2	R0	R0
       0x80040000,  //  0020  RET	1	R0
@@ -1280,12 +1280,12 @@ be_local_closure(class_Matter_TLV_item__cmp_gt,   /* name */
       0x4C0C0000,  //  0005  LDNIL	R3
       0x1C080403,  //  0006  EQ	R2	R2	R3
       0x780A0000,  //  0007  JMPF	R2	#0009
-      0x80069C00,  //  0008  RET	1	K78
+      0x80063A00,  //  0008  RET	1	K29
       0x88080102,  //  0009  GETMBR	R2	R0	K2
       0x880C0302,  //  000A  GETMBR	R3	R1	K2
       0x24080403,  //  000B  GT	R2	R2	R3
       0x780A0000,  //  000C  JMPF	R2	#000E
-      0x80069C00,  //  000D  RET	1	K78
+      0x80063A00,  //  000D  RET	1	K29
       0x88080102,  //  000E  GETMBR	R2	R0	K2
       0x880C0302,  //  000F  GETMBR	R3	R1	K2
       0x1C080403,  //  0010  EQ	R2	R2	R3
@@ -1294,7 +1294,7 @@ be_local_closure(class_Matter_TLV_item__cmp_gt,   /* name */
       0x880C0303,  //  0013  GETMBR	R3	R1	K3
       0x24080403,  //  0014  GT	R2	R2	R3
       0x780A0000,  //  0015  JMPF	R2	#0017
-      0x80069C00,  //  0016  RET	1	K78
+      0x80063A00,  //  0016  RET	1	K29
       0x88080103,  //  0017  GETMBR	R2	R0	K3
       0x540DFFFE,  //  0018  LDINT	R3	-1
       0x1C080403,  //  0019  EQ	R2	R2	R3
@@ -1303,7 +1303,7 @@ be_local_closure(class_Matter_TLV_item__cmp_gt,   /* name */
       0x4C0C0000,  //  001C  LDNIL	R3
       0x1C080403,  //  001D  EQ	R2	R2	R3
       0x780A0000,  //  001E  JMPF	R2	#0020
-      0x80069C00,  //  001F  RET	1	K78
+      0x80063A00,  //  001F  RET	1	K29
       0x70020008,  //  0020  JMP		#002A
       0x88080103,  //  0021  GETMBR	R2	R0	K3
       0x4C0C0000,  //  0022  LDNIL	R3
@@ -1313,7 +1313,7 @@ be_local_closure(class_Matter_TLV_item__cmp_gt,   /* name */
       0x540DFFFE,  //  0026  LDINT	R3	-1
       0x1C080403,  //  0027  EQ	R2	R2	R3
       0x780A0000,  //  0028  JMPF	R2	#002A
-      0x80061400,  //  0029  RET	1	K10
+      0x80069E00,  //  0029  RET	1	K79
       0x88080104,  //  002A  GETMBR	R2	R0	K4
       0x4C0C0000,  //  002B  LDNIL	R3
       0x20080403,  //  002C  NE	R2	R2	R3
@@ -1322,13 +1322,13 @@ be_local_closure(class_Matter_TLV_item__cmp_gt,   /* name */
       0x4C0C0000,  //  002F  LDNIL	R3
       0x1C080403,  //  0030  EQ	R2	R2	R3
       0x780A0000,  //  0031  JMPF	R2	#0033
-      0x80069C00,  //  0032  RET	1	K78
+      0x80063A00,  //  0032  RET	1	K29
       0x88080104,  //  0033  GETMBR	R2	R0	K4
       0x880C0304,  //  0034  GETMBR	R3	R1	K4
       0x24080403,  //  0035  GT	R2	R2	R3
       0x780A0000,  //  0036  JMPF	R2	#0038
-      0x80069C00,  //  0037  RET	1	K78
-      0x80061400,  //  0038  RET	1	K10
+      0x80063A00,  //  0037  RET	1	K29
+      0x80069E00,  //  0038  RET	1	K79
       0x88080105,  //  0039  GETMBR	R2	R0	K5
       0x4C0C0000,  //  003A  LDNIL	R3
       0x20080403,  //  003B  NE	R2	R2	R3
@@ -1337,13 +1337,13 @@ be_local_closure(class_Matter_TLV_item__cmp_gt,   /* name */
       0x4C0C0000,  //  003E  LDNIL	R3
       0x1C080403,  //  003F  EQ	R2	R2	R3
       0x780A0000,  //  0040  JMPF	R2	#0042
-      0x80069C00,  //  0041  RET	1	K78
+      0x80063A00,  //  0041  RET	1	K29
       0x88080105,  //  0042  GETMBR	R2	R0	K5
       0x880C0305,  //  0043  GETMBR	R3	R1	K5
       0x24080403,  //  0044  GT	R2	R2	R3
       0x780A0000,  //  0045  JMPF	R2	#0047
-      0x80069C00,  //  0046  RET	1	K78
-      0x80061400,  //  0047  RET	1	K10
+      0x80063A00,  //  0046  RET	1	K29
+      0x80069E00,  //  0047  RET	1	K79
     })
   )
 );
@@ -1392,7 +1392,7 @@ be_local_closure(class_Matter_TLV_item_tlv2raw,   /* name */
       0x600C0004,  //  0016  GETGBL	R3	G4
       0x88100107,  //  0017  GETMBR	R4	R0	K7
       0x7C0C0200,  //  0018  CALL	R3	1
-      0x1C0C072F,  //  0019  EQ	R3	R3	K47
+      0x1C0C072E,  //  0019  EQ	R3	R3	K46
       0x780E0008,  //  001A  JMPF	R3	#0024
       0x880C0106,  //  001B  GETMBR	R3	R0	K6
       0x8810051F,  //  001C  GETMBR	R4	R2	K31
@@ -1463,7 +1463,7 @@ be_local_closure(class_Matter_TLV_item_tlv2raw,   /* name */
       0x541200FE,  //  005D  LDINT	R4	255
       0x18100604,  //  005E  LE	R4	R3	R4
       0x78120004,  //  005F  JMPF	R4	#0065
-      0x2810072D,  //  0060  GE	R4	R3	K45
+      0x2810074F,  //  0060  GE	R4	R3	K79
       0x78120002,  //  0061  JMPF	R4	#0065
       0x88100513,  //  0062  GETMBR	R4	R2	K19
       0x90020C04,  //  0063  SETMBR	R0	K6	R4
@@ -1471,7 +1471,7 @@ be_local_closure(class_Matter_TLV_item_tlv2raw,   /* name */
       0x5412FFFE,  //  0065  LDINT	R4	65535
       0x18100604,  //  0066  LE	R4	R3	R4
       0x78120003,  //  0067  JMPF	R4	#006C
-      0x2810072D,  //  0068  GE	R4	R3	K45
+      0x2810074F,  //  0068  GE	R4	R3	K79
       0x78120001,  //  0069  JMPF	R4	#006C
       0x88100511,  //  006A  GETMBR	R4	R2	K17
       0x90020C04,  //  006B  SETMBR	R0	K6	R4
@@ -1533,7 +1533,7 @@ be_local_closure(class_Matter_TLV_item_tlv2raw,   /* name */
       0x70020001,  //  00A3  JMP		#00A6
       0x880C051B,  //  00A4  GETMBR	R3	R2	K27
       0x90020C03,  //  00A5  SETMBR	R0	K6	R3
-      0x8C0C0151,  //  00A6  GETMET	R3	R0	K81
+      0x8C0C0152,  //  00A6  GETMET	R3	R0	K82
       0x5C140200,  //  00A7  MOVE	R5	R1
       0x7C0C0400,  //  00A8  CALL	R3	2
       0x880C0106,  //  00A9  GETMBR	R3	R0	K6
@@ -1548,7 +1548,7 @@ be_local_closure(class_Matter_TLV_item_tlv2raw,   /* name */
       0x60140009,  //  00B2  GETGBL	R5	G9
       0x88180107,  //  00B3  GETMBR	R6	R0	K7
       0x7C140200,  //  00B4  CALL	R5	1
-      0x5818001D,  //  00B5  LDCONST	R6	K29
+      0x58180044,  //  00B5  LDCONST	R6	K68
       0x7C0C0600,  //  00B6  CALL	R3	3
       0x700200DA,  //  00B7  JMP		#0193
       0x880C0106,  //  00B8  GETMBR	R3	R0	K6
@@ -1563,7 +1563,7 @@ be_local_closure(class_Matter_TLV_item_tlv2raw,   /* name */
       0x60140009,  //  00C1  GETGBL	R5	G9
       0x88180107,  //  00C2  GETMBR	R6	R0	K7
       0x7C140200,  //  00C3  CALL	R5	1
-      0x5818001E,  //  00C4  LDCONST	R6	K30
+      0x5818004D,  //  00C4  LDCONST	R6	K77
       0x7C0C0600,  //  00C5  CALL	R3	3
       0x700200CB,  //  00C6  JMP		#0193
       0x880C0106,  //  00C7  GETMBR	R3	R0	K6
@@ -1595,19 +1595,19 @@ be_local_closure(class_Matter_TLV_item_tlv2raw,   /* name */
       0x60180015,  //  00E1  GETGBL	R6	G21
       0x7C100400,  //  00E2  CALL	R4	2
       0x78120006,  //  00E3  JMPF	R4	#00EB
-      0x8C100752,  //  00E4  GETMET	R4	R3	K82
+      0x8C100753,  //  00E4  GETMET	R4	R3	K83
       0x7C100200,  //  00E5  CALL	R4	1
-      0x8C100953,  //  00E6  GETMET	R4	R4	K83
+      0x8C100954,  //  00E6  GETMET	R4	R4	K84
       0x541A0007,  //  00E7  LDINT	R6	8
       0x7C100400,  //  00E8  CALL	R4	2
       0x5C0C0800,  //  00E9  MOVE	R3	R4
       0x7002001E,  //  00EA  JMP		#010A
       0x6010000F,  //  00EB  GETGBL	R4	G15
       0x5C140600,  //  00EC  MOVE	R5	R3
-      0xB81A7400,  //  00ED  GETNGBL	R6	K58
+      0xB81A7200,  //  00ED  GETNGBL	R6	K57
       0x7C100400,  //  00EE  CALL	R4	2
       0x78120003,  //  00EF  JMPF	R4	#00F4
-      0x8C100754,  //  00F0  GETMET	R4	R3	K84
+      0x8C100755,  //  00F0  GETMET	R4	R3	K85
       0x7C100200,  //  00F1  CALL	R4	1
       0x5C0C0800,  //  00F2  MOVE	R3	R4
       0x70020015,  //  00F3  JMP		#010A
@@ -1615,22 +1615,22 @@ be_local_closure(class_Matter_TLV_item_tlv2raw,   /* name */
       0x8814051F,  //  00F5  GETMBR	R5	R2	K31
       0x1C100805,  //  00F6  EQ	R4	R4	R5
       0x78120008,  //  00F7  JMPF	R4	#0101
-      0xB8127400,  //  00F8  GETNGBL	R4	K58
+      0xB8127200,  //  00F8  GETNGBL	R4	K57
       0x60140009,  //  00F9  GETGBL	R5	G9
       0x5C180600,  //  00FA  MOVE	R6	R3
       0x7C140200,  //  00FB  CALL	R5	1
       0x7C100200,  //  00FC  CALL	R4	1
-      0x8C100954,  //  00FD  GETMET	R4	R4	K84
+      0x8C100955,  //  00FD  GETMET	R4	R4	K85
       0x7C100200,  //  00FE  CALL	R4	1
       0x5C0C0800,  //  00FF  MOVE	R3	R4
       0x70020008,  //  0100  JMP		#010A
-      0xB8127400,  //  0101  GETNGBL	R4	K58
-      0x8C100955,  //  0102  GETMET	R4	R4	K85
+      0xB8127200,  //  0101  GETNGBL	R4	K57
+      0x8C100956,  //  0102  GETMET	R4	R4	K86
       0x60180009,  //  0103  GETGBL	R6	G9
       0x5C1C0600,  //  0104  MOVE	R7	R3
       0x7C180200,  //  0105  CALL	R6	1
       0x7C100400,  //  0106  CALL	R4	2
-      0x8C100954,  //  0107  GETMET	R4	R4	K84
+      0x8C100955,  //  0107  GETMET	R4	R4	K85
       0x7C100200,  //  0108  CALL	R4	1
       0x5C0C0800,  //  0109  MOVE	R3	R4
       0x40100203,  //  010A  CONNECT	R4	R1	R3
@@ -1652,10 +1652,10 @@ be_local_closure(class_Matter_TLV_item_tlv2raw,   /* name */
       0x5C100200,  //  011A  MOVE	R4	R1
       0x7C0C0200,  //  011B  CALL	R3	1
       0x8C10034C,  //  011C  GETMET	R4	R1	K76
-      0x5818002D,  //  011D  LDCONST	R6	K45
+      0x5818004F,  //  011D  LDCONST	R6	K79
       0x541E0003,  //  011E  LDINT	R7	4
       0x7C100600,  //  011F  CALL	R4	3
-      0x8C100356,  //  0120  GETMET	R4	R1	K86
+      0x8C100357,  //  0120  GETMET	R4	R1	K87
       0x5C180600,  //  0121  MOVE	R6	R3
       0x601C000A,  //  0122  GETGBL	R7	G10
       0x88200107,  //  0123  GETMBR	R8	R0	K7
@@ -1678,16 +1678,16 @@ be_local_closure(class_Matter_TLV_item_tlv2raw,   /* name */
       0x541200FE,  //  0134  LDINT	R4	255
       0x240C0604,  //  0135  GT	R3	R3	R4
       0x780E0000,  //  0136  JMPF	R3	#0138
-      0xB0064757,  //  0137  RAISE	1	K35	K87
+      0xB0064758,  //  0137  RAISE	1	K35	K88
       0x8C0C034C,  //  0138  GETMET	R3	R1	K76
       0x6014000C,  //  0139  GETGBL	R5	G12
       0x88180107,  //  013A  GETMBR	R6	R0	K7
       0x7C140200,  //  013B  CALL	R5	1
-      0x5818001D,  //  013C  LDCONST	R6	K29
+      0x58180044,  //  013C  LDCONST	R6	K68
       0x7C0C0600,  //  013D  CALL	R3	3
       0x600C0015,  //  013E  GETGBL	R3	G21
       0x7C0C0000,  //  013F  CALL	R3	0
-      0x8C0C0758,  //  0140  GETMET	R3	R3	K88
+      0x8C0C0759,  //  0140  GETMET	R3	R3	K89
       0x60140008,  //  0141  GETGBL	R5	G8
       0x88180107,  //  0142  GETMBR	R6	R0	K7
       0x7C140200,  //  0143  CALL	R5	1
@@ -1704,16 +1704,16 @@ be_local_closure(class_Matter_TLV_item_tlv2raw,   /* name */
       0x5412FFFE,  //  014E  LDINT	R4	65535
       0x240C0604,  //  014F  GT	R3	R3	R4
       0x780E0000,  //  0150  JMPF	R3	#0152
-      0xB0064757,  //  0151  RAISE	1	K35	K87
+      0xB0064758,  //  0151  RAISE	1	K35	K88
       0x8C0C034C,  //  0152  GETMET	R3	R1	K76
       0x6014000C,  //  0153  GETGBL	R5	G12
       0x88180107,  //  0154  GETMBR	R6	R0	K7
       0x7C140200,  //  0155  CALL	R5	1
-      0x5818001E,  //  0156  LDCONST	R6	K30
+      0x5818004D,  //  0156  LDCONST	R6	K77
       0x7C0C0600,  //  0157  CALL	R3	3
       0x600C0015,  //  0158  GETGBL	R3	G21
       0x7C0C0000,  //  0159  CALL	R3	0
-      0x8C0C0759,  //  015A  GETMET	R3	R3	K89
+      0x8C0C075A,  //  015A  GETMET	R3	R3	K90
       0x60140008,  //  015B  GETGBL	R5	G8
       0x88180107,  //  015C  GETMBR	R6	R0	K7
       0x7C140200,  //  015D  CALL	R5	1
@@ -1730,12 +1730,12 @@ be_local_closure(class_Matter_TLV_item_tlv2raw,   /* name */
       0x541200FE,  //  0168  LDINT	R4	255
       0x240C0604,  //  0169  GT	R3	R3	R4
       0x780E0000,  //  016A  JMPF	R3	#016C
-      0xB006475A,  //  016B  RAISE	1	K35	K90
+      0xB006475B,  //  016B  RAISE	1	K35	K91
       0x8C0C034C,  //  016C  GETMET	R3	R1	K76
       0x6014000C,  //  016D  GETGBL	R5	G12
       0x88180107,  //  016E  GETMBR	R6	R0	K7
       0x7C140200,  //  016F  CALL	R5	1
-      0x5818001D,  //  0170  LDCONST	R6	K29
+      0x58180044,  //  0170  LDCONST	R6	K68
       0x7C0C0600,  //  0171  CALL	R3	3
       0x880C0107,  //  0172  GETMBR	R3	R0	K7
       0x400C0203,  //  0173  CONNECT	R3	R1	R3
@@ -1750,12 +1750,12 @@ be_local_closure(class_Matter_TLV_item_tlv2raw,   /* name */
       0x5412FFFE,  //  017C  LDINT	R4	65535
       0x240C0604,  //  017D  GT	R3	R3	R4
       0x780E0000,  //  017E  JMPF	R3	#0180
-      0xB006475A,  //  017F  RAISE	1	K35	K90
+      0xB006475B,  //  017F  RAISE	1	K35	K91
       0x8C0C034C,  //  0180  GETMET	R3	R1	K76
       0x6014000C,  //  0181  GETGBL	R5	G12
       0x88180107,  //  0182  GETMBR	R6	R0	K7
       0x7C140200,  //  0183  CALL	R5	1
-      0x5818001E,  //  0184  LDCONST	R6	K30
+      0x5818004D,  //  0184  LDCONST	R6	K77
       0x7C0C0600,  //  0185  CALL	R3	3
       0x880C0107,  //  0186  GETMBR	R3	R0	K7
       0x400C0203,  //  0187  CONNECT	R3	R1	R3
@@ -1800,15 +1800,15 @@ be_local_closure(class_Matter_TLV_item__encode_tag_len,   /* name */
       0x78060001,  //  0003  JMPF	R1	#0006
       0x88040104,  //  0004  GETMBR	R1	R0	K4
       0x70020000,  //  0005  JMP		#0007
-      0x5804002D,  //  0006  LDCONST	R1	K45
+      0x5804000A,  //  0006  LDCONST	R1	K10
       0x540AFFFF,  //  0007  LDINT	R2	65536
       0x28080202,  //  0008  GE	R2	R1	R2
       0x740A0002,  //  0009  JMPT	R2	#000D
-      0x1408032D,  //  000A  LT	R2	R1	K45
+      0x1408030A,  //  000A  LT	R2	R1	K10
       0x740A0000,  //  000B  JMPT	R2	#000D
       0x50080001,  //  000C  LDBOOL	R2	0	1
       0x50080200,  //  000D  LDBOOL	R2	1	0
-      0x580C002D,  //  000E  LDCONST	R3	K45
+      0x580C000A,  //  000E  LDCONST	R3	K10
       0x88100102,  //  000F  GETMBR	R4	R0	K2
       0x4C140000,  //  0010  LDNIL	R5
       0x20100805,  //  0011  NE	R4	R4	R5
@@ -1828,7 +1828,7 @@ be_local_closure(class_Matter_TLV_item__encode_tag_len,   /* name */
       0x54120004,  //  001F  LDINT	R4	5
       0x80040800,  //  0020  RET	1	R4
       0x70020000,  //  0021  JMP		#0023
-      0x8006B600,  //  0022  RET	1	K91
+      0x8006B800,  //  0022  RET	1	K92
       0x70020010,  //  0023  JMP		#0035
       0x88100103,  //  0024  GETMBR	R4	R0	K3
       0x4C140000,  //  0025  LDNIL	R5
@@ -1838,15 +1838,15 @@ be_local_closure(class_Matter_TLV_item__encode_tag_len,   /* name */
       0x54120004,  //  0029  LDINT	R4	5
       0x80040800,  //  002A  RET	1	R4
       0x70020000,  //  002B  JMP		#002D
-      0x8006B600,  //  002C  RET	1	K91
+      0x8006B800,  //  002C  RET	1	K92
       0x70020006,  //  002D  JMP		#0035
       0x88100105,  //  002E  GETMBR	R4	R0	K5
       0x4C140000,  //  002F  LDNIL	R5
       0x20100805,  //  0030  NE	R4	R4	R5
       0x78120001,  //  0031  JMPF	R4	#0034
-      0x8006B800,  //  0032  RET	1	K92
+      0x80063C00,  //  0032  RET	1	K30
       0x70020000,  //  0033  JMP		#0035
-      0x80069C00,  //  0034  RET	1	K78
+      0x80068800,  //  0034  RET	1	K68
       0x80000000,  //  0035  RET	0
     })
   )
@@ -1926,7 +1926,7 @@ be_local_closure(class_Matter_TLV_item_create_TLV,   /* name */
     be_str_weak(create_TLV),
     &be_const_str_solidified,
     ( &(const binstruction[13]) {  /* code */
-      0x5808004D,  //  0000  LDCONST	R2	K77
+      0x5808004E,  //  0000  LDCONST	R2	K78
       0x4C0C0000,  //  0001  LDNIL	R3
       0x200C0203,  //  0002  NE	R3	R1	R3
       0x740E0002,  //  0003  JMPT	R3	#0007
@@ -2014,8 +2014,8 @@ be_local_class(Matter_TLV_item,
     })),
     be_str_weak(Matter_TLV_item)
 );
-// compact class 'Matter_TLV_list' ktab size: 51, total: 94 (saved 344 bytes)
-static const bvalue be_ktab_class_Matter_TLV_list[51] = {
+// compact class 'Matter_TLV_list' ktab size: 50, total: 94 (saved 352 bytes)
+static const bvalue be_ktab_class_Matter_TLV_list[50] = {
   /* K0   */  be_nested_str_weak(findsub),
   /* K1   */  be_nested_str_weak(val),
   /* K2   */  be_nested_str_weak(_encode_tag),
@@ -2064,9 +2064,8 @@ static const bvalue be_ktab_class_Matter_TLV_list[51] = {
   /* K45  */  be_nested_str_weak(_X2C_X20),
   /* K46  */  be_nested_str_weak(_X20),
   /* K47  */  be_nested_str_weak(_encode_tag_len),
-  /* K48  */  be_const_int(0),
-  /* K49  */  be_nested_str_weak(encode_len),
-  /* K50  */  be_const_int(1),
+  /* K48  */  be_nested_str_weak(encode_len),
+  /* K49  */  be_const_int(1),
 };
 
 
@@ -2858,7 +2857,7 @@ be_local_closure(class_Matter_TLV_list_encode_len,   /* name */
     ( &(const binstruction[17]) {  /* code */
       0x8C04012F,  //  0000  GETMET	R1	R0	K47
       0x7C040200,  //  0001  CALL	R1	1
-      0x58080030,  //  0002  LDCONST	R2	K48
+      0x5808002A,  //  0002  LDCONST	R2	K42
       0x600C000C,  //  0003  GETGBL	R3	G12
       0x88100101,  //  0004  GETMBR	R4	R0	K1
       0x7C0C0200,  //  0005  CALL	R3	1
@@ -2866,12 +2865,12 @@ be_local_closure(class_Matter_TLV_list_encode_len,   /* name */
       0x780E0006,  //  0007  JMPF	R3	#000F
       0x880C0101,  //  0008  GETMBR	R3	R0	K1
       0x940C0602,  //  0009  GETIDX	R3	R3	R2
-      0x8C0C0731,  //  000A  GETMET	R3	R3	K49
+      0x8C0C0730,  //  000A  GETMET	R3	R3	K48
       0x7C0C0200,  //  000B  CALL	R3	1
       0x00040203,  //  000C  ADD	R1	R1	R3
-      0x00080532,  //  000D  ADD	R2	R2	K50
+      0x00080531,  //  000D  ADD	R2	R2	K49
       0x7001FFF3,  //  000E  JMP		#0003
-      0x00040332,  //  000F  ADD	R1	R1	K50
+      0x00040331,  //  000F  ADD	R1	R1	K49
       0x80040200,  //  0010  RET	1	R1
     })
   )

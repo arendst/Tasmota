@@ -3,8 +3,8 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
-// compact class 'Matter_EventHandler' ktab size: 59, total: 86 (saved 216 bytes)
-static const bvalue be_ktab_class_Matter_EventHandler[59] = {
+// compact class 'Matter_EventHandler' ktab size: 61, total: 86 (saved 200 bytes)
+static const bvalue be_ktab_class_Matter_EventHandler[61] = {
   /* K0   */  be_nested_str_weak(tasmota),
   /* K1   */  be_nested_str_weak(log),
   /* K2   */  be_nested_str_weak(MTR_X3A_X20Events_X20queues_X20sizes_X3A_X20critical_X20_X25s_X2C_X20info_X20_X25s_X2C_X20debug_X20_X25s),
@@ -19,51 +19,53 @@ static const bvalue be_ktab_class_Matter_EventHandler[59] = {
   /* K11  */  be_nested_str_weak(MTR_X3A_X20Events_X20by_X20types_X3A_X20critical_X20_X25s_X2C_X20info_X20_X25s_X2C_X20debug_X20_X25s),
   /* K12  */  be_nested_str_weak(counter_event_no),
   /* K13  */  be_nested_str_weak(add),
-  /* K14  */  be_nested_str_weak(counter_event_no_persisted),
-  /* K15  */  be_nested_str_weak(load_event_no_persisted),
-  /* K16  */  be_nested_str_weak(persist),
-  /* K17  */  be_nested_str_weak(find),
-  /* K18  */  be_nested_str_weak(EVENT_NO_KEY),
-  /* K19  */  be_nested_str_weak(0),
-  /* K20  */  be_nested_str_weak(int64),
-  /* K21  */  be_nested_str_weak(fromstring),
-  /* K22  */  be_nested_str_weak(EVENT_NO_INCR),
-  /* K23  */  be_nested_str_weak(setmember),
-  /* K24  */  be_nested_str_weak(tostring),
-  /* K25  */  be_nested_str_weak(save),
-  /* K26  */  be_nested_str_weak(push),
-  /* K27  */  be_nested_str_weak(EVENT_QUEUE_SIZE_MAX),
-  /* K28  */  be_nested_str_weak(pop),
-  /* K29  */  be_const_int(0),
-  /* K30  */  be_nested_str_weak(matter),
-  /* K31  */  be_nested_str_weak(EVENT_DEBUG),
-  /* K32  */  be_nested_str_weak(EVENT_INFO),
-  /* K33  */  be_nested_str_weak(compact),
-  /* K34  */  be_nested_str_weak(device),
-  /* K35  */  be_nested_str_weak(EventQueued),
-  /* K36  */  be_nested_str_weak(get_next_event_no),
-  /* K37  */  be_nested_str_weak(loglevel),
-  /* K38  */  be_const_int(3),
-  /* K39  */  be_nested_str_weak(),
-  /* K40  */  be_nested_str_weak(_X2C_X20),
-  /* K41  */  be_nested_str_weak(val),
-  /* K42  */  be_nested_str_weak(_X25i_X2E_X25i_X2E_X25i_X2E_X25i),
-  /* K43  */  be_nested_str_weak(CRIT_X20_X20),
-  /* K44  */  be_nested_str_weak(INFO_X20_X20),
-  /* K45  */  be_nested_str_weak(DEBUG_X20),
-  /* K46  */  be_nested_str_weak(get_event_name),
-  /* K47  */  be_nested_str_weak(_X28),
-  /* K48  */  be_nested_str_weak(_X29_X20),
-  /* K49  */  be_nested_str_weak(MTR_X3A_X20_X2BAdd_Event_X20_X28_X25s_X258s_X29_X20_X5B_X2502X_X5D_X2504X_X2F_X2502X_X20_X25s_X2D_X20_X25s),
-  /* K50  */  be_nested_str_weak(event_no),
-  /* K51  */  be_nested_str_weak(endpoint),
-  /* K52  */  be_nested_str_weak(cluster),
-  /* K53  */  be_nested_str_weak(event_id),
-  /* K54  */  be_nested_str_weak(queue_event),
-  /* K55  */  be_nested_str_weak(message_handler),
-  /* K56  */  be_nested_str_weak(im),
-  /* K57  */  be_nested_str_weak(subs_shop),
-  /* K58  */  be_nested_str_weak(event_published),
+  /* K14  */  be_const_int(1),
+  /* K15  */  be_nested_str_weak(counter_event_no_persisted),
+  /* K16  */  be_nested_str_weak(load_event_no_persisted),
+  /* K17  */  be_nested_str_weak(persist),
+  /* K18  */  be_nested_str_weak(find),
+  /* K19  */  be_nested_str_weak(EVENT_NO_KEY),
+  /* K20  */  be_nested_str_weak(0),
+  /* K21  */  be_nested_str_weak(int64),
+  /* K22  */  be_nested_str_weak(fromstring),
+  /* K23  */  be_nested_str_weak(EVENT_NO_INCR),
+  /* K24  */  be_nested_str_weak(setmember),
+  /* K25  */  be_nested_str_weak(tostring),
+  /* K26  */  be_nested_str_weak(save),
+  /* K27  */  be_nested_str_weak(push),
+  /* K28  */  be_nested_str_weak(EVENT_QUEUE_SIZE_MAX),
+  /* K29  */  be_nested_str_weak(pop),
+  /* K30  */  be_const_int(0),
+  /* K31  */  be_nested_str_weak(matter),
+  /* K32  */  be_nested_str_weak(EVENT_DEBUG),
+  /* K33  */  be_nested_str_weak(EVENT_INFO),
+  /* K34  */  be_nested_str_weak(compact),
+  /* K35  */  be_nested_str_weak(device),
+  /* K36  */  be_nested_str_weak(EventQueued),
+  /* K37  */  be_nested_str_weak(get_next_event_no),
+  /* K38  */  be_nested_str_weak(loglevel),
+  /* K39  */  be_const_int(3),
+  /* K40  */  be_nested_str_weak(),
+  /* K41  */  be_nested_str_weak(_X2C_X20),
+  /* K42  */  be_nested_str_weak(val),
+  /* K43  */  be_nested_str_weak(_X25i_X2E_X25i_X2E_X25i_X2E_X25i),
+  /* K44  */  be_nested_str_weak(CRIT_X20_X20),
+  /* K45  */  be_const_int(1),
+  /* K46  */  be_nested_str_weak(INFO_X20_X20),
+  /* K47  */  be_nested_str_weak(DEBUG_X20),
+  /* K48  */  be_nested_str_weak(get_event_name),
+  /* K49  */  be_nested_str_weak(_X28),
+  /* K50  */  be_nested_str_weak(_X29_X20),
+  /* K51  */  be_nested_str_weak(MTR_X3A_X20_X2BAdd_Event_X20_X28_X25s_X258s_X29_X20_X5B_X2502X_X5D_X2504X_X2F_X2502X_X20_X25s_X2D_X20_X25s),
+  /* K52  */  be_nested_str_weak(event_no),
+  /* K53  */  be_nested_str_weak(endpoint),
+  /* K54  */  be_nested_str_weak(cluster),
+  /* K55  */  be_nested_str_weak(event_id),
+  /* K56  */  be_nested_str_weak(queue_event),
+  /* K57  */  be_nested_str_weak(message_handler),
+  /* K58  */  be_nested_str_weak(im),
+  /* K59  */  be_nested_str_weak(subs_shop),
+  /* K60  */  be_nested_str_weak(event_published),
 };
 
 
@@ -210,14 +212,14 @@ be_local_closure(class_Matter_EventHandler_get_next_event_no,   /* name */
     ( &(const binstruction[13]) {  /* code */
       0x8804010C,  //  0000  GETMBR	R1	R0	K12
       0x8C04030D,  //  0001  GETMET	R1	R1	K13
-      0x580C0009,  //  0002  LDCONST	R3	K9
+      0x580C000E,  //  0002  LDCONST	R3	K14
       0x7C040400,  //  0003  CALL	R1	2
       0x90021801,  //  0004  SETMBR	R0	K12	R1
       0x8804010C,  //  0005  GETMBR	R1	R0	K12
-      0x8808010E,  //  0006  GETMBR	R2	R0	K14
+      0x8808010F,  //  0006  GETMBR	R2	R0	K15
       0x28040202,  //  0007  GE	R1	R1	R2
       0x78060001,  //  0008  JMPF	R1	#000B
-      0x8C04010F,  //  0009  GETMET	R1	R0	K15
+      0x8C040110,  //  0009  GETMET	R1	R0	K16
       0x7C040200,  //  000A  CALL	R1	1
       0x8804010C,  //  000B  GETMBR	R1	R0	K12
       0x80040200,  //  000C  RET	1	R1
@@ -244,30 +246,30 @@ be_local_closure(class_Matter_EventHandler_load_event_no_persisted,   /* name */
     be_str_weak(load_event_no_persisted),
     &be_const_str_solidified,
     ( &(const binstruction[26]) {  /* code */
-      0xA4062000,  //  0000  IMPORT	R1	K16
+      0xA4062200,  //  0000  IMPORT	R1	K17
       0x60080008,  //  0001  GETGBL	R2	G8
-      0x8C0C0311,  //  0002  GETMET	R3	R1	K17
-      0x88140112,  //  0003  GETMBR	R5	R0	K18
-      0x58180013,  //  0004  LDCONST	R6	K19
+      0x8C0C0312,  //  0002  GETMET	R3	R1	K18
+      0x88140113,  //  0003  GETMBR	R5	R0	K19
+      0x58180014,  //  0004  LDCONST	R6	K20
       0x7C0C0600,  //  0005  CALL	R3	3
       0x7C080200,  //  0006  CALL	R2	1
-      0xB80E2800,  //  0007  GETNGBL	R3	K20
-      0x8C0C0715,  //  0008  GETMET	R3	R3	K21
+      0xB80E2A00,  //  0007  GETNGBL	R3	K21
+      0x8C0C0716,  //  0008  GETMET	R3	R3	K22
       0x5C140400,  //  0009  MOVE	R5	R2
       0x7C0C0400,  //  000A  CALL	R3	2
       0x90021803,  //  000B  SETMBR	R0	K12	R3
       0x880C010C,  //  000C  GETMBR	R3	R0	K12
       0x8C0C070D,  //  000D  GETMET	R3	R3	K13
-      0x88140116,  //  000E  GETMBR	R5	R0	K22
+      0x88140117,  //  000E  GETMBR	R5	R0	K23
       0x7C0C0400,  //  000F  CALL	R3	2
-      0x90021C03,  //  0010  SETMBR	R0	K14	R3
-      0x8C0C0317,  //  0011  GETMET	R3	R1	K23
-      0x88140112,  //  0012  GETMBR	R5	R0	K18
-      0x8818010E,  //  0013  GETMBR	R6	R0	K14
-      0x8C180D18,  //  0014  GETMET	R6	R6	K24
+      0x90021E03,  //  0010  SETMBR	R0	K15	R3
+      0x8C0C0318,  //  0011  GETMET	R3	R1	K24
+      0x88140113,  //  0012  GETMBR	R5	R0	K19
+      0x8818010F,  //  0013  GETMBR	R6	R0	K15
+      0x8C180D19,  //  0014  GETMET	R6	R6	K25
       0x7C180200,  //  0015  CALL	R6	1
       0x7C0C0600,  //  0016  CALL	R3	3
-      0x8C0C0319,  //  0017  GETMET	R3	R1	K25
+      0x8C0C031A,  //  0017  GETMET	R3	R1	K26
       0x7C0C0200,  //  0018  CALL	R3	1
       0x80000000,  //  0019  RET	0
     })
@@ -295,56 +297,56 @@ be_local_closure(class_Matter_EventHandler_queue_event,   /* name */
     ( &(const binstruction[54]) {  /* code */
       0x88080308,  //  0000  GETMBR	R2	R1	K8
       0x880C0105,  //  0001  GETMBR	R3	R0	K5
-      0x8C0C071A,  //  0002  GETMET	R3	R3	K26
+      0x8C0C071B,  //  0002  GETMET	R3	R3	K27
       0x5C140200,  //  0003  MOVE	R5	R1
       0x7C0C0400,  //  0004  CALL	R3	2
       0x600C000C,  //  0005  GETGBL	R3	G12
       0x88100105,  //  0006  GETMBR	R4	R0	K5
       0x7C0C0200,  //  0007  CALL	R3	1
-      0x8810011B,  //  0008  GETMBR	R4	R0	K27
+      0x8810011C,  //  0008  GETMBR	R4	R0	K28
       0x240C0604,  //  0009  GT	R3	R3	R4
       0x780E0029,  //  000A  JMPF	R3	#0035
       0x880C0105,  //  000B  GETMBR	R3	R0	K5
-      0x8C0C071C,  //  000C  GETMET	R3	R3	K28
-      0x5814001D,  //  000D  LDCONST	R5	K29
+      0x8C0C071D,  //  000C  GETMET	R3	R3	K29
+      0x5814001E,  //  000D  LDCONST	R5	K30
       0x7C0C0400,  //  000E  CALL	R3	2
       0x88100708,  //  000F  GETMBR	R4	R3	K8
-      0xB8163C00,  //  0010  GETNGBL	R5	K30
-      0x88140B1F,  //  0011  GETMBR	R5	R5	K31
+      0xB8163E00,  //  0010  GETNGBL	R5	K31
+      0x88140B20,  //  0011  GETMBR	R5	R5	K32
       0x24100805,  //  0012  GT	R4	R4	R5
       0x78120020,  //  0013  JMPF	R4	#0035
       0x88100104,  //  0014  GETMBR	R4	R0	K4
-      0x8C10091A,  //  0015  GETMET	R4	R4	K26
+      0x8C10091B,  //  0015  GETMET	R4	R4	K27
       0x5C180600,  //  0016  MOVE	R6	R3
       0x7C100400,  //  0017  CALL	R4	2
       0x6010000C,  //  0018  GETGBL	R4	G12
       0x88140104,  //  0019  GETMBR	R5	R0	K4
       0x7C100200,  //  001A  CALL	R4	1
-      0x8814011B,  //  001B  GETMBR	R5	R0	K27
+      0x8814011C,  //  001B  GETMBR	R5	R0	K28
       0x24100805,  //  001C  GT	R4	R4	R5
       0x78120016,  //  001D  JMPF	R4	#0035
       0x88100104,  //  001E  GETMBR	R4	R0	K4
-      0x8C10091C,  //  001F  GETMET	R4	R4	K28
-      0x5818001D,  //  0020  LDCONST	R6	K29
+      0x8C10091D,  //  001F  GETMET	R4	R4	K29
+      0x5818001E,  //  0020  LDCONST	R6	K30
       0x7C100400,  //  0021  CALL	R4	2
       0x88140908,  //  0022  GETMBR	R5	R4	K8
-      0xB81A3C00,  //  0023  GETNGBL	R6	K30
-      0x88180D20,  //  0024  GETMBR	R6	R6	K32
+      0xB81A3E00,  //  0023  GETNGBL	R6	K31
+      0x88180D21,  //  0024  GETMBR	R6	R6	K33
       0x24140A06,  //  0025  GT	R5	R5	R6
       0x7816000D,  //  0026  JMPF	R5	#0035
       0x88140103,  //  0027  GETMBR	R5	R0	K3
-      0x8C140B1A,  //  0028  GETMET	R5	R5	K26
+      0x8C140B1B,  //  0028  GETMET	R5	R5	K27
       0x5C1C0800,  //  0029  MOVE	R7	R4
       0x7C140400,  //  002A  CALL	R5	2
       0x6014000C,  //  002B  GETGBL	R5	G12
       0x88180103,  //  002C  GETMBR	R6	R0	K3
       0x7C140200,  //  002D  CALL	R5	1
-      0x8818011B,  //  002E  GETMBR	R6	R0	K27
+      0x8818011C,  //  002E  GETMBR	R6	R0	K28
       0x24140A06,  //  002F  GT	R5	R5	R6
       0x78160003,  //  0030  JMPF	R5	#0035
       0x88140103,  //  0031  GETMBR	R5	R0	K3
-      0x8C140B1C,  //  0032  GETMET	R5	R5	K28
-      0x581C001D,  //  0033  LDCONST	R7	K29
+      0x8C140B1D,  //  0032  GETMET	R5	R5	K29
+      0x581C001E,  //  0033  LDCONST	R7	K30
       0x7C140400,  //  0034  CALL	R5	2
       0x80000000,  //  0035  RET	0
     })
@@ -370,7 +372,7 @@ be_local_closure(class_Matter_EventHandler_every_second,   /* name */
     be_str_weak(every_second),
     &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
-      0x8C040121,  //  0000  GETMET	R1	R0	K33
+      0x8C040122,  //  0000  GETMET	R1	R0	K34
       0x7C040200,  //  0001  CALL	R1	1
       0x80000000,  //  0002  RET	0
     })
@@ -396,7 +398,7 @@ be_local_closure(class_Matter_EventHandler_init,   /* name */
     be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[13]) {  /* code */
-      0x90024401,  //  0000  SETMBR	R0	K34	R1
+      0x90024601,  //  0000  SETMBR	R0	K35	R1
       0x60080012,  //  0001  GETGBL	R2	G18
       0x7C080000,  //  0002  CALL	R2	0
       0x90020A02,  //  0003  SETMBR	R0	K5	R2
@@ -406,7 +408,7 @@ be_local_closure(class_Matter_EventHandler_init,   /* name */
       0x60080012,  //  0007  GETGBL	R2	G18
       0x7C080000,  //  0008  CALL	R2	0
       0x90020602,  //  0009  SETMBR	R0	K3	R2
-      0x8C08010F,  //  000A  GETMET	R2	R0	K15
+      0x8C080110,  //  000A  GETMET	R2	R0	K16
       0x7C080200,  //  000B  CALL	R2	1
       0x80000000,  //  000C  RET	0
     })
@@ -529,9 +531,9 @@ be_local_closure(class_Matter_EventHandler_publish_event,   /* name */
     be_str_weak(publish_event),
     &be_const_str_solidified,
     ( &(const binstruction[112]) {  /* code */
-      0xB8263C00,  //  0000  GETNGBL	R9	K30
-      0x8C241323,  //  0001  GETMET	R9	R9	K35
-      0x8C2C0124,  //  0002  GETMET	R11	R0	K36
+      0xB8263E00,  //  0000  GETNGBL	R9	K31
+      0x8C241324,  //  0001  GETMET	R9	R9	K36
+      0x8C2C0125,  //  0002  GETMET	R11	R0	K37
       0x7C2C0200,  //  0003  CALL	R11	1
       0x5C300200,  //  0004  MOVE	R12	R1
       0x5C340400,  //  0005  MOVE	R13	R2
@@ -543,11 +545,11 @@ be_local_closure(class_Matter_EventHandler_publish_event,   /* name */
       0x5C4C1000,  //  000B  MOVE	R19	R8
       0x7C241400,  //  000C  CALL	R9	10
       0xB82A0000,  //  000D  GETNGBL	R10	K0
-      0x8C281525,  //  000E  GETMET	R10	R10	K37
-      0x58300026,  //  000F  LDCONST	R12	K38
+      0x8C281526,  //  000E  GETMET	R10	R10	K38
+      0x58300027,  //  000F  LDCONST	R12	K39
       0x7C280400,  //  0010  CALL	R10	2
       0x782A0052,  //  0011  JMPF	R10	#0065
-      0x58280027,  //  0012  LDCONST	R10	K39
+      0x58280028,  //  0012  LDCONST	R10	K40
       0x4C2C0000,  //  0013  LDNIL	R11
       0x202C0C0B,  //  0014  NE	R11	R6	R11
       0x782E0003,  //  0015  JMPF	R11	#001A
@@ -561,7 +563,7 @@ be_local_closure(class_Matter_EventHandler_publish_event,   /* name */
       0x602C0008,  //  001D  GETGBL	R11	G8
       0x5C300E00,  //  001E  MOVE	R12	R7
       0x7C2C0200,  //  001F  CALL	R11	1
-      0x002E500B,  //  0020  ADD	R11	K40	R11
+      0x002E520B,  //  0020  ADD	R11	K41	R11
       0x0028140B,  //  0021  ADD	R10	R10	R11
       0x4C2C0000,  //  0022  LDNIL	R11
       0x202C100B,  //  0023  NE	R11	R8	R11
@@ -569,16 +571,16 @@ be_local_closure(class_Matter_EventHandler_publish_event,   /* name */
       0x602C0008,  //  0025  GETGBL	R11	G8
       0x5C301000,  //  0026  MOVE	R12	R8
       0x7C2C0200,  //  0027  CALL	R11	1
-      0x002E500B,  //  0028  ADD	R11	K40	R11
+      0x002E520B,  //  0028  ADD	R11	K41	R11
       0x0028140B,  //  0029  ADD	R10	R10	R11
       0x542E0027,  //  002A  LDINT	R11	40
       0x1C2C040B,  //  002B  EQ	R11	R2	R11
       0x782E0014,  //  002C  JMPF	R11	#0042
-      0x1C2C071D,  //  002D  EQ	R11	R3	K29
+      0x1C2C071E,  //  002D  EQ	R11	R3	K30
       0x782E0012,  //  002E  JMPF	R11	#0042
-      0x882C0D29,  //  002F  GETMBR	R11	R6	K41
+      0x882C0D2A,  //  002F  GETMBR	R11	R6	K42
       0x60300018,  //  0030  GETGBL	R12	G24
-      0x5834002A,  //  0031  LDCONST	R13	K42
+      0x5834002B,  //  0031  LDCONST	R13	K43
       0x543A0017,  //  0032  LDINT	R14	24
       0x3C38160E,  //  0033  SHR	R14	R11	R14
       0x543E00FE,  //  0034  LDINT	R15	255
@@ -597,47 +599,47 @@ be_local_closure(class_Matter_EventHandler_publish_event,   /* name */
       0x5C281800,  //  0041  MOVE	R10	R12
       0x1C2C0B06,  //  0042  EQ	R11	R5	K6
       0x782E0001,  //  0043  JMPF	R11	#0046
-      0x582C002B,  //  0044  LDCONST	R11	K43
+      0x582C002C,  //  0044  LDCONST	R11	K44
       0x70020004,  //  0045  JMP		#004B
-      0x1C2C0B09,  //  0046  EQ	R11	R5	K9
+      0x1C2C0B2D,  //  0046  EQ	R11	R5	K45
       0x782E0001,  //  0047  JMPF	R11	#004A
-      0x582C002C,  //  0048  LDCONST	R11	K44
+      0x582C002E,  //  0048  LDCONST	R11	K46
       0x70020000,  //  0049  JMP		#004B
-      0x582C002D,  //  004A  LDCONST	R11	K45
-      0xB8323C00,  //  004B  GETNGBL	R12	K30
-      0x8C30192E,  //  004C  GETMET	R12	R12	K46
+      0x582C002F,  //  004A  LDCONST	R11	K47
+      0xB8323E00,  //  004B  GETNGBL	R12	K31
+      0x8C301930,  //  004C  GETMET	R12	R12	K48
       0x5C380400,  //  004D  MOVE	R14	R2
       0x5C3C0600,  //  004E  MOVE	R15	R3
       0x7C300600,  //  004F  CALL	R12	3
       0x4C340000,  //  0050  LDNIL	R13
       0x2034180D,  //  0051  NE	R13	R12	R13
       0x78360002,  //  0052  JMPF	R13	#0056
-      0x00365E0C,  //  0053  ADD	R13	K47	R12
-      0x00341B30,  //  0054  ADD	R13	R13	K48
+      0x0036620C,  //  0053  ADD	R13	K49	R12
+      0x00341B32,  //  0054  ADD	R13	R13	K50
       0x70020000,  //  0055  JMP		#0057
-      0x58340027,  //  0056  LDCONST	R13	K39
+      0x58340028,  //  0056  LDCONST	R13	K40
       0x5C301A00,  //  0057  MOVE	R12	R13
       0xB8360200,  //  0058  GETNGBL	R13	K1
       0x60380018,  //  0059  GETGBL	R14	G24
-      0x583C0031,  //  005A  LDCONST	R15	K49
+      0x583C0033,  //  005A  LDCONST	R15	K51
       0x5C401600,  //  005B  MOVE	R16	R11
-      0x88441332,  //  005C  GETMBR	R17	R9	K50
-      0x88481333,  //  005D  GETMBR	R18	R9	K51
-      0x884C1334,  //  005E  GETMBR	R19	R9	K52
-      0x88501335,  //  005F  GETMBR	R20	R9	K53
+      0x88441334,  //  005C  GETMBR	R17	R9	K52
+      0x88481335,  //  005D  GETMBR	R18	R9	K53
+      0x884C1336,  //  005E  GETMBR	R19	R9	K54
+      0x88501337,  //  005F  GETMBR	R20	R9	K55
       0x5C541800,  //  0060  MOVE	R21	R12
       0x5C581400,  //  0061  MOVE	R22	R10
       0x7C381000,  //  0062  CALL	R14	8
       0x583C0006,  //  0063  LDCONST	R15	K6
       0x7C340400,  //  0064  CALL	R13	2
-      0x8C280136,  //  0065  GETMET	R10	R0	K54
+      0x8C280138,  //  0065  GETMET	R10	R0	K56
       0x5C301200,  //  0066  MOVE	R12	R9
       0x7C280400,  //  0067  CALL	R10	2
-      0x88280122,  //  0068  GETMBR	R10	R0	K34
-      0x88281537,  //  0069  GETMBR	R10	R10	K55
-      0x88281538,  //  006A  GETMBR	R10	R10	K56
-      0x88281539,  //  006B  GETMBR	R10	R10	K57
-      0x8C28153A,  //  006C  GETMET	R10	R10	K58
+      0x88280123,  //  0068  GETMBR	R10	R0	K35
+      0x88281539,  //  0069  GETMBR	R10	R10	K57
+      0x8828153A,  //  006A  GETMBR	R10	R10	K58
+      0x8828153B,  //  006B  GETMBR	R10	R10	K59
+      0x8C28153C,  //  006C  GETMET	R10	R10	K60
       0x5C301200,  //  006D  MOVE	R12	R9
       0x7C280400,  //  006E  CALL	R10	2
       0x80000000,  //  006F  RET	0
@@ -743,8 +745,8 @@ be_local_class(Matter_EventHandler,
     })),
     be_str_weak(Matter_EventHandler)
 );
-// compact class 'Matter_EventQueued' ktab size: 30, total: 43 (saved 104 bytes)
-static const bvalue be_ktab_class_Matter_EventQueued[30] = {
+// compact class 'Matter_EventQueued' ktab size: 31, total: 43 (saved 96 bytes)
+static const bvalue be_ktab_class_Matter_EventQueued[31] = {
   /* K0   */  be_nested_str_weak(raw_tlv),
   /* K1   */  be_nested_str_weak(eventreport2raw),
   /* K2   */  be_nested_str_weak(endpoint),
@@ -775,6 +777,7 @@ static const bvalue be_ktab_class_Matter_EventQueued[30] = {
   /* K27  */  be_nested_str_weak(tag_sub),
   /* K28  */  be_const_int(0),
   /* K29  */  be_nested_str_weak(tlv2raw),
+  /* K30  */  be_const_int(2),
 };
 
 
@@ -1107,7 +1110,7 @@ be_local_closure(class_Matter_EventQueued_eventreport2raw,   /* name */
       0x4C300000,  //  003F  LDNIL	R12
       0x2030160C,  //  0040  NE	R12	R11	R12
       0x78320003,  //  0041  JMPF	R12	#0046
-      0x902E3716,  //  0042  SETMBR	R11	K27	K22
+      0x902E371E,  //  0042  SETMBR	R11	K27	K30
       0x8C30171D,  //  0043  GETMET	R12	R11	K29
       0x5C380200,  //  0044  MOVE	R14	R1
       0x7C300400,  //  0045  CALL	R12	2

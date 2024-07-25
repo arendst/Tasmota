@@ -3,8 +3,8 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
-// compact class 'Matter_Profiler' ktab size: 19, total: 43 (saved 192 bytes)
-static const bvalue be_ktab_class_Matter_Profiler[19] = {
+// compact class 'Matter_Profiler' ktab size: 20, total: 43 (saved 184 bytes)
+static const bvalue be_ktab_class_Matter_Profiler[20] = {
   /* K0   */  be_nested_str_weak(active),
   /* K1   */  be_const_int(0),
   /* K2   */  be_nested_str_weak(PREALLOCATED),
@@ -23,7 +23,8 @@ static const bvalue be_ktab_class_Matter_Profiler[19] = {
   /* K15  */  be_const_int(1),
   /* K16  */  be_nested_str_weak(_X3C_X2D_X2Dend_X2D_X2D_X3E),
   /* K17  */  be_nested_str_weak(MTR_X3A_X20Profiler_X20dump_X3A),
-  /* K18  */  be_nested_str_weak(MTR_X3A_X20_X20_X20_X254i_X20_X5B_X254i_X5D_X27_X25s_X27),
+  /* K18  */  be_const_int(1),
+  /* K19  */  be_nested_str_weak(MTR_X3A_X20_X20_X20_X254i_X20_X5B_X254i_X5D_X27_X25s_X27),
 };
 
 
@@ -242,13 +243,13 @@ be_local_closure(class_Matter_Profiler_dump,   /* name */
       0x940C0701,  //  000D  GETIDX	R3	R3	K1
       0x8810010D,  //  000E  GETMBR	R4	R0	K13
       0x94100901,  //  000F  GETIDX	R4	R4	K1
-      0x5814000F,  //  0010  LDCONST	R5	K15
+      0x58140012,  //  0010  LDCONST	R5	K18
       0x88180106,  //  0011  GETMBR	R6	R0	K6
       0x14180A06,  //  0012  LT	R6	R5	R6
       0x781A000F,  //  0013  JMPF	R6	#0024
       0xB81A1200,  //  0014  GETNGBL	R6	K9
       0x601C0018,  //  0015  GETGBL	R7	G24
-      0x58200012,  //  0016  LDCONST	R8	K18
+      0x58200013,  //  0016  LDCONST	R8	K19
       0x88240103,  //  0017  GETMBR	R9	R0	K3
       0x94241205,  //  0018  GETIDX	R9	R9	R5
       0x04241202,  //  0019  SUB	R9	R9	R2
@@ -260,7 +261,7 @@ be_local_closure(class_Matter_Profiler_dump,   /* name */
       0x7C1C0800,  //  001F  CALL	R7	4
       0x5C200200,  //  0020  MOVE	R8	R1
       0x7C180400,  //  0021  CALL	R6	2
-      0x00140B0F,  //  0022  ADD	R5	R5	K15
+      0x00140B12,  //  0022  ADD	R5	R5	K18
       0x7001FFEC,  //  0023  JMP		#0011
       0x80000000,  //  0024  RET	0
     })

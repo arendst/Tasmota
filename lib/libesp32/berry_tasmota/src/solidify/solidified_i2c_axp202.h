@@ -3,8 +3,8 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
-// compact class 'AXP202' ktab size: 28, total: 64 (saved 288 bytes)
-static const bvalue be_ktab_class_AXP202[28] = {
+// compact class 'AXP202' ktab size: 31, total: 64 (saved 264 bytes)
+static const bvalue be_ktab_class_AXP202[31] = {
   /* K0   */  be_const_int(0),
   /* K1   */  be_const_int(1),
   /* K2   */  be_const_int(2),
@@ -17,22 +17,25 @@ static const bvalue be_ktab_class_AXP202[28] = {
   /* K9   */  be_nested_str(read13),
   /* K10  */  be_const_real_hex(0x3F000000),
   /* K11  */  be_nested_str(read24),
-  /* K12  */  be_const_real_hex(0x3A102DE1),
+  /* K12  */  be_const_real_hex(0x3A102DE0),
   /* K13  */  be_const_real_hex(0x3AB78035),
   /* K14  */  be_const_real_hex(0x3ADED28A),
-  /* K15  */  be_nested_str(write_bit),
-  /* K16  */  be_nested_str(wire),
-  /* K17  */  be_nested_str(read),
-  /* K18  */  be_nested_str(addr),
-  /* K19  */  be_const_int(3),
-  /* K20  */  be_nested_str(I2C_Driver),
-  /* K21  */  be_nested_str(init),
-  /* K22  */  be_nested_str(AXP202),
-  /* K23  */  be_const_int(0),
-  /* K24  */  be_const_int(2),
-  /* K25  */  be_const_real_hex(0x3F000000),
-  /* K26  */  be_const_real_hex(0x3DCCCCCD),
-  /* K27  */  be_const_real_hex(0x4310B333),
+  /* K15  */  be_const_int(2),
+  /* K16  */  be_nested_str(write_bit),
+  /* K17  */  be_nested_str(wire),
+  /* K18  */  be_nested_str(read),
+  /* K19  */  be_nested_str(addr),
+  /* K20  */  be_const_int(1),
+  /* K21  */  be_const_int(3),
+  /* K22  */  be_nested_str(I2C_Driver),
+  /* K23  */  be_nested_str(init),
+  /* K24  */  be_nested_str(AXP202),
+  /* K25  */  be_const_int(0),
+  /* K26  */  be_const_int(3),
+  /* K27  */  be_const_int(0),
+  /* K28  */  be_const_real_hex(0x3DCCCCCD),
+  /* K29  */  be_const_real_hex(0x4310B333),
+  /* K30  */  be_const_int(3),
 };
 
 
@@ -274,16 +277,16 @@ be_local_closure(class_AXP202_set_ldo_enable,   /* name */
     &be_const_str_set_ldo_enable,
     &be_const_str_solidified,
     ( &(const binstruction[23]) {  /* code */
-      0x1C0C0302,  //  0000  EQ	R3	R1	K2
+      0x1C0C030F,  //  0000  EQ	R3	R1	K15
       0x780E0004,  //  0001  JMPF	R3	#0007
-      0x8C0C010F,  //  0002  GETMET	R3	R0	K15
+      0x8C0C0110,  //  0002  GETMET	R3	R0	K16
       0x54160011,  //  0003  LDINT	R5	18
-      0x58180002,  //  0004  LDCONST	R6	K2
+      0x5818000F,  //  0004  LDCONST	R6	K15
       0x5C1C0400,  //  0005  MOVE	R7	R2
       0x7C0C0800,  //  0006  CALL	R3	4
       0x1C0C0303,  //  0007  EQ	R3	R1	K3
       0x780E0004,  //  0008  JMPF	R3	#000E
-      0x8C0C010F,  //  0009  GETMET	R3	R0	K15
+      0x8C0C0110,  //  0009  GETMET	R3	R0	K16
       0x54160011,  //  000A  LDINT	R5	18
       0x541A0005,  //  000B  LDINT	R6	6
       0x5C1C0400,  //  000C  MOVE	R7	R2
@@ -291,7 +294,7 @@ be_local_closure(class_AXP202_set_ldo_enable,   /* name */
       0x540E0003,  //  000E  LDINT	R3	4
       0x1C0C0203,  //  000F  EQ	R3	R1	R3
       0x780E0004,  //  0010  JMPF	R3	#0016
-      0x8C0C010F,  //  0011  GETMET	R3	R0	K15
+      0x8C0C0110,  //  0011  GETMET	R3	R0	K16
       0x54160011,  //  0012  LDINT	R5	18
       0x58180003,  //  0013  LDCONST	R6	K3
       0x5C1C0400,  //  0014  MOVE	R7	R2
@@ -320,11 +323,11 @@ be_local_closure(class_AXP202_battery_present,   /* name */
     &be_const_str_battery_present,
     &be_const_str_solidified,
     ( &(const binstruction[15]) {  /* code */
-      0x88040110,  //  0000  GETMBR	R1	R0	K16
-      0x8C040311,  //  0001  GETMET	R1	R1	K17
-      0x880C0112,  //  0002  GETMBR	R3	R0	K18
-      0x58100001,  //  0003  LDCONST	R4	K1
-      0x58140001,  //  0004  LDCONST	R5	K1
+      0x88040111,  //  0000  GETMBR	R1	R0	K17
+      0x8C040312,  //  0001  GETMET	R1	R1	K18
+      0x880C0113,  //  0002  GETMBR	R3	R0	K19
+      0x58100014,  //  0003  LDCONST	R4	K20
+      0x58140014,  //  0004  LDCONST	R5	K20
       0x7C040800,  //  0005  CALL	R1	4
       0x540A001F,  //  0006  LDINT	R2	32
       0x2C040202,  //  0007  AND	R1	R1	R2
@@ -399,14 +402,14 @@ be_local_closure(class_AXP202_set_dcdc_enable,   /* name */
     ( &(const binstruction[15]) {  /* code */
       0x1C0C0302,  //  0000  EQ	R3	R1	K2
       0x780E0004,  //  0001  JMPF	R3	#0007
-      0x8C0C010F,  //  0002  GETMET	R3	R0	K15
+      0x8C0C0110,  //  0002  GETMET	R3	R0	K16
       0x54160011,  //  0003  LDINT	R5	18
       0x541A0003,  //  0004  LDINT	R6	4
       0x5C1C0400,  //  0005  MOVE	R7	R2
       0x7C0C0800,  //  0006  CALL	R3	4
       0x1C0C0303,  //  0007  EQ	R3	R1	K3
       0x780E0004,  //  0008  JMPF	R3	#000E
-      0x8C0C010F,  //  0009  GETMET	R3	R0	K15
+      0x8C0C0110,  //  0009  GETMET	R3	R0	K16
       0x54160011,  //  000A  LDINT	R5	18
       0x58180001,  //  000B  LDCONST	R6	K1
       0x5C1C0400,  //  000C  MOVE	R7	R2
@@ -443,7 +446,7 @@ be_local_closure(class_AXP202_set_chg_led_mode,   /* name */
       0x54120007,  //  0005  LDINT	R4	8
       0x300C0604,  //  0006  OR	R3	R3	R4
       0x5C080600,  //  0007  MOVE	R2	R3
-      0x2C0C0313,  //  0008  AND	R3	R1	K19
+      0x2C0C0315,  //  0008  AND	R3	R1	K21
       0x54120003,  //  0009  LDINT	R4	4
       0x380C0604,  //  000A  SHL	R3	R3	R4
       0x30080403,  //  000B  OR	R2	R2	R3
@@ -477,10 +480,10 @@ be_local_closure(class_AXP202_init,   /* name */
     ( &(const binstruction[ 9]) {  /* code */
       0x60040003,  //  0000  GETGBL	R1	G3
       0x5C080000,  //  0001  MOVE	R2	R0
-      0xB80E2800,  //  0002  GETNGBL	R3	K20
+      0xB80E2C00,  //  0002  GETNGBL	R3	K22
       0x7C040400,  //  0003  CALL	R1	2
-      0x8C040315,  //  0004  GETMET	R1	R1	K21
-      0x580C0016,  //  0005  LDCONST	R3	K22
+      0x8C040317,  //  0004  GETMET	R1	R1	K23
+      0x580C0018,  //  0005  LDCONST	R3	K24
       0x54120034,  //  0006  LDINT	R4	53
       0x7C040600,  //  0007  CALL	R1	3
       0x80000000,  //  0008  RET	0
@@ -507,9 +510,9 @@ be_local_closure(class_AXP202_set_exten,   /* name */
     &be_const_str_set_exten,
     &be_const_str_solidified,
     ( &(const binstruction[ 6]) {  /* code */
-      0x8C08010F,  //  0000  GETMET	R2	R0	K15
+      0x8C080110,  //  0000  GETMET	R2	R0	K16
       0x54120011,  //  0001  LDINT	R4	18
-      0x58140017,  //  0002  LDCONST	R5	K23
+      0x58140019,  //  0002  LDCONST	R5	K25
       0x5C180200,  //  0003  MOVE	R6	R1
       0x7C080800,  //  0004  CALL	R2	4
       0x80000000,  //  0005  RET	0
@@ -536,11 +539,11 @@ be_local_closure(class_AXP202_get_battery_chargin_status,   /* name */
     &be_const_str_get_battery_chargin_status,
     &be_const_str_solidified,
     ( &(const binstruction[ 7]) {  /* code */
-      0x88040110,  //  0000  GETMBR	R1	R0	K16
-      0x8C040311,  //  0001  GETMET	R1	R1	K17
-      0x880C0112,  //  0002  GETMBR	R3	R0	K18
-      0x58100001,  //  0003  LDCONST	R4	K1
-      0x58140001,  //  0004  LDCONST	R5	K1
+      0x88040111,  //  0000  GETMBR	R1	R0	K17
+      0x8C040312,  //  0001  GETMET	R1	R1	K18
+      0x880C0113,  //  0002  GETMBR	R3	R0	K19
+      0x58100014,  //  0003  LDCONST	R4	K20
+      0x58140014,  //  0004  LDCONST	R5	K20
       0x7C040800,  //  0005  CALL	R1	4
       0x80040200,  //  0006  RET	1	R1
     })
@@ -566,23 +569,23 @@ be_local_closure(class_AXP202_set_dc_voltage,   /* name */
     &be_const_str_set_dc_voltage,
     &be_const_str_solidified,
     ( &(const binstruction[44]) {  /* code */
-      0x140C0318,  //  0000  LT	R3	R1	K24
+      0x140C030F,  //  0000  LT	R3	R1	K15
       0x740E0001,  //  0001  JMPT	R3	#0004
-      0x240C0303,  //  0002  GT	R3	R1	K3
+      0x240C031A,  //  0002  GT	R3	R1	K26
       0x780E0000,  //  0003  JMPF	R3	#0005
       0x80000600,  //  0004  RET	0
       0x4C0C0000,  //  0005  LDNIL	R3
       0x541202BB,  //  0006  LDINT	R4	700
       0x14100404,  //  0007  LT	R4	R2	R4
       0x78120001,  //  0008  JMPF	R4	#000B
-      0x580C0017,  //  0009  LDCONST	R3	K23
+      0x580C001B,  //  0009  LDCONST	R3	K27
       0x70020010,  //  000A  JMP		#001C
       0x54120DAB,  //  000B  LDINT	R4	3500
       0x24100404,  //  000C  GT	R4	R2	R4
       0x78120001,  //  000D  JMPF	R4	#0010
       0x540E006F,  //  000E  LDINT	R3	112
       0x7002000B,  //  000F  JMP		#001C
-      0x1C100318,  //  0010  EQ	R4	R1	K24
+      0x1C10030F,  //  0010  EQ	R4	R1	K15
       0x78120004,  //  0011  JMPF	R4	#0017
       0x541208E2,  //  0012  LDINT	R4	2275
       0x24100404,  //  0013  GT	R4	R2	R4
@@ -595,7 +598,7 @@ be_local_closure(class_AXP202_set_dc_voltage,   /* name */
       0x0C100805,  //  001A  DIV	R4	R4	R5
       0x5C0C0800,  //  001B  MOVE	R3	R4
       0x54120022,  //  001C  LDINT	R4	35
-      0x1C140303,  //  001D  EQ	R5	R1	K3
+      0x1C14031A,  //  001D  EQ	R5	R1	K26
       0x78160000,  //  001E  JMPF	R5	#0020
       0x54120026,  //  001F  LDINT	R4	39
       0x8C140104,  //  0020  GETMET	R5	R0	K4
@@ -636,7 +639,7 @@ be_local_closure(class_AXP202_get_bat_charge_current,   /* name */
       0x8C040109,  //  0000  GETMET	R1	R0	K9
       0x540E0079,  //  0001  LDINT	R3	122
       0x7C040400,  //  0002  CALL	R1	2
-      0x08040319,  //  0003  MUL	R1	R1	K25
+      0x0804030A,  //  0003  MUL	R1	R1	K10
       0x80040200,  //  0004  RET	1	R1
     })
   )
@@ -664,8 +667,8 @@ be_local_closure(class_AXP202_get_temp,   /* name */
       0x8C040106,  //  0000  GETMET	R1	R0	K6
       0x540E005D,  //  0001  LDINT	R3	94
       0x7C040400,  //  0002  CALL	R1	2
-      0x0804031A,  //  0003  MUL	R1	R1	K26
-      0x0404031B,  //  0004  SUB	R1	R1	K27
+      0x0804031C,  //  0003  MUL	R1	R1	K28
+      0x0404031D,  //  0004  SUB	R1	R1	K29
       0x80040200,  //  0005  RET	1	R1
     })
   )
@@ -694,7 +697,7 @@ be_local_closure(class_AXP202_set_ldo_voltage,   /* name */
       0x240C0403,  //  0001  GT	R3	R2	R3
       0x780E0000,  //  0002  JMPF	R3	#0004
       0x540A000E,  //  0003  LDINT	R2	15
-      0x1C0C0302,  //  0004  EQ	R3	R1	K2
+      0x1C0C030F,  //  0004  EQ	R3	R1	K15
       0x740E0002,  //  0005  JMPT	R3	#0009
       0x540E0003,  //  0006  LDINT	R3	4
       0x1C0C0203,  //  0007  EQ	R3	R1	R3
@@ -704,7 +707,7 @@ be_local_closure(class_AXP202_set_ldo_voltage,   /* name */
       0x54120011,  //  000B  LDINT	R4	18
       0x040C0604,  //  000C  SUB	R3	R3	R4
       0x5C080600,  //  000D  MOVE	R2	R3
-      0x1C0C0302,  //  000E  EQ	R3	R1	K2
+      0x1C0C030F,  //  000E  EQ	R3	R1	K15
       0x780E000D,  //  000F  JMPF	R3	#001E
       0x8C0C0104,  //  0010  GETMET	R3	R0	K4
       0x54160027,  //  0011  LDINT	R5	40
@@ -777,7 +780,7 @@ be_local_closure(class_AXP202_set_limiting_off,   /* name */
       0x8C100105,  //  0002  GETMET	R4	R0	K5
       0x541A002F,  //  0003  LDINT	R6	48
       0x7C100400,  //  0004  CALL	R4	2
-      0x30100903,  //  0005  OR	R4	R4	K3
+      0x3010091E,  //  0005  OR	R4	R4	K30
       0x7C040600,  //  0006  CALL	R1	3
       0x80000000,  //  0007  RET	0
     })
@@ -803,11 +806,11 @@ be_local_closure(class_AXP202_get_input_power_status,   /* name */
     &be_const_str_get_input_power_status,
     &be_const_str_solidified,
     ( &(const binstruction[ 7]) {  /* code */
-      0x88040110,  //  0000  GETMBR	R1	R0	K16
-      0x8C040311,  //  0001  GETMET	R1	R1	K17
-      0x880C0112,  //  0002  GETMBR	R3	R0	K18
-      0x58100017,  //  0003  LDCONST	R4	K23
-      0x58140001,  //  0004  LDCONST	R5	K1
+      0x88040111,  //  0000  GETMBR	R1	R0	K17
+      0x8C040312,  //  0001  GETMET	R1	R1	K18
+      0x880C0113,  //  0002  GETMBR	R3	R0	K19
+      0x58100000,  //  0003  LDCONST	R4	K0
+      0x58140014,  //  0004  LDCONST	R5	K20
       0x7C040800,  //  0005  CALL	R1	4
       0x80040200,  //  0006  RET	1	R1
     })

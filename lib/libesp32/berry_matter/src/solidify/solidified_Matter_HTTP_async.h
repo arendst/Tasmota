@@ -3,8 +3,8 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
-// compact class 'Matter_HTTP_async' ktab size: 79, total: 152 (saved 584 bytes)
-static const bvalue be_ktab_class_Matter_HTTP_async[79] = {
+// compact class 'Matter_HTTP_async' ktab size: 80, total: 152 (saved 576 bytes)
+static const bvalue be_ktab_class_Matter_HTTP_async[80] = {
   /* K0   */  be_nested_str_weak(is_chunked),
   /* K1   */  be_nested_str_weak(chunk_size),
   /* K2   */  be_nested_str_weak(global),
@@ -27,63 +27,64 @@ static const bvalue be_ktab_class_Matter_HTTP_async[79] = {
   /* K19  */  be_nested_str_weak(chunked),
   /* K20  */  be_nested_str_weak(find),
   /* K21  */  be_nested_str_weak(_X40),
-  /* K22  */  be_const_int(0),
-  /* K23  */  be_nested_str_weak(auth),
-  /* K24  */  be_nested_str_weak(fromstring),
-  /* K25  */  be_const_int(1),
-  /* K26  */  be_nested_str_weak(tob64),
+  /* K22  */  be_nested_str_weak(auth),
+  /* K23  */  be_nested_str_weak(fromstring),
+  /* K24  */  be_const_int(1),
+  /* K25  */  be_nested_str_weak(tob64),
+  /* K26  */  be_const_int(2147483647),
   /* K27  */  be_nested_str_weak(init),
   /* K28  */  be_nested_str_weak(compile_re),
   /* K29  */  be_nested_str_weak(phase),
-  /* K30  */  be_nested_str_weak(parse_http_status_line),
-  /* K31  */  be_nested_str_weak(parse_http_headers),
-  /* K32  */  be_const_int(2),
-  /* K33  */  be_nested_str_weak(parse_http_payload),
-  /* K34  */  be_nested_str_weak(http_status),
-  /* K35  */  be_nested_str_weak(event_http_failed),
-  /* K36  */  be_nested_str_weak(reset),
-  /* K37  */  be_nested_str_weak(cmd),
-  /* K38  */  be_nested_str_weak(begin),
-  /* K39  */  be_nested_str_weak(send_http),
-  /* K40  */  be_nested_str_weak(_re_http_header),
-  /* K41  */  be_nested_str_weak(event_http_header),
-  /* K42  */  be_nested_str_weak(_re_http_body),
-  /* K43  */  be_nested_str_weak(event_http_headers_end),
-  /* K44  */  be_nested_str_weak(receive),
-  /* K45  */  be_nested_str_weak(event_http_timeout),
-  /* K46  */  be_nested_str_weak(re),
-  /* K47  */  be_nested_str_weak(contains),
-  /* K48  */  be_nested_str_weak(_re_http_status),
-  /* K49  */  be_nested_str_weak(compile),
-  /* K50  */  be_nested_str_weak(HTTP_STATUS_REGEX),
-  /* K51  */  be_nested_str_weak(HTTP_HEADER_REGEX),
-  /* K52  */  be_nested_str_weak(HTTP_BODY_REGEX),
-  /* K53  */  be_nested_str_weak(HTTP_CHUNK_REGEX),
-  /* K54  */  be_nested_str_weak(event_http_finished),
-  /* K55  */  be_nested_str_weak(timeout),
-  /* K56  */  be_nested_str_weak(set_timeout),
-  /* K57  */  be_nested_str_weak(SPINLOCK),
-  /* K58  */  be_nested_str_weak(loop),
-  /* K59  */  be_nested_str_weak(tasmota),
-  /* K60  */  be_nested_str_weak(delay),
-  /* K61  */  be_nested_str_weak(addr),
-  /* K62  */  be_nested_str_weak(_X3A),
-  /* K63  */  be_nested_str_weak(_X5B),
-  /* K64  */  be_nested_str_weak(_X5D),
-  /* K65  */  be_nested_str_weak(HTTP_GET),
-  /* K66  */  be_nested_str_weak(port),
-  /* K67  */  be_nested_str_weak(HTTP_GET_AUTH),
-  /* K68  */  be_nested_str_weak(write),
-  /* K69  */  be_const_int(2147483647),
-  /* K70  */  be_nested_str_weak(status_code),
-  /* K71  */  be_const_int(1),
-  /* K72  */  be_nested_str_weak(tcp_connected),
-  /* K73  */  be_nested_str_weak(millis),
-  /* K74  */  be_nested_str_weak(time_start),
-  /* K75  */  be_nested_str_weak(tcp),
-  /* K76  */  be_nested_str_weak(available),
-  /* K77  */  be_nested_str_weak(read),
-  /* K78  */  be_nested_str_weak(parse_http_response),
+  /* K30  */  be_const_int(0),
+  /* K31  */  be_nested_str_weak(parse_http_status_line),
+  /* K32  */  be_nested_str_weak(parse_http_headers),
+  /* K33  */  be_const_int(2),
+  /* K34  */  be_nested_str_weak(parse_http_payload),
+  /* K35  */  be_nested_str_weak(http_status),
+  /* K36  */  be_nested_str_weak(event_http_failed),
+  /* K37  */  be_nested_str_weak(reset),
+  /* K38  */  be_nested_str_weak(cmd),
+  /* K39  */  be_nested_str_weak(begin),
+  /* K40  */  be_nested_str_weak(send_http),
+  /* K41  */  be_nested_str_weak(_re_http_header),
+  /* K42  */  be_nested_str_weak(event_http_header),
+  /* K43  */  be_nested_str_weak(_re_http_body),
+  /* K44  */  be_nested_str_weak(event_http_headers_end),
+  /* K45  */  be_nested_str_weak(receive),
+  /* K46  */  be_nested_str_weak(event_http_timeout),
+  /* K47  */  be_nested_str_weak(re),
+  /* K48  */  be_nested_str_weak(contains),
+  /* K49  */  be_nested_str_weak(_re_http_status),
+  /* K50  */  be_nested_str_weak(compile),
+  /* K51  */  be_nested_str_weak(HTTP_STATUS_REGEX),
+  /* K52  */  be_nested_str_weak(HTTP_HEADER_REGEX),
+  /* K53  */  be_nested_str_weak(HTTP_BODY_REGEX),
+  /* K54  */  be_nested_str_weak(HTTP_CHUNK_REGEX),
+  /* K55  */  be_const_int(1),
+  /* K56  */  be_nested_str_weak(event_http_finished),
+  /* K57  */  be_nested_str_weak(timeout),
+  /* K58  */  be_nested_str_weak(set_timeout),
+  /* K59  */  be_nested_str_weak(SPINLOCK),
+  /* K60  */  be_nested_str_weak(loop),
+  /* K61  */  be_nested_str_weak(tasmota),
+  /* K62  */  be_nested_str_weak(delay),
+  /* K63  */  be_nested_str_weak(addr),
+  /* K64  */  be_nested_str_weak(_X3A),
+  /* K65  */  be_const_int(0),
+  /* K66  */  be_nested_str_weak(_X5B),
+  /* K67  */  be_nested_str_weak(_X5D),
+  /* K68  */  be_nested_str_weak(HTTP_GET),
+  /* K69  */  be_nested_str_weak(port),
+  /* K70  */  be_nested_str_weak(HTTP_GET_AUTH),
+  /* K71  */  be_nested_str_weak(write),
+  /* K72  */  be_nested_str_weak(status_code),
+  /* K73  */  be_nested_str_weak(tcp_connected),
+  /* K74  */  be_nested_str_weak(millis),
+  /* K75  */  be_nested_str_weak(time_start),
+  /* K76  */  be_nested_str_weak(tcp),
+  /* K77  */  be_nested_str_weak(available),
+  /* K78  */  be_nested_str_weak(read),
+  /* K79  */  be_nested_str_weak(parse_http_response),
 };
 
 
@@ -286,20 +287,20 @@ be_local_closure(class_Matter_HTTP_async_init,   /* name */
       0x5C200200,  //  0006  MOVE	R8	R1
       0x58240015,  //  0007  LDCONST	R9	K21
       0x7C180600,  //  0008  CALL	R6	3
-      0x281C0D16,  //  0009  GE	R7	R6	K22
+      0x281C0D07,  //  0009  GE	R7	R6	K7
       0x781E000C,  //  000A  JMPF	R7	#0018
       0x601C0015,  //  000B  GETGBL	R7	G21
       0x7C1C0000,  //  000C  CALL	R7	0
-      0x8C1C0F18,  //  000D  GETMET	R7	R7	K24
-      0x04240D19,  //  000E  SUB	R9	R6	K25
-      0x40262C09,  //  000F  CONNECT	R9	K22	R9
+      0x8C1C0F17,  //  000D  GETMET	R7	R7	K23
+      0x04240D18,  //  000E  SUB	R9	R6	K24
+      0x40260E09,  //  000F  CONNECT	R9	K7	R9
       0x94240209,  //  0010  GETIDX	R9	R1	R9
       0x7C1C0400,  //  0011  CALL	R7	2
-      0x8C1C0F1A,  //  0012  GETMET	R7	R7	K26
+      0x8C1C0F19,  //  0012  GETMET	R7	R7	K25
       0x7C1C0200,  //  0013  CALL	R7	1
-      0x90022E07,  //  0014  SETMBR	R0	K23	R7
-      0x001C0D19,  //  0015  ADD	R7	R6	K25
-      0x401C0F0F,  //  0016  CONNECT	R7	R7	K15
+      0x90022C07,  //  0014  SETMBR	R0	K22	R7
+      0x001C0D18,  //  0015  ADD	R7	R6	K24
+      0x401C0F1A,  //  0016  CONNECT	R7	R7	K26
       0x94040207,  //  0017  GETIDX	R1	R1	R7
       0x601C0003,  //  0018  GETGBL	R7	G3
       0x5C200000,  //  0019  MOVE	R8	R0
@@ -361,21 +362,21 @@ be_local_closure(class_Matter_HTTP_async_parse_http_response,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[18]) {  /* code */
       0x8804011D,  //  0000  GETMBR	R1	R0	K29
-      0x1C040316,  //  0001  EQ	R1	R1	K22
+      0x1C04031E,  //  0001  EQ	R1	R1	K30
       0x78060002,  //  0002  JMPF	R1	#0006
-      0x8C04011E,  //  0003  GETMET	R1	R0	K30
+      0x8C04011F,  //  0003  GETMET	R1	R0	K31
       0x7C040200,  //  0004  CALL	R1	1
       0x7002000A,  //  0005  JMP		#0011
       0x8804011D,  //  0006  GETMBR	R1	R0	K29
-      0x1C040319,  //  0007  EQ	R1	R1	K25
+      0x1C040309,  //  0007  EQ	R1	R1	K9
       0x78060002,  //  0008  JMPF	R1	#000C
-      0x8C04011F,  //  0009  GETMET	R1	R0	K31
+      0x8C040120,  //  0009  GETMET	R1	R0	K32
       0x7C040200,  //  000A  CALL	R1	1
       0x70020004,  //  000B  JMP		#0011
       0x8804011D,  //  000C  GETMBR	R1	R0	K29
-      0x1C040320,  //  000D  EQ	R1	R1	K32
+      0x1C040321,  //  000D  EQ	R1	R1	K33
       0x78060001,  //  000E  JMPF	R1	#0011
-      0x8C040121,  //  000F  GETMET	R1	R0	K33
+      0x8C040122,  //  000F  GETMET	R1	R0	K34
       0x7C040200,  //  0010  CALL	R1	1
       0x80000000,  //  0011  RET	0
     })
@@ -402,8 +403,8 @@ be_local_closure(class_Matter_HTTP_async_event_refused,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x5405FFFE,  //  0000  LDINT	R1	-1
-      0x90024401,  //  0001  SETMBR	R0	K34	R1
-      0x8C040123,  //  0002  GETMET	R1	R0	K35
+      0x90024601,  //  0001  SETMBR	R0	K35	R1
+      0x8C040124,  //  0002  GETMET	R1	R0	K36
       0x7C040200,  //  0003  CALL	R1	1
       0x80000000,  //  0004  RET	0
     })
@@ -432,16 +433,16 @@ be_local_closure(class_Matter_HTTP_async_reset,   /* name */
       0x60040003,  //  0000  GETGBL	R1	G3
       0x5C080000,  //  0001  MOVE	R2	R0
       0x7C040200,  //  0002  CALL	R1	1
-      0x8C040324,  //  0003  GETMET	R1	R1	K36
+      0x8C040325,  //  0003  GETMET	R1	R1	K37
       0x7C040200,  //  0004  CALL	R1	1
       0x4C040000,  //  0005  LDNIL	R1
-      0x90024A01,  //  0006  SETMBR	R0	K37	R1
+      0x90024C01,  //  0006  SETMBR	R0	K38	R1
       0x4C040000,  //  0007  LDNIL	R1
       0x90020A01,  //  0008  SETMBR	R0	K5	R1
-      0x90020D16,  //  0009  SETMBR	R0	K6	K22
+      0x90020D1E,  //  0009  SETMBR	R0	K6	K30
       0x90021D0C,  //  000A  SETMBR	R0	K14	K12
-      0x90023B16,  //  000B  SETMBR	R0	K29	K22
-      0x90024516,  //  000C  SETMBR	R0	K34	K22
+      0x90023B1E,  //  000B  SETMBR	R0	K29	K30
+      0x9002471E,  //  000C  SETMBR	R0	K35	K30
       0x50040000,  //  000D  LDBOOL	R1	0	0
       0x90020001,  //  000E  SETMBR	R0	K0	R1
       0x4C040000,  //  000F  LDNIL	R1
@@ -473,9 +474,9 @@ be_local_closure(class_Matter_HTTP_async_begin,   /* name */
       0x60080003,  //  0000  GETGBL	R2	G3
       0x5C0C0000,  //  0001  MOVE	R3	R0
       0x7C080200,  //  0002  CALL	R2	1
-      0x8C080526,  //  0003  GETMET	R2	R2	K38
+      0x8C080527,  //  0003  GETMET	R2	R2	K39
       0x7C080200,  //  0004  CALL	R2	1
-      0x90024A01,  //  0005  SETMBR	R0	K37	R1
+      0x90024C01,  //  0005  SETMBR	R0	K38	R1
       0x80040400,  //  0006  RET	1	R2
     })
   )
@@ -500,7 +501,7 @@ be_local_closure(class_Matter_HTTP_async_event_established,   /* name */
     be_str_weak(event_established),
     &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
-      0x8C040127,  //  0000  GETMET	R1	R0	K39
+      0x8C040128,  //  0000  GETMET	R1	R0	K40
       0x7C040200,  //  0001  CALL	R1	1
       0x80000000,  //  0002  RET	0
     })
@@ -529,15 +530,15 @@ be_local_closure(class_Matter_HTTP_async_parse_http_headers,   /* name */
       0x50040200,  //  0000  LDBOOL	R1	1	0
       0x7806002B,  //  0001  JMPF	R1	#002E
       0xB8060400,  //  0002  GETNGBL	R1	K2
-      0x88040328,  //  0003  GETMBR	R1	R1	K40
+      0x88040329,  //  0003  GETMBR	R1	R1	K41
       0x8C040304,  //  0004  GETMET	R1	R1	K4
       0x880C0105,  //  0005  GETMBR	R3	R0	K5
       0x88100106,  //  0006  GETMBR	R4	R0	K6
       0x7C040600,  //  0007  CALL	R1	3
       0x78060008,  //  0008  JMPF	R1	#0012
-      0x8C080129,  //  0009  GETMET	R2	R0	K41
-      0x94100319,  //  000A  GETIDX	R4	R1	K25
-      0x94140320,  //  000B  GETIDX	R5	R1	K32
+      0x8C08012A,  //  0009  GETMET	R2	R0	K42
+      0x94100309,  //  000A  GETIDX	R4	R1	K9
+      0x94140321,  //  000B  GETIDX	R5	R1	K33
       0x7C080600,  //  000C  CALL	R2	3
       0x88080106,  //  000D  GETMBR	R2	R0	K6
       0x940C0307,  //  000E  GETIDX	R3	R1	K7
@@ -545,16 +546,16 @@ be_local_closure(class_Matter_HTTP_async_parse_http_headers,   /* name */
       0x90020C02,  //  0010  SETMBR	R0	K6	R2
       0x7002001A,  //  0011  JMP		#002D
       0xB80A0400,  //  0012  GETNGBL	R2	K2
-      0x8808052A,  //  0013  GETMBR	R2	R2	K42
+      0x8808052B,  //  0013  GETMBR	R2	R2	K43
       0x8C080504,  //  0014  GETMET	R2	R2	K4
       0x88100105,  //  0015  GETMBR	R4	R0	K5
       0x88140106,  //  0016  GETMBR	R5	R0	K6
       0x7C080600,  //  0017  CALL	R2	3
       0x780A0004,  //  0018  JMPF	R2	#001E
-      0x8C0C012B,  //  0019  GETMET	R3	R0	K43
+      0x8C0C012C,  //  0019  GETMET	R3	R0	K44
       0x7C0C0200,  //  001A  CALL	R3	1
-      0x90023B20,  //  001B  SETMBR	R0	K29	K32
-      0x8C0C0121,  //  001C  GETMET	R3	R0	K33
+      0x90023B21,  //  001B  SETMBR	R0	K29	K33
+      0x8C0C0122,  //  001C  GETMET	R3	R0	K34
       0x7C0C0200,  //  001D  CALL	R3	1
       0x600C000C,  //  001E  GETGBL	R3	G12
       0x88100105,  //  001F  GETMBR	R4	R0	K5
@@ -567,8 +568,8 @@ be_local_closure(class_Matter_HTTP_async_parse_http_headers,   /* name */
       0x540DFFFB,  //  0026  LDINT	R3	-4
       0x90021403,  //  0027  SETMBR	R0	K10	R3
       0x540DFFFE,  //  0028  LDINT	R3	-1
-      0x90024403,  //  0029  SETMBR	R0	K34	R3
-      0x8C0C0123,  //  002A  GETMET	R3	R0	K35
+      0x90024603,  //  0029  SETMBR	R0	K35	R3
+      0x8C0C0124,  //  002A  GETMET	R3	R0	K36
       0x7C0C0200,  //  002B  CALL	R3	1
       0x80000600,  //  002C  RET	0
       0x7001FFD1,  //  002D  JMP		#0000
@@ -596,7 +597,7 @@ be_local_closure(class_Matter_HTTP_async_event_available,   /* name */
     be_str_weak(event_available),
     &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
-      0x8C04012C,  //  0000  GETMET	R1	R0	K44
+      0x8C04012D,  //  0000  GETMET	R1	R0	K45
       0x7C040200,  //  0001  CALL	R1	1
       0x80000000,  //  0002  RET	0
     })
@@ -623,8 +624,8 @@ be_local_closure(class_Matter_HTTP_async_event_timeout,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x5405FFFD,  //  0000  LDINT	R1	-2
-      0x90024401,  //  0001  SETMBR	R0	K34	R1
-      0x8C04012D,  //  0002  GETMET	R1	R0	K45
+      0x90024601,  //  0001  SETMBR	R0	K35	R1
+      0x8C04012E,  //  0002  GETMET	R1	R0	K46
       0x7C040200,  //  0003  CALL	R1	1
       0x80000000,  //  0004  RET	0
     })
@@ -650,30 +651,30 @@ be_local_closure(class_Matter_HTTP_async_compile_re,   /* name */
     be_str_weak(compile_re),
     &be_const_str_solidified,
     ( &(const binstruction[27]) {  /* code */
-      0xA4065C00,  //  0000  IMPORT	R1	K46
+      0xA4065E00,  //  0000  IMPORT	R1	K47
       0xB80A0400,  //  0001  GETNGBL	R2	K2
-      0x8C08052F,  //  0002  GETMET	R2	R2	K47
-      0x58100030,  //  0003  LDCONST	R4	K48
+      0x8C080530,  //  0002  GETMET	R2	R2	K48
+      0x58100031,  //  0003  LDCONST	R4	K49
       0x7C080400,  //  0004  CALL	R2	2
       0x740A0013,  //  0005  JMPT	R2	#001A
       0xB80A0400,  //  0006  GETNGBL	R2	K2
-      0x8C0C0331,  //  0007  GETMET	R3	R1	K49
-      0x88140132,  //  0008  GETMBR	R5	R0	K50
+      0x8C0C0332,  //  0007  GETMET	R3	R1	K50
+      0x88140133,  //  0008  GETMBR	R5	R0	K51
       0x7C0C0400,  //  0009  CALL	R3	2
-      0x900A6003,  //  000A  SETMBR	R2	K48	R3
+      0x900A6203,  //  000A  SETMBR	R2	K49	R3
       0xB80A0400,  //  000B  GETNGBL	R2	K2
-      0x8C0C0331,  //  000C  GETMET	R3	R1	K49
-      0x88140133,  //  000D  GETMBR	R5	R0	K51
+      0x8C0C0332,  //  000C  GETMET	R3	R1	K50
+      0x88140134,  //  000D  GETMBR	R5	R0	K52
       0x7C0C0400,  //  000E  CALL	R3	2
-      0x900A5003,  //  000F  SETMBR	R2	K40	R3
+      0x900A5203,  //  000F  SETMBR	R2	K41	R3
       0xB80A0400,  //  0010  GETNGBL	R2	K2
-      0x8C0C0331,  //  0011  GETMET	R3	R1	K49
-      0x88140134,  //  0012  GETMBR	R5	R0	K52
+      0x8C0C0332,  //  0011  GETMET	R3	R1	K50
+      0x88140135,  //  0012  GETMBR	R5	R0	K53
       0x7C0C0400,  //  0013  CALL	R3	2
-      0x900A5403,  //  0014  SETMBR	R2	K42	R3
+      0x900A5603,  //  0014  SETMBR	R2	K43	R3
       0xB80A0400,  //  0015  GETNGBL	R2	K2
-      0x8C0C0331,  //  0016  GETMET	R3	R1	K49
-      0x88140135,  //  0017  GETMBR	R5	R0	K53
+      0x8C0C0332,  //  0016  GETMET	R3	R1	K50
+      0x88140136,  //  0017  GETMBR	R5	R0	K54
       0x7C0C0400,  //  0018  CALL	R3	2
       0x900A0603,  //  0019  SETMBR	R2	K3	R3
       0x80000000,  //  001A  RET	0
@@ -700,11 +701,11 @@ be_local_closure(class_Matter_HTTP_async_event_closed,   /* name */
     be_str_weak(event_closed),
     &be_const_str_solidified,
     ( &(const binstruction[ 7]) {  /* code */
-      0x88040122,  //  0000  GETMBR	R1	R0	K34
-      0x1C040316,  //  0001  EQ	R1	R1	K22
+      0x88040123,  //  0000  GETMBR	R1	R0	K35
+      0x1C04031E,  //  0001  EQ	R1	R1	K30
       0x78060002,  //  0002  JMPF	R1	#0006
-      0x90024509,  //  0003  SETMBR	R0	K34	K9
-      0x8C040136,  //  0004  GETMET	R1	R0	K54
+      0x90024737,  //  0003  SETMBR	R0	K35	K55
+      0x8C040138,  //  0004  GETMET	R1	R0	K56
       0x7C040200,  //  0005  CALL	R1	1
       0x80000000,  //  0006  RET	0
     })
@@ -730,34 +731,34 @@ be_local_closure(class_Matter_HTTP_async_begin_sync,   /* name */
     be_str_weak(begin_sync),
     &be_const_str_solidified,
     ( &(const binstruction[33]) {  /* code */
-      0x880C0137,  //  0000  GETMBR	R3	R0	K55
+      0x880C0139,  //  0000  GETMBR	R3	R0	K57
       0x4C100000,  //  0001  LDNIL	R4
       0x20100404,  //  0002  NE	R4	R2	R4
       0x78120002,  //  0003  JMPF	R4	#0007
-      0x8C100138,  //  0004  GETMET	R4	R0	K56
+      0x8C10013A,  //  0004  GETMET	R4	R0	K58
       0x5C180400,  //  0005  MOVE	R6	R2
       0x7C100400,  //  0006  CALL	R4	2
       0x4C100000,  //  0007  LDNIL	R4
-      0x88140139,  //  0008  GETMBR	R5	R0	K57
-      0x8C180126,  //  0009  GETMET	R6	R0	K38
+      0x8814013B,  //  0008  GETMBR	R5	R0	K59
+      0x8C180127,  //  0009  GETMET	R6	R0	K39
       0x5C200200,  //  000A  MOVE	R8	R1
       0x7C180400,  //  000B  CALL	R6	2
       0x781A0009,  //  000C  JMPF	R6	#0017
-      0x881C0122,  //  000D  GETMBR	R7	R0	K34
-      0x1C1C0F16,  //  000E  EQ	R7	R7	K22
+      0x881C0123,  //  000D  GETMBR	R7	R0	K35
+      0x1C1C0F1E,  //  000E  EQ	R7	R7	K30
       0x781E0006,  //  000F  JMPF	R7	#0017
-      0x8C1C013A,  //  0010  GETMET	R7	R0	K58
+      0x8C1C013C,  //  0010  GETMET	R7	R0	K60
       0x7C1C0200,  //  0011  CALL	R7	1
-      0xB81E7600,  //  0012  GETNGBL	R7	K59
-      0x8C1C0F3C,  //  0013  GETMET	R7	R7	K60
+      0xB81E7A00,  //  0012  GETNGBL	R7	K61
+      0x8C1C0F3E,  //  0013  GETMET	R7	R7	K62
       0x5C240A00,  //  0014  MOVE	R9	R5
       0x7C1C0400,  //  0015  CALL	R7	2
       0x7001FFF5,  //  0016  JMP		#000D
-      0x8C1C0138,  //  0017  GETMET	R7	R0	K56
+      0x8C1C013A,  //  0017  GETMET	R7	R0	K58
       0x5C240600,  //  0018  MOVE	R9	R3
       0x7C1C0400,  //  0019  CALL	R7	2
-      0x881C0122,  //  001A  GETMBR	R7	R0	K34
-      0x241C0F16,  //  001B  GT	R7	R7	K22
+      0x881C0123,  //  001A  GETMBR	R7	R0	K35
+      0x241C0F1E,  //  001B  GT	R7	R7	K30
       0x781E0001,  //  001C  JMPF	R7	#001F
       0x881C010E,  //  001D  GETMBR	R7	R0	K14
       0x70020000,  //  001E  JMP		#0020
@@ -788,38 +789,38 @@ be_local_closure(class_Matter_HTTP_async_send_http,   /* name */
     ( &(const binstruction[50]) {  /* code */
       0xA4062000,  //  0000  IMPORT	R1	K16
       0x90020B0C,  //  0001  SETMBR	R0	K5	K12
-      0x8808013D,  //  0002  GETMBR	R2	R0	K61
+      0x8808013F,  //  0002  GETMBR	R2	R0	K63
       0x8C0C0314,  //  0003  GETMET	R3	R1	K20
       0x5C140400,  //  0004  MOVE	R5	R2
-      0x5818003E,  //  0005  LDCONST	R6	K62
+      0x58180040,  //  0005  LDCONST	R6	K64
       0x7C0C0600,  //  0006  CALL	R3	3
-      0x280C0707,  //  0007  GE	R3	R3	K7
+      0x280C0741,  //  0007  GE	R3	R3	K65
       0x780E0002,  //  0008  JMPF	R3	#000C
-      0x000E7E02,  //  0009  ADD	R3	K63	R2
-      0x000C0740,  //  000A  ADD	R3	R3	K64
+      0x000E8402,  //  0009  ADD	R3	K66	R2
+      0x000C0743,  //  000A  ADD	R3	R3	K67
       0x5C080600,  //  000B  MOVE	R2	R3
       0x4C0C0000,  //  000C  LDNIL	R3
-      0x88100117,  //  000D  GETMBR	R4	R0	K23
+      0x88100116,  //  000D  GETMBR	R4	R0	K22
       0x4C140000,  //  000E  LDNIL	R5
       0x1C100805,  //  000F  EQ	R4	R4	R5
       0x78120007,  //  0010  JMPF	R4	#0019
       0x60100018,  //  0011  GETGBL	R4	G24
-      0x88140141,  //  0012  GETMBR	R5	R0	K65
-      0x88180125,  //  0013  GETMBR	R6	R0	K37
+      0x88140144,  //  0012  GETMBR	R5	R0	K68
+      0x88180126,  //  0013  GETMBR	R6	R0	K38
       0x5C1C0400,  //  0014  MOVE	R7	R2
-      0x88200142,  //  0015  GETMBR	R8	R0	K66
+      0x88200145,  //  0015  GETMBR	R8	R0	K69
       0x7C100800,  //  0016  CALL	R4	4
       0x5C0C0800,  //  0017  MOVE	R3	R4
       0x70020007,  //  0018  JMP		#0021
       0x60100018,  //  0019  GETGBL	R4	G24
-      0x88140143,  //  001A  GETMBR	R5	R0	K67
-      0x88180125,  //  001B  GETMBR	R6	R0	K37
+      0x88140146,  //  001A  GETMBR	R5	R0	K70
+      0x88180126,  //  001B  GETMBR	R6	R0	K38
       0x5C1C0400,  //  001C  MOVE	R7	R2
-      0x88200142,  //  001D  GETMBR	R8	R0	K66
-      0x88240117,  //  001E  GETMBR	R9	R0	K23
+      0x88200145,  //  001D  GETMBR	R8	R0	K69
+      0x88240116,  //  001E  GETMBR	R9	R0	K22
       0x7C100A00,  //  001F  CALL	R4	5
       0x5C0C0800,  //  0020  MOVE	R3	R4
-      0x8C100144,  //  0021  GETMET	R4	R0	K68
+      0x8C100147,  //  0021  GETMET	R4	R0	K71
       0x5C180600,  //  0022  MOVE	R6	R3
       0x7C100400,  //  0023  CALL	R4	2
       0x6014000C,  //  0024  GETGBL	R5	G12
@@ -832,8 +833,8 @@ be_local_closure(class_Matter_HTTP_async_send_http,   /* name */
       0x5415FFFB,  //  002B  LDINT	R5	-4
       0x90021405,  //  002C  SETMBR	R0	K10	R5
       0x5415FFFE,  //  002D  LDINT	R5	-1
-      0x90024405,  //  002E  SETMBR	R0	K34	R5
-      0x8C140123,  //  002F  GETMET	R5	R0	K35
+      0x90024605,  //  002E  SETMBR	R0	K35	R5
+      0x8C140124,  //  002F  GETMET	R5	R0	K36
       0x7C140200,  //  0030  CALL	R5	1
       0x80000000,  //  0031  RET	0
     })
@@ -860,14 +861,14 @@ be_local_closure(class_Matter_HTTP_async_event_http_headers_end,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[10]) {  /* code */
       0x88040106,  //  0000  GETMBR	R1	R0	K6
-      0x24040316,  //  0001  GT	R1	R1	K22
+      0x24040307,  //  0001  GT	R1	R1	K7
       0x78060005,  //  0002  JMPF	R1	#0009
       0x88040106,  //  0003  GETMBR	R1	R0	K6
-      0x40040345,  //  0004  CONNECT	R1	R1	K69
+      0x4004031A,  //  0004  CONNECT	R1	R1	K26
       0x88080105,  //  0005  GETMBR	R2	R0	K5
       0x94040401,  //  0006  GETIDX	R1	R2	R1
       0x90020A01,  //  0007  SETMBR	R0	K5	R1
-      0x90020D16,  //  0008  SETMBR	R0	K6	K22
+      0x90020D07,  //  0008  SETMBR	R0	K6	K7
       0x80000000,  //  0009  RET	0
     })
   )
@@ -892,7 +893,7 @@ be_local_closure(class_Matter_HTTP_async_event_http_status_code,   /* name */
     be_str_weak(event_http_status_code),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
-      0x90028C01,  //  0000  SETMBR	R0	K70	R1
+      0x90029001,  //  0000  SETMBR	R0	K72	R1
       0x80000000,  //  0001  RET	0
     })
   )
@@ -918,7 +919,7 @@ be_local_closure(class_Matter_HTTP_async_parse_http_status_line,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[28]) {  /* code */
       0xB8060400,  //  0000  GETNGBL	R1	K2
-      0x88040330,  //  0001  GETMBR	R1	R1	K48
+      0x88040331,  //  0001  GETMBR	R1	R1	K49
       0x8C040304,  //  0002  GETMET	R1	R1	K4
       0x880C0105,  //  0003  GETMBR	R3	R0	K5
       0x88100106,  //  0004  GETMBR	R4	R0	K6
@@ -927,11 +928,11 @@ be_local_closure(class_Matter_HTTP_async_parse_http_status_line,   /* name */
       0x94080307,  //  0007  GETIDX	R2	R1	K7
       0x90020C02,  //  0008  SETMBR	R0	K6	R2
       0x60080009,  //  0009  GETGBL	R2	G9
-      0x940C0347,  //  000A  GETIDX	R3	R1	K71
+      0x940C0309,  //  000A  GETIDX	R3	R1	K9
       0x7C080200,  //  000B  CALL	R2	1
-      0x90028C02,  //  000C  SETMBR	R0	K70	R2
-      0x90023B47,  //  000D  SETMBR	R0	K29	K71
-      0x8C08011F,  //  000E  GETMET	R2	R0	K31
+      0x90029002,  //  000C  SETMBR	R0	K72	R2
+      0x90023B09,  //  000D  SETMBR	R0	K29	K9
+      0x8C080120,  //  000E  GETMET	R2	R0	K32
       0x7C080200,  //  000F  CALL	R2	1
       0x70020009,  //  0010  JMP		#001B
       0x6008000C,  //  0011  GETGBL	R2	G12
@@ -992,17 +993,17 @@ be_local_closure(class_Matter_HTTP_async_receive,   /* name */
     be_str_weak(receive),
     &be_const_str_solidified,
     ( &(const binstruction[48]) {  /* code */
-      0x88040148,  //  0000  GETMBR	R1	R0	K72
+      0x88040149,  //  0000  GETMBR	R1	R0	K73
       0x50080200,  //  0001  LDBOOL	R2	1	0
       0x20040202,  //  0002  NE	R1	R1	R2
       0x78060000,  //  0003  JMPF	R1	#0005
       0x80000200,  //  0004  RET	0
-      0xB8067600,  //  0005  GETNGBL	R1	K59
-      0x8C040349,  //  0006  GETMET	R1	R1	K73
+      0xB8067A00,  //  0005  GETNGBL	R1	K61
+      0x8C04034A,  //  0006  GETMET	R1	R1	K74
       0x7C040200,  //  0007  CALL	R1	1
-      0x8808014A,  //  0008  GETMBR	R2	R0	K74
+      0x8808014B,  //  0008  GETMBR	R2	R0	K75
       0x04040202,  //  0009  SUB	R1	R1	R2
-      0x88080137,  //  000A  GETMBR	R2	R0	K55
+      0x88080139,  //  000A  GETMBR	R2	R0	K57
       0x24040202,  //  000B  GT	R1	R1	R2
       0x78060008,  //  000C  JMPF	R1	#0016
       0x5405FFFC,  //  000D  LDINT	R1	-3
@@ -1010,18 +1011,18 @@ be_local_closure(class_Matter_HTTP_async_receive,   /* name */
       0x8C04010D,  //  000F  GETMET	R1	R0	K13
       0x7C040200,  //  0010  CALL	R1	1
       0x5405FFFD,  //  0011  LDINT	R1	-2
-      0x90024401,  //  0012  SETMBR	R0	K34	R1
-      0x8C04012D,  //  0013  GETMET	R1	R0	K45
+      0x90024601,  //  0012  SETMBR	R0	K35	R1
+      0x8C04012E,  //  0013  GETMET	R1	R0	K46
       0x7C040200,  //  0014  CALL	R1	1
       0x70020018,  //  0015  JMP		#002F
-      0x8804014B,  //  0016  GETMBR	R1	R0	K75
-      0x8C04034C,  //  0017  GETMET	R1	R1	K76
+      0x8804014C,  //  0016  GETMBR	R1	R0	K76
+      0x8C04034D,  //  0017  GETMET	R1	R1	K77
       0x7C040200,  //  0018  CALL	R1	1
-      0x58080016,  //  0019  LDCONST	R2	K22
-      0x240C0316,  //  001A  GT	R3	R1	K22
+      0x58080007,  //  0019  LDCONST	R2	K7
+      0x240C0307,  //  001A  GT	R3	R1	K7
       0x780E000E,  //  001B  JMPF	R3	#002B
-      0x880C014B,  //  001C  GETMBR	R3	R0	K75
-      0x8C0C074D,  //  001D  GETMET	R3	R3	K77
+      0x880C014C,  //  001C  GETMBR	R3	R0	K76
+      0x8C0C074E,  //  001D  GETMET	R3	R3	K78
       0x7C0C0200,  //  001E  CALL	R3	1
       0x88100105,  //  001F  GETMBR	R4	R0	K5
       0x00100803,  //  0020  ADD	R4	R4	R3
@@ -1030,14 +1031,14 @@ be_local_closure(class_Matter_HTTP_async_receive,   /* name */
       0x5C140600,  //  0023  MOVE	R5	R3
       0x7C100200,  //  0024  CALL	R4	1
       0x00080404,  //  0025  ADD	R2	R2	R4
-      0x8810014B,  //  0026  GETMBR	R4	R0	K75
-      0x8C10094C,  //  0027  GETMET	R4	R4	K76
+      0x8810014C,  //  0026  GETMBR	R4	R0	K76
+      0x8C10094D,  //  0027  GETMET	R4	R4	K77
       0x7C100200,  //  0028  CALL	R4	1
       0x5C040800,  //  0029  MOVE	R1	R4
       0x7001FFEE,  //  002A  JMP		#001A
-      0x240C0516,  //  002B  GT	R3	R2	K22
+      0x240C0507,  //  002B  GT	R3	R2	K7
       0x780E0001,  //  002C  JMPF	R3	#002F
-      0x8C0C014E,  //  002D  GETMET	R3	R0	K78
+      0x8C0C014F,  //  002D  GETMET	R3	R0	K79
       0x7C0C0200,  //  002E  CALL	R3	1
       0x80000000,  //  002F  RET	0
     })

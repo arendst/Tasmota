@@ -3,8 +3,8 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
-// compact class 'Matter_Plugin_Sensor_OnOff' ktab size: 12, total: 14 (saved 16 bytes)
-static const bvalue be_ktab_class_Matter_Plugin_Sensor_OnOff[12] = {
+// compact class 'Matter_Plugin_Sensor_OnOff' ktab size: 13, total: 14 (saved 8 bytes)
+static const bvalue be_ktab_class_Matter_Plugin_Sensor_OnOff[13] = {
   /* K0   */  be_nested_str_weak(matter),
   /* K1   */  be_nested_str_weak(TLV),
   /* K2   */  be_nested_str_weak(cluster),
@@ -17,6 +17,7 @@ static const bvalue be_ktab_class_Matter_Plugin_Sensor_OnOff[12] = {
   /* K9   */  be_nested_str_weak(read_attribute),
   /* K10  */  be_nested_str_weak(_X2C_X22OnOff_X22_X3A_X25s),
   /* K11  */  be_nested_str_weak(attribute_updated),
+  /* K12  */  be_const_int(0),
 };
 
 
@@ -119,7 +120,7 @@ be_local_closure(class_Matter_Plugin_Sensor_OnOff_value_updated,   /* name */
     ( &(const binstruction[ 5]) {  /* code */
       0x8C04010B,  //  0000  GETMET	R1	R0	K11
       0x540E0005,  //  0001  LDINT	R3	6
-      0x58100005,  //  0002  LDCONST	R4	K5
+      0x5810000C,  //  0002  LDCONST	R4	K12
       0x7C040600,  //  0003  CALL	R1	3
       0x80000000,  //  0004  RET	0
     })

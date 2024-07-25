@@ -3,8 +3,8 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
-// compact class 'I2C_Driver' ktab size: 22, total: 60 (saved 304 bytes)
-static const bvalue be_ktab_class_I2C_Driver[22] = {
+// compact class 'I2C_Driver' ktab size: 23, total: 60 (saved 296 bytes)
+static const bvalue be_ktab_class_I2C_Driver[23] = {
   /* K0   */  be_const_int(0),
   /* K1   */  be_const_int(1),
   /* K2   */  be_nested_str(write8),
@@ -12,11 +12,11 @@ static const bvalue be_ktab_class_I2C_Driver[22] = {
   /* K4   */  be_nested_str(wire),
   /* K5   */  be_nested_str(read_bytes),
   /* K6   */  be_nested_str(addr),
-  /* K7   */  be_const_int(1),
+  /* K7   */  be_const_int(0),
   /* K8   */  be_const_int(2),
   /* K9   */  be_const_int(3),
-  /* K10  */  be_const_int(3),
-  /* K11  */  be_const_int(2),
+  /* K10  */  be_const_int(2),
+  /* K11  */  be_const_int(1),
   /* K12  */  be_nested_str(tasmota),
   /* K13  */  be_nested_str(i2c_enabled),
   /* K14  */  be_nested_str(wire_scan),
@@ -26,7 +26,8 @@ static const bvalue be_ktab_class_I2C_Driver[22] = {
   /* K18  */  be_nested_str(detected_X20on_X20bus),
   /* K19  */  be_nested_str(bus),
   /* K20  */  be_nested_str(write),
-  /* K21  */  be_nested_str(read),
+  /* K21  */  be_const_int(1),
+  /* K22  */  be_nested_str(read),
 };
 
 
@@ -104,10 +105,10 @@ be_local_closure(class_I2C_Driver_read32,   /* name */
       0x5C140200,  //  0003  MOVE	R5	R1
       0x541A0003,  //  0004  LDINT	R6	4
       0x7C080800,  //  0005  CALL	R2	4
-      0x940C0500,  //  0006  GETIDX	R3	R2	K0
+      0x940C0507,  //  0006  GETIDX	R3	R2	K7
       0x54120017,  //  0007  LDINT	R4	24
       0x380C0604,  //  0008  SHL	R3	R3	R4
-      0x94100507,  //  0009  GETIDX	R4	R2	K7
+      0x94100501,  //  0009  GETIDX	R4	R2	K1
       0x5416000F,  //  000A  LDINT	R5	16
       0x38100805,  //  000B  SHL	R4	R4	R5
       0x000C0604,  //  000C  ADD	R3	R3	R4
@@ -145,12 +146,12 @@ be_local_closure(class_I2C_Driver_read13,   /* name */
       0x8C080505,  //  0001  GETMET	R2	R2	K5
       0x88100106,  //  0002  GETMBR	R4	R0	K6
       0x5C140200,  //  0003  MOVE	R5	R1
-      0x58180008,  //  0004  LDCONST	R6	K8
+      0x5818000A,  //  0004  LDCONST	R6	K10
       0x7C080800,  //  0005  CALL	R2	4
-      0x940C0500,  //  0006  GETIDX	R3	R2	K0
+      0x940C0507,  //  0006  GETIDX	R3	R2	K7
       0x54120004,  //  0007  LDINT	R4	5
       0x380C0604,  //  0008  SHL	R3	R3	R4
-      0x94100507,  //  0009  GETIDX	R4	R2	K7
+      0x9410050B,  //  0009  GETIDX	R4	R2	K11
       0x000C0604,  //  000A  ADD	R3	R3	R4
       0x80040600,  //  000B  RET	1	R3
     })
@@ -180,16 +181,16 @@ be_local_closure(class_I2C_Driver_read24,   /* name */
       0x8C080505,  //  0001  GETMET	R2	R2	K5
       0x88100106,  //  0002  GETMBR	R4	R0	K6
       0x5C140200,  //  0003  MOVE	R5	R1
-      0x5818000A,  //  0004  LDCONST	R6	K10
+      0x58180009,  //  0004  LDCONST	R6	K9
       0x7C080800,  //  0005  CALL	R2	4
-      0x940C0500,  //  0006  GETIDX	R3	R2	K0
+      0x940C0507,  //  0006  GETIDX	R3	R2	K7
       0x5412000F,  //  0007  LDINT	R4	16
       0x380C0604,  //  0008  SHL	R3	R3	R4
-      0x94100507,  //  0009  GETIDX	R4	R2	K7
+      0x94100501,  //  0009  GETIDX	R4	R2	K1
       0x54160007,  //  000A  LDINT	R5	8
       0x38100805,  //  000B  SHL	R4	R4	R5
       0x000C0604,  //  000C  ADD	R3	R3	R4
-      0x9410050B,  //  000D  GETIDX	R4	R2	K11
+      0x9410050A,  //  000D  GETIDX	R4	R2	K10
       0x000C0604,  //  000E  ADD	R3	R3	R4
       0x80040600,  //  000F  RET	1	R3
     })
@@ -219,12 +220,12 @@ be_local_closure(class_I2C_Driver_read14,   /* name */
       0x8C080505,  //  0001  GETMET	R2	R2	K5
       0x88100106,  //  0002  GETMBR	R4	R0	K6
       0x5C140200,  //  0003  MOVE	R5	R1
-      0x58180008,  //  0004  LDCONST	R6	K8
+      0x5818000A,  //  0004  LDCONST	R6	K10
       0x7C080800,  //  0005  CALL	R2	4
-      0x940C0500,  //  0006  GETIDX	R3	R2	K0
+      0x940C0507,  //  0006  GETIDX	R3	R2	K7
       0x54120005,  //  0007  LDINT	R4	6
       0x380C0604,  //  0008  SHL	R3	R3	R4
-      0x94100507,  //  0009  GETIDX	R4	R2	K7
+      0x9410050B,  //  0009  GETIDX	R4	R2	K11
       0x000C0604,  //  000A  ADD	R3	R3	R4
       0x80040600,  //  000B  RET	1	R3
     })
@@ -322,7 +323,7 @@ be_local_closure(class_I2C_Driver_write8,   /* name */
       0x88140106,  //  0002  GETMBR	R5	R0	K6
       0x5C180200,  //  0003  MOVE	R6	R1
       0x5C1C0400,  //  0004  MOVE	R7	R2
-      0x58200001,  //  0005  LDCONST	R8	K1
+      0x58200015,  //  0005  LDCONST	R8	K21
       0x7C0C0A00,  //  0006  CALL	R3	5
       0x80040600,  //  0007  RET	1	R3
     })
@@ -349,10 +350,10 @@ be_local_closure(class_I2C_Driver_read8,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[ 7]) {  /* code */
       0x88080104,  //  0000  GETMBR	R2	R0	K4
-      0x8C080515,  //  0001  GETMET	R2	R2	K21
+      0x8C080516,  //  0001  GETMET	R2	R2	K22
       0x88100106,  //  0002  GETMBR	R4	R0	K6
       0x5C140200,  //  0003  MOVE	R5	R1
-      0x58180007,  //  0004  LDCONST	R6	K7
+      0x58180001,  //  0004  LDCONST	R6	K1
       0x7C080800,  //  0005  CALL	R2	4
       0x80040400,  //  0006  RET	1	R2
     })
@@ -382,12 +383,12 @@ be_local_closure(class_I2C_Driver_read12,   /* name */
       0x8C080505,  //  0001  GETMET	R2	R2	K5
       0x88100106,  //  0002  GETMBR	R4	R0	K6
       0x5C140200,  //  0003  MOVE	R5	R1
-      0x58180008,  //  0004  LDCONST	R6	K8
+      0x5818000A,  //  0004  LDCONST	R6	K10
       0x7C080800,  //  0005  CALL	R2	4
-      0x940C0500,  //  0006  GETIDX	R3	R2	K0
+      0x940C0507,  //  0006  GETIDX	R3	R2	K7
       0x54120003,  //  0007  LDINT	R4	4
       0x380C0604,  //  0008  SHL	R3	R3	R4
-      0x94100507,  //  0009  GETIDX	R4	R2	K7
+      0x9410050B,  //  0009  GETIDX	R4	R2	K11
       0x000C0604,  //  000A  ADD	R3	R3	R4
       0x80040600,  //  000B  RET	1	R3
     })
@@ -417,12 +418,12 @@ be_local_closure(class_I2C_Driver_read16,   /* name */
       0x8C080505,  //  0001  GETMET	R2	R2	K5
       0x88100106,  //  0002  GETMBR	R4	R0	K6
       0x5C140200,  //  0003  MOVE	R5	R1
-      0x58180008,  //  0004  LDCONST	R6	K8
+      0x5818000A,  //  0004  LDCONST	R6	K10
       0x7C080800,  //  0005  CALL	R2	4
-      0x940C0500,  //  0006  GETIDX	R3	R2	K0
+      0x940C0507,  //  0006  GETIDX	R3	R2	K7
       0x54120007,  //  0007  LDINT	R4	8
       0x380C0604,  //  0008  SHL	R3	R3	R4
-      0x94100507,  //  0009  GETIDX	R4	R2	K7
+      0x9410050B,  //  0009  GETIDX	R4	R2	K11
       0x000C0604,  //  000A  ADD	R3	R3	R4
       0x80040600,  //  000B  RET	1	R3
     })
