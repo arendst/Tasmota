@@ -3,8 +3,8 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
-// compact class 'Matter_Profiler' ktab size: 20, total: 43 (saved 184 bytes)
-static const bvalue be_ktab_class_Matter_Profiler[20] = {
+// compact class 'Matter_Profiler' ktab size: 18, total: 43 (saved 200 bytes)
+static const bvalue be_ktab_class_Matter_Profiler[18] = {
   /* K0   */  be_nested_str_weak(active),
   /* K1   */  be_const_int(0),
   /* K2   */  be_nested_str_weak(PREALLOCATED),
@@ -20,11 +20,9 @@ static const bvalue be_ktab_class_Matter_Profiler[20] = {
   /* K12  */  be_nested_str_weak(allocs),
   /* K13  */  be_nested_str_weak(reallocs),
   /* K14  */  be_nested_str_weak(debug),
-  /* K15  */  be_const_int(1),
-  /* K16  */  be_nested_str_weak(_X3C_X2D_X2Dend_X2D_X2D_X3E),
-  /* K17  */  be_nested_str_weak(MTR_X3A_X20Profiler_X20dump_X3A),
-  /* K18  */  be_const_int(1),
-  /* K19  */  be_nested_str_weak(MTR_X3A_X20_X20_X20_X254i_X20_X5B_X254i_X5D_X27_X25s_X27),
+  /* K15  */  be_nested_str_weak(_X3C_X2D_X2Dend_X2D_X2D_X3E),
+  /* K16  */  be_nested_str_weak(MTR_X3A_X20Profiler_X20dump_X3A),
+  /* K17  */  be_nested_str_weak(MTR_X3A_X20_X20_X20_X254i_X20_X5B_X254i_X5D_X27_X25s_X27),
 };
 
 
@@ -201,7 +199,7 @@ be_local_closure(class_Matter_Profiler_log,   /* name */
       0x7C140200,  //  0016  CALL	R5	1
       0x98100605,  //  0017  SETIDX	R4	R3	R5
       0x88100106,  //  0018  GETMBR	R4	R0	K6
-      0x0010090F,  //  0019  ADD	R4	R4	K15
+      0x00100905,  //  0019  ADD	R4	R4	K5
       0x90020C04,  //  001A  SETMBR	R0	K6	R4
       0x80000000,  //  001B  RET	0
     })
@@ -231,10 +229,10 @@ be_local_closure(class_Matter_Profiler_dump,   /* name */
       0x740A0000,  //  0001  JMPT	R2	#0003
       0x80000400,  //  0002  RET	0
       0x8C080109,  //  0003  GETMET	R2	R0	K9
-      0x58100010,  //  0004  LDCONST	R4	K16
+      0x5810000F,  //  0004  LDCONST	R4	K15
       0x7C080400,  //  0005  CALL	R2	2
       0xB80A1200,  //  0006  GETNGBL	R2	K9
-      0x580C0011,  //  0007  LDCONST	R3	K17
+      0x580C0010,  //  0007  LDCONST	R3	K16
       0x5C100200,  //  0008  MOVE	R4	R1
       0x7C080400,  //  0009  CALL	R2	2
       0x88080103,  //  000A  GETMBR	R2	R0	K3
@@ -243,13 +241,13 @@ be_local_closure(class_Matter_Profiler_dump,   /* name */
       0x940C0701,  //  000D  GETIDX	R3	R3	K1
       0x8810010D,  //  000E  GETMBR	R4	R0	K13
       0x94100901,  //  000F  GETIDX	R4	R4	K1
-      0x58140012,  //  0010  LDCONST	R5	K18
+      0x58140005,  //  0010  LDCONST	R5	K5
       0x88180106,  //  0011  GETMBR	R6	R0	K6
       0x14180A06,  //  0012  LT	R6	R5	R6
       0x781A000F,  //  0013  JMPF	R6	#0024
       0xB81A1200,  //  0014  GETNGBL	R6	K9
       0x601C0018,  //  0015  GETGBL	R7	G24
-      0x58200013,  //  0016  LDCONST	R8	K19
+      0x58200011,  //  0016  LDCONST	R8	K17
       0x88240103,  //  0017  GETMBR	R9	R0	K3
       0x94241205,  //  0018  GETIDX	R9	R9	R5
       0x04241202,  //  0019  SUB	R9	R9	R2
@@ -261,7 +259,7 @@ be_local_closure(class_Matter_Profiler_dump,   /* name */
       0x7C1C0800,  //  001F  CALL	R7	4
       0x5C200200,  //  0020  MOVE	R8	R1
       0x7C180400,  //  0021  CALL	R6	2
-      0x00140B12,  //  0022  ADD	R5	R5	K18
+      0x00140B05,  //  0022  ADD	R5	R5	K5
       0x7001FFEC,  //  0023  JMP		#0011
       0x80000000,  //  0024  RET	0
     })

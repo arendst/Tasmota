@@ -1041,8 +1041,8 @@ be_local_class(lv_wifi_arcs_icon,
     })),
     be_str_weak(lv_wifi_arcs_icon)
 );
-// compact class 'lv_signal_bars' ktab size: 41, total: 49 (saved 64 bytes)
-static const bvalue be_ktab_class_lv_signal_bars[41] = {
+// compact class 'lv_signal_bars' ktab size: 40, total: 49 (saved 72 bytes)
+static const bvalue be_ktab_class_lv_signal_bars[40] = {
   /* K0   */  be_nested_str_weak(percentage),
   /* K1   */  be_const_int(0),
   /* K2   */  be_nested_str_weak(invalidate),
@@ -1070,20 +1070,19 @@ static const bvalue be_ktab_class_lv_signal_bars[41] = {
   /* K24  */  be_nested_str_weak(get_style_line_color),
   /* K25  */  be_nested_str_weak(STATE_DEFAULT),
   /* K26  */  be_nested_str_weak(get_style_bg_color),
-  /* K27  */  be_const_int(0),
-  /* K28  */  be_nested_str_weak(color),
-  /* K29  */  be_nested_str_weak(p1_y),
-  /* K30  */  be_nested_str_weak(p1_x),
-  /* K31  */  be_nested_str_weak(p2_y),
-  /* K32  */  be_nested_str_weak(p2_x),
-  /* K33  */  be_nested_str_weak(draw_line),
-  /* K34  */  be_nested_str_weak(stop_iteration),
-  /* K35  */  be_nested_str_weak(init),
-  /* K36  */  be_nested_str_weak(set_style_bg_opa),
-  /* K37  */  be_nested_str_weak(set_style_border_width),
-  /* K38  */  be_nested_str_weak(draw_line_dsc),
-  /* K39  */  be_nested_str_weak(add_event_cb),
-  /* K40  */  be_nested_str_weak(widget_event),
+  /* K27  */  be_nested_str_weak(color),
+  /* K28  */  be_nested_str_weak(p1_y),
+  /* K29  */  be_nested_str_weak(p1_x),
+  /* K30  */  be_nested_str_weak(p2_y),
+  /* K31  */  be_nested_str_weak(p2_x),
+  /* K32  */  be_nested_str_weak(draw_line),
+  /* K33  */  be_nested_str_weak(stop_iteration),
+  /* K34  */  be_nested_str_weak(init),
+  /* K35  */  be_nested_str_weak(set_style_bg_opa),
+  /* K36  */  be_nested_str_weak(set_style_border_width),
+  /* K37  */  be_nested_str_weak(draw_line_dsc),
+  /* K38  */  be_nested_str_weak(add_event_cb),
+  /* K39  */  be_nested_str_weak(widget_event),
 };
 
 
@@ -1257,7 +1256,7 @@ be_local_closure(class_lv_signal_bars_widget_event,   /* name */
       0x30442212,  //  003A  OR	R17	R17	R18
       0x7C3C0400,  //  003B  CALL	R15	2
       0x60400010,  //  003C  GETGBL	R16	G16
-      0x40463706,  //  003D  CONNECT	R17	K27	K6
+      0x40460306,  //  003D  CONNECT	R17	K1	K6
       0x7C400200,  //  003E  CALL	R16	1
       0xA8020024,  //  003F  EXBLK	0	#0065
       0x5C442000,  //  0040  MOVE	R17	R16
@@ -1271,16 +1270,16 @@ be_local_closure(class_lv_signal_bars_widget_event,   /* name */
       0x5C481C00,  //  0048  MOVE	R18	R14
       0x70020000,  //  0049  JMP		#004B
       0x5C481E00,  //  004A  MOVE	R18	R15
-      0x90263812,  //  004B  SETMBR	R9	K28	R18
+      0x90263612,  //  004B  SETMBR	R9	K27	R18
       0x00481A04,  //  004C  ADD	R18	R13	R4
       0x04482515,  //  004D  SUB	R18	R18	K21
       0x04482408,  //  004E  SUB	R18	R18	R8
-      0x90263A12,  //  004F  SETMBR	R9	K29	R18
+      0x90263812,  //  004F  SETMBR	R9	K28	R18
       0x00480E06,  //  0050  ADD	R18	R7	R6
       0x08482212,  //  0051  MUL	R18	R17	R18
       0x00481812,  //  0052  ADD	R18	R12	R18
       0x00482408,  //  0053  ADD	R18	R18	R8
-      0x90263C12,  //  0054  SETMBR	R9	K30	R18
+      0x90263A12,  //  0054  SETMBR	R9	K29	R18
       0x044A0C11,  //  0055  SUB	R18	K6	R17
       0x044C0807,  //  0056  SUB	R19	R4	R7
       0x08482413,  //  0057  MUL	R18	R18	R19
@@ -1288,16 +1287,16 @@ be_local_closure(class_lv_signal_bars_widget_event,   /* name */
       0x0C482413,  //  0059  DIV	R18	R18	R19
       0x00481A12,  //  005A  ADD	R18	R13	R18
       0x00482408,  //  005B  ADD	R18	R18	R8
-      0x90263E12,  //  005C  SETMBR	R9	K31	R18
-      0x8848131E,  //  005D  GETMBR	R18	R9	K30
-      0x90264012,  //  005E  SETMBR	R9	K32	R18
+      0x90263C12,  //  005C  SETMBR	R9	K30	R18
+      0x8848131D,  //  005D  GETMBR	R18	R9	K29
+      0x90263E12,  //  005E  SETMBR	R9	K31	R18
       0xB84A1000,  //  005F  GETNGBL	R18	K8
-      0x8C482521,  //  0060  GETMET	R18	R18	K33
+      0x8C482520,  //  0060  GETMET	R18	R18	K32
       0x5C501600,  //  0061  MOVE	R20	R11
       0x5C541200,  //  0062  MOVE	R21	R9
       0x7C480600,  //  0063  CALL	R18	3
       0x7001FFDA,  //  0064  JMP		#0040
-      0x58400022,  //  0065  LDCONST	R16	K34
+      0x58400021,  //  0065  LDCONST	R16	K33
       0xAC400200,  //  0066  CATCH	R16	1	0
       0xB0080000,  //  0067  RAISE	2	R0	R0
       0x80000000,  //  0068  RET	0
@@ -1327,14 +1326,14 @@ be_local_closure(class_lv_signal_bars_init,   /* name */
       0x60080003,  //  0000  GETGBL	R2	G3
       0x5C0C0000,  //  0001  MOVE	R3	R0
       0x7C080200,  //  0002  CALL	R2	1
-      0x8C080523,  //  0003  GETMET	R2	R2	K35
+      0x8C080522,  //  0003  GETMET	R2	R2	K34
       0x5C100200,  //  0004  MOVE	R4	R1
       0x7C080400,  //  0005  CALL	R2	2
-      0x8C080124,  //  0006  GETMET	R2	R0	K36
+      0x8C080123,  //  0006  GETMET	R2	R0	K35
       0x58100001,  //  0007  LDCONST	R4	K1
       0x58140001,  //  0008  LDCONST	R5	K1
       0x7C080600,  //  0009  CALL	R2	3
-      0x8C080125,  //  000A  GETMET	R2	R0	K37
+      0x8C080124,  //  000A  GETMET	R2	R0	K36
       0x58100001,  //  000B  LDCONST	R4	K1
       0x58140001,  //  000C  LDCONST	R5	K1
       0x7C080600,  //  000D  CALL	R2	3
@@ -1345,11 +1344,11 @@ be_local_closure(class_lv_signal_bars_init,   /* name */
       0x7C080200,  //  0012  CALL	R2	1
       0x90021C02,  //  0013  SETMBR	R0	K14	R2
       0xB80A1000,  //  0014  GETNGBL	R2	K8
-      0x8C080526,  //  0015  GETMET	R2	R2	K38
+      0x8C080525,  //  0015  GETMET	R2	R2	K37
       0x7C080200,  //  0016  CALL	R2	1
       0x90021402,  //  0017  SETMBR	R0	K10	R2
-      0x8C080127,  //  0018  GETMET	R2	R0	K39
-      0x88100128,  //  0019  GETMBR	R4	R0	K40
+      0x8C080126,  //  0018  GETMET	R2	R0	K38
+      0x88100127,  //  0019  GETMBR	R4	R0	K39
       0xB8161000,  //  001A  GETNGBL	R5	K8
       0x88140B09,  //  001B  GETMBR	R5	R5	K9
       0x58180001,  //  001C  LDCONST	R6	K1

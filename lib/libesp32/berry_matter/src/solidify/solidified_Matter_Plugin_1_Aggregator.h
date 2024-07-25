@@ -3,8 +3,8 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
-// compact class 'Matter_Plugin_Aggregator' ktab size: 23, total: 29 (saved 48 bytes)
-static const bvalue be_ktab_class_Matter_Plugin_Aggregator[23] = {
+// compact class 'Matter_Plugin_Aggregator' ktab size: 21, total: 29 (saved 64 bytes)
+static const bvalue be_ktab_class_Matter_Plugin_Aggregator[21] = {
   /* K0   */  be_nested_str_weak(matter),
   /* K1   */  be_nested_str_weak(TLV),
   /* K2   */  be_nested_str_weak(cluster),
@@ -24,10 +24,8 @@ static const bvalue be_ktab_class_Matter_Plugin_Aggregator[23] = {
   /* K16  */  be_nested_str_weak(stop_iteration),
   /* K17  */  be_nested_str_weak(read_attribute),
   /* K18  */  be_nested_str_weak(command),
-  /* K19  */  be_const_int(0),
-  /* K20  */  be_const_int(1),
-  /* K21  */  be_nested_str_weak(Matter_TLV_struct),
-  /* K22  */  be_nested_str_weak(invoke_request),
+  /* K19  */  be_nested_str_weak(Matter_TLV_struct),
+  /* K20  */  be_nested_str_weak(invoke_request),
 };
 
 
@@ -152,21 +150,21 @@ be_local_closure(class_Matter_Plugin_Aggregator_invoke_request,   /* name */
       0x88180712,  //  0003  GETMBR	R6	R3	K18
       0x1C1C0B04,  //  0004  EQ	R7	R5	K4
       0x781E0016,  //  0005  JMPF	R7	#001D
-      0x1C1C0D13,  //  0006  EQ	R7	R6	K19
+      0x1C1C0D05,  //  0006  EQ	R7	R6	K5
       0x781E0002,  //  0007  JMPF	R7	#000B
       0x501C0200,  //  0008  LDBOOL	R7	1	0
       0x80040E00,  //  0009  RET	1	R7
       0x70020010,  //  000A  JMP		#001C
-      0x1C1C0D14,  //  000B  EQ	R7	R6	K20
+      0x1C1C0D08,  //  000B  EQ	R7	R6	K8
       0x781E0009,  //  000C  JMPF	R7	#0017
-      0x8C1C0915,  //  000D  GETMET	R7	R4	K21
+      0x8C1C0913,  //  000D  GETMET	R7	R4	K19
       0x7C1C0200,  //  000E  CALL	R7	1
       0x8C200F0C,  //  000F  GETMET	R8	R7	K12
-      0x58280013,  //  0010  LDCONST	R10	K19
+      0x58280005,  //  0010  LDCONST	R10	K5
       0x882C0907,  //  0011  GETMBR	R11	R4	K7
-      0x58300013,  //  0012  LDCONST	R12	K19
+      0x58300005,  //  0012  LDCONST	R12	K5
       0x7C200800,  //  0013  CALL	R8	4
-      0x900E2513,  //  0014  SETMBR	R3	K18	K19
+      0x900E2505,  //  0014  SETMBR	R3	K18	K5
       0x80040E00,  //  0015  RET	1	R7
       0x70020004,  //  0016  JMP		#001C
       0x541E003F,  //  0017  LDINT	R7	64
@@ -178,7 +176,7 @@ be_local_closure(class_Matter_Plugin_Aggregator_invoke_request,   /* name */
       0x601C0003,  //  001D  GETGBL	R7	G3
       0x5C200000,  //  001E  MOVE	R8	R0
       0x7C1C0200,  //  001F  CALL	R7	1
-      0x8C1C0F16,  //  0020  GETMET	R7	R7	K22
+      0x8C1C0F14,  //  0020  GETMET	R7	R7	K20
       0x5C240200,  //  0021  MOVE	R9	R1
       0x5C280400,  //  0022  MOVE	R10	R2
       0x5C2C0600,  //  0023  MOVE	R11	R3

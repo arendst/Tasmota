@@ -89,17 +89,17 @@ be_local_closure(class_Matter_Plugin_Sensor_Waterleak_read_attribute,   /* name 
       0x541E0044,  //  0004  LDINT	R7	69
       0x1C1C0A07,  //  0005  EQ	R7	R5	R7
       0x781E0006,  //  0006  JMPF	R7	#000E
-      0x1C1C0D09,  //  0007  EQ	R7	R6	K9
+      0x1C1C0D03,  //  0007  EQ	R7	R6	K3
       0x781E0004,  //  0008  JMPF	R7	#000E
-      0x8C1C070A,  //  0009  GETMET	R7	R3	K10
-      0x8824090B,  //  000A  GETMBR	R9	R4	K11
+      0x8C1C0709,  //  0009  GETMET	R7	R3	K9
+      0x8824090A,  //  000A  GETMBR	R9	R4	K10
       0x88280100,  //  000B  GETMBR	R10	R0	K0
       0x7C1C0600,  //  000C  CALL	R7	3
       0x80040E00,  //  000D  RET	1	R7
       0x601C0003,  //  000E  GETGBL	R7	G3
       0x5C200000,  //  000F  MOVE	R8	R0
       0x7C1C0200,  //  0010  CALL	R7	1
-      0x8C1C0F0C,  //  0011  GETMET	R7	R7	K12
+      0x8C1C0F0B,  //  0011  GETMET	R7	R7	K11
       0x5C240200,  //  0012  MOVE	R9	R1
       0x5C280400,  //  0013  MOVE	R10	R2
       0x5C2C0600,  //  0014  MOVE	R11	R3
@@ -209,7 +209,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Waterleak_value_updated,   /* name *
     be_str_weak(value_updated),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
-      0x8C040118,  //  0000  GETMET	R1	R0	K24
+      0x8C040117,  //  0000  GETMET	R1	R0	K23
       0x540E0044,  //  0001  LDINT	R3	69
       0x58100003,  //  0002  LDCONST	R4	K3
       0x7C040600,  //  0003  CALL	R1	3

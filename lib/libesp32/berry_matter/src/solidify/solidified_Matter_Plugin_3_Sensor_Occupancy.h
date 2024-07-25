@@ -3,8 +3,8 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
-// compact class 'Matter_Plugin_Sensor_Occupancy' ktab size: 29, total: 35 (saved 48 bytes)
-static const bvalue be_ktab_class_Matter_Plugin_Sensor_Occupancy[29] = {
+// compact class 'Matter_Plugin_Sensor_Occupancy' ktab size: 28, total: 35 (saved 56 bytes)
+static const bvalue be_ktab_class_Matter_Plugin_Sensor_Occupancy[28] = {
   /* K0   */  be_nested_str_weak(shadow_bool_value),
   /* K1   */  be_nested_str_weak(_parse_update_virtual),
   /* K2   */  be_nested_str_weak(Occupancy),
@@ -14,26 +14,25 @@ static const bvalue be_ktab_class_Matter_Plugin_Sensor_Occupancy[29] = {
   /* K6   */  be_nested_str_weak(TLV),
   /* K7   */  be_nested_str_weak(cluster),
   /* K8   */  be_nested_str_weak(attribute),
-  /* K9   */  be_const_int(0),
-  /* K10  */  be_nested_str_weak(set_or_nil),
-  /* K11  */  be_nested_str_weak(U1),
-  /* K12  */  be_const_int(1),
-  /* K13  */  be_nested_str_weak(set),
-  /* K14  */  be_const_int(3),
-  /* K15  */  be_const_int(2),
-  /* K16  */  be_nested_str_weak(read_attribute),
-  /* K17  */  be_nested_str_weak(webserver),
-  /* K18  */  be_nested_str_weak(web_values_prefix),
-  /* K19  */  be_nested_str_weak(content_send),
-  /* K20  */  be_nested_str_weak(Occupancy_X25i_X20_X25s),
-  /* K21  */  be_nested_str_weak(web_value_onoff),
-  /* K22  */  be_nested_str_weak(shadow_occupancy),
-  /* K23  */  be_nested_str_weak(get_name),
-  /* K24  */  be_nested_str_weak(Switch),
-  /* K25  */  be_nested_str_weak(PREFIX),
-  /* K26  */  be_nested_str_weak(html_escape),
-  /* K27  */  be_nested_str_weak(),
-  /* K28  */  be_nested_str_weak(attribute_updated),
+  /* K9   */  be_nested_str_weak(set_or_nil),
+  /* K10  */  be_nested_str_weak(U1),
+  /* K11  */  be_const_int(1),
+  /* K12  */  be_nested_str_weak(set),
+  /* K13  */  be_const_int(3),
+  /* K14  */  be_const_int(2),
+  /* K15  */  be_nested_str_weak(read_attribute),
+  /* K16  */  be_nested_str_weak(webserver),
+  /* K17  */  be_nested_str_weak(web_values_prefix),
+  /* K18  */  be_nested_str_weak(content_send),
+  /* K19  */  be_nested_str_weak(Occupancy_X25i_X20_X25s),
+  /* K20  */  be_nested_str_weak(web_value_onoff),
+  /* K21  */  be_nested_str_weak(shadow_occupancy),
+  /* K22  */  be_nested_str_weak(get_name),
+  /* K23  */  be_nested_str_weak(Switch),
+  /* K24  */  be_nested_str_weak(PREFIX),
+  /* K25  */  be_nested_str_weak(html_escape),
+  /* K26  */  be_nested_str_weak(),
+  /* K27  */  be_nested_str_weak(attribute_updated),
 };
 
 
@@ -102,33 +101,33 @@ be_local_closure(class_Matter_Plugin_Sensor_Occupancy_read_attribute,   /* name 
       0x541E0405,  //  0004  LDINT	R7	1030
       0x1C1C0A07,  //  0005  EQ	R7	R5	R7
       0x781E0016,  //  0006  JMPF	R7	#001E
-      0x1C1C0D09,  //  0007  EQ	R7	R6	K9
+      0x1C1C0D03,  //  0007  EQ	R7	R6	K3
       0x781E0005,  //  0008  JMPF	R7	#000F
-      0x8C1C070A,  //  0009  GETMET	R7	R3	K10
-      0x8824090B,  //  000A  GETMBR	R9	R4	K11
+      0x8C1C0709,  //  0009  GETMET	R7	R3	K9
+      0x8824090A,  //  000A  GETMBR	R9	R4	K10
       0x88280100,  //  000B  GETMBR	R10	R0	K0
       0x7C1C0600,  //  000C  CALL	R7	3
       0x80040E00,  //  000D  RET	1	R7
       0x7002000E,  //  000E  JMP		#001E
-      0x1C1C0D0C,  //  000F  EQ	R7	R6	K12
+      0x1C1C0D0B,  //  000F  EQ	R7	R6	K11
       0x781E0005,  //  0010  JMPF	R7	#0017
-      0x8C1C070D,  //  0011  GETMET	R7	R3	K13
-      0x8824090B,  //  0012  GETMBR	R9	R4	K11
-      0x5828000E,  //  0013  LDCONST	R10	K14
+      0x8C1C070C,  //  0011  GETMET	R7	R3	K12
+      0x8824090A,  //  0012  GETMBR	R9	R4	K10
+      0x5828000D,  //  0013  LDCONST	R10	K13
       0x7C1C0600,  //  0014  CALL	R7	3
       0x80040E00,  //  0015  RET	1	R7
       0x70020006,  //  0016  JMP		#001E
-      0x1C1C0D0F,  //  0017  EQ	R7	R6	K15
+      0x1C1C0D0E,  //  0017  EQ	R7	R6	K14
       0x781E0004,  //  0018  JMPF	R7	#001E
-      0x8C1C070D,  //  0019  GETMET	R7	R3	K13
-      0x8824090B,  //  001A  GETMBR	R9	R4	K11
-      0x58280009,  //  001B  LDCONST	R10	K9
+      0x8C1C070C,  //  0019  GETMET	R7	R3	K12
+      0x8824090A,  //  001A  GETMBR	R9	R4	K10
+      0x58280003,  //  001B  LDCONST	R10	K3
       0x7C1C0600,  //  001C  CALL	R7	3
       0x80040E00,  //  001D  RET	1	R7
       0x601C0003,  //  001E  GETGBL	R7	G3
       0x5C200000,  //  001F  MOVE	R8	R0
       0x7C1C0200,  //  0020  CALL	R7	1
-      0x8C1C0F10,  //  0021  GETMET	R7	R7	K16
+      0x8C1C0F0F,  //  0021  GETMET	R7	R7	K15
       0x5C240200,  //  0022  MOVE	R9	R1
       0x5C280400,  //  0023  MOVE	R10	R2
       0x5C2C0600,  //  0024  MOVE	R11	R3
@@ -157,15 +156,15 @@ be_local_closure(class_Matter_Plugin_Sensor_Occupancy_web_values,   /* name */
     be_str_weak(web_values),
     &be_const_str_solidified,
     ( &(const binstruction[13]) {  /* code */
-      0xA4062200,  //  0000  IMPORT	R1	K17
-      0x8C080112,  //  0001  GETMET	R2	R0	K18
+      0xA4062000,  //  0000  IMPORT	R1	K16
+      0x8C080111,  //  0001  GETMET	R2	R0	K17
       0x7C080200,  //  0002  CALL	R2	1
-      0x8C080313,  //  0003  GETMET	R2	R1	K19
+      0x8C080312,  //  0003  GETMET	R2	R1	K18
       0x60100018,  //  0004  GETGBL	R4	G24
-      0x58140014,  //  0005  LDCONST	R5	K20
+      0x58140013,  //  0005  LDCONST	R5	K19
       0x88180100,  //  0006  GETMBR	R6	R0	K0
-      0x8C1C0115,  //  0007  GETMET	R7	R0	K21
-      0x88240116,  //  0008  GETMBR	R9	R0	K22
+      0x8C1C0114,  //  0007  GETMET	R7	R0	K20
+      0x88240115,  //  0008  GETMBR	R9	R0	K21
       0x7C1C0400,  //  0009  CALL	R7	2
       0x7C100600,  //  000A  CALL	R4	3
       0x7C080400,  //  000B  CALL	R2	2
@@ -193,25 +192,25 @@ be_local_closure(class_Matter_Plugin_Sensor_Occupancy_web_values_prefix,   /* na
     be_str_weak(web_values_prefix),
     &be_const_str_solidified,
     ( &(const binstruction[22]) {  /* code */
-      0xA4062200,  //  0000  IMPORT	R1	K17
-      0x8C080117,  //  0001  GETMET	R2	R0	K23
+      0xA4062000,  //  0000  IMPORT	R1	K16
+      0x8C080116,  //  0001  GETMET	R2	R0	K22
       0x7C080200,  //  0002  CALL	R2	1
       0x5C0C0400,  //  0003  MOVE	R3	R2
       0x740E0004,  //  0004  JMPT	R3	#000A
       0x600C0008,  //  0005  GETGBL	R3	G8
       0x88100100,  //  0006  GETMBR	R4	R0	K0
       0x7C0C0200,  //  0007  CALL	R3	1
-      0x000E3003,  //  0008  ADD	R3	K24	R3
+      0x000E2E03,  //  0008  ADD	R3	K23	R3
       0x5C080600,  //  0009  MOVE	R2	R3
-      0x8C0C0313,  //  000A  GETMET	R3	R1	K19
+      0x8C0C0312,  //  000A  GETMET	R3	R1	K18
       0x60140018,  //  000B  GETGBL	R5	G24
-      0x88180119,  //  000C  GETMBR	R6	R0	K25
+      0x88180118,  //  000C  GETMBR	R6	R0	K24
       0x780A0003,  //  000D  JMPF	R2	#0012
-      0x8C1C031A,  //  000E  GETMET	R7	R1	K26
+      0x8C1C0319,  //  000E  GETMET	R7	R1	K25
       0x5C240400,  //  000F  MOVE	R9	R2
       0x7C1C0400,  //  0010  CALL	R7	2
       0x70020000,  //  0011  JMP		#0013
-      0x581C001B,  //  0012  LDCONST	R7	K27
+      0x581C001A,  //  0012  LDCONST	R7	K26
       0x7C140400,  //  0013  CALL	R5	2
       0x7C0C0400,  //  0014  CALL	R3	2
       0x80000000,  //  0015  RET	0
@@ -238,7 +237,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Occupancy_value_updated,   /* name *
     be_str_weak(value_updated),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
-      0x8C04011C,  //  0000  GETMET	R1	R0	K28
+      0x8C04011B,  //  0000  GETMET	R1	R0	K27
       0x540E0405,  //  0001  LDINT	R3	1030
       0x58100003,  //  0002  LDCONST	R4	K3
       0x7C040600,  //  0003  CALL	R1	3

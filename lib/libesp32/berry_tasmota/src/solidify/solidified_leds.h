@@ -6,8 +6,8 @@
 extern const bclass be_class_Leds_segment;
 extern const bclass be_class_Leds;
 extern const bclass be_class_Leds_matrix;
-// compact class 'Leds_segment' ktab size: 17, total: 34 (saved 136 bytes)
-static const bvalue be_ktab_class_Leds_segment[17] = {
+// compact class 'Leds_segment' ktab size: 16, total: 34 (saved 144 bytes)
+static const bvalue be_ktab_class_Leds_segment[16] = {
   /* K0   */  be_nested_str(offset),
   /* K1   */  be_nested_str(bri),
   /* K2   */  be_nested_str(strip),
@@ -24,7 +24,6 @@ static const bvalue be_ktab_class_Leds_segment[17] = {
   /* K13  */  be_nested_str(get_pixel_color),
   /* K14  */  be_nested_str(offseta),
   /* K15  */  be_nested_str(pixel_size),
-  /* K16  */  be_const_int(0),
 };
 
 
@@ -424,7 +423,7 @@ be_local_closure(class_Leds_segment_show,   /* name */
       0x7C080200,  //  0002  CALL	R2	1
       0x740A0007,  //  0003  JMPT	R2	#000C
       0x88080100,  //  0004  GETMBR	R2	R0	K0
-      0x1C080510,  //  0005  EQ	R2	R2	K16
+      0x1C08050B,  //  0005  EQ	R2	R2	K11
       0x780A0007,  //  0006  JMPF	R2	#000F
       0x88080105,  //  0007  GETMBR	R2	R0	K5
       0x880C0102,  //  0008  GETMBR	R3	R0	K2
@@ -469,8 +468,8 @@ be_local_class(Leds_segment,
     })),
     (bstring*) &be_const_str_Leds_segment
 );
-// compact class 'Leds_matrix' ktab size: 25, total: 62 (saved 296 bytes)
-static const bvalue be_ktab_class_Leds_matrix[25] = {
+// compact class 'Leds_matrix' ktab size: 24, total: 62 (saved 304 bytes)
+static const bvalue be_ktab_class_Leds_matrix[24] = {
   /* K0   */  be_nested_str(strip),
   /* K1   */  be_nested_str(bri),
   /* K2   */  be_nested_str(call_native),
@@ -495,7 +494,6 @@ static const bvalue be_ktab_class_Leds_matrix[25] = {
   /* K21  */  be_nested_str(get_pixel_color),
   /* K22  */  be_nested_str(offseta),
   /* K23  */  be_nested_str(clear_to),
-  /* K24  */  be_const_int(0),
 };
 
 
@@ -1066,7 +1064,7 @@ be_local_closure(class_Leds_matrix_clear,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[ 6]) {  /* code */
       0x8C040117,  //  0000  GETMET	R1	R0	K23
-      0x580C0018,  //  0001  LDCONST	R3	K24
+      0x580C0007,  //  0001  LDCONST	R3	K7
       0x7C040400,  //  0002  CALL	R1	2
       0x8C040109,  //  0003  GETMET	R1	R0	K9
       0x7C040200,  //  0004  CALL	R1	1
@@ -1113,8 +1111,8 @@ be_local_class(Leds_matrix,
     })),
     (bstring*) &be_const_str_Leds_matrix
 );
-// compact class 'Leds' ktab size: 47, total: 83 (saved 288 bytes)
-static const bvalue be_ktab_class_Leds[47] = {
+// compact class 'Leds' ktab size: 43, total: 83 (saved 320 bytes)
+static const bvalue be_ktab_class_Leds[43] = {
   /* K0   */  be_nested_str(leds),
   /* K1   */  be_const_int(0),
   /* K2   */  be_nested_str(value_error),
@@ -1142,26 +1140,22 @@ static const bvalue be_ktab_class_Leds[47] = {
   /* K24  */  be_const_class(be_class_Leds),
   /* K25  */  be_nested_str(Leds),
   /* K26  */  be_nested_str(create_matrix),
-  /* K27  */  be_const_int(0),
-  /* K28  */  be_nested_str(to_gamma),
-  /* K29  */  be_const_int(0),
-  /* K30  */  be_const_class(be_class_Leds_matrix),
-  /* K31  */  be_const_int(3),
-  /* K32  */  be_const_int(0),
-  /* K33  */  be_nested_str(invalid_X20GPIO_X20number),
-  /* K34  */  be_nested_str(global),
-  /* K35  */  be_nested_str(contains),
-  /* K36  */  be_nested_str(_rmt),
-  /* K37  */  be_nested_str(MAX_RMT),
-  /* K38  */  be_const_int(1),
-  /* K39  */  be_nested_str(push),
-  /* K40  */  be_nested_str(stop_iteration),
-  /* K41  */  be_nested_str(pin_used),
-  /* K42  */  be_nested_str(no_X20more_X20RMT_X20channel_X20available),
-  /* K43  */  be_nested_str(WS2812_GRB),
-  /* K44  */  be_nested_str(assign_rmt),
-  /* K45  */  be_nested_str(pixel_size),
-  /* K46  */  be_nested_str(_change_buffer),
+  /* K27  */  be_nested_str(to_gamma),
+  /* K28  */  be_const_class(be_class_Leds_matrix),
+  /* K29  */  be_const_int(3),
+  /* K30  */  be_nested_str(invalid_X20GPIO_X20number),
+  /* K31  */  be_nested_str(global),
+  /* K32  */  be_nested_str(contains),
+  /* K33  */  be_nested_str(_rmt),
+  /* K34  */  be_nested_str(MAX_RMT),
+  /* K35  */  be_nested_str(push),
+  /* K36  */  be_nested_str(stop_iteration),
+  /* K37  */  be_nested_str(pin_used),
+  /* K38  */  be_nested_str(no_X20more_X20RMT_X20channel_X20available),
+  /* K39  */  be_nested_str(WS2812_GRB),
+  /* K40  */  be_nested_str(assign_rmt),
+  /* K41  */  be_nested_str(pixel_size),
+  /* K42  */  be_nested_str(_change_buffer),
 };
 
 
@@ -1614,7 +1608,7 @@ be_local_closure(class_Leds_pixel_offset,   /* name */
     &be_const_str_pixel_offset,
     &be_const_str_solidified,
     ( &(const binstruction[ 1]) {  /* code */
-      0x80063600,  //  0000  RET	1	K27
+      0x80060200,  //  0000  RET	1	K1
     })
   )
 );
@@ -1644,7 +1638,7 @@ be_local_closure(class_Leds_clear_to,   /* name */
       0x88080105,  //  0003  GETMBR	R2	R0	K5
       0x8C0C0106,  //  0004  GETMET	R3	R0	K6
       0x54160008,  //  0005  LDINT	R5	9
-      0x8C18011C,  //  0006  GETMET	R6	R0	K28
+      0x8C18011B,  //  0006  GETMET	R6	R0	K27
       0x5C200200,  //  0007  MOVE	R8	R1
       0x5C240400,  //  0008  MOVE	R9	R2
       0x7C180600,  //  0009  CALL	R6	3
@@ -1680,7 +1674,7 @@ be_local_closure(class_Leds_set_pixel_color,   /* name */
       0x8C100106,  //  0004  GETMET	R4	R0	K6
       0x541A0009,  //  0005  LDINT	R6	10
       0x5C1C0200,  //  0006  MOVE	R7	R1
-      0x8C20011C,  //  0007  GETMET	R8	R0	K28
+      0x8C20011B,  //  0007  GETMET	R8	R0	K27
       0x5C280400,  //  0008  MOVE	R10	R2
       0x5C2C0600,  //  0009  MOVE	R11	R3
       0x7C200600,  //  000A  CALL	R8	3
@@ -1751,21 +1745,21 @@ be_local_closure(class_Leds_create_matrix,   /* name */
       0x4C100000,  //  000C  LDNIL	R4
       0x1C100604,  //  000D  EQ	R4	R3	R4
       0x78120000,  //  000E  JMPF	R4	#0010
-      0x580C001D,  //  000F  LDCONST	R3	K29
+      0x580C0001,  //  000F  LDCONST	R3	K1
       0x08100202,  //  0010  MUL	R4	R1	R2
       0x00100803,  //  0011  ADD	R4	R4	R3
       0x88140100,  //  0012  GETMBR	R5	R0	K0
       0x24100805,  //  0013  GT	R4	R4	R5
       0x74120005,  //  0014  JMPT	R4	#001B
-      0x1410051D,  //  0015  LT	R4	R2	K29
+      0x14100501,  //  0015  LT	R4	R2	K1
       0x74120003,  //  0016  JMPT	R4	#001B
-      0x1410031D,  //  0017  LT	R4	R1	K29
+      0x14100301,  //  0017  LT	R4	R1	K1
       0x74120001,  //  0018  JMPT	R4	#001B
-      0x1410071D,  //  0019  LT	R4	R3	K29
+      0x14100701,  //  0019  LT	R4	R3	K1
       0x78120000,  //  001A  JMPF	R4	#001C
       0xB0060503,  //  001B  RAISE	1	K2	K3
-      0x5810001E,  //  001C  LDCONST	R4	K30
-      0xB400001E,  //  001D  CLASS	K30
+      0x5810001C,  //  001C  LDCONST	R4	K28
+      0xB400001C,  //  001D  CLASS	K28
       0x5C140800,  //  001E  MOVE	R5	R4
       0x5C180000,  //  001F  MOVE	R6	R0
       0x5C1C0200,  //  0020  MOVE	R7	R1
@@ -1849,7 +1843,7 @@ be_local_closure(class_Leds_can_show,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
       0x8C040106,  //  0000  GETMET	R1	R0	K6
-      0x580C001F,  //  0001  LDCONST	R3	K31
+      0x580C001D,  //  0001  LDCONST	R3	K29
       0x7C040400,  //  0002  CALL	R1	2
       0x80040200,  //  0003  RET	1	R1
     })
@@ -1880,72 +1874,72 @@ be_local_closure(class_Leds_assign_rmt,   /* name */
       0x5C0C0000,  //  0002  MOVE	R3	R0
       0x7C080200,  //  0003  CALL	R2	1
       0x5C000400,  //  0004  MOVE	R0	R2
-      0x14080120,  //  0005  LT	R2	R0	K32
+      0x14080101,  //  0005  LT	R2	R0	K1
       0x780A0000,  //  0006  JMPF	R2	#0008
-      0xB0060521,  //  0007  RAISE	1	K2	K33
-      0xA40A4400,  //  0008  IMPORT	R2	K34
+      0xB006051E,  //  0007  RAISE	1	K2	K30
+      0xA40A3E00,  //  0008  IMPORT	R2	K31
       0x4C0C0000,  //  0009  LDNIL	R3
-      0x8C100523,  //  000A  GETMET	R4	R2	K35
-      0x58180024,  //  000B  LDCONST	R6	K36
+      0x8C100520,  //  000A  GETMET	R4	R2	K32
+      0x58180021,  //  000B  LDCONST	R6	K33
       0x7C100400,  //  000C  CALL	R4	2
       0x74120021,  //  000D  JMPT	R4	#0030
       0x60100012,  //  000E  GETGBL	R4	G18
       0x7C100000,  //  000F  CALL	R4	0
       0x5C0C0800,  //  0010  MOVE	R3	R4
-      0x900A4803,  //  0011  SETMBR	R2	K36	R3
+      0x900A4203,  //  0011  SETMBR	R2	K33	R3
       0x60100010,  //  0012  GETGBL	R4	G16
       0xB8161400,  //  0013  GETNGBL	R5	K10
-      0x88140B25,  //  0014  GETMBR	R5	R5	K37
-      0x04140B26,  //  0015  SUB	R5	R5	K38
-      0x40164005,  //  0016  CONNECT	R5	K32	R5
+      0x88140B22,  //  0014  GETMBR	R5	R5	K34
+      0x04140B07,  //  0015  SUB	R5	R5	K7
+      0x40160205,  //  0016  CONNECT	R5	K1	R5
       0x7C100200,  //  0017  CALL	R4	1
       0xA8020005,  //  0018  EXBLK	0	#001F
       0x5C140800,  //  0019  MOVE	R5	R4
       0x7C140000,  //  001A  CALL	R5	0
-      0x8C180727,  //  001B  GETMET	R6	R3	K39
+      0x8C180723,  //  001B  GETMET	R6	R3	K35
       0x5421FFFE,  //  001C  LDINT	R8	-1
       0x7C180400,  //  001D  CALL	R6	2
       0x7001FFF9,  //  001E  JMP		#0019
-      0x58100028,  //  001F  LDCONST	R4	K40
+      0x58100024,  //  001F  LDCONST	R4	K36
       0xAC100200,  //  0020  CATCH	R4	1	0
       0xB0080000,  //  0021  RAISE	2	R0	R0
       0xB8121400,  //  0022  GETNGBL	R4	K10
-      0x8C100929,  //  0023  GETMET	R4	R4	K41
+      0x8C100925,  //  0023  GETMET	R4	R4	K37
       0xB81A1400,  //  0024  GETNGBL	R6	K10
       0x88180D0D,  //  0025  GETMBR	R6	R6	K13
-      0x581C0020,  //  0026  LDCONST	R7	K32
+      0x581C0001,  //  0026  LDCONST	R7	K1
       0x7C100600,  //  0027  CALL	R4	3
       0x78120006,  //  0028  JMPF	R4	#0030
       0xB8121400,  //  0029  GETNGBL	R4	K10
       0x8C10090C,  //  002A  GETMET	R4	R4	K12
       0xB81A1400,  //  002B  GETNGBL	R6	K10
       0x88180D0D,  //  002C  GETMBR	R6	R6	K13
-      0x581C0020,  //  002D  LDCONST	R7	K32
+      0x581C0001,  //  002D  LDCONST	R7	K1
       0x7C100600,  //  002E  CALL	R4	3
-      0x980E4004,  //  002F  SETIDX	R3	K32	R4
-      0x880C0524,  //  0030  GETMBR	R3	R2	K36
-      0x58100020,  //  0031  LDCONST	R4	K32
+      0x980E0204,  //  002F  SETIDX	R3	K1	R4
+      0x880C0521,  //  0030  GETMBR	R3	R2	K33
+      0x58100001,  //  0031  LDCONST	R4	K1
       0x5415FFFE,  //  0032  LDINT	R5	-1
       0xB81A1400,  //  0033  GETNGBL	R6	K10
-      0x88180D25,  //  0034  GETMBR	R6	R6	K37
+      0x88180D22,  //  0034  GETMBR	R6	R6	K34
       0x14180806,  //  0035  LT	R6	R4	R6
       0x781A000A,  //  0036  JMPF	R6	#0042
       0x94180604,  //  0037  GETIDX	R6	R3	R4
       0x1C1C0C00,  //  0038  EQ	R7	R6	R0
       0x781E0000,  //  0039  JMPF	R7	#003B
       0x80040800,  //  003A  RET	1	R4
-      0x141C0D20,  //  003B  LT	R7	R6	K32
+      0x141C0D01,  //  003B  LT	R7	R6	K1
       0x781E0002,  //  003C  JMPF	R7	#0040
-      0x141C0B20,  //  003D  LT	R7	R5	K32
+      0x141C0B01,  //  003D  LT	R7	R5	K1
       0x781E0000,  //  003E  JMPF	R7	#0040
       0x5C140800,  //  003F  MOVE	R5	R4
-      0x00100926,  //  0040  ADD	R4	R4	K38
+      0x00100907,  //  0040  ADD	R4	R4	K7
       0x7001FFF0,  //  0041  JMP		#0033
-      0x28180B20,  //  0042  GE	R6	R5	K32
+      0x28180B01,  //  0042  GE	R6	R5	K1
       0x781A0001,  //  0043  JMPF	R6	#0046
       0x980C0A00,  //  0044  SETIDX	R3	R5	R0
       0x80040A00,  //  0045  RET	1	R5
-      0xB006272A,  //  0046  RAISE	1	K19	K42
+      0xB0062726,  //  0046  RAISE	1	K19	K38
       0x80000000,  //  0047  RET	0
     })
   )
@@ -1980,11 +1974,11 @@ be_local_closure(class_Leds_ctor,   /* name */
       0x4C140000,  //  0007  LDNIL	R5
       0x1C140605,  //  0008  EQ	R5	R3	R5
       0x78160000,  //  0009  JMPF	R5	#000B
-      0x880C012B,  //  000A  GETMBR	R3	R0	K43
+      0x880C0127,  //  000A  GETMBR	R3	R0	K39
       0x4C140000,  //  000B  LDNIL	R5
       0x1C140805,  //  000C  EQ	R5	R4	R5
       0x78160003,  //  000D  JMPF	R5	#0012
-      0x8C14012C,  //  000E  GETMET	R5	R0	K44
+      0x8C140128,  //  000E  GETMET	R5	R0	K40
       0x5C1C0400,  //  000F  MOVE	R7	R2
       0x7C140400,  //  0010  CALL	R5	2
       0x5C100A00,  //  0011  MOVE	R4	R5
@@ -2027,7 +2021,7 @@ be_local_closure(class_Leds_pixels_buffer,   /* name */
       0x780E0009,  //  0005  JMPF	R3	#0010
       0x600C0015,  //  0006  GETGBL	R3	G21
       0x5C100400,  //  0007  MOVE	R4	R2
-      0x8C14012D,  //  0008  GETMET	R5	R0	K45
+      0x8C140129,  //  0008  GETMET	R5	R0	K41
       0x7C140200,  //  0009  CALL	R5	1
       0x8C18010F,  //  000A  GETMET	R6	R0	K15
       0x7C180200,  //  000B  CALL	R6	1
@@ -2035,7 +2029,7 @@ be_local_closure(class_Leds_pixels_buffer,   /* name */
       0x7C0C0400,  //  000D  CALL	R3	2
       0x80040600,  //  000E  RET	1	R3
       0x70020003,  //  000F  JMP		#0014
-      0x8C0C032E,  //  0010  GETMET	R3	R1	K46
+      0x8C0C032A,  //  0010  GETMET	R3	R1	K42
       0x5C140400,  //  0011  MOVE	R5	R2
       0x7C0C0400,  //  0012  CALL	R3	2
       0x80040200,  //  0013  RET	1	R1

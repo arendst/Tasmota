@@ -3,8 +3,8 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
-// compact class 'Matter_Control_Message' ktab size: 23, total: 31 (saved 64 bytes)
-static const bvalue be_ktab_class_Matter_Control_Message[23] = {
+// compact class 'Matter_Control_Message' ktab size: 22, total: 31 (saved 72 bytes)
+static const bvalue be_ktab_class_Matter_Control_Message[22] = {
   /* K0   */  be_nested_str_weak(session),
   /* K1   */  be_nested_str_weak(log),
   /* K2   */  be_nested_str_weak(MTR_X3A_X20_X3EMCSyncRsp_X20_X2A_X20Not_X20implemented_X20_X25s),
@@ -27,7 +27,6 @@ static const bvalue be_ktab_class_Matter_Control_Message[23] = {
   /* K19  */  be_const_int(1),
   /* K20  */  be_nested_str_weak(parse_MsgCounterSyncRsp),
   /* K21  */  be_nested_str_weak(MTR_X3A_X20_X3E_X3F_X3F_X3F_X3F_X3F_X3F_X3F_X3F_X3F_X20Unknown_X20OpCode_X20_X28control_X20message_X29_X20_X2502X),
-  /* K22  */  be_const_int(2),
 };
 
 
@@ -183,7 +182,7 @@ be_local_closure(class_Matter_Control_Message_process_incoming_control_message, 
       0x58100015,  //  001A  LDCONST	R4	K21
       0x88140310,  //  001B  GETMBR	R5	R1	K16
       0x7C0C0400,  //  001C  CALL	R3	2
-      0x58100016,  //  001D  LDCONST	R4	K22
+      0x58100007,  //  001D  LDCONST	R4	K7
       0x7C080400,  //  001E  CALL	R2	2
       0x50080000,  //  001F  LDBOOL	R2	0	0
       0x80040400,  //  0020  RET	1	R2

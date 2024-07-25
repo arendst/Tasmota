@@ -3,8 +3,8 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
-// compact class 'Autoconf' ktab size: 127, total: 205 (saved 624 bytes)
-static const bvalue be_ktab_class_Autoconf[127] = {
+// compact class 'Autoconf' ktab size: 124, total: 205 (saved 648 bytes)
+static const bvalue be_ktab_class_Autoconf[124] = {
   /* K0   */  be_nested_str(webserver),
   /* K1   */  be_nested_str(path),
   /* K2   */  be_nested_str(check_privileged_access),
@@ -105,33 +105,30 @@ static const bvalue be_ktab_class_Autoconf[127] = {
   /* K97  */  be_nested_str(stop_iteration),
   /* K98  */  be_nested_str(_X3C_X2Fselect_X3E_X3Cp_X3E_X3C_X2Fp_X3E),
   /* K99  */  be_nested_str(_X3Cbutton_X20name_X3D_X27zipapply_X27_X20class_X3D_X27button_X20bgrn_X27_X3EApply_X20configuration_X3C_X2Fbutton_X3E),
-  /* K100 */  be_const_int(0),
-  /* K101 */  be_nested_str(listdir),
-  /* K102 */  be_nested_str(_X2F),
-  /* K103 */  be_nested_str(find),
-  /* K104 */  be_nested_str(_X2Eautoconf),
-  /* K105 */  be_nested_str(remove),
-  /* K106 */  be_nested_str(_X2F_X2Eautoconf),
-  /* K107 */  be_nested_str(json),
-  /* K108 */  be_nested_str(https_X3A_X2F_X2Fraw_X2Egithubusercontent_X2Ecom_X2Ftasmota_X2Fautoconf_X2Fmain_X2F_X25s_manifest_X2Ejson),
-  /* K109 */  be_nested_str(CFG_X3A_X20loading_X20_X27_X25s_X27),
-  /* K110 */  be_nested_str(CFG_X3A_X20return_code_X3D_X25i),
-  /* K111 */  be_nested_str(get_string),
-  /* K112 */  be_nested_str(CFG_X3A_X20loaded_X20_X27_X25s_X27),
-  /* K113 */  be_nested_str(files),
-  /* K114 */  be_nested_str(CFG_X3A_X20exception_X20_X27_X25s_X27_X20_X2D_X20_X27_X25s_X27),
-  /* K115 */  be_nested_str(_X3Cp_X3E_X3Cform_X20id_X3Dac_X20action_X3D_X27ac_X27_X20style_X3D_X27display_X3A_X20block_X3B_X27_X20method_X3D_X27get_X27_X3E_X3Cbutton_X3EAuto_X2Dconfiguration_X3C_X2Fbutton_X3E_X3C_X2Fform_X3E_X3C_X2Fp_X3E),
-  /* K116 */  be_nested_str(add_driver),
-  /* K117 */  be_nested_str(CFG_X3A_X20multiple_X20autoconf_X20files_X20found_X2C_X20aborting_X20_X28_X27_X25s_X27_X20_X2B_X20_X27_X25s_X27_X29),
-  /* K118 */  be_const_int(2),
-  /* K119 */  be_const_int(1),
-  /* K120 */  be_nested_str(CFG_X3A_X20No_X20_X27_X2A_X2Eautoconf_X27_X20file_X20found),
-  /* K121 */  be_nested_str(_X23preinit_X2Ebe),
-  /* K122 */  be_nested_str(CFG_X3A_X20removed_X20file_X20_X27_X25s_X27),
-  /* K123 */  be_nested_str(on),
-  /* K124 */  be_nested_str(_X2Fac),
-  /* K125 */  be_nested_str(HTTP_GET),
-  /* K126 */  be_nested_str(HTTP_POST),
+  /* K100 */  be_nested_str(listdir),
+  /* K101 */  be_nested_str(_X2F),
+  /* K102 */  be_nested_str(find),
+  /* K103 */  be_nested_str(_X2Eautoconf),
+  /* K104 */  be_nested_str(remove),
+  /* K105 */  be_nested_str(_X2F_X2Eautoconf),
+  /* K106 */  be_nested_str(json),
+  /* K107 */  be_nested_str(https_X3A_X2F_X2Fraw_X2Egithubusercontent_X2Ecom_X2Ftasmota_X2Fautoconf_X2Fmain_X2F_X25s_manifest_X2Ejson),
+  /* K108 */  be_nested_str(CFG_X3A_X20loading_X20_X27_X25s_X27),
+  /* K109 */  be_nested_str(CFG_X3A_X20return_code_X3D_X25i),
+  /* K110 */  be_nested_str(get_string),
+  /* K111 */  be_nested_str(CFG_X3A_X20loaded_X20_X27_X25s_X27),
+  /* K112 */  be_nested_str(files),
+  /* K113 */  be_nested_str(CFG_X3A_X20exception_X20_X27_X25s_X27_X20_X2D_X20_X27_X25s_X27),
+  /* K114 */  be_nested_str(_X3Cp_X3E_X3Cform_X20id_X3Dac_X20action_X3D_X27ac_X27_X20style_X3D_X27display_X3A_X20block_X3B_X27_X20method_X3D_X27get_X27_X3E_X3Cbutton_X3EAuto_X2Dconfiguration_X3C_X2Fbutton_X3E_X3C_X2Fform_X3E_X3C_X2Fp_X3E),
+  /* K115 */  be_nested_str(add_driver),
+  /* K116 */  be_nested_str(CFG_X3A_X20multiple_X20autoconf_X20files_X20found_X2C_X20aborting_X20_X28_X27_X25s_X27_X20_X2B_X20_X27_X25s_X27_X29),
+  /* K117 */  be_nested_str(CFG_X3A_X20No_X20_X27_X2A_X2Eautoconf_X27_X20file_X20found),
+  /* K118 */  be_nested_str(_X23preinit_X2Ebe),
+  /* K119 */  be_nested_str(CFG_X3A_X20removed_X20file_X20_X27_X25s_X27),
+  /* K120 */  be_nested_str(on),
+  /* K121 */  be_nested_str(_X2Fac),
+  /* K122 */  be_nested_str(HTTP_GET),
+  /* K123 */  be_nested_str(HTTP_POST),
 };
 
 
@@ -702,7 +699,7 @@ be_local_closure(class_Autoconf_get_current_module_name,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x5405FFF5,  //  0000  LDINT	R1	-10
-      0x4006C801,  //  0001  CONNECT	R1	K100	R1
+      0x40068201,  //  0001  CONNECT	R1	K65	R1
       0x88080127,  //  0002  GETMBR	R2	R0	K39
       0x94040401,  //  0003  GETIDX	R1	R2	R1
       0x80040200,  //  0004  RET	1	R1
@@ -731,8 +728,8 @@ be_local_closure(class_Autoconf_delete_all_configs,   /* name */
     ( &(const binstruction[25]) {  /* code */
       0xA4060200,  //  0000  IMPORT	R1	K1
       0xA40A8C00,  //  0001  IMPORT	R2	K70
-      0x8C0C0365,  //  0002  GETMET	R3	R1	K101
-      0x58140066,  //  0003  LDCONST	R5	K102
+      0x8C0C0364,  //  0002  GETMET	R3	R1	K100
+      0x58140065,  //  0003  LDCONST	R5	K101
       0x7C0C0400,  //  0004  CALL	R3	2
       0x60100010,  //  0005  GETGBL	R4	G16
       0x5C140600,  //  0006  MOVE	R5	R3
@@ -740,13 +737,13 @@ be_local_closure(class_Autoconf_delete_all_configs,   /* name */
       0xA802000B,  //  0008  EXBLK	0	#0015
       0x5C140800,  //  0009  MOVE	R5	R4
       0x7C140000,  //  000A  CALL	R5	0
-      0x8C180567,  //  000B  GETMET	R6	R2	K103
+      0x8C180566,  //  000B  GETMET	R6	R2	K102
       0x5C200A00,  //  000C  MOVE	R8	R5
-      0x58240068,  //  000D  LDCONST	R9	K104
+      0x58240067,  //  000D  LDCONST	R9	K103
       0x7C180600,  //  000E  CALL	R6	3
       0x24180D41,  //  000F  GT	R6	R6	K65
       0x781A0002,  //  0010  JMPF	R6	#0014
-      0x8C180369,  //  0011  GETMET	R6	R1	K105
+      0x8C180368,  //  0011  GETMET	R6	R1	K104
       0x5C200A00,  //  0012  MOVE	R8	R5
       0x7C180400,  //  0013  CALL	R6	2
       0x7001FFF3,  //  0014  JMP		#0009
@@ -778,7 +775,7 @@ be_local_closure(class_Autoconf_set_first_time,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[ 7]) {  /* code */
       0x60040011,  //  0000  GETGBL	R1	G17
-      0x5808006A,  //  0001  LDCONST	R2	K106
+      0x58080069,  //  0001  LDCONST	R2	K105
       0x580C0031,  //  0002  LDCONST	R3	K49
       0x7C040400,  //  0003  CALL	R1	2
       0x8C08031B,  //  0004  GETMET	R2	R1	K27
@@ -807,10 +804,10 @@ be_local_closure(class_Autoconf_load_templates,   /* name */
     &be_const_str_load_templates,
     &be_const_str_solidified,
     ( &(const binstruction[85]) {  /* code */
-      0xA406D600,  //  0000  IMPORT	R1	K107
+      0xA406D400,  //  0000  IMPORT	R1	K106
       0xA8020042,  //  0001  EXBLK	0	#0045
       0x60080018,  //  0002  GETGBL	R2	G24
-      0x580C006C,  //  0003  LDCONST	R3	K108
+      0x580C006B,  //  0003  LDCONST	R3	K107
       0xB8120A00,  //  0004  GETNGBL	R4	K5
       0x8C100912,  //  0005  GETMET	R4	R4	K18
       0x7C100200,  //  0006  CALL	R4	1
@@ -818,7 +815,7 @@ be_local_closure(class_Autoconf_load_templates,   /* name */
       0xB80E0A00,  //  0008  GETNGBL	R3	K5
       0x8C0C0706,  //  0009  GETMET	R3	R3	K6
       0x60140018,  //  000A  GETGBL	R5	G24
-      0x5818006D,  //  000B  LDCONST	R6	K109
+      0x5818006C,  //  000B  LDCONST	R6	K108
       0x5C1C0400,  //  000C  MOVE	R7	R2
       0x7C140400,  //  000D  CALL	R5	2
       0x5818003A,  //  000E  LDCONST	R6	K58
@@ -836,7 +833,7 @@ be_local_closure(class_Autoconf_load_templates,   /* name */
       0xB8160A00,  //  001A  GETNGBL	R5	K5
       0x8C140B06,  //  001B  GETMET	R5	R5	K6
       0x601C0018,  //  001C  GETGBL	R7	G24
-      0x5820006E,  //  001D  LDCONST	R8	K110
+      0x5820006D,  //  001D  LDCONST	R8	K109
       0x5C240800,  //  001E  MOVE	R9	R4
       0x7C1C0400,  //  001F  CALL	R7	2
       0x58200008,  //  0020  LDCONST	R8	K8
@@ -844,7 +841,7 @@ be_local_closure(class_Autoconf_load_templates,   /* name */
       0x4C140000,  //  0022  LDNIL	R5
       0xA8040001,  //  0023  EXBLK	1	1
       0x80040A00,  //  0024  RET	1	R5
-      0x8C14076F,  //  0025  GETMET	R5	R3	K111
+      0x8C14076E,  //  0025  GETMET	R5	R3	K110
       0x7C140200,  //  0026  CALL	R5	1
       0x8C18071B,  //  0027  GETMET	R6	R3	K27
       0x7C180200,  //  0028  CALL	R6	1
@@ -854,15 +851,15 @@ be_local_closure(class_Autoconf_load_templates,   /* name */
       0xB81E0A00,  //  002C  GETNGBL	R7	K5
       0x8C1C0F06,  //  002D  GETMET	R7	R7	K6
       0x60240018,  //  002E  GETGBL	R9	G24
-      0x58280070,  //  002F  LDCONST	R10	K112
+      0x5828006F,  //  002F  LDCONST	R10	K111
       0x602C0008,  //  0030  GETGBL	R11	G8
       0x5C300C00,  //  0031  MOVE	R12	R6
       0x7C2C0200,  //  0032  CALL	R11	1
       0x7C240400,  //  0033  CALL	R9	2
       0x5828003A,  //  0034  LDCONST	R10	K58
       0x7C1C0600,  //  0035  CALL	R7	3
-      0x8C1C0D67,  //  0036  GETMET	R7	R6	K103
-      0x58240071,  //  0037  LDCONST	R9	K113
+      0x8C1C0D66,  //  0036  GETMET	R7	R6	K102
+      0x58240070,  //  0037  LDCONST	R9	K112
       0x7C1C0400,  //  0038  CALL	R7	2
       0x6020000F,  //  0039  GETGBL	R8	G15
       0x5C240E00,  //  003A  MOVE	R9	R7
@@ -881,7 +878,7 @@ be_local_closure(class_Autoconf_load_templates,   /* name */
       0xB8120A00,  //  0047  GETNGBL	R4	K5
       0x8C100906,  //  0048  GETMET	R4	R4	K6
       0x60180018,  //  0049  GETGBL	R6	G24
-      0x581C0072,  //  004A  LDCONST	R7	K114
+      0x581C0071,  //  004A  LDCONST	R7	K113
       0x5C200400,  //  004B  MOVE	R8	R2
       0x5C240600,  //  004C  MOVE	R9	R3
       0x7C180600,  //  004D  CALL	R6	3
@@ -917,7 +914,7 @@ be_local_closure(class_Autoconf_web_add_config_button,   /* name */
     ( &(const binstruction[ 5]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
       0x8C080322,  //  0001  GETMET	R2	R1	K34
-      0x58100073,  //  0002  LDCONST	R4	K115
+      0x58100072,  //  0002  LDCONST	R4	K114
       0x7C080400,  //  0003  CALL	R2	2
       0x80000000,  //  0004  RET	0
     })
@@ -945,7 +942,7 @@ be_local_closure(class_Autoconf_is_first_time,   /* name */
     ( &(const binstruction[ 8]) {  /* code */
       0xA4060200,  //  0000  IMPORT	R1	K1
       0x8C08032A,  //  0001  GETMET	R2	R1	K42
-      0x5810006A,  //  0002  LDCONST	R4	K106
+      0x58100069,  //  0002  LDCONST	R4	K105
       0x7C080400,  //  0003  CALL	R2	2
       0x780A0000,  //  0004  JMPF	R2	#0006
       0x50080001,  //  0005  LDBOOL	R2	0	1
@@ -976,12 +973,12 @@ be_local_closure(class_Autoconf_init,   /* name */
     ( &(const binstruction[53]) {  /* code */
       0xA4060200,  //  0000  IMPORT	R1	K1
       0xA40A8C00,  //  0001  IMPORT	R2	K70
-      0x8C0C0365,  //  0002  GETMET	R3	R1	K101
-      0x58140066,  //  0003  LDCONST	R5	K102
+      0x8C0C0364,  //  0002  GETMET	R3	R1	K100
+      0x58140065,  //  0003  LDCONST	R5	K101
       0x7C0C0400,  //  0004  CALL	R3	2
       0x4C100000,  //  0005  LDNIL	R4
       0xB8160A00,  //  0006  GETNGBL	R5	K5
-      0x8C140B74,  //  0007  GETMET	R5	R5	K116
+      0x8C140B73,  //  0007  GETMET	R5	R5	K115
       0x5C1C0000,  //  0008  MOVE	R7	R0
       0x7C140400,  //  0009  CALL	R5	2
       0x58140041,  //  000A  LDCONST	R5	K65
@@ -990,9 +987,9 @@ be_local_closure(class_Autoconf_init,   /* name */
       0x7C180200,  //  000D  CALL	R6	1
       0x14180A06,  //  000E  LT	R6	R5	R6
       0x781A0018,  //  000F  JMPF	R6	#0029
-      0x8C180567,  //  0010  GETMET	R6	R2	K103
+      0x8C180566,  //  0010  GETMET	R6	R2	K102
       0x94200605,  //  0011  GETIDX	R8	R3	R5
-      0x58240068,  //  0012  LDCONST	R9	K104
+      0x58240067,  //  0012  LDCONST	R9	K103
       0x7C180600,  //  0013  CALL	R6	3
       0x24180D41,  //  0014  GT	R6	R6	K65
       0x781A0010,  //  0015  JMPF	R6	#0027
@@ -1002,25 +999,25 @@ be_local_closure(class_Autoconf_init,   /* name */
       0xB81A0A00,  //  0019  GETNGBL	R6	K5
       0x8C180D06,  //  001A  GETMET	R6	R6	K6
       0x60200018,  //  001B  GETGBL	R8	G24
-      0x58240075,  //  001C  LDCONST	R9	K117
+      0x58240074,  //  001C  LDCONST	R9	K116
       0x5C280800,  //  001D  MOVE	R10	R4
       0x942C0605,  //  001E  GETIDX	R11	R3	R5
       0x7C200600,  //  001F  CALL	R8	3
-      0x58240076,  //  0020  LDCONST	R9	K118
+      0x58240008,  //  0020  LDCONST	R9	K8
       0x7C180600,  //  0021  CALL	R6	3
       0x50180200,  //  0022  LDBOOL	R6	1	0
       0x90029C06,  //  0023  SETMBR	R0	K78	R6
       0x4C180000,  //  0024  LDNIL	R6
       0x80040C00,  //  0025  RET	1	R6
       0x94100605,  //  0026  GETIDX	R4	R3	R5
-      0x00140B77,  //  0027  ADD	R5	R5	K119
+      0x00140B45,  //  0027  ADD	R5	R5	K69
       0x7001FFE1,  //  0028  JMP		#000B
       0x4C180000,  //  0029  LDNIL	R6
       0x1C180806,  //  002A  EQ	R6	R4	R6
       0x781A0006,  //  002B  JMPF	R6	#0033
       0xB81A0A00,  //  002C  GETNGBL	R6	K5
       0x8C180D06,  //  002D  GETMET	R6	R6	K6
-      0x58200078,  //  002E  LDCONST	R8	K120
+      0x58200075,  //  002E  LDCONST	R8	K117
       0x5824003A,  //  002F  LDCONST	R9	K58
       0x7C180600,  //  0030  CALL	R6	3
       0x4C180000,  //  0031  LDNIL	R6
@@ -1057,7 +1054,7 @@ be_local_closure(class_Autoconf_preinit,   /* name */
       0x80000200,  //  0004  RET	0
       0xA4060200,  //  0005  IMPORT	R1	K1
       0x88080127,  //  0006  GETMBR	R2	R0	K39
-      0x00080579,  //  0007  ADD	R2	R2	K121
+      0x00080576,  //  0007  ADD	R2	R2	K118
       0x8C0C032A,  //  0008  GETMET	R3	R1	K42
       0x5C140400,  //  0009  MOVE	R5	R2
       0x7C0C0400,  //  000A  CALL	R3	2
@@ -1101,33 +1098,33 @@ be_local_closure(class_Autoconf_reset,   /* name */
     ( &(const binstruction[35]) {  /* code */
       0xA4060200,  //  0000  IMPORT	R1	K1
       0xA40A8C00,  //  0001  IMPORT	R2	K70
-      0x8C0C0365,  //  0002  GETMET	R3	R1	K101
-      0x58140066,  //  0003  LDCONST	R5	K102
+      0x8C0C0364,  //  0002  GETMET	R3	R1	K100
+      0x58140065,  //  0003  LDCONST	R5	K101
       0x7C0C0400,  //  0004  CALL	R3	2
       0x4C100000,  //  0005  LDNIL	R4
-      0x58140064,  //  0006  LDCONST	R5	K100
+      0x58140041,  //  0006  LDCONST	R5	K65
       0x6018000C,  //  0007  GETGBL	R6	G12
       0x5C1C0600,  //  0008  MOVE	R7	R3
       0x7C180200,  //  0009  CALL	R6	1
       0x14180A06,  //  000A  LT	R6	R5	R6
       0x781A0011,  //  000B  JMPF	R6	#001E
       0x94180605,  //  000C  GETIDX	R6	R3	R5
-      0x8C1C0567,  //  000D  GETMET	R7	R2	K103
+      0x8C1C0566,  //  000D  GETMET	R7	R2	K102
       0x5C240C00,  //  000E  MOVE	R9	R6
-      0x58280068,  //  000F  LDCONST	R10	K104
+      0x58280067,  //  000F  LDCONST	R10	K103
       0x7C1C0600,  //  0010  CALL	R7	3
-      0x241C0F64,  //  0011  GT	R7	R7	K100
+      0x241C0F41,  //  0011  GT	R7	R7	K65
       0x781E0008,  //  0012  JMPF	R7	#001C
-      0x8C1C0369,  //  0013  GETMET	R7	R1	K105
+      0x8C1C0368,  //  0013  GETMET	R7	R1	K104
       0x5C240C00,  //  0014  MOVE	R9	R6
       0x7C1C0400,  //  0015  CALL	R7	2
       0x601C0001,  //  0016  GETGBL	R7	G1
       0x60200018,  //  0017  GETGBL	R8	G24
-      0x5824007A,  //  0018  LDCONST	R9	K122
+      0x58240077,  //  0018  LDCONST	R9	K119
       0x5C280C00,  //  0019  MOVE	R10	R6
       0x7C200400,  //  001A  CALL	R8	2
       0x7C1C0200,  //  001B  CALL	R7	1
-      0x00140B77,  //  001C  ADD	R5	R5	K119
+      0x00140B45,  //  001C  ADD	R5	R5	K69
       0x7001FFE8,  //  001D  JMP		#0007
       0x4C180000,  //  001E  LDNIL	R6
       0x90024E06,  //  001F  SETMBR	R0	K39	R6
@@ -1205,15 +1202,15 @@ be_local_closure(class_Autoconf_web_add_handler,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[13]) {  /* code */
       0xA4060000,  //  0000  IMPORT	R1	K0
-      0x8C08037B,  //  0001  GETMET	R2	R1	K123
-      0x5810007C,  //  0002  LDCONST	R4	K124
+      0x8C080378,  //  0001  GETMET	R2	R1	K120
+      0x58100079,  //  0002  LDCONST	R4	K121
       0x84140000,  //  0003  CLOSURE	R5	P0
-      0x8818037D,  //  0004  GETMBR	R6	R1	K125
+      0x8818037A,  //  0004  GETMBR	R6	R1	K122
       0x7C080800,  //  0005  CALL	R2	4
-      0x8C08037B,  //  0006  GETMET	R2	R1	K123
-      0x5810007C,  //  0007  LDCONST	R4	K124
+      0x8C080378,  //  0006  GETMET	R2	R1	K120
+      0x58100079,  //  0007  LDCONST	R4	K121
       0x84140001,  //  0008  CLOSURE	R5	P1
-      0x8818037E,  //  0009  GETMBR	R6	R1	K126
+      0x8818037B,  //  0009  GETMBR	R6	R1	K123
       0x7C080800,  //  000A  CALL	R2	4
       0xA0000000,  //  000B  CLOSE	R0
       0x80000000,  //  000C  RET	0
@@ -1241,8 +1238,8 @@ be_local_closure(class_Autoconf_clear_first_time,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0xA4060200,  //  0000  IMPORT	R1	K1
-      0x8C080369,  //  0001  GETMET	R2	R1	K105
-      0x5810006A,  //  0002  LDCONST	R4	K106
+      0x8C080368,  //  0001  GETMET	R2	R1	K104
+      0x58100069,  //  0002  LDCONST	R4	K105
       0x7C080400,  //  0003  CALL	R2	2
       0x80000000,  //  0004  RET	0
     })

@@ -3,8 +3,8 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
-// compact class 'Animate_core' ktab size: 50, total: 98 (saved 384 bytes)
-static const bvalue be_ktab_class_Animate_core[50] = {
+// compact class 'Animate_core' ktab size: 48, total: 98 (saved 400 bytes)
+static const bvalue be_ktab_class_Animate_core[48] = {
   /* K0   */  be_nested_str_weak(stop),
   /* K1   */  be_nested_str_weak(strip),
   /* K2   */  be_nested_str_weak(clear),
@@ -32,29 +32,27 @@ static const bvalue be_ktab_class_Animate_core[50] = {
   /* K24  */  be_nested_str_weak(millis),
   /* K25  */  be_nested_str_weak(FAST_LOOP_MIN),
   /* K26  */  be_nested_str_weak(animate),
-  /* K27  */  be_const_int(1),
-  /* K28  */  be_nested_str_weak(layer),
-  /* K29  */  be_const_int(-16777216),
-  /* K30  */  be_nested_str_weak(paint),
-  /* K31  */  be_nested_str_weak(blend_pixels),
-  /* K32  */  be_nested_str_weak(obj),
-  /* K33  */  be_nested_str_weak(mth),
-  /* K34  */  be_nested_str_weak(paste_pixels),
-  /* K35  */  be_nested_str_weak(pixels_buffer),
-  /* K36  */  be_nested_str_weak(get_bri),
-  /* K37  */  be_nested_str_weak(get_gamma),
-  /* K38  */  be_nested_str_weak(dirty),
-  /* K39  */  be_nested_str_weak(show),
-  /* K40  */  be_nested_str_weak(global),
-  /* K41  */  be_nested_str_weak(_cur_anim),
-  /* K42  */  be_nested_str_weak(pixel_count),
-  /* K43  */  be_const_int(0),
-  /* K44  */  be_nested_str_weak(set_current),
-  /* K45  */  be_nested_str_weak(set_cb),
-  /* K46  */  be_nested_str_weak(set_back_color),
-  /* K47  */  be_nested_str_weak(add_animator),
-  /* K48  */  be_nested_str_weak(start),
-  /* K49  */  be_nested_str_weak(add_fast_loop),
+  /* K27  */  be_nested_str_weak(layer),
+  /* K28  */  be_const_int(-16777216),
+  /* K29  */  be_nested_str_weak(paint),
+  /* K30  */  be_nested_str_weak(blend_pixels),
+  /* K31  */  be_nested_str_weak(obj),
+  /* K32  */  be_nested_str_weak(mth),
+  /* K33  */  be_nested_str_weak(paste_pixels),
+  /* K34  */  be_nested_str_weak(pixels_buffer),
+  /* K35  */  be_nested_str_weak(get_bri),
+  /* K36  */  be_nested_str_weak(get_gamma),
+  /* K37  */  be_nested_str_weak(dirty),
+  /* K38  */  be_nested_str_weak(show),
+  /* K39  */  be_nested_str_weak(global),
+  /* K40  */  be_nested_str_weak(_cur_anim),
+  /* K41  */  be_nested_str_weak(pixel_count),
+  /* K42  */  be_nested_str_weak(set_current),
+  /* K43  */  be_nested_str_weak(set_cb),
+  /* K44  */  be_nested_str_weak(set_back_color),
+  /* K45  */  be_nested_str_weak(add_animator),
+  /* K46  */  be_nested_str_weak(start),
+  /* K47  */  be_nested_str_weak(add_fast_loop),
 };
 
 
@@ -338,32 +336,32 @@ be_local_closure(class_Animate_core_fast_loop,   /* name */
       0x8C0C071A,  //  001D  GETMET	R3	R3	K26
       0x5C140400,  //  001E  MOVE	R5	R2
       0x7C0C0400,  //  001F  CALL	R3	2
-      0x0004031B,  //  0020  ADD	R1	R1	K27
+      0x0004030D,  //  0020  ADD	R1	R1	K13
       0x7001FFF3,  //  0021  JMP		#0016
       0x58040007,  //  0022  LDCONST	R1	K7
       0x880C0115,  //  0023  GETMBR	R3	R0	K21
-      0x8810011C,  //  0024  GETMBR	R4	R0	K28
+      0x8810011B,  //  0024  GETMBR	R4	R0	K27
       0x6014000C,  //  0025  GETGBL	R5	G12
       0x88180108,  //  0026  GETMBR	R6	R0	K8
       0x7C140200,  //  0027  CALL	R5	1
       0x14140205,  //  0028  LT	R5	R1	R5
       0x7816000D,  //  0029  JMPF	R5	#0038
       0x8C140916,  //  002A  GETMET	R5	R4	K22
-      0x581C001D,  //  002B  LDCONST	R7	K29
+      0x581C001C,  //  002B  LDCONST	R7	K28
       0x7C140400,  //  002C  CALL	R5	2
       0x88140108,  //  002D  GETMBR	R5	R0	K8
       0x94140A01,  //  002E  GETIDX	R5	R5	R1
-      0x8C140B1E,  //  002F  GETMET	R5	R5	K30
+      0x8C140B1D,  //  002F  GETMET	R5	R5	K29
       0x5C1C0800,  //  0030  MOVE	R7	R4
       0x7C140400,  //  0031  CALL	R5	2
       0x78160002,  //  0032  JMPF	R5	#0036
-      0x8C14071F,  //  0033  GETMET	R5	R3	K31
+      0x8C14071E,  //  0033  GETMET	R5	R3	K30
       0x5C1C0800,  //  0034  MOVE	R7	R4
       0x7C140400,  //  0035  CALL	R5	2
-      0x0004031B,  //  0036  ADD	R1	R1	K27
+      0x0004030D,  //  0036  ADD	R1	R1	K13
       0x7001FFEC,  //  0037  JMP		#0025
-      0x88140120,  //  0038  GETMBR	R5	R0	K32
-      0x88180121,  //  0039  GETMBR	R6	R0	K33
+      0x8814011F,  //  0038  GETMBR	R5	R0	K31
+      0x88180120,  //  0039  GETMBR	R6	R0	K32
       0x78160003,  //  003A  JMPF	R5	#003F
       0x781A0002,  //  003B  JMPF	R6	#003F
       0x5C1C0C00,  //  003C  MOVE	R7	R6
@@ -372,22 +370,22 @@ be_local_closure(class_Animate_core_fast_loop,   /* name */
       0x8C1C011A,  //  003F  GETMET	R7	R0	K26
       0x7C1C0200,  //  0040  CALL	R7	1
       0x881C0115,  //  0041  GETMBR	R7	R0	K21
-      0x8C1C0F22,  //  0042  GETMET	R7	R7	K34
+      0x8C1C0F21,  //  0042  GETMET	R7	R7	K33
       0x88240101,  //  0043  GETMBR	R9	R0	K1
-      0x8C241323,  //  0044  GETMET	R9	R9	K35
+      0x8C241322,  //  0044  GETMET	R9	R9	K34
       0x7C240200,  //  0045  CALL	R9	1
       0x88280101,  //  0046  GETMBR	R10	R0	K1
-      0x8C281524,  //  0047  GETMET	R10	R10	K36
+      0x8C281523,  //  0047  GETMET	R10	R10	K35
       0x7C280200,  //  0048  CALL	R10	1
       0x882C0101,  //  0049  GETMBR	R11	R0	K1
-      0x8C2C1725,  //  004A  GETMET	R11	R11	K37
+      0x8C2C1724,  //  004A  GETMET	R11	R11	K36
       0x7C2C0200,  //  004B  CALL	R11	1
       0x7C1C0800,  //  004C  CALL	R7	4
       0x881C0101,  //  004D  GETMBR	R7	R0	K1
-      0x8C1C0F26,  //  004E  GETMET	R7	R7	K38
+      0x8C1C0F25,  //  004E  GETMET	R7	R7	K37
       0x7C1C0200,  //  004F  CALL	R7	1
       0x881C0101,  //  0050  GETMBR	R7	R0	K1
-      0x8C1C0F27,  //  0051  GETMET	R7	R7	K39
+      0x8C1C0F26,  //  0051  GETMET	R7	R7	K38
       0x7C1C0200,  //  0052  CALL	R7	1
       0x80000000,  //  0053  RET	0
     })
@@ -473,8 +471,8 @@ be_local_closure(class_Animate_core_set_current,   /* name */
     be_str_weak(set_current),
     &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
-      0xB8065000,  //  0000  GETNGBL	R1	K40
-      0x90065200,  //  0001  SETMBR	R1	K41	R0
+      0xB8064E00,  //  0000  GETNGBL	R1	K39
+      0x90065000,  //  0001  SETMBR	R1	K40	R0
       0x80000000,  //  0002  RET	0
     })
   )
@@ -534,9 +532,9 @@ be_local_closure(class_Animate_core_init,   /* name */
       0x7C100200,  //  0008  CALL	R4	1
       0x50100000,  //  0009  LDBOOL	R4	0	0
       0x90021604,  //  000A  SETMBR	R0	K11	R4
-      0x8C10032A,  //  000B  GETMET	R4	R1	K42
+      0x8C100329,  //  000B  GETMET	R4	R1	K41
       0x7C100200,  //  000C  CALL	R4	1
-      0x90025404,  //  000D  SETMBR	R0	K42	R4
+      0x90025204,  //  000D  SETMBR	R0	K41	R4
       0x60100012,  //  000E  GETGBL	R4	G18
       0x7C100000,  //  000F  CALL	R4	0
       0x90021804,  //  0010  SETMBR	R0	K12	R4
@@ -546,17 +544,17 @@ be_local_closure(class_Animate_core_init,   /* name */
       0x8C100102,  //  0014  GETMET	R4	R0	K2
       0x7C100200,  //  0015  CALL	R4	1
       0x8C100715,  //  0016  GETMET	R4	R3	K21
-      0x8818012A,  //  0017  GETMBR	R6	R0	K42
+      0x88180129,  //  0017  GETMBR	R6	R0	K41
       0x7C100400,  //  0018  CALL	R4	2
       0x90022A04,  //  0019  SETMBR	R0	K21	R4
       0x8C100715,  //  001A  GETMET	R4	R3	K21
-      0x8818012A,  //  001B  GETMBR	R6	R0	K42
+      0x88180129,  //  001B  GETMBR	R6	R0	K41
       0x7C100400,  //  001C  CALL	R4	2
-      0x90023804,  //  001D  SETMBR	R0	K28	R4
+      0x90023604,  //  001D  SETMBR	R0	K27	R4
       0x84100000,  //  001E  CLOSURE	R4	P0
       0x90021E04,  //  001F  SETMBR	R0	K15	R4
-      0x90022F2B,  //  0020  SETMBR	R0	K23	K43
-      0x8C10012C,  //  0021  GETMET	R4	R0	K44
+      0x90022F07,  //  0020  SETMBR	R0	K23	K7
+      0x8C10012A,  //  0021  GETMET	R4	R0	K42
       0x7C100200,  //  0022  CALL	R4	1
       0xA0000000,  //  0023  CLOSE	R0
       0x80000000,  //  0024  RET	0
@@ -583,8 +581,8 @@ be_local_closure(class_Animate_core_set_cb,   /* name */
     be_str_weak(set_cb),
     &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
-      0x90024001,  //  0000  SETMBR	R0	K32	R1
-      0x90024202,  //  0001  SETMBR	R0	K33	R2
+      0x90023E01,  //  0000  SETMBR	R0	K31	R1
+      0x90024002,  //  0001  SETMBR	R0	K32	R2
       0x80000000,  //  0002  RET	0
     })
   )
@@ -634,11 +632,11 @@ be_local_closure(class_Animate_core_add_background_animator,   /* name */
     be_str_weak(add_background_animator),
     &be_const_str_solidified,
     ( &(const binstruction[ 8]) {  /* code */
-      0x8C08032D,  //  0000  GETMET	R2	R1	K45
+      0x8C08032B,  //  0000  GETMET	R2	R1	K43
       0x5C100000,  //  0001  MOVE	R4	R0
-      0x8814012E,  //  0002  GETMBR	R5	R0	K46
+      0x8814012C,  //  0002  GETMBR	R5	R0	K44
       0x7C080600,  //  0003  CALL	R2	3
-      0x8C08012F,  //  0004  GETMET	R2	R0	K47
+      0x8C08012D,  //  0004  GETMET	R2	R0	K45
       0x5C100200,  //  0005  MOVE	R4	R1
       0x7C080400,  //  0006  CALL	R2	2
       0x80000000,  //  0007  RET	0
@@ -740,13 +738,13 @@ be_local_closure(class_Animate_core_start,   /* name */
       0x140C0403,  //  0007  LT	R3	R2	R3
       0x780E0004,  //  0008  JMPF	R3	#000E
       0x940C0202,  //  0009  GETIDX	R3	R1	R2
-      0x8C0C0730,  //  000A  GETMET	R3	R3	K48
+      0x8C0C072E,  //  000A  GETMET	R3	R3	K46
       0x7C0C0200,  //  000B  CALL	R3	1
       0x0008050D,  //  000C  ADD	R2	R2	K13
       0x7001FFF5,  //  000D  JMP		#0004
       0x90022707,  //  000E  SETMBR	R0	K19	K7
       0xB80E0800,  //  000F  GETNGBL	R3	K4
-      0x8C0C0731,  //  0010  GETMET	R3	R3	K49
+      0x8C0C072F,  //  0010  GETMET	R3	R3	K47
       0x8814010F,  //  0011  GETMBR	R5	R0	K15
       0x7C0C0400,  //  0012  CALL	R3	2
       0x80000000,  //  0013  RET	0

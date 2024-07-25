@@ -1146,8 +1146,8 @@ be_local_class(Rule_Matcher_AND_List,
     (bstring*) &be_const_str_Rule_Matcher_AND_List
 );
 extern const bclass be_class_Rule_Matcher;
-// compact class 'Rule_Matcher' ktab size: 30, total: 34 (saved 32 bytes)
-static const bvalue be_ktab_class_Rule_Matcher[30] = {
+// compact class 'Rule_Matcher' ktab size: 29, total: 34 (saved 40 bytes)
+static const bvalue be_ktab_class_Rule_Matcher[29] = {
   /* K0   */  be_nested_str(matchers),
   /* K1   */  be_nested_str(rule),
   /* K2   */  be_nested_str(trigger),
@@ -1177,7 +1177,6 @@ static const bvalue be_ktab_class_Rule_Matcher[30] = {
   /* K26  */  be_nested_str(Rule_Matcher_Array),
   /* K27  */  be_nested_str(Rule_Matcher_Operator),
   /* K28  */  be_nested_str(match),
-  /* K29  */  be_const_int(1),
 };
 
 
@@ -1448,7 +1447,7 @@ be_local_closure(class_Rule_Matcher_match,   /* name */
       0x78120001,  //  0015  JMPF	R4	#0018
       0x4C100000,  //  0016  LDNIL	R4
       0x80040800,  //  0017  RET	1	R4
-      0x000C071D,  //  0018  ADD	R3	R3	K29
+      0x000C070C,  //  0018  ADD	R3	R3	K12
       0x7001FFED,  //  0019  JMP		#0008
       0x80040400,  //  001A  RET	1	R2
     })

@@ -3,8 +3,8 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
-// compact class 'FT3663' ktab size: 22, total: 25 (saved 24 bytes)
-static const bvalue be_ktab_class_FT3663[22] = {
+// compact class 'FT3663' ktab size: 21, total: 25 (saved 32 bytes)
+static const bvalue be_ktab_class_FT3663[21] = {
   /* K0   */  be_nested_str(wire),
   /* K1   */  be_nested_str(ts_loop),
   /* K2   */  be_nested_str(init),
@@ -21,12 +21,11 @@ static const bvalue be_ktab_class_FT3663[22] = {
   /* K13  */  be_nested_str(display),
   /* K14  */  be_nested_str(read_bytes),
   /* K15  */  be_nested_str(addr),
-  /* K16  */  be_const_int(2),
-  /* K17  */  be_const_int(3),
-  /* K18  */  be_nested_str(gest_id_codes),
-  /* K19  */  be_nested_str(find),
-  /* K20  */  be_const_int(1),
-  /* K21  */  be_nested_str(touch_update),
+  /* K16  */  be_const_int(3),
+  /* K17  */  be_nested_str(gest_id_codes),
+  /* K18  */  be_nested_str(find),
+  /* K19  */  be_const_int(1),
+  /* K20  */  be_nested_str(touch_update),
 };
 
 
@@ -160,10 +159,10 @@ be_local_closure(class_FT3663_ts_loop,   /* name */
       0x5814000B,  //  0007  LDCONST	R5	K11
       0x541A000E,  //  0008  LDINT	R6	15
       0x7C080800,  //  0009  CALL	R2	4
-      0x940C0510,  //  000A  GETIDX	R3	R2	K16
+      0x940C0508,  //  000A  GETIDX	R3	R2	K8
       0x5412000E,  //  000B  LDINT	R4	15
       0x2C0C0604,  //  000C  AND	R3	R3	R4
-      0x94100511,  //  000D  GETIDX	R4	R2	K17
+      0x94100510,  //  000D  GETIDX	R4	R2	K16
       0x5416000E,  //  000E  LDINT	R5	15
       0x2C100805,  //  000F  AND	R4	R4	R5
       0x54160007,  //  0010  LDINT	R5	8
@@ -182,7 +181,7 @@ be_local_closure(class_FT3663_ts_loop,   /* name */
       0x30140A06,  //  001D  OR	R5	R5	R6
       0x541A0006,  //  001E  LDINT	R6	7
       0x94180406,  //  001F  GETIDX	R6	R2	R6
-      0x941C0511,  //  0020  GETIDX	R7	R2	K17
+      0x941C0510,  //  0020  GETIDX	R7	R2	K16
       0x54220008,  //  0021  LDINT	R8	9
       0x2C1C0E08,  //  0022  AND	R7	R7	R8
       0x54220007,  //  0023  LDINT	R8	8
@@ -201,12 +200,12 @@ be_local_closure(class_FT3663_ts_loop,   /* name */
       0x30201009,  //  0030  OR	R8	R8	R9
       0x5426000C,  //  0031  LDINT	R9	13
       0x94240409,  //  0032  GETIDX	R9	R2	R9
-      0x88280112,  //  0033  GETMBR	R10	R0	K18
-      0x8C281513,  //  0034  GETMET	R10	R10	K19
-      0x94300514,  //  0035  GETIDX	R12	R2	K20
+      0x88280111,  //  0033  GETMBR	R10	R0	K17
+      0x8C281512,  //  0034  GETMET	R10	R10	K18
+      0x94300513,  //  0035  GETIDX	R12	R2	K19
       0x5834000B,  //  0036  LDCONST	R13	K11
       0x7C280600,  //  0037  CALL	R10	3
-      0x8C2C0315,  //  0038  GETMET	R11	R1	K21
+      0x8C2C0314,  //  0038  GETMET	R11	R1	K20
       0x5C340600,  //  0039  MOVE	R13	R3
       0x5C380800,  //  003A  MOVE	R14	R4
       0x5C3C0A00,  //  003B  MOVE	R15	R5
