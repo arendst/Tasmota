@@ -3,6 +3,7 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
+// ktab too big for class 'Matter_Device' - skipping
 
 extern const bclass be_class_Matter_Device;
 

@@ -3,6 +3,37 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
+// compact class 'lv_clock' ktab size: 27, total: 32 (saved 40 bytes)
+static const bvalue be_ktab_class_lv_clock[27] = {
+  /* K0   */  be_nested_str_weak(hour),
+  /* K1   */  be_nested_str_weak(minute),
+  /* K2   */  be_nested_str_weak(sec),
+  /* K3   */  be_nested_str_weak(_X2502d_X25s_X2502d),
+  /* K4   */  be_const_int(2),
+  /* K5   */  be_nested_str_weak(_X3A),
+  /* K6   */  be_nested_str_weak(_X20),
+  /* K7   */  be_nested_str_weak(set_text),
+  /* K8   */  be_nested_str_weak(tasmota),
+  /* K9   */  be_nested_str_weak(time_dump),
+  /* K10  */  be_nested_str_weak(rtc),
+  /* K11  */  be_nested_str_weak(local),
+  /* K12  */  be_nested_str_weak(year),
+  /* K13  */  be_nested_str_weak(set_time),
+  /* K14  */  be_nested_str_weak(min),
+  /* K15  */  be_nested_str_weak(init),
+  /* K16  */  be_nested_str_weak(lv),
+  /* K17  */  be_nested_str_weak(seg7_font),
+  /* K18  */  be_nested_str_weak(set_style_text_font),
+  /* K19  */  be_nested_str_weak(PART_MAIN),
+  /* K20  */  be_nested_str_weak(STATE_DEFAULT),
+  /* K21  */  be_nested_str_weak(_X2D_X2D_X3A_X2D_X2D),
+  /* K22  */  be_nested_str_weak(add_event_cb),
+  /* K23  */  be_nested_str_weak(EVENT_DELETE),
+  /* K24  */  be_const_int(0),
+  /* K25  */  be_nested_str_weak(add_driver),
+  /* K26  */  be_nested_str_weak(remove_driver),
+};
+
 
 extern const bclass be_class_lv_clock;
 
@@ -13,22 +44,13 @@ be_local_closure(class_lv_clock_set_time,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     4,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 8]) {     /* constants */
-    /* K0   */  be_nested_str_weak(hour),
-    /* K1   */  be_nested_str_weak(minute),
-    /* K2   */  be_nested_str_weak(sec),
-    /* K3   */  be_nested_str_weak(_X2502d_X25s_X2502d),
-    /* K4   */  be_const_int(2),
-    /* K5   */  be_nested_str_weak(_X3A),
-    /* K6   */  be_nested_str_weak(_X20),
-    /* K7   */  be_nested_str_weak(set_text),
-    }),
+    &be_ktab_class_lv_clock,     /* shared constants */
     be_str_weak(set_time),
     &be_const_str_solidified,
     ( &(const binstruction[26]) {  /* code */
@@ -71,41 +93,31 @@ be_local_closure(class_lv_clock_every_second,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 9]) {     /* constants */
-    /* K0   */  be_nested_str_weak(tasmota),
-    /* K1   */  be_nested_str_weak(time_dump),
-    /* K2   */  be_nested_str_weak(rtc),
-    /* K3   */  be_nested_str_weak(local),
-    /* K4   */  be_nested_str_weak(year),
-    /* K5   */  be_nested_str_weak(set_time),
-    /* K6   */  be_nested_str_weak(hour),
-    /* K7   */  be_nested_str_weak(min),
-    /* K8   */  be_nested_str_weak(sec),
-    }),
+    &be_ktab_class_lv_clock,     /* shared constants */
     be_str_weak(every_second),
     &be_const_str_solidified,
     ( &(const binstruction[17]) {  /* code */
-      0xB8060000,  //  0000  GETNGBL	R1	K0
-      0x8C040301,  //  0001  GETMET	R1	R1	K1
-      0xB80E0000,  //  0002  GETNGBL	R3	K0
-      0x8C0C0702,  //  0003  GETMET	R3	R3	K2
+      0xB8061000,  //  0000  GETNGBL	R1	K8
+      0x8C040309,  //  0001  GETMET	R1	R1	K9
+      0xB80E1000,  //  0002  GETNGBL	R3	K8
+      0x8C0C070A,  //  0003  GETMET	R3	R3	K10
       0x7C0C0200,  //  0004  CALL	R3	1
-      0x940C0703,  //  0005  GETIDX	R3	R3	K3
+      0x940C070B,  //  0005  GETIDX	R3	R3	K11
       0x7C040400,  //  0006  CALL	R1	2
-      0x94080304,  //  0007  GETIDX	R2	R1	K4
+      0x9408030C,  //  0007  GETIDX	R2	R1	K12
       0x540E07B1,  //  0008  LDINT	R3	1970
       0x20080403,  //  0009  NE	R2	R2	R3
       0x780A0004,  //  000A  JMPF	R2	#0010
-      0x8C080105,  //  000B  GETMET	R2	R0	K5
-      0x94100306,  //  000C  GETIDX	R4	R1	K6
-      0x94140307,  //  000D  GETIDX	R5	R1	K7
-      0x94180308,  //  000E  GETIDX	R6	R1	K8
+      0x8C08010D,  //  000B  GETMET	R2	R0	K13
+      0x94100300,  //  000C  GETIDX	R4	R1	K0
+      0x9414030E,  //  000D  GETIDX	R5	R1	K14
+      0x94180302,  //  000E  GETIDX	R6	R1	K2
       0x7C080800,  //  000F  CALL	R2	4
       0x80000000,  //  0010  RET	0
     })
@@ -121,7 +133,7 @@ be_local_closure(class_lv_clock_init,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
@@ -151,56 +163,42 @@ be_local_closure(class_lv_clock_init,   /* name */
       ),
     }),
     1,                          /* has constants */
-    ( &(const bvalue[13]) {     /* constants */
-    /* K0   */  be_nested_str_weak(init),
-    /* K1   */  be_nested_str_weak(lv),
-    /* K2   */  be_nested_str_weak(seg7_font),
-    /* K3   */  be_nested_str_weak(set_style_text_font),
-    /* K4   */  be_nested_str_weak(PART_MAIN),
-    /* K5   */  be_nested_str_weak(STATE_DEFAULT),
-    /* K6   */  be_nested_str_weak(set_text),
-    /* K7   */  be_nested_str_weak(_X2D_X2D_X3A_X2D_X2D),
-    /* K8   */  be_nested_str_weak(add_event_cb),
-    /* K9   */  be_nested_str_weak(EVENT_DELETE),
-    /* K10  */  be_const_int(0),
-    /* K11  */  be_nested_str_weak(tasmota),
-    /* K12  */  be_nested_str_weak(add_driver),
-    }),
+    &be_ktab_class_lv_clock,     /* shared constants */
     be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[36]) {  /* code */
       0x60080003,  //  0000  GETGBL	R2	G3
       0x5C0C0000,  //  0001  MOVE	R3	R0
       0x7C080200,  //  0002  CALL	R2	1
-      0x8C080500,  //  0003  GETMET	R2	R2	K0
+      0x8C08050F,  //  0003  GETMET	R2	R2	K15
       0x5C100200,  //  0004  MOVE	R4	R1
       0x7C080400,  //  0005  CALL	R2	2
-      0xB80A0200,  //  0006  GETNGBL	R2	K1
-      0x8C080502,  //  0007  GETMET	R2	R2	K2
+      0xB80A2000,  //  0006  GETNGBL	R2	K16
+      0x8C080511,  //  0007  GETMET	R2	R2	K17
       0x5412000F,  //  0008  LDINT	R4	16
       0x7C080400,  //  0009  CALL	R2	2
       0x4C0C0000,  //  000A  LDNIL	R3
       0x200C0403,  //  000B  NE	R3	R2	R3
       0x780E0007,  //  000C  JMPF	R3	#0015
-      0x8C0C0103,  //  000D  GETMET	R3	R0	K3
+      0x8C0C0112,  //  000D  GETMET	R3	R0	K18
       0x5C140400,  //  000E  MOVE	R5	R2
-      0xB81A0200,  //  000F  GETNGBL	R6	K1
-      0x88180D04,  //  0010  GETMBR	R6	R6	K4
-      0xB81E0200,  //  0011  GETNGBL	R7	K1
-      0x881C0F05,  //  0012  GETMBR	R7	R7	K5
+      0xB81A2000,  //  000F  GETNGBL	R6	K16
+      0x88180D13,  //  0010  GETMBR	R6	R6	K19
+      0xB81E2000,  //  0011  GETNGBL	R7	K16
+      0x881C0F14,  //  0012  GETMBR	R7	R7	K20
       0x30180C07,  //  0013  OR	R6	R6	R7
       0x7C0C0600,  //  0014  CALL	R3	3
-      0x8C0C0106,  //  0015  GETMET	R3	R0	K6
-      0x58140007,  //  0016  LDCONST	R5	K7
+      0x8C0C0107,  //  0015  GETMET	R3	R0	K7
+      0x58140015,  //  0016  LDCONST	R5	K21
       0x7C0C0400,  //  0017  CALL	R3	2
-      0x8C0C0108,  //  0018  GETMET	R3	R0	K8
+      0x8C0C0116,  //  0018  GETMET	R3	R0	K22
       0x84140000,  //  0019  CLOSURE	R5	P0
-      0xB81A0200,  //  001A  GETNGBL	R6	K1
-      0x88180D09,  //  001B  GETMBR	R6	R6	K9
-      0x581C000A,  //  001C  LDCONST	R7	K10
+      0xB81A2000,  //  001A  GETNGBL	R6	K16
+      0x88180D17,  //  001B  GETMBR	R6	R6	K23
+      0x581C0018,  //  001C  LDCONST	R7	K24
       0x7C0C0800,  //  001D  CALL	R3	4
-      0xB80E1600,  //  001E  GETNGBL	R3	K11
-      0x8C0C070C,  //  001F  GETMET	R3	R3	K12
+      0xB80E1000,  //  001E  GETNGBL	R3	K8
+      0x8C0C0719,  //  001F  GETMET	R3	R3	K25
       0x5C140000,  //  0020  MOVE	R5	R0
       0x7C0C0400,  //  0021  CALL	R3	2
       0xA0000000,  //  0022  CLOSE	R0
@@ -218,21 +216,18 @@ be_local_closure(class_lv_clock_before_del,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(tasmota),
-    /* K1   */  be_nested_str_weak(remove_driver),
-    }),
+    &be_ktab_class_lv_clock,     /* shared constants */
     be_str_weak(before_del),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
-      0xB8060000,  //  0000  GETNGBL	R1	K0
-      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0xB8061000,  //  0000  GETNGBL	R1	K8
+      0x8C04031A,  //  0001  GETMET	R1	R1	K26
       0x5C0C0000,  //  0002  MOVE	R3	R0
       0x7C040400,  //  0003  CALL	R1	2
       0x80000000,  //  0004  RET	0
@@ -377,6 +372,54 @@ be_local_class(lv_clock_icon,
     })),
     be_str_weak(lv_clock_icon)
 );
+// compact class 'lv_signal_arcs' ktab size: 44, total: 52 (saved 64 bytes)
+static const bvalue be_ktab_class_lv_signal_arcs[44] = {
+  /* K0   */  be_nested_str_weak(get_code),
+  /* K1   */  be_nested_str_weak(math),
+  /* K2   */  be_nested_str_weak(get_height),
+  /* K3   */  be_nested_str_weak(get_width),
+  /* K4   */  be_const_int(2),
+  /* K5   */  be_const_int(3),
+  /* K6   */  be_nested_str_weak(lv),
+  /* K7   */  be_nested_str_weak(EVENT_DRAW_MAIN),
+  /* K8   */  be_nested_str_weak(arc_dsc),
+  /* K9   */  be_nested_str_weak(get_param),
+  /* K10  */  be_nested_str_weak(get_layer),
+  /* K11  */  be_nested_str_weak(get_coords),
+  /* K12  */  be_nested_str_weak(area),
+  /* K13  */  be_nested_str_weak(x1),
+  /* K14  */  be_nested_str_weak(y1),
+  /* K15  */  be_nested_str_weak(draw_arc_dsc_init),
+  /* K16  */  be_nested_str_weak(init_draw_arc_dsc),
+  /* K17  */  be_nested_str_weak(PART_MAIN),
+  /* K18  */  be_nested_str_weak(rounded),
+  /* K19  */  be_const_int(1),
+  /* K20  */  be_nested_str_weak(width),
+  /* K21  */  be_nested_str_weak(get_style_line_color),
+  /* K22  */  be_nested_str_weak(STATE_DEFAULT),
+  /* K23  */  be_nested_str_weak(get_style_bg_color),
+  /* K24  */  be_nested_str_weak(deg),
+  /* K25  */  be_nested_str_weak(acos),
+  /* K26  */  be_nested_str_weak(center_x),
+  /* K27  */  be_nested_str_weak(center_y),
+  /* K28  */  be_nested_str_weak(color),
+  /* K29  */  be_nested_str_weak(percentage),
+  /* K30  */  be_nested_str_weak(radius),
+  /* K31  */  be_const_int(0),
+  /* K32  */  be_nested_str_weak(start_angle),
+  /* K33  */  be_nested_str_weak(end_angle),
+  /* K34  */  be_nested_str_weak(draw_arc),
+  /* K35  */  be_nested_str_weak(init),
+  /* K36  */  be_nested_str_weak(set_style_bg_opa),
+  /* K37  */  be_nested_str_weak(set_style_border_width),
+  /* K38  */  be_nested_str_weak(set_style_pad_all),
+  /* K39  */  be_nested_str_weak(draw_arc_dsc),
+  /* K40  */  be_nested_str_weak(add_event_cb),
+  /* K41  */  be_nested_str_weak(widget_event),
+  /* K42  */  be_const_int(0),
+  /* K43  */  be_nested_str_weak(invalidate),
+};
+
 
 extern const bclass be_class_lv_signal_arcs;
 
@@ -387,7 +430,7 @@ be_local_closure(class_lv_signal_arcs_widget_event,   /* name */
   be_nested_proto(
     28,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
@@ -417,43 +460,7 @@ be_local_closure(class_lv_signal_arcs_widget_event,   /* name */
       ),
     }),
     1,                          /* has constants */
-    ( &(const bvalue[35]) {     /* constants */
-    /* K0   */  be_nested_str_weak(get_code),
-    /* K1   */  be_nested_str_weak(math),
-    /* K2   */  be_nested_str_weak(get_height),
-    /* K3   */  be_nested_str_weak(get_width),
-    /* K4   */  be_const_int(2),
-    /* K5   */  be_const_int(3),
-    /* K6   */  be_nested_str_weak(lv),
-    /* K7   */  be_nested_str_weak(EVENT_DRAW_MAIN),
-    /* K8   */  be_nested_str_weak(arc_dsc),
-    /* K9   */  be_nested_str_weak(get_param),
-    /* K10  */  be_nested_str_weak(get_layer),
-    /* K11  */  be_nested_str_weak(get_coords),
-    /* K12  */  be_nested_str_weak(area),
-    /* K13  */  be_nested_str_weak(x1),
-    /* K14  */  be_nested_str_weak(y1),
-    /* K15  */  be_nested_str_weak(draw_arc_dsc_init),
-    /* K16  */  be_nested_str_weak(init_draw_arc_dsc),
-    /* K17  */  be_nested_str_weak(PART_MAIN),
-    /* K18  */  be_nested_str_weak(rounded),
-    /* K19  */  be_const_int(1),
-    /* K20  */  be_nested_str_weak(width),
-    /* K21  */  be_nested_str_weak(get_style_line_color),
-    /* K22  */  be_nested_str_weak(STATE_DEFAULT),
-    /* K23  */  be_nested_str_weak(get_style_bg_color),
-    /* K24  */  be_nested_str_weak(deg),
-    /* K25  */  be_nested_str_weak(acos),
-    /* K26  */  be_nested_str_weak(center_x),
-    /* K27  */  be_nested_str_weak(center_y),
-    /* K28  */  be_nested_str_weak(color),
-    /* K29  */  be_nested_str_weak(percentage),
-    /* K30  */  be_nested_str_weak(radius),
-    /* K31  */  be_const_int(0),
-    /* K32  */  be_nested_str_weak(start_angle),
-    /* K33  */  be_nested_str_weak(end_angle),
-    /* K34  */  be_nested_str_weak(draw_arc),
-    }),
+    &be_ktab_class_lv_signal_arcs,     /* shared constants */
     be_str_weak(widget_event),
     &be_const_str_solidified,
     ( &(const binstruction[161]) {  /* code */
@@ -631,19 +638,17 @@ be_local_closure(class_lv_signal_arcs_get_percentage,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(percentage),
-    }),
+    &be_ktab_class_lv_signal_arcs,     /* shared constants */
     be_str_weak(get_percentage),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
-      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x8804011D,  //  0000  GETMBR	R1	R0	K29
       0x80040200,  //  0001  RET	1	R1
     })
   )
@@ -658,63 +663,49 @@ be_local_closure(class_lv_signal_arcs_init,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[13]) {     /* constants */
-    /* K0   */  be_nested_str_weak(init),
-    /* K1   */  be_nested_str_weak(set_style_bg_opa),
-    /* K2   */  be_const_int(0),
-    /* K3   */  be_nested_str_weak(set_style_border_width),
-    /* K4   */  be_nested_str_weak(set_style_pad_all),
-    /* K5   */  be_nested_str_weak(percentage),
-    /* K6   */  be_nested_str_weak(area),
-    /* K7   */  be_nested_str_weak(lv),
-    /* K8   */  be_nested_str_weak(arc_dsc),
-    /* K9   */  be_nested_str_weak(draw_arc_dsc),
-    /* K10  */  be_nested_str_weak(add_event_cb),
-    /* K11  */  be_nested_str_weak(widget_event),
-    /* K12  */  be_nested_str_weak(EVENT_DRAW_MAIN),
-    }),
+    &be_ktab_class_lv_signal_arcs,     /* shared constants */
     be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[35]) {  /* code */
       0x60080003,  //  0000  GETGBL	R2	G3
       0x5C0C0000,  //  0001  MOVE	R3	R0
       0x7C080200,  //  0002  CALL	R2	1
-      0x8C080500,  //  0003  GETMET	R2	R2	K0
+      0x8C080523,  //  0003  GETMET	R2	R2	K35
       0x5C100200,  //  0004  MOVE	R4	R1
       0x7C080400,  //  0005  CALL	R2	2
-      0x8C080101,  //  0006  GETMET	R2	R0	K1
-      0x58100002,  //  0007  LDCONST	R4	K2
-      0x58140002,  //  0008  LDCONST	R5	K2
+      0x8C080124,  //  0006  GETMET	R2	R0	K36
+      0x5810001F,  //  0007  LDCONST	R4	K31
+      0x5814001F,  //  0008  LDCONST	R5	K31
       0x7C080600,  //  0009  CALL	R2	3
-      0x8C080103,  //  000A  GETMET	R2	R0	K3
-      0x58100002,  //  000B  LDCONST	R4	K2
-      0x58140002,  //  000C  LDCONST	R5	K2
+      0x8C080125,  //  000A  GETMET	R2	R0	K37
+      0x5810001F,  //  000B  LDCONST	R4	K31
+      0x5814001F,  //  000C  LDCONST	R5	K31
       0x7C080600,  //  000D  CALL	R2	3
-      0x8C080104,  //  000E  GETMET	R2	R0	K4
-      0x58100002,  //  000F  LDCONST	R4	K2
-      0x58140002,  //  0010  LDCONST	R5	K2
+      0x8C080126,  //  000E  GETMET	R2	R0	K38
+      0x5810001F,  //  000F  LDCONST	R4	K31
+      0x5814001F,  //  0010  LDCONST	R5	K31
       0x7C080600,  //  0011  CALL	R2	3
       0x540A0063,  //  0012  LDINT	R2	100
-      0x90020A02,  //  0013  SETMBR	R0	K5	R2
-      0xB80A0E00,  //  0014  GETNGBL	R2	K7
-      0x8C080506,  //  0015  GETMET	R2	R2	K6
+      0x90023A02,  //  0013  SETMBR	R0	K29	R2
+      0xB80A0C00,  //  0014  GETNGBL	R2	K6
+      0x8C08050C,  //  0015  GETMET	R2	R2	K12
       0x7C080200,  //  0016  CALL	R2	1
-      0x90020C02,  //  0017  SETMBR	R0	K6	R2
-      0xB80A0E00,  //  0018  GETNGBL	R2	K7
-      0x8C080509,  //  0019  GETMET	R2	R2	K9
+      0x90021802,  //  0017  SETMBR	R0	K12	R2
+      0xB80A0C00,  //  0018  GETNGBL	R2	K6
+      0x8C080527,  //  0019  GETMET	R2	R2	K39
       0x7C080200,  //  001A  CALL	R2	1
       0x90021002,  //  001B  SETMBR	R0	K8	R2
-      0x8C08010A,  //  001C  GETMET	R2	R0	K10
-      0x8810010B,  //  001D  GETMBR	R4	R0	K11
-      0xB8160E00,  //  001E  GETNGBL	R5	K7
-      0x88140B0C,  //  001F  GETMBR	R5	R5	K12
-      0x58180002,  //  0020  LDCONST	R6	K2
+      0x8C080128,  //  001C  GETMET	R2	R0	K40
+      0x88100129,  //  001D  GETMBR	R4	R0	K41
+      0xB8160C00,  //  001E  GETNGBL	R5	K6
+      0x88140B07,  //  001F  GETMBR	R5	R5	K7
+      0x5818001F,  //  0020  LDCONST	R6	K31
       0x7C080800,  //  0021  CALL	R2	4
       0x80000000,  //  0022  RET	0
     })
@@ -730,36 +721,32 @@ be_local_closure(class_lv_signal_arcs_set_percentage,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_weak(percentage),
-    /* K1   */  be_const_int(0),
-    /* K2   */  be_nested_str_weak(invalidate),
-    }),
+    &be_ktab_class_lv_signal_arcs,     /* shared constants */
     be_str_weak(set_percentage),
     &be_const_str_solidified,
     ( &(const binstruction[18]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
+      0x8808011D,  //  0000  GETMBR	R2	R0	K29
       0x540E0018,  //  0001  LDINT	R3	25
       0x0C080403,  //  0002  DIV	R2	R2	R3
       0x540E0063,  //  0003  LDINT	R3	100
       0x240C0203,  //  0004  GT	R3	R1	R3
       0x780E0000,  //  0005  JMPF	R3	#0007
       0x54060063,  //  0006  LDINT	R1	100
-      0x140C0301,  //  0007  LT	R3	R1	K1
+      0x140C032A,  //  0007  LT	R3	R1	K42
       0x780E0000,  //  0008  JMPF	R3	#000A
-      0x58040001,  //  0009  LDCONST	R1	K1
-      0x90020001,  //  000A  SETMBR	R0	K0	R1
+      0x5804002A,  //  0009  LDCONST	R1	K42
+      0x90023A01,  //  000A  SETMBR	R0	K29	R1
       0x540E0018,  //  000B  LDINT	R3	25
       0x0C0C0203,  //  000C  DIV	R3	R1	R3
       0x200C0403,  //  000D  NE	R3	R2	R3
       0x780E0001,  //  000E  JMPF	R3	#0011
-      0x8C0C0102,  //  000F  GETMET	R3	R0	K2
+      0x8C0C012B,  //  000F  GETMET	R3	R0	K43
       0x7C0C0200,  //  0010  CALL	R3	1
       0x80000000,  //  0011  RET	0
     })
@@ -787,6 +774,20 @@ be_local_class(lv_signal_arcs,
     })),
     be_str_weak(lv_signal_arcs)
 );
+// compact class 'lv_wifi_arcs' ktab size: 10, total: 14 (saved 32 bytes)
+static const bvalue be_ktab_class_lv_wifi_arcs[10] = {
+  /* K0   */  be_nested_str_weak(tasmota),
+  /* K1   */  be_nested_str_weak(remove_driver),
+  /* K2   */  be_nested_str_weak(init),
+  /* K3   */  be_nested_str_weak(add_driver),
+  /* K4   */  be_nested_str_weak(set_percentage),
+  /* K5   */  be_const_int(0),
+  /* K6   */  be_nested_str_weak(wifi),
+  /* K7   */  be_nested_str_weak(find),
+  /* K8   */  be_nested_str_weak(quality),
+  /* K9   */  be_nested_str_weak(ip),
+};
+
 
 extern const bclass be_class_lv_wifi_arcs;
 
@@ -797,16 +798,13 @@ be_local_closure(class_lv_wifi_arcs_before_del,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(tasmota),
-    /* K1   */  be_nested_str_weak(remove_driver),
-    }),
+    &be_ktab_class_lv_wifi_arcs,     /* shared constants */
     be_str_weak(before_del),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
@@ -828,34 +826,28 @@ be_local_closure(class_lv_wifi_arcs_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_weak(init),
-    /* K1   */  be_nested_str_weak(tasmota),
-    /* K2   */  be_nested_str_weak(add_driver),
-    /* K3   */  be_nested_str_weak(set_percentage),
-    /* K4   */  be_const_int(0),
-    }),
+    &be_ktab_class_lv_wifi_arcs,     /* shared constants */
     be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[14]) {  /* code */
       0x60080003,  //  0000  GETGBL	R2	G3
       0x5C0C0000,  //  0001  MOVE	R3	R0
       0x7C080200,  //  0002  CALL	R2	1
-      0x8C080500,  //  0003  GETMET	R2	R2	K0
+      0x8C080502,  //  0003  GETMET	R2	R2	K2
       0x5C100200,  //  0004  MOVE	R4	R1
       0x7C080400,  //  0005  CALL	R2	2
-      0xB80A0200,  //  0006  GETNGBL	R2	K1
-      0x8C080502,  //  0007  GETMET	R2	R2	K2
+      0xB80A0000,  //  0006  GETNGBL	R2	K0
+      0x8C080503,  //  0007  GETMET	R2	R2	K3
       0x5C100000,  //  0008  MOVE	R4	R0
       0x7C080400,  //  0009  CALL	R2	2
-      0x8C080103,  //  000A  GETMET	R2	R0	K3
-      0x58100004,  //  000B  LDCONST	R4	K4
+      0x8C080104,  //  000A  GETMET	R2	R0	K4
+      0x58100005,  //  000B  LDCONST	R4	K5
       0x7C080400,  //  000C  CALL	R2	2
       0x80000000,  //  000D  RET	0
     })
@@ -871,44 +863,36 @@ be_local_closure(class_lv_wifi_arcs_every_second,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_str_weak(tasmota),
-    /* K1   */  be_nested_str_weak(wifi),
-    /* K2   */  be_nested_str_weak(find),
-    /* K3   */  be_nested_str_weak(quality),
-    /* K4   */  be_nested_str_weak(ip),
-    /* K5   */  be_nested_str_weak(set_percentage),
-    /* K6   */  be_const_int(0),
-    }),
+    &be_ktab_class_lv_wifi_arcs,     /* shared constants */
     be_str_weak(every_second),
     &be_const_str_solidified,
     ( &(const binstruction[23]) {  /* code */
       0xB8060000,  //  0000  GETNGBL	R1	K0
-      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x8C040306,  //  0001  GETMET	R1	R1	K6
       0x7C040200,  //  0002  CALL	R1	1
-      0x8C080302,  //  0003  GETMET	R2	R1	K2
-      0x58100003,  //  0004  LDCONST	R4	K3
+      0x8C080307,  //  0003  GETMET	R2	R1	K7
+      0x58100008,  //  0004  LDCONST	R4	K8
       0x7C080400,  //  0005  CALL	R2	2
-      0x8C0C0302,  //  0006  GETMET	R3	R1	K2
-      0x58140004,  //  0007  LDCONST	R5	K4
+      0x8C0C0307,  //  0006  GETMET	R3	R1	K7
+      0x58140009,  //  0007  LDCONST	R5	K9
       0x7C0C0400,  //  0008  CALL	R3	2
       0x4C100000,  //  0009  LDNIL	R4
       0x1C100604,  //  000A  EQ	R4	R3	R4
       0x78120003,  //  000B  JMPF	R4	#0010
-      0x8C100105,  //  000C  GETMET	R4	R0	K5
-      0x58180006,  //  000D  LDCONST	R6	K6
+      0x8C100104,  //  000C  GETMET	R4	R0	K4
+      0x58180005,  //  000D  LDCONST	R6	K5
       0x7C100400,  //  000E  CALL	R4	2
       0x70020005,  //  000F  JMP		#0016
       0x4C100000,  //  0010  LDNIL	R4
       0x20100404,  //  0011  NE	R4	R2	R4
       0x78120002,  //  0012  JMPF	R4	#0016
-      0x8C100105,  //  0013  GETMET	R4	R0	K5
+      0x8C100104,  //  0013  GETMET	R4	R0	K4
       0x5C180400,  //  0014  MOVE	R6	R2
       0x7C100400,  //  0015  CALL	R4	2
       0x80000000,  //  0016  RET	0
@@ -1058,6 +1042,51 @@ be_local_class(lv_wifi_arcs_icon,
     })),
     be_str_weak(lv_wifi_arcs_icon)
 );
+// compact class 'lv_signal_bars' ktab size: 41, total: 49 (saved 64 bytes)
+static const bvalue be_ktab_class_lv_signal_bars[41] = {
+  /* K0   */  be_nested_str_weak(percentage),
+  /* K1   */  be_const_int(0),
+  /* K2   */  be_nested_str_weak(invalidate),
+  /* K3   */  be_nested_str_weak(get_code),
+  /* K4   */  be_nested_str_weak(get_height),
+  /* K5   */  be_nested_str_weak(get_width),
+  /* K6   */  be_const_int(3),
+  /* K7   */  be_const_int(2),
+  /* K8   */  be_nested_str_weak(lv),
+  /* K9   */  be_nested_str_weak(EVENT_DRAW_MAIN),
+  /* K10  */  be_nested_str_weak(line_dsc),
+  /* K11  */  be_nested_str_weak(get_param),
+  /* K12  */  be_nested_str_weak(get_layer),
+  /* K13  */  be_nested_str_weak(get_coords),
+  /* K14  */  be_nested_str_weak(area),
+  /* K15  */  be_nested_str_weak(x1),
+  /* K16  */  be_nested_str_weak(y1),
+  /* K17  */  be_nested_str_weak(draw_line_dsc_init),
+  /* K18  */  be_nested_str_weak(init_draw_line_dsc),
+  /* K19  */  be_nested_str_weak(PART_MAIN),
+  /* K20  */  be_nested_str_weak(round_start),
+  /* K21  */  be_const_int(1),
+  /* K22  */  be_nested_str_weak(round_end),
+  /* K23  */  be_nested_str_weak(width),
+  /* K24  */  be_nested_str_weak(get_style_line_color),
+  /* K25  */  be_nested_str_weak(STATE_DEFAULT),
+  /* K26  */  be_nested_str_weak(get_style_bg_color),
+  /* K27  */  be_nested_str_weak(color),
+  /* K28  */  be_nested_str_weak(p1_y),
+  /* K29  */  be_nested_str_weak(p1_x),
+  /* K30  */  be_nested_str_weak(p2_y),
+  /* K31  */  be_nested_str_weak(p2_x),
+  /* K32  */  be_nested_str_weak(draw_line),
+  /* K33  */  be_nested_str_weak(stop_iteration),
+  /* K34  */  be_nested_str_weak(init),
+  /* K35  */  be_nested_str_weak(set_style_bg_opa),
+  /* K36  */  be_const_int(0),
+  /* K37  */  be_nested_str_weak(set_style_border_width),
+  /* K38  */  be_nested_str_weak(draw_line_dsc),
+  /* K39  */  be_nested_str_weak(add_event_cb),
+  /* K40  */  be_nested_str_weak(widget_event),
+};
+
 
 extern const bclass be_class_lv_signal_bars;
 
@@ -1068,17 +1097,13 @@ be_local_closure(class_lv_signal_bars_set_percentage,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str_weak(percentage),
-    /* K1   */  be_const_int(0),
-    /* K2   */  be_nested_str_weak(invalidate),
-    }),
+    &be_ktab_class_lv_signal_bars,     /* shared constants */
     be_str_weak(set_percentage),
     &be_const_str_solidified,
     ( &(const binstruction[18]) {  /* code */
@@ -1113,15 +1138,13 @@ be_local_closure(class_lv_signal_bars_get_percentage,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(percentage),
-    }),
+    &be_ktab_class_lv_signal_bars,     /* shared constants */
     be_str_weak(get_percentage),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
@@ -1140,7 +1163,7 @@ be_local_closure(class_lv_signal_bars_widget_event,   /* name */
   be_nested_proto(
     22,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
@@ -1170,112 +1193,78 @@ be_local_closure(class_lv_signal_bars_widget_event,   /* name */
       ),
     }),
     1,                          /* has constants */
-    ( &(const bvalue[33]) {     /* constants */
-    /* K0   */  be_nested_str_weak(get_code),
-    /* K1   */  be_nested_str_weak(get_height),
-    /* K2   */  be_nested_str_weak(get_width),
-    /* K3   */  be_const_int(3),
-    /* K4   */  be_const_int(2),
-    /* K5   */  be_nested_str_weak(lv),
-    /* K6   */  be_nested_str_weak(EVENT_DRAW_MAIN),
-    /* K7   */  be_nested_str_weak(line_dsc),
-    /* K8   */  be_nested_str_weak(get_param),
-    /* K9   */  be_nested_str_weak(get_layer),
-    /* K10  */  be_nested_str_weak(get_coords),
-    /* K11  */  be_nested_str_weak(area),
-    /* K12  */  be_nested_str_weak(x1),
-    /* K13  */  be_nested_str_weak(y1),
-    /* K14  */  be_nested_str_weak(draw_line_dsc_init),
-    /* K15  */  be_nested_str_weak(init_draw_line_dsc),
-    /* K16  */  be_nested_str_weak(PART_MAIN),
-    /* K17  */  be_nested_str_weak(round_start),
-    /* K18  */  be_const_int(1),
-    /* K19  */  be_nested_str_weak(round_end),
-    /* K20  */  be_nested_str_weak(width),
-    /* K21  */  be_nested_str_weak(get_style_line_color),
-    /* K22  */  be_nested_str_weak(STATE_DEFAULT),
-    /* K23  */  be_nested_str_weak(get_style_bg_color),
-    /* K24  */  be_const_int(0),
-    /* K25  */  be_nested_str_weak(color),
-    /* K26  */  be_nested_str_weak(percentage),
-    /* K27  */  be_nested_str_weak(p1_y),
-    /* K28  */  be_nested_str_weak(p1_x),
-    /* K29  */  be_nested_str_weak(p2_y),
-    /* K30  */  be_nested_str_weak(p2_x),
-    /* K31  */  be_nested_str_weak(draw_line),
-    /* K32  */  be_nested_str_weak(stop_iteration),
-    }),
+    &be_ktab_class_lv_signal_bars,     /* shared constants */
     be_str_weak(widget_event),
     &be_const_str_solidified,
     ( &(const binstruction[105]) {  /* code */
-      0x8C080300,  //  0000  GETMET	R2	R1	K0
+      0x8C080303,  //  0000  GETMET	R2	R1	K3
       0x7C080200,  //  0001  CALL	R2	1
       0x840C0000,  //  0002  CLOSURE	R3	P0
-      0x8C100101,  //  0003  GETMET	R4	R0	K1
+      0x8C100104,  //  0003  GETMET	R4	R0	K4
       0x7C100200,  //  0004  CALL	R4	1
-      0x8C140102,  //  0005  GETMET	R5	R0	K2
+      0x8C140105,  //  0005  GETMET	R5	R0	K5
       0x7C140200,  //  0006  CALL	R5	1
       0x5C180600,  //  0007  MOVE	R6	R3
       0x541E000E,  //  0008  LDINT	R7	15
       0x0C1C0A07,  //  0009  DIV	R7	R5	R7
       0x7C180200,  //  000A  CALL	R6	1
       0x5C1C0600,  //  000B  MOVE	R7	R3
-      0x08200D03,  //  000C  MUL	R8	R6	K3
+      0x08200D06,  //  000C  MUL	R8	R6	K6
       0x04200A08,  //  000D  SUB	R8	R5	R8
       0x54260003,  //  000E  LDINT	R9	4
       0x0C201009,  //  000F  DIV	R8	R8	R9
       0x7C1C0200,  //  0010  CALL	R7	1
-      0x0C200F04,  //  0011  DIV	R8	R7	K4
-      0xB8260A00,  //  0012  GETNGBL	R9	K5
-      0x88241306,  //  0013  GETMBR	R9	R9	K6
+      0x0C200F07,  //  0011  DIV	R8	R7	K7
+      0xB8261000,  //  0012  GETNGBL	R9	K8
+      0x88241309,  //  0013  GETMBR	R9	R9	K9
       0x1C240409,  //  0014  EQ	R9	R2	R9
       0x78260051,  //  0015  JMPF	R9	#0068
-      0x88240107,  //  0016  GETMBR	R9	R0	K7
-      0x8C280308,  //  0017  GETMET	R10	R1	K8
+      0x8824010A,  //  0016  GETMBR	R9	R0	K10
+      0x8C28030B,  //  0017  GETMET	R10	R1	K11
       0x7C280200,  //  0018  CALL	R10	1
-      0x8C2C0309,  //  0019  GETMET	R11	R1	K9
+      0x8C2C030C,  //  0019  GETMET	R11	R1	K12
       0x7C2C0200,  //  001A  CALL	R11	1
-      0x8C30010A,  //  001B  GETMET	R12	R0	K10
-      0x8838010B,  //  001C  GETMBR	R14	R0	K11
+      0x8C30010D,  //  001B  GETMET	R12	R0	K13
+      0x8838010E,  //  001C  GETMBR	R14	R0	K14
       0x7C300400,  //  001D  CALL	R12	2
-      0x8830010B,  //  001E  GETMBR	R12	R0	K11
-      0x8830190C,  //  001F  GETMBR	R12	R12	K12
-      0x8834010B,  //  0020  GETMBR	R13	R0	K11
-      0x88341B0D,  //  0021  GETMBR	R13	R13	K13
-      0xB83A0A00,  //  0022  GETNGBL	R14	K5
-      0x8C381D0E,  //  0023  GETMET	R14	R14	K14
+      0x8830010E,  //  001E  GETMBR	R12	R0	K14
+      0x8830190F,  //  001F  GETMBR	R12	R12	K15
+      0x8834010E,  //  0020  GETMBR	R13	R0	K14
+      0x88341B10,  //  0021  GETMBR	R13	R13	K16
+      0xB83A1000,  //  0022  GETNGBL	R14	K8
+      0x8C381D11,  //  0023  GETMET	R14	R14	K17
       0x5C401200,  //  0024  MOVE	R16	R9
       0x7C380400,  //  0025  CALL	R14	2
-      0x8C38010F,  //  0026  GETMET	R14	R0	K15
-      0xB8420A00,  //  0027  GETNGBL	R16	K5
-      0x88402110,  //  0028  GETMBR	R16	R16	K16
+      0x8C380112,  //  0026  GETMET	R14	R0	K18
+      0xB8421000,  //  0027  GETNGBL	R16	K8
+      0x88402113,  //  0028  GETMBR	R16	R16	K19
       0x5C441200,  //  0029  MOVE	R17	R9
       0x7C380600,  //  002A  CALL	R14	3
-      0x90262312,  //  002B  SETMBR	R9	K17	K18
-      0x90262712,  //  002C  SETMBR	R9	K19	K18
-      0x90262807,  //  002D  SETMBR	R9	K20	R7
-      0x8C380115,  //  002E  GETMET	R14	R0	K21
-      0xB8420A00,  //  002F  GETNGBL	R16	K5
-      0x88402110,  //  0030  GETMBR	R16	R16	K16
-      0xB8460A00,  //  0031  GETNGBL	R17	K5
-      0x88442316,  //  0032  GETMBR	R17	R17	K22
+      0x90262915,  //  002B  SETMBR	R9	K20	K21
+      0x90262D15,  //  002C  SETMBR	R9	K22	K21
+      0x90262E07,  //  002D  SETMBR	R9	K23	R7
+      0x8C380118,  //  002E  GETMET	R14	R0	K24
+      0xB8421000,  //  002F  GETNGBL	R16	K8
+      0x88402113,  //  0030  GETMBR	R16	R16	K19
+      0xB8461000,  //  0031  GETNGBL	R17	K8
+      0x88442319,  //  0032  GETMBR	R17	R17	K25
       0x30402011,  //  0033  OR	R16	R16	R17
       0x7C380400,  //  0034  CALL	R14	2
-      0x8C3C0117,  //  0035  GETMET	R15	R0	K23
-      0xB8460A00,  //  0036  GETNGBL	R17	K5
-      0x88442310,  //  0037  GETMBR	R17	R17	K16
-      0xB84A0A00,  //  0038  GETNGBL	R18	K5
-      0x88482516,  //  0039  GETMBR	R18	R18	K22
+      0x8C3C011A,  //  0035  GETMET	R15	R0	K26
+      0xB8461000,  //  0036  GETNGBL	R17	K8
+      0x88442313,  //  0037  GETMBR	R17	R17	K19
+      0xB84A1000,  //  0038  GETNGBL	R18	K8
+      0x88482519,  //  0039  GETMBR	R18	R18	K25
       0x30442212,  //  003A  OR	R17	R17	R18
       0x7C3C0400,  //  003B  CALL	R15	2
       0x60400010,  //  003C  GETGBL	R16	G16
-      0x40463103,  //  003D  CONNECT	R17	K24	K3
+      0x40460306,  //  003D  CONNECT	R17	K1	K6
       0x7C400200,  //  003E  CALL	R16	1
       0xA8020024,  //  003F  EXBLK	0	#0065
       0x5C442000,  //  0040  MOVE	R17	R16
       0x7C440000,  //  0041  CALL	R17	0
-      0x8848011A,  //  0042  GETMBR	R18	R0	K26
-      0x004C2312,  //  0043  ADD	R19	R17	K18
+      0x88480100,  //  0042  GETMBR	R18	R0	K0
+      0x004C2315,  //  0043  ADD	R19	R17	K21
       0x54520013,  //  0044  LDINT	R20	20
       0x084C2614,  //  0045  MUL	R19	R19	R20
       0x28482413,  //  0046  GE	R18	R18	R19
@@ -1283,33 +1272,33 @@ be_local_closure(class_lv_signal_bars_widget_event,   /* name */
       0x5C481C00,  //  0048  MOVE	R18	R14
       0x70020000,  //  0049  JMP		#004B
       0x5C481E00,  //  004A  MOVE	R18	R15
-      0x90263212,  //  004B  SETMBR	R9	K25	R18
+      0x90263612,  //  004B  SETMBR	R9	K27	R18
       0x00481A04,  //  004C  ADD	R18	R13	R4
-      0x04482512,  //  004D  SUB	R18	R18	K18
+      0x04482515,  //  004D  SUB	R18	R18	K21
       0x04482408,  //  004E  SUB	R18	R18	R8
-      0x90263612,  //  004F  SETMBR	R9	K27	R18
+      0x90263812,  //  004F  SETMBR	R9	K28	R18
       0x00480E06,  //  0050  ADD	R18	R7	R6
       0x08482212,  //  0051  MUL	R18	R17	R18
       0x00481812,  //  0052  ADD	R18	R12	R18
       0x00482408,  //  0053  ADD	R18	R18	R8
-      0x90263812,  //  0054  SETMBR	R9	K28	R18
-      0x044A0611,  //  0055  SUB	R18	K3	R17
+      0x90263A12,  //  0054  SETMBR	R9	K29	R18
+      0x044A0C11,  //  0055  SUB	R18	K6	R17
       0x044C0807,  //  0056  SUB	R19	R4	R7
       0x08482413,  //  0057  MUL	R18	R18	R19
       0x544E0003,  //  0058  LDINT	R19	4
       0x0C482413,  //  0059  DIV	R18	R18	R19
       0x00481A12,  //  005A  ADD	R18	R13	R18
       0x00482408,  //  005B  ADD	R18	R18	R8
-      0x90263A12,  //  005C  SETMBR	R9	K29	R18
-      0x8848131C,  //  005D  GETMBR	R18	R9	K28
-      0x90263C12,  //  005E  SETMBR	R9	K30	R18
-      0xB84A0A00,  //  005F  GETNGBL	R18	K5
-      0x8C48251F,  //  0060  GETMET	R18	R18	K31
+      0x90263C12,  //  005C  SETMBR	R9	K30	R18
+      0x8848131D,  //  005D  GETMBR	R18	R9	K29
+      0x90263E12,  //  005E  SETMBR	R9	K31	R18
+      0xB84A1000,  //  005F  GETNGBL	R18	K8
+      0x8C482520,  //  0060  GETMET	R18	R18	K32
       0x5C501600,  //  0061  MOVE	R20	R11
       0x5C541200,  //  0062  MOVE	R21	R9
       0x7C480600,  //  0063  CALL	R18	3
       0x7001FFDA,  //  0064  JMP		#0040
-      0x58400020,  //  0065  LDCONST	R16	K32
+      0x58400021,  //  0065  LDCONST	R16	K33
       0xAC400200,  //  0066  CATCH	R16	1	0
       0xB0080000,  //  0067  RAISE	2	R0	R0
       0x80000000,  //  0068  RET	0
@@ -1326,58 +1315,45 @@ be_local_closure(class_lv_signal_bars_init,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[12]) {     /* constants */
-    /* K0   */  be_nested_str_weak(init),
-    /* K1   */  be_nested_str_weak(set_style_bg_opa),
-    /* K2   */  be_const_int(0),
-    /* K3   */  be_nested_str_weak(set_style_border_width),
-    /* K4   */  be_nested_str_weak(percentage),
-    /* K5   */  be_nested_str_weak(area),
-    /* K6   */  be_nested_str_weak(lv),
-    /* K7   */  be_nested_str_weak(line_dsc),
-    /* K8   */  be_nested_str_weak(draw_line_dsc),
-    /* K9   */  be_nested_str_weak(add_event_cb),
-    /* K10  */  be_nested_str_weak(widget_event),
-    /* K11  */  be_nested_str_weak(EVENT_DRAW_MAIN),
-    }),
+    &be_ktab_class_lv_signal_bars,     /* shared constants */
     be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[31]) {  /* code */
       0x60080003,  //  0000  GETGBL	R2	G3
       0x5C0C0000,  //  0001  MOVE	R3	R0
       0x7C080200,  //  0002  CALL	R2	1
-      0x8C080500,  //  0003  GETMET	R2	R2	K0
+      0x8C080522,  //  0003  GETMET	R2	R2	K34
       0x5C100200,  //  0004  MOVE	R4	R1
       0x7C080400,  //  0005  CALL	R2	2
-      0x8C080101,  //  0006  GETMET	R2	R0	K1
-      0x58100002,  //  0007  LDCONST	R4	K2
-      0x58140002,  //  0008  LDCONST	R5	K2
+      0x8C080123,  //  0006  GETMET	R2	R0	K35
+      0x58100024,  //  0007  LDCONST	R4	K36
+      0x58140024,  //  0008  LDCONST	R5	K36
       0x7C080600,  //  0009  CALL	R2	3
-      0x8C080103,  //  000A  GETMET	R2	R0	K3
-      0x58100002,  //  000B  LDCONST	R4	K2
-      0x58140002,  //  000C  LDCONST	R5	K2
+      0x8C080125,  //  000A  GETMET	R2	R0	K37
+      0x58100024,  //  000B  LDCONST	R4	K36
+      0x58140024,  //  000C  LDCONST	R5	K36
       0x7C080600,  //  000D  CALL	R2	3
       0x540A0063,  //  000E  LDINT	R2	100
-      0x90020802,  //  000F  SETMBR	R0	K4	R2
-      0xB80A0C00,  //  0010  GETNGBL	R2	K6
-      0x8C080505,  //  0011  GETMET	R2	R2	K5
+      0x90020002,  //  000F  SETMBR	R0	K0	R2
+      0xB80A1000,  //  0010  GETNGBL	R2	K8
+      0x8C08050E,  //  0011  GETMET	R2	R2	K14
       0x7C080200,  //  0012  CALL	R2	1
-      0x90020A02,  //  0013  SETMBR	R0	K5	R2
-      0xB80A0C00,  //  0014  GETNGBL	R2	K6
-      0x8C080508,  //  0015  GETMET	R2	R2	K8
+      0x90021C02,  //  0013  SETMBR	R0	K14	R2
+      0xB80A1000,  //  0014  GETNGBL	R2	K8
+      0x8C080526,  //  0015  GETMET	R2	R2	K38
       0x7C080200,  //  0016  CALL	R2	1
-      0x90020E02,  //  0017  SETMBR	R0	K7	R2
-      0x8C080109,  //  0018  GETMET	R2	R0	K9
-      0x8810010A,  //  0019  GETMBR	R4	R0	K10
-      0xB8160C00,  //  001A  GETNGBL	R5	K6
-      0x88140B0B,  //  001B  GETMBR	R5	R5	K11
-      0x58180002,  //  001C  LDCONST	R6	K2
+      0x90021402,  //  0017  SETMBR	R0	K10	R2
+      0x8C080127,  //  0018  GETMET	R2	R0	K39
+      0x88100128,  //  0019  GETMBR	R4	R0	K40
+      0xB8161000,  //  001A  GETNGBL	R5	K8
+      0x88140B09,  //  001B  GETMBR	R5	R5	K9
+      0x58180024,  //  001C  LDCONST	R6	K36
       0x7C080800,  //  001D  CALL	R2	4
       0x80000000,  //  001E  RET	0
     })
@@ -1405,6 +1381,20 @@ be_local_class(lv_signal_bars,
     })),
     be_str_weak(lv_signal_bars)
 );
+// compact class 'lv_wifi_bars' ktab size: 10, total: 14 (saved 32 bytes)
+static const bvalue be_ktab_class_lv_wifi_bars[10] = {
+  /* K0   */  be_nested_str_weak(tasmota),
+  /* K1   */  be_nested_str_weak(remove_driver),
+  /* K2   */  be_nested_str_weak(init),
+  /* K3   */  be_nested_str_weak(add_driver),
+  /* K4   */  be_nested_str_weak(set_percentage),
+  /* K5   */  be_const_int(0),
+  /* K6   */  be_nested_str_weak(wifi),
+  /* K7   */  be_nested_str_weak(find),
+  /* K8   */  be_nested_str_weak(quality),
+  /* K9   */  be_nested_str_weak(ip),
+};
+
 
 extern const bclass be_class_lv_wifi_bars;
 
@@ -1415,16 +1405,13 @@ be_local_closure(class_lv_wifi_bars_before_del,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(tasmota),
-    /* K1   */  be_nested_str_weak(remove_driver),
-    }),
+    &be_ktab_class_lv_wifi_bars,     /* shared constants */
     be_str_weak(before_del),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
@@ -1446,34 +1433,28 @@ be_local_closure(class_lv_wifi_bars_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_weak(init),
-    /* K1   */  be_nested_str_weak(tasmota),
-    /* K2   */  be_nested_str_weak(add_driver),
-    /* K3   */  be_nested_str_weak(set_percentage),
-    /* K4   */  be_const_int(0),
-    }),
+    &be_ktab_class_lv_wifi_bars,     /* shared constants */
     be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[14]) {  /* code */
       0x60080003,  //  0000  GETGBL	R2	G3
       0x5C0C0000,  //  0001  MOVE	R3	R0
       0x7C080200,  //  0002  CALL	R2	1
-      0x8C080500,  //  0003  GETMET	R2	R2	K0
+      0x8C080502,  //  0003  GETMET	R2	R2	K2
       0x5C100200,  //  0004  MOVE	R4	R1
       0x7C080400,  //  0005  CALL	R2	2
-      0xB80A0200,  //  0006  GETNGBL	R2	K1
-      0x8C080502,  //  0007  GETMET	R2	R2	K2
+      0xB80A0000,  //  0006  GETNGBL	R2	K0
+      0x8C080503,  //  0007  GETMET	R2	R2	K3
       0x5C100000,  //  0008  MOVE	R4	R0
       0x7C080400,  //  0009  CALL	R2	2
-      0x8C080103,  //  000A  GETMET	R2	R0	K3
-      0x58100004,  //  000B  LDCONST	R4	K4
+      0x8C080104,  //  000A  GETMET	R2	R0	K4
+      0x58100005,  //  000B  LDCONST	R4	K5
       0x7C080400,  //  000C  CALL	R2	2
       0x80000000,  //  000D  RET	0
     })
@@ -1489,44 +1470,36 @@ be_local_closure(class_lv_wifi_bars_every_second,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_str_weak(tasmota),
-    /* K1   */  be_nested_str_weak(wifi),
-    /* K2   */  be_nested_str_weak(find),
-    /* K3   */  be_nested_str_weak(quality),
-    /* K4   */  be_nested_str_weak(ip),
-    /* K5   */  be_nested_str_weak(set_percentage),
-    /* K6   */  be_const_int(0),
-    }),
+    &be_ktab_class_lv_wifi_bars,     /* shared constants */
     be_str_weak(every_second),
     &be_const_str_solidified,
     ( &(const binstruction[23]) {  /* code */
       0xB8060000,  //  0000  GETNGBL	R1	K0
-      0x8C040301,  //  0001  GETMET	R1	R1	K1
+      0x8C040306,  //  0001  GETMET	R1	R1	K6
       0x7C040200,  //  0002  CALL	R1	1
-      0x8C080302,  //  0003  GETMET	R2	R1	K2
-      0x58100003,  //  0004  LDCONST	R4	K3
+      0x8C080307,  //  0003  GETMET	R2	R1	K7
+      0x58100008,  //  0004  LDCONST	R4	K8
       0x7C080400,  //  0005  CALL	R2	2
-      0x8C0C0302,  //  0006  GETMET	R3	R1	K2
-      0x58140004,  //  0007  LDCONST	R5	K4
+      0x8C0C0307,  //  0006  GETMET	R3	R1	K7
+      0x58140009,  //  0007  LDCONST	R5	K9
       0x7C0C0400,  //  0008  CALL	R3	2
       0x4C100000,  //  0009  LDNIL	R4
       0x1C100604,  //  000A  EQ	R4	R3	R4
       0x78120003,  //  000B  JMPF	R4	#0010
-      0x8C100105,  //  000C  GETMET	R4	R0	K5
-      0x58180006,  //  000D  LDCONST	R6	K6
+      0x8C100104,  //  000C  GETMET	R4	R0	K4
+      0x58180005,  //  000D  LDCONST	R6	K5
       0x7C100400,  //  000E  CALL	R4	2
       0x70020005,  //  000F  JMP		#0016
       0x4C100000,  //  0010  LDNIL	R4
       0x20100404,  //  0011  NE	R4	R2	R4
       0x78120002,  //  0012  JMPF	R4	#0016
-      0x8C100105,  //  0013  GETMET	R4	R0	K5
+      0x8C100104,  //  0013  GETMET	R4	R0	K4
       0x5C180400,  //  0014  MOVE	R6	R2
       0x7C100400,  //  0015  CALL	R4	2
       0x80000000,  //  0016  RET	0

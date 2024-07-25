@@ -121,6 +121,18 @@ be_local_closure(module_lv_tasmota_init,   /* name */
 );
 /*******************************************************************/
 
+// compact class 'splash_runner' ktab size: 8, total: 9 (saved 8 bytes)
+static const bvalue be_ktab_class_splash_runner[8] = {
+  /* K0   */  be_nested_str_weak(tasmota),
+  /* K1   */  be_nested_str_weak(add_driver),
+  /* K2   */  be_nested_str_weak(display),
+  /* K3   */  be_nested_str_weak(dim),
+  /* K4   */  be_nested_str_weak(started),
+  /* K5   */  be_nested_str_weak(remove_driver),
+  /* K6   */  be_nested_str_weak(lv),
+  /* K7   */  be_nested_str_weak(splash),
+};
+
 
 extern const bclass be_class_splash_runner;
 
@@ -131,16 +143,13 @@ be_local_closure(class_splash_runner_init,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(tasmota),
-    /* K1   */  be_nested_str_weak(add_driver),
-    }),
+    &be_ktab_class_splash_runner,     /* shared constants */
     be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
@@ -162,36 +171,28 @@ be_local_closure(class_splash_runner_display,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     5,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 7]) {     /* constants */
-    /* K0   */  be_nested_str_weak(display),
-    /* K1   */  be_nested_str_weak(dim),
-    /* K2   */  be_nested_str_weak(started),
-    /* K3   */  be_nested_str_weak(tasmota),
-    /* K4   */  be_nested_str_weak(remove_driver),
-    /* K5   */  be_nested_str_weak(lv),
-    /* K6   */  be_nested_str_weak(splash),
-    }),
+    &be_ktab_class_splash_runner,     /* shared constants */
     be_str_weak(display),
     &be_const_str_solidified,
     ( &(const binstruction[14]) {  /* code */
-      0xA4160000,  //  0000  IMPORT	R5	K0
-      0x1C180301,  //  0001  EQ	R6	R1	K1
+      0xA4160400,  //  0000  IMPORT	R5	K2
+      0x1C180303,  //  0001  EQ	R6	R1	K3
       0x781A0009,  //  0002  JMPF	R6	#000D
-      0x8C180B02,  //  0003  GETMET	R6	R5	K2
+      0x8C180B04,  //  0003  GETMET	R6	R5	K4
       0x7C180200,  //  0004  CALL	R6	1
       0x781A0006,  //  0005  JMPF	R6	#000D
-      0xB81A0600,  //  0006  GETNGBL	R6	K3
-      0x8C180D04,  //  0007  GETMET	R6	R6	K4
+      0xB81A0000,  //  0006  GETNGBL	R6	K0
+      0x8C180D05,  //  0007  GETMET	R6	R6	K5
       0x5C200000,  //  0008  MOVE	R8	R0
       0x7C180400,  //  0009  CALL	R6	2
-      0xB81A0A00,  //  000A  GETNGBL	R6	K5
-      0x8C180D06,  //  000B  GETMET	R6	R6	K6
+      0xB81A0C00,  //  000A  GETNGBL	R6	K6
+      0x8C180D07,  //  000B  GETMET	R6	R6	K7
       0x7C180200,  //  000C  CALL	R6	1
       0x80000000,  //  000D  RET	0
     })

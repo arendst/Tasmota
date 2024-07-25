@@ -3,6 +3,14 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
+// compact class 'dyn' ktab size: 4, total: 7 (saved 24 bytes)
+static const bvalue be_ktab_class_dyn[4] = {
+  /* K0   */  be_nested_str(_attr),
+  /* K1   */  be_nested_str(tostring),
+  /* K2   */  be_nested_str(contains),
+  /* K3   */  be_nested_str(undefined),
+};
+
 
 extern const bclass be_class_dyn;
 
@@ -13,16 +21,13 @@ be_local_closure(class_dyn_tostring,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str(_attr),
-    /* K1   */  be_nested_str(tostring),
-    }),
+    &be_ktab_class_dyn,     /* shared constants */
     &be_const_str_tostring,
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
@@ -43,22 +48,18 @@ be_local_closure(class_dyn_member,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 3]) {     /* constants */
-    /* K0   */  be_nested_str(_attr),
-    /* K1   */  be_nested_str(contains),
-    /* K2   */  be_nested_str(undefined),
-    }),
+    &be_ktab_class_dyn,     /* shared constants */
     &be_const_str_member,
     &be_const_str_solidified,
     ( &(const binstruction[12]) {  /* code */
       0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x8C080502,  //  0001  GETMET	R2	R2	K2
       0x5C100200,  //  0002  MOVE	R4	R1
       0x7C080400,  //  0003  CALL	R2	2
       0x780A0003,  //  0004  JMPF	R2	#0009
@@ -66,7 +67,7 @@ be_local_closure(class_dyn_member,   /* name */
       0x94080401,  //  0006  GETIDX	R2	R2	R1
       0x80040400,  //  0007  RET	1	R2
       0x70020001,  //  0008  JMP		#000B
-      0xA40A0400,  //  0009  IMPORT	R2	K2
+      0xA40A0600,  //  0009  IMPORT	R2	K3
       0x80040400,  //  000A  RET	1	R2
       0x80000000,  //  000B  RET	0
     })
@@ -82,15 +83,13 @@ be_local_closure(class_dyn_setmember,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     3,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str(_attr),
-    }),
+    &be_ktab_class_dyn,     /* shared constants */
     &be_const_str_setmember,
     &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
@@ -110,15 +109,13 @@ be_local_closure(class_dyn_init,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str(_attr),
-    }),
+    &be_ktab_class_dyn,     /* shared constants */
     &be_const_str_init,
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
