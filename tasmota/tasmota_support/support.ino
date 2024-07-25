@@ -976,7 +976,7 @@ float CalcTempHumToAbsHum(float t, float h) {
 float ConvertHgToHpa(float p) {
   // Convert mmHg (or inHg) to hPa
   float result = p;
-  if (!isnan(p) && Settings->flag.pressure_conversion) {       // SetOption24 - Switch between hPa or mmHg pressure unit
+  if (!isnan(p) && !Settings->flag.pressure_conversion) {       // SetOption24 - Switch between hPa or mmHg pressure unit
     if (Settings->flag5.mm_vs_inch) {                          // SetOption139 - Switch between mmHg or inHg pressure unit
       result = p * 33.86389f;                                  // inHg (double to float saves 16 bytes!)
     } else {
