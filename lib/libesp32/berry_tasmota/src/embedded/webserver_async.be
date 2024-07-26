@@ -25,9 +25,9 @@
 # - support for limited headers
 # - HTTP 1.0 only
 
-#@ solidify:webserver_async.webserver_async_cnx
-#@ solidify:webserver_async.webserver_async_dispatcher
-#@ solidify:webserver_async
+#@ solidify:webserver_async.webserver_async_cnx,weak
+#@ solidify:webserver_async.webserver_async_dispatcher,weak
+#@ solidify:webserver_async,weak
 
 class webserver_async
   #############################################################
@@ -52,11 +52,7 @@ class webserver_async
     var header_host                                 # 'Host' header - useful for redirections
     # response
     var resp_headers                                # (string) aggregate headers
-    var resp_version                                # (int) HTTP version, currently only HTTP/1.1
     var chunked                                     # if true enable chunked encoding (default true)
-    var cors                                        # if true send CORS headers (default false)
-    # bytes objects to be reused
-    var payload1                                    # avoids new object allocation by reusing the same bytes() instance
     # conversion
     static var CODE_TO_STRING = {
       # 100: "Continue",
@@ -64,7 +60,7 @@ class webserver_async
       # 204: "No Content",
       301: "Moved Permanently",
       # 400: "Bad Request",
-      401: "Unauthorized",
+      # 401: "Unauthorized",
       # 403: "Payment Required",      # not sure it's useful in Tasmota context
       404: "Not Found",
       500: "Internal Server Error",
@@ -82,7 +78,6 @@ class webserver_async
     # By default:
     #   version is HTTP/1.1
     #   response is chunked-encoded
-    #   cors is disabled
     def init(server, cnx)
       self.server = server
       self.cnx = cnx
@@ -91,13 +86,10 @@ class webserver_async
       self.buf_out = bytes()
       self.phase = 0              # 0 = status line
       # util
-      self.payload1 = bytes()
       self.close_after_send = false
       # response
       self.resp_headers = ''
-      self.resp_version = 1       # HTTP 1.1      # TODO
       self.chunked = true
-      self.cors = false
       # register cb
       self.fastloop_cb = def () self.loop() end   # the closure needs to be kept, to allow removal of fast_loop later
       tasmota.add_fast_loop(self.fastloop_cb)
@@ -109,19 +101,6 @@ class webserver_async
     #
     def set_chunked(chunked)
       self.chunked = bool(chunked)
-    end
-
-    #############################################################
-    # set_cors: sets whether CORS headers are sent
-    #   false by default
-    #
-    # CORS headers are:
-    #   Access-Control-Allow-Origin: *
-    #   Access-Control-Allow-Methods: *
-    #   Access-Control-Allow-Headers: *
-    #
-    def set_cors(cors)
-      self.cors = bool(cors)
     end
 
     #############################################################
@@ -298,7 +277,7 @@ class webserver_async
             self.buf_in = self.buf_in[self.buf_in_offset + m2[0] .. ]   # truncate
             self.buf_in_offset = 0
 
-            self.event_http_headers_end()     # no more headers
+            # self.event_http_headers_end()     # no more headers
             self.phase = 2
             self.parse_http_payload()         # continue to parsing payload
           end
@@ -336,8 +315,8 @@ class webserver_async
     #
     # By default does nothing
     #
-    def event_http_headers_end()
-    end
+    # def event_http_headers_end()
+    # end
 
     #############################################################
     # parse incoming payload (if any)
@@ -379,7 +358,7 @@ class webserver_async
     #   content: (bytes or string, opt) first content to send to client (you can send more later)
     #
     def send(code, content_type, content)
-      var response = f"HTTP/1.{self.resp_version} {code} {self.code_to_string(code)}\r\n"
+      var response = f"HTTP/1.1 {code} {self.CODE_TO_STRING.find(code, 'UNKNOWN')}\r\n"
       self.send_header("Content-Type", content_type ? content_type : "text/html", true)
 
       self.send_header("Accept-Ranges", "none")
@@ -388,7 +367,7 @@ class webserver_async
         self.send_header("Transfer-Encoding", "chunked")
       end
       # cors?
-      if self.cors
+      if self.server.cors
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "*")
         self.send_header("Access-Control-Allow-Headers", "*")
@@ -408,15 +387,6 @@ class webserver_async
     end
 
     #############################################################
-    # code_to_string: converts code to string
-    #
-    # Ex: '200' to "OK"
-    #
-    static def code_to_string(code)
-      return _class.CODE_TO_STRING.find(code, "UNKNOWN")
-    end
-
-    #############################################################
     # write: writes a bytes or string piece of content
     #
     # If chunked encoding is enabled, it is sent as a separate chunk
@@ -431,14 +401,14 @@ class webserver_async
 
       # use chunk encoding
       if self.chunked
-        var payload1 = self.payload1
-        payload1.clear()
-        payload1.append(f"{size(v):X}\r\n")
-        payload1.append(v)
-        payload1.append("\r\n")
+        var p1 = self.server.p1
+        p1.clear()
+        p1.append(f"{size(v):X}\r\n")
+        p1.append(v)
+        p1.append("\r\n")
 
-        # log(f"WEB: sending chunk '{payload1.tohex()}'")
-        self._write(payload1)
+        # log(f"WEB: sending chunk '{p1.tohex()}'")
+        self._write(p1)
       else
         self._write(v)
       end
@@ -537,9 +507,8 @@ class webserver_async
   var local_port                                  # listening port, 80 is already used by Tasmota
   var server                                      # instance of `tcpserver`
   var fastloop_cb                                 # closure used by fastloop
-  var timeout                                     # default timeout for tcp connection
+  # var timeout                                     # default timeout for tcp connection
   var connections                                 # list of active connections
-  # var timeout                                     # timeout in ms
   # var auth                                        # web authentication string (Basic Auth) or `nil`, in format `user:password` as bade64
   # var cmd                                         # GET url command
   var dispatchers
@@ -547,24 +516,24 @@ class webserver_async
   var chunked                                     # if true enable chunked encoding (default true)
   var cors                                        # if true send CORS headers (default false)
   #
-  var payload1, payload2                          # temporary object bytes() to avoid reallocation
+  var p1                                          # temporary object bytes() to avoid reallocation
 
-  static var TIMEOUT = 1000                       # default timeout: 1000ms
-  static var HTTP_REQ = "^(\\w+) (\\S+) HTTP\\/(\\d\\.\\d)\r\n"
-  static var HTTP_HEADER_REGEX = "([A-Za-z0-9-]+): (.*?)\r\n"       # extract a header with its 2 parts
-  static var HTTP_BODY_REGEX   = "\r\n"                             # end of headers
+  # static var TIMEOUT = 1000                       # default timeout: 1000ms
+  # static var HTTP_REQ = "^(\\w+) (\\S+) HTTP\\/(\\d\\.\\d)\r\n"
+  # static var HTTP_HEADER_REGEX = "([A-Za-z0-9-]+): (.*?)\r\n"       # extract a header with its 2 parts
+  # static var HTTP_BODY_REGEX   = "\r\n"                             # end of headers
 
   #############################################################
   # init
   def init(port, timeout)
-    if (timeout == nil)   timeout = self.TIMEOUT    end
+    # if (timeout == nil)   timeout = self.TIMEOUT    end
+    # if (timeout == nil)   timeout = 1000    end
     self.connections = []
     self.dispatchers = []
     self.server = tcpserver(port)                 # throws an exception if port is not available
     self.chunked = true
     self.cors = false
-    self.payload1 = bytes(100)              # reserve 100 bytes by default
-    self.payload2 = bytes(100)              # reserve 100 bytes by default
+    self.p1 = bytes(100)              # reserve 100 bytes by default
     # TODO what about max_clients ?
     self.compile_re()
     # register cb
@@ -578,9 +547,12 @@ class webserver_async
   def compile_re()
     import re
     if !global.contains("_re_http_srv")
-      global._re_http_srv         = re.compile(self.HTTP_REQ)
-      global._re_http_srv_header  = re.compile(self.HTTP_HEADER_REGEX)
-      global._re_http_srv_body   = re.compile(self.HTTP_BODY_REGEX)
+      # global._re_http_srv         = re.compile(self.HTTP_REQ)
+      # global._re_http_srv_header  = re.compile(self.HTTP_HEADER_REGEX)
+      # global._re_http_srv_body   = re.compile(self.HTTP_BODY_REGEX)
+      global._re_http_srv         = re.compile("^(\\w+) (\\S+) HTTP\\/(\\d\\.\\d)\r\n")
+      global._re_http_srv_header  = re.compile("([A-Za-z0-9-]+): (.*?)\r\n")
+      global._re_http_srv_body   = re.compile("\r\n")
     end
   end
 
@@ -694,7 +666,6 @@ class webserver_async
       # retrieve new client
       var cnx = self.webserver_async_cnx(self, self.server.acceptasync())
       cnx.set_chunked(self.chunked)
-      cnx.set_cors(self.cors)
       self.connections.push(cnx)
     end
   end

@@ -284,7 +284,9 @@ BERRY_LOCAL bclass_array be_class_table = {
     &be_native_class(webclient),
     &be_native_class(tcpclient),
     &be_native_class(tcpclientasync),
-    &be_native_class(webserver_async),
+#ifdef USE_BERRY_DEBUG
+    &be_native_class(webserver_async),  // include only when USE_BERRY_DEBUG is enabled
+#endif // USE_BERRY_DEBUG
 #endif // USE_WEBCLIENT
 #ifdef USE_BERRY_TCPSERVER
     &be_native_class(tcpserver),
