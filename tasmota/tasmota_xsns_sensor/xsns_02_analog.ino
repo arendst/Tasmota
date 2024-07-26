@@ -163,7 +163,6 @@ struct {
 } Adcs;
 
 struct {
-//  float mq_samples[ANALOG_MQ_SAMPLES];
   float *mq_samples;
   float temperature = 0;
   float current = 0;
@@ -243,9 +242,9 @@ void AdcInitParams(uint8_t idx) {
     }
     else if (ADC_MQ == Adc[idx].type) {
       Adc[idx].param1 = ANALOG_MQ_TYPE;  // Could be MQ-002, MQ-004, MQ-131 ....
-      Adc[idx].param2 = (int)(ANALOG_MQ_A * ANALOG_MQ_DECIMAL_MULTIPLIER);                       // Exponential regression
-      Adc[idx].param3 = (int)(ANALOG_MQ_B * ANALOG_MQ_DECIMAL_MULTIPLIER);                      // Exponential regression
-      Adc[idx].param4 = (int)(ANALOG_MQ_RatioMQCleanAir * ANALOG_MQ_DECIMAL_MULTIPLIER);                      // Exponential regression
+      Adc[idx].param2 = (int)(ANALOG_MQ_A * ANALOG_MQ_DECIMAL_MULTIPLIER);                // Exponential regression
+      Adc[idx].param3 = (int)(ANALOG_MQ_B * ANALOG_MQ_DECIMAL_MULTIPLIER);                // Exponential regression
+      Adc[idx].param4 = (int)(ANALOG_MQ_RatioMQCleanAir * ANALOG_MQ_DECIMAL_MULTIPLIER);  // Exponential regression
     }
   }
   if ((Adcs.type != Adc[idx].type) || (0 == Adc[idx].param1) || (Adc[idx].param1 > ANALOG_RANGE)) {
@@ -263,11 +262,10 @@ void AdcAttach(uint32_t pin, uint8_t type) {
   Adc[Adcs.present].pin = pin;
   if (adcAttachPin(Adc[Adcs.present].pin)) {
     if (ADC_MQ == type) {
-      Adc[Adcs.present].mq_samples = (float*)calloc(sizeof(float), ANALOG_MQ_SAMPLES);  // Need calloc to reset registers to 0/false
+      Adc[Adcs.present].mq_samples = (float*)calloc(sizeof(float), ANALOG_MQ_SAMPLES);  // Need calloc to reset registers to 0
       if (nullptr == Adc[Adcs.present].mq_samples) { return; }
     }
     Adc[Adcs.present].type = type;
-//    analogSetPinAttenuation(Adc[Adcs.present].pin, ADC_11db);  // Default
     Adcs.present++;
   }
 }
