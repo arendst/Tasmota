@@ -3,27 +3,44 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
+// compact class 'Matter_Plugin_Sensor_Humidity' ktab size: 17, total: 19 (saved 16 bytes)
+static const bvalue be_ktab_class_Matter_Plugin_Sensor_Humidity[17] = {
+  /* K0   */  be_nested_str_weak(attribute_updated),
+  /* K1   */  be_const_int(0),
+  /* K2   */  be_nested_str_weak(matter),
+  /* K3   */  be_nested_str_weak(TLV),
+  /* K4   */  be_nested_str_weak(cluster),
+  /* K5   */  be_nested_str_weak(attribute),
+  /* K6   */  be_nested_str_weak(set_or_nil),
+  /* K7   */  be_nested_str_weak(U2),
+  /* K8   */  be_nested_str_weak(shadow_value),
+  /* K9   */  be_const_int(1),
+  /* K10  */  be_nested_str_weak(set),
+  /* K11  */  be_const_int(2),
+  /* K12  */  be_nested_str_weak(read_attribute),
+  /* K13  */  be_nested_str_weak(webserver),
+  /* K14  */  be_nested_str_weak(web_values_prefix),
+  /* K15  */  be_nested_str_weak(content_send),
+  /* K16  */  be_nested_str_weak(_X26_X23x1F4A7_X3B_X20_X252_X2E0f_X25_X25),
+};
+
 
 extern const bclass be_class_Matter_Plugin_Sensor_Humidity;
 
 /********************************************************************
 ** Solidified function: value_changed
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Humidity;
 be_local_closure(class_Matter_Plugin_Sensor_Humidity_value_changed,   /* name */
   be_nested_proto(
     5,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_Humidity, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 2]) {     /* constants */
-    /* K0   */  be_nested_str_weak(attribute_updated),
-    /* K1   */  be_const_int(0),
-    }),
+    &be_ktab_class_Matter_Plugin_Sensor_Humidity,     /* shared constants */
     be_str_weak(value_changed),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
@@ -41,70 +58,56 @@ be_local_closure(class_Matter_Plugin_Sensor_Humidity_value_changed,   /* name */
 /********************************************************************
 ** Solidified function: read_attribute
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Humidity;
 be_local_closure(class_Matter_Plugin_Sensor_Humidity_read_attribute,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     4,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_Humidity, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[12]) {     /* constants */
-    /* K0   */  be_nested_str_weak(matter),
-    /* K1   */  be_nested_str_weak(TLV),
-    /* K2   */  be_nested_str_weak(cluster),
-    /* K3   */  be_nested_str_weak(attribute),
-    /* K4   */  be_const_int(0),
-    /* K5   */  be_nested_str_weak(set_or_nil),
-    /* K6   */  be_nested_str_weak(U2),
-    /* K7   */  be_nested_str_weak(shadow_value),
-    /* K8   */  be_const_int(1),
-    /* K9   */  be_nested_str_weak(set),
-    /* K10  */  be_const_int(2),
-    /* K11  */  be_nested_str_weak(read_attribute),
-    }),
+    &be_ktab_class_Matter_Plugin_Sensor_Humidity,     /* shared constants */
     be_str_weak(read_attribute),
     &be_const_str_solidified,
     ( &(const binstruction[41]) {  /* code */
-      0xB8120000,  //  0000  GETNGBL	R4	K0
-      0x88100901,  //  0001  GETMBR	R4	R4	K1
-      0x88140502,  //  0002  GETMBR	R5	R2	K2
-      0x88180503,  //  0003  GETMBR	R6	R2	K3
+      0xB8120400,  //  0000  GETNGBL	R4	K2
+      0x88100903,  //  0001  GETMBR	R4	R4	K3
+      0x88140504,  //  0002  GETMBR	R5	R2	K4
+      0x88180505,  //  0003  GETMBR	R6	R2	K5
       0x541E0404,  //  0004  LDINT	R7	1029
       0x1C1C0A07,  //  0005  EQ	R7	R5	R7
       0x781E0018,  //  0006  JMPF	R7	#0020
-      0x1C1C0D04,  //  0007  EQ	R7	R6	K4
+      0x1C1C0D01,  //  0007  EQ	R7	R6	K1
       0x781E0007,  //  0008  JMPF	R7	#0011
-      0x8C1C0705,  //  0009  GETMET	R7	R3	K5
-      0x88240906,  //  000A  GETMBR	R9	R4	K6
+      0x8C1C0706,  //  0009  GETMET	R7	R3	K6
+      0x88240907,  //  000A  GETMBR	R9	R4	K7
       0x60280009,  //  000B  GETGBL	R10	G9
-      0x882C0107,  //  000C  GETMBR	R11	R0	K7
+      0x882C0108,  //  000C  GETMBR	R11	R0	K8
       0x7C280200,  //  000D  CALL	R10	1
       0x7C1C0600,  //  000E  CALL	R7	3
       0x80040E00,  //  000F  RET	1	R7
       0x7002000E,  //  0010  JMP		#0020
-      0x1C1C0D08,  //  0011  EQ	R7	R6	K8
+      0x1C1C0D09,  //  0011  EQ	R7	R6	K9
       0x781E0005,  //  0012  JMPF	R7	#0019
-      0x8C1C0709,  //  0013  GETMET	R7	R3	K9
-      0x88240906,  //  0014  GETMBR	R9	R4	K6
+      0x8C1C070A,  //  0013  GETMET	R7	R3	K10
+      0x88240907,  //  0014  GETMBR	R9	R4	K7
       0x542A01F3,  //  0015  LDINT	R10	500
       0x7C1C0600,  //  0016  CALL	R7	3
       0x80040E00,  //  0017  RET	1	R7
       0x70020006,  //  0018  JMP		#0020
-      0x1C1C0D0A,  //  0019  EQ	R7	R6	K10
+      0x1C1C0D0B,  //  0019  EQ	R7	R6	K11
       0x781E0004,  //  001A  JMPF	R7	#0020
-      0x8C1C0709,  //  001B  GETMET	R7	R3	K9
-      0x88240906,  //  001C  GETMBR	R9	R4	K6
+      0x8C1C070A,  //  001B  GETMET	R7	R3	K10
+      0x88240907,  //  001C  GETMBR	R9	R4	K7
       0x542A270F,  //  001D  LDINT	R10	10000
       0x7C1C0600,  //  001E  CALL	R7	3
       0x80040E00,  //  001F  RET	1	R7
       0x601C0003,  //  0020  GETGBL	R7	G3
       0x5C200000,  //  0021  MOVE	R8	R0
       0x7C1C0200,  //  0022  CALL	R7	1
-      0x8C1C0F0B,  //  0023  GETMET	R7	R7	K11
+      0x8C1C0F0C,  //  0023  GETMET	R7	R7	K12
       0x5C240200,  //  0024  MOVE	R9	R1
       0x5C280400,  //  0025  MOVE	R10	R2
       0x5C2C0600,  //  0026  MOVE	R11	R3
@@ -119,18 +122,17 @@ be_local_closure(class_Matter_Plugin_Sensor_Humidity_read_attribute,   /* name *
 /********************************************************************
 ** Solidified function: pre_value
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Humidity;
 be_local_closure(class_Matter_Plugin_Sensor_Humidity_pre_value,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_Humidity, 
-    0,                          /* has constants */
-    NULL,                       /* no const */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    &be_ktab_class_Matter_Plugin_Sensor_Humidity,     /* shared constants */
     be_str_weak(pre_value),
     &be_const_str_solidified,
     ( &(const binstruction[10]) {  /* code */
@@ -153,39 +155,32 @@ be_local_closure(class_Matter_Plugin_Sensor_Humidity_pre_value,   /* name */
 /********************************************************************
 ** Solidified function: web_values
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Sensor_Humidity;
 be_local_closure(class_Matter_Plugin_Sensor_Humidity_web_values,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     1,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Sensor_Humidity, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 5]) {     /* constants */
-    /* K0   */  be_nested_str_weak(webserver),
-    /* K1   */  be_nested_str_weak(web_values_prefix),
-    /* K2   */  be_nested_str_weak(content_send),
-    /* K3   */  be_nested_str_weak(_X26_X23x1F4A7_X3B_X20_X252_X2E0f_X25_X25),
-    /* K4   */  be_nested_str_weak(shadow_value),
-    }),
+    &be_ktab_class_Matter_Plugin_Sensor_Humidity,     /* shared constants */
     be_str_weak(web_values),
     &be_const_str_solidified,
     ( &(const binstruction[20]) {  /* code */
-      0xA4060000,  //  0000  IMPORT	R1	K0
-      0x8C080101,  //  0001  GETMET	R2	R0	K1
+      0xA4061A00,  //  0000  IMPORT	R1	K13
+      0x8C08010E,  //  0001  GETMET	R2	R0	K14
       0x7C080200,  //  0002  CALL	R2	1
-      0x8C080302,  //  0003  GETMET	R2	R1	K2
+      0x8C08030F,  //  0003  GETMET	R2	R1	K15
       0x60100018,  //  0004  GETGBL	R4	G24
-      0x58140003,  //  0005  LDCONST	R5	K3
-      0x88180104,  //  0006  GETMBR	R6	R0	K4
+      0x58140010,  //  0005  LDCONST	R5	K16
+      0x88180108,  //  0006  GETMBR	R6	R0	K8
       0x4C1C0000,  //  0007  LDNIL	R7
       0x20180C07,  //  0008  NE	R6	R6	R7
       0x781A0005,  //  0009  JMPF	R6	#0010
       0x6018000A,  //  000A  GETGBL	R6	G10
-      0x881C0104,  //  000B  GETMBR	R7	R0	K4
+      0x881C0108,  //  000B  GETMBR	R7	R0	K8
       0x7C180200,  //  000C  CALL	R6	1
       0x541E0063,  //  000D  LDINT	R7	100
       0x0C180C07,  //  000E  DIV	R6	R6	R7

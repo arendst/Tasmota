@@ -9,7 +9,6 @@ extern const bclass be_class_Matter_Plugin_Bridge_OnOff;
 /********************************************************************
 ** Solidified function: web_values
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Bridge_OnOff;
 be_local_closure(class_Matter_Plugin_Bridge_OnOff_web_values,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Matter_Plugin_Bridge_OnOff_web_values,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Matter_Plugin_Bridge_OnOff, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 7]) {     /* constants */
     /* K0   */  be_nested_str_weak(webserver),

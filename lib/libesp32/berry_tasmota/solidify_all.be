@@ -7,6 +7,7 @@ import global
 import solidify
 import string as string2
 import re
+import introspect
 
 import sys
 sys.path().push('src/embedded')   # allow to import from src/embedded

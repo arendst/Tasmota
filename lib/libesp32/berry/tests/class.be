@@ -58,18 +58,3 @@ assert(type(c4.c) == 'class')
 c5 = c4.c()
 assert(type(c5) == 'instance')
 assert(classname(c5) == 'map')
-
-#- classof now gets back the class of Berry methods -#
-class A
-    def f() end
-    static def g() end
-end
-class B : A
-    def h() end
-end
-assert(classof(A.f) == A)
-assert(classof(A.g) == A)
-assert(classof(B.h) == B)
-#- returns nil if native function of not in class -#
-assert(classof(int) == nil)
-assert(classof(def () end) == nil)

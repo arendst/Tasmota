@@ -184,9 +184,11 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `input()` returns empty string and does not crash [#21565](https://github.com/arendst/Tasmota/issues/21565)
 - Berry `bytes.resize()` for large sizes [#21716](https://github.com/arendst/Tasmota/issues/21716)
 - Berry `light.get` for separate RGB/CT [#21818](https://github.com/arendst/Tasmota/issues/21818)
+- Berry `bytes` setters and getters with negative offsets [#21835](https://github.com/arendst/Tasmota/issues/21835)
 - Matter interverted attributes 0xFFF9 and 0xFFFB [#21636](https://github.com/arendst/Tasmota/issues/21636)
 - Matter CASE Sigma1 resumption mode for faster reconnection [#21644](https://github.com/arendst/Tasmota/issues/21644)
 - Matter TLV.U8 unsigned encoding [#21672](https://github.com/arendst/Tasmota/issues/21672)
 - Matter resumption final ack [#21673](https://github.com/arendst/Tasmota/issues/21673)
 
 ### Removed
+- Berry internal: remove class from closure to simplify code [#21839](https://github.com/arendst/Tasmota/issues/21839)

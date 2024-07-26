@@ -7,7 +7,6 @@
 /********************************************************************
 ** Solidified function: read_bytes
 ********************************************************************/
-extern const bclass be_class_Wire;
 be_local_closure(class_Wire_read_bytes,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -16,7 +15,7 @@ be_local_closure(class_Wire_read_bytes,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Wire, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str(_begin_transmission),
@@ -62,7 +61,6 @@ be_local_closure(class_Wire_read_bytes,   /* name */
 /********************************************************************
 ** Solidified function: write_bytes
 ********************************************************************/
-extern const bclass be_class_Wire;
 be_local_closure(class_Wire_write_bytes,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -71,7 +69,7 @@ be_local_closure(class_Wire_write_bytes,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Wire, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str(_begin_transmission),

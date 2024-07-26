@@ -9,7 +9,6 @@ extern const bclass be_class_Driver;
 /********************************************************************
 ** Solidified function: add_cmd
 ********************************************************************/
-extern const bclass be_class_Driver;
 be_local_closure(class_Driver_add_cmd,   /* name */
   be_nested_proto(
     7,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Driver_add_cmd,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 1]) {
       be_nested_proto(
         10,                          /* nstack */
         4,                          /* argc */
@@ -29,7 +28,7 @@ be_local_closure(class_Driver_add_cmd,   /* name */
           be_local_const_upval(1, 0),
         }),
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         0,                          /* has constants */
         NULL,                       /* no const */
         &be_const_str__X3Clambda_X3E,
@@ -45,7 +44,6 @@ be_local_closure(class_Driver_add_cmd,   /* name */
           0x80040800,  //  0007  RET	1	R4
         })
       ),
-    &be_class_Driver, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 2]) {     /* constants */
