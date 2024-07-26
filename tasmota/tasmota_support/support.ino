@@ -1791,29 +1791,6 @@ bool ValidSpiPinUsed(uint32_t gpio) {
   return result;
 }
 
-#ifdef ESP32
-#ifndef FIRMWARE_SAFEBOOT
-SPIClass *Init_SPI_Bus(uint32 bus) {
-  SPIClass *spi;
-  if (1 == bus) {
-    if (TasmotaGlobal.spi_enabled) {
-      spi = &SPI;
-      spi->begin(Pin(GPIO_SPI_CLK, 0), Pin(GPIO_SPI_MISO, 0), Pin(GPIO_SPI_MOSI, 0), -1);
-      return spi;
-    }
-  }
-  if (2 == bus) {
-    if (TasmotaGlobal.spi_enabled2) {
-      spi = new SPIClass(HSPI);
-      spi->begin(Pin(GPIO_SPI_CLK, 1), Pin(GPIO_SPI_MISO, 1), Pin(GPIO_SPI_MOSI, 1), -1);
-      return spi;
-    }
-  }
-  return nullptr;
-}
-#endif // FIRMWARE_SAFEBOOT
-#endif // ESP32
-
 bool JsonTemplate(char* dataBuf)
 {
   // Old: {"NAME":"Shelly 2.5","GPIO":[56,0,17,0,21,83,0,0,6,82,5,22,156],"FLAG":2,"BASE":18}
@@ -2671,38 +2648,6 @@ void AddLogSerial() {
 void AddLogMissed(const char *sensor, uint32_t misses)
 {
   AddLog(LOG_LEVEL_DEBUG, PSTR("SNS: %s missed %d"), sensor, SENSOR_MAX_MISS - misses);
-}
-
-void AddLogSpi(uint32_t hardware, int clk, int mosi, int miso) {
-  uint32_t enabled = TasmotaGlobal.soft_spi_enabled;
-  char hwswbus[8];
-  if (hardware) {
-#ifdef ESP8266
-    strcpy_P(hwswbus, PSTR("Hard"));
-    enabled = TasmotaGlobal.spi_enabled;
-#endif      
-#ifdef ESP32
-    strcpy_P(hwswbus, PSTR("Bus0"));
-    hwswbus[3] += (char)hardware;
-    enabled = (1 == hardware) ? TasmotaGlobal.spi_enabled : TasmotaGlobal.spi_enabled2;
-#endif
-  } else {
-    strcpy_P(hwswbus, PSTR("Soft"));
-  }
-  switch(enabled) {
-    case SPI_MOSI:
-      AddLog(LOG_LEVEL_INFO, PSTR("SPI: %s using GPIO%02d(CLK) and GPIO%02d(MOSI)"),
-        hwswbus, clk, mosi);
-      break;
-    case SPI_MISO:
-      AddLog(LOG_LEVEL_INFO, PSTR("SPI: %s using GPIO%02d(CLK) and GPIO%02d(MISO)"),
-        hwswbus, clk, miso);
-      break;
-    case SPI_MOSI_MISO:
-      AddLog(LOG_LEVEL_INFO, PSTR("SPI: %s using GPIO%02d(CLK), GPIO%02d(MOSI) and GPIO%02d(MISO)"),
-        hwswbus, clk, mosi, miso);
-      break;
-  }
 }
 
 /*********************************************************************************************\

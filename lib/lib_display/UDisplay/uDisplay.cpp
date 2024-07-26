@@ -2021,14 +2021,14 @@ bool uDisplay::utouch_Init(char **name) {
       attachInterrupt(ut_irq, ut_touch_irq, FALLING);
     }
 
-extern SPIClass *Init_SPI_Bus(uint32 bus);
+extern SPIClass *SpiBegin(uint32 bus);
 
     if (ut_spi_nr == spi_nr) {
       // same as display
       ut_spi = uspi;
     } else {
 #ifdef ESP32
-      ut_spi = Init_SPI_Bus(ut_spi_nr);
+      ut_spi = SpiBegin(ut_spi_nr);
 #endif
     }
     return ut_execute(ut_init_code);
