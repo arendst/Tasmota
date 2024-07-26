@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Matter improve internal `inspect`for superclasses (#21824)
 - Matter support for split lights (`SetOption68 1` and `SetOption37 128`) (#21834)
 - Berry `webserver_async` (#21836)
+- NeoPool add `NPSetOption<x>` command to enabled/disable data validation/connection statistics
 
 ### Breaking Changed
 
