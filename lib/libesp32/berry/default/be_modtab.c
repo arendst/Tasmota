@@ -231,6 +231,7 @@ be_extern_native_class(udp);
 be_extern_native_class(webclient);
 be_extern_native_class(tcpclient);
 be_extern_native_class(tcpclientasync);
+be_extern_native_class(webserver_async);
 be_extern_native_class(tcpserver);
 be_extern_native_class(energy_struct);
 // LVGL core classes
@@ -283,6 +284,9 @@ BERRY_LOCAL bclass_array be_class_table = {
     &be_native_class(webclient),
     &be_native_class(tcpclient),
     &be_native_class(tcpclientasync),
+#ifdef USE_BERRY_DEBUG
+    &be_native_class(webserver_async),  // include only when USE_BERRY_DEBUG is enabled
+#endif // USE_BERRY_DEBUG
 #endif // USE_WEBCLIENT
 #ifdef USE_BERRY_TCPSERVER
     &be_native_class(tcpserver),
