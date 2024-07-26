@@ -26,7 +26,10 @@ static int i_write(bvm *vm)
         } else {
             data = be_tobytes(vm, 2, &size);
         }
-        be_fwrite(fh, data, size);
+        size_t bw = be_fwrite(fh, data, size);
+        if (bw != size) {
+            be_raise(vm, "io_error", "write failed");
+        }
     }
     be_return_nil(vm);
 }

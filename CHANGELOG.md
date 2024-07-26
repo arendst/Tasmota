@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Berry `light.get` for separate RGB/CT (#21818)
 - Berry `bytes` setters and getters with negative offsets (#21835)
+- Berry `file.write()` raises an exception on failure (ex: disk full)
 
 ### Removed
 - Berry internal: remove class from closure to simplify code (#21839)
