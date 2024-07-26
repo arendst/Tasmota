@@ -16,7 +16,7 @@ SPIClass *SpiBegin(uint32 bus) {
   SPIClass *spi;
   if (1 == bus) {                // SPI bus 1
     if (TasmotaGlobal.spi_enabled) {
-      spi = &SPI;                // This uses HSPI by default
+      spi = &SPI;                // Uses VSPI on ESP32 or FSPI on all other ESP32 derivatives (See SPI.cpp)
 #ifdef ESP8266
       spi->begin();
 #endif // ESP8266
@@ -29,14 +29,7 @@ SPIClass *SpiBegin(uint32 bus) {
 #ifdef ESP32
   if (2 == bus) {                // SPI bus 2
     if (TasmotaGlobal.spi_enabled2) {
-      // See framework-arduinoespressif32 esp32-hal-spi.h
-#if CONFIG_IDF_TARGET_ESP32S2
-      spi = new SPIClass(SPI3);
-#elif CONFIG_IDF_TARGET_ESP32
-      spi = new SPIClass(VSPI);
-#else
-      spi = new SPIClass(HSPI);  // Same as SPI bus 1 ???
-#endif
+      spi = new SPIClass(HSPI);  // See framework-arduinoespressif32 esp32-hal-spi.h
       spi->begin(Pin(GPIO_SPI_CLK, 1), Pin(GPIO_SPI_MISO, 1), Pin(GPIO_SPI_MOSI, 1), -1);
       return spi;
     }
