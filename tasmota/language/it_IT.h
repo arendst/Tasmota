@@ -913,6 +913,8 @@
 #define D_SENSOR_ADC_JOYSTICK           "ADC - Joystick"
 #define D_SENSOR_ADC_PH                 "ADC - pH"
 #define D_SENSOR_ADC_MQ                 "ADC - MQ"
+#define D_SENSOR_ADC_VOLTAGE   "ADC Voltage"
+#define D_SENSOR_ADC_CURRENT   "ADC Current"
 #define D_GPIO_WEBCAM_PWDN              "Webcam - PWDN"
 #define D_GPIO_WEBCAM_RESET             "Webcam - RESET"
 #define D_GPIO_WEBCAM_XCLK              "Webcam - XCLK"
