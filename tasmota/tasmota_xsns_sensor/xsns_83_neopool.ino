@@ -763,18 +763,30 @@ enum NeoPoolResult {
 #define NEOPOOL_DEFAULT_RESULT        NEOPOOL_RESULT_HEX
 #define NEOPOOL_DEFAULT_NPTELEPERIOD  0
 
-// NeoPool value resolutions
-typedef struct {
-  uint16_t ph : 2;
-  uint16_t cl : 2;
-  uint16_t ion : 2;
-} NeoPoolResMBitfield;
+typedef union {
+  uint16_t data;                           // Allow bit manipulation
+  struct {
+    uint16_t ph : 2;                      // bit 0,1 - pH value resolution
+    uint16_t cl : 2;                      // bit 2,3 - CL value resolution
+    uint16_t ion : 2;                     // bit 4,5 - ION value resolution
+    uint16_t range_check : 1;             // bit 6   - enable data validation and repair
+    uint16_t conn_stat : 1;               // bit 7   - enable connection statistic
+    uint16_t spare08 : 1;                 // bit 8
+    uint16_t spare09 : 1;                 // bit 9
+    uint16_t spare10 : 1;                 // bit 10
+    uint16_t spare11 : 1;                 // bit 11
+    uint16_t spare12 : 1;                 // bit 12
+    uint16_t spare13 : 1;                 // bit 13
+    uint16_t spare14 : 1;                 // bit 14
+    uint16_t spare15 : 1;                 // bit 15
+  };
+} NeoPoolBitfield;;
 
 // Global structure containing sensor saved variables
 struct {
   uint32_t  crc32;
   uint16_t  version;
-  NeoPoolResMBitfield resolution;
+  NeoPoolBitfield flags;
   uint8_t   result;
   uint16_t  npteleperiod;
 } NeoPoolSettings;
@@ -1099,6 +1111,13 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  * NPIonRes {<digits>}
  *            get/set number of digits in results for PH, CL and ION values
  *
+ * NPSetOption0 {0|1}
+ *            (only available on ESP32 or if NEOPOOL_RANGE_CHECKS is defined)
+ *            Disable(0)/Enable(1) sensor data min/max validation and correction ()
+ *
+ * NPSetOption1 {0|1}
+ *            (only available on ESP32 or if NEOPOOL_CONNSTAT is defined)
+ *            Disable(0)/Enable(1) modbus connection statistics
  *
  * NPRead <addr> {<cnt>}
  * NPReadL <addr> {<cnt>}
@@ -1193,6 +1212,8 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
 #define D_CMND_NP_PHRES "PHRes"
 #define D_CMND_NP_CLRES "CLRes"
 #define D_CMND_NP_IONRES "IONRes"
+#define D_CMND_NP_SETOPTION "SetOption"
+#define D_CMND_NP_SO "SO"
 #ifdef NEOPOOL_EMULATE_GPERH
   #define D_CMND_NP_GPERH "gPerh"
 #endif
@@ -1226,7 +1247,9 @@ const char kNPCommands[] PROGMEM =  D_PRFX_NEOPOOL "|"  // Prefix
   D_CMND_NP_ONERROR "|"
   D_CMND_NP_PHRES "|"
   D_CMND_NP_CLRES "|"
-  D_CMND_NP_IONRES
+  D_CMND_NP_IONRES "|"
+  D_CMND_NP_SETOPTION "|"
+  D_CMND_NP_SO
 #ifdef NEOPOOL_EMULATE_GPERH
    "|" D_CMND_NP_GPERH
 #endif
@@ -1261,7 +1284,9 @@ void (* const NPCommand[])(void) PROGMEM = {
   &CmndNeopoolOnError,
   &CmndNeopoolPHRes,
   &CmndNeopoolCLRes,
-  &CmndNeopoolIONRes
+  &CmndNeopoolIONRes,
+  &CmndNeopoolSetOption,
+  &CmndNeopoolSetOption
 #ifdef NEOPOOL_EMULATE_GPERH
   ,&CmndNeopoolgPerh
 #endif
@@ -1716,47 +1741,49 @@ uint16_t NeoPoolGetData(uint16_t addr)
   uint16_t data = NeoPoolGetCacheData(addr, -1);
 
 #ifdef NEOPOOL_RANGE_CHECKS
-  for (uint16_t i = 0; i < nitems(NeoPoolRangeCheck); i++) {
-    if (MBF_HIDRO_CURRENT == NeoPoolRangeCheck[i].addr && NEOPOOL_UNDEF_UINT16 == NeoPoolRangeCheck[i].max) {
-      // get hydrolsysis max value
-      uint16_t max = NeoPoolGetCacheData(MBF_PAR_HIDRO_NOM, -1);
-      if (0 != max) {
-        NeoPoolRangeCheck[i].max = max;
-#ifdef DEBUG_TASMOTA_SENSOR
-        AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: ConnStat - use hydrolysis max = %d"), NeoPoolRangeCheck[i].max);
-#endif
-      }
-    }
-    if (NeoPoolRangeCheck[i].addr == addr) {
-      uint16_t prev_data = data;
-      // check out of range
-      if (data < NeoPoolRangeCheck[i].min || data > NeoPoolRangeCheck[i].max) {
-#ifdef NEOPOOL_CONNSTAT
-        NeoPoolStats.value_out_of_range++;
-#endif
-        // use previous value if defined
-        if (NEOPOOL_UNDEF_UINT16 != NeoPoolRangeCheck[i].prev) {
-          data = NeoPoolRangeCheck[i].prev;
-        } else  {
-          // limit to min/max as long as no valid previous value is present
-          if (data < NeoPoolRangeCheck[i].min) {
-            data = NeoPoolRangeCheck[i].min;
-          } else {
-            data = NeoPoolRangeCheck[i].max;
-          }
+  if (NeoPoolSettings.flags.range_check) {
+    for (uint16_t i = 0; i < nitems(NeoPoolRangeCheck); i++) {
+      if (MBF_HIDRO_CURRENT == NeoPoolRangeCheck[i].addr && NEOPOOL_UNDEF_UINT16 == NeoPoolRangeCheck[i].max) {
+        // get hydrolsysis max value
+        uint16_t max = NeoPoolGetCacheData(MBF_PAR_HIDRO_NOM, -1);
+        if (0 != max) {
+          NeoPoolRangeCheck[i].max = max;
+  #ifdef DEBUG_TASMOTA_SENSOR
+          AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: ConnStat - use hydrolysis max = %d"), NeoPoolRangeCheck[i].max);
+  #endif
         }
-#ifdef DEBUG_TASMOTA_SENSOR
-        AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: ConnStat - Addr 0x%04X data out of range [%d-%d]: received %d, corrected using %d"),
-          NeoPoolRangeCheck[i].addr,
-          NeoPoolRangeCheck[i].min,
-          NeoPoolRangeCheck[i].max,
-          prev_data,
-          data);
-#endif
       }
-      else {
-        // remeber origin value
-        NeoPoolRangeCheck[i].prev = data;
+      if (NeoPoolRangeCheck[i].addr == addr) {
+        uint16_t prev_data = data;
+        // check out of range
+        if (data < NeoPoolRangeCheck[i].min || data > NeoPoolRangeCheck[i].max) {
+  #ifdef NEOPOOL_CONNSTAT
+          NeoPoolStats.value_out_of_range++;
+  #endif
+          // use previous value if defined
+          if (NEOPOOL_UNDEF_UINT16 != NeoPoolRangeCheck[i].prev) {
+            data = NeoPoolRangeCheck[i].prev;
+          } else  {
+            // limit to min/max as long as no valid previous value is present
+            if (data < NeoPoolRangeCheck[i].min) {
+              data = NeoPoolRangeCheck[i].min;
+            } else {
+              data = NeoPoolRangeCheck[i].max;
+            }
+          }
+  #ifdef DEBUG_TASMOTA_SENSOR
+          AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: ConnStat - Addr 0x%04X data out of range [%d-%d]: received %d, corrected using %d"),
+            NeoPoolRangeCheck[i].addr,
+            NeoPoolRangeCheck[i].min,
+            NeoPoolRangeCheck[i].max,
+            prev_data,
+            data);
+  #endif
+        }
+        else {
+          // remeber origin value
+          NeoPoolRangeCheck[i].prev = data;
+        }
       }
     }
   }
@@ -1976,13 +2003,13 @@ void NeoPoolShow(bool json)
     // pH
     if (NeoPoolIspHModule()) {
       fvalue = (float)NeoPoolGetData(MBF_MEASURE_PH)/100;
-      ResponseAppend_P(PSTR(",\""  D_PH  "\":{\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_PH), NeoPoolSettings.resolution.ph, &fvalue);
+      ResponseAppend_P(PSTR(",\""  D_PH  "\":{\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_PH), NeoPoolSettings.flags.ph, &fvalue);
 
       // S1
       float fphmin = (float)NeoPoolGetData(MBF_PAR_PH2)/100;
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MIN  "\":"  NEOPOOL_FMT_PH), NeoPoolSettings.resolution.ph, &fphmin);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MIN  "\":"  NEOPOOL_FMT_PH), NeoPoolSettings.flags.ph, &fphmin);
       float fphmax = (float)NeoPoolGetData(MBF_PAR_PH1)/100;
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MAX  "\":"  NEOPOOL_FMT_PH), NeoPoolSettings.resolution.ph, &fphmax);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MAX  "\":"  NEOPOOL_FMT_PH), NeoPoolSettings.flags.ph, &fphmax);
 
       // S2
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_STATE  "\":%d"), (NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_ALARM));
@@ -2018,9 +2045,9 @@ void NeoPoolShow(bool json)
     if (NeoPoolIsChlorine()) {
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CHLORINE  "\":{"));
       fvalue = (float)NeoPoolGetData(MBF_MEASURE_CL)/100;
-      ResponseAppend_P(PSTR("\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_CL), NeoPoolSettings.resolution.cl, &fvalue);
+      ResponseAppend_P(PSTR("\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_CL), NeoPoolSettings.flags.cl, &fvalue);
       fvalue = (float)NeoPoolGetData(MBF_PAR_CL1)/100;
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":"  NEOPOOL_FMT_CL), NeoPoolSettings.resolution.cl, &fvalue);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":"  NEOPOOL_FMT_CL), NeoPoolSettings.flags.cl, &fvalue);
       ResponseJsonEnd();
     }
 
@@ -2033,11 +2060,11 @@ void NeoPoolShow(bool json)
     if (NeoPoolIsIonization()) {
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_IONIZATION  "\":{"));
       fvalue = (float)NeoPoolGetData(MBF_ION_CURRENT);
-      ResponseAppend_P(PSTR("\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_ION), NeoPoolSettings.resolution.ion, &fvalue);
+      ResponseAppend_P(PSTR("\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_ION), NeoPoolSettings.flags.ion, &fvalue);
       fvalue = (float)NeoPoolGetData(MBF_PAR_ION);
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":"  NEOPOOL_FMT_ION), NeoPoolSettings.resolution.ion, &fvalue);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":"  NEOPOOL_FMT_ION), NeoPoolSettings.flags.ion, &fvalue);
       fvalue = (float)NeoPoolGetData(MBF_PAR_ION_NOM);
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MAX  "\":"  NEOPOOL_FMT_ION), NeoPoolSettings.resolution.ion, &fvalue);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MAX  "\":"  NEOPOOL_FMT_ION), NeoPoolSettings.flags.ion, &fvalue);
       ResponseJsonEnd();
     }
 
@@ -2151,19 +2178,21 @@ void NeoPoolShow(bool json)
     ResponseJsonEnd();
 
 #ifdef NEOPOOL_CONNSTAT
-    ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CONNSTAT  "\":{"));
-    ResponseAppend_P(PSTR( "\""  D_JSON_TIME  "\":\"%s\""), GetDT(NeoPoolStats.time).c_str());
-    ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CONNSTAT_MB_REQUESTS  "\":%d"), NeoPoolStats.mb_requests);
-    uint32_t mb_sum = 0;
-    for(uint16_t i = 0; i < nitems(NeoPoolStats.mb_results); i++) {
-      char mbresult[32];
-      GetTextIndexed(mbresult, sizeof(mbresult), i, kNeoPoolMBResults);
-      ResponseAppend_P(PSTR(",\"%s\":%d"), mbresult,NeoPoolStats.mb_results[i]);
-      mb_sum += NeoPoolStats.mb_results[i];
+    if (NeoPoolSettings.flags.conn_stat) {
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CONNSTAT  "\":{"));
+      ResponseAppend_P(PSTR( "\""  D_JSON_TIME  "\":\"%s\""), GetDT(NeoPoolStats.time).c_str());
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CONNSTAT_MB_REQUESTS  "\":%d"), NeoPoolStats.mb_requests);
+      uint32_t mb_sum = 0;
+      for(uint16_t i = 0; i < nitems(NeoPoolStats.mb_results); i++) {
+        char mbresult[32];
+        GetTextIndexed(mbresult, sizeof(mbresult), i, kNeoPoolMBResults);
+        ResponseAppend_P(PSTR(",\"%s\":%d"), mbresult,NeoPoolStats.mb_results[i]);
+        mb_sum += NeoPoolStats.mb_results[i];
+      }
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS  "\":%d"), NeoPoolStats.mb_requests - mb_sum);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CONNSTAT_DATA_OOR  "\":%d"), NeoPoolStats.value_out_of_range);
+      ResponseJsonEnd();
     }
-    ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS  "\":%d"), NeoPoolStats.mb_requests - mb_sum);
-    ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CONNSTAT_DATA_OOR  "\":%d"), NeoPoolStats.value_out_of_range);
-    ResponseJsonEnd();
 #endif
 
     ResponseJsonEnd();
@@ -2258,11 +2287,11 @@ void NeoPoolShow(bool json)
     if (NeoPoolIspHModule()) {
       // Data
       fvalue = (float)NeoPoolGetData(MBF_MEASURE_PH)/100;
-      WSContentSend_PD(HTTP_SNS_NEOPOOL_PH, neopool_type, NeoPoolSettings.resolution.ph, &fvalue);
+      WSContentSend_PD(HTTP_SNS_NEOPOOL_PH, neopool_type, NeoPoolSettings.flags.ph, &fvalue);
       WSContentSend_PD(PSTR("&nbsp;"));
       // S1
       float fphmax = (float)NeoPoolGetData(MBF_PAR_PH1)/100;
-      ext_snprintf_P(stemp, sizeof(stemp), PSTR(NEOPOOL_FMT_PH), NeoPoolSettings.resolution.ph, &fphmax);
+      ext_snprintf_P(stemp, sizeof(stemp), PSTR(NEOPOOL_FMT_PH), NeoPoolSettings.flags.ph, &fphmax);
       WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color,
         (((uint16_t)(fvalue*10) > (uint16_t)(fphmax*10)) ? HTTP_SNS_NEOPOOL_STATUS_ACTIVE : HTTP_SNS_NEOPOOL_STATUS_INACTIVE), stemp);
       WSContentSend_PD(PSTR(" "));
@@ -2312,7 +2341,7 @@ void NeoPoolShow(bool json)
     // Chlorine
     if (NeoPoolIsChlorine()) {
       fvalue = (float)NeoPoolGetData(MBF_MEASURE_CL)/100;
-      WSContentSend_PD(HTTP_SNS_NEOPOOL_PPM_CHLORINE, neopool_type, NeoPoolSettings.resolution.ph, &fvalue);
+      WSContentSend_PD(HTTP_SNS_NEOPOOL_PPM_CHLORINE, neopool_type, NeoPoolSettings.flags.ph, &fvalue);
     }
 
     // Conductivity
@@ -2331,7 +2360,7 @@ void NeoPoolShow(bool json)
         );
       fvalue = (float)NeoPoolGetData(MBF_ION_CURRENT);
       WSContentSend_PD(HTTP_SNS_NEOPOOL_IONIZATION, neopool_type,
-        NeoPoolSettings.resolution.ion, &fvalue,
+        NeoPoolSettings.flags.ion, &fvalue,
         stemp,
         NeoPoolGetData(MBF_ION_STATUS) & MBMSK_ION_STATUS_LOW ? PSTR(" " D_NEOPOOL_LOW) : PSTR("")
       );
@@ -2941,7 +2970,7 @@ void CmndNeopoolpHMin(void)
         return;
     }
     if (CmndNeopoolSetParam(MBF_PAR_PH2, 100, 0, (float)data/100)) {
-      CmndNeopoolGetParam(MBF_PAR_PH2, 100, NeoPoolSettings.resolution.ph);
+      CmndNeopoolGetParam(MBF_PAR_PH2, 100, NeoPoolSettings.flags.ph);
     }
   } else {
     NeopoolCmndError();
@@ -2959,7 +2988,7 @@ void CmndNeopoolpHMax(void)
         return;
     }
     if (CmndNeopoolSetParam(MBF_PAR_PH1, 100, (float)data/100, 14)) {
-      CmndNeopoolGetParam(MBF_PAR_PH1, 100, NeoPoolSettings.resolution.ph);
+      CmndNeopoolGetParam(MBF_PAR_PH1, 100, NeoPoolSettings.flags.ph);
     }
   } else {
     NeopoolCmndError();
@@ -3065,7 +3094,7 @@ void CmndNeopoolIonization(void)
         return;
     }
     if (CmndNeopoolSetParam(MBF_PAR_ION, 1, 0, (float)data)) {
-      CmndNeopoolGetParam(MBF_PAR_ION, 1, NeoPoolSettings.resolution.ion);
+      CmndNeopoolGetParam(MBF_PAR_ION, 1, NeoPoolSettings.flags.ion);
     }
   } else {
     NeopoolCmndError();
@@ -3077,7 +3106,7 @@ void CmndNeopoolChlorine(void)
 {
   if (NeoPoolIsChlorine()) {
     if (CmndNeopoolSetParam(MBF_PAR_CL1, 100, 0, 10)) {
-      CmndNeopoolGetParam(MBF_PAR_CL1, 100, NeoPoolSettings.resolution.cl);
+      CmndNeopoolGetParam(MBF_PAR_CL1, 100, NeoPoolSettings.flags.cl);
     }
   } else {
     NeopoolCmndError();
@@ -3154,27 +3183,38 @@ void CmndNeopoolOnError(void)
 void CmndNeopoolPHRes(void)
 {
   if (XdrvMailbox.data_len && XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 3) {
-    NeoPoolSettings.resolution.ph = XdrvMailbox.payload;
+    NeoPoolSettings.flags.ph = XdrvMailbox.payload;
   }
-  ResponseCmndNumber(NeoPoolSettings.resolution.ph);
+  ResponseCmndNumber(NeoPoolSettings.flags.ph);
 }
 
 
 void CmndNeopoolCLRes(void)
 {
   if (XdrvMailbox.data_len && XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 3) {
-    NeoPoolSettings.resolution.cl = XdrvMailbox.payload;
+    NeoPoolSettings.flags.cl = XdrvMailbox.payload;
   }
-  ResponseCmndNumber(NeoPoolSettings.resolution.cl);
+  ResponseCmndNumber(NeoPoolSettings.flags.cl);
 }
 
 
 void CmndNeopoolIONRes(void)
 {
   if (XdrvMailbox.data_len && XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 3) {
-    NeoPoolSettings.resolution.ion = XdrvMailbox.payload;
+    NeoPoolSettings.flags.ion = XdrvMailbox.payload;
   }
-  ResponseCmndNumber(NeoPoolSettings.resolution.ion);
+  ResponseCmndNumber(NeoPoolSettings.flags.ion);
+}
+
+
+void CmndNeopoolSetOption(void)
+{
+  if (XdrvMailbox.index >= 0 && XdrvMailbox.index <= 1) {
+    if (XdrvMailbox.data_len && XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 1) {
+      bitWrite(NeoPoolSettings.flags.data, XdrvMailbox.index + 6, XdrvMailbox.payload);
+    }
+    ResponseCmndIdxChar(GetStateText(bitRead(NeoPoolSettings.flags.data, XdrvMailbox.index + 6)));
+  }
 }
 
 
@@ -3254,9 +3294,11 @@ void NeoPoolSettingsLoad(bool erase) {
   memset(&NeoPoolSettings, 0x00, sizeof(NeoPoolSettings));
   NeoPoolSettings.crc32 = GetCfgCrc32((uint8_t*)&NeoPoolSettings +4, sizeof(NeoPoolSettings) -4);
   NeoPoolSettings.version = NEOPOOL_SETTING_VERSION;
-  NeoPoolSettings.resolution.ph = NEOPOOL_DEFAULT_PHRES;
-  NeoPoolSettings.resolution.cl = NEOPOOL_DEFAULT_CLRES;
-  NeoPoolSettings.resolution.ion = NEOPOOL_DEFAULT_IONRES;
+  NeoPoolSettings.flags.ph = NEOPOOL_DEFAULT_PHRES;
+  NeoPoolSettings.flags.cl = NEOPOOL_DEFAULT_CLRES;
+  NeoPoolSettings.flags.ion = NEOPOOL_DEFAULT_IONRES;
+  NeoPoolSettings.flags.range_check = 1;
+  NeoPoolSettings.flags.conn_stat = 1;
   NeoPoolSettings.result = NEOPOOL_DEFAULT_RESULT;
   NeoPoolSettings.npteleperiod = NEOPOOL_DEFAULT_NPTELEPERIOD;
 
