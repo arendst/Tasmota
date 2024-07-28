@@ -21,6 +21,14 @@ import matter
 
 # this is used to solidify plugins list in Matter_Device
 
+######################################################################
+# Register all classes to the `matter` module before solidification
+#
+# Scans all classes starting with `Plugin_`
+# Add to a map from class.TYPE -> class
+# and set an attribute `plugins_classes` to the module `matter`
+# before final solidification.
+######################################################################
 def register_native_classes()
   var plugins_classes = {}
   # try to register any class that starts with 'Plugin_'
