@@ -126,9 +126,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for Sonoff iFan04-H using template [#16402](https://github.com/arendst/Tasmota/issues/16402)
 - Support for Sonoff POWCT Ring [#21131](https://github.com/arendst/Tasmota/issues/21131)
 - Support for Wooliis Hall Effect Coulometer or Battery capacity monitor [#21732](https://github.com/arendst/Tasmota/issues/21732)
-- Analog GPIO ``ADC Input`` with ``AdcParam<x> 1,<start_range>,<end_range>,1`` provide direct light control 
-- Analog GPIO ``ADC Voltage`` with ``AdcParam<x> 11,<start_range>,<end_range>,<lowest_voltage>,<highest_voltage>`` provide energy monitoring with dc voltage 
-- Analog GPIO ``ADC Current`` with ``AdcParam<x> 12,<start_range>,<end_range>,<lowest_current>,<highest_current>`` provide energy monitoring with dc voltage 
 - Skip MQTT response if command is prefixed with underscore [#21740](https://github.com/arendst/Tasmota/issues/21740)
 - Skip MQTT response if commands are executed prefixed with ``Backlog2`` (no delay) or ``Backlog3`` [#21740](https://github.com/arendst/Tasmota/issues/21740)
 - Extend command ``SetOption147 1`` to disable publish of IRReceived MQTT messages [#21574](https://github.com/arendst/Tasmota/issues/21574)
@@ -173,7 +170,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 MI32 refactoring, bugfixes, generic device scanning [#21603](https://github.com/arendst/Tasmota/issues/21603)
 - ESP32 MI32 improve parser [#21648](https://github.com/arendst/Tasmota/issues/21648)
 - ESP32 TM1621 number overflow from "9999" to "12E3" [#21131](https://github.com/arendst/Tasmota/issues/21131)
-- Berry updated precompiled Windows binary [#21858](https://github.com/arendst/Tasmota/issues/21858)
 - Berry simplified `module persist` [#21812](https://github.com/arendst/Tasmota/issues/21812)
 - Berry consolidated constants for solidified classes reduces Flash size [#2185](https://github.com/arendst/Tasmota/issues/2185)
 - Matter refactoring of bridged devices [#21575](https://github.com/arendst/Tasmota/issues/21575)
