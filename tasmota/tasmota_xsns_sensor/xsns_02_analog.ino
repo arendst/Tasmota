@@ -215,6 +215,7 @@ void AdcInitParams(uint8_t idx) {
         Adc[idx].param2 = ANALOG_RANGE;
         Adc[idx].param3 = 3;                       // Margin
         Adc[idx].param4 = 0;                       // Default mode (0) or Direct mode (1) using Dimmer or Channel command
+        break;
       case ADC_TEMP:
         // Default Shelly 2.5 and 1PM parameters
         Adc[idx].param1 = ANALOG_NTC_BRIDGE_RESISTANCE;
