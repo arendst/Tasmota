@@ -266,17 +266,32 @@ class Matter_PathGenerator
   def _next_attribute()
     if (self.attribute == false)   return false    end       # exhausted all possible values
 
-    var attributes = self.pi.get_attribute_list(self.cluster)
+    var attributes_bytes = self.pi.get_attribute_list_bytes(self.cluster)
+    var attributes_bytes_sz = (attributes_bytes != nil) ? size(attributes_bytes) / 2 : 0
     var attr_filter = self.path_in_attribute
+    
     var idx = -1
     if (self.attribute != nil)
-      idx = attributes.find(self.attribute)     # find index in current list
+      var i = 0
+      while true
+        if (i < attributes_bytes_sz)
+          if attributes_bytes.get(i * 2, -2) == self.attribute
+            idx = i
+            break
+          end
+          i += 1
+        else
+          idx = nil
+          break
+        end
+      end
+      # idx = attributes.find(self.attribute)     # finds index in current list
     end
     # safeguard
     if (idx != nil)
-      while (idx + 1 < size(attributes))
+      while (idx + 1 < attributes_bytes_sz)
         idx += 1                      # move to next item
-        self.attribute = attributes[idx]
+        self.attribute = attributes_bytes.get(idx * 2, -2)
         if (attr_filter == nil) || (attr_filter == self.attribute)
           return self.attribute
         end
