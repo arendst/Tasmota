@@ -18,8 +18,9 @@
 */
 
 #ifdef USE_NEOPOOL
-/*********************************************************************************************\
- * Sugar Valley NeoPool electronic pool control and water treatment system, also known as brand
+/****************************************************************************\
+ * Sugar Valley NeoPool electronic pool control and water treatment system,
+ * also known as brand:
  *   Hidrolife (yellow case)
  *   Aquascenic (blue case)
  *   Oxilife (green case)
@@ -31,24 +32,36 @@
  *   Bayrol
  *   Hay
  *
- * Sugar Valley RS485 connector inside (DISPLAY/WIFI/EXTERN) pins (from top to bottom):
+ * Sugar Valley RS485 connector inside (DISPLAY/WIFI/EXTERN) pins
+ * (from top to bottom):
  *      ___
- *   1 |*  |- +12V (internal power supply)
- *   2 |*  |- (not connected)
+ *   1 |*  |- +12V (from internal power supply)
+ *   2 |*  |- NC (not connected)
  *   3 |*  |- Modbus A+
  *   4 |*  |- Modbus B-
  *   5 |*__|- Modbus GND
  *
  * Parameter: 19200 Baud / 1 Stopbit / Parity None
- * Protocol: Modbus RTU
- *   NeoPool controller is Modbus server (formerly known as slave)
- *   Tasmota is Modbus client (formerly known as master)
+ * Protocol:  Modbus RTU
  *
- * Connector DISPLAY is useless as long as the internal display is also connected to the
- * second DISPLAY connector. Use WIFI or EXTERN.
+ * Plug connector:
+ * The NeoPool device is a Modbus server (formerly known as a slave),
+ * Tasmota is a Modbus client (formerly known as a master).
+ * Only one Modbus client (master) can be connected to the Modbus connector
+ * of the same name. It is not possible to operate several clients on
+ * connectors with the same name.
  *
- * Hardware serial will be selected if GPIO1 = [NeoPool Rx] and GPIO3 = [NeoPool Tx]
-\*********************************************************************************************/
+ * The differently labelled Modbus connectors are completely independent
+ * physical Modbus interfaces. Data traffic on one of the connector is
+ * invisible on the other connectors. One exception is the DISPLAY connector,
+ * which is present twice and is normally occupied by the built-in LCD.
+ * Since only one Modbus client can operate one Modbus server at a time, the
+ * DISPLAY connector is useless for our purposes as long as the internal LCD
+ * is connected to one of the two DISPLAY connectors at the same time.
+ *
+ * Conclusion:
+ * Use the WIFI or EXTERNAL connector only.
+\****************************************************************************/
 
 #define XSNS_83                      83
 
@@ -79,16 +92,16 @@
 // by switching them off and on again for a defined time when the LED is switched on.
 // Default timings for LED light program step sequence (NPLight 3)
 #ifndef NEOPOOL_LIGHT_PRG_WAIT
-#define NEOPOOL_LIGHT_PRG_WAIT       30     // delay before start prg light if light was off (in ms)
+#define NEOPOOL_LIGHT_PRG_WAIT       30     // delay before start prg light if light was off (in 1/10 s)
 #endif
 #ifndef NEOPOOL_LIGHT_PRG_DELAY
-#define NEOPOOL_LIGHT_PRG_DELAY      15     // default next light prg delay (in ms)
+#define NEOPOOL_LIGHT_PRG_DELAY      15     // default next light prg delay (in 1/10 s)
 #endif
 #ifndef NEOPOOL_LIGHT_PRG_DELAY_MIN
-#define NEOPOOL_LIGHT_PRG_DELAY_MIN  5      // next light prg delay min (in ms)
+#define NEOPOOL_LIGHT_PRG_DELAY_MIN  5      // next light prg delay min (in 1/10 s)
 #endif
 #ifndef NEOPOOL_LIGHT_PRG_DELAY_MAX
-#define NEOPOOL_LIGHT_PRG_DELAY_MAX  100    // next light prg delay max (in ms)
+#define NEOPOOL_LIGHT_PRG_DELAY_MAX  100    // next light prg delay max (in 1/10 s)
 #endif
 
 #ifdef ESP32                                // Defaults for ESP32 only
@@ -102,14 +115,19 @@
   #endif
 #endif
 
-/*********************************************************************************************\
- * Sugar Valley Modbus Register (addresses marked with * are queried with each polling cycle)
- * (see https://downloads.vodnici.net/uploads/wpforo/attachments/69/171-Modbus-registers.pdf)
-\*********************************************************************************************/
+/****************************************************************************\
+ * Sugar Valley Modbus Register
+ * (addresses marked with * are queried with each polling cycle)
+ * see https://downloads.vodnici.net/uploads/wpforo/attachments/69/171-Modbus-registers.pdf
+ * 
+ * Register desribed with ‘!’ means the register is officially undocumented,
+ * the function was determined by reverse-engineering
+\****************************************************************************/
 enum NeoPoolRegister {
-                                          // addr    Unit   Description - "!" indicates register is not officially documented
+                                          // addr    Unit   Description
                                           // ------  ------ ------------------------------------------------------------
-  // MODBUS page (0x00xx) - Manages general configuration of the box. This page is reserved for internal purposes
+  // MODBUS page (0x00xx)
+  // Manages general configuration of the box. This page is reserved for internal purposes
   MBF_POWER_MODULE_VERSION = 0x0002,      // 0x0002         ! Power module version (MSB=Major, LSB=Minor)
   MBF_POWER_MODULE_NODEID = 0x0004,       // 0x0004         ! Power module Node ID (6 register 0x0004 - 0x0009)
   MBF_POWER_MODULE_REGISTER = 0x000C,     // 0x000C         ! Writing an address in this register causes the power module register address to be read out into MBF_POWER_MODULE_DATA, see MBF_POWER_MODULE_REG_*
@@ -119,7 +137,8 @@ enum NeoPoolRegister {
   MBF_VOLT_5 = 0x006A,                    // 0x006A*        ! 5V line in mV / 0,62069
   MBF_AMP_4_20_MICRO = 0x0072,            // 0x0072*        ! 2-40mA line in µA * 10 (1=0,01mA)
 
-  // MEASURE page (0x01xx) - Contains the different measurement information including hydrolysis current, pH level, redox level, etc.
+  // MEASURE page (0x01xx)
+  // Contains the different measurement information including hydrolysis current, pH level, redox level, etc.
   MBF_ION_CURRENT = 0x0100,               // 0x0100*        Ionization level measured
   MBF_HIDRO_CURRENT,                      // 0x0101*        Hydrolysis intensity level
   MBF_MEASURE_PH,                         // 0x0102* ph     pH level measured in 1/100 (700 = 7.00)
@@ -138,7 +157,8 @@ enum NeoPoolRegister {
   MBF_NOTIFICATION,                       // 0x0110* mask   Bit field that informs whether a property page has changed since the last time it was queried. (see MBMSK_NOTIF_*). This register makes it possible to refresh the content of the registers maintained by a modbus master in an optimized way, without the need to reread all registers periodically, but only those on a page that has been changed.
   MBF_HIDRO_VOLTAGE,                      // 0x0111         The voltage applied to the hydrolysis cell. This register, together with that of MBF_HIDRO_CURRENT allows extrapolation of water salinity.
 
-  // GLOBAL page (0x02xx) - Contains global information, such as the amount of time that each power unit has been working.
+  // GLOBAL page (0x02xx)
+  // Contains global information, such as the amount of time that each power unit has been working.
   MBF_CELL_RUNTIME_LOW = 0x0206,          // 0x0206*        ! Cell runtime (32 bit value - low word)
   MBF_CELL_RUNTIME_HIGH,                  // 0x0207*        ! Cell runtime (32 bit value - high word)
   MBF_CELL_RUNTIME_PART_LOW,              // 0x0208*        ! Cell part runtime (32 bit value - low word)
@@ -159,7 +179,8 @@ enum NeoPoolRegister {
   MBF_SAVE_TO_EEPROM = 0x02F0,            // 0x02F0         A write operation to this register immediately starts a EEPROM storage operation. During the EEPROM storage procedure, the system may be unresponsive to MODBUS requests. The operation will last always less than 1 second.
   MBF_EXEC = 0x02F5,                      // 0x02F5         ! A write operation to this register immediately take over settings of the previous written data
 
-  // FACTORY page (0x03xx) - Contains factory data such as calibration parameters for the different power units.
+  // FACTORY page (0x03xx)
+  // Contains factory data such as calibration parameters for the different power units.
   MBF_PAR_VERSION = 0x0300,               // 0x0300*        Software version of the PowerBox
   MBF_PAR_MODEL,                          // 0x0301* mask   System model options
   MBF_PAR_SERNUM,                         // 0x0302*        Serial number of the PowerBox
@@ -173,7 +194,9 @@ enum NeoPoolRegister {
   MBF_PAR_HIDRO_MAX_PWM_STEP_UP,          // 0x0324         This register sets the PWM ramp up of the hydrolysis in pulses per duty cycle. This register makes it possible to adjust the rate at which the power delivered to the cell increases, allowing a gradual rise in power so that the operation of the switching source of the equipment is not saturated. Default 150
   MBF_PAR_HIDRO_MAX_PWM_STEP_DOWN,        // 0x0325         This register sets the PWM down ramp of the hydrolysis in pulses per duty cycle. This register allows adjusting the rate at which the power delivered to the cell decreases, allowing a gradual drop in power so that the switched source of the equipment is not disconnected due to lack of consumption. This gradual fall must be in accordance with the type of cell used, since said cell stores charge once the current stimulus has ceased. Default 20
 
-  // INSTALLER page (0x04xx) - Contains a set of configuration registers related to the equipment installation, such as the relays used for each function, the amount of time that each pump must operate, etc.
+  // INSTALLER page (0x04xx)
+  // Contains a set of configuration registers related to the equipment installation,#
+  // such as the relays used for each function, the amount of time that each pump must operate, etc.
   MBF_PAR_ION_POL0 = 0x0400,              // 0x0400         Time in minutes that the equipment must remain working in positive polarization in the copper-silver ionization.
   MBF_PAR_ION_POL1,                       // 0x0401         Time in minutes that the equipment must remain working in negative polarization in the copper-silver ionization.
   MBF_PAR_ION_POL2,                       // 0x0402         Time in minutes that the equipment must remain working in dead time (without delivering power) in the copper-silver ionization.
@@ -249,7 +272,9 @@ enum NeoPoolRegister {
   MBF_PAR_FILTVALVE_REMAINING,            // 0x04EF         Time remaining for the current cleaning action in seconds. If this register is 0, it means that there is no cleaning function running. When a cleanup function is started, the contents of the MBF_PAR_FILTVALVE_INTERVAL register are copied to this register, then decremented once per second. The display uses this log to track the progress of the cleaning function.
   MBF_ACTION_COPY_TO_RTC,                 // 0x04F0         A write (any value) forces the writing of the RTC time registers MBF_PAR_TIME_LOW (0x0408) and MBF_PAR_TIME_HIGH (0x0409) into the RTC internal microcontroller clock management registers.
 
-  // USER page (0x05xx) - Contains user configuration registers, such as the production level for the ionization and the hydrolysis, or the set points for the pH, redox, or chlorine regulation loops.
+  // USER page (0x05xx)
+  // Contains user configuration registers, such as the production level
+  // for the ionization and the hydrolysis, or the set points for the pH, redox, or chlorine regulation loops.
   MBF_PAR_ION = 0x0500,                   // 0x0500*        Ionization target production level. The value adjusted in this register must not exceed the value set in the MBF_PAR_ION_NOM factory register.
   MBF_PAR_ION_PR,                         // 0x0501*        Amount of time in minutes that the ionization must be activated each time that the filtration starts.
   MBF_PAR_HIDRO,                          // 0x0502*        Hydrolisis target production level. When the hydrolysis production is to be set in percent values, this value will contain the percent of production. If the hydrolysis module is set to work in g/h production, this module will contain the desired amount of production in g/h units. The value adjusted in this register must not exceed the value set in the MBF_PAR_HIDRO_NOM factory register.
@@ -261,7 +286,8 @@ enum NeoPoolRegister {
   MBF_PAR_FILTRATION_SPEED_FUNC = 0x0513, // 0x0513         ! filtration speed function control
   MBF_PAR_FUNCTION_DEPENDENCY = 0x051B,   // 0x051B  mask   Specification for the dependency of different functions, such as heating, from external events like FL1 (see MBMSK_FCTDEP_HEATING/MBMSK_DEPENDENCY_*)
 
-  // MISC page (0x06xx) - Contains the configuration parameters for the screen controllers (language, colours, sound, etc).
+  // MISC page (0x06xx)
+  // Contains the configuration parameters for the screen controllers (language, colours, sound, etc).
   MBF_PAR_UICFG_MACHINE = 0x0600,         // 0x0600*        Machine type (see MBV_PAR_MACH_* and  kNeoPoolMachineNames[])
   MBF_PAR_UICFG_LANGUAGE,                 // 0x0601*        Selected language (see MBV_PAR_LANG_*)
   MBF_PAR_UICFG_BACKLIGHT,                // 0x0602*        Display backlight function (see MBV_PAR_BACKLIGHT_*)
@@ -282,7 +308,7 @@ enum NeoPoolRegister {
 enum NeoPoolConstAndBitMask {
   // MBF_PH_STATUS
   MBMSK_PH_STATUS_ALARM                   = 0x000F, // PH alarm. The possible alarm values are depending on the regulation model:
-      // Valid alarm values for pH regulation with acid and base:
+  // Valid alarm values for pH regulation with acid and base:
   MBV_PH_ACID_BASE_ALARM0                 = 0,      // no alarm
   MBV_PH_ACID_BASE_ALARM1                 = 1,      // pH too high; the pH value is 0.8 points higher than the setpoint (PH1 on acid systems, PH2 on base systems, PH1 on acid+base systems)
   MBV_PH_ACID_BASE_ALARM2                 = 2,      // pH too low: the pH value is 0.8 points lower than the set point value set in (PH1 on acid systems, PH2 on base systems, PH2 on acid+base systems)
@@ -984,20 +1010,23 @@ const char HTTP_SNS_NEOPOOL_STATUS_INACTIVE[]  PROGMEM = "filter:opacity(0.15)";
 const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
 
 
-/*********************************************************************************************\
+/****************************************************************************\
  * Commands
  *
  * NPFiltration {<state> {speed}}
  *            get/set manual filtration (state = 0..2, speed = 1..3)
- *            get filtration state if <state> is omitted, otherwise set new state
+ *            get filtration state if <state> is omitted,
+ *            otherwise set new state
  *              0 - switch filtration pump off
  *              1 - switch filtration pump on
  *              2 - toggle filtration pump
- *            for non-standard filtration types additional speed control is possible
+ *            additional speed control is possible for non-standardised
+ *            filter types
  *
  * NPFiltrationMode {<mode>}
  *            get/set filtration mode (mode = 0..4|13)
- *            get mode if <mode> is omitted, otherwise set new mode according:
+ *            get mode if <mode> is omitted,
+ *            otherwise set new mode according:
  *              0 - Manual
  *              1 - Auto
  *              2 - Heating
@@ -1008,35 +1037,40 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  * NPFiltrationSpeed {<speed>}
  *            (only available for non-standard filtration types)
  *            get/set manual filtration speed (speed = 1..3)
- *            get filtration speed if <speed> is omitted, otherwise set new speed
+ *            get filtration speed if <speed> is omitted,
+ *            otherwise set new speed:
  *              1 - low
  *              2 - mid
  *              3 - high
  *
  * NPBoost {<mode>}
  *            get/set hydrolysis/electrolysis boost mode (mode = 0..2)
- *            get mode if <mode> is omitted, otherwise set new mode according:
+ *            get mode if <mode> is omitted,
+ *            otherwise set new mode according:
  *              0|OFF   - boost off
  *              1|ON    - boost on
  *              2|REDOX - boost on with redox control
  *
  * NPTime {<time>}
  *            get/set system time
- *            get current time if <time> is omitted, otherwise set time according:
+ *            get current time if <time> is omitted,
+ *            otherwise set time according:
  *              0 - sync with Tasmota local time
  *              1 - sync with Tasmota utc time
  *            any other value of <time> will set time as epoch
  *
  * NPLight {<state> {delay}}
- *            get/set light (state = 0|1|2|3|4)
+ *            get/set light (state = 0|1|2|3|4, delay = 5..100)
  *            get light state if <state> is omitted, otherwise set new state
  *              0 - switch light manual off
  *              1 - switch light manual on
  *              2 - toggle light
  *              3 - switch light to auto mode
- *              4 - switch to next program (for RGB-LED lights) (delay = 5..100)
- *                  prg change by switch light of for delay time then switch on
- *                  delay in ms from 0.5 - 10 sec
+ *              4 - switch to next program for RGB-LED lights using <delay> in
+ *                  1/10 sec (5 = 0.5 sec, 100 = 10 sec)
+ *                  Change LED program by switching light relay OFF for <delay>
+ *                  time, then switch light relay ON. If the light was
+ *                  originally OFF, it is switched ON first.
  *
  * NPpHMin {<ph>}
  *            (only available if pH module is installed)
@@ -1062,13 +1096,17 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *            (only available if hydrolysis/electrolysis control is present)
  *            get/set hydrolysis/electrolysis level
  *            get current level if <level> is omitted, otherwise set:
- *            0..100 in % for NeoPool systems configured to %
- *            0..<max> in g/h for NeoPool systems configured for g/h (<max> depends by M_PAR_HIDRO_NOM register value)
- *            <level> can specified in % on all NeoPool systems by appending the % sign to the value
+ *            0..100   in % for NeoPool systems configured to %
+ *            0..<max> in g/h for NeoPool systems configured for g/h
+ *                     (<max> depends by M_PAR_HIDRO_NOM register value)
+ *            <level>  can specified in % on all NeoPool systems by appending
+ *                     the % sign to the value
  *
  * NPIonization {<level>}
  *            (only available if ionization control is present)
- *            get/set ionization target production level (level = 0..x, the upper limit of the range may vary depending on the MBF_PAR_ION_NOM register)
+ *            get/set ionization target production level
+ *            (level = 0..x, the upper limit of the range may vary depending
+ *            on the MBF_PAR_ION_NOM register)
  *            get current level if <level> is omitted, otherwise set
  *
  * NPChlorine {<setpoint>}
@@ -1080,10 +1118,16 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *            Show information about system controls
  *
  * NPTelePeriod {time}
- *            enables/disables auto telemetry SENSOR message when NeoPool values change (time = 0 or 5..3600):
- *            0 disable this function off (default), SENSOR message are only reported depending on TelePeriod setting
- *            5..3600 set the minimum of seconds between two SENSOR messages for NeoPool measured (sensor) values (Status changes for relays and settings trigger the SENSOR messages immediately, regardless of this time)
- *            If <time> is set higher than TelePeriod, only status changes for relays and settings will trigger SENSOR message.
+ *            enables/disables auto telemetry SENSOR message when NeoPool
+ *            values change (time = 0 or 5..3600):
+ *            0       disable this function off (default), SENSOR messages are
+ *                    only reported depending on TelePeriod setting
+ *            5..3600 set the minimum of seconds between two SENSOR messages
+ *                    for NeoPool measured (sensor) values
+ *                    (status changes for relays and settings trigger the
+ *                    SENSOR messages immediately, regardless of this time)
+ *            If <time> is set higher than TelePeriod, only status changes for
+ *            relays and settings will trigger SENSOR message.
  *
  * NPSave
  *            write data permanently into EEPROM
@@ -1095,13 +1139,15 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *            clears possible errors (like pump exceeded time etc.)
  *
  * NPResult {<format>}
- *            get/set addr/data result format read/write commands (format = 0|1):
+ *            get/set addr/data result format read/write commands
+ *            (format = 0|1)
  *            get output format if <format> is omitted, otherwise
  *              0 - output as decimal numbers
  *              1 - output as hexadecimal strings (default)
  *
  * NPOnError {<repeat>}
- *            get/set auto-repeat Modbus read/write commands on error (repeat = 0..10):
+ *            get/set auto-repeat Modbus read/write commands on error
+ *            (repeat = 0..10)
  *            get auto-repeat setting if <repeat> is omitted, otherwise
  *              0     - disable auto-repeat on read/write error
  *              1..10 - repeat commands n times until ok
@@ -1113,11 +1159,12 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *
  * NPSetOption0 {0|1}
  *            (only available on ESP32 or if NEOPOOL_RANGE_CHECKS is defined)
- *            Disable(0)/Enable(1) sensor data min/max validation and correction ()
+ *            Disable(0)/enable(1) sensor data min/max validation and
+ *            correction
  *
  * NPSetOption1 {0|1}
  *            (only available on ESP32 or if NEOPOOL_CONNSTAT is defined)
- *            Disable(0)/Enable(1) modbus connection statistics
+ *            Disable(0)/enable(1) modbus connection statistics
  *
  * NPRead <addr> {<cnt>}
  * NPReadL <addr> {<cnt>}
@@ -1127,15 +1174,26 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *
  * NPWrite <addr> <data> {<data>...}
  * NPWriteL <addr> <data> {<data>...}
- *            NPWrite write 16-bit register (data = 0..65535), <data> max 10 times
- *            NPWriteL write 32-bit register (data = 0..4294967295), <data> max 10 times
+ *            NPWrite write 16-bit register (data = 0..65535)
+ *            NPWriteL write 32-bit register (data = 0..4294967295)
+ *            The max. number of <data> parameters is 10
  *
  * NPBit <addr> <bit> {<data>}
  * NPBitL <addr> <bit> {<data>}
  *            read/write register bit (bit = 0..15, data = 0|1)
  *            read if <data> is omitted, otherwise set <bit> to new <data>
  *
- * Examples:
+ *
+ * Note:
+ * The setttings changed by commands NPPHRes, NPCLRes, NPIonRes,
+ * NPSetOption0 and NPSetOption1 are permanently stored only if firmware was
+ * compiled with USE_UFILESYS (default enabled on ESP32 and disabled on
+ * ESP82xx). Without USE_UFILESYS (default on ESP82xx), you can alternatively
+ * use a rule to set your defaults during system start, e. g.:
+ * Rule1 ON System#Init DO Backlog NPPHRes 1;NPCLRes 1;NPIonRes 1;NPSetOption0 1;NPSetOption1 0
+ *
+ *
+ * Command examples:
  *
  * Get/Set filtration mode
  *    NPFiltrationMode
@@ -1157,12 +1215,14 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *    RESULT = {"NPResult":0}
  *    RESULT = {"NPReadL":{"Address":1032,"Data":1612124540}}
  *
- * Enable temperature module by setting MBF_PAR_TEMPERATURE_ACTIVE and set it permanently into EEPROM
+ * Enable temperature module by setting MBF_PAR_TEMPERATURE_ACTIVE
+ * and set it permanently into EEPROM
  *    Backlog NPWrite 0x40F,1;NPSave
  *    RESULT = {"NPWrite":{"Address":"0x040F","Data":"0x0001"}}
  *    RESULT = {"NPSave":"Done"}
  *
- * Hide auxiliary relay display from main menu by setting bit 3 of MBF_PAR_UICFG_VISUAL_OPTIONS
+ * Hide auxiliary relay display from main menu
+ * by setting bit 3 of MBF_PAR_UICFG_VISUAL_OPTIONS
  *    NPBit 0x605,3,1
  *    RESULT = {"NPBit":{"Address":"0x0605","Data":"0x08C8"}}
  *
@@ -1176,11 +1236,12 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *    RESULT = {"NPRead":{"Address":1106,"Data":1}}
  *    RESULT = {"NPReadL":{"Address":1107,"Data":[0,0,86400,0,0,1,0]}} *
  *
- * Set filtration interval 1 to daily 9:00 - 12:30 (9:00: 3600 * 9 ≙ 32400 / 12:30 ≙ 3,5h = 12600)
+ * Set filtration interval 1 to daily 9:00 - 12:30
+ * (9:00: 3600 * 9 ≙ 32400 / 12:30 ≙ 3,5h = 12600)
  *    NPWriteL 0x435,32400 0 86400 12600
  *    RESULT = {"NPWriteL":{"Address":1077,"Data":[32400,0,86400,12600]}}
  *
- *********************************************************************************************/
+ ****************************************************************************/
 
 #define D_PRFX_NEOPOOL "NP"
 #define D_CMND_NP_RESULT "Result"
@@ -1294,10 +1355,11 @@ void (* const NPCommand[])(void) PROGMEM = {
 
 
 
-/*********************************************************************************************/
+/****************************************************************************/
 
 void NeoPoolPoll(void)              // Poll modbus register
 {
+  // called every 250 ms
   if (!neopool_poll) {
     return;
   };
@@ -1370,7 +1432,7 @@ void NeoPoolPoll(void)              // Poll modbus register
 
 
 
-/*********************************************************************************************/
+/****************************************************************************/
 
 void NeoPoolInit(void) {
   NeoPoolSettingsLoad(false);
@@ -1442,7 +1504,7 @@ bool NeoPoolInitData(void)
 
 
 
-/*********************************************************************************************/
+/****************************************************************************/
 
 #ifdef DEBUG_TASMOTA_SENSOR
 void NeoPoolLogRW(const char *name, uint16_t addr, uint16_t *data, uint16_t cnt)
@@ -1916,7 +1978,7 @@ bool NeoPoolIsIonization(void)
 }
 
 
-/*********************************************************************************************/
+/****************************************************************************/
 void NeoPoolAppendModules(void)
 {
   ResponseAppend_P(PSTR("\""  D_NEOPOOL_JSON_MODULES  "\":"));
@@ -2433,9 +2495,9 @@ void NeoPoolShow(bool json)
 
 
 
-/*********************************************************************************************\
+/****************************************************************************\
  * Command implementation
-\*********************************************************************************************/
+\****************************************************************************/
 
 void NeopoolReadWriteResponse(uint16_t addr, uint16_t *data, uint16_t cnt, bool fbits32, int16_t bit)
 {
@@ -3347,9 +3409,9 @@ void NeoPoolSettingsSave(void) {
 #endif  // USE_UFILESYS
 }
 
-/*********************************************************************************************\
+/****************************************************************************\
  * Interface
-\*********************************************************************************************/
+\****************************************************************************/
 
 bool Xsns83(uint32_t function)
 {
