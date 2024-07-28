@@ -24,7 +24,7 @@ import matter
 
 #@ solidify:Matter_Plugin_Virt_Sensor_Rain,weak
 
-class Matter_Plugin_Virt_Sensor_Rain  : Matter_Plugin_Virt_Sensor_Rain
+class Matter_Plugin_Virt_Sensor_Rain  : Matter_Plugin_Sensor_Rain
   static var TYPE = "v_rain"                        # name of the plug-in in json
   static var DISPLAY_NAME = "v.Rain"                # display name of the plug-in
   static var ARG  = ""                              # no arg for virtual device

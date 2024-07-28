@@ -24,7 +24,7 @@ import matter
 
 #@ solidify:Matter_Plugin_Virt_Sensor_Waterleak,weak
 
-class Matter_Plugin_Virt_Sensor_Waterleak : Matter_Plugin_Virt_Sensor_Waterleak
+class Matter_Plugin_Virt_Sensor_Waterleak : Matter_Plugin_Sensor_Waterleak
   static var TYPE = "v_waterleak"                       # name of the plug-in in json
   static var DISPLAY_NAME = "v.Waterleak"                     # display name of the plug-in
   static var ARG  = ""                              # no arg for virtual device

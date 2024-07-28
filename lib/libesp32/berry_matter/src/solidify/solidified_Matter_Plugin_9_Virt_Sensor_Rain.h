@@ -9,10 +9,10 @@ extern const bclass be_class_Matter_Plugin_Virt_Sensor_Rain;
 /********************************************************************
 ** Solidified class: Matter_Plugin_Virt_Sensor_Rain
 ********************************************************************/
-extern const bclass be_class_Matter_Plugin_Virt_Sensor_Rain;
+extern const bclass be_class_Matter_Plugin_Sensor_Rain;
 be_local_class(Matter_Plugin_Virt_Sensor_Rain,
     0,
-    &be_class_Matter_Plugin_Virt_Sensor_Rain,
+    &be_class_Matter_Plugin_Sensor_Rain,
     be_nested_map(5,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_weak(VIRTUAL, 3), be_const_bool(1) },
