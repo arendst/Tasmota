@@ -34,7 +34,6 @@
 #ifdef ESP8266
 #define ANALOG_RESOLUTION             10               // 12 = 4095, 11 = 2047, 10 = 1023
 #define ANALOG_RANGE                  1023             // 4095 = 12, 2047 = 11, 1023 = 10
-#define ANALOG_PERCENT                10               // backward compatible div10 range
 #endif  // ESP8266
 
 #ifdef ESP32
@@ -42,8 +41,6 @@
 #define ANALOG_RESOLUTION             12               // 12 = 4095, 11 = 2047, 10 = 1023
 #undef ANALOG_RANGE
 #define ANALOG_RANGE                  4095             // 4095 = 12, 2047 = 11, 1023 = 10
-#undef ANALOG_PERCENT
-#define ANALOG_PERCENT                ((ANALOG_RANGE + 50) / 100)  // approximation to 1% ADC range
 #endif  // ESP32
 
 #define TO_CELSIUS(x) ((x) - 273.15f)
@@ -212,52 +209,53 @@ void AdcGetSettings(uint32_t idx) {
 
 void AdcInitParams(uint8_t idx) {
   if ((Adcs.type != Adc[idx].type) || (Adc[idx].param1 > 1000000)) {
-    if (ADC_TEMP == Adc[idx].type) {
-      // Default Shelly 2.5 and 1PM parameters
-      Adc[idx].param1 = ANALOG_NTC_BRIDGE_RESISTANCE;
-      Adc[idx].param2 = ANALOG_NTC_RESISTANCE;
-      Adc[idx].param3 = ANALOG_NTC_B_COEFFICIENT * 10000;
-      Adc[idx].param4 = 0; // Default to Shelly mode with NTC towards GND
-    }
-    else if (ADC_LIGHT == Adc[idx].type) {
-      Adc[idx].param1 = ANALOG_LDR_BRIDGE_RESISTANCE;
-      Adc[idx].param2 = ANALOG_LDR_LUX_CALC_SCALAR;
-      Adc[idx].param3 = ANALOG_LDR_LUX_CALC_EXPONENT * 10000;
-    }
-    else if (ADC_RANGE == Adc[idx].type) {
-      Adc[idx].param1 = 0;
-      Adc[idx].param2 = ANALOG_RANGE;
-      Adc[idx].param3 = 0;
-      Adc[idx].param4 = 100;
-    }
-    else if (ADC_CT_POWER == Adc[idx].type) {
-      Adc[idx].param1 = ANALOG_CT_FLAGS;         // (uint32_t) 0
-      Adc[idx].param2 = ANALOG_CT_MULTIPLIER;    // (uint32_t) 100000
-      Adc[idx].param3 = ANALOG_CT_VOLTAGE;       // (int)      10
-    }
-    else if (ADC_PH == Adc[idx].type) {
-      Adc[idx].param1 = ANALOG_PH_CALSOLUTION_LOW_PH * ANALOG_PH_DECIMAL_MULTIPLIER;  // PH of the calibration solution 1, which is the one with the lower PH
-      Adc[idx].param2 = ANALOG_PH_CALSOLUTION_LOW_ANALOG_VALUE;                       // Reading of AnalogInput while probe is in solution 1
-      Adc[idx].param3 = ANALOG_PH_CALSOLUTION_HIGH_PH * ANALOG_PH_DECIMAL_MULTIPLIER; // PH of the calibration solution 2, which is the one with the higher PH
-      Adc[idx].param4 = ANALOG_PH_CALSOLUTION_HIGH_ANALOG_VALUE;                      // Reading of AnalogInput while probe is in solution 2
-    }
-    else if (ADC_MQ == Adc[idx].type) {
-      Adc[idx].param1 = ANALOG_MQ_TYPE;  // Could be MQ-002, MQ-004, MQ-131 ....
-      Adc[idx].param2 = (int)(ANALOG_MQ_A * ANALOG_MQ_DECIMAL_MULTIPLIER);                // Exponential regression
-      Adc[idx].param3 = (int)(ANALOG_MQ_B * ANALOG_MQ_DECIMAL_MULTIPLIER);                // Exponential regression
-      Adc[idx].param4 = (int)(ANALOG_MQ_RatioMQCleanAir * ANALOG_MQ_DECIMAL_MULTIPLIER);  // Exponential regression
-    }
-    else if (ADC_VOLTAGE == Adc[idx].type) {
-      Adc[idx].param1 = 0;
-      Adc[idx].param2 = ANALOG_RANGE;
-      Adc[idx].param3 = 0;
-      Adc[idx].param4 = ANALOG_V33 * 10000;
-    }
-    else if (ADC_CURRENT == Adc[idx].type) {
-      Adc[idx].param1 = 0;
-      Adc[idx].param2 = ANALOG_RANGE;
-      Adc[idx].param3 = 0;
-      Adc[idx].param4 = ANALOG_V33 * 10000;
+    switch (Adc[idx].type) {
+      case ADC_INPUT:
+        Adc[idx].param1 = 0;
+        Adc[idx].param2 = ANALOG_RANGE;
+        Adc[idx].param3 = 0;                       // Default mode (0) or Direct mode (1) using Dimmer or Channel command
+      case ADC_TEMP:
+        // Default Shelly 2.5 and 1PM parameters
+        Adc[idx].param1 = ANALOG_NTC_BRIDGE_RESISTANCE;
+        Adc[idx].param2 = ANALOG_NTC_RESISTANCE;
+        Adc[idx].param3 = ANALOG_NTC_B_COEFFICIENT * 10000;
+        Adc[idx].param4 = 0;                       // Default to Shelly mode with NTC towards GND
+        break;
+      case ADC_LIGHT:
+        Adc[idx].param1 = ANALOG_LDR_BRIDGE_RESISTANCE;
+        Adc[idx].param2 = ANALOG_LDR_LUX_CALC_SCALAR;
+        Adc[idx].param3 = ANALOG_LDR_LUX_CALC_EXPONENT * 10000;
+        break;
+      case ADC_RANGE:
+        Adc[idx].param1 = 0;
+        Adc[idx].param2 = ANALOG_RANGE;
+        Adc[idx].param3 = 0;
+        Adc[idx].param4 = 100;
+        break;
+      case ADC_CT_POWER:
+        Adc[idx].param1 = ANALOG_CT_FLAGS;         // (uint32_t) 0
+        Adc[idx].param2 = ANALOG_CT_MULTIPLIER;    // (uint32_t) 100000
+        Adc[idx].param3 = ANALOG_CT_VOLTAGE;       // (int)      10
+        break;
+      case ADC_PH:
+        Adc[idx].param1 = ANALOG_PH_CALSOLUTION_LOW_PH * ANALOG_PH_DECIMAL_MULTIPLIER;  // PH of the calibration solution 1, which is the one with the lower PH
+        Adc[idx].param2 = ANALOG_PH_CALSOLUTION_LOW_ANALOG_VALUE;                       // Reading of AnalogInput while probe is in solution 1
+        Adc[idx].param3 = ANALOG_PH_CALSOLUTION_HIGH_PH * ANALOG_PH_DECIMAL_MULTIPLIER; // PH of the calibration solution 2, which is the one with the higher PH
+        Adc[idx].param4 = ANALOG_PH_CALSOLUTION_HIGH_ANALOG_VALUE;                      // Reading of AnalogInput while probe is in solution 2
+        break;
+      case ADC_MQ:
+        Adc[idx].param1 = ANALOG_MQ_TYPE;  // Could be MQ-002, MQ-004, MQ-131 ....
+        Adc[idx].param2 = (int)(ANALOG_MQ_A * ANALOG_MQ_DECIMAL_MULTIPLIER);                // Exponential regression
+        Adc[idx].param3 = (int)(ANALOG_MQ_B * ANALOG_MQ_DECIMAL_MULTIPLIER);                // Exponential regression
+        Adc[idx].param4 = (int)(ANALOG_MQ_RatioMQCleanAir * ANALOG_MQ_DECIMAL_MULTIPLIER);  // Exponential regression
+        break; 
+      case ADC_VOLTAGE:
+      case ADC_CURRENT:
+        Adc[idx].param1 = 0;
+        Adc[idx].param2 = ANALOG_RANGE;
+        Adc[idx].param3 = 0;
+        Adc[idx].param4 = ANALOG_V33 * 10000;
+        break;
     }
   }
   if ((Adcs.type != Adc[idx].type) || (0 == Adc[idx].param1) || (Adc[idx].param1 > ANALOG_RANGE)) {
@@ -385,7 +383,6 @@ uint16_t AdcRead(uint32_t pin, uint32_t factor) {
   return analog;
 }
 
-#ifdef USE_RULES
 void AdcEvery250ms(void) {
   char adc_idx[3] = { 0 };
   uint32_t offset = 0;
@@ -395,12 +392,35 @@ void AdcEvery250ms(void) {
     offset = 1;
 #endif
     if (ADC_INPUT == Adc[idx].type) {
-      uint16_t new_value = AdcRead(Adc[idx].pin, 5);
-      if ((new_value < Adc[idx].last_value -ANALOG_PERCENT) || (new_value > Adc[idx].last_value +ANALOG_PERCENT)) {
+      int adc = AdcRead(Adc[idx].pin, 4);                          // 4 = 16 mS
+      int new_value = changeUIntScale(adc, Adc[idx].param1, Adc[idx].param2, 0, 100);
+      if ((new_value < Adc[idx].last_value -2) ||
+          (new_value > Adc[idx].last_value +2) ||
+          ((0 == new_value) && (Adc[idx].last_value != 0)) ||      // Lowest end
+          ((100 == new_value) && (Adc[idx].last_value != 100))) {  // Highest end
         Adc[idx].last_value = new_value;
-        uint16_t value = Adc[idx].last_value / ANALOG_PERCENT;
-        Response_P(PSTR("{\"ANALOG\":{\"A%ddiv10\":%d}}"), idx + offset, (value > 99) ? 100 : value);
-        XdrvRulesProcess(0);
+        if (-1 == Adc[idx].indexOfPointer) {
+          Adc[idx].indexOfPointer = 0;
+          continue;                                                // Skip action on restart
+        }
+#ifdef USE_LIGHT
+        if (0 == Adc[idx].param3) {                                // Default (0) or Direct mode (1)
+#endif  // USE_LIGHT
+          Response_P(PSTR("{\"ANALOG\":{\"A%ddiv10\":%d}}"), idx + offset, new_value);
+          XdrvRulesProcess(0);
+#ifdef USE_LIGHT
+        } else {
+          char command[33];
+          if (Settings->flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
+//            snprintf_P(command, sizeof(command), PSTR("_" D_CMND_CHANNEL "%d %d"), idx +1, new_value);
+            snprintf_P(command, sizeof(command), PSTR(D_CMND_CHANNEL "%d %d"), idx +1, new_value);
+          } else {
+//            snprintf_P(command, sizeof(command), PSTR("_" D_CMND_DIMMER "3 %d"), new_value);
+            snprintf_P(command, sizeof(command), PSTR(D_CMND_DIMMER "3 %d"), new_value);  // Change both RGB and W(W) Dimmers with no fading
+          }
+          ExecuteCommand(command, SRC_SWITCH);
+        }
+#endif  // USE_LIGHT
       }
     }
     else if (ADC_JOY == Adc[idx].type) {
@@ -416,7 +436,6 @@ void AdcEvery250ms(void) {
     }
   }
 }
-#endif  // USE_RULES
 
 uint8_t AdcGetButton(uint32_t pin) {
   for (uint32_t idx = 0; idx < Adcs.present; idx++) {
@@ -641,16 +660,21 @@ void AdcShow(bool json) {
 
     switch (Adc[idx].type) {
       case ADC_INPUT: {
-        uint16_t analog = AdcRead(Adc[idx].pin, 5);
-
-        if (json) {
-          AdcShowContinuation(&jsonflg);
-          ResponseAppend_P(PSTR("\"A%d\":%d"), idx + offset, analog);
+#ifdef USE_LIGHT
+        if (0 == Adc[idx].param3) {                                // Default (0) or Direct mode (1)
+#endif  // USE_LIGHT
+          uint16_t analog = AdcRead(Adc[idx].pin, 5);
+          if (json) {
+            AdcShowContinuation(&jsonflg);
+            ResponseAppend_P(PSTR("\"A%d\":%d"), idx + offset, analog);
 #ifdef USE_WEBSERVER
-        } else {
-          WSContentSend_PD(HTTP_SNS_ANALOG, "", idx + offset, analog);
+          } else {
+            WSContentSend_PD(HTTP_SNS_ANALOG, "", idx + offset, analog);
 #endif  // USE_WEBSERVER
+          }
+#ifdef USE_LIGHT
         }
+#endif  // USE_LIGHT
         break;
       }
       case ADC_TEMP: {
@@ -815,10 +839,11 @@ void CmndAdcParam(void) {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_ADCS)) {
     uint8_t idx = XdrvMailbox.index -1;
     if (XdrvMailbox.data_len) {
-      if (XdrvMailbox.payload > ADC_INPUT) {
+      if (XdrvMailbox.payload > 0) {
         AdcGetSettings(idx);
         if (ArgC() > 3) {  // Process parameter entry
           char argument[XdrvMailbox.data_len];
+          // AdcParam 1, 0, ANALOG_RANGE, 0          ADC_INPUT rule | dimmer
           // AdcParam 2, 32000, 10000, 3350          ADC_TEMP Shelly mode
           // AdcParam 2, 32000, 10000, 3350, 1       ADC_TEMP Alternate mode
           // AdcParam 3, 10000, 12518931, -1.405
@@ -834,7 +859,8 @@ void CmndAdcParam(void) {
           Adc[idx].type = XdrvMailbox.payload;
           Adc[idx].param1 = strtol(ArgV(argument, 2), nullptr, 10);             // param1 = int
           Adc[idx].param2 = strtol(ArgV(argument, 3), nullptr, 10);             // param2 = int
-          if (ADC_RANGE == XdrvMailbox.payload) {
+          if ((ADC_INPUT == XdrvMailbox.payload) ||
+              (ADC_RANGE == XdrvMailbox.payload)) {
             Adc[idx].param3 = abs(strtol(ArgV(argument, 4), nullptr, 10));      // param3 = abs(int)
             Adc[idx].param4 = abs(strtol(ArgV(argument, 5), nullptr, 10));      // param4 = abs(int)
           } else {
@@ -897,13 +923,7 @@ void CmndAdcParam(void) {
 //            AddLog(LOG_LEVEL_INFO, PSTR("ADC: MQ reset mq%d, a = %2_f, b = %2_f, ratioMQCleanAir = %2_f"), Adc[idx].param1, &a, &b, &ratioMQCleanAir);
           }
         } else {                                         // Set default values based on current adc type
-          // AdcParam 2
-          // AdcParam 3
-          // AdcParam 4
-          // AdcParam 5
-          // AdcParam 6
-          // AdcParam 7
-          // AdcParam 8
+          // AdcParam 1
           Adcs.type = 0;
           AdcInitParams(idx);
         }
@@ -914,7 +934,9 @@ void CmndAdcParam(void) {
     // AdcParam
     AdcGetSettings(idx);
     Response_P(PSTR("{\"" D_CMND_ADCPARAM "%d\":[%d,%d,%d"), idx +1, Adcs.type, Adc[idx].param1, Adc[idx].param2);
-    if ((ADC_RANGE == Adc[idx].type) || (ADC_MQ == Adc[idx].type)) {
+    if ((ADC_INPUT == Adc[idx].type) ||
+        (ADC_RANGE == Adc[idx].type) ||
+        (ADC_MQ == Adc[idx].type)) {
       ResponseAppend_P(PSTR(",%d,%d"), Adc[idx].param3, Adc[idx].param4);    // param3 = int, param4 = int
     }
     else {
@@ -980,11 +1002,9 @@ bool Xsns02(uint32_t function) {
     default:
       if (Adcs.present) {
         switch (function) {
-#ifdef USE_RULES
           case FUNC_EVERY_250_MSECOND:
             AdcEvery250ms();
             break;
-#endif  // USE_RULES
           case FUNC_EVERY_SECOND:
             AdcEverySecond();
             break;
