@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 17.07.2024
+ * Updated until v9.4.0.1 - Last update 27.07.2024
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -913,8 +913,8 @@
 #define D_SENSOR_ADC_JOYSTICK           "ADC - Joystick"
 #define D_SENSOR_ADC_PH                 "ADC - pH"
 #define D_SENSOR_ADC_MQ                 "ADC - MQ"
-#define D_SENSOR_ADC_VOLTAGE   "ADC Voltage"
-#define D_SENSOR_ADC_CURRENT   "ADC Current"
+#define D_SENSOR_ADC_VOLTAGE            "ADC - Voltaggio"
+#define D_SENSOR_ADC_CURRENT            "ADC - Corrente"
 #define D_GPIO_WEBCAM_PWDN              "Webcam - PWDN"
 #define D_GPIO_WEBCAM_RESET             "Webcam - RESET"
 #define D_GPIO_WEBCAM_XCLK              "Webcam - XCLK"
