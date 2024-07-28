@@ -99,7 +99,6 @@ class Matter_Plugin
   static var UPDATE_COMMANDS = []
   var device                                # reference to the `device` global object
   var endpoint                              # current endpoint
-  var clusters                              # map from cluster to list of attributes, typically constructed from CLUSTERS hierachy
   var tick                                  # tick value when it was last updated
   var node_label                            # name of the endpoint, used only in bridge mode, "" if none
 
@@ -118,7 +117,6 @@ class Matter_Plugin
   def init(device, endpoint, config)
     self.device = device
     self.endpoint = endpoint
-    self.clusters = self.get_clusters()
     self.parse_configuration(config)
     self.node_label = config.find("name", "")
   end
@@ -277,20 +275,26 @@ matter_device.events.dump()
     return self.endpoint
   end
   def get_cluster_list_sorted()
-    return self.device.k2l(self.clusters)
+    return self.device.k2l(self.CLUSTERS)
   end
   def contains_cluster(cluster)
-    return self.clusters.contains(cluster)
+    return self.CLUSTERS.contains(cluster)
   end
-  def get_attribute_list(cluster)
-    return self.clusters.find(cluster, [])
+  # def get_attribute_list(cluster)
+  #   return self.clusters.find(cluster, [])
+  # end
+  # returns as a constant bytes of 16-bit ints, big endian
+  def get_attribute_list_bytes(cluster)
+    return self.CLUSTERS.find(cluster, nil)
   end
   def contains_attribute(cluster, attribute)
-    var attr_list = self.clusters.find(cluster)
+    var attr_list = self.CLUSTERS.find(cluster)
+    # log(f"MTR: contains_attribute {cluster=} {attribute=} {attr_list=}")
     if attr_list != nil
       var idx = 0
-      while idx < size(attr_list)
-        if attr_list[idx] == attribute
+      var attr_sz = size(attr_list) / 2     # group of 16-bit integers, big endian
+      while idx < attr_sz
+        if attr_list.get(idx * 2, -2) == attribute
           return true
         end
         idx += 1
@@ -359,10 +363,11 @@ matter_device.events.dump()
       return gcl                        # return empty list
     elif attribute == 0xFFFB            # AttributeList
       var acli = TLV.Matter_TLV_array()
-      var attr_list = self.get_attribute_list(cluster)
+      var attr_list_bytes = self.get_attribute_list_bytes(cluster)
+      var attr_list_bytes_sz = (attr_list_bytes != nil) ? size(attr_list_bytes) : 0
       var idx = 0
-      while idx < size(attr_list)
-        acli.add_TLV(nil, TLV.U2, attr_list[idx])
+      while idx < attr_list_bytes_sz
+        acli.add_TLV(nil, TLV.U2, attr_list_bytes.get(idx * 2, -2))
         idx += 1
       end
       return acli                       # TODO, empty list for now
