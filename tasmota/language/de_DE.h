@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v13.3.0.3 - Last update 12.01.2024
+ * Updated until v14.1.0.4 - Last update 28.07.2024
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -421,7 +421,7 @@
 // xdrv_01_mqtt.ino
 #define D_FINGERPRINT "TLS-Fingerabdruck wird verifiziert…"
 #define D_TLS_CONNECT_FAILED_TO "TLS-Verbindung fehlgeschlagen an"
-#define D_RETRY_IN "Wiederversuch in"
+#define D_RETRY_IN "Erneuter Versuch in"
 #define D_VERIFIED "verifiziert mit Fingerabdruck"
 #define D_INSECURE "unsichere Verbindung aufgrund ungültigen Fingerabdrucks"
 #define D_CONNECT_FAILED_TO "Verbindung fehlgeschlagen aufgrund von"
@@ -506,7 +506,7 @@
 #define D_ZIGBEE_MAPPING_IN_PROGRESS_SEC "Karte in Erstellung (%d s․ verbleibend)"
 #define D_ZIGBEE_MAPPING_NOT_PRESENT "Keine Karte"
 #define D_ZIGBEE_MAP_REFRESH "Zigbee Karte erneuern"
-#define D_ZIGBEE_MAP   "Zigbee Karte"
+#define D_ZIGBEE_MAP "Zigbee Karte"
 #define D_ZIGBEE_PERMITJOIN "Zigbee Kopplung ein"
 #define D_ZIGBEE_GENERATE_KEY "Erzeuge zufälligen Zigbee Netzwerkschlüssel"
 #define D_ZIGBEE_UNKNOWN_DEVICE "Unbekanntes Gerät"
@@ -665,22 +665,22 @@
 #define D_CHIPTEMPERATURE "Chiptemperatur"
 
 // xsns_60_GPS
-#define D_LATITUDE             "Latitude"
-#define D_LONGITUDE            "Longitude"
-#define D_HORIZONTAL_ACCURACY  "Horizontal Accuracy"
-#define D_ALTITUDE             "Altitude"
-#define D_VERTICAL_ACCURACY    "Vertical Accuracy"
-#define D_SPEED                "Speed"
-#define D_SPEED_ACCURACY       "Speed Accuracy"
-#define D_HEADING              "Heading"
-#define D_HEADING_ACCURACY     "Heading Accuracy"
-#define D_SAT_FIX              "Satellite Fix"
-  #define D_SAT_FIX_NO_FIX     "None"
-  #define D_SAT_FIX_DEAD_RECK  "Dead reckoning"
-  #define D_SAT_FIX_2D         "2D"
-  #define D_SAT_FIX_3D         "3D"
-  #define D_SAT_FIX_GPS_DEAD   "GPS and dead reckoning"
-  #define D_SAT_FIX_TIME       "Time only fix"
+#define D_LATITUDE             "Breite"
+#define D_LONGITUDE            "Länge"
+#define D_HORIZONTAL_ACCURACY  "Horizontale Genauigkeit"
+#define D_ALTITUDE             "Höhe"
+#define D_VERTICAL_ACCURACY    "Vertikale Genauigkeit"
+#define D_SPEED                "Geschwindigkeit"
+#define D_SPEED_ACCURACY       "Geschwindigkeitsgenauigkeit"
+#define D_HEADING              "Kurs"
+#define D_HEADING_ACCURACY     "Kursgenauigkeit"
+#define D_SAT_FIX              "Satelliten Fix"
+#define D_SAT_FIX_NO_FIX       "Kein Fix"
+#define D_SAT_FIX_DEAD_RECK    "Koppelnavigation"
+#define D_SAT_FIX_2D           "2D"
+#define D_SAT_FIX_3D           "3D"
+#define D_SAT_FIX_GPS_DEAD     "GPS und Koppelnavigation"
+#define D_SAT_FIX_TIME         "Nur Uhrzeit"
 
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "None"
@@ -913,8 +913,8 @@
 #define D_SENSOR_ADC_JOYSTICK  "ADC Joystick"
 #define D_SENSOR_ADC_PH        "ADC pH"
 #define D_SENSOR_ADC_MQ        "ADC MQ"
-#define D_SENSOR_ADC_VOLTAGE   "ADC Voltage"
-#define D_SENSOR_ADC_CURRENT   "ADC Current"
+#define D_SENSOR_ADC_VOLTAGE   "ADC Spannung"
+#define D_SENSOR_ADC_CURRENT   "ADC Strom"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
