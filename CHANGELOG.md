@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Berry consolidated constants for solidified classes reduces Flash size (#2185)
+- Berry updated precompiled Windows binary
 
 ### Fixed
 - Berry `light.get` for separate RGB/CT (#21818)
