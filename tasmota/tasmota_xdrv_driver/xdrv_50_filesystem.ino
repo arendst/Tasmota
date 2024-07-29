@@ -64,8 +64,8 @@ ftp       start stop ftp server: 0 = OFF, 1 = SDC, 2 = FlashFile
 #define UFS_TFAT          2
 #define UFS_TLFS          3
 
-#define UFS_SDC 0
-#define UFS_SDMMC 1
+#define UFS_SDC           0
+#define UFS_SDMMC         1
 
 /*
 // In tasmota.ino
