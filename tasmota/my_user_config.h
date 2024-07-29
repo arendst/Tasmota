@@ -1254,7 +1254,7 @@
     // #define BE_LV_WIDGET_TILEVIEW
 
 // -- Matter protocol ---------------------------------
-  // #define USE_MATTER_DEVICE                      // Enable Matter device support (+420KB)
+  // #define USE_MATTER_DEVICE                      // Enable Matter device support (+380KB)
                                                     // Enabled by default in standard ESP32 binary
 
 #endif  // ESP32
