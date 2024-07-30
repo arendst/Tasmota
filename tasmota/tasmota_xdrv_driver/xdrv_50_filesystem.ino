@@ -64,6 +64,9 @@ ftp       start stop ftp server: 0 = OFF, 1 = SDC, 2 = FlashFile
 #define UFS_TFAT          2
 #define UFS_TLFS          3
 
+#define UFS_SDC           0
+#define UFS_SDMMC         1
+
 /*
 // In tasmota.ino
 #ifdef ESP8266
@@ -97,6 +100,8 @@ uint8_t ufs_dir;
 // 0 = None, 1 = SD, 2 = ffat, 3 = littlefs
 uint8_t ufs_type;
 uint8_t ffs_type;
+// sd type 0 = SD spi interface, 1 = MMC interface
+uint8_t sd_type;
 
 struct {
   char run_file[48];
@@ -206,6 +211,7 @@ void UfsCheckSDCardInit(void) {
 #endif  // ESP32
 
       ufs_type = UFS_TSDC;
+      sd_type = UFS_SDC;
       dfsp = ufsp;
       if (ffsp) {ufs_dir = 1;}
       // make sd card the global filesystem
@@ -239,6 +245,7 @@ void UfsCheckSDCardInit(void) {
       ufsp = &SD_MMC;
 
       ufs_type = UFS_TSDC;
+      sd_type = UFS_SDMMC;
       dfsp = ufsp;
       if (ffsp) {ufs_dir = 1;}
       // make sd card the global filesystem
@@ -274,11 +281,29 @@ uint32_t UfsInfo(uint32_t sel, uint32_t type) {
       }
 #endif  // ESP8266
 #ifdef ESP32
+#ifdef SOC_SDMMC_HOST_SUPPORTED
+      if (sd_type == UFS_SDC) {
+        if (sel == 0) {
+          result = SD.totalBytes();
+        } else {
+          result = (SD.totalBytes() - SD.usedBytes());
+        }
+      } else if (sd_type == UFS_SDMMC) {
+        if (sel == 0) {
+          result = SD_MMC.totalBytes();
+        } else {
+          result = (SD_MMC.totalBytes() - SD_MMC.usedBytes());
+        }
+      } else {
+        result = 0;
+      }
+#else
       if (sel == 0) {
         result = SD.totalBytes();
       } else {
         result = (SD.totalBytes() - SD.usedBytes());
       }
+#endif // SOC_SDMMC_HOST_SUPPORTED
 #endif  // ESP32
 #endif  // USE_SDCARD
       break;
