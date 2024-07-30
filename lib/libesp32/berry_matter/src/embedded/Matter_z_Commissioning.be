@@ -47,12 +47,11 @@ class Matter_Commissioning
   #############################################################
   def init(device)
     self.device = device
-    self._init_basic_commissioning()
   end
 
   #############################################################
   # Start Basic Commissioning Window if needed at startup
-  def _init_basic_commissioning()
+  def init_basic_commissioning()
     # if no fabric is configured, automatically open commissioning at restart
     if self.device.sessions.count_active_fabrics() == 0
       self.start_root_basic_commissioning()

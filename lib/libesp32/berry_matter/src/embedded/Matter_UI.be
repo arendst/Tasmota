@@ -196,9 +196,9 @@ class Matter_UI
   def show_passcode_form()
     import webserver
 
-    webserver.content_send("<fieldset><legend><b>&nbsp;Matter Advanced Configuration&nbsp;</b></legend><p></p>")
-    #
-    webserver.content_send("<form action='/matterc' method='post' onsubmit='return confirm(\"This will cause a restart.\");'>"
+    webserver.content_send("<fieldset><legend><b>&nbsp;Matter Advanced Configuration&nbsp;</b></legend><p></p>"
+    
+                           "<form action='/matterc' method='post' onsubmit='return confirm(\"This will cause a restart.\");'>"
                            "<p>Passcode:</p>")
     webserver.content_send(f"<input type='number' min='1' max='99999998' name='passcode' value='{self.device.root_passcode:i}'>")
     webserver.content_send("<p>Distinguish id:</p>")
@@ -240,9 +240,9 @@ class Matter_UI
 
         webserver.content_send("<form action='/matterc' method='post' onsubmit='return confirm(\"Are you sure?\");'>")
         webserver.content_send(f"<input name='del_fabric' type='hidden' value='{f.get_fabric_index():i}'>")
-        webserver.content_send("<button name='del' class='button bgrn'>Delete Fabric</button></form></p>")
-
-        webserver.content_send("<p></p></fieldset><p></p>")
+        webserver.content_send("<button name='del' class='button bgrn'>Delete Fabric</button></form></p>"
+        
+                               "<p></p></fieldset><p></p>")
       end
     end
 
@@ -378,8 +378,8 @@ class Matter_UI
       var remote_html = webserver.html_escape(remote)
       var host_device_name = webserver.html_escape( self.device.get_plugin_remote_info(remote).find('name', remote) )
       webserver.content_send(f"&#x1F517; <a target='_blank' title='http://{remote_html}/' href=\"http://{remote_html}/?\">{host_device_name}</a>")
-      webserver.content_send("<table style='width:100%'>")
-      webserver.content_send("<tr>"
+      webserver.content_send("<table style='width:100%'>"
+                             "<tr>"
                              "<td width='25'></td>"
                              "<td width='78'></td>"
                              "<td width='115'>"
@@ -440,45 +440,46 @@ class Matter_UI
     # Add new endpoint section
     self.show_plugins_hints_js(self._CLASSES_TYPES)
 
-    webserver.content_send("<p></p><fieldset><legend><b>&nbsp;Add to Configuration&nbsp;</b></legend><p></p>")
-    webserver.content_send("<p><b>Add local sensor or device</b></p>"
+    webserver.content_send("<p></p><fieldset><legend><b>&nbsp;Add to Configuration&nbsp;</b></legend><p></p>"
+                           "<p><b>Add local sensor or device</b></p>"
                            "<form action='/matterc' method='post'>"
-                           "<table style='width:100%'>")
-    webserver.content_send("<tr>"
+                           "<table style='width:100%'>"
+                           "<tr>"
                            "<td width='100' style='font-size:smaller;'>Name</td>"
                            "<td width='115' style='font-size:smaller;'>Type</td>"
                            "<td style='font-size:smaller;'>Parameter</td>"
-                           "</tr>")
-
-    webserver.content_send("<tr>"
+                           "</tr>"
+                           
+                           "<tr>"
                            "<td style='font-size:smaller;'><input type='text' name='nam' size='1' value='' placeholder='(optional)' title=''></td>"
                            "<td style='font-size:smaller;'><select id='pi' name='pi' onchange='otm(\"arg\",this.value)'>")
     self.plugin_option('', self._CLASSES_TYPES)
-    webserver.content_send("</select></td>")
-    webserver.content_send("<td style='font-size:smaller;'><input type='text' id='arg' name='arg' size='1' value=''></td>"
-                           "</tr></table>")
-    
-    webserver.content_send("<div style='display: block;'></div>")
-    webserver.content_send("<button name='addep' class='button bgrn'"
-                           ">Create new endpoint</button></form>")
+    webserver.content_send("</select></td>"
+                          "<td style='font-size:smaller;'><input type='text' id='arg' name='arg' size='1' value=''></td>"
+                           "</tr></table>"
+                           
+                           "<div style='display: block;'></div>"
+                           "<button name='addep' class='button bgrn'"
+                           ">Create new endpoint</button></form>"
 
     # Add remote endpoint
-    webserver.content_send("<hr><p><b>Add Remote Tasmota or OpenBK</b></p>"
+                           "<hr><p><b>Add Remote Tasmota or OpenBK</b></p>"
                            "<form action='/matteradd' method='get'>"
-                           "<table style='width:100%'>")
-    webserver.content_send("<tr><td width='30' style='font-size:smaller;'><b>http://</b></td><td><input type='text' name='url' size='8' value='' required placeholder='IP or domain'></td><td width='10' style='font-size:smaller;'><b>/</b></td></tr>"
-                           "</tr></table>")
-    
-    webserver.content_send("<div style='display: block;'></div>")
-    webserver.content_send("<button class='button bgrn'>"
-                           "Auto-configure remote Tasmota</button></form><hr>")
+                           "<table style='width:100%'>"
+
+                           "<tr><td width='30' style='font-size:smaller;'><b>http://</b></td><td><input type='text' name='url' size='8' value='' required placeholder='IP or domain'></td><td width='10' style='font-size:smaller;'><b>/</b></td></tr>"
+                           "</tr></table>"
+                           
+                           "<div style='display: block;'></div>"
+                           "<button class='button bgrn'>"
+                           "Auto-configure remote Tasmota</button></form><hr>"
     
     # button "Reset and Auto-discover"
-    webserver.content_send("<form action='/matterc' method='post'"
+                          "<form action='/matterc' method='post'"
                            "onsubmit='return confirm(\"This will RESET the configuration to the default. You will need to associate again.\");'>"
-                           "<button name='auto' class='button bred'>Reset all and Auto-discover</button><p></p></form>")
-    
-    webserver.content_send("<p></p></fieldset>")
+                           "<button name='auto' class='button bred'>Reset all and Auto-discover</button><p></p></form>"
+                           
+                           "<p></p></fieldset>")
 
   end
 
@@ -554,8 +555,8 @@ class Matter_UI
       self.show_plugins_configuration()
     end
 
-    webserver.content_send("<div style='display: block;'></div>")
-    webserver.content_send("<p></p><form id='butmat' style='display: block;' action='mattera' method='get'><button name=''>Advanced Configuration</button></form>")
+    webserver.content_send("<div style='display: block;'></div>"
+                           "<p></p><form id='butmat' style='display: block;' action='mattera' method='get'><button name=''>Advanced Configuration</button></form>")
 
     webserver.content_button(webserver.BUTTON_CONFIGURATION)
     webserver.content_stop()                        #- end of web page -#
@@ -617,7 +618,7 @@ class Matter_UI
 
 
     # detect sensors
-    config_list += self.device.autoconf_sensors_list(status10)
+    config_list += self.device.autoconf.autoconf_sensors_list(status10)
 
     return config_list
   end
@@ -703,13 +704,13 @@ class Matter_UI
       webserver.content_send("</td></tr>")
 
       # end of table
-      webserver.content_send("</table>")
-      
-      webserver.content_send("<div style='display: block;'></div>")
-      webserver.content_send("<button name='addrem' class='button bgrn'>"
-                            "Add endpoints</button></form>")
-
-      webserver.content_send("</form></fieldset>")
+      webserver.content_send("</table>"
+                             
+                             "<div style='display: block;'></div>"
+                             "<button name='addrem' class='button bgrn'>"
+                             "Add endpoints</button></form>"
+                             
+                             "</form></fieldset>")
 
     else
       webserver.content_send(format("<p><b>Unable to connect to '%s'</b></p>", webserver.html_escape(url)))
@@ -831,8 +832,7 @@ class Matter_UI
       #---------------------------------------------------------------------#
       elif webserver.has_arg("auto")
         log(format("MTR: /matterc received '%s' command", 'auto'), 3)
-        self.device.plugins_persist = false
-        self.device.save_param()
+        self.device.reset_param()
         #- and force restart -#
         webserver.redirect("/?rst=")
 

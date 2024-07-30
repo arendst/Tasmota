@@ -232,6 +232,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Control_Message.h"
 #include "solidify/solidified_Matter_Plugin_0.h"
 #include "solidify/solidified_Matter_z_Commissioning.h"
+#include "solidify/solidified_Matter_z_Autoconf.h"
 #include "solidify/solidified_Matter_Base38.h"
 #include "solidify/solidified_Matter_UI.h"
 #include "solidify/solidified_Matter_Profiler.h"
@@ -473,6 +474,7 @@ module matter (scope: global, strings: weak) {
 
   // Commissioning
   Commissioning, class(be_class_Matter_Commissioning)
+  Autoconf, class(be_class_Matter_Autoconf)
 
   // QR Code
   QRCode, class(be_class_Matter_QRCode)
