@@ -108,7 +108,7 @@ class Matter_UI
 
     if self.matter_enabled()
       # checkbox for Matter commissioning
-      var commissioning_open_checked = self.device.commissioning_open != nil ? "checked" : ""
+      var commissioning_open_checked = self.device.commissioning.commissioning_open != nil ? "checked" : ""
       webserver.content_send(f"<p><input id='comm' type='checkbox' name='comm' {commissioning_open_checked}>")
       webserver.content_send("<label for='comm'><b>Commissioning open</b></label></p>")
       var disable_bridge_mode_checked = self.device.disable_bridge_mode ? " checked" : ""
@@ -173,17 +173,17 @@ class Matter_UI
   def show_commissioning_info()
     import webserver
 
-    var seconds_left = (self.device.commissioning_open - tasmota.millis()) / 1000
+    var seconds_left = (self.device.commissioning.commissioning_open - tasmota.millis()) / 1000
     if seconds_left < 0   seconds_left = 0 end
     var min_left = (seconds_left + 30) / 60
 
     webserver.content_send(f"<fieldset><legend><b>&nbsp;Commissioning open for {min_left:i} min&nbsp;</b></legend><p></p>")
 
-    var pairing_code = self.device.compute_manual_pairing_code()
+    var pairing_code = self.device.commissioning.compute_manual_pairing_code()
     webserver.content_send(f"<p>Manual pairing code:<br><b>{pairing_code[0..3]}-{pairing_code[4..6]}-{pairing_code[7..]}</b></p><hr>")
 
     webserver.content_send("<div><center>")
-    var qr_text = self.device.compute_qrcode_content()
+    var qr_text = self.device.commissioning.compute_qrcode_content()
     self.show_qrcode(qr_text)
     webserver.content_send(f"<p> {qr_text}</p>")
     webserver.content_send("</div><p></p></fieldset><p></p>")
@@ -794,11 +794,11 @@ class Matter_UI
           end
           #- and force restart -#
           webserver.redirect("/?rst=")
-        elif matter_commissioning_requested != (self.device.commissioning_open != nil)
+        elif matter_commissioning_requested != (self.device.commissioning.commissioning_open != nil)
           if matter_commissioning_requested
             self.device.start_root_basic_commissioning()
           else
-            self.device.stop_basic_commissioning()
+            self.device.commissioning.stop_basic_commissioning()
           end
         
           #- and force restart -#
@@ -1085,7 +1085,7 @@ class Matter_UI
 
       self.show_bridge_status()
 
-      if self.device.is_root_commissioning_open()
+      if self.device.commissioning.is_root_commissioning_open()
         self.show_commissioning_info()
       end
 
@@ -1095,7 +1095,7 @@ class Matter_UI
   def web_get_arg()
     import webserver
     if   webserver.has_arg("mtc0")    # Close Commissioning
-      self.device.stop_basic_commissioning()
+      self.device.commissioning.stop_basic_commissioning()
     elif webserver.has_arg("mtc1")    # Open Commissioning
       self.device.start_root_basic_commissioning()
     end

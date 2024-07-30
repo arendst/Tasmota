@@ -222,7 +222,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_Session.h"
 #include "solidify/solidified_Matter_Session_Store.h"
 #include "solidify/solidified_Matter_Commissioning_Data.h"
-#include "solidify/solidified_Matter_Commissioning.h"
+#include "solidify/solidified_Matter_Commissioning_Context.h"
 #include "solidify/solidified_Matter_Message.h"
 #include "solidify/solidified_Matter_MessageHandler.h"
 #include "solidify/solidified_Matter_IM_Message.h"
@@ -231,6 +231,7 @@ extern const bclass be_class_Matter_TLV;   // need to declare it upfront because
 #include "solidify/solidified_Matter_EventHandler.h"
 #include "solidify/solidified_Matter_Control_Message.h"
 #include "solidify/solidified_Matter_Plugin_0.h"
+#include "solidify/solidified_Matter_z_Commissioning.h"
 #include "solidify/solidified_Matter_Base38.h"
 #include "solidify/solidified_Matter_UI.h"
 #include "solidify/solidified_Matter_Profiler.h"
@@ -469,6 +470,9 @@ module matter (scope: global, strings: weak) {
   IM, class(be_class_Matter_IM)
   Control_Message, class(be_class_Matter_Control_Message)
   UI, class(be_class_Matter_UI)
+
+  // Commissioning
+  Commissioning, class(be_class_Matter_Commissioning)
 
   // QR Code
   QRCode, class(be_class_Matter_QRCode)
