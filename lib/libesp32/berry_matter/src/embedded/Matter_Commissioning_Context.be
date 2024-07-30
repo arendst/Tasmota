@@ -1,5 +1,5 @@
 #
-# Matter_Commissioning.be - suppport for Matter Commissioning process PASE and CASE
+# Matter_Commissioning_Context.be - suppport for Matter Commissioning process PASE and CASE
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #
@@ -53,7 +53,7 @@ class Matter_Commisioning_Context
 
   def process_incoming(msg)
     #
-    if !self.device.is_commissioning_open() && msg.opcode >= 0x20 && msg.opcode <= 0x24
+    if !self.device.commissioning.is_commissioning_open() && msg.opcode >= 0x20 && msg.opcode <= 0x24
       log("MTR: commissioning not open", 2)
       return false
     end
@@ -139,8 +139,8 @@ class Matter_Commisioning_Context
     # generate 32 bytes random
     pbkdfparamresp.responderRandom = crypto.random(32)
     pbkdfparamresp.responderSessionId = session.__future_local_session_id
-    pbkdfparamresp.pbkdf_parameters_salt = self.device.commissioning_salt
-    pbkdfparamresp.pbkdf_parameters_iterations = self.device.commissioning_iterations
+    pbkdfparamresp.pbkdf_parameters_salt = self.device.commissioning.commissioning_salt
+    pbkdfparamresp.pbkdf_parameters_iterations = self.device.commissioning.commissioning_iterations
     # log("MTR: pbkdfparamresp: " + str(matter.inspect(pbkdfparamresp)), 4)
     var pbkdfparamresp_raw = pbkdfparamresp.tlv2raw()
     # log("MTR: pbkdfparamresp_raw: " + pbkdfparamresp_raw.tohex(), 4)
@@ -172,7 +172,7 @@ class Matter_Commisioning_Context
     
     # instanciate SPAKE
     # for testing purpose, we don't send `w1` to make sure
-    var spake = crypto.SPAKE2P_Matter(self.device.commissioning_w0, nil, self.device.commissioning_L)
+    var spake = crypto.SPAKE2P_Matter(self.device.commissioning.commissioning_w0, nil, self.device.commissioning.commissioning_L)
 
     # generate `y` nonce (not persisted)
     var y = crypto.random(32)                     # 32 bytes random known only by verifier

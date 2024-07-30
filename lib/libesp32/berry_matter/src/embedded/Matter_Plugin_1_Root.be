@@ -196,17 +196,17 @@ class Matter_Plugin_Root : Matter_Plugin
     # ====================================================================================================
     elif cluster == 0x003C              # ========== Administrator Commissioning Cluster 11.18 p.725 ==========
       if   attribute == 0x0000          #  ---------- WindowStatus / u8 ----------
-        var commissioning_open = self.device.is_commissioning_open()
-        var basic_commissioning = self.device.is_root_commissioning_open()
+        var commissioning_open = self.device.commissioning.is_commissioning_open()
+        var basic_commissioning = self.device.commissioning.is_root_commissioning_open()
         var val = commissioning_open ? (basic_commissioning ? 2 #-BasicWindowOpen-# : 1 #-EnhancedWindowOpen-#) : 0 #-WindowNotOpen-#
         return tlv_solo.set(TLV.U1, val)
       elif attribute == 0x0001          #  ---------- AdminFabricIndex / u16 ----------
-        var admin_fabric = self.device.commissioning_admin_fabric
+        var admin_fabric = self.device.commissioning.commissioning_admin_fabric
         if admin_fabric != nil
           return tlv_solo.set_or_nil(TLV.U2, admin_fabric.get_fabric_index())
         end
       elif attribute == 0x0002          #  ---------- AdminVendorId / u16 ----------
-        var admin_fabric = self.device.commissioning_admin_fabric
+        var admin_fabric = self.device.commissioning.commissioning_admin_fabric
         if admin_fabric != nil
           return tlv_solo.set_or_nil(TLV.U2, admin_fabric.get_admin_vendor())
         end
@@ -387,7 +387,7 @@ class Matter_Plugin_Root : Matter_Plugin
           ccr.add_TLV(1, TLV.UTF1, "")   # DebugText = ""
           ctx.command = 0x05              # CommissioningCompleteResponse
 
-          self.device.start_commissioning_complete_deferred(session)
+          self.device.commissioning.start_commissioning_complete_deferred(session)
           return ccr
         else
           raise "context_error", "CommissioningComplete: no fabric attached"
@@ -526,7 +526,7 @@ class Matter_Plugin_Root : Matter_Plugin
         var hk = crypto.HKDF_SHA256()
         var fabric_rev = fabric_id.copy().reverse()
         var k_fabric = hk.derive(root_ca_pub, fabric_rev, info, 8)
-        var parent_fabric = session._fabric ? session._fabric : self.device.commissioning_admin_fabric    # get parent fabric whether CASE or PASE
+        var parent_fabric = session._fabric ? session._fabric : self.device.commissioning.commissioning_admin_fabric    # get parent fabric whether CASE or PASE
         new_fabric.set_fabric_device(fabric_id, deviceid, k_fabric, parent_fabric)
 
         # log("MTR: AddNoc k_fabric=" + str(k_fabric), 3)
@@ -534,7 +534,7 @@ class Matter_Plugin_Root : Matter_Plugin
         new_fabric.fabric_candidate()
 
         # move to next step
-        self.device.start_operational_discovery_deferred(new_fabric)
+        self.device.commissioning.start_operational_discovery_deferred(new_fabric)
 
         # we keep the PASE session for 1 minute
         if session.is_PASE()
@@ -627,7 +627,7 @@ class Matter_Plugin_Root : Matter_Plugin
         var w0 = passcode_verifier[0..31]
         var L  = passcode_verifier[32..]
 
-        self.device.start_basic_commissioning(timeout, iterations, discriminator, salt, w0, #-w1,-# L, session.get_fabric())
+        self.device.commissioning.start_basic_commissioning(timeout, iterations, discriminator, salt, w0, #-w1,-# L, session.get_fabric())
         # TODO announce in MDNS
         return true                   # OK
       elif command == 0x0001          #  ---------- OpenBasicCommissioningWindow  ----------
@@ -637,7 +637,7 @@ class Matter_Plugin_Root : Matter_Plugin
         return true
       elif command == 0x0002          #  ---------- RevokeCommissioning  ----------
         # TODO add checks that the commissioning window was opened by the same fabric
-        self.device.stop_basic_commissioning()
+        self.device.commissioning.stop_basic_commissioning()
         return true
       end
 
