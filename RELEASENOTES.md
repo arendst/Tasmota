@@ -180,11 +180,13 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Matter filter suffix automatically added for sensors [#21589](https://github.com/arendst/Tasmota/issues/21589)
 - Matter support for Rain sensor [#21633](https://github.com/arendst/Tasmota/issues/21633)
 - Matter refactor reading of multiple attributes to reduce memory pressure [#21675](https://github.com/arendst/Tasmota/issues/21675)
+- Matter improve encoding of attributes to reduce flash size [#21864](https://github.com/arendst/Tasmota/issues/21864)
 
 ### Fixed
 - On universal display remove default backlight power if a single PWM channel is used for backlight. Regression from 14.0.0.1 [#21726](https://github.com/arendst/Tasmota/issues/21726)
 - Shutter MQTT on inverted shutter [#21663](https://github.com/arendst/Tasmota/issues/21663)
 - Scripter TCP server [#21660](https://github.com/arendst/Tasmota/issues/21660)
+- Filesystem SD MMC free space display [#21869](https://github.com/arendst/Tasmota/issues/21869)
 - ESP32 allow use of UART0 with enabled USB_CDC_CONSOLE [#21496](https://github.com/arendst/Tasmota/issues/21496)
 - ESP32 I2S fixes [#21770](https://github.com/arendst/Tasmota/issues/21770)
 - ESP32 Resistive Touch xpt for 2 spi busses [#21814](https://github.com/arendst/Tasmota/issues/21814)

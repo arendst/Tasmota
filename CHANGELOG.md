@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - Berry `light.get` for separate RGB/CT (#21818)
 - Berry `bytes` setters and getters with negative offsets (#21835)
 - Berry `file.write()` raises an exception on failure (ex: disk full) (#21849)
+- Filesystem SD MMC free space display (#21869)
 
 ### Removed
 - Berry internal: remove class from closure to simplify code (#21839)
