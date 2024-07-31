@@ -5,8 +5,7 @@
 
   SPDX-License-Identifier: GPL-3.0-only
 */
-#define USE_LD2410
-#define USE_WEBSERVER
+
 #ifdef USE_LD2410
 /*********************************************************************************************\
  * HLK-LD2410 24GHz smart wave motion sensor
