@@ -87,9 +87,6 @@
 #define D_DEBUG "Ontfout"
 #define D_DEWPOINT "Dou punt"
 #define D_DISABLED "Gedeaktiveer"
-#define D_MOVING_DISTANCE "Moving Distance"
-#define D_STATIC_DISTANCE "Static Distance"
-#define D_DETECT_DISTANCE "Detect Distance"
 #define D_DISTANCE "Afstand"
 #define D_DNS_SERVER "DNS"
 #define D_DO "Opgeloste suurstof"
@@ -1271,6 +1268,15 @@
 // ixrv92_pipsolar.ino
 #define D_SENSOR_PIPSOLAR_TX             "Pipsolar TX"
 #define D_SENSOR_PIPSOLAR_RX             "Pipsolar RX"
+
+// xsns_102_ld2410.ino
+#define D_MOVING_DISTANCE "Moving Distance"
+#define D_STATIC_DISTANCE "Static Distance"
+#define D_DETECT_DISTANCE "Detect Distance"
+#define D_MOVING_ENERGY_T "Moving target"
+#define D_STATIC_ENERGY_T "Static target"
+#define D_LD2410_PIN_STATE "Out port state"
+#define D_LD2410_LIGHT "Light sensor"
 
 // xsns_115_wooliis.ino
 #define D_IMPORT                          "Import"

@@ -87,9 +87,6 @@
 #define D_DEBUG "Debug"
 #define D_DEWPOINT "Point de rosée"
 #define D_DISABLED "Désactivé"
-#define D_MOVING_DISTANCE "Distance mobile"
-#define D_STATIC_DISTANCE "Distance fixe"
-#define D_DETECT_DISTANCE "Distance détectée"
 #define D_DISTANCE "Distance"
 #define D_DNS_SERVER "Serveur DNS"
 #define D_DO "Oxygène dissout"
@@ -1272,6 +1269,15 @@
 // ixrv92_pipsolar.ino
 #define D_SENSOR_PIPSOLAR_TX             "Pipsolar TX"
 #define D_SENSOR_PIPSOLAR_RX             "Pipsolar RX"
+
+// xsns_102_ld2410.ino
+#define D_MOVING_DISTANCE "Distance mobile"
+#define D_STATIC_DISTANCE "Distance fixe"
+#define D_DETECT_DISTANCE "Distance détectée"
+#define D_MOVING_ENERGY_T "Moving target"
+#define D_STATIC_ENERGY_T "Static target"
+#define D_LD2410_PIN_STATE "Out port state"
+#define D_LD2410_LIGHT "Light sensor"
 
 // xsns_115_wooliis.ino
 #define D_IMPORT                          "Import"
