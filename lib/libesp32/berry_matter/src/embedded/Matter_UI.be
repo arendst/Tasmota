@@ -1115,3 +1115,7 @@ class Matter_UI
   end
 end
 matter.UI = Matter_UI
+
+# optimization of constants
+import solidify
+solidify.nocompact(Matter_UI.page_part_ctl)
