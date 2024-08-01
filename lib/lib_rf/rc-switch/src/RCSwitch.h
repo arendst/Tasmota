@@ -57,9 +57,9 @@
 #endif
 
 // Number of maximum high/Low changes per packet.
-// We can handle up to (unsigned long) => 32 bit * 2 H/L changes per bit + 2 for sync
+// We can handle up to 36 bit * 2 H/L changes per bit + 2 for sync
 // Для keeloq нужно увеличить RCSWITCH_MAX_CHANGES до 23+1+66*2+1=157
-#define RCSWITCH_MAX_CHANGES 67        // default 67
+#define RCSWITCH_MAX_CHANGES 75        // default 75 - longest protocol that requires this buffer size is 38/nexus
 
 // separationLimit: minimum microseconds between received codes, closer codes are ignored.
 // according to discussion on issue #14 it might be more suitable to set the separation
