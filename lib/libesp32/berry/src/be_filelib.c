@@ -9,6 +9,7 @@
 #include "be_mem.h"
 #include "be_sys.h"
 #include "be_gc.h"
+#include "be_bytecode.h"
 #include <string.h>
 
 #define READLINE_STEP           100
@@ -181,6 +182,26 @@ static int i_close(bvm *vm)
     be_return_nil(vm);
 }
 
+static int i_savecode(bvm *vm)
+{
+    int argc = be_top(vm);
+    if (argc >= 2 && be_isclosure(vm, 2)) {
+        be_getmember(vm, 1, ".p");
+        if (be_iscomptr(vm, -1)) {
+            void *fh = be_tocomptr(vm, -1);
+            bvalue *v = be_indexof(vm, 2);
+            if (var_isclosure(v)) {
+                bclosure *cl = var_toobj(v);
+                bproto *pr = cl->proto;
+                be_bytecode_save_to_fs(vm, fh, pr);
+            }
+        }
+    } else {
+        be_raise(vm, "type_error", "closure expected");
+    }
+    be_return_nil(vm);
+}
+
 #if !BE_USE_PRECOMPILED_OBJECT
 static int m_open(bvm *vm)
 #else
@@ -201,6 +222,7 @@ int be_nfunc_open(bvm *vm)
         { "flush", i_flush },
         { "close", i_close },
         { "deinit", i_close },
+        { "savecode", i_savecode },
         { NULL, NULL }
     };
     fname = argc >= 1 && be_isstring(vm, 1) ? be_tostring(vm, 1) : NULL;
