@@ -43,6 +43,7 @@
 #define BE_VA_METHOD            (1 << 1)    /* function is a method (this is only a hint) */
 #define BE_VA_STATICMETHOD      (1 << 2)    /* the function is a static method and has the class as implicit '_class' variable */
 #define BE_VA_SHARED_KTAB       (1 << 3)    /* the funciton has a shared consolidated ktab */
+#define BE_VA_NOCOMPACT         (1 << 4)    /* the funciton has a shared consolidated ktab */
 #define array_count(a)   (sizeof(a) / sizeof((a)[0]))
 
 #define bcommon_header          \

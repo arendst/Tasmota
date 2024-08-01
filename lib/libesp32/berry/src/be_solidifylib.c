@@ -18,6 +18,7 @@
 #include "be_sys.h"
 #include "be_mem.h"
 #include "be_byteslib.h"
+#include "be_gc.h"
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -313,10 +314,11 @@ static void m_solidify_bvalue(bvm *vm, bbool str_literal, const bvalue * value, 
 static void m_solidify_subclass(bvm *vm, bbool str_literal, const bclass *cl, void* fout);
 
 /* solidify any inner class */
-static void m_solidify_proto_inner_class(bvm *vm, bbool str_literal, const bproto *pr, void* fout)
+static void m_solidify_closure_inner_class(bvm *vm, bbool str_literal, const bclosure *clo, void* fout)
 {
     // parse any class in constants to output it first
-    if ((pr->nconst > 0) && (!(pr->varg & BE_VA_SHARED_KTAB))) {        /* if shared ktab, this was done already earlier */
+    bproto *pr = clo->proto;
+    if ((!gc_isconst(clo)) && (pr->nconst > 0) && (!(pr->varg & BE_VA_SHARED_KTAB)) && (!(pr->varg & BE_VA_NOCOMPACT))) {        /* if shared ktab or nocompact, skip */
         for (int k = 0; k < pr->nconst; k++) {
             if (var_type(&pr->ktab[k]) == BE_CLASS) {
                 if ((k == 0) && (pr->varg & BE_VA_STATICMETHOD)) {
@@ -430,7 +432,7 @@ static void m_solidify_closure(bvm *vm, bbool str_literal, const bclosure *clo, 
 
     int indent = 2;
 
-    m_solidify_proto_inner_class(vm, str_literal, pr, fout);
+    m_solidify_closure_inner_class(vm, str_literal, clo, fout);
 
     logfmt("\n");
     logfmt("/********************************************************************\n");
@@ -622,7 +624,7 @@ static void m_compact_class(bvm *vm, bbool str_literal, const bclass *cla, void*
                 bclosure *cl = var_toobj(&node->value);
                 bproto *pr = cl->proto;
 
-                if (pr->varg & BE_VA_SHARED_KTAB) { continue; }
+                if ((gc_isconst(cl)) || (pr->varg & BE_VA_SHARED_KTAB) || (pr->varg & BE_VA_NOCOMPACT)) { continue; }
 
                 // iterate on each bvalue in ktab
                 for (int i = 0; i < pr->nconst; i++) {
@@ -664,7 +666,7 @@ static void m_compact_class(bvm *vm, bbool str_literal, const bclass *cla, void*
                 bclosure *cl = var_toobj(&node->value);
                 bproto *pr = cl->proto;
 
-                if (pr->varg & BE_VA_SHARED_KTAB) { continue; }
+                if ((gc_isconst(cl)) || (pr->varg & BE_VA_SHARED_KTAB) || (pr->varg & BE_VA_NOCOMPACT)) { continue; }
 
                 uint8_t mapping_array[MAX_KTAB_SIZE];
                 // iterate in proto ktab to get the index in the global ktab
@@ -689,7 +691,10 @@ static void m_compact_class(bvm *vm, bbool str_literal, const bclass *cla, void*
                     uint32_t ins = pr->code[pc];
                     bopcode op = IGET_OP(ins);
 
-           
+                    /* handle all impacted opcodes */
+                    /* Possibilities: */
+                    /* "B" | "B and C" | "Bx" contain a constant code */
+                    /* special case for OP_RET where "B" may not contain anything */
                     switch (op) {
                     case OP_ADD: case OP_SUB: case OP_MUL: case OP_DIV:
                     case OP_MOD: case OP_LT: case OP_LE: case OP_EQ:
@@ -739,25 +744,6 @@ static void m_compact_class(bvm *vm, bbool str_literal, const bclass *cla, void*
                             pr->code[pc] = ins;
                         }
                         break;
-                    // case OP_GETGBL: case OP_SETGBL:
-                    //     logbuf("%s\tR%d\tG%d", opc2str(op), IGET_RA(ins), IGET_Bx(ins));
-                    //     break;
-                    // case OP_MOVE: case OP_SETSUPER: case OP_NEG: case OP_FLIP: case OP_IMPORT:
-                    //     logbuf("%s\tR%d\t%c%d", opc2str(op), IGET_RA(ins),
-                    //             isKB(ins) ? 'K' : 'R', IGET_RKB(ins) & KR_MASK);
-                    //     break;
-                    // case OP_JMP:
-                    //     logbuf("%s\t\t#%.4X", opc2str(op), IGET_sBx(ins) + pc + 1);
-                    //     break;
-                    // case OP_JMPT: case OP_JMPF:
-                    //     logbuf("%s\tR%d\t#%.4X", opc2str(op), IGET_RA(ins), IGET_sBx(ins) + pc + 1);
-                    //     break;
-                    // case OP_LDINT:
-                    //     logbuf("%s\tR%d\t%d", opc2str(op), IGET_RA(ins), IGET_sBx(ins));
-                    //     break;
-                    // case OP_LDBOOL:
-                    //     logbuf("%s\tR%d\t%d\t%d", opc2str(op),  IGET_RA(ins), IGET_RKB(ins), IGET_RKC(ins));
-                    //     break;
                     case OP_RET:
                         if (IGET_RA(ins)) {
                             // Only B might contain 'K' constant
@@ -771,39 +757,19 @@ static void m_compact_class(bvm *vm, bbool str_literal, const bclass *cla, void*
                         }
                         pr->code[pc] = ins;
                         break;
-                    // case OP_GETUPV: case OP_SETUPV:
-                    //     logbuf("%s\tR%d\tU%d", opc2str(op), IGET_RA(ins), IGET_Bx(ins));
-                    //     break;
-                    // case OP_LDCONST:
-                    //     logbuf("%s\tR%d\tK%d", opc2str(op), IGET_RA(ins), IGET_Bx(ins));
-                    //     break;
-                    // case OP_CALL:
-                    //     logbuf("%s\tR%d\t%d", opc2str(op), IGET_RA(ins), IGET_RKB(ins));
-                    //     break;
-                    // case OP_CLOSURE:
-                    //     logbuf("%s\tR%d\tP%d", opc2str(op), IGET_RA(ins), IGET_Bx(ins));
-                    //     break;
-                    // case OP_CLASS:
-                    //     logbuf("%s\tK%d", opc2str(op), IGET_Bx(ins));
-                    //     break;
-                    // case OP_CLOSE: case OP_LDNIL:
-                    //     logbuf("%s\tR%d", opc2str(op), IGET_RA(ins));
-                    //     break;
-                    // case OP_RAISE:
-                    //     logbuf("%s\t%d\t%c%d\t%c%d", opc2str(op), IGET_RA(ins),
-                    //             isKB(ins) ? 'K' : 'R', IGET_RKB(ins) & KR_MASK,
-                    //             isKC(ins) ? 'K' : 'R', IGET_RKC(ins) & KR_MASK);
-                    //     break;
-                    // case OP_EXBLK:
-                    //     if (IGET_RA(ins)) {
-                    //         logbuf("%s\t%d\t%d", opc2str(op), IGET_RA(ins), IGET_Bx(ins));
-                    //     } else {
-                    //         logbuf("%s\t%d\t#%.4X", opc2str(op), IGET_RA(ins), IGET_sBx(ins) + pc + 1);
-                    //     }
-                    //     break;
-                    // case OP_CATCH:
-                    //     logbuf("%s\tR%d\t%d\t%d", opc2str(op), IGET_RA(ins), IGET_RKB(ins), IGET_RKC(ins));
-                    //     break;
+                    /* The following opcodes are not impacted by shared constant table
+                    case OP_GETUPV: case OP_SETUPV:
+                    case OP_LDCONST:
+                    case OP_CALL:
+                    case OP_CLOSURE:
+                    case OP_CLOSE: case OP_LDNIL:
+                    case OP_EXBLK:
+                    case OP_CATCH:
+                    case OP_GETGBL: case OP_SETGBL:
+                    case OP_JMP:
+                    case OP_JMPT: case OP_JMPF:
+                    case OP_LDINT:
+                    case OP_LDBOOL:     */
                     default:
                         break;
                     }
@@ -883,6 +849,22 @@ static int m_compact(bvm *vm)
     be_return_nil(vm);
 }
 
+static int m_nocompact(bvm *vm)
+{
+    int top = be_top(vm);
+    if (top >= 1) {
+        bvalue *v = be_indexof(vm, 1);
+        if (var_isclosure(v)) {
+            bclosure *cl = var_toobj(v);
+            bproto *pr = cl->proto;
+            pr->varg |= BE_VA_NOCOMPACT;
+        } else {
+            be_raise(vm, "value_error", "unsupported type");
+        }
+    }
+    be_return_nil(vm);
+}
+
 #if !BE_USE_PRECOMPILED_OBJECT
 be_native_module_attr_table(solidify) {
     be_native_module_function("dump", m_dump),
@@ -895,6 +877,7 @@ be_define_native_module(solidify, NULL);
 module solidify (scope: global, depend: BE_USE_SOLIDIFY_MODULE) {
     dump, func(m_dump)
     compact, func(m_compact)
+    nocompact, func(m_nocompact)
 }
 @const_object_info_end */
 #include "../generate/be_fixed_solidify.h"
