@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Berry add `solidify.nocompact()` and reduce size of Matter UI
 
 ### Breaking Changed
+- Berry `energy` module support for 8 phases and move to pseudo-arrays
 
 ### Changed
 - Berry consolidated constants for solidified classes reduces Flash size (#2185)
