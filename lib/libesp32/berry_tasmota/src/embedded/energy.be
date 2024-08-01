@@ -6,7 +6,7 @@ energy_struct = nil
 # implement an array of simple types
 class bytes_array : bytes
     var item_type               # item_type number for each element
-    var sz                    # size (number of items in the array)
+    var sz                      # size (number of items in the array)
     var item_size               # size in bytes of each element (inferred from item_type)
 
     def init(ptr, item_type, sz)
@@ -46,6 +46,10 @@ class bytes_array : bytes
         else
             return self.set(idx * self.item_size, self.item_type, v)
         end
+    end
+
+    def size()
+        return self.sz
     end
 
     def tostring()
