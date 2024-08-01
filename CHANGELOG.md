@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Analog GPIO ``ADC Voltage`` with ``AdcParam<x> 11,<start_range>,<end_range>,<lowest_voltage>,<highest_voltage>`` provide energy monitoring with dc voltage 
 - Analog GPIO ``ADC Current`` with ``AdcParam<x> 12,<start_range>,<end_range>,<lowest_current>,<highest_current>`` provide energy monitoring with dc voltage
 - Berry add new type "addr" to ctypes mapping
+- Berry add `file.savecode()`
 
 ### Breaking Changed
 
