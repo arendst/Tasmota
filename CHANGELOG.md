@@ -13,12 +13,12 @@ All notable changes to this project will be documented in this file.
 - Analog GPIO ``ADC Input`` with ``AdcParam<x> 1,<start_range>,<end_range>,<margin>,1`` provide direct light control 
 - Analog GPIO ``ADC Voltage`` with ``AdcParam<x> 11,<start_range>,<end_range>,<lowest_voltage>,<highest_voltage>`` provide energy monitoring with dc voltage 
 - Analog GPIO ``ADC Current`` with ``AdcParam<x> 12,<start_range>,<end_range>,<lowest_current>,<highest_current>`` provide energy monitoring with dc voltage
-- Berry add new type "addr" to ctypes mapping
-- Berry add `file.savecode()`
-- Berry add `solidify.nocompact()` and reduce size of Matter UI
+- Berry new type "addr" to ctypes mapping (#21883)
+- Berry `file.savecode()` (#21884)
+- Berry `solidify.nocompact()` and reduce size of Matter UI (#21885)
 
 ### Breaking Changed
-- Berry `energy` module support for 8 phases and move to pseudo-arrays
+- Berry `energy` module support for 8 phases and move to pseudo-arrays (#21887)
 
 ### Changed
 - Berry consolidated constants for solidified classes reduces Flash size (#2185)

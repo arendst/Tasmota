@@ -146,6 +146,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `int64` added `low32()` and `high32()` methods, used in Matter [#21728](https://github.com/arendst/Tasmota/issues/21728)
 - Berry `webserver_async` [#21836](https://github.com/arendst/Tasmota/issues/21836)
 - Berry cam module and img class [#21743](https://github.com/arendst/Tasmota/issues/21743)
+- Berry new type "addr" to ctypes mapping [#21883](https://github.com/arendst/Tasmota/issues/21883)
+- Berry `file.savecode()` [#21884](https://github.com/arendst/Tasmota/issues/21884)
+- Berry `solidify.nocompact()` and reduce size of Matter UI [#21885](https://github.com/arendst/Tasmota/issues/21885)
 - HASPmota rounds to nearest int values passed as 'real' [#21599](https://github.com/arendst/Tasmota/issues/21599)
 - Matter support for Air Quality sensors [#21559](https://github.com/arendst/Tasmota/issues/21559)
 - Matter support for bridged Air Quality [#21597](https://github.com/arendst/Tasmota/issues/21597)
@@ -156,6 +159,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Matter support for 'Generic Switch' based on Tasmota Buttons [#21731](https://github.com/arendst/Tasmota/issues/21731)
 - Matter improve internal `inspect`for superclasses [#21824](https://github.com/arendst/Tasmota/issues/21824)
 - Matter support for split lights (`SetOption68 1` and `SetOption37 128`) [#21834](https://github.com/arendst/Tasmota/issues/21834)
+
+### Breaking Changed
+- Berry `energy` module support for 8 phases and move to pseudo-arrays [#21887](https://github.com/arendst/Tasmota/issues/21887)
 
 ### Changed
 - ESP8266 platform update from 2024.01.01 to 2024.06.00 [#21668](https://github.com/arendst/Tasmota/issues/21668)
