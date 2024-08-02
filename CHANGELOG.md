@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Berry new type "addr" to ctypes mapping (#21883)
 - Berry `file.savecode()` (#21884)
 - Berry `solidify.nocompact()` and reduce size of Matter UI (#21885)
+- Berry `zigbee.find()`
 
 ### Breaking Changed
 - Berry `energy` module support for 8 phases and move to pseudo-arrays (#21887)
