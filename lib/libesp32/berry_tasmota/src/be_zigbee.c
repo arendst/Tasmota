@@ -49,6 +49,7 @@ static int zd_member(bvm *vm) {
   be_return(vm);
 }
 
+extern int zc_started(struct bvm *vm);
 extern int zc_info(struct bvm *vm);
 extern int zc_item(struct bvm *vm);
 extern int zc_find(struct bvm *vm);
@@ -111,6 +112,8 @@ class be_class_zb_coord_ntv (scope: global, name: zb_coord_ntv, strings: weak) {
   zcl_attribute, class(be_class_zcl_attribute)
   zcl_attribute_list, class(be_class_zcl_attribute_list)
   zb_device, class(be_class_zb_device)
+
+  started, func(zc_started)
 
   info, func(zc_info)
   item, func(zc_item)

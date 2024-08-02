@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Berry `file.savecode()` (#21884)
 - Berry `solidify.nocompact()` and reduce size of Matter UI (#21885)
 - Berry `zigbee.find()`
+- Berry `zigbee.started()`
 
 ### Breaking Changed
 - Berry `energy` module support for 8 phases and move to pseudo-arrays (#21887)
