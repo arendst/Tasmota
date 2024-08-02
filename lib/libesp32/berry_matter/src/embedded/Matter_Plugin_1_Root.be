@@ -633,7 +633,7 @@ class Matter_Plugin_Root : Matter_Plugin
       elif command == 0x0001          #  ---------- OpenBasicCommissioningWindow  ----------
         var commissioning_timeout = val.findsubval(0)     # CommissioningTimeout
         log("MTR: OpenBasicCommissioningWindow commissioning_timeout="+str(commissioning_timeout), 3)
-        self.device.start_root_basic_commissioning(commissioning_timeout)
+        self.device.commissioning.start_root_basic_commissioning(commissioning_timeout)
         return true
       elif command == 0x0002          #  ---------- RevokeCommissioning  ----------
         # TODO add checks that the commissioning window was opened by the same fabric

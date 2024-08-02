@@ -797,7 +797,7 @@ class Matter_UI
           webserver.redirect("/?rst=")
         elif matter_commissioning_requested != (self.device.commissioning.commissioning_open != nil)
           if matter_commissioning_requested
-            self.device.start_root_basic_commissioning()
+            self.device.commissioning.start_root_basic_commissioning()
           else
             self.device.commissioning.stop_basic_commissioning()
           end
@@ -1097,7 +1097,7 @@ class Matter_UI
     if   webserver.has_arg("mtc0")    # Close Commissioning
       self.device.commissioning.stop_basic_commissioning()
     elif webserver.has_arg("mtc1")    # Open Commissioning
-      self.device.start_root_basic_commissioning()
+      self.device.commissioning.start_root_basic_commissioning()
     end
   end
 
