@@ -2426,7 +2426,7 @@ void ZigbeeShow(bool json)
                       zigbee.major_rel, zigbee.minor_rel,
                       zigbee.maint_rel, zigbee.revision);
       WSContentSend_P(HTTP_BTN_ZB_BUTTONS);
-    } else {
+    } else if (zigbee.state_machine) {      // show buttons only if the state machine is still running. If not running anymore, it means aborted
       uint32_t grey = WebColor(COL_FORM);
       WSContentSend_P(HTTP_BTN_ZB_BUTTONS_DISABLED, grey, grey);
     }

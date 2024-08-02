@@ -75,6 +75,21 @@ extern "C" {
 
 extern "C" {
   // Zigbee Coordinator `zc`
+
+  // `zigbee.started() -> bool or nil`
+  // Returns `true` if Zigbee sucessfully started, `false` if not yet started
+  // or `nil` if not configured or aborted
+  int zc_started(struct bvm *vm);
+  int zc_started(struct bvm *vm) {
+    // return `nil` if `zigbee.active` is false (i.e. no GPIO configured)
+    // or aborted, `zigbee.init_phase` is `true` but `zigbee.state_machine` is `false`
+    if (!zigbee.active || (!zigbee.state_machine && zigbee.init_phase)) {
+      be_return_nil(vm);
+    }
+    be_pushbool(vm, !zigbee.init_phase);
+    be_return(vm);
+  }
+
   int zc_info(struct bvm *vm);
   int zc_info(struct bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
