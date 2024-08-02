@@ -51,6 +51,7 @@ static int zd_member(bvm *vm) {
 
 extern int zc_info(struct bvm *vm);
 extern int zc_item(struct bvm *vm);
+extern int zc_find(struct bvm *vm);
 extern int32_t zc_size(void* d);               BE_FUNC_CTYPE_DECLARE(zc_size, "i", ".");
 extern int zc_iter(bvm *vm);
 extern void zc_abort(void);                    BE_FUNC_CTYPE_DECLARE(zc_abort, "", ".");
@@ -113,6 +114,7 @@ class be_class_zb_coord_ntv (scope: global, name: zb_coord_ntv, strings: weak) {
 
   info, func(zc_info)
   item, func(zc_item)
+  find, func(zc_find)
   size, ctype_func(zc_size)
   iter, func(zc_iter)
 

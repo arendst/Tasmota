@@ -99,8 +99,8 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
-  int zc_item(struct bvm *vm);
-  int zc_item(struct bvm *vm) {
+  // implement item() and find()
+  int zc_item_or_find(struct bvm *vm, bbool raise_if_unknown) {
     int32_t top = be_top(vm); // Get the number of arguments
     if (zigbee.init_phase) {
       be_raise(vm, "internal_error", "zigbee not started");
@@ -109,7 +109,11 @@ extern "C" {
       const Z_Device & device = be_isint(vm, 2) ? zigbee_devices.findShortAddr(be_toint(vm, 2))
                                                 : zigbee_devices.parseDeviceFromName(be_tostring(vm, 2));
       if (!device.valid()) {
-        be_raise(vm, "value_error", "unknown device");
+        if (raise_if_unknown) {
+          be_raise(vm, "index_error", "unknown device");
+        } else {
+          be_return_nil(vm);
+        }
       }
 
       be_pushntvclass(vm, &be_class_zb_device);
@@ -119,6 +123,20 @@ extern "C" {
       be_return(vm);
     }
     be_raise(vm, kTypeError, nullptr);
+  }
+
+  // `zigbee.item(shortaddr:int | friendlyname:str) -> instance of zb_device`
+  // raise en exception if not found
+  int zc_item(struct bvm *vm);
+  int zc_item(struct bvm *vm) {
+    return zc_item_or_find(vm, true);
+  }
+
+  // `zigbee.find(shortaddr:int | friendlyname:str) -> instance of zb_device`
+  // return `nil` if not found
+  int zc_find(struct bvm *vm);
+  int zc_find(struct bvm *vm) {
+    return zc_item_or_find(vm, false);
   }
 
   int32_t zc_size(void*) {
