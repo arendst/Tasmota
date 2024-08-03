@@ -1,7 +1,7 @@
 /*
   xnrg_24_biopdu.ino - BioPDU-625x12 (based on xnrg_05_pzem_ac.ino)
 
-  Copyright (C) 2023  Fabrizio Amodio
+  Copyright (C) 2023-24  Fabrizio Amodio
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -21,26 +21,36 @@
 #if defined(USE_ENERGY_SENSOR) && defined(USE_I2C)
 #ifdef USE_BIOPDU
 /*********************************************************************************************\
-  Biomine 625x12 Custom Board
+  Biomine 625x12 Custom Board rev 2.0
   6 x 25A Relays
-  6 x Independent PZEM-004V3 Modbus AC energy sensor
+  6 x Independent PZEM-004T-100A-D-P Modbus AC energy sensor
   3bit serial switch
   Integrated MCP23008
+  SSD1309 OLED Display I2C
 
-  Template {"NAME":"Olimex ESP32-PoE-BioPDU","GPIO":[1,10209,10210,1,10144,1,0,0,5536,640,1,1,608,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,10208,1,1,10176,0,0,1],"FLAG":0,"BASE":1}
+  Template {"NAME":"Olimex ESP32-PoE-BioPDU","GPIO":[1,10209,10210,1,10144,1,0,0,5536,640,1,1,608,0,5600,1,1,1,1,5568,1,1,1,1,6210,0,0,0,1,10208,1,1,10176,1,1,1],"FLAG":0,"BASE":1}
 
   BioPDU 625x12 Factory Settings:
 
-      Template {"NAME":"Olimex ESP32-PoE-BioPDU","GPIO":[1,10209,10210,1,10144,1,0,0,5536,640,1,1,608,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,10208,1,1,10176,0,0,1],"FLAG":0,"BASE":1}
+      Template {"NAME":"Olimex ESP32-PoE-BioPDU","GPIO":[1,10209,10210,1,10144,1,0,0,5536,640,1,1,608,0,5600,1,1,1,1,5568,1,1,1,1,6210,0,0,0,1,10208,1,1,10176,1,1,1],"FLAG":0,"BASE":1}
       Module 0
       EthType 0
       EthAddress 0
       EthClockMode 3
+      SetOption21 1
       SetOption26 1
+      SetOption65 1
       SetOption129 1
       SetOption150 1
       EnergyDisplay 1
       EnergyCols 6
+      displaymodel 17
+      displaymode 0
+      displayrows 8
+      displaycols 25
+      PowerOnState1 ON
+      PowerLock1 1
+      TelePeriod 30
       i2cscan
       Sensor29 0,1,0
       Sensor29 1,5,2
@@ -61,12 +71,21 @@
       USE_MCP230xx
       USE_MCP230xx_ADDR=0x20
       USE_MCP230xx_OUTPUT
+      USE_DISPLAY
+      USE_UNIVERSAL_DISPLAY
+      USE_ALL_EPD_FONTS
+      USE_TINY_FONT
       USE_BIOPDU
+
+extra dirs:
+
+  lib_extra_dirs          = ${env:tasmota32_base.lib_extra_dirs} lib/libesp32, lib/lib_basic, lib/lib_display, lib/lib_ssl, lib/lib_rf, lib/lib_i2c, lib/lib_div
+
 \*********************************************************************************************/
 
 #define XNRG_24 24
 
-#define BIOPDU_MAX_PHASES         6         // BioPDU support max six phases/channels
+#define BIOPDU_MAX_PHASES 6 // BioPDU support max six phases/channels
 
 const uint8_t BIOPDU_DEVICE_ADDRESS = 0x01; // PZEM default address
 const uint32_t BIOPDU_STABILIZE = 10;       // Number of seconds to stabilize 1 device
@@ -124,7 +143,7 @@ void BioPduEvery250ms(void)
       BioPdu.address_step--;
     }
     uint8_t error = BioPduModbus->ReceiveBuffer(buffer, registers);
-    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, BioPduModbus->ReceiveCount());
+    // AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, BioPduModbus->ReceiveCount());
 
     if (error)
     {
@@ -147,6 +166,21 @@ void BioPduEvery250ms(void)
         Energy->frequency[BioPdu.phase] = (float)((buffer[17] << 8) + buffer[18]) / 10.0f;                                                 // 50.0 Hz
         Energy->power_factor[BioPdu.phase] = (float)((buffer[19] << 8) + buffer[20]) / 100.0f;                                             // 1.00
         Energy->import_active[BioPdu.phase] = (float)((buffer[15] << 24) + (buffer[16] << 16) + (buffer[13] << 8) + buffer[14]) / 1000.0f; // 4294967.295 kWh
+
+        // Sanity check to prevent spike on power ON
+        if (Energy->voltage[BioPdu.phase] < 0 || Energy->voltage[BioPdu.phase] > 300                // Voltage range 0-300
+            || Energy->current[BioPdu.phase] < 0 || Energy->current[BioPdu.phase] > 25              // Ampere range 0-25
+            || Energy->active_power[BioPdu.phase] < 0 || Energy->active_power[BioPdu.phase] > 5500) // Watt range 0-5500
+        {
+          AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PDU: phase %d, spike detected"), BioPdu.phase);
+
+          Energy->voltage[BioPdu.phase] = 0;
+          Energy->current[BioPdu.phase] = 0;
+          Energy->active_power[BioPdu.phase] = 0;
+          Energy->frequency[BioPdu.phase] = 0;
+          Energy->power_factor[BioPdu.phase] = 0;
+          Energy->import_active[BioPdu.phase] = 0;
+        }
       }
     }
   }
@@ -291,6 +325,6 @@ bool Xnrg24(uint32_t function)
   return result;
 }
 
-#endif  // USE_BIOPDU
-#endif  // USE_ENERGY_SENSOR
-#endif  // ESP32
+#endif // USE_BIOPDU
+#endif // USE_ENERGY_SENSOR
+#endif // ESP32
