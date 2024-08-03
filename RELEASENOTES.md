@@ -36,9 +36,9 @@ While fallback or downgrading is common practice it was never supported due to S
 
 This release will be supported from ESP8266/Arduino library Core version **2.7.7** due to reported security and stability issues on previous Core version. This will also support gzipped binaries.
 
-This release will be supported from ESP32/Arduino library Core version **3.0.2**.
+This release will be supported from ESP32/Arduino library Core version **3.0.4**.
 
-Support of ESP8266 Core versions before 2.7.7 and ESP32 Core versions before 3.0.2 have been removed.
+Support of ESP8266 Core versions before 2.7.7 and ESP32 Core versions before 3.0.4 have been removed.
 
 ### Known issues with v14.1.0
 
@@ -85,7 +85,7 @@ Historical binaries can be downloaded from
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
 ### ESP32, ESP32-C2, ESP32-C3, ESP32-C6, ESP32-S2 and ESP32-S3 based
-The following binary downloads have been compiled with ESP32/Arduino library core version **3.0.2**.
+The following binary downloads have been compiled with ESP32/Arduino library core version **3.0.4**.
 
 - **tasmota32.bin** = The Tasmota version with most drivers including additional sensors and KNX for 4M+ flash.  **RECOMMENDED RELEASE BINARY**
 - **tasmota32solo1.bin** = The Tasmota version with most drivers including additional sensors and KNX for single core ESP32 and 4M+ flash.
@@ -149,6 +149,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry new type "addr" to ctypes mapping [#21883](https://github.com/arendst/Tasmota/issues/21883)
 - Berry `file.savecode()` [#21884](https://github.com/arendst/Tasmota/issues/21884)
 - Berry `solidify.nocompact()` and reduce size of Matter UI [#21885](https://github.com/arendst/Tasmota/issues/21885)
+- Berry `zigbee.find()` [#21889](https://github.com/arendst/Tasmota/issues/21889)
+- Berry `zigbee.started()` [#21895](https://github.com/arendst/Tasmota/issues/21895)
 - HASPmota rounds to nearest int values passed as 'real' [#21599](https://github.com/arendst/Tasmota/issues/21599)
 - Matter support for Air Quality sensors [#21559](https://github.com/arendst/Tasmota/issues/21559)
 - Matter support for bridged Air Quality [#21597](https://github.com/arendst/Tasmota/issues/21597)
@@ -166,8 +168,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Changed
 - ESP8266 platform update from 2024.01.01 to 2024.06.00 [#21668](https://github.com/arendst/Tasmota/issues/21668)
 - ESP8266 Framework (Arduino Core) from v2.7.6 to v2.7.7 [#21668](https://github.com/arendst/Tasmota/issues/21668)
-- ESP32 platform update from 2024.05.13 to 2024.07.11 [#21765](https://github.com/arendst/Tasmota/issues/21765)
-- ESP32 Framework (Arduino Core) from v3.0.0 to v3.0.2 [#21694](https://github.com/arendst/Tasmota/issues/21694)
+- ESP32 platform update from 2024.05.13 to 2024.08.10 [#21893](https://github.com/arendst/Tasmota/issues/21893)
+- ESP32 Framework (Arduino Core) from v3.0.0 to v3.0.4 [#21893](https://github.com/arendst/Tasmota/issues/21893)
 - Optional MQTT_TELE_RETAIN to Energy Margins message replaced by ``SensorRetain``
 - Display timing splash screen with display modes 1 to 5
 - Allow receive or send using SerialBridge
