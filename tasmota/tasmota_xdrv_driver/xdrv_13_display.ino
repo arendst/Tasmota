@@ -2169,7 +2169,11 @@ void CmndDisplayText(void) {
     } else {
       DisplayText();
     }
-    ResponseCmndChar(XdrvMailbox.data);
+    if (!Settings->flag6.mqtt_disable_displaytext) {  // SetOption160 - (MQTT) Disable publish DisplayText MQTT messages (1)
+      ResponseCmndChar(XdrvMailbox.data);
+    } else {
+      TasmotaGlobal.no_mqtt_response = true;
+    }
   }
 }
 
