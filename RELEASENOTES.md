@@ -121,6 +121,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v14.1.0.4
 ### Added
+- Command ``AdcGpio<gpio> <parameters>`` to better support ADC configuration
 - Support for QMP6988 temperature and pressure sensor
 - Support for Sonoff WTS01 temperature sensor using SerialBridge in ``SSerialMode 3``
 - Support for Sonoff iFan04-H using template [#16402](https://github.com/arendst/Tasmota/issues/16402)
@@ -170,6 +171,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP8266 Framework (Arduino Core) from v2.7.6 to v2.7.7 [#21668](https://github.com/arendst/Tasmota/issues/21668)
 - ESP32 platform update from 2024.05.13 to 2024.08.10 [#21893](https://github.com/arendst/Tasmota/issues/21893)
 - ESP32 Framework (Arduino Core) from v3.0.0 to v3.0.4 [#21893](https://github.com/arendst/Tasmota/issues/21893)
+- Refactored Analog driver to better support multiple channels
 - Optional MQTT_TELE_RETAIN to Energy Margins message replaced by ``SensorRetain``
 - Display timing splash screen with display modes 1 to 5
 - Allow receive or send using SerialBridge

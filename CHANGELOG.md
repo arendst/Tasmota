@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Berry `solidify.nocompact()` and reduce size of Matter UI (#21885)
 - Berry `zigbee.find()` (#21889)
 - Berry `zigbee.started()` (#21895)
+- Command ``AdcGpio<gpio> <parameters>`` to better support ADC configuration
 
 ### Breaking Changed
 - Berry `energy` module support for 8 phases and move to pseudo-arrays (#21887)
@@ -28,6 +29,7 @@ All notable changes to this project will be documented in this file.
 - Matter improve encoding of attributes to reduce flash size (#21864)
 - ESP32 platform update from 2024.07.11 to 2024.08.10 (#21893)
 - ESP32 Framework (Arduino Core) from v3.0.2 to v3.0.4 (#21893)
+- Refactored Analog driver to better support multiple channels
 
 ### Fixed
 - Berry `light.get` for separate RGB/CT (#21818)

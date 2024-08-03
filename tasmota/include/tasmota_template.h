@@ -1273,25 +1273,6 @@ const uint16_t kAdcNiceList[] PROGMEM = {
 };
 #endif  // ESP8266
 
-// User selectable ADC functionality
-enum UserSelectableAdc {
-  ADC_NONE,           // 0 = Not used
-  ADC_INPUT,          // 1 = Analog input
-  ADC_TEMP,           // 2 = Thermistor
-  ADC_LIGHT,          // 3 =Light sensor
-  ADC_BUTTON,         // 4 =Button
-  ADC_BUTTON_INV,     // 5 = Inverted button
-  ADC_RANGE,          // 6 = Range
-  ADC_CT_POWER,       // 7 = Current
-  ADC_JOY,            // 8 = Joystick
-  ADC_PH,             // 9 = Analog PH Sensor
-  ADC_MQ,             // 10 = Analog MQ Sensor
-  ADC_VOLTAGE,        // 11 = Voltage
-  ADC_CURRENT,        // 12 = Current
-//  ADC_SWITCH,         // Switch
-//  ADC_SWITCH_INV,
-  ADC_END };
-
 /*********************************************************************************************\
  * ATTENTION: No user changeable features beyond this point - do not add templates !!!
 \*********************************************************************************************/

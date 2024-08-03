@@ -817,7 +817,8 @@
 #define D_CMND_DALI_DIMMER                "dim"
 
 // Commands xsns_02_analog.ino
-#define D_CMND_ADCPARAM "AdcParam"
+#define D_CMND_ADCGPIO "Gpio"
+#define D_CMND_ADCPARAM "Param"
 
 // Commands xsns_05_ds18x20.ino
 #define D_CMND_DS_ALIAS "Alias"
