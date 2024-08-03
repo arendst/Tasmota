@@ -226,7 +226,7 @@ bool AdcGetSettings(uint32_t channel) {
     Adc[channel].param2 = atoi(subStr(parameters, SettingsText(SET_ADC_PARAM1 + channel), ",", 3));
     Adc[channel].param3 = atoi(subStr(parameters, SettingsText(SET_ADC_PARAM1 + channel), ",", 4));
     Adc[channel].param4 = atoi(subStr(parameters, SettingsText(SET_ADC_PARAM1 + channel), ",", 5));
-    if (adc_type < GPIO_ADC_INPUT) {          // Former ADC_END
+    if ((adc_type > 0) && (adc_type < GPIO_ADC_INPUT)) {  // Former ADC_END
       AdcSaveSettings(channel);
       adc_type = AdcType(channel);            // Migrate for backwards compatibility
     }
