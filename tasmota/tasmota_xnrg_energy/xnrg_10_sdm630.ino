@@ -39,7 +39,7 @@
 #include <TasmotaModbus.h>
 TasmotaModbus *Sdm630Modbus;
 
-typedef struct sSdm630RequestConfig{
+struct sSdm630RequestConfig{
   uint16_t startAddress;
   uint8_t  registerToRead; // according to spec: max 80 register can be read a once
 };
