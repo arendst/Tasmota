@@ -22,6 +22,35 @@
 #ifdef USE_ADC
 /*********************************************************************************************\
  * ADC support for ESP8266 GPIO17 (=PIN_A0) and ESP32 up to 8 channels on GPIO32 to GPIO39
+ * 
+ * 
+ * 
+ * 
+ * For shelly RGBW PM:
+ * Template {"NAME":"Shelly Plus RGBW PM Pot.meter","GPIO":[1,0,0,0,419,0,0,0,0,0,544,0,0,0,0,1,0,0,1,0,0,416,417,418,0,0,0,0,0,4736,11264,11296,4704,0,4705,0],"FLAG":0,"BASE":1}
+ * AdcParam1 1,32000,40000,3350      <- Temperature parameters
+ * AdcParam2 1,1161,3472,10,30       <- Voltage parameters
+ * AdcParam3 1,960,1017,0.01,0.706   <- Current parameters
+ * AdcParam4 1,1552,176,3,1          <- I1 Potentiometer RGBW or RGB if SO37 128
+ * AdcParam4 1,1552,176,3,3          <- I1 Potentiometer RGBW or RGB if SO37 128 without fading
+ * AdcParam5 1,1552,176,3,1          <- I3 Potentiometer W if SO37 128
+ * Fade 1
+ * Speed 6
+ * VoltRes 2
+ * WattRes 2
+ * 
+ * Template {"NAME":"Shelly Plus RGBW PM Button","GPIO":[1,0,0,0,419,0,0,0,0,0,544,0,0,0,0,1,0,0,1,0,0,416,417,418,0,0,0,0,0,4736,11264,11296,4800,4801,4802,4803],"FLAG":0,"BASE":1}
+ * AdcParam1 1,8000,9200,3350      <- Temperature parameters
+ * AdcParam2 1,1161,3472,10,30       <- Voltage parameters
+ * AdcParam3 1,960,1017,0.01,0.706   <- Current parameters
+ * AdcParam4 1,511                   <- I1 Button
+ * AdcParam5 1,511                   <- I2 Button
+ * AdcParam6 1,511                   <- I3 Button
+ * AdcParam7 1,511                   <- I4 Button
+ * Fade 1
+ * Speed 6
+ * VoltRes 2
+ * WattRes 2
 \*********************************************************************************************/
 
 #define XSNS_02                       2
@@ -156,23 +185,24 @@
 #define ANALOG_MQ_SAMPLES                         60
 
 struct {
-  uint8_t present = 0;
+  uint8_t present;
 } Adcs;
 
 struct {
   float *mq_samples;
-  float temperature = 0;
-  float current = 0;
-  float energy = 0;
-  uint32_t previous_millis = 0;
-  uint32_t param1 = 0;
-  uint32_t param2 = 0;
-  int param3 = 0;
-  int param4 = 0;
-  int indexOfPointer = -1;
-  uint16_t last_value = 0;
+  float temperature;
+  float current;
+  float energy;
+  uint32_t previous_millis;
+  uint32_t param1;
+  uint32_t param2;
+  int param3;
+  int param4;
+  int indexOfPointer;
+  uint16_t last_value;
   uint16_t type;
-  uint8_t pin = 0;
+  uint8_t index;
+  uint8_t pin;
 } Adc[MAX_ADCS];
 
 /*********************************************************************************************\
@@ -202,18 +232,12 @@ uint16_t AdcRead1(uint32_t pin) {
 
 /*********************************************************************************************/
 
-uint32_t AdcType(uint32_t channel) {
-  return TasmotaGlobal.gpio_pin[Adc[channel].pin] >> 5;
-}
-
-uint32_t AdcIndex(uint32_t channel) {
-  return TasmotaGlobal.gpio_pin[Adc[channel].pin] & 0x001F;
-}
-
 void AdcSaveSettings(uint32_t channel) {
-  char parameters[32];
-  snprintf_P(parameters, sizeof(parameters), PSTR("%d,%d,%d,%d,%d"),
-    Adc[channel].type, Adc[channel].param1, Adc[channel].param2, Adc[channel].param3, Adc[channel].param4);
+  char parameters[32] = { 0 };
+  if (channel < Adcs.present) {
+    snprintf_P(parameters, sizeof(parameters), PSTR("%d,%d,%d,%d,%d"),
+      Adc[channel].type, Adc[channel].param1, Adc[channel].param2, Adc[channel].param3, Adc[channel].param4);
+  }
   SettingsUpdateText(SET_ADC_PARAM1 + channel, parameters);
 }
 
@@ -228,10 +252,10 @@ bool AdcGetSettings(uint32_t channel) {
     Adc[channel].param4 = atoi(subStr(parameters, SettingsText(SET_ADC_PARAM1 + channel), ",", 5));
     if ((adc_type > 0) && (adc_type < GPIO_ADC_INPUT)) {  // Former ADC_END
       AdcSaveSettings(channel);
-      adc_type = AdcType(channel);            // Migrate for backwards compatibility
+      adc_type = Adc[channel].type;           // Migrate for backwards compatibility
     }
   }
-  return (AdcType(channel) == adc_type);
+  return (Adc[channel].type == adc_type);
 }
 
 void AdcInitParams(uint32_t channel) {
@@ -239,7 +263,7 @@ void AdcInitParams(uint32_t channel) {
   Adc[channel].param2 = 0;
   Adc[channel].param3 = 0;
   Adc[channel].param4 = 0;
-  uint32_t adc_type = AdcType(channel);
+  uint32_t adc_type = Adc[channel].type;
   switch (adc_type) {
     case GPIO_ADC_INPUT:
 //      Adc[channel].param1 = 0;
@@ -310,6 +334,8 @@ void AdcInitParams(uint32_t channel) {
 
 void AdcInit(void) {
   Adcs.present = 0;
+  memset(&Adc, 0, sizeof(Adc));
+
   uint32_t pin = 0;                           // ESP32 full range of GPIOs possible for ADC channels
 #ifdef ESP8266  
   pin = ADC0_PIN;                             // ESP8266 single ADC channel
@@ -331,8 +357,10 @@ void AdcInit(void) {
       case GPIO_ADC_LIGHT:
       case GPIO_ADC_TEMP:
       case GPIO_ADC_INPUT:
-        Adc[Adcs.present].type = adc_type;
+        Adc[Adcs.present].indexOfPointer = -1;
         Adc[Adcs.present].pin = pin;
+        Adc[Adcs.present].type = adc_type;
+        Adc[Adcs.present].index = TasmotaGlobal.gpio_pin[pin] & 0x001F;
         Adcs.present++;
         if (Adcs.present == MAX_ADCS) { break; }
     }
@@ -348,6 +376,11 @@ void AdcInit(void) {
         AdcInitParams(channel);
         AdcSaveSettings(channel);
       }
+    }
+  }
+  for (uint32_t channel = Adcs.present; channel < MAX_ADCS; channel++) {
+    if (strlen(SettingsText(SET_ADC_PARAM1 + channel))) {
+      AdcSaveSettings(channel);               // Free space by unused params
     }
   }
 }
@@ -380,13 +413,24 @@ uint16_t AdcRead(uint32_t pin, uint32_t factor) {
 void AdcEvery250ms(void) {
   char adc_channel[3] = { 0 };
   uint32_t offset = 0;
+
+  uint32_t dimmer_count = 0;
+#ifdef USE_LIGHT
+  if (!light_controller.isCTRGBLinked()) {                             // SetOption37 >= 128 (Light) RGB and White channel separation (default 0)
+    for (uint32_t channel = 0; channel < Adcs.present; channel++) {
+      if ((GPIO_ADC_INPUT == Adc[channel].type) && (Adc[channel].param4 > 0)) {
+        dimmer_count++;
+      }
+    }
+  }
+#endif  // USE_LIGHT
   for (uint32_t channel = 0; channel < Adcs.present; channel++) {
-    uint32_t type_index = AdcIndex(channel);
+    uint32_t type_index = Adc[channel].index;
 #ifdef ESP32
     snprintf_P(adc_channel, sizeof(adc_channel), PSTR("%d"), type_index +1);
     offset = 1;
 #endif
-    uint32_t adc_type = AdcType(channel);
+    uint32_t adc_type = Adc[channel].type;
     if (GPIO_ADC_INPUT == adc_type) {
       int adc = AdcRead(Adc[channel].pin, 4);                          // 4 = 16 mS
       bool swap = (Adc[channel].param2 < Adc[channel].param1);
@@ -413,12 +457,16 @@ void AdcEvery250ms(void) {
 #ifdef USE_LIGHT
         } else {
           char command[33];
-          if (Settings->flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
-//            snprintf_P(command, sizeof(command), PSTR("_" D_CMND_CHANNEL "%d %d"), type_index +1, new_value);
+          if (Settings->flag3.pwm_multi_channels) {                    // SetOption68 - Enable multi-channels PWM instead of Color PWM
             snprintf_P(command, sizeof(command), PSTR(D_CMND_CHANNEL "%d %d"), type_index +1, new_value);
           } else {
-//            snprintf_P(command, sizeof(command), PSTR("_" D_CMND_DIMMER "3 %d"), new_value);
-            snprintf_P(command, sizeof(command), PSTR(D_CMND_DIMMER "3 %d"), new_value);  // Change both RGB and W(W) Dimmers with no fading
+            uint32_t dimmer_option;
+            if (dimmer_count > 1) {
+              dimmer_option = (0 == type_index) ? 1 : 2;               // Change RGB (1) or W(W) (2) dimmer
+            } else {
+              dimmer_option = (3 == Adc[channel].param4) ? 3 : 0;      // Change both RGB and W(W) Dimmers (0) with no fading (3)
+            }
+            snprintf_P(command, sizeof(command), PSTR(D_CMND_DIMMER "%d %d"), dimmer_option, new_value);
           }
           ExecuteCommand(command, SRC_SWITCH);
         }
@@ -441,7 +489,7 @@ void AdcEvery250ms(void) {
 
 uint8_t AdcGetButton(uint32_t pin) {
   for (uint32_t channel = 0; channel < Adcs.present; channel++) {
-    uint32_t adc_type = AdcType(channel);
+    uint32_t adc_type = Adc[channel].type;
     if (Adc[channel].pin == pin) {
       if (GPIO_ADC_BUTTON_INV == adc_type) {
         return (AdcRead(Adc[channel].pin, 1) < Adc[channel].param1);
@@ -584,8 +632,8 @@ void AdcEverySecond(void) {
   uint32_t voltage_count = 0;
   uint32_t current_count = 0;
   for (uint32_t channel = 0; channel < Adcs.present; channel++) {
-    uint32_t type_index = AdcIndex(channel);
-    uint32_t adc_type = AdcType(channel);
+    uint32_t type_index = Adc[channel].index;
+    uint32_t adc_type = Adc[channel].type;
     if (GPIO_ADC_TEMP == adc_type) {
       int adc = AdcRead(Adc[channel].pin, 2);
       // Steinhart-Hart equation for thermistor as temperature sensor:
@@ -664,13 +712,13 @@ void AdcShow(bool json) {
 
   bool jsonflg = false;
   for (uint32_t channel = 0; channel < Adcs.present; channel++) {
-    uint32_t type_index = AdcIndex(channel);
+    uint32_t type_index = Adc[channel].index;
 #ifdef ESP32
     snprintf_P(adc_name, sizeof(adc_name), PSTR("Analog%d"), type_index +1);
     snprintf_P(adc_channel, sizeof(adc_channel), PSTR("%d"), type_index +1);
     offset = 1;
 #endif
-    uint32_t adc_type = AdcType(channel);
+    uint32_t adc_type = Adc[channel].type;
     switch (adc_type) {
       case GPIO_ADC_INPUT: {
 #ifdef USE_LIGHT
@@ -881,10 +929,10 @@ void CmndAdcParam(void) {
   // AdcParam 1, 0, ANALOG_RANGE, 0, 3.3     ADC_CURRENT
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_ADCS)) {
     uint8_t channel = XdrvMailbox.index -1;
-    uint32_t adc_type = AdcType(channel);
+    uint32_t adc_type = Adc[channel].type;
     if (XdrvMailbox.data_len) {
       AdcGetSettings(channel);
-      if (ArgC() > 3) {  // Process parameter entry
+      if (ArgC() > 2) {  // Process parameter entry
         char argument[XdrvMailbox.data_len];
         Adc[channel].param1 = strtol(ArgV(argument, 2), nullptr, 10);             // param1 = int
         Adc[channel].param2 = strtol(ArgV(argument, 3), nullptr, 10);             // param2 = int
@@ -1001,7 +1049,7 @@ bool Xnrg33(uint32_t function) {
     uint32_t voltage_count = 0;
     uint32_t current_count = 0;
     for (uint32_t channel = 0; channel < Adcs.present; channel++) {
-      uint32_t adc_type = AdcType(channel);
+      uint32_t adc_type = Adc[channel].type;
       if (GPIO_ADC_VOLTAGE == adc_type) { voltage_count++; }
       if (GPIO_ADC_CURRENT == adc_type) { current_count++; }
     }
