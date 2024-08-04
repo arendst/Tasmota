@@ -40,7 +40,7 @@
  * WattRes 2
  * 
  * Template {"NAME":"Shelly Plus RGBW PM Button","GPIO":[1,0,0,0,419,0,0,0,0,0,544,0,0,0,0,1,0,0,1,0,0,416,417,418,0,0,0,0,0,4736,11264,11296,4800,4801,4802,4803],"FLAG":0,"BASE":1}
- * AdcParam1 1,8000,9200,3350      <- Temperature parameters
+ * AdcParam1 1,32000,40000,3350      <- Temperature parameters
  * AdcParam2 1,1161,3472,10,30       <- Voltage parameters
  * AdcParam3 1,960,1017,0.01,0.706   <- Current parameters
  * AdcParam4 1,511                   <- I1 Button
