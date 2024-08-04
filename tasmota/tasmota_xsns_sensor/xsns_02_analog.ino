@@ -687,6 +687,7 @@ void AdcEverySecond(void) {
       uint32_t voltage_phase = (voltage_count == current_count) ? phase : 0;
       Energy->active_power[phase] = Energy->voltage[voltage_phase] * Energy->current[phase];  // Watt
       Energy->kWhtoday_delta[phase] += (uint32_t)(Energy->active_power[phase] * 1000) / 36;   // deca_microWh
+      Energy->data_valid[phase] = 0;
     }
     EnergyUpdateToday();
   }
