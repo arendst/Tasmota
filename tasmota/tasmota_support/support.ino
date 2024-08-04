@@ -2060,7 +2060,14 @@ uint32_t ConvertSerialConfig(uint8_t serial_config) {
 //}
 //#else
 uint32_t GetSerialBaudrate(void) {
-  return (Serial.baudRate() / 300) * 300;  // Fix ESP32 strange results like 115201
+//  return (Serial.baudRate() / 300) * 300;  // Fix ESP32 strange results like 115201
+// Since core 3.0.4 the returned baudrate could even be 115942 instead of 115200 !!!
+  uint32_t margin = 300;
+  uint32_t baudrate = Serial.baudRate();
+  if (baudrate > 10000) {
+    margin = 2400;
+  }
+  return (baudrate / margin) * margin;  // Fix ESP32 strange results like 115201
 }
 //#endif
 
