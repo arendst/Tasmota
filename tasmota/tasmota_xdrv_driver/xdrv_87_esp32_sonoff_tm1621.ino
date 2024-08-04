@@ -42,6 +42,8 @@
 #define TM1621_ROTATE        5     // Seconds display rotation speed
 #define TM1621_MAX_VALUES    8     // Default 8 x two different lines
 
+//#define TM1621_DEBUG
+
 #define TM1621_PULSE_WIDTH   10    // microseconds (Sonoff = 100)
 
 #define TM1621_SYS_EN        0x01  // 0b00000001
@@ -263,10 +265,8 @@ void TM1621SendRows(void) {
     if (len <= 5) {               // "----", "    ", "0.4", "237.5"
       dp = strchr(Tm1621.row[j], '.');
       row_idx = len -1;
-    } else {                      // "12345.6" = "12E3"
-      if (len > 13) {             // "123456789012.3" = "12E9"
-        len = 13;
-      }
+    }
+    else if (len > 6) {           // "1234567890.3" = "12E8"
       Tm1621.row[j][2] = 'E';
       Tm1621.row[j][3] = '0' + len -4;
       row_idx = 3;
@@ -543,9 +543,17 @@ void TM1621EverySecond(void) {
 \*********************************************************************************************/
 
 const char kTm1621Commands[] PROGMEM = "Dsp|"  // No prefix
-  "Line|Speed";
+  "Line|"
+#ifdef TM1621_DEBUG
+  "Test|"
+#endif  // TM1621_DEBUG
+  "Speed";
 void (*const kTm1621Command[])(void) PROGMEM = {
-  &CmndDspLine, &CmndDspSpeed };
+  &CmndDspLine,
+#ifdef TM1621_DEBUG
+  &CmndDspTest,
+#endif  // TM1621_DEBUG
+  &CmndDspSpeed };
 
 void CmndDspLine(void) {
   // DspLine1 <index>,<unit>,<index>,<unit>,... = Display specific JSON value and rotate between them
@@ -605,6 +613,22 @@ void CmndDspSpeed(void) {
   }
   ResponseCmndNumber(Xdrv87Settings.rotate);
 }
+
+#ifdef TM1621_DEBUG
+void CmndDspTest(void) {
+  // Only one decimal is supported !!!
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
+    if (XdrvMailbox.data_len > 0) {
+      uint32_t line = XdrvMailbox.index -1;
+      snprintf_P(Tm1621.row[0], sizeof(Tm1621.row[0]), PSTR("----"));
+      snprintf_P(Tm1621.row[1], sizeof(Tm1621.row[1]), PSTR("----"));
+      snprintf_P(Tm1621.row[line], sizeof(Tm1621.row[line]), PSTR("%s"), XdrvMailbox.data);
+      TM1621SendRows();
+    }
+  }
+  ResponseCmndDone();
+}
+#endif  // TM1621_DEBUG
 
 /*********************************************************************************************\
  * Interface
