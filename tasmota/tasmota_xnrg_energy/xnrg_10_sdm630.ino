@@ -149,7 +149,7 @@ void SDM630Every250ms(void)
       }
 
       Sdm630.read_state++;
-      if ( (sizeof(sdm630ReqConf)/sizeof(sdm630ReqConf[0])) == Sdm630.read_state) {
+      if ( nitems(sdm630ReqConf) == Sdm630.read_state) {
         Sdm630.read_state = 0;
       }
     }
