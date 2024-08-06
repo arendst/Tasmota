@@ -30,7 +30,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 platform update from 2024.07.11 to 2024.08.10 (#21893)
 - ESP32 Framework (Arduino Core) from v3.0.2 to v3.0.4 (#21893)
 - Refactored Analog driver to better support multiple channels
-- Zigbee loads device data early before MCU startup
+- Zigbee loads device data early before MCU startup (#21917)
 
 ### Fixed
 - Berry `light.get` for separate RGB/CT (#21818)

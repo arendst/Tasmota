@@ -183,6 +183,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 MI32 refactoring, bugfixes, generic device scanning [#21603](https://github.com/arendst/Tasmota/issues/21603)
 - ESP32 MI32 improve parser [#21648](https://github.com/arendst/Tasmota/issues/21648)
 - ESP32 TM1621 number overflow from "9999" to "12E3" [#21131](https://github.com/arendst/Tasmota/issues/21131)
+- Zigbee loads device data early before MCU startup [#21917](https://github.com/arendst/Tasmota/issues/21917)
 - Berry updated precompiled Windows binary [#21858](https://github.com/arendst/Tasmota/issues/21858)
 - Berry simplified `module persist` [#21812](https://github.com/arendst/Tasmota/issues/21812)
 - Berry consolidated constants for solidified classes reduces Flash size [#2185](https://github.com/arendst/Tasmota/issues/2185)
