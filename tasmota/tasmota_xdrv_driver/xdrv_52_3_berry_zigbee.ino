@@ -83,7 +83,7 @@ extern "C" {
   int zc_started(struct bvm *vm) {
     // return `nil` if `zigbee.active` is false (i.e. no GPIO configured)
     // or aborted, `zigbee.init_phase` is `true` but `zigbee.state_machine` is `false`
-    if (!zigbee.active || (!zigbee.state_machine && zigbee.init_phase)) {
+    if (!zigbee.active) {
       be_return_nil(vm);
     }
     be_pushbool(vm, !zigbee.init_phase);
@@ -117,7 +117,7 @@ extern "C" {
   // implement item() and find()
   int zc_item_or_find(struct bvm *vm, bbool raise_if_unknown) {
     int32_t top = be_top(vm); // Get the number of arguments
-    if (zigbee.init_phase) {
+    if (!zigbee.active) {
       be_raise(vm, "internal_error", "zigbee not started");
     }
     if (top >= 2 && (be_isint(vm, 2) || be_isstring(vm, 2))) {
@@ -189,7 +189,7 @@ extern "C" {
 
   int zc_iter(bvm *vm);
   int zc_iter(bvm *vm) {
-    if (zigbee.init_phase) {
+    if (!zigbee.active) {
       be_raise(vm, "internal_error", "zigbee not started");
     }
     be_pushntvclosure(vm, zc_iter_closure, 1);

@@ -425,7 +425,27 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_TIMEOUT_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_RECV_UNEXPECTED(&ZNP_Recv_Default)
+
+    ZI_LOG(LOG_LEVEL_INFO, D_LOG_ZIGBEE "Loading Zigbee data")
+    ZI_CALL(&Z_Prepare_Storage, 0)
+    ZI_CALL(&Z_Load_Devices, 0)
+    ZI_CALL(&Z_Load_Data, 0)
+    ZI_CALL(&Z_Set_Save_Data_Timer, 0)
+    ZI_CALL(&Z_ZbAutoload, 0)
+#ifndef USE_ZIGBEE_DEBUG
     ZI_WAIT(15500)                             // wait for 15 seconds for Tasmota to stabilize
+#else
+    ZI_WAIT(30000)                             // wait for cumulated 5 minutes
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+#endif
 
     //ZI_MQTT_STATE(ZIGBEE_STATUS_BOOT, "Booting")
     ZI_LOG(LOG_LEVEL_INFO, D_LOG_ZIGBEE "rebooting ZNP device")
@@ -532,11 +552,6 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     // Correctly configured and running, enable all Tasmota features
     // ======================================================================
   ZI_LABEL(ZIGBEE_LABEL_READY)
-    ZI_CALL(&Z_Prepare_Storage, 0)
-    ZI_CALL(&Z_Load_Devices, 0)
-    ZI_CALL(&Z_Load_Data, 0)
-    ZI_CALL(&Z_Set_Save_Data_Timer, 0)
-    ZI_CALL(&Z_ZbAutoload, 0)
     ZI_MQTT_STATE(ZIGBEE_STATUS_OK, kStarted)
     ZI_LOG(LOG_LEVEL_INFO, kZigbeeStarted)
     ZI_CALL(&Z_State_Ready, 1)                    // Now accept incoming messages
@@ -881,7 +896,27 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_TIMEOUT_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_RECV_UNEXPECTED(&EZ_Recv_Default)
+    
+    ZI_LOG(LOG_LEVEL_INFO, D_LOG_ZIGBEE "Loading Zigbee data")
+    ZI_CALL(&Z_Prepare_Storage, 0)
+    ZI_CALL(&Z_Load_Devices, 0)
+    ZI_CALL(&Z_Load_Data, 0)
+    ZI_CALL(&Z_Set_Save_Data_Timer, 0)
+    ZI_CALL(&Z_ZbAutoload, 0)
+#ifndef USE_ZIGBEE_DEBUG
     ZI_WAIT(15500)                             // wait for 15 seconds for Tasmota to stabilize
+#else
+    ZI_WAIT(30000)                             // wait for cumulated 5 minutes
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+    ZI_WAIT(30000)
+#endif
 
     // Hardware reset
     ZI_LOG(LOG_LEVEL_INFO, kResettingDevice)     // Log Debug: resetting EZSP device
@@ -978,12 +1013,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_LOG(LOG_LEVEL_INFO, kZigbeeGroup0)
     ZI_SEND(ZBS_SET_MCAST_ENTRY)        ZI_WAIT_RECV(2500, ZBR_SET_MCAST_ENTRY)
 
-  // ZI_LABEL(ZIGBEE_LABEL_READY)
-    ZI_CALL(&Z_Prepare_Storage, 0)
-    ZI_CALL(&Z_Load_Devices, 0)
-    ZI_CALL(&Z_Load_Data, 0)
-    ZI_CALL(&Z_Set_Save_Data_Timer, 0)
-    ZI_CALL(&Z_ZbAutoload, 0)
+  ZI_LABEL(ZIGBEE_LABEL_READY)
     ZI_MQTT_STATE(ZIGBEE_STATUS_OK, kStarted)
     ZI_LOG(LOG_LEVEL_INFO, kZigbeeStarted)
     ZI_CALL(&Z_State_Ready, 1)                    // Now accept incoming messages
@@ -1088,6 +1118,7 @@ void ZigbeeStateMachine_Run(void) {
     }
     if (zigbee.pc < 0) {
       zigbee.state_machine = false;
+      zigbee.active = false;
       return;
     }
 
@@ -1133,6 +1164,7 @@ void ZigbeeStateMachine_Run(void) {
         zigbee.state_machine = false;
         if (cur_d8) {
           AddLog(LOG_LEVEL_ERROR, PSTR(D_LOG_ZIGBEE "Stopping (%d)"), cur_d8);
+          zigbee.active = false;
         }
         break;
       case ZGB_INSTR_CALL:
