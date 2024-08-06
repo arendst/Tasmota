@@ -629,8 +629,6 @@ void AdcGetCurrentPower(uint8_t channel, uint8_t factor) {
 }
 
 void AdcEverySecond(void) {
-  uint32_t voltage_count = 0;
-  uint32_t current_count = 0;
   for (uint32_t channel = 0; channel < Adcs.present; channel++) {
     uint32_t type_index = Adc[channel].index;
     uint32_t adc_type = Adc[channel].type;
@@ -668,31 +666,12 @@ void AdcEverySecond(void) {
       AddSampleMq(channel);
       AdcGetMq(channel);
     }
-#ifdef USE_ENERGY_SENSOR
-    else if (GPIO_ADC_VOLTAGE == adc_type) {
-      Energy->voltage_available = true;
-      Energy->voltage[type_index] = AdcGetRange(channel) / 10000;  // Volt
-      voltage_count++;
-    }
-    else if (GPIO_ADC_CURRENT == adc_type) {
-      Energy->current_available = true;
-      Energy->current[type_index] = AdcGetRange(channel) / 10000;  // Ampere
-      current_count++;
-    }
-#endif  // USE_ENERGY_SENSOR
   }
-#ifdef USE_ENERGY_SENSOR
-  if (voltage_count && current_count) {
-    for (uint32_t phase = 0; phase < current_count; phase++) {
-      uint32_t voltage_phase = (voltage_count == current_count) ? phase : 0;
-      Energy->active_power[phase] = Energy->voltage[voltage_phase] * Energy->current[phase];  // Watt
-      Energy->kWhtoday_delta[phase] += (uint32_t)(Energy->active_power[phase] * 1000) / 36;   // deca_microWh
-      Energy->data_valid[phase] = 0;
-    }
-    EnergyUpdateToday();
-  }
-#endif  // USE_ENERGY_SENSOR
 }
+
+/*********************************************************************************************\
+ * Presentation
+\*********************************************************************************************/
 
 void AdcShowContinuation(bool *jsonflg) {
   if (*jsonflg) {
@@ -1043,26 +1022,58 @@ void CmndAdcParam(void) {
 \*********************************************************************************************/
 
 #ifdef USE_ENERGY_SENSOR
+void AdcEnergyEverySecond(void) {
+  uint32_t voltage_count = 0;
+  uint32_t current_count = 0;
+  for (uint32_t channel = 0; channel < Adcs.present; channel++) {
+    uint32_t type_index = Adc[channel].index;
+    uint32_t adc_type = Adc[channel].type;
+    if (GPIO_ADC_VOLTAGE == adc_type) {
+      Energy->voltage_available = true;
+      Energy->voltage[type_index] = AdcGetRange(channel) / 10000;  // Volt
+      voltage_count++;
+    }
+    else if (GPIO_ADC_CURRENT == adc_type) {
+      Energy->current_available = true;
+      Energy->current[type_index] = AdcGetRange(channel) / 10000;  // Ampere
+      current_count++;
+    }
+  }
+  for (uint32_t phase = 0; phase < current_count; phase++) {
+    uint32_t voltage_phase = (voltage_count == current_count) ? phase : 0;
+    Energy->active_power[phase] = Energy->voltage[voltage_phase] * Energy->current[phase];  // Watt
+    Energy->kWhtoday_delta[phase] += (uint32_t)(Energy->active_power[phase] * 1000) / 36;   // deca_microWh
+    Energy->data_valid[phase] = 0;
+  }
+  EnergyUpdateToday();
+}
+
 bool Xnrg33(uint32_t function) {
   bool result = false;
 
-  if (FUNC_PRE_INIT == function) {
-    uint32_t voltage_count = 0;
-    uint32_t current_count = 0;
-    for (uint32_t channel = 0; channel < Adcs.present; channel++) {
-      uint32_t adc_type = Adc[channel].type;
-      if (GPIO_ADC_VOLTAGE == adc_type) { voltage_count++; }
-      if (GPIO_ADC_CURRENT == adc_type) { current_count++; }
-    }
-    if (voltage_count || current_count) {
-      Energy->type_dc = true;
-      Energy->voltage_common = (1 == voltage_count);
-      Energy->phase_count = (voltage_count > current_count) ? voltage_count : current_count;
-      Energy->voltage_available = false;
-      Energy->current_available = false;
-      Energy->use_overtemp = true;   // Use global temperature for overtemp detection
-      TasmotaGlobal.energy_driver = XNRG_33;
-    }
+  switch (function) {
+    case FUNC_ENERGY_EVERY_SECOND:
+      AdcEnergyEverySecond();
+      break;
+    case FUNC_PRE_INIT: {
+        uint32_t voltage_count = 0;
+        uint32_t current_count = 0;
+        for (uint32_t channel = 0; channel < Adcs.present; channel++) {
+          uint32_t adc_type = Adc[channel].type;
+          if (GPIO_ADC_VOLTAGE == adc_type) { voltage_count++; }
+          if (GPIO_ADC_CURRENT == adc_type) { current_count++; }
+        }
+        if (voltage_count || current_count) {
+          Energy->type_dc = true;
+          Energy->voltage_common = (1 == voltage_count);
+          Energy->phase_count = (voltage_count > current_count) ? voltage_count : current_count;
+          Energy->voltage_available = false;
+          Energy->current_available = false;
+          Energy->use_overtemp = true;   // Use global temperature for overtemp detection
+          TasmotaGlobal.energy_driver = XNRG_33;
+        }
+      }
+      break;
   }
   return result;
 }
