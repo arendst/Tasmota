@@ -39,6 +39,36 @@
 #include <TasmotaModbus.h>
 TasmotaModbus *Sdm630Modbus;
 
+#ifdef SDM630_HIGH_UPDATE_RATE
+struct sSdm630RequestConfig{
+  uint16_t startAddress;
+  uint8_t  registerToRead; // according to spec: max 80 register can be read a once
+};
+
+const struct sSdm630RequestConfig sdm630ReqConf[] {
+  {0x0000, 18*2}, // 0x0000 - 0x0025
+  {0x0046, 1*2},  // 0x0046 
+  {0x0156, 8*2}   // 0x0156 - 0x0165
+};
+
+struct SDM630 {
+  uint8_t read_state = 0;
+  uint8_t send_retry = 0;
+} Sdm630;
+
+
+/* convert data buffer to float value according to IEEE754 */
+float convBufToFloat(uint8_t *buffer)
+{
+  float value;
+
+  ((uint8_t*)&value)[3] = buffer[0];   // Get float values
+  ((uint8_t*)&value)[2] = buffer[1];
+  ((uint8_t*)&value)[1] = buffer[2];
+  ((uint8_t*)&value)[0] = buffer[3];
+  return value;
+}
+#else
 const uint16_t sdm630_start_addresses[] {
            // 3P4 3P3 1P2 Unit Description
   0x0000,  //  +   -   +   V    Phase 1 line to neutral volts
@@ -72,17 +102,26 @@ struct SDM630 {
   uint8_t read_state = 0;
   uint8_t send_retry = 0;
 } Sdm630;
+#endif
 
 /*********************************************************************************************/
+
+#ifdef SDM630_HIGH_UPDATE_RATE
+uint8_t sdm630ReadBuffer[128]; // at least 5 + (2*max_RegisterToRead)
+#endif
 
 void SDM630Every250ms(void)
 {
   bool data_ready = Sdm630Modbus->ReceiveReady();
 
   if (data_ready) {
+#ifdef SDM630_HIGH_UPDATE_RATE
+    uint8_t* buffer = &sdm630ReadBuffer[0];
+    uint32_t error = Sdm630Modbus->ReceiveBuffer(buffer, sdm630ReqConf[Sdm630.read_state].registerToRead);
+#else
     uint8_t buffer[14];  // At least 5 + (2 * 2) = 9
-
     uint32_t error = Sdm630Modbus->ReceiveBuffer(buffer, 2);
+#endif
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, Sdm630Modbus->ReceiveCount());
 
     if (error) {
@@ -92,6 +131,7 @@ void SDM630Every250ms(void)
       Energy->data_valid[1] = 0;
       Energy->data_valid[2] = 0;
 
+#ifndef SDM630_HIGH_UPDATE_RATE
       //  0  1  2  3  4  5  6  7  8
       // SA FC BC Fh Fl Sh Sl Cl Ch
       // 01 04 04 43 66 33 34 1B 38 = 230.2 Volt
@@ -100,8 +140,64 @@ void SDM630Every250ms(void)
       ((uint8_t*)&value)[2] = buffer[4];
       ((uint8_t*)&value)[1] = buffer[5];
       ((uint8_t*)&value)[0] = buffer[6];
+#endif
 
       switch(Sdm630.read_state) {
+#ifdef SDM630_HIGH_UPDATE_RATE
+        case 0: // start address 0x0000                               // 3P4 3P3 1P2 Unit  Description
+          Energy->voltage[0] = convBufToFloat(&buffer[3]);            //  +   -   +   V    Phase 1 line to neutral volts
+          Energy->voltage[1] = convBufToFloat(&buffer[7]);            //  +   -   -   V    Phase 2 line to neutral volts
+          Energy->voltage[2] = convBufToFloat(&buffer[11]);           //  +   -   -   V    Phase 3 line to neutral volts
+
+          //0x0006
+          Energy->current[0] = convBufToFloat(&buffer[15]);           //  +   +   +   A    Phase 1 current
+          Energy->current[1] = convBufToFloat(&buffer[19]);           //  +   +   -   A    Phase 2 current
+          Energy->current[2] = convBufToFloat(&buffer[23]);           //  +   +   -   A    Phase 3 current
+
+          //0x000C
+          Energy->active_power[0] = convBufToFloat(&buffer[27]);      //  +   -   +   W    Phase 1 power
+          Energy->active_power[1] = convBufToFloat(&buffer[31]);      //  +   -   -   W    Phase 2 power
+          Energy->active_power[2] = convBufToFloat(&buffer[35]);      //  +   -   -   W    Phase 3 power
+
+          //0x0012
+          Energy->apparent_power[0] = convBufToFloat(&buffer[39]);    //  +   -   +   VA   Phase 1 volt amps
+          Energy->apparent_power[1] = convBufToFloat(&buffer[43]);    //  +   -   -   VA   Phase 2 volt amps
+          Energy->apparent_power[2] = convBufToFloat(&buffer[47]);    //  +   -   -   VA   Phase 3 volt amps
+
+          //0x0018
+          Energy->reactive_power[0] = convBufToFloat(&buffer[51]);    //  +   -   +   VAr  Phase 1 volt amps reactive
+          Energy->reactive_power[1] = convBufToFloat(&buffer[55]);    //  +   -   -   VAr  Phase 2 volt amps reactive
+          Energy->reactive_power[2] = convBufToFloat(&buffer[59]);    //  +   -   -   VAr  Phase 3 volt amps reactive
+
+          //0x001E
+          Energy->power_factor[0] = convBufToFloat(&buffer[63]);      //  +   -   +        Phase 1 power factor
+          Energy->power_factor[1] = convBufToFloat(&buffer[67]);      //  +   -   -        Phase 2 power factor
+          Energy->power_factor[2] = convBufToFloat(&buffer[71]);      //  +   -   -        Phase 3 power factor
+          break;
+
+        case 1: // start address 0x0046
+          Energy->frequency[0] = convBufToFloat(&buffer[3]);          //  +   +   +   Hz   Frequency of supply voltages
+          break;
+
+        case 2: // start address 0x0156
+          //   0x0156   //  +   +   +   kWh  Total active energy
+          //   0x0158   //  +   +   +   kvarh Total reactive energy
+
+#ifdef SDM630_IMPORT
+          //0x015A
+          Energy->import_active[0] = convBufToFloat(&buffer[11]);     //  +   +   +   kWh  Phase 1 import active energy
+          Energy->import_active[1] = convBufToFloat(&buffer[15]);     //  +   +   +   kWh  Phase 2 import active energy
+          Energy->import_active[2] = convBufToFloat(&buffer[19]);     //  +   +   +   kWh  Phase 3 import active energy
+#endif
+          //0x0160
+          Energy->export_active[0] = convBufToFloat(&buffer[23]);     //  +   +   +   kWh  Phase 1 export active energy
+          Energy->export_active[1] = convBufToFloat(&buffer[27]);     //  +   +   +   kWh  Phase 2 export active energy
+          Energy->export_active[2] = convBufToFloat(&buffer[31]);     //  +   +   +   kWh  Phase 3 export active energy
+
+          EnergyUpdateTotal();
+          break;
+
+#else //old sdm630 implementation
         case 0:
           Energy->voltage[0] = value;
           break;
@@ -194,10 +290,15 @@ void SDM630Every250ms(void)
 //          Energy->import_active[0] = value;
           EnergyUpdateTotal();
           break;
+#endif
       }
 
       Sdm630.read_state++;
+#ifdef SDM630_HIGH_UPDATE_RATE
+      if ( nitems(sdm630ReqConf) == Sdm630.read_state) {
+#else
       if (sizeof(sdm630_start_addresses)/2 == Sdm630.read_state) {
+#endif
         Sdm630.read_state = 0;
       }
     }
@@ -205,7 +306,11 @@ void SDM630Every250ms(void)
 
   if (0 == Sdm630.send_retry || data_ready) {
     Sdm630.send_retry = 5;
+#ifdef SDM630_HIGH_UPDATE_RATE
+    Sdm630Modbus->Send(SDM630_ADDR, 0x04, sdm630ReqConf[Sdm630.read_state].startAddress, sdm630ReqConf[Sdm630.read_state].registerToRead);
+#else
     Sdm630Modbus->Send(SDM630_ADDR, 0x04, sdm630_start_addresses[Sdm630.read_state], 2);
+#endif
   } else {
     Sdm630.send_retry--;
   }
