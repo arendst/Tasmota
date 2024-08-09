@@ -23,30 +23,47 @@
 /*********************************************************************************************\
  * ADC support for ESP8266 GPIO17 (=PIN_A0) and ESP32 up to 8 channels on GPIO32 to GPIO39
  * 
+ * Command AdcParam<x> allows for configuration of multiple sequential ADC GPIOs.
+ * Due to it's sequential nature it loses configurations when in-between ADC GPIOs are redefined.
+ * ---------------------------------    --------------------------------------------------------------------------------------------------
+ * AdcParam<channel> <parameters>
+ * AdcParam1 1                       <- Set first ADC GPIO found, counting from GPIO0 up, to default parameters based on configured GPIO_ADC_xxxx
+ * AdcParam1 1,32000,40000,3350      <- Temperature parameters for first ADC GPIO found, counting from GPIO0 up, and configured as GPIO_ADC_TEMP
+ * AdcParam2 1,511                   <- Button parameter for second ADC GPIO found, counting from GPIO0 up, and configured as GPIO_ADC_BUTTON1
+ * AdcParam3 1,511                   <- Button parameter for third ADC GPIO found, counting from GPIO0 up, and configured as GPIO_ADC_BUTTON2
  * 
+ * Version v14.1.0.4 supersedes previous command with command AdcGpio for easier configuration of multiple ADC GPIOs.
+ * As it is GPIO based it will not loose configurations when in-between GPIOs are redefined.
+ * ---------------------------------    --------------------------------------------------------------------------------------------------
+ * AdcGpio<gpio> <parameters>
+ * AdcGpio 1                         <- ESP8266 Set ADC on GPIO17 to default parameters based on configured GPIO_ADC_xxxx
+ * AdcGpio 32000,40000,3350          <- ESP8266 Temperature parameters for ADC on GPIO17 configured as GPIO_ADC_TEMP (no index needed)
+ * AdcGpio33 1                       <- ESP32 Set ADC on GPIO33 to default parameters based on configured GPIO_ADC_xxxx
+ * AdcGpio33 32000,40000,3350        <- ESP32 Temperature parameters for ADC on GPIO33 configured as GPIO_ADC_TEMP
+ * AdcGpio37 511                     <- ESP32 Button parameter for ADC on GPIO37 configured as GPIO_ADC_BUTTON1
  * 
  * 
  * For shelly RGBW PM:
  * Template {"NAME":"Shelly Plus RGBW PM Pot.meter","GPIO":[1,0,0,0,419,0,0,0,0,0,544,0,0,0,0,1,0,0,1,0,0,416,417,418,0,0,0,0,0,4736,11264,11296,4704,0,4705,0],"FLAG":0,"BASE":1}
- * AdcParam1 1,32000,40000,3350      <- Temperature parameters
- * AdcParam2 1,1161,3472,10,30       <- Voltage parameters
- * AdcParam3 1,960,1017,0.01,0.706   <- Current parameters
- * AdcParam4 1,1552,176,3,1          <- I1 Potentiometer RGBW or RGB if SO37 128
- * AdcParam4 1,1552,176,3,3          <- I1 Potentiometer RGBW or RGB if SO37 128 without fading
- * AdcParam5 1,1552,176,3,1          <- I3 Potentiometer W if SO37 128
+ * AdcGpio33 32000,40000,3350        <- Temperature parameters
+ * AdcGpio34 1161,3472,10,30         <- Voltage parameters
+ * AdcGpio35 960,1017,0.01,0.706     <- Current parameters
+ * AdcGpio36 1552,176,3,1            <- I1 Potentiometer RGBW or RGB if SO37 128
+ * AdcGpio36 1552,176,3,3            <- I1 Potentiometer RGBW or RGB if SO37 128 without fading
+ * AdcGpio38 1552,176,3,1            <- I3 Potentiometer W if SO37 128
  * Fade 1
  * Speed 6
  * VoltRes 2
  * WattRes 2
  * 
  * Template {"NAME":"Shelly Plus RGBW PM Button","GPIO":[1,0,0,0,419,0,0,0,0,0,544,0,0,0,0,1,0,0,1,0,0,416,417,418,0,0,0,0,0,4736,11264,11296,4800,4801,4802,4803],"FLAG":0,"BASE":1}
- * AdcParam1 1,32000,40000,3350      <- Temperature parameters
- * AdcParam2 1,1161,3472,10,30       <- Voltage parameters
- * AdcParam3 1,960,1017,0.01,0.706   <- Current parameters
- * AdcParam4 1,511                   <- I1 Button
- * AdcParam5 1,511                   <- I2 Button
- * AdcParam6 1,511                   <- I3 Button
- * AdcParam7 1,511                   <- I4 Button
+ * AdcGpio33 32000,40000,3350        <- Temperature parameters
+ * AdcGpio34 1161,3472,10,30         <- Voltage parameters
+ * AdcGpio35 960,1017,0.01,0.706     <- Current parameters
+ * AdcGpio36 511                     <- I1 ADC Button
+ * AdcGpio37 511                     <- I2 ADC Button
+ * AdcGpio38 511                     <- I3 ADC Button
+ * AdcGpio39 511                     <- I4 ADC Button
  * Fade 1
  * Speed 6
  * VoltRes 2
@@ -184,6 +201,8 @@
 // lenght of filter
 #define ANALOG_MQ_SAMPLES                         60
 
+/*********************************************************************************************/
+
 struct {
   uint8_t present;
 } Adcs;
@@ -193,12 +212,9 @@ struct {
   float temperature;
   float current;
   float energy;
-  uint32_t previous_millis;
-  uint32_t param1;
-  uint32_t param2;
-  int param3;
-  int param4;
+  int param[4];
   int indexOfPointer;
+  uint32_t previous_millis;
   uint16_t last_value;
   uint16_t type;
   uint8_t index;
@@ -222,114 +238,171 @@ bool AdcPin(uint32_t pin) {
   return false;
 }
 
-uint16_t AdcRead1(uint32_t pin) {
-#ifdef ESP32 
-  return analogReadMilliVolts(pin) / (ANALOG_V33 * 1000) * ANALOG_RANGE;  // Go back from mV to ADC
-#else
-  return analogRead(pin);
-#endif
-}
-
 /*********************************************************************************************/
 
-void AdcSaveSettings(uint32_t channel) {
-  char parameters[32] = { 0 };
-  if (channel < Adcs.present) {
-    snprintf_P(parameters, sizeof(parameters), PSTR("%d,%d,%d,%d,%d"),
-      Adc[channel].type, Adc[channel].param1, Adc[channel].param2, Adc[channel].param3, Adc[channel].param4);
+#ifdef ESP32
+void AdcFreeUnusedSettings(void) {
+  // Go over all SET_ADC_PARAMx looking for pin numbers currently used on channels
+  // Clear non used freeing global text space
+  char parameters[40];
+  for (uint32_t param_idx = 0; param_idx <= MAX_ADCS; param_idx++) {
+    if (strchr(SettingsText(SET_ADC_PARAM1 + param_idx), ',') != nullptr) {
+      uint32_t pin = atoi(subStr(parameters, SettingsText(SET_ADC_PARAM1 + param_idx), ",", 6));
+      uint32_t channel;
+      for (channel = 0; channel < Adcs.present; channel++) {
+        if (pin == Adc[channel].pin) { break; }
+      }
+      if (channel == Adcs.present) {
+        SettingsUpdateText(SET_ADC_PARAM1 + param_idx, "");
+      }
+    }
   }
-  SettingsUpdateText(SET_ADC_PARAM1 + channel, parameters);
+}
+#endif  // ESP32
+
+int AdcFindSlot(uint32_t channel) {
+  char parameters[40];
+  for (uint32_t param_idx = 0; param_idx < MAX_ADCS; param_idx++) {
+    if (strchr(SettingsText(SET_ADC_PARAM1 + param_idx), ',') != nullptr) {
+//      if (Adc[channel].pin == atoi(subStr(parameters, SettingsText(SET_ADC_PARAM1 + param_idx), ",", 6))) {  // Assuming pin 0 is never an ADC channel
+      subStr(parameters, SettingsText(SET_ADC_PARAM1 + param_idx), ",", 6);
+      if (strlen(parameters) && (atoi(parameters) == Adc[channel].pin)) {
+        return param_idx;  // Found
+      }
+    }
+  }
+  return -1;               // Not found
+}
+
+void AdcSaveSettings(uint32_t channel) {
+  char parameters[40];
+  snprintf_P(parameters, sizeof(parameters), PSTR("%d,%d,%d,%d,%d,%d"),
+    Adc[channel].type,
+    Adc[channel].param[0], Adc[channel].param[1], Adc[channel].param[2], Adc[channel].param[3],
+    Adc[channel].pin);
+
+#ifdef ESP8266
+  SettingsUpdateText(SET_ADC_PARAM1, parameters);                    // Save in only slot
+#else  // ESP32
+  // Find used slot based on channel pin. If not find a free slot.
+  int param_idx = AdcFindSlot(channel);
+  if (-1 == param_idx) {
+    for (param_idx = 0; param_idx < MAX_ADCS; param_idx++) {         // Find a free slot
+      if (strchr(SettingsText(SET_ADC_PARAM1 + param_idx), ',') == nullptr) {
+        break;
+      }
+    }
+  }
+  SettingsUpdateText(SET_ADC_PARAM1 + param_idx, parameters);       // Save in current slot
+#endif  // ESP32
+}
+
+uint32_t AdcGetType(uint32_t channel, uint32_t param_idx) {
+  // Get params and adc_type
+  char parameters[40];
+  for (uint32_t i = 0; i < 4; i++) {
+    Adc[channel].param[i] = atoi(subStr(parameters, SettingsText(SET_ADC_PARAM1 + param_idx), ",", i +2));
+  }
+  return atoi(subStr(parameters, SettingsText(SET_ADC_PARAM1 + param_idx), ",", 1));
 }
 
 bool AdcGetSettings(uint32_t channel) {
   uint32_t adc_type = 0;
-  char parameters[32];
-  if (strchr(SettingsText(SET_ADC_PARAM1 + channel), ',') != nullptr) {
-    adc_type = atoi(subStr(parameters, SettingsText(SET_ADC_PARAM1 + channel), ",", 1));
-    Adc[channel].param1 = atoi(subStr(parameters, SettingsText(SET_ADC_PARAM1 + channel), ",", 2));
-    Adc[channel].param2 = atoi(subStr(parameters, SettingsText(SET_ADC_PARAM1 + channel), ",", 3));
-    Adc[channel].param3 = atoi(subStr(parameters, SettingsText(SET_ADC_PARAM1 + channel), ",", 4));
-    Adc[channel].param4 = atoi(subStr(parameters, SettingsText(SET_ADC_PARAM1 + channel), ",", 5));
-    if ((adc_type > 0) && (adc_type < GPIO_ADC_INPUT)) {  // Former ADC_END
-      AdcSaveSettings(channel);
-      adc_type = Adc[channel].type;           // Migrate for backwards compatibility
+  // Find corresponding pin (since v14.1.0.4)
+  int param_idx = AdcFindSlot(channel);
+  if (param_idx > -1) {
+    // Param is 148,32000,10000,3350,0,17
+    adc_type = AdcGetType(channel, param_idx);
+  } else {
+    // Legacy support (No pin in param)
+    // Param is 1,32000,10000,33500000,0 or 148,32000,10000,33500000,0 or 148,32000,10000,3350,0
+    if (strchr(SettingsText(SET_ADC_PARAM1 + channel), ',') != nullptr) {
+      adc_type = AdcGetType(channel, channel);
+      if ((adc_type > 0) && (adc_type < GPIO_ADC_INPUT)) {  // Former ADC_END
+        adc_type = Adc[channel].type;           // Migrate adc_type from 1..12 to UserSelectablePins index
+      }
+      if ((GPIO_ADC_TEMP == adc_type) && (Adc[channel].param[2] > 1000000)) {
+        Adc[channel].param[2] /= 10000;         // Fix legacy value from 33500000 to 3350
+      }
+      AdcSaveSettings(channel);                 // Add pin
     }
   }
   return (Adc[channel].type == adc_type);
 }
 
 void AdcInitParams(uint32_t channel) {
-  Adc[channel].param1 = 0;
-  Adc[channel].param2 = 0;
-  Adc[channel].param3 = 0;
-  Adc[channel].param4 = 0;
+  Adc[channel].param[0] = 0;
+  Adc[channel].param[1] = 0;
+  Adc[channel].param[2] = 0;
+  Adc[channel].param[3] = 0;
   uint32_t adc_type = Adc[channel].type;
   switch (adc_type) {
     case GPIO_ADC_INPUT:
-//      Adc[channel].param1 = 0;
-      Adc[channel].param2 = ANALOG_RANGE;
-      Adc[channel].param3 = 3;                       // Margin / Tolerance
-//      Adc[channel].param4 = 0;                       // Default mode (0) or Direct mode (1) using Dimmer or Channel command
+//      Adc[channel].param[0] = 0;
+      Adc[channel].param[1] = ANALOG_RANGE;
+      Adc[channel].param[2] = 3;                       // Margin / Tolerance
+//      Adc[channel].param[3] = 0;                       // Default mode (0) or Direct mode (1) using Dimmer or Channel command
       break;
     case GPIO_ADC_TEMP:
       // Default Shelly 2.5 and 1PM parameters
-      Adc[channel].param1 = ANALOG_NTC_BRIDGE_RESISTANCE;
-      Adc[channel].param2 = ANALOG_NTC_RESISTANCE;
-      Adc[channel].param3 = ANALOG_NTC_B_COEFFICIENT;
-//      Adc[channel].param4 = 0;                       // Default to Shelly mode with NTC towards GND
+      Adc[channel].param[0] = ANALOG_NTC_BRIDGE_RESISTANCE;
+      Adc[channel].param[1] = ANALOG_NTC_RESISTANCE;
+      Adc[channel].param[2] = ANALOG_NTC_B_COEFFICIENT;
+//      Adc[channel].param[3] = 0;                       // Default to Shelly mode with NTC towards GND
       break;
     case GPIO_ADC_LIGHT:
-      Adc[channel].param1 = ANALOG_LDR_BRIDGE_RESISTANCE;
-      Adc[channel].param2 = ANALOG_LDR_LUX_CALC_SCALAR;
-      Adc[channel].param3 = ANALOG_LDR_LUX_CALC_EXPONENT * 10000;
-//      Adc[channel].param4 = 0;
+      Adc[channel].param[0] = ANALOG_LDR_BRIDGE_RESISTANCE;
+      Adc[channel].param[1] = ANALOG_LDR_LUX_CALC_SCALAR;
+      Adc[channel].param[2] = ANALOG_LDR_LUX_CALC_EXPONENT * 10000;
+//      Adc[channel].param[3] = 0;
       break;
     case GPIO_ADC_BUTTON:
     case GPIO_ADC_BUTTON_INV:
-      Adc[channel].param1 = ANALOG_BUTTON_THRESHOLD;  // Between 0 or 1
-//      Adc[channel].param2 = 0;
-//      Adc[channel].param3 = 0;
-//      Adc[channel].param4 = 0;
+      Adc[channel].param[0] = ANALOG_BUTTON_THRESHOLD;  // Between 0 or 1
+//      Adc[channel].param[1] = 0;
+//      Adc[channel].param[2] = 0;
+//      Adc[channel].param[3] = 0;
       break;
     case GPIO_ADC_RANGE:
-//      Adc[channel].param1 = 0;
-      Adc[channel].param2 = ANALOG_RANGE;
-//      Adc[channel].param3 = 0;
-      Adc[channel].param4 = 100;
+//      Adc[channel].param[0] = 0;
+      Adc[channel].param[1] = ANALOG_RANGE;
+//      Adc[channel].param[2] = 0;
+      Adc[channel].param[3] = 100;
       break;
     case GPIO_ADC_CT_POWER:
-      Adc[channel].param1 = ANALOG_CT_FLAGS;         // (uint32_t) 0
-      Adc[channel].param2 = ANALOG_CT_MULTIPLIER;    // (uint32_t) 100000
-      Adc[channel].param3 = ANALOG_CT_VOLTAGE;       // (int)      10
+      Adc[channel].param[0] = ANALOG_CT_FLAGS;         // (uint32_t) 0
+      Adc[channel].param[1] = ANALOG_CT_MULTIPLIER;    // (uint32_t) 100000
+      Adc[channel].param[2] = ANALOG_CT_VOLTAGE;       // (int)      10
+//      Adc[channel].param[3] = 0;
       break;
     case GPIO_ADC_JOY:
-      Adc[channel].param1 = ANALOG_JOYSTICK_THRESHOLD;
-//      Adc[channel].param2 = 0;
-//      Adc[channel].param3 = 0;
-//      Adc[channel].param4 = 0;
+      Adc[channel].param[0] = ANALOG_JOYSTICK_THRESHOLD;
+//      Adc[channel].param[1] = 0;
+//      Adc[channel].param[2] = 0;
+//      Adc[channel].param[3] = 0;
       break;
     case GPIO_ADC_PH:
-      Adc[channel].param1 = ANALOG_PH_CALSOLUTION_LOW_PH * ANALOG_PH_DECIMAL_MULTIPLIER;  // PH of the calibration solution 1, which is the one with the lower PH
-      Adc[channel].param2 = ANALOG_PH_CALSOLUTION_LOW_ANALOG_VALUE;                       // Reading of AnalogInput while probe is in solution 1
-      Adc[channel].param3 = ANALOG_PH_CALSOLUTION_HIGH_PH * ANALOG_PH_DECIMAL_MULTIPLIER; // PH of the calibration solution 2, which is the one with the higher PH
-      Adc[channel].param4 = ANALOG_PH_CALSOLUTION_HIGH_ANALOG_VALUE;                      // Reading of AnalogInput while probe is in solution 2
+      Adc[channel].param[0] = ANALOG_PH_CALSOLUTION_LOW_PH * ANALOG_PH_DECIMAL_MULTIPLIER;  // PH of the calibration solution 1, which is the one with the lower PH
+      Adc[channel].param[1] = ANALOG_PH_CALSOLUTION_LOW_ANALOG_VALUE;                       // Reading of AnalogInput while probe is in solution 1
+      Adc[channel].param[2] = ANALOG_PH_CALSOLUTION_HIGH_PH * ANALOG_PH_DECIMAL_MULTIPLIER; // PH of the calibration solution 2, which is the one with the higher PH
+      Adc[channel].param[3] = ANALOG_PH_CALSOLUTION_HIGH_ANALOG_VALUE;                      // Reading of AnalogInput while probe is in solution 2
       break;
     case GPIO_ADC_MQ:
-      Adc[channel].param1 = ANALOG_MQ_TYPE;  // Could be MQ-002, MQ-004, MQ-131 ....
-      Adc[channel].param2 = (int)(ANALOG_MQ_A * ANALOG_MQ_DECIMAL_MULTIPLIER);                // Exponential regression
-      Adc[channel].param3 = (int)(ANALOG_MQ_B * ANALOG_MQ_DECIMAL_MULTIPLIER);                // Exponential regression
-      Adc[channel].param4 = (int)(ANALOG_MQ_RatioMQCleanAir * ANALOG_MQ_DECIMAL_MULTIPLIER);  // Exponential regression
+      Adc[channel].param[0] = ANALOG_MQ_TYPE;  // Could be MQ-002, MQ-004, MQ-131 ....
+      Adc[channel].param[1] = (int)(ANALOG_MQ_A * ANALOG_MQ_DECIMAL_MULTIPLIER);                // Exponential regression
+      Adc[channel].param[2] = (int)(ANALOG_MQ_B * ANALOG_MQ_DECIMAL_MULTIPLIER);                // Exponential regression
+      Adc[channel].param[3] = (int)(ANALOG_MQ_RatioMQCleanAir * ANALOG_MQ_DECIMAL_MULTIPLIER);  // Exponential regression
       break; 
     case GPIO_ADC_VOLTAGE:
     case GPIO_ADC_CURRENT:
-//      Adc[channel].param1 = 0;
-      Adc[channel].param2 = ANALOG_RANGE;
-//      Adc[channel].param3 = 0;
-      Adc[channel].param4 = ANALOG_V33 * 10000;
+//      Adc[channel].param[0] = 0;
+      Adc[channel].param[1] = ANALOG_RANGE;
+//      Adc[channel].param[2] = 0;
+      Adc[channel].param[3] = ANALOG_V33 * 10000;
       break;
   }
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("ADC: AdcParam%d %d,%d,%d,%d,%d"), channel+1, Adc[channel].pin, Adc[channel].param1, Adc[channel].param2, Adc[channel].param3, Adc[channel].param4);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("ADC: AdcParam%d %d,%d,%d,%d,%d"), channel+1, Adc[channel].pin, Adc[channel].param[0], Adc[channel].param[1], Adc[channel].param[2], Adc[channel].param[3]);
 }
 
 void AdcInit(void) {
@@ -357,7 +430,7 @@ void AdcInit(void) {
       case GPIO_ADC_LIGHT:
       case GPIO_ADC_TEMP:
       case GPIO_ADC_INPUT:
-        Adc[Adcs.present].indexOfPointer = -1;
+        Adc[Adcs.present].indexOfPointer = -1;  // Used to skip first update of GPIO_ADC_INPUT after restart
         Adc[Adcs.present].pin = pin;
         Adc[Adcs.present].type = adc_type;
         Adc[Adcs.present].index = TasmotaGlobal.gpio_pin[pin] & 0x001F;
@@ -378,14 +451,22 @@ void AdcInit(void) {
       }
     }
   }
-  for (uint32_t channel = Adcs.present; channel < MAX_ADCS; channel++) {
-    if (strlen(SettingsText(SET_ADC_PARAM1 + channel))) {
-      AdcSaveSettings(channel);               // Free space by unused params
-    }
-  }
+#ifdef ESP32
+  AdcFreeUnusedSettings();
+#endif  // ESP32
 }
 
-uint16_t AdcRead(uint32_t pin, uint32_t factor) {
+/*********************************************************************************************/
+
+uint32_t AdcRead1(uint32_t pin) {
+#ifdef ESP32 
+  return analogReadMilliVolts(pin) / (ANALOG_V33 * 1000) * ANALOG_RANGE;  // Go back from mV to ADC
+#else
+  return analogRead(pin);
+#endif
+}
+
+uint32_t AdcRead(uint32_t pin, uint32_t factor) {
   // factor 1 = 2 samples
   // factor 2 = 4 samples
   // factor 3 = 8 samples
@@ -418,7 +499,7 @@ void AdcEvery250ms(void) {
 #ifdef USE_LIGHT
   if (!light_controller.isCTRGBLinked()) {                             // SetOption37 >= 128 (Light) RGB and White channel separation (default 0)
     for (uint32_t channel = 0; channel < Adcs.present; channel++) {
-      if ((GPIO_ADC_INPUT == Adc[channel].type) && (Adc[channel].param4 > 0)) {
+      if ((GPIO_ADC_INPUT == Adc[channel].type) && (Adc[channel].param[3] > 0)) {
         dimmer_count++;
       }
     }
@@ -431,17 +512,21 @@ void AdcEvery250ms(void) {
     offset = 1;
 #endif
     uint32_t adc_type = Adc[channel].type;
+    int param0 = Adc[channel].param[0];
+    int param1 = Adc[channel].param[1];
+    int param2 = Adc[channel].param[2];
+    int param3 = Adc[channel].param[3];
     if (GPIO_ADC_INPUT == adc_type) {
       int adc = AdcRead(Adc[channel].pin, 4);                          // 4 = 16 mS
-      bool swap = (Adc[channel].param2 < Adc[channel].param1);
-      uint32_t lo = (swap) ? Adc[channel].param2 : Adc[channel].param1;
-      uint32_t hi = (swap) ? Adc[channel].param1 : Adc[channel].param2;
+      bool swap = (param1 < param0);
+      uint32_t lo = (swap) ? param1 : param0;
+      uint32_t hi = (swap) ? param0 : param1;
       int new_value = changeUIntScale(adc, lo, hi, 0, 100);
       if (swap) {
         new_value = 100 - new_value;
       }
-      if ((new_value < Adc[channel].last_value -Adc[channel].param3) ||
-          (new_value > Adc[channel].last_value +Adc[channel].param3) ||
+      if ((new_value < Adc[channel].last_value -param2) ||
+          (new_value > Adc[channel].last_value +param2) ||
           ((0 == new_value) && (Adc[channel].last_value != 0)) ||      // Lowest end
           ((100 == new_value) && (Adc[channel].last_value != 100))) {  // Highest end
         Adc[channel].last_value = new_value;
@@ -450,7 +535,7 @@ void AdcEvery250ms(void) {
           continue;                                                    // Do not use potentiometer state on restart
         }
 #ifdef USE_LIGHT
-        if (0 == Adc[channel].param4) {                                // Default (0) or Direct mode (1)
+        if (0 == param3) {                                // Default (0) or Direct mode (1)
 #endif  // USE_LIGHT
           Response_P(PSTR("{\"ANALOG\":{\"A%ddiv10\":%d}}"), type_index + offset, new_value);
           XdrvRulesProcess(0);
@@ -464,7 +549,7 @@ void AdcEvery250ms(void) {
             if (dimmer_count > 1) {
               dimmer_option = (0 == type_index) ? 1 : 2;               // Change RGB (1) or W(W) (2) dimmer
             } else {
-              dimmer_option = (3 == Adc[channel].param4) ? 3 : 0;      // Change both RGB and W(W) Dimmers (0) with no fading (3)
+              dimmer_option = (3 == param3) ? 3 : 0;      // Change both RGB and W(W) Dimmers (0) with no fading (3)
             }
             snprintf_P(command, sizeof(command), PSTR(D_CMND_DIMMER "%d %d"), dimmer_option, new_value);
           }
@@ -477,7 +562,7 @@ void AdcEvery250ms(void) {
       uint16_t new_value = AdcRead(Adc[channel].pin, 1);
       if (new_value && (new_value != Adc[channel].last_value)) {
         Adc[channel].last_value = new_value;
-        uint16_t value = new_value / Adc[channel].param1;
+        uint16_t value = new_value / param0;
         Response_P(PSTR("{\"ANALOG\":{\"Joy%s\":%d}}"), adc_channel, value);
         XdrvRulesProcess(0);
       } else {
@@ -489,28 +574,30 @@ void AdcEvery250ms(void) {
 
 uint8_t AdcGetButton(uint32_t pin) {
   for (uint32_t channel = 0; channel < Adcs.present; channel++) {
-    uint32_t adc_type = Adc[channel].type;
     if (Adc[channel].pin == pin) {
+      uint32_t adc_type = Adc[channel].type;
+      uint32_t adc = AdcRead(Adc[channel].pin, 1);
+      uint32_t param0 = Adc[channel].param[0];
       if (GPIO_ADC_BUTTON_INV == adc_type) {
-        return (AdcRead(Adc[channel].pin, 1) < Adc[channel].param1);
+        return (adc < param0);
       }
       else if (GPIO_ADC_BUTTON == adc_type) {
-        return (AdcRead(Adc[channel].pin, 1) > Adc[channel].param1);
+        return (adc > param0);
       }
     }
   }
   return 0;
 }
 
-uint16_t AdcGetLux(uint32_t channel) {
+uint32_t AdcGetLux(uint32_t channel) {
   int adc = AdcRead(Adc[channel].pin, 2);
   // Source: https://www.allaboutcircuits.com/projects/design-a-luxmeter-using-a-light-dependent-resistor/
-  double resistorVoltage = ((double)adc / ANALOG_RANGE) * ANALOG_V33;
-  double ldrVoltage = ANALOG_V33 - resistorVoltage;
-  double ldrResistance = ldrVoltage / resistorVoltage * (double)Adc[channel].param1;
-  double ldrLux = (double)Adc[channel].param2 * FastPrecisePow(ldrResistance, (double)Adc[channel].param3 / 10000);
+  float resistorVoltage = ((float)adc / ANALOG_RANGE) * ANALOG_V33;
+  float ldrVoltage = ANALOG_V33 - resistorVoltage;
+  float ldrResistance = ldrVoltage / resistorVoltage * (float)Adc[channel].param[0];
+  float ldrLux = (float)Adc[channel].param[1] * FastPrecisePowf(ldrResistance, (float)Adc[channel].param[2] / 10000);
 
-  return (uint16_t)ldrLux;
+  return (uint32_t)ldrLux;
 }
 
 void AddSampleMq(uint32_t channel){
@@ -551,7 +638,7 @@ float AdcGetMq(uint32_t channel) {
 
   float _R0 = 10;
   float _ratio = _RS_Calc / _R0;                         // Get ratio RS_gas/RS_air
-  float ppm = Adc[channel].param2 / ANALOG_MQ_DECIMAL_MULTIPLIER * FastPrecisePow(_ratio, Adc[channel].param3 / ANALOG_MQ_DECIMAL_MULTIPLIER);  // Source excel analisis https://github.com/miguel5612/MQSensorsLib_Docs/tree/master/Internal_design_documents
+  float ppm = Adc[channel].param[1] / ANALOG_MQ_DECIMAL_MULTIPLIER * FastPrecisePowf(_ratio, Adc[channel].param[2] / ANALOG_MQ_DECIMAL_MULTIPLIER);  // Source excel analisis https://github.com/miguel5612/MQSensorsLib_Docs/tree/master/Internal_design_documents
   if (ppm < 0) { ppm = 0; }                              // No negative values accepted or upper datasheet recomendation.
   if (ppm > 100000) { ppm = 100000; }
 
@@ -563,10 +650,10 @@ float AdcGetMq(uint32_t channel) {
 float AdcGetPh(uint32_t channel) {
   int adc = AdcRead(Adc[channel].pin, 2);
 
-  float y1 = (float)Adc[channel].param1 / ANALOG_PH_DECIMAL_MULTIPLIER;
-  int32_t x1 = Adc[channel].param2;
-  float y2 = (float)Adc[channel].param3 / ANALOG_PH_DECIMAL_MULTIPLIER;
-  int32_t x2 = Adc[channel].param4;
+  float y1 = (float)Adc[channel].param[0] / ANALOG_PH_DECIMAL_MULTIPLIER;
+  int32_t x1 = Adc[channel].param[1];
+  float y2 = (float)Adc[channel].param[2] / ANALOG_PH_DECIMAL_MULTIPLIER;
+  int32_t x2 = Adc[channel].param[3];
 
   float m = (y2 - y1) / (float)(x2 - x1);
   float ph = m * (float)(adc - x1) + y1;
@@ -581,25 +668,25 @@ float AdcGetRange(uint32_t channel) {
   // Example: 514, 632, 236, 0, 100
   // int( ((<param2> - <analog-value>) / (<param2> - <param1>) ) * (<param3> - <param4>) ) + <param4> )
   int adc = AdcRead(Adc[channel].pin, 5);
-  float adcrange = ( ((float)Adc[channel].param2 - (float)adc) / ( ((float)Adc[channel].param2 - (float)Adc[channel].param1)) * ((float)Adc[channel].param3 - (float)Adc[channel].param4) + (float)Adc[channel].param4 );
+  float adcrange = ( ((float)Adc[channel].param[1] - (float)adc) / ( ((float)Adc[channel].param[1] - (float)Adc[channel].param[0])) * ((float)Adc[channel].param[2] - (float)Adc[channel].param[3]) + (float)Adc[channel].param[3] );
   return adcrange;
 }
 
-void AdcGetCurrentPower(uint8_t channel, uint8_t factor) {
+void AdcGetCurrentPower(uint32_t channel, uint32_t factor) {
   // factor 1 = 2 samples
   // factor 2 = 4 samples
   // factor 3 = 8 samples
   // factor 4 = 16 samples
   // factor 5 = 32 samples
-  uint8_t samples = 1 << factor;
-  uint16_t analog = 0;
-  uint16_t analog_min = ANALOG_RANGE;
-  uint16_t analog_max = 0;
+  uint32_t samples = 1 << factor;
+  uint32_t analog = 0;
+  uint32_t analog_min = ANALOG_RANGE;
+  uint32_t analog_max = 0;
 
-  if (0 == Adc[channel].param1) {
-    unsigned long tstart=millis();
+  if (0 == Adc[channel].param[0]) {
+    uint32_t tstart = millis();
     while (millis()-tstart < 35) {
-      analog = analogRead(Adc[channel].pin);
+      analog = AdcRead1(Adc[channel].pin);
       if (analog < analog_min) {
         analog_min = analog;
       }
@@ -608,21 +695,20 @@ void AdcGetCurrentPower(uint8_t channel, uint8_t factor) {
       }
     }
     //AddLog(0, PSTR("min: %u, max:%u, dif:%u"), analog_min, analog_max, analog_max-analog_min);
-    Adc[channel].current = (float)(analog_max-analog_min) * ((float)(Adc[channel].param2) / 100000);
-    if (Adc[channel].current < (((float)Adc[channel].param4) / 10000.0))
-        Adc[channel].current = 0.0;
-  }
-  else {
-    analog = AdcRead(Adc[channel].pin, 5);
-    if (analog > Adc[channel].param1) {
-     Adc[channel].current = ((float)(analog) - (float)Adc[channel].param1) * ((float)(Adc[channel].param2) / 100000);
+    Adc[channel].current = (float)(analog_max-analog_min) * ((float)(Adc[channel].param[1]) / 100000);
+    if (Adc[channel].current < (((float)Adc[channel].param[3]) / 10000.0)) {
+      Adc[channel].current = 0.0;
     }
-    else {
+  } else {
+    analog = AdcRead(Adc[channel].pin, 5);
+    if (analog > Adc[channel].param[0]) {
+      Adc[channel].current = ((float)(analog) - (float)Adc[channel].param[0]) * ((float)(Adc[channel].param[1]) / 100000);
+    } else {
       Adc[channel].current = 0;
     }
   }
 
-  float power = Adc[channel].current * (float)(Adc[channel].param3) / 10;
+  float power = Adc[channel].current * (float)(Adc[channel].param[2]) / 10;
   uint32_t current_millis = millis();
   Adc[channel].energy = Adc[channel].energy + ((power * (current_millis - Adc[channel].previous_millis)) / 3600000000);
   Adc[channel].previous_millis = current_millis;
@@ -632,31 +718,32 @@ void AdcEverySecond(void) {
   for (uint32_t channel = 0; channel < Adcs.present; channel++) {
     uint32_t type_index = Adc[channel].index;
     uint32_t adc_type = Adc[channel].type;
+    int param0 = Adc[channel].param[0];
+    int param1 = Adc[channel].param[1];
+    int param2 = Adc[channel].param[2];
+    int param3 = Adc[channel].param[3];
     if (GPIO_ADC_TEMP == adc_type) {
       int adc = AdcRead(Adc[channel].pin, 2);
       // Steinhart-Hart equation for thermistor as temperature sensor:
-      // double Rt = (adc * Adc[channel].param1 * MAX_ADC_V) / (ANALOG_RANGE * ANALOG_V33 - (double)adc * MAX_ADC_V);
+      // float Rt = (adc * Adc[channel].param[0] * MAX_ADC_V) / (ANALOG_RANGE * ANALOG_V33 - (float)adc * MAX_ADC_V);
       // MAX_ADC_V in ESP8266 is 1
       // MAX_ADC_V in ESP32 is 3.3
-      double Rt;
+      float Rt;
 #ifdef ESP8266
-      if (Adc[channel].param4) { // Alternate mode
-        Rt = (double)Adc[channel].param1 * (ANALOG_RANGE * ANALOG_V33 - (double)adc) / (double)adc;
+      if (param3) { // Alternate mode
+        Rt = (float)param0 * (ANALOG_RANGE * ANALOG_V33 - (float)adc) / (float)adc;
       } else {
-        Rt = (double)Adc[channel].param1 * (double)adc / (ANALOG_RANGE * ANALOG_V33 - (double)adc);
+        Rt = (float)param0 * (float)adc / (ANALOG_RANGE * ANALOG_V33 - (float)adc);
       }
 #else
-      if (Adc[channel].param4) { // Alternate mode
-        Rt = (double)Adc[channel].param1 * (ANALOG_RANGE - (double)adc) / (double)adc;
+      if (param3) { // Alternate mode
+        Rt = (float)param0 * (ANALOG_RANGE - (float)adc) / (float)adc;
       } else {
-        Rt = (double)Adc[channel].param1 * (double)adc / (ANALOG_RANGE - (double)adc);
+        Rt = (float)param0 * (float)adc / (ANALOG_RANGE - (float)adc);
       }
 #endif
-      if (Adc[channel].param3 > 1000000) {
-        Adc[channel].param3 /= 10000;    // Fix legacy value from 33500000 to 3350
-      }
-      double BC = (double)Adc[channel].param3;                                              // Shelly param3 = 3350 (ANALOG_NTC_B_COEFFICIENT)
-      double T = BC / (BC / ANALOG_T0 + TaylorLog(Rt / (double)Adc[channel].param2));       // Shelly param2 = 10000 (ANALOG_NTC_RESISTANCE)
+      float BC = (float)param2;                                              // Shelly param3 = 3350 (ANALOG_NTC_B_COEFFICIENT)
+      float T = BC / (BC / ANALOG_T0 + TaylorLog(Rt / (float)param1));       // Shelly param2 = 10000 (ANALOG_NTC_RESISTANCE)
       Adc[channel].temperature = ConvertTemp(TO_CELSIUS(T));
     }
     else if (GPIO_ADC_CT_POWER == adc_type) {
@@ -702,7 +789,7 @@ void AdcShow(bool json) {
     switch (adc_type) {
       case GPIO_ADC_INPUT: {
 #ifdef USE_LIGHT
-        if (0 == Adc[channel].param4) {                                // Default (0) or Direct mode (1)
+        if (0 == Adc[channel].param[3]) {                                // Default (0) or Direct mode (1)
 #endif  // USE_LIGHT
           uint16_t analog = AdcRead(Adc[channel].pin, 5);
           if (json) {
@@ -739,7 +826,7 @@ void AdcShow(bool json) {
         break;
       }
       case GPIO_ADC_LIGHT: {
-        uint16_t adc_light = AdcGetLux(channel);
+        uint32_t adc_light = AdcGetLux(channel);
 
         if (json) {
           AdcShowContinuation(&jsonflg);
@@ -775,7 +862,7 @@ void AdcShow(bool json) {
       case GPIO_ADC_CT_POWER: {
         AdcGetCurrentPower(channel, 5);
 
-        float voltage = (float)(Adc[channel].param3) / 10;
+        float voltage = (float)(Adc[channel].param[2]) / 10;
         char voltage_chr[FLOATSZ];
         dtostrfd(voltage, Settings->flag2.voltage_resolution, voltage_chr);
         char current_chr[FLOATSZ];
@@ -809,7 +896,7 @@ void AdcShow(bool json) {
       }
       case GPIO_ADC_JOY: {
         uint16_t new_value = AdcRead(Adc[channel].pin, 1);
-        uint16_t value = new_value / Adc[channel].param1;
+        uint16_t value = new_value / Adc[channel].param[0];
         if (json) {
           AdcShowContinuation(&jsonflg);
           ResponseAppend_P(PSTR("\"Joy%s\":%d"), adc_channel, value);
@@ -836,13 +923,13 @@ void AdcShow(bool json) {
         char mq_chr[FLOATSZ];
         dtostrfd(mq, 2, mq_chr);
 
-        float mqnumber =Adc[channel].param1;
+        float mqnumber =Adc[channel].param[0];
         char mqnumber_chr[FLOATSZ];
         dtostrfd(mqnumber, 0, mqnumber_chr);
 
         if (json) {
           AdcShowContinuation(&jsonflg);
-          ResponseAppend_P(PSTR("\"MQ%d_%d\":%s"), Adc[channel].param1, type_index + offset, mq_chr);
+          ResponseAppend_P(PSTR("\"MQ%d_%d\":%s"), Adc[channel].param[0], type_index + offset, mq_chr);
   #ifdef USE_WEBSERVER
         } else {
           WSContentSend_PD(HTTP_SNS_MQ, mqnumber_chr, mq_chr);
@@ -877,8 +964,13 @@ uint32_t Decimals(int value) {
 }
 
 void CmndAdcGpio(void) {
+  // AdcGpio33 1                           Set to default 
   // AdcGpio33 32000, 10000, 3350          ADC_TEMP Shelly mode
   for (uint32_t channel = 0; channel < Adcs.present; channel++) {
+#ifdef ESP8266
+    // AdcGpio 32000, 10000, 3350          ADC_TEMP Shelly mode
+    XdrvMailbox.index = Adc[channel].pin;
+#endif
     if (XdrvMailbox.index == Adc[channel].pin) {
       XdrvMailbox.index = channel +1;
       if (XdrvMailbox.data_len) {
@@ -914,37 +1006,37 @@ void CmndAdcParam(void) {
       AdcGetSettings(channel);
       if (ArgC() > 2) {  // Process parameter entry
         char argument[XdrvMailbox.data_len];
-        Adc[channel].param1 = strtol(ArgV(argument, 2), nullptr, 10);             // param1 = int
-        Adc[channel].param2 = strtol(ArgV(argument, 3), nullptr, 10);             // param2 = int
+        Adc[channel].param[0] = strtol(ArgV(argument, 2), nullptr, 10);             // param1 = int
+        Adc[channel].param[1] = strtol(ArgV(argument, 3), nullptr, 10);             // param2 = int
         if ((GPIO_ADC_INPUT == adc_type) ||
             (GPIO_ADC_TEMP == adc_type) ||
             (GPIO_ADC_RANGE == adc_type)) {
-          Adc[channel].param3 = abs(strtol(ArgV(argument, 4), nullptr, 10));      // param3 = abs(int)
-          Adc[channel].param4 = abs(strtol(ArgV(argument, 5), nullptr, 10));      // param4 = abs(int)
+          Adc[channel].param[2] = abs(strtol(ArgV(argument, 4), nullptr, 10));      // param3 = abs(int)
+          Adc[channel].param[3] = abs(strtol(ArgV(argument, 5), nullptr, 10));      // param4 = abs(int)
         } else {
-          Adc[channel].param3 = (int)(CharToFloat(ArgV(argument, 4)) * 10000);    // param3 = float
+          Adc[channel].param[2] = (int)(CharToFloat(ArgV(argument, 4)) * 10000);    // param3 = float
           if (ArgC() > 4) {
-            Adc[channel].param4 = (int)(CharToFloat(ArgV(argument, 5)) * 10000);  // param4 = float
+            Adc[channel].param[3] = (int)(CharToFloat(ArgV(argument, 5)) * 10000);  // param4 = float
           } else {
-            Adc[channel].param4 = 0;                                              // param4 = fixed 0
+            Adc[channel].param[3] = 0;                                              // param4 = fixed 0
           }
         }
         if (GPIO_ADC_PH == adc_type) {
           float phLow = CharToFloat(ArgV(argument, 2));
-          Adc[channel].param1 = phLow * ANALOG_PH_DECIMAL_MULTIPLIER;             // param1 = float
-//            Adc[channel].param2 = strtol(ArgV(argument, 3), nullptr, 10);           // param2 = int
+          Adc[channel].param[0] = phLow * ANALOG_PH_DECIMAL_MULTIPLIER;             // param1 = float
+//            Adc[channel].param[1] = strtol(ArgV(argument, 3), nullptr, 10);           // param2 = int
           float phHigh = CharToFloat(ArgV(argument, 4));
-          Adc[channel].param3 = phHigh * ANALOG_PH_DECIMAL_MULTIPLIER;            // param3 = float
-          Adc[channel].param4 = strtol(ArgV(argument, 5), nullptr, 10);           // param4 = int
+          Adc[channel].param[2] = phHigh * ANALOG_PH_DECIMAL_MULTIPLIER;            // param3 = float
+          Adc[channel].param[3] = strtol(ArgV(argument, 5), nullptr, 10);           // param4 = int
 
-//            AddLog(LOG_LEVEL_INFO, PSTR("ADC: Analog pH probe calibrated. cal-low(pH=ADC) %2_f = %d, cal-high(pH=ADC) %2_f = %d"), &phLow, Adc[channel].param2, &phHigh, Adc[channel].param4);
+//            AddLog(LOG_LEVEL_INFO, PSTR("ADC: Analog pH probe calibrated. cal-low(pH=ADC) %2_f = %d, cal-high(pH=ADC) %2_f = %d"), &phLow, Adc[channel].param[1], &phHigh, Adc[channel].param[3]);
         }
         if (GPIO_ADC_CT_POWER == adc_type) {
-          if (((1 == Adc[channel].param1) & CT_FLAG_ENERGY_RESET) > 0) {          // param1 = int
+          if (((1 == Adc[channel].param[0]) & CT_FLAG_ENERGY_RESET) > 0) {          // param1 = int
             for (uint32_t i = 0; i < Adcs.present; i++) {
               Adc[i].energy = 0;
             }
-            Adc[channel].param1 ^= CT_FLAG_ENERGY_RESET;                          // Cancel energy reset flag
+            Adc[channel].param[0] ^= CT_FLAG_ENERGY_RESET;                          // Cancel energy reset flag
           }
         }
         if (GPIO_ADC_MQ == adc_type) {
@@ -952,32 +1044,32 @@ void CmndAdcParam(void) {
           float b = CharToFloat(ArgV(argument, 4));                           // param3 = float
           float ratioMQCleanAir = CharToFloat(ArgV(argument, 5));             // param4 = float
           if ((0 == a) && (0 == b) && (0 == ratioMQCleanAir)) {
-            if (2 == Adc[channel].param1) {                                       // param1 = int
+            if (2 == Adc[channel].param[0]) {                                       // param1 = int
               a = 574.25;
               b = -2.222;
               ratioMQCleanAir = 9.83;
             }
-            else if (4 == Adc[channel].param1) {
+            else if (4 == Adc[channel].param[0]) {
               a = 1012.7;
               b = -2.786;
               ratioMQCleanAir = 4.4;
             }
-            else if (7 == Adc[channel].param1) {
+            else if (7 == Adc[channel].param[0]) {
               a = 99.042;
               b = -1.518;
               ratioMQCleanAir = 27.5;
             }
-            if (131 == Adc[channel].param1) {
+            if (131 == Adc[channel].param[0]) {
               a = 23.943;
               b = -1.11;
               ratioMQCleanAir = 15;
             }
           }
-          Adc[channel].param2 = (int)(a * ANALOG_MQ_DECIMAL_MULTIPLIER);                // Exponential regression
-          Adc[channel].param3 = (int)(b * ANALOG_MQ_DECIMAL_MULTIPLIER);                // Exponential regression
-          Adc[channel].param4 = (int)(ratioMQCleanAir * ANALOG_MQ_DECIMAL_MULTIPLIER);  // Exponential regression
+          Adc[channel].param[1] = (int)(a * ANALOG_MQ_DECIMAL_MULTIPLIER);                // Exponential regression
+          Adc[channel].param[2] = (int)(b * ANALOG_MQ_DECIMAL_MULTIPLIER);                // Exponential regression
+          Adc[channel].param[3] = (int)(ratioMQCleanAir * ANALOG_MQ_DECIMAL_MULTIPLIER);  // Exponential regression
 
-//            AddLog(LOG_LEVEL_INFO, PSTR("ADC: MQ reset mq%d, a = %2_f, b = %2_f, ratioMQCleanAir = %2_f"), Adc[channel].param1, &a, &b, &ratioMQCleanAir);
+//            AddLog(LOG_LEVEL_INFO, PSTR("ADC: MQ reset mq%d, a = %2_f, b = %2_f, ratioMQCleanAir = %2_f"), Adc[channel].param[0], &a, &b, &ratioMQCleanAir);
         }
       } else {                                         // Set default values based on current adc type
         // AdcParam 1
@@ -990,27 +1082,31 @@ void CmndAdcParam(void) {
     AdcGetSettings(channel);
     Response_P(PSTR("{\"%s"), XdrvMailbox.command);      // {"AdcParam or {"AdcGpio
     if (strstr_P(XdrvMailbox.command, PSTR(D_CMND_ADCGPIO))) {
+#ifdef ESP8266
+      ResponseAppend_P(PSTR("\":["));
+#else
       ResponseAppend_P(PSTR("%d\":["), Adc[channel].pin);
+#endif      
     } else {
       ResponseAppend_P(PSTR("%d\":[%d,"), channel +1, Adc[channel].pin);
     }
-    ResponseAppend_P(PSTR("%d,%d"), Adc[channel].param1, Adc[channel].param2);
+    ResponseAppend_P(PSTR("%d,%d"), Adc[channel].param[0], Adc[channel].param[1]);
     if ((GPIO_ADC_INPUT == adc_type) ||
         (GPIO_ADC_TEMP == adc_type) ||
         (GPIO_ADC_RANGE == adc_type) ||
         (GPIO_ADC_MQ == adc_type)) {
-      ResponseAppend_P(PSTR(",%d,%d"), Adc[channel].param3, Adc[channel].param4);    // param3 = int, param4 = int
+      ResponseAppend_P(PSTR(",%d,%d"), Adc[channel].param[2], Adc[channel].param[3]);    // param3 = int, param4 = int
     }
     else {
-      float param = (float)Adc[channel].param3 / 10000;
-      ResponseAppend_P(PSTR(",%*_f"), Decimals(Adc[channel].param3), &param);    // param3 = float
+      float param = (float)Adc[channel].param[2] / 10000;
+      ResponseAppend_P(PSTR(",%*_f"), Decimals(Adc[channel].param[2]), &param);    // param3 = float
       if ((GPIO_ADC_CT_POWER == adc_type) ||
           (GPIO_ADC_VOLTAGE == adc_type) ||
           (GPIO_ADC_CURRENT == adc_type)) {
-        param = (float)Adc[channel].param4 / 10000;
-        ResponseAppend_P(PSTR(",%*_f"), Decimals(Adc[channel].param4), &param);  // param4 = float
+        param = (float)Adc[channel].param[3] / 10000;
+        ResponseAppend_P(PSTR(",%*_f"), Decimals(Adc[channel].param[3]), &param);  // param4 = float
       } else {
-        ResponseAppend_P(PSTR(",%d"), Adc[channel].param4);                      // param4 = int
+        ResponseAppend_P(PSTR(",%d"), Adc[channel].param[3]);                      // param4 = int
       }      
     }
     ResponseAppend_P(PSTR("]}"));
