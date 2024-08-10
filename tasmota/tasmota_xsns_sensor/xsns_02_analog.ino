@@ -1126,21 +1126,27 @@ void AdcEnergyEverySecond(void) {
     uint32_t adc_type = Adc[channel].type;
     if (GPIO_ADC_VOLTAGE == adc_type) {
       Energy->voltage_available = true;
-      Energy->voltage[type_index] = AdcGetRange(channel) / 10000;  // Volt
+      float value = AdcGetRange(channel) / 10000;                   // Volt
+      Energy->voltage[type_index] = (value < 0.0f) ? 0.0f : value;  // Disregard negative values
       voltage_count++;
     }
     else if (GPIO_ADC_CURRENT == adc_type) {
       Energy->current_available = true;
-      Energy->current[type_index] = AdcGetRange(channel) / 10000;  // Ampere
+      float value = AdcGetRange(channel) / 10000;                   // Ampere
+      Energy->current[type_index] = (value < 0.0f) ? 0.0f : value;  // Disregard negative values
       current_count++;
     }
   }
-  for (uint32_t phase = 0; phase < current_count; phase++) {
+  for (uint32_t phase = 0; phase < Energy->phase_count; phase++) {
     uint32_t voltage_phase = (voltage_count == current_count) ? phase : 0;
     Energy->active_power[phase] = Energy->voltage[voltage_phase] * Energy->current[phase];  // Watt
     Energy->kWhtoday_delta[phase] += (uint32_t)(Energy->active_power[phase] * 1000) / 36;   // deca_microWh
     Energy->data_valid[phase] = 0;
   }
+
+//  float delta = (float)Energy->kWhtoday_delta[0] / 100;
+//  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADC: %3_fV, %3_fA, %3_fW, %2_fmWh"), &Energy->voltage[0], &Energy->current[0], &Energy->active_power[0], &delta);
+
   EnergyUpdateToday();
 }
 
