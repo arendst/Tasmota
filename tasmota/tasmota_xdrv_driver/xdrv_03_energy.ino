@@ -120,7 +120,7 @@ typedef struct {
   bool power_on;
 
 #ifdef USE_ENERGY_MARGIN_DETECTION
-  uint16_t power_history[ENERGY_MAX_PHASES][3];
+  uint16_t power_history[3][ENERGY_MAX_PHASES];
   uint8_t power_steady_counter;                 // Allow for power on stabilization
   uint8_t margin_stable;
   bool min_power_flag;
@@ -482,15 +482,15 @@ void EnergyMarginCheck(void) {
   for (uint32_t phase = 0; phase < Energy->phase_count; phase++) {
     uint16_t active_power = (uint16_t)(Energy->active_power[phase]);
 
-//    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: APower %d, HPower0 %d, HPower1 %d, HPower2 %d"), active_power, Energy->power_history[phase][0], Energy->power_history[phase][1], Energy->power_history[phase][2]);
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: APower %d, HPower0 %d, HPower1 %d, HPower2 %d"), active_power, Energy->power_history[0][phase], Energy->power_history[1][phase], Energy->power_history[2][phase]);
 
     if (Settings->energy_power_delta[phase]) {
-      power_diff[phase] = active_power - Energy->power_history[phase][0];
+      power_diff[phase] = active_power - Energy->power_history[0][phase];
       uint16_t delta = abs(power_diff[phase]);
       bool threshold_met = false;
       if (delta > 0) {
         if (Settings->energy_power_delta[phase] < 101) {  // 1..100 = Percentage
-          uint16_t min_power = (Energy->power_history[phase][0] > active_power) ? active_power : Energy->power_history[phase][0];
+          uint16_t min_power = (Energy->power_history[0][phase] > active_power) ? active_power : Energy->power_history[0][phase];
           if (0 == min_power) { min_power++; }    // Fix divide by 0 exception (#6741)
           delta = (delta * 100) / min_power;
           if (delta >= Settings->energy_power_delta[phase]) {
@@ -503,16 +503,16 @@ void EnergyMarginCheck(void) {
         }
       }
       if (threshold_met) {
-        Energy->power_history[phase][1] = active_power;  // We only want one report so reset history
-        Energy->power_history[phase][2] = active_power;
+        Energy->power_history[1][phase] = active_power;  // We only want one report so reset history
+        Energy->power_history[2][phase] = active_power;
         jsonflg = true;
       } else {
         power_diff[phase] = 0;
       }
     }
-    Energy->power_history[phase][0] = Energy->power_history[phase][1];  // Shift in history every second allowing power changes to settle for up to three seconds
-    Energy->power_history[phase][1] = Energy->power_history[phase][2];
-    Energy->power_history[phase][2] = active_power;
+    Energy->power_history[0][phase] = Energy->power_history[1][phase];  // Shift in history every second allowing power changes to settle for up to three seconds
+    Energy->power_history[1][phase] = Energy->power_history[2][phase];
+    Energy->power_history[2][phase] = active_power;
   }
   if (jsonflg) {
     float power_diff_f[Energy->phase_count];
