@@ -8823,21 +8823,13 @@ bool Is_gpio_used(uint8_t gpiopin) {
 }
 
 void ScripterEvery100ms(void) {
-  static uint8_t xsns_index = 0;
-
   if (bitRead(Settings->rule_enabled, 0) && (TasmotaGlobal.uptime > 4)) {
-    ResponseClear();
-    uint16_t script_tele_period_save = TasmotaGlobal.tele_period;
-    TasmotaGlobal.tele_period = 2;
-    XsnsNextCall(FUNC_JSON_APPEND, xsns_index);
-    TasmotaGlobal.tele_period = script_tele_period_save;
-    if (ResponseLength()) {
-      ResponseJsonStart();
-      ResponseJsonEnd();
+    if (GetNextSensor()) {
       //Run_Scripter(">T", 2, ResponseData());
       if (glob_script_mem.teleperiod) Run_Scripter(glob_script_mem.teleperiod, 0, ResponseData());
     }
   }
+
   if (bitRead(Settings->rule_enabled, 0)) {
     if (glob_script_mem.fast_script) Run_Scripter1(glob_script_mem.fast_script, 0, 0);
   }

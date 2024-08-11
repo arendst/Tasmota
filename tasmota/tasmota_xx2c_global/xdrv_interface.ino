@@ -1065,6 +1065,18 @@ const uint8_t kXdrvList[] = {
 
 uint32_t Xdrv_active[4] = { 0 };
 
+bool XdrvActive(uint32_t drv_index) {
+  if (drv_index < sizeof(kXdrvList)) {
+#ifdef XFUNC_PTR_IN_ROM
+    uint32_t index = pgm_read_byte(kXdrvList + drv_index);
+#else
+    uint32_t index = kXdrvList[drv_index];
+#endif
+    return bitRead(Xdrv_active[index / 32], index % 32);
+  }
+  return true;
+}
+
 void XsnsDriverState(void) {
   ResponseAppend_P(PSTR(",\"Drivers\":\""));  // Use string for future enable/disable signal
   for (uint32_t i = 0; i < sizeof(kXdrvList); i++) {
@@ -1129,6 +1141,28 @@ bool XdrvCallDriver(uint32_t driver, uint32_t function) {
 /*********************************************************************************************\
  * Function call to all xdrv
 \*********************************************************************************************/
+
+bool XdrvNextCallJsonAppend(void) {
+  static int xdrv_index = -1;
+
+  if (0 == xdrv_present) { return false; }
+
+  xdrv_index++;
+  if (xdrv_index == xdrv_present) { 
+    xdrv_index = -1;
+    return false;
+  }
+  uint32_t max_disabled = xdrv_present;
+  while (!XdrvActive(xdrv_index) && max_disabled--) {  // Perform at least one sensor
+    xdrv_index++;
+    if (xdrv_index == xdrv_present) { 
+      xdrv_index = -1;
+      return false;
+    }
+  }
+  xdrv_func_ptr[xdrv_index](FUNC_JSON_APPEND);
+  return true;
+}
 
 bool XdrvCall(uint32_t function) {
   bool result = false;
