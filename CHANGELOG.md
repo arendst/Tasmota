@@ -10,16 +10,15 @@ All notable changes to this project will be documented in this file.
 - Matter support for split lights (`SetOption68 1` and `SetOption37 128`) (#21834)
 - Berry `webserver_async` (#21836)
 - NeoPool command `NPSetOption<x>` to enabled/disable data validation/connection statistics (#21850)
-- Analog GPIO ``ADC Input`` with ``AdcGpio<pin> <start_range>,<end_range>,<margin>,1`` provide direct light control 
-- Analog GPIO ``ADC Voltage`` with ``AdcGpio<pin> <start_range>,<end_range>,<lowest_voltage>,<highest_voltage>`` provide energy monitoring with dc voltage 
-- Analog GPIO ``ADC Current`` with ``AdcGpio<pin> <start_range>,<end_range>,<lowest_current>,<highest_current>`` provide energy monitoring with dc voltage
+- Analog GPIO ``ADC Input`` with ``AdcParam<x> 1,<start_range>,<end_range>,<margin>,1`` provide direct light control 
+- Analog GPIO ``ADC Voltage`` with ``AdcParam<x> 11,<start_range>,<end_range>,<lowest_voltage>,<highest_voltage>`` provide energy monitoring with dc voltage 
+- Analog GPIO ``ADC Current`` with ``AdcParam<x> 12,<start_range>,<end_range>,<lowest_current>,<highest_current>`` provide energy monitoring with dc voltage
 - Berry new type "addr" to ctypes mapping (#21883)
 - Berry `file.savecode()` (#21884)
 - Berry `solidify.nocompact()` and reduce size of Matter UI (#21885)
 - Berry `zigbee.find()` (#21889)
 - Berry `zigbee.started()` (#21895)
 - Command ``AdcGpio<gpio> <parameters>`` to better support ADC configuration
-- Rule and Scripter xdrv sensor polling
 
 ### Breaking Changed
 - Berry `energy` module support for 8 phases and move to pseudo-arrays (#21887)
@@ -32,7 +31,6 @@ All notable changes to this project will be documented in this file.
 - ESP32 Framework (Arduino Core) from v3.0.2 to v3.0.4 (#21893)
 - Refactored Analog driver to better support multiple channels
 - Zigbee loads device data early before MCU startup (#21917)
-- Rule and Scripter sensor polling
 
 ### Fixed
 - Berry `light.get` for separate RGB/CT (#21818)

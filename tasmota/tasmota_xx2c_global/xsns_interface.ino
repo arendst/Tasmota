@@ -1094,26 +1094,21 @@ void XsnsSensorState(uint32_t sensor_list) {
  * Function call to all xsns
 \*********************************************************************************************/
 
-bool XsnsNextCallJsonAppend(void) {
-  static int xsns_index = -1;
-
-  if (0 == xsns_present) { return false; }
-
-  xsns_index++;
-  if (xsns_index == xsns_present) { 
-    xsns_index = -1;
+bool XsnsNextCall(uint32_t function, uint8_t &xsns_index) {
+  if (0 == xsns_present) {
+    xsns_index = 0;
     return false;
   }
+
+  xsns_index++;
+  if (xsns_index == xsns_present) { xsns_index = 0; }
   uint32_t max_disabled = xsns_present;
-  while (!XsnsEnabled(0, xsns_index) && max_disabled--) {  // Perform at least one sensor
+  while ((!XsnsEnabled(0, xsns_index) || ((FUNC_WEB_SENSOR == function) && !XsnsEnabled(1, xsns_index))) && max_disabled--) {  // Perform at least one sensor
     xsns_index++;
-    if (xsns_index == xsns_present) { 
-      xsns_index = -1;
-      return false;
-    }
+    if (xsns_index == xsns_present) { xsns_index = 0; }
   }
-  xsns_func_ptr[xsns_index](FUNC_JSON_APPEND);
-  return true;
+
+  return xsns_func_ptr[xsns_index](function);
 }
 
 bool XsnsCall(uint32_t function) {

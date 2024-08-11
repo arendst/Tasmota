@@ -1443,7 +1443,17 @@ void DisplayDTVarsTeleperiod(void) {
 }
 
 void get_dt_mqtt(void) {
-  GetNextSensor();
+  static uint8_t xsns_index = 0;
+
+  ResponseClear();
+  uint16_t script_tele_period_save = TasmotaGlobal.tele_period;
+  TasmotaGlobal.tele_period = 2;
+  XsnsNextCall(FUNC_JSON_APPEND, xsns_index);
+  TasmotaGlobal.tele_period = script_tele_period_save;
+  if (ResponseLength()) {
+    ResponseJsonStart();
+    ResponseJsonEnd();
+  }
   get_dt_vars(ResponseData());
 }
 

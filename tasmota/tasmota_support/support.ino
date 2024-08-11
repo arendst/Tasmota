@@ -1416,44 +1416,6 @@ bool ResponseContains_P(const char* needle) {
   return (strstr_P(ResponseData(), needle) != nullptr);
 }
 
-bool GetNextSensor(void) {
-  static uint32_t start_time = 0;
-  static uint8_t sensor_set = 0;
-
-  ResponseClear();
-  int tele_period_save = TasmotaGlobal.tele_period;
-  TasmotaGlobal.tele_period = 2;                     // Do not allow HA updates during next function call
-  while (!ResponseLength()) {
-    if (0 == sensor_set) {
-      if (TimeReached(start_time)) {
-        SetNextTimeInterval(start_time, 1000);
-        sensor_set++;                                 // Minimal loop time is 1 second
-      }
-      break;
-    }
-    else if (1 == sensor_set) {
-      if (!XsnsNextCallJsonAppend()) {               // ,"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
-        sensor_set++;                                 // Looped
-        break;
-      }
-    }
-    else {
-      if (!XdrvNextCallJsonAppend()) {               // ,"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
-        sensor_set = 0;                               // Looped
-        break;
-      }
-    }
-  }
-//  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBG: GetNextSensor %d, %d"), sensor_set, ResponseLength());
-  TasmotaGlobal.tele_period = tele_period_save;
-  if (ResponseLength()) {
-    ResponseJsonStart();                             // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
-    ResponseJsonEnd();
-    return true;
-  }
-  return false;
-}
-
 /*********************************************************************************************\
  * GPIO Module and Template management
 \*********************************************************************************************/
