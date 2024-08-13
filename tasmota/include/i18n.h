@@ -964,6 +964,7 @@ const char HTTP_SNS_HR[]            PROGMEM = "<tr><td colspan=2 style='font-siz
 const char HTTP_SNS_HR_THIN[]       PROGMEM = "<tr><td colspan=2 style='font-size:2px'><hr size=1/></td></tr>";
 const char HTTP_SNS_F_TEMP[]        PROGMEM = "{s}%s "  D_TEMPERATURE         "{m}%*_f " D_UNIT_DEGREE          "%c{e}";
 const char HTTP_SNS_F_VOLTAGE[]     PROGMEM = "{s}%s "  D_VOLTAGE             "{m}%*_f " D_UNIT_VOLT              "{e}";
+const char HTTP_SNS_F_CURRENT[]     PROGMEM = "{s}%s "  D_CURRENT             "{m}%*_f " D_UNIT_AMPERE            "{e}";
 const char HTTP_SNS_F_CURRENT_MA[]  PROGMEM = "{s}%s "  D_CURRENT             "{m}%*_f " D_UNIT_MILLIAMPERE       "{e}";
 const char HTTP_SNS_F_DISTANCE_CM[] PROGMEM = "{s}%s "  D_DISTANCE            "{m}%1_f " D_UNIT_CENTIMETER        "{e}";
 const char HTTP_SNS_F_NOX[]         PROGMEM = "{s}%s "  D_NOX                 "{m}%*_f "                          "{e}";
