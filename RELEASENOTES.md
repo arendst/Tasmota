@@ -127,9 +127,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for Sonoff iFan04-H using template [#16402](https://github.com/arendst/Tasmota/issues/16402)
 - Support for Sonoff POWCT Ring [#21131](https://github.com/arendst/Tasmota/issues/21131)
 - Support for Wooliis Hall Effect Coulometer or Battery capacity monitor [#21732](https://github.com/arendst/Tasmota/issues/21732)
-- Analog GPIO ``ADC Input`` with ``AdcParam<x> 1,<start_range>,<end_range>,<margin>,1`` provide direct light control 
-- Analog GPIO ``ADC Voltage`` with ``AdcParam<x> 11,<start_range>,<end_range>,<lowest_voltage>,<highest_voltage>`` provide energy monitoring with dc voltage 
-- Analog GPIO ``ADC Current`` with ``AdcParam<x> 12,<start_range>,<end_range>,<lowest_current>,<highest_current>`` provide energy monitoring with dc voltage 
+- Analog GPIO ``ADC Input`` with ``AdcGpio<pin> <start_range>,<end_range>,<margin>,1`` provide direct light control 
+- Analog GPIO ``ADC Voltage`` with ``AdcGpio<pin> <start_range>,<end_range>,<lowest_voltage>,<highest_voltage>`` provide energy monitoring with dc voltage 
+- Analog GPIO ``ADC Current`` with ``AdcGpio<pin> <start_range>,<end_range>,<lowest_current>,<highest_current>`` provide energy monitoring with dc voltage 
+- Rule and Scripter xdrv sensor polling
 - Skip MQTT response if command is prefixed with underscore [#21740](https://github.com/arendst/Tasmota/issues/21740)
 - Skip MQTT response if commands are executed prefixed with ``Backlog2`` (no delay) or ``Backlog3`` [#21740](https://github.com/arendst/Tasmota/issues/21740)
 - Extend command ``SetOption147 1`` to disable publish of IRReceived MQTT messages [#21574](https://github.com/arendst/Tasmota/issues/21574)
@@ -171,6 +172,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP8266 Framework (Arduino Core) from v2.7.6 to v2.7.7 [#21668](https://github.com/arendst/Tasmota/issues/21668)
 - ESP32 platform update from 2024.05.13 to 2024.08.10 [#21893](https://github.com/arendst/Tasmota/issues/21893)
 - ESP32 Framework (Arduino Core) from v3.0.0 to v3.0.4 [#21893](https://github.com/arendst/Tasmota/issues/21893)
+- Rule and Scripter sensor polling
 - Refactored Analog driver to better support multiple channels
 - Optional MQTT_TELE_RETAIN to Energy Margins message replaced by ``SensorRetain``
 - Display timing splash screen with display modes 1 to 5

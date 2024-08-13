@@ -1093,16 +1093,8 @@ void RulesEvery50ms(void)
 }
 
 void RulesEvery100ms(void) {
-  static uint8_t xsns_index = 0;
   if ((Settings->rule_enabled || BERRY_RULES) && !Rules.busy && (TasmotaGlobal.uptime > 4)) {  // Any rule enabled and allow 4 seconds start-up time for sensors (#3811)
-    ResponseClear();
-    int tele_period_save = TasmotaGlobal.tele_period;
-    TasmotaGlobal.tele_period = 2;                                   // Do not allow HA updates during next function call
-    XsnsNextCall(FUNC_JSON_APPEND, xsns_index);                      // ,"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
-    TasmotaGlobal.tele_period = tele_period_save;
-    if (ResponseLength()) {
-      ResponseJsonStart();                                           // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
-      ResponseJsonEnd();
+    if (GetNextSensor()) {
       RulesProcessEvent(ResponseData());
     }
   }
