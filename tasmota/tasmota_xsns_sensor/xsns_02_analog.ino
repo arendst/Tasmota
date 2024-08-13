@@ -425,17 +425,17 @@ void AdcInit(void) {
       case GPIO_ADC_MQ:
         Adc[Adcs.present].mq_samples = (float*)calloc(sizeof(float), ANALOG_MQ_SAMPLES);  // Need calloc to reset registers to 0
         if (nullptr == Adc[Adcs.present].mq_samples) { continue; }
-      case GPIO_ADC_CURRENT:
-      case GPIO_ADC_VOLTAGE:
-      case GPIO_ADC_PH:
-      case GPIO_ADC_JOY:
-      case GPIO_ADC_CT_POWER:
-      case GPIO_ADC_RANGE:
-      case GPIO_ADC_BUTTON_INV:
-      case GPIO_ADC_BUTTON:
-      case GPIO_ADC_LIGHT:
-      case GPIO_ADC_TEMP:
       case GPIO_ADC_INPUT:
+      case GPIO_ADC_TEMP:
+      case GPIO_ADC_LIGHT:
+      case GPIO_ADC_BUTTON:
+      case GPIO_ADC_BUTTON_INV:
+      case GPIO_ADC_RANGE:
+      case GPIO_ADC_CT_POWER:
+      case GPIO_ADC_JOY:
+      case GPIO_ADC_PH:
+      case GPIO_ADC_VOLTAGE:
+      case GPIO_ADC_CURRENT:
         Adc[Adcs.present].indexOfPointer = -1;  // Used to skip first update of GPIO_ADC_INPUT after restart
         Adc[Adcs.present].pin = pin;
         Adc[Adcs.present].type = adc_type;
@@ -787,7 +787,7 @@ void AdcShow(bool json) {
   for (uint32_t channel = 0; channel < Adcs.present; channel++) {
     uint32_t type_index = Adc[channel].index;
 #ifdef ESP32
-    snprintf_P(adc_name, sizeof(adc_name), PSTR("Analog%d"), type_index +1);
+    snprintf_P(adc_name, sizeof(adc_name), PSTR("ADC%d"), type_index +1);
     snprintf_P(adc_channel, sizeof(adc_channel), PSTR("%d"), type_index +1);
     offset = 1;
 #endif
@@ -917,10 +917,10 @@ void AdcShow(bool json) {
         if (json) {
           AdcShowContinuation(&jsonflg);
           ResponseAppend_P(PSTR("\"pH%s\":%s"), adc_channel, ph_chr);
-  #ifdef USE_WEBSERVER
+#ifdef USE_WEBSERVER
         } else {
           WSContentSend_PD(HTTP_SNS_PH, "", ph_chr);
-  #endif // USE_WEBSERVER
+#endif // USE_WEBSERVER
         }
         break;
       }
@@ -936,13 +936,42 @@ void AdcShow(bool json) {
         if (json) {
           AdcShowContinuation(&jsonflg);
           ResponseAppend_P(PSTR("\"MQ%d_%d\":%s"), Adc[channel].param[0], type_index + offset, mq_chr);
-  #ifdef USE_WEBSERVER
+#ifdef USE_WEBSERVER
         } else {
           WSContentSend_PD(HTTP_SNS_MQ, mqnumber_chr, mq_chr);
-  #endif // USE_WEBSERVER
+#endif // USE_WEBSERVER
         }
         break;
       }
+      case GPIO_ADC_VOLTAGE: 
+        if (TasmotaGlobal.energy_driver != XNRG_33) {
+          float value = AdcGetRange(channel) / 10000;   // Volt
+          if (value < 0.0f) { value = 0.0f; }           // Disregard negative values
+          if (json) {
+            AdcShowContinuation(&jsonflg);
+            ResponseAppend_P(PSTR("\"" D_JSON_VOLTAGE "%s\":%*_f"), adc_channel, Settings->flag2.voltage_resolution, &value);
+#ifdef USE_WEBSERVER
+          } else {
+//            WSContentSend_Voltage(adc_name, value);
+            WSContentSend_PD(HTTP_SNS_F_VOLTAGE, adc_name, Settings->flag2.voltage_resolution, &value);
+#endif // USE_WEBSERVER
+          }
+        }
+        break;
+      case GPIO_ADC_CURRENT: 
+        if (TasmotaGlobal.energy_driver != XNRG_33) {
+          float value = AdcGetRange(channel) / 10000;   // Ampere
+          if (value < 0.0f) { value = 0.0f; }           // Disregard negative values
+          if (json) {
+            AdcShowContinuation(&jsonflg);
+            ResponseAppend_P(PSTR("\"" D_JSON_CURRENT "%s\":%*_f"), adc_channel, Settings->flag2.current_resolution, &value);
+#ifdef USE_WEBSERVER
+          } else {
+            WSContentSend_PD(HTTP_SNS_F_CURRENT, adc_name, Settings->flag2.current_resolution, &value);
+#endif // USE_WEBSERVER
+          }
+        }
+        break;
     }
   }
   if (jsonflg) {
@@ -1171,7 +1200,7 @@ bool Xnrg33(uint32_t function) {
           if (GPIO_ADC_VOLTAGE == adc_type) { voltage_count++; }
           if (GPIO_ADC_CURRENT == adc_type) { current_count++; }
         }
-        if (voltage_count || current_count) {
+        if (voltage_count && current_count) {
           Energy->type_dc = true;
           Energy->voltage_common = (1 == voltage_count);
           Energy->phase_count = (voltage_count > current_count) ? voltage_count : current_count;

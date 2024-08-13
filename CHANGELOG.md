@@ -33,6 +33,7 @@ All notable changes to this project will be documented in this file.
 - Refactored Analog driver to better support multiple channels
 - Zigbee loads device data early before MCU startup (#21917)
 - Rule and Scripter sensor polling
+- GUI name of Analog<x> to ADC<x>
 
 ### Fixed
 - Berry `light.get` for separate RGB/CT (#21818)
