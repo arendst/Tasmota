@@ -89,6 +89,8 @@
 #define ANALOG_RANGE                  4095             // 4095 = 12, 2047 = 11, 1023 = 10
 #endif  // ESP32
 
+#define ANALOG_MARGIN                 5                // backward compatible div10 range
+
 #define TO_CELSIUS(x) ((x) - 273.15f)
 #define TO_KELVIN(x) ((x) + 273.15f)
 
@@ -108,7 +110,7 @@
 #define ANALOG_NTC_RESISTANCE         10000            // NTC Resistance
 #define ANALOG_NTC_B_COEFFICIENT      3350             // NTC Beta Coefficient
 
-// LDR parameters
+// LDR parameters (example as used on Ulanzi)
 // 3V3 --- LDR ---v--- ANALOG_LDR_BRIDGE_RESISTANCE --- Gnd
 //                |
 //               ADC0
@@ -321,6 +323,10 @@ bool AdcGetSettings(uint32_t channel) {
       if ((adc_type > 0) && (adc_type < GPIO_ADC_INPUT)) {  // Former ADC_END
         adc_type = Adc[channel].type;           // Migrate adc_type from 1..12 to UserSelectablePins index
       }
+      if (GPIO_ADC_INPUT == adc_type) {
+        Adc[channel].param[2] = ANALOG_MARGIN;  // Margin / Tolerance
+        Adc[channel].param[3] = 0;              // Default mode (0) or Direct mode (1) using Dimmer or Channel command
+      }
       if ((GPIO_ADC_TEMP == adc_type) && (Adc[channel].param[2] > 1000000)) {
         Adc[channel].param[2] /= 10000;         // Fix legacy value from 33500000 to 3350
       }
@@ -340,7 +346,7 @@ void AdcInitParams(uint32_t channel) {
     case GPIO_ADC_INPUT:
 //      Adc[channel].param[0] = 0;
       Adc[channel].param[1] = ANALOG_RANGE;
-      Adc[channel].param[2] = 3;                       // Margin / Tolerance
+      Adc[channel].param[2] = ANALOG_MARGIN;             // Margin / Tolerance
 //      Adc[channel].param[3] = 0;                       // Default mode (0) or Direct mode (1) using Dimmer or Channel command
       break;
     case GPIO_ADC_TEMP:
@@ -535,7 +541,7 @@ void AdcEvery250ms(void) {
           continue;                                                    // Do not use potentiometer state on restart
         }
 #ifdef USE_LIGHT
-        if (0 == param3) {                                // Default (0) or Direct mode (1)
+        if (0 == param3) {                                             // Default (0) or Direct mode (1)
 #endif  // USE_LIGHT
           Response_P(PSTR("{\"ANALOG\":{\"A%ddiv10\":%d}}"), type_index + offset, new_value);
           XdrvRulesProcess(0);
@@ -549,7 +555,7 @@ void AdcEvery250ms(void) {
             if (dimmer_count > 1) {
               dimmer_option = (0 == type_index) ? 1 : 2;               // Change RGB (1) or W(W) (2) dimmer
             } else {
-              dimmer_option = (3 == param3) ? 3 : 0;      // Change both RGB and W(W) Dimmers (0) with no fading (3)
+              dimmer_option = (3 == param3) ? 3 : 0;                   // Change both RGB and W(W) Dimmers (0) with no fading (3)
             }
             snprintf_P(command, sizeof(command), PSTR(D_CMND_DIMMER "%d %d"), dimmer_option, new_value);
           }
