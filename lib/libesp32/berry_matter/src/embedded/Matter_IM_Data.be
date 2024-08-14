@@ -615,17 +615,18 @@ class Matter_ReadRequestMessage : Matter_IM_Message_base
     return self
   end
 
-  def to_TLV()
-    var TLV = matter.TLV
-    var s = TLV.Matter_TLV_struct()
-    self.to_TLV_array(s, 0, self.attributes_requests)
-    self.to_TLV_array(s, 1, self.event_requests)
-    self.to_TLV_array(s, 2, self.event_filters)
-    s.add_TLV(3, TLV.BOOL, self.fabric_filtered)
-    self.to_TLV_array(s, 4, self.data_version_filters)
-    s.add_TLV(0xFF, TLV.U1, self.InteractionModelRevision)
-    return s
-  end
+  # to_TLV not used in Matter Device
+  # def to_TLV()
+  #   var TLV = matter.TLV
+  #   var s = TLV.Matter_TLV_struct()
+  #   self.to_TLV_array(s, 0, self.attributes_requests)
+  #   self.to_TLV_array(s, 1, self.event_requests)
+  #   self.to_TLV_array(s, 2, self.event_filters)
+  #   s.add_TLV(3, TLV.BOOL, self.fabric_filtered)
+  #   self.to_TLV_array(s, 4, self.data_version_filters)
+  #   s.add_TLV(0xFF, TLV.U1, self.InteractionModelRevision)
+  #   return s
+  # end
 end
 matter.ReadRequestMessage = Matter_ReadRequestMessage
 
@@ -872,15 +873,16 @@ class Matter_ReportDataMessage : Matter_IM_Message_base
   var suppress_response           # bool
 
   # decode from TLV
-  def from_TLV(val)
-    if val == nil     return nil end
-    self.subscription_id = val.findsubval(0)
-    self.attribute_reports = self.from_TLV_array(val.findsubval(1), matter.AttributeReportIB)
-    self.event_reports = self.from_TLV_array(val.findsubval(2), matter.EventReportIB)
-    self.more_chunked_messages = val.findsubval(3)
-    self.suppress_response = val.findsubval(4)
-    return self
-  end
+  # from_TLV not used in Matter Device
+  # def from_TLV(val)
+  #   if val == nil     return nil end
+  #   self.subscription_id = val.findsubval(0)
+  #   self.attribute_reports = self.from_TLV_array(val.findsubval(1), matter.AttributeReportIB)
+  #   self.event_reports = self.from_TLV_array(val.findsubval(2), matter.EventReportIB)
+  #   self.more_chunked_messages = val.findsubval(3)
+  #   self.suppress_response = val.findsubval(4)
+  #   return self
+  # end
 
   def to_TLV()
     var TLV = matter.TLV
@@ -923,20 +925,21 @@ class Matter_SubscribeRequestMessage : Matter_IM_Message_base
     return self
   end
 
-  def to_TLV()
-    var TLV = matter.TLV
-    var s = TLV.Matter_TLV_struct()
-    s.add_TLV(0, TLV.BOOL, self.keep_subscriptions)
-    s.add_TLV(1, TLV.U2, self.min_interval_floor)
-    s.add_TLV(2, TLV.U2, self.max_interval_ceiling)
-    self.to_TLV_array(s, 3, self.attributes_requests)
-    self.to_TLV_array(s, 4, self.event_requests)
-    self.to_TLV_array(s, 5, self.event_filters)
-    s.add_TLV(7, TLV.BOOL, self.fabric_filtered)
-    self.to_TLV_array(s, 8, self.data_version_filters)
-    s.add_TLV(0xFF, TLV.U1, self.InteractionModelRevision)
-    return s
-  end
+  # to_TLV not used in Matter Device
+  # def to_TLV()
+  #   var TLV = matter.TLV
+  #   var s = TLV.Matter_TLV_struct()
+  #   s.add_TLV(0, TLV.BOOL, self.keep_subscriptions)
+  #   s.add_TLV(1, TLV.U2, self.min_interval_floor)
+  #   s.add_TLV(2, TLV.U2, self.max_interval_ceiling)
+  #   self.to_TLV_array(s, 3, self.attributes_requests)
+  #   self.to_TLV_array(s, 4, self.event_requests)
+  #   self.to_TLV_array(s, 5, self.event_filters)
+  #   s.add_TLV(7, TLV.BOOL, self.fabric_filtered)
+  #   self.to_TLV_array(s, 8, self.data_version_filters)
+  #   s.add_TLV(0xFF, TLV.U1, self.InteractionModelRevision)
+  #   return s
+  # end
 end
 matter.SubscribeRequestMessage = Matter_SubscribeRequestMessage
 
@@ -948,12 +951,13 @@ class Matter_SubscribeResponseMessage : Matter_IM_Message_base
   var max_interval                # u16
 
   # decode from TLV
-  def from_TLV(val)
-    if val == nil     return nil end
-    self.subscription_id = val.findsubval(0)
-    self.max_interval = val.findsubval(2)
-    return self
-  end
+  # from_TLV not used in Matter Device
+  # def from_TLV(val)
+  #   if val == nil     return nil end
+  #   self.subscription_id = val.findsubval(0)
+  #   self.max_interval = val.findsubval(2)
+  #   return self
+  # end
 
   def to_TLV()
     var TLV = matter.TLV
@@ -985,16 +989,17 @@ class Matter_WriteRequestMessage : Matter_IM_Message_base
     return self
   end
 
-  def to_TLV()
-    var TLV = matter.TLV
-    var s = TLV.Matter_TLV_struct()
-    s.add_TLV(0, TLV.BOOL, self.suppress_response)
-    s.add_TLV(1, TLV.BOOL, self.timed_request)
-    self.to_TLV_array(s, 2, self.write_requests)
-    s.add_TLV(3, TLV.BOOL, self.more_chunked_messages)
-    s.add_TLV(0xFF, TLV.U1, self.InteractionModelRevision)
-    return s
-  end
+  # to_TLV not used in Matter Device
+  # def to_TLV()
+  #   var TLV = matter.TLV
+  #   var s = TLV.Matter_TLV_struct()
+  #   s.add_TLV(0, TLV.BOOL, self.suppress_response)
+  #   s.add_TLV(1, TLV.BOOL, self.timed_request)
+  #   self.to_TLV_array(s, 2, self.write_requests)
+  #   s.add_TLV(3, TLV.BOOL, self.more_chunked_messages)
+  #   s.add_TLV(0xFF, TLV.U1, self.InteractionModelRevision)
+  #   return s
+  # end
 end
 matter.WriteRequestMessage = Matter_WriteRequestMessage
 
@@ -1005,11 +1010,12 @@ class Matter_WriteResponseMessage : Matter_IM_Message_base
   var write_responses             # array of AttributeStatusIB
 
   # decode from TLV
-  def from_TLV(val)
-    if val == nil     return nil end
-    self.write_requests = self.from_TLV_array(val.findsubval(0), matter.AttributeStatusIB)
-    return self
-  end
+  # from_TLV not used in Matter Device
+  # def from_TLV(val)
+  #   if val == nil     return nil end
+  #   self.write_requests = self.from_TLV_array(val.findsubval(0), matter.AttributeStatusIB)
+  #   return self
+  # end
 
   def to_TLV()
     var TLV = matter.TLV
@@ -1034,13 +1040,14 @@ class Matter_TimedRequestMessage : Matter_IM_Message_base
     return self
   end
 
-  def to_TLV()
-    var TLV = matter.TLV
-    var s = TLV.Matter_TLV_struct()
-    s.add_TLV(0, TLV.U2, self.timeout)
-    s.add_TLV(0xFF, TLV.U1, self.InteractionModelRevision)
-    return s
-  end
+  # to_TLV not used in Matter Device
+  # def to_TLV()
+  #   var TLV = matter.TLV
+  #   var s = TLV.Matter_TLV_struct()
+  #   s.add_TLV(0, TLV.U2, self.timeout)
+  #   s.add_TLV(0xFF, TLV.U1, self.InteractionModelRevision)
+  #   return s
+  # end
 end
 matter.TimedRequestMessage = Matter_TimedRequestMessage
 
@@ -1061,15 +1068,16 @@ class Matter_InvokeRequestMessage : Matter_IM_Message_base
     return self
   end
 
-  def to_TLV()
-    var TLV = matter.TLV
-    var s = TLV.Matter_TLV_struct()
-    s.add_TLV(0, TLV.BOOL, self.suppress_response)
-    s.add_TLV(1, TLV.BOOL, self.timed_request)
-    self.to_TLV_array(s, 2, self.invoke_requests)
-    s.add_TLV(0xFF, TLV.U1, self.InteractionModelRevision)
-    return s
-  end
+  # to_TLV not used in Matter Device
+  # def to_TLV()
+  #   var TLV = matter.TLV
+  #   var s = TLV.Matter_TLV_struct()
+  #   s.add_TLV(0, TLV.BOOL, self.suppress_response)
+  #   s.add_TLV(1, TLV.BOOL, self.timed_request)
+  #   self.to_TLV_array(s, 2, self.invoke_requests)
+  #   s.add_TLV(0xFF, TLV.U1, self.InteractionModelRevision)
+  #   return s
+  # end
 end
 matter.InvokeRequestMessage = Matter_InvokeRequestMessage
 
@@ -1081,12 +1089,13 @@ class Matter_InvokeResponseMessage : Matter_IM_Message_base
   var invoke_responses            # array of InvokeResponseIB
 
   # decode from TLV
-  def from_TLV(val)
-    if val == nil     return nil end
-    self.suppress_response = val.findsubval(0)
-    self.invoke_responses = self.from_TLV_array(val.findsubval(1), matter.InvokeResponseIB)
-    return self
-  end
+  # from_TLV not used in Matter Device
+  # def from_TLV(val)
+  #   if val == nil     return nil end
+  #   self.suppress_response = val.findsubval(0)
+  #   self.invoke_responses = self.from_TLV_array(val.findsubval(1), matter.InvokeResponseIB)
+  #   return self
+  # end
 
   def to_TLV()
     var TLV = matter.TLV

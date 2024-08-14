@@ -307,7 +307,7 @@ bool ShellyProButton(void) {
   if (button_index > 2) { return false; }           // Only support Up, Down, Ok
 
   uint32_t button = XdrvMailbox.payload;
-  uint32_t last_state = XdrvMailbox.command_code;
+  uint32_t last_state = (XdrvMailbox.command_code & 0xFF);
   if ((PRESSED == button) && (NOT_PRESSED == last_state)) {  // Button pressed
 
     AddLog(LOG_LEVEL_DEBUG, PSTR("SHP: Button %d pressed"), button_index +1);

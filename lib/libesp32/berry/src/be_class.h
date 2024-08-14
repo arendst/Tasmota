@@ -49,6 +49,16 @@ struct binstance {
     bvalue members[1]; /* members variable data field */
 };
 
+/* special structure accepting 3 instance variables used only for bytes() solidification */
+struct binstance_arg3 {
+    bcommon_header;
+    struct binstance *super;
+    struct binstance *sub;
+    bclass *_class;
+    bgcobject *gray; /* for gc gray list */
+    bvalue members[3]; /* members variable data field */
+};
+
 bclass* be_newclass(bvm *vm, bstring *name, bclass *super);
 void be_class_compress(bvm *vm, bclass *c);
 int be_class_attribute(bvm *vm, bclass *c, bstring *attr);

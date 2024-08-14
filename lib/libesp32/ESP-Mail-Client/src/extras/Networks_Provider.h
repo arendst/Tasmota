@@ -75,7 +75,7 @@
 
 #if !defined(ESP_MAIL_DISABLE_NATIVE_ETHERNET)
 
-#if defined(ESP32) && __has_include(<ETH.h>)
+#if defined(ESP32) && __has_include(<esp_eth_driver.h>)
 #include <ETH.h>
 #define ESP_MAIL_ETH_IS_AVAILABLE
 #elif defined(ESP8266) && defined(ESP8266_CORE_SDK_V3_X_X)

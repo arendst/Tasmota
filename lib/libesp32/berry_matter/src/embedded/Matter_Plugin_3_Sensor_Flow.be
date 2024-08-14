@@ -62,11 +62,7 @@ class Matter_Plugin_Sensor_Flow : Matter_Plugin_Sensor
     # ====================================================================================================
     if   cluster == 0x0404              # ========== Flow Measurement 2.4 p.98 ==========
       if   attribute == 0x0000          #  ---------- MeasuredValue / i16 ----------
-        if self.shadow_value != nil
-          return tlv_solo.set(TLV.U2, int(self.shadow_value)) # MeasuredValue represents 10 x flow in m3/h.
-        else
-          return tlv_solo.set(TLV.NULL, nil)
-        end
+        return tlv_solo.set_or_nil(TLV.U2, int(self.shadow_value)) # MeasuredValue represents 10 x flow in m3/h.
       elif attribute == 0x0001              #  ---------- MinMeasuredValue / i16 ----------
         return tlv_solo.set(TLV.U2, 0)      # 0 m3/h
       elif attribute == 0x0002              #  ---------- MaxMeasuredValue / i16 ----------
@@ -77,5 +73,20 @@ class Matter_Plugin_Sensor_Flow : Matter_Plugin_Sensor
     return super(self).read_attribute(session, ctx, tlv_solo)
   end
 
+  #############################################################
+  # For Bridge devices
+  #############################################################
+  #############################################################
+  # web_values
+  #
+  # Show values of the remote device as HTML
+  def web_values()
+    import webserver
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(format("&#x26C5; %i m&sup3;/h",
+                                         int(self.shadow_value)))
+  end
+  #############################################################
+  #############################################################
 end
 matter.Plugin_Sensor_Flow = Matter_Plugin_Sensor_Flow

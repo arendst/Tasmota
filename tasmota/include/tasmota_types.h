@@ -180,7 +180,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption146 .. SetOption177
     uint32_t use_esp32_temperature : 1;    // bit 0  (v12.1.1.1) - SetOption146 - (ESP32) Show ESP32 internal temperature sensor
-    uint32_t mqtt_disable_sserialrec : 1;  // bit 1  (v12.1.1.2) - SetOption147 - (MQTT) Disable publish SSerialReceived MQTT messages, you must use event trigger rules instead.
+    uint32_t mqtt_disable_publish : 1;     // bit 1  (v12.1.1.2) - SetOption147 - (MQTT) Disable publish SSerialReceived/IRReceived MQTT messages, you must use event trigger rules instead.
     uint32_t artnet_autorun : 1;           // bit 2  (v12.2.0.4) - SetOption148 - (Light) start DMX ArtNet at boot, listen to UDP port as soon as network is up
     uint32_t dns_ipv6_priority : 1;        // bit 3  (v12.2.0.6) - SetOption149 - (Wifi) prefer IPv6 DNS resolution to IPv4 address when available. Requires `#define USE_IPV6`
     uint32_t no_voltage_common : 1;        // bit 4  (v12.3.1.5) - SetOption150 - (Energy) Force no voltage/frequency common
@@ -286,7 +286,7 @@ typedef union {
     uint32_t sspm_display : 1;             // bit 8  (v10.0.0.4) - CMND_SSPMDISPLAY - Enable gui display of powered on relays only
     uint32_t local_ntp_server : 1;         // bit 9  (v11.0.0.4) - CMND_RTCNTPSERVER - Enable local NTP server
     uint32_t influxdb_sensor : 1;          // bit 10 (v11.0.0.5) - CMND_IFXSENSOR - Enable sensor support in addition to teleperiod support
-    uint32_t serbridge_console : 1;        // bit 11 (v11.1.0.4) - CMND_SSERIALSEND9 - Enable logging tee to serialbridge
+    uint32_t ex_serbridge_console : 1;     // bit 11 (v11.1.0.4) - (v14.1.0.2) Replaced by CMND_SSERIALMODE
     uint32_t telegram_disable_af : 1;      // bit 12 (v14.0.0.2) - CMND_TMSTATE 6/7 - Disable Telegram auto-fingerprint fix
     uint32_t spare13 : 1;                  // bit 13
     uint32_t spare14 : 1;                  // bit 14
@@ -515,6 +515,7 @@ typedef struct {
   uint8_t       text_pool_290[66];         // 290
 
   // End of single char array of 698 chars max ****************
+
   uint8_t       display_model;             // 2D2
   uint8_t       display_mode;              // 2D3
   uint8_t       display_refresh;           // 2D4
@@ -561,9 +562,9 @@ typedef struct {
   uint16_t      energy_max_power_limit;              // 386  MaxPowerLimit
   uint16_t      energy_max_power_limit_hold;         // 388  MaxPowerLimitHold
   uint16_t      energy_max_power_limit_window;       // 38A  MaxPowerLimitWindow
-  uint16_t      energy_max_power_safe_limit;         // 38C  MaxSafePowerLimit
-  uint16_t      energy_max_power_safe_limit_hold;    // 38E  MaxSafePowerLimitHold
-  uint16_t      energy_max_power_safe_limit_window;  // 390  MaxSafePowerLimitWindow
+  uint16_t      ex_energy_max_power_safe_limit;         // 38C  MaxSafePowerLimit - Free since 14.1.0.3
+  uint16_t      ex_energy_max_power_safe_limit_hold;    // 38E  MaxSafePowerLimitHold - Free since 14.1.0.3
+  uint16_t      ex_energy_max_power_safe_limit_window;  // 390  MaxSafePowerLimitWindow - Free since 14.1.0.3
   uint16_t      energy_max_energy;         // 392  MaxEnergy
   uint16_t      energy_max_energy_start;   // 394  MaxEnergyStart
   uint16_t      mqtt_retry;                // 396
@@ -832,9 +833,7 @@ typedef struct {
   uint8_t       windmeter_tele_pchange;    // F3E
   uint8_t       ledpwm_on;                 // F3F
   uint8_t       ledpwm_off;                // F40
-
-  uint8_t       ex_tcp_baudrate;           // F41  ex_tcp_baudrate, free since v14.0.0.4 
-
+  uint8_t       sserial_mode;              // F41
   uint8_t       fallback_module;           // F42
   uint8_t       shutter_mode;              // F43
   uint16_t      energy_power_delta[3];     // F44

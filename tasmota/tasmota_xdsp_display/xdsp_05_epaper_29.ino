@@ -130,8 +130,6 @@ void EpdPrintLog29(void)
       DisplayFillScreen(last_row);
       renderer->DrawStringAt(0, epd_scroll, disp_screen_buffer[last_row], COLORED, 0);
 //      EpdDisplayFrame();
-
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "[%s]"), txt);
     }
   }
 }

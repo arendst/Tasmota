@@ -4,6 +4,7 @@ import re
 import os
 from coc_parser import *
 from str_build import *
+from bytes_build import *
 from block_builder import *
 from macro_table import *
 
@@ -20,6 +21,7 @@ class builder:
         self.strmap = {}
         self.strmap_weak = {}
         self.strmap_long = {}
+        self.bytesmap = {}
 
         self.macro = macro_table()
         for path in self.config:
@@ -30,6 +32,9 @@ class builder:
         
         sb = str_build(self.strmap, self.strmap_weak, self.strmap_long)
         sb.build(self.output)
+
+        sbytes = bytes_build(self.bytesmap)
+        sbytes.build(self.output)
     
     def parse_file(self, filename):
         if re.search(r"\.(h|c|cc|cpp)$", filename):
@@ -45,6 +50,8 @@ class builder:
                 self.strmap_weak[s] = 0
             for s in parser.strtab_long:
                 self.strmap_long[s] = 0
+            for s in parser.bintab:
+                self.bytesmap[s] = 0
             for obj in parser.objects:
                 builder = block_builder(obj, self.macro)
                 for s in builder.strtab:

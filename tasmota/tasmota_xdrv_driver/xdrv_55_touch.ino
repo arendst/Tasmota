@@ -242,7 +242,7 @@ void utouch_Touch_Init() {
     char *name;
     utouch_found = renderer->utouch_Init(&name);
     if (utouch_found) {
-      AddLog(LOG_LEVEL_INFO, PSTR("UT : %s"), name);
+      AddLog(LOG_LEVEL_INFO, PSTR("UTI: %s initialized"), name);
     }
   }
 }

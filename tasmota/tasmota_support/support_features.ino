@@ -919,8 +919,12 @@ constexpr uint32_t feature[] = {
 #if defined(USE_I2C) && defined(USE_SPL06_007)
   0x00000020 |  // xsns_25_spl006-7_sensor.ino
 #endif
-//  0x00000040 |  // 
-//  0x00000080 |  // 
+#if defined(USE_I2C) && defined(USE_QMP6988)
+  0x00000040 |  // xsns_28_qmp6988.ino
+#endif
+#ifdef USE_WOOLIIS
+  0x00000080 |  // xsns_115_wooliis.ino
+#endif
 //  0x00000100 |  // 
 //  0x00000200 |  // 
 //  0x00000400 |  // 

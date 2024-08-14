@@ -65,10 +65,10 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
       if r_st13.contains('StatusSHT')
         r_st13 = r_st13['StatusSHT']        # skip root
         var d = r_st13.find("SHT"+str(self.tasmota_shutter_index), {}).find('Opt')
-        # tasmota.log("MTR: opt: "+str(d))
+        # log("MTR: opt: "+str(d))
         if d != nil
           self.shadow_shutter_inverted = int(d[size(d)-1])  # inverted is at the most right character
-          # tasmota.log("MTR: Inverted flag: "+str(self.shadow_shutter_inverted))
+          # log("MTR: Inverted flag: "+str(self.shadow_shutter_inverted))
         end
       end
     end
@@ -162,7 +162,7 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
         self.update_shadow()
         return true
       elif command == 0x0005            # ---------- GoToLiftPercentage ----------
-        tasmota.log("MTR: Tilt = "+str(val), 2)
+        log("MTR: Tilt = "+str(val), 2)
         var pos_100 = val.findsubval(0)
         if pos_100 != nil
           pos_100 = pos_100 / 100
@@ -191,7 +191,7 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
     var k = "Shutter" + str(self.tasmota_shutter_index + 1)
     if payload.contains(k)
       var v = payload[k]
-      # tasmota.log(format("MTR: getting shutter values(%i): %s", self.endpoint, str(v)), 2)
+      # log(format("MTR: getting shutter values(%i): %s", self.endpoint, str(v)), 2)
       # Position
       var val_pos = v.find("Position")
       if val_pos != nil

@@ -20,7 +20,7 @@
 #ifdef USE_ENERGY_SENSOR
 #ifdef USE_CSE7761
 /*********************************************************************************************\
- * CSE7761 - Energy  (Sonoff Dual R3 Pow)
+ * CSE7761 - Energy  (Sonoff Dual R3 and Pow CT)
  *
  * Without zero-cross detection
  * {"NAME":"Sonoff Dual R3","GPIO":[32,0,0,0,0,0,0,0,0,576,225,0,0,0,0,0,0,0,0,0,0,7296,7328,224,0,0,0,0,160,161,0,0,0,0,0,0],"FLAG":0,"BASE":1}
@@ -28,6 +28,8 @@
  * With zero-cross detection
  * {"NAME":"Sonoff Dual R3 (ZCD)","GPIO":[32,0,0,0,7552,0,0,0,0,576,225,0,0,0,0,0,0,0,0,0,0,7296,7328,224,0,0,0,0,160,161,0,0,0,0,0,0],"FLAG":0,"BASE":1}
  *
+ * {"NAME":"Sonoff POWCT","GPIO":[32,0,0,0,0,9280,0,0,0,288,0,576,0,9184,9216,0,0,224,0,9248,0,7329,7296,0,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
+ * 
  * Based on datasheet from ChipSea and analysing serial data
  * See https://github.com/arendst/Tasmota/discussions/10793
  * https://goldenrelay.en.alibaba.com/product/62119012875-811845870/GOLDEN_GI_1A_5LH_SPST_5V_5A_10A_250VAC_NO_18_5_10_5_15_3mm_sealed_type_all_certificate_compliances_class_F_SPDT_Form_available.html
@@ -88,6 +90,8 @@ enum CSE7761 { RmsIAC, RmsIBC, RmsUC, PowerPAC, PowerPBC, PowerSC, EnergyAC, Ene
 
 TasmotaSerial *Cse7761Serial = nullptr;
 
+enum CSE7761Model { CSE7761_MODEL_DUALR3, CSE7761_MODEL_POWCT };  // Model index number starting from 0
+
 struct {
   uint32_t frequency = 0;
   uint32_t voltage_rms = 0;
@@ -98,6 +102,7 @@ struct {
   uint8_t energy_update[2] = { 0 };
   uint8_t init = 4;
   uint8_t ready = 0;
+  uint8_t model;
 } CSE7761Data;
 
 /********************************************************************************************/
@@ -196,10 +201,14 @@ uint32_t Cse7761ReadFallback(uint32_t reg, uint32_t prev, uint32_t size) {
 /********************************************************************************************/
 
 uint32_t Cse7761Ref(uint32_t unit) {
+  uint32_t coeff = 1;
+  if (CSE7761_MODEL_POWCT == CSE7761Data.model) {
+    coeff = 5;
+  }
   switch (unit) {
     case RmsUC: return 0x400000 * 100 / CSE7761Data.coefficient[RmsUC];
-    case RmsIAC: return (0x800000 * 100 / CSE7761Data.coefficient[RmsIAC]) * 10;  // Stay within 32 bits
-    case PowerPAC: return 0x80000000 / CSE7761Data.coefficient[PowerPAC];
+    case RmsIAC: return (0x800000 * 100 / (CSE7761Data.coefficient[RmsIAC] * coeff)) * 10;  // Stay within 32 bits
+    case PowerPAC: return 0x80000000 / (CSE7761Data.coefficient[PowerPAC] * coeff);
   }
   return 0;
 }
@@ -250,124 +259,129 @@ bool Cse7761ChipInit(void) {
     Bit    name               Function description
     15-11  NC                 -, the default is 1
     10     ADC2ON
-                              =1, means ADC current channel B is on (Sonoff Dual R3 Pow)
-                              =0, means ADC current channel B is closed
+                              =1, means ADC current channel B is on (Sonoff Dual R3)
+                              =0, means ADC current channel B is closed (Pow CT)
     9      NC                 -, the default is 1.
     8-6    PGAIB[2:0]         Current channel B analog gain selection highest bit
-                              =1XX, PGA of current channel B=16 (Sonoff Dual R3 Pow)
+                              =1XX, PGA of current channel B=16 (Sonoff Dual R3)
                               =011, PGA of current channel B=8
                               =010, PGA of current channel B=4
                               =001, PGA of current channel B=2
-                              =000, PGA of current channel B=1
+                              =000, PGA of current channel B=1 (Pow CT)
     5-3    PGAU[2:0]          Highest bit of voltage channel analog gain selection
                               =1XX, PGA of voltage U=16
                               =011, PGA of voltage U=8
                               =010, PGA of voltage U=4
                               =001, PGA of voltage U=2
-                              =000, PGA of voltage U=1 (Sonoff Dual R3 Pow)
+                              =000, PGA of voltage U=1 (Sonoff Dual R3 / Pow CT)
     2-0    PGAIA[2:0]         Current channel A analog gain selection highest bit
-                              =1XX, PGA of current channel A=16 (Sonoff Dual R3 Pow)
+                              =1XX, PGA of current channel A=16 (Sonoff Dual R3)
                               =011, PGA of current channel A=8
                               =010, PGA of current channel A=4
                               =001, PGA of current channel A=2
-                              =000, PGA of current channel A=1
+                              =000, PGA of current channel A=1 (Pow CT)
 */
-    Cse7761Write(CSE7761_REG_SYSCON | 0x80, 0xFF04);
+    if (CSE7761_MODEL_POWCT == CSE7761Data.model) {
+//      Cse7761Write(CSE7761_REG_SYSCON | 0x80, 0x0A00);  // Pow CT
+      Cse7761Write(CSE7761_REG_SYSCON | 0x80, 0xFE00);  // Pow CT - Tasmota (enable B)
+    } else {      
+      Cse7761Write(CSE7761_REG_SYSCON | 0x80, 0xFF04);  // Sonoff Dual R3
+    }
 
 /*
     Energy Measure Control Register (EMUCON)  Addr:0x01  Default value: 0x0000
     Bit    name               Function description
     15-14  Tsensor_Step[1:0]  Measurement steps of temperature sensor:
-                              =2'b00 The first step of temperature sensor measurement, the Offset of OP1 and OP2 is +/+. (Sonoff Dual R3 Pow)
+                              =2'b00 The first step of temperature sensor measurement, the Offset of OP1 and OP2 is +/+. (Sonoff Dual R3 / Pow CT)
                               =2'b01 The second step of temperature sensor measurement, the Offset of OP1 and OP2 is +/-.
                               =2'b10 The third step of temperature sensor measurement, the Offset of OP1 and OP2 is -/+.
                               =2'b11 The fourth step of temperature sensor measurement, the Offset of OP1 and OP2 is -/-.
                               After measuring these four results and averaging, the AD value of the current measured temperature can be obtained.
     13     tensor_en          Temperature measurement module control
-                              =0 when the temperature measurement module is closed; (Sonoff Dual R3 Pow)
+                              =0 when the temperature measurement module is closed; (Sonoff Dual R3 / Pow CT)
                               =1 when the temperature measurement module is turned on;
     12     comp_off           Comparator module close signal:
                               =0 when the comparator module is in working state
-                              =1 when the comparator module is off (Sonoff Dual R3 Pow)
+                              =1 when the comparator module is off (Sonoff Dual R3 / Pow CT)
     11-10  Pmode[1:0]         Selection of active energy calculation method:
                               Pmode =00, both positive and negative active energy participate in the accumulation,
-                                the accumulation method is algebraic sum mode, the reverse REVQ symbol indicates to active power; (Sonoff Dual R3 Pow)
+                                the accumulation method is algebraic sum mode, the reverse REVQ symbol indicates to active power; (Sonoff Dual R3 / Pow CT)
                               Pmode = 01, only accumulate positive active energy;
                               Pmode = 10, both positive and negative active energy participate in the accumulation,
                                 and the accumulation method is absolute value method. No reverse active power indication;
                               Pmode =11, reserved, the mode is the same as Pmode =00
     9      NC                 -
     8      ZXD1               The initial value of ZX output is 0, and different waveforms are output according to the configuration of ZXD1 and ZXD0:
-                              =0, it means that the ZX output changes only at the selected zero-crossing point (Sonoff Dual R3 Pow)
+                              =0, it means that the ZX output changes only at the selected zero-crossing point (Sonoff Dual R3 / Pow CT)
                               =1, indicating that the ZX output changes at both the positive and negative zero crossings
     7      ZXD0
-                              =0, indicates that the positive zero-crossing point is selected as the zero-crossing detection signal (Sonoff Dual R3 Pow)
+                              =0, indicates that the positive zero-crossing point is selected as the zero-crossing detection signal (Sonoff Dual R3 / Pow CT)
                               =1, indicating that the negative zero-crossing point is selected as the zero-crossing detection signal
     6      HPFIBOFF
-                              =0, enable current channel B digital high-pass filter (Sonoff Dual R3 Pow)
-                              =1, turn off the digital high-pass filter of current channel B
+                              =0, enable current channel B digital high-pass filter (Sonoff Dual R3)
+                              =1, turn off the digital high-pass filter of current channel B (Pow CT)
     5      HPFIAOFF
-                              =0, enable current channel A digital high-pass filter (Sonoff Dual R3 Pow)
+                              =0, enable current channel A digital high-pass filter (Sonoff Dual R3 / Pow CT)
                               =1, turn off the digital high-pass filter of current channel A
     4      HPFUOFF
-                              =0, enable U channel digital high pass filter (Sonoff Dual R3 Pow)
+                              =0, enable U channel digital high pass filter (Sonoff Dual R3 / Pow CT)
                               =1, turn off the U channel digital high-pass filter
     3-2    NC                 -
     1      PBRUN
-                              =1, enable PFB pulse output and active energy register accumulation; (Sonoff Dual R3 Pow)
+                              =1, enable PFB pulse output and active energy register accumulation; (Sonoff Dual R3 / Pow CT)
                               =0 (default), turn off PFB pulse output and active energy register accumulation.
     0      PARUN
-                              =1, enable PFA pulse output and active energy register accumulation; (Sonoff Dual R3 Pow)
+                              =1, enable PFA pulse output and active energy register accumulation; (Sonoff Dual R3 / Pow CT)
                               =0 (default), turn off PFA pulse output and active energy register accumulation.
 */
-//    Cse7761Write(CSE7761_REG_EMUCON | 0x80, 0x1003);
+//    Cse7761Write(CSE7761_REG_EMUCON | 0x80, 0x1043);  // Pow CT
+//    Cse7761Write(CSE7761_REG_EMUCON | 0x80, 0x1003);  // Sonoff Dual R3
     Cse7761Write(CSE7761_REG_EMUCON | 0x80, 0x1183);  // Tasmota enable zero cross detection on both positive and negative signal
-
 /*
     Energy Measure Control Register (EMUCON2)  Addr: 0x13  Default value: 0x0001
     Bit    name               Function description
     15-13  NC                 -
     12     SDOCmos
                               =1, SDO pin CMOS open-drain output
-                              =0, SDO pin CMOS output (Sonoff Dual R3 Pow)
+                              =0, SDO pin CMOS output (Sonoff Dual R3 / Pow CT)
     11     EPB_CB             Energy_PB clear signal control, the default is 0, and it needs to be configured to 1 in UART mode.
                                 Clear after reading is not supported in UART mode
-                              =1, Energy_PB will not be cleared after reading; (Sonoff Dual R3 Pow)
+                              =1, Energy_PB will not be cleared after reading; (Sonoff Dual R3 / Pow CT)
                               =0, Energy_PB is cleared after reading;
     10     EPA_CB             Energy_PA clear signal control, the default is 0, it needs to be configured to 1 in UART mode,
                                 Clear after reading is not supported in UART mode
-                              =1, Energy_PA will not be cleared after reading; (Sonoff Dual R3 Pow)
+                              =1, Energy_PA will not be cleared after reading; (Sonoff Dual R3 / Pow CT)
                               =0, Energy_PA is cleared after reading;
     9-8    DUPSEL[1:0]        Average register update frequency control
                               =00, Update frequency 3.4Hz
                               =01, Update frequency 6.8Hz
                               =10, Update frequency 13.65Hz
-                              =11, Update frequency 27.3Hz (Sonoff Dual R3 Pow)
+                              =11, Update frequency 27.3Hz (Sonoff Dual R3 / Pow CT)
     7      CHS_IB             Current channel B measurement selection signal
-                              =1, measure the current of channel B (Sonoff Dual R3 Pow)
+                              =1, measure the current of channel B (Sonoff Dual R3 / Pow CT)
                               =0, measure the internal temperature of the chip
     6      PfactorEN          Power factor function enable
-                              =1, turn on the power factor output function (Sonoff Dual R3 Pow)
+                              =1, turn on the power factor output function (Sonoff Dual R3 / Pow CT)
                               =0, turn off the power factor output function
     5      WaveEN             Waveform data, instantaneous data output enable signal
                               =1, turn on the waveform data output function (Tasmota add frequency)
-                              =0, turn off the waveform data output function (Sonoff Dual R3 Pow)
+                              =0, turn off the waveform data output function (Sonoff Dual R3 / Pow CT)
     4      SAGEN              Voltage drop detection enable signal, WaveEN=1 must be configured first
                               =1, turn on the voltage drop detection function
-                              =0, turn off the voltage drop detection function (Sonoff Dual R3 Pow)
+                              =0, turn off the voltage drop detection function (Sonoff Dual R3 / Pow CT)
     3      OverEN             Overvoltage, overcurrent, and overload detection enable signal, WaveEN=1 must be configured first
                               =1, turn on the overvoltage, overcurrent, and overload detection functions
-                              =0, turn off the overvoltage, overcurrent, and overload detection functions (Sonoff Dual R3 Pow)
+                              =0, turn off the overvoltage, overcurrent, and overload detection functions (Sonoff Dual R3 / Pow CT)
     2      ZxEN               Zero-crossing detection, phase angle, voltage frequency measurement enable signal
                               =1, turn on the zero-crossing detection, phase angle, and voltage frequency measurement functions (Tasmota add frequency)
-                              =0, disable zero-crossing detection, phase angle, voltage frequency measurement functions (Sonoff Dual R3 Pow)
+                              =0, disable zero-crossing detection, phase angle, voltage frequency measurement functions (Sonoff Dual R3 / Pow CT)
     1      PeakEN             Peak detect enable signal
                               =1, turn on the peak detection function
-                              =0, turn off the peak detection function (Sonoff Dual R3 Pow)
+                              =0, turn off the peak detection function (Sonoff Dual R3 / Pow CT)
     0      NC                 Default is 1
 */
 #ifndef CSE7761_FREQUENCY
-    Cse7761Write(CSE7761_REG_EMUCON2 | 0x80, 0x0FC1);  // Sonoff Dual R3 Pow
+    Cse7761Write(CSE7761_REG_EMUCON2 | 0x80, 0x0FC1);  // Sonoff Dual R3 / Pow CT
 #else
     Cse7761Write(CSE7761_REG_EMUCON2 | 0x80, 0x0FE5);  // Tasmota add Frequency
 
@@ -442,16 +456,18 @@ void Cse7761GetData(void) {
 #endif
   CSE7761Data.active_power[0] = (0 == CSE7761Data.current_rms[0]) ? 0 : (value & 0x80000000) ? (~value) + 1 : value;
 
-  value = Cse7761ReadFallback(CSE7761_REG_RMSIB, CSE7761Data.current_rms[1], 3);
+  if (2 == Energy->phase_count) {
+    value = Cse7761ReadFallback(CSE7761_REG_RMSIB, CSE7761Data.current_rms[1], 3);
 #ifdef CSE7761_SIMULATE
-  value = 29760;  // 0.185A
+    value = 29760;  // 0.185A
 #endif
-  CSE7761Data.current_rms[1] = ((value >= 0x800000) || (value < 1600)) ? 0 : value;  // No load threshold of 10mA
-  value = Cse7761ReadFallback(CSE7761_REG_POWERPB, CSE7761Data.active_power[1], 4);
+    CSE7761Data.current_rms[1] = ((value >= 0x800000) || (value < 1600)) ? 0 : value;  // No load threshold of 10mA
+    value = Cse7761ReadFallback(CSE7761_REG_POWERPB, CSE7761Data.active_power[1], 4);
 #ifdef CSE7761_SIMULATE
-  value = 2126641;  // 44.05W
+    value = 2126641;  // 44.05W
 #endif
-  CSE7761Data.active_power[1] = (0 == CSE7761Data.current_rms[1]) ? 0 : (value & 0x80000000) ? (~value) + 1 : value;
+    CSE7761Data.active_power[1] = (0 == CSE7761Data.current_rms[1]) ? 0 : (value & 0x80000000) ? (~value) + 1 : value;
+  }
 
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: F%d, U%d, I%d/%d, P%d/%d"),
     CSE7761Data.frequency, CSE7761Data.voltage_rms,
@@ -459,16 +475,20 @@ void Cse7761GetData(void) {
     CSE7761Data.active_power[0], CSE7761Data.active_power[1]);
 
   if (Energy->power_on) {  // Powered on
-    // Voltage = RmsU * RmsUC * 10 / 0x400000
-    // Energy->voltage[0] = (float)(((uint64_t)CSE7761Data.voltage_rms * CSE7761Data.coefficient[RmsUC] * 10) >> 22) / 1000;  // V
-    Energy->voltage[0] = ((float)CSE7761Data.voltage_rms / EnergyGetCalibration(ENERGY_VOLTAGE_CALIBRATION));  // V
-    Energy->voltage[1] = Energy->voltage[0];
+    for (uint32_t channel = 0; channel < Energy->phase_count; channel++) {
+      if (0 == channel) {
+        // Voltage = RmsU * RmsUC * 10 / 0x400000
+        // Energy->voltage[0] = (float)(((uint64_t)CSE7761Data.voltage_rms * CSE7761Data.coefficient[RmsUC] * 10) >> 22) / 1000;  // V
+        Energy->voltage[0] = ((float)CSE7761Data.voltage_rms / EnergyGetCalibration(ENERGY_VOLTAGE_CALIBRATION));  // V
 #ifdef CSE7761_FREQUENCY
-    Energy->frequency[0] = (CSE7761Data.frequency) ? ((float)EnergyGetCalibration(ENERGY_FREQUENCY_CALIBRATION) / 8 / CSE7761Data.frequency) : 0;  // Hz
-    Energy->frequency[1] = Energy->frequency[0];
+        Energy->frequency[0] = (CSE7761Data.frequency) ? ((float)EnergyGetCalibration(ENERGY_FREQUENCY_CALIBRATION) / 8 / CSE7761Data.frequency) : 0;  // Hz
 #endif
-
-    for (uint32_t channel = 0; channel < 2; channel++) {
+      } else {
+        Energy->voltage[1] = Energy->voltage[0];
+#ifdef CSE7761_FREQUENCY
+        Energy->frequency[1] = Energy->frequency[0];
+#endif
+      }
       Energy->data_valid[channel] = 0;
       uint32_t power_calibration = EnergyGetCalibration(ENERGY_POWER_CALIBRATION, channel);
       // Active power = PowerPA * PowerPAC * 1000 / 0x80000000
@@ -563,7 +583,7 @@ void Cse7761EverySecond(void) {
   }
   else {
     if (2 == CSE7761Data.ready) {
-      for (uint32_t channel = 0; channel < 2; channel++) {
+      for (uint32_t channel = 0; channel < Energy->phase_count; channel++) {
         if (CSE7761Data.energy_update[channel]) {
           Energy->kWhtoday_delta[channel] += ((CSE7761Data.energy[channel] * 1000) / CSE7761Data.energy_update[channel]) / 36;
           CSE7761Data.energy[channel] = 0;
@@ -577,7 +597,7 @@ void Cse7761EverySecond(void) {
 
 void Cse7761SnsInit(void) {
   // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
-  Cse7761Serial = new TasmotaSerial(Pin(GPIO_CSE7761_RX), Pin(GPIO_CSE7761_TX), 1);
+  Cse7761Serial = new TasmotaSerial(Pin(GPIO_CSE7761_RX, GPIO_ANY), Pin(GPIO_CSE7761_TX), 1);
   if (Cse7761Serial->begin(38400, SERIAL_8E1)) {
     if (Cse7761Serial->hardwareSerial()) {
       SetSerial(38400, TS_SERIAL_8E1);
@@ -599,10 +619,15 @@ void Cse7761SnsInit(void) {
 }
 
 void Cse7761DrvInit(void) {
-  if (PinUsed(GPIO_CSE7761_RX) && PinUsed(GPIO_CSE7761_TX)) {
+  if (PinUsed(GPIO_CSE7761_RX, GPIO_ANY) && PinUsed(GPIO_CSE7761_TX)) {
+    CSE7761Data.model = GetPin(Pin(GPIO_CSE7761_RX, GPIO_ANY)) - AGPIO(GPIO_CSE7761_RX);
     CSE7761Data.ready = 0;
-    CSE7761Data.init = 4;                       // Init setup steps
-    Energy->phase_count = 2;                     // Handle two channels as two phases
+    CSE7761Data.init = 4;                        // Init setup steps
+
+//    Energy->phase_count = 1;                     // Handle one channel (default set by xdrv_03_energy.ino)
+    if (CSE7761_MODEL_DUALR3 == CSE7761Data.model) {
+      Energy->phase_count = 2;                   // Handle two channels as two phases
+    }
     Energy->voltage_common = true;               // Use common voltage
 #ifdef CSE7761_FREQUENCY
     Energy->frequency_common = true;             // Use common frequency
@@ -615,7 +640,10 @@ void Cse7761DrvInit(void) {
 bool Cse7761Command(void) {
   bool serviced = true;
 
-  uint32_t channel = (2 == XdrvMailbox.index) ? 1 : 0;
+  uint32_t channel = 0;
+  if (Energy->phase_count > 1) {
+    channel = (2 == XdrvMailbox.index) ? 1 : 0;
+  }
   uint32_t value = (uint32_t)(CharToFloat(XdrvMailbox.data) * 100);  // 1.23 = 123
 
   if (CMND_POWERCAL == Energy->command_code) {
@@ -624,7 +652,7 @@ bool Cse7761Command(void) {
   }
   else if (CMND_POWERSET == Energy->command_code) {
     if (XdrvMailbox.data_len && CSE7761Data.active_power[channel]) {
-      if ((value > 100) && (value < 200000)) {  // Between 1W and 2000W
+      if ((value > 100) && (value < 2000000)) {  // Between 1W and 20000W
         XdrvMailbox.payload = ((CSE7761Data.active_power[channel]) / value) * 100;
       }
     }
@@ -635,7 +663,7 @@ bool Cse7761Command(void) {
   }
   else if (CMND_VOLTAGESET == Energy->command_code) {
     if (XdrvMailbox.data_len && CSE7761Data.voltage_rms) {
-      if ((value > 10000) && (value < 26000)) {  // Between 100V and 260V
+      if ((value > 10000) && (value < 40000)) {  // Between 100V and 400V
         XdrvMailbox.payload = (CSE7761Data.voltage_rms * 100) / value;
       }
     }
@@ -646,7 +674,7 @@ bool Cse7761Command(void) {
   }
   else if (CMND_CURRENTSET == Energy->command_code) {
     if (XdrvMailbox.data_len && CSE7761Data.current_rms[channel]) {
-      if ((value > 1000) && (value < 1000000)) {  // Between 10mA and 10A
+      if ((value > 1000) && (value < 10000000)) {  // Between 10mA and 100A
         XdrvMailbox.payload = ((CSE7761Data.current_rms[channel] * 100) / value) * 1000;
       }
     }

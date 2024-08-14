@@ -21,8 +21,8 @@ BE_FUNC_CTYPE_DECLARE(be_TFL_begin, "b", "@s[(bytes)~]");
 extern bbool be_TFL_load(struct bvm *vm, const uint8_t *model_buf, size_t model_size, const uint8_t *output_buf, size_t output_size,int arena);
 BE_FUNC_CTYPE_DECLARE(be_TFL_load, "b", "@(bytes)~(bytes)~[i]");
 
-extern bbool be_TFL_input(struct bvm *vm, const uint8_t *buf, size_t size);
-BE_FUNC_CTYPE_DECLARE(be_TFL_input, "b", "@(bytes)~");
+extern bbool be_TFL_input(struct bvm *vm, const uint8_t *buf, size_t size, bbool quantize_to_int8);
+BE_FUNC_CTYPE_DECLARE(be_TFL_input, "b", "@(bytes)~[b]");
 
 extern bbool be_TFL_output(struct bvm *vm, const uint8_t *buf, size_t size);
 BE_FUNC_CTYPE_DECLARE(be_TFL_output, "b", "@(bytes)~");

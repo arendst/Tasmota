@@ -75,11 +75,18 @@ void Webradio(const char *url) {
     I2sWebRadioStopPlaying();
     return;
   }
-  
+  AddLog(LOG_LEVEL_INFO, "I2S: did connect to %s",url);
+
   I2SAudioPower(true);
   Audio_webradio.buff = new AudioFileSourceBuffer(Audio_webradio.ifile, Audio_webradio.preallocateBuffer, preallocateBufferSize);
+  if(Audio_webradio.buff == nullptr){
+    return;
+  }
   Audio_webradio.buff->RegisterStatusCB(I2sStatusCallback, NULL);
   audio_i2s_mp3.decoder = new AudioGeneratorMP3(Audio_webradio.preallocateCodec, preallocateCodecSize);
+  if(audio_i2s_mp3.decoder == nullptr){
+    return;
+  }
   audio_i2s_mp3.decoder->RegisterStatusCB(I2sStatusCallback, NULL);
   audio_i2s_mp3.decoder->begin(Audio_webradio.buff, audio_i2s.out);
   if (!audio_i2s_mp3.decoder->isRunning()) {

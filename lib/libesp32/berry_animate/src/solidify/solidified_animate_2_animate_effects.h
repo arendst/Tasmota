@@ -9,7 +9,6 @@ extern const bclass be_class_Animate_painter;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Animate_painter;
 be_local_closure(class_Animate_painter_init,   /* name */
   be_nested_proto(
     5,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Animate_painter_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_painter, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 3]) {     /* constants */
     /* K0   */  be_nested_str_weak(global),
@@ -46,7 +45,6 @@ be_local_closure(class_Animate_painter_init,   /* name */
 /********************************************************************
 ** Solidified function: paint
 ********************************************************************/
-extern const bclass be_class_Animate_painter;
 be_local_closure(class_Animate_painter_paint,   /* name */
   be_nested_proto(
     2,                          /* nstack */
@@ -55,7 +53,7 @@ be_local_closure(class_Animate_painter_paint,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_painter, 
+    NULL,                       /* no sub protos */
     0,                          /* has constants */
     NULL,                       /* no const */
     be_str_weak(paint),
@@ -81,26 +79,42 @@ be_local_class(Animate_painter,
     })),
     be_str_weak(Animate_painter)
 );
+// compact class 'Animate_pulse' ktab size: 15, total: 28 (saved 104 bytes)
+static const bvalue be_ktab_class_Animate_pulse[15] = {
+  /* K0   */  be_nested_str_weak(pulse_size),
+  /* K1   */  be_nested_str_weak(slew_size),
+  /* K2   */  be_nested_str_weak(back_color),
+  /* K3   */  be_nested_str_weak(pos),
+  /* K4   */  be_nested_str_weak(color),
+  /* K5   */  be_nested_str_weak(init),
+  /* K6   */  be_const_int(16777215),
+  /* K7   */  be_const_int(1),
+  /* K8   */  be_const_int(0),
+  /* K9   */  be_const_int(-16777216),
+  /* K10  */  be_nested_str_weak(fill_pixels),
+  /* K11  */  be_nested_str_weak(pixel_size),
+  /* K12  */  be_nested_str_weak(blend),
+  /* K13  */  be_nested_str_weak(tasmota),
+  /* K14  */  be_nested_str_weak(scale_int),
+};
+
 
 extern const bclass be_class_Animate_pulse;
 
 /********************************************************************
 ** Solidified function: set_pulse_size
 ********************************************************************/
-extern const bclass be_class_Animate_pulse;
 be_local_closure(class_Animate_pulse_set_pulse_size,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_pulse, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(pulse_size),
-    }),
+    &be_ktab_class_Animate_pulse,     /* shared constants */
     be_str_weak(set_pulse_size),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
@@ -115,24 +129,21 @@ be_local_closure(class_Animate_pulse_set_pulse_size,   /* name */
 /********************************************************************
 ** Solidified function: set_slew_size
 ********************************************************************/
-extern const bclass be_class_Animate_pulse;
 be_local_closure(class_Animate_pulse_set_slew_size,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_pulse, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(slew_size),
-    }),
+    &be_ktab_class_Animate_pulse,     /* shared constants */
     be_str_weak(set_slew_size),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
-      0x90020001,  //  0000  SETMBR	R0	K0	R1
+      0x90020201,  //  0000  SETMBR	R0	K1	R1
       0x80000000,  //  0001  RET	0
     })
   )
@@ -143,24 +154,21 @@ be_local_closure(class_Animate_pulse_set_slew_size,   /* name */
 /********************************************************************
 ** Solidified function: set_back_color
 ********************************************************************/
-extern const bclass be_class_Animate_pulse;
 be_local_closure(class_Animate_pulse_set_back_color,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_pulse, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(back_color),
-    }),
+    &be_ktab_class_Animate_pulse,     /* shared constants */
     be_str_weak(set_back_color),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
-      0x90020001,  //  0000  SETMBR	R0	K0	R1
+      0x90020401,  //  0000  SETMBR	R0	K2	R1
       0x80000000,  //  0001  RET	0
     })
   )
@@ -171,24 +179,21 @@ be_local_closure(class_Animate_pulse_set_back_color,   /* name */
 /********************************************************************
 ** Solidified function: set_pos
 ********************************************************************/
-extern const bclass be_class_Animate_pulse;
 be_local_closure(class_Animate_pulse_set_pos,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_pulse, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(pos),
-    }),
+    &be_ktab_class_Animate_pulse,     /* shared constants */
     be_str_weak(set_pos),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
-      0x90020001,  //  0000  SETMBR	R0	K0	R1
+      0x90020601,  //  0000  SETMBR	R0	K3	R1
       0x80000000,  //  0001  RET	0
     })
   )
@@ -199,24 +204,21 @@ be_local_closure(class_Animate_pulse_set_pos,   /* name */
 /********************************************************************
 ** Solidified function: set_color
 ********************************************************************/
-extern const bclass be_class_Animate_pulse;
 be_local_closure(class_Animate_pulse_set_color,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_pulse, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(color),
-    }),
+    &be_ktab_class_Animate_pulse,     /* shared constants */
     be_str_weak(set_color),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
-      0x90020001,  //  0000  SETMBR	R0	K0	R1
+      0x90020801,  //  0000  SETMBR	R0	K4	R1
       0x80000000,  //  0001  RET	0
     })
   )
@@ -227,60 +229,48 @@ be_local_closure(class_Animate_pulse_set_color,   /* name */
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_Animate_pulse;
 be_local_closure(class_Animate_pulse_init,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     4,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_pulse, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[10]) {     /* constants */
-    /* K0   */  be_nested_str_weak(init),
-    /* K1   */  be_const_int(16777215),
-    /* K2   */  be_const_int(1),
-    /* K3   */  be_const_int(0),
-    /* K4   */  be_nested_str_weak(color),
-    /* K5   */  be_nested_str_weak(back_color),
-    /* K6   */  be_const_int(-16777216),
-    /* K7   */  be_nested_str_weak(pulse_size),
-    /* K8   */  be_nested_str_weak(slew_size),
-    /* K9   */  be_nested_str_weak(pos),
-    }),
+    &be_ktab_class_Animate_pulse,     /* shared constants */
     be_str_weak(init),
     &be_const_str_solidified,
     ( &(const binstruction[29]) {  /* code */
       0x60100003,  //  0000  GETGBL	R4	G3
       0x5C140000,  //  0001  MOVE	R5	R0
       0x7C100200,  //  0002  CALL	R4	1
-      0x8C100900,  //  0003  GETMET	R4	R4	K0
+      0x8C100905,  //  0003  GETMET	R4	R4	K5
       0x7C100200,  //  0004  CALL	R4	1
       0x4C100000,  //  0005  LDNIL	R4
       0x1C100204,  //  0006  EQ	R4	R1	R4
       0x78120000,  //  0007  JMPF	R4	#0009
-      0x58040001,  //  0008  LDCONST	R1	K1
+      0x58040006,  //  0008  LDCONST	R1	K6
       0x4C100000,  //  0009  LDNIL	R4
       0x1C100404,  //  000A  EQ	R4	R2	R4
       0x78120000,  //  000B  JMPF	R4	#000D
-      0x58080002,  //  000C  LDCONST	R2	K2
+      0x58080007,  //  000C  LDCONST	R2	K7
       0x4C100000,  //  000D  LDNIL	R4
       0x1C100604,  //  000E  EQ	R4	R3	R4
       0x78120000,  //  000F  JMPF	R4	#0011
-      0x580C0003,  //  0010  LDCONST	R3	K3
+      0x580C0008,  //  0010  LDCONST	R3	K8
       0x90020801,  //  0011  SETMBR	R0	K4	R1
-      0x90020B06,  //  0012  SETMBR	R0	K5	K6
-      0x14100503,  //  0013  LT	R4	R2	K3
+      0x90020509,  //  0012  SETMBR	R0	K2	K9
+      0x14100508,  //  0013  LT	R4	R2	K8
       0x78120000,  //  0014  JMPF	R4	#0016
-      0x58080003,  //  0015  LDCONST	R2	K3
-      0x90020E02,  //  0016  SETMBR	R0	K7	R2
-      0x14100703,  //  0017  LT	R4	R3	K3
+      0x58080008,  //  0015  LDCONST	R2	K8
+      0x90020002,  //  0016  SETMBR	R0	K0	R2
+      0x14100708,  //  0017  LT	R4	R3	K8
       0x78120000,  //  0018  JMPF	R4	#001A
-      0x580C0003,  //  0019  LDCONST	R3	K3
-      0x90021003,  //  001A  SETMBR	R0	K8	R3
-      0x90021303,  //  001B  SETMBR	R0	K9	K3
+      0x580C0008,  //  0019  LDCONST	R3	K8
+      0x90020203,  //  001A  SETMBR	R0	K1	R3
+      0x90020708,  //  001B  SETMBR	R0	K3	K8
       0x80000000,  //  001C  RET	0
     })
   )
@@ -291,46 +281,31 @@ be_local_closure(class_Animate_pulse_init,   /* name */
 /********************************************************************
 ** Solidified function: paint
 ********************************************************************/
-extern const bclass be_class_Animate_pulse;
 be_local_closure(class_Animate_pulse_paint,   /* name */
   be_nested_proto(
     22,                          /* nstack */
     2,                          /* argc */
-    2,                          /* varg */
+    10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_Animate_pulse, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[13]) {     /* constants */
-    /* K0   */  be_nested_str_weak(back_color),
-    /* K1   */  be_const_int(-16777216),
-    /* K2   */  be_nested_str_weak(fill_pixels),
-    /* K3   */  be_nested_str_weak(pos),
-    /* K4   */  be_nested_str_weak(slew_size),
-    /* K5   */  be_nested_str_weak(pulse_size),
-    /* K6   */  be_nested_str_weak(color),
-    /* K7   */  be_nested_str_weak(pixel_size),
-    /* K8   */  be_const_int(0),
-    /* K9   */  be_const_int(1),
-    /* K10  */  be_nested_str_weak(blend),
-    /* K11  */  be_nested_str_weak(tasmota),
-    /* K12  */  be_nested_str_weak(scale_int),
-    }),
+    &be_ktab_class_Animate_pulse,     /* shared constants */
     be_str_weak(paint),
     &be_const_str_solidified,
     ( &(const binstruction[91]) {  /* code */
-      0x88080100,  //  0000  GETMBR	R2	R0	K0
-      0x200C0501,  //  0001  NE	R3	R2	K1
+      0x88080102,  //  0000  GETMBR	R2	R0	K2
+      0x200C0509,  //  0001  NE	R3	R2	K9
       0x780E0002,  //  0002  JMPF	R3	#0006
-      0x8C0C0302,  //  0003  GETMET	R3	R1	K2
+      0x8C0C030A,  //  0003  GETMET	R3	R1	K10
       0x5C140400,  //  0004  MOVE	R5	R2
       0x7C0C0400,  //  0005  CALL	R3	2
       0x880C0103,  //  0006  GETMBR	R3	R0	K3
-      0x88100104,  //  0007  GETMBR	R4	R0	K4
-      0x88140105,  //  0008  GETMBR	R5	R0	K5
-      0x88180106,  //  0009  GETMBR	R6	R0	K6
-      0x881C0307,  //  000A  GETMBR	R7	R1	K7
+      0x88100101,  //  0007  GETMBR	R4	R0	K1
+      0x88140100,  //  0008  GETMBR	R5	R0	K0
+      0x88180104,  //  0009  GETMBR	R6	R0	K4
+      0x881C030B,  //  000A  GETMBR	R7	R1	K11
       0x4C200000,  //  000B  LDNIL	R8
       0x4C240000,  //  000C  LDNIL	R9
       0x5C200600,  //  000D  MOVE	R8	R3
@@ -346,7 +321,7 @@ be_local_closure(class_Animate_pulse_paint,   /* name */
       0x142C1409,  //  0017  LT	R11	R10	R9
       0x782E0002,  //  0018  JMPF	R11	#001C
       0x98041406,  //  0019  SETIDX	R1	R10	R6
-      0x00281509,  //  001A  ADD	R10	R10	K9
+      0x00281507,  //  001A  ADD	R10	R10	K7
       0x7001FFFA,  //  001B  JMP		#0017
       0x242C0908,  //  001C  GT	R11	R4	K8
       0x782E003A,  //  001D  JMPF	R11	#0059
@@ -362,21 +337,21 @@ be_local_closure(class_Animate_pulse_paint,   /* name */
       0x5C281000,  //  0027  MOVE	R10	R8
       0x142C1409,  //  0028  LT	R11	R10	R9
       0x782E000F,  //  0029  JMPF	R11	#003A
-      0x8C2C030A,  //  002A  GETMET	R11	R1	K10
+      0x8C2C030C,  //  002A  GETMET	R11	R1	K12
       0x5C340400,  //  002B  MOVE	R13	R2
       0x5C380C00,  //  002C  MOVE	R14	R6
-      0xB83E1600,  //  002D  GETNGBL	R15	K11
-      0x8C3C1F0C,  //  002E  GETMET	R15	R15	K12
+      0xB83E1A00,  //  002D  GETNGBL	R15	K13
+      0x8C3C1F0E,  //  002E  GETMET	R15	R15	K14
       0x5C441400,  //  002F  MOVE	R17	R10
       0x04480604,  //  0030  SUB	R18	R3	R4
-      0x04482509,  //  0031  SUB	R18	R18	K9
+      0x04482507,  //  0031  SUB	R18	R18	K7
       0x5C4C0600,  //  0032  MOVE	R19	R3
       0x545200FE,  //  0033  LDINT	R20	255
       0x58540008,  //  0034  LDCONST	R21	K8
       0x7C3C0C00,  //  0035  CALL	R15	6
       0x7C2C0800,  //  0036  CALL	R11	4
       0x9804140B,  //  0037  SETIDX	R1	R10	R11
-      0x00281509,  //  0038  ADD	R10	R10	K9
+      0x00281507,  //  0038  ADD	R10	R10	K7
       0x7001FFED,  //  0039  JMP		#0028
       0x002C0605,  //  003A  ADD	R11	R3	R5
       0x5C201600,  //  003B  MOVE	R8	R11
@@ -392,14 +367,14 @@ be_local_closure(class_Animate_pulse_paint,   /* name */
       0x5C281000,  //  0045  MOVE	R10	R8
       0x142C1409,  //  0046  LT	R11	R10	R9
       0x782E0010,  //  0047  JMPF	R11	#0059
-      0x8C2C030A,  //  0048  GETMET	R11	R1	K10
+      0x8C2C030C,  //  0048  GETMET	R11	R1	K12
       0x5C340400,  //  0049  MOVE	R13	R2
       0x5C380C00,  //  004A  MOVE	R14	R6
-      0xB83E1600,  //  004B  GETNGBL	R15	K11
-      0x8C3C1F0C,  //  004C  GETMET	R15	R15	K12
+      0xB83E1A00,  //  004B  GETNGBL	R15	K13
+      0x8C3C1F0E,  //  004C  GETMET	R15	R15	K14
       0x5C441400,  //  004D  MOVE	R17	R10
       0x00480605,  //  004E  ADD	R18	R3	R5
-      0x04482509,  //  004F  SUB	R18	R18	K9
+      0x04482507,  //  004F  SUB	R18	R18	K7
       0x004C0605,  //  0050  ADD	R19	R3	R5
       0x004C2604,  //  0051  ADD	R19	R19	R4
       0x58500008,  //  0052  LDCONST	R20	K8
@@ -407,7 +382,7 @@ be_local_closure(class_Animate_pulse_paint,   /* name */
       0x7C3C0C00,  //  0054  CALL	R15	6
       0x7C2C0800,  //  0055  CALL	R11	4
       0x9804140B,  //  0056  SETIDX	R1	R10	R11
-      0x00281509,  //  0057  ADD	R10	R10	K9
+      0x00281507,  //  0057  ADD	R10	R10	K7
       0x7001FFEC,  //  0058  JMP		#0046
       0x502C0200,  //  0059  LDBOOL	R11	1	0
       0x80041600,  //  005A  RET	1	R11

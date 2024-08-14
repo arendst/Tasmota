@@ -39,13 +39,13 @@ class Matter_Control_Message
 
   def process_incoming_control_message(msg)
 
-    tasmota.log("MTR: received control message " + matter.inspect(msg), 3)
+    log("MTR: received control message " + matter.inspect(msg), 3)
     if   msg.opcode == 0x00
       return self.parse_MsgCounterSyncReq(msg)
     elif msg.opcode == 0x01
       return self.parse_MsgCounterSyncRsp(msg)
     else
-      tasmota.log(format("MTR: >????????? Unknown OpCode (control message) %02X", msg.opcode), 2)
+      log(format("MTR: >????????? Unknown OpCode (control message) %02X", msg.opcode), 2)
       return false
     end
 
@@ -58,7 +58,7 @@ class Matter_Control_Message
   # Not yet implemented
   def parse_MsgCounterSyncReq(msg)
     var session = msg.session
-    tasmota.log(format("MTR: >MCSyncReq * Not implemented %s", msg.raw[msg.app_payload_idx..].tohex()), 2)
+    log(format("MTR: >MCSyncReq * Not implemented %s", msg.raw[msg.app_payload_idx..].tohex()), 2)
     return false      # we don't explicitly ack the message
   end
 
@@ -68,7 +68,7 @@ class Matter_Control_Message
   # Not yet implemented
   def parse_MsgCounterSyncRsp(msg)
     var session = msg.session
-    tasmota.log(format("MTR: >MCSyncRsp * Not implemented %s", msg.raw[msg.app_payload_idx..].tohex()), 2)
+    log(format("MTR: >MCSyncRsp * Not implemented %s", msg.raw[msg.app_payload_idx..].tohex()), 2)
     return false      # we don't explicitly ack the message
   end
 

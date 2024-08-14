@@ -9,7 +9,6 @@ extern const bclass be_class_lv_str_arr;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_lv_str_arr;
 be_local_closure(class_lv_str_arr_init,   /* name */
   be_nested_proto(
     11,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_lv_str_arr_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_str_arr, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(l),
@@ -88,7 +87,6 @@ extern const bclass be_class_lv_int_arr;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_lv_int_arr;
 be_local_closure(class_lv_int_arr_init,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -97,7 +95,7 @@ be_local_closure(class_lv_int_arr_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_int_arr, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(instance),
@@ -179,7 +177,6 @@ be_local_closure(class_lv_int_arr_init,   /* name */
 /********************************************************************
 ** Solidified function: item
 ********************************************************************/
-extern const bclass be_class_lv_int_arr;
 be_local_closure(class_lv_int_arr_item,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -188,7 +185,7 @@ be_local_closure(class_lv_int_arr_item,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_int_arr, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(get),
@@ -211,7 +208,6 @@ be_local_closure(class_lv_int_arr_item,   /* name */
 /********************************************************************
 ** Solidified function: setitem
 ********************************************************************/
-extern const bclass be_class_lv_int_arr;
 be_local_closure(class_lv_int_arr_setitem,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -220,7 +216,7 @@ be_local_closure(class_lv_int_arr_setitem,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_int_arr, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(set),
@@ -262,7 +258,6 @@ extern const bclass be_class_lv_point_arr;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_lv_point_arr;
 be_local_closure(class_lv_point_arr_init,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -271,7 +266,7 @@ be_local_closure(class_lv_point_arr_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_point_arr, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[11]) {     /* constants */
     /* K0   */  be_nested_str_weak(instance),
@@ -372,7 +367,7 @@ be_local_closure(_anonymous_,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    NULL, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[12]) {     /* constants */
     /* K0   */  be_nested_str_weak(global),
@@ -421,7 +416,6 @@ extern const bclass be_class_lv_style_prop_arr;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_lv_style_prop_arr;
 be_local_closure(class_lv_style_prop_arr_init,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -430,7 +424,7 @@ be_local_closure(class_lv_style_prop_arr_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_style_prop_arr, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */
     /* K0   */  be_nested_str_weak(instance),
@@ -506,7 +500,6 @@ extern const bclass be_class_lv_coord_arr;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-extern const bclass be_class_lv_coord_arr;
 be_local_closure(class_lv_coord_arr_init,   /* name */
   be_nested_proto(
     9,                          /* nstack */
@@ -515,7 +508,7 @@ be_local_closure(class_lv_coord_arr_init,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_coord_arr, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 8]) {     /* constants */
     /* K0   */  be_nested_str_weak(instance),
@@ -597,7 +590,6 @@ be_local_closure(class_lv_coord_arr_init,   /* name */
 /********************************************************************
 ** Solidified function: item
 ********************************************************************/
-extern const bclass be_class_lv_coord_arr;
 be_local_closure(class_lv_coord_arr_item,   /* name */
   be_nested_proto(
     6,                          /* nstack */
@@ -606,7 +598,7 @@ be_local_closure(class_lv_coord_arr_item,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_coord_arr, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(get),
@@ -629,7 +621,6 @@ be_local_closure(class_lv_coord_arr_item,   /* name */
 /********************************************************************
 ** Solidified function: setitem
 ********************************************************************/
-extern const bclass be_class_lv_coord_arr;
 be_local_closure(class_lv_coord_arr_setitem,   /* name */
   be_nested_proto(
     8,                          /* nstack */
@@ -638,7 +629,7 @@ be_local_closure(class_lv_coord_arr_setitem,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     0,                          /* has sup protos */
-    &be_class_lv_coord_arr, 
+    NULL,                       /* no sub protos */
     1,                          /* has constants */
     ( &(const bvalue[ 1]) {     /* constants */
     /* K0   */  be_nested_str_weak(set),

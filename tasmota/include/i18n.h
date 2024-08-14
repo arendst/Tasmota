@@ -46,7 +46,9 @@
 #define D_JSON_BSSID "BSSId"
 #define D_JSON_BUTTON "Button"
 #define D_JSON_BUILDDATETIME "BuildDateTime"
+#define D_JSON_CAPACITY "Capacity"
 #define D_JSON_CHANNEL "Channel"
+#define D_JSON_CHARGING "Charging"
 #define D_JSON_CO2 "CarbonDioxide"
 #define D_JSON_CODINGRATE4 "CodingRate4"
 #define D_JSON_COMMAND "Command"
@@ -609,6 +611,7 @@
 // Commands xdrv_08_serial_bridge.ino
 #define D_CMND_SSERIALSEND "SSerialSend"
 #define D_CMND_SBAUDRATE "SBaudrate"
+#define D_CMND_SSERIALMODE "SSerialMode"
 #define D_CMND_SSERIALBUFFER "SSerialBuffer"
 #define D_CMND_SSERIALCONFIG "SSerialConfig"
   #define D_JSON_SSERIALRECEIVED "SSerialReceived"
@@ -814,7 +817,8 @@
 #define D_CMND_DALI_DIMMER                "dim"
 
 // Commands xsns_02_analog.ino
-#define D_CMND_ADCPARAM "AdcParam"
+#define D_CMND_ADCGPIO "Gpio"
+#define D_CMND_ADCPARAM "Param"
 
 // Commands xsns_05_ds18x20.ino
 #define D_CMND_DS_ALIAS "Alias"
@@ -960,6 +964,7 @@ const char HTTP_SNS_HR[]            PROGMEM = "<tr><td colspan=2 style='font-siz
 const char HTTP_SNS_HR_THIN[]       PROGMEM = "<tr><td colspan=2 style='font-size:2px'><hr size=1/></td></tr>";
 const char HTTP_SNS_F_TEMP[]        PROGMEM = "{s}%s "  D_TEMPERATURE         "{m}%*_f " D_UNIT_DEGREE          "%c{e}";
 const char HTTP_SNS_F_VOLTAGE[]     PROGMEM = "{s}%s "  D_VOLTAGE             "{m}%*_f " D_UNIT_VOLT              "{e}";
+const char HTTP_SNS_F_CURRENT[]     PROGMEM = "{s}%s "  D_CURRENT             "{m}%*_f " D_UNIT_AMPERE            "{e}";
 const char HTTP_SNS_F_CURRENT_MA[]  PROGMEM = "{s}%s "  D_CURRENT             "{m}%*_f " D_UNIT_MILLIAMPERE       "{e}";
 const char HTTP_SNS_F_DISTANCE_CM[] PROGMEM = "{s}%s "  D_DISTANCE            "{m}%1_f " D_UNIT_CENTIMETER        "{e}";
 const char HTTP_SNS_F_NOX[]         PROGMEM = "{s}%s "  D_NOX                 "{m}%*_f "                          "{e}";

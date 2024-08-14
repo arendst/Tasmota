@@ -9,7 +9,6 @@ extern const bclass be_class_Matter_Base38;
 /********************************************************************
 ** Solidified function: encode
 ********************************************************************/
-extern const bclass be_class_Matter_Base38;
 be_local_closure(class_Matter_Base38_encode,   /* name */
   be_nested_proto(
     10,                          /* nstack */
@@ -18,7 +17,7 @@ be_local_closure(class_Matter_Base38_encode,   /* name */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 1]) {
       be_nested_proto(
         6,                          /* nstack */
         2,                          /* argc */
@@ -26,7 +25,7 @@ be_local_closure(class_Matter_Base38_encode,   /* name */
         0,                          /* has upvals */
         NULL,                       /* no upvals */
         0,                          /* has sup protos */
-        NULL, 
+        NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 4]) {     /* constants */
         /* K0   */  be_nested_str_weak(0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_X2D_X2E),
@@ -53,7 +52,6 @@ be_local_closure(class_Matter_Base38_encode,   /* name */
           0x80040800,  //  000D  RET	1	R4
         })
       ),
-    &be_class_Matter_Base38, 
     }),
     1,                          /* has constants */
     ( &(const bvalue[ 6]) {     /* constants */

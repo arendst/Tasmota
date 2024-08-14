@@ -419,7 +419,7 @@ void ButtonHandler(void) {
 
     XdrvMailbox.index = button_index;
     XdrvMailbox.payload = button;
-    XdrvMailbox.command_code = Button.last_state[button_index];
+    XdrvMailbox.command_code = (Button.last_state[button_index] & 0xFF) | ((Button.press_counter[button_index] & 0xFF) << 8);
     if (XdrvCall(FUNC_BUTTON_PRESSED)) {
       // Serviced
     }

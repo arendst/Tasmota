@@ -1,5 +1,5 @@
 #
-# Matter_Plugin_Aggregator.be - implements the Aggregator endpoint
+# Matter_Plugin_1_Aggregator.be - implements the Aggregator endpoint
 #
 # Copyright (C) 2023  Stephan Hadinger & Theo Arends
 #

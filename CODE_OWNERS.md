@@ -139,7 +139,7 @@ In addition to @arendst the following code is mainly owned by:
 | xsns_25_spl06-007_sensor     | @rai68
 | xsns_26_lm75ad               | Andre Thomas
 | xsns_27_apds9960             | Shawn Hymel
-| xsns_28                      |
+| xsns_28_qmp6988              | @arendst
 | xsns_29_mcp230xx             | Andre Thomas
 | xsns_30_mpr121               | Rene 'Renne' Bartsch
 | xsns_31_ccs811               | Gerhard Mutz
@@ -229,6 +229,7 @@ In addition to @arendst the following code is mainly owned by:
 | xsns_112_ens210              | Christoph Friese
 | xsns_113_hc8                 | Daniel Maier
 | xsns_114_amsx915             | Bastian Urschel
+| xsns_115_wooliis             | Luca Melette
 |                              |
 | xsns_127_esp32_sensors       | @arendst
 |                              |

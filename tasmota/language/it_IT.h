@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 19.05.2024
+ * Updated until v9.4.0.1 - Last update 27.07.2024
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -76,7 +76,6 @@
 #define D_COMMAND              "Comando"
 #define D_CONNECTED            "Connesso"
 #define D_CORS_DOMAIN          "Dominio CORS"
-
 #define D_COLOR                "Colore"
 #define D_COUNT                "Conteggio"
 #define D_COUNTER              "Contatore"
@@ -665,6 +664,24 @@
 #define D_SIGNALSTRENGTH   "Livello segnale"
 #define D_CHIPTEMPERATURE  "Temperatura chip"
 
+// xsns_60_GPS
+#define D_LATITUDE             "Latitudine"
+#define D_LONGITUDE            "Longitudine"
+#define D_HORIZONTAL_ACCURACY  "Precisione orizzontale"
+#define D_ALTITUDE             "Altitudine"
+#define D_VERTICAL_ACCURACY    "Precisione verticale"
+#define D_SPEED                "Velocità"
+#define D_SPEED_ACCURACY       "Precisione velocità"
+#define D_HEADING              "Direzione"
+#define D_HEADING_ACCURACY     "Precisione direzione"
+#define D_SAT_FIX              "Aggancio satelliti"
+#define D_SAT_FIX_NO_FIX       "Nessuno"
+#define D_SAT_FIX_DEAD_RECK    "Navigazione stimata"
+#define D_SAT_FIX_2D           "2D"
+#define D_SAT_FIX_3D           "3D"
+#define D_SAT_FIX_GPS_DEAD     "GPS e navigazione stimata"
+#define D_SAT_FIX_TIME         "Solo corrzione orario"
+
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE                   "Nessuno"
 #define D_SENSOR_USER                   "Utente"
@@ -794,8 +811,6 @@
 #define D_GPIO_ASR650X_TX               "ASR650X - Tx"
 #define D_GPIO_ASR650X_RX               "ASR650X - Rx"
 #define D_GPIO_LORA_CS                  "LoRa - CS"
-#define D_GPIO_ASR650X_TX               "ASR650x - TX"
-#define D_GPIO_ASR650X_RX               "ASR650x - RX"
 #define D_GPIO_LORA_RST                 "LoRa - Rst"
 #define D_GPIO_LORA_BUSY                "LoRa - Busy"
 #define D_GPIO_LORA_DI                  "LoRa - DIO"    // Suffix "0","1","2"
@@ -810,6 +825,8 @@
 #define D_SENSOR_CSE7761_RX             "CSE7761 - RX"
 #define D_SENSOR_CSE7766_TX             "CSE7766 - TX"
 #define D_SENSOR_CSE7766_RX             "CSE7766 - RX"
+#define D_SENSOR_BL0939_RX              "BL0939 - RX"
+#define D_SENSOR_BL0942_RX              "BL0942 - RX"
 #define D_SENSOR_HM330X_SET             "HM330X - SET"
 #define D_SENSOR_PN532_TX               "PN532 - TX"
 #define D_SENSOR_PN532_RX               "PN532 - RX"
@@ -877,8 +894,6 @@
 #define D_SENSOR_LE01MR_RX              "LE-01MR - RX"
 #define D_SENSOR_LE01MR_TX              "LE-01MR - TX"
 #define D_SENSOR_BL0940_RX              "BL0940 - RX"
-#define D_SENSOR_BL0939_RX              "BL0939 - RX"
-#define D_SENSOR_BL0942_RX              "BL0942 - RX"
 #define D_SENSOR_CC1101_GDO0            "CC1101 - GDO0"
 #define D_SENSOR_CC1101_GDO2            "CC1101 - GDO2"
 #define D_SENSOR_HRXL_RX                "HRXL - RX"
@@ -898,6 +913,8 @@
 #define D_SENSOR_ADC_JOYSTICK           "ADC - Joystick"
 #define D_SENSOR_ADC_PH                 "ADC - pH"
 #define D_SENSOR_ADC_MQ                 "ADC - MQ"
+#define D_SENSOR_ADC_VOLTAGE            "ADC - Voltaggio"
+#define D_SENSOR_ADC_CURRENT            "ADC - Corrente"
 #define D_GPIO_WEBCAM_PWDN              "Webcam - PWDN"
 #define D_GPIO_WEBCAM_RESET             "Webcam - RESET"
 #define D_GPIO_WEBCAM_XCLK              "Webcam - XCLK"
@@ -985,6 +1002,7 @@
 #define D_SENSOR_BIOPDU_BIT             "BioPDU Bit"
 #define D_SENSOR_LOX_O2_RX              "LoxO2 - RX"
 #define D_GPIO_MAGIC_SWITCH             "MagicSwitch"
+#define D_SENSOR_WOOLIIS_RX             "Wooliis - RX"
 
 // Units
 #define D_UNIT_AMPERE                     "A"
@@ -1009,6 +1027,7 @@
 #define D_UNIT_LITERS                     "L"
 #define D_UNIT_LITERS_PER_MIN             "L/m"
 #define D_UNIT_LUX                        "lx"
+#define D_UNIT_METER                      "m"
 #define D_UNIT_MICROGRAM_PER_CUBIC_METER  "µg/m³"
 #define D_UNIT_MICROMETER                 "µm"
 #define D_UNIT_MICROSECOND                "µs"
@@ -1251,7 +1270,13 @@
 #define D_UNIT_US_H                       "µSv/h"
 
 // ixrv92_pipsolar.ino
-#define D_SENSOR_PIPSOLAR_TX             "Pipsolar - TX"
-#define D_SENSOR_PIPSOLAR_RX             "Pipsolar - RX"
+#define D_SENSOR_PIPSOLAR_TX              "Pipsolar - TX"
+#define D_SENSOR_PIPSOLAR_RX              "Pipsolar - RX"
+
+// xsns_115_wooliis.ino
+#define D_IMPORT                          "Importa"
+#define D_EXPORT                          "Esporta"
+#define D_CHARGING                        "In carica"
+#define D_CAPACITY                        "Capacità"
 
 #endif  // _LANGUAGE_IT_IT_H_

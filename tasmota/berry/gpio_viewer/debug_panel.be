@@ -21,6 +21,7 @@ class debug_panel
   var port
   var web
   var sampling_interval
+  var p1, p2
 
   static var SAMPLING = 100
   static var HTML_HEAD1 = 
@@ -72,6 +73,9 @@ class debug_panel
     self.web = webserver_async(port)
     self.sampling_interval = self.SAMPLING
 
+    self.p1 = bytes(100)
+    self.p2 = bytes(100)
+
     self.web.set_chunked(true)
     self.web.set_cors(true)
     self.web.on("/info_feed", self, self.send_info_feed)
@@ -107,9 +111,11 @@ class debug_panel
   end
   
   static class feeder
+    var app                                   # overarching app (debug_panel)
     var cnx                                   # connection object
 
-    def init(cnx)
+    def init(app, cnx)
+      self.app = app
       self.cnx = cnx
       tasmota.add_driver(self)
     end
@@ -129,8 +135,8 @@ class debug_panel
         return
       end
 
-      var payload1 = self.cnx.server.payload1
-      var payload2 = self.cnx.server.payload2
+      var payload1 = self.app.p1
+      var payload2 = self.app.p2
       var server = self.cnx.server
       if cnx.buf_out_empty()
         # if out buffer is not empty, do not send any new information
@@ -172,7 +178,7 @@ class debug_panel
     cnx.set_chunked(false)     # no chunking since we use EventSource
     cnx.send(200, "text/event-stream")
     #
-    var feed = feeder(cnx)
+    var feed = feeder(self, cnx)
     feed.send_feed()          # send first values immediately
   end
 
