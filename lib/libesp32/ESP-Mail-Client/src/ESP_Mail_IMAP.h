@@ -590,7 +590,7 @@ bool ESP_Mail_Client::readMail(IMAPSession *imap, bool closeSession)
             msg_num.type = esp_mail_imap_msg_num_type_number;
             msg_num.value = (uint32_t)imap->_mbif._msgCount;
 
-            imap->_imap_msg_num.push_back(msg_num);
+            imap->_imap_msg_num.emplace_back(msg_num);
             imap->_headerOnly = false;
             imap->_imap_data->fetch.number = imap->_mbif._msgCount;
         }
@@ -615,7 +615,7 @@ bool ESP_Mail_Client::readMail(IMAPSession *imap, bool closeSession)
                 msg_num.type = esp_mail_imap_msg_num_type_uid;
                 msg_num.value = (uint32_t)atoi(imap->_imap_data->fetch.uid.c_str());
 
-                imap->_imap_msg_num.push_back(msg_num);
+                imap->_imap_msg_num.emplace_back(msg_num);
             }
 
             if (imap->_imap_data->fetch.number.length() > 0)
@@ -626,7 +626,7 @@ bool ESP_Mail_Client::readMail(IMAPSession *imap, bool closeSession)
                 msg_num.type = esp_mail_imap_msg_num_type_number;
                 msg_num.value = (uint32_t)atoi(imap->_imap_data->fetch.number.c_str());
 
-                imap->_imap_msg_num.push_back(msg_num);
+                imap->_imap_msg_num.emplace_back(msg_num);
             }
         }
     }
@@ -721,7 +721,7 @@ bool ESP_Mail_Client::readMail(IMAPSession *imap, bool closeSession)
                 mlevel.level = 1;
                 mlevel.fetch_rfc822_header = false;
                 mlevel.append_body_text = false;
-                imap->_multipart_levels.push_back(mlevel);
+                imap->_multipart_levels.emplace_back(mlevel);
 
                 if (!fetchMultipartBodyHeader(imap, i))
                     return false;
@@ -1169,7 +1169,7 @@ bool ESP_Mail_Client::fetchMultipartBodyHeader(IMAPSession *imap, int msgIdx)
                     mlevel.level = 1;
                     mlevel.fetch_rfc822_header = false;
                     mlevel.append_body_text = false;
-                    imap->_multipart_levels.push_back(mlevel);
+                    imap->_multipart_levels.emplace_back(mlevel);
                     fetchMultipartBodyHeader(imap, msgIdx);
                 }
                 else
@@ -1684,7 +1684,7 @@ int ESP_Mail_Client::parseSearchResponse(IMAPSession *imap, esp_mail_imap_respon
                         msg_num.type = imap->_uidSearch ? esp_mail_imap_msg_num_type_uid : esp_mail_imap_msg_num_type_number;
                         msg_num.value = (uint32_t)atoi(res.response);
 
-                        imap->_imap_msg_num.push_back(msg_num);
+                        imap->_imap_msg_num.emplace_back(msg_num);
 
                         if (imap->_imap_msg_num.size() > imap->_imap_data->limit.search)
                             imap->_imap_msg_num.erase(imap->_imap_msg_num.begin());
@@ -1697,7 +1697,7 @@ int ESP_Mail_Client::parseSearchResponse(IMAPSession *imap, esp_mail_imap_respon
                             msg_num.type = imap->_uidSearch ? esp_mail_imap_msg_num_type_uid : esp_mail_imap_msg_num_type_number;
                             msg_num.value = (uint32_t)atoi(res.response);
 
-                            imap->_imap_msg_num.push_back(msg_num);
+                            imap->_imap_msg_num.emplace_back(msg_num);
                         }
                     }
 
@@ -3105,7 +3105,7 @@ bool ESP_Mail_Client::handleIMAPResponse(IMAPSession *imap, int errCode, bool cl
                     decodeString(imap, res.header.header_fields.header_items[i]);
             }
 
-            imap->_headers.push_back(res.header);
+            imap->_headers.emplace_back(res.header);
         }
 
         if (imap->_imap_cmd == esp_mail_imap_cmd_fetch_body_mime)
@@ -3135,7 +3135,7 @@ bool ESP_Mail_Client::handleIMAPResponse(IMAPSession *imap, int errCode, bool cl
                     }
                 }
 
-                cHeader(imap)->part_headers.push_back(res.part);
+                cHeader(imap)->part_headers.emplace_back(res.part);
                 cHeader(imap)->message_data_count = cHeader(imap)->part_headers.size();
 
                 if (res.part.msg_type != esp_mail_msg_type_none ||
@@ -3760,7 +3760,7 @@ void ESP_Mail_Client::parseCmdResponse(IMAPSession *imap, char *buf, PGM_P find)
 
                 msg_num.type = esp_mail_imap_msg_num_type_uid;
                 msg_num.value = (uint32_t)atoi(tmp);
-                imap->_imap_msg_num.push_back(msg_num);
+                imap->_imap_msg_num.emplace_back(msg_num);
 
                 if (imap->_imap_msg_num.size() > imap->_imap_data->limit.fetch)
                     imap->_imap_msg_num.erase(imap->_imap_msg_num.begin());
@@ -5315,7 +5315,7 @@ struct esp_mail_imap_msg_list_t IMAPSession::data()
 
         getRFC822Messages(i, itm);
 
-        ret.msgItems.push_back(itm);
+        ret.msgItems.emplace_back(itm);
     }
 
     return ret;
@@ -5404,7 +5404,7 @@ void IMAPSession::getMessages(uint16_t messageIndex, struct esp_mail_imap_msg_it
                         att.description = _headers[messageIndex].part_headers[i].content_description.c_str();
                         att.creationDate = _headers[messageIndex].part_headers[i].creation_date.c_str();
                         att.type = _headers[messageIndex].part_headers[i].attach_type;
-                        msg.attachments.push_back(att);
+                        msg.attachments.emplace_back(att);
                     }
                 }
             }
@@ -5429,7 +5429,7 @@ void IMAPSession::getRFC822Messages(uint16_t messageIndex, struct esp_mail_imap_
                     if (_headers[messageIndex].part_headers[i].rfc822_part)
                     {
                         if (partIdx > 0)
-                            msg.rfc822.push_back(*_rfc822);
+                            msg.rfc822.emplace_back(*_rfc822);
                         cIdx = i;
                         partIdx++;
                         _rfc822 = new IMAP_MSG_Item();
@@ -5466,7 +5466,7 @@ void IMAPSession::getRFC822Messages(uint16_t messageIndex, struct esp_mail_imap_
                                 att.description = _headers[messageIndex].part_headers[i].content_description.c_str();
                                 att.creationDate = _headers[messageIndex].part_headers[i].creation_date.c_str();
                                 att.type = _headers[messageIndex].part_headers[i].attach_type;
-                                _rfc822->attachments.push_back(att);
+                                _rfc822->attachments.emplace_back(att);
                             }
                         }
                     }
@@ -5474,7 +5474,7 @@ void IMAPSession::getRFC822Messages(uint16_t messageIndex, struct esp_mail_imap_
             }
 
             if ((int)msg.rfc822.size() < partIdx && _rfc822 != nullptr)
-                msg.rfc822.push_back(*_rfc822);
+                msg.rfc822.emplace_back(*_rfc822);
         }
     }
 }

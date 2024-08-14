@@ -119,7 +119,7 @@ public:
   void add(int uid)
   {
     if (uid > 0)
-      _list.push_back(uid);
+      _list.emplace_back(uid);
   }
 
   void clear() { _list.clear(); }
@@ -195,9 +195,9 @@ private:
   {
     MB_String s = flag;
     if (permanent)
-      _permanent_flags.push_back(s);
+      _permanent_flags.emplace_back(s);
     else
-      _flags.push_back(s);
+      _flags.emplace_back(s);
   };
   void clear()
   {
@@ -266,7 +266,7 @@ public:
   }
 
 private:
-  void add(struct esp_mail_folder_info_t fd) { _folders.push_back(fd); };
+  void add(struct esp_mail_folder_info_t fd) { _folders.emplace_back(fd); };
   void clear()
   {
     for (size_t i = 0; i < _folders.size(); i++)
@@ -304,7 +304,7 @@ private:
 
   void add(IMAP_Quota_Root_Info v)
   {
-    _quota_roots.push_back(v);
+    _quota_roots.emplace_back(v);
   }
   void clear()
   {
@@ -336,7 +336,7 @@ private:
 
   void add(IMAP_Namespace_Info v)
   {
-    _ns_list.push_back(v);
+    _ns_list.emplace_back(v);
   }
   void clear()
   {
@@ -368,7 +368,7 @@ private:
 
   void add(IMAP_Rights_Info v)
   {
-    _rights_list.push_back(v);
+    _rights_list.emplace_back(v);
   }
   void clear()
   {
@@ -604,7 +604,7 @@ public:
     att._int.att_type = esp_mail_att_type_attachment;
     att._int.parallel = false;
     att._int.flash_blob = true;
-    _att.push_back(att);
+    _att.emplace_back(att);
   };
 
   /** Add parallel attachment to the message
@@ -616,7 +616,7 @@ public:
     att._int.att_type = esp_mail_att_type_attachment;
     att._int.parallel = true;
     att._int.flash_blob = true;
-    _parallel.push_back(att);
+    _parallel.emplace_back(att);
   };
 
   /** Add inline image to the message
@@ -629,14 +629,14 @@ public:
     att._int.parallel = false;
     att._int.att_type = esp_mail_att_type_inline;
     att._int.cid = random(2000, 4000);
-    _att.push_back(att);
+    _att.emplace_back(att);
   };
 
   /** Add rfc822 message to the message
    *
    * @param msg The RFC822_Message class object
    */
-  void addMessage(SMTP_Message &msg) { _rfc822.push_back(msg); }
+  void addMessage(SMTP_Message &msg) { _rfc822.emplace_back(msg); }
 
   /** Add the primary recipient mailbox to the message
    *
@@ -649,7 +649,7 @@ public:
     struct esp_mail_address_info_t rcp;
     rcp.name = toStringPtr(name);
     rcp.email = toStringPtr(email);
-    _rcp.push_back(rcp);
+    _rcp.emplace_back(rcp);
   };
 
   /** Add Carbon-copy recipient mailbox
@@ -661,7 +661,7 @@ public:
   {
     struct esp_mail_address_info_t cc;
     cc.email = toStringPtr(email);
-    _cc.push_back(cc);
+    _cc.emplace_back(cc);
   };
 
   /** Add Blind-carbon-copy recipient mailbox
@@ -673,7 +673,7 @@ public:
   {
     struct esp_mail_address_info_t bcc;
     bcc.email = toStringPtr(email);
-    _bcc.push_back(bcc);
+    _bcc.emplace_back(bcc);
   };
 
   /** Add the custom header to the message
@@ -683,7 +683,7 @@ public:
   template <typename T = const char *>
   void addHeader(T hdr)
   {
-    _hdr.push_back(MB_String().setPtr(toStringPtr(hdr)));
+    _hdr.emplace_back(MB_String().setPtr(toStringPtr(hdr)));
   };
 
   /* The message author config */
@@ -2522,7 +2522,7 @@ private:
 
   void add(SMTP_Result *r)
   {
-    _result.push_back(*r);
+    _result.emplace_back(*r);
   }
 
 public:

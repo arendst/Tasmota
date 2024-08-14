@@ -903,7 +903,7 @@ namespace Matchers {
             AllOf( AllOf const& other ) : m_matchers( other.m_matchers ) {}
 
             AllOf& add( Matcher<ExpressionT> const& matcher ) {
-                m_matchers.push_back( matcher.clone() );
+                m_matchers.emplace_back( matcher.clone() );
                 return *this;
             }
             virtual bool match( ExpressionT const& expr ) const
@@ -943,7 +943,7 @@ namespace Matchers {
             AnyOf( AnyOf const& other ) : m_matchers( other.m_matchers ) {}
 
             AnyOf& add( Matcher<ExpressionT> const& matcher ) {
-                m_matchers.push_back( matcher.clone() );
+                m_matchers.emplace_back( matcher.clone() );
                 return *this;
             }
             virtual bool match( ExpressionT const& expr ) const
@@ -2329,7 +2329,7 @@ public:
     ValuesGenerator(){}
 
     void add( T value ) {
-        m_values.push_back( value );
+        m_values.emplace_back( value );
     }
 
     virtual T getValue( std::size_t index ) const {
@@ -2386,7 +2386,7 @@ public:
 
     void add( const IGenerator<T>* generator ) {
         m_totalSize += generator->size();
-        m_composed.push_back( generator );
+        m_composed.emplace_back( generator );
     }
 
     CompositeGenerator& then( CompositeGenerator& other ) {
@@ -3279,14 +3279,14 @@ namespace Catch {
                 Ptr<TestSpec::Pattern> pattern = new T( token );
                 if( m_exclusion )
                     pattern = new TestSpec::ExcludedPattern( pattern );
-                m_currentFilter.m_patterns.push_back( pattern );
+                m_currentFilter.m_patterns.emplace_back( pattern );
             }
             m_exclusion = false;
             m_mode = None;
         }
         void addFilter() {
             if( !m_currentFilter.m_patterns.empty() ) {
-                m_testSpec.m_filters.push_back( m_currentFilter );
+                m_testSpec.m_filters.emplace_back( m_currentFilter );
                 m_currentFilter = TestSpec::Filter();
             }
         }
@@ -3645,7 +3645,7 @@ namespace Tbc {
 
             while( !remainder.empty() ) {
                 if( lines.size() >= 1000 ) {
-                    lines.push_back( "... message truncated due to excessive size" );
+                    lines.emplace_back( "... message truncated due to excessive size" );
                     return;
                 }
                 std::size_t tabPos = std::string::npos;
@@ -3691,7 +3691,7 @@ namespace Tbc {
         }
 
         void spliceLine( std::size_t _indent, std::string& _remainder, std::size_t _pos ) {
-            lines.push_back( std::string( _indent, ' ' ) + _remainder.substr( 0, _pos ) );
+            lines.emplace_back( std::string( _indent, ' ' ) + _remainder.substr( 0, _pos ) );
             _remainder = _remainder.substr( _pos );
         }
 
@@ -3884,7 +3884,7 @@ namespace Tbc {
 // ----------- end of #include from clara_compilers.h -----------
 // ........... back in clara.h
 
-#include <map>
+#include <unordered_map>
 #include <stdexcept>
 #include <memory>
 
@@ -4130,7 +4130,7 @@ namespace Clara {
                         token.data = token.data.substr( 0, pos );
                     }
                 }
-                tokens.push_back( token );
+                tokens.emplace_back( token );
             }
         }
         std::string separators;
@@ -4227,7 +4227,7 @@ namespace Clara {
                 arg.longName = optName.substr( 2 );
             }
             else if( Detail::startsWith( optName, "-" ) )
-                arg.shortNames.push_back( optName.substr( 1 ) );
+                arg.shortNames.emplace_back( optName.substr( 1 ) );
             else
                 throw std::logic_error( "option must begin with - or --. Option was: '" + optName + "'" );
         }
@@ -4332,7 +4332,7 @@ namespace Clara {
         }
 
         OptBuilder operator[]( std::string const& optName ) {
-            m_options.push_back( Arg() );
+            m_options.emplace_back( Arg() );
             addOptName( m_options.back(), optName );
             OptBuilder builder( &m_options.back() );
             return builder;
@@ -4399,7 +4399,7 @@ namespace Clara {
             for( int i = 1; i <= m_highestSpecifiedArgPosition; ++i ) {
                 if( i > 1 )
                     os << " ";
-                typename std::map<int, Arg>::const_iterator it = m_positionalArgs.find( i );
+                typename std::unordered_map<int, Arg>::const_iterator it = m_positionalArgs.find( i );
                 if( it != m_positionalArgs.end() )
                     os << "<" << it->second.placeholder << ">";
                 else if( m_floatingArg.get() )
@@ -4476,7 +4476,7 @@ namespace Clara {
                             ( token.type == Parser::Token::LongOpt && arg.hasLongName( token.data ) ) ) {
                             if( arg.takesArg() ) {
                                 if( i == tokens.size()-1 || tokens[i+1].type != Parser::Token::Positional )
-                                    errors.push_back( "Expected argument to option: " + token.data );
+                                    errors.emplace_back( "Expected argument to option: " + token.data );
                                 else
                                     arg.boundField.set( config, tokens[++i].data );
                             }
@@ -4487,14 +4487,14 @@ namespace Clara {
                         }
                     }
                     catch( std::exception& ex ) {
-                        errors.push_back( std::string( ex.what() ) + "\n- while parsing: (" + arg.commands() + ")" );
+                        errors.emplace_back( std::string( ex.what() ) + "\n- while parsing: (" + arg.commands() + ")" );
                     }
                 }
                 if( it == itEnd ) {
                     if( token.type == Parser::Token::Positional || !m_throwOnUnrecognisedTokens )
-                        unusedTokens.push_back( token );
+                        unusedTokens.emplace_back( token );
                     else if( errors.empty() && m_throwOnUnrecognisedTokens )
-                        errors.push_back( "unrecognised option: " + token.data );
+                        errors.emplace_back( "unrecognised option: " + token.data );
                 }
             }
             if( !errors.empty() ) {
@@ -4515,11 +4515,11 @@ namespace Clara {
             int position = 1;
             for( std::size_t i = 0; i < tokens.size(); ++i ) {
                 Parser::Token const& token = tokens[i];
-                typename std::map<int, Arg>::const_iterator it = m_positionalArgs.find( position );
+                typename std::unordered_map<int, Arg>::const_iterator it = m_positionalArgs.find( position );
                 if( it != m_positionalArgs.end() )
                     it->second.boundField.set( config, token.data );
                 else
-                    unusedTokens.push_back( token );
+                    unusedTokens.emplace_back( token );
                 if( token.type == Parser::Token::Positional )
                     position++;
             }
@@ -4534,7 +4534,7 @@ namespace Clara {
                 if( token.type == Parser::Token::Positional )
                     m_floatingArg->boundField.set( config, token.data );
                 else
-                    unusedTokens.push_back( token );
+                    unusedTokens.emplace_back( token );
             }
             return unusedTokens;
         }
@@ -4553,7 +4553,7 @@ namespace Clara {
     private:
         Detail::BoundArgFunction<ConfigT> m_boundProcessName;
         std::vector<Arg> m_options;
-        std::map<int, Arg> m_positionalArgs;
+        std::unordered_map<int, Arg> m_positionalArgs;
         ArgAutoPtr m_floatingArg;
         int m_highestSpecifiedArgPosition;
         bool m_throwOnUnrecognisedTokens;
@@ -4584,8 +4584,8 @@ namespace Catch {
             throw std::runtime_error( "Value after -x or --abortAfter must be greater than zero" );
         config.abortAfter = x;
     }
-    inline void addTestOrTags( ConfigData& config, std::string const& _testSpec ) { config.testsOrTags.push_back( _testSpec ); }
-    inline void addReporterName( ConfigData& config, std::string const& _reporterName ) { config.reporterNames.push_back( _reporterName ); }
+    inline void addTestOrTags( ConfigData& config, std::string const& _testSpec ) { config.testsOrTags.emplace_back( _testSpec ); }
+    inline void addReporterName( ConfigData& config, std::string const& _reporterName ) { config.reporterNames.emplace_back( _reporterName ); }
 
     inline void addWarning( ConfigData& config, std::string const& _warning ) {
         if( _warning == "NoAssertions" )
@@ -4816,7 +4816,7 @@ namespace Tbc {
 
             while( !remainder.empty() ) {
                 if( lines.size() >= 1000 ) {
-                    lines.push_back( "... message truncated due to excessive size" );
+                    lines.emplace_back( "... message truncated due to excessive size" );
                     return;
                 }
                 std::size_t tabPos = std::string::npos;
@@ -4862,7 +4862,7 @@ namespace Tbc {
         }
 
         void spliceLine( std::size_t _indent, std::string& _remainder, std::size_t _pos ) {
-            lines.push_back( std::string( _indent, ' ' ) + _remainder.substr( 0, _pos ) );
+            lines.emplace_back( std::string( _indent, ' ' ) + _remainder.substr( 0, _pos ) );
             _remainder = _remainder.substr( _pos );
         }
 
@@ -4971,7 +4971,7 @@ namespace Catch {
 
 #include <string>
 #include <ostream>
-#include <map>
+#include <unordered_map>
 #include <assert.h>
 
 namespace Catch
@@ -5047,7 +5047,7 @@ namespace Catch
                 builder << assertionResult.getMessage();
                 builder.m_info.message = builder.m_stream.str();
 
-                infoMessages.push_back( builder.m_info );
+                infoMessages.emplace_back( builder.m_info );
             }
         }
         virtual ~AssertionStats();
@@ -5206,12 +5206,12 @@ namespace Catch
     };
 
     struct IReporterRegistry {
-        typedef std::map<std::string, Ptr<IReporterFactory> > FactoryMap;
+        typedef std::unordered_map<std::string, Ptr<IReporterFactory> > Factoryunordered_map;
         typedef std::vector<Ptr<IReporterFactory> > Listeners;
 
         virtual ~IReporterRegistry();
         virtual IStreamingReporter* create( std::string const& name, Ptr<IConfig const> const& config ) const = 0;
-        virtual FactoryMap const& getFactories() const = 0;
+        virtual Factoryunordered_map const& getFactories() const = 0;
         virtual Listeners const& getListeners() const = 0;
     };
 
@@ -5305,7 +5305,7 @@ namespace Catch {
             testSpec = TestSpecParser( ITagAliasRegistry::get() ).parse( "*" ).testSpec();
         }
 
-        std::map<std::string, TagInfo> tagCounts;
+        std::unordered_map<std::string, TagInfo> tagCounts;
 
         std::vector<TestCase> matchedTestCases = filterTests( getAllTestCasesSorted( config ), testSpec, config );
         for( std::vector<TestCase>::const_iterator it = matchedTestCases.begin(), itEnd = matchedTestCases.end();
@@ -5317,14 +5317,14 @@ namespace Catch {
                     ++tagIt ) {
                 std::string tagName = *tagIt;
                 std::string lcaseTagName = toLower( tagName );
-                std::map<std::string, TagInfo>::iterator countIt = tagCounts.find( lcaseTagName );
+                std::unordered_map<std::string, TagInfo>::iterator countIt = tagCounts.find( lcaseTagName );
                 if( countIt == tagCounts.end() )
                     countIt = tagCounts.insert( std::make_pair( lcaseTagName, TagInfo() ) ).first;
                 countIt->second.add( tagName );
             }
         }
 
-        for( std::map<std::string, TagInfo>::const_iterator countIt = tagCounts.begin(),
+        for( std::unordered_map<std::string, TagInfo>::const_iterator countIt = tagCounts.begin(),
                                                             countItEnd = tagCounts.end();
                 countIt != countItEnd;
                 ++countIt ) {
@@ -5342,8 +5342,8 @@ namespace Catch {
 
     inline std::size_t listReporters( Config const& /*config*/ ) {
         Catch::cout() << "Available reporters:\n";
-        IReporterRegistry::FactoryMap const& factories = getRegistryHub().getReporterRegistry().getFactories();
-        IReporterRegistry::FactoryMap::const_iterator itBegin = factories.begin(), itEnd = factories.end(), it;
+        IReporterRegistry::Factoryunordered_map const& factories = getRegistryHub().getReporterRegistry().getFactories();
+        IReporterRegistry::Factoryunordered_map::const_iterator itBegin = factories.begin(), itEnd = factories.end(), it;
         std::size_t maxNameLen = 0;
         for(it = itBegin; it != itEnd; ++it )
             maxNameLen = (std::max)( maxNameLen, it->first.size() );
@@ -5384,7 +5384,7 @@ namespace Catch {
 // #included from: catch_test_case_tracker.hpp
 #define TWOBLUECUBES_CATCH_TEST_CASE_TRACKER_HPP_INCLUDED
 
-#include <map>
+#include <unordered_map>
 #include <string>
 #include <assert.h>
 #include <vector>
@@ -5517,7 +5517,7 @@ namespace TestCaseTracking {
         }
 
         virtual void addChild( Ptr<ITracker> const& child ) CATCH_OVERRIDE {
-            m_children.push_back( child );
+            m_children.emplace_back( child );
         }
 
         virtual ITracker* findChild( std::string const& name ) CATCH_OVERRIDE {
@@ -5891,7 +5891,7 @@ namespace Catch {
             ITracker& sectionTracker = SectionTracker::acquire( m_trackerContext, oss.str() );
             if( !sectionTracker.isOpen() )
                 return false;
-            m_activeSections.push_back( &sectionTracker );
+            m_activeSections.emplace_back( &sectionTracker );
 
             m_lastAssertionInfo.lineInfo = sectionInfo.lineInfo;
 
@@ -5933,11 +5933,11 @@ namespace Catch {
                 m_activeSections.back()->close();
             m_activeSections.pop_back();
 
-            m_unfinishedSections.push_back( endInfo );
+            m_unfinishedSections.emplace_back( endInfo );
         }
 
         virtual void pushScopedMessage( MessageInfo const& message ) {
-            m_messages.push_back( message );
+            m_messages.emplace_back( message );
         }
 
         virtual void popScopedMessage( MessageInfo const& message ) {
@@ -6140,7 +6140,7 @@ namespace Catch {
     Ptr<IStreamingReporter> makeReporter( Ptr<Config> const& config ) {
         std::vector<std::string> reporters = config->getReporterNames();
         if( reporters.empty() )
-            reporters.push_back( "console" );
+            reporters.emplace_back( "console" );
 
         Ptr<IStreamingReporter> reporter;
         for( std::vector<std::string>::const_iterator it = reporters.begin(), itEnd = reporters.end();
@@ -6395,7 +6395,7 @@ namespace Catch {
                 it != itEnd;
                 ++it )
             if( matchTest( *it, testSpec, config ) )
-                filtered.push_back( *it );
+                filtered.emplace_back( *it );
         return filtered;
     }
     std::vector<TestCase> const& getAllTestCasesSorted( IConfig const& config ) {
@@ -6417,7 +6417,7 @@ namespace Catch {
                 oss << "Anonymous test case " << ++m_unnamedCount;
                 return registerTest( testCase.withName( oss.str() ) );
             }
-            m_functions.push_back( testCase );
+            m_functions.emplace_back( testCase );
         }
 
         virtual std::vector<TestCase> const& getAllTests() const {
@@ -6509,7 +6509,7 @@ namespace Catch {
 // #included from: catch_reporter_registry.hpp
 #define TWOBLUECUBES_CATCH_REPORTER_REGISTRY_HPP_INCLUDED
 
-#include <map>
+#include <unordered_map>
 
 namespace Catch {
 
@@ -6520,7 +6520,7 @@ namespace Catch {
         virtual ~ReporterRegistry() CATCH_OVERRIDE {}
 
         virtual IStreamingReporter* create( std::string const& name, Ptr<IConfig const> const& config ) const CATCH_OVERRIDE {
-            FactoryMap::const_iterator it =  m_factories.find( name );
+            Factoryunordered_map::const_iterator it =  m_factories.find( name );
             if( it == m_factories.end() )
                 return CATCH_NULL;
             return it->second->create( ReporterConfig( config ) );
@@ -6530,10 +6530,10 @@ namespace Catch {
             m_factories.insert( std::make_pair( name, factory ) );
         }
         void registerListener( Ptr<IReporterFactory> const& factory ) {
-            m_listeners.push_back( factory );
+            m_listeners.emplace_back( factory );
         }
 
-        virtual FactoryMap const& getFactories() const CATCH_OVERRIDE {
+        virtual Factoryunordered_map const& getFactories() const CATCH_OVERRIDE {
             return m_factories;
         }
         virtual Listeners const& getListeners() const CATCH_OVERRIDE {
@@ -6541,7 +6541,7 @@ namespace Catch {
         }
 
     private:
-        FactoryMap m_factories;
+        Factoryunordered_map m_factories;
         Listeners m_listeners;
     };
 }
@@ -6562,7 +6562,7 @@ namespace Catch {
         }
 
         virtual void registerTranslator( const IExceptionTranslator* translator ) {
-            m_translators.push_back( translator );
+            m_translators.emplace_back( translator );
         }
 
         virtual std::string translateActiveException() const {
@@ -6842,7 +6842,7 @@ namespace Catch {
         IGeneratorsForTest* findGeneratorsForCurrentTest() {
             std::string testName = getResultCapture()->getCurrentTestName();
 
-            std::map<std::string, IGeneratorsForTest*>::const_iterator it =
+            std::unordered_map<std::string, IGeneratorsForTest*>::const_iterator it =
                 m_generatorsByTestName.find( testName );
             return it != m_generatorsByTestName.end()
                 ? it->second
@@ -6863,7 +6863,7 @@ namespace Catch {
         Ptr<IConfig const> m_config;
         IRunner* m_runner;
         IResultCapture* m_resultCapture;
-        std::map<std::string, IGeneratorsForTest*> m_generatorsByTestName;
+        std::unordered_map<std::string, IGeneratorsForTest*> m_generatorsByTestName;
     };
 
     namespace {
@@ -7060,7 +7060,7 @@ namespace Catch {
 
 #include <vector>
 #include <string>
-#include <map>
+#include <unordered_map>
 
 namespace Catch {
 
@@ -7097,11 +7097,11 @@ namespace Catch {
         }
 
         IGeneratorInfo& getGeneratorInfo( std::string const& fileInfo, std::size_t size ) {
-            std::map<std::string, IGeneratorInfo*>::const_iterator it = m_generatorsByName.find( fileInfo );
+            std::unordered_map<std::string, IGeneratorInfo*>::const_iterator it = m_generatorsByName.find( fileInfo );
             if( it == m_generatorsByName.end() ) {
                 IGeneratorInfo* info = new GeneratorInfo( size );
                 m_generatorsByName.insert( std::make_pair( fileInfo, info ) );
-                m_generatorsInOrder.push_back( info );
+                m_generatorsInOrder.emplace_back( info );
                 return *info;
             }
             return *it->second;
@@ -7118,7 +7118,7 @@ namespace Catch {
         }
 
     private:
-        std::map<std::string, IGeneratorInfo*> m_generatorsByName;
+        std::unordered_map<std::string, IGeneratorInfo*> m_generatorsByName;
         std::vector<IGeneratorInfo*> m_generatorsInOrder;
     };
 
@@ -8213,7 +8213,7 @@ namespace Catch {
 // #included from: catch_tag_alias_registry.h
 #define TWOBLUECUBES_CATCH_TAG_ALIAS_REGISTRY_H_INCLUDED
 
-#include <map>
+#include <unordered_map>
 
 namespace Catch {
 
@@ -8226,12 +8226,12 @@ namespace Catch {
         static TagAliasRegistry& get();
 
     private:
-        std::map<std::string, TagAlias> m_registry;
+        std::unordered_map<std::string, TagAlias> m_registry;
     };
 
 } // end namespace Catch
 
-#include <map>
+#include <unordered_map>
 #include <iostream>
 
 namespace Catch {
@@ -8239,7 +8239,7 @@ namespace Catch {
     TagAliasRegistry::~TagAliasRegistry() {}
 
     Option<TagAlias> TagAliasRegistry::find( std::string const& alias ) const {
-        std::map<std::string, TagAlias>::const_iterator it = m_registry.find( alias );
+        std::unordered_map<std::string, TagAlias>::const_iterator it = m_registry.find( alias );
         if( it != m_registry.end() )
             return it->second;
         else
@@ -8248,7 +8248,7 @@ namespace Catch {
 
     std::string TagAliasRegistry::expandAliases( std::string const& unexpandedTestSpec ) const {
         std::string expandedTestSpec = unexpandedTestSpec;
-        for( std::map<std::string, TagAlias>::const_iterator it = m_registry.begin(), itEnd = m_registry.end();
+        for( std::unordered_map<std::string, TagAlias>::const_iterator it = m_registry.begin(), itEnd = m_registry.end();
                 it != itEnd;
                 ++it ) {
             std::size_t pos = expandedTestSpec.find( it->first );
@@ -8310,7 +8310,7 @@ class MultipleReporters : public SharedImpl<IStreamingReporter> {
 
 public:
     void add( Ptr<IStreamingReporter> const& reporter ) {
-        m_reporters.push_back( reporter );
+        m_reporters.emplace_back( reporter );
     }
 
 public: // IStreamingReporter
@@ -8468,7 +8468,7 @@ namespace Catch {
             currentTestCaseInfo = _testInfo;
         }
         virtual void sectionStarting( SectionInfo const& _sectionInfo ) CATCH_OVERRIDE {
-            m_sectionStack.push_back( _sectionInfo );
+            m_sectionStack.emplace_back( _sectionInfo );
         }
 
         virtual void sectionEnded( SectionStats const& /* _sectionStats */ ) CATCH_OVERRIDE {
@@ -8580,12 +8580,12 @@ namespace Catch {
                                     BySectionInfo( sectionInfo ) );
                 if( it == parentNode.childSections.end() ) {
                     node = new SectionNode( incompleteStats );
-                    parentNode.childSections.push_back( node );
+                    parentNode.childSections.emplace_back( node );
                 }
                 else
                     node = *it;
             }
-            m_sectionStack.push_back( node );
+            m_sectionStack.emplace_back( node );
             m_deepestSection = node;
         }
 
@@ -8594,7 +8594,7 @@ namespace Catch {
         virtual bool assertionEnded( AssertionStats const& assertionStats ) {
             assert( !m_sectionStack.empty() );
             SectionNode& sectionNode = *m_sectionStack.back();
-            sectionNode.assertions.push_back( assertionStats );
+            sectionNode.assertions.emplace_back( assertionStats );
             return true;
         }
         virtual void sectionEnded( SectionStats const& sectionStats ) CATCH_OVERRIDE {
@@ -8606,8 +8606,8 @@ namespace Catch {
         virtual void testCaseEnded( TestCaseStats const& testCaseStats ) CATCH_OVERRIDE {
             Ptr<TestCaseNode> node = new TestCaseNode( testCaseStats );
             assert( m_sectionStack.size() == 0 );
-            node->children.push_back( m_rootSection );
-            m_testCases.push_back( node );
+            node->children.emplace_back( m_rootSection );
+            m_testCases.emplace_back( node );
             m_rootSection.reset();
 
             assert( m_deepestSection );
@@ -8617,12 +8617,12 @@ namespace Catch {
         virtual void testGroupEnded( TestGroupStats const& testGroupStats ) CATCH_OVERRIDE {
             Ptr<TestGroupNode> node = new TestGroupNode( testGroupStats );
             node->children.swap( m_testCases );
-            m_testGroups.push_back( node );
+            m_testGroups.emplace_back( node );
         }
         virtual void testRunEnded( TestRunStats const& testRunStats ) CATCH_OVERRIDE {
             Ptr<TestRunNode> node = new TestRunNode( testRunStats );
             node->children.swap( m_testGroups );
-            m_testRuns.push_back( node );
+            m_testRuns.emplace_back( node );
             testRunEndedCumulative();
         }
         virtual void testRunEndedCumulative() = 0;
@@ -8875,7 +8875,7 @@ namespace Catch {
             ensureTagClosed();
             newlineIfNecessary();
             stream() << m_indent << "<" << name;
-            m_tags.push_back( name );
+            m_tags.emplace_back( name );
             m_indent += "  ";
             m_tagIsOpen = true;
             return *this;
@@ -9708,7 +9708,7 @@ namespace Catch {
                     while( it->size() > row.size() )
                         row = " " + row;
                 }
-                rows.push_back( row );
+                rows.emplace_back( row );
                 return *this;
             }
 
@@ -9732,16 +9732,16 @@ namespace Catch {
             else {
 
                 std::vector<SummaryColumn> columns;
-                columns.push_back( SummaryColumn( "", Colour::None )
+                columns.emplace_back( SummaryColumn( "", Colour::None )
                                         .addRow( totals.testCases.total() )
                                         .addRow( totals.assertions.total() ) );
-                columns.push_back( SummaryColumn( "passed", Colour::Success )
+                columns.emplace_back( SummaryColumn( "passed", Colour::Success )
                                         .addRow( totals.testCases.passed )
                                         .addRow( totals.assertions.passed ) );
-                columns.push_back( SummaryColumn( "failed", Colour::ResultError )
+                columns.emplace_back( SummaryColumn( "failed", Colour::ResultError )
                                         .addRow( totals.testCases.failed )
                                         .addRow( totals.assertions.failed ) );
-                columns.push_back( SummaryColumn( "failed as expected", Colour::ResultExpectedFailure )
+                columns.emplace_back( SummaryColumn( "failed as expected", Colour::ResultExpectedFailure )
                                         .addRow( totals.testCases.failedButOk )
                                         .addRow( totals.assertions.failedButOk ) );
 

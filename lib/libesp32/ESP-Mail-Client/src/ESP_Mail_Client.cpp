@@ -689,7 +689,7 @@ void ESP_Mail_Client::splitToken(const char *str, _vectorImpl<MB_String> &tk, co
     if (strlen(pp) > 0)
     {
       tmp = pp;
-      tk.push_back(tmp);
+      tk.emplace_back(tmp);
     }
     pp = end;
   }
