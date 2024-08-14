@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.1.0.4]
+## [14.1.0.4] 20240814
 ### Added
 - Support for Sonoff iFan04-H using template (#16402)
 - Matter improve internal `inspect`for superclasses (#21824)
