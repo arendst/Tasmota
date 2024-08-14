@@ -3,6 +3,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [14.2.0.1]
+### Added
+
+### Breaking Changed
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [Released]
+
+## [14.2.0] 20240814
+- Release Rita
+
 ## [14.1.0.4] 20240814
 ### Added
 - Support for Sonoff iFan04-H using template (#16402)
@@ -127,8 +143,6 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Berry `input()` returns empty string and does not crash (#21565)
-
-## [Released]
 
 ## [14.1.0] 20240603
 - Release Rachel
