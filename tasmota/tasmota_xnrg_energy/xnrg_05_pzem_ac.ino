@@ -79,11 +79,11 @@ void PzemAcEverySecond(void)
         Energy->frequency[PzemAc.phase] = (float)((buffer[17] << 8) + buffer[18]) / 10.0f;                                              // 50.0 Hz
         Energy->power_factor[PzemAc.phase] = (float)((buffer[19] << 8) + buffer[20]) / 100.0f;                                          // 1.00
         Energy->import_active[PzemAc.phase] = (float)((buffer[15] << 24) + (buffer[16] << 16) + (buffer[13] << 8) + buffer[14]) / 1000.0f;  // 4294967.295 kWh
-        if (PzemAc.phase == Energy->phase_count -1) {
-          if (TasmotaGlobal.uptime > (PZEM_AC_STABILIZE * ENERGY_MAX_PHASES)) {
-            EnergyUpdateTotal();
-          }
-        }
+      }
+    }
+    if (PzemAc.phase == Energy->phase_count -1) {
+      if (TasmotaGlobal.uptime > (PZEM_AC_STABILIZE * ENERGY_MAX_PHASES)) {
+        EnergyUpdateTotal();
       }
     }
   }

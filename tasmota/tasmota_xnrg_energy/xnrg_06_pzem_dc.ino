@@ -81,11 +81,11 @@ void PzemDcEverySecond(void)
         Energy->current[PzemDc->channel] = (float)((buffer[5] << 8) + buffer[6]) / 100.0f;                                               // 655.00 A
         Energy->active_power[PzemDc->channel] = (float)((buffer[9] << 24) + (buffer[10] << 16) + (buffer[7] << 8) + buffer[8]) / 10.0f;  // 429496729.0 W
         Energy->import_active[PzemDc->channel] = (float)((buffer[13] << 24) + (buffer[14] << 16) + (buffer[11] << 8) + buffer[12]) / 1000.0f;  // 4294967.295 kWh
-        if (PzemDc->channel == Energy->phase_count -1) {
-          if (TasmotaGlobal.uptime > (PZEM_DC_STABILIZE * ENERGY_MAX_PHASES)) {
-            EnergyUpdateTotal();
-          }
-        }
+      }
+    }
+    if (PzemDc->channel == Energy->phase_count -1) {
+      if (TasmotaGlobal.uptime > (PZEM_DC_STABILIZE * ENERGY_MAX_PHASES)) {
+        EnergyUpdateTotal();
       }
     }
   }

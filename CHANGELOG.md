@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Shutter timing registers overflow (#21966)
+- PZEM continue energy monitoring when one phase fails (#21968)
 
 ### Removed
 - ESP8266 Analog input support using energy driver as only one channel is available

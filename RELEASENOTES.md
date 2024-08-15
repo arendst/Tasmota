@@ -128,6 +128,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Fixed
 - Shutter timing registers overflow [#21966](https://github.com/arendst/Tasmota/issues/21966)
+- PZEM continue energy monitoring when one phase fails [#21968](https://github.com/arendst/Tasmota/issues/21968)
 
 ### Removed
 - ESP8266 Analog input support using energy driver as only one channel is available
