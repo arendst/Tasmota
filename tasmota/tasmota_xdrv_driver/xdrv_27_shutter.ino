@@ -731,12 +731,10 @@ void ShutterAllowPreStartProcedure(uint8_t i) {
   // What PreStartProcedure do you want to execute here?
   // Anyway, as long var1 != 99 this is skipped (luckily)
 #ifdef USE_RULES
-  uint32_t uptime_Local = 0;
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start? var%d <99>=<%s>, max10s?"),i + 1, rules_vars[i]);
   // wait for response from rules
   uint32_t start_time = millis();
-  while (TimePassedSince(start_time) < 10000 && (String)rules_vars[i] == "99")
-  {
+  while (TimePassedSince(start_time) < 10000 && (String)rules_vars[i] == "99") {
       delay(1);
   }
 #endif  // USE_RULES
