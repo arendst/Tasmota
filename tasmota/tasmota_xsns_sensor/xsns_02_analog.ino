@@ -71,7 +71,10 @@
 \*********************************************************************************************/
 
 #define XSNS_02                       2
+#if defined(ESP32) && defined(USE_ENERGY_SENSOR)
+// Only ESP32 and up support more than one ADC channel enabling energy driver
 #define XNRG_33                       33
+#endif  // ESP32 and USE_ENERGY_SENSOR
 
 #ifdef ESP32
 #include "esp32-hal-adc.h"
@@ -944,7 +947,10 @@ void AdcShow(bool json) {
         break;
       }
       case GPIO_ADC_VOLTAGE: 
-        if (TasmotaGlobal.energy_driver != XNRG_33) {
+#if defined(ESP32) && defined(USE_ENERGY_SENSOR)
+        if (TasmotaGlobal.energy_driver != XNRG_33)
+#endif  // ESP32 and USE_ENERGY_SENSOR
+        {
           float value = AdcGetRange(channel) / 10000;   // Volt
           if (value < 0.0f) { value = 0.0f; }           // Disregard negative values
           if (json) {
@@ -959,7 +965,10 @@ void AdcShow(bool json) {
         }
         break;
       case GPIO_ADC_CURRENT: 
-        if (TasmotaGlobal.energy_driver != XNRG_33) {
+#if defined(ESP32) && defined(USE_ENERGY_SENSOR)
+        if (TasmotaGlobal.energy_driver != XNRG_33)
+#endif  // ESP32 and USE_ENERGY_SENSOR
+        {
           float value = AdcGetRange(channel) / 10000;   // Ampere
           if (value < 0.0f) { value = 0.0f; }           // Disregard negative values
           if (json) {
@@ -1152,7 +1161,7 @@ void CmndAdcParam(void) {
  * Energy Interface
 \*********************************************************************************************/
 
-#ifdef USE_ENERGY_SENSOR
+#if defined(ESP32) && defined(USE_ENERGY_SENSOR)
 void AdcEnergyEverySecond(void) {
   uint32_t voltage_count = 0;
   uint32_t current_count = 0;
@@ -1214,7 +1223,7 @@ bool Xnrg33(uint32_t function) {
   }
   return result;
 }
-#endif  // USE_ENERGY_SENSOR
+#endif  // ESP32 and USE_ENERGY_SENSOR
 
 /*********************************************************************************************\
  * Sensor Interface
