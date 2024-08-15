@@ -1383,7 +1383,8 @@ void ShutterUpdateVelocity(uint8_t i)
 
 void ShutterWaitForMotorStart(uint8_t i)
 {
-  while (millis() < Shutter[i].last_stop_time + ShutterSettings.shutter_motorstop) {
+  uint32_t start_time = Shutter[i].last_stop_time;
+  while (TimePassedSince(start_time) < ShutterSettings.shutter_motorstop && TimePassedSince(start_time) > 0) {
     loop();
   }
   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Stoptime done"));
