@@ -127,5 +127,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Changed
 
 ### Fixed
+- Shutter timing registers overflow [#21966](https://github.com/arendst/Tasmota/issues/21966)
 
 ### Removed
+- ESP8266 Analog input support using energy driver as only one channel is available

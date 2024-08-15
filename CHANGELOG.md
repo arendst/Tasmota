@@ -11,8 +11,10 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- Shutter timing registers overflow (#21966)
 
 ### Removed
+- ESP8266 Analog input support using energy driver as only one channel is available
 
 ## [Released]
 
