@@ -2280,7 +2280,8 @@ void TasShiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t va
 /*********************************************************************************************\
  * Sleep aware time scheduler functions borrowed from ESPEasy
 \*********************************************************************************************/
-
+/*
+// No need to use 64-bit
 inline uint64_t GetMicros64() {
 #ifdef ESP8266
   return micros64();
@@ -2290,15 +2291,24 @@ inline uint64_t GetMicros64() {
 #endif
 }
 
+inline int64_t TimeDifference64(uint64_t prev, uint64_t next) {
+  return ((int64_t) (next - prev));
+}
+
+int64_t TimePassedSince64(const uint64_t& timestamp) {
+  return TimeDifference64(timestamp, GetMicros64());
+}
+
+bool TimeReached64(const uint64_t& timer) {
+  return TimePassedSince64(timer) >= 0;
+}
+*/
+
 // Return the time difference as a signed value, taking into account the timers may overflow.
 // Returned timediff is between -24.9 days and +24.9 days.
 // Returned value is positive when "next" is after "prev"
 inline int32_t TimeDifference(uint32_t prev, uint32_t next) {
   return ((int32_t) (next - prev));
-}
-
-inline int64_t TimeDifference64(uint64_t prev, uint64_t next) {
-  return ((int64_t) (next - prev));
 }
 
 int32_t TimePassedSince(uint32_t timestamp) {
@@ -2307,17 +2317,10 @@ int32_t TimePassedSince(uint32_t timestamp) {
   return TimeDifference(timestamp, millis());
 }
 
-int64_t TimePassedSince64(const uint64_t& timestamp) {
-  return TimeDifference64(timestamp, GetMicros64());
-}
-
 bool TimeReached(uint32_t timer) {
   // Check if a certain timeout has been reached.
+  // This is roll-over proof.
   return TimePassedSince(timer) >= 0;
-}
-
-bool TimeReached64(const uint64_t& timer) {
-  return TimePassedSince64(timer) >= 0;
 }
 
 void SetNextTimeInterval(uint32_t& timer, const uint32_t step) {
