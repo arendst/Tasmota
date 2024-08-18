@@ -215,13 +215,7 @@ void ShutterAllowPreStartProcedure(uint8_t i) {
 #ifdef USE_RULES
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start? var%d <99>=<%s>, max10s?"),i + 1, rules_vars[i]);
   // wait for response from rules
-/*
-  uint32_t start_time = millis();
-  while (TimePassedSince(start_time) < 10000 && (String)rules_vars[i] == "99") {
-      delay(1);
-  }
-*/
-  uint32_t end_time = millis() + 10000;
+  uint32_t end_time = millis() + 10000;  // 10 seconds
   while (!TimeReached(end_time) && (String)rules_vars[i] == "99") {
     delay(1);
   }
@@ -1389,12 +1383,6 @@ void ShutterUpdateVelocity(uint8_t i)
 
 void ShutterWaitForMotorStart(uint8_t i)
 {
-/*
-  uint32_t start_time = Shutter[i].last_stop_time;
-  while (TimePassedSince(start_time) < ShutterSettings.shutter_motorstop && TimePassedSince(start_time) > 0) {
-    loop();
-  }
-*/
   uint32_t end_time = Shutter[i].last_stop_time + ShutterSettings.shutter_motorstop;
   while (!TimeReached(end_time)) {
     loop();

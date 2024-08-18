@@ -89,8 +89,8 @@ bool NovaSdsCommand(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint16_t sensor
   NovaSdsSerial->flush();
 
   // wait for any response
-  unsigned long cmndtime = millis();
-  while ( (TimePassedSince(cmndtime) < NOVA_SDS_RECDATA_TIMEOUT) && ( ! NovaSdsSerial->available() ) );
+  unsigned long cmndtime = millis() + NOVA_SDS_RECDATA_TIMEOUT;
+  while ( (!TimeReached(cmndtime)) && ( ! NovaSdsSerial->available() ) );
   if ( ! NovaSdsSerial->available() ) {
     // timeout
     return false;
@@ -98,7 +98,7 @@ bool NovaSdsCommand(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint16_t sensor
   uint8_t recbuf[10];
   memset(recbuf, 0, sizeof(recbuf));
   // sync to 0xAA header
-  while ( (TimePassedSince(cmndtime) < NOVA_SDS_RECDATA_TIMEOUT) && ( NovaSdsSerial->available() > 0) && (0xAA != (recbuf[0] = NovaSdsSerial->read())) );
+  while ( (!TimeReached(cmndtime)) && ( NovaSdsSerial->available() > 0) && (0xAA != (recbuf[0] = NovaSdsSerial->read())) );
   if ( 0xAA != recbuf[0] ) {
     // no head found
     return false;
