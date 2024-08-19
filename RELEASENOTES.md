@@ -121,14 +121,18 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v14.2.0.1
 ### Added
+- Energy Log level 4 message when (Calculated) Apparent Power is less than Active Power indicating wrong calibration [#20653](https://github.com/arendst/Tasmota/issues/20653)
 
 ### Breaking Changed
 
 ### Changed
 
 ### Fixed
+- Energy calculation [#20653](https://github.com/arendst/Tasmota/issues/20653)
 - Shutter timing registers overflow [#21966](https://github.com/arendst/Tasmota/issues/21966)
 - PZEM continue energy monitoring when one phase fails [#21968](https://github.com/arendst/Tasmota/issues/21968)
 
 ### Removed
+- Energy force Active Power equals Apparent Power when (Calculated) Apparent Power is less than Active Power [#20653](https://github.com/arendst/Tasmota/issues/20653)
+- Energy force Power Factor to be always 1 or lower [#20653](https://github.com/arendst/Tasmota/issues/20653)
 - ESP8266 Analog input support using energy driver as only one channel is available

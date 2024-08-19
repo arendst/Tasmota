@@ -1533,15 +1533,28 @@ void EnergyShow(bool json) {
         else if (0 == Energy->current[i]) {
           apparent_power[i] = 0;
         }
+/*        
         if (apparent_power[i] < Energy->active_power[i]) {  // Should be impossible
           Energy->active_power[i] = apparent_power[i];
         }
-
         power_factor[i] = Energy->power_factor[i];
         if (isnan(power_factor[i])) {
           power_factor[i] = (Energy->active_power[i] && apparent_power[i]) ? Energy->active_power[i] / apparent_power[i] : 0;
-          if (power_factor[i] > 1) {
+          if (power_factor[i] > 1) {  // Should not happen (Active > Apparent)
             power_factor[i] = 1;
+          }
+        }
+*/
+        power_factor[i] = Energy->power_factor[i];
+        if (isnan(power_factor[i])) {
+          power_factor[i] = (Energy->active_power[i] && apparent_power[i]) ? Energy->active_power[i] / apparent_power[i] : 0;
+        }
+        if (apparent_power[i] < Energy->active_power[i]) {  // Should be impossible
+          if (apparent_power[i]) {
+            if ((power_factor[i] > 1.005) && (power_factor[i] < 2.0f)) {  // Skip below 0.5% and don't expect 50% differences
+              AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NRG: Calibrate as Active %3_fW > Apparent %3_fVA (PF = %4_f)"),
+                &Energy->active_power[i], &apparent_power[i], &power_factor[i]);
+            }
           }
         }
 

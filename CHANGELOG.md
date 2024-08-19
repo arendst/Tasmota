@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [14.2.0.1]
 ### Added
+- Energy Log level 4 message when (Calculated) Apparent Power is less than Active Power indicating wrong calibration (#20653)
 
 ### Breaking Changed
 
@@ -13,9 +14,12 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Shutter timing registers overflow (#21966)
 - PZEM continue energy monitoring when one phase fails (#21968)
+- Energy calculation (#20653)
 
 ### Removed
 - ESP8266 Analog input support using energy driver as only one channel is available
+- Energy force Active Power equals Apparent Power when (Calculated) Apparent Power is less than Active Power (#20653)
+- Energy force Power Factor to be always 1 or lower (#20653)
 
 ## [Released]
 
