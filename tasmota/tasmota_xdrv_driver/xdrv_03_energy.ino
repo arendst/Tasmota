@@ -988,9 +988,7 @@ void EnergyCommandSetCal(uint32_t cal_type) {
       float Igoal = Pgoal / Ugoal;                     // 0.26087 A
       float R = Ugoal / Igoal;                         // 881,666 Ohm
 
-      uint32_t channel = XdrvMailbox.index;
-      if (channel > Energy->phase_count) { channel = 1; }
-      channel--;
+      uint32_t channel = ((1 == XdrvMailbox.index -1) && (2 == Energy->phase_count)) ? 1 : 0;
       float Umeas = Energy->voltage[channel];          // 232.0
       // Calculate current and power based on measured voltage
       float Ical = Umeas / R;                          // 0.26306 A
