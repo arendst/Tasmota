@@ -6,10 +6,13 @@ All notable changes to this project will be documented in this file.
 ## [14.2.0.1]
 ### Added
 - Energy Log level 4 message when (Calculated) Apparent Power is less than Active Power indicating wrong calibration (#20653)
+- Energy command ``PowerSet 60,230`` to calibrate both Current and Power with known resistive load of 60W at 230V using calibrated Voltage
+- Energy command ``CurrentSet 60,230`` to calibrate both Power and Current with known resistive load of 60W at 230V using calibrated Voltage
 
 ### Breaking Changed
 
 ### Changed
+- Energy force Apparent Power equals Active Power when (Calculated) Apparent Power is less than Active Power (#20653)
 
 ### Fixed
 - Shutter timing registers overflow (#21966)
@@ -18,8 +21,6 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 - ESP8266 Analog input support using energy driver as only one channel is available
-- Energy force Active Power equals Apparent Power when (Calculated) Apparent Power is less than Active Power (#20653)
-- Energy force Power Factor to be always 1 or lower (#20653)
 
 ## [Released]
 

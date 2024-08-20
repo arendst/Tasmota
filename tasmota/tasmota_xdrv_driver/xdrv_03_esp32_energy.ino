@@ -1285,14 +1285,56 @@ void EnergyCommandSetCalResponse(uint32_t cal_type) {
   }
 }
 
+void EnergyCommandSetCal(uint32_t cal_type) {
+  if (XdrvMailbox.data_len && (XdrvMailbox.index > 0)) {
+    // PowerSet 61.2
+    // CurrentSet 263
+    if (ArgC() > 1) {
+      // Calibrate current and power using calibrated voltage and known resistive load voltage and power
+      // PowerSet 60.0,230
+      // CurrentSet 60.0,230
+      char argument[32];
+      float Pgoal = CharToFloat(ArgV(argument, 1));    // 60.0    W
+      float Ugoal = CharToFloat(ArgV(argument, 2));    // 230     V
+      float Igoal = Pgoal / Ugoal;                     // 0.26087 A
+      float R = Ugoal / Igoal;                         // 881,666 Ohm
+
+      uint32_t channel = XdrvMailbox.index;
+      if (channel > Energy->phase_count) { channel = 1; }
+      channel--;
+      float Umeas = Energy->voltage[channel];          // 232.0
+      // Calculate current and power based on measured voltage
+      float Ical = Umeas / R;                          // 0.26306 A
+      float Pcal = Umeas * Ical;                       // 61.03   W
+      Ical *= 1000;                                    // A to mA
+
+      uint32_t cal_type1 = ENERGY_CURRENT_CALIBRATION;
+      float cal1 = Ical;
+      float cal2 = Pcal;
+      if (ENERGY_CURRENT_CALIBRATION == cal_type) {
+        cal_type1 = ENERGY_POWER_CALIBRATION;
+        cal1 = Pcal;
+        cal2 = Ical;
+      }
+      XdrvMailbox.data = argument;
+      ext_snprintf_P(argument, sizeof(argument), PSTR("%5_f"), &cal1);
+      XdrvMailbox.data_len = strlen(argument);
+      EnergyCommandSetCalResponse(cal_type1);
+      ext_snprintf_P(argument, sizeof(argument), PSTR("%5_f"), &cal2);
+      XdrvMailbox.data_len = strlen(argument);
+    }
+  }
+  EnergyCommandSetCalResponse(cal_type);
+}
+
 void CmndPowerSet(void) {
-  EnergyCommandSetCalResponse(ENERGY_POWER_CALIBRATION);
+  EnergyCommandSetCal(ENERGY_POWER_CALIBRATION);
 }
 void CmndVoltageSet(void) {
   EnergyCommandSetCalResponse(ENERGY_VOLTAGE_CALIBRATION);
 }
 void CmndCurrentSet(void) {
-  EnergyCommandSetCalResponse(ENERGY_CURRENT_CALIBRATION);
+  EnergyCommandSetCal(ENERGY_CURRENT_CALIBRATION);
 }
 void CmndFrequencySet(void) {
   EnergyCommandSetCalResponse(ENERGY_FREQUENCY_CALIBRATION);
@@ -1526,6 +1568,10 @@ void EnergyShow(bool json) {
   if (!Energy->type_dc) {
     if (Energy->current_available && Energy->voltage_available) {
       for (uint32_t i = 0; i < Energy->phase_count; i++) {
+        if (0 == Energy->current[i]) {
+          Energy->active_power[i] = 0;
+        }
+
         apparent_power[i] = Energy->apparent_power[i];
         if (isnan(apparent_power[i])) {
           apparent_power[i] = Energy->voltage[i] * Energy->current[i];
@@ -1551,10 +1597,14 @@ void EnergyShow(bool json) {
         }
         if (apparent_power[i] < Energy->active_power[i]) {  // Should be impossible
           if (apparent_power[i]) {
-            if ((power_factor[i] > 1.005) && (power_factor[i] < 2.0f)) {  // Skip below 0.5% and don't expect 50% differences
+            if ((power_factor[i] >= 1.02f) && (power_factor[i] < 2.0f)) {  // Skip below 2% and don't expect 50% differences
               AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NRG: Calibrate as Active %3_fW > Apparent %3_fVA (PF = %4_f)"),
                 &Energy->active_power[i], &apparent_power[i], &power_factor[i]);
             }
+          }
+          apparent_power[i] = Energy->active_power[i];  // Force apparent equal to active as mis-calibrated
+          if (power_factor[i] > 1) {                    // Should not happen (Active > Apparent)
+            power_factor[i] = 1;
           }
         }
 
