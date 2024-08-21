@@ -393,19 +393,24 @@ bool Bl09XXCommand(void) {
   uint32_t channel = (2 == XdrvMailbox.index) && (Energy->phase_count > 1) ? 1 : 0;
   uint32_t value = (uint32_t)(CharToFloat(XdrvMailbox.data) * 100);  // 1.23 = 123
 
-  if (CMND_POWERSET == Energy->command_code) {
+  if ((CMND_POWERCAL == Energy->command_code) ||
+      (CMND_VOLTAGECAL == Energy->command_code) ||
+      (CMND_CURRENTCAL == Energy->command_code)) {
+    // Service in xdrv_03_energy.ino
+  }
+  else if (CMND_POWERSET == Energy->command_code) {                  // xxx.xx W
     if (XdrvMailbox.data_len && Bl09XX.power[channel]) {
       XdrvMailbox.payload = (Bl09XX.power[channel] * 100) / value;
     }
   }
-  else if (CMND_VOLTAGESET == Energy->command_code) {
+  else if (CMND_VOLTAGESET == Energy->command_code) {                // xxx.xx V
     if (XdrvMailbox.data_len && Bl09XX.voltage) {
       XdrvMailbox.payload = (Bl09XX.voltage * 100) / value;
     }
   }
-  else if (CMND_CURRENTSET == Energy->command_code) {
+  else if (CMND_CURRENTSET == Energy->command_code) {                // xxx.xx mA
     if (XdrvMailbox.data_len && Bl09XX.current[channel]) {
-      XdrvMailbox.payload = (Bl09XX.current[channel] * 100) / value;
+      XdrvMailbox.payload = ((Bl09XX.current[channel] * 100) / value) * 1000;
     }
   }
   else serviced = false;  // Unknown command

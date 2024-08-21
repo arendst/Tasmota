@@ -284,22 +284,26 @@ void HlwDrvInit(void) {
 bool HlwCommand(void) {
   bool serviced = true;
 
-  if ((CMND_POWERCAL == Energy->command_code) || (CMND_VOLTAGECAL == Energy->command_code) || (CMND_CURRENTCAL == Energy->command_code)) {
+  float value = CharToFloat(XdrvMailbox.data);
+
+  if ((CMND_POWERCAL == Energy->command_code) ||
+      (CMND_VOLTAGECAL == Energy->command_code) ||
+      (CMND_CURRENTCAL == Energy->command_code)) {
     // Service in xdrv_03_energy.ino
   }
-  else if (CMND_POWERSET == Energy->command_code) {
+  else if (CMND_POWERSET == Energy->command_code) {    // xxx.x W
     if (XdrvMailbox.data_len && Hlw.cf_power_pulse_length ) {
-      XdrvMailbox.payload = ((uint32_t)(CharToFloat(XdrvMailbox.data) * 10) * Hlw.cf_power_pulse_length ) / Hlw.power_ratio;
+      XdrvMailbox.payload = ((uint32_t)(value * 10) * Hlw.cf_power_pulse_length ) / Hlw.power_ratio;
     }
   }
-  else if (CMND_VOLTAGESET == Energy->command_code) {
+  else if (CMND_VOLTAGESET == Energy->command_code) {  // xxx.x V
     if (XdrvMailbox.data_len && Hlw.cf1_voltage_pulse_length ) {
-      XdrvMailbox.payload = ((uint32_t)(CharToFloat(XdrvMailbox.data) * 10) * Hlw.cf1_voltage_pulse_length ) / Hlw.voltage_ratio;
+      XdrvMailbox.payload = ((uint32_t)(value * 10) * Hlw.cf1_voltage_pulse_length ) / Hlw.voltage_ratio;
     }
   }
-  else if (CMND_CURRENTSET == Energy->command_code) {
+  else if (CMND_CURRENTSET == Energy->command_code) {  // xxx mA
     if (XdrvMailbox.data_len && Hlw.cf1_current_pulse_length) {
-      XdrvMailbox.payload = ((uint32_t)(CharToFloat(XdrvMailbox.data)) * Hlw.cf1_current_pulse_length) / Hlw.current_ratio;
+      XdrvMailbox.payload = ((uint32_t)(value) * Hlw.cf1_current_pulse_length) / Hlw.current_ratio;
     }
   }
   else serviced = false;  // Unknown command

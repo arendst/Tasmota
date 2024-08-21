@@ -3,13 +3,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.2.0.1]
+## [14.2.0.2]
+### Added
+
+### Breaking Changed
+
+### Changed
+- Energy BL09xx command ``CurrentSet`` input changed from Ampere to milliAmpere
+
+### Fixed
+
+### Removed
+
+## [14.2.0.1] 20240821
 ### Added
 - Energy Log level 4 message when (Calculated) Apparent Power is less than Active Power indicating wrong calibration (#20653)
 - Energy command ``PowerSet 60,230`` to calibrate both Current and Power with known resistive load of 60W at 230V using calibrated Voltage
 - Energy command ``CurrentSet 60,230`` to calibrate both Power and Current with known resistive load of 60W at 230V using calibrated Voltage
-
-### Breaking Changed
 
 ### Changed
 - Energy force Apparent Power equals Active Power when (Calculated) Apparent Power is less than Active Power (#20653)
