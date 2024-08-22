@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Energy BL09xx command ``CurrentSet`` input changed from Ampere to milliAmpere
+- GPIOViewer from v1.5.5 to v1.5.6
 
 ### Fixed
 
@@ -101,6 +102,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 platform update from 2024.06.11 to 2024.07.10 (#21745)
 - ESP32 platform update from 2024.07.10 to 2024.07.11 (#21765)
 - Berry simplified `module persist` (#21812)
+- GPIOViewer from v1.5.4 to v1.5.5 (No functional change)
 
 ### Fixed
 - Berry `bytes.resize()` for large sizes (#21716)
