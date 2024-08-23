@@ -121,7 +121,7 @@ a_setoption = [[
     "(Tuya) Enable (1) TuyaMcuReceived messages over Mqtt",
     "(Buzzer) Enable (1) buzzer when available",
     "(Light) Enable multi-channels PWM (1) instead of Color PWM (0)",
-    "(not used) Limits Tuya dimmers to minimum of 10% (25) when enabled",
+    "(Serial) Invert Serial receive on SerialBridge (1)",
     "(Energy) Enable Weekend Energy Tariff",
     "(DDS2382) Select different Modbus registers (1) for Active Energy (#6531)",
     "(Energy) Enable (1) hardware energy total counter as reference (#6561)",
@@ -339,7 +339,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v14.1.0.1 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v14.2.0.3 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

@@ -1565,6 +1565,9 @@ void CmndSetoptionBase(bool indexed) {
                 WiFiSetSleepMode();        // Update WiFi sleep mode accordingly
                 break;
               case 18:                     // SetOption68 for multi-channel PWM, requires a reboot
+#ifdef USE_SERIAL_BRIDGE
+              case 19:                     // SetOption69  - (Serial) Invert Serial receive on SerialBridge
+#endif  // USE_SERIAL_BRIDGE
               case 25:                     // SetOption75 grouptopic change
                 TasmotaGlobal.restart_flag = 2;
                 break;

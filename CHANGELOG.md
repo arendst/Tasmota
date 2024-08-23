@@ -3,18 +3,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.2.0.2]
+## [14.2.0.3]
 ### Added
+- Command ``SetOption69 1`` to enable Serial Bridge inverted Receive (#22000)
 
 ### Breaking Changed
 
 ### Changed
-- Energy BL09xx command ``CurrentSet`` input changed from Ampere to milliAmpere
-- GPIOViewer from v1.5.5 to v1.5.6
 
 ### Fixed
 
 ### Removed
+
+## [14.2.0.2] 20240823
+### Changed
+- Energy BL09xx command ``CurrentSet`` input changed from Ampere to milliAmpere
+- GPIOViewer from v1.5.5 to v1.5.6
 
 ## [14.2.0.1] 20240821
 ### Added

@@ -1829,6 +1829,9 @@ void SettingsDelta(void) {
     if (Settings->version < 0x0E010002) {  // 14.1.0.2
       Settings->sserial_mode = Settings->sbflag1.ex_serbridge_console;
     }
+    if (Settings->version < 0x0E020003) {  // 14.2.0.3
+      Settings->flag3.sb_receive_invert = 0;  // SetOption69  - (Serial) Invert Serial receive on SerialBridge
+    }
 
     Settings->version = TASMOTA_VERSION;
     SettingsSave(1);
