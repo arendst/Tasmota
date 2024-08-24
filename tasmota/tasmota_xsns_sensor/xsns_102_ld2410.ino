@@ -9,7 +9,12 @@
 #ifdef USE_LD2410
 /*********************************************************************************************\
  * HLK-LD2410 24GHz smart wave motion sensor
- *
+ * 
+ * Attention!
+ * This module works with HLK-LD2410, HLK-LD2410B (md5sum-as tested), HLK-LD2410C (md5sum-as tested) devices. 
+ * The module does not support HLK-LD2410S (md5sum-as tested) and is not guaranteed to work with other devices.
+ * 
+ * 
  * LD2410Duration 0                            - Set factory default settings
  * LD2410Duration 1..65535                     - Set no-one duration in seconds (default 5)
  * LD2410MovingSens 50,50,40,30,20,15,15,15,15 - Set moving distance sensitivity for up to 9 gates (at 0.75 meter interval)
