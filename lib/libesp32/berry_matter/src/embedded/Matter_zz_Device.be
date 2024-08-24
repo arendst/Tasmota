@@ -531,7 +531,7 @@ class Matter_Device
       self.ipv4only = bool(j.find("ipv4only", false))
       self.disable_bridge_mode = bool(j.find("disable_bridge_mode", false))
       self.next_ep = j.find("nextep", self.next_ep)
-      self.plugins_config = j.find("config")
+      self.plugins_config = j.find("config", {})
       self.debug = bool(j.find("debug"))    # bool converts nil to false
       if self.plugins_config != nil
         log(f"MTR: Load_config = {self.plugins_config}", 3)
