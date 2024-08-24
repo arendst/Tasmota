@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Matter fixed UI bug when no endpoints configured
+- Zigbee extend timeout for MCU reboot from 5s to 10s
 
 ### Removed
 
