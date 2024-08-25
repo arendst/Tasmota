@@ -84,27 +84,21 @@ class Matter_Device
     self.events = matter.EventHandler(self)
     self.ui = matter.UI(self)
 
-    if tasmota.wifi()['up'] || tasmota.eth()['up']
-      self.start()
-    end
-    if !tasmota.wifi()['up']
-      tasmota.add_rule("Wifi#Connected", def ()
-          self.start()
-          tasmota.remove_rule("Wifi#Connected", "matter_start")
-        end, "matter_start")
-    end
-    if !tasmota.eth()['up']
-      tasmota.add_rule("Eth#Connected", def ()
-          self.start()
-          tasmota.remove_rule("Eth#Connected", "matter_start")
-        end, "matter_start")
-    end
-
     self.commissioning.init_basic_commissioning()
     tasmota.add_driver(self)
 
     self.register_commands()
   end
+
+  #############################################################
+  # Check if the network just started
+  def check_network()
+    if self.started  return end      # abort if already started
+    if tasmota.wifi()['up'] || tasmota.eth()['up']
+      self.start()
+    end
+  end
+
 
   #############################################################
   # Start Matter device server when the first network is coming up
@@ -255,6 +249,7 @@ class Matter_Device
   # dispatch every 50ms
   # ticks
   def every_50ms()
+    self.check_network()
     self.tick += 1
     self.message_handler.every_50ms()
   end
