@@ -157,7 +157,7 @@ int GetPinMode(uint32_t pin) {
   return GV_INPUT_PULLUP;                     // ESP8266 = 0x02 : 0x00, ESP32 = 0x05 : x01
 }
 
-/*********************************************************************************************/
+/*-------------------------------------------------------------------------------------------*/
 
 #ifdef ESP32
 #ifdef SOC_ADC_SUPPORTED
@@ -177,6 +177,8 @@ int8_t GVDigitalPinToAnalogChannel(uint8_t pin) {
 }
 #endif  // SOC_ADC_SUPPORTED
 #endif  // ESP32
+
+/*********************************************************************************************/
 
 bool GVInit(void) {
   if (!GV) {
@@ -211,13 +213,7 @@ bool GVInit(void) {
   return true;
 }
 
-void GVStop(void) {
-  GV->sse_ready = false;
-  GV->ticker.detach();
-
-  GV->WebServer->stop();
-  GV->WebServer = nullptr;
-}
+/*-------------------------------------------------------------------------------------------*/
 
 void GVBegin(void) {
   if (GV->WebServer == nullptr) {
@@ -227,6 +223,7 @@ void GVBegin(void) {
   //  GV->WebServer->sendHeader(F("Access-Control-Allow-Methods"), F("GET, POST, OPTIONS"));
   //  GV->WebServer->sendHeader(F("Access-Control-Allow-Headers"), F("Content-Type"));
     GV->WebServer->on("/", GVHandleRoot);
+    GV->WebServer->on("/events", GVHandleEvents);
     GV->WebServer->on("/release", GVHandleRelease);
     GV->WebServer->on("/free_psram", GVHandleFreePSRam);
     GV->WebServer->on("/sampling", GVHandleSampling);
@@ -234,9 +231,18 @@ void GVBegin(void) {
     GV->WebServer->on("/partition", GVHandlePartition);
     GV->WebServer->on("/pinmodes", GVHandlePinModes);
     GV->WebServer->on("/pinfunctions", GVHandlePinFunctions);
-    GV->WebServer->on("/events", GVHandleEvents);
     GV->WebServer->begin();
   }
+}
+
+/*-------------------------------------------------------------------------------------------*/
+
+void GVStop(void) {
+  GV->sse_ready = false;
+  GV->ticker.detach();
+
+  GV->WebServer->stop();
+  GV->WebServer = nullptr;
 }
 
 /*********************************************************************************************/
@@ -264,6 +270,27 @@ void GVWebserverSendJson(String &jsonResponse) {
 #endif  // GV_DEBUG
   GV->WebServer->send(200, "application/json", jsonResponse);
 }
+
+/*-------------------------------------------------------------------------------------------*/
+
+void GVHandleEvents(void) {
+  GVWebClient = GV->WebServer->client();
+  GVWebClient.setNoDelay(true);
+//  GVWebClient.setSync(true);
+
+  GV->WebServer->setContentLength(CONTENT_LENGTH_UNKNOWN);  // The payload can go on forever
+  GV->WebServer->sendContent_P(HTTP_GV_EVENT);
+#ifdef ESP32
+  GVWebClient.setSSE(true);
+#endif
+  GV->sse_ready = true;                                     // Ready for async updates
+  if (GV->sampling != 100) {
+    GV->ticker.attach_ms(GV->sampling, GVMonitorTask);      // Use Tasmota Scheduler (100) or Ticker (20..99,101..1000)
+  }
+  AddLog(LOG_LEVEL_DEBUG, PSTR("IOV: Connected"));
+}
+
+/*********************************************************************************************/
 
 void GVHandleRelease(void) {
   String jsonResponse = "{\"release\":\"" + String(GVRelease) + "\"}";
@@ -443,25 +470,6 @@ void GVHandlePinFunctions(void) {
   GVWebserverSendJson(jsonResponse);
 }
 
-/*-------------------------------------------------------------------------------------------*/
-
-void GVHandleEvents(void) {
-  GVWebClient = GV->WebServer->client();
-  GVWebClient.setNoDelay(true);
-//  GVWebClient.setSync(true);
-
-  GV->WebServer->setContentLength(CONTENT_LENGTH_UNKNOWN);  // The payload can go on forever
-  GV->WebServer->sendContent_P(HTTP_GV_EVENT);
-#ifdef ESP32
-  GVWebClient.setSSE(true);
-#endif
-  GV->sse_ready = true;                                     // Ready for async updates
-  if (GV->sampling != 100) {
-    GV->ticker.attach_ms(GV->sampling, GVMonitorTask);      // Use Tasmota Scheduler (100) or Ticker (20..99,101..1000)
-  }
-  AddLog(LOG_LEVEL_DEBUG, PSTR("IOV: Connected"));
-}
-
 /*********************************************************************************************/
 
 void GVEventDisconnected(void) {
@@ -472,12 +480,16 @@ void GVEventDisconnected(void) {
   GV->ticker.detach();
 }
 
+/*-------------------------------------------------------------------------------------------*/
+
 void GVCloseEvent(void) {
   if (GV->WebServer) {
     GVEventSend("{}", "close", millis());                   // Closes web page
     GVEventDisconnected();
   }
 }
+
+/*-------------------------------------------------------------------------------------------*/
 
 //void GVEventSend(const char *message, const char *event=NULL, uint32_t id=0, uint32_t reconnect=0);
 void GVEventSend(const char *message, const char *event, uint32_t id) {
