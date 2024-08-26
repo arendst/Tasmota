@@ -185,6 +185,12 @@ char *Get_esc_char(char *cp, char *esc_chr);
 #endif
 #endif // ESP32
 
+#ifdef ESP32
+#include "driver/i2s_std.h"
+#include "driver/i2s_pdm.h"
+#endif
+
+
 #ifdef SCRIPT_FULL_OPTIONS
 
 #undef USE_BUTTON_EVENT
@@ -722,7 +728,14 @@ typedef struct {
 
   uint16_t ufs_script_size;
 
+#ifdef USE_PLAY_WAVE
+#ifdef ESP32
+  i2s_chan_handle_t tx_handle;
+#endif
+#endif
+
 } SCRIPT_MEM;
+
 
 SCRIPT_MEM glob_script_mem;
 
@@ -792,6 +805,7 @@ int32_t script_ow(uint8_t sel, uint32_t val);
 int32_t script_logfile_write(char *path, char *payload, uint32_t size);
 void script_sort_array(TS_FLOAT *array, uint16_t size);
 uint32_t Touch_Status(int32_t sel);
+int32_t play_wave(char *path);
 
 void ScriptEverySecond(void) {
 
@@ -4877,7 +4891,7 @@ char *Plugin_Query(uint8_t, uint8_t);
           len++;
           goto exit;
         }
-#if  defined(ESP32) && (defined(USE_I2S_AUDIO) || defined(USE_TTGO_WATCH) || defined(USE_M5STACK_CORE2))
+#if  defined(ESP32) && defined(USE_I2S_AUDIO)
         if (!strncmp_XP(lp, XPSTR("pl("), 3)) {
           char path[SCRIPT_MAX_SBSIZE];
           lp = GetStringArgument(lp + 3, OPER_EQU, path, 0);
@@ -4952,6 +4966,14 @@ char *Plugin_Query(uint8_t, uint8_t);
           goto exit;
         }
 
+#ifdef USE_PLAY_WAVE
+        if (!strncmp_XP(lp, XPSTR("pwav("), 5)) {
+          char str[SCRIPT_MAX_SBSIZE];
+          lp = GetStringArgument(lp + 5, OPER_EQU, str, 0);
+          fvar = play_wave(str);
+          goto nfuncexit;
+        }
+#endif // USE_PLAY_WAVE
         break;
 
       case 'r':
@@ -6620,6 +6642,169 @@ char *getop(char *lp, uint8_t *operand) {
     *operand = 0;
     return lp;
 }
+
+
+
+#ifdef USE_PLAY_WAVE
+
+#ifdef ESP8266
+#include <i2s.h>
+#include <i2s_reg.h>
+/*
+i2S on ESP8266
+dout  = 3   	(RX)
+clk   = 15	  (D8)
+ws    = 2		  (D4)
+*/
+#endif // ESP8266
+
+
+// RIFF header
+typedef struct {
+    uint32_t ChunkID; //"RIFF"
+    uint32_t ChunkSize; //"36 + sizeof(wav_data_t) + data"
+    uint32_t Format; // "WAV"
+} wav_riff_t;
+
+// FMT header
+typedef struct {
+    uint32_t Subchunk1ID; //"fmt "
+    uint32_t Subchunk1Size; //16 (PCM)
+    uint16_t AudioFormat; // 1 'cause PCM
+    uint16_t NumChannels; // mono = 1; stereo = 2
+    uint32_t SampleRate; // 8000, 44100, etc.
+    uint32_t ByteRate; //== SampleRate * NumChannels * byte
+    uint16_t BlockAlign; //== NumChannels * bytePerSample
+    uint16_t BytesPerSample; //8 byte = 8, 16 byte = 16, etc.
+} wav_fmt_t;
+
+// Data header
+typedef struct {
+    uint32_t Subchunk2ID; //"data"
+    uint32_t Subchunk2Size; //== NumSamples * NumChannels * bytePerSample/8
+} wav_data_t;
+
+
+// complete header
+typedef struct {
+    wav_riff_t Riff;
+    wav_fmt_t Fmt;
+    wav_data_t Data;
+} wav_header_t;
+
+
+// we assume 1 channel with 8khz
+int32_t play_wave(char *path) {
+
+
+#ifdef ESP32
+  if (path[0] == 'i' && path[1] == ':') {
+    // get esp32 i2s pins
+    char *cp = &path[2];
+    uint8_t bck = strtol(cp, &cp, 10);
+    cp++;
+    uint8_t ws = strtol(cp, &cp, 10);
+    cp++;
+    uint8_t dout = strtol(cp, &cp, 10);
+    cp++;
+    uint8_t mode = strtol(cp, &cp, 10);
+
+    i2s_chan_config_t chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_AUTO, I2S_ROLE_MASTER);
+    i2s_new_channel(&chan_cfg, &glob_script_mem.tx_handle, NULL);
+
+    i2s_std_slot_config_t slot_cfg;
+    switch (mode) {
+        case 0:
+          slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_MONO);
+          break;
+        case 1:
+          slot_cfg = I2S_STD_MSB_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_MONO);
+          break;
+        default:
+          slot_cfg = I2S_STD_PCM_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_MONO);
+          break;
+    }
+
+    i2s_std_config_t std_cfg = { 
+        .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(8000),
+        .slot_cfg = slot_cfg,
+        .gpio_cfg = {
+          .mclk = I2S_GPIO_UNUSED,
+          .bclk = (gpio_num_t)bck,
+          .ws = (gpio_num_t)ws,
+          .dout = (gpio_num_t)dout,
+          .din = I2S_GPIO_UNUSED,
+          .invert_flags = {
+            .mclk_inv = false,
+            .bclk_inv = false,
+            .ws_inv = false,
+          },
+        },
+    };
+
+    /* Initialize the channel */
+    i2s_channel_init_std_mode(glob_script_mem.tx_handle, &std_cfg);
+    return 0;
+  }
+#endif
+
+File wf = ufsp->open(path, FS_FILE_READ);
+  if (!wf) {
+    return -1;
+  }
+
+  int16_t buffer[512]; 
+
+  uint32_t fsize = wf.size();
+ 
+  // check for RIFF
+   wf.readBytes((char*)buffer, sizeof(wav_header_t));
+   wav_header_t *wh = (wav_header_t *)buffer;
+   // 0x52494646
+  if (wh->Riff.ChunkID != 0x46464952 && wh->Fmt.NumChannels != 1) {
+    wf.close();
+    return -2;
+  }
+  fsize -= sizeof(wav_header_t);
+
+#ifdef ESP8266
+  i2s_begin();
+  i2s_set_rate(wh->Fmt.SampleRate);
+
+  while (wf.position() < fsize) {
+    int numBytes = _min(sizeof(buffer), fsize - wf.position() - 1);
+    int bytesread = wf.readBytes((char*)buffer, numBytes);
+    if (!bytesread) {
+      break;
+    }
+    for (int i = 0; i < numBytes / 2; i++) {
+      i2s_write_sample(buffer[i]);
+      OsWatchLoop();
+    }
+  }
+
+  i2s_end();
+#endif // ESP8266
+
+#ifdef ESP32
+  i2s_channel_enable(glob_script_mem.tx_handle);
+  while (wf.position() < fsize) {
+    int numBytes = _min(sizeof(buffer), fsize - wf.position() - 1);
+    int bytesread = wf.readBytes((char*)buffer, numBytes);
+    if (!bytesread) {
+      break;
+    }
+    i2s_channel_write(glob_script_mem.tx_handle, buffer, numBytes, nullptr, 100);
+    OsWatchLoop();
+  }
+  i2s_channel_disable(glob_script_mem.tx_handle);
+#endif // ESP32
+
+  wf.close();
+  return 0;
+}
+#endif // USE_PLAY_WAVE
+
 
 #ifdef USE_SCRIPT_FATFS_EXT
 #ifdef USE_UFILESYS
@@ -8823,13 +9008,14 @@ bool Is_gpio_used(uint8_t gpiopin) {
 }
 
 void ScripterEvery100ms(void) {
+  static uint8_t xsns_index = 0;
+
   if (bitRead(Settings->rule_enabled, 0) && (TasmotaGlobal.uptime > 4)) {
     if (GetNextSensor()) {
       //Run_Scripter(">T", 2, ResponseData());
       if (glob_script_mem.teleperiod) Run_Scripter(glob_script_mem.teleperiod, 0, ResponseData());
     }
   }
-
   if (bitRead(Settings->rule_enabled, 0)) {
     if (glob_script_mem.fast_script) Run_Scripter1(glob_script_mem.fast_script, 0, 0);
   }
@@ -10648,9 +10834,10 @@ uint32_t fsize;
     #define fileHeaderSize 14
     #define infoHeaderSize 40
 
-    if (renderer && renderer->framebuffer) {
+     if (renderer && (renderer->framebuffer || renderer->rgb_fb)) {
       uint8_t *bp = renderer->framebuffer;
-      uint8_t *lbuf = (uint8_t*)special_malloc(Settings->display_width * 3 + 2);
+      uint16_t *dwp = renderer->rgb_fb;
+      uint8_t *lbuf = (uint8_t*)special_malloc(Settings->display_width * 3 + 6);
       memset(lbuf, 0, Settings->display_width * 3);
       if (!lbuf) return -3;
       uint8_t dmflg = 0;
@@ -10728,6 +10915,19 @@ uint32_t fsize;
 #endif
               }
             }
+          } else if (bpp == 16) {
+            // RGB displays have RAM display buffer only ESP32 S3
+            lbp = lbuf;
+            dwp = renderer->rgb_fb + ((Settings->display_height - lins - 1) * Settings->display_width);
+            for (uint32_t cols = 0; cols < Settings->display_width; cols++) {
+              uint16_t color = *dwp++;
+              if (renderer->lvgl_pars()->swap_color) {
+                color = (color >> 8) | (color << 8);
+              }
+              *lbp++ = (color &0x001f) << 3; // B  (5 bit)
+              *lbp++ = (color &0x07e0) >> 3; // >> 5 G (6 bit)
+              *lbp++ = (color &0xf800) >> 8; // >> 10 R (5 bit)
+            }
           } else {
             // one bit
             for (uint32_t cols = 0; cols < Settings->display_width; cols += 8) {
@@ -10748,6 +10948,7 @@ uint32_t fsize;
             }
           }
           client.write((const char*)lbuf, Settings->display_width * 3);
+          client.flush();
         }
       }
       if (lbuf) free(lbuf);

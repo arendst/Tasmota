@@ -396,7 +396,7 @@ class uDisplay : public Renderer {
 #if ESP_IDF_VERSION_MAJOR < 5
    esp_rgb_panel_t *_rgb_panel;
 #endif //ESP_IDF_VERSION_MAJOR < 5
-   uint16_t *rgb_fb;
+   
 
 
    esp_lcd_i80_bus_handle_t _i80_bus = nullptr;
