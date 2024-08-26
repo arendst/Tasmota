@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- ESP32 platform update from 2024.08.10 to 2024.08.11 (#22021)
 
 ### Fixed
 - Matter fixed UI bug when no endpoints configured (#22008)
