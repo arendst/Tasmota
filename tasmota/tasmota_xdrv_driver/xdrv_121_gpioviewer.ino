@@ -452,7 +452,9 @@ void GVHandleEvents(void) {
 
   GV->WebServer->setContentLength(CONTENT_LENGTH_UNKNOWN);  // The payload can go on forever
   GV->WebServer->sendContent_P(HTTP_GV_EVENT);
-
+#ifdef ESP32
+  GVWebClient.setSSE(true);
+#endif
   GV->sse_ready = true;                                     // Ready for async updates
   if (GV->sampling != 100) {
     GV->ticker.attach_ms(GV->sampling, GVMonitorTask);      // Use Tasmota Scheduler (100) or Ticker (20..99,101..1000)
