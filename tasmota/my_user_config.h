@@ -789,8 +789,9 @@
 #endif  // USE_I2C
 
 //  #define USE_DISPLAY                            // Add I2C/TM1637/MAX7219 Display Support (+2k code)
-//    #define USE_DISPLAY_TM1637                   // [DisplayModel 15] Enable TM1637 Module
-//    #define USE_DISPLAY_MAX7219                  // [DisplayModel 19] Enable MAX7219 Module
+//    #define USE_DISPLAY_TM1637                   // [DisplayModel 15] Enable TM1637 Seven Segment Display Module (4-6 digits)
+//    #define USE_DISPLAY_MAX7219                  // [DisplayModel 15] Enable MAX7219 Seven Segment Display Module (8 digits)
+//    #define USE_DISPLAY_MAX7219_MATRIX           // [DisplayModel 19] Enable MAX7219 8x8 Matrix Display
 
 // -- Universal Display Driver ---------------------------------
 // #define USE_UNIVERSAL_DISPLAY                   // New universal display driver for both I2C and SPI
