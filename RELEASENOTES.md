@@ -137,6 +137,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Energy calculation [#20653](https://github.com/arendst/Tasmota/issues/20653)
 - Shutter timing registers overflow [#21966](https://github.com/arendst/Tasmota/issues/21966)
 - PZEM continue energy monitoring when one phase fails [#21968](https://github.com/arendst/Tasmota/issues/21968)
+- BearSSL panic on ESP8266 in rare conditions [#22017](https://github.com/arendst/Tasmota/issues/22017)
+- Zigbee extend timeout for MCU reboot from 5s to 10s [#22009](https://github.com/arendst/Tasmota/issues/22009)
+- Matter fixed UI bug when no endpoints configured [#22008](https://github.com/arendst/Tasmota/issues/22008)
+- Matter fix when Rules are disabled [#22016](https://github.com/arendst/Tasmota/issues/22016)
 
 ### Removed
 - ESP8266 Analog input support using energy driver as only one channel is available

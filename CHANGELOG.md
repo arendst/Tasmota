@@ -12,10 +12,10 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
-- Matter fixed UI bug when no endpoints configured
-- Zigbee extend timeout for MCU reboot from 5s to 10s
-- Matter fix when Rules are disabled
-- BearSSL panic on ESP8266 in rare conditions
+- Matter fixed UI bug when no endpoints configured (#22008)
+- Zigbee extend timeout for MCU reboot from 5s to 10s (#22009)
+- Matter fix when Rules are disabled (#22016)
+- BearSSL panic on ESP8266 in rare conditions (#22017)
 
 ### Removed
 
