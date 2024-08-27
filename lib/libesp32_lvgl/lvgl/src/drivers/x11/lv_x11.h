@@ -39,11 +39,11 @@ typedef void(*lv_x11_close_cb)(void * user_data);
  **********************/
 
 /**
- * create and add keyboard, mouse and scrillwheel objects and connect them to x11 display.
+ * create and add keyboard, mouse and scrollwheel objects and connect them to x11 display.
  *
  * This is a convenience method handling the typical input initialisation of an X11 window:
- * - create keyboard (@ref lv_x11_keyboard_create)
- * - create mouse (with scrollwheel, @ref lv_x11_mouse_create @ref lv_x11_mousewheel_create)
+ * - create keyboard (lv_x11_keyboard_create)
+ * - create mouse (with scrollwheel, lv_x11_mouse_create lv_x11_mousewheel_create)
  *
  * @param[in] disp      the created X11 display object from @ref lv_x11_window_create
  * @param[in] mouse_img optional image description for the mouse cursor (NULL for no/invisible mouse cursor)
@@ -60,7 +60,7 @@ void lv_x11_inputs_create(lv_display_t * disp, lv_image_dsc_t const * mouse_img)
  * @endcode
  * or with mouse cursor icon:
  * @code
- * lv_img_dsc_t mouse_symbol = {.....};
+ * lv_image_dsc_t mouse_symbol = {.....};
  * lv_display_t* disp = lv_x11_window_create("My Window Title", window_width, window_width);
  * lv_x11_inputs_create(disp, &mouse_symbol);
  * @endcode

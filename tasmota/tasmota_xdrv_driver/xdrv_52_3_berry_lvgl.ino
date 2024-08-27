@@ -141,7 +141,7 @@ extern "C" {
       // lv_ft_info_t info = {};
       const char * name = be_tostring(vm, 1);
       int32_t weight = be_toint(vm, 2);
-      int32_t style = be_toint(vm, 3);
+      lv_freetype_font_style_t style = (lv_freetype_font_style_t) be_toint(vm, 3);
       lv_font_t * font = lv_freetype_font_create(name, LV_FREETYPE_FONT_RENDER_MODE_BITMAP, weight, style);
       // lv_ft_font_init(&info);
       // lv_font_t * font = info.font;

@@ -9,10 +9,9 @@
 #include "lv_sdl_keyboard.h"
 #if LV_USE_SDL
 
-#include "../../indev/lv_indev.h"
 #include "../../core/lv_group.h"
 #include "../../stdlib/lv_string.h"
-#include LV_SDL_INCLUDE_PATH
+#include "lv_sdl_private.h"
 
 /*********************
  *      DEFINES
@@ -83,7 +82,7 @@ static void sdl_keyboard_read(lv_indev_t * indev, lv_indev_data_t * data)
         dev->dummy_read = true;
         data->state = LV_INDEV_STATE_PRESSED;
         data->key = dev->buf[0];
-        memmove(dev->buf, dev->buf + 1, len);
+        lv_memmove(dev->buf, dev->buf + 1, len);
     }
 }
 
@@ -99,7 +98,7 @@ static void release_indev_cb(lv_event_t * e)
     }
 }
 
-void _lv_sdl_keyboard_handler(SDL_Event * event)
+void lv_sdl_keyboard_handler(SDL_Event * event)
 {
     uint32_t win_id = UINT32_MAX;
     switch(event->type) {
@@ -113,17 +112,18 @@ void _lv_sdl_keyboard_handler(SDL_Event * event)
             return;
     }
 
-    lv_display_t * disp = _lv_sdl_get_disp_from_win_id(win_id);
+    lv_display_t * disp = lv_sdl_get_disp_from_win_id(win_id);
+
 
     /*Find a suitable indev*/
     lv_indev_t * indev = lv_indev_get_next(NULL);
     while(indev) {
-        if(lv_indev_get_display(indev) == disp && lv_indev_get_type(indev) == LV_INDEV_TYPE_KEYPAD) {
-            break;
+        if(lv_indev_get_type(indev) == LV_INDEV_TYPE_KEYPAD) {
+            /*If disp is NULL for any reason use the first indev with the correct type*/
+            if(disp == NULL || lv_indev_get_display(indev) == disp) break;
         }
         indev = lv_indev_get_next(indev);
     }
-
     if(indev == NULL) return;
     lv_sdl_keyboard_t * dsc = lv_indev_get_driver_data(indev);
 

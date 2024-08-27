@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file lv_math.h
  *
  */
@@ -14,7 +14,6 @@ extern "C" {
  *      INCLUDES
  *********************/
 #include "../lv_conf_internal.h"
-#include <stdint.h>
 #include "lv_types.h"
 
 /*********************
@@ -27,8 +26,11 @@ extern "C" {
 #define LV_BEZIER_VAL_MAX (1L << LV_BEZIER_VAL_SHIFT) /**< Max time in Bezier functions (not [0..1] to use integers)*/
 #define LV_BEZIER_VAL_FLOAT(f) ((int32_t)((f) * LV_BEZIER_VAL_MAX)) /**< Convert const float number cubic-bezier values to fix-point value*/
 
-/*Align up value x to align, align must be a power of two*/
+/** Align up value x to align, align must be a power of two */
 #define LV_ALIGN_UP(x, align) (((x) + ((align) - 1)) & ~((align) - 1))
+
+/** Round up value x to round, round can be any integer number */
+#define LV_ROUND_UP(x, round) ((((x) + ((round) - 1)) / (round)) * (round))
 
 /**********************
  *      TYPEDEFS
@@ -51,10 +53,7 @@ typedef struct {
  */
 int32_t /* LV_ATTRIBUTE_FAST_MEM */ lv_trigo_sin(int16_t angle);
 
-static inline int32_t LV_ATTRIBUTE_FAST_MEM lv_trigo_cos(int16_t angle)
-{
-    return lv_trigo_sin(angle + 90);
-}
+int32_t LV_ATTRIBUTE_FAST_MEM lv_trigo_cos(int16_t angle);
 
 //! @endcond
 
@@ -78,12 +77,8 @@ int32_t lv_cubic_bezier(int32_t x, int32_t x1, int32_t y1, int32_t x2, int32_t y
  * @param u3 must be LV_BEZIER_VAL_MAX
  * @return the value calculated from the given parameters in range of [0..LV_BEZIER_VAL_MAX]
  */
-static inline int32_t lv_bezier3(int32_t t, int32_t u0, uint32_t u1, int32_t u2, int32_t u3)
-{
-    LV_UNUSED(u0);
-    LV_UNUSED(u3);
-    return lv_cubic_bezier(t, 341, u1, 683, u2);
-}
+int32_t lv_bezier3(int32_t t, int32_t u0, uint32_t u1, int32_t u2, int32_t u3);
+
 
 /**
  * Calculate the atan2 of a vector.
@@ -108,6 +103,22 @@ uint16_t lv_atan2(int x, int y);
 void /* LV_ATTRIBUTE_FAST_MEM */ lv_sqrt(uint32_t x, lv_sqrt_res_t * q, uint32_t mask);
 
 //! @endcond
+
+/**
+ * Alternative (fast, approximate) implementation for getting the square root of an integer.
+ * @param x integer which square root should be calculated
+ */
+int32_t /* LV_ATTRIBUTE_FAST_MEM */ lv_sqrt32(uint32_t x);
+
+/**
+ * Calculate the square of an integer (input range is 0..32767).
+ * @param x input
+ * @return square
+ */
+static inline int32_t lv_sqr(int32_t x)
+{
+    return x * x;
+}
 
 /**
  * Calculate the integer exponents.

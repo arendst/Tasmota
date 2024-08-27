@@ -6,7 +6,8 @@
 /*********************
  *      INCLUDES
  *********************/
-#include "lv_obj.h"
+#include "lv_obj_class_private.h"
+#include "lv_obj_private.h"
 #include "lv_global.h"
 #include "../osal/lv_os.h"
 #include "../stdlib/lv_sprintf.h"
@@ -40,7 +41,7 @@ typedef struct _class_info_t {
  *   GLOBAL FUNCTIONS
  **********************/
 
-#if LV_USE_OBJ_ID_BUILTIN
+#if LV_USE_OBJ_ID && LV_USE_OBJ_ID_BUILTIN
 
 void lv_obj_assign_id(const lv_obj_class_t * class_p, lv_obj_t * obj)
 {
@@ -78,9 +79,17 @@ void lv_obj_assign_id(const lv_obj_class_t * class_p, lv_obj_t * obj)
     obj->id = (void *)(lv_uintptr_t)id;
 }
 
+void lv_obj_set_id(lv_obj_t * obj, void * id)
+{
+    LV_ASSERT_NULL(obj);
+    if(obj->id) lv_obj_free_id(obj);
+    obj->id = id;
+}
+
 void lv_obj_free_id(lv_obj_t * obj)
 {
     LV_UNUSED(obj);
+    obj->id = NULL;
 }
 
 const char * lv_obj_stringify_id(lv_obj_t * obj, char * buf, uint32_t len)
@@ -92,7 +101,7 @@ const char * lv_obj_stringify_id(lv_obj_t * obj, char * buf, uint32_t len)
     name = obj->class_p->name;
     if(name == NULL) name = "nameless";
 
-    lv_snprintf(buf, len, "%s%" LV_PRId32 "", name, (uint32_t)(lv_uintptr_t)obj->id);
+    lv_snprintf(buf, len, "%s%" LV_PRIu32 "", name, (uint32_t)(lv_uintptr_t)obj->id);
     return buf;
 }
 
@@ -103,6 +112,11 @@ void lv_objid_builtin_destroy(void)
 
     lv_free(global->objid_array);
     global->objid_count = 0;
+}
+
+int lv_obj_id_compare(const void * id1, const void * id2)
+{
+    return id1 == id2 ? 0 : 1;
 }
 
 #endif /*LV_USE_OBJ_ID_BUILTIN*/

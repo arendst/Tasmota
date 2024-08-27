@@ -16,6 +16,7 @@
 #include "lv_draw_pxp.h"
 
 #if LV_USE_DRAW_PXP
+#include "../../lv_draw_buf_private.h"
 #include "lv_pxp_cfg.h"
 #include "lv_pxp_utils.h"
 
@@ -68,7 +69,7 @@ static void _invalidate_cache(const lv_draw_buf_t * draw_buf, const lv_area_t * 
         uint16_t size = stride * lv_area_get_height(area);
 
         /* Invalidate full buffer. */
-        DCACHE_CleanInvalidateByRange((uint32_t)draw_buf->data, size);
+        DEMO_CleanInvalidateCacheByAddr((void *)draw_buf->data, size);
         return;
     }
 
@@ -103,7 +104,7 @@ static void _invalidate_cache(const lv_draw_buf_t * draw_buf, const lv_area_t * 
     for(uint16_t y = 0; y < area_height; y++) {
         const void * line_addr = buf_u8 + y * stride;
 
-        DCACHE_CleanInvalidateByRange((uint32_t)line_addr, line_size);
+        DEMO_CleanInvalidateCacheByAddr((void *)line_addr, line_size);
     }
 }
 

@@ -6,12 +6,12 @@
  *      INCLUDES
  *********************/
 #include "lv_nuttx_libuv.h"
-#include <stdlib.h>
 
 #include "../../../lvgl.h"
 #include "../../lvgl_private.h"
 
 #if LV_USE_NUTTX
+#include <stdlib.h>
 
 #if LV_USE_NUTTX_LIBUV
 #include <uv.h>
@@ -202,7 +202,7 @@ static void lv_nuttx_uv_disp_poll_cb(uv_poll_t * handle, int status, int events)
     LV_UNUSED(status);
     LV_UNUSED(events);
     uv_poll_stop(handle);
-    _lv_display_refr_timer(NULL);
+    lv_display_refr_timer(NULL);
     fb_ctx->polling = false;
 }
 
@@ -241,7 +241,7 @@ static int lv_nuttx_uv_fb_init(lv_nuttx_uv_t * uv_info, lv_nuttx_uv_ctx_t * uv_c
 
     /* Remove default refr timer. */
 
-    lv_timer_del(disp->refr_timer);
+    lv_timer_delete(disp->refr_timer);
     disp->refr_timer = NULL;
 
     fb_ctx->fb_poll.data = uv_ctx;
