@@ -3,11 +3,14 @@
  *
  */
 
+#include <stdlib.h>
+
 /*********************
  *      INCLUDES
  *********************/
 #include "../lvgl.h" /*To see all the widgets*/
 
+#include "themes/lv_theme_private.h"
 #include "lv_theme_haspmota.h"
 // #include "misc/lv_gc.h"          TODO
 
@@ -633,7 +636,7 @@ lv_theme_t * lv_theme_haspmota_init(lv_display_t * disp, lv_color_t color_primar
      *In a general case styles could be in simple `static lv_style_t my_style...` variables*/
     if(!inited) {
         // LV_GC_ROOT(_lv_theme_default_styles) = lv_mem_alloc(sizeof(my_theme_styles_t));
-        styles = (my_theme_styles_t *)malloc(sizeof(my_theme_styles_t));        // TODO LVGL
+        styles = (my_theme_styles_t *) malloc(sizeof(my_theme_styles_t));        // TODO LVGL
     }
 
     if(LV_HOR_RES <= 320) disp_size = DISP_SMALL;

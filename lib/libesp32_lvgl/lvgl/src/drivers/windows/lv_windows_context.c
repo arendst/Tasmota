@@ -10,7 +10,12 @@
 #include "lv_windows_context.h"
 #if LV_USE_WINDOWS
 
+#ifdef __GNUC__
+    #pragma GCC diagnostic ignored "-Wcast-function-type"
+#endif
+
 #include "lv_windows_display.h"
+#include "lv_windows_input_private.h"
 
 /*********************
  *      DEFINES
@@ -31,32 +36,18 @@ static void lv_windows_delay_callback(uint32_t ms);
 static void lv_windows_check_display_existence_timer_callback(
     lv_timer_t * timer);
 
+static bool lv_windows_window_message_callback_nolock(
+    HWND hWnd,
+    UINT uMsg,
+    WPARAM wParam,
+    LPARAM lParam,
+    LRESULT * plResult);
+
 static LRESULT CALLBACK lv_windows_window_message_callback(
     HWND   hWnd,
     UINT   uMsg,
     WPARAM wParam,
     LPARAM lParam);
-
-bool lv_windows_pointer_device_window_message_handler(
-    HWND hWnd,
-    UINT uMsg,
-    WPARAM wParam,
-    LPARAM lParam,
-    LRESULT * plResult);
-
-bool lv_windows_keypad_device_window_message_handler(
-    HWND hWnd,
-    UINT uMsg,
-    WPARAM wParam,
-    LPARAM lParam,
-    LRESULT * plResult);
-
-bool lv_windows_encoder_device_window_message_handler(
-    HWND hWnd,
-    UINT uMsg,
-    WPARAM wParam,
-    LPARAM lParam,
-    LRESULT * plResult);
 
 /**********************
  *  STATIC VARIABLES
@@ -154,6 +145,7 @@ static void lv_windows_delay_callback(uint32_t ms)
 static void lv_windows_check_display_existence_timer_callback(
     lv_timer_t * timer)
 {
+    LV_UNUSED(timer);
     if(!lv_display_get_next(NULL)) {
         // Don't use lv_deinit() due to it will cause exception when parallel
         // rendering is enabled.
@@ -186,7 +178,7 @@ static HDC lv_windows_create_frame_buffer(
         typedef struct _BITMAPINFO_16BPP {
             BITMAPINFOHEADER bmiHeader;
             DWORD bmiColorMask[3];
-        } BITMAPINFO_16BPP, * PBITMAPINFO_16BPP;
+        } BITMAPINFO_16BPP;
 
         BITMAPINFO_16BPP bitmap_info = { 0 };
 #else
@@ -275,7 +267,7 @@ static void lv_windows_display_timer_callback(lv_timer_t * timer)
                 context->display_device_object,
                 context->display_framebuffer_base,
                 NULL,
-                context->display_framebuffer_size,
+                (uint32_t)context->display_framebuffer_size,
                 LV_DISPLAY_RENDER_MODE_DIRECT);
         }
     }
@@ -290,6 +282,8 @@ static void lv_windows_display_driver_flush_callback(
     const lv_area_t * area,
     uint8_t * px_map)
 {
+    LV_UNUSED(area);
+
     HWND window_handle = lv_windows_get_display_window_handle(display);
     if(!window_handle) {
         lv_display_flush_ready(display);
@@ -465,11 +459,12 @@ static BOOL lv_windows_enable_child_window_dpi_message(
     return function(WindowHandle, TRUE);
 }
 
-static LRESULT CALLBACK lv_windows_window_message_callback(
+static bool lv_windows_window_message_callback_nolock(
     HWND hWnd,
     UINT uMsg,
     WPARAM wParam,
-    LPARAM lParam)
+    LPARAM lParam,
+    LRESULT * plResult)
 {
     switch(uMsg) {
         case WM_CREATE: {
@@ -659,15 +654,15 @@ static LRESULT CALLBACK lv_windows_window_message_callback(
                 lv_windows_window_context_t * context = (lv_windows_window_context_t *)(
                                                             lv_windows_get_window_context(hWnd));
                 if(context) {
-                    LRESULT lResult = 0;
                     if(context->pointer.indev &&
                        lv_windows_pointer_device_window_message_handler(
                            hWnd,
                            uMsg,
                            wParam,
                            lParam,
-                           &lResult)) {
-                        return lResult;
+                           plResult)) {
+                        // Handled
+                        return true;
                     }
                     else if(context->keypad.indev &&
                             lv_windows_keypad_device_window_message_handler(
@@ -675,8 +670,9 @@ static LRESULT CALLBACK lv_windows_window_message_callback(
                                 uMsg,
                                 wParam,
                                 lParam,
-                                &lResult)) {
-                        return lResult;
+                                plResult)) {
+                        // Handled
+                        return true;
                     }
                     else if(context->encoder.indev &&
                             lv_windows_encoder_device_window_message_handler(
@@ -684,16 +680,41 @@ static LRESULT CALLBACK lv_windows_window_message_callback(
                                 uMsg,
                                 wParam,
                                 lParam,
-                                &lResult)) {
-                        return lResult;
+                                plResult)) {
+                        // Handled
+                        return true;
                     }
                 }
 
-                return DefWindowProcW(hWnd, uMsg, wParam, lParam);
+                // Not Handled
+                return false;
             }
     }
 
-    return 0;
+    // Handled
+    *plResult = 0;
+    return true;
+}
+
+static LRESULT CALLBACK lv_windows_window_message_callback(
+    HWND hWnd,
+    UINT uMsg,
+    WPARAM wParam,
+    LPARAM lParam)
+{
+    lv_lock();
+
+    LRESULT lResult = 0;
+    bool Handled = lv_windows_window_message_callback_nolock(
+                       hWnd,
+                       uMsg,
+                       wParam,
+                       lParam,
+                       &lResult);
+
+    lv_unlock();
+
+    return Handled ? lResult : DefWindowProcW(hWnd, uMsg, wParam, lParam);
 }
 
 #endif // LV_USE_WINDOWS

@@ -21,13 +21,26 @@
 /*********************
  *      DEFINES
  *********************/
+#if LV_FS_STDIO_LETTER == '\0'
+    #error "LV_FS_STDIO_LETTER must be set to a valid value"
+#else
+    #if (LV_FS_STDIO_LETTER < 'A') || (LV_FS_STDIO_LETTER > 'Z')
+        #if LV_FS_DEFAULT_DRIVE_LETTER != '\0' /*When using default drive letter, strict format (X:) is mandatory*/
+            #error "LV_FS_STDIO_LETTER must be an upper case ASCII letter"
+        #else /*Lean rules for backward compatibility*/
+            #warning LV_FS_STDIO_LETTER should be an upper case ASCII letter. \
+            Using a slash symbol as drive letter should be replaced with LV_FS_DEFAULT_DRIVE_LETTER mechanism
+        #endif
+    #endif
+#endif
+
 #define MAX_PATH_LEN 256
 
 /**********************
  *      TYPEDEFS
  **********************/
 typedef struct {
-#ifdef WIN32
+#ifdef _WIN32
     HANDLE dir_p;
     char next_fn[MAX_PATH_LEN];
 #else
@@ -276,6 +289,8 @@ static void * fs_dir_open(lv_fs_drv_t * drv, const char * path)
 static lv_fs_res_t fs_dir_read(lv_fs_drv_t * drv, void * dir_p, char * fn, uint32_t fn_len)
 {
     LV_UNUSED(drv);
+    if(fn_len == 0) return LV_FS_RES_INV_PARAM;
+
     dir_handle_t * handle = (dir_handle_t *)dir_p;
 #ifndef WIN32
     struct dirent * entry;
@@ -284,16 +299,16 @@ static lv_fs_res_t fs_dir_read(lv_fs_drv_t * drv, void * dir_p, char * fn, uint3
         if(entry) {
             /*Note, DT_DIR is not defined in C99*/
             if(entry->d_type == DT_DIR) lv_snprintf(fn, fn_len, "/%s", entry->d_name);
-            else lv_strncpy(fn, entry->d_name, fn_len);
+            else lv_strlcpy(fn, entry->d_name, fn_len);
         }
         else {
-            lv_strncpy(fn, "", fn_len);
+            lv_strlcpy(fn, "", fn_len);
         }
     } while(lv_strcmp(fn, "/.") == 0 || lv_strcmp(fn, "/..") == 0);
 #else
-    lv_strncpy(fn, handle->next_fn, fn_len);
+    lv_strlcpy(fn, handle->next_fn, fn_len);
 
-    lv_strncpy(handle->next_fn, "", fn_len);
+    lv_strcpy(handle->next_fn, "");
     WIN32_FIND_DATAA fdata;
 
     if(FindNextFileA(handle->dir_p, &fdata) == false) return LV_FS_RES_OK;

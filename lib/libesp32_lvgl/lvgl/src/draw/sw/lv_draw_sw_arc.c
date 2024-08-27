@@ -6,6 +6,10 @@
 /*********************
  *      INCLUDES
  *********************/
+#include "../../misc/lv_area_private.h"
+#include "lv_draw_sw_mask_private.h"
+#include "blend/lv_draw_sw_blend_private.h"
+#include "../lv_image_decoder_private.h"
 #include "lv_draw_sw.h"
 #if LV_USE_DRAW_SW
 #if LV_DRAW_SW_COMPLEX
@@ -14,7 +18,7 @@
 #include "../../misc/lv_log.h"
 #include "../../stdlib/lv_mem.h"
 #include "../../stdlib/lv_string.h"
-#include "../lv_draw.h"
+#include "../lv_draw_private.h"
 
 static void add_circle(const lv_opa_t * circle_mask, const lv_area_t * blend_area, const lv_area_t * circle_area,
                        lv_opa_t * mask_buf,  int32_t width);
@@ -58,7 +62,7 @@ void lv_draw_sw_arc(lv_draw_unit_t * draw_unit, const lv_draw_arc_dsc_t * dsc, c
 
     lv_area_t area_out = *coords;
     lv_area_t clipped_area;
-    if(!_lv_area_intersect(&clipped_area, &area_out, draw_unit->clip_area)) return;
+    if(!lv_area_intersect(&clipped_area, &area_out, draw_unit->clip_area)) return;
 
     /*Draw a full ring*/
     if(dsc->img_src == NULL &&
@@ -118,22 +122,34 @@ void lv_draw_sw_arc(lv_draw_unit_t * draw_unit, const lv_draw_arc_dsc_t * dsc, c
     blend_dsc.opa = dsc->opa;
     blend_dsc.blend_area = &blend_area;
     blend_dsc.mask_area = &blend_area;
+
+    const uint8_t * img_mask = NULL;
     lv_image_decoder_dsc_t decoder_dsc;
     if(dsc->img_src == NULL) {
         blend_dsc.color = dsc->color;
     }
     else {
-        lv_image_decoder_open(&decoder_dsc, dsc->img_src, NULL);
-        img_area.x1 = 0;
-        img_area.y1 = 0;
-        img_area.x2 = decoder_dsc.decoded->header.w - 1;
-        img_area.y2 = decoder_dsc.decoded->header.h - 1;
-        int32_t ofs = decoder_dsc.decoded->header.w / 2;
-        lv_area_move(&img_area, dsc->center.x - ofs, dsc->center.y - ofs);
-        blend_dsc.src_area = &img_area;
-        blend_dsc.src_buf = decoder_dsc.decoded->data;
-        blend_dsc.src_color_format = decoder_dsc.decoded->header.cf;
-        blend_dsc.src_stride = decoder_dsc.decoded->header.stride;
+        lv_result_t res = lv_image_decoder_open(&decoder_dsc, dsc->img_src, NULL);
+        if(res == LV_RESULT_INVALID || decoder_dsc.decoded == NULL) {
+            LV_LOG_WARN("Can't decode the background image");
+            blend_dsc.color = dsc->color;
+        }
+        else {
+            img_area.x1 = 0;
+            img_area.y1 = 0;
+            img_area.x2 = decoder_dsc.decoded->header.w - 1;
+            img_area.y2 = decoder_dsc.decoded->header.h - 1;
+            int32_t ofs = decoder_dsc.decoded->header.w / 2;
+            lv_area_move(&img_area, dsc->center.x - ofs, dsc->center.y - ofs);
+            blend_dsc.src_area = &img_area;
+            blend_dsc.src_buf = decoder_dsc.decoded->data;
+            blend_dsc.src_stride = decoder_dsc.decoded->header.stride;
+            blend_dsc.src_color_format = decoder_dsc.decoded->header.cf;
+            if(blend_dsc.src_color_format == LV_COLOR_FORMAT_RGB565A8) {
+                blend_dsc.src_color_format = LV_COLOR_FORMAT_RGB565;
+                img_mask = (uint8_t *)blend_dsc.src_buf + blend_dsc.src_stride * lv_area_get_height(blend_dsc.src_area);
+            }
+        }
     }
 
     lv_opa_t * circle_mask = NULL;
@@ -185,6 +201,21 @@ void lv_draw_sw_arc(lv_draw_unit_t * draw_unit, const lv_draw_arc_dsc_t * dsc, c
             }
         }
 
+        /*If it was an RGB565A8 image use consider its A8 part on the mask*/
+        if(img_mask && blend_dsc.mask_res != LV_DRAW_SW_MASK_RES_TRANSP) {
+            const uint8_t * img_mask_tmp = img_mask;
+            img_mask_tmp += blend_dsc.src_stride / 2 * (blend_area.y1 - blend_dsc.src_area->y1);
+            img_mask_tmp += blend_area.x1 - blend_dsc.src_area->x1;
+
+            int32_t i;
+            for(i = 0; i < blend_w; i++) {
+                mask_buf[i] = LV_OPA_MIX2(mask_buf[i], img_mask_tmp[i]);
+            }
+            if(blend_dsc.mask_res == LV_DRAW_SW_MASK_RES_FULL_COVER) {
+                blend_dsc.mask_res = LV_DRAW_SW_MASK_RES_CHANGED;
+            }
+        }
+
         lv_draw_sw_blend(draw_unit, &blend_dsc);
 
         blend_area.y1 ++;
@@ -219,7 +250,7 @@ static void add_circle(const lv_opa_t * circle_mask, const lv_area_t * blend_are
                        lv_opa_t * mask_buf,  int32_t width)
 {
     lv_area_t circle_common_area;
-    if(_lv_area_intersect(&circle_common_area, circle_area, blend_area)) {
+    if(lv_area_intersect(&circle_common_area, circle_area, blend_area)) {
         const lv_opa_t * circle_mask_tmp = circle_mask + width * (circle_common_area.y1 - circle_area->y1);
         circle_mask_tmp += circle_common_area.x1 - circle_area->x1;
 

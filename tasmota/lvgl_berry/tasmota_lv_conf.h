@@ -1,6 +1,6 @@
 /**
  * @file lv_conf.h
- * Configuration file for v9.1.0
+ * Configuration file for v9.2.0
  */
 
 /*
@@ -26,7 +26,7 @@
    COLOR SETTINGS
  *====================*/
 
-/*Color depth: 8 (A8), 16 (RGB565), 24 (RGB888), 32 (XRGB8888)*/
+/*Color depth: 1 (I1), 8 (L8), 16 (RGB565), 24 (RGB888), 32 (XRGB8888)*/
 #define LV_COLOR_DEPTH 16
 
 /*=========================
@@ -44,6 +44,12 @@
 #define LV_USE_STDLIB_STRING    LV_STDLIB_CLIB          // TASMOTA
 #define LV_USE_STDLIB_SPRINTF   LV_STDLIB_CLIB          // TASMOTA
 
+#define LV_STDINT_INCLUDE       <stdint.h>
+#define LV_STDDEF_INCLUDE       <stddef.h>
+#define LV_STDBOOL_INCLUDE      <stdbool.h>
+#define LV_INTTYPES_INCLUDE     <inttypes.h>
+#define LV_LIMITS_INCLUDE       <limits.h>
+#define LV_STDARG_INCLUDE       <stdarg.h>
 
 #if LV_USE_STDLIB_MALLOC == LV_STDLIB_BUILTIN
     /*Size of the memory available for `lv_malloc()` in bytes (>= 2kB)*/
@@ -82,6 +88,7 @@
  * - LV_OS_CMSIS_RTOS2
  * - LV_OS_RTTHREAD
  * - LV_OS_WINDOWS
+ * - LV_OS_MQX
  * - LV_OS_CUSTOM */
 #define LV_USE_OS   LV_OS_NONE
 
@@ -99,6 +106,12 @@
 /*Align the start address of draw_buf addresses to this bytes*/
 #define LV_DRAW_BUF_ALIGN                       4
 
+/*Using matrix for transformations.
+ *Requirements:
+    `LV_USE_MATRIX = 1`.
+    The rendering engine needs to support 3x3 matrix transformations.*/
+#define LV_DRAW_TRANSFORM_USE_MATRIX            0
+
 /* If a widget has `style_opa < 255` (not `bg_opa`, `text_opa` etc) or not NORMAL blend mode
  * it is buffered into a "simple" layer before rendering. The widget can be buffered in smaller chunks.
  * "Transformed layers" (if `transform_angle/zoom` are set) use larger buffers
@@ -107,11 +120,34 @@
 /*The target buffer size for simple layer chunks.*/
 #define LV_DRAW_LAYER_SIMPLE_BUF_SIZE    (24 * 1024)   /*[bytes]*/
 
+/* The stack size of the drawing thread.
+ * NOTE: If FreeType or ThorVG is enabled, it is recommended to set it to 32KB or more.
+ */
+#define LV_DRAW_THREAD_STACK_SIZE    (8 * 1024)   /*[bytes]*/
+
 #define LV_USE_DRAW_SW 1
 #if LV_USE_DRAW_SW == 1
-    /* Set the number of draw unit.
+
+	/*
+	 * Selectively disable color format support in order to reduce code size.
+	 * NOTE: some features use certain color formats internally, e.g.
+	 * - gradients use RGB888
+	 * - bitmaps with transparency may use ARGB8888
+	 */
+
+	#define LV_DRAW_SW_SUPPORT_RGB565		1
+	#define LV_DRAW_SW_SUPPORT_RGB565A8		1
+	#define LV_DRAW_SW_SUPPORT_RGB888		1
+	#define LV_DRAW_SW_SUPPORT_XRGB8888		0
+	#define LV_DRAW_SW_SUPPORT_ARGB8888		1
+	#define LV_DRAW_SW_SUPPORT_L8			0
+	#define LV_DRAW_SW_SUPPORT_AL88			1
+	#define LV_DRAW_SW_SUPPORT_A8			0
+	#define LV_DRAW_SW_SUPPORT_I1			1
+
+	/* Set the number of draw unit.
      * > 1 requires an operating system enabled in `LV_USE_OS`
-     * > 1 means multiply threads will render the screen in parallel */
+     * > 1 means multiple threads will render the screen in parallel */
     #define LV_DRAW_SW_DRAW_UNIT_CNT    1
 
     /* Use Arm-2D to accelerate the sw render */
@@ -119,7 +155,7 @@
 
     /* Enable native helium assembly to be compiled */
     #define LV_USE_NATIVE_HELIUM_ASM    0
-    
+
     /* 0: use a simple renderer capable of drawing only simple rectangles with gradient, images, texts, and straight lines only
      * 1: use a complex renderer capable of drawing rounded corners, shadow, skew lines, and arcs too */
     #define LV_DRAW_SW_COMPLEX          1
@@ -142,6 +178,9 @@
     #if LV_USE_DRAW_SW_ASM == LV_DRAW_SW_ASM_CUSTOM
         #define  LV_DRAW_SW_ASM_CUSTOM_INCLUDE ""
     #endif
+
+    /* Enable drawing complex gradients in software: linear at an angle, radial or conical */
+    #define LV_USE_DRAW_SW_COMPLEX_GRADIENTS    0
 #endif
 
 /* Use NXP's VG-Lite GPU on iMX RTxxx platforms. */
@@ -152,8 +191,13 @@
     #define LV_USE_VGLITE_BLIT_SPLIT 0
 
     #if LV_USE_OS
-        /* Enable VGLite draw async. Queue multiple tasks and flash them once to the GPU. */
-        #define LV_USE_VGLITE_DRAW_ASYNC 1
+        /* Use additional draw thread for VG-Lite processing.*/
+        #define LV_USE_VGLITE_DRAW_THREAD 1
+
+        #if LV_USE_VGLITE_DRAW_THREAD
+            /* Enable VGLite draw async. Queue multiple tasks and flash them once to the GPU. */
+            #define LV_USE_VGLITE_DRAW_ASYNC 1
+        #endif
     #endif
 
     /* Enable VGLite asserts. */
@@ -164,6 +208,11 @@
 #define LV_USE_DRAW_PXP 0
 
 #if LV_USE_DRAW_PXP
+    #if LV_USE_OS
+        /* Use additional draw thread for PXP processing.*/
+        #define LV_USE_PXP_DRAW_THREAD 1
+    #endif
+
     /* Enable PXP asserts. */
     #define LV_USE_PXP_ASSERT 0
 #endif
@@ -178,24 +227,28 @@
 #define LV_USE_DRAW_VG_LITE 0
 
 #if LV_USE_DRAW_VG_LITE
-/* Enable VG-Lite custom external 'gpu_init()' function */
-#define LV_VG_LITE_USE_GPU_INIT 0
+    /* Enable VG-Lite custom external 'gpu_init()' function */
+    #define LV_VG_LITE_USE_GPU_INIT 0
 
-/* Enable VG-Lite assert. */
-#define LV_VG_LITE_USE_ASSERT 0
+    /* Enable VG-Lite assert. */
+    #define LV_VG_LITE_USE_ASSERT 0
 
-/* VG-Lite flush commit trigger threshold. GPU will try to batch these many draw tasks. */
-#define LV_VG_LITE_FLUSH_MAX_COUNT 8
+    /* VG-Lite flush commit trigger threshold. GPU will try to batch these many draw tasks. */
+    #define LV_VG_LITE_FLUSH_MAX_COUNT 8
 
-/* Enable border to simulate shadow
- * NOTE: which usually improves performance,
- * but does not guarantee the same rendering quality as the software. */
-#define LV_VG_LITE_USE_BOX_SHADOW 0
+    /* Enable border to simulate shadow
+     * NOTE: which usually improves performance,
+     * but does not guarantee the same rendering quality as the software. */
+    #define LV_VG_LITE_USE_BOX_SHADOW 0
 
-/* VG-Lite gradient image maximum cache number.
- * NOTE: The memory usage of a single gradient image is 4K bytes.
- */
-#define LV_VG_LITE_GRAD_CACHE_SIZE 32
+    /* VG-Lite gradient maximum cache number.
+     * NOTE: The memory usage of a single gradient image is 4K bytes.
+     */
+    #define LV_VG_LITE_GRAD_CACHE_CNT 32
+
+    /* VG-Lite stroke maximum cache number.
+     */
+    #define LV_VG_LITE_STROKE_CACHE_CNT 32
 
 #endif
 
@@ -224,6 +277,11 @@
     *0: User need to register a callback with `lv_log_register_print_cb()`*/
     #define LV_LOG_PRINTF 0
 
+    /*Set callback to print the logs.
+     *E.g `my_print`. The prototype should be `void my_print(lv_log_level_t level, const char * buf)`
+     *Can be overwritten by `lv_log_register_print_cb`*/
+    //#define LV_LOG_PRINT_CB
+
     /*1: Enable print timestamp;
      *0: Disable print timestamp*/
     #define LV_LOG_USE_TIMESTAMP 1
@@ -231,6 +289,7 @@
     /*1: Print file and line number of the log;
      *0: Do not print file and line number of the log*/
     #define LV_LOG_USE_FILE_LINE 1
+
 
     /*Enable/disable LV_LOG_TRACE in modules that produces a huge number of logs*/
     #define LV_LOG_TRACE_MEM        0
@@ -296,7 +355,7 @@
 
 /*Default number of image header cache entries. The cache is used to store the headers of images
  *The main logic is like `LV_CACHE_DEF_SIZE` but for image headers.*/
-#define LV_IMAGE_HEADER_CACHE_DEF_CNT 10
+#define LV_IMAGE_HEADER_CACHE_DEF_CNT 0
 
 /*Number of stops allowed per gradient. Increase this to allow more stops.
  *This adds (sizeof(lv_color_t) + 1) bytes per additional stop*/
@@ -312,11 +371,22 @@
 /* Add `id` field to `lv_obj_t` */
 #define LV_USE_OBJ_ID           1       // TASMOTA
 
-/* Use lvgl builtin method for obj ID */
-#define LV_USE_OBJ_ID_BUILTIN   1       // TASMOTA
+/* Automatically assign an ID when obj is created */
+#define LV_OBJ_ID_AUTO_ASSIGN   LV_USE_OBJ_ID
+
+/*Use the builtin obj ID handler functions:
+* - lv_obj_assign_id:       Called when a widget is created. Use a separate counter for each widget class as an ID.
+* - lv_obj_id_compare:      Compare the ID to decide if it matches with a requested value.
+* - lv_obj_stringify_id:    Return e.g. "button3"
+* - lv_obj_free_id:         Does nothing, as there is no memory allocation  for the ID.
+* When disabled these functions needs to be implemented by the user.*/
+#define LV_USE_OBJ_ID_BUILTIN   1
 
 /*Use obj property set/get API*/
 #define LV_USE_OBJ_PROPERTY 0
+
+/*Enable property name support*/
+#define LV_USE_OBJ_PROPERTY_NAME 0      // TASMOTA
 
 /* VG-Lite Simulator */
 /*Requires: LV_USE_THORVG_INTERNAL or LV_USE_THORVG_EXTERNAL */
@@ -329,6 +399,9 @@
 
     /*Enable YUV color format support*/
     #define LV_VG_LITE_THORVG_YUV_SUPPORT 0
+
+    /*Enable Linear gradient extension support*/
+    #define LV_VG_LITE_THORVG_LINEAR_GRADIENT_EXT_SUPPORT 0
 
     /*Enable 16 pixels alignment*/
     #define LV_VG_LITE_THORVG_16PIXELS_ALIGN 1
@@ -374,7 +447,7 @@
 #define LV_ATTRIBUTE_FAST_MEM
 
 /*Export integer constant to binding. This macro is used with constants in the form of LV_<CONST> that
- *should also appear on LVGL binding API such as Micropython.*/
+ *should also appear on LVGL binding API such as MicroPython.*/
 #define LV_EXPORT_CONST_INT(int_value) struct _silence_gcc_warning /*The default value just prevents GCC warning*/
 
 /*Prefix all global extern data with this*/
@@ -382,6 +455,13 @@
 
 /* Use `float` as `lv_value_precise_t` */
 #define LV_USE_FLOAT            0
+
+/*Enable matrix support
+ *Requires `LV_USE_FLOAT = 1`*/
+#define LV_USE_MATRIX           0
+
+/*Include `lvgl_private.h` in `lvgl.h` to access internal data and functions by default*/
+#define LV_USE_PRIVATE_API		0
 
 /*==================
  *   FONT USAGE
@@ -542,7 +622,7 @@
 #endif
 
 /*Enable Arabic/Persian processing
- *In these languages characters should be replaced with an other form based on their position in the text*/
+ *In these languages characters should be replaced with another form based on their position in the text*/
 #define LV_USE_ARABIC_PERSIAN_CHARS 0
 
 /*==================
@@ -575,6 +655,7 @@
     #define LV_CALENDAR_DEFAULT_MONTH_NAMES {"January", "February", "March",  "April", "May",  "June", "July", "August", "September", "October", "November", "December"}
     #define LV_USE_CALENDAR_HEADER_ARROW 1
     #define LV_USE_CALENDAR_HEADER_DROPDOWN 1
+    #define LV_USE_CALENDAR_CHINESE 0
 #endif  /*LV_USE_CALENDAR*/
 
 #define LV_USE_CANVAS     1
@@ -603,6 +684,8 @@
 #define LV_USE_LINE       1
 
 #define LV_USE_LIST       1
+
+#define LV_USE_LOTTIE     0  /*Requires: lv_canvas, thorvg */
 
 #define LV_USE_MENU       1
 
@@ -679,6 +762,9 @@
 
 /*File system interfaces for common APIs */
 
+/*Setting a default driver letter allows skipping the driver prefix in filepaths*/
+#define LV_FS_DEFAULT_DRIVE_LETTER '\0'
+
 /*API for fopen, fread, etc*/
 #define LV_USE_FS_STDIO 0
 #if LV_USE_FS_STDIO
@@ -722,6 +808,18 @@
     #define LV_FS_LITTLEFS_LETTER '\0'     /*Set an upper cased letter on which the drive will accessible (e.g. 'A')*/
 #endif
 
+/*API for Arduino LittleFs. */
+#define LV_USE_FS_ARDUINO_ESP_LITTLEFS 0
+#if LV_USE_FS_ARDUINO_ESP_LITTLEFS
+    #define LV_FS_ARDUINO_ESP_LITTLEFS_LETTER '\0'     /*Set an upper cased letter on which the drive will accessible (e.g. 'A')*/
+#endif
+
+/*API for Arduino Sd. */
+#define LV_USE_FS_ARDUINO_SD 0
+#if LV_USE_FS_ARDUINO_SD
+    #define LV_FS_ARDUINO_SD_LETTER '\0'     /*Set an upper cased letter on which the drive will accessible (e.g. 'A')*/
+#endif
+
 /*LODEPNG decoder library*/
 #define LV_USE_LODEPNG 1       // TASMOTA
 
@@ -742,8 +840,8 @@
 /*GIF decoder library*/
 #define LV_USE_GIF 0
 #if LV_USE_GIF
-/*GIF decoder accelerate*/
-#define LV_GIF_CACHE_DECODE_DATA 0
+    /*GIF decoder accelerate*/
+    #define LV_GIF_CACHE_DECODE_DATA 0
 #endif
 
 
@@ -762,9 +860,6 @@
 /*FreeType library*/
 #define LV_USE_FREETYPE 1       // TASMOTA
 #if LV_USE_FREETYPE
-    /*Memory used by FreeType to cache characters in kilobytes*/
-    #define LV_FREETYPE_CACHE_SIZE 64       // TODO TASMOTA (only with PSRAM ?)
-
     /*Let FreeType to use LVGL memory and file porting*/
     #define LV_FREETYPE_USE_LVGL_PORT 0
 
@@ -778,12 +873,14 @@
 #if LV_USE_TINY_TTF
     /* Enable loading TTF data from files */
     #define LV_TINY_TTF_FILE_SUPPORT 0
+    #define LV_TINY_TTF_CACHE_GLYPH_CNT 256
 #endif
 
 /*Rlottie library*/
 #define LV_USE_RLOTTIE 0
 
-/*Enable Vector Graphic APIs*/
+/*Enable Vector Graphic APIs
+ *Requires `LV_USE_MATRIX = 1`*/
 #define LV_USE_VECTOR_GRAPHIC  0
 
 /* Enable ThorVG (vector graphics library) from the src/libs folder */
@@ -885,7 +982,7 @@
 #define LV_USE_IME_PINYIN 0
 #if LV_USE_IME_PINYIN
     /*1: Use default thesaurus*/
-    /*If you do not use the default thesaurus, be sure to use `lv_ime_pinyin` after setting the thesauruss*/
+    /*If you do not use the default thesaurus, be sure to use `lv_ime_pinyin` after setting the thesaurus*/
     #define LV_IME_PINYIN_USE_DEFAULT_DICT 1
     /*Set the maximum number of candidate panels that can be displayed*/
     /*This needs to be adjusted according to the size of the screen*/
@@ -919,6 +1016,7 @@
     #define LV_SDL_INCLUDE_PATH     <SDL2/SDL.h>
     #define LV_SDL_RENDER_MODE      LV_DISPLAY_RENDER_MODE_DIRECT   /*LV_DISPLAY_RENDER_MODE_DIRECT is recommended for best performance*/
     #define LV_SDL_BUF_COUNT        1    /*1 or 2*/
+    #define LV_SDL_ACCELERATED      1    /*1: Use hardware acceleration*/
     #define LV_SDL_FULLSCREEN       0    /*1: Make the window full screen by default*/
     #define LV_SDL_DIRECT_EXIT      1    /*1: Exit the application when all SDL windows are closed*/
     #define LV_SDL_MOUSEWHEEL_MODE  LV_SDL_MOUSEWHEEL_MODE_ENCODER  /*LV_SDL_MOUSEWHEEL_MODE_ENCODER/CROWN*/
@@ -928,11 +1026,18 @@
 #define LV_USE_X11              0
 #if LV_USE_X11
     #define LV_X11_DIRECT_EXIT         1  /*Exit the application when all X11 windows have been closed*/
-    #define LV_X11_DOUBLE_BUFFER       1  /*Use double buffers for endering*/
+    #define LV_X11_DOUBLE_BUFFER       1  /*Use double buffers for rendering*/
     /*select only 1 of the following render modes (LV_X11_RENDER_MODE_PARTIAL preferred!)*/
     #define LV_X11_RENDER_MODE_PARTIAL 1  /*Partial render mode (preferred)*/
     #define LV_X11_RENDER_MODE_DIRECT  0  /*direct render mode*/
     #define LV_X11_RENDER_MODE_FULL    0  /*Full render mode*/
+#endif
+
+/*Use Wayland to open a window and handle input on Linux or BSD desktops */
+#define LV_USE_WAYLAND          0
+#if LV_USE_WAYLAND
+    #define LV_WAYLAND_WINDOW_DECORATIONS   0    /*Draw client side window decorations only necessary on Mutter/GNOME*/
+    #define LV_WAYLAND_WL_SHELL             0    /*Use the legacy wl_shell protocol instead of the default XDG shell*/
 #endif
 
 /*Driver for /dev/fb*/
@@ -989,15 +1094,30 @@
 #endif
 
 /*Drivers for LCD devices connected via SPI/parallel port*/
-#define LV_USE_ST7735		0
-#define LV_USE_ST7789		0
-#define LV_USE_ST7796		0
-#define LV_USE_ILI9341		0
+#define LV_USE_ST7735        0
+#define LV_USE_ST7789        0
+#define LV_USE_ST7796        0
+#define LV_USE_ILI9341       0
 
 #define LV_USE_GENERIC_MIPI (LV_USE_ST7735 | LV_USE_ST7789 | LV_USE_ST7796 | LV_USE_ILI9341)
 
+/*Driver for Renesas GLCD*/
+#define LV_USE_RENESAS_GLCDC    0
+
 /* LVGL Windows backend */
 #define LV_USE_WINDOWS    0
+
+/* Use OpenGL to open window on PC and handle mouse and keyboard */
+#define LV_USE_OPENGLES   0
+#if LV_USE_OPENGLES
+    #define LV_USE_OPENGLES_DEBUG        1    /* Enable or disable debug for opengles */
+#endif
+
+/* QNX Screen display and input drivers */
+#define LV_USE_QNX              0
+#if LV_USE_QNX
+    #define LV_QNX_BUF_COUNT        1    /*1 or 2*/
+#endif
 
 /*==================
 * EXAMPLES
@@ -1049,6 +1169,7 @@
 
 /*Vector graphic demo*/
 #define LV_USE_DEMO_VECTOR_GRAPHIC  0
+
 /*--END OF LV_CONF_H--*/
 
 #endif /*LV_CONF_H*/

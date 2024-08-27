@@ -1578,7 +1578,7 @@ class lvh_line : lvh_obj
       end
       var pt_arr = lv.point_arr(pts)
       self._lv_points = pt_arr
-      self._lv_obj.set_points(pt_arr, size(pts))
+      self._lv_obj.set_points_mutable(pt_arr, size(pts))
     else
       print(f"HSP: 'line' wrong format for 'points' {t}")
     end
@@ -1792,11 +1792,11 @@ class lvh_scale_line : lvh_line
     super(self).set_val(t)
     self._parent_lvh._lv_obj.set_line_needle_value(self._lv_obj, self._needle_length, self._val)
     # work-around for points being global static
-    if (self._lv_obj.get_points_num() == 2)      # check that there are only 2 points
+    if (self._lv_obj.get_point_count() == 2)      # check that there are only 2 points
       # read back the computed points
       var p_arr = bytes(self._lv_obj.get_points(), size(self._lv_points))
       self._lv_points.setbytes(0, p_arr)
-      self._lv_obj.set_points(self._lv_points, 2)
+      self._lv_obj.set_points_mutable(self._lv_points, 2)
     end
   end
 end

@@ -7,7 +7,8 @@
  *      INCLUDES
  *********************/
 
-#include "lv_libinput.h"
+#include "../../indev/lv_indev_private.h"
+#include "lv_libinput_private.h"
 
 #if LV_USE_LIBINPUT
 
@@ -22,6 +23,7 @@
 #include <dirent.h>
 #include <libinput.h>
 #include <pthread.h>
+#include <string.h>
 
 #if LV_LIBINPUT_BSD
     #include <dev/evdev/input.h>
@@ -602,7 +604,7 @@ static void _read_keypad(lv_libinput_t * dsc, struct libinput_event * event)
                 /* Only record button state when actual output is produced to prevent widgets from refreshing */
                 evt->pressed = (key_state == LIBINPUT_KEY_STATE_RELEASED) ? LV_INDEV_STATE_RELEASED : LV_INDEV_STATE_PRESSED;
 
-                // just release the key immediatly after it got pressed.
+                // just release the key immediately after it got pressed.
                 // but don't handle special keys where holding a key makes sense
                 if(evt->key_val != LV_KEY_BACKSPACE &&
                    evt->key_val != LV_KEY_UP &&

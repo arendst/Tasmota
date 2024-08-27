@@ -8,7 +8,7 @@
  *********************/
 #include "lv_flex.h"
 #include "../lv_layout.h"
-#include "../../core/lv_obj.h"
+#include "../../core/lv_obj_private.h"
 
 #if LV_USE_FLEX
 
@@ -96,7 +96,6 @@ void lv_flex_init(void)
 {
     layout_list_def[LV_LAYOUT_FLEX].cb = flex_update;
     layout_list_def[LV_LAYOUT_FLEX].user_data = NULL;
-
 }
 
 void lv_obj_set_flex_flow(lv_obj_t * obj, lv_flex_flow_t flow)
@@ -131,9 +130,9 @@ static void flex_update(lv_obj_t * cont, void * user_data)
 
     flex_t f;
     lv_flex_flow_t flow = lv_obj_get_style_flex_flow(cont, LV_PART_MAIN);
-    f.row = flow & _LV_FLEX_COLUMN ? 0 : 1;
-    f.wrap = flow & _LV_FLEX_WRAP ? 1 : 0;
-    f.rev = flow & _LV_FLEX_REVERSE ? 1 : 0;
+    f.row = flow & LV_FLEX_COLUMN ? 0 : 1;
+    f.wrap = flow & LV_FLEX_WRAP ? 1 : 0;
+    f.rev = flow & LV_FLEX_REVERSE ? 1 : 0;
     f.main_place = lv_obj_get_style_flex_main_place(cont, LV_PART_MAIN);
     f.cross_place = lv_obj_get_style_flex_cross_place(cont, LV_PART_MAIN);
     f.track_place = lv_obj_get_style_flex_track_place(cont, LV_PART_MAIN);
@@ -472,7 +471,6 @@ static void place_content(lv_flex_align_t place, int32_t max_size, int32_t conte
 {
     if(item_cnt <= 1) {
         switch(place) {
-            case LV_FLEX_ALIGN_SPACE_BETWEEN:
             case LV_FLEX_ALIGN_SPACE_AROUND:
             case LV_FLEX_ALIGN_SPACE_EVENLY:
                 place = LV_FLEX_ALIGN_CENTER;
@@ -492,7 +490,7 @@ static void place_content(lv_flex_align_t place, int32_t max_size, int32_t conte
             *start_pos += max_size - content_size;
             break;
         case LV_FLEX_ALIGN_SPACE_BETWEEN:
-            *gap = (int32_t)(max_size - content_size) / (int32_t)(item_cnt - 1);
+            if(item_cnt > 1) *gap = (int32_t)(max_size - content_size) / (int32_t)(item_cnt - 1);
             break;
         case LV_FLEX_ALIGN_SPACE_AROUND:
             *gap += (int32_t)(max_size - content_size) / (int32_t)(item_cnt);

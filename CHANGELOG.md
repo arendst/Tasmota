@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - ESP32 platform update from 2024.08.10 to 2024.08.11 (#22021)
+- ESP32 LVGL library from v9.1.0 to v9.2.0
 
 ### Fixed
 - Matter fixed UI bug when no endpoints configured (#22008)

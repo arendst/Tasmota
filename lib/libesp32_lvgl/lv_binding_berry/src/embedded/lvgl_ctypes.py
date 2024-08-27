@@ -51,7 +51,7 @@ int32_t = ct.i32
 size_t = ct.u32
 ptr = ct.ptr32
 
-lv_point = [            # valid LVGL9
+lv_point = [            # valid LVGL92
     [int32_t, "x"],
     [int32_t, "y"],
 ]
@@ -61,13 +61,13 @@ lv_point = ct.structure(lv_point, "lv_point")
 #     lv_value_precise_t x;
 #     lv_value_precise_t y;
 # } lv_point_precise_t;
-lv_point_precise = [            # valid LVGL9
+lv_point_precise = [            # valid LVGL92
     [lv_value_precise, "x"],
     [lv_value_precise, "y"],
 ]
 lv_point_precise = ct.structure(lv_point_precise, "lv_point_precise")
 
-lv_area = [            # valid LVGL9
+lv_area = [            # valid LVGL92
     [int32_t, "x1"],
     [int32_t, "y1"],
     [int32_t, "x2"],
@@ -82,7 +82,7 @@ lv_area = ct.structure(lv_area, "lv_area")
 #     lv_opa_t   opa;     /**< The opacity of the color*/
 #     uint8_t    frac;    /**< The stop position in 1/255 unit */
 # } lv_gradient_stop_t;
-lv_gradient_stop = [            # valid LVGL91
+lv_gradient_stop = [            # valid LVGL92
     [lv_color, "color"],
     [lv_opa, "opa"],
     [uint8_t, "frac"],
@@ -90,12 +90,15 @@ lv_gradient_stop = [            # valid LVGL91
 lv_gradient_stop = ct.structure(lv_gradient_stop, "lv_gradient_stop")
 
 # typedef struct {
-#     lv_gradient_stop_t   stops[LV_GRADIENT_MAX_STOPS]; /**< A gradient stop array */
-#     uint8_t              stops_count;                  /**< The number of used stops in the array */
-#     lv_grad_dir_t        dir : 3;                      /**< The gradient direction.
+#     lv_gradient_stop_t   stops[LV_GRADIENT_MAX_STOPS];  /**< A gradient stop array */
+#     uint8_t              stops_count;                   /**< The number of used stops in the array */
+#     lv_grad_dir_t        dir : 3;                       /**< The gradient direction.
+#                                                          * Any of LV_GRAD_DIR_NONE, LV_GRAD_DIR_VER, LV_GRAD_DIR_HOR,
+#                                                          * LV_GRAD_TYPE_LINEAR, LV_GRAD_TYPE_RADIAL, LV_GRAD_TYPE_CONICAL */
+#     lv_grad_extend_t     extend : 2;                    /**< Behaviour outside the defined range.
 #                                                         * Any of LV_GRAD_DIR_HOR, LV_GRAD_DIR_VER, LV_GRAD_DIR_NONE */
 # } lv_grad_dsc_t;
-lv_grad_dsc = [            # valid LVGL91
+lv_grad_dsc = [            # valid LVGL92
     # since it's an array and not two structures, we need to explicitly unroll it here or the alignment is wrong
     # [lv_gradient_stop, "stops_0"],
     [lv_color, "stops_0_color"],
@@ -108,6 +111,7 @@ lv_grad_dsc = [            # valid LVGL91
     
     [uint8_t, "stops_count"],
     [uint8_t_3, "dir"],
+    [uint8_t_2, "extend"],
 ]
 lv_grad_dsc = ct.structure(lv_grad_dsc, "lv_grad_dsc")
 
@@ -121,7 +125,7 @@ lv_grad_dsc = ct.structure(lv_grad_dsc, "lv_grad_dsc")
 #     size_t dsc_size;
 #     void * user_data;
 # } lv_draw_dsc_base_t;
-lv_draw_dsc_base = [            # valid LVGL91
+lv_draw_dsc_base = [            # valid LVGL92
     [ptr, "obj"],
     [uint32_t, "part"],
     [uint32_t, "id1"],
@@ -171,7 +175,7 @@ lv_draw_dsc_base = ct.structure(lv_draw_dsc_base, "lv_draw_dsc_base")
 #     int32_t shadow_spread;
 #     lv_opa_t shadow_opa;
 # } lv_draw_rect_dsc_t;
-lv_draw_rect_dsc = [            # valid LVGL91
+lv_draw_rect_dsc = [            # valid LVGL92
     [lv_draw_dsc_base, "base"],
 
     [int32_t, "radius"],
@@ -193,8 +197,8 @@ lv_draw_rect_dsc = [            # valid LVGL91
     [lv_color, "border_color"],
     [int32_t, "border_width"],
     [lv_opa, "border_opa"],
-    [uint8_t_1, "border_post"],
     [uint8_t_5, "border_side"],
+    [uint8_t_1, "border_post"],
 
     #/*Outline*/
     [lv_color, "outline_color"],
@@ -227,7 +231,7 @@ lv_draw_rect_dsc = ct.structure(lv_draw_rect_dsc, "lv_draw_rect_dsc")
 #     uint8_t round_end   : 1;
 #     uint8_t raw_end     : 1;    /*Do not bother with perpendicular line ending if it's not visible for any reason*/
 # } lv_draw_line_dsc_t;
-lv_draw_line_dsc = [            # valid LVGL91
+lv_draw_line_dsc = [            # valid LVGL92
     [lv_draw_dsc_base, "base"],
 
     [lv_point_precise, "p1"],
@@ -257,7 +261,7 @@ lv_draw_line_dsc = ct.structure(lv_draw_line_dsc, "lv_draw_line_dsc")
 #     lv_opa_t opa;
 #     uint8_t rounded : 1;
 # } lv_draw_arc_dsc_t;
-lv_draw_arc_dsc = [            # valid LVGL91
+lv_draw_arc_dsc = [            # valid LVGL92
     [lv_draw_dsc_base, "base"],
 
     [lv_color, "color"],
@@ -283,7 +287,7 @@ lv_draw_arc_dsc = ct.structure(lv_draw_arc_dsc, "lv_draw_arc_dsc")
 #     uint32_t stride: 16;        /*Number of bytes in a row*/
 #     uint32_t reserved_2: 16;    /*Reserved to be used later*/
 # } lv_image_header_t;
-lv_image_header = [            # valid LVGL91
+lv_image_header = [            # valid LVGL92
     [uint8_t, "magic"],
     [uint8_t, "cf"],
     [uint16_t, "flags"],
@@ -323,7 +327,7 @@ lv_image_header = ct.structure(lv_image_header, "lv_image_header")
 #     lv_area_t original_area;
 #     const lv_image_dsc_t * bitmap_mask_src;
 # } lv_draw_image_dsc_t;
-lv_draw_image_dsc = [            # valid LVGL91
+lv_draw_image_dsc = [            # valid LVGL92
     [lv_draw_dsc_base, "base"],
 
     [ptr, "src"],
@@ -343,8 +347,11 @@ lv_draw_image_dsc = [            # valid LVGL91
     [uint8_t_4, "blend_mode"],
     [uint8_t_1, "antialias"],
     [uint8_t_1, "tile"],
-    [lv_area, "original_area"],
     [ptr, "sup"],
+    [lv_area, "image_area"],
+
+    [int32_t, "clip_radius"],
+    [ptr, "bitmap_mask_src"],
 ]
 lv_draw_image_dsc = ct.structure(lv_draw_image_dsc, "lv_draw_image_dsc")
 
@@ -374,7 +381,7 @@ lv_draw_image_dsc = ct.structure(lv_draw_image_dsc, "lv_draw_image_dsc")
 #     uint8_t text_local : 1;
 #     lv_draw_label_hint_t * hint;
 # } lv_draw_label_dsc_t;
-lv_draw_label_dsc = [            # valid LVGL91
+lv_draw_label_dsc = [            # valid LVGL92
     [lv_draw_dsc_base, "base"],
     [ptr, "text"],
     [ptr, "font"],
@@ -409,7 +416,7 @@ lv_draw_label_dsc = ct.structure(lv_draw_label_dsc, "lv_draw_label_dsc")
 #     uint32_t x_axis_sec : 1;
 #     uint32_t y_axis_sec : 1;
 # } lv_chart_series_t;
-lv_chart_series = [            # valid LVGL91
+lv_chart_series = [            # valid LVGL92
     [ptr, "x_points"],
     [ptr, "y_points"],
     [lv_color, "color"],
@@ -430,7 +437,7 @@ lv_chart_series = ct.structure(lv_chart_series, "lv_chart_series")
 #     lv_dir_t dir;
 #     uint32_t pos_set: 1; /*1: pos is set; 0: point_id is set*/
 # } lv_chart_cursor_t;
-lv_chart_cursor = [            # valid LVGL91
+lv_chart_cursor = [            # valid LVGL92
     [lv_point, "pos"],
     [int32_t, "point_id"],
     [lv_color, "color"],
@@ -449,22 +456,16 @@ destructor_cb = ptr    # callback
 event_cb = ptr    # callback
 lv_event_code = ct.i32
 
-# struct _lv_obj_class_t {
+
+# struct lv_obj_class_t {
 #     const lv_obj_class_t * base_class;
-#     /*class_p is the final class while obj->class_p is the class currently being [de]constructed.*/
+#     /** class_p is the final class while obj->class_p is the class currently being [de]constructed. */
 #     void (*constructor_cb)(const lv_obj_class_t * class_p, lv_obj_t * obj);
 #     void (*destructor_cb)(const lv_obj_class_t * class_p, lv_obj_t * obj);
-
-#     /*class_p is the class in which event is being processed.*/
+#
+#     /** class_p is the class in which event is being processed. */
 #     void (*event_cb)(const lv_obj_class_t * class_p, lv_event_t * e);  /**< Widget type specific event function*/
-
-# #if LV_USE_OBJ_PROPERTY
-#     uint32_t prop_index_start;
-#     uint32_t prop_index_end;
-#     const lv_property_ops_t * properties;
-#     uint32_t properties_count;
-# #endif
-
+#
 #     void * user_data;
 #     const char * name;
 #     int32_t width_def;
@@ -474,7 +475,7 @@ lv_event_code = ct.i32
 #     uint32_t instance_size : 16;
 #     uint32_t theme_inheritable : 1;    /**< Value from ::lv_obj_class_theme_inheritable_t*/
 # };
-lv_obj_class = [            # valid LVGL91
+lv_obj_class = [            # valid LVGL92
     [lv_obj_class_ptr, "base_class"],
     [constructor_cb, "constructor_cb"],
     [destructor_cb, "destructor_cb"],
@@ -490,7 +491,7 @@ lv_obj_class = [            # valid LVGL91
 ]
 lv_obj_class = ct.structure(lv_obj_class, "lv_obj_class")
 
-# struct _lv_event_t {
+# struct lv_event_t {
 #     void * current_target;
 #     void * original_target;
 #     lv_event_code_t code;
@@ -501,9 +502,9 @@ lv_obj_class = ct.structure(lv_obj_class, "lv_obj_class")
 #     uint8_t stop_processing : 1;
 #     uint8_t stop_bubbling : 1;
 # };
-lv_event = [            # valid LVGL91
-    [lv_obj_ptr, "target"],
+lv_event = [            # valid LVGL92
     [lv_obj_ptr, "current_target"],
+    [lv_obj_ptr, "original_target"],
     [lv_event_code, "code"],
     [ptr, "user_data"],
     [ptr, "param"],
@@ -523,7 +524,7 @@ lv_event = ct.structure(lv_event, "lv_event")
 #     const uint8_t * data;       /**< Pointer to the data of the image*/
 #     const void * reserved;      /**< A reserved field to make it has same size as lv_draw_buf_t*/
 # } lv_image_dsc_t;
-lv_image_dsc = [                        # valid LVGL91
+lv_image_dsc = [                        # valid LVGL92
     [lv_image_header, "header"],
     [uint32_t, "data_size"],
     [ptr, "data"],
@@ -541,7 +542,7 @@ lv_image_dsc = ct.structure(lv_image_dsc, "lv_image_dsc")
 #     uint32_t time;                 /**< Duration of the transition in [ms]*/
 #     uint32_t delay;                /**< Delay before the transition in [ms]*/
 # } lv_style_transition_dsc_t;
-lv_style_transition_dsc = [            # valid LVGL91
+lv_style_transition_dsc = [            # valid LVGL92
     [ptr, "props"],
     [ptr, "user_data"],
     [ptr, "path_xcb"],
@@ -550,22 +551,52 @@ lv_style_transition_dsc = [            # valid LVGL91
 ]
 lv_style_transition_dsc = ct.structure(lv_style_transition_dsc, "lv_style_transition_dsc")
 
-# typedef struct {
+
+# struct lv_layer_t  {
+#
+#     /** Target draw buffer of the layer*/
 #     lv_draw_buf_t * draw_buf;
+#
+#     /** The absolute coordinates of the buffer */
 #     lv_area_t buf_area;
+#
+#     /** The color format of the layer. LV_COLOR_FORMAT_...  */
 #     lv_color_format_t color_format;
+#
+#     /**
+#      * NEVER USE IT DRAW UNITS. USED INTERNALLY DURING DRAW TASK CREATION.
+#      * The current clip area with absolute coordinates, always the same or smaller than `buf_area`
+#      * Can be set before new draw tasks are added to indicate the clip area of the draw tasks.
+#      * Therefore `lv_draw_add_task()` always saves it in the new draw task to know the clip area when the draw task was added.
+#      * During drawing the draw units also sees the saved clip_area and should use it during drawing.
+#      * During drawing the layer's clip area shouldn't be used as it might be already changed for other draw tasks.
+#      */
 #     lv_area_t _clip_area;
+#
+#     /**
+#      * The physical clipping area relative to the display.
+#      */
+#     lv_area_t phy_clip_area;
+#
+# #if LV_DRAW_TRANSFORM_USE_MATRIX
+#     /** Transform matrix to be applied when rendering the layer */
+#     lv_matrix_t matrix;
+# #endif
+#
+#     /** Linked list of draw tasks */
 #     lv_draw_task_t * draw_task_head;
+#
 #     lv_layer_t * parent;
 #     lv_layer_t * next;
 #     bool all_tasks_added;
 #     void * user_data;
-# } lv_layer_t;
-lv_layer = [ # valid LVGL9
+# };
+lv_layer = [ # valid LVGL92
     [ptr, "draw_buf"],
     [lv_area, "buf_area"],
-    [uint8_t, "color_format"],
+    [uint32_t, "color_format"],
     [lv_area, "_clip_area"],
+    [lv_area, "phy_clip_area"],
     [ptr, "draw_task_head"],
     [ptr, "parent"],
     [ptr, "next"],
@@ -581,7 +612,7 @@ lv_layer = ct.structure(lv_layer, "lv_layer")
 #     lv_color_filter_cb_t filter_cb;
 #     void * user_data;
 # } lv_color_filter_dsc_t;
-lv_color_filter_dsc = [            # valid LVGL91
+lv_color_filter_dsc = [            # valid LVGL92
     [ptr, "filter_cb"],
     [ptr, "user_data"],
 ]
@@ -590,16 +621,16 @@ lv_color_filter_dsc = ct.structure(lv_color_filter_dsc, "lv_color_filter_dsc")
 #######################################################################
 # lv_timer native, superseded by lv_timer
 
-# struct _lv_timer_t {
-#     uint32_t period; /**< How often the timer should run*/
-#     uint32_t last_run; /**< Last time the timer ran*/
-#     lv_timer_cb_t timer_cb; /**< Timer function*/
-#     void * user_data; /**< Custom user data*/
-#     int32_t repeat_count; /**< 1: One time;  -1 : infinity;  n>0: residual times*/
+# struct lv_timer_t {
+#     uint32_t period;           /**< How often the timer should run */
+#     uint32_t last_run;         /**< Last time the timer ran */
+#     lv_timer_cb_t timer_cb;    /**< Timer function */
+#     void * user_data;          /**< Custom user data */
+#     int32_t repeat_count;      /**< 1: One time;  -1 : infinity;  n>0: residual times */
 #     uint32_t paused : 1;
 #     uint32_t auto_delete : 1;
 # };
-lv_timer_ntv = [                    # valid LVGL91
+lv_timer_ntv = [                    # valid LVGL92
     [uint32_t, "period"],
     [uint32_t, "last_run"],
     [ptr, "timer_cb"],
@@ -618,7 +649,7 @@ lv_timer_ntv = ct.structure(lv_timer_ntv, "lv_timer_ntv")
 #     void * user_data;
 #     uint32_t filter;
 # } lv_event_dsc_t;
-lv_event_dsc = [            # valid LVGL91
+lv_event_dsc = [            # valid LVGL92
     [ptr, "cb"],
     [ptr, "user_data"],
     [uint32_t, "filter"],
