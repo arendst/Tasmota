@@ -1273,10 +1273,10 @@
 #define D_MOVING_DISTANCE "Abstand bewegt"
 #define D_STATIC_DISTANCE "Abstand fix"
 #define D_DETECT_DISTANCE "Abstandsfeststellung"
-#define D_MOVING_ENERGY_T "Moving target"
-#define D_STATIC_ENERGY_T "Static target"
-#define D_LD2410_PIN_STATE "Out port state"
-#define D_LD2410_LIGHT "Light sensor"
+#define D_MOVING_ENERGY_T "Bewegliches Ziel"
+#define D_STATIC_ENERGY_T "Statisches Ziel"
+#define D_LD2410_PIN_STATE "Zustand des Ausgangspins"
+#define D_LD2410_LIGHT "Lichtsensor"
 
 // xsns_115_wooliis.ino
 #define D_IMPORT                          "Import"

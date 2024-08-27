@@ -1276,7 +1276,7 @@
 #define D_DETECT_DISTANCE "Detect Distance"
 #define D_MOVING_ENERGY_T "Moving target"
 #define D_STATIC_ENERGY_T "Static target"
-#define D_LD2410_PIN_STATE "Out port state"
+#define D_LD2410_PIN_STATE "Output pin state"
 #define D_LD2410_LIGHT "Light sensor"
 
 // xsns_115_wooliis.ino
