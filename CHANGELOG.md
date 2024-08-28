@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Zigbee extend timeout for MCU reboot from 5s to 10s (#22009)
 - Matter fix when Rules are disabled (#22016)
 - BearSSL panic on ESP8266 in rare conditions (#22017)
+- Crash when calling TasmotaSerial destructor when initialized with incorrect arguments
 
 ### Removed
 
