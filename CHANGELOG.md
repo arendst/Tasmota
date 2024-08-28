@@ -1,7 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Unreleased] - Development
+## [Released]
+
+## [14.2.0] 20240814
+- Release Rita
 
 ## [14.2.0.3]
 ### Added

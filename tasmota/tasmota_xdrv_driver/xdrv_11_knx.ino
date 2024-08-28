@@ -116,6 +116,10 @@ device_parameters_t device_param[] = {
   { KNX_SLOT3 , false, false, KNX_Empty },
   { KNX_SLOT4 , false, false, KNX_Empty },
   { KNX_SLOT5 , false, false, KNX_Empty },
+  { KNX_SLOT6 , false, false, KNX_Empty },
+  { KNX_SLOT7 , false, false, KNX_Empty },
+  { KNX_SLOT8 , false, false, KNX_Empty },
+  { KNX_SLOT9 , false, false, KNX_Empty },
   { KNX_SCENE , false, false, KNX_Empty },
   { KNX_DIMMER , false, false, KNX_Empty },
   { KNX_COLOUR , false, false, KNX_Empty },
@@ -154,6 +158,10 @@ const char * device_param_ga[] = {
   D_KNX_TX_SLOT   " 3",
   D_KNX_TX_SLOT   " 4",
   D_KNX_TX_SLOT   " 5",
+  D_KNX_TX_SLOT   " 6",
+  D_KNX_TX_SLOT   " 7",
+  D_KNX_TX_SLOT   " 8",
+  D_KNX_TX_SLOT   " 9",
   D_KNX_TX_SCENE      ,
   D_BRIGHTLIGHT       ,
   D_COLOR             ,
@@ -192,6 +200,10 @@ const char *device_param_cb[] = {
   D_KNX_RX_SLOT   " 3",
   D_KNX_RX_SLOT   " 4",
   D_KNX_RX_SLOT   " 5",
+  D_KNX_RX_SLOT   " 6",
+  D_KNX_RX_SLOT   " 7",
+  D_KNX_RX_SLOT   " 8",
+  D_KNX_RX_SLOT   " 9",
   D_KNX_RX_SCENE      ,
   D_BRIGHTLIGHT       ,
   D_COLOR             ,
@@ -209,13 +221,30 @@ nullptr
 #define D_CMND_KNX_CB "_CB"
 #define D_CMND_KNXTXSCENE "Tx_Scene"
 
+#ifdef KNX_EXTRA_CMD
+#warning *** KnxTx_DPTNine : Add command to send DPT9 values
+#define D_CMND_KNXTXFLOAT "Tx_Float"    // 2 bytes float (DPT9)
+#define D_CMND_KNXTXDOUBLE "Tx_Double"  // 4 bytes float (DPT14)
+#define D_CMND_KNXTXBYTE "Tx_Byte"      // 1 byte unsigned (DPT5)
 
+
+const char kKnxCommands[] PROGMEM = D_PRFX_KNX "|"  // Prefix
+  D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL "|" D_CMND_KNX_ENABLED "|" D_CMND_KNX_ENHANCED "|" D_CMND_KNX_PA "|" D_CMND_KNX_GA "|" D_CMND_KNX_CB "|" D_CMND_KNXTXSCENE "|"
+  D_CMND_KNXTXFLOAT "|"  D_CMND_KNXTXDOUBLE "|"  D_CMND_KNXTXBYTE;
+
+void (* const KnxCommand[])(void) PROGMEM = {
+  &CmndKnxTxCmnd, &CmndKnxTxVal, &CmndKnxEnabled, &CmndKnxEnhanced, &CmndKnxPa, &CmndKnxGa, &CmndKnxCb, &CmndKnxTxScene,
+  &CmndKnxTxFloat, &CmndKnxTxVal, &CmndKnxTxByte};
+
+#else // not KNX_EXTRA_CMD
 const char kKnxCommands[] PROGMEM = D_PRFX_KNX "|"  // Prefix
   D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL "|" D_CMND_KNX_ENABLED "|" D_CMND_KNX_ENHANCED "|" D_CMND_KNX_PA "|" D_CMND_KNX_GA "|" D_CMND_KNX_CB "|" D_CMND_KNXTXSCENE ;
 
 void (* const KnxCommand[])(void) PROGMEM = {
   &CmndKnxTxCmnd, &CmndKnxTxVal, &CmndKnxEnabled, &CmndKnxEnhanced, &CmndKnxPa, &CmndKnxGa, &CmndKnxCb, &CmndKnxTxScene };
 
+
+#endif //  KNX_EXTRA_CMD
 
 #ifndef KNX_ENHANCEMENT_REPEAT
 #define KNX_ENHANCEMENT_REPEAT 3
@@ -239,6 +268,15 @@ void KNX_Send_1byte_uint(address_t const &receiver, uint8_t value, knx_command_t
 }
 #define KNX_WRITE_1BYTE_UINT(r,v) KNX_Send_1byte_uint((r),(v),KNX_CT_WRITE)
 #define KNX_ANSWER_1BYTE_UINT(r,v) KNX_Send_1byte_uint((r),(v),KNX_CT_ANSWER)
+
+void KNX_Send_2byte_float(address_t const &receiver, float value, knx_command_type_t ct) 
+{
+  uint8_t repeat = Settings->flag.knx_enable_enhancement ? KNX_ENHANCEMENT_REPEAT : 1;
+  while ( repeat-- )
+    knx.send_2byte_float(receiver, ct, value);
+}
+#define KNX_WRITE_2BYTE_FLOAT(r,v) KNX_Send_2byte_float((r),(v),KNX_CT_WRITE)
+#define KNX_ANSWER_2BYTE_FLOAT(r,v) KNX_Send_2byte_float((r),(v),KNX_CT_ANSWER)
 
 void KNX_Send_4byte_float(address_t const &receiver, float value, knx_command_type_t ct) 
 {
@@ -601,6 +639,10 @@ void KNX_INIT(void)
   device_param[KNX_SLOT3-1].show = true;
   device_param[KNX_SLOT4-1].show = true;
   device_param[KNX_SLOT5-1].show = true;
+  device_param[KNX_SLOT6-1].show = true;
+  device_param[KNX_SLOT7-1].show = true;
+  device_param[KNX_SLOT8-1].show = true;
+  device_param[KNX_SLOT9-1].show = true;
   device_param[KNX_SCENE-1].show = true;
 #endif // USE_RULES
 
@@ -690,7 +732,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
         }
       }
 #ifdef USE_RULES
-      else if ((chan->type >= KNX_SLOT1) && (chan->type <= KNX_SLOT5)) // KNX RX SLOTs (write command)
+      else if ((chan->type >= KNX_SLOT1) && (chan->type <= KNX_SLOT9)) // KNX RX SLOTs (write command)
       {
         if (!toggle_inhibit) {
           char command[35]; //4294967295.00  13chars + 17
@@ -753,11 +795,11 @@ void KNX_CB_Action(message_t const &msg, void *arg)
         KNX_Send_1bit(msg.received_on, chan->last_state, KNX_CT_ANSWER);
       else if (chan->type == KNX_TEMPERATURE) // Reply Temperature
       {
-        KNX_ANSWER_4BYTE_FLOAT(msg.received_on, last_temp);
+        KNX_ANSWER_2BYTE_FLOAT(msg.received_on, last_temp);
       }
       else if (chan->type == KNX_HUMIDITY) // Reply Humidity
       {
-        KNX_ANSWER_4BYTE_FLOAT(msg.received_on, last_hum);
+        KNX_ANSWER_2BYTE_FLOAT(msg.received_on, last_hum);
       }
 #if defined(USE_ENERGY_SENSOR)      
       else if (chan->type == KNX_ENERGY_VOLTAGE) // Reply KNX_ENERGY_VOLTAGE
@@ -790,7 +832,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       }
 #endif // USE_ENERGY_SENSOR
 #ifdef USE_RULES
-      else if ((chan->type >= KNX_SLOT1) && (chan->type <= KNX_SLOT5)) // KNX RX SLOTs (read command)
+      else if ((chan->type >= KNX_SLOT1) && (chan->type <= KNX_SLOT9)) // KNX RX SLOTs (read command)
       {
         if (!toggle_inhibit) {
           char command[25];
@@ -932,6 +974,9 @@ void KnxSensor(uint8_t sensor_type, float value)
       case KNX_ENERGY_TOTAL:
         KNX_WRITE_4BYTE_INT(KNX_addr, round(1000.0 * value));
         break;
+      case KNX_TEMPERATURE:
+      case KNX_HUMIDITY:
+        KNX_WRITE_2BYTE_FLOAT(KNX_addr, value);
       default:
         KNX_WRITE_4BYTE_FLOAT(KNX_addr, value);
     }
@@ -1250,6 +1295,59 @@ void CmndKnxTxVal(void)
     ResponseCmndIdxChar (XdrvMailbox.data );
   }
 }
+
+#ifdef KNX_EXTRA_CMD
+void CmndKnxTxFloat(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KNXTX_CMNDS) && (XdrvMailbox.data_len > 0) && Settings->flag.knx_enabled) {
+    // XdrvMailbox.index <- KNX SLOT to use
+    // XdrvMailbox.payload <- data to send
+    // Search all the registered GA that has that output (variable: KNX SLOTx) as parameter
+    uint8_t i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1);
+    while ( i != KNX_Empty ) {
+      KNX_addr.value = Settings->knx_GA_addr[i];
+
+      float tempvar = CharToFloat(XdrvMailbox.data);
+      dtostrfd(tempvar,2,XdrvMailbox.data);
+
+      KNX_WRITE_2BYTE_FLOAT(KNX_addr, tempvar);
+
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %s " D_SENT_TO " %d/%d/%d (2 bytes float)"),
+       device_param_ga[XdrvMailbox.index + KNX_SLOT1 -2], XdrvMailbox.data,
+       KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
+
+      i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1, i + 1);
+    }
+    ResponseCmndIdxChar (XdrvMailbox.data );
+  }
+}
+
+void CmndKnxTxByte(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KNXTX_CMNDS) && (XdrvMailbox.data_len > 0) && Settings->flag.knx_enabled) {
+    // XdrvMailbox.index <- KNX SLOT to use
+    // XdrvMailbox.payload <- data to send
+    // Search all the registered GA that has that output (variable: KNX SLOTx) as parameter
+    uint8_t i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1);
+    while ( i != KNX_Empty ) {
+      KNX_addr.value = Settings->knx_GA_addr[i];
+
+      uint8_t tempvar = TextToInt(XdrvMailbox.data);
+      dtostrfd(tempvar,0,XdrvMailbox.data);
+
+      KNX_WRITE_1BYTE_UINT(KNX_addr, tempvar);
+
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %s " D_SENT_TO " %d/%d/%d (1 byte unsigned)"),
+       device_param_ga[XdrvMailbox.index + KNX_SLOT1 -2], XdrvMailbox.data,
+       KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
+
+      i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1, i + 1);
+    }
+    ResponseCmndIdxChar (XdrvMailbox.data );
+  }
+}
+
+#endif 
 
 void CmndKnxTxScene(void)
 {
