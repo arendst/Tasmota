@@ -21,7 +21,7 @@
 #define BE_FUNCTION     6
 
 #define BE_GCOBJECT     16      /* from this type can be gced */
-#define BE_GCOBJECT_MAX (3<<5)  /* from this type can't be gced */
+#define BE_GCOBJECT_MAX (3<<5)  /* 96 - from this type can't be gced */
 
 #define BE_STRING       16
 #define BE_CLASS        17
@@ -32,20 +32,18 @@
 #define BE_MODULE       22
 #define BE_COMOBJ       23      /* common object */
 
-#define BE_NTVFUNC      ((0 << 5) | BE_FUNCTION)
-#define BE_CLOSURE      ((1 << 5) | BE_FUNCTION)
-#define BE_NTVCLOS      ((2 << 5) | BE_FUNCTION)
-#define BE_CTYPE_FUNC   ((3 << 5) | BE_FUNCTION)
-#define BE_STATIC       (1 << 7)
-
-#define func_isstatic(o)       (((o)->type & BE_STATIC) != 0)
-#define func_setstatic(o)      ((o)->type |= BE_STATIC)
-#define func_clearstatic(o)    ((o)->type &= ~BE_STATIC)
+#define BE_NTVFUNC      ((0 << 5) | BE_FUNCTION)    /* 6 - cannot be gced */
+#define BE_CLOSURE      ((1 << 5) | BE_FUNCTION)    /* 38 - can be gced */
+#define BE_NTVCLOS      ((2 << 5) | BE_FUNCTION)    /* 70 - can be gced*/
+#define BE_CTYPE_FUNC   ((3 << 5) | BE_FUNCTION)    /* 102 - cannot be gced */
+#define BE_STATIC       (1 << 7)                    /* 128 */
 
 /* values for bproto.varg */
 #define BE_VA_VARARG            (1 << 0)    /* function has variable number of arguments */
 #define BE_VA_METHOD            (1 << 1)    /* function is a method (this is only a hint) */
 #define BE_VA_STATICMETHOD      (1 << 2)    /* the function is a static method and has the class as implicit '_class' variable */
+#define BE_VA_SHARED_KTAB       (1 << 3)    /* the funciton has a shared consolidated ktab */
+#define BE_VA_NOCOMPACT         (1 << 4)    /* the funciton has a shared consolidated ktab */
 #define array_count(a)   (sizeof(a) / sizeof((a)[0]))
 
 #define bcommon_header          \
@@ -66,6 +64,7 @@ typedef struct bclosure bclosure;
 typedef struct bntvclos bntvclos;
 typedef struct bclass bclass;
 typedef struct binstance binstance;
+typedef struct binstance_arg3 binstance_arg3;
 typedef struct blist blist;
 typedef struct bmap bmap;
 typedef struct bupval bupval;

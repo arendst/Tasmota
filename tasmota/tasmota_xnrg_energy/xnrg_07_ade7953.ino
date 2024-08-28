@@ -829,7 +829,7 @@ bool Ade7953Command(void) {
   }
   else if (CMND_POWERSET == Energy->command_code) {
     if (XdrvMailbox.data_len && Ade7953.active_power[channel]) {
-      if ((value > 100) && (value < 200000)) {       // Between 1W and 2000W
+      if ((value > 100) && (value < 2000000)) {       // Between 1W and 20000W
 #ifdef ADE7953_ACCU_ENERGY
         float power_calibration = (float)(Ade7953.active_power[channel] * 1000) / value;  // 0.00 W
         power_calibration *= ADE7953_POWER_CORRECTION;
@@ -842,14 +842,14 @@ bool Ade7953Command(void) {
   }
   else if (CMND_VOLTAGESET == Energy->command_code) {
     if (XdrvMailbox.data_len && Ade7953.voltage_rms[channel]) {
-      if ((value > 10000) && (value < 26000)) {      // Between 100V and 260V
+      if ((value > 10000) && (value < 40000)) {      // Between 100V and 400V
         XdrvMailbox.payload = (Ade7953.voltage_rms[channel] * 100) / value;  // 0.00 V
       }
     }
   }
   else if (CMND_CURRENTSET == Energy->command_code) {
     if (XdrvMailbox.data_len && Ade7953.current_rms[channel]) {
-      if ((value > 2000) && (value < 1000000)) {     // Between 20mA and 10A
+      if ((value > 2000) && (value < 10000000)) {     // Between 20mA and 100A
         XdrvMailbox.payload = ((Ade7953.current_rms[channel] * 100) / value) * 100;  // 0.00 mA
       }
     }

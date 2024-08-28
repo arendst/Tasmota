@@ -267,9 +267,6 @@ void MatrixPrintLog(uint8_t direction)
         }
         i++;
       }
-
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "[%s]"), mtx_buffer);
-
       mtx_done = 1;
     }
 

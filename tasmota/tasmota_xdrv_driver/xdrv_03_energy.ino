@@ -29,10 +29,6 @@
 //#define USE_ENERGY_MARGIN_DETECTION
 //  #define USE_ENERGY_POWER_LIMIT
 
-#ifndef MQTT_TELE_RETAIN
-#define MQTT_TELE_RETAIN       0
-#endif
-
 #define ENERGY_NONE            0
 #define ENERGY_WATCHDOG        4        // Allow up to 4 seconds before deciding no valid data present
 
@@ -63,7 +59,6 @@ const char kEnergyCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_ENERGY_POWER_LIMIT
   D_CMND_MAXENERGY "|" D_CMND_MAXENERGYSTART "|"
   D_CMND_MAXPOWER "|" D_CMND_MAXPOWERHOLD "|" D_CMND_MAXPOWERWINDOW "|"
-  D_CMND_SAFEPOWER "|" D_CMND_SAFEPOWERHOLD "|"  D_CMND_SAFEPOWERWINDOW "|"
 #endif  // USE_ENERGY_POWER_LIMIT
 #endif  // USE_ENERGY_MARGIN_DETECTION
   D_CMND_ENERGYTODAY "|" D_CMND_ENERGYYESTERDAY "|" D_CMND_ENERGYTOTAL "|" D_CMND_ENERGYEXPORTACTIVE "|" D_CMND_ENERGYUSAGE "|" D_CMND_ENERGYEXPORT "|" D_CMND_TARIFF;
@@ -76,7 +71,6 @@ void (* const EnergyCommand[])(void) PROGMEM = {
 #ifdef USE_ENERGY_POWER_LIMIT
   &CmndMaxEnergy, &CmndMaxEnergyStart,
   &CmndMaxPower, &CmndMaxPowerHold, &CmndMaxPowerWindow,
-  &CmndSafePower, &CmndSafePowerHold, &CmndSafePowerWindow,
 #endif  // USE_ENERGY_POWER_LIMIT
 #endif  // USE_ENERGY_MARGIN_DETECTION
   &CmndEnergyToday, &CmndEnergyYesterday, &CmndEnergyTotal, &CmndEnergyExportActive, &CmndEnergyUsage, &CmndEnergyExport, &CmndTariff};
@@ -126,7 +120,7 @@ typedef struct {
   bool power_on;
 
 #ifdef USE_ENERGY_MARGIN_DETECTION
-  uint16_t power_history[ENERGY_MAX_PHASES][3];
+  uint16_t power_history[3][ENERGY_MAX_PHASES];
   uint8_t power_steady_counter;                 // Allow for power on stabilization
   uint8_t margin_stable;
   bool min_power_flag;
@@ -137,9 +131,9 @@ typedef struct {
   bool max_current_flag;
 
 #ifdef USE_ENERGY_POWER_LIMIT
-  uint16_t mplh_counter;
-  uint16_t mplw_counter;
-  uint8_t mplr_counter;
+  uint16_t mpl_hold_counter;
+  uint16_t mpl_window_counter;
+  uint8_t mpl_retry_counter;
   uint8_t max_energy_state;
 #endif  // USE_ENERGY_POWER_LIMIT
 #endif  // USE_ENERGY_MARGIN_DETECTION
@@ -488,15 +482,15 @@ void EnergyMarginCheck(void) {
   for (uint32_t phase = 0; phase < Energy->phase_count; phase++) {
     uint16_t active_power = (uint16_t)(Energy->active_power[phase]);
 
-//    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: APower %d, HPower0 %d, HPower1 %d, HPower2 %d"), active_power, Energy->power_history[phase][0], Energy->power_history[phase][1], Energy->power_history[phase][2]);
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: APower %d, HPower0 %d, HPower1 %d, HPower2 %d"), active_power, Energy->power_history[0][phase], Energy->power_history[1][phase], Energy->power_history[2][phase]);
 
     if (Settings->energy_power_delta[phase]) {
-      power_diff[phase] = active_power - Energy->power_history[phase][0];
+      power_diff[phase] = active_power - Energy->power_history[0][phase];
       uint16_t delta = abs(power_diff[phase]);
       bool threshold_met = false;
       if (delta > 0) {
         if (Settings->energy_power_delta[phase] < 101) {  // 1..100 = Percentage
-          uint16_t min_power = (Energy->power_history[phase][0] > active_power) ? active_power : Energy->power_history[phase][0];
+          uint16_t min_power = (Energy->power_history[0][phase] > active_power) ? active_power : Energy->power_history[0][phase];
           if (0 == min_power) { min_power++; }    // Fix divide by 0 exception (#6741)
           delta = (delta * 100) / min_power;
           if (delta >= Settings->energy_power_delta[phase]) {
@@ -509,16 +503,16 @@ void EnergyMarginCheck(void) {
         }
       }
       if (threshold_met) {
-        Energy->power_history[phase][1] = active_power;  // We only want one report so reset history
-        Energy->power_history[phase][2] = active_power;
+        Energy->power_history[1][phase] = active_power;  // We only want one report so reset history
+        Energy->power_history[2][phase] = active_power;
         jsonflg = true;
       } else {
         power_diff[phase] = 0;
       }
     }
-    Energy->power_history[phase][0] = Energy->power_history[phase][1];  // Shift in history every second allowing power changes to settle for up to three seconds
-    Energy->power_history[phase][1] = Energy->power_history[phase][2];
-    Energy->power_history[phase][2] = active_power;
+    Energy->power_history[0][phase] = Energy->power_history[1][phase];  // Shift in history every second allowing power changes to settle for up to three seconds
+    Energy->power_history[1][phase] = Energy->power_history[2][phase];
+    Energy->power_history[2][phase] = active_power;
   }
   if (jsonflg) {
     float power_diff_f[Energy->phase_count];
@@ -564,7 +558,7 @@ void EnergyMarginCheck(void) {
   }
   if (jsonflg) {
     ResponseJsonEndEnd();
-    MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR(D_RSLT_MARGINS), MQTT_TELE_RETAIN);
+    MqttPublishTele(PSTR(D_RSLT_MARGINS));
     EnergyMqttShow();
     Energy->margin_stable = 3;  // Allow 2 seconds to stabilize before reporting
   }
@@ -572,44 +566,40 @@ void EnergyMarginCheck(void) {
 #ifdef USE_ENERGY_POWER_LIMIT
   // Max Power
   if (Settings->energy_max_power_limit) {
-    if (Energy->active_power[0] > Settings->energy_max_power_limit) {
-      if (!Energy->mplh_counter) {
-        Energy->mplh_counter = Settings->energy_max_power_limit_hold;
-      } else {
-        Energy->mplh_counter--;
-        if (!Energy->mplh_counter) {
-          ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHED "\":%d}"), energy_power_u);
-          MqttPublishPrefixTopicRulesProcess_P(STAT, S_RSLT_WARNING);
-          EnergyMqttShow();
-          SetAllPower(POWER_OFF_FORCE, SRC_MAXPOWER);
-          if (!Energy->mplr_counter) {
-            Energy->mplr_counter = Settings->param[P_MAX_POWER_RETRY] +1;  // SetOption33 - Max Power Retry count
-          }
-          Energy->mplw_counter = Settings->energy_max_power_limit_window;
+    if (energy_power_u > Settings->energy_max_power_limit) {
+      if (!Energy->mpl_hold_counter) {
+        Energy->mpl_hold_counter = Settings->energy_max_power_limit_hold +1;
+      }
+      Energy->mpl_hold_counter--;
+      if (!Energy->mpl_hold_counter) {
+        if (!Energy->mpl_retry_counter) {
+          Energy->mpl_retry_counter = Settings->param[P_MAX_POWER_RETRY] +1;  // SetOption33 - Max Power Retry count
         }
+        Energy->mpl_retry_counter--;
+        if (Energy->mpl_retry_counter) {
+          ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHED "\":%d}"), energy_power_u);
+        } else {
+          ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHEDRETRY "\":\"%s\"}"), GetStateText(0));
+        }
+        MqttPublishPrefixTopicRulesProcess_P(STAT, S_RSLT_WARNING);
+        EnergyMqttShow();
+        SetAllPower(POWER_OFF_FORCE, SRC_MAXPOWER);
+        Energy->mpl_window_counter = Settings->energy_max_power_limit_window;
       }
     }
     else if (TasmotaGlobal.power && (energy_power_u <= Settings->energy_max_power_limit)) {
-      Energy->mplh_counter = 0;
-      Energy->mplr_counter = 0;
-      Energy->mplw_counter = 0;
+      Energy->mpl_hold_counter = 0;
+      Energy->mpl_retry_counter = 0;
+      Energy->mpl_window_counter = 0;
     }
     if (!TasmotaGlobal.power) {
-      if (Energy->mplw_counter) {
-        Energy->mplw_counter--;
+      if (Energy->mpl_window_counter) {
+        Energy->mpl_window_counter--;
       } else {
-        if (Energy->mplr_counter) {
-          Energy->mplr_counter--;
-          if (Energy->mplr_counter) {
-            ResponseTime_P(PSTR(",\"" D_JSON_POWERMONITOR "\":\"%s\"}"), GetStateText(1));
-            MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_JSON_POWERMONITOR));
-            RestorePower(true, SRC_MAXPOWER);
-          } else {
-            ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHEDRETRY "\":\"%s\"}"), GetStateText(0));
-            MqttPublishPrefixTopicRulesProcess_P(STAT, S_RSLT_WARNING);
-            EnergyMqttShow();
-            SetAllPower(POWER_OFF_FORCE, SRC_MAXPOWER);
-          }
+        if (Energy->mpl_retry_counter) {
+          ResponseTime_P(PSTR(",\"" D_JSON_POWERMONITOR "\":\"%s\"}"), GetStateText(1));
+          MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, PSTR(D_JSON_POWERMONITOR));
+          RestorePower(true, SRC_MAXPOWER);
         }
       }
     }
@@ -1022,10 +1012,30 @@ void CmndEnergyConfig(void) {
 \*********************************************************************************************/
 
 void EnergyMarginStatus(void) {
-  Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS9_MARGIN "\":{\"" D_CMND_POWERDELTA "\":[%d,%d,%d],\"" D_CMND_POWERLOW "\":%d,\"" D_CMND_POWERHIGH "\":%d,\""
-                        D_CMND_VOLTAGELOW "\":%d,\"" D_CMND_VOLTAGEHIGH "\":%d,\"" D_CMND_CURRENTLOW "\":%d,\"" D_CMND_CURRENTHIGH "\":%d}}"),
-                        Settings->energy_power_delta[0], Settings->energy_power_delta[1], Settings->energy_power_delta[2], Settings->energy_min_power, Settings->energy_max_power,
-                        Settings->energy_min_voltage, Settings->energy_max_voltage, Settings->energy_min_current, Settings->energy_max_current);
+  Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS9_MARGIN "\":{\"" D_CMND_POWERDELTA "\":"));
+  if (Energy->phase_count > 1) {
+    for (uint32_t i = 0; i < Energy->phase_count; i++) {
+      ResponseAppend_P(PSTR("%c%d"), (i)?',':'[', Settings->energy_power_delta[i]);
+    }
+    ResponseAppend_P(PSTR("]"));
+  } else {
+    ResponseAppend_P(PSTR("%d"), Settings->energy_power_delta[0]);
+  }
+  ResponseAppend_P(PSTR(",\"" D_CMND_POWERLOW "\":%d,\"" D_CMND_POWERHIGH "\":%d,\""
+                              D_CMND_VOLTAGELOW "\":%d,\"" D_CMND_VOLTAGEHIGH "\":%d,\"" 
+                              D_CMND_CURRENTLOW "\":%d,\"" D_CMND_CURRENTHIGH "\":%d"),
+                              Settings->energy_min_power, Settings->energy_max_power,
+                              Settings->energy_min_voltage, Settings->energy_max_voltage,
+                              Settings->energy_min_current, Settings->energy_max_current);
+#ifdef USE_ENERGY_POWER_LIMIT
+  ResponseAppend_P(PSTR(",\"" D_CMND_MAXPOWER "\":%d,\""
+                              D_CMND_MAXPOWERHOLD "\":%d,\"" D_CMND_MAXPOWERWINDOW "\":%d,\"" 
+                              D_CMND_MAXENERGY "\":%d,\"" D_CMND_MAXENERGYSTART "\":%d"),
+                              Settings->energy_max_power_limit,
+                              Settings->energy_max_power_limit_hold, Settings->energy_max_power_limit_window,
+                              Settings->energy_max_energy, Settings->energy_max_energy_start);
+#endif  // USE_ENERGY_POWER_LIMIT
+  ResponseJsonEndEnd();
 }
 
 void CmndPowerDelta(void) {
@@ -1037,104 +1047,62 @@ void CmndPowerDelta(void) {
   }
 }
 
-void CmndPowerLow(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-    Settings->energy_min_power = XdrvMailbox.payload;
+bool ResponseCmndEnergyMargin(uint16_t* value, uint32_t max_value, uint32_t default_value = 1);
+bool ResponseCmndEnergyMargin(uint16_t* value, uint32_t max_value, uint32_t default_value) {
+  bool value_changed = false;
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= max_value)) {
+    *value = (1 == XdrvMailbox.payload) ? default_value : XdrvMailbox.payload;
+    value_changed = true;
   }
-  ResponseCmndNumber(Settings->energy_min_power);
+  ResponseCmndNumber(*value);
+  return value_changed;
+}
+
+void CmndPowerLow(void) {
+  ResponseCmndEnergyMargin(&Settings->energy_min_power, 6000);
 }
 
 void CmndPowerHigh(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-    Settings->energy_max_power = XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_power);
+  ResponseCmndEnergyMargin(&Settings->energy_max_power, 6000);
 }
 
 void CmndVoltageLow(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 500)) {
-    Settings->energy_min_voltage = XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_min_voltage);
+  ResponseCmndEnergyMargin(&Settings->energy_min_voltage, 500);
 }
 
 void CmndVoltageHigh(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 500)) {
-    Settings->energy_max_voltage = XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_voltage);
+  ResponseCmndEnergyMargin(&Settings->energy_max_voltage, 500);
 }
 
 void CmndCurrentLow(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 25000)) {
-    Settings->energy_min_current = XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_min_current);
+  ResponseCmndEnergyMargin(&Settings->energy_min_current, 25000);
 }
 
 void CmndCurrentHigh(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 25000)) {
-    Settings->energy_max_current = XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_current);
+  ResponseCmndEnergyMargin(&Settings->energy_max_current, 25000);
 }
 
 #ifdef USE_ENERGY_POWER_LIMIT
 void CmndMaxPower(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-    Settings->energy_max_power_limit = XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_power_limit);
+  ResponseCmndEnergyMargin(&Settings->energy_max_power_limit, 6000);
 }
 
 void CmndMaxPowerHold(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-    Settings->energy_max_power_limit_hold = (1 == XdrvMailbox.payload) ? MAX_POWER_HOLD : XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_power_limit_hold);
+  ResponseCmndEnergyMargin(&Settings->energy_max_power_limit_hold, 6000, MAX_POWER_HOLD);
 }
 
 void CmndMaxPowerWindow(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-    Settings->energy_max_power_limit_window = (1 == XdrvMailbox.payload) ? MAX_POWER_WINDOW : XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_power_limit_window);
-}
-
-void CmndSafePower(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-    Settings->energy_max_power_safe_limit = XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_power_safe_limit);
-}
-
-void CmndSafePowerHold(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-    Settings->energy_max_power_safe_limit_hold = (1 == XdrvMailbox.payload) ? SAFE_POWER_HOLD : XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_power_safe_limit_hold);
-}
-
-void CmndSafePowerWindow(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 1440)) {
-    Settings->energy_max_power_safe_limit_window = (1 == XdrvMailbox.payload) ? SAFE_POWER_WINDOW : XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_power_safe_limit_window);
+  ResponseCmndEnergyMargin(&Settings->energy_max_power_limit_window, 6000, MAX_POWER_WINDOW);
 }
 
 void CmndMaxEnergy(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 6000)) {
-    Settings->energy_max_energy = XdrvMailbox.payload;
+  if (ResponseCmndEnergyMargin(&Settings->energy_max_energy, 6000)) {
     Energy->max_energy_state  = 3;
   }
-  ResponseCmndNumber(Settings->energy_max_energy);
 }
 
 void CmndMaxEnergyStart(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 24)) {
-    Settings->energy_max_energy_start = XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->energy_max_energy_start);
+  ResponseCmndEnergyMargin(&Settings->energy_max_energy_start, 23);
 }
 #endif  // USE_ENERGY_POWER_LIMIT
 #endif  // USE_ENERGY_MARGIN_DETECTION

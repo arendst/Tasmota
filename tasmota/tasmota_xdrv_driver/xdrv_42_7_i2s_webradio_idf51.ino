@@ -27,7 +27,6 @@ struct AUDIO_I2S_WEBRADIO_t {
   char wr_title[64];
   void *preallocateBuffer = NULL;
   void *preallocateCodec = NULL;
-  uint32_t retryms = 0;
 } Audio_webradio;
 
 void I2sMDCallback(void *cbData, const char *type, bool isUnicode, const char *str) {
@@ -41,6 +40,10 @@ void I2sMDCallback(void *cbData, const char *type, bool isUnicode, const char *s
   } else {
     // Who knows what to do?  Not me!
   }
+}
+
+void I2SWrStatusCB(void *cbData, int code, const char *str){
+  AddLog(LOG_LEVEL_INFO, "I2S: status: %s",str);
 }
 
 void Webradio(const char *url) {
@@ -65,25 +68,33 @@ void Webradio(const char *url) {
     return;
   }
 
-  // if (audio_i2s_mp3.decoder || audio_i2s_mp3.mp3) return;
-  if (!audio_i2s.out) return;
-  I2SAudioPower(true);
-  Audio_webradio.ifile = new AudioFileSourceICYStream(url);
+  Audio_webradio.ifile = new AudioFileSourceICYStream();
   Audio_webradio.ifile->RegisterMetadataCB(I2sMDCallback, NULL);
+  Audio_webradio.ifile->RegisterStatusCB(I2SWrStatusCB, NULL);
+  if(!Audio_webradio.ifile->open(url)){
+    I2sWebRadioStopPlaying();
+    return;
+  }
+  AddLog(LOG_LEVEL_INFO, "I2S: did connect to %s",url);
+
+  I2SAudioPower(true);
   Audio_webradio.buff = new AudioFileSourceBuffer(Audio_webradio.ifile, Audio_webradio.preallocateBuffer, preallocateBufferSize);
+  if(Audio_webradio.buff == nullptr){
+    return;
+  }
   Audio_webradio.buff->RegisterStatusCB(I2sStatusCallback, NULL);
   audio_i2s_mp3.decoder = new AudioGeneratorMP3(Audio_webradio.preallocateCodec, preallocateCodecSize);
+  if(audio_i2s_mp3.decoder == nullptr){
+    return;
+  }
   audio_i2s_mp3.decoder->RegisterStatusCB(I2sStatusCallback, NULL);
   audio_i2s_mp3.decoder->begin(Audio_webradio.buff, audio_i2s.out);
   if (!audio_i2s_mp3.decoder->isRunning()) {
-  //  Serial.printf_P(PSTR("Can't connect to URL"));
     I2sStopPlaying();
-  //  strcpy_P(status, PSTR("Unable to connect to URL"));
-    Audio_webradio.retryms = millis() + 2000;
   }
 
   AddLog(LOG_LEVEL_DEBUG,PSTR("I2S: will launch webradio task"));
-  xTaskCreatePinnedToCore(I2sMp3Task2, "MP3-2", 8192, NULL, 3, &audio_i2s_mp3.mp3_task_handle, 1);
+  xTaskCreatePinnedToCore(I2sMp3WrTask, "MP3-WR", 8192, NULL, 3, &audio_i2s_mp3.mp3_task_handle, 1);
 }
 
 #ifdef USE_WEBSERVER
@@ -102,11 +113,8 @@ void I2sWrShow(bool json) {
 #endif  // USE_WEBSERVER
 
 void CmndI2SWebRadio(void) {
-  if (!audio_i2s.out) return;
+  if (I2SPrepareTx() != I2S_OK) return;
 
-  if (audio_i2s_mp3.decoder) {
-    I2sStopPlaying();
-  }
   if (XdrvMailbox.data_len > 0) {
     Webradio(XdrvMailbox.data);
     ResponseCmndChar(XdrvMailbox.data);
@@ -117,6 +125,11 @@ void CmndI2SWebRadio(void) {
 
 
 void I2sWebRadioStopPlaying() {
+  if(audio_i2s_mp3.decoder) {
+    audio_i2s_mp3.decoder->stop();
+    delete audio_i2s_mp3.decoder;
+    audio_i2s_mp3.decoder = nullptr;
+  }
   if (Audio_webradio.buff) {
     Audio_webradio.buff->close();
     delete Audio_webradio.buff;

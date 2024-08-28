@@ -332,11 +332,11 @@ class Leds : Leds_ntv
         return self.offset
       end
       def clear_to(col, bri)
-        if (bri == nil)   bri = self.bri    end
+        if (bri == nil)   bri = self.strip.bri    end
         self.strip.call_native(9, self.strip.to_gamma(col, bri), self.offset, self.w * self.h)
       end
       def set_pixel_color(idx, col, bri)
-        if (bri == nil)   bri = self.bri    end
+        if (bri == nil)   bri = self.strip.bri    end
         self.strip.set_pixel_color(idx + self.offset, col, bri)
       end
       def get_pixel_color(idx)
@@ -361,8 +361,8 @@ class Leds : Leds_ntv
       end
 
       def set_matrix_pixel_color(x, y, col, bri)
-        if (bri == nil)   bri = self.bri    end
-        if self.alternate && x % 2
+        if (bri == nil)   bri = self.strip.bri    end
+        if self.alternate && (y & 0x1)
           # reversed line
           self.strip.set_pixel_color(x * self.w + self.h - y - 1 + self.offset, col, bri)
         else

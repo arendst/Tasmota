@@ -128,7 +128,7 @@ print("".join(pin))
 #define USE_EQ3_ESP32
 #endif
 
-#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S3
 #ifdef USE_EQ3_ESP32
 #ifdef ESP32                       // ESP32 only. Use define USE_HM10 for ESP8266 support
 #ifdef USE_BLE_ESP32
@@ -1007,7 +1007,7 @@ void EQ3Show(void)
       FirstSensorShown = true;
       const char *alias = BLE_ESP32::getAlias(EQ3Devices[i].addr);
       if (alias && *alias){
-        WSContentSend_PD(HTTP_EQ3_ALIAS, i + 1, alias);
+        WSContentSend_P(HTTP_EQ3_ALIAS, i + 1, alias);
       }
       WSContentSend_P(HTTP_EQ3_MAC, i + 1, addrStr(EQ3Devices[i].addr));
       WSContentSend_PD(HTTP_EQ3_RSSI, i + 1, EQ3Devices[i].RSSI);

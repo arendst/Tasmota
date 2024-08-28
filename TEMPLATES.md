@@ -5,7 +5,7 @@
 
 # Templates
 
-Find below the available templates as of May 2024. More template information can be found in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates)
+Find below the available templates as of August 2024. More template information can be found in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates)
 
 ## Adapter Board
 ```
@@ -311,7 +311,7 @@ LilyGo 4G GPS                {"NAME":"LiLyGo A7608EH","GPIO":[1,1,672,1,226,225,
 LilyGO RGB LED Ring Encoder  {"NAME":"T-Encoder","GPIO":[0,0,1,0,1,0,0,0,1,1,1,1,0,0,0,480,6212,0,0,0,0,449,450,448,0,0,0,0,0,0,0,0,3296,3264,32,0],"FLAG":0,"BASE":1,"CMND":"BuzzerPwm 1"}
 LilyGO T7 Mini32 V1.5        {"NAME":"LilyGO T7 V1.5","GPIO":[1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,544,0,0,0,1,0,1,1,1,0,0,0,0,0,1,1,4704,1,0,0,1],"FLAG":0,"BASE":1}
 LilyGO TTGO ESP32 Ethernet   {"NAME":"T-Internet-POE v1.2","GPIO":[0,1,1,1,1,1,1,1,1,1,1,1,1,1,5600,1,0,1,1,5568,0,1,1,1,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1,"CMND":"EthType 0|EthClockMode 1|EthAddress 0"}
-M5Stack Atom Lite ESP32      {"NAME":"M5Stack Atom Lite","GPIO":[1,1,1,1,1,1,1,1,1056,1,1,1,1,1,1,1,0,1,1,1,0,1,640,1376,0,0,0,0,608,1,1,1,1,0,0,32],"FLAG":0,"BASE":1}
+M5Stack Atom Lite ESP32      {"NAME":"M5Stack Atom Lite","GPIO":[0,0,0,0,0,0,0,0,1056,0,0,0,0,0,0,1,0,1,1,1,0,1,1,1376,0,0,0,0,1,1,1,0,0,0,0,32],"FLAG":0,"BASE":1}
 M5Stack AtomU USB-A ESP32    "Not available"
 Mostly Robots Wemos D1 4 Channel MOSFET Shield  {"NAME":"MOSFET","GPIO":[1,1,288,1,1,1,1,1,226,225,227,224,1,1],"FLAG":0,"BASE":18}
 Olimex ESP32-POE Ethernet    {"NAME":"Olimex ESP32-PoE","GPIO":[1,1,1,1,1,1,0,0,5536,1,1,1,1,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
@@ -656,6 +656,10 @@ Uniplay Universal Remote     {"NAME":"Uniplay IR","GPIO":[1,3200,1,3232,576,1088
 YTF Universal Remote         {"NAME":"YTF IR Controller","GPIO":[1,1,1,1,320,1088,0,0,0,32,1056,0,0,0],"FLAG":0,"BASE":62}
 ```
 
+## IR Remote
+```
+```
+
 ## Illuminance Sensor
 ```
 Tuya                         {"NAME":"Lightsensor","GPIO":[0,2272,0,2304,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54}
@@ -873,7 +877,7 @@ PCI-e Desktop PC Remote Control  {"NAME":"PC-Switch-01","GPIO":[32,0,0,0,0,0,0,0
 Petoneer Smart Dot Cat Toy   {"NAME":"Petoneer Smart Dot","GPIO":[0,2272,0,2304,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54}
 Proscenic T21 Air Fryer      {"NAME":"Proscenic T21","GPIO":[0,2272,0,2304,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54}
 RainPoint Indoor Water Pump  {"NAME":"RainPoint","GPIO":[0,0,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54,"CMND":"TuyaMCU 81,107|TuyaMCU 12,109|TuyaMCU 11,1|TuyaMCU 82,104"}
-Sinilink PCIe Computer Remote  {"NAME":"XY-WPCE","GPIO":[1,1,320,1,32,224,0,0,160,0,0,0,0,0],"FLAG":0,"BASE":18,"CMND":"SO114 1 | SwitchMode1 2"}
+Sinilink PCIe Computer Remote  {"NAME":"XY-WPCE","GPIO":[1,1,320,1,160,224,0,161,162,0,0,0,0,0],"FLAG":0,"BASE":18,"CMND":"SO114 1 | Pulsetime 10 | SwitchMode1 2 | SwitchMode2 2 | SwitchMode3 2"}
 Sinilink USB Computer Remote  {"NAME":"XY-WPCL","GPIO":[0,0,320,0,0,224,0,32,160,0,0,0,0,0],"FLAG":0,"BASE":18,"CMND":"SO114 1 | Pulsetime 10 | SwitchMode1 2"}
 Sinilink XY-Clock Clock Alarm Module  {"NAME":"XY-Clock","GPIO":[288,0,289,0,0,416,32,33,608,640,0,0,34,0],"FLAG":0,"BASE":18}
 Sunbeam LoftTec Electric Blanket  {"NAME":"Sunbeam Heated Blanket","GPIO":[0,2272,0,2304,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54}
@@ -1221,8 +1225,8 @@ Epicka                       {"NAME":"Epicka","GPIO":[1,1,1,1,321,320,0,0,224,32
 Eques Elf Smart Plug         {"NAME":"EQP01WTGY","GPIO":[0,0,0,320,0,0,0,0,96,0,0,224,0,0],"FLAG":0,"BASE":18}
 Esicoo JSM-WF02              {"NAME":"Esicoo Plug","GPIO":[0,32,0,0,0,0,0,0,0,320,224,0,0,0],"FLAG":0,"BASE":18}
 Estink C178                  {"NAME":"Estink C178","GPIO":[0,0,0,0,288,321,0,0,224,32,0,0,0,0],"FLAG":0,"BASE":18}
-Etekcity 15A                 {"NAME":"ESW15-US","GPIO":[0,0,0,0,0,224,0,0,2656,2688,32,2592,288,0],"FLAG":0,"BASE":18}
 Etekcity 8A                  {"NAME":"ESW01-USA","GPIO":[0,0,0,0,224,544,0,0,2656,2688,32,2592,288,0],"FLAG":0,"BASE":55}
+ETEKCITY Voltson Smart Wi-Fi Outlet  {"NAME":"ESW15-USA","GPIO":[0,0,0,0,416,224,0,0,2656,2688,32,2592,544,4704],"FLAG":0,"BASE":18}
 EU3S                         {"NAME":"AWOW BSD33","GPIO":[0,0,320,0,0,2720,0,0,2624,32,2656,224,0,0],"FLAG":0,"BASE":18}
 Eva Logik                    {"NAME":"EVA LOGIK Plug","GPIO":[1,32,1,1,1,1,0,0,1,288,224,1,1,0],"FLAG":0,"BASE":18}
 Ewelink EU 20A               {"NAME":"Ewelink Smart Socket 20A","GPIO":[0,0,0,32,2720,2656,0,0,2624,320,224,0,0,0],"FLAG":0,"BASE":18}
@@ -2267,6 +2271,7 @@ Claudy 5V                    {"NAME":"CLAUDY","GPIO":[0,0,225,0,0,0,0,0,0,0,0,22
 Devantech 8x16A              {"NAME":"ESP32LR88","GPIO":[0,0,231,0,32,35,0,0,229,230,228,0,33,34,36,37,0,38,39,544,0,225,226,227,0,0,0,0,0,224,3232,3200,0,0,0,0],"FLAG":0,"BASE":1}
 Dingtian 16 Channel          {"NAME":"Dingtian DT-R008","GPIO":[1,9408,1,9440,1,1,1,1,1,9760,9729,9856,9792,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,9824,9952,1,1,1,0,0,1],"FLAG":0,"BASE":1}
 Dingtian 32 Channel          {"NAME":"Dingtian DT-R008","GPIO":[1,9408,1,9440,1,1,1,1,1,9760,9731,9856,9792,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,9824,9952,1,1,1,0,0,1],"FLAG":0,"BASE":1}
+Dingtian 4 Channel           {"NAME":"Dingtian DT-R004","GPIO":[0,9408,225,9440,0,0,0,0,227,9952,0,0,224,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,226,162,0,163,160,0,0,161],"FLAG":0,"BASE":1}
 Dingtian 8 Channel           {"NAME":"Dingtian DT-R008","GPIO":[1,9408,1,9440,1,1,1,1,1,9760,9728,9856,9792,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,9824,9952,1,1,1,0,0,1],"FLAG":0,"BASE":1}
 DoHome HomeKit DIY Switch    {"NAME":"DoHome DIY","GPIO":[1,1,0,1,96,544,0,0,224,0,0,0,0,0],"FLAG":0,"BASE":1}
 Eachen ST-DC2                {"NAME":"Garage Control","GPIO":[162,0,0,0,226,225,33,0,224,288,163,227,0,4704],"FLAG":0,"BASE":18}
@@ -2315,7 +2320,7 @@ LC Technology 5V/8-80V 1 Channel  {"NAME":"LC-Relay-ESP12-1R-MV","GPIO":[1,1,544
 LC Technology 5V/8-80V 1 Channel  {"NAME":"LC-Relay-ESP12-1R-D8","GPIO":[1,1,544,1,1,224,1,1,1,1,1,1,321,1],"FLAG":0,"BASE":18}
 LC Technology AC90V-250V 1 Channel  {"NAME":"ESP32_Relay_AC_X1","GPIO":[1,1,1,1,1,1,1,1,1,1,1,1,224,1,1,1,0,1,1,544,0,1,1,1,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
 LC Technology DC5-60V 1 Channel  {"NAME":"ESP32_Relay_X1","GPIO":[1,1,1,1,1,1,1,1,1,1,1,1,224,1,1,1,0,1,1,544,0,1,1,1,0,0,0,0,1,1,1,1,1,0,0,1],"FLAG":0,"BASE":1}
-LC Technology DC5-60V 2 Channel  {"NAME":"ESP32_Relay_X2","GPIO":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,544,0,225,224,0,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
+LC Technology DC5-60V 2 Channel  {"NAME":"ESP32_Relay_X2","GPIO":[0,0,0,0,0,0,0,0,0,0,0,0,224,225,0,0,0,0,0,544,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1}
 LC Technology DC5-60V 4 Channel  {"NAME":"ESP32_Relay_X4","GPIO":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,544,0,226,227,1,0,0,0,0,224,225,1,1,1,0,0,1],"FLAG":0,"BASE":1}
 LC Technology ESP8266 5V     {"NAME":"ESP8266-01S","GPIO":[224,3200,0,3232,0,0,0,0,0,0,0,0,0,4704],"FLAG":0,"BASE":18}
 LilyGo T-Relay 5V 8 Channel  {"NAME":"LilyGo ESP32 Relay 8","GPIO":[1,1,1,1,1,231,1,1,227,226,1,1,1,1,230,229,0,228,1,1,0,544,1,1,0,0,0,0,225,224,1,1,1,0,0,1],"FLAG":0,"BASE":1}
@@ -2598,7 +2603,7 @@ QNCX Smart Breaker           {"NAME":"QNCX Smart breaker","GPIO":[0,0,0,0,160,22
 Qualitel 1 Gang              {"NAME":"Qualitel 1 Gang","GPIO":[544,0,0,160,224,0,0,0,0,0,288,0,0,0],"FLAG":0,"BASE":18}
 Qualitel 2-Gang              {"NAME":"Qualitel 2 Gang","GPIO":[544,0,289,0,0,161,0,0,160,224,0,225,288,0],"FLAG":0,"BASE":18}
 Qualitel 3 Gang              {"NAME":"Qualitel 3 Gang","GPIO":[544,0,290,161,225,162,0,0,160,224,289,226,288,0],"FLAG":0,"BASE":18}
-Refoss AC/DC                 {"NAME":"Refoss-R10","GPIO":[0,1,3104,0,224,192,0,0,2720,0,0,0,0,4736],"FLAG":0,"BASE":18}
+Refoss AC/DC                 {"NAME":"Refoss-R10","GPIO":[1,1,0,1,224,192,0,0,2656,2720,32,1,2624,4736],"FLAG":0,"BASE":18}
 RY-RSM104 Light Touch        {"NAME":"RY-RSM104","GPIO":[0,2272,0,2304,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54}
 Sainko 1-Way                 {"NAME":"SAINKO 1CH","GPIO":[32,1,1,1,0,0,0,0,224,320,0,0,0,0],"FLAG":0,"BASE":28}
 Sainko 2 Way                 {"NAME":"Sainko 2-Way","GPIO":[0,1,320,0,0,32,0,0,224,225,0,0,33,0],"FLAG":0,"BASE":18}
@@ -2753,7 +2758,7 @@ Century Aoke Smart Switch    {"NAME":"CenturyAoke","GPIO":[0,1,0,1,224,0,0,0,32,
 Deta 6000HA Smart Inline Switch  {"NAME":"DETA-6000HA","GPIO":[0,32,0,0,0,0,0,0,0,320,224,0,0,0],"FLAG":0,"BASE":18}
 dewenwils Outdoor Timer Box  {"NAME":"Dewenwils50054","GPIO":[0,0,290,0,0,0,0,0,0,32,0,224,0,0],"FLAG":0,"BASE":18}
 EDM Low Voltage              {"NAME":"HVAC Switch","GPIO":[0,0,0,0,288,321,0,0,224,0,0,0,0,0],"FLAG":0,"BASE":18}
-eMylo 2 Channel              {"NAME":"eMylo XL9252WI","GPIO":[0,1,0,0,320,225,0,0,224,0,163,0,0,0],"FLAG":0,"BASE":18}
+eMylo 2 Channel              {"NAME":"eMylo XL9252WI","GPIO":[0,1,0,0,320,225,0,0,224,0,32,0,0,0],"FLAG":0,"BASE":18}
 eMylo Single Channel Switch  {"NAME":"eMylo XL9251WI","GPIO":[0,1,0,0,320,0,0,0,224,0,35,0,0,0],"FLAG":0,"BASE":18}
 eMylo SS-8839-02             {"NAME":"SS-8839-02","GPIO":[0,1,0,1,320,0,0,0,224,0,32,0,0,0],"FLAG":0,"BASE":18}
 eMylo SS-8839-03             {"NAME":"SS-8839-03","GPIO":[0,1,0,1,288,0,0,0,224,0,32,0,0,0],"FLAG":0,"BASE":18}

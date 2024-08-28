@@ -18,8 +18,9 @@
 */
 
 #ifdef USE_NEOPOOL
-/*********************************************************************************************\
- * Sugar Valley NeoPool electronic pool control and water treatment system, also known as brand
+/****************************************************************************\
+ * Sugar Valley NeoPool electronic pool control and water treatment system,
+ * also known as brand:
  *   Hidrolife (yellow case)
  *   Aquascenic (blue case)
  *   Oxilife (green case)
@@ -31,24 +32,36 @@
  *   Bayrol
  *   Hay
  *
- * Sugar Valley RS485 connector inside (DISPLAY/WIFI/EXTERN) pins (from top to bottom):
+ * Sugar Valley RS485 connector inside (DISPLAY/WIFI/EXTERN) pins
+ * (from top to bottom):
  *      ___
- *   1 |*  |- +12V (internal power supply)
- *   2 |*  |- (not connected)
+ *   1 |*  |- +12V (from internal power supply)
+ *   2 |*  |- NC (not connected)
  *   3 |*  |- Modbus A+
  *   4 |*  |- Modbus B-
  *   5 |*__|- Modbus GND
  *
  * Parameter: 19200 Baud / 1 Stopbit / Parity None
- * Protocol: Modbus RTU
- *   NeoPool controller is Modbus server (formerly known as slave)
- *   Tasmota is Modbus client (formerly known as master)
+ * Protocol:  Modbus RTU
  *
- * Connector DISPLAY is useless as long as the internal display is also connected to the
- * second DISPLAY connector. Use WIFI or EXTERN.
+ * Plug connector:
+ * The NeoPool device is a Modbus server (formerly known as a slave),
+ * Tasmota is a Modbus client (formerly known as a master).
+ * Only one Modbus client (master) can be connected to the Modbus connector
+ * of the same name. It is not possible to operate several clients on
+ * connectors with the same name.
  *
- * Hardware serial will be selected if GPIO1 = [NeoPool Rx] and GPIO3 = [NeoPool Tx]
-\*********************************************************************************************/
+ * The differently labelled Modbus connectors are completely independent
+ * physical Modbus interfaces. Data traffic on one of the connector is
+ * invisible on the other connectors. One exception is the DISPLAY connector,
+ * which is present twice and is normally occupied by the built-in LCD.
+ * Since only one Modbus client can operate one Modbus server at a time, the
+ * DISPLAY connector is useless for our purposes as long as the internal LCD
+ * is connected to one of the two DISPLAY connectors at the same time.
+ *
+ * Conclusion:
+ * Use the WIFI or EXTERNAL connector only.
+\****************************************************************************/
 
 #define XSNS_83                      83
 
@@ -61,29 +74,60 @@
 #endif
 
 
+#ifndef NEOPOOL_READ_REGISTER
 #define NEOPOOL_READ_REGISTER        0x04   // Function code used to read register
+#endif
+#ifndef NEOPOOL_WRITE_REGISTER
 #define NEOPOOL_WRITE_REGISTER       0x10   // Function code used to write register
+#endif
+#ifndef NEOPOOL_READ_TIMEOUT
 #define NEOPOOL_READ_TIMEOUT           25   // read data timeout in ms
+#endif
+#ifndef NEOPOOL_CACHE_INVALID_TIME
 #define NEOPOOL_CACHE_INVALID_TIME     30   // data cache invalidation time in s
+#endif
 
 
 // Pool LED RGB lights with different programs, the individual programs can be selected
 // by switching them off and on again for a defined time when the LED is switched on.
 // Default timings for LED light program step sequence (NPLight 3)
-#define NEOPOOL_LIGHT_PRG_WAIT       30     // delay before start prg light if light was off (in ms)
-#define NEOPOOL_LIGHT_PRG_DELAY      15     // default next light prg delay (in ms)
-#define NEOPOOL_LIGHT_PRG_DELAY_MIN  5      // next light prg delay min (in ms)
-#define NEOPOOL_LIGHT_PRG_DELAY_MAX  100    // next light prg delay max (in ms)
+#ifndef NEOPOOL_LIGHT_PRG_WAIT
+#define NEOPOOL_LIGHT_PRG_WAIT       30     // delay before start prg light if light was off (in 1/10 s)
+#endif
+#ifndef NEOPOOL_LIGHT_PRG_DELAY
+#define NEOPOOL_LIGHT_PRG_DELAY      15     // default next light prg delay (in 1/10 s)
+#endif
+#ifndef NEOPOOL_LIGHT_PRG_DELAY_MIN
+#define NEOPOOL_LIGHT_PRG_DELAY_MIN  5      // next light prg delay min (in 1/10 s)
+#endif
+#ifndef NEOPOOL_LIGHT_PRG_DELAY_MAX
+#define NEOPOOL_LIGHT_PRG_DELAY_MAX  100    // next light prg delay max (in 1/10 s)
+#endif
 
+#ifdef ESP32                                // Defaults for ESP32 only
+  #ifndef NEOPOOL_RANGE_CHECKS
+  #define NEOPOOL_RANGE_CHECKS              // Compile with value range checks
+  #endif
+#endif
+#ifdef NEOPOOL_RANGE_CHECKS
+  #ifndef NEOPOOL_CONNSTAT
+  #define NEOPOOL_CONNSTAT                  // Compile with connection statistics
+  #endif
+#endif
 
-/*********************************************************************************************\
- * Sugar Valley Modbus Register (addresses marked with * are queried with each polling cycle)
- * (see https://downloads.vodnici.net/uploads/wpforo/attachments/69/171-Modbus-registers.pdf)
-\*********************************************************************************************/
+/****************************************************************************\
+ * Sugar Valley Modbus Register
+ * (addresses marked with * are queried with each polling cycle)
+ * see https://downloads.vodnici.net/uploads/wpforo/attachments/69/171-Modbus-registers.pdf
+ * 
+ * Register desribed with ‘!’ means the register is officially undocumented,
+ * the function was determined by reverse-engineering
+\****************************************************************************/
 enum NeoPoolRegister {
-                                          // addr    Unit   Description - "!" indicates register is not officially documented
+                                          // addr    Unit   Description
                                           // ------  ------ ------------------------------------------------------------
-  // MODBUS page (0x00xx) - Manages general configuration of the box. This page is reserved for internal purposes
+  // MODBUS page (0x00xx)
+  // Manages general configuration of the box. This page is reserved for internal purposes
   MBF_POWER_MODULE_VERSION = 0x0002,      // 0x0002         ! Power module version (MSB=Major, LSB=Minor)
   MBF_POWER_MODULE_NODEID = 0x0004,       // 0x0004         ! Power module Node ID (6 register 0x0004 - 0x0009)
   MBF_POWER_MODULE_REGISTER = 0x000C,     // 0x000C         ! Writing an address in this register causes the power module register address to be read out into MBF_POWER_MODULE_DATA, see MBF_POWER_MODULE_REG_*
@@ -93,7 +137,8 @@ enum NeoPoolRegister {
   MBF_VOLT_5 = 0x006A,                    // 0x006A*        ! 5V line in mV / 0,62069
   MBF_AMP_4_20_MICRO = 0x0072,            // 0x0072*        ! 2-40mA line in µA * 10 (1=0,01mA)
 
-  // MEASURE page (0x01xx) - Contains the different measurement information including hydrolysis current, pH level, redox level, etc.
+  // MEASURE page (0x01xx)
+  // Contains the different measurement information including hydrolysis current, pH level, redox level, etc.
   MBF_ION_CURRENT = 0x0100,               // 0x0100*        Ionization level measured
   MBF_HIDRO_CURRENT,                      // 0x0101*        Hydrolysis intensity level
   MBF_MEASURE_PH,                         // 0x0102* ph     pH level measured in 1/100 (700 = 7.00)
@@ -112,7 +157,8 @@ enum NeoPoolRegister {
   MBF_NOTIFICATION,                       // 0x0110* mask   Bit field that informs whether a property page has changed since the last time it was queried. (see MBMSK_NOTIF_*). This register makes it possible to refresh the content of the registers maintained by a modbus master in an optimized way, without the need to reread all registers periodically, but only those on a page that has been changed.
   MBF_HIDRO_VOLTAGE,                      // 0x0111         The voltage applied to the hydrolysis cell. This register, together with that of MBF_HIDRO_CURRENT allows extrapolation of water salinity.
 
-  // GLOBAL page (0x02xx) - Contains global information, such as the amount of time that each power unit has been working.
+  // GLOBAL page (0x02xx)
+  // Contains global information, such as the amount of time that each power unit has been working.
   MBF_CELL_RUNTIME_LOW = 0x0206,          // 0x0206*        ! Cell runtime (32 bit value - low word)
   MBF_CELL_RUNTIME_HIGH,                  // 0x0207*        ! Cell runtime (32 bit value - high word)
   MBF_CELL_RUNTIME_PART_LOW,              // 0x0208*        ! Cell part runtime (32 bit value - low word)
@@ -133,7 +179,8 @@ enum NeoPoolRegister {
   MBF_SAVE_TO_EEPROM = 0x02F0,            // 0x02F0         A write operation to this register immediately starts a EEPROM storage operation. During the EEPROM storage procedure, the system may be unresponsive to MODBUS requests. The operation will last always less than 1 second.
   MBF_EXEC = 0x02F5,                      // 0x02F5         ! A write operation to this register immediately take over settings of the previous written data
 
-  // FACTORY page (0x03xx) - Contains factory data such as calibration parameters for the different power units.
+  // FACTORY page (0x03xx)
+  // Contains factory data such as calibration parameters for the different power units.
   MBF_PAR_VERSION = 0x0300,               // 0x0300*        Software version of the PowerBox
   MBF_PAR_MODEL,                          // 0x0301* mask   System model options
   MBF_PAR_SERNUM,                         // 0x0302*        Serial number of the PowerBox
@@ -147,7 +194,9 @@ enum NeoPoolRegister {
   MBF_PAR_HIDRO_MAX_PWM_STEP_UP,          // 0x0324         This register sets the PWM ramp up of the hydrolysis in pulses per duty cycle. This register makes it possible to adjust the rate at which the power delivered to the cell increases, allowing a gradual rise in power so that the operation of the switching source of the equipment is not saturated. Default 150
   MBF_PAR_HIDRO_MAX_PWM_STEP_DOWN,        // 0x0325         This register sets the PWM down ramp of the hydrolysis in pulses per duty cycle. This register allows adjusting the rate at which the power delivered to the cell decreases, allowing a gradual drop in power so that the switched source of the equipment is not disconnected due to lack of consumption. This gradual fall must be in accordance with the type of cell used, since said cell stores charge once the current stimulus has ceased. Default 20
 
-  // INSTALLER page (0x04xx) - Contains a set of configuration registers related to the equipment installation, such as the relays used for each function, the amount of time that each pump must operate, etc.
+  // INSTALLER page (0x04xx)
+  // Contains a set of configuration registers related to the equipment installation,#
+  // such as the relays used for each function, the amount of time that each pump must operate, etc.
   MBF_PAR_ION_POL0 = 0x0400,              // 0x0400         Time in minutes that the equipment must remain working in positive polarization in the copper-silver ionization.
   MBF_PAR_ION_POL1,                       // 0x0401         Time in minutes that the equipment must remain working in negative polarization in the copper-silver ionization.
   MBF_PAR_ION_POL2,                       // 0x0402         Time in minutes that the equipment must remain working in dead time (without delivering power) in the copper-silver ionization.
@@ -223,7 +272,9 @@ enum NeoPoolRegister {
   MBF_PAR_FILTVALVE_REMAINING,            // 0x04EF         Time remaining for the current cleaning action in seconds. If this register is 0, it means that there is no cleaning function running. When a cleanup function is started, the contents of the MBF_PAR_FILTVALVE_INTERVAL register are copied to this register, then decremented once per second. The display uses this log to track the progress of the cleaning function.
   MBF_ACTION_COPY_TO_RTC,                 // 0x04F0         A write (any value) forces the writing of the RTC time registers MBF_PAR_TIME_LOW (0x0408) and MBF_PAR_TIME_HIGH (0x0409) into the RTC internal microcontroller clock management registers.
 
-  // USER page (0x05xx) - Contains user configuration registers, such as the production level for the ionization and the hydrolysis, or the set points for the pH, redox, or chlorine regulation loops.
+  // USER page (0x05xx)
+  // Contains user configuration registers, such as the production level
+  // for the ionization and the hydrolysis, or the set points for the pH, redox, or chlorine regulation loops.
   MBF_PAR_ION = 0x0500,                   // 0x0500*        Ionization target production level. The value adjusted in this register must not exceed the value set in the MBF_PAR_ION_NOM factory register.
   MBF_PAR_ION_PR,                         // 0x0501*        Amount of time in minutes that the ionization must be activated each time that the filtration starts.
   MBF_PAR_HIDRO,                          // 0x0502*        Hydrolisis target production level. When the hydrolysis production is to be set in percent values, this value will contain the percent of production. If the hydrolysis module is set to work in g/h production, this module will contain the desired amount of production in g/h units. The value adjusted in this register must not exceed the value set in the MBF_PAR_HIDRO_NOM factory register.
@@ -235,7 +286,8 @@ enum NeoPoolRegister {
   MBF_PAR_FILTRATION_SPEED_FUNC = 0x0513, // 0x0513         ! filtration speed function control
   MBF_PAR_FUNCTION_DEPENDENCY = 0x051B,   // 0x051B  mask   Specification for the dependency of different functions, such as heating, from external events like FL1 (see MBMSK_FCTDEP_HEATING/MBMSK_DEPENDENCY_*)
 
-  // MISC page (0x06xx) - Contains the configuration parameters for the screen controllers (language, colours, sound, etc).
+  // MISC page (0x06xx)
+  // Contains the configuration parameters for the screen controllers (language, colours, sound, etc).
   MBF_PAR_UICFG_MACHINE = 0x0600,         // 0x0600*        Machine type (see MBV_PAR_MACH_* and  kNeoPoolMachineNames[])
   MBF_PAR_UICFG_LANGUAGE,                 // 0x0601*        Selected language (see MBV_PAR_LANG_*)
   MBF_PAR_UICFG_BACKLIGHT,                // 0x0602*        Display backlight function (see MBV_PAR_BACKLIGHT_*)
@@ -256,7 +308,7 @@ enum NeoPoolRegister {
 enum NeoPoolConstAndBitMask {
   // MBF_PH_STATUS
   MBMSK_PH_STATUS_ALARM                   = 0x000F, // PH alarm. The possible alarm values are depending on the regulation model:
-      // Valid alarm values for pH regulation with acid and base:
+  // Valid alarm values for pH regulation with acid and base:
   MBV_PH_ACID_BASE_ALARM0                 = 0,      // no alarm
   MBV_PH_ACID_BASE_ALARM1                 = 1,      // pH too high; the pH value is 0.8 points higher than the setpoint (PH1 on acid systems, PH2 on base systems, PH1 on acid+base systems)
   MBV_PH_ACID_BASE_ALARM2                 = 2,      // pH too low: the pH value is 0.8 points lower than the set point value set in (PH1 on acid systems, PH2 on base systems, PH2 on acid+base systems)
@@ -632,15 +684,15 @@ const uint16_t NeoPoolRegCheck[] PROGMEM = {
   // MBF_CELL_RUNTIME_POL_CHANGES_HIGH,
 
   // measured values delayed (set bit 15 to indicate often value changes)
-  MBF_ION_CURRENT          | 0x8000,
-  MBF_MEASURE_CL           | 0x8000,
-  MBF_MEASURE_CONDUCTIVITY | 0x8000,
-  MBF_MEASURE_PH           | 0x8000,
-  MBF_MEASURE_RX           | 0x8000,
   MBF_MEASURE_TEMPERATURE  | 0x8000,
-  MBF_HIDRO_CURRENT        | 0x8000,
 
   // undelayed measured values
+  MBF_MEASURE_CL,
+  MBF_MEASURE_CONDUCTIVITY,
+  MBF_MEASURE_PH,
+  MBF_MEASURE_RX,
+  MBF_ION_CURRENT,
+  MBF_HIDRO_CURRENT,
   MBF_HIDRO_STATUS,
   MBF_PH_STATUS,
   MBF_RELAY_STATE,
@@ -691,7 +743,36 @@ enum NeoPoolModbusCode {
   NEOPOOL_MODBUS_ERROR_DEADLOCK
 };
 
+#ifdef NEOPOOL_RANGE_CHECKS
+#define NEOPOOL_UNDEF_UINT16  0xFFFF
+  typedef struct {
+    uint16_t addr;          // Modbus register addr
+    uint16_t min;           // min valid value (or UNDEFined)
+    uint16_t max;           // max valid value (or UNDEFined)
+    uint16_t prev;          // previous read value
+  } TNeoPoolRangeCheck;
+  TNeoPoolRangeCheck NeoPoolRangeCheck[] = {
+    {MBF_ION_CURRENT,           0, 100,                   NEOPOOL_UNDEF_UINT16}, // Ionization level measured
+    {MBF_HIDRO_CURRENT,         0, NEOPOOL_UNDEF_UINT16,  NEOPOOL_UNDEF_UINT16},  // Hydrolysis intensity level
+    {MBF_MEASURE_PH,            0, 1400,                  NEOPOOL_UNDEF_UINT16}, // pH level measured
+    {MBF_MEASURE_RX,            0, 1000,                  NEOPOOL_UNDEF_UINT16},  // Redox level measured
+    {MBF_MEASURE_CL,            0, 1000,                  NEOPOOL_UNDEF_UINT16},  // Chlorine level measured
+    {MBF_MEASURE_CONDUCTIVITY,  0, 100,                   NEOPOOL_UNDEF_UINT16}, // Conductivity level measured
+    {MBF_MEASURE_TEMPERATURE,   0, 6500,                  NEOPOOL_UNDEF_UINT16}    // Temperature sensor measured
+  };
+#endif
 
+#ifdef NEOPOOL_CONNSTAT
+  #define NEOPOOL_TASMOTAMODBUS_ERROR_NUM_MAX 15 // 0-14 - see TasmotaModbus.h class TasmotaModbus highest error #
+  // counting modbus and data error
+  struct {
+    uint32_t time;                // time where counting started
+    uint32_t mb_requests;         // request count
+                                  // result count:
+    uint32_t mb_results[NEOPOOL_TASMOTAMODBUS_ERROR_NUM_MAX + 1];
+    uint32_t value_out_of_range;  // value out of range count
+  } NeoPoolStats;
+#endif
 
 // NPResult possible values
 enum NeoPoolResult {
@@ -708,18 +789,30 @@ enum NeoPoolResult {
 #define NEOPOOL_DEFAULT_RESULT        NEOPOOL_RESULT_HEX
 #define NEOPOOL_DEFAULT_NPTELEPERIOD  0
 
-// NeoPool value resolutions
-typedef struct {
-  uint16_t ph : 2;
-  uint16_t cl : 2;
-  uint16_t ion : 2;
-} NeoPoolResMBitfield;
+typedef union {
+  uint16_t data;                           // Allow bit manipulation
+  struct {
+    uint16_t ph : 2;                      // bit 0,1 - pH value resolution
+    uint16_t cl : 2;                      // bit 2,3 - CL value resolution
+    uint16_t ion : 2;                     // bit 4,5 - ION value resolution
+    uint16_t range_check : 1;             // bit 6   - enable data validation and repair
+    uint16_t conn_stat : 1;               // bit 7   - enable connection statistic
+    uint16_t spare08 : 1;                 // bit 8
+    uint16_t spare09 : 1;                 // bit 9
+    uint16_t spare10 : 1;                 // bit 10
+    uint16_t spare11 : 1;                 // bit 11
+    uint16_t spare12 : 1;                 // bit 12
+    uint16_t spare13 : 1;                 // bit 13
+    uint16_t spare14 : 1;                 // bit 14
+    uint16_t spare15 : 1;                 // bit 15
+  };
+} NeoPoolBitfield;;
 
 // Global structure containing sensor saved variables
 struct {
   uint32_t  crc32;
   uint16_t  version;
-  NeoPoolResMBitfield resolution;
+  NeoPoolBitfield flags;
   uint8_t   result;
   uint16_t  npteleperiod;
 } NeoPoolSettings;
@@ -779,6 +872,48 @@ struct {
 #define D_NEOPOOL_JSON_TANK                   "Tank"
 #define D_NEOPOOL_JSON_BIT                    "Bit"
 #define D_NEOPOOL_JSON_NODE_ID                "NodeID"
+
+#ifdef NEOPOOL_CONNSTAT
+#define D_NEOPOOL_JSON_CONNSTAT               "Connection"
+#define D_NEOPOOL_JSON_CONNSTAT_MB_REQUESTS   "MBRequests"
+#define D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_0  "MBNoError"
+#define D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_1  "MBIllegalFunc"
+#define D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_2  "MBIllegalDataAddr"
+#define D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_3  "MBIllegalDataValue"
+#define D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_4  "MBSlaveError"
+#define D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_5  "MBAck"
+#define D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_6  "MBSlaveBusy"
+#define D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_7  "MBNotEnoughData"
+#define D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_8  "MBMemParityErr"
+#define D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_9  "MBCRCErr"
+#define D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_10 "MBGWPath"
+#define D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_11 "MBGWTarget"
+#define D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_12 "MBRegErr"
+#define D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_13 "MBRegData"
+#define D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_14 "MBTooManyReg"
+#define D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_15 "MBUnknownErr"
+#define D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS    "MBNoResponse"
+#define D_NEOPOOL_JSON_CONNSTAT_DATA_OOR      "DataOutOfRange"
+
+const char kNeoPoolMBResults[] PROGMEM =
+  D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_0  "|"
+  D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_1  "|"
+  D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_2  "|"
+  D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_3  "|"
+  D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_4  "|"
+  D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_5  "|"
+  D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_6  "|"
+  D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_7  "|"
+  D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_8  "|"
+  D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_9  "|"
+  D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_10 "|"
+  D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_11 "|"
+  D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_12 "|"
+  D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_13 "|"
+  D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_14 "|"
+  D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS_15
+  ;
+#endif
 
 const char kNeoPoolMachineNames[] PROGMEM =
   D_NEOPOOL_MACH_NONE "|"
@@ -875,20 +1010,23 @@ const char HTTP_SNS_NEOPOOL_STATUS_INACTIVE[]  PROGMEM = "filter:opacity(0.15)";
 const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
 
 
-/*********************************************************************************************\
+/****************************************************************************\
  * Commands
  *
  * NPFiltration {<state> {speed}}
  *            get/set manual filtration (state = 0..2, speed = 1..3)
- *            get filtration state if <state> is omitted, otherwise set new state
+ *            get filtration state if <state> is omitted,
+ *            otherwise set new state
  *              0 - switch filtration pump off
  *              1 - switch filtration pump on
  *              2 - toggle filtration pump
- *            for non-standard filtration types additional speed control is possible
+ *            additional speed control is possible for non-standardised
+ *            filter types
  *
  * NPFiltrationMode {<mode>}
  *            get/set filtration mode (mode = 0..4|13)
- *            get mode if <mode> is omitted, otherwise set new mode according:
+ *            get mode if <mode> is omitted,
+ *            otherwise set new mode according:
  *              0 - Manual
  *              1 - Auto
  *              2 - Heating
@@ -899,35 +1037,40 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  * NPFiltrationSpeed {<speed>}
  *            (only available for non-standard filtration types)
  *            get/set manual filtration speed (speed = 1..3)
- *            get filtration speed if <speed> is omitted, otherwise set new speed
+ *            get filtration speed if <speed> is omitted,
+ *            otherwise set new speed:
  *              1 - low
  *              2 - mid
  *              3 - high
  *
  * NPBoost {<mode>}
  *            get/set hydrolysis/electrolysis boost mode (mode = 0..2)
- *            get mode if <mode> is omitted, otherwise set new mode according:
+ *            get mode if <mode> is omitted,
+ *            otherwise set new mode according:
  *              0|OFF   - boost off
  *              1|ON    - boost on
  *              2|REDOX - boost on with redox control
  *
  * NPTime {<time>}
  *            get/set system time
- *            get current time if <time> is omitted, otherwise set time according:
+ *            get current time if <time> is omitted,
+ *            otherwise set time according:
  *              0 - sync with Tasmota local time
  *              1 - sync with Tasmota utc time
  *            any other value of <time> will set time as epoch
  *
  * NPLight {<state> {delay}}
- *            get/set light (state = 0|1|2|3|4)
+ *            get/set light (state = 0|1|2|3|4, delay = 5..100)
  *            get light state if <state> is omitted, otherwise set new state
  *              0 - switch light manual off
  *              1 - switch light manual on
  *              2 - toggle light
  *              3 - switch light to auto mode
- *              4 - switch to next program (for RGB-LED lights) (delay = 5..100)
- *                  prg change by switch light of for delay time then switch on
- *                  delay in ms from 0.5 - 10 sec
+ *              4 - switch to next program for RGB-LED lights using <delay> in
+ *                  1/10 sec (5 = 0.5 sec, 100 = 10 sec)
+ *                  Change LED program by switching light relay OFF for <delay>
+ *                  time, then switch light relay ON. If the light was
+ *                  originally OFF, it is switched ON first.
  *
  * NPpHMin {<ph>}
  *            (only available if pH module is installed)
@@ -953,13 +1096,17 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *            (only available if hydrolysis/electrolysis control is present)
  *            get/set hydrolysis/electrolysis level
  *            get current level if <level> is omitted, otherwise set:
- *            0..100 in % for NeoPool systems configured to %
- *            0..<max> in g/h for NeoPool systems configured for g/h (<max> depends by M_PAR_HIDRO_NOM register value)
- *            <level> can specified in % on all NeoPool systems by appending the % sign to the value
+ *            0..100   in % for NeoPool systems configured to %
+ *            0..<max> in g/h for NeoPool systems configured for g/h
+ *                     (<max> depends by M_PAR_HIDRO_NOM register value)
+ *            <level>  can specified in % on all NeoPool systems by appending
+ *                     the % sign to the value
  *
  * NPIonization {<level>}
  *            (only available if ionization control is present)
- *            get/set ionization target production level (level = 0..x, the upper limit of the range may vary depending on the MBF_PAR_ION_NOM register)
+ *            get/set ionization target production level
+ *            (level = 0..x, the upper limit of the range may vary depending
+ *            on the MBF_PAR_ION_NOM register)
  *            get current level if <level> is omitted, otherwise set
  *
  * NPChlorine {<setpoint>}
@@ -971,10 +1118,16 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *            Show information about system controls
  *
  * NPTelePeriod {time}
- *            enables/disables auto telemetry SENSOR message when NeoPool values change (time = 0 or 5..3600):
- *            0 disable this function off (default), SENSOR message are only reported depending on TelePeriod setting
- *            5..3600 set the minimum of seconds between two SENSOR messages for NeoPool measured (sensor) values (Status changes for relays and settings trigger the SENSOR messages immediately, regardless of this time)
- *            If <time> is set higher than TelePeriod, only status changes for relays and settings will trigger SENSOR message.
+ *            enables/disables auto telemetry SENSOR message when NeoPool
+ *            values change (time = 0 or 5..3600):
+ *            0       disable this function off (default), SENSOR messages are
+ *                    only reported depending on TelePeriod setting
+ *            5..3600 set the minimum of seconds between two SENSOR messages
+ *                    for NeoPool measured (sensor) values
+ *                    (status changes for relays and settings trigger the
+ *                    SENSOR messages immediately, regardless of this time)
+ *            If <time> is set higher than TelePeriod, only status changes for
+ *            relays and settings will trigger SENSOR message.
  *
  * NPSave
  *            write data permanently into EEPROM
@@ -986,13 +1139,15 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *            clears possible errors (like pump exceeded time etc.)
  *
  * NPResult {<format>}
- *            get/set addr/data result format read/write commands (format = 0|1):
+ *            get/set addr/data result format read/write commands
+ *            (format = 0|1)
  *            get output format if <format> is omitted, otherwise
  *              0 - output as decimal numbers
  *              1 - output as hexadecimal strings (default)
  *
  * NPOnError {<repeat>}
- *            get/set auto-repeat Modbus read/write commands on error (repeat = 0..10):
+ *            get/set auto-repeat Modbus read/write commands on error
+ *            (repeat = 0..10)
  *            get auto-repeat setting if <repeat> is omitted, otherwise
  *              0     - disable auto-repeat on read/write error
  *              1..10 - repeat commands n times until ok
@@ -1002,6 +1157,14 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  * NPIonRes {<digits>}
  *            get/set number of digits in results for PH, CL and ION values
  *
+ * NPSetOption0 {0|1}
+ *            (only available on ESP32 or if NEOPOOL_RANGE_CHECKS is defined)
+ *            Disable(0)/enable(1) sensor data min/max validation and
+ *            correction
+ *
+ * NPSetOption1 {0|1}
+ *            (only available on ESP32 or if NEOPOOL_CONNSTAT is defined)
+ *            Disable(0)/enable(1) modbus connection statistics
  *
  * NPRead <addr> {<cnt>}
  * NPReadL <addr> {<cnt>}
@@ -1011,15 +1174,26 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *
  * NPWrite <addr> <data> {<data>...}
  * NPWriteL <addr> <data> {<data>...}
- *            NPWrite write 16-bit register (data = 0..65535), <data> max 10 times
- *            NPWriteL write 32-bit register (data = 0..4294967295), <data> max 10 times
+ *            NPWrite write 16-bit register (data = 0..65535)
+ *            NPWriteL write 32-bit register (data = 0..4294967295)
+ *            The max. number of <data> parameters is 10
  *
  * NPBit <addr> <bit> {<data>}
  * NPBitL <addr> <bit> {<data>}
  *            read/write register bit (bit = 0..15, data = 0|1)
  *            read if <data> is omitted, otherwise set <bit> to new <data>
  *
- * Examples:
+ *
+ * Note:
+ * The setttings changed by commands NPPHRes, NPCLRes, NPIonRes,
+ * NPSetOption0 and NPSetOption1 are permanently stored only if firmware was
+ * compiled with USE_UFILESYS (default enabled on ESP32 and disabled on
+ * ESP82xx). Without USE_UFILESYS (default on ESP82xx), you can alternatively
+ * use a rule to set your defaults during system start, e. g.:
+ * Rule1 ON System#Init DO Backlog NPPHRes 1;NPCLRes 1;NPIonRes 1;NPSetOption0 1;NPSetOption1 0
+ *
+ *
+ * Command examples:
  *
  * Get/Set filtration mode
  *    NPFiltrationMode
@@ -1041,12 +1215,14 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *    RESULT = {"NPResult":0}
  *    RESULT = {"NPReadL":{"Address":1032,"Data":1612124540}}
  *
- * Enable temperature module by setting MBF_PAR_TEMPERATURE_ACTIVE and set it permanently into EEPROM
+ * Enable temperature module by setting MBF_PAR_TEMPERATURE_ACTIVE
+ * and set it permanently into EEPROM
  *    Backlog NPWrite 0x40F,1;NPSave
  *    RESULT = {"NPWrite":{"Address":"0x040F","Data":"0x0001"}}
  *    RESULT = {"NPSave":"Done"}
  *
- * Hide auxiliary relay display from main menu by setting bit 3 of MBF_PAR_UICFG_VISUAL_OPTIONS
+ * Hide auxiliary relay display from main menu
+ * by setting bit 3 of MBF_PAR_UICFG_VISUAL_OPTIONS
  *    NPBit 0x605,3,1
  *    RESULT = {"NPBit":{"Address":"0x0605","Data":"0x08C8"}}
  *
@@ -1060,11 +1236,12 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
  *    RESULT = {"NPRead":{"Address":1106,"Data":1}}
  *    RESULT = {"NPReadL":{"Address":1107,"Data":[0,0,86400,0,0,1,0]}} *
  *
- * Set filtration interval 1 to daily 9:00 - 12:30 (9:00: 3600 * 9 ≙ 32400 / 12:30 ≙ 3,5h = 12600)
+ * Set filtration interval 1 to daily 9:00 - 12:30
+ * (9:00: 3600 * 9 ≙ 32400 / 12:30 ≙ 3,5h = 12600)
  *    NPWriteL 0x435,32400 0 86400 12600
  *    RESULT = {"NPWriteL":{"Address":1077,"Data":[32400,0,86400,12600]}}
  *
- *********************************************************************************************/
+ ****************************************************************************/
 
 #define D_PRFX_NEOPOOL "NP"
 #define D_CMND_NP_RESULT "Result"
@@ -1096,6 +1273,8 @@ const char HTTP_SNS_NEOPOOL_STATUS_ACTIVE[]    PROGMEM = "filter:invert(1)";
 #define D_CMND_NP_PHRES "PHRes"
 #define D_CMND_NP_CLRES "CLRes"
 #define D_CMND_NP_IONRES "IONRes"
+#define D_CMND_NP_SETOPTION "SetOption"
+#define D_CMND_NP_SO "SO"
 #ifdef NEOPOOL_EMULATE_GPERH
   #define D_CMND_NP_GPERH "gPerh"
 #endif
@@ -1129,7 +1308,9 @@ const char kNPCommands[] PROGMEM =  D_PRFX_NEOPOOL "|"  // Prefix
   D_CMND_NP_ONERROR "|"
   D_CMND_NP_PHRES "|"
   D_CMND_NP_CLRES "|"
-  D_CMND_NP_IONRES
+  D_CMND_NP_IONRES "|"
+  D_CMND_NP_SETOPTION "|"
+  D_CMND_NP_SO
 #ifdef NEOPOOL_EMULATE_GPERH
    "|" D_CMND_NP_GPERH
 #endif
@@ -1164,7 +1345,9 @@ void (* const NPCommand[])(void) PROGMEM = {
   &CmndNeopoolOnError,
   &CmndNeopoolPHRes,
   &CmndNeopoolCLRes,
-  &CmndNeopoolIONRes
+  &CmndNeopoolIONRes,
+  &CmndNeopoolSetOption,
+  &CmndNeopoolSetOption
 #ifdef NEOPOOL_EMULATE_GPERH
   ,&CmndNeopoolgPerh
 #endif
@@ -1172,10 +1355,11 @@ void (* const NPCommand[])(void) PROGMEM = {
 
 
 
-/*********************************************************************************************/
+/****************************************************************************/
 
 void NeoPoolPoll(void)              // Poll modbus register
 {
+  // called every 250 ms
   if (!neopool_poll) {
     return;
   };
@@ -1196,7 +1380,9 @@ void NeoPoolPoll(void)              // Poll modbus register
 
     if (nullptr != buffer) {
       uint8_t error = NeoPoolModbus->ReceiveBuffer(buffer, NeoPoolReg[neopool_read_state].cnt);  // cnt x 16bit register
-
+#ifdef NEOPOOL_CONNSTAT
+      NeoPoolModbusErrorCount(error);
+#endif
       if (0 == error) {
         neopool_failed_count = 0;
         neopool_error = false;
@@ -1227,6 +1413,9 @@ void NeoPoolPoll(void)              // Poll modbus register
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: modbus send(%d, %d, 0x%04X, %d)"), NEOPOOL_MODBUS_ADDRESS, NEOPOOL_READ_REGISTER, NeoPoolReg[neopool_read_state].addr, NeoPoolReg[neopool_read_state].cnt);
 #endif  // DEBUG_TASMOTA_SENSOR
         NeoPoolModbus->Send(NEOPOOL_MODBUS_ADDRESS, NEOPOOL_READ_REGISTER, NeoPoolReg[neopool_read_state].addr, NeoPoolReg[neopool_read_state].cnt);
+#ifdef NEOPOOL_CONNSTAT
+        NeoPoolStats.mb_requests++;
+#endif
     } else {
       if (1 == neopool_send_retry) {
         neopool_failed_count++;
@@ -1243,7 +1432,7 @@ void NeoPoolPoll(void)              // Poll modbus register
 
 
 
-/*********************************************************************************************/
+/****************************************************************************/
 
 void NeoPoolInit(void) {
   NeoPoolSettingsLoad(false);
@@ -1280,6 +1469,9 @@ bool NeoPoolInitData(void)
 
   neopool_error = true;
   neopool_power_module_version = 0;
+#ifdef NEOPOOL_CONNSTAT
+  memset(&NeoPoolStats, 0, sizeof(NeoPoolStats));
+#endif
   memset(neopool_power_module_nodeid, 0, sizeof(neopool_power_module_nodeid));
 
   for (uint32_t i = 0; i < nitems(NeoPoolReg); i++) {
@@ -1312,7 +1504,7 @@ bool NeoPoolInitData(void)
 
 
 
-/*********************************************************************************************/
+/****************************************************************************/
 
 #ifdef DEBUG_TASMOTA_SENSOR
 void NeoPoolLogRW(const char *name, uint16_t addr, uint16_t *data, uint16_t cnt)
@@ -1346,6 +1538,19 @@ void NeoPool250msSetStatus(bool status)
   }
 }
 
+#ifdef NEOPOOL_CONNSTAT
+void NeoPoolModbusErrorCount(uint8_t error)
+{
+  if (NeoPoolStats.time < 86400L) {
+    NeoPoolStats.time = Rtc.local_time;
+  }
+  if (error < nitems(NeoPoolStats.mb_results) - 1) {
+    NeoPoolStats.mb_results[error]++;
+  } else {
+    NeoPoolStats.mb_results[nitems(NeoPoolStats.mb_results) - 1]++;
+  }
+}
+#endif
 
 uint8_t NeoPoolReadRegisterData(uint16_t addr, uint16_t *data, uint16_t cnt)
 {
@@ -1357,12 +1562,18 @@ uint8_t NeoPoolReadRegisterData(uint16_t addr, uint16_t *data, uint16_t cnt)
   *data = 0;
 
   NeoPoolModbus->Send(NEOPOOL_MODBUS_ADDRESS, NEOPOOL_READ_REGISTER, addr, cnt);
+#ifdef NEOPOOL_CONNSTAT
+  NeoPoolStats.mb_requests++;
+#endif
   timeoutMS = millis() + cnt * NEOPOOL_READ_TIMEOUT; // Max delay before we timeout
   while (!(data_ready = NeoPoolModbus->ReceiveReady()) && millis() < timeoutMS) { delay(1); }
   if (data_ready) {
     uint8_t *buffer = (uint8_t*)malloc(5+cnt*2);
     if (buffer != nullptr) {
       uint8_t error = NeoPoolModbus->ReceiveBuffer(buffer, cnt);
+#ifdef NEOPOOL_CONNSTAT
+      NeoPoolModbusErrorCount(error);
+#endif
       if (error) {
 #ifdef DEBUG_TASMOTA_SENSOR
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: addr 0x%04X read data error %d"), addr, error);
@@ -1439,6 +1650,9 @@ uint8_t NeoPoolWriteRegisterData(uint16_t addr, uint16_t *data, uint16_t cnt)
 
   NeoPoolModbus->flush();
   NeoPoolModbus->write(frame, numbytes+2);
+#ifdef NEOPOOL_CONNSTAT
+  NeoPoolStats.mb_requests++;
+#endif
 
   timeoutMS = millis() + 1 * NEOPOOL_READ_TIMEOUT; // Max delay before we timeout
   while (!(data_ready = NeoPoolModbus->ReceiveReady()) && millis() < timeoutMS) { delay(1); }
@@ -1446,6 +1660,9 @@ uint8_t NeoPoolWriteRegisterData(uint16_t addr, uint16_t *data, uint16_t cnt)
   if (data_ready) {
     uint8_t buffer[9];
     uint8_t error = NeoPoolModbus->ReceiveBuffer(buffer, 1);
+#ifdef NEOPOOL_CONNSTAT
+    NeoPoolModbusErrorCount(error);
+#endif
     if (0 != error && 9 != error) { // ReceiveBuffer can't handle 0x10 code result
 #ifdef DEBUG_TASMOTA_SENSOR
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NEO: addr 0x%04X write data response error %d"), addr, error);
@@ -1523,7 +1740,7 @@ uint8_t NeoPoolWriteRegisterWord(uint16_t addr, uint16_t data)
 
 uint16_t NeoPoolGetCacheData(uint16_t addr, int32_t timeout)
 {
-  uint16_t data;
+  uint16_t data = 0;
   bool datavalid = false;
   uint16_t i;
 
@@ -1583,7 +1800,57 @@ uint16_t NeoPoolGetCacheData(uint16_t addr, int32_t timeout)
 
 uint16_t NeoPoolGetData(uint16_t addr)
 {
-  return NeoPoolGetCacheData(addr, -1);
+  uint16_t data = NeoPoolGetCacheData(addr, -1);
+
+#ifdef NEOPOOL_RANGE_CHECKS
+  if (NeoPoolSettings.flags.range_check) {
+    for (uint16_t i = 0; i < nitems(NeoPoolRangeCheck); i++) {
+      if (MBF_HIDRO_CURRENT == NeoPoolRangeCheck[i].addr && NEOPOOL_UNDEF_UINT16 == NeoPoolRangeCheck[i].max) {
+        // get hydrolsysis max value
+        uint16_t max = NeoPoolGetCacheData(MBF_PAR_HIDRO_NOM, -1);
+        if (0 != max) {
+          NeoPoolRangeCheck[i].max = max;
+  #ifdef DEBUG_TASMOTA_SENSOR
+          AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: ConnStat - use hydrolysis max = %d"), NeoPoolRangeCheck[i].max);
+  #endif
+        }
+      }
+      if (NeoPoolRangeCheck[i].addr == addr) {
+        uint16_t prev_data = data;
+        // check out of range
+        if (data < NeoPoolRangeCheck[i].min || data > NeoPoolRangeCheck[i].max) {
+  #ifdef NEOPOOL_CONNSTAT
+          NeoPoolStats.value_out_of_range++;
+  #endif
+          // use previous value if defined
+          if (NEOPOOL_UNDEF_UINT16 != NeoPoolRangeCheck[i].prev) {
+            data = NeoPoolRangeCheck[i].prev;
+          } else  {
+            // limit to min/max as long as no valid previous value is present
+            if (data < NeoPoolRangeCheck[i].min) {
+              data = NeoPoolRangeCheck[i].min;
+            } else {
+              data = NeoPoolRangeCheck[i].max;
+            }
+          }
+  #ifdef DEBUG_TASMOTA_SENSOR
+          AddLog(LOG_LEVEL_DEBUG, PSTR("NEO: ConnStat - Addr 0x%04X data out of range [%d-%d]: received %d, corrected using %d"),
+            NeoPoolRangeCheck[i].addr,
+            NeoPoolRangeCheck[i].min,
+            NeoPoolRangeCheck[i].max,
+            prev_data,
+            data);
+  #endif
+        }
+        else {
+          // remeber origin value
+          NeoPoolRangeCheck[i].prev = data;
+        }
+      }
+    }
+  }
+#endif  // NEOPOOL_RANGE_CHECKS
+  return data;
 }
 
 
@@ -1711,7 +1978,7 @@ bool NeoPoolIsIonization(void)
 }
 
 
-/*********************************************************************************************/
+/****************************************************************************/
 void NeoPoolAppendModules(void)
 {
   ResponseAppend_P(PSTR("\""  D_NEOPOOL_JSON_MODULES  "\":"));
@@ -1798,13 +2065,13 @@ void NeoPoolShow(bool json)
     // pH
     if (NeoPoolIspHModule()) {
       fvalue = (float)NeoPoolGetData(MBF_MEASURE_PH)/100;
-      ResponseAppend_P(PSTR(",\""  D_PH  "\":{\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_PH), NeoPoolSettings.resolution.ph, &fvalue);
+      ResponseAppend_P(PSTR(",\""  D_PH  "\":{\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_PH), NeoPoolSettings.flags.ph, &fvalue);
 
       // S1
       float fphmin = (float)NeoPoolGetData(MBF_PAR_PH2)/100;
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MIN  "\":"  NEOPOOL_FMT_PH), NeoPoolSettings.resolution.ph, &fphmin);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MIN  "\":"  NEOPOOL_FMT_PH), NeoPoolSettings.flags.ph, &fphmin);
       float fphmax = (float)NeoPoolGetData(MBF_PAR_PH1)/100;
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MAX  "\":"  NEOPOOL_FMT_PH), NeoPoolSettings.resolution.ph, &fphmax);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MAX  "\":"  NEOPOOL_FMT_PH), NeoPoolSettings.flags.ph, &fphmax);
 
       // S2
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_STATE  "\":%d"), (NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_ALARM));
@@ -1840,9 +2107,9 @@ void NeoPoolShow(bool json)
     if (NeoPoolIsChlorine()) {
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CHLORINE  "\":{"));
       fvalue = (float)NeoPoolGetData(MBF_MEASURE_CL)/100;
-      ResponseAppend_P(PSTR("\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_CL), NeoPoolSettings.resolution.cl, &fvalue);
+      ResponseAppend_P(PSTR("\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_CL), NeoPoolSettings.flags.cl, &fvalue);
       fvalue = (float)NeoPoolGetData(MBF_PAR_CL1)/100;
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":"  NEOPOOL_FMT_CL), NeoPoolSettings.resolution.cl, &fvalue);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":"  NEOPOOL_FMT_CL), NeoPoolSettings.flags.cl, &fvalue);
       ResponseJsonEnd();
     }
 
@@ -1855,11 +2122,11 @@ void NeoPoolShow(bool json)
     if (NeoPoolIsIonization()) {
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_IONIZATION  "\":{"));
       fvalue = (float)NeoPoolGetData(MBF_ION_CURRENT);
-      ResponseAppend_P(PSTR("\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_ION), NeoPoolSettings.resolution.ion, &fvalue);
+      ResponseAppend_P(PSTR("\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_ION), NeoPoolSettings.flags.ion, &fvalue);
       fvalue = (float)NeoPoolGetData(MBF_PAR_ION);
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":"  NEOPOOL_FMT_ION), NeoPoolSettings.resolution.ion, &fvalue);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":"  NEOPOOL_FMT_ION), NeoPoolSettings.flags.ion, &fvalue);
       fvalue = (float)NeoPoolGetData(MBF_PAR_ION_NOM);
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MAX  "\":"  NEOPOOL_FMT_ION), NeoPoolSettings.resolution.ion, &fvalue);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_MAX  "\":"  NEOPOOL_FMT_ION), NeoPoolSettings.flags.ion, &fvalue);
       ResponseJsonEnd();
     }
 
@@ -1959,19 +2226,38 @@ void NeoPoolShow(bool json)
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_RELAY_CL  "\":%d"), (NeoPoolGetData(MBF_RELAY_STATE) >> (NeoPoolGetData(MBF_PAR_CL_RELAY_GPIO)-1)) & 1);
     }
     if (0 != NeoPoolGetData(MBF_PAR_CD_RELAY_GPIO)) {
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_RELAY_CD " \":%d"), (NeoPoolGetData(MBF_RELAY_STATE) >> NeoPoolGetData(MBF_PAR_CD_RELAY_GPIO)) & 1);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_RELAY_CD "\":%d"), (NeoPoolGetData(MBF_RELAY_STATE) >> (NeoPoolGetData(MBF_PAR_CD_RELAY_GPIO)-1)) & 1);
     }
     if (0 != NeoPoolGetData(MBF_PAR_HEATING_GPIO)) {
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_RELAY_HEATING " \":%d"), (NeoPoolGetData(MBF_RELAY_STATE) >> NeoPoolGetData(MBF_PAR_HEATING_GPIO)) & 1);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_RELAY_HEATING "\":%d"), (NeoPoolGetData(MBF_RELAY_STATE) >> (NeoPoolGetData(MBF_PAR_HEATING_GPIO)-1)) & 1);
     }
     if (0 != NeoPoolGetData(MBF_PAR_UV_RELAY_GPIO)) {
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_RELAY_UV " \":%d"), (NeoPoolGetData(MBF_RELAY_STATE) >> NeoPoolGetData(MBF_PAR_UV_RELAY_GPIO)) & 1);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_RELAY_UV "\":%d"), (NeoPoolGetData(MBF_RELAY_STATE) >> (NeoPoolGetData(MBF_PAR_UV_RELAY_GPIO)-1)) & 1);
     }
     if (0 != NeoPoolGetData(MBF_PAR_FILTVALVE_GPIO)) {
-      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_RELAY_FILTVALVE " \":%d"), (NeoPoolGetData(MBF_RELAY_STATE) >> NeoPoolGetData(MBF_PAR_FILTVALVE_GPIO)) & 1);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_RELAY_FILTVALVE "\":%d"), (NeoPoolGetData(MBF_RELAY_STATE) >> (NeoPoolGetData(MBF_PAR_FILTVALVE_GPIO)-1)) & 1);
     }
+    ResponseJsonEnd();
 
-    ResponseJsonEndEnd();
+#ifdef NEOPOOL_CONNSTAT
+    if (NeoPoolSettings.flags.conn_stat) {
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CONNSTAT  "\":{"));
+      ResponseAppend_P(PSTR( "\""  D_JSON_TIME  "\":\"%s\""), GetDT(NeoPoolStats.time).c_str());
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CONNSTAT_MB_REQUESTS  "\":%d"), NeoPoolStats.mb_requests);
+      uint32_t mb_sum = 0;
+      for(uint16_t i = 0; i < nitems(NeoPoolStats.mb_results); i++) {
+        char mbresult[32];
+        GetTextIndexed(mbresult, sizeof(mbresult), i, kNeoPoolMBResults);
+        ResponseAppend_P(PSTR(",\"%s\":%d"), mbresult,NeoPoolStats.mb_results[i]);
+        mb_sum += NeoPoolStats.mb_results[i];
+      }
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CONNSTAT_MB_RESULTS  "\":%d"), NeoPoolStats.mb_requests - mb_sum);
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_CONNSTAT_DATA_OOR  "\":%d"), NeoPoolStats.value_out_of_range);
+      ResponseJsonEnd();
+    }
+#endif
+
+    ResponseJsonEnd();
 
 #ifdef USE_WEBSERVER
   } else {
@@ -2063,11 +2349,11 @@ void NeoPoolShow(bool json)
     if (NeoPoolIspHModule()) {
       // Data
       fvalue = (float)NeoPoolGetData(MBF_MEASURE_PH)/100;
-      WSContentSend_PD(HTTP_SNS_NEOPOOL_PH, neopool_type, NeoPoolSettings.resolution.ph, &fvalue);
+      WSContentSend_PD(HTTP_SNS_NEOPOOL_PH, neopool_type, NeoPoolSettings.flags.ph, &fvalue);
       WSContentSend_PD(PSTR("&nbsp;"));
       // S1
       float fphmax = (float)NeoPoolGetData(MBF_PAR_PH1)/100;
-      ext_snprintf_P(stemp, sizeof(stemp), PSTR(NEOPOOL_FMT_PH), NeoPoolSettings.resolution.ph, &fphmax);
+      ext_snprintf_P(stemp, sizeof(stemp), PSTR(NEOPOOL_FMT_PH), NeoPoolSettings.flags.ph, &fphmax);
       WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color,
         (((uint16_t)(fvalue*10) > (uint16_t)(fphmax*10)) ? HTTP_SNS_NEOPOOL_STATUS_ACTIVE : HTTP_SNS_NEOPOOL_STATUS_INACTIVE), stemp);
       WSContentSend_PD(PSTR(" "));
@@ -2117,7 +2403,7 @@ void NeoPoolShow(bool json)
     // Chlorine
     if (NeoPoolIsChlorine()) {
       fvalue = (float)NeoPoolGetData(MBF_MEASURE_CL)/100;
-      WSContentSend_PD(HTTP_SNS_NEOPOOL_PPM_CHLORINE, neopool_type, NeoPoolSettings.resolution.ph, &fvalue);
+      WSContentSend_PD(HTTP_SNS_NEOPOOL_PPM_CHLORINE, neopool_type, NeoPoolSettings.flags.ph, &fvalue);
     }
 
     // Conductivity
@@ -2136,7 +2422,7 @@ void NeoPoolShow(bool json)
         );
       fvalue = (float)NeoPoolGetData(MBF_ION_CURRENT);
       WSContentSend_PD(HTTP_SNS_NEOPOOL_IONIZATION, neopool_type,
-        NeoPoolSettings.resolution.ion, &fvalue,
+        NeoPoolSettings.flags.ion, &fvalue,
         stemp,
         NeoPoolGetData(MBF_ION_STATUS) & MBMSK_ION_STATUS_LOW ? PSTR(" " D_NEOPOOL_LOW) : PSTR("")
       );
@@ -2209,9 +2495,9 @@ void NeoPoolShow(bool json)
 
 
 
-/*********************************************************************************************\
+/****************************************************************************\
  * Command implementation
-\*********************************************************************************************/
+\****************************************************************************/
 
 void NeopoolReadWriteResponse(uint16_t addr, uint16_t *data, uint16_t cnt, bool fbits32, int16_t bit)
 {
@@ -2607,7 +2893,7 @@ void CmndNeopoolLight(void)
       if (POWER_TOGGLE == timer_val[XdrvMailbox.payload]) {
         XdrvMailbox.payload = ((data >>= (neopool_light_relay - 1)) & 1) ? POWER_OFF : POWER_ON;
       }
-      NeoPoolWriteRegisterWord(MBF_PAR_TIMER_BLOCK_LIGHT_INT + MBV_TIMER_OFFMB_TIMER_ENABLE, timer_val[XdrvMailbox.payload]);
+      NeoPoolWriteRegisterWord((uint16_t)MBF_PAR_TIMER_BLOCK_LIGHT_INT + (uint16_t)MBV_TIMER_OFFMB_TIMER_ENABLE, timer_val[XdrvMailbox.payload]);
       NeoPoolWriteRegisterWord(MBF_EXEC, 1);
       // data >>= (neopool_light_relay - 1);
       ResponseCmndStateText(XdrvMailbox.payload);
@@ -2677,7 +2963,7 @@ void CmndNeopoolLightPrgEnd(void)
   // exit manual ctrl
   NeoPoolWriteRegisterWord(MBF_SET_MANUAL_CTRL, 0);
   // switch light on to finish prg sequence
-  NeoPoolWriteRegisterWord(MBF_PAR_TIMER_BLOCK_LIGHT_INT + MBV_TIMER_OFFMB_TIMER_ENABLE, MBV_PAR_CTIMER_ALWAYS_ON);
+  NeoPoolWriteRegisterWord((uint16_t)MBF_PAR_TIMER_BLOCK_LIGHT_INT + (uint16_t)MBV_TIMER_OFFMB_TIMER_ENABLE, MBV_PAR_CTIMER_ALWAYS_ON);
   NeoPoolWriteRegisterWord(MBF_EXEC, 1);
 }
 
@@ -2746,7 +3032,7 @@ void CmndNeopoolpHMin(void)
         return;
     }
     if (CmndNeopoolSetParam(MBF_PAR_PH2, 100, 0, (float)data/100)) {
-      CmndNeopoolGetParam(MBF_PAR_PH2, 100, NeoPoolSettings.resolution.ph);
+      CmndNeopoolGetParam(MBF_PAR_PH2, 100, NeoPoolSettings.flags.ph);
     }
   } else {
     NeopoolCmndError();
@@ -2764,7 +3050,7 @@ void CmndNeopoolpHMax(void)
         return;
     }
     if (CmndNeopoolSetParam(MBF_PAR_PH1, 100, (float)data/100, 14)) {
-      CmndNeopoolGetParam(MBF_PAR_PH1, 100, NeoPoolSettings.resolution.ph);
+      CmndNeopoolGetParam(MBF_PAR_PH1, 100, NeoPoolSettings.flags.ph);
     }
   } else {
     NeopoolCmndError();
@@ -2870,7 +3156,7 @@ void CmndNeopoolIonization(void)
         return;
     }
     if (CmndNeopoolSetParam(MBF_PAR_ION, 1, 0, (float)data)) {
-      CmndNeopoolGetParam(MBF_PAR_ION, 1, NeoPoolSettings.resolution.ion);
+      CmndNeopoolGetParam(MBF_PAR_ION, 1, NeoPoolSettings.flags.ion);
     }
   } else {
     NeopoolCmndError();
@@ -2882,7 +3168,7 @@ void CmndNeopoolChlorine(void)
 {
   if (NeoPoolIsChlorine()) {
     if (CmndNeopoolSetParam(MBF_PAR_CL1, 100, 0, 10)) {
-      CmndNeopoolGetParam(MBF_PAR_CL1, 100, NeoPoolSettings.resolution.cl);
+      CmndNeopoolGetParam(MBF_PAR_CL1, 100, NeoPoolSettings.flags.cl);
     }
   } else {
     NeopoolCmndError();
@@ -2959,27 +3245,38 @@ void CmndNeopoolOnError(void)
 void CmndNeopoolPHRes(void)
 {
   if (XdrvMailbox.data_len && XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 3) {
-    NeoPoolSettings.resolution.ph = XdrvMailbox.payload;
+    NeoPoolSettings.flags.ph = XdrvMailbox.payload;
   }
-  ResponseCmndNumber(NeoPoolSettings.resolution.ph);
+  ResponseCmndNumber(NeoPoolSettings.flags.ph);
 }
 
 
 void CmndNeopoolCLRes(void)
 {
   if (XdrvMailbox.data_len && XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 3) {
-    NeoPoolSettings.resolution.cl = XdrvMailbox.payload;
+    NeoPoolSettings.flags.cl = XdrvMailbox.payload;
   }
-  ResponseCmndNumber(NeoPoolSettings.resolution.cl);
+  ResponseCmndNumber(NeoPoolSettings.flags.cl);
 }
 
 
 void CmndNeopoolIONRes(void)
 {
   if (XdrvMailbox.data_len && XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 3) {
-    NeoPoolSettings.resolution.ion = XdrvMailbox.payload;
+    NeoPoolSettings.flags.ion = XdrvMailbox.payload;
   }
-  ResponseCmndNumber(NeoPoolSettings.resolution.ion);
+  ResponseCmndNumber(NeoPoolSettings.flags.ion);
+}
+
+
+void CmndNeopoolSetOption(void)
+{
+  if (XdrvMailbox.index >= 0 && XdrvMailbox.index <= 1) {
+    if (XdrvMailbox.data_len && XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 1) {
+      bitWrite(NeoPoolSettings.flags.data, XdrvMailbox.index + 6, XdrvMailbox.payload);
+    }
+    ResponseCmndIdxChar(GetStateText(bitRead(NeoPoolSettings.flags.data, XdrvMailbox.index + 6)));
+  }
 }
 
 
@@ -3059,9 +3356,11 @@ void NeoPoolSettingsLoad(bool erase) {
   memset(&NeoPoolSettings, 0x00, sizeof(NeoPoolSettings));
   NeoPoolSettings.crc32 = GetCfgCrc32((uint8_t*)&NeoPoolSettings +4, sizeof(NeoPoolSettings) -4);
   NeoPoolSettings.version = NEOPOOL_SETTING_VERSION;
-  NeoPoolSettings.resolution.ph = NEOPOOL_DEFAULT_PHRES;
-  NeoPoolSettings.resolution.cl = NEOPOOL_DEFAULT_CLRES;
-  NeoPoolSettings.resolution.ion = NEOPOOL_DEFAULT_IONRES;
+  NeoPoolSettings.flags.ph = NEOPOOL_DEFAULT_PHRES;
+  NeoPoolSettings.flags.cl = NEOPOOL_DEFAULT_CLRES;
+  NeoPoolSettings.flags.ion = NEOPOOL_DEFAULT_IONRES;
+  NeoPoolSettings.flags.range_check = 1;
+  NeoPoolSettings.flags.conn_stat = 1;
   NeoPoolSettings.result = NEOPOOL_DEFAULT_RESULT;
   NeoPoolSettings.npteleperiod = NEOPOOL_DEFAULT_NPTELEPERIOD;
 
@@ -3110,9 +3409,9 @@ void NeoPoolSettingsSave(void) {
 #endif  // USE_UFILESYS
 }
 
-/*********************************************************************************************\
+/****************************************************************************\
  * Interface
-\*********************************************************************************************/
+\****************************************************************************/
 
 bool Xsns83(uint32_t function)
 {

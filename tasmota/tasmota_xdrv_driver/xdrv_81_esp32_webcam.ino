@@ -122,10 +122,11 @@
 #include "fb_gfx.h"
 #include "camera_pins.h"
 
+SemaphoreHandle_t WebcamMutex = nullptr;
+
+#ifndef USE_WEBCAM_SETUP_ONLY
 bool HttpCheckPriviledgedAccess(bool);
 extern ESP8266WebServer *Webserver;
-
-SemaphoreHandle_t WebcamMutex = nullptr;;
 
 // use mutex like:
 // TasAutoMutex localmutex(&WebcamMutex, "somename");
@@ -134,7 +135,7 @@ SemaphoreHandle_t WebcamMutex = nullptr;;
 #define BOUNDARY "e8b8c539-047d-4777-a985-fbba6edff11e"
 
 #ifndef MAX_PICSTORE
-#define MAX_PICSTORE 4
+  #define MAX_PICSTORE 4
 #endif
 struct PICSTORE {
   uint8_t *buff;
@@ -151,11 +152,14 @@ struct PICSTORE {
 #endif // RTSP_FRAME_TIME
 #endif // ENABLE_RTSPSERVER
 
+#endif //USE_WEBCAM_SETUP_ONLY
+
 struct {
   uint8_t  up = 0;
   uint16_t width;
   uint16_t height;
   uint8_t  stream_active;
+ #ifndef USE_WEBCAM_SETUP_ONLY
   WiFiClient client;
   ESP8266WebServer *CamServer;
   struct PICSTORE picstore[MAX_PICSTORE];
@@ -165,9 +169,10 @@ struct {
   CRtspSession *rtsp_session;
   WiFiClient rtsp_client;
   uint8_t rtsp_start;
+#endif // ENABLE_RTSPSERVER
   OV2640 cam;
   uint32_t rtsp_lastframe_time;
-#endif // ENABLE_RTSPSERVER
+#endif // USE_WEBCAM_SETUP_ONLY
 } Wc;
 
 struct {
@@ -219,6 +224,7 @@ bool WcPinUsed(void) {
   return pin_used;
 }
 
+
 void WcFeature(int32_t value) {
   TasAutoMutex localmutex(&WebcamMutex, "WcFeature");
   sensor_t * wc_s = esp_camera_sensor_get();
@@ -252,6 +258,7 @@ void WcFeature(int32_t value) {
   }
   AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Feature: %d"), value);
 }
+
 
 void WcApplySettings() {
   TasAutoMutex localmutex(&WebcamMutex, "WcApplySettings");
@@ -493,7 +500,7 @@ uint32_t WcSetup(int32_t fsiz) {
 }
 
 /*********************************************************************************************/
-
+#ifndef USE_WEBCAM_SETUP_ONLY
 int32_t WcSetOptions(uint32_t sel, int32_t value) {
   int32_t res = 0;
   TasAutoMutex localmutex(&WebcamMutex, "WcSetOptions");
@@ -771,7 +778,6 @@ pcopy:
 }
 
 //////////////// Handle authentication /////////////////
-
 
 bool WebcamAuthenticate(void)
 {
@@ -1120,6 +1126,8 @@ void WcShowStream(void) {
   }
 }
 
+#endif // USE_WEBCAM_SETUP_ONLY
+
 void WcInit(void) {
   if (!Settings->webcam_config.data) {
     Settings->webcam_config.stream = 1;
@@ -1138,6 +1146,7 @@ void WcInit(void) {
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
+#ifndef USE_WEBCAM_SETUP_ONLY
 
 #define D_PRFX_WEBCAM "WC"
 #define D_CMND_WC_STREAM "Stream"
@@ -1502,13 +1511,15 @@ void WcStatsShow(void) {
 #endif  // USE_WEBSERVER
 }
 
+#endif //USE_WEBCAM_SETUP_ONLY
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
 
 bool Xdrv81(uint32_t function) {
   bool result = false;
-
+  #ifndef USE_WEBCAM_SETUP_ONLY
   switch (function) {
     case FUNC_LOOP:
       WcLoop();
@@ -1536,8 +1547,8 @@ bool Xdrv81(uint32_t function) {
     case FUNC_ACTIVE:
       result = true;
       break;
-
   }
+  #endif // USE_WEBCAM_SETUP_ONLY
   return result;
 }
 

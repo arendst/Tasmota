@@ -9,7 +9,7 @@ extern const bclass be_class_lv_str_arr;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(lv_str_arr_init,   /* name */
+be_local_closure(class_lv_str_arr_init,   /* name */
   be_nested_proto(
     11,                          /* nstack */
     2,                          /* argc */
@@ -76,7 +76,7 @@ be_local_class(lv_str_arr,
     &be_class_bytes,
     be_nested_map(2,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(init, -1), be_const_closure(lv_str_arr_init_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_lv_str_arr_init_closure) },
         { be_const_key_weak(l, 0), be_const_var(0) },
     })),
     be_str_weak(lv_str_arr)
@@ -87,7 +87,7 @@ extern const bclass be_class_lv_int_arr;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(lv_int_arr_init,   /* name */
+be_local_closure(class_lv_int_arr_init,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     3,                          /* argc */
@@ -177,7 +177,7 @@ be_local_closure(lv_int_arr_init,   /* name */
 /********************************************************************
 ** Solidified function: item
 ********************************************************************/
-be_local_closure(lv_int_arr_item,   /* name */
+be_local_closure(class_lv_int_arr_item,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -208,7 +208,7 @@ be_local_closure(lv_int_arr_item,   /* name */
 /********************************************************************
 ** Solidified function: setitem
 ********************************************************************/
-be_local_closure(lv_int_arr_setitem,   /* name */
+be_local_closure(class_lv_int_arr_setitem,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     3,                          /* argc */
@@ -246,9 +246,9 @@ be_local_class(lv_int_arr,
     &be_class_bytes,
     be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(init, -1), be_const_closure(lv_int_arr_init_closure) },
-        { be_const_key_weak(item, -1), be_const_closure(lv_int_arr_item_closure) },
-        { be_const_key_weak(setitem, -1), be_const_closure(lv_int_arr_setitem_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_lv_int_arr_init_closure) },
+        { be_const_key_weak(item, -1), be_const_closure(class_lv_int_arr_item_closure) },
+        { be_const_key_weak(setitem, -1), be_const_closure(class_lv_int_arr_setitem_closure) },
     })),
     be_str_weak(lv_int_arr)
 );
@@ -258,7 +258,7 @@ extern const bclass be_class_lv_point_arr;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(lv_point_arr_init,   /* name */
+be_local_closure(class_lv_point_arr_init,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     2,                          /* argc */
@@ -351,7 +351,7 @@ be_local_class(lv_point_arr,
     &be_class_bytes,
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(init, -1), be_const_closure(lv_point_arr_init_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_lv_point_arr_init_closure) },
     })),
     be_str_weak(lv_point_arr)
 );
@@ -359,7 +359,7 @@ be_local_class(lv_point_arr,
 /********************************************************************
 ** Solidified function: _anonymous_
 ********************************************************************/
-be_local_closure(lv_extra__anonymous_,   /* name */
+be_local_closure(_anonymous_,   /* name */
   be_nested_proto(
     4,                          /* nstack */
     1,                          /* argc */
@@ -416,7 +416,7 @@ extern const bclass be_class_lv_style_prop_arr;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(lv_style_prop_arr_init,   /* name */
+be_local_closure(class_lv_style_prop_arr_init,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     2,                          /* argc */
@@ -490,7 +490,7 @@ be_local_class(lv_style_prop_arr,
     &be_class_bytes,
     be_nested_map(1,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(init, -1), be_const_closure(lv_style_prop_arr_init_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_lv_style_prop_arr_init_closure) },
     })),
     be_str_weak(lv_style_prop_arr)
 );
@@ -500,7 +500,7 @@ extern const bclass be_class_lv_coord_arr;
 /********************************************************************
 ** Solidified function: init
 ********************************************************************/
-be_local_closure(lv_coord_arr_init,   /* name */
+be_local_closure(class_lv_coord_arr_init,   /* name */
   be_nested_proto(
     9,                          /* nstack */
     3,                          /* argc */
@@ -590,7 +590,7 @@ be_local_closure(lv_coord_arr_init,   /* name */
 /********************************************************************
 ** Solidified function: item
 ********************************************************************/
-be_local_closure(lv_coord_arr_item,   /* name */
+be_local_closure(class_lv_coord_arr_item,   /* name */
   be_nested_proto(
     6,                          /* nstack */
     2,                          /* argc */
@@ -621,7 +621,7 @@ be_local_closure(lv_coord_arr_item,   /* name */
 /********************************************************************
 ** Solidified function: setitem
 ********************************************************************/
-be_local_closure(lv_coord_arr_setitem,   /* name */
+be_local_closure(class_lv_coord_arr_setitem,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     3,                          /* argc */
@@ -659,9 +659,9 @@ be_local_class(lv_coord_arr,
     &be_class_bytes,
     be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(init, -1), be_const_closure(lv_coord_arr_init_closure) },
-        { be_const_key_weak(item, -1), be_const_closure(lv_coord_arr_item_closure) },
-        { be_const_key_weak(setitem, -1), be_const_closure(lv_coord_arr_setitem_closure) },
+        { be_const_key_weak(init, -1), be_const_closure(class_lv_coord_arr_init_closure) },
+        { be_const_key_weak(item, -1), be_const_closure(class_lv_coord_arr_item_closure) },
+        { be_const_key_weak(setitem, -1), be_const_closure(class_lv_coord_arr_setitem_closure) },
     })),
     be_str_weak(lv_coord_arr)
 );
@@ -676,7 +676,7 @@ be_local_module(lv_extra,
         { be_const_key_weak(lv_coord_arr, 4), be_const_class(be_class_lv_coord_arr) },
         { be_const_key_weak(lv_int_arr, -1), be_const_class(be_class_lv_int_arr) },
         { be_const_key_weak(lv_point_arr, -1), be_const_class(be_class_lv_point_arr) },
-        { be_const_key_weak(init, -1), be_const_closure(lv_extra__anonymous__closure) },
+        { be_const_key_weak(init, -1), be_const_closure(_anonymous__closure) },
         { be_const_key_weak(lv_style_prop_arr, -1), be_const_class(be_class_lv_style_prop_arr) },
         { be_const_key_weak(lv_str_arr, 0), be_const_class(be_class_lv_str_arr) },
     }))

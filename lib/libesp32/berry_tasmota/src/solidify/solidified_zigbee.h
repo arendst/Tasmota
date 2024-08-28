@@ -7,7 +7,7 @@
 /********************************************************************
 ** Solidified function: tostring
 ********************************************************************/
-be_local_closure(zb_device_tostring,   /* name */
+be_local_closure(class_zb_device_tostring,   /* name */
   be_nested_proto(
     12,                          /* nstack */
     1,                          /* argc */

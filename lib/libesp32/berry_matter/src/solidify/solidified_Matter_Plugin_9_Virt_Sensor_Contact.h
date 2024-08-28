@@ -23,12 +23,5 @@ be_local_class(Matter_Plugin_Virt_Sensor_Contact,
     })),
     be_str_weak(Matter_Plugin_Virt_Sensor_Contact)
 );
-/*******************************************************************/
-
-void be_load_Matter_Plugin_Virt_Sensor_Contact_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_Plugin_Virt_Sensor_Contact);
-    be_setglobal(vm, "Matter_Plugin_Virt_Sensor_Contact");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */

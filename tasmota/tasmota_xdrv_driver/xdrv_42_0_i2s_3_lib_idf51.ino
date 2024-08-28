@@ -105,7 +105,7 @@ public:
 
   void setSlotConfig(i2s_port_t i2s_port, uint8_t tx_slot_config,
                      uint8_t tx_slot_mask, uint8_t rx_slot_mask) {
-    _i2s_port = i2s_port;
+    // _i2s_port = i2s_port;
     _tx_slot_config = tx_slot_config;
   }
   void setRxFreq(uint16_t freq) { _rx_freq = freq; }
@@ -197,6 +197,7 @@ public:
   // Tx
   virtual bool begin(void) { return beginTx(); };   // the name `begin()`is inherited from superclass, prefer `beginTx()` which is more explicit
   virtual bool stop(void) { return stopTx(); };     // the name `stop()`is inherited from superclass, prefer `stopTx()` which is more explicit
+  virtual void flush(void);                         // makes sure that all stored DMA samples are consumed / played to prevent static noise after stop()
   bool beginTx(void);
   bool stopTx(void);
   bool ConsumeSample(int16_t sample[2]);
@@ -324,7 +325,7 @@ bool TasmotaI2S::beginTx(void) {
   {
     err = i2s_channel_enable(_tx_handle);
   }
-  AddLog(LOG_LEVEL_INFO, "I2S: Tx i2s_channel_enable err=0x%04X", err);
+  AddLog(LOG_LEVEL_DEBUG, "I2S: Tx i2s_channel_enable err=0x%04X", err);
   if (err != ERR_OK){
     return false;
   }
@@ -343,6 +344,11 @@ bool TasmotaI2S::stopTx() {
       dac_task_stop();
       err = dac_continuous_disable((dac_continuous_handle_t) _tx_handle);
     } else {
+      uint8_t zero_buffer[240] = {0};
+      size_t sz;
+      for(int i = 0;i < 6;i++){
+        i2s_channel_write(_tx_handle, zero_buffer, sizeof(zero_buffer), &sz, 0); // fill DMA buffer with silence
+      }
       err = i2s_channel_disable(_tx_handle);
     }
     AddLog(LOG_LEVEL_DEBUG, "I2S: stopTx i2s_channel_disable err=0x%04X", err);
@@ -358,9 +364,23 @@ bool TasmotaI2S::stopTx() {
       AddLog(LOG_LEVEL_DEBUG, "I2S: stopTx i2s_del_channel err=0x%04X", err);
       _tx_handle = nullptr;
     }
-    AddLog(LOG_LEVEL_INFO, "I2S: stop: I2S channel disabled");
+    AddLog(LOG_LEVEL_DEBUG, "I2S: stop: I2S channel disabled");
   }
   return true;
+}
+
+void TasmotaI2S::flush()
+{
+    int buffersize = 6 * 240;
+    int16_t samples[2] = {0x0, 0x0};
+    for (int i = 0; i < buffersize; i++)
+    {
+      while (!ConsumeSample(samples))
+      {
+        delay(1);
+      }
+    }
+    AddLog(LOG_LEVEL_DEBUG, "I2S: flush DMA TX buffer");
 }
 
 bool TasmotaI2S::delTxHandle(void) {
@@ -638,10 +658,10 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
       case I2S_MODE_STD:
         {
           i2s_std_slot_config_t _slot_cfg = {
-            .data_bit_width = (i2s_data_bit_width_t)bps,
+            .data_bit_width = rx_data_bit_width,
             .slot_bit_width = (i2s_slot_bit_width_t)audio_i2s.Settings->rx.slot_bit_width,
-            .slot_mode = (i2s_slot_mode_t)channels,
-            .slot_mask = (i2s_std_slot_mask_t)audio_i2s.Settings->rx.slot_mask,
+            .slot_mode =  rx_slot_mode,
+            .slot_mask =  (i2s_std_slot_mask_t)_rx_slot_mask,
             .ws_width = audio_i2s.Settings->rx.ws_width,
             .ws_pol = audio_i2s.Settings->rx.ws_pol,
             .bit_shift = audio_i2s.Settings->rx.bit_shift,
@@ -669,7 +689,11 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
               },
             },
           };
-
+#if SOC_I2S_SUPPORTS_APLL
+          if(audio_i2s.Settings->rx.apll == 1){
+              rx_std_cfg.clk_cfg.clk_src = I2S_CLK_SRC_APLL;
+          }
+#endif //SOC_I2S_SUPPORTS_APLL
           err = i2s_channel_init_std_mode(_rx_handle, &rx_std_cfg);
           AddLog(LOG_LEVEL_DEBUG, "I2S: RX i2s_channel_init_std_mode with err:%i", err);
           AddLog(LOG_LEVEL_DEBUG, "I2S: RX channel in standard mode with %u bit width on %i channel(s) initialized", bps, rx_slot_mode);

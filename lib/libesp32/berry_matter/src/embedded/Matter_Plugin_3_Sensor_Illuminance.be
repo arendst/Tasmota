@@ -69,11 +69,7 @@ class Matter_Plugin_Sensor_Illuminance : Matter_Plugin_Sensor
     # ====================================================================================================
     if   cluster == 0x0400              # ========== Illuminance Measurement 2.2 p.95 ==========
       if   attribute == 0x0000          #  ---------- MeasuredValue / i16 ----------
-        if self.shadow_value != nil
-          return tlv_solo.set(TLV.U2, int(self.shadow_value))
-        else
-          return tlv_solo.set(TLV.NULL, nil)
-        end
+        return tlv_solo.set_or_nil(TLV.U2, int(self.shadow_value))
       elif attribute == 0x0001          #  ---------- MinMeasuredValue / i16 ----------
         return tlv_solo.set(TLV.U2, 1)  # 1 lux
       elif attribute == 0x0002          #  ---------- MaxMeasuredValue / i16 ----------
@@ -83,6 +79,22 @@ class Matter_Plugin_Sensor_Illuminance : Matter_Plugin_Sensor
     end
     return super(self).read_attribute(session, ctx, tlv_solo)
   end
+
+  #############################################################
+  # For Bridge devices
+  #############################################################
+  #############################################################
+  # web_values
+  #
+  # Show values of the remote device as HTML
+  def web_values()
+    import webserver
+    self.web_values_prefix()        # display '| ' and name if present
+    webserver.content_send(format("&#128261; %i lux",
+                                         int(self.shadow_value)))
+  end
+  #############################################################
+  #############################################################
 
 end
 matter.Plugin_Sensor_Illuminance = Matter_Plugin_Sensor_Illuminance

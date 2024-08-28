@@ -356,6 +356,8 @@
   #define USE_DISPLAY_TM1637                     // [DisplayModel 15] Enable TM1637 module
   #define USE_DISPLAY_MAX7219                    // [DisplayModel 19] Enable MAX7219 7-segment module
 
+#define USE_TM1638                               // Add support for TM1638 switches copying Switch1 .. Switch8 (+1k code)
+
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
   #define USE_DISPLAY_MODES1TO5                  // Enable display mode 1 to 5 in addition to mode 0
   #define USE_DISPLAY_LCD                        // [DisplayModel 1] Enable Lcd display (I2C addresses 0x27 and 0x3F) (+6k code)

@@ -2228,12 +2228,12 @@ void HM10Show(bool json)
       }
       if (MIBLEsensors.size()==0) i=-1; // only for the GUI
 
-      WSContentSend_PD(HTTP_HM10, HM10.firmware, i+1,stemp,MIBLEsensors.size());
+      WSContentSend_P(HTTP_HM10, HM10.firmware, i+1,stemp,MIBLEsensors.size());
       for (i; i<j; i++) {
         WSContentSend_PD(HTTP_HM10_HL);
         char _MAC[18];
         ToHex_P(MIBLEsensors[i].MAC,6,_MAC,18,':');
-        WSContentSend_PD(HTTP_HM10_MAC, kHM10DeviceType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, _MAC);
+        WSContentSend_P(HTTP_HM10_MAC, kHM10DeviceType[MIBLEsensors[i].type-1], D_MAC_ADDRESS, _MAC);
         if (MIBLEsensors[i].type==HM10_FLORA){
           if(!isnan(MIBLEsensors[i].temp)){
             WSContentSend_Temp(kHM10DeviceType[MIBLEsensors[i].type-1], MIBLEsensors[i].temp);
@@ -2288,7 +2288,7 @@ void HM10Show(bool json)
         _sbeacon[6] = _idx + 0x30;
         char _MAC[18];
         ToHex_P(_beacon.MAC,6,_MAC,18,':');
-        WSContentSend_PD(HTTP_HM10_MAC, _sbeacon, D_MAC_ADDRESS, _MAC);
+        WSContentSend_P(HTTP_HM10_MAC, _sbeacon, D_MAC_ADDRESS, _MAC);
         WSContentSend_PD(HTTP_RSSI, _sbeacon, _beacon.RSSI);
         if(_beacon.CID!=0) WSContentSend_PD(PSTR("{s}Beacon%u CID{m}0x%04X{e}"),_idx, _beacon.CID);
         if(_beacon.SVC!=0) WSContentSend_PD(PSTR("{s}Beacon%u SVC{m}0x%04X{e}"),_idx, _beacon.SVC);

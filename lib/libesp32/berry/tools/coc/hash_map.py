@@ -27,6 +27,13 @@ class hash_map:
         self.bucket = []
 
         self.resize(2)
+        var_count = 0
+        # replace any 'var' by its slot number
+        for (key, value) in map.items():
+            if value == "var":
+                map[key] = var_count
+                var_count += 1
+
         for key in sorted(map.keys()):
             self.insert(key, map[key])
     
@@ -115,27 +122,21 @@ class hash_map:
     # Compute entries in the hash for modules or classes
     #################################################################################
     # return a list (entiry, var_count)
-    def entry_modify(self, ent, var_count):
+    def entry_modify(self, ent):
         ent.key = escape_operator(ent.key)
-        if ent.value == "var":
-            ent.value = "be_const_var(" + str(var_count) + ")"
-            var_count += 1
+        if isinstance(ent.value, int):
+            ent.value = "be_const_var(" + str(ent.value) + ")"
         else:
             ent.value = "be_const_" + ent.value
-        return (ent, var_count)
+        return ent
     
     #  generate the final map
     def entry_list(self):
         l = []
-        var_count = 0
         
         self.resize(self.count)
         for it in self.bucket:
-            (ent, var_count) = self.entry_modify(it, var_count)
-            # print(f"ent={ent} var_count={var_count}")
-            # # ex: ent=<entry object; key='arg', value='be_const_func(w_webserver_arg)', next=-1> var_count=0
-            # # ex: ent=<entry object; key='check_privileged_access2', value='be_const_func(w_webserver_check_privileged_access_ntv, "b", "")', next=-1> var_count=0
-            l.append(ent)
+            l.append(self.entry_modify(it))
         return l
     
     def var_count(self):
@@ -143,7 +144,7 @@ class hash_map:
 
         self.resize(self.count)
         for it in self.bucket:
-            if it.value == "var": count += 1
+            if isinstance(it.value, int): count += 1
         return count
 
 if __name__ == '__main__':

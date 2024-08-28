@@ -212,6 +212,16 @@ int64_t* int64_frombytes(bvm *vm, uint8_t* ptr, size_t len, int32_t idx) {
 }
 BE_FUNC_CTYPE_DECLARE(int64_frombytes, "int64", "@(bytes)~[i]")
 
+int32_t int64_low32(int64_t *i64) {
+  return (int32_t) *i64;
+}
+BE_FUNC_CTYPE_DECLARE(int64_low32, "i", "(int64)")
+
+int32_t int64_high32(int64_t *i64) {
+  return (int32_t) (*i64 >> 32);
+}
+BE_FUNC_CTYPE_DECLARE(int64_high32, "i", "(int64)")
+
 /*
 
 def toint64(i)
@@ -305,5 +315,8 @@ class be_class_int64 (scope: global, name: int64) {
 
   tobytes, ctype_func(int64_tobytes)
   frombytes, static_ctype_func(int64_frombytes)
+
+  low32, ctype_func(int64_low32)        // return low 32 bits as int
+  high32, ctype_func(int64_high32)      // return high 32 bits as int
 }
 @const_object_info_end */

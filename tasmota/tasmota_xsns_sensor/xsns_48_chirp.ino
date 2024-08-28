@@ -152,9 +152,9 @@ void ChirpResetAll(void) {
 /********************************************************************************************/
 
 void ChirpClockSet() { // set I2C for this slow sensor
-#if ESP_IDF_VERSION_MAJOR < 5 // setClockStretchLimit was removed
+#ifdef ESP8266
     Wire.setClockStretchLimit(4000);
-#endif
+#endif  // ESP8266
     Wire.setClock(50000);
 }
 

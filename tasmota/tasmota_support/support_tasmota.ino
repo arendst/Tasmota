@@ -690,6 +690,7 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
 // state 2 = POWER_TOGGLE = Toggle relay
 // state 3 = POWER_BLINK = Blink relay
 // state 4 = POWER_BLINK_STOP = Stop blinking relay
+// state 5 = POWER_OFF_FORCE = Relay off even if locked
 // state 8 = POWER_OFF_NO_STATE = Relay Off and no publishPowerState
 // state 9 = POWER_ON_NO_STATE = Relay On and no publishPowerState
 // state 10 = POWER_TOGGLE_NO_STATE = Toggle relay and no publishPowerState
@@ -709,6 +710,12 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
   }
 #endif  // USE_SONOFF_IFAN
 
+  bool force_power_off = false;
+  if (POWER_OFF_FORCE == state) {
+    force_power_off = true;
+    state = POWER_OFF;
+  }
+
   bool publish_power = true;
   if ((state >= POWER_OFF_NO_STATE) && (state <= POWER_TOGGLE_NO_STATE)) {
     state &= 3;                          // POWER_OFF, POWER_ON or POWER_TOGGLE
@@ -720,7 +727,7 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
   }
   TasmotaGlobal.active_device = device;
 
-  if (bitRead(Settings->power_lock, device -1)) {
+  if (!force_power_off && bitRead(Settings->power_lock, device -1)) {
     AddLog(LOG_LEVEL_INFO, PSTR("CMD: Power%d is LOCKED"), device);
     state = POWER_SHOW_STATE;            // Only show state. Make no change
   }
@@ -1436,6 +1443,7 @@ void Every250mSeconds(void)
             OtaFactoryWrite(true);
 #endif
             RtcSettings.ota_loader = 1;                 // Try safeboot image next
+            XsnsXdrvCall(FUNC_ABOUT_TO_RESTART);
             SettingsSaveAll();
             AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
             EspPrepRestartToSafeBoot();
@@ -1583,6 +1591,7 @@ void Every250mSeconds(void)
       }
 
       if (2 == TasmotaGlobal.restart_flag) {              // Restart 1
+        XsnsXdrvCall(FUNC_ABOUT_TO_RESTART);
         SettingsSaveAll();
       }
 
@@ -1609,12 +1618,12 @@ void Every250mSeconds(void)
 #ifdef ESP32
         if (OtaFactoryRead()) {
           OtaFactoryWrite(false);
-          TasmotaGlobal.ota_state_flag = 3;
-          AddLog(LOG_LEVEL_DEBUG, PSTR("OTA: Propagating upload"));
+          RtcSettings.ota_loader = 1;
         }
 #endif
         if (1 == RtcSettings.ota_loader) {
           RtcSettings.ota_loader = 0;
+          AddLog(LOG_LEVEL_DEBUG, PSTR("OTA: Propagating upload"));
           TasmotaGlobal.ota_state_flag = 3;
         }
 #endif  // FIRMWARE_MINIMAL
@@ -2150,33 +2159,19 @@ void GpioInit(void)
       SetPin(14, AGPIO(GPIO_SPI_CLK));
     }
   }
+  AddLogSpi(1, Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_MISO));
 #endif  // ESP8266
 #ifdef ESP32
-/*
-  if (PinUsed(GPIO_SPI_CS) ||
-      PinUsed(GPIO_RC522_CS) ||
-      PinUsed(GPIO_NRF24_CS) ||
-      PinUsed(GPIO_ILI9341_CS) ||
-      PinUsed(GPIO_EPAPER29_CS) ||
-      PinUsed(GPIO_EPAPER42_CS) ||
-      PinUsed(GPIO_ILI9488_CS) ||
-      PinUsed(GPIO_SSD1351_CS) ||
-      PinUsed(GPIO_RA8876_CS) ||
-      PinUsed(GPIO_ST7789_DC) ||  // ST7789 CS may be omitted so chk DC too
-      PinUsed(GPIO_ST7789_CS) ||
-      PinUsed(GPIO_SSD1331_CS) ||
-      PinUsed(GPIO_SDCARD_CS)
-     ) {
-    uint32_t spi_mosi = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MOSI)) ? SPI_MOSI : SPI_NONE;
-    uint32_t spi_miso = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MISO)) ? SPI_MISO : SPI_NONE;
-    TasmotaGlobal.spi_enabled = spi_mosi + spi_miso;
-  }
-*/
   uint32_t spi_mosi = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MOSI)) ? SPI_MOSI : SPI_NONE;
   uint32_t spi_miso = (PinUsed(GPIO_SPI_CLK) && PinUsed(GPIO_SPI_MISO)) ? SPI_MISO : SPI_NONE;
   TasmotaGlobal.spi_enabled = spi_mosi + spi_miso;
-#endif  // ESP32
   AddLogSpi(1, Pin(GPIO_SPI_CLK), Pin(GPIO_SPI_MOSI), Pin(GPIO_SPI_MISO));
+
+  spi_mosi = (PinUsed(GPIO_SPI_CLK, 1) && PinUsed(GPIO_SPI_MOSI, 1)) ? SPI_MOSI : SPI_NONE;
+  spi_miso = (PinUsed(GPIO_SPI_CLK, 1) && PinUsed(GPIO_SPI_MISO, 1)) ? SPI_MISO : SPI_NONE;
+  TasmotaGlobal.spi_enabled2 = spi_mosi + spi_miso;
+  AddLogSpi(2, Pin(GPIO_SPI_CLK, 1), Pin(GPIO_SPI_MOSI, 1), Pin(GPIO_SPI_MISO, 1));
+#endif  // ESP32
 #endif  // USE_SPI
 
   for (uint32_t i = 0; i < nitems(TasmotaGlobal.my_module.io); i++) {

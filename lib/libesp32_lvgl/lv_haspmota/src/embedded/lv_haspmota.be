@@ -1018,6 +1018,12 @@ class lvh_obj : lvh_root
 
     if string.startswith(k, "set_") || string.startswith(k, "get_")   return end
 
+    # if value is 'real', round to nearest int
+    if type(v) == 'real'
+      import math
+      v = int(math.round(v))
+    end
+
     # parse value in percentage
     if string.endswith(k, "%")
       k = k[0..-2]

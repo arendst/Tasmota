@@ -32,7 +32,7 @@ Index | Define              | Driver   | Device   | Address(es) | Bus2 | Descrip
   13  | USE_ADS1115         | xsns_12  | ADS1115  | 0x48 - 0x4B | Yes  | 4-channel 16-bit A/D converter
   14  | USE_INA219          | xsns_13  | INA219   | 0x40 - 0x41, 0x44 - 0x45 |      | Low voltage current sensor
   15  | USE_SHT3X           | xsns_14  | SHT3X    | 0x44 - 0x45 | Yes  | Temperature and Humidity sensor
-  15  | USE_SHT3X           | xsns_14  | SHT4X    | 0x44 - 0x45 | Yes  | Temperature and Humidity sensor
+  15  | USE_SHT3X           | xsns_14  | SHT4X    | 0x44 - 0x46 | Yes  | Temperature and Humidity sensor
   15  | USE_SHT3X           | xsns_14  | SHTCX    | 0x70        | Yes  | Temperature and Humidity sensor
   16  | USE_TSL2561         | xsns_16  | TSL2561  | 0x29, 0x39, 0x49 |      | Light intensity sensor
   17  | USE_MGS             | xsns_19  | Grove    | 0x04        |      | Multichannel gas sensor
@@ -123,7 +123,7 @@ Index | Define              | Driver   | Device   | Address(es) | Bus2 | Descrip
   83  | USE_MAX17043        | xsns_110 | MAX17043 | 0x36        |      | Fuel-gauge for 3.7 Volt Lipo battery
   84  | USE_ENS16x          | xsns_111 | ENS16x   | 0x52 - 0x53 |      | Gas (TVOC, eCO2) and air quality sensor
   85  | USE_ENS210          | xsns_112 | ENS210   | 0x43 - 0x44 |      | Temperature and humidity sensor
-  86  | USE_AMSX915         | xsns_114 | AMS5915  | 0x28        |      | Pressure (absolute/differential) and temperature sensor
   86  | USE_AMSX915         | xsns_114 | AMS6915  | 0x28        |      | Pressure (absolute/differential) and temperature sensor
-  87  | USE_SPL06_007       | xsns_25  | SPL06-007 | 0x76        |      | Pressure and temperature sensor
+  87  | USE_SPL06_007       | xsns_25  | SPL06-007 | 0x76       |      | Pressure and temperature sensor
+  88  | USE_QMP6988         | xsns_28  | QMP6988   | 0x56, 0x70 | Yes  | Pressure and temperature sensor
   NOTE: Bus2 supported on ESP32 only.

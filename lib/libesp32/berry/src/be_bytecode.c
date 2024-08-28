@@ -297,6 +297,13 @@ static void save_global_info(bvm *vm, void *fp)
     }
 }
 
+void be_bytecode_save_to_fs(bvm *vm, void *fp, bproto *proto)
+{
+    save_header(fp);
+    save_global_info(vm, fp);
+    save_proto(vm, fp, proto);
+}
+
 void be_bytecode_save(bvm *vm, const char *filename, bproto *proto)
 {
     void *fp = be_fopen(filename, "wb");
@@ -304,9 +311,7 @@ void be_bytecode_save(bvm *vm, const char *filename, bproto *proto)
         bytecode_error(vm, be_pushfstring(vm,
             "can not open file '%s'.", filename));
     } else {
-        save_header(fp);
-        save_global_info(vm, fp);
-        save_proto(vm, fp, proto);
+        be_bytecode_save_to_fs(vm, fp, proto);
         be_fclose(fp);
     }
 }

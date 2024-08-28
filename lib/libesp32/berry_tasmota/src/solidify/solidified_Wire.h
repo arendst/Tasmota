@@ -7,7 +7,7 @@
 /********************************************************************
 ** Solidified function: read_bytes
 ********************************************************************/
-be_local_closure(Wire_read_bytes,   /* name */
+be_local_closure(class_Wire_read_bytes,   /* name */
   be_nested_proto(
     8,                          /* nstack */
     4,                          /* argc */
@@ -61,7 +61,7 @@ be_local_closure(Wire_read_bytes,   /* name */
 /********************************************************************
 ** Solidified function: write_bytes
 ********************************************************************/
-be_local_closure(Wire_write_bytes,   /* name */
+be_local_closure(class_Wire_write_bytes,   /* name */
   be_nested_proto(
     7,                          /* nstack */
     4,                          /* argc */

@@ -83,6 +83,13 @@ public:
   // With ESP32 Core3, the WiFi mac address is not valid until the wifi is actually started
   // this helper function always provide a valid mac address
   static String macAddress(void);
+
+  // Auto-fix zone
+  //
+  // After a reconnect, the zone id may not be valid anymore
+  // In such case we detect any "%st<n>" or "%en<n>" zone identifier
+  // and replace with the current zone id
+  static void IPv6ZoneAutoFix(IPAddress &addr, const char* aHostname);
 };
 
 

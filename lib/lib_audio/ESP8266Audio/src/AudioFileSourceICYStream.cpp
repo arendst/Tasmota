@@ -45,17 +45,15 @@ bool AudioFileSourceICYStream::open(const char *url)
 {
   static const char *hdr[] = { "icy-metaint", "icy-name", "icy-genre", "icy-br" };
   pos = 0;
-  http.begin(client, url);
+  if (!http.begin(client, url)) {
+    cb.st(STATUS_HTTPFAIL, PSTR("Can't connect to url"));
+    return false;
+  }
   http.addHeader("Icy-MetaData", "1");
   http.collectHeaders( hdr, 4 );
   http.setReuse(true);
   http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
   int code = http.GET();
-  if (code != HTTP_CODE_OK) {
-    http.end();
-    cb.st(STATUS_HTTPFAIL, PSTR("Can't open HTTP request"));
-    return false;
-  }
   if (http.hasHeader(hdr[0])) {
     String ret = http.header(hdr[0]);
     icyMetaInt = ret.toInt();

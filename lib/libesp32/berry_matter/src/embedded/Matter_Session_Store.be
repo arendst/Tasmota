@@ -21,9 +21,6 @@ import matter
 
 #@ solidify:Matter_Session_Store,weak
 
-# for compilation
-class Matter_Expirable end
-
 #################################################################################
 #################################################################################
 #################################################################################
@@ -289,9 +286,9 @@ class Matter_Session_Store
     var sessions = self.sessions
     while i < size(sessions)
       var session = sessions[i]
-      tasmota.log(format("MTR: session.resumption_id=%s vs %s", str(session.resumption_id), str(resumption_id)), 4)
+      log(format("MTR: session.resumption_id=%s vs %s", str(session.resumption_id), str(resumption_id)), 4)
       if session.resumption_id == resumption_id && session.shared_secret != nil
-        # tasmota.log(format("MTR: session.shared_secret=%s", str(session.shared_secret)), 4)
+        # log(format("MTR: session.shared_secret=%s", str(session.shared_secret)), 4)
         session.update()
         return session
       end
@@ -342,13 +339,13 @@ class Matter_Session_Store
       # saving went well, now remove previous version and rename
       path.remove(self._FABRICS)
       if (path.rename(self._FABRICS_TEMP, self._FABRICS))
-        tasmota.log(f"MTR: =Saved     {fabrics_saved} fabric(s) and {sessions_saved} session(s)", 2)
+        log(f"MTR: =Saved     {fabrics_saved} fabric(s) and {sessions_saved} session(s)", 2)
         self.device.event_fabrics_saved()     # signal event
       else
-        tasmota.log(f"MTR: Saving Fabrics failed", 2)
+        log(f"MTR: Saving Fabrics failed", 2)
       end
     except .. as e, m
-      tasmota.log("MTR: Session_Store::save Exception:" + str(e) + "|" + str(m), 2)
+      log("MTR: Session_Store::save Exception:" + str(e) + "|" + str(m), 2)
     end
   end
 
@@ -389,10 +386,10 @@ class Matter_Session_Store
         self.fabrics.push(fabric)
       end
 
-      tasmota.log(format("MTR: Loaded %i fabric(s)", size(self.fabrics)), 2)
+      log(format("MTR: Loaded %i fabric(s)", size(self.fabrics)), 2)
     except .. as e, m
       if e != "io_error"
-        tasmota.log("MTR: Session_Store::load Exception:" + str(e) + "|" + str(m), 2)
+        log("MTR: Session_Store::load Exception:" + str(e) + "|" + str(m), 2)
       end
     end
     # persistables are normally not expiring

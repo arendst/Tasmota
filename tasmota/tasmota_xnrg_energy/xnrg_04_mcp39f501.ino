@@ -604,7 +604,7 @@ bool McpCommand(void)
   if (CMND_POWERSET == Energy->command_code) {
     if (XdrvMailbox.data_len && mcp_active_power) {
       value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 100);
-      if ((value > 100) && (value < 200000)) {  // Between 1W and 2000W
+      if ((value > 100) && (value < 2000000)) {  // Between 1W and 20000W
         XdrvMailbox.payload = value;
         mcp_calibrate |= MCP_CALIBRATE_POWER;
         McpGetCalibration();
@@ -614,7 +614,7 @@ bool McpCommand(void)
   else if (CMND_VOLTAGESET == Energy->command_code) {
     if (XdrvMailbox.data_len && mcp_voltage_rms) {
       value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 10);
-      if ((value > 1000) && (value < 2600)) {  // Between 100V and 260V
+      if ((value > 1000) && (value < 4000)) {  // Between 100V and 400V
         XdrvMailbox.payload = value;
         mcp_calibrate |= MCP_CALIBRATE_VOLTAGE;
         McpGetCalibration();
@@ -624,7 +624,7 @@ bool McpCommand(void)
   else if (CMND_CURRENTSET == Energy->command_code) {
     if (XdrvMailbox.data_len && mcp_current_rms) {
       value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 10);
-      if ((value > 100) && (value < 80000)) {  // Between 10mA and 8A
+      if ((value > 100) && (value < 800000)) {  // Between 10mA and 80A
         XdrvMailbox.payload = value;
         mcp_calibrate |= MCP_CALIBRATE_CURRENT;
         McpGetCalibration();

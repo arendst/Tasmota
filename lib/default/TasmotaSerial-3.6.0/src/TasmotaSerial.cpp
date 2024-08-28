@@ -136,7 +136,12 @@ bool TasmotaSerial::isValidGPIOpin(int pin) {
 }
 
 void TasmotaSerial::setTransmitEnablePin(int tx_enable_pin) {
+#ifdef ESP8266
+  if ((tx_enable_pin > -1) && (isValidGPIOpin(tx_enable_pin) || (16 == tx_enable_pin))) {
+#endif
+#ifdef ESP32
   if ((tx_enable_pin > -1) && isValidGPIOpin(tx_enable_pin)) {
+#endif
     m_tx_enable_pin = tx_enable_pin;
     pinMode(m_tx_enable_pin, OUTPUT);
     digitalWrite(m_tx_enable_pin, LOW);
@@ -145,9 +150,9 @@ void TasmotaSerial::setTransmitEnablePin(int tx_enable_pin) {
 
 #ifdef ESP32
 bool TasmotaSerial::freeUart(void) {
-  for (uint32_t i = SOC_UART_NUM -1; i >= 0; i--) {
+  for (uint32_t i = SOC_UART_HP_NUM -1; i >= 0; i--) {
     if (0 == bitRead(tasmota_serial_uart_bitmap, i)) {
-      m_uart = i;
+      m_uart = uart_port_t(i);
       bitSet(tasmota_serial_uart_bitmap, m_uart);
       return true;
     }

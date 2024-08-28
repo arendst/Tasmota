@@ -13,6 +13,13 @@
 #include "be_exec.h"
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
+
+#if BE_USE_SINGLE_FLOAT
+  #define mathfunc(func)        func##f
+#else
+  #define mathfunc(func)        func
+#endif
 
 /* Ubuntu 22.04 LTS seems to have an invalid or missing signature for strtok_r, forcing a correct one */
 extern char *strtok_r(char *str, const char *delim, char **saveptr);
@@ -227,7 +234,15 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *buf
     type_ok = type_ok || (arg_type[0] == provided_type && arg_type[1] == 0);      // or type is a match (single char only)
     type_ok = type_ok || (ret == 0 && arg_type_len != 1);     // or NULL is accepted for an instance
     type_ok = type_ok || (ret == 0 && arg_type[0] == 's' && arg_type[1] == 0);  // accept nil for string, can be dangerous
-    
+    if (!type_ok) {
+      if ((provided_type == 'f') && (arg_type[0] == 'i') && (arg_type[1] == 0)) {
+        // special case: float is accepted as int
+        breal v_real = be_toreal(vm, idx);
+        ret = mathfunc(round)(v_real);
+        provided_type = 'i';
+        type_ok = btrue;
+      }
+    }
     if (!type_ok) {
       be_raisef(vm, "type_error", "Unexpected argument type '%c', expected '%s'", provided_type, arg_type);
     }

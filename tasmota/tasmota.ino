@@ -83,7 +83,9 @@
 #include <LittleFS.h>
 #ifdef USE_SDCARD
 #include <SD.h>
+#ifdef SOC_SDMMC_HOST_SUPPORTED
 #include <SD_MMC.h>
+#endif  // SOC_SDMMC_HOST_SUPPORTED
 #endif  // USE_SDCARD
 #include "FFat.h"
 #include "FS.h"
@@ -303,8 +305,10 @@ struct TasmotaGlobal_t {
 
   bool serial_local;                        // Handle serial locally
   bool fallback_topic_flag;                 // Use Topic or FallbackTopic
+  bool no_mqtt_response;                    // Respond with rule processing only
   bool backlog_nodelay;                     // Execute all backlog commands with no delay
   bool backlog_mutex;                       // Command backlog pending
+  bool backlog_no_mqtt_response;            // Set respond with rule processing only
   bool stop_flash_rotate;                   // Allow flash configuration rotation
   bool blinkstate;                          // LED state
   bool pwm_present;                         // Any PWM channel configured with SetOption15 0
@@ -325,7 +329,8 @@ struct TasmotaGlobal_t {
   uint8_t busy_time;                        // Time in ms to allow executing of time critical functions
   uint8_t init_state;                       // Tasmota init state
   uint8_t heartbeat_inverted;               // Heartbeat pulse inverted flag
-  uint8_t spi_enabled;                      // SPI configured
+  uint8_t spi_enabled;                      // SPI configured (bus1)
+  uint8_t spi_enabled2;                     // SPI configured (bus2)
   uint8_t soft_spi_enabled;                 // Software SPI configured
   uint8_t blinks;                           // Number of LED blinks
   uint8_t restart_flag;                     // Tasmota restart flag
@@ -708,6 +713,7 @@ void BacklogLoop(void) {
           free(cmd);
           nodelay = true;
         } else {
+          TasmotaGlobal.no_mqtt_response = TasmotaGlobal.backlog_no_mqtt_response;
           ExecuteCommand(cmd, SRC_BACKLOG);
           free(cmd);
           if (nodelay || TasmotaGlobal.backlog_nodelay) {
@@ -716,23 +722,6 @@ void BacklogLoop(void) {
           break;
         }
       } while (!BACKLOG_EMPTY);
-/*
-      // This adds 96 bytes
-      for (auto &cmd : backlog) {
-        backlog.remove(&cmd);
-        if (!strncasecmp_P(cmd, PSTR(D_CMND_NODELAY), strlen(D_CMND_NODELAY))) {
-          free(cmd);
-          nodelay = true;
-        } else {
-          ExecuteCommand(cmd, SRC_BACKLOG);
-          free(cmd);
-          if (nodelay || TasmotaGlobal.backlog_nodelay) {
-            TasmotaGlobal.backlog_timer = millis();  // Reset backlog_timer which has been set by ExecuteCommand (CommandHandler)
-          }
-          break;
-        }
-      }
-*/
       TasmotaGlobal.backlog_mutex = false;
     }
     if (BACKLOG_EMPTY) {

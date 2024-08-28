@@ -55,9 +55,15 @@ def inspect(p)
     import introspect
 
     var keys = []
-    for k : introspect.members(p)
-      var v = introspect.get(p, k)
-      if type(v) != 'function'    keys.push(k) end
+    var o = p
+    while (o != nil)
+      for k : introspect.members(o)
+        var v = introspect.get(o, k)
+        if (type(v) != 'function') && (keys.find(k) == nil)
+          keys.push(k)
+        end
+      end
+      o = super(o)      # move to superclass
     end
     keys = matter.sort(keys)
 
@@ -83,20 +89,35 @@ matter.inspect = inspect
 # from the inheritance hierarchy
 #@ solidify:matter.consolidate_clusters,weak
 def consolidate_clusters(cl, m)
-  var cl_parent = super(cl) != nil ? super(cl).CLUSTERS : {}
+  var cl_parent = (super(cl) != nil) ? super(cl).CLUSTERS : {}
   var ret = {}
   # clone cl_parent
   for k: cl_parent.keys()
     # print(f"{k=} {cl_parent[k]=}")
-    ret[k] = cl_parent[k].copy()
+    # rebuild an actual list
+    var attr_arr = []
+    var attr_bytes = cl_parent[k]
+    var attr_bytes_sz = (attr_bytes != nil) ? size(attr_bytes) / 2 : 0
+    var idx = 0
+    while (idx < attr_bytes_sz)
+      attr_arr.push(attr_bytes.get(idx * 2, -2))
+      idx += 1
+    end
+    ret[k] = attr_arr
+    # ret[k] = cl_parent[k].copy()
   end
   # add all keys from m
   # print("--- step 2")
   for k: m.keys()
     # print(f"{k=} {ret.find(k)=} {m[k]=}")
-    var l = ret.find(k)
-    if l == nil     l = []  end
-    ret[k] = l + m[k]
+    if !ret.contains(k)
+      ret[k] = []
+    end
+    for v: m[k]
+      if ret[k].find(v) == nil
+        ret[k].push(v)
+      end
+    end
   end
   # add all auto-attribbutes to each cluster
   var AUTO_ATTRIBUTES = [                 # pre-defined auto attributes for every cluster
@@ -113,6 +134,23 @@ def consolidate_clusters(cl, m)
         ret[k].push(at)
       end
     end
+  end
+  # sort all lists
+  for k: ret.keys()
+    var attr_list = ret[k]
+    # sort in place
+    ret[k] = matter.sort(attr_list)
+  end
+  # convert back to bytes
+  for k: ret.keys()
+    var attr_arr = ret[k]
+    var attr_bytes = bytes()
+    var idx = 0
+    while (idx < size(attr_arr))
+      attr_bytes.add(attr_arr[idx], -2)
+      idx += 1
+    end
+    ret[k] = attr_bytes
   end
   # print(ret)
   return ret

@@ -189,9 +189,9 @@ bool RtcRebootValid(void) {
 
 extern "C" {
 #include "spi_flash.h"
-#if ESP_IDF_VERSION_MAJOR >= 5
-  #include "spi_flash_mmap.h"
-#endif
+#ifdef ESP32
+#include "spi_flash_mmap.h"
+#endif  // ESP32
 }
 
 #ifdef ESP8266
@@ -1137,7 +1137,7 @@ void SettingsDefaultSet2(void) {
   flag5.mqtt_status_retain |= MQTT_STATUS_RETAIN;
   flag5.mqtt_switches |= MQTT_SWITCHES;
   flag5.mqtt_persistent |= ~MQTT_CLEAN_SESSION;
-  flag6.mqtt_disable_sserialrec |= MQTT_DISABLE_SSERIALRECEIVED;
+  flag6.mqtt_disable_publish |= MQTT_DISABLE_SSERIALRECEIVED;
   flag6.mqtt_disable_modbus |= MQTT_DISABLE_MODBUSRECEIVED;
 //  flag.mqtt_serial |= 0;
   flag.device_index_enable |= MQTT_POWER_FORMAT;
@@ -1208,9 +1208,9 @@ void SettingsDefaultSet2(void) {
 //  Settings->energy_max_power_limit = 0;                            // MaxPowerLimit
   Settings->energy_max_power_limit_hold = MAX_POWER_HOLD;
   Settings->energy_max_power_limit_window = MAX_POWER_WINDOW;
-//  Settings->energy_max_power_safe_limit = 0;                       // MaxSafePowerLimit
-  Settings->energy_max_power_safe_limit_hold = SAFE_POWER_HOLD;
-  Settings->energy_max_power_safe_limit_window = SAFE_POWER_WINDOW;
+//  Settings->ex_energy_max_power_safe_limit = 0;                    // MaxSafePowerLimit
+//  Settings->ex_energy_max_power_safe_limit_hold = SAFE_POWER_HOLD;
+//  Settings->ex_energy_max_power_safe_limit_window = SAFE_POWER_WINDOW;
 //  Settings->energy_max_energy = 0;                                 // MaxEnergy
 //  Settings->energy_max_energy_start = 0;                           // MaxEnergyStart
 //  Settings->energy_kWhtotal_ph[0] = 0;
@@ -1424,6 +1424,9 @@ void SettingsDefaultSet2(void) {
   flag5.mi32_enable |= BLE_ESP32_ENABLE;
   #endif
 #endif // FIRMWARE_MINIMAL
+
+  // Matter
+  flag6.matter_enabled |= MATTER_ENABLED;
 
   Settings->flag = flag;
   Settings->flag2 = flag2;
@@ -1723,6 +1726,13 @@ void SettingsDelta(void) {
     if (Settings->version < 0x0A010003) {  // 10.1.0.3
       Settings->sserial_config = Settings->serial_config;
     }
+
+    // Change CalVer (2022.01.1-4 = 0x14160101) to SemVer (10.1.0.4-7 = 0x0A010004)
+    uint32_t version2022 = Settings->version & 0x00FF0000;
+    if (0x00160000 == version2022) {       // Version x.22.x.x is not likely to appear
+      Settings->version = 0x0A010005;      // Choose this as 0x0A010006 has a change following
+    }
+
     if (Settings->version < 0x0A010006) {  // 10.1.0.6
       Settings->web_time_start = 0;
       Settings->web_time_end = 0;
@@ -1812,6 +1822,12 @@ void SettingsDelta(void) {
 */
     if (Settings->version < 0x0D040004) {  // 13.4.0.4
       Settings->power_lock = 0;
+    }
+    if (Settings->version < 0x0E000004) {  // 14.0.0.4
+      Settings->tcp_baudrate = (uint16_t)Settings->sserial_mode * 4;
+    }
+    if (Settings->version < 0x0E010002) {  // 14.1.0.2
+      Settings->sserial_mode = Settings->sbflag1.ex_serbridge_console;
     }
 
     Settings->version = TASMOTA_VERSION;

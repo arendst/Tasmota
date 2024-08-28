@@ -42,9 +42,9 @@ const uint8_t WIFI_RETRY_OFFSET_SEC = WIFI_RETRY_SECONDS;  // seconds
 
 #include <ESP8266WiFi.h>                   // Wifi, MQTT, Ota, WifiManager
 #include "lwip/dns.h"
-#if ESP_IDF_VERSION_MAJOR >= 5
+#ifdef ESP32
   #include "esp_netif.h"
-#endif
+#endif  // ESP32
 
 int WifiGetRssiAsQuality(int rssi) {
   int quality = 0;
@@ -923,18 +923,6 @@ void WifiCheck(uint8_t param)
     if (Wifi.config_counter) {
       Wifi.config_counter--;
       Wifi.counter = Wifi.config_counter +5;
-      if (Wifi.config_counter) {
-        if (!Wifi.config_counter) {
-          if (strlen(WiFi.SSID().c_str())) {
-            SettingsUpdateText(SET_STASSID1, WiFi.SSID().c_str());
-          }
-          if (strlen(WiFi.psk().c_str())) {
-            SettingsUpdateText(SET_STAPWD1, WiFi.psk().c_str());
-          }
-          Settings->sta_active = 0;
-          AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_WCFG_2_WIFIMANAGER D_CMND_SSID "1 %s"), SettingsText(SET_STASSID1));
-        }
-      }
       if (!Wifi.config_counter) {
 //        SettingsSdkErase();  //  Disabled v6.1.0b due to possible bad wifi connects
         TasmotaGlobal.restart_flag = 2;
@@ -1278,6 +1266,7 @@ bool WifiHostByName(const char* aHostname, IPAddress& aResult) {
 #if ESP_IDF_VERSION_MAJOR >= 5
   // try converting directly to IP
   if (aResult.fromString(aHostname)) {
+    WiFiHelper::IPv6ZoneAutoFix(aResult, aHostname);
     return true;   // we're done
   }
 #endif

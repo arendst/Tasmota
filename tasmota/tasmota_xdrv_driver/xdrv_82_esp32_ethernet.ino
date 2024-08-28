@@ -18,7 +18,7 @@
 */
 
 #ifdef ESP32
-//#if CONFIG_IDF_TARGET_ESP32
+#ifndef CONFIG_IDF_TARGET_ESP32C2
 #ifdef USE_ETHERNET
 /*********************************************************************************************\
  * Ethernet support for ESP32
@@ -233,9 +233,9 @@ void EthernetInit(void) {
 #endif  // CONFIG_ETH_USE_ESP32_EMAC
 
   if (eth_uses_spi) {
-    // Uses SPI Ethernat
-    if (!PinUsed(GPIO_ETH_PHY_MDC) || !PinUsed(GPIO_ETH_PHY_MDIO) || !PinUsed(GPIO_ETH_PHY_POWER)) {
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ETH "No ETH MDC (SPI CS), ETH MDIO (SPI IRQ) and ETH POWER (SPI RST) GPIO defined"));
+    // Uses SPI Ethernet and needs at least SPI CS being ETH MDC
+    if (!PinUsed(GPIO_ETH_PHY_MDC)) {
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ETH "No ETH MDC as SPI CS GPIO defined"));
       return;
     }
   } else {
@@ -445,5 +445,5 @@ bool Xdrv82(uint32_t function) {
 }
 
 #endif  // USE_ETHERNET
-//#endif  // CONFIG_IDF_TARGET_ESP32
+#endif  // CONFIG_IDF_TARGET_ESP32C2
 #endif  // ESP32

@@ -1065,6 +1065,10 @@ const uint8_t kXdrvList[] = {
 
 uint32_t Xdrv_active[4] = { 0 };
 
+bool XdrvActive(uint32_t drv_index) {
+  return bitRead(Xdrv_active[drv_index / 32], drv_index % 32);
+}
+
 void XsnsDriverState(void) {
   ResponseAppend_P(PSTR(",\"Drivers\":\""));  // Use string for future enable/disable signal
   for (uint32_t i = 0; i < sizeof(kXdrvList); i++) {
@@ -1073,7 +1077,7 @@ void XsnsDriverState(void) {
 #else
     uint32_t driverid = kXdrvList[i];
 #endif
-    ResponseAppend_P(PSTR("%s%s%d"), (i) ? "," : "", (!bitRead(Xdrv_active[i / 32], i % 32)) ? "!" : "", driverid);
+    ResponseAppend_P(PSTR("%s%s%d"), (i) ? "," : "", (!XdrvActive(i)) ? "!" : "", driverid);
   }
   ResponseAppend_P(PSTR("\""));
 }
@@ -1129,6 +1133,20 @@ bool XdrvCallDriver(uint32_t driver, uint32_t function) {
 /*********************************************************************************************\
  * Function call to all xdrv
 \*********************************************************************************************/
+
+bool XdrvCallNextJsonAppend(void) {
+  static int xdrv_index = -1;
+
+  do {
+    xdrv_index++;
+    if (xdrv_index == xdrv_present) { 
+      xdrv_index = -1;
+      return false;
+    }
+  } while (!XdrvActive(xdrv_index));
+  xdrv_func_ptr[xdrv_index](FUNC_JSON_APPEND);
+  return true;
+}
 
 bool XdrvCall(uint32_t function) {
   bool result = false;

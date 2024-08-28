@@ -80,7 +80,7 @@ const uint8_t MAX_DOMOTICZ_SNS_IDX = 12;    // Max number of Domoticz sensors in
 const uint8_t MAX_KNX_GA = 10;              // Max number of KNX Group Addresses to read that can be set
 const uint8_t MAX_KNX_CB = 10;              // Max number of KNX Group Addresses to write that can be set
 const uint8_t MAX_XNRG_DRIVERS = 32;        // Max number of allowed energy drivers
-const uint8_t MAX_XDRV_DRIVERS = 96;        // Max number of allowed driver drivers
+const uint8_t MAX_XDRV_DRIVERS = 128;       // Max number of allowed driver drivers
 const uint8_t MAX_XSNS_DRIVERS = 128;       // Max number of allowed sensor drivers
 const uint8_t MAX_I2C_DRIVERS = 96;         // Max number of allowed i2c drivers
 const uint8_t MAX_SHUTTERS = 4;             // Max number of shutters
@@ -287,7 +287,9 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
 #define KNX_SLOT8              33
 #define KNX_SLOT9              34
 #define KNX_SCENE              35
-#define KNX_MAX_device_param   35
+#define KNX_DIMMER             36   // aka DPT_Scaling 5.001
+#define KNX_COLOUR             37   // aka DPT_Colour_RGB 232.600 or DPT_Colour_RGBW 251.600
+#define KNX_MAX_device_param   37
 #define MAX_KNXTX_CMNDS        9
 
 // XPT2046 resistive touch driver min/max raw values
@@ -418,7 +420,7 @@ enum LightSubtypes { LST_NONE, LST_SINGLE, LST_COLDWARM, LST_RGB,   LST_RGBW, LS
 enum LightTypes    { LT_BASIC, LT_PWM1,    LT_PWM2,      LT_PWM3,   LT_PWM4,  LT_PWM5,  LT_PWM6, LT_PWM7,
                      LT_NU8,   LT_SERIAL1, LT_SERIAL2,   LT_RGB,    LT_RGBW,  LT_RGBWC, LT_NU14, LT_NU15 };  // Do not insert new fields
 
-enum XsnsFunctions { FUNC_SETTINGS_OVERRIDE, FUNC_SETUP_RING1, FUNC_SETUP_RING2, FUNC_PRE_INIT, FUNC_INIT, FUNC_ACTIVE,
+enum XsnsFunctions { FUNC_SETTINGS_OVERRIDE, FUNC_SETUP_RING1, FUNC_SETUP_RING2, FUNC_PRE_INIT, FUNC_INIT, FUNC_ACTIVE, FUNC_ABOUT_TO_RESTART,
                      FUNC_LOOP, FUNC_SLEEP_LOOP, FUNC_EVERY_50_MSECOND, FUNC_EVERY_100_MSECOND, FUNC_EVERY_200_MSECOND, FUNC_EVERY_250_MSECOND, FUNC_EVERY_SECOND,
                      FUNC_RESET_SETTINGS, FUNC_RESTORE_SETTINGS, FUNC_SAVE_SETTINGS, FUNC_SAVE_AT_MIDNIGHT, FUNC_SAVE_BEFORE_RESTART, FUNC_INTERRUPT_STOP, FUNC_INTERRUPT_START,
                      FUNC_AFTER_TELEPERIOD, FUNC_JSON_APPEND, FUNC_WEB_SENSOR, FUNC_WEB_COL_SENSOR,
@@ -480,6 +482,7 @@ enum SettingsTextIndex { SET_OTAURL,
                          SET_RGX_SSID, SET_RGX_PASSWORD,
                          SET_INFLUXDB_HOST, SET_INFLUXDB_PORT, SET_INFLUXDB_ORG, SET_INFLUXDB_TOKEN, SET_INFLUXDB_BUCKET, SET_INFLUXDB_RP,
                          SET_CANVAS,
+                         SET_TELEGRAM_FINGERPRINT,
                          SET_MAX, // limit of texts stored in Settings
                          // Index above are not stored in Settings and should be handled specifically in SettingText()
                          SET_BUTTON17, SET_BUTTON18, SET_BUTTON19, SET_BUTTON20, SET_BUTTON21, SET_BUTTON22, SET_BUTTON23, SET_BUTTON24,
@@ -516,10 +519,10 @@ enum DevGroupShareItem { DGR_SHARE_POWER = 1, DGR_SHARE_LIGHT_BRI = 2, DGR_SHARE
 
 enum CommandSource { SRC_IGNORE, SRC_MQTT, SRC_RESTART, SRC_BUTTON, SRC_SWITCH, SRC_BACKLOG, SRC_SERIAL, SRC_WEBGUI, SRC_WEBCOMMAND, SRC_WEBCONSOLE, SRC_PULSETIMER,
                      SRC_TIMER, SRC_RULE, SRC_MAXPOWER, SRC_MAXENERGY, SRC_OVERTEMP, SRC_LIGHT, SRC_KNX, SRC_DISPLAY, SRC_WEMO, SRC_HUE, SRC_RETRY, SRC_REMOTE, SRC_SHUTTER,
-                     SRC_THERMOSTAT, SRC_CHAT, SRC_TCL, SRC_BERRY, SRC_FILE, SRC_SSERIAL, SRC_USBCONSOLE, SRC_SO47, SRC_SENSOR, SRC_MAX };
+                     SRC_THERMOSTAT, SRC_CHAT, SRC_TCL, SRC_BERRY, SRC_FILE, SRC_SSERIAL, SRC_USBCONSOLE, SRC_SO47, SRC_SENSOR, SRC_WEB, SRC_MAX };
 const char kCommandSource[] PROGMEM = "I|MQTT|Restart|Button|Switch|Backlog|Serial|WebGui|WebCommand|WebConsole|PulseTimer|"
                                       "Timer|Rule|MaxPower|MaxEnergy|Overtemp|Light|Knx|Display|Wemo|Hue|Retry|Remote|Shutter|"
-                                      "Thermostat|Chat|TCL|Berry|File|SSerial|UsbConsole|SO47|Sensor";
+                                      "Thermostat|Chat|TCL|Berry|File|SSerial|UsbConsole|SO47|Sensor|Web";
 
 const uint8_t kDefaultRfCode[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };
 

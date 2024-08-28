@@ -23,12 +23,5 @@ be_local_class(Matter_Plugin_Virt_Light2,
     })),
     be_str_weak(Matter_Plugin_Virt_Light2)
 );
-/*******************************************************************/
-
-void be_load_Matter_Plugin_Virt_Light2_class(bvm *vm) {
-    be_pushntvclass(vm, &be_class_Matter_Plugin_Virt_Light2);
-    be_setglobal(vm, "Matter_Plugin_Virt_Light2");
-    be_pop(vm, 1);
-}
 /********************************************************************/
 /* End of solidification */
