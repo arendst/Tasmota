@@ -220,9 +220,6 @@ nullptr
 #define D_CMND_KNX_GA "_GA"
 #define D_CMND_KNX_CB "_CB"
 #define D_CMND_KNXTXSCENE "Tx_Scene"
-
-#ifdef KNX_EXTRA_CMD
-#warning *** KnxTx_DPTNine : Add command to send DPT9 values
 #define D_CMND_KNXTXFLOAT "Tx_Float"    // 2 bytes float (DPT9)
 #define D_CMND_KNXTXDOUBLE "Tx_Double"  // 4 bytes float (DPT14)
 #define D_CMND_KNXTXBYTE "Tx_Byte"      // 1 byte unsigned (DPT5)
@@ -235,16 +232,6 @@ const char kKnxCommands[] PROGMEM = D_PRFX_KNX "|"  // Prefix
 void (* const KnxCommand[])(void) PROGMEM = {
   &CmndKnxTxCmnd, &CmndKnxTxVal, &CmndKnxEnabled, &CmndKnxEnhanced, &CmndKnxPa, &CmndKnxGa, &CmndKnxCb, &CmndKnxTxScene,
   &CmndKnxTxFloat, &CmndKnxTxVal, &CmndKnxTxByte};
-
-#else // not KNX_EXTRA_CMD
-const char kKnxCommands[] PROGMEM = D_PRFX_KNX "|"  // Prefix
-  D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL "|" D_CMND_KNX_ENABLED "|" D_CMND_KNX_ENHANCED "|" D_CMND_KNX_PA "|" D_CMND_KNX_GA "|" D_CMND_KNX_CB "|" D_CMND_KNXTXSCENE ;
-
-void (* const KnxCommand[])(void) PROGMEM = {
-  &CmndKnxTxCmnd, &CmndKnxTxVal, &CmndKnxEnabled, &CmndKnxEnhanced, &CmndKnxPa, &CmndKnxGa, &CmndKnxCb, &CmndKnxTxScene };
-
-
-#endif //  KNX_EXTRA_CMD
 
 #ifndef KNX_ENHANCEMENT_REPEAT
 #define KNX_ENHANCEMENT_REPEAT 3
@@ -1296,7 +1283,7 @@ void CmndKnxTxVal(void)
   }
 }
 
-#ifdef KNX_EXTRA_CMD
+
 void CmndKnxTxFloat(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KNXTX_CMNDS) && (XdrvMailbox.data_len > 0) && Settings->flag.knx_enabled) {
@@ -1346,8 +1333,6 @@ void CmndKnxTxByte(void)
     ResponseCmndIdxChar (XdrvMailbox.data );
   }
 }
-
-#endif 
 
 void CmndKnxTxScene(void)
 {
