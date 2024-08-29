@@ -221,6 +221,9 @@ extern "C" {
   #if LV_FONT_MONTSERRAT_28
     { 28, &lv_font_montserrat_28 },
   #endif
+  #if LV_FONT_MONTSERRAT_TASMOTA_28
+    { 28, &lv_font_montserrat_tasmota_28 },
+  #endif
   #if LV_FONT_MONTSERRAT_28_COMPRESSED
     { 28, &lv_font_montserrat_28_compressed, },
   #endif
