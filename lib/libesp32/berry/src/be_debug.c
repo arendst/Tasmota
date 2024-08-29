@@ -62,7 +62,7 @@ void be_print_inst(binstruction ins, int pc, void* fout)
     case OP_ADD: case OP_SUB: case OP_MUL: case OP_DIV:
     case OP_MOD: case OP_LT: case OP_LE: case OP_EQ:
     case OP_NE:  case OP_GT:  case OP_GE: case OP_CONNECT:
-    case OP_GETMBR: case OP_SETMBR:  case OP_GETMET: case OP_SETMET:
+    case OP_GETMBR: case OP_SETMBR:  case OP_GETMET:
     case OP_GETIDX: case OP_SETIDX: case OP_AND:
     case OP_OR: case OP_XOR: case OP_SHL: case OP_SHR:
         logbuf("%s\tR%d\t%c%d\t%c%d", opc2str(op), IGET_RA(ins),

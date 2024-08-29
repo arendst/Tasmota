@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - Matter fix Waterleak broken after Berry solidification optimisation #21885
 
 ### Removed
+- Berry remove reuse of methods for interface-like code reuse #21500
 
 ## [14.2.0.2] 20240823
 ### Changed

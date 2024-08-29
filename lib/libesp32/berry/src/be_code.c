@@ -695,7 +695,7 @@ static void setsfxvar(bfuncinfo *finfo, bopcode op, bexpdesc *e1, int src)
 /* e1 must be in a register and have a valid idx */
 /* if `keep_reg` is true, do not release register */
 /* return 1 if assignment was possible, 0 if type is not compatible */
-int be_code_setvar(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2, bbool keep_reg, bbool ismethod)
+int be_code_setvar(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2, bbool keep_reg)
 {
     /* free_e2 indicates special case where ETINDEX or ETMEMBER need to be freed if top of registers */
     bbool free_e2 = (e2->type == ETINDEX || e2->type == ETMEMBER) && (e2->v.ss.idx != e1->v.idx) && (e2->v.ss.idx == finfo->freereg - 1);
@@ -729,7 +729,7 @@ int be_code_setvar(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2, bbool keep_reg,
         break;
     case ETMEMBER: /* store to member R(A).RK(B) <- RK(C) */
     case ETINDEX: /* store to member R(A)[RK(B)] <- RK(C) */
-        setsfxvar(finfo, (e1->type == ETMEMBER) ? (ismethod ? OP_SETMET : OP_SETMBR) : OP_SETIDX, e1, src);
+        setsfxvar(finfo, (e1->type == ETMEMBER) ? OP_SETMBR : OP_SETIDX, e1, src);
         if (keep_reg && e2->type == ETREG && e1->v.ss.obj >= be_list_count(finfo->local)) {
             /* special case of walrus assignemnt when we need to recreate an ETREG */
             code_move(finfo, e1->v.ss.obj, src);    /* move from ETREG to MEMBER instance*/
@@ -923,7 +923,7 @@ void be_code_import(bfuncinfo *finfo, bexpdesc *m, bexpdesc *v)
         codeABC(finfo, OP_IMPORT, dst, src, 0);
         m->type = ETREG;
         m->v.idx = dst;
-        be_code_setvar(finfo, v, m, bfalse, bfalse);
+        be_code_setvar(finfo, v, m, bfalse);
     }
 }
 
