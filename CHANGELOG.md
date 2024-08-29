@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - Matter fix when Rules are disabled (#22016)
 - BearSSL panic on ESP8266 in rare conditions (#22017)
 - Crash when calling TasmotaSerial destructor when initialized with incorrect arguments
+- LVGL Added OpenHASP icons to font `montserrat-28`
 
 ### Removed
 
