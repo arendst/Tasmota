@@ -634,7 +634,7 @@ static bproto* funcbody(bparser *parser, bstring *name, bclass *c, int type)
         new_var(parser, parser_newstr(parser, "_class"), &e1); /* new implicit variable '_class' */
         init_exp(&e2, ETCONST, 0);
         be_code_implicit_class(parser->finfo, &e2, c);
-        be_code_setvar(parser->finfo, &e1, &e2, bfalse, bfalse);
+        be_code_setvar(parser->finfo, &e1, &e2, bfalse);
         finfo.proto->varg |= BE_VA_STATICMETHOD;
     }
     stmtlist(parser); /* parse statement without final `end` */
@@ -738,7 +738,7 @@ static void map_nextmember(bparser *parser, bexpdesc *l)
     match_token(parser, OptColon); /* ':' */
     expr(parser, &e); /* value in `e` */
     check_var(parser, &e);  /* check if value is correct */
-    be_code_setvar(finfo, &v, &e, bfalse, bfalse);  /* set suffi  INDEX value to e */
+    be_code_setvar(finfo, &v, &e, bfalse);  /* set suffi  INDEX value to e */
 }
 
 static void list_expr(bparser *parser, bexpdesc *e)
@@ -1018,7 +1018,7 @@ static void assign_expr(bparser *parser)
         if (check_newvar(parser, &e)) { /* new variable */
             new_var(parser, e.v.s, &e);
         }
-        if (be_code_setvar(parser->finfo, &e, &e1, bfalse, bfalse)) {
+        if (be_code_setvar(parser->finfo, &e, &e1, bfalse)) {
             parser->lexer.linenumber = line;
             parser_error(parser,
                 "try to assign constant expressions.");
@@ -1121,7 +1121,7 @@ static void walrus_expr(bparser *parser, bexpdesc *e)
         if (check_newvar(parser, &e1)) { /* new variable */
             new_var(parser, e1.v.s, &e1);
         }
-        if (be_code_setvar(parser->finfo, &e1, e, btrue /* do not release register */, bfalse)) {
+        if (be_code_setvar(parser->finfo, &e1, e, btrue /* do not release register */ )) {
             parser->lexer.linenumber = line;
             parser_error(parser,
                 "try to assign constant expressions.");
@@ -1254,7 +1254,7 @@ static void for_iter(bparser *parser, bstring *var, bexpdesc *it)
     finfo->binfo->beginpc = finfo->pc;
     /* itvar = .it() */
     init_exp(&e, ETLOCAL, new_localvar(parser, var)); /* new itvar */
-    be_code_setvar(finfo, &e, it, bfalse, bfalse); /* code function to variable '.it' */
+    be_code_setvar(finfo, &e, it, bfalse); /* code function to variable '.it' */
     be_code_call(finfo, e.v.idx, 0); /* itvar <- call .it() */
     stmtlist(parser);
 }
@@ -1435,7 +1435,7 @@ static void classvar_stmt(bparser *parser, bclass *c)
     }
 }
 
-static void class_static_assignment_expr(bparser *parser, bexpdesc *e, bstring *name, bbool ismethod)
+static void class_static_assignment_expr(bparser *parser, bexpdesc *e, bstring *name)
 {
     if (match_skip(parser, OptAssign)) { /* '=' */
         bexpdesc e1, e2;
@@ -1448,32 +1448,22 @@ static void class_static_assignment_expr(bparser *parser, bexpdesc *e, bstring *
         key.v.s = name;
 
         be_code_member(parser->finfo, &e1, &key);   /* compute member accessor */
-        be_code_setvar(parser->finfo, &e1, &e2, bfalse, ismethod);    /* set member */
+        be_code_setvar(parser->finfo, &e1, &e2, bfalse);    /* set member */
     }
 }
 
-static void classdef_stmt(bparser *parser, bclass *c, bexpdesc *e, bbool is_static)
+static void classdef_stmt(bparser *parser, bclass *c, bbool is_static)
 {
-    bexpdesc e1;
+    bexpdesc e;
     bstring *name;
     bproto *proto;
     /* 'def' ID '(' varlist ')' block 'end' */
-    /* 'def' ID = funcname */
-    /* 'def' ID = classname '.' method */
     scan_next_token(parser); /* skip 'def' */
-    name = func_name(parser, &e1, 1);
-    check_class_attr(parser, c, name);      /* check that we don't redefine an existing name within the class */
-    if (next_type(parser) == OptAssign) {
-        /* 'def' ID = funcname */
-        /* 'def' ID = classname '.' method */
-        be_class_member_bind(parser->vm, c, name, bfalse);
-        class_static_assignment_expr(parser, e, name, !is_static);
-    } else {
-        /* 'def' ID '(' varlist ')' block 'end' */
-        proto = funcbody(parser, name, c, is_static ? FUNC_STATIC : FUNC_METHOD);
-        be_class_method_bind(parser->vm, c, proto->name, proto, is_static);
-        be_stackpop(parser->vm, 1);
-    }
+    name = func_name(parser, &e, 1);
+    check_class_attr(parser, c, name);
+    proto = funcbody(parser, name, c, is_static ? FUNC_STATIC : FUNC_METHOD);
+    be_class_method_bind(parser->vm, c, proto->name, proto, is_static);
+    be_stackpop(parser->vm, 1);
 }
 
 static void classstaticclass_stmt(bparser *parser, bclass *c_out, bexpdesc *e_out);
@@ -1483,10 +1473,9 @@ static void classstatic_stmt(bparser *parser, bclass *c, bexpdesc *e)
     bstring *name;
     /* 'static' ['var'] ID ['=' expr] {',' ID ['=' expr] } */
     /* 'static' 'def' ID '(' varlist ')' block 'end' */
-    /* 'static' 'def' ID '=' func */
     scan_next_token(parser); /* skip 'static' */
     if (next_type(parser) == KeyDef) {  /* 'static' 'def' ... */
-        classdef_stmt(parser, c, e, btrue);
+        classdef_stmt(parser, c, btrue);
     } else if (next_type(parser) == KeyClass) {  /* 'static' 'class' ... */
         classstaticclass_stmt(parser, c, e);
     } else {
@@ -1496,13 +1485,13 @@ static void classstatic_stmt(bparser *parser, bclass *c, bexpdesc *e)
         if (match_id(parser, name) != NULL) {
             check_class_attr(parser, c, name);
             be_class_member_bind(parser->vm, c, name, bfalse);
-            class_static_assignment_expr(parser, e, name, bfalse);
+            class_static_assignment_expr(parser, e, name);
 
             while (match_skip(parser, OptComma)) { /* ',' */
                 if (match_id(parser, name) != NULL) {
                     check_class_attr(parser, c, name);
                     be_class_member_bind(parser->vm, c, name, bfalse);
-                    class_static_assignment_expr(parser, e, name, bfalse);
+                    class_static_assignment_expr(parser, e, name);
                 } else {
                     parser_error(parser, "class static error");
                 }
@@ -1532,7 +1521,7 @@ static void class_block(bparser *parser, bclass *c, bexpdesc *e)
         switch (next_type(parser)) {
         case KeyVar: classvar_stmt(parser, c); break;
         case KeyStatic: classstatic_stmt(parser, c, e); break;
-        case KeyDef: classdef_stmt(parser, c, e, bfalse); break;
+        case KeyDef: classdef_stmt(parser, c, bfalse); break;
         case OptSemic: scan_next_token(parser); break;
         default: push_error(parser,
                 "unexpected token '%s'", token2str(parser));
@@ -1559,7 +1548,7 @@ static void class_stmt(bparser *parser)
         bexpdesc e1;                        /* if inline class, we add a second local variable for _class */
         init_exp(&e1, ETLOCAL, 0);
         e1.v.idx = new_localvar(parser, class_str);
-        be_code_setvar(parser->finfo, &e1, &e, btrue, bfalse);
+        be_code_setvar(parser->finfo, &e1, &e, btrue);
 
         begin_varinfo(parser, class_str);
 
@@ -1597,7 +1586,7 @@ static void classstaticclass_stmt(bparser *parser, bclass *c_out, bexpdesc *e_ou
         key.v.s = name;
         /* assign the class to the static member */
         be_code_member(parser->finfo, &e1, &key);   /* compute member accessor */
-        be_code_setvar(parser->finfo, &e1, &e_class, bfalse, bfalse);    /* set member */
+        be_code_setvar(parser->finfo, &e1, &e_class, bfalse);    /* set member */
     } else {
         parser_error(parser, "class name error");
     }
@@ -1649,7 +1638,7 @@ static void var_field(bparser *parser)
         init_exp(&e2, ETNIL, 0);
     }
     new_var(parser, name, &e1); /* new variable */
-    be_code_setvar(parser->finfo, &e1, &e2, bfalse, bfalse);
+    be_code_setvar(parser->finfo, &e1, &e2, bfalse);
 }
 
 static void var_stmt(bparser *parser)

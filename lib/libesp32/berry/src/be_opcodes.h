@@ -54,5 +54,4 @@ OPCODE(CATCH),      /*  A, B, C  |   ... */
 OPCODE(RAISE),      /*  A, B, C  |   RAISE(B,C) B is code, C is description. A==0 only B provided, A==1 B and C are provided, A==2 rethrow with both parameters already on stack */
 OPCODE(CLASS),      /*  Bx       |   init class in K[Bx] */
 OPCODE(GETNGBL),    /*  A, B     |   R(A) <- GLOBAL[RK(B)] by name */
-OPCODE(SETNGBL),    /*  A, B     |   R(A) -> GLOBAL[RK(B)] by name */
-OPCODE(SETMET),     /*  A, B, C  |   R(A).RK(B) <- RK(C) only if R(A) is a class, and RK(C) is marked as non-static */
+OPCODE(SETNGBL)     /*  A, B     |   R(A) -> GLOBAL[RK(B)] by name */
