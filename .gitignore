@@ -44,5 +44,5 @@ lib/libesp32/berry/berry
 *.code-workspace
 
 ## Python virtual environments for Platformio ##
-venv*
-.venv*
+venv
+.venv
