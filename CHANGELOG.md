@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Command ``SetOption69 1`` to enable Serial Bridge inverted Receive (#22000)
 
 ### Breaking Changed
+- Berry make `energy` modules changes from #21887 backwards compatible
 
 ### Changed
 - ESP32 platform update from 2024.08.10 to 2024.08.11 (#22021)
