@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Crash when calling TasmotaSerial destructor when initialized with incorrect arguments
 - LVGL Added OpenHASP icons to font `montserrat-28`
 - Matter fail to report Shutter status if no shutter is configured in Tasmota
+- Matter fix Waterleak broken after Berry solidification optimisation #21885
 
 ### Removed
 

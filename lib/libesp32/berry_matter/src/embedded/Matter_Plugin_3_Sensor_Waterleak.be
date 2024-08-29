@@ -45,13 +45,28 @@ class Matter_Plugin_Sensor_Waterleak : Matter_Plugin_Sensor_Boolean
   #
   # This is triggered when a new value is changed, for subscription
   # This method is meant to be overloaded and maximize shared code
-  def value_updated = Matter_Plugin_Sensor_Rain.value_updated
+  def value_updated()
+    self.attribute_updated(0x0045, 0x0000)
+  end
 
   #############################################################
   # read an attribute
   #
-  def read_attribute = Matter_Plugin_Sensor_Rain.read_attribute
+  def read_attribute(session, ctx, tlv_solo)
+    var TLV = matter.TLV
+    var cluster = ctx.cluster
+    var attribute = ctx.attribute
 
+    # ====================================================================================================
+    if   cluster == 0x0045              # ========== Boolean State ==========
+      if   attribute == 0x0000          #  ---------- StateValue / bool ----------
+        return tlv_solo.set(TLV.BOOL, self.shadow_bool_value)
+      end
+
+    end
+    return super(self).read_attribute(session, ctx, tlv_solo)
+  end
+  
   #############################################################
   # update_virtual
   #

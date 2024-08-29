@@ -3,24 +3,32 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
-// compact class 'Matter_Plugin_Sensor_Waterleak' ktab size: 16, total: 20 (saved 32 bytes)
-static const bvalue be_ktab_class_Matter_Plugin_Sensor_Waterleak[16] = {
+// compact class 'Matter_Plugin_Sensor_Waterleak' ktab size: 24, total: 31 (saved 56 bytes)
+static const bvalue be_ktab_class_Matter_Plugin_Sensor_Waterleak[24] = {
   /* K0   */  be_nested_str_weak(shadow_bool_value),
   /* K1   */  be_nested_str_weak(_parse_update_virtual),
   /* K2   */  be_nested_str_weak(Waterleak),
   /* K3   */  be_const_int(0),
   /* K4   */  be_nested_str_weak(update_virtual),
-  /* K5   */  be_nested_str_weak(webserver),
-  /* K6   */  be_nested_str_weak(web_values_prefix),
-  /* K7   */  be_nested_str_weak(content_send),
-  /* K8   */  be_nested_str_weak(Waterleak_X25i_X20_X25s),
-  /* K9   */  be_nested_str_weak(tasmota_switch_index),
-  /* K10  */  be_nested_str_weak(web_value_onoff),
-  /* K11  */  be_nested_str_weak(get_name),
-  /* K12  */  be_nested_str_weak(Switch),
-  /* K13  */  be_nested_str_weak(PREFIX),
-  /* K14  */  be_nested_str_weak(html_escape),
-  /* K15  */  be_nested_str_weak(),
+  /* K5   */  be_nested_str_weak(matter),
+  /* K6   */  be_nested_str_weak(TLV),
+  /* K7   */  be_nested_str_weak(cluster),
+  /* K8   */  be_nested_str_weak(attribute),
+  /* K9   */  be_nested_str_weak(set),
+  /* K10  */  be_nested_str_weak(BOOL),
+  /* K11  */  be_nested_str_weak(read_attribute),
+  /* K12  */  be_nested_str_weak(webserver),
+  /* K13  */  be_nested_str_weak(web_values_prefix),
+  /* K14  */  be_nested_str_weak(content_send),
+  /* K15  */  be_nested_str_weak(Waterleak_X25i_X20_X25s),
+  /* K16  */  be_nested_str_weak(tasmota_switch_index),
+  /* K17  */  be_nested_str_weak(web_value_onoff),
+  /* K18  */  be_nested_str_weak(get_name),
+  /* K19  */  be_nested_str_weak(Switch),
+  /* K20  */  be_nested_str_weak(PREFIX),
+  /* K21  */  be_nested_str_weak(html_escape),
+  /* K22  */  be_nested_str_weak(),
+  /* K23  */  be_nested_str_weak(attribute_updated),
 };
 
 
@@ -128,14 +136,14 @@ be_local_closure(class_Matter_Plugin_Sensor_Waterleak_web_values,   /* name */
     be_str_weak(web_values),
     &be_const_str_solidified,
     ( &(const binstruction[13]) {  /* code */
-      0xA4060A00,  //  0000  IMPORT	R1	K5
-      0x8C080106,  //  0001  GETMET	R2	R0	K6
+      0xA4061800,  //  0000  IMPORT	R1	K12
+      0x8C08010D,  //  0001  GETMET	R2	R0	K13
       0x7C080200,  //  0002  CALL	R2	1
-      0x8C080307,  //  0003  GETMET	R2	R1	K7
+      0x8C08030E,  //  0003  GETMET	R2	R1	K14
       0x60100018,  //  0004  GETGBL	R4	G24
-      0x58140008,  //  0005  LDCONST	R5	K8
-      0x88180109,  //  0006  GETMBR	R6	R0	K9
-      0x8C1C010A,  //  0007  GETMET	R7	R0	K10
+      0x5814000F,  //  0005  LDCONST	R5	K15
+      0x88180110,  //  0006  GETMBR	R6	R0	K16
+      0x8C1C0111,  //  0007  GETMET	R7	R0	K17
       0x88240100,  //  0008  GETMBR	R9	R0	K0
       0x7C1C0400,  //  0009  CALL	R7	2
       0x7C100600,  //  000A  CALL	R4	3
@@ -164,25 +172,25 @@ be_local_closure(class_Matter_Plugin_Sensor_Waterleak_web_values_prefix,   /* na
     be_str_weak(web_values_prefix),
     &be_const_str_solidified,
     ( &(const binstruction[22]) {  /* code */
-      0xA4060A00,  //  0000  IMPORT	R1	K5
-      0x8C08010B,  //  0001  GETMET	R2	R0	K11
+      0xA4061800,  //  0000  IMPORT	R1	K12
+      0x8C080112,  //  0001  GETMET	R2	R0	K18
       0x7C080200,  //  0002  CALL	R2	1
       0x5C0C0400,  //  0003  MOVE	R3	R2
       0x740E0004,  //  0004  JMPT	R3	#000A
       0x600C0008,  //  0005  GETGBL	R3	G8
-      0x88100109,  //  0006  GETMBR	R4	R0	K9
+      0x88100110,  //  0006  GETMBR	R4	R0	K16
       0x7C0C0200,  //  0007  CALL	R3	1
-      0x000E1803,  //  0008  ADD	R3	K12	R3
+      0x000E2603,  //  0008  ADD	R3	K19	R3
       0x5C080600,  //  0009  MOVE	R2	R3
-      0x8C0C0307,  //  000A  GETMET	R3	R1	K7
+      0x8C0C030E,  //  000A  GETMET	R3	R1	K14
       0x60140018,  //  000B  GETGBL	R5	G24
-      0x8818010D,  //  000C  GETMBR	R6	R0	K13
+      0x88180114,  //  000C  GETMBR	R6	R0	K20
       0x780A0003,  //  000D  JMPF	R2	#0012
-      0x8C1C030E,  //  000E  GETMET	R7	R1	K14
+      0x8C1C0315,  //  000E  GETMET	R7	R1	K21
       0x5C240400,  //  000F  MOVE	R9	R2
       0x7C1C0400,  //  0010  CALL	R7	2
       0x70020000,  //  0011  JMP		#0013
-      0x581C000F,  //  0012  LDCONST	R7	K15
+      0x581C0016,  //  0012  LDCONST	R7	K22
       0x7C140400,  //  0013  CALL	R5	2
       0x7C0C0400,  //  0014  CALL	R3	2
       0x80000000,  //  0015  RET	0
