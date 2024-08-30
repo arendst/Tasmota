@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - LVGL Added OpenHASP icons to font `montserrat-28`
 - Matter fail to report Shutter status if no shutter is configured in Tasmota
 - Matter fix Waterleak broken after Berry solidification optimisation #21885
+- Berry avoid `readbytes()` from crashing when file is too large
 
 ### Removed
 - Berry remove reuse of methods for interface-like code reuse #21500
