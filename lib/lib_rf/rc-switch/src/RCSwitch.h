@@ -108,7 +108,7 @@ class RCSwitch {
     void setRepeatTransmit(int nRepeatTransmit);
     #if not defined( RCSwitchDisableReceiving )
     void setReceiveTolerance(int nPercent);
-    void setReceiveProtocolMask(unsigned long long mask);
+    bool setReceiveProtocolMask(unsigned long long mask);
     #endif
 
     /**
@@ -171,6 +171,7 @@ class RCSwitch {
     #if not defined( RCSwitchDisableReceiving )
     static void handleInterrupt();
     static bool receiveProtocol(const int p, unsigned int changeCount);
+    static bool updateSeparationLimit();
     int nReceiverInterrupt;
     #endif
     int nTransmitterPin;
@@ -184,7 +185,7 @@ class RCSwitch {
     volatile static unsigned int nReceivedBitlength;
     volatile static unsigned int nReceivedDelay;
     volatile static unsigned int nReceivedProtocol;
-    const static unsigned int nSeparationLimit;
+    static unsigned int nSeparationLimit;
     /*
      * timings[0] contains sync timing, followed by a number of bits
      */

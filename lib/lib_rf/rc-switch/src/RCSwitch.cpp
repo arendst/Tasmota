@@ -167,7 +167,7 @@ volatile unsigned int RCSwitch::nReceivedBitlength = 0;
 volatile unsigned int RCSwitch::nReceivedDelay = 0;
 volatile unsigned int RCSwitch::nReceivedProtocol = 0;
 int RCSwitch::nReceiveTolerance = 60;
-const unsigned int RCSwitch::nSeparationLimit = RCSWITCH_SEPARATION_LIMIT;
+unsigned int RCSwitch::nSeparationLimit = RCSWITCH_SEPARATION_LIMIT;
 unsigned int RCSwitch::timings[RCSWITCH_MAX_CHANGES];
 unsigned int RCSwitch::buftimings[4];
 #endif
@@ -239,8 +239,50 @@ void RCSwitch::setReceiveTolerance(int nPercent) {
   RCSwitch::nReceiveTolerance = nPercent;
 }
 
-void RCSwitch::setReceiveProtocolMask(unsigned long long mask) {
+bool RCSwitch::setReceiveProtocolMask(unsigned long long mask) {
   RCSwitch::nReceiveProtocolMask = mask;
+  return updateSeparationLimit();
+}
+
+bool RCSwitch::updateSeparationLimit()
+{
+  unsigned int longestPulseTime = std::numeric_limits<unsigned int>::max();
+  unsigned int shortestPulseTime = 0;
+
+  unsigned long long thisMask = 1;
+  for(unsigned int i = 0; i < numProto; i++) {
+    if (RCSwitch::nReceiveProtocolMask & thisMask) {
+      const unsigned int headerShortPulseCount = std::min(proto[i].Header.high, proto[i].Header.low);
+      const unsigned int headerLongPulseCount = std::max(proto[i].Header.high, proto[i].Header.low);
+
+      // This must be the longest pulse-length of this protocol. nSeparationLimit must of this length or shorter.
+      // This pulse will be used to detect the beginning of a transmission.
+      const unsigned int headerLongPulseTime = proto[i].pulseLength * headerLongPulseCount;
+
+      // nSeparationLimit must be longer than any of the following pulses to avoid detecting a new transmission in the middle of a frame.
+      unsigned int longestDataPulseCount = headerShortPulseCount;
+      longestDataPulseCount = std::max<unsigned int>(longestDataPulseCount, proto[i].zero.high);
+      longestDataPulseCount = std::max<unsigned int>(longestDataPulseCount, proto[i].zero.low);
+      longestDataPulseCount = std::max<unsigned int>(longestDataPulseCount, proto[i].one.high);
+      longestDataPulseCount = std::max<unsigned int>(longestDataPulseCount, proto[i].one.low);
+
+      const unsigned int longestDataPulseTime = proto[i].pulseLength * longestDataPulseCount;
+
+      longestPulseTime = std::min(longestPulseTime, headerLongPulseTime);
+      shortestPulseTime = std::max(shortestPulseTime, longestDataPulseTime);
+    }
+    thisMask <<= 1;
+  }
+
+  if (longestPulseTime <= shortestPulseTime) {
+    // incompatible protocols enabled, fall back to default value
+    nSeparationLimit = RCSWITCH_SEPARATION_LIMIT;
+    return false;
+  }
+
+  const unsigned int timeDiff = longestPulseTime - shortestPulseTime;
+  nSeparationLimit = longestPulseTime - (timeDiff / 2);
+  return true;
 }
 #endif
 
