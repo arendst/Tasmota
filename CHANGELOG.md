@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [14.2.0.3]
 ### Added
 - Command ``SetOption69 1`` to enable Serial Bridge inverted Receive (#22000)
+- Zigbee Koenkk firmware 20240710 for Sonoff Zigbee ZBPro
 
 ### Breaking Changed
 - Berry make `energy` modules changes from #21887 backwards compatible
