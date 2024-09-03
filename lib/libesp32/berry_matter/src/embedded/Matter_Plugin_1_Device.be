@@ -55,6 +55,12 @@ class Matter_Plugin_Device : Matter_Plugin
   #############################################################
   # Constructor
   def init(device, endpoint, arguments)
+    # Zigbee code, activated only when `ZIGBEE` is true
+    # attribute `zigbee_mapper` needs to be defined for classes with `ZIGBEE` true
+    if self.ZIGBEE
+      self.zigbee_mapper = device.create_zb_mapper(self)  # needs to exist before `parse_configuration()` is called
+    end
+
     super(self).init(device, endpoint, arguments)
 
     if self.BRIDGE
@@ -64,6 +70,17 @@ class Matter_Plugin_Device : Matter_Plugin
     end
   end
 
+  #############################################################
+  # parse_configuration
+  #
+  # Parse configuration map, handling case of Zigbee configuration
+  def parse_configuration(config)
+    # super(self).parse_configuration(config)   # not necessary because the superclass does nothing
+    if self.ZIGBEE && self.zigbee_mapper
+      self.zigbee_mapper.parse_configuration(config)
+    end
+  end
+  
   #############################################################
   # read an attribute
   #

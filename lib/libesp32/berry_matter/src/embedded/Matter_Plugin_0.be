@@ -35,6 +35,7 @@ class Matter_Plugin
   static var UPDATE_TIME = 5000             # default is every 5 seconds
   static var VIRTUAL = false                # set to true only for virtual devices
   static var BRIDGE = false                 # set to true only for bridged devices (ESP8266 or OpenBK)
+  static var ZIGBEE = false                 # set to true only when mapped to a zigbee device
   var update_next                           # next timestamp for update
   # Configuration of the plugin: clusters and type
   static var CLUSTERS = matter.consolidate_clusters(_class, {
