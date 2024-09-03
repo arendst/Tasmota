@@ -55,6 +55,7 @@ be_extern_native_module(TFL);
 be_extern_native_module(mdns);
 #ifdef USE_ZIGBEE
 be_extern_native_module(zigbee);
+be_extern_native_module(matter_zigbee);
 #endif // USE_ZIGBEE
 #ifdef USE_BERRY_CAM
 be_extern_native_module(cam);
@@ -171,6 +172,7 @@ BERRY_LOCAL const bntvmodule_t* const be_module_table[] = {
 #endif // USE_WEBSERVER
 #ifdef USE_ZIGBEE
     &be_native_module(zigbee),
+    &be_native_module(matter_zigbee),
 #endif // USE_ZIGBEE
     &be_native_module(flash),
     &be_native_module(partition_core),

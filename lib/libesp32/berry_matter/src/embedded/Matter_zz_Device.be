@@ -39,6 +39,7 @@ class Matter_Device
   var commissioning                   # `matter.Commissioning()` object
   var autoconf                        # `matter.Autoconf()` objects
   var sessions                        # `matter.Session_Store()` objet
+  var zigbee                          # `Mattter_Zigbee()` object, only set if compiled with zigbee, `nil` otherwise
   var ui
   var tick                            # increment at each tick, avoids to repeat too frequently some actions
   # Events
@@ -82,6 +83,7 @@ class Matter_Device
     self.sessions.load_fabrics()
     self.message_handler = matter.MessageHandler(self)
     self.events = matter.EventHandler(self)
+    self.zigbee = self.init_zigbee()
     self.ui = matter.UI(self)
 
     self.commissioning.init_basic_commissioning()
@@ -998,6 +1000,30 @@ class Matter_Device
       tasmota.publish_result(mtr_info, "")
     end
   end
+
+  #####################################################################
+  # Zigbee support
+  #
+  # Returns true if zigbee module is present
+  #####################################################################
+  def is_zigbee_present()
+    import introspect
+    return (introspect.module('matter_zigbee') != nil)
+  end
+  #
+  def init_zigbee()
+    if self.is_zigbee_present()
+      import matter_zigbee
+      return matter_zigbee(self)
+    end
+  end
+  #
+  def create_zb_mapper(pi)
+    if self.zigbee
+      return self.zigbee.Matter_Zigbee_Mapper(pi)
+    end
+  end
+
 
 end
 matter.Device = Matter_Device

@@ -57,6 +57,7 @@ class Matter_Plugin_Sensor : Matter_Plugin_Device
   #
   # Parse configuration map
   def parse_configuration(config)
+    super(self).parse_configuration(config)
     self.tasmota_sensor_filter = config.find(self.ARG#-'filter'-#)
     if self.tasmota_sensor_filter
       self.tasmota_sensor_matcher = tasmota.Rule_Matcher.parse(self.tasmota_sensor_filter)
@@ -166,6 +167,32 @@ class Matter_Plugin_Sensor : Matter_Plugin_Device
   end
   #############################################################
   #############################################################
+
+  #############################################################
+  # For Zigbee devices
+  #############################################################
+  #############################################################
+  # attributes_refined
+  #
+  # Filtered to only events for this endpoint
+  #
+  # Can be called only if `self.ZIGBEE` is true
+  def zigbee_received(frame, attr_list)
+    import math
+    log(f"MTR: zigbee_received Ox{self.zigbee_mapper.shortaddr:04X} {attr_list=} {type(attr_list)=}", 3)
+    var idx = 0
+    while (idx < size(attr_list))
+      var entry = attr_list[idx]
+      if (entry.key == self.ZIGBEE_NAME)
+        var val = self.pre_value(entry.val)
+        var update_list = { self.JSON_NAME : val }   # Matter temperature is 1/100th of degrees
+        self.update_virtual(update_list)
+        log(f"MTR: [{self.endpoint:02X}] {self.JSON_NAME} updated {update_list}", 3)
+        return nil
+      end
+      idx += 1
+    end
+  end
 
 end
 matter.Plugin_Sensor = Matter_Plugin_Sensor
