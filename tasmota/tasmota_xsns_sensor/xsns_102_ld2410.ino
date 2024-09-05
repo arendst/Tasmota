@@ -125,7 +125,7 @@ void Ld1410HandleConfigData(void) {
     LD2410.max_moving_distance_gate = LD2410.buffer[12];
     LD2410.max_static_distance_gate = LD2410.buffer[13];
     for (uint32_t i = 0; i <= LD2410_MAX_GATES; i++) {
-      LD2410. moving_sensitivity[i] = LD2410.buffer[14 +i];
+      LD2410.moving_sensitivity[i] = LD2410.buffer[14 +i];
       LD2410.static_sensitivity[i] = LD2410.buffer[23 +i];
     }
     LD2410.no_one_duration = LD2410.buffer[33] << 8 | LD2410.buffer[32];
