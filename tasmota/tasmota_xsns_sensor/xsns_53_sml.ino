@@ -119,6 +119,10 @@
 #endif
 
 
+#ifndef SML_TRX_BUFF_SIZE
+#define SML_TRX_BUFF_SIZE 1024
+#endif
+
 #ifdef USE_SML_CANBUS
 
 #ifdef ESP8266
@@ -443,6 +447,7 @@ typedef union {
     uint8_t SO_DWS74_BUG : 1;
     uint8_t SO_OBIS_LINE : 1;
     uint8_t SO_TRX_INVERT : 1;
+    uint8_t SO_DISS_PULL : 1;
   };
 } SO_FLAGS;
 
@@ -3286,50 +3291,51 @@ dddef_exit:
             if (*lp1 != ',') goto next_line;
             lp1++;
             mmp->tsecs = strtol(lp1, &lp1, 10);
+            // optional values to send
             if (*lp1 == ',') {
               lp1++;
-              // look ahead
-              uint16_t txlen = 0;
-              uint16_t tx_entries = 1;
+              // look ahead, lp points to next line
+              char *txbuff = (char *)malloc(SML_TRX_BUFF_SIZE);
+              if (!txbuff) {
+                goto dddef_exit;
+              }
+              char *txb1 = txbuff;
               char *txp = lp1;
-              while (*txp) {
-                if (*txp == ',') tx_entries++;
-                if (*txp == SCRIPT_EOL) {
-                  if (tx_entries > 1) {
-                    if (*(txp - 1) != ',' ) {
-                      break;
-                    }
-                    // line ends with ,
+              uint16_t tx_entries = 1;
+              uint16_t txlen = 0;
+              while (1) {
+                if (!*lp1 || (*lp1 == SCRIPT_EOL)) {
+                  if (*(lp1 - 1) == ',') {
+                    // line ends with comma, add another line
+                    while (*lp == SCRIPT_EOL) lp++;
+#ifdef SML_REPLACE_VARS
+                    Replace_Cmd_Vars(lp, 1, dstbuf, sizeof(dstbuf));
+                    lp += SML_getlinelen(lp);
+				            lp1 = dstbuf;
+#else   
+                    lp1 = lp;
+                    lp += SML_getlinelen(lp);
+#endif
                   } else {
-                    // single entry
                     break;
                   }
                 }
-                txp++;
+                if (*lp1 == ',') tx_entries++;
+                *txb1++ = *lp1++;
                 txlen++;
-              }
-              if (txlen) {
-                mmp->txmem = (char*)calloc(txlen + 2, 1);
-								memory += txlen + 2;
-                if (mmp->txmem) {
-                  // now copy send blocks
-                  char *txp = lp1;
-                  uint16_t tind = 0;
-                  for (uint32_t cnt = 0; cnt < txlen; cnt++) {
-                      if (*txp == SCRIPT_EOL) {
-                        txp++;
-                      } else {
-                        mmp->txmem[tind] = *txp++;
-                        tind++;
-                      }
-                  }
+                if (txlen >= SML_TRX_BUFF_SIZE - 2) {
+                  break;
                 }
-                //AddLog(LOG_LEVEL_INFO, PSTR(">>> %s - %d"), meter_desc[index].txmem, txlen);
-                mmp->index = 0;
-                mmp->max_index = tx_entries;
-                sml_globs.sml_send_blocks++;
-                lp1 += txlen;
               }
+              // tx lines complete
+              *txb1 = 0;
+              //AddLog(LOG_LEVEL_INFO, PSTR("SML: >>> %s - %d - %d"), txbuff, txlen, tx_entries);
+              mmp->txmem = (char*)realloc(txbuff, txlen + 2);
+              memory += txlen + 2;
+              mmp->index = 0;
+              mmp->max_index = tx_entries;
+              sml_globs.sml_send_blocks++;
+              // end collect transmit values
             }
           }
           if (*lp1 == SCRIPT_EOL) lp1--;
@@ -3639,6 +3645,9 @@ next_line:
 
 #ifdef ESP32
         mp->meter_ss->begin(mp->params, smode, mp->srcpin, mp->trxpin, mp->so_flags.SO_TRX_INVERT);
+        if (mp->so_flags.SO_DISS_PULL) {
+          gpio_pullup_dis((gpio_num_t)mp->srcpin);
+        }
 #ifdef USE_ESP32_SW_SERIAL
 				mp->meter_ss->setRxBufferSize(mp->sibsiz);
 #endif
@@ -3770,6 +3779,9 @@ uint32_t SML_Write(int32_t meter, char *hstr) {
     Serial.begin(baud, (SerialConfig)smode);
 #else
     meter_desc[meter].meter_ss->begin(baud, smode, sml_globs.mp[meter].srcpin, sml_globs.mp[meter].trxpin, sml_globs.mp[meter].so_flags.SO_TRX_INVERT);
+    if (sml_globs.mp[meter].so_flags.SO_DISS_PULL) {
+      gpio_pullup_dis((gpio_num_t)sml_globs.mp[meter].srcpin);
+    }
 #endif
   }
   return 1;
