@@ -6,31 +6,33 @@ All notable changes to this project will be documented in this file.
 ## [14.2.0.3]
 ### Added
 - Command ``SetOption69 1`` to enable Serial Bridge inverted Receive (#22000)
-- Zigbee Koenkk firmware 20240710 for Sonoff Zigbee ZBPro
-- Berry Zigbee improvements to prepare Matter
-- Matter Zigbee support for sensors: Temperature, Humidity, Pressure
+- Support nexus protocol and calculation of separation limit to rc-switch library (#21886)
+- Zigbee Koenkk firmware 20240710 for Sonoff Zigbee ZBPro (#22076)
+- Berry Zigbee improvements to prepare Matter (#22083)
+- Matter support for Zigbee Temperature, Humidity and Pressure sensors (#22084)
+- SML multi TRX line (#22056)
 
 ### Breaking Changed
-- Berry make `energy` modules changes from #21887 backwards compatible
+- Berry make `energy` modules changes from #21887 backwards compatible (#22046)
 
 ### Changed
 - ESP32 platform update from 2024.08.10 to 2024.08.11 (#22021)
-- ESP32 LVGL library from v9.1.0 to v9.2.0
+- ESP32 LVGL library from v9.1.0 to v9.2.0 (#22031)
 
 ### Fixed
 - Matter fixed UI bug when no endpoints configured (#22008)
 - Zigbee extend timeout for MCU reboot from 5s to 10s (#22009)
 - Matter fix when Rules are disabled (#22016)
 - BearSSL panic on ESP8266 in rare conditions (#22017)
-- Crash when calling TasmotaSerial destructor when initialized with incorrect arguments
-- LVGL Added OpenHASP icons to font `montserrat-28`
-- Matter fail to report Shutter status if no shutter is configured in Tasmota
-- Matter fix Waterleak broken after Berry solidification optimisation #21885
-- Berry avoid `readbytes()` from crashing when file is too large
-- Zigbee avoid disabling console serial on ESP32 and improved log messages
+- Crash when calling TasmotaSerial destructor when initialized with incorrect arguments (#22036)
+- LVGL Added OpenHASP icons to font `montserrat-28` (#22048)
+- Matter fail to report Shutter status if no shutter is configured in Tasmota (#22049)
+- Matter fix Waterleak broken after Berry solidification optimisation #21885 (#22052)
+- Berry avoid `readbytes()` from crashing when file is too large (#22057)
+- Zigbee avoid disabling console serial on ESP32 and improved log messages (#22082)
 
 ### Removed
-- Berry remove reuse of methods for interface-like code reuse #21500
+- Berry remove reuse of methods for interface-like code reuse #21500 (#22055)
 
 ## [14.2.0.2] 20240823
 ### Changed

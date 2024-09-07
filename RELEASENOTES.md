@@ -125,23 +125,37 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Energy command ``PowerSet 60,230`` to calibrate both Current and Power with known resistive load of 60W at 230V using calibrated Voltage
 - Energy command ``CurrentSet 60,230`` to calibrate both Power and Current with known resistive load of 60W at 230V using calibrated Voltage
 - Energy Log level 4 message when (Calculated) Apparent Power is less than Active Power indicating wrong calibration [#20653](https://github.com/arendst/Tasmota/issues/20653)
+- Support nexus protocol and calculation of separation limit to rc-switch library [#21886](https://github.com/arendst/Tasmota/issues/21886)
+- SML multi TRX line [#22056](https://github.com/arendst/Tasmota/issues/22056)
+- Zigbee Koenkk firmware 20240710 for Sonoff Zigbee ZBPro [#22076](https://github.com/arendst/Tasmota/issues/22076)
+- Berry Zigbee improvements to prepare Matter [#22083](https://github.com/arendst/Tasmota/issues/22083)
+- Matter support for Zigbee Temperature, Humidity and Pressure sensors [#22084](https://github.com/arendst/Tasmota/issues/22084)
 
 ### Breaking Changed
+- Berry make `energy` modules changes from #21887 backwards compatible [#22046](https://github.com/arendst/Tasmota/issues/22046)
 
 ### Changed
 - ESP32 platform update from 2024.08.10 to 2024.08.11 [#22021](https://github.com/arendst/Tasmota/issues/22021)
+- ESP32 LVGL library from v9.1.0 to v9.2.0 [#22031](https://github.com/arendst/Tasmota/issues/22031)
 - GPIOViewer from v1.5.5 to v1.5.6
 - Energy BL09xx command ``CurrentSet`` input changed from Ampere to milliAmpere
 - Energy force Apparent Power equals Active Power when (Calculated) Apparent Power is less than Active Power [#20653](https://github.com/arendst/Tasmota/issues/20653)
 
 ### Fixed
+- Crash when calling TasmotaSerial destructor when initialized with incorrect arguments [#22036](https://github.com/arendst/Tasmota/issues/22036)
 - Energy calculation [#20653](https://github.com/arendst/Tasmota/issues/20653)
 - Shutter timing registers overflow [#21966](https://github.com/arendst/Tasmota/issues/21966)
 - PZEM continue energy monitoring when one phase fails [#21968](https://github.com/arendst/Tasmota/issues/21968)
 - BearSSL panic on ESP8266 in rare conditions [#22017](https://github.com/arendst/Tasmota/issues/22017)
+- LVGL Added OpenHASP icons to font `montserrat-28` [#22048](https://github.com/arendst/Tasmota/issues/22048)
 - Zigbee extend timeout for MCU reboot from 5s to 10s [#22009](https://github.com/arendst/Tasmota/issues/22009)
+- Zigbee avoid disabling console serial on ESP32 and improved log messages [#22082](https://github.com/arendst/Tasmota/issues/22082)
+- Berry avoid `readbytes()` from crashing when file is too large [#22057](https://github.com/arendst/Tasmota/issues/22057)
 - Matter fixed UI bug when no endpoints configured [#22008](https://github.com/arendst/Tasmota/issues/22008)
 - Matter fix when Rules are disabled [#22016](https://github.com/arendst/Tasmota/issues/22016)
+- Matter fail to report Shutter status if no shutter is configured in Tasmota [#22049](https://github.com/arendst/Tasmota/issues/22049)
+- Matter fix Waterleak broken after Berry solidification optimisation #21885 [#22052](https://github.com/arendst/Tasmota/issues/22052)
 
 ### Removed
 - ESP8266 Analog input support using energy driver as only one channel is available
+- Berry remove reuse of methods for interface-like code reuse #21500 [#22055](https://github.com/arendst/Tasmota/issues/22055)
