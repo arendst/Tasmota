@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [14.2.0.4]
 ### Added
 - HX711 optional calibration precision option on command ``Sensor34 2 <weight in gram> <precision>`` where `<precision>` is 1 to 10 (#13983)
+- Matter support for Zigbee Occupancy and Light 0/1/2 (OnOff / Dimmer / White Color Temperature)
 
 ### Breaking Changed
 

@@ -118,6 +118,29 @@ class Matter_Zigbee_Mapper
     end
   end
 
+  #############################################################
+  # zb_single_command
+  #
+  # Convert a `MtrReceived` unitary payload to a Zigbee command
+  def zb_single_command(key, value)
+    # to ease caller, we accept nil arguments and do nothing
+    var cmd
+    if   (key == 'Power')
+      cmd = f'ZbSend {{"Device":"0x{self.shortaddr:04X}","Send":{{"Power":{value:i}}}}}'
+    elif (key == 'Bri')
+      cmd = f'ZbSend {{"Device":"0x{self.shortaddr:04X}","Send":{{"Dimmer":{value:i}}}}}'
+    elif (key == 'CT')
+      cmd = f'ZbSend {{"Device":"0x{self.shortaddr:04X}","Send":{{"CT":{value:i}}}}}'
+    end
+    # send command
+    if (cmd != nil)
+      if tasmota.loglevel(3)
+        log(f"MTR: '{cmd}'", 3)
+      end
+      tasmota.cmd(cmd, true)
+    end
+  end
+
 end
 
 ##########################################################################################
@@ -130,7 +153,7 @@ class Matter_Zigbee
   var device                          # reference to the main Device instance
   # UI
   static var _CLASSES_TYPES = # Zigbee
-                              "-zigbee|z_temp|z_pressure|z_humidity"
+                              "-zigbee|z_light0|z_light1|z_light2|z_temp|z_pressure|z_humidity|z_occupancy"
 
   #############################################################
   def init(device)
@@ -138,6 +161,7 @@ class Matter_Zigbee
     self.device = device
     zigbee.add_handler(self)          # listen to all events received
   end
+
 
   #############################################################
   # attributes_refined

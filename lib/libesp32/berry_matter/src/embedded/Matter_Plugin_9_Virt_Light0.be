@@ -25,7 +25,7 @@ import matter
 
 class Matter_Plugin_Virt_Light0 : Matter_Plugin_Light0
   static var TYPE = "v_light0"                      # name of the plug-in in json
-  static var DISPLAY_NAME = "v.Light 0 On"                # display name of the plug-in
+  static var DISPLAY_NAME = "v.Light 0 OnOff"       # display name of the plug-in
   static var ARG  = ""                              # no arg for virtual device
   static var ARG_HINT = "_Not used_"                # Hint for entering the Argument (inside 'placeholder')
   static var VIRTUAL = true                         # virtual device
