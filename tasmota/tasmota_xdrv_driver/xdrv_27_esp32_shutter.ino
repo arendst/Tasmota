@@ -246,7 +246,7 @@ bool ShutterButtonHandlerMulti(void)
     Button.last_state[button_index], Button.press_counter[button_index], Button.window_timer[button_index], Shutter[shutter_index].button_simu_pressed);
 
   // multipress event handle back to main procedure
-  if (Button.press_counter[button_index]>3) return false;
+  if (Button.press_counter[button_index]>4) return false;
 
   if (!Shutter[shutter_index].button_simu_pressed) {
     uint8_t pos_press_index = Button.press_counter[button_index]-1;
