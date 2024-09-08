@@ -46,6 +46,7 @@ class Matter_Plugin_Sensor_Boolean : Matter_Plugin_Device
   #
   # Parse configuration map
   def parse_configuration(config)
+    super(self).parse_configuration(config)
     self.tasmota_switch_index = int(config.find(self.ARG #-'switch'-#, 1))
     if self.tasmota_switch_index <= 0    self.tasmota_switch_index = 1    end
   end
@@ -77,6 +78,16 @@ class Matter_Plugin_Sensor_Boolean : Matter_Plugin_Device
   # This is triggered when a new value is changed, for subscription
   # This method is meant to be overloaded and maximize shared code
   def value_updated()
+  end
+
+  #############################################################
+  # update_virtual
+  #
+  # Update internal state for virtual devices
+  def update_virtual(payload)
+    self.shadow_bool_value = self._parse_update_virtual(payload, self.JSON_NAME, self.shadow_bool_value, bool, nil, nil)   # publishing cluster/attr is delegated to `value_updated()`
+    self.value_updated()
+    super(self).update_virtual(payload)
   end
 
   #############################################################

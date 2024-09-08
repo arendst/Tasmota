@@ -25,7 +25,7 @@ import matter
 
 class Matter_Plugin_Light0 : Matter_Plugin_Device
   static var TYPE = "light0"                        # name of the plug-in in json
-  static var DISPLAY_NAME = "Light 0 On"                    # display name of the plug-in
+  static var DISPLAY_NAME = "Light 0 OnOff"         # display name of the plug-in
   static var ARG  = "relay"                         # additional argument name (or empty if none)
   static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   static var ARG_HINT = "Relay<x> number"
@@ -63,6 +63,7 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
   #
   # Parse configuration map
   def parse_configuration(config)
+    super(self).parse_configuration(config)
     # with Light0 we always need relay number but we don't for Light1/2/3 so self.tasmota_relay_index may be `nil`
     self.tasmota_relay_index = int(config.find(self.ARG #-'relay'-#, nil))
     if (self.tasmota_relay_index != nil && self.tasmota_relay_index <= 0)    self.tasmota_relay_index = 1    end
@@ -172,6 +173,40 @@ class Matter_Plugin_Light0 : Matter_Plugin_Device
       self.set_onoff(bool(val_onoff))
     end
     super(self).update_virtual(payload)
+  end
+
+  #############################################################
+  # For Zigbee devices
+  #############################################################
+  #############################################################
+  # attributes_refined
+  #
+  # Filtered to only events for this endpoint
+  # Contains common code for Light 0/1/2/3 to avoid code duplication
+  #
+  # Can be called only if `self.ZIGBEE` is true
+  def zigbee_received(frame, attr_list)
+    import math
+    log(f"MTR: zigbee_received Ox{self.zigbee_mapper.shortaddr:04X} {attr_list=} {type(attr_list)=}", 3)
+    var idx = 0
+    var update_list = {}
+    while (idx < size(attr_list))
+      var entry = attr_list[idx]
+      if (entry.key == "Power")
+        update_list['Power'] = int(entry.val)
+      end
+      if (entry.key == "Dimmer")
+        update_list['Dimmer'] = int(entry.val)
+      end
+      if (entry.key == "CT")
+        update_list['CT'] = int(entry.val)
+      end
+      idx += 1
+    end
+    if (size(update_list) > 0)
+      self.update_virtual(update_list)
+      log(f"MTR: [{self.endpoint:02X}] Light2 updated {update_list}", 3)
+    end
   end
 
   #############################################################

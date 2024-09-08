@@ -28,6 +28,8 @@ class Matter_Plugin_Sensor_OnOff : Matter_Plugin_Sensor_Boolean
   # static var ARG_HINT = "Switch<x> number"
   # static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   # static var UPDATE_TIME = 750                      # update every 750ms
+  static var JSON_NAME = "OnOff"                    # Name of the sensor attribute in JSON payloads
+  static var UPDATE_COMMANDS = matter.UC_LIST(_class, "OnOff")
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     0x0006: [0],                                    # On/Off 1.5 p.48
   })

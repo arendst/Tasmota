@@ -86,24 +86,6 @@ class Matter_Plugin_Sensor : Matter_Plugin_Device
   end
 
   #############################################################
-  # Called when the value changed compared to shadow value
-  #
-  # This must be overriden.
-  # This is where you call `self.attribute_updated(<cluster>, <attribute>)`
-  def value_changed()
-    # self.attribute_updated(0x0402, 0x0000)
-  end
-
-  #############################################################
-  # Pre-process value
-  #
-  # This must be overriden.
-  # This allows to convert the raw sensor value to the target one, typically int
-  def pre_value(val)
-    return val
-  end
-
-  #############################################################
   # update_virtual
   #
   # Update internal state for virtual devices
@@ -167,32 +149,6 @@ class Matter_Plugin_Sensor : Matter_Plugin_Device
   end
   #############################################################
   #############################################################
-
-  #############################################################
-  # For Zigbee devices
-  #############################################################
-  #############################################################
-  # attributes_refined
-  #
-  # Filtered to only events for this endpoint
-  #
-  # Can be called only if `self.ZIGBEE` is true
-  def zigbee_received(frame, attr_list)
-    import math
-    log(f"MTR: zigbee_received Ox{self.zigbee_mapper.shortaddr:04X} {attr_list=} {type(attr_list)=}", 3)
-    var idx = 0
-    while (idx < size(attr_list))
-      var entry = attr_list[idx]
-      if (entry.key == self.ZIGBEE_NAME)
-        var val = self.pre_value(entry.val)
-        var update_list = { self.JSON_NAME : val }   # Matter temperature is 1/100th of degrees
-        self.update_virtual(update_list)
-        log(f"MTR: [{self.endpoint:02X}] {self.JSON_NAME} updated {update_list}", 3)
-        return nil
-      end
-      idx += 1
-    end
-  end
 
 end
 matter.Plugin_Sensor = Matter_Plugin_Sensor

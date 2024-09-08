@@ -415,10 +415,20 @@ extern "C" {
         be_pushreal(vm, (breal)attr->val.fval);
         break;
       case Za_type::Za_raw:
-        be_pushbytes(vm, attr->val.bval->getBuffer(), attr->val.bval->len());
+        // `bval` can be `null`, avoid crashing
+        if (attr->val.bval) {
+          be_pushbytes(vm, attr->val.bval->getBuffer(), attr->val.bval->len());
+        } else {
+          be_pushbytes(vm, nullptr, 0);
+        }
         break;
       case Za_type::Za_str:
-        be_pushstring(vm, attr->val.sval);
+        // `sval` can be `null`, avoid crashing
+        if (attr->val.sval) {
+          be_pushstring(vm, attr->val.sval);
+        } else {
+          be_pushstring(vm, "");
+        }
         break;
         
       case Za_type::Za_obj:
