@@ -3,7 +3,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.2.0.3]
+## [14.2.0.4]
+### Added
+- HX711 optional calibration precision option on command ``Sensor34 2 <weight in gram> <precision>`` where `<precision>` is 1 to 10 (#13983)
+
+### Breaking Changed
+
+### Changed
+
+### Fixed
+- Shutter missing HOLD on shutterbutton (#22108)
+
+### Removed
+
+## [14.2.0.3] 20240908
 ### Added
 - Command ``SetOption69 1`` to enable Serial Bridge inverted Receive (#22000)
 - Support nexus protocol and calculation of separation limit to rc-switch library (#21886)

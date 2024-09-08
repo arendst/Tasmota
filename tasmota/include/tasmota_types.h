@@ -698,8 +698,9 @@ typedef struct {
   uint16_t      mqtt_socket_timeout;       // 52E
   uint8_t       mqtt_wifi_timeout;         // 530
   uint8_t       ina219_mode;               // 531
+  uint8_t       weight_precision;          // 532  ex_pulse_timer free since 11.0.0.3
 
-  uint16_t      ex_pulse_timer[7];         // 532  ex_pulse_timer free since 11.0.0.3
+  uint8_t       free_533[13];              // 533
 
   uint16_t      tcp_baudrate;              // 540 
   uint16_t      button_debounce;           // 542

@@ -44,7 +44,7 @@
 #define HX_SCALE             120     // Default result of measured weight / reference weight when scale is 1
 #endif
 #ifndef HX711_CAL_PRECISION
-#define HX711_CAL_PRECISION  1     // When calibration is to course, raise this value.
+#define HX711_CAL_PRECISION  1       // When calibration is to course, raise this value.
 #endif
 
 
@@ -60,6 +60,7 @@
 #define D_JSON_WEIGHT_RAW_ABS "AbsRaw"
 #define D_JSON_WEIGHT_REF    "Ref"
 #define D_JSON_WEIGHT_CAL    "Cal"
+#define D_JSON_WEIGHT_PREC   "Prec"
 #define D_JSON_WEIGHT_MAX    "Max"
 #define D_JSON_WEIGHT_ITEM   "Item"
 #define D_JSON_WEIGHT_CHANGE "Change"
@@ -182,6 +183,7 @@ void SetWeightDelta(void) {
  * Sensor34 1                      - Reset display to 0
  * Sensor34 2                      - Start calibration
  * Sensor34 2 <weight in gram>     - Set reference weight and start calibration
+ * Sensor34 2 <weight in gram> <precision> - Set reference weight with larger precision (1..10) and start calibration
  * Sensor34 3 <weight in gram>     - Set reference weight
  * Sensor34 4 <scale value>        - Set calibrated scale value
  * Sensor34 5 <weight in gram>     - Set max weight
@@ -207,7 +209,7 @@ bool HxCommand(void) {
   for (uint32_t ca = 0; ca < XdrvMailbox.data_len; ca++) {
     if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
   }
-  bool any_value = (strchr(XdrvMailbox.data, ',') != nullptr);
+  bool any_value = (ArgC() > 1);
   if (any_value) { value = strtol(ArgV(argument, 2), nullptr, 10); }
 
   switch (XdrvMailbox.payload) {
@@ -219,14 +221,20 @@ bool HxCommand(void) {
       show_parms = false;
       break;
     case 2:  // Calibrate
-      if (any_value) { Settings->weight_reference = value; }
+      if (any_value) { 
+        Settings->weight_reference = value;
+        if (ArgC() > 2) {
+          value = strtol(ArgV(argument, 3), nullptr, 10);
+          Settings->weight_precision = (value && (value < 11)) ? value : HX711_CAL_PRECISION;
+        }
+      }
       Hx.scale = 1;                                  // Uncalibrated
       Hx.sample_count = 0;
       Hx.offset = 0;                                 // Disable tare while calibrating
       Hx.calibrate_step = HX_CAL_START;
       Hx.calibrate_timer = 1;
 //      HxCalibrationStateTextJson(3);                 // D_HX_CAL_REMOVE
-      HxCalibrationStateTextJson(2);                 // D_HX_CAL_REMOVE
+      HxCalibrationStateTextJson(2);                 // D_HX_CAL_REFERENCE
       show_parms = false;
       break;
     case 3:  // WeightRef to user reference
@@ -234,8 +242,8 @@ bool HxCommand(void) {
       break;
     case 4:  // WeightCal to user calculated value
       if (any_value) {
-        Settings->weight_calibration = value;
-        Hx.scale = Settings->weight_calibration;
+        Settings->weight_calibration = value;        // Allow zero for re-init
+        Hx.scale = (value) ? Settings->weight_calibration : 1;  // Fix divide by zero
       }
       break;
     case 5:  // WeightMax
@@ -278,10 +286,13 @@ bool HxCommand(void) {
   if (show_parms) {
     char item[33];
     dtostrfd((float)Settings->weight_item / 10, 1, item);
-    Response_P(PSTR("{\"Sensor34\":{\"" D_JSON_WEIGHT_REF "\":%d,\"" D_JSON_WEIGHT_CAL "\":%d,\"" D_JSON_WEIGHT_MAX "\":%d,\""
+    Response_P(PSTR("{\"Sensor34\":{\"" 
+         D_JSON_WEIGHT_REF "\":%d,\"" D_JSON_WEIGHT_CAL "\":%d,\"" D_JSON_WEIGHT_PREC "\":%d,\"" 
+         D_JSON_WEIGHT_MAX "\":%d,\""
          D_JSON_WEIGHT_ITEM "\":%s,\"" D_JSON_WEIGHT_CHANGE "\":\"%s\",\"" D_JSON_WEIGHT_DELTA "\":%d,\""
          D_JSON_WEIGHT_TARE "\":%d,\"" D_JSON_WEIGHT_ABSC_A "\":%d,\"" D_JSON_WEIGHT_ABSC_B "\":%d}}"),
-	       Settings->weight_reference, Settings->weight_calibration, Settings->weight_max * 1000,
+	       Settings->weight_reference, Settings->weight_calibration, Settings->weight_precision,
+         Settings->weight_max * 1000,
 	       item, GetStateText(Settings->SensorBits1.hx711_json_weight_change), Settings->weight_change,
          Settings->weight_user_tare, Settings->weight_absconv_a, Settings->weight_absconv_b);
   }
@@ -310,7 +321,8 @@ void HxInit(void) {
 
     if (HxIsReady(8 * HX_TIMEOUT)) {                 // Can take 600 milliseconds after power on
       if (!Settings->weight_max) { Settings->weight_max = HX_MAX_WEIGHT / 1000; }
-      if (!Settings->weight_calibration) { Settings->weight_calibration = HX_SCALE; }
+      if (!Settings->weight_precision) { Settings->weight_precision = HX711_CAL_PRECISION; }
+      if (!Settings->weight_calibration) { Settings->weight_calibration = HX_SCALE * Settings->weight_precision; }
       if (!Settings->weight_reference) { Settings->weight_reference = HX_REFERENCE; }
       Hx.scale = Settings->weight_calibration;
       HxTareInit();
@@ -344,7 +356,7 @@ void HxEvery100mSecond(void) {
     for (uint32_t i = 2; i < HX_SAMPLES -2; i++) {
       sum_raw += Hx.reads[i];
     }
-    Hx.raw_absolute = (sum_raw / (HX_SAMPLES -4)) * HX711_CAL_PRECISION;     // Uncalibrated value
+    Hx.raw_absolute = (sum_raw / (HX_SAMPLES -4)) * Settings->weight_precision;  // Uncalibrated value
     Hx.raw = Hx.raw_absolute / Hx.scale;             // grams
 
     if ((0 == Settings->weight_user_tare) && Hx.tare_flg) {  // Reset scale based on current load
