@@ -3246,14 +3246,15 @@ dddef_exit:
           mmp->params = strtol(lp1, &lp1, 10);
           if (*lp1 != ',') goto next_line;
           lp1++;
-          mmp->prefix[SML_PREFIX_SIZE - 1] = 0;
           for (uint32_t cnt = 0; cnt < SML_PREFIX_SIZE; cnt++) {
-            if (*lp1 == SCRIPT_EOL || *lp1 == ',') {
+            if (!*lp1 || *lp1 == SCRIPT_EOL || *lp1 == ',') {
               mmp->prefix[cnt] = 0;
               break;
             }
-           mmp->prefix[cnt] = *lp1++;
+            mmp->prefix[cnt] = *lp1++;
           }
+          mmp->prefix[SML_PREFIX_SIZE - 1] = 0;
+
           if (*lp1 == ',') {
             lp1++;
             // get TRX pin
