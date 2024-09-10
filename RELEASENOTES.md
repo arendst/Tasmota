@@ -147,8 +147,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Fixed
 - Crash when calling TasmotaSerial destructor when initialized with incorrect arguments [#22036](https://github.com/arendst/Tasmota/issues/22036)
 - Energy calculation [#20653](https://github.com/arendst/Tasmota/issues/20653)
+- SML trx pin error [#22119](https://github.com/arendst/Tasmota/issues/22119)
 - Shutter timing registers overflow [#21966](https://github.com/arendst/Tasmota/issues/21966)
 - Shutter missing HOLD on shutterbutton [#22108](https://github.com/arendst/Tasmota/issues/22108)
+- Shutter remaining issues on shutterinvert [#22120](https://github.com/arendst/Tasmota/issues/22120)
 - PZEM continue energy monitoring when one phase fails [#21968](https://github.com/arendst/Tasmota/issues/21968)
 - BearSSL panic on ESP8266 in rare conditions [#22017](https://github.com/arendst/Tasmota/issues/22017)
 - ModbusBridge request and response logic [#22075](https://github.com/arendst/Tasmota/issues/22075)
