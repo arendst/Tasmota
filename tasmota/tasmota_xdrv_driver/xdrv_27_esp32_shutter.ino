@@ -1,7 +1,7 @@
 /*
   xdrv_27_esp32_shutter.ino - Shutter/Blind support for Tasmota
 
-  Copyright (C) 2023  Stefan Bode
+  Copyright (C) 2024  Stefan Bode
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -1356,7 +1356,8 @@ void ShutterUpdatePosition(void)
           // sending MQTT result to broker
           snprintf_P(scommand, sizeof(scommand),PSTR(D_SHUTTER "%d"), i + 1);
           GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, scommand);
-          Response_P("%d", ShutterSettings.shutter_position[i]);
+          uint32_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
+          Response_P("%d", (ShutterSettings.shutter_options[i] & 1) ? 100 - position : position);
           MqttPublish(stopic, Settings->flag.mqtt_power_retain);  // CMND_POWERRETAIN
         }
 
@@ -2332,11 +2333,13 @@ bool Xdrv27(uint32_t function)
         for (uint8_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
           ResponseAppend_P(",");
           uint8_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
+          position = (ShutterSettings.shutter_options[i] & 1) ? 100 - position : position;
           uint8_t target   = ShutterRealToPercentPosition(Shutter[i].target_position, i);
-          ResponseAppend_P(JSON_SHUTTER_POS, i + 1, (ShutterSettings.shutter_options[i] & 1) ? 100 - position : position, Shutter[i].direction,(ShutterSettings.shutter_options[i] & 1) ? 100 - target : target, Shutter[i].tilt_real_pos );
+          target = (ShutterSettings.shutter_options[i] & 1) ? 100 - target : target;
+          ResponseAppend_P(JSON_SHUTTER_POS, i + 1,  position, Shutter[i].direction, target, Shutter[i].tilt_real_pos );
 #ifdef USE_DOMOTICZ
           if ((0 == TasmotaGlobal.tele_period) && (0 == i)) {
-             DomoticzSensor(DZ_SHUTTER, ShutterRealToPercentPosition(Shutter[i].real_position, i));
+             DomoticzSensor(DZ_SHUTTER, position);
           }
 #endif  // USE_DOMOTICZ
         }
