@@ -122,7 +122,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ## Changelog v14.2.0.4
 ### Added
 - Command ``SetOption69 1`` to enable Serial Bridge inverted Receive [#22000](https://github.com/arendst/Tasmota/issues/22000)
-- HX711 optional calibration precision option on command ``Sensor34 2 <weight in gram> <precision>`` where `<precision>` is 1 to 10 [#13983](https://github.com/arendst/Tasmota/issues/13983)
+- HX711 optional calibration precision option on command ``Sensor34 2 <weight in gram> <precision>`` where `<precision>` is 1 to 20 [#13983](https://github.com/arendst/Tasmota/issues/13983)
 - Energy command ``PowerSet 60,230`` to calibrate both Current and Power with known resistive load of 60W at 230V using calibrated Voltage
 - Energy command ``CurrentSet 60,230`` to calibrate both Power and Current with known resistive load of 60W at 230V using calibrated Voltage
 - Energy Log level 4 message when (Calculated) Apparent Power is less than Active Power indicating wrong calibration [#20653](https://github.com/arendst/Tasmota/issues/20653)
