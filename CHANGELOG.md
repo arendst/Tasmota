@@ -16,8 +16,8 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Shutter missing HOLD on shutterbutton (#22108)
 - ModbusBridge request and response logic (#22075)
-- Berry energy missing attributes
-- Zigbee flashing CC2562P with latest firmware
+- Berry energy missing attributes (#22116)
+- Zigbee flashing CC2562P with latest firmware (#22117)
 
 ### Removed
 
