@@ -27,12 +27,17 @@
  * - Execute command Sensor34 1
  *
  * To calibrate the scale perform the following tasks:
- * - Set reference weight once using command Sensor34 3 <reference weight in gram>
+ * - (Optional) Set reference weight once using command Sensor34 3 <reference weight in gram>
  * - Remove any weight from the scale
- * - Execute command Sensor34 2 and follow messages shown
+ * - Execute command Sensor34 2 <reference weight in gram> and follow messages shown
+ * -------------------------------------------------------------------------------------------
+ * I2C M5Unit (Mini)Scales(HX711 STM32) supported
+ * 
+ * I2C Address: 0x26
 \*********************************************************************************************/
 
 #define XSNS_34              34
+#define XI2C_89              89      // See I2CDEVICES.md
 
 #ifndef HX_MAX_WEIGHT
 #define HX_MAX_WEIGHT        20000   // Default max weight in gram
@@ -46,7 +51,6 @@
 #ifndef HX711_CAL_PRECISION
 #define HX711_CAL_PRECISION  1       // When calibration is to course, raise this value to max 20 (otherwise uint32_t overflow)
 #endif
-
 
 #define HX_TIMEOUT           120     // A reading at default 10Hz (pin RATE to Gnd on HX711) can take up to 100 milliseconds
 #define HX_SAMPLES           10      // Number of samples for average calculation
@@ -97,7 +101,55 @@ Hx_t* Hx = nullptr;
 
 /*********************************************************************************************/
 
+#if defined(USE_I2C) && defined(USE_HX711_M5SCALES)
+// M5Unit scales (STM32) need at least 800mS delay before ready after power on
+//  hence HxInit() is called 2 seconds after power on using FUNC_EVERY_SECOND
+
+#ifndef HX_SCALES_ADDR
+#define HX_SCALES_ADDR       0x26                    // M5Unit (Mini)Scales(HX711 STM32) default I2C address
+#endif
+#ifndef HX_SCALES_RAW_ADC
+#define HX_SCALES_RAW_ADC    0x00                    // M5Unit MiniScales raw ADC register (U177)
+//#define HX_SCALES_RAW_ADC    0x10                    // M5Unit Scales raw ADC register (U108)
+#endif
+#define HX_SCALES_I2C_ADDR   0xFF                    // M5Unit (Mini)Scales get I2C address register
+
+bool HxM5Found(void) {
+  uint8_t data = 0;
+  if (!I2cReadBuffer(HX_SCALES_ADDR, HX_SCALES_I2C_ADDR, &data, 1, Hx->pin_dout)) {
+    return (HX_SCALES_ADDR == data);                 // Verify I2C address with stored register
+  }
+  return false;
+}
+
+long HxM5ReadRaw(void) {
+  long rawADC = -1;
+  uint8_t data[4] = { 0 };
+  if (!I2cReadBuffer(HX_SCALES_ADDR, HX_SCALES_RAW_ADC, data, 4, Hx->pin_dout)) {
+#if (HX_SCALES_RAW_ADC == 0x00)                      // M5Unit MiniScales (U177)
+    long rawADC1 = data[0] | (data[1] << 8) | (data[2] << 16) | (data[3] << 24);
+#else                                                // M5Unit Scales (U108)
+    long rawADC1 = data[0];
+    rawADC1 = (rawADC1 << 8) | data[1];
+    rawADC1 = (rawADC1 << 8) | data[2];
+    rawADC1 = (rawADC1 << 8) | data[3];
+#endif  // M5Unit Scales (U108)
+    rawADC = 0x01FFFFFF - rawADC1;                   // Additional weight on miniscale decreases ADC value
+  }
+  return rawADC;
+}
+#endif  // USE_I2C && USE_HX711_M5SCALES
+
+/*********************************************************************************************/
+
 bool HxIsReady(uint16_t timeout) {
+
+#if defined(USE_I2C) && defined(USE_HX711_M5SCALES)
+  if (Hx->pin_dout == Hx->pin_sck) { 
+    return HxM5Found();
+  }
+#endif  // USE_I2C && USE_HX711_M5SCALES
+
   // A reading can take up to 100 mS or 600mS after power on
   uint32_t start = millis();
   while ((digitalRead(Hx->pin_dout) == HIGH) && (millis() - start < timeout)) {
@@ -107,6 +159,13 @@ bool HxIsReady(uint16_t timeout) {
 }
 
 long HxRead(void) {
+
+#if defined(USE_I2C) && defined(USE_HX711_M5SCALES)
+  if (Hx->pin_dout == Hx->pin_sck) { 
+    return HxM5ReadRaw();
+  }
+#endif  // USE_I2C && USE_HX711_M5SCALES
+
   if (!HxIsReady(HX_TIMEOUT)) { return -1; }
 
   uint8_t data[3] = { 0 };
@@ -317,21 +376,44 @@ long HxWeight(void) {
 }
 
 void HxInit(void) {
-  if (PinUsed(GPIO_HX711_DAT) && PinUsed(GPIO_HX711_SCK)) {
+  uint32_t hx711_config = (PinUsed(GPIO_HX711_DAT) && PinUsed(GPIO_HX711_SCK)) ? 1 : 0;
+
+#if defined(USE_I2C) && defined(USE_HX711_M5SCALES)
+  uint32_t bus;
+  if (!hx711_config && I2cEnabled(XI2C_89)) { 
+    for (bus = 0; bus < 2; bus++) {
+      if (!I2cSetDevice(HX_SCALES_ADDR, bus)) { continue; }
+      I2cSetActiveFound(HX_SCALES_ADDR, "M5Unit Scales", bus);
+      hx711_config = 2;
+      break;
+    }
+  }
+#endif  // USE_I2C && USE_HX711_M5SCALES
+
+  if (hx711_config > 0) {
     Hx = (Hx_t*)calloc(sizeof(Hx_t), 1);             // Need calloc to reset registers to 0/false
     if (nullptr == Hx) { return; }
 
 //    Hx->calibrate_step = HX_CAL_END;               // HX_CAL_END = 0
 
-    Hx->pin_sck = Pin(GPIO_HX711_SCK);
-    Hx->pin_dout = Pin(GPIO_HX711_DAT);
-    pinMode(Hx->pin_sck, OUTPUT);
-    pinMode(Hx->pin_dout, INPUT);
-    digitalWrite(Hx->pin_sck, LOW);
+#if defined(USE_I2C) && defined(USE_HX711_M5SCALES)
+    if (2 == hx711_config) {
+      Hx->pin_sck = bus;                             // If both are equal use M5Scale instead of HX711
+      Hx->pin_dout = bus;
+    } else {
+#endif  // USE_I2C && USE_HX711_M5SCALES
+      Hx->pin_sck = Pin(GPIO_HX711_SCK);
+      Hx->pin_dout = Pin(GPIO_HX711_DAT);
+      pinMode(Hx->pin_sck, OUTPUT);
+      pinMode(Hx->pin_dout, INPUT);
+      digitalWrite(Hx->pin_sck, LOW);
+#if defined(USE_I2C) && defined(USE_HX711_M5SCALES)
+    }
+#endif  // USE_I2C && USE_HX711_M5SCALES
 
     SetWeightDelta();
 
-    if (HxIsReady(8 * HX_TIMEOUT)) {                 // Can take 600 milliseconds after power on
+    if (HxIsReady(8 * HX_TIMEOUT)) {                 // Could take 600 milliseconds after power on
       if (!Settings->weight_max) { Settings->weight_max = HX_MAX_WEIGHT / 1000; }
       if (!Settings->weight_precision) { Settings->weight_precision = HX711_CAL_PRECISION; }
       if (!Settings->weight_calibration) { Settings->weight_calibration = HX_SCALE * Settings->weight_precision; }
@@ -606,8 +688,10 @@ void HandleHxAction(void) {
 bool Xsns34(uint32_t function) {
   bool result = false;
 
-  if (FUNC_INIT == function) {
-    HxInit();
+  if (FUNC_EVERY_SECOND == function) {
+    if (2 == TasmotaGlobal.uptime) {                 // Fix power on init
+      HxInit();
+    }
   }
   else if (Hx) {
     switch (function) {
