@@ -233,7 +233,7 @@ enum ProgramSelectablePins {
   GPIO_USER,           // User configurable needs to be 2047
   GPIO_MAX };
 
-#define MAX_OPTIONS_A  8                   // Increase if more bits are used from GpioOptionABits
+#define MAX_OPTIONS_A  9                   // Increase if more bits are used from GpioOptionABits
 
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
@@ -246,7 +246,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t linkind_support : 1;          // bit 5 (v10.1.0.4)  - Option_A6 - (Light) LinkInd support
     uint32_t shelly_pro : 1;               // bit 6 (v12.2.0.1)  - Option_A7 - (Device) Shelly Pro
     uint32_t ifan04_h : 1;                 // bit 7 (v14.1.0.4)  - Option_A8 - (Device) Sonoff ifan04-H
-    uint32_t spare08 : 1;                  // bit 8
+    uint32_t berry_energy : 1;             // bit 8 (v14.2.0.4)  - Option_A9 - (Energy) Enable Berry energy driver
     uint32_t spare09 : 1;                  // bit 9
     uint32_t spare10 : 1;                  // bit 10
     uint32_t spare11 : 1;                  // bit 11

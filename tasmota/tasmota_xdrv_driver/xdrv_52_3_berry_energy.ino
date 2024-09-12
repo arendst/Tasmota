@@ -37,6 +37,12 @@ extern "C" {
     EnergyUpdateTotal();
     be_return_nil(vm);
   }
+  
+  extern int module_energy_driver_enabled(bvm *vm);
+  int module_energy_driver_enabled(bvm *vm) {
+    be_pushbool(vm, 28 == TasmotaGlobal.energy_driver);
+    be_return(vm);
+  }
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Winvalid-offsetof"   // avoid warnings since we're using offsetof() in a risky way
