@@ -10,6 +10,19 @@
 #ifdef USE_RTC_CHIPS
 /*********************************************************************************************\
  * RTC chip support
+ * 
+ * #define USE_DS3231
+ *   DS1307 and DS3231 at I2C address 0x68
+ *   Used by Ulanzi TC001
+ * #define USE_BM8563
+ *   BM8563 at I2C address 0x51
+ *   Used by M5Stack and IOTTIMER (v3)
+ * #define USE_PCF85363
+ *   PCF85363 at I2C address 0x51
+ *   Used by Shelly 3EM
+ * #define USE_RX8010
+ *   RX8010 at I2C address 0x32
+ *   Used by IOTTIMER (v1 and v2)
 \*********************************************************************************************/
 
 #define XDRV_56             56
@@ -250,7 +263,6 @@ void BM8563Detected(void) {
 }
 #endif  // USE_BM8563
 
-
 /*********************************************************************************************\
  * PCF85363 support
  *
@@ -383,6 +395,92 @@ void Pcf85363Detected(void) {
 #endif // USE_PCF85363
 
 /*********************************************************************************************\
+ * RX8010 - Real Time Clock
+ * based on linux/rtc-rx8010.c
+ *
+ * I2C Address: 0x32
+\*********************************************************************************************/
+#ifdef USE_RX8010
+
+#define XI2C_90             90       // See I2CDEVICES.md
+
+#define RX8010_ADDRESS      0x32     // RX8010 I2C Address
+
+// RX8010 Register Addresses
+#define RX8010_REG_SEC		  0x10
+#define RX8010_REG_MIN		  0x11
+#define RX8010_REG_HOUR		  0x12
+#define RX8010_REG_WDAY		  0x13
+#define RX8010_REG_MDAY		  0x14
+#define RX8010_REG_MONTH	  0x15
+#define RX8010_REG_YEAR		  0x16
+#define RX8010_REG_CTRL		  0x1F
+
+// Control Register (1Fh) bit positions
+#define RX8010_BIT_CTRL_STOP	6
+
+/*-------------------------------------------------------------------------------------------*\
+ * Read time from RX8010 and return the epoch time (second since 1-1-1970 00:00)
+\*-------------------------------------------------------------------------------------------*/
+uint32_t Rx8010ReadTime(void) {
+  TIME_T tm;
+
+  uint8_t data[7];
+  I2cReadBuffer(RtcChip.address, RX8010_REG_SEC, data, 7, RtcChip.bus);
+  tm.second = Bcd2Dec(data[0] & 0x7F);
+  tm.minute = Bcd2Dec(data[1] & 0x7F);
+  tm.hour = Bcd2Dec(data[2] & 0x3F);    // Assumes 24hr clock
+  tm.day_of_month = Bcd2Dec(data[3] & 0x3F);
+  tm.month = Bcd2Dec(data[4] & 0x3F) -1;
+  tm.year = Bcd2Dec(data[5]);
+	if (tm.year < 70) { tm.year += 100; }
+  tm.day_of_week = Bcd2Dec(data[6] & 0x7F);
+  return MakeTime(tm);
+}
+
+/*-------------------------------------------------------------------------------------------*\
+ * Get time as TIME_T and set the RX8010 time to this value
+\*-------------------------------------------------------------------------------------------*/
+void Rx8010SetTime(uint32_t epoch_time) {
+  TIME_T tm;
+  BreakTime(epoch_time, tm);
+	// Set STOP bit before changing clock/calendar
+  I2cWrite8(RtcChip.address, RX8010_REG_CTRL, I2cRead8(RtcChip.address, RX8010_REG_CTRL, RtcChip.bus) | _BV(RX8010_BIT_CTRL_STOP), RtcChip.bus);
+  uint8_t data[7];
+  data[0] = Dec2Bcd(tm.second);
+  data[1] = Dec2Bcd(tm.minute);
+  data[2] = Dec2Bcd(tm.hour);
+  data[3] = Dec2Bcd(tm.day_of_month);
+  data[4] = Dec2Bcd(tm.month +1);
+  data[5] = Dec2Bcd(tm.year % 100);
+  data[6] = Dec2Bcd(tm.day_of_week);
+  I2cWriteBuffer(RtcChip.address, RX8010_REG_SEC, data, 7, RtcChip.bus);
+	// Clear STOP bit after changing clock/calendar
+  I2cWrite8(RtcChip.address, RX8010_REG_CTRL, I2cRead8(RtcChip.address, RX8010_REG_CTRL, RtcChip.bus) & ~_BV(RX8010_BIT_CTRL_STOP), RtcChip.bus);
+}
+
+/*-------------------------------------------------------------------------------------------*\
+ * Detection
+\*-------------------------------------------------------------------------------------------*/
+void Rx8010Detected(void) {
+  if (!RtcChip.detected && I2cEnabled(XI2C_90)) {
+    RtcChip.address = RX8010_ADDRESS;
+    for (RtcChip.bus = 0; RtcChip.bus < 2; RtcChip.bus++) {
+      if (!I2cSetDevice(RtcChip.address, RtcChip.bus)) { continue; }
+      if (I2cValidRead(RtcChip.address, RX8010_REG_CTRL, 1, RtcChip.bus)) {
+        RtcChip.detected = 1;
+        strcpy_P(RtcChip.name, PSTR("RX8010"));
+        RtcChip.ReadTime = &Rx8010ReadTime;
+        RtcChip.SetTime = &Rx8010SetTime;
+        RtcChip.mem_size = -1;
+        break;
+      }
+    }
+  }
+}
+#endif  // USE_RX8010
+
+/*********************************************************************************************\
  * RTC Detect and time set
 \*********************************************************************************************/
 
@@ -399,6 +497,9 @@ void RtcChipDetect(void) {
 #ifdef USE_PCF85363
   Pcf85363Detected();
 #endif // USE_PCF85363
+#ifdef USE_RX8010
+  Rx8010Detected();
+#endif  // USE_RX8010
 
   if (!RtcChip.detected) { return; }
 

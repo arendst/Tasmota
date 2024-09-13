@@ -9,7 +9,8 @@ All notable changes to this project will be documented in this file.
 - Matter support for Zigbee Occupancy and Light 0/1/2 (OnOff / Dimmer / White Color Temperature) (#22110)
 - KNX additional KnxTx functions and define KNX_USE_DPT9 (#22071)
 - Support for I2C M5Unit (Mini)Scales using HX711 driver
-- Berry virtual Energy driver
+- Berry virtual Energy driver (#22134)
+- Support for RX8010 RTC as used in IOTTIMER (#21376)
 
 ### Breaking Changed
 
