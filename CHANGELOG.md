@@ -23,7 +23,7 @@ All notable changes to this project will be documented in this file.
 - Zigbee flashing CC2562P with latest firmware (#22117)
 - SML trx pin error (#22119)
 - Shutter remaining issues on shutterinvert (#22120)
-- Berry I2C to prepare M5Stack I2C STM32 based devices
+- Berry I2C to prepare M5Stack I2C STM32 based devices (#22143)
 
 ### Removed
 

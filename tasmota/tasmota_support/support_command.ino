@@ -2743,21 +2743,20 @@ void CmndBatteryPercent(void) {
 
 #ifdef USE_I2C
 void CmndI2cScan(void) {
-  // I2CScan0  - Scan bus1 and bus2
-  // I2CScan   - Scan bus1
-  // I2CScan2  - Scan bus2
+  // I2CScan   - Scan bus1 then bus2
+  bool jsflag = false;
   if (TasmotaGlobal.i2c_enabled) {
-    if ((0 == XdrvMailbox.index) || (1 == XdrvMailbox.index)) {
-      I2cScan();
-    }
+    I2cScan();
+    jsflag = true;
   }
 #ifdef ESP32
   if (TasmotaGlobal.i2c_enabled_2) {
-    if ((0 == XdrvMailbox.index) || (2 == XdrvMailbox.index)) {
-      I2cScan(1);
+    if (jsflag) {
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, XdrvMailbox.command);
     }
+    I2cScan(1);
   }
-#endif
+#endif  // ESP32
 }
 
 void CmndI2cDriver(void)
