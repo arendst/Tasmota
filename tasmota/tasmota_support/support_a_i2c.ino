@@ -20,36 +20,29 @@ uint32_t i2c_active[2][4] = { 0 };
 #endif
 uint32_t i2c_buffer = 0;
 
-bool I2cBegin(int sda, int scl, uint32_t frequency = 100000);
-bool I2cBegin(int sda, int scl, uint32_t frequency) {
+bool I2cBegin(int sda, int scl, uint32_t bus = 0, uint32_t frequency = 100000);
+bool I2cBegin(int sda, int scl, uint32_t bus, uint32_t frequency) {
   bool result = true;
 #ifdef ESP8266
   Wire.begin(sda, scl);
+  Wire.setClock(frequency);
 #endif
 #ifdef ESP32
   static bool reinit = false;
-  if (reinit) { Wire.end(); }
-  result = Wire.begin(sda, scl, frequency);
+  TwoWire& myWire = (0 == bus) ? Wire : Wire1;
+  if (reinit) { myWire.end(); }
+  result = myWire.begin(sda, scl, frequency);
   reinit = result;
 #endif
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Bus1 %d"), result);
+//  AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Bus%d %d"), bus +1, result);
   return result;
 }
-
-#ifdef ESP32
-bool I2c2Begin(int sda, int scl, uint32_t frequency = 100000);
-bool I2c2Begin(int sda, int scl, uint32_t frequency) {
-  bool result = Wire1.begin(sda, scl, frequency);
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("I2C: Bus2 %d"), result);
-  return result;
-}
-#endif
 
 TwoWire& I2cGetWire(uint8_t bus = 0) {
-  if (!bus && TasmotaGlobal.i2c_enabled) {
+  if ((0 == bus) && TasmotaGlobal.i2c_enabled) {
     return Wire;
 #ifdef ESP32
-  } else if (bus && TasmotaGlobal.i2c_enabled_2) {
+  } else if ((1 == bus) && TasmotaGlobal.i2c_enabled_2) {
     return Wire1;
 #endif  // ESP32
   } else {
