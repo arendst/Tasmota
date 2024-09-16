@@ -85,19 +85,23 @@ uint8_t HtuCheckCrc8(uint16_t data) {
 }
 
 bool HtuReset(void) {
+/*
   TwoWire& myWire = I2cGetWire(Htu.bus);
   if (&myWire == nullptr) { return false; }  // No valid I2c bus
 
   myWire.beginTransmission(HTU21_ADDR);
   myWire.write(HTU21_RESET);
   myWire.endTransmission();
+*/
+  I2cWrite0(HTU21_ADDR, HTU21_RESET, Htu.bus);
+
   delay(15);                // Reset takes 15ms
   return true;
 }
 
 uint8_t HtuReadDeviceId(void) {
   if (!HtuReset()) { return 0; };  // Fixes ESP32 sensor loss at restart
-
+/*
   uint16_t deviceID = 0;
   uint8_t checksum = 0;
 
@@ -116,6 +120,16 @@ uint8_t HtuReadDeviceId(void) {
   } else {
     deviceID = 0;
   }
+*/
+  uint8_t data[3];
+  I2cReadBuffer(HTU21_ADDR, HTU21_SERIAL2_READ2 << 8 | HTU21_SERIAL2_READ1, data, 3, Htu.bus);
+  uint16_t deviceID  = (data[0] << 8) | data[1];
+  if (HtuCheckCrc8(deviceID) == data[2]) {
+    deviceID = deviceID >> 8;
+  } else {
+    deviceID = 0;
+  }
+
   return (uint8_t)deviceID;
 }
 
@@ -146,11 +160,23 @@ void HtuInit(void) {
   HtuSetResolution(HTU21_RES_RH12_T14);
 }
 
-bool HtuRead(void) {
-  uint8_t  checksum = 0;
-  uint16_t sensorval = 0;
+bool HtuI2cRead(uint8_t reg, uint8_t hdelay, uint16_t &sensorval) {
+  if (!I2cWrite0(HTU21_ADDR, reg, Htu.bus)) { return false; }
+  delay(hdelay);                                               // Sensor time at max resolution
+  uint8_t data[3] = { 0 };
+  if (!I2cReadBuffer0(HTU21_ADDR, data, 3, Htu.bus)) {
+    sensorval = data[0] << 8 | data[1];                        // MSB, LSB
+  }
+  if (HtuCheckCrc8(sensorval) != data[2]) { return false; }    // Checksum mismatch
+  return true;
+}
 
+bool HtuRead(void) {
   if (Htu.valid) { Htu.valid--; }
+
+  uint16_t sensorval = 0;
+/*
+  uint8_t  checksum = 0;
 
   TwoWire& myWire = I2cGetWire(Htu.bus);
   myWire.beginTransmission(HTU21_ADDR);
@@ -180,6 +206,11 @@ bool HtuRead(void) {
     checksum = myWire.read();
   }
   if (HtuCheckCrc8(sensorval) != checksum) { return false; }   // Checksum mismatch
+*/
+  if (!HtuI2cRead(HTU21_READTEMP, Htu.delay_temp, sensorval)) { return false; }  // Checksum mismatch
+  Htu.temperature = ConvertTemp(0.002681f * (float)sensorval - 46.85f);
+
+  if (!HtuI2cRead(HTU21_READHUM, Htu.delay_humidity, sensorval)) { return false; }  // Checksum mismatch
 
   sensorval ^= 0x02;                                           // clear status bits
   Htu.humidity = 0.001907f * (float)sensorval - 6;

@@ -149,6 +149,8 @@ int32_t I2cRead24(uint8_t addr, uint8_t reg, uint8_t bus = 0) {
   return i2c_buffer;
 }
 
+/*-------------------------------------------------------------------------------------------*/
+
 bool I2cWrite(uint8_t addr, uint8_t reg, uint32_t val, uint8_t size, uint8_t bus = 0) {
   TwoWire& myWire = I2cGetWire(bus);
   if (&myWire == nullptr) { return false; }               // No valid I2c bus
@@ -166,6 +168,10 @@ bool I2cWrite(uint8_t addr, uint8_t reg, uint32_t val, uint8_t size, uint8_t bus
   return (x);                                             // 0 = Error, 1 = OK
 }
 
+bool I2cWrite0(uint8_t addr, uint8_t reg, uint8_t bus = 0) {
+   return I2cWrite(addr, reg, 0, 0, bus);                 // 0 = Error, 1 = OK
+}
+
 bool I2cWrite8(uint8_t addr, uint8_t reg, uint32_t val, uint8_t bus = 0) {
    return I2cWrite(addr, reg, val, 1, bus);               // 0 = Error, 1 = OK
 }
@@ -178,14 +184,12 @@ bool I2cWrite16(uint8_t addr, uint8_t reg, uint32_t val, uint8_t bus = 0) {
  * Return code: 0 = OK, 1 = Error
 \*-------------------------------------------------------------------------------------------*/
 
-bool I2cReadBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len, uint8_t bus = 0) {
+bool I2cReadBuffer0(uint8_t addr, uint8_t *reg_data, uint16_t len, uint8_t bus = 0) {
   TwoWire& myWire = I2cGetWire(bus);
   if (&myWire == nullptr) { return true; }                // No valid I2c bus
 
-  myWire.beginTransmission((uint8_t)addr);
-  myWire.write((uint8_t)reg);
-  myWire.endTransmission();
-  if (len != myWire.requestFrom((uint8_t)addr, (uint8_t)len)) {
+  myWire.requestFrom((uint8_t)addr, (uint8_t)len);
+  if (myWire.available() != len) {
     return true;                                          // 1 = Error
   }
   while (len--) {
@@ -195,9 +199,34 @@ bool I2cReadBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len, u
   return false;                                           // 0 = OK
 }
 
-int8_t I2cWriteBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len, uint8_t bus = 0) {
+bool I2cReadBuffer(uint8_t addr, int reg, uint8_t *reg_data, uint16_t len, uint8_t bus = 0) {
   TwoWire& myWire = I2cGetWire(bus);
-  if (&myWire == nullptr) { return 1; }                   // 1 = Error, No valid I2c bus
+  if (&myWire == nullptr) { return true; }                // No valid I2c bus
+
+  myWire.beginTransmission((uint8_t)addr);
+  if (reg > -1) { 
+    myWire.write((uint8_t)reg);
+    if (reg > 255) {
+      myWire.write((uint8_t)(reg >> 8));
+    }
+    myWire.endTransmission();
+  }
+  if (len != myWire.requestFrom((uint8_t)addr, (uint8_t)len)) {
+    return true;                                          // 1 = Error
+  }
+  while (len--) {
+    *reg_data = (uint8_t)myWire.read();
+    reg_data++;
+  }
+  if (reg < 0) { 
+    myWire.endTransmission();
+  }
+  return false;                                           // 0 = OK
+}
+
+bool I2cWriteBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len, uint8_t bus = 0) {
+  TwoWire& myWire = I2cGetWire(bus);
+  if (&myWire == nullptr) { return true; }                // 1 = Error, No valid I2c bus
 
   myWire.beginTransmission((uint8_t)addr);
   myWire.write((uint8_t)reg);
@@ -206,7 +235,7 @@ int8_t I2cWriteBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len
     reg_data++;
   }
   myWire.endTransmission();
-  return 0;                                               // 0 = OK
+  return false;                                           // 0 = OK
 }
 
 /*-------------------------------------------------------------------------------------------*/

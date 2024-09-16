@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- Refactored I2C drivers HTU21, BH1750 and HYT
 
 ### Fixed
 - Shutter missing HOLD on shutterbutton (#22108)
