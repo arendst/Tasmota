@@ -379,6 +379,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
 
   char *type = strrchr(topicBuf, '/');   // Last part of received topic is always the command (type)
 
+  bool command_unknown = false;
   uint32_t index = 1;
   bool user_index = false;
   if (type != nullptr) {
@@ -448,32 +449,29 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
     XdrvMailbox.data = dataBuf;
 
 #ifdef USE_SCRIPT_SUB_COMMAND
-  // allow overwrite tasmota cmds
-    if (!Script_SubCmd()) {
+    if (!Script_SubCmd()) {              // Allow override tasmota cmds
+#endif  // USE_SCRIPT_SUB_COMMAND
       if (!DecodeCommand(kTasmotaCommands, TasmotaCommand, kTasmotaSynonyms)) {
         if (!XdrvCall(FUNC_COMMAND)) {
           if (!XsnsCall(FUNC_COMMAND)) {
-            type = nullptr;  // Unknown command
+            command_unknown = true;      // Unknown command
           }
         }
       }
-    }
-#else  // USE_SCRIPT_SUB_COMMAND
-    if (!DecodeCommand(kTasmotaCommands, TasmotaCommand, kTasmotaSynonyms)) {
-      if (!XdrvCall(FUNC_COMMAND)) {
-        if (!XsnsCall(FUNC_COMMAND)) {
-          type = nullptr;  // Unknown command
-        }
-      }
+#ifdef USE_SCRIPT_SUB_COMMAND
     }
 #endif  // USE_SCRIPT_SUB_COMMAND
 
+  } else {                               // type = nullptr
+    stemp1[0] = '\0';
+    type = (char*)stemp1;
+    command_unknown = true;              // Unknown command
   }
 
-  if (type == nullptr) {
+  if (command_unknown) {
     TasmotaGlobal.blinks = 201;
+    Response_P(PSTR("{\"" D_JSON_COMMAND "\":\"%s%s" D_JSON_UNKNOWN "\"}"), type, (strlen(type))?" ":"");
     snprintf_P(stemp1, sizeof(stemp1), PSTR(D_JSON_COMMAND));
-    Response_P(PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_UNKNOWN "\"}"));
     type = (char*)stemp1;
   }
 
