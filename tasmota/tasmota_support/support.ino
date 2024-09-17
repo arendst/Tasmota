@@ -1321,6 +1321,14 @@ void ResponseClear(void) {
 //  TasmotaGlobal.mqtt_data = (const char*) nullptr;  // Doesn't work on ESP32 as strlen() (in MqttPublishPayload) will fail (for obvious reasons)
 }
 
+void ResponseReplace(const char* rold, const char* rnew) {
+  TasmotaGlobal.mqtt_data.replace(rold, rnew);
+}
+
+bool ResponseStartsWith(const char* start_with) {
+  return TasmotaGlobal.mqtt_data.startsWith(start_with);
+}
+
 void ResponseJsonStart(void) {
   // Insert a JSON start bracket {
   TasmotaGlobal.mqtt_data.setCharAt(0,'{');

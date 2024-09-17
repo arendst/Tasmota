@@ -901,6 +901,8 @@
 #endif
 
 // Common
+const char S_JSON_COMMAND_ERROR[] PROGMEM =                   "{\"" D_JSON_COMMAND "\":\"" D_JSON_ERROR "\"";
+
 const char S_JSON_COMMAND_NVALUE_SPACE_UNIT[] PROGMEM =       "{\"%s\":\"%d %s\"}";
 const char S_JSON_COMMAND_LVALUE_SPACE_UNIT[] PROGMEM =       "{\"%s\":\"%lu %s\"}";
 const char S_JSON_COMMAND_SVALUE_SPACE_UNIT[] PROGMEM =       "{\"%s\":\"%s %s\"}";

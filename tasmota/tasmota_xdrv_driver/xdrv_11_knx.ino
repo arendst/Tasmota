@@ -1395,8 +1395,7 @@ void CmndKnxPa(void)
 
       if ( ((pa_area == 0) && (pa_line == 0) && (pa_member == 0))
             || (pa_area > 15) || (pa_line > 15) || (pa_member > 255) ) {
-              ResponseCmndError();
-              return;
+              return;  // Command Error
       }  // Invalid command
 
       KNX_addr.pa.area = pa_area;
@@ -1426,8 +1425,7 @@ void CmndKnxGa(void)
           || (ga_area > 31) || (ga_line > 7) || (ga_member > 255)
           || (ga_option < 0) || ((ga_option > KNX_MAX_device_param ) && (ga_option != KNX_Empty))
           || (!device_param[ga_option-1].show) ) {
-               ResponseCmndIdxError();
-               return;
+               return;  // Command Error
         }  // Invalid command
 
         KNX_addr.ga.area = ga_area;
@@ -1445,8 +1443,7 @@ void CmndKnxGa(void)
         if ( (XdrvMailbox.payload <= Settings->knx_GA_registered) && (XdrvMailbox.payload > 0) ) {
           XdrvMailbox.index = XdrvMailbox.payload;
         } else {
-          ResponseCmndIdxError();
-          return;
+          return;  // Command Error
         }
       }
       if ( XdrvMailbox.index <= Settings->knx_GA_registered ) {
@@ -1477,8 +1474,7 @@ void CmndKnxCb(void)
           || (cb_area > 31) || (cb_line > 7) || (cb_member > 255)
           || (cb_option < 0) || ((cb_option > KNX_MAX_device_param ) && (cb_option != KNX_Empty))
           || (!device_param[cb_option-1].show) ) {
-               ResponseCmndIdxError();
-               return;
+               return;  // Command Error
         }  // Invalid command
 
         KNX_addr.ga.area = cb_area;
@@ -1496,8 +1492,7 @@ void CmndKnxCb(void)
         if ( (XdrvMailbox.payload <= Settings->knx_CB_registered) && (XdrvMailbox.payload > 0) ) {
           XdrvMailbox.index = XdrvMailbox.payload;
         } else {
-          ResponseCmndIdxError();
-          return;
+          return;  // Command Error
         }
       }
       if ( XdrvMailbox.index <= Settings->knx_CB_registered ) {

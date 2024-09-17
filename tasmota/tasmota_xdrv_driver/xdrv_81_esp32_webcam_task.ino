@@ -2519,8 +2519,7 @@ void CmndWebcamGetPicStore(void) {
     bnum = XdrvMailbox.index;
   }
   if (bnum < 0 || bnum > MAX_PICSTORE) {
-    ResponseCmndError();
-    return;
+    return;  // Command Error
   }
 
   // if given 0, then get frame 1 first, and use frame 1 (the first frame, index 0).
@@ -2616,11 +2615,15 @@ int WebcamSavePic(int append) {
 }
 // "WCSAVEPIC1 /temp.jpg" "WCSAVEPIC2 /temp.jpg"
 void CmdWebcamSavePic(){
-  WebcamSavePic(0)? ResponseCmndDone(): ResponseCmndError();
+  if (WebcamSavePic(0)) {
+    ResponseCmndDone();
+  }    
 }
 // "WCAPPENDPIC1 /temp.jpg" "WCAPPENDPIC2 /temp.jpg"
 void CmdWebcamAppendPic(){
-  WebcamSavePic(1)? ResponseCmndDone(): ResponseCmndError();
+  if (WebcamSavePic(1)) {
+    ResponseCmndDone();
+  }
 }
 
 void CmndWebcamMenuVideoDisable(void) {

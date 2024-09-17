@@ -16,7 +16,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Refactored I2C drivers HTU21, BH1750 and HYT
-- Add entered command to MQTT command unknown message
+- Add command entered to command error and command unknown message
 
 ### Fixed
 - Shutter missing HOLD on shutterbutton (#22108)

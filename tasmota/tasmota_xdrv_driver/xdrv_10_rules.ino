@@ -2468,8 +2468,7 @@ void CmndScale(void)
         dtostrfd(value, Settings->flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
         bitSet(Rules.vars_event, XdrvMailbox.index -1);
       } else {
-        ResponseCmndIdxError();
-        return;
+        return;  // Command Error
       }
     }
     ResponseCmndIdxChar(rules_vars[XdrvMailbox.index -1]);

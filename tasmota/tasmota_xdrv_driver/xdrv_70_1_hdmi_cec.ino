@@ -131,8 +131,6 @@ void CmndHDMISendRaw(void) {
     } else {
       ResponseCmndChar_P(PSTR("Buffer too large"));
     }
-  } else {
-    ResponseCmndError();
   }
 }
 
@@ -211,8 +209,6 @@ void CmndHDMISend(void) {
         }
       }
     }
-  } else {
-    ResponseCmndError();
   }
 }
 
