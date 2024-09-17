@@ -302,10 +302,16 @@ autoconf_module.init = def (m)
       try
         f = open(fname, "r")       # open file in read-only mode, it is expected to exist
         while true
-          var line = f.readline()         # read each line, can contain a terminal '\n', empty if end of file
-          if size(line) == 0 break end    # end of file
+          var line = f.readline()         # read each line, can contain a terminal '\n'
 
-          while (size(line) > 0 && (line[-1] == "\n" || line[-1] == "\r")) line = line[0..-2] end  # remove any trailing '\n' or '\r'
+          if (size(line) == 0) && (f.tell() >= f.size())  # did we reach end of file?
+            break
+          end
+
+          while (size(line) > 0 && (line[-1] == "\n" || line[-1] == "\r"))
+            line = line[0..-2]      # remove any trailing '\n' or '\r'
+          end
+
           if size(line) > 0
             tasmota.cmd(line)             # run the command
           end
