@@ -470,7 +470,11 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
 
   if (command_unknown) {
     TasmotaGlobal.blinks = 201;
-    Response_P(PSTR("{\"" D_JSON_COMMAND "\":\"%s%s" D_JSON_UNKNOWN "\"}"), type, (strlen(type))?" ":"");
+    Response_P(PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_UNKNOWN "\""));
+    if (strlen(type)) {
+      ResponseAppend_P(PSTR(",\"Input\":\"%s\""), type);
+    }
+    ResponseJsonEnd();
     snprintf_P(stemp1, sizeof(stemp1), PSTR(D_JSON_COMMAND));
     type = (char*)stemp1;
   }
