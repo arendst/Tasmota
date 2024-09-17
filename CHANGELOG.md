@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - SML trx pin error (#22119)
 - Shutter remaining issues on shutterinvert (#22120)
 - Berry I2C to prepare M5Stack I2C STM32 based devices (#22143)
+- Autoconf prevent 'init.bat' from stopping on empty lines 
 
 ### Removed
 
