@@ -9906,7 +9906,7 @@ void Script_Handle_Hue(String path) {
 
   uint16_t args = Webserver->args();
 
-#ifdef ESP82666
+#ifdef ESP8266
   char *json = (char*)Webserver->arg(args - 1).c_str();
 #else
    String request_arg = Webserver->arg(args - 1);
