@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Support for RX8010 RTC as used in IOTTIMER (#21376)
 - ESP8266 experimental support for second I2C bus
 - Berry improve `int64` constructor
+- MQTT add warning if trying to connect without TLS on a port that normally uses TLS
 
 ### Breaking Changed
 
