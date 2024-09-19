@@ -499,6 +499,11 @@ const char kSensorNamesFixed[] PROGMEM =
   D_SENSOR_USER;
 
 // Max number of GPIOs
+#define MAX_I2C          0              // Display no index if one bus
+#ifdef USE_I2C_BUS2
+#undef MAX_I2C
+#define MAX_I2C          2
+#endif
 #define MAX_MAX31855S    6
 #define MAX_MAX31865S    6
 #define MAX_MCP23XXX     6

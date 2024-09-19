@@ -191,7 +191,7 @@ void Sht3xShow(bool json) {
       strlcpy(types, sht3x_sensors[idx].types, sizeof(types));
       if (sht3x_count > 1) {
         snprintf_P(types, sizeof(types), PSTR("%s%c%02X"), types, IndexSeparator(), sht3x_sensors[idx].address);  // "SHT3X-0xXX"  
-#ifdef ESP32
+#ifdef USE_I2C_BUS2
         if (TasmotaGlobal.i2c_enabled_2) {
           for (uint32_t i = 1; i < sht3x_count; i++) {
             if (sht3x_sensors[0].bus != sht3x_sensors[i].bus) {
@@ -200,7 +200,7 @@ void Sht3xShow(bool json) {
             }
           }
         }
-#endif
+#endif  // USE_I2C_BUS2
       }
       TempHumDewShow(json, ((0 == TasmotaGlobal.tele_period) && (0 == idx)), types, sht3x_sensors[idx].temp, sht3x_sensors[idx].humi);
     }

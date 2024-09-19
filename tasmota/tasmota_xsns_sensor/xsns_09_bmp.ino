@@ -558,7 +558,7 @@ void BmpShow(bool json) {
       if (bmp_count > 1) {
         // BMP280-77
         snprintf_P(name, sizeof(name), PSTR("%s%c%02X"), name, IndexSeparator(), bmp_sensors[bmp_idx].bmp_address);
-#ifdef ESP32
+#ifdef USE_I2C_BUS2
         if (TasmotaGlobal.i2c_enabled_2) {           // Second bus enabled
           uint8_t bus = bmp_sensors[0].bmp_bus;
           for (uint32_t i = 1; i < bmp_count; i++) {
@@ -569,7 +569,7 @@ void BmpShow(bool json) {
             }
           }
         }
-#endif
+#endif  // USE_I2C_BUS2
       }
 
       char pressure[33];

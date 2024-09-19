@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Support for I2C M5Unit (Mini)Scales using HX711 driver
 - Berry virtual Energy driver (#22134)
 - Support for RX8010 RTC as used in IOTTIMER (#21376)
+- ESP8266 experimental support for second I2C bus
 
 ### Breaking Changed
 

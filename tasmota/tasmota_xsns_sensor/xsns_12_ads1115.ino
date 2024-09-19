@@ -199,7 +199,7 @@ void Ads1115Label(char* label, uint32_t maxsize, uint32_t device) {
   if (ads1115_count > 1) {
     // "ADS1115-48":{"A0":3240,"A1":3235,"A2":3269,"A3":3269},"ADS1115-49":{"A0":3240,"A1":3235,"A2":3269,"A3":3269}
     snprintf_P(label, maxsize, PSTR("%s%c%02X"), label, IndexSeparator(), Ads1115[device].address);
-#ifdef ESP32
+#ifdef USE_I2C_BUS2
     if (TasmotaGlobal.i2c_enabled_2) {           // Second bus enabled
       uint8_t bus = Ads1115[0].bus;
       for (uint32_t i = 1; i < ads1115_count; i++) {
@@ -210,7 +210,7 @@ void Ads1115Label(char* label, uint32_t maxsize, uint32_t device) {
         }
       }
     }
-#endif
+#endif  // USE_I2C_BUS2
   }
 }
 

@@ -243,7 +243,7 @@ extern "C" {
       }
       bool ok = I2cValidRead(addr, reg, size, bus, true);  // force sendStop
       if (ok) {
-        int32_t val = i2c_buffer;
+        int32_t val = I2C.buffer;
         if (little_endian) {
           if (size == 2) {
             val = __bswap_16(val);

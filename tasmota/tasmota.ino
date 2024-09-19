@@ -313,8 +313,8 @@ struct TasmotaGlobal_t {
   bool blinkstate;                          // LED state
   bool pwm_present;                         // Any PWM channel configured with SetOption15 0
   bool i2c_enabled;                         // I2C configured
+  bool i2c_enabled_2;                       // I2C configured, second controller, Wire1
 #ifdef ESP32
-  bool i2c_enabled_2;                       // I2C configured, second controller on ESP32, Wire1
   bool ota_factory;                         // Select safeboot binary
 #endif
   bool ntp_force_sync;                      // Force NTP sync
@@ -501,9 +501,9 @@ void setup(void) {
     TasConsole.println();
     AddLog(LOG_LEVEL_INFO, PSTR("CMD: Using USB CDC"));
   } else {
-    #if SOC_USB_SERIAL_JTAG_SUPPORTED  // Not S2
+#if SOC_USB_SERIAL_JTAG_SUPPORTED  // Not S2
     HWCDCSerial.~HWCDC();       // not needed, deinit CDC
-    #endif  // SOC_USB_SERIAL_JTAG_SUPPORTED
+#endif  // SOC_USB_SERIAL_JTAG_SUPPORTED
     // Init command serial console preparing for AddLog use
     Serial.begin(TasmotaGlobal.baudrate);
     Serial.println();

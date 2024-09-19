@@ -2751,14 +2751,14 @@ void CmndI2cScan(void) {
     I2cScan();
     jsflag = true;
   }
-#ifdef ESP32
+#ifdef USE_I2C_BUS2
   if (TasmotaGlobal.i2c_enabled_2) {
     if (jsflag) {
       MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, XdrvMailbox.command);
     }
     I2cScan(1);
   }
-#endif  // ESP32
+#endif  // USE_I2C_BUS2
 }
 
 void CmndI2cDriver(void)

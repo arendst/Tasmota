@@ -2232,6 +2232,7 @@ void GpioInit(void)
   }
 
 #ifdef USE_I2C
+/*
   if (PinUsed(GPIO_I2C_SCL) && PinUsed(GPIO_I2C_SDA)) {
     TasmotaGlobal.i2c_enabled = I2cBegin(Pin(GPIO_I2C_SDA), Pin(GPIO_I2C_SCL));
 #ifdef ESP32
@@ -2248,6 +2249,26 @@ void GpioInit(void)
     }
   }
 #endif
+*/
+  uint32_t max_bus = 1;
+#ifdef USE_I2C_BUS2
+  max_bus = 2;
+#endif  // USE_I2C_BUS2
+  for (uint32_t bus = 0; bus < max_bus; bus++) {
+    if (PinUsed(GPIO_I2C_SCL, bus) && PinUsed(GPIO_I2C_SDA, bus)) {
+      if (I2cBegin(Pin(GPIO_I2C_SDA, bus), Pin(GPIO_I2C_SCL, bus), bus)) {
+        if (0 == bus) { 
+          TasmotaGlobal.i2c_enabled = true;
+        }
+#ifdef USE_I2C_BUS2
+        else { 
+          TasmotaGlobal.i2c_enabled_2 = true;
+        }
+        AddLog(LOG_LEVEL_INFO, PSTR("I2C: Bus%d using GPIO%02d(SCL) and GPIO%02d(SDA)"), bus +1, Pin(GPIO_I2C_SCL, bus), Pin(GPIO_I2C_SDA, bus));
+#endif  // USE_I2C_BUS2
+      }
+    }
+  }
 #endif  // USE_I2C
 
   TasmotaGlobal.devices_present = 0;
