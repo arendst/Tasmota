@@ -20,8 +20,16 @@ uint32_t i2c_active[2][4] = { 0 };
 #endif
 uint32_t i2c_buffer = 0;
 
+struct I2Ct {
+  uint32_t frequency[2];
+  int8_t sda[2];
+  int8_t scl[2];
+  int8_t active_bus;
+} I2C;
+
 bool I2cBegin(int sda, int scl, uint32_t bus = 0, uint32_t frequency = 100000);
 bool I2cBegin(int sda, int scl, uint32_t bus, uint32_t frequency) {
+  I2C.frequency[bus] = frequency;
   bool result = true;
 #ifdef ESP8266
   Wire.begin(sda, scl);
@@ -49,6 +57,24 @@ TwoWire& I2cGetWire(uint8_t bus = 0) {
 //    AddLog(LOG_LEVEL_ERROR, PSTR("I2C: bus%d not initialized"), bus +1);
     return *(TwoWire*)nullptr;
   }
+}
+
+bool I2cSetClock(uint32_t frequency = 0, uint32_t bus = 0);
+bool I2cSetClock(uint32_t frequency, uint32_t bus) {
+  TwoWire& myWire = I2cGetWire(bus);
+  if (&myWire == nullptr) { return false; }               // No valid I2c bus
+
+  if (0 == frequency) {
+    if (0 == I2C.frequency[bus]) {
+      I2C.frequency[bus] = 100000;                        // Tasmota default I2C bus speed
+    }
+  } else {
+    I2C.frequency[bus] = frequency;
+  }
+  if (frequency != I2C.frequency[bus]) {
+    myWire.setClock(I2C.frequency[bus]);
+  }
+  return true;
 }
 
 /*-------------------------------------------------------------------------------------------*\
