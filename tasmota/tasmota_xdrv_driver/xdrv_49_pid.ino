@@ -292,10 +292,10 @@ void PIDProcessSensor() {
     JsonParserToken value_token = root[PID_LOCAL_SENSOR_NAME].getObject()[PSTR(PID_LOCAL_SENSOR_TYPE)];
     if (value_token.isNum()) {
       sensor_reading = value_token.getFloat();
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PID: PIDProcessSensor: Got isNum: %s"), buf.c_str());
+      //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PID: PIDProcessSensor: Got isNum: %s"), buf.c_str());
     }
-  } else {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("PID: PIDProcessSensor: not valid JSON: %s"), buf.c_str());
+    //} else {
+    //AddLog(LOG_LEVEL_DEBUG, PSTR("PID: PIDProcessSensor: not valid JSON: %s"), buf.c_str());
   }
 #endif // PID_USE_LOCAL_SENSOR
 
@@ -513,7 +513,7 @@ void PIDShowValues(bool json) {
 }
 
 void PIDRun(void) {
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIDRUN(): tick"));
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIDRUN(): tick"));
   Pid.power = Pid.pid.tick(Pid.current_time_secs);
 #ifdef PID_DONT_USE_PID_TOPIC
   // This part is left inside to regularly publish the PID Power via
@@ -527,13 +527,13 @@ void PIDRun(void) {
 #if defined PID_SHUTTER
   // send output as a position from 0-100 to defined shutter
   int pos = Pid.power * 100;
-  AddLog(LOG_LEVEL_DEBUG, PSTR("PIDRun: Setting Shutter to %i"), pos );
+  //AddLog(LOG_LEVEL_DEBUG, PSTR("PIDRun: Setting Shutter to %i"), pos );
   ShutterSetPosition(PID_SHUTTER, pos);
 #endif //PID_SHUTTER
 
 #if defined(PID_USE_TIMPROP) && (PID_USE_TIMPROP > 0)
   // send power to appropriate timeprop output
-  AddLog(LOG_LEVEL_DEBUG, PSTR("PIDRun: Setting TimeProp to %d"), Pid.power );
+  //AddLog(LOG_LEVEL_DEBUG, PSTR("PIDRun: Setting TimeProp to %d"), Pid.power );
   TimepropSetPower( PID_USE_TIMPROP-1, Pid.power );
 #endif // PID_USE_TIMPROP
 }
