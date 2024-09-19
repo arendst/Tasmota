@@ -15,7 +15,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
-- Refactored I2C drivers HTU21, BH1750 and HYT
+- Refactored I2C drivers HTU21, BH1750, SHT3x, iAQ and HYT
 - Add command entered to command error and command unknown message
 - ESP32 platform update from 2024.08.11 to 2024.09.10 and Framework (Arduino Core) from v3.0.4 to v3.0.5 (#22163)
 
