@@ -547,7 +547,7 @@ void m_write_attributes(bvm *vm, int rel_idx, const buf_impl * attr)
 }
 
 // buf_impl * bytes_realloc(bvm *vm, buf_impl *oldbuf, int32_t size)
-void bytes_realloc(bvm *vm, buf_impl * attr, int32_t size)
+void bytes_realloc(bvm *vm, buf_impl * attr, size_t size)
 {
     m_assert_not_readlonly(vm, attr);
     if (!attr->fixed && size < 4) { size = 4; }

@@ -32,23 +32,70 @@ static void int64_toa(int64_t num, uint8_t* str) {
 	}
 }
 
-void* int64_init(bvm *vm, int32_t val) {
-  int64_t *i64 = (int64_t*)be_malloc(vm, sizeof(int64_t));
-  *i64 = (int64_t) val;
-  // serial_debug("int64_init p=%p\n", i64);
-  return i64;
+/* constructor*/
+static int int64_init(bvm *vm) {
+  int32_t argc = be_top(vm); // Get the number of arguments
+  int64_t *i64 = NULL;
+  /* did we receive a pre-allocated pointer */
+  if (argc > 1 && be_iscomptr(vm, 2)) {
+    i64 = be_tocomptr(vm, 2);
+  }
+  /* or allocated */
+  if (i64 == NULL) {
+    i64 = (int64_t*)be_malloc(vm, sizeof(int64_t));
+    if (i64 == NULL) { be_raise(vm, "memory_error", "cannot allocate buffer"); }
+    *i64 = 0;   // default to zero
+  }
+  bbool invalid_arg = bfalse;
+  if (argc > 1) {
+    if (be_iscomptr(vm, 2) || be_isnil(vm, 2)) {
+      /* keep value */
+    } else if (be_isint(vm, 2)) {
+      *i64 = be_toint(vm, 2);
+    } else if (be_isreal(vm, 2)) {
+      *i64 = (int64_t)be_toreal(vm, 2);
+    } else if (be_isstring(vm, 2)) {
+      const char* s = be_tostring(vm, 2);
+      *i64 = atoll(s);
+    } else if (be_isbool(vm, 2)) {
+      *i64 = be_tobool(vm, 2) ? 1 : 0;
+    } else if (be_isinstance(vm, 2)) {
+      be_getglobal(vm, "int64");
+      if (be_isderived(vm, 2)) {
+        be_getmember(vm, 2, "_p");
+        int64_t *v64 = be_tocomptr(vm, -1);
+        if (v64 != NULL) {
+          *i64 = *v64;
+        }
+      } else {
+        invalid_arg = btrue;
+      }
+    } else {
+      invalid_arg = btrue;
+    }
+  }
+  if (invalid_arg) {
+    be_free(vm, i64, sizeof(int64_t));
+    be_raise(vm, "TypeError", "unsupported argument type");
+  }
+  be_pushcomptr(vm, i64);
+  be_setmember(vm, 1, "_p");
+  be_return_nil(vm);
 }
-BE_FUNC_CTYPE_DECLARE(int64_init, "+_p", "@[i]")
 
-void int64_deinit(bvm *vm, int64_t *i64) {
-  // serial_debug("int64_deinit p=%p\n", i64);
-  be_free(vm, i64, sizeof(int64_t));
+/* destructor */
+static int int64_deinit(bvm *vm) {
+  be_getmember(vm, 1, "_p");
+  int64_t *i64 = be_tocomptr(vm, -1);
+  if (i64 != NULL) {
+    be_free(vm, i64, sizeof(int64_t));
+  }
+  be_return_nil(vm);
 }
-BE_FUNC_CTYPE_DECLARE(int64_deinit, "", "@.")
 
 char* int64_tostring(int64_t *i64) {
   static char s[24];    /* enough to hold max value */
-  int64_toa(*i64, s);
+  int64_toa(*i64, (uint8_t*)s);
   return s;
 }
 BE_FUNC_CTYPE_DECLARE(int64_tostring, "s", ".")
@@ -79,6 +126,13 @@ int64_t* int64_fromu32(bvm *vm, uint32_t low, uint32_t high) {
   return r64;
 }
 BE_FUNC_CTYPE_DECLARE(int64_fromu32, "int64", "@i[i]")
+
+int64_t* int64_fromfloat(bvm *vm, float f) {
+  int64_t* r64 = (int64_t*)be_malloc(vm, sizeof(int64_t));
+  *r64 = (int64_t)f;
+  return r64;
+}
+BE_FUNC_CTYPE_DECLARE(int64_fromfloat, "int64", "@f")
 
 int64_t* int64_add(bvm *vm, int64_t *i64, int64_t *j64) {
   int64_t* r64 = (int64_t*)be_malloc(vm, sizeof(int64_t));
@@ -203,7 +257,7 @@ int64_t* int64_frombytes(bvm *vm, uint8_t* ptr, size_t len, int32_t idx) {
   int64_t* r64 = (int64_t*)be_malloc(vm, sizeof(int64_t));
   if (idx < 0) { idx = len + idx; }   // support negative index, counting from the end
   if (idx < 0) { idx = 0; }           // sanity check
-  if (idx > len) { idx = len; }
+  if (idx > (int32_t)len) { idx = len; }
   uint32_t usable_len = len - idx;
   if (usable_len > sizeof(int64_t)) { usable_len = sizeof(int64_t); }
   *r64 = 0;   // start with 0
@@ -224,10 +278,9 @@ BE_FUNC_CTYPE_DECLARE(int64_high32, "i", "(int64)")
 
 /*
 
-def toint64(i)
-  if (type(i) == 'int') return int64.fromu32(i)   end
-  if (type(i) == 'instance') && isinstance(i, int64) return i   end
-  return nil
+def toint64(v)
+  if (v == nil)          return nil   end
+  return int64(v)
 end
 
 */
@@ -237,7 +290,7 @@ end
 ********************************************************************/
 be_local_closure(toint64,   /* name */
   be_nested_proto(
-    4,                          /* nstack */
+    3,                          /* nstack */
     1,                          /* argc */
     0,                          /* varg */
     0,                          /* has upvals */
@@ -245,38 +298,21 @@ be_local_closure(toint64,   /* name */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 4]) {     /* constants */
-    /* K0   */  be_nested_str(int),
-    /* K1   */  be_nested_str(int64),
-    /* K2   */  be_nested_str(fromu32),
-    /* K3   */  be_nested_str(instance),
+    ( &(const bvalue[ 1]) {     /* constants */
+    /* K0   */  be_nested_str(int64),
     }),
-    &be_const_str_to64,
+    &be_const_str_toint64,
     &be_const_str_solidified,
-    ( &(const binstruction[23]) {  /* code */
-      0x60040004,  //  0000  GETGBL	R1	G4
-      0x5C080000,  //  0001  MOVE	R2	R0
-      0x7C040200,  //  0002  CALL	R1	1
-      0x1C040300,  //  0003  EQ	R1	R1	K0
-      0x78060004,  //  0004  JMPF	R1	#000A
-      0xB8060200,  //  0005  GETNGBL	R1	K1
-      0x8C040302,  //  0006  GETMET	R1	R1	K2
-      0x5C0C0000,  //  0007  MOVE	R3	R0
-      0x7C040400,  //  0008  CALL	R1	2
-      0x80040200,  //  0009  RET	1	R1
-      0x60040004,  //  000A  GETGBL	R1	G4
-      0x5C080000,  //  000B  MOVE	R2	R0
-      0x7C040200,  //  000C  CALL	R1	1
-      0x1C040303,  //  000D  EQ	R1	R1	K3
-      0x78060005,  //  000E  JMPF	R1	#0015
-      0x6004000F,  //  000F  GETGBL	R1	G15
-      0x5C080000,  //  0010  MOVE	R2	R0
-      0xB80E0200,  //  0011  GETNGBL	R3	K1
-      0x7C040400,  //  0012  CALL	R1	2
-      0x78060000,  //  0013  JMPF	R1	#0015
-      0x80040000,  //  0014  RET	1	R0
-      0x4C040000,  //  0015  LDNIL	R1
-      0x80040200,  //  0016  RET	1	R1
+    ( &(const binstruction[ 9]) {  /* code */
+      0x4C040000,  //  0000  LDNIL	R1
+      0x1C040001,  //  0001  EQ	R1	R0	R1
+      0x78060001,  //  0002  JMPF	R1	#0005
+      0x4C040000,  //  0003  LDNIL	R1
+      0x80040200,  //  0004  RET	1	R1
+      0xB8060000,  //  0005  GETNGBL	R1	K0
+      0x5C080000,  //  0006  MOVE	R2	R0
+      0x7C040200,  //  0007  CALL	R1	1
+      0x80040200,  //  0008  RET	1	R1
     })
   )
 );
@@ -288,9 +324,10 @@ be_local_closure(toint64,   /* name */
 /* @const_object_info_begin
 class be_class_int64 (scope: global, name: int64) {
   _p, var
-  init, ctype_func(int64_init)
-  deinit, ctype_func(int64_deinit)
+  init, func(int64_init)
+  deinit, func(int64_deinit)
   fromu32, static_ctype_func(int64_fromu32)
+  fromfloat, static_ctype_func(int64_fromfloat)
   toint64, static_closure(toint64_closure)
 
   tostring, ctype_func(int64_tostring)

@@ -34,15 +34,15 @@ typedef intptr_t (*fn_any_callable)(intptr_t p0, intptr_t p1, intptr_t p2, intpt
  * On ESP32, int=32bits, real=float (32bits)
 \*********************************************************************************************/
 static intptr_t realasint(breal v) {
-  intptr_t i;
-  i = *((intptr_t*) &v);
-  return i;
+  union { breal f; bint i; } u;
+  u.f = v;
+  return (intptr_t)u.i;
 }
 
 static breal intasreal(intptr_t v) {
-  breal r;
-  r = *((breal*) &v);
-  return r;
+  union { breal f; bint i; } u;
+  u.i = (bint)v;
+  return (breal)u.f;
 }
 
 /*********************************************************************************************\

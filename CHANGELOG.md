@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Berry virtual Energy driver (#22134)
 - Support for RX8010 RTC as used in IOTTIMER (#21376)
 - ESP8266 experimental support for second I2C bus
+- Berry improve `int64` constructor
 
 ### Breaking Changed
 
