@@ -48,7 +48,7 @@
 
 #define BMP_CMND_RESET       0xB6  // I2C Parameter for RESET to put BMP into reset state
 
-#ifdef ESP32
+#ifdef USE_I2C_BUS2
   #define BMP_MAX_SENSORS    4     // 2 busses
 #else
   #define BMP_MAX_SENSORS    2
