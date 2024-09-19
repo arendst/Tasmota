@@ -47,6 +47,7 @@ class Matter_UI
                               "|http_occupancy|http_contact|http_flow|http_rain|http_waterleak"
                               "|http_airquality"
   var device
+  var matter_enabled
 
   # ####################################################################################################
   # Static function to compare two maps (shallow compare)
@@ -66,8 +67,9 @@ class Matter_UI
 
   # ####################################################################################################
   # Constructor
-  def init(device)
+  def init(device, matter_enabled)
     self.device = device
+    self.matter_enabled = matter_enabled
     tasmota.add_driver(self)
   end
 
@@ -84,13 +86,6 @@ class Matter_UI
   end
 
   #- ---------------------------------------------------------------------- -#
-  #- Is Matter enabled?
-  #- ---------------------------------------------------------------------- -#
-  def matter_enabled()
-    return bool(tasmota.get_option(matter.MATTER_OPTION))
-  end
-
-  #- ---------------------------------------------------------------------- -#
   #- Show commissioning information and QR Code
   #
   # Returns true if Matter is enabled
@@ -104,11 +99,11 @@ class Matter_UI
                            "<form action='/matterc' method='post'>")
 
     # checkbox for Matter enable
-    var matter_enabled_checked = self.matter_enabled() ? 'checked' : ''
+    var matter_enabled_checked = matter_enabled ? 'checked' : ''
     webserver.content_send(f"<p><input id='menable' type='checkbox' name='menable' {matter_enabled_checked}>")
     webserver.content_send("<label for='menable'><b>Matter enable</b></label></p>")
 
-    if self.matter_enabled()
+    if matter_enabled
       # checkbox for Matter commissioning
       var commissioning_open_checked = self.device.commissioning.commissioning_open != nil ? "checked" : ""
       webserver.content_send(f"<p><input id='comm' type='checkbox' name='comm' {commissioning_open_checked}>")
@@ -541,7 +536,7 @@ class Matter_UI
     webserver.content_start("Matter Advanced Configuration")           #- title of the web page -#
     webserver.content_send_style()                  #- send standard Tasmota styles -#
 
-    if self.matter_enabled()
+    if self.matter_enabled
       self.show_passcode_form()
       self.show_fabric_info()
     end
@@ -563,7 +558,7 @@ class Matter_UI
     webserver.content_send_style()                  #- send standard Tasmota styles -#
 
     self.show_enable()
-    if self.matter_enabled()
+    if self.matter_enabled
       self.show_plugins_configuration()
     end
 
@@ -743,7 +738,7 @@ class Matter_UI
     webserver.content_send_style()                  #- send standard Tasmota styles -#
 
     var url = webserver.arg("url")
-    if self.matter_enabled()
+    if self.matter_enabled
       self.show_remote_autoconf(url)
     end
     webserver.content_button(webserver.BUTTON_CONFIGURATION)
@@ -797,7 +792,7 @@ class Matter_UI
           self.device.save_param()
         end
 
-        if matter_enabled_requested != self.matter_enabled()
+        if matter_enabled_requested != self.matter_enabled
           if matter_enabled_requested
             log(format("MTR: /matterc received '%s' command", 'enable'), 3)
             tasmota.cmd("SetOption" + str(matter.MATTER_OPTION) + " 1")
@@ -1084,7 +1079,7 @@ class Matter_UI
   def web_sensor()
     import webserver
 
-    if self.matter_enabled()
+    if self.matter_enabled
 
       # mtc0 = close, mtc1 = open commissioning
       var fabrics_count = (self.device.sessions != nil) ? self.device.sessions.count_active_fabrics() : 0

@@ -63,7 +63,7 @@ class Matter_Device
   def init()
     import crypto
     if !tasmota.get_option(matter.MATTER_OPTION)
-      matter.UI(self)   # minimal UI
+      self.ui = matter.UI(self, false)   # minimal UI
       return
     end    # abort if SetOption 151 is not set
 
@@ -84,7 +84,7 @@ class Matter_Device
     self.message_handler = matter.MessageHandler(self)
     self.events = matter.EventHandler(self)
     self.zigbee = self.init_zigbee()
-    self.ui = matter.UI(self)
+    self.ui = matter.UI(self, true)
 
     self.commissioning.init_basic_commissioning()
     tasmota.add_driver(self)
