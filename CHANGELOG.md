@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Refactored I2C drivers HTU21, BH1750 and HYT
 - Add command entered to command error and command unknown message
+- ESP32 platform update from 2024.08.11 to 2024.09.10 and Framework (Arduino Core) from v3.0.4 to v3.0.5 (#22163)
 
 ### Fixed
 - Shutter missing HOLD on shutterbutton (#22108)
@@ -26,7 +27,7 @@ All notable changes to this project will be documented in this file.
 - SML trx pin error (#22119)
 - Shutter remaining issues on shutterinvert (#22120)
 - Berry I2C to prepare M5Stack I2C STM32 based devices (#22143)
-- Autoconf prevent 'init.bat' from stopping on empty lines 
+- Autoconf prevent 'init.bat' from stopping on empty lines (#22158)
 
 ### Removed
 
