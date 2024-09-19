@@ -258,7 +258,6 @@ void PIDEverySecond() {
   Pid.current_time_secs++;    // increment time
   // run the pid algorithm if Pid.run_pid_now is true or if the right number of seconds has passed or if too long has
   // elapsed since last pv update. If too long has elapsed the the algorithm will deal with that.
-  AddLog(LOG_LEVEL_DEBUG, PSTR("PIDEverySecond()"));
   PIDProcessSensor();    // set actual process value, needs to have mqtt data already populated
   if (Pid.run_pid_now ||
       Pid.current_time_secs - Pid.last_pv_update_secs > Pid.max_interval  ||
@@ -293,7 +292,7 @@ void PIDProcessSensor() {
     JsonParserToken value_token = root[PID_LOCAL_SENSOR_NAME].getObject()[PSTR(PID_LOCAL_SENSOR_TYPE)];
     if (value_token.isNum()) {
       sensor_reading = value_token.getFloat();
-      AddLog(LOG_LEVEL_DEBUG, PSTR("PID: PIDProcessSensor: Got isNum: %s"), buf.c_str());
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PID: PIDProcessSensor: Got isNum: %s"), buf.c_str());
     }
   } else {
     AddLog(LOG_LEVEL_DEBUG, PSTR("PID: PIDProcessSensor: not valid JSON: %s"), buf.c_str());
@@ -446,7 +445,6 @@ void PIDShowValues(bool json) {
   float f_buf;
 
   if (json) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("PIDShowValues(true)"));
     ResponseAppend_P(PSTR(",\"PID\":{"));
 
     d_buf = Pid.pid.getPv();
@@ -497,8 +495,6 @@ void PIDShowValues(bool json) {
     return;
   }
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("PIDShowValues(false)"));
-
 #ifdef USE_WEBSERVER
   WSContentSend_P(HTTP_PID_HL);
   WSContentSend_P(HTTP_PID_INFO, (Pid.pid.getAuto()==1) ?
@@ -517,7 +513,7 @@ void PIDShowValues(bool json) {
 }
 
 void PIDRun(void) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("PIDRUN(): tick"));
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("PIDRUN(): tick"));
   Pid.power = Pid.pid.tick(Pid.current_time_secs);
 #ifdef PID_DONT_USE_PID_TOPIC
   // This part is left inside to regularly publish the PID Power via
