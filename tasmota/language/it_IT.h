@@ -825,6 +825,7 @@
 #define D_SENSOR_CSE7761_RX             "CSE7761 - RX"
 #define D_SENSOR_CSE7766_TX             "CSE7766 - TX"
 #define D_SENSOR_CSE7766_RX             "CSE7766 - RX"
+#define D_SENSOR_BL0906_RX              "BL0906 - RX"
 #define D_SENSOR_BL0939_RX              "BL0939 - RX"
 #define D_SENSOR_BL0942_RX              "BL0942 - RX"
 #define D_SENSOR_HM330X_SET             "HM330X - SET"

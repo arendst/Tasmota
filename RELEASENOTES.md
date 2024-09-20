@@ -127,6 +127,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for RX8010 RTC as used in IOTTIMER [#21376](https://github.com/arendst/Tasmota/issues/21376)
 - Energy command ``PowerSet 60,230`` to calibrate both Current and Power with known resistive load of 60W at 230V using calibrated Voltage
 - Energy command ``CurrentSet 60,230`` to calibrate both Power and Current with known resistive load of 60W at 230V using calibrated Voltage
+- MQTT warning if trying to connect without TLS on a port that normally uses TLS [#22175](https://github.com/arendst/Tasmota/issues/22175)
 - Energy Log level 4 message when (Calculated) Apparent Power is less than Active Power indicating wrong calibration [#20653](https://github.com/arendst/Tasmota/issues/20653)
 - Support nexus protocol and calculation of separation limit to rc-switch library [#21886](https://github.com/arendst/Tasmota/issues/21886)
 - KNX additional KnxTx functions and define KNX_USE_DPT9 [#22071](https://github.com/arendst/Tasmota/issues/22071)
@@ -135,6 +136,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Zigbee Koenkk firmware 20240710 for Sonoff Zigbee ZBPro [#22076](https://github.com/arendst/Tasmota/issues/22076)
 - Berry Zigbee improvements to prepare Matter [#22083](https://github.com/arendst/Tasmota/issues/22083)
 - Berry virtual Energy driver [#22134](https://github.com/arendst/Tasmota/issues/22134)
+- Berry improve `int64` constructor [#22172](https://github.com/arendst/Tasmota/issues/22172)
 - Matter support for Zigbee Temperature, Humidity and Pressure sensors [#22084](https://github.com/arendst/Tasmota/issues/22084)
 - Matter support for Zigbee Occupancy and Light 0/1/2 (OnOff / Dimmer / White Color Temperature) [#22110](https://github.com/arendst/Tasmota/issues/22110)
 
@@ -152,6 +154,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - SCD30 Lowered I2C clock from 100k to 50k [#15438](https://github.com/arendst/Tasmota/issues/15438)
 
 ### Fixed
+- Compilation exception when metrics not found [#22170](https://github.com/arendst/Tasmota/issues/22170)
 - Crash when calling TasmotaSerial destructor when initialized with incorrect arguments [#22036](https://github.com/arendst/Tasmota/issues/22036)
 - Energy calculation [#20653](https://github.com/arendst/Tasmota/issues/20653)
 - SML trx pin error [#22119](https://github.com/arendst/Tasmota/issues/22119)

@@ -223,6 +223,7 @@ enum UserSelectablePins {
   GPIO_ASR650X_TX, GPIO_ASR650X_RX,     // ASR650X LoRaWan node Serial interface
   GPIO_WOOLIIS_RX,                      // Wooliis Battery capacity monitor Serial RX
   GPIO_ADC_VOLTAGE, GPIO_ADC_CURRENT,   // Analog Voltage and Current
+  GPIO_BL0906_RX,                       // BL0906 Serial interface
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -493,6 +494,7 @@ const char kSensorNames[] PROGMEM =
   D_GPIO_ASR650X_TX "|" D_GPIO_ASR650X_RX "|"
   D_SENSOR_WOOLIIS_RX "|"
   D_SENSOR_ADC_VOLTAGE "|" D_SENSOR_ADC_CURRENT "|"
+  D_SENSOR_BL0906_RX "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -948,7 +950,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_LE01MR
   AGPIO(GPIO_LE01MR_TX),                // F7F LE-01MR energy meter tx pin
   AGPIO(GPIO_LE01MR_RX),                // F7F LE-01MR energy meter rx pin
-#endif // IFDEF:USE_LE01MR
+#endif // USE_LE01MR
+#ifdef USE_BL0906
+  AGPIO(GPIO_BL0906_RX),                // BL0906 Serial interface (Athom EM6)
+#endif // USE_BL0906
 #if defined(USE_BL0940) || defined(USE_BL09XX)
   AGPIO(GPIO_BL0939_RX),                // BL0939 Serial interface (Dual R3 v2)
   AGPIO(GPIO_BL0940_RX),                // BL0940 Serial interface

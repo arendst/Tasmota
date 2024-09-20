@@ -12,8 +12,8 @@ All notable changes to this project will be documented in this file.
 - Berry virtual Energy driver (#22134)
 - Support for RX8010 RTC as used in IOTTIMER (#21376)
 - ESP8266 experimental support for second I2C bus
-- Berry improve `int64` constructor
-- MQTT add warning if trying to connect without TLS on a port that normally uses TLS
+- Berry improve `int64` constructor (#22172)
+- MQTT warning if trying to connect without TLS on a port that normally uses TLS (#22175)
 
 ### Breaking Changed
 
@@ -32,6 +32,7 @@ All notable changes to this project will be documented in this file.
 - Shutter remaining issues on shutterinvert (#22120)
 - Berry I2C to prepare M5Stack I2C STM32 based devices (#22143)
 - Autoconf prevent 'init.bat' from stopping on empty lines (#22158)
+- Compilation exception when metrics not found (#22170)
 
 ### Removed
 
