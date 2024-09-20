@@ -415,7 +415,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
     }
   }
 
-  Response_P(S_JSON_COMMAND_ERROR);      // Prep error message for either Command Error or Command Unknown
+  Response_P(PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_ERROR "\""));      // Prep error message for either Command Error or Command Unknown
   char number[12];
   ResponseAppend_P(PSTR(",\"Input\":\"%s%s%s%s\"}"), 
     type,
@@ -468,7 +468,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
 #endif  // USE_SCRIPT_SUB_COMMAND
   }
 
-  if (ResponseStartsWith(S_JSON_COMMAND_ERROR)) {
+  if (ResponseStartsWith(PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_ERROR "\""))) {
     // No calls to Response_P performed if got here so it's either Command Error or Unknown
     TasmotaGlobal.no_mqtt_response = false;  // Make sure to report commands starting with underline
     if (!strlen(type)) {

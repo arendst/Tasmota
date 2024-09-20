@@ -34,6 +34,7 @@ All notable changes to this project will be documented in this file.
 - Berry I2C to prepare M5Stack I2C STM32 based devices (#22143)
 - Autoconf prevent 'init.bat' from stopping on empty lines (#22158)
 - Compilation exception when metrics not found (#22170)
+- ESP8266 Exception 3 on tasmota-minimal caused by unaligned PROGMEM (#22169)
 
 ### Removed
 
