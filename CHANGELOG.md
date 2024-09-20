@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Add command entered to command error and command unknown message
 - ESP32 platform update from 2024.08.11 to 2024.09.10 and Framework (Arduino Core) from v3.0.4 to v3.0.5 (#22163)
 - SCD30 Lowered I2C clock from 100k to 50k (#15438)
+- Refactor and fix PID sensor (PID_USE_LOCAL_SENSOR) read race condition (#22162)
 
 ### Fixed
 - Shutter missing HOLD on shutterbutton (#22108)
