@@ -10,6 +10,7 @@
 *.gcda
 
 ## Project files ######
+managed_components
 .platformio
 .pio
 .clang_complete
