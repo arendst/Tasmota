@@ -415,9 +415,10 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
     }
   }
 
-  Response_P(PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_ERROR "\""));      // Prep error message for either Command Error or Command Unknown
+  Response_P(PSTR("_1"));  // Signal error message for either Command Error or Command Unknown
   char number[12];
-  ResponseAppend_P(PSTR(",\"Input\":\"%s%s%s%s\"}"), 
+  char command_line[64];
+  snprintf_P(command_line, sizeof(command_line), PSTR("%s%s%s%s"), 
     type,
     (index != 1) ? itoa(index, number, 10) : "",
     (data_len) ? " " : "",
@@ -468,15 +469,19 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
 #endif  // USE_SCRIPT_SUB_COMMAND
   }
 
-  if (ResponseStartsWith("{\"" D_JSON_COMMAND "\":\"" D_JSON_ERROR "\"")) {
-    // No calls to Response_P performed if got here so it's either Command Error or Unknown
+  if (!strcmp(ResponseData(), "_1")) {
+    // No calls to Response_P performed so it's either Command Error or Unknown
     TasmotaGlobal.no_mqtt_response = false;  // Make sure to report commands starting with underline
+    Response_P(PSTR("{\"" D_JSON_COMMAND "\":"));
     if (!strlen(type)) {
       TasmotaGlobal.blinks = 201;
-      ResponseReplace("\"" D_JSON_ERROR "\"", "\"" D_JSON_UNKNOWN "\"");  // Need quotes to make sure only the first Error is replaceds by Unknown
+      ResponseAppend_P(PSTR("\"" D_JSON_UNKNOWN "\""));
       snprintf_P(stemp1, sizeof(stemp1), PSTR(D_JSON_COMMAND));
       type = (char*)stemp1;
+    } else {
+      ResponseAppend_P(PSTR("\"" D_JSON_ERROR "\""));
     }
+    ResponseAppend_P(PSTR(",\"Input\":\"%s\"}"), command_line);
   }
 
   if (ResponseLength()) {
