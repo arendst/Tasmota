@@ -596,6 +596,7 @@ double buffer[MEDIAN_SIZE];
 int8_t index;
 };
 
+#define SML_OPTIONS_JSON_ENABLE 1
 
 struct SML_GLOBS {
   uint8_t sml_send_blocks;
@@ -629,12 +630,10 @@ struct SML_GLOBS {
 #ifdef USE_SML_CANBUS
   uint8_t twai_installed;
 #endif // USE_SML_CANBUS
+  uint8_t sml_options = SML_OPTIONS_JSON_ENABLE;
 } sml_globs;
 
 
-
-#define SML_OPTIONS_JSON_ENABLE 1
-uint8_t sml_options = SML_OPTIONS_JSON_ENABLE;
 
 #ifdef USE_SML_MEDIAN_FILTER
 
@@ -794,7 +793,7 @@ void dump2log(void) {
 						while (logsiz) {
 							sml_dump_start('>');
 							for (uint16_t cnt = 0; cnt < 16; cnt++) {
-								sprintf(&sml_globs.log_data[sml_globs.sml_logindex], "%02x ", mp->sbuff[index++]);
+								sprintf_P(&sml_globs.log_data[sml_globs.sml_logindex], PSTR("%02x "), mp->sbuff[index++]);
 								if (sml_globs.sml_logindex < sml_globs.logsize - 7) {
 				          sml_globs.sml_logindex += 3;
 				        }
@@ -809,7 +808,7 @@ void dump2log(void) {
 						// dump serial buffer
 						sml_dump_start(' ');
 						while (index < mp->spos) {
-							sprintf(&sml_globs.log_data[sml_globs.sml_logindex], "%02x ", mp->sbuff[index++]);
+							sprintf_P(&sml_globs.log_data[sml_globs.sml_logindex], PSTR("%02x "), mp->sbuff[index++]);
 							if (sml_globs.sml_logindex >= 32*3+2) {
 								AddLogData(LOG_LEVEL_INFO, sml_globs.log_data);
 								sml_dump_start(' ');
@@ -838,7 +837,7 @@ void dump2log(void) {
       while ((millis() - d_lastms) < 40) {
         if (SML_SAVAILABLE) {
           uint8_t c = SML_SREAD;
-          sprintf(&sml_globs.log_data[index], "%02x ", c);
+          sprintf_P(&sml_globs.log_data[index], PSTR("%02x "), c);
           dchars[hcnt] = c;
           index += 3;
           hcnt++;
@@ -896,7 +895,7 @@ void dump2log(void) {
           	AddLogData(LOG_LEVEL_INFO, sml_globs.log_data);
 						sml_dump_start(' ');
         	}
-        	sprintf(&sml_globs.log_data[sml_globs.sml_logindex], "%02x ", c);
+        	sprintf_P(&sml_globs.log_data[sml_globs.sml_logindex], PSTR("%02x "), c);
         	if (sml_globs.sml_logindex < sml_globs.logsize - 7) {
           	sml_globs.sml_logindex += 3;
         	}
@@ -919,7 +918,7 @@ void dump2log(void) {
           	}
           	continue;
         	}
-        	sprintf(&sml_globs.log_data[sml_globs.sml_logindex], "%02x ", c);
+        	sprintf_P(&sml_globs.log_data[sml_globs.sml_logindex], PSTR("%02x "), c);
         	if (sml_globs.sml_logindex < sml_globs.logsize - 7) {
           	sml_globs.sml_logindex += 3;
         	}
@@ -936,7 +935,7 @@ void dump2log(void) {
           	AddLogData(LOG_LEVEL_INFO, sml_globs.log_data);
 						sml_dump_start(' ');
         	}
-        	sprintf(&sml_globs.log_data[sml_globs.sml_logindex], "%02x ", c);
+        	sprintf_P(&sml_globs.log_data[sml_globs.sml_logindex], PSTR("%02x "), c);
         	if (sml_globs.sml_logindex < sml_globs.logsize - 7) {
           	sml_globs.sml_logindex += 3;
         	}
@@ -960,7 +959,7 @@ void dump2log(void) {
               }
               sml_dump_start(' ');
               for (uint8_t index = 0; index < canFrame.can_dlc + 5; index++) {
-                sprintf(&sml_globs.log_data[sml_globs.sml_logindex], "%02x", mp->sbuff[index]);
+                sprintf_P(&sml_globs.log_data[sml_globs.sml_logindex], PSTR("%02x"), mp->sbuff[index]);
                 sml_globs.sml_logindex += 2;
                 if (index == 3) {
                   sml_globs.log_data[sml_globs.sml_logindex] = ':';
@@ -1001,7 +1000,7 @@ void dump2log(void) {
             }
             sml_dump_start(' ');
             for (uint8_t index = 0; index < message.data_length_code + 5; index++) {
-              sprintf(&sml_globs.log_data[sml_globs.sml_logindex], "%02x", mp->sbuff[index]);
+              sprintf_P(&sml_globs.log_data[sml_globs.sml_logindex], PSTR("%02x"), mp->sbuff[index]);
               sml_globs.sml_logindex += 2;
               if (index == 3) {
                   sml_globs.log_data[sml_globs.sml_logindex] = ':';
@@ -1026,7 +1025,7 @@ void dump2log(void) {
 					while (SML_SAVAILABLE) {
 						d_lastms = millis();
 						yield();
-          	sprintf(&sml_globs.log_data[sml_globs.sml_logindex], "%02x ", SML_SREAD);
+          	sprintf_P(&sml_globs.log_data[sml_globs.sml_logindex], PSTR("%02x "), SML_SREAD);
 						if (sml_globs.sml_logindex < sml_globs.logsize - 7) {
 	          	sml_globs.sml_logindex += 3;
 	        	}
@@ -1052,7 +1051,7 @@ void Hexdump(uint8_t *sbuff, uint32_t slen) {
   *cp++ = '>';
   *cp++ = ' ';
   for (uint32_t cnt = 0; cnt < slen; cnt ++) {
-    sprintf(cp, "%02x ", sbuff[cnt]);
+    sprintf_P(cp, PSTR("%02x "), sbuff[cnt]);
     cp += 3;
   }
   AddLogData(LOG_LEVEL_INFO, cbuff);
@@ -1229,12 +1228,12 @@ double dval;
                 s1 = *cp << 16 | *(cp + 1) <<8 | *(cp + 2);
                 cp += 4;
                 s2 = *cp << 16 | *(cp + 1) <<8 | *(cp + 2);
-                sprintf(&meter_desc[index].meter_id[0], "%u-%u", s1, s2);
+                sprintf_P(&meter_desc[index].meter_id[0], PSTR("%u-%u"), s1, s2);
             } else {
                 // server id on hager
                 char *str = &meter_desc[index].meter_id[0];
                 for (type = 0; type < len - 1; type++) {
-                    sprintf(str,"%02x", *cp++);
+                    sprintf_P(str, PSTR("%02x"), *cp++);
                     str += 2;
                 }
             }
@@ -1964,7 +1963,7 @@ void SML_Decode(uint8_t index) {
             }
           } else {
             // ebus modbus pzem vbus or raw
-						if (!strncmp(mp, "pm(", 3)) {
+						if (!strncmp_P(mp, PSTR("pm("), 3)) {
 							// pattern match
 							uint8_t dp = 0;
 							mp += 3;
@@ -2042,7 +2041,7 @@ void SML_Decode(uint8_t index) {
                   cp += skip;
                 }
               }
-            } else if (!strncmp(mp, "U64", 3)) {
+            } else if (!strncmp_P(mp, PSTR("U64"), 3)) {
               uint32_t valh = (cp[0]<<24) | (cp[1]<<16) | (cp[2]<<8) | (cp[3]<<0);
               uint32_t vall = (cp[4]<<24) | (cp[5]<<16) | (cp[6]<<8) | (cp[7]<<0);
               uint64_t val = ((uint64_t)valh<<32) | vall;
@@ -2050,7 +2049,7 @@ void SML_Decode(uint8_t index) {
               cp += 8;
               ebus_dval = val;
               mbus_dval = val;
-            } else if (!strncmp(mp, "u64", 3)) {
+            } else if (!strncmp_P(mp, PSTR("u64"), 3)) {
               uint64_t valh = (cp[1]<<24) | (cp[0]<<16) | (cp[3]<<8) | (cp[2]<<0);
               uint64_t vall = (cp[5]<<24) | (cp[4]<<16) | (cp[7]<<8) | (cp[6]<<0);
               uint64_t val = ((uint64_t)valh<<32) | vall;
@@ -2058,10 +2057,10 @@ void SML_Decode(uint8_t index) {
               cp += 8;
               ebus_dval = val;
               mbus_dval = val;
-            } else if (!strncmp(mp, "U32", 3)) {
+            } else if (!strncmp_P(mp, PSTR("U32"), 3)) {
               mp += 3;
               goto U32_do;
-            } else if (!strncmp(mp, "UUuuUUuu", 8)) {
+            } else if (!strncmp_P(mp, PSTR("UUuuUUuu"), 8)) {
               mp += 8;
               U32_do:
               uint32_t val = (cp[0]<<24) | (cp[1]<<16) | (cp[2]<<8) | (cp[3]<<0);
@@ -2073,10 +2072,10 @@ void SML_Decode(uint8_t index) {
               }
               ebus_dval = val;
               mbus_dval = val;
-            } else if (!strncmp(mp, "u32", 3)) {
+            } else if (!strncmp_P(mp, PSTR("u32"), 3)) {
               mp += 3;
               goto u32_do;
-            } else if (!strncmp(mp, "uuUUuuUU", 8)) {
+            } else if (!strncmp_P(mp, PSTR("uuUUuuUU"), 8)) {
               mp += 8;
               u32_do:
               uint32_t val = (cp[1]<<24) | (cp[0]<<16) | (cp[3]<<8) | (cp[2]<<0);
@@ -2088,16 +2087,16 @@ void SML_Decode(uint8_t index) {
               }
               ebus_dval = val;
               mbus_dval = val;
-            } else if (!strncmp(mp, "UUuu", 4)) {
+            } else if (!strncmp_P(mp, PSTR("UUuu"), 4)) {
               uint16_t val = cp[1] | (cp[0]<<8);
               mbus_dval = val;
               ebus_dval = val;
               mp += 4;
               cp += 2;
-            } else if (!strncmp(mp, "S32", 3)) {
+            } else if (!strncmp_P(mp, PSTR("S32"), 3)) {
               mp += 3;
               goto S32_do;
-            } else if (!strncmp(mp, "SSssSSss", 8)) {
+            } else if (!strncmp_P(mp, PSTR("SSssSSss"), 8)) {
               mp += 8;
               S32_do:
               int32_t val = (cp[0]<<24) | (cp[1]<<16) | (cp[2]<<8) | (cp[3]<<0);
@@ -2109,10 +2108,10 @@ void SML_Decode(uint8_t index) {
               }
               ebus_dval = val;
               mbus_dval = val;
-            } else if (!strncmp(mp, "s32", 3)) {
+            } else if (!strncmp_P(mp, PSTR("s32"), 3)) {
               mp += 3;
               goto s32_do;
-            } else if (!strncmp(mp, "ssSSssSS", 8)) {
+            } else if (!strncmp_P(mp, PSTR("ssSSssSS"), 8)) {
               mp += 8;
               s32_do:
               int32_t val = (cp[1]<<24) | (cp[0]<<16) | (cp[3]<<8) | (cp[2]<<0);
@@ -2124,42 +2123,42 @@ void SML_Decode(uint8_t index) {
               }
               ebus_dval = val;
               mbus_dval = val;
-            } else if (!strncmp(mp, "uuUU", 4)) {
+            } else if (!strncmp_P(mp, PSTR("uuUU"), 4)) {
               uint16_t val = cp[0] | (cp[1]<<8);
               mbus_dval = val;
               ebus_dval = val;
               mp += 4;
               cp += 2;
-            } else if (!strncmp(mp, "uu", 2)) {
+            } else if (!strncmp_P(mp, PSTR("uu"), 2)) {
               uint8_t val = *cp++;
               mbus_dval = val;
               ebus_dval = val;
               mp += 2;
-            } else if (!strncmp(mp, "ssSS", 4)) {
+            } else if (!strncmp_P(mp, PSTR("ssSS"), 4)) {
               int16_t val = *cp | (*(cp+1)<<8);
               mbus_dval = val;
               ebus_dval = val;
               mp += 4;
               cp += 2;
-            } else if (!strncmp(mp, "SSss", 4)) {
+            } else if (!strncmp_P(mp, PSTR("SSss"), 4)) {
               int16_t val = cp[1] | (cp[0]<<8);
               mbus_dval = val;
               ebus_dval = val;
               mp += 4;
               cp += 2;
-            } else if (!strncmp(mp,"ss", 2)) {
+            } else if (!strncmp_P(mp, PSTR("ss"), 2)) {
               int8_t val = *cp++;
               mbus_dval = val;
               ebus_dval = val;
               mp += 2;
-            } else if (!strncmp(mp, "ffffffff", 8)) {
+            } else if (!strncmp_P(mp, PSTR("ffffffff"), 8)) {
               uint32_t val = (cp[0]<<24) | (cp[1]<<16) | (cp[2]<<8) | (cp[3]<<0);
               float *fp = (float*)&val;
               ebus_dval = *fp;
               mbus_dval = *fp;
               mp += 8;
               cp += 4;
-            } else if (!strncmp(mp, "FFffFFff", 8)) {
+            } else if (!strncmp_P(mp, PSTR("FFffFFff"), 8)) {
               // reverse word float
               uint32_t val = (cp[1]<<0) | (cp[0]<<8) | (cp[3]<<16) | (cp[2]<<24);
               float *fp = (float*)&val;
@@ -2167,24 +2166,24 @@ void SML_Decode(uint8_t index) {
               mbus_dval = *fp;
               mp += 8;
               cp += 4;
-            } else if (!strncmp(mp, "eeeeee", 6)) {
+            } else if (!strncmp_P(mp, PSTR("eeeeee"), 6)) {
               uint32_t val = (cp[0]<<16) | (cp[1]<<8) | (cp[2]<<0);
               mbus_dval = val;
               mp += 6;
               cp += 3;
-            } else if (!strncmp(mp, "vvvvvv", 6)) {
+            } else if (!strncmp_P(mp, PSTR("vvvvvv"), 6)) {
               mbus_dval = (float)((cp[0]<<8) | (cp[1])) + ((float)cp[2]/10.0);
               mp += 6;
               cp += 3;
-            } else if (!strncmp(mp, "cccccc", 6)) {
+            } else if (!strncmp_P(mp, PSTR("cccccc"), 6)) {
               mbus_dval = (float)((cp[0]<<8) | (cp[1])) + ((float)cp[2]/100.0);
               mp += 6;
               cp += 3;
-            } else if (!strncmp(mp, "pppp", 4)) {
+            } else if (!strncmp_P(mp, PSTR("pppp"), 4)) {
               mbus_dval = (float)((cp[0]<<8) | cp[1]);
               mp += 4;
               cp += 2;
-            }  else if (!strncmp(mp, "kstr", 4)) {
+            }  else if (!strncmp_P(mp, PSTR("kstr"), 4)) {
               mp += 4;
               // decode the mantissa
               uint32_t x = 0;
@@ -2207,7 +2206,7 @@ void SML_Decode(uint8_t index) {
               }
               mbus_dval = (double )(x * ifl);
 
-            } else if (!strncmp(mp, "bcd", 3)) {
+            } else if (!strncmp_P(mp, PSTR("bcd"), 3)) {
               mp += 3;
               uint8_t digits = strtol((char*)mp, (char**)&mp, 10);
               if (digits < 2) digits = 2;
@@ -2310,7 +2309,7 @@ void SML_Decode(uint8_t index) {
                     } else {
                       time = vbus_get_septet(cp) & 0xffff;
                     }
-                    sprintf(&meter_desc[index].meter_id[0], "%02d:%02d", time / 60, time % 60);
+                    sprintf_P(&meter_desc[index].meter_id[0], PSTR("%02d:%02d"), time / 60, time % 60);
                   }
                   break;
               }
@@ -2354,7 +2353,7 @@ void SML_Decode(uint8_t index) {
               date -= year * 10000;
               uint8_t month = date / 100; // = 09
               uint8_t day = date % 100; // = 01
-              sprintf(&meter_desc[mindex].meter_id[0],"%02d.%02d.%02d",day, month, year);
+              sprintf_P(&meter_desc[mindex].meter_id[0], PSTR("%02d.%02d.%02d"),day, month, year);
             } else {
               sml_getvalue(cp, mindex);
             }
@@ -2596,7 +2595,7 @@ void SML_Show(boolean json) {
               // convert hex to asci
               sml_hex_asci(mindex, tpowstr);
             } else {
-              sprintf(tpowstr,"\"%s\"", &meter_desc[mindex].meter_id[0]);
+              sprintf_P(tpowstr, PSTR("\"%s\""), &meter_desc[mindex].meter_id[0]);
             }
             mid = 1;
           } else if (*cp == '(') {
@@ -2701,8 +2700,12 @@ void SML_Show(boolean json) {
             } else {
               // web ui export
               //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s{s}%s %s: {m}%s %s{e}", b_mqtt_data,meter_desc[mindex].prefix,name,tpowstr,unit);
-              if (strcmp(name, "*")) {
-                WSContentSend_P(PSTR("{s}%s %s{m}"), sml_globs.mp[mindex].prefix, name);  // Do not replace decimal separator in label
+              if (strncmp_P(name, PSTR("*"), 1)) {
+                if (sml_globs.mp[mindex].prefix[0] == '*') {
+                  WSContentSend_P(PSTR("{s}%s{m}"), name);
+                } else {
+                  WSContentSend_P(PSTR("{s}%s %s{m}"), sml_globs.mp[mindex].prefix, name);  // Do not replace decimal separator in label
+                }
                 WSContentSend_PD(PSTR("%s %s{e}"), tpowstr, unit); // Replace decimal separator in value
               }
             }
@@ -3364,8 +3367,8 @@ dddef_exit:
             goto next_line;
           }
           // 1,=h—————————————
-          if (!strncmp(lp1 + 1, ",=h", 3) || !strncmp(lp1 + 1, ",=so", 4)) {
-            if (!strncmp(lp1 + 1, ",=so", 4)) {
+          if (!strncmp_P(lp1 + 1, PSTR(",=h"), 3) || !strncmp_P(lp1 + 1, PSTR(",=so"), 4)) {
+            if (!strncmp_P(lp1 + 1, PSTR(",=so"), 4)) {
 							SpecOptions(lp1 + 5, mnum - 1);
             }
           } else {
@@ -3707,6 +3710,13 @@ next_line:
 
 #ifdef USE_SML_SCRIPT_CMD
 
+uint32_t SML_SetOptions(uint32_t in) {
+  if (in & 0x100) {
+    sml_globs.sml_options = in;
+  }
+  return sml_globs.sml_options;
+}
+
 uint32_t SML_SetBaud(uint32_t meter, uint32_t br) {
   if (sml_globs.ready == false) return 0;
   if (meter < 1 || meter > sml_globs.meters_used) return 0;
@@ -3813,7 +3823,7 @@ uint32_t SML_Read(int32_t meter, char *str, uint32_t slen) {
   } else {
     uint32_t index = 0;
     for (uint32_t cnt = 0; cnt < mp->spos; cnt++) {
-      sprintf(str,"%02x", mp->sbuff[cnt]);
+      sprintf_P(str, PSTR("%02x"), mp->sbuff[cnt]);
       str += 2;
       index += 2;
       if (index >= slen - 2) break;
@@ -4594,7 +4604,7 @@ bool XSNS_53_cmd(void) {
 
 void InjektCounterValue(uint8_t meter, uint32_t counter, float rate) {
 
-  snprintf((char*)&meter_desc[meter].sbuff[0], meter_desc[meter].sbsiz, "1-0:1.8.0*255(%d)", counter);
+  snprintf_P((char*)&meter_desc[meter].sbuff[0], meter_desc[meter].sbsiz, PSTR("1-0:1.8.0*255(%d)"), counter);
   SML_Decode(meter);
 
 	char freq[16];
@@ -4602,7 +4612,7 @@ void InjektCounterValue(uint8_t meter, uint32_t counter, float rate) {
 	if (rate) {
 		DOUBLE2CHAR(rate, 4, freq);
 	}
-  snprintf((char*)&meter_desc[meter].sbuff[0], meter_desc[meter].sbsiz, "1-0:1.7.0*255(%s)", freq);
+  snprintf_P((char*)&meter_desc[meter].sbuff[0], meter_desc[meter].sbsiz, PSTR("1-0:1.7.0*255(%s)"), freq);
   SML_Decode(meter);
 }
 
@@ -4657,7 +4667,7 @@ bool Xsns53(uint32_t function) {
 					break;
       case FUNC_JSON_APPEND:
         if (sml_globs.ready) {
-          if (sml_options & SML_OPTIONS_JSON_ENABLE) {
+          if (sml_globs.sml_options & SML_OPTIONS_JSON_ENABLE) {
             SML_Show(1);
           }
         }
