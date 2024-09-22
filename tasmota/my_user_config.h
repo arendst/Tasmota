@@ -1246,6 +1246,7 @@
     // #define BE_LV_WIDGET_KEYBOARD
     #define BE_LV_WIDGET_LED
     #define BE_LV_WIDGET_LIST
+    // #define BE_LV_WIDGET_MENU
     #define BE_LV_WIDGET_METER
     #define BE_LV_WIDGET_MSGBOX
     #define BE_LV_WIDGET_QRCODE
