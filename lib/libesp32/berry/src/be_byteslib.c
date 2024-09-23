@@ -1180,7 +1180,6 @@ static int m_item(bvm *vm)
 {
     int argc = be_top(vm);
     buf_impl attr = bytes_check_data(vm, 0); /* we reserve 4 bytes anyways */
-    check_ptr_modifiable(vm, &attr);
     if (argc >=2 && be_isint(vm, 2)) {  /* single byte */
         int index = be_toint(vm,2);
         if (index < 0) {
