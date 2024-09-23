@@ -1521,6 +1521,26 @@ set_day_names|comptr||[lv_calendar_set_day_names](https://docs.lvgl.io/9.0/searc
 set_showed_date|int, int||[lv_calendar_set_showed_date](https://docs.lvgl.io/9.0/search.html?q=lv_calendar_set_showed_date)
 set_today_date|int, int, int||[lv_calendar_set_today_date](https://docs.lvgl.io/9.0/search.html?q=lv_calendar_set_today_date)
 
+### widget `lv.menu_page`
+
+Method|Arguments|Return type|LVGL equivalent
+:---|:---|:---|:---
+
+### widget `lv.menu_cont`
+
+Method|Arguments|Return type|LVGL equivalent
+:---|:---|:---|:---
+
+### widget `lv.menu_section`
+
+Method|Arguments|Return type|LVGL equivalent
+:---|:---|:---|:---
+
+### widget `lv.menu_separator`
+
+Method|Arguments|Return type|LVGL equivalent
+:---|:---|:---|:---
+
 ### widget `lv.menu`
 
 Method|Arguments|Return type|LVGL equivalent

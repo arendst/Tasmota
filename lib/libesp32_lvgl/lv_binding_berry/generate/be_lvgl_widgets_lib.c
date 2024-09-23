@@ -60,6 +60,10 @@ extern int be_ntv_lv_led_init(bvm *vm);
 extern int be_ntv_lv_line_init(bvm *vm);
 extern int be_ntv_lv_list_init(bvm *vm);
 extern int be_ntv_lv_menu_init(bvm *vm);
+extern int be_ntv_lv_menu_page_init(bvm *vm);
+extern int be_ntv_lv_menu_cont_init(bvm *vm);
+extern int be_ntv_lv_menu_section_init(bvm *vm);
+extern int be_ntv_lv_menu_separator_init(bvm *vm);
 extern int be_ntv_lv_msgbox_init(bvm *vm);
 extern int be_ntv_lv_roller_init(bvm *vm);
 extern int be_ntv_lv_scale_init(bvm *vm);
@@ -100,6 +104,10 @@ extern const bclass be_class_lv_led;
 extern const bclass be_class_lv_line;
 extern const bclass be_class_lv_list;
 extern const bclass be_class_lv_menu;
+extern const bclass be_class_lv_menu_cont;
+extern const bclass be_class_lv_menu_page;
+extern const bclass be_class_lv_menu_section;
+extern const bclass be_class_lv_menu_separator;
 extern const bclass be_class_lv_msgbox;
 extern const bclass be_class_lv_obj;
 extern const bclass be_class_lv_qrcode;
@@ -475,6 +483,50 @@ class be_class_lv_list (scope: global, name: lv_list, super: be_class_lv_obj, st
 class be_class_lv_menu (scope: global, name: lv_menu, super: be_class_lv_obj, strings: weak) {
     init, func(be_ntv_lv_menu_init)
     _class, comptr(&lv_menu_class)
+}
+@const_object_info_end */
+
+/********************************************************************
+** Solidified class: lv_menu_page
+********************************************************************/
+#include "be_fixed_be_class_lv_menu_page.h"
+/* @const_object_info_begin
+class be_class_lv_menu_page (scope: global, name: lv_menu_page, super: be_class_lv_obj, strings: weak) {
+    init, func(be_ntv_lv_menu_page_init)
+    _class, comptr(&lv_menu_page_class)
+}
+@const_object_info_end */
+
+/********************************************************************
+** Solidified class: lv_menu_cont
+********************************************************************/
+#include "be_fixed_be_class_lv_menu_cont.h"
+/* @const_object_info_begin
+class be_class_lv_menu_cont (scope: global, name: lv_menu_cont, super: be_class_lv_obj, strings: weak) {
+    init, func(be_ntv_lv_menu_cont_init)
+    _class, comptr(&lv_menu_cont_class)
+}
+@const_object_info_end */
+
+/********************************************************************
+** Solidified class: lv_menu_section
+********************************************************************/
+#include "be_fixed_be_class_lv_menu_section.h"
+/* @const_object_info_begin
+class be_class_lv_menu_section (scope: global, name: lv_menu_section, super: be_class_lv_obj, strings: weak) {
+    init, func(be_ntv_lv_menu_section_init)
+    _class, comptr(&lv_menu_section_class)
+}
+@const_object_info_end */
+
+/********************************************************************
+** Solidified class: lv_menu_separator
+********************************************************************/
+#include "be_fixed_be_class_lv_menu_separator.h"
+/* @const_object_info_begin
+class be_class_lv_menu_separator (scope: global, name: lv_menu_separator, super: be_class_lv_obj, strings: weak) {
+    init, func(be_ntv_lv_menu_separator_init)
+    _class, comptr(&lv_menu_separator_class)
 }
 @const_object_info_end */
 

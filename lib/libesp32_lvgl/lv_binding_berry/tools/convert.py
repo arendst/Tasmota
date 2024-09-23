@@ -41,7 +41,9 @@ lv_widgets = ['obj',
 lv_widgets_no_class = ['span', 'scale_section']      # widgets that don't have a lv_obj class
 # extra widgets
 lv_widgets = lv_widgets + [ 'chart', 'imagebutton', 'led', 'msgbox', 'spinbox', 'spinner', 'keyboard', 'tabview', 'tileview' , 'list',
-                            'animimg', 'calendar', 'menu']
+                            'animimg', 'calendar',
+                            'menu_page', 'menu_cont', 'menu_section', 'menu_separator', 'menu_sidebar_cont',
+                            'menu_main_cont', 'menu_sidebar_header', 'menu_main_header_cont', 'menu']
 
 # add qrcode
 lv_widgets = lv_widgets + [ 'qrcode' ]
