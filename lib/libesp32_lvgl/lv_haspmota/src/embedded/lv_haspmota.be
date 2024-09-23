@@ -30,9 +30,9 @@ end
 # Pre-defined events lists
 #################################################################################
 var EVENTS_NONE = list_to_bytes([])
-var EVENTS_TOUCH = list_to_bytes([lv.EVENT_PRESSED, lv.EVENT_SHORT_CLICKED, lv.EVENT_PRESS_LOST, lv.EVENT_RELEASED,
+var EVENTS_TOUCH = list_to_bytes([lv.EVENT_PRESSED, lv.EVENT_CLICKED, lv.EVENT_PRESS_LOST, lv.EVENT_RELEASED,
                                 lv.EVENT_LONG_PRESSED, #-lv.EVENT_LONG_PRESSED_REPEAT-# ])
-var EVENTS_ALL = list_to_bytes([lv.EVENT_PRESSED, lv.EVENT_SHORT_CLICKED, lv.EVENT_PRESS_LOST, lv.EVENT_RELEASED,
+var EVENTS_ALL = list_to_bytes([lv.EVENT_PRESSED, lv.EVENT_CLICKED, lv.EVENT_PRESS_LOST, lv.EVENT_RELEASED,
                                 lv.EVENT_LONG_PRESSED, #-lv.EVENT_LONG_PRESSED_REPEAT,-#
                                 lv.EVENT_VALUE_CHANGED ])   # adding VALUE_CHANGED
 
@@ -605,7 +605,7 @@ class lvh_obj : lvh_root
   #====================================================================
   static var _event_map = {
     lv.EVENT_PRESSED:             "down",
-    lv.EVENT_SHORT_CLICKED:       "up",
+    lv.EVENT_CLICKED:             "up",
     lv.EVENT_PRESS_LOST:          "lost",
     lv.EVENT_RELEASED:            "release",
     lv.EVENT_LONG_PRESSED:        "long",
