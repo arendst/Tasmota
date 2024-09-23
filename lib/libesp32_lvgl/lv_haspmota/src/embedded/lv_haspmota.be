@@ -10,6 +10,34 @@
 var haspmota = module("haspmota")
 
 #################################################################################
+# Bytes list
+#
+# This function takes a list of events (uin8) and returns a bytes object
+#
+# It is used only at compile time, and is not included in the final flash
+# The bytes object is far more compact than a list of ints and
+# does automatic deduplication if the same list occurs twice
+#################################################################################
+def list_to_bytes(l)
+  var b = bytes()
+  for v: l
+    b.add(v, 1)
+  end
+  return b
+end
+
+#################################################################################
+# Pre-defined events lists
+#################################################################################
+var EVENTS_NONE = list_to_bytes([])
+var EVENTS_TOUCH = list_to_bytes([lv.EVENT_PRESSED, lv.EVENT_SHORT_CLICKED, lv.EVENT_PRESS_LOST, lv.EVENT_RELEASED,
+                                lv.EVENT_LONG_PRESSED, #-lv.EVENT_LONG_PRESSED_REPEAT-# ])
+var EVENTS_ALL = list_to_bytes([lv.EVENT_PRESSED, lv.EVENT_SHORT_CLICKED, lv.EVENT_PRESS_LOST, lv.EVENT_RELEASED,
+                                lv.EVENT_LONG_PRESSED, #-lv.EVENT_LONG_PRESSED_REPEAT,-#
+                                lv.EVENT_VALUE_CHANGED ])   # adding VALUE_CHANGED
+
+
+#################################################################################
 # Class `lvh_root`
 #
 # Allows to map either a `lv_obj` for LVGL or arbitrary object
@@ -17,7 +45,8 @@ var haspmota = module("haspmota")
 #################################################################################
 #@ solidify:lvh_root,weak
 class lvh_root
-  static var _lv_class = nil        # _lv_class refers to the lvgl class encapsulated, and is overriden by subclasses
+  static var _lv_class = nil                # _lv_class refers to the lvgl class encapsulated, and is overriden by subclasses
+  static var _EVENTS = EVENTS_NONE
 
   # attributes to ignore when set at object level (they are managed by page)
   static var _attr_ignore = [
@@ -518,6 +547,7 @@ end
 class lvh_obj : lvh_root
   static var _lv_class = lv.obj     # _lv_class refers to the lvgl class encapsulated, and is overriden by subclasses
   static var _lv_part2_selector     # selector for secondary part (like knob of arc)
+  static var _EVENTS = EVENTS_ALL
 
   #====================================================================
   # Instance variables
@@ -575,7 +605,7 @@ class lvh_obj : lvh_root
   #====================================================================
   static var _event_map = {
     lv.EVENT_PRESSED:             "down",
-    lv.EVENT_CLICKED:             "up",
+    lv.EVENT_SHORT_CLICKED:       "up",
     lv.EVENT_PRESS_LOST:          "lost",
     lv.EVENT_RELEASED:            "release",
     lv.EVENT_LONG_PRESSED:        "long",
@@ -584,8 +614,11 @@ class lvh_obj : lvh_root
   }
   def register_event_cb()
     var oh = self._page._oh
-    for ev:self._event_map.keys()
-      oh.register_event(self, ev)
+    var b = self._EVENTS
+    var i = 0
+    while (i < size(b))
+      oh.register_event(self, b[i])
+      i += 1
     end
   end
 
@@ -606,16 +639,14 @@ class lvh_obj : lvh_root
 
       var tas_event_more = ""   # complementary data
       if code == lv.EVENT_VALUE_CHANGED
-        try
-          # try to get the new val
-          var val = self.val
-          if val != nil   tas_event_more = format(',"val":%s', json.dump(val)) end
-          var text = self.text
-          if text != nil
-            tas_event_more += ',"text":'
-            tas_event_more += json.dump(text)
-          end
-        except ..
+        import introspect
+        var val = introspect.get(self, "val")     # does not raise an exception if not found
+        if (val != nil && type(val) != 'module')
+          tas_event_more = f',"val":{json.dump(val)}'
+        end
+        var text = introspect.get(self, "text")     # does not raise an exception if not found
+        if (text != nil && type(text) != 'module')
+          tas_event_more += f',"text":{json.dump(text)}'
         end
       end
       var tas_event = format('{"hasp":{"p%ib%i":{"event":"%s"%s}}}', self._page._page_id, self.id, event_hasp, tas_event_more)
@@ -1096,6 +1127,8 @@ end
 #@ solidify:lvh_fixed,weak
 class lvh_fixed : lvh_obj
   # static var _lv_class = lv.obj # from parent class
+  # static var _EVENTS = EVENTS_ALL
+
   # label do not need a sub-label
   def post_init()
     super(self).post_init()         # call super
@@ -1115,6 +1148,7 @@ end
 #@ solidify:lvh_flex,weak
 class lvh_flex : lvh_fixed
   # static var _lv_class = lv.obj # from parent class
+  static var _EVENTS = EVENTS_NONE # inhetited
   # label do not need a sub-label
   def post_init()
     super(self).post_init()         # call super
@@ -1143,6 +1177,7 @@ end
 class lvh_arc : lvh_obj
   static var _lv_class = lv.arc
   static var _lv_part2_selector = lv.PART_KNOB
+  # static var _EVENTS = EVENTS_ALL
   var _label_angle                  # nil if none
 
   # line_width converts to arc_width
@@ -1223,6 +1258,7 @@ end
 class lvh_switch : lvh_obj
   static var _lv_class = lv.switch
   static var _lv_part2_selector = lv.PART_KNOB
+  # static var _EVENTS = EVENTS_ALL
   # map val to toggle
   def set_val(t)
     self._val = t
@@ -1239,6 +1275,7 @@ end
 #@ solidify:lvh_spinner,weak
 class lvh_spinner : lvh_arc
   static var _lv_class = lv.spinner
+  # static var _EVENTS = EVENTS_ALL # inherited
   var _speed, _angle
 
   # init
@@ -1356,6 +1393,7 @@ end
 #@ solidify:lvh_slider,weak
 class lvh_slider : lvh_obj
   static var _lv_class = lv.slider
+  # static var _EVENTS = EVENTS_ALL
 
   def set_val(t)
     self._val = t
@@ -1439,6 +1477,7 @@ end
 #@ solidify:lvh_dropdown,weak
 class lvh_dropdown : lvh_obj
   static var _lv_class = lv.dropdown
+  # static var _EVENTS = EVENTS_ALL
   var _symbol                         # we need to keep a reference to the string used for symbol to avoid GC
   static var _dir = [ lv.DIR_BOTTOM, lv.DIR_TOP, lv.DIR_LEFT, lv.DIR_RIGHT ] # 0 = down, 1 = up, 2 = left, 3 = right
 
@@ -1509,6 +1548,7 @@ end
 #@ solidify:lvh_dropdown_list,weak
 class lvh_dropdown_list : lvh_obj
   static var _lv_class = nil
+  # static var _EVENTS = EVENTS_NONE
 
   def post_init()
     self._lv_obj = nil                # default to nil object, whatever it was initialized with
@@ -1518,7 +1558,7 @@ class lvh_dropdown_list : lvh_obj
     else
       print("HSP: '_dropdown_list' should have a parent of type 'dropdown'")
     end
-    # super(self).post_init()         # call super - don't call post_init to not register a callback
+    super(self).post_init()
   end
 end
 
@@ -2055,7 +2095,9 @@ class lvh_checkbox : lvh_obj    static var _lv_class = lv.checkbox    end
 # class lvh_textarea : lvh_obj    static var _lv_class = lv.textarea    end
 # special case for scr (which is actually lv_obj)
 #@ solidify:lvh_scr,weak
-class lvh_scr : lvh_obj         static var _lv_class = nil            end    # no class for screen
+class lvh_scr : lvh_obj
+  static var _lv_class = nil    # no class for screen
+end
 
 
 #################################################################################

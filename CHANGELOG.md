@@ -36,6 +36,7 @@ All notable changes to this project will be documented in this file.
 - Compilation exception when metrics not found (#22170)
 - ESP8266 Exception 3 on tasmota-minimal caused by unaligned PROGMEM (#22169)
 - LVGL compilation of lv_menu (#22188)
+- HASPmota broken `changed` event
 
 ### Removed
 
