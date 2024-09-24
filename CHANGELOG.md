@@ -3,7 +3,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.2.0.4]
+## [14.2.0.5]
+### Added
+- ESP8266 support for I2C CLK on GPIO16 (#22199)
+
+### Breaking Changed
+
+### Changed
+- ESP8266 platform update from 2024.06.00 to 2024.09.00 and Framework (Arduino Core) from v2.7.7 to v2.7.8 (#22199)
+
+### Fixed
+- HASPmota broken `changed` event (#22194)
+
+### Removed
+
+
+## [14.2.0.4] 20240924
 ### Added
 - HX711 optional calibration precision option on command ``Sensor34 2 <weight in gram> <precision>`` where `<precision>` is 1 to 20 (#13983)
 - Matter support for Zigbee Occupancy and Light 0/1/2 (OnOff / Dimmer / White Color Temperature) (#22110)
@@ -14,8 +29,6 @@ All notable changes to this project will be documented in this file.
 - ESP8266 experimental support for second I2C bus
 - Berry improve `int64` constructor (#22172)
 - MQTT warning if trying to connect without TLS on a port that normally uses TLS (#22175)
-
-### Breaking Changed
 
 ### Changed
 - Refactored I2C drivers HTU21, BH1750, SHT3x, iAQ and HYT
@@ -36,9 +49,6 @@ All notable changes to this project will be documented in this file.
 - Compilation exception when metrics not found (#22170)
 - ESP8266 Exception 3 on tasmota-minimal caused by unaligned PROGMEM (#22169)
 - LVGL compilation of lv_menu (#22188)
-- HASPmota broken `changed` event
-
-### Removed
 
 ## [14.2.0.3] 20240908
 ### Added
