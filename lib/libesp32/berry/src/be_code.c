@@ -307,7 +307,7 @@ static int exp2const(bfuncinfo *finfo, bexpdesc *e)
 {
     int idx = findconst(finfo, e); /* does the constant already exist? */
     if (idx == -1) { /* if not add it */
-        bvalue k = {};
+        bvalue k = {0};
         switch (e->type) {
         case ETINT:
             k.type = BE_INT;
@@ -882,7 +882,7 @@ void be_code_index(bfuncinfo *finfo, bexpdesc *c, bexpdesc *k)
 void be_code_class(bfuncinfo *finfo, bexpdesc *dst, bclass *c)
 {
     int src;
-    bvalue var = {};
+    bvalue var = {0};
     var_setclass(&var, c);  /* new var of CLASS type */
     src = newconst(finfo, &var);  /* allocate a new constant and return kreg */
     if (dst->type == ETLOCAL) {  /* if target is a local variable, just assign */
@@ -965,7 +965,7 @@ void be_code_raise(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2)
 
 void be_code_implicit_class(bfuncinfo *finfo, bexpdesc *e, bclass *c)
 {
-    bvalue k = {};
+    bvalue k = {0};
     k.type = BE_CLASS;
     k.v.p = c;
     int idx = newconst(finfo, &k);  /* create new constant */
