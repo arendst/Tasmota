@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - ESP8266 support for I2C CLK on GPIO16 (#22199)
 - ESP8266 support for one-wire M1601 temperature sensor on DS18x20 GPIO (#21376)
+- Support for BL0906 up to 6 channel energy monitor as used in Athom EM2/EM6 (#22167)
 
 ### Breaking Changed
 

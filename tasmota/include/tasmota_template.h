@@ -519,6 +519,7 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_BP1658CJ_DAT 16
 #define MAX_DINGTIAN_SHIFT  4
 #define MAX_MAGIC_SWITCH_MODES   2
+#define MAX_BL0906_RX    6              // Model number of phases, 2 (EM2), 6 (EM6)
 #define MAX_BL0942_RX    8              // Baudrates 1/5 (4800), 2/6 (9600), 3/7 (19200), 4/8 (38400), Support Positive values only 1..4, Support also negative values 5..8
 #define MAX_CSE7761      2              // Model 1/2 (DUALR3), 2/2 (POWCT)
 
@@ -946,14 +947,16 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SOLAXX1_TX),               // Solax Inverter tx pin
   AGPIO(GPIO_SOLAXX1_RX),               // Solax Inverter rx pin
   AGPIO(GPIO_SOLAXX1_RTS),              // Solax Inverter RTS pin
-#endif // USE_SOLAX_X1
+#endif  // USE_SOLAX_X1
 #ifdef USE_LE01MR
   AGPIO(GPIO_LE01MR_TX),                // F7F LE-01MR energy meter tx pin
   AGPIO(GPIO_LE01MR_RX),                // F7F LE-01MR energy meter rx pin
-#endif // USE_LE01MR
+#endif  // USE_LE01MR
+#ifdef ESP32
 #ifdef USE_BL0906
-  AGPIO(GPIO_BL0906_RX),                // BL0906 Serial interface (Athom EM6)
-#endif // USE_BL0906
+  AGPIO(GPIO_BL0906_RX) + MAX_BL0906_RX,  // BL0906 Serial interface (Athom EM6)
+#endif  // USE_BL0906
+#endif  // ESP32
 #if defined(USE_BL0940) || defined(USE_BL09XX)
   AGPIO(GPIO_BL0939_RX),                // BL0939 Serial interface (Dual R3 v2)
   AGPIO(GPIO_BL0940_RX),                // BL0940 Serial interface
