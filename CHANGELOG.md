@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [14.2.0.5]
 ### Added
 - ESP8266 support for I2C CLK on GPIO16 (#22199)
+- ESP8266 support for one-wire M1601 temperature sensor on DS18x20 GPIO (#21376)
 
 ### Breaking Changed
 
