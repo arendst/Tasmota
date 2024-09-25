@@ -158,6 +158,7 @@
 #define SSPM_FUNC_SCAN_RESULT        19      // 0x13 - Provide 4relay ARM firmware version, module type and OPS limits
 #define SSPM_FUNC_SCAN_DONE          25      // 0x19
 #define SSPM_FUNC_UPLOAD_DONE_ACK    30      // 0x1E - Restart ARM
+#define SSPM_FUNC_38                 38      // 0x26 - v1.3.0 - AA550100000000000000000000000000 26 00 0D 2419474C3831310C45373439 00 04 45CD
 
 // Unknown
 #define SSPM_FUNC_01                 1       // 0x01
@@ -1517,16 +1518,18 @@ void SSPMHandleReceivedData(void) {
         AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 06 00 1c 8b 34 32 37 39 37 34 13 4b 35 36 37 08 00 4a 00 e1 22 00 61 4d 00 2c 38 00 a8 28 20 26 21 70
                                                                                                     |Ch|Curre|Voltage |ActivePo|Reactive|Apparent|5m|
 
-        Sspm->main_version = SSPM_VERSION_1_3_0
-        AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 06 00 2A 24 19 47 4C 38 31 31 0C 45 37 34 39 03 01 01 00 EA 04 00 C4 21 00 8F 1F 00 F3 45              Chan 0
-                                                                                                        00 16 00 EA 1D 00 27 3B 00 1F 59 00 33 23 45 05 39 B4  Chan 1
-        AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 06 00 38 24 19 47 4C 38 31 31 0C 45 37 34 39 07 01 02 00 EA 0F 00 C0 30 00 8E 01 00 EF 51              Chan 0
-                                                                                                        00 16 00 EA 24 00 27 3E 00 1F 62 00 33 27              Chan 1
-                                                                                                        00 0A 00 EA 1C 00 04 21 00 18 41 00 19 13 00 06 65 40  Chan 2
-        AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 06 00 46 24 19 47 4C 38 31 31 0C 45 37 34 39 0F 01 02 00 E9 61 00 BF 53 00 8D 0B 00 EE 5F
-                                                                                                        00 16 00 EA 14 00 27 18 00 20 1D 00 33 1E
-                                                                                                        00 0A 00 EA 0B 00 04 1B 00 18 3C 00 19 0E
-                                                                                                        00 55 00 EA 15 00 9F 14 00 7E 3F 00 CD 04 00 07 AB C3
+        Sspm->main_version = SSPM_VERSION_1_3_0:
+        AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 06 00 2A 24 19 47 4C 38 31 31 0C 45 37 34 39 09 01 03 00 EA 1D 00 C3 37 00 8F 38 00 F2 24              - L1 
+                                                                                                        00 49 00 EA 3A 00 7A 3D 00 82 0A 00 AC 40 37 75 FD B1  - L4
+        AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 06 00 2A 24 19 47 4C 38 31 31 0C 45 37 34 39 03 01 01 00 EA 04 00 C4 21 00 8F 1F 00 F3 45              - L1
+                                                                                                        00 16 00 EA 1D 00 27 3B 00 1F 59 00 33 23 45 05 39 B4  - L2
+        AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 06 00 38 24 19 47 4C 38 31 31 0C 45 37 34 39 07 01 02 00 EA 0F 00 C0 30 00 8E 01 00 EF 51              - L1
+                                                                                                        00 16 00 EA 24 00 27 3E 00 1F 62 00 33 27              - L2
+                                                                                                        00 0A 00 EA 1C 00 04 21 00 18 41 00 19 13 00 06 65 40  - L3
+        AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 06 00 46 24 19 47 4C 38 31 31 0C 45 37 34 39 0F 01 02 00 E9 61 00 BF 53 00 8D 0B 00 EE 5F              - L1
+                                                                                                        00 16 00 EA 14 00 27 18 00 20 1D 00 33 1E              - L2
+                                                                                                        00 0A 00 EA 0B 00 04 1B 00 18 3C 00 19 0E              - L3
+                                                                                                        00 55 00 EA 15 00 9F 14 00 7E 3F 00 CD 04 00 07 AB C3  - L4
         AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 06 00 46 24 19 47 4C 38 31 31 0C 45 37 34 39 0F 01 02 00 E9 57 00 C0 3C 00 8D 26 00 EF 29
                                                                                                         00 16 00 EA 06 00 27 1C 00 20 24 00 32 45
                                                                                                         00 0A 00 E9 63 00 04 1A 00 18 3D 00 19 0D
@@ -1552,14 +1555,19 @@ void SSPMHandleReceivedData(void) {
             uint32_t channel_mask = SspmBuffer[31] >> channel;
             if (0 == (channel_mask &1)) { continue; }
 
-            Sspm->current[module][channel] = SspmBuffer[offset] + (float)SspmBuffer[offset +1] / 100;  // x.xxA
-            Sspm->voltage[module][channel] = SSPMGetValue(&SspmBuffer[offset +2]);                     // x.xxV
-            Sspm->active_power[module][channel] = SSPMGetValue(&SspmBuffer[offset +5]);                // x.xxW
-            Sspm->reactive_power[module][channel] = SSPMGetValue(&SspmBuffer[offset +8]);              // x.xxVAr
-            Sspm->apparent_power[module][channel] = SSPMGetValue(&SspmBuffer[offset +11]);             // x.xxVA
-            float power_factor = (Sspm->active_power[module][channel] && Sspm->apparent_power[module][channel]) ? Sspm->active_power[module][channel] / Sspm->apparent_power[module][channel] : 0;
-            if (power_factor > 1) { power_factor = 1; }
-            Sspm->power_factor[module][channel] = power_factor;
+            uint32_t relay = (module * 4) + channel;
+            if ((TasmotaGlobal.power >> relay) &1) {  // Show only powered ON
+
+              Sspm->current[module][channel] = SspmBuffer[offset] + (float)SspmBuffer[offset +1] / 100;  // x.xxA
+              Sspm->voltage[module][channel] = SSPMGetValue(&SspmBuffer[offset +2]);                     // x.xxV
+              Sspm->active_power[module][channel] = SSPMGetValue(&SspmBuffer[offset +5]);                // x.xxW
+              Sspm->reactive_power[module][channel] = SSPMGetValue(&SspmBuffer[offset +8]);              // x.xxVAr
+              Sspm->apparent_power[module][channel] = SSPMGetValue(&SspmBuffer[offset +11]);             // x.xxVA
+              float power_factor = (Sspm->active_power[module][channel] && Sspm->apparent_power[module][channel]) ? Sspm->active_power[module][channel] / Sspm->apparent_power[module][channel] : 0;
+              if (power_factor > 1) { power_factor = 1; }
+              Sspm->power_factor[module][channel] = power_factor;
+
+            }
 
             offset += 14;
             if (offset > offset_max) { break; }
