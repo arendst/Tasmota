@@ -3,22 +3,29 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.2.0.5]
+## [14.2.0.6]
+### Added
+
+### Breaking Changed
+
+### Changed
+- ESP32 platform update from 2024.09.10 to 2024.09.30 and Framework (Arduino Core) from v3.0.5 to v3.1.0.240926 (#22203)
+
+### Fixed
+
+### Removed
+
+## [14.2.0.5] 20240926
 ### Added
 - ESP8266 support for I2C CLK on GPIO16 (#22199)
 - ESP8266 support for one-wire M1601 temperature sensor on DS18x20 GPIO (#21376)
 - Support for BL0906 up to 6 channel energy monitor as used in Athom EM2/EM6 (#22167)
-
-### Breaking Changed
 
 ### Changed
 - ESP8266 platform update from 2024.06.00 to 2024.09.00 and Framework (Arduino Core) from v2.7.7 to v2.7.8 (#22199)
 
 ### Fixed
 - HASPmota broken `changed` event (#22194)
-
-### Removed
-
 
 ## [14.2.0.4] 20240924
 ### Added
