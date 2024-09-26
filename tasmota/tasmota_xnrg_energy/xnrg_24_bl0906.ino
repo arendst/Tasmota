@@ -22,7 +22,9 @@
  * Optional commands:
  * EnergyCols <phases>`   - Change default 4 column GUI display to <phases> columns
  * VoltRes 1              - Change none to 1 decimal display
+ * FreqRes 1              - Change none to 1 decimal display
  * WattRes 2              - Change none to 2 decimals display
+ * SetOption21 1          - Display Voltage
  * SetOption129 1         - Display energy for each phase instead of single sum
  * SetOption150 1         - Display no common voltage/frequency
  \*********************************************************************************************/
@@ -30,7 +32,7 @@
 #define XNRG_24                     24
 
 #ifndef BL0906_UPDATE
-#define BL0906_UPDATE               5    // Update every 5 seconds
+#define BL0906_UPDATE               2    // Update every 2 seconds (Must be lower than ENERGY_WATCHDOG)
 #endif
 //#define DEBUG_BL0906
 
@@ -376,36 +378,45 @@ void Bl0906Loop(void) {
     return;
   }
 
-  while (Bl0906Serial->available())
+  while (Bl0906Serial->available()) {
     Bl0906Serial->flush();
-
+  }
   if (0 == Bl0906.current_channel) {
+#ifdef DEBUG_BL0906
+    AddLog(LOG_LEVEL_DEBUG, PSTR("BL6: Start polling"));
+#endif  // DEBUG_BL0906
     // Temperature
     Bl0906ReadData(BL0906_TEMPERATURE, BL0906_TREF, &Bl0906.temperature);
   } else if (1 == Bl0906.current_channel) {
     Bl0906ReadData(BL0906_I_1_RMS, BL0906_IREF, &Energy->current[0]);
     Bl0906ReadData(BL0906_WATT_1, BL0906_PREF, &Energy->active_power[0]);
     Bl0906ReadData(BL0906_CF_1_CNT, BL0906_EREF, &Energy->import_active[0]);
+    Energy->data_valid[0] = 0;
   } else if (2 == Bl0906.current_channel) {
     Bl0906ReadData(BL0906_I_2_RMS, BL0906_IREF, &Energy->current[1]);
     Bl0906ReadData(BL0906_WATT_2, BL0906_PREF, &Energy->active_power[1]);
     Bl0906ReadData(BL0906_CF_2_CNT, BL0906_EREF, &Energy->import_active[1]);
+    Energy->data_valid[1] = 0;
   } else if (3 == Bl0906.current_channel) {
     Bl0906ReadData(BL0906_I_3_RMS, BL0906_IREF, &Energy->current[2]);
     Bl0906ReadData(BL0906_WATT_3, BL0906_PREF, &Energy->active_power[2]);
     Bl0906ReadData(BL0906_CF_3_CNT, BL0906_EREF, &Energy->import_active[2]);
+    Energy->data_valid[2] = 0;
   } else if (4 == Bl0906.current_channel) {
     Bl0906ReadData(BL0906_I_4_RMS, BL0906_IREF, &Energy->current[3]);
     Bl0906ReadData(BL0906_WATT_4, BL0906_PREF, &Energy->active_power[3]);
     Bl0906ReadData(BL0906_CF_4_CNT, BL0906_EREF, &Energy->import_active[3]);
+    Energy->data_valid[3] = 0;
   } else if (5 == Bl0906.current_channel) {
     Bl0906ReadData(BL0906_I_5_RMS, BL0906_IREF, &Energy->current[4]);
     Bl0906ReadData(BL0906_WATT_5, BL0906_PREF, &Energy->active_power[4]);
     Bl0906ReadData(BL0906_CF_5_CNT, BL0906_EREF, &Energy->import_active[4]);
+    Energy->data_valid[4] = 0;
   } else if (6 == Bl0906.current_channel) {
     Bl0906ReadData(BL0906_I_6_RMS, BL0906_IREF, &Energy->current[5]);
     Bl0906ReadData(BL0906_WATT_6, BL0906_PREF, &Energy->active_power[5]);
     Bl0906ReadData(BL0906_CF_6_CNT, BL0906_EREF, &Energy->import_active[5]);
+    Energy->data_valid[5] = 0;
   } else if (8 == Bl0906.current_channel) {
     // Frequency
     Bl0906ReadData(BL0906_FREQUENCY, BL0906_FREF, &Energy->frequency[0]);
@@ -420,6 +431,9 @@ void Bl0906Loop(void) {
     EnergyUpdateTotal();
   } else {
     Bl0906.current_channel = UINT8_MAX - 1;  // Stop
+#ifdef DEBUG_BL0906
+    AddLog(LOG_LEVEL_DEBUG, PSTR("BL6: Stop polling"));
+#endif  // DEBUG_BL0906
   }
   if (Bl0906.current_channel == Energy->phase_count) {
     Bl0906.current_channel = 7;    // Skip next phases and go to frequency and voltage
