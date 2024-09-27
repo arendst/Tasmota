@@ -41,7 +41,6 @@ List AP clients (MAC, IP and RSSI) with command RgxClients on ESP32
 An example full static configuration:
 #define USE_WIFI_RANGE_EXTENDER
 #define USE_WIFI_RANGE_EXTENDER_NAPT
-#define USE_WIFI_RANGE_EXTENDER_CLIENTS
 #define WIFI_RGX_STATE 1
 #define WIFI_RGX_NAPT 1
 #define WIFI_RGX_SSID "rangeextender"
@@ -83,8 +82,8 @@ Backlog RgxSSID rangeextender ; RgxPassword securepassword ; RgxAddress 192.168.
 // All good
 #else
 #error CONFIG_LWIP_IPV4_NAPT not set, arduino-esp32 v2 or later required with CONFIG_LWIP_IPV4_NAPT support
-#endif // IP_NAPT
 #endif // CONFIG_LWIP_IPV4_NAPT
+#endif // CONFIG_LWIP_IP_FORWARD
 #endif // ESP32
 
 const char kDrvRgxCommands[] PROGMEM = "Rgx|" // Prefix
@@ -131,6 +130,7 @@ void (*const DrvRgxCommand[])(void) PROGMEM = {
 #include "lwip/lwip_napt.h"
 #include <dhcpserver/dhcpserver.h>
 #include "esp_wifi.h"
+#include "esp_wifi_ap_get_sta_list.h"
 #endif // ESP32
 
 #define RGX_NOT_CONFIGURED 0
@@ -182,16 +182,16 @@ void CmndRgxClients(void)
 
 #if defined(ESP32)
   wifi_sta_list_t wifi_sta_list = {0};
-  tcpip_adapter_sta_list_t adapter_sta_list = {0};
+  wifi_sta_mac_ip_list_t wifi_sta_mac_ip_list = {0};
 
   esp_wifi_ap_get_sta_list(&wifi_sta_list);
-  tcpip_adapter_get_sta_list(&wifi_sta_list, &adapter_sta_list);
+  esp_wifi_ap_get_sta_list_with_ip(&wifi_sta_list, &wifi_sta_mac_ip_list);
 
-  for (int i=0; i<adapter_sta_list.num; i++)
+  for (int i=0; i<wifi_sta_mac_ip_list.num; i++)
   {
-    const uint8_t *m = adapter_sta_list.sta[i].mac;
+    const uint8_t *m = wifi_sta_mac_ip_list.sta[i].mac;
     ResponseAppend_P(PSTR("%s\"%02X%02X%02X%02X%02X%02X\":{\"" D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_RSSI "\":%d}"),
-      sep, m[0], m[1], m[2], m[3], m[4], m[5], adapter_sta_list.sta[i].ip, wifi_sta_list.sta[i].rssi);
+      sep, m[0], m[1], m[2], m[3], m[4], m[5], wifi_sta_mac_ip_list.sta[i].ip, wifi_sta_list.sta[i].rssi);
     sep = ",";
   }
 #elif defined(ESP8266)
@@ -347,14 +347,14 @@ void CmndRgxPort(void)
   // Forward address is a mac, find the associated ip...
 #if defined(ESP32)
   wifi_sta_list_t wifi_sta_list = {0};
-  tcpip_adapter_sta_list_t adapter_sta_list = {0};
+  wifi_sta_mac_ip_list_t wifi_sta_mac_ip_list = {0};
 
   esp_wifi_ap_get_sta_list(&wifi_sta_list);
-  tcpip_adapter_get_sta_list(&wifi_sta_list, &adapter_sta_list);
+  esp_wifi_ap_get_sta_list_with_ip(&wifi_sta_list, &wifi_sta_mac_ip_list);
 
-  for (int i=0; i<adapter_sta_list.num; i++)
+  for (int i=0; i<wifi_sta_mac_ip_list.num; i++)
   {
-    if (CmndRgxPortMapCheck(adapter_sta_list.sta[i].mac, parm_addr, proto, gw, adapter_sta_list.sta[i].ip.addr, dst))
+    if (CmndRgxPortMapCheck(wifi_sta_mac_ip_list.sta[i].mac, parm_addr, proto, gw, wifi_sta_mac_ip_list.sta[i].ip.addr, dst))
     {
       break;
     }
@@ -400,14 +400,16 @@ void rngxSetup()
 #endif // ESP8266
 #ifdef ESP32
   esp_err_t err;
-  tcpip_adapter_dns_info_t ip_dns;
+  esp_netif_t* esp_netif_STA = get_esp_interface_netif(ESP_IF_WIFI_STA);
+  esp_netif_t* esp_netif_AP = get_esp_interface_netif(ESP_IF_WIFI_AP);
+  esp_netif_dns_info_t ip_dns;
 
-  err = tcpip_adapter_dhcps_stop(TCPIP_ADAPTER_IF_AP);
-  err = tcpip_adapter_get_dns_info(TCPIP_ADAPTER_IF_STA, ESP_NETIF_DNS_MAIN, &ip_dns);
-  err = tcpip_adapter_set_dns_info(TCPIP_ADAPTER_IF_AP, ESP_NETIF_DNS_MAIN, &ip_dns);
+  err = esp_netif_dhcps_stop(esp_netif_AP);
+  err = esp_netif_get_dns_info(esp_netif_STA, ESP_NETIF_DNS_MAIN, &ip_dns);
+  err = esp_netif_set_dns_info(esp_netif_AP, ESP_NETIF_DNS_MAIN, &ip_dns);
   dhcps_offer_t opt_val = OFFER_DNS; // supply a dns server via dhcps
-  tcpip_adapter_dhcps_option(ESP_NETIF_OP_SET, ESP_NETIF_DOMAIN_NAME_SERVER, &opt_val, 1);
-  err = tcpip_adapter_dhcps_start(TCPIP_ADAPTER_IF_AP);
+  err = esp_netif_dhcps_option(esp_netif_AP, ESP_NETIF_OP_SET, ESP_NETIF_DOMAIN_NAME_SERVER, &opt_val, 1);
+  err = esp_netif_dhcps_start(esp_netif_AP);
 #endif // ESP32
   // WiFi.softAPConfig(EXTENDER_LOCAL_IP, EXTENDER_GATEWAY_IP, EXTENDER_SUBNET);
   WiFi.softAPConfig(Settings->ipv4_rgx_address, Settings->ipv4_rgx_address, Settings->ipv4_rgx_subnetmask);
