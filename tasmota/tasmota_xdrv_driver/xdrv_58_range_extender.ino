@@ -83,15 +83,7 @@ Backlog RgxSSID rangeextender ; RgxPassword securepassword ; RgxAddress 192.168.
 #else
 #error CONFIG_LWIP_IPV4_NAPT not set, arduino-esp32 v2 or later required with CONFIG_LWIP_IPV4_NAPT support
 #endif // CONFIG_LWIP_IPV4_NAPT
-#ifdef IP_NAPT_PORTMAP
-// All good
-#else
-#warning IP_NAPT_PORTMAP not set, arduino-esp32 v2 or later required with IP_NAPT_PORTMAP support
-#ifdef USE_WIFI_RANGE_EXTENDER_PORTADD
-#undef USE_WIFI_RANGE_EXTENDER_PORTADD
-#endif // USE_WIFI_RANGE_EXTENDER_PORTADD
-#endif // IP_NAPT_PORTMAP
-#endif // CONFIG_LWIP_IPV4_NAPT
+#endif // CONFIG_LWIP_IP_FORWARD
 #endif // ESP32
 
 const char kDrvRgxCommands[] PROGMEM = "Rgx|" // Prefix
@@ -101,10 +93,8 @@ const char kDrvRgxCommands[] PROGMEM = "Rgx|" // Prefix
 #ifdef USE_WIFI_RANGE_EXTENDER_NAPT
                                        "|"
                                        "NAPT"
-#ifdef USE_WIFI_RANGE_EXTENDER_PORTADD
                                        "|"
                                        "Port"
-#endif
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
                                        "|"
                                        "Clients"
@@ -119,9 +109,7 @@ void (*const DrvRgxCommand[])(void) PROGMEM = {
     &CmndRgxPassword,
 #ifdef USE_WIFI_RANGE_EXTENDER_NAPT
     &CmndRgxNAPT,
-#ifdef USE_WIFI_RANGE_EXTENDER_PORTADD
     &CmndRgxPort,
-#endif
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
     &CmndRgxClients,
     &CmndRgxAddresses,
@@ -301,7 +289,6 @@ void CmndRgxNAPT(void)
   ResponseCmndStateText(Settings->sbflag1.range_extender_napt);
 }
 
-#ifdef USE_WIFI_RANGE_EXTENDER_PORTADD
 // CmndRgxPort helper: Do port map and set response if successful
 void CmndRgxPortMap(uint8_t proto, uint16_t gw_port, uint32_t dst_ip, uint16_t dst_port)
 {
@@ -385,7 +372,6 @@ void CmndRgxPort(void)
   wifi_softap_free_station_info();
 #endif // ESP8266
 }
-#endif
 #endif // USE_WIFI_RANGE_EXTENDER_NAPT
 
 void ResponseRgxConfig(void)
