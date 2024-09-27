@@ -27,6 +27,7 @@
  * SetOption21 1          - Display Voltage
  * SetOption129 1         - Display energy for each phase instead of single sum
  * SetOption150 1         - Display no common voltage/frequency
+ * EnergyExportActive 1   - Enable display of Export Active energy based on negative Active Power
  \*********************************************************************************************/
 
 #define XNRG_24                     24

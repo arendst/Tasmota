@@ -86,6 +86,7 @@ typedef struct {
   float import_active[ENERGY_MAX_PHASES];       // 123.123 kWh
   float export_active[ENERGY_MAX_PHASES];       // 123.123 kWh
   float start_energy[ENERGY_MAX_PHASES];        // 12345.12345 kWh total previous
+  float start_export_energy[ENERGY_MAX_PHASES]; // 12345.12345 kWh total previous
   float daily[ENERGY_MAX_PHASES];               // 123.123 kWh
   float total[ENERGY_MAX_PHASES];               // 12345.12345 kWh total energy
   float daily_sum;                              // 123.123 kWh
@@ -357,9 +358,14 @@ void EnergyUpdateTotal(void) {
 
     if (0 == Energy->start_energy[i] || (Energy->import_active[i] < Energy->start_energy[i])) {
       Energy->start_energy[i] = Energy->import_active[i];            // Init after restart and handle roll-over if any
+      Energy->start_export_energy[i] = (float)(RtcSettings.energy_kWhexport_ph[i]) / 1000;  // Init after restart
     }
     else if (Energy->import_active[i] != Energy->start_energy[i]) {
-      Energy->kWhtoday[i] = (int32_t)((Energy->import_active[i] - Energy->start_energy[i]) * 100000);
+      if (Energy->local_energy_active_export && (Energy->active_power[i] < 0)) {
+        RtcSettings.energy_kWhexport_ph[i] = (int32_t)((Energy->start_export_energy[i] + Energy->import_active[i] - Energy->start_energy[i]) * 1000);
+      } else {
+        Energy->kWhtoday[i] = (int32_t)((Energy->import_active[i] - Energy->start_energy[i]) * 100000);
+      }
     }
 
     if ((Energy->total[i] < (Energy->import_active[i] - 0.01f)) &&   // We subtract a little offset of 10Wh to avoid continuous updates
@@ -779,13 +785,18 @@ void CmndEnergyToday(void) {
 }
 
 void CmndEnergyExportActive(void) {
-  if (Energy->local_energy_active_export) {
-    // EnergyExportActive1 24
-    // EnergyExportActive1 24,1650111291
-    uint32_t values[2] = { 0 };
-    uint32_t params = ParseParameters(2, values);
+  // EnergyExportActive 0           - Disable local energy_active_export support
+  // EnergyExportActive 1           - Enable local energy_active_export support
+  uint32_t values[2] = { 0 };
+  uint32_t params = ParseParameters(2, values);
 
-    if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Energy->phase_count) && (params > 0)) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Energy->phase_count) && (params > 0)) {
+    if (!XdrvMailbox.usridx) {
+      Energy->local_energy_active_export = values[0] &1;
+    }
+    else if (Energy->local_energy_active_export) {
+      // EnergyExportActive1 24
+      // EnergyExportActive1 24,1650111291
       uint32_t phase = XdrvMailbox.index -1;
       // Reset Energy Export Active
       RtcSettings.energy_kWhexport_ph[phase] = (int32_t)values[0];
@@ -794,7 +805,12 @@ void CmndEnergyExportActive(void) {
         Settings->energy_kWhtotal_time = values[1];
       }
     }
+  }
+  if (Energy->local_energy_active_export) {
     ResponseCmndEnergyTotalYesterdayToday();
+  } else {
+    Energy->export_active[0] = NAN;  // Disable display of unused export_active
+    ResponseCmndStateText(Energy->local_energy_active_export);
   }
 }
 
