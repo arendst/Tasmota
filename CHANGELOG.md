@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [14.2.0.6]
 ### Added
+- Support for Sonoff SPM v1.3.0 (#13447)
 
 ### Breaking Changed
 
@@ -12,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 platform update from 2024.09.10 to 2024.09.30 and Framework (Arduino Core) from v3.0.5 to v3.1.0.240926 (#22203)
 
 ### Fixed
+- ESP32 Range Extender compile error with core 3.0.0 (#22205)
 
 ### Removed
 
