@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - ESP32 Range Extender compile error with core 3.0.0 (#22205)
+- HASPmota error when page '1' is not defined
 
 ### Removed
 
