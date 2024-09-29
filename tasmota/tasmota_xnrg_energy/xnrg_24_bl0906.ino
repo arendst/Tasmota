@@ -460,7 +460,7 @@ void Bl0906EverySecond(void) {
 
 void Bl0906Show(bool json) {
   if (json) {
-    ResponseAppend_P(JSON_SNS_F_TEMP, "BL0909", Settings->flag2.temperature_resolution, &Bl0906.temperature);
+    ResponseAppend_P(JSON_SNS_F_TEMP, "BL0906", Settings->flag2.temperature_resolution, &Bl0906.temperature);
     if (0 == TasmotaGlobal.tele_period) {
 #ifdef USE_DOMOTICZ
       DomoticzFloatSensor(DZ_TEMP, Bl0906.temperature);
