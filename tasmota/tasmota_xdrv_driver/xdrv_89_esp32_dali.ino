@@ -386,17 +386,20 @@ void DaliPreInit() {
         AddLog(LOG_LEVEL_INFO, PSTR("DLI: Memory allocation error"));
         return;
     }
+//  Arduino Core < 3
 //    Dali->timer = timerBegin(DALI_TIMER, 13, true);
-    Dali->timer = timerBegin(12307692);  // 160MHz????? / 13
+//    timerAttachInterrupt(Dali->timer, &DALI_Tick_Handler, true);
+//    timerAlarmWrite(Dali->timer, 641, true);
+
+//  Arduino Core > 3
+    Dali->timer = timerBegin(6153846);  // 80MHz / 13
     if (nullptr == Dali->timer) {
-        AddLog(LOG_LEVEL_INFO, PSTR("DLI: Bad timer init"));
+        AddLog(LOG_LEVEL_INFO, PSTR("DLI: No timer available"));
         free(Dali);
         Dali = nullptr;
         return;
     }
-//    timerAttachInterrupt(Dali->timer, &DALI_Tick_Handler, true);
     timerAttachInterrupt(Dali->timer, &DALI_Tick_Handler);
-//    timerAlarmWrite(Dali->timer, 641, true);
     timerAlarm(Dali->timer, 641, true, 0);
     
     attachInterrupt(Pin(GPIO_DALI_RX), receiveDaliData, FALLING);
