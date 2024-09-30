@@ -14,8 +14,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - ESP32 Range Extender compile error with core 3.0.0 (#22205)
-- HASPmota error when page '1' is not defined
-- uDisplay force cache writes to RGB display on ESP32S3
+- HASPmota error when page '1' is not defined (#22220)
+- ESP32-S3 uDisplay force cache writes to RGB display (#22222)
 
 ### Removed
 
