@@ -730,8 +730,7 @@ miel_hvac_cmnd_settemp(void)
 		return;
 
 	degc = strtof(XdrvMailbox.data, nullptr);
-	if (degc < MIEL_HVAC_UPDATE_TEMP_MIN ||
-		degc > MIEL_HVAC_UPDATE_TEMP_MAX)
+	if (degc < MIEL_HVAC_UPDATE_TEMP_MIN || degc > MIEL_HVAC_UPDATE_TEMP_MAX)
 	{
 		miel_hvac_respond_unsupported();
 		return;
@@ -814,8 +813,7 @@ miel_hvac_remotetemp_degc2old(long degc)
 	else if (degc > MIEL_HVAC_REMOTETEMP_OLD_MAX)
 		degc = MIEL_HVAC_REMOTETEMP_OLD_MIN;
 
-	return ((degc - MIEL_HVAC_REMOTETEMP_OLD_MIN) *
-			MIEL_HVAC_REMOTETEMP_OLD_FACTOR);
+	return ((degc - MIEL_HVAC_REMOTETEMP_OLD_MIN) * MIEL_HVAC_REMOTETEMP_OLD_FACTOR);
 }
 
 static void
@@ -861,8 +859,7 @@ miel_hvac_cmnd_remotetemp(void)
 	 */
 
 	rt->temp_old = miel_hvac_remotetemp_degc2old(degc);
-	rt->temp = (degc + MIEL_HVAC_REMOTETEMP_OFFSET) *
-			   MIEL_HVAC_REMOTETEMP_OLD_FACTOR;
+	rt->temp = (degc + MIEL_HVAC_REMOTETEMP_OFFSET) * MIEL_HVAC_REMOTETEMP_OLD_FACTOR;
 }
 
 #ifdef MIEL_HVAC_DEBUG
@@ -886,8 +883,7 @@ miel_hvac_cmnd_request(void)
  */
 
 static void
-miel_hvac_log_bytes(struct miel_hvac_softc *sc, const char *name,
-					const void *buf, size_t len)
+miel_hvac_log_bytes(struct miel_hvac_softc *sc, const char *name, const void *buf, size_t len)
 {
 	char hex[(MIEL_HVAC_DATABUFLEN + 1) * 2];
 	const unsigned char *b = (const unsigned char *)buf;
@@ -909,8 +905,7 @@ miel_hvac_publish_settings(struct miel_hvac_softc *sc)
 	char temp[33];
 	const char *name;
 
-	Response_P(PSTR("{\"" D_JSON_IRHVAC_POWER "\":\"%s\""),
-			   set->power ? "ON" : "OFF");
+	Response_P(PSTR("{\"" D_JSON_IRHVAC_POWER "\":\"%s\""), set->power ? "ON" : "OFF");
 
 	name = miel_hvac_map_byval(set->mode & MIEL_HVAC_SETTINGS_MODE_MASK, miel_hvac_mode_map, nitems(miel_hvac_mode_map));
 	if (name != NULL)
@@ -1114,8 +1109,7 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 
 	ResponseAppend_P(PSTR(","
 						  "\"MiElHVAC\":{"));
-	ResponseAppend_P(PSTR("\"Power\":\"%s\""),
-					 set->power ? "ON" : "OFF");
+	ResponseAppend_P(PSTR("\"Power\":\"%s\""), set->power ? "ON" : "OFF");
 
 	if (sc->sc_temp.type != 0)
 	{
@@ -1203,8 +1197,7 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 	{
 		ResponseAppend_P(PSTR(","
 							  "\"roomtemp\":\"%s\""),
-						 ToHex_P((uint8_t *)&sc->sc_temp, sizeof(sc->sc_temp),
-								 hex, sizeof(hex)));
+						 ToHex_P((uint8_t *)&sc->sc_temp, sizeof(sc->sc_temp), hex, sizeof(hex)));
 	}
 
 	if (sc->sc_status.type != 0)
