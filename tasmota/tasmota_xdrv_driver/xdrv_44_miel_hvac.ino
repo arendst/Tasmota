@@ -1202,7 +1202,7 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		    &sc->sc_status.data.status;
 
 		ResponseAppend_P(PSTR(",\"Operation\":\"%s\""),
-		    s->operation ? "ON" : "OFF";
+		    s->operation ? "ON" : "OFF");
 		ResponseAppend_P(PSTR(",\"Compressor\":\"%s\""),
 		    s->compressor ? "ON" : "OFF");	
 	}
