@@ -1201,26 +1201,26 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		const struct miel_hvac_data_status *s =
 		    &sc->sc_status.data.status;
 
-		ResponseAppend_P(PSTR(",\"Operation\":\"%s\"" ","
-		    "\"Compressor\":\"%s\""), sep,
-		    s->operation ? "ON" : "OFF",
-		    s->compressor ? "ON" : "OFF");
+		ResponseAppend_P(PSTR(",\"Operation\":\"%s\""),
+		    s->operation ? "ON" : "OFF";
+		ResponseAppend_P(PSTR(",\"Compressor\":\"%s\""),
+		    s->compressor ? "ON" : "OFF");	
 	}
 
 	if (sc->sc_temp.type != 0) {
-		ResponseAppend_P(PSTR(",\"roomtemp\":\"%s\""), sep,
+		ResponseAppend_P(PSTR(",\"roomtemp\":\"%s\""),
 		    ToHex_P((uint8_t *)&sc->sc_temp, sizeof(sc->sc_temp),
 		    hex, sizeof(hex)));
 	}
 
 	if (sc->sc_status.type != 0) {
-		ResponseAppend_P(PSTR(",\"status\":\"%s\""), sep,
+		ResponseAppend_P(PSTR(",\"status\":\"%s\""),
 		    ToHex_P((uint8_t *)&sc->sc_status, sizeof(sc->sc_status),
 		    hex, sizeof(hex)));
 	}
 
 	if (sc->sc_stage.type != 0) {
-		ResponseAppend_P(PSTR(",\"stage\":\"%s\""), sep,
+		ResponseAppend_P(PSTR(",\"stage\":\"%s\""),
 		    ToHex_P((uint8_t *)&sc->sc_stage, sizeof(sc->sc_stage),
 		    hex, sizeof(hex)));
 	}
