@@ -1131,7 +1131,7 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 	const char *name;
 
 	ResponseAppend_P(PSTR("," "\"MiElHVAC\":{"));
-	ResponseAppend_P(PSTR("{"\"Power\":\"%s\""),
+	ResponseAppend_P(PSTR("\"Power\":\"%s\""),
 	    set->power ? "ON" : "OFF");
 
 	name = miel_hvac_map_byval( set->mode &
