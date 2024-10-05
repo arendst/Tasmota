@@ -223,6 +223,7 @@ enum UserSelectablePins {
   GPIO_ASR650X_TX, GPIO_ASR650X_RX,     // ASR650X LoRaWan node Serial interface
   GPIO_WOOLIIS_RX,                      // Wooliis Battery capacity monitor Serial RX
   GPIO_ADC_VOLTAGE, GPIO_ADC_CURRENT,   // Analog Voltage and Current
+  GPIO_BL0906_RX,                       // BL0906 Serial interface
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -233,7 +234,7 @@ enum ProgramSelectablePins {
   GPIO_USER,           // User configurable needs to be 2047
   GPIO_MAX };
 
-#define MAX_OPTIONS_A  8                   // Increase if more bits are used from GpioOptionABits
+#define MAX_OPTIONS_A  9                   // Increase if more bits are used from GpioOptionABits
 
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
@@ -246,7 +247,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t linkind_support : 1;          // bit 5 (v10.1.0.4)  - Option_A6 - (Light) LinkInd support
     uint32_t shelly_pro : 1;               // bit 6 (v12.2.0.1)  - Option_A7 - (Device) Shelly Pro
     uint32_t ifan04_h : 1;                 // bit 7 (v14.1.0.4)  - Option_A8 - (Device) Sonoff ifan04-H
-    uint32_t spare08 : 1;                  // bit 8
+    uint32_t berry_energy : 1;             // bit 8 (v14.2.0.4)  - Option_A9 - (Energy) Enable Berry energy driver
     uint32_t spare09 : 1;                  // bit 9
     uint32_t spare10 : 1;                  // bit 10
     uint32_t spare11 : 1;                  // bit 11
@@ -493,12 +494,18 @@ const char kSensorNames[] PROGMEM =
   D_GPIO_ASR650X_TX "|" D_GPIO_ASR650X_RX "|"
   D_SENSOR_WOOLIIS_RX "|"
   D_SENSOR_ADC_VOLTAGE "|" D_SENSOR_ADC_CURRENT "|"
+  D_SENSOR_BL0906_RX "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
   D_SENSOR_USER;
 
 // Max number of GPIOs
+#define MAX_I2C          0              // Display no index if one bus
+#ifdef USE_I2C_BUS2
+#undef MAX_I2C
+#define MAX_I2C          2
+#endif
 #define MAX_MAX31855S    6
 #define MAX_MAX31865S    6
 #define MAX_MCP23XXX     6
@@ -512,6 +519,7 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_BP1658CJ_DAT 16
 #define MAX_DINGTIAN_SHIFT  4
 #define MAX_MAGIC_SWITCH_MODES   2
+#define MAX_BL0906_RX    6              // Model number of phases, 2 (EM2), 6 (EM6)
 #define MAX_BL0942_RX    8              // Baudrates 1/5 (4800), 2/6 (9600), 3/7 (19200), 4/8 (38400), Support Positive values only 1..4, Support also negative values 5..8
 #define MAX_CSE7761      2              // Model 1/2 (DUALR3), 2/2 (POWCT)
 
@@ -939,11 +947,16 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SOLAXX1_TX),               // Solax Inverter tx pin
   AGPIO(GPIO_SOLAXX1_RX),               // Solax Inverter rx pin
   AGPIO(GPIO_SOLAXX1_RTS),              // Solax Inverter RTS pin
-#endif // USE_SOLAX_X1
+#endif  // USE_SOLAX_X1
 #ifdef USE_LE01MR
   AGPIO(GPIO_LE01MR_TX),                // F7F LE-01MR energy meter tx pin
   AGPIO(GPIO_LE01MR_RX),                // F7F LE-01MR energy meter rx pin
-#endif // IFDEF:USE_LE01MR
+#endif  // USE_LE01MR
+#ifdef ESP32
+#ifdef USE_BL0906
+  AGPIO(GPIO_BL0906_RX) + MAX_BL0906_RX,  // BL0906 Serial interface (Athom EM6)
+#endif  // USE_BL0906
+#endif  // ESP32
 #if defined(USE_BL0940) || defined(USE_BL09XX)
   AGPIO(GPIO_BL0939_RX),                // BL0939 Serial interface (Dual R3 v2)
   AGPIO(GPIO_BL0940_RX),                // BL0940 Serial interface

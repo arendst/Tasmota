@@ -16,10 +16,12 @@
  *      DEFINES
  *********************/
 
+#define CACHE_NAME  "FREETYPE_GLYPH"
+
 /**********************
  *      TYPEDEFS
  **********************/
-typedef struct _lv_freetype_glyph_cache_data_t {
+typedef struct lv_freetype_glyph_cache_data_t {
     uint32_t unicode;
     uint32_t size;
 
@@ -59,6 +61,7 @@ lv_cache_t * lv_freetype_create_glyph_cache(uint32_t cache_size)
 
     lv_cache_t * glyph_cache = lv_cache_create(&lv_cache_class_lru_rb_count, sizeof(lv_freetype_glyph_cache_data_t),
                                                cache_size, ops);
+    lv_cache_set_name(glyph_cache, CACHE_NAME);
 
     return glyph_cache;
 }
@@ -129,13 +132,15 @@ static bool freetype_glyph_create_cb(lv_freetype_glyph_cache_data_t * data, void
 
     lv_font_glyph_dsc_t * dsc_out = &data->glyph_dsc;
 
+    lv_mutex_lock(&dsc->cache_node->face_lock);
     FT_Face face = dsc->cache_node->face;
     FT_UInt glyph_index = FT_Get_Char_Index(face, data->unicode);
 
     FT_Set_Pixel_Sizes(face, 0, dsc->size);
-    error = FT_Load_Glyph(face, glyph_index,  FT_LOAD_COMPUTE_METRICS | FT_LOAD_NO_BITMAP);
+    error = FT_Load_Glyph(face, glyph_index,  FT_LOAD_COMPUTE_METRICS | FT_LOAD_NO_BITMAP | FT_LOAD_NO_AUTOHINT);
     if(error) {
         FT_ERROR_MSG("FT_Load_Glyph", error);
+        lv_mutex_unlock(&dsc->cache_node->face_lock);
         return false;
     }
 
@@ -170,7 +175,9 @@ static bool freetype_glyph_create_cb(lv_freetype_glyph_cache_data_t * data, void
     }
 
     dsc_out->is_placeholder = glyph_index == 0;
-    dsc_out->glyph_index = glyph_index;
+    dsc_out->gid.index = (uint32_t)glyph_index;
+
+    lv_mutex_unlock(&dsc->cache_node->face_lock);
 
     return true;
 }

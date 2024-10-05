@@ -69,7 +69,7 @@ uint8_t Sht3xComputeCrc(uint8_t data[], uint8_t len) {
 
 bool Sht3xRead(uint32_t sensor) {
   if (sht3x_sensors[sensor].valid) { sht3x_sensors[sensor].valid--; }
-
+/*
   TwoWire& myWire = I2cGetWire(sht3x_sensors[sensor].bus);
   if (&myWire == nullptr) { return false; }   // No valid I2c bus
   uint32_t type = sht3x_sensors[sensor].type;
@@ -97,12 +97,43 @@ bool Sht3xRead(uint32_t sensor) {
   if (myWire.endTransmission() != 0) {        // Stop I2C transmission
     return false;
   }
+*/
+  uint32_t type = sht3x_sensors[sensor].type;
+  uint8_t i2c_address = sht3x_sensors[sensor].address;
+  uint8_t i2c_bus = sht3x_sensors[sensor].bus;
+  switch (type) {
+    case SHT3X_TYPE_SHT3X:
+      // TODO: Clock stretching is used for SHT3x but not for SHTC3. Why?
+      if (!I2cWrite8(i2c_address, 0x2C, 0x06, i2c_bus)) {  // Enable clock stretching / High repeatability measurement
+        return false;
+      }
+      break;
+    case SHT3X_TYPE_SHTCX:
+      if (!I2cWrite8(i2c_address, 0x35, 0x17, i2c_bus)) {  // Wake from sleep
+        return false;
+      }
+      // TODO: Clock stretching is used for SHT3x but not for SHTC3. Why?
+      if (!I2cWrite8(i2c_address, 0x78, 0x66, i2c_bus)) {  // Disable clock stretching / Normal mode measurement
+        return false;
+      }
+      break;
+    case SHT3X_TYPE_SHT4X:
+      if (!I2cWrite0(i2c_address, 0xFD, i2c_bus)) {  // High repeatability measurement
+        return false;
+      }
+      break;
+  }
+
   delay(30);                                  // Timing verified with logic analyzer (10 is too short)
   uint8_t data[6];
+/*
   myWire.requestFrom(i2c_address, (uint8_t)6); // Request 6 bytes of data
   for (uint32_t i = 0; i < 6; i++) {
     data[i] = myWire.read();                  // temperature (MSB, LSB, CRC), humidity (MSB, LSB, CRC)
   };
+*/
+  I2cReadBuffer0(i2c_address, data, 6, i2c_bus);
+
   if ((Sht3xComputeCrc(&data[0], 2) != data[2]) || (Sht3xComputeCrc(&data[3], 2) != data[5])) {
     return false;
   }
@@ -160,7 +191,7 @@ void Sht3xShow(bool json) {
       strlcpy(types, sht3x_sensors[idx].types, sizeof(types));
       if (sht3x_count > 1) {
         snprintf_P(types, sizeof(types), PSTR("%s%c%02X"), types, IndexSeparator(), sht3x_sensors[idx].address);  // "SHT3X-0xXX"  
-#ifdef ESP32
+#ifdef USE_I2C_BUS2
         if (TasmotaGlobal.i2c_enabled_2) {
           for (uint32_t i = 1; i < sht3x_count; i++) {
             if (sht3x_sensors[0].bus != sht3x_sensors[i].bus) {
@@ -169,7 +200,7 @@ void Sht3xShow(bool json) {
             }
           }
         }
-#endif
+#endif  // USE_I2C_BUS2
       }
       TempHumDewShow(json, ((0 == TasmotaGlobal.tele_period) && (0 == idx)), types, sht3x_sensors[idx].temp, sht3x_sensors[idx].humi);
     }

@@ -78,7 +78,8 @@ struct DALI {
 * @param  None
 * @retval None
 */
-void IRAM_ATTR DALI_Tick_Handler(void)
+void IRAM_ATTR DALI_Tick_Handler(void);
+void DALI_Tick_Handler(void)
 {
     if (getDaliFlag() == DALI_RECEIVING_DATA)
     {
@@ -97,7 +98,8 @@ void IRAM_ATTR DALI_Tick_Handler(void)
 */
 void enableDaliRxInterrupt() {
     Dali->flag = DALI_NO_ACTION;
-    timerAlarmDisable(Dali->timer);
+//    timerAlarmDisable(Dali->timer);
+    timerStop(Dali->timer);
     attachInterrupt(Pin(GPIO_DALI_RX), receiveDaliData, FALLING);
 }
 
@@ -107,7 +109,8 @@ void enableDaliRxInterrupt() {
 * @retval None
 */
 void disableRxInterrupt() {
-    timerAlarmEnable(Dali->timer);
+//    timerAlarmEnable(Dali->timer);
+    timerStart(Dali->timer);
 	detachInterrupt(Pin(GPIO_DALI_RX));
 }
 
@@ -383,9 +386,21 @@ void DaliPreInit() {
         AddLog(LOG_LEVEL_INFO, PSTR("DLI: Memory allocation error"));
         return;
     }
-     Dali->timer = timerBegin(DALI_TIMER, 13, true);
-    timerAttachInterrupt(Dali->timer, &DALI_Tick_Handler, true);
-    timerAlarmWrite(Dali->timer, 641, true);
+//  Arduino Core < 3
+//    Dali->timer = timerBegin(DALI_TIMER, 13, true);
+//    timerAttachInterrupt(Dali->timer, &DALI_Tick_Handler, true);
+//    timerAlarmWrite(Dali->timer, 641, true);
+
+//  Arduino Core > 3
+    Dali->timer = timerBegin(6153846);  // 80MHz / 13
+    if (nullptr == Dali->timer) {
+        AddLog(LOG_LEVEL_INFO, PSTR("DLI: No timer available"));
+        free(Dali);
+        Dali = nullptr;
+        return;
+    }
+    timerAttachInterrupt(Dali->timer, &DALI_Tick_Handler);
+    timerAlarm(Dali->timer, 641, true, 0);
     
     attachInterrupt(Pin(GPIO_DALI_RX), receiveDaliData, FALLING);
 	enableDaliRxInterrupt();

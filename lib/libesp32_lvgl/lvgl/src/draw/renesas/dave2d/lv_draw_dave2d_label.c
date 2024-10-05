@@ -30,7 +30,7 @@ static void lv_draw_dave2d_draw_letter_cb(lv_draw_unit_t * u, lv_draw_glyph_dsc_
     letter_coords = *glyph_draw_dsc->letter_coords;
 
     bool is_common;
-    is_common = _lv_area_intersect(&clip_area, glyph_draw_dsc->letter_coords, u->clip_area);
+    is_common = lv_area_intersect(&clip_area, glyph_draw_dsc->letter_coords, u->clip_area);
     if(!is_common) return;
 
     x = 0 - unit->base_unit.target_layer->buf_area.x1;
@@ -42,9 +42,7 @@ static void lv_draw_dave2d_draw_letter_cb(lv_draw_unit_t * u, lv_draw_glyph_dsc_
 #if LV_USE_OS
     lv_result_t  status;
     status = lv_mutex_lock(unit->pd2Mutex);
-    if(LV_RESULT_OK != status) {
-        __BKPT(0);
-    }
+    LV_ASSERT(LV_RESULT_OK == status);
 #endif
 
 #if D2_RENDER_EACH_OPERATION
@@ -155,9 +153,7 @@ static void lv_draw_dave2d_draw_letter_cb(lv_draw_unit_t * u, lv_draw_glyph_dsc_
 
 #if LV_USE_OS
     status = lv_mutex_unlock(unit->pd2Mutex);
-    if(LV_RESULT_OK != status) {
-        __BKPT(0);
-    }
+    LV_ASSERT(LV_RESULT_OK == status);
 #endif
 }
 

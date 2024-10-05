@@ -41,7 +41,9 @@ lv_widgets = ['obj',
 lv_widgets_no_class = ['span', 'scale_section']      # widgets that don't have a lv_obj class
 # extra widgets
 lv_widgets = lv_widgets + [ 'chart', 'imagebutton', 'led', 'msgbox', 'spinbox', 'spinner', 'keyboard', 'tabview', 'tileview' , 'list',
-                            'animimg', 'calendar', 'menu']
+                            'animimg', 'calendar',
+                            'menu_page', 'menu_cont', 'menu_section', 'menu_separator', 'menu_sidebar_cont',
+                            'menu_main_cont', 'menu_sidebar_header', 'menu_main_header_cont', 'menu']
 
 # add qrcode
 lv_widgets = lv_widgets + [ 'qrcode' ]
@@ -280,6 +282,9 @@ class type_mapper_class:
     "lv_indev_read_cb_t",
     "lv_vector_path_t *",
     "lv_vector_path_quality_t",
+    "lv_color16_t",
+    "uint8_t *",
+    "lv_obj_t **",
   ]
 
   return_types = {
@@ -329,6 +334,7 @@ class type_mapper_class:
     "lv_text_align_t": "i",
     "lv_arc_mode_t": "i",
     "lv_bar_mode_t": "i",
+    "lv_bar_orientation_t": "i",
     "lv_event_code_t": "i",
     "lv_obj_flag_t": "i",
     "lv_slider_mode_t": "i",
@@ -356,6 +362,7 @@ class type_mapper_class:
     "lv_hit_test_info_t *": "c",  # treat as opaque pointer
     "lv_screen_load_anim_t": "i",
     "lv_display_render_mode_t": "i",
+    "lv_draw_task_type_t": "i",
     # "lv_vector_gradient_spread_t": "i",
     "lv_cover_res_t": "i",
     # "lv_vector_path_quality_t": "i",
@@ -397,6 +404,8 @@ class type_mapper_class:
     "lv_roller_mode_t": "i",
     "lv_table_cell_ctrl_t": "i",
 
+    "lv_calendar_chinese_t": "c",
+
     # arrays
     "constchar * []": "str_arr",
     # "char * []": "str_arr",
@@ -416,7 +425,7 @@ class type_mapper_class:
     "lv_draw_image_dsc_t *": "lv_draw_image_dsc",
     "lv_event_dsc_t *": "lv_event_dsc",
 
-    "_lv_obj_t *": "lv_obj",
+    # "_lv_obj_t *": "lv_obj",    // no more used in LVGL 9.2
     "lv_obj_t *": "lv_obj",
     "lv_event_t *": "lv_event",
     "lv_color_t": "lv_color",
@@ -425,7 +434,7 @@ class type_mapper_class:
     "lv_font_t *": "lv_font",
     "lv_theme_t *": "lv_theme",
     "lv_display_t *": "lv_display",
-    '_lv_display_t *': "lv_display",
+    # '_lv_display_t *': "lv_display",  // no more used in LVGL 9.2
     "lv_indev_t *": "lv_indev",
     "lv_point_t []": "lv_point_arr",
     "lv_span_t *": "lv_span",

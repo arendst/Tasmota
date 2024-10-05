@@ -640,14 +640,19 @@ void Cse7761DrvInit(void) {
 bool Cse7761Command(void) {
   bool serviced = true;
 
-  uint32_t channel = 0;
-  if (Energy->phase_count > 1) {
-    channel = (2 == XdrvMailbox.index) ? 1 : 0;
-  }
+  uint32_t channel = (2 == XdrvMailbox.index) && (Energy->phase_count > 1) ? 1 : 0;
   uint32_t value = (uint32_t)(CharToFloat(XdrvMailbox.data) * 100);  // 1.23 = 123
 
   if (CMND_POWERCAL == Energy->command_code) {
     if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = Cse7761Ref(PowerPAC); }
+    // Service in xdrv_03_energy.ino
+  }
+  else if (CMND_VOLTAGECAL == Energy->command_code) {
+    if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = Cse7761Ref(RmsUC); }
+    // Service in xdrv_03_energy.ino
+  }
+  else if (CMND_CURRENTCAL == Energy->command_code) {
+    if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = Cse7761Ref(RmsIAC); }
     // Service in xdrv_03_energy.ino
   }
   else if (CMND_POWERSET == Energy->command_code) {
@@ -657,20 +662,12 @@ bool Cse7761Command(void) {
       }
     }
   }
-  else if (CMND_VOLTAGECAL == Energy->command_code) {
-    if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = Cse7761Ref(RmsUC); }
-    // Service in xdrv_03_energy.ino
-  }
   else if (CMND_VOLTAGESET == Energy->command_code) {
     if (XdrvMailbox.data_len && CSE7761Data.voltage_rms) {
       if ((value > 10000) && (value < 40000)) {  // Between 100V and 400V
         XdrvMailbox.payload = (CSE7761Data.voltage_rms * 100) / value;
       }
     }
-  }
-  else if (CMND_CURRENTCAL == Energy->command_code) {
-    if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = Cse7761Ref(RmsIAC); }
-    // Service in xdrv_03_energy.ino
   }
   else if (CMND_CURRENTSET == Energy->command_code) {
     if (XdrvMailbox.data_len && CSE7761Data.current_rms[channel]) {

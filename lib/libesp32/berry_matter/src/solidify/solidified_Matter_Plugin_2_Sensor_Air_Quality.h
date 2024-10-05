@@ -3,8 +3,8 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
-// compact class 'Matter_Plugin_Sensor_Air_Quality' ktab size: 36, total: 73 (saved 296 bytes)
-static const bvalue be_ktab_class_Matter_Plugin_Sensor_Air_Quality[36] = {
+// compact class 'Matter_Plugin_Sensor_Air_Quality' ktab size: 37, total: 74 (saved 296 bytes)
+static const bvalue be_ktab_class_Matter_Plugin_Sensor_Air_Quality[37] = {
   /* K0   */  be_nested_str_weak(web_values_prefix),
   /* K1   */  be_nested_str_weak(Air),
   /* K2   */  be_nested_str_weak(shadow_air_quality),
@@ -36,11 +36,12 @@ static const bvalue be_ktab_class_Matter_Plugin_Sensor_Air_Quality[36] = {
   /* K28  */  be_nested_str_weak(set_or_nil),
   /* K29  */  be_nested_str_weak(U1),
   /* K30  */  be_nested_str_weak(read_attribute),
-  /* K31  */  be_nested_str_weak(ARG),
-  /* K32  */  be_nested_str_weak(_parse_sensor_entry),
-  /* K33  */  be_nested_str_weak(CarbonDioxide),
-  /* K34  */  be_nested_str_weak(parse_sensors),
-  /* K35  */  be_nested_str_weak(attribute_updated),
+  /* K31  */  be_nested_str_weak(parse_configuration),
+  /* K32  */  be_nested_str_weak(ARG),
+  /* K33  */  be_nested_str_weak(_parse_sensor_entry),
+  /* K34  */  be_nested_str_weak(CarbonDioxide),
+  /* K35  */  be_nested_str_weak(parse_sensors),
+  /* K36  */  be_nested_str_weak(attribute_updated),
 };
 
 
@@ -520,14 +521,20 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_configuration,   /
     &be_ktab_class_Matter_Plugin_Sensor_Air_Quality,     /* shared constants */
     be_str_weak(parse_configuration),
     &be_const_str_solidified,
-    ( &(const binstruction[ 7]) {  /* code */
-      0x60080008,  //  0000  GETGBL	R2	G8
-      0x8C0C030F,  //  0001  GETMET	R3	R1	K15
-      0x8814011F,  //  0002  GETMBR	R5	R0	K31
-      0x7C0C0400,  //  0003  CALL	R3	2
-      0x7C080200,  //  0004  CALL	R2	1
-      0x90022002,  //  0005  SETMBR	R0	K16	R2
-      0x80000000,  //  0006  RET	0
+    ( &(const binstruction[13]) {  /* code */
+      0x60080003,  //  0000  GETGBL	R2	G3
+      0x5C0C0000,  //  0001  MOVE	R3	R0
+      0x7C080200,  //  0002  CALL	R2	1
+      0x8C08051F,  //  0003  GETMET	R2	R2	K31
+      0x5C100200,  //  0004  MOVE	R4	R1
+      0x7C080400,  //  0005  CALL	R2	2
+      0x60080008,  //  0006  GETGBL	R2	G8
+      0x8C0C030F,  //  0007  GETMET	R3	R1	K15
+      0x88140120,  //  0008  GETMBR	R5	R0	K32
+      0x7C0C0400,  //  0009  CALL	R3	2
+      0x7C080200,  //  000A  CALL	R2	1
+      0x90022002,  //  000B  SETMBR	R0	K16	R2
+      0x80000000,  //  000C  RET	0
     })
   )
 );
@@ -557,16 +564,16 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_sensors,   /* name
       0x4C0C0000,  //  0003  LDNIL	R3
       0x200C0403,  //  0004  NE	R3	R2	R3
       0x780E0035,  //  0005  JMPF	R3	#003C
-      0x8C0C0120,  //  0006  GETMET	R3	R0	K32
+      0x8C0C0121,  //  0006  GETMET	R3	R0	K33
       0x5C140400,  //  0007  MOVE	R5	R2
-      0x58180021,  //  0008  LDCONST	R6	K33
+      0x58180022,  //  0008  LDCONST	R6	K34
       0x881C010A,  //  0009  GETMBR	R7	R0	K10
       0x60200007,  //  000A  GETGBL	R8	G7
       0x5426040C,  //  000B  LDINT	R9	1037
       0x58280013,  //  000C  LDCONST	R10	K19
       0x7C0C0E00,  //  000D  CALL	R3	7
       0x90021403,  //  000E  SETMBR	R0	K10	R3
-      0x8C0C0120,  //  000F  GETMET	R3	R0	K32
+      0x8C0C0121,  //  000F  GETMET	R3	R0	K33
       0x5C140400,  //  0010  MOVE	R5	R2
       0x58180003,  //  0011  LDCONST	R6	K3
       0x881C0104,  //  0012  GETMBR	R7	R0	K4
@@ -575,7 +582,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_sensors,   /* name
       0x58280013,  //  0015  LDCONST	R10	K19
       0x7C0C0E00,  //  0016  CALL	R3	7
       0x90020803,  //  0017  SETMBR	R0	K4	R3
-      0x8C0C0120,  //  0018  GETMET	R3	R0	K32
+      0x8C0C0121,  //  0018  GETMET	R3	R0	K33
       0x5C140400,  //  0019  MOVE	R5	R2
       0x58180005,  //  001A  LDCONST	R6	K5
       0x881C0106,  //  001B  GETMBR	R7	R0	K6
@@ -584,7 +591,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_sensors,   /* name
       0x58280013,  //  001E  LDCONST	R10	K19
       0x7C0C0E00,  //  001F  CALL	R3	7
       0x90020C03,  //  0020  SETMBR	R0	K6	R3
-      0x8C0C0120,  //  0021  GETMET	R3	R0	K32
+      0x8C0C0121,  //  0021  GETMET	R3	R0	K33
       0x5C140400,  //  0022  MOVE	R5	R2
       0x58180007,  //  0023  LDCONST	R6	K7
       0x881C0108,  //  0024  GETMBR	R7	R0	K8
@@ -593,7 +600,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_sensors,   /* name
       0x58280013,  //  0027  LDCONST	R10	K19
       0x7C0C0E00,  //  0028  CALL	R3	7
       0x90021003,  //  0029  SETMBR	R0	K8	R3
-      0x8C0C0120,  //  002A  GETMET	R3	R0	K32
+      0x8C0C0121,  //  002A  GETMET	R3	R0	K33
       0x5C140400,  //  002B  MOVE	R5	R2
       0x5818000D,  //  002C  LDCONST	R6	K13
       0x881C010E,  //  002D  GETMBR	R7	R0	K14
@@ -602,7 +609,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_sensors,   /* name
       0x58280013,  //  0030  LDCONST	R10	K19
       0x7C0C0E00,  //  0031  CALL	R3	7
       0x90021C03,  //  0032  SETMBR	R0	K14	R3
-      0x8C0C0120,  //  0033  GETMET	R3	R0	K32
+      0x8C0C0121,  //  0033  GETMET	R3	R0	K33
       0x5C140400,  //  0034  MOVE	R5	R2
       0x5818000B,  //  0035  LDCONST	R6	K11
       0x881C010C,  //  0036  GETMBR	R7	R0	K12
@@ -614,7 +621,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality_parse_sensors,   /* name
       0x600C0003,  //  003C  GETGBL	R3	G3
       0x5C100000,  //  003D  MOVE	R4	R0
       0x7C0C0200,  //  003E  CALL	R3	1
-      0x8C0C0722,  //  003F  GETMET	R3	R3	K34
+      0x8C0C0723,  //  003F  GETMET	R3	R3	K35
       0x5C140200,  //  0040  MOVE	R5	R1
       0x7C0C0400,  //  0041  CALL	R3	2
       0x80000000,  //  0042  RET	0
@@ -656,7 +663,7 @@ be_local_closure(class_Matter_Plugin_Sensor_Air_Quality__parse_sensor_entry,   /
       0x78220005,  //  000C  JMPF	R8	#0013
       0x20200E03,  //  000D  NE	R8	R7	R3
       0x78220003,  //  000E  JMPF	R8	#0013
-      0x8C200123,  //  000F  GETMET	R8	R0	K35
+      0x8C200124,  //  000F  GETMET	R8	R0	K36
       0x5C280A00,  //  0010  MOVE	R10	R5
       0x5C2C0C00,  //  0011  MOVE	R11	R6
       0x7C200600,  //  0012  CALL	R8	3

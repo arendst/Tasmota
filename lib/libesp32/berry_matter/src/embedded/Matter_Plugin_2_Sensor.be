@@ -57,6 +57,7 @@ class Matter_Plugin_Sensor : Matter_Plugin_Device
   #
   # Parse configuration map
   def parse_configuration(config)
+    super(self).parse_configuration(config)
     self.tasmota_sensor_filter = config.find(self.ARG#-'filter'-#)
     if self.tasmota_sensor_filter
       self.tasmota_sensor_matcher = tasmota.Rule_Matcher.parse(self.tasmota_sensor_filter)
@@ -82,24 +83,6 @@ class Matter_Plugin_Sensor : Matter_Plugin_Device
         self.shadow_value = val
       end
     end
-  end
-
-  #############################################################
-  # Called when the value changed compared to shadow value
-  #
-  # This must be overriden.
-  # This is where you call `self.attribute_updated(<cluster>, <attribute>)`
-  def value_changed()
-    # self.attribute_updated(0x0402, 0x0000)
-  end
-
-  #############################################################
-  # Pre-process value
-  #
-  # This must be overriden.
-  # This allows to convert the raw sensor value to the target one, typically int
-  def pre_value(val)
-    return val
   end
 
   #############################################################

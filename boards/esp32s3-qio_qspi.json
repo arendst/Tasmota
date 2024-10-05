@@ -21,7 +21,8 @@
     "openocd_target": "esp32s3.cfg"
   },
   "frameworks": [
-    "arduino"
+    "arduino",
+    "espidf"
   ],
   "name": "Espressif Generic ESP32-S3 >= 4M Flash QSPI PSRAM, Tasmota 2880k Code/OTA, 320k FS",
   "upload": {

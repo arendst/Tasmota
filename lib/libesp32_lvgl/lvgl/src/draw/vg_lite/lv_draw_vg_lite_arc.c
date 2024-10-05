@@ -7,6 +7,9 @@
  *      INCLUDES
  *********************/
 
+#include "../../misc/lv_area_private.h"
+#include "../lv_image_decoder_private.h"
+#include "../lv_draw_private.h"
 #include "lv_draw_vg_lite.h"
 
 #if LV_USE_DRAW_VG_LITE
@@ -52,17 +55,10 @@
 void lv_draw_vg_lite_arc(lv_draw_unit_t * draw_unit, const lv_draw_arc_dsc_t * dsc,
                          const lv_area_t * coords)
 {
-    if(dsc->opa <= LV_OPA_MIN)
-        return;
-    if(dsc->width <= 0)
-        return;
-    if(dsc->start_angle == dsc->end_angle)
-        return;
-
     lv_draw_vg_lite_unit_t * u = (lv_draw_vg_lite_unit_t *)draw_unit;
 
     lv_area_t clip_area;
-    if(!_lv_area_intersect(&clip_area, coords, draw_unit->clip_area)) {
+    if(!lv_area_intersect(&clip_area, coords, draw_unit->clip_area)) {
         /*Fully clipped, nothing to do*/
         return;
     }

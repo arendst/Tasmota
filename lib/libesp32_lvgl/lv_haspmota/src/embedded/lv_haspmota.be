@@ -10,6 +10,34 @@
 var haspmota = module("haspmota")
 
 #################################################################################
+# Bytes list
+#
+# This function takes a list of events (uin8) and returns a bytes object
+#
+# It is used only at compile time, and is not included in the final flash
+# The bytes object is far more compact than a list of ints and
+# does automatic deduplication if the same list occurs twice
+#################################################################################
+def list_to_bytes(l)
+  var b = bytes()
+  for v: l
+    b.add(v, 1)
+  end
+  return b
+end
+
+#################################################################################
+# Pre-defined events lists
+#################################################################################
+var EVENTS_NONE = list_to_bytes([])
+var EVENTS_TOUCH = list_to_bytes([lv.EVENT_PRESSED, lv.EVENT_CLICKED, lv.EVENT_PRESS_LOST, lv.EVENT_RELEASED,
+                                lv.EVENT_LONG_PRESSED, #-lv.EVENT_LONG_PRESSED_REPEAT-# ])
+var EVENTS_ALL = list_to_bytes([lv.EVENT_PRESSED, lv.EVENT_CLICKED, lv.EVENT_PRESS_LOST, lv.EVENT_RELEASED,
+                                lv.EVENT_LONG_PRESSED, #-lv.EVENT_LONG_PRESSED_REPEAT,-#
+                                lv.EVENT_VALUE_CHANGED ])   # adding VALUE_CHANGED
+
+
+#################################################################################
 # Class `lvh_root`
 #
 # Allows to map either a `lv_obj` for LVGL or arbitrary object
@@ -17,7 +45,8 @@ var haspmota = module("haspmota")
 #################################################################################
 #@ solidify:lvh_root,weak
 class lvh_root
-  static var _lv_class = nil        # _lv_class refers to the lvgl class encapsulated, and is overriden by subclasses
+  static var _lv_class = nil                # _lv_class refers to the lvgl class encapsulated, and is overriden by subclasses
+  static var _EVENTS = EVENTS_NONE
 
   # attributes to ignore when set at object level (they are managed by page)
   static var _attr_ignore = [
@@ -518,6 +547,7 @@ end
 class lvh_obj : lvh_root
   static var _lv_class = lv.obj     # _lv_class refers to the lvgl class encapsulated, and is overriden by subclasses
   static var _lv_part2_selector     # selector for secondary part (like knob of arc)
+  static var _EVENTS = EVENTS_ALL
 
   #====================================================================
   # Instance variables
@@ -583,9 +613,12 @@ class lvh_obj : lvh_root
     lv.EVENT_VALUE_CHANGED:       "changed",
   }
   def register_event_cb()
-    var oh = self._page._oh
-    for ev:self._event_map.keys()
-      oh.register_event(self, ev)
+    var hm = self._page._hm
+    var b = self._EVENTS
+    var i = 0
+    while (i < size(b))
+      hm.register_event(self, b[i])
+      i += 1
     end
   end
 
@@ -593,11 +626,11 @@ class lvh_obj : lvh_root
     # the callback avoids doing anything sophisticated in the cb
     # defer the actual action to the Tasmota event loop
     # print("-> CB fired","self",self,"obj",obj,"event",event.tomap(),"code",event.code)
-    var oh = self._page._oh         # haspmota global object
+    var hm = self._page._hm         # haspmota global object
     var code = event.get_code()     # materialize to a local variable, otherwise the value can change (and don't capture event object)
     if self.action != "" && code == lv.EVENT_CLICKED
       # if clicked and action is declared, do the page change event
-      tasmota.set_timer(0, /-> oh.do_action(self, code))
+      tasmota.set_timer(0, /-> hm.do_action(self, code))
     end
 
     var event_hasp = self._event_map.find(code)
@@ -606,16 +639,14 @@ class lvh_obj : lvh_root
 
       var tas_event_more = ""   # complementary data
       if code == lv.EVENT_VALUE_CHANGED
-        try
-          # try to get the new val
-          var val = self.val
-          if val != nil   tas_event_more = format(',"val":%s', json.dump(val)) end
-          var text = self.text
-          if text != nil
-            tas_event_more += ',"text":'
-            tas_event_more += json.dump(text)
-          end
-        except ..
+        import introspect
+        var val = introspect.get(self, "val")     # does not raise an exception if not found
+        if (val != nil && type(val) != 'module')
+          tas_event_more = f',"val":{json.dump(val)}'
+        end
+        var text = introspect.get(self, "text")     # does not raise an exception if not found
+        if (text != nil && type(text) != 'module')
+          tas_event_more += f',"text":{json.dump(text)}'
         end
       end
       var tas_event = format('{"hasp":{"p%ib%i":{"event":"%s"%s}}}', self._page._page_id, self.id, event_hasp, tas_event_more)
@@ -1096,6 +1127,8 @@ end
 #@ solidify:lvh_fixed,weak
 class lvh_fixed : lvh_obj
   # static var _lv_class = lv.obj # from parent class
+  # static var _EVENTS = EVENTS_ALL
+
   # label do not need a sub-label
   def post_init()
     super(self).post_init()         # call super
@@ -1115,6 +1148,7 @@ end
 #@ solidify:lvh_flex,weak
 class lvh_flex : lvh_fixed
   # static var _lv_class = lv.obj # from parent class
+  static var _EVENTS = EVENTS_NONE # inhetited
   # label do not need a sub-label
   def post_init()
     super(self).post_init()         # call super
@@ -1143,6 +1177,7 @@ end
 class lvh_arc : lvh_obj
   static var _lv_class = lv.arc
   static var _lv_part2_selector = lv.PART_KNOB
+  # static var _EVENTS = EVENTS_ALL
   var _label_angle                  # nil if none
 
   # line_width converts to arc_width
@@ -1223,6 +1258,7 @@ end
 class lvh_switch : lvh_obj
   static var _lv_class = lv.switch
   static var _lv_part2_selector = lv.PART_KNOB
+  # static var _EVENTS = EVENTS_ALL
   # map val to toggle
   def set_val(t)
     self._val = t
@@ -1239,6 +1275,7 @@ end
 #@ solidify:lvh_spinner,weak
 class lvh_spinner : lvh_arc
   static var _lv_class = lv.spinner
+  # static var _EVENTS = EVENTS_ALL # inherited
   var _speed, _angle
 
   # init
@@ -1356,6 +1393,7 @@ end
 #@ solidify:lvh_slider,weak
 class lvh_slider : lvh_obj
   static var _lv_class = lv.slider
+  # static var _EVENTS = EVENTS_ALL
 
   def set_val(t)
     self._val = t
@@ -1439,6 +1477,7 @@ end
 #@ solidify:lvh_dropdown,weak
 class lvh_dropdown : lvh_obj
   static var _lv_class = lv.dropdown
+  # static var _EVENTS = EVENTS_ALL
   var _symbol                         # we need to keep a reference to the string used for symbol to avoid GC
   static var _dir = [ lv.DIR_BOTTOM, lv.DIR_TOP, lv.DIR_LEFT, lv.DIR_RIGHT ] # 0 = down, 1 = up, 2 = left, 3 = right
 
@@ -1509,16 +1548,17 @@ end
 #@ solidify:lvh_dropdown_list,weak
 class lvh_dropdown_list : lvh_obj
   static var _lv_class = nil
+  # static var _EVENTS = EVENTS_NONE
 
   def post_init()
     self._lv_obj = nil                # default to nil object, whatever it was initialized with
     # check if it is the parent is a spangroup
-    if isinstance(self._parent_lvh, self._page._oh.lvh_dropdown)
+    if isinstance(self._parent_lvh, self._page._hm.lvh_dropdown)
       self._lv_obj = lv.list(self._parent_lvh._lv_obj.get_list()._p)
     else
       print("HSP: '_dropdown_list' should have a parent of type 'dropdown'")
     end
-    # super(self).post_init()         # call super - don't call post_init to not register a callback
+    super(self).post_init()
   end
 end
 
@@ -1531,7 +1571,7 @@ class lvh_bar : lvh_obj
   
   def post_init()
     super(self).post_init()
-    if isinstance(self._parent_lvh, self._page._oh.lvh_scale)
+    if isinstance(self._parent_lvh, self._page._hm.lvh_scale)
       # if sub-object of scale, copy min and max
       var min = self._parent_lvh._lv_obj.get_range_min_value()
       var max = self._parent_lvh._lv_obj.get_range_max_value()
@@ -1578,7 +1618,7 @@ class lvh_line : lvh_obj
       end
       var pt_arr = lv.point_arr(pts)
       self._lv_points = pt_arr
-      self._lv_obj.set_points(pt_arr, size(pts))
+      self._lv_obj.set_points_mutable(pt_arr, size(pts))
     else
       print(f"HSP: 'line' wrong format for 'points' {t}")
     end
@@ -1639,7 +1679,7 @@ class lvh_scale_section : lvh_root
     self._min = 0                     # default value by LVGL
     self._max = 0                     # default value by LVGL
     # check if it is the parent is a spangroup
-    if isinstance(self._parent_lvh, self._page._oh.lvh_scale)
+    if isinstance(self._parent_lvh, self._page._hm.lvh_scale)
       # print(">>> GOOD")
       self._lv_obj = self._parent_lvh._lv_obj.add_section()
       self._style = lv.style()        # we create a specific lv.style object for this object
@@ -1769,7 +1809,7 @@ class lvh_scale_line : lvh_line
 
   def post_init()
     # check if it is the parent is a spangroup
-    if !isinstance(self._parent_lvh, self._page._oh.lvh_scale)
+    if !isinstance(self._parent_lvh, self._page._hm.lvh_scale)
       print("HSP: 'scale_line' should have a parent of type 'scale'")
     end
     self._needle_length = 0
@@ -1792,11 +1832,11 @@ class lvh_scale_line : lvh_line
     super(self).set_val(t)
     self._parent_lvh._lv_obj.set_line_needle_value(self._lv_obj, self._needle_length, self._val)
     # work-around for points being global static
-    if (self._lv_obj.get_points_num() == 2)      # check that there are only 2 points
+    if (self._lv_obj.get_point_count() == 2)      # check that there are only 2 points
       # read back the computed points
       var p_arr = bytes(self._lv_obj.get_points(), size(self._lv_points))
       self._lv_points.setbytes(0, p_arr)
-      self._lv_obj.set_points(self._lv_points, 2)
+      self._lv_obj.set_points_mutable(self._lv_points, 2)
     end
   end
 end
@@ -1832,7 +1872,7 @@ class lvh_span : lvh_root
   def post_init()
     self._lv_obj = nil                # default to nil object, whatever it was initialized with
     # check if it is the parent is a spangroup
-    if isinstance(self._parent_lvh, self._page._oh.lvh_spangroup)
+    if isinstance(self._parent_lvh, self._page._hm.lvh_spangroup)
       # print(">>> GOOD")
       self._lv_obj = self._parent_lvh._lv_obj.new_span()
       self._style = self._lv_obj.get_style()
@@ -2055,7 +2095,9 @@ class lvh_checkbox : lvh_obj    static var _lv_class = lv.checkbox    end
 # class lvh_textarea : lvh_obj    static var _lv_class = lv.textarea    end
 # special case for scr (which is actually lv_obj)
 #@ solidify:lvh_scr,weak
-class lvh_scr : lvh_obj         static var _lv_class = nil            end    # no class for screen
+class lvh_scr : lvh_obj
+  static var _lv_class = nil    # no class for screen
+end
 
 
 #################################################################################
@@ -2070,7 +2112,7 @@ class lvh_page
   var _obj_id               # (map) of `lvh_obj` objects by id numbers
   var _page_id              # (int) id number of this page
   var _lv_scr               # (lv_obj) lvgl screen object
-  var _oh                   # HASPmota global object
+  var _hm                   # HASPmota global object
   # haspmota attributes for page are on item `#0`
   var prev, next, back      # (int) id values for `prev`, `next`, `back` buttons
 
@@ -2080,12 +2122,12 @@ class lvh_page
   # arg1: `page_number` (int) HASPmota page id
   #        defaults to `1` if not specified
   #        page 0 is special, visible on all pages. Internally uses `layer_top`
-  # arg2: `oh` global HASPmota monad object
+  # arg2: `hm` global HASPmota monad object
   #  page_number: haspmota page number, defaults to `1` if not specified
   #====================================================================
-  def init(page_number, oh)
+  def init(page_number, hm)
     import global
-    self._oh = oh                   # memorize HASPmota parent object
+    self._hm = hm                   # memorize HASPmota parent object
 
     # if no parameter, default to page #1
     page_number = int(page_number)
@@ -2097,9 +2139,7 @@ class lvh_page
     # initialize the LVGL object for the page
     # uses a lv_scr object except for page 0 where we use layer_top
     # page 1 is mapped directly to the default screen `scr_act`
-    if page_number == 1
-      self._lv_scr = lv.scr_act()   # default screen
-    elif page_number == 0
+    if page_number == 0
       self._lv_scr = lv.layer_top() # top layer, visible over all screens
     else
       self._lv_scr = lv.obj(0)      # allocate a new screen
@@ -2108,7 +2148,7 @@ class lvh_page
     end
 
     # page object is also stored in the object map at id `0` as instance of `lvg_scr`
-    var lvh_scr_class = self._oh.lvh_scr
+    var lvh_scr_class = self._hm.lvh_scr
     var obj_scr = lvh_scr_class(nil, self, nil, self._lv_scr)   # store screen in a virtual object
     self._obj_id[0] = obj_scr
 
@@ -2165,7 +2205,7 @@ class lvh_page
   #====================================================================
   #  `show` transition from one page to another
   #    duration: in ms, default 500 ms
-  #    anim: -1 right to left, 1 left to right (default)
+  #    anim: -1 right to left, 1 left to right (default), `nil` auto, 0 none
   #
   #  show this page, with animation
   #====================================================================
@@ -2185,25 +2225,29 @@ class lvh_page
     if self._lv_scr._p == lv.scr_act()._p return end    # do nothing
 
     # default duration of 500ms
-    if duration == nil  duration = 500 end
+    if (duration == nil)  duration = 500 end
 
     # if anim is `nil` try to guess the direction from current screen
     if anim == nil
-      anim = self._oh.page_dir_to(self.id())
+      anim = self._hm.page_dir_to(self.id())
     end
 
     # send page events
-    var event_str_in = format('{"hasp":{"p%i":"out"}}', self._oh.lvh_page_cur_idx)
+    var event_str_in = format('{"hasp":{"p%i":"out"}}', self._hm.lvh_page_cur_idx)
     tasmota.set_timer(0, /-> tasmota.publish_rule(event_str_in))
     var event_str_out = format('{"hasp":{"p%i":"in"}}', self._page_id)
     tasmota.set_timer(0, /-> tasmota.publish_rule(event_str_out))
 
     # change current page
-    self._oh.lvh_page_cur_idx = self._page_id
+    self._hm.lvh_page_cur_idx = self._page_id
 
-    var anim_lvgl = self.show_anim.find(anim, lv.SCR_LOAD_ANIM_NONE)
-    # load new screen with animation, no delay, 500ms transition time, no auto-delete
-    lv.screen_load_anim(self._lv_scr, anim_lvgl, duration, 0, false)
+    if (anim == 0)
+      lv.screen_load(self._lv_scr)
+    else    # animation
+      var anim_lvgl = self.show_anim.find(anim, lv.SCR_LOAD_ANIM_NONE)
+      # load new screen with animation, no delay, 500ms transition time, no auto-delete
+      lv.screen_load_anim(self._lv_scr, anim_lvgl, duration, 0, false)
+    end
   end
 end
 
@@ -2361,10 +2405,6 @@ class HASPmota
   def _load(templ_name)
     import string
     import json
-    #- pages -#
-    self.lvh_page_cur_idx = 1
-    var lvh_page_class = self.lvh_page 
-    self.lvh_pages[1] = lvh_page_class(1, self)   # always create page #1
 
     var f = open(templ_name,"r")
     var f_content =  f.read()
@@ -2384,6 +2424,9 @@ class HASPmota
         end
         self.parse_page(jline)    # parse page first to create any page related objects, may change self.lvh_page_cur_idx
         # objects are created in the current page
+        if (self.lvh_pages == nil)
+          raise "value_error", "no page 'id' defined"
+        end
         self.parse_obj(jline, self.lvh_pages[self.lvh_page_cur_idx])    # then parse object within this page
       else
         # check if it's invalid json
@@ -2397,7 +2440,12 @@ class HASPmota
     jsonl = nil     # make all of it freeable
 
     # current page is always 1 when we start
-    self.lvh_page_cur_idx = 1
+    var pages_sorted = self.pages_list_sorted(nil)            # nil for full list
+    if (size(pages_sorted) == 0)
+      raise "value_error", "no page object defined"
+    end
+    self.lvh_page_cur_idx = pages_sorted[0]
+    self.lvh_pages[self.lvh_page_cur_idx].show(0, 0)          # show first page
   end
 
   #====================================================================
@@ -2432,12 +2480,12 @@ class HASPmota
   def pages_list_sorted(cur_page)
     # get list of pages as sorted array
     var pages = []
-    if cur_page == 0    cur_page = self.lvh_page_cur_idx end
+    if (cur_page == 0)    cur_page = self.lvh_page_cur_idx end
     for p: self.lvh_pages.keys()
       if p != 0   pages.push(p) end   # discard page 0
     end
     pages = self.sort(pages)
-    if cur_page == nil    return cur_page end
+    if (cur_page == nil)    return pages end
 
     var count_pages = size(pages)                       # how many pages are defined
     pages = pages + pages                               # double the list to splice it
@@ -2518,15 +2566,17 @@ class HASPmota
       if to_page == nil   to_page = sorted_pages_list[1] end    # if no next, take the next page
     elif action == 'back'
       to_page = int(cur_page.back)
-      if to_page == nil   to_page = 1 end                       # if no nack, take page number 1
+      if to_page == nil                                         # if no back, take first page
+        to_page = self.pages_list_sorted(nil)[0]
+      end                       
     elif self.re_page_target.match(action)
       # action is supposed to be `p<number>` format
       to_page = int(action[1..-1])          # just skip first char and convert the rest to a string
     end
 
     # print("to_page=",to_page)
-    if to_page != nil && to_page > 0                          # we have a target
-      self.lvh_pages[to_page].show()        # switvh to the target page
+    if to_page != nil && to_page > 0                            # we have a target
+      self.lvh_pages[to_page].show()                            # switch to the target page
     end
   end
 
@@ -2720,8 +2770,8 @@ haspmota.HASPmota = HASPmota
 # This means that the object is never garbage collected
 #
 haspmota.init = def (m)         # `init(m)` is called during first `import haspmota`
-  var oh = m.HASPmota
-  return oh()
+  var hm = m.HASPmota
+  return hm()
 end
 
 #@ solidify:haspmota,weak

@@ -7,6 +7,7 @@
  *      INCLUDES
  *********************/
 
+#include "../../misc/lv_area_private.h"
 #include "lv_draw_vg_lite.h"
 
 #if LV_USE_DRAW_VG_LITE
@@ -44,11 +45,6 @@
 
 void lv_draw_vg_lite_line(lv_draw_unit_t * draw_unit, const lv_draw_line_dsc_t * dsc)
 {
-    if(dsc->opa <= LV_OPA_MIN)
-        return;
-    if(dsc->width == 0)
-        return;
-
     float p1_x = dsc->p1.x;
     float p1_y = dsc->p1.y;
     float p2_x = dsc->p2.x;
@@ -65,7 +61,7 @@ void lv_draw_vg_lite_line(lv_draw_unit_t * draw_unit, const lv_draw_line_dsc_t *
     rel_clip_area.y1 = (int32_t)(LV_MIN(p1_y, p2_y) - half_w);
     rel_clip_area.y2 = (int32_t)(LV_MAX(p1_y, p2_y) + half_w);
 
-    if(!_lv_area_intersect(&rel_clip_area, &rel_clip_area, draw_unit->clip_area)) {
+    if(!lv_area_intersect(&rel_clip_area, &rel_clip_area, draw_unit->clip_area)) {
         return; /*Fully clipped, nothing to do*/
     }
 

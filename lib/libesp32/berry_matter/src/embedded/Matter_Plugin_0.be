@@ -35,6 +35,7 @@ class Matter_Plugin
   static var UPDATE_TIME = 5000             # default is every 5 seconds
   static var VIRTUAL = false                # set to true only for virtual devices
   static var BRIDGE = false                 # set to true only for bridged devices (ESP8266 or OpenBK)
+  static var ZIGBEE = false                 # set to true only when mapped to a zigbee device
   var update_next                           # next timestamp for update
   # Configuration of the plugin: clusters and type
   static var CLUSTERS = matter.consolidate_clusters(_class, {
@@ -258,6 +259,13 @@ matter_device.events.dump()
   #
   # we limit to 3 commands (to we need more?)
   def publish_command(key1, value1, key2, value2, key3, value3)
+    # if zigbee, decompose simple commands
+    if self.ZIGBEE && self.zigbee_mapper && self.zigbee_mapper.resolve_zb_device()
+      self.zigbee_mapper.zb_single_command(key1, value1)
+      self.zigbee_mapper.zb_single_command(key2, value2)
+      self.zigbee_mapper.zb_single_command(key3, value3)
+    end
+
     import json
     var payload = f"{json.dump(key1)}:{json.dump(value1)}"
     if key2 != nil
@@ -536,7 +544,7 @@ matter_device.events.dump()
   #   key: key name in the JSON payload to read from, do nothing if key does not exist or content is `null`
   #   old_val: previous value, used to detect a change or return the value unchanged
   #   type_func: type enforcer for value, typically `int`, `bool`, `str`, `number`, `real`
-  #   cluster/attribute: in case the value has change, publish a change to cluster/attribute
+  #   cluster/attribute: in case the value has change, publish a change to cluster/attribute. Don't publish if they are `nil`
   #
   # Returns:
   #   `old_val` if key does not exist, JSON value is `null`, or value is unchanged
@@ -546,7 +554,7 @@ matter_device.events.dump()
     var val = payload.find(key)
     if (val != nil)
       val = type_func(val)
-      if (val != old_val)
+      if (val != old_val) && (cluster != nil) && (attribute != nil)
         self.attribute_updated(cluster, attribute)
       end
       return val

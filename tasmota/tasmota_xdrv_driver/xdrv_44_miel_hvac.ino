@@ -137,6 +137,9 @@ struct miel_hvac_msg_request {
 #define MIEL_HVAC_REQUEST_TIMERS	0x05
 #define MIEL_HVAC_REQUEST_STATUS	0x06
 #define MIEL_HVAC_REQUEST_STAGE		0x09
+#define MIEL_HVAC_UPDATE_MODE_HEAT_ISEE	0x09
+#define MIEL_HVAC_UPDATE_MODE_DRY_ISEE	0x0a
+#define MIEL_HVAC_UPDATE_MODE_COOL_ISEE	0x0b
 	uint8_t			zero[15];
 };
 
@@ -185,8 +188,6 @@ struct miel_hvac_msg_update {
 	uint8_t			_pad1[5];
 	uint8_t			widevane;
 #define MIEL_HVAC_UPDATE_WIDEVANE_MASK	0x0f
-#define MIEL_HVAC_UPDATE_WIDEVANE_LL	0x01
-#define MIEL_HVAC_UPDATE_WIDEVANE_L	0x02
 #define MIEL_HVAC_UPDATE_WIDEVANE_LL	0x01
 #define MIEL_HVAC_UPDATE_WIDEVANE_L	0x02
 #define MIEL_HVAC_UPDATE_WIDEVANE_C	0x03
@@ -284,6 +285,9 @@ static const struct miel_hvac_map miel_hvac_mode_map[] = {
 	{ MIEL_HVAC_UPDATE_MODE_COOL,		"cool"	},
 	{ MIEL_HVAC_UPDATE_MODE_FAN,		"fan_only" },
 	{ MIEL_HVAC_UPDATE_MODE_AUTO,		"auto"	},
+        { MIEL_HVAC_UPDATE_MODE_HEAT_ISEE,	"heat_isee"	},
+	{ MIEL_HVAC_UPDATE_MODE_DRY_ISEE,	"dry_isee"	},
+	{ MIEL_HVAC_UPDATE_MODE_COOL_ISEE,	"cool_isee"	},
 };
 
 static const struct miel_hvac_map miel_hvac_fan_map[] = {

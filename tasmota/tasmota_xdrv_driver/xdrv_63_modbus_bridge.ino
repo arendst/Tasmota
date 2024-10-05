@@ -55,6 +55,7 @@
 #define D_CMND_MODBUS_SEND "Send"
 #define D_CMND_MODBUS_SETBAUDRATE "Baudrate"
 #define D_CMND_MODBUS_SETSERIALCONFIG "SerialConfig"
+#define D_CMND_MODBUS_SETSERIALTIMEOUT "SerialTimeout"
 
 #define D_JSON_MODBUS_RECEIVED "ModbusReceived"
 #define D_JSON_MODBUS_DEVICE_ADDRESS "DeviceAddress"
@@ -68,10 +69,10 @@
 
 #ifndef USE_MODBUS_BRIDGE_TCP
 const char kModbusBridgeCommands[] PROGMEM = "Modbus|" // Prefix
-    D_CMND_MODBUS_SEND "|" D_CMND_MODBUS_SETBAUDRATE "|" D_CMND_MODBUS_SETSERIALCONFIG;
+    D_CMND_MODBUS_SEND "|" D_CMND_MODBUS_SETBAUDRATE "|" D_CMND_MODBUS_SETSERIALCONFIG "|" D_CMND_MODBUS_SETSERIALTIMEOUT;
 
 void (*const ModbusBridgeCommand[])(void) PROGMEM = {
-    &CmndModbusBridgeSend, &CmndModbusBridgeSetBaudrate, &CmndModbusBridgeSetConfig};
+    &CmndModbusBridgeSend, &CmndModbusBridgeSetBaudrate, &CmndModbusBridgeSetConfig, &CmndModbusBridgeSetTimeout};
 #endif
 
 #ifdef USE_MODBUS_BRIDGE_TCP
@@ -84,11 +85,11 @@ void (*const ModbusBridgeCommand[])(void) PROGMEM = {
 #define D_CMND_MODBUS_TCP_MQTT "TCPMqtt"
 
 const char kModbusBridgeCommands[] PROGMEM = "Modbus|" // Prefix
-    D_CMND_MODBUS_TCP_START "|" D_CMND_MODBUS_TCP_CONNECT "|" D_CMND_MODBUS_TCP_MQTT "|" D_CMND_MODBUS_SEND "|" D_CMND_MODBUS_SETBAUDRATE "|" D_CMND_MODBUS_SETSERIALCONFIG;
+    D_CMND_MODBUS_TCP_START "|" D_CMND_MODBUS_TCP_CONNECT "|" D_CMND_MODBUS_TCP_MQTT "|" D_CMND_MODBUS_SEND "|" D_CMND_MODBUS_SETBAUDRATE "|" D_CMND_MODBUS_SETSERIALCONFIG "|" D_CMND_MODBUS_SETSERIALTIMEOUT;
 
 void (*const ModbusBridgeCommand[])(void) PROGMEM = {
     &CmndModbusTCPStart, &CmndModbusTCPConnect, &CmndModbusTCPMqtt,
-    &CmndModbusBridgeSend, &CmndModbusBridgeSetBaudrate, &CmndModbusBridgeSetConfig};
+    &CmndModbusBridgeSend, &CmndModbusBridgeSetBaudrate, &CmndModbusBridgeSetConfig, &CmndModbusBridgeSetTimeout};
 
 struct ModbusBridgeTCP
 {
@@ -97,7 +98,11 @@ struct ModbusBridgeTCP
   uint8_t client_next = 0;
   uint8_t *tcp_buf = nullptr; // data transfer buffer
   IPAddress ip_filter;
-  uint16_t tcp_transaction_id = 0;
+# define MODBUS_TCP_INVALID_TRANSACTION_ID UINT32_MAX
+  // Invalid ID value denotes, that the data 'tcp_buf' points to
+  // should not be used to send Modbus TCP response (very likely
+  // the response was already sent).
+  uint32_t tcp_transaction_id = MODBUS_TCP_INVALID_TRANSACTION_ID;
   bool output_mqtt = false;
 };
 
@@ -155,6 +160,10 @@ enum class ModbusBridgeEndian
   mb_lsb
 };
 
+#ifndef MODBUS_SERIAL_TIMEOUT_MS
+#define MODBUS_SERIAL_TIMEOUT_MS 1000
+#endif
+
 struct ModbusBridge
 {
   unsigned long polling_window = 0;
@@ -172,6 +181,49 @@ struct ModbusBridge
   bool raw = false;
   uint8_t *buffer = nullptr;    // Buffer for storing read / write data
   bool enabled = false;
+
+  // Buffer to store command data received from CmndModbusBridgeSend()
+  char *command_data = nullptr;
+
+private:
+  // Timeout in [ms]. How long we will wait for Modbus response.
+  uint32_t modbusSerialTimeout_ms = MODBUS_SERIAL_TIMEOUT_MS;
+  // Holds the value of millis() after we set
+  // waitingForAnswerFromSerial flag to true.
+  uint32_t sendDataToSerial_ms;
+  // If true, then do not sent another Modbus request until:
+  // millis() - sendDataToSerial_ms > modbusSerialTimeout_ms
+  bool waitingForAnswerFromSerial = false;
+
+public:
+  void setModbusSerialTimeout_ms(const uint32_t new_timeout)
+  {
+    modbusSerialTimeout_ms = new_timeout;
+  }
+
+  uint32_t getModbusSerialTimeout_ms() const
+  {
+    return modbusSerialTimeout_ms;
+  }
+
+  void setWaitingForAnswerFromSerial(const bool new_value)
+  {
+    waitingForAnswerFromSerial = new_value;
+    if (waitingForAnswerFromSerial)
+      sendDataToSerial_ms = millis();
+  }
+
+  bool isWaitingForAnswerFromSerial() const
+  {
+    return waitingForAnswerFromSerial;
+  }
+
+  bool isWaitingForAnswerFromSerialTimedOut() const
+  {
+    const auto t1 = millis() - sendDataToSerial_ms;
+
+    return (t1 > modbusSerialTimeout_ms) ? true : false;
+  }
 };
 
 ModbusBridge modbusBridge;
@@ -255,6 +307,8 @@ void ModbusBridgeSetBaudrate(uint32_t baudrate)
 //
 void ModbusBridgeHandle(void)
 {
+  uint32_t error = 0;
+
   bool data_ready = modbusBridgeModbus->ReceiveReady();
   if (data_ready)
   {
@@ -267,13 +321,26 @@ void ModbusBridgeHandle(void)
       return;
     }
     memset(modbusBridge.buffer, 0, MBR_RECEIVE_BUFFER_SIZE);
-    uint32_t error = modbusBridgeModbus->ReceiveBuffer(modbusBridge.buffer, 0, MBR_RECEIVE_BUFFER_SIZE - 9);
+    error = modbusBridgeModbus->ReceiveBuffer(modbusBridge.buffer, 0, MBR_RECEIVE_BUFFER_SIZE - 9);
+    modbusBridge.setWaitingForAnswerFromSerial(false);
+  }
+  else if (modbusBridge.isWaitingForAnswerFromSerial()
+        && modbusBridge.isWaitingForAnswerFromSerialTimedOut())
+  {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR Recv timed out"));
+    modbusBridge.setWaitingForAnswerFromSerial(false);
+    // MODBUS Application Protocol Specification V1.1b3,
+    // p.7 MODBUS Exception Responses
+    error = 11; // The targeted device failed to respond
+  }
 
+  if (data_ready || error)
+  {
 #ifdef USE_MODBUS_BRIDGE_TCP
     for (uint32_t i = 0; i < nitems(modbusBridgeTCP.client_tcp); i++)
     {
       WiFiClient &client = modbusBridgeTCP.client_tcp[i];
-      if (client)
+      if (client && modbusBridgeTCP.tcp_transaction_id != MODBUS_TCP_INVALID_TRANSACTION_ID)
       {
         uint8_t header[9];
         uint8_t nrOfBytes = 8;
@@ -312,7 +379,8 @@ void ModbusBridgeHandle(void)
           nrOfBytes += 4;
         }
         client.flush();
-        AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBRTCP from Modbus deviceAddress %d, writing %d bytes to client"), modbusBridge.buffer[0], nrOfBytes);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBRTCP from Modbus TransactionId:%d, deviceAddress:%d, writing:%d bytes to client (error:%d)"), (static_cast<uint16_t>(header[0]) << 8) + header[1], modbusBridge.buffer[0], nrOfBytes, error);
+        modbusBridgeTCP.tcp_transaction_id = MODBUS_TCP_INVALID_TRANSACTION_ID;
       }
     }
 #endif
@@ -664,6 +732,8 @@ void ModbusTCPHandle(void)
       client.stop();
       client = new_client;
     }
+
+    modbusBridgeTCP.tcp_transaction_id = MODBUS_TCP_INVALID_TRANSACTION_ID;
   }
 
   do
@@ -743,7 +813,10 @@ void ModbusTCPHandle(void)
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MBS: MBRTCP to Modbus TransactionId:%d, deviceAddress:%d, functionCode:%d, startAddress:%d, count:%d, recvCount:%d, recvBytes:%d"),
                modbusBridgeTCP.tcp_transaction_id, mbdeviceaddress, mbfunctioncode, mbstartaddress, count, modbusBridge.dataCount, modbusBridge.byteCount);
 
-        modbusBridgeModbus->Send(mbdeviceaddress, mbfunctioncode, mbstartaddress, count, writeData);
+        if (modbusBridgeModbus->Send(mbdeviceaddress, mbfunctioncode, mbstartaddress, count, writeData) == 0)
+        {
+          modbusBridge.setWaitingForAnswerFromSerial(true);
+        }
 
         if (modbusBridgeTCP.output_mqtt)
         {
@@ -767,12 +840,54 @@ void ModbusTCPHandle(void)
 
 void CmndModbusBridgeSend(void)
 {
+  if (!modbusBridge.isWaitingForAnswerFromSerial())
+  {
+    if (modbusBridge.command_data == nullptr)
+    {
+      CmndModbusBridgeSend(XdrvMailbox.data);
+      return;
+    }
+    else
+    {
+      // There is already a command pending
+      ResponseCmndFailed();
+      return;
+    }
+  }
+  else
+  {
+    if (modbusBridge.command_data == nullptr)
+    {
+      // Let's store the command data
+      modbusBridge.command_data = (char *)malloc(XdrvMailbox.data_len);
+
+      if (modbusBridge.command_data == nullptr)
+      {
+        // We couldn't store the command data.
+        ModbusBridgeAllocError(PSTR("COMMAND"));
+        ResponseCmndFailed();
+        return;
+      }
+
+      memcpy(modbusBridge.command_data, XdrvMailbox.data, XdrvMailbox.data_len);
+    }
+    else
+    {
+        // We're processing a command and yet another is waiting.
+        ResponseCmndFailed();
+        return;
+    }
+  }
+}
+
+void CmndModbusBridgeSend(char *json_in)
+{
   uint16_t *writeData = nullptr;
   uint8_t writeDataSize = 0;
   bool bitMode = false;
   ModbusBridgeError errorcode = ModbusBridgeError::noerror;
 
-  JsonParser parser(XdrvMailbox.data);
+  JsonParser parser(json_in);
   JsonParserObject root = parser.getRootObject();
   if (!root)
     return;
@@ -1022,7 +1137,11 @@ void CmndModbusBridgeSend(void)
   uint8_t error = modbusBridgeModbus->Send(modbusBridge.deviceAddress, (uint8_t)modbusBridge.functionCode, modbusBridge.startAddress, modbusBridge.dataCount, writeData);
   free(writeData);
 
-  if (error)
+  if (error == 0)
+  {
+    modbusBridge.setWaitingForAnswerFromSerial(true);
+  }
+  else
   {
     AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR Driver send error %u"), error);
     return;
@@ -1061,6 +1180,21 @@ void CmndModbusBridgeSetConfig(void)
     }
   }
   ResponseCmndChar(GetSerialConfig(Settings->modbus_sconfig).c_str());
+}
+
+void CmndModbusBridgeSetTimeout(void)
+{
+  if (XdrvMailbox.data_len > 0)
+  {
+    const int timeout_ms = XdrvMailbox.payload;
+
+    if (timeout_ms > 0) // Accepts values in the range of: 1..INT_MAX
+    {
+      modbusBridge.setModbusSerialTimeout_ms(timeout_ms);
+    }
+  }
+
+  ResponseCmndNumber(modbusBridge.getModbusSerialTimeout_ms());
 }
 
 #ifdef USE_MODBUS_BRIDGE_TCP
@@ -1181,8 +1315,19 @@ bool Xdrv63(uint32_t function)
     switch (function) {
       case FUNC_LOOP:
         ModbusBridgeHandle();
+
+        // Check whether we can send a stored command
+        if (modbusBridge.command_data && !modbusBridge.isWaitingForAnswerFromSerial())
+        {
+          CmndModbusBridgeSend(modbusBridge.command_data);
+          free(modbusBridge.command_data), modbusBridge.command_data = nullptr;
+        }
+
 #ifdef USE_MODBUS_BRIDGE_TCP
-        ModbusTCPHandle();
+        if (!modbusBridge.isWaitingForAnswerFromSerial())
+        {
+          ModbusTCPHandle();
+        }
 #endif
         break;
       case FUNC_COMMAND:

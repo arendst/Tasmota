@@ -547,7 +547,7 @@ void m_write_attributes(bvm *vm, int rel_idx, const buf_impl * attr)
 }
 
 // buf_impl * bytes_realloc(bvm *vm, buf_impl *oldbuf, int32_t size)
-void bytes_realloc(bvm *vm, buf_impl * attr, int32_t size)
+void bytes_realloc(bvm *vm, buf_impl * attr, size_t size)
 {
     m_assert_not_readlonly(vm, attr);
     if (!attr->fixed && size < 4) { size = 4; }
@@ -1180,7 +1180,7 @@ static int m_item(bvm *vm)
 {
     int argc = be_top(vm);
     buf_impl attr = bytes_check_data(vm, 0); /* we reserve 4 bytes anyways */
-    check_ptr_modifiable(vm, &attr);
+    check_ptr(vm, &attr);
     if (argc >=2 && be_isint(vm, 2)) {  /* single byte */
         int index = be_toint(vm,2);
         if (index < 0) {

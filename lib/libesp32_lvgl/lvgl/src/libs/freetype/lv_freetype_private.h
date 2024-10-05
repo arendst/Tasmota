@@ -14,7 +14,10 @@ extern "C" {
  *      INCLUDES
  *********************/
 
-#include "../../../lvgl.h"
+#include "lv_freetype.h"
+#include "../../misc/cache/lv_cache.h"
+#include "../../misc/lv_ll.h"
+#include "../../font/lv_font.h"
 
 #if LV_USE_FREETYPE
 
@@ -43,7 +46,8 @@ extern "C" {
 #define LV_ASSERT_FREETYPE_FONT_DSC(dsc)                                                   \
     do {                                                                                   \
         LV_ASSERT_NULL(dsc);                                                               \
-        LV_ASSERT_MSG(LV_FREETYPE_FONT_DSC_HAS_MAGIC_NUM(dsc), "Invalid font descriptor"); \
+        LV_ASSERT_FORMAT_MSG(LV_FREETYPE_FONT_DSC_HAS_MAGIC_NUM(dsc),                      \
+                             "Invalid font descriptor: 0x%" LV_PRIx32, (dsc)->magic_num);  \
     } while (0)
 
 #define FT_INT_TO_F26DOT6(x) ((x) << 6)
@@ -56,9 +60,23 @@ extern "C" {
  *      TYPEDEFS
  **********************/
 
-typedef struct _lv_freetype_cache_node_t lv_freetype_cache_node_t;
+struct lv_freetype_outline_vector_t {
+    int32_t x;
+    int32_t y;
+};
 
-struct _lv_freetype_cache_node_t {
+struct lv_freetype_outline_event_param_t {
+    lv_freetype_outline_t outline;
+    lv_freetype_outline_type_t type;
+    lv_freetype_outline_vector_t to;
+    lv_freetype_outline_vector_t control1;
+    lv_freetype_outline_vector_t control2;
+};
+
+
+typedef struct lv_freetype_cache_node_t lv_freetype_cache_node_t;
+
+struct lv_freetype_cache_node_t {
     const char * pathname;
     lv_freetype_font_style_t style;
     lv_freetype_font_render_mode_t render_mode;
@@ -66,6 +84,7 @@ struct _lv_freetype_cache_node_t {
     uint32_t ref_size;                  /**< Reference size for calculating outline glyph's real size.*/
 
     FT_Face face;
+    lv_mutex_t face_lock;
 
     /*glyph cache*/
     lv_cache_t * glyph_cache;
@@ -74,7 +93,7 @@ struct _lv_freetype_cache_node_t {
     lv_cache_t * draw_data_cache;
 };
 
-typedef struct _lv_freetype_context_t {
+typedef struct lv_freetype_context_t {
     FT_Library library;
     lv_ll_t face_id_ll;
     lv_event_cb_t event_cb;
@@ -84,7 +103,7 @@ typedef struct _lv_freetype_context_t {
     lv_cache_t * cache_node_cache;
 } lv_freetype_context_t;
 
-typedef struct _lv_freetype_font_dsc_t {
+typedef struct lv_freetype_font_dsc_t {
     uint32_t magic_num;
     lv_font_t font;
     uint32_t size;

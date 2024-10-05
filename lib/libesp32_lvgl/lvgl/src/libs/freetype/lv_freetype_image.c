@@ -12,15 +12,21 @@
 
 #if LV_USE_FREETYPE
 
+#include "../../core/lv_global.h"
+
+#define font_draw_buf_handlers &(LV_GLOBAL_DEFAULT()->font_draw_buf_handlers)
+
 /*********************
  *      DEFINES
  *********************/
+
+#define CACHE_NAME "FREETYPE_IMAGE"
 
 /**********************
  *      TYPEDEFS
  **********************/
 
-typedef struct _lv_freetype_image_cache_data_t {
+typedef struct lv_freetype_image_cache_data_t {
     FT_UInt glyph_index;
     uint32_t size;
 
@@ -30,9 +36,7 @@ typedef struct _lv_freetype_image_cache_data_t {
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static const void * freetype_get_glyph_bitmap_cb(lv_font_glyph_dsc_t * g_dsc,
-                                                 uint32_t unicode_letter,
-                                                 lv_draw_buf_t * draw_buf);
+static const void * freetype_get_glyph_bitmap_cb(lv_font_glyph_dsc_t * g_dsc, lv_draw_buf_t * draw_buf);
 
 static bool freetype_image_create_cb(lv_freetype_image_cache_data_t * data, void * user_data);
 static void freetype_image_free_cb(lv_freetype_image_cache_data_t * node, void * user_data);
@@ -62,6 +66,7 @@ lv_cache_t * lv_freetype_create_draw_data_image(uint32_t cache_size)
 
     lv_cache_t * draw_data_cache = lv_cache_create(&lv_cache_class_lru_rb_count, sizeof(lv_freetype_image_cache_data_t),
                                                    cache_size, ops);
+    lv_cache_set_name(draw_data_cache, CACHE_NAME);
 
     return draw_data_cache;
 }
@@ -77,18 +82,14 @@ void lv_freetype_set_cbs_image_font(lv_freetype_font_dsc_t * dsc)
  *   STATIC FUNCTIONS
  **********************/
 
-static const void * freetype_get_glyph_bitmap_cb(lv_font_glyph_dsc_t * g_dsc,
-                                                 uint32_t unicode_letter,
-                                                 lv_draw_buf_t * draw_buf)
+static const void * freetype_get_glyph_bitmap_cb(lv_font_glyph_dsc_t * g_dsc, lv_draw_buf_t * draw_buf)
 {
-    LV_UNUSED(unicode_letter);
     LV_UNUSED(draw_buf);
     const lv_font_t * font = g_dsc->resolved_font;
     lv_freetype_font_dsc_t * dsc = (lv_freetype_font_dsc_t *)font->dsc;
     LV_ASSERT_FREETYPE_FONT_DSC(dsc);
 
-    FT_Face face = dsc->cache_node->face;
-    FT_UInt glyph_index = FT_Get_Char_Index(face, unicode_letter);
+    FT_UInt glyph_index = (FT_UInt)g_dsc->gid.index;
 
     lv_cache_t * cache = dsc->cache_node->draw_data_cache;
 
@@ -123,16 +124,20 @@ static bool freetype_image_create_cb(lv_freetype_image_cache_data_t * data, void
 
     FT_Error error;
 
+    lv_mutex_lock(&dsc->cache_node->face_lock);
+
     FT_Face face = dsc->cache_node->face;
     FT_Set_Pixel_Sizes(face, 0, dsc->size);
-    error = FT_Load_Glyph(face, data->glyph_index,  FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL);
+    error = FT_Load_Glyph(face, data->glyph_index,  FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL | FT_LOAD_NO_AUTOHINT);
     if(error) {
         FT_ERROR_MSG("FT_Load_Glyph", error);
+        lv_mutex_unlock(&dsc->cache_node->face_lock);
         return false;
     }
     error = FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL);
     if(error) {
         FT_ERROR_MSG("FT_Render_Glyph", error);
+        lv_mutex_unlock(&dsc->cache_node->face_lock);
         return false;
     }
 
@@ -140,6 +145,7 @@ static bool freetype_image_create_cb(lv_freetype_image_cache_data_t * data, void
     error = FT_Get_Glyph(face->glyph, &glyph);
     if(error) {
         FT_ERROR_MSG("FT_Get_Glyph", error);
+        lv_mutex_unlock(&dsc->cache_node->face_lock);
         return false;
     }
 
@@ -149,7 +155,7 @@ static bool freetype_image_create_cb(lv_freetype_image_cache_data_t * data, void
     uint16_t box_w = glyph_bitmap->bitmap.width;        /*Width of the bitmap in [px]*/
 
     uint32_t stride = lv_draw_buf_width_to_stride(box_w, LV_COLOR_FORMAT_A8);
-    data->draw_buf = lv_draw_buf_create(box_w, box_h, LV_COLOR_FORMAT_A8, stride);
+    data->draw_buf = lv_draw_buf_create_ex(font_draw_buf_handlers, box_w, box_h, LV_COLOR_FORMAT_A8, stride);
 
     for(int y = 0; y < box_h; ++y) {
         lv_memcpy((uint8_t *)(data->draw_buf->data) + y * stride, glyph_bitmap->bitmap.buffer + y * box_w,
@@ -157,6 +163,8 @@ static bool freetype_image_create_cb(lv_freetype_image_cache_data_t * data, void
     }
 
     FT_Done_Glyph(glyph);
+
+    lv_mutex_unlock(&dsc->cache_node->face_lock);
 
     return true;
 }

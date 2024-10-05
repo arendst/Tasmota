@@ -1738,7 +1738,7 @@ void SettingsDelta(void) {
       Settings->web_time_end = 0;
     }
     if (Settings->version < 0x0B000003) {  // 11.0.0.3
-       memcpy(Settings->pulse_timer, Settings->ex_pulse_timer, 16);
+       memcpy(Settings->pulse_timer, (uint16_t*)&Settings->weight_precision, 16);
     }
     if (Settings->version < 0x0B000006) {  // 11.0.0.6
         Settings->weight_absconv_a = 0;
@@ -1828,6 +1828,12 @@ void SettingsDelta(void) {
     }
     if (Settings->version < 0x0E010002) {  // 14.1.0.2
       Settings->sserial_mode = Settings->sbflag1.ex_serbridge_console;
+    }
+    if (Settings->version < 0x0E020003) {  // 14.2.0.3
+      Settings->flag3.sb_receive_invert = 0;  // SetOption69  - (Serial) Invert Serial receive on SerialBridge
+    }
+    if (Settings->version < 0x0E020004) {  // 14.2.0.4
+      Settings->weight_precision = 0;      // Initialized by HX711 driver
     }
 
     Settings->version = TASMOTA_VERSION;

@@ -79,13 +79,17 @@ uint8_t Bh1750Resolution(uint32_t sensor_index) {
 }
 
 bool Bh1750SetResolution(uint32_t sensor_index) {
+/*
   TwoWire& myWire = I2cGetWire(Bh1750_sensors[sensor_index].bus);
   myWire.beginTransmission(Bh1750_sensors[sensor_index].address);
   myWire.write(Bh1750.resolution[Bh1750Resolution(sensor_index)]);
   return (!myWire.endTransmission());
+*/
+  return I2cWrite0(Bh1750_sensors[sensor_index].address, Bh1750.resolution[Bh1750Resolution(sensor_index)], Bh1750_sensors[sensor_index].bus);
 }
 
 bool Bh1750SetMTreg(uint32_t sensor_index) {
+/*
   TwoWire& myWire = I2cGetWire(Bh1750_sensors[sensor_index].bus);
   if (&myWire == nullptr) { return false; }  // No valid I2c bus
   myWire.beginTransmission(Bh1750_sensors[sensor_index].address);
@@ -96,16 +100,31 @@ bool Bh1750SetMTreg(uint32_t sensor_index) {
   data = BH1750_MEASUREMENT_TIME_LOW | (Bh1750_sensors[sensor_index].mtreg & 0x1F);
   myWire.write(data);
   if (myWire.endTransmission()) { return false; }
+*/
+  uint8_t reg = BH1750_MEASUREMENT_TIME_HIGH | ((Bh1750_sensors[sensor_index].mtreg >> 5) & 0x07);
+  if (!I2cWrite0(Bh1750_sensors[sensor_index].address, reg, Bh1750_sensors[sensor_index].bus)) {
+    return false;
+  }
+  reg = BH1750_MEASUREMENT_TIME_LOW | (Bh1750_sensors[sensor_index].mtreg & 0x1F);
+  if (!I2cWrite0(Bh1750_sensors[sensor_index].address, reg, Bh1750_sensors[sensor_index].bus)) {
+    return false;
+  }
   return Bh1750SetResolution(sensor_index);
 }
 
 bool Bh1750Read(uint32_t sensor_index) {
   if (Bh1750_sensors[sensor_index].valid) { Bh1750_sensors[sensor_index].valid--; }
-
+/*
   TwoWire& myWire = I2cGetWire(Bh1750_sensors[sensor_index].bus);
   if (2 != myWire.requestFrom(Bh1750_sensors[sensor_index].address, (uint8_t)2)) { return false; }
 
   float illuminance = (myWire.read() << 8) | myWire.read();
+*/
+  uint8_t data[2];
+  if (I2cReadBuffer0(Bh1750_sensors[sensor_index].address, data, 2, Bh1750_sensors[sensor_index].bus)) {
+    return false;
+  }
+  float illuminance = (data[0] << 8) | data[1];
   illuminance *= 57.5 / (float)Bh1750_sensors[sensor_index].mtreg;  // Fix #16022
   if (1 == Bh1750Resolution(sensor_index)) {
     illuminance /= 2;

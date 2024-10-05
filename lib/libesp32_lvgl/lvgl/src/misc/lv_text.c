@@ -6,14 +6,14 @@
 /*********************
  *      INCLUDES
  *********************/
-#include <stdarg.h>
-#include "lv_text.h"
+#include "lv_text_private.h"
 #include "lv_text_ap.h"
 #include "lv_math.h"
 #include "lv_log.h"
 #include "lv_assert.h"
 #include "../stdlib/lv_mem.h"
 #include "../stdlib/lv_string.h"
+#include "../misc/lv_types.h"
 
 /*********************
  *      DEFINES
@@ -55,23 +55,23 @@
  *  GLOBAL VARIABLES
  **********************/
 #if LV_TXT_ENC == LV_TXT_ENC_UTF8
-    uint8_t (*_lv_text_encoded_size)(const char *)                   = lv_text_utf8_size;
-    uint32_t (*_lv_text_unicode_to_encoded)(uint32_t)                = lv_text_unicode_to_utf8;
-    uint32_t (*_lv_text_encoded_conv_wc)(uint32_t)                   = lv_text_utf8_conv_wc;
-    uint32_t (*_lv_text_encoded_next)(const char *, uint32_t *)      = lv_text_utf8_next;
-    uint32_t (*_lv_text_encoded_prev)(const char *, uint32_t *)      = lv_text_utf8_prev;
-    uint32_t (*_lv_text_encoded_get_byte_id)(const char *, uint32_t) = lv_text_utf8_get_byte_id;
-    uint32_t (*_lv_text_encoded_get_char_id)(const char *, uint32_t) = lv_text_utf8_get_char_id;
-    uint32_t (*_lv_text_get_encoded_length)(const char *)            = lv_text_utf8_get_length;
+    uint8_t (*const lv_text_encoded_size)(const char *)                   = lv_text_utf8_size;
+    uint32_t (*const lv_text_unicode_to_encoded)(uint32_t)                = lv_text_unicode_to_utf8;
+    uint32_t (*const lv_text_encoded_conv_wc)(uint32_t)                   = lv_text_utf8_conv_wc;
+    uint32_t (*const lv_text_encoded_next)(const char *, uint32_t *)      = lv_text_utf8_next;
+    uint32_t (*const lv_text_encoded_prev)(const char *, uint32_t *)      = lv_text_utf8_prev;
+    uint32_t (*const lv_text_encoded_get_byte_id)(const char *, uint32_t) = lv_text_utf8_get_byte_id;
+    uint32_t (*const lv_text_encoded_get_char_id)(const char *, uint32_t) = lv_text_utf8_get_char_id;
+    uint32_t (*const lv_text_get_encoded_length)(const char *)            = lv_text_utf8_get_length;
 #elif LV_TXT_ENC == LV_TXT_ENC_ASCII
-    uint8_t (*_lv_text_encoded_size)(const char *)                   = lv_text_iso8859_1_size;
-    uint32_t (*_lv_text_unicode_to_encoded)(uint32_t)                = lv_text_unicode_to_iso8859_1;
-    uint32_t (*_lv_text_encoded_conv_wc)(uint32_t)                   = lv_text_iso8859_1_conv_wc;
-    uint32_t (*_lv_text_encoded_next)(const char *, uint32_t *)      = lv_text_iso8859_1_next;
-    uint32_t (*_lv_text_encoded_prev)(const char *, uint32_t *)      = lv_text_iso8859_1_prev;
-    uint32_t (*_lv_text_encoded_get_byte_id)(const char *, uint32_t) = lv_text_iso8859_1_get_byte_id;
-    uint32_t (*_lv_text_encoded_get_char_id)(const char *, uint32_t)     = lv_text_iso8859_1_get_char_id;
-    uint32_t (*_lv_text_get_encoded_length)(const char *)            = lv_text_iso8859_1_get_length;
+    uint8_t (*const lv_text_encoded_size)(const char *)                   = lv_text_iso8859_1_size;
+    uint32_t (*const lv_text_unicode_to_encoded)(uint32_t)                = lv_text_unicode_to_iso8859_1;
+    uint32_t (*const lv_text_encoded_conv_wc)(uint32_t)                   = lv_text_iso8859_1_conv_wc;
+    uint32_t (*const lv_text_encoded_next)(const char *, uint32_t *)      = lv_text_iso8859_1_next;
+    uint32_t (*const lv_text_encoded_prev)(const char *, uint32_t *)      = lv_text_iso8859_1_prev;
+    uint32_t (*const lv_text_encoded_get_byte_id)(const char *, uint32_t) = lv_text_iso8859_1_get_byte_id;
+    uint32_t (*const lv_text_encoded_get_char_id)(const char *, uint32_t)     = lv_text_iso8859_1_get_char_id;
+    uint32_t (*const lv_text_get_encoded_length)(const char *)            = lv_text_iso8859_1_get_length;
 
 #endif
 
@@ -106,7 +106,7 @@ void lv_text_get_size(lv_point_t * size_res, const char * text, const lv_font_t 
 
     /*Calc. the height and longest line*/
     while(text[line_start] != '\0') {
-        new_line_start += _lv_text_get_next_line(&text[line_start], font, letter_space, max_width, NULL, flag);
+        new_line_start += lv_text_get_next_line(&text[line_start], font, letter_space, max_width, NULL, flag);
 
         if((unsigned long)size_res->y + (unsigned long)letter_height + (unsigned long)line_space > LV_MAX_OF(int32_t)) {
             LV_LOG_WARN("integer overflow while calculating text height");
@@ -164,12 +164,11 @@ void lv_text_get_size(lv_point_t * size_res, const char * text, const lv_font_t 
  * @param max_width max width of the text (break the lines to fit this size). Set COORD_MAX to avoid line breaks
  * @param flags settings for the text from 'txt_flag_type' enum
  * @param[out] word_w_ptr width (in pixels) of the parsed word. May be NULL.
- * @param force Force return the fraction of the word that can fit in the provided space.
  * @return the index of the first char of the next word (in byte index not letter index. With UTF-8 they are different)
  */
 static uint32_t lv_text_get_next_word(const char * txt, const lv_font_t * font,
                                       int32_t letter_space, int32_t max_width,
-                                      lv_text_flag_t flag, uint32_t * word_w_ptr, bool force)
+                                      lv_text_flag_t flag, uint32_t * word_w_ptr)
 {
     if(txt == NULL || txt[0] == '\0') return 0;
     if(font == NULL) return 0;
@@ -180,17 +179,17 @@ static uint32_t lv_text_get_next_word(const char * txt, const lv_font_t * font,
     uint32_t letter = 0;      /*Letter at i*/
     uint32_t letter_next = 0; /*Letter at i_next*/
     int32_t letter_w;
-    int32_t cur_w = 0;  /*Pixel Width of transversed string*/
-    uint32_t word_len = 0;   /*Number of characters in the transversed word*/
+    int32_t cur_w = 0;  /*Pixel Width of traversed string*/
+    uint32_t word_len = 0;   /*Number of characters in the traversed word*/
     uint32_t break_index = NO_BREAK_FOUND; /*only used for "long" words*/
     uint32_t break_letter_count = 0; /*Number of characters up to the long word break point*/
 
-    letter = _lv_text_encoded_next(txt, &i_next);
+    letter = lv_text_encoded_next(txt, &i_next);
     i_next_next = i_next;
 
     /*Obtain the full word, regardless if it fits or not in max_width*/
     while(txt[i] != '\0') {
-        letter_next = _lv_text_encoded_next(txt, &i_next_next);
+        letter_next = lv_text_encoded_next(txt, &i_next_next);
         word_len++;
 
         letter_w = lv_font_get_glyph_width(font, letter, letter_next);
@@ -208,14 +207,14 @@ static uint32_t lv_text_get_next_word(const char * txt, const lv_font_t * font,
         }
 
         /*Check for new line chars and breakchars*/
-        if(letter == '\n' || letter == '\r' || _lv_text_is_break_char(letter)) {
+        if(letter == '\n' || letter == '\r' || lv_text_is_break_char(letter)) {
             /*Update the output width on the first character if it fits.
              *Must do this here in case first letter is a break character.*/
             if(i == 0 && break_index == NO_BREAK_FOUND && word_w_ptr != NULL) *word_w_ptr = cur_w;
             word_len--;
             break;
         }
-        else if(_lv_text_is_a_word(letter_next) || _lv_text_is_a_word(letter)) {
+        else if(lv_text_is_a_word(letter_next) || lv_text_is_a_word(letter)) {
             /*Found a word for single letter, usually true for CJK*/
             *word_w_ptr = cur_w;
             i = i_next;
@@ -239,14 +238,14 @@ static uint32_t lv_text_get_next_word(const char * txt, const lv_font_t * font,
 #if LV_TXT_LINE_BREAK_LONG_LEN > 0
     /*Word doesn't fit in provided space, but isn't "long"*/
     if(word_len < LV_TXT_LINE_BREAK_LONG_LEN) {
-        if(force) return break_index;
+        if(flag & LV_TEXT_FLAG_BREAK_ALL) return break_index;
         if(word_w_ptr != NULL) *word_w_ptr = 0; /*Return no word*/
         return 0;
     }
 
     /*Word is "long," but insufficient amounts can fit in provided space*/
     if(break_letter_count < LV_TXT_LINE_BREAK_LONG_PRE_MIN_LEN) {
-        if(force) return break_index;
+        if(flag & LV_TEXT_FLAG_BREAK_ALL) return break_index;
         if(word_w_ptr != NULL) *word_w_ptr = 0;
         return 0;
     }
@@ -257,7 +256,7 @@ static uint32_t lv_text_get_next_word(const char * txt, const lv_font_t * font,
         int32_t n_move = LV_TXT_LINE_BREAK_LONG_POST_MIN_LEN - (word_len - break_letter_count);
         /*Move pointer "i" backwards*/
         for(; n_move > 0; n_move--) {
-            _lv_text_encoded_prev(txt, &i);
+            lv_text_encoded_prev(txt, &i);
             /**
              * TODO: it would be appropriate to update the returned
              * word width hereHowever, in current usage, this doesn't impact anything.
@@ -266,16 +265,16 @@ static uint32_t lv_text_get_next_word(const char * txt, const lv_font_t * font,
     }
     return i;
 #else
-    if(force) return break_index;
+    if(flag & LV_TEXT_FLAG_BREAK_ALL) return break_index;
     if(word_w_ptr != NULL) *word_w_ptr = 0; /*Return no word*/
     (void) break_letter_count;
     return 0;
 #endif
 }
 
-uint32_t _lv_text_get_next_line(const char * txt, const lv_font_t * font,
-                                int32_t letter_space, int32_t max_width,
-                                int32_t * used_width, lv_text_flag_t flag)
+uint32_t lv_text_get_next_line(const char * txt, const lv_font_t * font,
+                               int32_t letter_space, int32_t max_width,
+                               int32_t * used_width, lv_text_flag_t flag)
 {
     if(used_width) *used_width = 0;
 
@@ -301,8 +300,11 @@ uint32_t _lv_text_get_next_line(const char * txt, const lv_font_t * font,
     uint32_t i = 0;                                        /*Iterating index into txt*/
 
     while(txt[i] != '\0' && max_width > 0) {
+        lv_text_flag_t word_flag = flag;
+        if(i == 0) word_flag |= LV_TEXT_FLAG_BREAK_ALL;
+
         uint32_t word_w = 0;
-        uint32_t advance = lv_text_get_next_word(&txt[i], font, letter_space, max_width, flag, &word_w, i == 0);
+        uint32_t advance = lv_text_get_next_word(&txt[i], font, letter_space, max_width, word_flag, &word_w);
         max_width -= word_w;
         line_w += word_w;
 
@@ -323,7 +325,7 @@ uint32_t _lv_text_get_next_line(const char * txt, const lv_font_t * font,
 
     /*Always step at least one to avoid infinite loops*/
     if(i == 0) {
-        uint32_t letter = _lv_text_encoded_next(txt, &i);
+        uint32_t letter = lv_text_encoded_next(txt, &i);
         if(used_width != NULL) {
             line_w = lv_font_get_glyph_width(font, letter, '\0');
         }
@@ -349,7 +351,7 @@ int32_t lv_text_get_width(const char * txt, uint32_t length, const lv_font_t * f
         while(i < length) {
             uint32_t letter;
             uint32_t letter_next;
-            _lv_text_encoded_letter_next_2(txt, &letter, &letter_next, &i);
+            lv_text_encoded_letter_next_2(txt, &letter, &letter_next, &i);
 
             int32_t char_width = lv_font_get_glyph_width(font, letter, letter_next);
             if(char_width > 0) {
@@ -367,7 +369,7 @@ int32_t lv_text_get_width(const char * txt, uint32_t length, const lv_font_t * f
     return width;
 }
 
-void _lv_text_ins(char * txt_buf, uint32_t pos, const char * ins_txt)
+void lv_text_ins(char * txt_buf, uint32_t pos, const char * ins_txt)
 {
     if(txt_buf == NULL || ins_txt == NULL) return;
 
@@ -376,7 +378,7 @@ void _lv_text_ins(char * txt_buf, uint32_t pos, const char * ins_txt)
     if(ins_len == 0) return;
 
     size_t new_len = ins_len + old_len;
-    pos              = _lv_text_encoded_get_byte_id(txt_buf, pos); /*Convert to byte index instead of letter index*/
+    pos              = lv_text_encoded_get_byte_id(txt_buf, pos); /*Convert to byte index instead of letter index*/
 
     /*Copy the second part into the end to make place to text to insert*/
     size_t i;
@@ -388,14 +390,14 @@ void _lv_text_ins(char * txt_buf, uint32_t pos, const char * ins_txt)
     lv_memcpy(txt_buf + pos, ins_txt, ins_len);
 }
 
-void _lv_text_cut(char * txt, uint32_t pos, uint32_t len)
+void lv_text_cut(char * txt, uint32_t pos, uint32_t len)
 {
     if(txt == NULL) return;
 
     size_t old_len = lv_strlen(txt);
 
-    pos = _lv_text_encoded_get_byte_id(txt, pos); /*Convert to byte index instead of letter index*/
-    len = _lv_text_encoded_get_byte_id(&txt[pos], len);
+    pos = lv_text_encoded_get_byte_id(txt, pos); /*Convert to byte index instead of letter index*/
+    len = lv_text_encoded_get_byte_id(&txt[pos], len);
 
     /*Copy the second part into the end to make place to text to insert*/
     uint32_t i;
@@ -404,7 +406,7 @@ void _lv_text_cut(char * txt, uint32_t pos, uint32_t len)
     }
 }
 
-char * _lv_text_set_text_vfmt(const char * fmt, va_list ap)
+char * lv_text_set_text_vfmt(const char * fmt, va_list ap)
 {
     /*Allocate space for the new text by using trick from C99 standard section 7.19.6.12*/
     va_list ap_copy;
@@ -424,13 +426,13 @@ char * _lv_text_set_text_vfmt(const char * fmt, va_list ap)
     lv_vsnprintf(raw_txt, len + 1, fmt, ap);
 
     /*Get the size of the Arabic text and process it*/
-    size_t len_ap = _lv_text_ap_calc_bytes_count(raw_txt);
+    size_t len_ap = lv_text_ap_calc_bytes_count(raw_txt);
     text = lv_malloc(len_ap + 1);
     LV_ASSERT_MALLOC(text);
     if(text == NULL) {
         return NULL;
     }
-    _lv_text_ap_proc(raw_txt, text);
+    lv_text_ap_proc(raw_txt, text);
 
     lv_free(raw_txt);
 #else
@@ -446,10 +448,10 @@ char * _lv_text_set_text_vfmt(const char * fmt, va_list ap)
     return text;
 }
 
-void _lv_text_encoded_letter_next_2(const char * txt, uint32_t * letter, uint32_t * letter_next, uint32_t * ofs)
+void lv_text_encoded_letter_next_2(const char * txt, uint32_t * letter, uint32_t * letter_next, uint32_t * ofs)
 {
-    *letter = _lv_text_encoded_next(txt, ofs);
-    *letter_next = *letter != '\0' ? _lv_text_encoded_next(&txt[*ofs], NULL) : 0;
+    *letter = lv_text_encoded_next(txt, ofs);
+    *letter_next = *letter != '\0' ? lv_text_encoded_next(&txt[*ofs], NULL) : 0;
 }
 
 #if LV_TXT_ENC == LV_TXT_ENC_UTF8
@@ -629,7 +631,7 @@ static uint32_t lv_text_utf8_prev(const char * txt, uint32_t * i)
     do {
         if(cnt >= 4) return 0; /*No UTF-8 char found before the initial*/
 
-        c_size = _lv_text_encoded_size(&txt[*i]);
+        c_size = lv_text_encoded_size(&txt[*i]);
         if(c_size == 0) {
             if(*i != 0)
                 (*i)--;
@@ -640,7 +642,7 @@ static uint32_t lv_text_utf8_prev(const char * txt, uint32_t * i)
     } while(c_size == 0);
 
     uint32_t i_tmp  = *i;
-    uint32_t letter = _lv_text_encoded_next(txt, &i_tmp); /*Character found, get it*/
+    uint32_t letter = lv_text_encoded_next(txt, &i_tmp); /*Character found, get it*/
 
     return letter;
 }
@@ -657,7 +659,7 @@ static uint32_t lv_text_utf8_get_byte_id(const char * txt, uint32_t utf8_id)
     uint32_t i;
     uint32_t byte_cnt = 0;
     for(i = 0; i < utf8_id && txt[byte_cnt] != '\0'; i++) {
-        uint8_t c_size = _lv_text_encoded_size(&txt[byte_cnt]);
+        uint8_t c_size = lv_text_encoded_size(&txt[byte_cnt]);
         /* If the char was invalid tell it's 1 byte long*/
         byte_cnt += c_size ? c_size : 1;
     }
@@ -678,7 +680,7 @@ static uint32_t lv_text_utf8_get_char_id(const char * txt, uint32_t byte_id)
     uint32_t char_cnt = 0;
 
     while(i < byte_id) {
-        _lv_text_encoded_next(txt, &i); /*'i' points to the next letter so use the prev. value*/
+        lv_text_encoded_next(txt, &i); /*'i' points to the next letter so use the prev. value*/
         char_cnt++;
     }
 
@@ -697,7 +699,7 @@ static uint32_t lv_text_utf8_get_length(const char * txt)
     uint32_t i   = 0;
 
     while(txt[i] != '\0') {
-        _lv_text_encoded_next(txt, &i);
+        lv_text_encoded_next(txt, &i);
         len++;
     }
 
@@ -712,7 +714,7 @@ static uint32_t lv_text_utf8_get_length(const char * txt)
 /**
  * Give the size of an ISO8859-1 coded character
  * @param str pointer to a character in a string
- * @return length of the UTF-8 character (1,2,3 or 4). O on invalid code
+ * @return length of the ISO8859-1 coded character, will be always 1.
  */
 static uint8_t lv_text_iso8859_1_size(const char * str)
 {
@@ -748,9 +750,9 @@ static uint32_t lv_text_iso8859_1_conv_wc(uint32_t c)
  * Decode an ISO8859-1 character from a string.
  * @param txt pointer to '\0' terminated string
  * @param i start byte index in 'txt' where to start.
- *          After call it will point to the next UTF-8 char in 'txt'.
+ *          After call it will point to the next ISO8859-1 coded char in 'txt'.
  *          NULL to use txt[0] as index
- * @return the decoded Unicode character or 0 on invalid UTF-8 code
+ * @return the decoded ISO8859-1 character.
  */
 static uint32_t lv_text_iso8859_1_next(const char * txt, uint32_t * i)
 {
@@ -764,8 +766,8 @@ static uint32_t lv_text_iso8859_1_next(const char * txt, uint32_t * i)
 /**
  * Get previous ISO8859-1 character form a string.
  * @param txt pointer to '\0' terminated string
- * @param i start byte index in 'txt' where to start. After the call it will point to the previous UTF-8 char in 'txt'.
- * @return the decoded Unicode character or 0 on invalid UTF-8 code
+ * @param i start byte index in 'txt' where to start. After the call it will point to the previous ISO8859-1 coded char in 'txt'.
+ * @return the decoded ISO8859-1 character.
  */
 static uint32_t lv_text_iso8859_1_prev(const char * txt, uint32_t * i)
 {
@@ -779,8 +781,8 @@ static uint32_t lv_text_iso8859_1_prev(const char * txt, uint32_t * i)
 
 /**
  * Convert a character index (in an ISO8859-1 text) to byte index.
- * E.g. in "AÁRT" index of 'R' is 2th char but start at byte 3 because 'Á' is 2 bytes long
- * @param txt a '\0' terminated UTF-8 string
+ * The ISO8859-1 encoding is compatible with ASCII so the indices of characters is the same as the indices of bytes.
+ * @param txt a '\0' terminated char string
  * @param utf8_id character index
  * @return byte index of the 'utf8_id'th letter
  */
@@ -792,8 +794,8 @@ static uint32_t lv_text_iso8859_1_get_byte_id(const char * txt, uint32_t utf8_id
 
 /**
  * Convert a byte index (in an ISO8859-1 text) to character index.
- * E.g. in "AÁRT" index of 'R' is 2th char but start at byte 3 because 'Á' is 2 bytes long
- * @param txt a '\0' terminated UTF-8 string
+ * The ISO8859-1 encoding is compatible with ASCII so the indices of characters is the same as the indices of bytes.
+ * @param txt a '\0' terminated char string
  * @param byte_id byte index
  * @return character index of the letter at 'byte_id'th position
  */
@@ -804,8 +806,8 @@ static uint32_t lv_text_iso8859_1_get_char_id(const char * txt, uint32_t byte_id
 }
 
 /**
- * Get the number of characters (and NOT bytes) in a string. Decode it with UTF-8 if enabled.
- * E.g.: "ÁBC" is 3 characters (but 4 bytes)
+ * Get the number of characters (and NOT bytes) in a string.
+ * The ISO8859-1 encoding is compatible with ASCII so the number of characters is the same as the number of bytes.
  * @param txt a '\0' terminated char string
  * @return number of characters
  */

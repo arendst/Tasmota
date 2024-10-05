@@ -30,6 +30,7 @@ class Matter_Plugin_Sensor_Waterleak : Matter_Plugin_Sensor_Boolean
   # static var ARG_HINT = "Switch<x> number"
   # static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   # static var UPDATE_TIME = 750                      # update every 750ms
+  static var JSON_NAME = "Waterleak"                # Name of the sensor attribute in JSON payloads
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Waterleak")
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     0x0045: [0],                                    # Boolean State p.70 - no writable
@@ -45,22 +46,28 @@ class Matter_Plugin_Sensor_Waterleak : Matter_Plugin_Sensor_Boolean
   #
   # This is triggered when a new value is changed, for subscription
   # This method is meant to be overloaded and maximize shared code
-  def value_updated = Matter_Plugin_Sensor_Rain.value_updated
+  def value_updated()
+    self.attribute_updated(0x0045, 0x0000)
+  end
 
   #############################################################
   # read an attribute
   #
-  def read_attribute = Matter_Plugin_Sensor_Rain.read_attribute
+  def read_attribute(session, ctx, tlv_solo)
+    var TLV = matter.TLV
+    var cluster = ctx.cluster
+    var attribute = ctx.attribute
 
-  #############################################################
-  # update_virtual
-  #
-  # Update internal state for virtual devices
-  def update_virtual(payload)
-    self.shadow_bool_value = self._parse_update_virtual(payload, "Waterleak", self.shadow_bool_value, bool, 0x0045, 0x0000)
-    super(self).update_virtual(payload)
+    # ====================================================================================================
+    if   cluster == 0x0045              # ========== Boolean State ==========
+      if   attribute == 0x0000          #  ---------- StateValue / bool ----------
+        return tlv_solo.set(TLV.BOOL, self.shadow_bool_value)
+      end
+
+    end
+    return super(self).read_attribute(session, ctx, tlv_solo)
   end
-
+  
   #############################################################
   # For Bridge devices
   #############################################################

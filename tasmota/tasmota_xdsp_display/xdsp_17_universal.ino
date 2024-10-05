@@ -183,7 +183,7 @@ Renderer *Init_uDisplay(const char *desc) {
 #ifdef ESP32
       if (wire_n == 1) {
         if (!TasmotaGlobal.i2c_enabled_2) {
-          I2c2Begin(sda, scl);
+          I2cBegin(sda, scl, 1);
         }
       }
 #endif // ESP32
@@ -377,7 +377,7 @@ Renderer *Init_uDisplay(const char *desc) {
 #ifdef ESP32
       if (wire_n == 1) {
         if (!TasmotaGlobal.i2c_enabled_2) {
-          I2c2Begin(sda, scl, 400000);
+          I2cBegin(sda, scl, 1, 400000);
         }
       }
 #endif // ESP32

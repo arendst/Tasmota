@@ -55,6 +55,12 @@ class Matter_Plugin_Device : Matter_Plugin
   #############################################################
   # Constructor
   def init(device, endpoint, arguments)
+    # Zigbee code, activated only when `ZIGBEE` is true
+    # attribute `zigbee_mapper` needs to be defined for classes with `ZIGBEE` true
+    if self.ZIGBEE
+      self.zigbee_mapper = device.create_zb_mapper(self)  # needs to exist before `parse_configuration()` is called
+    end
+
     super(self).init(device, endpoint, arguments)
 
     if self.BRIDGE
@@ -62,6 +68,35 @@ class Matter_Plugin_Device : Matter_Plugin
       self.http_remote = self.device.register_http_remote(addr, self.PROBE_TIMEOUT)
       self.register_cmd_cb()
     end
+  end
+
+  #############################################################
+  # parse_configuration
+  #
+  # Parse configuration map, handling case of Zigbee configuration
+  def parse_configuration(config)
+    # super(self).parse_configuration(config)   # not necessary because the superclass does nothing
+    if self.ZIGBEE && self.zigbee_mapper
+      self.zigbee_mapper.parse_configuration(config)
+    end
+  end
+  
+  #############################################################
+  # Called when the value changed compared to shadow value
+  #
+  # This must be overriden.
+  # This is where you call `self.attribute_updated(<cluster>, <attribute>)`
+  def value_changed()
+    # self.attribute_updated(0x0402, 0x0000)
+  end
+
+  #############################################################
+  # Pre-process value
+  #
+  # This must be overriden.
+  # This allows to convert the raw sensor value to the target one, typically int
+  def pre_value(val)
+    return val
   end
 
   #############################################################
@@ -436,6 +471,32 @@ class Matter_Plugin_Device : Matter_Plugin
       return val
     end
     return old_val
+  end
+
+  #############################################################
+  # For Zigbee devices
+  #############################################################
+  #############################################################
+  # attributes_refined
+  #
+  # Filtered to only events for this endpoint
+  #
+  # Can be called only if `self.ZIGBEE` is true
+  def zigbee_received(frame, attr_list)
+    import math
+    log(f"MTR: zigbee_received Ox{self.zigbee_mapper.shortaddr:04X} {attr_list=} {type(attr_list)=}", 3)
+    var idx = 0
+    while (idx < size(attr_list))
+      var entry = attr_list[idx]
+      if (entry.key == self.ZIGBEE_NAME)
+        var val = self.pre_value(entry.val)
+        var update_list = { self.JSON_NAME : val }   # Matter temperature is 1/100th of degrees
+        self.update_virtual(update_list)
+        log(f"MTR: [{self.endpoint:02X}] {self.JSON_NAME} updated {update_list}", 3)
+        return nil
+      end
+      idx += 1
+    end
   end
 
 end

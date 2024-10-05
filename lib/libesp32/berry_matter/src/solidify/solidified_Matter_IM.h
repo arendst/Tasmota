@@ -109,7 +109,7 @@ static const bvalue be_ktab_class_Matter_IM[203] = {
   /* K100 */  be_nested_str_weak(_X2A_X2A),
   /* K101 */  be_nested_str_weak(_X2504X),
   /* K102 */  be_nested_str_weak(_X2A_X2A_X2A_X2A),
-  /* K103 */  be_nested_str_weak(_X20_X28_X3E_X25s_X29),
+  /* K103 */  be_nested_str_weak(_X20_X28event_X3E_X25s_X29),
   /* K104 */  be_nested_str_weak(MTR_X3A_X20_X3ERead_Event_X28_X256i_X29_X20_X5B_X25s_X5D_X25s_X2F_X25s_X20_X25s_X25s),
   /* K105 */  be_nested_str_weak(finished),
   /* K106 */  be_nested_str_weak(ready),

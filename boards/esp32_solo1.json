@@ -19,7 +19,8 @@
     "openocd_target": "esp32-solo-1.cfg"
   },
   "frameworks": [
-    "arduino"
+    "arduino",
+    "espidf"
   ],
   "name": "Espressif Generic ESP32-solo1 >= 4M Flash, Tasmota 2880k Code/OTA, 320k FS",
   "upload": {

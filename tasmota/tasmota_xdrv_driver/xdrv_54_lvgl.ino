@@ -22,6 +22,7 @@
 
 #include <renderer.h>
 #include "lvgl.h"
+#include "core/lv_global.h"         // needed for LV_GLOBAL_DEFAULT
 #include "tasmota_lvgl_assets.h"    // force compilation of assets
 
 #define XDRV_54             54
@@ -138,12 +139,12 @@ extern "C" {
   }
 
   // int fclose ( FILE * stream );
-  int lvbe_fclose(lvbe_FILE * stream) {
+  lv_fs_res_t lvbe_fclose(lvbe_FILE * stream) {
     File * f_ptr = (File*) stream;
     f_ptr->close();
     delete f_ptr;
     // AddLog(LOG_LEVEL_INFO, "LVG: lvbe_fclose(%p)", f_ptr);
-    return 0;
+    return LV_FS_RES_OK;
   }
 
   // size_t fread ( void * ptr, size_t size, size_t count, FILE * stream );

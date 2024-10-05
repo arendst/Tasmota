@@ -1,7 +1,6 @@
 /*----------------------------------------------------------------------------/
 / TJpgDec - Tiny JPEG Decompressor R0.03 include file         (C)ChaN, 2021
 /----------------------------------------------------------------------------*/
-#ifndef TASMOTA // has tjpegd in ROM
 #ifndef DEF_TJPGDEC
 #define DEF_TJPGDEC
 
@@ -9,7 +8,11 @@
 extern "C" {
 #endif
 
+#include "../../lv_conf_internal.h"
 #include "tjpgdcnf.h"
+
+#if LV_USE_TJPGD
+
 #include <string.h>
 #include <stdint.h>
 
@@ -96,10 +99,10 @@ JRESULT jd_mcu_output(JDEC * jd, int (*outfunc)(JDEC *, void *, JRECT *), unsign
 
 JRESULT jd_restart(JDEC * jd, uint16_t rstn);
 
+#endif
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* _TJPGDEC */
-#endif // TASMOTA

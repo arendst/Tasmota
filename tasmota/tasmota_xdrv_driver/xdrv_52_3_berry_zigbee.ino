@@ -26,6 +26,9 @@
 #include "be_func.h"
 
 extern "C" {
+  extern const bclass be_class_zcl_attribute_list;
+  extern const bclass be_class_zcl_attribute;
+  extern const bclass be_class_zcl_attribute_ntv;
   extern const bclass be_class_zb_device;
 
   // Zigbee Device `zd`
@@ -118,7 +121,11 @@ extern "C" {
   int zc_item_or_find(struct bvm *vm, bbool raise_if_unknown) {
     int32_t top = be_top(vm); // Get the number of arguments
     if (!zigbee.active) {
-      be_raise(vm, "internal_error", "zigbee not started");
+      if (raise_if_unknown) {
+        be_raise(vm, "internal_error", "zigbee not started");
+      } else {
+        be_return_nil(vm);
+      }
     }
     if (top >= 2 && (be_isint(vm, 2) || be_isstring(vm, 2))) {
       const Z_Device & device = be_isint(vm, 2) ? zigbee_devices.findShortAddr(be_toint(vm, 2))
@@ -235,6 +242,27 @@ extern "C" {
     return ret;
   }
 
+  int zd_info(bvm *vm);
+  int zd_info(bvm *vm) {
+    if (!zigbee.active) {
+      be_raise(vm, "internal_error", "zigbee not started");
+    }
+    be_getmember(vm, 1, "_p");
+    const class Z_Device* device = (const class Z_Device*) be_tocomptr(vm, -1);
+    // call ZbInfo
+    static Z_attribute_list attr_list;
+    attr_list.reset();
+    if (device != nullptr) {
+      device->jsonDumpSingleDevice(attr_list, 3, false);   // don't add Device/Name
+      be_pushntvclass(vm, &be_class_zcl_attribute_list);
+     be_pushcomptr(vm, &attr_list);
+      be_call(vm, 1);
+      be_pop(vm, 1);
+      be_return(vm);
+    } else {
+      be_return_nil(vm);
+    }
+  }
 }
 
 /*********************************************************************************************\
@@ -346,10 +374,6 @@ extern "C" {
  *
 \*********************************************************************************************/
 extern "C" {
-  extern const bclass be_class_zcl_attribute_list;
-  extern const bclass be_class_zcl_attribute;
-  extern const bclass be_class_zcl_attribute_ntv;
-
   void zat_zcl_attribute(struct bvm *vm, const Z_attribute *attr);
 
   // Pushes the Z_attribute_list on the stack as a simple list
@@ -391,10 +415,20 @@ extern "C" {
         be_pushreal(vm, (breal)attr->val.fval);
         break;
       case Za_type::Za_raw:
-        be_pushbytes(vm, attr->val.bval->getBuffer(), attr->val.bval->len());
+        // `bval` can be `null`, avoid crashing
+        if (attr->val.bval) {
+          be_pushbytes(vm, attr->val.bval->getBuffer(), attr->val.bval->len());
+        } else {
+          be_pushbytes(vm, nullptr, 0);
+        }
         break;
       case Za_type::Za_str:
-        be_pushstring(vm, attr->val.sval);
+        // `sval` can be `null`, avoid crashing
+        if (attr->val.sval) {
+          be_pushstring(vm, attr->val.sval);
+        } else {
+          be_pushstring(vm, "");
+        }
         break;
         
       case Za_type::Za_obj:

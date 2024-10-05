@@ -453,7 +453,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_CALL(&ZNP_Reset_Device, 0)         // LOW = reset
     ZI_WAIT(100)                          // wait for .1 second
     ZI_CALL(&ZNP_Reset_Device, 1)         // HIGH = release reset
-    ZI_WAIT_RECV_FUNC(5000, ZBR_RESET, &ZNP_Reboot)             // timeout 5s
+    ZI_WAIT_RECV_FUNC(10000, ZBR_RESET, &ZNP_Reboot)             // timeout 5s
     ZI_WAIT(100)
     ZI_LOG(LOG_LEVEL_DEBUG, kCheckingDeviceConfiguration)     // Log Debug: checking device configuration
     ZI_SEND(ZBS_VERSION)                      // check ZNP software version
@@ -925,7 +925,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_CALL(&EZ_Reset_Device, 1)         // HIGH = release reset
 
     // wait for device to start
-    ZI_WAIT_UNTIL(5000, ZBR_RSTACK)     // wait for RSTACK message
+    ZI_WAIT_UNTIL(10000, ZBR_RSTACK)     // wait for RSTACK message
 
     // Init device and probe version
     ZI_SEND(ZBS_VERSION)                ZI_WAIT_RECV_FUNC(5000, ZBR_VERSION, &EZ_ReceiveCheckVersion)       // check EXT PAN ID

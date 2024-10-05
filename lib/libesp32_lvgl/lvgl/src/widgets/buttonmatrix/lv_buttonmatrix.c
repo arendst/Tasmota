@@ -6,7 +6,10 @@
 /*********************
  *      INCLUDES
  *********************/
-#include "lv_buttonmatrix.h"
+#include "lv_buttonmatrix_private.h"
+#include "../../misc/lv_area_private.h"
+#include "../../core/lv_obj_private.h"
+#include "../../core/lv_obj_class_private.h"
 #if LV_USE_BUTTONMATRIX != 0
 
 #include "../../misc/lv_assert.h"
@@ -130,7 +133,7 @@ void lv_buttonmatrix_set_map(lv_obj_t * obj, const char * map[])
         uint32_t unit_cnt = 0;           /*Number of units in a row*/
         uint32_t btn_cnt = 0;            /*Number of buttons in a row*/
         /*Count the buttons and units in this row*/
-        while(map_row[btn_cnt] && strcmp(map_row[btn_cnt], "\n") != 0 && map_row[btn_cnt][0] != '\0') {
+        while(map_row[btn_cnt] && lv_strcmp(map_row[btn_cnt], "\n") != 0 && map_row[btn_cnt][0] != '\0') {
             unit_cnt += get_button_width(btnm->ctrl_bits[btn_tot_i + btn_cnt]);
             btn_cnt++;
         }
@@ -325,7 +328,7 @@ const char * lv_buttonmatrix_get_button_text(const lv_obj_t * obj, uint32_t btn_
     while(btn_i != btn_id) {
         btn_i++;
         txt_i++;
-        if(strcmp(btnm->map_p[txt_i], "\n") == 0) txt_i++;
+        if(lv_strcmp(btnm->map_p[txt_i], "\n") == 0) txt_i++;
     }
 
     if(btn_i == btnm->btn_cnt) return NULL;
@@ -703,7 +706,7 @@ static void draw_main(lv_event_t * e)
 
     for(btn_i = 0; btn_i < btnm->btn_cnt; btn_i++, txt_i++) {
         /*Search the next valid text in the map*/
-        while(strcmp(btnm->map_p[txt_i], "\n") == 0) {
+        while(lv_strcmp(btnm->map_p[txt_i], "\n") == 0) {
             txt_i++;
         }
 
@@ -775,9 +778,9 @@ static void draw_main(lv_event_t * e)
 
 #if LV_USE_ARABIC_PERSIAN_CHARS
         /*Get the size of the Arabic text and process it*/
-        size_t len_ap = _lv_text_ap_calc_bytes_count(txt);
+        size_t len_ap = lv_text_ap_calc_bytes_count(txt);
         if(len_ap < sizeof(txt_ap)) {
-            _lv_text_ap_proc(txt, txt_ap);
+            lv_text_ap_proc(txt, txt_ap);
             txt = txt_ap;
         }
 #endif
@@ -818,7 +821,7 @@ static void allocate_button_areas_and_controls(const lv_obj_t * obj, const char 
     uint32_t btn_cnt = 0;
     uint32_t i       = 0;
     while(map[i] && map[i][0] != '\0') {
-        if(strcmp(map[i], "\n") != 0) { /*Do not count line breaks*/
+        if(lv_strcmp(map[i], "\n") != 0) { /*Do not count line breaks*/
             btn_cnt++;
         }
         else {
@@ -950,7 +953,7 @@ static uint32_t get_button_from_point(lv_obj_t * obj, lv_point_t * p)
                                                                                     BTN_EXTRA_CLICK_AREA_MAX); /*-2 for rounding error*/
         else btn_area.y2 += obj_cords.y1 + prow;
 
-        if(_lv_area_is_point_on(&btn_area, p, 0) != false) {
+        if(lv_area_is_point_on(&btn_area, p, 0) != false) {
             break;
         }
     }
@@ -1029,7 +1032,7 @@ static bool has_popovers_in_top_row(lv_obj_t * obj)
     const char ** map_row = btnm->map_p;
     uint32_t btn_cnt = 0;
 
-    while(map_row[btn_cnt] && strcmp(map_row[btn_cnt], "\n") != 0 && map_row[btn_cnt][0] != '\0') {
+    while(map_row[btn_cnt] && lv_strcmp(map_row[btn_cnt], "\n") != 0 && map_row[btn_cnt][0] != '\0') {
         if(button_is_popover(btnm->ctrl_bits[btn_cnt])) {
             return true;
         }

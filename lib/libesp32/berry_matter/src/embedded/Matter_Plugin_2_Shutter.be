@@ -49,6 +49,7 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
   #
   # Parse configuration map
   def parse_configuration(config)
+    super(self).parse_configuration(config)
     self.tasmota_shutter_index = config.find(self.ARG #-'relay'-#)
     if self.tasmota_shutter_index == nil     self.tasmota_shutter_index = 0   end
     self.shadow_shutter_inverted = -1
@@ -110,22 +111,29 @@ class Matter_Plugin_Shutter : Matter_Plugin_Device
       elif attribute == 0x000D          #  ---------- EndProductType / u8 ----------
         return tlv_solo.set(TLV.U1, 0xFF) # 0xFF = unknown type of shutter
       elif attribute == 0x000E          #  ---------- CurrentPositionLiftPercent100ths / u16 ----------
-        if self.shadow_shutter_inverted == 0
-          matter_position = (100 - self.shadow_shutter_pos) * 100
-        else
-          matter_position = self.shadow_shutter_pos * 100
+        if self.shadow_shutter_pos != nil
+          if self.shadow_shutter_inverted == 0
+            matter_position = (100 - self.shadow_shutter_pos) * 100
+          else
+            matter_position = self.shadow_shutter_pos * 100
+          end
         end
-        return tlv_solo.set(TLV.U2, matter_position)
+        return tlv_solo.set_or_nil(TLV.U2, matter_position)
       elif attribute == 0x000A          #  ---------- OperationalStatus / u8 ----------
-        var op = self.shadow_shutter_direction == 0 ? 0 : (self.shadow_shutter_direction > 0 ? 1 : 2)
-        return tlv_solo.set(TLV.U1, op)
-      elif attribute == 0x000B          #  ---------- TargetPositionLiftPercent100ths / u16 ----------
-        if self.shadow_shutter_inverted == 0
-          matter_position = (100 - self.shadow_shutter_target) * 100
-        else
-          matter_position = self.shadow_shutter_target * 100
+        var op
+        if self.shadow_shutter_direction != nil
+          op = self.shadow_shutter_direction == 0 ? 0 : (self.shadow_shutter_direction > 0 ? 1 : 2)
         end
-        return tlv_solo.set(TLV.U2, matter_position)
+        return tlv_solo.set_or_nil(TLV.U1, op)
+      elif attribute == 0x000B          #  ---------- TargetPositionLiftPercent100ths / u16 ----------
+        if self.shadow_shutter_target != nil
+          if self.shadow_shutter_inverted == 0
+            matter_position = (100 - self.shadow_shutter_target) * 100
+          else
+            matter_position = self.shadow_shutter_target * 100
+          end
+        end
+        return tlv_solo.set_or_nil(TLV.U2, matter_position)
 
       elif attribute == 0x0017          #  ---------- Mode / u8 ----------
         return tlv_solo.set(TLV.U1, 0)    # normal mode

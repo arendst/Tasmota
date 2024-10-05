@@ -14,6 +14,7 @@
 
 extern struct ENERGY Energy;
 extern int module_energy_update_total(bvm *vm);
+extern int module_energy_driver_enabled(bvm *vm);
 
 #include "solidify/solidified_energy.h"
 #include "be_fixed_energy.h"
@@ -37,6 +38,7 @@ module energy (scope: global) {
   tomap, closure(module_energy_tomap_closure)
 
   update_total, func(module_energy_update_total)
+  driver_enabled, func(module_energy_driver_enabled)    // is the Berry virtual driver active?
 }
 
 @const_object_info_end */

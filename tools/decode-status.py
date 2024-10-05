@@ -121,7 +121,7 @@ a_setoption = [[
     "(Tuya) Enable (1) TuyaMcuReceived messages over Mqtt",
     "(Buzzer) Enable (1) buzzer when available",
     "(Light) Enable multi-channels PWM (1) instead of Color PWM (0)",
-    "(not used) Limits Tuya dimmers to minimum of 10% (25) when enabled",
+    "(Serial) Invert Serial receive on SerialBridge (1)",
     "(Energy) Enable Weekend Energy Tariff",
     "(DDS2382) Select different Modbus registers (1) for Active Energy (#6531)",
     "(Energy) Enable (1) hardware energy total counter as reference (#6561)",
@@ -306,7 +306,7 @@ a_features = [[
     ],[
     "USE_MAGIC_SWITCH","USE_PIPSOLAR","USE_GPIO_VIEWER","USE_AMSX915",
     "USE_SPI_LORA","USE_SPL06_007","USE_QMP6988","USE_WOOLIIS",
-    "","","","",
+    "USE_HX711_M5SCALES","USE_RX8010","","",
     "","","","",
     "","","","",
     "","","","",
@@ -339,7 +339,7 @@ else:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v14.1.0.1 by Theo Arends and Jacek Ziolkowski ***")
+    print ("\n*** decode-status.py v14.2.0.4 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 

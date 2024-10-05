@@ -158,6 +158,7 @@
 #define SSPM_FUNC_SCAN_RESULT        19      // 0x13 - Provide 4relay ARM firmware version, module type and OPS limits
 #define SSPM_FUNC_SCAN_DONE          25      // 0x19
 #define SSPM_FUNC_UPLOAD_DONE_ACK    30      // 0x1E - Restart ARM
+#define SSPM_FUNC_38                 38      // 0x26 - v1.3.0 - AA550100000000000000000000000000 26 00 0D 2419474C3831310C45373439 00 04 45CD
 
 // Unknown
 #define SSPM_FUNC_01                 1       // 0x01
@@ -177,6 +178,7 @@
 
 #define SSPM_VERSION_1_0_0           0x00010000
 #define SSPM_VERSION_1_2_0           0x00010200
+#define SSPM_VERSION_1_3_0           0x00010300
 #define SSPM_VERSION_1_4_0           0x00010400
 
 /*********************************************************************************************/
@@ -1515,28 +1517,61 @@ void SSPMHandleReceivedData(void) {
         AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 06 00 1c 8b 34 32 37 39 37 34 13 4b 35 36 37 08 00 44 00 e1 35 00 9a 3e 00 01 45 00 9a 38 00 08 8b ae
         AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 06 00 1c 8b 34 32 37 39 37 34 13 4b 35 36 37 08 00 4a 00 e1 22 00 61 4d 00 2c 38 00 a8 28 20 26 21 70
                                                                                                     |Ch|Curre|Voltage |ActivePo|Reactive|Apparent|5m|
+
+        Sspm->main_version = SSPM_VERSION_1_3_0:
+        AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 06 00 2A 24 19 47 4C 38 31 31 0C 45 37 34 39 09 01 03 00 EA 1D 00 C3 37 00 8F 38 00 F2 24              - L1 
+                                                                                                        00 49 00 EA 3A 00 7A 3D 00 82 0A 00 AC 40 37 75 FD B1  - L4
+        AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 06 00 2A 24 19 47 4C 38 31 31 0C 45 37 34 39 03 01 01 00 EA 04 00 C4 21 00 8F 1F 00 F3 45              - L1
+                                                                                                        00 16 00 EA 1D 00 27 3B 00 1F 59 00 33 23 45 05 39 B4  - L2
+        AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 06 00 38 24 19 47 4C 38 31 31 0C 45 37 34 39 07 01 02 00 EA 0F 00 C0 30 00 8E 01 00 EF 51              - L1
+                                                                                                        00 16 00 EA 24 00 27 3E 00 1F 62 00 33 27              - L2
+                                                                                                        00 0A 00 EA 1C 00 04 21 00 18 41 00 19 13 00 06 65 40  - L3
+        AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 06 00 46 24 19 47 4C 38 31 31 0C 45 37 34 39 0F 01 02 00 E9 61 00 BF 53 00 8D 0B 00 EE 5F              - L1
+                                                                                                        00 16 00 EA 14 00 27 18 00 20 1D 00 33 1E              - L2
+                                                                                                        00 0A 00 EA 0B 00 04 1B 00 18 3C 00 19 0E              - L3
+                                                                                                        00 55 00 EA 15 00 9F 14 00 7E 3F 00 CD 04 00 07 AB C3  - L4
+        AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 06 00 46 24 19 47 4C 38 31 31 0C 45 37 34 39 0F 01 02 00 E9 57 00 C0 3C 00 8D 26 00 EF 29
+                                                                                                        00 16 00 EA 06 00 27 1C 00 20 24 00 32 45
+                                                                                                        00 0A 00 E9 63 00 04 1A 00 18 3D 00 19 0D
+                                                                                                        00 5D 00 EA 0D 00 C2 5D 00 7F 5F 00 DB 3B 00 08 31 6F
+
+        AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 06 00 46 24 19 47 4C 38 31 31 0C 45 37 34 39 0F 01 03 00 EA 15 00 C2 3D 00 8F 1D 00 F1 41
+                                                                                                        00 12 00 EA 2A 00 17 49 00 1F 04 00 2A 47
+                                                                                                        00 0A 00 EA 22 00 04 1D 00 18 46 00 19 17
+                                                                                                        00 5C 00 EA 31 00 AA 62 00 7D 01 00 D9 12 00 36 6F B8
+                                                                                                    |Ch|Curre|Voltage |ActivePo|Reactive|Apparent|5m|
         Values are XX XX    - number
                          XX - decimals
         5m - 5 minutes Power Consumption (Ws)
         */
         {
-          uint32_t channel = 0;
-          for (channel = 0; channel < 4; channel++) {
-            if (SspmBuffer[31] & 1) { break; }
-            SspmBuffer[31] >>= 1;
-          }
           uint32_t module = SSPMGetModuleNumberFromMap(SspmBuffer[19] << 8 | SspmBuffer[20]);
 #ifdef SSPM_SIMULATE
           if (Sspm->Settings.simulate_count) { module = Sspm->simulated_module; }
 #endif  // SSPM_SIMULATE
-          Sspm->current[module][channel] = SspmBuffer[32] + (float)SspmBuffer[33] / 100;                                 // x.xxA
-          Sspm->voltage[module][channel] = SSPMGetValue(&SspmBuffer[34]);         // x.xxV
-          Sspm->active_power[module][channel] = SSPMGetValue(&SspmBuffer[37]);    // x.xxW
-          Sspm->reactive_power[module][channel] = SSPMGetValue(&SspmBuffer[40]);  // x.xxVAr
-          Sspm->apparent_power[module][channel] = SSPMGetValue(&SspmBuffer[43]);  // x.xxVA
-          float power_factor = (Sspm->active_power[module][channel] && Sspm->apparent_power[module][channel]) ? Sspm->active_power[module][channel] / Sspm->apparent_power[module][channel] : 0;
-          if (power_factor > 1) { power_factor = 1; }
-          Sspm->power_factor[module][channel] = power_factor;
+          uint32_t offset = 32;
+          uint32_t offset_max = SspmBuffer[18] +18;
+          for (uint32_t channel = 0; channel < 4; channel++) {
+            uint32_t channel_mask = SspmBuffer[31] >> channel;
+            if (0 == (channel_mask &1)) { continue; }
+
+            uint32_t relay = (module * 4) + channel;
+            if ((TasmotaGlobal.power >> relay) &1) {  // Show only powered ON
+
+              Sspm->current[module][channel] = SspmBuffer[offset] + (float)SspmBuffer[offset +1] / 100;  // x.xxA
+              Sspm->voltage[module][channel] = SSPMGetValue(&SspmBuffer[offset +2]);                     // x.xxV
+              Sspm->active_power[module][channel] = SSPMGetValue(&SspmBuffer[offset +5]);                // x.xxW
+              Sspm->reactive_power[module][channel] = SSPMGetValue(&SspmBuffer[offset +8]);              // x.xxVAr
+              Sspm->apparent_power[module][channel] = SSPMGetValue(&SspmBuffer[offset +11]);             // x.xxVA
+              float power_factor = (Sspm->active_power[module][channel] && Sspm->apparent_power[module][channel]) ? Sspm->active_power[module][channel] / Sspm->apparent_power[module][channel] : 0;
+              if (power_factor > 1) { power_factor = 1; }
+              Sspm->power_factor[module][channel] = power_factor;
+
+            }
+
+            offset += 14;
+            if (offset > offset_max) { break; }
+          }
           SSPMSendAck(command_sequence);
           Sspm->allow_updates = 1;
         }
@@ -1636,6 +1671,8 @@ void SSPMHandleReceivedData(void) {
                                                                                                                 |130|  1.0.0|20.0A|0.10A| 240.00V|   0.10V|4400.00W|   0.10W|
         AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 13 00 24 8B 34 32 37 39 37 34 13 4B 35 36 37 04 00 00 00 82 01 02 00 14 00 00 0A 01 08 00 00 5A 00 12 C0 00 00 00 0A 02 6B 93 - v1.2.0
                                                                                                                 |130|  1.2.0|20.0A|0.10A| 264.00V|     90V|4800.00W|   0.10W|
+        AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 13 00 24 B2 43 47 4C 38 31 30 0E 35 36 37 34 04 00 00 00 82 01 03 00 14 00 00 0A 01 08 00 00 5A 00 12 C0 00 00 00 0A 02 C5 87
+                                                                                                                |130|  1.3.0|20.0A|0.10A| 264.00V|     90V|4800.00W|   0.10W|
         Ty = Type of sub-device. 130: Four-channel sub-device
         */
         if (0x24 == expected_bytes) {
@@ -1713,11 +1750,21 @@ void SSPMHandleReceivedData(void) {
         break;
       case SSPM_FUNC_UPLOAD_DONE_ACK:
         /* 0x1E
-        0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22
+         0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22
         aa 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 1e 00 01 00 01 fe 05
         Marker  |                                   |  |Cm|Size |  |Ix|Chksm|
         */
         SSPMSendFindAck();
+        break;
+      case SSPM_FUNC_38:
+        /* 0x26 v1.3.0
+         0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34
+        AA 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 26 00 0D 24 19 47 4C 38 31 31 0C 45 37 34 39 00 04 45 CD
+        aa 55 01 00 00 00 00 00 00 00 00 00 00 00 00 00 26 00 0d b2 43 47 4c 38 31 30 0e 35 36 37 34 00 02 f0 46
+        Marker  |                                   |  |Cm|Size |Module id                          |  |Ix|Chksm|
+
+        */
+        SSPMSendAck(command_sequence);
         break;
     }
   }

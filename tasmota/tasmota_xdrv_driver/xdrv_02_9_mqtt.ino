@@ -177,6 +177,19 @@ void MqttDisableLogging(bool state) {
   TasmotaGlobal.masterlog_level = (Mqtt.disable_logging) ? LOG_LEVEL_DEBUG_MORE : LOG_LEVEL_NONE;
 }
 
+// The following emits a warning if the connection is non-TLS on a TLS port
+// this makes troubleshooting easier
+// This function is called only when a non-TLS connection is detected
+void MqttNonTLSWarning(void) {
+#ifndef FIRMWARE_MINIMAL    // not needed in MINIMAL firmware
+  if ((443  == Settings->mqtt_port) ||
+      (8883 == Settings->mqtt_port ) ||
+      (8443 == Settings->mqtt_port)) {
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Warning non-TLS connection on TLS port %d"), Settings->mqtt_port);
+  }
+#endif // FIRMWARE_MINIMAL
+}
+
 /*********************************************************************************************\
  * MQTT driver specific code need to provide the following functions:
  *
@@ -253,9 +266,11 @@ void MqttInit(void) {
     MqttClient.setClient(*tlsClient);
   } else {
     MqttClient.setClient(EspClient);    // non-TLS
+    MqttNonTLSWarning();
   }
 #else // USE_MQTT_TLS
   MqttClient.setClient(EspClient);
+  MqttNonTLSWarning();
 #endif // USE_MQTT_TLS
 
   MqttClient.setKeepAlive(Settings->mqtt_keepalive);
@@ -1152,6 +1167,7 @@ void MqttReconnect(void) {
     tlsClient->setDomainName(SettingsText(SET_MQTT_HOST));   // set domain name for TLS SNI (selection of certificate based on domain name)
   } else {
     MqttClient.setClient(EspClient);
+    MqttNonTLSWarning();
   }
 #ifdef USE_MQTT_AWS_IOT
   // re-assign private keys in case it was updated in between
@@ -1192,6 +1208,7 @@ void MqttReconnect(void) {
   }
 #else   // No USE_MQTT_TLS
   MqttClient.setClient(EspClient);
+  MqttNonTLSWarning();
 #endif  // USE_MQTT_TLS
 
   char stopic[TOPSZ];

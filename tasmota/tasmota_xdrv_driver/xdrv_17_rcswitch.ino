@@ -92,7 +92,7 @@ void RfInit(void) {
     if (!Settings->rf_protocol_mask) {
       Settings->rf_protocol_mask = (1ULL << mySwitch.getNumProtos()) -1;
     }
-    mySwitch.setReceiveProtocolMask(Settings->rf_protocol_mask);
+    (void)mySwitch.setReceiveProtocolMask(Settings->rf_protocol_mask);
   }
 }
 
@@ -132,7 +132,10 @@ void CmndRfProtocol(void) {
       }
     }
   }
-  mySwitch.setReceiveProtocolMask(Settings->rf_protocol_mask);
+  const bool incompatibleProtocolsSelected = !mySwitch.setReceiveProtocolMask(Settings->rf_protocol_mask);
+  if (incompatibleProtocolsSelected) {
+    AddLog(LOG_LEVEL_INFO, PSTR("RFR: CmndRfProtocol:: Incompatible protocols selected, using default separation limit, some protocols may not work"));
+  }
 //  AddLog(LOG_LEVEL_INFO, PSTR("RFR: CmndRfProtocol:: Start responce"));
   Response_P(PSTR("{\"" D_CMND_RFPROTOCOL "\":\""));
   bool gotone = false;

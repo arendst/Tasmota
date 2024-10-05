@@ -2282,14 +2282,11 @@ void uDisplay::pushColors(uint16_t *data, uint16_t len, boolean not_swapped) {
           }
         }
         uint16_t * flush_ptr = rgb_fb + (int32_t)seta_yp1 * _width + seta_xp1;
-        esp_cache_msync(flush_ptr, (seta_xp2 - seta_xp1) * 2, 0);
+        Cache_WriteBack_Addr((uint32_t)flush_ptr, (seta_xp2 - seta_xp1) * 2);
         fb_y += _width;
         seta_yp1++;
         if (!lenc) break; 
       }
-      // using esp_cache_msync() to flush the PSRAM cache and ensure that all data is actually written to PSRAM
-      // from https://github.com/espressif/esp-idf/blob/636ff35b52f10e1a804a3760a5bd94e68f4b1b71/components/esp_lcd/rgb/esp_lcd_panel_rgb.c#L159
-
     }
 #endif
     return;

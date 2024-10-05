@@ -10,6 +10,7 @@
 *.gcda
 
 ## Project files ######
+managed_components
 .platformio
 .pio
 .clang_complete
@@ -42,3 +43,7 @@ lib/libesp32/berry/berry
 .vscode/extensions.json
 *.bak
 *.code-workspace
+
+## Python virtual environments for Platformio ##
+venv
+.venv

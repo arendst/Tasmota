@@ -2611,8 +2611,7 @@ void CmndMi32Option(void){
       }
     } break;
     default:{
-      ResponseCmndIdxError();
-      return;
+      return;  // Command Error
     } break;
   }
   ResponseCmndIdxNumber(value);

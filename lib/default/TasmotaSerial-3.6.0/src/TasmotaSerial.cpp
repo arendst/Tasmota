@@ -123,7 +123,9 @@ void TasmotaSerial::end(void) {
 }
 
 TasmotaSerial::~TasmotaSerial(void) {
-  end();
+  if (m_valid) {
+    end();
+  }
 }
 
 bool TasmotaSerial::isValidGPIOpin(int pin) {
