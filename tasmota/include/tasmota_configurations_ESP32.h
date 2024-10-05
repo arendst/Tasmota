@@ -830,6 +830,9 @@
 
 #ifdef CONFIG_IDF_TARGET_ESP32C2
   #undef USE_ETHERNET
+  #ifdef FIRMWARE_MINIMAL
+    #undef USE_SPI
+  #endif  // FIRMWARE_MINIMAL
 #endif  // CONFIG_IDF_TARGET_ESP32C2
 
 #endif  // ESP32
