@@ -1208,19 +1208,19 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 	}
 
 	if (sc->sc_temp.type != 0) {
-		ResponseAppend_P(PSTR(",\"roomtemp\":\"%s\""),
+		ResponseAppend_P(PSTR(",\"Roomtemp\":\"%s\""),
 		    ToHex_P((uint8_t *)&sc->sc_temp, sizeof(sc->sc_temp),
 		    hex, sizeof(hex)));
 	}
 
 	if (sc->sc_status.type != 0) {
-		ResponseAppend_P(PSTR(",\"status\":\"%s\""),
+		ResponseAppend_P(PSTR(",\"Status\":\"%s\""),
 		    ToHex_P((uint8_t *)&sc->sc_status, sizeof(sc->sc_status),
 		    hex, sizeof(hex)));
 	}
 
 	if (sc->sc_stage.type != 0) {
-		ResponseAppend_P(PSTR(",\"stage\":\"%s\""),
+		ResponseAppend_P(PSTR(",\"Stage\":\"%s\""),
 		    ToHex_P((uint8_t *)&sc->sc_stage, sizeof(sc->sc_stage),
 		    hex, sizeof(hex)));
 	}
