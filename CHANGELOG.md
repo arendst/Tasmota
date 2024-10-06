@@ -6,11 +6,12 @@ All notable changes to this project will be documented in this file.
 ## [14.2.0.6]
 ### Added
 - Support for Sonoff SPM v1.3.0 (#13447)
-- LVGL port `colorwheel` from LVGL 8
-- HASPmota `cpicker` and `msgbox`
+- LVGL port `colorwheel` from LVGL 8 (#22244)
+- HASPmota `cpicker` and `msgbox` (#22244)
+- Support for DALI 1 on ESP8266
 
 ### Breaking Changed
-- HASPmota `delete` instead of `delete()`
+- HASPmota `delete` instead of `delete()` (#22245)
 
 ### Changed
 - ESP32 platform update from 2024.09.10 to 2024.09.30 and Framework (Arduino Core) from v3.0.5 to v3.1.0.240926 (#22203)
@@ -20,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - HASPmota error when page '1' is not defined (#22220)
 - ESP32-S3 uDisplay force cache writes to RGB display (#22222)
 - ESP32 Dali compile error with core 3.x (#22214)
+- Dali received data decoding
 
 ### Removed
 

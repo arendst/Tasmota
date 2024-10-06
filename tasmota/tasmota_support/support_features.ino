@@ -823,7 +823,7 @@ constexpr uint32_t feature[] = {
   0x00000020 |  // xdrv_88_esp32_shelly_pro.ino
 #endif
 #ifdef USE_DALI
-  0x00000040 |  // xdrv_89_esp32_dali.ino
+  0x00000040 |  // xdrv_75_dali.ino
 #endif
 #if defined(USE_LIGHT) && defined(USE_BP1658CJ)
   0x00000080 |  // xlgt_10_bp1658cj.ino

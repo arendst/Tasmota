@@ -592,7 +592,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
  * Protocol specifics
 \*-------------------------------------------------------------------------------------------*/
 
-#if defined(USE_DALI) && defined(ESP32)
+#ifdef USE_DALI
   AGPIO(GPIO_DALI_RX),                  // DALI RX
   AGPIO(GPIO_DALI_TX),                  // DALI TX
 #endif  // USE_DALI
