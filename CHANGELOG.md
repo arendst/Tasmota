@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - HASPmota `cpicker` and `msgbox`
 
 ### Breaking Changed
+- HASPmota `delete` instead of `delete()`
 
 ### Changed
 - ESP32 platform update from 2024.09.10 to 2024.09.30 and Framework (Arduino Core) from v3.0.5 to v3.1.0.240926 (#22203)

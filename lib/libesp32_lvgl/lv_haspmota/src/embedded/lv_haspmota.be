@@ -132,9 +132,9 @@ class lvh_root
     raise "type_error", "you cannot assign to 'delete'"
   end
   def get_delete()
-    self.delete()
+    self._delete()
   end
-  def delete()
+  def _delete()
     # to be overriden
   end
  
@@ -658,10 +658,10 @@ class lvh_obj : lvh_root
   end
 
   #====================================================================
-  #  `delete` special attribute used to delete the object
+  #  `_delete` special attribute used to delete the object
   #====================================================================
-  # the actual delete method, overriden
-  def delete()
+  # the actual _delete method, overriden
+  def _delete()
     # remove any rule
     self.remove_val_rule()
     self.remove_text_rule()
@@ -1858,10 +1858,10 @@ class lvh_scale_section : lvh_root
   end
 
   #====================================================================
-  #  `delete` special attribute used to delete the object
+  #  `_delete` special attribute used to delete the object
   #====================================================================
-  # the actual delete method, overriden
-  def delete()
+  # the actual _delete method, overriden
+  def _delete()
     self._style.del()
     self._style = nil
     self._style10.del()
