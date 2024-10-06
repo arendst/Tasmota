@@ -48,6 +48,9 @@ lv_widgets = lv_widgets + [ 'chart', 'imagebutton', 'led', 'msgbox', 'spinbox', 
 # add qrcode
 lv_widgets = lv_widgets + [ 'qrcode' ]
 
+# adding ad-hoc colorwheel from LVGL8 to LVGL9
+lv_widgets = lv_widgets + [ 'colorwheel' ]
+
 lv_prefix = ['group', 'style', 'indev', 'display', 'timer', 'anim', 'event', 'span'] + lv_widgets
 
 # define here widget inheritance because it's hard to deduce from source
@@ -405,6 +408,9 @@ class type_mapper_class:
     "lv_table_cell_ctrl_t": "i",
 
     "lv_calendar_chinese_t": "c",
+
+    # adding ad-hoc colorwheel from LVGL8 to LVGL9
+    "lv_colorwheel_mode_t": "i",
 
     # arrays
     "constchar * []": "str_arr",
@@ -798,6 +804,7 @@ extern "C" {
 
 #include "be_ctypes.h"
 #include "be_mapping.h"
+#include "../src/lv_colorwheel.h"
 """)
 
 for subtype, flv in lv.items():
@@ -913,6 +920,9 @@ BE_EXPORT_VARIABLE extern const bclass be_class_lv_obj;
 
 extern int lvbe_font_create(bvm *vm);
 extern int lvbe_theme_create(bvm *vm);
+
+// adding ad-hoc colorwheel from LVGL8 to LVGL9
+extern const lv_obj_class_t lv_colorwheel_class;
 
 """)
 

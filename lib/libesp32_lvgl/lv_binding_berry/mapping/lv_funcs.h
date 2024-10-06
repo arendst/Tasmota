@@ -1498,3 +1498,14 @@ void be_load_lvgl_classes(bvm *vm)
 void lv_image_set_tasmota_logo(lv_obj_t * img)
 lv_area_t * lv_bar_get_indic_area(lv_obj_t * bar)
 
+// ../src/lv_colorwheel.h
+lv_obj_t * lv_colorwheel_create(lv_obj_t * parent, bool knob_recolor)
+bool lv_colorwheel_set_hsv(lv_obj_t * obj, lv_color_hsv_t hsv)
+bool lv_colorwheel_set_rgb(lv_obj_t * obj, lv_color_t color)
+void lv_colorwheel_set_mode(lv_obj_t * obj, lv_colorwheel_mode_t mode)
+void lv_colorwheel_set_mode_fixed(lv_obj_t * obj, bool fixed)
+lv_color_hsv_t lv_colorwheel_get_hsv(lv_obj_t * obj)
+lv_color_t lv_colorwheel_get_rgb(lv_obj_t * obj)
+lv_colorwheel_mode_t lv_colorwheel_get_color_mode(lv_obj_t * obj)
+bool lv_colorwheel_get_color_mode_fixed(lv_obj_t * obj)
+

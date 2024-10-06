@@ -257,10 +257,11 @@ class lvh_root
   #====================================================================
   # init HASPmota object from its jsonl definition
   #
-  # arg1: LVGL parent object (used to create a sub-object)
-  # arg2: `jline` JSONL definition of the object from HASPmota template (used in sub-classes)
-  # arg3: (opt) LVGL object if it already exists and was created prior to init()
-  # arg4: HASPmota parent object defined by `parentid`
+  # parent: LVGL parent object (used to create a sub-object)
+  # page: HASPmota page object
+  # jline: JSONL definition of the object from HASPmota template (used in sub-classes)
+  # obj: (opt) LVGL object if it already exists and was created prior to init()
+  # parent_lvh: HASPmota parent object defined by `parentid`
   #====================================================================
   def init(parent, page, jline, obj, parent_lvh)
     self._page = page
@@ -557,10 +558,11 @@ class lvh_obj : lvh_root
   #====================================================================
   # init HASPmota object from its jsonl definition
   #
-  # arg1: LVGL parent object (used to create a sub-object)
-  # arg2: `jline` JSONL definition of the object from HASPmota template (used in sub-classes)
-  # arg3: (opt) LVGL object if it already exists and was created prior to init()
-  # arg4: HASPmota parent object defined by `parentid`
+  # parent: LVGL parent object (used to create a sub-object)
+  # page: HASPmota page object
+  # jline: JSONL definition of the object from HASPmota template (used in sub-classes)
+  # obj: (opt) LVGL object if it already exists and was created prior to init()
+  # parent_lvh: HASPmota parent object defined by `parentid`
   #====================================================================
   def init(parent, page, jline, obj, parent_lvh)
     super(self).init(parent, page, jline, obj, parent_lvh)
@@ -640,11 +642,11 @@ class lvh_obj : lvh_root
       var tas_event_more = ""   # complementary data
       if code == lv.EVENT_VALUE_CHANGED
         import introspect
-        var val = introspect.get(self, "val")     # does not raise an exception if not found
+        var val = introspect.get(self, true)     # does not raise an exception if not found
         if (val != nil && type(val) != 'module')
           tas_event_more = f',"val":{json.dump(val)}'
         end
-        var text = introspect.get(self, "text")     # does not raise an exception if not found
+        var text = introspect.get(self, true)     # does not raise an exception if not found
         if (text != nil && type(text) != 'module')
           tas_event_more += f',"text":{json.dump(text)}'
         end
@@ -1270,6 +1272,145 @@ class lvh_switch : lvh_obj
 end
 
 #====================================================================
+#  msgbox
+#====================================================================
+#@ solidify:lvh_msgbox,weak
+class lvh_msgbox : lvh_obj
+  static var _lv_class = lv.msgbox
+  var _modal
+  # sub_objects
+  var _header, _footer, _content, _title
+  var _buttons          # array containing the buttons, to apply styles later
+
+  #====================================================================
+  # init
+  #
+  # parent: LVGL parent object (used to create a sub-object)
+  # page: HASPmota page object
+  # jline: JSONL definition of the object from HASPmota template (used in sub-classes)
+  # obj: (opt) LVGL object if it already exists and was created prior to init()
+  # parent_lvh: HASPmota parent object defined by `parentid`
+  #====================================================================
+  def init(parent, page, jline, obj, parent_lvh)
+    self._buttons = []
+    self._modal = bool(jline.find("modal", false))
+    if (self._modal)
+      # the object created as modal is on top of everything
+      self._lv_obj = lv.msgbox(0)
+    end
+    super(self).init(parent, page, jline, self._lv_obj, parent_lvh)
+    # apply some default styles
+    self.text_align = 2     # can be overriden
+    self.bg_opa = 255       # can be overriden
+  end
+
+  #====================================================================
+  # register_event_cb
+  #
+  # Override the normal event handler, we are only interested
+  # in events on buttons
+  #====================================================================
+  def register_event_cb()
+    # nothing to register for now, event_cb is allocated when buttons are allocted in `setoptions`
+  end
+
+  # update after parsing
+  # 
+  def post_config()
+    var lvh_class = self._page._hm.lvh_obj      # get `lvh_obj` class from root instance
+    var _lv_obj = self._lv_obj                  # get msgbox lvgl object
+    # read the method, and return nil if exception 'value_error' occured
+    def get_obj_safe(method)
+      try
+        var lv_obj = method(_lv_obj)            # equivalent of `self._lv_obj.get_XXX()` where XXX is header/footer/title/content
+        return lvh_class(nil, self._page, {}, lv_obj, self) # instanciate a local lvh object
+      except 'value_error'
+        return nil
+      end
+    end
+
+    super(self).post_config()
+    # get sub-objects
+    self._header = get_obj_safe(_lv_obj.get_header)
+    self._footer = get_obj_safe(_lv_obj.get_footer)
+    self._content = get_obj_safe(_lv_obj.get_content)
+    self._title = get_obj_safe(_lv_obj.get_title)
+  end
+
+  #- ------------------------------------------------------------#
+  # `setmember` virtual setter
+  #
+  # If the key starts with `footer_`, `header_`, `title_` or `content_`
+  # send to the corresponding object
+  #- ------------------------------------------------------------#
+  def setmember(k, v)
+    import string
+    if string.startswith(k, 'footer_') && self._footer
+      self._footer.setmember(k[7..], v)
+    elif string.startswith(k, 'header_') && self._header
+      self._header.setmember(k[7..], v)
+    elif string.startswith(k, 'title_') && self._title
+      self._title.setmember(k[6..], v)
+    elif string.startswith(k, 'content_') && self._content
+      self._content.setmember(k[8..], v)
+    elif string.startswith(k, 'buttons_') && self._buttons
+      for btn: self._buttons
+        btn.setmember(k[8..], v)
+      end
+    else
+      super(self).setmember(k, v)
+    end
+  end
+  def member(k)
+    import string
+    if string.startswith(k, 'footer_') && self._footer
+      return self._footer.member(k[7..])
+    elif string.startswith(k, 'header_') && self._header
+      return self._header.member(k[7..])
+    elif string.startswith(k, 'title_') && self._title
+      return self._title.member(k[6..])
+    elif string.startswith(k, 'content_') && self._content
+      return self._content.member(k[8..])
+    else
+      return super(self).member(k)
+    end
+  end
+
+  # private function to add a button, create the lvh class and register callbacks
+  def _add_button(msg)
+    var lvh_class = self._page._hm.lvh_obj      # get `lvh_obj` class from root instance
+    var btn_lv = self._lv_obj.add_footer_button(msg)
+    var btn_lvh = lvh_class(nil, self._page, {}, btn_lv, self) # instanciate a local lvh object
+    self._buttons.push(btn_lvh)
+  end
+
+  def set_options(l)
+    if (isinstance(l, list) && size(l) > 0)
+      for msg: l
+        self._add_button(msg)
+      end
+    else
+      print("HTP: 'msgbox' needs 'options' to be a list of strings")
+    end
+  end
+  def get_options()
+  end
+
+  def set_title(t)
+    self._lv_obj.add_title(str(t))
+  end
+  def get_title()
+    # self._lv_obj.get_title()
+  end
+  def set_text(t)
+    self._lv_obj.add_text(str(t))
+  end
+  def get_text()
+    # self._lv_obj.get_text()
+  end
+end
+
+#====================================================================
 #  spinner
 #====================================================================
 #@ solidify:lvh_spinner,weak
@@ -1278,17 +1419,21 @@ class lvh_spinner : lvh_arc
   # static var _EVENTS = EVENTS_ALL # inherited
   var _speed, _angle
 
+  #====================================================================
   # init
-  # - create the LVGL encapsulated object
-  # arg1: parent object
-  # arg2: json line object
+  #
+  # parent: LVGL parent object (used to create a sub-object)
+  # page: HASPmota page object
+  # jline: JSONL definition of the object from HASPmota template (used in sub-classes)
+  # obj: (opt) LVGL object if it already exists and was created prior to init()
+  # parent_lvh: HASPmota parent object defined by `parentid`
+  #====================================================================
   def init(parent, page, jline)
-    self._page = page
     var angle = jline.find("angle", 60)
     var speed = jline.find("speed", 1000)
     self._lv_obj = lv.spinner(parent)
     self._lv_obj.set_anim_params(speed, angle)
-    self.post_init()
+    super(self).init(parent, page, jline, self._lv_obj)
   end
 
   def set_angle(t) end
@@ -2082,6 +2227,71 @@ class lvh_btnmatrix : lvh_obj
   end
 end
 
+#====================================================================
+#  cpicker - color picker
+#
+# OpenHASP maps to LVGL 7 `cpicker`
+# However `cpicker` was replaced with `colorwheel` in LVGL 8
+# and removed in LVGL 9.
+# We have ported back `colorwheel` from LVGL 8 to LVGL 9
+#====================================================================
+#@ solidify:lvh_cpicker,weak
+class lvh_cpicker : lvh_obj
+  static var _lv_class = lv.colorwheel
+  static var _CW_MODES = ['hue', 'saturation', 'value']
+
+  # we need a non-standard initialization of lvgl object
+  def init(parent, page, jline, obj, parent_lvh)
+    obj = lv.colorwheel(parent, true #-knob_recolor = true-#)
+    super(self).init(parent, page, jline, obj, parent_lvh)
+    self.set_scale_width(25)      # align to OpenHASP default value
+  end
+
+  def set_color(t)
+    var v = self.parse_color(t)
+    self._lv_obj.set_rgb(v)
+  end
+  def get_color()
+    var color = self._lv_obj.get_rgb()
+    return f"#{color:06X}"
+  end
+
+  def set_mode(s)
+    var mode = self._CW_MODES.find(s)
+    if (mode != nil)
+      self._lv_obj.set_mode(mode)
+    else
+      raise "value_error", f"unknown color mode '{mode}'"
+    end
+  end
+  def get_mode()
+    var mode = self._lv_obj.get_color_mode()
+    if (mode >= 0) && (mode < size(self._CW_MODES))
+      return self._CW_MODES[mode]
+    else
+      return 'unknown'
+    end
+  end
+
+  def set_mode_fixed(b)
+    b = bool(b)
+    self._lv_obj.set_mode_fixed(b)
+  end
+  def get_mode_fixed()
+    return self._lv_obj.get_color_mode_fixed()
+  end
+
+  def set_scale_width(v)
+    self._lv_obj.set_style_arc_width(int(v), 0)
+  end
+  def get_scale_width()
+    return self._lv_obj.get_style_arc_width(0)
+  end
+  # pad_inner is ignored (for now?)
+  def set_pad_inner() end
+  def get_pad_inner() end
+end
+
 #################################################################################
 #
 # All other subclasses than just map the LVGL object
@@ -2292,10 +2502,10 @@ class HASPmota
   static lvh_dropdown_list = lvh_dropdown_list
 	static lvh_roller = lvh_roller
 	static lvh_btnmatrix = lvh_btnmatrix
- 	# static lvh_msgbox = lvh_msgbox
+ 	static lvh_msgbox = lvh_msgbox
  	# static lvh_tabview = lvh_tabview
  	# static lvh_tab = lvh_tab
- 	# static lvh_cpiker = lvh_cpiker
+ 	static lvh_cpicker = lvh_cpicker
 	static lvh_bar = lvh_bar
 	static lvh_slider = lvh_slider
 	static lvh_arc = lvh_arc

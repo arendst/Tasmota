@@ -1570,3 +1570,16 @@ set_light_color|lv.color||[lv_qrcode_set_light_color](https://docs.lvgl.io/9.0/s
 set_size|int||[lv_qrcode_set_size](https://docs.lvgl.io/9.0/search.html?q=lv_qrcode_set_size)
 update|\<any\>, int|int|[lv_qrcode_update](https://docs.lvgl.io/9.0/search.html?q=lv_qrcode_update)
 
+### widget `lv.colorwheel`
+
+Method|Arguments|Return type|LVGL equivalent
+:---|:---|:---|:---
+get_color_mode||int|[lv_colorwheel_get_color_mode](https://docs.lvgl.io/9.0/search.html?q=lv_colorwheel_get_color_mode)
+get_color_mode_fixed||bool|[lv_colorwheel_get_color_mode_fixed](https://docs.lvgl.io/9.0/search.html?q=lv_colorwheel_get_color_mode_fixed)
+get_hsv||int|[lv_colorwheel_get_hsv](https://docs.lvgl.io/9.0/search.html?q=lv_colorwheel_get_hsv)
+get_rgb||lv.color|[lv_colorwheel_get_rgb](https://docs.lvgl.io/9.0/search.html?q=lv_colorwheel_get_rgb)
+set_hsv|int|bool|[lv_colorwheel_set_hsv](https://docs.lvgl.io/9.0/search.html?q=lv_colorwheel_set_hsv)
+set_mode|int||[lv_colorwheel_set_mode](https://docs.lvgl.io/9.0/search.html?q=lv_colorwheel_set_mode)
+set_mode_fixed|bool||[lv_colorwheel_set_mode_fixed](https://docs.lvgl.io/9.0/search.html?q=lv_colorwheel_set_mode_fixed)
+set_rgb|lv.color|bool|[lv_colorwheel_set_rgb](https://docs.lvgl.io/9.0/search.html?q=lv_colorwheel_set_rgb)
+
