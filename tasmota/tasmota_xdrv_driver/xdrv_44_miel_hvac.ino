@@ -203,14 +203,13 @@ struct miel_hvac_msg_update {
 #define MIEL_HVAC_UPDATE_WIDEVANE_SWING	0x0c
 #define MIEL_HVAC_UPDATE_WIDEVANE_ADJ	0x80
 	uint8_t			temp05;
-	uint8_t			_pad2[2];
 	uint8_t			airdirection;
 #define MIEL_HVAC_UPDATE_AIRDIRECTION_EVEN	0x00
 #define MIEL_HVAC_UPDATE_AIRDIRECTION_INDIRECT	0x01
 #define MIEL_HVAC_UPDATE_AIRDIRECTION_DIRECT	0x02
 } __packed;
 
-CTASSERT(sizeof(struct miel_hvac_msg_update) == 18);
+CTASSERT(sizeof(struct miel_hvac_msg_update) == 16);
 #define MIEL_HVAC_OFFS(_v) ((_v) - sizeof(struct miel_hvac_header))
 CTASSERT(offsetof(struct miel_hvac_msg_update, flags) == MIEL_HVAC_OFFS(6));
 CTASSERT(offsetof(struct miel_hvac_msg_update, power) == MIEL_HVAC_OFFS(8));
@@ -220,7 +219,7 @@ CTASSERT(offsetof(struct miel_hvac_msg_update, fan) == MIEL_HVAC_OFFS(11));
 CTASSERT(offsetof(struct miel_hvac_msg_update, vane) == MIEL_HVAC_OFFS(12));
 CTASSERT(offsetof(struct miel_hvac_msg_update, widevane) == MIEL_HVAC_OFFS(18));
 CTASSERT(offsetof(struct miel_hvac_msg_update, temp05) == MIEL_HVAC_OFFS(19));
-CTASSERT(offsetof(struct miel_hvac_msg_update, airdirection) == MIEL_HVAC_OFFS(22));
+CTASSERT(offsetof(struct miel_hvac_msg_update, airdirection) == MIEL_HVAC_OFFS(20));
 
 
 static inline uint8_t
@@ -1266,7 +1265,7 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 	}
 
 	if (sc->sc_temp.type != 0) {
-		ResponseAppend_P(PSTR(",\"Roomtemp\":\"%s\""),
+		ResponseAppend_P(PSTR(",\"RoomTemp\":\"%s\""),
 		    ToHex_P((uint8_t *)&sc->sc_temp, sizeof(sc->sc_temp),
 		    hex, sizeof(hex)));
 	}
