@@ -65,6 +65,8 @@ struct DALI {
   uint16_t received_dali_data;  // Data received from DALI bus
   uint8_t pin_rx;
   uint8_t pin_tx;
+  uint8_t address;
+  uint8_t command;
   uint8_t dimmer;
   bool power;
   bool input_ready;
@@ -138,6 +140,8 @@ void DaliDigitalWrite(bool pin_value) {
 }
 
 void DaliSendData(uint8_t firstByte, uint8_t secondByte) {
+  Dali->address = firstByte;
+  Dali->command = secondByte;
   if (BROADCAST_DP == firstByte) {
     Dali->power = (secondByte);  // State
     Dali->dimmer = secondByte;   // Value
@@ -184,25 +188,31 @@ void DaliPower(uint8_t val) {
 
 /***********************************************************/
 
+void ResponseAppendDali(void) {
+  ResponseAppend_P(PSTR("\"" D_NAME_DALI "\":{\"Power\":\"%s\",\"Dimmer\":%d,\"Address\":%d,\"Command\":%d}"), 
+    GetStateText(Dali->power), Dali->dimmer, Dali->address, Dali->command);
+}
+
 void DaliInput(void) {
   if (Dali->input_ready) {
-    uint8_t DALIaddr = Dali->received_dali_data >> 8;
-    uint8_t DALIcmnd = Dali->received_dali_data;
-    if (BROADCAST_DP == DALIaddr) {
-      Dali->power = (DALIcmnd);  // State
-      Dali->dimmer = DALIcmnd;   // Value
+    Dali->address = Dali->received_dali_data >> 8;
+    Dali->command = Dali->received_dali_data;
+    if (BROADCAST_DP == Dali->address) {
+      Dali->power = (Dali->command);  // State
+      Dali->dimmer = Dali->command;   // Value
     }
 
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("DLI: Received 0x%04X"), Dali->received_dali_data);
-    Response_P(PSTR("{\"" D_NAME_DALI "\":{\"Power\":\"%s\",\"Dimmer\":%d,\"Address\":%d,\"Command\":%d}}"), 
-      GetStateText(Dali->power), Dali->dimmer, DALIaddr, DALIcmnd);
+    Response_P(PSTR("{"));
+    ResponseAppendDali();
+    ResponseJsonEnd();
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_NAME_DALI));
 
     Dali->input_ready = false;
   }
 }
 
-void DaliPreInit(void) {
+void DaliInit(void) {
   if (!PinUsed(GPIO_DALI_TX) || !PinUsed(GPIO_DALI_RX)) { return; }
 
   Dali = (DALI*)calloc(sizeof(DALI), 1);
@@ -225,6 +235,10 @@ void DaliPreInit(void) {
 
   DaliEnableRxInterrupt();
 }
+
+/*********************************************************************************************\
+ * Experimental - Not functioning
+\*********************************************************************************************/
 
 bool DaliMqtt(void) {
 /*
@@ -300,6 +314,10 @@ bool DaliMqtt(void) {
   return true;
 }
 
+/*********************************************************************************************\
+ * Commands
+\*********************************************************************************************/
+
 bool DaliJsonParse(void) {
   // {"addr":254,"cmd":100}
   // {"addr":2}
@@ -347,10 +365,6 @@ bool DaliJsonParse(void) {
   return served;
 }
 
-/*********************************************************************************************\
- * Commands
-\*********************************************************************************************/
-
 void CmndDali(void) {
   if (XdrvMailbox.data_len > 0) {
     if (DaliJsonParse()) {
@@ -377,7 +391,12 @@ void CmndDaliDimmer(void) {
  * Presentation
 \*********************************************************************************************/
 
-
+void DaliShow(bool json) {
+  if (json) {
+    ResponseAppend_P(PSTR(","));
+    ResponseAppendDali();
+  }
+}
 
 /*********************************************************************************************\
  * Interface
@@ -387,7 +406,7 @@ bool Xdrv75(uint32_t function) {
   bool result = false;
 
   if (FUNC_INIT == function) {
-    DaliPreInit();
+    DaliInit();
   }
   else if (Dali) {
     switch (function) {
@@ -397,6 +416,14 @@ bool Xdrv75(uint32_t function) {
       case FUNC_MQTT_DATA:
         result = DaliMqtt();
         break;
+      case FUNC_JSON_APPEND:
+        DaliShow(true);
+        break;
+#ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        DaliShow(false);
+        break;
+#endif  // USE_WEBSERVER
       case FUNC_COMMAND:
         result = DecodeCommand(kDALICommands, DALICommand);
         break;

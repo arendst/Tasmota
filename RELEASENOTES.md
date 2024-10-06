@@ -178,6 +178,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry avoid `readbytes()` from crashing when file is too large [#22057](https://github.com/arendst/Tasmota/issues/22057)
 - Berry energy missing attributes [#22116](https://github.com/arendst/Tasmota/issues/22116)
 - Berry I2C to prepare M5Stack I2C STM32 based devices [#22143](https://github.com/arendst/Tasmota/issues/22143)
+- Berry improve `persist` dirty data handling [#22246](https://github.com/arendst/Tasmota/issues/22246)
 - ESP32-S3 uDisplay force cache writes to RGB display [#22222](https://github.com/arendst/Tasmota/issues/22222)
 - LVGL Added OpenHASP icons to font `montserrat-28` [#22048](https://github.com/arendst/Tasmota/issues/22048)
 - LVGL compilation of lv_menu [#22188](https://github.com/arendst/Tasmota/issues/22188)
