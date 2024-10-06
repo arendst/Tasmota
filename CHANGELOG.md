@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 ## [14.2.0.6]
 ### Added
 - Support for Sonoff SPM v1.3.0 (#13447)
+- LVGL port `colorwheel` from LVGL 8
+- HASPmota `cpicker` and `msgbox`
 
 ### Breaking Changed
 

@@ -1239,6 +1239,9 @@
     #define BE_LV_WIDGET_TABLE
     // #define BE_LV_WIDGET_TEXTAREA
 
+    // adding ad-hoc colorwheel from LVGL8 to LVGL9
+    #define BE_LV_WIDGET_COLORWHEEL
+
     #define BE_LV_WIDGET_ANIMIMG
     #define BE_LV_WIDGET_CHART
     #define BE_LV_WIDGET_IMGBTN       // LVGL 8
