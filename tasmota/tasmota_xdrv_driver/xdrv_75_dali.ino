@@ -19,6 +19,9 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.1.0.1 20241007  update    - To stablizie communication send Dali datagram twice like Busch-Jaeger does 
+                              - Change DaliPower 0..2 to act like Tasmota Power (Off, On, Toggle)
+                              - Keep last Dimmer value as default power on
   0.1.0.0 20241006  rewrite   - Add support for ESP8266
                               - Fix decoding of received Dali 1 data
                               - Refactor command `DaliPower 0..254` controlling Broadcast devices
@@ -36,10 +39,10 @@
 #define XDRV_75             75
 
 #ifndef DALI_IN_INVERT
-#define DALI_IN_INVERT      0           // DALI RX inverted ?
+#define DALI_IN_INVERT      0                  // DALI RX inverted ?
 #endif
 #ifndef DALI_OUT_INVERT
-#define DALI_OUT_INVERT     0           // DALI TX inverted ?
+#define DALI_OUT_INVERT     0                  // DALI TX inverted
 #endif
 
 //#define DALI_DEBUG
@@ -47,11 +50,9 @@
 #define DALI_DEBUG_PIN      27
 #endif
 
-#define BROADCAST_DP        0b11111110  // 0xFE = 254
+#define BROADCAST_DP        0b11111110         // 0xFE = 254
 
 #define DALI_TOPIC "DALI"
-// http and json defines
-#define D_NAME_DALI "DALI"
 #define D_PRFX_DALI "Dali"
 
 const char kDALICommands[] PROGMEM = D_PRFX_DALI "|"  // Prefix
@@ -62,7 +63,7 @@ void (* const DALICommand[])(void) PROGMEM = {
 
 struct DALI {
   uint32_t bit_time;
-  uint16_t received_dali_data;  // Data received from DALI bus
+  uint16_t received_dali_data;                 // Data received from DALI bus
   uint8_t pin_rx;
   uint8_t pin_tx;
   uint8_t address;
@@ -101,13 +102,13 @@ void DaliReceiveData(void) {
   uint32_t received_dali_data = 0;
 
   DALI_WAIT_RCV;
-  DALI_WAIT_RCV;                   // Start bit
+  DALI_WAIT_RCV;                               // Start bit
   for (uint32_t i = 0; i < 32; i++) {
     DALI_WAIT_RCV;
-    if (abs(bit_state) <= 2) {     // Manchester encoding max 2 consequtive equal bits
+    if (abs(bit_state) <= 2) {                 // Manchester encoding max 2 consequtive equal bits
       dali_read = digitalRead(Dali->pin_rx);
 #ifdef DALI_DEBUG
-      digitalWrite(DALI_DEBUG_PIN, i&1);  // Add LogicAnalyzer poll indication
+      digitalWrite(DALI_DEBUG_PIN, i&1);       // Add LogicAnalyzer poll indication
 #endif  // DALI_DEBUG
       bit_state += (dali_read) ? 1 : -1;
       if (i &1) {
@@ -117,11 +118,11 @@ void DaliReceiveData(void) {
     }
   }
   DALI_WAIT_RCV;
-  DALI_WAIT_RCV;                   // Stop bit
+  DALI_WAIT_RCV;                               // Stop bit
 
-  if (abs(bit_state) <= 2) {       // Valid Manchester encoding
+  if (abs(bit_state) <= 2) {                   // Valid Manchester encoding
     Dali->received_dali_data = received_dali_data;
-    Dali->input_ready = true;      // Valid data received
+    Dali->input_ready = true;                  // Valid data received
   }
 
 #ifdef ESP8266
@@ -139,22 +140,10 @@ void DaliDigitalWrite(bool pin_value) {
   digitalWrite(Dali->pin_tx, (pin_value == DALI_OUT_INVERT) ? LOW : HIGH);
 }
 
-void DaliSendData(uint8_t firstByte, uint8_t secondByte) {
-  Dali->address = firstByte;
-  Dali->command = secondByte;
-  if (BROADCAST_DP == firstByte) {
-    Dali->power = (secondByte);  // State
-    Dali->dimmer = secondByte;   // Value
-  }
-
-  uint16_t send_dali_data = firstByte << 8;
-  send_dali_data += secondByte & 0xff;
-
-  DaliDisableRxInterrupt();
-
+void DaliSendDataOnce(uint16_t send_dali_data) {
   uint32_t bit_time = Dali->bit_time;
   uint32_t wait = bit_time;
-//  digitalWrite(Dali->pin_tx, HIGH);     // already in HIGH mode
+//  digitalWrite(Dali->pin_tx, HIGH);            // Already in HIGH mode
   uint32_t start = ESP.getCycleCount();
 
   // Settling time between forward and backward frame
@@ -177,8 +166,25 @@ void DaliSendData(uint8_t firstByte, uint8_t secondByte) {
   }
   // Stop bit
   DaliDigitalWrite(HIGH);
-  delay(1);
+}
 
+void DaliSendData(uint8_t firstByte, uint8_t secondByte) {
+  Dali->address = firstByte;
+  Dali->command = secondByte;
+  if (BROADCAST_DP == firstByte) {
+    Dali->power = (secondByte);                // State
+    if (Dali->power) {
+      Dali->dimmer = secondByte;               // Value
+    }
+  }
+  uint16_t send_dali_data = firstByte << 8;
+  send_dali_data += secondByte & 0xff;
+
+  DaliDisableRxInterrupt();
+  DaliSendDataOnce(send_dali_data);            // Takes 14.5 ms
+  delay(15);                                   // As used by Busch-Jaeger
+  DaliSendDataOnce(send_dali_data);            // Takes 14.5 ms
+  delay(1);                                    // Block response
   DaliEnableRxInterrupt();
 }
 
@@ -189,8 +195,14 @@ void DaliPower(uint8_t val) {
 /***********************************************************/
 
 void ResponseAppendDali(void) {
-  ResponseAppend_P(PSTR("\"" D_NAME_DALI "\":{\"Power\":\"%s\",\"Dimmer\":%d,\"Address\":%d,\"Command\":%d}"), 
+  ResponseAppend_P(PSTR("\"" D_PRFX_DALI "\":{\"Power\":\"%s\",\"Dimmer\":%d,\"Address\":%d,\"Command\":%d}"), 
     GetStateText(Dali->power), Dali->dimmer, Dali->address, Dali->command);
+}
+
+void ResponseDali(void) {
+  Response_P(PSTR("{"));
+  ResponseAppendDali();
+  ResponseJsonEnd();
 }
 
 void DaliInput(void) {
@@ -198,15 +210,15 @@ void DaliInput(void) {
     Dali->address = Dali->received_dali_data >> 8;
     Dali->command = Dali->received_dali_data;
     if (BROADCAST_DP == Dali->address) {
-      Dali->power = (Dali->command);  // State
-      Dali->dimmer = Dali->command;   // Value
+      Dali->power = (Dali->command);           // State
+      if (Dali->power) {
+        Dali->dimmer = Dali->command;          // Value
+      }
     }
 
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("DLI: Received 0x%04X"), Dali->received_dali_data);
-    Response_P(PSTR("{"));
-    ResponseAppendDali();
-    ResponseJsonEnd();
-    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_NAME_DALI));
+    ResponseDali();
+    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_PRFX_DALI));
 
     Dali->input_ready = false;
   }
@@ -366,25 +378,38 @@ bool DaliJsonParse(void) {
 }
 
 void CmndDali(void) {
+  // Dali {"addr":254,"cmd":100} - Any address and/or command
   if (XdrvMailbox.data_len > 0) {
-    if (DaliJsonParse()) {
-      ResponseCmndDone();
-    }
+    DaliJsonParse();
   }
+  ResponseDali();
 }
 
 void CmndDaliPower(void) {
+  // DaliPower 0      - Power off
+  // DaliPower 1      - Power on to last dimmer state
+  // DaliPower 2      - Toggle power off or last dimmer state
+  // DaliPower 3..254 - Equals DaliDimmer command
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 254)) {
+    if (XdrvMailbox.payload <= 2) {
+      if (2 == XdrvMailbox.payload) {
+        XdrvMailbox.payload = (Dali->power) ? 0 : 1;
+      }
+      if (1 == XdrvMailbox.payload) {
+        XdrvMailbox.payload = Dali->dimmer;
+      }
+    }
     DaliPower(XdrvMailbox.payload);
   }
-  ResponseCmndStateText(Dali->power);
+  ResponseDali();
 }
 
 void CmndDaliDimmer(void) {
+  // DaliDimmer 0..254 - Set power off or dimmer state
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 254)) {
     DaliPower(XdrvMailbox.payload);
   }
-  ResponseCmndNumber(Dali->dimmer);
+  ResponseDali();
 }
 
 /*********************************************************************************************\
