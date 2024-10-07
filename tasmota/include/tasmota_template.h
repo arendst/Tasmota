@@ -224,6 +224,7 @@ enum UserSelectablePins {
   GPIO_WOOLIIS_RX,                      // Wooliis Battery capacity monitor Serial RX
   GPIO_ADC_VOLTAGE, GPIO_ADC_CURRENT,   // Analog Voltage and Current
   GPIO_BL0906_RX,                       // BL0906 Serial interface
+  GPIO_LD2410S_TX, GPIO_LD2410S_RX,      // HLK-LD2410S
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -495,6 +496,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_WOOLIIS_RX "|"
   D_SENSOR_ADC_VOLTAGE "|" D_SENSOR_ADC_CURRENT "|"
   D_SENSOR_BL0906_RX "|"
+  D_SENSOR_LD2410S_TX "|" D_SENSOR_LD2410S_RX "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -1099,6 +1101,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_LD2410                       // xsns_102_ld2410.ino
   AGPIO(GPIO_LD2410_TX),                // HLK-LD2410 Serial interface
   AGPIO(GPIO_LD2410_RX),                // HLK-LD2410 Serial interface
+#endif
+#ifdef USE_LD2410S                      // xsns_102_ld2410s.ino
+  AGPIO(GPIO_LD2410S_TX),                // HLK-LD2410S Serial interface
+  AGPIO(GPIO_LD2410S_RX),                // HLK-LD2410S Serial interface
 #endif
 #ifdef USE_LOX_O2                       // xsns_105_lox_o2.ino
   AGPIO(GPIO_LOX_O2_RX),                // LuminOx Oxygen Sensor LOX-O2 Serial interface
