@@ -17,7 +17,7 @@ managed_components
 .clang_complete
 .gcc-flags.json
 .cache
-.dummy/*
+.dummy
 sdkconfig.*
 data
 unpacked_fs
