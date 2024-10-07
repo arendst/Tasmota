@@ -44,6 +44,9 @@
 #ifndef DALI_OUT_INVERT
 #define DALI_OUT_INVERT     0                  // DALI TX inverted
 #endif
+#ifndef DALI_INIT_STATE
+#define DALI_INIT_STATE     50                 // DALI init dimmer state 50/254
+#endif
 
 //#define DALI_DEBUG
 #ifndef DALI_DEBUG_PIN
@@ -243,6 +246,7 @@ void DaliInit(void) {
   digitalWrite(DALI_DEBUG_PIN, HIGH);
 #endif  // DALI_DEBUG
 
+  Dali->dimmer = DALI_INIT_STATE;
   Dali->bit_time = ESP.getCpuFreqMHz() * 1000000 / 2400;  // Manchester twice 1200 bps
 
   DaliEnableRxInterrupt();
