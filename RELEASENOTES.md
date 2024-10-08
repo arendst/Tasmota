@@ -127,12 +127,12 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for Sonoff SPM v1.3.0 [#13447](https://github.com/arendst/Tasmota/issues/13447)
 - Energy command ``PowerSet 60,230`` to calibrate both Current and Power with known resistive load of 60W at 230V using calibrated Voltage
 - Energy command ``CurrentSet 60,230`` to calibrate both Power and Current with known resistive load of 60W at 230V using calibrated Voltage
+- ESP8266 experimental support for second I2C bus
 - MQTT warning if trying to connect without TLS on a port that normally uses TLS [#22175](https://github.com/arendst/Tasmota/issues/22175)
 - Energy Log level 4 message when (Calculated) Apparent Power is less than Active Power indicating wrong calibration [#20653](https://github.com/arendst/Tasmota/issues/20653)
 - Support nexus protocol and calculation of separation limit to rc-switch library [#21886](https://github.com/arendst/Tasmota/issues/21886)
 - KNX additional KnxTx functions and define KNX_USE_DPT9 [#22071](https://github.com/arendst/Tasmota/issues/22071)
 - SML multi TRX line [#22056](https://github.com/arendst/Tasmota/issues/22056)
-- ESP8266 experimental support for second I2C bus
 - Zigbee Koenkk firmware 20240710 for Sonoff Zigbee ZBPro [#22076](https://github.com/arendst/Tasmota/issues/22076)
 - Berry Zigbee improvements to prepare Matter [#22083](https://github.com/arendst/Tasmota/issues/22083)
 - Berry virtual Energy driver [#22134](https://github.com/arendst/Tasmota/issues/22134)
@@ -147,17 +147,19 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Changed
 - ESP8266 platform update from 2024.06.00 to 2024.09.00 and Framework (Arduino Core) from v2.7.7 to v2.7.8 [#22199](https://github.com/arendst/Tasmota/issues/22199)
-- ESP32 platform update from 2024.08.10 to 2024.09.30 and Framework (Arduino Core) from v3.0.4 to v3.1.0.240926 (#22203)[#22203](https://github.com/arendst/Tasmota/issues/22203)
+- ESP32 platform update from 2024.08.10 to 2024.09.30 and Framework (Arduino Core) from v3.0.4 to v3.1.0.240926 [#22203](https://github.com/arendst/Tasmota/issues/22203)
 - ESP32 LVGL library from v9.1.0 to v9.2.0 [#22031](https://github.com/arendst/Tasmota/issues/22031)
 - GPIOViewer from v1.5.5 to v1.5.6
 - Add command entered to command error and command unknown message
+- Refactored I2C drivers HTU21, BH1750, SHT3x, iAQ and HYT
 - Energy BL09xx command ``CurrentSet`` input changed from Ampere to milliAmpere
 - Energy force Apparent Power equals Active Power when (Calculated) Apparent Power is less than Active Power [#20653](https://github.com/arendst/Tasmota/issues/20653)
-- Refactored I2C drivers HTU21, BH1750, SHT3x, iAQ and HYT
 - Refactor and fix PID sensor (PID_USE_LOCAL_SENSOR) read race condition [#22162](https://github.com/arendst/Tasmota/issues/22162)
 - SCD30 Lowered I2C clock from 100k to 50k [#15438](https://github.com/arendst/Tasmota/issues/15438)
+- HASPmota `delete` instead of `delete()` [#22245](https://github.com/arendst/Tasmota/issues/22245)
 
 ### Fixed
+- Dali received data decoding
 - Compilation exception when metrics not found [#22170](https://github.com/arendst/Tasmota/issues/22170)
 - Crash when calling TasmotaSerial destructor when initialized with incorrect arguments [#22036](https://github.com/arendst/Tasmota/issues/22036)
 - Energy calculation [#20653](https://github.com/arendst/Tasmota/issues/20653)
@@ -168,7 +170,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - PZEM continue energy monitoring when one phase fails [#21968](https://github.com/arendst/Tasmota/issues/21968)
 - BearSSL panic on ESP8266 in rare conditions [#22017](https://github.com/arendst/Tasmota/issues/22017)
 - ModbusBridge request and response logic [#22075](https://github.com/arendst/Tasmota/issues/22075)
-- Dali received data decoding
 - Autoconf prevent 'init.bat' from stopping on empty lines [#22158](https://github.com/arendst/Tasmota/issues/22158)
 - Zigbee extend timeout for MCU reboot from 5s to 10s [#22009](https://github.com/arendst/Tasmota/issues/22009)
 - Zigbee avoid disabling console serial on ESP32 and improved log messages [#22082](https://github.com/arendst/Tasmota/issues/22082)
