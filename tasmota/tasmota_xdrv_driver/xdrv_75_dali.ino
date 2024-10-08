@@ -19,6 +19,7 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.1.0.2 20241008  update    - Better receive error detection
   0.1.0.1 20241007  update    - To stablizie communication send Dali datagram twice like Busch-Jaeger does 
                               - Change DaliPower 0..2 to act like Tasmota Power (Off, On, Toggle)
                               - Keep last Dimmer value as default power on
@@ -26,7 +27,6 @@
                               - Fix decoding of received Dali 1 data
                               - Refactor command `DaliPower 0..254` controlling Broadcast devices
                               - Add command `DaliDimmer 0..254` controlling Broadcast devices
-
   0.0.0.1 20221027  publish   - Initial version
 */
 
@@ -50,7 +50,7 @@
 
 //#define DALI_DEBUG
 #ifndef DALI_DEBUG_PIN
-#define DALI_DEBUG_PIN      27
+#define DALI_DEBUG_PIN      4
 #endif
 
 #define BROADCAST_DP        0b11111110         // 0xFE = 254
@@ -90,85 +90,58 @@ void DaliDisableRxInterrupt(void) {
 
 /*************** R E C E I V E * P R O C E D U R E *********/
 
-#define DALI_WAIT_RCV { while (ESP.getCycleCount() < (wait + start)); wait += bit_time; }
-
-void IRAM_ATTR DaliReceiveData(void);
+void IRAM_ATTR DaliReceiveData(void);          // Fix ESP8266 ISR not in IRAM! exception
 void DaliReceiveData(void) {
-  if (Dali->input_ready) { return; }
-  uint32_t start = ESP.getCycleCount();
-  uint32_t bit_time = Dali->bit_time;
-  // Advance the starting point for the samples but compensate for the
-  // initial delay which occurs before the interrupt is delivered
-  uint32_t wait = bit_time / 2;
+  if (Dali->input_ready) { return; }           // Skip if last input is not yet handled
+  uint32_t wait = ESP.getCycleCount() + (Dali->bit_time / 2);
   int bit_state = 0; 
   bool dali_read;
   uint32_t received_dali_data = 0;
-
-  DALI_WAIT_RCV;
-  DALI_WAIT_RCV;                               // Start bit
-  for (uint32_t i = 0; i < 32; i++) {
-    DALI_WAIT_RCV;
-    if (abs(bit_state) <= 2) {                 // Manchester encoding max 2 consequtive equal bits
+  uint32_t bit_pos = 15;
+  for (uint32_t i = 0; i < 36; i++) {          // (1 Start bit, 16 data bits, 1 stop bit) * 2 bits/bit (manchester encoding)
+    while (ESP.getCycleCount() < wait);
+    wait += Dali->bit_time;                    // Auto roll-over
+    if (abs(bit_state) <= 2) {                 // Manchester encoding max 2 consecutive equal bits
       dali_read = digitalRead(Dali->pin_rx);
 #ifdef DALI_DEBUG
       digitalWrite(DALI_DEBUG_PIN, i&1);       // Add LogicAnalyzer poll indication
 #endif  // DALI_DEBUG
       bit_state += (dali_read) ? 1 : -1;
-      if (i &1) {
-        uint32_t j = i >>1;
-        received_dali_data |= ((DALI_IN_INVERT) ? !dali_read : dali_read << (15 -j));
+      if ((i >= 2) && (i <= 34)) {             // 32 manchester encoded data bits
+        if (i &1) {                            // 16 data bits
+          received_dali_data |= ((DALI_IN_INVERT) ? !dali_read : dali_read << bit_pos--);
+        }
       }
     }
   }
-  DALI_WAIT_RCV;
-  DALI_WAIT_RCV;                               // Stop bit
-
-  if (abs(bit_state) <= 2) {                   // Valid Manchester encoding
-    Dali->received_dali_data = received_dali_data;
-    Dali->input_ready = true;                  // Valid data received
+  if (abs(bit_state) <= 2) {                   // Valid Manchester encoding including start and stop bits
+    if (Dali->received_dali_data != received_dali_data) {  // Skip duplicates
+      Dali->received_dali_data = received_dali_data;
+      Dali->input_ready = true;                // Valid data received
+    }
   }
-
-#ifdef ESP8266
-  // Must clear this bit in the interrupt register,
-  // it gets set even when interrupts are disabled
-  GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << Dali->pin_rx);
-#endif  // ESP8266
 }
 
 /*************** S E N D * P R O C E D U R E ***************/
 
-#define DALI_WAIT_SND { while (ESP.getCycleCount() < (wait + start)) optimistic_yield(1); wait += bit_time; }  // Watchdog timeouts
-
-void DaliDigitalWrite(bool pin_value) {
-  digitalWrite(Dali->pin_tx, (pin_value == DALI_OUT_INVERT) ? LOW : HIGH);
-}
-
 void DaliSendDataOnce(uint16_t send_dali_data) {
-  uint32_t bit_time = Dali->bit_time;
-  uint32_t wait = bit_time;
-//  digitalWrite(Dali->pin_tx, HIGH);            // Already in HIGH mode
-  uint32_t start = ESP.getCycleCount();
-
-  // Settling time between forward and backward frame
-  for (uint32_t i = 0; i < 8; i++) {
-    DALI_WAIT_SND;
+  bool bit_value;
+  uint32_t bit_pos = 15;
+  uint32_t wait = ESP.getCycleCount();
+  for (uint32_t i = 0; i < 35; i++) {
+    if (0 == (i &1)) {                         // Even bit
+      //          Start bit,     Stop bit,       Data bits
+      bit_value = (0 == i) ? 1 : (34 == i) ? 0 : (bool)((send_dali_data >> bit_pos--) &1);  // MSB first
+    } else {                                   // Odd bit
+      bit_value = !bit_value;                  // Complement bit
+    }
+    bool pin_value = bit_value ? LOW : HIGH;   // Invert bit
+    digitalWrite(Dali->pin_tx, (pin_value == DALI_OUT_INVERT) ? LOW : HIGH);
+    wait += Dali->bit_time;                    // Auto roll-over
+    while (ESP.getCycleCount() < wait) { 
+      optimistic_yield(1);
+    }
   }
-  // Start bit;
-  DaliDigitalWrite(LOW);
-  DALI_WAIT_SND;
-  DaliDigitalWrite(HIGH);
-  DALI_WAIT_SND;
-  for (uint32_t i = 0; i < 16; i++) {
-    // Bit value (edge) selection
-    bool bit_value = (bool)((send_dali_data >> (15 - i)) & 0x01);  // MSB first
-    // Every half bit -> Manchester coding
-    DaliDigitalWrite(bit_value ? LOW : HIGH);  // Manchester 
-    DALI_WAIT_SND;
-    DaliDigitalWrite(bit_value ? HIGH : LOW);  // Value
-    DALI_WAIT_SND;
-  }
-  // Stop bit
-  DaliDigitalWrite(HIGH);
 }
 
 void DaliSendData(uint8_t firstByte, uint8_t secondByte) {
@@ -184,10 +157,11 @@ void DaliSendData(uint8_t firstByte, uint8_t secondByte) {
   send_dali_data += secondByte & 0xff;
 
   DaliDisableRxInterrupt();
+  delay(3);                                    // Settling time between forward and backward frame
   DaliSendDataOnce(send_dali_data);            // Takes 14.5 ms
-  delay(15);                                   // As used by Busch-Jaeger
+  delay(14);                                   // As used by Busch-Jaeger
   DaliSendDataOnce(send_dali_data);            // Takes 14.5 ms
-  delay(1);                                    // Block response
+  delay(3);                                    // Block response
   DaliEnableRxInterrupt();
 }
 
@@ -247,7 +221,7 @@ void DaliInit(void) {
 #endif  // DALI_DEBUG
 
   Dali->dimmer = DALI_INIT_STATE;
-  Dali->bit_time = ESP.getCpuFreqMHz() * 1000000 / 2400;  // Manchester twice 1200 bps
+  Dali->bit_time = ESP.getCpuFreqMHz() * 1000000 / 2400;  // Manchester twice 1200 bps = 2400 bps = 417 ms
 
   DaliEnableRxInterrupt();
 }
