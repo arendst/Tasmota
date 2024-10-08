@@ -133,6 +133,7 @@ class lvh_root
   end
   def get_delete()
     self._delete()
+    return def () end
   end
   def _delete()
     # to be overriden
