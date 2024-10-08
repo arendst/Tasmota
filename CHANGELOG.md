@@ -11,11 +11,11 @@ All notable changes to this project will be documented in this file.
 - Support for DALI 1 on ESP8266
 
 ### Breaking Changed
-- HASPmota `delete` instead of `delete()` (#22245)
 
 ### Changed
 - ESP32 platform update from 2024.09.10 to 2024.09.30 and Framework (Arduino Core) from v3.0.5 to v3.1.0.240926 (#22203)
 - Berry improve `persist` dirty data handling (#22246)
+- HASPmota `delete` instead of `delete()` (#22245)
 
 ### Fixed
 - ESP32 Range Extender compile error with core 3.0.0 (#22205)

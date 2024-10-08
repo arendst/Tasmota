@@ -345,16 +345,34 @@ be_local_closure(class_lvh_root_get_delete,   /* name */
     10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    1,                          /* has sup protos */
+    ( &(const struct bproto*[ 1]) {
+      be_nested_proto(
+        0,                          /* nstack */
+        0,                          /* argc */
+        0,                          /* varg */
+        0,                          /* has upvals */
+        NULL,                       /* no upvals */
+        0,                          /* has sup protos */
+        NULL,                       /* no sub protos */
+        0,                          /* has constants */
+        NULL,                       /* no const */
+        be_str_weak(_anonymous_),
+        &be_const_str_solidified,
+        ( &(const binstruction[ 1]) {  /* code */
+          0x80000000,  //  0000  RET	0
+        })
+      ),
+    }),
     1,                          /* has constants */
     &be_ktab_class_lvh_root,     /* shared constants */
     be_str_weak(get_delete),
     &be_const_str_solidified,
-    ( &(const binstruction[ 3]) {  /* code */
+    ( &(const binstruction[ 4]) {  /* code */
       0x8C040119,  //  0000  GETMET	R1	R0	K25
       0x7C040200,  //  0001  CALL	R1	1
-      0x80000000,  //  0002  RET	0
+      0x84040000,  //  0002  CLOSURE	R1	P0
+      0x80040200,  //  0003  RET	1	R1
     })
   )
 );
