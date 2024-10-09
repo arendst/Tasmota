@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - ESP32-S3 uDisplay force cache writes to RGB display (#22222)
 - ESP32 Dali compile error with core 3.x (#22214)
 - Dali received data decoding
+- ESP32 Ethernet using EthClockMode 3 (#22248)
 
 ### Removed
 

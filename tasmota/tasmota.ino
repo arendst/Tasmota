@@ -396,6 +396,11 @@ LList<char*> backlog;                       // Command backlog implemented with 
  * Main
 \*********************************************************************************************/
 
+#ifdef ESP32
+// IDF5.3 fix esp_gpio_reserve used in init PSRAM. Needed by Tasmota.ino esp_gpio_revoke
+#include "esp_private/esp_gpio_reserve.h"
+#endif  // ESP32
+
 void setup(void) {
 #ifdef ESP32
 #ifdef CONFIG_IDF_TARGET_ESP32
@@ -409,6 +414,7 @@ void setup(void) {
     // test if the CPU is not pico
     uint32_t pkg_version = bootloader_common_get_chip_ver_pkg();
     if (pkg_version <= 3) {   // D0WD, S0WD, D2WD
+      esp_gpio_revoke(0xFFFFFFFFFFFFFFFF);  // Revoke all GPIO's some of them set by init PSRAM in IDF
       gpio_reset_pin(GPIO_NUM_16);
       gpio_reset_pin(GPIO_NUM_17);
     }
