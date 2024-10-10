@@ -22,6 +22,7 @@
 
 #ifdef ESP32
 #include "esp8266toEsp32.h"
+#include "esp_idf_version.h"
 #endif
 
 #ifdef USE_ESP32_S3
