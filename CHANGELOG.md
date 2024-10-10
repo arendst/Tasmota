@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Dali compile error with core 3.x (#22214)
 - Dali received data decoding
 - ESP32 Ethernet using EthClockMode 3 (#22248)
+- Temporarily disable SPI DMA for uDisplay (broken since esp-idf 5.3)
 
 ### Removed
 - Berry Zigbee removed test code
