@@ -190,17 +190,25 @@ void DaliInput(void) {
   if (Dali->input_ready) {
     Dali->address = Dali->received_dali_data >> 8;
     Dali->command = Dali->received_dali_data;
+    uint8_t dimmer = Dali->dimmer;
     if (BROADCAST_DP == Dali->address) {
       Dali->power = (Dali->command);           // State
       if (Dali->power) {
         Dali->dimmer = Dali->command;          // Value
       }
     }
-
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("DLI: Received 0x%04X"), Dali->received_dali_data);
-    ResponseDali();
-    MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_PRFX_DALI));
-
+    if (Settings->sbflag1.dali_web) {          // DaliWeb 1
+      if (dimmer != Dali->dimmer) {
+        dimmer = changeUIntScale(Dali->dimmer, 0, 254, 0, 100);
+        char scmnd[20];
+        snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), dimmer);
+        ExecuteCommand(scmnd, SRC_SWITCH);
+      }
+    } else {
+      ResponseDali();
+      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_PRFX_DALI));
+    }
     Dali->input_ready = false;
   }
 }
