@@ -413,10 +413,11 @@ void setup(void) {
   if (!FoundPSRAM()) {
     // test if the CPU is not pico
     uint32_t pkg_version = bootloader_common_get_chip_ver_pkg();
-    if (pkg_version <= 3) {   // D0WD, S0WD, D2WD
-      esp_gpio_revoke(0xFFFFFFFFFFFFFFFF);  // Revoke all GPIO's some of them set by init PSRAM in IDF
-      gpio_reset_pin(GPIO_NUM_16);
-      gpio_reset_pin(GPIO_NUM_17);
+    if (pkg_version <= 3) {         // D0WD, S0WD, D2WD
+      gpio_reset_pin(GPIO_NUM_16);  // D0WD_PSRAM_CS_IO
+      gpio_reset_pin(GPIO_NUM_17);  // D0WD_PSRAM_CLK_IO
+      // IDF5.3 fix esp_gpio_reserve used in init PSRAM
+      esp_gpio_revoke(BIT64(GPIO_NUM_16) | BIT64(GPIO_NUM_17));
     }
   }
 #endif  // CONFIG_IDF_TARGET_ESP32
