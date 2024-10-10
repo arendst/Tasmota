@@ -190,22 +190,28 @@ void DaliInput(void) {
   if (Dali->input_ready) {
     Dali->address = Dali->received_dali_data >> 8;
     Dali->command = Dali->received_dali_data;
-    uint8_t dimmer = Dali->dimmer;
+
     if (BROADCAST_DP == Dali->address) {
+      uint8_t dimmer = changeUIntScale(Dali->dimmer, 0, 254, 0, 100);
+      uint8_t power = Dali->power;
       Dali->power = (Dali->command);           // State
       if (Dali->power) {
         Dali->dimmer = Dali->command;          // Value
       }
+      if (Settings->sbflag1.dali_web) {        // DaliWeb 1
+        char scmnd[20];
+        uint8_t dimmer_new = changeUIntScale(Dali->dimmer, 0, 254, 0, 100);
+        if (power != Dali->power) {
+          ExecuteCommandPower(1, Dali->power, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
+        }
+        else if (dimmer != dimmer_new) {
+          snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), dimmer_new);
+          ExecuteCommand(scmnd, SRC_SWITCH);
+        }
+      }
     }
 //    AddLog(LOG_LEVEL_DEBUG, PSTR("DLI: Received 0x%04X"), Dali->received_dali_data);
-    if (Settings->sbflag1.dali_web) {          // DaliWeb 1
-      if (dimmer != Dali->dimmer) {
-        dimmer = changeUIntScale(Dali->dimmer, 0, 254, 0, 100);
-        char scmnd[20];
-        snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), dimmer);
-        ExecuteCommand(scmnd, SRC_SWITCH);
-      }
-    } else {
+    if (!Settings->sbflag1.dali_web) {         // DaliWeb 0
       ResponseDali();
       MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_PRFX_DALI));
     }
