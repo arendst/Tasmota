@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - LVGL port `colorwheel` from LVGL 8 (#22244)
 - HASPmota `cpicker` and `msgbox` (#22244)
 - Support for DALI 1 on ESP8266
+- Command ``DaliWeb 1`` to enable light control for broadcast address
 
 ### Breaking Changed
 
@@ -16,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 platform update from 2024.09.10 to 2024.09.30 and Framework (Arduino Core) from v3.0.5 to v3.1.0.240926 (#22203)
 - Berry improve `persist` dirty data handling (#22246)
 - HASPmota `delete` instead of `delete()` (#22245)
+- Command ``DaliDimmer`` range from 0..254 to 0..100
 
 ### Fixed
 - ESP32 Range Extender compile error with core 3.0.0 (#22205)

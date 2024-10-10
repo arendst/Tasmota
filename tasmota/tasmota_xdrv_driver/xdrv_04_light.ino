@@ -29,11 +29,16 @@
  *  3          PWM3       RGB    no         (H801, MagicHome and Arilux LC01)
  *  4          PWM4       RGBW   no         (H801, MagicHome and Arilux)
  *  5          PWM5       RGBCW  yes        (H801, Arilux LC11)
- *  9          reserved          no
- * 10          reserved          yes
+ *  6          PWM6
+ *  7          PWM7
+ *  8          reserved
+ *  9          SERIAL1           no
+ * 10          SERIAL2           yes
  * 11          +WS2812    RGB    no         (One WS2812 RGB or RGBW ledstrip)
  * 12          AiLight    RGBW   no
  * 13          Sonoff B1  RGBCW  yes
+ * 14          reserved
+ * 15          reserved
  *
  * light_scheme  WS2812  3+ Colors  1+2 Colors  Effect
  * ------------  ------  ---------  ----------  -----------------
