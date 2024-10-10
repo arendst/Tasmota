@@ -601,38 +601,38 @@ extern "C" {
 }
 
 extern "C" {
-  int zigbee_test_attr(struct bvm *vm) {
-    int32_t mode = be_toint(vm, 2);
-    if (mode < 10) {
-      //
-    } else {
-      Z_attribute *a = new Z_attribute();
-      if (mode == 10) {
-        a->setKeyId(1111, 2222);
-        a->setUInt(1337);
-      } else if (mode == 11) {
-        a->setKeyName("super_attribute");
-        a->key_suffix = 2;
-        a->setFloat(3.14);
-      } else if (mode == 12) {
-        a->setKeyName("array");
-        a->newJsonArray();
-        a->val.arrval->add((int32_t)-1);
-        a->val.arrval->addStr("foo");
-        a->val.arrval->addStr("bar");
-        a->val.arrval->addStr("bar\"baz\'toto");
-      } else if (mode == 13) {
-        a->setKeyName("list");
-        a->newAttrList();
-        Z_attribute &subattr1 = a->val.objval->addAttribute(10,20);
-        subattr1.setStr("sub1");
-        Z_attribute &subattr2 = a->val.objval->addAttribute(11,21);
-        subattr2.setStr("sub2");
-      }
-      zat_zcl_attribute(vm, a);
-    }
-    be_return(vm);
-  }
+//   int zigbee_test_attr(struct bvm *vm) {
+//     int32_t mode = be_toint(vm, 2);
+//     if (mode < 10) {
+//       //
+//     } else {
+//       Z_attribute *a = new Z_attribute();
+//       if (mode == 10) {
+//         a->setKeyId(1111, 2222);
+//         a->setUInt(1337);
+//       } else if (mode == 11) {
+//         a->setKeyName("super_attribute");
+//         a->key_suffix = 2;
+//         a->setFloat(3.14);
+//       } else if (mode == 12) {
+//         a->setKeyName("array");
+//         a->newJsonArray();
+//         a->val.arrval->add((int32_t)-1);
+//         a->val.arrval->addStr("foo");
+//         a->val.arrval->addStr("bar");
+//         a->val.arrval->addStr("bar\"baz\'toto");
+//       } else if (mode == 13) {
+//         a->setKeyName("list");
+//         a->newAttrList();
+//         Z_attribute &subattr1 = a->val.objval->addAttribute(10,20);
+//         subattr1.setStr("sub1");
+//         Z_attribute &subattr2 = a->val.objval->addAttribute(11,21);
+//         subattr2.setStr("sub2");
+//       }
+//       zat_zcl_attribute(vm, a);
+//     }
+//     be_return(vm);
+//   }
 
 
   // Creates a zcl_attributes from Z_attribute_list
@@ -651,18 +651,18 @@ extern "C" {
     }
   }
 
-  int zigbee_test_msg(struct bvm *vm) {
-    Z_attribute_list attr_list;
+  // int zigbee_test_msg(struct bvm *vm) {
+  //   Z_attribute_list attr_list;
 
-    attr_list.lqi = 250;
-    Z_attribute &subattr1 = attr_list.addAttribute(10,20);
-    subattr1.setStr("sub1");
-    Z_attribute &subattr2 = attr_list.addAttribute(11,21);
-    subattr2.setStr("sub2");
+  //   attr_list.lqi = 250;
+  //   Z_attribute &subattr1 = attr_list.addAttribute(10,20);
+  //   subattr1.setStr("sub1");
+  //   Z_attribute &subattr2 = attr_list.addAttribute(11,21);
+  //   subattr2.setStr("sub2");
 
-    zat_zcl_attribute_list(vm, 100, &attr_list);
-    be_return(vm);
-  }
+  //   zat_zcl_attribute_list(vm, 100, &attr_list);
+  //   be_return(vm);
+  // }
 }
 
 #endif // USE_ZIGBEE

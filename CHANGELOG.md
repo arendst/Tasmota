@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Ethernet using EthClockMode 3 (#22248)
 
 ### Removed
+- Berry Zigbee removed test code
 
 ## [14.2.0.5] 20240926
 ### Added
