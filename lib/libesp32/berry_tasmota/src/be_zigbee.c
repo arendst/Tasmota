@@ -49,6 +49,8 @@ static int zd_member(bvm *vm) {
   be_return(vm);
 }
 
+extern int zd_info(bvm *vm);
+
 extern int zc_started(struct bvm *vm);
 extern int zc_info(struct bvm *vm);
 extern int zc_item(struct bvm *vm);
@@ -99,6 +101,8 @@ class be_class_zb_device (scope: global, name: zb_device, strings: weak) {
   init, ctype_func(zd_init)
 
   member, func(zd_member)
+
+  info, func(zd_info)
 
   tostring, closure(class_zb_device_tostring_closure)
 }

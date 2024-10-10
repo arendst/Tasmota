@@ -47,6 +47,7 @@ struct  {
 } iAQ;
 
 bool IAQ_Read(void) {
+/*  
   TwoWire& myWire = I2cGetWire(iAQ.i2c_bus);
   if (&myWire == nullptr) { return false; }  // No valid I2c bus
 
@@ -56,6 +57,11 @@ bool IAQ_Read(void) {
   for (uint32_t i = 0; i < 9; i++) {
     buf[i] = myWire.read();
   }
+*/
+  uint8_t buf[9];
+  buf[2] = IAQ_STATUS_I2C_ERR; // populate entry with error code
+  I2cReadBuffer0(iAQ.i2c_address, buf, sizeof(buf), iAQ.i2c_bus);
+
   // AddLog(LOG_LEVEL_DEBUG, "iAQ: buffer %x %x %x %x %x %x %x %x %x ", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8]);
   if (IAQ_STATUS_I2C_ERR == buf[2]) {
     return false;

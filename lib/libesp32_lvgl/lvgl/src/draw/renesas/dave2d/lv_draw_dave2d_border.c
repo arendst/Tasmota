@@ -55,15 +55,13 @@ static void dave2d_draw_border_simple(lv_draw_dave2d_unit_t * u, const lv_area_t
     int32_t y;
     bool is_common;
 
-    is_common = _lv_area_intersect(&clip_area, outer_area, u->base_unit.clip_area);
+    is_common = lv_area_intersect(&clip_area, outer_area, u->base_unit.clip_area);
     if(!is_common) return;
 
 #if LV_USE_OS
     lv_result_t  status;
     status = lv_mutex_lock(u->pd2Mutex);
-    if(LV_RESULT_OK != status) {
-        __BKPT(0);
-    }
+    LV_ASSERT(LV_RESULT_OK == status);
 #endif
 
     local_outer_area = *outer_area;
@@ -151,9 +149,7 @@ static void dave2d_draw_border_simple(lv_draw_dave2d_unit_t * u, const lv_area_t
 
 #if LV_USE_OS
     status = lv_mutex_unlock(u->pd2Mutex);
-    if(LV_RESULT_OK != status) {
-        __BKPT(0);
-    }
+    LV_ASSERT(LV_RESULT_OK == status);
 #endif
 }
 
@@ -161,7 +157,6 @@ static void dave2d_draw_border_complex(lv_draw_dave2d_unit_t * u, const lv_area_
                                        const lv_area_t * orig_inner_area,
                                        int32_t rout, int32_t rin, lv_color_t color, lv_opa_t opa)
 {
-#if LV_DRAW_SW_COMPLEX
     /*Get clipped draw area which is the real draw area.
      *It is always the same or inside `coords`*/
     lv_area_t draw_area;
@@ -175,14 +170,12 @@ static void dave2d_draw_border_complex(lv_draw_dave2d_unit_t * u, const lv_area_
     outer_area = *orig_outer_area;
     inner_area = *orig_inner_area;
 
-    if(!_lv_area_intersect(&draw_area, &outer_area, u->base_unit.clip_area)) return;
+    if(!lv_area_intersect(&draw_area, &outer_area, u->base_unit.clip_area)) return;
 
 #if LV_USE_OS
     lv_result_t  status;
     status = lv_mutex_lock(u->pd2Mutex);
-    if(LV_RESULT_OK != status) {
-        __BKPT(0);
-    }
+    LV_ASSERT(LV_RESULT_OK == status);
 #endif
 
     x = 0 - u->base_unit.target_layer->buf_area.x1;
@@ -292,7 +285,7 @@ static void dave2d_draw_border_complex(lv_draw_dave2d_unit_t * u, const lv_area_
             arc_area.x2 = core_area.x1;
             arc_area.y2 = core_area.y1;
 
-            if(_lv_area_intersect(&clip_arc, &arc_area, &draw_area)) {
+            if(lv_area_intersect(&clip_arc, &arc_area, &draw_area)) {
                 d2_cliprect(u->d2_handle, (d2_border)clip_arc.x1, (d2_border)clip_arc.y1, (d2_border)clip_arc.x2,
                             (d2_border)clip_arc.y2);
                 result = d2_renderwedge(u->d2_handle,
@@ -305,9 +298,7 @@ static void dave2d_draw_border_complex(lv_draw_dave2d_unit_t * u, const lv_area_
                                         (d2_s32)  D2_FIX16((int16_t) -1),//( 270 Degrees
                                         (d2_s32) D2_FIX16(0),
                                         flags);
-                if(D2_OK != result) {
-                    __BKPT(0);
-                }
+                LV_ASSERT(D2_OK == result);
             }
 
         }
@@ -321,7 +312,7 @@ static void dave2d_draw_border_complex(lv_draw_dave2d_unit_t * u, const lv_area_
             arc_area.x2 = core_area.x1;
             arc_area.y2 = core_area.y2 + rout;
 
-            if(_lv_area_intersect(&clip_arc, &arc_area, &draw_area)) {
+            if(lv_area_intersect(&clip_arc, &arc_area, &draw_area)) {
 
                 d2_cliprect(u->d2_handle, (d2_border)clip_arc.x1, (d2_border)clip_arc.y1, (d2_border)clip_arc.x2,
                             (d2_border)clip_arc.y2);
@@ -335,9 +326,7 @@ static void dave2d_draw_border_complex(lv_draw_dave2d_unit_t * u, const lv_area_
                                         (d2_s32)  D2_FIX16(0), //180 degrees
                                         (d2_s32) D2_FIX16(1),
                                         flags);
-                if(D2_OK != result) {
-                    __BKPT(0);
-                }
+                LV_ASSERT(D2_OK == result);
             }
         }
 
@@ -359,7 +348,7 @@ static void dave2d_draw_border_complex(lv_draw_dave2d_unit_t * u, const lv_area_
                 arc_area.x2 = core_area.x2 + rout;
                 arc_area.y2 = core_area.y1;
 
-                if(_lv_area_intersect(&clip_arc, &arc_area, &draw_area)) {
+                if(lv_area_intersect(&clip_arc, &arc_area, &draw_area)) {
 
                     d2_cliprect(u->d2_handle, (d2_border)clip_arc.x1, (d2_border)clip_arc.y1, (d2_border)clip_arc.x2,
                                 (d2_border)clip_arc.y2);
@@ -373,9 +362,7 @@ static void dave2d_draw_border_complex(lv_draw_dave2d_unit_t * u, const lv_area_
                                             (d2_s32)  D2_FIX16(0),// 0 degrees
                                             (d2_s32) D2_FIX16(-1),
                                             flags);
-                    if(D2_OK != result) {
-                        __BKPT(0);
-                    }
+                    LV_ASSERT(D2_OK == result);
                 }
 
             }
@@ -389,7 +376,7 @@ static void dave2d_draw_border_complex(lv_draw_dave2d_unit_t * u, const lv_area_
                 arc_area.x2 = core_area.x2 + rout;
                 arc_area.y2 = core_area.y2 + rout;
 
-                if(_lv_area_intersect(&clip_arc, &arc_area, &draw_area)) {
+                if(lv_area_intersect(&clip_arc, &arc_area, &draw_area)) {
 
                     d2_cliprect(u->d2_handle, (d2_border)clip_arc.x1, (d2_border)clip_arc.y1, (d2_border)clip_arc.x2,
                                 (d2_border)clip_arc.y2);
@@ -403,9 +390,7 @@ static void dave2d_draw_border_complex(lv_draw_dave2d_unit_t * u, const lv_area_
                                             (d2_s32)  D2_FIX16(1),// 90 degrees
                                             (d2_s32) D2_FIX16(0),
                                             flags);
-                    if(D2_OK != result) {
-                        __BKPT(0);
-                    }
+                    LV_ASSERT(D2_OK == result);
                 }
             }
         }
@@ -422,12 +407,9 @@ static void dave2d_draw_border_complex(lv_draw_dave2d_unit_t * u, const lv_area_
 
 #if LV_USE_OS
     status = lv_mutex_unlock(u->pd2Mutex);
-    if(LV_RESULT_OK != status) {
-        __BKPT(0);
-    }
+    LV_ASSERT(LV_RESULT_OK == status);
 #endif
 
-#endif /*LV_DRAW_SW_COMPLEX*/
 }
 
 #endif /*LV_USE_DRAW_DAVE2D*/

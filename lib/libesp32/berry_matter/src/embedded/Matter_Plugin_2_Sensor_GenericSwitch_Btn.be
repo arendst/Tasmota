@@ -46,6 +46,7 @@ class Matter_Plugin_Sensor_GenericSwitch_Btn : Matter_Plugin_Device
   #
   # Parse configuration map
   def parse_configuration(config)
+    super(self).parse_configuration(config)
     self.tasmota_switch_index = int(config.find(self.ARG #-'relay'-#, 1))
     if self.tasmota_switch_index <= 0    self.tasmota_switch_index = 1    end
   end

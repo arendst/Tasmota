@@ -125,11 +125,6 @@ class sonoff_zb_pro_flasher
   # don't flash so ignore data
   # check CCFG at location 0x57FD8 (4 bytes)
   def _check_cb(addr, sz, data, offset)
-    # check than sz is a multiple of 4
-    if (sz % 4 != 0)
-      raise "value_error", format("size of payload is not a mutliple of 4: 0x%06X", addr)
-    end
-
     # print(format("> addr=0x%06X sz=0x%02X data=%s", addr, sz, data[offset..offset+sz-1]))
     var CCFG = self.CCFG_address
     if addr <= CCFG && addr+sz > CCFG+4

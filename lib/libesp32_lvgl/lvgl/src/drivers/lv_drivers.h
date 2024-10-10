@@ -37,6 +37,14 @@ extern "C" {
 #include "windows/lv_windows_input.h"
 #include "windows/lv_windows_display.h"
 
+#include "glfw/lv_glfw_window.h"
+#include "glfw/lv_opengles_texture.h"
+#include "glfw/lv_opengles_driver.h"
+
+#include "qnx/lv_qnx.h"
+
+#include "wayland/lv_wayland.h"
+
 /*********************
  *      DEFINES
  *********************/

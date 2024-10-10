@@ -44,52 +44,15 @@ LV_EXPORT_CONST_INT(LV_SCALE_LABEL_ENABLED_DEFAULT);
 /**
  * Scale mode
  */
-enum {
+typedef enum {
     LV_SCALE_MODE_HORIZONTAL_TOP    = 0x00U,
     LV_SCALE_MODE_HORIZONTAL_BOTTOM = 0x01U,
     LV_SCALE_MODE_VERTICAL_LEFT     = 0x02U,
     LV_SCALE_MODE_VERTICAL_RIGHT    = 0x04U,
     LV_SCALE_MODE_ROUND_INNER       = 0x08U,
     LV_SCALE_MODE_ROUND_OUTER      = 0x10U,
-    _LV_SCALE_MODE_LAST
-};
-typedef uint32_t lv_scale_mode_t;
-
-typedef struct {
-    lv_style_t * main_style;
-    lv_style_t * indicator_style;
-    lv_style_t * items_style;
-    int32_t minor_range;
-    int32_t major_range;
-    uint32_t first_tick_idx_in_section;
-    uint32_t last_tick_idx_in_section;
-    uint32_t first_tick_idx_is_major;
-    uint32_t last_tick_idx_is_major;
-    int32_t first_tick_in_section_width;
-    int32_t last_tick_in_section_width;
-    lv_point_t first_tick_in_section;
-    lv_point_t last_tick_in_section;
-} lv_scale_section_t;
-
-typedef struct {
-    lv_obj_t obj;
-    lv_ll_t section_ll;     /**< Linked list for the sections (stores lv_scale_section_t)*/
-    const char ** txt_src;
-    lv_scale_mode_t mode;
-    int32_t range_min;
-    int32_t range_max;
-    uint32_t total_tick_count   : 15;
-    uint32_t major_tick_every   : 15;
-    uint32_t label_enabled      : 1;
-    uint32_t post_draw          : 1;
-    /* Round scale */
-    uint32_t angle_range;
-    int32_t rotation;
-    /* Private properties */
-    int32_t custom_label_cnt;
-    int32_t last_tick_width;
-    int32_t first_tick_width;
-} lv_scale_t;
+    LV_SCALE_MODE_LAST
+} lv_scale_mode_t;
 
 LV_ATTRIBUTE_EXTERN_DATA extern const lv_obj_class_t lv_scale_class;
 
@@ -113,7 +76,7 @@ lv_obj_t * lv_scale_create(lv_obj_t * parent);
  *====================*/
 
 /**
- * Set scale mode. See @ref lv_scale_mode_t
+ * Set scale mode. See lv_scale_mode_t
  * @param obj       pointer the scale object
  * @param mode      the new scale mode
  */
@@ -165,7 +128,9 @@ void lv_scale_set_rotation(lv_obj_t * obj, int32_t rotation);
 /**
  * Point the needle to the corresponding value through the line
  * @param obj              pointer to a scale object
- * @param needle_line      needle_line of the scale
+ * @param needle_line      needle_line of the scale. The line points will be allocated and
+ *                         managed by the scale unless the line point array was previously set
+ *                         using `lv_line_set_points_mutable`.
  * @param needle_length    length of the needle
  *                         needle_length>0 needle_length=needle_length;
  *                         needle_length<0 needle_length=radius-|needle_length|;
@@ -198,6 +163,13 @@ void lv_scale_set_text_src(lv_obj_t * obj, const char * txt_src[]);
 void lv_scale_set_post_draw(lv_obj_t * obj, bool en);
 
 /**
+ * Draw the scale ticks on top of all parts
+ * @param obj       pointer to a scale object
+ * @param en        true: enable draw ticks on top of all parts
+ */
+void lv_scale_set_draw_ticks_on_top(lv_obj_t * obj, bool en);
+
+/**
  * Add a section to the given scale
  * @param obj       pointer to a scale object
  * @return          pointer to the new section
@@ -218,14 +190,14 @@ void lv_scale_section_set_range(lv_scale_section_t * section, int32_t minor_rang
  * @param part      the part for the section, e.g. LV_PART_INDICATOR
  * @param section_part_style Pointer to the section part style
  */
-void lv_scale_section_set_style(lv_scale_section_t * section, uint32_t part, lv_style_t * section_part_style);
+void lv_scale_section_set_style(lv_scale_section_t * section, lv_part_t part, lv_style_t * section_part_style);
 
 /*=====================
  * Getter functions
  *====================*/
 
 /**
- * Get scale mode. See @ref lv_scale_mode_t
+ * Get scale mode. See lv_scale_mode_t
  * @param obj   pointer the scale object
  * @return      Scale mode
  */

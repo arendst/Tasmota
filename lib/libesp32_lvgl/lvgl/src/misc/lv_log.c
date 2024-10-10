@@ -9,8 +9,7 @@
 #include "lv_log.h"
 #if LV_USE_LOG
 
-#include <stdarg.h>
-#include <string.h>
+#include "../misc/lv_types.h"
 #include "../stdlib/lv_sprintf.h"
 #include "../stdlib/lv_mem.h"
 #include "../stdlib/lv_string.h"
@@ -70,9 +69,9 @@ void lv_log_register_print_cb(lv_log_print_g_cb_t print_cb)
     custom_print_cb = print_cb;
 }
 
-void _lv_log_add(lv_log_level_t level, const char * file, int line, const char * func, const char * format, ...)
+void lv_log_add(lv_log_level_t level, const char * file, int line, const char * func, const char * format, ...)
 {
-    if(level >= _LV_LOG_LEVEL_NUM) return; /*Invalid level*/
+    if(level >= LV_LOG_LEVEL_NUM) return; /*Invalid level*/
 
     if(level >= LV_LOG_LEVEL) {
         va_list args;
@@ -102,7 +101,8 @@ void _lv_log_add(lv_log_level_t level, const char * file, int line, const char *
                lvl_prefix[level], LOG_TIMESTAMP_EXPR func);
         vprintf(format, args);
         printf(LOG_FILE_LINE_FMT "\n" LOG_FILE_LINE_EXPR);
-#else
+        fflush(stdout);
+#endif
         if(custom_print_cb) {
             char buf[512];
             char msg[256];
@@ -111,7 +111,6 @@ void _lv_log_add(lv_log_level_t level, const char * file, int line, const char *
                         lvl_prefix[level], LOG_TIMESTAMP_EXPR func, msg LOG_FILE_LINE_EXPR);
             custom_print_cb(level, buf);
         }
-#endif
 
 #if LV_LOG_USE_TIMESTAMP
         last_log_time = t;

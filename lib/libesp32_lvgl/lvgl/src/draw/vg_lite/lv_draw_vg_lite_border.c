@@ -7,6 +7,8 @@
  *      INCLUDES
  *********************/
 
+#include "../../misc/lv_area_private.h"
+#include "../lv_draw_private.h"
 #include "lv_draw_vg_lite.h"
 
 #if LV_USE_DRAW_VG_LITE
@@ -42,17 +44,10 @@
 void lv_draw_vg_lite_border(lv_draw_unit_t * draw_unit, const lv_draw_border_dsc_t * dsc,
                             const lv_area_t * coords)
 {
-    if(dsc->opa <= LV_OPA_MIN)
-        return;
-    if(dsc->width == 0)
-        return;
-    if(dsc->side == LV_BORDER_SIDE_NONE)
-        return;
-
     lv_draw_vg_lite_unit_t * u = (lv_draw_vg_lite_unit_t *)draw_unit;
 
     lv_area_t clip_area;
-    if(!_lv_area_intersect(&clip_area, coords, draw_unit->clip_area)) {
+    if(!lv_area_intersect(&clip_area, coords, draw_unit->clip_area)) {
         /*Fully clipped, nothing to do*/
         return;
     }
@@ -78,13 +73,13 @@ void lv_draw_vg_lite_border(lv_draw_unit_t * draw_unit, const lv_draw_border_dsc
     lv_vg_lite_path_append_rect(path,
                                 coords->x1, coords->y1,
                                 w, h,
-                                r_out, r_out);
+                                r_out);
 
     /* inner rect */
     lv_vg_lite_path_append_rect(path,
                                 coords->x1 + border_w, coords->y1 + border_w,
                                 w - border_w * 2, h - border_w * 2,
-                                r_in, r_in);
+                                r_in);
 
     lv_vg_lite_path_end(path);
 

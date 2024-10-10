@@ -6,6 +6,7 @@
 #include "be_mem.h"
 
 #include <stdio.h>
+#include <string.h>
 
 // Backport configuration from LVGL 8 to LVGL 9
 #ifdef BE_LV_WIDGET_BTN
@@ -391,16 +392,7 @@ int lv0_constants_as_hash(bvm *vm) {
 /*********************************************************************************************\
  * temporarily fix lv_span_get_style()
 \*********************************************************************************************/
-lv_style_t * lv_span_get_style(lv_span_t * span) {
-  return &span->style;
-}
+#include "widgets/bar/lv_bar_private.h"
 lv_area_t * lv_bar_get_indic_area(lv_obj_t * bar) {
   return &((lv_bar_t*)bar)->indic_area;
-}
-// add accessor for lv_line points array
-lv_point_t * lv_line_get_points(lv_obj_t * line) {
-  return &((lv_line_t*)line)->point_array[0];
-}
-int lv_line_get_points_num(lv_obj_t * line) {
-  return ((lv_line_t*)line)->point_num;
 }

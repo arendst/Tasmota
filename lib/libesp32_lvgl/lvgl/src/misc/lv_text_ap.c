@@ -6,10 +6,10 @@
 /*********************
  *      INCLUDES
  *********************/
-#include <stddef.h>
 #include "lv_bidi.h"
-#include "lv_text.h"
+#include "lv_text_private.h"
 #include "lv_text_ap.h"
+#include "lv_types.h"
 #include "../stdlib/lv_mem.h"
 #include "../draw/lv_draw.h"
 
@@ -49,7 +49,7 @@ const ap_chars_map_t ap_chars_map[] = {
     {1, 0xFE84, -1, 0, -1,  {1, 0}},    // أ
     {2, 0xFE86, -1, 0, -1,  {1, 0}},    // ؤ
     {3, 0xFE88, -1, 0, -1,  {1, 0}},    // ﺇ
-    {4, 0xFE8A, 1, 2, -1,  {1, 0}},    // ئ
+    {4, 0xFE8A, 1, 2, -1,  {1, 1}},    // ئ
     {5, 0xFE8E, -1, 0, -1,  {1, 0}},    // آ
     {6, 0xFE90, 1, 2, -1,  {1, 1}},    // ب
     {92, 0xFB57, 1, 2, -1,  {1, 1}},   // پ
@@ -86,8 +86,8 @@ const ap_chars_map_t ap_chars_map[] = {
     {39, 0xFEF0, 0, 0, -1, {1, 0}},   // ى
     {40, 0xFEF2, 1, 2, -1,  {1, 1}},   // ي
     {170, 0xFBFD, 1, 2, -1,  {1, 1}},   // ی
-    {7, 0xFE94, 1, 2, -1,  {1, 0}},   // ة
-    {206, 0x06F0, 1, 2, -1,  {0, 0}},  // ۰
+    {7, 0xFE94, -1, 2, -1,  {1, 0}},   // ة
+    {206, 0x06F0, -1, 2, 0,  {0, 0}},  // ۰
     {207, 0x06F1, 0, 0, 0,  {0, 0}},  // ۱
     {208, 0x06F2, 0, 0, 0,  {0, 0}},  // ۲
     {209, 0x06F3, 0, 0, 0,  {0, 0}},  // ۳
@@ -106,7 +106,7 @@ const ap_chars_map_t ap_chars_map[] = {
 /**********************
 *   GLOBAL FUNCTIONS
 **********************/
-uint32_t _lv_text_ap_calc_bytes_count(const char * txt)
+uint32_t lv_text_ap_calc_bytes_count(const char * txt)
 {
     uint32_t txt_length = 0;
     uint32_t chars_cnt = 0;
@@ -114,12 +114,12 @@ uint32_t _lv_text_ap_calc_bytes_count(const char * txt)
     uint32_t i, j;
     uint32_t ch_enc;
 
-    txt_length = _lv_text_get_encoded_length(txt);
+    txt_length = lv_text_get_encoded_length(txt);
 
     i = 0;
     j = 0;
     while(i < txt_length) {
-        ch_enc = _lv_text_encoded_next(txt, &j);
+        ch_enc = lv_text_encoded_next(txt, &j);
         current_ap_idx = lv_ap_get_char_index(ch_enc);
 
         if(current_ap_idx != LV_UNDEF_ARABIC_PERSIAN_CHARS)
@@ -140,7 +140,7 @@ uint32_t _lv_text_ap_calc_bytes_count(const char * txt)
     return chars_cnt + 1;
 }
 
-void _lv_text_ap_proc(const char * txt, char * txt_out)
+void lv_text_ap_proc(const char * txt, char * txt_out)
 {
     uint32_t txt_length = 0;
     uint32_t index_current, idx_next, idx_previous, i, j;
@@ -148,7 +148,7 @@ void _lv_text_ap_proc(const char * txt, char * txt_out)
     uint32_t * ch_fin;
     char * txt_out_temp;
 
-    txt_length = _lv_text_get_encoded_length(txt);
+    txt_length = lv_text_get_encoded_length(txt);
 
     ch_enc = (uint32_t *)lv_malloc(sizeof(uint32_t) * (txt_length + 1));
     ch_fin = (uint32_t *)lv_malloc(sizeof(uint32_t) * (txt_length + 1));
@@ -156,7 +156,7 @@ void _lv_text_ap_proc(const char * txt, char * txt_out)
     i = 0;
     j = 0;
     while(j < txt_length)
-        ch_enc[j++] = _lv_text_encoded_next(txt, &i);
+        ch_enc[j++] = lv_text_encoded_next(txt, &i);
 
     ch_enc[j] = 0;
 
@@ -185,14 +185,14 @@ void _lv_text_ap_proc(const char * txt, char * txt_out)
             continue;
         }
 
-        uint8_t conjunction_to_previuse = (i == 0 ||
+        uint8_t conjunction_to_previous = (i == 0 ||
                                            idx_previous == LV_UNDEF_ARABIC_PERSIAN_CHARS) ? 0 : ap_chars_map[idx_previous].ap_chars_conjunction.conj_to_next;
         uint8_t conjunction_to_next = ((i == txt_length - 1) ||
                                        idx_next == LV_UNDEF_ARABIC_PERSIAN_CHARS) ? 0 : ap_chars_map[idx_next].ap_chars_conjunction.conj_to_previous;
 
         uint32_t lam_alef = lv_text_lam_alef(index_current, idx_next);
         if(lam_alef) {
-            if(conjunction_to_previuse) {
+            if(conjunction_to_previous) {
                 lam_alef ++;
             }
             ch_fin[j] = lam_alef;
@@ -202,11 +202,11 @@ void _lv_text_ap_proc(const char * txt, char * txt_out)
             continue;
         }
 
-        if(conjunction_to_previuse && conjunction_to_next)
+        if(conjunction_to_previous && conjunction_to_next)
             ch_fin[j] = ap_chars_map[index_current].char_end_form + ap_chars_map[index_current].char_middle_form_offset;
-        else if(!conjunction_to_previuse && conjunction_to_next)
+        else if(!conjunction_to_previous && conjunction_to_next)
             ch_fin[j] = ap_chars_map[index_current].char_end_form + ap_chars_map[index_current].char_beginning_form_offset;
-        else if(conjunction_to_previuse && !conjunction_to_next)
+        else if(conjunction_to_previous && !conjunction_to_next)
             ch_fin[j] = ap_chars_map[index_current].char_end_form;
         else
             ch_fin[j] = ap_chars_map[index_current].char_end_form + ap_chars_map[index_current].char_isolated_form_offset;

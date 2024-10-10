@@ -26,7 +26,7 @@ import matter
 class Matter_Plugin_Bridge_Light0 : Matter_Plugin_Light0
   static var BRIDGE = true                          # flag as bridged device
   static var TYPE = "http_light0"                   # name of the plug-in in json
-  # static var DISPLAY_NAME = "Light 0 On"          # display name of the plug-in
+  # static var DISPLAY_NAME = "Light 0 OnOff"       # display name of the plug-in
   static var UPDATE_TIME = 3000                     # update every 3s
 end
 matter.Plugin_Bridge_Light0 = Matter_Plugin_Bridge_Light0

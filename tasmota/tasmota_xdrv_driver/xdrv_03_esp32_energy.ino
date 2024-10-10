@@ -163,6 +163,7 @@ typedef struct {
   float import_active[ENERGY_MAX_PHASES];       // 123.123 kWh
   float export_active[ENERGY_MAX_PHASES];       // 123.123 kWh
   float start_energy[ENERGY_MAX_PHASES];        // 12345.12345 kWh total previous
+  float start_export_energy[ENERGY_MAX_PHASES]; // 12345.12345 kWh total previous
   float total[ENERGY_MAX_PHASES];               // 12345.12345 kWh total energy
   float daily_sum;                              // 123.123 kWh
   float total_sum;                              // 12345.12345 kWh total energy
@@ -613,9 +614,14 @@ void EnergyUpdateTotal(void) {
 
     if (0 == Energy->start_energy[i] || (Energy->import_active[i] < Energy->start_energy[i])) {
       Energy->start_energy[i] = Energy->import_active[i];            // Init after restart and handle roll-over if any
+      Energy->start_export_energy[i] = RtcEnergySettings.energy_export_kWh[i];  // Init after restart
     }
     else if (Energy->import_active[i] != Energy->start_energy[i]) {
-      Energy->kWhtoday[i] = (int32_t)((Energy->import_active[i] - Energy->start_energy[i]) * 100000);
+      if (Energy->local_energy_active_export && (Energy->active_power[i] < 0)) {
+        RtcEnergySettings.energy_export_kWh[i] = Energy->start_export_energy[i] + Energy->import_active[i] - Energy->start_energy[i];
+      } else {
+        Energy->kWhtoday[i] = (int32_t)((Energy->import_active[i] - Energy->start_energy[i]) * 100000);
+      }
     }
 
     if ((Energy->total[i] < (Energy->import_active[i] - 0.01f)) &&   // We subtract a little offset of 10Wh to avoid continuous updates
@@ -1095,13 +1101,18 @@ void CmndEnergyToday(void) {
 }
 
 void CmndEnergyExportActive(void) {
-  if (Energy->local_energy_active_export) {
-    // EnergyExportActive1 24
-    // EnergyExportActive1 24,1650111291
-    uint32_t values[2] = { 0 };
-    uint32_t params = ParseParameters(2, values);
+  // EnergyExportActive 0           - Disable local energy_active_export support
+  // EnergyExportActive 1           - Enable local energy_active_export support
+  uint32_t values[2] = { 0 };
+  uint32_t params = ParseParameters(2, values);
 
-    if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Energy->phase_count) && (params > 0)) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Energy->phase_count) && (params > 0)) {
+    if (!XdrvMailbox.usridx) {
+      Energy->local_energy_active_export = values[0] &1;
+    }
+    else if (Energy->local_energy_active_export) {
+      // EnergyExportActive1 24
+      // EnergyExportActive1 24,1650111291
       uint32_t phase = XdrvMailbox.index -1;
       // Reset Energy Export Active
       RtcEnergySettings.energy_export_kWh[phase] = (float)(int32_t)values[0] / 1000;
@@ -1110,7 +1121,12 @@ void CmndEnergyExportActive(void) {
         Energy->Settings.energy_kWhtotal_time = values[1];
       }
     }
+  }
+  if (Energy->local_energy_active_export) {
     ResponseCmndEnergyTotalYesterdayToday();
+  } else {
+    Energy->export_active[0] = NAN;  // Disable display of unused export_active
+    ResponseCmndStateText(Energy->local_energy_active_export);
   }
 }
 
@@ -1285,14 +1301,56 @@ void EnergyCommandSetCalResponse(uint32_t cal_type) {
   }
 }
 
+void EnergyCommandSetCal(uint32_t cal_type) {
+  if (XdrvMailbox.data_len && (XdrvMailbox.index > 0)) {
+    // PowerSet 61.2
+    // CurrentSet 263
+    if (ArgC() > 1) {
+      // Calibrate current and power using calibrated voltage and known resistive load voltage and power
+      // PowerSet 60.0,230
+      // CurrentSet 60.0,230
+      char argument[32];
+      float Pgoal = CharToFloat(ArgV(argument, 1));    // 60.0    W
+      float Ugoal = CharToFloat(ArgV(argument, 2));    // 230     V
+      float Igoal = Pgoal / Ugoal;                     // 0.26087 A
+      float R = Ugoal / Igoal;                         // 881,666 Ohm
+
+      uint32_t channel = XdrvMailbox.index;
+      if (channel > Energy->phase_count) { channel = 1; }
+      channel--;
+      float Umeas = Energy->voltage[channel];          // 232.0
+      // Calculate current and power based on measured voltage
+      float Ical = Umeas / R;                          // 0.26306 A
+      float Pcal = Umeas * Ical;                       // 61.03   W
+      Ical *= 1000;                                    // A to mA
+
+      uint32_t cal_type1 = ENERGY_CURRENT_CALIBRATION;
+      float cal1 = Ical;
+      float cal2 = Pcal;
+      if (ENERGY_CURRENT_CALIBRATION == cal_type) {
+        cal_type1 = ENERGY_POWER_CALIBRATION;
+        cal1 = Pcal;
+        cal2 = Ical;
+      }
+      XdrvMailbox.data = argument;
+      ext_snprintf_P(argument, sizeof(argument), PSTR("%5_f"), &cal1);
+      XdrvMailbox.data_len = strlen(argument);
+      EnergyCommandSetCalResponse(cal_type1);
+      ext_snprintf_P(argument, sizeof(argument), PSTR("%5_f"), &cal2);
+      XdrvMailbox.data_len = strlen(argument);
+    }
+  }
+  EnergyCommandSetCalResponse(cal_type);
+}
+
 void CmndPowerSet(void) {
-  EnergyCommandSetCalResponse(ENERGY_POWER_CALIBRATION);
+  EnergyCommandSetCal(ENERGY_POWER_CALIBRATION);
 }
 void CmndVoltageSet(void) {
   EnergyCommandSetCalResponse(ENERGY_VOLTAGE_CALIBRATION);
 }
 void CmndCurrentSet(void) {
-  EnergyCommandSetCalResponse(ENERGY_CURRENT_CALIBRATION);
+  EnergyCommandSetCal(ENERGY_CURRENT_CALIBRATION);
 }
 void CmndFrequencySet(void) {
   EnergyCommandSetCalResponse(ENERGY_FREQUENCY_CALIBRATION);
@@ -1526,6 +1584,10 @@ void EnergyShow(bool json) {
   if (!Energy->type_dc) {
     if (Energy->current_available && Energy->voltage_available) {
       for (uint32_t i = 0; i < Energy->phase_count; i++) {
+        if (0 == Energy->current[i]) {
+          Energy->active_power[i] = 0;
+        }
+
         apparent_power[i] = Energy->apparent_power[i];
         if (isnan(apparent_power[i])) {
           apparent_power[i] = Energy->voltage[i] * Energy->current[i];
@@ -1533,14 +1595,31 @@ void EnergyShow(bool json) {
         else if (0 == Energy->current[i]) {
           apparent_power[i] = 0;
         }
+/*        
         if (apparent_power[i] < Energy->active_power[i]) {  // Should be impossible
           Energy->active_power[i] = apparent_power[i];
         }
-
         power_factor[i] = Energy->power_factor[i];
         if (isnan(power_factor[i])) {
           power_factor[i] = (Energy->active_power[i] && apparent_power[i]) ? Energy->active_power[i] / apparent_power[i] : 0;
-          if (power_factor[i] > 1) {
+          if (power_factor[i] > 1) {  // Should not happen (Active > Apparent)
+            power_factor[i] = 1;
+          }
+        }
+*/
+        power_factor[i] = Energy->power_factor[i];
+        if (isnan(power_factor[i])) {
+          power_factor[i] = (Energy->active_power[i] && apparent_power[i]) ? Energy->active_power[i] / apparent_power[i] : 0;
+        }
+        if (apparent_power[i] < Energy->active_power[i]) {  // Should be impossible
+          if (apparent_power[i]) {
+            if ((power_factor[i] >= 1.02f) && (power_factor[i] < 2.0f)) {  // Skip below 2% and don't expect 50% differences
+              AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NRG: Calibrate as Active %3_fW > Apparent %3_fVA (PF = %4_f)"),
+                &Energy->active_power[i], &apparent_power[i], &power_factor[i]);
+            }
+          }
+          apparent_power[i] = Energy->active_power[i];  // Force apparent equal to active as mis-calibrated
+          if (power_factor[i] > 1) {                    // Should not happen (Active > Apparent)
             power_factor[i] = 1;
           }
         }

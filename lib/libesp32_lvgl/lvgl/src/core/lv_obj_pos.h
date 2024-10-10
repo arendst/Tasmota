@@ -179,9 +179,9 @@ void lv_obj_set_align(lv_obj_t * obj, lv_align_t align);
 void lv_obj_align(lv_obj_t * obj, lv_align_t align, int32_t x_ofs, int32_t y_ofs);
 
 /**
- * Align an object to an other object.
+ * Align an object to another object.
  * @param obj       pointer to an object to align
- * @param base      pointer to an other object (if NULL `obj`s parent is used). 'obj' will be aligned to it.
+ * @param base      pointer to another object (if NULL `obj`s parent is used). 'obj' will be aligned to it.
  * @param align     type of alignment (see 'lv_align_t' enum)
  * @param x_ofs     x coordinate offset after alignment
  * @param y_ofs     y coordinate offset after alignment
@@ -195,10 +195,7 @@ void lv_obj_align_to(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, in
  * @param obj       pointer to an object to align
  * @note            if the parent size changes `obj` needs to be aligned manually again
  */
-static inline void lv_obj_center(lv_obj_t * obj)
-{
-    lv_obj_align(obj, LV_ALIGN_CENTER, 0, 0);
-}
+void lv_obj_center(lv_obj_t * obj);
 
 /**
  * Copy the coordinates of an object to an area
@@ -256,14 +253,14 @@ int32_t lv_obj_get_y(const lv_obj_t * obj);
 int32_t lv_obj_get_y2(const lv_obj_t * obj);
 
 /**
- * Get the actually set x coordinate of object, i.e. the offset form the set alignment
+ * Get the actually set x coordinate of object, i.e. the offset from the set alignment
  * @param obj       pointer to an object
  * @return          the set x coordinate
  */
 int32_t lv_obj_get_x_aligned(const lv_obj_t * obj);
 
 /**
- * Get the actually set y coordinate of object, i.e. the offset form the set alignment
+ * Get the actually set y coordinate of object, i.e. the offset from the set alignment
  * @param obj       pointer to an object
  * @return          the set y coordinate
  */

@@ -77,6 +77,7 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
   #
   # Parse configuration map
   def parse_configuration(config)
+    super(self).parse_configuration(config)
     self.prefix = str(config.find(self.ARG))
   end
 

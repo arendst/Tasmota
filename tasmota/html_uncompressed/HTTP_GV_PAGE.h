@@ -2,7 +2,7 @@ const char HTTP_GV_PAGE[] PROGMEM =
   "<!DOCTYPE html>"
   "<html lang='en'>"
   "<head>"
-    "<title>%s - GPIO Viewer</title>"                           // SettingsTextEscaped(SET_DEVICENAME).c_str()
+    "<title>%s GPIO Viewer</title>"                             // SettingsTextEscaped(SET_DEVICENAME).c_str()
     "<meta charset='UTF-8'>"
     "<base href='%s'>"                                          // GV_BASE_URL
     "<link rel='icon' href='favicon.ico'>"

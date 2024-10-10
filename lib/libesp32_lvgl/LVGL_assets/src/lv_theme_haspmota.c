@@ -3,11 +3,14 @@
  *
  */
 
+#include <stdlib.h>
+
 /*********************
  *      INCLUDES
  *********************/
 #include "../lvgl.h" /*To see all the widgets*/
 
+#include "themes/lv_theme_private.h"
 #include "lv_theme_haspmota.h"
 // #include "misc/lv_gc.h"          TODO
 
@@ -184,7 +187,7 @@ typedef struct {
 #endif
 
 #if LV_USE_MSGBOX
-    lv_style_t msgbox_bg, msgbox_btn_bg;
+    lv_style_t msgbox_bg, msgbox_btn_bg, msgbox_backdrop_bg;
 #endif
 
 #if LV_USE_KEYBOARD
@@ -573,6 +576,10 @@ static void style_init(void)
 
     style_init_reset(&styles->msgbox_bg);
     lv_style_set_max_width(&styles->msgbox_bg, lv_pct(100));
+
+    style_init_reset(&styles->msgbox_backdrop_bg);
+    lv_style_set_bg_color(&styles->msgbox_backdrop_bg, lv_palette_main(LV_PALETTE_GREY));
+    lv_style_set_bg_opa(&styles->msgbox_backdrop_bg, LV_OPA_50);
 #endif
 #if LV_USE_KEYBOARD
     style_init_reset(&styles->keyboard_btn_bg);
@@ -633,7 +640,7 @@ lv_theme_t * lv_theme_haspmota_init(lv_display_t * disp, lv_color_t color_primar
      *In a general case styles could be in simple `static lv_style_t my_style...` variables*/
     if(!inited) {
         // LV_GC_ROOT(_lv_theme_default_styles) = lv_mem_alloc(sizeof(my_theme_styles_t));
-        styles = (my_theme_styles_t *)malloc(sizeof(my_theme_styles_t));        // TODO LVGL
+        styles = (my_theme_styles_t *) malloc(sizeof(my_theme_styles_t));        // TODO LVGL
     }
 
     if(LV_HOR_RES <= 320) disp_size = DISP_SMALL;
@@ -735,19 +742,6 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
 
 #if LV_USE_BUTTONMATRIX
     else if(lv_obj_check_type(obj, &lv_buttonmatrix_class)) {
-#if LV_USE_MSGBOX
-        if(lv_obj_check_type(lv_obj_get_parent(obj), &lv_msgbox_class)) {
-            lv_obj_add_style(obj, &styles->msgbox_btn_bg, 0);
-            lv_obj_add_style(obj, &styles->pad_gap, 0);
-            lv_obj_add_style(obj, &styles->btn, LV_PART_ITEMS);
-            lv_obj_add_style(obj, &styles->pressed, LV_PART_ITEMS | LV_STATE_PRESSED);
-            lv_obj_add_style(obj, &styles->disabled, LV_PART_ITEMS | LV_STATE_DISABLED);
-            lv_obj_add_style(obj, &styles->bg_color_primary, LV_PART_ITEMS | LV_STATE_CHECKED);
-            lv_obj_add_style(obj, &styles->bg_color_primary_muted, LV_PART_ITEMS | LV_STATE_FOCUS_KEY);
-            lv_obj_add_style(obj, &styles->bg_color_secondary_muted, LV_PART_ITEMS | LV_STATE_EDITED);
-            return;
-        }
-#endif
 #if LV_USE_TABVIEW
         if(lv_obj_check_type(lv_obj_get_parent(obj), &lv_tabview_class)) {
             lv_obj_add_style(obj, &styles->bg_color_white, 0);
@@ -1009,7 +1003,39 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
 #if LV_USE_MSGBOX
     else if(lv_obj_check_type(obj, &lv_msgbox_class)) {
         lv_obj_add_style(obj, &styles->card, 0);
-        lv_obj_add_style(obj, &styles->msgbox_bg, 0);
+        lv_obj_add_style(obj, &styles->pad_zero, 0);
+        lv_obj_add_style(obj, &styles->clip_corner, 0);
+        return;
+    }
+    else if(lv_obj_check_type(obj, &lv_msgbox_backdrop_class)) {
+        lv_obj_add_style(obj, &styles->msgbox_backdrop_bg, 0);
+        return;
+    }
+    else if(lv_obj_check_type(obj, &lv_msgbox_header_class)) {
+        lv_obj_add_style(obj, &styles->pad_tiny, 0);
+        lv_obj_add_style(obj, &styles->bg_color_grey, 0);
+        return;
+    }
+    else if(lv_obj_check_type(obj, &lv_msgbox_footer_class)) {
+        lv_obj_add_style(obj, &styles->pad_tiny, 0);
+        return;
+    }
+    else if(lv_obj_check_type(obj, &lv_msgbox_content_class)) {
+        lv_obj_add_style(obj, &styles->scrollbar, LV_PART_SCROLLBAR);
+        lv_obj_add_style(obj, &styles->scrollbar_scrolled, LV_PART_SCROLLBAR | LV_STATE_SCROLLED);
+        lv_obj_add_style(obj, &styles->pad_tiny, 0);
+        return;
+    }
+    else if(lv_obj_check_type(obj, &lv_msgbox_header_button_class) ||
+            lv_obj_check_type(obj, &lv_msgbox_footer_button_class)) {
+        lv_obj_add_style(obj, &styles->btn, 0);
+        lv_obj_add_style(obj, &styles->bg_color_primary, 0);
+        lv_obj_add_style(obj, &styles->transition_delayed, 0);
+        lv_obj_add_style(obj, &styles->pressed, LV_STATE_PRESSED);
+        lv_obj_add_style(obj, &styles->transition_normal, LV_STATE_PRESSED);
+        lv_obj_add_style(obj, &styles->outline_primary, LV_STATE_FOCUS_KEY);
+        lv_obj_add_style(obj, &styles->bg_color_secondary, LV_STATE_CHECKED);
+        lv_obj_add_style(obj, &styles->disabled, LV_STATE_DISABLED);
         return;
     }
 #endif

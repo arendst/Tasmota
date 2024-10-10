@@ -30,6 +30,7 @@ class Matter_Plugin_Sensor_Rain : Matter_Plugin_Sensor_Boolean
   # static var ARG_HINT = "Switch<x> number"
   # static var ARG_TYPE = / x -> int(x)               # function to convert argument to the right type
   # static var UPDATE_TIME = 750                      # update every 750ms
+  static var JSON_NAME = "Rain"                # Name of the sensor attribute in JSON payloads
   static var UPDATE_COMMANDS = matter.UC_LIST(_class, "Rain")
   static var CLUSTERS  = matter.consolidate_clusters(_class, {
     0x0045: [0],                                    # Boolean State p.70 - no writable
@@ -65,15 +66,6 @@ class Matter_Plugin_Sensor_Rain : Matter_Plugin_Sensor_Boolean
 
     end
     return super(self).read_attribute(session, ctx, tlv_solo)
-  end
-
-  #############################################################
-  # update_virtual
-  #
-  # Update internal state for virtual devices
-  def update_virtual(payload)
-    self.shadow_bool_value = self._parse_update_virtual(payload, "Rain", self.shadow_bool_value, bool, 0x0045, 0x0000)
-    super(self).update_virtual(payload)
   end
 
   #############################################################

@@ -44,26 +44,48 @@
 
 //#define DEBUG_BL09XX
 
+#ifndef BL0939_PREF
 #define BL0939_PREF                 713       // =(4046*1*0,51*1000)/(1,218*1,218*(390*5+0,51)) = 713,105
+#endif
+#ifndef BL0939_UREF
 #define BL0939_UREF                 17159     // =(79931*0,51*1000)/(1,218*(390*5+0,51)) = 17158,92
+#endif
+#ifndef BL0939_IREF
 #define BL0939_IREF                 266013    // =(324004*1)/1,218 = 266013,14
+#endif
 
+#ifndef BL0940_PREF
 #define BL0940_PREF                 1430
+#endif
+#ifndef BL0940_UREF
 #define BL0940_UREF                 33000
+#endif
+#ifndef BL0940_IREF
 #define BL0940_IREF                 275000
+#endif
 
+#ifndef BL0942_PREF
 #define BL0942_PREF                 596
+#endif
+#ifndef BL0942_UREF
 #define BL0942_UREF                 15187
+#endif
+#ifndef BL0942_IREF
 #define BL0942_IREF                 251213
+#endif
 
+#ifndef BL09XX_WRITE_COMMAND
 #define BL09XX_WRITE_COMMAND        0xA0  // 0xA8 according to documentation
+#endif
 #define BL09XX_REG_I_FAST_RMS_CTRL  0x10
 #define BL09XX_REG_MODE             0x18
 #define BL09XX_REG_SOFT_RESET       0x19
 #define BL09XX_REG_USR_WRPROT       0x1A
 #define BL09XX_REG_TPS_CTRL         0x1B
 
+#ifndef BL09XX_READ_COMMAND
 #define BL09XX_READ_COMMAND         0x50  // 0x58 according to documentation
+#endif
 #define BL09XX_FULL_PACKET          0xAA
 
 #define BL09XX_PACKET_HEADER        0x55  // 0x58 according to documentation
@@ -393,19 +415,24 @@ bool Bl09XXCommand(void) {
   uint32_t channel = (2 == XdrvMailbox.index) && (Energy->phase_count > 1) ? 1 : 0;
   uint32_t value = (uint32_t)(CharToFloat(XdrvMailbox.data) * 100);  // 1.23 = 123
 
-  if (CMND_POWERSET == Energy->command_code) {
+  if ((CMND_POWERCAL == Energy->command_code) ||
+      (CMND_VOLTAGECAL == Energy->command_code) ||
+      (CMND_CURRENTCAL == Energy->command_code)) {
+    // Service in xdrv_03_energy.ino
+  }
+  else if (CMND_POWERSET == Energy->command_code) {                  // xxx.xx W
     if (XdrvMailbox.data_len && Bl09XX.power[channel]) {
       XdrvMailbox.payload = (Bl09XX.power[channel] * 100) / value;
     }
   }
-  else if (CMND_VOLTAGESET == Energy->command_code) {
+  else if (CMND_VOLTAGESET == Energy->command_code) {                // xxx.xx V
     if (XdrvMailbox.data_len && Bl09XX.voltage) {
       XdrvMailbox.payload = (Bl09XX.voltage * 100) / value;
     }
   }
-  else if (CMND_CURRENTSET == Energy->command_code) {
+  else if (CMND_CURRENTSET == Energy->command_code) {                // xxx.xx mA
     if (XdrvMailbox.data_len && Bl09XX.current[channel]) {
-      XdrvMailbox.payload = (Bl09XX.current[channel] * 100) / value;
+      XdrvMailbox.payload = ((Bl09XX.current[channel] * 100) / value) * 1000;
     }
   }
   else serviced = false;  // Unknown command

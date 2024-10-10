@@ -6,6 +6,7 @@
 /*********************
  *      INCLUDES
  *********************/
+#include "../lv_theme_private.h"
 #include "../../../lvgl.h"
 
 #if LV_USE_THEME_MONO
@@ -205,7 +206,7 @@ void lv_theme_mono_deinit(void)
 lv_theme_t * lv_theme_mono_init(lv_display_t * disp, bool dark_bg, const lv_font_t * font)
 {
     /*This trick is required only to avoid the garbage collection of
-     *styles' data if LVGL is used in a binding (e.g. Micropython)
+     *styles' data if LVGL is used in a binding (e.g. MicroPython)
      *In a general case styles could be in simple `static lv_style_t my_style...` variables*/
     if(!lv_theme_mono_is_inited()) {
         theme_def = lv_malloc_zeroed(sizeof(my_theme_t));
@@ -233,8 +234,9 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
     LV_UNUSED(th);
 
     my_theme_t * theme = theme_def;
+    lv_obj_t * parent = lv_obj_get_parent(obj);
 
-    if(lv_obj_get_parent(obj) == NULL) {
+    if(parent == NULL) {
         lv_obj_add_style(obj, &theme->styles.scr, 0);
         lv_obj_add_style(obj, &theme->styles.scrollbar, LV_PART_SCROLLBAR);
         return;
@@ -242,7 +244,6 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
 
     if(lv_obj_check_type(obj, &lv_obj_class)) {
 #if LV_USE_TABVIEW
-        lv_obj_t * parent = lv_obj_get_parent(obj);
         /*Tabview content area*/
         if(lv_obj_check_type(parent, &lv_tabview_class)) {
             return;
@@ -258,13 +259,13 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
 
 #if LV_USE_WIN
         /*Header*/
-        if(lv_obj_get_index(obj) == 0 && lv_obj_check_type(lv_obj_get_parent(obj), &lv_win_class)) {
+        if(lv_obj_check_type(parent, &lv_win_class) && lv_obj_get_child(parent, 0) == 0) {
             lv_obj_add_style(obj, &theme->styles.card, 0);
             lv_obj_add_style(obj, &theme->styles.no_radius, 0);
             return;
         }
         /*Content*/
-        else if(lv_obj_get_index(obj) == 1 && lv_obj_check_type(lv_obj_get_parent(obj), &lv_win_class)) {
+        else if(lv_obj_check_type(parent, &lv_win_class) && lv_obj_get_child(parent, 1) == obj) {
             lv_obj_add_style(obj, &theme->styles.card, 0);
             lv_obj_add_style(obj, &theme->styles.no_radius, 0);
             lv_obj_add_style(obj, &theme->styles.scrollbar, LV_PART_SCROLLBAR);
@@ -288,7 +289,7 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
 #if LV_USE_BUTTONMATRIX
     else if(lv_obj_check_type(obj, &lv_buttonmatrix_class)) {
 #if LV_USE_MSGBOX
-        if(lv_obj_check_type(lv_obj_get_parent(obj), &lv_msgbox_class)) {
+        if(lv_obj_check_type(parent, &lv_msgbox_class)) {
             lv_obj_add_style(obj, &theme->styles.pad_gap, 0);
             lv_obj_add_style(obj, &theme->styles.card, LV_PART_ITEMS);
             lv_obj_add_style(obj, &theme->styles.pr, LV_PART_ITEMS | LV_STATE_PRESSED);
@@ -299,7 +300,7 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
         }
 #endif
 #if LV_USE_TABVIEW
-        if(lv_obj_check_type(lv_obj_get_parent(obj), &lv_tabview_class)) {
+        if(lv_obj_check_type(parent, &lv_tabview_class)) {
             lv_obj_add_style(obj, &theme->styles.pad_gap, 0);
             lv_obj_add_style(obj, &theme->styles.card, LV_PART_ITEMS);
             lv_obj_add_style(obj, &theme->styles.pr, LV_PART_ITEMS | LV_STATE_PRESSED);

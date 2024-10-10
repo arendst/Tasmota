@@ -1,7 +1,7 @@
 /*
   xdrv_27_esp32_shutter.ino - Shutter/Blind support for Tasmota
 
-  Copyright (C) 2023  Stefan Bode
+  Copyright (C) 2024  Stefan Bode
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -213,14 +213,12 @@ void ShutterAllowPreStartProcedure(uint8_t i) {
   // Prestart allow e.g. to release a LOCK or something else before the movement start
   // Anyway, as long var1 != 99 this is skipped (luckily)
 #ifdef USE_RULES
-  uint32_t uptime_Local = 0;
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start? var%d <99>=<%s>, max10s?"),i + 1, rules_vars[i]);
-  uptime_Local = TasmotaGlobal.uptime;
-  while (uptime_Local + 10 > TasmotaGlobal.uptime 
-          && (String)rules_vars[i] == "99") {
-    loop();
+  // wait for response from rules
+  uint32_t end_time = millis() + 10000;  // 10 seconds
+  while (!TimeReached(end_time) && (String)rules_vars[i] == "99") {
+    delay(1);
   }
-  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Delay Start. Done"));
 #endif  // USE_RULES
 }
 
@@ -248,7 +246,7 @@ bool ShutterButtonHandlerMulti(void)
     Button.last_state[button_index], Button.press_counter[button_index], Button.window_timer[button_index], Shutter[shutter_index].button_simu_pressed);
 
   // multipress event handle back to main procedure
-  if (Button.press_counter[button_index]>3) return false;
+  if (Button.press_counter[button_index]>4) return false;
 
   if (!Shutter[shutter_index].button_simu_pressed) {
     uint8_t pos_press_index = Button.press_counter[button_index]-1;
@@ -1358,7 +1356,8 @@ void ShutterUpdatePosition(void)
           // sending MQTT result to broker
           snprintf_P(scommand, sizeof(scommand),PSTR(D_SHUTTER "%d"), i + 1);
           GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, scommand);
-          Response_P("%d", ShutterSettings.shutter_position[i]);
+          uint32_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
+          Response_P("%d", (ShutterSettings.shutter_options[i] & 1) ? 100 - position : position);
           MqttPublish(stopic, Settings->flag.mqtt_power_retain);  // CMND_POWERRETAIN
         }
 
@@ -1385,7 +1384,8 @@ void ShutterUpdateVelocity(uint8_t i)
 
 void ShutterWaitForMotorStart(uint8_t i)
 {
-  while (millis() < Shutter[i].last_stop_time + ShutterSettings.shutter_motorstop) {
+  uint32_t end_time = Shutter[i].last_stop_time + ShutterSettings.shutter_motorstop;
+  while (!TimeReached(end_time)) {
     loop();
   }
   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Stoptime done"));
@@ -2333,11 +2333,13 @@ bool Xdrv27(uint32_t function)
         for (uint8_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
           ResponseAppend_P(",");
           uint8_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
+          position = (ShutterSettings.shutter_options[i] & 1) ? 100 - position : position;
           uint8_t target   = ShutterRealToPercentPosition(Shutter[i].target_position, i);
-          ResponseAppend_P(JSON_SHUTTER_POS, i + 1, (ShutterSettings.shutter_options[i] & 1) ? 100 - position : position, Shutter[i].direction,(ShutterSettings.shutter_options[i] & 1) ? 100 - target : target, Shutter[i].tilt_real_pos );
+          target = (ShutterSettings.shutter_options[i] & 1) ? 100 - target : target;
+          ResponseAppend_P(JSON_SHUTTER_POS, i + 1,  position, Shutter[i].direction, target, Shutter[i].tilt_real_pos );
 #ifdef USE_DOMOTICZ
           if ((0 == TasmotaGlobal.tele_period) && (0 == i)) {
-             DomoticzSensor(DZ_SHUTTER, ShutterRealToPercentPosition(Shutter[i].real_position, i));
+             DomoticzSensor(DZ_SHUTTER, position);
           }
 #endif  // USE_DOMOTICZ
         }

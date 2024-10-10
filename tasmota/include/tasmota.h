@@ -94,7 +94,6 @@ const uint16_t VL53LXX_MAX_SENSORS = 8;     // Max number of VL53L0X sensors
 const uint8_t MAX_SR04 = 3; // Max number of SR04 ultrasonic sensors
 
 #ifdef ESP32
-const uint8_t MAX_I2C = 2;                  // Max number of I2C controllers (ESP32 = 2)
 const uint8_t MAX_SPI = 2;                  // Max number of Hardware SPI controllers (ESP32 = 2)
 const uint8_t MAX_I2S = 2;                  // Max number of Hardware I2S controllers (ESP32 = 2)
   #if CONFIG_IDF_TARGET_ESP32
@@ -109,7 +108,6 @@ const uint8_t MAX_I2S = 2;                  // Max number of Hardware I2S contro
   const uint8_t MAX_RMT = 0;                // Max number or RMT channels (0 if unknown)
   #endif
 #else
-const uint8_t MAX_I2C = 0;                  // Max number of I2C controllers (ESP8266 = 0, no choice)
 const uint8_t MAX_SPI = 0;                  // Max number of Hardware SPI controllers (ESP8266 = 0, no choice)
 const uint8_t MAX_I2S = 0;                  // Max number of Hardware I2S controllers (ESP8266 = 0, no choice)
 const uint8_t MAX_RMT = 0;                  // No RMT channel on ESP8266
@@ -282,11 +280,15 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
 #define KNX_SLOT3              28
 #define KNX_SLOT4              29
 #define KNX_SLOT5              30
-#define KNX_SCENE              31
-#define KNX_DIMMER             32   // aka DPT_Scaling 5.001
-#define KNX_COLOUR             33   // aka DPT_Colour_RGB 232.600 or DPT_Colour_RGBW 251.600
-#define KNX_MAX_device_param   33
-#define MAX_KNXTX_CMNDS        5
+#define KNX_SLOT6              31
+#define KNX_SLOT7              32
+#define KNX_SLOT8              33
+#define KNX_SLOT9              34
+#define KNX_SCENE              35
+#define KNX_DIMMER             36   // aka DPT_Scaling 5.001
+#define KNX_COLOUR             37   // aka DPT_Colour_RGB 232.600 or DPT_Colour_RGBW 251.600
+#define KNX_MAX_device_param   37
+#define MAX_KNXTX_CMNDS        9
 
 // XPT2046 resistive touch driver min/max raw values
 #define	XPT2046_MINX			192

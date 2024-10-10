@@ -2280,28 +2280,50 @@ void TasShiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t va
 /*********************************************************************************************\
  * Sleep aware time scheduler functions borrowed from ESPEasy
 \*********************************************************************************************/
+/*
+// No need to use 64-bit
+inline uint64_t GetMicros64() {
+#ifdef ESP8266
+  return micros64();
+#endif
+#ifdef ESP32
+  return esp_timer_get_time();
+#endif
+}
 
-inline int32_t TimeDifference(uint32_t prev, uint32_t next)
-{
+inline int64_t TimeDifference64(uint64_t prev, uint64_t next) {
+  return ((int64_t) (next - prev));
+}
+
+int64_t TimePassedSince64(const uint64_t& timestamp) {
+  return TimeDifference64(timestamp, GetMicros64());
+}
+
+bool TimeReached64(const uint64_t& timer) {
+  return TimePassedSince64(timer) >= 0;
+}
+*/
+
+// Return the time difference as a signed value, taking into account the timers may overflow.
+// Returned timediff is between -24.9 days and +24.9 days.
+// Returned value is positive when "next" is after "prev"
+inline int32_t TimeDifference(uint32_t prev, uint32_t next) {
   return ((int32_t) (next - prev));
 }
 
-int32_t TimePassedSince(uint32_t timestamp)
-{
+int32_t TimePassedSince(uint32_t timestamp) {
   // Compute the number of milliSeconds passed since timestamp given.
   // Note: value can be negative if the timestamp has not yet been reached.
   return TimeDifference(timestamp, millis());
 }
 
-bool TimeReached(uint32_t timer)
-{
+bool TimeReached(uint32_t timer) {
   // Check if a certain timeout has been reached.
-  const long passed = TimePassedSince(timer);
-  return (passed >= 0);
+  // This is roll-over proof.
+  return TimePassedSince(timer) >= 0;
 }
 
-void SetNextTimeInterval(uint32_t& timer, const uint32_t step)
-{
+void SetNextTimeInterval(uint32_t& timer, const uint32_t step) {
   timer += step;
   const long passed = TimePassedSince(timer);
   if (passed < 0) { return; }   // Event has not yet happened, which is fine.
@@ -2314,13 +2336,11 @@ void SetNextTimeInterval(uint32_t& timer, const uint32_t step)
   timer = millis() + (step - passed);
 }
 
-int32_t TimePassedSinceUsec(uint32_t timestamp)
-{
+int32_t TimePassedSinceUsec(uint32_t timestamp) {
   return TimeDifference(timestamp, micros());
 }
 
-bool TimeReachedUsec(uint32_t timer)
-{
+bool TimeReachedUsec(uint32_t timer) {
   // Check if a certain timeout has been reached.
   const long passed = TimePassedSinceUsec(timer);
   return (passed >= 0);

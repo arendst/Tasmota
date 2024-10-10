@@ -735,7 +735,7 @@ class Matter_IM
             var ep_str = (q.endpoint != nil) ? f"{q.endpoint:02X}" : "**"
             var cl_str = (q.cluster != nil) ? f"{q.cluster:04X}" : "****"
             var ev_str = (q.event != nil) ? f"{q.event:02X}" : "**"
-            var event_no_min_str = (event_no_min != nil) ? f" (>{event_no_min})" : ""
+            var event_no_min_str = (event_no_min != nil) ? f" (event>{event_no_min})" : ""
             log(f"MTR: >Read_Event({msg.session.local_session_id:6i}) [{ep_str}]{cl_str}/{ev_str} {event_name}{event_no_min_str}", 3)
           end
         end

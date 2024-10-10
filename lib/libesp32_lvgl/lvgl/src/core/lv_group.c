@@ -6,12 +6,11 @@
 /*********************
  *      INCLUDES
  *********************/
-#include <stddef.h>
-
-#include "lv_group.h"
-#include "../core/lv_obj.h"
+#include "lv_group_private.h"
+#include "../core/lv_obj_private.h"
 #include "../core/lv_global.h"
 #include "../indev/lv_indev.h"
+#include "../misc/lv_types.h"
 
 /*********************
  *      DEFINES
@@ -43,22 +42,22 @@ static lv_indev_t * get_indev(const lv_group_t * g);
  *   GLOBAL FUNCTIONS
  **********************/
 
-void _lv_group_init(void)
+void lv_group_init(void)
 {
-    _lv_ll_init(group_ll_p, sizeof(lv_group_t));
+    lv_ll_init(group_ll_p, sizeof(lv_group_t));
 }
 
-void _lv_group_deinit(void)
+void lv_group_deinit(void)
 {
-    _lv_ll_clear(group_ll_p);
+    lv_ll_clear(group_ll_p);
 }
 
 lv_group_t * lv_group_create(void)
 {
-    lv_group_t * group = _lv_ll_ins_head(group_ll_p);
+    lv_group_t * group = lv_ll_ins_head(group_ll_p);
     LV_ASSERT_MALLOC(group);
     if(group == NULL) return NULL;
-    _lv_ll_init(&group->obj_ll, sizeof(lv_obj_t *));
+    lv_ll_init(&group->obj_ll, sizeof(lv_obj_t *));
 
     group->obj_focus      = NULL;
     group->frozen         = 0;
@@ -83,7 +82,7 @@ void lv_group_delete(lv_group_t * group)
 
     /*Remove the objects from the group*/
     lv_obj_t ** obj;
-    _LV_LL_READ(&group->obj_ll, obj) {
+    LV_LL_READ(&group->obj_ll, obj) {
         if((*obj)->spec_attr)(*obj)->spec_attr->group_p = NULL;
     }
 
@@ -99,8 +98,8 @@ void lv_group_delete(lv_group_t * group)
     /*If the group is the default group, set the default group as NULL*/
     if(group == lv_group_get_default()) lv_group_set_default(NULL);
 
-    _lv_ll_clear(&(group->obj_ll));
-    _lv_ll_remove(group_ll_p, group);
+    lv_ll_clear(&(group->obj_ll));
+    lv_ll_remove(group_ll_p, group);
     lv_free(group);
 }
 
@@ -123,36 +122,17 @@ void lv_group_add_obj(lv_group_t * group, lv_obj_t * obj)
     /*Be sure the object is removed from its current group*/
     lv_group_remove_obj(obj);
 
-    /*Do not add the object twice*/
-    lv_obj_t ** obj_i;
-    _LV_LL_READ(&group->obj_ll, obj_i) {
-        if((*obj_i) == obj) {
-            LV_LOG_INFO("the object is already added to this group");
-            return;
-        }
-    }
-
-    /*If the object is already in a group and focused then refocus it*/
-    lv_group_t * group_cur = lv_obj_get_group(obj);
-    if(group_cur) {
-        if(obj->spec_attr->group_p && *(obj->spec_attr->group_p->obj_focus) == obj) {
-            lv_group_refocus(group_cur);
-
-            LV_LOG_INFO("changing object's group");
-        }
-    }
-
     if(obj->spec_attr == NULL) lv_obj_allocate_spec_attr(obj);
     obj->spec_attr->group_p = group;
 
-    lv_obj_t ** next = _lv_ll_ins_tail(&group->obj_ll);
+    lv_obj_t ** next = lv_ll_ins_tail(&group->obj_ll);
     LV_ASSERT_MALLOC(next);
     if(next == NULL) return;
     *next = obj;
 
     /*If the head and the tail is equal then there is only one object in the linked list.
      *In this case automatically activate it*/
-    if(_lv_ll_get_head(&group->obj_ll) == next) {
+    if(lv_ll_get_head(&group->obj_ll) == next) {
         lv_group_refocus(group);
     }
 
@@ -168,7 +148,7 @@ void lv_group_swap_obj(lv_obj_t * obj1, lv_obj_t * obj2)
 
     /*Do not add the object twice*/
     lv_obj_t ** obj_i;
-    _LV_LL_READ(&g1->obj_ll, obj_i) {
+    LV_LL_READ(&g1->obj_ll, obj_i) {
         if((*obj_i) == obj1)(*obj_i) = obj2;
         else if((*obj_i) == obj2)(*obj_i) = obj1;
     }
@@ -191,7 +171,7 @@ void lv_group_remove_obj(lv_obj_t * obj)
         if(g->frozen) g->frozen = 0;
 
         /*If this is the only object in the group then focus to nothing.*/
-        if(_lv_ll_get_head(&g->obj_ll) == g->obj_focus && _lv_ll_get_tail(&g->obj_ll) == g->obj_focus) {
+        if(lv_ll_get_head(&g->obj_ll) == g->obj_focus && lv_ll_get_tail(&g->obj_ll) == g->obj_focus) {
             lv_obj_send_event(*g->obj_focus, LV_EVENT_DEFOCUSED, get_indev(g));
         }
         /*If there more objects in the group then focus to the next/prev object*/
@@ -209,9 +189,9 @@ void lv_group_remove_obj(lv_obj_t * obj)
 
     /*Search the object and remove it from its group*/
     lv_obj_t ** i;
-    _LV_LL_READ(&g->obj_ll, i) {
+    LV_LL_READ(&g->obj_ll, i) {
         if(*i == obj) {
-            _lv_ll_remove(&g->obj_ll, i);
+            lv_ll_remove(&g->obj_ll, i);
             lv_free(i);
             if(obj->spec_attr) obj->spec_attr->group_p = NULL;
             break;
@@ -233,11 +213,11 @@ void lv_group_remove_all_objs(lv_group_t * group)
 
     /*Remove the objects from the group*/
     lv_obj_t ** obj;
-    _LV_LL_READ(&group->obj_ll, obj) {
+    LV_LL_READ(&group->obj_ll, obj) {
         if((*obj)->spec_attr)(*obj)->spec_attr->group_p = NULL;
     }
 
-    _lv_ll_clear(&(group->obj_ll));
+    lv_ll_clear(&(group->obj_ll));
 }
 
 void lv_group_focus_obj(lv_obj_t * obj)
@@ -252,7 +232,7 @@ void lv_group_focus_obj(lv_obj_t * obj)
     lv_group_set_editing(g, false);
 
     lv_obj_t ** i;
-    _LV_LL_READ(&g->obj_ll, i) {
+    LV_LL_READ(&g->obj_ll, i) {
         if(*i == obj) {
             if(g->obj_focus != NULL && obj != *g->obj_focus) {  /*Do not defocus if the same object needs to be focused again*/
                 lv_result_t res = lv_obj_send_event(*g->obj_focus, LV_EVENT_DEFOCUSED, get_indev(g));
@@ -277,7 +257,7 @@ void lv_group_focus_next(lv_group_t * group)
 {
     LV_ASSERT_NULL(group);
 
-    bool focus_changed = focus_next_core(group, _lv_ll_get_head, _lv_ll_get_next);
+    bool focus_changed = focus_next_core(group, lv_ll_get_head, lv_ll_get_next);
     if(group->edge_cb) {
         if(!focus_changed)
             group->edge_cb(group, true);
@@ -288,7 +268,7 @@ void lv_group_focus_prev(lv_group_t * group)
 {
     LV_ASSERT_NULL(group);
 
-    bool focus_changed = focus_next_core(group, _lv_ll_get_tail, _lv_ll_get_prev);
+    bool focus_changed = focus_next_core(group, lv_ll_get_tail, lv_ll_get_prev);
     if(group->edge_cb) {
         if(!focus_changed)
             group->edge_cb(group, false);
@@ -394,22 +374,36 @@ bool lv_group_get_wrap(lv_group_t * group)
 uint32_t lv_group_get_obj_count(lv_group_t * group)
 {
     LV_ASSERT_NULL(group);
-    return _lv_ll_get_len(&group->obj_ll);
+    return lv_ll_get_len(&group->obj_ll);
+}
+
+lv_obj_t * lv_group_get_obj_by_index(lv_group_t * group, uint32_t index)
+{
+    uint32_t len = 0;
+    lv_obj_t ** obj;
+
+    LV_LL_READ(&group->obj_ll, obj) {
+        if(len == index) {
+            return *obj;
+        }
+        len++;
+    }
+    return NULL;
 }
 
 uint32_t lv_group_get_count(void)
 {
-    return _lv_ll_get_len(group_ll_p);
+    return lv_ll_get_len(group_ll_p);
 }
 
 lv_group_t  * lv_group_by_index(uint32_t index)
 {
     uint32_t len = 0;
-    void * node;
+    lv_group_t * group;
 
-    for(node = _lv_ll_get_tail(group_ll_p); node != NULL; node = _lv_ll_get_prev(group_ll_p, node)) {
+    LV_LL_READ_BACK(group_ll_p, group) {
         if(len == index) {
-            return (lv_group_t *) node;
+            return group;
         }
         len++;
     }

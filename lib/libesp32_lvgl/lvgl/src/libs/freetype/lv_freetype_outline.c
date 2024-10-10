@@ -7,6 +7,7 @@
  *      INCLUDES
  *********************/
 
+#include "../../misc/lv_event_private.h"
 #include "../../lvgl.h"
 #include "lv_freetype_private.h"
 
@@ -16,11 +17,13 @@
  *      DEFINES
  *********************/
 
+#define CACHE_NAME "FREETYPE_OUTLINE"
+
 /**********************
  *      TYPEDEFS
  **********************/
 
-typedef struct _lv_freetype_outline_node_t {
+typedef struct lv_freetype_outline_node_t {
     FT_UInt glyph_index;
     lv_freetype_outline_t outline;
 } lv_freetype_outline_node_t;
@@ -32,12 +35,10 @@ typedef struct _lv_freetype_outline_node_t {
 static lv_freetype_outline_t outline_create(lv_freetype_context_t * ctx, FT_Face face, FT_UInt glyph_index,
                                             uint32_t size, uint32_t strength);
 static lv_result_t outline_delete(lv_freetype_context_t * ctx, lv_freetype_outline_t outline);
-static const void * freetype_get_glyph_bitmap_cb(lv_font_glyph_dsc_t * g_dsc,
-                                                 uint32_t unicode_letter,
-                                                 lv_draw_buf_t * draw_buf);
+static const void * freetype_get_glyph_bitmap_cb(lv_font_glyph_dsc_t * g_dsc, lv_draw_buf_t * draw_buf);
 static void freetype_release_glyph_cb(const lv_font_t * font, lv_font_glyph_dsc_t * g_dsc);
 
-static lv_cache_entry_t * lv_freetype_outline_lookup(lv_freetype_font_dsc_t * dsc, uint32_t unicode_letter);
+static lv_cache_entry_t * lv_freetype_outline_lookup(lv_freetype_font_dsc_t * dsc, FT_UInt glyph_index);
 
 /*glyph dsc cache lru callbacks*/
 static bool freetype_glyph_outline_create_cb(lv_freetype_outline_node_t * node, lv_freetype_font_dsc_t * dsc);
@@ -68,6 +69,7 @@ lv_cache_t * lv_freetype_create_draw_data_outline(uint32_t cache_size)
     lv_cache_t * draw_data_cache = lv_cache_create(&lv_cache_class_lru_rb_count, sizeof(lv_freetype_outline_node_t),
                                                    cache_size,
                                                    glyph_outline_cache_ops);
+    lv_cache_set_name(draw_data_cache, CACHE_NAME);
 
     return draw_data_cache;
 }
@@ -119,11 +121,14 @@ bool lv_freetype_is_outline_font(const lv_font_t * font)
 static bool freetype_glyph_outline_create_cb(lv_freetype_outline_node_t * node, lv_freetype_font_dsc_t * dsc)
 {
     lv_freetype_outline_t outline;
+
+    lv_mutex_lock(&dsc->cache_node->face_lock);
     outline = outline_create(dsc->context,
                              dsc->cache_node->face,
                              node->glyph_index,
                              dsc->cache_node->ref_size,
                              dsc->style & LV_FREETYPE_FONT_STYLE_BOLD ? 1 : 0);
+    lv_mutex_unlock(&dsc->cache_node->face_lock);
 
     if(!outline) {
         return false;
@@ -153,15 +158,14 @@ static lv_cache_compare_res_t freetype_glyph_outline_cmp_cb(const lv_freetype_ou
     return node_a->glyph_index > node_b->glyph_index ? 1 : -1;
 }
 
-static const void * freetype_get_glyph_bitmap_cb(lv_font_glyph_dsc_t * g_dsc,
-                                                 uint32_t unicode_letter,
-                                                 lv_draw_buf_t * draw_buf)
+static const void * freetype_get_glyph_bitmap_cb(lv_font_glyph_dsc_t * g_dsc, lv_draw_buf_t * draw_buf)
 {
     LV_UNUSED(draw_buf);
+
     const lv_font_t * font = g_dsc->resolved_font;
     lv_freetype_font_dsc_t * dsc = (lv_freetype_font_dsc_t *)font->dsc;
     LV_ASSERT_FREETYPE_FONT_DSC(dsc);
-    lv_cache_entry_t * entry = lv_freetype_outline_lookup(dsc, unicode_letter);
+    lv_cache_entry_t * entry = lv_freetype_outline_lookup(dsc, (FT_UInt)g_dsc->gid.index);
     if(entry == NULL) {
         return NULL;
     }
@@ -184,12 +188,9 @@ static void freetype_release_glyph_cb(const lv_font_t * font, lv_font_glyph_dsc_
     g_dsc->entry = NULL;
 }
 
-static lv_cache_entry_t * lv_freetype_outline_lookup(lv_freetype_font_dsc_t * dsc, uint32_t unicode_letter)
+static lv_cache_entry_t * lv_freetype_outline_lookup(lv_freetype_font_dsc_t * dsc, FT_UInt glyph_index)
 {
     lv_freetype_cache_node_t * cache_node = dsc->cache_node;
-
-    FT_Face face = cache_node->face;
-    FT_UInt glyph_index = FT_Get_Char_Index(face, unicode_letter);
 
     lv_freetype_outline_node_t tmp_node;
     tmp_node.glyph_index = glyph_index;
@@ -302,8 +303,11 @@ static lv_freetype_outline_t outline_create(
         return NULL;
     }
 
-    /* Load glyph */
-    error = FT_Load_Glyph(face, glyph_index, FT_LOAD_DEFAULT | FT_LOAD_NO_BITMAP);
+    /**
+     * Disable AUTOHINT(https://freetype.org/autohinting/hinter.html) to avoid display clipping
+     * caused by inconsistent glyph measurement and outline.
+     */
+    error = FT_Load_Glyph(face, glyph_index, FT_LOAD_DEFAULT | FT_LOAD_NO_BITMAP | FT_LOAD_NO_AUTOHINT);
     if(error) {
         FT_ERROR_MSG("FT_Load_Glyph", error);
         return NULL;

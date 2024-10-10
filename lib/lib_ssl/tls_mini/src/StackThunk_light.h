@@ -32,6 +32,8 @@
 extern "C" {
 #endif
 
+extern void stack_thunk_yield();
+
 extern void stack_thunk_light_add_ref();
 extern void stack_thunk_light_del_ref();
 extern void stack_thunk_light_repaint();

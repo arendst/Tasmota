@@ -53,10 +53,11 @@ const be_ctypes_structure_t be_lv_gradient_stop = {
 
 const be_ctypes_structure_t be_lv_grad_dsc = {
   12,  /* size in bytes */
-  8,  /* number of elements */
+  9,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[8]) {
+  (const be_ctypes_structure_item_t[9]) {
     { "dir", 11, 0, 3, ctypes_bf, 0 },
+    { "extend", 11, 3, 2, ctypes_bf, 0 },
     { "stops_0_color", 0, 0, 0, ctypes_u24, 1 },
     { "stops_0_frac", 4, 0, 0, ctypes_u8, 0 },
     { "stops_0_opa", 3, 0, 0, ctypes_u8, 0 },
@@ -82,9 +83,9 @@ const be_ctypes_structure_t be_lv_draw_dsc_base = {
 
 const be_ctypes_structure_t be_lv_draw_rect_dsc = {
   112,  /* size in bytes */
-  39,  /* number of elements */
+  40,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[39]) {
+  (const be_ctypes_structure_item_t[40]) {
     { "base_dsc_size", 20, 0, 0, ctypes_u32, 0 },
     { "base_id1", 8, 0, 0, ctypes_u32, 0 },
     { "base_id2", 12, 0, 0, ctypes_u32, 0 },
@@ -94,6 +95,7 @@ const be_ctypes_structure_t be_lv_draw_rect_dsc = {
     { "base_user_data", 24, 0, 0, ctypes_ptr32, 0 },
     { "bg_color", 33, 0, 0, ctypes_u24, 1 },
     { "bg_grad_dir", 47, 0, 3, ctypes_bf, 0 },
+    { "bg_grad_extend", 47, 3, 2, ctypes_bf, 0 },
     { "bg_grad_stops_0_color", 36, 0, 0, ctypes_u24, 1 },
     { "bg_grad_stops_0_frac", 40, 0, 0, ctypes_u8, 0 },
     { "bg_grad_stops_0_opa", 39, 0, 0, ctypes_u8, 0 },
@@ -110,8 +112,8 @@ const be_ctypes_structure_t be_lv_draw_rect_dsc = {
     { "bg_opa", 32, 0, 0, ctypes_u8, 0 },
     { "border_color", 62, 0, 0, ctypes_u24, 1 },
     { "border_opa", 72, 0, 0, ctypes_u8, 0 },
-    { "border_post", 73, 0, 1, ctypes_bf, 0 },
-    { "border_side", 73, 1, 5, ctypes_bf, 0 },
+    { "border_post", 73, 5, 1, ctypes_bf, 0 },
+    { "border_side", 73, 0, 5, ctypes_bf, 0 },
     { "border_width", 68, 0, 0, ctypes_i32, 0 },
     { "outline_color", 74, 0, 0, ctypes_u24, 1 },
     { "outline_opa", 88, 0, 0, ctypes_u8, 0 },
@@ -192,10 +194,10 @@ const be_ctypes_structure_t be_lv_image_header = {
 }};
 
 const be_ctypes_structure_t be_lv_draw_image_dsc = {
-  100,  /* size in bytes */
-  33,  /* number of elements */
+  108,  /* size in bytes */
+  35,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[33]) {
+  (const be_ctypes_structure_item_t[35]) {
     { "antialias", 77, 4, 1, ctypes_bf, 0 },
     { "base_dsc_size", 20, 0, 0, ctypes_u32, 0 },
     { "base_id1", 8, 0, 0, ctypes_u32, 0 },
@@ -204,7 +206,9 @@ const be_ctypes_structure_t be_lv_draw_image_dsc = {
     { "base_obj", 0, 0, 0, ctypes_ptr32, 0 },
     { "base_part", 4, 0, 0, ctypes_u32, 0 },
     { "base_user_data", 24, 0, 0, ctypes_ptr32, 0 },
+    { "bitmap_mask_src", 104, 0, 0, ctypes_ptr32, 0 },
     { "blend_mode", 77, 0, 4, ctypes_bf, 0 },
+    { "clip_radius", 100, 0, 0, ctypes_i32, 0 },
     { "header_cf", 33, 0, 0, ctypes_u8, 0 },
     { "header_flags", 34, 0, 0, ctypes_u16, 0 },
     { "header_h", 38, 0, 0, ctypes_u16, 0 },
@@ -212,11 +216,11 @@ const be_ctypes_structure_t be_lv_draw_image_dsc = {
     { "header_reserved_2", 42, 0, 0, ctypes_u16, 0 },
     { "header_stride", 40, 0, 0, ctypes_u16, 0 },
     { "header_w", 36, 0, 0, ctypes_u16, 0 },
+    { "image_area_x1", 84, 0, 0, ctypes_i32, 0 },
+    { "image_area_x2", 92, 0, 0, ctypes_i32, 0 },
+    { "image_area_y1", 88, 0, 0, ctypes_i32, 0 },
+    { "image_area_y2", 96, 0, 0, ctypes_i32, 0 },
     { "opa", 76, 0, 0, ctypes_u8, 0 },
-    { "original_area_x1", 80, 0, 0, ctypes_i32, 0 },
-    { "original_area_x2", 88, 0, 0, ctypes_i32, 0 },
-    { "original_area_y1", 84, 0, 0, ctypes_i32, 0 },
-    { "original_area_y2", 92, 0, 0, ctypes_i32, 0 },
     { "pivot_x", 64, 0, 0, ctypes_i32, 0 },
     { "pivot_y", 68, 0, 0, ctypes_i32, 0 },
     { "recolor", 72, 0, 0, ctypes_u24, 1 },
@@ -227,7 +231,7 @@ const be_ctypes_structure_t be_lv_draw_image_dsc = {
     { "skew_x", 56, 0, 0, ctypes_i32, 0 },
     { "skew_y", 60, 0, 0, ctypes_i32, 0 },
     { "src", 28, 0, 0, ctypes_ptr32, 0 },
-    { "sup", 96, 0, 0, ctypes_ptr32, 0 },
+    { "sup", 80, 0, 0, ctypes_ptr32, 0 },
     { "tile", 77, 5, 1, ctypes_bf, 0 },
 }};
 
@@ -319,13 +323,13 @@ const be_ctypes_structure_t be_lv_event = {
   be_ctypes_instance_mappings,
   (const be_ctypes_structure_item_t[9]) {
     { "code", 8, 0, 0, ctypes_i32, 0 },
-    { "current_target", 4, 0, 0, ctypes_ptr32, 0 },
+    { "current_target", 0, 0, 0, ctypes_ptr32, 0 },
     { "deleted", 24, 0, 1, ctypes_bf, 0 },
+    { "original_target", 4, 0, 0, ctypes_ptr32, 0 },
     { "param", 16, 0, 0, ctypes_ptr32, 0 },
     { "prev", 20, 0, 0, ctypes_ptr32, 0 },
     { "stop_bubbling", 24, 2, 1, ctypes_bf, 0 },
     { "stop_processing", 24, 1, 1, ctypes_bf, 0 },
-    { "target", 0, 0, 0, ctypes_ptr32, 0 },
     { "user_data", 12, 0, 0, ctypes_ptr32, 0 },
 }};
 
@@ -359,10 +363,10 @@ const be_ctypes_structure_t be_lv_style_transition_dsc = {
 }};
 
 const be_ctypes_structure_t be_lv_layer = {
-  56,  /* size in bytes */
-  14,  /* number of elements */
+  72,  /* size in bytes */
+  18,  /* number of elements */
   be_ctypes_instance_mappings,
-  (const be_ctypes_structure_item_t[14]) {
+  (const be_ctypes_structure_item_t[18]) {
     { "_clip_area_x1", 24, 0, 0, ctypes_i32, 0 },
     { "_clip_area_x2", 32, 0, 0, ctypes_i32, 0 },
     { "_clip_area_y1", 28, 0, 0, ctypes_i32, 0 },
@@ -371,12 +375,16 @@ const be_ctypes_structure_t be_lv_layer = {
     { "buf_area_x2", 12, 0, 0, ctypes_i32, 0 },
     { "buf_area_y1", 8, 0, 0, ctypes_i32, 0 },
     { "buf_area_y2", 16, 0, 0, ctypes_i32, 0 },
-    { "color_format", 20, 0, 0, ctypes_u8, 0 },
+    { "color_format", 20, 0, 0, ctypes_u32, 0 },
     { "draw_buf", 0, 0, 0, ctypes_ptr32, 0 },
-    { "draw_task_head", 40, 0, 0, ctypes_ptr32, 0 },
-    { "next", 48, 0, 0, ctypes_ptr32, 0 },
-    { "parent", 44, 0, 0, ctypes_ptr32, 0 },
-    { "user_data", 52, 0, 0, ctypes_ptr32, 0 },
+    { "draw_task_head", 56, 0, 0, ctypes_ptr32, 0 },
+    { "next", 64, 0, 0, ctypes_ptr32, 0 },
+    { "parent", 60, 0, 0, ctypes_ptr32, 0 },
+    { "phy_clip_area_x1", 40, 0, 0, ctypes_i32, 0 },
+    { "phy_clip_area_x2", 48, 0, 0, ctypes_i32, 0 },
+    { "phy_clip_area_y1", 44, 0, 0, ctypes_i32, 0 },
+    { "phy_clip_area_y2", 52, 0, 0, ctypes_i32, 0 },
+    { "user_data", 68, 0, 0, ctypes_ptr32, 0 },
 }};
 
 const be_ctypes_structure_t be_lv_color_filter_dsc = {

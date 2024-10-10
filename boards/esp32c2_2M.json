@@ -17,7 +17,8 @@
       "openocd_target": "esp32c2.cfg"
     },
     "frameworks": [
-      "arduino"
+      "arduino",
+      "espidf"
     ],
     "name": "Espressif Generic ESP32-C2 = 2M Flash, Tasmota 1245kB Code/OTA, 64k FS",
     "upload": {

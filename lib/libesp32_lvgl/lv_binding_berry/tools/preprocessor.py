@@ -81,9 +81,20 @@ lv_fun_globs = [
                   # add version information
                   "../lvgl.h",
               ]
+headers_exlude_suffix = [
+                  "_private.h",
+                  "lv_lottie.h",
+                  "lv_obj_property.h",
+                  "lv_obj_property_names.h",
+                  "lv_style_properties.h",
+]
+
 headers_names = list_files(lv_src_prefix, lv_fun_globs)
 headers_names += list_files("../../LVGL_assets/src/", ["lv_theme_haspmota.h"])
-headers_names += list_files("../src/", ["lv_berry.h"])
+headers_names += list_files("../src/", ["lv_berry.h", "lv_colorwheel.h"])
+
+# filter out from headers_exlude_suffix
+headers_names = [x for x in headers_names if not any(x.endswith(suffix) for suffix in headers_exlude_suffix)]
 
 output_filename = "../mapping/lv_funcs.h"
 sys.stdout = open(output_filename, 'w', encoding='utf-8')
@@ -110,7 +121,7 @@ lv_coord_t lv_get_ver_res(void);
 """)
 
 for header_name in headers_names:
-  with open(header_name, encoding='utf-8') as f:
+  with open(header_name, encoding='utf-8-sig') as f:
     print("// " + header_name)
     raw = clean_source(f.read())
 
@@ -191,7 +202,18 @@ lv_fun_globs = [
                   "display/lv_display.h",
                   "layouts/**/*.h",
               ]
+
+headers_exlude_suffix = [
+                  "_private.h",
+                  "lv_lottie.h",
+                  "lv_obj_property.h",
+                  "lv_obj_property_names.h",
+                  "lv_style_properties.h",
+]
 headers_names = list_files(lv_src_prefix, lv_fun_globs)
+
+# filter out from headers_exlude_suffix
+headers_names = [x for x in headers_names if not any(x.endswith(suffix) for suffix in headers_exlude_suffix)]
 
 output_filename = "../mapping/lv_enum.h"
 sys.stdout = open(output_filename, 'w', encoding='utf-8')

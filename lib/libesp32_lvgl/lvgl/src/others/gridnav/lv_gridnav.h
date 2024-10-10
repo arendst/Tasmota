@@ -1,50 +1,10 @@
 /**
- * @file lv_templ.c
- *
- */
-
-/*********************
- *      INCLUDES
- *********************/
-
-/*********************
- *      DEFINES
- *********************/
-
-/**********************
- *      TYPEDEFS
- **********************/
-
-/*This typedef exists purely to keep -Wpedantic happy when the file is empty.*/
-/*It can be removed.*/
-typedef int _keep_pedantic_happy;
-
-/**********************
- *  STATIC PROTOTYPES
- **********************/
-
-/**********************
- *  STATIC VARIABLES
- **********************/
-
-/**********************
- *      MACROS
- **********************/
-
-/**********************
- *   GLOBAL FUNCTIONS
- **********************/
-
-/**********************
- *   STATIC FUNCTIONS
- **********************/
-/**
  * @file lv_gridnav.h
  *
  */
 
-#ifndef LV_GRIDFOCUS_H
-#define LV_GRIDFOCUS_H
+#ifndef LV_GRIDNAV_H
+#define LV_GRIDNAV_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -79,6 +39,18 @@ typedef enum {
      * then it will be scrolled instead of going to the next/previous object.
      * If there is no more room for scrolling the next/previous object will be focused normally */
     LV_GRIDNAV_CTRL_SCROLL_FIRST = 0x2,
+
+    /**
+     * Only use left/right keys for grid navigation. Up/down key events will be sent to the
+     * focused object.
+    */
+    LV_GRIDNAV_CTRL_HORIZONTAL_MOVE_ONLY = 0x4,
+
+    /**
+     * Only use up/down keys for grid navigation. Left/right key events will be sent to the
+     * focused object.
+    */
+    LV_GRIDNAV_CTRL_VERTICAL_MOVE_ONLY = 0x8
 
 } lv_gridnav_ctrl_t;
 
@@ -120,4 +92,4 @@ void lv_gridnav_set_focused(lv_obj_t * cont, lv_obj_t * to_focus, lv_anim_enable
 } /*extern "C"*/
 #endif
 
-#endif /*LV_GRIDFOCUS_H*/
+#endif /* LV_GRIDNAV_H */

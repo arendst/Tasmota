@@ -32,11 +32,13 @@ import matter
 # WebUI for the partition manager
 #################################################################################
 class Matter_UI
-  static var _CLASSES_TYPES = "|relay|light0|light1|light2|light3|shutter|shutter+tilt"
+  static var _CLASSES_TYPES_STD =
+                              "|relay|light0|light1|light2|light3|shutter|shutter+tilt"
                               "|gensw_btn"
                               "|temperature|pressure|illuminance|humidity|occupancy|onoff|contact|flow|rain|waterleak"
                               "|airquality"
-                              "|-virtual|v_relay|v_light0|v_light1|v_light2|v_light3"
+  static var _CLASSES_TYPES_VIRTUAL = 
+                              "-virtual|v_relay|v_light0|v_light1|v_light2|v_light3"
                               "|v_fan"
                               "|v_temp|v_pressure|v_illuminance|v_humidity|v_occupancy|v_contact|v_flow|v_rain|v_waterleak"
                               "|v_airquality"
@@ -45,6 +47,7 @@ class Matter_UI
                               "|http_occupancy|http_contact|http_flow|http_rain|http_waterleak"
                               "|http_airquality"
   var device
+  var matter_enabled
 
   # ####################################################################################################
   # Static function to compare two maps (shallow compare)
@@ -64,8 +67,9 @@ class Matter_UI
 
   # ####################################################################################################
   # Constructor
-  def init(device)
+  def init(device, matter_enabled)
     self.device = device
+    self.matter_enabled = matter_enabled
     tasmota.add_driver(self)
   end
 
@@ -82,13 +86,6 @@ class Matter_UI
   end
 
   #- ---------------------------------------------------------------------- -#
-  #- Is Matter enabled?
-  #- ---------------------------------------------------------------------- -#
-  def matter_enabled()
-    return bool(tasmota.get_option(matter.MATTER_OPTION))
-  end
-
-  #- ---------------------------------------------------------------------- -#
   #- Show commissioning information and QR Code
   #
   # Returns true if Matter is enabled
@@ -102,11 +99,11 @@ class Matter_UI
                            "<form action='/matterc' method='post'>")
 
     # checkbox for Matter enable
-    var matter_enabled_checked = self.matter_enabled() ? 'checked' : ''
+    var matter_enabled_checked = matter_enabled ? 'checked' : ''
     webserver.content_send(f"<p><input id='menable' type='checkbox' name='menable' {matter_enabled_checked}>")
     webserver.content_send("<label for='menable'><b>Matter enable</b></label></p>")
 
-    if self.matter_enabled()
+    if matter_enabled
       # checkbox for Matter commissioning
       var commissioning_open_checked = self.device.commissioning.commissioning_open != nil ? "checked" : ""
       webserver.content_send(f"<p><input id='comm' type='checkbox' name='comm' {commissioning_open_checked}>")
@@ -438,7 +435,11 @@ class Matter_UI
 
     
     # Add new endpoint section
-    self.show_plugins_hints_js(self._CLASSES_TYPES)
+    if self.device.zigbee
+      self.show_plugins_hints_js(self._CLASSES_TYPES_STD, self.device.zigbee._CLASSES_TYPES, self._CLASSES_TYPES_VIRTUAL)
+    else
+      self.show_plugins_hints_js(self._CLASSES_TYPES_STD, self._CLASSES_TYPES_VIRTUAL)
+    end
 
     webserver.content_send("<p></p><fieldset><legend><b>&nbsp;Add to Configuration&nbsp;</b></legend><p></p>"
                            "<p><b>Add local sensor or device</b></p>"
@@ -453,9 +454,13 @@ class Matter_UI
                            "<tr>"
                            "<td style='font-size:smaller;'><input type='text' name='nam' size='1' value='' placeholder='(optional)' title=''></td>"
                            "<td style='font-size:smaller;'><select id='pi' name='pi' onchange='otm(\"arg\",this.value)'>")
-    self.plugin_option('', self._CLASSES_TYPES)
+    if self.device.zigbee
+      self.plugin_option('', self._CLASSES_TYPES_STD, self.device.zigbee._CLASSES_TYPES, self._CLASSES_TYPES_VIRTUAL)
+    else
+      self.plugin_option('', self._CLASSES_TYPES_STD, self._CLASSES_TYPES_VIRTUAL)
+    end
     webserver.content_send("</select></td>"
-                          "<td style='font-size:smaller;'><input type='text' id='arg' name='arg' size='1' value=''></td>"
+                           "<td style='font-size:smaller;'><input type='text' id='arg' name='arg' size='1' value=''></td>"
                            "</tr></table>"
                            
                            "<div style='display: block;'></div>"
@@ -509,6 +514,8 @@ class Matter_UI
         webserver.content_send("<option value=''></option>")
       elif typ == '-virtual'
         webserver.content_send("<option value='' disabled>--- Virtual Devices ---</option>")
+      elif typ == '-zigbee'
+        webserver.content_send("<option value='' disabled>--- Zigbee Devices ---</option>")
       else
         var nam = self.device.get_plugin_class_displayname(typ)
         webserver.content_send(format("<option value='%s'%s>%s</option>", typ, (typ == cur) ? " selected" : "", nam))
@@ -529,7 +536,7 @@ class Matter_UI
     webserver.content_start("Matter Advanced Configuration")           #- title of the web page -#
     webserver.content_send_style()                  #- send standard Tasmota styles -#
 
-    if self.matter_enabled()
+    if self.matter_enabled
       self.show_passcode_form()
       self.show_fabric_info()
     end
@@ -551,7 +558,7 @@ class Matter_UI
     webserver.content_send_style()                  #- send standard Tasmota styles -#
 
     self.show_enable()
-    if self.matter_enabled()
+    if self.matter_enabled
       self.show_plugins_configuration()
     end
 
@@ -731,7 +738,7 @@ class Matter_UI
     webserver.content_send_style()                  #- send standard Tasmota styles -#
 
     var url = webserver.arg("url")
-    if self.matter_enabled()
+    if self.matter_enabled
       self.show_remote_autoconf(url)
     end
     webserver.content_button(webserver.BUTTON_CONFIGURATION)
@@ -785,7 +792,7 @@ class Matter_UI
           self.device.save_param()
         end
 
-        if matter_enabled_requested != self.matter_enabled()
+        if matter_enabled_requested != self.matter_enabled
           if matter_enabled_requested
             log(format("MTR: /matterc received '%s' command", 'enable'), 3)
             tasmota.cmd("SetOption" + str(matter.MATTER_OPTION) + " 1")
@@ -1072,7 +1079,7 @@ class Matter_UI
   def web_sensor()
     import webserver
 
-    if self.matter_enabled()
+    if self.matter_enabled
 
       # mtc0 = close, mtc1 = open commissioning
       var fabrics_count = (self.device.sessions != nil) ? self.device.sessions.count_active_fabrics() : 0

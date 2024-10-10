@@ -29,6 +29,9 @@ BE_EXPORT_VARIABLE extern const bclass be_class_lv_obj;
 extern int lvbe_font_create(bvm *vm);
 extern int lvbe_theme_create(bvm *vm);
 
+// adding ad-hoc colorwheel from LVGL8 to LVGL9
+extern const lv_obj_class_t lv_colorwheel_class;
+
 
 extern int be_ntv_lv_style_init(bvm *vm);
 extern int be_ntv_lv_font_init(bvm *vm);
@@ -60,6 +63,10 @@ extern int be_ntv_lv_led_init(bvm *vm);
 extern int be_ntv_lv_line_init(bvm *vm);
 extern int be_ntv_lv_list_init(bvm *vm);
 extern int be_ntv_lv_menu_init(bvm *vm);
+extern int be_ntv_lv_menu_page_init(bvm *vm);
+extern int be_ntv_lv_menu_cont_init(bvm *vm);
+extern int be_ntv_lv_menu_section_init(bvm *vm);
+extern int be_ntv_lv_menu_separator_init(bvm *vm);
 extern int be_ntv_lv_msgbox_init(bvm *vm);
 extern int be_ntv_lv_roller_init(bvm *vm);
 extern int be_ntv_lv_scale_init(bvm *vm);
@@ -74,6 +81,7 @@ extern int be_ntv_lv_table_init(bvm *vm);
 extern int be_ntv_lv_tabview_init(bvm *vm);
 extern int be_ntv_lv_textarea_init(bvm *vm);
 extern int be_ntv_lv_tileview_init(bvm *vm);
+extern int be_ntv_lv_colorwheel_init(bvm *vm);
 
 extern const bclass be_class_lv_anim;
 extern const bclass be_class_lv_animimg;
@@ -86,6 +94,7 @@ extern const bclass be_class_lv_canvas;
 extern const bclass be_class_lv_chart;
 extern const bclass be_class_lv_checkbox;
 extern const bclass be_class_lv_color;
+extern const bclass be_class_lv_colorwheel;
 extern const bclass be_class_lv_display;
 extern const bclass be_class_lv_dropdown;
 extern const bclass be_class_lv_event;
@@ -100,6 +109,10 @@ extern const bclass be_class_lv_led;
 extern const bclass be_class_lv_line;
 extern const bclass be_class_lv_list;
 extern const bclass be_class_lv_menu;
+extern const bclass be_class_lv_menu_cont;
+extern const bclass be_class_lv_menu_page;
+extern const bclass be_class_lv_menu_section;
+extern const bclass be_class_lv_menu_separator;
 extern const bclass be_class_lv_msgbox;
 extern const bclass be_class_lv_obj;
 extern const bclass be_class_lv_qrcode;
@@ -479,6 +492,50 @@ class be_class_lv_menu (scope: global, name: lv_menu, super: be_class_lv_obj, st
 @const_object_info_end */
 
 /********************************************************************
+** Solidified class: lv_menu_page
+********************************************************************/
+#include "be_fixed_be_class_lv_menu_page.h"
+/* @const_object_info_begin
+class be_class_lv_menu_page (scope: global, name: lv_menu_page, super: be_class_lv_obj, strings: weak) {
+    init, func(be_ntv_lv_menu_page_init)
+    _class, comptr(&lv_menu_page_class)
+}
+@const_object_info_end */
+
+/********************************************************************
+** Solidified class: lv_menu_cont
+********************************************************************/
+#include "be_fixed_be_class_lv_menu_cont.h"
+/* @const_object_info_begin
+class be_class_lv_menu_cont (scope: global, name: lv_menu_cont, super: be_class_lv_obj, strings: weak) {
+    init, func(be_ntv_lv_menu_cont_init)
+    _class, comptr(&lv_menu_cont_class)
+}
+@const_object_info_end */
+
+/********************************************************************
+** Solidified class: lv_menu_section
+********************************************************************/
+#include "be_fixed_be_class_lv_menu_section.h"
+/* @const_object_info_begin
+class be_class_lv_menu_section (scope: global, name: lv_menu_section, super: be_class_lv_obj, strings: weak) {
+    init, func(be_ntv_lv_menu_section_init)
+    _class, comptr(&lv_menu_section_class)
+}
+@const_object_info_end */
+
+/********************************************************************
+** Solidified class: lv_menu_separator
+********************************************************************/
+#include "be_fixed_be_class_lv_menu_separator.h"
+/* @const_object_info_begin
+class be_class_lv_menu_separator (scope: global, name: lv_menu_separator, super: be_class_lv_obj, strings: weak) {
+    init, func(be_ntv_lv_menu_separator_init)
+    _class, comptr(&lv_menu_separator_class)
+}
+@const_object_info_end */
+
+/********************************************************************
 ** Solidified class: lv_msgbox
 ********************************************************************/
 #include "be_fixed_be_class_lv_msgbox.h"
@@ -630,6 +687,17 @@ class be_class_lv_textarea (scope: global, name: lv_textarea, super: be_class_lv
 class be_class_lv_tileview (scope: global, name: lv_tileview, super: be_class_lv_obj, strings: weak) {
     init, func(be_ntv_lv_tileview_init)
     _class, comptr(&lv_tileview_class)
+}
+@const_object_info_end */
+
+/********************************************************************
+** Solidified class: lv_colorwheel
+********************************************************************/
+#include "be_fixed_be_class_lv_colorwheel.h"
+/* @const_object_info_begin
+class be_class_lv_colorwheel (scope: global, name: lv_colorwheel, super: be_class_lv_obj, strings: weak) {
+    init, func(be_ntv_lv_colorwheel_init)
+    _class, comptr(&lv_colorwheel_class)
 }
 @const_object_info_end */
 

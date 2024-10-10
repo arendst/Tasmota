@@ -63,6 +63,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
   #
   # Parse configuration map
   def parse_configuration(config)
+    super(self).parse_configuration(config)
     # with Light0 we always need relay number but we don't for Light1/2/3 so self.tasmota_relay_index may be `nil`
     if self.BRIDGE
       self.tasmota_relay_index = int(config.find(self.ARG #-'relay'-#, nil))
@@ -207,7 +208,7 @@ class Matter_Plugin_Light1 : Matter_Plugin_Light0
         var onoff = bri_254 > 0
         self.set_bri(bri_254, onoff)
         ctx.log = "bri:"+str(bri_254)
-        self.publish_command('Bri', bri_254, 'Dimmer', tasmota.scale_uint(bri_254, 0, 254, 0, 100), 'Power', onoff ? 1 : 0)
+        self.publish_command('Power', onoff ? 1 : 0, 'Bri', bri_254, 'Dimmer', tasmota.scale_uint(bri_254, 0, 254, 0, 100))
         return true
       elif command == 0x0005            # ---------- MoveWithOnOff ----------
         # TODO, we don't really support it

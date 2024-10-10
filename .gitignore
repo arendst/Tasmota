@@ -8,13 +8,17 @@
 *.o
 *.gcno
 *.gcda
+dependencies.lock
 
 ## Project files ######
+managed_components
 .platformio
 .pio
 .clang_complete
 .gcc-flags.json
 .cache
+.dummy
+sdkconfig.*
 data
 unpacked_fs
 unpacked_boards
@@ -42,3 +46,7 @@ lib/libesp32/berry/berry
 .vscode/extensions.json
 *.bak
 *.code-workspace
+
+## Python virtual environments for Platformio ##
+venv
+.venv

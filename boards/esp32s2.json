@@ -16,7 +16,8 @@
     "openocd_target": "esp32s2.cfg"
   },
   "frameworks": [
-    "arduino"
+    "arduino",
+    "espidf"
   ],
   "name": "Espressif Generic ESP32-S2 >= 4M Flash PSRAM, Tasmota 2880k Code/OTA, 320k FS",
   "upload": {

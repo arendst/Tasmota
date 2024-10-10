@@ -28,37 +28,17 @@ extern "C" {
 /**********************
  *      TYPEDEFS
  **********************/
-enum _lv_bar_mode_t {
+typedef enum {
     LV_BAR_MODE_NORMAL,
     LV_BAR_MODE_SYMMETRICAL,
     LV_BAR_MODE_RANGE
-};
+} lv_bar_mode_t;
 
-#ifdef DOXYGEN
-typedef _lv_bar_mode_t lv_bar_mode_t;
-#else
-typedef uint8_t lv_bar_mode_t;
-#endif /*DOXYGEN*/
-
-typedef struct {
-    lv_obj_t * bar;
-    int32_t anim_start;
-    int32_t anim_end;
-    int32_t anim_state;
-} _lv_bar_anim_t;
-
-typedef struct {
-    lv_obj_t obj;
-    int32_t cur_value;          /**< Current value of the bar*/
-    int32_t min_value;          /**< Minimum value of the bar*/
-    int32_t max_value;          /**< Maximum value of the bar*/
-    int32_t start_value;        /**< Start value of the bar*/
-    lv_area_t indic_area;       /**< Save the indicator area. Might be used by derived types*/
-    bool val_reversed;          /**< Whether value been reversed */
-    _lv_bar_anim_t cur_value_anim;
-    _lv_bar_anim_t start_value_anim;
-    lv_bar_mode_t mode : 2;     /**< Type of bar*/
-} lv_bar_t;
+typedef enum {
+    LV_BAR_ORIENTATION_AUTO,
+    LV_BAR_ORIENTATION_HORIZONTAL,
+    LV_BAR_ORIENTATION_VERTICAL
+} lv_bar_orientation_t;
 
 LV_ATTRIBUTE_EXTERN_DATA extern const lv_obj_class_t lv_bar_class;
 
@@ -98,7 +78,7 @@ void lv_bar_set_start_value(lv_obj_t * obj, int32_t start_value, lv_anim_enable_
  * @param obj       pointer to the bar object
  * @param min       minimum value
  * @param max       maximum value
- * @note If min is greater than max, the drawing direction becomes to the oppsite direction.
+ * @note If min is greater than max, the drawing direction becomes to the opposite direction.
  */
 void lv_bar_set_range(lv_obj_t * obj, int32_t min, int32_t max);
 
@@ -108,6 +88,13 @@ void lv_bar_set_range(lv_obj_t * obj, int32_t min, int32_t max);
  * @param mode      bar type from ::lv_bar_mode_t
  */
 void lv_bar_set_mode(lv_obj_t * obj, lv_bar_mode_t mode);
+
+/**
+ * Set the orientation of bar.
+ * @param obj           pointer to bar object
+ * @param orientation   bar orientation from `lv_bar_orientation_t`
+ */
+void lv_bar_set_orientation(lv_obj_t * obj, lv_bar_orientation_t orientation);
 
 /*=====================
  * Getter functions
@@ -147,6 +134,13 @@ int32_t lv_bar_get_max_value(const lv_obj_t * obj);
  * @return          bar type from ::lv_bar_mode_t
  */
 lv_bar_mode_t lv_bar_get_mode(lv_obj_t * obj);
+
+/**
+ * Get the orientation of bar.
+ * @param obj       pointer to bar object
+ * @return          bar orientation from ::lv_bar_orientation_t
+ */
+lv_bar_orientation_t lv_bar_get_orientation(lv_obj_t * obj);
 
 /**
  * Give the bar is in symmetrical mode or not

@@ -135,7 +135,7 @@ void MqttPublishDomoticzFanState(void) {
     Response_P(DOMOTICZ_MESSAGE, (int)DomoticzRelayIdx(1), (0 == fan_speed) ? 0 : 2, svalue, DomoticzBatteryQuality(), DomoticzRssiQuality());
     MqttPublish(domoticz_in_topic);
 
-    Domoticz->fan_debounce = millis();
+    Domoticz->fan_debounce = millis() + 1000;  // 1 second
   }
 }
 
@@ -321,7 +321,7 @@ bool DomoticzMqttData(void) {
     if (GetFanspeed() == svalue) {
       return true;  // Stop as already set
     }
-    if (TimePassedSince(Domoticz->fan_debounce) < 1000) {
+    if (!TimeReached(Domoticz->fan_debounce)) {
       return true;  // Stop if device in limbo
     }
     snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_FANSPEED));

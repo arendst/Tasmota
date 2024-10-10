@@ -48,7 +48,17 @@ void lv_fs_memfs_init(void);
 #endif
 
 #if LV_USE_FS_LITTLEFS
+struct lfs;
+void lv_littlefs_set_handler(struct lfs *);
 void lv_fs_littlefs_init(void);
+#endif
+
+#if LV_USE_FS_ARDUINO_ESP_LITTLEFS
+void lv_fs_arduino_esp_littlefs_init(void);
+#endif
+
+#if LV_USE_FS_ARDUINO_SD
+void lv_fs_arduino_sd_init(void);
 #endif
 
 /**********************

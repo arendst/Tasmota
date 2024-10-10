@@ -44,7 +44,7 @@ struct HYT {
 
 bool HYT_Read(void) {
   if (HYT.valid) { HYT.valid--; }
-
+/*
   TwoWire& myWire = I2cGetWire(HYT.bus);
   if (&myWire == nullptr) { return false; }  // No valid I2c bus
   myWire.beginTransmission(HYT_ADDR);
@@ -64,6 +64,18 @@ bool HYT_Read(void) {
     HYT.humidity = ConvertHumidity(humidity);
     HYT.temperature  = ConvertTemp(temperature);
   }
+*/
+  uint8_t data[4];
+  if (!I2cReadBuffer(HYT_ADDR, -1, data, 4, HYT.bus)) {
+    // Convert the data to 14-bits
+    float humidity = ((((data[0] & 0x3F) * 256) + data[1]) * 100.0) / 16383.0;
+    int temp = ((data[2] * 256) + (data[3] & 0xFC)) / 4;
+    float temperature = (temp / 16384.0) * 165.0 - 40.0;
+
+    HYT.humidity = ConvertHumidity(humidity);
+    HYT.temperature  = ConvertTemp(temperature);
+  }
+
   if (isnan(HYT.temperature) || isnan(HYT.humidity)) { return false; }
 
   HYT.valid = SENSOR_MAX_MISS;

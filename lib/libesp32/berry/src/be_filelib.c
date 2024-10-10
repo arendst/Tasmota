@@ -10,6 +10,7 @@
 #include "be_sys.h"
 #include "be_gc.h"
 #include "be_bytecode.h"
+#include "be_vm.h"
 #include <string.h>
 
 #define READLINE_STEP           100
@@ -71,11 +72,22 @@ static int i_readbytes(bvm *vm)
         void *fh = be_tocomptr(vm, -1);
         size_t size = readsize(vm, argc, fh);
         if (size) {
+            if (size > vm->bytesmaxsize) {
+                be_raise(vm, "memory_error", "size exceeds maximum allowed for bytes");
+            }
             /* avoid double allocation, using directly the internal buffer of bytes() */
             be_getbuiltin(vm, "bytes");
             be_pushint(vm, size);
             be_call(vm, 1);  /* call bytes() constructor with pre-sized buffer */
             be_pop(vm, 1);  /* bytes() instance is at top */
+
+            /* read back the actual buffer size */
+            be_getmember(vm, -1, ".size");
+            int32_t bytes_size = be_toint(vm, -1);
+            be_pop(vm, 1);
+            if (bytes_size < (int32_t)size) {
+                be_raise(vm, "memory_error", "could not allocated buffer");
+            }
 
             be_getmember(vm, -1, "resize");
             be_pushvalue(vm, -2);

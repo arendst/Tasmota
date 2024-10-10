@@ -246,8 +246,6 @@ bool Rg15Command(void) {
     }
 
     ResponseCmndIdxChar(XdrvMailbox.data);
-  } else {
-    ResponseCmndIdxError();
   }
 
   return serviced;
