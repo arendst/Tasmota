@@ -22,11 +22,11 @@
   0.1.0.3 20241010  update    - Change DaliDimmer range from 0..254 to 0..100
                               - Add command DaliWeb 0|1 to enable persistent Web light controls
   0.1.0.2 20241008  update    - Better receive error detection
-  0.1.0.1 20241007  update    - To stablizie communication send Dali datagram twice like Busch-Jaeger does 
+  0.1.0.1 20241007  update    - To stablizie communication send DALI datagram twice like Busch-Jaeger does 
                               - Change DaliPower 0..2 to act like Tasmota Power (Off, On, Toggle)
                               - Keep last Dimmer value as default power on
   0.1.0.0 20241006  rewrite   - Add support for ESP8266
-                              - Fix decoding of received Dali 1 data
+                              - Fix decoding of received DALI data
                               - Refactor command `DaliPower 0..254` controlling Broadcast devices
                               - Add command `DaliDimmer 0..254` controlling Broadcast devices
   0.0.0.1 20221027  publish   - Initial version

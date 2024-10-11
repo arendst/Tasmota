@@ -8,8 +8,8 @@ All notable changes to this project will be documented in this file.
 - Support for Sonoff SPM v1.3.0 (#13447)
 - LVGL port `colorwheel` from LVGL 8 (#22244)
 - HASPmota `cpicker` and `msgbox` (#22244)
-- Support for DALI 1 on ESP8266
-- Command ``DaliWeb 1`` to enable light control for Dali broadcast address
+- Support for DALI on ESP8266
+- Command ``DaliWeb 1`` to enable light control for DALI broadcast address
 
 ### Breaking Changed
 
@@ -23,8 +23,8 @@ All notable changes to this project will be documented in this file.
 - ESP32 Range Extender compile error with core 3.0.0 (#22205)
 - HASPmota error when page '1' is not defined (#22220)
 - ESP32-S3 uDisplay force cache writes to RGB display (#22222)
-- ESP32 Dali compile error with core 3.x (#22214)
-- Dali received data decoding
+- ESP32 DALI compile error with core 3.x (#22214)
+- DALI received data decoding
 - ESP32 Ethernet using EthClockMode 3 (#22248)
 - ESP32 disable SPI DMA for uDisplay (broken since esp-idf 5.3 (core 3.1.0)) (#22264)
 
