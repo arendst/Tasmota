@@ -12,11 +12,13 @@ All notable changes to this project will be documented in this file.
 - LVGL port `colorwheel` from LVGL 8 (#22244)
 - HASPmota `cpicker` and `msgbox` (#22244)
 - Support for DALI 1 on ESP8266
+- Command ``DaliWeb 1`` to enable light control for Dali broadcast address
 
 ### Changed
 - ESP32 platform update from 2024.09.10 to 2024.09.30 and Framework (Arduino Core) from v3.0.5 to v3.1.0.240926 (#22203)
 - Berry improve `persist` dirty data handling (#22246)
 - HASPmota `delete` instead of `delete()` (#22245)
+- Command ``DaliDimmer`` range from 0..254 to 0..100
 
 ### Fixed
 - ESP32 Range Extender compile error with core 3.0.0 (#22205)
@@ -25,6 +27,10 @@ All notable changes to this project will be documented in this file.
 - ESP32 Dali compile error with core 3.x (#22214)
 - Dali received data decoding
 - ESP32 Ethernet using EthClockMode 3 (#22248)
+- ESP32 disable SPI DMA for uDisplay (broken since esp-idf 5.3 (core 3.1.0)) (#22264)
+
+### Removed
+- Berry Zigbee removed test code (#22263)
 
 ## [14.2.0.5] 20240926
 ### Added

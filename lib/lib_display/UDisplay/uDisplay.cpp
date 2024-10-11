@@ -599,6 +599,12 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
           case 'B':
             lvgl_param.flushlines = next_val(&lp1);
             lvgl_param.data = next_val(&lp1);
+            // temporary fix to disable DMA due to a problem in esp-idf 5.3
+#ifdef ESP32
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 3, 0)
+            lvgl_param.use_dma = false;
+#endif
+#endif
             break;
           case 'M':
             rotmap_xmin = next_val(&lp1);

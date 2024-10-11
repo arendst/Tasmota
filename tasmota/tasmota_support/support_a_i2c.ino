@@ -18,8 +18,10 @@
 #endif  // ESP8266
 
 #ifdef ESP32
+#if SOC_HP_I2C_NUM > 1
 #define USE_I2C_BUS2
-#endif
+#endif  // SOC_HP_I2C_NUM
+#endif  // ESP32
 
 const uint8_t I2C_RETRY_COUNTER = 3;
 

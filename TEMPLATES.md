@@ -5,7 +5,7 @@
 
 # Templates
 
-Find below the available templates as of August 2024. More template information can be found in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates)
+Find below the available templates as of October 2024. More template information can be found in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates)
 
 ## Adapter Board
 ```
@@ -97,7 +97,7 @@ Iotton 9W 700lm              {"NAME":"Iotton Light","GPIO":[0,0,0,0,416,417,0,0,
 iQtech 10W 900lm             {"NAME":"iQ-Tech CCT 10W 900LM","GPIO":[0,0,0,0,0,416,0,0,0,417,0,0,0,0],"FLAG":0,"BASE":18}
 iView 10W 1050lm             {"NAME":"iView ISB1000-D","GPIO":[0,0,0,0,0,416,0,0,0,417,0,0,0,0],"FLAG":0,"BASE":18}
 Kogan 10W Cool & Warm White 1050lm  {"NAME":"Kogan 10W CCT","GPIO":[0,0,0,0,0,416,0,0,0,417,0,0,0,0],"FLAG":0,"BASE":48}
-Kogan 4.5W 330lm 110         {"NAME":"Kogan White/Wa","GPIO":[0,0,0,0,0,416,0,0,417,0,0,0,0,0],"FLAG":0,"BASE":18}
+Kogan 4.5W 330lm 110°        {"NAME":"Kogan White/Wa","GPIO":[0,0,0,0,0,416,0,0,417,0,0,0,0,0],"FLAG":0,"BASE":18}
 Kogan 5W                     {"NAME":"Kogan Co/Wa","GPIO":[0,0,0,0,0,416,0,0,0,417,0,0,0,0],"FLAG":0,"BASE":18}
 Kruidvat A60 9W 806lm        {"NAME":"Kruidvat E27 806 Lumens","GPIO":[0,0,0,0,416,449,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":48}
 Laser 10W 1000lm             {"NAME":"Laser 10W CCT","GPIO":[0,0,0,0,0,416,0,0,0,417,0,0,0,0],"FLAG":0,"BASE":48}
@@ -131,7 +131,7 @@ Nedis C10 350lm              {"NAME":"WIFILW10WTE14","GPIO":[0,0,0,0,0,416,0,0,0
 Nedis G125 5.5W 350lm Twisted Filament  {"NAME":"WIFILF10GDG125","GPIO":[0,0,0,0,0,0,0,0,417,0,416,0,0,0],"FLAG":0,"BASE":18}
 Nedis PAR16 330lm            {"NAME":"Nedis WIFILW30","GPIO":[0,0,0,0,0,416,0,0,417,0,0,0,0,0],"FLAG":0,"BASE":18}
 Nedis PAR16 4,5W 380lm       {"NAME":"Nedis WIFILW10WTGU10","GPIO":[0,0,0,0,0,416,0,0,417,0,0,0,0,0],"FLAG":0,"BASE":18}
-Nedis PAR16 4.5W 330lm 110   {"NAME":"WIFILW30","GPIO":[0,0,0,0,0,416,0,0,417,0,0,0,0,0],"FLAG":0,"BASE":18}
+Nedis PAR16 4.5W 330lm 110°  {"NAME":"WIFILW30","GPIO":[0,0,0,0,0,416,0,0,417,0,0,0,0,0],"FLAG":0,"BASE":18}
 Nous P2                      {"NAME":"NOUS-P2","GPIO":[0,0,0,0,0,416,0,0,417,0,0,0,0,0],"FLAG":0,"BASE":37}
 Philips Zhirui Candle 250lm  {"NAME":"Xiaomi Philips","GPIO":[0,0,0,0,0,0,0,0,417,0,0,416,0,0],"FLAG":0,"BASE":48}
 Phillips Zhirui 450lm        {"NAME":"Xiaomi Philips","GPIO":[0,0,0,0,0,0,0,0,417,0,0,416,0,0],"FLAG":0,"BASE":48}
@@ -150,7 +150,7 @@ Sulion Morgan C37 5W 470lm   {"NAME":"Sulion Bombilla C37","GPIO":[0,0,0,0,0,0,0
 Swisstone 806lm              {"NAME":"SwisstoneSH330","GPIO":[0,0,0,0,2912,416,0,0,417,2976,2944,0,0,0],"FLAG":0,"BASE":18}
 Swisstone SH 310             {"NAME":"Swisstone SH 310","GPIO":[0,0,0,0,0,416,0,0,0,417,0,0,0,0],"FLAG":0,"BASE":18}
 Treatlife A19 9W 800lm       {"NAME":"Treatlife SL20","GPIO":[0,0,0,0,0,416,0,0,0,417,0,0,0,0],"FLAG":0,"BASE":18}
-V-Tac PAR16 4.5W 300lm 110   {"NAME":"V-TAC VT-5174","GPIO":[0,0,0,0,0,0,0,0,417,0,416,0,0,0],"FLAG":0,"BASE":18}
+V-Tac PAR16 4.5W 300lm 110°  {"NAME":"V-TAC VT-5174","GPIO":[0,0,0,0,0,0,0,0,417,0,416,0,0,0],"FLAG":0,"BASE":18}
 Vestaiot BR30 800lm          {"NAME":"Vesta BR30 CCT","GPIO":[0,0,0,0,0,416,0,0,0,417,0,0,0,0],"FLAG":0,"BASE":18}
 Wipro Garnet NS9100 810lm    {"NAME":"Wipro 9W CCT","GPIO":[0,0,0,0,0,416,0,0,0,417,0,0,0,0],"FLAG":0,"BASE":48}
 Wyze A19 800lm               {"NAME":"Wyze Bulb","GPIO":[5728,0,0,0,0,0,0,0,0,416,417,0,0,0],"FLAG":0,"BASE":48}
@@ -395,7 +395,7 @@ Nedis A60 Warm White 9W 800lm  {"NAME":"WIFILW11WTE27","GPIO":[0,0,0,0,0,416,0,0
 Nedis G125 Filament          {"NAME":"WIFILF10GDG125","GPIO":[0,0,0,0,0,0,0,0,0,0,416,0,0,0],"FLAG":0,"BASE":18}
 Nedis PAR16 330lm            {"NAME":"Nedis WIFILW31","GPIO":[0,0,0,0,0,416,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
 Nedis ST64 5W 500lm Filament  {"NAME":"WIFILF10GDST64","GPIO":[0,0,0,0,0,0,0,0,0,0,416,0,0,0],"FLAG":0,"BASE":18}
-Positivo Smart Lampada Retro  {"NAME":"POSITIVO SMART LAMPADA RETRO","GPIO":[0,0,0,0,0,0,0,0,0,0,416,0,0,0],"FLAG":0,"BASE":18}
+Positivo Smart Lâmpada Retrô  {"NAME":"POSITIVO SMART LAMPADA RETRO","GPIO":[0,0,0,0,0,0,0,0,0,0,416,0,0,0],"FLAG":0,"BASE":18}
 Sealight Vintage Edison A19  {"NAME":"SealightEdison","GPIO":[0,0,0,0,0,416,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
 Shelly Vintage 4W 260lm 2700k  {"NAME":"Shelly Vintage","GPIO":[0,0,0,0,416,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
 Shelly Vintage 7W 750lm 2700k  {"NAME":"Shelly Vintage","GPIO":[0,0,0,0,416,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
@@ -558,7 +558,7 @@ Goldair SleepSmart GCPF315   {"NAME":"Goldair Fan","GPIO":[0,0,0,0,0,0,0,0,0,230
 Holmes 36" Oscillating Tower  {"NAME":"Generic","GPIO":[1,1,1,1,1,1,1,1,1,1,1,1,1,1],"FLAG":0,"BASE":54,"CMND":"TuyaMcu 11,1 | TuyaMcu 12,5 | WebButton1 Power | WebButton2 Oscillation "}
 Lucci Connect Remote Control  {"NAME":"Lucci Fan","GPIO":[0,0,0,0,0,0,0,0,0,2304,0,2272,0,0],"FLAG":0,"BASE":54}
 QuietCool Gable Mount Attic  {"NAME":"QuietCool-AFG-SMT-PRO-2.0","GPIO":[0,0,0,0,0,224,0,0,0,0,0,0,0,0,640,608,0,0,0,225,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"Interlock 1|WebButton1 Low|WebButton2 High|SO8 1"}
-Sichler Haushaltsgeraete Column  {"NAME":"Sichler Fan","GPIO":[0,2272,0,2304,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54}
+Sichler Haushaltsgeräte Column  {"NAME":"Sichler Fan","GPIO":[0,2272,0,2304,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54}
 Technical Pro                {"NAME":"FXA16 Fan","GPIO":[0,2272,0,2304,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":54,"CMND":"TuyaMCU 12,8"}
 Zemismart Bladeless          {"NAME":"Bladeless Fan","GPIO":[1,2272,1,2304,1,1,0,0,1,1,1,1,1,0],"FLAG":0,"BASE":54}
 ```
@@ -927,7 +927,7 @@ Zemismart Updated RF Remote Roller Shade  {"NAME":"Zemismart M515EGB","GPIO":[1,
 ## Other
 ```
 Kogan SmarterHome 1.9L Pet Water Fountain  {"NAME":"WaterFountain","GPIO":[257,0,259,0,576,32,0,0,224,161,0,480,226,4704],"FLAG":0,"BASE":18}
-Tetra Connect Automatic Feeder  {"NAME":"Tetra Connect","GPIO":[0,0,0,0,224,288,0,0,98,96,97,0,289,0],"FLAG":0,"BASE":18}
+Tetra® Connect Automatic Feeder  {"NAME":"Tetra Connect","GPIO":[0,0,0,0,224,288,0,0,98,96,97,0,289,0],"FLAG":0,"BASE":18}
 ```
 
 ## Outdoor Plug
@@ -2037,7 +2037,7 @@ Teckin SB53 1300lm           {"NAME":"Teckin SB53","GPIO":[0,0,0,0,416,419,0,0,4
 Treatlife A19 8W 650lm       {"NAME":"Treatlife RGBW","GPIO":[0,0,0,0,417,416,0,0,420,418,419,0,0,0],"FLAG":0,"BASE":18}
 V-TAC 10W 806lm              {"NAME":"V-TAC VT-5119","GPIO":[0,0,0,0,4032,0,0,0,0,0,4064,0,0,0],"FLAG":0,"BASE":18}
 V-Tac A60 10W 806lm          {"NAME":"V-Tac A60","GPIO":[0,0,0,0,416,417,0,0,418,419,420,0,0,0],"FLAG":0,"BASE":18,"CMND":"SetOption37 13"}
-V-Tac PAR16 4.5W 400lm 100   {"NAME":"V-TAC VT5164","GPIO":[0,0,0,0,0,0,0,0,4064,0,4032,0,0,0],"FLAG":0,"BASE":18}
+V-Tac PAR16 4.5W 400lm 100°  {"NAME":"V-TAC VT5164","GPIO":[0,0,0,0,0,0,0,0,4064,0,4032,0,0,0],"FLAG":0,"BASE":18}
 Vizia 5W GU10                {"NAME":"Vizia RGBWW","GPIO":[0,0,0,0,419,420,0,0,417,418,416,0,0,1],"FLAG":0,"BASE":18}
 WdtPro 8W 800lm              {"NAME":"WdtPro","GPIO":[0,0,0,0,419,420,0,0,417,418,416,0,0,0],"FLAG":0,"BASE":18}
 Wipro Garnet 9W 810lm        {"NAME":"Wipro","GPIO":[0,0,0,0,416,419,0,0,417,420,418,0,0,0],"FLAG":0,"BASE":18}
@@ -2140,7 +2140,7 @@ Kainsy 600lm                 {"NAME":"KAINSY","GPIO":[32,0,0,0,3008,3040,0,0,0,0
 Kkmoon 9W 800lm              {"NAME":"KKMOON V21","GPIO":[0,0,0,0,419,0,0,0,417,418,416,0,0,0],"FLAG":0,"BASE":18}
 Koaanw 650lm                 {"NAME":"KOAANW Bulb","GPIO":[0,0,0,0,3008,3040,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":27}
 Kogan 10W Ambient 1050lm     {"NAME":"Kogan RGB","GPIO":[0,0,0,0,2912,416,0,0,0,0,2944,0,0,0],"FLAG":0,"BASE":18}
-Kogan 4.5W 330lm 110         {"NAME":"Kogan_GU10","GPIO":[0,0,0,0,418,419,0,0,416,0,417,0,0,0],"FLAG":0,"BASE":18}
+Kogan 4.5W 330lm 110°        {"NAME":"Kogan_GU10","GPIO":[0,0,0,0,418,419,0,0,416,0,417,0,0,0],"FLAG":0,"BASE":18}
 Kogan Ambient Candle         {"NAME":"Kogan_E14","GPIO":[0,0,0,0,416,419,0,0,417,0,418,0,0,0],"FLAG":0,"BASE":18}
 Kuled 800lm                  {"NAME":"KULED 60W RGB","GPIO":[0,0,0,0,418,419,0,0,416,0,417,0,0,4704],"FLAG":0,"BASE":18}
 Laideyi 7W                   {"NAME":"7W-E14-RGBW-La","GPIO":[0,0,0,0,417,416,0,0,418,0,419,0,0,0],"FLAG":0,"BASE":18}
@@ -2590,7 +2590,7 @@ Nedis Dual                   {"NAME":"SM-SW102U-2","GPIO":[576,0,0,33,225,0,0,0,
 NEO Coolcam 2Ch Touch Light  {"NAME":"Neo NAS-SC01W-2","GPIO":[0,0,0,0,225,0,0,0,32,224,33,0,544,0],"FLAG":0,"BASE":18}
 Nexete DS-123                {"NAME":"DS-123","GPIO":[544,321,1,32,224,33,0,0,1,225,320,1,1,0],"FLAG":0,"BASE":18}
 Nexete DS-123 Single         {"NAME":"DS-123","GPIO":[544,0,1,33,0,32,0,0,1,224,320,1,1,0],"FLAG":0,"BASE":18}
-Novadigital Interruptor Touch Led 1 Boto  {"NAME":"Nova Digital Switch 1 Gang","GPIO":[544,0,0,32,224,0,0,0,0,0,288,0,0,0],"FLAG":0,"BASE":18}
+Novadigital Interruptor Touch Led 1 Botão  {"NAME":"Nova Digital Switch 1 Gang","GPIO":[544,0,0,32,224,0,0,0,0,0,288,0,0,0],"FLAG":0,"BASE":18}
 PNI SmartHome 1 Key          {"NAME":"Tuya Switch 1 key","GPIO":[544,1,1,32,224,1,1,1,1,1,288,1,1,1],"FLAG":0,"BASE":18}
 PNI SmartHome 2 Keys         {"NAME":"Tuya switch 2 key","GPIO":[544,0,289,0,0,32,0,0,33,225,0,224,288,0],"FLAG":0,"BASE":18}
 Prosto                       {"NAME":"Prosto WFS-T10","GPIO":[0,0,0,0,0,224,0,0,320,0,64,0,0,0],"FLAG":0,"BASE":18}
@@ -2739,7 +2739,7 @@ ZUCZUG 3 Gang                {"NAME":"2ph105626a x3","GPIO":[0,288,0,32,34,33,0,
 ## Switch Module
 ```
 2 CH Smart Switch            {"NAME":"Generic","GPIO":[32,1,1,1,1,225,33,1,224,288,1,1,1,1],"FLAG":0,"BASE":18}
-AGL Modulo Relay 01 Canal    {"NAME":"AGL-Basic","GPIO":[0,1,0,0,224,32,0,0,0,0,320,0,0,0],"FLAG":0,"BASE":18}
+AGL Módulo Relé 01 Canal     {"NAME":"AGL-Basic","GPIO":[0,1,0,0,224,32,0,0,0,0,320,0,0,0],"FLAG":0,"BASE":18}
 Albohes 2 Channel            {"NAME":"Albohes SH-08","GPIO":[0,3200,33,3232,321,320,0,0,224,544,32,0,225,1],"FLAG":0,"BASE":18}
 Athom 10A                    {"NAME":"CB01-TAS-1","GPIO":[0,0,0,32,320,0,0,0,0,224,0,0,0,1],"FLAG":0,"BASE":18}
 Athom 2Ch Inching/Self-locking  {"NAME":"Athom R02","GPIO":[1,1,1,1,225,224,1,1,1,1,1,1,576,0],"FLAG":0,"BASE":18}
