@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file.
 - LVGL port `colorwheel` from LVGL 8 (#22244)
 - HASPmota `cpicker` and `msgbox` (#22244)
 - Support for DALI 1 on ESP8266
-- Command ``DaliWeb 1`` to enable light control for broadcast address
+- Command ``DaliWeb 1`` to enable light control for Dali broadcast address
 
 ### Breaking Changed
 
@@ -26,10 +26,10 @@ All notable changes to this project will be documented in this file.
 - ESP32 Dali compile error with core 3.x (#22214)
 - Dali received data decoding
 - ESP32 Ethernet using EthClockMode 3 (#22248)
-- Temporarily disable SPI DMA for uDisplay (broken since esp-idf 5.3)
+- ESP32 disable SPI DMA for uDisplay (broken since esp-idf 5.3 (core 3.1.0)) (#22264)
 
 ### Removed
-- Berry Zigbee removed test code
+- Berry Zigbee removed test code (#22263)
 
 ## [14.2.0.5] 20240926
 ### Added

@@ -117,7 +117,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ## Changelog v14.2.0.6
 ### Added
 - Command ``SetOption69 1`` to enable Serial Bridge inverted Receive [#22000](https://github.com/arendst/Tasmota/issues/22000)
-- Command ``DaliWeb 1`` to enable light control for broadcast address
+- Command ``DaliWeb 1`` to enable light control for Dali broadcast address
 - HX711 optional calibration precision option on command ``Sensor34 2 <weight in gram> <precision>`` where `<precision>` is 1 to 20 [#13983](https://github.com/arendst/Tasmota/issues/13983)
 - ESP8266 support for one-wire M1601 temperature sensor on DS18x20 GPIO [#21376](https://github.com/arendst/Tasmota/issues/21376)
 - ESP8266 support for I2C CLK on GPIO16 [#22199](https://github.com/arendst/Tasmota/issues/22199)
@@ -179,6 +179,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 Range Extender compile error with core 3.x [#22205](https://github.com/arendst/Tasmota/issues/22205)
 - ESP32 Dali compile error with core 3.x [#22214](https://github.com/arendst/Tasmota/issues/22214)
 - ESP32 Ethernet using EthClockMode 3 [#22248](https://github.com/arendst/Tasmota/issues/22248)
+- ESP32 disable SPI DMA for uDisplay (broken since esp-idf 5.3 (core 3.1.0)) [#22264](https://github.com/arendst/Tasmota/issues/22264)
 - Berry avoid `readbytes()` from crashing when file is too large [#22057](https://github.com/arendst/Tasmota/issues/22057)
 - Berry energy missing attributes [#22116](https://github.com/arendst/Tasmota/issues/22116)
 - Berry I2C to prepare M5Stack I2C STM32 based devices [#22143](https://github.com/arendst/Tasmota/issues/22143)
@@ -196,3 +197,4 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Removed
 - ESP8266 Analog input support using energy driver as only one channel is available
 - Berry remove reuse of methods for interface-like code reuse #21500 [#22055](https://github.com/arendst/Tasmota/issues/22055)
+- Berry Zigbee removed test code [#22263](https://github.com/arendst/Tasmota/issues/22263)
