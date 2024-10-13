@@ -19,6 +19,7 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.1.0.4 20241013  update    - Fix intermittent bad send timing
   0.1.0.3 20241010  update    - Change DaliDimmer range from 0..254 to 0..100
                               - Add command DaliWeb 0|1 to enable persistent Web light controls
   0.1.0.2 20241008  update    - Better receive error detection
@@ -148,9 +149,7 @@ void DaliSendDataOnce(uint16_t send_dali_data) {
     bool pin_value = bit_value ? LOW : HIGH;   // Invert bit
     digitalWrite(Dali->pin_tx, (pin_value == DALI_OUT_INVERT) ? LOW : HIGH);
     wait += Dali->bit_time;                    // Auto roll-over
-    while (ESP.getCycleCount() < wait) { 
-      optimistic_yield(1);
-    }
+    while (ESP.getCycleCount() < wait);
   }
 }
 
@@ -169,8 +168,10 @@ void DaliSendData(uint8_t firstByte, uint8_t secondByte) {
   DaliDisableRxInterrupt();
   delay(3);                                    // Settling time between forward and backward frame
   DaliSendDataOnce(send_dali_data);            // Takes 14.5 ms
-  delay(14);                                   // As used by Busch-Jaeger
-  DaliSendDataOnce(send_dali_data);            // Takes 14.5 ms
+  if (DALI_BROADCAST_DP == firstByte) {
+    delay(14);                                 // As used by Busch-Jaeger and suggested by DALI protocol (> 9.17 ms)
+    DaliSendDataOnce(send_dali_data);          // Takes 14.7 ms
+  }
   delay(3);                                    // Block response
   DaliEnableRxInterrupt();
 }
