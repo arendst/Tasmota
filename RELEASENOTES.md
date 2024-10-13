@@ -117,12 +117,12 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ## Changelog v14.2.0.6
 ### Added
 - Command ``SetOption69 1`` to enable Serial Bridge inverted Receive [#22000](https://github.com/arendst/Tasmota/issues/22000)
-- Command ``DaliWeb 1`` to enable light control for broadcast address
+- Command ``DaliWeb 1`` to enable light control for DALI broadcast address
 - HX711 optional calibration precision option on command ``Sensor34 2 <weight in gram> <precision>`` where `<precision>` is 1 to 20 [#13983](https://github.com/arendst/Tasmota/issues/13983)
 - ESP8266 support for one-wire M1601 temperature sensor on DS18x20 GPIO [#21376](https://github.com/arendst/Tasmota/issues/21376)
 - ESP8266 support for I2C CLK on GPIO16 [#22199](https://github.com/arendst/Tasmota/issues/22199)
 - Support for I2C M5Unit (Mini)Scales using HX711 driver
-- Support for DALI 1 on ESP8266
+- Support for DALI on ESP8266
 - Support for RX8010 RTC as used in IOTTIMER [#21376](https://github.com/arendst/Tasmota/issues/21376)
 - Support for BL0906 up to 6 channel energy monitor as used in Athom EM2/EM6 [#22167](https://github.com/arendst/Tasmota/issues/22167)
 - Support for Sonoff SPM v1.3.0 [#13447](https://github.com/arendst/Tasmota/issues/13447)
@@ -134,6 +134,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support nexus protocol and calculation of separation limit to rc-switch library [#21886](https://github.com/arendst/Tasmota/issues/21886)
 - KNX additional KnxTx functions and define KNX_USE_DPT9 [#22071](https://github.com/arendst/Tasmota/issues/22071)
 - SML multi TRX line [#22056](https://github.com/arendst/Tasmota/issues/22056)
+- Misubishi Electric HVAC Heat/Dry/Cool ISEE operation mode [#22216](https://github.com/arendst/Tasmota/issues/22216)
+- Misubishi Electric HVAC Bridge to HomeBridge/Homekit locally [#22236](https://github.com/arendst/Tasmota/issues/22236)
+- Misubishi Electric HVAC Air Direction Control [#22241](https://github.com/arendst/Tasmota/issues/22241)
+- Misubishi Electric HVAC prohibit function [#22269](https://github.com/arendst/Tasmota/issues/22269)
 - Zigbee Koenkk firmware 20240710 for Sonoff Zigbee ZBPro [#22076](https://github.com/arendst/Tasmota/issues/22076)
 - Berry Zigbee improvements to prepare Matter [#22083](https://github.com/arendst/Tasmota/issues/22083)
 - Berry virtual Energy driver [#22134](https://github.com/arendst/Tasmota/issues/22134)
@@ -161,7 +165,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - HASPmota `delete` instead of `delete()` [#22245](https://github.com/arendst/Tasmota/issues/22245)
 
 ### Fixed
-- Dali received data decoding
+- DALI received data decoding
 - Compilation exception when metrics not found [#22170](https://github.com/arendst/Tasmota/issues/22170)
 - Crash when calling TasmotaSerial destructor when initialized with incorrect arguments [#22036](https://github.com/arendst/Tasmota/issues/22036)
 - Energy calculation [#20653](https://github.com/arendst/Tasmota/issues/20653)
@@ -177,8 +181,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Zigbee avoid disabling console serial on ESP32 and improved log messages [#22082](https://github.com/arendst/Tasmota/issues/22082)
 - Zigbee flashing CC2562P with latest firmware [#22117](https://github.com/arendst/Tasmota/issues/22117)
 - ESP32 Range Extender compile error with core 3.x [#22205](https://github.com/arendst/Tasmota/issues/22205)
-- ESP32 Dali compile error with core 3.x [#22214](https://github.com/arendst/Tasmota/issues/22214)
+- ESP32 DALI compile error with core 3.x [#22214](https://github.com/arendst/Tasmota/issues/22214)
 - ESP32 Ethernet using EthClockMode 3 [#22248](https://github.com/arendst/Tasmota/issues/22248)
+- ESP32 disable SPI DMA for uDisplay (broken since esp-idf 5.3 (core 3.1.0)) [#22264](https://github.com/arendst/Tasmota/issues/22264)
 - Berry avoid `readbytes()` from crashing when file is too large [#22057](https://github.com/arendst/Tasmota/issues/22057)
 - Berry energy missing attributes [#22116](https://github.com/arendst/Tasmota/issues/22116)
 - Berry I2C to prepare M5Stack I2C STM32 based devices [#22143](https://github.com/arendst/Tasmota/issues/22143)
@@ -196,3 +201,4 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Removed
 - ESP8266 Analog input support using energy driver as only one channel is available
 - Berry remove reuse of methods for interface-like code reuse #21500 [#22055](https://github.com/arendst/Tasmota/issues/22055)
+- Berry Zigbee removed test code [#22263](https://github.com/arendst/Tasmota/issues/22263)

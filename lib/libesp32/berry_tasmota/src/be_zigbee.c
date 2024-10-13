@@ -127,8 +127,8 @@ class be_class_zb_coord_ntv (scope: global, name: zb_coord_ntv, strings: weak) {
 
   abort, ctype_func(zc_abort)
 
-  test_attr, func(zigbee_test_attr)
-  test_msg, func(zigbee_test_msg)
+  // test_attr, func(zigbee_test_attr)
+  // test_msg, func(zigbee_test_msg)
 }
 @const_object_info_end */
 
