@@ -476,6 +476,42 @@ size_t TasmotaSerial::write(uint8_t b) {
   return size;
 }
 
+#ifdef ESP32
+// Add ability to change parity on the fly, for RS-485
+// See https://github.com/arendst/Tasmota/discussions/22272
+int32_t TasmotaSerial::setConfig(uint32_t config) {
+
+  uint32_t data_bits_before = (m_config & 0xc) >> 2;
+  uint32_t parity_before = m_config & 0x3;
+  uint32_t stop_bits_before = (m_config & 0x30) >> 4;
+
+  uint32_t data_bits = (config & 0xc) >> 2;
+  uint32_t parity = config & 0x3;
+  uint32_t stop_bits = (config & 0x30) >> 4;
+
+  esp_err_t err;
+
+  if (data_bits_before != data_bits) {
+    if (err = uart_set_word_length(m_uart, (uart_word_length_t) data_bits)) {
+      return (int32_t) err;
+    }
+  }
+  if (parity_before != parity) {
+    if (err = uart_set_parity(m_uart, (uart_parity_t) parity)) {
+      return (int32_t) err;
+    }
+  }
+  if (stop_bits_before != stop_bits) {
+    if (err = uart_set_stop_bits(m_uart, (uart_stop_bits_t) stop_bits)) {
+      return (int32_t) err;
+    }
+  }
+
+  m_config = config;
+  return 0;   // no error
+}
+#endif
+
 #ifdef ESP8266
 void IRAM_ATTR TasmotaSerial::rxRead(void) {
   if (!m_nwmode) {

@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - HASPmota `cpicker` and `msgbox` (#22244)
 - Support for DALI on ESP8266
 - Command ``DaliWeb 1`` to enable light control for DALI broadcast address
+- Berry Serial `config` to change parity on-the-fly for RS-485
 
 ### Breaking Changed
 
