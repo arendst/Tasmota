@@ -10,6 +10,7 @@
 
 extern int b_serial_init(bvm *vm);
 extern int b_config_tx_en(bvm *vm);
+extern int b_serial_config(bvm *vm);
 extern int b_serial_deinit(bvm *vm);
 
 extern int b_serial_write(bvm *vm);
@@ -92,5 +93,6 @@ class be_class_serial (scope: global, name: serial) {
     read, func(b_serial_read)
     available, func(b_serial_available)
     flush, func(b_serial_flush)
+    config, func(b_serial_config)
 }
 @const_object_info_end */

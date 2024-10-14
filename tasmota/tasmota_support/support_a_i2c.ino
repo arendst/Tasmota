@@ -17,12 +17,6 @@
 #endif  // USE_I2C_BUS2_ESP8266
 #endif  // ESP8266
 
-#ifdef ESP32
-#if SOC_HP_I2C_NUM > 1
-#define USE_I2C_BUS2
-#endif  // SOC_HP_I2C_NUM
-#endif  // ESP32
-
 const uint8_t I2C_RETRY_COUNTER = 3;
 
 struct I2Ct {
@@ -69,7 +63,12 @@ bool I2cBegin(int sda, int scl, uint32_t bus, uint32_t frequency) {
 #endif  // USE_I2C_BUS2_ESP8266
 #endif  // ESP8266
 #ifdef ESP32
+#ifdef USE_I2C_BUS2
   TwoWire& myWire = (0 == bus) ? Wire : Wire1;
+#else
+  if (bus > 0) { return false; }
+  TwoWire& myWire = Wire;
+#endif
   static bool reinit = false;
   if (reinit) { myWire.end(); }
   result = myWire.begin(sda, scl, frequency);

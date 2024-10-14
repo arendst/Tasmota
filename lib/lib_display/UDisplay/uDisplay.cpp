@@ -242,7 +242,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
               if (wire_n == 1) {
                 wire = &Wire;
               } else {
-#ifdef ESP32               
+#if SOC_HP_I2C_NUM > 1
                 wire = &Wire1;
 #else
                 wire = &Wire;
@@ -636,7 +636,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
                 if (ut_mode == 1) {
                   ut_wire = &Wire;
                 } else {
-#ifdef ESP32
+#if SOC_HP_I2C_NUM > 1
                   ut_wire = &Wire1;
 #else
                   ut_wire = &Wire;
@@ -1076,7 +1076,7 @@ Renderer *uDisplay::Init(void) {
     if (wire_n == 0) {
       wire = &Wire;
     }
-#ifdef ESP32
+#if SOC_HP_I2C_NUM > 1
     if (wire_n == 1) {
       wire = &Wire1;
     }

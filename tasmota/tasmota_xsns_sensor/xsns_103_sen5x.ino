@@ -75,7 +75,7 @@ void sen5x_Init(void) {
 
   sen5x = new SensirionI2CSen5x();
   if (1 == usingI2cBus) {
-#ifdef ESP32
+#if defined(ESP32) && defined(USE_I2C_BUS2)
     sen5x->begin(Wire1);
 #else
     sen5x->begin(Wire);
