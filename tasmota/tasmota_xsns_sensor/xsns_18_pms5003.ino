@@ -406,6 +406,24 @@ int compute_us_aqi(int pm25_standard)
   }
 }
 
+// From https://www.eea.europa.eu/en/analysis/maps-and-charts/index
+const char* compute_european_aqi(int pm25_standard)
+{
+  if (pm25_standard <= 10) {
+    return "Good";
+  } else if (pm25_standard <= 20) {
+    return "Fair";
+  } else if (pm25_standard <= 25) {
+    return "Moderate";
+  } else if (pm25_standard <= 50) {
+    return "Poor";
+  } else if (pm25_standard <= 75) {
+    return "Very Poor";
+  } else {
+    return "Extremely Poor";
+  }
+}
+
 void PmsShow(bool json) {
   if (Pms.valid) {
     char types[10];
@@ -423,23 +441,42 @@ void PmsShow(bool json) {
 #ifdef PMS_MODEL_PMS5003T
     float temperature = ConvertTemp(pms_data.temperature10x/10.0);
     float humidity = ConvertHumidity(pms_data.humidity10x/10.0);
-    int epa_us_aqi = compute_us_aqi(usaEpaStandardPm2d5Adjustment(pms_data.pm25_standard, humidity));
+    int epa_us_aqi;
+    // When in Fahrenheit include US AQI
+    if (Settings->flag.temperature_conversion) {
+      epa_us_aqi = compute_us_aqi(usaEpaStandardPm2d5Adjustment(pms_data.pm25_standard, humidity));
+    }
 #endif // PMS_MODEL_PMS5003T
-    int us_aqi = compute_us_aqi(pms_data.pm25_standard);
+    int us_aqi;
+    const char* european_aqi;
+    // Use US AQI for Fahrenheit, EAQI (European Air Quality Index) for Celsius
+    if (Settings->flag.temperature_conversion) {
+      us_aqi = compute_us_aqi(pms_data.pm25_standard);
+    } else {
+      european_aqi = compute_european_aqi(pms_data.pm25_standard);
+    }
 
     if (json) {
-      ResponseAppend_P(PSTR(",\"%s\":{\"CF1\":%d,\"CF2.5\":%d,\"CF10\":%d,\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d,\"AQI\":%d"),
+      ResponseAppend_P(PSTR(",\"%s\":{\"CF1\":%d,\"CF2.5\":%d,\"CF10\":%d,\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d"),
         types,
         pms_data.pm10_standard, pms_data.pm25_standard, pms_data.pm100_standard,
-        pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env, us_aqi);
+        pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env);
+      if (Settings->flag.temperature_conversion) {
+        ResponseAppend_P(PSTR(",\"US_AQI\":%d"), us_aqi);
+      } else {
+        ResponseAppend_P(PSTR(",\"EAQI\":\"%s\""), european_aqi);
+      }
 #if !(defined(PMS_MODEL_PMS3003) || defined(PMS_MODEL_ZH03X))
-      ResponseAppend_P(PSTR(",\"PB0.3\":%d,\"PB0.5\":%d,\"PB1\":%d,\"PB2.5\":%d,"),
+      ResponseAppend_P(PSTR(",\"PB0.3\":%d,\"PB0.5\":%d,\"PB1\":%d,\"PB2.5\":%d"),
         pms_data.particles_03um, pms_data.particles_05um, pms_data.particles_10um, pms_data.particles_25um);
 #ifdef PMS_MODEL_PMS5003T
+      ResponseAppend_P(PSTR(","));
       ResponseAppendTHD(temperature, humidity);
-      ResponseAppend_P(PSTR(",\"EPA_AQI\":%d"), epa_us_aqi);
+      if (Settings->flag.temperature_conversion) {
+        ResponseAppend_P(PSTR(",\"US_EPA_AQI\":%d"), epa_us_aqi);
+      }
 #else
-      ResponseAppend_P(PSTR("\"PB5\":%d,\"PB10\":%d"),
+      ResponseAppend_P(PSTR(",\"PB5\":%d,\"PB10\":%d"),
         pms_data.particles_50um, pms_data.particles_100um);
 #endif  // PMS_MODEL_PMS5003T
 #endif  // No PMS_MODEL_PMS3003
@@ -465,10 +502,16 @@ void PmsShow(bool json) {
       WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "0.5", pms_data.particles_05um);
       WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "1", pms_data.particles_10um);
       WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "2.5", pms_data.particles_25um);
-      WSContentSend_PD(HTTP_SNS_US_AQI, types, us_aqi);
+      if (Settings->flag.temperature_conversion) {
+        WSContentSend_PD(HTTP_SNS_US_AQI, types, us_aqi);
+      } else {
+        WSContentSend_PD(HTTP_SNS_EUROPEAN_AQI, types, european_aqi);
+      }
 #ifdef PMS_MODEL_PMS5003T
       WSContentSend_THD(types, temperature, humidity);
-      WSContentSend_PD(HTTP_SNS_US_EPA_AQI, types, epa_us_aqi);
+      if (Settings->flag.temperature_conversion) {
+        WSContentSend_PD(HTTP_SNS_US_EPA_AQI, types, epa_us_aqi);
+      }
 #else
       WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "5", pms_data.particles_50um);
       WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "10", pms_data.particles_100um);

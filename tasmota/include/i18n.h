@@ -1008,7 +1008,8 @@ const char HTTP_SNS_F_ENVIRONMENTAL_CONCENTRATION[] PROGMEM = "{s}%s " D_ENVIRON
 const char HTTP_SNS_PARTICALS_BEYOND[] PROGMEM =              "{s}%s " D_PARTICALS_BEYOND            " %s " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER       "{e}";
 const char HTTP_SNS_AVG_RAD_DOSE[]     PROGMEM =              "{s}%s " D_AVG_RAD_DOSE                " %s " D_UNIT_MINUTE     "{m}%d.%02d " D_UNIT_US_H                  "{e}";
 const char HTTP_SNS_US_AQI[] PROGMEM =                        "{s}%s US AQI {m}%d{e}";
-const char HTTP_SNS_US_EPA_AQI[] PROGMEM =                    "{s}%s EPA US AQI {m}%d{e}";
+const char HTTP_SNS_US_EPA_AQI[] PROGMEM =                    "{s}%s US EPA AQI {m}%d{e}";
+const char HTTP_SNS_EUROPEAN_AQI[] PROGMEM =                  "{s}%s European AQI {m}%s{e}";
 
 const char HTTP_SNS_VOLTAGE[]             PROGMEM = "{s}" D_VOLTAGE                 "{m}%s " D_UNIT_VOLT          "{e}";
 const char HTTP_SNS_CURRENT[]             PROGMEM = "{s}" D_CURRENT                 "{m}%s " D_UNIT_AMPERE        "{e}";
