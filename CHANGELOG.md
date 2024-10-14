@@ -30,6 +30,7 @@ All notable changes to this project will be documented in this file.
 - DALI received data decoding
 - ESP32 Ethernet using EthClockMode 3 (#22248)
 - ESP32 disable SPI DMA for uDisplay (broken since esp-idf 5.3 (core 3.1.0)) (#22264)
+- Sonoff WTS01 temperature sensor shows incorrect negative temperature (#19373)
 
 ### Removed
 - Berry Zigbee removed test code (#22263)
