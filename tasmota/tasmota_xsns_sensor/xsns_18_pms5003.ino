@@ -373,15 +373,15 @@ int usaEpaStandardPm2d5Adjustment(int pm25_standard, int relative_humidity)
   float x = pm25_standard;
   float RH = relative_humidity;
   if (x<30) {
-    return 0.524 * x - 0.0862 * RH + 5.75;
+    return 0.524f * x - 0.0862f * RH + 5.75f;
   } else if(x<50) {
-    return (0.786 * (x/20.0 - 3.0/2.0) + 0.524 * (1.0 - (x/20.0 - 3.0/2.0))) * x - 0.0862 * RH + 5.75;
+    return (0.786f * (x/20.0f - 3.0f/2.0f) + 0.524f * (1.0f - (x/20.0f - 3.0f/2.0f))) * x - 0.0862f * RH + 5.75f;
   } else if(x<210) {
-    return 0.786 * x - 0.0862 * RH + 5.75;
+    return 0.786f * x - 0.0862f * RH + 5.75f;
   } else if(x<260) {
-    return (0.69 * (x/50.0 - 21.0/5.0) + 0.786 * (1.0 - (x/50.0 - 21.0/5.0))) * x - 0.0862 * RH * (1.0 - (x/50.0 - 21.0/5.0)) + 2.966 * (x/50.0 - 21.0/5.0) + 5.75 * (1.0 - (x/50.0 - 21.0/5.0)) + 8.84 * pow(10.0, -4.0) * pow(x,2.0) * (x/50.0 - 21.0/5.0);
+    return (0.69f * (x/50.0f - 21.0f/5.0f) + 0.786f * (1.0f - (x/50.0f - 21.0f/5.0f))) * x - 0.0862f * RH * (1.0f - (x/50.0f - 21.0f/5.0f)) + 2.966f * (x/50.0f - 21.0f/5.0f) + 5.75f * (1.0f - (x/50.0f - 21.0f/5.0f)) + 8.84f * FastPrecisePowf(10.0f, -4.0f) * FastPrecisePowf(x,2.0f) * (x/50.0f - 21.0f/5.0f);
   } else {
-    return 2.966 + 0.69 * x + 8.84 * pow(10.0, -4.0) * pow(x, 2.0);
+    return 2.966f + 0.69f * x + 8.84f * FastPrecisePowf(10.0f, -4.0f) * FastPrecisePowf(x, 2.0f);
   }
 }
 
@@ -391,16 +391,16 @@ int compute_us_aqi(int pm25_standard)
 {
   if (pm25_standard <= 9) {
     return map_double(pm25_standard, 0, 9, 0, 50);
-  } else if (pm25_standard <= 35.4) {
-    return map_double(pm25_standard, 9.1, 35.4, 51, 100);
-  } else if (pm25_standard <= 55.4) {
-    return map_double(pm25_standard, 35.5, 55.4, 101, 150);
-  } else if (pm25_standard <= 125.4) {
-    return map_double(pm25_standard, 55.5, 125.4, 151, 200);
-  } else if (pm25_standard <= 225.4) {
-    return map_double(pm25_standard, 125.5, 225.4, 201, 300);
-  } else if (pm25_standard <= 325.4) {
-    return map_double(pm25_standard, 225.5, 325.4, 301, 500);
+  } else if (pm25_standard <= 35) {
+    return map_double(pm25_standard, 9.1f, 35.4f, 51, 100);
+  } else if (pm25_standard <= 55) {
+    return map_double(pm25_standard, 35.5f, 55.4f, 101, 150);
+  } else if (pm25_standard <= 125) {
+    return map_double(pm25_standard, 55.5f, 125.4f, 151, 200);
+  } else if (pm25_standard <= 225) {
+    return map_double(pm25_standard, 125.5f, 225.4f, 201, 300);
+  } else if (pm25_standard <= 325) {
+    return map_double(pm25_standard, 225.5f, 325.4f, 301, 500);
   } else {
     return 500;
   }
