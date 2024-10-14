@@ -141,6 +141,7 @@ void DaliReceiveData(void) {
     while (ESP.getCycleCount() < wait);
     wait += Dali->bit_time;                    // Auto roll-over
     dali_read = digitalRead(Dali->pin_rx);
+    if (DALI_IN_INVERT) { dali_read != dali_read; }
 #ifdef DALI_DEBUG
     digitalWrite(DALI_DEBUG_PIN, bit_number&1);  // Add LogicAnalyzer poll indication
 #endif  // DALI_DEBUG
@@ -149,7 +150,7 @@ void DaliReceiveData(void) {
       if (0 == bit_state) {                    // Manchester encoding total 2 bits is always 0
         if (bit_number > 2) {                  // Skip start bit
           received_dali_data <<= 1;
-          received_dali_data |= (DALI_IN_INVERT) ? !dali_read : dali_read;
+          received_dali_data |= dali_read;
         }
       }
       else if ((2 == bit_state) &&
@@ -195,6 +196,7 @@ void DaliSendDataOnce(uint16_t send_dali_data) {
   */
   bool bit_value;
   bool pin_value;
+  bool dali_read;
   bool collision = false;
   uint32_t bit_pos = 15;
   uint32_t wait = ESP.getCycleCount();
@@ -202,7 +204,7 @@ void DaliSendDataOnce(uint16_t send_dali_data) {
   while (bit_number < 35) {                    // 417 * 35 = 14.7 ms
     if (!collision) {
       if (0 == (bit_number &1)) {              // Even bit
-        //          Start bit,     Stop bit,       Data bits
+        //          Start bit,              Stop bit,                Data bits
         bit_value = (0 == bit_number) ? 1 : (34 == bit_number) ? 0 : (bool)((send_dali_data >> bit_pos--) &1);  // MSB first
       } else {                                 // Odd bit
         bit_value = !bit_value;                // Complement bit
@@ -219,7 +221,9 @@ void DaliSendDataOnce(uint16_t send_dali_data) {
     while (ESP.getCycleCount() < wait);
 
     if (!collision) {
-      if ((HIGH == pin_value) && (LOW == digitalRead(Dali->pin_rx))) {  // Collision if write is 1 and bus is 0
+      dali_read = digitalRead(Dali->pin_rx);
+      if (DALI_IN_INVERT) { dali_read != dali_read; }
+      if ((HIGH == pin_value) && (LOW == dali_read)) {  // Collision if write is 1 and bus is 0
         collision = true;
         pin_value = LOW;
         bit_number = 29;                       // Keep bus low for 4 bits
