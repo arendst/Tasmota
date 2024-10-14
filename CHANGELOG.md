@@ -13,6 +13,11 @@ All notable changes to this project will be documented in this file.
 - Command ``DaliSend <address>|<address+256>,<command>`` to send command (address+256 is repeat) on DALI bus
 - Command ``DaliQuery <address>|<address+256>,<command>`` to send command (address+256 is repeat) on DALI bus and wait up to DALI_TIMEOUT ms for response
 - Berry Serial `config` to change parity on-the-fly for RS-485 (#22285)
+- Misubishi Electric HVAC Heat/Dry/Cool Auto operation mode (#22216)
+- Misubishi Electric HVAC Bridge to HomeBridge/Homekit locally (#22236)
+- Misubishi Electric HVAC Air Direction Control (#22241)
+- Misubishi Electric HVAC prohibit function (#22269)
+- Misubishi Electric HVAC compressor map and operation power and energy (#22290)
 
 ### Breaking Changed
 
@@ -58,10 +63,6 @@ All notable changes to this project will be documented in this file.
 - ESP8266 experimental support for second I2C bus
 - Berry improve `int64` constructor (#22172)
 - MQTT warning if trying to connect without TLS on a port that normally uses TLS (#22175)
-- Misubishi Electric HVAC Heat/Dry/Cool ISEE operation mode (#22216)
-- Misubishi Electric HVAC Bridge to HomeBridge/Homekit locally (#22236)
-- Misubishi Electric HVAC Air Direction Control (#22241)
-- Misubishi Electric HVAC prohibit function (#22269)
 
 ### Changed
 - Refactored I2C drivers HTU21, BH1750, SHT3x, iAQ and HYT
