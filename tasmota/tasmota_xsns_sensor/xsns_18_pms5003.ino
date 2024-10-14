@@ -353,6 +353,59 @@ void PmsInit(void) {
   }
 }
 
+// This gives more accurate data for forest fire smoke.  PurpleAir gives you this conversion option labeled "US EPA"
+// https://cfpub.epa.gov/si/si_public_record_report.cfm?dirEntryId=353088&Lab=CEMM
+/*
+Copy-paste from the PDF Slide 26
+y={0 ≤ x <30: 0.524*x - 0.0862*RH + 5.75}
+y={30≤ x <50: (0.786*(x/20 - 3/2) + 0.524*(1 - (x/20 - 3/2)))*x -0.0862*RH + 5.75}
+y={50 ≤ x <210: 0.786*x - 0.0862*RH + 5.75}
+y={210 ≤ x <260: (0.69*(x/50 – 21/5) + 0.786*(1 - (x/50 – 21/5)))*x - 0.0862*RH*(1 - (x/50 – 21/5)) + 2.966*(x/50 – 21/5) + 5.75*(1 - (x/50 – 21/5)) + 8.84*(10^{-4})*x^{2}*(x/50 – 21/5)}
+y={260 ≤ x: 2.966 + 0.69*x + 8.84*10^{-4}*x^2}
+
+y= corrected PM2.5 µg/m3
+x= PM2.5 cf_atm (lower)
+RH= Relative humidity as measured by the PurpleAir
+*/
+int usaEpaStandardPm2d5Adjustment(int pm25_standard, int relative_humidity)
+{
+  // Rename to use the same variables from the paper
+  float x = pm25_standard;
+  float RH = relative_humidity;
+  if (x<30) {
+    return 0.524 * x - 0.0862 * RH + 5.75;
+  } else if(x<50) {
+    return (0.786 * (x/20.0 - 3.0/2.0) + 0.524 * (1.0 - (x/20.0 - 3.0/2.0))) * x - 0.0862 * RH + 5.75;
+  } else if(x<210) {
+    return 0.786 * x - 0.0862 * RH + 5.75;
+  } else if(x<260) {
+    return (0.69 * (x/50.0 - 21.0/5.0) + 0.786 * (1.0 - (x/50.0 - 21.0/5.0))) * x - 0.0862 * RH * (1.0 - (x/50.0 - 21.0/5.0)) + 2.966 * (x/50.0 - 21.0/5.0) + 5.75 * (1.0 - (x/50.0 - 21.0/5.0)) + 8.84 * pow(10.0, -4.0) * pow(x,2.0) * (x/50.0 - 21.0/5.0);
+  } else {
+    return 2.966 + 0.69 * x + 8.84 * pow(10.0, -4.0) * pow(x, 2.0);
+  }
+}
+
+// Compute US AQI using the 2024+ table
+// https://forum.airnowtech.org/t/the-aqi-equation-2024-valid-beginning-may-6th-2024/453
+int compute_us_aqi(int pm25_standard)
+{
+  if (pm25_standard <= 9) {
+    return map_double(pm25_standard, 0, 9, 0, 50);
+  } else if (pm25_standard <= 35.4) {
+    return map_double(pm25_standard, 9.1, 35.4, 51, 100);
+  } else if (pm25_standard <= 55.4) {
+    return map_double(pm25_standard, 35.5, 55.4, 101, 150);
+  } else if (pm25_standard <= 125.4) {
+    return map_double(pm25_standard, 55.5, 125.4, 151, 200);
+  } else if (pm25_standard <= 225.4) {
+    return map_double(pm25_standard, 125.5, 225.4, 201, 300);
+  } else if (pm25_standard <= 325.4) {
+    return map_double(pm25_standard, 225.5, 325.4, 301, 500);
+  } else {
+    return 500;
+  }
+}
+
 void PmsShow(bool json) {
   if (Pms.valid) {
     char types[10];
@@ -370,18 +423,21 @@ void PmsShow(bool json) {
 #ifdef PMS_MODEL_PMS5003T
     float temperature = ConvertTemp(pms_data.temperature10x/10.0);
     float humidity = ConvertHumidity(pms_data.humidity10x/10.0);
+    int epa_us_aqi = compute_us_aqi(usaEpaStandardPm2d5Adjustment(pms_data.pm25_standard, humidity));
 #endif // PMS_MODEL_PMS5003T
+    int us_aqi = compute_us_aqi(pms_data.pm25_standard);
 
     if (json) {
-      ResponseAppend_P(PSTR(",\"%s\":{\"CF1\":%d,\"CF2.5\":%d,\"CF10\":%d,\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d"),
+      ResponseAppend_P(PSTR(",\"%s\":{\"CF1\":%d,\"CF2.5\":%d,\"CF10\":%d,\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d,\"AQI\":%d"),
         types,
         pms_data.pm10_standard, pms_data.pm25_standard, pms_data.pm100_standard,
-        pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env);
+        pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env, us_aqi);
 #if !(defined(PMS_MODEL_PMS3003) || defined(PMS_MODEL_ZH03X))
       ResponseAppend_P(PSTR(",\"PB0.3\":%d,\"PB0.5\":%d,\"PB1\":%d,\"PB2.5\":%d,"),
         pms_data.particles_03um, pms_data.particles_05um, pms_data.particles_10um, pms_data.particles_25um);
 #ifdef PMS_MODEL_PMS5003T
       ResponseAppendTHD(temperature, humidity);
+      ResponseAppend_P(PSTR(",\"EPA_AQI\":%d"), epa_us_aqi);
 #else
       ResponseAppend_P(PSTR("\"PB5\":%d,\"PB10\":%d"),
         pms_data.particles_50um, pms_data.particles_100um);
@@ -409,8 +465,10 @@ void PmsShow(bool json) {
       WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "0.5", pms_data.particles_05um);
       WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "1", pms_data.particles_10um);
       WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "2.5", pms_data.particles_25um);
+      WSContentSend_PD(HTTP_SNS_US_AQI, types, us_aqi);
 #ifdef PMS_MODEL_PMS5003T
       WSContentSend_THD(types, temperature, humidity);
+      WSContentSend_PD(HTTP_SNS_US_EPA_AQI, types, epa_us_aqi);
 #else
       WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "5", pms_data.particles_50um);
       WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "10", pms_data.particles_100um);
