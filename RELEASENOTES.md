@@ -118,6 +118,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Added
 - Command ``SetOption69 1`` to enable Serial Bridge inverted Receive [#22000](https://github.com/arendst/Tasmota/issues/22000)
 - Command ``DaliWeb 1`` to enable light control for DALI broadcast address
+- Command ``DaliSend <address>|<address+256>,<command>`` to send command (address+256 is repeat) on DALI bus
+- Command ``DaliQuery <address>|<address+256>,<command>`` to send command (address+256 is repeat) on DALI bus and wait up to DALI_TIMEOUT ms for response
 - HX711 optional calibration precision option on command ``Sensor34 2 <weight in gram> <precision>`` where `<precision>` is 1 to 20 [#13983](https://github.com/arendst/Tasmota/issues/13983)
 - ESP8266 support for one-wire M1601 temperature sensor on DS18x20 GPIO [#21376](https://github.com/arendst/Tasmota/issues/21376)
 - ESP8266 support for I2C CLK on GPIO16 [#22199](https://github.com/arendst/Tasmota/issues/22199)
@@ -142,6 +144,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry Zigbee improvements to prepare Matter [#22083](https://github.com/arendst/Tasmota/issues/22083)
 - Berry virtual Energy driver [#22134](https://github.com/arendst/Tasmota/issues/22134)
 - Berry improve `int64` constructor [#22172](https://github.com/arendst/Tasmota/issues/22172)
+- Berry Serial `config` to change parity on-the-fly for RS-485 [#22285](https://github.com/arendst/Tasmota/issues/22285)
 - LVGL port `colorwheel` from LVGL 8 [#22244](https://github.com/arendst/Tasmota/issues/22244)
 - HASPmota `cpicker` and `msgbox` [#22244](https://github.com/arendst/Tasmota/issues/22244)
 - Matter support for Zigbee Temperature, Humidity and Pressure sensors [#22084](https://github.com/arendst/Tasmota/issues/22084)

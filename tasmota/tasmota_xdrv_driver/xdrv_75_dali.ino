@@ -19,9 +19,13 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.1.0.5 20241014  update    - Add command `DaliSend [repeat]<address>,<command>`
+                              - Add command `DaliQuery [repeat]<address>,<command>`
+                              - Send frame twice (repeat) for DALI defined commands
+                              - Add support for receiving backward frame
   0.1.0.4 20241013  update    - Fix intermittent bad send timing
   0.1.0.3 20241010  update    - Change DaliDimmer range from 0..254 to 0..100
-                              - Add command DaliWeb 0|1 to enable persistent Web light controls
+                              - Add command `DaliWeb 0|1` to enable persistent Web light controls
   0.1.0.2 20241008  update    - Better receive error detection
   0.1.0.1 20241007  update    - To stablizie communication send DALI datagram twice like Busch-Jaeger does 
                               - Change DaliPower 0..2 to act like Tasmota Power (Off, On, Toggle)
@@ -42,13 +46,16 @@
 #define XDRV_75             75
 
 #ifndef DALI_IN_INVERT
-#define DALI_IN_INVERT      0                  // DALI RX inverted ?
+#define DALI_IN_INVERT      0                  // DALI RX inverted
 #endif
 #ifndef DALI_OUT_INVERT
 #define DALI_OUT_INVERT     0                  // DALI TX inverted
 #endif
 #ifndef DALI_INIT_STATE
 #define DALI_INIT_STATE     50                 // DALI init dimmer state 50/254
+#endif
+#ifndef DALI_TIMEOUT
+#define DALI_TIMEOUT        50                 // DALI backward frame receive timeout (ms)
 #endif
 
 //#define DALI_DEBUG
@@ -66,14 +73,14 @@ const char kDALICommands[] PROGMEM = D_PRFX_DALI "|"  // Prefix
 #ifdef USE_LIGHT
   "|Web"
 #endif  // USE_LIGHT
-  "|" D_CMND_DIMMER ;
+  "|" D_CMND_DIMMER "|Send|Query"  ;
 
 void (* const DALICommand[])(void) PROGMEM = {
   &CmndDali, &CmndDaliPower,
 #ifdef USE_LIGHT
   &CmndDaliWeb,
 #endif  // USE_LIGHT
-  &CmndDaliDimmer };
+  &CmndDaliDimmer, &CmndDaliSend, &CmndDaliQuery };
 
 struct DALI {
   uint32_t bit_time;
@@ -85,6 +92,7 @@ struct DALI {
   uint8_t dimmer;
   bool power;
   bool available;
+  bool response;
 } *Dali = nullptr;
 
 /*********************************************************************************************\
@@ -92,6 +100,7 @@ struct DALI {
 \*********************************************************************************************/
 
 void DaliEnableRxInterrupt(void) {
+  Dali->available = false;
   attachInterrupt(Dali->pin_rx, DaliReceiveData, FALLING);
 }
 
@@ -103,30 +112,65 @@ void DaliDisableRxInterrupt(void) {
 
 void IRAM_ATTR DaliReceiveData(void);          // Fix ESP8266 ISR not in IRAM! exception
 void DaliReceiveData(void) {
+  /*
+  Forward frame (1 Start bit + 16 data bits) * 2 bits/bit (manchester encoding) + 2 * 2 Stop bits = 38 bits
+  DALI data 0xFE64       1 1 1 1 1 1 1 0 0 1 1 0 0 1 0 0       Forward frame
+  Start and Stop bits  1                                 1 1
+  Manchester data     0101010101010101101001011010011010
+  Stop bits                                             1111                  
+
+  Backward frame (1 Start bit + 8 data bits) * 2 bits/bit (manchester encoding) + 2 * 2 Stop bits = 22 bits
+  DALI data 0x64         0 1 1 0 0 1 0 0                       Backward frame
+  Start and Stop bits  1                 1 1
+  Manchester data     011001011010011010
+  Stop bits                             1111                  
+
+  Bit number          01234567890123456789012345678901234567
+                                1         2         3
+  */
   if (Dali->available) { return; }             // Skip if last input is not yet handled
   uint32_t wait = ESP.getCycleCount() + (Dali->bit_time / 2);
   int bit_state = 0; 
   bool dali_read;
   uint32_t received_dali_data = 0;
-  uint32_t bit_pos = 15;
-  for (uint32_t i = 0; i < 36; i++) {          // (1 Start bit, 16 data bits, 1 stop bit) * 2 bits/bit (manchester encoding)
+  uint32_t bit_number = 0;
+  while (bit_number < 38) {
     while (ESP.getCycleCount() < wait);
     wait += Dali->bit_time;                    // Auto roll-over
-    if (abs(bit_state) <= 2) {                 // Manchester encoding max 2 consecutive equal bits
-      dali_read = digitalRead(Dali->pin_rx);
+    dali_read = digitalRead(Dali->pin_rx);
 #ifdef DALI_DEBUG
-      digitalWrite(DALI_DEBUG_PIN, i&1);       // Add LogicAnalyzer poll indication
+    digitalWrite(DALI_DEBUG_PIN, bit_number&1);  // Add LogicAnalyzer poll indication
 #endif  // DALI_DEBUG
+    if (bit_number < 34) {                     // 34 manchester encoded bits
       bit_state += (dali_read) ? 1 : -1;
-      if ((i >= 2) && (i <= 34)) {             // 32 manchester encoded data bits
-        if (i &1) {                            // 16 data bits
-          received_dali_data |= ((DALI_IN_INVERT) ? !dali_read : dali_read << bit_pos--);
+      if (0 == bit_state) {                    // Manchester encoding total 2 bits is always 0
+        if (bit_number > 2) {                  // Skip start bit
+          received_dali_data <<= 1;
+          received_dali_data |= (DALI_IN_INVERT) ? !dali_read : dali_read;
         }
       }
+      else if ((2 == bit_state) &&
+               (bit_number == 19)) {           // Possible backward frame detected - Chk stop bits
+        bit_state = 0;
+        bit_number = 35;
+      }
+      else if (abs(bit_state) > 1) {           // Invalid manchester data
+        break;
+      }
+    } else {                                   // 4 high Stop bits
+      if (bit_state != 0) {                    // Invalid manchester data
+        break;
+      }
+      else if (dali_read != 1) {               // Invalid level of stop bit
+        bit_state = 1;
+        break;
+      }
     }
+    bit_number++;
   }
-  if (abs(bit_state) <= 2) {                   // Valid Manchester encoding including start and stop bits
-    if (Dali->received_dali_data != received_dali_data) {  // Skip duplicates
+  if (0 == bit_state) {                        // Valid Manchester encoding including start and stop bits
+    if (Dali->response ||                      // Response from last message send
+       (Dali->received_dali_data != received_dali_data)) {  // Skip duplicates
       Dali->received_dali_data = received_dali_data;
       Dali->available = true;                  // Valid data received
     }
@@ -136,10 +180,20 @@ void DaliReceiveData(void) {
 /*************** S E N D * P R O C E D U R E ***************/
 
 void DaliSendDataOnce(uint16_t send_dali_data) {
+  /*
+  DALI protocol forward frame
+  DALI data 0xFE64       1 1 1 1 1 1 1 0 0 1 1 0 0 1 0 0
+  Start and Stop bits  1                                 1 1
+  Manchester data     0101010101010101101001011010011010
+  Stop bits                                             1111                  
+
+  Bit number          01234567890123456789012345678901234567
+                                1         2         3
+  */
   bool bit_value;
   uint32_t bit_pos = 15;
   uint32_t wait = ESP.getCycleCount();
-  for (uint32_t i = 0; i < 35; i++) {
+  for (uint32_t i = 0; i < 35; i++) {          // 417 * 35 = 14.7 ms
     if (0 == (i &1)) {                         // Even bit
       //          Start bit,     Stop bit,       Data bits
       bit_value = (0 == i) ? 1 : (34 == i) ? 0 : (bool)((send_dali_data >> bit_pos--) &1);  // MSB first
@@ -151,32 +205,66 @@ void DaliSendDataOnce(uint16_t send_dali_data) {
     wait += Dali->bit_time;                    // Auto roll-over
     while (ESP.getCycleCount() < wait);
   }
+//  delayMicroseconds(1100);                     // Adds to total 15.8 ms
 }
 
-void DaliSendData(uint8_t firstByte, uint8_t secondByte) {
-  Dali->address = firstByte;
-  Dali->command = secondByte;
-  if (DALI_BROADCAST_DP == firstByte) {
-    Dali->power = (secondByte);                // State
+void DaliSendData(uint32_t adr, uint32_t cmd) {
+  bool repeat = (adr &0x100);                  // Set repeat if bit 8 is set
+  adr &= 0xFF;
+  cmd &= 0xFF;
+
+  Dali->address = adr;
+  Dali->command = cmd;
+  if (DALI_BROADCAST_DP == adr) {
+    repeat = true;
+    Dali->power = (cmd);                       // State
     if (Dali->power) {
-      Dali->dimmer = secondByte;               // Value
+      Dali->dimmer = cmd;                      // Value
     }
   }
-  uint16_t send_dali_data = firstByte << 8;
-  send_dali_data += secondByte & 0xff;
+
+  if (!repeat && (adr &0x01)) {                // YAAAAAA1 Commands where user didn't set repeat
+    if ((adr >= 0xA1) && (adr <= 0xFD)) {      // Special commands
+      repeat = ((0xA5 == adr) || (0xA7 == adr));
+    } else {
+      // ((cmd >=0) && (cmd <= 31))            // Arc power control commands
+      repeat = (((cmd >=32) && (cmd <= 143)) ||  // Configuration commands
+                ((cmd >=224) && (cmd <= 236)));  // Extended configuration commands
+      // ((cmd >=144) && (cmd <= 223))         // Query commands
+      // ((cmd >=237) && (cmd <= 255))         // Extended query commands
+    }
+  }
+
+  uint16_t send_dali_data = adr << 8 | cmd;
 
   DaliDisableRxInterrupt();
   delay(3);                                    // Settling time between forward and backward frame
-  DaliSendDataOnce(send_dali_data);            // Takes 14.5 ms
-  if (DALI_BROADCAST_DP == firstByte) {
+  DaliSendDataOnce(send_dali_data);            // Takes 14.7 ms
+  if (repeat) {
     delay(14);                                 // As used by Busch-Jaeger and suggested by DALI protocol (> 9.17 ms)
     DaliSendDataOnce(send_dali_data);          // Takes 14.7 ms
   }
-  delay(3);                                    // Block response
+  delay(2);                                    // Block response
   DaliEnableRxInterrupt();
 }
 
-void DaliPower(uint8_t val) {
+int DaliSendWaitResponse(uint32_t adr, uint32_t cmd, uint32_t timeout = DALI_TIMEOUT);
+int DaliSendWaitResponse(uint32_t adr, uint32_t cmd, uint32_t timeout) {
+  Dali->response = true;
+  DaliSendData(adr, cmd);
+  while (!Dali->available && timeout--) {      // Expect backward frame within DALI_TIMEOUT ms
+    delay(1);
+  };
+  int result = -1;                             // DALI NO or no response
+  if (Dali->available) {
+    Dali->available = false;
+    result = Dali->received_dali_data;
+  }
+  Dali->response = false;
+  return result;
+}
+
+void DaliPower(uint32_t val) {
   DaliSendData(DALI_BROADCAST_DP, val);
 }
 
@@ -184,7 +272,7 @@ void DaliPower(uint8_t val) {
 
 void ResponseAppendDali(void) {
   uint8_t dimmer = changeUIntScale(Dali->dimmer, 0, 254, 0, 100);
-  ResponseAppend_P(PSTR("\"" D_PRFX_DALI "\":{\"Power\":\"%s\",\"Dimmer\":%d,\"Address\":%d,\"Command\":%d}"), 
+  ResponseAppend_P(PSTR("\"DALI\":{\"Power\":\"%s\",\"Dimmer\":%d,\"Address\":%d,\"Command\":%d}"), 
     GetStateText(Dali->power), dimmer, Dali->address, Dali->command);
 }
 
@@ -195,47 +283,49 @@ void ResponseDali(void) {
 }
 
 void DaliInput(void) {
-  if (Dali->available) {
-    Dali->address = Dali->received_dali_data >> 8;
-    Dali->command = Dali->received_dali_data;
+  if (!Dali->available || Dali->response) { return; }
+
+  Dali->address = Dali->received_dali_data >> 8;
+  Dali->command = Dali->received_dali_data;
 
 #ifdef USE_LIGHT
-    if (DALI_BROADCAST_DP == Dali->address) {
-      uint8_t dimmer_old = changeUIntScale(Dali->dimmer, 0, 254, 0, 100);
-      uint8_t power_old = Dali->power;
-      Dali->power = (Dali->command);           // State
-      if (Dali->power) {
-        Dali->dimmer = Dali->command;          // Value
-      }
-      if (Settings->sbflag1.dali_web) {        // DaliWeb 1
-        uint8_t dimmer_new = changeUIntScale(Dali->dimmer, 0, 254, 0, 100);
-        if (power_old != Dali->power) {
-          ExecuteCommandPower(LightDevice(), Dali->power, SRC_SWITCH);
-        }
-        else if (dimmer_old != dimmer_new) {
-          char scmnd[20];
-          snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), dimmer_new);
-          ExecuteCommand(scmnd, SRC_SWITCH);
-        }
-      }
+  bool show_response = true;
+  if (DALI_BROADCAST_DP == Dali->address) {
+    uint8_t dimmer_old = changeUIntScale(Dali->dimmer, 0, 254, 0, 100);
+    uint8_t power_old = Dali->power;
+    Dali->power = (Dali->command);           // State
+    if (Dali->power) {
+      Dali->dimmer = Dali->command;          // Value
     }
-    if (!Settings->sbflag1.dali_web) {         // DaliWeb 0
-      ResponseDali();
-      MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_PRFX_DALI));
-    }
-#else
-    if (DALI_BROADCAST_DP == Dali->address) {
-      Dali->power = (Dali->command);           // State
-      if (Dali->power) {
-        Dali->dimmer = Dali->command;          // Value
+    if (Settings->sbflag1.dali_web) {        // DaliWeb 1
+      uint8_t dimmer_new = changeUIntScale(Dali->dimmer, 0, 254, 0, 100);
+      if (power_old != Dali->power) {
+        ExecuteCommandPower(LightDevice(), Dali->power, SRC_SWITCH);
       }
+      else if (dimmer_old != dimmer_new) {
+        char scmnd[20];
+        snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), dimmer_new);
+        ExecuteCommand(scmnd, SRC_SWITCH);
+      }
+      show_response = false;
     }
+  }
+  if (show_response) {
     ResponseDali();
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_PRFX_DALI));
+  }
+#else
+  if (DALI_BROADCAST_DP == Dali->address) {
+    Dali->power = (Dali->command);           // State
+    if (Dali->power) {
+      Dali->dimmer = Dali->command;          // Value
+    }
+  }
+  ResponseDali();
+  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_PRFX_DALI));
 #endif  // USE_LIGHT
 
-    Dali->available = false;
-  }
+  Dali->available = false;
 }
 
 bool DaliInit(void) {
@@ -258,7 +348,8 @@ bool DaliInit(void) {
 #endif  // DALI_DEBUG
 
   Dali->dimmer = DALI_INIT_STATE;
-  Dali->bit_time = ESP.getCpuFreqMHz() * 1000000 / 2400;  // Manchester twice 1200 bps = 2400 bps = 417 ms
+  // Manchester twice 1200 bps = 2400 bps = 417 (protocol 416.76 +/- 10%) us
+  Dali->bit_time = ESP.getCpuFreqMHz() * 1000000 / 2400;
 
   DaliEnableRxInterrupt();
 
@@ -380,14 +471,14 @@ bool DaliJsonParse(void) {
     int DALIindex = 0;
     int ADRindex = 0;
     int8_t DALIdim = -1;
-    uint8_t DALIaddr = DALI_BROADCAST_DP;
+    uint32_t DALIaddr = DALI_BROADCAST_DP;
 
     JsonParserToken val = root[PSTR("cmd")];
     if (val) {
-      uint8_t cmd = val.getUInt();
+      uint32_t cmd = val.getUInt();
       val = root[PSTR("addr")];
       if (val) {
-        uint8_t addr = val.getUInt();
+        uint32_t addr = val.getUInt();
         AddLog(LOG_LEVEL_DEBUG, PSTR("DLI: cmd = %d, addr = %d"), cmd, addr);
         DaliSendData(addr, cmd);
         return true;
@@ -397,7 +488,7 @@ bool DaliJsonParse(void) {
     }
     val = root[PSTR("addr")];
     if (val) {
-      uint8_t addr = val.getUInt();
+      uint32_t addr = val.getUInt();
       if ((addr >= 0) && (addr < 64)) {
         DALIaddr = addr  << 1;
       }
@@ -449,6 +540,31 @@ void CmndDaliDimmer(void) {
     DaliPower(dimmer);
   }
   ResponseDali();
+}
+
+void CmndDaliSend(void) {
+  // Send command
+  // Setting bit 8 will repeat command twice
+  // DaliSend 0x1a5,255  - DALI Initialise (send twice)
+  uint32_t values[2] = { 0 };
+  uint32_t params = ParseParameters(2, values);
+  if (2 == params) {
+    DaliSendData(values[0] &0x1FF, values[1] &0xFF);
+    ResponseCmndDone();
+  }
+}
+
+void CmndDaliQuery(void) {
+  // Send command and return response or -1 (no response within DALI_TIMEOUT)
+  // Setting bit 8 will repeat command twice
+  // DaliQuery 0xff,0x90  - DALI Query status
+  // DaliQuery 0xff,144   - DALI Query status
+  uint32_t values[2] = { 0 };
+  uint32_t params = ParseParameters(2, values);
+  if (2 == params) {
+    int result = DaliSendWaitResponse(values[0] &0x1FF, values[1] &0xFF);
+    ResponseCmndNumber(result);
+  }
 }
 
 #ifdef USE_LIGHT

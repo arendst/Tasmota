@@ -10,7 +10,9 @@ All notable changes to this project will be documented in this file.
 - HASPmota `cpicker` and `msgbox` (#22244)
 - Support for DALI on ESP8266
 - Command ``DaliWeb 1`` to enable light control for DALI broadcast address
-- Berry Serial `config` to change parity on-the-fly for RS-485
+- Command ``DaliSend <address>|<address+256>,<command>`` to send command (address+256 is repeat) on DALI bus
+- Command ``DaliQuery <address>|<address+256>,<command>`` to send command (address+256 is repeat) on DALI bus and wait up to DALI_TIMEOUT ms for response
+- Berry Serial `config` to change parity on-the-fly for RS-485 (#22285)
 
 ### Breaking Changed
 
