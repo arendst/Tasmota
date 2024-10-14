@@ -179,6 +179,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - PZEM continue energy monitoring when one phase fails [#21968](https://github.com/arendst/Tasmota/issues/21968)
 - BearSSL panic on ESP8266 in rare conditions [#22017](https://github.com/arendst/Tasmota/issues/22017)
 - ModbusBridge request and response logic [#22075](https://github.com/arendst/Tasmota/issues/22075)
+- Sonoff WTS01 temperature sensor shows incorrect negative temperature [#19373](https://github.com/arendst/Tasmota/issues/19373)
 - Autoconf prevent 'init.bat' from stopping on empty lines [#22158](https://github.com/arendst/Tasmota/issues/22158)
 - Zigbee extend timeout for MCU reboot from 5s to 10s [#22009](https://github.com/arendst/Tasmota/issues/22009)
 - Zigbee avoid disabling console serial on ESP32 and improved log messages [#22082](https://github.com/arendst/Tasmota/issues/22082)
