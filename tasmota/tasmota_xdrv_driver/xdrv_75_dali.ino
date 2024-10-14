@@ -19,6 +19,8 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.1.0.6 20241014  update    - Fix received light command loop
+                              - Add send collision detection
   0.1.0.5 20241014  update    - Add command `DaliSend [repeat]<address>,<command>`
                               - Add command `DaliQuery [repeat]<address>,<command>`
                               - Send frame twice (repeat) for DALI defined commands
@@ -93,6 +95,7 @@ struct DALI {
   bool power;
   bool available;
   bool response;
+  bool light_sync;
 } *Dali = nullptr;
 
 /*********************************************************************************************\
@@ -191,19 +194,40 @@ void DaliSendDataOnce(uint16_t send_dali_data) {
                                 1         2         3
   */
   bool bit_value;
+  bool pin_value;
+  bool collision = false;
   uint32_t bit_pos = 15;
   uint32_t wait = ESP.getCycleCount();
-  for (uint32_t i = 0; i < 35; i++) {          // 417 * 35 = 14.7 ms
-    if (0 == (i &1)) {                         // Even bit
-      //          Start bit,     Stop bit,       Data bits
-      bit_value = (0 == i) ? 1 : (34 == i) ? 0 : (bool)((send_dali_data >> bit_pos--) &1);  // MSB first
-    } else {                                   // Odd bit
-      bit_value = !bit_value;                  // Complement bit
+  uint32_t bit_number = 0;
+  while (bit_number < 35) {                    // 417 * 35 = 14.7 ms
+    if (!collision) {
+      if (0 == (bit_number &1)) {              // Even bit
+        //          Start bit,     Stop bit,       Data bits
+        bit_value = (0 == bit_number) ? 1 : (34 == bit_number) ? 0 : (bool)((send_dali_data >> bit_pos--) &1);  // MSB first
+      } else {                                 // Odd bit
+        bit_value = !bit_value;                // Complement bit
+      }
+      pin_value = bit_value ? LOW : HIGH;      // Invert bit
+    } else {
+      if (34 == bit_number) {
+        pin_value = HIGH;                      // Set to idle
+      }
     }
-    bool pin_value = bit_value ? LOW : HIGH;   // Invert bit
+
     digitalWrite(Dali->pin_tx, (pin_value == DALI_OUT_INVERT) ? LOW : HIGH);
     wait += Dali->bit_time;                    // Auto roll-over
     while (ESP.getCycleCount() < wait);
+
+    if (!collision) {
+      if ((HIGH == pin_value) && (LOW == digitalRead(Dali->pin_rx))) {  // Collision if write is 1 and bus is 0
+        collision = true;
+        pin_value = LOW;
+        bit_number = 29;                       // Keep bus low for 4 bits
+        AddLog(LOG_LEVEL_DEBUG, PSTR("DLI: Send collision"));
+      }
+    }
+
+    bit_number++;
   }
 //  delayMicroseconds(1100);                     // Adds to total 15.8 ms
 }
@@ -293,18 +317,20 @@ void DaliInput(void) {
   if (DALI_BROADCAST_DP == Dali->address) {
     uint8_t dimmer_old = changeUIntScale(Dali->dimmer, 0, 254, 0, 100);
     uint8_t power_old = Dali->power;
-    Dali->power = (Dali->command);           // State
+    Dali->power = (Dali->command);             // State
     if (Dali->power) {
-      Dali->dimmer = Dali->command;          // Value
+      Dali->dimmer = Dali->command;            // Value
     }
-    if (Settings->sbflag1.dali_web) {        // DaliWeb 1
+    if (Settings->sbflag1.dali_web) {          // DaliWeb 1
       uint8_t dimmer_new = changeUIntScale(Dali->dimmer, 0, 254, 0, 100);
       if (power_old != Dali->power) {
+        Dali->light_sync = true;               // Block local loop
         ExecuteCommandPower(LightDevice(), Dali->power, SRC_SWITCH);
       }
       else if (dimmer_old != dimmer_new) {
         char scmnd[20];
         snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), dimmer_new);
+        Dali->light_sync = true;               // Block local loop
         ExecuteCommand(scmnd, SRC_SWITCH);
       }
       show_response = false;
@@ -316,9 +342,9 @@ void DaliInput(void) {
   }
 #else
   if (DALI_BROADCAST_DP == Dali->address) {
-    Dali->power = (Dali->command);           // State
+    Dali->power = (Dali->command);             // State
     if (Dali->power) {
-      Dali->dimmer = Dali->command;          // Value
+      Dali->dimmer = Dali->command;            // Value
     }
   }
   ResponseDali();
@@ -327,6 +353,21 @@ void DaliInput(void) {
 
   Dali->available = false;
 }
+
+#ifdef USE_LIGHT
+bool DaliSetChannels(void) {
+  if (Settings->sbflag1.dali_web) {            // DaliWeb 1
+    if (Dali->light_sync) {                    // Block local loop
+      Dali->light_sync = false;
+    } else {
+      uint8_t value = ((uint8_t*)XdrvMailbox.data)[0];
+      if (255 == value) { value = 254; }       // Max Dali value
+      DaliPower(value);
+    }
+  }
+  return true;
+}
+#endif  // USE_LIGHT
 
 bool DaliInit(void) {
   if (!PinUsed(GPIO_DALI_TX) || !PinUsed(GPIO_DALI_RX)) { return false; }
@@ -365,17 +406,6 @@ bool DaliInit(void) {
   return false;
 #endif  // USE_LIGHT
 }
-
-#ifdef USE_LIGHT
-bool DaliSetChannels(void) {
-  if (Settings->sbflag1.dali_web) {            // DaliWeb 1
-    uint8_t value = ((uint8_t*)XdrvMailbox.data)[0];
-    if (255 == value) { value = 254; }         // Max Dali value
-    DaliPower(value);
-  }
-  return true;
-}
-#endif  // USE_LIGHT
 
 /*********************************************************************************************\
  * Experimental - Not functioning
