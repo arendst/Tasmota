@@ -341,7 +341,7 @@ int NimBLEExtAdvertising::handleGapEvent(struct ble_gap_event *event, void *arg)
                 case BLE_HS_EOS:
                 case BLE_HS_ECONTROLLER:
                 case BLE_HS_ENOTSYNCED:
-                    NIMBLE_LOGC(LOG_TAG, "host reset, rc = %d", event->adv_complete.reason);
+                    NIMBLE_LOGE(LOG_TAG, "host reset, rc = %d", event->adv_complete.reason);
                     NimBLEDevice::onReset(event->adv_complete.reason);
                     return 0;
                 default:
@@ -623,9 +623,6 @@ void NimBLEExtAdvertisement::addData(const uint8_t * data, size_t length) {
 /**
  * @brief Set the appearance.
  * @param [in] appearance The appearance code value.
- *
- * See also:
- * https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.characteristic.gap.appearance.xml
  */
 void NimBLEExtAdvertisement::setAppearance(uint16_t appearance) {
     char cdata[2];

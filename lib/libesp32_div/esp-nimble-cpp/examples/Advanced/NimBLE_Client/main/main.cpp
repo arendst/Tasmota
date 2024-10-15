@@ -39,20 +39,22 @@ class ClientCallbacks : public NimBLEClientCallbacks {
 
     /********************* Security handled here **********************
     ****** Note: these are the same return values as defaults ********/
-    uint32_t onPassKeyRequest(){
-        printf("Client Passkey Request\n");
-        /** return the passkey to send to the server */
-        return 123456;
-    }
+    void onPassKeyEntry(const NimBLEConnInfo& connInfo){
+        printf("Server Passkey Entry\n");
+        /** This should prompt the user to enter the passkey displayed
+         * on the peer device.
+         */
+        NimBLEDevice::injectPassKey(connInfo, 123456);
+    };
 
-    bool onConfirmPIN(uint32_t pass_key){
-        printf("The passkey YES/NO number: %" PRIu32"\n", pass_key);
-    /** Return false if passkeys don't match. */
-        return true;
-    }
+    void onConfirmPIN(const NimBLEConnInfo& connInfo, uint32_t pass_key){
+        printf("The passkey YES/NO number: %" PRIu32 "\n", pass_key);
+        /** Inject false if passkeys don't match. */
+        NimBLEDevice::injectConfirmPIN(connInfo, true);
+    };
 
     /** Pairing process complete, we can check the results in connInfo */
-    void onAuthenticationComplete(NimBLEConnInfo& connInfo){
+    void onAuthenticationComplete(const NimBLEConnInfo& connInfo){
         if(!connInfo.isEncrypted()) {
             printf("Encrypt connection failed - disconnecting\n");
             /** Find the client with the connection handle provided in desc */
@@ -146,8 +148,8 @@ bool connectToServer() {
          *  Min interval: 12 * 1.25ms = 15, Max interval: 12 * 1.25ms = 15, 0 latency, 12 * 10ms = 120ms timeout
          */
         pClient->setConnectionParams(6,6,0,15);
-        /** Set how long we are willing to wait for the connection to complete (seconds), default is 30. */
-        pClient->setConnectTimeout(5);
+        /** Set how long we are willing to wait for the connection to complete (milliseconds), default is 30000. */
+        pClient->setConnectTimeout(5 * 1000);
 
 
         if (!pClient->connect(advDevice)) {
@@ -358,7 +360,7 @@ void app_main (void){
      *  but will use more energy from both devices
      */
     pScan->setActiveScan(true);
-    /** Start scanning for advertisers for the scan time specified (in seconds) 0 = forever
+    /** Start scanning for advertisers for the scan time specified (in milliseconds) 0 = forever
      *  Optional callback for when scanning stops.
      */
     pScan->start(scanTime);
