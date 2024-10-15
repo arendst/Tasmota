@@ -3,7 +3,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.2.0.6]
+## [14.3.0.1]
+### Added
+
+### Breaking Changed
+
+### Changed
+
+### Fixed
+
+### Removed
+
+
+## [Released]
+
+## [14.3.0] 20241015
+- Release Robert
+
+## [14.2.0.6] 20241015
 ### Added
 - Support for Sonoff SPM v1.3.0 (#13447)
 - LVGL port `colorwheel` from LVGL 8 (#22244)
@@ -18,8 +35,6 @@ All notable changes to this project will be documented in this file.
 - Misubishi Electric HVAC Air Direction Control (#22241)
 - Misubishi Electric HVAC prohibit function (#22269)
 - Misubishi Electric HVAC compressor map and operation power and energy (#22290)
-
-### Breaking Changed
 
 ### Changed
 - ESP32 platform update from 2024.09.10 to 2024.09.30 and Framework (Arduino Core) from v3.0.5 to v3.1.0.240926 (#22203)
@@ -136,8 +151,6 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 - ESP8266 Analog input support using energy driver as only one channel is available
-
-## [Released]
 
 ## [14.2.0] 20240814
 - Release Rita
