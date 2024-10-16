@@ -32,6 +32,18 @@
 #  endif
 #endif
 
+#if CONFIG_NIMBLE_CPP_DEBUG_ASSERT_ENABLED && !defined NDEBUG
+void nimble_cpp_assert(const char *file, unsigned line) __attribute((weak, noreturn));
+# define NIMBLE_ATT_VAL_FILE  (__builtin_strrchr(__FILE__, '/') ? \
+                            __builtin_strrchr (__FILE__, '/') + 1 : __FILE__)
+# define NIMBLE_CPP_DEBUG_ASSERT(cond) \
+    if (!(cond)) { \
+        nimble_cpp_assert(NIMBLE_ATT_VAL_FILE, __LINE__); \
+    }
+#else
+# define NIMBLE_CPP_DEBUG_ASSERT(cond) (void(0))
+#endif
+
 #endif /* CONFIG_BT_ENABLED */
 
 #ifdef _DOXYGEN_

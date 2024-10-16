@@ -87,7 +87,7 @@ class MI32SensorCallback : public NimBLEClientCallbacks {
     MI32.infoMsg = MI32_DID_CONNECT;
     MI32.mode.willConnect = 0;
     MI32.mode.connected = 1;
-    pclient->updateConnParams(8,11,0,1000);
+    pclient->updateConnParams(8,16,0,1000);
   }
   void onDisconnect(NimBLEClient* pclient, int reason) {
     MI32.mode.connected = 0;
@@ -186,6 +186,19 @@ class MI32ServerCallbacks: public NimBLEServerCallbacks {
         NimBLEDevice::startAdvertising();
 #endif
     };
+    void onAuthenticationComplete(const NimBLEConnInfo& connInfo) {
+      struct{
+        BLERingBufferItem_t header;
+        uint8_t buffer[sizeof(ble_store_value_sec)];
+      } item;
+      item.header.length = sizeof(ble_store_value_sec);
+      item.header.type = BLE_OP_ON_AUTHENTICATED;
+      ble_store_value_sec value_sec;
+      ble_sm_read_bond(connInfo.getConnHandle(), &value_sec);
+      memcpy(item.buffer,(uint8_t*)&value_sec,sizeof(ble_store_value_sec));
+      xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t), pdMS_TO_TICKS(1));
+      MI32.infoMsg = MI32_SERV_CLIENT_AUTHENTICATED;
+    }
 };
 
 class MI32CharacteristicCallbacks: public NimBLECharacteristicCallbacks {
@@ -691,6 +704,12 @@ void MI32Init(void) {
   #endif
     const std::string name(TasmotaGlobal.hostname);
     NimBLEDevice::init(name);
+    #ifdef CONFIG_BT_NIMBLE_NVS_PERSIST
+      NimBLEDevice::setSecurityAuth(true, true, true);
+    #else
+      NimBLEDevice::setSecurityAuth(false, true, true);
+    #endif
+
     AddLog(LOG_LEVEL_INFO,PSTR("M32: Init BLE device: %s"),TasmotaGlobal.hostname);
     MI32.mode.init = 1;
     MI32.mode.readyForNextConnJob = 1;
@@ -947,6 +966,9 @@ void MI32loadCfg(){
                 MI32HexStringToBytes(_pidStr,_pid);
                 uint16_t _pid16 = _pid[0]*256 + _pid[1];
                 _numberOfDevices = MIBLEgetSensorSlot(_mac,_pid16,0);
+                if (MIBLEsensors[_numberOfDevices].PID == 0) { // no Xiaomi sensor
+                  MI32.option.handleEveryDevice = 1; // if in config, we assume to handle it
+                }
                 _error = false;
               }
           }
@@ -958,6 +980,9 @@ void MI32loadCfg(){
                 uint8_t *_key = (uint8_t*) malloc(16);
                 MI32HexStringToBytes(_keyStr,_key);
                 MIBLEsensors[_numberOfDevices].key = _key;
+                if (MIBLEsensors[_numberOfDevices].PID == 0) { // no Xiaomi sensor
+                  MI32.mode.IRKinCfg = 1; // key is treated as IRK for RPA
+                }
               }
               else{
                 _error = true;
@@ -1239,12 +1264,6 @@ bool MI32StartConnectionTask(){
 void MI32ConnectionTask(void *pvParameters){
 #if !defined(CONFIG_IDF_TARGET_ESP32C3) || !defined(CONFIG_IDF_TARGET_ESP32C6) //needs more testing ...
     // NimBLEDevice::setOwnAddrType(BLE_OWN_ADDR_RANDOM,false); //seems to be important for i.e. xbox controller, hopefully not breaking other things
-#ifdef CONFIG_BT_NIMBLE_NVS_PERSIST
-    NimBLEDevice::setSecurityAuth(true, true, true);
-#else
-    NimBLEDevice::setSecurityAuth(false, true, true);
-#endif
-
 #endif //CONFIG_IDF_TARGET_ESP32C3
     MI32.conCtx->error = MI32_CONN_NO_ERROR;
     if (MI32ConnectActiveSensor()){
@@ -2049,11 +2068,33 @@ void MI32ParseResponse(char *buf, uint16_t bufsize, uint8_t addr[6], int RSSI) {
     }
 }
 
+uint16_t MI32checkRPA(uint8_t *addr) {
+  br_aes_small_cbcenc_keys cbc_ctx;
+  size_t data_len = 16;
+  int idx = -1;
+  for (auto _sensor : MIBLEsensors) {
+      idx += 1;
+      if (_sensor.PID != 0) continue;
+      if (_sensor.key == nullptr) continue;
+      uint8_t  iv[16] = {0};
+      uint8_t data[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,addr[0],addr[1],addr[2]};
+      br_aes_small_cbcenc_init(&cbc_ctx, _sensor.key, 16);
+      br_aes_small_cbcenc_run( &cbc_ctx, iv, data, data_len );
+      if(data[13] == addr[3] && data[14] == addr[4] && data[15] == addr[5]) {
+        MIBLEsensors[idx].lastTime = Rtc.local_time;
+        return idx;
+      } 
+  }
+  return 0xff;
+}
+
 void MI32HandleEveryDevice(NimBLEAdvertisedDevice* advertisedDevice, uint8_t addr[6], int RSSI) {
-    if(advertisedDevice->getAddressType() != BLE_ADDR_PUBLIC) {
-      return;
-    }
-    uint16_t _slot = MIBLEgetSensorSlot(addr, 0, 0);
+
+    uint16_t _slot;
+    if (advertisedDevice->getAddressType() == BLE_ADDR_PUBLIC) { _slot = MIBLEgetSensorSlot(addr, 0, 0);}
+    else if (advertisedDevice->getAddress().isRpa() && MI32.mode.IRKinCfg == 1) { _slot = MI32checkRPA(addr);}
+    else {return;}
+
     if(_slot==0xff) {
       return;
     }

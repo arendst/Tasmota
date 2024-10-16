@@ -43,6 +43,7 @@ public:
     NimBLEAddress(uint8_t address[6], uint8_t type = BLE_ADDR_PUBLIC);
     NimBLEAddress(const std::string &stringAddress, uint8_t type = BLE_ADDR_PUBLIC);
     NimBLEAddress(const uint64_t &address, uint8_t type = BLE_ADDR_PUBLIC);
+    bool            isRpa() const;
     bool            equals(const NimBLEAddress &otherAddress) const;
     const uint8_t*  getNative() const;
     std::string     toString() const;
