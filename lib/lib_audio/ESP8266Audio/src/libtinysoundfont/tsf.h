@@ -42,6 +42,16 @@
 
 */
 
+// ESP32 as of 3.x has a compiler bug in this section, with the G++ generated assembly
+// being illegal.  There's nothing wrong with the code here, it just looks like an
+// Xtensa backend issue.  Until that's fixed, no MIDI for you!
+///home/earle/Arduino/libraries/ESP8266Audio/src/libtinysoundfont/tsf.h: In function 'void tsf_channel_midi_control(tsf*, int, int, int)':
+// /home/earle/Arduino/libraries/ESP8266Audio/src/libtinysoundfont/tsf.h:2101:1: error: insn does not satisfy its constraints:
+//  2101 | }
+//       | ^
+
+#if !defined(ESP32)
+
 #ifndef TSF_INCLUDE_TSF_INL
 #define TSF_INCLUDE_TSF_INL
 
@@ -190,7 +200,6 @@ TSFDEF void tsf_channel_set_bank(tsf* f, int channel, int bank);
 TSFDEF int  tsf_channel_set_bank_preset(tsf* f, int channel, int bank, int preset_number);
 TSFDEF void tsf_channel_set_pan(tsf* f, int channel, float pan);
 TSFDEF void tsf_channel_set_volume(tsf* f, int channel, float volume);
-TSFDEF void tsf_channel_set_volume_to_one(tsf* f, int channel); // solves a Compiler bug!! TODO: refactor after compiler fix!!
 TSFDEF void tsf_channel_set_pitchwheel(tsf* f, int channel, int pitch_wheel);
 TSFDEF void tsf_channel_set_pitchrange(tsf* f, int channel, float pitch_range);
 TSFDEF void tsf_channel_set_tuning(tsf* f, int channel, float tuning);
@@ -603,11 +612,11 @@ struct tsf_voice
 {
 	int playingPreset, playingKey, playingChannel;
 	struct tsf_region* region;
-	double pitchInputTimecents, pitchOutputFactor;
+	double pitchRatio;
 	double sourceSamplePosition;
-  fixed32p32 sourceSamplePositionF32P32;
-	float  noteGainDB, panFactorLeft, panFactorRight;
-	unsigned int playIndex, loopStart, loopEnd;
+	fixed32p32 sourceSamplePositionF32P32, loopStartF32P32, loopEndF32P32, loopSizeF32P32, pitchRatioF32P32;
+	float  noteGain, panFactorLeft, panFactorRight;
+	int playIndex, loopStart, loopEnd;
 	struct tsf_voice_envelope ampenv, modenv;
 	struct tsf_voice_lowpass lowpass;
 	struct tsf_voice_lfo modlfo, viblfo;
@@ -626,6 +635,14 @@ struct tsf_channels
 	int channelNum, activeChannel;
 };
 
+// Math properties of tsf_timecents2Secs* (tc2s):
+//    # tc2s(a + b) = tc2s(a) * tc2s(b)
+//    # tc2s(a - b) = tc2s(a) / tc2s(b)
+//    # 1 / tc2s(a) = tc2s(-a)
+//    # The same applies to tsf_cents2Hertz and tsf_decibelsToGain
+// Path properties of tsf_decibelsToGain (db2g) and tsf_gainToDecibels (g2db)
+//    # db2g(g2db(a)) = a
+//    # g2db(db2g(a)) = a
 static double tsf_timecents2Secsd(double timecents) { return TSF_POW(2.0, timecents / 1200.0); }
 static float tsf_timecents2Secsf(float timecents) { return TSF_POWF(2.0f, timecents / 1200.0f); }
 static float tsf_cents2Hertz(float cents) { return 8.176f * TSF_POWF(2.0f, cents / 1200.0f); }
@@ -1221,6 +1238,7 @@ static void tsf_voice_end(struct tsf_voice* v, float outSampleRate)
 	{
 		// Continue playing, but stop looping.
 		v->loopEnd = v->loopStart;
+		v->loopSizeF32P32 = 0;
 	}
 }
 
@@ -1233,10 +1251,9 @@ static void tsf_voice_endquick(struct tsf_voice* v, float outSampleRate)
 static void tsf_voice_calcpitchratio(struct tsf_voice* v, float pitchShift, float outSampleRate)
 {
 	double note = v->playingKey + v->region->transpose + v->region->tune / 100.0;
-	double adjustedPitch = v->region->pitch_keycenter + (note - v->region->pitch_keycenter) * (v->region->pitch_keytrack / 100.0);
-	if (pitchShift) adjustedPitch += pitchShift;
-	v->pitchInputTimecents = adjustedPitch * 100.0;
-	v->pitchOutputFactor = v->region->sample_rate / (tsf_timecents2Secsd(v->region->pitch_keycenter * 100.0) * outSampleRate);
+	double adjustedPitch = (note - v->region->pitch_keycenter) * v->region->pitch_keytrack;
+	if (pitchShift) adjustedPitch += adjustedPitch * 100.0f;
+	v->pitchRatio = v->region->sample_rate * tsf_timecents2Secsd(adjustedPitch) / outSampleRate;
 }
 
 short tsf_read_short_cached(tsf *f, int pos)
@@ -1304,10 +1321,10 @@ static void tsf_voice_render(tsf* f, struct tsf_voice* v, float* outputBuffer, i
 	else tmpInitialFilterFc = 0, tmpModLfoToFilterFc = 0, tmpModEnvToFilterFc = 0;
 
 	if (dynamicPitchRatio) pitchRatio = 0, tmpModLfoToPitch = (float)region->modLfoToPitch, tmpVibLfoToPitch = (float)region->vibLfoToPitch, tmpModEnvToPitch = (float)region->modEnvToPitch;
-	else pitchRatio = tsf_timecents2Secsd(v->pitchInputTimecents) * v->pitchOutputFactor, tmpModLfoToPitch = 0, tmpVibLfoToPitch = 0, tmpModEnvToPitch = 0;
+	else pitchRatio = v->pitchRatio, tmpModLfoToPitch = 0, tmpVibLfoToPitch = 0, tmpModEnvToPitch = 0;
 
 	if (dynamicGain) tmpModLfoToVolume = (float)region->modLfoToVolume * 0.1f;
-	else noteGain = tsf_decibelsToGain(v->noteGainDB), tmpModLfoToVolume = 0;
+	else noteGain = v->noteGain, tmpModLfoToVolume = 0;
 
 	while (numSamples)
 	{
@@ -1324,10 +1341,10 @@ static void tsf_voice_render(tsf* f, struct tsf_voice* v, float* outputBuffer, i
 		}
 
 		if (dynamicPitchRatio)
-			pitchRatio = tsf_timecents2Secsd(v->pitchInputTimecents + (v->modlfo.level * tmpModLfoToPitch + v->viblfo.level * tmpVibLfoToPitch + v->modenv.level * tmpModEnvToPitch)) * v->pitchOutputFactor;
+			pitchRatio = v->pitchRatio * tsf_timecents2Secsd(v->modlfo.level * tmpModLfoToPitch + v->viblfo.level * tmpVibLfoToPitch + v->modenv.level * tmpModEnvToPitch);
 
 		if (dynamicGain)
-			noteGain = tsf_decibelsToGain(v->noteGainDB + (v->modlfo.level * tmpModLfoToVolume));
+			noteGain = v->noteGain * tsf_decibelsToGain(v->modlfo.level * tmpModLfoToVolume);
 
 		gainMono = noteGain * v->ampenv.level;
 
@@ -1436,39 +1453,22 @@ static void tsf_voice_render_fast(tsf* f, struct tsf_voice* v, short* outputBuff
   TSF_BOOL updateModEnv = (region->modEnvToPitch || region->modEnvToFilterFc);
   TSF_BOOL updateModLFO = (v->modlfo.delta && (region->modLfoToPitch || region->modLfoToFilterFc || region->modLfoToVolume));
   TSF_BOOL updateVibLFO = (v->viblfo.delta && (region->vibLfoToPitch));
-  TSF_BOOL isLooping    = (v->loopStart < v->loopEnd);
-  unsigned int tmpLoopStart = v->loopStart, tmpLoopEnd = v->loopEnd;
-  //double tmpSampleEndDbl = (double)v->sampleEnd, tmpLoopEndDbl = (double)tmpLoopEnd + 1.0;
-  //double tmpSourceSamplePosition = v->sourceSamplePosition;
-  fixed32p32 tmpSampleEndF32P32 = ((fixed32p32)(region->end)) << 32;
-  fixed32p32 tmpLoopEndF32P32 = ((fixed32p32)(tmpLoopEnd + 1)) << 32;
+  TSF_BOOL isLooping    = (v->loopSizeF32P32 > 0);
+  fixed32p32 tmpSampleEndF32P32 = (fixed32p32)(region->end) << 32;
   fixed32p32 tmpSourceSamplePositionF32P32 = v->sourceSamplePositionF32P32;
-  struct tsf_voice_lowpass tmpLowpass = v->lowpass;
-
-  TSF_BOOL dynamicLowpass = (region->modLfoToFilterFc || region->modEnvToFilterFc);
-  float tmpSampleRate = f->outSampleRate, tmpInitialFilterFc, tmpModLfoToFilterFc, tmpModEnvToFilterFc;
 
   TSF_BOOL dynamicPitchRatio = (region->modLfoToPitch || region->modEnvToPitch || region->vibLfoToPitch);
-  //double pitchRatio;
-  fixed32p32 pitchRatioF32P32;
+  fixed32p32 pitchRatioF32P32, tmpPitchRatioF32P32;
   float tmpModLfoToPitch, tmpVibLfoToPitch, tmpModEnvToPitch;
 
   TSF_BOOL dynamicGain = (region->modLfoToVolume != 0);
-  float noteGain, tmpModLfoToVolume;
+  float noteGain, tmpNoteGain, tmpModLfoToVolume;
 
-  if (dynamicLowpass) tmpInitialFilterFc = (float)region->initialFilterFc, tmpModLfoToFilterFc = (float)region->modLfoToFilterFc, tmpModEnvToFilterFc = (float)region->modEnvToFilterFc;
-  else tmpInitialFilterFc = 0, tmpModLfoToFilterFc = 0, tmpModEnvToFilterFc = 0;
+  if (dynamicPitchRatio) tmpPitchRatioF32P32 = v->pitchRatioF32P32, pitchRatioF32P32 = 0, tmpModLfoToPitch = (float)region->modLfoToPitch, tmpVibLfoToPitch = (float)region->vibLfoToPitch, tmpModEnvToPitch = (float)region->modEnvToPitch;
+  else pitchRatioF32P32 = v->pitchRatioF32P32, tmpModLfoToPitch = 0, tmpVibLfoToPitch = 0, tmpModEnvToPitch = 0;
 
-  if (dynamicPitchRatio) pitchRatioF32P32 = 0, tmpModLfoToPitch = (float)region->modLfoToPitch, tmpVibLfoToPitch = (float)region->vibLfoToPitch, tmpModEnvToPitch = (float)region->modEnvToPitch;
-  else {
-    double pr = tsf_timecents2Secsd(v->pitchInputTimecents) * v->pitchOutputFactor;
-    fixed32p32 adj = 1LL<<32;
-    pr *= adj;
-    pitchRatioF32P32 = (int64_t)pr, tmpModLfoToPitch = 0, tmpVibLfoToPitch = 0, tmpModEnvToPitch = 0;
-  }
-
-  if (dynamicGain) noteGain = 0, tmpModLfoToVolume = (float)region->modLfoToVolume * 0.1f;
-  else noteGain = tsf_decibelsToGain(v->noteGainDB), tmpModLfoToVolume = 0;
+  if (dynamicGain) noteGain = 0, tmpNoteGain = v->noteGain, tmpModLfoToVolume = (float)region->modLfoToVolume * 0.1f;
+  else noteGain = v->noteGain, tmpModLfoToVolume = 0;
 
   while (numSamples)
   {
@@ -1476,19 +1476,17 @@ static void tsf_voice_render_fast(tsf* f, struct tsf_voice* v, short* outputBuff
     int blockSamples = (numSamples > TSF_RENDER_EFFECTSAMPLEBLOCK ? TSF_RENDER_EFFECTSAMPLEBLOCK : numSamples);
     numSamples -= blockSamples;
 
-    if (dynamicLowpass)
-    {
-      float fres = tmpInitialFilterFc + v->modlfo.level * tmpModLfoToFilterFc + v->modenv.level * tmpModEnvToFilterFc;
-      tmpLowpass.active = (fres <= 13500.0f);
-      if (tmpLowpass.active) tsf_voice_lowpass_setup(&tmpLowpass, tsf_cents2Hertz(fres) / tmpSampleRate);
+    if (dynamicPitchRatio) {
+      if (v->modlfo.level || v->viblfo.level || v->modenv.level)
+        pitchRatioF32P32 = tmpPitchRatioF32P32 * tsf_timecents2Secsd(v->modlfo.level * tmpModLfoToPitch + v->viblfo.level * tmpVibLfoToPitch + v->modenv.level * tmpModEnvToPitch);
+      else
+        pitchRatioF32P32 = tmpPitchRatioF32P32; // If all levels are 0, just bypass conversion function
     }
 
-    if (dynamicPitchRatio) {
-      pitchRatioF32P32 = tsf_timecents2Secsd(v->pitchInputTimecents + (v->modlfo.level * tmpModLfoToPitch + v->viblfo.level * tmpVibLfoToPitch + v->modenv.level * tmpModEnvToPitch)) * v->pitchOutputFactor * (1LL<<32);
-   }
-
-    if (dynamicGain)
-      noteGain = tsf_decibelsToGain(v->noteGainDB + (v->modlfo.level * tmpModLfoToVolume));
+    if (dynamicGain) {
+      if (v->modlfo.level) noteGain = tmpNoteGain * tsf_decibelsToGain(v->modlfo.level * tmpModLfoToVolume);
+      else                 noteGain = tmpNoteGain; // If level is 0, just bypass conversion function
+    }
 
     gainMono = noteGain * v->ampenv.level;
     short gainMonoFP = gainMono * 32767;
@@ -1501,7 +1499,7 @@ static void tsf_voice_render_fast(tsf* f, struct tsf_voice* v, short* outputBuff
     if (updateModLFO) tsf_voice_lfo_process(&v->modlfo, blockSamples);
     if (updateVibLFO) tsf_voice_lfo_process(&v->viblfo, blockSamples);
 
-    while (blockSamples-- && tmpSourceSamplePositionF32P32 < tmpSampleEndF32P32)
+    while (blockSamples--)
     {
       unsigned int pos = (unsigned int)(tmpSourceSamplePositionF32P32>>32);
       if (pos == 0xffffffff) pos = 0;
@@ -1513,8 +1511,14 @@ static void tsf_voice_render_fast(tsf* f, struct tsf_voice* v, short* outputBuff
 
       // Next sample.
       tmpSourceSamplePositionF32P32 += pitchRatioF32P32;
-      if (tmpSourceSamplePositionF32P32 >= tmpLoopEndF32P32 && isLooping)
-        tmpSourceSamplePositionF32P32 -= (tmpLoopEndF32P32 - tmpLoopStart + (1LL<<32));
+
+      if (tmpSourceSamplePositionF32P32 >= v->loopEndF32P32)
+      {
+        if (isLooping)
+          tmpSourceSamplePositionF32P32 -= v->loopSizeF32P32;
+        else if (tmpSourceSamplePositionF32P32 >= tmpSampleEndF32P32)
+          break;
+      }
     }
 
     if (tmpSourceSamplePositionF32P32 >= tmpSampleEndF32P32 || v->ampenv.segment == TSF_SEGMENT_DONE)
@@ -1525,7 +1529,6 @@ static void tsf_voice_render_fast(tsf* f, struct tsf_voice* v, short* outputBuff
   }
 
   v->sourceSamplePositionF32P32 = tmpSourceSamplePositionF32P32;
-  if (tmpLowpass.active || dynamicLowpass) v->lowpass = tmpLowpass;
 }
 
 
@@ -1720,13 +1723,14 @@ TSFDEF void tsf_note_on(tsf* f, int preset_index, int key, float vel)
 			}
 			voice = &f->voices[f->voiceNum - 4];
 			voice[1].playingPreset = voice[2].playingPreset = voice[3].playingPreset = -1;
+			voice[1].playIndex = voice[2].playIndex = voice[3].playIndex = -1;
 		}
 
 		voice->region = region;
 		voice->playingPreset = preset_index;
 		voice->playingKey = key;
 		voice->playIndex = voicePlayIndex;
-		voice->noteGainDB = f->globalGainDB - region->attenuation - tsf_gainToDecibels(1.0f / vel);
+		voice->noteGain = vel * tsf_decibelsToGain(f->globalGainDB - region->attenuation);
 
 		if (f->channels)
 		{
@@ -1742,7 +1746,6 @@ TSFDEF void tsf_note_on(tsf* f, int preset_index, int key, float vel)
 
 		// Offset/end.
 		voice->sourceSamplePosition = region->offset;
-		voice->sourceSamplePositionF32P32 = ((int64_t)region->offset)<< 32;
 
 		// Loop.
 		doLoop = (region->loop_mode != TSF_LOOPMODE_NONE && region->loop_start < region->loop_end);
@@ -1765,6 +1768,86 @@ TSFDEF void tsf_note_on(tsf* f, int preset_index, int key, float vel)
 		tsf_voice_lfo_setup(&voice->modlfo, region->delayModLFO, region->freqModLFO, f->outSampleRate);
 		tsf_voice_lfo_setup(&voice->viblfo, region->delayVibLFO, region->freqVibLFO, f->outSampleRate);
 	}
+}
+
+/**
+ * Returns the generated playing index that can be used to identify all voices related to this note.
+ */
+TSFDEF int tsf_note_on_fast(tsf* f, int preset_index, int key, float vel)
+{
+	if (preset_index < 0 || preset_index >= f->presetNum) return -1;
+	if (!vel) { tsf_note_off(f, preset_index, key); return -1; }
+	if (f->presets[preset_index].regions == NULL) tsf_load_preset(f, f->hydra, preset_index);
+
+	short midiVelocity = (short)(vel * 127);
+	struct tsf_region *region, *regionEnd;
+
+	// Play all matching regions.
+	int voicePlayIndex = f->voicePlayIndex++;
+	for (region = f->presets[preset_index].regions, regionEnd = region + f->presets[preset_index].regionNum; region != regionEnd; region++)
+	{
+		if (key < region->lokey || key > region->hikey || midiVelocity < region->lovel || midiVelocity > region->hivel) continue;
+
+		struct tsf_voice *voice, *v, *vEnd; TSF_BOOL doLoop;
+		voice = TSF_NULL, v = f->voices, vEnd = v + f->voiceNum;
+		if (region->group)
+		{
+			for (; v != vEnd; v++)
+				if (v->playingPreset == preset_index && v->region->group == region->group) tsf_voice_endquick(v, f->outSampleRate);
+				else if (v->playingPreset == -1 && !voice) voice = v;
+		}
+		else for (; v != vEnd; v++) if (v->playingPreset == -1) { voice = v; break; }
+
+		if (!voice)
+		{
+			f->voiceNum += 4;
+			struct tsf_voice *saveVoice = f->voices;
+			f->voices = (struct tsf_voice*)TSF_REALLOC(f->voices, f->voiceNum * sizeof(struct tsf_voice));
+			if (!f->voices) {
+				f->voices = saveVoice;
+				printf("OOM, no room for new voice.  Ignoring note_on\n");
+				return -1;
+			}
+			voice = &f->voices[f->voiceNum - 4];
+			voice[1].playingPreset = voice[2].playingPreset = voice[3].playingPreset = -1;
+			voice[1].playIndex = voice[2].playIndex = voice[3].playIndex = -1;
+		}
+
+		voice->region = region;
+		voice->playingPreset = preset_index;
+		voice->playingKey = key;
+		voice->playIndex = voicePlayIndex;
+		voice->noteGain = vel * tsf_decibelsToGain(f->globalGainDB - region->attenuation);
+
+		if (f->channels)
+		{
+			f->channels->setupVoice(f, voice);
+		}
+		else
+		{
+			tsf_voice_calcpitchratio(voice, 0, f->outSampleRate);
+			voice->pitchRatioF32P32 = voice->pitchRatio * (1LL << 32);
+		}
+
+		// Offset/end.
+		voice->sourceSamplePositionF32P32 = ((int64_t)region->offset)<< 32;
+
+		// Loop.
+		doLoop = (region->loop_mode != TSF_LOOPMODE_NONE && region->loop_start < region->loop_end);
+		voice->loopStartF32P32 = doLoop ? ((int64_t)region->loop_start + 1) << 32 : 0;
+		voice->loopEndF32P32 = doLoop ? ((int64_t)region->loop_end + 1) << 32 : 0;
+		voice->loopSizeF32P32 = doLoop ? voice->loopEndF32P32 - voice->loopStartF32P32 + (1LL << 32) : 0;
+
+		// Setup envelopes.
+		tsf_voice_envelope_setup(&voice->ampenv, &region->ampenv, key, midiVelocity, TSF_TRUE, f->outSampleRate);
+		tsf_voice_envelope_setup(&voice->modenv, &region->modenv, key, midiVelocity, TSF_FALSE, f->outSampleRate);
+
+		// Setup LFO filters.
+		tsf_voice_lfo_setup(&voice->modlfo, region->delayModLFO, region->freqModLFO, f->outSampleRate);
+		tsf_voice_lfo_setup(&voice->viblfo, region->delayVibLFO, region->freqVibLFO, f->outSampleRate);
+	}
+
+	return voicePlayIndex;
 }
 
 TSFDEF int tsf_bank_note_on(tsf* f, int bank, int preset_number, int key, float vel)
@@ -1793,6 +1876,19 @@ TSFDEF void tsf_note_off(tsf* f, int preset_index, int key)
 			(v->playIndex != vMatchFirst->playIndex || v->playingPreset != preset_index || v->playingKey != key || v->ampenv.segment >= TSF_SEGMENT_RELEASE)) continue;
 		tsf_voice_end(v, f->outSampleRate);
 	}
+}
+
+/**
+ * Stops all voices with the given playing index. If no key provided or if -1, fallbacks to tsf_note_off
+ */
+TSFDEF void tsf_note_off_fast(tsf* f, int preset_index, int key, int playIndex = -1)
+{
+  if (playIndex < 0)
+    tsf_note_off(f, preset_index, key);
+  else
+    for (struct tsf_voice *v = f->voices, *vEnd = v + f->voiceNum; v != vEnd; v++)
+      if (v->playIndex == playIndex && v->playingPreset == preset_index && v->playingKey == key && v->ampenv.segment < TSF_SEGMENT_RELEASE)
+        tsf_voice_end(v, f->outSampleRate);
 }
 
 TSFDEF int tsf_bank_note_off(tsf* f, int bank, int preset_number, int key)
@@ -1874,7 +1970,7 @@ static void tsf_channel_setup_voice(tsf* f, struct tsf_voice* v)
 	struct tsf_channel* c = &f->channels->channels[f->channels->activeChannel];
 	float newpan = v->region->pan + c->panOffset;
 	v->playingChannel = f->channels->activeChannel;
-	v->noteGainDB += c->gainDB;
+	v->noteGain *= tsf_decibelsToGain(c->gainDB);
 	tsf_voice_calcpitchratio(v, (c->pitchWheel == 8192 ? c->tuning : ((c->pitchWheel / 16383.0f * c->pitchRange * 2.0f) - c->pitchRange + c->tuning)), f->outSampleRate);
 	if      (newpan <= -0.5f) { v->panFactorLeft = 1.0f; v->panFactorRight = 0.0f; }
 	else if (newpan >=  0.5f) { v->panFactorLeft = 0.0f; v->panFactorRight = 1.0f; }
@@ -1984,7 +2080,7 @@ TSFDEF void tsf_channel_set_volume(tsf* f, int channel, float volume)
 	if (gainDBChange == 0) return;
 	for (v = f->voices, vEnd = v + f->voiceNum; v != vEnd; v++)
 		if (v->playingChannel == channel && v->playingPreset != -1)
-			v->noteGainDB += gainDBChange;
+			v->noteGain *= tsf_decibelsToGain(gainDBChange);
 	c->gainDB = gainDB;
 }
 
@@ -2055,10 +2151,6 @@ TSFDEF void tsf_channel_sounds_off_all(tsf* f, int channel)
 			tsf_voice_endquick(v, f->outSampleRate);
 }
 
-TSFDEF void tsf_channel_set_volume_to_one(tsf* f, int channel){
-	tsf_channel_set_volume(f, channel, 1.0f);
-}
-
 TSFDEF void tsf_channel_midi_control(tsf* f, int channel, int controller, int control_value)
 {
 	struct tsf_channel* c = tsf_channel_init(f, channel);
@@ -2084,7 +2176,7 @@ TSFDEF void tsf_channel_midi_control(tsf* f, int channel, int controller, int co
 			c->midiVolume = c->midiExpression = 16383;
 			c->midiPan = 8192;
 			c->bank = 0;
-			tsf_channel_set_volume_to_one(f, channel);
+			tsf_channel_set_volume(f, channel, 1.0f);
 			tsf_channel_set_pan(f, channel, 0.5f);
 			tsf_channel_set_pitchrange(f, channel, 2.0f);
 			return;
@@ -2149,3 +2241,5 @@ TSFDEF float tsf_channel_get_tuning(tsf* f, int channel)
 #endif
 
 #endif //TSF_IMPLEMENTATION
+
+#endif // ! ESP32
