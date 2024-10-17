@@ -21,7 +21,7 @@
 #ifndef _AUDIOGENERATORMIDI_H
 #define _AUDIOGENERATORMIDI_H
 
-#if defined(ESP32) && (__GNUC__ >= 8) && (__XTENSA__)
+#if defined(ESP32)
 // Do not build, Espressif's GCC8+ has a compiler bug
 #else // __GNUC__ == 8
 
