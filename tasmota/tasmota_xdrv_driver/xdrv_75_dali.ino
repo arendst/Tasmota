@@ -19,6 +19,11 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.1.0.7 20241017  update    - Add command `DaliCommission 1|2` assigning short addresses
+                              - Add command `DaliTarget 0, 1..64, 101..116` to select light control address
+                              - Add command `DaliGroup1..16 +<devices>|-<devices>` to add/remove devices from group
+                              - Extend commands `DaliPower` and `DaliDimmer` with index to control short address or group
+                              - Remove non-functional MQTT interface
   0.1.0.6 20241014  update    - Fix received light command loop
                               - Add send collision detection
   0.1.0.5 20241014  update    - Add command `DaliSend [repeat]<address>,<command>`
@@ -43,6 +48,29 @@
 
 /*********************************************************************************************\
  * DALI support for Tasmota
+ * 
+ * Available commands:
+ *   <first byte> = 0..255 or 0x00..0xFF + 256/0x100 for optional repeat (send twice)
+ *   <second byte> = 0..255 or 0x00..0xFF        - Both decimal and hexadecimal is supported
+ *   <broadcast> = 0                             - DALI default
+ *   <device> = 1..64                            - DALI short address + 1
+ *   <group> = 101..116                          - DALI group + 101
+ * DaliSend <first byte>,<second byte>           - Execute DALI code and do not expect a DALI backward frame
+ * DaliQuery <first byte>,<second byte>          - Execute DALI code and report result (DALI backward frame)
+ * DaliCommission 1|2                            - Reset (0) or (1)/and commission device short addresses
+ * DaliGroup<1..16> [+]|-<device>,<device>...    - Add(+) or Remove(-) devices to/from group
+ * DaliPower<broadcast>|<device>|<group> 0..254  - Control power (0 = Off, 1 = Last dimmer, 2 = Toggle, 3..254 = absolute light brightness)
+ * DaliDimmer<broadcast>|<device>|<group> 0..100 - Control dimmer (0 = Off, 1..100 = precentage of brightness)
+ * DaliWeb 0|1                                   - Enable Tasmota light control for DaliTarget device
+ * DaliTarget <broadcast>|<device>|<group>       - Set Tasmota light control device (0, 1..64, 101..116)
+ * 
+ * Address type        Address byte
+ * ------------------  --------------------
+ * Broadcast address   1111111S
+ * 64 short address    0AAAAAAS
+ * 16 group address    100AAAAS
+ * Special command     101CCCC1 to 110CCCC1
+ * A = Address bit, S = 0 Direct Arc Power control, S = 1 Command, C = Special command
 \*********************************************************************************************/
 
 #define XDRV_75             75
@@ -71,18 +99,18 @@
 #define D_PRFX_DALI "Dali"
 
 const char kDALICommands[] PROGMEM = D_PRFX_DALI "|"  // Prefix
-  "|" D_CMND_POWER 
+  "|" D_CMND_POWER "|" D_CMND_DIMMER "|Target"
 #ifdef USE_LIGHT
   "|Web"
 #endif  // USE_LIGHT
-  "|" D_CMND_DIMMER "|Send|Query"  ;
+  "|Send|Query|Commission|Group";
 
 void (* const DALICommand[])(void) PROGMEM = {
-  &CmndDali, &CmndDaliPower,
+  &CmndDali, &CmndDaliPower, &CmndDaliDimmer, &CmndDaliTarget,
 #ifdef USE_LIGHT
   &CmndDaliWeb,
 #endif  // USE_LIGHT
-  &CmndDaliDimmer, &CmndDaliSend, &CmndDaliQuery };
+  &CmndDaliSend, &CmndDaliQuery, &CmndDaliCommission, &CmndDaliGroup };
 
 struct DALI {
   uint32_t bit_time;
@@ -92,6 +120,7 @@ struct DALI {
   uint8_t address;
   uint8_t command;
   uint8_t dimmer;
+  uint8_t target;
   bool power;
   bool available;
   bool response;
@@ -102,6 +131,35 @@ struct DALI {
  * DALI low level
 \*********************************************************************************************/
 
+uint32_t DaliTarget2Address(uint32_t target) {
+  // 1..64    = Short address
+  // 101..116 = Group address
+  // Others   = Broadcast
+  if ((target >= 1) && (target <= 64)) {       // 1 .. 64
+    target -= 1;                               // Short address
+    target <<= 1;
+  }
+  else if ((target >= 101) && (target <= 116)) {  // 101 .. 116
+    target -= 101;
+    target <<= 1;
+    target |= 0x80;                            // Group address
+  }
+  else {                                       // Others
+    target = DALI_BROADCAST_DP;                // Broadcast address
+  }
+  return target &0xFE;                         // Direct Arc Power Control command
+}
+/*
+uint32_t DaliAddress2Target(uint32_t adr) {
+  if (adr >= 254) {                            // 0b1111111S
+    return 0;                                  // Broadcast address (0)
+  }
+  else if ((adr >= 128) && (adr <= 159)) {     // 0b1000000S .. 0b1001111S
+    return (adr >> 1) +101;                    // Group address (101 .. 116)
+  }
+  return (adr >> 1) +1;                        // 0b0000000S .. 0b0111111S Short address (1 .. 64)
+}
+*/
 void DaliEnableRxInterrupt(void) {
   Dali->available = false;
   attachInterrupt(Dali->pin_rx, DaliReceiveData, FALLING);
@@ -243,7 +301,7 @@ void DaliSendData(uint32_t adr, uint32_t cmd) {
 
   Dali->address = adr;
   Dali->command = cmd;
-  if (DALI_BROADCAST_DP == adr) {
+  if (DaliTarget2Address(Dali->target) == adr) {
     repeat = true;
     Dali->power = (cmd);                       // State
     if (Dali->power) {
@@ -262,6 +320,10 @@ void DaliSendData(uint32_t adr, uint32_t cmd) {
       // ((cmd >=237) && (cmd <= 255))         // Extended query commands
     }
   }
+
+#ifdef DALI_DEBUG
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DLI: SendData Repeat %d, Adr 0x%02X, Cmd 0x%02x"), repeat, adr, cmd);
+#endif  // DALI_DEBUG
 
   uint16_t send_dali_data = adr << 8 | cmd;
 
@@ -289,12 +351,163 @@ int DaliSendWaitResponse(uint32_t adr, uint32_t cmd, uint32_t timeout) {
     result = Dali->received_dali_data;
   }
   Dali->response = false;
+
+#ifdef DALI_DEBUG
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DLI: SendWaitResponse result %d = 0x%04X"), result, result);
+#endif  // DALI_DEBUG
+
   return result;
 }
 
-void DaliPower(uint32_t val) {
-  DaliSendData(DALI_BROADCAST_DP, val);
+/*********************************************************************************************\
+ * DALI commissioning short addresses
+ * 
+ * Courtesy of https://github.com/qqqlab/DALI-Lighting-Interface
+\*********************************************************************************************/
+
+// Query commands - Send as second byte
+#define DALI_QUERY_STATUS          0x0090  // 144  - Returns "STATUS INFORMATION"
+
+// Special commands - Send as first byte
+#define DALI_TERMINATE             0x00A1  // 256  - Releases the INITIALISE state.
+#define DALI_INITIALISE            0x01A5  // 258 REPEAT - Sets the slave to the INITIALISE status for15 minutes. Commands 259 to 270 are enabled only for a slave in this status.
+#define DALI_RANDOMISE             0x01A7  // 259 REPEAT - Generates a random address.
+#define DALI_COMPARE               0x00A9  // 260  - Is the random address smaller or equal to the search address?
+#define DALI_WITHDRAW              0x00AB  // 261  - Excludes slaves for which the random address and search address match from the Compare process.
+#define DALI_SEARCHADDRH           0x00B1  // 264  - Specifies the higher 8 bits of the search address.
+#define DALI_SEARCHADDRM           0x00B3  // 265  - Specifies the middle 8 bits of the search address.
+#define DALI_SEARCHADDRL           0x00B5  // 266  - Specifies the lower 8 bits of the search address.
+#define DALI_PROGRAM_SHORT_ADDRESS 0x00B7  // 267  - The slave shall store the received 6-bit address (AAA AAA) as a short address if it is selected.
+
+void DaliSetSearchAddress(uint32_t adr) {
+  // Set search address
+  DaliSendData(DALI_SEARCHADDRH, adr>>16);
+  DaliSendData(DALI_SEARCHADDRM, adr>>8);
+  DaliSendData(DALI_SEARCHADDRL, adr);
 }
+
+void DaliSetSearchAddressDifference(uint32_t adr_new, uint32_t adr_current) {
+  // Set search address, but set only changed bytes (takes less time)
+  if ( (uint8_t)(adr_new>>16) !=  (uint8_t)(adr_current>>16) ) DaliSendData(DALI_SEARCHADDRH, adr_new>>16);
+  if ( (uint8_t)(adr_new>>8)  !=  (uint8_t)(adr_current>>8)  ) DaliSendData(DALI_SEARCHADDRM, adr_new>>8);
+  if ( (uint8_t)(adr_new)     !=  (uint8_t)(adr_current)     ) DaliSendData(DALI_SEARCHADDRL, adr_new);
+}
+
+bool DaliCompare() {
+  // Is the random address smaller or equal to the search address?
+  // As more than one device can reply, the reply gets garbled
+  uint8_t retry = 2;
+  while (retry > 0) {
+    // Compare is true if we received any activity on the bus as reply.
+    // Sometimes the reply is not registered... so only accept retry times 'no reply' as a real false compare
+    int rv = DaliSendWaitResponse(DALI_COMPARE, 0x00);
+    if (rv == 0xFF) return true;               // Yes reply
+    retry--;
+  }
+  return false;
+}
+
+uint32_t DaliFindAddress(void) {
+  // Find addr with binary search
+  uint32_t adr = 0x800000;
+  uint32_t addsub = 0x400000;
+  uint32_t adr_last = adr;
+  DaliSetSearchAddress(adr);
+  
+  while (addsub) {
+    DaliSetSearchAddressDifference(adr, adr_last);
+    adr_last = adr;
+    if (DaliCompare()) {                       // Returns true if searchadr > adr
+      adr -= addsub;
+    } else {
+      adr += addsub;
+    }
+    addsub >>= 1;
+  }
+  DaliSetSearchAddressDifference(adr, adr_last);
+  adr_last = adr;
+  if (!DaliCompare()) {
+    adr++;
+    DaliSetSearchAddressDifference(adr, adr_last);
+  }
+  return adr;
+}
+
+void DaliProgramShortAddress(uint8_t shortadr) {
+  // The slave shall store the received 6-bit address (AAAAAA) as a short address if it is selected.
+  DaliSendData(DALI_PROGRAM_SHORT_ADDRESS, (shortadr << 1) | 0x01);
+
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DLI: Set short address %d"), shortadr +1);
+}
+
+uint32_t DaliCommission(uint8_t init_arg) {
+  // init_arg=11111111 : all without short address
+  // init_arg=00000000 : all 
+  // init_arg=0AAAAAA1 : only for this shortadr
+  // returns number of new short addresses assigned
+  DaliSendData(DALI_BROADCAST_DP, 0);          // Turn all OFF
+  delay(100);                                  // Need 100ms pause before starting commissioning
+
+  uint8_t arr[64];
+  uint32_t sa;
+  for (sa = 0; sa < 64; sa++) {
+    arr[sa] = 0;
+  }
+
+  // Start commissioning
+  DaliSendData(DALI_INITIALISE, init_arg);
+  DaliSendData(DALI_RANDOMISE, 0x00);
+  delay(100);                                  // Need 100ms pause after RANDOMISE
+
+  // Find used short addresses (run always, seems to work better than without...)
+  for (sa = 0; sa < 64; sa++) {
+    int rv = DaliSendWaitResponse(sa << 1 | 1, DALI_QUERY_STATUS);
+    if (rv >= 0) {
+      if (init_arg != 0b00000000) {
+        arr[sa] = 1;                           // Remove address from list if not in "all" mode
+      }
+    }
+  }
+
+  uint32_t cnt = 0;
+  while (true) {                               // Find random addresses and assign unused short addresses
+    uint32_t adr = DaliFindAddress();
+    if (adr > 0xffffff) { break; }             // No more random addresses found -> exit
+    for (sa = 0; sa < 64; sa++) {              // Find first unused short address
+      if (0 == arr[sa]) { break; }
+    }
+    if( sa >= 64) { break; }                   // All 64 short addresses assigned -> exit
+    arr[sa] = 1;                               // Mark short address as used
+    cnt++;
+ 
+    DaliProgramShortAddress(sa);               // Assign short address
+    DaliSendData(DALI_WITHDRAW, 0x00);         // Remove the device from the search
+
+    delay(1);
+    OsWatchLoop();
+  }
+
+  DaliSendData(DALI_TERMINATE, 0x00);          // Terminate the DALI_INITIALISE command
+
+  for (sa = 0; sa < cnt; sa++) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DLI: Flash short address %d"), sa +1);
+
+    DaliSendData(sa << 1, 200);                // Flash assigned lights
+    delay(1000);
+    OsWatchLoop();
+    DaliSendData(sa << 1, 0);
+  }
+
+  return cnt;
+}
+
+/*********************************************************************************************\
+ * DALI group management
+\*********************************************************************************************/
+
+// Configuration commands - Send as second byte
+#define DALI_ADD_TO_GROUP0         0x0060  //  96  - Adds the slave to Group XXXX.
+#define DALI_REMOVE_FROM_GROUP0    0x0070  // 112  - Deletes the slave from Group XXXX.
 
 /***********************************************************/
 
@@ -318,7 +531,7 @@ void DaliInput(void) {
 
 #ifdef USE_LIGHT
   bool show_response = true;
-  if (DALI_BROADCAST_DP == Dali->address) {
+  if (DaliTarget2Address(Dali->target) == Dali->address) {
     uint8_t dimmer_old = changeUIntScale(Dali->dimmer, 0, 254, 0, 100);
     uint8_t power_old = Dali->power;
     Dali->power = (Dali->command);             // State
@@ -345,7 +558,7 @@ void DaliInput(void) {
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_PRFX_DALI));
   }
 #else
-  if (DALI_BROADCAST_DP == Dali->address) {
+  if (DaliTarget2Address(Dali->target) == Dali->address) {
     Dali->power = (Dali->command);             // State
     if (Dali->power) {
       Dali->dimmer = Dali->command;            // Value
@@ -366,7 +579,7 @@ bool DaliSetChannels(void) {
     } else {
       uint8_t value = ((uint8_t*)XdrvMailbox.data)[0];
       if (255 == value) { value = 254; }       // Max Dali value
-      DaliPower(value);
+      DaliSendData(DaliTarget2Address(Dali->target), value);
     }
   }
   return true;
@@ -409,84 +622,6 @@ bool DaliInit(void) {
 #else
   return false;
 #endif  // USE_LIGHT
-}
-
-/*********************************************************************************************\
- * Experimental - Not functioning
-\*********************************************************************************************/
-
-bool DaliMqtt(void) {
-/*
-  XdrvMailbox.topic = topic;
-  XdrvMailbox.index = strlen(topic);
-  XdrvMailbox.data = (char*)data;
-  XdrvMailbox.data_len = data_len;
-
-  This won't work as there is currently no subscribe done
-*/
-  char stopic[TOPSZ];
-  strncpy(stopic, XdrvMailbox.topic, TOPSZ);
-  XdrvMailbox.topic[TOPSZ - 1] = 0;
-
-  char *items[10];
-  char *p = stopic;
-  int cnt = 0;
-  do {
-    items[cnt] = strtok(p, "/");
-    cnt++;
-    p = nullptr;
-  } while (items[cnt - 1]);
-  cnt--; // represents the number of items
-
-  AddLog(LOG_LEVEL_DEBUG, PSTR("DLI: Cnt %d, Topic '%s', Payload '%s'"), cnt, XdrvMailbox.topic, XdrvMailbox.data);
-
-  if (cnt < 3) { // not for us?
-    AddLog(LOG_LEVEL_INFO, PSTR("DLI: Cnt %d < 3"), cnt);
-    return false;
-  }
-
-  int DALIindex = 0;
-  int ADRindex = 0;
-  int CMDindex = 0;
-  uint8_t DALIaddr = DALI_BROADCAST_DP;
-
-  if (strcasecmp_P(items[cnt - 3], PSTR(DALI_TOPIC)) != 0) {      // dali
-    // cmnd
-    if (strcasecmp_P(items[cnt - 2], PSTR(DALI_TOPIC)) != 0) {    // dali
-      // device
-      return false; // not for us
-    } else {
-      // cmnd/dali/percent
-      DALIindex = cnt - 2;
-      CMDindex = cnt - 1;
-    }
-  } else {
-    // dali/percent/2 20 
-    DALIindex = cnt - 3;
-    CMDindex = cnt - 2;
-    ADRindex = cnt - 1;
-    DALIaddr = ((int)CharToFloat(items[ADRindex]))  << 1;
-  }
-
-  uint8_t level;
-  uint8_t value = (uint8_t)CharToFloat(XdrvMailbox.data);
-  if (strcasecmp_P(items[CMDindex], PSTR("percent")) == 0) {
-    // dali/percent/
-    float percent = (float)(254 * value * 0.01);
-    level = (uint8_t)percent;
-  }
-  else if (strcasecmp_P(items[CMDindex], PSTR("level")) == 0) {
-    level = value;
-  }
-  else {
-    AddLog(LOG_LEVEL_INFO,PSTR("DLI: Command not recognized: %s"), items[CMDindex]);
-    return false; // not for us
-  }
-
-  AddLog(LOG_LEVEL_INFO,PSTR("DLI: Dali value %d on address %d"), value, DALIaddr);
-  DaliSendData(DALIaddr, level);
-
-  return true;
 }
 
 /*********************************************************************************************\
@@ -548,37 +683,109 @@ void CmndDali(void) {
   ResponseDali();
 }
 
+void CmndDaliTarget(void) {
+  // DaliTarget          - Set transmit target
+  // DaliTarget 0        - Set target to broadcast address
+  // DaliTarget 1..64    - Set target to short address
+  // DaliTarget 101..116 - Set target to group address
+  if (((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 64)) ||
+      ((XdrvMailbox.payload >= 101) && (XdrvMailbox.payload <= 116)) ||
+      (XdrvMailbox.payload == 0)) {
+    Dali->target = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(Dali->target);
+}
+
 void CmndDaliPower(void) {
-  // DaliPower 0      - Power off
-  // DaliPower 1      - Power on to last dimmer state
-  // DaliPower 2      - Toggle power off or last dimmer state
-  // DaliPower 3..254 - Equals DaliDimmer command
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 254)) {
-    if (XdrvMailbox.payload <= 2) {
-      if (2 == XdrvMailbox.payload) {
-        XdrvMailbox.payload = (Dali->power) ? 0 : 1;
+  // DaliPower 0       - Broadcast power off
+  // DaliPower 1       - Broadcast power on to last dimmer state
+  // DaliPower 2       - Broadcast toggle power off or last dimmer state
+  // DaliPower 3..254  - Broadcast equals DaliDimmer command
+  // DaliPower 0..254  - Broadcast control
+  // DaliPower0 0..254 - Broadcast control (= DaliPower)
+  // DaliPower1 0..254 - Short address 0 control
+  // DaliPower3 0..254 - Short address 2 control
+  if (((XdrvMailbox.index >= 0) && (XdrvMailbox.index <= 64)) ||
+      ((XdrvMailbox.index >= 101) && (XdrvMailbox.index <= 116))) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 254)) {
+      if (XdrvMailbox.payload <= 2) {
+        if (2 == XdrvMailbox.payload) {
+          XdrvMailbox.payload = (Dali->power) ? 0 : 1;
+        }
+        if (1 == XdrvMailbox.payload) {
+          XdrvMailbox.payload = Dali->dimmer;
+        }
       }
-      if (1 == XdrvMailbox.payload) {
-        XdrvMailbox.payload = Dali->dimmer;
+      uint32_t DALIaddr = DALI_BROADCAST_DP;
+      if (XdrvMailbox.index >= 101) {
+        DALIaddr = ((XdrvMailbox.index -101) << 1) | 0x80;  // Group address
       }
+      else if ((XdrvMailbox.index > 0) && XdrvMailbox.usridx) {
+        DALIaddr = (XdrvMailbox.index -1) << 1;  // Short address
+      }
+      DaliSendData(DALIaddr, XdrvMailbox.payload);
     }
-    DaliPower(XdrvMailbox.payload);
   }
   ResponseDali();
 }
 
 void CmndDaliDimmer(void) {
-  // DaliDimmer 0..100 - Set power off or dimmer state
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-    uint8_t dimmer = changeUIntScale(XdrvMailbox.payload, 0, 100, 0, 254);
-    DaliPower(dimmer);
+  // DaliDimmer 0..100  - Broadcast set power off or dimmer state
+  // DaliDimmer0 0..100 - Broadcast set power off or dimmer state
+  // DaliDimmer1 0..100 - Short address 0 set power off or dimmer state
+  // DaliDimmer3 0..100 - Short address 2 set power off or dimmer state
+  if (((XdrvMailbox.index >= 0) && (XdrvMailbox.index <= 64)) ||
+      ((XdrvMailbox.index >= 101) && (XdrvMailbox.index <= 116))) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
+      uint8_t dimmer = changeUIntScale(XdrvMailbox.payload, 0, 100, 0, 254);
+      uint32_t DALIaddr = DALI_BROADCAST_DP;
+      if (XdrvMailbox.index >= 101) {
+        DALIaddr = ((XdrvMailbox.index -101) << 1) | 0x80;  // Group address
+      }
+      else if ((XdrvMailbox.index > 0) && XdrvMailbox.usridx) {
+        DALIaddr = (XdrvMailbox.index -1) << 1;  // Short address
+      }
+      DaliSendData(DALIaddr, dimmer);
+    }
   }
   ResponseDali();
 }
 
+void CmndDaliGroup(void) {
+  // DaliGroup1 1,2   - Add device 1 and 2 to group 1
+  // DaliGroup1 -1,2  - Remove device 1 and 2 to group 1
+  if ((XdrvMailbox.index >= 1) && (XdrvMailbox.index <= 16)) {
+    if (XdrvMailbox.data_len) {
+      uint32_t command = DALI_ADD_TO_GROUP0;
+      if ('+' == XdrvMailbox.data[0]) {        // Add devices
+        XdrvMailbox.data++;
+        XdrvMailbox.data_len--;
+      }
+      else if ('-' == XdrvMailbox.data[0]) {   // Remove devices
+        command = DALI_REMOVE_FROM_GROUP0;
+        XdrvMailbox.data++;
+        XdrvMailbox.data_len--;
+      }
+      uint32_t argc = ArgC();                  // Number of devices
+      if (argc) {
+        command |= (XdrvMailbox.index -1);
+        uint32_t sas[argc];
+        ParseParameters(argc, sas);
+        for (uint32_t arg = 0; arg < argc; arg++) {
+          uint32_t sa = sas[arg] -1;
+          if (sa <= 63) {
+            DaliSendData(sa << 1 | 0x01, command);
+          }
+        }
+        ResponseCmndDone();
+      }
+    }
+  }
+}
+
 void CmndDaliSend(void) {
   // Send command
-  // Setting bit 8 will repeat command twice
+  // Setting bit 8 will repeat command once
   // DaliSend 0x1a5,255  - DALI Initialise (send twice)
   uint32_t values[2] = { 0 };
   uint32_t params = ParseParameters(2, values);
@@ -590,13 +797,27 @@ void CmndDaliSend(void) {
 
 void CmndDaliQuery(void) {
   // Send command and return response or -1 (no response within DALI_TIMEOUT)
-  // Setting bit 8 will repeat command twice
+  // Setting bit 8 will repeat command once
   // DaliQuery 0xff,0x90  - DALI Query status
   // DaliQuery 0xff,144   - DALI Query status
   uint32_t values[2] = { 0 };
   uint32_t params = ParseParameters(2, values);
   if (2 == params) {
     int result = DaliSendWaitResponse(values[0] &0x1FF, values[1] &0xFF);
+    ResponseCmndNumber(result);
+  }
+}
+
+void CmndDaliCommission(void) {
+  // Commission short addresses
+  // DaliCommission 1     - Reset and commission short addresses
+  // DaliCommission 2     - Commission unassigned short addresses
+  if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 2)) {
+    uint32_t init_arg = 0x00;                  // Commission all
+    if (2 == XdrvMailbox.payload) {
+      init_arg = 0xFF;                         // Commission all without short addresses
+    }
+    int result = DaliCommission(init_arg);
     ResponseCmndNumber(result);
   }
 }
@@ -638,9 +859,6 @@ bool Xdrv75(uint32_t function) {
     switch (function) {
       case FUNC_LOOP:
         DaliInput();
-        break;
-      case FUNC_MQTT_DATA:
-        result = DaliMqtt();
         break;
 #ifdef USE_LIGHT
       case FUNC_SET_CHANNELS:
