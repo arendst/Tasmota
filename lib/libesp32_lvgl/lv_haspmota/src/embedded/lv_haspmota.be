@@ -136,7 +136,8 @@ class lvh_root
     return def () end
   end
   def _delete()
-    # to be overriden
+    # remove from page
+    self._page.remove_obj(self.id)
   end
  
   #################################################################################
@@ -668,8 +669,7 @@ class lvh_obj : lvh_root
     self.remove_text_rule()
     if (self._lv_label)   self._lv_label.del()    self._lv_label = nil    end
     if (self._lv_obj)     self._lv_obj.del()      self._lv_obj = nil      end
-    # remove from page
-    self._page.remove_obj(self.id)
+    super(self)._delete()
   end
 
   #====================================================================
@@ -1869,6 +1869,7 @@ class lvh_scale_section : lvh_root
     self._style10 = nil
     self._style30.del()
     self._style30 = nil
+    super(self)._delete()
   end
 
   #- ------------------------------------------------------------#
@@ -2365,14 +2366,43 @@ class lvh_page
 
     # create a global for this page of form p<page_number>, ex `p1`
     # create a global for the page attributes as p<page_number>b0, ex `p1b0`
-    global.("p" + str(self._page_id)) = self
-    global.("p" + str(self._page_id) + "b0") = obj_scr
+    global.(f"p{self._page_id}") = self
+    global.(f"p{self._page_id}b0") = obj_scr
   end
 
   #####################################################################
   # General Setters and Getters
   #####################################################################
   
+  #- ------------------------------------------------------------#
+  #  Internal utility functions
+  #
+  #  Mapping of virtual attributes
+  #
+  #- ------------------------------------------------------------#
+  # `member` virtual getter
+  #- ------------------------------------------------------------#
+  def member(k)
+    import string
+    import introspect
+
+    if string.startswith(k, "set_") || string.startswith(k, "get_")   return end
+
+    # if attribute name is in ignore list, abort
+    # if self._attr_ignore.find(k) != nil return end
+    # we don't need an ignore list for pages
+
+    # first check if there is a method named `get_X()`
+    var f = introspect.get(self, "get_" + k)  # call self method
+    if type(f) == 'function'
+      # print(f">>>: getmember local method get_{k}")
+      return f(self)
+    end
+
+    # fallback to exception if attribute unknown or not a function
+    return module("undefined")
+  end
+
   #====================================================================
   # retrieve lvgl screen object for this page
   #====================================================================
@@ -2416,34 +2446,39 @@ class lvh_page
   #====================================================================
   #  `delete` special attribute used to delete the object
   #====================================================================
-  # def set_delete(v)
-  #   raise "type_error", "you cannot assign to 'delete'"
-  # end
-  # def get_delete()
-  #   self._delete()
-  #   return def () end
-  # end
-  def delete()
+  def get_clear()
+    self._clear()
+    return def () end
+  end
+  def _clear()
     # iterate on all objects and try to delete
     # we first get a copy of all ids so we can delete and continue iterating
     # without fearing about an infinite loop
-    var page_ids = []
+    var ids = []
     for id: self._obj_id.keys()
-      page_ids.push(id)
+      ids.push(id)
     end
     # we iterate until the array is empty
     var idx = 0
-    while idx < size(page_ids)
-      var page_id = page_ids[idx]
+    while idx < size(ids)
+      var page_id = ids[idx]
       if (page_id != 0) && self._obj_id.contains(page_id)
         # first check if the id is still in the page - it could have been already removed if it's a sub-object
-        self._obj_id[page_id].delete()
+        self._obj_id[page_id]._delete()
       end
       idx += 1
     end
     self._obj_id = {}       # clear map
-    # remove from page
+  end
+  def get_delete()
+    self._delete()
+    return def () end
+  end
+  def _delete()
+    # remove from page, also change page if this is the current one
     self._hm._remove_page(self._page_id)
+    # clear content
+    self._clear()
   end
 
   #====================================================================
@@ -2790,37 +2825,59 @@ class HASPmota
   #  Execute a page changing action from string `action`
   #
   #  Arg1 `action` can be `prev`, `next`, `back` or `p<number>`
-  #  Returns: nil
+  #       of `delete` if we are deleting the current page
+  #  duration: in ms, default 500 ms
+  #  anim: -1 right to left, 1 left to right (default), `nil` auto, 0 none
+  #  Returns: the target page object if changed, or `nil` if still on same page
   #====================================================================
-  def page_show(action)
+  def page_show(action, anim, duration)
+    # resolve between page numbers
+    # p1 is either a number or nil (stored value)
+    # p2 is the default value
+    # l is the list of page ids
+    def to_page_resolve(p1, p_def, l)
+      if (p1 != nil) && (l.find(p1) != nil)
+        return p1
+      else
+        return p_def
+      end
+    end
     # action can be `prev`, `next`, `back`, or `p<number>` like `p1`
     var to_page = nil
-    var cur_page = self.lvh_pages[self.lvh_page_cur_idx]
+    var cur_page = self.get_page_cur()
     var sorted_pages_list =  self.pages_list_sorted(self.lvh_page_cur_idx)
-    if size(sorted_pages_list) <= 1  return end     # if only 1 page, do nothing
+
+    if size(sorted_pages_list) <= 1     # if only 1 page, do nothing
+      return nil
+    end
+
     # handle prev/next/back values
     # get the corresponding value from page object,
     # if absent, revert to next page, previous page and page 1
     # print("sorted_pages_list",sorted_pages_list)
     if action == 'prev'
-      to_page = int(cur_page.prev)
-      if to_page == nil   to_page = sorted_pages_list[-1] end   # if no prev, take the previous page
+      to_page = to_page_resolve(int(cur_page.prev), sorted_pages_list[-1], sorted_pages_list)
     elif action == 'next'
-      to_page = int(cur_page.next)
-      if to_page == nil   to_page = sorted_pages_list[1] end    # if no next, take the next page
+      to_page = to_page_resolve(int(cur_page.next), sorted_pages_list[1], sorted_pages_list)
     elif action == 'back'
-      to_page = int(cur_page.back)
-      if to_page == nil                                         # if no back, take first page
-        to_page = self.pages_list_sorted(nil)[0]
-      end                       
+      to_page = to_page_resolve(int(cur_page.back), self.pages_list_sorted(nil)[0], sorted_pages_list)
+    elif action == 'delete'
+      to_page = to_page_resolve(int(cur_page.back), self.pages_list_sorted(nil)[0], sorted_pages_list)
+      if (to_page == cur_page.id())
+        to_page = to_page_resolve(int(cur_page.next), sorted_pages_list[1], sorted_pages_list)
+      end
     elif self.re_page_target.match(action)
       # action is supposed to be `p<number>` format
-      to_page = int(action[1..-1])          # just skip first char and convert the rest to a string
+      to_page = to_page_resolve(int(action[1..-1]), nil #-default to nil-#, sorted_pages_list)
     end
 
     # print("to_page=",to_page)
-    if to_page != nil && to_page > 0                            # we have a target
-      self.lvh_pages[to_page].show()                            # switch to the target page
+    if (to_page != nil) && (to_page > 0)                          # we have a target
+      var to_page_obj = self.lvh_pages[to_page]
+      if (to_page_obj != nil)
+        to_page_obj.show(anim, duration)
+      end
+      return to_page_obj
     end
   end
 
@@ -2861,11 +2918,20 @@ class HASPmota
   #====================================================================
   def _remove_page(page_id)
     # check if we remove the active page
-    # TODO XXX
+    var cur_page_id = self.get_page_cur().id()
+    if (page_id == cur_page_id)
+      # if we try to delete the current page, move do main page
+      var to_page_obj = self.page_show("delete", 0, 0 #-no animation-#)    # get the target page as result
+      if (to_page_obj == nil)                       # we didn't change page
+        return
+      end
+    end
     # remove object from page object
     if self.lvh_pages.contains(page_id)
       self.lvh_pages.remove(page_id)
     end
+    # remove global for page
+    global.(f"p{page_id}") = nil
   end
 
   #====================================================================
