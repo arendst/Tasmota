@@ -8,8 +8,8 @@ if "FIRMWARE_SAFEBOOT" in build_flags:
   try:
     link_flags.pop(link_flags.index("-Wl,--wrap=panicHandler"))
   except:
-    do_nothing=""
+    pass
   try:
     link_flags.pop(link_flags.index("-Wl,--wrap=xt_unhandled_exception"))
   except:
-    do_nothing=""
+    pass
