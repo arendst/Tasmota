@@ -4,8 +4,8 @@
 \********************************************************************/
 #include "be_constobj.h"
 extern const bclass be_class_lvh_root;
-// compact class 'lvh_root' ktab size: 63, total: 95 (saved 256 bytes)
-static const bvalue be_ktab_class_lvh_root[63] = {
+// compact class 'lvh_root' ktab size: 65, total: 98 (saved 264 bytes)
+static const bvalue be_ktab_class_lvh_root[65] = {
   /* K0   */  be_nested_str_weak(_val_rule_formula),
   /* K1   */  be_nested_str_weak(_val_rule),
   /* K2   */  be_nested_str_weak(_page),
@@ -43,32 +43,34 @@ static const bvalue be_ktab_class_lvh_root[63] = {
   /* K34  */  be_nested_str_weak(remove_val_rule),
   /* K35  */  be_nested_str_weak(tasmota),
   /* K36  */  be_nested_str_weak(add_rule),
-  /* K37  */  be_nested_str_weak(get_text),
-  /* K38  */  be_const_class(be_class_lvh_root),
-  /* K39  */  be_nested_str_weak(_X23),
-  /* K40  */  be_nested_str_weak(color),
-  /* K41  */  be_nested_str_weak(introspect),
-  /* K42  */  be_nested_str_weak(COLOR_),
-  /* K43  */  be_nested_str_weak(toupper),
-  /* K44  */  be_nested_str_weak(get),
-  /* K45  */  be_nested_str_weak(_val_rule_function),
-  /* K46  */  be_nested_str_weak(_val),
-  /* K47  */  be_nested_str_weak(set_val),
-  /* K48  */  be_nested_str_weak(resize),
-  /* K49  */  be_nested_str_weak(_digit2part),
-  /* K50  */  be_nested_str_weak(_digit2state),
-  /* K51  */  be_nested_str_weak(invalid_X20style_X20suffix_X20_X2502i),
-  /* K52  */  be_nested_str_weak(value_error),
-  /* K53  */  be_nested_str_weak(remove_rule),
-  /* K54  */  be_nested_str_weak(HSP_X3A_X20failed_X20to_X20run_X20self_X2E_val_rule_function_X20_X2D_X20_X25s_X20_X28_X25s_X29),
-  /* K55  */  be_nested_str_weak(val),
-  /* K56  */  be_nested_str_weak(HSP_X3A_X20failed_X20to_X20run_X20self_X2E_text_rule_function_X20_X2D_X20_X25s_X20_X28_X25s_X29),
-  /* K57  */  be_nested_str_weak(),
-  /* K58  */  be_nested_str_weak(text),
-  /* K59  */  be_nested_str_weak(remove_text_rule),
-  /* K60  */  be_nested_str_weak(type_error),
-  /* K61  */  be_nested_str_weak(you_X20cannot_X20assign_X20to_X20_X27delete_X27),
-  /* K62  */  be_nested_str_weak(set_text),
+  /* K37  */  be_nested_str_weak(remove_obj),
+  /* K38  */  be_nested_str_weak(id),
+  /* K39  */  be_nested_str_weak(get_text),
+  /* K40  */  be_const_class(be_class_lvh_root),
+  /* K41  */  be_nested_str_weak(_X23),
+  /* K42  */  be_nested_str_weak(color),
+  /* K43  */  be_nested_str_weak(introspect),
+  /* K44  */  be_nested_str_weak(COLOR_),
+  /* K45  */  be_nested_str_weak(toupper),
+  /* K46  */  be_nested_str_weak(get),
+  /* K47  */  be_nested_str_weak(_val_rule_function),
+  /* K48  */  be_nested_str_weak(_val),
+  /* K49  */  be_nested_str_weak(set_val),
+  /* K50  */  be_nested_str_weak(resize),
+  /* K51  */  be_nested_str_weak(_digit2part),
+  /* K52  */  be_nested_str_weak(_digit2state),
+  /* K53  */  be_nested_str_weak(invalid_X20style_X20suffix_X20_X2502i),
+  /* K54  */  be_nested_str_weak(value_error),
+  /* K55  */  be_nested_str_weak(remove_rule),
+  /* K56  */  be_nested_str_weak(HSP_X3A_X20failed_X20to_X20run_X20self_X2E_val_rule_function_X20_X2D_X20_X25s_X20_X28_X25s_X29),
+  /* K57  */  be_nested_str_weak(val),
+  /* K58  */  be_nested_str_weak(HSP_X3A_X20failed_X20to_X20run_X20self_X2E_text_rule_function_X20_X2D_X20_X25s_X20_X28_X25s_X29),
+  /* K59  */  be_nested_str_weak(),
+  /* K60  */  be_nested_str_weak(text),
+  /* K61  */  be_nested_str_weak(remove_text_rule),
+  /* K62  */  be_nested_str_weak(type_error),
+  /* K63  */  be_nested_str_weak(you_X20cannot_X20assign_X20to_X20_X27delete_X27),
+  /* K64  */  be_nested_str_weak(set_text),
 };
 
 
@@ -625,7 +627,7 @@ be_local_closure(class_lvh_root_set_val_rule,   /* name */
 ********************************************************************/
 be_local_closure(class_lvh_root__delete,   /* name */
   be_nested_proto(
-    1,                          /* nstack */
+    4,                          /* nstack */
     1,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
@@ -636,8 +638,12 @@ be_local_closure(class_lvh_root__delete,   /* name */
     &be_ktab_class_lvh_root,     /* shared constants */
     be_str_weak(_delete),
     &be_const_str_solidified,
-    ( &(const binstruction[ 1]) {  /* code */
-      0x80000000,  //  0000  RET	0
+    ( &(const binstruction[ 5]) {  /* code */
+      0x88040102,  //  0000  GETMBR	R1	R0	K2
+      0x8C040325,  //  0001  GETMET	R1	R1	K37
+      0x880C0126,  //  0002  GETMBR	R3	R0	K38
+      0x7C040400,  //  0003  CALL	R1	2
+      0x80000000,  //  0004  RET	0
     })
   )
 );
@@ -661,7 +667,7 @@ be_local_closure(class_lvh_root_get_value_str,   /* name */
     be_str_weak(get_value_str),
     &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
-      0x8C040125,  //  0000  GETMET	R1	R0	K37
+      0x8C040127,  //  0000  GETMET	R1	R0	K39
       0x7C040200,  //  0001  CALL	R1	1
       0x80040200,  //  0002  RET	1	R1
     })
@@ -785,17 +791,17 @@ be_local_closure(class_lvh_root_parse_color,   /* name */
     be_str_weak(parse_color),
     &be_const_str_solidified,
     ( &(const binstruction[40]) {  /* code */
-      0x58040026,  //  0000  LDCONST	R1	K38
+      0x58040028,  //  0000  LDCONST	R1	K40
       0x84080000,  //  0001  CLOSURE	R2	P0
       0x600C0008,  //  0002  GETGBL	R3	G8
       0x5C100000,  //  0003  MOVE	R4	R0
       0x7C0C0200,  //  0004  CALL	R3	1
       0x5C000600,  //  0005  MOVE	R0	R3
       0x940C0112,  //  0006  GETIDX	R3	R0	K18
-      0x1C0C0727,  //  0007  EQ	R3	R3	K39
+      0x1C0C0729,  //  0007  EQ	R3	R3	K41
       0x780E0007,  //  0008  JMPF	R3	#0011
       0xB80E1000,  //  0009  GETNGBL	R3	K8
-      0x8C0C0728,  //  000A  GETMET	R3	R3	K40
+      0x8C0C072A,  //  000A  GETMET	R3	R3	K42
       0x5C140400,  //  000B  MOVE	R5	R2
       0x5C180000,  //  000C  MOVE	R6	R0
       0x7C140200,  //  000D  CALL	R5	1
@@ -803,12 +809,12 @@ be_local_closure(class_lvh_root_parse_color,   /* name */
       0x80040600,  //  000F  RET	1	R3
       0x70020011,  //  0010  JMP		#0023
       0xA40E1A00,  //  0011  IMPORT	R3	K13
-      0xA4125200,  //  0012  IMPORT	R4	K41
-      0x8C14072B,  //  0013  GETMET	R5	R3	K43
+      0xA4125600,  //  0012  IMPORT	R4	K43
+      0x8C14072D,  //  0013  GETMET	R5	R3	K45
       0x5C1C0000,  //  0014  MOVE	R7	R0
       0x7C140400,  //  0015  CALL	R5	2
-      0x00165405,  //  0016  ADD	R5	K42	R5
-      0x8C18092C,  //  0017  GETMET	R6	R4	K44
+      0x00165805,  //  0016  ADD	R5	K44	R5
+      0x8C18092E,  //  0017  GETMET	R6	R4	K46
       0xB8221000,  //  0018  GETNGBL	R8	K8
       0x5C240A00,  //  0019  MOVE	R9	R5
       0x7C180600,  //  001A  CALL	R6	3
@@ -816,12 +822,12 @@ be_local_closure(class_lvh_root_parse_color,   /* name */
       0x201C0C07,  //  001C  NE	R7	R6	R7
       0x781E0004,  //  001D  JMPF	R7	#0023
       0xB81E1000,  //  001E  GETNGBL	R7	K8
-      0x8C1C0F28,  //  001F  GETMET	R7	R7	K40
+      0x8C1C0F2A,  //  001F  GETMET	R7	R7	K42
       0x5C240C00,  //  0020  MOVE	R9	R6
       0x7C1C0400,  //  0021  CALL	R7	2
       0x80040E00,  //  0022  RET	1	R7
       0xB80E1000,  //  0023  GETNGBL	R3	K8
-      0x8C0C0728,  //  0024  GETMET	R3	R3	K40
+      0x8C0C072A,  //  0024  GETMET	R3	R3	K42
       0x58140012,  //  0025  LDCONST	R5	K18
       0x7C0C0400,  //  0026  CALL	R3	2
       0x80040600,  //  0027  RET	1	R3
@@ -861,7 +867,7 @@ be_local_closure(class_lvh_root_set_val_rule_formula,   /* name */
       0x7C0C0200,  //  000A  CALL	R3	1
       0x5C100600,  //  000B  MOVE	R4	R3
       0x7C100000,  //  000C  CALL	R4	0
-      0x90025A04,  //  000D  SETMBR	R0	K45	R4
+      0x90025E04,  //  000D  SETMBR	R0	K47	R4
       0xA8040001,  //  000E  EXBLK	1	1
       0x7002000B,  //  000F  JMP		#001C
       0xAC0C0002,  //  0010  CATCH	R3	0	2
@@ -900,12 +906,12 @@ be_local_closure(class_lvh_root_post_config,   /* name */
     be_str_weak(post_config),
     &be_const_str_solidified,
     ( &(const binstruction[ 8]) {  /* code */
-      0x8804012E,  //  0000  GETMBR	R1	R0	K46
+      0x88040130,  //  0000  GETMBR	R1	R0	K48
       0x4C080000,  //  0001  LDNIL	R2
       0x20040202,  //  0002  NE	R1	R1	R2
       0x78060002,  //  0003  JMPF	R1	#0007
-      0x8C04012F,  //  0004  GETMET	R1	R0	K47
-      0x880C012E,  //  0005  GETMBR	R3	R0	K46
+      0x8C040131,  //  0004  GETMET	R1	R0	K49
+      0x880C0130,  //  0005  GETMBR	R3	R0	K48
       0x7C040400,  //  0006  CALL	R1	2
       0x80000000,  //  0007  RET	0
     })
@@ -931,7 +937,7 @@ be_local_closure(class_lvh_root_remove_trailing_zeroes,   /* name */
     be_str_weak(remove_trailing_zeroes),
     &be_const_str_solidified,
     ( &(const binstruction[24]) {  /* code */
-      0x58040026,  //  0000  LDCONST	R1	K38
+      0x58040028,  //  0000  LDCONST	R1	K40
       0x6008000C,  //  0001  GETGBL	R2	G12
       0x5C0C0000,  //  0002  MOVE	R3	R0
       0x7C080200,  //  0003  CALL	R2	1
@@ -948,7 +954,7 @@ be_local_closure(class_lvh_root_remove_trailing_zeroes,   /* name */
       0x7001FFF5,  //  000E  JMP		#0005
       0x24100712,  //  000F  GT	R4	R3	K18
       0x78120005,  //  0010  JMPF	R4	#0017
-      0x8C100130,  //  0011  GETMET	R4	R0	K48
+      0x8C100132,  //  0011  GETMET	R4	R0	K50
       0x6018000C,  //  0012  GETGBL	R6	G12
       0x5C1C0000,  //  0013  MOVE	R7	R0
       0x7C180200,  //  0014  CALL	R6	1
@@ -1042,11 +1048,11 @@ be_local_closure(class_lvh_root_digits_to_style,   /* name */
       0x28140512,  //  000B  GE	R5	R2	K18
       0x78160008,  //  000C  JMPF	R5	#0016
       0x6014000C,  //  000D  GETGBL	R5	G12
-      0x88180131,  //  000E  GETMBR	R6	R0	K49
+      0x88180133,  //  000E  GETMBR	R6	R0	K51
       0x7C140200,  //  000F  CALL	R5	1
       0x14140405,  //  0010  LT	R5	R2	R5
       0x78160003,  //  0011  JMPF	R5	#0016
-      0x88140131,  //  0012  GETMBR	R5	R0	K49
+      0x88140133,  //  0012  GETMBR	R5	R0	K51
       0x94140A02,  //  0013  GETIDX	R5	R5	R2
       0x30100805,  //  0014  OR	R4	R4	R5
       0x70020000,  //  0015  JMP		#0017
@@ -1054,11 +1060,11 @@ be_local_closure(class_lvh_root_digits_to_style,   /* name */
       0x28140712,  //  0017  GE	R5	R3	K18
       0x78160008,  //  0018  JMPF	R5	#0022
       0x6014000C,  //  0019  GETGBL	R5	G12
-      0x88180132,  //  001A  GETMBR	R6	R0	K50
+      0x88180134,  //  001A  GETMBR	R6	R0	K52
       0x7C140200,  //  001B  CALL	R5	1
       0x14140605,  //  001C  LT	R5	R3	R5
       0x78160003,  //  001D  JMPF	R5	#0022
-      0x88140132,  //  001E  GETMBR	R5	R0	K50
+      0x88140134,  //  001E  GETMBR	R5	R0	K52
       0x94140A03,  //  001F  GETIDX	R5	R5	R3
       0x30100805,  //  0020  OR	R4	R4	R5
       0x70020000,  //  0021  JMP		#0023
@@ -1067,10 +1073,10 @@ be_local_closure(class_lvh_root_digits_to_style,   /* name */
       0x1C140805,  //  0024  EQ	R5	R4	R5
       0x78160004,  //  0025  JMPF	R5	#002B
       0x60140018,  //  0026  GETGBL	R5	G24
-      0x58180033,  //  0027  LDCONST	R6	K51
+      0x58180035,  //  0027  LDCONST	R6	K53
       0x5C1C0200,  //  0028  MOVE	R7	R1
       0x7C140400,  //  0029  CALL	R5	2
-      0xB0066805,  //  002A  RAISE	1	K52	R5
+      0xB0066C05,  //  002A  RAISE	1	K54	R5
       0x80040800,  //  002B  RET	1	R4
     })
   )
@@ -1100,7 +1106,7 @@ be_local_closure(class_lvh_root_remove_val_rule,   /* name */
       0x20040202,  //  0002  NE	R1	R1	R2
       0x78060004,  //  0003  JMPF	R1	#0009
       0xB8064600,  //  0004  GETNGBL	R1	K35
-      0x8C040335,  //  0005  GETMET	R1	R1	K53
+      0x8C040337,  //  0005  GETMET	R1	R1	K55
       0x880C0101,  //  0006  GETMBR	R3	R0	K1
       0x5C100000,  //  0007  MOVE	R4	R0
       0x7C040600,  //  0008  CALL	R1	3
@@ -1136,7 +1142,7 @@ be_local_closure(class_lvh_root_val_rule_matched,   /* name */
       0x780E0001,  //  0005  JMPF	R3	#0008
       0x500C0000,  //  0006  LDBOOL	R3	0	0
       0x80040600,  //  0007  RET	1	R3
-      0x880C012D,  //  0008  GETMBR	R3	R0	K45
+      0x880C012F,  //  0008  GETMBR	R3	R0	K47
       0x4C100000,  //  0009  LDNIL	R4
       0x20100604,  //  000A  NE	R4	R3	R4
       0x78120011,  //  000B  JMPF	R4	#001E
@@ -1151,7 +1157,7 @@ be_local_closure(class_lvh_root_val_rule_matched,   /* name */
       0x70020007,  //  0014  JMP		#001D
       0x60180001,  //  0015  GETGBL	R6	G1
       0x601C0018,  //  0016  GETGBL	R7	G24
-      0x58200036,  //  0017  LDCONST	R8	K54
+      0x58200038,  //  0017  LDCONST	R8	K56
       0x5C240800,  //  0018  MOVE	R9	R4
       0x5C280A00,  //  0019  MOVE	R10	R5
       0x7C1C0600,  //  001A  CALL	R7	3
@@ -1161,7 +1167,7 @@ be_local_closure(class_lvh_root_val_rule_matched,   /* name */
       0x60100009,  //  001E  GETGBL	R4	G9
       0x5C140400,  //  001F  MOVE	R5	R2
       0x7C100200,  //  0020  CALL	R4	1
-      0x90026E04,  //  0021  SETMBR	R0	K55	R4
+      0x90027204,  //  0021  SETMBR	R0	K57	R4
       0x50100000,  //  0022  LDBOOL	R4	0	0
       0x80040800,  //  0023  RET	1	R4
     })
@@ -1211,7 +1217,7 @@ be_local_closure(class_lvh_root_text_rule_matched,   /* name */
       0x70020007,  //  0015  JMP		#001E
       0x60140001,  //  0016  GETGBL	R5	G1
       0x60180018,  //  0017  GETGBL	R6	G24
-      0x581C0038,  //  0018  LDCONST	R7	K56
+      0x581C003A,  //  0018  LDCONST	R7	K58
       0x5C200600,  //  0019  MOVE	R8	R3
       0x5C240800,  //  001A  MOVE	R9	R4
       0x7C180600,  //  001B  CALL	R6	3
@@ -1230,8 +1236,8 @@ be_local_closure(class_lvh_root_text_rule_matched,   /* name */
       0x7C100400,  //  0028  CALL	R4	2
       0x5C0C0800,  //  0029  MOVE	R3	R4
       0x70020000,  //  002A  JMP		#002C
-      0x580C0039,  //  002B  LDCONST	R3	K57
-      0x90027403,  //  002C  SETMBR	R0	K58	R3
+      0x580C003B,  //  002B  LDCONST	R3	K59
+      0x90027803,  //  002C  SETMBR	R0	K60	R3
       0x50100000,  //  002D  LDBOOL	R4	0	0
       0x80040800,  //  002E  RET	1	R4
     })
@@ -1262,7 +1268,7 @@ be_local_closure(class_lvh_root_is_color_attribute,   /* name */
       0x60140008,  //  0002  GETGBL	R5	G8
       0x5C180200,  //  0003  MOVE	R6	R1
       0x7C140200,  //  0004  CALL	R5	1
-      0x58180028,  //  0005  LDCONST	R6	K40
+      0x5818002A,  //  0005  LDCONST	R6	K42
       0x7C0C0600,  //  0006  CALL	R3	3
       0x80040600,  //  0007  RET	1	R3
     })
@@ -1338,7 +1344,7 @@ be_local_closure(class_lvh_root_set_text_rule,   /* name */
     be_str_weak(set_text_rule),
     &be_const_str_solidified,
     ( &(const binstruction[14]) {  /* code */
-      0x8C08013B,  //  0000  GETMET	R2	R0	K59
+      0x8C08013D,  //  0000  GETMET	R2	R0	K61
       0x7C080200,  //  0001  CALL	R2	1
       0x60080008,  //  0002  GETGBL	R2	G8
       0x5C0C0200,  //  0003  MOVE	R3	R1
@@ -1380,7 +1386,7 @@ be_local_closure(class_lvh_root_remove_text_rule,   /* name */
       0x20040202,  //  0002  NE	R1	R1	R2
       0x78060004,  //  0003  JMPF	R1	#0009
       0xB8064600,  //  0004  GETNGBL	R1	K35
-      0x8C040335,  //  0005  GETMET	R1	R1	K53
+      0x8C040337,  //  0005  GETMET	R1	R1	K55
       0x880C0121,  //  0006  GETMBR	R3	R0	K33
       0x5C100000,  //  0007  MOVE	R4	R0
       0x7C040600,  //  0008  CALL	R1	3
@@ -1408,7 +1414,7 @@ be_local_closure(class_lvh_root_set_delete,   /* name */
     be_str_weak(set_delete),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
-      0xB006793D,  //  0000  RAISE	1	K60	K61
+      0xB0067D3F,  //  0000  RAISE	1	K62	K63
       0x80000000,  //  0001  RET	0
     })
   )
@@ -1433,7 +1439,7 @@ be_local_closure(class_lvh_root_set_value_str,   /* name */
     be_str_weak(set_value_str),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
-      0x8C08013E,  //  0000  GETMET	R2	R0	K62
+      0x8C080140,  //  0000  GETMET	R2	R0	K64
       0x5C100200,  //  0001  MOVE	R4	R1
       0x7C080400,  //  0002  CALL	R2	2
       0x80000000,  //  0003  RET	0
@@ -1572,7 +1578,7 @@ be_local_class(lvh_root,
     })),
     be_str_weak(lvh_root)
 );
-// compact class 'lvh_obj' ktab size: 136, total: 285 (saved 1192 bytes)
+// compact class 'lvh_obj' ktab size: 136, total: 283 (saved 1176 bytes)
 static const bvalue be_ktab_class_lvh_obj[136] = {
   /* K0   */  be_nested_str_weak(_action),
   /* K1   */  be_nested_str_weak(_lv_label),
@@ -1608,81 +1614,81 @@ static const bvalue be_ktab_class_lvh_obj[136] = {
   /* K31  */  be_nested_str_weak(remove_val_rule),
   /* K32  */  be_nested_str_weak(remove_text_rule),
   /* K33  */  be_nested_str_weak(del),
-  /* K34  */  be_nested_str_weak(remove_obj),
-  /* K35  */  be_nested_str_weak(id),
-  /* K36  */  be_nested_str_weak(get_text_font),
-  /* K37  */  be_nested_str_weak(get_style_radius),
-  /* K38  */  be_nested_str_weak(set_text_color),
-  /* K39  */  be_nested_str_weak(get_style_text_color),
-  /* K40  */  be_nested_str_weak(get_x),
-  /* K41  */  be_nested_str_weak(get_long_mode),
-  /* K42  */  be_nested_str_weak(_val),
-  /* K43  */  be_nested_str_weak(set_value),
-  /* K44  */  be_nested_str_weak(set_enabled),
-  /* K45  */  be_nested_str_weak(string),
-  /* K46  */  be_nested_str_weak(startswith),
-  /* K47  */  be_nested_str_weak(set_),
-  /* K48  */  be_nested_str_weak(get_),
-  /* K49  */  be_const_int(3),
-  /* K50  */  be_nested_str_weak(byte),
-  /* K51  */  be_const_int(2147483647),
-  /* K52  */  be_nested_str_weak(digits_to_style),
-  /* K53  */  be_nested_str_weak(_attr_ignore),
-  /* K54  */  be_nested_str_weak(find),
-  /* K55  */  be_nested_str_weak(get),
-  /* K56  */  be_nested_str_weak(function),
-  /* K57  */  be_nested_str_weak(_attr_map),
-  /* K58  */  be_nested_str_weak(get_style_),
-  /* K59  */  be_nested_str_weak(undefined),
-  /* K60  */  be_nested_str_weak(set_style_pad_top),
-  /* K61  */  be_nested_str_weak(clear_state),
-  /* K62  */  be_nested_str_weak(add_state),
-  /* K63  */  be_nested_str_weak(check_label),
-  /* K64  */  be_nested_str_weak(set_x),
-  /* K65  */  be_nested_str_weak(init),
-  /* K66  */  be_nested_str_weak(STATE_CHECKED),
-  /* K67  */  be_nested_str_weak(parse_font),
-  /* K68  */  be_nested_str_weak(set_style_text_font),
-  /* K69  */  be_nested_str_weak(get_enabled),
-  /* K70  */  be_nested_str_weak(set_style_pad_right),
-  /* K71  */  be_nested_str_weak(),
-  /* K72  */  be_nested_str_weak(real),
-  /* K73  */  be_nested_str_weak(math),
-  /* K74  */  be_nested_str_weak(round),
-  /* K75  */  be_nested_str_weak(endswith),
-  /* K76  */  be_nested_str_weak(_X25),
-  /* K77  */  be_nested_str_weak(pct),
-  /* K78  */  be_nested_str_weak(is_color_attribute),
-  /* K79  */  be_nested_str_weak(set_style_),
-  /* K80  */  be_nested_str_weak(HSP_X3A_X20unknown_X20attribute_X3A),
-  /* K81  */  be_nested_str_weak(set_text_font),
-  /* K82  */  be_nested_str_weak(toupper),
-  /* K83  */  be_nested_str_weak(TRUE),
-  /* K84  */  be_nested_str_weak(FALSE),
-  /* K85  */  be_nested_str_weak(OBJ_FLAG_CLICKABLE),
-  /* K86  */  be_nested_str_weak(get_style_text_align),
-  /* K87  */  be_nested_str_weak(TEXT_ALIGN_LEFT),
-  /* K88  */  be_nested_str_weak(left),
-  /* K89  */  be_nested_str_weak(TEXT_ALIGN_CENTER),
-  /* K90  */  be_nested_str_weak(center),
-  /* K91  */  be_nested_str_weak(TEXT_ALIGN_RIGHT),
-  /* K92  */  be_nested_str_weak(right),
-  /* K93  */  be_nested_str_weak(get_style_pad_top),
-  /* K94  */  be_nested_str_weak(set_style_radius),
-  /* K95  */  be_nested_str_weak(get_code),
-  /* K96  */  be_nested_str_weak(action),
-  /* K97  */  be_nested_str_weak(EVENT_CLICKED),
-  /* K98  */  be_nested_str_weak(tasmota),
-  /* K99  */  be_nested_str_weak(set_timer),
-  /* K100 */  be_nested_str_weak(_event_map),
-  /* K101 */  be_nested_str_weak(json),
-  /* K102 */  be_nested_str_weak(EVENT_VALUE_CHANGED),
-  /* K103 */  be_nested_str_weak(module),
-  /* K104 */  be_nested_str_weak(_X2C_X22val_X22_X3A_X25s),
-  /* K105 */  be_nested_str_weak(dump),
-  /* K106 */  be_nested_str_weak(_X2C_X22text_X22_X3A_X25s),
-  /* K107 */  be_nested_str_weak(_X7B_X22hasp_X22_X3A_X7B_X22p_X25ib_X25i_X22_X3A_X7B_X22event_X22_X3A_X22_X25s_X22_X25s_X7D_X7D_X7D),
-  /* K108 */  be_nested_str_weak(_page_id),
+  /* K34  */  be_nested_str_weak(_delete),
+  /* K35  */  be_nested_str_weak(get_text_font),
+  /* K36  */  be_nested_str_weak(get_style_radius),
+  /* K37  */  be_nested_str_weak(set_text_color),
+  /* K38  */  be_nested_str_weak(get_style_text_color),
+  /* K39  */  be_nested_str_weak(get_x),
+  /* K40  */  be_nested_str_weak(get_long_mode),
+  /* K41  */  be_nested_str_weak(_val),
+  /* K42  */  be_nested_str_weak(set_value),
+  /* K43  */  be_nested_str_weak(set_enabled),
+  /* K44  */  be_nested_str_weak(string),
+  /* K45  */  be_nested_str_weak(startswith),
+  /* K46  */  be_nested_str_weak(set_),
+  /* K47  */  be_nested_str_weak(get_),
+  /* K48  */  be_const_int(3),
+  /* K49  */  be_nested_str_weak(byte),
+  /* K50  */  be_const_int(2147483647),
+  /* K51  */  be_nested_str_weak(digits_to_style),
+  /* K52  */  be_nested_str_weak(_attr_ignore),
+  /* K53  */  be_nested_str_weak(find),
+  /* K54  */  be_nested_str_weak(get),
+  /* K55  */  be_nested_str_weak(function),
+  /* K56  */  be_nested_str_weak(_attr_map),
+  /* K57  */  be_nested_str_weak(get_style_),
+  /* K58  */  be_nested_str_weak(undefined),
+  /* K59  */  be_nested_str_weak(set_style_pad_top),
+  /* K60  */  be_nested_str_weak(clear_state),
+  /* K61  */  be_nested_str_weak(add_state),
+  /* K62  */  be_nested_str_weak(check_label),
+  /* K63  */  be_nested_str_weak(set_x),
+  /* K64  */  be_nested_str_weak(init),
+  /* K65  */  be_nested_str_weak(STATE_CHECKED),
+  /* K66  */  be_nested_str_weak(parse_font),
+  /* K67  */  be_nested_str_weak(set_style_text_font),
+  /* K68  */  be_nested_str_weak(get_enabled),
+  /* K69  */  be_nested_str_weak(set_style_pad_right),
+  /* K70  */  be_nested_str_weak(),
+  /* K71  */  be_nested_str_weak(real),
+  /* K72  */  be_nested_str_weak(math),
+  /* K73  */  be_nested_str_weak(round),
+  /* K74  */  be_nested_str_weak(endswith),
+  /* K75  */  be_nested_str_weak(_X25),
+  /* K76  */  be_nested_str_weak(pct),
+  /* K77  */  be_nested_str_weak(is_color_attribute),
+  /* K78  */  be_nested_str_weak(set_style_),
+  /* K79  */  be_nested_str_weak(HSP_X3A_X20unknown_X20attribute_X3A),
+  /* K80  */  be_nested_str_weak(set_text_font),
+  /* K81  */  be_nested_str_weak(toupper),
+  /* K82  */  be_nested_str_weak(TRUE),
+  /* K83  */  be_nested_str_weak(FALSE),
+  /* K84  */  be_nested_str_weak(OBJ_FLAG_CLICKABLE),
+  /* K85  */  be_nested_str_weak(get_style_text_align),
+  /* K86  */  be_nested_str_weak(TEXT_ALIGN_LEFT),
+  /* K87  */  be_nested_str_weak(left),
+  /* K88  */  be_nested_str_weak(TEXT_ALIGN_CENTER),
+  /* K89  */  be_nested_str_weak(center),
+  /* K90  */  be_nested_str_weak(TEXT_ALIGN_RIGHT),
+  /* K91  */  be_nested_str_weak(right),
+  /* K92  */  be_nested_str_weak(get_style_pad_top),
+  /* K93  */  be_nested_str_weak(set_style_radius),
+  /* K94  */  be_nested_str_weak(get_code),
+  /* K95  */  be_nested_str_weak(action),
+  /* K96  */  be_nested_str_weak(EVENT_CLICKED),
+  /* K97  */  be_nested_str_weak(tasmota),
+  /* K98  */  be_nested_str_weak(set_timer),
+  /* K99  */  be_nested_str_weak(_event_map),
+  /* K100 */  be_nested_str_weak(json),
+  /* K101 */  be_nested_str_weak(EVENT_VALUE_CHANGED),
+  /* K102 */  be_nested_str_weak(module),
+  /* K103 */  be_nested_str_weak(_X2C_X22val_X22_X3A_X25s),
+  /* K104 */  be_nested_str_weak(dump),
+  /* K105 */  be_nested_str_weak(_X2C_X22text_X22_X3A_X25s),
+  /* K106 */  be_nested_str_weak(_X7B_X22hasp_X22_X3A_X7B_X22p_X25ib_X25i_X22_X3A_X7B_X22event_X22_X3A_X22_X25s_X22_X25s_X7D_X7D_X7D),
+  /* K107 */  be_nested_str_weak(_page_id),
+  /* K108 */  be_nested_str_weak(id),
   /* K109 */  be_nested_str_weak(get_style_pad_bottom),
   /* K110 */  be_nested_str_weak(get_y),
   /* K111 */  be_nested_str_weak(set_style_pad_bottom),
@@ -2120,7 +2126,7 @@ be_local_closure(class_lvh_obj_post_init,   /* name */
 ********************************************************************/
 be_local_closure(class_lvh_obj__delete,   /* name */
   be_nested_proto(
-    4,                          /* nstack */
+    3,                          /* nstack */
     1,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
@@ -2131,7 +2137,7 @@ be_local_closure(class_lvh_obj__delete,   /* name */
     &be_ktab_class_lvh_obj,     /* shared constants */
     be_str_weak(_delete),
     &be_const_str_solidified,
-    ( &(const binstruction[23]) {  /* code */
+    ( &(const binstruction[24]) {  /* code */
       0x8C04011F,  //  0000  GETMET	R1	R0	K31
       0x7C040200,  //  0001  CALL	R1	1
       0x8C040120,  //  0002  GETMET	R1	R0	K32
@@ -2150,11 +2156,12 @@ be_local_closure(class_lvh_obj__delete,   /* name */
       0x7C040200,  //  000F  CALL	R1	1
       0x4C040000,  //  0010  LDNIL	R1
       0x90020601,  //  0011  SETMBR	R0	K3	R1
-      0x88040115,  //  0012  GETMBR	R1	R0	K21
-      0x8C040322,  //  0013  GETMET	R1	R1	K34
-      0x880C0123,  //  0014  GETMBR	R3	R0	K35
-      0x7C040400,  //  0015  CALL	R1	2
-      0x80000000,  //  0016  RET	0
+      0x60040003,  //  0012  GETGBL	R1	G3
+      0x5C080000,  //  0013  MOVE	R2	R0
+      0x7C040200,  //  0014  CALL	R1	1
+      0x8C040322,  //  0015  GETMET	R1	R1	K34
+      0x7C040200,  //  0016  CALL	R1	1
+      0x80000000,  //  0017  RET	0
     })
   )
 );
@@ -2178,7 +2185,7 @@ be_local_closure(class_lvh_obj_get_value_font,   /* name */
     be_str_weak(get_value_font),
     &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
-      0x8C040124,  //  0000  GETMET	R1	R0	K36
+      0x8C040123,  //  0000  GETMET	R1	R0	K35
       0x7C040200,  //  0001  CALL	R1	1
       0x80040200,  //  0002  RET	1	R1
     })
@@ -2209,7 +2216,7 @@ be_local_closure(class_lvh_obj_get_radius2,   /* name */
       0x20040202,  //  0002  NE	R1	R1	R2
       0x78060007,  //  0003  JMPF	R1	#000C
       0x88040103,  //  0004  GETMBR	R1	R0	K3
-      0x8C040325,  //  0005  GETMET	R1	R1	K37
+      0x8C040324,  //  0005  GETMET	R1	R1	K36
       0x880C0107,  //  0006  GETMBR	R3	R0	K7
       0xB8120A00,  //  0007  GETNGBL	R4	K5
       0x88100909,  //  0008  GETMBR	R4	R4	K9
@@ -2240,7 +2247,7 @@ be_local_closure(class_lvh_obj_set_value_color,   /* name */
     be_str_weak(set_value_color),
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
-      0x8C0C0126,  //  0000  GETMET	R3	R0	K38
+      0x8C0C0125,  //  0000  GETMET	R3	R0	K37
       0x5C140200,  //  0001  MOVE	R5	R1
       0x5C180400,  //  0002  MOVE	R6	R2
       0x7C0C0600,  //  0003  CALL	R3	3
@@ -2269,7 +2276,7 @@ be_local_closure(class_lvh_obj_get_text_color,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
       0x88080103,  //  0000  GETMBR	R2	R0	K3
-      0x8C080527,  //  0001  GETMET	R2	R2	K39
+      0x8C080526,  //  0001  GETMET	R2	R2	K38
       0x5C100200,  //  0002  MOVE	R4	R1
       0x7C080400,  //  0003  CALL	R2	2
       0x80040400,  //  0004  RET	1	R2
@@ -2297,7 +2304,7 @@ be_local_closure(class_lvh_obj_get_value_ofs_x,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
       0x88040101,  //  0000  GETMBR	R1	R0	K1
-      0x8C040328,  //  0001  GETMET	R1	R1	K40
+      0x8C040327,  //  0001  GETMET	R1	R1	K39
       0x7C040200,  //  0002  CALL	R1	1
       0x80040200,  //  0003  RET	1	R1
     })
@@ -2328,7 +2335,7 @@ be_local_closure(class_lvh_obj_get_label_mode,   /* name */
       0x20040202,  //  0002  NE	R1	R1	R2
       0x78060003,  //  0003  JMPF	R1	#0008
       0x88040101,  //  0004  GETMBR	R1	R0	K1
-      0x8C040329,  //  0005  GETMET	R1	R1	K41
+      0x8C040328,  //  0005  GETMET	R1	R1	K40
       0x7C040200,  //  0006  CALL	R1	1
       0x80040200,  //  0007  RET	1	R1
       0x80000000,  //  0008  RET	0
@@ -2356,14 +2363,14 @@ be_local_closure(class_lvh_obj_set_val,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[12]) {  /* code */
       0xA40A1C00,  //  0000  IMPORT	R2	K14
-      0x90025401,  //  0001  SETMBR	R0	K42	R1
+      0x90025201,  //  0001  SETMBR	R0	K41	R1
       0x8C0C050F,  //  0002  GETMET	R3	R2	K15
       0x88140103,  //  0003  GETMBR	R5	R0	K3
-      0x5818002B,  //  0004  LDCONST	R6	K43
+      0x5818002A,  //  0004  LDCONST	R6	K42
       0x7C0C0600,  //  0005  CALL	R3	3
       0x780E0003,  //  0006  JMPF	R3	#000B
       0x880C0103,  //  0007  GETMBR	R3	R0	K3
-      0x8C0C072B,  //  0008  GETMET	R3	R3	K43
+      0x8C0C072A,  //  0008  GETMET	R3	R3	K42
       0x5C140200,  //  0009  MOVE	R5	R1
       0x7C0C0400,  //  000A  CALL	R3	2
       0x80000000,  //  000B  RET	0
@@ -2390,7 +2397,7 @@ be_local_closure(class_lvh_obj_set_click,   /* name */
     be_str_weak(set_click),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
-      0x8C08012C,  //  0000  GETMET	R2	R0	K44
+      0x8C08012B,  //  0000  GETMET	R2	R0	K43
       0x5C100200,  //  0001  MOVE	R4	R1
       0x7C080400,  //  0002  CALL	R2	2
       0x80000000,  //  0003  RET	0
@@ -2417,16 +2424,16 @@ be_local_closure(class_lvh_obj_member,   /* name */
     be_str_weak(member),
     &be_const_str_solidified,
     ( &(const binstruction[125]) {  /* code */
-      0xA40A5A00,  //  0000  IMPORT	R2	K45
+      0xA40A5800,  //  0000  IMPORT	R2	K44
       0xA40E1C00,  //  0001  IMPORT	R3	K14
-      0x8C10052E,  //  0002  GETMET	R4	R2	K46
+      0x8C10052D,  //  0002  GETMET	R4	R2	K45
       0x5C180200,  //  0003  MOVE	R6	R1
-      0x581C002F,  //  0004  LDCONST	R7	K47
+      0x581C002E,  //  0004  LDCONST	R7	K46
       0x7C100600,  //  0005  CALL	R4	3
       0x74120004,  //  0006  JMPT	R4	#000C
-      0x8C10052E,  //  0007  GETMET	R4	R2	K46
+      0x8C10052D,  //  0007  GETMET	R4	R2	K45
       0x5C180200,  //  0008  MOVE	R6	R1
-      0x581C0030,  //  0009  LDCONST	R7	K48
+      0x581C002F,  //  0009  LDCONST	R7	K47
       0x7C100600,  //  000A  CALL	R4	3
       0x78120000,  //  000B  JMPF	R4	#000D
       0x80000800,  //  000C  RET	0
@@ -2434,13 +2441,13 @@ be_local_closure(class_lvh_obj_member,   /* name */
       0x6014000C,  //  000E  GETGBL	R5	G12
       0x5C180200,  //  000F  MOVE	R6	R1
       0x7C140200,  //  0010  CALL	R5	1
-      0x28140B31,  //  0011  GE	R5	R5	K49
+      0x28140B30,  //  0011  GE	R5	R5	K48
       0x7816001F,  //  0012  JMPF	R5	#0033
-      0x8C140532,  //  0013  GETMET	R5	R2	K50
+      0x8C140531,  //  0013  GETMET	R5	R2	K49
       0x541DFFFE,  //  0014  LDINT	R7	-1
       0x941C0207,  //  0015  GETIDX	R7	R1	R7
       0x7C140400,  //  0016  CALL	R5	2
-      0x8C180532,  //  0017  GETMET	R6	R2	K50
+      0x8C180531,  //  0017  GETMET	R6	R2	K49
       0x5421FFFD,  //  0018  LDINT	R8	-2
       0x94200208,  //  0019  GETIDX	R8	R1	R8
       0x7C180400,  //  001A  CALL	R6	2
@@ -2458,32 +2465,32 @@ be_local_closure(class_lvh_obj_member,   /* name */
       0x781E000B,  //  0026  JMPF	R7	#0033
       0x601C0009,  //  0027  GETGBL	R7	G9
       0x5421FFFD,  //  0028  LDINT	R8	-2
-      0x40201133,  //  0029  CONNECT	R8	R8	K51
+      0x40201132,  //  0029  CONNECT	R8	R8	K50
       0x94200208,  //  002A  GETIDX	R8	R1	R8
       0x7C1C0200,  //  002B  CALL	R7	1
       0x5421FFFC,  //  002C  LDINT	R8	-3
       0x40223008,  //  002D  CONNECT	R8	K24	R8
       0x94040208,  //  002E  GETIDX	R1	R1	R8
-      0x8C200134,  //  002F  GETMET	R8	R0	K52
+      0x8C200133,  //  002F  GETMET	R8	R0	K51
       0x5C280E00,  //  0030  MOVE	R10	R7
       0x7C200400,  //  0031  CALL	R8	2
       0x5C101000,  //  0032  MOVE	R4	R8
-      0x88140135,  //  0033  GETMBR	R5	R0	K53
-      0x8C140B36,  //  0034  GETMET	R5	R5	K54
+      0x88140134,  //  0033  GETMBR	R5	R0	K52
+      0x8C140B35,  //  0034  GETMET	R5	R5	K53
       0x5C1C0200,  //  0035  MOVE	R7	R1
       0x7C140400,  //  0036  CALL	R5	2
       0x4C180000,  //  0037  LDNIL	R6
       0x20140A06,  //  0038  NE	R5	R5	R6
       0x78160000,  //  0039  JMPF	R5	#003B
       0x80000A00,  //  003A  RET	0
-      0x8C140737,  //  003B  GETMET	R5	R3	K55
+      0x8C140736,  //  003B  GETMET	R5	R3	K54
       0x5C1C0000,  //  003C  MOVE	R7	R0
-      0x00226001,  //  003D  ADD	R8	K48	R1
+      0x00225E01,  //  003D  ADD	R8	K47	R1
       0x7C140600,  //  003E  CALL	R5	3
       0x60180004,  //  003F  GETGBL	R6	G4
       0x5C1C0A00,  //  0040  MOVE	R7	R5
       0x7C180200,  //  0041  CALL	R6	1
-      0x1C180D38,  //  0042  EQ	R6	R6	K56
+      0x1C180D37,  //  0042  EQ	R6	R6	K55
       0x781A0009,  //  0043  JMPF	R6	#004E
       0x5C180A00,  //  0044  MOVE	R6	R5
       0x5C1C0000,  //  0045  MOVE	R7	R0
@@ -2495,8 +2502,8 @@ be_local_closure(class_lvh_obj_member,   /* name */
       0x58200018,  //  004B  LDCONST	R8	K24
       0x7C180400,  //  004C  CALL	R6	2
       0x80040C00,  //  004D  RET	1	R6
-      0x88180139,  //  004E  GETMBR	R6	R0	K57
-      0x8C180D36,  //  004F  GETMET	R6	R6	K54
+      0x88180138,  //  004E  GETMBR	R6	R0	K56
+      0x8C180D35,  //  004F  GETMET	R6	R6	K53
       0x5C200200,  //  0050  MOVE	R8	R1
       0x5C240200,  //  0051  MOVE	R9	R1
       0x7C180600,  //  0052  CALL	R6	3
@@ -2504,29 +2511,29 @@ be_local_closure(class_lvh_obj_member,   /* name */
       0x4C180000,  //  0054  LDNIL	R6
       0x1C180806,  //  0055  EQ	R6	R4	R6
       0x781A000D,  //  0056  JMPF	R6	#0065
-      0x8C180737,  //  0057  GETMET	R6	R3	K55
+      0x8C180736,  //  0057  GETMET	R6	R3	K54
       0x88200103,  //  0058  GETMBR	R8	R0	K3
-      0x00266001,  //  0059  ADD	R9	K48	R1
+      0x00265E01,  //  0059  ADD	R9	K47	R1
       0x7C180600,  //  005A  CALL	R6	3
       0x5C140C00,  //  005B  MOVE	R5	R6
       0x60180004,  //  005C  GETGBL	R6	G4
       0x5C1C0A00,  //  005D  MOVE	R7	R5
       0x7C180200,  //  005E  CALL	R6	1
-      0x1C180D38,  //  005F  EQ	R6	R6	K56
+      0x1C180D37,  //  005F  EQ	R6	R6	K55
       0x781A0003,  //  0060  JMPF	R6	#0065
       0x5C180A00,  //  0061  MOVE	R6	R5
       0x881C0103,  //  0062  GETMBR	R7	R0	K3
       0x7C180200,  //  0063  CALL	R6	1
       0x80040C00,  //  0064  RET	1	R6
-      0x8C180737,  //  0065  GETMET	R6	R3	K55
+      0x8C180736,  //  0065  GETMET	R6	R3	K54
       0x88200103,  //  0066  GETMBR	R8	R0	K3
-      0x00267401,  //  0067  ADD	R9	K58	R1
+      0x00267201,  //  0067  ADD	R9	K57	R1
       0x7C180600,  //  0068  CALL	R6	3
       0x5C140C00,  //  0069  MOVE	R5	R6
       0x60180004,  //  006A  GETGBL	R6	G4
       0x5C1C0A00,  //  006B  MOVE	R7	R5
       0x7C180200,  //  006C  CALL	R6	1
-      0x1C180D38,  //  006D  EQ	R6	R6	K56
+      0x1C180D37,  //  006D  EQ	R6	R6	K55
       0x781A0009,  //  006E  JMPF	R6	#0079
       0x5C180A00,  //  006F  MOVE	R6	R5
       0x881C0103,  //  0070  GETMBR	R7	R0	K3
@@ -2539,7 +2546,7 @@ be_local_closure(class_lvh_obj_member,   /* name */
       0x7C180400,  //  0077  CALL	R6	2
       0x80040C00,  //  0078  RET	1	R6
       0x6018000B,  //  0079  GETGBL	R6	G11
-      0x581C003B,  //  007A  LDCONST	R7	K59
+      0x581C003A,  //  007A  LDCONST	R7	K58
       0x7C180200,  //  007B  CALL	R6	1
       0x80040C00,  //  007C  RET	1	R6
     })
@@ -2570,7 +2577,7 @@ be_local_closure(class_lvh_obj_set_pad_top2,   /* name */
       0x20080403,  //  0002  NE	R2	R2	R3
       0x780A0009,  //  0003  JMPF	R2	#000E
       0x88080103,  //  0004  GETMBR	R2	R0	K3
-      0x8C08053C,  //  0005  GETMET	R2	R2	K60
+      0x8C08053B,  //  0005  GETMET	R2	R2	K59
       0x60100009,  //  0006  GETGBL	R4	G9
       0x5C140200,  //  0007  MOVE	R5	R1
       0x7C100200,  //  0008  CALL	R4	1
@@ -2605,13 +2612,13 @@ be_local_closure(class_lvh_obj_set_enabled,   /* name */
     ( &(const binstruction[13]) {  /* code */
       0x78060005,  //  0000  JMPF	R1	#0007
       0x88080103,  //  0001  GETMBR	R2	R0	K3
-      0x8C08053D,  //  0002  GETMET	R2	R2	K61
+      0x8C08053C,  //  0002  GETMET	R2	R2	K60
       0xB8120A00,  //  0003  GETNGBL	R4	K5
       0x8810090C,  //  0004  GETMBR	R4	R4	K12
       0x7C080400,  //  0005  CALL	R2	2
       0x70020004,  //  0006  JMP		#000C
       0x88080103,  //  0007  GETMBR	R2	R0	K3
-      0x8C08053E,  //  0008  GETMET	R2	R2	K62
+      0x8C08053D,  //  0008  GETMET	R2	R2	K61
       0xB8120A00,  //  0009  GETNGBL	R4	K5
       0x8810090C,  //  000A  GETMBR	R4	R4	K12
       0x7C080400,  //  000B  CALL	R2	2
@@ -2639,10 +2646,10 @@ be_local_closure(class_lvh_obj_set_value_ofs_x,   /* name */
     be_str_weak(set_value_ofs_x),
     &be_const_str_solidified,
     ( &(const binstruction[ 9]) {  /* code */
-      0x8C08013F,  //  0000  GETMET	R2	R0	K63
+      0x8C08013E,  //  0000  GETMET	R2	R0	K62
       0x7C080200,  //  0001  CALL	R2	1
       0x88080101,  //  0002  GETMBR	R2	R0	K1
-      0x8C080540,  //  0003  GETMET	R2	R2	K64
+      0x8C08053F,  //  0003  GETMET	R2	R2	K63
       0x60100009,  //  0004  GETGBL	R4	G9
       0x5C140200,  //  0005  MOVE	R5	R1
       0x7C100200,  //  0006  CALL	R4	1
@@ -2674,7 +2681,7 @@ be_local_closure(class_lvh_obj_init,   /* name */
       0x60180003,  //  0000  GETGBL	R6	G3
       0x5C1C0000,  //  0001  MOVE	R7	R0
       0x7C180200,  //  0002  CALL	R6	1
-      0x8C180D41,  //  0003  GETMET	R6	R6	K65
+      0x8C180D40,  //  0003  GETMET	R6	R6	K64
       0x5C200200,  //  0004  MOVE	R8	R1
       0x5C240400,  //  0005  MOVE	R9	R2
       0x5C280600,  //  0006  MOVE	R10	R3
@@ -2708,7 +2715,7 @@ be_local_closure(class_lvh_obj_get_toggle,   /* name */
       0x88040103,  //  0000  GETMBR	R1	R0	K3
       0x8C04030B,  //  0001  GETMET	R1	R1	K11
       0xB80E0A00,  //  0002  GETNGBL	R3	K5
-      0x880C0742,  //  0003  GETMBR	R3	R3	K66
+      0x880C0741,  //  0003  GETMBR	R3	R3	K65
       0x7C040400,  //  0004  CALL	R1	2
       0x80040200,  //  0005  RET	1	R1
     })
@@ -2734,14 +2741,14 @@ be_local_closure(class_lvh_obj_set_text_font,   /* name */
     be_str_weak(set_text_font),
     &be_const_str_solidified,
     ( &(const binstruction[12]) {  /* code */
-      0x8C080143,  //  0000  GETMET	R2	R0	K67
+      0x8C080142,  //  0000  GETMET	R2	R0	K66
       0x5C100200,  //  0001  MOVE	R4	R1
       0x7C080400,  //  0002  CALL	R2	2
       0x4C0C0000,  //  0003  LDNIL	R3
       0x200C0403,  //  0004  NE	R3	R2	R3
       0x780E0004,  //  0005  JMPF	R3	#000B
       0x880C0103,  //  0006  GETMBR	R3	R0	K3
-      0x8C0C0744,  //  0007  GETMET	R3	R3	K68
+      0x8C0C0743,  //  0007  GETMET	R3	R3	K67
       0x5C140400,  //  0008  MOVE	R5	R2
       0x58180018,  //  0009  LDCONST	R6	K24
       0x7C0C0600,  //  000A  CALL	R3	3
@@ -2769,7 +2776,7 @@ be_local_closure(class_lvh_obj_get_click,   /* name */
     be_str_weak(get_click),
     &be_const_str_solidified,
     ( &(const binstruction[ 3]) {  /* code */
-      0x8C040145,  //  0000  GETMET	R1	R0	K69
+      0x8C040144,  //  0000  GETMET	R1	R0	K68
       0x7C040200,  //  0001  CALL	R1	1
       0x80040200,  //  0002  RET	1	R1
     })
@@ -2800,7 +2807,7 @@ be_local_closure(class_lvh_obj_set_pad_right2,   /* name */
       0x20080403,  //  0002  NE	R2	R2	R3
       0x780A0009,  //  0003  JMPF	R2	#000E
       0x88080103,  //  0004  GETMBR	R2	R0	K3
-      0x8C080546,  //  0005  GETMET	R2	R2	K70
+      0x8C080545,  //  0005  GETMET	R2	R2	K69
       0x60100009,  //  0006  GETGBL	R4	G9
       0x5C140200,  //  0007  MOVE	R5	R1
       0x7C100200,  //  0008  CALL	R4	1
@@ -2837,7 +2844,7 @@ be_local_closure(class_lvh_obj_get_action,   /* name */
       0x78060001,  //  0001  JMPF	R1	#0004
       0x5C080200,  //  0002  MOVE	R2	R1
       0x70020000,  //  0003  JMP		#0005
-      0x58080047,  //  0004  LDCONST	R2	K71
+      0x58080046,  //  0004  LDCONST	R2	K70
       0x80040400,  //  0005  RET	1	R2
     })
   )
@@ -2862,41 +2869,41 @@ be_local_closure(class_lvh_obj_setmember,   /* name */
     be_str_weak(setmember),
     &be_const_str_solidified,
     ( &(const binstruction[164]) {  /* code */
-      0xA40E5A00,  //  0000  IMPORT	R3	K45
+      0xA40E5800,  //  0000  IMPORT	R3	K44
       0xA4121C00,  //  0001  IMPORT	R4	K14
-      0x8C14072E,  //  0002  GETMET	R5	R3	K46
+      0x8C14072D,  //  0002  GETMET	R5	R3	K45
       0x5C1C0200,  //  0003  MOVE	R7	R1
-      0x5820002F,  //  0004  LDCONST	R8	K47
+      0x5820002E,  //  0004  LDCONST	R8	K46
       0x7C140600,  //  0005  CALL	R5	3
       0x74160004,  //  0006  JMPT	R5	#000C
-      0x8C14072E,  //  0007  GETMET	R5	R3	K46
+      0x8C14072D,  //  0007  GETMET	R5	R3	K45
       0x5C1C0200,  //  0008  MOVE	R7	R1
-      0x58200030,  //  0009  LDCONST	R8	K48
+      0x5820002F,  //  0009  LDCONST	R8	K47
       0x7C140600,  //  000A  CALL	R5	3
       0x78160000,  //  000B  JMPF	R5	#000D
       0x80000A00,  //  000C  RET	0
       0x60140004,  //  000D  GETGBL	R5	G4
       0x5C180400,  //  000E  MOVE	R6	R2
       0x7C140200,  //  000F  CALL	R5	1
-      0x1C140B48,  //  0010  EQ	R5	R5	K72
+      0x1C140B47,  //  0010  EQ	R5	R5	K71
       0x78160006,  //  0011  JMPF	R5	#0019
-      0xA4169200,  //  0012  IMPORT	R5	K73
+      0xA4169000,  //  0012  IMPORT	R5	K72
       0x60180009,  //  0013  GETGBL	R6	G9
-      0x8C1C0B4A,  //  0014  GETMET	R7	R5	K74
+      0x8C1C0B49,  //  0014  GETMET	R7	R5	K73
       0x5C240400,  //  0015  MOVE	R9	R2
       0x7C1C0400,  //  0016  CALL	R7	2
       0x7C180200,  //  0017  CALL	R6	1
       0x5C080C00,  //  0018  MOVE	R2	R6
-      0x8C14074B,  //  0019  GETMET	R5	R3	K75
+      0x8C14074A,  //  0019  GETMET	R5	R3	K74
       0x5C1C0200,  //  001A  MOVE	R7	R1
-      0x5820004C,  //  001B  LDCONST	R8	K76
+      0x5820004B,  //  001B  LDCONST	R8	K75
       0x7C140600,  //  001C  CALL	R5	3
       0x78160009,  //  001D  JMPF	R5	#0028
       0x5415FFFD,  //  001E  LDINT	R5	-2
       0x40163005,  //  001F  CONNECT	R5	K24	R5
       0x94040205,  //  0020  GETIDX	R1	R1	R5
       0xB8160A00,  //  0021  GETNGBL	R5	K5
-      0x8C140B4D,  //  0022  GETMET	R5	R5	K77
+      0x8C140B4C,  //  0022  GETMET	R5	R5	K76
       0x601C0009,  //  0023  GETGBL	R7	G9
       0x5C200400,  //  0024  MOVE	R8	R2
       0x7C1C0200,  //  0025  CALL	R7	1
@@ -2906,13 +2913,13 @@ be_local_closure(class_lvh_obj_setmember,   /* name */
       0x6018000C,  //  0029  GETGBL	R6	G12
       0x5C1C0200,  //  002A  MOVE	R7	R1
       0x7C180200,  //  002B  CALL	R6	1
-      0x28180D31,  //  002C  GE	R6	R6	K49
+      0x28180D30,  //  002C  GE	R6	R6	K48
       0x781A001F,  //  002D  JMPF	R6	#004E
-      0x8C180732,  //  002E  GETMET	R6	R3	K50
+      0x8C180731,  //  002E  GETMET	R6	R3	K49
       0x5421FFFE,  //  002F  LDINT	R8	-1
       0x94200208,  //  0030  GETIDX	R8	R1	R8
       0x7C180400,  //  0031  CALL	R6	2
-      0x8C1C0732,  //  0032  GETMET	R7	R3	K50
+      0x8C1C0731,  //  0032  GETMET	R7	R3	K49
       0x5425FFFD,  //  0033  LDINT	R9	-2
       0x94240209,  //  0034  GETIDX	R9	R1	R9
       0x7C1C0400,  //  0035  CALL	R7	2
@@ -2930,32 +2937,32 @@ be_local_closure(class_lvh_obj_setmember,   /* name */
       0x7822000B,  //  0041  JMPF	R8	#004E
       0x60200009,  //  0042  GETGBL	R8	G9
       0x5425FFFD,  //  0043  LDINT	R9	-2
-      0x40241333,  //  0044  CONNECT	R9	R9	K51
+      0x40241332,  //  0044  CONNECT	R9	R9	K50
       0x94240209,  //  0045  GETIDX	R9	R1	R9
       0x7C200200,  //  0046  CALL	R8	1
       0x5425FFFC,  //  0047  LDINT	R9	-3
       0x40263009,  //  0048  CONNECT	R9	K24	R9
       0x94040209,  //  0049  GETIDX	R1	R1	R9
-      0x8C240134,  //  004A  GETMET	R9	R0	K52
+      0x8C240133,  //  004A  GETMET	R9	R0	K51
       0x5C2C1000,  //  004B  MOVE	R11	R8
       0x7C240400,  //  004C  CALL	R9	2
       0x5C141200,  //  004D  MOVE	R5	R9
-      0x88180135,  //  004E  GETMBR	R6	R0	K53
-      0x8C180D36,  //  004F  GETMET	R6	R6	K54
+      0x88180134,  //  004E  GETMBR	R6	R0	K52
+      0x8C180D35,  //  004F  GETMET	R6	R6	K53
       0x5C200200,  //  0050  MOVE	R8	R1
       0x7C180400,  //  0051  CALL	R6	2
       0x4C1C0000,  //  0052  LDNIL	R7
       0x20180C07,  //  0053  NE	R6	R6	R7
       0x781A0000,  //  0054  JMPF	R6	#0056
       0x80000C00,  //  0055  RET	0
-      0x8C180937,  //  0056  GETMET	R6	R4	K55
+      0x8C180936,  //  0056  GETMET	R6	R4	K54
       0x5C200000,  //  0057  MOVE	R8	R0
-      0x00265E01,  //  0058  ADD	R9	K47	R1
+      0x00265C01,  //  0058  ADD	R9	K46	R1
       0x7C180600,  //  0059  CALL	R6	3
       0x601C0004,  //  005A  GETGBL	R7	G4
       0x5C200C00,  //  005B  MOVE	R8	R6
       0x7C1C0200,  //  005C  CALL	R7	1
-      0x1C1C0F38,  //  005D  EQ	R7	R7	K56
+      0x1C1C0F37,  //  005D  EQ	R7	R7	K55
       0x781E000A,  //  005E  JMPF	R7	#006A
       0x5C1C0C00,  //  005F  MOVE	R7	R6
       0x5C200000,  //  0060  MOVE	R8	R0
@@ -2968,13 +2975,13 @@ be_local_closure(class_lvh_obj_setmember,   /* name */
       0x58280018,  //  0067  LDCONST	R10	K24
       0x7C1C0600,  //  0068  CALL	R7	3
       0x80000E00,  //  0069  RET	0
-      0x881C0139,  //  006A  GETMBR	R7	R0	K57
-      0x8C1C0F36,  //  006B  GETMET	R7	R7	K54
+      0x881C0138,  //  006A  GETMBR	R7	R0	K56
+      0x8C1C0F35,  //  006B  GETMET	R7	R7	K53
       0x5C240200,  //  006C  MOVE	R9	R1
       0x5C280200,  //  006D  MOVE	R10	R1
       0x7C1C0600,  //  006E  CALL	R7	3
       0x5C040E00,  //  006F  MOVE	R1	R7
-      0x8C1C014E,  //  0070  GETMET	R7	R0	K78
+      0x8C1C014D,  //  0070  GETMET	R7	R0	K77
       0x5C240200,  //  0071  MOVE	R9	R1
       0x7C1C0400,  //  0072  CALL	R7	2
       0x781E0003,  //  0073  JMPF	R7	#0078
@@ -2985,30 +2992,30 @@ be_local_closure(class_lvh_obj_setmember,   /* name */
       0x4C1C0000,  //  0078  LDNIL	R7
       0x1C1C0A07,  //  0079  EQ	R7	R5	R7
       0x781E000E,  //  007A  JMPF	R7	#008A
-      0x8C1C0937,  //  007B  GETMET	R7	R4	K55
+      0x8C1C0936,  //  007B  GETMET	R7	R4	K54
       0x88240103,  //  007C  GETMBR	R9	R0	K3
-      0x002A5E01,  //  007D  ADD	R10	K47	R1
+      0x002A5C01,  //  007D  ADD	R10	K46	R1
       0x7C1C0600,  //  007E  CALL	R7	3
       0x5C180E00,  //  007F  MOVE	R6	R7
       0x601C0004,  //  0080  GETGBL	R7	G4
       0x5C200C00,  //  0081  MOVE	R8	R6
       0x7C1C0200,  //  0082  CALL	R7	1
-      0x1C1C0F38,  //  0083  EQ	R7	R7	K56
+      0x1C1C0F37,  //  0083  EQ	R7	R7	K55
       0x781E0004,  //  0084  JMPF	R7	#008A
       0x5C1C0C00,  //  0085  MOVE	R7	R6
       0x88200103,  //  0086  GETMBR	R8	R0	K3
       0x5C240400,  //  0087  MOVE	R9	R2
       0x7C1C0400,  //  0088  CALL	R7	2
       0x80040E00,  //  0089  RET	1	R7
-      0x8C1C0937,  //  008A  GETMET	R7	R4	K55
+      0x8C1C0936,  //  008A  GETMET	R7	R4	K54
       0x88240103,  //  008B  GETMBR	R9	R0	K3
-      0x002A9E01,  //  008C  ADD	R10	K79	R1
+      0x002A9C01,  //  008C  ADD	R10	K78	R1
       0x7C1C0600,  //  008D  CALL	R7	3
       0x5C180E00,  //  008E  MOVE	R6	R7
       0x601C0004,  //  008F  GETGBL	R7	G4
       0x5C200C00,  //  0090  MOVE	R8	R6
       0x7C1C0200,  //  0091  CALL	R7	1
-      0x1C1C0F38,  //  0092  EQ	R7	R7	K56
+      0x1C1C0F37,  //  0092  EQ	R7	R7	K55
       0x781E000A,  //  0093  JMPF	R7	#009F
       0x5C1C0C00,  //  0094  MOVE	R7	R6
       0x88200103,  //  0095  GETMBR	R8	R0	K3
@@ -3022,7 +3029,7 @@ be_local_closure(class_lvh_obj_setmember,   /* name */
       0x7C1C0600,  //  009D  CALL	R7	3
       0x80040E00,  //  009E  RET	1	R7
       0x601C0001,  //  009F  GETGBL	R7	G1
-      0x58200050,  //  00A0  LDCONST	R8	K80
+      0x5820004F,  //  00A0  LDCONST	R8	K79
       0x5C240200,  //  00A1  MOVE	R9	R1
       0x7C1C0400,  //  00A2  CALL	R7	2
       0x80000000,  //  00A3  RET	0
@@ -3049,7 +3056,7 @@ be_local_closure(class_lvh_obj_set_value_font,   /* name */
     be_str_weak(set_value_font),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
-      0x8C080151,  //  0000  GETMET	R2	R0	K81
+      0x8C080150,  //  0000  GETMET	R2	R0	K80
       0x5C100200,  //  0001  MOVE	R4	R1
       0x7C080400,  //  0002  CALL	R2	2
       0x80000000,  //  0003  RET	0
@@ -3100,36 +3107,36 @@ be_local_closure(class_lvh_obj_set_toggle,   /* name */
     be_str_weak(set_toggle),
     &be_const_str_solidified,
     ( &(const binstruction[32]) {  /* code */
-      0xA40A5A00,  //  0000  IMPORT	R2	K45
+      0xA40A5800,  //  0000  IMPORT	R2	K44
       0x600C0004,  //  0001  GETGBL	R3	G4
       0x5C100200,  //  0002  MOVE	R4	R1
       0x7C0C0200,  //  0003  CALL	R3	1
-      0x1C0C072D,  //  0004  EQ	R3	R3	K45
+      0x1C0C072C,  //  0004  EQ	R3	R3	K44
       0x780E000C,  //  0005  JMPF	R3	#0013
-      0x8C0C0552,  //  0006  GETMET	R3	R2	K82
+      0x8C0C0551,  //  0006  GETMET	R3	R2	K81
       0x60140008,  //  0007  GETGBL	R5	G8
       0x5C180200,  //  0008  MOVE	R6	R1
       0x7C140200,  //  0009  CALL	R5	1
       0x7C0C0400,  //  000A  CALL	R3	2
       0x5C040600,  //  000B  MOVE	R1	R3
-      0x1C0C0353,  //  000C  EQ	R3	R1	K83
+      0x1C0C0352,  //  000C  EQ	R3	R1	K82
       0x780E0001,  //  000D  JMPF	R3	#0010
       0x50040200,  //  000E  LDBOOL	R1	1	0
       0x70020002,  //  000F  JMP		#0013
-      0x1C0C0354,  //  0010  EQ	R3	R1	K84
+      0x1C0C0353,  //  0010  EQ	R3	R1	K83
       0x780E0000,  //  0011  JMPF	R3	#0013
       0x50040000,  //  0012  LDBOOL	R1	0	0
       0x78060005,  //  0013  JMPF	R1	#001A
       0x880C0103,  //  0014  GETMBR	R3	R0	K3
-      0x8C0C073E,  //  0015  GETMET	R3	R3	K62
+      0x8C0C073D,  //  0015  GETMET	R3	R3	K61
       0xB8160A00,  //  0016  GETNGBL	R5	K5
-      0x88140B42,  //  0017  GETMBR	R5	R5	K66
+      0x88140B41,  //  0017  GETMBR	R5	R5	K65
       0x7C0C0400,  //  0018  CALL	R3	2
       0x70020004,  //  0019  JMP		#001F
       0x880C0103,  //  001A  GETMBR	R3	R0	K3
-      0x8C0C073D,  //  001B  GETMET	R3	R3	K61
+      0x8C0C073C,  //  001B  GETMET	R3	R3	K60
       0xB8160A00,  //  001C  GETNGBL	R5	K5
-      0x88140B42,  //  001D  GETMBR	R5	R5	K66
+      0x88140B41,  //  001D  GETMBR	R5	R5	K65
       0x7C0C0400,  //  001E  CALL	R3	2
       0x80000000,  //  001F  RET	0
     })
@@ -3158,7 +3165,7 @@ be_local_closure(class_lvh_obj_get_adjustable,   /* name */
       0x88040103,  //  0000  GETMBR	R1	R0	K3
       0x8C040304,  //  0001  GETMET	R1	R1	K4
       0xB80E0A00,  //  0002  GETNGBL	R3	K5
-      0x880C0755,  //  0003  GETMBR	R3	R3	K85
+      0x880C0754,  //  0003  GETMBR	R3	R3	K84
       0x7C040400,  //  0004  CALL	R1	2
       0x80040200,  //  0005  RET	1	R1
     })
@@ -3194,26 +3201,26 @@ be_local_closure(class_lvh_obj_get_align,   /* name */
       0x4C080000,  //  0007  LDNIL	R2
       0x80040400,  //  0008  RET	1	R2
       0x88080101,  //  0009  GETMBR	R2	R0	K1
-      0x8C080556,  //  000A  GETMET	R2	R2	K86
+      0x8C080555,  //  000A  GETMET	R2	R2	K85
       0x5C100200,  //  000B  MOVE	R4	R1
       0x7C080400,  //  000C  CALL	R2	2
       0xB80E0A00,  //  000D  GETNGBL	R3	K5
-      0x880C0757,  //  000E  GETMBR	R3	R3	K87
+      0x880C0756,  //  000E  GETMBR	R3	R3	K86
       0x1C0C0403,  //  000F  EQ	R3	R2	R3
       0x780E0001,  //  0010  JMPF	R3	#0013
-      0x8006B000,  //  0011  RET	1	K88
+      0x8006AE00,  //  0011  RET	1	K87
       0x7002000C,  //  0012  JMP		#0020
       0xB80E0A00,  //  0013  GETNGBL	R3	K5
-      0x880C0759,  //  0014  GETMBR	R3	R3	K89
+      0x880C0758,  //  0014  GETMBR	R3	R3	K88
       0x1C0C0403,  //  0015  EQ	R3	R2	R3
       0x780E0001,  //  0016  JMPF	R3	#0019
-      0x8006B400,  //  0017  RET	1	K90
+      0x8006B200,  //  0017  RET	1	K89
       0x70020006,  //  0018  JMP		#0020
       0xB80E0A00,  //  0019  GETNGBL	R3	K5
-      0x880C075B,  //  001A  GETMBR	R3	R3	K91
+      0x880C075A,  //  001A  GETMBR	R3	R3	K90
       0x1C0C0403,  //  001B  EQ	R3	R2	R3
       0x780E0001,  //  001C  JMPF	R3	#001F
-      0x8006B800,  //  001D  RET	1	K92
+      0x8006B600,  //  001D  RET	1	K91
       0x70020000,  //  001E  JMP		#0020
       0x80040400,  //  001F  RET	1	R2
       0x80000000,  //  0020  RET	0
@@ -3245,7 +3252,7 @@ be_local_closure(class_lvh_obj_get_pad_top,   /* name */
       0x20040202,  //  0002  NE	R1	R1	R2
       0x78060007,  //  0003  JMPF	R1	#000C
       0x88040103,  //  0004  GETMBR	R1	R0	K3
-      0x8C04035D,  //  0005  GETMET	R1	R1	K93
+      0x8C04035C,  //  0005  GETMET	R1	R1	K92
       0x880C0107,  //  0006  GETMBR	R3	R0	K7
       0xB8120A00,  //  0007  GETNGBL	R4	K5
       0x88100909,  //  0008  GETMBR	R4	R4	K9
@@ -3281,7 +3288,7 @@ be_local_closure(class_lvh_obj_set_radius2,   /* name */
       0x20080403,  //  0002  NE	R2	R2	R3
       0x780A0009,  //  0003  JMPF	R2	#000E
       0x88080103,  //  0004  GETMBR	R2	R0	K3
-      0x8C08055E,  //  0005  GETMET	R2	R2	K94
+      0x8C08055D,  //  0005  GETMET	R2	R2	K93
       0x60100009,  //  0006  GETGBL	R4	G9
       0x5C140200,  //  0007  MOVE	R5	R1
       0x7C100200,  //  0008  CALL	R4	1
@@ -3369,35 +3376,35 @@ be_local_closure(class_lvh_obj_event_cb,   /* name */
     ( &(const binstruction[84]) {  /* code */
       0x88080115,  //  0000  GETMBR	R2	R0	K21
       0x88080516,  //  0001  GETMBR	R2	R2	K22
-      0x8C0C035F,  //  0002  GETMET	R3	R1	K95
+      0x8C0C035E,  //  0002  GETMET	R3	R1	K94
       0x7C0C0200,  //  0003  CALL	R3	1
-      0x88100160,  //  0004  GETMBR	R4	R0	K96
-      0x20100947,  //  0005  NE	R4	R4	K71
+      0x8810015F,  //  0004  GETMBR	R4	R0	K95
+      0x20100946,  //  0005  NE	R4	R4	K70
       0x78120008,  //  0006  JMPF	R4	#0010
       0xB8120A00,  //  0007  GETNGBL	R4	K5
-      0x88100961,  //  0008  GETMBR	R4	R4	K97
+      0x88100960,  //  0008  GETMBR	R4	R4	K96
       0x1C100604,  //  0009  EQ	R4	R3	R4
       0x78120004,  //  000A  JMPF	R4	#0010
-      0xB812C400,  //  000B  GETNGBL	R4	K98
-      0x8C100963,  //  000C  GETMET	R4	R4	K99
+      0xB812C200,  //  000B  GETNGBL	R4	K97
+      0x8C100962,  //  000C  GETMET	R4	R4	K98
       0x58180018,  //  000D  LDCONST	R6	K24
       0x841C0000,  //  000E  CLOSURE	R7	P0
       0x7C100600,  //  000F  CALL	R4	3
-      0x88100164,  //  0010  GETMBR	R4	R0	K100
-      0x8C100936,  //  0011  GETMET	R4	R4	K54
+      0x88100163,  //  0010  GETMBR	R4	R0	K99
+      0x8C100935,  //  0011  GETMET	R4	R4	K53
       0x5C180600,  //  0012  MOVE	R6	R3
       0x7C100400,  //  0013  CALL	R4	2
       0x4C140000,  //  0014  LDNIL	R5
       0x20140805,  //  0015  NE	R5	R4	R5
       0x7816003A,  //  0016  JMPF	R5	#0052
-      0xA416CA00,  //  0017  IMPORT	R5	K101
-      0x58180047,  //  0018  LDCONST	R6	K71
+      0xA416C800,  //  0017  IMPORT	R5	K100
+      0x58180046,  //  0018  LDCONST	R6	K70
       0xB81E0A00,  //  0019  GETNGBL	R7	K5
-      0x881C0F66,  //  001A  GETMBR	R7	R7	K102
+      0x881C0F65,  //  001A  GETMBR	R7	R7	K101
       0x1C1C0607,  //  001B  EQ	R7	R3	R7
       0x781E0026,  //  001C  JMPF	R7	#0044
       0xA41E1C00,  //  001D  IMPORT	R7	K14
-      0x8C200F37,  //  001E  GETMET	R8	R7	K55
+      0x8C200F36,  //  001E  GETMET	R8	R7	K54
       0x5C280000,  //  001F  MOVE	R10	R0
       0x502C0200,  //  0020  LDBOOL	R11	1	0
       0x7C200600,  //  0021  CALL	R8	3
@@ -3407,16 +3414,16 @@ be_local_closure(class_lvh_obj_event_cb,   /* name */
       0x60240004,  //  0025  GETGBL	R9	G4
       0x5C281000,  //  0026  MOVE	R10	R8
       0x7C240200,  //  0027  CALL	R9	1
-      0x20241367,  //  0028  NE	R9	R9	K103
+      0x20241366,  //  0028  NE	R9	R9	K102
       0x78260006,  //  0029  JMPF	R9	#0031
       0x60240018,  //  002A  GETGBL	R9	G24
-      0x58280068,  //  002B  LDCONST	R10	K104
-      0x8C2C0B69,  //  002C  GETMET	R11	R5	K105
+      0x58280067,  //  002B  LDCONST	R10	K103
+      0x8C2C0B68,  //  002C  GETMET	R11	R5	K104
       0x5C341000,  //  002D  MOVE	R13	R8
       0x7C2C0400,  //  002E  CALL	R11	2
       0x7C240400,  //  002F  CALL	R9	2
       0x5C181200,  //  0030  MOVE	R6	R9
-      0x8C240F37,  //  0031  GETMET	R9	R7	K55
+      0x8C240F36,  //  0031  GETMET	R9	R7	K54
       0x5C2C0000,  //  0032  MOVE	R11	R0
       0x50300200,  //  0033  LDBOOL	R12	1	0
       0x7C240600,  //  0034  CALL	R9	3
@@ -3426,25 +3433,25 @@ be_local_closure(class_lvh_obj_event_cb,   /* name */
       0x60280004,  //  0038  GETGBL	R10	G4
       0x5C2C1200,  //  0039  MOVE	R11	R9
       0x7C280200,  //  003A  CALL	R10	1
-      0x20281567,  //  003B  NE	R10	R10	K103
+      0x20281566,  //  003B  NE	R10	R10	K102
       0x782A0006,  //  003C  JMPF	R10	#0044
       0x60280018,  //  003D  GETGBL	R10	G24
-      0x582C006A,  //  003E  LDCONST	R11	K106
-      0x8C300B69,  //  003F  GETMET	R12	R5	K105
+      0x582C0069,  //  003E  LDCONST	R11	K105
+      0x8C300B68,  //  003F  GETMET	R12	R5	K104
       0x5C381200,  //  0040  MOVE	R14	R9
       0x7C300400,  //  0041  CALL	R12	2
       0x7C280400,  //  0042  CALL	R10	2
       0x00180C0A,  //  0043  ADD	R6	R6	R10
       0x601C0018,  //  0044  GETGBL	R7	G24
-      0x5820006B,  //  0045  LDCONST	R8	K107
+      0x5820006A,  //  0045  LDCONST	R8	K106
       0x88240115,  //  0046  GETMBR	R9	R0	K21
-      0x8824136C,  //  0047  GETMBR	R9	R9	K108
-      0x88280123,  //  0048  GETMBR	R10	R0	K35
+      0x8824136B,  //  0047  GETMBR	R9	R9	K107
+      0x8828016C,  //  0048  GETMBR	R10	R0	K108
       0x5C2C0800,  //  0049  MOVE	R11	R4
       0x5C300C00,  //  004A  MOVE	R12	R6
       0x7C1C0A00,  //  004B  CALL	R7	5
-      0xB822C400,  //  004C  GETNGBL	R8	K98
-      0x8C201163,  //  004D  GETMET	R8	R8	K99
+      0xB822C200,  //  004C  GETNGBL	R8	K97
+      0x8C201162,  //  004D  GETMET	R8	R8	K98
       0x58280018,  //  004E  LDCONST	R10	K24
       0x842C0001,  //  004F  CLOSURE	R11	P1
       0x7C200600,  //  0050  CALL	R8	3
@@ -3675,13 +3682,13 @@ be_local_closure(class_lvh_obj_set_adjustable,   /* name */
       0x88080103,  //  0001  GETMBR	R2	R0	K3
       0x8C080570,  //  0002  GETMET	R2	R2	K112
       0xB8120A00,  //  0003  GETNGBL	R4	K5
-      0x88100955,  //  0004  GETMBR	R4	R4	K85
+      0x88100954,  //  0004  GETMBR	R4	R4	K84
       0x7C080400,  //  0005  CALL	R2	2
       0x70020004,  //  0006  JMP		#000C
       0x88080103,  //  0007  GETMBR	R2	R0	K3
       0x8C080571,  //  0008  GETMET	R2	R2	K113
       0xB8120A00,  //  0009  GETNGBL	R4	K5
-      0x88100955,  //  000A  GETMBR	R4	R4	K85
+      0x88100954,  //  000A  GETMBR	R4	R4	K84
       0x7C080400,  //  000B  CALL	R2	2
       0x80000000,  //  000C  RET	0
     })
@@ -3707,7 +3714,7 @@ be_local_closure(class_lvh_obj_set_text,   /* name */
     be_str_weak(set_text),
     &be_const_str_solidified,
     ( &(const binstruction[ 9]) {  /* code */
-      0x8C08013F,  //  0000  GETMET	R2	R0	K63
+      0x8C08013E,  //  0000  GETMET	R2	R0	K62
       0x7C080200,  //  0001  CALL	R2	1
       0x88080101,  //  0002  GETMBR	R2	R0	K1
       0x8C080510,  //  0003  GETMET	R2	R2	K16
@@ -3739,7 +3746,7 @@ be_local_closure(class_lvh_obj_set_value_ofs_y,   /* name */
     be_str_weak(set_value_ofs_y),
     &be_const_str_solidified,
     ( &(const binstruction[ 9]) {  /* code */
-      0x8C08013F,  //  0000  GETMET	R2	R0	K63
+      0x8C08013E,  //  0000  GETMET	R2	R0	K62
       0x7C080200,  //  0001  CALL	R2	1
       0x88080101,  //  0002  GETMBR	R2	R0	K1
       0x8C080573,  //  0003  GETMET	R2	R2	K115
@@ -3860,7 +3867,7 @@ be_local_closure(class_lvh_obj_set_label_mode,   /* name */
       0x4C0C0000,  //  0021  LDNIL	R3
       0x200C0403,  //  0022  NE	R3	R2	R3
       0x780E0005,  //  0023  JMPF	R3	#002A
-      0x8C0C013F,  //  0024  GETMET	R3	R0	K63
+      0x8C0C013E,  //  0024  GETMET	R3	R0	K62
       0x7C0C0200,  //  0025  CALL	R3	1
       0x880C0101,  //  0026  GETMBR	R3	R0	K1
       0x8C0C0783,  //  0027  GETMET	R3	R3	K131
@@ -3930,28 +3937,28 @@ be_local_closure(class_lvh_obj_set_align,   /* name */
       0x1C100518,  //  0001  EQ	R4	R2	K24
       0x78120000,  //  0002  JMPF	R4	#0004
       0x58080018,  //  0003  LDCONST	R2	K24
-      0x8C10013F,  //  0004  GETMET	R4	R0	K63
+      0x8C10013E,  //  0004  GETMET	R4	R0	K62
       0x7C100200,  //  0005  CALL	R4	1
       0x1C100318,  //  0006  EQ	R4	R1	K24
       0x74120001,  //  0007  JMPT	R4	#000A
-      0x1C100358,  //  0008  EQ	R4	R1	K88
+      0x1C100357,  //  0008  EQ	R4	R1	K87
       0x78120002,  //  0009  JMPF	R4	#000D
       0xB8120A00,  //  000A  GETNGBL	R4	K5
-      0x880C0957,  //  000B  GETMBR	R3	R4	K87
+      0x880C0956,  //  000B  GETMBR	R3	R4	K86
       0x7002000C,  //  000C  JMP		#001A
       0x1C10031A,  //  000D  EQ	R4	R1	K26
       0x74120001,  //  000E  JMPT	R4	#0011
-      0x1C10035A,  //  000F  EQ	R4	R1	K90
+      0x1C100359,  //  000F  EQ	R4	R1	K89
       0x78120002,  //  0010  JMPF	R4	#0014
       0xB8120A00,  //  0011  GETNGBL	R4	K5
-      0x880C0959,  //  0012  GETMBR	R3	R4	K89
+      0x880C0958,  //  0012  GETMBR	R3	R4	K88
       0x70020005,  //  0013  JMP		#001A
       0x1C100384,  //  0014  EQ	R4	R1	K132
       0x74120001,  //  0015  JMPT	R4	#0018
-      0x1C10035C,  //  0016  EQ	R4	R1	K92
+      0x1C10035B,  //  0016  EQ	R4	R1	K91
       0x78120001,  //  0017  JMPF	R4	#001A
       0xB8120A00,  //  0018  GETNGBL	R4	K5
-      0x880C095B,  //  0019  GETMBR	R3	R4	K91
+      0x880C095A,  //  0019  GETMBR	R3	R4	K90
       0x88100101,  //  001A  GETMBR	R4	R0	K1
       0x8C100985,  //  001B  GETMET	R4	R4	K133
       0x5C180600,  //  001C  MOVE	R6	R3
@@ -8128,50 +8135,51 @@ be_local_class(lvh_scale,
     })),
     be_str_weak(lvh_scale)
 );
-// compact class 'lvh_scale_section' ktab size: 42, total: 57 (saved 120 bytes)
-static const bvalue be_ktab_class_lvh_scale_section[42] = {
+// compact class 'lvh_scale_section' ktab size: 43, total: 58 (saved 120 bytes)
+static const bvalue be_ktab_class_lvh_scale_section[43] = {
   /* K0   */  be_nested_str_weak(_style),
   /* K1   */  be_nested_str_weak(del),
   /* K2   */  be_nested_str_weak(_style10),
   /* K3   */  be_nested_str_weak(_style30),
-  /* K4   */  be_nested_str_weak(_lv_obj),
-  /* K5   */  be_nested_str_weak(_min),
-  /* K6   */  be_const_int(0),
-  /* K7   */  be_nested_str_weak(_max),
-  /* K8   */  be_nested_str_weak(_parent_lvh),
-  /* K9   */  be_nested_str_weak(_page),
-  /* K10  */  be_nested_str_weak(_hm),
-  /* K11  */  be_nested_str_weak(lvh_scale),
-  /* K12  */  be_nested_str_weak(add_section),
-  /* K13  */  be_nested_str_weak(lv),
-  /* K14  */  be_nested_str_weak(style),
-  /* K15  */  be_nested_str_weak(set_style),
-  /* K16  */  be_nested_str_weak(PART_MAIN),
-  /* K17  */  be_nested_str_weak(PART_INDICATOR),
-  /* K18  */  be_nested_str_weak(PART_ITEMS),
-  /* K19  */  be_nested_str_weak(HSP_X3A_X20_X27scale_section_X27_X20should_X20have_X20a_X20parent_X20of_X20type_X20_X27scale_X27),
-  /* K20  */  be_nested_str_weak(set_range),
-  /* K21  */  be_nested_str_weak(string),
-  /* K22  */  be_nested_str_weak(introspect),
-  /* K23  */  be_nested_str_weak(startswith),
-  /* K24  */  be_nested_str_weak(set_),
-  /* K25  */  be_nested_str_weak(get_),
-  /* K26  */  be_nested_str_weak(endswith),
-  /* K27  */  be_nested_str_weak(_X25),
-  /* K28  */  be_nested_str_weak(pct),
-  /* K29  */  be_const_int(3),
-  /* K30  */  be_nested_str_weak(byte),
-  /* K31  */  be_const_int(2147483647),
-  /* K32  */  be_nested_str_weak(value_error),
-  /* K33  */  be_nested_str_weak(only_X20modifiers_X20_X2710_X27_X20or_X20_X2730_X27_X20allowed),
-  /* K34  */  be_nested_str_weak(_attr_ignore),
-  /* K35  */  be_nested_str_weak(find),
-  /* K36  */  be_nested_str_weak(get),
-  /* K37  */  be_nested_str_weak(function),
-  /* K38  */  be_nested_str_weak(is_color_attribute),
-  /* K39  */  be_nested_str_weak(parse_color),
-  /* K40  */  be_nested_str_weak(_X20for_X20),
-  /* K41  */  be_nested_str_weak(HSP_X3A_X20Could_X20not_X20find_X20function_X20set_),
+  /* K4   */  be_nested_str_weak(_delete),
+  /* K5   */  be_nested_str_weak(_lv_obj),
+  /* K6   */  be_nested_str_weak(_min),
+  /* K7   */  be_const_int(0),
+  /* K8   */  be_nested_str_weak(_max),
+  /* K9   */  be_nested_str_weak(_parent_lvh),
+  /* K10  */  be_nested_str_weak(_page),
+  /* K11  */  be_nested_str_weak(_hm),
+  /* K12  */  be_nested_str_weak(lvh_scale),
+  /* K13  */  be_nested_str_weak(add_section),
+  /* K14  */  be_nested_str_weak(lv),
+  /* K15  */  be_nested_str_weak(style),
+  /* K16  */  be_nested_str_weak(set_style),
+  /* K17  */  be_nested_str_weak(PART_MAIN),
+  /* K18  */  be_nested_str_weak(PART_INDICATOR),
+  /* K19  */  be_nested_str_weak(PART_ITEMS),
+  /* K20  */  be_nested_str_weak(HSP_X3A_X20_X27scale_section_X27_X20should_X20have_X20a_X20parent_X20of_X20type_X20_X27scale_X27),
+  /* K21  */  be_nested_str_weak(set_range),
+  /* K22  */  be_nested_str_weak(string),
+  /* K23  */  be_nested_str_weak(introspect),
+  /* K24  */  be_nested_str_weak(startswith),
+  /* K25  */  be_nested_str_weak(set_),
+  /* K26  */  be_nested_str_weak(get_),
+  /* K27  */  be_nested_str_weak(endswith),
+  /* K28  */  be_nested_str_weak(_X25),
+  /* K29  */  be_nested_str_weak(pct),
+  /* K30  */  be_const_int(3),
+  /* K31  */  be_nested_str_weak(byte),
+  /* K32  */  be_const_int(2147483647),
+  /* K33  */  be_nested_str_weak(value_error),
+  /* K34  */  be_nested_str_weak(only_X20modifiers_X20_X2710_X27_X20or_X20_X2730_X27_X20allowed),
+  /* K35  */  be_nested_str_weak(_attr_ignore),
+  /* K36  */  be_nested_str_weak(find),
+  /* K37  */  be_nested_str_weak(get),
+  /* K38  */  be_nested_str_weak(function),
+  /* K39  */  be_nested_str_weak(is_color_attribute),
+  /* K40  */  be_nested_str_weak(parse_color),
+  /* K41  */  be_nested_str_weak(_X20for_X20),
+  /* K42  */  be_nested_str_weak(HSP_X3A_X20Could_X20not_X20find_X20function_X20set_),
 };
 
 
@@ -8193,7 +8201,7 @@ be_local_closure(class_lvh_scale_section__delete,   /* name */
     &be_ktab_class_lvh_scale_section,     /* shared constants */
     be_str_weak(_delete),
     &be_const_str_solidified,
-    ( &(const binstruction[16]) {  /* code */
+    ( &(const binstruction[21]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
       0x8C040301,  //  0001  GETMET	R1	R1	K1
       0x7C040200,  //  0002  CALL	R1	1
@@ -8209,7 +8217,12 @@ be_local_closure(class_lvh_scale_section__delete,   /* name */
       0x7C040200,  //  000C  CALL	R1	1
       0x4C040000,  //  000D  LDNIL	R1
       0x90020601,  //  000E  SETMBR	R0	K3	R1
-      0x80000000,  //  000F  RET	0
+      0x60040003,  //  000F  GETGBL	R1	G3
+      0x5C080000,  //  0010  MOVE	R2	R0
+      0x7C040200,  //  0011  CALL	R1	1
+      0x8C040304,  //  0012  GETMET	R1	R1	K4
+      0x7C040200,  //  0013  CALL	R1	1
+      0x80000000,  //  0014  RET	0
     })
   )
 );
@@ -8234,54 +8247,54 @@ be_local_closure(class_lvh_scale_section_post_init,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[51]) {  /* code */
       0x4C040000,  //  0000  LDNIL	R1
-      0x90020801,  //  0001  SETMBR	R0	K4	R1
-      0x90020B06,  //  0002  SETMBR	R0	K5	K6
-      0x90020F06,  //  0003  SETMBR	R0	K7	K6
+      0x90020A01,  //  0001  SETMBR	R0	K5	R1
+      0x90020D07,  //  0002  SETMBR	R0	K6	K7
+      0x90021107,  //  0003  SETMBR	R0	K8	K7
       0x6004000F,  //  0004  GETGBL	R1	G15
-      0x88080108,  //  0005  GETMBR	R2	R0	K8
-      0x880C0109,  //  0006  GETMBR	R3	R0	K9
-      0x880C070A,  //  0007  GETMBR	R3	R3	K10
-      0x880C070B,  //  0008  GETMBR	R3	R3	K11
+      0x88080109,  //  0005  GETMBR	R2	R0	K9
+      0x880C010A,  //  0006  GETMBR	R3	R0	K10
+      0x880C070B,  //  0007  GETMBR	R3	R3	K11
+      0x880C070C,  //  0008  GETMBR	R3	R3	K12
       0x7C040400,  //  0009  CALL	R1	2
       0x78060023,  //  000A  JMPF	R1	#002F
-      0x88040108,  //  000B  GETMBR	R1	R0	K8
-      0x88040304,  //  000C  GETMBR	R1	R1	K4
-      0x8C04030C,  //  000D  GETMET	R1	R1	K12
+      0x88040109,  //  000B  GETMBR	R1	R0	K9
+      0x88040305,  //  000C  GETMBR	R1	R1	K5
+      0x8C04030D,  //  000D  GETMET	R1	R1	K13
       0x7C040200,  //  000E  CALL	R1	1
-      0x90020801,  //  000F  SETMBR	R0	K4	R1
-      0xB8061A00,  //  0010  GETNGBL	R1	K13
-      0x8C04030E,  //  0011  GETMET	R1	R1	K14
+      0x90020A01,  //  000F  SETMBR	R0	K5	R1
+      0xB8061C00,  //  0010  GETNGBL	R1	K14
+      0x8C04030F,  //  0011  GETMET	R1	R1	K15
       0x7C040200,  //  0012  CALL	R1	1
       0x90020001,  //  0013  SETMBR	R0	K0	R1
-      0x88040104,  //  0014  GETMBR	R1	R0	K4
-      0x8C04030F,  //  0015  GETMET	R1	R1	K15
-      0xB80E1A00,  //  0016  GETNGBL	R3	K13
-      0x880C0710,  //  0017  GETMBR	R3	R3	K16
+      0x88040105,  //  0014  GETMBR	R1	R0	K5
+      0x8C040310,  //  0015  GETMET	R1	R1	K16
+      0xB80E1C00,  //  0016  GETNGBL	R3	K14
+      0x880C0711,  //  0017  GETMBR	R3	R3	K17
       0x88100100,  //  0018  GETMBR	R4	R0	K0
       0x7C040600,  //  0019  CALL	R1	3
-      0xB8061A00,  //  001A  GETNGBL	R1	K13
-      0x8C04030E,  //  001B  GETMET	R1	R1	K14
+      0xB8061C00,  //  001A  GETNGBL	R1	K14
+      0x8C04030F,  //  001B  GETMET	R1	R1	K15
       0x7C040200,  //  001C  CALL	R1	1
       0x90020401,  //  001D  SETMBR	R0	K2	R1
-      0x88040104,  //  001E  GETMBR	R1	R0	K4
-      0x8C04030F,  //  001F  GETMET	R1	R1	K15
-      0xB80E1A00,  //  0020  GETNGBL	R3	K13
-      0x880C0711,  //  0021  GETMBR	R3	R3	K17
+      0x88040105,  //  001E  GETMBR	R1	R0	K5
+      0x8C040310,  //  001F  GETMET	R1	R1	K16
+      0xB80E1C00,  //  0020  GETNGBL	R3	K14
+      0x880C0712,  //  0021  GETMBR	R3	R3	K18
       0x88100102,  //  0022  GETMBR	R4	R0	K2
       0x7C040600,  //  0023  CALL	R1	3
-      0xB8061A00,  //  0024  GETNGBL	R1	K13
-      0x8C04030E,  //  0025  GETMET	R1	R1	K14
+      0xB8061C00,  //  0024  GETNGBL	R1	K14
+      0x8C04030F,  //  0025  GETMET	R1	R1	K15
       0x7C040200,  //  0026  CALL	R1	1
       0x90020601,  //  0027  SETMBR	R0	K3	R1
-      0x88040104,  //  0028  GETMBR	R1	R0	K4
-      0x8C04030F,  //  0029  GETMET	R1	R1	K15
-      0xB80E1A00,  //  002A  GETNGBL	R3	K13
-      0x880C0712,  //  002B  GETMBR	R3	R3	K18
+      0x88040105,  //  0028  GETMBR	R1	R0	K5
+      0x8C040310,  //  0029  GETMET	R1	R1	K16
+      0xB80E1C00,  //  002A  GETNGBL	R3	K14
+      0x880C0713,  //  002B  GETMBR	R3	R3	K19
       0x88100103,  //  002C  GETMBR	R4	R0	K3
       0x7C040600,  //  002D  CALL	R1	3
       0x70020002,  //  002E  JMP		#0032
       0x60040001,  //  002F  GETGBL	R1	G1
-      0x58080013,  //  0030  LDCONST	R2	K19
+      0x58080014,  //  0030  LDCONST	R2	K20
       0x7C040200,  //  0031  CALL	R1	1
       0x80000000,  //  0032  RET	0
     })
@@ -8310,11 +8323,11 @@ be_local_closure(class_lvh_scale_section_set_min,   /* name */
       0x60080009,  //  0000  GETGBL	R2	G9
       0x5C0C0200,  //  0001  MOVE	R3	R1
       0x7C080200,  //  0002  CALL	R2	1
-      0x880C0107,  //  0003  GETMBR	R3	R0	K7
+      0x880C0108,  //  0003  GETMBR	R3	R0	K8
       0x14100602,  //  0004  LT	R4	R3	R2
       0x78120000,  //  0005  JMPF	R4	#0007
       0x5C0C0400,  //  0006  MOVE	R3	R2
-      0x8C100114,  //  0007  GETMET	R4	R0	K20
+      0x8C100115,  //  0007  GETMET	R4	R0	K21
       0x5C180400,  //  0008  MOVE	R6	R2
       0x5C1C0600,  //  0009  MOVE	R7	R3
       0x7C100600,  //  000A  CALL	R4	3
@@ -8342,10 +8355,10 @@ be_local_closure(class_lvh_scale_section_set_range,   /* name */
     be_str_weak(set_range),
     &be_const_str_solidified,
     ( &(const binstruction[ 8]) {  /* code */
-      0x90020A01,  //  0000  SETMBR	R0	K5	R1
-      0x90020E02,  //  0001  SETMBR	R0	K7	R2
-      0x880C0104,  //  0002  GETMBR	R3	R0	K4
-      0x8C0C0714,  //  0003  GETMET	R3	R3	K20
+      0x90020C01,  //  0000  SETMBR	R0	K6	R1
+      0x90021002,  //  0001  SETMBR	R0	K8	R2
+      0x880C0105,  //  0002  GETMBR	R3	R0	K5
+      0x8C0C0715,  //  0003  GETMET	R3	R3	K21
       0x5C140200,  //  0004  MOVE	R5	R1
       0x5C180400,  //  0005  MOVE	R6	R2
       0x7C0C0600,  //  0006  CALL	R3	3
@@ -8373,14 +8386,14 @@ be_local_closure(class_lvh_scale_section_set_max,   /* name */
     be_str_weak(set_max),
     &be_const_str_solidified,
     ( &(const binstruction[12]) {  /* code */
-      0x88080105,  //  0000  GETMBR	R2	R0	K5
+      0x88080106,  //  0000  GETMBR	R2	R0	K6
       0x600C0009,  //  0001  GETGBL	R3	G9
       0x5C100200,  //  0002  MOVE	R4	R1
       0x7C0C0200,  //  0003  CALL	R3	1
       0x24100403,  //  0004  GT	R4	R2	R3
       0x78120000,  //  0005  JMPF	R4	#0007
       0x5C080600,  //  0006  MOVE	R2	R3
-      0x8C100114,  //  0007  GETMET	R4	R0	K20
+      0x8C100115,  //  0007  GETMET	R4	R0	K21
       0x5C180400,  //  0008  MOVE	R6	R2
       0x5C1C0600,  //  0009  MOVE	R7	R3
       0x7C100600,  //  000A  CALL	R4	3
@@ -8408,29 +8421,29 @@ be_local_closure(class_lvh_scale_section_setmember,   /* name */
     be_str_weak(setmember),
     &be_const_str_solidified,
     ( &(const binstruction[141]) {  /* code */
-      0xA40E2A00,  //  0000  IMPORT	R3	K21
-      0xA4122C00,  //  0001  IMPORT	R4	K22
-      0x8C140717,  //  0002  GETMET	R5	R3	K23
+      0xA40E2C00,  //  0000  IMPORT	R3	K22
+      0xA4122E00,  //  0001  IMPORT	R4	K23
+      0x8C140718,  //  0002  GETMET	R5	R3	K24
       0x5C1C0200,  //  0003  MOVE	R7	R1
-      0x58200018,  //  0004  LDCONST	R8	K24
+      0x58200019,  //  0004  LDCONST	R8	K25
       0x7C140600,  //  0005  CALL	R5	3
       0x74160004,  //  0006  JMPT	R5	#000C
-      0x8C140717,  //  0007  GETMET	R5	R3	K23
+      0x8C140718,  //  0007  GETMET	R5	R3	K24
       0x5C1C0200,  //  0008  MOVE	R7	R1
-      0x58200019,  //  0009  LDCONST	R8	K25
+      0x5820001A,  //  0009  LDCONST	R8	K26
       0x7C140600,  //  000A  CALL	R5	3
       0x78160000,  //  000B  JMPF	R5	#000D
       0x80000A00,  //  000C  RET	0
-      0x8C14071A,  //  000D  GETMET	R5	R3	K26
+      0x8C14071B,  //  000D  GETMET	R5	R3	K27
       0x5C1C0200,  //  000E  MOVE	R7	R1
-      0x5820001B,  //  000F  LDCONST	R8	K27
+      0x5820001C,  //  000F  LDCONST	R8	K28
       0x7C140600,  //  0010  CALL	R5	3
       0x78160009,  //  0011  JMPF	R5	#001C
       0x5415FFFD,  //  0012  LDINT	R5	-2
-      0x40160C05,  //  0013  CONNECT	R5	K6	R5
+      0x40160E05,  //  0013  CONNECT	R5	K7	R5
       0x94040205,  //  0014  GETIDX	R1	R1	R5
-      0xB8161A00,  //  0015  GETNGBL	R5	K13
-      0x8C140B1C,  //  0016  GETMET	R5	R5	K28
+      0xB8161C00,  //  0015  GETNGBL	R5	K14
+      0x8C140B1D,  //  0016  GETMET	R5	R5	K29
       0x601C0009,  //  0017  GETGBL	R7	G9
       0x5C200400,  //  0018  MOVE	R8	R2
       0x7C1C0200,  //  0019  CALL	R7	1
@@ -8440,13 +8453,13 @@ be_local_closure(class_lvh_scale_section_setmember,   /* name */
       0x6018000C,  //  001D  GETGBL	R6	G12
       0x5C1C0200,  //  001E  MOVE	R7	R1
       0x7C180200,  //  001F  CALL	R6	1
-      0x28180D1D,  //  0020  GE	R6	R6	K29
+      0x28180D1E,  //  0020  GE	R6	R6	K30
       0x781A0023,  //  0021  JMPF	R6	#0046
-      0x8C18071E,  //  0022  GETMET	R6	R3	K30
+      0x8C18071F,  //  0022  GETMET	R6	R3	K31
       0x5421FFFE,  //  0023  LDINT	R8	-1
       0x94200208,  //  0024  GETIDX	R8	R1	R8
       0x7C180400,  //  0025  CALL	R6	2
-      0x8C1C071E,  //  0026  GETMET	R7	R3	K30
+      0x8C1C071F,  //  0026  GETMET	R7	R3	K31
       0x5425FFFD,  //  0027  LDINT	R9	-2
       0x94240209,  //  0028  GETIDX	R9	R1	R9
       0x7C1C0400,  //  0029  CALL	R7	2
@@ -8464,12 +8477,12 @@ be_local_closure(class_lvh_scale_section_setmember,   /* name */
       0x7822000F,  //  0035  JMPF	R8	#0046
       0x60200009,  //  0036  GETGBL	R8	G9
       0x5425FFFD,  //  0037  LDINT	R9	-2
-      0x4024131F,  //  0038  CONNECT	R9	R9	K31
+      0x40241320,  //  0038  CONNECT	R9	R9	K32
       0x94240209,  //  0039  GETIDX	R9	R1	R9
       0x7C200200,  //  003A  CALL	R8	1
       0x5C141000,  //  003B  MOVE	R5	R8
       0x5421FFFC,  //  003C  LDINT	R8	-3
-      0x40220C08,  //  003D  CONNECT	R8	K6	R8
+      0x40220E08,  //  003D  CONNECT	R8	K7	R8
       0x94040208,  //  003E  GETIDX	R1	R1	R8
       0x54220009,  //  003F  LDINT	R8	10
       0x20200A08,  //  0040  NE	R8	R5	R8
@@ -8477,9 +8490,9 @@ be_local_closure(class_lvh_scale_section_setmember,   /* name */
       0x5422001D,  //  0042  LDINT	R8	30
       0x20200A08,  //  0043  NE	R8	R5	R8
       0x78220000,  //  0044  JMPF	R8	#0046
-      0xB0064121,  //  0045  RAISE	1	K32	K33
-      0x88180122,  //  0046  GETMBR	R6	R0	K34
-      0x8C180D23,  //  0047  GETMET	R6	R6	K35
+      0xB0064322,  //  0045  RAISE	1	K33	K34
+      0x88180123,  //  0046  GETMBR	R6	R0	K35
+      0x8C180D24,  //  0047  GETMET	R6	R6	K36
       0x5C200200,  //  0048  MOVE	R8	R1
       0x7C180400,  //  0049  CALL	R6	2
       0x4C1C0000,  //  004A  LDNIL	R7
@@ -8496,35 +8509,35 @@ be_local_closure(class_lvh_scale_section_setmember,   /* name */
       0x1C1C0A07,  //  0055  EQ	R7	R5	R7
       0x781E0000,  //  0056  JMPF	R7	#0058
       0x88180103,  //  0057  GETMBR	R6	R0	K3
-      0x8C1C0924,  //  0058  GETMET	R7	R4	K36
+      0x8C1C0925,  //  0058  GETMET	R7	R4	K37
       0x5C240000,  //  0059  MOVE	R9	R0
-      0x002A3001,  //  005A  ADD	R10	K24	R1
+      0x002A3201,  //  005A  ADD	R10	K25	R1
       0x7C1C0600,  //  005B  CALL	R7	3
       0x60200004,  //  005C  GETGBL	R8	G4
       0x5C240E00,  //  005D  MOVE	R9	R7
       0x7C200200,  //  005E  CALL	R8	1
-      0x1C201125,  //  005F  EQ	R8	R8	K37
+      0x1C201126,  //  005F  EQ	R8	R8	K38
       0x78220004,  //  0060  JMPF	R8	#0066
       0x5C200E00,  //  0061  MOVE	R8	R7
       0x5C240000,  //  0062  MOVE	R9	R0
       0x5C280400,  //  0063  MOVE	R10	R2
       0x7C200400,  //  0064  CALL	R8	2
       0x80001000,  //  0065  RET	0
-      0x8C200924,  //  0066  GETMET	R8	R4	K36
+      0x8C200925,  //  0066  GETMET	R8	R4	K37
       0x5C280C00,  //  0067  MOVE	R10	R6
-      0x002E3001,  //  0068  ADD	R11	K24	R1
+      0x002E3201,  //  0068  ADD	R11	K25	R1
       0x7C200600,  //  0069  CALL	R8	3
       0x5C1C1000,  //  006A  MOVE	R7	R8
       0x60200004,  //  006B  GETGBL	R8	G4
       0x5C240E00,  //  006C  MOVE	R9	R7
       0x7C200200,  //  006D  CALL	R8	1
-      0x1C201125,  //  006E  EQ	R8	R8	K37
+      0x1C201126,  //  006E  EQ	R8	R8	K38
       0x78220018,  //  006F  JMPF	R8	#0089
-      0x8C200126,  //  0070  GETMET	R8	R0	K38
+      0x8C200127,  //  0070  GETMET	R8	R0	K39
       0x5C280200,  //  0071  MOVE	R10	R1
       0x7C200400,  //  0072  CALL	R8	2
       0x78220003,  //  0073  JMPF	R8	#0078
-      0x8C200127,  //  0074  GETMET	R8	R0	K39
+      0x8C200128,  //  0074  GETMET	R8	R0	K40
       0x5C280400,  //  0075  MOVE	R10	R2
       0x7C200400,  //  0076  CALL	R8	2
       0x5C081000,  //  0077  MOVE	R2	R8
@@ -8537,7 +8550,7 @@ be_local_closure(class_lvh_scale_section_setmember,   /* name */
       0x70020006,  //  007E  JMP		#0086
       0xAC200002,  //  007F  CATCH	R8	0	2
       0x70020003,  //  0080  JMP		#0085
-      0x00281328,  //  0081  ADD	R10	R9	K40
+      0x00281329,  //  0081  ADD	R10	R9	K41
       0x00281401,  //  0082  ADD	R10	R10	R1
       0xB004100A,  //  0083  RAISE	1	R8	R10
       0x70020000,  //  0084  JMP		#0086
@@ -8546,7 +8559,7 @@ be_local_closure(class_lvh_scale_section_setmember,   /* name */
       0x80041000,  //  0087  RET	1	R8
       0x70020002,  //  0088  JMP		#008C
       0x60200001,  //  0089  GETGBL	R8	G1
-      0x00265201,  //  008A  ADD	R9	K41	R1
+      0x00265401,  //  008A  ADD	R9	K42	R1
       0x7C200200,  //  008B  CALL	R8	1
       0x80000000,  //  008C  RET	0
     })
@@ -10206,55 +10219,225 @@ be_local_class(lvh_scr,
     })),
     be_str_weak(lvh_scr)
 );
-// compact class 'lvh_page' ktab size: 38, total: 62 (saved 192 bytes)
-static const bvalue be_ktab_class_lvh_page[38] = {
-  /* K0   */  be_nested_str_weak(_page_id),
-  /* K1   */  be_nested_str_weak(_obj_id),
-  /* K2   */  be_nested_str_weak(find),
-  /* K3   */  be_nested_str_weak(remove),
-  /* K4   */  be_nested_str_weak(p_X25ib_X25i),
-  /* K5   */  be_nested_str_weak(_page),
-  /* K6   */  be_nested_str_weak(id),
-  /* K7   */  be_nested_str_weak(global),
-  /* K8   */  be_nested_str_weak(_hm),
-  /* K9   */  be_const_int(1),
-  /* K10  */  be_const_int(0),
-  /* K11  */  be_nested_str_weak(_lv_scr),
-  /* K12  */  be_nested_str_weak(lv),
-  /* K13  */  be_nested_str_weak(layer_top),
-  /* K14  */  be_nested_str_weak(obj),
-  /* K15  */  be_nested_str_weak(scr_act),
-  /* K16  */  be_nested_str_weak(get_style_bg_color),
-  /* K17  */  be_nested_str_weak(set_style_bg_color),
-  /* K18  */  be_nested_str_weak(lvh_scr),
-  /* K19  */  be_nested_str_weak(p),
-  /* K20  */  be_nested_str_weak(b0),
-  /* K21  */  be_nested_str_weak(keys),
-  /* K22  */  be_nested_str_weak(push),
-  /* K23  */  be_nested_str_weak(stop_iteration),
-  /* K24  */  be_nested_str_weak(contains),
-  /* K25  */  be_nested_str_weak(delete),
-  /* K26  */  be_nested_str_weak(_remove_page),
-  /* K27  */  be_nested_str_weak(_p),
-  /* K28  */  be_nested_str_weak(page_dir_to),
-  /* K29  */  be_nested_str_weak(_X7B_X22hasp_X22_X3A_X7B_X22p_X25i_X22_X3A_X22out_X22_X7D_X7D),
-  /* K30  */  be_nested_str_weak(lvh_page_cur_idx),
-  /* K31  */  be_nested_str_weak(tasmota),
-  /* K32  */  be_nested_str_weak(set_timer),
-  /* K33  */  be_nested_str_weak(_X7B_X22hasp_X22_X3A_X7B_X22p_X25i_X22_X3A_X22in_X22_X7D_X7D),
-  /* K34  */  be_nested_str_weak(screen_load),
-  /* K35  */  be_nested_str_weak(show_anim),
-  /* K36  */  be_nested_str_weak(SCR_LOAD_ANIM_NONE),
-  /* K37  */  be_nested_str_weak(screen_load_anim),
+// compact class 'lvh_page' ktab size: 47, total: 73 (saved 208 bytes)
+static const bvalue be_ktab_class_lvh_page[47] = {
+  /* K0   */  be_nested_str_weak(_clear),
+  /* K1   */  be_nested_str_weak(string),
+  /* K2   */  be_nested_str_weak(introspect),
+  /* K3   */  be_nested_str_weak(startswith),
+  /* K4   */  be_nested_str_weak(set_),
+  /* K5   */  be_nested_str_weak(get_),
+  /* K6   */  be_nested_str_weak(get),
+  /* K7   */  be_nested_str_weak(function),
+  /* K8   */  be_nested_str_weak(undefined),
+  /* K9   */  be_nested_str_weak(_obj_id),
+  /* K10  */  be_nested_str_weak(keys),
+  /* K11  */  be_nested_str_weak(push),
+  /* K12  */  be_nested_str_weak(stop_iteration),
+  /* K13  */  be_const_int(0),
+  /* K14  */  be_nested_str_weak(contains),
+  /* K15  */  be_nested_str_weak(_delete),
+  /* K16  */  be_const_int(1),
+  /* K17  */  be_nested_str_weak(_lv_scr),
+  /* K18  */  be_nested_str_weak(find),
+  /* K19  */  be_nested_str_weak(remove),
+  /* K20  */  be_nested_str_weak(p_X25ib_X25i),
+  /* K21  */  be_nested_str_weak(_page),
+  /* K22  */  be_nested_str_weak(id),
+  /* K23  */  be_nested_str_weak(global),
+  /* K24  */  be_nested_str_weak(_hm),
+  /* K25  */  be_nested_str_weak(_page_id),
+  /* K26  */  be_nested_str_weak(lv),
+  /* K27  */  be_nested_str_weak(layer_top),
+  /* K28  */  be_nested_str_weak(obj),
+  /* K29  */  be_nested_str_weak(scr_act),
+  /* K30  */  be_nested_str_weak(get_style_bg_color),
+  /* K31  */  be_nested_str_weak(set_style_bg_color),
+  /* K32  */  be_nested_str_weak(lvh_scr),
+  /* K33  */  be_nested_str_weak(p_X25s),
+  /* K34  */  be_nested_str_weak(p_X25sb0),
+  /* K35  */  be_nested_str_weak(_p),
+  /* K36  */  be_nested_str_weak(page_dir_to),
+  /* K37  */  be_nested_str_weak(_X7B_X22hasp_X22_X3A_X7B_X22p_X25i_X22_X3A_X22out_X22_X7D_X7D),
+  /* K38  */  be_nested_str_weak(lvh_page_cur_idx),
+  /* K39  */  be_nested_str_weak(tasmota),
+  /* K40  */  be_nested_str_weak(set_timer),
+  /* K41  */  be_nested_str_weak(_X7B_X22hasp_X22_X3A_X7B_X22p_X25i_X22_X3A_X22in_X22_X7D_X7D),
+  /* K42  */  be_nested_str_weak(screen_load),
+  /* K43  */  be_nested_str_weak(show_anim),
+  /* K44  */  be_nested_str_weak(SCR_LOAD_ANIM_NONE),
+  /* K45  */  be_nested_str_weak(screen_load_anim),
+  /* K46  */  be_nested_str_weak(_remove_page),
 };
 
 
 extern const bclass be_class_lvh_page;
 
 /********************************************************************
-** Solidified function: id
+** Solidified function: get_clear
 ********************************************************************/
-be_local_closure(class_lvh_page_id,   /* name */
+be_local_closure(class_lvh_page_get_clear,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    10,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    1,                          /* has sup protos */
+    ( &(const struct bproto*[ 1]) {
+      be_nested_proto(
+        0,                          /* nstack */
+        0,                          /* argc */
+        0,                          /* varg */
+        0,                          /* has upvals */
+        NULL,                       /* no upvals */
+        0,                          /* has sup protos */
+        NULL,                       /* no sub protos */
+        0,                          /* has constants */
+        NULL,                       /* no const */
+        be_str_weak(_anonymous_),
+        &be_const_str_solidified,
+        ( &(const binstruction[ 1]) {  /* code */
+          0x80000000,  //  0000  RET	0
+        })
+      ),
+    }),
+    1,                          /* has constants */
+    &be_ktab_class_lvh_page,     /* shared constants */
+    be_str_weak(get_clear),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 4]) {  /* code */
+      0x8C040100,  //  0000  GETMET	R1	R0	K0
+      0x7C040200,  //  0001  CALL	R1	1
+      0x84040000,  //  0002  CLOSURE	R1	P0
+      0x80040200,  //  0003  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: member
+********************************************************************/
+be_local_closure(class_lvh_page_member,   /* name */
+  be_nested_proto(
+    8,                          /* nstack */
+    2,                          /* argc */
+    10,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    &be_ktab_class_lvh_page,     /* shared constants */
+    be_str_weak(member),
+    &be_const_str_solidified,
+    ( &(const binstruction[30]) {  /* code */
+      0xA40A0200,  //  0000  IMPORT	R2	K1
+      0xA40E0400,  //  0001  IMPORT	R3	K2
+      0x8C100503,  //  0002  GETMET	R4	R2	K3
+      0x5C180200,  //  0003  MOVE	R6	R1
+      0x581C0004,  //  0004  LDCONST	R7	K4
+      0x7C100600,  //  0005  CALL	R4	3
+      0x74120004,  //  0006  JMPT	R4	#000C
+      0x8C100503,  //  0007  GETMET	R4	R2	K3
+      0x5C180200,  //  0008  MOVE	R6	R1
+      0x581C0005,  //  0009  LDCONST	R7	K5
+      0x7C100600,  //  000A  CALL	R4	3
+      0x78120000,  //  000B  JMPF	R4	#000D
+      0x80000800,  //  000C  RET	0
+      0x8C100706,  //  000D  GETMET	R4	R3	K6
+      0x5C180000,  //  000E  MOVE	R6	R0
+      0x001E0A01,  //  000F  ADD	R7	K5	R1
+      0x7C100600,  //  0010  CALL	R4	3
+      0x60140004,  //  0011  GETGBL	R5	G4
+      0x5C180800,  //  0012  MOVE	R6	R4
+      0x7C140200,  //  0013  CALL	R5	1
+      0x1C140B07,  //  0014  EQ	R5	R5	K7
+      0x78160003,  //  0015  JMPF	R5	#001A
+      0x5C140800,  //  0016  MOVE	R5	R4
+      0x5C180000,  //  0017  MOVE	R6	R0
+      0x7C140200,  //  0018  CALL	R5	1
+      0x80040A00,  //  0019  RET	1	R5
+      0x6014000B,  //  001A  GETGBL	R5	G11
+      0x58180008,  //  001B  LDCONST	R6	K8
+      0x7C140200,  //  001C  CALL	R5	1
+      0x80040A00,  //  001D  RET	1	R5
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: _clear
+********************************************************************/
+be_local_closure(class_lvh_page__clear,   /* name */
+  be_nested_proto(
+    7,                          /* nstack */
+    1,                          /* argc */
+    10,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    &be_ktab_class_lvh_page,     /* shared constants */
+    be_str_weak(_clear),
+    &be_const_str_solidified,
+    ( &(const binstruction[41]) {  /* code */
+      0x60040012,  //  0000  GETGBL	R1	G18
+      0x7C040000,  //  0001  CALL	R1	0
+      0x60080010,  //  0002  GETGBL	R2	G16
+      0x880C0109,  //  0003  GETMBR	R3	R0	K9
+      0x8C0C070A,  //  0004  GETMET	R3	R3	K10
+      0x7C0C0200,  //  0005  CALL	R3	1
+      0x7C080200,  //  0006  CALL	R2	1
+      0xA8020005,  //  0007  EXBLK	0	#000E
+      0x5C0C0400,  //  0008  MOVE	R3	R2
+      0x7C0C0000,  //  0009  CALL	R3	0
+      0x8C10030B,  //  000A  GETMET	R4	R1	K11
+      0x5C180600,  //  000B  MOVE	R6	R3
+      0x7C100400,  //  000C  CALL	R4	2
+      0x7001FFF9,  //  000D  JMP		#0008
+      0x5808000C,  //  000E  LDCONST	R2	K12
+      0xAC080200,  //  000F  CATCH	R2	1	0
+      0xB0080000,  //  0010  RAISE	2	R0	R0
+      0x5808000D,  //  0011  LDCONST	R2	K13
+      0x600C000C,  //  0012  GETGBL	R3	G12
+      0x5C100200,  //  0013  MOVE	R4	R1
+      0x7C0C0200,  //  0014  CALL	R3	1
+      0x140C0403,  //  0015  LT	R3	R2	R3
+      0x780E000D,  //  0016  JMPF	R3	#0025
+      0x940C0202,  //  0017  GETIDX	R3	R1	R2
+      0x2010070D,  //  0018  NE	R4	R3	K13
+      0x78120008,  //  0019  JMPF	R4	#0023
+      0x88100109,  //  001A  GETMBR	R4	R0	K9
+      0x8C10090E,  //  001B  GETMET	R4	R4	K14
+      0x5C180600,  //  001C  MOVE	R6	R3
+      0x7C100400,  //  001D  CALL	R4	2
+      0x78120003,  //  001E  JMPF	R4	#0023
+      0x88100109,  //  001F  GETMBR	R4	R0	K9
+      0x94100803,  //  0020  GETIDX	R4	R4	R3
+      0x8C10090F,  //  0021  GETMET	R4	R4	K15
+      0x7C100200,  //  0022  CALL	R4	1
+      0x00080510,  //  0023  ADD	R2	R2	K16
+      0x7001FFEC,  //  0024  JMP		#0012
+      0x600C0013,  //  0025  GETGBL	R3	G19
+      0x7C0C0000,  //  0026  CALL	R3	0
+      0x90021203,  //  0027  SETMBR	R0	K9	R3
+      0x80000000,  //  0028  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_scr
+********************************************************************/
+be_local_closure(class_lvh_page_get_scr,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
@@ -10265,11 +10448,55 @@ be_local_closure(class_lvh_page_id,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     &be_ktab_class_lvh_page,     /* shared constants */
-    be_str_weak(id),
+    be_str_weak(get_scr),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
-      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x88040111,  //  0000  GETMBR	R1	R0	K17
       0x80040200,  //  0001  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_delete
+********************************************************************/
+be_local_closure(class_lvh_page_get_delete,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    10,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    1,                          /* has sup protos */
+    ( &(const struct bproto*[ 1]) {
+      be_nested_proto(
+        0,                          /* nstack */
+        0,                          /* argc */
+        0,                          /* varg */
+        0,                          /* has upvals */
+        NULL,                       /* no upvals */
+        0,                          /* has sup protos */
+        NULL,                       /* no sub protos */
+        0,                          /* has constants */
+        NULL,                       /* no const */
+        be_str_weak(_anonymous_),
+        &be_const_str_solidified,
+        ( &(const binstruction[ 1]) {  /* code */
+          0x80000000,  //  0000  RET	0
+        })
+      ),
+    }),
+    1,                          /* has constants */
+    &be_ktab_class_lvh_page,     /* shared constants */
+    be_str_weak(get_delete),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 4]) {  /* code */
+      0x8C04010F,  //  0000  GETMET	R1	R0	K15
+      0x7C040200,  //  0001  CALL	R1	1
+      0x84040000,  //  0002  CLOSURE	R1	P0
+      0x80040200,  //  0003  RET	1	R1
     })
   )
 );
@@ -10293,23 +10520,23 @@ be_local_closure(class_lvh_page_remove_obj,   /* name */
     be_str_weak(remove_obj),
     &be_const_str_solidified,
     ( &(const binstruction[20]) {  /* code */
-      0x88080101,  //  0000  GETMBR	R2	R0	K1
-      0x8C080502,  //  0001  GETMET	R2	R2	K2
+      0x88080109,  //  0000  GETMBR	R2	R0	K9
+      0x8C080512,  //  0001  GETMET	R2	R2	K18
       0x5C100200,  //  0002  MOVE	R4	R1
       0x7C080400,  //  0003  CALL	R2	2
-      0x880C0101,  //  0004  GETMBR	R3	R0	K1
-      0x8C0C0703,  //  0005  GETMET	R3	R3	K3
+      0x880C0109,  //  0004  GETMBR	R3	R0	K9
+      0x8C0C0713,  //  0005  GETMET	R3	R3	K19
       0x5C140200,  //  0006  MOVE	R5	R1
       0x7C0C0400,  //  0007  CALL	R3	2
       0x780A0009,  //  0008  JMPF	R2	#0013
       0x600C0018,  //  0009  GETGBL	R3	G24
-      0x58100004,  //  000A  LDCONST	R4	K4
-      0x88140505,  //  000B  GETMBR	R5	R2	K5
-      0x8C140B06,  //  000C  GETMET	R5	R5	K6
+      0x58100014,  //  000A  LDCONST	R4	K20
+      0x88140515,  //  000B  GETMBR	R5	R2	K21
+      0x8C140B16,  //  000C  GETMET	R5	R5	K22
       0x7C140200,  //  000D  CALL	R5	1
       0x5C180200,  //  000E  MOVE	R6	R1
       0x7C0C0600,  //  000F  CALL	R3	3
-      0xB8120E00,  //  0010  GETNGBL	R4	K7
+      0xB8122E00,  //  0010  GETNGBL	R4	K23
       0x4C140000,  //  0011  LDNIL	R5
       0x90100605,  //  0012  SETMBR	R4	R3	R5
       0x80000000,  //  0013  RET	0
@@ -10320,12 +10547,12 @@ be_local_closure(class_lvh_page_remove_obj,   /* name */
 
 
 /********************************************************************
-** Solidified function: init
+** Solidified function: get_obj
 ********************************************************************/
-be_local_closure(class_lvh_page_init,   /* name */
+be_local_closure(class_lvh_page_get_obj,   /* name */
   be_nested_proto(
-    10,                          /* nstack */
-    3,                          /* argc */
+    5,                          /* nstack */
+    2,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -10333,68 +10560,14 @@ be_local_closure(class_lvh_page_init,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     &be_ktab_class_lvh_page,     /* shared constants */
-    be_str_weak(init),
+    be_str_weak(get_obj),
     &be_const_str_solidified,
-    ( &(const binstruction[59]) {  /* code */
-      0xA40E0E00,  //  0000  IMPORT	R3	K7
-      0x90021002,  //  0001  SETMBR	R0	K8	R2
-      0x60100009,  //  0002  GETGBL	R4	G9
-      0x5C140200,  //  0003  MOVE	R5	R1
-      0x7C100200,  //  0004  CALL	R4	1
-      0x5C040800,  //  0005  MOVE	R1	R4
-      0x4C100000,  //  0006  LDNIL	R4
-      0x1C100204,  //  0007  EQ	R4	R1	R4
-      0x78120000,  //  0008  JMPF	R4	#000A
-      0x58040009,  //  0009  LDCONST	R1	K9
-      0x90020001,  //  000A  SETMBR	R0	K0	R1
-      0x60100013,  //  000B  GETGBL	R4	G19
-      0x7C100000,  //  000C  CALL	R4	0
-      0x90020204,  //  000D  SETMBR	R0	K1	R4
-      0x1C10030A,  //  000E  EQ	R4	R1	K10
-      0x78120004,  //  000F  JMPF	R4	#0015
-      0xB8121800,  //  0010  GETNGBL	R4	K12
-      0x8C10090D,  //  0011  GETMET	R4	R4	K13
-      0x7C100200,  //  0012  CALL	R4	1
-      0x90021604,  //  0013  SETMBR	R0	K11	R4
-      0x7002000F,  //  0014  JMP		#0025
-      0xB8121800,  //  0015  GETNGBL	R4	K12
-      0x8C10090E,  //  0016  GETMET	R4	R4	K14
-      0x5818000A,  //  0017  LDCONST	R6	K10
-      0x7C100400,  //  0018  CALL	R4	2
-      0x90021604,  //  0019  SETMBR	R0	K11	R4
-      0xB8121800,  //  001A  GETNGBL	R4	K12
-      0x8C10090F,  //  001B  GETMET	R4	R4	K15
-      0x7C100200,  //  001C  CALL	R4	1
-      0x8C100910,  //  001D  GETMET	R4	R4	K16
-      0x5818000A,  //  001E  LDCONST	R6	K10
-      0x7C100400,  //  001F  CALL	R4	2
-      0x8814010B,  //  0020  GETMBR	R5	R0	K11
-      0x8C140B11,  //  0021  GETMET	R5	R5	K17
-      0x5C1C0800,  //  0022  MOVE	R7	R4
-      0x5820000A,  //  0023  LDCONST	R8	K10
-      0x7C140600,  //  0024  CALL	R5	3
-      0x88100108,  //  0025  GETMBR	R4	R0	K8
-      0x88100912,  //  0026  GETMBR	R4	R4	K18
-      0x5C140800,  //  0027  MOVE	R5	R4
-      0x4C180000,  //  0028  LDNIL	R6
-      0x5C1C0000,  //  0029  MOVE	R7	R0
-      0x4C200000,  //  002A  LDNIL	R8
-      0x8824010B,  //  002B  GETMBR	R9	R0	K11
-      0x7C140800,  //  002C  CALL	R5	4
-      0x88180101,  //  002D  GETMBR	R6	R0	K1
-      0x981A1405,  //  002E  SETIDX	R6	K10	R5
-      0x60180008,  //  002F  GETGBL	R6	G8
-      0x881C0100,  //  0030  GETMBR	R7	R0	K0
-      0x7C180200,  //  0031  CALL	R6	1
-      0x001A2606,  //  0032  ADD	R6	K19	R6
-      0x900C0C00,  //  0033  SETMBR	R3	R6	R0
-      0x60180008,  //  0034  GETGBL	R6	G8
-      0x881C0100,  //  0035  GETMBR	R7	R0	K0
-      0x7C180200,  //  0036  CALL	R6	1
-      0x001A2606,  //  0037  ADD	R6	K19	R6
-      0x00180D14,  //  0038  ADD	R6	R6	K20
-      0x900C0C05,  //  0039  SETMBR	R3	R6	R5
-      0x80000000,  //  003A  RET	0
+    ( &(const binstruction[ 5]) {  /* code */
+      0x88080109,  //  0000  GETMBR	R2	R0	K9
+      0x8C080512,  //  0001  GETMET	R2	R2	K18
+      0x5C100200,  //  0002  MOVE	R4	R1
+      0x7C080400,  //  0003  CALL	R2	2
+      0x80040400,  //  0004  RET	1	R2
     })
   )
 );
@@ -10418,16 +10591,16 @@ be_local_closure(class_lvh_page_add_obj,   /* name */
     be_str_weak(add_obj),
     &be_const_str_solidified,
     ( &(const binstruction[12]) {  /* code */
-      0x880C0101,  //  0000  GETMBR	R3	R0	K1
+      0x880C0109,  //  0000  GETMBR	R3	R0	K9
       0x980C0202,  //  0001  SETIDX	R3	R1	R2
       0x600C0018,  //  0002  GETGBL	R3	G24
-      0x58100004,  //  0003  LDCONST	R4	K4
-      0x88140505,  //  0004  GETMBR	R5	R2	K5
-      0x8C140B06,  //  0005  GETMET	R5	R5	K6
+      0x58100014,  //  0003  LDCONST	R4	K20
+      0x88140515,  //  0004  GETMBR	R5	R2	K21
+      0x8C140B16,  //  0005  GETMET	R5	R5	K22
       0x7C140200,  //  0006  CALL	R5	1
       0x5C180200,  //  0007  MOVE	R6	R1
       0x7C0C0600,  //  0008  CALL	R3	3
-      0xB8120E00,  //  0009  GETNGBL	R4	K7
+      0xB8122E00,  //  0009  GETNGBL	R4	K23
       0x90100602,  //  000A  SETMBR	R4	R3	R2
       0x80000000,  //  000B  RET	0
     })
@@ -10437,12 +10610,12 @@ be_local_closure(class_lvh_page_add_obj,   /* name */
 
 
 /********************************************************************
-** Solidified function: delete
+** Solidified function: init
 ********************************************************************/
-be_local_closure(class_lvh_page_delete,   /* name */
+be_local_closure(class_lvh_page_init,   /* name */
   be_nested_proto(
-    7,                          /* nstack */
-    1,                          /* argc */
+    10,                          /* nstack */
+    3,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -10450,54 +10623,67 @@ be_local_closure(class_lvh_page_delete,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     &be_ktab_class_lvh_page,     /* shared constants */
-    be_str_weak(delete),
+    be_str_weak(init),
     &be_const_str_solidified,
-    ( &(const binstruction[45]) {  /* code */
-      0x60040012,  //  0000  GETGBL	R1	G18
-      0x7C040000,  //  0001  CALL	R1	0
-      0x60080010,  //  0002  GETGBL	R2	G16
-      0x880C0101,  //  0003  GETMBR	R3	R0	K1
-      0x8C0C0715,  //  0004  GETMET	R3	R3	K21
-      0x7C0C0200,  //  0005  CALL	R3	1
-      0x7C080200,  //  0006  CALL	R2	1
-      0xA8020005,  //  0007  EXBLK	0	#000E
-      0x5C0C0400,  //  0008  MOVE	R3	R2
-      0x7C0C0000,  //  0009  CALL	R3	0
-      0x8C100316,  //  000A  GETMET	R4	R1	K22
-      0x5C180600,  //  000B  MOVE	R6	R3
-      0x7C100400,  //  000C  CALL	R4	2
-      0x7001FFF9,  //  000D  JMP		#0008
-      0x58080017,  //  000E  LDCONST	R2	K23
-      0xAC080200,  //  000F  CATCH	R2	1	0
-      0xB0080000,  //  0010  RAISE	2	R0	R0
-      0x5808000A,  //  0011  LDCONST	R2	K10
-      0x600C000C,  //  0012  GETGBL	R3	G12
-      0x5C100200,  //  0013  MOVE	R4	R1
-      0x7C0C0200,  //  0014  CALL	R3	1
-      0x140C0403,  //  0015  LT	R3	R2	R3
-      0x780E000D,  //  0016  JMPF	R3	#0025
-      0x940C0202,  //  0017  GETIDX	R3	R1	R2
-      0x2010070A,  //  0018  NE	R4	R3	K10
-      0x78120008,  //  0019  JMPF	R4	#0023
-      0x88100101,  //  001A  GETMBR	R4	R0	K1
-      0x8C100918,  //  001B  GETMET	R4	R4	K24
-      0x5C180600,  //  001C  MOVE	R6	R3
-      0x7C100400,  //  001D  CALL	R4	2
-      0x78120003,  //  001E  JMPF	R4	#0023
-      0x88100101,  //  001F  GETMBR	R4	R0	K1
-      0x94100803,  //  0020  GETIDX	R4	R4	R3
-      0x8C100919,  //  0021  GETMET	R4	R4	K25
-      0x7C100200,  //  0022  CALL	R4	1
-      0x00080509,  //  0023  ADD	R2	R2	K9
-      0x7001FFEC,  //  0024  JMP		#0012
-      0x600C0013,  //  0025  GETGBL	R3	G19
-      0x7C0C0000,  //  0026  CALL	R3	0
-      0x90020203,  //  0027  SETMBR	R0	K1	R3
-      0x880C0108,  //  0028  GETMBR	R3	R0	K8
-      0x8C0C071A,  //  0029  GETMET	R3	R3	K26
-      0x88140100,  //  002A  GETMBR	R5	R0	K0
-      0x7C0C0400,  //  002B  CALL	R3	2
-      0x80000000,  //  002C  RET	0
+    ( &(const binstruction[58]) {  /* code */
+      0xA40E2E00,  //  0000  IMPORT	R3	K23
+      0x90023002,  //  0001  SETMBR	R0	K24	R2
+      0x60100009,  //  0002  GETGBL	R4	G9
+      0x5C140200,  //  0003  MOVE	R5	R1
+      0x7C100200,  //  0004  CALL	R4	1
+      0x5C040800,  //  0005  MOVE	R1	R4
+      0x4C100000,  //  0006  LDNIL	R4
+      0x1C100204,  //  0007  EQ	R4	R1	R4
+      0x78120000,  //  0008  JMPF	R4	#000A
+      0x58040010,  //  0009  LDCONST	R1	K16
+      0x90023201,  //  000A  SETMBR	R0	K25	R1
+      0x60100013,  //  000B  GETGBL	R4	G19
+      0x7C100000,  //  000C  CALL	R4	0
+      0x90021204,  //  000D  SETMBR	R0	K9	R4
+      0x1C10030D,  //  000E  EQ	R4	R1	K13
+      0x78120004,  //  000F  JMPF	R4	#0015
+      0xB8123400,  //  0010  GETNGBL	R4	K26
+      0x8C10091B,  //  0011  GETMET	R4	R4	K27
+      0x7C100200,  //  0012  CALL	R4	1
+      0x90022204,  //  0013  SETMBR	R0	K17	R4
+      0x7002000F,  //  0014  JMP		#0025
+      0xB8123400,  //  0015  GETNGBL	R4	K26
+      0x8C10091C,  //  0016  GETMET	R4	R4	K28
+      0x5818000D,  //  0017  LDCONST	R6	K13
+      0x7C100400,  //  0018  CALL	R4	2
+      0x90022204,  //  0019  SETMBR	R0	K17	R4
+      0xB8123400,  //  001A  GETNGBL	R4	K26
+      0x8C10091D,  //  001B  GETMET	R4	R4	K29
+      0x7C100200,  //  001C  CALL	R4	1
+      0x8C10091E,  //  001D  GETMET	R4	R4	K30
+      0x5818000D,  //  001E  LDCONST	R6	K13
+      0x7C100400,  //  001F  CALL	R4	2
+      0x88140111,  //  0020  GETMBR	R5	R0	K17
+      0x8C140B1F,  //  0021  GETMET	R5	R5	K31
+      0x5C1C0800,  //  0022  MOVE	R7	R4
+      0x5820000D,  //  0023  LDCONST	R8	K13
+      0x7C140600,  //  0024  CALL	R5	3
+      0x88100118,  //  0025  GETMBR	R4	R0	K24
+      0x88100920,  //  0026  GETMBR	R4	R4	K32
+      0x5C140800,  //  0027  MOVE	R5	R4
+      0x4C180000,  //  0028  LDNIL	R6
+      0x5C1C0000,  //  0029  MOVE	R7	R0
+      0x4C200000,  //  002A  LDNIL	R8
+      0x88240111,  //  002B  GETMBR	R9	R0	K17
+      0x7C140800,  //  002C  CALL	R5	4
+      0x88180109,  //  002D  GETMBR	R6	R0	K9
+      0x981A1A05,  //  002E  SETIDX	R6	K13	R5
+      0x60180018,  //  002F  GETGBL	R6	G24
+      0x581C0021,  //  0030  LDCONST	R7	K33
+      0x88200119,  //  0031  GETMBR	R8	R0	K25
+      0x7C180400,  //  0032  CALL	R6	2
+      0x900C0C00,  //  0033  SETMBR	R3	R6	R0
+      0x60180018,  //  0034  GETGBL	R6	G24
+      0x581C0022,  //  0035  LDCONST	R7	K34
+      0x88200119,  //  0036  GETMBR	R8	R0	K25
+      0x7C180400,  //  0037  CALL	R6	2
+      0x900C0C05,  //  0038  SETMBR	R3	R6	R5
+      0x80000000,  //  0039  RET	0
     })
   )
 );
@@ -10572,18 +10758,18 @@ be_local_closure(class_lvh_page_show,   /* name */
     be_str_weak(show),
     &be_const_str_solidified,
     ( &(const binstruction[73]) {  /* code */
-      0x880C010B,  //  0000  GETMBR	R3	R0	K11
+      0x880C0111,  //  0000  GETMBR	R3	R0	K17
       0x4C100000,  //  0001  LDNIL	R4
       0x1C0C0604,  //  0002  EQ	R3	R3	R4
       0x780E0001,  //  0003  JMPF	R3	#0006
       0x4C0C0000,  //  0004  LDNIL	R3
       0x80040600,  //  0005  RET	1	R3
-      0x880C010B,  //  0006  GETMBR	R3	R0	K11
-      0x880C071B,  //  0007  GETMBR	R3	R3	K27
-      0xB8121800,  //  0008  GETNGBL	R4	K12
-      0x8C10090F,  //  0009  GETMET	R4	R4	K15
+      0x880C0111,  //  0006  GETMBR	R3	R0	K17
+      0x880C0723,  //  0007  GETMBR	R3	R3	K35
+      0xB8123400,  //  0008  GETNGBL	R4	K26
+      0x8C10091D,  //  0009  GETMET	R4	R4	K29
       0x7C100200,  //  000A  CALL	R4	1
-      0x8810091B,  //  000B  GETMBR	R4	R4	K27
+      0x88100923,  //  000B  GETMBR	R4	R4	K35
       0x1C0C0604,  //  000C  EQ	R3	R3	R4
       0x780E0000,  //  000D  JMPF	R3	#000F
       0x80000600,  //  000E  RET	0
@@ -10594,53 +10780,53 @@ be_local_closure(class_lvh_page_show,   /* name */
       0x4C0C0000,  //  0013  LDNIL	R3
       0x1C0C0203,  //  0014  EQ	R3	R1	R3
       0x780E0005,  //  0015  JMPF	R3	#001C
-      0x880C0108,  //  0016  GETMBR	R3	R0	K8
-      0x8C0C071C,  //  0017  GETMET	R3	R3	K28
-      0x8C140106,  //  0018  GETMET	R5	R0	K6
+      0x880C0118,  //  0016  GETMBR	R3	R0	K24
+      0x8C0C0724,  //  0017  GETMET	R3	R3	K36
+      0x8C140116,  //  0018  GETMET	R5	R0	K22
       0x7C140200,  //  0019  CALL	R5	1
       0x7C0C0400,  //  001A  CALL	R3	2
       0x5C040600,  //  001B  MOVE	R1	R3
       0x600C0018,  //  001C  GETGBL	R3	G24
-      0x5810001D,  //  001D  LDCONST	R4	K29
-      0x88140108,  //  001E  GETMBR	R5	R0	K8
-      0x88140B1E,  //  001F  GETMBR	R5	R5	K30
+      0x58100025,  //  001D  LDCONST	R4	K37
+      0x88140118,  //  001E  GETMBR	R5	R0	K24
+      0x88140B26,  //  001F  GETMBR	R5	R5	K38
       0x7C0C0400,  //  0020  CALL	R3	2
-      0xB8123E00,  //  0021  GETNGBL	R4	K31
-      0x8C100920,  //  0022  GETMET	R4	R4	K32
-      0x5818000A,  //  0023  LDCONST	R6	K10
+      0xB8124E00,  //  0021  GETNGBL	R4	K39
+      0x8C100928,  //  0022  GETMET	R4	R4	K40
+      0x5818000D,  //  0023  LDCONST	R6	K13
       0x841C0000,  //  0024  CLOSURE	R7	P0
       0x7C100600,  //  0025  CALL	R4	3
       0x60100018,  //  0026  GETGBL	R4	G24
-      0x58140021,  //  0027  LDCONST	R5	K33
-      0x88180100,  //  0028  GETMBR	R6	R0	K0
+      0x58140029,  //  0027  LDCONST	R5	K41
+      0x88180119,  //  0028  GETMBR	R6	R0	K25
       0x7C100400,  //  0029  CALL	R4	2
-      0xB8163E00,  //  002A  GETNGBL	R5	K31
-      0x8C140B20,  //  002B  GETMET	R5	R5	K32
-      0x581C000A,  //  002C  LDCONST	R7	K10
+      0xB8164E00,  //  002A  GETNGBL	R5	K39
+      0x8C140B28,  //  002B  GETMET	R5	R5	K40
+      0x581C000D,  //  002C  LDCONST	R7	K13
       0x84200001,  //  002D  CLOSURE	R8	P1
       0x7C140600,  //  002E  CALL	R5	3
-      0x88140108,  //  002F  GETMBR	R5	R0	K8
-      0x88180100,  //  0030  GETMBR	R6	R0	K0
-      0x90163C06,  //  0031  SETMBR	R5	K30	R6
-      0x1C14030A,  //  0032  EQ	R5	R1	K10
+      0x88140118,  //  002F  GETMBR	R5	R0	K24
+      0x88180119,  //  0030  GETMBR	R6	R0	K25
+      0x90164C06,  //  0031  SETMBR	R5	K38	R6
+      0x1C14030D,  //  0032  EQ	R5	R1	K13
       0x78160004,  //  0033  JMPF	R5	#0039
-      0xB8161800,  //  0034  GETNGBL	R5	K12
-      0x8C140B22,  //  0035  GETMET	R5	R5	K34
-      0x881C010B,  //  0036  GETMBR	R7	R0	K11
+      0xB8163400,  //  0034  GETNGBL	R5	K26
+      0x8C140B2A,  //  0035  GETMET	R5	R5	K42
+      0x881C0111,  //  0036  GETMBR	R7	R0	K17
       0x7C140400,  //  0037  CALL	R5	2
       0x7002000D,  //  0038  JMP		#0047
-      0x88140123,  //  0039  GETMBR	R5	R0	K35
-      0x8C140B02,  //  003A  GETMET	R5	R5	K2
+      0x8814012B,  //  0039  GETMBR	R5	R0	K43
+      0x8C140B12,  //  003A  GETMET	R5	R5	K18
       0x5C1C0200,  //  003B  MOVE	R7	R1
-      0xB8221800,  //  003C  GETNGBL	R8	K12
-      0x88201124,  //  003D  GETMBR	R8	R8	K36
+      0xB8223400,  //  003C  GETNGBL	R8	K26
+      0x8820112C,  //  003D  GETMBR	R8	R8	K44
       0x7C140600,  //  003E  CALL	R5	3
-      0xB81A1800,  //  003F  GETNGBL	R6	K12
-      0x8C180D25,  //  0040  GETMET	R6	R6	K37
-      0x8820010B,  //  0041  GETMBR	R8	R0	K11
+      0xB81A3400,  //  003F  GETNGBL	R6	K26
+      0x8C180D2D,  //  0040  GETMET	R6	R6	K45
+      0x88200111,  //  0041  GETMBR	R8	R0	K17
       0x5C240A00,  //  0042  MOVE	R9	R5
       0x5C280400,  //  0043  MOVE	R10	R2
-      0x582C000A,  //  0044  LDCONST	R11	K10
+      0x582C000D,  //  0044  LDCONST	R11	K13
       0x50300000,  //  0045  LDBOOL	R12	0	0
       0x7C180C00,  //  0046  CALL	R6	6
       0xA0000000,  //  0047  CLOSE	R0
@@ -10652,12 +10838,12 @@ be_local_closure(class_lvh_page_show,   /* name */
 
 
 /********************************************************************
-** Solidified function: get_obj
+** Solidified function: _delete
 ********************************************************************/
-be_local_closure(class_lvh_page_get_obj,   /* name */
+be_local_closure(class_lvh_page__delete,   /* name */
   be_nested_proto(
-    5,                          /* nstack */
-    2,                          /* argc */
+    4,                          /* nstack */
+    1,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -10665,14 +10851,16 @@ be_local_closure(class_lvh_page_get_obj,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     &be_ktab_class_lvh_page,     /* shared constants */
-    be_str_weak(get_obj),
+    be_str_weak(_delete),
     &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
-      0x88080101,  //  0000  GETMBR	R2	R0	K1
-      0x8C080502,  //  0001  GETMET	R2	R2	K2
-      0x5C100200,  //  0002  MOVE	R4	R1
-      0x7C080400,  //  0003  CALL	R2	2
-      0x80040400,  //  0004  RET	1	R2
+    ( &(const binstruction[ 7]) {  /* code */
+      0x88040118,  //  0000  GETMBR	R1	R0	K24
+      0x8C04032E,  //  0001  GETMET	R1	R1	K46
+      0x880C0119,  //  0002  GETMBR	R3	R0	K25
+      0x7C040400,  //  0003  CALL	R1	2
+      0x8C040100,  //  0004  GETMET	R1	R0	K0
+      0x7C040200,  //  0005  CALL	R1	1
+      0x80000000,  //  0006  RET	0
     })
   )
 );
@@ -10680,9 +10868,9 @@ be_local_closure(class_lvh_page_get_obj,   /* name */
 
 
 /********************************************************************
-** Solidified function: get_scr
+** Solidified function: id
 ********************************************************************/
-be_local_closure(class_lvh_page_get_scr,   /* name */
+be_local_closure(class_lvh_page_id,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
@@ -10693,10 +10881,10 @@ be_local_closure(class_lvh_page_get_scr,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     &be_ktab_class_lvh_page,     /* shared constants */
-    be_str_weak(get_scr),
+    be_str_weak(id),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
-      0x8804010B,  //  0000  GETMBR	R1	R0	K11
+      0x88040119,  //  0000  GETMBR	R1	R0	K25
       0x80040200,  //  0001  RET	1	R1
     })
   )
@@ -10710,13 +10898,9 @@ be_local_closure(class_lvh_page_get_scr,   /* name */
 be_local_class(lvh_page,
     7,
     NULL,
-    be_nested_map(16,
+    be_nested_map(20,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(id, 5), be_const_closure(class_lvh_page_id_closure) },
-        { be_const_key_weak(_obj_id, -1), be_const_var(0) },
-        { be_const_key_weak(back, -1), be_const_var(6) },
-        { be_const_key_weak(remove_obj, 14), be_const_closure(class_lvh_page_remove_obj_closure) },
-        { be_const_key_weak(show_anim, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
+        { be_const_key_weak(show_anim, 1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(5,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key_int(0, 3), be_const_int(0) },
@@ -10725,23 +10909,31 @@ be_local_class(lvh_page,
         { be_const_key_int(-1, -1), be_const_int(6) },
         { be_const_key_int(-2, -1), be_const_int(7) },
     }))    ) } )) },
-        { be_const_key_weak(prev, -1), be_const_var(4) },
-        { be_const_key_weak(add_obj, -1), be_const_closure(class_lvh_page_add_obj_closure) },
-        { be_const_key_weak(get_scr, -1), be_const_closure(class_lvh_page_get_scr_closure) },
+        { be_const_key_weak(id, 3), be_const_closure(class_lvh_page_id_closure) },
+        { be_const_key_weak(_obj_id, -1), be_const_var(0) },
+        { be_const_key_weak(show, 18), be_const_closure(class_lvh_page_show_closure) },
+        { be_const_key_weak(_lv_scr, 19), be_const_var(2) },
+        { be_const_key_weak(get_clear, 2), be_const_closure(class_lvh_page_get_clear_closure) },
+        { be_const_key_weak(back, -1), be_const_var(6) },
+        { be_const_key_weak(get_delete, -1), be_const_closure(class_lvh_page_get_delete_closure) },
+        { be_const_key_weak(remove_obj, 4), be_const_closure(class_lvh_page_remove_obj_closure) },
+        { be_const_key_weak(_hm, -1), be_const_var(3) },
+        { be_const_key_weak(_page_id, 8), be_const_var(1) },
+        { be_const_key_weak(member, 10), be_const_closure(class_lvh_page_member_closure) },
         { be_const_key_weak(next, -1), be_const_var(5) },
         { be_const_key_weak(get_obj, -1), be_const_closure(class_lvh_page_get_obj_closure) },
-        { be_const_key_weak(delete, -1), be_const_closure(class_lvh_page_delete_closure) },
-        { be_const_key_weak(_lv_scr, -1), be_const_var(2) },
-        { be_const_key_weak(show, 7), be_const_closure(class_lvh_page_show_closure) },
-        { be_const_key_weak(_hm, 9), be_const_var(3) },
-        { be_const_key_weak(_page_id, 15), be_const_var(1) },
+        { be_const_key_weak(add_obj, -1), be_const_closure(class_lvh_page_add_obj_closure) },
         { be_const_key_weak(init, -1), be_const_closure(class_lvh_page_init_closure) },
+        { be_const_key_weak(prev, 0), be_const_var(4) },
+        { be_const_key_weak(_delete, -1), be_const_closure(class_lvh_page__delete_closure) },
+        { be_const_key_weak(get_scr, -1), be_const_closure(class_lvh_page_get_scr_closure) },
+        { be_const_key_weak(_clear, -1), be_const_closure(class_lvh_page__clear_closure) },
     })),
     be_str_weak(lvh_page)
 );
 extern const bclass be_class_HASPmota;
-// compact class 'HASPmota' ktab size: 120, total: 180 (saved 480 bytes)
-static const bvalue be_ktab_class_HASPmota[120] = {
+// compact class 'HASPmota' ktab size: 122, total: 190 (saved 544 bytes)
+static const bvalue be_ktab_class_HASPmota[122] = {
   /* K0   */  be_const_class(be_class_HASPmota),
   /* K1   */  be_nested_str_weak(introspect),
   /* K2   */  be_nested_str_weak(get),
@@ -10807,61 +10999,63 @@ static const bvalue be_ktab_class_HASPmota[120] = {
   /* K62  */  be_nested_str_weak(pages_list_sorted),
   /* K63  */  be_nested_str_weak(no_X20page_X20object_X20defined),
   /* K64  */  be_nested_str_weak(show),
-  /* K65  */  be_nested_str_weak(match),
-  /* K66  */  be_nested_str_weak(path),
-  /* K67  */  be_nested_str_weak(def_templ_name),
-  /* K68  */  be_nested_str_weak(exists),
-  /* K69  */  be_nested_str_weak(file_X20_X27),
-  /* K70  */  be_nested_str_weak(_X27_X20not_X20found),
-  /* K71  */  be_nested_str_weak(io_erorr),
-  /* K72  */  be_nested_str_weak(start),
-  /* K73  */  be_nested_str_weak(dark),
-  /* K74  */  be_nested_str_weak(hres),
-  /* K75  */  be_nested_str_weak(get_hor_res),
-  /* K76  */  be_nested_str_weak(vres),
-  /* K77  */  be_nested_str_weak(get_ver_res),
-  /* K78  */  be_nested_str_weak(scr),
-  /* K79  */  be_nested_str_weak(scr_act),
-  /* K80  */  be_nested_str_weak(r16),
-  /* K81  */  be_nested_str_weak(font_embedded),
-  /* K82  */  be_nested_str_weak(robotocondensed),
-  /* K83  */  be_nested_str_weak(montserrat),
-  /* K84  */  be_nested_str_weak(theme_haspmota_init),
-  /* K85  */  be_nested_str_weak(color),
-  /* K86  */  be_const_int(16711935),
-  /* K87  */  be_const_int(3158064),
-  /* K88  */  be_nested_str_weak(get_disp),
-  /* K89  */  be_nested_str_weak(set_theme),
-  /* K90  */  be_nested_str_weak(set_style_bg_color),
-  /* K91  */  be_const_int(16777215),
-  /* K92  */  be_nested_str_weak(theme_apply),
-  /* K93  */  be_nested_str_weak(layer_top),
-  /* K94  */  be_nested_str_weak(set_style_bg_opa),
-  /* K95  */  be_nested_str_weak(_load),
-  /* K96  */  be_nested_str_weak(global),
-  /* K97  */  be_nested_str_weak(obj),
-  /* K98  */  be_nested_str_weak(HSP_X3A_X20invalid_X20_X27id_X27_X3A_X20_X25s_X20for_X20_X27obj_X27_X3A_X20_X25s),
-  /* K99  */  be_nested_str_weak(get_obj),
-  /* K100 */  be_nested_str_weak(parentid),
-  /* K101 */  be_nested_str_weak(get_scr),
-  /* K102 */  be_nested_str_weak(lvh_),
-  /* K103 */  be_nested_str_weak(class),
-  /* K104 */  be_nested_str_weak(lvh_obj),
-  /* K105 */  be_nested_str_weak(module),
-  /* K106 */  be_nested_str_weak(HSP_X3A_X20Cannot_X20find_X20object_X20of_X20type_X20_X25s),
-  /* K107 */  be_nested_str_weak(add_obj),
-  /* K108 */  be_nested_str_weak(HSP_X3A_X20cannot_X20specify_X20_X27obj_X27_X3A_X27_X25s_X27_X20for_X20_X27id_X27_X3A0),
-  /* K109 */  be_nested_str_weak(post_config),
-  /* K110 */  be_nested_str_weak(berry_run),
-  /* K111 */  be_nested_str_weak(nil),
-  /* K112 */  be_nested_str_weak(HSP_X3A_X20unable_X20to_X20compile_X20berry_X20code_X20_X22_X25s_X22_X20_X2D_X20_X27_X25s_X27_X20_X2D_X20_X25s),
-  /* K113 */  be_nested_str_weak(function),
-  /* K114 */  be_nested_str_weak(HSP_X3A_X20unable_X20to_X20run_X20berry_X20code_X20_X22_X25s_X22_X20_X2D_X20_X27_X25s_X27_X20_X2D_X20_X25s),
-  /* K115 */  be_nested_str_weak(event),
-  /* K116 */  be_nested_str_weak(_p),
-  /* K117 */  be_nested_str_weak(lv_event),
-  /* K118 */  be_nested_str_weak(get_user_data),
-  /* K119 */  be_nested_str_weak(fromptr),
+  /* K65  */  be_nested_str_weak(delete),
+  /* K66  */  be_nested_str_weak(match),
+  /* K67  */  be_nested_str_weak(path),
+  /* K68  */  be_nested_str_weak(def_templ_name),
+  /* K69  */  be_nested_str_weak(exists),
+  /* K70  */  be_nested_str_weak(file_X20_X27),
+  /* K71  */  be_nested_str_weak(_X27_X20not_X20found),
+  /* K72  */  be_nested_str_weak(io_erorr),
+  /* K73  */  be_nested_str_weak(start),
+  /* K74  */  be_nested_str_weak(dark),
+  /* K75  */  be_nested_str_weak(hres),
+  /* K76  */  be_nested_str_weak(get_hor_res),
+  /* K77  */  be_nested_str_weak(vres),
+  /* K78  */  be_nested_str_weak(get_ver_res),
+  /* K79  */  be_nested_str_weak(scr),
+  /* K80  */  be_nested_str_weak(scr_act),
+  /* K81  */  be_nested_str_weak(r16),
+  /* K82  */  be_nested_str_weak(font_embedded),
+  /* K83  */  be_nested_str_weak(robotocondensed),
+  /* K84  */  be_nested_str_weak(montserrat),
+  /* K85  */  be_nested_str_weak(theme_haspmota_init),
+  /* K86  */  be_nested_str_weak(color),
+  /* K87  */  be_const_int(16711935),
+  /* K88  */  be_const_int(3158064),
+  /* K89  */  be_nested_str_weak(get_disp),
+  /* K90  */  be_nested_str_weak(set_theme),
+  /* K91  */  be_nested_str_weak(set_style_bg_color),
+  /* K92  */  be_const_int(16777215),
+  /* K93  */  be_nested_str_weak(theme_apply),
+  /* K94  */  be_nested_str_weak(layer_top),
+  /* K95  */  be_nested_str_weak(set_style_bg_opa),
+  /* K96  */  be_nested_str_weak(_load),
+  /* K97  */  be_nested_str_weak(global),
+  /* K98  */  be_nested_str_weak(p_X25s),
+  /* K99  */  be_nested_str_weak(obj),
+  /* K100 */  be_nested_str_weak(HSP_X3A_X20invalid_X20_X27id_X27_X3A_X20_X25s_X20for_X20_X27obj_X27_X3A_X20_X25s),
+  /* K101 */  be_nested_str_weak(get_obj),
+  /* K102 */  be_nested_str_weak(parentid),
+  /* K103 */  be_nested_str_weak(get_scr),
+  /* K104 */  be_nested_str_weak(lvh_),
+  /* K105 */  be_nested_str_weak(class),
+  /* K106 */  be_nested_str_weak(lvh_obj),
+  /* K107 */  be_nested_str_weak(module),
+  /* K108 */  be_nested_str_weak(HSP_X3A_X20Cannot_X20find_X20object_X20of_X20type_X20_X25s),
+  /* K109 */  be_nested_str_weak(add_obj),
+  /* K110 */  be_nested_str_weak(HSP_X3A_X20cannot_X20specify_X20_X27obj_X27_X3A_X27_X25s_X27_X20for_X20_X27id_X27_X3A0),
+  /* K111 */  be_nested_str_weak(post_config),
+  /* K112 */  be_nested_str_weak(berry_run),
+  /* K113 */  be_nested_str_weak(nil),
+  /* K114 */  be_nested_str_weak(HSP_X3A_X20unable_X20to_X20compile_X20berry_X20code_X20_X22_X25s_X22_X20_X2D_X20_X27_X25s_X27_X20_X2D_X20_X25s),
+  /* K115 */  be_nested_str_weak(function),
+  /* K116 */  be_nested_str_weak(HSP_X3A_X20unable_X20to_X20run_X20berry_X20code_X20_X22_X25s_X22_X20_X2D_X20_X27_X25s_X27_X20_X2D_X20_X25s),
+  /* K117 */  be_nested_str_weak(event),
+  /* K118 */  be_nested_str_weak(_p),
+  /* K119 */  be_nested_str_weak(lv_event),
+  /* K120 */  be_nested_str_weak(get_user_data),
+  /* K121 */  be_nested_str_weak(fromptr),
 };
 
 
@@ -11436,89 +11630,157 @@ be_local_closure(class_HASPmota_page_dir_to,   /* name */
 ********************************************************************/
 be_local_closure(class_HASPmota_page_show,   /* name */
   be_nested_proto(
-    8,                          /* nstack */
-    2,                          /* argc */
+    13,                          /* nstack */
+    4,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
+    1,                          /* has sup protos */
+    ( &(const struct bproto*[ 1]) {
+      be_nested_proto(
+        6,                          /* nstack */
+        3,                          /* argc */
+        0,                          /* varg */
+        0,                          /* has upvals */
+        NULL,                       /* no upvals */
+        0,                          /* has sup protos */
+        NULL,                       /* no sub protos */
+        1,                          /* has constants */
+        ( &(const bvalue[ 1]) {     /* constants */
+        /* K0   */  be_nested_str_weak(find),
+        }),
+        be_str_weak(to_page_resolve),
+        &be_const_str_solidified,
+        ( &(const binstruction[13]) {  /* code */
+          0x4C0C0000,  //  0000  LDNIL	R3
+          0x200C0003,  //  0001  NE	R3	R0	R3
+          0x780E0007,  //  0002  JMPF	R3	#000B
+          0x8C0C0500,  //  0003  GETMET	R3	R2	K0
+          0x5C140000,  //  0004  MOVE	R5	R0
+          0x7C0C0400,  //  0005  CALL	R3	2
+          0x4C100000,  //  0006  LDNIL	R4
+          0x200C0604,  //  0007  NE	R3	R3	R4
+          0x780E0001,  //  0008  JMPF	R3	#000B
+          0x80040000,  //  0009  RET	1	R0
+          0x70020000,  //  000A  JMP		#000C
+          0x80040200,  //  000B  RET	1	R1
+          0x80000000,  //  000C  RET	0
+        })
+      ),
+    }),
     1,                          /* has constants */
     &be_ktab_class_HASPmota,     /* shared constants */
     be_str_weak(page_show),
     &be_const_str_solidified,
-    ( &(const binstruction[71]) {  /* code */
-      0x4C080000,  //  0000  LDNIL	R2
-      0x880C010B,  //  0001  GETMBR	R3	R0	K11
-      0x8810010C,  //  0002  GETMBR	R4	R0	K12
-      0x940C0604,  //  0003  GETIDX	R3	R3	R4
-      0x8C10013E,  //  0004  GETMET	R4	R0	K62
-      0x8818010C,  //  0005  GETMBR	R6	R0	K12
-      0x7C100400,  //  0006  CALL	R4	2
-      0x6014000C,  //  0007  GETGBL	R5	G12
-      0x5C180800,  //  0008  MOVE	R6	R4
-      0x7C140200,  //  0009  CALL	R5	1
-      0x18140B15,  //  000A  LE	R5	R5	K21
-      0x78160000,  //  000B  JMPF	R5	#000D
-      0x80000A00,  //  000C  RET	0
-      0x1C140321,  //  000D  EQ	R5	R1	K33
-      0x78160009,  //  000E  JMPF	R5	#0019
-      0x60140009,  //  000F  GETGBL	R5	G9
-      0x88180721,  //  0010  GETMBR	R6	R3	K33
-      0x7C140200,  //  0011  CALL	R5	1
-      0x5C080A00,  //  0012  MOVE	R2	R5
-      0x4C140000,  //  0013  LDNIL	R5
-      0x1C140405,  //  0014  EQ	R5	R2	R5
-      0x78160001,  //  0015  JMPF	R5	#0018
-      0x5415FFFE,  //  0016  LDINT	R5	-1
-      0x94080805,  //  0017  GETIDX	R2	R4	R5
-      0x70020023,  //  0018  JMP		#003D
-      0x1C140322,  //  0019  EQ	R5	R1	K34
-      0x78160008,  //  001A  JMPF	R5	#0024
-      0x60140009,  //  001B  GETGBL	R5	G9
-      0x88180722,  //  001C  GETMBR	R6	R3	K34
-      0x7C140200,  //  001D  CALL	R5	1
-      0x5C080A00,  //  001E  MOVE	R2	R5
-      0x4C140000,  //  001F  LDNIL	R5
-      0x1C140405,  //  0020  EQ	R5	R2	R5
-      0x78160000,  //  0021  JMPF	R5	#0023
-      0x94080915,  //  0022  GETIDX	R2	R4	K21
-      0x70020018,  //  0023  JMP		#003D
-      0x1C140323,  //  0024  EQ	R5	R1	K35
-      0x7816000B,  //  0025  JMPF	R5	#0032
-      0x60140009,  //  0026  GETGBL	R5	G9
-      0x88180723,  //  0027  GETMBR	R6	R3	K35
-      0x7C140200,  //  0028  CALL	R5	1
-      0x5C080A00,  //  0029  MOVE	R2	R5
-      0x4C140000,  //  002A  LDNIL	R5
-      0x1C140405,  //  002B  EQ	R5	R2	R5
-      0x78160003,  //  002C  JMPF	R5	#0031
-      0x8C14013E,  //  002D  GETMET	R5	R0	K62
-      0x4C1C0000,  //  002E  LDNIL	R7
-      0x7C140400,  //  002F  CALL	R5	2
-      0x94080B0F,  //  0030  GETIDX	R2	R5	K15
-      0x7002000A,  //  0031  JMP		#003D
-      0x88140118,  //  0032  GETMBR	R5	R0	K24
-      0x8C140B41,  //  0033  GETMET	R5	R5	K65
-      0x5C1C0200,  //  0034  MOVE	R7	R1
-      0x7C140400,  //  0035  CALL	R5	2
-      0x78160005,  //  0036  JMPF	R5	#003D
-      0x60140009,  //  0037  GETGBL	R5	G9
-      0x5419FFFE,  //  0038  LDINT	R6	-1
-      0x401A2A06,  //  0039  CONNECT	R6	K21	R6
-      0x94180206,  //  003A  GETIDX	R6	R1	R6
-      0x7C140200,  //  003B  CALL	R5	1
-      0x5C080A00,  //  003C  MOVE	R2	R5
-      0x4C140000,  //  003D  LDNIL	R5
-      0x20140405,  //  003E  NE	R5	R2	R5
-      0x78160005,  //  003F  JMPF	R5	#0046
-      0x2414050F,  //  0040  GT	R5	R2	K15
-      0x78160003,  //  0041  JMPF	R5	#0046
-      0x8814010B,  //  0042  GETMBR	R5	R0	K11
-      0x94140A02,  //  0043  GETIDX	R5	R5	R2
-      0x8C140B40,  //  0044  GETMET	R5	R5	K64
-      0x7C140200,  //  0045  CALL	R5	1
-      0x80000000,  //  0046  RET	0
+    ( &(const binstruction[108]) {  /* code */
+      0x84100000,  //  0000  CLOSURE	R4	P0
+      0x4C140000,  //  0001  LDNIL	R5
+      0x8C180120,  //  0002  GETMET	R6	R0	K32
+      0x7C180200,  //  0003  CALL	R6	1
+      0x8C1C013E,  //  0004  GETMET	R7	R0	K62
+      0x8824010C,  //  0005  GETMBR	R9	R0	K12
+      0x7C1C0400,  //  0006  CALL	R7	2
+      0x6020000C,  //  0007  GETGBL	R8	G12
+      0x5C240E00,  //  0008  MOVE	R9	R7
+      0x7C200200,  //  0009  CALL	R8	1
+      0x18201115,  //  000A  LE	R8	R8	K21
+      0x78220001,  //  000B  JMPF	R8	#000E
+      0x4C200000,  //  000C  LDNIL	R8
+      0x80041000,  //  000D  RET	1	R8
+      0x1C200321,  //  000E  EQ	R8	R1	K33
+      0x78220009,  //  000F  JMPF	R8	#001A
+      0x5C200800,  //  0010  MOVE	R8	R4
+      0x60240009,  //  0011  GETGBL	R9	G9
+      0x88280D21,  //  0012  GETMBR	R10	R6	K33
+      0x7C240200,  //  0013  CALL	R9	1
+      0x5429FFFE,  //  0014  LDINT	R10	-1
+      0x94280E0A,  //  0015  GETIDX	R10	R7	R10
+      0x5C2C0E00,  //  0016  MOVE	R11	R7
+      0x7C200600,  //  0017  CALL	R8	3
+      0x5C141000,  //  0018  MOVE	R5	R8
+      0x70020041,  //  0019  JMP		#005C
+      0x1C200322,  //  001A  EQ	R8	R1	K34
+      0x78220008,  //  001B  JMPF	R8	#0025
+      0x5C200800,  //  001C  MOVE	R8	R4
+      0x60240009,  //  001D  GETGBL	R9	G9
+      0x88280D22,  //  001E  GETMBR	R10	R6	K34
+      0x7C240200,  //  001F  CALL	R9	1
+      0x94280F15,  //  0020  GETIDX	R10	R7	K21
+      0x5C2C0E00,  //  0021  MOVE	R11	R7
+      0x7C200600,  //  0022  CALL	R8	3
+      0x5C141000,  //  0023  MOVE	R5	R8
+      0x70020036,  //  0024  JMP		#005C
+      0x1C200323,  //  0025  EQ	R8	R1	K35
+      0x7822000B,  //  0026  JMPF	R8	#0033
+      0x5C200800,  //  0027  MOVE	R8	R4
+      0x60240009,  //  0028  GETGBL	R9	G9
+      0x88280D23,  //  0029  GETMBR	R10	R6	K35
+      0x7C240200,  //  002A  CALL	R9	1
+      0x8C28013E,  //  002B  GETMET	R10	R0	K62
+      0x4C300000,  //  002C  LDNIL	R12
+      0x7C280400,  //  002D  CALL	R10	2
+      0x9428150F,  //  002E  GETIDX	R10	R10	K15
+      0x5C2C0E00,  //  002F  MOVE	R11	R7
+      0x7C200600,  //  0030  CALL	R8	3
+      0x5C141000,  //  0031  MOVE	R5	R8
+      0x70020028,  //  0032  JMP		#005C
+      0x1C200341,  //  0033  EQ	R8	R1	K65
+      0x78220017,  //  0034  JMPF	R8	#004D
+      0x5C200800,  //  0035  MOVE	R8	R4
+      0x60240009,  //  0036  GETGBL	R9	G9
+      0x88280D23,  //  0037  GETMBR	R10	R6	K35
+      0x7C240200,  //  0038  CALL	R9	1
+      0x8C28013E,  //  0039  GETMET	R10	R0	K62
+      0x4C300000,  //  003A  LDNIL	R12
+      0x7C280400,  //  003B  CALL	R10	2
+      0x9428150F,  //  003C  GETIDX	R10	R10	K15
+      0x5C2C0E00,  //  003D  MOVE	R11	R7
+      0x7C200600,  //  003E  CALL	R8	3
+      0x5C141000,  //  003F  MOVE	R5	R8
+      0x8C200D1F,  //  0040  GETMET	R8	R6	K31
+      0x7C200200,  //  0041  CALL	R8	1
+      0x1C200A08,  //  0042  EQ	R8	R5	R8
+      0x78220007,  //  0043  JMPF	R8	#004C
+      0x5C200800,  //  0044  MOVE	R8	R4
+      0x60240009,  //  0045  GETGBL	R9	G9
+      0x88280D22,  //  0046  GETMBR	R10	R6	K34
+      0x7C240200,  //  0047  CALL	R9	1
+      0x94280F15,  //  0048  GETIDX	R10	R7	K21
+      0x5C2C0E00,  //  0049  MOVE	R11	R7
+      0x7C200600,  //  004A  CALL	R8	3
+      0x5C141000,  //  004B  MOVE	R5	R8
+      0x7002000E,  //  004C  JMP		#005C
+      0x88200118,  //  004D  GETMBR	R8	R0	K24
+      0x8C201142,  //  004E  GETMET	R8	R8	K66
+      0x5C280200,  //  004F  MOVE	R10	R1
+      0x7C200400,  //  0050  CALL	R8	2
+      0x78220009,  //  0051  JMPF	R8	#005C
+      0x5C200800,  //  0052  MOVE	R8	R4
+      0x60240009,  //  0053  GETGBL	R9	G9
+      0x5429FFFE,  //  0054  LDINT	R10	-1
+      0x402A2A0A,  //  0055  CONNECT	R10	K21	R10
+      0x9428020A,  //  0056  GETIDX	R10	R1	R10
+      0x7C240200,  //  0057  CALL	R9	1
+      0x4C280000,  //  0058  LDNIL	R10
+      0x5C2C0E00,  //  0059  MOVE	R11	R7
+      0x7C200600,  //  005A  CALL	R8	3
+      0x5C141000,  //  005B  MOVE	R5	R8
+      0x4C200000,  //  005C  LDNIL	R8
+      0x20200A08,  //  005D  NE	R8	R5	R8
+      0x7822000B,  //  005E  JMPF	R8	#006B
+      0x24200B0F,  //  005F  GT	R8	R5	K15
+      0x78220009,  //  0060  JMPF	R8	#006B
+      0x8820010B,  //  0061  GETMBR	R8	R0	K11
+      0x94201005,  //  0062  GETIDX	R8	R8	R5
+      0x4C240000,  //  0063  LDNIL	R9
+      0x20241009,  //  0064  NE	R9	R8	R9
+      0x78260003,  //  0065  JMPF	R9	#006A
+      0x8C241140,  //  0066  GETMET	R9	R8	K64
+      0x5C2C0400,  //  0067  MOVE	R11	R2
+      0x5C300600,  //  0068  MOVE	R12	R3
+      0x7C240600,  //  0069  CALL	R9	3
+      0x80041000,  //  006A  RET	1	R8
+      0x80000000,  //  006B  RET	0
     })
   )
 );
@@ -11542,108 +11804,108 @@ be_local_closure(class_HASPmota_start,   /* name */
     be_str_weak(start),
     &be_const_str_solidified,
     ( &(const binstruction[105]) {  /* code */
-      0xA40E8400,  //  0000  IMPORT	R3	K66
+      0xA40E8600,  //  0000  IMPORT	R3	K67
       0x4C100000,  //  0001  LDNIL	R4
       0x1C100404,  //  0002  EQ	R4	R2	R4
       0x78120000,  //  0003  JMPF	R4	#0005
-      0x88080143,  //  0004  GETMBR	R2	R0	K67
-      0x8C100744,  //  0005  GETMET	R4	R3	K68
+      0x88080144,  //  0004  GETMBR	R2	R0	K68
+      0x8C100745,  //  0005  GETMET	R4	R3	K69
       0x5C180400,  //  0006  MOVE	R6	R2
       0x7C100400,  //  0007  CALL	R4	2
       0x74120002,  //  0008  JMPT	R4	#000C
-      0x00128A02,  //  0009  ADD	R4	K69	R2
-      0x00100946,  //  000A  ADD	R4	R4	K70
-      0xB0068E04,  //  000B  RAISE	1	K71	R4
+      0x00128C02,  //  0009  ADD	R4	K70	R2
+      0x00100947,  //  000A  ADD	R4	R4	K71
+      0xB0069004,  //  000B  RAISE	1	K72	R4
       0xB8120600,  //  000C  GETNGBL	R4	K3
-      0x8C100948,  //  000D  GETMET	R4	R4	K72
+      0x8C100949,  //  000D  GETMET	R4	R4	K73
       0x7C100200,  //  000E  CALL	R4	1
       0x60100017,  //  000F  GETGBL	R4	G23
       0x5C140200,  //  0010  MOVE	R5	R1
       0x7C100200,  //  0011  CALL	R4	1
-      0x90029204,  //  0012  SETMBR	R0	K73	R4
+      0x90029404,  //  0012  SETMBR	R0	K74	R4
       0xB8120600,  //  0013  GETNGBL	R4	K3
-      0x8C10094B,  //  0014  GETMET	R4	R4	K75
+      0x8C10094C,  //  0014  GETMET	R4	R4	K76
       0x7C100200,  //  0015  CALL	R4	1
-      0x90029404,  //  0016  SETMBR	R0	K74	R4
+      0x90029604,  //  0016  SETMBR	R0	K75	R4
       0xB8120600,  //  0017  GETNGBL	R4	K3
-      0x8C10094D,  //  0018  GETMET	R4	R4	K77
+      0x8C10094E,  //  0018  GETMET	R4	R4	K78
       0x7C100200,  //  0019  CALL	R4	1
-      0x90029804,  //  001A  SETMBR	R0	K76	R4
+      0x90029A04,  //  001A  SETMBR	R0	K77	R4
       0xB8120600,  //  001B  GETNGBL	R4	K3
-      0x8C10094F,  //  001C  GETMET	R4	R4	K79
+      0x8C100950,  //  001C  GETMET	R4	R4	K80
       0x7C100200,  //  001D  CALL	R4	1
-      0x90029C04,  //  001E  SETMBR	R0	K78	R4
+      0x90029E04,  //  001E  SETMBR	R0	K79	R4
       0xA8020007,  //  001F  EXBLK	0	#0028
       0xB8120600,  //  0020  GETNGBL	R4	K3
-      0x8C100951,  //  0021  GETMET	R4	R4	K81
-      0x58180052,  //  0022  LDCONST	R6	K82
+      0x8C100952,  //  0021  GETMET	R4	R4	K82
+      0x58180053,  //  0022  LDCONST	R6	K83
       0x541E000F,  //  0023  LDINT	R7	16
       0x7C100600,  //  0024  CALL	R4	3
-      0x9002A004,  //  0025  SETMBR	R0	K80	R4
+      0x9002A204,  //  0025  SETMBR	R0	K81	R4
       0xA8040001,  //  0026  EXBLK	1	1
       0x70020009,  //  0027  JMP		#0032
       0xAC100000,  //  0028  CATCH	R4	0	0
       0x70020006,  //  0029  JMP		#0031
       0xB8120600,  //  002A  GETNGBL	R4	K3
-      0x8C100951,  //  002B  GETMET	R4	R4	K81
-      0x58180053,  //  002C  LDCONST	R6	K83
+      0x8C100952,  //  002B  GETMET	R4	R4	K82
+      0x58180054,  //  002C  LDCONST	R6	K84
       0x541E000D,  //  002D  LDINT	R7	14
       0x7C100600,  //  002E  CALL	R4	3
-      0x9002A004,  //  002F  SETMBR	R0	K80	R4
+      0x9002A204,  //  002F  SETMBR	R0	K81	R4
       0x70020000,  //  0030  JMP		#0032
       0xB0080000,  //  0031  RAISE	2	R0	R0
       0xB8120600,  //  0032  GETNGBL	R4	K3
-      0x8C100954,  //  0033  GETMET	R4	R4	K84
+      0x8C100955,  //  0033  GETMET	R4	R4	K85
       0x5818000F,  //  0034  LDCONST	R6	K15
       0xB81E0600,  //  0035  GETNGBL	R7	K3
-      0x8C1C0F55,  //  0036  GETMET	R7	R7	K85
-      0x58240056,  //  0037  LDCONST	R9	K86
+      0x8C1C0F56,  //  0036  GETMET	R7	R7	K86
+      0x58240057,  //  0037  LDCONST	R9	K87
       0x7C1C0400,  //  0038  CALL	R7	2
       0xB8220600,  //  0039  GETNGBL	R8	K3
-      0x8C201155,  //  003A  GETMET	R8	R8	K85
-      0x58280057,  //  003B  LDCONST	R10	K87
+      0x8C201156,  //  003A  GETMET	R8	R8	K86
+      0x58280058,  //  003B  LDCONST	R10	K88
       0x7C200400,  //  003C  CALL	R8	2
-      0x88240149,  //  003D  GETMBR	R9	R0	K73
-      0x88280150,  //  003E  GETMBR	R10	R0	K80
+      0x8824014A,  //  003D  GETMBR	R9	R0	K74
+      0x88280151,  //  003E  GETMBR	R10	R0	K81
       0x7C100C00,  //  003F  CALL	R4	6
-      0x8814014E,  //  0040  GETMBR	R5	R0	K78
-      0x8C140B58,  //  0041  GETMET	R5	R5	K88
+      0x8814014F,  //  0040  GETMBR	R5	R0	K79
+      0x8C140B59,  //  0041  GETMET	R5	R5	K89
       0x7C140200,  //  0042  CALL	R5	1
-      0x8C140B59,  //  0043  GETMET	R5	R5	K89
+      0x8C140B5A,  //  0043  GETMET	R5	R5	K90
       0x5C1C0800,  //  0044  MOVE	R7	R4
       0x7C140400,  //  0045  CALL	R5	2
-      0x8814014E,  //  0046  GETMBR	R5	R0	K78
-      0x8C140B5A,  //  0047  GETMET	R5	R5	K90
-      0x881C0149,  //  0048  GETMBR	R7	R0	K73
+      0x8814014F,  //  0046  GETMBR	R5	R0	K79
+      0x8C140B5B,  //  0047  GETMET	R5	R5	K91
+      0x881C014A,  //  0048  GETMBR	R7	R0	K74
       0x781E0004,  //  0049  JMPF	R7	#004F
       0xB81E0600,  //  004A  GETNGBL	R7	K3
-      0x8C1C0F55,  //  004B  GETMET	R7	R7	K85
+      0x8C1C0F56,  //  004B  GETMET	R7	R7	K86
       0x5824000F,  //  004C  LDCONST	R9	K15
       0x7C1C0400,  //  004D  CALL	R7	2
       0x70020003,  //  004E  JMP		#0053
       0xB81E0600,  //  004F  GETNGBL	R7	K3
-      0x8C1C0F55,  //  0050  GETMET	R7	R7	K85
-      0x5824005B,  //  0051  LDCONST	R9	K91
+      0x8C1C0F56,  //  0050  GETMET	R7	R7	K86
+      0x5824005C,  //  0051  LDCONST	R9	K92
       0x7C1C0400,  //  0052  CALL	R7	2
       0x5820000F,  //  0053  LDCONST	R8	K15
       0x7C140600,  //  0054  CALL	R5	3
       0xB8160600,  //  0055  GETNGBL	R5	K3
-      0x8C140B5C,  //  0056  GETMET	R5	R5	K92
+      0x8C140B5D,  //  0056  GETMET	R5	R5	K93
       0xB81E0600,  //  0057  GETNGBL	R7	K3
-      0x8C1C0F5D,  //  0058  GETMET	R7	R7	K93
+      0x8C1C0F5E,  //  0058  GETMET	R7	R7	K94
       0x7C1C0200,  //  0059  CALL	R7	1
       0x7C140400,  //  005A  CALL	R5	2
       0xB8160600,  //  005B  GETNGBL	R5	K3
-      0x8C140B5D,  //  005C  GETMET	R5	R5	K93
+      0x8C140B5E,  //  005C  GETMET	R5	R5	K94
       0x7C140200,  //  005D  CALL	R5	1
-      0x8C140B5E,  //  005E  GETMET	R5	R5	K94
+      0x8C140B5F,  //  005E  GETMET	R5	R5	K95
       0x581C000F,  //  005F  LDCONST	R7	K15
       0x5820000F,  //  0060  LDCONST	R8	K15
       0x7C140600,  //  0061  CALL	R5	3
       0x60140013,  //  0062  GETGBL	R5	G19
       0x7C140000,  //  0063  CALL	R5	0
       0x90021605,  //  0064  SETMBR	R0	K11	R5
-      0x8C14015F,  //  0065  GETMET	R5	R0	K95
+      0x8C140160,  //  0065  GETMET	R5	R0	K96
       0x5C1C0400,  //  0066  MOVE	R7	R2
       0x7C140400,  //  0067  CALL	R5	2
       0x80000000,  //  0068  RET	0
@@ -11658,7 +11920,7 @@ be_local_closure(class_HASPmota_start,   /* name */
 ********************************************************************/
 be_local_closure(class_HASPmota__remove_page,   /* name */
   be_nested_proto(
-    5,                          /* nstack */
+    8,                          /* nstack */
     2,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
@@ -11669,17 +11931,39 @@ be_local_closure(class_HASPmota__remove_page,   /* name */
     &be_ktab_class_HASPmota,     /* shared constants */
     be_str_weak(_remove_page),
     &be_const_str_solidified,
-    ( &(const binstruction[10]) {  /* code */
-      0x8808010B,  //  0000  GETMBR	R2	R0	K11
-      0x8C08051D,  //  0001  GETMET	R2	R2	K29
-      0x5C100200,  //  0002  MOVE	R4	R1
-      0x7C080400,  //  0003  CALL	R2	2
-      0x780A0003,  //  0004  JMPF	R2	#0009
-      0x8808010B,  //  0005  GETMBR	R2	R0	K11
-      0x8C08053D,  //  0006  GETMET	R2	R2	K61
-      0x5C100200,  //  0007  MOVE	R4	R1
-      0x7C080400,  //  0008  CALL	R2	2
-      0x80000000,  //  0009  RET	0
+    ( &(const binstruction[32]) {  /* code */
+      0x8C080120,  //  0000  GETMET	R2	R0	K32
+      0x7C080200,  //  0001  CALL	R2	1
+      0x8C08051F,  //  0002  GETMET	R2	R2	K31
+      0x7C080200,  //  0003  CALL	R2	1
+      0x1C0C0202,  //  0004  EQ	R3	R1	R2
+      0x780E0008,  //  0005  JMPF	R3	#000F
+      0x8C0C0125,  //  0006  GETMET	R3	R0	K37
+      0x58140041,  //  0007  LDCONST	R5	K65
+      0x5818000F,  //  0008  LDCONST	R6	K15
+      0x581C000F,  //  0009  LDCONST	R7	K15
+      0x7C0C0800,  //  000A  CALL	R3	4
+      0x4C100000,  //  000B  LDNIL	R4
+      0x1C100604,  //  000C  EQ	R4	R3	R4
+      0x78120000,  //  000D  JMPF	R4	#000F
+      0x80000800,  //  000E  RET	0
+      0x880C010B,  //  000F  GETMBR	R3	R0	K11
+      0x8C0C071D,  //  0010  GETMET	R3	R3	K29
+      0x5C140200,  //  0011  MOVE	R5	R1
+      0x7C0C0400,  //  0012  CALL	R3	2
+      0x780E0003,  //  0013  JMPF	R3	#0018
+      0x880C010B,  //  0014  GETMBR	R3	R0	K11
+      0x8C0C073D,  //  0015  GETMET	R3	R3	K61
+      0x5C140200,  //  0016  MOVE	R5	R1
+      0x7C0C0400,  //  0017  CALL	R3	2
+      0x600C0018,  //  0018  GETGBL	R3	G24
+      0x58100062,  //  0019  LDCONST	R4	K98
+      0x5C140200,  //  001A  MOVE	R5	R1
+      0x7C0C0400,  //  001B  CALL	R3	2
+      0xB812C200,  //  001C  GETNGBL	R4	K97
+      0x4C140000,  //  001D  LDNIL	R5
+      0x90100605,  //  001E  SETMBR	R4	R3	R5
+      0x80000000,  //  001F  RET	0
     })
   )
 );
@@ -11756,7 +12040,7 @@ be_local_closure(class_HASPmota_parse_obj,   /* name */
     be_str_weak(parse_obj),
     &be_const_str_solidified,
     ( &(const binstruction[239]) {  /* code */
-      0xA40EC000,  //  0000  IMPORT	R3	K96
+      0xA40EC200,  //  0000  IMPORT	R3	K97
       0xA4120200,  //  0001  IMPORT	R4	K1
       0x60140009,  //  0002  GETGBL	R5	G9
       0x8C180314,  //  0003  GETMET	R6	R1	K20
@@ -11764,7 +12048,7 @@ be_local_closure(class_HASPmota_parse_obj,   /* name */
       0x7C180400,  //  0005  CALL	R6	2
       0x7C140200,  //  0006  CALL	R5	1
       0x8C180314,  //  0007  GETMET	R6	R1	K20
-      0x58200061,  //  0008  LDCONST	R8	K97
+      0x58200063,  //  0008  LDCONST	R8	K99
       0x7C180400,  //  0009  CALL	R6	2
       0x4C1C0000,  //  000A  LDNIL	R7
       0x201C0C07,  //  000B  NE	R7	R6	R7
@@ -11792,13 +12076,13 @@ be_local_closure(class_HASPmota_parse_obj,   /* name */
       0x78220007,  //  0021  JMPF	R8	#002A
       0x60200001,  //  0022  GETGBL	R8	G1
       0x60240018,  //  0023  GETGBL	R9	G24
-      0x58280062,  //  0024  LDCONST	R10	K98
+      0x58280064,  //  0024  LDCONST	R10	K100
       0x5C2C0A00,  //  0025  MOVE	R11	R5
       0x5C300C00,  //  0026  MOVE	R12	R6
       0x7C240600,  //  0027  CALL	R9	3
       0x7C200200,  //  0028  CALL	R8	1
       0x80001000,  //  0029  RET	0
-      0x8C200F63,  //  002A  GETMET	R8	R7	K99
+      0x8C200F65,  //  002A  GETMET	R8	R7	K101
       0x5C280A00,  //  002B  MOVE	R10	R5
       0x7C200400,  //  002C  CALL	R8	2
       0x4C240000,  //  002D  LDNIL	R9
@@ -11812,7 +12096,7 @@ be_local_closure(class_HASPmota_parse_obj,   /* name */
       0x78260059,  //  0035  JMPF	R9	#0090
       0x60240009,  //  0036  GETGBL	R9	G9
       0x8C280314,  //  0037  GETMET	R10	R1	K20
-      0x58300064,  //  0038  LDCONST	R12	K100
+      0x58300066,  //  0038  LDCONST	R12	K102
       0x7C280400,  //  0039  CALL	R10	2
       0x7C240200,  //  003A  CALL	R9	1
       0x4C280000,  //  003B  LDNIL	R10
@@ -11820,7 +12104,7 @@ be_local_closure(class_HASPmota_parse_obj,   /* name */
       0x4C300000,  //  003D  LDNIL	R12
       0x2030120C,  //  003E  NE	R12	R9	R12
       0x78320007,  //  003F  JMPF	R12	#0048
-      0x8C300F63,  //  0040  GETMET	R12	R7	K99
+      0x8C300F65,  //  0040  GETMET	R12	R7	K101
       0x5C381200,  //  0041  MOVE	R14	R9
       0x7C300400,  //  0042  CALL	R12	2
       0x5C281800,  //  0043  MOVE	R10	R12
@@ -11831,12 +12115,12 @@ be_local_closure(class_HASPmota_parse_obj,   /* name */
       0x4C300000,  //  0048  LDNIL	R12
       0x1C30160C,  //  0049  EQ	R12	R11	R12
       0x78320002,  //  004A  JMPF	R12	#004E
-      0x8C300F65,  //  004B  GETMET	R12	R7	K101
+      0x8C300F67,  //  004B  GETMET	R12	R7	K103
       0x7C300200,  //  004C  CALL	R12	1
       0x5C2C1800,  //  004D  MOVE	R11	R12
       0x8C300902,  //  004E  GETMET	R12	R4	K2
       0x5C380000,  //  004F  MOVE	R14	R0
-      0x003ECC06,  //  0050  ADD	R15	K102	R6
+      0x003ED006,  //  0050  ADD	R15	K104	R6
       0x7C300600,  //  0051  CALL	R12	3
       0x4C340000,  //  0052  LDNIL	R13
       0x4C380000,  //  0053  LDNIL	R14
@@ -11852,17 +12136,17 @@ be_local_closure(class_HASPmota_parse_obj,   /* name */
       0x603C0004,  //  005D  GETGBL	R15	G4
       0x5C401C00,  //  005E  MOVE	R16	R14
       0x7C3C0200,  //  005F  CALL	R15	1
-      0x1C3C1F67,  //  0060  EQ	R15	R15	K103
+      0x1C3C1F69,  //  0060  EQ	R15	R15	K105
       0x783E0004,  //  0061  JMPF	R15	#0067
       0x5C3C1C00,  //  0062  MOVE	R15	R14
       0x5C401600,  //  0063  MOVE	R16	R11
       0x7C3C0200,  //  0064  CALL	R15	1
       0x5C341E00,  //  0065  MOVE	R13	R15
-      0x88300168,  //  0066  GETMBR	R12	R0	K104
+      0x8830016A,  //  0066  GETMBR	R12	R0	K106
       0x4C380000,  //  0067  LDNIL	R14
       0x1C38180E,  //  0068  EQ	R14	R12	R14
       0x783A000F,  //  0069  JMPF	R14	#007A
-      0x8C380969,  //  006A  GETMET	R14	R4	K105
+      0x8C38096B,  //  006A  GETMET	R14	R4	K107
       0x5C400C00,  //  006B  MOVE	R16	R6
       0x7C380400,  //  006C  CALL	R14	2
       0x4C3C0000,  //  006D  LDNIL	R15
@@ -11871,19 +12155,19 @@ be_local_closure(class_HASPmota_parse_obj,   /* name */
       0x603C0004,  //  0070  GETGBL	R15	G4
       0x5C401C00,  //  0071  MOVE	R16	R14
       0x7C3C0200,  //  0072  CALL	R15	1
-      0x1C3C1F67,  //  0073  EQ	R15	R15	K103
+      0x1C3C1F69,  //  0073  EQ	R15	R15	K105
       0x783E0004,  //  0074  JMPF	R15	#007A
       0x5C3C1C00,  //  0075  MOVE	R15	R14
       0x5C401600,  //  0076  MOVE	R16	R11
       0x7C3C0200,  //  0077  CALL	R15	1
       0x5C341E00,  //  0078  MOVE	R13	R15
-      0x88300168,  //  0079  GETMBR	R12	R0	K104
+      0x8830016A,  //  0079  GETMBR	R12	R0	K106
       0x4C380000,  //  007A  LDNIL	R14
       0x1C38180E,  //  007B  EQ	R14	R12	R14
       0x783A0006,  //  007C  JMPF	R14	#0084
       0x60380001,  //  007D  GETGBL	R14	G1
       0x603C0018,  //  007E  GETGBL	R15	G24
-      0x5840006A,  //  007F  LDCONST	R16	K106
+      0x5840006C,  //  007F  LDCONST	R16	K108
       0x5C440C00,  //  0080  MOVE	R17	R6
       0x7C3C0400,  //  0081  CALL	R15	2
       0x7C380200,  //  0082  CALL	R14	1
@@ -11896,7 +12180,7 @@ be_local_closure(class_HASPmota_parse_obj,   /* name */
       0x5C4C1400,  //  0089  MOVE	R19	R10
       0x7C380A00,  //  008A  CALL	R14	5
       0x5C201C00,  //  008B  MOVE	R8	R14
-      0x8C380F6B,  //  008C  GETMET	R14	R7	K107
+      0x8C380F6D,  //  008C  GETMET	R14	R7	K109
       0x5C400A00,  //  008D  MOVE	R16	R5
       0x5C441000,  //  008E  MOVE	R17	R8
       0x7C380600,  //  008F  CALL	R14	3
@@ -11907,14 +12191,14 @@ be_local_closure(class_HASPmota_parse_obj,   /* name */
       0x78260006,  //  0094  JMPF	R9	#009C
       0x60240001,  //  0095  GETGBL	R9	G1
       0x60280018,  //  0096  GETGBL	R10	G24
-      0x582C006C,  //  0097  LDCONST	R11	K108
+      0x582C006E,  //  0097  LDCONST	R11	K110
       0x5C300C00,  //  0098  MOVE	R12	R6
       0x7C280400,  //  0099  CALL	R10	2
       0x7C240200,  //  009A  CALL	R9	1
       0x80001200,  //  009B  RET	0
       0x8C240120,  //  009C  GETMET	R9	R0	K32
       0x7C240200,  //  009D  CALL	R9	1
-      0x8C241363,  //  009E  GETMET	R9	R9	K99
+      0x8C241365,  //  009E  GETMET	R9	R9	K101
       0x582C000F,  //  009F  LDCONST	R11	K15
       0x7C240400,  //  00A0  CALL	R9	2
       0x5C201200,  //  00A1  MOVE	R8	R9
@@ -11937,15 +12221,15 @@ be_local_closure(class_HASPmota_parse_obj,   /* name */
       0x4C240000,  //  00B2  LDNIL	R9
       0x20241009,  //  00B3  NE	R9	R8	R9
       0x78260001,  //  00B4  JMPF	R9	#00B7
-      0x8C24116D,  //  00B5  GETMET	R9	R8	K109
+      0x8C24116F,  //  00B5  GETMET	R9	R8	K111
       0x7C240200,  //  00B6  CALL	R9	1
       0x4C240000,  //  00B7  LDNIL	R9
       0x60280008,  //  00B8  GETGBL	R10	G8
       0x8C2C0314,  //  00B9  GETMET	R11	R1	K20
-      0x5834006E,  //  00BA  LDCONST	R13	K110
+      0x58340070,  //  00BA  LDCONST	R13	K112
       0x7C2C0400,  //  00BB  CALL	R11	2
       0x7C280200,  //  00BC  CALL	R10	1
-      0x202C156F,  //  00BD  NE	R11	R10	K111
+      0x202C1571,  //  00BD  NE	R11	R10	K113
       0x782E0012,  //  00BE  JMPF	R11	#00D2
       0xA8020005,  //  00BF  EXBLK	0	#00C6
       0x602C000D,  //  00C0  GETGBL	R11	G13
@@ -11958,7 +12242,7 @@ be_local_closure(class_HASPmota_parse_obj,   /* name */
       0x70020008,  //  00C7  JMP		#00D1
       0x60340001,  //  00C8  GETGBL	R13	G1
       0x60380018,  //  00C9  GETGBL	R14	G24
-      0x583C0070,  //  00CA  LDCONST	R15	K112
+      0x583C0072,  //  00CA  LDCONST	R15	K114
       0x5C401400,  //  00CB  MOVE	R16	R10
       0x5C441600,  //  00CC  MOVE	R17	R11
       0x5C481800,  //  00CD  MOVE	R18	R12
@@ -11975,7 +12259,7 @@ be_local_closure(class_HASPmota_parse_obj,   /* name */
       0x60300004,  //  00D8  GETGBL	R12	G4
       0x5C341600,  //  00D9  MOVE	R13	R11
       0x7C300200,  //  00DA  CALL	R12	1
-      0x1C301971,  //  00DB  EQ	R12	R12	K113
+      0x1C301973,  //  00DB  EQ	R12	R12	K115
       0x78320002,  //  00DC  JMPF	R12	#00E0
       0x5C301600,  //  00DD  MOVE	R12	R11
       0x5C341000,  //  00DE  MOVE	R13	R8
@@ -11986,7 +12270,7 @@ be_local_closure(class_HASPmota_parse_obj,   /* name */
       0x70020008,  //  00E3  JMP		#00ED
       0x60340001,  //  00E4  GETGBL	R13	G1
       0x60380018,  //  00E5  GETGBL	R14	G24
-      0x583C0072,  //  00E6  LDCONST	R15	K114
+      0x583C0074,  //  00E6  LDCONST	R15	K116
       0x5C401400,  //  00E7  MOVE	R16	R10
       0x5C441600,  //  00E8  MOVE	R17	R11
       0x5C481800,  //  00E9  MOVE	R18	R12
@@ -12022,25 +12306,25 @@ be_local_closure(class_HASPmota_event_dispatch,   /* name */
       0x8C0C052C,  //  0001  GETMET	R3	R2	K44
       0x5C140200,  //  0002  MOVE	R5	R1
       0x7C0C0400,  //  0003  CALL	R3	2
-      0x88100173,  //  0004  GETMBR	R4	R0	K115
+      0x88100175,  //  0004  GETMBR	R4	R0	K117
       0x78120002,  //  0005  JMPF	R4	#0009
-      0x88100173,  //  0006  GETMBR	R4	R0	K115
-      0x9012E803,  //  0007  SETMBR	R4	K116	R3
+      0x88100175,  //  0006  GETMBR	R4	R0	K117
+      0x9012EC03,  //  0007  SETMBR	R4	K118	R3
       0x70020004,  //  0008  JMP		#000E
       0xB8120600,  //  0009  GETNGBL	R4	K3
-      0x8C100975,  //  000A  GETMET	R4	R4	K117
+      0x8C100977,  //  000A  GETMET	R4	R4	K119
       0x5C180600,  //  000B  MOVE	R6	R3
       0x7C100400,  //  000C  CALL	R4	2
-      0x9002E604,  //  000D  SETMBR	R0	K115	R4
-      0x88100173,  //  000E  GETMBR	R4	R0	K115
-      0x8C100976,  //  000F  GETMET	R4	R4	K118
+      0x9002EA04,  //  000D  SETMBR	R0	K117	R4
+      0x88100175,  //  000E  GETMBR	R4	R0	K117
+      0x8C100978,  //  000F  GETMET	R4	R4	K120
       0x7C100200,  //  0010  CALL	R4	1
       0x60140009,  //  0011  GETGBL	R5	G9
       0x5C180800,  //  0012  MOVE	R6	R4
       0x7C140200,  //  0013  CALL	R5	1
       0x20140B0F,  //  0014  NE	R5	R5	K15
       0x7816000A,  //  0015  JMPF	R5	#0021
-      0x8C140577,  //  0016  GETMET	R5	R2	K119
+      0x8C140579,  //  0016  GETMET	R5	R2	K121
       0x5C1C0800,  //  0017  MOVE	R7	R4
       0x7C140400,  //  0018  CALL	R5	2
       0x60180004,  //  0019  GETGBL	R6	G4
@@ -12049,7 +12333,7 @@ be_local_closure(class_HASPmota_event_dispatch,   /* name */
       0x1C180D08,  //  001C  EQ	R6	R6	K8
       0x781A0002,  //  001D  JMPF	R6	#0021
       0x8C180B28,  //  001E  GETMET	R6	R5	K40
-      0x88200173,  //  001F  GETMBR	R8	R0	K115
+      0x88200175,  //  001F  GETMBR	R8	R0	K117
       0x7C180400,  //  0020  CALL	R6	2
       0x80000000,  //  0021  RET	0
     })
