@@ -22,8 +22,8 @@
 
 #define MS5837_ADDR         0x76
 
-#define XSNS_128            128
-#define XI2C_98             98         // See I2CDEVICES.md
+#define XSNS_115            115
+#define XI2C_88             88         // See I2CDEVICES.md
 /*********************************************************************************************\
  * BlueRobotics Pressure Sensor
  *
@@ -57,25 +57,29 @@ void MS5837init(void) {
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_MS5837[] PROGMEM =
-  "{s}MS5837 Pressure {m}%s hPa{e}{s}MS5837 Temperature {m}%s %c{e}{s}Inches Water {m}%s in{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+  "{s}MS5837 Temperature {m}%s " D_UNIT_DEGREE            "%c{e}{s}MS5837 Pressure {m}%s %s{e}{s}Inches Water {m}%s in{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
 void MS5837Show(bool json) {
+  float ms5837Temp;
+  float ms5837Pres;
   float pressure_delta;
   float inches_water;
 
   sensor_ms5837.read();
-  if (I2cEnabled(XI2C_10)) {
+  ms5837Temp = ConvertTemp(sensor_ms5837.temperature());
+  ms5837Pres = ConvertPressure(sensor_ms5837.pressure());
+  if (I2cEnabled(XI2C_88)) { //pick up here
     pressure_delta = sensor_ms5837.pressure() - bmp_sensors[0].bmp_pressure + pressureOffset;
-    inches_water = pressure_delta*0.401463078662;
-    // AddLog(LOG_LEVEL_DEBUG, PSTR("Pressure Delta: %f | Inches Water: %f"), pressure_delta, inches_water);
+    inches_water = pressure_delta*0.401463078662f;
+    AddLog(LOG_LEVEL_DEBUG, PSTR("Pressure Delta: %f | Inches Water: %f"), pressure_delta, inches_water);
   }
   char temperature_str[8];
-  dtostrf(sensor_ms5837.temperature(), sizeof(temperature_str)-1, 3, temperature_str);
+  ext_snprintf_P(temperature_str, sizeof(temperature_str), PSTR("%1_f"), &ms5837Temp);
   char pressure_str[8];
-  dtostrf(sensor_ms5837.pressure(), sizeof(pressure_str)-1, 3, pressure_str);
+  ext_snprintf_P(pressure_str, sizeof(pressure_str), PSTR("%1_f"), &ms5837Pres);
   char inchesWater_str[8];
-  dtostrf(inches_water, sizeof(inchesWater_str)-1, 3, inchesWater_str);
+  ext_snprintf_P(inchesWater_str, sizeof(inchesWater_str), PSTR("%1_f"), &inches_water);
   if (json) {
     // consolidate to one line
     ResponseAppend_P(PSTR(",\"MS5837\":{\"Temperature\":%s,"), temperature_str);
@@ -83,7 +87,7 @@ void MS5837Show(bool json) {
     ResponseAppend_P(PSTR("\"Inches Water\":%s}"), inchesWater_str);
 #ifdef USE_WEBSERVER
     } else {
-      WSContentSend_PD(HTTP_SNS_MS5837, pressure_str, TempUnit(), temperature_str, inchesWater_str);
+      WSContentSend_PD(HTTP_SNS_MS5837, temperature_str, TempUnit(), pressure_str, PressureUnit().c_str(), inchesWater_str);
 #endif  // USE_WEBSERVER
     }
   AddLog(LOG_LEVEL_DEBUG, PSTR("BMP Pressure: %f"), bmp_sensors[0].bmp_pressure);
@@ -93,8 +97,8 @@ void MS5837Show(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns128(uint32_t function) {
-  //if (!I2cEnabled(XI2C_98)) { return false; }
+bool Xsns115(uint32_t function) {
+  if (!I2cEnabled(XI2C_88)) { return false; }
 
   bool result = false;
   //I2cScan();
