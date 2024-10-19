@@ -111,7 +111,7 @@ NimBLEClient::~NimBLEClient() {
  */
 void NimBLEClient::dcTimerCb(ble_npl_event *event) {
  /*   NimBLEClient *pClient = (NimBLEClient*)event->arg;
-    NIMBLE_LOGC(LOG_TAG, "Timed out disconnecting from %s - resetting host",
+    NIMBLE_LOGE(LOG_TAG, "Timed out disconnecting from %s - resetting host",
                 std::string(pClient->getPeerAddress()).c_str());
  */
     ble_hs_sched_reset(BLE_HS_ECONTROLLER);
@@ -189,7 +189,7 @@ bool NimBLEClient::connect(const NimBLEAddress &address, bool deleteAttributes) 
     NIMBLE_LOGD(LOG_TAG, ">> connect(%s)", address.toString().c_str());
 
     if(!NimBLEDevice::m_synced) {
-        NIMBLE_LOGC(LOG_TAG, "Host reset, wait for sync.");
+        NIMBLE_LOGE(LOG_TAG, "Host reset, wait for sync.");
         return false;
     }
 
@@ -458,9 +458,6 @@ void NimBLEClient::setConnectionParams(uint16_t minInterval, uint16_t maxInterva
     // These are not used by NimBLE at this time - Must leave at defaults
     //m_pConnParams->min_ce_len = minConnTime;     // Minimum length of connection event in 0.625ms units
     //m_pConnParams->max_ce_len = maxConnTime;     // Maximum length of connection event in 0.625ms units
-
-    int rc = NimBLEUtils::checkConnParams(&m_pConnParams);
-    assert(rc == 0 && "Invalid Connection parameters");
 } // setConnectionParams
 
 
@@ -551,6 +548,66 @@ uint16_t NimBLEClient::getConnId() {
     return m_conn_id;
 } // getConnId
 
+/**
+ * @brief Clear the connection information for this client.
+ * @note This is designed to be used to reset the connection information after
+ *       calling setConnection(), and should not be used to disconnect from a
+ *       peer. To disconnect from a peer, use disconnect().
+ */
+void NimBLEClient::clearConnection() {
+    m_conn_id = BLE_HS_CONN_HANDLE_NONE;
+    m_connEstablished = false;
+    m_peerAddress = NimBLEAddress();
+} // clearConnection
+
+/**
+ * @brief Set the connection information for this client.
+ * @param [in] connInfo The connection information.
+ * @return True on success.
+ * @note Sets the connection established flag to true.
+ * @note If the client is already connected to a peer, this will return false.
+ * @note This is designed to be used when a connection is made outside of the
+ *       NimBLEClient class, such as when a connection is made by the
+ *       NimBLEServer class and the client is passed the connection id. This use
+ *       enables the GATT Server to read the name of the device that has
+ *       connected to it.
+ */
+bool NimBLEClient::setConnection(NimBLEConnInfo &connInfo) {
+    if (isConnected() || m_connEstablished) {
+        NIMBLE_LOGE(LOG_TAG, "Already connected");
+        return false;
+    }
+
+    m_peerAddress = connInfo.getAddress();
+    m_conn_id = connInfo.getConnHandle();
+    m_connEstablished = true;
+
+    return true;
+} // setConnection
+
+/**
+ * @brief Set the connection information for this client.
+ * @param [in] conn_id The connection id.
+ * @note Sets the connection established flag to true.
+ * @note This is designed to be used when a connection is made outside of the
+ *       NimBLEClient class, such as when a connection is made by the
+ *       NimBLEServer class and the client is passed the connection id. This use
+ *       enables the GATT Server to read the name of the device that has
+ *       connected to it.
+ * @note If the client is already connected to a peer, this will return false.
+ * @note This will look up the peer address using the connection id.
+ */
+bool NimBLEClient::setConnection(uint16_t conn_id) {
+    // we weren't provided the peer address, look it up using ble_gap_conn_find
+    NimBLEConnInfo connInfo;
+    int rc = ble_gap_conn_find(m_conn_id, &connInfo.m_desc);
+    if (rc != 0) {
+        NIMBLE_LOGE(LOG_TAG, "Connection info not found");
+        return false;
+    }
+
+    return setConnection(connInfo);
+} // setConnection
 
 /**
  * @brief Retrieve the address of the peer.
@@ -945,7 +1002,7 @@ int NimBLEClient::handleGapEvent(struct ble_gap_event *event, void *arg) {
                 case BLE_HS_ETIMEOUT_HCI:
                 case BLE_HS_ENOTSYNCED:
                 case BLE_HS_EOS:
-                    NIMBLE_LOGC(LOG_TAG, "Disconnect - host reset, rc=%d", rc);
+                    NIMBLE_LOGE(LOG_TAG, "Disconnect - host reset, rc=%d", rc);
                     NimBLEDevice::onReset(rc);
                     break;
                 default:
@@ -1111,7 +1168,11 @@ int NimBLEClient::handleGapEvent(struct ble_gap_event *event, void *arg) {
             {
                 NimBLEConnInfo peerInfo;
                 rc = ble_gap_conn_find(event->enc_change.conn_handle, &peerInfo.m_desc);
-                assert(rc == 0);
+                if (rc != 0) {
+                    NIMBLE_LOGE(LOG_TAG, "Connection info not found");
+                    rc = 0;
+                    break;
+                }
 
                 if (event->enc_change.status == (BLE_HS_ERR_HCI_BASE + BLE_ERR_PINKEY_MISSING)) {
                     // Key is missing, try deleting.
@@ -1124,6 +1185,19 @@ int NimBLEClient::handleGapEvent(struct ble_gap_event *event, void *arg) {
             rc = event->enc_change.status;
             break;
         } //BLE_GAP_EVENT_ENC_CHANGE
+
+        case BLE_GAP_EVENT_IDENTITY_RESOLVED: {
+            NimBLEConnInfo peerInfo;
+            rc = ble_gap_conn_find(event->identity_resolved.conn_handle, &peerInfo.m_desc);
+            if (rc != 0) {
+                NIMBLE_LOGE(LOG_TAG, "Connection info not found");
+                rc = 0;
+                break;
+            }
+
+            pClient->m_pClientCallbacks->onIdentity(peerInfo);
+            break;
+        } // BLE_GAP_EVENT_IDENTITY_RESOLVED
 
         case BLE_GAP_EVENT_MTU: {
             if(pClient->m_conn_id != event->mtu.conn_handle){
@@ -1143,20 +1217,17 @@ int NimBLEClient::handleGapEvent(struct ble_gap_event *event, void *arg) {
             if(pClient->m_conn_id != event->passkey.conn_handle)
                 return 0;
 
-            if (event->passkey.params.action == BLE_SM_IOACT_DISP) {
-                pkey.action = event->passkey.params.action;
-                pkey.passkey = NimBLEDevice::m_passkey; // This is the passkey to be entered on peer
-                rc = ble_sm_inject_io(event->passkey.conn_handle, &pkey);
-                NIMBLE_LOGD(LOG_TAG, "ble_sm_inject_io result: %d", rc);
+            NimBLEConnInfo peerInfo;
+            rc = ble_gap_conn_find(event->passkey.conn_handle, &peerInfo.m_desc);
+            if (rc != 0) {
+                NIMBLE_LOGE(LOG_TAG, "Connection info not found");
+                rc = 0;
+                break;
+            }
 
-            } else if (event->passkey.params.action == BLE_SM_IOACT_NUMCMP) {
+            if (event->passkey.params.action == BLE_SM_IOACT_NUMCMP) {
                 NIMBLE_LOGD(LOG_TAG, "Passkey on device's display: %" PRIu32, event->passkey.params.numcmp);
-                pkey.action = event->passkey.params.action;
-                pkey.numcmp_accept = pClient->m_pClientCallbacks->onConfirmPIN(event->passkey.params.numcmp);
-
-                rc = ble_sm_inject_io(event->passkey.conn_handle, &pkey);
-                NIMBLE_LOGD(LOG_TAG, "ble_sm_inject_io result: %d", rc);
-
+                pClient->m_pClientCallbacks->onConfirmPIN(peerInfo, event->passkey.params.numcmp);
             //TODO: Handle out of band pairing
             } else if (event->passkey.params.action == BLE_SM_IOACT_OOB) {
                 static uint8_t tem_oob[16] = {0};
@@ -1169,12 +1240,7 @@ int NimBLEClient::handleGapEvent(struct ble_gap_event *event, void *arg) {
             ////////
             } else if (event->passkey.params.action == BLE_SM_IOACT_INPUT) {
                 NIMBLE_LOGD(LOG_TAG, "Enter the passkey");
-                pkey.action = event->passkey.params.action;
-                pkey.passkey = pClient->m_pClientCallbacks->onPassKeyRequest();
-
-                rc = ble_sm_inject_io(event->passkey.conn_handle, &pkey);
-                NIMBLE_LOGD(LOG_TAG, "ble_sm_inject_io result: %d", rc);
-
+                pClient->m_pClientCallbacks->onPassKeyEntry(peerInfo);
             } else if (event->passkey.params.action == BLE_SM_IOACT_NONE) {
                 NIMBLE_LOGD(LOG_TAG, "No passkey action required");
             }
@@ -1261,17 +1327,22 @@ bool NimBLEClientCallbacks::onConnParamsUpdateRequest(NimBLEClient* pClient, con
     return true;
 }
 
-uint32_t NimBLEClientCallbacks::onPassKeyRequest(){
-    NIMBLE_LOGD("NimBLEClientCallbacks", "onPassKeyRequest: default: 123456");
-    return 123456;
-}
+void NimBLEClientCallbacks::onPassKeyEntry(const NimBLEConnInfo& connInfo){
+    NIMBLE_LOGD("NimBLEClientCallbacks", "onPassKeyEntry: default: 123456");
+    NimBLEDevice::injectPassKey(connInfo, 123456);
+} //onPassKeyEntry
 
-void NimBLEClientCallbacks::onAuthenticationComplete(NimBLEConnInfo& peerInfo){
+void NimBLEClientCallbacks::onAuthenticationComplete(const NimBLEConnInfo& connInfo){
     NIMBLE_LOGD("NimBLEClientCallbacks", "onAuthenticationComplete: default");
 }
-bool NimBLEClientCallbacks::onConfirmPIN(uint32_t pin){
+
+void NimBLEClientCallbacks::onIdentity(const NimBLEConnInfo& connInfo){
+    NIMBLE_LOGD("NimBLEClientCallbacks", "onIdentity: default");
+} // onIdentity
+
+void NimBLEClientCallbacks::onConfirmPIN(const NimBLEConnInfo& connInfo, uint32_t pin){
     NIMBLE_LOGD("NimBLEClientCallbacks", "onConfirmPIN: default: true");
-    return true;
+    NimBLEDevice::injectConfirmPIN(connInfo, true);
 }
 
 #endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_CENTRAL */

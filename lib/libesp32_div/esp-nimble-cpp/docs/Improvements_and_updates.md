@@ -66,7 +66,7 @@ If false the service is only removed from visibility by clients. The pointers to
 # Advertising
 `NimBLEAdvertising::start`
 
-Now takes 2 optional parameters, the first is the duration to advertise for (in seconds), the second is a callback that is invoked when advertising ends and takes a pointer to a `NimBLEAdvertising` object (similar to the `NimBLEScan::start` API).
+Now takes 2 optional parameters, the first is the duration to advertise for (in milliseconds), the second is a callback that is invoked when advertising ends and takes a pointer to a `NimBLEAdvertising` object (similar to the `NimBLEScan::start` API).
 
 This provides an opportunity to update the advertisement data if desired.
 

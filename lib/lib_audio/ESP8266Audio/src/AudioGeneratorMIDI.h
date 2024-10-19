@@ -21,6 +21,10 @@
 #ifndef _AUDIOGENERATORMIDI_H
 #define _AUDIOGENERATORMIDI_H
 
+#if defined(ESP32)
+// Do not build, Espressif's GCC8+ has a compiler bug
+#else // __GNUC__ == 8
+
 #include "AudioGenerator.h"
 
 #define TSF_NO_STDIO
@@ -90,7 +94,7 @@ class AudioGeneratorMIDI : public AudioGenerator
     unsigned long earliest_time = 0;
 
     struct tonegen_status {         /* current status of a tone generator */
-      bool playing;                /* is it playing? */
+      bool playing;                 /* is it playing? */
       char track;                   /* if so, which track is the note from? */
       char note;                    /* what note is playing? */
       char instrument;              /* what instrument? */
@@ -176,6 +180,7 @@ class AudioGeneratorMIDI : public AudioGenerator
     short samplesRendered[256];
 };
 
+#endif //__GNUC__ == 8
 
 #endif
 

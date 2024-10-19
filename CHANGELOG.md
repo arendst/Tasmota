@@ -5,10 +5,14 @@ All notable changes to this project will be documented in this file.
 
 ## [14.3.0.1]
 ### Added
+- BLE track devices with RPA (#22300)
+- DALI support for short addresses and groups
 
 ### Breaking Changed
 
 ### Changed
+- ESP32 platform update from 2024.09.30 to 2024.10.30 and Framework (Arduino Core) from v3.1.0.240926 to v3.1.0.241015 (#22299)
+- HASPmota support for page delete and object updates (#22311)
 
 ### Fixed
 
@@ -30,11 +34,11 @@ All notable changes to this project will be documented in this file.
 - Command ``DaliSend <address>|<address+256>,<command>`` to send command (address+256 is repeat) on DALI bus
 - Command ``DaliQuery <address>|<address+256>,<command>`` to send command (address+256 is repeat) on DALI bus and wait up to DALI_TIMEOUT ms for response
 - Berry Serial `config` to change parity on-the-fly for RS-485 (#22285)
-- Misubishi Electric HVAC Heat/Dry/Cool Auto operation mode (#22216)
-- Misubishi Electric HVAC Bridge to HomeBridge/Homekit locally (#22236)
-- Misubishi Electric HVAC Air Direction Control (#22241)
-- Misubishi Electric HVAC prohibit function (#22269)
-- Misubishi Electric HVAC compressor map and operation power and energy (#22290)
+- Mitsubishi Electric HVAC Heat/Dry/Cool Auto operation mode (#22216)
+- Mitsubishi Electric HVAC Bridge to HomeBridge/Homekit locally (#22236)
+- Mitsubishi Electric HVAC Air Direction Control (#22241)
+- Mitsubishi Electric HVAC prohibit function (#22269)
+- Mitsubishi Electric HVAC compressor map and operation power and energy (#22290)
 
 ### Changed
 - ESP32 platform update from 2024.09.10 to 2024.09.30 and Framework (Arduino Core) from v3.0.5 to v3.1.0.240926 (#22203)

@@ -154,7 +154,7 @@ void app_main (void) {
      */
     pScan->setActiveScan(true);
 
-    /*  Start scanning for advertisers for the scan time specified (in seconds) 0 = forever
+    /*  Start scanning for advertisers for the scan time specified (in milliseconds) 0 = forever
      *  Optional callback for when scanning stops.
      */
     pScan->start(scanTime);

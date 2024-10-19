@@ -208,6 +208,35 @@ extern "C" {
   be_raisef(vm, "ble_error", "BLE: could not add MAC to watch list");
   }
 
+  // helper function
+  NimBLEConnInfo be_BLE_get_ConnInfo(NimBLEClient *device);
+  NimBLEConnInfo be_BLE_get_ConnInfo(NimBLEClient *device){
+    if(!device){
+      return NimBLEDevice::getServer()->getPeerInfo(0);
+    } else {
+      return NimBLEDevice::getClientList()->front()->getConnInfo();
+    }
+  }
+
+  // from esp-nimble/ble_sm.c
+  int ble_sm_read_bond(uint16_t conn_handle, struct ble_store_value_sec *out_bond)
+  {
+      struct ble_store_key_sec key_sec;
+      struct ble_gap_conn_desc desc;
+      int rc;
+
+      rc = ble_gap_conn_find(conn_handle, &desc);
+      if (rc != 0) {
+          return rc;
+      }
+
+      memset(&key_sec, 0, sizeof key_sec);
+      key_sec.peer_addr = desc.peer_id_addr;
+
+      rc = ble_store_read_peer_sec(&key_sec, out_bond);
+      return rc;
+  }
+
   // BLE.info(void) -> map
   int32_t be_BLE_info(struct bvm *vm);
   int32_t be_BLE_info(struct bvm *vm) {
@@ -225,26 +254,43 @@ extern "C" {
 #else
     be_map_insert_int(vm, "version", 4);
 #endif
-#ifdef CONFIG_BT_NIMBLE_PERSIST
+// #ifdef CONFIG_BT_NIMBLE_PERSIST
     be_map_insert_int(vm, "bonds", NimBLEDevice::getNumBonds());
-#else
-    be_map_insert_nil(vm, "bonds");
-#endif
-    if(MI32.mode.connected == 1){
-        be_pushstring(vm, "connection");
-        be_newobject(vm, "map");
-        auto _info = NimBLEDevice::getClientList()->front()->getConnInfo();
-        be_map_insert_str(vm, "peer_addr", _info.getAddress().toString().c_str());
-        be_map_insert_int(vm, "RSSI", NimBLEDevice::getClientList()->front()->getRssi());
-        be_map_insert_int(vm, "MTU", _info.getMTU());
-        be_map_insert_bool(vm, "bonded", _info.isBonded());
-        be_map_insert_bool(vm, "master", _info.isMaster());
-        be_map_insert_bool(vm, "encrypted", _info.isEncrypted());
-        be_map_insert_bool(vm, "authenticated", _info.isAuthenticated());
+// #else
+//     be_map_insert_nil(vm, "bonds");
+// #endif
+    if(MI32.mode.connected == 1 || MI32.ServerTask != nullptr){
+      NimBLEClient* _device = nullptr;
+      if(MI32.mode.connected == 1){
+        _device = NimBLEDevice::getClientList()->front();
+      }
+      NimBLEConnInfo _info = be_BLE_get_ConnInfo(_device);
 
-        be_pop(vm, 1);
-        be_data_insert(vm, -3);
-        be_pop(vm, 2);
+      be_pushstring(vm, "connection");
+      be_newobject(vm, "map");
+
+      be_map_insert_str(vm, "peer_addr", _info.getAddress().toString().c_str());
+      be_map_insert_str(vm, "peerID_addr", _info.getIdAddress().toString().c_str());
+      if(_device != nullptr) be_map_insert_int(vm, "RSSI", _device->getRssi()); // ESP32 is client
+      be_map_insert_int(vm, "MTU", _info.getMTU());
+      be_map_insert_bool(vm, "bonded", _info.isBonded());
+      be_map_insert_bool(vm, "master", _info.isMaster());
+      be_map_insert_bool(vm, "encrypted", _info.isEncrypted());
+      be_map_insert_bool(vm, "authenticated", _info.isAuthenticated());
+      if(_device == nullptr) be_map_insert_str(vm, "name", NimBLEDevice::getServer()->getPeerName(_info).c_str()); // ESP32 is server
+
+      ble_store_value_sec value_sec;
+      ble_sm_read_bond(_info.getConnHandle(), &value_sec);
+      if(value_sec.irk_present == 1){
+            char IRK[33];
+            ToHex_P(value_sec.irk,16,IRK,33);
+            be_map_insert_str(vm, "IRK",IRK );
+      }
+
+      be_pop(vm, 1);
+      be_data_insert(vm, -3);
+      be_pop(vm, 2);
+
     }
 
     be_pop(vm, 1);
@@ -271,6 +317,9 @@ be_BLE_op:
 3 subscribe
 4 unsubscribe - maybe later
 5 disconnect
+6 discover services
+7 discover characteristics
+
 
 11 read once, then disconnect
 12 write once, then disconnect
@@ -294,6 +343,7 @@ __response
 227 onConnect
 228 onDisconnect
 229 onStatus
+230 onAuthenticated
 
 
 BLE.conn_cb(cb,buffer)
