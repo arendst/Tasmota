@@ -2545,6 +2545,7 @@ class HASPmota
   # haspmota objects
   var lvh_pages                         # (list of lvg_page) list of pages
   var lvh_page_cur_idx                  # (int) current page index number
+  var lvh_page_cur_idx_parsing          # (int) index of the current page related to parsing JSONL, can be different from the displayed page
   # regex patterns
   var re_page_target                    # compiled regex for action `p<number>`
   # specific event_cb handling for less memory usage since we are registering a lot of callbacks
@@ -2677,6 +2678,12 @@ class HASPmota
   def get_page_cur()
     return self.lvh_pages[self.lvh_page_cur_idx]
   end
+  #====================================================================
+  # return the current page being parsed with JSONL as `lvh_page` object
+  #====================================================================
+  def get_page_cur_parsing()
+    return self.lvh_pages[self.lvh_page_cur_idx_parsing]
+  end
 
   #====================================================================
   # load JSONL template
@@ -2701,12 +2708,12 @@ class HASPmota
         if tasmota.loglevel(4)
           tasmota.log(f"HSP: parsing line '{jsonl[0]}'", 4)
         end
-        self.parse_page(jline)    # parse page first to create any page related objects, may change self.lvh_page_cur_idx
+        self.parse_page(jline)    # parse page first to create any page related objects, may change self.lvh_page_cur_idx_parsing
         # objects are created in the current page
         if (self.lvh_pages == nil)
           raise "value_error", "no page 'id' defined"
         end
-        self.parse_obj(jline, self.lvh_pages[self.lvh_page_cur_idx])    # then parse object within this page
+        self.parse_obj(jline, self.lvh_pages[self.lvh_page_cur_idx_parsing])    # then parse object within this page
       else
         # check if it's invalid json
         if size(string.tr(jsonl[0], " \t", "")) > 0
@@ -2737,7 +2744,7 @@ class HASPmota
     var jline = json.load(j)
 
     if type(jline) == 'instance'
-      self.parse_page(jline)    # parse page first to create any page related objects, may change self.lvh_page_cur_idx
+      self.parse_page(jline)    # parse page first to create any page related objects, may change self.lvh_page_cur_idx_parsing
       # objects are created in the current page
       self.parse_obj(jline, self.lvh_pages[self.lvh_page_cur_idx])    # then parse object within this page
     else
@@ -2871,9 +2878,10 @@ class HASPmota
       to_page = to_page_resolve(int(action[1..-1]), nil #-default to nil-#, sorted_pages_list)
     end
 
-    # print("to_page=",to_page)
+    # print(f"{action=} {to_page=}")
     if (to_page != nil) && (to_page > 0)                          # we have a target
       var to_page_obj = self.lvh_pages[to_page]
+      # print(f"{to_page_obj.id()=}")
       if (to_page_obj != nil)
         to_page_obj.show(anim, duration)
       end
@@ -2890,7 +2898,11 @@ class HASPmota
   def parse_page(jline)
     if jline.has("page") && type(jline["page"]) == 'int'
       var page = int(jline["page"])
-      self.lvh_page_cur_idx = page    # change current page
+      # print(f">>> parsing page {page}")
+      self.lvh_page_cur_idx_parsing = page    # change current page
+      if (self.lvh_page_cur_idx == nil)       # also set current page if we haven't any yet
+        self.lvh_page_cur_idx = page
+      end
 
       # create the page object if it doesn't exist already
       if !self.lvh_pages.contains(page)
@@ -2900,7 +2912,7 @@ class HASPmota
 
       # check if there is "id":0
       if jline.find("id") == 0
-        var lvh_page_cur = self.get_page_cur()
+        var lvh_page_cur = self.get_page_cur_parsing()
         lvh_page_cur.prev = int(jline.find("prev", nil))
         lvh_page_cur.next = int(jline.find("next", nil))
         lvh_page_cur.back = int(jline.find("back", nil))
@@ -2925,6 +2937,10 @@ class HASPmota
       if (to_page_obj == nil)                       # we didn't change page
         return
       end
+    end
+    # also update lvh_page_cur_idx_parsing, if we removed the current parsing page
+    if (self.lvh_page_cur_idx_parsing == page_id)
+      self.lvh_page_cur_idx_parsing = self.lvh_page_cur_idx
     end
     # remove object from page object
     if self.lvh_pages.contains(page_id)
@@ -2982,7 +2998,7 @@ class HASPmota
     var obj_id = int(jline.find("id"))        # id number or nil
     var obj_type = jline.find("obj")          # obj class or nil
     obj_type = (obj_type != nil) ? str(obj_type) : nil
-    var lvh_page_cur = self.get_page_cur()    # current page object, cannot be nil
+    var lvh_page_cur = self.get_page_cur_parsing()    # current page object, cannot be nil
 
     # Step 1. Check the id for valid range
     # 'obj_id' must be between 1 and 254
@@ -3063,7 +3079,7 @@ class HASPmota
         print(f"HSP: cannot specify 'obj':'{obj_type}' for 'id':0")
         return
       end
-      obj_lvh = self.get_page_cur().get_obj(0)   # get object id '0'
+      obj_lvh = self.get_page_cur_parsing().get_obj(0)   # get object id '0'
     end
 
     # Step 5. apply attributes
