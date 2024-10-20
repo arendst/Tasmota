@@ -3465,11 +3465,6 @@ std::string BLETriggerResponse(generic_sensor_t *toSend){
 #ifdef USE_WEBSERVER
 
 #define WEB_HANDLE_BLE "ble"
-#define D_CONFIGURE_BLE "Configure BLE"
-#define D_BLE_PARAMETERS "Bluetooth Settings"
-#define D_MQTT_BLE_ENABLE "Enable Bluetooth"
-#define D_MQTT_BLE_ACTIVESCAN "Enable Active Scan(*)"
-#define D_BLE_DEVICES "Devices Seen"
 
 const char HTTP_BTN_MENU_BLE[] PROGMEM =
   "<p><form action='" WEB_HANDLE_BLE "' method='get'><button>" D_CONFIGURE_BLE "</button></form></p>";
@@ -3479,7 +3474,7 @@ const char HTTP_FORM_BLE[] PROGMEM =
   "<form method='get' action='" WEB_HANDLE_BLE "'>"
   "<p><label><input id='e0' type='checkbox'%s><b>" D_MQTT_BLE_ENABLE "</b></label></p>"
   "<p><label><input id='e1' type='checkbox'%s><b>" D_MQTT_BLE_ACTIVESCAN "</b></label></p>"
-  "<p>items marked (*) are not stored in config</p>";
+  "<p>" D_BLE_REMARK "</p>";
 
 
 const char HTTP_BLE_DEV_STYLE[] PROGMEM = "th, td { padding-left:5px; }";
