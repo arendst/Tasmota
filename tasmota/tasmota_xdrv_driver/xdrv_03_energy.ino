@@ -1514,9 +1514,10 @@ bool Xdrv03(uint32_t function)
       case FUNC_SLEEP_LOOP:
         XnrgCall(FUNC_LOOP);
         break;
+      case FUNC_EVERY_100_MSECOND:
       case FUNC_EVERY_250_MSECOND:
         if (TasmotaGlobal.uptime > 4) {
-          XnrgCall(FUNC_EVERY_250_MSECOND);
+          XnrgCall(function);
         }
         break;
       case FUNC_EVERY_SECOND:
