@@ -572,6 +572,14 @@
 #define D_THERMOSTAT_PI_HYBRID        "PI (Hybrid)"
 #define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
 
+// xdrv_79_esp32_ble.ino
+#define D_CONFIGURE_BLE       "BLE-Einstellungen"
+#define D_BLE_PARAMETERS      "Bluetooth-Einstellungen"
+#define D_MQTT_BLE_ENABLE     "Bluetooth aktivieren"
+#define D_MQTT_BLE_ACTIVESCAN "Aktiv scannen (*)"
+#define D_BLE_DEVICES         "Erkannte Geräte"
+#define D_BLE_REMARK          "Mit (*) markierte Geräte werden nicht gespeichert."
+
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Sensor beschäftigt"
 #define D_SENSOR_CRC_ERROR "Sensor CRC-Fehler"
