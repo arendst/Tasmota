@@ -87,11 +87,15 @@ struct miel_hvac_data_roomtemp {
 	uint8_t			temp;
 	uint8_t			_pad2[2];
 	uint8_t			temp05;
+	uint8_t			settemp;
+	uint8_t			_pad3[3];
+	uint8_t			opratingtime;
+	uint8_t			opratingtime1;
+	uint8_t			opratingtime2;
 };
 
 struct miel_hvac_data_status {
-	uint8_t			_pad1[2];
-	uint8_t			_pad2[1];
+	uint8_t			_pad1[3];
 	uint8_t			compressor;
 #define MIEL_HVAC_STATUS_COMPRESSOR_OFF	0x00
 #define MIEL_HVAC_STATUS_COMPRESSOR_ON	0x01
@@ -135,6 +139,10 @@ CTASSERT(offsetof(struct miel_hvac_data, data.settings.airdirection) == 14);
 
 CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.temp) == 3);
 CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.temp05) == 6);
+CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.settemp) == 7);
+CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.opratingtime) == 11);
+CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.opratingtime1) == 12);
+CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.opratingtime2) == 13);
 
 CTASSERT(offsetof(struct miel_hvac_data, data.status.compressor) == 4);
 CTASSERT(offsetof(struct miel_hvac_data, data.status.operationpower) == 5);
@@ -1345,6 +1353,17 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		}
 		ResponseAppend_P(PSTR(",\"Temperature\":\"%s\""),
 		    room_temp);
+
+		uint32_t combined_time = ((uint32_t)rt->opratingtime << 16) | ((uint32_t)rt->opratingtime1 << 8) | (uint32_t)rt->opratingtime2;
+		float operationtime_in_min = (float)combined_time;
+        char operationtime[33];
+        dtostrf(operationtime_in_min, 1, 0, operationtime);
+		ResponseAppend_P(PSTR(",\"OperationTime\":\"%s\""),
+		        operationtime);
+
+		ResponseAppend_P(PSTR(",\"RoomTemp\":\"%s\""),
+		    ToHex_P((uint8_t *)&sc->sc_temp, sizeof(sc->sc_temp),
+		    hex, sizeof(hex)));
 	}
 
 	if (sc->sc_status.type != 0) {
@@ -1370,15 +1389,7 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
         dtostrfd((float)operationenergy_in_kWh, 1, operationenergy);
 		ResponseAppend_P(PSTR(",\"OperationEnergy\":\"%s\""),
 		        operationenergy);
-	}
 
-	if (sc->sc_temp.type != 0) {
-		ResponseAppend_P(PSTR(",\"RoomTemp\":\"%s\""),
-		    ToHex_P((uint8_t *)&sc->sc_temp, sizeof(sc->sc_temp),
-		    hex, sizeof(hex)));
-	}
-
-	if (sc->sc_status.type != 0) {
 		ResponseAppend_P(PSTR(",\"Status\":\"%s\""),
 		    ToHex_P((uint8_t *)&sc->sc_status, sizeof(sc->sc_status),
 		    hex, sizeof(hex)));
