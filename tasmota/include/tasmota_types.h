@@ -289,7 +289,7 @@ typedef union {
     uint32_t influxdb_sensor : 1;          // bit 10 (v11.0.0.5) - CMND_IFXSENSOR - Enable sensor support in addition to teleperiod support
     uint32_t ex_serbridge_console : 1;     // bit 11 (v11.1.0.4) - (v14.1.0.2) Replaced by CMND_SSERIALMODE
     uint32_t telegram_disable_af : 1;      // bit 12 (v14.0.0.2) - CMND_TMSTATE 6/7 - Disable Telegram auto-fingerprint fix
-    uint32_t dali_web : 1;                 // bit 13 (v14.2.0.6) - CMND_DALIWEB - Enable DALI web controls
+    uint32_t dali_light : 1;               // bit 13 (v14.2.0.6) - CMND_DALILIGHT - Enable Tasmota light controls for DALI
     uint32_t spare14 : 1;                  // bit 14
     uint32_t spare15 : 1;                  // bit 15
     uint32_t spare16 : 1;                  // bit 16

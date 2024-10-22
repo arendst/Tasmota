@@ -1835,6 +1835,9 @@ void SettingsDelta(void) {
     if (Settings->version < 0x0E020004) {  // 14.2.0.4
       Settings->weight_precision = 0;      // Initialized by HX711 driver
     }
+    if (Settings->version < 0x0E030002) {  // 14.3.0.2
+      Settings->sbflag1.dali_light = 1;
+    }
 
     Settings->version = TASMOTA_VERSION;
     SettingsSave(1);

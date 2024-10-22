@@ -114,15 +114,20 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v14.3.0.1
+## Changelog v14.3.0.2
 ### Added
-- DALI support for short addresses and groups
+- DALI support for short addresses (gear) and groups
+- DALI command `DaliGear` to set max found gear to speed up scan response
+- DALI command `DaliGroup` to add gear to groups
+- DALI command `DaliTarget` to set light control broadcast, group number or gear number
 - BLE track devices with RPA [#22300](https://github.com/arendst/Tasmota/issues/22300)
 
 ### Breaking Changed
 
 ### Changed
 - ESP32 platform update from 2024.09.30 to 2024.10.30 and Framework (Arduino Core) from v3.1.0.240926 to v3.1.0.241015 [#22299](https://github.com/arendst/Tasmota/issues/22299)
+- DALI renamed commands `DaliCommission` to `DaliScan` and `DaliWeb` to `DaliLight`
+- DALI set Tasmota light control as default
 - HASPmota support for page delete and object updates [#22311](https://github.com/arendst/Tasmota/issues/22311)
 
 ### Fixed
