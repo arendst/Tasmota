@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 27.07.2024
+ * Updated until v9.4.0.1 - Last update 22.10.2024
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -573,24 +573,24 @@
 #define D_THERMOSTAT_AUTOTUNE_HYBRID  "Regolazione automatica (ibrida)"
 
 // xdrv_79_esp32_ble.ino
-#define D_CONFIGURE_BLE "Configure BLE"
-#define D_BLE_PARAMETERS "Bluetooth Settings"
-#define D_MQTT_BLE_ENABLE "Enable Bluetooth"
-#define D_MQTT_BLE_ACTIVESCAN "Enable Active Scan(*)"
-#define D_BLE_DEVICES "Devices Seen"
-#define D_BLE_REMARK "items marked (*) are not stored in config"
+#define D_CONFIGURE_BLE               "Configura BLE"
+#define D_BLE_PARAMETERS              "Impostazioni Bluetooth"
+#define D_MQTT_BLE_ENABLE             "Abilita Bluetooth"
+#define D_MQTT_BLE_ACTIVESCAN         "Abilita scansione attiva (*)"
+#define D_BLE_DEVICES                 "Scansione dispositivi"
+#define D_BLE_REMARK                  "gli elementi segnati con (*) non sono memorizzati in config"
 
 // xsns_05_ds18b20.ino
-#define D_SENSOR_BUSY       "Sensore occupato"
-#define D_SENSOR_CRC_ERROR  "Errore CRC sensore"
-#define D_SENSORS_FOUND     "Sensori trovati"
+#define D_SENSOR_BUSY                 "Sensore occupato"
+#define D_SENSOR_CRC_ERROR            "Errore CRC sensore"
+#define D_SENSORS_FOUND               "Sensori trovati"
 
 // xsns_06_dht.ino
-#define D_TIMEOUT_WAITING_FOR  "Timeout attesa per"
-#define D_START_SIGNAL_LOW     "inizio segnale basso"
-#define D_START_SIGNAL_HIGH    "inizio segnale alto"
-#define D_PULSE                "impulso"
-#define D_CHECKSUM_FAILURE     "Checksum fallito"
+#define D_TIMEOUT_WAITING_FOR         "Timeout attesa per"
+#define D_START_SIGNAL_LOW            "inizio segnale basso"
+#define D_START_SIGNAL_HIGH           "inizio segnale alto"
+#define D_PULSE                       "impulso"
+#define D_CHECKSUM_FAILURE            "Checksum fallito"
 
 // xsns_07_sht1x.ino
 #define D_SENSOR_DID_NOT_ACK_COMMAND  "Il sensore non ha eseguito il comando ACK"
@@ -602,26 +602,26 @@
 #define D_PARTICALS_BEYOND             "Particelle"
 
 // xsns_27_apds9960.ino
-#define D_GESTURE      "Gesto"
-#define D_COLOR_RED    "Rosso"
-#define D_COLOR_GREEN  "Verde"
-#define D_COLOR_BLUE   "Blu"
-#define D_CCT          "CCT"
-#define D_PROXIMITY    "Prossimità"
+#define D_GESTURE           "Gesto"
+#define D_COLOR_RED         "Rosso"
+#define D_COLOR_GREEN       "Verde"
+#define D_COLOR_BLUE        "Blu"
+#define D_CCT               "CCT"
+#define D_PROXIMITY         "Prossimità"
 
 // xsns_32_mpu6050.ino
-#define D_AX_AXIS "Accelerazione asse X"
-#define D_AY_AXIS "Accelerazione asse Y"
-#define D_AZ_AXIS "Accelerazione asse Z"
-#define D_GX_AXIS "Giroscopio asse X"
-#define D_GY_AXIS "Giroscopio asse Y"
-#define D_GZ_AXIS "Giroscopio asse Z"
+#define D_AX_AXIS           "Accelerazione asse X"
+#define D_AY_AXIS           "Accelerazione asse Y"
+#define D_AZ_AXIS           "Accelerazione asse Z"
+#define D_GX_AXIS           "Giroscopio asse X"
+#define D_GY_AXIS           "Giroscopio asse Y"
+#define D_GZ_AXIS           "Giroscopio asse Z"
 
 // xsns_33_QMC5883L.ino
-#define D_MX           "Asse X induzione"
-#define D_MY           "Asse Y induzione"
-#define D_MZ           "Asse Z induzione"
-#define D_MAGNETICFLD  "Induzione magnetica"
+#define D_MX                "Asse X induzione"
+#define D_MY                "Asse Y induzione"
+#define D_MZ                "Asse Z induzione"
+#define D_MAGNETICFLD       "Induzione magnetica"
 
 // xsns_34_hx711.ino
 #define D_HX_CAL_REMOVE     "Rimuovi peso"
