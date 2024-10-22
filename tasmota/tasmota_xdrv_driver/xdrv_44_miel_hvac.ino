@@ -85,7 +85,8 @@ struct miel_hvac_data_settings {
 struct miel_hvac_data_roomtemp {
 	uint8_t			_pad1[2];
 	uint8_t			temp;
-	uint8_t			_pad2[2];
+	uint8_t			_pad2[1];
+	uint8_t			outdoortemp;
 	uint8_t			temp05;
 	uint8_t			settemp;
 	uint8_t			_pad3[3];
@@ -138,6 +139,7 @@ CTASSERT(offsetof(struct miel_hvac_data, data.settings.temp05) == 11);
 CTASSERT(offsetof(struct miel_hvac_data, data.settings.airdirection) == 14);
 
 CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.temp) == 3);
+CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.outdoortemp) == 5);
 CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.temp05) == 6);
 CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.settemp) == 7);
 CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.opratingtime) == 11);
@@ -290,6 +292,13 @@ miel_hvac_roomtemp2deg(uint8_t roomtemp)
 		roomtemp -= 128;
 		return ((float) roomtemp/2);
 	}
+}
+
+static inline float
+miel_hvac_outdoortemp2deg(uint8_t outdoortemp)
+{
+	outdoortemp -= 128;
+	return ((float) outdoortemp/2);
 }
 
 struct miel_hvac_msg_remotetemp {
@@ -1353,6 +1362,14 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		}
 		ResponseAppend_P(PSTR(",\"Temperature\":\"%s\""),
 		    room_temp);
+
+        if(rt->outdoortemp > 1) {
+		    char outdoor_temp[33];
+            float temp = miel_hvac_outdoortemp2deg(rt->outdoortemp);
+		    dtostrfd(ConvertTemp(temp), 1, outdoor_temp);
+		    ResponseAppend_P(PSTR(",\"OutdoorTemperature\":\"%s\""),
+		            outdoor_temp);
+		}
 
 		uint32_t combined_time = ((uint32_t)rt->opratingtime << 16) | ((uint32_t)rt->opratingtime1 << 8) | (uint32_t)rt->opratingtime2;
 		float operationtime_in_min = (float)combined_time;
