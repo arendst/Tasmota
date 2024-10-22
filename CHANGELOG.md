@@ -3,12 +3,26 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.3.0.1]
+## [14.3.0.2]
+### Added
+- DALI command `DaliGear` to set max found gear to speed up scan response
+- DALI command `DaliGroup` to add gear to groups
+- DALI command `DaliTarget` to set light control broadcast, group number or gear number
+
+### Breaking Changed
+
+### Changed
+- DALI renamed commands `DaliCommission` to `DaliScan` and `DaliWeb` to `DaliLight`
+- DALI set Tasmota light control as default
+
+### Fixed
+
+### Removed
+
+## [14.3.0.1] 20241022
 ### Added
 - BLE track devices with RPA (#22300)
 - DALI support for short addresses and groups
-
-### Breaking Changed
 
 ### Changed
 - ESP32 platform update from 2024.09.30 to 2024.10.30 and Framework (Arduino Core) from v3.1.0.240926 to v3.1.0.241015 (#22299)
@@ -16,9 +30,6 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - EQ3 TRV firmware version 1.46 fails if the default true is used in subscribe on the notify characteristic (#22328)
-
-### Removed
-
 
 ## [Released]
 
