@@ -90,13 +90,14 @@ struct miel_hvac_data_roomtemp {
 	uint8_t			temp05;
 	uint8_t			settemp;
 	uint8_t			_pad3[3];
-	uint8_t			opratingtime;
-	uint8_t			opratingtime1;
-	uint8_t			opratingtime2;
+	uint8_t			operationtime;
+	uint8_t			operationtime1;
+	uint8_t			operationtime2;
 };
 
 struct miel_hvac_data_status {
-	uint8_t			_pad1[3];
+	uint8_t			_pad1[2];
+	uint8_t			compressorfrequency;
 	uint8_t			compressor;
 #define MIEL_HVAC_STATUS_COMPRESSOR_OFF	0x00
 #define MIEL_HVAC_STATUS_COMPRESSOR_ON	0x01
@@ -142,10 +143,11 @@ CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.temp) == 3);
 CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.outdoortemp) == 5);
 CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.temp05) == 6);
 CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.settemp) == 7);
-CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.opratingtime) == 11);
-CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.opratingtime1) == 12);
-CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.opratingtime2) == 13);
+CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.operationtime) == 11);
+CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.operationtime1) == 12);
+CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.operationtime2) == 13);
 
+CTASSERT(offsetof(struct miel_hvac_data, data.status.compressorfrequency) == 3);
 CTASSERT(offsetof(struct miel_hvac_data, data.status.compressor) == 4);
 CTASSERT(offsetof(struct miel_hvac_data, data.status.operationpower) == 5);
 CTASSERT(offsetof(struct miel_hvac_data, data.status.operationpower1) == 6);
@@ -1371,7 +1373,7 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		            outdoor_temp);
 		}
 
-		uint32_t combined_time = ((uint32_t)rt->opratingtime << 16) | ((uint32_t)rt->opratingtime1 << 8) | (uint32_t)rt->opratingtime2;
+		uint32_t combined_time = ((uint32_t)rt->operationtime << 16) | ((uint32_t)rt->operationtime1 << 8) | (uint32_t)rt->operationtime2;
 		float operationtime_in_min = (float)combined_time;
         char operationtime[33];
         dtostrf(operationtime_in_min, 1, 0, operationtime);
@@ -1389,10 +1391,14 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 
 		name = miel_hvac_map_byval(status->compressor,
 	    miel_hvac_compressor_map, nitems(miel_hvac_compressor_map));
-		if (name != NULL) {
-		    ResponseAppend_P(PSTR(",\"Compressor\":\"%s\""),
-		        name);	
-		}
+		ResponseAppend_P(PSTR(",\"Compressor\":\"%s\""),
+		        name != NULL ? name : "N/A");	
+
+		unsigned int compressor_frequency = status->compressorfrequency;
+        char compressorfrequency[33];
+        utoa(compressor_frequency, compressorfrequency, 10);
+		ResponseAppend_P(PSTR(",\"CompressorFrequency\":\"%s\""),
+		        compressorfrequency);	
 
         uint16_t combined_power = ((uint16_t)status->operationpower << 8) | (uint16_t)status->operationpower1;
         char operationpower[33];
