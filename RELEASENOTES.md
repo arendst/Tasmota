@@ -122,14 +122,17 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - DALI command `DaliTarget` to set light control broadcast, group number or gear number
 - Mitsubishi Electric HVAC Operation time for MiElHVAC [#22334](https://github.com/arendst/Tasmota/issues/22334)
 - Mitsubishi Electric HVAC Outdoor Temperature for MiElHVAC [#22345](https://github.com/arendst/Tasmota/issues/22345)
+- Mitsubishi Electric HVAC Compressor Frequency for MiElHVAC [#22347](https://github.com/arendst/Tasmota/issues/22347)
+- SolaxX1 Meter mode [#22330](https://github.com/arendst/Tasmota/issues/22330)
 - BLE track devices with RPA [#22300](https://github.com/arendst/Tasmota/issues/22300)
 
 ### Breaking Changed
 
 ### Changed
-- ESP32 platform update from 2024.09.30 to 2024.10.30 and Framework (Arduino Core) from v3.1.0.240926 to v3.1.0.241015 [#22299](https://github.com/arendst/Tasmota/issues/22299)
+- ESP32 platform update from 2024.09.30 to 2024.10.30 and Framework (Arduino Core) from v3.1.0.240926 to v3.1.0.241023 [#22351](https://github.com/arendst/Tasmota/issues/22351)
 - DALI renamed commands `DaliCommission` to `DaliScan` and `DaliWeb` to `DaliLight`
 - DALI set Tasmota light control as default
+- Shutter optimized behavior to publish shutter data with sensor request [#22353](https://github.com/arendst/Tasmota/issues/22353)
 - HASPmota support for page delete and object updates [#22311](https://github.com/arendst/Tasmota/issues/22311)
 
 ### Fixed
