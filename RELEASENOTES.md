@@ -120,6 +120,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - DALI command `DaliGear` to set max found gear to speed up scan response
 - DALI command `DaliGroup` to add gear to groups
 - DALI command `DaliTarget` to set light control broadcast, group number or gear number
+- DALI inverted signal configuration using GPIO DALI RX_i/TX_i
+- Experimental support for Shelly DALI Dimmer Gen3 (See template in file xdrv_75_dali.ino)
 - Mitsubishi Electric HVAC Operation time for MiElHVAC [#22334](https://github.com/arendst/Tasmota/issues/22334)
 - Mitsubishi Electric HVAC Outdoor Temperature for MiElHVAC [#22345](https://github.com/arendst/Tasmota/issues/22345)
 - Mitsubishi Electric HVAC Compressor Frequency for MiElHVAC [#22347](https://github.com/arendst/Tasmota/issues/22347)
