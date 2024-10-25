@@ -1,6 +1,6 @@
 /********************************************************************
  * Tasmota lib
- * 
+ *
  * To use: `import MI32`
  *******************************************************************/
 #include "be_constobj.h"
@@ -25,6 +25,9 @@ BE_FUNC_CTYPE_DECLARE(be_MI32_set_hum, "", "ii");
 extern void be_MI32_set_temp(int slot, int temp_val);
 BE_FUNC_CTYPE_DECLARE(be_MI32_set_temp, "", "ii");
 
+extern bbool be_MI32_widget(const char *sbuf, void* function);
+BE_FUNC_CTYPE_DECLARE(be_MI32_widget, "b", "s[c]");
+
 #include "be_fixed_MI32.h"
 
 /* @const_object_info_begin
@@ -35,12 +38,13 @@ module MI32 (scope: global) {
   set_bat,    ctype_func(be_MI32_set_bat)
   set_hum,    ctype_func(be_MI32_set_hum)
   set_temp,   ctype_func(be_MI32_set_temp)
+  widget,     ctype_func(be_MI32_widget)
 }
 @const_object_info_end */
 
 /********************************************************************
  * Tasmota lib
- * 
+ *
  * To use: `import BLE`
  *******************************************************************/
 
