@@ -57,19 +57,29 @@ class MyServerCallbacks: public BLEServerCallbacks {
     }
 /***************** New - Security handled here ********************
 ****** Note: these are the same return values as defaults ********/
-  uint32_t onPassKeyRequest(){
-    printf("Server PassKeyRequest\n");
-    return 123456;
-  }
+    uint32_t onPassKeyDisplay(){
+        printf("Server Passkey Display\n");
+        /** This should return a random 6 digit number for security
+         *  or make your own static passkey as done here.
+         */
+        return 123456;
+    };
 
-  bool onConfirmPIN(uint32_t pass_key){
-    printf("The passkey YES/NO number: %" PRIu32"\n", pass_key);
-    return true;
-  }
+    void onConfirmPIN(const NimBLEConnInfo& connInfo, uint32_t pass_key){
+        printf("The passkey YES/NO number: %" PRIu32 "\n", pass_key);
+        /** Inject false if passkeys don't match. */
+        NimBLEDevice::injectConfirmPIN(connInfo, true);
+    };
 
-  void onAuthenticationComplete(BLEConnInfo& connInfo){
-    printf("Starting BLE work!\n");
-  }
+    void onAuthenticationComplete(const NimBLEConnInfo& connInfo){
+        /** Check that encryption was successful, if not we disconnect the client */
+        if(!connInfo.isEncrypted()) {
+            NimBLEDevice::getServer()->disconnect(connInfo.getConnHandle());
+            printf("Encrypt connection failed - disconnecting client\n");
+            return;
+        }
+        printf("Starting BLE work!");
+    };
 /*******************************************************************/
 };
 
@@ -128,7 +138,6 @@ void app_main(void) {
                       NIMBLE_PROPERTY::INDICATE
                     );
 
-  // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.client_characteristic_configuration.xml
   // Create a BLE Descriptor
   /***************************************************
    NOTE: DO NOT create a 2902 descriptor.

@@ -24,6 +24,7 @@
 
 #include <string>
 #include <vector>
+#include <ctime>
 
 #ifndef CONFIG_NIMBLE_CPP_ATT_VALUE_TIMESTAMP_ENABLED
 #    define CONFIG_NIMBLE_CPP_ATT_VALUE_TIMESTAMP_ENABLED 0
@@ -40,7 +41,6 @@
 #elif CONFIG_NIMBLE_CPP_ATT_VALUE_INIT_LENGTH < 1
 #    error CONFIG_NIMBLE_CPP_ATT_VALUE_INIT_LENGTH cannot be less than 1; Range = 1 : 512
 #endif
-
 
 /* Used to determine if the type passed to a template has a c_str() and length() method. */
 template <typename T, typename = void, typename = void>
@@ -266,7 +266,8 @@ public:
 
     /** @brief Subscript operator */
     uint8_t operator [](int pos) const {
-        assert(pos < m_attr_len && "out of range"); return m_attr_value[pos]; }
+        NIMBLE_CPP_DEBUG_ASSERT(pos < m_attr_len);
+        return m_attr_value[pos]; }
 
     /** @brief Operator; Get the value as a std::vector<uint8_t>. */
     operator std::vector<uint8_t>() const {
@@ -311,7 +312,7 @@ public:
 
 inline NimBLEAttValue::NimBLEAttValue(uint16_t init_len, uint16_t max_len) {
     m_attr_value   = (uint8_t*)calloc(init_len + 1, 1);
-    assert(m_attr_value && "No Mem");
+    NIMBLE_CPP_DEBUG_ASSERT(m_attr_value);
     m_attr_max_len = std::min(BLE_ATT_ATTR_MAX_LEN, (int)max_len);
     m_attr_len     = 0;
     m_capacity     = init_len;
@@ -354,7 +355,7 @@ inline NimBLEAttValue& NimBLEAttValue::operator =(const NimBLEAttValue & source)
 
 inline void NimBLEAttValue::deepCopy(const NimBLEAttValue & source) {
     uint8_t* res = (uint8_t*)realloc( m_attr_value, source.m_capacity + 1);
-    assert(res && "deepCopy: realloc failed");
+    NIMBLE_CPP_DEBUG_ASSERT(res);
 
     ble_npl_hw_enter_critical();
     m_attr_value   = res;
@@ -389,7 +390,7 @@ inline bool NimBLEAttValue::setValue(const uint8_t *value, uint16_t len) {
         res = (uint8_t*)realloc(m_attr_value, (len + 1));
         m_capacity = len;
     }
-    assert(res && "setValue: realloc failed");
+    NIMBLE_CPP_DEBUG_ASSERT(res);
 
 #if CONFIG_NIMBLE_CPP_ATT_VALUE_TIMESTAMP_ENABLED
     time_t t = time(nullptr);
@@ -424,7 +425,7 @@ inline NimBLEAttValue& NimBLEAttValue::append(const uint8_t *value, uint16_t len
         res = (uint8_t*)realloc(m_attr_value, (new_len + 1));
         m_capacity = new_len;
     }
-    assert(res && "append: realloc failed");
+    NIMBLE_CPP_DEBUG_ASSERT(res);
 
 #if CONFIG_NIMBLE_CPP_ATT_VALUE_TIMESTAMP_ENABLED
     time_t t = time(nullptr);

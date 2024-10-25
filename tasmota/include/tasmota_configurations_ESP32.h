@@ -515,6 +515,9 @@
 
 #define USE_ENHANCED_GUI_WIFI_SCAN
 
+#undef USE_ENERGY_SENSOR                        // Disable support for energy sensors
+#undef USE_SHUTTER                              // Disable support for shutter
+#undef USE_IR_REMOTE                            // Disable support for IR Remote
 #undef USE_ARMTRONIX_DIMMERS                    // Disable support for Armtronix Dimmers (+1k4 code)
 #undef USE_PS_16_DZ                             // Disable support for PS-16-DZ Dimmer (+2k code)
 #undef USE_SONOFF_IFAN                          // Disable support for Sonoff iFan02 and iFan03 (+2k code)

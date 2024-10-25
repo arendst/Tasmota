@@ -1905,12 +1905,27 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
           if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: got notify characteristic"));
 #endif
           op->notifylen = 0;
+          bool response = false;
+
+          /* although it FEELS like this would do the job, it does not for EQ3.
+          // when SHOULD we pass the default true?  Is it just that EQ3 is a bad BLE implementation?
+          bool response = true;
+          if (pNCharacteristic->canWriteNoResponse()){
+            response = false;
+          }
+          */
+          uint8_t props = pNCharacteristic->getProperties();
+#ifdef BLE_ESP32_DEBUG
+          if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: characteristic props 0x%02X"), props);
+#endif
+
           if(pNCharacteristic->canNotify()) {
             uint64_t now = esp_timer_get_time();
             op->notifytimer = now;
-            if(pNCharacteristic->subscribe(true, BLE_ESP32::BLEGenNotifyCB)) {
+
+            if(pNCharacteristic->subscribe(true, BLE_ESP32::BLEGenNotifyCB, response)) {
 #ifdef BLE_ESP32_DEBUG
-              if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: subscribe for notify"));
+              if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: subscribe for notify - resp %d"), response? 1:0);
 #endif
               // this will get changed to read or write,
               // but here in case it's notify only (can that happen?)
@@ -1918,7 +1933,7 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
               waitNotify = true;
             } else {
 #ifdef BLE_ESP32_DEBUG
-              AddLog(LOG_LEVEL_ERROR,PSTR("BLE: failed subscribe for notify"));
+              AddLog(LOG_LEVEL_ERROR,PSTR("BLE: failed subscribe for notify - resp %d"), response? 1:0);
 #endif
               newstate = GEN_STATE_FAILED_NOTIFY;
               op->notifytimer = 0L;
@@ -1927,15 +1942,15 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
             if(pNCharacteristic->canIndicate()) {
               uint64_t now = esp_timer_get_time();
               op->notifytimer = now;
-              if(pNCharacteristic->subscribe(false, BLE_ESP32::BLEGenNotifyCB)) {
+              if(pNCharacteristic->subscribe(false, BLE_ESP32::BLEGenNotifyCB, response)) {
 #ifdef BLE_ESP32_DEBUG
-                AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: subscribe for indicate"));
+                AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: subscribe for indicate - resp %d"), response? 1:0);
 #endif
                 notifystate = GEN_STATE_WAITINDICATE;
                 waitNotify = true;
               } else {
 #ifdef BLE_ESP32_DEBUG
-                AddLog(LOG_LEVEL_ERROR,PSTR("BLE: failed subscribe for indicate"));
+                AddLog(LOG_LEVEL_ERROR,PSTR("BLE: failed subscribe for indicate - resp %d"), response? 1:0);
 #endif
                 newstate = GEN_STATE_FAILED_INDICATE;
                 op->notifytimer = 0L;
@@ -3450,11 +3465,6 @@ std::string BLETriggerResponse(generic_sensor_t *toSend){
 #ifdef USE_WEBSERVER
 
 #define WEB_HANDLE_BLE "ble"
-#define D_CONFIGURE_BLE "Configure BLE"
-#define D_BLE_PARAMETERS "Bluetooth Settings"
-#define D_MQTT_BLE_ENABLE "Enable Bluetooth"
-#define D_MQTT_BLE_ACTIVESCAN "Enable Active Scan(*)"
-#define D_BLE_DEVICES "Devices Seen"
 
 const char HTTP_BTN_MENU_BLE[] PROGMEM =
   "<p><form action='" WEB_HANDLE_BLE "' method='get'><button>" D_CONFIGURE_BLE "</button></form></p>";
@@ -3464,7 +3474,7 @@ const char HTTP_FORM_BLE[] PROGMEM =
   "<form method='get' action='" WEB_HANDLE_BLE "'>"
   "<p><label><input id='e0' type='checkbox'%s><b>" D_MQTT_BLE_ENABLE "</b></label></p>"
   "<p><label><input id='e1' type='checkbox'%s><b>" D_MQTT_BLE_ACTIVESCAN "</b></label></p>"
-  "<p>items marked (*) are not stored in config</p>";
+  "<p>" D_BLE_REMARK "</p>";
 
 
 const char HTTP_BLE_DEV_STYLE[] PROGMEM = "th, td { padding-left:5px; }";

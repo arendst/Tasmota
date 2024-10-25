@@ -126,7 +126,7 @@ bool NimBLEService::start() {
         // Nimble requires an array of services to be sent to the api
         // Since we are adding 1 at a time we create an array of 2 and set the type
         // of the second service to 0 to indicate the end of the array.
-        ble_gatt_svc_def* svc = new ble_gatt_svc_def[2];
+        ble_gatt_svc_def* svc = new ble_gatt_svc_def[2]{};
         ble_gatt_chr_def* pChr_a = nullptr;
         ble_gatt_dsc_def* pDsc_a = nullptr;
 
@@ -188,7 +188,7 @@ bool NimBLEService::start() {
                     pChr_a[i].descriptors = NULL;
                 } else {
                     // Must have last descriptor uuid = 0 so we have to create 1 extra
-                    pDsc_a = new ble_gatt_dsc_def[numDscs+1];
+                    pDsc_a = new ble_gatt_dsc_def[numDscs+1]{};
                     int d = 0;
                     for(auto dsc_it = (*chr_it)->m_dscVec.begin(); dsc_it != (*chr_it)->m_dscVec.end(); ++dsc_it ) {
                         if((*dsc_it)->m_removed > 0) {
@@ -433,5 +433,15 @@ std::string NimBLEService::toString() {
 NimBLEServer* NimBLEService::getServer() {
     return NimBLEDevice::getServer();
 }// getServer
+
+
+/**
+ * @brief Checks if the service has been started.
+ * @return True if the service has been started.
+ */
+bool NimBLEService::isStarted() {
+    return m_pSvcDef != nullptr;
+}
+
 
 #endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL */

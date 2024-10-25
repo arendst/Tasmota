@@ -33,9 +33,6 @@ struct BLE2904_Data {
  * @brief Descriptor for Characteristic Presentation Format.
  *
  * This is a convenience descriptor for the Characteristic Presentation Format which has a UUID of 0x2904.
- *
- * See also:
- * https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.characteristic_presentation_format.xml
  */
 class NimBLE2904: public NimBLEDescriptor {
 public:

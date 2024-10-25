@@ -198,7 +198,7 @@ enum UserSelectablePins {
   GPIO_ADE7953_RST,                    // ADE7953 Reset
   GPIO_NRG_MBS_TX, GPIO_NRG_MBS_RX,    // Generic Energy Modbus device
   GPIO_ADE7953_CS,                     // ADE7953 SPI Chip Select
-  GPIO_DALI_RX, GPIO_DALI_TX,          // Dali
+  GPIO_DALI_RX, GPIO_DALI_TX,          // DALI
   GPIO_BP1658CJ_CLK, GPIO_BP1658CJ_DAT,// BP1658CJ
   GPIO_DINGTIAN_CLK, GPIO_DINGTIAN_SDI, GPIO_DINGTIAN_Q7, GPIO_DINGTIAN_PL, GPIO_DINGTIAN_RCK,  // Dingtian relay board - 595's & 165's pins
   GPIO_LD2410_TX, GPIO_LD2410_RX,      // HLK-LD2410
@@ -224,7 +224,8 @@ enum UserSelectablePins {
   GPIO_WOOLIIS_RX,                      // Wooliis Battery capacity monitor Serial RX
   GPIO_ADC_VOLTAGE, GPIO_ADC_CURRENT,   // Analog Voltage and Current
   GPIO_BL0906_RX,                       // BL0906 Serial interface
-  GPIO_LD2410S_TX, GPIO_LD2410S_RX,      // HLK-LD2410S
+  GPIO_DALI_RX_INV, GPIO_DALI_TX_INV,   // DALI
+  GPIO_LD2410S_TX, GPIO_LD2410S_RX,     // HLK-LD2410S
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -496,6 +497,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_WOOLIIS_RX "|"
   D_SENSOR_ADC_VOLTAGE "|" D_SENSOR_ADC_CURRENT "|"
   D_SENSOR_BL0906_RX "|"
+  D_SENSOR_DALI_RX "_i|" D_SENSOR_DALI_TX "_i|"
   D_SENSOR_LD2410S_TX "|" D_SENSOR_LD2410S_RX "|"
   ;
 
@@ -593,11 +595,6 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 /*-------------------------------------------------------------------------------------------*\
  * Protocol specifics
 \*-------------------------------------------------------------------------------------------*/
-
-#ifdef USE_DALI
-  AGPIO(GPIO_DALI_RX),                  // DALI RX
-  AGPIO(GPIO_DALI_TX),                  // DALI TX
-#endif  // USE_DALI
 
 #ifdef USE_I2C
   AGPIO(GPIO_I2C_SCL) + MAX_I2C,        // I2C SCL
@@ -835,6 +832,13 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SHELLY_DIMMER_RST_INV),
 #endif
 #endif  // USE_LIGHT
+
+#ifdef USE_DALI
+  AGPIO(GPIO_DALI_TX),                  // DALI TX
+  AGPIO(GPIO_DALI_TX_INV),              // DALI TX inverted
+  AGPIO(GPIO_DALI_RX),                  // DALI RX
+  AGPIO(GPIO_DALI_RX_INV),              // DALI RX inverted
+#endif  // USE_DALI
 
 /*-------------------------------------------------------------------------------------------*\
  * Transmission sensors

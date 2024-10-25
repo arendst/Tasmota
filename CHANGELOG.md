@@ -3,28 +3,84 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.2.0.6]
+## [14.3.0.2]
+### Added
+- DALI command `DaliGear` to set max found gear to speed up scan response
+- DALI command `DaliGroup` to add gear to groups
+- DALI command `DaliTarget` to set light control broadcast, group number or gear number
+- Mitsubishi Electric HVAC Operation time for MiElHVAC (#22334)
+- Mitsubishi Electric HVAC Outdoor Temperature for MiElHVAC (#22345)
+- Mitsubishi Electric HVAC Compressor Frequency for MiElHVAC (#22347)
+- SolaxX1 Meter mode (#22330)
+- DALI inverted signal configuration using GPIO DALI RX_i/TX_i
+- Support for Shelly DALI Dimmer Gen3 (See tips and template in file xdrv_75_dali.ino)
+- HASPmota `haspmota.get_pages()` to get the sorted list of pages (#22358)
+- Support for US AQI and EPA AQI in PMS5003x sensors (#22294)
+
+### Breaking Changed
+
+### Changed
+- DALI renamed commands `DaliCommission` to `DaliScan` and `DaliWeb` to `DaliLight`
+- DALI set Tasmota light control as default
+- ESP32 Framework (Arduino Core) from v3.1.0.241015 to v3.1.0.241023 (#22351)
+- Shutter optimized behavior to publish shutter data with sensor request (#22353)
+
+### Fixed
+
+### Removed
+- DALI inverted signal configuration using compile time defines
+
+## [14.3.0.1] 20241022
+### Added
+- BLE track devices with RPA (#22300)
+- DALI support for short addresses and groups
+
+### Changed
+- ESP32 platform update from 2024.09.30 to 2024.10.30 and Framework (Arduino Core) from v3.1.0.240926 to v3.1.0.241015 (#22299)
+- HASPmota support for page delete and object updates (#22311)
+
+### Fixed
+- EQ3 TRV firmware version 1.46 fails if the default true is used in subscribe on the notify characteristic (#22328)
+
+## [Released]
+
+## [14.3.0] 20241015
+- Release Robert
+
+## [14.2.0.6] 20241015
 ### Added
 - Support for Sonoff SPM v1.3.0 (#13447)
 - LVGL port `colorwheel` from LVGL 8 (#22244)
 - HASPmota `cpicker` and `msgbox` (#22244)
-- Support for DALI 1 on ESP8266
-
-### Breaking Changed
-- HASPmota `delete` instead of `delete()` (#22245)
+- Support for DALI on ESP8266
+- Command ``DaliWeb 1`` to enable light control for DALI broadcast address
+- Command ``DaliSend <address>|<address+256>,<command>`` to send command (address+256 is repeat) on DALI bus
+- Command ``DaliQuery <address>|<address+256>,<command>`` to send command (address+256 is repeat) on DALI bus and wait up to DALI_TIMEOUT ms for response
+- Berry Serial `config` to change parity on-the-fly for RS-485 (#22285)
+- Mitsubishi Electric HVAC Heat/Dry/Cool Auto operation mode (#22216)
+- Mitsubishi Electric HVAC Bridge to HomeBridge/Homekit locally (#22236)
+- Mitsubishi Electric HVAC Air Direction Control (#22241)
+- Mitsubishi Electric HVAC prohibit function (#22269)
+- Mitsubishi Electric HVAC compressor map and operation power and energy (#22290)
 
 ### Changed
 - ESP32 platform update from 2024.09.10 to 2024.09.30 and Framework (Arduino Core) from v3.0.5 to v3.1.0.240926 (#22203)
 - Berry improve `persist` dirty data handling (#22246)
+- HASPmota `delete` instead of `delete()` (#22245)
+- Command ``DaliDimmer`` range from 0..254 to 0..100
 
 ### Fixed
 - ESP32 Range Extender compile error with core 3.0.0 (#22205)
 - HASPmota error when page '1' is not defined (#22220)
 - ESP32-S3 uDisplay force cache writes to RGB display (#22222)
-- ESP32 Dali compile error with core 3.x (#22214)
-- Dali received data decoding
+- ESP32 DALI compile error with core 3.x (#22214)
+- DALI received data decoding
+- ESP32 Ethernet using EthClockMode 3 (#22248)
+- ESP32 disable SPI DMA for uDisplay (broken since esp-idf 5.3 (core 3.1.0)) (#22264)
+- Sonoff WTS01 temperature sensor shows incorrect negative temperature (#19373)
 
 ### Removed
+- Berry Zigbee removed test code (#22263)
 
 ## [14.2.0.5] 20240926
 ### Added
@@ -122,8 +178,6 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 - ESP8266 Analog input support using energy driver as only one channel is available
-
-## [Released]
 
 ## [14.2.0] 20240814
 - Release Rita

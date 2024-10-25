@@ -255,7 +255,7 @@ Calling `NimBLEAdvertising::setAdvertisementData` will entirely replace any data
 
 > BLEAdvertising::start (NimBLEAdvertising::start)
 
-Now takes 2 optional parameters, the first is the duration to advertise for (in seconds), the second is a callback that is invoked when advertising ends and takes a pointer to a `NimBLEAdvertising` object (similar to the `NimBLEScan::start` API).
+Now takes 2 optional parameters, the first is the duration to advertise for (in milliseconds), the second is a callback that is invoked when advertising ends and takes a pointer to a `NimBLEAdvertising` object (similar to the `NimBLEScan::start` API).
 This provides an opportunity to update the advertisement data if desired.  
 <br/>
 
@@ -383,18 +383,23 @@ The security callback methods are now incorporated in the `NimBLEServerCallbacks
 
 The callback methods are:
 
-> `bool onConfirmPIN(uint32_t pin)`
+> `bool onConfirmPIN(const NimBLEConnInfo& connInfo, uint32_t pin)`
 
-Receives the pin when using numeric comparison authentication, `return true;` to accept.  
+Receives the pin when using numeric comparison authentication.
+Call `NimBLEDevice::injectConfirmPIN(connInfo, true);` to accept or `NimBLEDevice::injectConfirmPIN(connInfo, false);` to reject.
 <br/>
 
-> `uint32_t onPassKeyRequest()`
+> `void onPassKeyEntry(const NimBLEConnInfo& connInfo)`
 
-For server callback; return the passkey expected from the client.
-For client callback; return the passkey to send to the server.  
+Client callback; client should respond with the passkey (pin) by calling `NimBLEDevice::injectPassKey(connInfo, 123456);`
 <br/>
 
-> `void onAuthenticationComplete(NimBLEConnInfo& connInfo)`
+> `uint32_t onPassKeyDisplay()`
+
+Server callback; should return the passkey (pin) expected from the client.
+<br/>
+
+> `void onAuthenticationComplete(const NimBLEConnInfo& connInfo)`
 
 Authentication complete, success or failed information is available from the `NimBLEConnInfo` methods.  
 <br/>

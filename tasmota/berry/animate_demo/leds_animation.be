@@ -24,43 +24,6 @@ class Leds_animation_UI
       "<form id=but_part_mgr style='display: block;' action='leds_anim' method='get'><button>Leds animation</button></form><p></p>")
   end
 
-  #- ---------------------------------------------------------------------- -#
-  #- Show page to migrate to factory layout + single OTA
-  #- ---------------------------------------------------------------------- -#
-  def show_migrate_to_factory(p)
-    # display ota partitions
-    import webserver
-    import string
-
-    if !self.factory_migrate_eligible(p)  return end
-
-    webserver.content_send("<fieldset><legend><b>&nbsp;Migrate to safeboot partition layout&nbsp;</b></legend><p></p>")
-
-    webserver.content_send("<p>The `safeboot` layout allows for increased size<br>of firmware or file-system.</p>")
-    webserver.content_send("<p>Please see <a href='https://tasmota.github.io/docs/Safeboot/' target='_blank'>Safeboot layout documentation</a></p>")
-    webserver.content_send("<p>&nbsp;</p>")
-
-    webserver.content_send(string.format("<p>Step 1: %s</p>", self.display_step_state(self.test_step_1(p), "boot on `app1`")))
-    webserver.content_send(string.format("<p>Step 2: %s</p>", self.display_step_state(self.test_step_2(p), "flash `safeboot` to `app0`")))
-    webserver.content_send(string.format("<p>Step 3: %s</p>", self.display_step_state(self.test_step_3(p), "change partition map")))
-    webserver.content_send(string.format("<p>Step 4: %s</p>", self.display_step_state(self.test_step_4(p), "flash final firmware")))
-
-    webserver.content_send("<form action='/part_wiz' method='post' ")
-    webserver.content_send("onsubmit='return confirm(\"This will cause multiple restarts.\");'>")
-    var ota_url = tasmota.cmd("OtaUrl").find("OtaUrl", "")
-    webserver.content_send(string.format("<br><b>OTA Url</b><br><input id='o1' placeholder='OTA_URL' value='%s'><br>",
-                                         ota_url))
-
-    import persist
-    var safeboot_url = persist.find("safeboot_url", self.default_safeboot_URL())
-    webserver.content_send(string.format("<br><b>SAFEBOOT Url</b> (don't change)<input id='o2' placeholder='SAFEBOOT_URL' value='%s'><br>",
-                                         safeboot_url))
-
-    webserver.content_send("<p></p><button name='factory' class='button bred'>Start migration</button></form></p>")
-    
-    webserver.content_send("<p></p></fieldset><p></p>")
-  end
-
   #######################################################################
   # Show background colors
   #######################################################################

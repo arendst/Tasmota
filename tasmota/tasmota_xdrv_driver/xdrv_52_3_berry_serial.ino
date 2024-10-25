@@ -86,6 +86,21 @@ extern "C" {
     be_return_nil(vm);
   }
 
+  // Berry: `config(config:int) -> nil or exception`
+  int32_t b_serial_config(struct bvm *vm);
+  int32_t b_serial_config(struct bvm *vm) {
+    be_getmember(vm, 1, ".p");
+    TasmotaSerial * ser = (TasmotaSerial *) be_tocomptr(vm, -1);
+    if (ser) {
+      uint32_t config = be_toint(vm, 2);
+      int32_t err = ser->setConfig(config);
+      if (err) {
+        be_raisef(vm, "internal_error", "Unable to set serial config err %d", err);
+      }
+    }
+    be_return_nil(vm);
+  }
+
   // Berry: `deinit(void)`
   int32_t b_serial_deinit(struct bvm *vm);
   int32_t b_serial_deinit(struct bvm *vm) {

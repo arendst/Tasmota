@@ -81,7 +81,7 @@ uint16_t NimBLEEddystoneTLM::getVolt() {
  * @return The temperature value.
  */
 float NimBLEEddystoneTLM::getTemp() {
-    return ENDIAN_CHANGE_U16(m_eddystoneData.temp) / 256.0f;
+    return (int16_t)ENDIAN_CHANGE_U16(m_eddystoneData.temp) / 256.0f;
 } // getTemp
 
 /**
@@ -203,7 +203,7 @@ void NimBLEEddystoneTLM::setVolt(uint16_t volt) {
  * @param [in] temp The temperature value.
  */
 void NimBLEEddystoneTLM::setTemp(float temp) {
-    m_eddystoneData.temp = (uint16_t)temp;
+    m_eddystoneData.temp = ENDIAN_CHANGE_U16((int16_t)(temp * 256.0f));
 } // setTemp
 
 
