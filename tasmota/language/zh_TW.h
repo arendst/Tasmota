@@ -87,9 +87,6 @@
 #define D_DEBUG "偵錯"
 #define D_DEWPOINT "Dew point"
 #define D_DISABLED "已停用"
-#define D_MOVING_DISTANCE "Moving Distance"
-#define D_STATIC_DISTANCE "Static Distance"
-#define D_DETECT_DISTANCE "Detect Distance"
 #define D_DISTANCE "距離"
 #define D_DNS_SERVER "DNS伺服器"
 #define D_DO "Disolved Oxygen"
@@ -1280,6 +1277,15 @@
 // ixrv92_pipsolar.ino
 #define D_SENSOR_PIPSOLAR_TX             "Pipsolar TX"
 #define D_SENSOR_PIPSOLAR_RX             "Pipsolar RX"
+
+// xsns_102_ld2410.ino
+#define D_MOVING_DISTANCE "Moving Distance"
+#define D_STATIC_DISTANCE "Static Distance"
+#define D_DETECT_DISTANCE "Detect Distance"
+#define D_MOVING_ENERGY_T "Moving target"
+#define D_STATIC_ENERGY_T "Static target"
+#define D_LD2410_PIN_STATE "Output pin state"
+#define D_LD2410_LIGHT "Light sensor"
 
 // xsns_115_wooliis.ino
 #define D_IMPORT                          "Import"
