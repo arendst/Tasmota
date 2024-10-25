@@ -686,7 +686,7 @@ void MI32Init(void) {
   if (MI32.mode.init) { return; }
 
   if (TasmotaGlobal.global_state.wifi_down && TasmotaGlobal.global_state.eth_down) {
-    if (!(WIFI_MANAGER == Wifi.config_type || WIFI_MANAGER_RESET_ONLY == Wifi.config_type)) return; 
+    if (!(WIFI_MANAGER == Wifi.config_type || WIFI_MANAGER_RESET_ONLY == Wifi.config_type)) return;
   }
 
   if (!TasmotaGlobal.global_state.wifi_down) {
@@ -917,6 +917,14 @@ extern "C" {
       GetTextIndexed(_name, sizeof(_name), MIBLEsensors[slot].type-1, kMI32DeviceType);
     }
     return _name;
+  }
+
+  void MI32sendBerryWidget() {
+    if(be_MI32Widget.size != 0) {
+      WSContentSend(be_MI32Widget.data, be_MI32Widget.size);
+      be_MI32Widget.data = nullptr;
+      be_MI32Widget.size = 0;
+    }
   }
 
 } //extern "C"
@@ -1187,7 +1195,7 @@ bool MI32ConnectActiveSensor(){ // only use inside a task !!
 
 /**
  * @brief Retrieves all services of the connected BLE device and stores the result into the transfer buffer of Berry's BLE module
-*         buffer format: 
+ *        buffer format:
  *        first byte: number of services
  *        next byte: format of the UUID in bits, next N bytes: the UUID as 16-bit-uint or uint8_t buffer of 16 bytes
  *        ... next service
@@ -1212,13 +1220,13 @@ void MI32ConnectionGetServices(){
 
 /**
  * @brief Retrieves all characteristics of the given service and stores the result into the transfer buffer of Berry's BLE module
- *         buffer format: 
+ *         buffer format:
  *         first byte: number of characteristics
  *         next byte: format of the UUID in bits, next N bytes: the UUID as 16-bit-uint or uint8_t buffer of 16 bytes
  *         next byte: properties in a bitfield
  *         ... next characteristic
- * 
- * @param pSvc 
+ *
+ * @param pSvc
  */
 void MI32ConnectionGetCharacteristics(NimBLERemoteService* pSvc);
 void MI32ConnectionGetCharacteristics(NimBLERemoteService* pSvc){
@@ -1478,7 +1486,7 @@ bool MI32StartServerTask(){
 void MI32ServerSetAdv(NimBLEServer *pServer, std::vector<NimBLEService*>& servicesToStart, bool &shallStartServices);
 /**
  * @brief Sets the advertisement message from the data of the context, could be regular advertisement or scan response
- * 
+ *
  * @param pServer - our server instance
  * @param servicesToStart - for the first run, this vector holds all our services, would not be used for later modifications of the advertisement message
  * @param shallStartServices - true only for the first call, which will finish the construction of the server by starting all services
@@ -1570,7 +1578,7 @@ void MI32ServerSetAdv(NimBLEServer *pServer, std::vector<NimBLEService*>& servic
 void MI32ServerSetCharacteristic(NimBLEServer *pServer, std::vector<NimBLEService*>& servicesToStart, bool &shallStartServices);
 /**
  * @brief Create a characteristic or modify its value with data of the context
- * 
+ *
  * @param pServer - our server instance
  * @param servicesToStart - before the finish of the server construction, a characteristic and maybe the holding service will be created and added to this vector
  * @param shallStartServices - true, if the server construction is not finished by first setting of advertisement data
@@ -2083,7 +2091,7 @@ uint16_t MI32checkRPA(uint8_t *addr) {
       if(data[13] == addr[3] && data[14] == addr[4] && data[15] == addr[5]) {
         MIBLEsensors[idx].lastTime = Rtc.local_time;
         return idx;
-      } 
+      }
   }
   return 0xff;
 }
@@ -2120,7 +2128,7 @@ void MI32HandleEveryDevice(NimBLEAdvertisedDevice* advertisedDevice, uint8_t add
       if(MI32.option.directBridgeMode == 1){
         MI32.mode.shallTriggerTele = 1;
         _sensor.shallSendMQTT = 1;
-      } 
+      }
     }
 }
 
@@ -2156,7 +2164,7 @@ void MI32BLELoop()
   if(MI32.mode.connected == 1 && BLERingBufferQueue != nullptr && MI32.mode.triggerBerryConnCB == 0) {
     size_t size;
     BLERingBufferItem_t *q = (BLERingBufferItem_t *)xRingbufferReceive(BLERingBufferQueue, &size, pdMS_TO_TICKS(1));
-    
+
     if(q != nullptr){
       if(q->length != 0){
         memcpy(MI32.conCtx->buffer,&q->length,q->length + 1);
@@ -2184,7 +2192,7 @@ void MI32BLELoop()
   if(MI32.mode.connected == 0 && BLERingBufferQueue != nullptr){
     size_t size;
     BLERingBufferItem_t *q = (BLERingBufferItem_t *)xRingbufferReceive(BLERingBufferQueue, &size, pdMS_TO_TICKS(1));
-    
+
     if(q != nullptr){
       if(q->length != 0){
         memcpy(MI32.conCtx->buffer,&q->length,q->length + 1);
@@ -2361,10 +2369,13 @@ void CmndMi32Option(void){
 \*********************************************************************************************/
 #ifdef USE_MI_EXT_GUI
 bool MI32HandleWebGUIResponse(void){
+  if(be_MI32Widget.callback != nullptr){
+    ((void(*)())be_MI32Widget.callback)();
+  }
   char tmp[16];
   WebGetArg(PSTR("wi"), tmp, sizeof(tmp));
   if (strlen(tmp)) {
-    WSContentBegin(200, CT_PLAIN);                         
+    WSContentBegin(200, CT_PLAIN);
     if(MI32.widgetSlot!=0){
       for(uint32_t i=0;i<32;i++){
         if(bitRead(MI32.widgetSlot,i)){
@@ -2373,6 +2384,8 @@ bool MI32HandleWebGUIResponse(void){
           break;
         }
       }
+    } else {
+      MI32sendBerryWidget();
     }
     WSContentEnd();
     return true;
@@ -2585,7 +2598,7 @@ void MI32InitGUI(void){
 #endif //USE_MI_ESP32_ENERGY
 #ifdef USE_WEBCAM
   MI32sendCamWidget();
-#endif //USE_WEBCAM 
+#endif //USE_WEBCAM
   WSContentSend_P(PSTR("</div>"));
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();

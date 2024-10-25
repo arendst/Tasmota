@@ -121,12 +121,16 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - DALI command `DaliGroup` to add gear to groups
 - DALI command `DaliTarget` to set light control broadcast, group number or gear number
 - DALI inverted signal configuration using GPIO DALI RX_i/TX_i
-- Experimental support for Shelly DALI Dimmer Gen3 (See template in file xdrv_75_dali.ino)
+- Support for Shelly DALI Dimmer Gen3 (See tips and template in file xdrv_75_dali.ino)
+- Support for HLK-LD2410S 24GHz smart wave motion sensor [#22253](https://github.com/arendst/Tasmota/issues/22253)
+- Support for US AQI and EPA AQI in PMS5003x sensors [#22294](https://github.com/arendst/Tasmota/issues/22294)
+- HLK-LD2410 Engineering mode [#21880](https://github.com/arendst/Tasmota/issues/21880)
 - Mitsubishi Electric HVAC Operation time for MiElHVAC [#22334](https://github.com/arendst/Tasmota/issues/22334)
 - Mitsubishi Electric HVAC Outdoor Temperature for MiElHVAC [#22345](https://github.com/arendst/Tasmota/issues/22345)
 - Mitsubishi Electric HVAC Compressor Frequency for MiElHVAC [#22347](https://github.com/arendst/Tasmota/issues/22347)
 - SolaxX1 Meter mode [#22330](https://github.com/arendst/Tasmota/issues/22330)
 - BLE track devices with RPA [#22300](https://github.com/arendst/Tasmota/issues/22300)
+- HASPmota `haspmota.get_pages()` to get the sorted list of pages [#22358](https://github.com/arendst/Tasmota/issues/22358)
 
 ### Breaking Changed
 

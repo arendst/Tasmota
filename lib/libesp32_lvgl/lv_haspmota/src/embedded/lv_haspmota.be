@@ -2679,6 +2679,12 @@ class HASPmota
     return self.lvh_pages[self.lvh_page_cur_idx]
   end
   #====================================================================
+  # return an array of all pages numbers
+  #====================================================================
+  def get_pages()
+    return self.pages_list_sorted(nil)
+  end
+  #====================================================================
   # return the current page being parsed with JSONL as `lvh_page` object
   #====================================================================
   def get_page_cur_parsing()

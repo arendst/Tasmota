@@ -87,9 +87,6 @@
 #define D_DEBUG "Debug"
 #define D_DEWPOINT "Point de rosée"
 #define D_DISABLED "Désactivé"
-#define D_MOVING_DISTANCE "Distance mobile"
-#define D_STATIC_DISTANCE "Distance fixe"
-#define D_DETECT_DISTANCE "Distance détectée"
 #define D_DISTANCE "Distance"
 #define D_DNS_SERVER "Serveur DNS"
 #define D_DO "Oxygène dissout"
@@ -777,6 +774,8 @@
 #define D_SENSOR_WE517_RX      "WE517 Rx"
 #define D_SENSOR_LD2410_TX     "LD2410 Tx"
 #define D_SENSOR_LD2410_RX     "LD2410 Rx"
+#define D_SENSOR_LD2410S_TX     "LD2410S Tx"
+#define D_SENSOR_LD2410S_RX     "LD2410S Rx"
 #define D_GPIO_TM1621_CS       "TM1621 CS"
 #define D_GPIO_TM1621_WR       "TM1621 Wr"
 #define D_GPIO_TM1621_RD       "TM1621 Rd"
@@ -1281,6 +1280,15 @@
 // ixrv92_pipsolar.ino
 #define D_SENSOR_PIPSOLAR_TX             "Pipsolar TX"
 #define D_SENSOR_PIPSOLAR_RX             "Pipsolar RX"
+
+// xsns_102_ld2410.ino
+#define D_MOVING_DISTANCE "Distance mobile"
+#define D_STATIC_DISTANCE "Distance fixe"
+#define D_DETECT_DISTANCE "Distance détectée"
+#define D_MOVING_ENERGY_T "Cible mouvante"
+#define D_STATIC_ENERGY_T "Cible statique"
+#define D_LD2410_PIN_STATE "État de la broche de sortie"
+#define D_LD2410_LIGHT "Capteur de lumière"
 
 // xsns_115_wooliis.ino
 #define D_IMPORT                          "Import"

@@ -13,7 +13,11 @@ All notable changes to this project will be documented in this file.
 - Mitsubishi Electric HVAC Compressor Frequency for MiElHVAC (#22347)
 - SolaxX1 Meter mode (#22330)
 - DALI inverted signal configuration using GPIO DALI RX_i/TX_i
-- Experimental support for Shelly DALI Dimmer Gen3 (See template in file xdrv_75_dali.ino)
+- Support for Shelly DALI Dimmer Gen3 (See tips and template in file xdrv_75_dali.ino)
+- HASPmota `haspmota.get_pages()` to get the sorted list of pages (#22358)
+- Support for US AQI and EPA AQI in PMS5003x sensors (#22294)
+- HLK-LD2410 Engineering mode (#21880)
+- Support for HLK-LD2410S 24GHz smart wave motion sensor (#22253)
 
 ### Breaking Changed
 
