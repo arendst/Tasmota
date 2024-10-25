@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 - Mitsubishi Electric HVAC Outdoor Temperature for MiElHVAC (#22345)
 - Mitsubishi Electric HVAC Compressor Frequency for MiElHVAC (#22347)
 - SolaxX1 Meter mode (#22330)
+- DALI inverted signal configuration using GPIO DALI RX_i/TX_i
+- Experimental support for Shelly DALI Dimmer Gen3 (See template in file xdrv_75_dali.ino)
 
 ### Breaking Changed
 
@@ -24,6 +26,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 ### Removed
+- DALI inverted signal configuration using compile time defines
 
 ## [14.3.0.1] 20241022
 ### Added

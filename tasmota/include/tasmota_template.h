@@ -224,6 +224,7 @@ enum UserSelectablePins {
   GPIO_WOOLIIS_RX,                      // Wooliis Battery capacity monitor Serial RX
   GPIO_ADC_VOLTAGE, GPIO_ADC_CURRENT,   // Analog Voltage and Current
   GPIO_BL0906_RX,                       // BL0906 Serial interface
+  GPIO_DALI_RX_INV, GPIO_DALI_TX_INV,   // DALI
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -495,6 +496,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_WOOLIIS_RX "|"
   D_SENSOR_ADC_VOLTAGE "|" D_SENSOR_ADC_CURRENT "|"
   D_SENSOR_BL0906_RX "|"
+  D_SENSOR_DALI_RX "_i|" D_SENSOR_DALI_TX "_i|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -591,11 +593,6 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 /*-------------------------------------------------------------------------------------------*\
  * Protocol specifics
 \*-------------------------------------------------------------------------------------------*/
-
-#ifdef USE_DALI
-  AGPIO(GPIO_DALI_RX),                  // DALI RX
-  AGPIO(GPIO_DALI_TX),                  // DALI TX
-#endif  // USE_DALI
 
 #ifdef USE_I2C
   AGPIO(GPIO_I2C_SCL) + MAX_I2C,        // I2C SCL
@@ -833,6 +830,13 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_SHELLY_DIMMER_RST_INV),
 #endif
 #endif  // USE_LIGHT
+
+#ifdef USE_DALI
+  AGPIO(GPIO_DALI_TX),                  // DALI TX
+  AGPIO(GPIO_DALI_TX_INV),              // DALI TX inverted
+  AGPIO(GPIO_DALI_RX),                  // DALI RX
+  AGPIO(GPIO_DALI_RX_INV),              // DALI RX inverted
+#endif  // USE_DALI
 
 /*-------------------------------------------------------------------------------------------*\
  * Transmission sensors

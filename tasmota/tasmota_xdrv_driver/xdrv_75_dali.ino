@@ -19,6 +19,9 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  1.0.0.1 20241024  update    - Change from signal invert defines to GPIO config DALI RX_i/DALI TX_i
+                              - Fix inverted DALI signal support
+                              - Experimental support for Shelly DALI Dimmer Gen3
   1.0.0.0 20241022  update    - Refactor commission
                               - Add receive collision detection
   0.1.0.8 20241019  update    - Rename command `DaliCommission` to `DaliScan`
@@ -79,19 +82,16 @@
  * 16 group address    100AAAAS
  * Special command     101CCCC1 to 110CCCC1
  * A = Address bit, S = 0 Direct Arc Power control, S = 1 Command, C = Special command
+ * 
+ * Shelly DALI Dimmer Gen3 (ESP32C3-8M)
+ * Template {"NAME":"Shelly DALI Dimmer Gen3","GPIO":[34,4736,1,3840,11360,11392,128,129,1,1,576,0,0,0,0,0,0,0,0,1,1,1],"FLAG":0,"BASE":1}
+ * AdcGpio1 10000,10000,4000        <- Temperature parameters
+ * Backlog ButtonTopic 0; SetOption1 1; SetOption11 0; SetOption32 20
+ * rule1 on button1#state=2 do dimmer + endon on button2#state=2 do dimmer - endon on button1#state=3 do power 2 endon on button2#state=3 do power 2 endon
 \*********************************************************************************************/
 
 #define XDRV_75                    75
 
-#ifndef DALI_IN_INVERT
-#define DALI_IN_INVERT             0       // DALI RX inverted (1)
-#endif
-#ifndef DALI_OUT_INVERT
-#define DALI_OUT_INVERT            0       // DALI TX inverted (1)
-#endif
-#ifndef DALI_MAX_SHORT_ADDRESS
-#define DALI_MAX_SHORT_ADDRESS     64      // DALI default max short addresses
-#endif
 #ifndef DALI_INIT_STATE
 #define DALI_INIT_STATE            50      // DALI init dimmer state 50/254
 #endif
@@ -280,7 +280,7 @@ void (* const DALICommand[])(void) PROGMEM = {
   &CmndDaliSend, &CmndDaliQuery, &CmndDaliScan, &CmndDaliGroup, &CmndDaliGear };
 
 struct DALI {
-  uint32_t bit_time;
+  uint32_t bit_cycles;
   uint32_t last_activity;
   uint32_t received_dali_data;                 // Data received from DALI bus
   uint8_t pin_rx;
@@ -295,6 +295,8 @@ struct DALI {
   bool response;
   bool light_sync;
   bool probe;
+  bool invert_rx;
+  bool invert_tx;
 } *Dali = nullptr;
 
 /*********************************************************************************************\
@@ -334,7 +336,7 @@ uint32_t DaliAddress2Target(uint32_t adr) {
 
 void DaliEnableRxInterrupt(void) {
   Dali->available = false;
-  attachInterrupt(Dali->pin_rx, DaliReceiveData, FALLING);
+  attachInterrupt(Dali->pin_rx, DaliReceiveData, (Dali->invert_rx) ? RISING : FALLING);
 }
 
 void DaliDisableRxInterrupt(void) {
@@ -365,16 +367,15 @@ void DaliReceiveData(void) {
   */
   if (Dali->available) { return; }             // Skip if last input is not yet handled
   uint32_t gap_time = millis() - Dali->last_activity;
-  uint32_t wait = ESP.getCycleCount() + (Dali->bit_time / 2);
+  uint32_t wait = ESP.getCycleCount() + (Dali->bit_cycles / 2);
   int bit_state = 0; 
   bool dali_read;
   uint32_t received_dali_data = 0;
   uint32_t bit_number = 0;
   while (bit_number < 38) {
     while (ESP.getCycleCount() < wait);
-    wait += Dali->bit_time;                    // Auto roll-over
-    dali_read = digitalRead(Dali->pin_rx);
-    if (DALI_IN_INVERT) { dali_read != dali_read; }
+    wait += Dali->bit_cycles;                  // Auto roll-over
+    dali_read = (digitalRead(Dali->pin_rx) != Dali->invert_rx);
 #ifdef DALI_DEBUG
     digitalWrite(DALI_DEBUG_PIN, bit_number&1);  // Add LogicAnalyzer poll indication
 #endif  // DALI_DEBUG
@@ -465,13 +466,12 @@ void DaliSendDataOnce(uint16_t send_dali_data) {
       }
     }
 
-    digitalWrite(Dali->pin_tx, (pin_value == DALI_OUT_INVERT) ? LOW : HIGH);
-    wait += Dali->bit_time;                    // Auto roll-over
+    digitalWrite(Dali->pin_tx, (Dali->invert_tx) ? !pin_value : pin_value);
+    wait += Dali->bit_cycles;                  // Auto roll-over
     while (ESP.getCycleCount() < wait);
 
     if (!collision) {
-      dali_read = digitalRead(Dali->pin_rx);
-      if (DALI_IN_INVERT) { dali_read != dali_read; }
+      dali_read = (digitalRead(Dali->pin_rx) != Dali->invert_rx);
       if ((HIGH == pin_value) && (LOW == dali_read)) {  // Collision if write is 1 and bus is 0
         collision = true;
         pin_value = LOW;
@@ -686,7 +686,7 @@ void DaliProgramShortAddress(uint8_t shortadr) {
   // The slave shall store the received 6-bit address (AAAAAA) as a short address if it is selected.
   DaliSendData(DALI_PROGRAM_SHORT_ADDRESS, (shortadr << 1) | 0x01);
 
-  AddLog(LOG_LEVEL_DEBUG, PSTR("DLI: Set short address %d"), shortadr +1);
+  AddLog(LOG_LEVEL_INFO, PSTR("DLI: Set short address %d"), shortadr +1);
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -738,9 +738,9 @@ uint32_t DaliCommission(uint8_t init_arg) {
 #ifdef USE_LIGHT
   DaliInitLight();
   uint32_t address = (Settings->sbflag1.dali_light) ? DaliTarget2Address(Dali->target) : DALI_BROADCAST_DP;
-  DaliSendData(address, Dali->dimmer);         // Restore lights
+  DaliSendData(address, Dali->power);          // Restore lights
 #else
-  DaliSendData(DALI_BROADCAST_DP, Dali->dimmer);  // Restore lights
+  DaliSendData(DALI_BROADCAST_DP, Dali->power);  // Restore lights
 #endif  // USE_LIGHT
   return cnt;
 }
@@ -763,6 +763,9 @@ void ResponseDali(void) {
 
 void DaliLoop(void) {
   if (!Dali->available || Dali->response) { return; }
+
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DLI: Rx 0x%05X"), Dali->received_dali_data);
+
   if (Dali->received_dali_data &0x00010000) { 
     Dali->available = false;
     return;                                    // Rx collision
@@ -842,28 +845,45 @@ bool DaliSetChannels(void) {
 /*-------------------------------------------------------------------------------------------*/
 
 bool DaliInit(void) {
-  if (!PinUsed(GPIO_DALI_TX) || !PinUsed(GPIO_DALI_RX)) { return false; }
-
   Dali = (DALI*)calloc(sizeof(DALI), 1);
   if (!Dali) { return false; }
 
-  Dali->pin_rx = Pin(GPIO_DALI_RX);
-  Dali->pin_tx = Pin(GPIO_DALI_TX);
+  Dali->pin_tx = -1;
+  if (PinUsed(GPIO_DALI_TX)) {
+    Dali->pin_tx = Pin(GPIO_DALI_TX);
+  }
+  else if (PinUsed(GPIO_DALI_TX_INV)) {
+    Dali->pin_tx = Pin(GPIO_DALI_TX_INV);
+    Dali->invert_tx = true;
+  }
+  Dali->pin_rx = -1;
+  if (PinUsed(GPIO_DALI_RX)) {
+    Dali->pin_rx = Pin(GPIO_DALI_RX);
+  }
+  else if (PinUsed(GPIO_DALI_RX_INV)) {
+    Dali->pin_rx = Pin(GPIO_DALI_RX_INV);
+    Dali->invert_rx = true;
+  }
+  if ((-1 == Dali->pin_tx) || (-1 == Dali->pin_rx)) { 
+    free(Dali);
+    return false;
+  }
 
-  AddLog(LOG_LEVEL_INFO, PSTR("DLI: GPIO%d(RX) and GPIO%d(TX)"), Dali->pin_rx, Dali->pin_tx);
+  AddLog(LOG_LEVEL_INFO, PSTR("DLI: GPIO%d(RX%s) and GPIO%d(TX%s)"),
+    Dali->pin_rx, (Dali->invert_rx)?"i":"", Dali->pin_tx, (Dali->invert_tx)?"i":"");
 
   pinMode(Dali->pin_tx, OUTPUT);
-  digitalWrite(Dali->pin_tx, HIGH);
+  digitalWrite(Dali->pin_tx, (Dali->invert_tx) ? LOW : HIGH);  // Idle
   pinMode(Dali->pin_rx, INPUT);
 #ifdef DALI_DEBUG
   pinMode(DALI_DEBUG_PIN, OUTPUT);
   digitalWrite(DALI_DEBUG_PIN, HIGH);
 #endif  // DALI_DEBUG
 
-  Dali->max_short_address = (DALI_MAX_SHORT_ADDRESS <= 64) ? DALI_MAX_SHORT_ADDRESS : 64;
+  Dali->max_short_address = 64;
   Dali->dimmer = DALI_INIT_STATE;
   // Manchester twice 1200 bps = 2400 bps = 417 (protocol 416.76 +/- 10%) us
-  Dali->bit_time = ESP.getCpuFreqMHz() * 1000000 / 2400;
+  Dali->bit_cycles = ESP.getCpuFreqMHz() * 1000000 / 2400;
 
   DaliEnableRxInterrupt();
 
