@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - SolaxX1 Meter mode (#22330)
 - DALI inverted signal configuration using GPIO DALI RX_i/TX_i
 - Experimental support for Shelly DALI Dimmer Gen3 (See template in file xdrv_75_dali.ino)
+- HASPmota `haspmota.get_pages()` to get the sorted list of pages
 
 ### Breaking Changed
 
