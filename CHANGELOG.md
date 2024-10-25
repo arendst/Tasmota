@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - DALI inverted signal configuration using GPIO DALI RX_i/TX_i
 - Support for Shelly DALI Dimmer Gen3 (See tips and template in file xdrv_75_dali.ino)
 - HASPmota `haspmota.get_pages()` to get the sorted list of pages (#22358)
+- Support for US AQI and EPA AQI in PMS5003x sensors (#22294)
 
 ### Breaking Changed
 
