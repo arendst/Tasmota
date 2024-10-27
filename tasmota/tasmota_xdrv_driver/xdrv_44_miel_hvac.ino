@@ -49,6 +49,8 @@
 
 /* from hvac */
 bool temp_type = false;
+bool remotetemp_clear = true;
+unsigned long remotetemp_last_call_time = 0;
 
 struct miel_hvac_header {
 	uint8_t			start;
@@ -945,6 +947,23 @@ miel_hvac_remotetemp_degc2old(long degc)
 }
 
 static void
+miel_hvac_clear_remotetemp(void) 
+{
+    struct miel_hvac_softc *sc = miel_hvac_sc;
+    struct miel_hvac_msg_remotetemp *rt = &sc->sc_remotetemp;
+	uint8_t control = MIEL_HVAC_REMOTETEMP_CLR;
+	long degc = 0;
+
+	memset(rt, 0, sizeof(*rt));
+	rt->seven = 0x7;
+	rt->control = control;
+	rt->temp_old = miel_hvac_remotetemp_degc2old(degc);
+	rt->temp = (degc + MIEL_HVAC_REMOTETEMP_OFFSET) * MIEL_HVAC_REMOTETEMP_OLD_FACTOR;
+
+	remotetemp_clear = false;
+}
+
+static void
 miel_hvac_cmnd_remotetemp(void)
 {
 	struct miel_hvac_softc *sc = miel_hvac_sc;
@@ -960,6 +979,7 @@ miel_hvac_cmnd_remotetemp(void)
 		degc = 0;
 
 		ResponseCmndChar_P("clear");
+		remotetemp_clear = false;
 	} else {
 		degc = strtol(XdrvMailbox.data, nullptr, 0);
 
@@ -970,6 +990,7 @@ miel_hvac_cmnd_remotetemp(void)
 			degc = MIEL_HVAC_REMOTETEMP_MAX;
 
 		ResponseCmndNumber(degc);
+        remotetemp_clear = true;
 	}
 
 	memset(rt, 0, sizeof(*rt));
@@ -986,6 +1007,8 @@ miel_hvac_cmnd_remotetemp(void)
 	rt->temp_old = miel_hvac_remotetemp_degc2old(degc);
 	rt->temp = (degc + MIEL_HVAC_REMOTETEMP_OFFSET) *
 	    MIEL_HVAC_REMOTETEMP_OLD_FACTOR;
+
+	remotetemp_last_call_time = millis();	
 }
 
 #ifdef MIEL_HVAC_DEBUG
@@ -1592,6 +1615,9 @@ bool Xdrv44(uint32_t function) {
 	case FUNC_EVERY_100_MSECOND:
 	case FUNC_EVERY_200_MSECOND:
 	case FUNC_EVERY_SECOND:
+		if (remotetemp_clear && ((millis() - remotetemp_last_call_time > 10000) || remotetemp_last_call_time == 0)) {
+            miel_hvac_clear_remotetemp();
+	    }
 		break;
 
 	case FUNC_JSON_APPEND:
