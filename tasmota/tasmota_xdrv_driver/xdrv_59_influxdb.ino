@@ -41,6 +41,7 @@
  * IfxSensor   - Set Influxdb sensor logging off (0) or on (1)
  * IfxRP       - Set Influxdb retention policy
  * IfxLog      - Set Influxdb logging level (4 = default)
+ * IfxFeed     - Feed Influxdb with JSON data
  *
  * The following triggers result in automatic influxdb numeric feeds without appended time:
  * - this driver initiated state message
@@ -476,6 +477,7 @@ void InfluxDbLoop(void) {
 #define D_CMND_INFLUXDBPERIOD   "Period"
 #define D_CMND_INFLUXDBSENSOR   "Sensor"
 #define D_CMND_INFLUXDBRP       "RP"
+#define D_CMND_INFLUXDBFEED     "Feed"
 
 const char kInfluxDbCommands[] PROGMEM = D_PRFX_INFLUXDB "|"  // Prefix
   "|" D_CMND_INFLUXDBLOG "|"
@@ -483,7 +485,8 @@ const char kInfluxDbCommands[] PROGMEM = D_PRFX_INFLUXDB "|"  // Prefix
   D_CMND_INFLUXDBUSER "|" D_CMND_INFLUXDBORG "|"
   D_CMND_INFLUXDBPASSWORD "|" D_CMND_INFLUXDBTOKEN "|"
   D_CMND_INFLUXDBDATABASE "|" D_CMND_INFLUXDBBUCKET "|"
-  D_CMND_INFLUXDBPERIOD "|" D_CMND_INFLUXDBSENSOR "|" D_CMND_INFLUXDBRP;
+  D_CMND_INFLUXDBPERIOD "|" D_CMND_INFLUXDBSENSOR "|"
+  D_CMND_INFLUXDBRP "|" D_CMND_INFLUXDBFEED;
 
 void (* const InfluxCommand[])(void) PROGMEM = {
   &CmndInfluxDbState, &CmndInfluxDbLog,
@@ -491,7 +494,8 @@ void (* const InfluxCommand[])(void) PROGMEM = {
   &CmndInfluxDbUser, &CmndInfluxDbUser,
   &CmndInfluxDbPassword, &CmndInfluxDbPassword,
   &CmndInfluxDbDatabase, &CmndInfluxDbDatabase,
-  &CmndInfluxDbPeriod, &CmndInfluxDbSensor, &CmndInfluxDbRP };
+  &CmndInfluxDbPeriod, &CmndInfluxDbSensor,
+  &CmndInfluxDbRP, &CmndInfluxDbFeed };
 
 void InfluxDbReinit(void) {
   IFDB.init = false;
@@ -597,6 +601,15 @@ void CmndInfluxDbPeriod(void) {
     }
   }
   ResponseCmndNumber(Settings->influxdb_period);
+}
+
+void CmndInfluxDbFeed(void) {
+  // IfxFeed {"Data":10}
+  if ((XdrvMailbox.data_len > 0) && ('{' == XdrvMailbox.data[0])) {
+    Response_P(XdrvMailbox.data);
+    InfluxDbProcessJson();
+    ResponseCmndDone();
+  }
 }
 
 /*********************************************************************************************\
