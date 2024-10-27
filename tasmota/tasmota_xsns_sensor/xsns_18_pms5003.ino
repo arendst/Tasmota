@@ -390,17 +390,17 @@ int usaEpaStandardPm2d5Adjustment(int pm25_standard, int relative_humidity)
 int compute_us_aqi(int pm25_standard)
 {
   if (pm25_standard <= 9) {
-    return map_double(pm25_standard, 0, 9, 0, 50);
+    return map_float(pm25_standard, 0, 9, 0, 50);
   } else if (pm25_standard <= 35) {
-    return map_double(pm25_standard, 9.1f, 35.4f, 51, 100);
+    return map_float(pm25_standard, 9.1f, 35.4f, 51, 100);
   } else if (pm25_standard <= 55) {
-    return map_double(pm25_standard, 35.5f, 55.4f, 101, 150);
+    return map_float(pm25_standard, 35.5f, 55.4f, 101, 150);
   } else if (pm25_standard <= 125) {
-    return map_double(pm25_standard, 55.5f, 125.4f, 151, 200);
+    return map_float(pm25_standard, 55.5f, 125.4f, 151, 200);
   } else if (pm25_standard <= 225) {
-    return map_double(pm25_standard, 125.5f, 225.4f, 201, 300);
+    return map_float(pm25_standard, 125.5f, 225.4f, 201, 300);
   } else if (pm25_standard <= 325) {
-    return map_double(pm25_standard, 225.5f, 325.4f, 301, 500);
+    return map_float(pm25_standard, 225.5f, 325.4f, 301, 500);
   } else {
     return 500;
   }
