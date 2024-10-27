@@ -821,12 +821,12 @@ void EnergyMarginCheck(void) {
         jsonflg = true;
       }
     }
-    if (jsonflg) {
-      ResponseJsonEndEnd();
-      MqttPublishTele(PSTR(D_RSLT_MARGINS));
-      EnergyMqttShow();
-      Energy->margin_stable = 3;  // Allow 2 seconds to stabilize before reporting
-    }
+  }
+  if (jsonflg) {
+    ResponseJsonEndEnd();
+    MqttPublishTele(PSTR(D_RSLT_MARGINS));
+    EnergyMqttShow();
+    Energy->margin_stable = 3;  // Allow 2 seconds to stabilize before reporting
   }
 
   // Max Power
