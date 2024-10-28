@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file.
 - Shutter optimized behavior to publish shutter data with sensor request (#22353)
 
 ### Fixed
+- Ethernet on -DFRAMEWORK_ARDUINO_ITEAD framework regression from v14.3.0 (#22367)
 
 ### Removed
 - DALI inverted signal configuration using compile time defines
