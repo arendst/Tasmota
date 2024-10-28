@@ -15,7 +15,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/ 
+*/
 
 #ifdef USE_I2C
 
@@ -406,11 +406,7 @@ const uint8_t kI2cList[] = {
 #endif
 
 #ifdef XI2C_96
-  XI2C_96,
-#endif
-
-#ifdef XI2C_97
-  XI2C_97
+  XI2C_96
 #endif
 };
 
