@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Support for US AQI and EPA AQI in PMS5003x sensors (#22294)
 - HLK-LD2410 Engineering mode (#21880)
 - Support for HLK-LD2410S 24GHz smart wave motion sensor (#22253)
+- Mitsubishi Electric HVAC Auto Clear Remote Temp for MiElHVAC (#22370)
 
 ### Breaking Changed
 
