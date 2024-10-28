@@ -44,11 +44,15 @@
 #define D_CMND_MIEL_HVAC_SETAIRDIRECTION "HVACSetAirDirection"
 #define D_CMND_MIEL_HVAC_SETPROHIBIT "HVACSetProhibit"
 #define D_CMND_MIEL_HVAC_REMOTETEMP "HVACRemoteTemp"
+#define D_CMND_MIEL_HVAC_REMOTETEMP_AUTO_CLEAR_TIME "HVACRemoteTempClearTime"
 
 #include <TasmotaSerial.h>
 
 /* from hvac */
 bool temp_type = false;
+bool remotetemp_clear = true;
+unsigned long remotetemp_auto_clear_time = 10000;
+unsigned long remotetemp_last_call_time = 0;
 
 struct miel_hvac_header {
 	uint8_t			start;
@@ -945,6 +949,39 @@ miel_hvac_remotetemp_degc2old(long degc)
 }
 
 static void
+miel_hvac_auto_clear_remotetemp(void) 
+{
+    struct miel_hvac_softc *sc = miel_hvac_sc;
+    struct miel_hvac_msg_remotetemp *rt = &sc->sc_remotetemp;
+	uint8_t control = MIEL_HVAC_REMOTETEMP_CLR;
+	long degc = 0;
+
+	memset(rt, 0, sizeof(*rt));
+	rt->seven = 0x7;
+	rt->control = control;
+	rt->temp_old = miel_hvac_remotetemp_degc2old(degc);
+	rt->temp = (degc + MIEL_HVAC_REMOTETEMP_OFFSET) * MIEL_HVAC_REMOTETEMP_OLD_FACTOR;
+
+	remotetemp_clear = false;
+}
+
+static void
+miel_hvac_cmnd_remotetemp_auto_clear_time(void)
+{
+	if (XdrvMailbox.data_len == 0)
+		return;
+
+	unsigned long clear_time = strtoul(XdrvMailbox.data, nullptr, 10);
+	if (clear_time == 0) {
+		miel_hvac_respond_unsupported();
+		return;
+	}
+	remotetemp_auto_clear_time = clear_time;
+
+	ResponseCmndNumber(remotetemp_auto_clear_time);
+}
+
+static void
 miel_hvac_cmnd_remotetemp(void)
 {
 	struct miel_hvac_softc *sc = miel_hvac_sc;
@@ -960,6 +997,8 @@ miel_hvac_cmnd_remotetemp(void)
 		degc = 0;
 
 		ResponseCmndChar_P("clear");
+		remotetemp_clear = false;
+		remotetemp_last_call_time = 0;
 	} else {
 		degc = strtol(XdrvMailbox.data, nullptr, 0);
 
@@ -970,6 +1009,8 @@ miel_hvac_cmnd_remotetemp(void)
 			degc = MIEL_HVAC_REMOTETEMP_MAX;
 
 		ResponseCmndNumber(degc);
+        remotetemp_clear = true;
+		remotetemp_last_call_time = millis();	
 	}
 
 	memset(rt, 0, sizeof(*rt));
@@ -1539,6 +1580,7 @@ static const char miel_hvac_cmnd_names[] PROGMEM =
 	"|" D_CMND_MIEL_HVAC_SETAIRDIRECTION
 	"|" D_CMND_MIEL_HVAC_SETPROHIBIT
 	"|" D_CMND_MIEL_HVAC_REMOTETEMP
+	"|" D_CMND_MIEL_HVAC_REMOTETEMP_AUTO_CLEAR_TIME
 #ifdef MIEL_HVAC_DEBUG
 	"|" "HVACRequest"
 #endif
@@ -1554,6 +1596,7 @@ static void (*const miel_hvac_cmnds[])(void) PROGMEM = {
 	&miel_hvac_cmnd_setairdirection,
 	&miel_hvac_cmnd_setprohibit,
 	&miel_hvac_cmnd_remotetemp,
+	&miel_hvac_cmnd_remotetemp_auto_clear_time,
 #ifdef MIEL_HVAC_DEBUG
 	&miel_hvac_cmnd_request,
 #endif
@@ -1592,6 +1635,9 @@ bool Xdrv44(uint32_t function) {
 	case FUNC_EVERY_100_MSECOND:
 	case FUNC_EVERY_200_MSECOND:
 	case FUNC_EVERY_SECOND:
+		if (remotetemp_clear && ((millis() - remotetemp_last_call_time) > remotetemp_auto_clear_time || remotetemp_last_call_time == 0)) {
+            miel_hvac_auto_clear_remotetemp();
+	    }
 		break;
 
 	case FUNC_JSON_APPEND:
