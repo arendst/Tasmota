@@ -860,29 +860,33 @@ bool DaliSetChannels(void) {
 /*-------------------------------------------------------------------------------------------*/
 
 bool DaliInit(void) {
+  int pin_tx = -1;
+  bool invert_tx = false;
+  if (PinUsed(GPIO_DALI_TX)) {
+    pin_tx = Pin(GPIO_DALI_TX);
+  }
+  else if (PinUsed(GPIO_DALI_TX_INV)) {
+    pin_tx = Pin(GPIO_DALI_TX_INV);
+    invert_tx = true;
+  }
+  int pin_rx = -1;
+  bool invert_rx = false;
+  if (PinUsed(GPIO_DALI_RX)) {
+    pin_rx = Pin(GPIO_DALI_RX);
+  }
+  else if (PinUsed(GPIO_DALI_RX_INV)) {
+    pin_rx = Pin(GPIO_DALI_RX_INV);
+    invert_rx = true;
+  }
+  if ((-1 == pin_tx) || (-1 == pin_rx)) { return false; }
+
   Dali = (DALI*)calloc(sizeof(DALI), 1);
   if (!Dali) { return false; }
 
-  Dali->pin_tx = 255;
-  if (PinUsed(GPIO_DALI_TX)) {
-    Dali->pin_tx = Pin(GPIO_DALI_TX);
-  }
-  else if (PinUsed(GPIO_DALI_TX_INV)) {
-    Dali->pin_tx = Pin(GPIO_DALI_TX_INV);
-    Dali->invert_tx = true;
-  }
-  Dali->pin_rx = 255;
-  if (PinUsed(GPIO_DALI_RX)) {
-    Dali->pin_rx = Pin(GPIO_DALI_RX);
-  }
-  else if (PinUsed(GPIO_DALI_RX_INV)) {
-    Dali->pin_rx = Pin(GPIO_DALI_RX_INV);
-    Dali->invert_rx = true;
-  }
-  if ((255 == Dali->pin_tx) || (255 == Dali->pin_rx)) { 
-    free(Dali);
-    return false;
-  }
+  Dali->pin_tx = pin_tx;
+  Dali->invert_tx = invert_tx;
+  Dali->pin_rx = pin_rx;
+  Dali->invert_rx = invert_rx;
 
   AddLog(LOG_LEVEL_INFO, PSTR("DLI: GPIO%d(RX%s) and GPIO%d(TX%s)"),
     Dali->pin_rx, (Dali->invert_rx)?"i":"", Dali->pin_tx, (Dali->invert_tx)?"i":"");
