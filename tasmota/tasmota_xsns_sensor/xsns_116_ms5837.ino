@@ -22,8 +22,8 @@
 
 #define MS5837_ADDR         0x76
 
-#define XSNS_115            115
-#define XI2C_88             88         // See I2CDEVICES.md
+#define XSNS_116            116
+#define XI2C_91             91         // See I2CDEVICES.md
 /*********************************************************************************************\
  * BlueRobotics Pressure Sensor
  *
@@ -72,7 +72,7 @@ void MS5837Show(bool json) {
   char pressure_str[8];
   char inchesWater_str[8];
 
-  if (I2cEnabled(XI2C_88)) {
+  if (I2cEnabled(XI2C_91)) {
     sensor_ms5837.read();
     ms5837Temp = ConvertTemp(sensor_ms5837.temperature());
     ms5837Pres = ConvertPressure(sensor_ms5837.pressure());
@@ -110,8 +110,8 @@ void MS5837Show(bool json) {
  * Interface
 \*********************************************************************************************/
 
-bool Xsns115(uint32_t function) {
-  if (!I2cEnabled(XI2C_88)) { return false; }
+bool Xsns116(uint32_t function) {
+  if (!I2cEnabled(XI2C_91)) { return false; }
 
   bool result = false;
   //I2cScan();
