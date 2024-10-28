@@ -949,7 +949,7 @@ miel_hvac_remotetemp_degc2old(long degc)
 }
 
 static void
-miel_hvac_auto_clear_remotetemp(void) 
+miel_hvac_remotetemp_auto_clear(void) 
 {
     struct miel_hvac_softc *sc = miel_hvac_sc;
     struct miel_hvac_msg_remotetemp *rt = &sc->sc_remotetemp;
@@ -972,7 +972,7 @@ miel_hvac_cmnd_remotetemp_auto_clear_time(void)
 		return;
 
 	unsigned long clear_time = strtoul(XdrvMailbox.data, nullptr, 10);
-	if (clear_time == 0) {
+	if (clear_time < 1000 || clear_time > 600000) {
 		miel_hvac_respond_unsupported();
 		return;
 	}
@@ -997,7 +997,6 @@ miel_hvac_cmnd_remotetemp(void)
 		degc = 0;
 
 		ResponseCmndChar_P("clear");
-		remotetemp_clear = false;
 		remotetemp_last_call_time = 0;
 	} else {
 		degc = strtol(XdrvMailbox.data, nullptr, 0);
@@ -1009,7 +1008,6 @@ miel_hvac_cmnd_remotetemp(void)
 			degc = MIEL_HVAC_REMOTETEMP_MAX;
 
 		ResponseCmndNumber(degc);
-        remotetemp_clear = true;
 		remotetemp_last_call_time = millis();	
 	}
 
@@ -1027,6 +1025,8 @@ miel_hvac_cmnd_remotetemp(void)
 	rt->temp_old = miel_hvac_remotetemp_degc2old(degc);
 	rt->temp = (degc + MIEL_HVAC_REMOTETEMP_OFFSET) *
 	    MIEL_HVAC_REMOTETEMP_OLD_FACTOR;
+
+	remotetemp_clear = control == MIEL_HVAC_REMOTETEMP_SET ? true : false;	
 }
 
 #ifdef MIEL_HVAC_DEBUG
@@ -1406,6 +1406,9 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		ResponseAppend_P(PSTR(",\"Temperature\":\"%s\""),
 		    room_temp);
 
+		ResponseAppend_P(PSTR(",\"RemoteTemperatureSensor\":\"%s\""),
+		    remotetemp_clear ? "ON" : "OFF");	
+
         if(rt->outdoortemp > 1) {
 		    char outdoor_temp[33];
             float temp = miel_hvac_outdoortemp2deg(rt->outdoortemp);
@@ -1636,7 +1639,7 @@ bool Xdrv44(uint32_t function) {
 	case FUNC_EVERY_200_MSECOND:
 	case FUNC_EVERY_SECOND:
 		if (remotetemp_clear && ((millis() - remotetemp_last_call_time) > remotetemp_auto_clear_time || remotetemp_last_call_time == 0)) {
-            miel_hvac_auto_clear_remotetemp();
+            miel_hvac_remotetemp_auto_clear();
 	    }
 		break;
 
