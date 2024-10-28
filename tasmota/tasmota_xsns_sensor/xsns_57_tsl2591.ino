@@ -39,8 +39,8 @@ uint8_t tsl2591_type = 0;
 uint8_t tsl2591_valid = 0;
 float tsl2591_lux = 0;
 
-tsl2591Gain_t gain_enum_array[4] = {TSL2591_GAIN_LOW,TSL2591_GAIN_MED,TSL2591_GAIN_HIGH,TSL2591_GAIN_MAX};
-tsl2591IntegrationTime_t int_enum_array[6] = {TSL2591_INTEGRATIONTIME_100MS,TSL2591_INTEGRATIONTIME_200MS,TSL2591_INTEGRATIONTIME_300MS,TSL2591_INTEGRATIONTIME_400MS,TSL2591_INTEGRATIONTIME_500MS,TSL2591_INTEGRATIONTIME_600MS};
+tsl2591Gain_t const gain_enum_array[4] PROGMEM = {TSL2591_GAIN_LOW,TSL2591_GAIN_MED,TSL2591_GAIN_HIGH,TSL2591_GAIN_MAX};
+tsl2591IntegrationTime_t const int_enum_array[6] PROGMEM = {TSL2591_INTEGRATIONTIME_100MS,TSL2591_INTEGRATIONTIME_200MS,TSL2591_INTEGRATIONTIME_300MS,TSL2591_INTEGRATIONTIME_400MS,TSL2591_INTEGRATIONTIME_500MS,TSL2591_INTEGRATIONTIME_600MS};
 
 void Tsl2591Init(void)
 {
@@ -81,7 +81,7 @@ void Tsl2591Show(bool json)
     char lux_str[10];
     dtostrf(tsl2591_lux, sizeof(lux_str)-1, 3, lux_str);
     if (json) {
-    ResponseAppend_P(PSTR(",\"TSL2591\":{\"" D_JSON_ILLUMINANCE "\":%s}"), lux_str);
+      ResponseAppend_P(PSTR(",\"TSL2591\":{\"" D_JSON_ILLUMINANCE "\":%s}"), lux_str);
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) { DomoticzSensor(DZ_ILLUMINANCE, tsl2591_lux); }
 #endif  // USE_DOMOTICZ
