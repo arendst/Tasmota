@@ -56,8 +56,11 @@ void MS5837init(void) {
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_MS5837[] PROGMEM =
-  "{s}MS5837 Temperature {m}%s " D_UNIT_DEGREE            "%c{e}{s}MS5837 Pressure {m}%s %s{e}{s}Inches Water {m}%s in{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_MS5837_DEFAULT[] PROGMEM =
+  "{s}MS5837 Temperature {m}%s " D_UNIT_DEGREE            "%c{e}{s}MS5837 Pressure {m}%s %s{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_MS5837_INCHES_WATER[] PROGMEM =
+  "{s}Inches Water {m}%s in{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+char HTTP_SNS_MS5837_DUAL[118];
 #endif  // USE_WEBSERVER
 
 void MS5837Show(bool json) {
@@ -65,34 +68,44 @@ void MS5837Show(bool json) {
   float ms5837Pres;
   float pressure_delta;
   float inches_water;
-
-  sensor_ms5837.read();
-  ms5837Temp = ConvertTemp(sensor_ms5837.temperature());
-  ms5837Pres = ConvertPressure(sensor_ms5837.pressure());
-  if (I2cEnabled(XI2C_88)) { //pick up here
-    pressure_delta = sensor_ms5837.pressure() - bmp_sensors[0].bmp_pressure + pressureOffset;
-    inches_water = pressure_delta*0.401463078662f;
-    AddLog(LOG_LEVEL_DEBUG, PSTR("Pressure Delta: %f | Inches Water: %f"), pressure_delta, inches_water);
-  }
   char temperature_str[8];
-  ext_snprintf_P(temperature_str, sizeof(temperature_str), PSTR("%1_f"), &ms5837Temp);
   char pressure_str[8];
-  ext_snprintf_P(pressure_str, sizeof(pressure_str), PSTR("%1_f"), &ms5837Pres);
   char inchesWater_str[8];
-  ext_snprintf_P(inchesWater_str, sizeof(inchesWater_str), PSTR("%1_f"), &inches_water);
-  if (json) {
-    // consolidate to one line
-    ResponseAppend_P(PSTR(",\"MS5837\":{\"Temperature\":%s,"), temperature_str);
-    ResponseAppend_P(PSTR("\"Pressure\":%s,"), pressure_str);
-    ResponseAppend_P(PSTR("\"Inches Water\":%s}"), inchesWater_str);
+
+  if (I2cEnabled(XI2C_88)) {
+    sensor_ms5837.read();
+    ms5837Temp = ConvertTemp(sensor_ms5837.temperature());
+    ms5837Pres = ConvertPressure(sensor_ms5837.pressure());
+    ext_snprintf_P(temperature_str, sizeof(temperature_str), PSTR("%1_f"), &ms5837Temp);
+    ext_snprintf_P(pressure_str, sizeof(pressure_str), PSTR("%1_f"), &ms5837Pres);
+    if (json) {
+      ResponseAppend_P(PSTR(",\"MS5837\":{\"Temperature\":%s,\"Pressure\":%s"), temperature_str, pressure_str);
+    }
+    if (I2cEnabled(XI2C_10)) {
+      pressure_delta = sensor_ms5837.pressure() - bmp_sensors[0].bmp_pressure + pressureOffset;
+      inches_water = pressure_delta*0.401463078662f;
+      ext_snprintf_P(inchesWater_str, sizeof(inchesWater_str), PSTR("%1_f"), &inches_water);
+      if (json) {
+        ResponseAppend_P(PSTR(",\"Inches Water\":%s"),inchesWater_str);
+      }
+    }
+    if (json) {
+      ResponseAppend_P(PSTR("}"));
+
 #ifdef USE_WEBSERVER
     } else {
-      WSContentSend_PD(HTTP_SNS_MS5837, temperature_str, TempUnit(), pressure_str, PressureUnit().c_str(), inchesWater_str);
+        if (I2cEnabled(XI2C_10)) {
+          strncat(HTTP_SNS_MS5837_DUAL,HTTP_SNS_MS5837_DEFAULT,sizeof(HTTP_SNS_MS5837_DUAL));
+          strncat(HTTP_SNS_MS5837_DUAL,HTTP_SNS_MS5837_INCHES_WATER,sizeof(HTTP_SNS_MS5837_DUAL));
+          WSContentSend_PD(HTTP_SNS_MS5837_DUAL, temperature_str, TempUnit(), pressure_str, PressureUnit().c_str(), inchesWater_str);
+        }
+        else {
+          WSContentSend_PD(HTTP_SNS_MS5837_DEFAULT, temperature_str, TempUnit(), pressure_str, PressureUnit().c_str());
+        }
 #endif  // USE_WEBSERVER
     }
-  AddLog(LOG_LEVEL_DEBUG, PSTR("BMP Pressure: %f"), bmp_sensors[0].bmp_pressure);
+  }
 }
-
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/

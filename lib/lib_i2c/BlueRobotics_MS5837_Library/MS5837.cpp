@@ -481,11 +481,11 @@ float MS5837::temperature() {
 // In order to calculate the correct depth, the actual atmospheric pressure should be measured once in air, and
 // that value should subtracted for subsequent depth calculations.
 float MS5837::depth() {
-	return (pressure(MS5837::Pa)-101300)/(fluidDensity*9.80665);
+	return (pressure(MS5837::Pa)-101300)/(fluidDensity*9.80665f);
 }
 
 float MS5837::altitude() {
-	return (1-pow((pressure()/1013.25),.190284))*145366.45*.3048;
+	return (1-pow((pressure()/1013.25f),.190284f))*145366.45f*.3048f;
 }
 
 
