@@ -1406,8 +1406,13 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		ResponseAppend_P(PSTR(",\"Temperature\":\"%s\""),
 		    room_temp);
 
-		ResponseAppend_P(PSTR(",\"RemoteTemperatureSensor\":\"%s\""),
-		    remotetemp_clear ? "ON" : "OFF");	
+		ResponseAppend_P(PSTR(",\"RemoteTemperatureSensorState\":\"%s\""),
+		    remotetemp_clear ? "ON" : "OFF");
+
+        char remotetempautocleartime[33];
+        ultoa(remotetemp_auto_clear_time, remotetempautocleartime, 10);
+		ResponseAppend_P(PSTR(",\"RemoteTemperatureSensorAutoClearTime\":\"%s\""),
+		    remotetempautocleartime);		
 
         if(rt->outdoortemp > 1) {
 		    char outdoor_temp[33];
