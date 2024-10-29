@@ -31,7 +31,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Ethernet on -DFRAMEWORK_ARDUINO_ITEAD framework regression from v14.3.0 (#22367)
-- Alexa Hue with multiple devices
+- Alexa Hue with multiple devices (#22383)
 
 ### Removed
 - DALI inverted signal configuration using compile time defines

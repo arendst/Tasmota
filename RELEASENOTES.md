@@ -144,6 +144,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - HASPmota support for page delete and object updates [#22311](https://github.com/arendst/Tasmota/issues/22311)
 
 ### Fixed
+- Alexa Hue with multiple devices [#22383](https://github.com/arendst/Tasmota/issues/22383)
 - EQ3 TRV firmware version 1.46 fails if the default true is used in subscribe on the notify characteristic [#22328](https://github.com/arendst/Tasmota/issues/22328)
 - Ethernet on -DFRAMEWORK_ARDUINO_ITEAD framework regression from v14.3.0 [#22367](https://github.com/arendst/Tasmota/issues/22367)
 
