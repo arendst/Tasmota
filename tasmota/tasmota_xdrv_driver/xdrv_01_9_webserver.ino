@@ -459,6 +459,7 @@ ESP8266WebServer *Webserver;
 struct WEB {
   String chunk_buffer = "";                         // Could be max 2 * CHUNKED_BUFFER_SIZE
   uint32_t upload_size = 0;
+  int slider[LST_MAX];
   uint16_t upload_error = 0;
   uint8_t state = HTTP_OFF;
   uint8_t upload_file_type;
@@ -595,6 +596,11 @@ void StartWebserver(int type)
 {
   if (!Settings->web_refresh) { Settings->web_refresh = HTTP_REFRESH_TIME; }
   if (!Web.state) {
+
+    for (uint32_t i = 0; i < LST_MAX; i++) {
+      Web.slider[i] = -1;
+    }
+
     if (!Webserver) {
       Webserver = new ESP8266WebServer((HTTP_MANAGER == type || HTTP_MANAGER_RESET_ONLY == type) ? 80 : WEB_PORT);
 
@@ -1152,14 +1158,14 @@ uint32_t WebDeviceColumns(void) {
 }
 
 #ifdef USE_LIGHT
-void WebSliderColdWarm(void)
-{
+void WebSliderColdWarm(void) {
+  Web.slider[0] = LightGetColorTemp();
   WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Cold Warm
     PSTR("a"),             // a - Unique HTML id
     PSTR("#eff"), PSTR("#f81"),  // 6500k in RGB (White) to 2500k in RGB (Warm Yellow)
-    1,               // sl1
+    1,               // sl1 - used for slider updates
     153, 500,        // Range color temperature
-    LightGetColorTemp(),
+    Web.slider[0],
     't', 0);         // t0 - Value id releated to lc("t0", value) and WebGetArg("t0", tmp, sizeof(tmp));
 }
 #endif  // USE_LIGHT
@@ -1226,12 +1232,13 @@ void HandleRoot(void)
           uint8_t sat;
           LightGetHSB(&hue, &sat, nullptr);
 
+          Web.slider[1] = hue;
           WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Hue
             PSTR("b"),             // b - Unique HTML id
             PSTR("#800"), PSTR("#f00 5%,#ff0 20%,#0f0 35%,#0ff 50%,#00f 65%,#f0f 80%,#f00 95%,#800"),  // Hue colors
-            2,               // sl2 - Unique range HTML id - Used as source for Saturation end color
+            2,               // sl2 - Unique range HTML id - Used as source for Saturation end color and slider updates
             0, 359,          // Range valid Hue
-            hue,
+            Web.slider[1],
             'h', 0);         // h0 - Value id
 
           uint8_t dcolor = changeUIntScale(Settings->light_dimmer, 0, 100, 0, 255);
@@ -1241,33 +1248,36 @@ void HandleRoot(void)
           HsToRgb(hue, 255, &red, &green, &blue);
           snprintf_P(stemp, sizeof(stemp), PSTR("#%02X%02X%02X"), red, green, blue);  // Saturation end color
 
+          Web.slider[2] = changeUIntScale(sat, 0, 255, 0, 100);
           WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Saturation
             PSTR("s"),             // s - Unique HTML id related to eb('s').style.background='linear-gradient(to right,rgb('+sl+'%%,'+sl+'%%,'+sl+'%%),hsl('+eb('sl2').value+',100%%,50%%))';
             scolor, stemp,   // Brightness to max current color
-            3,               // sl3 - Unique range HTML id - Not used
+            3,               // sl3 - Unique range HTML id - Used for slider updates
             0, 100,          // Range 0 to 100%
-            changeUIntScale(sat, 0, 255, 0, 100),
+            Web.slider[2],
             'n', 0);         // n0 - Value id
         }
 
+        Web.slider[3] = Settings->light_dimmer;
         WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Brightness - Black to White
           PSTR("c"),               // c - Unique HTML id
           PSTR("#000"), PSTR("#fff"),    // Black to White
-          4,                 // sl4 - Unique range HTML id - Used as source for Saturation begin color
+          4,                 // sl4 - Unique range HTML id - Used as source for Saturation begin color and slider updates
           Settings->flag3.slider_dimmer_stay_on, 100,  // Range 0/1 to 100% (SetOption77 - Do not power off if slider moved to far left)
-          Settings->light_dimmer,
+          Web.slider[3],
           'd', 0);           // d0 - Value id is related to lc("d0", value) and WebGetArg("d0", tmp, sizeof(tmp));
 
         if (split_white) {   // SetOption37 128
           if (LST_RGBCW == light_subtype) {
             WebSliderColdWarm();
           }
+          Web.slider[4] = LightGetDimmer(2);
           WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // White brightness - Black to White
             PSTR("f"),             // f - Unique HTML id
             PSTR("#000"), PSTR("#fff"),  // Black to White
-            5,               // sl5 - Unique range HTML id - Not used
+            5,               // sl5 - Unique range HTML id - Used for slider updates
             Settings->flag3.slider_dimmer_stay_on, 100,  // Range 0/1 to 100% (SetOption77 - Do not power off if slider moved to far left)
-            LightGetDimmer(2),
+            Web.slider[4],
             'w', 0);         // w0 - Value id is related to lc("w0", value) and WebGetArg("w0", tmp, sizeof(tmp));
         }
       } else {  // Settings->flag3.pwm_multi_channels - SetOption68 1 - Enable multi-channels PWM instead of Color PWM
@@ -1276,12 +1286,13 @@ void HandleRoot(void)
         for (uint32_t i = 0; i < pwm_channels; i++) {
           stemp[1]++;        // e1 to e5 - Make unique ids
 
+          Web.slider[i] = changeUIntScale(Settings->light_color[i], 0, 255, 0, 100);
           WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Channel brightness - Black to White
             stemp,           // e1 to e5 - Unique HTML id
             PSTR("#000"), PSTR("#fff"),  // Black to White
-            i+1,             // sl1 to sl5 - Unique range HTML id - Not used
+            i+1,             // sl1 to sl5 - Unique range HTML id - Used for slider updates
             1, 100,          // Range 1 to 100%
-            changeUIntScale(Settings->light_color[i], 0, 255, 0, 100),
+            Web.slider[i],
             'e', i+1);       // e1 to e5 - Value id
         }
       }  // Settings->flag3.pwm_multi_channels
@@ -1492,6 +1503,43 @@ bool HandleRootStatusRefresh(void)
 #else
   WSContentBegin(200, CT_HTML);
 #endif  // USE_WEB_SSE
+
+#ifdef USE_LIGHT
+  if (!Settings->flag6.disable_slider_updates) {    // SetOption161 0 - (Light) Disable slider updates (1)
+    uint16_t hue;
+    uint8_t sat;
+    int current_value = -1;
+    for (uint32_t i = 0; i < LST_MAX; i++) {
+      if (Web.slider[i] != -1) {
+        if (!Settings->flag3.pwm_multi_channels) {  // SetOption68 0 - Enable multi-channels PWM instead of Color PWM
+          if (0 == i) {
+            current_value = LightGetColorTemp();
+          }
+          else if (1 == i) {
+            LightGetHSB(&hue, &sat, nullptr);
+            current_value = hue;
+          }
+          else if (2 == i) {
+            current_value = changeUIntScale(sat, 0, 255, 0, 100);
+          }
+          else if (3 == i) {
+            current_value = Settings->light_dimmer;
+          }
+          else if (4 == i) {
+            current_value = LightGetDimmer(2);
+          }
+        } else {
+          current_value = changeUIntScale(Settings->light_color[i], 0, 255, 0, 100);
+        }
+        if (current_value != Web.slider[i]) {
+          Web.slider[i] = current_value;
+          // https://stackoverflow.com/questions/4057236/how-to-add-onload-event-to-a-div-element
+          WSContentSend_P(PSTR("<img style='display:none;' src onerror=\"eb('sl%d').value='%d';\">"), i +1, current_value);
+        }
+      }
+    }
+  }
+#endif  // USE_LIGHT
 
   WSContentSend_P(PSTR("{t}"));        // <table style='width:100%'>
   WSContentSeparator(3);               // Reset seperator to ignore previous outputs 

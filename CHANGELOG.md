@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - HLK-LD2410 Engineering mode (#21880)
 - Support for HLK-LD2410S 24GHz smart wave motion sensor (#22253)
 - Mitsubishi Electric HVAC Auto Clear Remote Temp for MiElHVAC (#22370)
+- Command ``SetOption161 1`` to disable web page slider updates by commands
 
 ### Breaking Changed
 

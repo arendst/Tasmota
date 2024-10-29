@@ -116,6 +116,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v14.3.0.2
 ### Added
+- Command ``SetOption161 1`` to disable web page slider updates by commands
 - DALI support for short addresses (gear) and groups
 - DALI command `DaliGear` to set max found gear to speed up scan response
 - DALI command `DaliGroup` to add gear to groups
