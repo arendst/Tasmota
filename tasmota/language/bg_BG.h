@@ -1065,6 +1065,7 @@
 #define D_UNIT_LITER_PER_MINUTE "л/мин"
 #define D_UNIT_CUBICMETER_PER_HOUR "м³/ч"
 #define D_UNIT_CUBIC_METER "м³"
+#define D_UNIT_INCHES "Инча"
 
 #define D_NEW_ADDRESS          "Setting address to"
 #define D_OUT_OF_RANGE         "Out of Range"

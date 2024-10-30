@@ -1,5 +1,5 @@
 /*
-  xsns_14_sht3x.ino - SHT3X, SHT4X and SHTCX temperature and humidity sensor support for Tasmota
+  xsns_116_ms5837.ino - BlueRobotics MS5837 pressure sensor support for Tasmota
 
   Copyright (C) 2022  Theo Arends, Stefan Tibus
 
@@ -134,5 +134,5 @@ bool Xsns116(uint32_t function) {
   return result;
 }
 
-#endif  // USE_SHT3X
+#endif  // USE_MS5837
 #endif  // USE_I2C
