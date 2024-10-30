@@ -195,7 +195,7 @@ void MatrixInit(uint8_t mode)
 }
 
 void MatrixInitDriver(void) {
-  if (!TasmotaGlobal.i2c_enabled) { return; }
+  if (!TasmotaGlobal.i2c_enabled[0]) { return; }
 
   mtx_buffer = (char*)(malloc(MTX_MAX_SCREEN_BUFFER));
   if (mtx_buffer != nullptr) {

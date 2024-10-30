@@ -236,7 +236,7 @@ void CmndHDMIType(void) {
 // The buffer must be allocated to uint8_t[256] by caller
 // Only checksum is checked
 bool ReadEdid256(uint8_t *buf) {
-  if (!TasmotaGlobal.i2c_enabled) { return true; }    // abort if I2C is not started
+  if (!TasmotaGlobal.i2c_enabled[0]) { return true; }    // abort if I2C is not started
 
   if (I2cReadBuffer(HDMI_EDID_ADDRESS,   0, buf      , 128)) { return true; }
   if (I2cReadBuffer(HDMI_EDID_ADDRESS, 128, buf + 128, 128)) { return true; }

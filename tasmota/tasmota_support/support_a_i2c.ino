@@ -79,14 +79,14 @@ bool I2cBegin(int sda, int scl, uint32_t bus, uint32_t frequency) {
 }
 
 TwoWire& I2cGetWire(uint8_t bus = 0) {
-  if ((0 == bus) && TasmotaGlobal.i2c_enabled) {
+  if ((0 == bus) && TasmotaGlobal.i2c_enabled[0]) {
 #ifdef USE_I2C_BUS2_ESP8266
     I2cSetBus(bus);
 #endif
     return Wire;
   }
 #ifdef USE_I2C_BUS2
-  else if ((1 == bus) && TasmotaGlobal.i2c_enabled_2) {
+  else if ((1 == bus) && TasmotaGlobal.i2c_enabled[1]) {
 #ifdef USE_I2C_BUS2_ESP8266
     I2cSetBus(bus);
 #endif
