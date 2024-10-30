@@ -1501,6 +1501,7 @@ set_button_text|lv.obj, string||[lv_list_set_button_text](https://docs.lvgl.io/9
 
 Method|Arguments|Return type|LVGL equivalent
 :---|:---|:---|:---
+get_anim||lv.anim|[lv_animimg_get_anim](https://docs.lvgl.io/9.0/search.html?q=lv_animimg_get_anim)
 get_duration||int|[lv_animimg_get_duration](https://docs.lvgl.io/9.0/search.html?q=lv_animimg_get_duration)
 get_repeat_count||int|[lv_animimg_get_repeat_count](https://docs.lvgl.io/9.0/search.html?q=lv_animimg_get_repeat_count)
 get_src_count||int|[lv_animimg_get_src_count](https://docs.lvgl.io/9.0/search.html?q=lv_animimg_get_src_count)
