@@ -56,7 +56,7 @@ void sen5x_Init(void) {
 #ifdef ESP32
   if (!I2cSetDevice(SEN5X_ADDRESS, 0)) {
     DEBUG_SENSOR_LOG(PSTR("Sensirion SEN5X not found, i2c bus 0"));
-    if (TasmotaGlobal.i2c_enabled_2 ) {
+    if (TasmotaGlobal.i2c_enabled[1] ) {
       if(!I2cSetDevice(SEN5X_ADDRESS, 1)) {
         DEBUG_SENSOR_LOG(PSTR("Sensirion SEN5X not found, i2c bus 1"));
         return;

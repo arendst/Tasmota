@@ -2752,12 +2752,12 @@ void CmndBatteryPercent(void) {
 void CmndI2cScan(void) {
   // I2CScan   - Scan bus1 then bus2
   bool jsflag = false;
-  if (TasmotaGlobal.i2c_enabled) {
+  if (TasmotaGlobal.i2c_enabled[0]) {
     I2cScan();
     jsflag = true;
   }
 #ifdef USE_I2C_BUS2
-  if (TasmotaGlobal.i2c_enabled_2) {
+  if (TasmotaGlobal.i2c_enabled[1]) {
     if (jsflag) {
       MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, XdrvMailbox.command);
     }
