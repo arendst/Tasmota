@@ -215,6 +215,7 @@
 #define D_WEB_SERVER "Webbserver"
 #define D_SOC "State of Charge"
 #define D_SOH "State of Health"
+#define D_WATER_DEPTH "Vattendjup"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "VARNING Denna version supporterar inte beständiga inställningar"

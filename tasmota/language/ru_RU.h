@@ -216,6 +216,7 @@
 #define D_WEB_SERVER "Веб-сервер"
 #define D_SOC "State of Charge"
 #define D_SOH "State of Health"
+#define D_WATER_DEPTH "Глубина воды"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "ПРЕДУПРЕЖДЕНИЕ Эта версия не поддерживает персистентные настройки"

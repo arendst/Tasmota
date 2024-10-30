@@ -215,6 +215,7 @@
 #define D_WEB_SERVER "웹 서버"
 #define D_SOC "State of Charge"
 #define D_SOH "State of Health"
+#define D_WATER_DEPTH "수심"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "경고: 이 버전은 영구 설정을 지원하지 않습니다"

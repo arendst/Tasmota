@@ -215,6 +215,7 @@
 #define D_WEB_SERVER "Server Web"
 #define D_SOC "State of Charge"
 #define D_SOH "State of Health"
+#define D_WATER_DEPTH "Adâncimea apei"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "ATENȚIE Această versiune nu suportă setări permanente"

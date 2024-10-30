@@ -215,6 +215,7 @@
 #define D_WEB_SERVER "網頁伺服器"
 #define D_SOC "State of Charge"
 #define D_SOH "State of Health"
+#define D_WATER_DEPTH "水深"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "警告，這個版本並不支援將設定永久的儲存!"

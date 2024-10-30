@@ -215,6 +215,7 @@
 #define D_WEB_SERVER "Webserver"
 #define D_SOC "Laadtoestand"
 #define D_SOH "Gezondheid"
+#define D_WATER_DEPTH "Diepte van het water"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "WAARSCHUWING Deze versie bewaart geen instellingen"

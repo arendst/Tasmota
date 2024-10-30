@@ -215,6 +215,7 @@
 #define D_WEB_SERVER "Webszerver"
 #define D_SOC "State of Charge"
 #define D_SOH "State of Health"
+#define D_WATER_DEPTH "Vízmélység"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "VIGYÁZZ! Ez a verzió nem támogat tartós beállításokat"

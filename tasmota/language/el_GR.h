@@ -215,6 +215,7 @@
 #define D_WEB_SERVER "Διακομιστής Web"
 #define D_SOC "State of Charge"
 #define D_SOH "State of Health"
+#define D_WATER_DEPTH "Βάθος νερού"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "ΠΡΟΕΙΔΟΠΟΙΗΣΗ Αυτή η έκδοση δεν αποθηκεύει τις ρυθμίσεις"
