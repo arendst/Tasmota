@@ -3,7 +3,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.3.0.2]
+## [14.3.0.3]
+### Added
+
+### Breaking Changed
+
+### Changed
+- ESP32 Platform from 2024.10.30 to 2024.11.30, Framework (Arduino Core) from v3.1.0.241023 to v3.1.0.241030 and IDF to 5.3.1.241024 (#22384)
+
+### Fixed
+- ESP32 Arduino Core IPv6 zones used by Matter (#22378)
+
+### Removed
+
+## [14.3.0.2] 20241030
 ### Added
 - DALI command `DaliGear` to set max found gear to speed up scan response
 - DALI command `DaliGroup` to add gear to groups
@@ -20,8 +33,6 @@ All notable changes to this project will be documented in this file.
 - Support for HLK-LD2410S 24GHz smart wave motion sensor (#22253)
 - Mitsubishi Electric HVAC Auto Clear Remote Temp for MiElHVAC (#22370)
 - Command ``SetOption161 1`` to disable web page slider updates by commands
-
-### Breaking Changed
 
 ### Changed
 - DALI renamed commands `DaliCommission` to `DaliScan` and `DaliWeb` to `DaliLight`
