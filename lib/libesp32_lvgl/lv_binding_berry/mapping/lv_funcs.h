@@ -1013,6 +1013,7 @@ const void ** lv_animimg_get_src(lv_obj_t * img)
 uint8_t lv_animimg_get_src_count(lv_obj_t * img)
 uint32_t lv_animimg_get_duration(lv_obj_t * img)
 uint32_t lv_animimg_get_repeat_count(lv_obj_t * img)
+lv_anim_t * lv_animimg_get_anim(lv_obj_t * img)
 
 // ../../lvgl/src/widgets/arc/lv_arc.h
 lv_obj_t * lv_arc_create(lv_obj_t * parent)
@@ -1061,7 +1062,7 @@ lv_obj_t * lv_button_create(lv_obj_t * parent)
 
 // ../../lvgl/src/widgets/buttonmatrix/lv_buttonmatrix.h
 lv_obj_t * lv_buttonmatrix_create(lv_obj_t * parent)
-void lv_buttonmatrix_set_map(lv_obj_t * obj, const char * map[])
+void lv_buttonmatrix_set_map(lv_obj_t * obj, const char * const map[])
 void lv_buttonmatrix_set_ctrl_map(lv_obj_t * obj, const lv_buttonmatrix_ctrl_t ctrl_map[])
 void lv_buttonmatrix_set_selected_button(lv_obj_t * obj, uint32_t btn_id)
 void lv_buttonmatrix_set_button_ctrl(lv_obj_t * obj, uint32_t btn_id, lv_buttonmatrix_ctrl_t ctrl)
@@ -1070,7 +1071,7 @@ void lv_buttonmatrix_set_button_ctrl_all(lv_obj_t * obj, lv_buttonmatrix_ctrl_t 
 void lv_buttonmatrix_clear_button_ctrl_all(lv_obj_t * obj, lv_buttonmatrix_ctrl_t ctrl)
 void lv_buttonmatrix_set_button_width(lv_obj_t * obj, uint32_t btn_id, uint32_t width)
 void lv_buttonmatrix_set_one_checked(lv_obj_t * obj, bool en)
-const char ** lv_buttonmatrix_get_map(const lv_obj_t * obj)
+const char * const * lv_buttonmatrix_get_map(const lv_obj_t * obj)
 uint32_t lv_buttonmatrix_get_selected_button(const lv_obj_t * obj)
 const char * lv_buttonmatrix_get_button_text(const lv_obj_t * obj, uint32_t btn_id)
 bool lv_buttonmatrix_has_button_ctrl(lv_obj_t * obj, uint32_t btn_id, lv_buttonmatrix_ctrl_t ctrl)
@@ -1092,7 +1093,7 @@ lv_result_t lv_calendar_get_pressed_date(const lv_obj_t * calendar, lv_calendar_
 // ../../lvgl/src/widgets/calendar/lv_calendar_chinese.h
 void lv_calendar_set_chinese_mode(lv_obj_t * obj, bool en)
 const char * lv_calendar_get_day_name(lv_calendar_date_t * gregorian)
-lv_calendar_chinese_t lv_calendar_gregorian_to_chinese(lv_calendar_date_t * gregorian)
+void lv_calendar_gregorian_to_chinese(lv_calendar_date_t * gregorian_time, lv_calendar_chinese_t * chinese_time)
 
 // ../../lvgl/src/widgets/calendar/lv_calendar_header_arrow.h
 lv_obj_t * lv_calendar_header_arrow_create(lv_obj_t * parent)
@@ -1220,11 +1221,11 @@ lv_obj_t * lv_keyboard_create(lv_obj_t * parent)
 void lv_keyboard_set_textarea(lv_obj_t * kb, lv_obj_t * ta)
 void lv_keyboard_set_mode(lv_obj_t * kb, lv_keyboard_mode_t mode)
 void lv_keyboard_set_popovers(lv_obj_t * kb, bool en)
-void lv_keyboard_set_map(lv_obj_t * kb, lv_keyboard_mode_t mode, const char * map[], const lv_buttonmatrix_ctrl_t ctrl_map[])
+void lv_keyboard_set_map(lv_obj_t * kb, lv_keyboard_mode_t mode, const char * const map[], const lv_buttonmatrix_ctrl_t ctrl_map[])
 lv_obj_t * lv_keyboard_get_textarea(const lv_obj_t * kb)
 lv_keyboard_mode_t lv_keyboard_get_mode(const lv_obj_t * kb)
 bool lv_keyboard_get_popovers(const lv_obj_t * obj)
-const char ** lv_keyboard_get_map_array(const lv_obj_t * kb)
+const char * const * lv_keyboard_get_map_array(const lv_obj_t * kb)
 uint32_t lv_keyboard_get_selected_button(const lv_obj_t * obj)
 const char * lv_keyboard_get_button_text(const lv_obj_t * obj, uint32_t btn_id)
 
