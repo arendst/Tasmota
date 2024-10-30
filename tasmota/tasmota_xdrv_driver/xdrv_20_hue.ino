@@ -415,14 +415,31 @@ const char HueConfigResponse_JSON[] PROGMEM = "\x3D\xA7\xB3\xAC\x6B\x3D\x87\x99\
 
 /********************************************************************************************/
 
+// Since Oct 2024, Alexa does not distinguish anymore if the only the last 2 digits differ after '-'
+// Ex: 78:e3:6d:09:1d:a4:00:11-01
+//     78:e3:6d:09:1d:a4:00:11-02
+//     78:e3:6d:09:1d:a4:00:11-03
+// are mixed up in the Alexa app
+//
+// We now change the encoding like this:
+//     78:e3:6d:09:1d:a4:XX:YY-01
+// where XX is the high 8 bits of id (unchanged) and YY is the low 8 bits xor 0x10 (so default `1` becomes `0x11`)
+// if the endpoint is not zero, XOR the second byte (rare case)
 String GetHueDeviceId(uint16_t id, uint8_t ep = 0)
 {
   char s[32];
   String deviceid = WiFiHelper::macAddress();
   deviceid.toLowerCase();
-  if (0x11 == ep) { ep = 0xFE; }    // avoid collision with 0x11 which is used as default for `0`
-  if (0 == ep) { ep = 0x11; }   // if ep is zero, revert to original value
-  snprintf(s, sizeof(s), "%s:%02x:%02X-%02x", deviceid.c_str(), (id >> 8) & 0xFF, ep, id & 0xFF);
+  snprintf(s, sizeof(s), "%s:%02x:%02X-01", deviceid.c_str(), (id >> 8) & 0xFF, (id & 0xFF) ^ 0x10);
+
+  if (ep != 0 && ep != 1) {
+    uint32_t mac2 = strtol(&s[3], NULL, 16);
+    mac2 ^= ep;
+    char mac2_s[4];
+    snprintf(mac2_s, sizeof(mac2_s), "%02x", mac2);
+    s[3] = mac2_s[0];
+    s[4] = mac2_s[1];
+  }
   return String(s);  // 5c:cf:7f:13:9f:3d:00:11-01
 }
 

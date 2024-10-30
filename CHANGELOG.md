@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - HLK-LD2410 Engineering mode (#21880)
 - Support for HLK-LD2410S 24GHz smart wave motion sensor (#22253)
 - Mitsubishi Electric HVAC Auto Clear Remote Temp for MiElHVAC (#22370)
+- Command ``SetOption161 1`` to disable web page slider updates by commands
 
 ### Breaking Changed
 
@@ -30,6 +31,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Ethernet on -DFRAMEWORK_ARDUINO_ITEAD framework regression from v14.3.0 (#22367)
+- Alexa Hue with multiple devices (#22383)
 
 ### Removed
 - DALI inverted signal configuration using compile time defines
