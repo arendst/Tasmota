@@ -99,6 +99,19 @@ struct miel_hvac_data_roomtemp {
 	uint8_t			operationtime2;
 };
 
+struct miel_hvac_data_timers {
+	uint8_t			_pad1[2];
+	uint8_t			mode;
+#define MIEL_HVAC_TIMER_MODE_NONE	0x00
+#define MIEL_HVAC_TIMER_MODE_OFF	0x01
+#define MIEL_HVAC_TIMER_MODE_ON	0x02
+#define MIEL_HVAC_TIMER_MODE_BOTH	0x03
+	uint8_t			onminutes;
+	uint8_t			offminutes;
+	uint8_t			onminutesremaining;
+	uint8_t			offminutesremaining;
+};
+
 struct miel_hvac_data_status {
 	uint8_t			_pad1[2];
 	uint8_t			compressorfrequency;
@@ -115,7 +128,7 @@ struct miel_hvac_data {
 	uint8_t			type;
 #define MIEL_HVAC_DATA_T_SETTINGS	0x02
 #define MIEL_HVAC_DATA_T_ROOMTEMP	0x03
-#define MIEL_HVAC_DATA_T_TIMER		0x05
+#define MIEL_HVAC_DATA_T_TIMERS		0x05
 #define MIEL_HVAC_DATA_T_STATUS		0x06
 #define MIEL_HVAC_DATA_T_STAGE		0x09
 
@@ -124,6 +137,8 @@ struct miel_hvac_data {
 					settings;
 		struct miel_hvac_data_roomtemp
 					roomtemp;
+		struct miel_hvac_data_timers
+					timers;			
 		struct miel_hvac_data_status
 					status;
 
@@ -150,6 +165,12 @@ CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.settemp) == 7);
 CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.operationtime) == 11);
 CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.operationtime1) == 12);
 CTASSERT(offsetof(struct miel_hvac_data, data.roomtemp.operationtime2) == 13);
+
+CTASSERT(offsetof(struct miel_hvac_data, data.timers.mode) == 3);
+CTASSERT(offsetof(struct miel_hvac_data, data.timers.onminutes) == 4);
+CTASSERT(offsetof(struct miel_hvac_data, data.timers.offminutes) == 5);
+CTASSERT(offsetof(struct miel_hvac_data, data.timers.onminutesremaining) == 6);
+CTASSERT(offsetof(struct miel_hvac_data, data.timers.offminutesremaining) == 7);
 
 CTASSERT(offsetof(struct miel_hvac_data, data.status.compressorfrequency) == 3);
 CTASSERT(offsetof(struct miel_hvac_data, data.status.compressor) == 4);
@@ -407,6 +428,13 @@ static const struct miel_hvac_map miel_hvac_compressor_map[] = {
 	{ MIEL_HVAC_STATUS_COMPRESSOR_ON,	"on"	},
 };
 
+static const struct miel_hvac_map miel_hvac_timer_mode_map[] = {
+	{ MIEL_HVAC_TIMER_MODE_NONE,	"none"	},
+	{ MIEL_HVAC_TIMER_MODE_OFF,	   "off"	},
+	{ MIEL_HVAC_TIMER_MODE_ON,	  "on"	},
+	{ MIEL_HVAC_TIMER_MODE_BOTH,	"on_and_off"	},
+};
+
 enum miel_hvac_parser_state {
 	MIEL_HVAC_P_START,
 	MIEL_HVAC_P_TYPE,
@@ -444,6 +472,7 @@ struct miel_hvac_softc {
 
 	struct miel_hvac_data	 sc_settings;
 	struct miel_hvac_data	 sc_temp;
+	struct miel_hvac_data	 sc_timers;
 	struct miel_hvac_data	 sc_status;
 	struct miel_hvac_data	 sc_stage;
 
@@ -1228,6 +1257,9 @@ miel_hvac_input_data(struct miel_hvac_softc *sc,
 	case MIEL_HVAC_DATA_T_ROOMTEMP:
 		miel_hvac_input_sensor(sc, &sc->sc_temp, d);
 		break;
+	case MIEL_HVAC_DATA_T_TIMERS:
+		miel_hvac_input_sensor(sc, &sc->sc_timers, d);
+		break;	
 	case MIEL_HVAC_DATA_T_STATUS:
 		miel_hvac_input_sensor(sc, &sc->sc_status, d);
 		break;
@@ -1407,7 +1439,7 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		    room_temp);
 
 		ResponseAppend_P(PSTR(",\"RemoteTemperatureSensorState\":\"%s\""),
-		    remotetemp_clear ? "ON" : "OFF");
+		    remotetemp_clear ? "on" : "off");
 
         char remotetempautocleartime[33];
         ultoa(remotetemp_auto_clear_time, remotetempautocleartime, 10);
@@ -1431,6 +1463,46 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 
 		ResponseAppend_P(PSTR(",\"RoomTemp\":\"%s\""),
 		    ToHex_P((uint8_t *)&sc->sc_temp, sizeof(sc->sc_temp),
+		    hex, sizeof(hex)));
+	}
+
+	if (sc->sc_timers.type != 0) {
+		const struct miel_hvac_data_timers *timer =
+		    &sc->sc_timers.data.timers;
+
+        name = miel_hvac_map_byval( timer->mode,
+	    miel_hvac_timer_mode_map, nitems(miel_hvac_timer_mode_map));
+	    if (name != NULL) {
+		    ResponseAppend_P(PSTR(",\"TimerMode\":\"%s\""),
+		        name);
+
+            unsigned int on_timer = timer->onminutes * 10;
+            char timeron[33];
+			utoa(on_timer, timeron, 10);
+			ResponseAppend_P(PSTR(",\"TimerOn\":\"%s\""),
+		        timeron);
+
+			unsigned int timer_on_remaining = timer->onminutesremaining * 10;
+            char timeronremaining[33];
+			utoa(timer_on_remaining, timeronremaining, 10);
+			ResponseAppend_P(PSTR(",\"TimerOnRemaining\":\"%s\""),
+		        timeronremaining);
+
+            unsigned int off_timer = timer->offminutes * 10;
+            char timeroff[33];
+			utoa(off_timer, timeroff, 10);
+			ResponseAppend_P(PSTR(",\"TimerOff\":\"%s\""),
+		        timeroff);
+
+            unsigned int timer_off_remaining = timer->offminutesremaining * 10;
+            char timeroffremaining[33];
+			utoa(timer_off_remaining, timeroffremaining, 10);
+			ResponseAppend_P(PSTR(",\"TimerOffRemaining\":\"%s\""),
+		        timeroffremaining);
+	    }
+
+		ResponseAppend_P(PSTR(",\"Timers\":\"%s\""),
+		    ToHex_P((uint8_t *)&sc->sc_timers, sizeof(sc->sc_timers),
 		    hex, sizeof(hex)));
 	}
 
@@ -1527,7 +1599,8 @@ miel_hvac_tick(struct miel_hvac_softc *sc)
 		MIEL_HVAC_REQUEST_STATUS,
 		MIEL_HVAC_REQUEST_SETTINGS,
 		MIEL_HVAC_REQUEST_ROOMTEMP,
-
+        MIEL_HVAC_REQUEST_SETTINGS,
+		MIEL_HVAC_REQUEST_TIMERS,
 		MIEL_HVAC_REQUEST_SETTINGS,
 		/* MUZ-GA80VA doesnt respond :( */
 		MIEL_HVAC_REQUEST_STAGE,
