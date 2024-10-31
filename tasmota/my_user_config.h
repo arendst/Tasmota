@@ -72,10 +72,10 @@
 #define WIFI_DNS2              "0.0.0.0"         // [IpAddress5] If not using DHCP set DNS2 IP address (might be equal to WIFI_GATEWAY)
 
 #ifndef STA_SSID1
-#define STA_SSID1              ""                // [Ssid1] Wi-Fi SSID
+#define STA_SSID1              "FRITZ!Box7590D"                // [Ssid1] Wi-Fi SSID
 #endif
 #ifndef STA_PASS1
-#define STA_PASS1              ""                // [Password1] Wi-Fi password
+#define STA_PASS1              "013309483933756733471"                // [Password1] Wi-Fi password
 #endif
 #ifndef STA_SSID2
 #define STA_SSID2              ""                // [Ssid2] Optional alternate AP Wi-Fi SSID
@@ -373,7 +373,7 @@
 //#define MY_LANGUAGE            bg_BG           // Bulgarian in Bulgaria
 //#define MY_LANGUAGE            ca_AD           // Catalan in All catalan speaking countries ( Andorra )
 //#define MY_LANGUAGE            cs_CZ           // Czech in Czech
-//#define MY_LANGUAGE            de_DE           // German in Germany
+#define MY_LANGUAGE            de_DE           // German in Germany
 //#define MY_LANGUAGE            el_GR           // Greek in Greece
 //#define MY_LANGUAGE            en_GB           // English in Great Britain. Enabled by Default
 //#define MY_LANGUAGE            es_ES           // Spanish in Spain
@@ -1035,7 +1035,7 @@
 
 // -- Other sensors/drivers -----------------------
 
-//#define USE_SHIFT595                             // Add support for 74xx595 8-bit shift registers (+0k7 code)
+#define USE_SHIFT595                             // Add support for 74xx595 8-bit shift registers (+0k7 code)
   #define SHIFT595_INVERT_OUTPUTS false            // [SetOption133] Don't invert outputs of 74x595 shift register
   #define SHIFT595_DEVICE_COUNT  1                 // [Shift595DeviceCount] Set the number of connected 74x595 shift registers
 
