@@ -114,13 +114,14 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v14.3.0.3
+## Changelog v14.3.0.4
 ### Added
 - Command ``SetOption161 1`` to disable web page slider updates by commands
 - DALI support for short addresses (gear) and groups
 - DALI command `DaliGear` to set max found gear to speed up scan response
 - DALI command `DaliGroup` to add gear to groups
 - DALI command `DaliTarget` to set light control broadcast, group number or gear number
+- DALI command `DaliGroupSliders 0..16` to show GUI group sliders with feedback disabling `DaliLight`
 - DALI inverted signal configuration using GPIO DALI RX_i/TX_i
 - Support for I2C over Serial, preliminary stub [#22388](https://github.com/arendst/Tasmota/issues/22388)
 - Support for Shelly DALI Dimmer Gen3
