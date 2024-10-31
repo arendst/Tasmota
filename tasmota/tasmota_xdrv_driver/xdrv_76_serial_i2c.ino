@@ -25,20 +25,20 @@ class TwoWireSerial;
 
 struct {
   bool active = false;
-  uint8_t bus;
-  uint8_t tx;
-  uint8_t rx;
+  uint8_t bus = 0;
+  uint8_t tx = 0;
+  uint8_t rx = 0;
   TwoWireSerial *WireSerial = nullptr;      // replacement object for TwoWire
-} i2c_serial = {0};
+} i2c_serial;
 
 class TwoWireSerial : public TwoWire {
 protected:
   uint8_t tx;
   uint8_t rx;
-  TasmotaSerial *serial = nullptr;       // serial instance to communicate with SC18IM704
+  TasmotaSerial *serial;                    // serial instance to communicate with SC18IM704
 private:
 public:
-  TwoWireSerial(uint8_t bus_num) : tx(-1), rx(-1), TwoWire(bus_num) {
+  TwoWireSerial(uint8_t bus_num) : tx(-1), rx(-1), serial(nullptr), TwoWire(bus_num) {
     AddLog(LOG_LEVEL_DEBUG_MORE, "ISR: TwoWireSerial(%i)", bus_num);
   };
   // ~TwoWireSerial() {};
