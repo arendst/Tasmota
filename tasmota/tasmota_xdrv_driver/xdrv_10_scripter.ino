@@ -13213,7 +13213,7 @@ uint32_t script_i2c(uint8_t sel, uint16_t val, uint32_t val1) {
       Wire1.end();
       Wire1.begin(val & 0x7f, val1);
       glob_script_mem.script_i2c_wire = &Wire1;
-      TasmotaGlobal.i2c_enabled_2 = true;
+      TasmotaGlobal.i2c_enabled[1] = true;
       if (val & 128) {
         XsnsCall(FUNC_INIT);
       }

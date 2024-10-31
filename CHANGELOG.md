@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - ESP32 Platform from 2024.10.30 to 2024.11.30, Framework (Arduino Core) from v3.1.0.241023 to v3.1.0.241030 and IDF to 5.3.1.241024 (#22384)
+- ESP32 LVGL library from v9.2.0 to v9.2.2
+- `i2c_enabled` refactored as array
 
 ### Fixed
 - ESP32 Arduino Core IPv6 zones used by Matter (#22378)

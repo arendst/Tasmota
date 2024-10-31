@@ -117,7 +117,7 @@ void ZigbeeInit(void)
 
 #ifdef USE_ZIGBEE_EZSP
     // Check the I2C EEprom
-    if (TasmotaGlobal.i2c_enabled) {
+    if (TasmotaGlobal.i2c_enabled[0]) {
       Wire.beginTransmission(USE_ZIGBEE_ZBBRIDGE_EEPROM);
       uint8_t error = Wire.endTransmission();
       if (0 == error) {
