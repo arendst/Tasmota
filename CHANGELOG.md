@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [14.3.0.3]
 ### Added
+- I2C over Serial, preliminary stub
 
 ### Breaking Changed
 
