@@ -37,7 +37,7 @@
 MS5837 sensor_ms5837;
 
 uint8_t ms5837Start = 0;
-float pressureOffset = 2.85;
+float pressureOffset = 2.85f;
 
 /********************************************************************************************/
 
@@ -84,7 +84,7 @@ void MS5837Show(bool json) {
     }
     if (I2cEnabled(XI2C_10)) {
       pressure_delta = sensor_ms5837.pressure() - bmp_sensors[0].bmp_pressure + pressureOffset;
-      cm_water = pressure_delta*0.401463078662f*2.54; // changes from inches to cm after read using 2.54cm/in conversion
+      cm_water = pressure_delta*0.401463078662f*2.54f; // changes from inches to cm after read using 2.54cm/in conversion
       ext_snprintf_P(cmWater_str, sizeof(cmWater_str), PSTR("%1_f"), &cmWater_str);
       if (json) {
         ResponseAppend_P(PSTR(",\"" D_JSON_WATER_DEPTH "\":%s"),cmWater_str);
@@ -103,10 +103,10 @@ void MS5837Show(bool json) {
         // else {
         //   WSContentSend_PD(HTTP_SNS_MS5837_DEFAULT, temperature_str, TempUnit(), pressure_str, PressureUnit().c_str());
         // }
-        WSContentSend_PD(HTTP_SNS_F_TEMP, name_str, &ms5837Temp, TempUnit());
+        WSContentSend_PD(HTTP_SNS_F_TEMP, name_str, Settings->flag2.temperature_resolution, &ms5837Temp, TempUnit());
         WSContentSend_PD(HTTP_SNS_PRESSURE, name_str, pressure_str, PressureUnit().c_str());
         if (I2cEnabled(XI2C_10)) {
-          WSContentSend_PD(HTTP_SNS_WATER_DEPTH, name_str, cmWater_str);
+          WSContentSend_PD(HTTP_SNS_WATER_DEPTH, name_str, &cmWater_str);
         }
 #endif  // USE_WEBSERVER
     }
