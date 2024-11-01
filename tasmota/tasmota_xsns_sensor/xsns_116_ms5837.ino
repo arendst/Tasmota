@@ -68,10 +68,10 @@ void MS5837Show(bool json) {
   float ms5837Temp;
   float ms5837Pres;
   float pressure_delta;
-  float inches_water;
+  float cm_water;
   char temperature_str[8];
   char pressure_str[8];
-  char inchesWater_str[8];
+  char cmWater_str[8];
 
   if (I2cEnabled(XI2C_91)) {
     sensor_ms5837.read();
@@ -80,14 +80,14 @@ void MS5837Show(bool json) {
     ext_snprintf_P(temperature_str, sizeof(temperature_str), PSTR("%1_f"), &ms5837Temp);
     ext_snprintf_P(pressure_str, sizeof(pressure_str), PSTR("%1_f"), &ms5837Pres);
     if (json) {
-      ResponseAppend_P(PSTR(",\"MS5837\":{\"Temperature\":%s,\"Pressure\":%s"), temperature_str, pressure_str);
+      ResponseAppend_P(PSTR(",\"MS5837\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_PRESSURE "\":%s"), temperature_str, pressure_str);
     }
     if (I2cEnabled(XI2C_10)) {
       pressure_delta = sensor_ms5837.pressure() - bmp_sensors[0].bmp_pressure + pressureOffset;
-      inches_water = pressure_delta*0.401463078662f;
-      ext_snprintf_P(inchesWater_str, sizeof(inchesWater_str), PSTR("%1_f"), &inches_water);
+      cm_water = pressure_delta*0.401463078662f*2.54; // changes from inches to cm after read using 2.54cm/in conversion
+      ext_snprintf_P(cmWater_str, sizeof(cmWater_str), PSTR("%1_f"), &cmWater_str);
       if (json) {
-        ResponseAppend_P(PSTR(",\"Inches Water\":%s"),inchesWater_str);
+        ResponseAppend_P(PSTR(",\"" D_JSON_WATER_DEPTH "\":%s"),cmWater_str);
       }
     }
     if (json) {
@@ -98,16 +98,15 @@ void MS5837Show(bool json) {
         // if (I2cEnabled(XI2C_10)) {
         //   strncat(HTTP_SNS_MS5837_DUAL,HTTP_SNS_MS5837_DEFAULT,sizeof(HTTP_SNS_MS5837_DUAL));
         //   strncat(HTTP_SNS_MS5837_DUAL,HTTP_SNS_MS5837_INCHES_WATER,sizeof(HTTP_SNS_MS5837_DUAL));
-        //   WSContentSend_PD(HTTP_SNS_MS5837_DUAL, temperature_str, TempUnit(), pressure_str, PressureUnit().c_str(), inchesWater_str);
+        //   WSContentSend_PD(HTTP_SNS_MS5837_DUAL, temperature_str, TempUnit(), pressure_str, PressureUnit().c_str(), cmWater_str);
         // }
         // else {
         //   WSContentSend_PD(HTTP_SNS_MS5837_DEFAULT, temperature_str, TempUnit(), pressure_str, PressureUnit().c_str());
         // }
-        
         WSContentSend_PD(HTTP_SNS_F_TEMP, name_str, &ms5837Temp, TempUnit());
         WSContentSend_PD(HTTP_SNS_PRESSURE, name_str, pressure_str, PressureUnit().c_str());
         if (I2cEnabled(XI2C_10)) {
-          WSContentSend_PD(HTTP_SNS_WATER_DEPTH, name_str, inchesWater_str);
+          WSContentSend_PD(HTTP_SNS_WATER_DEPTH, name_str, cmWater_str);
         }
 #endif  // USE_WEBSERVER
     }
