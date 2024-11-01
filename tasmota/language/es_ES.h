@@ -1066,7 +1066,6 @@
 #define D_UNIT_LITER_PER_MINUTE "l/min"
 #define D_UNIT_CUBICMETER_PER_HOUR "m³/h"
 #define D_UNIT_CUBIC_METER "m³"
-#define D_UNIT_INCHES "in"
 
 #define D_NEW_ADDRESS          "Cambiando dirección a"
 #define D_OUT_OF_RANGE         "Fuera de Rango"

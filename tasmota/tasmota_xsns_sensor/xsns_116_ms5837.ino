@@ -56,11 +56,12 @@ void MS5837init(void) {
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_MS5837_DEFAULT[] PROGMEM =
-  "{s}MS5837 Temperature {m}%s " D_UNIT_DEGREE            "%c{e}{s}MS5837 Pressure {m}%s %s{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-const char HTTP_SNS_MS5837_INCHES_WATER[] PROGMEM =
-  "{s}Inches Water {m}%s in{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-char HTTP_SNS_MS5837_DUAL[118];
+// const char HTTP_SNS_MS5837_DEFAULT[] PROGMEM =
+//   "{s}MS5837 Temperature {m}%s " D_UNIT_DEGREE            "%c{e}{s}MS5837 Pressure {m}%s %s{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+// const char HTTP_SNS_MS5837_INCHES_WATER[] PROGMEM =
+//   "{s}Inches Water {m}%s in{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+// char HTTP_SNS_MS5837_DUAL[118];
+const char name_str[] PROGMEM = "MS5837";
 #endif  // USE_WEBSERVER
 
 void MS5837Show(bool json) {
@@ -94,13 +95,19 @@ void MS5837Show(bool json) {
 
 #ifdef USE_WEBSERVER
     } else {
+        // if (I2cEnabled(XI2C_10)) {
+        //   strncat(HTTP_SNS_MS5837_DUAL,HTTP_SNS_MS5837_DEFAULT,sizeof(HTTP_SNS_MS5837_DUAL));
+        //   strncat(HTTP_SNS_MS5837_DUAL,HTTP_SNS_MS5837_INCHES_WATER,sizeof(HTTP_SNS_MS5837_DUAL));
+        //   WSContentSend_PD(HTTP_SNS_MS5837_DUAL, temperature_str, TempUnit(), pressure_str, PressureUnit().c_str(), inchesWater_str);
+        // }
+        // else {
+        //   WSContentSend_PD(HTTP_SNS_MS5837_DEFAULT, temperature_str, TempUnit(), pressure_str, PressureUnit().c_str());
+        // }
+        
+        WSContentSend_PD(HTTP_SNS_F_TEMP, name_str, &ms5837Temp, TempUnit());
+        WSContentSend_PD(HTTP_SNS_PRESSURE, name_str, pressure_str, PressureUnit().c_str());
         if (I2cEnabled(XI2C_10)) {
-          strncat(HTTP_SNS_MS5837_DUAL,HTTP_SNS_MS5837_DEFAULT,sizeof(HTTP_SNS_MS5837_DUAL));
-          strncat(HTTP_SNS_MS5837_DUAL,HTTP_SNS_MS5837_INCHES_WATER,sizeof(HTTP_SNS_MS5837_DUAL));
-          WSContentSend_PD(HTTP_SNS_MS5837_DUAL, temperature_str, TempUnit(), pressure_str, PressureUnit().c_str(), inchesWater_str);
-        }
-        else {
-          WSContentSend_PD(HTTP_SNS_MS5837_DEFAULT, temperature_str, TempUnit(), pressure_str, PressureUnit().c_str());
+          WSContentSend_PD(HTTP_SNS_WATER_DEPTH, name_str, inchesWater_str);
         }
 #endif  // USE_WEBSERVER
     }
