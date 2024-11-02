@@ -8,5 +8,5 @@ const char HTTP_HEAD_STYLE2[] PROGMEM =
   "a{color:#%06x;text-decoration:none;}"  // COLOR_BUTTON
   ".p{float:left;text-align:left;}"
   ".q{float:right;text-align:right;}"
-  ".r{border-radius:0.3em;padding:2px;margin:6px 2px;}"
+  ".r{border-radius:0.3em;padding:2px;margin:4px 2px;}"
   ".hf{display:none;}";
