@@ -312,7 +312,7 @@ struct TasmotaGlobal_t {
   bool stop_flash_rotate;                   // Allow flash configuration rotation
   bool blinkstate;                          // LED state
   bool pwm_present;                         // Any PWM channel configured with SetOption15 0
-  bool i2c_enabled[MAX_I2S];                // I2C configured for all possible buses (1 or 2)
+  bool i2c_enabled[2];                      // I2C configured for all possible buses (1 or 2)
 #ifdef ESP32
   bool ota_factory;                         // Select safeboot binary
 #endif

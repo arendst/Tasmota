@@ -19,6 +19,9 @@
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  1.1.0.1 20241101  update    - Enable DALI if another light is already claimed
+  1.1.0.0 20241031  update    - Add GUI sliders with feedback when `DaliLight 0`
+                              - Add command `DaliGroupSliders 0..16` to show GUI sliders
   1.0.0.2 20241025  update    - Fix GPIO detection
                               - Fix ESP32(C3) transmit stability by disabling interrupts
   1.0.0.1 20241024  update    - Change from signal invert defines to GPIO config DALI RX_i/DALI TX_i
@@ -264,6 +267,8 @@
 // Address type - Send as first byte
 #define DALI_BROADCAST_DP                      0x00FE  // 0b11111110 254 - Broadcast address
 
+#define DALI_MAX_STORED                        17      // Store broadcast and group states
+
 #define DALI_TOPIC "DALI"
 #define D_PRFX_DALI "Dali"
 
@@ -272,14 +277,16 @@ const char kDALICommands[] PROGMEM = D_PRFX_DALI "|"  // Prefix
 #ifdef USE_LIGHT
   "|Light"
 #endif  // USE_LIGHT
-  "|Send|Query|Scan|Group|Gear";
+  "|Send|Query|Scan|Group"
+  "|GroupSliders|Gear";
 
 void (* const DALICommand[])(void) PROGMEM = {
   &CmndDali, &CmndDaliPower, &CmndDaliDimmer, &CmndDaliTarget,
 #ifdef USE_LIGHT
   &CmndDaliLight,
 #endif  // USE_LIGHT
-  &CmndDaliSend, &CmndDaliQuery, &CmndDaliScan, &CmndDaliGroup, &CmndDaliGear };
+  &CmndDaliSend, &CmndDaliQuery, &CmndDaliScan, &CmndDaliGroup,
+  &CmndDaliGroupSliders, &CmndDaliGear };
 
 struct DALI {
   uint32_t bit_cycles;
@@ -290,9 +297,14 @@ struct DALI {
   uint8_t max_short_address;
   uint8_t address;
   uint8_t command;
-  uint8_t dimmer;
+  uint8_t last_dimmer;
+  uint8_t dimmer[DALI_MAX_STORED];
+  uint8_t web_dimmer[DALI_MAX_STORED];
   uint8_t target;
-  bool power;
+  bool allow_light;
+  bool last_power;
+  bool power[DALI_MAX_STORED];
+  bool web_power[DALI_MAX_STORED];
   bool available;
   bool response;
   bool light_sync;
@@ -305,23 +317,23 @@ struct DALI {
  * DALI low level
 \*********************************************************************************************/
 
-uint32_t DaliTarget2Address(uint32_t target) {
+uint32_t DaliTarget2Address(void) {
   // 1..64    = Short address
   // 101..116 = Group address
   // Others   = Broadcast
-  if ((target >= 1) && (target <= 64)) {       // 1 .. 64
-    target -= 1;                               // Short address
-    target <<= 1;
+  if ((Dali->target >= 1) && (Dali->target <= 64)) {  // 1 .. 64
+    Dali->target -= 1;                         // Short address
+    Dali->target <<= 1;
   }
-  else if ((target >= 101) && (target <= 116)) {  // 101 .. 116
-    target -= 101;
-    target <<= 1;
-    target |= 0x80;                            // Group address
+  else if ((Dali->target >= 101) && (Dali->target <= 116)) {  // 101 .. 116
+    Dali->target -= 101;
+    Dali->target <<= 1;
+    Dali->target |= 0x80;                      // Group address
   }
   else {                                       // Others
-    target = DALI_BROADCAST_DP;                // Broadcast address
+    Dali->target = DALI_BROADCAST_DP;          // Broadcast address
   }
-  return target &0xFE;                         // Direct Arc Power Control command
+  return Dali->target &0xFE;                   // Direct Arc Power Control command
 }
 
 /*
@@ -335,6 +347,34 @@ uint32_t DaliAddress2Target(uint32_t adr) {
   return (adr >> 1) +1;                        // 0b0000000S .. 0b0111111S Short address (1 .. 64)
 }
 */
+
+uint32_t DaliSaveState(uint32_t adr, uint32_t cmd) {
+  if (adr &0x01) { return 0; }                 // No address
+  int index = -1;
+  if (DALI_BROADCAST_DP == adr) {              // Broadcast address
+    index = 0;
+  }
+  adr >>= 1;
+  if ((adr >= 0x40) && (adr <= 0x4F)) {        // Group address 0 to 15
+    index = adr -0x3F;
+  }
+  if (index >= 0) {
+    Dali->last_power = Dali->power[index];
+    Dali->power[index] = (cmd);                // State
+    if (Dali->power[index]) {
+      Dali->last_dimmer = Dali->dimmer[index];
+      Dali->dimmer[index] = cmd;               // Value
+    }
+    if ((0 == index) && !Dali->power[0]) {     // Only on Broadcast change to power Off
+      for (uint32_t i = 0; i < DALI_MAX_STORED; i++) {
+        Dali->power[i] = false;                // Log all group power as Off when Broadcast is Off
+      }
+    }
+  } else {
+    index = 0;                                 // Use broadcast
+  }
+  return index;
+}
 
 void DaliEnableRxInterrupt(void) {
   Dali->available = false;
@@ -508,13 +548,7 @@ void DaliSendData(uint32_t adr, uint32_t cmd) {
 
   Dali->address = adr;
   Dali->command = cmd;
-  if (DaliTarget2Address(Dali->target) == adr) {
-    repeat = true;
-    Dali->power = (cmd);                       // State
-    if (Dali->power) {
-      Dali->dimmer = cmd;                      // Value
-    }
-  }
+  DaliSaveState(adr, cmd);
 
   if (!repeat && (adr &0x01)) {                // YAAAAAA1 Commands where user didn't set repeat
     if ((adr >= 0xA1) && (adr <= 0xFD)) {      // Special commands
@@ -616,8 +650,6 @@ uint32_t DaliGearPresent(void) {
 }
 
 void DaliInitLight(void) {
-  Settings->light_fade = 0;                    // Use Dali fading
-  Settings->light_correction = 0;              // Use Dali light correction
   // Taken from Shelly Dali Dimmer ;-)
   DaliSendData(DALI_DATA_TRANSFER_REGISTER0, DALI_INIT_FADE);  // Fade x second
   DaliSendData(0xFF, DALI_SET_FADE_TIME);
@@ -751,25 +783,28 @@ uint32_t DaliCommission(uint8_t init_arg) {
 
 #ifdef USE_LIGHT
   DaliInitLight();
-  uint32_t address = (Settings->sbflag1.dali_light) ? DaliTarget2Address(Dali->target) : DALI_BROADCAST_DP;
-  DaliSendData(address, Dali->power);          // Restore lights
+  uint32_t address = (Settings->sbflag1.dali_light) ? DaliTarget2Address() : DALI_BROADCAST_DP;
+  DaliSendData(address, Dali->power[0]);       // Restore lights
 #else
-  DaliSendData(DALI_BROADCAST_DP, Dali->power);  // Restore lights
+  DaliSendData(DALI_BROADCAST_DP, Dali->power[0]);  // Restore lights
 #endif  // USE_LIGHT
   return cnt;
 }
 
 /*********************************************************************************************/
 
-void ResponseAppendDali(void) {
-  uint8_t dimmer = changeUIntScale(Dali->dimmer, 0, 254, 0, 100);
-  ResponseAppend_P(PSTR("\"DALI\":{\"Power\":\"%s\",\"Dimmer\":%d,\"Address\":%d,\"Command\":%d}"), 
-    GetStateText(Dali->power), dimmer, Dali->address, Dali->command);
+void ResponseAppendDali(uint32_t index) {
+  char number[12];
+  uint8_t dimmer = changeUIntScale(Dali->dimmer[index], 0, 254, 0, 100);
+  ResponseAppend_P(PSTR("\"DALI\":{\"Power%s\":\"%s\",\"Dimmer%s\":%d,\"Address\":%d,\"Command\":%d}"), 
+    (0==index)?"":itoa(index+100, number, 10), GetStateText(Dali->power[index]),
+    (0==index)?"":itoa(index+100, number, 10), dimmer,
+    Dali->address, Dali->command);
 }
 
-void ResponseDali(void) {
+void ResponseDali(uint32_t index) {
   Response_P(PSTR("{"));
-  ResponseAppendDali();
+  ResponseAppendDali(index);
   ResponseJsonEnd();
 }
 
@@ -787,60 +822,47 @@ void DaliLoop(void) {
 
   Dali->address = Dali->received_dali_data >> 8;
   Dali->command = Dali->received_dali_data;
+  uint32_t index = DaliSaveState(Dali->address, Dali->command);  // Update dimmer and power
 
-#ifdef USE_LIGHT
   bool show_response = true;
-  if (DaliTarget2Address(Dali->target) == Dali->address) {
-    uint8_t dimmer_old = changeUIntScale(Dali->dimmer, 0, 254, 0, 100);
-    uint8_t power_old = Dali->power;
-    Dali->power = (Dali->command);             // State
-    if (Dali->power) {
-      Dali->dimmer = Dali->command;            // Value
-    }
+#ifdef USE_LIGHT
+  if (Dali->allow_light && (DaliTarget2Address() == Dali->address)) {
     if (Settings->sbflag1.dali_light) {        // DaliLight 1
-      uint8_t dimmer_new = changeUIntScale(Dali->dimmer, 0, 254, 0, 100);
-      if (power_old != Dali->power) {
+      uint8_t dim_old = changeUIntScale(Dali->last_dimmer, 0, 254, 0, 100);
+      uint8_t dim_new = changeUIntScale(Dali->dimmer[index], 0, 254, 0, 100);
+      if (Dali->last_power != Dali->power[index]) {
         Dali->light_sync = true;               // Block local loop
-        ExecuteCommandPower(LightDevice(), Dali->power, SRC_SWITCH);
+        ExecuteCommandPower(LightDevice(), Dali->power[index], SRC_SWITCH);
       }
-      else if (dimmer_old != dimmer_new) {
+      else if (dim_old != dim_new) {
         char scmnd[20];
-        snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), dimmer_new);
+        snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), dim_new);
         Dali->light_sync = true;               // Block local loop
         ExecuteCommand(scmnd, SRC_SWITCH);
       }
       show_response = false;
     }
   }
+#endif  // USE_LIGHT
   if (show_response) {
-    ResponseDali();
+    ResponseDali(index);
     MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_PRFX_DALI));
   }
-#else
-  if (DaliTarget2Address(Dali->target) == Dali->address) {
-    Dali->power = (Dali->command);             // State
-    if (Dali->power) {
-      Dali->dimmer = Dali->command;            // Value
-    }
-  }
-  ResponseDali();
-  MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_PRFX_DALI));
-#endif  // USE_LIGHT
 
   Dali->available = false;
 }
 
 /*-------------------------------------------------------------------------------------------*/
 
-#ifdef USE_LIGHT
 void DaliEverySecond(void) {
-  if (Settings->sbflag1.dali_light) {          // DaliLight 1
-    if (5 == TasmotaGlobal.uptime) {
-      DaliInitLight();
-    }
+  if (5 == TasmotaGlobal.uptime) {
+    DaliInitLight();
   }
 }
 
+/*-------------------------------------------------------------------------------------------*/
+
+#ifdef USE_LIGHT
 bool DaliSetChannels(void) {
   if (Settings->sbflag1.dali_light) {          // DaliLight 1
     Settings->light_fade = 0;                  // Use Dali fading
@@ -850,7 +872,7 @@ bool DaliSetChannels(void) {
     } else {
       uint8_t value = ((uint8_t*)XdrvMailbox.data)[0];
       if (255 == value) { value = 254; }       // Max Dali value
-      DaliSendData(DaliTarget2Address(Dali->target), value);
+      DaliSendData(DaliTarget2Address(), value);
     }
   }
   return true;
@@ -859,7 +881,7 @@ bool DaliSetChannels(void) {
 
 /*-------------------------------------------------------------------------------------------*/
 
-bool DaliInit(void) {
+bool DaliInit(uint32_t function) {
   int pin_tx = -1;
   bool invert_tx = false;
   if (PinUsed(GPIO_DALI_TX)) {
@@ -888,6 +910,8 @@ bool DaliInit(void) {
   Dali->pin_rx = pin_rx;
   Dali->invert_rx = invert_rx;
 
+  Dali->allow_light = (FUNC_MODULE_INIT == function);  // Light control is possible
+
   AddLog(LOG_LEVEL_INFO, PSTR("DLI: GPIO%d(RX%s) and GPIO%d(TX%s)"),
     Dali->pin_rx, (Dali->invert_rx)?"i":"", Dali->pin_tx, (Dali->invert_tx)?"i":"");
 
@@ -900,12 +924,18 @@ bool DaliInit(void) {
 #endif  // DALI_DEBUG
 
   Dali->max_short_address = 64;
-  Dali->dimmer = DALI_INIT_STATE;
+  for (uint32_t i = 0; i < DALI_MAX_STORED; i++) {
+    Dali->dimmer[i] = DALI_INIT_STATE;
+  }
+
   // Manchester twice 1200 bps = 2400 bps = 417 (protocol 416.76 +/- 10%) us
   Dali->bit_cycles = ESP.getCpuFreqMHz() * 1000000 / 2400;
 
   DaliEnableRxInterrupt();
 
+  if (!Dali->allow_light) {
+    Settings->sbflag1.dali_light = false;      // No light control possible
+  }
 #ifdef USE_LIGHT
   if (!Settings->sbflag1.dali_light) {         // DaliLight 0
     return false;
@@ -983,7 +1013,7 @@ void CmndDali(void) {
     }
     DaliJsonParse();
   }
-  ResponseDali();
+  ResponseDali(0);
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -1010,15 +1040,19 @@ void CmndDaliPower(void) {
   // DaliPower0 0..254 - Broadcast control (= DaliPower)
   // DaliPower1 0..254 - Short address 0 control
   // DaliPower3 0..254 - Short address 2 control
+  uint32_t index = 0;                          // Broadcast
+  if ((XdrvMailbox.index >= 101) && (XdrvMailbox.index <= 116)) {
+    index = XdrvMailbox.index - 100;           // Group1 to 16
+  }
   if (((XdrvMailbox.index >= 0) && (XdrvMailbox.index <= 64)) ||
       ((XdrvMailbox.index >= 101) && (XdrvMailbox.index <= 116))) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 254)) {
       if (XdrvMailbox.payload <= 2) {
         if (2 == XdrvMailbox.payload) {
-          XdrvMailbox.payload = (Dali->power) ? 0 : 1;
+          XdrvMailbox.payload = (Dali->power[index]) ? 0 : 1;
         }
         if (1 == XdrvMailbox.payload) {
-          XdrvMailbox.payload = Dali->dimmer;
+          XdrvMailbox.payload = Dali->dimmer[index];
         }
       }
       uint32_t DALIaddr = DALI_BROADCAST_DP;
@@ -1031,7 +1065,7 @@ void CmndDaliPower(void) {
       DaliSendData(DALIaddr, XdrvMailbox.payload);
     }
   }
-  ResponseDali();
+  ResponseDali(index);
 }
 
 void CmndDaliDimmer(void) {
@@ -1039,6 +1073,10 @@ void CmndDaliDimmer(void) {
   // DaliDimmer0 0..100 - Broadcast set power off or dimmer state
   // DaliDimmer1 0..100 - Short address 0 set power off or dimmer state
   // DaliDimmer3 0..100 - Short address 2 set power off or dimmer state
+  uint32_t index = 0;                          // Broadcast
+  if ((XdrvMailbox.index >= 101) && (XdrvMailbox.index <= 116)) {
+    index = XdrvMailbox.index - 100;           // Group1 to 16
+  }
   if (((XdrvMailbox.index >= 0) && (XdrvMailbox.index <= 64)) ||
       ((XdrvMailbox.index >= 101) && (XdrvMailbox.index <= 116))) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
@@ -1053,7 +1091,7 @@ void CmndDaliDimmer(void) {
       DaliSendData(DALIaddr, dimmer);
     }
   }
-  ResponseDali();
+  ResponseDali(index);
 }
 
 void CmndDaliGroup(void) {
@@ -1169,13 +1207,22 @@ void CmndDaliScan(void) {
   }
 }
 
+void CmndDaliGroupSliders(void) {
+  // DaliGroupSliders 0..16  - Add group sliders
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 16)) {
+    Settings->mbflag2.dali_group_sliders = XdrvMailbox.payload;
+    TasmotaGlobal.restart_flag = 2;            // Restart to update GUI
+  }
+  ResponseCmndNumber(Settings->mbflag2.dali_group_sliders);
+}
+
 #ifdef USE_LIGHT
 void CmndDaliLight(void) {
   // DaliLight 0  - Disable light controls
   // DaliLight 1  - Enable light controls
-  if (XdrvMailbox.data_len > 0) {
+  if (Dali->allow_light && (XdrvMailbox.data_len > 0)) {
     Settings->sbflag1.dali_light = XdrvMailbox.payload &1;
-    TasmotaGlobal.restart_flag = 2;
+    TasmotaGlobal.restart_flag = 2;            // Restart to update GUI
   }
   ResponseCmndStateText(Settings->sbflag1.dali_light);
 }
@@ -1185,10 +1232,83 @@ void CmndDaliLight(void) {
  * Presentation
 \*********************************************************************************************/
 
+#ifdef USE_WEBSERVER
+const char HTTP_MSG_SLIDER_DALI[] PROGMEM =
+  "<tr>"
+  "<td style='width:15%%'><button id='k75%d' style='background:#%06x;' onclick='la(\"&k75=%d\");'>%s%s</button></td>"
+  "<td style='width:85%%'><div class='r' style='background-image:linear-gradient(to right,#000,#FFF);'>"
+  "<input id='i75%d' type='range' min='1' max='100' value='%d' onchange='lc(\"i\",75%d,value)'></div></td>"
+  "</tr>";
+
+void DaliWebAddMainSlider(void) {
+  WSContentSend_P(HTTP_TABLE100);
+  char number[12];
+  for (uint32_t i = Settings->sbflag1.dali_light; i <= Settings->mbflag2.dali_group_sliders; i++) {
+    Dali->web_dimmer[i] = Dali->dimmer[i];
+    Dali->web_power[i] = Dali->power[i];
+    WSContentSend_P(HTTP_MSG_SLIDER_DALI,      // Brightness - Black to White
+      i,                                       // k75<i>
+      WebColor((Dali->web_power[i])?COL_BUTTON:COL_BACKGROUND),
+      i,                                       // k75=<i>
+      (0==i)?"B":"G",                          // B (Broadcast) or G1 to G16 (Group)
+      (0==i)?"":itoa(i, number, 10),
+      i,                                       // i75<i>
+      changeUIntScale(Dali->web_dimmer[i], 0, 254, 0, 100),
+      i                                        // i75<i>
+    );
+  }
+  WSContentSend_P(PSTR("</table>"));
+}
+
+void DaliWebGetArg(void) {
+  char tmp[8];                                 // WebGetArg numbers only
+  char svalue[32];                             // Command and number parameter
+  char webindex[8];                            // WebGetArg name
+
+  uint32_t index;
+  for (uint32_t i = Settings->sbflag1.dali_light; i <= Settings->mbflag2.dali_group_sliders; i++) {
+    snprintf_P(webindex, sizeof(webindex), PSTR("i75%d"), i);
+    WebGetArg(webindex, tmp, sizeof(tmp));     // 0 - 100 percent
+    if (strlen(tmp)) {
+      index = i;
+      if (index > 0) { index += 100; }         // Group
+      snprintf_P(svalue, sizeof(svalue), PSTR("DaliDimmer%d %s"), index, tmp);
+      ExecuteWebCommand(svalue);
+    }
+  }
+  WebGetArg(PSTR("k75"), tmp, sizeof(tmp));
+  if (strlen(tmp)) {
+    index = atoi(tmp);
+    if (index > 0) { index += 100; }           // Group
+    snprintf_P(svalue, sizeof(svalue), PSTR("DaliPower%d 2"), index);
+    ExecuteWebCommand(svalue);
+  }
+}
+#endif  // USE_WEBSERVER
+
 void DaliShow(bool json) {
   if (json) {
     ResponseAppend_P(PSTR(","));
-    ResponseAppendDali();
+    ResponseAppendDali(0);
+#ifdef USE_WEBSERVER
+  } else {
+    for (uint32_t i = Settings->sbflag1.dali_light; i <= Settings->mbflag2.dali_group_sliders; i++) {
+      if (Dali->power[i] != Dali->web_power[i]) {
+        Dali->web_power[i] = Dali->power[i];
+        WSContentSend_P(HTTP_MSG_SLIDER_UPDATE);  // "<img style='display:none;' src onerror="
+        WSContentSend_P(PSTR("\"eb('k75%d').style='background:#%06x;';\">"),
+          i, WebColor((Dali->web_power[i])?COL_BUTTON:COL_BACKGROUND));
+        WSContentSeparator(3);                 // Don't print separator on next WSContentSeparator(1)
+      }
+      if (Dali->dimmer[i] != Dali->web_dimmer[i]) {
+        Dali->web_dimmer[i] = Dali->dimmer[i];
+        WSContentSend_P(HTTP_MSG_SLIDER_UPDATE);  // "<img style='display:none;' src onerror="
+        WSContentSend_P(PSTR("\"eb('i75%d').value='%d';\">"),
+          i, changeUIntScale(Dali->web_dimmer[i], 0, 254, 0, 100));
+        WSContentSeparator(3);                 // Don't print separator on next WSContentSeparator(1)
+      }
+    }
+#endif  // USE_WEBSERVER
   }
 }
 
@@ -1199,18 +1319,21 @@ void DaliShow(bool json) {
 bool Xdrv75(uint32_t function) {
   bool result = false;
 
-  if (FUNC_MODULE_INIT == function) {
-    result = DaliInit();
+  if (FUNC_MODULE_INIT == function) {          // Try to claim DALI as light
+    result = DaliInit(function);
+  }
+  else if ((FUNC_PRE_INIT == function) && !Dali) {  // If claim failed then use DALI controls only
+    DaliInit(function);
   }
   else if (Dali) {
     switch (function) {
       case FUNC_LOOP:
         DaliLoop();
         break;
-#ifdef USE_LIGHT
       case FUNC_EVERY_SECOND:
         DaliEverySecond();
         break;
+#ifdef USE_LIGHT
       case FUNC_SET_CHANNELS:
         result = DaliSetChannels();
         break;
@@ -1221,6 +1344,12 @@ bool Xdrv75(uint32_t function) {
 #ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:
         DaliShow(false);
+        break;
+      case FUNC_WEB_ADD_MAIN_BUTTON:
+        DaliWebAddMainSlider();
+        break;
+      case FUNC_WEB_GET_ARG:
+        DaliWebGetArg();
         break;
 #endif  // USE_WEBSERVER
       case FUNC_COMMAND:

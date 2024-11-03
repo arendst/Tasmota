@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 26.10.2024
+ * Updated until v9.4.0.1 - Last update 31.10.2024
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -698,6 +698,8 @@
 #define D_SENSOR_DS18X20                "DS18x20"
 #define D_SENSOR_I2C_SCL                "I2C - SCL"
 #define D_SENSOR_I2C_SDA                "I2C - SDA"
+#define D_SENSOR_I2C_SER_TX             "I2C Ser - TX"
+#define D_SENSOR_I2C_SER_RX             "I2C Ser - RX"
 #define D_SENSOR_I2S_MCLK               "I2S - MCLK"
 #define D_SENSOR_I2S_BCLK               "I2S - BCLK"
 #define D_SENSOR_I2S_WS_IN              "I2S - BCLK IN"

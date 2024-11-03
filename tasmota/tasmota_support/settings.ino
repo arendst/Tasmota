@@ -1838,6 +1838,9 @@ void SettingsDelta(void) {
     if (Settings->version < 0x0E030002) {  // 14.3.0.2
       Settings->sbflag1.dali_light = 1;
     }
+    if (Settings->version < 0x0E030004) {  // 14.3.0.4
+      Settings->mbflag2.dali_group_sliders = 2;
+    }
 
     Settings->version = TASMOTA_VERSION;
     SettingsSave(1);

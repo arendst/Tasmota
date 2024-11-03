@@ -226,6 +226,7 @@ enum UserSelectablePins {
   GPIO_BL0906_RX,                       // BL0906 Serial interface
   GPIO_DALI_RX_INV, GPIO_DALI_TX_INV,   // DALI
   GPIO_LD2410S_TX, GPIO_LD2410S_RX,     // HLK-LD2410S
+  GPIO_I2C_SER_TX, GPIO_I2C_SER_RX,     // I2C via Serial using SC18IM704 protocol (xdrv74)
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -499,6 +500,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BL0906_RX "|"
   D_SENSOR_DALI_RX "_i|" D_SENSOR_DALI_TX "_i|"
   D_SENSOR_LD2410S_TX "|" D_SENSOR_LD2410S_RX "|"
+  D_SENSOR_I2C_SER_TX "|" D_SENSOR_I2C_SER_RX "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -602,6 +604,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_PCF8574
   AGPIO(GPIO_PCF8574_INT),              // PCF8574 Interrupt
 #endif  // USE_PCF8574
+#ifdef USE_I2C_SERIAL
+  AGPIO(GPIO_I2C_SER_TX) + MAX_I2C,     // I2C via Serial TX
+  AGPIO(GPIO_I2C_SER_RX) + MAX_I2C,     // I2C via Serial RX
+#endif // USE_I2C_SERIAL
 #endif
 
 #if defined(USE_I2S_AUDIO) || defined (USE_I2S)

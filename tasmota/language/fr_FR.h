@@ -698,6 +698,8 @@
 #define D_SENSOR_DS18X20       "DS18x20"
 #define D_SENSOR_I2C_SCL       "I2C SCl"
 #define D_SENSOR_I2C_SDA       "I2C SDa"
+#define D_SENSOR_I2C_SER_TX    "I2C Ser TX"
+#define D_SENSOR_I2C_SER_RX    "I2C Ser RX"
 #define D_SENSOR_I2S_MCLK      "I2S MClk"
 #define D_SENSOR_I2S_BCLK      "I2S BClk"
 #define D_SENSOR_I2S_WS_IN     "I2S BClk In"

@@ -271,6 +271,9 @@ const char HTTP_MSG_SLIDER_GRADIENT[] PROGMEM =
   "<input id='sl%d' type='range' min='%d' max='%d' value='%d' onchange='lc(\"%c\",%d,value)'>"
   "</div>";
 
+const char HTTP_MSG_SLIDER_UPDATE[] PROGMEM =
+  "<img style='display:none;' src onerror=";
+
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br>";
 
@@ -1354,7 +1357,7 @@ void HandleRoot(void)
     WSContentSpaceButton(BUTTON_FIRMWARE_UPGRADE);
 #endif  // ESP32
     WSContentButton(BUTTON_CONSOLE);
-#else
+#else   // Not FIRMWARE_MINIMAL
     WSContentSpaceButton(BUTTON_CONFIGURATION);
     WSContentButton(BUTTON_INFORMATION);
     WSContentButton(BUTTON_FIRMWARE_UPGRADE);
@@ -1534,7 +1537,8 @@ bool HandleRootStatusRefresh(void)
         if (current_value != Web.slider[i]) {
           Web.slider[i] = current_value;
           // https://stackoverflow.com/questions/4057236/how-to-add-onload-event-to-a-div-element
-          WSContentSend_P(PSTR("<img style='display:none;' src onerror=\"eb('sl%d').value='%d';\">"), i +1, current_value);
+          WSContentSend_P(HTTP_MSG_SLIDER_UPDATE);  // "<img style='display:none;' src onerror="
+          WSContentSend_P(PSTR("\"eb('sl%d').value='%d';\">"), i +1, current_value);
         }
       }
     }

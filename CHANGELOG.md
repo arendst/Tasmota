@@ -3,20 +3,29 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.3.0.3]
+## [14.3.0.4] 
 ### Added
+- DALI command `DaliGroupSliders 0..16` to show GUI group sliders with feedback disabling `DaliLight`
 
 ### Breaking Changed
 
 ### Changed
+
+### Fixed
+
+### Removed
+
+## [14.3.0.3] 20241031
+### Added
+- Support for I2C over Serial, preliminary stub (#22388)
+
+### Changed
 - ESP32 Platform from 2024.10.30 to 2024.11.30, Framework (Arduino Core) from v3.1.0.241023 to v3.1.0.241030 and IDF to 5.3.1.241024 (#22384)
-- ESP32 LVGL library from v9.2.0 to v9.2.2
-- `i2c_enabled` refactored as array
+- ESP32 LVGL library from v9.2.0 to v9.2.2 (#22385)
+- Refactored `i2c_enabled` as array (#22387)
 
 ### Fixed
 - ESP32 Arduino Core IPv6 zones used by Matter (#22378)
-
-### Removed
 
 ## [14.3.0.2] 20241030
 ### Added

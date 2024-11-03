@@ -114,14 +114,16 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v14.3.0.3
+## Changelog v14.3.0.4
 ### Added
 - Command ``SetOption161 1`` to disable web page slider updates by commands
 - DALI support for short addresses (gear) and groups
 - DALI command `DaliGear` to set max found gear to speed up scan response
 - DALI command `DaliGroup` to add gear to groups
 - DALI command `DaliTarget` to set light control broadcast, group number or gear number
+- DALI command `DaliGroupSliders 0..16` to show GUI group sliders with feedback disabling `DaliLight`
 - DALI inverted signal configuration using GPIO DALI RX_i/TX_i
+- Support for I2C over Serial, preliminary stub [#22388](https://github.com/arendst/Tasmota/issues/22388)
 - Support for Shelly DALI Dimmer Gen3
 - Support for HLK-LD2410S 24GHz smart wave motion sensor [#22253](https://github.com/arendst/Tasmota/issues/22253)
 - Support for US AQI and EPA AQI in PMS5003x sensors [#22294](https://github.com/arendst/Tasmota/issues/22294)
@@ -138,6 +140,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Changed
 - ESP32 Platform from 2024.09.30 to 2024.11.30, Framework (Arduino Core) from v3.1.0.240926 to v3.1.0.241030 and IDF to 5.3.1.241024 [#22384](https://github.com/arendst/Tasmota/issues/22384)
+- ESP32 LVGL library from v9.2.0 to v9.2.2 [#22385](https://github.com/arendst/Tasmota/issues/22385)
+- Refactored `i2c_enabled` as array [#22387](https://github.com/arendst/Tasmota/issues/22387)
 - DALI renamed commands `DaliCommission` to `DaliScan` and `DaliWeb` to `DaliLight`
 - DALI set Tasmota light control as default
 - Shutter optimized behavior to publish shutter data with sensor request [#22353](https://github.com/arendst/Tasmota/issues/22353)

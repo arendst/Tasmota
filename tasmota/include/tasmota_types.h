@@ -195,7 +195,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t mqtt_disable_modbus : 1;      // bit 12 (v13.3.0.5) - SetOption158 - (MQTT) Disable publish ModbusReceived MQTT messages (1), you must use event trigger rules instead
     uint32_t counter_both_edges : 1;       // bit 13 (v13.3.0.5) - SetOption159 - (Counter) Enable counting on both rising and falling edge (1)
     uint32_t ld2410_use_pin : 1;           // bit 14 (v14.3.0.2) - SetOption160 - (LD2410) Disable generate moving event by sensor report - use LD2410 out pin for events (1)
-    uint32_t disable_slider_updates : 1;   // bit 15 (v14.3.0.2) - SetOption161 - (Light) Disable slider updates (1)
+    uint32_t disable_slider_updates : 1;   // bit 15 (v14.3.0.2) - SetOption161 - (Light) Disable slider updates by commands (1)
     uint32_t spare16 : 1;                  // bit 16
     uint32_t spare17 : 1;                  // bit 17
     uint32_t spare18 : 1;                  // bit 18
@@ -260,15 +260,11 @@ typedef union {
     uint32_t spare16 : 1;                  // bit 16
     uint32_t spare17 : 1;                  // bit 17
     uint32_t spare18 : 1;                  // bit 18
-    uint32_t spare19 : 1;                  // bit 19
-    uint32_t spare20 : 1;                  // bit 20
-    uint32_t spare21 : 1;                  // bit 21
-    uint32_t spare22 : 1;                  // bit 22
-    uint32_t spare23 : 1;                  // bit 23
-    uint32_t FTP_Mode : 2;                  // bit 24, 25
-    uint32_t tariff_forced : 2;            // bit 26..27 (v12.4.0.2) - Energy forced tariff : 0=tariff change on time, 1|2=tariff forced
-    uint32_t sunrise_dawn_angle : 2;       // bits 28/29 (v12.1.1.4) -
-    uint32_t temperature_set_res : 2;      // bits 30/31 (v9.3.1.4) - (Tuya)
+    uint32_t dali_group_sliders : 5;       // bit 19.23 (v14.3.0.3) - (DALI) Number of group sliders 0 to 16
+    uint32_t FTP_Mode : 2;                 // bit 24/25
+    uint32_t tariff_forced : 2;            // bit 26/27 (v12.4.0.2) - Energy forced tariff : 0=tariff change on time, 1|2=tariff forced
+    uint32_t sunrise_dawn_angle : 2;       // bit 28/29 (v12.1.1.4) -
+    uint32_t temperature_set_res : 2;      // bit 30/31 (v9.3.1.4) - (Tuya)
   };
 } SysMBitfield2;
 
