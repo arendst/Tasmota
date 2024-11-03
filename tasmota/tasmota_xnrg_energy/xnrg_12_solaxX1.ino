@@ -116,8 +116,7 @@ struct SOLAXX1_GLOBALDATA {
   bool AddressAssigned = true;
   uint8_t SendRetry_count = 20;
   uint8_t QueryData_count = 0;
-  uint8_t QueryID_count = 240;
-  bool Command_QueryID = false;;
+  bool Command_QueryID = false;
   bool Command_QueryConfig = false;
   bool MeterMode = false;
   float MeterPower = 5000;
@@ -450,7 +449,7 @@ void solaxX1_CyclicTask(void) { // Every 100/250 milliseconds
         AddLog(LOG_LEVEL_INFO, PSTR("SX1: Inverter rated bus voltage: %s"),(char*)TempData);
         solaxX1_global.Command_QueryID = false;
       } else {
-        AddLog(LOG_LEVEL_DEBUG, PSTR("SX1: Inverter serial number: %s"),(char*)solaxX1.SerialNumber);
+        AddLog(LOG_LEVEL_INFO, PSTR("SX1: Inverter serial number: %s"),(char*)solaxX1.SerialNumber);
       }
       DEBUG_SENSOR_LOG(PSTR("SX1: received ID data"));
       return;
@@ -548,11 +547,11 @@ void solaxX1_CyclicTask(void) { // Every 100/250 milliseconds
     return;
   }
 
-//  DEBUG_SENSOR_LOG(PSTR("SX1: solaxX1_global.AddressAssigned: %d, solaxX1_global.QueryData_count: %d, solaxX1_global.SendRetry_count: %d, solaxX1_global.QueryID_count: %d"), solaxX1_global.AddressAssigned, solaxX1_global.QueryData_count, solaxX1_global.SendRetry_count, solaxX1_global.QueryID_count);
+//  DEBUG_SENSOR_LOG(PSTR("SX1: solaxX1_global.AddressAssigned: %d, solaxX1_global.QueryData_count: %d, solaxX1_global.SendRetry_count: %d"), solaxX1_global.AddressAssigned, solaxX1_global.QueryData_count, solaxX1_global.SendRetry_count);
   if (solaxX1_global.AddressAssigned) {
     if (!solaxX1_global.QueryData_count) { // normal periodically query
       solaxX1_global.QueryData_count = 5;
-      if (!solaxX1_global.QueryID_count || solaxX1_global.Command_QueryID) { // ID query
+      if (!solaxX1.SerialNumber[0] || solaxX1_global.Command_QueryID) { // ID query
         DEBUG_SENSOR_LOG(PSTR("SX1: Send ID query"));
         solaxX1_QueryIDData();
       } else if (solaxX1_global.Command_QueryConfig) { // Config query
@@ -562,7 +561,6 @@ void solaxX1_CyclicTask(void) { // Every 100/250 milliseconds
         DEBUG_SENSOR_LOG(PSTR("SX1: Send live query"));
         solaxX1_QueryLiveData();
       }
-      solaxX1_global.QueryID_count++; // query ID every 256th time
     }  // end normal periodically query
     solaxX1_global.QueryData_count--;
     if (!solaxX1_global.SendRetry_count) { // Inverter went "off"
