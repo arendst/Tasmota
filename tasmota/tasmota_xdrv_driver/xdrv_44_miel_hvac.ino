@@ -180,9 +180,12 @@ struct miel_hvac_data_status
 struct miel_hvac_data_stage
 {
 	uint8_t _pad1[2];
-	uint8_t prerun;
-#define MIEL_HVAC_STAGE_PRERUN_OFF 0x00
-#define MIEL_HVAC_STAGE_PRERUN_ON 0x04
+	uint8_t operation;
+#define MIEL_HVAC_STAGE_OPERATION_NORMAL 0x00
+#define MIEL_HVAC_STAGE_OPERATION_UNKNOWN 0x01
+#define MIEL_HVAC_STAGE_OPERATION_DEFROST 0x02
+#define MIEL_HVAC_STAGE_OPERATION_STANDBY 0x03
+#define MIEL_HVAC_STAGE_OPERATION_PREHEAT 0x04
 	uint8_t fan;
 #define MIEL_HVAC_STAGE_FAN_OFF 0x00
 #define MIEL_HVAC_STAGE_FAN_1 0x01
@@ -196,6 +199,7 @@ struct miel_hvac_data_stage
 #define MIEL_HVAC_STAGE_MODE_AUTO_FAN 0x01
 #define MIEL_HVAC_STAGE_MODE_AUTO_HEAT 0x02
 #define MIEL_HVAC_STAGE_MODE_AUTO_COOL 0x03
+#define MIEL_HVAC_STAGE_MODE_AUTO_LEADER 0x04
 };
 
 struct miel_hvac_data
@@ -210,7 +214,7 @@ struct miel_hvac_data
 	union
 	{
 		struct miel_hvac_data_settings settings;
-		struct miel_hvac_data_roomtemp roomtemp;;
+		struct miel_hvac_data_roomtemp roomtemp;
 		struct miel_hvac_data_timers timers;
 		struct miel_hvac_data_status status;
 		struct miel_hvac_data_stage stage;
@@ -243,7 +247,7 @@ CTASSERT(offsetof(struct miel_hvac_data, data.timers.offminutes) == 5);
 CTASSERT(offsetof(struct miel_hvac_data, data.timers.onminutesremaining) == 6);
 CTASSERT(offsetof(struct miel_hvac_data, data.timers.offminutesremaining) == 7);
 
-CTASSERT(offsetof(struct miel_hvac_data, data.stage.prerun) == 3);
+CTASSERT(offsetof(struct miel_hvac_data, data.stage.operation) == 3);
 CTASSERT(offsetof(struct miel_hvac_data, data.stage.fan) == 4);
 CTASSERT(offsetof(struct miel_hvac_data, data.stage.mode) == 5);
 
@@ -403,7 +407,7 @@ static const struct miel_hvac_map miel_hvac_mode_map[] = {
 	{MIEL_HVAC_SETTINGS_MODE_HEAT, "heat"},
 	{MIEL_HVAC_SETTINGS_MODE_DRY, "dry"},
 	{MIEL_HVAC_SETTINGS_MODE_COOL, "cool"},
-	{MIEL_HVAC_SETTINGS_MODE_FAN, "fan_only"},
+	{MIEL_HVAC_SETTINGS_MODE_FAN, "fan"},
 	{MIEL_HVAC_SETTINGS_MODE_AUTO, "auto"},
 	{MIEL_HVAC_SETTINGS_MODE_HEAT_ISEE, "heat_isee"},
 	{MIEL_HVAC_SETTINGS_MODE_DRY_ISEE, "dry_isee"},
@@ -469,9 +473,12 @@ static const struct miel_hvac_map miel_hvac_timer_mode_map[] = {
 	{MIEL_HVAC_TIMER_MODE_BOTH, "on_and_off"},
 };
 
-static const struct miel_hvac_map miel_hvac_stage_prerun_map[] = {
-	{MIEL_HVAC_STAGE_PRERUN_OFF, "off"},
-	{MIEL_HVAC_STAGE_PRERUN_ON, "on"},
+static const struct miel_hvac_map miel_hvac_stage_operation_map[] = {
+	{MIEL_HVAC_STAGE_OPERATION_NORMAL, "normal"},
+	{MIEL_HVAC_STAGE_OPERATION_UNKNOWN, "unknown"},
+	{MIEL_HVAC_STAGE_OPERATION_DEFROST, "defrost"},
+	{MIEL_HVAC_STAGE_OPERATION_STANDBY, "standby"},
+	{MIEL_HVAC_STAGE_OPERATION_PREHEAT, "preheat"},
 };
 
 static const struct miel_hvac_map miel_hvac_stage_fan_map[] = {
@@ -489,6 +496,7 @@ static const struct miel_hvac_map miel_hvac_stage_mode_map[] = {
 	{MIEL_HVAC_STAGE_MODE_AUTO_FAN, "auto_fan"},
 	{MIEL_HVAC_STAGE_MODE_AUTO_HEAT, "auto_heat"},
 	{MIEL_HVAC_STAGE_MODE_AUTO_COOL, "auto_cool"},
+	{MIEL_HVAC_STAGE_MODE_AUTO_LEADER, "auto_leader"},
 };
 
 enum miel_hvac_parser_state
@@ -545,7 +553,6 @@ miel_hvac_update_settings_pending(struct miel_hvac_softc *sc)
 }
 
 static struct miel_hvac_softc *miel_hvac_sc = nullptr;
-
 static void miel_hvac_input_connected(struct miel_hvac_softc *, const void *, size_t);
 static void miel_hvac_input_data(struct miel_hvac_softc *, const void *, size_t);
 static void miel_hvac_input_updated(struct miel_hvac_softc *, const void *, size_t);
@@ -1078,7 +1085,7 @@ miel_hvac_cmnd_remotetemp(void)
 	update->temp_old = miel_hvac_remotetemp_degc2old(degc);
 	update->temp = (degc + MIEL_HVAC_REMOTETEMP_OFFSET) * MIEL_HVAC_REMOTETEMP_OLD_FACTOR;
 
-    remotetemp_last_call_time = control == MIEL_HVAC_REMOTETEMP_SET ? millis() : 0;
+	remotetemp_last_call_time = control == MIEL_HVAC_REMOTETEMP_SET ? millis() : 0;
 	remotetemp_clear = control == MIEL_HVAC_REMOTETEMP_SET ? true : false;
 }
 
@@ -1252,7 +1259,7 @@ miel_hvac_input_data(struct miel_hvac_softc *sc, const void *buf, size_t len)
 		break;
 	case MIEL_HVAC_DATA_T_ROOMTEMP:
 		miel_hvac_input_sensor(sc, &sc->sc_roomtemp, d);
-		break;	
+		break;
 	case MIEL_HVAC_DATA_T_TIMERS:
 		miel_hvac_input_sensor(sc, &sc->sc_timers, d);
 		break;
@@ -1516,10 +1523,10 @@ miel_hvac_sensor(struct miel_hvac_softc *sc)
 		const struct miel_hvac_data_stage *stage = &sc->sc_stage.data.stage;
 		char hex[(sizeof(sc->sc_stage) + 1) * 2];
 
-		name = miel_hvac_map_byval(stage->prerun, miel_hvac_stage_prerun_map, nitems(miel_hvac_stage_prerun_map));
+		name = miel_hvac_map_byval(stage->operation, miel_hvac_stage_operation_map, nitems(miel_hvac_stage_operation_map));
 		if (name != NULL)
 		{
-			ResponseAppend_P(PSTR(",\"PrerunStage\":\"%s\""), name);
+			ResponseAppend_P(PSTR(",\"OperationStage\":\"%s\""), name);
 		}
 
 		name = miel_hvac_map_byval(stage->fan, miel_hvac_stage_fan_map, nitems(miel_hvac_stage_fan_map));
