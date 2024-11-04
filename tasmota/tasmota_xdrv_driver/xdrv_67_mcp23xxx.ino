@@ -75,8 +75,12 @@
 #define XDRV_67                  67
 #define XI2C_77                  77       // See I2CDEVICES.md
 
+#ifndef MCP23XXX_ADDR_START
 #define MCP23XXX_ADDR_START      0x20     // 32
+#endif
+#ifndef MCP23XXX_ADDR_END
 #define MCP23XXX_ADDR_END        0x26     // 38
+#endif
 
 #define MCP23XXX_MAX_DEVICES     6
 
