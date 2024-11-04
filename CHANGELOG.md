@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- AHT1X/AHT2X/AHT3X ready for virtual I2C
+- SGP4X ready for virtual I2C
 
 ### Fixed
 

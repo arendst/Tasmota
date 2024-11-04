@@ -94,9 +94,10 @@ struct {
 } aht1x_sensors[AHT1X_MAX_SENSORS];
 
 bool AHT1XWrite(uint8_t aht1x_idx) {
-  Wire.beginTransmission(aht1x_sensors[aht1x_idx].address);
-  Wire.write(AHTMeasureCmd, 3);
-  if (Wire.endTransmission() != 0)
+  TwoWire &wire = I2cGetWire();
+  wire.beginTransmission(aht1x_sensors[aht1x_idx].address);
+  wire.write(AHTMeasureCmd, 3);
+  if (wire.endTransmission() != 0)
     return false;
   delay(AHT1X_MEAS_DELAY);
   return true;
@@ -104,10 +105,11 @@ bool AHT1XWrite(uint8_t aht1x_idx) {
 
 bool AHT1XRead(uint8_t aht1x_idx) {
   uint8_t data[6];
-  Wire.requestFrom(aht1x_sensors[aht1x_idx].address, (uint8_t) 6);
+  TwoWire &wire = I2cGetWire();
+  wire.requestFrom(aht1x_sensors[aht1x_idx].address, (uint8_t) 6);
 
-  for(uint8_t i = 0; Wire.available() > 0; i++) {
-     data[i] = Wire.read();
+  for(uint8_t i = 0; wire.available() > 0; i++) {
+     data[i] = wire.read();
   }
   if (data[0] & 0x80)
     return false; //device is busy
@@ -141,23 +143,26 @@ unsigned char AHT1XReadStatus(uint8_t aht1x_address) {
   //Wire.beginTransmission(aht1x_address);
   //Wire.write(0x71);
   //if (Wire.endTransmission() != 0) return false;
-  Wire.requestFrom(aht1x_address, (uint8_t) 1);
-  result = Wire.read();
+  TwoWire &wire = I2cGetWire();
+  wire.requestFrom(aht1x_address, (uint8_t) 1);
+  result = wire.read();
   return result;
 }
 
 void AHT1XReset(uint8_t aht1x_address) {
-  Wire.beginTransmission(aht1x_address);
-  Wire.write(AHTResetCmd);
-  Wire.endTransmission();
+  TwoWire &wire = I2cGetWire();
+  wire.beginTransmission(aht1x_address);
+  wire.write(AHTResetCmd);
+  wire.endTransmission();
   delay(AHT1X_RST_DELAY);
 }
 
 /********************************************************************************************/
 bool AHT1XInit(uint8_t aht1x_address) {
-  Wire.beginTransmission(aht1x_address);
-  Wire.write(AHTSetCalCmd, 3);
-  if (Wire.endTransmission() != 0)
+  TwoWire &wire = I2cGetWire();
+  wire.beginTransmission(aht1x_address);
+  wire.write(AHTSetCalCmd, 3);
+  if (wire.endTransmission() != 0)
     return false;
   delay(AHT1X_CMD_DELAY);
   if(AHT1XReadStatus(aht1x_address) & 0x08) // Sensor calibrated?
