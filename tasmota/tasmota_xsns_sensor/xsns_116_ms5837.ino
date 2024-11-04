@@ -37,7 +37,7 @@
 MS5837 sensor_ms5837;
 
 uint8_t ms5837Start = 0;
-float pressureOffset = 2.85f;
+float pressure_offset = 2.85f;
 
 /********************************************************************************************/
 
@@ -76,14 +76,14 @@ void MS5837Show(bool json) {
   if (I2cEnabled(XI2C_91)) {
     sensor_ms5837.read();
     ms5837Temp = ConvertTemp(sensor_ms5837.temperature());
-    ms5837Pres = ConvertPressure(sensor_ms5837.pressure() + pressureOffset);
+    ms5837Pres = ConvertPressure(sensor_ms5837.pressure() + pressure_offset);
     ext_snprintf_P(temperature_str, sizeof(temperature_str), PSTR("%1_f"), &ms5837Temp);
     ext_snprintf_P(pressure_str, sizeof(pressure_str), PSTR("%1_f"), &ms5837Pres);
     if (json) {
       ResponseAppend_P(PSTR(",\"MS5837\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_PRESSURE "\":%s"), temperature_str, pressure_str);
     }
     if (I2cEnabled(XI2C_10)) {
-      pressure_delta = (sensor_ms5837.pressure() + pressureOffset) - bmp_sensors[0].bmp_pressure;
+      pressure_delta = (sensor_ms5837.pressure() + pressure_offset) - bmp_sensors[0].bmp_pressure;
       cm_water = pressure_delta*0.401463078662f*2.54f; // changes from inches to cm after read using 2.54cm/in conversion
       ext_snprintf_P(cmWater_str, sizeof(cmWater_str), PSTR("%1_f"), &cm_water);
       if (json) {
@@ -112,6 +112,19 @@ void MS5837Show(bool json) {
     }
   }
 }
+
+bool ms5837CommandSensor() {
+  bool serviced = true;
+  switch (XdrvMailbox.payload) {
+    case 0:
+      MS5837Show(0);
+      pressure_offset = bmp_sensors[0].bmp_pressure - sensor_ms5837.pressure();
+      break;
+  }
+  Response_P(PSTR("{\"Pressure Offset\":%f}"),pressure_offset);
+  return serviced;
+}
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -127,6 +140,11 @@ bool Xsns116(uint32_t function) {
   }
   else if (ms5837Start) {
     switch (function) {
+      case FUNC_COMMAND_SENSOR:
+        if (XSNS_116 == XdrvMailbox.index) {
+          result = ms5837CommandSensor();
+        }
+        break;
       case FUNC_JSON_APPEND:
         MS5837Show(1);
         break;
