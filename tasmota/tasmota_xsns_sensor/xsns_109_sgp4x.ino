@@ -81,7 +81,7 @@ void sgp4x_Init(void)
   uint16_t serialNumber[serialNumberSize];
   uint16_t error;
 
-  sgp4x.begin(Wire);
+  sgp4x.begin(I2cGetWire());
   error = sgp4x.getSerialNumber(serialNumber, serialNumberSize);
 
   if (error) {
