@@ -121,7 +121,6 @@ bool ms5837CommandSensor() {
       pressure_offset = bmp_sensors[0].bmp_pressure - sensor_ms5837.pressure();
       break;
   }
-  Response_P(PSTR("{\"Pressure Offset\":%f}"),pressure_offset);
   return serviced;
 }
 
