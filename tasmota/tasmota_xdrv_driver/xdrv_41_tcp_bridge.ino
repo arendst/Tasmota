@@ -149,6 +149,12 @@ void TCPInit(void) {
     if (!Settings->tcp_baudrate) { 
       Settings->tcp_baudrate = 115200 / 300;
     }
+    // patch for ESP32S3
+#if CONFIG_IDF_TARGET_ESP32S3
+    pinMode(Pin(GPIO_TCP_TX), OUTPUT);
+    digitalWrite(Pin(GPIO_TCP_TX), HIGH);
+    sleep(1);
+#endif // CONFIG_IDF_TARGET_ESP32S3
     TCPSerial = new TasmotaSerial(Pin(GPIO_TCP_RX), Pin(GPIO_TCP_TX), TasmotaGlobal.seriallog_level ? 1 : 2, 0, TCP_BRIDGE_BUF_SIZE);   // set a receive buffer of 256 bytes
     tcp_serial = TCPSerial->begin(Settings->tcp_baudrate * 300, ConvertSerialConfig(0x7F & Settings->tcp_config));
     if (PinUsed(GPIO_TCP_TX_EN)) {
