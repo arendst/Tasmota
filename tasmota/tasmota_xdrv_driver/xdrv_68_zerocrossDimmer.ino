@@ -39,7 +39,7 @@ struct AC_ZERO_CROSS_DIMMER {
   uint32_t enable_time_us[MAX_PWMS];         // Time since last ZC pulse to enable gate pin. 0 means no disable.
   uint32_t disable_time_us[MAX_PWMS];        // 99% of cycle time 
   uint32_t lastlight[MAX_PWMS];              // Store the light value. Set 1 if controlled through ZCDimmerSet
-  uint16_t detailpower[MAX_PWMS];            // replaces dimmer and light controll 0..10000. required savedata 0.
+  uint16_t detailpower[MAX_PWMS];            // replaces dimmer and light control 0..10000. required savedata 0.
   uint32_t accurracy[MAX_PWMS];              // offset of the time to fire the triac and the real time when it fired
   uint32_t intr_counter = 0;                 // counter internally on interrerupt calls
   uint32_t missed_zero_cross;                // count up all missed Zero-cross events.

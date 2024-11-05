@@ -168,7 +168,7 @@ const char * device_param_ga[] = {
   nullptr
 };
 
-// device actions (posible actions to be performed on the device)
+// device actions (possible actions to be performed on the device)
 const char *device_param_cb[] = {
   D_TIMER_OUTPUT " 1", // Set Relay 1 (1-On or 0-OFF)
   D_TIMER_OUTPUT " 2",
@@ -455,7 +455,7 @@ void KNX_DEL_CB( uint8_t CBnum )
   uint8_t src_offset = 0;
   uint8_t len = 0;
 
-  // Delete assigment
+  // Delete assignment
   knx.callback_unassign(CBnum-1);
   Settings->knx_CB_param[CBnum-1] = 0;
 
@@ -491,7 +491,7 @@ void KNX_DEL_CB( uint8_t CBnum )
 
   Settings->knx_CB_registered--;
 
-  // Check if there is no other assigment to that callback. If there is not. delete that callback register
+  // Check if there is no other assignment to that callback. If there is not. delete that callback register
   if ( KNX_CB_Search( oldparam ) == KNX_Empty ) {
     knx.callback_deregister( device_param[oldparam-1].CB_id );
     device_param[oldparam-1].CB_id =  KNX_Empty;
@@ -1170,7 +1170,7 @@ void HandleKNXConfiguration(void)
     uint8_t j;
     for (uint32_t i = 0; i < KNX_MAX_device_param ; i++)
     {
-      // Check How many Relays are available and add: RelayX and TogleRelayX
+      // Check How many Relays are available and add: RelayX and ToggleRelayX
       if ( (i > 8) && (i < 16) ) { j=i-8; } else { j=i; }
       if ( i == 8 ) { j = 0; }
       if ( device_param[j].show )

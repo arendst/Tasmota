@@ -137,7 +137,7 @@ void TCPLoop(void)
 
 void TCPInit(void) {
   if (PinUsed(GPIO_TCP_RX) && PinUsed(GPIO_TCP_TX)) {
-    if (0 == (0x80 & Settings->tcp_config)) {  // !0x80 means unitialized
+    if (0 == (0x80 & Settings->tcp_config)) {  // !0x80 means uninitialized
       Settings->tcp_config = 0x80 | ParseSerialConfig("8N1");  // default as 8N1 for backward compatibility
     }
     tcp_buf = (uint8_t*) malloc(TCP_BRIDGE_BUF_SIZE);

@@ -33,7 +33,7 @@
 #include "UnishoxStrings.h"
 
 #ifdef USE_BERRY
-  // not sure why they are not infered automatically
+  // not sure why they are not inferred automatically
   bool be_hue_status(String* response, uint32_t device_id);
   void be_hue_discovery(String* response, bool* appending);
   void be_hue_groups(String* response);

@@ -49,7 +49,7 @@ extern "C" {
     Ping_t      *next;              // next object in linked list
     uint16_t    seq_num;            // next sequence number
     uint16_t    seqno;              // reject a packet already received
-    uint8_t     success_count;      // sucessful responses received
+    uint8_t     success_count;      // successful responses received
     uint8_t     timeout_count;      // time-outs (no responses)
     uint8_t     to_send_count;      // number of packets remaining to send
     uint32_t    ping_time_sent;     // timestamp when the packet was sent
@@ -58,7 +58,7 @@ extern "C" {
     uint32_t    sum_time;           // cumulated time in ms for all successful responses (used to compute the average)
     bool        done;               // indicates the ping campaign is finished
     bool        fast;               // fast mode, i.e. stop pings when first successful response
-    String      hostname;           // original hostname before convertion to IP address
+    String      hostname;           // original hostname before conversion to IP address
   } Ping_t;
 
   // globals
@@ -89,7 +89,7 @@ extern "C" {
   // Timer called a packet response is in time-out
   // ================================================================================
   //
-  // called after the ICMP timeout occured
+  // called after the ICMP timeout occurred
   // we never received the packet, increase the timeout count
   //
   void ICACHE_FLASH_ATTR t_ping_timeout(void* arg) {
@@ -209,7 +209,7 @@ extern "C" {
   // Callback: a packet response was received
   // ================================================================================
   //
-  // Reveived packet
+  // Received packet
   //
   static uint8_t ICACHE_FLASH_ATTR t_ping_recv(void *arg, struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *addr) {
     // AddLog(LOG_LEVEL_DEBUG, "PNG: from %s pub(%i)=%*_H", IPAddress(*addr).toString().c_str(), p->len, p->len, p->payload);
@@ -285,7 +285,7 @@ extern "C" {
 #endif // USE_IPV6
   }
 
-  // we have finsihed a ping series, deallocated if no more ongoing
+  // we have finished a ping series, deallocate if no more ongoing
   void t_ping_deregister_pcb(void) {
     if (nullptr == ping_head) {         // deregister only if no ping is flying
       raw_remove(t_ping_pcb);

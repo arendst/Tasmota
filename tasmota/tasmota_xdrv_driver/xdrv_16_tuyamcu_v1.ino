@@ -75,11 +75,11 @@ struct TUYA {
   bool ModeSet = false;                   // Controls 0 - Single Tone light, 1 - RGB Light
   int16_t Sensors[14];                    // Stores the values of Sensors connected to the Tuya Device
   bool SensorsValid[14];                  // Bool used for nullify the sensor value until a real value is received from the MCU
-  bool SuspendTopic = false;              // Used to reduce the load at init time or when polling the configuraton on demand
+  bool SuspendTopic = false;              // Used to reduce the load at init time or when polling the configuration on demand
   uint32_t ignore_topic_timeout = 0;      // Suppress the /STAT topic (if enabled) to avoid data overflow until the configuration is over
   bool ignore_dim = false;                // Flag to skip serial send to prevent looping when processing inbound states from the faceplate interaction
   uint8_t cmd_checksum = 0;               // Checksum of tuya command
-  uint8_t data_len = 0;                   // Data lenght of command
+  uint8_t data_len = 0;                   // Data length of command
   uint8_t wifi_state = -2;                // Keep MCU wifi-status in sync with WifiState()
   uint8_t heartbeat_timer = 0;            // 10 second heartbeat timer for tuya module
 #ifdef USE_ENERGY_SENSOR
@@ -368,7 +368,7 @@ void CmndTuyaEnumList(void) { // Command to declare the number of items in list 
   } else { return; }
 }
 
-int StrCmpNoCase(char const *Str1, char const *Str2) // Compare case sensistive RGB strings
+int StrCmpNoCase(char const *Str1, char const *Str2) // Compare case sensitive RGB strings
 {
   for (;; Str1++, Str2++) {
     int StrCmp = tolower((unsigned char)*Str1) - tolower((unsigned char)*Str2);
@@ -413,7 +413,7 @@ void TuyaAddMcuFunc(uint8_t fnId, uint8_t dpId) {
   } else { // Add or update
     for (uint8_t i = 0; i < MAX_TUYA_FUNCTIONS; i++) {
       if (Settings->tuya_fnid_map[i].dpid == dpId || Settings->tuya_fnid_map[i].dpid == 0 || Settings->tuya_fnid_map[i].fnid == fnId || Settings->tuya_fnid_map[i].fnid == 0) {
-        if (!added) { // Update entry if exisiting entry or add
+        if (!added) { // Update entry if existing entry or add
           Settings->tuya_fnid_map[i].fnid = fnId;
           Settings->tuya_fnid_map[i].dpid = dpId;
           added = true;
@@ -651,7 +651,7 @@ bool TuyaSetChannels(void)
       Tuya.Snapshot[0] = changeUIntScale(Light.current_color[0], 0, 255, 0, 100);
       Tuya.Snapshot[1] = changeUIntScale(Light.current_color[1], 0, 255, 0, 100);
     } else { // CT Light or RGBWC
-      getCTRange(&Tuya.CTMin, &Tuya.CTMax); // SetOption82 - Reduce the CT range from 153..500 to 200..380 to accomodate with Alexa range
+      getCTRange(&Tuya.CTMin, &Tuya.CTMax); // SetOption82 - Reduce the CT range from 153..500 to 200..380 to accommodate with Alexa range
       Tuya.Snapshot[0] = light_state.getDimmer();
       Tuya.Snapshot[1] = light_state.getCT();
     }
@@ -933,7 +933,7 @@ void TuyaProcessStatePacket(void) {
             (fnId == TUYA_MCU_FUNC_CT) || (fnId == TUYA_MCU_FUNC_WHITE)) {
 
           if (Tuya.ignore_dimmer_cmd_timeout < millis()) {
-            if ((TasmotaGlobal.power || Settings->flag3.tuya_apply_o20) && ((Tuya.Levels[dimIndex] > 0 || Settings->flag5.tuya_allow_dimmer_0) && (Tuya.Levels[dimIndex] != Tuya.Snapshot[dimIndex]))) { // SetOption54 - Apply SetOption20 settings to Tuya device / SetOption131 Allow save dimmer = 0 receved by MCU
+            if ((TasmotaGlobal.power || Settings->flag3.tuya_apply_o20) && ((Tuya.Levels[dimIndex] > 0 || Settings->flag5.tuya_allow_dimmer_0) && (Tuya.Levels[dimIndex] != Tuya.Snapshot[dimIndex]))) { // SetOption54 - Apply SetOption20 settings to Tuya device / SetOption131 Allow save dimmer = 0 received by MCU
               Tuya.ignore_dim = true;
               TasmotaGlobal.skip_light_fade = true;
 
@@ -1492,7 +1492,7 @@ void TuyaCheckTestWifi(void){
 }
 
 void TuyaSetNetworkState (void) {
-  //MCU requests the network state (this state should be consitent to the wifi state)
+  //MCU requests the network state (this state should be consistent to the wifi state)
   uint8_t network_state = TuyaGetTuyaWifiState();
   TuyaSendCmd(TUYA_CMD_GET_NETWORK_STATUS, &network_state, 1);
 }

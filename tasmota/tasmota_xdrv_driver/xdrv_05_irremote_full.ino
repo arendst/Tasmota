@@ -18,13 +18,13 @@
 */
 
 /*
-Below is the Pyhton3 code to decompress IR comact format.
+Below is the Python3 code to decompress IR comact format.
 
 ======================================================================
 import re
 
 def ir_expand(ir_compact):
-	count = ir_compact.count(',')		# number of occurence of comma
+	count = ir_compact.count(',')		# number of comma occurrences
 
 	if count > 1:
 		return "Unsupported format"
@@ -65,7 +65,7 @@ def ir_expand(ir_compact):
 #include <IRutils.h>
 #include <IRac.h>
 
-// Receiving IR while sending at the same time (i.e. receiving your own signal) was dsiabled in #10041
+// Receiving IR while sending at the same time (i.e. receiving your own signal) was disabled in #10041
 // At the demand of @pilaGit, you can `#define IR_RCV_WHILE_SENDING 1` to bring back this behavior
 #ifndef IR_RCV_WHILE_SENDING
 #define IR_RCV_WHILE_SENDING  0
@@ -375,7 +375,7 @@ void IrReceiveCheck(void) {
       }
 
       ResponseJsonEndEnd();
-      if (Settings->flag6.mqtt_disable_publish ) {  // SetOption147 - If it is activated, Tasmota will not publish IRReceived MQTT messages, but it will proccess event trigger rules
+      if (Settings->flag6.mqtt_disable_publish ) {  // SetOption147 - If it is activated, Tasmota will not publish IRReceived MQTT messages, but it will process event trigger rules
         XdrvRulesProcess(0);
       } else {
         MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_IRRECEIVED));
@@ -612,7 +612,7 @@ uint32_t IrRemoteCmndIrSendJson(void)
   uint16_t repeat = root.getUInt(PSTR(D_JSON_IR_REPEAT), 0);
   int8_t channel = root.getUInt(PSTR(D_JSON_IR_CHANNEL), 1) - 1;
   if (0 == bits) { return IE_SYNTAX_IRSEND; }
-  // check if the IRSend<x> is greater than repeat, but can be overriden with JSON
+  // check if the IRSend<x> is greater than repeat, but can be overridden with JSON
   if (XdrvMailbox.index > repeat + 1) { repeat = XdrvMailbox.index - 1; }
 
   bool success = false;

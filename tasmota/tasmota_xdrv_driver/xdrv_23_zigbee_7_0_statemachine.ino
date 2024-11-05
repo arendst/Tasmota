@@ -807,7 +807,7 @@ ZBM(ZBR_NETWORK_UP,       EZSP_stackStatusHandler, 0x00 /*high*/, EMBER_NETWORK_
 
 // leaveNetwork
 ZBR(ZBS_LEAVE_NETWORK,    EZSP_leaveNetwork, 0x00 /*high*/)   // 2000
-ZBM(ZBR_LEAVE_NETWORK,    EZSP_leaveNetwork, 0x00 /*high*/)   // 2000, we don't care whether it succeeeded or the network was not up
+ZBM(ZBR_LEAVE_NETWORK,    EZSP_leaveNetwork, 0x00 /*high*/)   // 2000, we don't care whether it succeeded or the network was not up
 
 // read configuration details
 ZBM(ZBS_GET_NETW_PARM,    EZSP_getNetworkParameters, 0x00 /*high*/)   // 2800

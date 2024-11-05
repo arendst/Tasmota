@@ -306,7 +306,7 @@ bool ZbTuyaWrite(SBuffer & buf, const Z_attribute & attr) {
 }
 
 //
-// Send Attribute Write, apply mutlipliers before
+// Send Attribute Write, apply multipliers before
 //
 bool ZbAppendWriteBuf(SBuffer & buf, const Z_attribute & attr, bool prepend_status_ok) {
   double val_d = attr.getOptimisticDouble();
@@ -338,11 +338,11 @@ bool ZbAppendWriteBuf(SBuffer & buf, const Z_attribute & attr, bool prepend_stat
 // Operation is one of: ZCL_REPORT_ATTRIBUTES (0x0A), ZCL_WRITE_ATTRIBUTES (0x02) or ZCL_READ_ATTRIBUTES_RESPONSE (0x01)
 //
 void ZbSendReportWrite(class JsonParserToken val_pubwrite, class ZCLFrame & zcl) {
-  zcl.payload.reserve(200);   // buffer to store the binary output of attibutes
+  zcl.payload.reserve(200);   // buffer to store the binary output of attributes
   SBuffer & buf = zcl.payload;    // synonym
 
   if (nullptr == XdrvMailbox.command) {
-    XdrvMailbox.command = (char*) "";             // prevent a crash when calling ReponseCmndChar and there was no previous command
+    XdrvMailbox.command = (char*) "";             // prevent a crash when calling ResponseCmndChar and there was no previous command
   }
 
   bool tuya_protocol = zigbee_devices.isTuyaProtocol(zcl.shortaddr, zcl.dstendpoint);
@@ -568,9 +568,9 @@ void ZbSendSend(class JsonParserToken val_cmd, ZCLFrame & zcl) {
     // where AAAA is the cluster number, BB the command number, CCCC... the payload
     // Possible delimiters:
     //   "AAAA_BB/...": general cluster, sent to device (direction == 0)
-    //   "AAAA^BB/...": general cluster, recevied from device (direction == 1)
+    //   "AAAA^BB/...": general cluster, received from device (direction == 1)
     //   "AAAA!BB/...": cluster specific, sent to device (direction == 0)
-    //   "AAAA?BB/...": cluster specific, recevied from device (direction == 1)
+    //   "AAAA?BB/...": cluster specific, received from device (direction == 1)
     // First delimiter is '_' for a global command, or '!' for a cluster specific command
     const char * data = val_cmd.getStr();
     uint16_t local_cluster_id = parseHex(&data, 4);
@@ -617,7 +617,7 @@ void ZbSendRead(JsonParserToken val_attr, ZCLFrame & zcl) {
   // ZbSend {"Device":"0xF289","Endpoint":3,"Read":{"ModelId":true}}
   // ZbSend {"Device":"0xF289","Read":{"ModelId":true}}
 
-  // ZbSend {"Device":"0xF289","ReadConig":{"Power":true}}
+  // ZbSend {"Device":"0xF289","ReadConfig":{"Power":true}}
   // ZbSend {"Device":"0xF289","Cluster":6,"Endpoint":3,"ReadConfig":0}
 
   // params
@@ -817,7 +817,7 @@ void CmndZbSend(void) {
   uint32_t multi_cmd = ((bool)val_cmd) + ((bool)val_read) + ((bool)val_write) + ((bool)val_publish)
                      + ((bool)val_response) + ((bool)val_read_config) + ((bool)val_config);
   if (multi_cmd > 1) {
-    ResponseCmndChar_P(PSTR("Can only have one of: 'Send', 'Read', 'Write', 'Report', 'Reponse', 'ReadConfig' or 'Config'"));
+    ResponseCmndChar_P(PSTR("Can only have one of: 'Send', 'Read', 'Write', 'Report', 'Response', 'ReadConfig' or 'Config'"));
     return;
   }
   // from here we have one and only one command
@@ -832,7 +832,7 @@ void CmndZbSend(void) {
     ZbSendSend(val_cmd, zcl);
   } else if (val_read) {
     // "Read":{...attributes...}, "Read":attribute or "Read":[...attributes...]
-    // we accept eitehr a number, a string, an array of numbers/strings, or a JSON object
+    // we accept either a number, a string, an array of numbers/strings, or a JSON object
     zcl.cmd = ZCL_READ_ATTRIBUTES;
     ZbSendRead(val_read, zcl);
   } else if (val_write) {
@@ -864,7 +864,7 @@ void CmndZbSend(void) {
     ZbSendReportWrite(val_response, zcl);
   } else if (val_read_config) {
     // "ReadConfg":{...attributes...}, "ReadConfg":attribute or "ReadConfg":[...attributes...]
-    // we accept eitehr a number, a string, an array of numbers/strings, or a JSON object
+    // we accept either a number, a string, an array of numbers/strings, or a JSON object
     zcl.cmd = ZCL_READ_REPORTING_CONFIGURATION;
     ZbSendRead(val_read_config, zcl);
   } else if (val_config) {

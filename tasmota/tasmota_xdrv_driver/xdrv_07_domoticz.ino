@@ -264,7 +264,7 @@ bool DomoticzMqttData(void) {
     return false;  // No Domoticz driver subscription so try user subscribes
   }
 
-  // Default subscibed to domoticz/out/#
+  // Default subscribed to domoticz/out/#
   if (strncasecmp_P(XdrvMailbox.topic, PSTR(DOMOTICZ_OUT_TOPIC), strlen(DOMOTICZ_OUT_TOPIC)) != 0) {
     return false;  // Process unchanged data
   }

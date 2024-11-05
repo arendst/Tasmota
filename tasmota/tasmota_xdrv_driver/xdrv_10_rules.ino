@@ -205,7 +205,7 @@ char rules_vars[MAX_RULE_VARS][33] = {{ 0 }};
  *   Rule[x][] = 511 char max NULL terminated string (512 with trailing NULL)
  *   Rule[x][0] = 0 if the Rule<x> is empty
  *   New: in case the string is empty we also enforce:
- *   Rule[x][1] = 0   (i.e. we have two conseutive NULLs)
+ *   Rule[x][1] = 0   (i.e. we have two consecutive NULLs)
  *
  * - If `SetOption93 1`
  *   If the rule is smaller than 511, it is stored uncompressed. Rule[x][0] is not null.
@@ -308,7 +308,7 @@ String GetRule(uint32_t idx) {
 }
 
 #ifdef USE_UNISHOX_COMPRESSION
-// internal function, comrpess rule and store a cached version uncompressed (except if SetOption94 1)
+// internal function, compress rule and store a cached version uncompressed (except if SetOption94 1)
 // If out == nullptr, we are in dry-run mode, so don't keep rule in cache
 int32_t SetRule_compress(uint32_t idx, const char *in, size_t in_len, char *out, size_t out_len) {
   int32_t len_compressed;
@@ -388,7 +388,7 @@ int32_t SetRule(uint32_t idx, const char *content, bool append = false) {
     if ((len_compressed >= 0) && (len_compressed < MAX_RULE_SIZE - 2)) {
       // size is ok, copy to Settings
       Settings->rules[idx][0] = 0;     // clear first byte to mark as compressed
-      Settings->rules[idx][1] = (len_in + 7) / 8;    // store original length in first bytes (4 bytes chuks)
+      Settings->rules[idx][1] = (len_in + 7) / 8;    // store original length in first bytes (4 bytes chunks)
       memcpy(&Settings->rules[idx][2], buf_out, len_compressed);
       Settings->rules[idx][len_compressed + 2] = 0;  // add NULL termination
       AddLog(LOG_LEVEL_INFO, PSTR("RUL: Compressed from %d to %d (-%d%%)"), len_in, len_compressed, 100 - changeUIntScale(len_compressed, 0, len_in, 0, 100));
@@ -1804,7 +1804,7 @@ bool evaluateComparisonExpression(const char *expression, int len)
  * A logical operator is expected at this moment. If we find something else, this function will fail.
  * Input:
  *      pointer     - Point to a char buffer
- *      op          - Used to accpet the logical operator type
+ *      op          - Used to accept the logical operator type
  * Output:
  *      Pointer     - pointer will forward to next character after the logical operator.
  *      op          - The logical operator type we found

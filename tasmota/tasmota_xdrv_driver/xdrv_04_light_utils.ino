@@ -18,7 +18,7 @@
 */
 
 // This file is compiled even if `USE_LIGHT` is not defined and provides
-// general purpose converter fucntions
+// general purpose converter functions
 
 
 // New version of Gamma correction compute

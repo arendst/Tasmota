@@ -104,7 +104,7 @@
         BLEMaxAge - display the setting
         BLEMaxAge nn - set to nn seconds
       BLEAddrFilter
-        *0/1/2/3 - the maximum 'type' of BLE address recevied
+        *0/1/2/3 - the maximum 'type' of BLE address received
       BLEEnableUnsaved
         *0/1 - if BLE is disabled, this can be used to enable BLE without
         it being saved - useful as the last command in autoexec.bat
@@ -171,7 +171,7 @@ namespace BLE_ESP32 {
 // connect/read/wrtie/notify operations
 // only one operation will happen at a time
 
-#pragma pack( push, 0 )  // aligned structures for speed.  but be sepcific
+#pragma pack( push, 0 )  // aligned structures for speed.  but be specific
 
 /////////////////////////////////////////////////////
 // states for runTaskDoneOperation
@@ -315,7 +315,7 @@ const char * getStateString(int state);
 #define USE_NATIVE_LOGGING
 
 
-// a temporay safe logging mechanism.  This has a max of 40 chars, and a max of 15 slots per 50ms
+// a temporary safe logging mechanism.  This has a max of 40 chars, and a max of 15 slots per 50ms
 //int SafeAddLog_P(uint32_t loglevel, PGM_P formatP, ...);
 
 static void BLEDiag();
@@ -562,7 +562,7 @@ const char * getStateString(int state){
 
 enum BLE_Commands {          // commands useable in console or rules
   CMND_BLE_PERIOD,           // set period like TELE-period in seconds between read-cycles
-  CMND_BLE_ADV,             // change advertisment options at runtime
+  CMND_BLE_ADV,             // change advertisement options at runtime
   CMND_BLE_OP,                // connect/read/write/notify operations
   CMND_BLE_MODE,              // change mode of ble - BLE_MODES
   CMND_BLE_DETAILS,           // get details for one device's adverts
@@ -1131,7 +1131,7 @@ void ReverseMAC(uint8_t _mac[]){
 
 
 /*********************************************************************************************\
- * Advertisment details
+ * Advertisement details
 \*********************************************************************************************/
 
 //ble_advertisment_t BLEAdvertismentDetails;
@@ -1604,7 +1604,7 @@ static void BLEInit(void) {
   }
 
 #ifdef BLE_ESP32_EXAMPLES
-// this is only for testing, does nothin if examples are undefed
+// this is only for testing, does nothing if examples are undefed
   installExamples();
   //initSafeLog();
   initSeenDevices();
@@ -1685,7 +1685,7 @@ static void BLETaskStopStartNimBLE(NimBLEClient **ppClient, bool start = true){
 
     *ppClient = NimBLEDevice::createClient();
     (*ppClient)->setClientCallbacks(&clientCB, false);
-    /** Set initial connection parameters: These settings are 15ms interval, 0 latency, 120ms timout.
+    /** Set initial connection parameters: These settings are 15ms interval, 0 latency, 120ms timeout.
      *  These settings are safe for 3 clients to connect reliably, can go faster if you have less
      *  connections. Timeout should be a multiple of the interval, minimum is 100ms.
      *  Min interval: 12 * 1.25ms = 15, Max interval: 12 * 1.25ms = 15, 0 latency, 51 * 10ms = 510ms timeout
@@ -2293,7 +2293,7 @@ static void BLEEverySecond(bool restart){
     BLE_ESP32::BLEPostMQTT(true); // send only completed
   }
 
-  // request send of ALL oeprations prepped, queued, in progress -
+  // request send of ALL operations prepped, queued, in progress -
   // in separate MQTT messages.
   if (BLEPostMQTTTrigger){
     BLEPostMQTTTrigger = 0;
@@ -2497,7 +2497,7 @@ void stripColon(char* _string){
 
 
 //////////////////////////////////////////////////
-// use this for address interpretaton from string
+// use this for address interpretation from string
 // it looks for aliases, and converts AABBCCDDEEFF and AA:BB:CC:DD:EE:FF
 // it also accepts AABBCCDDEEFF/1 to indicate random
 int getAddr(uint8_t *dest, char *src){
@@ -2796,7 +2796,7 @@ void CmndBLEEnableUnsaved(void){
 // example: BLEDetails1 001A22092C9A
 // details look like:
 // MQT: tele/tasmota_esp32/BLE = {"details":{"mac":"001A22092C9A","p":"0C0943432D52542D4D2D424C450CFF0000000000000000000000"}}
-// and incliude mac, complete advert payload, plus optional ,"lost":true if an advert was not captured because MQTT we already
+// and include mac, complete advert payload, plus optional ,"lost":true if an advert was not captured because MQTT we already
 // had one waiting to be sent
 void CmndBLEDetails(void){
   switch(XdrvMailbox.index){
@@ -3088,7 +3088,7 @@ void CmndBLEOperation(void){
           ResponseCmndChar("FailQueue");
           return;
         } else {
-          // NOTE: prepOperation has been set to null if we queued sucessfully.
+          // NOTE: prepOperation has been set to null if we queued successfully.
 #ifdef BLE_ESP32_DEBUG
           if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: Operations queued:%d"), queuedOperations.size());
 #endif
@@ -3123,7 +3123,7 @@ void CmndBLEOperation(void){
 #endif
         ResponseCmndChar("FailQueue");
       } else {
-        // NOTE: prepOperation has been set to null if we queued sucessfully.
+        // NOTE: prepOperation has been set to null if we queued successfully.
 #ifdef BLE_ESP32_DEBUG
         if (BLEDebugMode > 0) AddLog(LOG_LEVEL_INFO,PSTR("BLE: Operations queued:%d"), queuedOperations.size());
 #endif
@@ -3238,7 +3238,7 @@ static void BLEPostMQTT(bool onlycompleted) {
           std::string out = BLETriggerResponse(toSend);
           Response_P(PSTR("%s"), out.c_str());
           MqttPublishPrefixTopicRulesProcess_P(TELE, PSTR("BLE"), Settings->flag.mqtt_sensor_retain);
-          // we alreayd removed this from the queues, so now delete
+          // we already removed this from the queues, so now delete
           delete toSend;
           //break;
         }
@@ -3270,7 +3270,7 @@ static void mainThreadBLETimeouts() {
     return;
   }
 
-  // if no adverts for 120s, and BLE is running, retsart NimBLE.
+  // if no adverts for 120s, and BLE is running, restart NimBLE.
   // belt and braces....
   uint64_t adTimeout = ((uint64_t)BLEMaxTimeBetweenAdverts)*1000L*1000L;
   if (BLEScanLastAdvertismentAt + adTimeout < now){
@@ -3285,7 +3285,7 @@ static void mainThreadBLETimeouts() {
   // restart Tasmota completely. (belt and braces)
   uint64_t bleLoopTimeout = ((uint64_t)BLEMaxTaskLoopTime)*1000L*1000L;
   if (BLELastLoopTime + bleLoopTimeout < now){
-    BLELastLoopTime = now; // initialise the time of the last advertisment
+    BLELastLoopTime = now; // initialise the time of the last advertisement
     BLERestartTasmota = 10;
     AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: BLETask stall > 120s, restart Tasmota in 10s"));
     BLERestartTasmotaReason = BLE_RESTART_TEAMOTA_REASON_BLE_LOOP_STALLED;
@@ -3655,7 +3655,7 @@ bool Xdrv79(uint32_t function)
 
 
 /*********************************************************************************************\
- * Example Advertisment callback
+ * Example Advertisement callback
 \*********************************************************************************************/
 
 #ifdef EXAMPLE_ADVERTISMENT_CALLBACK
@@ -3670,7 +3670,7 @@ int myAdvertCallback(BLE_ESP32::ble_advertisment_t *pStruct) {
 }
 #endif
 /*********************************************************************************************\
- * End of Example Advertisment callback
+ * End of Example Advertisement callback
 \*********************************************************************************************/
 
 

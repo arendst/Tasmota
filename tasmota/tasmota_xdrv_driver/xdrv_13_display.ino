@@ -41,7 +41,7 @@ extern VButton *buttons[MAX_TOUCH_BUTTONS];
 #endif
 
 // drawing color is WHITE
-// on epaper the whole display buffer is transfered inverted this results in white paper
+// on epaper the whole display buffer is transferred inverted this results in white paper
 uint16_t fg_color = 1;
 uint16_t bg_color = 0;
 uint8_t color_type = COLOR_BW;
@@ -323,7 +323,7 @@ uint8_t fatoiv(char *cp,float *res) {
   return index;
 }
 
-// get asci number until delimiter and return asci number lenght and value
+// get ascii number until delimiter and return ascii number length and value
 uint8_t atoiv(char *cp, int16_t *res)
 {
   uint8_t index = 0;
@@ -339,7 +339,7 @@ uint8_t atoiv(char *cp, int16_t *res)
   return index;
 }
 
-// get asci number until delimiter and return asci number lenght and value
+// get ascii number until delimiter and return ascii number length and value
 uint8_t atoiV(char *cp, uint16_t *res)
 {
   uint8_t index = 0;
@@ -402,7 +402,7 @@ uint32_t decode_te(char *line) {
       } else {
         // escape HH
         if (strlen(cp)<2) {
-          // illegal lenght, ignore
+          // illegal length, ignore
           return skip;
         }
         // take 2 hex chars
@@ -907,7 +907,7 @@ void DisplayText(void)
             }
           }
 #endif // USE_DT_VARS
-            // force draw grafics buffer
+            // force draw graphics buffer
             if (renderer) renderer->Updateframe();
             //else DisplayDrawFrame();
             break;
@@ -2164,7 +2164,7 @@ void CmndDisplayText(void) {
 }
 
 /*********************************************************************************************\
- * Currently 7-segement specific - should have been handled by (extended) DisplayText command
+ * Currently 7-segment specific - should have been handled by (extended) DisplayText command
 \*********************************************************************************************/
 
 void CmndDisplayClear(void) {
@@ -2582,7 +2582,7 @@ void ClrGraph(uint16_t num) {
   }
   if (yticks) {
     if (gp->ymin<0 && gp->ymax>0) {
-      // draw zero seperator
+      // draw zero separator
       float cxp=0;
       float czp=gp->yp+(gp->ymax/gp->range);
       while (cxp<gp->xs) {

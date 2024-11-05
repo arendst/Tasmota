@@ -94,7 +94,7 @@ public:
   bool rules_busy = false;              // are we already processing rules, avoid infinite loop
   bool web_add_handler_done = false;    // did we already sent `web_add_handler` event
 #ifdef USE_BERRY_PARTITION_WIZARD
-  bool partition_wizard_loaded = false; // did we already load Parition_Wizard
+  bool partition_wizard_loaded = false; // did we already load Partition_Wizard
 #endif // USE_BERRY_PARTITION_WIZARD
 #ifdef USE_BERRY_GPIOVIEWER
   bool gpviewer_loaded = false;         // did we already load GPIOViewer

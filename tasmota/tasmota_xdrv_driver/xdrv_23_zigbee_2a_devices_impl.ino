@@ -463,7 +463,7 @@ void Z_Devices::hideHueBulb(uint16_t shortaddr, bool hidden) {
     dirty();
   }
 }
-// true if device is not knwon or not a bulb - it wouldn't make sense to publish a non-bulb
+// true if device is not known or not a bulb - it wouldn't make sense to publish a non-bulb
 bool Z_Devices::isHueBulbHidden(uint16_t shortaddr) const {
   const Z_Device & device = findShortAddr(shortaddr);
   if (foundDevice(device)) {
@@ -544,7 +544,7 @@ void Z_Devices::runTimer(void) {
 }
 
 // does the new payload conflicts with the existing payload, i.e. values would be overwritten
-// true - one attribute (except LinkQuality) woudl be lost, there is conflict
+// true - one attribute (except LinkQuality) would be lost, there is conflict
 // false - new attributes can be safely added
 bool Z_Devices::jsonIsConflict(uint16_t shortaddr, const Z_attribute_list &attr_list) const {
   const Z_Device & device = findShortAddr(shortaddr);
@@ -605,7 +605,7 @@ void Z_Device::jsonPublishAttrList(const char * json_prefix, const Z_attribute_l
   // Do we prefix with `ZbReceived`?
   if (!Settings->flag4.remove_zbreceived && !Settings->flag5.zb_received_as_subtopic) {
     if (include_time && Rtc.utc_time >= START_VALID_TIME) {
-      // Add time if needed (and if time is valide)
+      // Add time if needed (and if time is valid)
       ResponseAppendTimeFormat(Settings->flag2.time_format);
       ResponseAppend_P(PSTR(",\"%s\":"), json_prefix);
     } else {
@@ -933,7 +933,7 @@ String Z_Devices::dumpDevice(uint32_t dump_mode, const Z_Device & device) const 
 
 // Restore a single device configuration based on json export
 // Input: json element as expported by `ZbStatus2``
-// Mandatory attribue: `Device`
+// Mandatory attribute: `Device`
 //
 // Returns:
 //  0 : Ok

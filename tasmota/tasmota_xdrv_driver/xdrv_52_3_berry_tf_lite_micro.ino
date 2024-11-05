@@ -402,7 +402,7 @@ void TFL_stop_audio_capture(){
 #endif //USE_I2S
 
 /**
- * @brief Helper function to stop all runnning tasks
+ * @brief Helper function to stop all running tasks
  * 
  */
 void TFL_delete_tasks(){
@@ -627,7 +627,7 @@ extern "C" {
         delay(5);
         timeout++;
       }
-      AddLog(LOG_LEVEL_DEBUG, PSTR("TFL: imput new data and invoke"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("TFL: input new data and invoke"));
       if(quantize_to_int8){
         int16_t temp_int;
         for(int i = 0; i < size; i++){

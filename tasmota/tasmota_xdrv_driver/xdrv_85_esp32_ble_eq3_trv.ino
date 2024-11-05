@@ -627,7 +627,7 @@ int EQ3GenericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
 
 
 /*********************************************************************************************\
- * Functons actualy called from within the BLE task
+ * Functions actually called from within the BLE task
 \*********************************************************************************************/
 
 int ispairing2(const uint8_t *payload, int len, char *name, int namelen, char *serial, int seriallen ){
@@ -1291,7 +1291,7 @@ int EQ3Send(const uint8_t* addr, const char *cmd, char* param, char* param2, int
       }
       dlen = 2; break;
     }
-    if (!strcmp(cmd, "mode"))     { cmdtype = 18; d[0] = 0x40; d[1] = 0xff;// invlaid
+    if (!strcmp(cmd, "mode"))     { cmdtype = 18; d[0] = 0x40; d[1] = 0xff;// invalid
 
       if (!param || param[0] == 0){
         return -1;

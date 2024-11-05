@@ -146,7 +146,7 @@ void DeepSleepCalculate()
       for (uint32_t i = 0; i < MAX_TIMERS; i++) {
         Timer    xtimer = Settings->timer[i];
         uint32_t day_bitarray = xtimer.days;
-        // day_bitarray>0 otherwhise no weekday selected
+        // day_bitarray>0 otherwise no weekday selected
         // rule keyword "Wakeup"
         // Timer action: rule
         if (xtimer.arm && day_bitarray && GetRule(0) == "Wakeup" && (TasmotaGlobal.restart_deepsleep || bitRead(Settings->rule_enabled | Settings->rule_once, 0)) && POWER_BLINK == xtimer.power) {
@@ -182,7 +182,7 @@ void DeepSleepStart(void)
   char stopic[TOPSZ];
   // Deepsleep_slip is ideally 10.000 == 100%
   // Typically the device has up to 4% slip. Anything else is a wrong setting in the deepsleep_slip
-  // Therefore all values >110% or <90% will be resetted to 100% to avoid crazy sleep times.
+  // Therefore all values >110% or <90% will be reset to 100% to avoid crazy sleep times.
   // This should normally never executed, but can happen an manual wakeup and problems during wakeup
   if ((RtcSettings.nextwakeup == 0) ||
       (RtcSettings.deepsleep_slip < 9000) ||

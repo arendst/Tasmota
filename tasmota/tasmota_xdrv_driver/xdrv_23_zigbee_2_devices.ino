@@ -173,7 +173,7 @@ public:
 
   void toAttributes(Z_attribute_list & attr_list) const;
 
-  // update internal structures after an attribut update
+  // update internal structures after an attribute update
   // True if a configuration was changed
   inline bool update(void) { return false; }
 
@@ -491,7 +491,7 @@ public:
   uint16_t              humidity;       // humidity in percent, 0..100, 0xFF if unknown
   // thermostat
   uint8_t               th_setpoint;    // percentage of heat/cool in percent
-  int16_t               temperature_target; // settings for the temparature
+  int16_t               temperature_target; // settings for the temperature
 };
 
 /*********************************************************************************************\
@@ -755,7 +755,7 @@ Z_Data & Z_Data_Set::getByType(Z_Data_Type type, uint8_t ep) {
   }
 }
 
-// Instanciate with either:
+// Instantiate with either:
 // (04)04010100          - without data except minimal Z_Data
 // (08)04010100.B06DFFFF - with complete data - in this case must not exceed the structure len
 //
@@ -973,7 +973,7 @@ public:
   uint32_t              batt_last_seen;     // Time when we last received battery status (epoch), 0 means unknown, 0xFFFFFFFF means that the device has no battery, 0xFFFFFFFE means the device is Green Power, all values above 0xFFFFFFF0 are reserved
   uint32_t              batt_last_probed;   // Time when the device was last probed for batteyr values
   uint8_t               lqi;                // lqi from last message, 0xFF means unknown
-  uint8_t               batt_percent;       // battery percentage (0..100), 0xFF means unknwon
+  uint8_t               batt_percent;       // battery percentage (0..100), 0xFF means unknown
   Z_no_advertize        no_advertize;       // no advertize for Hue or Matter
   uint8_t               reserved_for_alignment;
 

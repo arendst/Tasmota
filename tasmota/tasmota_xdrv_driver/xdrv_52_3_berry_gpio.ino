@@ -192,7 +192,7 @@ extern "C" {
     if (argc >= 1 && be_isint(vm, 1)) {
       int32_t counter = be_toint(vm, 1) + 1;    // counter are 0 based in Berry, 1 based in Tasmota
 
-      // is `index` refering to a counter?
+      // is `index` referring to a counter?
       if (CounterPinConfigured(counter)) {
         be_pushint(vm, CounterPinRead(counter));
         be_return(vm);
@@ -214,7 +214,7 @@ extern "C" {
       int32_t counter = be_toint(vm, 1) + 1;    // counter are 0 based in Berry, 1 based in Tasmota
       int32_t value = be_toint(vm, 2);
 
-      // is `index` refering to a counter?
+      // is `index` referring to a counter?
       if (CounterPinConfigured(counter)) {
         be_pushint(vm, CounterPinSet(counter, value, add));
         be_return(vm);

@@ -92,7 +92,7 @@ void Touch_SetStatus(uint8_t touches, uint16_t raw_x, uint16_t raw_y, uint8_t ge
   TS_RotConvert(&TSGlobal.touch_xp, &TSGlobal.touch_yp);
 }
 
-// return true if succesful, false if not configured
+// return true if successful, false if not configured
 bool Touch_GetStatus(uint8_t* touches, uint16_t* x, uint16_t* y, uint8_t* gesture,
                      uint16_t* raw_x, uint16_t* raw_y) {
   if (TSGlobal.external_ts || CST816S_found || FT5206_found || XPT2046_found || utouch_found) {

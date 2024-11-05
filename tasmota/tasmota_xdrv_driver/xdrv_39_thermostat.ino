@@ -218,7 +218,7 @@ struct THERMOSTAT {
   int16_t temp_rampup_output_off = 0;                                         // Temperature to switch off relay output within the ramp-up controller in tenths of degrees celsius
   uint8_t time_output_delay = THERMOSTAT_TIME_OUTPUT_DELAY;                   // Output delay between state change and real actuation event (eg. valve open/closed)
   uint8_t counter_rampup_cycles = 0;                                          // Counter of ramp-up cycles
-  uint8_t temp_rampup_pi_acc_error = THERMOSTAT_TEMP_PI_RAMPUP_ACC_E;         // Accumulated error when switching from ramp-up controller to PI in hundreths of degrees celsius
+  uint8_t temp_rampup_pi_acc_error = THERMOSTAT_TEMP_PI_RAMPUP_ACC_E;         // Accumulated error when switching from ramp-up controller to PI in hundredths of degrees celsius
   uint8_t temp_rampup_delta_out = THERMOSTAT_TEMP_RAMPUP_DELTA_OUT;           // Minimum delta temperature to target to get out of the rampup mode, in tenths of degrees celsius
   uint8_t temp_rampup_delta_in = THERMOSTAT_TEMP_RAMPUP_DELTA_IN;             // Minimum delta temperature to target to get into rampup mode, in tenths of degrees celsius
   uint8_t val_prop_band = THERMOSTAT_PROP_BAND;                               // Proportional band of the PI controller in degrees celsius
@@ -247,7 +247,7 @@ struct THERMOSTAT {
   uint16_t pU_pi_atune = 0;                                                   // pU value ("Ultimate" period) period of self-sustaining oscillations determined when the controller gain was set to Ku in minutes (for PI autotune)
   uint16_t kU_pi_atune = 0;                                                   // kU value ("Ultimate" gain) determined by increasing controller gain until self-sustaining oscillations are achieved (for PI autotune)
   uint16_t kP_pi_atune = 0;                                                   // kP value calculated by the autotune PI function multiplied by 100 (to avoid floating point operations)
-  uint16_t kI_pi_atune = 0;                                                   // kI value calulated by the autotune PI function multiplied by 100 (to avoid floating point operations)
+  uint16_t kI_pi_atune = 0;                                                   // kI value calculated by the autotune PI function multiplied by 100 (to avoid floating point operations)
   int16_t temp_peaks_atune[THERMOSTAT_PEAKNUMBER_AUTOTUNE];                   // Array to store temperature peaks to be used by the autotune PI function
   int16_t temp_abs_max_atune;                                                 // Maximum temperature reached within autotune
   int16_t temp_abs_min_atune;                                                 // Minimum temperature reached within autotune
@@ -464,7 +464,7 @@ void ThermostatHybridCtrPhase(uint8_t ctr_output)
     switch (Thermostat[ctr_output].status.phase_hybrid_ctr) {
       // Ramp-up phase with gradient control
       case CTR_HYBRID_RAMP_UP:
-          // If ramp-up offtime counter has been initalized
+          // If ramp-up offtime counter has been initialized
           // AND ramp-up offtime counter value reached
           if((Thermostat[ctr_output].time_ctr_checkpoint != 0)
             && (TasmotaGlobal.uptime >= Thermostat[ctr_output].time_ctr_checkpoint)) {
@@ -872,7 +872,7 @@ void ThermostatWorkAutomaticRampUp(uint8_t ctr_output)
     if ( (abs(temp_delta_rampup) >= Thermostat[ctr_output].temp_rampup_delta_out)
       && (Thermostat[ctr_output].time_rampup_deadtime == 0)) {
       // Set deadtime, assuming it is half of the time until slope, since thermal inertia of the temp. fall needs to be considered
-      // minus open time of the valve (arround 3 minutes). If rise/sink very fast limit it to delay of output valve
+      // minus open time of the valve (around 3 minutes). If rise/sink very fast limit it to delay of output valve
       int32_t time_aux;
       time_aux = ((time_in_rampup / 2) - Thermostat[ctr_output].time_output_delay);
       if (time_aux >= Thermostat[ctr_output].time_output_delay) {

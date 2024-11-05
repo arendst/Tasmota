@@ -38,9 +38,9 @@
  */
 
 struct DINGTIAN_DATA {
-  uint32_t    outputs;              // keep ouputs state
+  uint32_t    outputs;              // keep outputs state
   uint32_t    last_inputs;          // previous inputs state
-  uint8_t     count;                // number of relay and input (8 * numver of shift registers)
+  uint8_t     count;                // number of relay and input (8 * number of shift registers)
   uint8_t     first;                // index of 1st Tasmota relay assigned to 1st Dingtian relays
   int8_t      key_offset;           // index of virtual key
   bool        outputs_initialized;  // set when the outputs are initialized
@@ -74,10 +74,10 @@ uint32_t DingtianReadWrite(uint32_t outputs)
   }
   // ending
   digitalWrite(Dingtian->pin_rck, 1);    // rclk pulse to load '595 into output registers
-  if (PinUsed(GPIO_DINGTIAN_PL)) digitalWrite(Dingtian->pin_pl, 0);      // re-enable '595 ouputs (old board version)
+  if (PinUsed(GPIO_DINGTIAN_PL)) digitalWrite(Dingtian->pin_pl, 0);      // re-enable '595 outputs (old board version)
   if (!Dingtian->outputs_initialized && PinUsed(GPIO_DINGTIAN_OE))
   {
-    digitalWrite(Dingtian->pin_oe, 0);      // enable '595 ouputs (new board version)
+    digitalWrite(Dingtian->pin_oe, 0);      // enable '595 outputs (new board version)
     DINGTIAN_SET_OUTPUT(Dingtian->pin_oe, 0);
     Dingtian->outputs_initialized = true;
   }

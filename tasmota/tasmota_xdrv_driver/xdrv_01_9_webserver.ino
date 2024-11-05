@@ -484,7 +484,7 @@ static void WebGetArg(const char* arg, char* out, size_t max)
 String AddWebCommand(const char* command, const char* arg, const char* dflt) {
 /*
   // OK but fixed max argument
-  char param[200];                             // Allow parameter with lenght up to 199 characters
+  char param[200];                             // Allow parameter with length up to 199 characters
   WebGetArg(arg, param, sizeof(param));
   uint32_t len = strlen(param);
   char cmnd[232];
@@ -968,7 +968,7 @@ void WSContentTextCenterStart(uint32_t color) {
 
 void WSContentButton(uint32_t title_index, bool show=true) {
   char action[4];
-  char title[100];  // Large to accomodate UTF-16 as used by Russian
+  char title[100];  // Large to accommodate UTF-16 as used by Russian
 
   WSContentSend_P(PSTR("<p><form id=but%d style=\"display: %s;\" action='%s' method='get'"),
     title_index,
@@ -1169,7 +1169,7 @@ void WebSliderColdWarm(void) {
     1,               // sl1 - used for slider updates
     153, 500,        // Range color temperature
     Web.slider[0],
-    't', 0);         // t0 - Value id releated to lc("t0", value) and WebGetArg("t0", tmp, sizeof(tmp));
+    't', 0);         // t0 - Value id related to lc("t0", value) and WebGetArg("t0", tmp, sizeof(tmp));
 }
 #endif  // USE_LIGHT
 
@@ -1546,7 +1546,7 @@ bool HandleRootStatusRefresh(void)
 #endif  // USE_LIGHT
 
   WSContentSend_P(PSTR("{t}"));        // <table style='width:100%'>
-  WSContentSeparator(3);               // Reset seperator to ignore previous outputs 
+  WSContentSeparator(3);               // Reset separator to ignore previous outputs
   if (Settings->web_time_end) {
     WSContentSend_P(PSTR("{s}" D_TIMER_TIME "{m}%s{e}"), GetDateAndTime(DT_LOCAL).substring(Settings->web_time_start, Settings->web_time_end).c_str());
     WSContentSeparator(0);             // Print separator
@@ -2801,7 +2801,7 @@ void HandleUploadDone(void) {
 
   WSContentStart_P(PSTR(D_INFORMATION));
   if (!Web.upload_error) {
-    WSContentSend_P(HTTP_SCRIPT_RELOAD_TIME, (UPL_TASMOTA == Web.upload_file_type) ? HTTP_OTA_RESTART_RECONNECT_TIME : HTTP_RESTART_RECONNECT_TIME);  // Refesh main web ui after OTA upgrade
+    WSContentSend_P(HTTP_SCRIPT_RELOAD_TIME, (UPL_TASMOTA == Web.upload_file_type) ? HTTP_OTA_RESTART_RECONNECT_TIME : HTTP_RESTART_RECONNECT_TIME);  // Refresh main web ui after OTA upgrade
   }
   WSContentSendStyle();
   WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
@@ -3420,7 +3420,7 @@ int WebQuery(char *buffer, int query_function = 0)
 {
   // http://192.168.1.1/path GET                                         -> Sends HTTP GET http://192.168.1.1/path
   // http://192.168.1.1/path POST {"some":"message"}                     -> Sends HTTP POST to http://192.168.1.1/path with body {"some":"message"}
-  // http://192.168.1.1/path PUT [Autorization: Bearer abcdxyz] potato   -> Sends HTTP PUT to http://192.168.1.1/path with authorization header and body "potato"
+  // http://192.168.1.1/path PUT [Authorization: Bearer abcdxyz] potato  -> Sends HTTP PUT to http://192.168.1.1/path with authorization header and body "potato"
   // http://192.168.1.1/path PATCH patchInfo                             -> Sends HTTP PATCH to http://192.168.1.1/path with body "potato"
 
   // Valid HTTP Commands: GET, POST, PUT, and PATCH

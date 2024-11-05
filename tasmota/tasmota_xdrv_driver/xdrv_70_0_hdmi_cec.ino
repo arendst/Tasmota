@@ -167,7 +167,7 @@ class CEC_Device
 {
 public:
   // device types as defined by HDMI CEC standard
-  // a logical address is negociated during the first exchange with the CEC bus
+  // a logical address is negotiated during the first exchange with the CEC bus
   typedef enum {
     CDT_TV = 0,
     CDT_RECORDING_DEVICE, // 1
@@ -567,7 +567,7 @@ void CEC_Device::runTransmit() {
           // loop to next iteration
         }
 
-        // we have finsihed waiting, of have aborted wait
+        // we have finished waiting, of have aborted wait
         if (electrical_line_state == 0) {   // if the last measure was LOW, then the line is busy
           // abort, line is busy
           _state = CEC_IDLE;
@@ -1174,7 +1174,7 @@ void CEC_Device::OnTransmitComplete(uint8_t* buf, size_t len, bool ack)
 				OnReady(_logical_address);
       }
     } else {
-      // nak received, this addres is free so let's take it
+      // nak received, this address is free so let's take it
       _logical_address = *_valid_logical_addr;
       OnReady(_logical_address);
     }

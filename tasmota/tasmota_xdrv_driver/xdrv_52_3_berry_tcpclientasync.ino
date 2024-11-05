@@ -197,7 +197,7 @@ public:
 
   // connected()
   // returns:
-  //  0:  still in progres, unknown
+  //  0:  still in progress, unknown
   //  1:  connected
   // -1:  refused
   int connected(void) {
@@ -310,7 +310,7 @@ public:
   }
 
   void update_local_addr_port(void) {
-    local_port = -1;      // default to unknwon
+    local_port = -1;      // default to unknown
     if (sockfd > 0) {
       struct sockaddr_storage local_address;
       socklen_t addr_size = sizeof(local_address);

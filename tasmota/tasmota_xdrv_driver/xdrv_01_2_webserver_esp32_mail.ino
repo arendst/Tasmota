@@ -395,11 +395,11 @@ void smtpCallback(SMTP_Status status) {
   /* Print the sending result */
   if (status.success()) {
     //Serial.println("----------------");
-    //Serial.printf("Message sent success: %d\n", status.completedCount());
-    AddLog(LOG_LEVEL_INFO, PSTR("MAI: Message sent success: %d"),status.completedCount());
+    //Serial.printf("Message send success: %d\n", status.completedCount());
+    AddLog(LOG_LEVEL_INFO, PSTR("MAI: Message send success: %d"),status.completedCount());
 
-    //Serial.printf("Message sent failled: %d\n", status.failedCount());
-    AddLog(LOG_LEVEL_INFO, PSTR("MAI: Message sent failed: %d"),status.failedCount());
+    //Serial.printf("Message send failed: %d\n", status.failedCount());
+    AddLog(LOG_LEVEL_INFO, PSTR("MAI: Message send failed: %d"),status.failedCount());
 
     //Serial.println("----------------\n");
     struct tm dt;

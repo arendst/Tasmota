@@ -18,13 +18,13 @@
 */
 
 /*
-Below is the Pyhton3 code to decompress IR comact format.
+Below is the Python3 code to decompress IR comact format.
 
 ======================================================================
 import re
 
 def ir_expand(ir_compact):
-	count = ir_compact.count(',')		# number of occurence of comma
+	count = ir_compact.count(',')		# number of comma occurrences
 
 	if count > 1:
 		return "Unsupported format"
@@ -62,7 +62,7 @@ def ir_expand(ir_compact):
 #include <IRremoteESP8266.h>
 #include <IRutils.h>
 
-// Receiving IR while sending at the same time (i.e. receiving your own signal) was dsiabled in #10041
+// Receiving IR while sending at the same time (i.e. receiving your own signal) was disabled in #10041
 // At the demand of @pilaGit, you can `#define IR_RCV_WHILE_SENDING 1` to bring back this behavior
 #ifndef IR_RCV_WHILE_SENDING
 #define IR_RCV_WHILE_SENDING  0
@@ -296,7 +296,7 @@ void IrReceiveCheck(void)
       }
 
       ResponseJsonEndEnd();
-      if (Settings->flag6.mqtt_disable_publish ) {  // SetOption147 - If it is activated, Tasmota will not publish IRReceived MQTT messages, but it will proccess event trigger rules
+      if (Settings->flag6.mqtt_disable_publish ) {  // SetOption147 - If it is activated, Tasmota will not publish IRReceived MQTT messages, but it will process event trigger rules
         XdrvRulesProcess(0);
       } else {
         MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_IRRECEIVED));

@@ -56,7 +56,7 @@ extern "C" {
 #else
     IPAddress addr;
 #endif
-    // if no host or host is "" then we defult to INADDR_ANY
+    // if no host or host is "" then we default to INADDR_ANY
     if(host && (*host != 0) && !WifiHostByName(host, addr)){
         return 0;
     }

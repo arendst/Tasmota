@@ -50,7 +50,7 @@
  * - Persistence for module mapping, total energy and energy yesterday
  * - Supported commands:
  *   SspmDisplay 0|1|2          - Select alternative GUI rotating display either all (0), powered on only (1) or user selected (2)
- *   SspmDump 0|1               - Select shortenend (0) or full (1) serial receive buffer dumps
+ *   SspmDump 0|1               - Select shortened (0) or full (1) serial receive buffer dumps
  *   SspmEnergyTotal<relay>     - (p)reset total energy without today's energy
  *   SspmEnergyYesterday<relay> - (p)reset energy yesterday
  *   SspmHistory<relay>         - Retrieve daily energy of last six month (as defined by ARM firmware)
@@ -122,7 +122,7 @@
 #define XDRV_86                      86
 
 #define SSPM_MAX_MODULES             8       // Currently supports up to 8 SPM-4RELAY units for a total of 32 relays restricted by 32-bit power_t size
-#define SSPM_SERIAL_BUFFER_SIZE      548     // Needs to accomodate firmware upload data blocks (546 bytes)
+#define SSPM_SERIAL_BUFFER_SIZE      548     // Needs to accommodate firmware upload data blocks (546 bytes)
 
 //#define SSPM_SIMULATE                        // Simulate additional 4Relay modules based on first detected 4Relay module (debugging purposes only!!)
 
@@ -189,7 +189,7 @@ enum SspmMachineStates { SPM_NONE,                       // Do nothing
                          SPM_WAIT,                       // Wait 100ms
                          SPM_RESET,                      // Toggle ARM reset pin
                          SPM_POLL_ARM,                   // Wait for first acknowledge from ARM after reset
-// Removed to accomodate v1.2.0 too
+// Removed to accommodate v1.2.0 too
 //                         SPM_POLL_ARM_SPI,               // Wait for first acknowledge from ARM SPI after reset
 //                         SPM_POLL_ARM_2,                 // Wait for second acknowledge from ARM after reset
 //                         SPM_POLL_ARM_3,                 // Wait for second acknowledge from ARM after reset
@@ -2062,7 +2062,7 @@ void SSPMEvery100ms(void) {
       SSPMSendCmnd(SSPM_FUNC_FIND);
       break;
 /*
-    // Removed to accomodate v1.2.0 too
+    // Removed to accommodate v1.2.0 too
     case SPM_POLL_ARM_SPI:
       SSPMSendSPIFind();
       Sspm->mstate = SPM_POLL_ARM_2;
@@ -2567,7 +2567,7 @@ void CmndSSPMEnergy(void) {
 }
 
 void CmndSSPMHistory(void) {
-  // Retreive daily history of one relay up to six month
+  // Retrieve daily history of one relay up to six month
   // SspmHistory<relay>
   if (Sspm->module_max) {
     if ((XdrvMailbox.index < 1) || (XdrvMailbox.index > TasmotaGlobal.devices_present)) { XdrvMailbox.index = 1; }

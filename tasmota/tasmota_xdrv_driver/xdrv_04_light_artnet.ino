@@ -136,7 +136,7 @@ void ArtNetProcessPacket(uint8_t * buf, size_t len) {
   uint16_t protocol = (buf[10] << 8) | buf[11];   // Big Endian
   uint16_t universe = buf[14] | (buf[15] << 8);
   uint16_t datalen = (buf[16] << 8) | buf[17];
-  // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DMX: opcode=0x%04X procotol=%i universe=%i datalen=%i univ_start=%i univ_end=%i"), opcode, protocol, universe, datalen, artnet_conf.univ, artnet_conf.univ + artnet_conf.rows);
+  // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DMX: opcode=0x%04X protocol=%i universe=%i datalen=%i univ_start=%i univ_end=%i"), opcode, protocol, universe, datalen, artnet_conf.univ, artnet_conf.univ + artnet_conf.rows);
   if (opcode != 0x5000 || protocol != 14) { return; }
 
 //  if (len + 18 < datalen) {

@@ -55,7 +55,7 @@
 \*********************************************************************************************/
 
 /*********************************************************************************************\
- * This is the central class to acccess I2S in (rx) or out (tx)
+ * This is the central class to access I2S in (rx) or out (tx)
  * 
  * It inherits from AudioOutput so it can be used as output instance for ESP8266Audio library
  * 
@@ -210,7 +210,7 @@ public:
   //
   // Max 128 samples, it is clipped otherwise
   // Returns: the number of samples actually consumed
-  //   or -1 if an error occured
+  //   or -1 if an error occurred
   //
   // The call is non blocking and does not wait
   int32_t consumeSamples(int16_t *samples, size_t count);
@@ -504,7 +504,7 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
   if (rx && _rx_handle) { return true; }
 
   if (_exclusive) {
-    // in exclusive mode, we may need to remove exisiting driver
+    // in exclusive mode, we may need to remove existing driver
     if (tx && _rx_handle) {
       AddLog(LOG_LEVEL_DEBUG, "I2S: (exclusive mode) forcing stopRx");
       stopRx();
@@ -774,7 +774,7 @@ uint32_t TasmotaI2S::startRx(void) {
 // Read data into buffer of uint16_t[]
 //
 // Returns:
-//  n<0: error occured
+//  n<0: error occurred
 //  0: no data available
 //  n>0: number of bytes read
 //  peak: peak value of the mic (can go above 32767 to indicate clipping)

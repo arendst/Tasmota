@@ -103,7 +103,7 @@ void BuzzerBeep(uint32_t count, uint32_t on, uint32_t off, uint32_t tune, uint32
   if (Buzzer.enable) {
     Buzzer.sleep = TasmotaGlobal.sleep;
     if (Settings->sleep > PWM_MAX_SLEEP) {
-      TasmotaGlobal.sleep = PWM_MAX_SLEEP;   // Set a maxumum value of 10 milliseconds to ensure that buzzer periods are a bit more accurate
+      TasmotaGlobal.sleep = PWM_MAX_SLEEP;   // Set a maximum value of 10 milliseconds to ensure that buzzer periods are a bit more accurate
     } else {
       TasmotaGlobal.sleep = Settings->sleep;  // Or keep the current sleep if it's lower than 10
     }

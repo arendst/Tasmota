@@ -31,7 +31,7 @@ typedef struct Z_CommandConverter {
   uint16_t     param_offset;
 } Z_CommandConverter;
 
-typedef struct Z_XYZ_Var {    // Holds values for vairables X, Y and Z
+typedef struct Z_XYZ_Var {    // Holds values for variables X, Y and Z
   uint32_t    x = 0;
   uint32_t    y = 0;
   uint32_t    z = 0;
@@ -51,7 +51,7 @@ const Z_CommandConverter Z_Commands[] PROGMEM = {
   // Identify cluster
   { Z_(Identify),       0x0003, 0x00, 0x01,   Z_(xxxx) },         // Identify device, time in seconds
   { Z_(IdentifyQuery),  0x0003, 0x01, 0x01,   Z_() },             // Identify Query (no param)
-  // Group adress commands
+  // Group address commands
   { Z_(AddGroup),       0x0004, 0x00, 0x01,   Z_(xxxx00) },       // Add group id, group name is not supported
   { Z_(ViewGroup),      0x0004, 0x01, 0x01,   Z_(xxxx) },         // Ask for the group name
   { Z_(GetGroup),       0x0004, 0x02, 0x01,   Z_(01xxxx) },       // Get one group membership
@@ -353,7 +353,7 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
   Z_attribute & attr_raw = attr_list.addAttributeCmd(cluster, cmd, direction, false /* cluster specific */);
   attr_raw.setBuf(payload, 0, payload.len());
 
-  // Take a shotcut in case of Tuya attribute which follow a different scheme
+  // Take a shortcut in case of Tuya attribute which follow a different scheme
   if (cluster == 0xEF00) {
     // Tuya Cmd
     if (convertTuyaSpecificCluster(attr_list, cluster, cmd, direction, shortaddr, srcendpoint, payload)) {
@@ -532,7 +532,7 @@ void convertClusterSpecific(class Z_attribute_list &attr_list, uint16_t cluster,
  * Tuya Zigbee specific protocol
  * 
 \*********************************************************************************************/
-// Parse a sinlge attribute value and convert to human readable JSON attribute value
+// Parse a single attribute value and convert to human readable JSON attribute value
 void parseSingleTuyaAttribute(Z_attribute & attr, const SBuffer &buf,
                               uint32_t i, uint32_t len, int32_t attrtype) {
 
@@ -596,7 +596,7 @@ static void replyTuyaTime( uint16_t cluster, uint16_t shortaddr, uint8_t dstendp
 }
 
 //
-// Tuya - MOES specifc cluster 0xEF00
+// Tuya - MOES specific cluster 0xEF00
 // https://developer.tuya.com/en/docs/iot-device-dev/tuya-zigbee-universal-docking-access-standard?id=K9ik6zvofpzql#subtitle-6-Private%20cluster
 //
 bool convertTuyaSpecificCluster(class Z_attribute_list &attr_list, uint16_t cluster, uint8_t cmd, bool direction, uint16_t shortaddr, uint8_t srcendpoint, const SBuffer &buf) {

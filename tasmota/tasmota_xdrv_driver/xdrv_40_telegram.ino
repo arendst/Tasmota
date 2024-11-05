@@ -191,7 +191,7 @@ void TelegramGetUpdates(uint32_t offset) {
 
   String _token = SettingsText(SET_TELEGRAM_TOKEN);
   String command = "bot" + _token + "/getUpdates?offset=" + String(offset);
-  String response = TelegramConnectToTelegram(command);       //recieve reply from telegram.org
+  String response = TelegramConnectToTelegram(command);       //receive reply from telegram.org
 
   // {"ok":true,"result":[]}
   // or

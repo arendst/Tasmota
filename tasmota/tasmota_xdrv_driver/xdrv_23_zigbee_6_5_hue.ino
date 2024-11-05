@@ -170,7 +170,7 @@ void ZigbeeHueGroups(String * lights) {
       int8_t bulbtype = device.getHueBulbtype(ep);
       if (bulbtype >= 0) {
         *lights += ",\"";
-        *lights += EncodeLightIdZigbee((i == 0) ? 0 : ep, shortaddr); // if first endpont, announce as `0`
+        *lights += EncodeLightIdZigbee((i == 0) ? 0 : ep, shortaddr); // if first endpoint, announce as `0`
         *lights += "\"";
       }
     }

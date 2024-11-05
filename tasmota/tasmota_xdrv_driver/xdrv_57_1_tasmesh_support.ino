@@ -37,7 +37,7 @@
 
 #define MESH_PAYLOAD_SIZE 160      // Default 160 - with header of 20 bytes and 16 bytes tag, stays below 200 bytes, which is reported to work with ESP8266
 #define MESH_TOPICSZ      64       // Max supported topic size
-#define MESH_BUFFERS      26       // (6) Max buffers number for splitted messages
+#define MESH_BUFFERS      26       // (6) Max buffers number for split messages
 #define MESH_MAX_PACKETS  3        // (3) Max number of packets
 #define MESH_REFRESH      50       // Number of ms
 
@@ -163,7 +163,7 @@ enum MESH_Role {
 
 enum MESH_Packet_Type {            // Type of packet
   PACKET_TYPE_TIME = 0,            //
-  PACKET_TYPE_PEERLIST,            // send all kown peers, broker is always 0
+  PACKET_TYPE_PEERLIST,            // send all known peers, broker is always 0
   PACKET_TYPE_COMMAND,             // not used yet
   PACKET_TYPE_REGISTER_NODE,       // register a node with encrypted broker-MAC, announce mqtt topic to ESP32-proxy - broker will send time ASAP
   PACKET_TYPE_REFRESH_NODE,        // refresh node infos with encrypted broker-MAC, announce mqtt topic to ESP32-proxy - broker will send time slightly delayed

@@ -45,7 +45,7 @@ subdirectories are supported.
 
 Supported commands:
 ufs       fs info
-ufstype   get filesytem type 0=none 1=SD  2=Flashfile
+ufstype   get filesystem type 0=none 1=SD  2=Flashfile
 ufssize   total size in kB
 ufsfree   free size in kB
 ufsdelete
@@ -91,7 +91,7 @@ ftp       start stop ftp server: 0 = OFF, 1 = SDC, 2 = FlashFile
 FS *ufsp;
 // Flash file system pointer
 FS *ffsp;
-// Local pointer for file managment
+// Local pointer for file management
 FS *dfsp;
 
 char ufs_path[48];
@@ -216,7 +216,7 @@ void UfsCheckSDCardInit(void) {
       if (ffsp) {ufs_dir = 1;}
       // make sd card the global filesystem
 #ifdef ESP8266
-      // on esp8266 sdcard info takes several seconds !!!, so we ommit it here
+      // on esp8266 sdcard info takes several seconds !!!, so we omit it here
       AddLog(LOG_LEVEL_INFO, PSTR("UFS: SDCard mounted"));
 #endif // ESP8266
 #ifdef ESP32
@@ -554,7 +554,7 @@ void UfsExecuteCommandFileLoop(void) {
 }
 
 bool UfsExecuteCommandFile(const char *fname) {
-  // Check for non-concurrency and file existance
+  // Check for non-concurrency and file existence
   if (UfsExecuteCommandFileReady() && TfsFileExists(fname)) {
     snprintf(UfsData.run_file, sizeof(UfsData.run_file), fname);
     UfsData.run_file_pos = 0;          // Signal start of file
@@ -906,7 +906,7 @@ void UFSRename(void) {
 * e.g. "UFSServe /sd/,/mysdcard/,1" - will serve the /sd/ fs folder as https://<ip>/mysdcard/ with no auth required
 * e.g. "UFSServe /www/,/" - will serve the /www/ fs folder as https://<ip>/ with auth required if TAS has a password setup
 * <noauth> defaults to 0 - i.e. the default is to require auth if configured
-* it WILL serve on / - so conflicting urls could occur.  I beleive native TAS urls will have priority.
+* it WILL serve on / - so conflicting urls could occur.  I believe native TAS urls will have priority.
 * you can serve multiple folders, and they can each be auth or noauth
 *
 * by default, it also enables cors on the webserver - this allows you to have 
@@ -1470,7 +1470,7 @@ uint8_t UfsDownloadFile(char *file) {
 
 
 
-// to make this work I thing you wouold need to duplicate the client 
+// to make this work I think you would need to duplicate the client
 // BEFORE starting the task, so that the webserver does not close it's
 // copy of the client.
 #ifdef ESP32_DOWNLOAD_TASK

@@ -167,7 +167,7 @@ bool ShdUpdateFirmware(uint8_t* data, uint32_t size)
                 break;
             }
 
-            memcpy(buffer, p_st, sizeof(buffer));  // We need 4-byte bounadry flash access
+            memcpy(buffer, p_st, sizeof(buffer));  // We need 4-byte boundary flash access
             p_st += sizeof(buffer);
 
             s_err = stm32_write_memory(stm, addr, buffer, len);
@@ -436,7 +436,7 @@ bool ShdSyncState()
 
 #ifdef SHELLY_HW_DIMMING
     // TODO(jamesturton): HW dimming seems to conflict with SW dimming. See how
-    // we can disbale SW dimming when using HW dimming.
+    // we can disable SW dimming when using HW dimming.
     if (Settings->light_speed != Shd.dimmer.fade_rate)
     {
         ShdSetBrightnessFade();

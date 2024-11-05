@@ -393,7 +393,7 @@ uint32_t WcSetup(int32_t fsiz) {
     config.pin_reset = Pin(GPIO_WEBCAM_RESET);    // RESET_GPIO_NUM;
     AddLog(LOG_LEVEL_DEBUG, PSTR("CAM: Template pin config"));
   } else if (Y2_GPIO_NUM != -1) {
-    // Modell is set in camera_pins.h
+    // Model is set in camera_pins.h
     config.pin_d0 = Y2_GPIO_NUM;
     config.pin_d1 = Y3_GPIO_NUM;
     config.pin_d2 = Y4_GPIO_NUM;

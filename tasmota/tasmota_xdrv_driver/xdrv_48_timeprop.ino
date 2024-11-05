@@ -32,7 +32,7 @@
  *
  * A value for actuator dead time may be provided. If you have a device that
  * takes a significant time to open/close then set this to the average of the
- * open and close times.  The algorithim will then adjust the output timing
+ * open and close times.  The algorithm will then adjust the output timing
  * accordingly to ensure that the output is not switched more rapidly than
  * the actuator can cope with.
  *
@@ -60,22 +60,22 @@
 
  #define USE_TIMEPROP    //  include the timeprop feature (+1.2k)
    // for single output
-   #define TIMEPROP_NUM_OUTPUTS          1       // how many outputs to control (with separate alogorithm for each)
+   #define TIMEPROP_NUM_OUTPUTS          1       // how many outputs to control (with separate algorithm for each)
    #define TIMEPROP_CYCLETIMES           60      // cycle time seconds
    #define TIMEPROP_DEADTIMES            0       // actuator action time seconds
    #define TIMEPROP_OPINVERTS            false   // whether to invert the output
-   #define TIMEPROP_FALLBACK_POWERS      0.0       // falls back to this if too long betwen power updates
+   #define TIMEPROP_FALLBACK_POWERS      0.0       // falls back to this if too long between power updates
    #define TIMEPROP_MAX_UPDATE_INTERVALS 120     // max no secs that are allowed between power updates (0 to disable)
    #define TIMEPROP_RELAYS               1       // which relay to control 1:8
 
  * or for two relays:
  #define USE_TIMEPROP    //  include the timeprop feature (+1.2k)
    // for single output
-   #define TIMEPROP_NUM_OUTPUTS          2               // how many outputs to control (with separate alogorithm for each)
+   #define TIMEPROP_NUM_OUTPUTS          2               // how many outputs to control (with separate algorithm for each)
    #define TIMEPROP_CYCLETIMES           60,     10      // cycle time seconds
    #define TIMEPROP_DEADTIMES            0,      0       // actuator action time seconds
    #define TIMEPROP_OPINVERTS            false,  false   // whether to invert the output
-   #define TIMEPROP_FALLBACK_POWERS      0.0,      0.0       // falls back to this if too long betwen power updates
+   #define TIMEPROP_FALLBACK_POWERS      0.0,      0.0       // falls back to this if too long between power updates
    #define TIMEPROP_MAX_UPDATE_INTERVALS 120,    120     // max no secs that are allowed between power updates (0 to disable)
    #define TIMEPROP_RELAYS               1,      2       // which relay to control 1:8
 
@@ -89,7 +89,7 @@
 
 
 #ifndef TIMEPROP_NUM_OUTPUTS
-#define TIMEPROP_NUM_OUTPUTS          1       // how many outputs to control (with separate alogorithm for each)
+#define TIMEPROP_NUM_OUTPUTS          1       // how many outputs to control (with separate algorithm for each)
 #endif
 #ifndef TIMEPROP_CYCLETIMES
 #define TIMEPROP_CYCLETIMES           60      // cycle time seconds
@@ -284,7 +284,7 @@ void TimepropEverySecond(void) {
 // called by the system each time a relay state is changed
 void TimepropXdrvPower(void) {
   // for a single relay the state is in the lsb of index, I have think that for
-  // multiple outputs then succesive bits will hold the state but have not been
+  // multiple outputs then successive bits will hold the state but have not been
   // able to test that
   Tprop.current_relay_states = XdrvMailbox.index;
 }

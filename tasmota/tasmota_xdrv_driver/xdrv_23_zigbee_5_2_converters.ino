@@ -100,7 +100,7 @@ public:
   ZCLFrame(void);            // allocate 16 bytes by default
   ZCLFrame(size_t size);
 
-  // constructore used when receiving a Zigbee frame and populating the class
+  // constructor used when receiving a Zigbee frame and populating the class
   ZCLFrame(uint8_t frame_control, uint16_t manuf_code, uint8_t transact_seq, uint8_t cmd_id,
     const char *buf, size_t buf_len, uint16_t clusterid, uint16_t groupaddr,
     uint16_t srcaddr, uint8_t srcendpoint, uint8_t dstendpoint, uint8_t wasbroadcast,
@@ -247,7 +247,7 @@ private:
   uint8_t                 _seqnumber = 0;             // not used by Z2T, logging only
 };
 
-// define constructor seperately to avoid inlining and reduce Flash size
+// define constructor separately to avoid inlining and reduce Flash size
 ZCLFrame::ZCLFrame(void) : payload(12) {};
 ZCLFrame::ZCLFrame(size_t size) : payload(size) {};
 
@@ -303,12 +303,12 @@ int32_t encodeSingleAttribute(SBuffer &buf, double val_d, const char *val_str, u
     case Zmap16:      // map16
       buf.add16(u32);
       break;
-    // unisgned 32
+    // unsigned 32
     case Zuint24:
       buf.add16(u32);
       buf.add8(u32 >> 16);
       break;
-    // unisgned 24
+    // unsigned 24
     case Zuint32:     // uint32
     case Zdata32:     // data32
     case Zmap32:      // map32
@@ -384,7 +384,7 @@ uint32_t parseSingleAttribute(Z_attribute & attr, const SBuffer &buf,
   // fallback - enter a null value
   attr.setNone();   // set to null by default
 
-  uint32_t len = Z_getDatatypeLen(attrtype);    // pre-compute lenght, overloaded for variable length attributes
+  uint32_t len = Z_getDatatypeLen(attrtype);    // pre-compute length, overloaded for variable length attributes
 
   // now parse accordingly to attr type
   switch (attrtype) {
@@ -777,7 +777,7 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
           String manufacturerId((char*) manufacturer_c);
           if (manufacturerId.equals(F("Eurotronic"))) {
             if (ccccaaaa == 0x02010008) {
-              // Eurotronic does not report 0..100 but 0..255, including 255 which is normally an ivalid value
+              // Eurotronic does not report 0..100 but 0..255, including 255 which is normally an invalid value
               uint8_t valve = attr.getUInt();
               if (attr.isNone()) { valve = 255; }
               uint8_t valve_100 = changeUIntScale(valve, 0, 255, 0, 100);
@@ -839,7 +839,7 @@ void ZCLFrame::computeSyntheticAttributes(Z_attribute_list& attr_list) {
         }
         break;
       // convert AC multipliers/dividers
-      case 0x0B040600 ... 0x0B040605:   // cluser 0x0B04 - attr 0x0600..0x0605
+      case 0x0B040600 ... 0x0B040605:   // cluster 0x0B04 - attr 0x0600..0x0605
         {
           uint16_t val = attr.getUInt();
           Z_Data_Plug & plug = device.data.get<Z_Data_Plug>();
@@ -1505,7 +1505,7 @@ void Z_postProcessAttributes(uint16_t shortaddr, uint16_t src_ep, class Z_attrib
       if (found && (matched_attr.map_type != Z_Data_Type::Z_Unknown)) {
         // We apply an automatic mapping to Z_Data_XXX object
         // First we find or instantiate the correct Z_Data_XXX according to the endpoint
-        // Then store the attribute at the attribute addres (via offset) and according to size 8/16/32 bits
+        // Then store the attribute at the attribute address (via offset) and according to size 8/16/32 bits
 
         // add the endpoint if it was not already known
         device.addEndpoint(src_ep);

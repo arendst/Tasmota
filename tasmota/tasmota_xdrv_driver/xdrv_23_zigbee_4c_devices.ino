@@ -190,7 +190,7 @@ SBuffer hibernateDevice(const struct Z_Device &device) {
   if (hibernateDeviceConfiguration(buf, device.data, 0)) {
     buf.add8(0xFF); // end of configuration
     buf.add8(0x00); // empty ep friendly name, as it would duplicate the global friendly name
-    // update the lenght of ep0_data_lenth
+    // update the length of ep0_data_length
     buf.set8(ep0_len_offset, buf.len() - ep0_len_offset - 1);
   } else {
     buf.setLen(buf.len()-2);    // remove 2 bytes header
@@ -213,7 +213,7 @@ SBuffer hibernateDevice(const struct Z_Device &device) {
     } else {
       buf.add8(0x00); // no endpoint name
     }
-    // update the lenght of ep0_data_lenth
+    // update the length of ep0_data_length
     buf.set8(ep_len_offset, buf.len() - ep_len_offset - 1);
   }
   buf.add8(0xFF); // end of endpoints
@@ -232,7 +232,7 @@ SBuffer hibernateDevice(const struct Z_Device &device) {
  * 
  * Writes the preamble and all devices in the Univ_Write_File structure.
  * Does not close the file at the end.
- * Returns true if succesful.
+ * Returns true if successful.
  * In case of problem, the output file is left untouched
 \*********************************************************************************************/
 // EEPROM variant that writes one item at a time and is not limited to 2KB
@@ -305,7 +305,7 @@ void hydrateSingleDevice(const SBuffer & buf_d, uint32_t version) {
 
       while (d < buf_len) {
         uint8_t config_type = buf_d.get8(d++);
-        if (0xFF == config_type) { break; }                                // 0xFF marks the end of congiguration
+        if (0xFF == config_type) { break; }                                // 0xFF marks the end of configuration
         uint8_t config = config_type & 0x0F;
         Z_Data_Type type = (Z_Data_Type) (config_type >> 4);
         // set the configuration
@@ -327,7 +327,7 @@ void hydrateSingleDevice(const SBuffer & buf_d, uint32_t version) {
       // version == 2
       while (d < buf_len) {
         uint8_t config_type = buf_d.get8(d++);
-        if (0xFF == config_type) { break; }                                // 0xFF marks the end of congiguration
+        if (0xFF == config_type) { break; }                                // 0xFF marks the end of configuration
         uint8_t config = config_type & 0x0F;
         Z_Data_Type type = (Z_Data_Type) (config_type >> 4);
         // set the configuration

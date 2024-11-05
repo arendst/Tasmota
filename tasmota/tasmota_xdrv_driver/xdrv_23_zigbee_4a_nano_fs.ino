@@ -63,7 +63,7 @@ void hydrateSingleDevice(const SBuffer & buf_d, uint32_t version);
 // Then blocks are a linked-list of content. The next block is indicated in Block 1
 //
 // Note: the linked list could cause a circular reference loop and potentially an infinite loop.
-// This is why the content lenght is used to check that the block count does not exceed
+// This is why the content length is used to check that the block count does not exceed
 // the content length hence cannot cause an infinite loop.
 // Any pointer to blocks 1 or 255 is considered invalid and means a corruption of the file system.
 

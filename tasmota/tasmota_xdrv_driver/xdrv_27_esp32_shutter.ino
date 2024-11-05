@@ -105,7 +105,7 @@ struct SHUTTERSETTINGS {
   tButtonSettings shutter_button[MAX_SHUTTERS_ESP32*2];
 } ShutterSettings;
 
-const uint16_t RESOLUTION = 1000;       // incresed to 1000 in 8.5 to ramp servos
+const uint16_t RESOLUTION = 1000;       // increased to 1000 in 8.5 to ramp servos
 const uint8_t  STEPS_PER_SECOND = 20;   // FUNC_EVERY_50_MSECOND
 const uint16_t pwm_servo_max = 500;
 const uint16_t pwm_servo_min = 90;
@@ -166,7 +166,7 @@ struct SHUTTER {
   int8_t   motordelay;         // initial motorstarttime in 0.05sec. Also uses for ramp at steppers and servos, negative if motor stops late
   int16_t  pwm_velocity;       // frequency of PWN for stepper motors or PWM duty cycle change for PWM servo
   uint16_t pwm_value;          // dutyload of PWM 0..1023 on ESP8266
-  uint16_t close_velocity_max; // maximum of PWM change during closeing. Defines velocity on opening. Steppers and Servos only
+  uint16_t close_velocity_max; // maximum of PWM change during closing. Defines velocity on opening. Steppers and Servos only
   int32_t  accelerator;        // speed of ramp-up, ramp down of shutters with velocity control. Steppers and Servos only
   int8_t   tilt_config[5];     // tilt_min, tilt_max, duration, tilt_closed_value, tilt_opened_value
   int8_t   tilt_real_pos;      // -90 to 90
@@ -180,19 +180,19 @@ struct SHUTTER {
   uint16_t min_TiltChange = 0;         // minimum change of the tilt before the shutter operates. different for PWM and time based operations
   uint16_t last_reported_time = 0;     // get information on skipped 50ms loop() slots
   uint32_t last_stop_time = 0;         // record the last time the relay was switched off
-  uint8_t  button_simu_pressed = 0;    // record if both button where pressed simultanously
+  uint8_t  button_simu_pressed = 0;    // record if both buttons were pressed simultaneously
 } Shutter[MAX_SHUTTERS_ESP32];
 
 struct SHUTTERGLOBAL {
   power_t  RelayShutterMask = 0;             // bit mask with 11 at the position of relays that belong to at least ONE shutter
-  power_t  RelayOldMask = 0;                 // bitmatrix that contain the last known state of all relays. Required to detemine the manual changed relay.
+  power_t  RelayOldMask = 0;                 // bitmatrix that contains the last known state of all relays. Required to determine the manual changed relay.
   power_t  RelayCurrentMask = 0;             // bitmatrix that contain the current state of all relays
   uint8_t  LastChangedRelay = 0;             // Relay 1..32, 0 no change
   uint8_t  position_mode = 0;                // how to calculate actual position: SHT_TIME, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME
   uint8_t  skip_relay_change;                // avoid overrun at endstops
   uint8_t  start_reported = 0;               // indicates of the shutter start was reported through MQTT JSON
   uint16_t open_velocity_max = RESOLUTION;   // maximum of PWM change during opening. Defines velocity on opening. Steppers and Servos only
-  bool     callibration_run = false;         // if true a callibration is running and additional measures are captured
+  bool     callibration_run = false;         // if true a calibration is running and additional measures are captured
   uint8_t  stopp_armed = 0;                  // Count each step power usage is below limit of 1 Watt
   uint16_t cycle_time = 0;                   // used for shuttersetup to get accurate timing
   bool     sensor_data_reported = false;     // ensure that shutter sensor data reported every sedond is only reported if shutter is moving and there is a change.
@@ -252,7 +252,7 @@ bool ShutterButtonHandlerMulti(void)
   if (!Shutter[shutter_index].button_simu_pressed) {
     uint8_t pos_press_index = Button.press_counter[button_index]-1;
 
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Button %d = %d (single=1, double=2, tripple=3, hold=4)"), shutter_index+1, button_index+1, pos_press_index+1);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Shtr%d, Button %d = %d (single=1, double=2, triple=3, hold=4)"), shutter_index+1, button_index+1, pos_press_index+1);
     XdrvMailbox.index         = shutter_index +1;
     TasmotaGlobal.last_source = SRC_BUTTON;
     XdrvMailbox.data_len      = 0;
@@ -321,7 +321,7 @@ bool ShutterButtonHandlerMulti(void)
   // reset simu pressed record
   Shutter[shutter_index].button_simu_pressed = 0;
 
-  // reset all buttons on this shutter to prevent further actions with the second button comming in
+  // reset all buttons on this shutter to prevent further actions with the second button coming in
   for (uint32_t i = 0; i < MAX_SHUTTERS_ESP32*2 ; i++) {
     if ((ShutterSettings.shutter_button[i].enabled) && (ShutterSettings.shutter_button[i].shutter_number == shutter_index) ) {
       Button.press_counter[i] = 0;
@@ -351,7 +351,7 @@ bool ShutterButtonHandler(void)
   // handle on button release: start shutter on shortpress and stop running shutter after longpress.
   if (NOT_PRESSED == button
       && !ShutterSettings.shutter_button[button_index].position[3].mqtt_broadcast // do not stop on hold release if broadcast
-      && Shutter[shutter_index].direction != 0                                    // only act on shutters activly moving
+      && Shutter[shutter_index].direction != 0                                    // only act on shutters actively moving
       && Button.hold_timer[button_index]   > 0                                    // kick in on first release of botton. do not check for multipress
       ) 
   {
@@ -364,9 +364,9 @@ bool ShutterButtonHandler(void)
     return true;
   }
 
-  // simulatanous press. Stop 
+  // simultaneous press. Stop
   if (PRESSED == button
-      && Shutter[shutter_index].button_simu_pressed  // only if both buttons are pressed simultanously
+      && Shutter[shutter_index].button_simu_pressed  // only if both buttons are pressed simultaneously
       && Button.window_timer[button_index] == 0      // time for waiting for multipress window expired
       && Button.press_counter[button_index] > 0      // only execute if at least pressed ONCE. 0==disable
       )
@@ -413,11 +413,11 @@ void ShutterCalculateAccelerator(uint8_t i)
         next_possible_stop_position = current_real_position + current_stop_way ;
         // ensure that the accelerotor kicks in at the first overrun of the target position
         if (  Shutter[i].accelerator < 0 || next_possible_stop_position * Shutter[i].direction > Shutter[i].target_position * Shutter[i].direction ) {
-            // if startet to early because of 0.05sec maximum accuracy and final position is to far away (200) accelerate a bit less
+            // if started too early because of 0.05sec maximum accuracy and final position is too far away (200) accelerate a bit less
             if (next_possible_stop_position * Shutter[i].direction + 200 < Shutter[i].target_position * Shutter[i].direction) {
               Shutter[i].accelerator = -velocity_change_per_step_max * 9/10;
             } else {
-              // in any case increase accelleration if overrun is detected during decelleration
+              // in any case increase acceleration if overrun is detected during decelleration
               if (next_possible_stop_position * Shutter[i].direction > Shutter[i].target_position * Shutter[i].direction && Shutter[i].accelerator < 0) {
                 Shutter[i].accelerator = -velocity_change_per_step_max * 11/10;
               } else {
@@ -1061,7 +1061,7 @@ void ShutterSettingsDefault(void) {
     ShutterSettings.shutter_button[i].enabled        = Settings->shutter_button[i] &(1<<31);
     for (uint8_t j = 0; j < 4; j++) {
       ShutterSettings.shutter_button[i].position[j].pos            = (((Settings->shutter_button[i]>> (2+6*j))&(0x3f))-1)<<1;
-      ShutterSettings.shutter_button[i].position[j].tilt           = -128;  // -128 == DISBALED
+      ShutterSettings.shutter_button[i].position[j].tilt           = -128;  // -128 == DISABLED
       ShutterSettings.shutter_button[i].position[j].mqtt_broadcast = ((Settings->shutter_button[i]>>(26+j))&(0x01)!=0);
     }
   }
@@ -1213,7 +1213,7 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
         Shutter[i].venetian_delay, Shutter[i].tilt_real_pos,direction,(Shutter[i].tilt_config[1]-Shutter[i].tilt_config[0]), Shutter[i].tilt_config[2],Shutter[i].tilt_start_pos,Shutter[i].tilt_target_pos);
     }
 
-    // avoid file system writes during move to minimize missing steps. 15min diabled. Will re renabled on full stop
+    // avoid file system writes during move to minimize missing steps. 15min disabled. Will be re-enabled on full stop
     TasmotaGlobal.save_data_counter = 900;
 
   }
@@ -1375,7 +1375,7 @@ void ShutterUpdateVelocity(uint8_t i)
 {
   // No Logging allowed. Part of RTC Timer
   // will be calles through RTC every 50ms.
-  // do not allow accellerator to stop movement
+  // do not allow accelerator to stop movement
   Shutter[i].pwm_velocity = tmax(velocity_change_per_step_max, Shutter[i].pwm_velocity+Shutter[i].accelerator);
   Shutter[i].pwm_velocity = tmin(Shutter[i].direction==1 ? ShutterGlobal.open_velocity_max : Shutter[i].close_velocity_max,Shutter[i].pwm_velocity);
   // respect hard coded SDK limit of PWM_MIN on PWM frequency.
@@ -1412,11 +1412,11 @@ void CmndShutterButton(void)
     // (setting>>31)&(0x01) : enabled
     // (setting>>30)&(0x01) : mqtt broadcast to all index
     // (setting>>29)&(0x01) : mqtt broadcast hold
-    // (setting>>28)&(0x01) : mqtt broadcast tripple press
+    // (setting>>28)&(0x01) : mqtt broadcast triple press
     // (setting>>27)&(0x01) : mqtt broadcast double press
     // (setting>>26)&(0x01) : mqtt broadcast single press
     // (setting>>20)&(0x3f) : shutter_position hold; 0 disabled, 1..101 == 0..100%, 102 == toggle
-    // (setting>>14)&(0x3f) : shutter_position tripple press 0 disabled, 1..101 == 0..100%, 102 == toggle
+    // (setting>>14)&(0x3f) : shutter_position triple press 0 disabled, 1..101 == 0..100%, 102 == toggle
     // (setting>> 8)&(0x3f) : shutter_position double press 0 disabled, 1..101 == 0..100%, 102 == toggle
     // (setting>> 2)&(0x3f) : shutter_position single press 0 disabled, 1..101 == 0..100%, 102 == toggle
     // (setting>> 0)&(0x03) : shutter_index
@@ -1430,7 +1430,7 @@ void CmndShutterButton(void)
 
         char data_copy[strlen(XdrvMailbox.data) +1];
         strncpy(data_copy, XdrvMailbox.data, sizeof(data_copy));  // Duplicate data as strtok_r will modify it.
-        // Loop through the data string, splitting on ' ' seperators.
+        // Loop through the data string, splitting on ' ' separators.
         for (char *str = strtok_r(data_copy, " ,", &str_ptr); str && i < (1+4+4+1); str = strtok_r(nullptr, " ,", &str_ptr), i++) {
           int field         = -1;
           int tilt          = -128;
@@ -1439,7 +1439,7 @@ void CmndShutterButton(void)
           int j = 0;  // tokencount on "/"
           char field_copy[strlen(str) + 1];
           strncpy(field_copy, str, sizeof(field_copy));  // Duplicate data as strtok_r will modify it.
-          // Loop through the data string, splitting on '/' seperators. Syntax position[0..100]/tilt[-90..90]
+          // Loop through the data string, splitting on '/' separators. Syntax position[0..100]/tilt[-90..90]
           for (char *str2 = strtok_r(field_copy, "/", &str_ptr2); str2 && j < 2; str2 = strtok_r(nullptr, "/", &str_ptr2), j++) {
             switch (j) {
               case 0:
@@ -1468,7 +1468,7 @@ void CmndShutterButton(void)
                   case 't':
                     tilt = 127;
                     break;
-                  case '-': // special handling to seperate a - from a negative number. e.g. -90
+                  case '-': // special handling to separate a - from a negative number. e.g. -90
                   case '+':
                     if (strlen(str2)==1 && str2[0] == '-') {
                       tilt = -128;
@@ -1658,7 +1658,7 @@ void CmndShutterCalibration(void)
 
       char data_copy[strlen(XdrvMailbox.data) + 1];
       strncpy(data_copy, XdrvMailbox.data, sizeof(data_copy));  // Duplicate data as strtok_r will modify it.
-      // Loop through the data string, splitting on ' ' seperators.
+      // Loop through the data string, splitting on ' ' separators.
       for (char *str = strtok_r(data_copy, " ,", &str_ptr); str && i < 5; str = strtok_r(nullptr, " ,", &str_ptr), i++) {
         int field = atoi(str);
         // The fields in a data string can only range from 1-30000.
@@ -1823,7 +1823,7 @@ void CmndShutterPosition(void)
         char *str_ptr;
         char data_copy[strlen(XdrvMailbox.data) + 1];
         strncpy(data_copy, XdrvMailbox.data, sizeof(data_copy));  // Duplicate data as strtok_r will modify it.
-        // Loop through the data string, splitting on ',' seperators.
+        // Loop through the data string, splitting on ',' separators.
         for (char *str = strtok_r(data_copy, ",", &str_ptr); str && i < 2; str = strtok_r(nullptr, ",", &str_ptr), i++) {
           switch(i) {
             case 0:
@@ -1981,7 +1981,7 @@ void CmndShutterPwmRange(void)
 
       char data_copy[strlen(XdrvMailbox.data) +1];
       strncpy(data_copy, XdrvMailbox.data, sizeof(data_copy));  // Duplicate data as strtok_r will modify it.
-      // Loop through the data string, splitting on ' ' seperators.
+      // Loop through the data string, splitting on ' ' separators.
       for (char *str = strtok_r(data_copy, " ,", &str_ptr); str && i < 2; str = strtok_r(nullptr, " ,", &str_ptr), i++) {
         uint16_t field = atoi(str);
         // The fields in a data string can only range from 1-30000.
@@ -2018,7 +2018,7 @@ void CmndShutterRelay(void)
     ShutterSettings.shutter_startrelay[XdrvMailbox.index - 1] = XdrvMailbox.payload;
 
     ShutterInit();
-    // if payload is 0 to disable the relay there must be a reboot. Otherwhise does not work
+    // if payload is 0 to disable the relay there must be a reboot. Otherwise does not work
   }
   uint32_t start = (!XdrvMailbox.usridx && !XdrvMailbox.data_len)?0:XdrvMailbox.index - 1;
   uint32_t end   = (!XdrvMailbox.usridx && !XdrvMailbox.data_len)?TasmotaGlobal.shutters_present:XdrvMailbox.index;
@@ -2239,7 +2239,7 @@ void CmndShutterTiltConfig(void)
       char *str_ptr;
       char data_copy[strlen(XdrvMailbox.data) +1];
       strncpy(data_copy, XdrvMailbox.data, sizeof(data_copy));  // Duplicate data as strtok_r will modify it.
-      // Loop through the data string, splitting on ' ' seperators.
+      // Loop through the data string, splitting on ' ' separators.
       for (char *str = strtok_r(data_copy, " ,", &str_ptr); str && i < 6; str = strtok_r(nullptr, " ,", &str_ptr), i++) {
         Shutter[XdrvMailbox.index -1].tilt_config[i] = ShutterSettings.shutter_tilt_config[i][XdrvMailbox.index -1] = atoi(str);
       }
@@ -2388,7 +2388,7 @@ bool Xdrv27(uint32_t function)
       break;
       case FUNC_BUTTON_PRESSED:
         if (XdrvMailbox.index < MAX_SHUTTERS_ESP32*2 && ShutterSettings.shutter_button[XdrvMailbox.index].enabled) {
-          if (!Settings->flag3.mqtt_buttons) Settings->flag3.mqtt_buttons = 1; // ensure to detach buttons from relay to let the shutter controll the relay
+          if (!Settings->flag3.mqtt_buttons) Settings->flag3.mqtt_buttons = 1; // ensure to detach buttons from relay to let the shutter control the relay
           ShutterButtonHandler();
           result = false;
         }

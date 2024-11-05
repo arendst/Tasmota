@@ -27,7 +27,7 @@
   1/ make the protocol parsing more robust.
     to this end, it now observes a byte timeout on receive, and looks for 55AA rather than just 55 to reset.
     Parsing has been split from message processing for better readability.
-  2/ try to observe to 'tuya' state machine as per thier documentation.
+  2/ try to observe to 'tuya' state machine as per their documentation.
     - at least for startup.
     ALL sends should originate from the state machine (except manual sends?).
     ALL sends which need a return (synchronous) wait for an expected command before
@@ -201,12 +201,12 @@ typedef struct TUYA_STRUCT_tag {
   int16_t Sensors[14];                    // Stores the values of Sensors connected to the Tuya Device
   bool ModeSet;                   // Controls 0 - Single Tone light, 1 - RGB Light
   bool SensorsValid[14];                  // Bool used for nullify the sensor value until a real value is received from the MCU
-  bool SuspendTopic;              // Used to reduce the load at init time or when polling the configuraton on demand
+  bool SuspendTopic;              // Used to reduce the load at init time or when polling the configuration on demand
   bool ignore_dim;                // Flag to skip serial send to prevent looping when processing inbound states from the faceplate interaction
   uint32_t ignore_topic_timeout;      // Suppress the /STAT topic (if enabled) to avoid data overflow until the configuration is over
   uint8_t cmd_status;                 // Current status of serial-read
   uint8_t cmd_checksum;               // Checksum of tuya command
-  uint8_t data_len;                   // Data lenght of command
+  uint8_t data_len;                   // Data length of command
   uint8_t wifi_state;                // Keep MCU wifi-status in sync with WifiState()
   uint8_t heartbeat_timer;            // 10 second heartbeat timer for tuya module
 
@@ -577,7 +577,7 @@ void CmndTuyaEnumList(void) { // Command to declare the number of items in list 
   } else { return; }
 }
 
-int StrCmpNoCase(char const *Str1, char const *Str2) // Compare case sensistive RGB strings
+int StrCmpNoCase(char const *Str1, char const *Str2) // Compare case sensitive RGB strings
 {
   for (;; Str1++, Str2++) {
     int StrCmp = tolower((unsigned char)*Str1) - tolower((unsigned char)*Str2);
@@ -622,7 +622,7 @@ void TuyaAddMcuFunc(uint8_t fnId, uint8_t dpId) {
   } else { // Add or update
     for (uint8_t i = 0; i < MAX_TUYA_FUNCTIONS; i++) {
       if (Settings->tuya_fnid_map[i].dpid == dpId || Settings->tuya_fnid_map[i].dpid == 0 || Settings->tuya_fnid_map[i].fnid == fnId || Settings->tuya_fnid_map[i].fnid == 0) {
-        if (!added) { // Update entry if exisiting entry or add
+        if (!added) { // Update entry if existing entry or add
           Settings->tuya_fnid_map[i].fnid = fnId;
           Settings->tuya_fnid_map[i].dpid = dpId;
           added = true;
@@ -1067,7 +1067,7 @@ void TuyaPostState(uint8_t id, uint8_t type, uint8_t *value, int len = 4){
         }
         break;
       } else {
-        AddLog(LOG_LEVEL_ERROR, PSTR("TYA: set of dpid %d ignored - type %d != requred %d"), id, type, dp->Type);
+        AddLog(LOG_LEVEL_ERROR, PSTR("TYA: set of dpid %d ignored - type %d != required %d"), id, type, dp->Type);
         TuyaDumpDPStore();
         return;
       }
@@ -1285,7 +1285,7 @@ bool TuyaSetChannels(void)
       pTuya->Snapshot[0] = changeUIntScale(Light.current_color[0], 0, 255, 0, 100);
       pTuya->Snapshot[1] = changeUIntScale(Light.current_color[1], 0, 255, 0, 100);
     } else { // CT Light or RGBWC
-      getCTRange(&pTuya->CTMin, &pTuya->CTMax); // SetOption82 - Reduce the CT range from 153..500 to 200..380 to accomodate with Alexa range
+      getCTRange(&pTuya->CTMin, &pTuya->CTMax); // SetOption82 - Reduce the CT range from 153..500 to 200..380 to accommodate with Alexa range
       pTuya->Snapshot[0] = light_state.getDimmer();
       pTuya->Snapshot[1] = light_state.getCT();
     }
@@ -1695,7 +1695,7 @@ void TuyaProcessRxedDP(uint8_t dpid, uint8_t type, uint8_t *data, int dpDataLen)
             (fnId == TUYA_MCU_FUNC_DIMMER2) || (fnId == TUYA_MCU_FUNC_REPORT2) ||
             (fnId == TUYA_MCU_FUNC_CT) || (fnId == TUYA_MCU_FUNC_WHITE)) {
 
-        // SetOption54 - Apply SetOption20 settings to Tuya device / SetOption131 Allow save dimmer = 0 receved by MCU
+        // SetOption54 - Apply SetOption20 settings to Tuya device / SetOption131 Allow save dimmer = 0 received by MCU
         if (1) {//pTuya->ignore_dimmer_cmd_timeout < millis()) {
           if ((TasmotaGlobal.power || Settings->flag3.tuya_apply_o20) &&
               ((pTuya->Levels[dimIndex] > 0 || Settings->flag5.tuya_allow_dimmer_0) &&
@@ -1951,7 +1951,7 @@ bool TuyaModuleSelected(void) {
   }
 #endif
   if (!PinUsed(GPIO_TUYA_RX) || !PinUsed(GPIO_TUYA_TX)) { return false; }
-  // allocate and initialise the sturcture only if we will use it.
+  // allocate and initialise the structure only if we will use it.
   init_tuya_struct();
 
   if (!pTuya){ return false; }

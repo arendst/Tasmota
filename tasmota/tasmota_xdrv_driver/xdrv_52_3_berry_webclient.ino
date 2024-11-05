@@ -648,7 +648,7 @@ extern "C" {
       if (written != size) {
         be_raisef(vm, "internal_error", "failed, written %i bytes vs %i", written, size);
       }
-      AddLog(LOG_LEVEL_DEBUG, D_LOG_UPLOAD "flash writing succesful");
+      AddLog(LOG_LEVEL_DEBUG, D_LOG_UPLOAD "flash writing successful");
 
       be_pushint(vm, written);
       be_return(vm);  /* return code */

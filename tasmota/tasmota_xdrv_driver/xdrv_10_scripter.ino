@@ -1169,7 +1169,7 @@ char *script;
                       }
                       while (*op == ' ') op++;
                       if (isdigit(*op)) {
-                        // lenght define follows
+                        // length define follows
                         uint16_t flen = atoi(op);
                         if (flen > MAX_ARRAY_SIZE) {
                           // limit array size
@@ -2100,7 +2100,7 @@ int32_t opt_fext(File *fp,  char *ts_from, char *ts_to, uint32_t flg) {
 #endif
 
 // assume 1. entry is timestamp, others are tab delimited values until LF
-// file reference, from timestamp, to timestampm, column offset, array pointers, array lenght, number of arrays
+// file reference, from timestamp, to timestampm, column offset, array pointers, array length, number of arrays
 int32_t extract_from_file(File *fp,  char *ts_from, char *ts_to, int8_t coffs, TS_FLOAT **a_ptr, uint16_t *a_len, uint8_t numa, int16_t accum) {
 
   char rstr[32];
@@ -9861,7 +9861,7 @@ void Script_Check_Hue(String *response) {
     if (*lp!=';') {
       // check this line
       Replace_Cmd_Vars(lp, 1, tmp, sizeof(tmp));
-      // check for hue defintions
+      // check for hue definitions
       // NAME, TYPE , vars
       cp = tmp;
       cp = strchr(cp,',');
@@ -12159,7 +12159,7 @@ exgc:
         lp = get_array_by_name(cp + 5, &fpd, &alend, &ipos);
         SCRIPT_SKIP_SPACES
         if (*lp != ')') {
-          // limit array lenght
+          // limit array length
           TS_FLOAT val;
           lp = GetNumericArgument(lp, OPER_EQU, &val, 0);
           if (val > alend) {

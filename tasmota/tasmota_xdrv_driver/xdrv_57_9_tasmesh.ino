@@ -190,7 +190,7 @@ void MESHInit(void) {
 void MESHdeInit(void) {
 #ifdef ESP8266  // only ESP8266, ESP32 as a broker should not use deepsleep
   AddLog(LOG_LEVEL_INFO, PSTR("MSH: Stopping"));
-  // TODO: degister from the broker, so he can stop MQTT-proxy
+  // TODO: deregister from the broker, so it can stop the MQTT proxy
   esp_now_deinit();
 #endif  // ESP8266
 }
@@ -399,7 +399,7 @@ void MESHstartNode(int32_t _channel, uint8_t _role){ //we need a running broker 
     return;
   }
 
-//  AddLog(LOG_LEVEL_INFO, PSTR("MSH: Node initialized, channel: %u"),wifi_get_channel()); //check if we succesfully set the
+//  AddLog(LOG_LEVEL_INFO, PSTR("MSH: Node initialized, channel: %u"),wifi_get_channel()); //check if we successfully set the
   Response_P(PSTR("{\"%s\":{\"Node\":1,\"Channel\":%u,\"Role\":%u}}"), D_CMND_MESH, wifi_get_channel(), _role);
   XdrvRulesProcess(0);
 

@@ -490,7 +490,7 @@ tuyamcubr_send(struct tuyamcubr_softc *sc, uint8_t command,
 	serial->flush();
 }
 
-/* if we have polymorphic funcions then we may as well (ab)use them */
+/* if we have polymorphic functions then we may as well (ab)use them */
 static void
 tuyamcubr_send(struct tuyamcubr_softc *sc, uint8_t command)
 {

@@ -32,7 +32,7 @@
 #undef ENERGY_MAX_PHASES
 #define ENERGY_MAX_PHASES         8        // Support max eight phases/channels
 
-#define ENERGY_GUI_MAX_COLS       4        // [EnergyCols] Number of GUI data columns - Preffered 4
+#define ENERGY_GUI_MAX_COLS       4        // [EnergyCols] Number of GUI data columns - Preferred 4
 #define ENERGY_GUI_DISPLAY_MODE   3        // [EnergyDisplay] 1 = Rotate if over EnergyCols, 2 = Rotate only powered on if over EnergyCols, 3 = Use tabs if over EnergyCols
 
 #include <Ticker.h>

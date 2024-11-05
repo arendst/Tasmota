@@ -80,7 +80,7 @@ extern "C" {
   // Zigbee Coordinator `zc`
 
   // `zigbee.started() -> bool or nil`
-  // Returns `true` if Zigbee sucessfully started, `false` if not yet started
+  // Returns `true` if Zigbee successfully started, `false` if not yet started
   // or `nil` if not configured or aborted
   int zc_started(struct bvm *vm);
   int zc_started(struct bvm *vm) {

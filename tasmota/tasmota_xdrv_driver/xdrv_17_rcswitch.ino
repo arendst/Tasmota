@@ -136,7 +136,7 @@ void CmndRfProtocol(void) {
   if (incompatibleProtocolsSelected) {
     AddLog(LOG_LEVEL_INFO, PSTR("RFR: CmndRfProtocol:: Incompatible protocols selected, using default separation limit, some protocols may not work"));
   }
-//  AddLog(LOG_LEVEL_INFO, PSTR("RFR: CmndRfProtocol:: Start responce"));
+//  AddLog(LOG_LEVEL_INFO, PSTR("RFR: CmndRfProtocol:: Start response"));
   Response_P(PSTR("{\"" D_CMND_RFPROTOCOL "\":\""));
   bool gotone = false;
   thisdat = 1;

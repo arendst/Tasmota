@@ -27,7 +27,7 @@
   generate high-speed clock (25kHz)     DONE
   poll data bits on clock plateau       RISING EDGE
   update data & report every 50 ms      DONE
-  error & retry logic (if reqired)      BASIC
+  error & retry logic (if required)     BASIC
   MQTT message & rules hook             DONE
   test on actual Hardware               DONE
 
@@ -40,7 +40,7 @@
   *********************
 
   This driver implements the documented protocol of the Holtek BS814A-2 touch controller.
-  The protocol encodes the bitmap of touched keys in a syncronous serial data stream and
+  The protocol encodes the bitmap of touched keys in a synchronous serial data stream and
   adds a 3-bit checksum to it. The Chip is supposed to alert the MCU of new key input by
   pulling the data line low. This mechanism would have been nice but it didn't function
   reliablly in my hardware sample. So I decided to poll the touch keys every 50 ms regard-
@@ -75,7 +75,7 @@ struct BS814 {
   bool present            = false;          // driver initialized
 #ifdef DEBUG_BS814_DRIVER
   uint16_t e_level        = 0;              // level disagree error
-  uint16_t e_cksum        = 0;              // checksum errror
+  uint16_t e_cksum        = 0;              // checksum error
   uint16_t e_stp          = 0;              // stop bit error
   bool valid              = false;          // did we ever receive valid data?
 #endif  // DEBUG_BS814_DRIVER

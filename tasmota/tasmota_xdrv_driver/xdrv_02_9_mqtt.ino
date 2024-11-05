@@ -573,7 +573,7 @@ bool MqttPublishLib(const char* topic, const uint8_t* payload, unsigned int plen
 void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len) {
   SHOW_FREE_MEM(PSTR("MqttDataHandler"));
 
-  // Do not allow more data than would be feasable within stack space
+  // Do not allow more data than would be feasible within stack space
   if (data_len >= MQTT_MAX_PACKET_SIZE) { return; }
 
   // Do not execute multiple times if Prefix1 equals Prefix2
@@ -1925,7 +1925,7 @@ void CmndTlsKey(void) {
           memcpy(spi_buffer + tls_obj_store_offset + entry->start, bin_buf, entry->len);
           save_file = true;
         } else {
-          // if lenght is zero, simply erase this SPI flash area
+          // if length is zero, simply erase this SPI flash area
         }
       } else if (2 == XdrvMailbox.index) {
         // Try to write Certificate
@@ -1937,7 +1937,7 @@ void CmndTlsKey(void) {
           return;
         }
         if (bin_len <= 256) {
-          // Certificate lenght too short
+          // Certificate length too short
           AddLog(LOG_LEVEL_INFO, PSTR("TLSKey: Certificate length too short: %d."), bin_len);
           free(spi_buffer);
           free(bin_buf);

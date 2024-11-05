@@ -127,7 +127,7 @@ void ZigbeeInputLoop(void) {
 
     // recalculate frame length
     if (02 == zigbee_buffer->len()) {
-      // We just received the Lenght byte
+      // We just received the Length byte
       uint8_t len_byte = zigbee_buffer->get8(1);
       if (len_byte > 250)  len_byte = 250;    // ZNP spec says len is 250 max
 
@@ -361,7 +361,7 @@ void ZigbeeZNPSend(const uint8_t *msg, size_t len) {
 			uint8_t b = pgm_read_byte(msg + i);
 			ZigbeeSerial->write(b);
 			fcs ^= b;
-			//AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ZNPSend byt %02X"), b);
+			//AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ZNPSend byte %02X"), b);
 		}
 		ZigbeeSerial->write(fcs);			// finally send fcs checksum byte
 		//AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ZNPSend FCS %02X"), fcs);
@@ -879,7 +879,7 @@ void ZigbeeZCLSend_Raw(const ZCLFrame &zcl) {
 //
 // Send any buffered data to the NCP
 //
-// Used only with EZSP, as there is no replay of procotol control with ZNP
+// Used only with EZSP, as there is no replay of protocol control with ZNP
 void ZigbeeOutputLoop(void) {
 #ifdef USE_ZIGBEE_EZSP
   // while (EZSP_Serial.to_send != EZSP_Serial.to_end) {

@@ -454,7 +454,7 @@ void start_lvgl(const char * uconfig) {
   // -----------------------------------------
 
   // Set the default background color of the display
-  // This is normally overriden by an opaque screen on top
+  // This is normally overridden by an opaque screen on top
 #ifdef USE_BERRY
   // By default set the display color to black and opacity to 100%
   lv_obj_t * background = lv_layer_bottom();

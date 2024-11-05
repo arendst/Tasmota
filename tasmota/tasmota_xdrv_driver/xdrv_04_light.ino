@@ -246,7 +246,7 @@ struct LIGHT {
   uint32_t wakeup_start_time = 0;
 
   bool update = true;
-  bool pwm_multi_channels = false;        // SetOption68, treat each PWM channel as an independant dimmer
+  bool pwm_multi_channels = false;        // SetOption68, treat each PWM channel as an independent dimmer
   bool virtual_ct = false;                // SetOption106, add a 5th virtual channel, only if SO106 = 1, SO68 = 0, Light is RGBW (4 channels), SO37 < 128
 
   bool     fade_initialized = false;      // dont't fade at startup
@@ -274,7 +274,7 @@ struct LIGHT {
   uint8_t  speed_once_value = 0;         // override speed a single time
 
   uint16_t pwm_min = 0;                  // minimum value for PWM, from DimmerRange, 0..1023
-  uint16_t pwm_max = 1023;               // maxumum value for PWM, from DimmerRange, 0..1023
+  uint16_t pwm_max = 1023;               // maximum value for PWM, from DimmerRange, 0..1023
 
   // Virtual CT
   uint16_t vct_ct[CT_PIVOTS];            // CT value for each segment
@@ -307,7 +307,7 @@ uint8_t ddp_udp_up = 0;
 // This class is an abstraction of the current light state.
 // It allows for b/w, full colors, or white colortone
 //
-// This class has 2 independant slots
+// This class has 2 independent slots
 // 1/ Brightness 0.255, dimmer controls both RGB and WC (warm-cold)
 // 1/ RGB and Hue/Sat - always kept in sync and stored at full brightness,
 //    i.e. R G or B are 255
@@ -328,7 +328,7 @@ uint8_t ddp_udp_up = 0;
 //     ((WW == 255) || (WC == 255))
 // 4.  WC/WW and CT are always kept in sync.
 //     Note: if you use setCT() then WC+WW == 255 (both channels are linked)
-//     but if you use setCW() both channels can be set independantly
+//     but if you use setCW() both channels can be set independently
 // 5.  If RGB or CT channels are deactivated, then corresponding brightness is zero
 //     if (colot_tone == LCM_RGB) then briCT = 0
 //     if (color_tone == LCM_CT)  then briRGB = 0
@@ -360,7 +360,7 @@ class LightStateClass {
 
     uint8_t  _color_mode = LCM_RGB; // RGB by default
     bool     _power = false;    // power indicator, used only in virtual lights, Tasmota tracks power separately
-    bool     _reachable = true; // reachable indicator, used only in vritual lights. Not used in internal light
+    bool     _reachable = true; // reachable indicator, used only in virtual lights. Not used in internal light
 
   public:
     LightStateClass() {
@@ -368,7 +368,7 @@ class LightStateClass {
     }
 
     void setSubType(uint8_t sub_type) {
-      _subtype = sub_type;    // set sub_type at initialization, shoudln't be changed afterwards
+      _subtype = sub_type;    // set sub_type at initialization, should't be changed afterwards
     }
     uint8_t getSubType(void) const {
       return _subtype;
@@ -745,7 +745,7 @@ private:
 
   // are RGB and CT linked, i.e. if we set CT then RGB channels are off
   bool     _ct_rgb_linked = true;
-  bool     _pwm_multi_channels = false;    // treat each channel as independant dimmer
+  bool     _pwm_multi_channels = false;    // treat each channel as independent dimmer
 
 public:
   LightControllerClass(LightStateClass& state) {
@@ -1187,13 +1187,13 @@ void LightInit(void)
 
   if (LST_RGBW <= Light.subtype) {
     // only change if RGBW or RGBCW
-    // do not allow independant RGB and WC colors
+    // do not allow independent RGB and WC colors
     bool ct_rgb_linked = !(Settings->param[P_RGB_REMAP] & 128);  // SetOption37
     light_controller.setCTRGBLinked(ct_rgb_linked);
   }
 
   if ((LST_SINGLE <= Light.subtype) && Light.pwm_multi_channels) {
-    // we treat each PWM channel as an independant one, hence we switch to
+    // we treat each PWM channel as an independent one, hence we switch to
     light_controller.setPWMMultiChannel(true);
     Light.device = TasmotaGlobal.devices_present - Light.subtype + 1; // adjust if we also have relays
   } else if (!light_controller.isCTRGBLinked()) {
@@ -1246,7 +1246,7 @@ void LightInit(void)
     Settings->light_wakeup = 60;         // Fix divide by zero exception 0 in Animate
   }
   if (Settings->flag4.fade_at_startup) {
-    Light.fade_initialized = true;      // consider fade intialized starting from black
+    Light.fade_initialized = true;      // consider fade initialized starting from black
   }
 
   LightUpdateColorMapping();
@@ -2100,7 +2100,7 @@ bool LightApplyFade(void) {   // did the value chanegd and needs to be applied
         uint32_t delay_seconds = 1 + (Light.fade_duration + 999) / 1000;   // add one more second
         // AddLog(LOG_LEVEL_INFO, PSTR("delay_seconds %d, save_data_counter %d"), delay_seconds, TasmotaGlobal.save_data_counter);
         if (TasmotaGlobal.save_data_counter < delay_seconds) {
-          TasmotaGlobal.save_data_counter = delay_seconds;      // pospone
+          TasmotaGlobal.save_data_counter = delay_seconds;      // postpone
         }
       }
     } else {
@@ -2273,7 +2273,7 @@ void calcGammaMultiChannels(uint16_t cur_col_10[5]) {
 // In:
 // - 2 channels CW/WW in 10 bits format (0..1023)
 // Out:
-// - 2 channels CW/WW in 10 bits format, with Gamma corretion (if enabled), replaced in place
+// - 2 channels CW/WW in 10 bits format, with Gamma correction (if enabled), replaced in place
 // - white_bri10: global brightness of white channel, split over CW/WW (basically the sum of CW+WW, but it's easier to compute on this basis)
 // - white_free_cw: signals that CW/WW are free mode, and not linked via CT. This is used when channels are manually set on a channel per channel basis. CT is ignored
 //
@@ -2307,7 +2307,7 @@ void calcGammaBulbCW(uint16_t cw10[2], uint16_t *white_bri10_out, bool *white_fr
 // In:
 // - 5 channels RGBCW in 10 bits format (0..1023)
 // Out:
-// - 5 channels RGBCW in 10 bits format, with Gamma corretion (if enabled), replaced in place
+// - 5 channels RGBCW in 10 bits format, with Gamma correction (if enabled), replaced in place
 // - white_bri10: global brightness of white channel, split over CW/WW (basically the sum of CW+WW, but it's easier to compute on this basis)
 // - white_free_cw: signals that CW/WW are free mode, and not linked via CT. This is used when channels are manually set on a channel per channel basis. CT is ignored
 //

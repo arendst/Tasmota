@@ -63,7 +63,7 @@
 #define D_JSON_MODBUS_START_ADDRESS "StartAddress"
 #define D_JSON_MODBUS_COUNT "Count"
 #define D_JSON_MODBUS_ENDIAN "Endian"
-#define D_JSON_MODBUS_TYPE "Type" // allready defined
+#define D_JSON_MODBUS_TYPE "Type" // already defined
 #define D_JSON_MODBUS_VALUES "Values"
 #define D_JSON_MODBUS_LENGTH "Length"
 
@@ -438,7 +438,7 @@ void ModbusBridgeHandle(void)
     {
       if (modbusBridge.type == ModbusBridgeType::mb_raw)
       {
-        // Ouput raw data as decimal bytes
+        // Output raw data as decimal bytes
         Response_P(PSTR("{\"" D_JSON_MODBUS_RECEIVED "\":{\"RAW\":["));
         for (uint8_t i = 0; i < modbusBridgeModbus->ReceiveCount(); i++)
         {
@@ -448,7 +448,7 @@ void ModbusBridgeHandle(void)
         }
         ResponseAppend_P(PSTR("]}"));
         ResponseJsonEnd();
-        if (Settings->flag6.mqtt_disable_modbus ) {  // SetOption158  If it is activated, Tasmota will not publish ModbusReceived MQTT messages, but it will proccess event trigger rules
+        if (Settings->flag6.mqtt_disable_modbus ) {  // SetOption158  If it is activated, Tasmota will not publish ModbusReceived MQTT messages, but it will process event trigger rules
           XdrvRulesProcess(0);
         } else {
           MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_MODBUS_RECEIVED));
@@ -466,7 +466,7 @@ void ModbusBridgeHandle(void)
         }
         ResponseAppend_P(PSTR("]}"));
         ResponseJsonEnd();
-        if (Settings->flag6.mqtt_disable_modbus ) {  // SetOption158  If it is activated, Tasmota will not publish ModbusReceived MQTT messages, but it will proccess event trigger rules
+        if (Settings->flag6.mqtt_disable_modbus ) {  // SetOption158  If it is activated, Tasmota will not publish ModbusReceived MQTT messages, but it will process event trigger rules
           XdrvRulesProcess(0);
         } else {
           MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_MODBUS_RECEIVED));
@@ -619,7 +619,7 @@ void ModbusBridgeHandle(void)
         ResponseJsonEnd();
 
         if (errorcode == ModbusBridgeError::noerror)
-          if (Settings->flag6.mqtt_disable_modbus ) {  // SetOption158  If it is activated, Tasmota will not publish ModbusReceived MQTT messages, but it will proccess event trigger rules
+          if (Settings->flag6.mqtt_disable_modbus ) {  // SetOption158  If it is activated, Tasmota will not publish ModbusReceived MQTT messages, but it will process event trigger rules
             XdrvRulesProcess(0);
           } else {
             MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_MODBUS_RECEIVED));
@@ -636,7 +636,7 @@ void ModbusBridgeHandle(void)
         ResponseAppend_P(PSTR("}"));
         ResponseJsonEnd();
         if (errorcode == ModbusBridgeError::noerror)
-          if (Settings->flag6.mqtt_disable_modbus ) {  // SetOption158  If it is activated, Tasmota will not publish ModbusReceived MQTT messages, but it will proccess event trigger rules
+          if (Settings->flag6.mqtt_disable_modbus ) {  // SetOption158  If it is activated, Tasmota will not publish ModbusReceived MQTT messages, but it will process event trigger rules
             XdrvRulesProcess(0);
           } else {
             MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_TELE, PSTR(D_JSON_MODBUS_RECEIVED));
@@ -909,7 +909,7 @@ void CmndModbusBridgeSend(char *json_in)
     modbusBridge.endian = ModbusBridgeEndian::mb_lsb;
   }
 
-  // Change endianess when specified
+  // Change endianness when specified
   if (strcmp (sendian,"msb") == 0) modbusBridge.endian = ModbusBridgeEndian::mb_msb;
   if (strcmp (sendian,"lsb") == 0) modbusBridge.endian =  ModbusBridgeEndian::mb_lsb; 
 
@@ -1122,7 +1122,7 @@ void CmndModbusBridgeSend(char *json_in)
     }
   }
 
-  // Handle errorcode and exit function when an error has occured
+  // Handle errorcode and exit function when an error has occurred
   if (errorcode != ModbusBridgeError::noerror)
   {
     AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBR Send Error %u"), (uint8_t)errorcode);

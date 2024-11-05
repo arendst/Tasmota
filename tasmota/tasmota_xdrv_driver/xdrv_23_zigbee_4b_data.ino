@@ -37,7 +37,7 @@
 // uint8[] - list of data
 //
 
-// returns the lenght of consumed buffer, or -1 if error
+// returns the length of consumed buffer, or -1 if error
 int32_t hydrateDeviceWideData(class Z_Device & device, const SBuffer & buf, size_t start, size_t len) {
   size_t segment_len = buf.get8(start);
   if ((segment_len < 6) || (segment_len > len)) {
@@ -254,7 +254,7 @@ void hibernateAllData(void) {
 
   if (f.valid()) {
     for (const auto & device : zigbee_devices.getDevices()) {
-      // allocte a buffer for a single device
+      // allocate a buffer for a single device
       SBuffer buf = hibernateDeviceData(device);
       if (buf.len() > 0) {
         f.writeBytes(buf.getBuffer(), buf.len());

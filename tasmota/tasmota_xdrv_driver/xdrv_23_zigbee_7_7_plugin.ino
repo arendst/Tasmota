@@ -161,7 +161,7 @@ bool ZbLoad_inner(const char *filename, File &fp) {
       break;
     }
 
-    // at first valid line, we instanciate a new plug-in instance and assign a filemane
+    // at first valid line, we instantiate a new plug-in instance and assign a filemane
     if (filename_imported == nullptr) {
       // allocate only once the filename for multiple entries
       // freed only by `ZbUnload`
@@ -325,7 +325,7 @@ bool ZbLoad(const char *filename_raw) {
 
 #ifdef USE_UFILESYS
   if (ffsp) {
-    // first unload previsou definitions
+    // first unload previous definitions
     ZbUnload(filename_raw);
 
     String filename = filename_raw;
@@ -379,7 +379,7 @@ bool ZbUnload(const char *filename_raw) {
   // free memory for filename
   if (filename_registered) {
     free(filename_registered);
-    AddLog(LOG_LEVEL_INFO, "ZIG: ZbUnload '%s' sucessful", filename_raw);
+    AddLog(LOG_LEVEL_INFO, "ZIG: ZbUnload '%s' successful", filename_raw);
     return true;
   }
   return false;

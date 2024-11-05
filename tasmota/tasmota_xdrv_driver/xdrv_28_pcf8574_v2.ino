@@ -25,9 +25,9 @@
  * I2C Address: PCF8574  = 0x20 .. 0x27 (0x27 is not supported),
  *              PCF8574A = 0x39 .. 0x3F (0x38 is not supported)
  *
- * Start address and count can be overriden in user_config_override.h to allow better
+ * Start address and count can be overridden in user_config_override.h to allow better
  * sharing of the I2C address space. Still the covered range must remains valid.
- * A count of 0 can be used totaly disable any of the 2 ranges.
+ * A count of 0 can be used to totally disable any of the 2 ranges.
  * By default, the following addresses are explicitly excluded (as per the docs) :
  *  - 0x27 and 0x37 are reserved for USE_DISPLAY_LCD in xdsp_01_lcd.ino
  *  - 0X38 is reserved for other sensors
@@ -103,10 +103,10 @@
 
 // Consistency tests - Checked across the complete range for the PCF8574/PCF8574A to allow override
 #if (PCF8574_ADDR1 < 0x20) || ((PCF8574_ADDR1 + PCF8574_ADDR1_COUNT - 1) > 0x27)
-#error PCF8574_ADDR1 and/or PCF8574_ADDR1_COUNT badly overriden. Fix your user_config_override
+#error PCF8574_ADDR1 and/or PCF8574_ADDR1_COUNT badly overridden. Fix your user_config_override
 #endif
 #if (PCF8574_ADDR2 < 0x38) || ((PCF8574_ADDR2 + PCF8574_ADDR2_COUNT - 1) > 0x3F)
-#error PCF8574_ADDR2 and/or PCF8574_ADDR2_COUNT badly overriden. Fix your user_config_override.
+#error PCF8574_ADDR2 and/or PCF8574_ADDR2_COUNT badly overridden. Fix your user_config_override.
 #endif
 
 struct PCF8574 {
@@ -117,7 +117,7 @@ struct PCF8574 {
 #ifdef USE_PCF8574_MQTTINPUT
   uint8_t last_input[MAX_PCF8574] = { 0 };
 #endif
-  uint8_t max_connected_ports = 0;        // Max numbers of devices comming from PCF8574 modules
+  uint8_t max_connected_ports = 0;        // Max numbers of devices coming from PCF8574 modules
   uint8_t max_devices = 0;                // Max numbers of PCF8574 modules
   uint8_t mode;
   uint8_t relay_max;
@@ -474,9 +474,9 @@ void Pcf8574ModuleInitMode1(void) {
   }
   Pcf8574.max_connected_ports = 0;                     // Reset no of devices
 
-  for (uint32_t idx = 0; idx < Pcf8574.max_devices; idx++) { // suport up to 8 boards PCF8574
+  for (uint32_t idx = 0; idx < Pcf8574.max_devices; idx++) { // support up to 8 boards PCF8574
     uint8_t gpio = Pcf8574Read(idx);
-    // Insure the input pins are actually writen a 1 for proper input operation
+    // Ensure the input pins are actually written a 1 for proper input operation
     Pcf8574.pin_mask[idx] = gpio | ~Settings->pcf8574_config[idx];
     Pcf8574Write(idx);                                 // Write back to the register
 #ifdef USE_PCF8574_MQTTINPUT
@@ -567,7 +567,7 @@ void Pcf8574SaveSettings(void) {
   char stemp[7];
   char tmp[100];
 
-  //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Start working on Save arguements: inverted:%d")), Webserver->hasArg("b1");
+  //AddLog(LOG_LEVEL_DEBUG, PSTR("PCF: Start working on Save arguments: inverted:%d")), Webserver->hasArg("b1");
 
   Settings->flag3.pcf8574_ports_inverted = Webserver->hasArg("b1");  // SetOption81 - Invert all ports on PCF8574 devices
   for (byte idx = 0; idx < Pcf8574.max_devices; idx++) {

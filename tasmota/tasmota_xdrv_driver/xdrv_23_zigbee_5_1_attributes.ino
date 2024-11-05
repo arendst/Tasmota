@@ -114,7 +114,7 @@ uint8_t Z_getTypeByName(const char *type) {
   }
 }
 //
-// get the lenth in bytes for a data-type
+// get the length in bytes for a data-type
 // return 0 if unknown of type specific
 //
 // Note: this code is smaller than a static array
@@ -439,7 +439,7 @@ public:
   LList<Z_attribute_synonym> synonyms;
   LList<Z_plugin_attribute> attributes;
   char * filename = nullptr;              // the filename from which it was imported
-                                          // needs to be freed by ZbUnload only (to allow reuse between mutliple instances)
+                                          // needs to be freed by ZbUnload only (to allow reuse between multiple instances)
 };
 
 //
@@ -1352,7 +1352,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   // Legrand - Manuf code 0x1021
   { Zenum8,   CxFC40, 0x0000,  Z_(LegrandHeatingMode),   Cm1, 0 },
 
-  // Aqara Opple spacific
+  // Aqara Opple specific
   { Zuint8,   CxFCC0, 0x0009,  Z_(OppleMode),            Cm1, 0 },
 
   // Terncy specific - 0xFCCC

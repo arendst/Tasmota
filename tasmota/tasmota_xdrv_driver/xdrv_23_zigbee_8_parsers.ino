@@ -619,7 +619,7 @@ int32_t ZNP_ReceiveNodeDesc(int32_t res, const SBuffer &buf) {
 }
 
 //
-// Porcess Receive Active Endpoint
+// Process Receive Active Endpoint
 //
 int32_t Z_ReceiveActiveEp(int32_t res, const SBuffer &buf) {
   // Received ZDO_ACTIVE_EP_RSP
@@ -920,7 +920,7 @@ int32_t ZNP_ReceiveStateChange(int32_t res, const SBuffer &buf) {
   }
 
   if ((ZDO_DEV_END_DEVICE == state) || (ZDO_DEV_ROUTER == state) || (ZDO_DEV_ZB_COORD == state)) {
-    return 0;         // device sucessfully started
+    return 0;         // device successfully started
   } else {
     return -1;        // ignore
   }
@@ -1234,7 +1234,7 @@ int32_t Z_Mgmt_Lqi_Bind_Rsp(int32_t res, const SBuffer &buf, boolean lqi) {
         dstep = buf.get8(idx + 20);
         idx += 21;
       } else {
-        //AddLog(LOG_LEVEL_INFO, PSTR("ZNP_MgmtBindRsp unknwon address mode %d"), addrmode);
+        //AddLog(LOG_LEVEL_INFO, PSTR("ZNP_MgmtBindRsp unknown address mode %d"), addrmode);
         break;                                      // abort for any other value since we don't know the length of the field
       }
 
@@ -1279,7 +1279,7 @@ int32_t Z_MgmtLqiRsp(int32_t res, const SBuffer &buf) {
 
 #ifdef USE_ZIGBEE_EZSP
 //
-// Handle Parent Annonce Rsp incoming message
+// Handle Parent Announce Rsp incoming message
 //
 // rsp: true = ZDO_Parent_annce_rsp, false = ZDO_Parent_annce
 int32_t EZ_ParentAnnceRsp(int32_t res, const SBuffer &buf, bool rsp) {
@@ -1535,7 +1535,7 @@ typedef struct Z_autoAttributeReporting_t {
   uint16_t cluster;
   uint16_t attr_id;
   uint16_t min_interval;    // minimum interval in seconds (consecutive reports won't happen before this value)
-  uint16_t max_interval;    // maximum interval in seconds (attribut will always be reported after this interval)
+  uint16_t max_interval;    // maximum interval in seconds (attribute will always be reported after this interval)
   float    report_change;   // for non discrete attributes, the value change that triggers a report
 } Z_autoAttributeReporting_t;
 
@@ -2220,7 +2220,7 @@ int32_t Z_State_Ready(uint8_t value) {
 }
 
 //
-// Auto-responder for Read request from extenal devices.
+// Auto-responder for Read request from external devices.
 //
 // Mostly used for routers/end-devices
 // json: holds the attributes in JSON format

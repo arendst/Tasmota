@@ -737,7 +737,7 @@ void I2sInit(void) {
     if (tx && rx && exclusive) {
       i2s->setExclusive(true);
       audio_i2s.Settings->sys.exclusive = exclusive;
-      // in exclusive mode, we need to intialize in sequence Tx and Rx
+      // in exclusive mode, we need to initialize in sequence Tx and Rx
       init_tx_ok = i2s->startI2SChannel(true, false);
       init_rx_ok = i2s->startI2SChannel(false, true);
     } else if (tx && rx) {
@@ -748,11 +748,11 @@ void I2sInit(void) {
     }
     if (init_tx_ok) { audio_i2s.out = i2s; }
     if (init_rx_ok) { audio_i2s.in = i2s; }
-    audio_i2s.Settings->sys.tx |= init_tx_ok; // Do not set to zero id already configured on another channnel
+    audio_i2s.Settings->sys.tx |= init_tx_ok; // Do not set to zero id already configured on another channel
     audio_i2s.Settings->sys.rx |= init_rx_ok;
     if (init_tx_ok && init_rx_ok) { audio_i2s.Settings->sys.duplex = true; }
 
-    // if intput and output are configured, don't proceed with other IS2 ports
+    // if input and output are configured, don't proceed with other IS2 ports
     if (audio_i2s.out && audio_i2s.in) {
       break;
     }

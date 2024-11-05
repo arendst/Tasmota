@@ -93,7 +93,7 @@
                                                  // May be adjusted via MQTT using cmnd PidManualPower
 
    #define PID_UPDATE_SECS               0       // How often to run the pid algorithm (integer secs) or 0 to run the algorithm
-                                                 // each time a new pv value is received, for most applictions specify 0.
+                                                 // each time a new pv value is received, for most applications specify 0.
                                                  // Otherwise set this to a time that is short compared to the response of 
                                                  // the process.  For example, something like 15 seconds may well be appropriate
                                                  // for a domestic room heating application.  Keep in mind that the PID loop is
@@ -112,7 +112,7 @@
 
    #define PID_USE_LOCAL_SENSOR                  // If defined then the local sensor will be used for pv. Leave undefined if
                                                  // this is not required.  The sensor is read every second, and you can slow
-                                                 // down updates for slow systems by explictly setting UPDATE_SECS, or more
+                                                 // down updates for slow systems by explicitly setting UPDATE_SECS, or more
                                                  // prefably, appropriately adjusting P,I,D values.
                                                  // If not using the sensor then you can supply process values via MQTT using
                                                  // cmnd PidPv
@@ -237,7 +237,7 @@ void (* const PIDCommand[])(void) PROGMEM = {
 
 struct {
   PID pid;
-  int update_secs = PID_UPDATE_SECS <= 0  ?  0  :  PID_UPDATE_SECS;   // how often (secs) the pid alogorithm is run
+  int update_secs = PID_UPDATE_SECS <= 0  ?  0  :  PID_UPDATE_SECS;   // how often (secs) the pid algorithm is run
   int max_interval = PID_MAX_INTERVAL;
   unsigned long last_pv_update_secs = 0;
   bool run_pid_now = false;     // tells PID_Every_Second to run the pid algorithm
@@ -300,7 +300,7 @@ void PIDProcessSensor() {
 #endif // PID_USE_LOCAL_SENSOR
 
   if (!isnan(sensor_reading)) {
-    // pass the value to the pid alogorithm to use as current pv
+    // pass the value to the pid algorithm to use as current pv
     Pid.last_pv_update_secs = Pid.current_time_secs;
     Pid.pid.setPv(sensor_reading, Pid.last_pv_update_secs);
     // also trigger running the pid algorithm if we have been told to run it each pv sample

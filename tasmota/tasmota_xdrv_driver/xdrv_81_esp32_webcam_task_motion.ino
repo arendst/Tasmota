@@ -353,7 +353,7 @@ typedef struct {
 
 /*********************************************************************************************/
 /* Lets go a little faster by using bgr, since we don't care about byte order                */
-// from to_bmp.c - unfortunately thier version is static
+// from to_bmp.c - unfortunately their version is static
 unsigned int wc_jpg_read(void * arg, size_t index, uint8_t *buf, size_t len)
 {
     wc_rgb_jpg_decoder * jpeg = (wc_rgb_jpg_decoder *)arg;
@@ -391,7 +391,7 @@ static bool _mono_write(void * arg, uint16_t x, uint16_t y, uint16_t w, uint16_t
       return false;
     uint8_t *out = jpeg->poutput->buff + jpeg->data_offset;
     uint8_t *o = out;
-    size_t djw = jpeg->width; // ouptut stride
+    size_t djw = jpeg->width; // output stride
     size_t dl = x; // offset into output image data for x
 
     // first pixel in destination
@@ -414,7 +414,7 @@ static bool _mono_write(void * arg, uint16_t x, uint16_t y, uint16_t w, uint16_t
 
 #ifdef WC_USE_RGB_DECODE      
 //output buffer and image width
-// from to_bmp.c - unfortunately thier version is static
+// from to_bmp.c - unfortunately their version is static
 static bool wc_rgb_write(void * arg, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t *data)
 {
     wc_rgb_jpg_decoder * jpeg = (wc_rgb_jpg_decoder *)arg;
@@ -529,7 +529,7 @@ bool wc_jpg2mono(const uint8_t *src, size_t src_len, struct PICSTORE * out, int 
 
 #ifdef WC_USE_RGB_DECODE      
 // converts to a 3x8 bit pixel array
-// from to_bmp.c - unfortunately thier version is static
+// from to_bmp.c - unfortunately their version is static
 bool wc_jpg2rgb888(const uint8_t *src, size_t src_len, struct PICSTORE * out, int scale)
 {
     wc_rgb_jpg_decoder jpeg;
@@ -564,7 +564,7 @@ bool wc_jpg2rgb565(const uint8_t *src, size_t src_len, struct PICSTORE * out, in
 
 
 // general jpeg to pixel conversion
-// may be used for gettign pixels for other processing, e.g. tensorflow.
+// may be used for getting pixels for other processing, e.g. tensorflow.
 // supports scaling (0-3 -> 1:1. 1:2, 1:4, 1:8)
 // supports pixelformats GRAYSCALE, RGB565, RGB888 (see define)
 // pass in a camera_fb_t * and a buffer will be allocated/re-allocated if ->len != size required
@@ -843,7 +843,7 @@ void WcDetectMotionFn(uint8_t *_jpg_buf, int _jpg_buf_len){
     }
   } else {
     uint32_t x, y;
-    // for softare scaled, a silightly more complex loop.
+    // for software scaled, a slightly more complex loop.
     int xincrement = swscalex;
     int yincrement = swscaley;
     int stride = yincrement*width;
@@ -1101,7 +1101,7 @@ void CmndWebcamSetMotionDetect(void) {
       }
       res = wc_motion.enable_diffbuff;
       break;
-    case 7: // ammount of changed picture (accumulated diff)
+    case 7: // amount of changed picture (accumulated diff)
       if (XdrvMailbox.payload >= 0){
         wc_motion.motion_trigger_limit = XdrvMailbox.payload;
       }

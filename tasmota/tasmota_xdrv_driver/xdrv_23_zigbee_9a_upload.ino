@@ -139,7 +139,7 @@ void XModemOutputByte(uint8_t out_char) {
 }
 
 // Wait for the remote to acknowledge or cancel.
-// Returns the received char if no timeout occured or a CAN was received. In this cases, it returns -1.
+// Returns the received char if no timeout occurred or a CAN was received. In this cases, it returns -1.
 char XModemWaitACK(void)
 {
   char in_char;

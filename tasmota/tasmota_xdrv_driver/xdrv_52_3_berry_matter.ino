@@ -98,7 +98,7 @@ extern "C" int matter_publish_command(bvm *vm) {
     // Do we prefix with `ZbReceived`?
     if (!Settings->flag4.remove_zbreceived && !Settings->flag5.zb_received_as_subtopic) {
       if (Settings->flag5.zigbee_include_time && Rtc.utc_time >= START_VALID_TIME) {
-        // Add time if needed (and if time is valide)
+        // Add time if needed (and if time is valid)
         ResponseAppendTimeFormat(Settings->flag2.time_format);
         ResponseAppend_P(PSTR(",\"%s\":"), json_prefix);
       } else {

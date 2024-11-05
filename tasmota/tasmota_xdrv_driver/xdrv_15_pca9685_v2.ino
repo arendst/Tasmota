@@ -29,7 +29,7 @@
   2023-06-05  v2.0  Changelog by F.Amodio
   - Code Refactoring
 
-  - Support for multiple PCA9685 without breaking support for previuos driver version
+  - Support for multiple PCA9685 without breaking support for previous driver version
     all command (PWM,INVERT,etc) now support the suffix from 0 to PCA9685_MAX_COUNT to address the board,
     without the suffix the command is relative to the board 0, e.g.
         DRIVER15 PWM 0 350     Board address 0 pin 0 value 350

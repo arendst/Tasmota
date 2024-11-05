@@ -93,7 +93,7 @@ static const char TransferEncoding[] = "Transfer-Encoding";
 struct {
   String _serverUrl;                     // Connection info
   String _writeUrl;                      // Cached full write url
-  String _lastErrorResponse;             // Server reponse or library error message for last failed request
+  String _lastErrorResponse;             // Server response or library error message for last failed request
   uint32_t _lastRequestTime = 0;         // Last time in ms we made a request to server
   int interval = 0;
   int _lastStatusCode = 0;               // HTTP status code of last request to server
