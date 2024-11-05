@@ -247,7 +247,7 @@ typedef struct {
   float current[SSPM_MAX_MODULES][4];             // 123.12 A
   float active_power[SSPM_MAX_MODULES][4];        // 123.12 W
   float apparent_power[SSPM_MAX_MODULES][4];      // 123.12 VA
-  float reactive_power[SSPM_MAX_MODULES][4];      // 123.12 VAr
+  float reactive_power[SSPM_MAX_MODULES][4];      // 123.12 var
   float power_factor[SSPM_MAX_MODULES][4];        // 0.12
   float energy_today[SSPM_MAX_MODULES][4];        // 12345 kWh
   float energy_total[SSPM_MAX_MODULES][4];        // 12345 kWh total energy since last 6 month!!!
@@ -1561,7 +1561,7 @@ void SSPMHandleReceivedData(void) {
               Sspm->current[module][channel] = SspmBuffer[offset] + (float)SspmBuffer[offset +1] / 100;  // x.xxA
               Sspm->voltage[module][channel] = SSPMGetValue(&SspmBuffer[offset +2]);                     // x.xxV
               Sspm->active_power[module][channel] = SSPMGetValue(&SspmBuffer[offset +5]);                // x.xxW
-              Sspm->reactive_power[module][channel] = SSPMGetValue(&SspmBuffer[offset +8]);              // x.xxVAr
+              Sspm->reactive_power[module][channel] = SSPMGetValue(&SspmBuffer[offset +8]);              // x.xxvar
               Sspm->apparent_power[module][channel] = SSPMGetValue(&SspmBuffer[offset +11]);             // x.xxVA
               float power_factor = (Sspm->active_power[module][channel] && Sspm->apparent_power[module][channel]) ? Sspm->active_power[module][channel] / Sspm->apparent_power[module][channel] : 0;
               if (power_factor > 1) { power_factor = 1; }

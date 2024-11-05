@@ -599,7 +599,7 @@ void CmndDspLine(void) {
     // Example 2: PZEM016 serial connected (GPIO25 = PZEM0XX Tx, GPIO26 = PZEM016 Rx)
     //      {"ENERGY":{"TotalStartTime":"2022-07-05T16:01:39","Total":0.000,"Yesterday":0.000,"Today":0.000,"Power":0.00,"ApparentPower":0.00,"ReactivePower":0.00,"Factor":0.00,"Frequency":50,"Voltage":231.7,"Current":0.000}}
     // index: 1         2                                      3             4                 5             6            7                    8                    9             10             11              12
-    //  unit: 0         0                                      4 (kWh)       4 (kWh)           4 (kWh)       4 (W)        0 (VA)               0 (VAr)              0             0              3 (V)           3 (A)
+    //  unit: 0         0                                      4 (kWh)       4 (kWh)           4 (kWh)       4 (W)        0 (VA)               0 (var)              0             0              3 (V)           3 (A)
     TM1621GetSensors(1);
   }
 }

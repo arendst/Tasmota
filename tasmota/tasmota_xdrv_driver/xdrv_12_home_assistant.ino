@@ -48,7 +48,7 @@ const char kHAssJsonSensorUnits[] PROGMEM =
   "||||"
   "VA|%|A|cm|Hz|%|lux|"
   "%|ppd|ppd|ppd|ppd|ppd|ppd|µg/m³|µg/m³|µg/m³|Cos φ|W| |"
-  "VAr|kWh|kWh|V|kg|kWh|"
+  "var|kWh|kWh|V|kg|kWh|"
   "ppm|ppm|ppb|R|G|B|" D_UNIT_KELVIN "| |";
 
 const char kHAssJsonSensorDevCla[] PROGMEM =

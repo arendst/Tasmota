@@ -1059,7 +1059,7 @@
 #define D_UNIT_SECOND "秒"
 #define D_UNIT_SECTORS "扇区"
 #define D_UNIT_VA "VA"
-#define D_UNIT_VAR "VAr"
+#define D_UNIT_VAR "var"
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"
