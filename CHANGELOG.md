@@ -22,7 +22,7 @@ All notable changes to this project will be documented in this file.
 
 ## [14.3.0.3] 20241031
 ### Added
-- Support for I2C over Serial, preliminary stub (#22388)
+- Support for I2C over Serial
 
 ### Changed
 - ESP32 Platform from 2024.10.30 to 2024.11.30, Framework (Arduino Core) from v3.1.0.241023 to v3.1.0.241030 and IDF to 5.3.1.241024 (#22384)
