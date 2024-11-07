@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - AHT1X/AHT2X/AHT3X ready for virtual I2C
 - SGP4X ready for virtual I2C
+- SCD40 reduce logging levels
+- SCD40 ready for virtual I2C
 
 ### Fixed
 - ESP32S3 UART output mode for Tx
