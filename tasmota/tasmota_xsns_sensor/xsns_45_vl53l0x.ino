@@ -87,7 +87,7 @@ bool VL53L0X_xshut = false;
 bool VL53L0X_detected = false;
 
 #ifdef USE_DEEPSLEEP
-bool tof_standby = false;  // Prevent updating measurments once TOF has been put to standby (just before ESP enters deepsleep)
+bool VL53L0X_standby = false;  // Prevent updating measurments once VL53L0X has been put to standby (just before ESP enters deepsleep)
 #endif
 
 /********************************************************************************************/
@@ -150,8 +150,8 @@ void Vl53l0Detect(void) {
 
 void Vl53l0Every_250MSecond(void) {
 #ifdef USE_DEEPSLEEP
-  // Prevent updating measurments once TOF has been put to sleep (just before ESP enters deepsleep)
-  if (tof_standby) return;
+  // Prevent updating measurments once VL53L0X has been put to sleep (just before ESP enters deepsleep)
+  if (VL53L0X_standby) return;
 #endif
   for (uint32_t i = 0; i < VL53LXX_MAX_SENSORS; i++) {
     if (PinUsed(GPIO_VL53LXX_XSHUT1, i) || (!VL53L0X_xshut)) {
@@ -197,8 +197,8 @@ void Vl53l0Every_250MSecond(void) {
 #ifdef USE_DOMOTICZ
 void Vl53l0Every_Second(void) {
 #ifdef USE_DEEPSLEEP
-  // Prevent updating measurments once TOF has been put to sleep (just before ESP enters deepsleep)
-  if (tof_standby) return;
+  // Prevent updating measurments once VL53L0X has been put to sleep (just before ESP enters deepsleep)
+  if (VL53L0X_standby) return;
 #endif
   if (abs(Vl53l0x_data[0].distance - Vl53l0x_data[0].distance_prev) > 8) {
     Vl53l0x_data[0].distance_prev = Vl53l0x_data[0].distance;
@@ -239,7 +239,7 @@ void Vl53l0Show(boolean json) {
 
 #ifdef USE_DEEPSLEEP
 
-void TOF_EnterStandby(void) {
+void VL53L0EnterStandby(void) {
   if (DeepSleepEnabled()) {
     for (uint32_t i = 0; i < VL53LXX_MAX_SENSORS; i++) {
       if (PinUsed(GPIO_VL53LXX_XSHUT1, i) || (!VL53L0X_xshut)) {
@@ -253,7 +253,7 @@ void TOF_EnterStandby(void) {
         }
       }
     }
-    tof_standby = true;
+    VL53L0X_standby = true;
   }
 }
 
@@ -291,7 +291,7 @@ bool Xsns45(uint32_t function) {
 #endif  // USE_WEBSERVER
 #ifdef USE_DEEPSLEEP
       case FUNC_SAVE_BEFORE_RESTART:
-        TOF_EnterStandby();
+        VL53L0EnterStandby();
         break;
 #endif // USE_DEEPSLEEP
     }
