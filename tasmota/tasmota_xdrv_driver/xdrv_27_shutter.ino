@@ -1978,7 +1978,7 @@ bool Xdrv27(uint32_t function)
       break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:
-//        ShutterShow();
+        ShutterShow();
         break;
 #endif  // USE_WEBSERVER
       case FUNC_ACTIVE:
