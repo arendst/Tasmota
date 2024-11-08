@@ -197,35 +197,21 @@ void solaxX1_RS485SendRaw(uint8_t *SendBuffer, uint8_t DataLen, uint8_t CRCflag)
 }
 
 bool solaxX1_RS485Receive(uint8_t *ReadBuffer) {
-  uint32_t SerWatchdogTime;
-
-  // Read header
+  uint8_t SerAvial;
   uint8_t len = 0;
-  SerWatchdogTime = millis();
-  while (len < 2) { // read exact length because of unaccurate timing of the inverter
-    if (solaxX1Serial->available()) ReadBuffer[len++] = (uint8_t)solaxX1Serial->read();
-    if (millis() > (SerWatchdogTime + 1000)) return true; // No data received -> bail out
+
+  while (SerAvial = solaxX1Serial->available()) {
+    while (SerAvial--) {
+      ReadBuffer[len++] = (uint8_t)solaxX1Serial->read();
+    }
+    delay(10);  // wait for more data because of slowness of the inverter
   }
+  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, ReadBuffer, len);
 
   // Check and set meter mode
   solaxX1_SwitchMeterMode((ReadBuffer[0] == 0x01 || ReadBuffer[0] == 0x02) && (ReadBuffer[1] == 0x03 || ReadBuffer[1] == 0x04));
+  if (solaxX1_global.MeterMode) return false; // Ignore checksum in metermode
 
-  // Read data in meter mode
-  if (solaxX1_global.MeterMode) { // Metermode
-    SerWatchdogTime = millis();
-    while (len < 8) { // read exact length because of unaccurate timing of the inverter
-      if (solaxX1Serial->available()) ReadBuffer[len++] = (uint8_t)solaxX1Serial->read();
-      if (millis() > (SerWatchdogTime + 1000)) return true; // No data received -> bail out
-    }
-    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, ReadBuffer, len);
-    return false; // Ignore checksum  
-  } // end Metermode
-
-  // Process normal receive
-  while (solaxX1Serial->available()) {
-    ReadBuffer[len++] = (uint8_t)solaxX1Serial->read();
-  }
-  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, ReadBuffer, len);
   uint16_t crc = solaxX1_calculateCRC(ReadBuffer, len - 2); // calculate out crc bytes
   return !(ReadBuffer[len - 1] == lowByte(crc) && ReadBuffer[len - 2] == highByte(crc));
 }
@@ -550,7 +536,7 @@ void solaxX1_CyclicTask(void) { // Every 100/250 milliseconds
 //  DEBUG_SENSOR_LOG(PSTR("SX1: solaxX1_global.AddressAssigned: %d, solaxX1_global.QueryData_count: %d, solaxX1_global.SendRetry_count: %d"), solaxX1_global.AddressAssigned, solaxX1_global.QueryData_count, solaxX1_global.SendRetry_count);
   if (solaxX1_global.AddressAssigned) {
     if (!solaxX1_global.QueryData_count) { // normal periodically query
-      solaxX1_global.QueryData_count = 5;
+      solaxX1_global.QueryData_count = 3;
       if (!solaxX1.SerialNumber[0] || solaxX1_global.Command_QueryID) { // ID query
         DEBUG_SENSOR_LOG(PSTR("SX1: Send ID query"));
         solaxX1_QueryIDData();
