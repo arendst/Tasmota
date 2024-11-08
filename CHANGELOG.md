@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 - DALI command `DaliGroupSliders 0..16` to show GUI group sliders with feedback disabling `DaliLight`
 - Support for I2C over Serial (#22444)
+- Support KNX for scripts (#22429)
+- Support deep sleep (standby) for VL53L0X (#22441)
 
 ### Breaking Changed
 
@@ -15,9 +17,11 @@ All notable changes to this project will be documented in this file.
 - SGP4X ready for virtual I2C (#22427)
 - SCD40 reduce logging levels (#22443)
 - SCD40 ready for virtual I2C (#22443)
+- Unit (k)VAr(h) to (k)var(h) (#22435)
 
 ### Fixed
 - ESP32-S3 UART output mode for Tx (#22426)
+- Mitsubishi Electric HVAC Standby Stage for MiElHVAC (#22430)
 
 ### Removed
 
