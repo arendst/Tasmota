@@ -10259,7 +10259,7 @@ uint32_t options = 0;
 #ifdef USE_SCRIPT_I2C
   options |= 0x00400000;
 #endif
-#ifdef USE_DSIPLAY_DUMP
+#ifdef USE_DISPLAY_DUMP
   options |= 0x00800000;
 #endif
 #ifdef USE_SCRIPT_SERIAL
