@@ -215,6 +215,7 @@
 #define D_WEB_SERVER "Уеб сървър"
 #define D_SOC "Съснояние на зареждане"
 #define D_SOH "State of Health"
+#define D_WATER_DEPTH "Дълбочина на водата"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "ПРЕДУПРЕЖДЕНИЕ Тази версия не поддържа постоянни настройки"

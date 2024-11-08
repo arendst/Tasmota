@@ -215,6 +215,7 @@
 #define D_WEB_SERVER "Serwer Web"
 #define D_SOC "Stan naładowania"
 #define D_SOH "Kondycja"
+#define D_WATER_DEPTH "Głębokość wody"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "UWAGA Ta wersja nie obsługuje zapisu ustawień"

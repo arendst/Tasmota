@@ -215,6 +215,7 @@
 #define D_WEB_SERVER "Máy chủ Web"
 #define D_SOC "State of Charge"
 #define D_SOH "State of Health"
+#define D_WATER_DEPTH "Độ sâu nước"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "Cảnh báo phiên bản này không hỗ trợ các cài đặt vĩnh viễn"

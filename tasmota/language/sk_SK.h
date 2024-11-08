@@ -215,6 +215,7 @@
 #define D_WEB_SERVER "Web Server"
 #define D_SOC "State of Charge"
 #define D_SOH "State of Health"
+#define D_WATER_DEPTH "Hĺbka vody"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "UPOZORNENIE Táto verzia nepodporuje trvalé nastavenia"

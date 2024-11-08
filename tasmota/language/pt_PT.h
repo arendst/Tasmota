@@ -215,6 +215,7 @@
 #define D_WEB_SERVER "Servidor WEB"
 #define D_SOC "Estado de Carga"
 #define D_SOH "Estado de Saúde"
+#define D_WATER_DEPTH "Profundidade da água"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "AVISO esta versão não supporta configurações persistentes"

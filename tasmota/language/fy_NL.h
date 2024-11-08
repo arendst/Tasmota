@@ -215,6 +215,7 @@
 #define D_WEB_SERVER "Webserver"
 #define D_SOC "State of Charge"
 #define D_SOH "State of Charge"
+#define D_WATER_DEPTH "Vattendjup"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "WARSKOGING Dizze ferzje bewarret gjin ynstellings"

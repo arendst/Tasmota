@@ -215,6 +215,7 @@
 #define D_WEB_SERVER "Webbediener"
 #define D_SOC "Laai kondisie"
 #define D_SOH "Laai vermoeë"
+#define D_WATER_DEPTH "Water diepte"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "WAARSKUWING Hierdie weergawe ondersteun nie aanhoudende instellings nie"
