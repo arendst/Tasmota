@@ -2293,6 +2293,7 @@ bool Xdrv27(uint32_t function)
   if (Settings->flag3.shutter_mode) {  // SetOption80 - Enable shutter support
     uint8_t  counter         = XdrvMailbox.index == 0 ? 1 : XdrvMailbox.index;
     uint8_t  counterend      = XdrvMailbox.index == 0 ? TasmotaGlobal.shutters_present : XdrvMailbox.index;
+    uint32_t rescue_index    = XdrvMailbox.index;
     int32_t  rescue_payload  = XdrvMailbox.payload;
     uint32_t rescue_data_len = XdrvMailbox.data_len;
     char stemp1[10];
@@ -2323,7 +2324,7 @@ bool Xdrv27(uint32_t function)
           XdrvMailbox.index    = i;
           XdrvMailbox.payload  = rescue_payload;
           XdrvMailbox.data_len = rescue_data_len;
-	  if (!ShutterSettings.version) {
+          if (!ShutterSettings.version) {
             ShutterSettingsLoad(0);
             ShutterSettings.shutter_startrelay[0] = 1;
             ShutterInit();
@@ -2395,13 +2396,16 @@ bool Xdrv27(uint32_t function)
       break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:
-        ShutterShow();
+//        ShutterShow();
         break;
 #endif  // USE_WEBSERVER
       case FUNC_ACTIVE:
         result = true;
         break;
     }
+    XdrvMailbox.index = rescue_index;
+    XdrvMailbox.payload = rescue_payload;
+    XdrvMailbox.data_len = rescue_data_len;
   }
   return result;
 }

@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 - Support KNX for scripts (#22429)
 - Support deep sleep (standby) for VL53L0X (#22441)
 - Support for MS5837 pressure and temperature sensor (#22376)
-- Berry add I2C read16/write16 supporting Little Endian
+- Berry add I2C read16/write16 supporting Little Endian (#22448)
 
 ### Breaking Changed
 
@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - ESP32-S3 UART output mode for Tx (#22426)
 - Mitsubishi Electric HVAC Standby Stage for MiElHVAC (#22430)
+- FUNC_COMMAND linked list command buffer corruption by shutter driver
 
 ### Removed
 
