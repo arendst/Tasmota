@@ -123,7 +123,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - DALI command `DaliTarget` to set light control broadcast, group number or gear number
 - DALI command `DaliGroupSliders 0..16` to show GUI group sliders with feedback disabling `DaliLight`
 - DALI inverted signal configuration using GPIO DALI RX_i/TX_i
-- Support for I2C over Serial, preliminary stub [#22388](https://github.com/arendst/Tasmota/issues/22388)
+- Support for I2C over Serial [#224444](https://github.com/arendst/Tasmota/issues/224444)
 - Support for Shelly DALI Dimmer Gen3
 - Support for HLK-LD2410S 24GHz smart wave motion sensor [#22253](https://github.com/arendst/Tasmota/issues/22253)
 - Support for US AQI and EPA AQI in PMS5003x sensors [#22294](https://github.com/arendst/Tasmota/issues/22294)
@@ -141,6 +141,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Changed
 - ESP32 Platform from 2024.09.30 to 2024.11.30, Framework (Arduino Core) from v3.1.0.240926 to v3.1.0.241030 and IDF to 5.3.1.241024 [#22384](https://github.com/arendst/Tasmota/issues/22384)
 - ESP32 LVGL library from v9.2.0 to v9.2.2 [#22385](https://github.com/arendst/Tasmota/issues/22385)
+- AHT1X/AHT2X/AHT3X ready for virtual I2C [#22427](https://github.com/arendst/Tasmota/issues/22427)
+- SGP4X ready for virtual I2C [#22427](https://github.com/arendst/Tasmota/issues/22427)
+- SCD40 reduce logging levels [#22443](https://github.com/arendst/Tasmota/issues/22443)
+- SCD40 ready for virtual I2C [#22443](https://github.com/arendst/Tasmota/issues/22443)
 - Refactored `i2c_enabled` as array [#22387](https://github.com/arendst/Tasmota/issues/22387)
 - DALI renamed commands `DaliCommission` to `DaliScan` and `DaliWeb` to `DaliLight`
 - DALI set Tasmota light control as default
@@ -152,5 +156,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - EQ3 TRV firmware version 1.46 fails if the default true is used in subscribe on the notify characteristic [#22328](https://github.com/arendst/Tasmota/issues/22328)
 - Ethernet on -DFRAMEWORK_ARDUINO_ITEAD framework regression from v14.3.0 [#22367](https://github.com/arendst/Tasmota/issues/22367)
 - ESP32 Arduino Core IPv6 zones used by Matter [#22378](https://github.com/arendst/Tasmota/issues/22378)
+- ESP32-S3 UART output mode for Tx [#22426](https://github.com/arendst/Tasmota/issues/22426)
 
 ### Removed

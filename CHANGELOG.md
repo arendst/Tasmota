@@ -6,23 +6,24 @@ All notable changes to this project will be documented in this file.
 ## [14.3.0.4] 
 ### Added
 - DALI command `DaliGroupSliders 0..16` to show GUI group sliders with feedback disabling `DaliLight`
+- Support for I2C over Serial (#22444)
 
 ### Breaking Changed
 
 ### Changed
-- AHT1X/AHT2X/AHT3X ready for virtual I2C
-- SGP4X ready for virtual I2C
-- SCD40 reduce logging levels
-- SCD40 ready for virtual I2C
+- AHT1X/AHT2X/AHT3X ready for virtual I2C (#22427)
+- SGP4X ready for virtual I2C (#22427)
+- SCD40 reduce logging levels (#22443)
+- SCD40 ready for virtual I2C (#22443)
 
 ### Fixed
-- ESP32S3 UART output mode for Tx
+- ESP32-S3 UART output mode for Tx (#22426)
 
 ### Removed
 
 ## [14.3.0.3] 20241031
 ### Added
-- Support for I2C over Serial
+- Support for I2C over Serial, preliminary stub (#22388)
 
 ### Changed
 - ESP32 Platform from 2024.10.30 to 2024.11.30, Framework (Arduino Core) from v3.1.0.241023 to v3.1.0.241030 and IDF to 5.3.1.241024 (#22384)
