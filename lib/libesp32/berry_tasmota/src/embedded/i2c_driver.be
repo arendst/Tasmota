@@ -56,6 +56,15 @@ class I2C_Driver
   def write8(reg, val)
     return self.wire.write(self.addr, reg, val, 1)
   end
+  #- write register with 16 bits value -#
+  def write16(reg, val)
+    return self.wire.write(self.addr, reg, val, 2)
+  end
+  #- write register with 16 bits value, Little Endian -#
+  def write16LE(reg, val)
+    val = ((val & 0xFF) << 8) | ((val & 0xFF00) >> 8)
+    return self.write16(reg, val)
+  end
 
   # Set or clear a specific bit in a register
   # write_bit(reg:int, bit:int, state:bool) -> nil
@@ -93,6 +102,11 @@ class I2C_Driver
   def read16(reg)
     var buf = self.wire.read_bytes(self.addr, reg, 2)
     return (buf[0] << 8) + buf[1]
+  end
+  # read 16 bits Little Endian
+  def read16LE(reg)
+    var buf = self.wire.read_bytes(self.addr, reg, 2)
+    return (buf[1] << 8) + buf[0]
   end
   # read 24 bits
   def read24(reg)
