@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Support for I2C over Serial (#22444)
 - Support KNX for scripts (#22429)
 - Support deep sleep (standby) for VL53L0X (#22441)
+- Support for MS5837 pressure and temperature sensor (#22376)
 
 ### Breaking Changed
 

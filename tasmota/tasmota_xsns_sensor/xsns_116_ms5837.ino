@@ -19,25 +19,27 @@
 
 #ifdef USE_I2C
 #ifdef USE_MS5837
-
-#define MS5837_ADDR         0x76
-
-#define XSNS_116            116
-#define XI2C_91             91         // See I2CDEVICES.md
 /*********************************************************************************************\
  * BlueRobotics Pressure Sensor
  *
  * This driver supports the following sensors:
  * - BlueRobotics MS5837
+ * 
+ * I2C Address: 0x76
 \*********************************************************************************************/
+
+#define XSNS_116            116
+#define XI2C_91             91         // See I2CDEVICES.md
+
+#define MS5837_ADDR         0x76
 
 #include <Wire.h>
 #include <MS5837.h>
 
-MS5837 sensor_ms5837;
+MS5837 ms5837_sensor;
 
-uint8_t ms5837Start = 0;
-float pressure_offset = 2.85f;
+bool ms5837_start = false;
+float ms5837_pressure_offset = 2.85f;
 
 /********************************************************************************************/
 
@@ -46,10 +48,10 @@ void MS5837init(void) {
   if (I2cSetDevice(0x76)) {
     TwoWire& myWire = I2cGetWire();
 
-    if(sensor_ms5837.init(myWire)) {
-      sensor_ms5837.setModel(sensor_ms5837.MS5837_02BA);
-      sensor_ms5837.setFluidDensity(997); // kg/m^3 (freshwater, 1029 for seawater)
-      ms5837Start = 1;
+    if(ms5837_sensor.init(myWire)) {
+      ms5837_sensor.setModel(ms5837_sensor.MS5837_02BA);
+      ms5837_sensor.setFluidDensity(997); // kg/m^3 (freshwater, 1029 for seawater)
+      ms5837_start = true;
       I2cSetActiveFound(MS5837_ADDR, "MS5837");
     }
   }
@@ -69,22 +71,24 @@ void MS5837Show(bool json) {
   char cmWater_str[8];
 
   if (I2cEnabled(XI2C_91)) {
-    sensor_ms5837.read();
-    ms5837Temp = ConvertTemp(sensor_ms5837.temperature());
-    ms5837Pres = ConvertPressure(sensor_ms5837.pressure() + pressure_offset);
+    ms5837_sensor.read();
+    ms5837Temp = ConvertTemp(ms5837_sensor.temperature());
+    ms5837Pres = ConvertPressure(ms5837_sensor.pressure() + ms5837_pressure_offset);
     ext_snprintf_P(temperature_str, sizeof(temperature_str), PSTR("%1_f"), &ms5837Temp);
     ext_snprintf_P(pressure_str, sizeof(pressure_str), PSTR("%1_f"), &ms5837Pres);
     if (json) {
       ResponseAppend_P(PSTR(",\"MS5837\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_PRESSURE "\":%s"), temperature_str, pressure_str);
     }
+#ifdef USE_BMP
     if (I2cEnabled(XI2C_10)) {
-      pressure_delta = (sensor_ms5837.pressure() + pressure_offset) - bmp_sensors[0].bmp_pressure;
+      pressure_delta = (ms5837_sensor.pressure() + ms5837_pressure_offset) - bmp_sensors[0].bmp_pressure;
       cm_water = pressure_delta*0.401463078662f*2.54f; // changes from inches to cm after read using 2.54cm/in conversion
       ext_snprintf_P(cmWater_str, sizeof(cmWater_str), PSTR("%1_f"), &cm_water);
       if (json) {
         ResponseAppend_P(PSTR(",\"" D_JSON_WATER_DEPTH "\":%s"),cmWater_str);
       }
     }
+#endif  // USE_BMP
     if (json) {
       ResponseAppend_P(PSTR("}"));
 
@@ -92,9 +96,11 @@ void MS5837Show(bool json) {
     } else {
         WSContentSend_PD(HTTP_SNS_F_TEMP, name_str, Settings->flag2.temperature_resolution, &ms5837Temp, TempUnit());
         WSContentSend_PD(HTTP_SNS_PRESSURE, name_str, pressure_str, PressureUnit().c_str());
+#ifdef USE_BMP
         if (I2cEnabled(XI2C_10)) {
           WSContentSend_PD(HTTP_SNS_WATER_DEPTH, name_str, &cmWater_str);
         }
+#endif  // USE_BMP
 #endif  // USE_WEBSERVER
     }
   }
@@ -105,7 +111,9 @@ bool ms5837CommandSensor() {
   switch (XdrvMailbox.payload) {
     case 0:
       MS5837Show(0);
-      pressure_offset = bmp_sensors[0].bmp_pressure - sensor_ms5837.pressure();
+#ifdef USE_BMP
+      ms5837_pressure_offset = bmp_sensors[0].bmp_pressure - ms5837_sensor.pressure();
+#endif  // USE_BMP
       break;
   }
   return serviced;
@@ -119,12 +127,11 @@ bool Xsns116(uint32_t function) {
   if (!I2cEnabled(XI2C_91)) { return false; }
 
   bool result = false;
-  //I2cScan();
 
   if (FUNC_INIT == function) {
     MS5837init();
   }
-  else if (ms5837Start) {
+  else if (ms5837_start) {
     switch (function) {
       case FUNC_COMMAND_SENSOR:
         if (XSNS_116 == XdrvMailbox.index) {
