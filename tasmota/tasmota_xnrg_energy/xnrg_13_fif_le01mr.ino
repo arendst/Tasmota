@@ -24,7 +24,7 @@
  *               (and bidirectional energy counting - enabled by RS485).
  * It measure: Active energy imported AE+ [kWh] , Reactive energy imported RE+ [kvarh],
  *             Voltage V [V], Current I [A], Frequency F [Hz], power factor (aka "cos-phi"),
- *             Active power P [kW], Reactive power Q [kVAr], Apparent power S [kVA],
+ *             Active power P [kW], Reactive power Q [kvar], Apparent power S [kVA],
  *             *Active energy exported AE- [kWh] (when meter is switched to bi-directional counting then
  *                  reactive energy imported register contains value of Active energy exported).
  *

@@ -462,10 +462,10 @@ void Ade7953Init(void) {
         }
       }
 #ifdef USE_ESP32_SPI
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: Chip%d CalibRegs%c V %d, I %d, W %d, VA %d, VAr %d, Ph %d"),
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: Chip%d CalibRegs%c V %d, I %d, W %d, VA %d, var %d, Ph %d"),
         chip +1, 'A'+channel, regs[0], regs[1], regs[2], regs[3], regs[4], regs[5]);
 #else
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: CalibRegs%c V %d, I %d, W %d, VA %d, VAr %d, Ph %d"),
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: CalibRegs%c V %d, I %d, W %d, VA %d, var %d, Ph %d"),
         'A'+channel, regs[0], regs[1], regs[2], regs[3], regs[4], regs[5]);
 #endif  // USE_ESP32_SPI
     }

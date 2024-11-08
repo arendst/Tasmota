@@ -80,7 +80,7 @@ typedef struct {
   float current[ENERGY_MAX_PHASES];             // 123.123 A
   float active_power[ENERGY_MAX_PHASES];        // 123.1 W
   float apparent_power[ENERGY_MAX_PHASES];      // 123.1 VA
-  float reactive_power[ENERGY_MAX_PHASES];      // 123.1 VAr
+  float reactive_power[ENERGY_MAX_PHASES];      // 123.1 var
   float power_factor[ENERGY_MAX_PHASES];        // 0.12
   float frequency[ENERGY_MAX_PHASES];           // 123.1 Hz
   float import_active[ENERGY_MAX_PHASES];       // 123.123 kWh

@@ -80,9 +80,9 @@ const uint16_t sdm630_start_addresses[] {
   0x000C,  //  +   -   +   W    Phase 1 power
   0x000E,  //  +   -   +   W    Phase 2 power
   0x0010,  //  +   -   -   W    Phase 3 power
-  0x0018,  //  +   -   +   VAr  Phase 1 volt amps reactive
-  0x001A,  //  +   -   -   VAr  Phase 2 volt amps reactive
-  0x001C,  //  +   -   -   VAr  Phase 3 volt amps reactive
+  0x0018,  //  +   -   +   var  Phase 1 volt amps reactive
+  0x001A,  //  +   -   -   var  Phase 2 volt amps reactive
+  0x001C,  //  +   -   -   var  Phase 3 volt amps reactive
   0x001E,  //  +   -   +        Phase 1 power factor
   0x0020,  //  +   -   -        Phase 2 power factor
   0x0022,  //  +   -   -        Phase 3 power factor
@@ -165,9 +165,9 @@ void SDM630Every250ms(void)
           Energy->apparent_power[2] = convBufToFloat(&buffer[47]);    //  +   -   -   VA   Phase 3 volt amps
 
           //0x0018
-          Energy->reactive_power[0] = convBufToFloat(&buffer[51]);    //  +   -   +   VAr  Phase 1 volt amps reactive
-          Energy->reactive_power[1] = convBufToFloat(&buffer[55]);    //  +   -   -   VAr  Phase 2 volt amps reactive
-          Energy->reactive_power[2] = convBufToFloat(&buffer[59]);    //  +   -   -   VAr  Phase 3 volt amps reactive
+          Energy->reactive_power[0] = convBufToFloat(&buffer[51]);    //  +   -   +   var  Phase 1 volt amps reactive
+          Energy->reactive_power[1] = convBufToFloat(&buffer[55]);    //  +   -   -   var  Phase 2 volt amps reactive
+          Energy->reactive_power[2] = convBufToFloat(&buffer[59]);    //  +   -   -   var  Phase 3 volt amps reactive
 
           //0x001E
           Energy->power_factor[0] = convBufToFloat(&buffer[63]);      //  +   -   +        Phase 1 power factor
