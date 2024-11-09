@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - ESP32-S3 UART output mode for Tx (#22426)
 - Mitsubishi Electric HVAC Standby Stage for MiElHVAC (#22430)
 - FUNC_COMMAND linked list command buffer corruption by shutter driver
+- ESP32, ESP32-S2 and ESP32-S3 re-enable touch buttons (#22446)
 
 ### Removed
 
