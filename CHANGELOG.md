@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Support deep sleep (standby) for VL53L0X (#22441)
 - Support for MS5837 pressure and temperature sensor (#22376)
 - Berry add I2C read16/write16 supporting Little Endian (#22448)
+- Berry drivers for PCA9535 (generic and in SenseCAP D1)
 
 ### Breaking Changed
 
