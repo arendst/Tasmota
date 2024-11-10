@@ -1620,14 +1620,29 @@ void TuyaSensorsShow(bool json)
 
 #ifdef USE_WEBSERVER
 
+#define WEB_HANDLE_TUYA "d16"
+
 void TuyaAddButton(void) {
   if (AsModuleTuyaMS()) {
     WSContentSend_P(HTTP_TABLE100);
     char stemp[33];
-    snprintf_P(stemp, sizeof(stemp), PSTR("" D_JSON_IRHVAC_MODE ""));
-    WSContentSend_P(HTTP_DEVICE_CONTROL, 26, TasmotaGlobal.devices_present + 1, TasmotaGlobal.devices_present + 1,
-      (strlen(GetWebButton(TasmotaGlobal.devices_present))) ? HtmlEscape(GetWebButton(TasmotaGlobal.devices_present)).c_str() : stemp, "");
+    snprintf_P(stemp, sizeof(stemp), PSTR(D_JSON_IRHVAC_MODE));
+    WSContentSend_P(PSTR("<tr><td><button onclick='la(\"&" WEB_HANDLE_TUYA "=1\");'>%s</button></td>"),  // &d16 is related to WebGetArg("d16", tmp, sizeof(tmp));
+      (strlen(GetWebButton(TasmotaGlobal.devices_present))) ? HtmlEscape(GetWebButton(TasmotaGlobal.devices_present)).c_str() : stemp);
     WSContentSend_P(PSTR("</tr></table>"));
+  }
+}
+
+void TuyaWebGetArg(void) {
+  if (AsModuleTuyaMS()) {
+    char tmp[8];                       // WebGetArg numbers only
+    WebGetArg(PSTR(WEB_HANDLE_TUYA), tmp, sizeof(tmp));
+    if (strlen(tmp)) {
+      uint8_t dpId = TuyaGetDpId(TUYA_MCU_FUNC_MODESET);
+      char svalue[32];
+      snprintf_P(svalue, sizeof(svalue), PSTR("Tuyasend4 %d,%d"), dpId, !TuyaModeSet());
+      ExecuteWebCommand(svalue);
+    }
   }
 }
 
@@ -1722,6 +1737,9 @@ bool Xdrv16(uint32_t function) {
 #ifdef USE_WEBSERVER
       case FUNC_WEB_ADD_MAIN_BUTTON:
         TuyaAddButton();
+        break;
+      case FUNC_WEB_GET_ARG:
+        TuyaWebGetArg();
         break;
       case FUNC_WEB_SENSOR:
         TuyaSensorsShow(0);

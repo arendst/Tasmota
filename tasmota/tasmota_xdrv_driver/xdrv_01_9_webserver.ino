@@ -1580,19 +1580,6 @@ bool HandleRootStatusRefresh(void)
       }
     } else {
 #endif  // USE_SONOFF_IFAN
-#ifdef USE_TUYA_MCU
-    if (IsModuleTuya()) {
-      if (device <= TasmotaGlobal.devices_present) {
-        ExecuteCommandPower(device, POWER_TOGGLE, SRC_IGNORE);
-      } else {
-        if (AsModuleTuyaMS() && device == TasmotaGlobal.devices_present + 1) {
-          uint8_t dpId = TuyaGetDpId(TUYA_MCU_FUNC_MODESET);
-          snprintf_P(svalue, sizeof(svalue), PSTR("Tuyasend4 %d,%d"), dpId, !TuyaModeSet());
-          ExecuteCommand(svalue, SRC_WEBGUI);
-        }
-      }
-    } else {
-#endif  // USE_TUYA_MCU
 #ifdef USE_SHUTTER
       int32_t ShutterWebButton;
       if (ShutterWebButton = IsShutterWebButton(device)) {
@@ -1607,9 +1594,6 @@ bool HandleRootStatusRefresh(void)
 #ifdef USE_SONOFF_IFAN
     }
 #endif  // USE_SONOFF_IFAN
-#ifdef USE_TUYA_MCU
-    }
-#endif  // USE_TUYA_MCU
   }
 #ifdef USE_LIGHT
   WebGetArg(PSTR("d0"), tmp, sizeof(tmp));  // 0 - 100 Dimmer value
