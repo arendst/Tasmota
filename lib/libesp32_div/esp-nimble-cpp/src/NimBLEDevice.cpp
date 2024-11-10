@@ -444,12 +444,13 @@ int NimBLEDevice::getPower() {
  */
 /* STATIC*/
 NimBLEAddress NimBLEDevice::getAddress() {
-    ble_addr_t addr = {BLE_ADDR_PUBLIC, 0};
+    ble_addr_t addr = {m_own_addr_type, 0};
 
-    if(BLE_HS_ENOADDR == ble_hs_id_copy_addr(BLE_ADDR_PUBLIC, addr.val, NULL)) {
-        NIMBLE_LOGD(LOG_TAG, "Public address not found, checking random");
-        addr.type = BLE_ADDR_RANDOM;
-        ble_hs_id_copy_addr(BLE_ADDR_RANDOM, addr.val, NULL);
+    if(BLE_HS_ENOADDR == ble_hs_id_copy_addr(m_own_addr_type, addr.val, NULL)) {
+        // NIMBLE_LOGD(LOG_TAG, "Public address not found, checking random");
+        // addr.type = BLE_ADDR_RANDOM;
+        // ble_hs_id_copy_addr(BLE_ADDR_RANDOM, addr.val, NULL);
+        return NimBLEAddress(); // return blank to report error
     }
 
     return NimBLEAddress(addr);

@@ -66,6 +66,7 @@
 #include <t_bearssl.h>
 
 #include "include/xsns_62_esp32_mi.h"
+#include "services/gap/ble_svc_gap.h"
 
 void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify);
 void MI32AddKey(mi_bindKey_t keyMAC);
@@ -732,7 +733,50 @@ extern "C" {
     MI32BLELoop();
   }
 
+  bool MI32runBerryConfig(uint16_t operation){
+    bool success = false;
+    #ifdef CONFIG_BT_NIMBLE_EXT_ADV
+      NimBLEExtAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
+    #else
+      NimBLEAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
+    #endif
+    if(pAdvertising == nullptr){
+      return success;
+    }
+    switch(operation){
+      case 231: // set address
+        pAdvertising->stop();
+        if(MI32.conCtx->addrType > 0){
+          ble_hs_id_set_rnd(MI32.conCtx->MAC);
+          AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: set MAC to random"));
+        }
+        NimBLEDevice::setOwnAddrType(MI32.conCtx->addrType);
+        success = true;
+        break;
+      case 232: // set adv params via bytes() descriptor of size 5,
+        if(MI32.conCtx->buffer[0] == 5){
+          uint16_t itvl_min = MI32.conCtx->buffer[2] + (MI32.conCtx->buffer[3] << 8);
+          uint16_t itvl_max = MI32.conCtx->buffer[4] + (MI32.conCtx->buffer[5] << 8);
+          pAdvertising->setAdvertisementType(MI32.conCtx->buffer[1]);
+          pAdvertising->setMinInterval(itvl_min);
+          pAdvertising->setMaxInterval(itvl_max);
+          AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: adv params: type: %u, min: %u, max: %u"),MI32.conCtx->buffer[1], (uint16_t)(itvl_min * 0.625), (uint16_t)(itvl_max * 0.625)) ;
+          success = true;
+        }
+        break;
+      case 233:
+        int ret = ble_svc_gap_device_name_set((const char*)MI32.conCtx->buffer + 1);
+        AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: new gap device name - %s"),(const char*) MI32.conCtx->buffer + 1);
+        success = (ret == 0);
+        break;
+    }
+    return success;
+  }
+
   bool MI32runBerryServer(uint16_t operation){
+    if(operation > 230){
+      return MI32runBerryConfig(operation);
+    }
     MI32.conCtx->operation = operation;
     AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Berry server op: %d, response: %u"),MI32.conCtx->operation, MI32.conCtx->response);
     if(MI32.mode.readyForNextServerJob == 0){
