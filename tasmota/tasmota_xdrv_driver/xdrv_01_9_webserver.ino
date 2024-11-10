@@ -267,12 +267,14 @@ const char HTTP_HEAD_STYLE3[] PROGMEM =
   "<h2>%s</h2>";   // Device name
 
 const char HTTP_MSG_SLIDER_GRADIENT[] PROGMEM =
+  "<td colspan='%d' style='width:%d%%'>"
   "<div id='%s' class='r' style='background-image:linear-gradient(to right,%s,%s);'>"
   "<input id='sl%d' type='range' min='%d' max='%d' value='%d' onchange='lc(\"%c\",%d,value)'>"
-  "</div>";
+  "</div>"
+  "</td>";
 
-const char HTTP_MSG_SLIDER_UPDATE[] PROGMEM =
-  "<img style='display:none;' src onerror=";
+const char HTTP_MSG_EXEC_JAVASCRIPT[] PROGMEM =
+  "<img style='display:none;' src onerror=\"";
 
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br>";
@@ -416,7 +418,10 @@ const char HTTP_END[] PROGMEM =
   "</body>"
   "</html>";
 
-const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button onclick='la(\"&o=%d\");'>%s%s</button></td>";  // ?o is related to WebGetArg(PSTR("o"), tmp, sizeof(tmp))
+//const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button onclick='la(\"&o=%d\");'>%s%s</button></td>";  // ?o is related to WebGetArg(PSTR("o"), tmp, sizeof(tmp))
+//const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button id='o%d' style='background:#%06x;' onclick='la(\"&o=%d\");'>%s%s</button></td>";  // ?o is related to WebGetArg(PSTR("o"), tmp, sizeof(tmp))
+const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button id='o%d' onclick='la(\"&o=%d\");'>%s%s</button></td>";  // ?o is related to WebGetArg(PSTR("o"), tmp, sizeof(tmp))
+
 const char HTTP_DEVICE_STATE[] PROGMEM = "<td style='width:%d%%;text-align:center;font-weight:%s;font-size:%dpx'>%s</td>";
 
 enum ButtonTitle {
@@ -464,6 +469,7 @@ struct WEB {
   uint32_t upload_size = 0;
   int slider[LST_MAX];
   uint16_t upload_error = 0;
+  uint8_t slider_update[LST_MAX];
   uint8_t state = HTTP_OFF;
   uint8_t upload_file_type;
   uint8_t config_block_count = 0;
@@ -602,6 +608,7 @@ void StartWebserver(int type)
 
     for (uint32_t i = 0; i < LST_MAX; i++) {
       Web.slider[i] = -1;
+      Web.slider_update[i] = 0;
     }
 
     if (!Webserver) {
@@ -1150,31 +1157,30 @@ uint32_t WebUseManagementSubmenu(void) {
   return management_count -1;
 }
 
-uint32_t WebDeviceColumns(void) {
-  const uint32_t max_columns = 8;
-
-  uint32_t rows = TasmotaGlobal.devices_present / max_columns;
-  if (TasmotaGlobal.devices_present % max_columns) { rows++; }
-  uint32_t cols = TasmotaGlobal.devices_present / rows;
-  if (TasmotaGlobal.devices_present % rows) { cols++; }
-  return cols;
-}
-
 #ifdef USE_LIGHT
 void WebSliderColdWarm(void) {
   Web.slider[0] = LightGetColorTemp();
+  WSContentSend_P(PSTR("<tr>"));
   WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Cold Warm
-    PSTR("a"),             // a - Unique HTML id
+    2, 100,
+    PSTR("a"),       // a - Unique HTML id
     PSTR("#eff"), PSTR("#f81"),  // 6500k in RGB (White) to 2500k in RGB (Warm Yellow)
     1,               // sl1 - used for slider updates
     153, 500,        // Range color temperature
     Web.slider[0],
     't', 0);         // t0 - Value id releated to lc("t0", value) and WebGetArg("t0", tmp, sizeof(tmp));
+  WSContentSend_P(PSTR("</tr>"));
 }
 #endif  // USE_LIGHT
 
-void HandleRoot(void)
-{
+const char HTTP_MSG_SLIDER_SHUTTERT[] PROGMEM =
+  "<td style='width:70%%'>"
+  "<div style='padding:0px 2px;text-align:center;font-size:12px;'><span>%s</span>"
+  "<input id='s27%d' type='range' min='0' max='100' value='%d' onchange='lc(\"u\",%d,value)'>"
+  "</div>"
+  "</td>";
+
+void HandleRoot(void) {
 #ifndef NO_CAPTIVE_PORTAL
   if (CaptivePortal()) { return; }  // If captive portal redirect instead of displaying the page.
 #endif  // NO_CAPTIVE_PORTAL
@@ -1206,6 +1212,18 @@ void HandleRoot(void)
 
   AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_MAIN_MENU));
 
+  /*
+  Display GUI with items in following order:
+  - Header with module name and device name
+  - Dynamic ajax update region
+  - Optional power toggle buttons for relays, display and iFan with feedback
+  - Optional shutter buttons and slider with feedback
+  - Optional light button and slider(s) with feedback
+  - Call FUNC_WEB_ADD_MAIN_BUTTON
+    - Optional buttons and sliders with feedback
+  - Show default main buttons (Configuration, Information, Firmware Upgrade, Tools and Restart)
+  */
+
   char stemp[33];
 
   WSContentStart_P(PSTR(D_MAIN_MENU));
@@ -1215,16 +1233,129 @@ void HandleRoot(void)
   WSContentSend_P(HTTP_SCRIPT_ROOT, Settings->web_refresh);
 #endif
   WSContentSend_P(HTTP_SCRIPT_ROOT_PART2);
-
   WSContentSendStyle();
-
   WSContentSend_P(PSTR("<div style='padding:0;' id='l1' name='l1'></div>"));
+
   if (TasmotaGlobal.devices_present) {
+    uint32_t buttons_non_light = TasmotaGlobal.devices_present;
+    uint32_t button_idx = 1;
+
+#ifdef USE_LIGHT
+    // Chk for reduced toggle buttons used by lights
+    if (TasmotaGlobal.light_type) {
+      // Find and skip light buttons (Lights are controlled by the last TasmotaGlobal.devices_present (or 2))
+      buttons_non_light = LightDevice() -1;
+    }
+#endif  // USE_LIGHT
+
+    uint32_t buttons_non_light_non_shutter = buttons_non_light;
+
+#ifdef USE_SHUTTER
+    // Chk for reduced toggle buttons used by shutters
+    uint32_t shutter_button = 0;      // Bitmask for each button
+
+    // Find and skip dedicated shutter buttons
+    if (buttons_non_light && Settings->flag3.shutter_mode) {  // SetOption80 - Enable shutter support
+      for (button_idx = 1; button_idx <= buttons_non_light; button_idx++) {
+        if (IsShutterWebButton(button_idx) != 0) {
+          buttons_non_light_non_shutter--;
+          shutter_button |= (1 << (button_idx -1));  // Set button bit in bitmask
+        }
+      }
+    }
+#endif  // USE_SHUTTER
+
+    if (buttons_non_light_non_shutter) {  // Any non light AND non shutter button
+      // Display toggle buttons
+      WSContentSend_P(HTTP_TABLE100);  // "<table style='width:100%%'>"
+      WSContentSend_P(PSTR("<tr>"));
+
+#ifdef USE_SONOFF_IFAN
+      if (IsModuleIfan()) {
+        WSContentSend_P(HTTP_DEVICE_CONTROL, 36, 1, 1,
+          (strlen(SettingsText(SET_BUTTON1))) ? SettingsTextEscaped(SET_BUTTON1).c_str() : PSTR(D_BUTTON_TOGGLE),
+          "");
+        for (uint32_t i = 0; i < MaxFanspeed(); i++) {
+          snprintf_P(stemp, sizeof(stemp), PSTR("%d"), i);
+          WSContentSend_P(HTTP_DEVICE_CONTROL, 16, i +2, i +2,
+            (strlen(SettingsText(SET_BUTTON2 + i))) ? SettingsTextEscaped(SET_BUTTON2 + i).c_str() : stemp,
+            "");
+        }
+      } else {
+#endif  // USE_SONOFF_IFAN
+
+        const uint32_t max_columns = 8;
+        uint32_t rows = buttons_non_light_non_shutter / max_columns;
+        if (buttons_non_light_non_shutter % max_columns) { rows++; }
+        uint32_t cols = buttons_non_light_non_shutter / rows;
+        if (buttons_non_light_non_shutter % rows) { cols++; }
+
+        uint32_t button_ptr = 0;
+        for (button_idx = 1; button_idx <= buttons_non_light; button_idx++) {
+
+#ifdef USE_SHUTTER
+          if (bitRead(shutter_button, button_idx -1)) { continue; }  // Skip non-sequential shutter button
+#endif  // USE_SHUTTER
+
+          bool set_button = ((button_idx <= MAX_BUTTON_TEXT) && strlen(GetWebButton(button_idx -1)));
+          snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), button_idx);
+          WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / cols, button_idx, button_idx,
+            (set_button) ? HtmlEscape(GetWebButton(button_idx -1)).c_str() : (cols < 5) ? PSTR(D_BUTTON_TOGGLE) : "",
+            (set_button) ? "" : (TasmotaGlobal.devices_present > 1) ? stemp : "");
+          button_ptr++;
+          if (0 == button_ptr % cols) { WSContentSend_P(PSTR("</tr><tr>")); }
+        }
+#ifdef USE_SONOFF_IFAN
+      }
+#endif  // USE_SONOFF_IFAN
+
+      WSContentSend_P(PSTR("</tr></table>"));
+    }
+
+#ifdef USE_SHUTTER
+    if (shutter_button) {              // Any button bit set
+      WSContentSend_P(HTTP_TABLE100);  // "<table style='width:100%%'>"
+
+      int32_t ShutterWebButton;
+      uint32_t shutter_button_idx = 1;
+      for (uint32_t shutter_idx = 0; shutter_idx < TasmotaGlobal.shutters_present ; shutter_idx++) {
+        while ((0 == shutter_button & (1 << (shutter_button_idx -1)))) { shutter_button_idx++; }
+
+        WSContentSend_P(PSTR("<tr>"));
+        shutter_button_idx++;  // Left button is next button first (down)
+        for (uint32_t j = 0; j < 2; j++) {
+          ShutterWebButton = IsShutterWebButton(shutter_button_idx);
+          WSContentSend_P(HTTP_DEVICE_CONTROL, 15, shutter_button_idx, shutter_button_idx,
+            ((ShutterGetOptions(abs(ShutterWebButton)-1) & 2) /* is locked */ ? "-" :
+            ((ShutterGetOptions(abs(ShutterWebButton)-1) & 8) /* invert web buttons */ ? ((ShutterWebButton>0) ? "&#9660;" : "&#9650;") : ((ShutterWebButton>0) ? "&#9650;" : "&#9660;"))),
+            "");
+
+          if (1 == j) { break; }
+
+          shutter_button_idx--;  // Right button is previous button (up)
+          bool set_button = ((shutter_button_idx <= MAX_BUTTON_TEXT) && strlen(GetWebButton(shutter_button_idx -1)));
+          snprintf_P(stemp, sizeof(stemp), PSTR("Shutter %d"), shutter_idx +1);
+          WSContentSend_P(HTTP_MSG_SLIDER_SHUTTERT, 
+            (set_button) ? HtmlEscape(GetWebButton(shutter_button_idx -1)).c_str() : stemp,
+            shutter_idx +1,
+            (ShutterGetOptions(shutter_idx) & 1) ? (100 - ShutterRealToPercentPosition(-9999, shutter_idx)) : ShutterRealToPercentPosition(-9999, shutter_idx),
+            shutter_idx +1);
+        }
+        WSContentSend_P(PSTR("</tr>"));
+        shutter_button_idx += 2;
+
+      }
+      WSContentSend_P(PSTR("</table>"));
+    }
+#endif  // USE_SHUTTER
+
 #ifdef USE_LIGHT
     if (TasmotaGlobal.light_type) {
+      WSContentSend_P(HTTP_TABLE100);  // "<table style='width:100%%'>"
+
       uint8_t light_subtype = TasmotaGlobal.light_type &7;
       if (!Settings->flag3.pwm_multi_channels) {  // SetOption68 0 - Enable multi-channels PWM instead of Color PWM
-        bool split_white = ((LST_RGBW <= light_subtype) && (TasmotaGlobal.devices_present > 1));  // Only on RGBW or RGBCW and SetOption37 128
+        bool split_white = ((LST_RGBW <= light_subtype) && (TasmotaGlobal.devices_present > 1) && (Settings->param[P_RGB_REMAP] & 128));  // Only on RGBW or RGBCW and SetOption37 128
 
         if ((LST_COLDWARM == light_subtype) || ((LST_RGBCW == light_subtype) && !split_white)) {
           WebSliderColdWarm();
@@ -1236,13 +1367,16 @@ void HandleRoot(void)
           LightGetHSB(&hue, &sat, nullptr);
 
           Web.slider[1] = hue;
+          WSContentSend_P(PSTR("<tr>"));
           WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Hue
-            PSTR("b"),             // b - Unique HTML id
+            2, 100,
+            PSTR("b"),       // b - Unique HTML id
             PSTR("#800"), PSTR("#f00 5%,#ff0 20%,#0f0 35%,#0ff 50%,#00f 65%,#f0f 80%,#f00 95%,#800"),  // Hue colors
             2,               // sl2 - Unique range HTML id - Used as source for Saturation end color and slider updates
             0, 359,          // Range valid Hue
             Web.slider[1],
             'h', 0);         // h0 - Value id
+          WSContentSend_P(PSTR("</tr>"));
 
           uint8_t dcolor = changeUIntScale(Settings->light_dimmer, 0, 100, 0, 255);
           char scolor[8];
@@ -1252,95 +1386,136 @@ void HandleRoot(void)
           snprintf_P(stemp, sizeof(stemp), PSTR("#%02X%02X%02X"), red, green, blue);  // Saturation end color
 
           Web.slider[2] = changeUIntScale(sat, 0, 255, 0, 100);
+          WSContentSend_P(PSTR("<tr>"));
           WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Saturation
-            PSTR("s"),             // s - Unique HTML id related to eb('s').style.background='linear-gradient(to right,rgb('+sl+'%%,'+sl+'%%,'+sl+'%%),hsl('+eb('sl2').value+',100%%,50%%))';
+            2, 100,
+            PSTR("s"),       // s - Unique HTML id related to eb('s').style.background='linear-gradient(to right,rgb('+sl+'%%,'+sl+'%%,'+sl+'%%),hsl('+eb('sl2').value+',100%%,50%%))';
             scolor, stemp,   // Brightness to max current color
             3,               // sl3 - Unique range HTML id - Used for slider updates
             0, 100,          // Range 0 to 100%
             Web.slider[2],
             'n', 0);         // n0 - Value id
+          WSContentSend_P(PSTR("</tr>"));
         }
+
+        bool set_button = ((button_idx <= MAX_BUTTON_TEXT) && strlen(GetWebButton(button_idx -1)));
+        char first[2];
+        snprintf_P(first, sizeof(first), PSTR("%s"), PSTR(D_BUTTON_TOGGLE));
+        char butt_txt[4];
+        snprintf_P(butt_txt, sizeof(butt_txt), PSTR("%s"), (set_button) ? HtmlEscape(GetWebButton(button_idx -1)).c_str() : first);
+        char number[8];
+        WSContentSend_P(PSTR("<tr>"));
+        WSContentSend_P(HTTP_DEVICE_CONTROL, 15, button_idx, button_idx,
+          butt_txt,
+          (set_button) ? "" : itoa(button_idx, number, 10));
+        button_idx++;
 
         Web.slider[3] = Settings->light_dimmer;
         WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Brightness - Black to White
-          PSTR("c"),               // c - Unique HTML id
+          1, 85,
+          PSTR("c"),         // c - Unique HTML id
           PSTR("#000"), PSTR("#fff"),    // Black to White
           4,                 // sl4 - Unique range HTML id - Used as source for Saturation begin color and slider updates
           Settings->flag3.slider_dimmer_stay_on, 100,  // Range 0/1 to 100% (SetOption77 - Do not power off if slider moved to far left)
           Web.slider[3],
           'd', 0);           // d0 - Value id is related to lc("d0", value) and WebGetArg("d0", tmp, sizeof(tmp));
+        WSContentSend_P(PSTR("</tr>"));
 
         if (split_white) {   // SetOption37 128
           if (LST_RGBCW == light_subtype) {
             WebSliderColdWarm();
           }
+
+          uint32_t width = 100;
+          WSContentSend_P(PSTR("<tr>"));
+
+          if (button_idx <= TasmotaGlobal.devices_present) {
+            bool set_button = ((button_idx <= MAX_BUTTON_TEXT) && strlen(GetWebButton(button_idx -1)));
+            char first[2];
+            snprintf_P(first, sizeof(first), PSTR("%s"), PSTR(D_BUTTON_TOGGLE));
+            char butt_txt[4];
+            snprintf_P(butt_txt, sizeof(butt_txt), PSTR("%s"), (set_button) ? HtmlEscape(GetWebButton(button_idx -1)).c_str() : first);
+            char number[8];
+            WSContentSend_P(HTTP_DEVICE_CONTROL, 15, button_idx, button_idx,
+              butt_txt,
+              (set_button) ? "" : itoa(button_idx, number, 10));
+            button_idx++;
+            width = 85;
+          }
+
           Web.slider[4] = LightGetDimmer(2);
           WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // White brightness - Black to White
-            PSTR("f"),             // f - Unique HTML id
-            PSTR("#000"), PSTR("#fff"),  // Black to White
+            (100 == width) ? 2 : 1, width,
+            PSTR("f"),       // f - Unique HTML id
+            PSTR("#000"), PSTR("#fff"),    // Black to White
             5,               // sl5 - Unique range HTML id - Used for slider updates
             Settings->flag3.slider_dimmer_stay_on, 100,  // Range 0/1 to 100% (SetOption77 - Do not power off if slider moved to far left)
             Web.slider[4],
             'w', 0);         // w0 - Value id is related to lc("w0", value) and WebGetArg("w0", tmp, sizeof(tmp));
+          WSContentSend_P(PSTR("</tr>"));
         }
       } else {  // Settings->flag3.pwm_multi_channels - SetOption68 1 - Enable multi-channels PWM instead of Color PWM
-        uint32_t pwm_channels = light_subtype > LST_MAX ? LST_MAX : light_subtype;
+        uint32_t pwm_channels = TasmotaGlobal.devices_present - buttons_non_light;
         stemp[0] = 'e'; stemp[1] = '0'; stemp[2] = '\0';  // d0
         for (uint32_t i = 0; i < pwm_channels; i++) {
-          stemp[1]++;        // e1 to e5 - Make unique ids
+          bool set_button = ((button_idx <= MAX_BUTTON_TEXT) && strlen(GetWebButton(button_idx -1)));
+          char first[2];
+          snprintf_P(first, sizeof(first), PSTR("%s"), PSTR(D_BUTTON_TOGGLE));
+          char butt_txt[4];
+          snprintf_P(butt_txt, sizeof(butt_txt), PSTR("%s"),
+            (set_button) ? HtmlEscape(GetWebButton(button_idx -1)).c_str() : first);
+          char number[8];
+          WSContentSend_P(PSTR("<tr>"));
+          WSContentSend_P(HTTP_DEVICE_CONTROL, 15, button_idx, button_idx,
+            butt_txt,
+            (set_button) ? "" : itoa(button_idx, number, 10));
+          button_idx++;
 
+          stemp[1]++;        // e1 to e5 - Make unique ids
           Web.slider[i] = changeUIntScale(Settings->light_color[i], 0, 255, 0, 100);
+
           WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Channel brightness - Black to White
+            1, 85,
             stemp,           // e1 to e5 - Unique HTML id
             PSTR("#000"), PSTR("#fff"),  // Black to White
             i+1,             // sl1 to sl5 - Unique range HTML id - Used for slider updates
             1, 100,          // Range 1 to 100%
             Web.slider[i],
             'e', i+1);       // e1 to e5 - Value id
+
+          WSContentSend_P(PSTR("</tr>"));
         }
       }  // Settings->flag3.pwm_multi_channels
+      WSContentSend_P(PSTR("</table>"));
     }
 #endif // USE_LIGHT
-    WSContentSend_P(HTTP_TABLE100);
-    WSContentSend_P(PSTR("<tr>"));
+
+  }
+
+  // Init buttons 
+  WSContentSend_P(PSTR("<script>"));
+  uint32_t max_devices = TasmotaGlobal.devices_present;
+
 #ifdef USE_SONOFF_IFAN
-    if (IsModuleIfan()) {
-      WSContentSend_P(HTTP_DEVICE_CONTROL, 36, 1,
-        (strlen(SettingsText(SET_BUTTON1))) ? SettingsTextEscaped(SET_BUTTON1).c_str() : PSTR(D_BUTTON_TOGGLE),
-        "");
-      for (uint32_t i = 0; i < MaxFanspeed(); i++) {
-        snprintf_P(stemp, sizeof(stemp), PSTR("%d"), i);
-        WSContentSend_P(HTTP_DEVICE_CONTROL, 16, i +2,
-          (strlen(SettingsText(SET_BUTTON2 + i))) ? SettingsTextEscaped(SET_BUTTON2 + i).c_str() : stemp,
-          "");
-      }
-    } else {
+  if (IsModuleIfan()) { 
+    max_devices = MaxFanspeed() +1;  // 4 -> 5
+  }
 #endif  // USE_SONOFF_IFAN
-      uint32_t cols = WebDeviceColumns();
-      for (uint32_t idx = 1; idx <= TasmotaGlobal.devices_present; idx++) {
-        bool set_button = ((idx <= MAX_BUTTON_TEXT) && strlen(GetWebButton(idx -1)));
-#ifdef USE_SHUTTER
-        int32_t ShutterWebButton;
-        if (ShutterWebButton = IsShutterWebButton(idx)) {
-          WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / cols, idx,
-            (set_button) ? HtmlEscape(GetWebButton(idx -1)).c_str() : ((ShutterGetOptions(abs(ShutterWebButton)-1) & 2) /* is locked */ ? "-" : ((ShutterGetOptions(abs(ShutterWebButton)-1) & 8) /* invert web buttons */ ? ((ShutterWebButton>0) ? "&#9660;" : "&#9650;") : ((ShutterWebButton>0) ? "&#9650;" : "&#9660;"))),
-            "");
-        } else {
-#endif  // USE_SHUTTER
-          snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
-          WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / cols, idx,
-            (set_button) ? HtmlEscape(GetWebButton(idx -1)).c_str() : (cols < 5) ? PSTR(D_BUTTON_TOGGLE) : "",
-            (set_button) ? "" : (TasmotaGlobal.devices_present > 1) ? stemp : "");
-#ifdef USE_SHUTTER
-        }
-#endif  // USE_SHUTTER
-        if (0 == idx % cols) { WSContentSend_P(PSTR("</tr><tr>")); }
-      }
+
+  for (uint32_t idx = 1; idx <= max_devices; idx++) {
+    bool not_active = !bitRead(TasmotaGlobal.power, idx -1);
+
 #ifdef USE_SONOFF_IFAN
+    if (IsModuleIfan() && (idx > 1)) { 
+      not_active = true;
     }
 #endif  // USE_SONOFF_IFAN
-    WSContentSend_P(PSTR("</tr></table>"));
+
+    if (not_active) {
+      WSContentSend_P(PSTR("eb('o%d').style.background='#%06x';"), idx, WebColor(COL_FORM));
+    }
   }
+  WSContentSend_P(PSTR("</script>"));
 
 #ifndef FIRMWARE_MINIMAL
   XdrvXsnsCall(FUNC_WEB_ADD_MAIN_BUTTON);
@@ -1507,43 +1682,93 @@ bool HandleRootStatusRefresh(void)
   WSContentBegin(200, CT_HTML);
 #endif  // USE_WEB_SSE
 
+  bool msg_exec_javascript = false;
+  if (TasmotaGlobal.devices_present) {
+    // Update changed web buttons
+    uint32_t max_devices = TasmotaGlobal.devices_present;
+
+#ifdef USE_SONOFF_IFAN
+    uint32_t fanspeed;
+    if (IsModuleIfan()) {
+      // Single power relay and four virtual buttons
+      max_devices = MaxFanspeed() +1;  // 4 -> 5
+      fanspeed = GetFanspeed() +2;     // 0..3 -> 2..5
+    }
+#endif  // USE_SONOFF_IFAN
+
+    WSContentSend_P(HTTP_MSG_EXEC_JAVASCRIPT);  // "<img style='display:none;' src onerror=\""
+    msg_exec_javascript = true;
+    for (uint32_t idx = 1; idx <= max_devices; idx++) {
+      bool active = bitRead(TasmotaGlobal.power, idx -1);
+
+#ifdef USE_SONOFF_IFAN
+      if (IsModuleIfan() && (idx > 1)) {
+        active = (fanspeed == idx);
+      }
+#endif  // USE_SONOFF_IFAN
+
+      WSContentSend_P(PSTR("eb('o%d').style.background='#%06x';"),
+        idx, WebColor((active) ? COL_BUTTON : COL_FORM));
+    }
+  }
+
+#ifdef USE_SHUTTER
+  if (!msg_exec_javascript) {
+    WSContentSend_P(HTTP_MSG_EXEC_JAVASCRIPT);  // "<img style='display:none;' src onerror=\""
+    msg_exec_javascript = true;
+  }
+  for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
+    WSContentSend_P(PSTR("eb('s27%d').value='%d';"), i +1, 
+      (ShutterGetOptions(i) & 1) ? (100 - ShutterRealToPercentPosition(-9999, i)) : ShutterRealToPercentPosition(-9999, i));
+  }
+#endif  // USE_SHUTTER
+
 #ifdef USE_LIGHT
-  if (!Settings->flag6.disable_slider_updates) {    // SetOption161 0 - (Light) Disable slider updates (1)
-    uint16_t hue;
-    uint8_t sat;
-    int current_value = -1;
-    for (uint32_t i = 0; i < LST_MAX; i++) {
-      if (Web.slider[i] != -1) {
-        if (!Settings->flag3.pwm_multi_channels) {  // SetOption68 0 - Enable multi-channels PWM instead of Color PWM
-          if (0 == i) {
-            current_value = LightGetColorTemp();
-          }
-          else if (1 == i) {
-            LightGetHSB(&hue, &sat, nullptr);
-            current_value = hue;
-          }
-          else if (2 == i) {
-            current_value = changeUIntScale(sat, 0, 255, 0, 100);
-          }
-          else if (3 == i) {
-            current_value = Settings->light_dimmer;
-          }
-          else if (4 == i) {
-            current_value = LightGetDimmer(2);
-          }
-        } else {
-          current_value = changeUIntScale(Settings->light_color[i], 0, 255, 0, 100);
+  uint16_t hue;
+  uint8_t sat;
+  int current_value = -1;
+  for (uint32_t i = 0; i < LST_MAX; i++) {
+    if (Web.slider[i] != -1) {
+      if (!Settings->flag3.pwm_multi_channels) {  // SetOption68 0 - Enable multi-channels PWM instead of Color PWM
+        if (0 == i) {
+          current_value = LightGetColorTemp();
         }
-        if (current_value != Web.slider[i]) {
+        else if (1 == i) {
+          LightGetHSB(&hue, &sat, nullptr);
+          current_value = hue;
+        }
+        else if (2 == i) {
+          current_value = changeUIntScale(sat, 0, 255, 0, 100);
+        }
+        else if (3 == i) {
+          current_value = Settings->light_dimmer;
+        }
+        else if (4 == i) {
+          current_value = LightGetDimmer(2);
+        }
+      } else {
+        current_value = changeUIntScale(Settings->light_color[i], 0, 255, 0, 100);
+      }
+      if (current_value != Web.slider[i]) {
+        Web.slider_update[i]++;
+        if (Web.slider_update[i] > 2) {   // Allow two other users screen sync
+          Web.slider_update[i] = 0;
           Web.slider[i] = current_value;
-          // https://stackoverflow.com/questions/4057236/how-to-add-onload-event-to-a-div-element
-          WSContentSend_P(HTTP_MSG_SLIDER_UPDATE);  // "<img style='display:none;' src onerror="
-          WSContentSend_P(PSTR("\"eb('sl%d').value='%d';\">"), i +1, current_value);
         }
+        // https://stackoverflow.com/questions/4057236/how-to-add-onload-event-to-a-div-element
+        if (!msg_exec_javascript) {
+          WSContentSend_P(HTTP_MSG_EXEC_JAVASCRIPT);  // "<img style='display:none;' src onerror=\""
+          msg_exec_javascript = true;
+        }
+        WSContentSend_P(PSTR("eb('sl%d').value='%d';"), i +1, current_value);
       }
     }
   }
 #endif  // USE_LIGHT
+
+  if (msg_exec_javascript) {
+    WSContentSend_P(PSTR("\">"));
+  }
 
   WSContentSend_P(PSTR("{t}"));        // <table style='width:100%'>
   WSContentSeparator(3);               // Reset seperator to ignore previous outputs 
@@ -1554,30 +1779,6 @@ bool HandleRootStatusRefresh(void)
   XsnsXdrvCall(FUNC_WEB_SENSOR);
   WSContentSend_P(PSTR("</table>"));
 
-  if (TasmotaGlobal.devices_present) {
-    WSContentSend_P(PSTR("{t}<tr>"));
-#ifdef USE_SONOFF_IFAN
-    if (IsModuleIfan()) {
-      WSContentSend_P(HTTP_DEVICE_STATE, 36, (bitRead(TasmotaGlobal.power, 0)) ? PSTR("bold") : PSTR("normal"), 54, GetStateText(bitRead(TasmotaGlobal.power, 0)));
-      uint32_t fanspeed = GetFanspeed();
-      snprintf_P(svalue, sizeof(svalue), PSTR("%d"), fanspeed);
-      WSContentSend_P(HTTP_DEVICE_STATE, 64, (fanspeed) ? PSTR("bold") : PSTR("normal"), 54, (fanspeed) ? svalue : GetStateText(0));
-    } else {
-#endif  // USE_SONOFF_IFAN
-      uint32_t cols = WebDeviceColumns();
-      uint32_t fontsize = (cols < 5) ? 70 - (cols * 8) : 32;
-      for (uint32_t idx = 1; idx <= TasmotaGlobal.devices_present; idx++) {
-        snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(TasmotaGlobal.power, idx -1));
-        WSContentSend_P(HTTP_DEVICE_STATE, 100 / cols, (bitRead(TasmotaGlobal.power, idx -1)) ? PSTR("bold") : PSTR("normal"), fontsize,
-          (cols < 5) ? GetStateText(bitRead(TasmotaGlobal.power, idx -1)) : svalue);
-        if (0 == idx % cols) { WSContentSend_P(PSTR("</tr><tr>")); }
-      }
-#ifdef USE_SONOFF_IFAN
-    }
-#endif  // USE_SONOFF_IFAN
-
-    WSContentSend_P(PSTR("</tr></table>"));
-  }
   WSContentSend_P(PSTR("\n\n"));  // Prep for SSE
   WSContentEnd();
 
@@ -1754,12 +1955,12 @@ void HandleTemplateConfiguration(void) {
 
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_TEMPLATE);
-  WSContentSend_P(HTTP_TABLE100);
+  WSContentSend_P(HTTP_TABLE100);  // "<table style='width:100%%'>"
   WSContentSend_P(PSTR("<tr><td><b>" D_TEMPLATE_NAME "</b></td><td style='width:200px'><input id='s1' placeholder='" D_TEMPLATE_NAME "'></td></tr>"
                        "<tr><td><b>" D_BASE_TYPE "</b></td><td><select id='g99' onchange='st(this.value)'></select></td></tr>"
                        "</table>"
                        "<hr/>"));
-  WSContentSend_P(HTTP_TABLE100);
+  WSContentSend_P(HTTP_TABLE100);  // "<table style='width:100%%'>"
   for (uint32_t i = 0; i < MAX_GPIO_PIN; i++) {
 #if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
     // ESP32C2/C3/C6 all gpios are in the template, flash are hidden
