@@ -273,6 +273,7 @@ const char HTTP_MSG_SLIDER_GRADIENT[] PROGMEM =
   "</div>"
   "</td>";
 
+// https://stackoverflow.com/questions/4057236/how-to-add-onload-event-to-a-div-element
 const char HTTP_MSG_EXEC_JAVASCRIPT[] PROGMEM =
   "<img style='display:none;' src onerror=\"";
 
@@ -418,10 +419,7 @@ const char HTTP_END[] PROGMEM =
   "</body>"
   "</html>";
 
-//const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button onclick='la(\"&o=%d\");'>%s%s</button></td>";  // ?o is related to WebGetArg(PSTR("o"), tmp, sizeof(tmp))
-//const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button id='o%d' style='background:#%06x;' onclick='la(\"&o=%d\");'>%s%s</button></td>";  // ?o is related to WebGetArg(PSTR("o"), tmp, sizeof(tmp))
 const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button id='o%d' onclick='la(\"&o=%d\");'>%s%s</button></td>";  // ?o is related to WebGetArg(PSTR("o"), tmp, sizeof(tmp))
-
 const char HTTP_DEVICE_STATE[] PROGMEM = "<td style='width:%d%%;text-align:center;font-weight:%s;font-size:%dpx'>%s</td>";
 
 enum ButtonTitle {
@@ -467,9 +465,9 @@ ESP8266WebServer *Webserver;
 struct WEB {
   String chunk_buffer = "";                         // Could be max 2 * CHUNKED_BUFFER_SIZE
   uint32_t upload_size = 0;
+  uint32_t slider_update_time = 0;
   int slider[LST_MAX];
   uint16_t upload_error = 0;
-  uint8_t slider_update[LST_MAX];
   uint8_t state = HTTP_OFF;
   uint8_t upload_file_type;
   uint8_t config_block_count = 0;
@@ -608,7 +606,6 @@ void StartWebserver(int type)
 
     for (uint32_t i = 0; i < LST_MAX; i++) {
       Web.slider[i] = -1;
-      Web.slider_update[i] = 0;
     }
 
     if (!Webserver) {
@@ -1234,7 +1231,10 @@ void HandleRoot(void) {
 #endif
   WSContentSend_P(HTTP_SCRIPT_ROOT_PART2);
   WSContentSendStyle();
+
   WSContentSend_P(PSTR("<div style='padding:0;' id='l1' name='l1'></div>"));
+
+#ifndef FIRMWARE_MINIMAL
 
   if (TasmotaGlobal.devices_present) {
     uint32_t buttons_non_light = TasmotaGlobal.devices_present;
@@ -1252,8 +1252,7 @@ void HandleRoot(void) {
 
 #ifdef USE_SHUTTER
     // Chk for reduced toggle buttons used by shutters
-    uint32_t shutter_button = 0;      // Bitmask for each button
-
+    uint32_t shutter_button = 0;           // Bitmask for each button
     // Find and skip dedicated shutter buttons
     if (buttons_non_light && Settings->flag3.shutter_mode) {  // SetOption80 - Enable shutter support
       for (button_idx = 1; button_idx <= buttons_non_light; button_idx++) {
@@ -1265,9 +1264,9 @@ void HandleRoot(void) {
     }
 #endif  // USE_SHUTTER
 
-    if (buttons_non_light_non_shutter) {  // Any non light AND non shutter button
+    if (buttons_non_light_non_shutter) {   // Any non light AND non shutter button
       // Display toggle buttons
-      WSContentSend_P(HTTP_TABLE100);  // "<table style='width:100%%'>"
+      WSContentSend_P(HTTP_TABLE100);      // "<table style='width:100%%'>"
       WSContentSend_P(PSTR("<tr>"));
 
 #ifdef USE_SONOFF_IFAN
@@ -1517,7 +1516,6 @@ void HandleRoot(void) {
   }
   WSContentSend_P(PSTR("</script>"));
 
-#ifndef FIRMWARE_MINIMAL
   XdrvXsnsCall(FUNC_WEB_ADD_MAIN_BUTTON);
 #endif  // Not FIRMWARE_MINIMAL
 
@@ -1557,6 +1555,8 @@ bool HandleRootStatusRefresh(void)
   if (!Webserver->hasArg("m")) {     // Status refresh requested
     return false;
   }
+
+#ifndef FIRMWARE_MINIMAL
 
   #ifdef USE_SCRIPT_WEB_DISPLAY
     Script_Check_HTML_Setvars();
@@ -1727,6 +1727,7 @@ bool HandleRootStatusRefresh(void)
   uint16_t hue;
   uint8_t sat;
   int current_value = -1;
+  uint32_t slider_update_time = millis();
   for (uint32_t i = 0; i < LST_MAX; i++) {
     if (Web.slider[i] != -1) {
       if (!Settings->flag3.pwm_multi_channels) {  // SetOption68 0 - Enable multi-channels PWM instead of Color PWM
@@ -1750,12 +1751,13 @@ bool HandleRootStatusRefresh(void)
         current_value = changeUIntScale(Settings->light_color[i], 0, 255, 0, 100);
       }
       if (current_value != Web.slider[i]) {
-        Web.slider_update[i]++;
-        if (Web.slider_update[i] > 2) {   // Allow two other users screen sync
-          Web.slider_update[i] = 0;
+        if (0 == Web.slider_update_time) {
+          Web.slider_update_time = slider_update_time + Settings->web_refresh;  // Allow other users to sync screen
+        }
+        else if (slider_update_time > Web.slider_update_time) {
+          Web.slider_update_time = 1;  // Allow multiple updates
           Web.slider[i] = current_value;
         }
-        // https://stackoverflow.com/questions/4057236/how-to-add-onload-event-to-a-div-element
         if (!msg_exec_javascript) {
           WSContentSend_P(HTTP_MSG_EXEC_JAVASCRIPT);  // "<img style='display:none;' src onerror=\""
           msg_exec_javascript = true;
@@ -1763,6 +1765,9 @@ bool HandleRootStatusRefresh(void)
         WSContentSend_P(PSTR("eb('sl%d').value='%d';"), i +1, current_value);
       }
     }
+  }
+  if (1 == Web.slider_update_time) {
+    Web.slider_update_time = 0;
   }
 #endif  // USE_LIGHT
 
@@ -1781,6 +1786,8 @@ bool HandleRootStatusRefresh(void)
 
   WSContentSend_P(PSTR("\n\n"));  // Prep for SSE
   WSContentEnd();
+
+#endif  // not FIRMWARE_MINIMAL
 
   return true;
 }

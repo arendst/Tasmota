@@ -292,6 +292,7 @@ struct DALI {
   uint32_t bit_cycles;
   uint32_t last_activity;
   uint32_t received_dali_data;                 // Data received from DALI bus
+  uint32_t slider_update_time;
   uint8_t pin_rx;
   uint8_t pin_tx;
   uint8_t max_short_address;
@@ -300,7 +301,6 @@ struct DALI {
   uint8_t last_dimmer;
   uint8_t dimmer[DALI_MAX_STORED];
   uint8_t web_dimmer[DALI_MAX_STORED];
-  uint8_t web_update[DALI_MAX_STORED];
   uint8_t target;
   bool allow_light;
   bool last_power;
@@ -1293,19 +1293,24 @@ void DaliShow(bool json) {
   } else {
     WSContentSend_P(PSTR("</table>"));         // Terminate current {t}
     WSContentSend_P(HTTP_MSG_EXEC_JAVASCRIPT);  // "<img style='display:none;' src onerror=\""
+    uint32_t slider_update_time = millis();
     for (uint32_t i = Settings->sbflag1.dali_light; i <= Settings->mbflag2.dali_group_sliders; i++) {  // DaliLight 0/1, DaliGroupSliders
       WSContentSend_P(PSTR("eb('k75%d').style='background:#%06x';"),
         i, WebColor((Dali->power[i]) ? COL_BUTTON : COL_FORM));
       if (Dali->dimmer[i] != Dali->web_dimmer[i]) {
-        Dali->web_update[i]++;
-        if (Dali->web_update[i] > 2) {         // Allow two other users screen sync
-          Dali->web_update[i] = 0;
+        if (0 == Dali->slider_update_time) {
+          Dali->slider_update_time = slider_update_time + Settings->web_refresh;  // Allow other users to sync screen
+        }
+        else if (slider_update_time > Dali->slider_update_time) {
+          Dali->slider_update_time = 1;        // Allow multiple updates
           Dali->web_dimmer[i] = Dali->dimmer[i];
         }
         WSContentSend_P(PSTR("eb('i75%d').value='%d';"),
           i, changeUIntScale(Dali->dimmer[i], 0, 254, 0, 100));
-
       }
+    }
+    if (1 == Dali->slider_update_time) {
+      Dali->slider_update_time = 0;
     }
     WSContentSend_P(PSTR("\">{t}"));           // Restart {t} = <table style='width:100%'>
     WSContentSeparator(3);                     // Don't print separator on next WSContentSeparator(1)

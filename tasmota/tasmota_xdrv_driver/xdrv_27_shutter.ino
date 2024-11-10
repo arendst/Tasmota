@@ -1142,13 +1142,6 @@ void ShutterToggle(bool dir)
   }
 }
 
-void ShutterShow(){
-  for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
-    WSContentSend_P(HTTP_MSG_SLIDER_SHUTTER,  (Settings->shutter_options[i] & 1) ? D_OPEN : D_CLOSE,(Settings->shutter_options[i] & 1) ? D_CLOSE : D_OPEN, (Settings->shutter_options[i] & 1) ? (100 - ShutterRealToPercentPosition(-9999, i)) : ShutterRealToPercentPosition(-9999, i), i+1);
-    WSContentSeparator(3); // Don't print separator on next WSContentSeparator(1)
-  }
-}
-
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
@@ -1976,11 +1969,6 @@ bool Xdrv27(uint32_t function)
           result = true;
         }
       break;
-#ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-//        ShutterShow();
-        break;
-#endif  // USE_WEBSERVER
       case FUNC_ACTIVE:
         result = true;
         break;
