@@ -138,6 +138,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - SolaxX1 Meter mode [#22330](https://github.com/arendst/Tasmota/issues/22330)
 - BLE track devices with RPA [#22300](https://github.com/arendst/Tasmota/issues/22300)
 - Berry add I2C read16/write16 supporting Little Endian [#22448](https://github.com/arendst/Tasmota/issues/22448)
+- Berry drivers for PCA9535 (generic and in SenseCAP D1) [#22451](https://github.com/arendst/Tasmota/issues/22451)
 - HASPmota `haspmota.get_pages()` to get the sorted list of pages [#22358](https://github.com/arendst/Tasmota/issues/22358)
 
 ### Breaking Changed
