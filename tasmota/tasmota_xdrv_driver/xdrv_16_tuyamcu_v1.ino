@@ -1623,10 +1623,9 @@ void TuyaSensorsShow(bool json)
 void TuyaAddButton(void) {
   if (AsModuleTuyaMS()) {
     WSContentSend_P(HTTP_TABLE100);
-    WSContentSend_P(PSTR("<tr><div></div>"));
     char stemp[33];
     snprintf_P(stemp, sizeof(stemp), PSTR("" D_JSON_IRHVAC_MODE ""));
-    WSContentSend_P(HTTP_DEVICE_CONTROL, 26, TasmotaGlobal.devices_present + 1,
+    WSContentSend_P(HTTP_DEVICE_CONTROL, 26, TasmotaGlobal.devices_present + 1, TasmotaGlobal.devices_present + 1,
       (strlen(GetWebButton(TasmotaGlobal.devices_present))) ? HtmlEscape(GetWebButton(TasmotaGlobal.devices_present)).c_str() : stemp, "");
     WSContentSend_P(PSTR("</tr></table>"));
   }
