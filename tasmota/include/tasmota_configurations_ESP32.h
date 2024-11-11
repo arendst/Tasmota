@@ -190,14 +190,12 @@
 
 #undef USE_ESP32_WDT                                  // disable watchdog on SAFEBOOT until more testing is done
 
-#if CONFIG_IDF_TARGET_ESP32
-#if CONFIG_FREERTOS_UNICORE
-  #undef USE_MQTT_TLS
+#if CONFIG_FREERTOS_UNICORE || CONFIG_IDF_TARGET_ESP32S3
+//  #undef USE_MQTT_TLS
 //  #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge console Tee (+4.5k code)
   #define USE_SPI                                    // Make SPI Ethernet adapters useable (+124 bytes)
   #define USE_ETHERNET
-#endif  // CONFIG_FREERTOS_UNICORE
-#endif  // CONFIG_IDF_TARGET_ESP32
+#endif  // CONFIG_FREERTOS_UNICORE || CONFIG_IDF_TARGET_ESP32S3
 
 #endif  // FIRMWARE_SAFEBOOT
 
@@ -839,6 +837,9 @@
 
 #ifdef CONFIG_IDF_TARGET_ESP32C2
   #undef USE_ETHERNET
+  #ifdef FIRMWARE_MINIMAL
+    #undef USE_SPI
+  #endif  // FIRMWARE_MINIMAL
 #endif  // CONFIG_IDF_TARGET_ESP32C2
 
 #endif  // ESP32
