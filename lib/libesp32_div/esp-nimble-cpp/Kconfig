@@ -33,7 +33,7 @@ config NIMBLE_CPP_ENABLE_RETURN_CODE_TEXT
         Enabling this option will display return code values as text
         messages in the debug log. This will use approximately 8kB
         of flash memory.
-        
+
 config NIMBLE_CPP_ENABLE_GAP_EVENT_CODE_TEXT
     bool "Show NimBLE gap events as text in debug log."
     default "n"
@@ -47,7 +47,7 @@ config NIMBLE_CPP_ENABLE_ADVERTISEMENT_TYPE_TEXT
     default "n"
     help
         Enabling this option will display advertisment types recieved
-        while scanning as text messages in the debug log. 
+        while scanning as text messages in the debug log.
         This will use approximately 250 bytes of flash memory.
 
 config NIMBLE_CPP_ATT_VALUE_TIMESTAMP_ENABLED
@@ -68,5 +68,12 @@ config NIMBLE_CPP_ATT_VALUE_INIT_LENGTH
         when the constructor is called. This is also the size used when a remote
         characteristic or descriptor is constructed before a value is read/notifed.
         Increasing this will reduce reallocations but increase memory footprint.
-        
+
+config NIMBLE_CPP_DEBUG_ASSERT_ENABLED
+    bool "Enable debug asserts."
+    default "n"
+    help
+        Enabling this option will add debug asserts to the NimBLE CPP library.
+        This will use approximately 1kB of flash memory.
+
 endmenu

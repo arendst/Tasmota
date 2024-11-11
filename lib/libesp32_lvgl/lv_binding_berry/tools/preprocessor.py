@@ -91,7 +91,7 @@ headers_exlude_suffix = [
 
 headers_names = list_files(lv_src_prefix, lv_fun_globs)
 headers_names += list_files("../../LVGL_assets/src/", ["lv_theme_haspmota.h"])
-headers_names += list_files("../src/", ["lv_berry.h"])
+headers_names += list_files("../src/", ["lv_berry.h", "lv_colorwheel.h"])
 
 # filter out from headers_exlude_suffix
 headers_names = [x for x in headers_names if not any(x.endswith(suffix) for suffix in headers_exlude_suffix)]

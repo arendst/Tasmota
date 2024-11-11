@@ -336,6 +336,14 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
   #define WIFI_SENSITIVITY_n    -720
 #endif
 
+#ifdef ESP32
+#if SOC_TOUCH_SENSOR_VERSION == 1    // ESP32
+#define SOC_TOUCH_VERSION_1
+#elif SOC_TOUCH_SENSOR_VERSION == 2  // ESP32S2, ESP32S3
+#define SOC_TOUCH_VERSION_2
+#endif  // SOC_TOUCH_SENSOR_VERSION
+#endif  // ESP32
+
 /*********************************************************************************************\
  * Enumeration
 \*********************************************************************************************/

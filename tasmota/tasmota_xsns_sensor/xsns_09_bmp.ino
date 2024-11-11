@@ -16,7 +16,6 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifdef USE_I2C
 #ifdef USE_BMP
 /*********************************************************************************************\
@@ -559,7 +558,7 @@ void BmpShow(bool json) {
         // BMP280-77
         snprintf_P(name, sizeof(name), PSTR("%s%c%02X"), name, IndexSeparator(), bmp_sensors[bmp_idx].bmp_address);
 #ifdef USE_I2C_BUS2
-        if (TasmotaGlobal.i2c_enabled_2) {           // Second bus enabled
+        if (TasmotaGlobal.i2c_enabled[1]) {           // Second bus enabled
           uint8_t bus = bmp_sensors[0].bmp_bus;
           for (uint32_t i = 1; i < bmp_count; i++) {
             if (bus != bmp_sensors[i].bmp_bus) {     // Different busses

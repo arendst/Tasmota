@@ -86,7 +86,7 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_72_pipsolar             | @chefpro
 | xdrv_73_lora                 | @arendst
 | xdrv_74                      |
-| xdrv_75                      |
+| xdrv_75_dali                 | @eeak, @arendst
 | xdrv_76                      |
 | xdrv_77                      |
 | xdrv_78                      |
@@ -98,7 +98,7 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_86_esp32_sonoff_spm     | @arendst
 | xdrv_87_esp32_sonoff_tm1621  | @arendst
 | xdrv_88_esp32_shelly_pro     | @arendst
-| xdrv_89_esp32_dali           | @eeak
+| xdrv_89_                     |
 | xdrv_90_esp32_dingtian_relay | @barbudor
 | xdrv_91_                     |
 | xdrv_92_                     |

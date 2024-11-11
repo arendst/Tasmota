@@ -28,14 +28,14 @@
 
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
- * 
- * 
+ *
+ *
 \*********************************************************************************************/
 extern "C" {
 
 /********************************************************************
 **  MI32 - sensor specific functions
-********************************************************************/ 
+********************************************************************/
 
   extern uint32_t MI32numberOfDevices();
   extern char * MI32getDeviceName(uint32_t slot);
@@ -44,15 +44,21 @@ extern "C" {
   extern void MI32setTemperatureForSlot(uint32_t slot, float value);
   extern uint8_t * MI32getDeviceMAC(uint32_t slot);
 
+  struct {
+    const char * data = nullptr;
+    size_t size = 0;
+    void* callback = nullptr;
+  } be_MI32Widget;
+
   int be_MI32_devices(void) {
     return MI32numberOfDevices();
   }
 
-  void be_MI32_set_bat(int slot, int bat_val){    
+  void be_MI32_set_bat(int slot, int bat_val){
     MI32setBatteryForSlot(slot,bat_val);
   }
 
-  const char* be_MI32_get_name(int slot){    
+  const char* be_MI32_get_name(int slot){
     return  MI32getDeviceName(slot);
   }
 
@@ -65,12 +71,24 @@ extern "C" {
     return buffer;
   }
 
-  void be_MI32_set_hum(int slot, int hum_val){    
+  void be_MI32_set_hum(int slot, int hum_val){
     MI32setHumidityForSlot(slot,hum_val);
   }
 
-  void be_MI32_set_temp(int slot, int temp_val){    
+  void be_MI32_set_temp(int slot, int temp_val){
     MI32setTemperatureForSlot(slot,temp_val);
+  }
+
+  bool be_MI32_widget(const char* sbuf, void* function){
+    if (function){
+      be_MI32Widget.callback = function;
+    }
+    if(be_MI32Widget.size == 0){
+      be_MI32Widget.data = sbuf;
+      be_MI32Widget.size = strlen(sbuf);
+      return true;
+    }
+    return false;
   }
 
 
@@ -103,12 +121,12 @@ extern "C" {
   }
 
   void be_BLE_reg_conn_cb(void* function, uint8_t *buffer);
-  void be_BLE_reg_conn_cb(void* function, uint8_t *buffer){    
+  void be_BLE_reg_conn_cb(void* function, uint8_t *buffer){
     MI32setBerryConnCB(function,buffer);
   }
 
   void be_BLE_reg_server_cb(void* function, uint8_t *buffer);
-  void be_BLE_reg_server_cb(void* function, uint8_t *buffer){    
+  void be_BLE_reg_server_cb(void* function, uint8_t *buffer){
     MI32setBerryServerCB(function,buffer);
   }
 
@@ -145,7 +163,7 @@ extern "C" {
   }
 
   void be_BLE_set_service(struct bvm *vm, const char *Svc, bbool discoverAttributes);
-  void be_BLE_set_service(struct bvm *vm, const char *Svc, bbool discoverAttributes){    
+  void be_BLE_set_service(struct bvm *vm, const char *Svc, bbool discoverAttributes){
     bool _discoverAttributes = false;
     if(discoverAttributes){
       _discoverAttributes = discoverAttributes ;
@@ -157,7 +175,7 @@ extern "C" {
 
   void be_BLE_set_characteristic(struct bvm *vm, const char *Chr);
   void be_BLE_set_characteristic(struct bvm *vm, const char *Chr){
-      
+
     if (MI32setBerryCtxChr(Chr)) return;
 
     be_raisef(vm, "ble_error", "BLE: could not set characteristic");
@@ -166,7 +184,7 @@ extern "C" {
   void be_BLE_run(struct bvm *vm, uint8_t operation, bbool response, int32_t arg1);
   void be_BLE_run(struct bvm *vm, uint8_t operation, bbool response, int32_t arg1){
     int32_t argc = be_top(vm); // Get the number of arguments
-    bool _response = false;    
+    bool _response = false;
     if(response){
       _response = response;
     }
@@ -181,7 +199,7 @@ extern "C" {
   }
 
   void be_BLE_adv_block(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type);
-  void be_BLE_adv_block(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type){    
+  void be_BLE_adv_block(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type){
     if(!be_BLE_MAC_size(vm, size)){
       return;
     }
@@ -190,12 +208,12 @@ extern "C" {
       _type = type;
     }
     if(MI32addMACtoBlockList(buf, _type)) return;
-  
+
   be_raisef(vm, "ble_error", "BLE: could not block MAC");
   }
 
   void be_BLE_adv_watch(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type);
-  void be_BLE_adv_watch(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type){    
+  void be_BLE_adv_watch(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type){
     if(!be_BLE_MAC_size(vm, size)){
       return;
     }
@@ -206,6 +224,35 @@ extern "C" {
     if(MI32addMACtoWatchList(buf, _type)) return;
 
   be_raisef(vm, "ble_error", "BLE: could not add MAC to watch list");
+  }
+
+  // helper function
+  NimBLEConnInfo be_BLE_get_ConnInfo(NimBLEClient *device);
+  NimBLEConnInfo be_BLE_get_ConnInfo(NimBLEClient *device){
+    if(!device){
+      return NimBLEDevice::getServer()->getPeerInfo(0);
+    } else {
+      return NimBLEDevice::getClientList()->front()->getConnInfo();
+    }
+  }
+
+  // from esp-nimble/ble_sm.c
+  int ble_sm_read_bond(uint16_t conn_handle, struct ble_store_value_sec *out_bond)
+  {
+      struct ble_store_key_sec key_sec;
+      struct ble_gap_conn_desc desc;
+      int rc;
+
+      rc = ble_gap_conn_find(conn_handle, &desc);
+      if (rc != 0) {
+          return rc;
+      }
+
+      memset(&key_sec, 0, sizeof key_sec);
+      key_sec.peer_addr = desc.peer_id_addr;
+
+      rc = ble_store_read_peer_sec(&key_sec, out_bond);
+      return rc;
   }
 
   // BLE.info(void) -> map
@@ -225,26 +272,43 @@ extern "C" {
 #else
     be_map_insert_int(vm, "version", 4);
 #endif
-#ifdef CONFIG_BT_NIMBLE_PERSIST
+// #ifdef CONFIG_BT_NIMBLE_PERSIST
     be_map_insert_int(vm, "bonds", NimBLEDevice::getNumBonds());
-#else
-    be_map_insert_nil(vm, "bonds");
-#endif
-    if(MI32.mode.connected == 1){
-        be_pushstring(vm, "connection");
-        be_newobject(vm, "map");
-        auto _info = NimBLEDevice::getClientList()->front()->getConnInfo();
-        be_map_insert_str(vm, "peer_addr", _info.getAddress().toString().c_str());
-        be_map_insert_int(vm, "RSSI", NimBLEDevice::getClientList()->front()->getRssi());
-        be_map_insert_int(vm, "MTU", _info.getMTU());
-        be_map_insert_bool(vm, "bonded", _info.isBonded());
-        be_map_insert_bool(vm, "master", _info.isMaster());
-        be_map_insert_bool(vm, "encrypted", _info.isEncrypted());
-        be_map_insert_bool(vm, "authenticated", _info.isAuthenticated());
+// #else
+//     be_map_insert_nil(vm, "bonds");
+// #endif
+    if(MI32.mode.connected == 1 || MI32.ServerTask != nullptr){
+      NimBLEClient* _device = nullptr;
+      if(MI32.mode.connected == 1){
+        _device = NimBLEDevice::getClientList()->front();
+      }
+      NimBLEConnInfo _info = be_BLE_get_ConnInfo(_device);
 
-        be_pop(vm, 1);
-        be_data_insert(vm, -3);
-        be_pop(vm, 2);
+      be_pushstring(vm, "connection");
+      be_newobject(vm, "map");
+
+      be_map_insert_str(vm, "peer_addr", _info.getAddress().toString().c_str());
+      be_map_insert_str(vm, "peerID_addr", _info.getIdAddress().toString().c_str());
+      if(_device != nullptr) be_map_insert_int(vm, "RSSI", _device->getRssi()); // ESP32 is client
+      be_map_insert_int(vm, "MTU", _info.getMTU());
+      be_map_insert_bool(vm, "bonded", _info.isBonded());
+      be_map_insert_bool(vm, "master", _info.isMaster());
+      be_map_insert_bool(vm, "encrypted", _info.isEncrypted());
+      be_map_insert_bool(vm, "authenticated", _info.isAuthenticated());
+      if(_device == nullptr) be_map_insert_str(vm, "name", NimBLEDevice::getServer()->getPeerName(_info).c_str()); // ESP32 is server
+
+      ble_store_value_sec value_sec;
+      ble_sm_read_bond(_info.getConnHandle(), &value_sec);
+      if(value_sec.irk_present == 1){
+            char IRK[33];
+            ToHex_P(value_sec.irk,16,IRK,33);
+            be_map_insert_str(vm, "IRK",IRK );
+      }
+
+      be_pop(vm, 1);
+      be_data_insert(vm, -3);
+      be_pop(vm, 2);
+
     }
 
     be_pop(vm, 1);
@@ -271,6 +335,9 @@ be_BLE_op:
 3 subscribe
 4 unsubscribe - maybe later
 5 disconnect
+6 discover services
+7 discover characteristics
+
 
 11 read once, then disconnect
 12 write once, then disconnect
@@ -282,7 +349,7 @@ __commands
 201 add/set advertisement
 202 add/set scan response
 
-211 add/set characteristic 
+211 add/set characteristic
 
 __response
 221 onRead
@@ -294,6 +361,7 @@ __response
 227 onConnect
 228 onDisconnect
 229 onStatus
+230 onAuthenticated
 
 
 BLE.conn_cb(cb,buffer)
@@ -308,5 +376,6 @@ MI32.get_MAC(slot)
 MI32.set_bat(slot,int)
 MI32.set_hum(slot,float)
 MI32.set_temp(slot,float)
+MI32.widget(string[,cb])
 
 */

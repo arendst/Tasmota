@@ -31,6 +31,7 @@ idf_component_register(
     "esp32c2"
     "esp32c3"
     "esp32c6"
+    "esp32h2"
   INCLUDE_DIRS
     "src"
   SRCS
@@ -58,6 +59,7 @@ idf_component_register(
   REQUIRES
     bt
     nvs_flash
+    driver
   PRIV_REQUIRES
     ${ESP_NIMBLE_PRIV_REQUIRES}
 )

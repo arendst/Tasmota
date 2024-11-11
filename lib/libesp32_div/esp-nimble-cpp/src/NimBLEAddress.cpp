@@ -139,6 +139,15 @@ uint8_t NimBLEAddress::getType() const {
 
 
 /**
+ * @brief Determine if this address is a Resolvable Private Address.
+ * @return True if the address is a RPA.
+ */
+bool NimBLEAddress::isRpa() const {
+    return (m_addrType && ((m_address[5] & 0xc0) == 0x40));
+} // isRpa
+
+
+/**
  * @brief Convert a BLE address to a string.
  *
  * A string representation of an address is in the format:

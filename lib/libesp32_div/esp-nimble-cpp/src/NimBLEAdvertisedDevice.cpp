@@ -203,6 +203,24 @@ std::string NimBLEAdvertisedDevice::getURI() {
     return "";
 } // getURI
 
+/**
+ * @brief Get the data from any type available in the advertisement
+ * @param [in] type The advertised data type BLE_HS_ADV_TYPE
+ * @return The data available under the type `type`
+*/
+std::string NimBLEAdvertisedDevice::getPayloadByType(uint16_t type) {
+    size_t data_loc = 0;
+
+    if(findAdvField(type, 0, &data_loc) > 0) {
+        ble_hs_adv_field *field = (ble_hs_adv_field *)&m_payload[data_loc];
+        if(field->length > 1) {
+            return std::string((char*)field->value, field->length - 1);
+        }
+    }
+
+    return "";
+} // getPayloadByType
+
 
 /**
  * @brief Get the advertised name.
@@ -555,6 +573,14 @@ bool NimBLEAdvertisedDevice::haveManufacturerData() {
 bool NimBLEAdvertisedDevice::haveURI() {
     return findAdvField(BLE_HS_ADV_TYPE_URI) > 0;
 } // haveURI
+
+/**
+ * @brief Does this advertisement have a adv type `type`?
+ * @return True if there is a `type` present.
+*/
+bool NimBLEAdvertisedDevice::haveType(uint16_t type) {
+    return findAdvField(type) > 0;
+}
 
 
 /**

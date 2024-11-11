@@ -17,10 +17,6 @@
 #endif  // USE_I2C_BUS2_ESP8266
 #endif  // ESP8266
 
-#ifdef ESP32
-#define USE_I2C_BUS2
-#endif
-
 const uint8_t I2C_RETRY_COUNTER = 3;
 
 struct I2Ct {
@@ -67,7 +63,12 @@ bool I2cBegin(int sda, int scl, uint32_t bus, uint32_t frequency) {
 #endif  // USE_I2C_BUS2_ESP8266
 #endif  // ESP8266
 #ifdef ESP32
+#ifdef USE_I2C_BUS2
   TwoWire& myWire = (0 == bus) ? Wire : Wire1;
+#else
+  if (bus > 0) { return false; }
+  TwoWire& myWire = Wire;
+#endif
   static bool reinit = false;
   if (reinit) { myWire.end(); }
   result = myWire.begin(sda, scl, frequency);
@@ -77,19 +78,29 @@ bool I2cBegin(int sda, int scl, uint32_t bus, uint32_t frequency) {
   return result;
 }
 
+TwoWire * I2CSerialGetWire(TwoWire * orig_wire, uint8_t bus);
+
 TwoWire& I2cGetWire(uint8_t bus = 0) {
-  if ((0 == bus) && TasmotaGlobal.i2c_enabled) {
+  if ((0 == bus) && TasmotaGlobal.i2c_enabled[0]) {
 #ifdef USE_I2C_BUS2_ESP8266
     I2cSetBus(bus);
 #endif
+#ifdef USE_I2C_SERIAL
+    return I2CSerialGetWire(Wire, bus);
+#else
     return Wire;
+#endif // USE_I2C_SERIAL
   }
 #ifdef USE_I2C_BUS2
-  else if ((1 == bus) && TasmotaGlobal.i2c_enabled_2) {
+  else if ((1 == bus) && TasmotaGlobal.i2c_enabled[1]) {
 #ifdef USE_I2C_BUS2_ESP8266
     I2cSetBus(bus);
 #endif
+#ifdef USE_I2C_SERIAL
+    return I2CSerialGetWire(Wire1, bus);
+#else
     return Wire1;
+#endif // USE_I2C_SERIAL
   }
 #endif  // USE_I2C_BUS2
   else {

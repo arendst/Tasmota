@@ -52,12 +52,7 @@ int32_t  current_stop_way = 0;
 int32_t  next_possible_stop_position = 0;
 int32_t  current_real_position = 0;
 int32_t  current_pwm_velocity = 0;
-
-const char HTTP_MSG_SLIDER_SHUTTER[] PROGMEM =
-  "<tr><td colspan=2>"
-  "<div><span class='p'>%s</span><span class='q'>%s</span></div>"
-  "<div><input type='range' min='0' max='100' value='%d' onchange='lc(\"u\",%d,value)'></div>"
-  "{e}";
+bool     sensor_data_reported = false;
 
 const uint8_t MAX_MODES = 8;
 enum Shutterposition_mode {SHT_UNDEF, SHT_TIME, SHT_TIME_UP_DOWN, SHT_TIME_GARAGE, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME,SHT_AUTOCONFIG};
@@ -772,6 +767,7 @@ void ShutterStartInit(uint32_t i, int32_t direction, int32_t target_pos)
     Shutter[i].target_position = target_pos;
     Shutter[i].start_position = Shutter[i].real_position;
     TasmotaGlobal.rules_flag.shutter_moving = 1;
+    sensor_data_reported = false;
     ShutterAllowPreStartProcedure(i);
     Shutter[i].time = Shutter[i].last_reported_time = 0;
 
@@ -1137,13 +1133,6 @@ void ShutterToggle(bool dir)
     XdrvMailbox.data_len = 0;
     TasmotaGlobal.last_source = SRC_WEBGUI;
     CmndShutterPosition();
-  }
-}
-
-void ShutterShow(){
-  for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
-    WSContentSend_P(HTTP_MSG_SLIDER_SHUTTER,  (Settings->shutter_options[i] & 1) ? D_OPEN : D_CLOSE,(Settings->shutter_options[i] & 1) ? D_CLOSE : D_OPEN, (Settings->shutter_options[i] & 1) ? (100 - ShutterRealToPercentPosition(-9999, i)) : ShutterRealToPercentPosition(-9999, i), i+1);
-    WSContentSeparator(3); // Don't print separator on next WSContentSeparator(1)
   }
 }
 
@@ -1897,6 +1886,7 @@ bool Xdrv27(uint32_t function)
   if (Settings->flag3.shutter_mode) {  // SetOption80 - Enable shutter support
     uint8_t  counter = XdrvMailbox.index==0?1:XdrvMailbox.index;
     uint8_t  counterend = XdrvMailbox.index==0?TasmotaGlobal.shutters_present:XdrvMailbox.index;
+    uint32_t rescue_index    = XdrvMailbox.index;
     int32_t  rescue_payload  = XdrvMailbox.payload;
     uint32_t rescue_data_len = XdrvMailbox.data_len;
     char stemp1[10];
@@ -1920,24 +1910,23 @@ bool Xdrv27(uint32_t function)
           result = DecodeCommand(kShutterCommands, ShutterCommand);
         }
         break;
-        for (uint8_t i = counter; i <= counterend; i++) {
-          XdrvMailbox.index = i;
-          XdrvMailbox.payload = rescue_payload;
-          XdrvMailbox.data_len = rescue_data_len;
-          result = DecodeCommand(kShutterCommands, ShutterCommand);
-        }
-        break;
       case FUNC_JSON_APPEND:
-        for (uint8_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
-          uint8_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
-          uint8_t target   = ShutterRealToPercentPosition(Shutter[i].target_position, i);
-          ResponseAppend_P(",");
-          ResponseAppend_P(JSON_SHUTTER_POS, i+1, (Settings->shutter_options[i] & 1) ? 100 - position : position, Shutter[i].direction,(Settings->shutter_options[i] & 1) ? 100 - target : target, Shutter[i].tilt_real_pos );
-#ifdef USE_DOMOTICZ
-          if ((0 == TasmotaGlobal.tele_period) && (0 == i)) {
-             DomoticzSensor(DZ_SHUTTER, position);
+        if (!sensor_data_reported) {
+          sensor_data_reported = true;
+          for (uint8_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
+            uint8_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
+            uint8_t target   = ShutterRealToPercentPosition(Shutter[i].target_position, i);
+            ResponseAppend_P(",");
+            ResponseAppend_P(JSON_SHUTTER_POS, i+1, (Settings->shutter_options[i] & 1) ? 100 - position : position, Shutter[i].direction,(Settings->shutter_options[i] & 1) ? 100 - target : target, Shutter[i].tilt_real_pos );
+            if (Shutter[i].direction != 0) {
+              sensor_data_reported = false;
+            }
+  #ifdef USE_DOMOTICZ
+            if ((0 == TasmotaGlobal.tele_period) && (0 == i)) {
+              DomoticzSensor(DZ_SHUTTER, (Settings->shutter_options[i] & 1) ? 100 - position : position);
+            }
+  #endif  // USE_DOMOTICZ
           }
-#endif  // USE_DOMOTICZ
         }
         break;
       case FUNC_SET_POWER:
@@ -1974,15 +1963,13 @@ bool Xdrv27(uint32_t function)
           result = true;
         }
       break;
-#ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        ShutterShow();
-        break;
-#endif  // USE_WEBSERVER
       case FUNC_ACTIVE:
         result = true;
         break;
     }
+    XdrvMailbox.index = rescue_index;
+    XdrvMailbox.payload = rescue_payload;
+    XdrvMailbox.data_len = rescue_data_len;
   }
   return result;
 }

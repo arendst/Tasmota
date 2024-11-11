@@ -87,9 +87,6 @@
 #define D_DEBUG "debug"
 #define D_DEWPOINT "Taupunkt"
 #define D_DISABLED "deaktiviert"
-#define D_MOVING_DISTANCE "Abstand bewegt"
-#define D_STATIC_DISTANCE "Abstand fix"
-#define D_DETECT_DISTANCE "Abstandsfeststellung"
 #define D_DISTANCE "Abstand"
 #define D_DNS_SERVER "DNS-Server"
 #define D_DO "gelöster Sauerstoff"
@@ -218,6 +215,7 @@
 #define D_WEB_SERVER "Webserver"
 #define D_SOC "Ladestatus"
 #define D_SOH "Gesundheitsstatus"
+#define D_WATER_DEPTH "Wassertiefe"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "ACHTUNG: Diese Version unterstützt keine persistenten Einstellungen"
@@ -572,6 +570,14 @@
 #define D_THERMOSTAT_PI_HYBRID        "PI (Hybrid)"
 #define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
 
+// xdrv_79_esp32_ble.ino
+#define D_CONFIGURE_BLE       "BLE-Einstellungen"
+#define D_BLE_PARAMETERS      "Bluetooth-Einstellungen"
+#define D_MQTT_BLE_ENABLE     "Bluetooth aktivieren"
+#define D_MQTT_BLE_ACTIVESCAN "Aktiv scannen (*)"
+#define D_BLE_DEVICES         "Erkannte Geräte"
+#define D_BLE_REMARK          "Mit (*) markierte Geräte werden nicht gespeichert."
+
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Sensor beschäftigt"
 #define D_SENSOR_CRC_ERROR "Sensor CRC-Fehler"
@@ -693,6 +699,8 @@
 #define D_SENSOR_DS18X20       "DS18x20"
 #define D_SENSOR_I2C_SCL       "I2C SCL"
 #define D_SENSOR_I2C_SDA       "I2C SDA"
+#define D_SENSOR_I2C_SER_TX    "I2C Ser TX"
+#define D_SENSOR_I2C_SER_RX    "I2C Ser RX"
 #define D_SENSOR_I2S_MCLK      "I2S MCLK"
 #define D_SENSOR_I2S_BCLK      "I2S BCLK"
 #define D_SENSOR_I2S_WS_IN     "I2S BCLK IN"
@@ -769,6 +777,8 @@
 #define D_SENSOR_WE517_RX      "WE517 Rx"
 #define D_SENSOR_LD2410_TX     "LD2410 Tx"
 #define D_SENSOR_LD2410_RX     "LD2410 Rx"
+#define D_SENSOR_LD2410S_TX     "LD2410S Tx"
+#define D_SENSOR_LD2410S_RX     "LD2410S Rx"
 #define D_GPIO_TM1621_CS       "TM1621 CS"
 #define D_GPIO_TM1621_WR       "TM1621 WR"
 #define D_GPIO_TM1621_RD       "TM1621 RD"
@@ -1050,7 +1060,7 @@
 #define D_UNIT_SECOND "s"
 #define D_UNIT_SECTORS "Sektoren"
 #define D_UNIT_VA "VA"
-#define D_UNIT_VAR "VAr"
+#define D_UNIT_VAR "var"
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"
@@ -1072,7 +1082,7 @@
 #define D_IMPORT_REACTIVE "Importiere Blind"
 #define D_EXPORT_REACTIVE "Exportiere Blind"
 #define D_TOTAL_REACTIVE  "Total Blind"
-#define D_UNIT_KWARH      "kVArh"
+#define D_UNIT_KWARH      "kvarh"
 #define D_UNIT_ANGLE      "Grad"
 #define D_TOTAL_ACTIVE    "Total Wirk"
 #define D_RESETTABLE_TOTAL_ACTIVE    "Total Wirk (RST)"
@@ -1272,6 +1282,15 @@
 // ixrv92_pipsolar.ino
 #define D_SENSOR_PIPSOLAR_TX             "Pipsolar TX"
 #define D_SENSOR_PIPSOLAR_RX             "Pipsolar RX"
+
+// xsns_102_ld2410.ino
+#define D_MOVING_DISTANCE "Abstand bewegt"
+#define D_STATIC_DISTANCE "Abstand fix"
+#define D_DETECT_DISTANCE "Abstandsfeststellung"
+#define D_MOVING_ENERGY_T "Bewegliches Ziel"
+#define D_STATIC_ENERGY_T "Statisches Ziel"
+#define D_LD2410_PIN_STATE "Zustand des Ausgangspins"
+#define D_LD2410_LIGHT "Lichtsensor"
 
 // xsns_115_wooliis.ino
 #define D_IMPORT                          "Import"

@@ -33,10 +33,12 @@ TwoWire & getWire(bvm *vm) {
   be_getmember(vm, 1, "bus");
   int32_t bus = be_toint(vm, -1); // bus is 1 or 2
   be_pop(vm, 1);
-  if (1 == bus && TasmotaGlobal.i2c_enabled) {
+  if (1 == bus && TasmotaGlobal.i2c_enabled[0]) {
     return Wire;
-  } else if (2 == bus && TasmotaGlobal.i2c_enabled_2) {
+#ifdef USE_I2C_BUS2
+  } else if (2 == bus && TasmotaGlobal.i2c_enabled[1]) {
     return Wire1;
+#endif  // USE_I2C_BUS2
   } else {
     be_raise(vm, "configuration_error", "I2C bus not initiliazedd");
     return *(TwoWire*)nullptr;
@@ -48,9 +50,9 @@ bool I2cEnabled(bvm *vm) {
   be_getmember(vm, 1, "bus");
   int32_t bus = be_toint(vm, -1); // bus is 1 or 2
   be_pop(vm, 1);
-  if (1 == bus && TasmotaGlobal.i2c_enabled) {
+  if (1 == bus && TasmotaGlobal.i2c_enabled[0]) {
     return true;
-  } else if (2 == bus && TasmotaGlobal.i2c_enabled_2) {
+  } else if (2 == bus && TasmotaGlobal.i2c_enabled[1]) {
     return true;
   } else {
     return false;

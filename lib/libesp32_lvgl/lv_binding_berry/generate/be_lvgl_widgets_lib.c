@@ -29,6 +29,9 @@ BE_EXPORT_VARIABLE extern const bclass be_class_lv_obj;
 extern int lvbe_font_create(bvm *vm);
 extern int lvbe_theme_create(bvm *vm);
 
+// adding ad-hoc colorwheel from LVGL8 to LVGL9
+extern const lv_obj_class_t lv_colorwheel_class;
+
 
 extern int be_ntv_lv_style_init(bvm *vm);
 extern int be_ntv_lv_font_init(bvm *vm);
@@ -78,6 +81,7 @@ extern int be_ntv_lv_table_init(bvm *vm);
 extern int be_ntv_lv_tabview_init(bvm *vm);
 extern int be_ntv_lv_textarea_init(bvm *vm);
 extern int be_ntv_lv_tileview_init(bvm *vm);
+extern int be_ntv_lv_colorwheel_init(bvm *vm);
 
 extern const bclass be_class_lv_anim;
 extern const bclass be_class_lv_animimg;
@@ -90,6 +94,7 @@ extern const bclass be_class_lv_canvas;
 extern const bclass be_class_lv_chart;
 extern const bclass be_class_lv_checkbox;
 extern const bclass be_class_lv_color;
+extern const bclass be_class_lv_colorwheel;
 extern const bclass be_class_lv_display;
 extern const bclass be_class_lv_dropdown;
 extern const bclass be_class_lv_event;
@@ -682,6 +687,17 @@ class be_class_lv_textarea (scope: global, name: lv_textarea, super: be_class_lv
 class be_class_lv_tileview (scope: global, name: lv_tileview, super: be_class_lv_obj, strings: weak) {
     init, func(be_ntv_lv_tileview_init)
     _class, comptr(&lv_tileview_class)
+}
+@const_object_info_end */
+
+/********************************************************************
+** Solidified class: lv_colorwheel
+********************************************************************/
+#include "be_fixed_be_class_lv_colorwheel.h"
+/* @const_object_info_begin
+class be_class_lv_colorwheel (scope: global, name: lv_colorwheel, super: be_class_lv_obj, strings: weak) {
+    init, func(be_ntv_lv_colorwheel_init)
+    _class, comptr(&lv_colorwheel_class)
 }
 @const_object_info_end */
 

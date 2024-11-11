@@ -69,6 +69,8 @@ public:
     NimBLEService*         getServiceByHandle(uint16_t handle);
     int                    disconnect(uint16_t connID,
                                       uint8_t reason = BLE_ERR_REM_USER_CONN_TERM);
+    int                    disconnect(const NimBLEConnInfo &connInfo,
+                                      uint8_t reason = BLE_ERR_REM_USER_CONN_TERM);
     void                   updateConnParams(uint16_t conn_handle,
                                             uint16_t minInterval, uint16_t maxInterval,
                                             uint16_t latency, uint16_t timeout);
@@ -78,6 +80,8 @@ public:
     NimBLEConnInfo         getPeerInfo(size_t index);
     NimBLEConnInfo         getPeerInfo(const NimBLEAddress& address);
     NimBLEConnInfo         getPeerIDInfo(uint16_t id);
+    std::string            getPeerName(const NimBLEConnInfo& connInfo);
+    void                   getPeerNameOnConnect(bool enable);
 #if !CONFIG_BT_NIMBLE_EXT_ADV || defined(_DOXYGEN_)
     void                   advertiseOnDisconnect(bool);
 #endif
@@ -98,6 +102,7 @@ private:
 #if !CONFIG_BT_NIMBLE_EXT_ADV
     bool                   m_advertiseOnDisconnect;
 #endif
+    bool                   m_getPeerNameOnConnect;
     bool                   m_svcChanged;
     NimBLEServerCallbacks* m_pServerCallbacks;
     bool                   m_deleteCallbacks;
@@ -110,10 +115,14 @@ private:
     std::vector<NimBLECharacteristic*> m_notifyChrVec;
 
     static int             handleGapEvent(struct ble_gap_event *event, void *arg);
+    static int             peerNameCB(uint16_t conn_handle, const struct ble_gatt_error *error,
+                                      struct ble_gatt_attr *attr, void *arg);
+    std::string            getPeerNameInternal(uint16_t conn_handle, TaskHandle_t task, int cb_type = -1);
     void                   serviceChanged();
     void                   resetGATT();
     bool                   setIndicateWait(uint16_t conn_handle);
     void                   clearIndicateWait(uint16_t conn_handle);
+
 }; // NimBLEServer
 
 
@@ -128,10 +137,20 @@ public:
      * @brief Handle a client connection.
      * This is called when a client connects.
      * @param [in] pServer A pointer to the %BLE server that received the client connection.
-     * @param [in] connInfo A reference to a NimBLEConnInfo instance with information
+     * @param [in] connInfo A reference to a NimBLEConnInfo instance with information.
      * about the peer connection parameters.
      */
     virtual void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo);
+
+    /**
+     * @brief Handle a client connection.
+     * This is called when a client connects.
+     * @param [in] pServer A pointer to the %BLE server that received the client connection.
+     * @param [in] connInfo A reference to a NimBLEConnInfo instance with information.
+     * @param [in] name The name of the connected peer device.
+     * about the peer connection parameters.
+     */
+    virtual void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, std::string& name);
 
     /**
      * @brief Handle a client disconnection.
@@ -152,24 +171,39 @@ public:
     virtual void onMTUChange(uint16_t MTU, NimBLEConnInfo& connInfo);
 
     /**
-     * @brief Called when a client requests a passkey for pairing.
+     * @brief Called when a client requests a passkey for pairing (display).
      * @return The passkey to be sent to the client.
      */
-    virtual uint32_t onPassKeyRequest();
+    virtual uint32_t onPassKeyDisplay();
+
+    /**
+     * @brief Called when using numeric comparision for pairing.
+     * @param [in] connInfo A reference to a NimBLEConnInfo instance with information
+     * Should be passed back to NimBLEDevice::injectConfirmPIN
+     * @param [in] pin The pin to compare with the client.
+     */
+    virtual void onConfirmPIN(const NimBLEConnInfo& connInfo, uint32_t pin);
 
     /**
      * @brief Called when the pairing procedure is complete.
      * @param [in] connInfo A reference to a NimBLEConnInfo instance with information
      * about the peer connection parameters.
      */
-    virtual void onAuthenticationComplete(NimBLEConnInfo& connInfo);
+    virtual void onAuthenticationComplete(const NimBLEConnInfo& connInfo);
 
     /**
-     * @brief Called when using numeric comparision for pairing.
-     * @param [in] pin The pin to compare with the client.
-     * @return True to accept the pin.
+     * @brief Called when the pairing procedure is complete.
+     * @param [in] connInfo A reference to a NimBLEConnInfo instance with information
+     * @param [in] name The name of the connected peer device.
+     * about the peer connection parameters.
      */
-    virtual bool onConfirmPIN(uint32_t pin);
+    virtual void onAuthenticationComplete(const NimBLEConnInfo& connInfo, const std::string& name);
+
+    /**
+     * @brief Called when the peer identity address is resolved.
+     * @param [in] connInfo A reference to a NimBLEConnInfo instance with information
+     */
+    virtual void onIdentity(const NimBLEConnInfo& connInfo);
 }; // NimBLEServerCallbacks
 
 #endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL */

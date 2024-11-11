@@ -353,6 +353,59 @@ void PmsInit(void) {
   }
 }
 
+// This gives more accurate data for forest fire smoke.  PurpleAir gives you this conversion option labeled "US EPA"
+// https://cfpub.epa.gov/si/si_public_record_report.cfm?dirEntryId=353088&Lab=CEMM
+/*
+Copy-paste from the PDF Slide 26
+y={0 ≤ x <30: 0.524*x - 0.0862*RH + 5.75}
+y={30≤ x <50: (0.786*(x/20 - 3/2) + 0.524*(1 - (x/20 - 3/2)))*x -0.0862*RH + 5.75}
+y={50 ≤ x <210: 0.786*x - 0.0862*RH + 5.75}
+y={210 ≤ x <260: (0.69*(x/50 – 21/5) + 0.786*(1 - (x/50 – 21/5)))*x - 0.0862*RH*(1 - (x/50 – 21/5)) + 2.966*(x/50 – 21/5) + 5.75*(1 - (x/50 – 21/5)) + 8.84*(10^{-4})*x^{2}*(x/50 – 21/5)}
+y={260 ≤ x: 2.966 + 0.69*x + 8.84*10^{-4}*x^2}
+
+y= corrected PM2.5 µg/m3
+x= PM2.5 cf_atm (lower)
+RH= Relative humidity as measured by the PurpleAir
+*/
+int usaEpaStandardPm2d5Adjustment(int pm25_standard, int relative_humidity)
+{
+  // Rename to use the same variables from the paper
+  float x = pm25_standard;
+  float RH = relative_humidity;
+  if (x<30) {
+    return 0.524f * x - 0.0862f * RH + 5.75f;
+  } else if(x<50) {
+    return (0.786f * (x/20.0f - 3.0f/2.0f) + 0.524f * (1.0f - (x/20.0f - 3.0f/2.0f))) * x - 0.0862f * RH + 5.75f;
+  } else if(x<210) {
+    return 0.786f * x - 0.0862f * RH + 5.75f;
+  } else if(x<260) {
+    return (0.69f * (x/50.0f - 21.0f/5.0f) + 0.786f * (1.0f - (x/50.0f - 21.0f/5.0f))) * x - 0.0862f * RH * (1.0f - (x/50.0f - 21.0f/5.0f)) + 2.966f * (x/50.0f - 21.0f/5.0f) + 5.75f * (1.0f - (x/50.0f - 21.0f/5.0f)) + 8.84f * FastPrecisePowf(10.0f, -4.0f) * FastPrecisePowf(x,2.0f) * (x/50.0f - 21.0f/5.0f);
+  } else {
+    return 2.966f + 0.69f * x + 8.84f * FastPrecisePowf(10.0f, -4.0f) * FastPrecisePowf(x, 2.0f);
+  }
+}
+
+// Compute US AQI using the 2024+ table
+// https://forum.airnowtech.org/t/the-aqi-equation-2024-valid-beginning-may-6th-2024/453
+int compute_us_aqi(int pm25_standard)
+{
+  if (pm25_standard <= 9) {
+    return map_float(pm25_standard, 0, 9, 0, 50);
+  } else if (pm25_standard <= 35) {
+    return map_float(pm25_standard, 9.1f, 35.4f, 51, 100);
+  } else if (pm25_standard <= 55) {
+    return map_float(pm25_standard, 35.5f, 55.4f, 101, 150);
+  } else if (pm25_standard <= 125) {
+    return map_float(pm25_standard, 55.5f, 125.4f, 151, 200);
+  } else if (pm25_standard <= 225) {
+    return map_float(pm25_standard, 125.5f, 225.4f, 201, 300);
+  } else if (pm25_standard <= 325) {
+    return map_float(pm25_standard, 225.5f, 325.4f, 301, 500);
+  } else {
+    return 500;
+  }
+}
+
 void PmsShow(bool json) {
   if (Pms.valid) {
     char types[10];
@@ -370,20 +423,37 @@ void PmsShow(bool json) {
 #ifdef PMS_MODEL_PMS5003T
     float temperature = ConvertTemp(pms_data.temperature10x/10.0);
     float humidity = ConvertHumidity(pms_data.humidity10x/10.0);
+    int epa_us_aqi;
+    // When in Fahrenheit include US AQI
+    if (Settings->flag.temperature_conversion) {    // Fahrenheit - US, Liberia, Cayman Islands
+      epa_us_aqi = compute_us_aqi(usaEpaStandardPm2d5Adjustment(pms_data.pm25_standard, humidity));
+    }
 #endif // PMS_MODEL_PMS5003T
+    int us_aqi;
+    // Use US AQI for Fahrenheit, EAQI (European Air Quality Index) for Celsius
+    if (Settings->flag.temperature_conversion) {    // Fahrenheit - US, Liberia, Cayman Islands
+      us_aqi = compute_us_aqi(pms_data.pm25_standard);
+    }
 
     if (json) {
       ResponseAppend_P(PSTR(",\"%s\":{\"CF1\":%d,\"CF2.5\":%d,\"CF10\":%d,\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d"),
         types,
         pms_data.pm10_standard, pms_data.pm25_standard, pms_data.pm100_standard,
         pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env);
+      if (Settings->flag.temperature_conversion) {    // Fahrenheit - US, Liberia, Cayman Islands
+        ResponseAppend_P(PSTR(",\"US_AQI\":%d"), us_aqi);
+      }
 #if !(defined(PMS_MODEL_PMS3003) || defined(PMS_MODEL_ZH03X))
-      ResponseAppend_P(PSTR(",\"PB0.3\":%d,\"PB0.5\":%d,\"PB1\":%d,\"PB2.5\":%d,"),
+      ResponseAppend_P(PSTR(",\"PB0.3\":%d,\"PB0.5\":%d,\"PB1\":%d,\"PB2.5\":%d"),
         pms_data.particles_03um, pms_data.particles_05um, pms_data.particles_10um, pms_data.particles_25um);
 #ifdef PMS_MODEL_PMS5003T
+      ResponseAppend_P(PSTR(","));
       ResponseAppendTHD(temperature, humidity);
+      if (Settings->flag.temperature_conversion) {    // Fahrenheit - US, Liberia, Cayman Islands
+        ResponseAppend_P(PSTR(",\"US_EPA_AQI\":%d"), epa_us_aqi);
+      }
 #else
-      ResponseAppend_P(PSTR("\"PB5\":%d,\"PB10\":%d"),
+      ResponseAppend_P(PSTR(",\"PB5\":%d,\"PB10\":%d"),
         pms_data.particles_50um, pms_data.particles_100um);
 #endif  // PMS_MODEL_PMS5003T
 #endif  // No PMS_MODEL_PMS3003
@@ -409,8 +479,14 @@ void PmsShow(bool json) {
       WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "0.5", pms_data.particles_05um);
       WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "1", pms_data.particles_10um);
       WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "2.5", pms_data.particles_25um);
+      if (Settings->flag.temperature_conversion) {    // Fahrenheit - US, Liberia, Cayman Islands
+        WSContentSend_PD(HTTP_SNS_US_AQI, types, us_aqi);
+      }
 #ifdef PMS_MODEL_PMS5003T
       WSContentSend_THD(types, temperature, humidity);
+      if (Settings->flag.temperature_conversion) {    // Fahrenheit - US, Liberia, Cayman Islands
+        WSContentSend_PD(HTTP_SNS_US_EPA_AQI, types, epa_us_aqi);
+      }
 #else
       WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "5", pms_data.particles_50um);
       WSContentSend_PD(HTTP_SNS_PARTICALS_BEYOND, types, "10", pms_data.particles_100um);

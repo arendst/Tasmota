@@ -132,10 +132,12 @@ class lvh_root
     raise "type_error", "you cannot assign to 'delete'"
   end
   def get_delete()
-    self.delete()
+    self._delete()
+    return def () end
   end
-  def delete()
-    # to be overriden
+  def _delete()
+    # remove from page
+    self._page.remove_obj(self.id)
   end
  
   #################################################################################
@@ -257,10 +259,11 @@ class lvh_root
   #====================================================================
   # init HASPmota object from its jsonl definition
   #
-  # arg1: LVGL parent object (used to create a sub-object)
-  # arg2: `jline` JSONL definition of the object from HASPmota template (used in sub-classes)
-  # arg3: (opt) LVGL object if it already exists and was created prior to init()
-  # arg4: HASPmota parent object defined by `parentid`
+  # parent: LVGL parent object (used to create a sub-object)
+  # page: HASPmota page object
+  # jline: JSONL definition of the object from HASPmota template (used in sub-classes)
+  # obj: (opt) LVGL object if it already exists and was created prior to init()
+  # parent_lvh: HASPmota parent object defined by `parentid`
   #====================================================================
   def init(parent, page, jline, obj, parent_lvh)
     self._page = page
@@ -557,10 +560,11 @@ class lvh_obj : lvh_root
   #====================================================================
   # init HASPmota object from its jsonl definition
   #
-  # arg1: LVGL parent object (used to create a sub-object)
-  # arg2: `jline` JSONL definition of the object from HASPmota template (used in sub-classes)
-  # arg3: (opt) LVGL object if it already exists and was created prior to init()
-  # arg4: HASPmota parent object defined by `parentid`
+  # parent: LVGL parent object (used to create a sub-object)
+  # page: HASPmota page object
+  # jline: JSONL definition of the object from HASPmota template (used in sub-classes)
+  # obj: (opt) LVGL object if it already exists and was created prior to init()
+  # parent_lvh: HASPmota parent object defined by `parentid`
   #====================================================================
   def init(parent, page, jline, obj, parent_lvh)
     super(self).init(parent, page, jline, obj, parent_lvh)
@@ -640,11 +644,11 @@ class lvh_obj : lvh_root
       var tas_event_more = ""   # complementary data
       if code == lv.EVENT_VALUE_CHANGED
         import introspect
-        var val = introspect.get(self, "val")     # does not raise an exception if not found
+        var val = introspect.get(self, true)     # does not raise an exception if not found
         if (val != nil && type(val) != 'module')
           tas_event_more = f',"val":{json.dump(val)}'
         end
-        var text = introspect.get(self, "text")     # does not raise an exception if not found
+        var text = introspect.get(self, true)     # does not raise an exception if not found
         if (text != nil && type(text) != 'module')
           tas_event_more += f',"text":{json.dump(text)}'
         end
@@ -656,17 +660,16 @@ class lvh_obj : lvh_root
   end
 
   #====================================================================
-  #  `delete` special attribute used to delete the object
+  #  `_delete` special attribute used to delete the object
   #====================================================================
-  # the actual delete method, overriden
-  def delete()
+  # the actual _delete method, overriden
+  def _delete()
     # remove any rule
     self.remove_val_rule()
     self.remove_text_rule()
     if (self._lv_label)   self._lv_label.del()    self._lv_label = nil    end
     if (self._lv_obj)     self._lv_obj.del()      self._lv_obj = nil      end
-    # remove from page
-    self._page.remove_obj(self.id)
+    super(self)._delete()
   end
 
   #====================================================================
@@ -877,7 +880,7 @@ class lvh_obj : lvh_root
   def get_text_color(style_modifier)
     return self._lv_obj.get_style_text_color(style_modifier)
   end
-  def set_value_color(t) self.set_text_color(t) end
+  def set_value_color(t, style_modifier) self.set_text_color(t, style_modifier) end
   def get_value_color() return self.get_value_color() end
 
   #====================================================================
@@ -1270,6 +1273,145 @@ class lvh_switch : lvh_obj
 end
 
 #====================================================================
+#  msgbox
+#====================================================================
+#@ solidify:lvh_msgbox,weak
+class lvh_msgbox : lvh_obj
+  static var _lv_class = lv.msgbox
+  var _modal
+  # sub_objects
+  var _header, _footer, _content, _title
+  var _buttons          # array containing the buttons, to apply styles later
+
+  #====================================================================
+  # init
+  #
+  # parent: LVGL parent object (used to create a sub-object)
+  # page: HASPmota page object
+  # jline: JSONL definition of the object from HASPmota template (used in sub-classes)
+  # obj: (opt) LVGL object if it already exists and was created prior to init()
+  # parent_lvh: HASPmota parent object defined by `parentid`
+  #====================================================================
+  def init(parent, page, jline, obj, parent_lvh)
+    self._buttons = []
+    self._modal = bool(jline.find("modal", false))
+    if (self._modal)
+      # the object created as modal is on top of everything
+      self._lv_obj = lv.msgbox(0)
+    end
+    super(self).init(parent, page, jline, self._lv_obj, parent_lvh)
+    # apply some default styles
+    self.text_align = 2     # can be overriden
+    self.bg_opa = 255       # can be overriden
+  end
+
+  #====================================================================
+  # register_event_cb
+  #
+  # Override the normal event handler, we are only interested
+  # in events on buttons
+  #====================================================================
+  def register_event_cb()
+    # nothing to register for now, event_cb is allocated when buttons are allocted in `setoptions`
+  end
+
+  # update after parsing
+  # 
+  def post_config()
+    var lvh_class = self._page._hm.lvh_obj      # get `lvh_obj` class from root instance
+    var _lv_obj = self._lv_obj                  # get msgbox lvgl object
+    # read the method, and return nil if exception 'value_error' occured
+    def get_obj_safe(method)
+      try
+        var lv_obj = method(_lv_obj)            # equivalent of `self._lv_obj.get_XXX()` where XXX is header/footer/title/content
+        return lvh_class(nil, self._page, {}, lv_obj, self) # instanciate a local lvh object
+      except 'value_error'
+        return nil
+      end
+    end
+
+    super(self).post_config()
+    # get sub-objects
+    self._header = get_obj_safe(_lv_obj.get_header)
+    self._footer = get_obj_safe(_lv_obj.get_footer)
+    self._content = get_obj_safe(_lv_obj.get_content)
+    self._title = get_obj_safe(_lv_obj.get_title)
+  end
+
+  #- ------------------------------------------------------------#
+  # `setmember` virtual setter
+  #
+  # If the key starts with `footer_`, `header_`, `title_` or `content_`
+  # send to the corresponding object
+  #- ------------------------------------------------------------#
+  def setmember(k, v)
+    import string
+    if string.startswith(k, 'footer_') && self._footer
+      self._footer.setmember(k[7..], v)
+    elif string.startswith(k, 'header_') && self._header
+      self._header.setmember(k[7..], v)
+    elif string.startswith(k, 'title_') && self._title
+      self._title.setmember(k[6..], v)
+    elif string.startswith(k, 'content_') && self._content
+      self._content.setmember(k[8..], v)
+    elif string.startswith(k, 'buttons_') && self._buttons
+      for btn: self._buttons
+        btn.setmember(k[8..], v)
+      end
+    else
+      super(self).setmember(k, v)
+    end
+  end
+  def member(k)
+    import string
+    if string.startswith(k, 'footer_') && self._footer
+      return self._footer.member(k[7..])
+    elif string.startswith(k, 'header_') && self._header
+      return self._header.member(k[7..])
+    elif string.startswith(k, 'title_') && self._title
+      return self._title.member(k[6..])
+    elif string.startswith(k, 'content_') && self._content
+      return self._content.member(k[8..])
+    else
+      return super(self).member(k)
+    end
+  end
+
+  # private function to add a button, create the lvh class and register callbacks
+  def _add_button(msg)
+    var lvh_class = self._page._hm.lvh_obj      # get `lvh_obj` class from root instance
+    var btn_lv = self._lv_obj.add_footer_button(msg)
+    var btn_lvh = lvh_class(nil, self._page, {}, btn_lv, self) # instanciate a local lvh object
+    self._buttons.push(btn_lvh)
+  end
+
+  def set_options(l)
+    if (isinstance(l, list) && size(l) > 0)
+      for msg: l
+        self._add_button(msg)
+      end
+    else
+      print("HTP: 'msgbox' needs 'options' to be a list of strings")
+    end
+  end
+  def get_options()
+  end
+
+  def set_title(t)
+    self._lv_obj.add_title(str(t))
+  end
+  def get_title()
+    # self._lv_obj.get_title()
+  end
+  def set_text(t)
+    self._lv_obj.add_text(str(t))
+  end
+  def get_text()
+    # self._lv_obj.get_text()
+  end
+end
+
+#====================================================================
 #  spinner
 #====================================================================
 #@ solidify:lvh_spinner,weak
@@ -1278,17 +1420,21 @@ class lvh_spinner : lvh_arc
   # static var _EVENTS = EVENTS_ALL # inherited
   var _speed, _angle
 
+  #====================================================================
   # init
-  # - create the LVGL encapsulated object
-  # arg1: parent object
-  # arg2: json line object
+  #
+  # parent: LVGL parent object (used to create a sub-object)
+  # page: HASPmota page object
+  # jline: JSONL definition of the object from HASPmota template (used in sub-classes)
+  # obj: (opt) LVGL object if it already exists and was created prior to init()
+  # parent_lvh: HASPmota parent object defined by `parentid`
+  #====================================================================
   def init(parent, page, jline)
-    self._page = page
     var angle = jline.find("angle", 60)
     var speed = jline.find("speed", 1000)
     self._lv_obj = lv.spinner(parent)
     self._lv_obj.set_anim_params(speed, angle)
-    self.post_init()
+    super(self).init(parent, page, jline, self._lv_obj)
   end
 
   def set_angle(t) end
@@ -1713,16 +1859,17 @@ class lvh_scale_section : lvh_root
   end
 
   #====================================================================
-  #  `delete` special attribute used to delete the object
+  #  `_delete` special attribute used to delete the object
   #====================================================================
-  # the actual delete method, overriden
-  def delete()
+  # the actual _delete method, overriden
+  def _delete()
     self._style.del()
     self._style = nil
     self._style10.del()
     self._style10 = nil
     self._style30.del()
     self._style30 = nil
+    super(self)._delete()
   end
 
   #- ------------------------------------------------------------#
@@ -2082,6 +2229,71 @@ class lvh_btnmatrix : lvh_obj
   end
 end
 
+#====================================================================
+#  cpicker - color picker
+#
+# OpenHASP maps to LVGL 7 `cpicker`
+# However `cpicker` was replaced with `colorwheel` in LVGL 8
+# and removed in LVGL 9.
+# We have ported back `colorwheel` from LVGL 8 to LVGL 9
+#====================================================================
+#@ solidify:lvh_cpicker,weak
+class lvh_cpicker : lvh_obj
+  static var _lv_class = lv.colorwheel
+  static var _CW_MODES = ['hue', 'saturation', 'value']
+
+  # we need a non-standard initialization of lvgl object
+  def init(parent, page, jline, obj, parent_lvh)
+    obj = lv.colorwheel(parent, true #-knob_recolor = true-#)
+    super(self).init(parent, page, jline, obj, parent_lvh)
+    self.set_scale_width(25)      # align to OpenHASP default value
+  end
+
+  def set_color(t)
+    var v = self.parse_color(t)
+    self._lv_obj.set_rgb(v)
+  end
+  def get_color()
+    var color = self._lv_obj.get_rgb()
+    return f"#{color:06X}"
+  end
+
+  def set_mode(s)
+    var mode = self._CW_MODES.find(s)
+    if (mode != nil)
+      self._lv_obj.set_mode(mode)
+    else
+      raise "value_error", f"unknown color mode '{mode}'"
+    end
+  end
+  def get_mode()
+    var mode = self._lv_obj.get_color_mode()
+    if (mode >= 0) && (mode < size(self._CW_MODES))
+      return self._CW_MODES[mode]
+    else
+      return 'unknown'
+    end
+  end
+
+  def set_mode_fixed(b)
+    b = bool(b)
+    self._lv_obj.set_mode_fixed(b)
+  end
+  def get_mode_fixed()
+    return self._lv_obj.get_color_mode_fixed()
+  end
+
+  def set_scale_width(v)
+    self._lv_obj.set_style_arc_width(int(v), 0)
+  end
+  def get_scale_width()
+    return self._lv_obj.get_style_arc_width(0)
+  end
+  # pad_inner is ignored (for now?)
+  def set_pad_inner() end
+  def get_pad_inner() end
+end
+
 #################################################################################
 #
 # All other subclasses than just map the LVGL object
@@ -2154,14 +2366,43 @@ class lvh_page
 
     # create a global for this page of form p<page_number>, ex `p1`
     # create a global for the page attributes as p<page_number>b0, ex `p1b0`
-    global.("p" + str(self._page_id)) = self
-    global.("p" + str(self._page_id) + "b0") = obj_scr
+    global.(f"p{self._page_id}") = self
+    global.(f"p{self._page_id}b0") = obj_scr
   end
 
   #####################################################################
   # General Setters and Getters
   #####################################################################
   
+  #- ------------------------------------------------------------#
+  #  Internal utility functions
+  #
+  #  Mapping of virtual attributes
+  #
+  #- ------------------------------------------------------------#
+  # `member` virtual getter
+  #- ------------------------------------------------------------#
+  def member(k)
+    import string
+    import introspect
+
+    if string.startswith(k, "set_") || string.startswith(k, "get_")   return end
+
+    # if attribute name is in ignore list, abort
+    # if self._attr_ignore.find(k) != nil return end
+    # we don't need an ignore list for pages
+
+    # first check if there is a method named `get_X()`
+    var f = introspect.get(self, "get_" + k)  # call self method
+    if type(f) == 'function'
+      # print(f">>>: getmember local method get_{k}")
+      return f(self)
+    end
+
+    # fallback to exception if attribute unknown or not a function
+    return module("undefined")
+  end
+
   #====================================================================
   # retrieve lvgl screen object for this page
   #====================================================================
@@ -2200,6 +2441,44 @@ class lvh_page
       var glob_name = format("p%ib%i", obj_lvh._page.id(), obj_id)
       global.(glob_name) = nil
     end
+  end
+
+  #====================================================================
+  #  `delete` special attribute used to delete the object
+  #====================================================================
+  def get_clear()
+    self._clear()
+    return def () end
+  end
+  def _clear()
+    # iterate on all objects and try to delete
+    # we first get a copy of all ids so we can delete and continue iterating
+    # without fearing about an infinite loop
+    var ids = []
+    for id: self._obj_id.keys()
+      ids.push(id)
+    end
+    # we iterate until the array is empty
+    var idx = 0
+    while idx < size(ids)
+      var page_id = ids[idx]
+      if (page_id != 0) && self._obj_id.contains(page_id)
+        # first check if the id is still in the page - it could have been already removed if it's a sub-object
+        self._obj_id[page_id]._delete()
+      end
+      idx += 1
+    end
+    self._obj_id = {}       # clear map
+  end
+  def get_delete()
+    self._delete()
+    return def () end
+  end
+  def _delete()
+    # remove from page, also change page if this is the current one
+    self._hm._remove_page(self._page_id)
+    # clear content
+    self._clear()
   end
 
   #====================================================================
@@ -2266,6 +2545,7 @@ class HASPmota
   # haspmota objects
   var lvh_pages                         # (list of lvg_page) list of pages
   var lvh_page_cur_idx                  # (int) current page index number
+  var lvh_page_cur_idx_parsing          # (int) index of the current page related to parsing JSONL, can be different from the displayed page
   # regex patterns
   var re_page_target                    # compiled regex for action `p<number>`
   # specific event_cb handling for less memory usage since we are registering a lot of callbacks
@@ -2292,10 +2572,10 @@ class HASPmota
   static lvh_dropdown_list = lvh_dropdown_list
 	static lvh_roller = lvh_roller
 	static lvh_btnmatrix = lvh_btnmatrix
- 	# static lvh_msgbox = lvh_msgbox
+ 	static lvh_msgbox = lvh_msgbox
  	# static lvh_tabview = lvh_tabview
  	# static lvh_tab = lvh_tab
- 	# static lvh_cpiker = lvh_cpiker
+ 	static lvh_cpicker = lvh_cpicker
 	static lvh_bar = lvh_bar
 	static lvh_slider = lvh_slider
 	static lvh_arc = lvh_arc
@@ -2398,6 +2678,18 @@ class HASPmota
   def get_page_cur()
     return self.lvh_pages[self.lvh_page_cur_idx]
   end
+  #====================================================================
+  # return an array of all pages numbers
+  #====================================================================
+  def get_pages()
+    return self.pages_list_sorted(nil)
+  end
+  #====================================================================
+  # return the current page being parsed with JSONL as `lvh_page` object
+  #====================================================================
+  def get_page_cur_parsing()
+    return self.lvh_pages[self.lvh_page_cur_idx_parsing]
+  end
 
   #====================================================================
   # load JSONL template
@@ -2422,12 +2714,12 @@ class HASPmota
         if tasmota.loglevel(4)
           tasmota.log(f"HSP: parsing line '{jsonl[0]}'", 4)
         end
-        self.parse_page(jline)    # parse page first to create any page related objects, may change self.lvh_page_cur_idx
+        self.parse_page(jline)    # parse page first to create any page related objects, may change self.lvh_page_cur_idx_parsing
         # objects are created in the current page
         if (self.lvh_pages == nil)
           raise "value_error", "no page 'id' defined"
         end
-        self.parse_obj(jline, self.lvh_pages[self.lvh_page_cur_idx])    # then parse object within this page
+        self.parse_obj(jline, self.lvh_pages[self.lvh_page_cur_idx_parsing])    # then parse object within this page
       else
         # check if it's invalid json
         if size(string.tr(jsonl[0], " \t", "")) > 0
@@ -2458,7 +2750,7 @@ class HASPmota
     var jline = json.load(j)
 
     if type(jline) == 'instance'
-      self.parse_page(jline)    # parse page first to create any page related objects, may change self.lvh_page_cur_idx
+      self.parse_page(jline)    # parse page first to create any page related objects, may change self.lvh_page_cur_idx_parsing
       # objects are created in the current page
       self.parse_obj(jline, self.lvh_pages[self.lvh_page_cur_idx])    # then parse object within this page
     else
@@ -2546,37 +2838,60 @@ class HASPmota
   #  Execute a page changing action from string `action`
   #
   #  Arg1 `action` can be `prev`, `next`, `back` or `p<number>`
-  #  Returns: nil
+  #       of `delete` if we are deleting the current page
+  #  duration: in ms, default 500 ms
+  #  anim: -1 right to left, 1 left to right (default), `nil` auto, 0 none
+  #  Returns: the target page object if changed, or `nil` if still on same page
   #====================================================================
-  def page_show(action)
+  def page_show(action, anim, duration)
+    # resolve between page numbers
+    # p1 is either a number or nil (stored value)
+    # p2 is the default value
+    # l is the list of page ids
+    def to_page_resolve(p1, p_def, l)
+      if (p1 != nil) && (l.find(p1) != nil)
+        return p1
+      else
+        return p_def
+      end
+    end
     # action can be `prev`, `next`, `back`, or `p<number>` like `p1`
     var to_page = nil
-    var cur_page = self.lvh_pages[self.lvh_page_cur_idx]
+    var cur_page = self.get_page_cur()
     var sorted_pages_list =  self.pages_list_sorted(self.lvh_page_cur_idx)
-    if size(sorted_pages_list) <= 1  return end     # if only 1 page, do nothing
+
+    if size(sorted_pages_list) <= 1     # if only 1 page, do nothing
+      return nil
+    end
+
     # handle prev/next/back values
     # get the corresponding value from page object,
     # if absent, revert to next page, previous page and page 1
     # print("sorted_pages_list",sorted_pages_list)
     if action == 'prev'
-      to_page = int(cur_page.prev)
-      if to_page == nil   to_page = sorted_pages_list[-1] end   # if no prev, take the previous page
+      to_page = to_page_resolve(int(cur_page.prev), sorted_pages_list[-1], sorted_pages_list)
     elif action == 'next'
-      to_page = int(cur_page.next)
-      if to_page == nil   to_page = sorted_pages_list[1] end    # if no next, take the next page
+      to_page = to_page_resolve(int(cur_page.next), sorted_pages_list[1], sorted_pages_list)
     elif action == 'back'
-      to_page = int(cur_page.back)
-      if to_page == nil                                         # if no back, take first page
-        to_page = self.pages_list_sorted(nil)[0]
-      end                       
+      to_page = to_page_resolve(int(cur_page.back), self.pages_list_sorted(nil)[0], sorted_pages_list)
+    elif action == 'delete'
+      to_page = to_page_resolve(int(cur_page.back), self.pages_list_sorted(nil)[0], sorted_pages_list)
+      if (to_page == cur_page.id())
+        to_page = to_page_resolve(int(cur_page.next), sorted_pages_list[1], sorted_pages_list)
+      end
     elif self.re_page_target.match(action)
       # action is supposed to be `p<number>` format
-      to_page = int(action[1..-1])          # just skip first char and convert the rest to a string
+      to_page = to_page_resolve(int(action[1..-1]), nil #-default to nil-#, sorted_pages_list)
     end
 
-    # print("to_page=",to_page)
-    if to_page != nil && to_page > 0                            # we have a target
-      self.lvh_pages[to_page].show()                            # switch to the target page
+    # print(f"{action=} {to_page=}")
+    if (to_page != nil) && (to_page > 0)                          # we have a target
+      var to_page_obj = self.lvh_pages[to_page]
+      # print(f"{to_page_obj.id()=}")
+      if (to_page_obj != nil)
+        to_page_obj.show(anim, duration)
+      end
+      return to_page_obj
     end
   end
 
@@ -2589,7 +2904,11 @@ class HASPmota
   def parse_page(jline)
     if jline.has("page") && type(jline["page"]) == 'int'
       var page = int(jline["page"])
-      self.lvh_page_cur_idx = page    # change current page
+      # print(f">>> parsing page {page}")
+      self.lvh_page_cur_idx_parsing = page    # change current page
+      if (self.lvh_page_cur_idx == nil)       # also set current page if we haven't any yet
+        self.lvh_page_cur_idx = page
+      end
 
       # create the page object if it doesn't exist already
       if !self.lvh_pages.contains(page)
@@ -2599,12 +2918,42 @@ class HASPmota
 
       # check if there is "id":0
       if jline.find("id") == 0
-        var lvh_page_cur = self.get_page_cur()
+        var lvh_page_cur = self.get_page_cur_parsing()
         lvh_page_cur.prev = int(jline.find("prev", nil))
         lvh_page_cur.next = int(jline.find("next", nil))
         lvh_page_cur.back = int(jline.find("back", nil))
       end
     end
+  end
+
+  #====================================================================
+  #  Remove page by id
+  #
+  #  Should not be called directly. Indirectly called by `p<x>.delete`
+  #
+  #  Only removes reference to the page at root level
+  #  Change the active page if needed
+  #====================================================================
+  def _remove_page(page_id)
+    # check if we remove the active page
+    var cur_page_id = self.get_page_cur().id()
+    if (page_id == cur_page_id)
+      # if we try to delete the current page, move do main page
+      var to_page_obj = self.page_show("delete", 0, 0 #-no animation-#)    # get the target page as result
+      if (to_page_obj == nil)                       # we didn't change page
+        return
+      end
+    end
+    # also update lvh_page_cur_idx_parsing, if we removed the current parsing page
+    if (self.lvh_page_cur_idx_parsing == page_id)
+      self.lvh_page_cur_idx_parsing = self.lvh_page_cur_idx
+    end
+    # remove object from page object
+    if self.lvh_pages.contains(page_id)
+      self.lvh_pages.remove(page_id)
+    end
+    # remove global for page
+    global.(f"p{page_id}") = nil
   end
 
   #====================================================================
@@ -2645,65 +2994,70 @@ class HASPmota
 
   #====================================================================
   # Parse single object
+  #
+  # The object may be pre-existing or brand new
   #====================================================================
   def parse_obj(jline, page)
     import global
     import introspect
 
     var obj_id = int(jline.find("id"))        # id number or nil
-    var obj_type = str(jline.find("obj"))     # obj class or nil
-    var obj_lvh                               # lvgl object created
-    var lvh_page_cur = self.get_page_cur()    # current page object
+    var obj_type = jline.find("obj")          # obj class or nil
+    obj_type = (obj_type != nil) ? str(obj_type) : nil
+    var lvh_page_cur = self.get_page_cur_parsing()    # current page object, cannot be nil
 
-    # first run any Berry code embedded
-    var berry_run = str(jline.find("berry_run"))
-    var func_compiled
-    if berry_run != "nil"
-      try
-        func_compiled = compile(berry_run)
-      except .. as e,m
-        print(format("HSP: unable to compile berry code \"%s\" - '%s' - %s", berry_run, e, m))
+    # Step 1. Check the id for valid range
+    # 'obj_id' must be between 1 and 254
+    if (obj_id != nil) && (obj_id < 0 || obj_id > 254)
+      if (obj_id != 0) || (obj_type == nil)
+        # if `obj_id` is not `nil` and not `0`, it must have `obj_type` not set to `nil`
+        print(f"HSP: invalid 'id': {obj_id} for 'obj': {obj_type}")
+        return
       end
     end
 
-    # if line contains botn 'obj' and 'id', create the object
-    if obj_type != "nil" && obj_id != nil
-      # 'obj_id' must be between 1 and 254
-      if obj_id < 1 || obj_id > 254
-        print("HSP: invalid 'id': " + str(obj_id) + " for 'obj':" + obj_type)
-        return
-      end
+    # Step 2. Check if the p<>b<> object already exists
+    # `prev_obj` contains the pre-existing object, or `nil` if we create a new object
+    var obj_lvh = lvh_page_cur.get_obj(obj_id)   # get reference of object or `nil` if new object
+
+    # Step 3. Create object instance if required
+    if (obj_type != nil) && (obj_id != nil) && (obj_lvh == nil)
+
+      # Step 3.a. extract the LVGL parent object to create the object in the appropriate lvgl screen
+      # Result in `parent_lvgl`
 
       # extract haspmota class, prefix with `lvh_`. Ex: `btn` becomes `lvh_btn`
-      # extract parent
-      var parent_lvgl
-      var parent_id = int(jline.find("parentid"))
+      var parent_id = int(jline.find("parentid"))   # id of parent object, or `nil`
+      var parent_obj                                # parent HASPmota object
+      var parent_lvgl                               # lvgl object of parent object
 
-      var parent_obj
       if parent_id != nil
         parent_obj = lvh_page_cur.get_obj(parent_id)        # get parent object
-        if parent_obj != nil   parent_lvgl = parent_obj._lv_obj end  # parent 
+        if parent_obj != nil
+          parent_lvgl = parent_obj._lv_obj
+        end  # parent 
       end
       if parent_lvgl == nil
         parent_lvgl = lvh_page_cur.get_scr()   # if not parent, use the current page screen
       end
 
+      # Step 3.b. Get the HASPmota class object for the `obj` class
       # check if a class with the requested name exists
       # first look for a class with name `lvh_<name>` exists
       var obj_class = introspect.get(self, "lvh_" + obj_type)
-      var lv_instance = nil     # allows to pre-instanciate the object
+      var lv_instance             # allows to pre-instanciate the object
 
-      # there is no lvh_X class, try to load the class name from the global namespace
+      # Step 3.c. if no native `lvh_<obj>` is found, try the class name from the global namespace
       if obj_class == nil
         # if not found, check if a LVGL class with name `lv_<name>` exists
         var lv_cl = introspect.get(global, obj_type)
-        if lv_cl != nil && type(lv_cl) == 'class'
+        if (lv_cl != nil) && (type(lv_cl) == 'class')
           lv_instance = lv_cl(parent_lvgl)
           obj_class = self.lvh_obj           # use the basic lvh_obj component to encapsulate
         end
       end
 
-      # still not found, try to load a module with the name of the class
+      # Step 3.d. if not found, try to load a module with the name of the class
       if obj_class == nil
         var lv_cl = introspect.module(obj_type)
         if lv_cl != nil && type(lv_cl) == 'class'
@@ -2712,18 +3066,55 @@ class HASPmota
         end
       end
 
+      # Step 3.e. if none found, raise an error and abort
       if obj_class == nil
-        print("HSP: Cannot find object of type " + str(obj_type))
+        print(f"HSP: Cannot find object of type {obj_type}")
         return
       end
-      
-      # instanciate the object, passing the lvgl screen as parent object
+
+      # Step 3.f. instanciate the object, passing the lvgl screen as parent object
       obj_lvh = obj_class(parent_lvgl, page, jline, lv_instance, parent_obj)
 
-      # add object to page object
+      # Step 3.g. Add object to page object
       lvh_page_cur.add_obj(obj_id, obj_lvh)
     end
 
+    # Step 4. if "id" is 0, get the screen object
+    if obj_id == 0
+      if (obj_type != nil)
+        print(f"HSP: cannot specify 'obj':'{obj_type}' for 'id':0")
+        return
+      end
+      obj_lvh = self.get_page_cur_parsing().get_obj(0)   # get object id '0'
+    end
+
+    # Step 5. apply attributes
+    # set attributes
+    # try every attribute, if not supported it is silently ignored
+    if (obj_lvh != nil)
+      for k:jline.keys()
+        obj_lvh.(k) = jline[k]
+      end
+    end
+
+    # Step 6. apply post-config
+    # finally call 'post_config()' when all attributes are set, which gives an opportunity to clean or refresh
+    if (obj_lvh != nil)
+      obj_lvh.post_config()
+    end
+
+    # Step 7. run any Berry code embedded
+    # `func_compiled` contains compiled code, that will be run once the object is complete, or `nil` if no code
+    # `berry_run` contains the actual source code, used only for logging
+    var func_compiled
+    var berry_run = str(jline.find("berry_run"))
+    if berry_run != "nil"
+      try
+        func_compiled = compile(berry_run)
+      except .. as e,m
+        print(format("HSP: unable to compile berry code \"%s\" - '%s' - %s", berry_run, e, m))
+      end
+    end
     if func_compiled != nil
       try
         # run the compiled code once
@@ -2736,26 +3127,6 @@ class HASPmota
       end
     end
 
-    if obj_id == nil return end               # if no object id, ignore line
-    if obj_id == 0 && obj_type != "nil"
-      print("HSP: cannot specify 'obj' for 'id':0")
-      return
-    end
-    
-    # if id==0, retrieve the 'scr' object of the current page
-    if obj_id == 0
-      obj_lvh = self.get_page_cur().get_obj(0)   # get object id '0'
-    end
-
-    # set attributes
-    # try every attribute, if not supported it is silently ignored
-    for k:jline.keys()
-      # introspect.set(obj, k, jline[k])
-      obj_lvh.(k) = jline[k]
-    end
-
-    # finally call 'post_config()' when all attributes are set, which gives an opportunity to clean or refresh
-    obj_lvh.post_config()
   end
 end
 haspmota.HASPmota = HASPmota

@@ -687,9 +687,11 @@ char* SettingsText(uint32_t index) {
 
   if (index >= SET_MAX) { // Index above SET_MAX are not stored in Settings
 #ifdef USE_WEBSERVER
+#ifndef FIRMWARE_MINIMAL
     if (SET_BUTTON17 <= index && index <= SET_BUTTON32)
       return (char*)GetWebButton(index-SET_BUTTON17+16);
-#endif
+#endif  // not FIRMWARE_MINIMAL
+#endif  // USE_WEBSERVER
     position += settings_text_size -1;  // Setting not supported - internal error - return empty string
   } else {
     SettingsUpdateFinished();
@@ -1834,6 +1836,12 @@ void SettingsDelta(void) {
     }
     if (Settings->version < 0x0E020004) {  // 14.2.0.4
       Settings->weight_precision = 0;      // Initialized by HX711 driver
+    }
+    if (Settings->version < 0x0E030002) {  // 14.3.0.2
+      Settings->sbflag1.dali_light = 1;
+    }
+    if (Settings->version < 0x0E030004) {  // 14.3.0.4
+      Settings->mbflag2.dali_group_sliders = 2;
     }
 
     Settings->version = TASMOTA_VERSION;

@@ -80,7 +80,7 @@ typedef struct {
   float current[ENERGY_MAX_PHASES];             // 123.123 A
   float active_power[ENERGY_MAX_PHASES];        // 123.1 W
   float apparent_power[ENERGY_MAX_PHASES];      // 123.1 VA
-  float reactive_power[ENERGY_MAX_PHASES];      // 123.1 VAr
+  float reactive_power[ENERGY_MAX_PHASES];      // 123.1 var
   float power_factor[ENERGY_MAX_PHASES];        // 0.12
   float frequency[ENERGY_MAX_PHASES];           // 123.1 Hz
   float import_active[ENERGY_MAX_PHASES];       // 123.123 kWh
@@ -1514,9 +1514,10 @@ bool Xdrv03(uint32_t function)
       case FUNC_SLEEP_LOOP:
         XnrgCall(FUNC_LOOP);
         break;
+      case FUNC_EVERY_100_MSECOND:
       case FUNC_EVERY_250_MSECOND:
         if (TasmotaGlobal.uptime > 4) {
-          XnrgCall(FUNC_EVERY_250_MSECOND);
+          XnrgCall(function);
         }
         break;
       case FUNC_EVERY_SECOND:

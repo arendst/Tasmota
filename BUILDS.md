@@ -283,7 +283,7 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_SONOFF_SPM            |       | / x   |       |       |       |       |
 | USE_DISPLAY_TM1621_SONOFF |       | / x   |       |       |       |       |
 | USE_SHELLY_PRO            |       | / x   |       |       |       |       |
-| USE_DALI                  |       | / -   |       |       |       |       |
+| USE_DALI                  |       | / x   |       |       |       |       |
 | USE_DINGTIAN_RELAY        |       | / -   |       |       |       |       |
 | USE_MATTER_DEVICE         |       | / x   |       |       |       |       | See SetOption151            |
 

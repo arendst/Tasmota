@@ -176,13 +176,13 @@ Renderer *Init_uDisplay(const char *desc) {
       replacepin(&cp, Pin(GPIO_OLED_RESET));
 
       if (wire_n == 0) {
-        if (!TasmotaGlobal.i2c_enabled) {
+        if (!TasmotaGlobal.i2c_enabled[0]) {
           I2cBegin(sda, scl);
         }
       }
 #ifdef ESP32
       if (wire_n == 1) {
-        if (!TasmotaGlobal.i2c_enabled_2) {
+        if (!TasmotaGlobal.i2c_enabled[1]) {
           I2cBegin(sda, scl, 1);
         }
       }
@@ -370,13 +370,13 @@ Renderer *Init_uDisplay(const char *desc) {
       }
 
       if (wire_n == 0) {
-        if (!TasmotaGlobal.i2c_enabled) {
+        if (!TasmotaGlobal.i2c_enabled[0]) {
           I2cBegin(sda, scl);
         }
       }
 #ifdef ESP32
       if (wire_n == 1) {
-        if (!TasmotaGlobal.i2c_enabled_2) {
+        if (!TasmotaGlobal.i2c_enabled[1]) {
           I2cBegin(sda, scl, 1, 400000);
         }
       }
@@ -397,7 +397,7 @@ Renderer *Init_uDisplay(const char *desc) {
         if (!wire_n) {
           GT911_Touch_Init(&Wire, irq, rst, xs, ys);
         }
-#ifdef ESP32
+#if defined(ESP32) && defined(USE_I2C_BUS2)
         else {
           GT911_Touch_Init(&Wire1, irq, rst, xs, ys);
         }
@@ -414,7 +414,7 @@ Renderer *Init_uDisplay(const char *desc) {
         if (!wire_n) { 
           FT5206_Touch_Init(Wire);
         }
-#ifdef ESP32
+#if defined(ESP32) && defined(USE_I2C_BUS2)
         else {
           FT5206_Touch_Init(Wire1);
         }

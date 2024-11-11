@@ -148,7 +148,7 @@ void SevensegInit(uint8_t mode)
 }
 
 void SevensegInitDriver(void) {
-  if (!TasmotaGlobal.i2c_enabled) { return; }
+  if (!TasmotaGlobal.i2c_enabled[0]) { return; }
 
   if (!Settings->display_model) {
     if (I2cSetDevice(Settings->display_address[0])) {

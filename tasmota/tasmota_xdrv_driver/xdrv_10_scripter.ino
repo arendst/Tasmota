@@ -10259,7 +10259,7 @@ uint32_t options = 0;
 #ifdef USE_SCRIPT_I2C
   options |= 0x00400000;
 #endif
-#ifdef USE_DSIPLAY_DUMP
+#ifdef USE_DISPLAY_DUMP
   options |= 0x00800000;
 #endif
 #ifdef USE_SCRIPT_SERIAL
@@ -13160,7 +13160,7 @@ uint32_t script_i2c(uint8_t sel, uint16_t val, uint32_t val1) {
   switch (sel) {
     case 0:
       glob_script_mem.script_i2c_addr = val;
-#ifdef ESP32
+#if defined(ESP32) && defined(USE_I2C_BUS2)
       if (val1 == 0) glob_script_mem.script_i2c_wire = &Wire;
       else glob_script_mem.script_i2c_wire = &Wire1;
 #else
@@ -13209,15 +13209,15 @@ uint32_t script_i2c(uint8_t sel, uint16_t val, uint32_t val1) {
       glob_script_mem.script_i2c_wire->endTransmission();
       break;
     case 14:
- #ifdef ESP32
+#if defined(ESP32) && defined(USE_I2C_BUS2)
       Wire1.end();
       Wire1.begin(val & 0x7f, val1);
       glob_script_mem.script_i2c_wire = &Wire1;
-      TasmotaGlobal.i2c_enabled_2 = true;
+      TasmotaGlobal.i2c_enabled[1] = true;
       if (val & 128) {
         XsnsCall(FUNC_INIT);
       }
- #endif     
+#endif     
       break;
   }
   return rval;
