@@ -989,7 +989,7 @@ void WSContentButton(uint32_t title_index, bool show=true) {
 }
 
 void WSContentSpaceButton(uint32_t title_index, bool show=true) {
-  WSContentSend_P(PSTR("<div id=but%dd style=\"display: %s;\"></div>"),title_index, show ? "block":"none");            // 5px padding
+  WSContentSend_P(PSTR("<div></div>"));            // 5px padding
   WSContentButton(title_index, show);
 }
 
@@ -1230,7 +1230,7 @@ void HandleRoot(void) {
   WSContentSend_P(HTTP_SCRIPT_ROOT_PART2);
   WSContentSendStyle();
 
-  WSContentSend_P(PSTR("<div style='padding:0;' id='l1' name='l1'></div>"));
+  WSContentSend_P(PSTR("<div style='padding:0;' id='l1' name='l1'></div><div></div>"));
 
 #ifndef FIRMWARE_MINIMAL
 
