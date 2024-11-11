@@ -3,16 +3,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.3.0.5] 
+## [14.3.0.6] 
 ### Added
-- ESP32 MI32 legacy add config operations (#22458)
+- Add command ``WebColor20`` to control color of Button when Off
 
 ### Breaking Changed
 
 ### Changed
-- Redesign GUI adding feedback to buttons, shutters and lights
 
 ### Fixed
+
+### Removed
+
+## [14.3.0.5] 20241111
+### Added
+- ESP32 MI32 legacy add config operations (#22458)
+
+### Changed
+- Redesign GUI adding feedback to buttons, shutters and lights
 
 ### Removed
 - Command ``SetOption161 1`` to disable web page slider updates by commands

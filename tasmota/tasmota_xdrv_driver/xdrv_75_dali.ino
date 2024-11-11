@@ -1247,7 +1247,7 @@ void DaliWebAddMainSlider(void) {
     Dali->web_dimmer[i] = Dali->dimmer[i];
     WSContentSend_P(HTTP_MSG_SLIDER_DALI,      // Brightness - Black to White
       i,                                       // k75<i>
-      WebColor((Dali->power[i]) ? COL_BUTTON : COL_FORM),
+      WebColor((Dali->power[i]) ? COL_BUTTON : COL_BUTTON_OFF),
       i,                                       // k75=<i>
       (0==i)?"B":"G",                          // B (Broadcast) or G1 to G16 (Group)
       (0==i)?"":itoa(i, number, 10),
@@ -1296,7 +1296,7 @@ void DaliShow(bool json) {
     uint32_t slider_update_time = millis();
     for (uint32_t i = Settings->sbflag1.dali_light; i <= Settings->mbflag2.dali_group_sliders; i++) {  // DaliLight 0/1, DaliGroupSliders
       WSContentSend_P(PSTR("eb('k75%d').style='background:#%06x';"),
-        i, WebColor((Dali->power[i]) ? COL_BUTTON : COL_FORM));
+        i, WebColor((Dali->power[i]) ? COL_BUTTON : COL_BUTTON_OFF));
       if (Dali->dimmer[i] != Dali->web_dimmer[i]) {
         if (0 == Dali->slider_update_time) {
           Dali->slider_update_time = slider_update_time + Settings->web_refresh;  // Allow other users to sync screen

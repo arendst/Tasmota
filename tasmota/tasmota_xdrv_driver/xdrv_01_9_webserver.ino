@@ -1519,7 +1519,7 @@ void HandleRoot(void) {
 #endif  // USE_SONOFF_IFAN
 
     if (not_active) {
-      WSContentSend_P(PSTR("eb('o%d').style.background='#%06x';"), idx, WebColor(COL_FORM));
+      WSContentSend_P(PSTR("eb('o%d').style.background='#%06x';"), idx, WebColor(COL_BUTTON_OFF));
     }
   }
   WSContentSend_P(PSTR("</script>"));
@@ -1693,7 +1693,7 @@ bool HandleRootStatusRefresh(void)
 #endif  // USE_SONOFF_IFAN
 
       WSContentSend_P(PSTR("eb('o%d').style.background='#%06x';"),
-        idx, WebColor((active) ? COL_BUTTON : COL_FORM));
+        idx, WebColor((active) ? COL_BUTTON : COL_BUTTON_OFF));
     }
   }
 
@@ -3854,9 +3854,9 @@ int WebGetConfig(char *buffer) {
 bool JsonWebColor(const char* dataBuf)
 {
   // Default (Dark theme)
-  // {"WebColor":["#eaeaea","#252525","#4f4f4f","#000","#ddd","#65c115","#1f1f1f","#ff5661","#008000","#faffff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#faffff","#999","#eaeaea"]}
+  // {"WebColor":["#eaeaea","#252525","#4f4f4f","#000","#ddd","#65c115","#1f1f1f","#ff5661","#008000","#faffff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#faffff","#999","#eaeaea","#08405e"]}
   // Default pre v7 (Light theme)
-  // {"WebColor":["#000","#fff","#f2f2f2","#000","#fff","#000","#fff","#f00","#008000","#fff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#fff","#999","#000"]}	  // {"WebColor":["#000000","#ffffff","#f2f2f2","#000000","#ffffff","#000000","#ffffff","#ff0000","#008000","#ffffff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#ffffff","#999999","#000000"]}
+  // {"WebColor":["#000","#fff","#f2f2f2","#000","#fff","#000","#fff","#f00","#008000","#fff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#fff","#999","#000","#08405e"]}	  // {"WebColor":["#000000","#ffffff","#f2f2f2","#000000","#ffffff","#000000","#ffffff","#ff0000","#008000","#ffffff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#ffffff","#999999","#000000","#08405e"]}
 
   JsonParser parser((char*) dataBuf);
   JsonParserObject root = parser.getRootObject();

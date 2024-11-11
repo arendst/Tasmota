@@ -190,7 +190,7 @@
 // -- HTTP GUI Colors -----------------------------
 // HTML hex color codes. Only 3 and 6 digit hex string values are supported!! See https://www.w3schools.com/colors/colors_hex.asp
 // Light theme - pre v7
-// WebColor {"WebColor":["#000","#fff","#f2f2f2","#000","#fff","#000","#fff","#f00","#008000","#fff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#fff","#999","#000"]}
+// WebColor {"WebColor":["#000","#fff","#f2f2f2","#000","#fff","#000","#fff","#f00","#008000","#fff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#fff","#999","#000","#08405e"]}
 /*
 #define COLOR_TEXT                  "#000"       // [WebColor1] Global text color - Black
 #define COLOR_BACKGROUND            "#fff"       // [WebColor2] Global background color - White
@@ -211,9 +211,10 @@
 #define COLOR_TIMER_TAB_TEXT        "#fff"       // [WebColor17] Config timer tab text color - White
 #define COLOR_TIMER_TAB_BACKGROUND  "#999"       // [WebColor18] Config timer tab background color - Dark gray
 #define COLOR_TITLE_TEXT            "#000"       // [WebColor19] Title text color - Whiteish
+#define COLOR_BUTTON_OFF			      "#08405e"    // [WebColor20] Button color when off - Darkest blueish
 */
 // Dark theme
-// WebColor {"WebColor":["#eaeaea","#252525","#4f4f4f","#000","#ddd","#65c115","#1f1f1f","#ff5661","#008000","#faffff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#faffff","#999","#eaeaea"]}
+// WebColor {"WebColor":["#eaeaea","#252525","#4f4f4f","#000","#ddd","#65c115","#1f1f1f","#ff5661","#008000","#faffff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#faffff","#999","#eaeaea","#08405e"]}
 #define COLOR_TEXT                  "#eaeaea"    // [WebColor1] Global text color - Very light gray
 #define COLOR_BACKGROUND            "#252525"    // [WebColor2] Global background color - Very dark gray (mostly black)
 #define COLOR_FORM                  "#4f4f4f"    // [WebColor3] Form background color - Very dark gray
@@ -233,6 +234,7 @@
 #define COLOR_TIMER_TAB_TEXT        "#faffff"    // [WebColor17] Config timer tab text color - Very pale (mostly white) cyan.
 #define COLOR_TIMER_TAB_BACKGROUND  "#999"       // [WebColor18] Config timer tab background color - Dark gray
 #define COLOR_TITLE_TEXT            "#eaeaea"    // [WebColor19] Title text color - Very light gray
+#define COLOR_BUTTON_OFF			      "#08405e"    // [WebColor20] Button color when off - Darkest blueish
 
 // -- KNX -----------------------------------------
 #define KNX_ENABLED            false             // [Knx_Enabled] Enable KNX protocol

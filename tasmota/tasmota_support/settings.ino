@@ -1843,6 +1843,10 @@ void SettingsDelta(void) {
     if (Settings->version < 0x0E030004) {  // 14.3.0.4
       Settings->mbflag2.dali_group_sliders = 2;
     }
+    if (Settings->version < 0x0E030006) {  // 14.3.0.6
+      char scolor[10];
+      WebHexCode(COL_BUTTON_OFF, GetTextIndexed(scolor, sizeof(scolor), COL_BUTTON_OFF, kWebColors));
+    }
 
     Settings->version = TASMOTA_VERSION;
     SettingsSave(1);
