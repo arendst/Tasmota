@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [14.3.0.5] 
 ### Added
+- ESP32 MI32 legacy add config operations (#22458)
 
 ### Breaking Changed
 
