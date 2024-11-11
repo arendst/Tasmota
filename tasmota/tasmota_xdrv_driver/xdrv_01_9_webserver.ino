@@ -266,6 +266,13 @@ const char HTTP_HEAD_STYLE3[] PROGMEM =
   "<h3>%s</h3>"    // Module name
   "<h2>%s</h2>";   // Device name
 
+const char HTTP_MSG_SLIDER_SHUTTER[] PROGMEM =
+  "<td style='width:70%%'>"
+  "<div style='padding:0px 2px;text-align:center;font-size:12px;'><span>%s</span>"
+  "<input id='s27%d' type='range' min='0' max='100' value='%d' onchange='lc(\"u\",%d,value)'>"
+  "</div>"
+  "</td>";
+
 const char HTTP_MSG_SLIDER_GRADIENT[] PROGMEM =
   "<td colspan='%d' style='width:%d%%'>"
   "<div id='%s' class='r' style='background-image:linear-gradient(to right,%s,%s);'>"
@@ -467,6 +474,11 @@ struct WEB {
   uint32_t upload_size = 0;
   uint32_t slider_update_time = 0;
   int slider[LST_MAX];
+#ifdef ESP8266
+  int8_t shutter_slider[MAX_SHUTTERS];
+#else   // ESP32
+  int8_t shutter_slider[MAX_SHUTTERS_ESP32];
+#endif  // ESP8266
   uint16_t upload_error = 0;
   uint8_t state = HTTP_OFF;
   uint8_t upload_file_type;
@@ -604,6 +616,9 @@ void StartWebserver(int type)
 
     for (uint32_t i = 0; i < LST_MAX; i++) {
       Web.slider[i] = -1;
+    }
+    for (uint32_t i = 0; i < sizeof(Web.shutter_slider); i++) {
+      Web.shutter_slider[i] = -1;
     }
 
     if (!Webserver) {
@@ -1168,13 +1183,6 @@ void WebSliderColdWarm(void) {
 }
 #endif  // USE_LIGHT
 
-const char HTTP_MSG_SLIDER_SHUTTERT[] PROGMEM =
-  "<td style='width:70%%'>"
-  "<div style='padding:0px 2px;text-align:center;font-size:12px;'><span>%s</span>"
-  "<input id='s27%d' type='range' min='0' max='100' value='%d' onchange='lc(\"u\",%d,value)'>"
-  "</div>"
-  "</td>";
-
 void HandleRoot(void) {
 #ifndef NO_CAPTIVE_PORTAL
   if (CaptivePortal()) { return; }  // If captive portal redirect instead of displaying the page.
@@ -1332,10 +1340,12 @@ void HandleRoot(void) {
           shutter_button_idx--;  // Right button is previous button (up)
           bool set_button = ((shutter_button_idx <= MAX_BUTTON_TEXT) && strlen(GetWebButton(shutter_button_idx -1)));
           snprintf_P(stemp, sizeof(stemp), PSTR("Shutter %d"), shutter_idx +1);
-          WSContentSend_P(HTTP_MSG_SLIDER_SHUTTERT, 
+          uint32_t shutter_real_to_percent_position = ShutterRealToPercentPosition(-9999, shutter_idx);
+          Web.shutter_slider[shutter_idx] = (ShutterGetOptions(shutter_idx) & 1) ? (100 - shutter_real_to_percent_position) : shutter_real_to_percent_position;
+          WSContentSend_P(HTTP_MSG_SLIDER_SHUTTER, 
             (set_button) ? HtmlEscape(GetWebButton(shutter_button_idx -1)).c_str() : stemp,
             shutter_idx +1,
-            (ShutterGetOptions(shutter_idx) & 1) ? (100 - ShutterRealToPercentPosition(-9999, shutter_idx)) : ShutterRealToPercentPosition(-9999, shutter_idx),
+            Web.shutter_slider[shutter_idx],
             shutter_idx +1);
         }
         WSContentSend_P(PSTR("</tr>"));
@@ -1687,14 +1697,27 @@ bool HandleRootStatusRefresh(void)
     }
   }
 
+  uint32_t slider_update_time = millis();
 #ifdef USE_SHUTTER
-  if (!msg_exec_javascript) {
-    WSContentSend_P(HTTP_MSG_EXEC_JAVASCRIPT);  // "<img style='display:none;' src onerror=\""
-    msg_exec_javascript = true;
-  }
   for (uint32_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
-    WSContentSend_P(PSTR("eb('s27%d').value='%d';"), i +1, 
-      (ShutterGetOptions(i) & 1) ? (100 - ShutterRealToPercentPosition(-9999, i)) : ShutterRealToPercentPosition(-9999, i));
+    if (Web.shutter_slider[i] != -1) {
+      uint32_t shutter_real_to_percent_position = ShutterRealToPercentPosition(-9999, i);
+      uint32_t current_value = (ShutterGetOptions(i) & 1) ? (100 - shutter_real_to_percent_position) : shutter_real_to_percent_position;
+      if (current_value != Web.shutter_slider[i]) {
+        if (0 == Web.slider_update_time) {
+          Web.slider_update_time = slider_update_time + Settings->web_refresh;  // Allow other users to sync screen
+        }
+        else if (slider_update_time > Web.slider_update_time) {
+          Web.slider_update_time = 1;  // Allow multiple updates
+          Web.shutter_slider[i] = current_value;
+        }
+        if (!msg_exec_javascript) {
+          WSContentSend_P(HTTP_MSG_EXEC_JAVASCRIPT);  // "<img style='display:none;' src onerror=\""
+          msg_exec_javascript = true;
+        }
+        WSContentSend_P(PSTR("eb('s27%d').value='%d';"), i +1, current_value);
+      }
+    }
   }
 #endif  // USE_SHUTTER
 
@@ -1702,7 +1725,6 @@ bool HandleRootStatusRefresh(void)
   uint16_t hue;
   uint8_t sat;
   int current_value = -1;
-  uint32_t slider_update_time = millis();
   for (uint32_t i = 0; i < LST_MAX; i++) {
     if (Web.slider[i] != -1) {
       if (!Settings->flag3.pwm_multi_channels) {  // SetOption68 0 - Enable multi-channels PWM instead of Color PWM
@@ -1741,10 +1763,10 @@ bool HandleRootStatusRefresh(void)
       }
     }
   }
+#endif  // USE_LIGHT
   if (1 == Web.slider_update_time) {
     Web.slider_update_time = 0;
   }
-#endif  // USE_LIGHT
 
   if (msg_exec_javascript) {
     WSContentSend_P(PSTR("\">"));
