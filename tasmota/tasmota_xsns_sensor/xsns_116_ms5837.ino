@@ -102,10 +102,25 @@ void MS5837Show(bool json) {
 
 bool ms5837CommandSensor() {
   bool serviced = true;
+  char argument[XdrvMailbox.data_len];
+  long value = 0;
+
+  for (uint32_t ca = 0; ca < XdrvMailbox.data_len; ca++) {
+    if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
+  }
+
+  bool any_value = (strchr(XdrvMailbox.data, ',') != nullptr);
+  if (any_value) { value = strtol(ArgV(argument, 2), nullptr, 10); }
+
   switch (XdrvMailbox.payload) {
     case 0:
       MS5837Show(0);
       pressure_offset = bmp_sensors[0].bmp_pressure - sensor_ms5837.pressure();
+      // Response_P(PSTR("Test case 0: offset=%f"), pressure_offset);
+      break;
+    case 1:
+      pressure_offset = value;
+      // Response_P(PSTR("Test case 1: offset=%f"), pressure_offset);
       break;
   }
   return serviced;
