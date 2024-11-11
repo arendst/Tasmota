@@ -846,9 +846,10 @@ typedef struct {
   uint8_t       modbus_sconfig;            // F62
   uint8_t       windmeter_measure_intvl;   // F63
 
-  uint8_t       free_f64[12];              // F64 - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f64[8];               // F64 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
+  float         ms5837_pressure_offset;    // F6C
   uint32_t      touch_threshold;           // F70
   SOBitfield6   flag6;                     // F74
   uint16_t      flowratemeter_calibration[2];// F78
