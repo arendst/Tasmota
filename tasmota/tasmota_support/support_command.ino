@@ -22,7 +22,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_SO_WIFINOSLEEP "|"
   // Other commands
   D_CMND_UPGRADE "|" D_CMND_UPLOAD "|" D_CMND_OTAURL "|" D_CMND_SERIALLOG "|" D_CMND_RESTART "|"
-#ifndef FIRMWARE_MINIMAL_ONLY
+#ifndef FIRMWARE_MINIMAL
   D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_POWERLOCK "|" D_CMND_TIMEDPOWER "|" D_CMND_STATUS "|" D_CMND_STATE "|" D_CMND_SLEEP "|"
   D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|" D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_STATETEXT "|" D_CMND_SAVEDATA "|"
   D_CMND_SO "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|" D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|"
@@ -53,7 +53,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
   D_CMND_CPU_FREQUENCY
 #endif  // ESP32
-#endif   //FIRMWARE_MINIMAL_ONLY
+#endif  //FIRMWARE_MINIMAL
   ;
 
 SO_SYNONYMS(kTasmotaSynonyms,
@@ -62,7 +62,7 @@ SO_SYNONYMS(kTasmotaSynonyms,
 
 void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndUpgrade, &CmndUpgrade, &CmndOtaUrl, &CmndSeriallog, &CmndRestart,
-#ifndef FIRMWARE_MINIMAL_ONLY
+#ifndef FIRMWARE_MINIMAL
   &CmndBacklog, &CmndDelay, &CmndPower, &CmndPowerLock, &CmndTimedPower, &CmndStatus, &CmndState, &CmndSleep,
   &CmndPowerOnState, &CmndPulsetime, &CmndBlinktime, &CmndBlinkcount, &CmndStateText, &CmndSavedata,
   &CmndSetoption, &CmndSetoption, &CmndTemperatureResolution, &CmndHumidityResolution, &CmndPressureResolution, &CmndPowerResolution,
@@ -93,7 +93,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
   &CmndCpuFrequency
 #endif  // ESP32
-#endif   //FIRMWARE_MINIMAL_ONLY
+#endif   //FIRMWARE_MINIMAL
   };
 
 const char kWifiConfig[] PROGMEM =
@@ -101,7 +101,7 @@ const char kWifiConfig[] PROGMEM =
 
 /********************************************************************************************/
 
-#ifndef FIRMWARE_MINIMAL_ONLY
+#ifndef FIRMWARE_MINIMAL
 void CmndWifiScan(void)
 {
   if (XdrvMailbox.data_len > 0) {
@@ -249,7 +249,7 @@ void CmndWifiTest(void)
 #endif //USE_WEBSERVER
 }
 
-#endif  // not defined FIRMWARE_MINIMAL_ONLY
+#endif  // not defined FIRMWARE_MINIMAL
 
 void ResponseCmnd(void) {
   Response_P(PSTR("{\"%s\":"), XdrvMailbox.command);
@@ -829,9 +829,9 @@ void CmndStatus(void)
   if (payload > MAX_STATUS) { return; }  // {"Command":"Error"}
   if (!Settings->flag.mqtt_enabled && (6 == payload)) { return; }  // SetOption3 - Enable MQTT
   if (!TasmotaGlobal.energy_driver && (9 == payload)) { return; }
-  #ifndef FIRMWARE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
   if (!CrashFlag() && (12 == payload)) { return; }
-  #endif // FIRMWARE_MINIMAL
+#endif // FIRMWARE_MINIMAL
   if (!Settings->flag3.shutter_mode && (13 == payload)) { return; }
 
   char stemp[200];
@@ -956,9 +956,7 @@ void CmndStatus(void)
 
   if ((0 == payload) || (5 == payload)) {
 #ifdef USE_IPV6
-#ifndef FIRMWARE_MINIMAL
     if (5 == payload) { WifiDumpAddressesIPv6(); }
-#endif // FIRMWARE_MINIMAL
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS5_NETWORK "\":{\"" D_CMND_HOSTNAME "\":\"%s\",\""
                           D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\""
                           D_JSON_DNSSERVER "1\":\"%s\",\"" D_JSON_DNSSERVER "2\":\"%s\",\""
