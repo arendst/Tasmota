@@ -329,7 +329,7 @@ void solaxX1_SwitchMeterMode(bool MeterMode) {
 /*********************************************************************************************/
 
 void solaxX1_CyclicTask(void) { // Every 100/250 milliseconds
-  uint8_t DataRead[80] = {0};
+  uint8_t DataRead[256] = {0};
   uint8_t TempData[16] = {0};
   char TempDataChar[32];
   float TempFloat;
@@ -571,7 +571,7 @@ return;
 
 void solaxX1_SnsInit(void) {
   AddLog(LOG_LEVEL_INFO, PSTR("SX1: Init - RX-pin: %d, TX-pin: %d, RTS-pin: %d"), Pin(GPIO_SOLAXX1_RX), Pin(GPIO_SOLAXX1_TX), Pin(GPIO_SOLAXX1_RTS));
-  solaxX1Serial = new TasmotaSerial(Pin(GPIO_SOLAXX1_RX), Pin(GPIO_SOLAXX1_TX), 1);
+  solaxX1Serial = new TasmotaSerial(Pin(GPIO_SOLAXX1_RX), Pin(GPIO_SOLAXX1_TX), 1, 0, 256);
   if (solaxX1Serial->begin(SOLAXX1_SPEED)) {
     if (solaxX1Serial->hardwareSerial()) { ClaimSerial(); }
 #ifdef ESP32
