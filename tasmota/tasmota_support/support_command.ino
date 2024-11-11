@@ -956,7 +956,9 @@ void CmndStatus(void)
 
   if ((0 == payload) || (5 == payload)) {
 #ifdef USE_IPV6
+#ifndef FIRMWARE_MINIMAL
     if (5 == payload) { WifiDumpAddressesIPv6(); }
+#endif // FIRMWARE_MINIMAL
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS5_NETWORK "\":{\"" D_CMND_HOSTNAME "\":\"%s\",\""
                           D_CMND_IPADDRESS "\":\"%_I\",\"" D_JSON_GATEWAY "\":\"%_I\",\"" D_JSON_SUBNETMASK "\":\"%_I\",\""
                           D_JSON_DNSSERVER "1\":\"%s\",\"" D_JSON_DNSSERVER "2\":\"%s\",\""
