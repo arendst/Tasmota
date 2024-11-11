@@ -582,10 +582,8 @@ const WebServerDispatch_t WebServerDispatch[] PROGMEM = {
   { "dl", HTTP_ANY, HandleBackupConfiguration },
   { "rs", HTTP_ANY, HandleRestoreConfiguration },
   { "rt", HTTP_ANY, HandleResetConfiguration },
+  { "in", HTTP_ANY, HandleInformation }
 #endif  // Not FIRMWARE_MINIMAL
-#ifndef FIRMWARE_MINIMAL_ONLY
-  { "in", HTTP_ANY, HandleInformation },
-#endif  // Not FIRMWARE_MINIMAL_ONLY
 };
 
 void WebServer_on(const char * prefix, void (*func)(void), uint8_t method = HTTP_ANY) {
@@ -1521,14 +1519,7 @@ void HandleRoot(void) {
 
   if (HTTP_ADMIN == Web.state) {
 #ifdef FIRMWARE_MINIMAL
-#ifdef ESP32
-#ifndef FIRMWARE_MINIMAL_ONLY
-    WSContentSpaceButton(BUTTON_INFORMATION);
-    WSContentButton(BUTTON_FIRMWARE_UPGRADE);
-#endif  // FIRMWARE_MINIMAL_ONLY
-#else   // ESP8266
     WSContentSpaceButton(BUTTON_FIRMWARE_UPGRADE);
-#endif  // ESP32
     WSContentButton(BUTTON_CONSOLE);
 #else   // Not FIRMWARE_MINIMAL
     WSContentSpaceButton(BUTTON_CONFIGURATION);
@@ -1912,7 +1903,7 @@ void HandleTemplateConfiguration(void) {
       if (!FlashPin(i)) {
         WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", template_gp.io[i]);
       }
-#endif
+#endif  // CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
     }
     WSContentSend_P(PSTR("}1%d}1%d"), flag, Settings->user_template_base);  // FLAG: 1  BASE: 17
     WSContentEnd();
@@ -1966,7 +1957,7 @@ void HandleTemplateConfiguration(void) {
         RedPin(i) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? PSTR(" style='width:146px'") : "", i, i);
       WSContentSend_P(PSTR("<td style='width:54px'><select id='h%d'></select></td></tr>"), i);
     }
-#endif
+#endif  // CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
   }
   WSContentSend_P(PSTR("</table>"));
 
@@ -2202,7 +2193,7 @@ void HandleWifiConfiguration(void) {
       WebRestart(3);
 #else
       HandleRoot();
-#endif
+#endif  // RESTART_AFTER_INITIAL_WIFI_CONFIG
     }
   }
 
@@ -2365,7 +2356,7 @@ void HandleWifiConfiguration(void) {
       WSContentSend_P(HTTP_FORM_WIFI_PART2, SettingsTextEscaped(SET_STASSID2).c_str(), WIFI_HOSTNAME, WIFI_HOSTNAME, SettingsTextEscaped(SET_HOSTNAME).c_str(), SettingsTextEscaped(SET_CORS).c_str());
 #else
       WSContentSend_P(HTTP_FORM_WIFI_PART2, SettingsTextEscaped(SET_STASSID2).c_str(), WIFI_HOSTNAME, WIFI_HOSTNAME, SettingsTextEscaped(SET_HOSTNAME).c_str());
-#endif
+#endif  // USE_CORS
     }
 
     WSContentSend_P(HTTP_FORM_END);
@@ -2400,7 +2391,7 @@ void WifiSaveSettings(void) {
   cmnd += AddWebCommand(PSTR(D_CMND_HOSTNAME), PSTR("h"), PSTR("1"));
 #ifdef USE_CORS
   cmnd += AddWebCommand(PSTR(D_CMND_CORS), PSTR("c"), PSTR("1"));
-#endif
+#endif  // USE_CORS
   cmnd += AddWebCommand(PSTR(D_CMND_SSID "1"), PSTR("s1"), PSTR("1"));
   cmnd += AddWebCommand(PSTR(D_CMND_SSID "2"), PSTR("s2"), PSTR("1"));
   cmnd += AddWebCommand(PSTR(D_CMND_PASSWORD "3"), PSTR("p1"), PSTR("\""));
@@ -2616,12 +2607,6 @@ void HandleRestoreConfiguration(void)
 
   Web.upload_file_type = UPL_SETTINGS;
 }
-
-#endif  // Not FIRMWARE_MINIMAL
-
-/*-------------------------------------------------------------------------------------------*/
-
-#ifndef FIRMWARE_MINIMAL_ONLY
 
 void WSContentSeparatorI(uint32_t size) {
   WSContentSend_P(PSTR("</td></tr><tr><td colspan=2><hr style='font-size:2px'%s/>"), (1 == size)?" size=1":"");
@@ -2873,7 +2858,8 @@ void HandleInformation(void) {
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
 }
-#endif  // Not FIRMWARE_MINIMAL_ONLY
+
+#endif  // Not FIRMWARE_MINIMAL
 
 /*-------------------------------------------------------------------------------------------*/
 
@@ -2939,7 +2925,7 @@ void HandleUpgradeFirmware(void) {
   }
 #else
   WSContentSend_P(HTTP_FORM_RST_UPG, PSTR(D_START_UPGRADE));
-#endif
+#endif  // ESP32
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
 
@@ -3169,7 +3155,7 @@ void HandleUploadLoop(void) {
           uint32_t upload_size = (!strlen(tmp)) ? 0 : atoi(tmp);
           AddLog(LOG_LEVEL_DEBUG, D_LOG_UPLOAD "Freespace %i Filesize %i", ESP.getFreeSketchSpace(), upload_size);
           if (upload_size > ESP.getFreeSketchSpace()) {   // TODO revisit this test
-#endif
+#endif  // ESP8266
             Web.upload_error = 4;  // Program flash size is larger than real flash size
             return;
           }
@@ -3565,6 +3551,8 @@ bool CaptivePortal(void)
 
 /*********************************************************************************************/
 
+#ifndef FIRMWARE_MINIMAL
+
 enum {QUERY_DEFAULT=0, QUERY_RUN};
 int WebQuery(char *buffer, int query_function);
 
@@ -3727,7 +3715,6 @@ int WebQuery(char *buffer, int query_function = 0)
   return status;
 }
 
-
 int WebSend(char *buffer)
 {
   // [tasmota] POWER1 ON                                               --> Sends http://tasmota/cm?cmnd=POWER1 ON
@@ -3878,7 +3865,6 @@ const char kWebCmndStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|
 
 const char kWebCommands[] PROGMEM = "|"  // No prefix
   D_CMND_WEBLOG "|"
-#ifndef FIRMWARE_MINIMAL_ONLY
   D_CMND_WEBTIME "|"
 #ifdef USE_EMULATION
   D_CMND_EMULATION "|"
@@ -3897,12 +3883,10 @@ const char kWebCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_CORS
   "|" D_CMND_CORS
 #endif
-#endif  // FIRMWARE_MINIMAL_ONLY
 ;
 
 void (* const WebCommand[])(void) PROGMEM = {
   &CmndWeblog,
-#ifndef FIRMWARE_MINIMAL_ONLY
   &CmndWebTime,
 #ifdef USE_EMULATION
   &CmndEmulation,
@@ -3921,7 +3905,6 @@ void (* const WebCommand[])(void) PROGMEM = {
 #ifdef USE_CORS
   , &CmndCors
 #endif
-#endif  // FIRMWARE_MINIMAL_ONLY
   };
 
 /*********************************************************************************************/
@@ -4174,7 +4157,9 @@ void CmndCors(void)
   }
   ResponseCmndChar(SettingsText(SET_CORS));
 }
-#endif
+#endif  // USE_CORS
+
+#endif  // not FIRMWARE_MINIMAL
 
 /*********************************************************************************************\
  * Interface
@@ -4263,9 +4248,11 @@ bool Xdrv01(uint32_t function)
         }
       }
       break;
+#ifndef FIRMWARE_MINIMAL
     case FUNC_COMMAND:
       result = DecodeCommand(kWebCommands, WebCommand);
       break;
+#endif  // FIRMWARE_MINIMAL
     case FUNC_ACTIVE:
       result = true;
       break;

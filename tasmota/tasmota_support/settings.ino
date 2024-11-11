@@ -687,9 +687,11 @@ char* SettingsText(uint32_t index) {
 
   if (index >= SET_MAX) { // Index above SET_MAX are not stored in Settings
 #ifdef USE_WEBSERVER
+#ifndef FIRMWARE_MINIMAL
     if (SET_BUTTON17 <= index && index <= SET_BUTTON32)
       return (char*)GetWebButton(index-SET_BUTTON17+16);
-#endif
+#endif  // not FIRMWARE_MINIMAL
+#endif  // USE_WEBSERVER
     position += settings_text_size -1;  // Setting not supported - internal error - return empty string
   } else {
     SettingsUpdateFinished();

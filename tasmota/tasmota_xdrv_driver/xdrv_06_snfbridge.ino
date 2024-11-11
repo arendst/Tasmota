@@ -512,6 +512,7 @@ void CmndRfTimeout(void) {
 }
 
 #ifdef USE_WEBSERVER
+#ifndef FIRMWARE_MINIMAL
 
 void SonoffBridgeAddButton(void) {
   WSContentSend_P(HTTP_TABLE100);
@@ -539,6 +540,7 @@ void SonoffBridgeWebGetArg(void) {
   }
 }
 
+#endif  // not FIRMWARE_MINIMAL
 #endif  // USE_WEBSERVER
 
 /*********************************************************************************************\
@@ -559,12 +561,14 @@ bool Xdrv06(uint32_t function)
         result = DecodeCommand(kSonoffBridgeCommands, SonoffBridgeCommand);
         break;
 #ifdef USE_WEBSERVER
+#ifndef FIRMWARE_MINIMAL
       case FUNC_WEB_ADD_MAIN_BUTTON:
         SonoffBridgeAddButton();
         break;
       case FUNC_WEB_GET_ARG:
         SonoffBridgeWebGetArg();
         break;
+#endif  // not FIRMWARE_MINIMAL
 #endif  // USE_WEBSERVER
       case FUNC_INIT:
         if (Settings->rf_duplicate_time < 10) {

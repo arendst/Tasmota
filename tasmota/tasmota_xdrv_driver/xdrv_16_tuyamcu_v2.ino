@@ -2412,6 +2412,7 @@ void TuyaSensorsShow(bool json)
 }
 
 #ifdef USE_WEBSERVER
+#ifndef FIRMWARE_MINIMAL
 
 #define WEB_HANDLE_TUYA "d16"
 
@@ -2439,6 +2440,7 @@ void TuyaWebGetArg(void) {
   }
 }
 
+#endif  // not FIRMWARE_MINIMAL
 #endif  // USE_WEBSERVER
 
 /*********************************************************************************************\
@@ -2570,6 +2572,7 @@ bool Xdrv16(uint32_t function) {
         TuyaSensorsShow(1);
         break;
 #ifdef USE_WEBSERVER
+#ifndef FIRMWARE_MINIMAL
       case FUNC_WEB_ADD_MAIN_BUTTON:
         TuyaAddButton();
         break;
@@ -2579,6 +2582,7 @@ bool Xdrv16(uint32_t function) {
       case FUNC_WEB_SENSOR:
         TuyaSensorsShow(0);
         break;
+#endif  // not FIRMWARE_MINIMAL
 #endif  // USE_WEBSERVER
       case FUNC_ACTIVE:
         result = true;
