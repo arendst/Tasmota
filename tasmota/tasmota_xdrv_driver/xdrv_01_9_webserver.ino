@@ -477,7 +477,7 @@ struct WEB {
 #ifdef ESP8266
   int8_t shutter_slider[MAX_SHUTTERS];
 #else   // ESP32
-  int8_t shutter_slider[MAX_SHUTTERS_ESP32];
+  int8_t shutter_slider[16];                        // MAX_SHUTTERS_ESP32
 #endif  // ESP8266
   uint16_t upload_error = 0;
   uint8_t state = HTTP_OFF;
