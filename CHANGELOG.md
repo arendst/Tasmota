@@ -3,7 +3,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.3.0.4] 
+## [14.3.0.5] 
+### Added
+
+### Breaking Changed
+
+### Changed
+- Redesign GUI adding feedback to buttons, shutters and lights
+
+### Fixed
+
+### Removed
+- Command ``SetOption161 1`` to disable web page slider updates by commands
+
+## [14.3.0.4] 20241111
 ### Added
 - DALI command `DaliGroupSliders 0..16` to show GUI group sliders with feedback disabling `DaliLight`
 - Support for I2C over Serial (#22444)
@@ -12,8 +25,6 @@ All notable changes to this project will be documented in this file.
 - Support for MS5837 pressure and temperature sensor (#22376)
 - Berry add I2C read16/write16 supporting Little Endian (#22448)
 - Berry drivers for PCA9535 (generic and in SenseCAP D1) (#22451)
-
-### Breaking Changed
 
 ### Changed
 - AHT1X/AHT2X/AHT3X ready for virtual I2C (#22427)
@@ -27,8 +38,6 @@ All notable changes to this project will be documented in this file.
 - Mitsubishi Electric HVAC Standby Stage for MiElHVAC (#22430)
 - FUNC_COMMAND linked list command buffer corruption by shutter driver
 - ESP32, ESP32-S2 and ESP32-S3 re-enable touch buttons (#22446)
-
-### Removed
 
 ## [14.3.0.3] 20241031
 ### Added
