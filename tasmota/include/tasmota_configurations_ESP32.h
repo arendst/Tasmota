@@ -189,10 +189,12 @@
 #undef USE_ESP32_WDT                                  // disable watchdog on SAFEBOOT until more testing is done
 
 #if CONFIG_FREERTOS_UNICORE || CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_ETH_ENABLED                               // Check for Ethernet support in Arduino libs
 //  #undef USE_MQTT_TLS
 //  #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge console Tee (+4.5k code)
   #define USE_SPI                                    // Make SPI Ethernet adapters useable (+124 bytes)
   #define USE_ETHERNET
+#endif  // CONFIG_ETH_ENABLED
 #endif  // CONFIG_FREERTOS_UNICORE || CONFIG_IDF_TARGET_ESP32S3
 
 #endif  // FIRMWARE_SAFEBOOT
@@ -830,15 +832,15 @@
 #endif // USE_MATTER_DEVICE
 
 /*********************************************************************************************\
- * Post-process compile options for esp32-c2
+ * Post-process for switched off Ethernet support in Arduino static libs
 \*********************************************************************************************/
 
-#ifdef CONFIG_IDF_TARGET_ESP32C2
+#ifndef CONFIG_ETH_ENABLED
   #undef USE_ETHERNET
   #ifdef FIRMWARE_MINIMAL
     #undef USE_SPI
   #endif  // FIRMWARE_MINIMAL
-#endif  // CONFIG_IDF_TARGET_ESP32C2
+#endif  // CONFIG_ETH_ENABLED
 
 #endif  // ESP32
 #endif  // _TASMOTA_CONFIGURATIONS_ESP32_H_
