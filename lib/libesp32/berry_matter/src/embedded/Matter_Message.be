@@ -375,7 +375,7 @@ class Matter_Frame
     # recompute nonce
     var n = self.message_handler._n_bytes     # use cached bytes() object to avoid allocation
     n.clear()
-    n.add(self.flags, 1)
+    n.add(self.sec_flags, 1)
     n.add(self.message_counter, 4)
     if self.source_node_id
       n .. self.source_node_id
@@ -426,7 +426,7 @@ class Matter_Frame
     # recompute nonce
     var n = self.message_handler._n_bytes     # use cached bytes() object to avoid allocation
     n.clear()
-    n.add(self.flags, 1)
+    n.add(self.sec_flags, 1)
     n.add(self.message_counter, 4)
     if session.is_CASE() && session.get_device_id()
       n .. session.get_device_id()
