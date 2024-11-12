@@ -18,7 +18,8 @@
 */
 
 #ifdef ESP32
-#ifndef CONFIG_IDF_TARGET_ESP32C2
+#include "sdkconfig.h"
+#ifdef CONFIG_ETH_ENABLED
 #ifdef USE_ETHERNET
 /*********************************************************************************************\
  * Ethernet support for ESP32
