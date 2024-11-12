@@ -1489,12 +1489,11 @@ void Every250mSeconds(void)
         Response_P(PSTR("{\"" D_CMND_UPGRADE "\":\""));
         if (ota_result) {
           ResponseAppend_P(PSTR(D_JSON_SUCCESSFUL ". " D_JSON_RESTARTING));
-          TasmotaGlobal.restart_flag = 2;
+          TasmotaGlobal.restart_flag = 5;                 // Allow time for webserver to update console
         } else {
           ResponseAppend_P(PSTR(D_JSON_FAILED " %s"), ESPhttpUpdate.getLastErrorString().c_str());
         }
         ResponseAppend_P(PSTR("\"}"));
-//        TasmotaGlobal.restart_flag = 2;                   // Restart anyway to keep memory clean webserver
         MqttPublishPrefixTopicRulesProcess_P(STAT, PSTR(D_CMND_UPGRADE));
         AllowInterrupts(1);
       }
@@ -1624,7 +1623,7 @@ void Every250mSeconds(void)
         if (1 == RtcSettings.ota_loader) {
           RtcSettings.ota_loader = 0;
           AddLog(LOG_LEVEL_DEBUG, PSTR("OTA: Propagating upload"));
-          TasmotaGlobal.ota_state_flag = 3;
+          TasmotaGlobal.ota_state_flag = 6;               // Allow time for webserver to update console
         }
 #endif  // FIRMWARE_MINIMAL
 
