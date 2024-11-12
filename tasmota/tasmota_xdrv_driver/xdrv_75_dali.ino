@@ -272,6 +272,8 @@
 #define DALI_TOPIC "DALI"
 #define D_PRFX_DALI "Dali"
 
+/*********************************************************************************************/
+
 const char kDALICommands[] PROGMEM = D_PRFX_DALI "|"  // Prefix
   "|" D_CMND_POWER "|" D_CMND_DIMMER "|Target"
 #ifdef USE_LIGHT
@@ -292,7 +294,6 @@ struct DALI {
   uint32_t bit_cycles;
   uint32_t last_activity;
   uint32_t received_dali_data;                 // Data received from DALI bus
-  uint32_t slider_update_time;
   uint8_t pin_rx;
   uint8_t pin_tx;
   uint8_t max_short_address;
@@ -348,6 +349,8 @@ uint32_t DaliAddress2Target(uint32_t adr) {
 }
 */
 
+/*-------------------------------------------------------------------------------------------*/
+
 uint32_t DaliSaveState(uint32_t adr, uint32_t cmd) {
   if (adr &0x01) { return 0; }                 // No address
   int index = -1;
@@ -375,6 +378,8 @@ uint32_t DaliSaveState(uint32_t adr, uint32_t cmd) {
   }
   return index;
 }
+
+/*-------------------------------------------------------------------------------------------*/
 
 void DaliEnableRxInterrupt(void) {
   Dali->available = false;
@@ -639,6 +644,8 @@ bool DaliSetPowerOnLevel(uint32_t adr, uint32_t v) {
   return DaliSetValue(adr, DALI_QUERY_POWER_ON_LEVEL, DALI_SET_POWER_ON_LEVEL, v);
 }
 
+/*-------------------------------------------------------------------------------------------*/
+
 uint32_t DaliGearPresent(void) {
   uint32_t count = 0;
   for (uint32_t sa = 0; sa < Dali->max_short_address; sa++) {  // Scanning 64 addresses takes about 2500 ms
@@ -648,6 +655,8 @@ uint32_t DaliGearPresent(void) {
   }
   return count;
 }
+
+/*-------------------------------------------------------------------------------------------*/
 
 void DaliInitLight(void) {
   // Taken from Shelly Dali Dimmer ;-)
@@ -1002,6 +1011,8 @@ bool DaliJsonParse(void) {
   return served;
 }
 
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+
 void CmndDali(void) {
   // Dali {"addr":254,"cmd":100} - Any address and/or command
   // Dali 0|1                    - Enable DALI receive probe
@@ -1030,6 +1041,8 @@ void CmndDaliTarget(void) {
   }
   ResponseCmndNumber(Dali->target);
 }
+
+/*-------------------------------------------------------------------------------------------*/
 
 void CmndDaliPower(void) {
   // DaliPower 0       - Broadcast power off
@@ -1068,6 +1081,8 @@ void CmndDaliPower(void) {
   ResponseDali(index);
 }
 
+/*-------------------------------------------------------------------------------------------*/
+
 void CmndDaliDimmer(void) {
   // DaliDimmer 0..100  - Broadcast set power off or dimmer state
   // DaliDimmer0 0..100 - Broadcast set power off or dimmer state
@@ -1093,6 +1108,8 @@ void CmndDaliDimmer(void) {
   }
   ResponseDali(index);
 }
+
+/*-------------------------------------------------------------------------------------------*/
 
 void CmndDaliGroup(void) {
   // DaliGroup1 1,2   - Add device 1 and 2 to group 1
@@ -1151,6 +1168,8 @@ void CmndDaliGroup(void) {
   }
 }
 
+/*-------------------------------------------------------------------------------------------*/
+
 void CmndDaliGear(void) {
   if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 64)) {
     Dali->max_short_address = XdrvMailbox.payload;
@@ -1159,6 +1178,8 @@ void CmndDaliGear(void) {
   ResponseCmnd();
   ResponseAppend_P(PSTR("%d,\"Present\":%d}"), Dali->max_short_address, count);
 }
+
+/*-------------------------------------------------------------------------------------------*/
 
 void CmndDaliSend(void) {
   // Send command
@@ -1180,6 +1201,8 @@ void CmndDaliSend(void) {
   }
 }
 
+/*-------------------------------------------------------------------------------------------*/
+
 void CmndDaliQuery(void) {
   // Send command and return response or -1 (no response within DALI_TIMEOUT)
   // Setting bit 8 will repeat command once
@@ -1192,6 +1215,8 @@ void CmndDaliQuery(void) {
     ResponseCmndNumber(result);
   }
 }
+
+/*-------------------------------------------------------------------------------------------*/
 
 void CmndDaliScan(void) {
   // Scan short addresses
@@ -1207,6 +1232,8 @@ void CmndDaliScan(void) {
   }
 }
 
+/*-------------------------------------------------------------------------------------------*/
+
 void CmndDaliGroupSliders(void) {
   // DaliGroupSliders 0..16  - Add group sliders
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 16)) {
@@ -1217,6 +1244,8 @@ void CmndDaliGroupSliders(void) {
 }
 
 #ifdef USE_LIGHT
+/*-------------------------------------------------------------------------------------------*/
+
 void CmndDaliLight(void) {
   // DaliLight 0  - Disable light controls
   // DaliLight 1  - Enable light controls
@@ -1259,6 +1288,8 @@ void DaliWebAddMainSlider(void) {
   WSContentSend_P(PSTR("</table>"));
 }
 
+/*********************************************************************************************/
+
 void DaliWebGetArg(void) {
   char tmp[8];                                 // WebGetArg numbers only
   char svalue[32];                             // Command and number parameter
@@ -1283,40 +1314,28 @@ void DaliWebGetArg(void) {
     ExecuteWebCommand(svalue);
   }
 }
-#endif  // USE_WEBSERVER
 
-void DaliShow(bool json) {
-  if (json) {
-    ResponseAppend_P(PSTR(","));
-    ResponseAppendDali(0);
-#ifdef USE_WEBSERVER
-  } else {
-    WSContentSend_P(PSTR("</table>"));         // Terminate current {t}
-    WSContentSend_P(HTTP_MSG_EXEC_JAVASCRIPT);  // "<img style='display:none;' src onerror=\""
-    uint32_t slider_update_time = millis();
-    for (uint32_t i = Settings->sbflag1.dali_light; i <= Settings->mbflag2.dali_group_sliders; i++) {  // DaliLight 0/1, DaliGroupSliders
-      WSContentSend_P(PSTR("eb('k75%d').style='background:#%06x';"),
-        i, WebColor((Dali->power[i]) ? COL_BUTTON : COL_BUTTON_OFF));
-      if (Dali->dimmer[i] != Dali->web_dimmer[i]) {
-        if (0 == Dali->slider_update_time) {
-          Dali->slider_update_time = slider_update_time + Settings->web_refresh;  // Allow other users to sync screen
-        }
-        else if (slider_update_time > Dali->slider_update_time) {
-          Dali->slider_update_time = 1;        // Allow multiple updates
-          Dali->web_dimmer[i] = Dali->dimmer[i];
-        }
-        WSContentSend_P(PSTR("eb('i75%d').value='%d';"),
-          i, changeUIntScale(Dali->dimmer[i], 0, 254, 0, 100));
+/*********************************************************************************************/
+
+void DaliWebShow(void) {
+  WSContentSend_P(PSTR("</table>"));         // Terminate current {t}
+  WSContentSend_P(HTTP_MSG_EXEC_JAVASCRIPT);  // "<img style='display:none;' src onerror=\""
+  for (uint32_t i = Settings->sbflag1.dali_light; i <= Settings->mbflag2.dali_group_sliders; i++) {  // DaliLight 0/1, DaliGroupSliders
+    WSContentSend_P(PSTR("eb('k75%d').style='background:#%06x';"),
+      i, WebColor((Dali->power[i]) ? COL_BUTTON : COL_BUTTON_OFF));
+    if (Dali->dimmer[i] != Dali->web_dimmer[i]) {
+      if (WebUpdateSliderTime()) {
+        Dali->web_dimmer[i] = Dali->dimmer[i];
       }
+      WSContentSend_P(PSTR("eb('i75%d').value='%d';"),
+        i, changeUIntScale(Dali->dimmer[i], 0, 254, 0, 100));
     }
-    if (1 == Dali->slider_update_time) {
-      Dali->slider_update_time = 0;
-    }
-    WSContentSend_P(PSTR("\">{t}"));           // Restart {t} = <table style='width:100%'>
-    WSContentSeparator(3);                     // Don't print separator on next WSContentSeparator(1)
-#endif  // USE_WEBSERVER
   }
+  WSContentSend_P(PSTR("\">{t}"));           // Restart {t} = <table style='width:100%'>
+  WSContentSeparator(3);                     // Don't print separator on next WSContentSeparator(1)
 }
+
+#endif  // USE_WEBSERVER
 
 /*********************************************************************************************\
  * Interface
@@ -1345,11 +1364,12 @@ bool Xdrv75(uint32_t function) {
         break;
 #endif  // USE_LIGHT
       case FUNC_JSON_APPEND:
-        DaliShow(true);
+        ResponseAppend_P(PSTR(","));
+        ResponseAppendDali(0);
         break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:
-        DaliShow(false);
+        DaliWebShow();
         break;
       case FUNC_WEB_ADD_MAIN_BUTTON:
         DaliWebAddMainSlider();
