@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
-- Matter provisioning with matter.js controller
+- Matter provisioning with matter.js controller (#22470)
 
 ### Removed
 

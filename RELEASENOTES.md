@@ -168,5 +168,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 Arduino Core IPv6 zones used by Matter [#22378](https://github.com/arendst/Tasmota/issues/22378)
 - ESP32, ESP32-S2 and ESP32-S3 re-enable touch buttons [#22446](https://github.com/arendst/Tasmota/issues/22446)
 - ESP32-S3 UART output mode for Tx [#22426](https://github.com/arendst/Tasmota/issues/22426)
+- Matter provisioning with matter.js controller [#22470](https://github.com/arendst/Tasmota/issues/22470)
 
 ### Removed
