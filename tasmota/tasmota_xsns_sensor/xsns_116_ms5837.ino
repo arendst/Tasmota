@@ -52,6 +52,9 @@ void MS5837init(void) {
       ms5837_sensor.setModel(ms5837_sensor.MS5837_02BA);
       ms5837_sensor.setFluidDensity(997); // kg/m^3 (freshwater, 1029 for seawater)
       ms5837_start = true;
+      if(!isnan(Settings->ms5837_pressure_offset)) {
+        ms5837_pressure_offset = Settings->ms5837_pressure_offset;
+      }
       I2cSetActiveFound(MS5837_ADDR, "MS5837");
     }
   }
@@ -124,10 +127,12 @@ bool ms5837CommandSensor() {
 #ifdef USE_BMP
       ms5837_pressure_offset = bmp_sensors[0].bmp_pressure - ms5837_sensor.pressure();
 #endif  // USE_BMP
+      Settings->ms5837_pressure_offset = ms5837_pressure_offset;
       Response_P(PSTR("Set MS5837 pressure offset to %f"),ms5837_pressure_offset);
       break;
     case 1:
       ms5837_pressure_offset = value;
+      Settings->ms5837_pressure_offset = ms5837_pressure_offset;
       Response_P(PSTR("Set MS5837 pressure offset to %f"),ms5837_pressure_offset);
       break;
   }
