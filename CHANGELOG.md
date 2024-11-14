@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Matter provisioning with matter.js controller (#22470)
-- Prevent crashing when `display.ini` is missing end `#`
+- Prevent crashing when `display.ini` is missing end `#` (#22471)
 
 ### Removed
 

@@ -161,6 +161,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Fixed
 - FUNC_COMMAND linked list command buffer corruption by shutter driver
+- Prevent crashing when `display.ini` is missing end `#` [#22471](https://github.com/arendst/Tasmota/issues/22471)
 - Alexa Hue with multiple devices [#22383](https://github.com/arendst/Tasmota/issues/22383)
 - Mitsubishi Electric HVAC Standby Stage for MiElHVAC [#22430](https://github.com/arendst/Tasmota/issues/22430)
 - EQ3 TRV firmware version 1.46 fails if the default true is used in subscribe on the notify characteristic [#22328](https://github.com/arendst/Tasmota/issues/22328)
