@@ -680,14 +680,15 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
     if (*lp == '\n' || *lp == ' ') {   // Add space char
       lp++;
     } else {
-      lp = strchr(lp, '\n');
-      if (!lp) {
-        lp = strchr(lp, ' ');
-        if (!lp) {
+      char *lp1;
+      lp1 = strchr(lp, '\n');
+      if (!lp1) {
+        lp1 = strchr(lp, ' ');
+        if (!lp1) {
           break;
         }
       }
-      lp++;
+      lp = lp1 + 1;
     }
   }
 
