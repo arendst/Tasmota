@@ -51,15 +51,15 @@
 #define D_DECIMAL_SEPARATOR ","
 
 // Common
-#define D_ABSOLUTE_HUMIDITY "Abs Humidity"
+#define D_ABSOLUTE_HUMIDITY "Wilgotność"
 #define D_ADMIN "Admin"
 #define D_AIR_QUALITY "Jakość powietrza"
 #define D_AP "AP"                    // Access Point
 #define D_AS "jak"
 #define D_AUTO "AUTO"
-#define D_BATTERY "Battery"
-#define D_BATT "Batt"                // Short for Battery
-#define D_BATTERY_CHARGE "Charge"   // Battery charge in %
+#define D_BATTERY "Bateria"
+#define D_BATT "Bat"                // Short for Battery
+#define D_BATTERY_CHARGE "Ładowanie"   // Battery charge in %
 #define D_BLINK "Miganie"
 #define D_BLINKOFF "Miganie - Wył."
 #define D_BOOT_COUNT "Licznik restartów"
@@ -76,13 +76,13 @@
 #define D_COMMAND "Komenda"
 #define D_CONNECTED "Połączony"
 #define D_CORS_DOMAIN "Domena CORS"
-#define D_COLOR "Color"
+#define D_COLOR "Kolor"
 #define D_COUNT "Licz"
 #define D_COUNTER "Licznik"
 #define D_CT_POWER "Moc CT"
 #define D_CURRENT "Prąd"          // As in Voltage and Current
-#define D_CURRENT_NEUTRAL "Current Neutral"
-#define D_DATA "Data"
+#define D_CURRENT_NEUTRAL "Prąd N"
+#define D_DATA "Dane"
 #define D_DARKLIGHT "Ciemny"
 #define D_DEBUG "Debug"
 #define D_DEWPOINT "Punkt rosy"
@@ -107,7 +107,7 @@
 #define D_FILE_SYSTEM_SIZE "Rozmiar systemu plików"
 #define D_FLOW_RATE "Przepływ"
 #define D_FRAGMENTATION "frag."      // Lower case abbreviated version of fragmentation used in "memory fragmentation"
-#define D_FRAME_RATE "Frame rate"
+#define D_FRAME_RATE "Liczba klatek"
 #define D_FREE_MEMORY "Wolna pamięć"
 #define D_PSR_MAX_MEMORY "Pamięć PS-RAM"
 #define D_PSR_FREE_MEMORY "Wolna pamięć PS-RAM"
@@ -116,8 +116,8 @@
 #define D_GATEWAY "Brama"
 #define D_GROUP "Grupa"
 #define D_HOST "Serwer"
-#define D_HALL_EFFECT "Hall Effect"
-#define D_HEATINDEX "Heat index"
+#define D_HALL_EFFECT "Efekt Hall"
+#define D_HEATINDEX "Indeks ciepła"
 #define D_HOSTNAME "Nazwa serwera"
 #define D_HUMIDITY "Wilgotność"
 #define D_ILLUMINANCE "Podświetlanie"
@@ -152,7 +152,7 @@
 #define D_POWER_FACTOR "Cosinus fi"
 #define D_POWERUSAGE "Moc"
 #define D_POWERUSAGE_ACTIVE "Moc czynna"
-#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Moc czynna całkowita"
 #define D_POWERUSAGE_APPARENT "Moc pozorna"
 #define D_POWERUSAGE_REACTIVE "Moc bierna"
 #define D_PRESSURE "Ciśnienie"
@@ -188,9 +188,9 @@
 #define D_TRANSMIT "Wyślij"
 #define D_TRUE "Prawda"
 #define D_TVOC "TVOC"
-#define D_TWILIGHT_ASTRONOMICAL "Astronomical"
-#define D_TWILIGHT_CIVIL "Civil"
-#define D_TWILIGHT_NAUTICAL "Nautical"
+#define D_TWILIGHT_ASTRONOMICAL "Astronomiczny"
+#define D_TWILIGHT_CIVIL "Cywilny"
+#define D_TWILIGHT_NAUTICAL "Morski"
 #define D_UPLOAD "Wgraj"
 #define D_UPTIME "Czas pracy"
 #define D_USED "użyte"
@@ -201,8 +201,8 @@
 #define D_UV_INDEX_2 "Średni"
 #define D_UV_INDEX_3 "Wysoki"
 #define D_UV_INDEX_4 "Niebezpieczny"
-#define D_UV_INDEX_5 "Burn L1/2"
-#define D_UV_INDEX_6 "Burn L3"
+#define D_UV_INDEX_5 "Krytyczny L1/2"
+#define D_UV_INDEX_6 "Krytyczny L3"
 #define D_UV_INDEX_7 "OoR"
 #define D_UV_LEVEL "Poziom UV"
 #define D_UV_POWER "Moc UV"
@@ -275,8 +275,8 @@
 #define D_CONFIGURATION "Konfiguracja"
 #define D_INFORMATION "Informacje"
 #define D_FIRMWARE_UPGRADE "Aktualizacja oprogramowania"
-#define D_MANAGEMENT "Konsole"
-#define D_GPIO_VIEWER "GPIO Viewer"
+#define D_MANAGEMENT "Narzędzia"
+#define D_GPIO_VIEWER "Wizualizacja GPIO"
 #define D_CONSOLE "Konsola"
 #define D_CONFIRM_RESTART "Potwierdź restart"
 
@@ -528,7 +528,7 @@
 // xdrv_89_dali.ino
 #define D_SENSOR_DALI_RX                  "Dali RX"
 #define D_SENSOR_DALI_TX                  "Dali TX"
-#define D_CONFIGURE_DALI                  "Config DALI"
+#define D_CONFIGURE_DALI                  "Konfiguracja DALI"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energia dzisiaj"
@@ -537,8 +537,8 @@
 
 // xsns_100_ina3221.ino
 #define  D_UNIT_CHARGE                    "Ah"
-#define  D_CHARGE                         "Charge"    
-#define  D_ENERGY                         "Energy"
+#define  D_CHARGE                         "Ładowanie"    
+#define  D_ENERGY                         "Energia"
 
 // xdrv_27_shutter.ino
 #define D_OPEN "Otwórz"
@@ -571,12 +571,12 @@
 #define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
 
 // xdrv_79_esp32_ble.ino
-#define D_CONFIGURE_BLE "Configure BLE"
-#define D_BLE_PARAMETERS "Bluetooth Settings"
-#define D_MQTT_BLE_ENABLE "Enable Bluetooth"
-#define D_MQTT_BLE_ACTIVESCAN "Enable Active Scan(*)"
-#define D_BLE_DEVICES "Devices Seen"
-#define D_BLE_REMARK "items marked (*) are not stored in config"
+#define D_CONFIGURE_BLE "Konfiguracja BLE"
+#define D_BLE_PARAMETERS "Ustawienia Bluetooth"
+#define D_MQTT_BLE_ENABLE "Załącz Bluetooth"
+#define D_MQTT_BLE_ACTIVESCAN "Załącz Aktywne Skanowanie(*)"
+#define D_BLE_DEVICES "Znalezione Urządzenia"
+#define D_BLE_REMARK "rzeczy oznaczone (*) nie są zapisywane w konfiguracji"
 
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Czujnik zajęty"
@@ -1227,52 +1227,52 @@
 #define D_NEOPOOL_MACH_GENERIC            "Generic"
 #define D_NEOPOOL_MACH_BAYROL             "Bayrol"
 #define D_NEOPOOL_MACH_HAY                "Hay"
-#define D_NEOPOOL_FILTRATION_MANUAL       "Manual"            // Filtration modes
+#define D_NEOPOOL_FILTRATION_MANUAL       "Ręczny"            // Filtration modes
 #define D_NEOPOOL_FILTRATION_AUTO         "Auto"
-#define D_NEOPOOL_FILTRATION_HEATING      "Heating"
+#define D_NEOPOOL_FILTRATION_HEATING      "Ogrzewanie"
 #define D_NEOPOOL_FILTRATION_SMART        "Smart"
 #define D_NEOPOOL_FILTRATION_INTELLIGENT  "Intelligent"
 #define D_NEOPOOL_FILTRATION_BACKWASH     "Backwash"
 #define D_NEOPOOL_FILTRATION_NONE         ""                  // Filtration speed level
-#define D_NEOPOOL_FILTRATION_SLOW         "slow"
-#define D_NEOPOOL_FILTRATION_MEDIUM       "medium"
-#define D_NEOPOOL_FILTRATION_FAST         "fast"
-#define D_NEOPOOL_TYPE                    "Type"              // Sensor & relais names
+#define D_NEOPOOL_FILTRATION_SLOW         "wolny"
+#define D_NEOPOOL_FILTRATION_MEDIUM       "średni"
+#define D_NEOPOOL_FILTRATION_FAST         "szybki"
+#define D_NEOPOOL_TYPE                    "Typ"              // Sensor & relais names
 #define D_NEOPOOL_REDOX                   "Redox"
 #define D_NEOPOOL_CHLORINE                "Chlorine"
 #define D_NEOPOOL_CONDUCTIVITY            "Conductivity"
 #define D_NEOPOOL_IONIZATION              "Ionization"
 #define D_NEOPOOL_HYDROLYSIS              "Hydrolysis"
-#define D_NEOPOOL_RELAY                   "Relay"
-#define D_NEOPOOL_RELAY_FILTRATION        "Filtration"        // Relay assignment
-#define D_NEOPOOL_RELAY_LIGHT             "Light"
-#define D_NEOPOOL_RELAY_PH_ACID           "Acid pump"
-#define D_NEOPOOL_RELAY_PH_BASE           "Base pump"
-#define D_NEOPOOL_RELAY_RX                "Redox level"
-#define D_NEOPOOL_RELAY_CL                "Chlorine pump"
+#define D_NEOPOOL_RELAY                   "Przekaźnik"
+#define D_NEOPOOL_RELAY_FILTRATION        "Filtrowanie"        // Relay assignment
+#define D_NEOPOOL_RELAY_LIGHT             "Światło"
+#define D_NEOPOOL_RELAY_PH_ACID           "Pompa Acid"
+#define D_NEOPOOL_RELAY_PH_BASE           "Pompa Base"
+#define D_NEOPOOL_RELAY_RX                "Poziom Redox"
+#define D_NEOPOOL_RELAY_CL                "Pompa Chlorine"
 #define D_NEOPOOL_RELAY_CD                "Conductivity"
-#define D_NEOPOOL_RELAY_HEATING           "Heating"
+#define D_NEOPOOL_RELAY_HEATING           "Ogrzewanie"
 #define D_NEOPOOL_RELAY_UV                "UV"
-#define D_NEOPOOL_RELAY_VALVE             "Valve"
-#define D_NEOPOOL_RELAY_AUX               "Aux"
-#define D_NEOPOOL_TIME                    "Time"
-#define D_NEOPOOL_FILT_MODE               "Filtration mode"
+#define D_NEOPOOL_RELAY_VALVE             "Zawór"
+#define D_NEOPOOL_RELAY_AUX               "Uniwersalny"
+#define D_NEOPOOL_TIME                    "Czas"
+#define D_NEOPOOL_FILT_MODE               "Tryb filtracji"
 #define D_NEOPOOL_CELL_RUNTIME            "Cell runtime"
 #define D_NEOPOOL_POLARIZATION            "Pol"               // Sensor status
 #define D_NEOPOOL_PR_OFF                  "PrOff"
 #define D_NEOPOOL_SETPOINT_OK             "Ok"
-#define D_NEOPOOL_COVER                   "Cover"
-#define D_NEOPOOL_SHOCK                   "Boost"
-#define D_NEOPOOL_STATUS_ON               "ON"
-#define D_NEOPOOL_STATUS_OFF              "OFF"
-#define D_NEOPOOL_STATUS_WAIT             "WAIT"
-#define D_NEOPOOL_STATUS_TANK             "TANK"
-#define D_NEOPOOL_STATUS_FLOW             "Flow"
-#define D_NEOPOOL_LOW                     "Low"
+#define D_NEOPOOL_COVER                   "Okładka"
+#define D_NEOPOOL_SHOCK                   "Wzmocnienie"
+#define D_NEOPOOL_STATUS_ON               "ZAŁĄCZONY"
+#define D_NEOPOOL_STATUS_OFF              "WYŁĄCZONY"
+#define D_NEOPOOL_STATUS_WAIT             "CZEKAI"
+#define D_NEOPOOL_STATUS_TANK             "ZBIORNIK"
+#define D_NEOPOOL_STATUS_FLOW             "Przepływ"
+#define D_NEOPOOL_LOW                     "Niski"
 #define D_NEOPOOL_FLOW1                   "FL1"
 #define D_NEOPOOL_FLOW2                   "FL2"
-#define D_NEOPOOL_PH_HIGH                 "too high"          // ph Alarms
-#define D_NEOPOOL_PH_LOW                  "too low"
+#define D_NEOPOOL_PH_HIGH                 "za wysoki"          // ph Alarms
+#define D_NEOPOOL_PH_LOW                  "za niski"
 #define D_NEOPOOL_PUMP_TIME_EXCEEDED      "czas pompowania przekroczony"
 
 // xsns_106_gdk101.ino
@@ -1284,18 +1284,18 @@
 #define D_SENSOR_PIPSOLAR_RX             "Pipsolar RX"
 
 // xsns_102_ld2410.ino
-#define D_MOVING_DISTANCE "Moving Distance"
-#define D_STATIC_DISTANCE "Static Distance"
-#define D_DETECT_DISTANCE "Detect Distance"
-#define D_MOVING_ENERGY_T "Moving target"
-#define D_STATIC_ENERGY_T "Static target"
-#define D_LD2410_PIN_STATE "Output pin state"
-#define D_LD2410_LIGHT "Light sensor"
+#define D_MOVING_DISTANCE "Dystans Przesówu"
+#define D_STATIC_DISTANCE "Dystans Statyczny"
+#define D_DETECT_DISTANCE "Wykryj Dystans"
+#define D_MOVING_ENERGY_T "Cel przesówu"
+#define D_STATIC_ENERGY_T "Cel statyczny"
+#define D_LD2410_PIN_STATE "Stan wyjść pin"
+#define D_LD2410_LIGHT "Czujnik światła"
 
 // xsns_115_wooliis.ino
 #define D_IMPORT                          "Import"
 #define D_EXPORT                          "Export"
-#define D_CHARGING                        "Charging"
-#define D_CAPACITY                        "Capacity"
+#define D_CHARGING                        "Ładowanie"
+#define D_CAPACITY                        "Pojemność"
 
 #endif  // _LANGUAGE_PL_PL_D_H_
