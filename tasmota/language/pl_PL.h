@@ -116,7 +116,7 @@
 #define D_GATEWAY "Brama"
 #define D_GROUP "Grupa"
 #define D_HOST "Serwer"
-#define D_HALL_EFFECT "Efekt Hall"
+#define D_HALL_EFFECT "Efekt Hall'a"
 #define D_HEATINDEX "Indeks ciepła"
 #define D_HOSTNAME "Nazwa serwera"
 #define D_HUMIDITY "Wilgotność"
@@ -617,8 +617,8 @@
 
 // xsns_33_QMC5883L.ino
 #define D_MX "Indukcja X-Axis"
-#define D_MY "Inducja Y-Axis"
-#define D_MZ "Inducja Z-Axis"
+#define D_MY "Indukcja Y-Axis"
+#define D_MZ "Indukcja Z-Axis"
 #define D_MAGNETICFLD "Indukcja magnetyczna"
 
 // xsns_34_hx711.ino
@@ -721,7 +721,7 @@
 #define D_SENSOR_LED_LINK      "Led link"    // Suffix "i"
 #define D_SENSOR_PWM           "Obroty"        // Suffix "1"
 #define D_SENSOR_COUNTER       "Licznik"     // Suffix "1"
-#define D_SENSOR_INTERRUPT     "Zakłucenia"
+#define D_SENSOR_INTERRUPT     "Zakłócenia"
 #define D_SENSOR_INPUT         "Input"
 #define D_SENSOR_IRRECV        "IRrecv"
 #define D_SENSOR_MHZ_RX        "MHZ Rx"
@@ -1267,7 +1267,7 @@
 #define D_NEOPOOL_SHOCK                   "Wzmocnienie"
 #define D_NEOPOOL_STATUS_ON               "ZAŁĄCZONY"
 #define D_NEOPOOL_STATUS_OFF              "WYŁĄCZONY"
-#define D_NEOPOOL_STATUS_WAIT             "CZEKAI"
+#define D_NEOPOOL_STATUS_WAIT             "CZEKAJ"
 #define D_NEOPOOL_STATUS_TANK             "ZBIORNIK"
 #define D_NEOPOOL_STATUS_FLOW             "Przepływ"
 #define D_NEOPOOL_LOW                     "Niski"
@@ -1286,10 +1286,10 @@
 #define D_SENSOR_PIPSOLAR_RX             "Pipsolar RX"
 
 // xsns_102_ld2410.ino
-#define D_MOVING_DISTANCE "Dystans Przesówu"
+#define D_MOVING_DISTANCE "Dystans Przesuwu"
 #define D_STATIC_DISTANCE "Dystans Statyczny"
 #define D_DETECT_DISTANCE "Wykryj Dystans"
-#define D_MOVING_ENERGY_T "Cel przesówu"
+#define D_MOVING_ENERGY_T "Cel przesuwu"
 #define D_STATIC_ENERGY_T "Cel statyczny"
 #define D_LD2410_PIN_STATE "Stan wyjść pin"
 #define D_LD2410_LIGHT "Czujnik światła"
