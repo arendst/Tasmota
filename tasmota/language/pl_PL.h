@@ -257,7 +257,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "Aby korzystać z Tasmota, włącz obsługę JavaScript"
-#define D_SAFEBOOT "SAFEBOOT"
+#define D_SAFEBOOT "Bezpieczny rozruch"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Oprogramowanie MINIMAL<br>proszę uaktualnić"
 #define D_WEBSERVER_ACTIVE_ON "Aktywny serwer Web"
 #define D_WITH_IP_ADDRESS "z adresem IP"
@@ -417,11 +417,11 @@
 #define D_NEED_USER_AND_PASSWORD "Wymagany użytkownik=<username>&hasło=<password>"
 
 // xdrv_01_mqtt.ino
-#define D_FINGERPRINT "Weryfikuj odcisk TLS..."
+#define D_FINGERPRINT "Weryfikacja klucza TLS..."
 #define D_TLS_CONNECT_FAILED_TO "Nieudane połączenie TLS do"
 #define D_RETRY_IN "Spróbuj ponownie"
-#define D_VERIFIED "Zweryfikowano odcisk"
-#define D_INSECURE "Nieprawidłowe połączenie z powodu błędnego odcisku TLS"
+#define D_VERIFIED "Zweryfikowano"
+#define D_INSECURE "Nieprawidłowe połączenie z powodu błędnego klucza TLS"
 #define D_CONNECT_FAILED_TO "Nie udało się nawiązać połączenia"
 
 // xplg_wemohue.ino
@@ -509,12 +509,12 @@
 #define D_ZIGBEE_GENERATE_KEY "generuj losowo klucz sieci Zigbee"
 #define D_ZIGBEE_UNKNOWN_DEVICE "Nieznane urządzenie"
 #define D_ZIGBEE_UNKNOWN_ATTRIBUTE "Nieznany atrybut"
-#define D_ZIGBEE_UNKNOWN_ENDPOINT "Unknown endpoint"
+#define D_ZIGBEE_UNKNOWN_ENDPOINT "Nieznany punkt końcowy"
 #define D_ZIGBEE_INVALID_PARAM "Zły parametr"
 #define D_ZIGBEE_MISSING_PARAM "Brak parametrów"
 #define D_ZIGBEE_UNKNWON_ATTRIBUTE "Nieznana nazwa atrybutu (ignoruję): %s"
 #define D_ZIGBEE_TOO_MANY_CLUSTERS "Nie więcej niż jeden cluster id na komendę"
-#define D_ZIGBEE_CONFLICTING_ENDPOINTS "Conflicting destination endpoints"
+#define D_ZIGBEE_CONFLICTING_ENDPOINTS "Konflikt doselowych punktów końcowych"
 #define D_ZIGBEE_WRONG_DELIMITER "Błędny delimiter autoryzacji"
 #define D_ZIGBEE_UNRECOGNIZED_COMMAND "Nieznana komenda zigbee: %s"
 #define D_ZIGBEE_TOO_MANY_COMMANDS "Tylko 1 komenda dozwolona (%d)"
@@ -554,21 +554,21 @@
 #define D_DEVICE_OUTPUT "Wyjście"
 
 // xdrv_39_thermostat.ino, xdrv_85_esp32_ble_eq3_trv.ino
-#define D_THERMOSTAT                  "Thermostat"
-#define D_THERMOSTAT_SET_POINT        "Set Point Temperature"
-#define D_THERMOSTAT_SENSOR           "Current Temperature"
-#define D_THERMOSTAT_GRADIENT         "Gradient Temperature"
-#define D_THERMOSTAT_DUTY_CYCLE       "Duty cycle"
-#define D_THERMOSTAT_VALVE_POSITION   "Valve Position"
-#define D_THERMOSTAT_CYCLE_TIME       "Cycle time"
-#define D_THERMOSTAT_PI_AUTOTUNE      "PI Auto tuning"
-#define D_THERMOSTAT_CONTROL_METHOD   "Control method"
-#define D_THERMOSTAT_RAMP_UP          "Ramp up"
+#define D_THERMOSTAT                  "Termostat"
+#define D_THERMOSTAT_SET_POINT        "Temperatura zadana"
+#define D_THERMOSTAT_SENSOR           "Temperatura aktualna"
+#define D_THERMOSTAT_GRADIENT         "Rozdzielczość temperatury"
+#define D_THERMOSTAT_DUTY_CYCLE       "Cykl pracy"
+#define D_THERMOSTAT_VALVE_POSITION   "Pozycja zaworu"
+#define D_THERMOSTAT_CYCLE_TIME       "Czas cyklu"
+#define D_THERMOSTAT_PI_AUTOTUNE      "PI Auto strojenie"
+#define D_THERMOSTAT_CONTROL_METHOD   "Metoda kontroli"
+#define D_THERMOSTAT_RAMP_UP          "Przyspieszanie"
 #define D_THERMOSTAT_PI               "PI"
-#define D_THERMOSTAT_AUTOTUNE         "Autotune"
-#define D_THERMOSTAT_RAMP_UP_HYBRID   "Ramp up (Hybrid)"
+#define D_THERMOSTAT_AUTOTUNE         "Automatyczne strojenie"
+#define D_THERMOSTAT_RAMP_UP_HYBRID   "Przyspieszanie (Hybrid)"
 #define D_THERMOSTAT_PI_HYBRID        "PI (Hybrid)"
-#define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
+#define D_THERMOSTAT_AUTOTUNE_HYBRID  "Automatyczne strojenie (Hybrid)"
 
 // xdrv_79_esp32_ble.ino
 #define D_CONFIGURE_BLE "Konfiguracja BLE"
@@ -616,10 +616,10 @@
 #define D_GZ_AXIS "Odchylenie Oś-Z"
 
 // xsns_33_QMC5883L.ino
-#define D_MX "Induction X-Axis"
-#define D_MY "Induction Y-Axis"
-#define D_MZ "Induction Z-Axis"
-#define D_MAGNETICFLD "Magnetic Induction"
+#define D_MX "Indukcja X-Axis"
+#define D_MY "Inducja Y-Axis"
+#define D_MZ "Inducja Z-Axis"
+#define D_MAGNETICFLD "Indukcja magnetyczna"
 
 // xsns_34_hx711.ino
 #define D_HX_CAL_REMOVE "Usuń wagę"
@@ -671,22 +671,22 @@
 #define D_CHIPTEMPERATURE "Temperatura Chipa"
 
 // xsns_60_GPS
-#define D_LATITUDE             "Latitude"
-#define D_LONGITUDE            "Longitude"
+#define D_LATITUDE             "Szerokość"
+#define D_LONGITUDE            "Długość"
 #define D_HORIZONTAL_ACCURACY  "Horizontal Accuracy"
-#define D_ALTITUDE             "Altitude"
-#define D_VERTICAL_ACCURACY    "Vertical Accuracy"
-#define D_SPEED                "Speed"
-#define D_SPEED_ACCURACY       "Speed Accuracy"
-#define D_HEADING              "Heading"
-#define D_HEADING_ACCURACY     "Heading Accuracy"
-#define D_SAT_FIX              "Satellite Fix"
-  #define D_SAT_FIX_NO_FIX     "None"
-  #define D_SAT_FIX_DEAD_RECK  "Dead reckoning"
+#define D_ALTITUDE             "Dokładność pozioma"
+#define D_VERTICAL_ACCURACY    "Dokładność pionowa"
+#define D_SPEED                "Prędkość"
+#define D_SPEED_ACCURACY       "Dokładność prędkości"
+#define D_HEADING              "Nagłówek"
+#define D_HEADING_ACCURACY     "Dokładność nagłówka"
+#define D_SAT_FIX              "Satelita"
+  #define D_SAT_FIX_NO_FIX     "Żadne"
+  #define D_SAT_FIX_DEAD_RECK  "Martwe pole"
   #define D_SAT_FIX_2D         "2D"
   #define D_SAT_FIX_3D         "3D"
-  #define D_SAT_FIX_GPS_DEAD   "GPS and dead reckoning"
-  #define D_SAT_FIX_TIME       "Time only fix"
+  #define D_SAT_FIX_GPS_DEAD   "GPS i martwe pole"
+  #define D_SAT_FIX_TIME       "Tylko czas"
 
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Brak"
@@ -721,7 +721,7 @@
 #define D_SENSOR_LED_LINK      "Led link"    // Suffix "i"
 #define D_SENSOR_PWM           "Obroty"        // Suffix "1"
 #define D_SENSOR_COUNTER       "Licznik"     // Suffix "1"
-#define D_SENSOR_INTERRUPT     "Interrupt"
+#define D_SENSOR_INTERRUPT     "Zakłucenia"
 #define D_SENSOR_INPUT         "Input"
 #define D_SENSOR_IRRECV        "IRrecv"
 #define D_SENSOR_MHZ_RX        "MHZ Rx"
@@ -1003,7 +1003,7 @@
 #define D_GPIO_DINGTIAN_RCK    "Dingtian RCK"
 #define D_SENSOR_CM11_TX       "CM110x TX"
 #define D_SENSOR_CM11_RX       "CM110x RX"
-#define D_SENSOR_FLOWRATEMETER "Flowrate"
+#define D_SENSOR_FLOWRATEMETER "Przepływ"
 #define D_SENSOR_ME007_TRIG    "ME007 Tri"
 #define D_SENSOR_ME007_RX      "ME007 Rx"
 #define D_SENSOR_TUYAMCUBR_TX  "TuyaMCUBr Tx"
@@ -1210,9 +1210,9 @@
 #define D_FP_UNKNOWNERROR "Błąd"              // Any other error
 
 // xsns_96_flowratemeter.ino
-#define D_FLOWRATEMETER_NAME "Flowrate"
-#define D_FLOWRATEMETER_AMOUNT_TODAY "Amount Today"
-#define D_FLOWRATEMETER_DURATION_TODAY "Duration Today"
+#define D_FLOWRATEMETER_NAME "Przepływ"
+#define D_FLOWRATEMETER_AMOUNT_TODAY "Wartość dzisiaj"
+#define D_FLOWRATEMETER_DURATION_TODAY "Czas trwania dzisiaj"
 
 // xsns_83_neopool.ino
 #define D_NEOPOOL_MACH_NONE               "NeoPool"           // Machine names
@@ -1231,18 +1231,18 @@
 #define D_NEOPOOL_FILTRATION_AUTO         "Auto"
 #define D_NEOPOOL_FILTRATION_HEATING      "Ogrzewanie"
 #define D_NEOPOOL_FILTRATION_SMART        "Smart"
-#define D_NEOPOOL_FILTRATION_INTELLIGENT  "Intelligent"
-#define D_NEOPOOL_FILTRATION_BACKWASH     "Backwash"
-#define D_NEOPOOL_FILTRATION_NONE         ""                  // Filtration speed level
+#define D_NEOPOOL_FILTRATION_INTELLIGENT  "Inteligentny"
+#define D_NEOPOOL_FILTRATION_BACKWASH     "Płukanie wsteczne"
+#define D_NEOPOOL_FILTRATION_NONE         "Żadne"                  // Filtration speed level
 #define D_NEOPOOL_FILTRATION_SLOW         "wolny"
 #define D_NEOPOOL_FILTRATION_MEDIUM       "średni"
 #define D_NEOPOOL_FILTRATION_FAST         "szybki"
 #define D_NEOPOOL_TYPE                    "Typ"              // Sensor & relais names
 #define D_NEOPOOL_REDOX                   "Redox"
-#define D_NEOPOOL_CHLORINE                "Chlorine"
-#define D_NEOPOOL_CONDUCTIVITY            "Conductivity"
-#define D_NEOPOOL_IONIZATION              "Ionization"
-#define D_NEOPOOL_HYDROLYSIS              "Hydrolysis"
+#define D_NEOPOOL_CHLORINE                "Chlor"
+#define D_NEOPOOL_CONDUCTIVITY            "Przewodność"
+#define D_NEOPOOL_IONIZATION              "Jonizacja"
+#define D_NEOPOOL_HYDROLYSIS              "Hydroliza"
 #define D_NEOPOOL_RELAY                   "Przekaźnik"
 #define D_NEOPOOL_RELAY_FILTRATION        "Filtrowanie"        // Relay assignment
 #define D_NEOPOOL_RELAY_LIGHT             "Światło"
@@ -1250,7 +1250,7 @@
 #define D_NEOPOOL_RELAY_PH_BASE           "Pompa Base"
 #define D_NEOPOOL_RELAY_RX                "Poziom Redox"
 #define D_NEOPOOL_RELAY_CL                "Pompa Chlorine"
-#define D_NEOPOOL_RELAY_CD                "Conductivity"
+#define D_NEOPOOL_RELAY_CD                "Przewodność"
 #define D_NEOPOOL_RELAY_HEATING           "Ogrzewanie"
 #define D_NEOPOOL_RELAY_UV                "UV"
 #define D_NEOPOOL_RELAY_VALVE             "Zawór"
