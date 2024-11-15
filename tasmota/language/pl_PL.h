@@ -1233,7 +1233,7 @@
 #define D_NEOPOOL_FILTRATION_SMART        "Smart"
 #define D_NEOPOOL_FILTRATION_INTELLIGENT  "Inteligentny"
 #define D_NEOPOOL_FILTRATION_BACKWASH     "Płukanie wsteczne"
-#define D_NEOPOOL_FILTRATION_NONE         "Żadne"                  // Filtration speed level
+#define D_NEOPOOL_FILTRATION_NONE         "żaden"                  // Filtration speed level
 #define D_NEOPOOL_FILTRATION_SLOW         "wolny"
 #define D_NEOPOOL_FILTRATION_MEDIUM       "średni"
 #define D_NEOPOOL_FILTRATION_FAST         "szybki"
