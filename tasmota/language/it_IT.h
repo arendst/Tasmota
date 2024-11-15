@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 31.10.2024
+ * Updated until v9.4.0.1 - Last update 15.11.2024
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -788,8 +788,8 @@
 #define D_SENSOR_TM1638_CLK             "TM1638 - CLK"
 #define D_SENSOR_TM1638_DIO             "TM1638 - DIO"
 #define D_SENSOR_TM1638_STB             "TM1638 - STB"
-#define D_SENSOR_TM1640_CLK    "TM1640 CLK"
-#define D_SENSOR_TM1640_DIN    "TM1640 DIN"
+#define D_SENSOR_TM1640_CLK             "TM1640 - CLK"
+#define D_SENSOR_TM1640_DIN             "TM1640 - DIN"
 #define D_SENSOR_MAX7219_DIN            "MAX7219 - DIN"
 #define D_SENSOR_MAX7219_CS             "MAX7219 - CS"
 #define D_SENSOR_MAX7219_CLK            "MAX7219 - CLK"
