@@ -617,8 +617,8 @@
 
 // xsns_33_QMC5883L.ino
 #define D_MX "Indukcja X-Axis"
-#define D_MY "Inducja Y-Axis"
-#define D_MZ "Inducja Z-Axis"
+#define D_MY "Indukcja Y-Axis"
+#define D_MZ "Indukcja Z-Axis"
 #define D_MAGNETICFLD "Indukcja magnetyczna"
 
 // xsns_34_hx711.ino
@@ -721,7 +721,7 @@
 #define D_SENSOR_LED_LINK      "Led link"    // Suffix "i"
 #define D_SENSOR_PWM           "Obroty"        // Suffix "1"
 #define D_SENSOR_COUNTER       "Licznik"     // Suffix "1"
-#define D_SENSOR_INTERRUPT     "Zakłucenia"
+#define D_SENSOR_INTERRUPT     "Zakłócenia"
 #define D_SENSOR_INPUT         "Input"
 #define D_SENSOR_IRRECV        "IRrecv"
 #define D_SENSOR_MHZ_RX        "MHZ Rx"
