@@ -227,6 +227,7 @@ enum UserSelectablePins {
   GPIO_DALI_RX_INV, GPIO_DALI_TX_INV,   // DALI
   GPIO_LD2410S_TX, GPIO_LD2410S_RX,     // HLK-LD2410S
   GPIO_I2C_SER_TX, GPIO_I2C_SER_RX,     // I2C via Serial using SC18IM704 protocol (xdrv74)
+  GPIO_TM1640CLK, GPIO_TM1640DIN,       // TM1640 (16 x seven-segment LED controler)
   GPIO_SENSOR_END };
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -501,6 +502,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_DALI_RX "_i|" D_SENSOR_DALI_TX "_i|"
   D_SENSOR_LD2410S_TX "|" D_SENSOR_LD2410S_RX "|"
   D_SENSOR_I2C_SER_TX "|" D_SENSOR_I2C_SER_RX "|"
+  D_SENSOR_TM1640_CLK "|" D_SENSOR_TM1640_DIN "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -732,6 +734,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_TM1638DIO),
   AGPIO(GPIO_TM1638STB),
 #endif  // USE_DISPLAY_TM1637
+#ifdef USE_DISPLAY_TM1640
+  AGPIO(GPIO_TM1640CLK),
+  AGPIO(GPIO_TM1640DIN),
+#endif  // USE_DISPLAY_TM1640
   AGPIO(GPIO_BACKLIGHT),                // Display backlight control
   AGPIO(GPIO_OLED_RESET),               // OLED Display Reset
 #ifdef ESP32
