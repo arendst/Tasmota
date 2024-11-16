@@ -858,6 +858,8 @@ void SettingsLoad(void) {
   settings_crc32 = GetSettingsCrc32();
 #endif  // FIRMWARE_MINIMAL
 
+  SettingsMinimum();   // Set life-saving parameters if out-of-range due to reconfig Settings Area
+
   RtcSettingsLoad(1);
 }
 
@@ -927,6 +929,14 @@ void SettingsSdkErase(void) {
 }
 
 /********************************************************************************************/
+
+void SettingsMinimum(void) {
+  // Set life-saving parameters if out-of-range due to reconfig Settings Area
+  if (Settings->dns_timeout < 100) { Settings->dns_timeout = DNS_TIMEOUT; }
+  if (Settings->mqtt_keepalive < 1) { Settings->mqtt_keepalive = MQTT_KEEPALIVE; }
+  if (Settings->mqtt_socket_timeout < 1) { Settings->mqtt_socket_timeout = MQTT_SOCKET_TIMEOUT; }
+  if (Settings->mqtt_wifi_timeout < 1) { Settings->mqtt_wifi_timeout = MQTT_WIFI_CLIENT_TIMEOUT / 100; }
+}
 
 void SettingsDefault(void) {
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_CONFIG D_USE_DEFAULTS));
