@@ -566,6 +566,7 @@ void setup(void) {
 
   SettingsLoad();
   SettingsDelta();
+  SettingsMinimum();                           // Set life-saving parameters if out-of-range due to reconfig Settings Area
 
   OsWatchInit();
 

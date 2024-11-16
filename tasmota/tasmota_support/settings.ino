@@ -858,8 +858,6 @@ void SettingsLoad(void) {
   settings_crc32 = GetSettingsCrc32();
 #endif  // FIRMWARE_MINIMAL
 
-  SettingsMinimum();   // Set life-saving parameters if out-of-range due to reconfig Settings Area
-
   RtcSettingsLoad(1);
 }
 
