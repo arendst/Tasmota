@@ -4,7 +4,7 @@ name: Build_development
 on:
   workflow_dispatch:      # Start a workflow
   push:
-    branches: wpa_cipher
+    branches: development
     paths-ignore:
     - '.github/**'        # Ignore changes towards the .github directory
     - '**.md'             # Do no build if *.md files changes
@@ -17,7 +17,7 @@ concurrency:
 jobs:
   be_solidify:
     runs-on: ubuntu-latest
-    #if: github.repository == 'arendst/Tasmota' && github.ref_name == 'development'
+    if: github.repository == 'arendst/Tasmota' && github.ref_name == 'development'
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
@@ -58,7 +58,7 @@ jobs:
   push_solidified:
     needs: be_solidify
     runs-on: ubuntu-latest
-    #if: github.repository == 'arendst/Tasmota' && github.ref_name == 'development'
+    if: github.repository == 'arendst/Tasmota' && github.ref_name == 'development'
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
@@ -108,7 +108,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: wpa_cipher
+          ref: development
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -155,7 +155,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: wpa_cipher
+          ref: development
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -178,32 +178,32 @@ jobs:
           path: ./build_output
 
   base32-images:
-    needs: push_solidified
+    needs: safeboot-images
     runs-on: ubuntu-latest
-    #if: github.repository == 'arendst/Tasmota'
+    if: github.repository == 'arendst/Tasmota'
     continue-on-error: true
     strategy:
       matrix:
         variant:
-          - tasmota32-hybrid
-          #- tasmota32-zbbrdgpro
-          #- tasmota32-webcam
-          #- tasmota32-bluetooth
-          #- tasmota32-nspanel
-          #- tasmota32-display
-          #- tasmota32-ir
-          #- tasmota32-lvgl
-          #- tasmota32c2
-          #- tasmota32c3
-          #- tasmota32c6
-          #- tasmota32s2
-          #- tasmota32s2cdc
-          #- tasmota32s3
-          #- tasmota32solo1
+          - tasmota32
+          - tasmota32-zbbrdgpro
+          - tasmota32-webcam
+          - tasmota32-bluetooth
+          - tasmota32-nspanel
+          - tasmota32-display
+          - tasmota32-ir
+          - tasmota32-lvgl
+          - tasmota32c2
+          - tasmota32c3
+          - tasmota32c6
+          - tasmota32s2
+          - tasmota32s2cdc
+          - tasmota32s3
+          - tasmota32solo1
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: wpa_cipher
+          ref: development
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -212,6 +212,12 @@ jobs:
         run: |
           pip install wheel
           pip install -U platformio
+          cp ./platformio_override_sample.ini ./platformio_override.ini
+      - name: Download safeboot firmwares
+        uses: jason2866/download-artifact@v3.0.4
+        with:
+          name: firmware_safeboot
+          path: ./firmware
       - name: Add SHA to footer
         run: |
           COMMIT_SHA_LONG=$(git rev-parse --short HEAD || echo "")
