@@ -832,6 +832,7 @@ int32_t UpdateDevicesPresent(int32_t change) {
   else if (devices_present >= POWER_SIZE) {           // Support up to uint32_t as bitmask
     difference = devices_present - POWER_SIZE;
     devices_present = POWER_SIZE;
+    AddLog(LOG_LEVEL_DEBUG, PSTR("APP: Max number of devices reached"));
   }
   TasmotaGlobal.devices_present = devices_present;
   return difference;

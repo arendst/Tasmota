@@ -1856,6 +1856,25 @@ void SettingsDelta(void) {
       WebHexCode(COL_BUTTON_OFF, GetTextIndexed(scolor, sizeof(scolor), COL_BUTTON_OFF, kWebColors));
     }
 
+    if (Settings->version < 0x0E030007) {  // 14.3.0.7
+      // move up uint8_t knx_CB_registered from 4A8 to 533
+      memmove_P((uint8_t*)&Settings->knx_CB_registered, (uint8_t*)&Settings->switchmode, 1);
+      // move up uint8_t global_sensor_index[3] from 4C5 to 53C
+      memmove_P((uint8_t*)&Settings->global_sensor_index, (uint8_t*)&Settings->switchmode +29, 3);
+      // move dn uint8_t switchmode[MAX_SWITCHES_SET] from 4A9 to 4A8
+      memmove_P((uint8_t*)&Settings->switchmode, (uint8_t*)&Settings->switchmode +1, 28);
+      for (uint32_t i = 28; i < MAX_SWITCHES_SET; i++) {
+        Settings->switchmode[i] = SWITCH_MODE;
+      }
+      // move up int8_t shutter_tilt_pos[MAX_SHUTTERS], uint16_t influxdb_period and uint16_t rf_duplicate_timefrom 51C to 534
+      memmove_P((uint8_t*)&Settings->shutter_tilt_pos, (uint8_t*)&Settings->shutter_tilt_config +12, 8);
+      // move up int8_t shutter_tilt_config[5][MAX_SHUTTERS] from 508 to 510
+      memmove_P((uint8_t*)&Settings->shutter_tilt_config, (uint8_t*)&Settings->shutter_tilt_config -8, 20);
+      for (uint32_t i = 14; i < MAX_INTERLOCKS_SET; i++) {
+        Settings->interlock[i] = 0;
+      }
+    }
+
     Settings->version = TASMOTA_VERSION;
     SettingsSave(1);
   }

@@ -114,7 +114,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v14.3.0.6
+## Changelog v14.3.0.7
 ### Added
 - Add command ``WebColor20`` to control color of Button when Off
 - DALI support for short addresses (gear) and groups
@@ -157,6 +157,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - DALI renamed commands `DaliCommission` to `DaliScan` and `DaliWeb` to `DaliLight`
 - DALI set Tasmota light control as default
 - Shutter optimized behavior to publish shutter data with sensor request [#22353](https://github.com/arendst/Tasmota/issues/22353)
+- ESP32 max number of supported switches/buttons/relays from 28 to 32
+- ESP32 max number of interlocks from 14 to 16
 - HASPmota support for page delete and object updates [#22311](https://github.com/arendst/Tasmota/issues/22311)
 
 ### Fixed

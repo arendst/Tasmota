@@ -677,17 +677,12 @@ typedef struct {
   uint8_t       light_width;               // 4A4
   uint8_t       knx_GA_registered;         // 4A5  Number of Group Address to read
   uint16_t      light_wakeup;              // 4A6
-  uint8_t       knx_CB_registered;         // 4A8  Number of Group Address to write
-  uint8_t       switchmode[MAX_SWITCHES_SET];  // 4A9
-  uint8_t       global_sensor_index[3];    // 4C5
+  uint8_t       switchmode[MAX_SWITCHES_SET];  // 4A8 4A9 - Moved dn by 1 byte in v14.3.0.7
   uint16_t      dns_timeout;               // 4C8
   uint8_t       ds3502_state[MAX_DS3502];  // 4CA
   uint16_t      influxdb_port;             // 4CE
   power_t       interlock[MAX_INTERLOCKS_SET];  // 4D0 MAX_INTERLOCKS = MAX_RELAYS / 2
-  int8_t        shutter_tilt_config[5][MAX_SHUTTERS];  //508
-  int8_t        shutter_tilt_pos[MAX_SHUTTERS];        //51C
-  uint16_t      influxdb_period;           // 520
-  uint16_t      rf_duplicate_time;         // 522
+  int8_t        shutter_tilt_config[5][MAX_SHUTTERS];  // 510 508 - - Moved up by 8 bytes in v14.3.0.7
   int32_t       weight_absconv_a;          // 524
   int32_t       weight_absconv_b;          // 528
   uint16_t      mqtt_keepalive;            // 52C
@@ -695,8 +690,13 @@ typedef struct {
   uint8_t       mqtt_wifi_timeout;         // 530
   uint8_t       ina219_mode;               // 531
   uint8_t       weight_precision;          // 532  ex_pulse_timer free since 11.0.0.3
+  uint8_t       knx_CB_registered;         // 533 4A8  Number of Group Address to write
+  int8_t        shutter_tilt_pos[MAX_SHUTTERS];  // 534 51C
+  uint16_t      influxdb_period;           // 538 520
+  uint16_t      rf_duplicate_time;         // 53A 522
+  uint8_t       global_sensor_index[3];    // 53C 4C5
 
-  uint8_t       free_533[13];              // 533
+  uint8_t       free_53F[1];               // 53F
 
   uint16_t      tcp_baudrate;              // 540 
   uint16_t      button_debounce;           // 542

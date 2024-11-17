@@ -3,19 +3,26 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.3.0.6] 
+## [14.3.0.7] 
 ### Added
-- Add command ``WebColor20`` to control color of Button when Off
 
 ### Breaking Changed
 
+### Fixed
+
+### Removed
+
 ### Changed
+- ESP32 max number of supported switches/buttons/relays from 28 to 32
+- ESP32 max number of interlocks from 14 to 16
+
+## [14.3.0.6] 20241116
+### Added
+- Add command ``WebColor20`` to control color of Button when Off
 
 ### Fixed
 - Matter provisioning with matter.js controller (#22470)
 - Prevent crashing when `display.ini` is missing end `#` (#22471)
-
-### Removed
 
 ## [14.3.0.5] 20241111
 ### Added
