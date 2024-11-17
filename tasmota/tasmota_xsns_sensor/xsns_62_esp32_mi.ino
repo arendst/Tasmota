@@ -754,6 +754,7 @@ extern "C" {
         success = true;
         break;
       case 232: // set adv params via bytes() descriptor of size 5,
+        #ifndef CONFIG_BT_NIMBLE_EXT_ADV
         if(MI32.conCtx->buffer[0] == 5){
           uint16_t itvl_min = MI32.conCtx->buffer[2] + (MI32.conCtx->buffer[3] << 8);
           uint16_t itvl_max = MI32.conCtx->buffer[4] + (MI32.conCtx->buffer[5] << 8);
@@ -763,6 +764,7 @@ extern "C" {
           AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: adv params: type: %u, min: %u, max: %u"),MI32.conCtx->buffer[1], (uint16_t)(itvl_min * 0.625), (uint16_t)(itvl_max * 0.625)) ;
           success = true;
         }
+        #endif //CONFIG_BT_NIMBLE_EXT_ADV
         break;
       case 233:
         int ret = ble_svc_gap_device_name_set((const char*)MI32.conCtx->buffer + 1);
@@ -1995,7 +1997,7 @@ void MI32parseBTHomePacket(char * _buf, uint32_t length, uint8_t addr[6], int RS
        idx += 3;
        break;
       case 0x0b:
-        // power ??
+        // power in W
         idx += 4;
         break;
       case 0x0c:
@@ -2003,11 +2005,15 @@ void MI32parseBTHomePacket(char * _buf, uint32_t length, uint8_t addr[6], int RS
         idx += 3;
         break;
       case 0x10:
-        // binary power on/off??
+        // power on/off
+        idx += 2;
+        break;
+      case 0x11:
+        // opening closed=0/open=1
         idx += 2;
         break;
       default:
-        AddLog(LOG_LEVEL_INFO,PSTR("M32: unknown BTHome data type: %u, discard rest of data buffer!"),_buf[idx]);
+        AddLog(LOG_LEVEL_INFO,PSTR("M32: unknown BTHome data type: %x, discard rest of data buffer!"),_buf[idx]);
         AddLogBuffer(LOG_LEVEL_DEBUG,(uint8_t*)_buf,length);
         idx = length; // "break"
         break;
