@@ -509,7 +509,7 @@ const char kSensorNamesFixed[] PROGMEM =
   D_SENSOR_USER;
 
 // Max number of GPIOs
-#define MAX_I2C          1              // Display no index if one bus
+#define MAX_I2C          0              // Display no index if one bus
 #ifdef USE_I2C_BUS2
 #undef MAX_I2C
 #define MAX_I2C          2
@@ -533,46 +533,46 @@ const char kSensorNamesFixed[] PROGMEM =
 
 const uint16_t kGpioNiceList[] PROGMEM = {
   GPIO_NONE,                            // Not used
-  AGPIO(GPIO_OPTION_A) + MAX_OPTIONS_A -1, // Device specific options
+  AGPIO(GPIO_OPTION_A) + MAX_OPTIONS_A, // Device specific options
 #ifdef ESP32
-  AGPIO(GPIO_OPTION_E) + MAX_OPTIONS_E -1, // Device module emulation
+  AGPIO(GPIO_OPTION_E) + MAX_OPTIONS_E, // Device module emulation
 #endif
-  AGPIO(GPIO_KEY1) + MAX_KEYS -1,          // Buttons
-  AGPIO(GPIO_KEY1_NP) + MAX_KEYS -1,
+  AGPIO(GPIO_KEY1) + MAX_KEYS,          // Buttons
+  AGPIO(GPIO_KEY1_NP) + MAX_KEYS,
 #ifdef ESP32
-  AGPIO(GPIO_KEY1_PD) + MAX_KEYS -1,
+  AGPIO(GPIO_KEY1_PD) + MAX_KEYS,
 #endif
-  AGPIO(GPIO_KEY1_INV) + MAX_KEYS -1,
-  AGPIO(GPIO_KEY1_INV_NP) + MAX_KEYS -1,
+  AGPIO(GPIO_KEY1_INV) + MAX_KEYS,
+  AGPIO(GPIO_KEY1_INV_NP) + MAX_KEYS,
 #ifdef ESP32
-  AGPIO(GPIO_KEY1_INV_PD) + MAX_KEYS -1,
+  AGPIO(GPIO_KEY1_INV_PD) + MAX_KEYS,
 #if defined(SOC_TOUCH_VERSION_1) || defined(SOC_TOUCH_VERSION_2)
-  AGPIO(GPIO_KEY1_TC) + MAX_KEYS -1,       // Touch button
+  AGPIO(GPIO_KEY1_TC) + MAX_KEYS,       // Touch button
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
 #endif
-  AGPIO(GPIO_SWT1) + MAX_SWITCHES -1,      // User connected external switches
-  AGPIO(GPIO_SWT1_NP) + MAX_SWITCHES -1,
+  AGPIO(GPIO_SWT1) + MAX_SWITCHES,      // User connected external switches
+  AGPIO(GPIO_SWT1_NP) + MAX_SWITCHES,
 #ifdef ESP32
-  AGPIO(GPIO_SWT1_PD) + MAX_SWITCHES -1,
+  AGPIO(GPIO_SWT1_PD) + MAX_SWITCHES,
 #endif
 #ifdef ROTARY_V1
-  AGPIO(GPIO_ROT1A) + MAX_ROTARIES -1,     // Rotary A Pin
-  AGPIO(GPIO_ROT1B) + MAX_ROTARIES -1,     // Rotary B Pin
-  AGPIO(GPIO_ROT1A_NP) + MAX_ROTARIES -1,  // Rotary A Pin No Pullup
-  AGPIO(GPIO_ROT1B_NP) + MAX_ROTARIES -1,  // Rotary B Pin No Pullup
+  AGPIO(GPIO_ROT1A) + MAX_ROTARIES,     // Rotary A Pin
+  AGPIO(GPIO_ROT1B) + MAX_ROTARIES,     // Rotary B Pin
+  AGPIO(GPIO_ROT1A_NP) + MAX_ROTARIES,  // Rotary A Pin No Pullup
+  AGPIO(GPIO_ROT1B_NP) + MAX_ROTARIES,  // Rotary B Pin No Pullup
 #endif
-  AGPIO(GPIO_REL1) + MAX_RELAYS -1,        // Relays
-  AGPIO(GPIO_REL1_INV) + MAX_RELAYS -1,
-  AGPIO(GPIO_REL1_BI) + MAX_RELAYS -1,     // Bistable (Latching) two coil relays
-  AGPIO(GPIO_REL1_BI_INV) + MAX_RELAYS -1,
-  AGPIO(GPIO_LED1) + MAX_LEDS -1,          // Leds
-  AGPIO(GPIO_LED1_INV) + MAX_LEDS -1,
+  AGPIO(GPIO_REL1) + MAX_RELAYS,        // Relays
+  AGPIO(GPIO_REL1_INV) + MAX_RELAYS,
+  AGPIO(GPIO_REL1_BI) + MAX_RELAYS,     // Bistable (Latching) two coil relays
+  AGPIO(GPIO_REL1_BI_INV) + MAX_RELAYS,
+  AGPIO(GPIO_LED1) + MAX_LEDS,          // Leds
+  AGPIO(GPIO_LED1_INV) + MAX_LEDS,
 #ifdef USE_COUNTER
-  AGPIO(GPIO_CNTR1) + MAX_COUNTERS -1,     // Counters
-  AGPIO(GPIO_CNTR1_NP) + MAX_COUNTERS -1,
+  AGPIO(GPIO_CNTR1) + MAX_COUNTERS,     // Counters
+  AGPIO(GPIO_CNTR1_NP) + MAX_COUNTERS,
 #endif
-  AGPIO(GPIO_PWM1) + MAX_PWMS -1,          // RGB   Red   or C  Cold White
-  AGPIO(GPIO_PWM1_INV) + MAX_PWMS -1,      // or extended PWM for ESP32
+  AGPIO(GPIO_PWM1) + MAX_PWMS,          // RGB   Red   or C  Cold White
+  AGPIO(GPIO_PWM1_INV) + MAX_PWMS,      // or extended PWM for ESP32
 #ifdef USE_BUZZER
   AGPIO(GPIO_BUZZER),                   // Buzzer
   AGPIO(GPIO_BUZZER_INV),               // Inverted buzzer
@@ -580,8 +580,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_LEDLNK),                   // Link led
   AGPIO(GPIO_LEDLNK_INV),               // Inverted link led
 #ifdef USE_BERRY
-  AGPIO(GPIO_INPUT) + MAX_SWITCHES -1,     // Pure digital input to be read via Berry
-  AGPIO(GPIO_INTERRUPT) + MAX_SWITCHES -1, // Interrupt pins to be catched by Berry
+  AGPIO(GPIO_INPUT) + MAX_SWITCHES,     // Pure digital input to be read via Berry
+  AGPIO(GPIO_INTERRUPT) + MAX_SWITCHES, // Interrupt pins to be catched by Berry
 #endif
   AGPIO(GPIO_OUTPUT_HI),                // Fixed output high
   AGPIO(GPIO_OUTPUT_LO),                // Fixed output low
@@ -601,32 +601,32 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 \*-------------------------------------------------------------------------------------------*/
 
 #ifdef USE_I2C
-  AGPIO(GPIO_I2C_SCL) + MAX_I2C -1,        // I2C SCL
-  AGPIO(GPIO_I2C_SDA) + MAX_I2C -1,        // I2C SDA
+  AGPIO(GPIO_I2C_SCL) + MAX_I2C,        // I2C SCL
+  AGPIO(GPIO_I2C_SDA) + MAX_I2C,        // I2C SDA
 #ifdef USE_PCF8574
   AGPIO(GPIO_PCF8574_INT),              // PCF8574 Interrupt
 #endif  // USE_PCF8574
 #ifdef USE_I2C_SERIAL
-  AGPIO(GPIO_I2C_SER_TX) + MAX_I2C -1,     // I2C via Serial TX
-  AGPIO(GPIO_I2C_SER_RX) + MAX_I2C -1,     // I2C via Serial RX
+  AGPIO(GPIO_I2C_SER_TX) + MAX_I2C,     // I2C via Serial TX
+  AGPIO(GPIO_I2C_SER_RX) + MAX_I2C,     // I2C via Serial RX
 #endif // USE_I2C_SERIAL
 #endif
 
 #if defined(USE_I2S_AUDIO) || defined (USE_I2S)
-  AGPIO(GPIO_I2S_MCLK) + MAX_I2S -1,       // I2S master clock
-  AGPIO(GPIO_I2S_BCLK) + MAX_I2S -1,       // I2S bit clock
-  AGPIO(GPIO_I2S_DOUT) + MAX_I2S -1,       // I2S Out Data
-  AGPIO(GPIO_I2S_DAC) + 2 -1,              // I2S DAC Output
-  AGPIO(GPIO_I2S_WS) + MAX_I2S -1,         // I2S word select
-  AGPIO(GPIO_I2S_DIN) + MAX_I2S -1,        // I2S IN Data
+  AGPIO(GPIO_I2S_MCLK) + MAX_I2S,       // I2S master clock
+  AGPIO(GPIO_I2S_BCLK) + MAX_I2S,       // I2S bit clock
+  AGPIO(GPIO_I2S_DOUT) + MAX_I2S,       // I2S Out Data
+  AGPIO(GPIO_I2S_DAC) + 2,              // I2S DAC Output
+  AGPIO(GPIO_I2S_WS) + MAX_I2S,         // I2S word select
+  AGPIO(GPIO_I2S_DIN) + MAX_I2S,        // I2S IN Data
 #endif
 
 #ifdef USE_SPI
-  AGPIO(GPIO_SPI_MISO) + MAX_SPI -1,       // SPI MISO
-  AGPIO(GPIO_SPI_MOSI) + MAX_SPI -1,       // SPI MOSI
-  AGPIO(GPIO_SPI_CLK) + MAX_SPI -1,        // SPI Clk
-  AGPIO(GPIO_SPI_CS) + MAX_SPI -1,         // SPI Chip Select
-  AGPIO(GPIO_SPI_DC) + MAX_SPI -1,         // SPI Data Direction
+  AGPIO(GPIO_SPI_MISO) + MAX_SPI,       // SPI MISO
+  AGPIO(GPIO_SPI_MOSI) + MAX_SPI,       // SPI MOSI
+  AGPIO(GPIO_SPI_CLK) + MAX_SPI,        // SPI Clk
+  AGPIO(GPIO_SPI_CS) + MAX_SPI,         // SPI Chip Select
+  AGPIO(GPIO_SPI_DC) + MAX_SPI,         // SPI Data Direction
 #ifdef USE_NRF24
   AGPIO(GPIO_NRF24_CS),
   AGPIO(GPIO_NRF24_DC),
@@ -642,7 +642,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_MCP2515_CS),
 #endif  // USE_MCP2515
 #ifdef USE_MCP23XXX_DRV
-  AGPIO(GPIO_MCP23SXX_CS) + MAX_MCP23XXX -1,
+  AGPIO(GPIO_MCP23SXX_CS) + MAX_MCP23XXX,
 #endif  // USE_MCP23XXX_DRV
 #ifdef USE_SPI_LORA
   AGPIO(GPIO_LORA_CS),
@@ -754,11 +754,11 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif  // USE_DISPLAY_TM1621_SONOFF
 
 #ifdef USE_MAX31865
-  AGPIO(GPIO_SSPI_MAX31865_CS1) + MAX_MAX31865S -1,
+  AGPIO(GPIO_SSPI_MAX31865_CS1) + MAX_MAX31865S,
 #endif
 
 #ifdef USE_MCP23XXX_DRV
-  AGPIO(GPIO_MCP23XXX_INT) + MAX_MCP23XXX -1,
+  AGPIO(GPIO_MCP23XXX_INT) + MAX_MCP23XXX,
 #endif
 
 #ifdef USE_HDMI_CEC
@@ -780,8 +780,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_DHT11_OUT),                // Pseudo Single wire DHT11, DHT21, DHT22, AM2301, AM2302, AM2321
 #endif
 #ifdef USE_DS18x20
-  AGPIO(GPIO_DSB) + MAX_DSB -1,            // Single wire DS18B20 or DS18S20
-  AGPIO(GPIO_DSB_OUT) + MAX_DSB -1,        // Pseudo Single wire DS18B20 or DS18S20
+  AGPIO(GPIO_DSB) + MAX_DSB,            // Single wire DS18B20 or DS18S20
+  AGPIO(GPIO_DSB_OUT) + MAX_DSB,        // Pseudo Single wire DS18B20 or DS18S20
 #endif  // USE_DS18x20
 #ifdef USE_LMT01
   AGPIO(GPIO_LMT01),                    // LMT01, count pulses on GPIO
@@ -797,7 +797,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_P9813_CLK),                // P9813 CLOCK
   AGPIO(GPIO_P9813_DAT),                // P9813 DATA
 #else
-  AGPIO(GPIO_WS2812) + (MAX_RMT ? MAX_RMT + 1 : 1) -1, // WS2812 Led string, using RMT on ESP32
+  AGPIO(GPIO_WS2812) + (MAX_RMT ? MAX_RMT + 1 : 0), // WS2812 Led string, using RMT on ESP32
 #endif  // NEO_HW_P9813
 #endif
 #ifdef USE_ARILUX_RF
@@ -815,15 +815,15 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif  // USE_SM16716
 #ifdef USE_SM2135
   AGPIO(GPIO_SM2135_CLK),                   // SM2135 CLOCK
-  AGPIO(GPIO_SM2135_DAT) + MAX_SM2135_DAT -1,  // SM2135 DATA
+  AGPIO(GPIO_SM2135_DAT) + MAX_SM2135_DAT,  // SM2135 DATA
 #endif  // USE_SM2135
 #ifdef USE_SM2335
   AGPIO(GPIO_SM2335_CLK),                   // SM2335 CLOCK
-  AGPIO(GPIO_SM2335_DAT) + MAX_SM2335_DAT -1,  // SM2335 DATA
+  AGPIO(GPIO_SM2335_DAT) + MAX_SM2335_DAT,  // SM2335 DATA
 #endif  // USE_SM2335
 #ifdef USE_BP1658CJ
   AGPIO(GPIO_BP1658CJ_CLK),                    // BP1658CJ CLOCK
-  AGPIO(GPIO_BP1658CJ_DAT) + MAX_BP1658CJ_DAT -1, // BP1658CJ DATA
+  AGPIO(GPIO_BP1658CJ_DAT) + MAX_BP1658CJ_DAT, // BP1658CJ DATA
 #endif  // USE_BP1658CJ
 #ifdef USE_BP5758D
   AGPIO(GPIO_BP5758D_CLK),              // BP5758D CLOCK
@@ -857,7 +857,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 \*-------------------------------------------------------------------------------------------*/
 
 #if defined(USE_IR_REMOTE) || defined(USE_IR_REMOTE_FULL)
-  AGPIO(GPIO_IRSEND) + MAX_IRSEND -1,      // IR remote
+  AGPIO(GPIO_IRSEND) + MAX_IRSEND,      // IR remote
 #if defined(USE_IR_RECEIVE) || defined(USE_IR_REMOTE_FULL)
   AGPIO(GPIO_IRRECV),                   // IR receiver
 #endif
@@ -870,8 +870,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_RF_SENSOR),                // Rf receiver with sensor decoding
 #endif
 #ifdef USE_SR04
-  AGPIO(GPIO_SR04_TRIG) + MAX_SR04 -1,                // SR04 Tri/TXgger pin
-  AGPIO(GPIO_SR04_ECHO) + MAX_SR04 -1,                // SR04 Ech/RXo pin
+  AGPIO(GPIO_SR04_TRIG) + MAX_SR04,                // SR04 Tri/TXgger pin
+  AGPIO(GPIO_SR04_ECHO) + MAX_SR04,                // SR04 Ech/RXo pin
 #endif
 #ifdef USE_ME007
   AGPIO(GPIO_ME007_TRIG),              // ME007 Trigger pin (xsns_23_me007.ino)
@@ -904,20 +904,20 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_HJL_CF),                   // HJL-01/BL0937 CF power
 #endif
 #if defined(USE_I2C) && defined(USE_ADE7880)
-  AGPIO(GPIO_ADE7880_IRQ) + 2 -1,          // ADE7880 IRQ - (1 = IRQ1, 2 = IRQ2)
+  AGPIO(GPIO_ADE7880_IRQ) + 2,          // ADE7880 IRQ - (1 = IRQ1, 2 = IRQ2)
 #endif
 #ifdef USE_ADE7953
 #if defined(USE_I2C) || defined(USE_SPI)
-  AGPIO(GPIO_ADE7953_IRQ) + 6 -1,          // ADE7953 IRQ - (1 = Shelly 2.5, 2 = Shelly EM, 3 = Shelly Plus 2PM, 4 = Shelly Pro 1PM, 5 = Shelly Pro 2PM, 6 = Shelly Pro 4PM)
+  AGPIO(GPIO_ADE7953_IRQ) + 6,          // ADE7953 IRQ - (1 = Shelly 2.5, 2 = Shelly EM, 3 = Shelly Plus 2PM, 4 = Shelly Pro 1PM, 5 = Shelly Pro 2PM, 6 = Shelly Pro 4PM)
   AGPIO(GPIO_ADE7953_RST),              // ADE7953 Reset
 #ifdef USE_SPI
-  AGPIO(GPIO_ADE7953_CS) + 2 -1,           // ADE7953 SPI Chip Select (1 = CS1 (1PM, 2PM), 2 = CS2 (2PM))
+  AGPIO(GPIO_ADE7953_CS) + 2,           // ADE7953 SPI Chip Select (1 = CS1 (1PM, 2PM), 2 = CS2 (2PM))
 #endif  // USE_SPI
 #endif  // USE_I2C or USE_SPI
 #endif  // USE_ADE7953
 #ifdef USE_CSE7761
   AGPIO(GPIO_CSE7761_TX),               // CSE7761 Serial interface (Dual R3)
-  AGPIO(GPIO_CSE7761_RX) + MAX_CSE7761 -1,  // CSE7761 Serial interface (1 = Dual R3, 2 = POWCT)
+  AGPIO(GPIO_CSE7761_RX) + MAX_CSE7761,  // CSE7761 Serial interface (1 = Dual R3, 2 = POWCT)
 #endif
 #ifdef USE_CSE7766
   AGPIO(GPIO_CSE7766_TX),               // CSE7766 Serial interface (S31 and Pow R2)
@@ -972,13 +972,13 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif  // USE_LE01MR
 #ifdef ESP32
 #ifdef USE_BL0906
-  AGPIO(GPIO_BL0906_RX) + MAX_BL0906_RX -1,  // BL0906 Serial interface (Athom EM6)
+  AGPIO(GPIO_BL0906_RX) + MAX_BL0906_RX,  // BL0906 Serial interface (Athom EM6)
 #endif  // USE_BL0906
 #endif  // ESP32
 #if defined(USE_BL0940) || defined(USE_BL09XX)
   AGPIO(GPIO_BL0939_RX),                // BL0939 Serial interface (Dual R3 v2)
   AGPIO(GPIO_BL0940_RX),                // BL0940 Serial interface
-  AGPIO(GPIO_BL0942_RX) + MAX_BL0942_RX -1,  // BL0942 Serial interface
+  AGPIO(GPIO_BL0942_RX) + MAX_BL0942_RX,  // BL0942 Serial interface
 #endif
 #ifdef USE_IEM3000
   AGPIO(GPIO_IEM3000_TX),               // IEM3000 Serial interface
@@ -1024,7 +1024,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_ZIGBEE
   AGPIO(GPIO_ZIGBEE_TX),                // Zigbee Serial interface
   AGPIO(GPIO_ZIGBEE_RX),                // Zigbee Serial interface
-  AGPIO(GPIO_ZIGBEE_RST) + 2 -1,           // Zigbee reset, pin 1 is reset, pin 2 is bootloader mode
+  AGPIO(GPIO_ZIGBEE_RST) + 2,           // Zigbee reset, pin 1 is reset, pin 2 is bootloader mode
 #endif
 #ifdef USE_MHZ19
   AGPIO(GPIO_MHZ_TXD),                  // MH-Z19 Serial interface
@@ -1147,7 +1147,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_MGC3130_RESET),
 #endif
 #ifdef USE_MAX31855
-  AGPIO(GPIO_MAX31855CS) + MAX_MAX31855S -1, //MAX31855 Serial interface
+  AGPIO(GPIO_MAX31855CS) + MAX_MAX31855S, //MAX31855 Serial interface
   AGPIO(GPIO_MAX31855CLK),              // MAX31855 Serial interface
   AGPIO(GPIO_MAX31855DO),               // MAX31855 Serial interface
 #endif
@@ -1160,7 +1160,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_A4988_STP),                // A4988 step pin
   // folowing are not mandatory
   AGPIO(GPIO_A4988_ENA),                // A4988 enabled pin
-  AGPIO(GPIO_A4988_MS1) + MAX_A4988_MSS -1,  // A4988 microstep pin1 to pin3
+  AGPIO(GPIO_A4988_MS1) + MAX_A4988_MSS,  // A4988 microstep pin1 to pin3
 #endif
 #ifdef USE_DEEPSLEEP
   AGPIO(GPIO_DEEPSLEEP),
@@ -1203,10 +1203,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_PROJECTOR_CTRL_RX),        // LCD/DLP Projector Serial Control
 #endif
 #if defined(USE_VL53L0X) or defined (USE_VL53L1X)
-  AGPIO(GPIO_VL53LXX_XSHUT1) + VL53LXX_MAX_SENSORS -1,  // When using multiple VL53LXX.
+  AGPIO(GPIO_VL53LXX_XSHUT1) + VL53LXX_MAX_SENSORS,  // When using multiple VL53LXX.
 #endif
 #ifdef USE_FLOWRATEMETER
-  AGPIO(GPIO_FLOWRATEMETER_IN) + MAX_FLOWRATEMETER -1, // Flow meter Pin
+  AGPIO(GPIO_FLOWRATEMETER_IN) + MAX_FLOWRATEMETER, // Flow meter Pin
 #endif
 
 #ifdef USE_SHIFT595
@@ -1217,7 +1217,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 
 #if defined (ESP32) && defined(USE_DINGTIAN_RELAY)
-  AGPIO(GPIO_DINGTIAN_CLK) + MAX_DINGTIAN_SHIFT -1, // Dingtian Relay board - 8,16,24 or 32 relays & inputs
+  AGPIO(GPIO_DINGTIAN_CLK) + MAX_DINGTIAN_SHIFT, // Dingtian Relay board - 8,16,24 or 32 relays & inputs
   AGPIO(GPIO_DINGTIAN_SDI),
   AGPIO(GPIO_DINGTIAN_Q7),
   AGPIO(GPIO_DINGTIAN_PL),
@@ -1226,7 +1226,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 
 #ifdef USE_MAGIC_SWITCH
-  AGPIO(GPIO_MAGIC_SWITCH) + MAX_MAGIC_SWITCH_MODES -1,
+  AGPIO(GPIO_MAGIC_SWITCH) + MAX_MAGIC_SWITCH_MODES,
 #endif
 
 #ifdef USE_PIPSOLAR                       // xdrv_92_pipsolar.ino
@@ -1240,7 +1240,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 
 #ifdef ESP32
 #if CONFIG_IDF_TARGET_ESP32
-  AGPIO(GPIO_HALLEFFECT) + 2 -1,           // Hall effect sensor connected to GPIO36 and 39
+  AGPIO(GPIO_HALLEFFECT) + 2,           // Hall effect sensor connected to GPIO36 and 39
 #endif  // CONFIG_IDF_TARGET_ESP32
 #ifdef USE_WEBCAM
   AGPIO(GPIO_WEBCAM_PWDN),
@@ -1248,12 +1248,12 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_WEBCAM_XCLK),
   AGPIO(GPIO_WEBCAM_SIOD),
   AGPIO(GPIO_WEBCAM_SIOC),
-  AGPIO(GPIO_WEBCAM_DATA) + MAX_WEBCAM_DATA -1,
+  AGPIO(GPIO_WEBCAM_DATA) + MAX_WEBCAM_DATA,
   AGPIO(GPIO_WEBCAM_VSYNC),
   AGPIO(GPIO_WEBCAM_HREF),
   AGPIO(GPIO_WEBCAM_PCLK),
   AGPIO(GPIO_WEBCAM_PSCLK),
-  AGPIO(GPIO_WEBCAM_HSD) + MAX_WEBCAM_HSD -1,
+  AGPIO(GPIO_WEBCAM_HSD) + MAX_WEBCAM_HSD,
   AGPIO(GPIO_WEBCAM_PSRCS),
 #endif  // USE_WEBCAM
 #ifdef USE_ETHERNET
@@ -1264,25 +1264,25 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_BIOPDU
   AGPIO(GPIO_BIOPDU_PZEM0XX_TX),        // Biomine BioPDU pins
   AGPIO(GPIO_BIOPDU_PZEM016_RX),
-  AGPIO(GPIO_BIOPDU_BIT) + 3 -1,
+  AGPIO(GPIO_BIOPDU_BIT) + 3,
 #endif
 
 /*-------------------------------------------------------------------------------------------*\
  * ESP32 multiple Analog / Digital converter inputs
 \*-------------------------------------------------------------------------------------------*/
 
-  AGPIO(GPIO_ADC_INPUT) + MAX_ADCS -1,     // Analog inputs
-  AGPIO(GPIO_ADC_TEMP) + MAX_ADCS -1,      // Thermistor
-  AGPIO(GPIO_ADC_LIGHT) + MAX_ADCS -1,     // Light sensor
-  AGPIO(GPIO_ADC_BUTTON) + MAX_KEYS -1,    // Button
-  AGPIO(GPIO_ADC_BUTTON_INV) + MAX_KEYS -1,
-  AGPIO(GPIO_ADC_RANGE) + MAX_ADCS -1,     // Range
-  AGPIO(GPIO_ADC_CT_POWER) + MAX_ADCS -1,  // Current
-  AGPIO(GPIO_ADC_JOY) + MAX_ADCS -1,       // Joystick
-  AGPIO(GPIO_ADC_PH) + MAX_ADCS -1,        // Analog PH Sensor
-  AGPIO(GPIO_ADC_MQ) + MAX_ADCS -1,        // Analog MQ Sensor
-  AGPIO(GPIO_ADC_VOLTAGE) + MAX_ADCS -1,   // Voltage
-  AGPIO(GPIO_ADC_CURRENT) + MAX_ADCS -1,   // Current
+  AGPIO(GPIO_ADC_INPUT) + MAX_ADCS,     // Analog inputs
+  AGPIO(GPIO_ADC_TEMP) + MAX_ADCS,      // Thermistor
+  AGPIO(GPIO_ADC_LIGHT) + MAX_ADCS,     // Light sensor
+  AGPIO(GPIO_ADC_BUTTON) + MAX_KEYS,    // Button
+  AGPIO(GPIO_ADC_BUTTON_INV) + MAX_KEYS,
+  AGPIO(GPIO_ADC_RANGE) + MAX_ADCS,     // Range
+  AGPIO(GPIO_ADC_CT_POWER) + MAX_ADCS,  // Current
+  AGPIO(GPIO_ADC_JOY) + MAX_ADCS,       // Joystick
+  AGPIO(GPIO_ADC_PH) + MAX_ADCS,        // Analog PH Sensor
+  AGPIO(GPIO_ADC_MQ) + MAX_ADCS,        // Analog MQ Sensor
+  AGPIO(GPIO_ADC_VOLTAGE) + MAX_ADCS,   // Voltage
+  AGPIO(GPIO_ADC_CURRENT) + MAX_ADCS,   // Current
 #endif  // ESP32
 };
 
@@ -1296,8 +1296,8 @@ const uint16_t kAdcNiceList[] PROGMEM = {
   AGPIO(GPIO_ADC_INPUT),                  // Analog inputs
   AGPIO(GPIO_ADC_TEMP),                   // Thermistor
   AGPIO(GPIO_ADC_LIGHT),                  // Light sensor
-  AGPIO(GPIO_ADC_BUTTON) + MAX_KEYS -1,      // Button
-  AGPIO(GPIO_ADC_BUTTON_INV) + MAX_KEYS -1,
+  AGPIO(GPIO_ADC_BUTTON) + MAX_KEYS,      // Button
+  AGPIO(GPIO_ADC_BUTTON_INV) + MAX_KEYS,
   AGPIO(GPIO_ADC_RANGE),                  // Range
   AGPIO(GPIO_ADC_CT_POWER),               // Current
   AGPIO(GPIO_ADC_JOY),                    // Joystick

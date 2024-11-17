@@ -2882,11 +2882,11 @@ void CmndTouchCal(void) {
     if (XdrvMailbox.payload == 0) {
       TouchButton.calibration = 0;
     }
-    else if (XdrvMailbox.payload < MAX_KEYS) {
+    else if (XdrvMailbox.payload < MAX_KEYS + 1) {
       TouchButton.calibration = bitSet(TouchButton.calibration, XdrvMailbox.payload);
     }
     else if (XdrvMailbox.payload == 255) {
-      TouchButton.calibration = 0xFFFFFFFF;  // All MAX_KEYS pins
+      TouchButton.calibration = 0x0FFFFFFF;  // All MAX_KEYS pins
     }
   }
   ResponseCmndNumber(TouchButton.calibration);
