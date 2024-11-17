@@ -34,21 +34,12 @@ ip_addr_t dns_save6[DNS_MAX_SERVERS] = {};      // IPv6 DNS servers
 #include "tasmota_options.h"
 #include "lwip/dns.h"
 
-#if __has_include("esp_eap_client.h") && __has_include("chip-debug-report.h")  // check for Tasmota framework
 wl_status_t WiFiHelper::begin(const char *wpa2_ssid, wpa2_auth_method_t method, const char *wpa2_identity, const char *wpa2_username, const char *wpa2_password, const char *ca_pem, const char *client_crt, const char *client_key, int ttls_phase2_type, int32_t channel, const uint8_t *bssid, bool connect) {
   WiFiHelper::scrubDNS();
   wl_status_t ret = WiFi.begin(wpa2_ssid, method, wpa2_identity, wpa2_username, wpa2_password, ca_pem, client_crt, client_key, ttls_phase2_type, channel, bssid, connect);
   WiFiHelper::scrubDNS();
   return ret;
 }
-#else
-wl_status_t WiFiHelper::begin(const char* wpa2_ssid, wpa2_auth_method_t method, const char* wpa2_identity, const char* wpa2_username, const char *wpa2_password, const char* ca_pem, const char* client_crt, const char* client_key, int32_t channel, const uint8_t* bssid, bool connect) {
-  WiFiHelper::scrubDNS();
-  wl_status_t ret = WiFi.begin(wpa2_ssid, method, wpa2_identity, wpa2_username, wpa2_password, ca_pem, client_crt, client_key, channel, bssid, connect);
-  WiFiHelper::scrubDNS();
-  return ret;
-}
-#endif
 
 wl_status_t WiFiHelper::begin(const char* ssid, const char *passphrase, int32_t channel, const uint8_t* bssid, bool connect) {
   WiFiHelper::scrubDNS();
