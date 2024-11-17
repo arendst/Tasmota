@@ -1855,16 +1855,6 @@ void SettingsDelta(void) {
       char scolor[10];
       WebHexCode(COL_BUTTON_OFF, GetTextIndexed(scolor, sizeof(scolor), COL_BUTTON_OFF, kWebColors));
     }
-    if (Settings->version < 0x0E030007) {  // 14.3.0.7
-      memmove_P((uint8_t*)&Settings->shutter_tilt_config, (uint8_t*)&Settings->shutter_tilt_config - 12, 0x2B);
-      for (uint32_t i = 14; i < MAX_INTERLOCKS_SET; i++) {
-        Settings->interlock[i] = 0;
-      }
-      memmove_P((uint8_t*)&Settings->global_sensor_index, (uint8_t*)&Settings->global_sensor_index - 4, 0x43);
-      for (uint32_t i = 28; i < MAX_SWITCHES_SET; i++) {
-        Settings->switchmode[i] = SWITCH_MODE;
-      }
-    }
 
     Settings->version = TASMOTA_VERSION;
     SettingsSave(1);
