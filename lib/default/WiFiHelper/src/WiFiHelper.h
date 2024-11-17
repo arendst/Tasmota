@@ -59,7 +59,7 @@ typedef enum WiFiPhyMode
 class WiFiHelper {
 public:
 #ifdef ESP32
-#if __has_include("esp_eap_client.h") 
+#if __has_include("esp_eap_client.h") && __has_include("chip-debug-report.h")  // check for Tasmota framework
   static wl_status_t begin(const char* wpa2_ssid, wpa2_auth_method_t method, const char* wpa2_identity=NULL, const char* wpa2_username=NULL, const char *wpa2_password=NULL, const char* ca_pem=NULL, const char* client_crt=NULL, const char* client_key=NULL, int ttls_phase2_type=-1, int32_t channel=0, const uint8_t* bssid=0, bool connect=true);
 #else
   static wl_status_t begin(const char* wpa2_ssid, wpa2_auth_method_t method, const char* wpa2_identity=NULL, const char* wpa2_username=NULL, const char *wpa2_password=NULL, const char* ca_pem=NULL, const char* client_crt=NULL, const char* client_key=NULL, int32_t channel=0, const uint8_t* bssid=0, bool connect=true);
