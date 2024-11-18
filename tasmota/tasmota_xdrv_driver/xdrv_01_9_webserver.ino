@@ -368,23 +368,32 @@ const char HTTP_FORM_UPG[] PROGMEM =
   "<br><button type='submit'>" D_START_UPGRADE "</button></form>"
   "</fieldset><br><br>"
   "<fieldset><legend><b>&nbsp;" D_UPGRADE_BY_FILE_UPLOAD "&nbsp;</b></legend>";
-const char HTTP_FORM_RST_UPG[] PROGMEM =
+const char HTTP_FORM_RST_UPG[] PROGMEM =                  // ESP8266 or ESP32 dual partition
   "<form method='post' action='u2?fsz=' enctype='multipart/form-data'>"
   "<br><input type='file' name='u2'><br>"
   "<br><button type='submit' "
-  "onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.action+=this.form[\"u2\"].files[0].size;this.form.submit();'"
-    ">%s</button></form>"
+  "onclick='"
+    "eb(\"f1\").style.display=\"none\";"                  // Disable display of form f1
+    "eb(\"f2\").style.display=\"block\";"                 // Enable display of D_UPLOAD_STARTED
+    "this.form.action+=this.form[\"u2\"].files[0].size;"  // Set return file size
+    "this.form.submit();"                                 // Form response
+  "'>%s</button></form>"
   "</fieldset>"
   "</div>"
   "<div id='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED "...</b></div>";
 
 // upload via factory partition
-const char HTTP_FORM_RST_UPG_FCT[] PROGMEM =
+const char HTTP_FORM_RST_UPG_FCT[] PROGMEM =              // ESP32 safeboot partition
   "<form method='post' action='u2?fsz=' enctype='multipart/form-data'>"
   "<br><input type='file' name='u2'><br>"
   "<br><button type='submit' "
-  "onclick='eb(\"f1\").style.display=\"none\";eb(\"f3\").style.display=\"block\";this.form.action+=this.form[\"u2\"].files[0].size;return upl(this);'"
-    ">%s</button></form>"
+  "onclick='"
+    "eb(\"f1\").style.display=\"none\";"                  // Disable display of form f1
+    "var fs=this.form[\"u2\"].files[0].size;"             // Retreive file size of requested file
+    "eb((fs>900000)?\"f3\":\"f2\").style.display=\"block\";"  // Enable display of either D_UPLOAD_FACTORY or D_UPLOAD_STARTED based on arbitrary file size of 900k
+    "this.form.action+=fs;"                               // Set return file size
+    "return upl(this);"                                   // Form response
+  "'>%s</button></form>"
   "</fieldset>"
   "</div>"
   "<div id='f3' style='display:none;text-align:center;'><b>" D_UPLOAD_FACTORY "...</b></div>"

@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Platform from 2024.11.30 to 2024.11.31, Framework (Arduino Core) from v3.1.0.241030 to v3.1.0.241117 and IDF to 5.3.1.241024 (#22504)
 
 ### Fixed
+- ESP32 upgrade by file upload response based on file size (#22500)
 
 ### Removed
 
