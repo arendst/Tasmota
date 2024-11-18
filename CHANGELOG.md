@@ -8,13 +8,14 @@ All notable changes to this project will be documented in this file.
 
 ### Breaking Changed
 
-### Fixed
-
-### Removed
-
 ### Changed
 - ESP32 max number of supported switches/buttons/relays from 28 to 32
 - ESP32 max number of interlocks from 14 to 16
+- ESP32 Platform from 2024.11.30 to 2024.11.31, Framework (Arduino Core) from v3.1.0.241030 to v3.1.0.241117 and IDF to 5.3.1.241024 (#22504)
+
+### Fixed
+
+### Removed
 
 ## [14.3.0.6] 20241116
 ### Added
@@ -30,6 +31,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Redesign GUI adding feedback to buttons, shutters and lights
+- Use command `WebButton1` to change GUI shutter 1 name
 
 ### Removed
 - Command ``SetOption161 1`` to disable web page slider updates by commands

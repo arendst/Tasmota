@@ -430,10 +430,10 @@ int MCP23xPin(uint32_t gpio, uint32_t index = 0);
 int MCP23xPin(uint32_t gpio, uint32_t index) {
   uint16_t real_gpio = gpio << 5;
   uint16_t mask = 0xFFE0;
-//  if (index < GPIO_ANY) {
+  if (index < GPIO_ANY) {
     real_gpio += index;
     mask = 0xFFFF;
-//  }
+  }
   for (uint32_t i = 0; i <= Mcp23x.max_pins; i++) {
     if ((Mcp23x_gpio_pin[i] & mask) == real_gpio) {
       return i;                                        // Pin number configured for gpio
