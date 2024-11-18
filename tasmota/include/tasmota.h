@@ -107,7 +107,7 @@ const uint8_t MAX_I2S = 2;                  // Max number of Hardware I2S contro
   const uint8_t MAX_RMT = 0;                // Max number or RMT channels (0 if unknown)
   #endif
 #else
-const uint8_t MAX_SPI = 0;                  // Max number of Hardware SPI controllers (ESP8266 = 0, no choice)
+const uint8_t MAX_SPI = 1;                  // Max number of Hardware SPI controllers
 const uint8_t MAX_I2S = 0;                  // Max number of Hardware I2S controllers (ESP8266 = 0, no choice)
 const uint8_t MAX_RMT = 0;                  // No RMT channel on ESP8266
 #endif

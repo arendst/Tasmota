@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - ESP32 upgrade by file upload response based on file size (#22500)
+- Wrong GUI Module and Template drop down list indexes regression
 
 ### Removed
 

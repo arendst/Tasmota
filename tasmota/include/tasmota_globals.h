@@ -543,6 +543,7 @@ const char kWebColors[] PROGMEM =
 
 #define AGPIO(x) ((x)<<5)
 #define BGPIO(x) ((x)>>5)
+#define AGMAX(x) ((x)?(x-1):0)
 
 #ifdef USE_DEVICE_GROUPS
 #define SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, ...) _SendDeviceGroupMessage(DEVICE_INDEX, REQUEST_TYPE, __VA_ARGS__, 0)

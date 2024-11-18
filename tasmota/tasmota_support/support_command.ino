@@ -1805,7 +1805,7 @@ void CmndGpio(void)
     if (ValidGPIO(XdrvMailbox.index, template_gp.io[XdrvMailbox.index]) && (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < AGPIO(GPIO_SENSOR_END))) {
       bool present = false;
       for (uint32_t i = 0; i < nitems(kGpioNiceList); i++) {
-        uint32_t midx = pgm_read_word(kGpioNiceList + i);
+        uint32_t midx = pgm_read_word(&kGpioNiceList[i]);
         uint32_t max_midx = ((midx & 0x001F) > 0) ? midx : midx +1;
         if ((XdrvMailbox.payload >= (midx & 0xFFE0)) && (XdrvMailbox.payload < max_midx)) {
           present = true;
@@ -1843,7 +1843,7 @@ void CmndGpio(void)
         uint32_t sensor_name_idx = BGPIO(sensor_type);
         uint32_t nice_list_search = sensor_type & 0xFFE0;
         for (uint32_t j = 0; j < nitems(kGpioNiceList); j++) {
-          uint32_t nls_idx = pgm_read_word(kGpioNiceList + j);
+          uint32_t nls_idx = pgm_read_word(&kGpioNiceList[j]);
           if (((nls_idx & 0xFFE0) == nice_list_search) && ((nls_idx & 0x001F) > 0)) {
             snprintf_P(sindex, sizeof(sindex), PSTR("%d"), (sensor_type & 0x001F) +1);
             break;

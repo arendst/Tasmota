@@ -1932,7 +1932,7 @@ void WSContentSendNiceLists(uint32_t option) {
     if (option && (1 == i)) {
       WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, AGPIO(GPIO_USER), PSTR(D_SENSOR_USER));  // }2'255'>User}3
     }
-    uint32_t ridx = pgm_read_word(kGpioNiceList + i) & 0xFFE0;
+    uint32_t ridx = pgm_read_word(&kGpioNiceList[i]) & 0xFFE0;
     uint32_t midx = BGPIO(ridx);
     WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE_NO_INDEX, ridx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));
   }
@@ -1942,7 +1942,7 @@ void WSContentSendNiceLists(uint32_t option) {
   uint32_t midx;
   bool first_done = false;
   for (uint32_t i = 0; i < nitems(kGpioNiceList); i++) {  // hs=[36,68,100,132,168,200,232,264,292,324,356,388,421,453];
-    midx = pgm_read_word(kGpioNiceList + i);
+    midx = pgm_read_word(&kGpioNiceList[i]);
     if (midx & 0x001F) {
       if (first_done) { WSContentSend_P(PSTR(",")); }
       WSContentSend_P(PSTR("%d"), midx);
