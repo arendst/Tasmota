@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [14.3.0.7] 
 ### Added
+- Support for TM1640 based IoTTimer by Stefan Oskamp (#21376)
 
 ### Breaking Changed
 

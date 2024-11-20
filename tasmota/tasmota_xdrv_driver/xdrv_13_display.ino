@@ -2169,7 +2169,7 @@ void CmndDisplayText(void) {
 
 void CmndDisplayClear(void) {
   DisplayClear();
-  ResponseCmndChar(XdrvMailbox.data);
+  ResponseCmndDone();
 }
 
 void CmndDisplayNumber(void) {
