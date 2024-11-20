@@ -605,6 +605,8 @@ void IoTTimerShowTime(void) {
   snprintf_P(buffer, sizeof(buffer), PSTR("%2d:%02d"), hour, min);
   if (Tm1640->clock_seconds) {
     snprintf_P(buffer, sizeof(buffer), PSTR("%s:%02d"), buffer, sec);
+  } else {
+    snprintf_P(buffer, sizeof(buffer), PSTR("%s  "), buffer);         // Erase seconds in case toggling between date/time
   }
   IoTTimerDrawStringAt(0, 0, buffer);
 
