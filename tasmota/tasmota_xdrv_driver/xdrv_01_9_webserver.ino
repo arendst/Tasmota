@@ -1238,6 +1238,53 @@ void HandleWifiLogin(void) {
   WSContentStop();
 }
 
+#ifdef USE_SHUTTER
+/*-------------------------------------------------------------------------------------------*/
+
+int32_t IsShutterWebButton(uint32_t idx) {
+  /* 0: Not a shutter, 1..4: shutter up idx, -1..-4: shutter down idx */
+  int32_t ShutterWebButton = 0;
+  if (Settings->flag3.shutter_mode) {  // SetOption80 - Enable shutter support
+    for (uint32_t i = 0; i < TasmotaGlobal.shutters_present ; i++) {
+      if (ShutterGetStartRelay(i) && ((ShutterGetStartRelay(i) == idx) || (ShutterGetStartRelay(i) == (idx-1)))) {
+        ShutterWebButton = (ShutterGetStartRelay(i) == idx) ? (i+1): (-1-i);
+        break;
+      }
+    }
+  }
+  return ShutterWebButton;
+}
+#endif // USE_SHUTTER
+
+/*-------------------------------------------------------------------------------------------*/
+
+void WebGetDeviceCounts(uint32_t &buttons_non_light, uint32_t &buttons_non_light_non_shutter, uint32_t &shutter_button) {
+  buttons_non_light = TasmotaGlobal.devices_present;
+
+#ifdef USE_LIGHT
+  // Chk for reduced toggle buttons used by lights
+  if (TasmotaGlobal.light_type) {
+    // Find and skip light buttons (Lights are controlled by the last TasmotaGlobal.devices_present (or 2))
+    buttons_non_light = LightDevice() -1;
+  }
+#endif  // USE_LIGHT
+
+  buttons_non_light_non_shutter = buttons_non_light;
+  shutter_button = 0;           // Bitmask for each button
+#ifdef USE_SHUTTER
+  // Chk for reduced toggle buttons used by shutters
+  // Find and skip dedicated shutter buttons
+  if (buttons_non_light && Settings->flag3.shutter_mode) {  // SetOption80 - Enable shutter support
+    for (uint32_t button_idx = 1; button_idx <= buttons_non_light; button_idx++) {
+      if (IsShutterWebButton(button_idx) != 0) {
+        buttons_non_light_non_shutter--;
+        shutter_button |= (1 << (button_idx -1));  // Set button bit in bitmask
+      }
+    }
+  }
+#endif  // USE_SHUTTER
+}
+
 #ifdef USE_LIGHT
 /*-------------------------------------------------------------------------------------------*/
 
@@ -1318,32 +1365,11 @@ void HandleRoot(void) {
 #ifndef FIRMWARE_MINIMAL
 
   if (TasmotaGlobal.devices_present) {
-    uint32_t buttons_non_light = TasmotaGlobal.devices_present;
+    uint32_t buttons_non_light;
+    uint32_t buttons_non_light_non_shutter;
+    uint32_t shutter_button;
+    WebGetDeviceCounts(buttons_non_light, buttons_non_light_non_shutter, shutter_button);
     uint32_t button_idx = 1;
-
-#ifdef USE_LIGHT
-    // Chk for reduced toggle buttons used by lights
-    if (TasmotaGlobal.light_type) {
-      // Find and skip light buttons (Lights are controlled by the last TasmotaGlobal.devices_present (or 2))
-      buttons_non_light = LightDevice() -1;
-    }
-#endif  // USE_LIGHT
-
-    uint32_t buttons_non_light_non_shutter = buttons_non_light;
-
-#ifdef USE_SHUTTER
-    // Chk for reduced toggle buttons used by shutters
-    uint32_t shutter_button = 0;           // Bitmask for each button
-    // Find and skip dedicated shutter buttons
-    if (buttons_non_light && Settings->flag3.shutter_mode) {  // SetOption80 - Enable shutter support
-      for (button_idx = 1; button_idx <= buttons_non_light; button_idx++) {
-        if (IsShutterWebButton(button_idx) != 0) {
-          buttons_non_light_non_shutter--;
-          shutter_button |= (1 << (button_idx -1));  // Set button bit in bitmask
-        }
-      }
-    }
-#endif  // USE_SHUTTER
 
     if (buttons_non_light_non_shutter) {   // Any non light AND non shutter button
       // Display toggle buttons
@@ -1428,6 +1454,10 @@ void HandleRoot(void) {
 
       }
       WSContentSend_P(PSTR("</table>"));
+
+      if (1 == button_idx) {
+        button_idx = shutter_button_idx;
+      }
     }
 #endif  // USE_SHUTTER
 
@@ -1624,24 +1654,6 @@ void HandleRoot(void) {
 /*-------------------------------------------------------------------------------------------*\
  * HandleRootStatusRefresh
 \*-------------------------------------------------------------------------------------------*/
-
-#ifdef USE_SHUTTER
-int32_t IsShutterWebButton(uint32_t idx) {
-  /* 0: Not a shutter, 1..4: shutter up idx, -1..-4: shutter down idx */
-  int32_t ShutterWebButton = 0;
-  if (Settings->flag3.shutter_mode) {  // SetOption80 - Enable shutter support
-    for (uint32_t i = 0; i < TasmotaGlobal.shutters_present ; i++) {
-      if (ShutterGetStartRelay(i) && ((ShutterGetStartRelay(i) == idx) || (ShutterGetStartRelay(i) == (idx-1)))) {
-        ShutterWebButton = (ShutterGetStartRelay(i) == idx) ? (i+1): (-1-i);
-        break;
-      }
-    }
-  }
-  return ShutterWebButton;
-}
-#endif // USE_SHUTTER
-
-/*-------------------------------------------------------------------------------------------*/
 
 bool WebUpdateSliderTime(void) {
   uint32_t slider_update_time = millis();
@@ -1878,6 +1890,36 @@ bool HandleRootStatusRefresh(void) {
   }
   XsnsXdrvCall(FUNC_WEB_SENSOR);
   WSContentSend_P(PSTR("</table>"));
+
+  if (!Settings->flag6.gui_no_state_text) {  // SetOption161 - (GUI) Disable display of state text (1)
+    bool show_state = (TasmotaGlobal.devices_present);
+#ifdef USE_SONOFF_IFAN
+    if (IsModuleIfan()) { show_state = false; }
+#endif  // USE_SONOFF_IFAN
+    if (show_state) {
+      uint32_t buttons_non_light;
+      uint32_t buttons_non_light_non_shutter;
+      uint32_t shutter_button;
+      WebGetDeviceCounts(buttons_non_light, buttons_non_light_non_shutter, shutter_button);
+
+      if (buttons_non_light_non_shutter <= 8) {   // Any non light AND non shutter button
+        WSContentSend_P(PSTR("{t}<tr>"));
+        uint32_t cols = buttons_non_light_non_shutter;
+        uint32_t fontsize = (cols < 5) ? 70 - (cols * 8) : 32;
+        for (uint32_t idx = 1; idx <= buttons_non_light; idx++) {
+
+#ifdef USE_SHUTTER
+          if (bitRead(shutter_button, idx -1)) { continue; }  // Skip non-sequential shutter button
+#endif  // USE_SHUTTER
+
+          snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(TasmotaGlobal.power, idx -1));
+          WSContentSend_P(HTTP_DEVICE_STATE, 100 / cols, (bitRead(TasmotaGlobal.power, idx -1)) ? PSTR("bold") : PSTR("normal"), fontsize,
+            (cols < 5) ? GetStateText(bitRead(TasmotaGlobal.power, idx -1)) : svalue);
+        }
+        WSContentSend_P(PSTR("</tr></table>"));
+      }
+    }
+  }
 
   if (1 == Web.slider_update_time) {
     Web.slider_update_time = 0;

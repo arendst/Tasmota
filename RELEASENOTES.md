@@ -116,7 +116,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v14.3.0.7
 ### Added
-- Add command ``WebColor20`` to control color of Button when Off
+- Command `WebColor20` to control color of Button when Off
+- Command `SetOption161 1` to disable display of state text (#22515)
 - DALI support for short addresses (gear) and groups
 - DALI command `DaliGear` to set max found gear to speed up scan response
 - DALI command `DaliGroup` to add gear to groups
