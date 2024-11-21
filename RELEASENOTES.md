@@ -166,6 +166,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Fixed
 - FUNC_COMMAND linked list command buffer corruption by shutter driver
+- Use HTML escape on File System Edit File load [#22492](https://github.com/arendst/Tasmota/issues/22492)
 - Prevent crashing when `display.ini` is missing end `#` [#22471](https://github.com/arendst/Tasmota/issues/22471)
 - Alexa Hue with multiple devices [#22383](https://github.com/arendst/Tasmota/issues/22383)
 - Mitsubishi Electric HVAC Standby Stage for MiElHVAC [#22430](https://github.com/arendst/Tasmota/issues/22430)
