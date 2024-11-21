@@ -1891,12 +1891,20 @@ bool HandleRootStatusRefresh(void) {
   XsnsXdrvCall(FUNC_WEB_SENSOR);
   WSContentSend_P(PSTR("</table>"));
 
-  if (!Settings->flag6.gui_no_state_text) {  // SetOption161 - (GUI) Disable display of state text (1)
-    bool show_state = (TasmotaGlobal.devices_present);
+  if (!Settings->flag6.gui_no_state_text &&  // SetOption161 - (GUI) Disable display of state text (1)
+      TasmotaGlobal.devices_present) {
+
 #ifdef USE_SONOFF_IFAN
-    if (IsModuleIfan()) { show_state = false; }
+    if (IsModuleIfan()) {
+      WSContentSend_P(PSTR("{t}<tr>"));
+      WSContentSend_P(HTTP_DEVICE_STATE, 36, (bitRead(TasmotaGlobal.power, 0)) ? PSTR("bold") : PSTR("normal"), 54, GetStateText(bitRead(TasmotaGlobal.power, 0)));
+      uint32_t fanspeed = GetFanspeed();
+      snprintf_P(svalue, sizeof(svalue), PSTR("%d"), fanspeed);
+      WSContentSend_P(HTTP_DEVICE_STATE, 64, (fanspeed) ? PSTR("bold") : PSTR("normal"), 54, (fanspeed) ? svalue : GetStateText(0));
+      WSContentSend_P(PSTR("</tr></table>"));
+    } else {
 #endif  // USE_SONOFF_IFAN
-    if (show_state) {
+
       uint32_t buttons_non_light;
       uint32_t buttons_non_light_non_shutter;
       uint32_t shutter_button;
@@ -1918,7 +1926,11 @@ bool HandleRootStatusRefresh(void) {
         }
         WSContentSend_P(PSTR("</tr></table>"));
       }
+
+#ifdef USE_SONOFF_IFAN
     }
+#endif  // USE_SONOFF_IFAN
+
   }
 
   if (1 == Web.slider_update_time) {
