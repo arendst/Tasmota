@@ -641,6 +641,8 @@ void IoTTimerShowDate(void)
 
 
 void IoTTimerRefresh(void) {  // Every second
+  if (!disp_power) { return; }
+
   // Update temperature display content:
   IoTTimerUpdateTemperature();
 
