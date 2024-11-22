@@ -624,14 +624,14 @@ void EnergyUpdateTotal(void) {
       }
     }
 
-    if ((Energy->total[i] < (Energy->import_active[i] - 0.01f)) &&   // We subtract a little offset of 10Wh to avoid continuous updates
-        Settings->flag3.hardware_energy_total) {                   // SetOption72 - Enable hardware energy total counter as reference (#6561)
+    if (Settings->flag3.hardware_energy_total && // SetOption72 - Enable hardware energy total counter as reference (#6561)
+        fabs(Energy->total[i] - Energy->import_active[i]) > 0.01f) {   // to avoid continuous updates, check for difference of min 10Wh
       // The following calculation allows total usage (Energy->import_active[i]) up to +/-2147483.647 kWh
       RtcEnergySettings.energy_total_kWh[i] = Energy->import_active[i] - (Energy->energy_today_offset_kWh[i] + ((float)Energy->kWhtoday[i] / 100000));
       Energy->Settings.energy_total_kWh[i] = RtcEnergySettings.energy_total_kWh[i];
       Energy->total[i] = Energy->import_active[i];
       Energy->Settings.energy_kWhtotal_time = (!Energy->energy_today_offset_kWh[i]) ? LocalTime() : Midnight();
-  //    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: Energy Total updated with hardware value"));
+  //    AddLog(LOG_LEVEL_DEBUG, PSTR("NRG: EnergyTotal updated with hardware value"));
     }
   }
 
@@ -663,7 +663,7 @@ void Energy200ms(void) {
       }
 
       bool midnight = (LocalTime() == Midnight());
-      if (midnight || (RtcTime.day_of_year > Energy->Settings.energy_kWhdoy)) {
+      if ((midnight || RtcTime.day_of_year > Energy->Settings.energy_kWhdoy) && TasmotaGlobal.uptime > 10) {
         Energy->kWhtoday_offset_init = true;
         Energy->Settings.energy_kWhdoy = RtcTime.day_of_year;
 
