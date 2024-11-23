@@ -663,7 +663,7 @@ void Energy200ms(void) {
       }
 
       bool midnight = (LocalTime() == Midnight());
-      if ((midnight || RtcTime.day_of_year > Energy->Settings.energy_kWhdoy) && TasmotaGlobal.uptime > 10) {
+      if ((midnight || RtcTime.day_of_year != Energy->Settings.energy_kWhdoy) && TasmotaGlobal.uptime > 10) {
         Energy->kWhtoday_offset_init = true;
         Energy->Settings.energy_kWhdoy = RtcTime.day_of_year;
 
