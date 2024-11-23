@@ -106,7 +106,8 @@ void MagicSwitchLoop()
 }
 
 void MagicSwitchSetPower(void) {
-  // In case of any power state change, whatever is the source, the masking windows is restarted
+  // In case of any power state change, whatever is the source, the masking windows is restarted because
+  // it can happen that load switching can create mains disturbances that is understood as a MagicSwitch pulse
   MagicSwitch->switch_state = MAGICSWITCH_MASKING_WINDOW_LEN;
 }
 
@@ -179,7 +180,7 @@ bool Xdrv71(uint32_t function) {
         MagicSwitchLoop();
         break;
       case FUNC_SET_POWER:
-        MagixSwitchSetPower();
+        MagicSwitchSetPower();
         break;
       case FUNC_ADD_SWITCH:
         result = MagicSwitchAddSwitch();
