@@ -106,8 +106,8 @@ void MagicSwitchLoop()
 }
 
 void MagicSwitchSetPower(void) {
-  // In case of any power state change, whatever is the source, the masking windows is restarted because
-  // it can happen that load switching can create mains disturbances that is understood as a MagicSwitch pulse
+  // It can happen that on relay switch, disturbances on the mains is falsy see as a MagicSwitch pulse
+  // This restart the masking windows on every power change to avoid that effect
   MagicSwitch->switch_state = MAGICSWITCH_MASKING_WINDOW_LEN;
 }
 
