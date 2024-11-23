@@ -1424,6 +1424,7 @@ void HandleRoot(void) {
 
       int32_t ShutterWebButton;
       uint32_t shutter_button_idx = 1;
+      uint32_t shutter_button_idx_temp;
       for (uint32_t shutter_idx = 0; shutter_idx < TasmotaGlobal.shutters_present ; shutter_idx++) {
         while ((0 == shutter_button & (1 << (shutter_button_idx -1)))) { shutter_button_idx++; }
 
@@ -1431,9 +1432,11 @@ void HandleRoot(void) {
         shutter_button_idx++;  // Left button is next button first (down)
         for (uint32_t j = 0; j < 2; j++) {
           ShutterWebButton = IsShutterWebButton(shutter_button_idx);
-          WSContentSend_P(HTTP_DEVICE_CONTROL, 15, shutter_button_idx, shutter_button_idx,
+          shutter_button_idx_temp = ShutterGetOptions(abs(ShutterWebButton)-1) & 1 /* invert index */ ? shutter_button_idx + (j * 2) - 1 : shutter_button_idx;
+          // AddLog(LOG_LEVEL_DEBUG, PSTR("SHT: j %d, ShutterWebButton %d, shutter_button_idx %d, shutter_idx %d, shutter_button_idx_temp %d"), j, ShutterWebButton, shutter_button_idx, shutter_idx, shutter_button_idx_temp);
+          WSContentSend_P(HTTP_DEVICE_CONTROL, 15, shutter_button_idx_temp, shutter_button_idx_temp,
             ((ShutterGetOptions(abs(ShutterWebButton)-1) & 2) /* is locked */ ? "-" :
-            ((ShutterGetOptions(abs(ShutterWebButton)-1) & 8) /* invert web buttons */ ? ((ShutterWebButton>0) ? "&#9660;" : "&#9650;") : ((ShutterWebButton>0) ? "&#9650;" : "&#9660;"))),
+            ((ShutterGetOptions(abs(ShutterWebButton)-1) & 1) /* invert web buttons */ ? (j ? "&#9660;" : "&#9650;") : (j ? "&#9650;" : "&#9660;"))),
             "");
 
           if (1 == j) { break; }
