@@ -105,6 +105,11 @@ void MagicSwitchLoop()
   }
 }
 
+void MagicSwitchSetPower(void) {
+  // In case of any power state change, whatever is the source, the masking windows is restarted
+  MagicSwitch->switch_state = MAGICSWITCH_MASKING_WINDOW_LEN;
+}
+
 /********************************************************************************************************
  * Driver initialisation
  */
@@ -172,6 +177,9 @@ bool Xdrv71(uint32_t function) {
       case FUNC_EVERY_50_MSECOND:
       //case FUNC_EVERY_250_MSECOND:
         MagicSwitchLoop();
+        break;
+      case FUNC_SET_POWER:
+        MagixSwitchSetPower();
         break;
       case FUNC_ADD_SWITCH:
         result = MagicSwitchAddSwitch();
