@@ -84,7 +84,8 @@
         performs a manual scan or set passive/active
         *BLEScan0 0 - set passive scan
         BLEScan0 1 - set active scan (you may get names)
-        BLEScan1 nn - start a manula scan for nn seconds
+        BLEScan1 nn - start a manual scan for nn seconds
+        BLEScan2 nn - start a manual scan for nn seconds and publish on tele when at least one device is found
       BLEAlias
         <mac>=<name> <mac>=<name> - set one or more aliases for addresses
       BLEName
@@ -603,6 +604,7 @@ uint8_t BLEMode = BLEModeRegularScan;
 uint8_t BLETriggerScan = 0;
 uint8_t BLEAdvertMode = BLE_ADV_TELE;
 uint8_t BLEdeviceLimitReached = 0;
+uint8_t BLEpostWhenFound = 0;
 
 uint8_t BLEStop = 0;
 uint64_t BLEStopAt = 0;
@@ -2347,6 +2349,12 @@ static void BLEEverySecond(bool restart){
     BLE_ESP32::BLEPostMQTT(false); // show all operations, not just completed
   }
 
+  if ((BLEpostWhenFound == 1) && (seenDevices.size() > 0))
+  {
+    BLEPublishDevices = 2; // mqtt publish as 'STAT'
+    BLEpostWhenFound = 0;
+  }
+
   if (BLEPublishDevices){
     BLEPostMQTTSeenDevices(BLEPublishDevices);
     BLEShowStats();
@@ -2725,6 +2733,8 @@ void CmndBLEScan(void){
       }
     } break;
 
+    case 2: // post on tele when at leat one device is found
+      BLEpostWhenFound = 1;
     case 1: // do a manual scan now
       switch (BLEMode){
         case BLEModeScanByCommand: {
