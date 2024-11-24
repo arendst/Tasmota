@@ -23,13 +23,6 @@
 #include <berry.h>
 #include "esp8266toEsp32.h"
 
-#if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2)
-#if ESP_IDF_VERSION_MAJOR >= 5
-#include <driver/dac_oneshot.h>
-#else
-#include <driver/dac.h>
-#endif
-#endif
 /*********************************************************************************************\
  * Native functions mapped to Berry functions
  * 
@@ -40,9 +33,10 @@
 extern "C" {
 
   #include "berry/include/be_gpio_defines.h"
-#if   defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2)
+#ifdef SOC_DAC_SUPPORTED
   #include "soc/dac_channel.h"
-#endif // defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2)
+  #include <driver/dac_oneshot.h>
+#endif // SOC_DAC_SUPPORTED
 
   // virtual member
   int gp_member(bvm *vm);
@@ -65,7 +59,7 @@ extern "C" {
           // synthetic mode
           if (-1 == mode) {
             // DAC
-#if   defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2)
+#ifdef SOC_DAC_SUPPORTED
             if (pin != DAC_CHAN0_GPIO_NUM && pin != DAC_CHAN1_GPIO_NUM) {
               be_raisef(vm, "value_error", "DAC only supported on GPIO%i-%i", DAC_CHAN0_GPIO_NUM, DAC_CHAN1_GPIO_NUM);
             }
@@ -113,7 +107,7 @@ extern "C" {
 
   int gp_dac_voltage(bvm *vm);
   int gp_dac_voltage(bvm *vm) {
-#if   defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2)
+#ifdef SOC_DAC_SUPPORTED
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc == 2 && be_isint(vm, 1) && be_isnumber(vm, 2)) {
       int32_t pin = be_toint(vm, 1);
