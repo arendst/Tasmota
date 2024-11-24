@@ -108,6 +108,9 @@
       BLEEnableUnsaved
         *0/1 - if BLE is disabled, this can be used to enable BLE without
         it being saved - useful as the last command in autoexec.bat
+      BLEFilterNames
+        BLEFilterNames0 - clear filter list
+        BLEFilterNames1 - <name1>,<name2> - set one or more device names
 
   Other drivers can add callbacks to receive advertisements
   Other drivers can add 'operations' to be performed and receive callbacks from the operation's success or failure
@@ -134,6 +137,8 @@ i.e. the Bluetooth of the ESP can be shared without conflict.
 */
 
 #define BLE_ESP32_ALIASES
+#define BLE_ESP32_FILTER_BY_NAME
+#define BLE_ESP32_FILTER_BY_RSSI
 
 // uncomment for more diagnostic/information messages - + more flash use.
 //#define BLE_ESP32_DEBUG
@@ -472,6 +477,12 @@ std::deque<BLE_ESP32::SCANCOMPLETE_CALLBACK*> scancompleteCallbacks;
 std::deque<BLE_ESP32::ble_alias_t*> aliases;
 #endif
 
+#ifdef BLE_ESP32_FILTER_BY_NAME
+std::vector<String> bleFilterNames;
+#endif
+#ifdef BLE_ESP32_FILTER_BY_RSSI
+int minRSSI = -100;
+#endif
 
 /*********************************************************************************************\
  * constants
@@ -480,7 +491,7 @@ std::deque<BLE_ESP32::ble_alias_t*> aliases;
 #define D_CMND_BLE "BLE"
 
 const char kBLE_Commands[] PROGMEM = D_CMND_BLE "|"
-  "Period|Adv|Op|Mode|Details|Scan|Alias|Name|Debug|Devices|MaxAge|AddrFilter|EnableUnsaved";
+  "Period|Adv|Op|Mode|Details|Scan|Alias|Name|Debug|Devices|MaxAge|AddrFilter|EnableUnsaved|FilterNames|MinRssiLevel";
 
 static void CmndBLEPeriod(void);
 static void CmndBLEAdv(void);
@@ -495,6 +506,8 @@ static void CmndBLEDevices(void);
 static void CmndBLEMaxAge(void);
 static void CmndBLEAddrFilter(void);
 static void CmndBLEEnableUnsaved(void);
+static void CmndBleFilterNames(void);
+static void CmndSetMinRSSI(void);
 
 void (*const BLE_Commands[])(void) PROGMEM = {
   &BLE_ESP32::CmndBLEPeriod,
@@ -509,7 +522,9 @@ void (*const BLE_Commands[])(void) PROGMEM = {
   &BLE_ESP32::CmndBLEDevices,
   &BLE_ESP32::CmndBLEMaxAge,
   &BLE_ESP32::CmndBLEAddrFilter,
-  &BLE_ESP32::CmndBLEEnableUnsaved
+  &BLE_ESP32::CmndBLEEnableUnsaved,
+  &BLE_ESP32::CmndBleFilterNames,
+  &BLE_ESP32::CmndSetMinRSSI
 };
 
 const char *successStates[] PROGMEM = {
@@ -1128,7 +1143,24 @@ void ReverseMAC(uint8_t _mac[]){
 }
 
 
-
+/**
+ * @brief Search for device name in filer list
+ *
+ * @param deviceName device name string 
+ */
+#ifdef BLE_ESP32_FILTER_BY_NAME
+bool isDeviceInFilter(const String& deviceName) {
+#ifdef BLE_ESP32_DEBUG
+    if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Device chcked in filter %s"), deviceName);
+#endif  
+  for (const auto& filterName : bleFilterNames) {
+    if (deviceName == filterName) {
+      return true;
+    }
+  }
+  return false;
+}
+#endif
 
 /*********************************************************************************************\
  * Advertisment details
@@ -1372,9 +1404,24 @@ class BLEAdvCallbacks: public NimBLEScanCallbacks {
       BLEAdvertisment.name[sizeof(BLEAdvertisment.name)-1] = 0;
     }
 
+    int filter = 0;
+#ifdef BLE_ESP32_FILTER_BY_NAME
+    if (!bleFilterNames.empty()) {
+      if (!advertisedDevice->haveName() || !isDeviceInFilter(namestr))
+      {
+        filter = 1;
+      }
+    }
+#endif
+
+#ifdef BLE_ESP32_FILTER_BY_RSSI
+    if (advertisedDevice->getRSSI() < minRSSI) { 
+      filter = 1;
+    }
+#endif
 
     // log this device safely
-    if (BLEAdvertisment.addrtype <= BLEAddressFilter){
+    if ((BLEAdvertisment.addrtype <= BLEAddressFilter) && (0 == filter) ){
       addSeenDevice(BLEAdvertisment.addr, BLEAdvertisment.addrtype, BLEAdvertisment.name, BLEAdvertisment.RSSI);
     }
 
@@ -2832,6 +2879,58 @@ void CmndBLEDetails(void){
   }
 }
 
+
+void CmndBleFilterNames(void) {
+#ifdef BLE_ESP32_FILTER_BY_NAME
+  int op = XdrvMailbox.index;
+#ifdef BLE_ESP32_DEBUG
+  if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: Name %d %s"), op, XdrvMailbox.data);
+#endif
+
+  switch(op){
+    case 0:{
+      bleFilterNames.clear();
+      ResponseCmndDone();      
+    } break;
+    case 1:{
+      if (XdrvMailbox.data_len) {
+        String filters = XdrvMailbox.data;
+        bleFilterNames.clear();
+        
+        int start = 0;
+        int end = filters.indexOf(',');
+        while (end != -1) {
+          bleFilterNames.push_back(filters.substring(start, end));
+          start = end + 1;
+          end = filters.indexOf(',', start);
+        }
+        bleFilterNames.push_back(filters.substring(start));
+        
+        Response_P(PSTR("{\"BLEFilterNames\":\"%s\"}"), filters.c_str());
+      } else {
+        String filterList;
+        for (const auto& name : bleFilterNames) {
+          if (!filterList.isEmpty()) {
+            filterList += ", ";
+          }
+          filterList += name;
+        }
+
+        Response_P(PSTR("{\"BLEFilterNames\":\"%s\"}"), filterList.c_str());
+      }
+    } break;
+  }
+#endif
+}
+
+void CmndSetMinRSSI(void) {
+#ifdef BLE_ESP32_FILTER_BY_RSSI  
+  if (XdrvMailbox.data_len) {
+    minRSSI = atoi(XdrvMailbox.data);
+  } 
+  Response_P(PSTR("{\"MinRSSI\":\"%d\"}"), minRSSI);
+#endif
+}
 
 void CmndBLEAlias(void){
 #ifdef BLE_ESP32_ALIASES
