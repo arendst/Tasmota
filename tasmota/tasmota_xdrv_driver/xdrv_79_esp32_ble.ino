@@ -111,6 +111,8 @@
       BLEFilterNames
         BLEFilterNames0 - clear filter list
         BLEFilterNames1 - <name1>,<name2> - set one or more device names
+      BLEMinRssiLevel
+        BLEMinRssiLevel <value> - Sets the minimum allowable RSSI level for detected devices
 
   Other drivers can add callbacks to receive advertisements
   Other drivers can add 'operations' to be performed and receive callbacks from the operation's success or failure
