@@ -792,7 +792,7 @@ int genericSensorReadFn(int slot, int force){
       break;*/
     case MI_LYWSD03MMC:
       // don't read if key present and we've decoded at least one advert
-      if (MIBLEsensors[slot].needkey == KEY_REQUIRED_AND_FOUND && !force) return -2;
+      if ((MIBLEsensors[slot].needkey == KEY_NOT_REQUIRED || MIBLEsensors[slot].needkey == KEY_REQUIRED_AND_FOUND) && !force) return -2;
       res = MI32Operation(slot, OP_READ_HT_LY, LYWSD03_Svc, nullptr, LYWSD03_BattNotifyChar);
       break;
     case MI_LYWSD02MMC:
@@ -800,7 +800,7 @@ int genericSensorReadFn(int slot, int force){
       break;
     case MI_MHOC401:
       // don't read if key present and we've decoded at least one advert
-      if (MIBLEsensors[slot].needkey == KEY_REQUIRED_AND_FOUND && !force) return -2;
+      if ((MIBLEsensors[slot].needkey == KEY_NOT_REQUIRED || MIBLEsensors[slot].needkey == KEY_REQUIRED_AND_FOUND) && !force) return -2;
       res = MI32Operation(slot, OP_READ_HT_LY, MHOC401_Svc, nullptr, MHOC401_BattNotifyChar);
       break;
 
