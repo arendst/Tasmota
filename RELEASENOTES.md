@@ -138,6 +138,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Mitsubishi Electric HVAC Compressor Frequency for MiElHVAC [#22347](https://github.com/arendst/Tasmota/issues/22347)
 - Mitsubishi Electric HVAC Auto Clear Remote Temp for MiElHVAC [#22370](https://github.com/arendst/Tasmota/issues/22370)
 - SolaxX1 Meter mode [#22330](https://github.com/arendst/Tasmota/issues/22330)
+- ESP32 new BLE filters by name and minimum RSSI [#22530](https://github.com/arendst/Tasmota/issues/22530)
+- ESP32 Hybrid compile take custom boards settings in account [#22542](https://github.com/arendst/Tasmota/issues/22542)
 - ESP32 MI32 legacy add config operations [#22458](https://github.com/arendst/Tasmota/issues/22458)
 - BLE track devices with RPA [#22300](https://github.com/arendst/Tasmota/issues/22300)
 - Berry add I2C read16/write16 supporting Little Endian [#22448](https://github.com/arendst/Tasmota/issues/22448)
@@ -160,6 +162,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - DALI renamed commands `DaliCommission` to `DaliScan` and `DaliWeb` to `DaliLight`
 - DALI set Tasmota light control as default
 - Shutter optimized behavior to publish shutter data with sensor request [#22353](https://github.com/arendst/Tasmota/issues/22353)
+- Prevent active BLE operations with unencrypted MI-format beacons [#22453](https://github.com/arendst/Tasmota/issues/22453)
 - ESP32 max number of supported switches/buttons/relays from 28 to 32
 - ESP32 max number of interlocks from 14 to 16
 - HASPmota support for page delete and object updates [#22311](https://github.com/arendst/Tasmota/issues/22311)
@@ -168,6 +171,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - FUNC_COMMAND linked list command buffer corruption by shutter driver
 - Use HTML escape on File System Edit File load [#22492](https://github.com/arendst/Tasmota/issues/22492)
 - Prevent crashing when `display.ini` is missing end `#` [#22471](https://github.com/arendst/Tasmota/issues/22471)
+- Magic switch applying masking window to any power change [#22535](https://github.com/arendst/Tasmota/issues/22535)
 - Alexa Hue with multiple devices [#22383](https://github.com/arendst/Tasmota/issues/22383)
 - Mitsubishi Electric HVAC Standby Stage for MiElHVAC [#22430](https://github.com/arendst/Tasmota/issues/22430)
 - EQ3 TRV firmware version 1.46 fails if the default true is used in subscribe on the notify characteristic [#22328](https://github.com/arendst/Tasmota/issues/22328)

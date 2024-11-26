@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Support for TM1640 based IoTTimer by Stefan Oskamp (#21376)
 - Command `SetOption161 1` to disable display of state text (#22515)
+- ESP32 new BLE filters by name and minimum RSSI (#22530)
+- ESP32 Hybrid compile take custom boards settings in account (#22542)
 
 ### Breaking Changed
 
@@ -14,11 +16,13 @@ All notable changes to this project will be documented in this file.
 - ESP32 max number of supported switches/buttons/relays from 28 to 32
 - ESP32 max number of interlocks from 14 to 16
 - ESP32 Platform from 2024.11.30 to 2024.11.31, Framework (Arduino Core) from v3.1.0.241030 to v3.1.0.241117 and IDF to 5.3.1.241024 (#22504)
+- Prevent active BLE operations with unencrypted MI-format beacons (#22453)
 
 ### Fixed
 - ESP32 upgrade by file upload response based on file size (#22500)
 - Wrong GUI Module and Template drop down list indexes regression
 - Use HTML escape on File System Edit File load (#22492)
+- Magic switch applying masking window to any power change (#22535)
 
 ### Removed
 
