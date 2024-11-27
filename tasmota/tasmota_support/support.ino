@@ -844,9 +844,7 @@ void DevicesPresentNonDisplayOrLight(uint32_t &devices_claimed) {
   display_and_lights += LightDevices();               // Skip light(s)
 #endif  // USE_LIGHT
 #ifdef USE_DISPLAY
-  if (disp_device) {
-    display_and_lights++;                             // Skip display
-  }
+  display_and_lights += DisplayDevices();             // Skip display
 #endif  // USE_DISPLAY
   uint32_t devices_present = TasmotaGlobal.devices_present - display_and_lights;
   if (devices_claimed > devices_present) {

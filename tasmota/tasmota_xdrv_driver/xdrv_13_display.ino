@@ -269,6 +269,12 @@ bool disp_subscribed = false;
 
 /*********************************************************************************************/
 
+uint32_t DisplayDevices(void) {
+  return (disp_device);
+}
+
+/*********************************************************************************************/
+
 void DisplayClear(void) {
   if (renderer) {
     renderer->fillScreen(bg_color);
