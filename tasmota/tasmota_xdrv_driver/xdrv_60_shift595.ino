@@ -66,9 +66,9 @@ void Shift595ModuleInit(void) {
 
       if (PinUsed(GPIO_SHIFT595_OE)) {
         Shift595->pinOE = Pin(GPIO_SHIFT595_OE);
-        if (ResetReasonPowerOn()) {                    // Fix relay toggle at restart
-          Shift595ConfigurePin(Shift595->pinOE, 1);    // Set all outputs to 3-state (3-state converted to OFF by ULN2803 relay drivers)
-        }
+        // Fix relay toggle at restart
+        // On power ON set all outputs to 3-state (3-state converted to OFF by ULN2803 relay drivers)
+        Shift595ConfigurePin(Shift595->pinOE, ResetReasonPowerOn());
       }
 
       Shift595->first = TasmotaGlobal.devices_present; // devices_present offset
