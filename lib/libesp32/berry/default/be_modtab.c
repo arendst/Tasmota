@@ -152,7 +152,7 @@ BERRY_LOCAL const bntvmodule_t* const be_module_table[] = {
     &be_native_module(unishox),
 #endif // USE_UNISHOX_COMPRESSION
 
-#ifdef USE_WS2812
+#if defined(USE_WS2812) && !defined(USE_WS2812_FORCE_NEOPIXELBUS)
     &be_native_module(animate),
 #endif // USE_WS2812
 
@@ -293,7 +293,7 @@ BERRY_LOCAL bclass_array be_class_table = {
 #ifdef USE_BERRY_TCPSERVER
     &be_native_class(tcpserver),
 #endif // USE_BERRY_TCPSERVER
-#ifdef USE_WS2812
+#if defined(USE_WS2812) && !defined(USE_WS2812_FORCE_NEOPIXELBUS)
     &be_native_class(Leds_ntv),
     &be_native_class(Leds),
 #endif // USE_WS2812

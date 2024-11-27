@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 max number of interlocks from 14 to 16
 - ESP32 Platform from 2024.11.30 to 2024.11.31, Framework (Arduino Core) from v3.1.0.241030 to v3.1.0.241117 and IDF to 5.3.1.241024 (#22504)
 - Prevent active BLE operations with unencrypted MI-format beacons (#22453)
+- Replace NeoPixelBus with TasmotaLED on ESP32x
 
 ### Fixed
 - ESP32 upgrade by file upload response based on file size (#22500)
