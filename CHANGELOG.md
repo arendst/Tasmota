@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - Wrong GUI Module and Template drop down list indexes regression
 - Use HTML escape on File System Edit File load (#22492)
 - Magic switch applying masking window to any power change (#22535)
+- Shift595 output offsets and restart relay toggles
 
 ### Removed
 

@@ -832,10 +832,26 @@ int32_t UpdateDevicesPresent(int32_t change) {
   else if (devices_present >= POWER_SIZE) {           // Support up to uint32_t as bitmask
     difference = devices_present - POWER_SIZE;
     devices_present = POWER_SIZE;
-    AddLog(LOG_LEVEL_DEBUG, PSTR("APP: Max number of devices reached"));
+//    AddLog(LOG_LEVEL_DEBUG, PSTR("APP: Max 32 devices supported"));
   }
   TasmotaGlobal.devices_present = devices_present;
   return difference;
+}
+
+void DevicesPresentNonDisplayOrLight(uint32_t &devices_claimed) {
+  uint32_t display_and_lights = 0;
+#ifdef USE_LIGHT
+  display_and_lights += LightDevices();               // Skip light(s)
+#endif  // USE_LIGHT
+#ifdef USE_DISPLAY
+  if (disp_device) {
+    display_and_lights++;                             // Skip display
+  }
+#endif  // USE_DISPLAY
+  uint32_t devices_present = TasmotaGlobal.devices_present - display_and_lights;
+  if (devices_claimed > devices_present) {
+    devices_claimed = devices_present;                // Reduce amount of claimed devices
+  }
 }
 
 char* GetPowerDevice(char* dest, uint32_t idx, size_t size, uint32_t option)

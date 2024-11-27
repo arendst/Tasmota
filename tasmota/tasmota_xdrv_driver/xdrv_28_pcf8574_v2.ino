@@ -374,6 +374,7 @@ void Pcf8574Power(void) {
     rpower >>= Pcf8574.relay_offset;
     relay_max = Pcf8574.relay_max;
   }
+  DevicesPresentNonDisplayOrLight(relay_max);     // Skip display and/or light(s)
   for (uint32_t index = 0; index < relay_max; index++) {
     power_t state = rpower &1;
     if (Pcf8574PinUsed(GPIO_REL1, index)) {

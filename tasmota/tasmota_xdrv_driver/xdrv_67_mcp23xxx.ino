@@ -762,6 +762,7 @@ void MCP23xPower(void) {
     rpower >>= Mcp23x.relay_offset;
     relay_max = Mcp23x.relay_max;
   }
+  DevicesPresentNonDisplayOrLight(relay_max);          // Skip display and/or light(s)
   for (uint32_t index = 0; index < relay_max; index++) {
     power_t state = rpower &1;
     if (MCP23xPinUsed(GPIO_REL1, index)) {

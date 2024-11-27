@@ -169,6 +169,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Fixed
 - FUNC_COMMAND linked list command buffer corruption by shutter driver
+- Shift595 output offsets and restart relay toggles
 - Use HTML escape on File System Edit File load [#22492](https://github.com/arendst/Tasmota/issues/22492)
 - Prevent crashing when `display.ini` is missing end `#` [#22471](https://github.com/arendst/Tasmota/issues/22471)
 - Magic switch applying masking window to any power change [#22535](https://github.com/arendst/Tasmota/issues/22535)
