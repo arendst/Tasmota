@@ -1930,6 +1930,7 @@ bool Xdrv27(uint32_t function)
         }
         break;
       case FUNC_SET_POWER:
+
         // extract the number of the relay that was switched and save for later in Update Position.
         ShutterGlobal.RelayCurrentMask = XdrvMailbox.index ^ ShutterGlobal.RelayOldMask;
         ShutterGlobal.LastChangedRelay = ShutterGetRelayNoFromBitfield(XdrvMailbox.index ^ ShutterGlobal.RelayOldMask);
