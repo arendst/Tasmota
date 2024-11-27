@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Hybrid compile take custom boards settings in account (#22542)
 
 ### Breaking Changed
+- ArtNet on ESP32 switches from GRB to RGB encoding
 
 ### Changed
 - ESP32 max number of supported switches/buttons/relays from 28 to 32
