@@ -147,10 +147,12 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - HASPmota `haspmota.get_pages()` to get the sorted list of pages [#22358](https://github.com/arendst/Tasmota/issues/22358)
 
 ### Breaking Changed
+- ESP32 ArtNet switches from GRB to RGB encoding [#22556](https://github.com/arendst/Tasmota/issues/22556)
 
 ### Changed
 - ESP32 Platform from 2024.09.30 to 2024.11.31, Framework (Arduino Core) from v3.1.0.240926 to v3.1.0.241117 and IDF to 5.3.1.241024 [#22504](https://github.com/arendst/Tasmota/issues/22504)
 - ESP32 LVGL library from v9.2.0 to v9.2.2 [#22385](https://github.com/arendst/Tasmota/issues/22385)
+- ESP32 replaced NeoPixelBus with TasmotaLED [#22556](https://github.com/arendst/Tasmota/issues/22556)
 - Redesign GUI adding feedback to buttons, shutters and lights
 - Use command `WebButton1` to change GUI shutter 1 name
 - Unit (k)VAr(h) to (k)var(h) [#22435](https://github.com/arendst/Tasmota/issues/22435)
@@ -173,6 +175,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Use HTML escape on File System Edit File load [#22492](https://github.com/arendst/Tasmota/issues/22492)
 - Prevent crashing when `display.ini` is missing end `#` [#22471](https://github.com/arendst/Tasmota/issues/22471)
 - Magic switch applying masking window to any power change [#22535](https://github.com/arendst/Tasmota/issues/22535)
+- Shutter wrong power ON state [#22548](https://github.com/arendst/Tasmota/issues/22548)
 - Alexa Hue with multiple devices [#22383](https://github.com/arendst/Tasmota/issues/22383)
 - Mitsubishi Electric HVAC Standby Stage for MiElHVAC [#22430](https://github.com/arendst/Tasmota/issues/22430)
 - EQ3 TRV firmware version 1.46 fails if the default true is used in subscribe on the notify characteristic [#22328](https://github.com/arendst/Tasmota/issues/22328)

@@ -11,14 +11,14 @@ All notable changes to this project will be documented in this file.
 - ESP32 Hybrid compile take custom boards settings in account (#22542)
 
 ### Breaking Changed
-- ArtNet on ESP32 switches from GRB to RGB encoding
+- ESP32 ArtNet switches from GRB to RGB encoding (#22556)
 
 ### Changed
 - ESP32 max number of supported switches/buttons/relays from 28 to 32
 - ESP32 max number of interlocks from 14 to 16
 - ESP32 Platform from 2024.11.30 to 2024.11.31, Framework (Arduino Core) from v3.1.0.241030 to v3.1.0.241117 and IDF to 5.3.1.241024 (#22504)
 - Prevent active BLE operations with unencrypted MI-format beacons (#22453)
-- Replace NeoPixelBus with TasmotaLED on ESP32x
+- ESP32 replaced NeoPixelBus with TasmotaLED (#22556)
 
 ### Fixed
 - ESP32 upgrade by file upload response based on file size (#22500)
@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - Use HTML escape on File System Edit File load (#22492)
 - Magic switch applying masking window to any power change (#22535)
 - Shift595 output offsets and restart relay toggles
+- Shutter wrong power ON state (#22548)
 
 ### Removed
 

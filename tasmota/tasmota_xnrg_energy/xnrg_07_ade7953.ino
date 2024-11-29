@@ -33,14 +33,17 @@
  * {"NAME":"Shelly Pro 1PM","GPIO":[9568,1,9472,1,768,0,0,0,672,704,736,0,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,3459,0,0,32,4736,0,160,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350"}
  * {"NAME":"Shelly Pro 2PM","GPIO":[9568,1,9472,1,768,0,0,0,672,704,736,9569,0,0,5600,6214,0,0,0,5568,0,0,0,0,0,0,0,0,3460,0,0,32,4736,4737,160,161],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350;AdcParam2 2,5600,4700,3350"}
  * {"NAME":"Shelly Pro 4PM","GPIO":[0,6210,0,6214,9568,0,0,0,0,0,9569,0,768,0,5600,0,0,0,0,5568,0,0,0,0,0,0,0,0,736,704,3461,0,4736,0,0,672],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350"}
- *
+ * {"NAME":"Shelly 2PM Gen3","GPIO":[9472,3458,576,225,4736,224,640,608,1,1,193,0,0,0,0,0,0,0,192,32,1,1],"FLAG":0,"BASE":1,"CMND":"ADCGPIO4 10000,10000,4000"}
+ * 
  * Based on datasheet from https://www.analog.com/en/products/ade7953.html
  *
  * Model differences:
  * Function                        Model1   Model2   Model3   Model4  Model5  Model6  Remark
  * ------------------------------  -------  -------  -------  ------  ------  ------  -------------------------------------------------
- * Shelly                          2.5      EM       Plus2PM  Pro1PM  Pro2PM  Pro4PM
+ * Shelly                          2.5      EM       Plus2PM  Pro1PM  Pro2PM  Pro4PM  Shelly hardware
+ *                                                   2PMGen3
  * Processor                       ESP8266  ESP8266  ESP32    ESP32   ESP32   ESP32
+ *                                                   ESP32C3                          Shelly Gen3
  * Interface                       I2C      I2C      I2C      SPI     SPI     SPI     Interface type used
  * Number of inputs                2        2        2        1       2       4       Count of ADE9753 inputs used
  * Number of ADE9753 chips         1        1        1        1       2       2       Count of ADE9753 chips
