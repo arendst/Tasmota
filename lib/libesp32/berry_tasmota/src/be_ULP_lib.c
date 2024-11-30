@@ -6,7 +6,7 @@
 #include "be_constobj.h"
 #include "be_mapping.h"
 
-#if defined(USE_BERRY_ULP) &&  (defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3))
+#if defined(USE_BERRY_ULP) && defined(CONFIG_ULP_COPROC_ENABLED)
 
 extern void be_ULP_run(int32_t entry);
 BE_FUNC_CTYPE_DECLARE(be_ULP_run, "", "[i]");
