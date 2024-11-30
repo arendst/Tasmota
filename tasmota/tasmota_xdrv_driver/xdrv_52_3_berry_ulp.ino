@@ -21,34 +21,39 @@
 #ifdef USE_BERRY_ULP
 #include <berry.h>
 
-#if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
+// #if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_ULP_COPROC_TYPE_LP_CORE)
+#if defined(CONFIG_ULP_COPROC_ENABLED)
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
 #include "esp32/ulp.h"
 #endif // esp32
-#if ESP_IDF_VERSION_MAJOR < 5
-  #if defined(CONFIG_IDF_TARGET_ESP32S2)
-  #include "esp32s2/ulp.h"
-  #include "esp32s2/ulp_riscv.h"
-  #include "esp32s2/ulp_riscv_adc.h"
-  #endif // s2
-  #if defined(CONFIG_IDF_TARGET_ESP32S3)
-  #include "esp32s3/ulp.h"
-  #include "esp32s3/ulp_riscv.h"
-  #include "esp32s3/ulp_riscv_adc.h"
-  #endif //s3
-#endif // ESP_IDF_VERSION_MAJOR < 5
+// #if ESP_IDF_VERSION_MAJOR < 5
+//   #if defined(CONFIG_IDF_TARGET_ESP32S2)
+//   #include "esp32s2/ulp.h"
+//   #include "esp32s2/ulp_riscv.h"
+//   #include "esp32s2/ulp_riscv_adc.h"
+//   #endif // s2
+//   #if defined(CONFIG_IDF_TARGET_ESP32S3)
+//   #include "esp32s3/ulp.h"
+//   #include "esp32s3/ulp_riscv.h"
+//   #include "esp32s3/ulp_riscv_adc.h"
+//   #endif //s3
+// #endif // ESP_IDF_VERSION_MAJOR < 5
 #include "driver/rtc_io.h"
 #include "driver/gpio.h"
-#if ESP_IDF_VERSION_MAJOR >= 5
+// #if ESP_IDF_VERSION_MAJOR >= 5
   #include "esp_adc/adc_oneshot.h"
   #include "ulp_adc.h"
-  #if defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
+  #if defined(CONFIG_ULP_COPROC_TYPE_RISCV) // S2 or S3
     #include "ulp_riscv.h"
   #endif // defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
-#else
-  #include "driver/adc.h"
-#endif // ESP_IDF_VERSION_MAJOR >= 5
+// #else
+//   #include "driver/adc.h"
+// #endif // ESP_IDF_VERSION_MAJOR >= 5
+#ifdef CONFIG_ULP_COPROC_TYPE_LP_CORE
+  #include "ulp_lp_core.h"
+  ulp_lp_core_cfg_t be_ulp_lp_core_cfg;
+#endif //CONFIG_ULP_COPROC_TYPE_LP_CORE
 
 #include "sdkconfig.h"
 
@@ -60,14 +65,21 @@ extern "C" {
   void be_ULP_run(int32_t entry) {
 #if defined(CONFIG_IDF_TARGET_ESP32)
     ulp_run(entry);       // entry point should be at the beginning of program
-#else // S2 or S3
+#elif defined(CONFIG_ULP_COPROC_TYPE_RISCV) // S2 or S3
     ulp_riscv_run();
+#else // lp_core
+    int err = ulp_lp_core_run(&be_ulp_lp_core_cfg);
 #endif
   }
 
   // `ULP.wake_period(period_index:int, period_us:int) -> nil`
   void be_ULP_wake_up_period(int32_t period_index, int32_t period_us) {
+#ifdef CONFIG_ULP_COPROC_TYPE_LP_CORE
+    be_ulp_lp_core_cfg.wakeup_source = ULP_LP_CORE_WAKEUP_SOURCE_LP_TIMER;
+    be_ulp_lp_core_cfg.lp_timer_sleep_duration_us = period_us;
+#else
     ulp_set_wakeup_period(period_index, period_us);
+#endif //CONFIG_ULP_COPROC_TYPE_LP_CORE
   }
 
   // `ULP.set_mem(position:int, value:int) -> value:int`
@@ -102,7 +114,6 @@ extern "C" {
   // enums: channel 0-7, attenuation 0-3, width  0-3
   void be_ULP_adc_config(struct bvm *vm, int32_t channel, int32_t attenuation, int32_t width) {
 #if defined(CONFIG_IDF_TARGET_ESP32)
-#if ESP_IDF_VERSION_MAJOR >= 5
     ulp_adc_cfg_t cfg = {
         .adc_n    = ADC_UNIT_1,
         .channel  = (adc_channel_t)channel,
@@ -111,20 +122,7 @@ extern "C" {
         .ulp_mode = ADC_ULP_MODE_FSM,
     };
     esp_err_t err = ulp_adc_init(&cfg);
-#else
-    esp_err_t err = adc1_config_channel_atten((adc1_channel_t)channel, (adc_atten_t)attenuation);
-    err += adc1_config_width((adc_bits_width_t)width);
-#endif // ESP_IDF_VERSION_MAJOR >= 5
-    if (err != ESP_OK) {
-      be_raisef(vm, "ulp_adc_config_error", "ULP: invalid code err=%i", err);
-    }
-#if ESP_IDF_VERSION_MAJOR < 5
-    else {
-        adc1_ulp_enable();
-    }
-#endif // ESP_IDF_VERSION_MAJOR < 5
-#else // S2 or S3
-#if ESP_IDF_VERSION_MAJOR >= 5
+#elif defined(CONFIG_ULP_COPROC_TYPE_RISCV) // S2 or S3
     ulp_adc_cfg_t cfg = {
         .adc_n    = ADC_UNIT_1,
         .channel  = (adc_channel_t)channel,
@@ -134,17 +132,18 @@ extern "C" {
     };
     esp_err_t err = ulp_adc_init(&cfg);
 #else
-    ulp_riscv_adc_cfg_t cfg = {
-      .channel = (adc_channel_t)channel,
-      .atten   = (adc_atten_t)attenuation,
-      .width   = (adc_bits_width_t)width
-    };
-    esp_err_t err = ulp_riscv_adc_init(&cfg);
-#endif // ESP_IDF_VERSION_MAJOR >= 5
+    // esp_err_t err = lp_core_lp_adc_init(ADC_UNIT_1);
+    // const lp_core_lp_adc_chan_cfg_t config = {
+    //     .atten = (adc_atten_t)attenuation,
+    //     .bitwidth = (adc_bitwidth_t)width,
+    // };
+    // err += lp_core_lp_adc_config_channel(ADC_UNIT_1, (adc_channel_t)channel, &config);
+    be_raisef(vm, "ulp_adc_config_error", "ULP: not supported before ESP-IDF 5.4");
+    esp_err_t err = ESP_FAIL;
+#endif
     if (err != ESP_OK) {
       be_raisef(vm, "ulp_adc_config_error", "ULP: invalid code err=%i", err);
     }
-#endif
   }
 
   /**
@@ -156,8 +155,10 @@ extern "C" {
   void be_ULP_load(struct bvm *vm, const uint8_t *buf, size_t size) {
 #if defined(CONFIG_IDF_TARGET_ESP32)
     esp_err_t err = ulp_load_binary(0, buf, size / 4); // FSM type only, specific header, size in long words
-#else // S2 or S3
+#elif defined(CONFIG_ULP_COPROC_TYPE_RISCV) // S2 or S3
     esp_err_t err = ulp_riscv_load_binary(buf, size); // there are no header bytes, just load and hope for a valid binary - size in bytes
+#else
+    esp_err_t err = ulp_lp_core_load_binary(buf,size); // check valid size, size in bytes
 #endif // defined(CONFIG_IDF_TARGET_ESP32)
     if (err != ESP_OK) {
       be_raisef(vm, "ulp_load_error", "ULP: invalid code err=%i", err);

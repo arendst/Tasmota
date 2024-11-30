@@ -178,7 +178,7 @@ BERRY_LOCAL const bntvmodule_t* const be_module_table[] = {
     &be_native_module(partition_core),
     &be_native_module(crc),
     &be_native_module(crypto),
-#if defined(USE_BERRY_ULP) && ((CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3))
+#if defined(USE_BERRY_ULP) && defined(CONFIG_ULP_COPROC_ENABLED)
     &be_native_module(ULP),
 #endif // USE_BERRY_ULP
 #if defined(USE_BERRY_TF_LITE)
