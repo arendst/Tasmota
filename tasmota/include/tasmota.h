@@ -40,7 +40,7 @@ const uint32_t POWER_SIZE = 32;             // Power (relay) bit count
 
 #ifdef ESP8266
 const uint8_t MAX_RELAYS = 8;               // Max number of relays selectable on GPIO
-const uint8_t MAX_INTERLOCKS = 4;           // Max number of interlock groups (up to MAX_INTERLOCKS_SET)
+const uint8_t MAX_INTERLOCKS = 16;          // Max number of interlock groups (up to MAX_INTERLOCKS_SET)
 const uint8_t MAX_SWITCHES = 8;             // Max number of switches selectable on GPIO
 const uint8_t MAX_KEYS = 8;                 // Max number of keys or buttons selectable on GPIO
 #endif  // ESP8266

@@ -483,11 +483,7 @@ struct WEB {
   uint32_t upload_size = 0;
   uint32_t slider_update_time = 0;
   int slider[LST_MAX];
-#ifdef ESP8266
-  int8_t shutter_slider[MAX_SHUTTERS];
-#else   // ESP32
   int8_t shutter_slider[16];                        // MAX_SHUTTERS_ESP32
-#endif  // ESP8266
   uint16_t upload_error = 0;
   uint8_t state = HTTP_OFF;
   uint8_t upload_file_type;
@@ -1283,6 +1279,8 @@ void WebGetDeviceCounts(uint32_t &buttons_non_light, uint32_t &buttons_non_light
     }
   }
 #endif  // USE_SHUTTER
+
+//  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HTP: DP %d, BNL %d, BNLNS %d, SB %08X"), TasmotaGlobal.devices_present, buttons_non_light, buttons_non_light_non_shutter, shutter_button);
 }
 
 #ifdef USE_LIGHT
