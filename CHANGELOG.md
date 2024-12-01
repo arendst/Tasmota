@@ -9,6 +9,10 @@ All notable changes to this project will be documented in this file.
 - Command `SetOption161 1` to disable display of state text (#22515)
 - ESP32 new BLE filters by name and minimum RSSI (#22530)
 - ESP32 Hybrid compile take custom boards settings in account (#22542)
+- ESP32 ULP lp_core to Berry ULP module (#22567)
+- Shelly 1 Gen3 template {"NAME":"Shelly 1 Gen3","GPIO":[0,0,0,4736,0,224,0,0,1,1,192,0,0,0,0,0,0,0,0,576,1,1],"FLAG":0,"BASE":1,"CMND":"AdcGpio3 10000,10000,4000"}
+- Shelly 1PM Gen3 template {"NAME":"Shelly 1PM Gen3","GPIO":[0,32,0,4736,224,0,3200,8161,576,1,192,0,0,0,0,0,0,0,0,1,1,1],"FLAG":0,"BASE":1,"CMND":"AdcGpio3 10000,10000,4000"}
+- Shelly 2PM Gen3 template {"NAME":"Shelly 2PM Gen3","GPIO":[9472,3458,576,225,4736,224,640,608,1,1,193,0,0,0,0,0,0,0,192,32,1,1],"FLAG":0,"BASE":1,"CMND":"ADCGPIO4 10000,10000,4000"}
 
 ### Breaking Changed
 - ESP32 ArtNet switches from GRB to RGB encoding (#22556)
@@ -58,6 +62,7 @@ All notable changes to this project will be documented in this file.
 - Support for MS5837 pressure and temperature sensor (#22376)
 - Berry add I2C read16/write16 supporting Little Endian (#22448)
 - Berry drivers for PCA9535 (generic and in SenseCAP D1) (#22451)
+- Shelly DALI Dimmer Gen3 template {"NAME":"Shelly DALI Dimmer Gen3","GPIO":[34,4736,0,3840,11360,11392,128,129,0,1,576,0,0,0,0,0,0,0,0,1,1,1],"FLAG":0,"BASE":1,"CMND":"ADCGPIO1 10000,10000,4000}
 
 ### Changed
 - AHT1X/AHT2X/AHT3X ready for virtual I2C (#22427)
