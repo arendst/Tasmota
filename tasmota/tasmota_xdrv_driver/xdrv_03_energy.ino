@@ -278,7 +278,13 @@ void EnergyUpdateToday(void) {
       int32_t delta = Energy->kWhtoday_delta[i] / 1000;
       delta_sum_balanced += delta;
       Energy->kWhtoday_delta[i] -= (delta * 1000);
+#ifdef USE_ADE7880
+      if (!Settings->flag3.hardware_energy_total || delta > 0) {     // Import energy
+      	Energy->kWhtoday[i] += delta;
+	  }
+#else
       Energy->kWhtoday[i] += delta;
+#endif
       if (delta < 0) {     // Export energy
         Energy->kWhtoday_export[i] += (delta *-1);
         if (Energy->kWhtoday_export[i] > 100) {
