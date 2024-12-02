@@ -97,7 +97,7 @@ const uint16_t kTasLed_Type = kTasLed_PixelSize | kTasLed_PixelOrder | kTasLed_P
 
 // select hardware acceleration - bitbanging is not supported on ESP32 due to interference of interrupts
 #if CONFIG_IDF_TARGET_ESP32C2
-  const uint32_t kTasLed_Hardware = TasmotaLed_I2S;   // I2S
+  const uint32_t kTasLed_Hardware = TasmotaLed_SPI;   // no I2S for the C2
 #else // all other ESP32 variants
   #if defined(USE_WS2812_DMA)
     const uint32_t kTasLed_Hardware = TasmotaLed_RMT;   // default DMA to RMT
