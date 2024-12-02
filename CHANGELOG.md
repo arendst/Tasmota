@@ -32,6 +32,7 @@ All notable changes to this project will be documented in this file.
 - Magic switch applying masking window to any power change (#22535)
 - Shift595 output offsets and restart relay toggles
 - Shutter wrong power ON state (#22548)
+- ESP32-C2 TasmotaLED from not present I2S to SPI (#22575)
 
 ### Removed
 
