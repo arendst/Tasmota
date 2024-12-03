@@ -543,7 +543,9 @@ void EnergyUpdateToday(void) {
       int32_t delta = Energy->kWhtoday_delta[i] / 1000;
       delta_sum_balanced += delta;
       Energy->kWhtoday_delta[i] -= (delta * 1000);
-      Energy->kWhtoday[i] += delta;
+      if (!Settings->flag6.no_export_energy_today || (delta > 0)) {  // SetOption162 - (Energy) Do not add export energy to energy today (1)
+        Energy->kWhtoday[i] += delta;
+      }
       if (delta < 0) {     // Export energy
         RtcEnergySettings.energy_export_kWh[i] += ((float)(delta / 100) *-1) / 1000;
       }
