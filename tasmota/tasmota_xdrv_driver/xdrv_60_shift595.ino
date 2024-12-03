@@ -63,6 +63,11 @@ void Shift595ModuleInit(void) {
       Shift595ConfigurePin(Shift595->pinSRCLK);
       Shift595ConfigurePin(Shift595->pinRCLK);
       Shift595ConfigurePin(Shift595->pinSER);
+#ifdef ESP32
+      // Release hold on clocks (if set before restart)
+      gpio_hold_dis((gpio_num_t)Shift595->pinSRCLK);
+      gpio_hold_dis((gpio_num_t)Shift595->pinRCLK);
+#endif
 
       if (PinUsed(GPIO_SHIFT595_OE)) {
         Shift595->pinOE = Pin(GPIO_SHIFT595_OE);
@@ -142,6 +147,13 @@ bool Xdrv60(uint32_t function) {
       case FUNC_SET_POWER:
         Shift595SwitchRelay();
         break;
+#ifdef ESP32
+      case FUNC_SAVE_BEFORE_RESTART:
+        // Set hold on clocks to disable relay click on restart
+        gpio_hold_en((gpio_num_t)Shift595->pinSRCLK);
+        gpio_hold_en((gpio_num_t)Shift595->pinRCLK);
+        break;
+#endif  // ESP32
       case FUNC_COMMAND:
         result = DecodeCommand(kShift595Commands, Shift595Command);
         break;
