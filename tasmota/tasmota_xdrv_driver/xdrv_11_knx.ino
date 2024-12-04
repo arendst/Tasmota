@@ -84,6 +84,18 @@ typedef struct __device_parameters
                        // - Multiples address to the same callback (i.e. Set Relay 1 Status) are used on scenes for example
 } device_parameters_t;
 
+uint8_t knx_slot_xref[] = {
+  KNX_SLOT1,
+  KNX_SLOT2,
+  KNX_SLOT3,
+  KNX_SLOT4,
+  KNX_SLOT5,
+  KNX_SLOT6,
+  KNX_SLOT7,
+  KNX_SLOT8,
+  KNX_SLOT9
+};
+
 // device parameters (information that can be sent)
 device_parameters_t device_param[] = {
   {  1, false, false, KNX_Empty }, // device_param[ 0] = Relay 1
@@ -116,13 +128,13 @@ device_parameters_t device_param[] = {
   { KNX_SLOT3 , false, false, KNX_Empty },
   { KNX_SLOT4 , false, false, KNX_Empty },
   { KNX_SLOT5 , false, false, KNX_Empty },
+  { KNX_SCENE , false, false, KNX_Empty },
+  { KNX_DIMMER , false, false, KNX_Empty },
+  { KNX_COLOUR , false, false, KNX_Empty },
   { KNX_SLOT6 , false, false, KNX_Empty },
   { KNX_SLOT7 , false, false, KNX_Empty },
   { KNX_SLOT8 , false, false, KNX_Empty },
   { KNX_SLOT9 , false, false, KNX_Empty },
-  { KNX_SCENE , false, false, KNX_Empty },
-  { KNX_DIMMER , false, false, KNX_Empty },
-  { KNX_COLOUR , false, false, KNX_Empty },
   { KNX_Empty, false, false, KNX_Empty}
 };
 
@@ -158,13 +170,13 @@ const char * device_param_ga[] = {
   D_KNX_TX_SLOT   " 3",
   D_KNX_TX_SLOT   " 4",
   D_KNX_TX_SLOT   " 5",
+  D_KNX_TX_SCENE      ,
+  D_BRIGHTLIGHT       ,
+  D_COLOR             ,
   D_KNX_TX_SLOT   " 6",
   D_KNX_TX_SLOT   " 7",
   D_KNX_TX_SLOT   " 8",
   D_KNX_TX_SLOT   " 9",
-  D_KNX_TX_SCENE      ,
-  D_BRIGHTLIGHT       ,
-  D_COLOR             ,
   nullptr
 };
 
@@ -200,14 +212,14 @@ const char *device_param_cb[] = {
   D_KNX_RX_SLOT   " 3",
   D_KNX_RX_SLOT   " 4",
   D_KNX_RX_SLOT   " 5",
+  D_KNX_RX_SCENE      ,
+  D_BRIGHTLIGHT       ,
+  D_COLOR             ,
   D_KNX_RX_SLOT   " 6",
   D_KNX_RX_SLOT   " 7",
   D_KNX_RX_SLOT   " 8",
   D_KNX_RX_SLOT   " 9",
-  D_KNX_RX_SCENE      ,
-  D_BRIGHTLIGHT       ,
-  D_COLOR             ,
-nullptr
+  nullptr
 };
 
 // Commands
@@ -720,16 +732,21 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       }
 
 #if defined(USE_RULES) || defined(USE_SCRIPT)
-      else if ((chan->type >= KNX_SLOT1) && (chan->type <= KNX_SLOT9)) // KNX RX SLOTs (write command)
+      else if (((chan->type >= KNX_SLOT1) && (chan->type <= KNX_SLOT5)) ||
+               ((chan->type >= KNX_SLOT6) && (chan->type <= KNX_SLOT9))) // KNX RX SLOTs (write command)
       {
         if (!toggle_inhibit) {
+          uint32_t slot_offset = KNX_SLOT1;
+          if (chan->type >= KNX_SLOT6) {
+            slot_offset = KNX_SLOT6;
+          }
           char command[35]; //4294967295.00  13chars + 17
           if (msg.data_len == 1) {
             // Command received
-            snprintf_P(command, sizeof(command), PSTR("event KNXRX_CMND%d=%d"), ((chan->type) - KNX_SLOT1 + 1 ), msg.data[0]);
+            snprintf_P(command, sizeof(command), PSTR("event KNXRX_CMND%d=%d"), ((chan->type) - slot_offset + 1 ), msg.data[0]);
           } else {
             // Value received
-            snprintf_P(command, sizeof(command), PSTR("event KNXRX_VAL%d=%s"), ((chan->type) - KNX_SLOT1 + 1 ), tempchar);
+            snprintf_P(command, sizeof(command), PSTR("event KNXRX_VAL%d=%s"), ((chan->type) - slot_offset + 1 ), tempchar);
           }
           ExecuteCommand(command, SRC_KNX);
           if (Settings->flag.knx_enable_enhancement) {
@@ -830,11 +847,16 @@ void KNX_CB_Action(message_t const &msg, void *arg)
 
 #if defined(USE_RULES) || defined(USE_SCRIPT)
 
-      else if ((chan->type >= KNX_SLOT1) && (chan->type <= KNX_SLOT9)) // KNX RX SLOTs (read command)
+      else if (((chan->type >= KNX_SLOT1) && (chan->type <= KNX_SLOT5)) ||
+               ((chan->type >= KNX_SLOT6) && (chan->type <= KNX_SLOT9))) // KNX RX SLOTs (read command)
       {
         if (!toggle_inhibit) {
+          uint32_t slot_offset = KNX_SLOT1;
+          if (chan->type >= KNX_SLOT6) {
+            slot_offset = KNX_SLOT6;
+          }
           char command[25];
-          snprintf_P(command, sizeof(command), PSTR("event KNXRX_REQ%d"), ((chan->type) - KNX_SLOT1 + 1 ) );
+          snprintf_P(command, sizeof(command), PSTR("event KNXRX_REQ%d"), ((chan->type) - slot_offset + 1 ) );
           ExecuteCommand(command, SRC_KNX);
           if (Settings->flag.knx_enable_enhancement) {
             toggle_inhibit = TOGGLE_INHIBIT_TIME;
@@ -1258,16 +1280,16 @@ void CmndKnxTxCmnd(void)
     // XdrvMailbox.index <- KNX SLOT to use
     // XdrvMailbox.payload <- data to send
     // Search all the registered GA that has that output (variable: KNX SLOTx) as parameter
-    uint8_t i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1);
+    uint8_t i = KNX_GA_Search(knx_slot_xref[XdrvMailbox.index -1]);
     while ( i != KNX_Empty ) {
       KNX_addr.value = Settings->knx_GA_addr[i];
       KNX_WRITE_1BIT(KNX_addr, !(XdrvMailbox.payload == 0));
 
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d/%d/%d"),
-       device_param_ga[XdrvMailbox.index + KNX_SLOT1 -2], !(XdrvMailbox.payload == 0),
+       device_param_ga[knx_slot_xref[XdrvMailbox.index -1] -1], !(XdrvMailbox.payload == 0),
        KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
 
-      i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1, i + 1);
+      i = KNX_GA_Search(knx_slot_xref[XdrvMailbox.index -1], i + 1);
     }
     ResponseCmndIdxChar (XdrvMailbox.data );
   }
@@ -1279,7 +1301,7 @@ void CmndKnxTxVal(void)
     // XdrvMailbox.index <- KNX SLOT to use
     // XdrvMailbox.payload <- data to send
     // Search all the registered GA that has that output (variable: KNX SLOTx) as parameter
-    uint8_t i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1);
+    uint8_t i = KNX_GA_Search(knx_slot_xref[XdrvMailbox.index -1]);
     while ( i != KNX_Empty ) {
       KNX_addr.value = Settings->knx_GA_addr[i];
 
@@ -1289,10 +1311,10 @@ void CmndKnxTxVal(void)
       KNX_WRITE_4BYTE_FLOAT(KNX_addr, tempvar);
 
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %s " D_SENT_TO " %d/%d/%d"),
-       device_param_ga[XdrvMailbox.index + KNX_SLOT1 -2], XdrvMailbox.data,
+       device_param_ga[knx_slot_xref[XdrvMailbox.index -1] -1], XdrvMailbox.data,
        KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
 
-      i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1, i + 1);
+      i = KNX_GA_Search(knx_slot_xref[XdrvMailbox.index -1], i + 1);
     }
     ResponseCmndIdxChar (XdrvMailbox.data );
   }
@@ -1305,7 +1327,7 @@ void CmndKnxTxFloat(void)
     // XdrvMailbox.index <- KNX SLOT to use
     // XdrvMailbox.payload <- data to send
     // Search all the registered GA that has that output (variable: KNX SLOTx) as parameter
-    uint8_t i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1);
+    uint8_t i = KNX_GA_Search(knx_slot_xref[XdrvMailbox.index -1]);
     while ( i != KNX_Empty ) {
       KNX_addr.value = Settings->knx_GA_addr[i];
 
@@ -1315,10 +1337,10 @@ void CmndKnxTxFloat(void)
       KNX_WRITE_2BYTE_FLOAT(KNX_addr, tempvar);
 
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %s " D_SENT_TO " %d/%d/%d (2 bytes float)"),
-       device_param_ga[XdrvMailbox.index + KNX_SLOT1 -2], XdrvMailbox.data,
+       device_param_ga[knx_slot_xref[XdrvMailbox.index -1] -1], XdrvMailbox.data,
        KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
 
-      i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1, i + 1);
+      i = KNX_GA_Search(knx_slot_xref[XdrvMailbox.index -1], i + 1);
     }
     ResponseCmndIdxChar (XdrvMailbox.data );
   }
@@ -1330,7 +1352,7 @@ void CmndKnxTxByte(void)
     // XdrvMailbox.index <- KNX SLOT to use
     // XdrvMailbox.payload <- data to send
     // Search all the registered GA that has that output (variable: KNX SLOTx) as parameter
-    uint8_t i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1);
+    uint8_t i = KNX_GA_Search(knx_slot_xref[XdrvMailbox.index -1]);
     while ( i != KNX_Empty ) {
       KNX_addr.value = Settings->knx_GA_addr[i];
 
@@ -1340,10 +1362,10 @@ void CmndKnxTxByte(void)
       KNX_WRITE_1BYTE_UINT(KNX_addr, tempvar);
 
       AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %s " D_SENT_TO " %d/%d/%d (1 byte unsigned)"),
-       device_param_ga[XdrvMailbox.index + KNX_SLOT1 -2], XdrvMailbox.data,
+       device_param_ga[knx_slot_xref[XdrvMailbox.index -1] -1], XdrvMailbox.data,
        KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
 
-      i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1, i + 1);
+      i = KNX_GA_Search(knx_slot_xref[XdrvMailbox.index -1], i + 1);
     }
     ResponseCmndIdxChar (XdrvMailbox.data );
   }

@@ -35,6 +35,7 @@ All notable changes to this project will be documented in this file.
 - Shift595 output offsets and restart relay toggles
 - Shutter wrong power ON state (#22548)
 - ESP32-C2 TasmotaLED from not present I2S to SPI (#22575)
+- KNX Scenes index change regression from v14.2.0.4 (#22405)
 
 ### Removed
 
