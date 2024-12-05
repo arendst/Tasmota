@@ -52,18 +52,13 @@ uint8_t       Settings->knx_CB_param[MAX_KNX_CB]     Type of Output (set relay, 
 
 #include <esp-knx-ip.h>         // KNX Library
 
-bool knx_started = false;
+#define TOGGLE_INHIBIT_TIME 15  // 15*50mseg = 750mseg (inhibit time for not toggling again relays by a KNX toggle command)
 
-address_t KNX_physs_addr;  // Physical KNX address of this device
-address_t KNX_addr;        // KNX Address converter variable
+#ifndef KNX_ENHANCEMENT_REPEAT
+#define KNX_ENHANCEMENT_REPEAT 3
+#endif
 
 #define KNX_Empty 255
-
-#define TOGGLE_INHIBIT_TIME 15 // 15*50mseg = 750mseg (inhibit time for not toggling again relays by a KNX toggle command)
-
-float last_temp;
-float last_hum;
-uint8_t toggle_inhibit;
 
 typedef struct __device_parameters
 {
@@ -83,18 +78,6 @@ typedef struct __device_parameters
                        // used when a MSG receive  KNX triggers an action on the device
                        // - Multiples address to the same callback (i.e. Set Relay 1 Status) are used on scenes for example
 } device_parameters_t;
-
-uint8_t knx_slot_xref[] = {
-  KNX_SLOT1,
-  KNX_SLOT2,
-  KNX_SLOT3,
-  KNX_SLOT4,
-  KNX_SLOT5,
-  KNX_SLOT6,
-  KNX_SLOT7,
-  KNX_SLOT8,
-  KNX_SLOT9
-};
 
 // device parameters (information that can be sent)
 device_parameters_t device_param[] = {
@@ -222,6 +205,43 @@ const char *device_param_cb[] = {
   nullptr
 };
 
+uint8_t knx_slot_xref[] = {
+  KNX_SLOT1,
+  KNX_SLOT2,
+  KNX_SLOT3,
+  KNX_SLOT4,
+  KNX_SLOT5,
+  KNX_SLOT6,
+  KNX_SLOT7,
+  KNX_SLOT8,
+  KNX_SLOT9
+};
+
+uint8_t knx_select_nice_list[] = {
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+  KNX_TEMPERATURE -1,
+  KNX_HUMIDITY -1,
+  KNX_ENERGY_VOLTAGE -1,
+  KNX_ENERGY_CURRENT -1,
+  KNX_ENERGY_POWER -1,
+  KNX_ENERGY_POWERFACTOR -1,
+  KNX_ENERGY_DAILY -1,
+  KNX_ENERGY_YESTERDAY -1,
+  KNX_ENERGY_TOTAL -1,
+  KNX_SLOT1 -1,
+  KNX_SLOT2 -1,
+  KNX_SLOT3 -1,
+  KNX_SLOT4 -1,
+  KNX_SLOT5 -1,
+  KNX_SLOT6 -1,
+  KNX_SLOT7 -1,
+  KNX_SLOT8 -1,
+  KNX_SLOT9 -1,
+  KNX_SCENE -1,
+  KNX_DIMMER -1,
+  KNX_COLOUR -1
+};
+
 // Commands
 #define D_PRFX_KNX "Knx"
 #define D_CMND_KNXTXCMND "Tx_Cmnd"
@@ -236,19 +256,27 @@ const char *device_param_cb[] = {
 #define D_CMND_KNXTXDOUBLE "Tx_Double"  // 4 bytes float (DPT14)
 #define D_CMND_KNXTXBYTE "Tx_Byte"      // 1 byte unsigned (DPT5)
 
-
 const char kKnxCommands[] PROGMEM = D_PRFX_KNX "|"  // Prefix
-  D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL "|" D_CMND_KNX_ENABLED "|" D_CMND_KNX_ENHANCED "|" D_CMND_KNX_PA "|" D_CMND_KNX_GA "|" D_CMND_KNX_CB "|" D_CMND_KNXTXSCENE "|"
+  D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL "|" D_CMND_KNX_ENABLED "|" D_CMND_KNX_ENHANCED "|" 
+  D_CMND_KNX_PA "|" D_CMND_KNX_GA "|" D_CMND_KNX_CB "|" D_CMND_KNXTXSCENE "|"
   D_CMND_KNXTXFLOAT "|"  D_CMND_KNXTXDOUBLE "|"  D_CMND_KNXTXBYTE;
 
 void (* const KnxCommand[])(void) PROGMEM = {
-  &CmndKnxTxCmnd, &CmndKnxTxVal, &CmndKnxEnabled, &CmndKnxEnhanced, &CmndKnxPa, &CmndKnxGa, &CmndKnxCb, &CmndKnxTxScene,
+  &CmndKnxTxCmnd, &CmndKnxTxVal, &CmndKnxEnabled, &CmndKnxEnhanced,
+  &CmndKnxPa, &CmndKnxGa, &CmndKnxCb, &CmndKnxTxScene,
   &CmndKnxTxFloat, &CmndKnxTxVal, &CmndKnxTxByte};
 
-#ifndef KNX_ENHANCEMENT_REPEAT
-#define KNX_ENHANCEMENT_REPEAT 3
-#endif
+  address_t KNX_physs_addr;  // Physical KNX address of this device
+  address_t KNX_addr;        // KNX Address converter variable
 
+struct Knx_t {
+  float last_temp;
+  float last_hum;
+  uint8_t toggle_inhibit;
+  bool started = false;
+} Knx;
+
+/*********************************************************************************************/
 
 void KNX_Send_1bit(address_t const &receiver, uint8_t value, knx_command_type_t ct) 
 {
@@ -324,6 +352,7 @@ void KNX_Send_6byte_color(address_t const &receiver, uint8_t* color, knx_command
 #define KNX_WRITE_6BYTE_COLOR(r,rgbw) KNX_Send_6byte_color((r),(rgbw),KNX_CT_WRITE)
 #define KNX_ANSWER_6BYTE_COLOR(r,rgbw) KNX_Send_6byte_color((r),(rgbw),KNX_CT_ANSWER)
 
+/*********************************************************************************************/
 
 uint8_t KNX_GA_Search( uint8_t param, uint8_t start = 0 )
 {
@@ -562,6 +591,7 @@ bool KNX_CONFIG_NOT_MATCH(void)
   return false;
 }
 
+/*********************************************************************************************/
 
 void KNXStart(void)
 {
@@ -723,10 +753,10 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       }
       else if (chan->type < 17) // Toggle Relays
       {
-        if (!toggle_inhibit) {
+        if (!Knx.toggle_inhibit) {
           ExecuteCommandPower((chan->type) -8, POWER_TOGGLE, SRC_KNX);
           if (Settings->flag.knx_enable_enhancement) {
-            toggle_inhibit = TOGGLE_INHIBIT_TIME;
+            Knx.toggle_inhibit = TOGGLE_INHIBIT_TIME;
           }
         }
       }
@@ -735,7 +765,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       else if (((chan->type >= KNX_SLOT1) && (chan->type <= KNX_SLOT5)) ||
                ((chan->type >= KNX_SLOT6) && (chan->type <= KNX_SLOT9))) // KNX RX SLOTs (write command)
       {
-        if (!toggle_inhibit) {
+        if (!Knx.toggle_inhibit) {
           uint32_t slot_offset = KNX_SLOT1;
           if (chan->type >= KNX_SLOT6) {
             slot_offset = KNX_SLOT6;
@@ -750,19 +780,19 @@ void KNX_CB_Action(message_t const &msg, void *arg)
           }
           ExecuteCommand(command, SRC_KNX);
           if (Settings->flag.knx_enable_enhancement) {
-            toggle_inhibit = TOGGLE_INHIBIT_TIME;
+            Knx.toggle_inhibit = TOGGLE_INHIBIT_TIME;
           }
         }
       }
       else if (chan->type == KNX_SCENE)  // KNX RX SCENE SLOT (write command)
       {
-        if (!toggle_inhibit) {
+        if (!Knx.toggle_inhibit) {
           char command[25];
           // Value received
           snprintf_P(command, sizeof(command), PSTR("event KNX_SCENE=%s"), tempchar);
           ExecuteCommand(command, SRC_KNX);
           if (Settings->flag.knx_enable_enhancement) {
-            toggle_inhibit = TOGGLE_INHIBIT_TIME;
+            Knx.toggle_inhibit = TOGGLE_INHIBIT_TIME;
           }
         }
       }
@@ -770,25 +800,25 @@ void KNX_CB_Action(message_t const &msg, void *arg)
 #ifdef USE_LIGHT
       else if (chan->type == KNX_DIMMER)  // KNX RX DIMMER SLOT (write command)
       {
-        if (!toggle_inhibit) {
+        if (!Knx.toggle_inhibit) {
           char command[25];
           // Value received
           snprintf_P(command, sizeof(command), PSTR("Dimmer %s"), tempchar);
           ExecuteCommand(command, SRC_KNX);
           if (Settings->flag.knx_enable_enhancement) {
-            toggle_inhibit = TOGGLE_INHIBIT_TIME;
+            Knx.toggle_inhibit = TOGGLE_INHIBIT_TIME;
           }
         }
       }
       else if (chan->type == KNX_COLOUR)  // KNX RX COLOUR_RGB/RGBW SLOT (write command)
       {
-        if (!toggle_inhibit) {
+        if (!Knx.toggle_inhibit) {
           char command[25];
           // Value received
           snprintf_P(command, sizeof(command), PSTR("Color #%s"), tempchar);
           ExecuteCommand(command, SRC_KNX);
           if (Settings->flag.knx_enable_enhancement) {
-            toggle_inhibit = TOGGLE_INHIBIT_TIME;
+            Knx.toggle_inhibit = TOGGLE_INHIBIT_TIME;
           }
         }
       }
@@ -801,17 +831,17 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       else if (chan->type == KNX_TEMPERATURE) // Reply Temperature
       {
         #ifdef KNX_USE_DPT9
-        KNX_ANSWER_2BYTE_FLOAT(msg.received_on, last_temp);
+        KNX_ANSWER_2BYTE_FLOAT(msg.received_on, Knx.last_temp);
         #else
-        KNX_ANSWER_4BYTE_FLOAT(msg.received_on, last_temp);
+        KNX_ANSWER_4BYTE_FLOAT(msg.received_on, Knx.last_temp);
         #endif // KNX_USE_DPT9
       }
       else if (chan->type == KNX_HUMIDITY) // Reply Humidity
       {
         #ifdef KNX_USE_DPT9
-        KNX_ANSWER_2BYTE_FLOAT(msg.received_on, last_hum);
+        KNX_ANSWER_2BYTE_FLOAT(msg.received_on, Knx.last_hum);
         #else
-        KNX_ANSWER_4BYTE_FLOAT(msg.received_on, last_hum);
+        KNX_ANSWER_4BYTE_FLOAT(msg.received_on, Knx.last_hum);
         #endif // KNX_USE_DPT9
       }
 #if defined(USE_ENERGY_SENSOR)      
@@ -850,7 +880,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       else if (((chan->type >= KNX_SLOT1) && (chan->type <= KNX_SLOT5)) ||
                ((chan->type >= KNX_SLOT6) && (chan->type <= KNX_SLOT9))) // KNX RX SLOTs (read command)
       {
-        if (!toggle_inhibit) {
+        if (!Knx.toggle_inhibit) {
           uint32_t slot_offset = KNX_SLOT1;
           if (chan->type >= KNX_SLOT6) {
             slot_offset = KNX_SLOT6;
@@ -859,7 +889,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
           snprintf_P(command, sizeof(command), PSTR("event KNXRX_REQ%d"), ((chan->type) - slot_offset + 1 ) );
           ExecuteCommand(command, SRC_KNX);
           if (Settings->flag.knx_enable_enhancement) {
-            toggle_inhibit = TOGGLE_INHIBIT_TIME;
+            Knx.toggle_inhibit = TOGGLE_INHIBIT_TIME;
           }
         }
       }
@@ -977,10 +1007,10 @@ void KnxSensor(uint8_t sensor_type, float value)
 {
   if (sensor_type == KNX_TEMPERATURE)
   {
-    last_temp = value;
+    Knx.last_temp = value;
   } else if (sensor_type == KNX_HUMIDITY)
   {
-    last_hum = value;
+    Knx.last_hum = value;
   }
 
   if (!(Settings->flag.knx_enabled)) { return; }
@@ -1171,9 +1201,9 @@ void HandleKNXConfiguration(void)
     WSContentSend_P(HTTP_FORM_KNX2);
     for (uint32_t i = 0; i < KNX_MAX_device_param ; i++)
     {
-      if ( device_param[i].show )
+      if ( device_param[knx_select_nice_list[i]].show )
       {
-        WSContentSend_P(HTTP_FORM_KNX_OPT, device_param[i].type, device_param_ga[i]);
+        WSContentSend_P(HTTP_FORM_KNX_OPT, device_param[knx_select_nice_list[i]].type, device_param_ga[knx_select_nice_list[i]]);
       }
     }
     WSContentSend_P(PSTR("</select> -> "));
@@ -1198,9 +1228,9 @@ void HandleKNXConfiguration(void)
       // Check How many Relays are available and add: RelayX and TogleRelayX
       if ( (i > 8) && (i < 16) ) { j=i-8; } else { j=i; }
       if ( i == 8 ) { j = 0; }
-      if ( device_param[j].show )
+      if ( device_param[knx_select_nice_list[j]].show )
       {
-        WSContentSend_P(HTTP_FORM_KNX_OPT, device_param[i].type, device_param_cb[i]);
+        WSContentSend_P(HTTP_FORM_KNX_OPT, device_param[knx_select_nice_list[i]].type, device_param_cb[knx_select_nice_list[i]]);
       }
     }
     WSContentSend_P(PSTR("</select> "));
@@ -1276,6 +1306,7 @@ void KNX_Save_Settings(void)
 
 void CmndKnxTxCmnd(void)
 {
+  // KNX_WRITE_1BIT
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KNXTX_CMNDS) && (XdrvMailbox.data_len > 0) && Settings->flag.knx_enabled) {
     // XdrvMailbox.index <- KNX SLOT to use
     // XdrvMailbox.payload <- data to send
@@ -1297,6 +1328,7 @@ void CmndKnxTxCmnd(void)
 
 void CmndKnxTxVal(void)
 {
+  // KNX_WRITE_4BYTE_FLOAT
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KNXTX_CMNDS) && (XdrvMailbox.data_len > 0) && Settings->flag.knx_enabled) {
     // XdrvMailbox.index <- KNX SLOT to use
     // XdrvMailbox.payload <- data to send
@@ -1306,12 +1338,10 @@ void CmndKnxTxVal(void)
       KNX_addr.value = Settings->knx_GA_addr[i];
 
       float tempvar = CharToFloat(XdrvMailbox.data);
-      dtostrfd(tempvar,2,XdrvMailbox.data);
-
       KNX_WRITE_4BYTE_FLOAT(KNX_addr, tempvar);
 
-      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %s " D_SENT_TO " %d/%d/%d"),
-       device_param_ga[knx_slot_xref[XdrvMailbox.index -1] -1], XdrvMailbox.data,
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %2_f " D_SENT_TO " %d/%d/%d"),
+       device_param_ga[knx_slot_xref[XdrvMailbox.index -1] -1], &tempvar,
        KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
 
       i = KNX_GA_Search(knx_slot_xref[XdrvMailbox.index -1], i + 1);
@@ -1323,6 +1353,7 @@ void CmndKnxTxVal(void)
 
 void CmndKnxTxFloat(void)
 {
+  // KNX_WRITE_2BYTE_FLOAT
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KNXTX_CMNDS) && (XdrvMailbox.data_len > 0) && Settings->flag.knx_enabled) {
     // XdrvMailbox.index <- KNX SLOT to use
     // XdrvMailbox.payload <- data to send
@@ -1332,12 +1363,10 @@ void CmndKnxTxFloat(void)
       KNX_addr.value = Settings->knx_GA_addr[i];
 
       float tempvar = CharToFloat(XdrvMailbox.data);
-      dtostrfd(tempvar,2,XdrvMailbox.data);
-
       KNX_WRITE_2BYTE_FLOAT(KNX_addr, tempvar);
 
-      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %s " D_SENT_TO " %d/%d/%d (2 bytes float)"),
-       device_param_ga[knx_slot_xref[XdrvMailbox.index -1] -1], XdrvMailbox.data,
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %2_f " D_SENT_TO " %d/%d/%d (2 bytes float)"),
+       device_param_ga[knx_slot_xref[XdrvMailbox.index -1] -1], &tempvar,
        KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
 
       i = KNX_GA_Search(knx_slot_xref[XdrvMailbox.index -1], i + 1);
@@ -1348,6 +1377,7 @@ void CmndKnxTxFloat(void)
 
 void CmndKnxTxByte(void)
 {
+  // KNX_WRITE_1BYTE_UINT
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KNXTX_CMNDS) && (XdrvMailbox.data_len > 0) && Settings->flag.knx_enabled) {
     // XdrvMailbox.index <- KNX SLOT to use
     // XdrvMailbox.payload <- data to send
@@ -1357,12 +1387,10 @@ void CmndKnxTxByte(void)
       KNX_addr.value = Settings->knx_GA_addr[i];
 
       uint8_t tempvar = TextToInt(XdrvMailbox.data);
-      dtostrfd(tempvar,0,XdrvMailbox.data);
-
       KNX_WRITE_1BYTE_UINT(KNX_addr, tempvar);
 
-      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %s " D_SENT_TO " %d/%d/%d (1 byte unsigned)"),
-       device_param_ga[knx_slot_xref[XdrvMailbox.index -1] -1], XdrvMailbox.data,
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d/%d/%d (1 byte unsigned)"),
+       device_param_ga[knx_slot_xref[XdrvMailbox.index -1] -1], tempvar,
        KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
 
       i = KNX_GA_Search(knx_slot_xref[XdrvMailbox.index -1], i + 1);
@@ -1380,12 +1408,10 @@ void CmndKnxTxScene(void)
       KNX_addr.value = Settings->knx_GA_addr[i];
 
       uint8_t tempvar = TextToInt(XdrvMailbox.data);
-      dtostrfd(tempvar,0,XdrvMailbox.data);
-
       KNX_WRITE_1BYTE_UINT(KNX_addr, tempvar);
 
-      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %s " D_SENT_TO " %d/%d/%d"),
-       device_param_ga[KNX_SCENE-1], XdrvMailbox.data,
+      AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d/%d/%d"),
+       device_param_ga[KNX_SCENE-1], tempvar,
        KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
       ResponseCmndIdxChar (XdrvMailbox.data);
     }
@@ -1544,8 +1570,8 @@ bool Xdrv11(uint32_t function)
         if (!TasmotaGlobal.global_state.network_down) { knx.loop(); }  // Process knx events
         break;
       case FUNC_EVERY_50_MSECOND:
-        if (toggle_inhibit) {
-          toggle_inhibit--;
+        if (Knx.toggle_inhibit) {
+          Knx.toggle_inhibit--;
         }
         break;
       case FUNC_ANY_KEY:
@@ -1568,13 +1594,13 @@ bool Xdrv11(uint32_t function)
         KNX_INIT();
         break;
       case FUNC_NETWORK_UP:
-        if (!knx_started && Settings->flag.knx_enabled) {  // CMND_KNX_ENABLED
+        if (!Knx.started && Settings->flag.knx_enabled) {  // CMND_KNX_ENABLED
           KNXStart();
-          knx_started = true;
+          Knx.started = true;
         }
         break;
       case FUNC_NETWORK_DOWN:
-        knx_started = false;
+        Knx.started = false;
         break;
 //      case FUNC_SET_POWER:
 //        break;
