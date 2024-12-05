@@ -352,6 +352,7 @@ void alt_eeprom_readBytes(uint32_t adr, uint32_t len, uint8_t *buf) {
 #include <TasmotaSerial.h>
 
 #ifdef TESLA_POWERWALL
+#include "SSLClient/ESP_SSLClient.h"
 #include "include/powerwall.h"
 #endif
 
@@ -773,7 +774,7 @@ typedef struct {
 
 SCRIPT_MEM glob_script_mem;
 
-uint32_t Plugin_Query(uint16_t, uint8_t);
+uint32_t Plugin_Query(uint16_t, uint8_t, char *);
 
 void script_setaflg(uint8_t flg) {
   glob_script_mem.tasm_cmd_activ = flg;
@@ -845,8 +846,8 @@ int32_t play_wave(char *path);
 
 #if defined(USE_BINPLUGINS) && !defined(USE_SML_M)
 SML_TABLE *get_sml_table(void) {
-  if (Plugin_Query(53, 0)) {
-    return (SML_TABLE*)Plugin_Query(53, 1);
+  if (Plugin_Query(53, 0, 0)) {
+    return (SML_TABLE*)Plugin_Query(53, 1, 0);
   } else {
     return 0;
   }
@@ -2585,19 +2586,23 @@ uint32_t match_vars(char *dvnam, TS_FLOAT **fp, char **sp, uint32_t *ind) {
     if (slen == olen && *cp == dvnam[0]) {
       if (!strncmp(cp, dvnam, olen)) {
         uint16_t index = vtp[count].index;
-        if (vtp[count].bits.is_string == 0) {
-          if (vtp[count].bits.is_filter) {
-            // error
-            return 0;
+        if (vtp[count].bits.global > 0) {
+          if (vtp[count].bits.is_string == 0) {
+            if (vtp[count].bits.is_filter) {
+              // error
+              return 0;
+            } else {
+              *fp = &glob_script_mem.fvars[index];
+              *ind = count;
+              return NUM_RES;
+            }
           } else {
-            *fp = &glob_script_mem.fvars[index];
+            *sp = glob_script_mem.glob_snp + (index * glob_script_mem.max_ssize);
             *ind = count;
-            return NUM_RES;
+            return STR_RES;
           }
         } else {
-          *sp = glob_script_mem.glob_snp + (index * glob_script_mem.max_ssize);
-          *ind = count;
-          return STR_RES;
+          return 0;
         }
       }
     }
@@ -2839,15 +2844,15 @@ char *isvar(char *lp, uint8_t *vtype, struct T_INDEX *tind, TS_FLOAT *fp, char *
     }
 
     const char *term="\n\r ])=+-/*%><!^&|}{";
-    for (count = 0; count < sizeof(vname); count++) {
+    for (count = 0; count < sizeof(vname) - 1; count++) {
         char iob = lp[count];
         if (!iob || strchr(term, iob)) {
-            vname[count] = 0;
             break;
         }
         vname[count] = iob;
         len += 1;
     }
+    vname[count] = 0;
 
     if (!vname[0]) {
       // empty string
@@ -3515,6 +3520,10 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto nfuncexit;
         }
 #endif //USE_ENERGY_SENSOR
+        if (!strncmp_XP(vname, XPSTR("ethdwn"), 6)) {
+          fvar = TasmotaGlobal.global_state.eth_down;
+          goto exit;
+        }
         break;
       case 'f':
 //#define DEBUG_FS
@@ -4309,9 +4318,11 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 
 #ifdef TESLA_POWERWALL
         if (!strncmp_XP(lp, XPSTR("gpwl("), 5)) {
-          char path[SCRIPT_MAX_SBSIZE];
-          lp = GetStringArgument(lp + 5, OPER_EQU, path, 0);
+          char *path;
+          //lp = GetStringArgument(lp + 5, OPER_EQU, path, 0);
+          lp = GetLongIString(lp + 5, &path);
           fvar = call2pwl(path);
+          free(path);
           goto nfuncexit;
         }
 #endif
@@ -4849,10 +4860,14 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
 #ifdef USE_BINPLUGINS
         if (!strncmp_XP(lp, XPSTR("mo("), 3)) {
           TS_FLOAT fvar1;
+          TS_FLOAT fvar2;
           lp = GetNumericArgument(lp + 3, OPER_EQU, &fvar1, gv);
           SCRIPT_SKIP_SPACES
+          lp = GetNumericArgument(lp, OPER_EQU, &fvar2, gv);
+          SCRIPT_SKIP_SPACES
+          uint16_t par = ((uint8_t)fvar1) << 8 | (uint8_t)fvar2;
 
-          char *rbuff = (char*)Plugin_Query(126, fvar1);
+          char *rbuff = (char*)Plugin_Query(126, par, 0);
           if (rbuff) {
             if (sp) strlcpy(sp, rbuff, glob_script_mem.max_ssize);
             free (rbuff);
@@ -4967,6 +4982,18 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
           goto exit;
         }
 #endif // USE_I2S_AUDIO
+
+#if defined(USE_BINPLUGINS) && !defined(USE_I2S_AUDIO)
+        if (!strncmp_XP(lp, XPSTR("pl("), 3)) {
+          char path[SCRIPT_MAX_SBSIZE];
+          lp = GetStringArgument(lp + 3, OPER_EQU, path, 0);
+          Plugin_Query(42, 0, path);
+          len++;
+          len = 0;
+          goto exit;
+        }
+#endif // USE_BINPLUGINS
+
         if (!strncmp_XP(lp, XPSTR("pd["), 3)) {
           GetNumericArgument(lp + 3, OPER_EQU, &fvar, gv);
           uint8_t gpiopin = fvar;
@@ -6355,7 +6382,7 @@ void tmod_directModeOutput(uint32_t pin);
         if (!strncmp_XP(lp, XPSTR("wso("), 4)) {
           TS_FLOAT port;
           lp = GetNumericArgument(lp + 4, OPER_EQU, &port, gv);
-          if (TasmotaGlobal.global_state.wifi_down) {
+          if (TasmotaGlobal.global_state.network_down) {
             fvar = - 2;
           } else {
             if (glob_script_mem.tcp_server) {
@@ -7123,7 +7150,6 @@ char *GetLongIString(char *lp, char **dstr) {
     lp = GetStringArgument(lp, OPER_EQU, *dstr, 0);
   } else {
     lp++;
-
     char *cp;
 #if 0
     cp = strchr(lp, '"');
@@ -7132,7 +7158,7 @@ char *GetLongIString(char *lp, char **dstr) {
       *dstr = (char*)calloc(slen + 2, 1);
       if (!*dstr) return lp;
       memmove(*dstr, lp , slen);
-#else   
+#else
     char *llp = lp;
  loop:
     cp = strchr(lp, '"');
@@ -13022,21 +13048,6 @@ int32_t call2pwl(const char *url) {
   String result = powerwall.GetRequest(String(url), cookie);
   //AddLog(LOG_LEVEL_INFO, PSTR("PWL: result: %s"), result.c_str());
 
-  // shrink data size because it exceeds json parser maxsize
-  result.replace("communication_time", "ct");
-  result.replace("instant", "i");
-  result.replace("apparent", "a");
-  result.replace("reactive", "r");
-
-// custom replace
-#ifdef TESLA_POWERWALL_CTS1
-  result.replace(TESLA_POWERWALL_CTS1, "PW_CTS1");
-#endif
-
-#ifdef TESLA_POWERWALL_CTS2
-  result.replace(TESLA_POWERWALL_CTS2, "PW_CTS2");
-#endif
-
   if (result.length()>4095) {
     AddLog(LOG_LEVEL_INFO, PSTR("PWL: result overflow: %d"), result.length());
   }
@@ -13160,9 +13171,16 @@ uint32_t script_i2c(uint8_t sel, uint16_t val, uint32_t val1) {
   switch (sel) {
     case 0:
       glob_script_mem.script_i2c_addr = val;
-#if defined(ESP32) && defined(USE_I2C_BUS2)
+#ifdef ESP32
       if (val1 == 0) glob_script_mem.script_i2c_wire = &Wire;
-      else glob_script_mem.script_i2c_wire = &Wire1;
+      else {
+#if defined(USE_I2C_BUS2)
+        glob_script_mem.script_i2c_wire = &Wire1;
+#else
+        glob_script_mem.script_i2c_wire = &Wire;
+#endif
+      }
+
 #else
       glob_script_mem.script_i2c_wire = &Wire;
 #endif
