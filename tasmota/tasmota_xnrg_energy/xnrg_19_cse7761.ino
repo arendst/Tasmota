@@ -33,6 +33,11 @@
  * Based on datasheet from ChipSea and analysing serial data
  * See https://github.com/arendst/Tasmota/discussions/10793
  * https://goldenrelay.en.alibaba.com/product/62119012875-811845870/GOLDEN_GI_1A_5LH_SPST_5V_5A_10A_250VAC_NO_18_5_10_5_15_3mm_sealed_type_all_certificate_compliances_class_F_SPDT_Form_available.html
+ * 
+ * options:
+ * negativepower 0 - calculate negative power as positive (default)
+ * negativepower 1 - calculate negative power as negative
+ * negativepower 2 - calculate negative power as zero
 \*********************************************************************************************/
 
 #define XNRG_19                       19
@@ -481,7 +486,7 @@ void Cse7761GetData(void) {
     CSE7761Data.current_rms[0], CSE7761Data.current_rms[1],
     CSE7761Data.active_power[0], CSE7761Data.active_power[1]);
 
-  if (true || Energy->power_on) {  // Powered on <xxx] ALWAYS
+  if (Energy->power_on) {  // Powered on 
     for (uint32_t channel = 0; channel < Energy->phase_count; channel++) {
       if (0 == channel) {
         // Voltage = RmsU * RmsUC * 10 / 0x400000
@@ -507,9 +512,18 @@ void Cse7761GetData(void) {
       } else {
         int32_t power_factor = CSE7761Data.power_factor[channel] << 8;
         if ( power_factor < 0 ) {
-          // power factor is negative and active power is not zero -> invert active power
-          Energy->active_power[channel] = -Energy->active_power[channel];
+          // power factor is negative and active power is not zero -> handle negative active power
           power_factor++; // -1 == 0x80000000, so make it -0x7fffffff
+          switch (Energy->Settings.flag.negativePowerHandling) {
+            case NEGATIVE_POWER_NEGATIVE: 
+              Energy->active_power[channel] = -Energy->active_power[channel];
+              break;
+            case NEGATIVE_POWER_ZERO: 
+              Energy->active_power[channel] = 0;
+              break;
+            case NEGATIVE_POWER_POSITIVE:  // Absolute
+              break; // do nothing, it's already absolute
+          }
         }
         Energy->power_factor[channel] = (float)power_factor / 0x7fffffff;
         uint32_t current_calibration = EnergyGetCalibration(ENERGY_CURRENT_CALIBRATION, channel);

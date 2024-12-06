@@ -503,6 +503,7 @@
 #define D_CMND_MAXENERGYSTART "MaxEnergyStart"
   #define D_JSON_ENERGYMONITOR "EnergyMonitor"
   #define D_JSON_MAXENERGYREACHED "MaxEnergyReached"
+#define D_CMND_NEGATIVEPOWER "NegativePower"
 
 // xsns_100_ina3221.ino
 #define  D_JSON_CHARGE "Charge"

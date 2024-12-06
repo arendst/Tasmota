@@ -63,7 +63,7 @@ const char kEnergyCommands[] PROGMEM = "|"  // No prefix
   D_CMND_MAXENERGY "|" D_CMND_MAXENERGYSTART "|"
   D_CMND_MAXPOWER "|" D_CMND_MAXPOWERHOLD "|" D_CMND_MAXPOWERWINDOW "|"
   D_CMND_ENERGYTODAY "|" D_CMND_ENERGYYESTERDAY "|" D_CMND_ENERGYTOTAL "|" D_CMND_ENERGYEXPORTACTIVE "|" D_CMND_ENERGYUSAGE "|" D_CMND_ENERGYEXPORT "|"
-  D_CMND_TARIFF "|" D_CMND_ENERGYDISPLAY "|" D_CMND_ENERGYCOLS ;
+  D_CMND_TARIFF "|" D_CMND_ENERGYDISPLAY "|" D_CMND_ENERGYCOLS "|" D_CMND_NEGATIVEPOWER;
 
 void (* const EnergyCommand[])(void) PROGMEM = {
   &CmndPowerCal, &CmndVoltageCal, &CmndCurrentCal, &CmndFrequencyCal,
@@ -72,9 +72,16 @@ void (* const EnergyCommand[])(void) PROGMEM = {
   &CmndMaxEnergy, &CmndMaxEnergyStart,
   &CmndMaxPower, &CmndMaxPowerHold, &CmndMaxPowerWindow,
   &CmndEnergyToday, &CmndEnergyYesterday, &CmndEnergyTotal, &CmndEnergyExportActive, &CmndEnergyUsage, &CmndEnergyExport,
-  &CmndTariff, &CmndEnergyDisplay, &CmndEnergyCols };
+  &CmndTariff, &CmndEnergyDisplay, &CmndEnergyCols, &CmndNegativePower };
 
 /********************************************************************************************/
+enum NegativePowerHandling {
+  NEGATIVE_POWER_POSITIVE=0,
+  NEGATIVE_POWER_NEGATIVE,
+  NEGATIVE_POWER_ZERO,
+
+  NEGATIVE_POWER_MAX_OPTION 
+};
 
 typedef struct {
   float usage_total_kWh[4];
@@ -86,8 +93,7 @@ typedef struct {
 typedef union {
   uint16_t data;
   struct {
-    uint16_t spare00 : 1;        // bit 0
-    uint16_t spare01 : 1;        // bit 1
+    uint16_t negativePowerHandling : 2;        // bit 0 and 1, command NegativePower enum NegativePowerHandling  
     uint16_t spare02 : 1;        // bit 2
     uint16_t spare03 : 1;        // bit 3
     uint16_t spare04 : 1;        // bit 4
@@ -1365,6 +1371,16 @@ void CmndModuleAddress(void) {
       ResponseCmndDone();
     }
   }
+}
+
+void CmndNegativePower(void) {
+  // NegativePower 0           - Calculate negative power as positive
+  // NegativePower 1           - Does not calculate negative power
+  // NegativePower 2           - Calculate negative power as negative
+  if (XdrvMailbox.data_len && XdrvMailbox.payload >=0 && XdrvMailbox.payload < NEGATIVE_POWER_MAX_OPTION) {
+    Energy->Settings.flag.negativePowerHandling = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(Energy->Settings.flag.negativePowerHandling);
 }
 
 void CmndEnergyConfig(void) {
