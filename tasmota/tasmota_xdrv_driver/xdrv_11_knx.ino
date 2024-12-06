@@ -1422,6 +1422,9 @@ void CmndKnxEnabled(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     Settings->flag.knx_enabled = XdrvMailbox.payload;
+    if (!Settings->flag.knx_enabled) {
+      Knx.started = false;
+    }
   }
   ResponseCmndChar (GetStateText(Settings->flag.knx_enabled) );
 }
