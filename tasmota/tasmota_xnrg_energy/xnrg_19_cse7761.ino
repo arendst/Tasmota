@@ -481,7 +481,7 @@ void Cse7761GetData(void) {
     CSE7761Data.current_rms[0], CSE7761Data.current_rms[1],
     CSE7761Data.active_power[0], CSE7761Data.active_power[1]);
 
-  if (Energy->power_on) {  // Powered on
+  if (true || Energy->power_on) {  // Powered on <xxx] ALWAYS
     for (uint32_t channel = 0; channel < Energy->phase_count; channel++) {
       if (0 == channel) {
         // Voltage = RmsU * RmsUC * 10 / 0x400000
