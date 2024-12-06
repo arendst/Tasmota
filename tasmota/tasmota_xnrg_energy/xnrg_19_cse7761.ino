@@ -96,8 +96,9 @@ struct {
   uint32_t frequency = 0;
   uint32_t voltage_rms = 0;
   uint32_t current_rms[2] = { 0 };
-  uint32_t energy[2] = { 0 };
+  int32_t  energy[2] = { 0 };
   uint32_t active_power[2] = { 0 };
+  uint32_t power_factor[2] = { 0 };
   uint16_t coefficient[8] = { 0 };
   uint8_t energy_update[2] = { 0 };
   uint8_t init = 4;
@@ -445,6 +446,12 @@ void Cse7761GetData(void) {
   CSE7761Data.frequency = (value >= 0x8000) ? 0 : value;
 #endif  // CSE7761_FREQUENCY
 
+  for (int i=0; i<Energy->phase_count; i++) {
+    Cse7761Write(CSE7761_SPECIAL_COMMAND, (i) ? CSE7761_CMD_CHAN_B_SELECT : CSE7761_CMD_CHAN_A_SELECT);
+    CSE7761Data.power_factor[i] = Cse7761ReadFallback(CSE7761_REG_POWERFACTOR, CSE7761Data.power_factor[i], 3);
+  }
+
+
   value = Cse7761ReadFallback(CSE7761_REG_RMSIA, CSE7761Data.current_rms[0], 3);
 #ifdef CSE7761_SIMULATE
   value = 455;
@@ -496,7 +503,15 @@ void Cse7761GetData(void) {
       Energy->active_power[channel] = (float)CSE7761Data.active_power[channel] / power_calibration;  // W
       if (0 == Energy->active_power[channel]) {
         Energy->current[channel] = 0;
+        Energy->power_factor[channel] = 0;
       } else {
+        int32_t power_factor = CSE7761Data.power_factor[channel] << 8;
+        if ( power_factor < 0 ) {
+          // power factor is negative and active power is not zero -> invert active power
+          Energy->active_power[channel] = -Energy->active_power[channel];
+          power_factor++; // -1 == 0x80000000, so make it -0x7fffffff
+        }
+        Energy->power_factor[channel] = (float)power_factor / 0x7fffffff;
         uint32_t current_calibration = EnergyGetCalibration(ENERGY_CURRENT_CALIBRATION, channel);
         // Current = RmsIA * RmsIAC / 0x800000
         // Energy->current[channel] = (float)(((uint64_t)CSE7761Data.current_rms[channel] * CSE7761Data.coefficient[RmsIAC + channel]) >> 23) / 1000;  // A
@@ -635,6 +650,8 @@ void Cse7761DrvInit(void) {
     Energy->use_overtemp = true;                 // Use global temperature for overtemp detection
     TasmotaGlobal.energy_driver = XNRG_19;
   }
+  Settings->flag2.frequency_resolution = 2;      // 0.01Hz resolution
+  Settings->flag2.voltage_resolution = 1;        // 0.1V resolution
 }
 
 bool Cse7761Command(void) {
