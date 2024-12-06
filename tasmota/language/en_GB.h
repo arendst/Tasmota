@@ -280,16 +280,16 @@
 #define D_CONSOLE "Console"
 #define D_CONFIRM_RESTART "Confirm Restart"
 
-#define D_CONFIGURE_MODULE "Configure Module"
-#define D_CONFIGURE_WIFI "Configure WiFi"
-#define D_CONFIGURE_MQTT "Configure MQTT"
-#define D_CONFIGURE_DOMOTICZ "Configure Domoticz"
-#define D_CONFIGURE_LOGGING "Configure Logging"
-#define D_CONFIGURE_OTHER "Configure Other"
+#define D_CONFIGURE_MODULE "Module"
+#define D_CONFIGURE_WIFI "WiFi"
+#define D_CONFIGURE_MQTT "MQTT"
+#define D_CONFIGURE_DOMOTICZ "Domoticz"
+#define D_CONFIGURE_LOGGING "Logging"
+#define D_CONFIGURE_OTHER "Other"
 #define D_CONFIRM_RESET_CONFIGURATION "Confirm Reset Configuration"
-#define D_RESET_CONFIGURATION "Reset Configuration"
-#define D_BACKUP_CONFIGURATION "Backup Configuration"
-#define D_RESTORE_CONFIGURATION "Restore Configuration"
+#define D_RESET_CONFIGURATION "Reset"
+#define D_BACKUP_CONFIGURATION "Backup"
+#define D_RESTORE_CONFIGURATION "Restore"
 #define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Main Menu"
 
@@ -356,7 +356,7 @@
 #define D_SINGLE_DEVICE "single device"
 #define D_MULTI_DEVICE "multi device"
 
-#define D_CONFIGURE_TEMPLATE "Configure Template"
+#define D_CONFIGURE_TEMPLATE "Template"
 #define D_TEMPLATE_PARAMETERS "Template parameters"
 #define D_TEMPLATE_NAME "Name"
 #define D_BASE_TYPE "Based on"
@@ -386,10 +386,10 @@
 #define D_FLASH_CHIP_SIZE "Flash Size"
 #define D_FREE_PROGRAM_SPACE "Free Program Space"
 
-#define D_UPGRADE_BY_WEBSERVER "Upgrade by web server"
+#define D_UPGRADE_BY_WEBSERVER "Use web server"
 #define D_OTA_URL "OTA Url"
 #define D_START_UPGRADE "Start upgrade"
-#define D_UPGRADE_BY_FILE_UPLOAD "Upgrade by file upload"
+#define D_UPGRADE_BY_FILE_UPLOAD "Use file upload"
 #define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Upload started"
 #define D_UPGRADE_STARTED "Upgrade started"
@@ -463,7 +463,7 @@
 #define D_DOMOTICZ_UPDATE_TIMER "Update timer"
 
 // xdrv_09_timers.ino
-#define D_CONFIGURE_TIMER "Configure Timer"
+#define D_CONFIGURE_TIMER "Timer"
 #define D_TIMER_PARAMETERS "Timer parameters"
 #define D_TIMER_ENABLE "Enable Timers"
 #define D_TIMER_ARM "Enable"
@@ -474,7 +474,7 @@
 #define D_TIMER_ACTION "Action"
 
 // xdrv_10_knx.ino
-#define D_CONFIGURE_KNX "Configure KNX"
+#define D_CONFIGURE_KNX "KNX"
 #define D_KNX_PARAMETERS "KNX Parameters"
 #define D_KNX_GENERAL_CONFIG "General"
 #define D_KNX_PHYSICAL_ADDRESS "Physical Address"
@@ -528,7 +528,7 @@
 // xdrv_89_dali.ino
 #define D_SENSOR_DALI_RX                  "Dali RX"
 #define D_SENSOR_DALI_TX                  "Dali TX"
-#define D_CONFIGURE_DALI                  "Config DALI"
+#define D_CONFIGURE_DALI                  "DALI"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Energy Today"
@@ -546,7 +546,7 @@
 #define D_DOMOTICZ_SHUTTER "Shutter"
 
 // xdrv_28_pcf8574.ino
-#define D_CONFIGURE_PCF8574 "Configure PCF8574"
+#define D_CONFIGURE_PCF8574 "PCF8574"
 #define D_PCF8574_PARAMETERS "PCF8574 parameters"
 #define D_INVERT_PORTS "Invert Ports"
 #define D_DEVICE "Device"
@@ -571,7 +571,7 @@
 #define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
 
 // xdrv_79_esp32_ble.ino
-#define D_CONFIGURE_BLE "Configure BLE"
+#define D_CONFIGURE_BLE "BLE"
 #define D_BLE_PARAMETERS "Bluetooth Settings"
 #define D_MQTT_BLE_ENABLE "Enable Bluetooth"
 #define D_MQTT_BLE_ACTIVESCAN "Enable Active Scan(*)"
@@ -627,7 +627,7 @@
 #define D_HX_CAL_DONE "Calibrated"
 #define D_HX_CAL_FAIL "Calibration failed"
 #define D_RESET_HX711 "Reset Scale"
-#define D_CONFIGURE_HX711 "Configure Scale"
+#define D_CONFIGURE_HX711 "Scale"
 #define D_HX711_PARAMETERS "Scale parameters"
 #define D_ITEM_WEIGHT "Item weight"
 #define D_REFERENCE_WEIGHT "Reference weight"

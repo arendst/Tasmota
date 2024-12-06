@@ -266,6 +266,9 @@ const char HTTP_HEAD_STYLE3[] PROGMEM =
   "<h3>%s</h3>"    // Module name
   "<h2>%s</h2>";   // Device name
 
+const char HTTP_MENU_HEAD[] PROGMEM =
+  "<span style='text-align:center;'><h3><hr/>%s<hr/></h3></span>";
+
 const char HTTP_MSG_SLIDER_SHUTTER[] PROGMEM =
   "<td style='width:70%%'>"
   "<div style='padding:0px 2px;text-align:center;font-size:12px;'><span>%s</span>"
@@ -1952,6 +1955,7 @@ void HandleConfiguration(void) {
 
   WSContentStart_P(PSTR(D_CONFIGURATION));
   WSContentSendStyle();
+  WSContentSend_P(HTTP_MENU_HEAD, D_CONFIGURATION);
 
   WSContentButton(BUTTON_MODULE);
   WSContentButton(BUTTON_WIFI);
@@ -2834,6 +2838,7 @@ void HandleInformation(void) {
   // }1 = </td></tr><tr><th>
   // }2 = </th><td>
   WSContentSend_P(HTTP_SCRIPT_INFO_BEGIN);
+  WSContentSend_P(HTTP_MENU_HEAD, D_INFORMATION);
   WSContentSend_P(PSTR("<table style='width:100%%'><tr><th>"));
   WSContentSend_P(PSTR(D_PROGRAM_VERSION "}2%s %s %s"), TasmotaGlobal.version, TasmotaGlobal.image_name, GetCodeCores().c_str());
   WSContentSend_P(PSTR("}1" D_BUILD_DATE_AND_TIME "}2%s"), GetBuildDateAndTime().c_str());
@@ -3120,6 +3125,8 @@ void HandleUpgradeFirmware(void) {
 
   WSContentStart_P(PSTR(D_FIRMWARE_UPGRADE));
   WSContentSendStyle();
+  WSContentSend_P(HTTP_MENU_HEAD, D_FIRMWARE_UPGRADE);
+
   WSContentSend_P(HTTP_FORM_UPG, SettingsTextEscaped(SET_OTAURL).c_str());
 #ifdef ESP32
   if (EspSingleOtaPartition() && !EspRunningFactoryPartition()) {
@@ -3657,6 +3664,7 @@ void HandleManagement(void) {
 
   WSContentStart_P(PSTR(D_MANAGEMENT));
   WSContentSendStyle();
+  WSContentSend_P(HTTP_MENU_HEAD, D_MANAGEMENT);
 
   WSContentButton(BUTTON_CONSOLE);
 

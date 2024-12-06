@@ -280,16 +280,16 @@
 #define D_CONSOLE "Konsole"
 #define D_CONFIRM_RESTART "Bevestig weer te begin"
 
-#define D_CONFIGURE_MODULE "Stel Module in"
-#define D_CONFIGURE_WIFI "Stel WiFi in"
-#define D_CONFIGURE_MQTT "Stel MQTT in"
-#define D_CONFIGURE_DOMOTICZ "Stel Domoticz in"
-#define D_CONFIGURE_LOGGING "Stel Logging in"
-#define D_CONFIGURE_OTHER "Stel Ander in"
+#define D_CONFIGURE_MODULE "Module"
+#define D_CONFIGURE_WIFI "WiFi"
+#define D_CONFIGURE_MQTT "MQTT"
+#define D_CONFIGURE_DOMOTICZ "Domoticz"
+#define D_CONFIGURE_LOGGING "Logging"
+#define D_CONFIGURE_OTHER "Ander"
 #define D_CONFIRM_RESET_CONFIGURATION "Bevestig die herstel van die konfigurasie"
-#define D_RESET_CONFIGURATION "Stel die konfigurasie terug"
-#define D_BACKUP_CONFIGURATION "Rugsteun die konfigurasie"
-#define D_RESTORE_CONFIGURATION "Herstel die konfigurasie"
+#define D_RESET_CONFIGURATION "Stel terug"
+#define D_BACKUP_CONFIGURATION "Rugsteun"
+#define D_RESTORE_CONFIGURATION "Herstel"
 #define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Hoofkieslys"
 
@@ -356,7 +356,7 @@
 #define D_SINGLE_DEVICE "enkele toestel"
 #define D_MULTI_DEVICE "multi toestel"
 
-#define D_CONFIGURE_TEMPLATE "Konfigureer sjabloon"
+#define D_CONFIGURE_TEMPLATE "sjabloon"
 #define D_TEMPLATE_PARAMETERS "Sjabloon parameters"
 #define D_TEMPLATE_NAME "Naam"
 #define D_BASE_TYPE "Gebaseer op"
@@ -386,10 +386,10 @@
 #define D_FLASH_CHIP_SIZE "Flash Size"
 #define D_FREE_PROGRAM_SPACE "Vrye program grootte"
 
-#define D_UPGRADE_BY_WEBSERVER "Opgradeer per webbediener"
+#define D_UPGRADE_BY_WEBSERVER "Per webbediener"
 #define D_OTA_URL "OTA Url"
 #define D_START_UPGRADE "Begin opgradering"
-#define D_UPGRADE_BY_FILE_UPLOAD "Gradeer op volgens lêeroplaai"
+#define D_UPGRADE_BY_FILE_UPLOAD "Volgens lêeroplaai"
 #define D_UPLOAD_FACTORY "Switching to safeboot partition"
 #define D_UPLOAD_STARTED "Oplaai begin"
 #define D_UPGRADE_STARTED "Opgradering is begin"
@@ -463,7 +463,7 @@
 #define D_DOMOTICZ_UPDATE_TIMER "Dateer tydopdatering op"
 
 // xdrv_09_timers.ino
-#define D_CONFIGURE_TIMER "Stel Timer in"
+#define D_CONFIGURE_TIMER "Timer"
 #define D_TIMER_PARAMETERS "Timer-parameters"
 #define D_TIMER_ENABLE "Aktiveer timers"
 #define D_TIMER_ARM "Aktiveer"
@@ -474,7 +474,7 @@
 #define D_TIMER_ACTION "Aksie"
 
 // xdrv_10_knx.ino
-#define D_CONFIGURE_KNX "Stel KNX op"
+#define D_CONFIGURE_KNX "KNX"
 #define D_KNX_PARAMETERS "KNX-parameters"
 #define D_KNX_GENERAL_CONFIG "Algemene"
 #define D_KNX_PHYSICAL_ADDRESS "Fisiese adres"
@@ -546,7 +546,7 @@
 #define D_DOMOTICZ_SHUTTER "Luik"
 
 // xdrv_28_pcf8574.ino
-#define D_CONFIGURE_PCF8574 "Configure PCF8574"
+#define D_CONFIGURE_PCF8574 "PCF8574"
 #define D_PCF8574_PARAMETERS "PCF8574 parameters"
 #define D_INVERT_PORTS "Keer poorte om"
 #define D_DEVICE "Toestel"
@@ -571,7 +571,7 @@
 #define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
 
 // xdrv_79_esp32_ble.ino
-#define D_CONFIGURE_BLE "Configure BLE"
+#define D_CONFIGURE_BLE "BLE"
 #define D_BLE_PARAMETERS "Bluetooth Settings"
 #define D_MQTT_BLE_ENABLE "Enable Bluetooth"
 #define D_MQTT_BLE_ACTIVESCAN "Enable Active Scan(*)"
@@ -627,7 +627,7 @@
 #define D_HX_CAL_DONE "Gekalibreer"
 #define D_HX_CAL_FAIL "Kon nie kalibreer nie"
 #define D_RESET_HX711 "Stel die skaal terug"
-#define D_CONFIGURE_HX711 "Stel skaal op"
+#define D_CONFIGURE_HX711 "skaal"
 #define D_HX711_PARAMETERS "Skaal parameters"
 #define D_ITEM_WEIGHT "Gewig van die item"
 #define D_REFERENCE_WEIGHT "Verwysingsgewig"
