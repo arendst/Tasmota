@@ -478,7 +478,7 @@
 #define D_KNX_PARAMETERS "Parameter"
 #define D_KNX_GENERAL_CONFIG "Allgemein"
 #define D_KNX_PHYSICAL_ADDRESS "Physikalische Adresse"
-#define D_KNX_PHYSICAL_ADDRESS_NOTE "Muss einmalig im KNX-Netzwerk sein"
+#define D_KNX_PHYSICAL_ADDRESS_NOTE "Muss eindeutig im KNX-Netzwerk sein"
 #define D_KNX_ENABLE "aktivieren"
 #define D_KNX_GROUP_ADDRESS_TO_WRITE "Daten zum Senden an Gruppenadresse"
 #define D_ADD "Hinzufügen"
