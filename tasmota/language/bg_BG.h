@@ -350,6 +350,7 @@
 #define D_MQTT_TLS_ENABLE "MQTT през TLS"
 #define D_HTTP_API "HTTP API"
 #define D_HTTP_API_ENABLE "Включване на ППИ през HTTP"
+#define D_MDNS_ENABLE "Включване на MDNS"
 #define D_FRIENDLY_NAME "Приятелско име"
 #define D_BELKIN_WEMO "Belkin WeMo"
 #define D_HUE_BRIDGE "Hue Bridge"

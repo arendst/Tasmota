@@ -350,6 +350,7 @@
 #define D_MQTT_TLS_ENABLE "MQTT TLS"
 #define D_HTTP_API "HTTP API"
 #define D_HTTP_API_ENABLE "HTTP API 的啟用"
+#define D_MDNS_ENABLE "MDNS 的啟用"
 #define D_FRIENDLY_NAME "暱稱"
 #define D_BELKIN_WEMO "貝爾金 WeMo"
 #define D_HUE_BRIDGE "Hue 橋接器"

@@ -350,6 +350,7 @@
 #define D_MQTT_TLS_ENABLE "MQTT TLS"
 #define D_HTTP_API "HTTP API"
 #define D_HTTP_API_ENABLE "HTTP API aktif"
+#define D_MDNS_ENABLE "MDNS aktif"
 #define D_FRIENDLY_NAME "Kullanıcı Dostu İsim"
 #define D_BELKIN_WEMO "Belkin WeMo"
 #define D_HUE_BRIDGE "Hue Bridge"

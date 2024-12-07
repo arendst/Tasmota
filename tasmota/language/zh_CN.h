@@ -350,6 +350,7 @@
 #define D_MQTT_TLS_ENABLE "MQTT TLS"
 #define D_HTTP_API "HTTP API"
 #define D_HTTP_API_ENABLE "启用 HTTP API"
+#define D_MDNS_ENABLE "启用 MDNS"
 #define D_FRIENDLY_NAME "昵称"
 #define D_BELKIN_WEMO "Belkin WeMo"
 #define D_HUE_BRIDGE "飞利浦 Hue 网桥"
