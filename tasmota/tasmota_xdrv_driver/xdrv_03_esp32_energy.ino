@@ -547,7 +547,7 @@ void EnergyUpdateToday(void) {
         Energy->kWhtoday[i] += delta;
       }
       if (delta < 0) {     // Export energy
-        RtcEnergySettings.energy_export_kWh[i] += ((float)(delta / 100) *-1) / 1000;
+        RtcEnergySettings.energy_export_kWh[i] += (((float)delta / 100) *-1) / 1000;
       }
     }
 
