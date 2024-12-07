@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v14.1.0.4 - Last update 28.07.2024
+ * Updated until v14.3.0.7 - Last update 07.12.2024
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -285,7 +285,7 @@
 #define D_CONFIGURE_MQTT "MQTT"
 #define D_CONFIGURE_DOMOTICZ "Domoticz"
 #define D_CONFIGURE_LOGGING "Logging"
-#define D_CONFIGURE_OTHER "Weitere"
+#define D_CONFIGURE_OTHER "Erweitert"
 #define D_CONFIRM_RESET_CONFIGURATION "Zurücksetzen bestätigen"
 #define D_RESET_CONFIGURATION "Zurücksetzen"
 #define D_BACKUP_CONFIGURATION "Sichern"
@@ -341,7 +341,7 @@
 #define D_SYSLOG_PORT "Syslog Port"
 #define D_TELEMETRY_PERIOD "Telemetrieperiode"
 
-#define D_OTHER_PARAMETERS "Weitere"
+#define D_OTHER_PARAMETERS "Einstellungen"
 #define D_TEMPLATE "Vorlage"
 #define D_ACTIVATE "Aktivieren"
 #define D_DEVICE_NAME "Gerätename"
@@ -356,7 +356,7 @@
 #define D_SINGLE_DEVICE "Einzelnes Gerät"
 #define D_MULTI_DEVICE "Mehrfachgerät"
 
-#define D_CONFIGURE_TEMPLATE "konfigurieren"
+#define D_CONFIGURE_TEMPLATE "Vorlage"
 #define D_TEMPLATE_PARAMETERS "Parameter"
 #define D_TEMPLATE_NAME "Name"
 #define D_BASE_TYPE "basiert auf"
@@ -388,7 +388,7 @@
 
 #define D_UPGRADE_BY_WEBSERVER "Update über Webserver"
 #define D_OTA_URL "OTA-URL"
-#define D_START_UPGRADE "starten"
+#define D_START_UPGRADE "Starten"
 #define D_UPGRADE_BY_FILE_UPLOAD "Update Datei hochladen"
 #define D_UPLOAD_FACTORY "Wechsle zur Safeboot Partition"
 #define D_UPLOAD_STARTED "Upload gestartet"
