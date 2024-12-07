@@ -351,6 +351,7 @@ const char HTTP_FORM_OTHER[] PROGMEM =
   "<br>"
   "<label><input id='b3' type='checkbox'%s><b>" D_HTTP_API_ENABLE "</b></label><br>"
   "<label><input id='b1' type='checkbox'%s><b>" D_MQTT_ENABLE "</b></label><br>"
+  "<label><input id='b4' type='checkbox'%s><b>" D_MDNS_ENABLE "</b></label><br>"
   "<br>"
   "<label><b>" D_DEVICE_NAME "</b> (%s)</label><br><input id='dn' placeholder=\"\" value=\"%s\"><br>"
   "<br>";
@@ -2653,6 +2654,7 @@ void HandleOtherConfiguration(void) {
   WSContentSend_P(HTTP_FORM_OTHER, HtmlEscape(ResponseData()).c_str(), (USER_MODULE == Settings->module) ? PSTR(" checked disabled") : "",
     (Settings->flag5.disable_referer_chk) ? PSTR(" checked") : "",   // SetOption128 - Enable HTTP API
     (Settings->flag.mqtt_enabled) ? PSTR(" checked") : "",   // SetOption3 - Enable MQTT
+    (Settings->flag3.mdns_enabled) ? PSTR(" checked") : "",   // SetOption55 - Enable MDNS
     SettingsTextEscaped(SET_FRIENDLYNAME1).c_str(), SettingsTextEscaped(SET_DEVICENAME).c_str());
 
   char stemp[32];
@@ -2706,6 +2708,8 @@ void OtherSaveSettings(void) {
   cmnd += Webserver->hasArg(F("b1"));
   cmnd += F(";" D_CMND_SO "128 ");
   cmnd += Webserver->hasArg(F("b3"));
+  cmnd += F(";" D_CMND_SO "55 ");
+  cmnd += Webserver->hasArg(F("b4"));
   cmnd += AddWebCommand(PSTR(D_CMND_DEVICENAME), PSTR("dn"), PSTR("\""));
   char webindex[5];
   char cmnd2[24];                             // ";Module 0;Template "
