@@ -267,7 +267,7 @@ const char HTTP_HEAD_STYLE3[] PROGMEM =
   "<h2>%s</h2>";   // Device name
 
 const char HTTP_MENU_HEAD[] PROGMEM =
-  "<span style='text-align:center;'><h3><hr/>%s<hr/></h3></span>";
+  "<div style='padding:0px 5px;text-align:center;'><h3><hr/>%s<hr/></h3></div>";
 
 const char HTTP_MSG_SLIDER_SHUTTER[] PROGMEM =
   "<td style='width:70%%'>"
