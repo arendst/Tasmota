@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Shelly i4 Gen3 template {"NAME":"Shelly i4 Gen3","GPIO":[0,0,0,4736,32,195,194,193,1,1,192,0,0,0,0,0,0,0,0,0,1,1],"FLAG":0,"BASE":1,"CMND":"AdcGpio3 10000,10000,4000}
 - Show Active Power Total with any multi-phase energy monitoring (#22579)
 - Command `SetOption162 1` to disable adding export energy to energy today (#22578)
+- ESP32 support for WPA2/3 Enterprise conditional in core v3.1.0.241206 (#22600)
 
 ### Breaking Changed
 - ESP32 ArtNet switches from GRB to RGB encoding (#22556)
@@ -26,6 +27,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Platform from 2024.11.30 to 2024.11.31, Framework (Arduino Core) from v3.1.0.241030 to v3.1.0.241117 and IDF to 5.3.1.241024 (#22504)
 - Prevent active BLE operations with unencrypted MI-format beacons (#22453)
 - ESP32 replaced NeoPixelBus with TasmotaLED (#22556)
+- ESP32 Platform from 2024.11.31 to 2024.12.30, Framework (Arduino Core) from v3.1.0.241117 to v3.1.0.241206 and IDF to 5.3.2 (#22600)
 
 ### Fixed
 - ESP32 upgrade by file upload response based on file size (#22500)
