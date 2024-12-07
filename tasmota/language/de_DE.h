@@ -341,7 +341,7 @@
 #define D_SYSLOG_PORT "Syslog Port"
 #define D_TELEMETRY_PERIOD "Telemetrieperiode"
 
-#define D_OTHER_PARAMETERS "Weitere Einstellungen"
+#define D_OTHER_PARAMETERS "Einstellungen"
 #define D_TEMPLATE "Vorlage"
 #define D_ACTIVATE "Aktivieren"
 #define D_DEVICE_NAME "Gerätename"
@@ -357,7 +357,7 @@
 #define D_MULTI_DEVICE "Mehrfachgerät"
 
 #define D_CONFIGURE_TEMPLATE "Vorlage"
-#define D_TEMPLATE_PARAMETERS "Vorlage Parameter"
+#define D_TEMPLATE_PARAMETERS "Parameter"
 #define D_TEMPLATE_NAME "Name"
 #define D_BASE_TYPE "basiert auf"
 #define D_TEMPLATE_FLAGS "Optionen"
