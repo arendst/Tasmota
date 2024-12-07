@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 15.11.2024
+ * Updated until v9.4.0.1 - Last update 07.12.2024
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -386,10 +386,10 @@
 #define D_FLASH_CHIP_SIZE       "Dimensione flash"
 #define D_FREE_PROGRAM_SPACE    "Memoria libera programma"
 
-#define D_UPGRADE_BY_WEBSERVER    "Aggiornamento via server web"
+#define D_UPGRADE_BY_WEBSERVER    "Aggiorna via server web"
 #define D_OTA_URL                 "URL OTA"
 #define D_START_UPGRADE           "Esegui aggiornamento"
-#define D_UPGRADE_BY_FILE_UPLOAD  "Aggiornamento tramite file locale"
+#define D_UPGRADE_BY_FILE_UPLOAD  "Aggiorna tramite file locale"
 #define D_UPLOAD_FACTORY          "Passaggio a partizione avvio sicuro"
 #define D_UPLOAD_STARTED          "Caricamento..."
 #define D_UPGRADE_STARTED         "Aggiornamento..."
@@ -571,7 +571,7 @@
 #define D_THERMOSTAT_AUTOTUNE_HYBRID  "Regolazione automatica (ibrida)"
 
 // xdrv_79_esp32_ble.ino
-#define D_CONFIGURE_BLE               "Configura BLE"
+#define D_CONFIGURE_BLE               "BLE"
 #define D_BLE_PARAMETERS              "Impostazioni Bluetooth"
 #define D_MQTT_BLE_ENABLE             "Abilita Bluetooth"
 #define D_MQTT_BLE_ACTIVESCAN         "Abilita scansione attiva (*)"
