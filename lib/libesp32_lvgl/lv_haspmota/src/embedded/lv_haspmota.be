@@ -2187,10 +2187,10 @@ class lvh_chart : lvh_obj
   end
 
   def set_series1_color(color)
-    self._lv_obj.set_series_color(self._ser1, color)
+    self._lv_obj.set_series_color(self._ser1, self.parse_color(color))
   end
   def set_series2_color(color)
-    self._lv_obj.set_series_color(self._ser2, color)
+    self._lv_obj.set_series_color(self._ser2, self.parse_color(color))
   end
   def set_h_div_line_count(_h_div)
     self._h_div = _h_div
