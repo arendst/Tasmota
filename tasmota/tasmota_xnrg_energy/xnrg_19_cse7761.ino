@@ -44,7 +44,7 @@
  * Current measurement device      shunt    CT       CT = Current Transformer
  * Common voltage                  Yes      Yes      Show common voltage in GUI/JSON
  * Common frequency                Yes      Yes      Show common frequency in GUI/JSON
- * Swapped inputs                  Yes      No       Current direction defined by hardware design - Fixed by Tasmota
+ * Inverted inputs                 Yes      No       Current direction defined by hardware design - Fixed by Tasmota
  * Support Zero Cross detection    Yes      No       Tasmota supports zero cross detection only on DualR3 due to timing
  * Support Export Active           No       Yes      Only CT supports correct negative value detection
  * Show negative power             No       Yes      Only CT supports correct negative value detection
@@ -463,7 +463,9 @@ void Cse7761GetData(void) {
 
   for (uint32_t channel = 0; channel < Energy->phase_count; channel++) {
     if (CSE7761_MODEL_POWCT == CSE7761Data.model) {
-      Cse7761Write(CSE7761_SPECIAL_COMMAND, (channel) ? CSE7761_CMD_CHAN_B_SELECT : CSE7761_CMD_CHAN_A_SELECT);
+      if (Energy->phase_count > 1) {
+        Cse7761Write(CSE7761_SPECIAL_COMMAND, (channel) ? CSE7761_CMD_CHAN_B_SELECT : CSE7761_CMD_CHAN_A_SELECT);
+      }
       CSE7761Data.power_factor[channel] = Cse7761ReadFallback(CSE7761_REG_POWERFACTOR, CSE7761Data.power_factor[channel], 3);
     }
 
