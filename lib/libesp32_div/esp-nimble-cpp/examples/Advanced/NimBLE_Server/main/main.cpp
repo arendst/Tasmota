@@ -44,21 +44,21 @@ class ServerCallbacks: public NimBLEServerCallbacks {
 
 /********************* Security handled here **********************
 ****** Note: these are the same return values as defaults ********/
-    uint32_t onPassKeyRequest(){
-        printf("Server Passkey Request\n");
+    uint32_t onPassKeyDisplay(){
+        printf("Server Passkey Display\n");
         /** This should return a random 6 digit number for security
          *  or make your own static passkey as done here.
          */
         return 123456;
     };
 
-    bool onConfirmPIN(uint32_t pass_key){
-        printf("The passkey YES/NO number: %" PRIu32"\n", pass_key);
-        /** Return false if passkeys don't match. */
-        return true;
+    void onConfirmPIN(const NimBLEConnInfo& connInfo, uint32_t pass_key){
+        printf("The passkey YES/NO number: %" PRIu32 "\n", pass_key);
+        /** Inject false if passkeys don't match. */
+        NimBLEDevice::injectConfirmPIN(connInfo, true);
     };
 
-    void onAuthenticationComplete(NimBLEConnInfo& connInfo){
+    void onAuthenticationComplete(const NimBLEConnInfo& connInfo){
         /** Check that encryption was successful, if not we disconnect the client */
         if(!connInfo.isEncrypted()) {
             NimBLEDevice::getServer()->disconnect(connInfo.getConnHandle());

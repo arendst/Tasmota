@@ -105,6 +105,12 @@ void MagicSwitchLoop()
   }
 }
 
+void MagicSwitchSetPower(void) {
+  // It can happen that on relay switch, disturbances on the mains is falsy see as a MagicSwitch pulse
+  // This restart the masking windows on every power change to avoid that effect
+  MagicSwitch->switch_state = MAGICSWITCH_MASKING_WINDOW_LEN;
+}
+
 /********************************************************************************************************
  * Driver initialisation
  */
@@ -172,6 +178,9 @@ bool Xdrv71(uint32_t function) {
       case FUNC_EVERY_50_MSECOND:
       //case FUNC_EVERY_250_MSECOND:
         MagicSwitchLoop();
+        break;
+      case FUNC_SET_POWER:
+        MagicSwitchSetPower();
         break;
       case FUNC_ADD_SWITCH:
         result = MagicSwitchAddSwitch();

@@ -53,7 +53,7 @@ const uint16_t sdm230_start_addresses[] {
   0x0006,   // SDM230_CURRENT                             [A]
   0x000C,   // SDM230_POWER (Active)                      [W]
   0x0012,   // SDM230_POWER (Apparent) G                  [VA]
-  0x0018,   // SDM230_POWER (Reactive)                    [VAr]
+  0x0018,   // SDM230_POWER (Reactive)                    [var]
   0x001E,   // SDM230_POWER_FACTOR
   0x0046,   // SDM230_FREQUENCY                           [Hz]
   0X0048,   // SDM230_IMPORT_ACTIVE                       [kWh]
@@ -68,10 +68,10 @@ const uint16_t sdm230_start_addresses[] {
 #endif // SDM230_MORE_REGS
 
 // for documentation / further use or implementation
-//  0X0158,   // SDM230_TOTAL_ENERGY_REACTIVE               [kVArh]
-//  0X0182,   // SDM230_RESETTABLE_TOTAL_ENERGY_REACTIVE    [kVArh]
-//  0X004C,   // SDM230_IMPORT_REACTIVE                     [kVArh]
-//  0X004E,   // SDM230_EXPORT_REACTIVE                     [kVArh]
+//  0X0158,   // SDM230_TOTAL_ENERGY_REACTIVE               [kvarh]
+//  0X0182,   // SDM230_RESETTABLE_TOTAL_ENERGY_REACTIVE    [kvarh]
+//  0X004C,   // SDM230_IMPORT_REACTIVE                     [kvarh]
+//  0X004E,   // SDM230_EXPORT_REACTIVE                     [kvarh]
 //  0X0054,   // SDM230_TOTAL_DEMAND_POWER_ACTIVE           [W]
 //  0X0058,   // SDM230_IMPORT_DEMAND_POWER_ACTIVE          [W]
 //  0X005A,   // SDM230_MAXIMUM_IMPORT_DEMAND_POWER_ACTIVE  [W]

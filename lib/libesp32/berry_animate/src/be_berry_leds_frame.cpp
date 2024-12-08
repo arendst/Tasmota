@@ -45,10 +45,10 @@ extern "C" {
       uint32_t g2 = (color_b >>  8) & 0xFF;
       uint32_t b2 = (color_b      ) & 0xFF;
       uint32_t a2 = (color_b >> 24) & 0xFF;
-      uint32_t r3 = changeUIntScale(alpha, 0, 255, r2, r);
-      uint32_t g3 = changeUIntScale(alpha, 0, 255, g2, g);
-      uint32_t b3 = changeUIntScale(alpha, 0, 255, b2, b);
-      uint32_t a3 = changeUIntScale(alpha, 0, 255, a2, a);
+      uint8_t r3 = changeUIntScale(alpha, 0, 255, r2, r);
+      uint8_t g3 = changeUIntScale(alpha, 0, 255, g2, g);
+      uint8_t b3 = changeUIntScale(alpha, 0, 255, b2, b);
+      uint8_t a3 = changeUIntScale(alpha, 0, 255, a2, a);
       uint32_t rgb = (a3 << 24) | (r3 << 16) | (g3 << 8) | b3;
       be_pushint(vm, rgb);
       be_return(vm);
@@ -97,9 +97,9 @@ extern "C" {
             uint32_t fore_g = (fore_argb >>  8) & 0xFF;
             uint32_t back_b = (back_argb      ) & 0xFF;
             uint32_t fore_b = (fore_argb      ) & 0xFF;
-            uint32_t dest_r_new = changeUIntScale(fore_alpha, 0, 255, fore_r, back_r);
-            uint32_t dest_g_new = changeUIntScale(fore_alpha, 0, 255, fore_g, back_g);
-            uint32_t dest_b_new = changeUIntScale(fore_alpha, 0, 255, fore_b, back_b);
+            uint8_t dest_r_new = changeUIntScale(fore_alpha, 0, 255, fore_r, back_r);
+            uint8_t dest_g_new = changeUIntScale(fore_alpha, 0, 255, fore_g, back_g);
+            uint8_t dest_b_new = changeUIntScale(fore_alpha, 0, 255, fore_b, back_b);
             dest_rgb_new = (dest_r_new << 16) | (dest_g_new << 8) | dest_b_new;
           }
           dest[i] = dest_rgb_new;
@@ -135,7 +135,7 @@ extern "C" {
 
   // Leds_frame.paste_pixels(neopixel:bytes(), led_buffer:bytes(), bri:int 0..100, gamma:bool)
   //
-  // Copy from ARGB buffer to GRB
+  // Copy from ARGB buffer to RGB
   int32_t be_leds_paste_pixels(bvm *vm);
   int32_t be_leds_paste_pixels(bvm *vm) {
     int32_t top = be_top(vm); // Get the number of arguments
@@ -162,8 +162,8 @@ extern "C" {
           uint32_t src_r = (src_argb >> 16) & 0xFF;
           uint32_t src_g = (src_argb >>  8) & 0xFF;
           uint32_t src_b = (src_argb      ) & 0xFF;
-          dest_buf[i * 3 + 0] = src_g;
-          dest_buf[i * 3 + 1] = src_r;
+          dest_buf[i * 3 + 0] = src_r;
+          dest_buf[i * 3 + 1] = src_g;
           dest_buf[i * 3 + 2] = src_b;
         }
       }

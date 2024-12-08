@@ -3,6 +3,147 @@ All notable changes to this project will be documented in this file.
 
 ## [Released]
 
+## [14.4.0] 20241212
+- Release Rudolph
+
+## [14.3.0.7] 20241212
+### Added
+- Support for TM1640 based IoTTimer by Stefan Oskamp (#21376)
+- Command `SetOption161 1` to disable display of state text (#22515)
+- ESP32 new BLE filters by name and minimum RSSI (#22530)
+- ESP32 Hybrid compile take custom boards settings in account (#22542)
+- ESP32 ULP lp_core to Berry ULP module (#22567)
+- Shelly 1 Gen3 template {"NAME":"Shelly 1 Gen3","GPIO":[0,0,0,4736,0,224,0,0,1,1,192,0,0,0,0,0,0,0,0,576,1,1],"FLAG":0,"BASE":1,"CMND":"AdcGpio3 10000,10000,4000"}
+- Shelly 1PM Gen3 template {"NAME":"Shelly 1PM Gen3","GPIO":[0,32,0,4736,224,0,3200,8161,576,1,192,0,0,0,0,0,0,0,0,1,1,1],"FLAG":0,"BASE":1,"CMND":"AdcGpio3 10000,10000,4000"}
+- Shelly 2PM Gen3 template {"NAME":"Shelly 2PM Gen3","GPIO":[9472,3458,576,225,4736,224,640,608,1,1,193,0,0,0,0,0,0,0,192,32,1,1],"FLAG":0,"BASE":1,"CMND":"AdcGpio4 10000,10000,4000"}
+- Shelly i4 Gen3 template {"NAME":"Shelly i4 Gen3","GPIO":[0,0,0,4736,32,195,194,193,1,1,192,0,0,0,0,0,0,0,0,0,1,1],"FLAG":0,"BASE":1,"CMND":"AdcGpio3 10000,10000,4000}
+- Show Active Power Total with any multi-phase energy monitoring (#22579)
+- Command `SetOption162 1` to disable adding export energy to energy today (#22578)
+- ESP32 support for WPA2/3 Enterprise conditional in core v3.1.0.241206 (#22600)
+- Support for Sonoff POWCT Energy Export Active (#22596)
+
+### Breaking Changed
+- ESP32 ArtNet switches from GRB to RGB encoding (#22556)
+
+### Changed
+- ESP32 max number of supported switches/buttons/relays from 28 to 32
+- ESP32 max number of interlocks from 14 to 16
+- ESP32 Platform from 2024.11.30 to 2024.11.31, Framework (Arduino Core) from v3.1.0.241030 to v3.1.0.241117 and IDF to 5.3.1.241024 (#22504)
+- Prevent active BLE operations with unencrypted MI-format beacons (#22453)
+- ESP32 replaced NeoPixelBus with TasmotaLED (#22556)
+- ESP32 Platform from 2024.11.31 to 2024.12.30, Framework (Arduino Core) from v3.1.0.241117 to v3.1.0.241206 and IDF to 5.3.2 (#22600)
+
+### Fixed
+- ESP32 upgrade by file upload response based on file size (#22500)
+- Wrong GUI Module and Template drop down list indexes regression
+- Use HTML escape on File System Edit File load (#22492)
+- Magic switch applying masking window to any power change (#22535)
+- Shift595 output offsets and restart relay toggles
+- Shutter wrong power ON state (#22548)
+- ESP32-C2 TasmotaLED from not present I2S to SPI (#22575)
+- KNX Scenes index change regression from v14.2.0.4 (#22405)
+- Add GUI submenu headers and refresh configuration button text (#22592)
+
+### Removed
+
+## [14.3.0.6] 20241116
+### Added
+- Add command ``WebColor20`` to control color of Button when Off
+
+### Fixed
+- Matter provisioning with matter.js controller (#22470)
+- Prevent crashing when `display.ini` is missing end `#` (#22471)
+
+## [14.3.0.5] 20241111
+### Added
+- ESP32 MI32 legacy add config operations (#22458)
+
+### Changed
+- Redesign GUI adding feedback to buttons, shutters and lights
+- Use command `WebButton1` to change GUI shutter 1 name
+
+### Removed
+- Command ``SetOption161 1`` to disable web page slider updates by commands
+
+## [14.3.0.4] 20241111
+### Added
+- DALI command `DaliGroupSliders 0..16` to show GUI group sliders with feedback disabling `DaliLight`
+- Support for I2C over Serial (#22444)
+- Support KNX for scripts (#22429)
+- Support deep sleep (standby) for VL53L0X (#22441)
+- Support for MS5837 pressure and temperature sensor (#22376)
+- Berry add I2C read16/write16 supporting Little Endian (#22448)
+- Berry drivers for PCA9535 (generic and in SenseCAP D1) (#22451)
+- Shelly DALI Dimmer Gen3 template {"NAME":"Shelly DALI Dimmer Gen3","GPIO":[34,4736,0,3840,11360,11392,128,129,0,1,576,0,0,0,0,0,0,0,0,1,1,1],"FLAG":0,"BASE":1,"CMND":"AdcGpio1 10000,10000,4000}
+
+### Changed
+- AHT1X/AHT2X/AHT3X ready for virtual I2C (#22427)
+- SGP4X ready for virtual I2C (#22427)
+- SCD40 reduce logging levels (#22443)
+- SCD40 ready for virtual I2C (#22443)
+- Unit (k)VAr(h) to (k)var(h) (#22435)
+
+### Fixed
+- ESP32-S3 UART output mode for Tx (#22426)
+- Mitsubishi Electric HVAC Standby Stage for MiElHVAC (#22430)
+- FUNC_COMMAND linked list command buffer corruption by shutter driver
+- ESP32, ESP32-S2 and ESP32-S3 re-enable touch buttons (#22446)
+
+## [14.3.0.3] 20241031
+### Added
+- Support for I2C over Serial, preliminary stub (#22388)
+
+### Changed
+- ESP32 Platform from 2024.10.30 to 2024.11.30, Framework (Arduino Core) from v3.1.0.241023 to v3.1.0.241030 and IDF to 5.3.1.241024 (#22384)
+- ESP32 LVGL library from v9.2.0 to v9.2.2 (#22385)
+- Refactored `i2c_enabled` as array (#22387)
+
+### Fixed
+- ESP32 Arduino Core IPv6 zones used by Matter (#22378)
+
+## [14.3.0.2] 20241030
+### Added
+- DALI command `DaliGear` to set max found gear to speed up scan response
+- DALI command `DaliGroup` to add gear to groups
+- DALI command `DaliTarget` to set light control broadcast, group number or gear number
+- Mitsubishi Electric HVAC Operation time for MiElHVAC (#22334)
+- Mitsubishi Electric HVAC Outdoor Temperature for MiElHVAC (#22345)
+- Mitsubishi Electric HVAC Compressor Frequency for MiElHVAC (#22347)
+- SolaxX1 Meter mode (#22330)
+- DALI inverted signal configuration using GPIO DALI RX_i/TX_i
+- Support for Shelly DALI Dimmer Gen3 (See tips and template in file xdrv_75_dali.ino)
+- HASPmota `haspmota.get_pages()` to get the sorted list of pages (#22358)
+- Support for US AQI and EPA AQI in PMS5003x sensors (#22294)
+- HLK-LD2410 Engineering mode (#21880)
+- Support for HLK-LD2410S 24GHz smart wave motion sensor (#22253)
+- Mitsubishi Electric HVAC Auto Clear Remote Temp for MiElHVAC (#22370)
+- Command ``SetOption161 1`` to disable web page slider updates by commands
+
+### Changed
+- DALI renamed commands `DaliCommission` to `DaliScan` and `DaliWeb` to `DaliLight`
+- DALI set Tasmota light control as default
+- ESP32 Framework (Arduino Core) from v3.1.0.241015 to v3.1.0.241023 (#22351)
+- Shutter optimized behavior to publish shutter data with sensor request (#22353)
+
+### Fixed
+- Ethernet on -DFRAMEWORK_ARDUINO_ITEAD framework regression from v14.3.0 (#22367)
+- Alexa Hue with multiple devices (#22383)
+
+### Removed
+- DALI inverted signal configuration using compile time defines
+
+## [14.3.0.1] 20241022
+### Added
+- BLE track devices with RPA (#22300)
+- DALI support for short addresses and groups
+
+### Changed
+- ESP32 platform update from 2024.09.30 to 2024.10.30 and Framework (Arduino Core) from v3.1.0.240926 to v3.1.0.241015 (#22299)
+- HASPmota support for page delete and object updates (#22311)
+
+### Fixed
+- EQ3 TRV firmware version 1.46 fails if the default true is used in subscribe on the notify characteristic (#22328)
+
 ## [14.3.0] 20241015
 - Release Robert
 
@@ -16,11 +157,11 @@ All notable changes to this project will be documented in this file.
 - Command ``DaliSend <address>|<address+256>,<command>`` to send command (address+256 is repeat) on DALI bus
 - Command ``DaliQuery <address>|<address+256>,<command>`` to send command (address+256 is repeat) on DALI bus and wait up to DALI_TIMEOUT ms for response
 - Berry Serial `config` to change parity on-the-fly for RS-485 (#22285)
-- Misubishi Electric HVAC Heat/Dry/Cool Auto operation mode (#22216)
-- Misubishi Electric HVAC Bridge to HomeBridge/Homekit locally (#22236)
-- Misubishi Electric HVAC Air Direction Control (#22241)
-- Misubishi Electric HVAC prohibit function (#22269)
-- Misubishi Electric HVAC compressor map and operation power and energy (#22290)
+- Mitsubishi Electric HVAC Heat/Dry/Cool Auto operation mode (#22216)
+- Mitsubishi Electric HVAC Bridge to HomeBridge/Homekit locally (#22236)
+- Mitsubishi Electric HVAC Air Direction Control (#22241)
+- Mitsubishi Electric HVAC prohibit function (#22269)
+- Mitsubishi Electric HVAC compressor map and operation power and energy (#22290)
 
 ### Changed
 - ESP32 platform update from 2024.09.10 to 2024.09.30 and Framework (Arduino Core) from v3.0.5 to v3.1.0.240926 (#22203)

@@ -152,7 +152,7 @@ BERRY_LOCAL const bntvmodule_t* const be_module_table[] = {
     &be_native_module(unishox),
 #endif // USE_UNISHOX_COMPRESSION
 
-#ifdef USE_WS2812
+#if defined(USE_WS2812) && !defined(USE_WS2812_FORCE_NEOPIXELBUS)
     &be_native_module(animate),
 #endif // USE_WS2812
 
@@ -178,7 +178,7 @@ BERRY_LOCAL const bntvmodule_t* const be_module_table[] = {
     &be_native_module(partition_core),
     &be_native_module(crc),
     &be_native_module(crypto),
-#if defined(USE_BERRY_ULP) && ((CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3))
+#if defined(USE_BERRY_ULP) && defined(CONFIG_ULP_COPROC_ENABLED)
     &be_native_module(ULP),
 #endif // USE_BERRY_ULP
 #if defined(USE_BERRY_TF_LITE)
@@ -293,7 +293,7 @@ BERRY_LOCAL bclass_array be_class_table = {
 #ifdef USE_BERRY_TCPSERVER
     &be_native_class(tcpserver),
 #endif // USE_BERRY_TCPSERVER
-#ifdef USE_WS2812
+#if defined(USE_WS2812) && !defined(USE_WS2812_FORCE_NEOPIXELBUS)
     &be_native_class(Leds_ntv),
     &be_native_class(Leds),
 #endif // USE_WS2812

@@ -38,33 +38,36 @@ from SCons.Script import COMMAND_LINE_TARGETS
 sys.path.append(join(platform.get_package_dir("tool-esptoolpy")))
 import esptool
 
+config = env.GetProjectConfig()
 variants_dir = env.BoardConfig().get("build.variants_dir", "")
 variant = env.BoardConfig().get("build.variant", "")
 sections = env.subst(env.get("FLASH_EXTRA_IMAGES"))
 chip = env.get("BOARD_MCU")
 mcu_build_variant = env.BoardConfig().get("build.variant", "").lower()
+flag_custom_sdkconfig = config.has_option("env:"+env["PIOENV"], "custom_sdkconfig")
+flag_board_sdkconfig = env.BoardConfig().get("espidf.custom_sdkconfig", "")
 
 # Copy safeboots firmwares in place when running in Github
 github_actions = os.getenv('GITHUB_ACTIONS')
 extra_flags = ''.join([element.replace("-D", " ") for element in env.BoardConfig().get("build.extra_flags", "")])
 build_flags = ''.join([element.replace("-D", " ") for element in env.GetProjectOption("build_flags")])
 
-if "CORE32SOLO1" in extra_flags or "FRAMEWORK_ARDUINO_SOLO1" in build_flags:
+if ("CORE32SOLO1" in extra_flags or "FRAMEWORK_ARDUINO_SOLO1" in build_flags) and flag_custom_sdkconfig == False and flag_board_sdkconfig == "":
     FRAMEWORK_DIR = platform.get_package_dir("framework-arduino-solo1")
     if github_actions and os.path.exists("./firmware/firmware"):
-        shutil.copytree("./firmware/firmware", "/home/runner/.platformio/packages/framework-arduino-solo1/variants/tasmota")
+        shutil.copytree("./firmware/firmware", "/home/runner/.platformio/packages/framework-arduino-solo1/variants/tasmota", dirs_exist_ok=True)
         if variants_dir:
             shutil.copytree("./firmware/firmware", variants_dir, dirs_exist_ok=True)
-elif "CORE32ITEAD" in extra_flags or "FRAMEWORK_ARDUINO_ITEAD" in build_flags:
+elif ("CORE32ITEAD" in extra_flags or "FRAMEWORK_ARDUINO_ITEAD" in build_flags) and flag_custom_sdkconfig == False and flag_board_sdkconfig == "":
     FRAMEWORK_DIR = platform.get_package_dir("framework-arduino-ITEAD")
     if github_actions and os.path.exists("./firmware/firmware"):
-        shutil.copytree("./firmware/firmware", "/home/runner/.platformio/packages/framework-arduino-ITEAD/variants/tasmota")
+        shutil.copytree("./firmware/firmware", "/home/runner/.platformio/packages/framework-arduino-ITEAD/variants/tasmota", dirs_exist_ok=True)
         if variants_dir:
             shutil.copytree("./firmware/firmware", variants_dir, dirs_exist_ok=True)
 else:
     FRAMEWORK_DIR = platform.get_package_dir("framework-arduinoespressif32")
     if github_actions and os.path.exists("./firmware/firmware"):
-        shutil.copytree("./firmware/firmware", "/home/runner/.platformio/packages/framework-arduinoespressif32/variants/tasmota")
+        shutil.copytree("./firmware/firmware", "/home/runner/.platformio/packages/framework-arduinoespressif32/variants/tasmota", dirs_exist_ok=True)
         if variants_dir:
             shutil.copytree("./firmware/firmware", variants_dir, dirs_exist_ok=True)
 
@@ -129,7 +132,7 @@ def patch_partitions_bin(size_string):
 def esp32_create_chip_string(chip):
     tasmota_platform_org = env.subst("$BUILD_DIR").split(os.path.sep)[-1]
     tasmota_platform = tasmota_platform_org.split('-')[0]
-    if ("CORE32SOLO1" in extra_flags or "FRAMEWORK_ARDUINO_SOLO1" in build_flags) and "tasmota32-safeboot" not in tasmota_platform_org and "tasmota32solo1" not in tasmota_platform_org:
+    if ("CORE32SOLO1" in extra_flags or "FRAMEWORK_ARDUINO_SOLO1" in build_flags) and "tasmota32-safeboot" not in tasmota_platform_org and "tasmota32solo1" not in tasmota_platform_org and flag_custom_sdkconfig == False:
         print(Fore.YELLOW + "Unexpected naming convention in this build environment:" + Fore.RED, tasmota_platform_org)
         print(Fore.YELLOW + "Expected build environment name like " + Fore.GREEN + "'tasmota32solo1-whatever-you-want'")
         print(Fore.YELLOW + "Please correct your actual build environment, to avoid undefined behavior in build process!!")

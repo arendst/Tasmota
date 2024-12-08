@@ -14,6 +14,7 @@
 
 #if defined(CONFIG_NIMBLE_CPP_IDF) // using esp-idf
 #  include "esp_log.h"
+#  include "console/console.h"
 #  ifndef CONFIG_NIMBLE_CPP_LOG_LEVEL
 #    define CONFIG_NIMBLE_CPP_LOG_LEVEL 0
 #  endif
@@ -34,22 +35,6 @@
 
 #  define NIMBLE_LOGE(tag, format, ...) \
      NIMBLE_CPP_LOG_PRINT(ESP_LOG_ERROR, tag, format, ##__VA_ARGS__)
-
-#  define NIMBLE_LOGC(tag, format, ...) \
-     NIMBLE_CPP_LOG_PRINT(ESP_LOG_ERROR, tag, format, ##__VA_ARGS__)
-
-// These defines pollute the global namespace and conflict with Tasmota and basically always turn on `seriallog 3`
-#ifdef LOG_LEVEL_DEBUG
-#undef LOG_LEVEL_DEBUG
-#endif
-
-#ifdef LOG_LEVEL_INFO
-#undef LOG_LEVEL_INFO
-#endif
-
-#ifdef LOG_LEVEL_ERROR
-#undef LOG_LEVEL_ERROR
-#endif
 
 #else // using Arduino
 #  include "nimble/porting/nimble/include/syscfg/syscfg.h"
@@ -82,12 +67,13 @@
 
 #  if CONFIG_NIMBLE_CPP_LOG_LEVEL >= 1
 #    define NIMBLE_LOGE( tag, format, ... ) console_printf("E %s: " format "\n", tag, ##__VA_ARGS__)
-#    define NIMBLE_LOGC( tag, format, ... ) console_printf("CRIT %s: " format "\n", tag, ##__VA_ARGS__)
 #  else
 #    define NIMBLE_LOGE( tag, format, ... ) (void)tag
-#    define NIMBLE_LOGC( tag, format, ... ) (void)tag
 #  endif
 
 #endif /* CONFIG_NIMBLE_CPP_IDF */
+
+#define NIMBLE_LOGC( tag, format, ... ) console_printf("CRIT %s: " format "\n", tag, ##__VA_ARGS__)
+
 #endif /* CONFIG_BT_ENABLED */
 #endif /* MAIN_NIMBLELOG_H_ */

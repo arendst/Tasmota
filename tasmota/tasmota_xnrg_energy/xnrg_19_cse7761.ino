@@ -33,6 +33,21 @@
  * Based on datasheet from ChipSea and analysing serial data
  * See https://github.com/arendst/Tasmota/discussions/10793
  * https://goldenrelay.en.alibaba.com/product/62119012875-811845870/GOLDEN_GI_1A_5LH_SPST_5V_5A_10A_250VAC_NO_18_5_10_5_15_3mm_sealed_type_all_certificate_compliances_class_F_SPDT_Form_available.html
+ * 
+ * Model differences:
+ * Function                        Model1   Model2   Remark
+ * ------------------------------  -------  -------  -------------------------------------------------
+ * Sonoff                          DualR3   PowCT
+ * Processor                       ESP32    ESP32
+ * CSE7761 Rx                      1        2        Index defines model number
+ * Number of inputs                2        1        Count of CSE7761 inputs used
+ * Current measurement device      shunt    CT       CT = Current Transformer
+ * Common voltage                  Yes      Yes      Show common voltage in GUI/JSON
+ * Common frequency                Yes      Yes      Show common frequency in GUI/JSON
+ * Inverted inputs                 Yes      No       Current direction defined by hardware design - Fixed by Tasmota
+ * Support Zero Cross detection    Yes      No       Tasmota supports zero cross detection only on DualR3 due to timing
+ * Support Export Active           No       Yes      Only CT supports correct negative value detection
+ * Show negative power             No       Yes      Only CT supports correct negative value detection
 \*********************************************************************************************/
 
 #define XNRG_19                       19
@@ -96,8 +111,9 @@ struct {
   uint32_t frequency = 0;
   uint32_t voltage_rms = 0;
   uint32_t current_rms[2] = { 0 };
-  uint32_t energy[2] = { 0 };
+  int32_t energy[2] = { 0 };
   uint32_t active_power[2] = { 0 };
+  uint32_t power_factor[2] = { 0 };
   uint16_t coefficient[8] = { 0 };
   uint8_t energy_update[2] = { 0 };
   uint8_t init = 4;
@@ -445,32 +461,29 @@ void Cse7761GetData(void) {
   CSE7761Data.frequency = (value >= 0x8000) ? 0 : value;
 #endif  // CSE7761_FREQUENCY
 
-  value = Cse7761ReadFallback(CSE7761_REG_RMSIA, CSE7761Data.current_rms[0], 3);
-#ifdef CSE7761_SIMULATE
-  value = 455;
-#endif
-  CSE7761Data.current_rms[0] = ((value >= 0x800000) || (value < 1600)) ? 0 : value;  // No load threshold of 10mA
-  value = Cse7761ReadFallback(CSE7761_REG_POWERPA, CSE7761Data.active_power[0], 4);
-#ifdef CSE7761_SIMULATE
-  value = 217;
-#endif
-  CSE7761Data.active_power[0] = (0 == CSE7761Data.current_rms[0]) ? 0 : (value & 0x80000000) ? (~value) + 1 : value;
+  for (uint32_t channel = 0; channel < Energy->phase_count; channel++) {
+    if (CSE7761_MODEL_POWCT == CSE7761Data.model) {
+      if (Energy->phase_count > 1) {
+        Cse7761Write(CSE7761_SPECIAL_COMMAND, (channel) ? CSE7761_CMD_CHAN_B_SELECT : CSE7761_CMD_CHAN_A_SELECT);
+      }
+      CSE7761Data.power_factor[channel] = Cse7761ReadFallback(CSE7761_REG_POWERFACTOR, CSE7761Data.power_factor[channel], 3);
+    }
 
-  if (2 == Energy->phase_count) {
-    value = Cse7761ReadFallback(CSE7761_REG_RMSIB, CSE7761Data.current_rms[1], 3);
+    value = Cse7761ReadFallback((channel) ? CSE7761_REG_RMSIB : CSE7761_REG_RMSIA, CSE7761Data.current_rms[channel], 3);
 #ifdef CSE7761_SIMULATE
-    value = 29760;  // 0.185A
+    value = 455;
 #endif
-    CSE7761Data.current_rms[1] = ((value >= 0x800000) || (value < 1600)) ? 0 : value;  // No load threshold of 10mA
-    value = Cse7761ReadFallback(CSE7761_REG_POWERPB, CSE7761Data.active_power[1], 4);
+    CSE7761Data.current_rms[channel] = ((value >= 0x800000) || (value < 1600)) ? 0 : value;  // No load threshold of 10mA
+    value = Cse7761ReadFallback((channel) ? CSE7761_REG_POWERPB : CSE7761_REG_POWERPA, CSE7761Data.active_power[channel], 4);
 #ifdef CSE7761_SIMULATE
-    value = 2126641;  // 44.05W
+    value = 217;
 #endif
-    CSE7761Data.active_power[1] = (0 == CSE7761Data.current_rms[1]) ? 0 : (value & 0x80000000) ? (~value) + 1 : value;
+    CSE7761Data.active_power[channel] = (0 == CSE7761Data.current_rms[channel]) ? 0 : (value & 0x80000000) ? (~value) + 1 : value;
   }
 
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: F%d, U%d, I%d/%d, P%d/%d"),
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("C61: F%d, U%d, PF%d/%d, I%d/%d, P%d/%d"),
     CSE7761Data.frequency, CSE7761Data.voltage_rms,
+    CSE7761Data.power_factor[0], CSE7761Data.power_factor[1],
     CSE7761Data.current_rms[0], CSE7761Data.current_rms[1],
     CSE7761Data.active_power[0], CSE7761Data.active_power[1]);
 
@@ -497,6 +510,13 @@ void Cse7761GetData(void) {
       if (0 == Energy->active_power[channel]) {
         Energy->current[channel] = 0;
       } else {
+        if (CSE7761_MODEL_POWCT == CSE7761Data.model) {
+          int32_t power_factor = CSE7761Data.power_factor[channel] << 8;
+          if (power_factor < 0) {
+            // power factor is negative and active power is not zero -> handle negative active power
+            Energy->active_power[channel] = -Energy->active_power[channel];
+          }
+        }
         uint32_t current_calibration = EnergyGetCalibration(ENERGY_CURRENT_CALIBRATION, channel);
         // Current = RmsIA * RmsIAC / 0x800000
         // Energy->current[channel] = (float)(((uint64_t)CSE7761Data.current_rms[channel] * CSE7761Data.coefficient[RmsIAC + channel]) >> 23) / 1000;  // A
@@ -627,6 +647,9 @@ void Cse7761DrvInit(void) {
 //    Energy->phase_count = 1;                     // Handle one channel (default set by xdrv_03_energy.ino)
     if (CSE7761_MODEL_DUALR3 == CSE7761Data.model) {
       Energy->phase_count = 2;                   // Handle two channels as two phases
+    }
+    if (CSE7761_MODEL_POWCT == CSE7761Data.model) {
+      Energy->local_energy_active_export = true;  // Support energy export
     }
     Energy->voltage_common = true;               // Use common voltage
 #ifdef CSE7761_FREQUENCY

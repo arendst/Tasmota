@@ -75,8 +75,12 @@
 #define XDRV_67                  67
 #define XI2C_77                  77       // See I2CDEVICES.md
 
+#ifndef MCP23XXX_ADDR_START
 #define MCP23XXX_ADDR_START      0x20     // 32
+#endif
+#ifndef MCP23XXX_ADDR_END
 #define MCP23XXX_ADDR_END        0x26     // 38
+#endif
 
 #define MCP23XXX_MAX_DEVICES     6
 
@@ -430,7 +434,7 @@ int MCP23xPin(uint32_t gpio, uint32_t index) {
     real_gpio += index;
     mask = 0xFFFF;
   }
-  for (uint32_t i = 0; i < Mcp23x.max_pins; i++) {
+  for (uint32_t i = 0; i <= Mcp23x.max_pins; i++) {
     if ((Mcp23x_gpio_pin[i] & mask) == real_gpio) {
       return i;                                        // Pin number configured for gpio
     }
@@ -444,7 +448,7 @@ bool MCP23xPinUsed(uint32_t gpio, uint32_t index) {
 }
 
 uint32_t MCP23xGetPin(uint32_t lpin) {
-  if (lpin < Mcp23x.max_pins) {
+  if (lpin <= Mcp23x.max_pins) {
     return Mcp23x_gpio_pin[lpin];
   } else {
     return GPIO_NONE;
@@ -758,6 +762,7 @@ void MCP23xPower(void) {
     rpower >>= Mcp23x.relay_offset;
     relay_max = Mcp23x.relay_max;
   }
+  DevicesPresentNonDisplayOrLight(relay_max);          // Skip display and/or light(s)
   for (uint32_t index = 0; index < relay_max; index++) {
     power_t state = rpower &1;
     if (MCP23xPinUsed(GPIO_REL1, index)) {

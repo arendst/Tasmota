@@ -128,5 +128,6 @@ Index | Define              | Driver   | Device   | Address(es) | Bus2 | Descrip
   88  | USE_QMP6988         | xsns_28  | QMP6988   | 0x56, 0x70 | Yes  | Pressure and temperature sensor
   89  | USE_HX711_M5SCALES  | xsns_34  | M5SCALES  | 0x26       | Yes  | M5Unit (Mini)Scales(HX711 STM32) U177
   90  | USE_RX8010          | xdrv_56  | RX8010    | 0x32       | Yes  | RX8010 RTC from IOTTIMER
+  91  | USE_MS5837          | xsns_116 | MS5837    | 0x76       |      | Pressure and temperature sensor
 
   NOTE: Bus2 supported on ESP32 only.

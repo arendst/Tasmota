@@ -299,7 +299,7 @@ size_t NimBLEDevice::getClientListSize() {
 /**
  * @brief Get a reference to a client by connection ID.
  * @param [in] conn_id The client connection ID to search for.
- * @return A pointer to the client object with the spcified connection ID.
+ * @return A pointer to the client object with the specified connection ID or nullptr.
  */
 /* STATIC */
 NimBLEClient* NimBLEDevice::getClientByID(uint16_t conn_id) {
@@ -308,7 +308,7 @@ NimBLEClient* NimBLEDevice::getClientByID(uint16_t conn_id) {
             return (*it);
         }
     }
-    assert(0);
+
     return nullptr;
 } // getClientByID
 
@@ -444,12 +444,13 @@ int NimBLEDevice::getPower() {
  */
 /* STATIC*/
 NimBLEAddress NimBLEDevice::getAddress() {
-    ble_addr_t addr = {BLE_ADDR_PUBLIC, 0};
+    ble_addr_t addr = {m_own_addr_type, 0};
 
-    if(BLE_HS_ENOADDR == ble_hs_id_copy_addr(BLE_ADDR_PUBLIC, addr.val, NULL)) {
-        NIMBLE_LOGD(LOG_TAG, "Public address not found, checking random");
-        addr.type = BLE_ADDR_RANDOM;
-        ble_hs_id_copy_addr(BLE_ADDR_RANDOM, addr.val, NULL);
+    if(BLE_HS_ENOADDR == ble_hs_id_copy_addr(m_own_addr_type, addr.val, NULL)) {
+        // NIMBLE_LOGD(LOG_TAG, "Public address not found, checking random");
+        // addr.type = BLE_ADDR_RANDOM;
+        // ble_hs_id_copy_addr(BLE_ADDR_RANDOM, addr.val, NULL);
+        return NimBLEAddress(); // return blank to report error
     }
 
     return NimBLEAddress(addr);
@@ -567,10 +568,16 @@ int NimBLEDevice::getNumBonds() {
 
 /**
  * @brief Deletes all bonding information.
+ * @returns true on success, false on failure.
  */
 /*STATIC*/
-void NimBLEDevice::deleteAllBonds() {
-    ble_store_clear();
+bool NimBLEDevice::deleteAllBonds() {
+    int rc = ble_store_clear();
+    if (rc != 0) {
+        NIMBLE_LOGE(LOG_TAG, "Failed to delete all bonds; rc=%d", rc);
+        return false;
+    }
+    return true;
 }
 
 
@@ -685,6 +692,7 @@ bool NimBLEDevice::whiteListAdd(const NimBLEAddress & address) {
     int rc = ble_gap_wl_set(&wlVec[0], wlVec.size());
     if (rc != 0) {
         NIMBLE_LOGE(LOG_TAG, "Failed adding to whitelist rc=%d", rc);
+        m_whiteList.pop_back();
         return false;
     }
 
@@ -771,7 +779,7 @@ void NimBLEDevice::onReset(int reason)
 
     m_synced = false;
 
-    NIMBLE_LOGC(LOG_TAG, "Resetting state; reason=%d, %s", reason,
+    NIMBLE_LOGE(LOG_TAG, "Resetting state; reason=%d, %s", reason,
                         NimBLEUtils::returnCodeToString(reason));
 
 #if defined(CONFIG_BT_NIMBLE_ROLE_OBSERVER)
@@ -799,7 +807,10 @@ void NimBLEDevice::onSync(void)
 
     /* Make sure we have proper identity address set (public preferred) */
     int rc = ble_hs_util_ensure_addr(0);
-    assert(rc == 0);
+    if (rc != 0) {
+        NIMBLE_LOGE(LOG_TAG, "error ensuring address; rc=%d", rc);
+        return;
+    }
 
 #ifndef ESP_PLATFORM
     rc = ble_hs_id_infer_auto(m_own_addr_type, &m_own_addr_type);
@@ -871,9 +882,11 @@ void NimBLEDevice::init(const std::string &deviceName) {
 
         ESP_ERROR_CHECK(errRc);
 
+#if CONFIG_IDF_TARGET_ESP32
         esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
+#endif
 
-#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 0, 0)
+#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 0, 0) | !defined(CONFIG_NIMBLE_CPP_IDF)
         esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
 #  if  defined (CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32S3)
         bt_cfg.bluetooth_mode = ESP_BT_MODE_BLE;
@@ -902,14 +915,16 @@ void NimBLEDevice::init(const std::string &deviceName) {
         ble_hs_cfg.sm_bonding = 0;
         ble_hs_cfg.sm_mitm = 0;
         ble_hs_cfg.sm_sc = 1;
-        ble_hs_cfg.sm_our_key_dist = 1;
-        ble_hs_cfg.sm_their_key_dist = 3;
+        ble_hs_cfg.sm_our_key_dist = BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID;
+        ble_hs_cfg.sm_their_key_dist = BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID;
 
         ble_hs_cfg.store_status_cb = ble_store_util_status_rr; /*TODO: Implement handler for this*/
 
         // Set the device name.
         rc = ble_svc_gap_device_name_set(deviceName.c_str());
-        assert(rc == 0);
+        if (rc != 0) {
+            NIMBLE_LOGE(LOG_TAG, "ble_svc_gap_device_name_set() failed; rc=%d", rc);
+        }
 
         ble_store_config_init();
 
@@ -935,13 +950,13 @@ void NimBLEDevice::deinit(bool clearAll) {
     int ret = nimble_port_stop();
     if (ret == 0) {
         nimble_port_deinit();
-#ifdef ESP_PLATFORM
-#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 0, 0)
+#ifdef CONFIG_NIMBLE_CPP_IDF
+# if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5, 0, 0)
         ret = esp_nimble_hci_and_controller_deinit();
         if (ret != ESP_OK) {
             NIMBLE_LOGE(LOG_TAG, "esp_nimble_hci_and_controller_deinit() failed with error: %d", ret);
         }
-#endif
+# endif
 #endif
         initialized = false;
         m_synced = false;
@@ -1151,6 +1166,43 @@ int NimBLEDevice::startSecurity(uint16_t conn_id) {
 
 
 /**
+ * @brief Inject the provided passkey into the Security Manager
+ * @param [in] peerInfo Connection information for the peer
+ * @param [in] pin The 6-digit pin to inject
+ * @return true if the passkey was injected successfully.
+ */
+bool NimBLEDevice::injectPassKey(const NimBLEConnInfo& peerInfo, uint32_t pin) {
+    int rc = 0;
+    struct ble_sm_io pkey = {0,0};
+
+    pkey.action = BLE_SM_IOACT_INPUT;
+    pkey.passkey = pin;
+
+    rc = ble_sm_inject_io(peerInfo.getConnHandle(), &pkey);
+    NIMBLE_LOGD(LOG_TAG, "BLE_SM_IOACT_INPUT; ble_sm_inject_io result: %d", rc);
+    return rc == 0;
+}
+
+
+/**
+ * @brief Inject the provided numeric comparison response into the Security Manager
+ * @param [in] peerInfo Connection information for the peer
+ * @param [in] accept Whether the user confirmed or declined the comparison
+ */
+bool NimBLEDevice::injectConfirmPIN(const NimBLEConnInfo& peerInfo, bool accept) {
+    int rc = 0;
+    struct ble_sm_io pkey = {0,0};
+
+    pkey.action = BLE_SM_IOACT_NUMCMP;
+    pkey.numcmp_accept = accept;
+
+    rc = ble_sm_inject_io(peerInfo.getConnHandle(), &pkey);
+    NIMBLE_LOGD(LOG_TAG, "BLE_SM_IOACT_NUMCMP; ble_sm_inject_io result: %d", rc);
+    return rc == 0;
+}
+
+
+/**
  * @brief Check if the device address is on our ignore list.
  * @param [in] address The address to look for.
  * @return True if ignoring.
@@ -1202,10 +1254,22 @@ void NimBLEDevice::setCustomGapHandler(gap_event_handler handler) {
     int rc = ble_gap_event_listener_register(&m_listener, m_customGapHandler, NULL);
     if(rc == BLE_HS_EALREADY){
         NIMBLE_LOGI(LOG_TAG, "Already listening to GAP events.");
+    } else if (rc != 0) {
+        NIMBLE_LOGE(LOG_TAG, "ble_gap_event_listener_register: rc=%d %s", rc, NimBLEUtils::returnCodeToString(rc));
     }
-    else{
-        assert(rc == 0);
-    }
+
 } // setCustomGapHandler
+
+#if CONFIG_NIMBLE_CPP_DEBUG_ASSERT_ENABLED || __DOXYGEN__
+/**
+ * @brief Debug assert - weak function.
+ * @param [in] file The file where the assert occurred.
+ * @param [in] line The line number where the assert occurred.
+ */
+void nimble_cpp_assert(const char *file, unsigned line) {
+    NIMBLE_LOGC("", "Assertion failed at %s:%u\n", file, line);
+    abort();
+}
+#endif // CONFIG_NIMBLE_CPP_DEBUG_ASSERT_ENABLED
 
 #endif // CONFIG_BT_ENABLED

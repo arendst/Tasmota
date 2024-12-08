@@ -25,13 +25,14 @@
 /*********************************************************************************************\
  * Support the following Shangai Belling energy sensors:
  *
- * BL0942 - Energy (as in Shelly Plus1PMMini)
- * Template {"NAME":"Shelly Plus1PMMini","GPIO":[576,32,0,4736,0,224,3200,8161,0,0,192,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350}
- * Template {"NAME":"Shelly PlusPMMini","GPIO":[576,32,0,4736,0,0,3200,8161,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350}
+ * BL0942 - Energy (as in Shelly Gen3)
+ * {"NAME":"Shelly 1PM Gen3","GPIO":[0,32,0,4736,224,0,3200,8161,576,1,192,0,0,0,0,0,0,0,0,1,1,1],"FLAG":0,"BASE":1,"CMND":"AdcGpio3 10000,10000,4000"}
+ * {"NAME":"Shelly Plus1PMMini","GPIO":[576,32,0,4736,0,224,3200,8161,0,0,192,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350}
+ * {"NAME":"Shelly PlusPMMini","GPIO":[576,32,0,4736,0,0,3200,8161,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"FLAG":0,"BASE":1,"CMND":"AdcParam1 2,5600,4700,3350}
  * Based on datasheet from https://datasheet.lcsc.com/lcsc/2110191830_BL-Shanghai-Belling-BL0942_C2909509.pdf
  * 
  * BL0940 - Energy (as in Blitzwolf SHP10)
- * Template {"NAME":"BW-SHP10","GPIO":[0,148,0,207,158,21,0,0,0,17,0,0,0],"FLAG":0,"BASE":18}
+ * {"NAME":"BW-SHP10","GPIO":[0,148,0,207,158,21,0,0,0,17,0,0,0],"FLAG":0,"BASE":18}
  * Based on datasheet from http://www.belling.com.cn/media/file_object/bel_product/BL09XX/datasheet/BL09XX_V1.1_en.pdf
  *
  * BL0939 - Energy (as in Sonoff Dual R3 v2)

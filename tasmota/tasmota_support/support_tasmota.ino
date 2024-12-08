@@ -466,7 +466,11 @@ void SetPowerOnState(void)
   for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
 #ifdef ESP8266
     if (!Settings->flag3.no_power_feedback &&  // SetOption63 - Don't scan relay power state at restart - #5594 and #5663
-        !TasmotaGlobal.power_on_delay) {       // SetOption47 - Delay switching relays to reduce power surge at power on
+        !TasmotaGlobal.power_on_delay          // SetOption47 - Delay switching relays to reduce power surge at power on
+#ifdef USE_SHUTTER
+        && !Settings->flag3.shutter_mode       // SetOption80 - Enable shutter support
+#endif // USE_SHUTTER
+       ) {
       if ((port < MAX_RELAYS) && PinUsed(GPIO_REL1, port)) {
         if (bitRead(TasmotaGlobal.rel_bistable, port)) {
           port++;                              // Skip both bistable relays as always 0
@@ -1489,12 +1493,11 @@ void Every250mSeconds(void)
         Response_P(PSTR("{\"" D_CMND_UPGRADE "\":\""));
         if (ota_result) {
           ResponseAppend_P(PSTR(D_JSON_SUCCESSFUL ". " D_JSON_RESTARTING));
-          TasmotaGlobal.restart_flag = 2;
+          TasmotaGlobal.restart_flag = 5;                 // Allow time for webserver to update console
         } else {
           ResponseAppend_P(PSTR(D_JSON_FAILED " %s"), ESPhttpUpdate.getLastErrorString().c_str());
         }
         ResponseAppend_P(PSTR("\"}"));
-//        TasmotaGlobal.restart_flag = 2;                   // Restart anyway to keep memory clean webserver
         MqttPublishPrefixTopicRulesProcess_P(STAT, PSTR(D_CMND_UPGRADE));
         AllowInterrupts(1);
       }
@@ -1624,7 +1627,7 @@ void Every250mSeconds(void)
         if (1 == RtcSettings.ota_loader) {
           RtcSettings.ota_loader = 0;
           AddLog(LOG_LEVEL_DEBUG, PSTR("OTA: Propagating upload"));
-          TasmotaGlobal.ota_state_flag = 3;
+          TasmotaGlobal.ota_state_flag = 6;               // Allow time for webserver to update console
         }
 #endif  // FIRMWARE_MINIMAL
 
@@ -2234,17 +2237,17 @@ void GpioInit(void)
 #ifdef USE_I2C
 /*
   if (PinUsed(GPIO_I2C_SCL) && PinUsed(GPIO_I2C_SDA)) {
-    TasmotaGlobal.i2c_enabled = I2cBegin(Pin(GPIO_I2C_SDA), Pin(GPIO_I2C_SCL));
+    TasmotaGlobal.i2c_enabled[0] = I2cBegin(Pin(GPIO_I2C_SDA), Pin(GPIO_I2C_SCL));
 #ifdef ESP32
-    if (TasmotaGlobal.i2c_enabled) {
+    if (TasmotaGlobal.i2c_enabled[0]) {
       AddLog(LOG_LEVEL_INFO, PSTR("I2C: Bus1 using GPIO%02d(SCL) and GPIO%02d(SDA)"), Pin(GPIO_I2C_SCL), Pin(GPIO_I2C_SDA));
     }
 #endif
   }
 #ifdef ESP32
   if (PinUsed(GPIO_I2C_SCL, 1) && PinUsed(GPIO_I2C_SDA, 1)) {
-    TasmotaGlobal.i2c_enabled_2 = I2cBegin(Pin(GPIO_I2C_SDA, 1), Pin(GPIO_I2C_SCL, 1), 1);
-    if (TasmotaGlobal.i2c_enabled_2) {
+    TasmotaGlobal.i2c_enabled[1] = I2cBegin(Pin(GPIO_I2C_SDA, 1), Pin(GPIO_I2C_SCL, 1), 1);
+    if (TasmotaGlobal.i2c_enabled[1]) {
       AddLog(LOG_LEVEL_INFO, PSTR("I2C: Bus2 using GPIO%02d(SCL) and GPIO%02d(SDA)"), Pin(GPIO_I2C_SCL, 1), Pin(GPIO_I2C_SDA, 1));
     }
   }
@@ -2258,11 +2261,11 @@ void GpioInit(void)
     if (PinUsed(GPIO_I2C_SCL, bus) && PinUsed(GPIO_I2C_SDA, bus)) {
       if (I2cBegin(Pin(GPIO_I2C_SDA, bus), Pin(GPIO_I2C_SCL, bus), bus)) {
         if (0 == bus) { 
-          TasmotaGlobal.i2c_enabled = true;
+          TasmotaGlobal.i2c_enabled[0] = true;
         }
 #ifdef USE_I2C_BUS2
         else { 
-          TasmotaGlobal.i2c_enabled_2 = true;
+          TasmotaGlobal.i2c_enabled[1] = true;
         }
         AddLog(LOG_LEVEL_INFO, PSTR("I2C: Bus%d using GPIO%02d(SCL) and GPIO%02d(SDA)"), bus +1, Pin(GPIO_I2C_SCL, bus), Pin(GPIO_I2C_SDA, bus));
 #endif  // USE_I2C_BUS2

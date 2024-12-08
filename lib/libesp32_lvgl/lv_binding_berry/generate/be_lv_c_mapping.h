@@ -818,6 +818,7 @@ const be_ntv_func_def_t lv_timer_func[] = {
 /* `lv_animimg` methods */
 #ifdef BE_LV_WIDGET_ANIMIMG
 const be_ntv_func_def_t lv_animimg_func[] = {
+  { "get_anim", { (const void*) &lv_animimg_get_anim, "lv.anim", "(lv.obj)" } },
   { "get_duration", { (const void*) &lv_animimg_get_duration, "i", "(lv.obj)" } },
   { "get_repeat_count", { (const void*) &lv_animimg_get_repeat_count, "i", "(lv.obj)" } },
   { "get_src_count", { (const void*) &lv_animimg_get_src_count, "i", "(lv.obj)" } },

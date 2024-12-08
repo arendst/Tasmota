@@ -14,7 +14,7 @@ If you like **Tasmota**, give it a star, or fork it and contribute!
 [![GitHub forks](https://img.shields.io/github/forks/arendst/Tasmota.svg?style=social&label=Fork)](https://github.com/arendst/Tasmota/network)
 [![donate](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://paypal.me/tasmota)
 
-See [CHANGELOG.md](https://github.com/arendst/Tasmota/blob/development/tasmota/CHANGELOG.md) for changes since last release.
+See [CHANGELOG.md](https://github.com/arendst/Tasmota/blob/development/CHANGELOG.md) for changes since last release.
 
 ## Development
 

@@ -18,7 +18,7 @@
 */
 
 // Location specific includes
-#ifndef ESP32_STAGE                         // ESP32 Stage has no core_version.h file. Disable include via PlatformIO Option
+#if __has_include("core_version.h")         // ESP32 Stage has no core_version.h file. Disable include via PlatformIO Option
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_7_1)
 #endif  // ESP32_STAGE
 #include "include/tasmota_compat.h"
@@ -312,8 +312,7 @@ struct TasmotaGlobal_t {
   bool stop_flash_rotate;                   // Allow flash configuration rotation
   bool blinkstate;                          // LED state
   bool pwm_present;                         // Any PWM channel configured with SetOption15 0
-  bool i2c_enabled;                         // I2C configured
-  bool i2c_enabled_2;                       // I2C configured, second controller, Wire1
+  bool i2c_enabled[2];                      // I2C configured for all possible buses (1 or 2)
 #ifdef ESP32
   bool ota_factory;                         // Select safeboot binary
 #endif
@@ -409,17 +408,21 @@ void setup(void) {
   DisableBrownout();      // Workaround possible weak LDO resulting in brownout detection during Wifi connection
 #endif  // DISABLE_ESP32_BROWNOUT
 
-  // restore GPIO16/17 if no PSRAM is found
+#ifndef FIRMWARE_SAFEBOOT
+#ifndef CORE32SOLO1
+  // restore GPIO5/18 or 16/17 if no PSRAM is found which may be used by Ethernet among others
   if (!FoundPSRAM()) {
     // test if the CPU is not pico
     uint32_t pkg_version = bootloader_common_get_chip_ver_pkg();
     if (pkg_version <= 3) {         // D0WD, S0WD, D2WD
-      gpio_reset_pin(GPIO_NUM_16);  // D0WD_PSRAM_CS_IO
-      gpio_reset_pin(GPIO_NUM_17);  // D0WD_PSRAM_CLK_IO
+      gpio_reset_pin((gpio_num_t)CONFIG_D0WD_PSRAM_CS_IO);
+      gpio_reset_pin((gpio_num_t)CONFIG_D0WD_PSRAM_CLK_IO);
       // IDF5.3 fix esp_gpio_reserve used in init PSRAM
-      esp_gpio_revoke(BIT64(GPIO_NUM_16) | BIT64(GPIO_NUM_17));
+      esp_gpio_revoke(BIT64(CONFIG_D0WD_PSRAM_CS_IO) | BIT64(CONFIG_D0WD_PSRAM_CLK_IO));
     }
   }
+#endif  // CORE32SOLO1
+#endif  // FIRMWARE_SAFEBOOT
 #endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32
 
@@ -563,6 +566,7 @@ void setup(void) {
 
   SettingsLoad();
   SettingsDelta();
+  SettingsMinimum();                           // Set life-saving parameters if out-of-range due to reconfig Settings Area
 
   OsWatchInit();
 

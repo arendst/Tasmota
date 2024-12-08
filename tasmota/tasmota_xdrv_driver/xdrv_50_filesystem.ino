@@ -1117,7 +1117,7 @@ const char UFS_FORM_FILE_UPGb[] PROGMEM =
   "<form method='get' action='ufse'><input type='hidden' name='file' value='%s/" D_NEW_FILE "'>"
   "<button type='submit'>" D_CREATE_NEW_FILE "</button></form>";
 const char UFS_FORM_FILE_UPGb1[] PROGMEM =
-  "<input type='checkbox' id='shf' onclick='sf(eb(\"shf\").checked);' name='shf'>" D_SHOW_HIDDEN_FILES "</input>";
+  "<label><input type='checkbox' id='shf' onclick='sf(eb(\"shf\").checked);' name='shf'>" D_SHOW_HIDDEN_FILES "</label>";
 
 const char UFS_FORM_FILE_UPGb2[] PROGMEM =
   "</fieldset>"
@@ -1603,7 +1603,7 @@ void UfsEditor(void) {
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("UFS: UfsEditor: read=%d"), l);
         if (l < 0) { break; }
         buf[l] = '\0';
-        WSContentSend_P(PSTR("%s"), buf);
+        WSContentSend_P(PSTR("%s"), HtmlEscape((char*)buf).c_str());
         filelen -= l;
       }
       fp.close();

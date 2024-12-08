@@ -33,6 +33,7 @@
 #include "NimBLEUUID.h"
 #include "NimBLEAddress.h"
 
+#include <functional>
 #include <vector>
 
 /* COMPATIBILITY - DO NOT USE */
@@ -44,6 +45,9 @@
 #define ESP_BLE_ADV_FLAG_NON_LIMIT_DISC     (0x00 )
  /* ************************* */
 
+class NimBLEAdvertising;
+
+typedef std::function<void(NimBLEAdvertising*)> advCompleteCB_t;
 
 /**
  * @brief Advertisement data set by the programmer to be published by the %BLE server.
@@ -72,6 +76,7 @@ public:
     void addTxPower();
     void setPreferredParams(uint16_t min, uint16_t max);
     std::string getPayload();               // Retrieve the current advert payload.
+    void clearData();                       // Clear the advertisement data.
 
 private:
     friend class NimBLEAdvertising;
@@ -92,7 +97,8 @@ public:
     void addServiceUUID(const NimBLEUUID &serviceUUID);
     void addServiceUUID(const char* serviceUUID);
     void removeServiceUUID(const NimBLEUUID &serviceUUID);
-    bool start(uint32_t duration = 0, void (*advCompleteCB)(NimBLEAdvertising *pAdv) = nullptr, NimBLEAddress* dirAddr = nullptr);
+    bool start(uint32_t duration = 0, advCompleteCB_t advCompleteCB = nullptr, NimBLEAddress* dirAddr = nullptr);
+    void removeServices();
     bool stop();
     void setAppearance(uint16_t appearance);
     void setName(const std::string &name);
@@ -129,7 +135,7 @@ private:
     bool                    m_customScanResponseData;
     bool                    m_scanResp;
     bool                    m_advDataSet;
-    void                    (*m_advCompCB)(NimBLEAdvertising *pAdv);
+    advCompleteCB_t         m_advCompCB{nullptr};
     uint8_t                 m_slaveItvl[4];
     uint32_t                m_duration;
     std::vector<uint8_t>    m_svcData16;

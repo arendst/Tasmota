@@ -22,7 +22,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_SO_WIFINOSLEEP "|"
   // Other commands
   D_CMND_UPGRADE "|" D_CMND_UPLOAD "|" D_CMND_OTAURL "|" D_CMND_SERIALLOG "|" D_CMND_RESTART "|"
-#ifndef FIRMWARE_MINIMAL_ONLY
+#ifndef FIRMWARE_MINIMAL
   D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_POWERLOCK "|" D_CMND_TIMEDPOWER "|" D_CMND_STATUS "|" D_CMND_STATE "|" D_CMND_SLEEP "|"
   D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|" D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_STATETEXT "|" D_CMND_SAVEDATA "|"
   D_CMND_SO "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|" D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|"
@@ -53,7 +53,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
   D_CMND_CPU_FREQUENCY
 #endif  // ESP32
-#endif   //FIRMWARE_MINIMAL_ONLY
+#endif  //FIRMWARE_MINIMAL
   ;
 
 SO_SYNONYMS(kTasmotaSynonyms,
@@ -62,7 +62,7 @@ SO_SYNONYMS(kTasmotaSynonyms,
 
 void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndUpgrade, &CmndUpgrade, &CmndOtaUrl, &CmndSeriallog, &CmndRestart,
-#ifndef FIRMWARE_MINIMAL_ONLY
+#ifndef FIRMWARE_MINIMAL
   &CmndBacklog, &CmndDelay, &CmndPower, &CmndPowerLock, &CmndTimedPower, &CmndStatus, &CmndState, &CmndSleep,
   &CmndPowerOnState, &CmndPulsetime, &CmndBlinktime, &CmndBlinkcount, &CmndStateText, &CmndSavedata,
   &CmndSetoption, &CmndSetoption, &CmndTemperatureResolution, &CmndHumidityResolution, &CmndPressureResolution, &CmndPowerResolution,
@@ -93,7 +93,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
   &CmndCpuFrequency
 #endif  // ESP32
-#endif   //FIRMWARE_MINIMAL_ONLY
+#endif   //FIRMWARE_MINIMAL
   };
 
 const char kWifiConfig[] PROGMEM =
@@ -101,7 +101,7 @@ const char kWifiConfig[] PROGMEM =
 
 /********************************************************************************************/
 
-#ifndef FIRMWARE_MINIMAL_ONLY
+#ifndef FIRMWARE_MINIMAL
 void CmndWifiScan(void)
 {
   if (XdrvMailbox.data_len > 0) {
@@ -249,7 +249,7 @@ void CmndWifiTest(void)
 #endif //USE_WEBSERVER
 }
 
-#endif  // not defined FIRMWARE_MINIMAL_ONLY
+#endif  // not defined FIRMWARE_MINIMAL
 
 void ResponseCmnd(void) {
   Response_P(PSTR("{\"%s\":"), XdrvMailbox.command);
@@ -829,9 +829,9 @@ void CmndStatus(void)
   if (payload > MAX_STATUS) { return; }  // {"Command":"Error"}
   if (!Settings->flag.mqtt_enabled && (6 == payload)) { return; }  // SetOption3 - Enable MQTT
   if (!TasmotaGlobal.energy_driver && (9 == payload)) { return; }
-  #ifndef FIRMWARE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
   if (!CrashFlag() && (12 == payload)) { return; }
-  #endif // FIRMWARE_MINIMAL
+#endif // FIRMWARE_MINIMAL
   if (!Settings->flag3.shutter_mode && (13 == payload)) { return; }
 
   char stemp[200];
@@ -1805,7 +1805,7 @@ void CmndGpio(void)
     if (ValidGPIO(XdrvMailbox.index, template_gp.io[XdrvMailbox.index]) && (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < AGPIO(GPIO_SENSOR_END))) {
       bool present = false;
       for (uint32_t i = 0; i < nitems(kGpioNiceList); i++) {
-        uint32_t midx = pgm_read_word(kGpioNiceList + i);
+        uint32_t midx = pgm_read_word(&kGpioNiceList[i]);
         uint32_t max_midx = ((midx & 0x001F) > 0) ? midx : midx +1;
         if ((XdrvMailbox.payload >= (midx & 0xFFE0)) && (XdrvMailbox.payload < max_midx)) {
           present = true;
@@ -1843,7 +1843,7 @@ void CmndGpio(void)
         uint32_t sensor_name_idx = BGPIO(sensor_type);
         uint32_t nice_list_search = sensor_type & 0xFFE0;
         for (uint32_t j = 0; j < nitems(kGpioNiceList); j++) {
-          uint32_t nls_idx = pgm_read_word(kGpioNiceList + j);
+          uint32_t nls_idx = pgm_read_word(&kGpioNiceList[j]);
           if (((nls_idx & 0xFFE0) == nice_list_search) && ((nls_idx & 0x001F) > 0)) {
             snprintf_P(sindex, sizeof(sindex), PSTR("%d"), (sensor_type & 0x001F) +1);
             break;
@@ -2752,12 +2752,12 @@ void CmndBatteryPercent(void) {
 void CmndI2cScan(void) {
   // I2CScan   - Scan bus1 then bus2
   bool jsflag = false;
-  if (TasmotaGlobal.i2c_enabled) {
+  if (TasmotaGlobal.i2c_enabled[0]) {
     I2cScan();
     jsflag = true;
   }
 #ifdef USE_I2C_BUS2
-  if (TasmotaGlobal.i2c_enabled_2) {
+  if (TasmotaGlobal.i2c_enabled[1]) {
     if (jsflag) {
       MqttPublishPrefixTopicRulesProcess_P(RESULT_OR_STAT, XdrvMailbox.command);
     }
@@ -2882,11 +2882,11 @@ void CmndTouchCal(void) {
     if (XdrvMailbox.payload == 0) {
       TouchButton.calibration = 0;
     }
-    else if (XdrvMailbox.payload < MAX_KEYS + 1) {
+    else if (XdrvMailbox.payload < MAX_KEYS) {
       TouchButton.calibration = bitSet(TouchButton.calibration, XdrvMailbox.payload);
     }
     else if (XdrvMailbox.payload == 255) {
-      TouchButton.calibration = 0x0FFFFFFF;  // All MAX_KEYS pins
+      TouchButton.calibration = 0xFFFFFFFF;  // All MAX_KEYS pins
     }
   }
   ResponseCmndNumber(TouchButton.calibration);

@@ -173,6 +173,7 @@
 //#define USE_MAX17043                           // [I2cDriver83] Enable MAX17043 fuel-gauge systems Lipo batteries sensor (I2C address 0x36) (+0k9 code)
 //#define USE_AMSX915                            // [I2CDriver86] Enable AMS5915/AMS6915 pressure/temperature sensor (+1k2 code)
 //#define USE_SPL06_007                          // [I2cDriver87] Enable SPL06_007 pressure and temperature sensor (I2C addresses 0x76) (+2k5 code)
+//#define USE_MS5837                             // [I2cDriver91] Enable MS5837 sensor (I2C address 0x76) (+2k7 code)
 
 //#define USE_RTC_CHIPS                          // Enable RTC chip support and NTP server - Select only one
 //  #define USE_DS3231                           // [I2cDriver26] Enable DS3231 RTC (I2C address 0x68) (+1k2 code)
@@ -702,6 +703,7 @@
 #define USE_TASMOTA_DISCOVERY                    // Enable Tasmota Discovery support (+2k code)
 #undef USE_MQTT_TLS                              // Disable TLS support won't work as the MQTTHost is not set
 #undef USE_KNX                                   // Disable KNX IP Protocol Support
+#undef USE_DALI                                  // Disable support for DALI gateway (+5k code)
 //#undef USE_WEBSERVER                             // Disable Webserver
 #undef USE_ENHANCED_GUI_WIFI_SCAN                // Disable wifi scan output with BSSID (+0k5 code)
 #undef USE_WEBSEND_RESPONSE                      // Disable command WebSend response message (+1k code)
@@ -849,8 +851,6 @@
   #define CODE_IMAGE_STR "minimal"
 #endif
 
-#define FIRMWARE_MINIMAL_ONLY
-
 #undef FIRMWARE_LITE                             // Disable tasmota-lite with no sensors
 #undef FIRMWARE_SENSORS                          // Disable tasmota-sensors with useful sensors enabled
 #undef FIRMWARE_KNX_NO_EMULATION                 // Disable tasmota-knx with KNX but without Emulation
@@ -867,6 +867,7 @@
 #undef USE_TELEGRAM                              // Disable support for Telegram protocol (+49k code, +7.0k mem and +4.8k additional during connection handshake)
 //#undef USE_MQTT_TLS                              // Disable TLS support won't work as the MQTTHost is not set
 #undef USE_KNX                                   // Disable KNX IP Protocol Support
+#undef USE_DALI                                  // Disable support for DALI gateway (+5k code)
 //#undef USE_WEBSERVER                             // Disable Webserver
 #undef USE_GPIO_VIEWER                           // Disable GPIO Viewer to see realtime GPIO states (+5k6 code)
 #undef USE_ENHANCED_GUI_WIFI_SCAN                // Disable wifi scan output with BSSID (+0k5 code)
@@ -1029,21 +1030,23 @@
   #define SEND_PRONTO false                      // Exclude PRONTO protocol
 #else
   #define _IR_ENABLE_DEFAULT_ false              // disable all protocols by default
-  // below are the default IR protocols
-  #define DECODE_HASH true
-  #ifdef USE_IR_SEND_NEC
-    #define SEND_NEC   true                      // Support IRsend NEC protocol
-    #define DECODE_NEC true                      // Support IRreceive NEC protocol
-  #endif
-  #ifdef USE_IR_SEND_RC5
-    #define SEND_RC5   true                      // Support IRsend Philips RC5 protocol
-    #define DECODE_RC5 true                      // Support IRreceive Philips RC5 protocol
-  #endif
-  #ifdef USE_IR_SEND_RC6
-    #define SEND_RC6   true                      // Support IRsend Philips RC6 protocol
-    #define DECODE_RC6 true                      // Support IRreceive Philips RC6 protocol
-  #endif
-#endif
+  #ifdef USE_IR_REMOTE
+    // below are the default IR protocols
+    #define DECODE_HASH true
+    #ifdef USE_IR_SEND_NEC
+      #define SEND_NEC   true                    // Support IRsend NEC protocol
+      #define DECODE_NEC true                    // Support IRreceive NEC protocol
+    #endif // USE_IR_SEND_NEC
+    #ifdef USE_IR_SEND_RC5
+      #define SEND_RC5   true                    // Support IRsend Philips RC5 protocol
+      #define DECODE_RC5 true                    // Support IRreceive Philips RC5 protocol
+    #endif // USE_IR_SEND_RC5
+    #ifdef USE_IR_SEND_RC6
+      #define SEND_RC6   true                    // Support IRsend Philips RC6 protocol
+      #define DECODE_RC6 true                    // Support IRreceive Philips RC6 protocol
+    #endif // USE_IR_SEND_RC6
+  #endif // USE_IR_REMOTE
+#endif // USE_IR_REMOTE_FULL
 
 /*********************************************************************************************\
  * Mandatory defines satisfying disabled defines

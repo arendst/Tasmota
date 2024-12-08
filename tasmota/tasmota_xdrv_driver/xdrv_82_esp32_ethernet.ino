@@ -18,7 +18,8 @@
 */
 
 #ifdef ESP32
-#ifndef CONFIG_IDF_TARGET_ESP32C2
+#include "sdkconfig.h"
+#ifdef CONFIG_ETH_ENABLED
 #ifdef USE_ETHERNET
 /*********************************************************************************************\
  * Ethernet support for ESP32
@@ -168,10 +169,12 @@ void EthernetEvent(arduino_event_t *event) {
       }
       TasmotaGlobal.rules_flag.eth_connected = 1;
       TasmotaGlobal.global_state.eth_down = 0;
+#ifndef FIRMWARE_MINIMAL
       AddLog(LOG_LEVEL_DEBUG, PSTR("ETH: IPv4 %_I, mask %_I, gateway %_I"),
               event->event_info.got_ip.ip_info.ip.addr,
               event->event_info.got_ip.ip_info.netmask.addr,
               event->event_info.got_ip.ip_info.gw.addr);
+#endif // FIRMWARE_MINIMAL
       WiFiHelper::scrubDNS();    // internal calls to reconnect can zero the DNS servers, save DNS for future use
       break;
 
@@ -181,9 +184,11 @@ void EthernetEvent(arduino_event_t *event) {
       ip_addr_t ip_addr6;
       ip_addr_copy_from_ip6(ip_addr6, event->event_info.got_ip6.ip6_info.ip);
       IPAddress addr(&ip_addr6);
+#ifndef FIRMWARE_MINIMAL
       AddLog(LOG_LEVEL_DEBUG, PSTR("%s: IPv6 %s %s"),
              event->event_id == ARDUINO_EVENT_ETH_GOT_IP6 ? "ETH" : "WIF",
              IPv6isLocal(addr) ? PSTR("Local") : PSTR("Global"), addr.toString().c_str());
+#endif // FIRMWARE_MINIMAL
       if (!IPv6isLocal(addr)) {    // declare network up on IPv6
         TasmotaGlobal.rules_flag.eth_connected = 1;
         TasmotaGlobal.global_state.eth_down = 0;
@@ -235,13 +240,17 @@ void EthernetInit(void) {
   if (eth_uses_spi) {
     // Uses SPI Ethernet and needs at least SPI CS being ETH MDC
     if (!PinUsed(GPIO_ETH_PHY_MDC)) {
+#ifndef FIRMWARE_MINIMAL
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ETH "No ETH MDC as SPI CS GPIO defined"));
+#endif // FIRMWARE_MINIMAL
       return;
     }
   } else {
     // Native ESP32
     if (!PinUsed(GPIO_ETH_PHY_MDC) && !PinUsed(GPIO_ETH_PHY_MDIO)) {  // && should be || but keep for backward compatibility
+#ifndef FIRMWARE_MINIMAL
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ETH "No ETH MDC and ETH MDIO GPIO defined"));
+#endif // FIRMWARE_MINIMAL
       return;
     }
   }

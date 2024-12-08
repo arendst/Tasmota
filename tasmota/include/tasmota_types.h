@@ -194,9 +194,9 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t neopool_outputsensitive : 1;  // bit 11 (v13.2.0.1) - SetOption157 - (NeoPool) Output sensitive data (1)
     uint32_t mqtt_disable_modbus : 1;      // bit 12 (v13.3.0.5) - SetOption158 - (MQTT) Disable publish ModbusReceived MQTT messages (1), you must use event trigger rules instead
     uint32_t counter_both_edges : 1;       // bit 13 (v13.3.0.5) - SetOption159 - (Counter) Enable counting on both rising and falling edge (1)
-    uint32_t spare14 : 1;                  // bit 14
-    uint32_t spare15 : 1;                  // bit 15
-    uint32_t spare16 : 1;                  // bit 16
+    uint32_t ld2410_use_pin : 1;           // bit 14 (v14.3.0.2) - SetOption160 - (LD2410) Disable generate moving event by sensor report - use LD2410 out pin for events (1)
+    uint32_t gui_no_state_text : 1;        // bit 15 (v14.3.0.7) - SetOption161 - (GUI) Disable display of state text (1)
+    uint32_t no_export_energy_today : 1;   // bit 16 (v14.3.0.7) - SetOption162 - (Energy) Do not add export energy to energy today (1)
     uint32_t spare17 : 1;                  // bit 17
     uint32_t spare18 : 1;                  // bit 18
     uint32_t spare19 : 1;                  // bit 19
@@ -260,15 +260,11 @@ typedef union {
     uint32_t spare16 : 1;                  // bit 16
     uint32_t spare17 : 1;                  // bit 17
     uint32_t spare18 : 1;                  // bit 18
-    uint32_t spare19 : 1;                  // bit 19
-    uint32_t spare20 : 1;                  // bit 20
-    uint32_t spare21 : 1;                  // bit 21
-    uint32_t spare22 : 1;                  // bit 22
-    uint32_t spare23 : 1;                  // bit 23
-    uint32_t FTP_Mode : 2;                  // bit 24, 25
-    uint32_t tariff_forced : 2;            // bit 26..27 (v12.4.0.2) - Energy forced tariff : 0=tariff change on time, 1|2=tariff forced
-    uint32_t sunrise_dawn_angle : 2;       // bits 28/29 (v12.1.1.4) -
-    uint32_t temperature_set_res : 2;      // bits 30/31 (v9.3.1.4) - (Tuya)
+    uint32_t dali_group_sliders : 5;       // bit 19.23 (v14.3.0.3) - (DALI) Number of group sliders 0 to 16
+    uint32_t FTP_Mode : 2;                 // bit 24/25
+    uint32_t tariff_forced : 2;            // bit 26/27 (v12.4.0.2) - Energy forced tariff : 0=tariff change on time, 1|2=tariff forced
+    uint32_t sunrise_dawn_angle : 2;       // bit 28/29 (v12.1.1.4) -
+    uint32_t temperature_set_res : 2;      // bit 30/31 (v9.3.1.4) - (Tuya)
   };
 } SysMBitfield2;
 
@@ -289,7 +285,7 @@ typedef union {
     uint32_t influxdb_sensor : 1;          // bit 10 (v11.0.0.5) - CMND_IFXSENSOR - Enable sensor support in addition to teleperiod support
     uint32_t ex_serbridge_console : 1;     // bit 11 (v11.1.0.4) - (v14.1.0.2) Replaced by CMND_SSERIALMODE
     uint32_t telegram_disable_af : 1;      // bit 12 (v14.0.0.2) - CMND_TMSTATE 6/7 - Disable Telegram auto-fingerprint fix
-    uint32_t dali_web : 1;                 // bit 13 (v14.2.0.6) - CMND_DALIWEB - Enable DALI web controls
+    uint32_t dali_light : 1;               // bit 13 (v14.2.0.6) - CMND_DALILIGHT - Enable Tasmota light controls for DALI
     uint32_t spare14 : 1;                  // bit 14
     uint32_t spare15 : 1;                  // bit 15
     uint32_t spare16 : 1;                  // bit 16
@@ -681,17 +677,12 @@ typedef struct {
   uint8_t       light_width;               // 4A4
   uint8_t       knx_GA_registered;         // 4A5  Number of Group Address to read
   uint16_t      light_wakeup;              // 4A6
-  uint8_t       knx_CB_registered;         // 4A8  Number of Group Address to write
-  uint8_t       switchmode[MAX_SWITCHES_SET];  // 4A9
-  uint8_t       global_sensor_index[3];    // 4C5
+  uint8_t       switchmode[MAX_SWITCHES_SET];  // 4A8 4A9 - Moved dn by 1 byte in v14.3.0.7
   uint16_t      dns_timeout;               // 4C8
   uint8_t       ds3502_state[MAX_DS3502];  // 4CA
   uint16_t      influxdb_port;             // 4CE
   power_t       interlock[MAX_INTERLOCKS_SET];  // 4D0 MAX_INTERLOCKS = MAX_RELAYS / 2
-  int8_t        shutter_tilt_config[5][MAX_SHUTTERS];  //508
-  int8_t        shutter_tilt_pos[MAX_SHUTTERS];        //51C
-  uint16_t      influxdb_period;           // 520
-  uint16_t      rf_duplicate_time;         // 522
+  int8_t        shutter_tilt_config[5][MAX_SHUTTERS];  // 510 508 - - Moved up by 8 bytes in v14.3.0.7
   int32_t       weight_absconv_a;          // 524
   int32_t       weight_absconv_b;          // 528
   uint16_t      mqtt_keepalive;            // 52C
@@ -699,8 +690,13 @@ typedef struct {
   uint8_t       mqtt_wifi_timeout;         // 530
   uint8_t       ina219_mode;               // 531
   uint8_t       weight_precision;          // 532  ex_pulse_timer free since 11.0.0.3
+  uint8_t       knx_CB_registered;         // 533 4A8  Number of Group Address to write
+  int8_t        shutter_tilt_pos[MAX_SHUTTERS];  // 534 51C
+  uint16_t      influxdb_period;           // 538 520
+  uint16_t      rf_duplicate_time;         // 53A 522
+  uint8_t       global_sensor_index[3];    // 53C 4C5
 
-  uint8_t       free_533[13];              // 533
+  uint8_t       free_53F[1];               // 53F
 
   uint16_t      tcp_baudrate;              // 540 
   uint16_t      button_debounce;           // 542
@@ -850,9 +846,10 @@ typedef struct {
   uint8_t       modbus_sconfig;            // F62
   uint8_t       windmeter_measure_intvl;   // F63
 
-  uint8_t       free_f64[12];              // F64 - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f64[8];               // F64 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
+  float         ms5837_pressure_offset;    // F6C
   uint32_t      touch_threshold;           // F70
   SOBitfield6   flag6;                     // F74
   uint16_t      flowratemeter_calibration[2];// F78

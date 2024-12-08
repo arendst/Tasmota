@@ -293,6 +293,13 @@ uint8_t LightDevice(void)
   return Light.device;                    // Make external
 }
 
+uint32_t LightDevices(void) {
+  if (0 == Light.device) {
+    return 0;
+  }
+  return TasmotaGlobal.devices_present - Light.device +1;                    // Make external
+}
+
 static uint32_t min3(uint32_t a, uint32_t b, uint32_t c) {
   return (a < b && a < c) ? a : (b < c) ? b : c;
 }

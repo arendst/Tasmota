@@ -558,6 +558,8 @@ void ESPKNXIP::__loop_knx()
 
   DEBUG_PRINTLN(F(""));
 
+  udp.flush();
+
   knx_ip_pkt_t *knx_pkt = (knx_ip_pkt_t *)buf;
 
   DEBUG_PRINT(F("ST: 0x"));

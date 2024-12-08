@@ -60,6 +60,7 @@
 #undef USE_TELEGRAM                              // Disable support for Telegram protocol (+49k code, +7.0k mem and +4.8k additional during connection handshake)
 //#undef USE_MQTT_TLS                              // Disable TLS support won't work as the MQTTHost is not set
 #undef USE_KNX                                   // Disable KNX IP Protocol Support
+#undef USE_DALI                                  // Disable support for DALI gateway (+5k code)
 //#undef USE_WEBSERVER                             // Disable Webserver
 #undef USE_GPIO_VIEWER                           // Enable GPIO Viewer to see realtime GPIO states (+5k6 code)
 #undef USE_ENHANCED_GUI_WIFI_SCAN                // Disable wifi scan output with BSSID (+0k5 code)
@@ -172,8 +173,6 @@
 
 #define FIRMWARE_MINIMAL
 
-#undef FIRMWARE_MINIMAL_ONLY
-
 #undef USE_ESP32_SENSORS
 #undef USE_UFILESYS
 #undef GUI_TRASH_FILE
@@ -189,14 +188,14 @@
 
 #undef USE_ESP32_WDT                                  // disable watchdog on SAFEBOOT until more testing is done
 
-#if CONFIG_IDF_TARGET_ESP32
-#if CONFIG_FREERTOS_UNICORE
-  #undef USE_MQTT_TLS
+#if CONFIG_FREERTOS_UNICORE || CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_ETH_ENABLED                               // Check for Ethernet support in Arduino libs
+//  #undef USE_MQTT_TLS
 //  #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge console Tee (+4.5k code)
   #define USE_SPI                                    // Make SPI Ethernet adapters useable (+124 bytes)
   #define USE_ETHERNET
-#endif  // CONFIG_FREERTOS_UNICORE
-#endif  // CONFIG_IDF_TARGET_ESP32
+#endif  // CONFIG_ETH_ENABLED
+#endif  // CONFIG_FREERTOS_UNICORE || CONFIG_IDF_TARGET_ESP32S3
 
 #endif  // FIRMWARE_SAFEBOOT
 
@@ -449,6 +448,7 @@
 //#define USE_LUXV30B                            // [I2CDriver70] Enable RFRobot SEN0390 LuxV30b ambient light sensor (I2C address 0x4A) (+0k5 code)
 //#define USE_PMSA003I                           // [I2cDriver78] Enable PMSA003I Air Quality Sensor (I2C address 0x12) (+1k8 code)
 //#define USE_GDK101                             // [I2cDriver79] Enable GDK101 sensor (I2C addresses 0x18 - 0x1B) (+1k2 code)
+//#define USE_MS5837                             // [I2cDriver91] Enable MS5837 sensor (I2C address 0x76) (+2k7 code)
 
 //#define USE_RTC_CHIPS                          // Enable RTC chip support and NTP server - Select only one
 //  #define USE_DS3231                           // [I2cDriver26] Enable DS3231 RTC (I2C address 0x68) (+1k2 code)
@@ -515,6 +515,9 @@
 
 #define USE_ENHANCED_GUI_WIFI_SCAN
 
+#undef USE_ENERGY_SENSOR                        // Disable support for energy sensors
+#undef USE_SHUTTER                              // Disable support for shutter
+#undef USE_IR_REMOTE                            // Disable support for IR Remote
 #undef USE_ARMTRONIX_DIMMERS                    // Disable support for Armtronix Dimmers (+1k4 code)
 #undef USE_PS_16_DZ                             // Disable support for PS-16-DZ Dimmer (+2k code)
 #undef USE_SONOFF_IFAN                          // Disable support for Sonoff iFan02 and iFan03 (+2k code)
@@ -688,6 +691,7 @@
 //#define USE_LUXV30B                            // [I2CDriver70] Enable RFRobot SEN0390 LuxV30b ambient light sensor (I2C address 0x4A) (+0k5 code)
 //#define USE_PMSA003I                           // [I2cDriver78] Enable PMSA003I Air Quality Sensor (I2C address 0x12) (+1k8 code)
 //#define USE_GDK101                             // [I2cDriver79] Enable GDK101 sensor (I2C addresses 0x18 - 0x1B) (+1k2 code)
+//#define USE_MS5837                             // [I2cDriver91] Enable MS5837 sensor (I2C address 0x76) (+2k7 code)
 
 //#define USE_RTC_CHIPS                          // Enable RTC chip support and NTP server - Select only one
 //  #define USE_DS3231                           // [I2cDriver26] Enable DS3231 RTC (I2C address 0x68) (+1k2 code)
@@ -797,6 +801,7 @@
 #ifndef USE_KNX
 #define USE_KNX                                  // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
 #endif
+#define USE_DALI                                 // Add support for DALI gateway (+5k code)
 
 #endif // FIRMWARE_TASMOTA32
 
@@ -827,12 +832,15 @@
 #endif // USE_MATTER_DEVICE
 
 /*********************************************************************************************\
- * Post-process compile options for esp32-c2
+ * Post-process for switched off Ethernet support in Arduino static libs
 \*********************************************************************************************/
 
-#ifdef CONFIG_IDF_TARGET_ESP32C2
+#ifndef CONFIG_ETH_ENABLED
   #undef USE_ETHERNET
-#endif  // CONFIG_IDF_TARGET_ESP32C2
+  #ifdef FIRMWARE_MINIMAL
+    #undef USE_SPI
+  #endif  // FIRMWARE_MINIMAL
+#endif  // CONFIG_ETH_ENABLED
 
 #endif  // ESP32
 #endif  // _TASMOTA_CONFIGURATIONS_ESP32_H_

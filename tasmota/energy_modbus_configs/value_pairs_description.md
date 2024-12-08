@@ -90,8 +90,8 @@
                   D - Number of decimals for floating point presentation (0 to 20) or a code correspondig to Tasmota resolution command settings:
                       21 - VoltRes (V)
                       22 - AmpRes (A)
-                      23 - WattRes (W, VA, VAr)
-                      24 - EnergyRes (kWh, kVAh, kVArh)
+                      23 - WattRes (W, VA, var)
+                      24 - EnergyRes (kWh, kVAh, kvarh)
                       25 - FreqRes (Hz)
                       26 - TempRes (C, F)
                       27 - HumRes (%)

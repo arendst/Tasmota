@@ -27,6 +27,11 @@
 #include "nimble/nimble/host/services/gatt/include/services/gatt/ble_svc_gatt.h"
 #endif
 
+#include <limits.h>
+
+#define NIMBLE_SERVER_GET_PEER_NAME_ON_CONNECT_CB 0
+#define NIMBLE_SERVER_GET_PEER_NAME_ON_AUTH_CB 1
+
 static const char* LOG_TAG = "NimBLEServer";
 static NimBLEServerCallbacks defaultCallbacks;
 
@@ -47,6 +52,7 @@ NimBLEServer::NimBLEServer() {
 #endif
     m_svcChanged            = false;
     m_deleteCallbacks       = true;
+    m_getPeerNameOnConnect  = false;
 } // NimBLEServer
 
 
@@ -186,9 +192,8 @@ void NimBLEServer::start() {
 
     int rc = ble_gatts_start();
     if (rc != 0) {
-        NIMBLE_LOGE(LOG_TAG, "ble_gatts_start; rc=%d, %s", rc,
-                            NimBLEUtils::returnCodeToString(rc));
-        abort();
+        NIMBLE_LOGE(LOG_TAG, "ble_gatts_start; rc=%d, %s", rc, NimBLEUtils::returnCodeToString(rc));
+        return;
     }
 
 #if CONFIG_NIMBLE_CPP_LOG_LEVEL >= 4
@@ -215,7 +220,9 @@ void NimBLEServer::start() {
         if(svc->m_removed == 0) {
             rc = ble_gatts_find_svc(&svc->getUUID().getNative()->u, &svc->m_handle);
             if(rc != 0) {
-                abort();
+                NIMBLE_LOGW(LOG_TAG, "GATT Server started without service: %s, Service %s",
+                            svc->getUUID().toString().c_str(), svc->isStarted() ? "missing" : "not started");
+                continue; // Skip this service as it was not started
             }
         }
 
@@ -252,6 +259,15 @@ int NimBLEServer::disconnect(uint16_t connId, uint8_t reason) {
     return rc;
 } // disconnect
 
+/**
+ * @brief Disconnect the specified client with optional reason.
+ * @param [in] connInfo Connection of the client to disconnect.
+ * @param [in] reason code for disconnecting.
+ * @return NimBLE host return code.
+ */
+int NimBLEServer::disconnect(const NimBLEConnInfo &connInfo, uint8_t reason) {
+    return disconnect(connInfo.getConnHandle(), reason);
+} // disconnect
 
 #if !CONFIG_BT_NIMBLE_EXT_ADV || defined(_DOXYGEN_)
 /**
@@ -262,6 +278,15 @@ void NimBLEServer::advertiseOnDisconnect(bool aod) {
     m_advertiseOnDisconnect = aod;
 } // advertiseOnDisconnect
 #endif
+
+/**
+ * @brief Set the server to automatically read the name from the connected peer before
+ * the onConnect callback is called and enables the override callback with name parameter.
+ * @param [in] enable Enable reading the connected peer name upon connection.
+ */
+void NimBLEServer::getPeerNameOnConnect(bool enable) {
+    m_getPeerNameOnConnect = enable;
+} // getPeerNameOnConnect
 
 /**
  * @brief Return the number of connected clients.
@@ -328,6 +353,113 @@ NimBLEConnInfo NimBLEServer::getPeerIDInfo(uint16_t id) {
     return peerInfo;
 } // getPeerIDInfo
 
+/**
+ * @brief Callback that is called after reading from the peer name characteristic.
+ * @details This will check the task pointer in the task data struct to determine
+ * the action to take once the name has been read. If there is a task waiting then
+ * it will be woken, if not, the the RC value is checked to determine which callback
+ * should be called.
+ */
+int NimBLEServer::peerNameCB(uint16_t conn_handle,
+                             const struct ble_gatt_error *error,
+                             struct ble_gatt_attr *attr,
+                             void *arg) {
+    ble_task_data_t *pTaskData = (ble_task_data_t*)arg;
+    std::string *name = (std::string*)pTaskData->buf;
+    int rc = error->status;
+
+    if (rc == 0) {
+        if (attr) {
+            name->append(OS_MBUF_DATA(attr->om, char*), OS_MBUF_PKTLEN(attr->om));
+            return rc;
+        }
+    }
+
+    if (rc == BLE_HS_EDONE) {
+        // No ask means this was read for a callback.
+        if (pTaskData->task == nullptr) {
+            NimBLEServer* pServer = (NimBLEServer*)pTaskData->pATT;
+            NimBLEConnInfo peerInfo{};
+            ble_gap_conn_find(conn_handle, &peerInfo.m_desc);
+
+            // Use the rc value as a flag to indicate which callback should be called.
+            if (pTaskData->rc == NIMBLE_SERVER_GET_PEER_NAME_ON_CONNECT_CB) {
+                pServer->m_pServerCallbacks->onConnect(pServer, peerInfo, *name);
+            } else if (pTaskData->rc == NIMBLE_SERVER_GET_PEER_NAME_ON_AUTH_CB) {
+                pServer->m_pServerCallbacks->onAuthenticationComplete(peerInfo, *name);
+            }
+        }
+    } else {
+        NIMBLE_LOGE(LOG_TAG, "NimBLEServerPeerNameCB rc=%d; %s", rc, NimBLEUtils::returnCodeToString(rc));
+    }
+
+    if (pTaskData->task != nullptr) {
+        pTaskData->rc = rc;
+        xTaskNotifyGive(pTaskData->task);
+    } else {
+        // If the read was triggered for callback use then these were allocated.
+        delete name;
+        delete pTaskData;
+    }
+
+    return rc;
+}
+
+/**
+ * @brief Internal method that sends the read command.
+ */
+std::string NimBLEServer::getPeerNameInternal(uint16_t conn_handle, TaskHandle_t task, int cb_type) {
+    std::string *buf = new std::string{};
+    ble_task_data_t *taskData = new ble_task_data_t{this, task, cb_type, buf};
+    ble_uuid16_t uuid {{BLE_UUID_TYPE_16}, BLE_SVC_GAP_CHR_UUID16_DEVICE_NAME};
+    int rc = ble_gattc_read_by_uuid(conn_handle,
+                                    1,
+                                    0xffff,
+                                    ((ble_uuid_t*)&uuid),
+                                    NimBLEServer::peerNameCB,
+                                    taskData);
+    if (rc != 0) {
+        NIMBLE_LOGE(LOG_TAG, "ble_gattc_read_by_uuid rc=%d, %s", rc, NimBLEUtils::returnCodeToString(rc));
+        NimBLEConnInfo peerInfo{};
+        ble_gap_conn_find(conn_handle, &peerInfo.m_desc);
+        if (cb_type == NIMBLE_SERVER_GET_PEER_NAME_ON_CONNECT_CB) {
+            m_pServerCallbacks->onConnect(this, peerInfo, *buf);
+        } else if (cb_type == NIMBLE_SERVER_GET_PEER_NAME_ON_AUTH_CB) {
+            m_pServerCallbacks->onAuthenticationComplete(peerInfo, *buf);
+        }
+        delete buf;
+        delete taskData;
+    } else if (task != nullptr) {
+#ifdef ulTaskNotifyValueClear
+        // Clear the task notification value to ensure we block
+        ulTaskNotifyValueClear(task, ULONG_MAX);
+#endif
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+        rc = taskData->rc;
+        std::string name{*(std::string*)taskData->buf};
+        delete buf;
+        delete taskData;
+
+        if (rc != 0 && rc != BLE_HS_EDONE) {
+            NIMBLE_LOGE(LOG_TAG, "getPeerName rc=%d %s", rc, NimBLEUtils::returnCodeToString(rc));
+        }
+
+        return name;
+    }
+    // TaskData and name buffer will be deleted in the callback.
+    return "";
+}
+
+/**
+ * @brief Get the name of the connected peer.
+ * @param connInfo A reference to a NimBLEConnInfo instance to read the name from.
+ * @returns A string containing the name.
+ * @note This is a blocking call and should NOT be called from any callbacks!
+ */
+std::string NimBLEServer::getPeerName(const NimBLEConnInfo& connInfo) {
+    std::string name = getPeerNameInternal(connInfo.getConnHandle(), xTaskGetCurrentTaskHandle());
+    return name;
+}
 
 /**
  * @brief Handle a GATT Server Event.
@@ -354,16 +486,22 @@ int NimBLEServer::handleGapEvent(struct ble_gap_event *event, void *arg) {
 #if !CONFIG_BT_NIMBLE_EXT_ADV
                 NimBLEDevice::startAdvertising();
 #endif
-            }
-            else {
-                pServer->m_connectedPeersVec.push_back(event->connect.conn_handle);
-
+            } else {
                 rc = ble_gap_conn_find(event->connect.conn_handle, &peerInfo.m_desc);
                 if (rc != 0) {
                     return 0;
                 }
 
-                pServer->m_pServerCallbacks->onConnect(pServer, peerInfo);
+                pServer->m_connectedPeersVec.push_back(event->connect.conn_handle);
+
+                if (pServer->m_getPeerNameOnConnect) {
+                    pServer->getPeerNameInternal(event->connect.conn_handle,
+                                                 nullptr,
+                                                 NIMBLE_SERVER_GET_PEER_NAME_ON_CONNECT_CB);
+                } else {
+                    pServer->m_pServerCallbacks->onConnect(pServer, peerInfo);
+                }
+
             }
 
             return 0;
@@ -378,7 +516,7 @@ int NimBLEServer::handleGapEvent(struct ble_gap_event *event, void *arg) {
                 case BLE_HS_EOS:
                 case BLE_HS_ECONTROLLER:
                 case BLE_HS_ENOTSYNCED:
-                    NIMBLE_LOGC(LOG_TAG, "Disconnect - host reset, rc=%d", event->disconnect.reason);
+                    NIMBLE_LOGE(LOG_TAG, "Disconnect - host reset, rc=%d", event->disconnect.reason);
                     NimBLEDevice::onReset(event->disconnect.reason);
                     break;
                 default:
@@ -514,9 +652,25 @@ int NimBLEServer::handleGapEvent(struct ble_gap_event *event, void *arg) {
                 return BLE_ATT_ERR_INVALID_HANDLE;
             }
 
-            pServer->m_pServerCallbacks->onAuthenticationComplete(peerInfo);
+            if (pServer->m_getPeerNameOnConnect) {
+                pServer->getPeerNameInternal(event->enc_change.conn_handle,
+                                             nullptr,
+                                             NIMBLE_SERVER_GET_PEER_NAME_ON_AUTH_CB);
+            } else {
+                pServer->m_pServerCallbacks->onAuthenticationComplete(peerInfo);
+            }
             return 0;
         } // BLE_GAP_EVENT_ENC_CHANGE
+
+        case BLE_GAP_EVENT_IDENTITY_RESOLVED: {
+            rc = ble_gap_conn_find(event->identity_resolved.conn_handle, &peerInfo.m_desc);
+            if(rc != 0) {
+                return BLE_ATT_ERR_INVALID_HANDLE;
+            }
+
+            pServer->m_pServerCallbacks->onIdentity(peerInfo);
+            return 0;
+        } // BLE_GAP_EVENT_IDENTITY_RESOLVED
 
         case BLE_GAP_EVENT_PASSKEY_ACTION: {
             struct ble_sm_io pkey = {0,0};
@@ -528,19 +682,20 @@ int NimBLEServer::handleGapEvent(struct ble_gap_event *event, void *arg) {
                 // if the (static)passkey is the default, check the callback for custom value
                 // both values default to the same.
                 if(pkey.passkey == 123456) {
-                    pkey.passkey = pServer->m_pServerCallbacks->onPassKeyRequest();
+                    pkey.passkey = pServer->m_pServerCallbacks->onPassKeyDisplay();
                 }
                 rc = ble_sm_inject_io(event->passkey.conn_handle, &pkey);
                 NIMBLE_LOGD(LOG_TAG, "BLE_SM_IOACT_DISP; ble_sm_inject_io result: %d", rc);
 
             } else if (event->passkey.params.action == BLE_SM_IOACT_NUMCMP) {
                 NIMBLE_LOGD(LOG_TAG, "Passkey on device's display: %" PRIu32, event->passkey.params.numcmp);
-                pkey.action = event->passkey.params.action;
-                pkey.numcmp_accept = pServer->m_pServerCallbacks->onConfirmPIN(event->passkey.params.numcmp);
 
-                rc = ble_sm_inject_io(event->passkey.conn_handle, &pkey);
-                NIMBLE_LOGD(LOG_TAG, "BLE_SM_IOACT_NUMCMP; ble_sm_inject_io result: %d", rc);
+                rc = ble_gap_conn_find(event->passkey.conn_handle, &peerInfo.m_desc);
+                if(rc != 0) {
+                    return BLE_ATT_ERR_INVALID_HANDLE;
+                }
 
+                pServer->m_pServerCallbacks->onConfirmPIN(peerInfo, event->passkey.params.numcmp);
             //TODO: Handle out of band pairing
             } else if (event->passkey.params.action == BLE_SM_IOACT_OOB) {
                 static uint8_t tem_oob[16] = {0};
@@ -551,14 +706,6 @@ int NimBLEServer::handleGapEvent(struct ble_gap_event *event, void *arg) {
                 rc = ble_sm_inject_io(event->passkey.conn_handle, &pkey);
                 NIMBLE_LOGD(LOG_TAG, "BLE_SM_IOACT_OOB; ble_sm_inject_io result: %d", rc);
             //////////////////////////////////
-            } else if (event->passkey.params.action == BLE_SM_IOACT_INPUT) {
-                NIMBLE_LOGD(LOG_TAG, "Enter the passkey");
-                pkey.action = event->passkey.params.action;
-                pkey.passkey = pServer->m_pServerCallbacks->onPassKeyRequest();
-
-                rc = ble_sm_inject_io(event->passkey.conn_handle, &pkey);
-                NIMBLE_LOGD(LOG_TAG, "BLE_SM_IOACT_INPUT; ble_sm_inject_io result: %d", rc);
-
             } else if (event->passkey.params.action == BLE_SM_IOACT_NONE) {
                 NIMBLE_LOGD(LOG_TAG, "No passkey action required");
             }
@@ -842,6 +989,10 @@ void NimBLEServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& con
     NIMBLE_LOGD("NimBLEServerCallbacks", "onConnect(): Default");
 } // onConnect
 
+void NimBLEServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, std::string& name) {
+    NIMBLE_LOGD("NimBLEServerCallbacks", "onConnect(): Default");
+} // onConnect
+
 void NimBLEServerCallbacks::onDisconnect(NimBLEServer* pServer,
                                          NimBLEConnInfo& connInfo, int reason) {
     NIMBLE_LOGD("NimBLEServerCallbacks", "onDisconnect(): Default");
@@ -851,18 +1002,26 @@ void NimBLEServerCallbacks::onMTUChange(uint16_t MTU, NimBLEConnInfo& connInfo) 
     NIMBLE_LOGD("NimBLEServerCallbacks", "onMTUChange(): Default");
 } // onMTUChange
 
-uint32_t NimBLEServerCallbacks::onPassKeyRequest(){
-    NIMBLE_LOGD("NimBLEServerCallbacks", "onPassKeyRequest: default: 123456");
+uint32_t NimBLEServerCallbacks::onPassKeyDisplay(){
+    NIMBLE_LOGD("NimBLEServerCallbacks", "onPassKeyDisplay: default: 123456");
     return 123456;
-} //onPassKeyRequest
+} //onPassKeyDisplay
 
-void NimBLEServerCallbacks::onAuthenticationComplete(NimBLEConnInfo& connInfo){
+void NimBLEServerCallbacks::onConfirmPIN(const NimBLEConnInfo& connInfo, uint32_t pin){
+    NIMBLE_LOGD("NimBLEServerCallbacks", "onConfirmPIN: default: true");
+    NimBLEDevice::injectConfirmPIN(connInfo, true);
+} // onConfirmPIN
+
+void NimBLEServerCallbacks::onIdentity(const NimBLEConnInfo& connInfo){
+    NIMBLE_LOGD("NimBLEServerCallbacks", "onIdentity: default");
+} // onIdentity
+
+void NimBLEServerCallbacks::onAuthenticationComplete(const NimBLEConnInfo& connInfo){
     NIMBLE_LOGD("NimBLEServerCallbacks", "onAuthenticationComplete: default");
 } // onAuthenticationComplete
 
-bool NimBLEServerCallbacks::onConfirmPIN(uint32_t pin){
-    NIMBLE_LOGD("NimBLEServerCallbacks", "onConfirmPIN: default: true");
-    return true;
-} // onConfirmPIN
+void NimBLEServerCallbacks::onAuthenticationComplete(const NimBLEConnInfo& connInfo, const std::string& name){
+    NIMBLE_LOGD("NimBLEServerCallbacks", "onAuthenticationComplete: default");
+} // onAuthenticationComplete
 
 #endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL */
