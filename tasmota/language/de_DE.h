@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v14.3.0.7 - Last update 07.12.2024
+ * Updated until v14.3.0.7 - Last update 08.12.2024
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -56,6 +56,7 @@
 #define D_AIR_QUALITY "Luftqualität"
 #define D_AP "AP"                    // Access Point
 #define D_AS "als"
+#define D_AT "an"
 #define D_AUTO "AUTO"
 #define D_BATTERY "Batterie"
 #define D_BATT "Batt"                // Short for Battery
@@ -571,10 +572,10 @@
 #define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
 
 // xdrv_79_esp32_ble.ino
-#define D_CONFIGURE_BLE       "BLE Einstellungen"
+#define D_CONFIGURE_BLE       "BLE"
 #define D_BLE_PARAMETERS      "BLE Parameter"
-#define D_MQTT_BLE_ENABLE     "BLE aktivieren"
-#define D_MQTT_BLE_ACTIVESCAN "Aktiv scannen (*)"
+#define D_BLE_ENABLE          "BLE aktivieren"
+#define D_BLE_ACTIVESCAN      "Aktiv scannen (*)"
 #define D_BLE_DEVICES         "Erkannte Geräte"
 #define D_BLE_REMARK          "Mit (*) markierte Geräte werden nicht gespeichert."
 

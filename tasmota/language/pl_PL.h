@@ -56,6 +56,7 @@
 #define D_AIR_QUALITY "Jakość powietrza"
 #define D_AP "AP"                    // Access Point
 #define D_AS "jak"
+#define D_AT "at"
 #define D_AUTO "AUTO"
 #define D_BATTERY "Bateria"
 #define D_BATT "Bat"                // Short for Battery
@@ -573,8 +574,8 @@
 // xdrv_79_esp32_ble.ino
 #define D_CONFIGURE_BLE "Konfiguracja BLE"
 #define D_BLE_PARAMETERS "Ustawienia Bluetooth"
-#define D_MQTT_BLE_ENABLE "Załącz Bluetooth"
-#define D_MQTT_BLE_ACTIVESCAN "Załącz Aktywne Skanowanie(*)"
+#define D_BLE_ENABLE "Załącz Bluetooth"
+#define D_BLE_ACTIVESCAN "Załącz Aktywne Skanowanie(*)"
 #define D_BLE_DEVICES "Znalezione Urządzenia"
 #define D_BLE_REMARK "rzeczy oznaczone (*) nie są zapisywane w konfiguracji"
 

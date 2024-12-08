@@ -3573,8 +3573,8 @@ const char HTTP_BTN_MENU_BLE[] PROGMEM =
 const char HTTP_FORM_BLE[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_BLE_PARAMETERS "&nbsp;</b></legend>"
   "<form method='get' action='" WEB_HANDLE_BLE "'>"
-  "<p><label><input id='e0' type='checkbox'%s><b>" D_MQTT_BLE_ENABLE "</b></label></p>"
-  "<p><label><input id='e1' type='checkbox'%s><b>" D_MQTT_BLE_ACTIVESCAN "</b></label></p>"
+  "<p><label><input id='e0' type='checkbox'%s><b>" D_BLE_ENABLE "</b></label></p>"
+  "<p><label><input id='e1' type='checkbox'%s><b>" D_BLE_ACTIVESCAN "</b></label></p>"
   "<p>" D_BLE_REMARK "</p>";
 
 
