@@ -82,7 +82,7 @@ class Matter_UI
     # webserver.content_send("<p><form id=ac action='matterc' style='display: block;' method='get'><button>Configure Matter</button></form></p>")
     webserver.content_send("<p><form id=ac action='matterc' style='display: block;' method='get'><button>")
     webserver.content_send(matter._LOGO)
-    webserver.content_send(" Configure Matter</button></form></p>")
+    webserver.content_send(" Matter</button></form></p>")
   end
 
   #- ---------------------------------------------------------------------- -#

@@ -191,7 +191,7 @@ static const bvalue be_ktab_class_Matter_UI[232] = {
   /* K182 */  be_nested_str_weak(_X3C_X2Ftable_X3E_X3Chr_X3E),
   /* K183 */  be_nested_str_weak(_X3Cp_X3E_X3Cform_X20id_X3Dac_X20action_X3D_X27matterc_X27_X20style_X3D_X27display_X3A_X20block_X3B_X27_X20method_X3D_X27get_X27_X3E_X3Cbutton_X3E),
   /* K184 */  be_nested_str_weak(_LOGO),
-  /* K185 */  be_nested_str_weak(_X20Configure_X20Matter_X3C_X2Fbutton_X3E_X3C_X2Fform_X3E_X3C_X2Fp_X3E),
+  /* K185 */  be_nested_str_weak(_X20Matter_X3C_X2Fbutton_X3E_X3C_X2Fform_X3E_X3C_X2Fp_X3E),
   /* K186 */  be_nested_str_weak(get_plugin_class_displayname),
   /* K187 */  be_nested_str_weak(Matter_X20Advanced_X20Configuration),
   /* K188 */  be_nested_str_weak(show_passcode_form),
