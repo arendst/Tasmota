@@ -348,6 +348,13 @@ void ExecuteCommand(const char *cmnd, uint32_t source)
   CommandHandler(stopic, svalue, strlen(svalue));
 }
 
+bool GetFallbackTopicFlag(char* topicBuf) {
+  // Use this function to free CommandHandler stack space from TOPSZ
+  char stemp1[TOPSZ];
+  GetFallbackTopic_P(stemp1, "");        // Full Fallback topic = cmnd/DVES_xxxxxxxx_fb/
+  return (!strncmp(topicBuf, stemp1, strlen(stemp1)));
+}
+
 /********************************************************************************************/
 
 // topicBuf:                    /power1  dataBuf: toggle  = Console command
@@ -369,9 +376,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
     }
   }
 
-  char stemp1[TOPSZ];
-  GetFallbackTopic_P(stemp1, "");        // Full Fallback topic = cmnd/DVES_xxxxxxxx_fb/
-  TasmotaGlobal.fallback_topic_flag = (!strncmp(topicBuf, stemp1, strlen(stemp1)));
+  TasmotaGlobal.fallback_topic_flag = GetFallbackTopicFlag(topicBuf);
 
   char *type = strrchr(topicBuf, '/');   // Last part of received topic is always the command (type)
 
@@ -416,11 +421,13 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
   }
 
   Response_P(PSTR("_1"));  // Signal error message for either Command Error or Command Unknown
-  char number[12];
-  char command_line[64];
-  snprintf_P(command_line, sizeof(command_line), PSTR("%s%s%s%s"), 
+  char stemp1[16];
+//  char command_line[64];
+//  snprintf_P(command_line, sizeof(command_line), PSTR("%s%s%s%s"), 
+  char *command_line = (char*)malloc(64);  // Use heap in favour of stack
+  snprintf_P(command_line, 64, PSTR("%s%s%s%s"), 
     type,
-    (index != 1) ? itoa(index, number, 10) : "",
+    (index != 1) ? itoa(index, stemp1, 10) : "",
     (data_len) ? " " : "",
     (data_len) ? (binary_data) ? HexToString((uint8_t*)dataBuf, data_len).c_str() : EscapeJSONString(dataBuf).c_str() : "");
 
@@ -483,6 +490,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
     }
     ResponseAppend_P(PSTR(",\"Input\":\"%s\"}"), command_line);
   }
+  free(command_line);
 
   if (ResponseLength()) {
     if (TasmotaGlobal.no_mqtt_response){  // If it is activated, Tasmota will not publish MQTT messages, but it will proccess event trigger rules

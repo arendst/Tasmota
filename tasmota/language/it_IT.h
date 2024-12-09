@@ -56,6 +56,7 @@
 #define D_AIR_QUALITY          "Qualità dell'aria"
 #define D_AP                   "AP"                   // Access Point
 #define D_AS                   "come"
+#define D_AT                   "in"
 #define D_AUTO                 "AUTO"
 #define D_BATTERY              "Batteria"
 #define D_BATT                 "Batt"                 // Short for Battery
@@ -573,8 +574,8 @@
 // xdrv_79_esp32_ble.ino
 #define D_CONFIGURE_BLE               "BLE"
 #define D_BLE_PARAMETERS              "Impostazioni Bluetooth"
-#define D_MQTT_BLE_ENABLE             "Abilita Bluetooth"
-#define D_MQTT_BLE_ACTIVESCAN         "Abilita scansione attiva (*)"
+#define D_BLE_ENABLE                  "Abilita Bluetooth"
+#define D_BLE_ACTIVESCAN              "Abilita scansione attiva (*)"
 #define D_BLE_DEVICES                 "Scansione dispositivi"
 #define D_BLE_REMARK                  "gli elementi segnati con (*) non sono memorizzati in config"
 

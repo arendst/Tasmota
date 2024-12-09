@@ -161,6 +161,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Redesign GUI adding feedback to buttons, shutters and lights
 - Add GUI submenu headers and refresh configuration button text (#22592)
 - Use command `WebButton1` to change GUI shutter 1 name
+- RG-15 sensor name from RG-15 to RG15 [#22612](https://github.com/arendst/Tasmota/issues/22612)
 - Unit (k)VAr(h) to (k)var(h) [#22435](https://github.com/arendst/Tasmota/issues/22435)
 - AHT1X/AHT2X/AHT3X ready for virtual I2C [#22427](https://github.com/arendst/Tasmota/issues/22427)
 - SGP4X ready for virtual I2C [#22427](https://github.com/arendst/Tasmota/issues/22427)
@@ -187,6 +188,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Mitsubishi Electric HVAC Standby Stage for MiElHVAC [#22430](https://github.com/arendst/Tasmota/issues/22430)
 - EQ3 TRV firmware version 1.46 fails if the default true is used in subscribe on the notify characteristic [#22328](https://github.com/arendst/Tasmota/issues/22328)
 - Ethernet on -DFRAMEWORK_ARDUINO_ITEAD framework regression from v14.3.0 [#22367](https://github.com/arendst/Tasmota/issues/22367)
+- ESP8266 Device Group exception due to lack of stack space (#22271)[#22271](https://github.com/arendst/Tasmota/issues/22271)
 - ESP32 Upgrade by file upload response based on file size [#22500](https://github.com/arendst/Tasmota/issues/22500)
 - ESP32 Arduino Core IPv6 zones used by Matter [#22378](https://github.com/arendst/Tasmota/issues/22378)
 - ESP32, ESP32-S2 and ESP32-S3 re-enable touch buttons [#22446](https://github.com/arendst/Tasmota/issues/22446)

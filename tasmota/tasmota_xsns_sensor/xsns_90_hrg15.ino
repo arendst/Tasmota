@@ -31,7 +31,7 @@
 
 #define XSNS_90 90
 
-#define RG15_NAME          "RG-15"
+#define RG15_NAME          "RG15"
 #define RG15_BAUDRATE      9600
 #define RG15_READ_TIMEOUT  500
 #define RG15_EVENT_TIMEOUT 60
