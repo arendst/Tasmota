@@ -186,12 +186,6 @@ long wsmap(long x, long in_min, long in_max, long out_min, long out_max) {
 
 void Ws2812LibStripShow(void) {
   strip->Show();
-
-#if defined(USE_WS2812_DMA) || defined(USE_WS2812_RMT) || defined(USE_WS2812_I2S)
-  // Wait for DMA/RMT/I2S to complete fixes distortion due to analogRead
-//  delay((Settings->light_pixels >> 6) +1);  // 256 / 64 = 4 +1 = 5
-  SystemBusyDelay( (Settings->light_pixels + 31) >> 5);  // (256 + 32) / 32 = 8
-#endif
 }
 
 void Ws2812StripShow(void)
