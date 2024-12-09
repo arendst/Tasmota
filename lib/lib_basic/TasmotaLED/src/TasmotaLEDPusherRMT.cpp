@@ -155,9 +155,7 @@ TasmotaLEDPusherRMT::~TasmotaLEDPusherRMT() {
   }
 }
 
-bool TasmotaLEDPusherRMT::Begin(uint16_t pixel_count, uint16_t pixel_size, const TasmotaLED_Timing * led_timing) {
-  TasmotaLEDPusher::Begin(pixel_count, pixel_size, led_timing);
-
+TasmotaLEDPusherRMT::TasmotaLEDPusherRMT(int8_t pin) : _pin(pin) {
   esp_err_t ret = ESP_OK;
   rmt_tx_channel_config_t config = {};
   config.clk_src = RMT_CLK_SRC_DEFAULT;
@@ -168,11 +166,15 @@ bool TasmotaLEDPusherRMT::Begin(uint16_t pixel_count, uint16_t pixel_size, const
   config.flags.invert_out = false;        // do not invert output signal
   config.flags.with_dma = false;          // do not need DMA backend
 
-  ret = rmt_new_tx_channel(&config, &_channel);
-  if (ret != ESP_OK) {
-    AddLog(LOG_LEVEL_INFO, "RMT: cannot initialize Gpio %i err=%i", _pin, ret);
-    return false;
+  _err = rmt_new_tx_channel(&config, &_channel);
+  if (_err == ESP_OK) {
+    _initialized = true;
   }
+}
+
+bool TasmotaLEDPusherRMT::Begin(uint16_t pixel_count, uint16_t pixel_size, const TasmotaLED_Timing * led_timing) {
+  if (!_initialized) { return false; }
+  TasmotaLEDPusher::Begin(pixel_count, pixel_size, led_timing);
   led_strip_encoder_config_t encoder_config = {
     .resolution = RMT_LED_STRIP_RESOLUTION_HZ,
   };
@@ -198,13 +200,13 @@ bool TasmotaLEDPusherRMT::Begin(uint16_t pixel_count, uint16_t pixel_size, const
     .level1 = 1,
   };
   // AddLog(LOG_LEVEL_INFO, "RMT: RmtBit0 0x%08X RmtBit1 0x%08X RmtReset 0x%08X", RmtBit0.val, RmtBit1.val, RmtReset.val);
-  ret = rmt_new_led_strip_encoder(&encoder_config, &_led_encoder, RmtBit0, RmtBit1, RmtReset);
-  if (ret != ESP_OK) {
+  _err = rmt_new_led_strip_encoder(&encoder_config, &_led_encoder, RmtBit0, RmtBit1, RmtReset);
+  if (_err != ESP_OK) {
     // AddLog(LOG_LEVEL_INFO, "RMT: cannot initialize led strip encoder err=%i", ret);
     return false;
   }
-  ret = rmt_enable(_channel);
-  if (ret != ESP_OK) {
+  _err = rmt_enable(_channel);
+  if (_err != ESP_OK) {
     // AddLog(LOG_LEVEL_INFO, "RMT: cannot enable channel err=%i", ret);
     return false;
   }
@@ -212,7 +214,7 @@ bool TasmotaLEDPusherRMT::Begin(uint16_t pixel_count, uint16_t pixel_size, const
 }
 
 bool TasmotaLEDPusherRMT::CanShow(void) {
-  if (_channel) {
+  if (_channel && _initialized) {
     return (ESP_OK == rmt_tx_wait_all_done(_channel, 0));
   } else {
     return false;
@@ -220,6 +222,7 @@ bool TasmotaLEDPusherRMT::CanShow(void) {
 }
 
 bool TasmotaLEDPusherRMT::Push(uint8_t *buf) {
+  if (!_initialized) { return false; }
 
   // wait for not actively sending data
   // this will time out at 1 second, an arbitrarily long period of time
