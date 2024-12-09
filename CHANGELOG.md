@@ -41,6 +41,7 @@ All notable changes to this project will be documented in this file.
 - ESP32-C2 TasmotaLED from not present I2S to SPI (#22575)
 - KNX Scenes index change regression from v14.2.0.4 (#22405)
 - Add GUI submenu headers and refresh configuration button text (#22592)
+- ESP8266 Device Group exception due to lack of stack space (#22271)
 
 ### Removed
 

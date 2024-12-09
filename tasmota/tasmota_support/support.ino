@@ -2654,11 +2654,12 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
     // Each entry has this format: [index][loglevel][log data]['\1']
 
     // Truncate log messages longer than MAX_LOGSZ which is the log buffer size minus 64 spare
+    char *too_long = nullptr;
     uint32_t log_data_len = strlen(log_data) + strlen(log_data_payload) + strlen(log_data_retained);
-    char too_long[TOPSZ];
     if (log_data_len > MAX_LOGSZ) {
-      snprintf_P(too_long, sizeof(too_long) - 20, PSTR("%s%s"), log_data, log_data_payload);   // 20 = strlen("... 123456 truncated")
-      snprintf_P(too_long, sizeof(too_long), PSTR("%s... %d truncated"), too_long, log_data_len);
+      too_long = (char*)malloc(TOPSZ);     // Use heap in favour of stack
+      snprintf_P(too_long, TOPSZ - 20, PSTR("%s%s"), log_data, log_data_payload);   // 20 = strlen("... 123456 truncated")
+      snprintf_P(too_long, TOPSZ, PSTR("%s... %d truncated"), too_long, log_data_len);
       log_data = too_long;
       log_data_payload = empty;
       log_data_retained = empty;
@@ -2679,6 +2680,9 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
     }
     snprintf_P(TasmotaGlobal.log_buffer, LOG_BUFFER_SIZE, PSTR("%s%c%c%s%s%s%s\1"),
       TasmotaGlobal.log_buffer, TasmotaGlobal.log_buffer_pointer++, '0'+loglevel, mxtime, log_data, log_data_payload, log_data_retained);
+    if (too_long) {
+      free(too_long);
+    }
     TasmotaGlobal.log_buffer_pointer &= 0xFF;
     if (!TasmotaGlobal.log_buffer_pointer) {
       TasmotaGlobal.log_buffer_pointer++;  // Index 0 is not allowed as it is the end of char string
