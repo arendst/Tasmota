@@ -29,6 +29,7 @@ All notable changes to this project will be documented in this file.
 - Prevent active BLE operations with unencrypted MI-format beacons (#22453)
 - ESP32 replaced NeoPixelBus with TasmotaLED (#22556)
 - ESP32 Platform from 2024.11.31 to 2024.12.30, Framework (Arduino Core) from v3.1.0.241117 to v3.1.0.241206 and IDF to 5.3.2 (#22600)
+- RG-15 sensor name from RG-15 to RG15 (#22612)
 
 ### Fixed
 - ESP32 upgrade by file upload response based on file size (#22500)
