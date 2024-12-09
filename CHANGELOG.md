@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Command `SetOption162 1` to disable adding export energy to energy today (#22578)
 - ESP32 support for WPA2/3 Enterprise conditional in core v3.1.0.241206 (#22600)
 - Support for Sonoff POWCT Energy Export Active (#22596)
+- Improved auto-selection of LED hardware support (RMT, SPI)
 
 ### Breaking Changed
 - ESP32 ArtNet switches from GRB to RGB encoding (#22556)
