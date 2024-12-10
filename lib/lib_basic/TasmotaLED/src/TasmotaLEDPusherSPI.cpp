@@ -95,31 +95,9 @@ TasmotaLEDPusherSPI::~TasmotaLEDPusherSPI() {
   }
 }
 
-bool TasmotaLEDPusherSPI::Begin(uint16_t pixel_count, uint16_t pixel_size, const TasmotaLED_Timing * led_timing) {
-  TasmotaLEDPusher::Begin(pixel_count, pixel_size, led_timing);
-  _spi_strip.bytes_per_pixel = _pixel_size;
-  _spi_strip.strip_len = _pixel_count;
-
-  esp_err_t err = ESP_OK;
-  uint32_t mem_caps = MALLOC_CAP_DEFAULT;
-  // spi_clock_source_t clk_src = SPI_CLK_SRC_DEFAULT;
-  spi_bus_config_t spi_bus_cfg;
-  spi_device_interface_config_t spi_dev_cfg;
+TasmotaLEDPusherSPI::TasmotaLEDPusherSPI(int8_t pin) : _pin(pin) {
   spi_host_device_t spi_host = SPI2_HOST;
-  bool with_dma = true; /// TODO: pass value or compute based on pixelcount
-  int clock_resolution_khz = 0;
-
-  if (with_dma) {  // TODO
-      // DMA buffer must be placed in internal SRAM
-      mem_caps |= MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA;
-  }
-  _spi_strip.pixel_buf = (uint8_t *)heap_caps_calloc(1, _pixel_count * _pixel_size * SPI_BYTES_PER_COLOR_BYTE, mem_caps);
-  if (_spi_strip.pixel_buf == nullptr) {
-    AddLog(LOG_LEVEL_INFO, PSTR("LED: Error no mem for spi strip"));
-    goto err;
-  }
-
-  spi_bus_cfg = {
+  spi_bus_config_t spi_bus_cfg = {
       .mosi_io_num = _pin,
       //Only use MOSI to generate the signal, set -1 when other pins are not used.
       .miso_io_num = -1,
@@ -128,32 +106,55 @@ bool TasmotaLEDPusherSPI::Begin(uint16_t pixel_count, uint16_t pixel_size, const
       .quadhd_io_num = -1,
       .max_transfer_sz = _pixel_count * _pixel_size * SPI_BYTES_PER_COLOR_BYTE,
   };
-  err = spi_bus_initialize(spi_host, &spi_bus_cfg, with_dma ? SPI_DMA_CH_AUTO : SPI_DMA_DISABLED);
-  if (err != ESP_OK) {
-    AddLog(LOG_LEVEL_INFO, PSTR("LED: Error create SPI bus failed"));
+  _err = spi_bus_initialize(spi_host, &spi_bus_cfg, _with_dma ? SPI_DMA_CH_AUTO : SPI_DMA_DISABLED);
+  if (_err == ESP_OK) {
+    _spi_strip.spi_host = spi_host;     // confirmed working, so keep it's value to free it later
+    _initialized = true;
+  }
+}
+
+bool TasmotaLEDPusherSPI::Begin(uint16_t pixel_count, uint16_t pixel_size, const TasmotaLED_Timing * led_timing) {
+  if (!_initialized) {
+    return false;
+  }
+  TasmotaLEDPusher::Begin(pixel_count, pixel_size, led_timing);
+  _spi_strip.bytes_per_pixel = _pixel_size;
+  _spi_strip.strip_len = _pixel_count;
+
+  uint32_t mem_caps = MALLOC_CAP_DEFAULT;
+  // spi_clock_source_t clk_src = SPI_CLK_SRC_DEFAULT;
+  spi_device_interface_config_t spi_dev_cfg;
+  int clock_resolution_khz = 0;
+
+  if (_with_dma) {  // TODO
+    // DMA buffer must be placed in internal SRAM
+    mem_caps |= MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA;
+  }
+  _spi_strip.pixel_buf = (uint8_t *)heap_caps_calloc(1, _pixel_count * _pixel_size * SPI_BYTES_PER_COLOR_BYTE, mem_caps);
+  if (_spi_strip.pixel_buf == nullptr) {
+    AddLog(LOG_LEVEL_INFO, PSTR("LED: Error no mem for spi strip"));
     goto err;
   }
-  _spi_strip.spi_host = spi_host;     // confirmed working, so keep it's value to free it later
 
   spi_dev_cfg = {
-      .command_bits = 0,
-      .address_bits = 0,
-      .dummy_bits = 0,
-      .mode = 0,
-      //set -1 when CS is not used
-      .clock_source = SPI_CLK_SRC_DEFAULT,    // clk_src,
-      .clock_speed_hz = LED_STRIP_SPI_DEFAULT_RESOLUTION,
-      .spics_io_num = -1,
-      .queue_size = LED_STRIP_SPI_DEFAULT_TRANS_QUEUE_SIZE,
+    .command_bits = 0,
+    .address_bits = 0,
+    .dummy_bits = 0,
+    .mode = 0,
+    //set -1 when CS is not used
+    .clock_source = SPI_CLK_SRC_DEFAULT,    // clk_src,
+    .clock_speed_hz = LED_STRIP_SPI_DEFAULT_RESOLUTION,
+    .spics_io_num = -1,
+    .queue_size = LED_STRIP_SPI_DEFAULT_TRANS_QUEUE_SIZE,
   };
-  err = spi_bus_add_device(_spi_strip.spi_host, &spi_dev_cfg, &_spi_strip.spi_device);
-  if (err != ESP_OK) {
+  _err = spi_bus_add_device(_spi_strip.spi_host, &spi_dev_cfg, &_spi_strip.spi_device);
+  if (_err != ESP_OK) {
     // AddLog(LOG_LEVEL_INFO, "LED: Error failed to add spi device");
     goto err;
   }
 
-  spi_device_get_actual_freq(_spi_strip.spi_device, &clock_resolution_khz);
-  if (err != ESP_OK) {
+  _err = spi_device_get_actual_freq(_spi_strip.spi_device, &clock_resolution_khz);
+  if (_err != ESP_OK) {
     // AddLog(LOG_LEVEL_INFO, "LED: Error failed to get spi frequency");
     goto err;
   }
@@ -163,7 +164,6 @@ bool TasmotaLEDPusherSPI::Begin(uint16_t pixel_count, uint16_t pixel_size, const
     // AddLog(LOG_LEVEL_INFO, "LED: Error unsupported clock resolution: %dKHz", clock_resolution_khz);
     goto err;
   }
-
   return true;
 err:
   if (_spi_strip.spi_device) {
@@ -172,15 +172,16 @@ err:
   if (_spi_strip.spi_host) {
     spi_bus_free(_spi_strip.spi_host);
   }
+  _initialized = false;
   return false;
 }
 
 bool TasmotaLEDPusherSPI::CanShow(void) {
-  return true; // TODO
+  return _initialized; // TODO
 }
 
 bool TasmotaLEDPusherSPI::Push(uint8_t *buf) {
-
+  if (!_initialized) { return false; }
   if (CanShow()) {
     led_strip_transmit_buffer(&_spi_strip, buf);
   }

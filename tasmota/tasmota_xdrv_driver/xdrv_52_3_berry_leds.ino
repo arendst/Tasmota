@@ -186,12 +186,6 @@ extern "C" {
               pixels_size = strip->PixelCount() * strip->PixelSize();
               update_completed = strip->CanShow();
             }
-
-            // Wait for RMT/I2S to complete fixes distortion due to analogRead
-            // 1ms is needed for 96 bytes
-            if (!update_completed) {
-              SystemBusyDelay((pixels_size + 95) / 96);
-            }
             }
             break;
           case 3: // # 03 : CanShow      void -> bool

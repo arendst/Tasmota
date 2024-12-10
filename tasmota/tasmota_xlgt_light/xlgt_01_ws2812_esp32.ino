@@ -95,20 +95,8 @@ const uint16_t kTasLed_PixelWhite = TasmotaLed_xxxW;
 
 const uint16_t kTasLed_Type = kTasLed_PixelSize | kTasLed_PixelOrder | kTasLed_PixelWhite | kTasLed_Timing;
 
-// select hardware acceleration - bitbanging is not supported on ESP32 due to interference of interrupts
-#if CONFIG_IDF_TARGET_ESP32C2
-  const uint32_t kTasLed_Hardware = TasmotaLed_SPI;   // no I2S for the C2
-#else // all other ESP32 variants
-  #if defined(USE_WS2812_DMA)
-    const uint32_t kTasLed_Hardware = TasmotaLed_RMT;   // default DMA to RMT
-  #elif defined(USE_WS2812_RMT)
-    const uint32_t kTasLed_Hardware = TasmotaLed_RMT;   // default DMA to RMT
-  #elif defined(USE_WS2812_I2S)
-    const uint32_t kTasLed_Hardware = TasmotaLed_I2S;   // I2S
-  #else
-    const uint32_t kTasLed_Hardware = TasmotaLed_RMT;   // default DMA to RMT
-  #endif
-#endif
+// select hardware acceleration - bitbanging is not supported on ESP32 due to interference of interrupts - use default
+const uint32_t kTasLed_Hardware = TasmotaLed_HW_Default;   // use whatever is available
 
 #if (USE_WS2812_HARDWARE == NEO_HW_P9813)
   #error "P9813 is not supported by this library"
@@ -186,12 +174,6 @@ long wsmap(long x, long in_min, long in_max, long out_min, long out_max) {
 
 void Ws2812LibStripShow(void) {
   strip->Show();
-
-#if defined(USE_WS2812_DMA) || defined(USE_WS2812_RMT) || defined(USE_WS2812_I2S)
-  // Wait for DMA/RMT/I2S to complete fixes distortion due to analogRead
-//  delay((Settings->light_pixels >> 6) +1);  // 256 / 64 = 4 +1 = 5
-  SystemBusyDelay( (Settings->light_pixels + 31) >> 5);  // (256 + 32) / 32 = 8
-#endif
 }
 
 void Ws2812StripShow(void)

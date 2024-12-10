@@ -1105,10 +1105,10 @@ bool XdrvRulesProcess(bool teleperiod) {
 
 #ifdef USE_DEBUG_DRIVER
 void ShowFreeMem(const char *where) {
-  char stemp[30];
-  snprintf_P(stemp, sizeof(stemp), where);
-  XdrvMailbox.data = stemp;
+  char *XdrvMailboxData = XdrvMailbox.data;
+  XdrvMailbox.data = (char*)where;
   XdrvCall(FUNC_FREE_MEM);
+  XdrvMailbox.data = XdrvMailboxData;
 }
 #endif
 

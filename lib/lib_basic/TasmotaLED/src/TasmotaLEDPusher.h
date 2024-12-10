@@ -80,9 +80,11 @@ typedef struct TasmotaLED_Timing {
 \*******************************************************************************************/
 class TasmotaLEDPusher {
 public:
-  TasmotaLEDPusher() : _pixel_count(0), _pixel_size(0), _led_timing(nullptr) {};
+  TasmotaLEDPusher() : _initialized(false), _err(ESP_OK), _pixel_count(0), _pixel_size(0), _led_timing(nullptr) {};
   virtual ~TasmotaLEDPusher() {};
 
+  bool Initialized(void) const { return _initialized; }
+  esp_err_t Error(void) const { return _err; }
   virtual bool Begin(uint16_t pixel_count, uint16_t pixel_size, const TasmotaLED_Timing * led_timing) {
     _pixel_count = pixel_count;
     _pixel_size = pixel_size;
@@ -96,6 +98,8 @@ public:
   static TasmotaLEDPusher * Create(uint32_t hw, int8_t gpio);   // create instance for the provided type, or nullptr if failed
   
 protected:
+  bool _initialized;                              // did the hardware got correctly initialized
+  esp_err_t _err;
   uint16_t _pixel_count;
   uint16_t _pixel_size;
   const TasmotaLED_Timing * _led_timing;
@@ -110,7 +114,7 @@ protected:
 #include "driver/rmt_tx.h"
 class TasmotaLEDPusherRMT : public TasmotaLEDPusher {
 public:
-  TasmotaLEDPusherRMT(int8_t pin) : _pin(pin) {};
+  TasmotaLEDPusherRMT(int8_t pin);
   ~TasmotaLEDPusherRMT();
 
   bool Begin(uint16_t pixel_count, uint16_t pixel_size, const TasmotaLED_Timing * led_timing) override;
@@ -144,7 +148,7 @@ typedef struct led_strip_spi_obj_t {
 
 class TasmotaLEDPusherSPI : public TasmotaLEDPusher {
 public:
-  TasmotaLEDPusherSPI(int8_t pin) : _pin(pin), _spi_strip({}) {};
+  TasmotaLEDPusherSPI(int8_t pin);
   ~TasmotaLEDPusherSPI();
 
   bool Begin(uint16_t pixel_count, uint16_t pixel_size, const TasmotaLED_Timing * led_timing) override;
@@ -154,7 +158,8 @@ public:
   
 protected:
   int8_t _pin;
-  struct led_strip_spi_obj_t _spi_strip;
+  struct led_strip_spi_obj_t _spi_strip = {};;
+  const bool _with_dma = true;
 };
 #endif  // TASMOTALED_HARDWARE_SPI
 

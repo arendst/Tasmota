@@ -702,15 +702,14 @@ void MqttPublishLoggingAsync(bool refresh) {
 
 void MqttPublishPayload(const char* topic, const char* payload, uint32_t binary_length, bool retained) {
   // Publish <topic> payload string or binary when binary_length set with optional retained
-
-  SHOW_FREE_MEM(PSTR("MqttPublish"));
+  SHOW_FREE_MEM(PSTR("MqttPublishPayload"));
 
   bool binary_data = (binary_length > 0);
   if (!binary_data) {
     binary_length = strlen(payload);
   }
 
-  if (Settings->flag4.mqtt_no_retain) {                   // SetOption104 - Disable all MQTT retained messages, some brokers don't support it: AWS IoT, Losant
+  if (Settings->flag4.mqtt_no_retain) {                  // SetOption104 - Disable all MQTT retained messages, some brokers don't support it: AWS IoT, Losant
     retained = false;                                    // Some brokers don't support retained, they will disconnect if received
   }
 
@@ -794,13 +793,29 @@ void MqttPublishPayloadPrefixTopic_P(uint32_t prefix, const char* subtopic, cons
   prefix 5 = stat using subtopic or RESULT
   prefix 6 = tele using subtopic or RESULT
 */
-  char romram[64];
+  SHOW_FREE_MEM(PSTR("MqttPublishPayloadPrefixTopic_P"));
+/*
+  char romram[64];                      // Claim 64 bytes from 4k stack
   snprintf_P(romram, sizeof(romram), ((prefix > 3) && !Settings->flag.mqtt_response) ? S_RSLT_RESULT : subtopic);  // SetOption4 - Switch between MQTT RESULT or COMMAND
   UpperCase(romram, romram);
 
   prefix &= 3;
-  char stopic[TOPSZ];
+  char stopic[TOPSZ];                   // Claim TOPSZ bytes from 4k stack
   GetTopic_P(stopic, prefix, TasmotaGlobal.mqtt_topic, romram);
+  MqttPublishPayload(stopic, payload, binary_length, retained);
+*/
+  // Reduce important stack usage by 200 bytes but adding 52 bytes code
+  char *romram = (char*)malloc(64);     // Claim 64 bytes from 20k heap
+  strcpy_P(romram, ((prefix > 3) && !Settings->flag.mqtt_response) ? S_RSLT_RESULT : subtopic);
+  UpperCase(romram, romram);
+
+  prefix &= 3;
+  char *htopic = (char*)malloc(TOPSZ);  // Claim TOPSZ bytes from 16k heap
+  GetTopic_P(htopic, prefix, TasmotaGlobal.mqtt_topic, romram);
+  char stopic[strlen_P(htopic) +1];     // Claim only strlen_P bytes from 4k stack
+  strcpy_P(stopic, htopic);
+  free(htopic);                         // Free 16k heap from TOPSZ bytes
+  free(romram);                         // Free 16k heap from 64 bytes
   MqttPublishPayload(stopic, payload, binary_length, retained);
 
 #if defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_AWS_IOT_LIGHT)
@@ -857,6 +872,8 @@ void MqttPublishPayloadPrefixTopicRulesProcess_P(uint32_t prefix, const char* su
 
 void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retained) {
   // Publish <prefix>/<device>/<RESULT or <subtopic>> default ResponseData string with optional retained
+  SHOW_FREE_MEM(PSTR("MqttPublishPrefixTopic_P"));
+
   MqttPublishPayloadPrefixTopic_P(prefix, subtopic, ResponseData(), 0, retained);
 }
 
@@ -868,6 +885,8 @@ void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic) {
 void MqttPublishPrefixTopicRulesProcess_P(uint32_t prefix, const char* subtopic, bool retained) {
   // Publish <prefix>/<device>/<RESULT or <subtopic>> default ResponseData string with optional retained
   //   then process rules
+  SHOW_FREE_MEM(PSTR("MqttPublishPrefixTopicRulesProcess_P"));
+
   MqttPublishPrefixTopic_P(prefix, subtopic, retained);
   XdrvRulesProcess(0);
 }
