@@ -592,7 +592,7 @@ uint32_t MCP23xTemplateGpio(void) {
 void MCP23xModuleInit(void) {
   int32_t pins_needed = MCP23xTemplateGpio();
   if (!pins_needed) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: Invalid template"));
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MCP: Invalid template"));
     return;
   }
 
