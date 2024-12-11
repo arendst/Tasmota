@@ -3,10 +3,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Released]
 
-## [14.4.0] 20241212
+## [14.4.0] 20241211
 - Release Rudolph
 
-## [14.3.0.7] 20241212
+## [14.3.0.7] 20241211
 ### Added
 - Support for TM1640 based IoTTimer by Stefan Oskamp (#21376)
 - Command `SetOption161 1` to disable display of state text (#22515)
