@@ -26,6 +26,7 @@
  * Supported template fields:
  * NAME  - Template name
  * BASE  - Optional. 0 = use relative buttons and switches (default), 1 = use absolute buttons and switches
+ * IOCON - Optional. IOCON I/O Expander configuration register (bitmap: 0 MIRROR 0 DISSLW HAEN ODR INTPOL 0. Default 0b01011000 = 0x58)
  * GPIO  - Sequential list of pin 1 and up with configured GPIO function
  *         Function             Code      Description
  *         -------------------  --------  ----------------------------------------
@@ -60,6 +61,9 @@
  *
  * Buttons and relays                        B1 B2 B3 B4 B5 B6 B7 B8 R1  R2  R3  R4  R5  R6  R7  R8
  * {"NAME":"MCP23017 A=B1-8, B=R1-8","GPIO":[32,33,34,35,36,37,38,39,224,225,226,227,228,229,230,231]}
+ * 
+ * Buttons and relays with open-drain INT    B1 B2 B3 B4 B5 B6 B7 B8 R1  R2  R3  R4  R5  R6  R7  R8
+ * {"NAME":"MCP23017 A=B1-8, B=R1-8","GPIO":[32,33,34,35,36,37,38,39,224,225,226,227,228,229,230,231],"IOCON":0x5C}
  *
  * Buttons, relays, buttons and relays                         B1 B2 B3 B4 B5 B6 B7 B8 R1  R2  R3  R4  R5  R6  R7  R8  B9 B10B11B12B13B14B15B16R9  R10 R11 R12 R13 R14 R15 R16
  * {"NAME":"MCP23017 A=B1-8, B=R1-8, C=B9-16, D=R9-16","GPIO":[32,33,34,35,36,37,38,39,224,225,226,227,228,229,230,231,40,41,42,43,44,45,46,47,232,233,234,235,236,237,238,239]}
@@ -89,6 +93,8 @@
 /*********************************************************************************************\
  * MCP23017 support
 \*********************************************************************************************/
+
+#define D_JSON_IOCON "IOCON"
 
 enum MCP23S08GPIORegisters {
   MCP23X08_IODIR = 0x00,
@@ -156,6 +162,7 @@ struct MCP230 {
   uint8_t relay_offset;
   uint8_t button_max;
   uint8_t switch_max;
+  uint8_t iocon;
   int8_t button_offset;
   int8_t switch_offset;
   bool base;
@@ -497,7 +504,7 @@ bool MCP23xLoadTemplate(void) {
   }
   val = root[PSTR(D_JSON_NAME)];
   if (val) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: Base %d, Template '%s'"), Mcp23x.base, val.getStr());
+    AddLog(LOG_LEVEL_DEBUG, PSTR("MCP: IOCON 0x%02X, Base %d, Template '%s'"), Mcp23x.iocon, Mcp23x.base, val.getStr());
   }
   JsonParserArray arr = root[PSTR(D_JSON_GPIO)];
   if (arr) {
@@ -582,6 +589,10 @@ uint32_t MCP23xTemplateGpio(void) {
   JsonParserObject root = parser.getRootObject();
   if (!root) { return 0; }
 
+  JsonParserToken val = root[PSTR(D_JSON_IOCON)];
+  if (val) {
+    Mcp23x.iocon = val.getUInt() & 0x5E;              // Only allow 0 MIRROR 0 DISSLW HAEN ODR INTPOL 0
+  }
   JsonParserArray arr = root[PSTR(D_JSON_GPIO)];
   if (arr.isArray()) {
     return arr.size();                                // Number of requested pins
@@ -590,6 +601,7 @@ uint32_t MCP23xTemplateGpio(void) {
 }
 
 void MCP23xModuleInit(void) {
+  Mcp23x.iocon = 0b01011000;                          // Default 0x58 = Enable INT mirror, Disable Slew rate, HAEN pins for addressing
   int32_t pins_needed = MCP23xTemplateGpio();
   if (!pins_needed) {
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MCP: Invalid template"));
@@ -619,12 +631,14 @@ void MCP23xModuleInit(void) {
         if (0x00 == buffer) { // MCP23S08
           AddLog(LOG_LEVEL_INFO, PSTR("SPI: MCP23S08 found at CS%d"), Mcp23x.chip +1);
           Mcp23x.device[Mcp23x.chip].pins = 8;
-          MCP23xWrite(MCP23X08_IOCON, 0b00011000);    // Enable INT mirror, Slew rate disabled, HAEN pins for addressing
+//          MCP23xWrite(MCP23X08_IOCON, 0b00011000);  // Slew rate disabled, HAEN pins for addressing
+          MCP23xWrite(MCP23X08_IOCON, Mcp23x.iocon & 0x3E);
           Mcp23x.device[Mcp23x.chip].olata = MCP23xRead(MCP23X08_OLAT);
         } else if (0x80 == buffer) { // MCP23S17
           AddLog(LOG_LEVEL_INFO, PSTR("SPI: MCP23S17 found at CS%d"), Mcp23x.chip +1);
           Mcp23x.device[Mcp23x.chip].pins = 16;
-          MCP23xWrite(MCP23X17_IOCONA, 0b01011000);    // Enable INT mirror, Slew rate disabled, HAEN pins for addressing
+//          MCP23xWrite(MCP23X17_IOCONA, 0b01011000);    // Enable INT mirror, Slew rate disabled, HAEN pins for addressing
+          MCP23xWrite(MCP23X17_IOCONA, Mcp23x.iocon);
           Mcp23x.device[Mcp23x.chip].olata = MCP23xRead(MCP23X17_OLATA);
           Mcp23x.device[Mcp23x.chip].olatb = MCP23xRead(MCP23X17_OLATB);
         }
@@ -652,7 +666,8 @@ void MCP23xModuleInit(void) {
           if (0x00 == buffer) {
             I2cSetActiveFound(mcp23xxx_address, "MCP23008");
             Mcp23x.device[Mcp23x.chip].pins = 8;
-            MCP23xWrite(MCP23X08_IOCON, 0b00011000);     // Slew rate disabled, HAEN pins for addressing
+//            MCP23xWrite(MCP23X08_IOCON, 0b00011000);   // Slew rate disabled, HAEN pins for addressing
+            MCP23xWrite(MCP23X08_IOCON, Mcp23x.iocon & 0x3E);
             Mcp23x.device[Mcp23x.chip].olata = MCP23xRead(MCP23X08_OLAT);
             Mcp23x.max_devices++;
           }
@@ -660,7 +675,8 @@ void MCP23xModuleInit(void) {
             I2cSetActiveFound(mcp23xxx_address, "MCP23017");
             Mcp23x.device[Mcp23x.chip].pins = 16;
             MCP23xWrite(MCP23X08_IOCON, 0x00);           // Reset bank mode to 0 (MCP23X17_GPINTENB)
-            MCP23xWrite(MCP23X17_IOCONA, 0b01011000);    // Enable INT mirror, Slew rate disabled, HAEN pins for addressing
+//            MCP23xWrite(MCP23X17_IOCONA, 0b01011000);  // Enable INT mirror, Slew rate disabled, HAEN pins for addressing
+            MCP23xWrite(MCP23X17_IOCONA, Mcp23x.iocon);
             Mcp23x.device[Mcp23x.chip].olata = MCP23xRead(MCP23X17_OLATA);
             Mcp23x.device[Mcp23x.chip].olatb = MCP23xRead(MCP23X17_OLATB);
             Mcp23x.max_devices++;

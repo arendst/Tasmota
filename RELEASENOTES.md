@@ -116,6 +116,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v14.4.0.1
 ### Added
+- MCP23XXX_DRV control register IOCON in template [#22622](https://github.com/arendst/Tasmota/issues/22622)
 
 ### Breaking Changed
 
