@@ -76,9 +76,6 @@ extern "C" {
     be_getmember(vm, 1, "_p");
     void * strip = (void*) be_tocomptr(vm, -1);
     be_pop(vm, 1);
-    if (strip == nullptr) {
-      be_raise(vm, "internal_error", "tasmotaled object not initialized");
-    }
     return strip;
   }
   int32_t be_get_leds_type(bvm *vm) {
@@ -119,7 +116,6 @@ extern "C" {
           // if GPIO is '-1'
           led_type = 0;
           Ws2812InitStrip();          // ensure the tasmotaled object is initialized, because Berry code runs before the driver is initialized
-          // strip = Ws2812GetStrip(); TODO
         } else {
           if (led_type < 1) { led_type = 1; }
           TasmotaLEDPusher * pusher = TasmotaLEDPusher::Create(hardware, gpio);
@@ -144,15 +140,13 @@ extern "C" {
         // all other commands need a valid tasmotaled pointer
         int32_t leds_type = be_get_leds_type(vm);
         TasmotaLED * strip = (TasmotaLED*) be_get_tasmotaled(vm);    // raises an exception if pointer is invalid
-        // detect native driver
-        bool native = (leds_type == 0);
-
+        // detect native driver means strip == nullptr
         be_pushnil(vm);     // push a default `nil` return value
 
         switch (cmd) {
           case 1: // # 01 : begin        void -> void
-            if (native)             Ws2812Begin();
-            else if (strip)              strip->Begin();
+            if (strip)                strip->Begin();
+            else                      Ws2812Begin();
             break;
           case 2: // # 02 : show         void -> void
             {
@@ -176,43 +170,40 @@ extern "C" {
             }
             uint32_t pixels_size;       // number of bytes to push
             bool update_completed = false;
-            if (native) {
+            if (strip) {
+              strip->Show();
+              pixels_size = strip->PixelCount() * strip->PixelSize();
+              update_completed = strip->CanShow();
+            } else {
               Ws2812Show();
               pixels_size = Ws2812PixelsSize();
               update_completed =Ws2812CanShow();
             }
-            else if (strip) {
-              strip->Show();
-              pixels_size = strip->PixelCount() * strip->PixelSize();
-              update_completed = strip->CanShow();
-            }
             }
             break;
           case 3: // # 03 : CanShow      void -> bool
-            if (native)             be_pushbool(vm, Ws2812CanShow());
-            else if (strip)         be_pushbool(vm, strip->CanShow());
+            if (strip)              be_pushbool(vm, strip->CanShow());
+            else                    be_pushbool(vm, Ws2812CanShow());
             break;
           case 4: // # 04 : IsDirty      void -> bool
-            if (native)             be_pushbool(vm, Ws2812IsDirty());
-            else if (strip)         be_pushbool(vm, strip->IsDirty());
+            if (strip)              be_pushbool(vm, strip->IsDirty());
+            else                    be_pushbool(vm, Ws2812IsDirty());
             break;
           case 5: // # 05 : Dirty        void -> void
-            if (native)             Ws2812Dirty();
-            else if (strip)         strip->Dirty();
+            if (strip)              strip->Dirty();
+            else                    Ws2812Dirty();
             break;
           case 6: // # 06 : Pixels       void -> bytes() (mapped to the buffer)
-            {
-            if (native)             be_pushcomptr(vm, Ws2812Pixels());
-            else if (strip)         be_pushcomptr(vm, strip->Pixels());
-            }
+            if (strip)              be_pushcomptr(vm, strip->Pixels());
+            else                    be_pushcomptr(vm, Ws2812Pixels());
             break;
           case 7: // # 07 : PixelSize    void -> int
-            if (native)             be_pushint(vm, Ws2812PixelSize());
-            else if (strip)         be_pushint(vm, strip->PixelSize());
+            if (strip)              be_pushint(vm, strip->PixelSize());
+            else                    be_pushint(vm, Ws2812PixelSize());
             break;
           case 8: // # 08 : PixelCount   void -> int
-            if (native)             be_pushint(vm, Ws2812PixelCount());
-            else if (strip)         be_pushint(vm, strip->PixelCount());
+            if (strip)             be_pushint(vm, strip->PixelCount());
+            else                   be_pushint(vm, Ws2812PixelCount());
             break;
           case 9: // # 09 : ClearTo      (color:??) -> void
             {
@@ -227,11 +218,11 @@ extern "C" {
               if (from < 0)          { from = 0; }
               if (len < 0)           { len = 0; }
 
-              if (native)             Ws2812ClearTo(r, g, b, w, from, from + len - 1);
-              else if (strip)         strip->ClearTo(rgbw, from, from + len - 1);
+              if (strip)              strip->ClearTo(rgbw, from, from + len - 1);
+              else                    Ws2812ClearTo(r, g, b, w, from, from + len - 1);
             } else {
-              if (native)             Ws2812ClearTo(r, g, b, w, -1, -1);
-              else if (strip)         strip->ClearTo(rgbw);
+              if (strip)              strip->ClearTo(rgbw);
+              else                    Ws2812ClearTo(r, g, b, w, -1, -1);
             }
             }
             break;
@@ -239,24 +230,24 @@ extern "C" {
             {
             int32_t idx = be_toint(vm, 3);
             uint32_t wrgb = be_toint(vm, 4);
-            if (native) {
+            if (strip) {
+              strip->SetPixelColor(idx, wrgb);
+            } else {
               uint8_t w = (wrgb >> 24) & 0xFF;
               uint8_t r = (wrgb >> 16) & 0xFF;
               uint8_t g = (wrgb >>  8) & 0xFF;
               uint8_t b = (wrgb      ) & 0xFF;
               Ws2812SetPixelColor(idx, r, g, b, w);
-            } else if (strip) {
-              strip->SetPixelColor(idx, wrgb);
             }
             }
             break;
           case 11: // # 11 : GetPixelColor (idx:int) -> color:int wrgb
             {
             int32_t idx = be_toint(vm, 3);
-            if (native) {
-              be_pushint(vm, Ws2812GetPixelColor(idx));
-            } else if (strip) {
+            if (strip) {
               be_pushint(vm, strip->GetPixelColor(idx));
+            } else {
+              be_pushint(vm, Ws2812GetPixelColor(idx));
             }
             }
             break;
