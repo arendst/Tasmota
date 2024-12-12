@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- ESP32 rules operation priority regression from v13.3.0.4 (#22636)
 
 ### Removed
 
