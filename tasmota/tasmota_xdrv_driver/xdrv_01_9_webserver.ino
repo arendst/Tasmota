@@ -1257,29 +1257,28 @@ int32_t IsShutterWebButton(uint32_t idx) {
 
 /*-------------------------------------------------------------------------------------------*/
 
-void WebGetDeviceCounts(uint32_t &buttons_non_light, uint32_t &buttons_non_light_non_shutter, uint32_t &light_shutter_button_mask) {
-  light_shutter_button_mask = 0;           // Bitmask for each light and/or shutter button
-  buttons_non_light = TasmotaGlobal.devices_present;
+void WebGetDeviceCounts(uint32_t &buttons_non_light_non_shutter, uint32_t &light_shutter_button_mask) {
+  buttons_non_light_non_shutter = TasmotaGlobal.devices_present;
+  light_shutter_button_mask = 0;       // Bitmask for each light and/or shutter button
 
 #ifdef USE_LIGHT
   // Chk for reduced toggle buttons used by lights
   if (TasmotaGlobal.light_type) {
-    // Find and skip light buttons (Lights are controlled by the last TasmotaGlobal.devices_present (or 2))
+    // Find and skip light buttons
     uint32_t light_device = LightDevice();
     uint32_t light_devices = LightDevices();
-    buttons_non_light -= light_devices;
     for (uint32_t button_idx = light_device; button_idx < (light_device + light_devices); button_idx++) {
+      buttons_non_light_non_shutter--;
       light_shutter_button_mask |= (1 << (button_idx -1));  // Set button bit in bitmask
     }
   }
 #endif  // USE_LIGHT
 
-  buttons_non_light_non_shutter = buttons_non_light;
 #ifdef USE_SHUTTER
   // Chk for reduced toggle buttons used by shutters
-  // Find and skip dedicated shutter buttons
-  if (buttons_non_light && Settings->flag3.shutter_mode) {  // SetOption80 - Enable shutter support
-    for (uint32_t button_idx = 1; button_idx <= buttons_non_light; button_idx++) {
+  if (Settings->flag3.shutter_mode) {  // SetOption80 - Enable shutter support
+    // Find and skip dedicated shutter buttons
+    for (uint32_t button_idx = 1; button_idx <= TasmotaGlobal.devices_present; button_idx++) {
       if (IsShutterWebButton(button_idx) != 0) {
         buttons_non_light_non_shutter--;
         light_shutter_button_mask |= (1 << (button_idx -1));  // Set button bit in bitmask
@@ -1288,8 +1287,7 @@ void WebGetDeviceCounts(uint32_t &buttons_non_light, uint32_t &buttons_non_light
   }
 #endif  // USE_SHUTTER
 
-//  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HTP: DP %d, BNL %d, BNLNS %d, SB %08X"),
-//    TasmotaGlobal.devices_present, buttons_non_light, buttons_non_light_non_shutter, light_shutter_button_mask);
+//  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HTP: DP %d, BNLNS %d, SB %08X"), TasmotaGlobal.devices_present, buttons_non_light_non_shutter, light_shutter_button_mask);
 }
 
 #ifdef USE_LIGHT
@@ -1372,10 +1370,9 @@ void HandleRoot(void) {
 #ifndef FIRMWARE_MINIMAL
 
   if (TasmotaGlobal.devices_present) {
-    uint32_t buttons_non_light;
     uint32_t buttons_non_light_non_shutter;
     uint32_t light_shutter_button_mask;
-    WebGetDeviceCounts(buttons_non_light, buttons_non_light_non_shutter, light_shutter_button_mask);
+    WebGetDeviceCounts(buttons_non_light_non_shutter, light_shutter_button_mask);
     uint32_t button_idx = 1;
 
     if (buttons_non_light_non_shutter) {   // Any non light AND non shutter button - Show toggle buttons
@@ -1458,13 +1455,15 @@ void HandleRoot(void) {
 
 #ifdef USE_LIGHT
     if (TasmotaGlobal.light_type) {        // Any light - Show light button and slider(s)
-      button_idx = LightDevice();
+      uint32_t light_device = LightDevice();
+      uint32_t light_devices = LightDevices();
+      button_idx = light_device;
 
       WSContentSend_P(HTTP_TABLE100);      // "<table style='width:100%%'>"
 
       uint8_t light_subtype = TasmotaGlobal.light_type &7;
       if (!Settings->flag3.pwm_multi_channels) {  // SetOption68 0 - Enable multi-channels PWM instead of Color PWM
-        bool split_white = ((LST_RGBW <= light_subtype) && (TasmotaGlobal.devices_present > 1) && (Settings->param[P_RGB_REMAP] & 128));  // Only on RGBW or RGBCW and SetOption37 128
+        bool split_white = ((LST_RGBW <= light_subtype) && (light_devices > 1) && (Settings->param[P_RGB_REMAP] & 128));  // Only on RGBW or RGBCW and SetOption37 128
 
         if ((LST_COLDWARM == light_subtype) || ((LST_RGBCW == light_subtype) && !split_white)) {
           WebSliderColdWarm();
@@ -1538,7 +1537,7 @@ void HandleRoot(void) {
           uint32_t width = 100;
           WSContentSend_P(PSTR("<tr>"));
 
-          if (button_idx <= TasmotaGlobal.devices_present) {
+          if (button_idx < (light_device + light_devices)) {
             bool set_button = ((button_idx <= MAX_BUTTON_TEXT) && strlen(GetWebButton(button_idx -1)));
             char first[2];
             snprintf_P(first, sizeof(first), PSTR("%s"), PSTR(D_BUTTON_TOGGLE));
@@ -1564,9 +1563,8 @@ void HandleRoot(void) {
           WSContentSend_P(PSTR("</tr>"));
         }
       } else {  // Settings->flag3.pwm_multi_channels - SetOption68 1 - Enable multi-channels PWM instead of Color PWM
-        uint32_t pwm_channels = TasmotaGlobal.devices_present - buttons_non_light;
         stemp[0] = 'e'; stemp[1] = '0'; stemp[2] = '\0';  // d0
-        for (uint32_t i = 0; i < pwm_channels; i++) {
+        for (uint32_t i = 0; i < light_devices; i++) {
           bool set_button = ((button_idx <= MAX_BUTTON_TEXT) && strlen(GetWebButton(button_idx -1)));
           char first[2];
           snprintf_P(first, sizeof(first), PSTR("%s"), PSTR(D_BUTTON_TOGGLE));
@@ -1726,9 +1724,9 @@ bool HandleRootStatusRefresh(void) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_WHITE " %s"), tmp);
     ExecuteWebCommand(svalue);
   }
-  uint32_t light_device = LightDevice();  // Channel number offset
-  uint32_t pwm_channels = (TasmotaGlobal.light_type & 7) > LST_MAX ? LST_MAX : (TasmotaGlobal.light_type & 7);
-  for (uint32_t j = 0; j < pwm_channels; j++) {
+  uint32_t light_device = LightDevice();    // Channel number offset
+  uint32_t light_devices = LightDevices();  // Number of channels
+  for (uint32_t j = 0; j < light_devices; j++) {
     snprintf_P(webindex, sizeof(webindex), PSTR("e%d"), j +1);
     WebGetArg(webindex, tmp, sizeof(tmp));  // 0 - 100 percent
     if (strlen(tmp)) {
@@ -1902,10 +1900,9 @@ bool HandleRootStatusRefresh(void) {
     } else {
 #endif  // USE_SONOFF_IFAN
 
-      uint32_t buttons_non_light;
       uint32_t buttons_non_light_non_shutter;
       uint32_t light_shutter_button_mask;
-      WebGetDeviceCounts(buttons_non_light, buttons_non_light_non_shutter, light_shutter_button_mask);
+      WebGetDeviceCounts(buttons_non_light_non_shutter, light_shutter_button_mask);
 
       if (buttons_non_light_non_shutter <= 8) {   // Any non light AND non shutter button
         WSContentSend_P(PSTR("{t}<tr>"));
