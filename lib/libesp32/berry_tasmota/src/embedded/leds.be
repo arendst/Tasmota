@@ -28,6 +28,7 @@ class Leds : Leds_ntv
   var gamma       # if true, apply gamma (true is default)
   var leds        # number of leds
   var bri         # implicit brightness for this led strip (0..255, default is 50% = 127)
+  var animate     # attached animate object or nil - this allows to stop any existing animation for this strip if we add a new animate
   # leds:int = number of leds of the strip
   # gpio:int (optional) = GPIO for NeoPixel. If not specified, takes the WS2812 gpio
   # typ:int (optional) = Type of LED, defaults to WS2812 RGB
@@ -35,25 +36,43 @@ class Leds : Leds_ntv
   def init(leds, gpio_phy, typ, hardware)
     import gpio
     self.gamma = true     # gamma is enabled by default, it should be disabled explicitly if needed
-    if (gpio_phy == nil) || (gpio_phy == gpio.pin(gpio.WS2812, 0))
+    if (leds == nil ) || (gpio_phy == nil) || (gpio_phy == gpio.pin(gpio.WS2812, 0))
       # use native driver
       self.ctor()           # no parameters
+      # in such case, `self._p` is equal to `0`
       self.leds = self.pixel_count()
       import light
       self.bri = light.get()['bri']
     else
       # use pure Berry driver
-      self.leds = int(leds)
+      leds = int(leds)
+      self.leds = leds
       self.bri = 127        # 50% brightness by default
 
       # initialize the structure
-      self.ctor(self.leds, gpio_phy, typ, hardware)
+      # check if already in global `_lhw`
+      if !global.contains('_lhw')
+        global._lhw = {}
+      end
+      if global._lhw.find(leds) != nil
+        # an object already exists, attach it
+        var prov_led = global._lhw.find(leds)   # already provisioned leds instance
+        if self.leds != prov_led.leds
+          raise "value_error", f"number of leds do not match with previous instanciation {self.leds} vs {prov_led.leds}"
+        end
+        self._p = prov_led._p
+        self.animate = prov_led.animate
+        global._lhw[leds] = self          # put the most recent as current
+      else
+        self.ctor(leds, gpio_phy, typ, hardware)
+        global._lhw[leds] = self
+        # call begin
+        self.begin()
+      end
     end
 
     if self._p == nil raise "internal_error", "couldn't not initialize noepixelbus" end
 
-    # call begin
-    self.begin()
   end
 
   def clear()
@@ -69,6 +88,13 @@ class Leds : Leds_ntv
   end
   def get_bri()
     return self.bri
+  end
+
+  def set_animate(animate)
+    self.animate = animate
+  end
+  def get_animate()
+    return self.animate
   end
 
   def ctor(leds, gpio_phy, typ, hardware)
