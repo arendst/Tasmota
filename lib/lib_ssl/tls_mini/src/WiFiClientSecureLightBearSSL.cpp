@@ -788,19 +788,39 @@ extern "C" {
   // created with more than two primes, and most numbers, even large ones, can
   // be easily factored.
   static void pubkeyfingerprint_pubkey_fingerprint(br_x509_pubkeyfingerprint_context *xc) {
-    br_rsa_public_key rsakey = xc->ctx.pkey.key.rsa;
+    if (xc->ctx.pkey.key_type == BR_KEYTYPE_RSA) {
+      br_rsa_public_key rsakey = xc->ctx.pkey.key.rsa;
 
-    br_sha1_context shactx;
+      br_sha1_context shactx;
 
-    br_sha1_init(&shactx);
+      br_sha1_init(&shactx);
 
-    // The tag string doesn't really matter, but it should differ depending on
-    // key type. Since we only support RSA for now, it's a fixed string.
-    sha1_update_len(&shactx, "ssh-rsa", 7);          // tag
-    sha1_update_len(&shactx, rsakey.e, rsakey.elen); // exponent
-    sha1_update_len(&shactx, rsakey.n, rsakey.nlen); // modulus
+      // The tag string doesn't really matter, but it should differ depending on
+      // key type. For RSA it's a fixed string.
+      sha1_update_len(&shactx, "ssh-rsa", 7);          // tag
+      sha1_update_len(&shactx, rsakey.e, rsakey.elen); // exponent
+      sha1_update_len(&shactx, rsakey.n, rsakey.nlen); // modulus
 
-    br_sha1_out(&shactx, xc->pubkey_recv_fingerprint); // copy to fingerprint
+      br_sha1_out(&shactx, xc->pubkey_recv_fingerprint); // copy to fingerprint
+    }
+  #ifndef ESP8266
+    else if (xc->ctx.pkey.key_type == BR_KEYTYPE_EC) {
+      br_ec_public_key eckey = xc->ctx.pkey.key.ec;
+
+      br_sha1_context shactx;
+
+      br_sha1_init(&shactx);
+
+      // The tag string doesn't really matter, but it should differ depending on
+      // key type. For ECDSA it's a fixed string.
+      sha1_update_len(&shactx, "ecdsa-sha2-nistp256", 19); // tag
+      sha1_update_len(&shactx, eckey.q, eckey.qlen);       // exponent
+    }
+  #endif
+    else {
+      // We don't support anything else, so just set the fingerprint to all zeros.
+      memset(xc->pubkey_recv_fingerprint, 0, 20);
+    }
   }
 
   // Callback when complete chain has been parsed.
@@ -856,11 +876,19 @@ extern "C" {
     ctx->fingerprint_all = fingerprint_all;
   }
 
+#ifdef ESP8266
   // We limit to a single cipher to reduce footprint
   // we reference it, don't put in PROGMEM
   static const uint16_t suites[] = {
     BR_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
   };
+#else
+  // add more flexibility on ESP32
+  static const uint16_t suites[] = {
+    BR_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+    BR_TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+  };
+#endif
 
   // Default initializion for our SSL clients
   static void br_ssl_client_base_init(br_ssl_client_context *cc) {
@@ -884,6 +912,9 @@ extern "C" {
 
     // we support only P256 EC curve for AWS IoT, no EC curve for Letsencrypt unless forced
     br_ssl_engine_set_ec(&cc->eng, &br_ec_p256_m15); // TODO
+#ifndef ESP8266
+    br_ssl_engine_set_ecdsa(&cc->eng, &br_ecdsa_i15_vrfy_asn1);
+#endif
   }
 }
 
