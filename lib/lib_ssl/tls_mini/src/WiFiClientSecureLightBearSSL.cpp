@@ -767,59 +767,47 @@ extern "C" {
     xc->done_cert = true; // first cert already processed
   }
 
-// **** Start patch Castellucci
-/*
-  static void pubkeyfingerprint_pubkey_fingerprint(br_sha1_context *shactx, br_rsa_public_key rsakey) {
-    br_sha1_init(shactx);
-    br_sha1_update(shactx, "ssh-rsa", 7);           // tag
-    br_sha1_update(shactx, rsakey.e, rsakey.elen);  // exponent
-    br_sha1_update(shactx, rsakey.n, rsakey.nlen);  // modulus
-  }
-*/
-  // If `compat` id false, adds a u32be length prefixed value to the sha1 state.
-  // If `compat` is true, the length will be omitted for compatibility with
-  // data from older versions of Tasmota.
-  static void sha1_update_len(br_sha1_context *shactx, const void *msg, uint32_t len, bool compat) {
+  // Add a data element with a u32be length prefix to the sha1 state.
+  static void sha1_update_len(br_sha1_context *shactx, const void *msg, uint32_t len) {
     uint8_t buf[] = {0, 0, 0, 0};
 
-    if (!compat) {
-      buf[0] = (len >> 24) & 0xff;
-      buf[1] = (len >> 16) & 0xff;
-      buf[2] = (len >>  8) & 0xff;
-      buf[3] = (len >>  0) & 0xff;
-      br_sha1_update(shactx, buf, 4); // length
-    }
+    buf[0] = (len >> 24) & 0xff;
+    buf[1] = (len >> 16) & 0xff;
+    buf[2] = (len >>  8) & 0xff;
+    buf[3] = (len >>  0) & 0xff;
+    br_sha1_update(shactx, buf, 4); // length
+
     br_sha1_update(shactx, msg, len); // message
   }
 
-  // Update the received fingerprint based on the certificate's public key.
-  // If `compat` is true, an insecure version of the fingerprint will be
-  // calcualted for compatibility with older versions of Tasmota. Normally,
-  // `compat` should be false.
-  static void pubkeyfingerprint_pubkey_fingerprint(br_x509_pubkeyfingerprint_context *xc, bool compat) {
+  // Calculate the received fingerprint based on the certificate's public key.
+  // The public exponent and modulus are length prefixed to avoid security
+  // vulnerabilities related to ambiguous serialization. Without this, an
+  // attacker can generate alternative public keys which result in the same
+  // fingerprint, but are trivial to crack. This works because RSA keys can be
+  // created with more than two primes, and most numbers, even large ones, can
+  // be easily factored.
+  static void pubkeyfingerprint_pubkey_fingerprint(br_x509_pubkeyfingerprint_context *xc) {
     br_rsa_public_key rsakey = xc->ctx.pkey.key.rsa;
 
     br_sha1_context shactx;
 
     br_sha1_init(&shactx);
 
-    sha1_update_len(&shactx, "ssh-rsa", 7, compat);          // tag
-    sha1_update_len(&shactx, rsakey.e, rsakey.elen, compat); // exponent
-    sha1_update_len(&shactx, rsakey.n, rsakey.nlen, compat); // modulus
+    // The tag string doesn't really matter, but it should differ depending on
+    // key type. Since we only support RSA for now, it's a fixed string.
+    sha1_update_len(&shactx, "ssh-rsa", 7);          // tag
+    sha1_update_len(&shactx, rsakey.e, rsakey.elen); // exponent
+    sha1_update_len(&shactx, rsakey.n, rsakey.nlen); // modulus
 
     br_sha1_out(&shactx, xc->pubkey_recv_fingerprint); // copy to fingerprint
   }
-// **** End patch Castellucci
 
   // Callback when complete chain has been parsed.
   // Return 0 on validation success, !0 on validation error
   static unsigned pubkeyfingerprint_end_chain(const br_x509_class **ctx) {
     br_x509_pubkeyfingerprint_context *xc = (br_x509_pubkeyfingerprint_context *)ctx;
-    // set fingerprint status byte to zero
-    // FIXME: find a better way to pass this information
-    xc->pubkey_recv_fingerprint[20] = 0;
-    // Try matching using the the new fingerprint algorithm
-    pubkeyfingerprint_pubkey_fingerprint(xc, false);
+    pubkeyfingerprint_pubkey_fingerprint(xc);
     if (!xc->fingerprint_all) {
       if (0 == memcmp_P(xc->pubkey_recv_fingerprint, xc->fingerprint1, 20)) {
         return 0;
@@ -832,7 +820,6 @@ extern "C" {
       // Default (no validation at all) or no errors in prior checks = success.
       return 0;
     }
-// **** End patch Castellucci
   }
 
   // Return the public key from the validator (set by x509_minimal)
