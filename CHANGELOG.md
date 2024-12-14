@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [14.4.0.1] 
 ### Added
 - MCP23XXX_DRV control register IOCON in template (#22622)
+- TLS add support for ECDSA on ESP32
 
 ### Breaking Changed
 
