@@ -117,14 +117,17 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ## Changelog v14.4.0.1
 ### Added
 - MCP23XXX_DRV control register IOCON in template [#22622](https://github.com/arendst/Tasmota/issues/22622)
+- ESP32 support for TLS ECDSA [#22649](https://github.com/arendst/Tasmota/issues/22649)
 
 ### Breaking Changed
 
 ### Changed
+- Display removed PWM control of backlight GPIO for universal display regression from v14.1.0
+- SSL clean up remnants of old fingerprint algorithm [#22645](https://github.com/arendst/Tasmota/issues/22645)
 - Berry make Leds animate calls reentrant [#22643](https://github.com/arendst/Tasmota/issues/22643)
-- SSL clean up remnants of old fingerprint algorithm (#22645)[#22645](https://github.com/arendst/Tasmota/issues/22645)
 
 ### Fixed
+- Display DisplayMode adds a display device while not configured
 - GUI display power button regression from v14.3.0.5 [#15788](https://github.com/arendst/Tasmota/issues/15788)
 - MCP23xxx, PCF8574 and Shift595 power control when a display is configured regression from v14.3.0.7
 - ESP32 rules operation priority regression from v13.3.0.4 [#22636](https://github.com/arendst/Tasmota/issues/22636)
