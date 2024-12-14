@@ -152,12 +152,7 @@ class WiFiClientSecure_light : public WiFiClient {
     bool _insecure;                   // force fingerprint
     const uint8_t *_fingerprint1;          // fingerprint1 to be checked against
     const uint8_t *_fingerprint2;          // fingerprint2 to be checked against
-// **** Start patch Castellucci
-/*
     uint8_t _recv_fingerprint[20];   // fingerprint received
-*/
-    uint8_t _recv_fingerprint[21];   // fingerprint received
-// **** End patch Castellucci
 
     unsigned char *_recvapp_buf;
     size_t _recvapp_len;
