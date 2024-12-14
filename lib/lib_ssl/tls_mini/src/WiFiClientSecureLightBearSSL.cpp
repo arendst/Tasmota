@@ -802,7 +802,9 @@ extern "C" {
       sha1_update_len(&shactx, rsakey.n, rsakey.nlen); // modulus
 
       br_sha1_out(&shactx, xc->pubkey_recv_fingerprint); // copy to fingerprint
-    } else if (xc->ctx.pkey.key_type == BR_KEYTYPE_EC) {
+    }
+  #ifndef ESP8266
+    else if (xc->ctx.pkey.key_type == BR_KEYTYPE_EC) {
       br_ec_public_key eckey = xc->ctx.pkey.key.ec;
 
       br_sha1_context shactx;
@@ -813,7 +815,9 @@ extern "C" {
       // key type. For ECDSA it's a fixed string.
       sha1_update_len(&shactx, "ecdsa-sha2-nistp256", 19); // tag
       sha1_update_len(&shactx, eckey.q, eckey.qlen);       // exponent
-    } else {
+    }
+  #endif
+    else {
       // We don't support anything else, so just set the fingerprint to all zeros.
       memset(xc->pubkey_recv_fingerprint, 0, 20);
     }
@@ -908,7 +912,9 @@ extern "C" {
 
     // we support only P256 EC curve for AWS IoT, no EC curve for Letsencrypt unless forced
     br_ssl_engine_set_ec(&cc->eng, &br_ec_p256_m15); // TODO
-    br_ssl_engine_set_ecdsa(&cc->eng, &br_ecdsa_i15_vrfy_asn1);    
+#ifndef ESP8266
+    br_ssl_engine_set_ecdsa(&cc->eng, &br_ecdsa_i15_vrfy_asn1);
+#endif
   }
 }
 
