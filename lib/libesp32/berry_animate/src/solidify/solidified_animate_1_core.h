@@ -3,8 +3,8 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
-// compact class 'Animate_core' ktab size: 48, total: 98 (saved 400 bytes)
-static const bvalue be_ktab_class_Animate_core[48] = {
+// compact class 'Animate_core' ktab size: 52, total: 104 (saved 416 bytes)
+static const bvalue be_ktab_class_Animate_core[52] = {
   /* K0   */  be_nested_str_weak(stop),
   /* K1   */  be_nested_str_weak(strip),
   /* K2   */  be_nested_str_weak(clear),
@@ -51,8 +51,12 @@ static const bvalue be_ktab_class_Animate_core[48] = {
   /* K43  */  be_nested_str_weak(set_cb),
   /* K44  */  be_nested_str_weak(set_back_color),
   /* K45  */  be_nested_str_weak(add_animator),
-  /* K46  */  be_nested_str_weak(start),
-  /* K47  */  be_nested_str_weak(add_fast_loop),
+  /* K46  */  be_nested_str_weak(get_animate),
+  /* K47  */  be_nested_str_weak(introspect),
+  /* K48  */  be_nested_str_weak(instance),
+  /* K49  */  be_nested_str_weak(set_animate),
+  /* K50  */  be_nested_str_weak(start),
+  /* K51  */  be_nested_str_weak(add_fast_loop),
 };
 
 
@@ -716,7 +720,7 @@ be_local_closure(class_Animate_core_remove,   /* name */
 ********************************************************************/
 be_local_closure(class_Animate_core_start,   /* name */
   be_nested_proto(
-    6,                          /* nstack */
+    8,                          /* nstack */
     1,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
@@ -727,27 +731,47 @@ be_local_closure(class_Animate_core_start,   /* name */
     &be_ktab_class_Animate_core,     /* shared constants */
     be_str_weak(start),
     &be_const_str_solidified,
-    ( &(const binstruction[20]) {  /* code */
-      0x50040200,  //  0000  LDBOOL	R1	1	0
-      0x90021601,  //  0001  SETMBR	R0	K11	R1
-      0x8804010C,  //  0002  GETMBR	R1	R0	K12
-      0x58080007,  //  0003  LDCONST	R2	K7
-      0x600C000C,  //  0004  GETGBL	R3	G12
-      0x5C100200,  //  0005  MOVE	R4	R1
-      0x7C0C0200,  //  0006  CALL	R3	1
-      0x140C0403,  //  0007  LT	R3	R2	R3
-      0x780E0004,  //  0008  JMPF	R3	#000E
-      0x940C0202,  //  0009  GETIDX	R3	R1	R2
-      0x8C0C072E,  //  000A  GETMET	R3	R3	K46
-      0x7C0C0200,  //  000B  CALL	R3	1
-      0x0008050D,  //  000C  ADD	R2	R2	K13
-      0x7001FFF5,  //  000D  JMP		#0004
-      0x90022707,  //  000E  SETMBR	R0	K19	K7
-      0xB80E0800,  //  000F  GETNGBL	R3	K4
-      0x8C0C072F,  //  0010  GETMET	R3	R3	K47
-      0x8814010F,  //  0011  GETMBR	R5	R0	K15
-      0x7C0C0400,  //  0012  CALL	R3	2
-      0x80000000,  //  0013  RET	0
+    ( &(const binstruction[40]) {  /* code */
+      0x88040101,  //  0000  GETMBR	R1	R0	K1
+      0x8C04032E,  //  0001  GETMET	R1	R1	K46
+      0x7C040200,  //  0002  CALL	R1	1
+      0xA40A5E00,  //  0003  IMPORT	R2	K47
+      0x4C0C0000,  //  0004  LDNIL	R3
+      0x200C0203,  //  0005  NE	R3	R1	R3
+      0x780E0008,  //  0006  JMPF	R3	#0010
+      0x600C0004,  //  0007  GETGBL	R3	G4
+      0x5C100200,  //  0008  MOVE	R4	R1
+      0x7C0C0200,  //  0009  CALL	R3	1
+      0x1C0C0730,  //  000A  EQ	R3	R3	K48
+      0x780E0003,  //  000B  JMPF	R3	#0010
+      0x200C0200,  //  000C  NE	R3	R1	R0
+      0x780E0001,  //  000D  JMPF	R3	#0010
+      0x8C0C0300,  //  000E  GETMET	R3	R1	K0
+      0x7C0C0200,  //  000F  CALL	R3	1
+      0x880C0101,  //  0010  GETMBR	R3	R0	K1
+      0x8C0C0731,  //  0011  GETMET	R3	R3	K49
+      0x5C140000,  //  0012  MOVE	R5	R0
+      0x7C0C0400,  //  0013  CALL	R3	2
+      0x500C0200,  //  0014  LDBOOL	R3	1	0
+      0x90021603,  //  0015  SETMBR	R0	K11	R3
+      0x880C010C,  //  0016  GETMBR	R3	R0	K12
+      0x58100007,  //  0017  LDCONST	R4	K7
+      0x6014000C,  //  0018  GETGBL	R5	G12
+      0x5C180600,  //  0019  MOVE	R6	R3
+      0x7C140200,  //  001A  CALL	R5	1
+      0x14140805,  //  001B  LT	R5	R4	R5
+      0x78160004,  //  001C  JMPF	R5	#0022
+      0x94140604,  //  001D  GETIDX	R5	R3	R4
+      0x8C140B32,  //  001E  GETMET	R5	R5	K50
+      0x7C140200,  //  001F  CALL	R5	1
+      0x0010090D,  //  0020  ADD	R4	R4	K13
+      0x7001FFF5,  //  0021  JMP		#0018
+      0x90022707,  //  0022  SETMBR	R0	K19	K7
+      0xB8160800,  //  0023  GETNGBL	R5	K4
+      0x8C140B33,  //  0024  GETMET	R5	R5	K51
+      0x881C010F,  //  0025  GETMBR	R7	R0	K15
+      0x7C140400,  //  0026  CALL	R5	2
+      0x80000000,  //  0027  RET	0
     })
   )
 );

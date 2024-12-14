@@ -78,15 +78,6 @@ extern "C" {
     be_pop(vm, 1);
     return strip;
   }
-  int32_t be_get_leds_type(bvm *vm) {
-    be_getmember(vm, 1, "_t");
-    int32_t type = be_toint(vm, -1);
-    be_pop(vm, 1);
-    if (type < 0) {
-      be_raise(vm, "internal_error", "invalid leds type");
-    }
-    return type;
-  }
 
   int be_tasmotaled_call_native(bvm *vm);
   int be_tasmotaled_call_native(bvm *vm) {
@@ -126,19 +117,12 @@ extern "C" {
           strip->SetPusher(pusher);
         }
 
-        // AddLog(LOG_LEVEL_DEBUG, "LED: leds %i gpio %i type %i", leds, gpio, led_type);
-        // store type in attribute `_t`
-        be_pushint(vm, led_type);
-        be_setmember(vm, 1, "_t");
-        be_pop(vm, 1);
-
         be_pushcomptr(vm, (void*) strip);   // if native driver, it is NULL
         be_setmember(vm, 1, "_p");
         be_pop(vm, 1);
         be_pushnil(vm);
       } else {
         // all other commands need a valid tasmotaled pointer
-        int32_t leds_type = be_get_leds_type(vm);
         TasmotaLED * strip = (TasmotaLED*) be_get_tasmotaled(vm);    // raises an exception if pointer is invalid
         // detect native driver means strip == nullptr
         be_pushnil(vm);     // push a default `nil` return value
