@@ -1180,8 +1180,6 @@ void LightSetScheme(uint32_t scheme) {
 
 void LightInit(void)
 {
-  uint32_t devices_present = TasmotaGlobal.devices_present;
-
   // move white blend mode from deprecated `RGBWWTable` to `SetOption105`
   if (0 == Settings->rgbwwTable[4]) {
     Settings->flag4.white_blend_mode = true;

@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - ESP32 rules operation priority regression from v13.3.0.4 (#22636)
 - GUI display power button regression from v14.3.0.5 (#15788)
+- MCP23xxx, PCF8574 and Shift595 power control when a display is configured regression from v14.3.0.7
 
 ### Removed
 
