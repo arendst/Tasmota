@@ -628,7 +628,7 @@ void MCP23xModuleInit(void) {
 #endif
     while ((Mcp23x.max_devices < MCP23XXX_MAX_DEVICES) && PinUsed(GPIO_MCP23SXX_CS, Mcp23x.max_devices)) {
       Mcp23x.chip = Mcp23x.max_devices;
-      uint32_t pin_int = (Mcp23x.iocon.ODR) ? 0 : Mcp23x.chip;  // INT pins are open-drain outputs and supposedly connected together to one GPIO
+      uint32_t pin_int = (Mcp23x.iocon.ODR) ? 0 : Mcp23x.chip;  // INT ODR pins are open-drain outputs and supposedly connected together to one GPIO
       Mcp23x.device[Mcp23x.chip].pin_int = (PinUsed(GPIO_MCP23XXX_INT, pin_int)) ? Pin(GPIO_MCP23XXX_INT, pin_int) : -1;
       Mcp23x.device[Mcp23x.chip].pin_cs = Pin(GPIO_MCP23SXX_CS, Mcp23x.max_devices);
       digitalWrite(Mcp23x.device[Mcp23x.chip].pin_cs, 1);
@@ -719,6 +719,8 @@ void MCP23xModuleInit(void) {
     return;
   }
 
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("MCP: INT open-drain %d"), Mcp23x.iocon.ODR);
+
   Mcp23x.relay_offset = TasmotaGlobal.devices_present;
   Mcp23x.relay_max -= UpdateDevicesPresent(Mcp23x.relay_max);
 
@@ -774,7 +776,8 @@ void MCP23xInit(void) {
           gpio = MCP23xRead16(MCP23X17_GPIOA);         // Clear MCP23x17 interrupt
         }
         if (Mcp23x.iocon.ODR && Mcp23x.chip) { continue; }
-        pinMode(Mcp23x.device[Mcp23x.chip].pin_int, (Mcp23x.iocon.ODR) ? INPUT_PULLUP : INPUT);
+//        pinMode(Mcp23x.device[Mcp23x.chip].pin_int, (Mcp23x.iocon.ODR) ? INPUT_PULLUP : INPUT);
+        pinMode(Mcp23x.device[Mcp23x.chip].pin_int, INPUT_PULLUP);
         attachInterrupt(Mcp23x.device[Mcp23x.chip].pin_int, MCP23xInputIsr, (Mcp23x.iocon.ODR) ? FALLING : CHANGE);
       }
     }

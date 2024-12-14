@@ -121,6 +121,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Breaking Changed
 
 ### Changed
+- Berry make Leds animate calls reentrant [#22643](https://github.com/arendst/Tasmota/issues/22643)
+- SSL clean up remnants of old fingerprint algorithm (#22645)[#22645](https://github.com/arendst/Tasmota/issues/22645)
 
 ### Fixed
 - GUI display power button regression from v14.3.0.5 [#15788](https://github.com/arendst/Tasmota/issues/15788)

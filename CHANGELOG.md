@@ -10,7 +10,8 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
-- Berry make Leds animate calls reentrant
+- Berry make Leds animate calls reentrant (#22643)
+- SSL clean up remnants of old fingerprint algorithm (#22645)
 
 ### Fixed
 - ESP32 rules operation priority regression from v13.3.0.4 (#22636)
