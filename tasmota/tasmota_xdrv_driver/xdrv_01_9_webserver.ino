@@ -1891,18 +1891,15 @@ bool HandleRootStatusRefresh(void) {
     }
     if ((Web.buttons_non_light_non_shutter > 0) &&
        ( Web.buttons_non_light_non_shutter <= 8)) {  // We need at least one non light AND non shutter button
-
+      WSContentSend_P(PSTR("{t}<tr>"));
 #ifdef USE_SONOFF_IFAN
       if (IsModuleIfan()) {
-        WSContentSend_P(PSTR("{t}<tr>"));
         WSContentSend_P(HTTP_DEVICE_STATE, 36, (bitRead(TasmotaGlobal.power, 0)) ? PSTR("bold") : PSTR("normal"), 54, GetStateText(bitRead(TasmotaGlobal.power, 0)));
         uint32_t fanspeed = GetFanspeed();
         snprintf_P(svalue, sizeof(svalue), PSTR("%d"), fanspeed);
         WSContentSend_P(HTTP_DEVICE_STATE, 64, (fanspeed) ? PSTR("bold") : PSTR("normal"), 54, (fanspeed) ? svalue : GetStateText(0));
-        WSContentSend_P(PSTR("</tr></table>"));
       } else {
 #endif  // USE_SONOFF_IFAN
-        WSContentSend_P(PSTR("{t}<tr>"));
         uint32_t cols = Web.buttons_non_light_non_shutter;
         uint32_t fontsize = (cols < 5) ? 70 - (cols * 8) : 32;
         uint32_t button_ptr = 0;
@@ -1914,10 +1911,10 @@ bool HandleRootStatusRefresh(void) {
           button_ptr++;
           if (button_ptr >= Web.buttons_non_light_non_shutter) { break; }
         }
-        WSContentSend_P(PSTR("</tr></table>"));
 #ifdef USE_SONOFF_IFAN
       }
 #endif  // USE_SONOFF_IFAN
+      WSContentSend_P(PSTR("</tr></table>"));
     }
   }
 
