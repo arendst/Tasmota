@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - ESP32 disable PSRAM check (and on restart some relay toggles) with `#define DISABLE_PSRAMCHECK` (#21266)
+- TLS disable ECDSA for MQTT to ensure we don't break fingerprints after #22649
 
 ### Fixed
 
