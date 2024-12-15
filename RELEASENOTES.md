@@ -116,6 +116,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v14.4.1.1
 ### Added
+- Command ``SetOption163 1`` to disable display of Device name in GUI header
 
 ### Breaking Changed
 
