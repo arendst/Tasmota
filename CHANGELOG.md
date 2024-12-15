@@ -3,30 +3,39 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.4.0.1] 
+## [14.4.1.1] 
 ### Added
-- MCP23XXX_DRV control register IOCON in template (#22622)
-- ESP32 support for TLS ECDSA (#22649)
 
 ### Breaking Changed
 
 ### Changed
+
+### Fixed
+
+### Removed
+
+
+## [Released]
+
+## [14.4.1] 20241215
+- Release Rudolph
+
+## [14.4.0.1] 20241215
+### Added
+- MCP23XXX_DRV control register IOCON in template (#22622)
+- ESP32 support for TLS ECDSA (#22649)
+
+### Changed
 - Berry make Leds animate calls reentrant (#22643)
 - SSL clean up remnants of old fingerprint algorithm (#22645)
-- Display removed PWM control of backlight GPIO for universal display regression from v14.1.0
+- Display removed PWM control of backlight GPIO regression from v14.1.0
 
 ### Fixed
 - ESP32 rules operation priority regression from v13.3.0.4 (#22636)
 - GUI display power button regression from v14.3.0.5 (#15788)
 - MCP23xxx, PCF8574 and Shift595 power control when a display is configured regression from v14.3.0.7
 - Display DisplayMode adds a display device while not configured
-- GUI intermittent exception on screen updates due to flash access
-- GUI timing related divide by zero exception
-
-### Removed
-
-
-## [Released]
+- GUI timing related divide by zero exception on screen updates
 
 ## [14.4.0] 20241211
 - Release Rudolph
