@@ -1853,9 +1853,9 @@ void DisplayLocalSensor(void)
 
 void DisplayInitDriver(void) {
   uint32_t display_model = Settings->display_model;
-  Settings->display_model = 0;                    // Test if any display_model is available
+  Settings->display_model = 0;                     // Test if any display_model is available
   XdspCall(FUNC_DISPLAY_INIT_DRIVER);
-  if (Settings->display_model) {                  // If model found keep using user configured one for backward compatibility
+  if (Settings->display_model && display_model) {  // If any model found keep using user configured one for backward compatibility
     Settings->display_model = display_model;
   }
   if (!Settings->display_model) { return; }
