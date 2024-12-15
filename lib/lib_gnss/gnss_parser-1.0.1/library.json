@@ -1,0 +1,30 @@
+{
+    "name": "gnss_parser",
+    "version": "1.0.1",
+    "description": "Parser for NMEA and RTCM3 GNSS messages",
+    "keywords": "gps, gnss, nmea, rtcm3, parser",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/catalinsanda/gnss_parser.git"
+    },
+    "authors": [
+        {
+            "name": "Catalin Sanda",
+            "email": "catalin.sanda@gmail.com",
+            "maintainer": true
+        }
+    ],
+    "license": "GPL-3.0",
+    "frameworks": [
+        "arduino"
+    ],
+    "platforms": [
+        "*"
+    ],
+    "build": {
+        "flags": [
+            "-I src"
+        ]
+    },
+    "dependencies": {}
+}

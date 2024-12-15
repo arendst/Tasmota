@@ -1,0 +1,71 @@
+#######################################
+# Syntax Coloring Map for TinyGPSPlus
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+TinyGPSPlus	KEYWORD1
+TinyGPSLocation	KEYWORD1
+TinyGPSDate	KEYWORD1
+TinyGPSTime	KEYWORD1
+TinyGPSSpeed	KEYWORD1
+TinyGPSCourse	KEYWORD1
+TinyGPSAltitude	KEYWORD1
+TinyGPSInteger	KEYWORD1
+TinyGPSDecimal	KEYWORD1
+TinyGPSCustom	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+encode	KEYWORD2
+location	KEYWORD2
+date	KEYWORD2
+time	KEYWORD2
+speed	KEYWORD2
+course	KEYWORD2
+altitude	KEYWORD2
+satellites	KEYWORD2
+hdop	KEYWORD2
+libraryVersion	KEYWORD2
+distanceBetween	KEYWORD2
+courseTo	KEYWORD2
+cardinal	KEYWORD2
+charsProcessed	KEYWORD2
+sentencesWithFix	KEYWORD2
+failedChecksum	KEYWORD2
+passedChecksum	KEYWORD2
+isValid	KEYWORD2
+isUpdated	KEYWORD2
+age	KEYWORD2
+lat	KEYWORD2
+lng	KEYWORD2
+isUpdatedDate	KEYWORD2
+isUpdatedTime	KEYWORD2
+year	KEYWORD2
+month	KEYWORD2
+day	KEYWORD2
+hour	KEYWORD2
+minute	KEYWORD2
+second	KEYWORD2
+centisecond	KEYWORD2
+value	KEYWORD2
+knots	KEYWORD2
+mph	KEYWORD2
+mps	KEYWORD2
+kmph	KEYWORD2
+deg	KEYWORD2
+billionths	KEYWORD2
+negative	KEYWORD2
+meters	KEYWORD2
+miles	KEYWORD2
+kilometers	KEYWORD2
+feet	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
