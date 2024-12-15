@@ -121,6 +121,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Breaking Changed
 
 ### Changed
+- ESP32 disable PSRAM check (and on restart some relay toggles) with `#define DISABLE_PSRAMCHECK` [#21266](https://github.com/arendst/Tasmota/issues/21266)
 
 ### Fixed
 
