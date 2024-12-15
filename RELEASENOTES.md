@@ -116,6 +116,22 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v14.4.1 Rudolph
 ### Added
+- MCP23XXX_DRV control register IOCON in template [#22622](https://github.com/arendst/Tasmota/issues/22622)
+- ESP32 support for TLS ECDSA [#22649](https://github.com/arendst/Tasmota/issues/22649)
+
+### Changed
+- Display removed PWM control of backlight GPIO regression from v14.1.0
+- SSL clean up remnants of old fingerprint algorithm [#22645](https://github.com/arendst/Tasmota/issues/22645)
+- Berry make Leds animate calls reentrant [#22643](https://github.com/arendst/Tasmota/issues/22643)
+
+### Fixed
+- Display DisplayMode adds a display device while not configured
+- GUI display power button regression from v14.3.0.5 [#15788](https://github.com/arendst/Tasmota/issues/15788)
+- MCP23xxx, PCF8574 and Shift595 power control when a display is configured regression from v14.3.0.7
+- ESP32 rules operation priority regression from v13.3.0.4 [#22636](https://github.com/arendst/Tasmota/issues/22636)
+
+## Changelog v14.4.0 Rudolph
+### Added
 - Command `WebColor20` to control color of Button when Off
 - Command `SetOption161 1` to disable display of state text [#22515](https://github.com/arendst/Tasmota/issues/22515)
 - Command `SetOption162 1` to disable adding export energy to energy today [#22578](https://github.com/arendst/Tasmota/issues/22578)
@@ -139,7 +155,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Mitsubishi Electric HVAC Outdoor Temperature for MiElHVAC [#22345](https://github.com/arendst/Tasmota/issues/22345)
 - Mitsubishi Electric HVAC Compressor Frequency for MiElHVAC [#22347](https://github.com/arendst/Tasmota/issues/22347)
 - Mitsubishi Electric HVAC Auto Clear Remote Temp for MiElHVAC [#22370](https://github.com/arendst/Tasmota/issues/22370)
-- MCP23XXX_DRV control register IOCON in template [#22622](https://github.com/arendst/Tasmota/issues/22622)
 - SolaxX1 Meter mode [#22330](https://github.com/arendst/Tasmota/issues/22330)
 - Show Active Power Total with any multi-phase energy monitoring [#22579](https://github.com/arendst/Tasmota/issues/22579)
 - ESP32 support for WPA2/3 Enterprise conditional in core v3.1.0.241206 [#22600](https://github.com/arendst/Tasmota/issues/22600)
@@ -173,10 +188,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - DALI set Tasmota light control as default
 - Shutter optimized behavior to publish shutter data with sensor request [#22353](https://github.com/arendst/Tasmota/issues/22353)
 - Prevent active BLE operations with unencrypted MI-format beacons [#22453](https://github.com/arendst/Tasmota/issues/22453)
-- SSL clean up remnants of old fingerprint algorithm [#22645](https://github.com/arendst/Tasmota/issues/22645)
 - ESP32 max number of supported switches/buttons/relays from 28 to 32
 - ESP32 max number of interlocks from 14 to 16
-- Berry make Leds animate calls reentrant [#22643](https://github.com/arendst/Tasmota/issues/22643)
 - HASPmota support for page delete and object updates [#22311](https://github.com/arendst/Tasmota/issues/22311)
 
 ### Fixed
@@ -191,10 +204,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Mitsubishi Electric HVAC Standby Stage for MiElHVAC [#22430](https://github.com/arendst/Tasmota/issues/22430)
 - EQ3 TRV firmware version 1.46 fails if the default true is used in subscribe on the notify characteristic [#22328](https://github.com/arendst/Tasmota/issues/22328)
 - Ethernet on -DFRAMEWORK_ARDUINO_ITEAD framework regression from v14.3.0 [#22367](https://github.com/arendst/Tasmota/issues/22367)
-- MCP23xxx, PCF8574 and Shift595 power control when a display is configured regression from v14.3.0.7
-- GUI display power button regression from v14.3.0.5 [#15788](https://github.com/arendst/Tasmota/issues/15788)
-- ESP8266 Device Group exception due to lack of stack space [#22271](https://github.com/arendst/Tasmota/issues/22271)
-- ESP32 rules operation priority regression from v13.3.0.4 [#22636](https://github.com/arendst/Tasmota/issues/22636)
+- ESP8266 Device Group exception due to lack of stack space (#22271)[#22271](https://github.com/arendst/Tasmota/issues/22271)
 - ESP32 Upgrade by file upload response based on file size [#22500](https://github.com/arendst/Tasmota/issues/22500)
 - ESP32 Arduino Core IPv6 zones used by Matter [#22378](https://github.com/arendst/Tasmota/issues/22378)
 - ESP32, ESP32-S2 and ESP32-S3 re-enable touch buttons [#22446](https://github.com/arendst/Tasmota/issues/22446)
