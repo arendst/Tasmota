@@ -1852,11 +1852,12 @@ void DisplayLocalSensor(void)
 \*********************************************************************************************/
 
 void DisplayInitDriver(void) {
-  Settings->display_model = 0;
+  uint32_t display_model = Settings->display_model;
+  Settings->display_model = 0;                    // Test if any display_model is available
   XdspCall(FUNC_DISPLAY_INIT_DRIVER);
-
-//  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings->display_model);
-
+  if (Settings->display_model) {                  // If model found keep using user configured one for backward compatibility
+    Settings->display_model = display_model;
+  }
   if (!Settings->display_model) { return; }
 
 //  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DSP: Model %d"), Settings->display_model);
@@ -1891,15 +1892,6 @@ void DisplayInitDriver(void) {
 #endif
 
   UpdateDevicesPresent(1);
-  if (!PinUsed(GPIO_BACKLIGHT)) {
-    if ((LT_PWM1 == TasmotaGlobal.light_type) &&  // Single PWM light channel
-        (4 == Settings->display_model)            // ILI9341 legacy
-//          ((4 == Settings->display_model) ||        // ILI9341 legacy
-//           (17 == Settings->display_model))         // Universal - Too invasive in case displays have no backlight pin
-        ) {
-      UpdateDevicesPresent(-1);                   // Assume PWM channel is used for backlight
-    }
-  }
   disp_device = TasmotaGlobal.devices_present;
 
 #ifndef USE_DISPLAY_MODES1TO5

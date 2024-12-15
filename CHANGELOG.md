@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - MCP23xxx, PCF8574 and Shift595 power control when a display is configured regression from v14.3.0.7
 - Display DisplayMode adds a display device while not configured
 - GUI intermittent exception on screen updates due to flash access
+- GUI timing related divide by zero exception
 
 ### Removed
 

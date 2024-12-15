@@ -1885,21 +1885,23 @@ bool HandleRootStatusRefresh(void) {
   XsnsXdrvCall(FUNC_WEB_SENSOR);
   WSContentSend_P(PSTR("</table>"));
 
-  if (!Settings->flag6.gui_no_state_text &&  // SetOption161 - (GUI) Disable display of state text (1)
-      TasmotaGlobal.devices_present) {
+  if (!Settings->flag6.gui_no_state_text) {          // SetOption161 - (GUI) Disable display of state text (1)
+    if (!Web.buttons_non_light_non_shutter) {        // Might still be zero on restart so chk if we have at least one 
+      WebGetDeviceCounts();
+    }
+    if ((Web.buttons_non_light_non_shutter > 0) &&
+       ( Web.buttons_non_light_non_shutter <= 8)) {  // We need at least one non light AND non shutter button
 
 #ifdef USE_SONOFF_IFAN
-    if (IsModuleIfan()) {
-      WSContentSend_P(PSTR("{t}<tr>"));
-      WSContentSend_P(HTTP_DEVICE_STATE, 36, (bitRead(TasmotaGlobal.power, 0)) ? PSTR("bold") : PSTR("normal"), 54, GetStateText(bitRead(TasmotaGlobal.power, 0)));
-      uint32_t fanspeed = GetFanspeed();
-      snprintf_P(svalue, sizeof(svalue), PSTR("%d"), fanspeed);
-      WSContentSend_P(HTTP_DEVICE_STATE, 64, (fanspeed) ? PSTR("bold") : PSTR("normal"), 54, (fanspeed) ? svalue : GetStateText(0));
-      WSContentSend_P(PSTR("</tr></table>"));
-    } else {
+      if (IsModuleIfan()) {
+        WSContentSend_P(PSTR("{t}<tr>"));
+        WSContentSend_P(HTTP_DEVICE_STATE, 36, (bitRead(TasmotaGlobal.power, 0)) ? PSTR("bold") : PSTR("normal"), 54, GetStateText(bitRead(TasmotaGlobal.power, 0)));
+        uint32_t fanspeed = GetFanspeed();
+        snprintf_P(svalue, sizeof(svalue), PSTR("%d"), fanspeed);
+        WSContentSend_P(HTTP_DEVICE_STATE, 64, (fanspeed) ? PSTR("bold") : PSTR("normal"), 54, (fanspeed) ? svalue : GetStateText(0));
+        WSContentSend_P(PSTR("</tr></table>"));
+      } else {
 #endif  // USE_SONOFF_IFAN
-
-      if (Web.buttons_non_light_non_shutter <= 8) {   // Any non light AND non shutter button
         WSContentSend_P(PSTR("{t}<tr>"));
         uint32_t cols = Web.buttons_non_light_non_shutter;
         uint32_t fontsize = (cols < 5) ? 70 - (cols * 8) : 32;
@@ -1908,17 +1910,15 @@ bool HandleRootStatusRefresh(void) {
           if (bitRead(Web.light_shutter_button_mask, button_idx -1)) { continue; }  // Skip non-sequential shutter button
           bool power_state = bitRead(TasmotaGlobal.power, button_idx -1);
           snprintf_P(svalue, sizeof(svalue), PSTR("%d"), power_state);
-          WSContentSend_P(HTTP_DEVICE_STATE, 100 / cols, (power_state) ? "bold" : "normal", fontsize, (cols < 5) ? GetStateText(power_state) : svalue);
+          WSContentSend_P(HTTP_DEVICE_STATE, 100 / cols, (power_state) ? PSTR("bold") : PSTR("normal"), fontsize, (cols < 5) ? GetStateText(power_state) : svalue);
           button_ptr++;
-          if (button_ptr == Web.buttons_non_light_non_shutter) { break; }
+          if (button_ptr >= Web.buttons_non_light_non_shutter) { break; }
         }
         WSContentSend_P(PSTR("</tr></table>"));
-      }
-
 #ifdef USE_SONOFF_IFAN
-    }
+      }
 #endif  // USE_SONOFF_IFAN
-
+    }
   }
 
   if (1 == Web.slider_update_time) {
