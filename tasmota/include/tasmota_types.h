@@ -197,7 +197,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t ld2410_use_pin : 1;           // bit 14 (v14.3.0.2) - SetOption160 - (LD2410) Disable generate moving event by sensor report - use LD2410 out pin for events (1)
     uint32_t gui_no_state_text : 1;        // bit 15 (v14.3.0.7) - SetOption161 - (GUI) Disable display of state text (1)
     uint32_t no_export_energy_today : 1;   // bit 16 (v14.3.0.7) - SetOption162 - (Energy) Do not add export energy to energy today (1)
-    uint32_t spare17 : 1;                  // bit 17
+    uint32_t gui_device_name : 1;          // bit 17 (v14.4.1.1) - SetOption163 - (GUI) Disable display of GUI device name (1)
     uint32_t spare18 : 1;                  // bit 18
     uint32_t spare19 : 1;                  // bit 19
     uint32_t spare20 : 1;                  // bit 20
