@@ -815,10 +815,9 @@ extern "C" {
       // The tag string doesn't really matter, but it should differ depending on
       // key type. For ECDSA it's a fixed string.
       sha1_update_len(&shactx, "ecdsa", 5); // tag
-      int32_t curve = eckey.curve;
-      sha1_update_len(&shactx, &curve, 4);   // curve id as int32
-      sha1_update_len(&shactx, "curve", 5); // tag2
-      sha1_update_len(&shactx, eckey.q, eckey.qlen);       // exponent
+      int32_t curve = htonl(eckey.curve);
+      sha1_update_len(&shactx, &curve, 4);   // curve id as int32be
+      sha1_update_len(&shactx, eckey.q, eckey.qlen);       // public point
     }
   #endif
     else {
