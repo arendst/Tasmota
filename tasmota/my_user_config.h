@@ -172,6 +172,7 @@
 #define MQTT_BUTTON_SWITCH_FORCE_LOCAL   false   // [SetOption61] Force local operation when button/switch topic is set (false = off, true = on)
 #define MQTT_INDEX_SEPARATOR   false             // [SetOption64] Enable "_" instead of "-" as sensor index separator
 #define MQTT_TUYA_RECEIVED     false             // [SetOption66] Enable TuyaMcuReceived messages over Mqtt
+#define MQTT_ONLY_JSON_OUTPUT  false             // [SetOption90] Disable non-json messages
 #define MQTT_TLS_ENABLED       false             // [SetOption103] Enable TLS mode (requires TLS version)
 #define MQTT_TLS_FINGERPRINT   false             // [SetOption132] Force TLS fingerprint validation instead of CA (requires TLS version)
 
@@ -185,7 +186,10 @@
   #define CORS_DOMAIN            ""                // [Cors] CORS Domain for preflight requests
 
 // -- HTTP Options --------------------------------
+#define GUI_NOSHOW_MODULE      false             // [SetOption141] Do not show module name in GUI main menu
+#define GUI_NOSHOW_DEVICENAME  false             // [SetOption163] Do not show device name in GUI main menu
 #define GUI_SHOW_HOSTNAME      false             // [SetOption53] Show hostname and IP address in GUI main menu
+#define GUI_NOSHOW_STATETEXT   false             // [SetOption161] Do not show power state text in GUI
 
 // -- HTTP GUI Colors -----------------------------
 // HTML hex color codes. Only 3 and 6 digit hex string values are supported!! See https://www.w3schools.com/colors/colors_hex.asp
