@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [14.4.1.1] 
 ### Added
 - Command ``SetOption163 1`` to disable display of Device name in GUI header
+- Berry `animate.crenel` primitive
 
 ### Breaking Changed
 
