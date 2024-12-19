@@ -553,7 +553,7 @@ static const bvalue be_ktab_class_zcl_attribute_list[27] = {
   /* K19  */  be_nested_str_weak(tostring),
   /* K20  */  be_const_int(1),
   /* K21  */  be_nested_str_weak(_X22Endpoint_X22_X3A_X25s),
-  /* K22  */  be_nested_str_weak(_X22LinkQuality_X22_X3A_X25i),
+  /* K22  */  be_nested_str_weak(_X22LinkQuality_X22_X3A_X25s),
   /* K23  */  be_nested_str_weak(_X7B),
   /* K24  */  be_nested_str_weak(concat),
   /* K25  */  be_nested_str_weak(_X2C),

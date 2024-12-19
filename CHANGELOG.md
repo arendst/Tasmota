@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Berry Zigbee fix wrong attributes (#22684)
+- Berry fix walrus operator
 
 ### Removed
 
