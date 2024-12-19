@@ -205,11 +205,13 @@ class zcl_attribute_list : zcl_attribute_list_ntv
     var v
 
     # shortaddr
-    if (v := self.shortaddr) != nil
+    v = self.shortaddr
+    if v != nil
       items.push(f'"Device":"0x{v:04X}"')
     end
     # groupaddr
-    if (v := self.groupaddr) != nil
+    v = self.groupaddr
+    if v != nil
       items.push(f'"Group":"0x{v:04X}"')
     end
 
@@ -223,13 +225,15 @@ class zcl_attribute_list : zcl_attribute_list_ntv
     end
 
     # Endpoint
-    if (v := self.src_ep) != nil
+    v = self.src_ep
+    if v != nil
       items.push(f'"Endpoint":{v}')
     end
 
     # LQI
-    if (v := self.lqi) != nil
-      items.push(f'"LinkQuality":{v}')
+    v := self.lqi
+    if v != nil
+      items.push(f'"LinkQuality":{v:i}')
     end
 
     var s = "{" + items.concat(",") + "}"
