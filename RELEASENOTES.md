@@ -117,6 +117,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ## Changelog v14.4.1.1
 ### Added
 - Command ``SetOption163 1`` to disable display of Device name in GUI header
+- Berry `animate.crenel` primitive [#22673](https://github.com/arendst/Tasmota/issues/22673)
 
 ### Breaking Changed
 
@@ -124,5 +125,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 disable PSRAM check (and on restart some relay toggles) with `#define DISABLE_PSRAMCHECK` [#21266](https://github.com/arendst/Tasmota/issues/21266)
 
 ### Fixed
+- Berry Zigbee fix wrong attributes [#22684](https://github.com/arendst/Tasmota/issues/22684)
 
 ### Removed

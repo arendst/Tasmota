@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [14.4.1.1] 
 ### Added
 - Command ``SetOption163 1`` to disable display of Device name in GUI header
-- Berry `animate.crenel` primitive
+- Berry `animate.crenel` primitive (#22673)
 
 ### Breaking Changed
 
@@ -15,7 +15,7 @@ All notable changes to this project will be documented in this file.
 - TLS disable ECDSA for MQTT to ensure we don't break fingerprints after #22649
 
 ### Fixed
-- Berry Zigbee fix wrong attributes
+- Berry Zigbee fix wrong attributes (#22684)
 
 ### Removed
 
