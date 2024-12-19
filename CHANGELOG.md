@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - TLS disable ECDSA for MQTT to ensure we don't break fingerprints after #22649
 
 ### Fixed
+- Berry Zigbee fix wrong attributes
 
 ### Removed
 
