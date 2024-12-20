@@ -11,12 +11,13 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
-- ESP32 disable PSRAM check (and on restart some relay toggles) with `#define DISABLE_PSRAMCHECK` (#21266)
+- ESP32 disable PSRAM check (and on restart some relay toggles) with `#define DISABLE_PSRAMCHECK true` (#21266)
 - TLS disable ECDSA for MQTT to ensure we don't break fingerprints after #22649
 
 ### Fixed
 - Berry Zigbee fix wrong attributes (#22684)
-- Berry fix walrus operator
+- Berry walrus operator (#22685)
+- Webcam compilation with `define USE_WEBCAM` but without `define ENABLE_RTSPSERVER` (#22686)
 
 ### Removed
 

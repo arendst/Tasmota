@@ -122,9 +122,11 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Breaking Changed
 
 ### Changed
-- ESP32 disable PSRAM check (and on restart some relay toggles) with `#define DISABLE_PSRAMCHECK` [#21266](https://github.com/arendst/Tasmota/issues/21266)
+- ESP32 disable PSRAM check (and on restart some relay toggles) with `#define DISABLE_PSRAMCHECK true` [#21266](https://github.com/arendst/Tasmota/issues/21266)
 
 ### Fixed
+- Webcam compilation with `define USE_WEBCAM` but without `define ENABLE_RTSPSERVER` [#22686](https://github.com/arendst/Tasmota/issues/22686)
 - Berry Zigbee fix wrong attributes [#22684](https://github.com/arendst/Tasmota/issues/22684)
+- Berry walrus operator [#22685](https://github.com/arendst/Tasmota/issues/22685)
 
 ### Removed
