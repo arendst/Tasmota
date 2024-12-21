@@ -122,6 +122,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Breaking Changed
 
 ### Changed
+- GPIOViewer from v1.5.6 to v1.5.8
 - ESP32 disable PSRAM check (and on restart some relay toggles) with `#define DISABLE_PSRAMCHECK true` [#21266](https://github.com/arendst/Tasmota/issues/21266)
 
 ### Fixed

@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - ESP32 disable PSRAM check (and on restart some relay toggles) with `#define DISABLE_PSRAMCHECK true` (#21266)
 - TLS disable ECDSA for MQTT to ensure we don't break fingerprints after #22649
+- GPIOViewer from v1.5.6 to v1.5.8
 
 ### Fixed
 - Berry Zigbee fix wrong attributes (#22684)
