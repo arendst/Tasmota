@@ -208,8 +208,22 @@ class lvh_root
       try
         font = lv.font_embedded("robotocondensed", t)
       except ..
+        import path
+        # try TTF file "roboto.ttf" or "RobotoCondensed-Regular.ttf"
         try
-          font = lv.font_embedded("montserrat", t)
+          var ttf_name = "roboto.ttf"
+          if !path.exists(ttf_name)
+            ttf_name = "RobotoCondensed-Regular.ttf"
+            if !path.exists(ttf_name)
+              ttf_name = nil
+            end
+          end
+          if ttf_name != nil
+            font = lv.load_freetype_font(ttf_name, t, 0)
+          else
+            print("HSP: 'roboto.ttf' file missing for size:", t)
+            return nil
+          end
         except ..
           print("HSP: Unsupported font:", t)
           return nil
