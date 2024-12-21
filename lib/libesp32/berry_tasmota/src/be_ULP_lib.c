@@ -23,8 +23,8 @@ BE_FUNC_CTYPE_DECLARE(be_ULP_get_mem, "i", "i");
 extern int32_t be_ULP_gpio_init(int32_t pin, int32_t mode);
 BE_FUNC_CTYPE_DECLARE(be_ULP_gpio_init, "i", "ii");
 
-extern void be_ULP_adc_config(struct bvm *vm, int32_t channel, int32_t attenuation, int32_t width);
-BE_FUNC_CTYPE_DECLARE(be_ULP_adc_config, "", "@iii");
+extern int32_t be_ULP_adc_config(struct bvm *vm, int32_t channel, int32_t attenuation, int32_t width);
+BE_FUNC_CTYPE_DECLARE(be_ULP_adc_config, "i", "@iii");
 
 extern void be_ULP_sleep(int32_t wake_up_s);
 BE_FUNC_CTYPE_DECLARE(be_ULP_sleep, "", "[i]");   // optional int arg
