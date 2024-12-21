@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - TLS disable ECDSA for MQTT to ensure we don't break fingerprints after #22649
 - GPIOViewer from v1.5.6 to v1.5.8
 - HASPmota use 'roboto.ttf' for automatic sizing of default font
+- HASPmota add 'tag' attribute for free-form JSON
 
 ### Fixed
 - Berry Zigbee fix wrong attributes (#22684)

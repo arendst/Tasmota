@@ -86,6 +86,8 @@ class lvh_root
   var _parent_lvh                           # parent HASPmota object if 'parentid' was set, or 'nil'
   var _meta                                 # free form metadata
 
+  var _tag                                  # free-form JSON tag
+
   #====================================================================
   # Rule engine to map value and text to rules
   # hence enabling auto-updates ob objects
@@ -311,6 +313,16 @@ class lvh_root
   #====================================================================
   def get_obj()
     return self._lv_obj
+  end
+
+  #====================================================================
+  # set_tag: create a free-form JSON tag
+  #====================================================================
+  def set_tag(t)
+    self._tag = t
+  end
+  def get_tag()
+    return self._tag
   end
 
   #====================================================================
@@ -667,9 +679,16 @@ class lvh_obj : lvh_root
           tas_event_more += f',"text":{json.dump(text)}'
         end
       end
+      # add tag if present
+      if (self._tag != nil)
+        tas_event_more += f',"tag":{json.dump(self._tag)}'
+      end
       var tas_event = format('{"hasp":{"p%ib%i":{"event":"%s"%s}}}', self._page._page_id, self.id, event_hasp, tas_event_more)
       # print("val=",val)
-      tasmota.set_timer(0, /-> tasmota.publish_rule(tas_event))
+      tasmota.set_timer(0,  def ()
+                              tasmota.publish_rule(tas_event)
+                              tasmota.log(f"HSP: publish {tas_event}", 4)
+                            end)
     end
   end
 
