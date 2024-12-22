@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Command ``SetOption163 1`` to disable display of Device name in GUI header
 - Berry `animate.crenel` primitive (#22673)
+- Berry scroll to Leds_matrix (#22693)
 
 ### Breaking Changed
 
@@ -14,14 +15,15 @@ All notable changes to this project will be documented in this file.
 - ESP32 disable PSRAM check (and on restart some relay toggles) with `#define DISABLE_PSRAMCHECK true` (#21266)
 - TLS disable ECDSA for MQTT to ensure we don't break fingerprints after #22649
 - GPIOViewer from v1.5.6 to v1.5.8
-- HASPmota use 'roboto.ttf' for automatic sizing of default font
-- HASPmota add 'tag' attribute for free-form JSON
+- HASPmota use 'roboto.ttf' for automatic sizing of default font (#22697)
+- HASPmota add 'tag' attribute for free-form JSON (#22698)
+- Postpone save_data during light animation when fade is Off
 
 ### Fixed
 - Berry Zigbee fix wrong attributes (#22684)
 - Berry walrus operator (#22685)
 - Webcam compilation with `define USE_WEBCAM` but without `define ENABLE_RTSPSERVER` (#22686)
-- LVGL updated `Antiburn.tapp`
+- LVGL updated `Antiburn.tapp` (#22699)
 
 ### Removed
 

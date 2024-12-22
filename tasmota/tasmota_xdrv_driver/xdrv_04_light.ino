@@ -1803,6 +1803,10 @@ void LightAnimate(void)
       sleep_previous = TasmotaGlobal.sleep;     // save previous value of sleep
       TasmotaGlobal.sleep = PWM_MAX_SLEEP;      // set a maximum value (in milliseconds) to sleep to ensure that animations are smooth
     }
+    if (Settings->save_data) {
+      // Postpone save_data during animation
+      TasmotaGlobal.save_data_counter = 2;
+    }
   } else {
     if (sleep_previous > 0) {
       TasmotaGlobal.sleep = sleep_previous;
