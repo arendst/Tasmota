@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - Berry Zigbee fix wrong attributes (#22684)
 - Berry walrus operator (#22685)
 - Webcam compilation with `define USE_WEBCAM` but without `define ENABLE_RTSPSERVER` (#22686)
+- LVGL updated `Antiburn.tapp`
 
 ### Removed
 
