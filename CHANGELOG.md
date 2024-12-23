@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Command ``SetOption163 1`` to disable display of Device name in GUI header
 - Berry `animate.crenel` primitive (#22673)
 - Berry scroll to Leds_matrix (#22693)
+- HASPmota support for `tabview`
 
 ### Breaking Changed
 
