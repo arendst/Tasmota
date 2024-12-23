@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Berry `animate.crenel` primitive (#22673)
 - Berry scroll to Leds_matrix (#22693)
 - HASPmota support for `tabview`
+- Berry bit-shift operators to `int64`
 
 ### Breaking Changed
 
