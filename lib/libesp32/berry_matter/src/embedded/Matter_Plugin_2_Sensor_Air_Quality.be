@@ -68,7 +68,7 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
   # Constructor
   def init(device, endpoint, config)
     super(self).init(device, endpoint, config)
-    self.shadow_air_quality = false
+    self.shadow_air_quality = 0
     device.add_read_sensors_schedule(self.UPDATE_TIME)
   end
 
@@ -92,7 +92,7 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
     if (val != nil)
       val = func(val)
       if (val != nil) && (val != old_val)
-        self.attribute_updated(cluster, attribute)   # CurrentPositionTiltPercent100ths
+        self.attribute_updated(cluster, attribute)
       end
       return val
     end
@@ -114,10 +114,49 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
       self.shadow_tvoc = self._parse_sensor_entry(v, "TVOC", self.shadow_tvoc, number, 0x042E, 0x0000)
       # NO2
       self.shadow_no2 = self._parse_sensor_entry(v, "NO2", self.shadow_no2, number, 0x0413, 0x0000)
+      # AirQuality
+      if v.contains("AirQuality")
+        self.shadow_air_quality = self._parse_sensor_entry(v, "AirQuality", self.shadow_air_quality, number, 0x005B, 0x0000)
+      else
+        # try to compute from available values
+        self.compute_air_quality()
+      end
     end
     super(self).parse_sensors(payload)            # parse other shutter values
   end
 
+  #############################################################
+  # compute_air_quality
+  #
+  # If self.shadow_air_quality is unknown, try to compute from other attributes
+  def compute_air_quality()
+    # try to compute from available values
+    var new_air_quality
+    if (self.shadow_co2 != nil)
+      var co2 = self.shadow_co2
+      if (co2 <= 750)
+        new_air_quality = 1
+      elif (co2 <= 1000)
+        new_air_quality = 2
+      elif (co2 <= 1250)
+        new_air_quality = 3
+      elif (co2 <= 1500)
+        new_air_quality = 4
+      elif (co2 <= 1750)
+        new_air_quality = 5
+      else
+        new_air_quality = 6
+      end
+    # any formula based on TVOC?
+    end
+
+    # do we have a new value for air_quality?
+    if (new_air_quality != nil) && (new_air_quality != self.shadow_air_quality)
+      self.shadow_air_quality = new_air_quality
+      self.attribute_updated(0x005B, 0x0000)
+    end
+  end
+  
   #############################################################
   # read an attribute
   #
@@ -201,12 +240,17 @@ class Matter_Plugin_Sensor_Air_Quality : Matter_Plugin_Device
   #
   # Update internal state for virtual devices
   def update_virtual(payload)
-    self.shadow_air_quality = self._parse_update_virtual(payload, "AirQuality", number, self.shadow_air_quality, 0x005B, 0x0000)
     self.shadow_co2 = self._parse_update_virtual(payload, "CO2", self.shadow_co2, number, 0x040D, 0x0000)
     self.shadow_pm1 = self._parse_update_virtual(payload, "PM1", self.shadow_pm1, number, 0x042C, 0x0000)
     self.shadow_pm2_5 = self._parse_update_virtual(payload, "PM2.5", self.shadow_pm2_5, number, 0x042A, 0x0000)
     self.shadow_pm10 = self._parse_update_virtual(payload, "PM10", self.shadow_pm10, number, 0x042D, 0x0000)
     self.shadow_tvoc = self._parse_update_virtual(payload, "TVOC", self.shadow_tvoc, number, 0x042E, 0x0000)
+    if payload.contains("AirQuality")
+      self.shadow_air_quality = self._parse_update_virtual(payload, "AirQuality", number, self.shadow_air_quality, 0x005B, 0x0000)
+    else
+      # try to compute from available values
+      self.compute_air_quality()
+    end
     super(self).update_virtual(payload)
   end
 
