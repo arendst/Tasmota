@@ -8,8 +8,8 @@ All notable changes to this project will be documented in this file.
 - Command ``SetOption163 1`` to disable display of Device name in GUI header
 - Berry `animate.crenel` primitive (#22673)
 - Berry scroll to Leds_matrix (#22693)
-- HASPmota support for `tabview`
-- Berry bit-shift operators to `int64`
+- HASPmota support for `tabview` (#22707)
+- Berry bit-shift operators to `int64` (#22709)
 
 ### Breaking Changed
 
@@ -26,7 +26,7 @@ All notable changes to this project will be documented in this file.
 - Berry walrus operator (#22685)
 - Webcam compilation with `define USE_WEBCAM` but without `define ENABLE_RTSPSERVER` (#22686)
 - LVGL updated `Antiburn.tapp` (#22699)
-- Matter Air Quality sensor
+- Matter Air Quality sensor (#22708)
 
 ### Removed
 
