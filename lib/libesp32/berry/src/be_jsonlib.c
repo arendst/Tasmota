@@ -7,6 +7,7 @@
 ********************************************************************/
 #include "be_object.h"
 #include "be_mem.h"
+#include "be_lexer.h"
 #include <string.h>
 #include <math.h>
 
@@ -116,38 +117,6 @@ static const char* parser_null(bvm *vm, const char *json)
     return NULL;
 }
 
-static char* load_unicode(char *dst, const char *json)
-{
-    int ucode = 0, i = 4;
-    while (i--) {
-        int ch = *json++;
-        if (ch >= '0' && ch <= '9') {
-            ucode = (ucode << 4) | (ch - '0');
-        } else if (ch >= 'A' && ch <= 'F') {
-            ucode = (ucode << 4) | (ch - 'A' + 0x0A);
-        } else if (ch >= 'a' && ch <= 'f') {
-            ucode = (ucode << 4) | (ch - 'a' + 0x0A);
-        } else {
-            return NULL;
-        }
-    }
-    /* convert unicode to utf8 */
-    if (ucode < 0x007F) {
-        /* unicode: 0000 - 007F -> utf8: 0xxxxxxx */
-        *dst++ = (char)(ucode & 0x7F);
-    } else if (ucode < 0x7FF) {
-        /* unicode: 0080 - 07FF -> utf8: 110xxxxx 10xxxxxx */
-        *dst++ = (char)(((ucode >> 6) & 0x1F) | 0xC0);
-        *dst++ = (char)((ucode & 0x3F) | 0x80);
-    } else {
-        /* unicode: 0800 - FFFF -> utf8: 1110xxxx 10xxxxxx 10xxxxxx */
-        *dst++ = (char)(((ucode >> 12) & 0x0F) | 0xE0);
-        *dst++ = (char)(((ucode >> 6) & 0x03F) | 0x80);
-        *dst++ = (char)((ucode & 0x3F) | 0x80);
-    }
-    return dst;
-}
-
 static const char* parser_string(bvm *vm, const char *json)
 {
     if (*json == '"') {
@@ -169,7 +138,7 @@ static const char* parser_string(bvm *vm, const char *json)
                     case 'r': *dst++ = '\r'; break;
                     case 't': *dst++ = '\t'; break;
                     case 'u': { /* load unicode */
-                        dst = load_unicode(dst, json);
+                        dst = be_load_unicode(dst, json);
                         if (dst == NULL) {
                             be_free(vm, buf, len);
                             return NULL;
