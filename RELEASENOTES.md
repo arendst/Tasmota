@@ -119,6 +119,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Command ``SetOption163 1`` to disable display of Device name in GUI header
 - Berry `animate.crenel` primitive [#22673](https://github.com/arendst/Tasmota/issues/22673)
 - Berry scroll to Leds_matrix [#22693](https://github.com/arendst/Tasmota/issues/22693)
+- Berry add unicode encoding to string parsing [#22713](https://github.com/arendst/Tasmota/issues/22713)
 
 ### Breaking Changed
 
