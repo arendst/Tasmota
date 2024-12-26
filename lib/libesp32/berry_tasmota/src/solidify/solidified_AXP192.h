@@ -11,7 +11,7 @@ static const bvalue be_ktab_class_AXP192[37] = {
   /* K3   */  be_const_int(2),
   /* K4   */  be_const_int(3),
   /* K5   */  be_nested_str(read24),
-  /* K6   */  be_const_real_hex(0x3A102DE1),
+  /* K6   */  be_const_real_hex(0x3A102DE0),
   /* K7   */  be_nested_str(read12),
   /* K8   */  be_const_real_hex(0x3A902DE0),
   /* K9   */  be_const_real_hex(0x3EC00000),

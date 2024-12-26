@@ -16,7 +16,7 @@ static const bvalue be_ktab_class_AXP202[24] = {
   /* K8   */  be_nested_str(read13),
   /* K9   */  be_const_real_hex(0x3F000000),
   /* K10  */  be_nested_str(read24),
-  /* K11  */  be_const_real_hex(0x3A102DE1),
+  /* K11  */  be_const_real_hex(0x3A102DE0),
   /* K12  */  be_nested_str(wire),
   /* K13  */  be_nested_str(read),
   /* K14  */  be_nested_str(addr),
