@@ -120,6 +120,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `animate.crenel` primitive [#22673](https://github.com/arendst/Tasmota/issues/22673)
 - Berry scroll to Leds_matrix [#22693](https://github.com/arendst/Tasmota/issues/22693)
 - Berry add unicode encoding to string parsing [#22713](https://github.com/arendst/Tasmota/issues/22713)
+- Berry `tasmota.int(v, min, max)` function [#22723](https://github.com/arendst/Tasmota/issues/22723)
+- Berry driver for M5Stack 8encoder [#22724](https://github.com/arendst/Tasmota/issues/22724)
 
 ### Breaking Changed
 

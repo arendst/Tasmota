@@ -11,8 +11,8 @@ All notable changes to this project will be documented in this file.
 - HASPmota support for `tabview` (#22707)
 - Berry bit-shift operators to `int64` (#22709)
 - Berry add unicode encoding to string parsing (#22713)
-- Berry `tasmota.int(v, min, max)` function
-- Berry driver for M5Stack 8encoder
+- Berry `tasmota.int(v, min, max)` function (#22723)
+- Berry driver for M5Stack 8encoder (#22724)
 
 ### Breaking Changed
 
