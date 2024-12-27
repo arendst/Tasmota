@@ -78,6 +78,12 @@ be_extern_native_module(matter);
 /* user-defined modules declare start */
 
 /* user-defined modules declare end */
+#ifndef CUSTOM_NATIVE_MODULES
+#define CUSTOM_NATIVE_MODULES
+#endif
+#ifndef CUSTOM_NATIVE_CLASSES
+#define CUSTOM_NATIVE_CLASSES
+#endif
 
 /* module list declaration */
 BERRY_LOCAL const bntvmodule_t* const be_module_table[] = {
