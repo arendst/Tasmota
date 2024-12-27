@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Berry bit-shift operators to `int64` (#22709)
 - Berry add unicode encoding to string parsing (#22713)
 - Berry `tasmota.int(v, min, max)` function
+- Berry driver for M5Stack 8encoder
 
 ### Breaking Changed
 
