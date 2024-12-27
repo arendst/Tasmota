@@ -1554,7 +1554,7 @@ be_local_closure(class_Leds_matrix,   /* name */
 ********************************************************************/
 be_local_closure(class_Leds_pixels_buffer,   /* name */
   be_nested_proto(
-    8,                          /* nstack */
+    7,                          /* nstack */
     2,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
@@ -1565,28 +1565,34 @@ be_local_closure(class_Leds_pixels_buffer,   /* name */
     &be_ktab_class_Leds,     /* shared constants */
     &be_const_str_pixels_buffer,
     &be_const_str_solidified,
-    ( &(const binstruction[21]) {  /* code */
+    ( &(const binstruction[27]) {  /* code */
       0x8C080109,  //  0000  GETMET	R2	R0	K9
       0x54120005,  //  0001  LDINT	R4	6
       0x7C080400,  //  0002  CALL	R2	2
-      0x4C0C0000,  //  0003  LDNIL	R3
-      0x1C0C0203,  //  0004  EQ	R3	R1	R3
-      0x780E0009,  //  0005  JMPF	R3	#0010
-      0x600C0015,  //  0006  GETGBL	R3	G21
-      0x5C100400,  //  0007  MOVE	R4	R2
-      0x8C14010A,  //  0008  GETMET	R5	R0	K10
-      0x7C140200,  //  0009  CALL	R5	1
-      0x8C18010B,  //  000A  GETMET	R6	R0	K11
-      0x7C180200,  //  000B  CALL	R6	1
-      0x08140A06,  //  000C  MUL	R5	R5	R6
-      0x7C0C0400,  //  000D  CALL	R3	2
-      0x80040600,  //  000E  RET	1	R3
-      0x70020003,  //  000F  JMP		#0014
-      0x8C0C030C,  //  0010  GETMET	R3	R1	K12
+      0x8C0C010A,  //  0003  GETMET	R3	R0	K10
+      0x7C0C0200,  //  0004  CALL	R3	1
+      0x8C10010B,  //  0005  GETMET	R4	R0	K11
+      0x7C100200,  //  0006  CALL	R4	1
+      0x080C0604,  //  0007  MUL	R3	R3	R4
+      0x4C100000,  //  0008  LDNIL	R4
+      0x1C100204,  //  0009  EQ	R4	R1	R4
+      0x74120004,  //  000A  JMPT	R4	#0010
+      0x6010000C,  //  000B  GETGBL	R4	G12
+      0x5C140400,  //  000C  MOVE	R5	R2
+      0x7C100200,  //  000D  CALL	R4	1
+      0x20100803,  //  000E  NE	R4	R4	R3
+      0x78120005,  //  000F  JMPF	R4	#0016
+      0x60100015,  //  0010  GETGBL	R4	G21
       0x5C140400,  //  0011  MOVE	R5	R2
-      0x7C0C0400,  //  0012  CALL	R3	2
-      0x80040200,  //  0013  RET	1	R1
-      0x80000000,  //  0014  RET	0
+      0x5C180600,  //  0012  MOVE	R6	R3
+      0x7C100400,  //  0013  CALL	R4	2
+      0x80040800,  //  0014  RET	1	R4
+      0x70020003,  //  0015  JMP		#001A
+      0x8C10030C,  //  0016  GETMET	R4	R1	K12
+      0x5C180400,  //  0017  MOVE	R6	R2
+      0x7C100400,  //  0018  CALL	R4	2
+      0x80040200,  //  0019  RET	1	R1
+      0x80000000,  //  001A  RET	0
     })
   )
 );
