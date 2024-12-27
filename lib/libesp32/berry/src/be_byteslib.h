@@ -19,7 +19,7 @@
 #define BYTES_SIZE_SOLIDIFIED       -3              /* is size is -3, then the bytes object is solidified and cannot be resized nor modified */
 
 #define BYTES_RESIZE_ERROR          "attribute_error"
-#define BYTES_RESIZE_MESSAGE        "bytes object size if fixed and cannot be resized"
+#define BYTES_RESIZE_MESSAGE        "bytes object size is fixed and cannot be resized"
 #define BYTES_READ_ONLY_MESSAGE     "bytes object is read only"
 /* be_raise(vm, BYTES_RESIZE_ERROR, BYTES_RESIZE_MESSAGE); */
 
