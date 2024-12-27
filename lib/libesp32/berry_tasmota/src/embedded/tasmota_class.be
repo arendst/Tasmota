@@ -2,7 +2,6 @@
 #- Do not use it -#
 
 class Trigger end       # for compilation
-class Rule_Matche end   # for compilation
 
 tasmota = nil
 #@ solidify:Tasmota
@@ -716,6 +715,46 @@ class Tasmota
     end
     return ret
   end
+
+  # tasmota.int(v, min, max)
+  # ensures that v is int, and always between min and max
+  # if min>max returns min
+  # if v==nil returns min
+  static def int(v, min, max)
+    if (min == nil || max == nil) return int(v) end
+    min = int(min)
+    max = int(max)
+    if (min > max)    return min    end
+    if (v == nil)     return min    end
+    v = int(v)        # v is int (not nil)
+    if (v < min)      return min    end
+    if (v > max)      return max    end
+    return v
+  end
+
+  #-
+  # Unit tests
+
+  # behave like normal int
+  assert(tasmota.int(4) == 4)
+  assert(tasmota.int(nil) == nil)
+  assert(tasmota.int(-3) == -3)
+  assert(tasmota.int(4.5) == 4)
+  assert(tasmota.int(true) == 1)
+  assert(tasmota.int(false) == 0)
+
+  # normal behavior
+  assert(tasmota.int(4, 0, 10) == 4)
+  assert(tasmota.int(0, 0, 10) == 0)
+  assert(tasmota.int(10, 0, 10) == 10)
+  assert(tasmota.int(10, 0, 0) == 0)
+  assert(tasmota.int(10, 10, 10) == 10)
+  assert(tasmota.int(-4, 0, 10) == 0)
+  assert(tasmota.int(nil, 0, 10) == 0)
+
+  # abnormal
+  assert(tasmota.int(4, 10, -10) == 10)
+  -#
 
   # set_light and get_light deprecetaion
   def get_light(l)
