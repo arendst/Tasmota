@@ -124,8 +124,9 @@ class Leds : Leds_ntv
   end
   def pixels_buffer(old_buf)
     var buf = self.call_native(6)   # address of buffer in memory
-    if old_buf == nil
-      return bytes(buf, self.pixel_size() * self.pixel_count())
+    var sz = self.pixel_size() * self.pixel_count()
+    if (old_buf == nil || size(buf) != sz)
+      return bytes(buf, sz)
     else
       old_buf._change_buffer(buf)
       return old_buf
