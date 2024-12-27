@@ -721,14 +721,17 @@ class Tasmota
   # if min>max returns min
   # if v==nil returns min
   static def int(v, min, max)
-    if (min == nil || max == nil) return int(v) end
+    v = int(v)        # v is int (not nil)
+    if (min == nil && max == nil) return v end
     min = int(min)
     max = int(max)
-    if (min > max)    return min    end
-    if (v == nil)     return min    end
-    v = int(v)        # v is int (not nil)
-    if (v < min)      return min    end
-    if (v > max)      return max    end
+    if (min != nil && max != nil)
+      if (v == nil) return min end
+    end
+    if (v != nil)
+      if (min != nil && v < min)    return min  end
+      if (max != nil && v > max)    return max  end
+    end
     return v
   end
 
@@ -752,8 +755,18 @@ class Tasmota
   assert(tasmota.int(-4, 0, 10) == 0)
   assert(tasmota.int(nil, 0, 10) == 0)
 
-  # abnormal
-  assert(tasmota.int(4, 10, -10) == 10)
+  # missing min or max
+  assert(tasmota.int(4, nil, 10) == 4)
+  assert(tasmota.int(14, nil, 10) == 10)
+  assert(tasmota.int(nil, nil, 10) == nil)
+  assert(tasmota.int(4, 0, nil) == 4)
+  assert(tasmota.int(-4, 0, nil) == 0)
+  assert(tasmota.int(nil, 0, nil) == nil)
+
+  # max < min
+  assert(tasmota.int(4, 10, 0) == 10)
+  assert(tasmota.int(nil, 10, 0) == 10)
+
   -#
 
   # set_light and get_light deprecetaion
