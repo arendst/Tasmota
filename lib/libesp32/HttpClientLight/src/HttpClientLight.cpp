@@ -89,6 +89,7 @@ public:
     {
         BearSSL::WiFiClientSecure_light& wcs = static_cast<BearSSL::WiFiClientSecure_light&>(client);
         wcs.setPubKeyFingerprint(_fingerprint_any, _fingerprint_any, true); // allow all fingerprints
+        wcs.setRSAOnly(false);          // although we use fingerprint, we allow ECDSA
         return true;
     }
 

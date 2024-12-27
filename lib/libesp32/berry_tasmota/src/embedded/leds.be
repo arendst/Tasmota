@@ -28,6 +28,7 @@ class Leds : Leds_ntv
   var gamma       # if true, apply gamma (true is default)
   var leds        # number of leds
   var bri         # implicit brightness for this led strip (0..255, default is 50% = 127)
+  var animate     # attached animate object or nil - this allows to stop any existing animation for this strip if we add a new animate
   # leds:int = number of leds of the strip
   # gpio:int (optional) = GPIO for NeoPixel. If not specified, takes the WS2812 gpio
   # typ:int (optional) = Type of LED, defaults to WS2812 RGB
@@ -35,25 +36,43 @@ class Leds : Leds_ntv
   def init(leds, gpio_phy, typ, hardware)
     import gpio
     self.gamma = true     # gamma is enabled by default, it should be disabled explicitly if needed
-    if (gpio_phy == nil) || (gpio_phy == gpio.pin(gpio.WS2812, 0))
+    if (leds == nil ) || (gpio_phy == nil) || (gpio_phy == gpio.pin(gpio.WS2812, 0))
       # use native driver
       self.ctor()           # no parameters
+      # in such case, `self._p` is equal to `0`
       self.leds = self.pixel_count()
       import light
       self.bri = light.get()['bri']
     else
       # use pure Berry driver
-      self.leds = int(leds)
+      leds = int(leds)
+      self.leds = leds
       self.bri = 127        # 50% brightness by default
 
       # initialize the structure
-      self.ctor(self.leds, gpio_phy, typ, hardware)
+      # check if already in global `_lhw`
+      if !global.contains('_lhw')
+        global._lhw = {}
+      end
+      if global._lhw.find(leds) != nil
+        # an object already exists, attach it
+        var prov_led = global._lhw.find(leds)   # already provisioned leds instance
+        if self.leds != prov_led.leds
+          raise "value_error", f"number of leds do not match with previous instanciation {self.leds} vs {prov_led.leds}"
+        end
+        self._p = prov_led._p
+        self.animate = prov_led.animate
+        global._lhw[leds] = self          # put the most recent as current
+      else
+        self.ctor(leds, gpio_phy, typ, hardware)
+        global._lhw[leds] = self
+        # call begin
+        self.begin()
+      end
     end
 
     if self._p == nil raise "internal_error", "couldn't not initialize noepixelbus" end
 
-    # call begin
-    self.begin()
   end
 
   def clear()
@@ -69,6 +88,13 @@ class Leds : Leds_ntv
   end
   def get_bri()
     return self.bri
+  end
+
+  def set_animate(animate)
+    self.animate = animate
+  end
+  def get_animate()
+    return self.animate
   end
 
   def ctor(leds, gpio_phy, typ, hardware)
@@ -98,8 +124,9 @@ class Leds : Leds_ntv
   end
   def pixels_buffer(old_buf)
     var buf = self.call_native(6)   # address of buffer in memory
-    if old_buf == nil
-      return bytes(buf, self.pixel_size() * self.pixel_count())
+    var sz = self.pixel_size() * self.pixel_count()
+    if (old_buf == nil || size(buf) != sz)
+      return bytes(buf, sz)
     else
       old_buf._change_buffer(buf)
       return old_buf
@@ -330,6 +357,103 @@ class Leds : Leds_ntv
           self.strip.set_pixel_color(x * self.w + self.h - y - 1 + self.offset, col, bri)
         else
           self.strip.set_pixel_color(x * self.w + y + self.offset, col, bri)
+        end
+      end
+
+      def scroll(direction, outshift, inshift) # 0 - up, 1 - left, 2 - down, 3 - right ; outshift mandatory, inshift optional
+        var buf = self.pix_buffer
+        var h = self.h
+        var sz = self.w * 3 # row size in bytes
+        var pos
+        if direction%2 == 0 #up/down
+          if direction == 0 #up
+            outshift.setbytes(0,(buf[0..sz-1]).reverse(0,nil,3))
+            var line = 0
+            while line < (h-1)
+              pos = 0
+              var offset_dst = line * sz
+              var offset_src = ((line+2) * sz) - 3
+              while pos < sz
+                var dst = pos + offset_dst
+                var src = offset_src - pos
+                buf[dst] = buf[src]
+                buf[dst+1] = buf[src+1]
+                buf[dst+2] = buf[src+2]
+                pos += 3
+              end
+              line += 1
+            end
+            var lastline = inshift ? inshift : outshift
+            if h%2 == 1
+              lastline.reverse(0,nil,3)
+            end
+            buf.setbytes((h-1) * sz, lastline)
+          else # down
+            outshift.setbytes(0,(buf[size(buf)-sz..]).reverse(0,nil,3))
+            var line = h - 1
+            while line > 0
+              buf.setbytes(line * sz,(buf[(line-1) * sz..line * sz-1]).reverse(0,nil,3))
+              line -= 1
+            end
+            var lastline = inshift ? inshift : outshift
+            if h%2 == 1
+              lastline.reverse(0,nil,3)
+            end
+            buf.setbytes(0, lastline)
+          end
+        else # left/right
+          var line = 0
+          var step = 3
+          if direction == 3 # right
+            step *= -1
+          end
+          while line < h
+            pos = line * sz
+            if step > 0
+                var line_end = pos + sz - step
+                outshift[(line * 3)] = buf[pos]
+                outshift[(line * 3) + 1] = buf[pos+1]
+                outshift[(line * 3) + 2] = buf[pos+2]
+                while pos < line_end
+                  buf[pos] = buf[pos+3]
+                  buf[pos+1] = buf[pos+4]
+                  buf[pos+2] = buf[pos+5]
+                  pos += step
+                end
+                if inshift == nil
+                  buf[line_end] = outshift[(line * 3)]
+                  buf[line_end+1] = outshift[(line * 3) + 1]
+                  buf[line_end+2] = outshift[(line * 3) + 2]
+                else
+                  buf[line_end] = inshift[(line * 3)]
+                  buf[line_end+1] = inshift[(line * 3) + 1]
+                  buf[line_end+2] = inshift[(line * 3) + 2]
+                end
+              else
+                var line_end = pos
+                pos = pos + sz + step
+                outshift[(line * 3)] = buf[pos]
+                outshift[(line * 3) + 1] = buf[pos+1]
+                outshift[(line * 3) + 2] = buf[pos+2]
+                while pos > line_end
+                  buf[pos] = buf[pos-3]
+                  buf[pos+1] = buf[pos-2]
+                  buf[pos+2] = buf[pos-1]
+                  pos += step
+                end
+                if inshift == nil
+                  buf[line_end] = outshift[(line * 3)]
+                  buf[line_end+1] = outshift[(line * 3) + 1]
+                  buf[line_end+2] = outshift[(line * 3) + 2]
+                else
+                  buf[line_end] = inshift[(line * 3)]
+                  buf[line_end+1] = inshift[(line * 3) + 1]
+                  buf[line_end+2] = inshift[(line * 3) + 2]
+                end
+              end
+              step *= -1
+              line += 1
+          end
         end
       end
     end

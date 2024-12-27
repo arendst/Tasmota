@@ -16,7 +16,6 @@ extern int be_leds_apply_bri_gamma(bvm *vm);
 /* @const_object_info_begin
 class be_class_Leds_ntv (scope: global, name: Leds_ntv, strings: weak) {
   _p, var
-  _t, var
 
   WS2812_GRB, int(ws2812_grb)
   SK6812_GRBW, int(sk6812_grbw)

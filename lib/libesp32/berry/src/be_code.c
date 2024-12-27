@@ -716,6 +716,8 @@ int be_code_setvar(bfuncinfo *finfo, bexpdesc *e1, bexpdesc *e2, bbool keep_reg)
                 free_expreg(finfo, e2); /* free source (checks only ETREG) */
                 *e2 = *e1;      /* now e2 is e1 ETLOCAL */
             }
+        } else {
+            *e2 = *e1;          /* ETLOCAL wins over ETREG */
         }
         break;
     case ETGLOBAL: /* store to grobal R(A) -> G(Bx) by global index */

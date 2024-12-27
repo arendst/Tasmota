@@ -2,7 +2,6 @@
 #- Do not use it -#
 
 class Trigger end       # for compilation
-class Rule_Matche end   # for compilation
 
 tasmota = nil
 #@ solidify:Tasmota
@@ -716,6 +715,59 @@ class Tasmota
     end
     return ret
   end
+
+  # tasmota.int(v, min, max)
+  # ensures that v is int, and always between min and max
+  # if min>max returns min
+  # if v==nil returns min
+  static def int(v, min, max)
+    v = int(v)        # v is int (not nil)
+    if (min == nil && max == nil) return v end
+    min = int(min)
+    max = int(max)
+    if (min != nil && max != nil)
+      if (v == nil) return min end
+    end
+    if (v != nil)
+      if (min != nil && v < min)    return min  end
+      if (max != nil && v > max)    return max  end
+    end
+    return v
+  end
+
+  #-
+  # Unit tests
+
+  # behave like normal int
+  assert(tasmota.int(4) == 4)
+  assert(tasmota.int(nil) == nil)
+  assert(tasmota.int(-3) == -3)
+  assert(tasmota.int(4.5) == 4)
+  assert(tasmota.int(true) == 1)
+  assert(tasmota.int(false) == 0)
+
+  # normal behavior
+  assert(tasmota.int(4, 0, 10) == 4)
+  assert(tasmota.int(0, 0, 10) == 0)
+  assert(tasmota.int(10, 0, 10) == 10)
+  assert(tasmota.int(10, 0, 0) == 0)
+  assert(tasmota.int(10, 10, 10) == 10)
+  assert(tasmota.int(-4, 0, 10) == 0)
+  assert(tasmota.int(nil, 0, 10) == 0)
+
+  # missing min or max
+  assert(tasmota.int(4, nil, 10) == 4)
+  assert(tasmota.int(14, nil, 10) == 10)
+  assert(tasmota.int(nil, nil, 10) == nil)
+  assert(tasmota.int(4, 0, nil) == 4)
+  assert(tasmota.int(-4, 0, nil) == 0)
+  assert(tasmota.int(nil, 0, nil) == nil)
+
+  # max < min
+  assert(tasmota.int(4, 10, 0) == 10)
+  assert(tasmota.int(nil, 10, 0) == 10)
+
+  -#
 
   # set_light and get_light deprecetaion
   def get_light(l)

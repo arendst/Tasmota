@@ -85,6 +85,10 @@ class WiFiClientSecure_light : public WiFiClient {
       _fingerprint2 = f2;
       _fingerprint_any = f_any;
       _insecure = true;
+      _rsa_only = true;     // if fingerprint, we limit to RSA only
+    }
+    void setRSAOnly(bool rsa_only) {
+      _rsa_only = rsa_only;
     }
     const uint8_t * getRecvPubKeyFingerprint(void) {
       return _recv_fingerprint;
@@ -150,14 +154,10 @@ class WiFiClientSecure_light : public WiFiClient {
 
     bool _fingerprint_any;            // accept all fingerprints
     bool _insecure;                   // force fingerprint
+    bool _rsa_only;                   // restrict to RSA only key exchange (no ECDSA - enabled to force RSA fingerprints)
     const uint8_t *_fingerprint1;          // fingerprint1 to be checked against
     const uint8_t *_fingerprint2;          // fingerprint2 to be checked against
-// **** Start patch Castellucci
-/*
     uint8_t _recv_fingerprint[20];   // fingerprint received
-*/
-    uint8_t _recv_fingerprint[21];   // fingerprint received
-// **** End patch Castellucci
 
     unsigned char *_recvapp_buf;
     size_t _recvapp_len;

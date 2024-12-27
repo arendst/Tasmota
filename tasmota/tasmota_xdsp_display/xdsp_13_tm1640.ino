@@ -99,6 +99,7 @@ enum tm1640_display_options_types {
 typedef struct Tm1640_t {
   int8_t clock_pin;
   int8_t data_pin;
+  uint8_t brightness;
   bool show_clock;
   bool clock_24;
   bool clock_seconds;
@@ -177,10 +178,18 @@ void TM1640SetBrightness(uint8_t level) {
   //     6 |      5 | 12/16
   //     7 |      6 | 13/16
   //     8 |      7 | 14/16
-  uint8_t cmd = TM1640_CMD_DISPLAY | (level > 0 ? 0x8 : 0) | ((level - 1) % 8);
+  if (level) {
+    Tm1640->brightness = (level -1) & 7;
+  }
+  uint8_t cmd = TM1640_CMD_DISPLAY | (level > 0 ? 0x8 : 0) | Tm1640->brightness;
   TM1640Start();
   TM1640Send (cmd);  
   TM1640Stop();
+}
+
+void TM1640SetPower(int8_t state) {
+  uint8_t level = (1 == state) ? Tm1640->brightness +1 : 0;
+  TM1640SetBrightness(level);
 }
 
 /*********************************************************************************************\
@@ -313,26 +322,9 @@ void IoTTimerDim(void)
 }
 
 
-void IoTTimerDisplayOn (void)
-{
-  IoTTimerDim();
-}
-
-
-void IoTTimerDisplayOff (void)
-{
-  TM1640SetBrightness (0);
-}
-
-
 void IoTTimerDisplayOnOff(void)
 {
-  if (disp_power) {
-    IoTTimerDisplayOn();
-  }
-  else {
-    IoTTimerDisplayOff();
-  }
+  TM1640SetPower(disp_power);
 }
 
 

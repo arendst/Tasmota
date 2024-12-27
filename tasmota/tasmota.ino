@@ -409,6 +409,7 @@ void setup(void) {
 #endif  // DISABLE_ESP32_BROWNOUT
 
 #ifndef FIRMWARE_SAFEBOOT
+#ifndef DISABLE_PSRAMCHECK
 #ifndef CORE32SOLO1
   // restore GPIO5/18 or 16/17 if no PSRAM is found which may be used by Ethernet among others
   if (!FoundPSRAM()) {
@@ -422,6 +423,7 @@ void setup(void) {
     }
   }
 #endif  // CORE32SOLO1
+#endif  // DISABLE_PSRAMCHECK
 #endif  // FIRMWARE_SAFEBOOT
 #endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32

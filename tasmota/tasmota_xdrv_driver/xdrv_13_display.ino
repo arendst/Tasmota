@@ -270,7 +270,7 @@ bool disp_subscribed = false;
 /*********************************************************************************************/
 
 uint32_t DisplayDevices(void) {
-  return (disp_device);
+  return (disp_device) ? 1 : 0;
 }
 
 /*********************************************************************************************/
@@ -1852,57 +1852,53 @@ void DisplayLocalSensor(void)
 \*********************************************************************************************/
 
 void DisplayInitDriver(void) {
+  uint32_t display_model = Settings->display_model;
+  Settings->display_model = 0;                     // Test if any display_model is available
   XdspCall(FUNC_DISPLAY_INIT_DRIVER);
+  if (Settings->display_model && display_model) {  // If any model found keep using user configured one for backward compatibility
+    Settings->display_model = display_model;
+  }
+  if (!Settings->display_model) { return; }
 
-//  AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings->display_model);
+//  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DSP: Model %d"), Settings->display_model);
 
-  if (Settings->display_model) {
-//    ApplyDisplayDimmer();  // Not allowed here. Way too early in init sequence. Global power state has not been set at this point in time
+//  ApplyDisplayDimmer();  // Not allowed here. Way too early in init sequence. Global power state has not been set at this point in time
 
 #ifdef USE_MULTI_DISPLAY
-    Set_display(0);
+  Set_display(0);
 #endif // USE_MULTI_DISPLAY
 
-    if (renderer) {
-      renderer->setTextFont(Settings->display_font);
-      renderer->setTextSize(Settings->display_size);
-      // force opaque mode
-      renderer->setDrawMode(0);
+  if (renderer) {
+    renderer->setTextFont(Settings->display_font);
+    renderer->setTextSize(Settings->display_size);
+    // force opaque mode
+    renderer->setDrawMode(0);
 
-      for (uint32_t cnt = 0; cnt < (MAX_INDEXCOLORS - PREDEF_INDEXCOLORS); cnt++) {
-        index_colors[cnt] = 0;
-      }
+    for (uint32_t cnt = 0; cnt < (MAX_INDEXCOLORS - PREDEF_INDEXCOLORS); cnt++) {
+      index_colors[cnt] = 0;
     }
+  }
 
 #ifdef USE_DT_VARS
-    free_dt_vars();
+  free_dt_vars();
 #endif
 
 #ifdef USE_UFILESYS
-    Display_Text_From_File(DISP_BATCH_FILE);
+  Display_Text_From_File(DISP_BATCH_FILE);
 #endif
 
 #ifdef USE_GRAPH
-    for (uint8_t count = 0; count < NUM_GRAPHS; count++) { graph[count] = 0; }
+  for (uint8_t count = 0; count < NUM_GRAPHS; count++) { graph[count] = 0; }
 #endif
 
-    UpdateDevicesPresent(1);
-    if (!PinUsed(GPIO_BACKLIGHT)) {
-      if ((LT_PWM1 == TasmotaGlobal.light_type) &&  // Single PWM light channel
-          ((4 == Settings->display_model) ||        // ILI9341 legacy
-           (17 == Settings->display_model))         // Universal
-         ) {
-        UpdateDevicesPresent(-1);                   // Assume PWM channel is used for backlight
-      }
-    }
-    disp_device = TasmotaGlobal.devices_present;
+  UpdateDevicesPresent(1);
+  disp_device = TasmotaGlobal.devices_present;
 
 #ifndef USE_DISPLAY_MODES1TO5
-    Settings->display_mode = 0;
+  Settings->display_mode = 0;
 #else
-    DisplayLogBufferInit();
+  DisplayLogBufferInit();
 #endif  // USE_DISPLAY_MODES1TO5
-  }
 }
 
 void DisplaySetPower(void) {

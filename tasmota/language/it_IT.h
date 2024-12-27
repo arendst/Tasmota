@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 07.12.2024
+ * Updated until v9.4.0.1 - Last update 26.12.2024
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -761,8 +761,8 @@
 #define D_SENSOR_MBR_TX                 "ModBr - TX"
 #define D_SENSOR_MBR_RX                 "ModBr - RX"
 #define D_SENSOR_MBR_TX_ENA             "ModBr - TX ON"
-#define D_SENSOR_SR04_TRIG              "SR04 Tri - TX"
-#define D_SENSOR_SR04_ECHO              "SR04 Ech - RX"
+#define D_SENSOR_SR04_TRIG              "SR04 - Tri/TX"
+#define D_SENSOR_SR04_ECHO              "SR04 - Ech/RX"
 #define D_SENSOR_NRG_MBS_TX             "NrgMbs - TX"
 #define D_SENSOR_NRG_MBS_RX             "NrgMbs - RX"
 #define D_SENSOR_NRG_MBS_TX_ENA         "NrgMbs - TX ON"
@@ -1011,6 +1011,10 @@
 #define D_SENSOR_ME007_RX               "ME007 - RX"
 #define D_SENSOR_TUYAMCUBR_TX           "TuyaMCUBr - TX"
 #define D_SENSOR_TUYAMCUBR_RX           "TuyaMCUBr - RX"
+#define D_SENSOR_TWAI_TX                "TWAI - TX"
+#define D_SENSOR_TWAI_RX                "TWAI - RX"
+#define D_SENSOR_TWAI_BO                "TWAI - BusOff"
+#define D_SENSOR_TWAI_CLK               "TWAI - ClkOut"
 #define D_SENSOR_BIOPDU_PZEM0XX_TX      "BioPDU PZEM0XX - TX"
 #define D_SENSOR_BIOPDU_PZEM016_RX      "BioPDU PZEM016 - RX"
 #define D_SENSOR_BIOPDU_BIT             "BioPDU Bit"

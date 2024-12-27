@@ -110,6 +110,14 @@ class Animate_core
     self.strip.clear()
   end
   def start()
+    # check if the strip had a different animate object, stop it
+    var prev_animate = self.strip.get_animate()
+    import introspect
+    if (prev_animate != nil) && (type(prev_animate) == 'instance') && (prev_animate != self)
+      prev_animate.stop()
+    end
+    self.strip.set_animate(self)
+
     self.running = true
     var animators = self.animators
     var idx = 0

@@ -194,6 +194,22 @@ int64_t* int64_div(bvm *vm, int64_t *i64, int64_t *j64) {
 }
 BE_FUNC_CTYPE_DECLARE(int64_div, "int64", "@.(int64)")
 
+int64_t* int64_shiftleft(bvm *vm, int64_t *i64, int32_t j32) {
+  int64_t* r64 = (int64_t*)be_malloc(vm, sizeof(int64_t));
+  // it's possible that arg j64 is nullptr, since class type does allow NULLPTR to come through.
+  *r64 = *i64 << j32;
+  return r64;
+}
+BE_FUNC_CTYPE_DECLARE(int64_shiftleft, "int64", "@(int64)i")
+
+int64_t* int64_shiftright(bvm *vm, int64_t *i64, int32_t j32) {
+  int64_t* r64 = (int64_t*)be_malloc(vm, sizeof(int64_t));
+  // it's possible that arg j64 is nullptr, since class type does allow NULLPTR to come through.
+  *r64 = *i64 >> j32;
+  return r64;
+}
+BE_FUNC_CTYPE_DECLARE(int64_shiftright, "int64", "@(int64)i")
+
 bbool int64_equals(int64_t *i64, int64_t *j64) {
   // it's possible that arg j64 is nullptr, since class type does allow NULLPTR to come through.
   int64_t j = 0;
@@ -349,6 +365,8 @@ class be_class_int64 (scope: global, name: int64) {
   >=, ctype_func(int64_gte)
   <, ctype_func(int64_lt)
   <=, ctype_func(int64_lte)
+  <<, ctype_func(int64_shiftleft)
+  >>, ctype_func(int64_shiftright)
 
   tobytes, ctype_func(int64_tobytes)
   frombytes, static_ctype_func(int64_frombytes)

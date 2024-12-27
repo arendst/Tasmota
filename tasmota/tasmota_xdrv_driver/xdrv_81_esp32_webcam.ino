@@ -159,7 +159,7 @@ struct {
   uint16_t width;
   uint16_t height;
   uint8_t  stream_active;
- #ifndef USE_WEBCAM_SETUP_ONLY
+#ifndef USE_WEBCAM_SETUP_ONLY
   WiFiClient client;
   ESP8266WebServer *CamServer;
   struct PICSTORE picstore[MAX_PICSTORE];
@@ -169,9 +169,9 @@ struct {
   CRtspSession *rtsp_session;
   WiFiClient rtsp_client;
   uint8_t rtsp_start;
-#endif // ENABLE_RTSPSERVER
   OV2640 cam;
   uint32_t rtsp_lastframe_time;
+#endif // ENABLE_RTSPSERVER
 #endif // USE_WEBCAM_SETUP_ONLY
 } Wc;
 
