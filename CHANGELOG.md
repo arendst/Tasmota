@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Berry add unicode encoding to string parsing (#22713)
 - Berry `tasmota.int(v, min, max)` function (#22723)
 - Berry driver for M5Stack 8encoder (#22724)
+- Support for PCF85063 RTC (#22727)
 
 ### Breaking Changed
 
