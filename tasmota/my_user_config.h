@@ -769,6 +769,7 @@
 //    #define USE_BM8563                           // [I2cDriver59] Enable BM8563 RTC - used by M5Stack - support both I2C buses on ESP32 (I2C address 0x51) (+2.5k code)
 //    #define USE_PCF85363                         // [I2cDriver66] Enable PCF85363 RTC - used by Shelly 3EM (I2C address 0x51) (+0k7 code)
 //    #define USE_RX8010                           // [I2cDriver90] Enable RX8010 RTC - used by IOTTIMER - support both I2C buses on ESP32 (I2C address 0x32) (+0k7 code)
+//    #define USE_PCF85063                         // [I2cDriver92] Enable PCF85063 RTC support (I2C address 0x51)
 
 //  #define USE_DISPLAY                            // Add I2C/TM1637/MAX7219 Display Support (+2k code)
     #define USE_DISPLAY_MODES1TO5                // Enable display mode 1 to 5 in addition to mode 0
