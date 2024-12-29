@@ -1,5 +1,6 @@
 /////////////////////////////////////////////////////////////////////
 // compressed by tools/unishox/compress-html-uncompressed.py
+// input sha256: 960fbc2354bc4029cbc93953e54edc74024a46ca58902af175f5ecf8839eb0a8
 /////////////////////////////////////////////////////////////////////
 
 const size_t HTTP_SCRIPT_CONSOL_SIZE = 985;
