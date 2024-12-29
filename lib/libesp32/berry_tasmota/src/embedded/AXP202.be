@@ -1,11 +1,11 @@
 #-------------------------------------------------------------
  - Generic driver for AXP202 - solidified
  -------------------------------------------------------------#
-class I2C_Driver end    # for solidification
 
- #@ solidify:AXP202
+#@ solidify:AXP202
 class AXP202 : I2C_Driver
-  def init()
+  def init(addr)
+    if (addr == nil)  addr = 0x35   end   # default address is 0x35
     super(self, I2C_Driver).init("AXP202", 0x35)
   end
 
@@ -22,7 +22,7 @@ class AXP202 : I2C_Driver
   end
 
   # Battery Charging Status
-  def get_battery_chargin_status()
+  def get_battery_charging_status()
     return self.wire.read(self.addr, 0x01, 1)
   end
 
@@ -189,3 +189,4 @@ class AXP202 : I2C_Driver
 #     # tasmota.response_append(msg)
 #   end
 end
+return AXP202

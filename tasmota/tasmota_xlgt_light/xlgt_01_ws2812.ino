@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#if defined(ESP8266) || defined(USE_WS2812_FORCE_NEOPIXELBUS)
 #ifdef USE_LIGHT
 #ifdef USE_WS2812
 
@@ -553,11 +554,14 @@ void Ws2812DDP(void)
 }
 #endif  // USE_NETWORK_LIGHT_SCHEMES
 
-void Ws2812Clear(void)
+void Ws2812Clear(bool display = true);
+void Ws2812Clear(bool display)
 {
   strip->ClearTo(0);
-  Ws2812LibStripShow();
-  Ws2812.show_next = 1;
+  if (display) {
+    Ws2812LibStripShow();
+    Ws2812.show_next = 1;
+  }
 }
 
 void Ws2812SetColor(uint32_t led, uint8_t red, uint8_t green, uint8_t blue, uint8_t white)
@@ -965,3 +969,4 @@ bool Xlgt01(uint32_t function)
 
 #endif  // USE_WS2812
 #endif  // USE_LIGHT
+#endif  // defined(ESP8266) || defined(USE_WS2812_FORCE_NEOPIXELBUS)

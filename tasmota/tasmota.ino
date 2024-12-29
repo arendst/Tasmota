@@ -18,7 +18,7 @@
 */
 
 // Location specific includes
-#ifndef ESP32_STAGE                         // ESP32 Stage has no core_version.h file. Disable include via PlatformIO Option
+#if __has_include("core_version.h")         // ESP32 Stage has no core_version.h file. Disable include via PlatformIO Option
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_7_1)
 #endif  // ESP32_STAGE
 #include "include/tasmota_compat.h"
@@ -409,6 +409,7 @@ void setup(void) {
 #endif  // DISABLE_ESP32_BROWNOUT
 
 #ifndef FIRMWARE_SAFEBOOT
+#ifndef DISABLE_PSRAMCHECK
 #ifndef CORE32SOLO1
   // restore GPIO5/18 or 16/17 if no PSRAM is found which may be used by Ethernet among others
   if (!FoundPSRAM()) {
@@ -422,6 +423,7 @@ void setup(void) {
     }
   }
 #endif  // CORE32SOLO1
+#endif  // DISABLE_PSRAMCHECK
 #endif  // FIRMWARE_SAFEBOOT
 #endif  // CONFIG_IDF_TARGET_ESP32
 #endif  // ESP32
@@ -566,6 +568,7 @@ void setup(void) {
 
   SettingsLoad();
   SettingsDelta();
+  SettingsMinimum();                           // Set life-saving parameters if out-of-range due to reconfig Settings Area
 
   OsWatchInit();
 

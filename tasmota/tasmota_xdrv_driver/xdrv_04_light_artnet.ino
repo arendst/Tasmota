@@ -386,7 +386,7 @@ bool ArtNetStart(void) {
           Settings->light_rotation = 0;
           Ws2812InitStrip();
         } else {
-          Ws2812Clear();
+          Ws2812Clear(true);
         }
       }
 

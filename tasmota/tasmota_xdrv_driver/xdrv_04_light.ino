@@ -236,6 +236,7 @@ struct LIGHT {
   uint8_t random = 0;
   uint8_t subtype = 0;                    // LST_ subtype
   uint8_t device = 0;
+  uint8_t devices = 0;
   uint8_t old_power = 1;
   uint8_t wakeup_active = 0;             // 0=inctive, 1=on-going, 2=about to start, 3=will be triggered next cycle
   uint8_t fixed_color_index = 1;
@@ -291,6 +292,10 @@ power_t LightPower(void)
 uint8_t LightDevice(void)
 {
   return Light.device;                    // Make external
+}
+
+uint32_t LightDevices(void) {
+  return Light.devices;                   // Make external
 }
 
 static uint32_t min3(uint32_t a, uint32_t b, uint32_t c) {
@@ -1249,6 +1254,8 @@ void LightInit(void)
     Light.fade_initialized = true;      // consider fade intialized starting from black
   }
 
+  Light.devices = TasmotaGlobal.devices_present - Light.device +1;  // Last time that devices_present is not increments by display
+
   LightUpdateColorMapping();
 }
 
@@ -1795,6 +1802,10 @@ void LightAnimate(void)
     if (TasmotaGlobal.sleep > PWM_MAX_SLEEP) {
       sleep_previous = TasmotaGlobal.sleep;     // save previous value of sleep
       TasmotaGlobal.sleep = PWM_MAX_SLEEP;      // set a maximum value (in milliseconds) to sleep to ensure that animations are smooth
+    }
+    if (Settings->save_data) {
+      // Postpone save_data during animation
+      TasmotaGlobal.save_data_counter = 2;
     }
   } else {
     if (sleep_previous > 0) {

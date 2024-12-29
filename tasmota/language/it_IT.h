@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 31.10.2024
+ * Updated until v9.4.0.1 - Last update 26.12.2024
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -56,6 +56,7 @@
 #define D_AIR_QUALITY          "Qualità dell'aria"
 #define D_AP                   "AP"                   // Access Point
 #define D_AS                   "come"
+#define D_AT                   "in"
 #define D_AUTO                 "AUTO"
 #define D_BATTERY              "Batteria"
 #define D_BATT                 "Batt"                 // Short for Battery
@@ -386,10 +387,10 @@
 #define D_FLASH_CHIP_SIZE       "Dimensione flash"
 #define D_FREE_PROGRAM_SPACE    "Memoria libera programma"
 
-#define D_UPGRADE_BY_WEBSERVER    "Aggiornamento via server web"
+#define D_UPGRADE_BY_WEBSERVER    "Aggiorna via server web"
 #define D_OTA_URL                 "URL OTA"
 #define D_START_UPGRADE           "Esegui aggiornamento"
-#define D_UPGRADE_BY_FILE_UPLOAD  "Aggiornamento tramite file locale"
+#define D_UPGRADE_BY_FILE_UPLOAD  "Aggiorna tramite file locale"
 #define D_UPLOAD_FACTORY          "Passaggio a partizione avvio sicuro"
 #define D_UPLOAD_STARTED          "Caricamento..."
 #define D_UPGRADE_STARTED         "Aggiornamento..."
@@ -571,10 +572,10 @@
 #define D_THERMOSTAT_AUTOTUNE_HYBRID  "Regolazione automatica (ibrida)"
 
 // xdrv_79_esp32_ble.ino
-#define D_CONFIGURE_BLE               "Configura BLE"
+#define D_CONFIGURE_BLE               "BLE"
 #define D_BLE_PARAMETERS              "Impostazioni Bluetooth"
-#define D_MQTT_BLE_ENABLE             "Abilita Bluetooth"
-#define D_MQTT_BLE_ACTIVESCAN         "Abilita scansione attiva (*)"
+#define D_BLE_ENABLE                  "Abilita Bluetooth"
+#define D_BLE_ACTIVESCAN              "Abilita scansione attiva (*)"
 #define D_BLE_DEVICES                 "Scansione dispositivi"
 #define D_BLE_REMARK                  "gli elementi segnati con (*) non sono memorizzati in config"
 
@@ -760,8 +761,8 @@
 #define D_SENSOR_MBR_TX                 "ModBr - TX"
 #define D_SENSOR_MBR_RX                 "ModBr - RX"
 #define D_SENSOR_MBR_TX_ENA             "ModBr - TX ON"
-#define D_SENSOR_SR04_TRIG              "SR04 Tri - TX"
-#define D_SENSOR_SR04_ECHO              "SR04 Ech - RX"
+#define D_SENSOR_SR04_TRIG              "SR04 - Tri/TX"
+#define D_SENSOR_SR04_ECHO              "SR04 - Ech/RX"
 #define D_SENSOR_NRG_MBS_TX             "NrgMbs - TX"
 #define D_SENSOR_NRG_MBS_RX             "NrgMbs - RX"
 #define D_SENSOR_NRG_MBS_TX_ENA         "NrgMbs - TX ON"
@@ -788,6 +789,8 @@
 #define D_SENSOR_TM1638_CLK             "TM1638 - CLK"
 #define D_SENSOR_TM1638_DIO             "TM1638 - DIO"
 #define D_SENSOR_TM1638_STB             "TM1638 - STB"
+#define D_SENSOR_TM1640_CLK             "TM1640 - CLK"
+#define D_SENSOR_TM1640_DIN             "TM1640 - DIN"
 #define D_SENSOR_MAX7219_DIN            "MAX7219 - DIN"
 #define D_SENSOR_MAX7219_CS             "MAX7219 - CS"
 #define D_SENSOR_MAX7219_CLK            "MAX7219 - CLK"
@@ -1008,6 +1011,10 @@
 #define D_SENSOR_ME007_RX               "ME007 - RX"
 #define D_SENSOR_TUYAMCUBR_TX           "TuyaMCUBr - TX"
 #define D_SENSOR_TUYAMCUBR_RX           "TuyaMCUBr - RX"
+#define D_SENSOR_TWAI_TX                "TWAI - TX"
+#define D_SENSOR_TWAI_RX                "TWAI - RX"
+#define D_SENSOR_TWAI_BO                "TWAI - BusOff"
+#define D_SENSOR_TWAI_CLK               "TWAI - ClkOut"
 #define D_SENSOR_BIOPDU_PZEM0XX_TX      "BioPDU PZEM0XX - TX"
 #define D_SENSOR_BIOPDU_PZEM016_RX      "BioPDU PZEM016 - RX"
 #define D_SENSOR_BIOPDU_BIT             "BioPDU Bit"

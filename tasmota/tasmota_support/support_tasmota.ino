@@ -466,7 +466,11 @@ void SetPowerOnState(void)
   for (uint32_t i = 0; i < TasmotaGlobal.devices_present; i++) {
 #ifdef ESP8266
     if (!Settings->flag3.no_power_feedback &&  // SetOption63 - Don't scan relay power state at restart - #5594 and #5663
-        !TasmotaGlobal.power_on_delay) {       // SetOption47 - Delay switching relays to reduce power surge at power on
+        !TasmotaGlobal.power_on_delay          // SetOption47 - Delay switching relays to reduce power surge at power on
+#ifdef USE_SHUTTER
+        && !Settings->flag3.shutter_mode       // SetOption80 - Enable shutter support
+#endif // USE_SHUTTER
+       ) {
       if ((port < MAX_RELAYS) && PinUsed(GPIO_REL1, port)) {
         if (bitRead(TasmotaGlobal.rel_bistable, port)) {
           port++;                              // Skip both bistable relays as always 0

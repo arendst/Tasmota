@@ -348,6 +348,13 @@ void ExecuteCommand(const char *cmnd, uint32_t source)
   CommandHandler(stopic, svalue, strlen(svalue));
 }
 
+bool GetFallbackTopicFlag(char* topicBuf) {
+  // Use this function to free CommandHandler stack space from TOPSZ
+  char stemp1[TOPSZ];
+  GetFallbackTopic_P(stemp1, "");        // Full Fallback topic = cmnd/DVES_xxxxxxxx_fb/
+  return (!strncmp(topicBuf, stemp1, strlen(stemp1)));
+}
+
 /********************************************************************************************/
 
 // topicBuf:                    /power1  dataBuf: toggle  = Console command
@@ -369,9 +376,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
     }
   }
 
-  char stemp1[TOPSZ];
-  GetFallbackTopic_P(stemp1, "");        // Full Fallback topic = cmnd/DVES_xxxxxxxx_fb/
-  TasmotaGlobal.fallback_topic_flag = (!strncmp(topicBuf, stemp1, strlen(stemp1)));
+  TasmotaGlobal.fallback_topic_flag = GetFallbackTopicFlag(topicBuf);
 
   char *type = strrchr(topicBuf, '/');   // Last part of received topic is always the command (type)
 
@@ -416,11 +421,13 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
   }
 
   Response_P(PSTR("_1"));  // Signal error message for either Command Error or Command Unknown
-  char number[12];
-  char command_line[64];
-  snprintf_P(command_line, sizeof(command_line), PSTR("%s%s%s%s"), 
+  char stemp1[16];
+//  char command_line[64];
+//  snprintf_P(command_line, sizeof(command_line), PSTR("%s%s%s%s"), 
+  char *command_line = (char*)malloc(64);  // Use heap in favour of stack
+  snprintf_P(command_line, 64, PSTR("%s%s%s%s"), 
     type,
-    (index != 1) ? itoa(index, number, 10) : "",
+    (index != 1) ? itoa(index, stemp1, 10) : "",
     (data_len) ? " " : "",
     (data_len) ? (binary_data) ? HexToString((uint8_t*)dataBuf, data_len).c_str() : EscapeJSONString(dataBuf).c_str() : "");
 
@@ -483,6 +490,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len) {
     }
     ResponseAppend_P(PSTR(",\"Input\":\"%s\"}"), command_line);
   }
+  free(command_line);
 
   if (ResponseLength()) {
     if (TasmotaGlobal.no_mqtt_response){  // If it is activated, Tasmota will not publish MQTT messages, but it will proccess event trigger rules
@@ -1805,7 +1813,7 @@ void CmndGpio(void)
     if (ValidGPIO(XdrvMailbox.index, template_gp.io[XdrvMailbox.index]) && (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < AGPIO(GPIO_SENSOR_END))) {
       bool present = false;
       for (uint32_t i = 0; i < nitems(kGpioNiceList); i++) {
-        uint32_t midx = pgm_read_word(kGpioNiceList + i);
+        uint32_t midx = pgm_read_word(&kGpioNiceList[i]);
         uint32_t max_midx = ((midx & 0x001F) > 0) ? midx : midx +1;
         if ((XdrvMailbox.payload >= (midx & 0xFFE0)) && (XdrvMailbox.payload < max_midx)) {
           present = true;
@@ -1843,7 +1851,7 @@ void CmndGpio(void)
         uint32_t sensor_name_idx = BGPIO(sensor_type);
         uint32_t nice_list_search = sensor_type & 0xFFE0;
         for (uint32_t j = 0; j < nitems(kGpioNiceList); j++) {
-          uint32_t nls_idx = pgm_read_word(kGpioNiceList + j);
+          uint32_t nls_idx = pgm_read_word(&kGpioNiceList[j]);
           if (((nls_idx & 0xFFE0) == nice_list_search) && ((nls_idx & 0x001F) > 0)) {
             snprintf_P(sindex, sizeof(sindex), PSTR("%d"), (sensor_type & 0x001F) +1);
             break;
@@ -2882,11 +2890,11 @@ void CmndTouchCal(void) {
     if (XdrvMailbox.payload == 0) {
       TouchButton.calibration = 0;
     }
-    else if (XdrvMailbox.payload < MAX_KEYS + 1) {
+    else if (XdrvMailbox.payload < MAX_KEYS) {
       TouchButton.calibration = bitSet(TouchButton.calibration, XdrvMailbox.payload);
     }
     else if (XdrvMailbox.payload == 255) {
-      TouchButton.calibration = 0x0FFFFFFF;  // All MAX_KEYS pins
+      TouchButton.calibration = 0xFFFFFFFF;  // All MAX_KEYS pins
     }
   }
   ResponseCmndNumber(TouchButton.calibration);

@@ -136,5 +136,6 @@ int be_lexer_scan_next(blexer *lexer);
 bstring* be_lexer_newstr(blexer *lexer, const char *str);
 const char *be_token2str(bvm *vm, btoken *token);
 const char* be_tokentype2str(btokentype type);
+char* be_load_unicode(char *dst, const char *src);
 
 #endif

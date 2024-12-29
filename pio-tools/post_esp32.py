@@ -45,19 +45,20 @@ sections = env.subst(env.get("FLASH_EXTRA_IMAGES"))
 chip = env.get("BOARD_MCU")
 mcu_build_variant = env.BoardConfig().get("build.variant", "").lower()
 flag_custom_sdkconfig = config.has_option("env:"+env["PIOENV"], "custom_sdkconfig")
+flag_board_sdkconfig = env.BoardConfig().get("espidf.custom_sdkconfig", "")
 
 # Copy safeboots firmwares in place when running in Github
 github_actions = os.getenv('GITHUB_ACTIONS')
 extra_flags = ''.join([element.replace("-D", " ") for element in env.BoardConfig().get("build.extra_flags", "")])
 build_flags = ''.join([element.replace("-D", " ") for element in env.GetProjectOption("build_flags")])
 
-if ("CORE32SOLO1" in extra_flags or "FRAMEWORK_ARDUINO_SOLO1" in build_flags) and flag_custom_sdkconfig == False:
+if ("CORE32SOLO1" in extra_flags or "FRAMEWORK_ARDUINO_SOLO1" in build_flags) and flag_custom_sdkconfig == False and flag_board_sdkconfig == "":
     FRAMEWORK_DIR = platform.get_package_dir("framework-arduino-solo1")
     if github_actions and os.path.exists("./firmware/firmware"):
         shutil.copytree("./firmware/firmware", "/home/runner/.platformio/packages/framework-arduino-solo1/variants/tasmota", dirs_exist_ok=True)
         if variants_dir:
             shutil.copytree("./firmware/firmware", variants_dir, dirs_exist_ok=True)
-elif ("CORE32ITEAD" in extra_flags or "FRAMEWORK_ARDUINO_ITEAD" in build_flags) and flag_custom_sdkconfig == False:
+elif ("CORE32ITEAD" in extra_flags or "FRAMEWORK_ARDUINO_ITEAD" in build_flags) and flag_custom_sdkconfig == False and flag_board_sdkconfig == "":
     FRAMEWORK_DIR = platform.get_package_dir("framework-arduino-ITEAD")
     if github_actions and os.path.exists("./firmware/firmware"):
         shutil.copytree("./firmware/firmware", "/home/runner/.platformio/packages/framework-arduino-ITEAD/variants/tasmota", dirs_exist_ok=True)

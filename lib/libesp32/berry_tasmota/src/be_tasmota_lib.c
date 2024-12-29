@@ -147,6 +147,8 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     web_send_decimal, func(l_webSendDecimal)
     webcolor, static_func(l_webcolor)
 
+    int, static_closure(class_Tasmota_int_closure)
+
     get_power, func(l_getpower)
     set_power, func(l_setpower)
     get_switch, func(l_getswitch)     // deprecated

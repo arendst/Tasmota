@@ -24,22 +24,8 @@
 
 #ifdef USE_WS2812
 
-#include <NeoPixelBus.h>
-
-enum {
-  ws2812_grb = 1,
-  sk6812_grbw = 2,
-
-  neopixel_type_end
-};
-
-#ifdef CONFIG_IDF_TARGET_ESP32C2
-typedef NeoPixelBus<NeoGrbFeature, NeoEsp32SpiN800KbpsMethod> neopixel_ws2812_grb_t;
-typedef NeoPixelBus<NeoGrbwFeature, NeoEsp32SpiNSk6812Method> neopixel_sk6812_grbw_t;
-#else
-typedef NeoPixelBus<NeoGrbFeature, NeoEsp32RmtN800KbpsMethod> neopixel_ws2812_grb_t;
-typedef NeoPixelBus<NeoGrbwFeature, NeoEsp32RmtNSk6812Method> neopixel_sk6812_grbw_t;
-#endif
+#include "TasmotaLED.h"
+#include "TasmotaLEDPusher.h"
 
 /*********************************************************************************************\
  * Functions from Tasmota WS2812 driver
@@ -86,93 +72,65 @@ extern "C" {
   // # 22 : ShiftLeft    (rot:int [, first:int, last:int]) -> void
   // # 23 : ShiftRight   (rot:int [, first:int, last:int]) -> void
 
-  void * be_get_neopixelbus(bvm *vm) {
+  void * be_get_tasmotaled(bvm *vm) {
     be_getmember(vm, 1, "_p");
     void * strip = (void*) be_tocomptr(vm, -1);
     be_pop(vm, 1);
-    if (strip == nullptr) {
-      be_raise(vm, "internal_error", "neopixelbus object not initialized");
-    }
     return strip;
   }
-  int32_t be_get_leds_type(bvm *vm) {
-    be_getmember(vm, 1, "_t");
-    int32_t type = be_toint(vm, -1);
-    be_pop(vm, 1);
-    if (type < 0 || type >= neopixel_type_end) {
-      be_raise(vm, "internal_error", "invalid leds type");
-    }
-    return type;
-  }
 
-  int be_neopixelbus_call_native(bvm *vm);
-  int be_neopixelbus_call_native(bvm *vm) {
+  int be_tasmotaled_call_native(bvm *vm);
+  int be_tasmotaled_call_native(bvm *vm) {
     int32_t argc = be_top(vm); // Get the number of arguments
     if (argc >= 2 && be_isint(vm, 2)) {
       int32_t cmd = be_toint(vm, 2);
 
       if (0 == cmd) { // 00 : ctor         (leds:int, gpio:int) -> void
-        if ((argc != 2) && !(argc >= 6 && be_isint(vm, 3) && be_isint(vm, 4) && be_isint(vm, 5) && be_isint(vm, 6))) {
-          be_raise(vm, "value_error", "bad arguments for neopixelbus:ctor");
+        if ((argc != 2) && !(argc >= 5 && be_isint(vm, 3) && be_isint(vm, 4) && be_isint(vm, 5))) {
+          be_raise(vm, "value_error", "bad arguments for tasmotaled:ctor");
         }
         int32_t leds = -1;
         int32_t gpio = -1;
-        int32_t neopixel_type = 0;
-        int32_t rmt = 0;
-        void * strip = nullptr;
+        int32_t led_type = 0;
+        int32_t hardware = 0;
+        if (argc >= 6 && be_isint(vm, 6)) {
+          hardware = be_toint(vm, 6) & 0xFF0000;    // remove the low 16 bits to avoid any interference with legacy parameter for RMT channels
+        }
+        TasmotaLED * strip = nullptr;
         if (argc > 2) {
           leds = be_toint(vm, 3);
           gpio = be_toint(vm, 4);
-          neopixel_type = be_toint(vm, 5);
-          rmt = be_toint(vm, 6);
+          led_type = be_toint(vm, 5);
         }
 
         if (-1 == gpio) {
           // if GPIO is '-1'
-          neopixel_type = 0;
-          Ws2812InitStrip();          // ensure the NeoPixelbus object is initialized, because Berry code runs before the driver is initialized
-          strip = Ws2812GetStrip();
+          led_type = 0;
+          Ws2812InitStrip();          // ensure the tasmotaled object is initialized, because Berry code runs before the driver is initialized
         } else {
-          // allocate a new RMT
-          if (neopixel_type < 1) { neopixel_type = 1; }
-          if (neopixel_type >= neopixel_type_end) { neopixel_type = neopixel_type_end - 1; }
-          if (rmt < 0) { rmt = 0; }
-          if (rmt >= MAX_RMT) { rmt = MAX_RMT - 1; }
-
-          switch (neopixel_type) {
-            case ws2812_grb:    strip = new neopixel_ws2812_grb_t(leds, gpio, (NeoBusChannel) rmt);
-              break;
-            case sk6812_grbw:   strip = new neopixel_sk6812_grbw_t(leds, gpio, (NeoBusChannel) rmt);
-            break;
+          if (led_type < 1) { led_type = 1; }
+          TasmotaLEDPusher * pusher = TasmotaLEDPusher::Create(hardware, gpio);
+          if (pusher == nullptr) {
+            be_raise(vm, "value_error", "LED interface not supported");
           }
+          strip = new TasmotaLED(led_type, leds);
+          strip->SetPusher(pusher);
         }
 
-        // store type in attribute `_t`
-        be_pushint(vm, neopixel_type);
-        be_setmember(vm, 1, "_t");
-        be_pop(vm, 1);
-
-        be_pushcomptr(vm, (void*) strip);
+        be_pushcomptr(vm, (void*) strip);   // if native driver, it is NULL
         be_setmember(vm, 1, "_p");
         be_pop(vm, 1);
         be_pushnil(vm);
       } else {
-        // all other commands need a valid neopixelbus pointer
-        int32_t leds_type = be_get_leds_type(vm);
-        const void * s = be_get_neopixelbus(vm);    // raises an exception if pointer is invalid
-        // initialize all possible variants
-        neopixel_ws2812_grb_t * s_ws2812_grb = (leds_type == ws2812_grb) ? (neopixel_ws2812_grb_t*) s : nullptr;
-        neopixel_sk6812_grbw_t * s_sk6812_grbw = (leds_type == sk6812_grbw) ? (neopixel_sk6812_grbw_t*) s : nullptr;
-        // detect native driver
-        bool native = (leds_type == 0);
-
+        // all other commands need a valid tasmotaled pointer
+        TasmotaLED * strip = (TasmotaLED*) be_get_tasmotaled(vm);    // raises an exception if pointer is invalid
+        // detect native driver means strip == nullptr
         be_pushnil(vm);     // push a default `nil` return value
 
         switch (cmd) {
           case 1: // # 01 : begin        void -> void
-            if (native)             Ws2812Begin();
-            if (s_ws2812_grb)       s_ws2812_grb->Begin();
-            if (s_sk6812_grbw)      s_sk6812_grbw->Begin();
+            if (strip)                strip->Begin();
+            else                      Ws2812Begin();
             break;
           case 2: // # 02 : show         void -> void
             {
@@ -195,49 +153,41 @@ extern "C" {
               }
             }
             uint32_t pixels_size;       // number of bytes to push
-            if (native)           { Ws2812Show(); pixels_size = Ws2812PixelsSize(); }
-            if (s_ws2812_grb)     { s_ws2812_grb->Show();   pixels_size = s_ws2812_grb->PixelsSize(); }
-            if (s_sk6812_grbw)    { s_sk6812_grbw->Show();  pixels_size = s_sk6812_grbw->PixelsSize(); }
-
-            // Wait for RMT/I2S to complete fixes distortion due to analogRead
-            // 1ms is needed for 96 bytes
-            SystemBusyDelay((pixels_size + 95) / 96);
+            bool update_completed = false;
+            if (strip) {
+              strip->Show();
+              pixels_size = strip->PixelCount() * strip->PixelSize();
+              update_completed = strip->CanShow();
+            } else {
+              Ws2812Show();
+              pixels_size = Ws2812PixelsSize();
+              update_completed =Ws2812CanShow();
+            }
             }
             break;
           case 3: // # 03 : CanShow      void -> bool
-            if (native)             be_pushbool(vm, Ws2812CanShow());
-            if (s_ws2812_grb)       be_pushbool(vm, s_ws2812_grb->CanShow());
-            if (s_sk6812_grbw)      be_pushbool(vm, s_sk6812_grbw->CanShow());
+            if (strip)              be_pushbool(vm, strip->CanShow());
+            else                    be_pushbool(vm, Ws2812CanShow());
             break;
           case 4: // # 04 : IsDirty      void -> bool
-            if (native)             be_pushbool(vm, Ws2812IsDirty());
-            if (s_ws2812_grb)       be_pushbool(vm, s_ws2812_grb->IsDirty());
-            if (s_sk6812_grbw)      be_pushbool(vm, s_sk6812_grbw->IsDirty());
+            if (strip)              be_pushbool(vm, strip->IsDirty());
+            else                    be_pushbool(vm, Ws2812IsDirty());
             break;
           case 5: // # 05 : Dirty        void -> void
-            if (native)             Ws2812Dirty();
-            if (s_ws2812_grb)       s_ws2812_grb->Dirty();
-            if (s_sk6812_grbw)      s_sk6812_grbw->Dirty();
+            if (strip)              strip->Dirty();
+            else                    Ws2812Dirty();
             break;
           case 6: // # 06 : Pixels       void -> bytes() (mapped to the buffer)
-            {
-            uint8_t * pixels;
-            if (native)             pixels = Ws2812Pixels();
-            if (s_ws2812_grb)       pixels = s_ws2812_grb->Pixels();
-            if (s_sk6812_grbw)      pixels = s_sk6812_grbw->Pixels();
-
-            be_pushcomptr(vm, pixels);
-            }
+            if (strip)              be_pushcomptr(vm, strip->Pixels());
+            else                    be_pushcomptr(vm, Ws2812Pixels());
             break;
           case 7: // # 07 : PixelSize    void -> int
-            if (native)             be_pushint(vm, Ws2812PixelSize());
-            if (s_ws2812_grb)       be_pushint(vm, s_ws2812_grb->PixelSize());
-            if (s_sk6812_grbw)      be_pushint(vm, s_sk6812_grbw->PixelSize());
+            if (strip)              be_pushint(vm, strip->PixelSize());
+            else                    be_pushint(vm, Ws2812PixelSize());
             break;
           case 8: // # 08 : PixelCount   void -> int
-            if (native)             be_pushint(vm, Ws2812PixelCount());
-            if (s_ws2812_grb)       be_pushint(vm, s_ws2812_grb->PixelCount());
-            if (s_sk6812_grbw)      be_pushint(vm, s_sk6812_grbw->PixelCount());
+            if (strip)             be_pushint(vm, strip->PixelCount());
+            else                   be_pushint(vm, Ws2812PixelCount());
             break;
           case 9: // # 09 : ClearTo      (color:??) -> void
             {
@@ -252,43 +202,36 @@ extern "C" {
               if (from < 0)          { from = 0; }
               if (len < 0)           { len = 0; }
 
-              if (native)             Ws2812ClearTo(r, g, b, w, from, from + len - 1);
-              if (s_ws2812_grb)       s_ws2812_grb->ClearTo(RgbColor(r, g, b), from, from + len - 1);
-              if (s_sk6812_grbw)      s_sk6812_grbw->ClearTo(RgbwColor(r, g, b, w), from, from + len - 1);
+              if (strip)              strip->ClearTo(rgbw, from, from + len - 1);
+              else                    Ws2812ClearTo(r, g, b, w, from, from + len - 1);
             } else {
-              if (native)             Ws2812ClearTo(r, g, b, w, -1, -1);
-              if (s_ws2812_grb)       s_ws2812_grb->ClearTo(RgbColor(r, g, b));
-              if (s_sk6812_grbw)      s_sk6812_grbw->ClearTo(RgbwColor(r, g, b, w));
+              if (strip)              strip->ClearTo(rgbw);
+              else                    Ws2812ClearTo(r, g, b, w, -1, -1);
             }
             }
             break;
-          case 10: // # 10 : SetPixelColor (idx:int, color:??) -> void
+          case 10: // # 10 : SetPixelColor (idx:int, color:int wrgb) -> void
             {
             int32_t idx = be_toint(vm, 3);
-            uint32_t rgbw = be_toint(vm, 4);
-            uint8_t w = (rgbw >> 24) & 0xFF;
-            uint8_t r = (rgbw >> 16) & 0xFF;
-            uint8_t g = (rgbw >>  8) & 0xFF;
-            uint8_t b = (rgbw      ) & 0xFF;
-            if (native)             Ws2812SetPixelColor(idx, r, g, b, w);
-            if (s_ws2812_grb)       s_ws2812_grb->SetPixelColor(idx, RgbColor(r, g, b));
-            if (s_sk6812_grbw)      s_sk6812_grbw->SetPixelColor(idx, RgbwColor(r, g, b, w));
+            uint32_t wrgb = be_toint(vm, 4);
+            if (strip) {
+              strip->SetPixelColor(idx, wrgb);
+            } else {
+              uint8_t w = (wrgb >> 24) & 0xFF;
+              uint8_t r = (wrgb >> 16) & 0xFF;
+              uint8_t g = (wrgb >>  8) & 0xFF;
+              uint8_t b = (wrgb      ) & 0xFF;
+              Ws2812SetPixelColor(idx, r, g, b, w);
+            }
             }
             break;
-          case 11: // # 11 : GetPixelColor (idx:int) -> color:??
+          case 11: // # 11 : GetPixelColor (idx:int) -> color:int wrgb
             {
             int32_t idx = be_toint(vm, 3);
-
-            if (native) {
+            if (strip) {
+              be_pushint(vm, strip->GetPixelColor(idx));
+            } else {
               be_pushint(vm, Ws2812GetPixelColor(idx));
-            }
-            if (s_ws2812_grb) {
-              RgbColor rgb = s_ws2812_grb->GetPixelColor(idx);
-              be_pushint(vm, (rgb.R << 16) | (rgb.G << 8) | rgb.B);
-            }
-            if (s_sk6812_grbw) {
-              RgbwColor rgbw = s_sk6812_grbw->GetPixelColor(idx);
-              be_pushint(vm, (rgbw.W << 24) | (rgbw.R << 16) | (rgbw.G << 8) | rgbw.B);
             }
             }
             break;

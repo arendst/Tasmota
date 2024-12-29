@@ -38,25 +38,24 @@ const uint32_t POWER_SIZE = 32;             // Power (relay) bit count
  * Constants
 \*********************************************************************************************/
 
-// Why 28? Because in addition to relays there may be lights and uint32_t bitmap can hold up to 32 devices
 #ifdef ESP8266
 const uint8_t MAX_RELAYS = 8;               // Max number of relays selectable on GPIO
-const uint8_t MAX_INTERLOCKS = 4;           // Max number of interlock groups (up to MAX_INTERLOCKS_SET)
+const uint8_t MAX_INTERLOCKS = 16;          // Max number of interlock groups (up to MAX_INTERLOCKS_SET)
 const uint8_t MAX_SWITCHES = 8;             // Max number of switches selectable on GPIO
 const uint8_t MAX_KEYS = 8;                 // Max number of keys or buttons selectable on GPIO
 #endif  // ESP8266
 #ifdef ESP32
-const uint8_t MAX_RELAYS = 28;              // Max number of relays selectable on GPIO
-const uint8_t MAX_INTERLOCKS = 14;          // Max number of interlock groups (up to MAX_INTERLOCKS_SET)
-const uint8_t MAX_SWITCHES = 28;            // Max number of switches selectable on GPIO
-const uint8_t MAX_KEYS = 28;                // Max number of keys or buttons selectable on GPIO
+const uint8_t MAX_RELAYS = 32;              // Max number of relays selectable on GPIO
+const uint8_t MAX_INTERLOCKS = 16;          // Max number of interlock groups (up to MAX_INTERLOCKS_SET)
+const uint8_t MAX_SWITCHES = 32;            // Max number of switches selectable on GPIO
+const uint8_t MAX_KEYS = 32;                // Max number of keys or buttons selectable on GPIO
 #endif  // ESP32
 const uint8_t MAX_RELAYS_SET = 32;          // Max number of relays
 const uint8_t MAX_KEYS_SET = 32;            // Max number of keys
 
 // Changes to the following MAX_ defines will impact settings layout
-const uint8_t MAX_INTERLOCKS_SET = 14;      // Max number of interlock groups (MAX_RELAYS_SET / 2)
-const uint8_t MAX_SWITCHES_SET = 28;        // Max number of switches
+const uint8_t MAX_INTERLOCKS_SET = 16;      // Max number of interlock groups (MAX_RELAYS_SET / 2)
+const uint8_t MAX_SWITCHES_SET = 32;        // Max number of switches
 const uint8_t MAX_LEDS = 4;                 // Max number of leds
 const uint8_t MAX_PWMS_LEGACY = 5;          // Max number of PWM channels in first settings block - Legacy limit for ESP8266, but extended for ESP32 (see below)
 #ifdef ESP32                                // Max number of PWM channels (total including extended) - ESP32 only
@@ -108,7 +107,7 @@ const uint8_t MAX_I2S = 2;                  // Max number of Hardware I2S contro
   const uint8_t MAX_RMT = 0;                // Max number or RMT channels (0 if unknown)
   #endif
 #else
-const uint8_t MAX_SPI = 0;                  // Max number of Hardware SPI controllers (ESP8266 = 0, no choice)
+const uint8_t MAX_SPI = 1;                  // Max number of Hardware SPI controllers
 const uint8_t MAX_I2S = 0;                  // Max number of Hardware I2S controllers (ESP8266 = 0, no choice)
 const uint8_t MAX_RMT = 0;                  // No RMT channel on ESP8266
 #endif
@@ -280,13 +279,13 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
 #define KNX_SLOT3              28
 #define KNX_SLOT4              29
 #define KNX_SLOT5              30
-#define KNX_SLOT6              31
-#define KNX_SLOT7              32
-#define KNX_SLOT8              33
-#define KNX_SLOT9              34
-#define KNX_SCENE              35
-#define KNX_DIMMER             36   // aka DPT_Scaling 5.001
-#define KNX_COLOUR             37   // aka DPT_Colour_RGB 232.600 or DPT_Colour_RGBW 251.600
+#define KNX_SCENE              31
+#define KNX_DIMMER             32   // aka DPT_Scaling 5.001
+#define KNX_COLOUR             33   // aka DPT_Colour_RGB 232.600 or DPT_Colour_RGBW 251.600
+#define KNX_SLOT6              34
+#define KNX_SLOT7              35
+#define KNX_SLOT8              36
+#define KNX_SLOT9              37
 #define KNX_MAX_device_param   37
 #define MAX_KNXTX_CMNDS        9
 
