@@ -40,21 +40,20 @@
 #define XSNS_17                      17
 
 #define SENSEAIR_MODBUS_SPEED        9600
-#define SENSEAIR_DEVICE_ADDRESS      0xFE    // Any address
+#define SENSEAIR_BROADCAST_ADDRESS   0xFE
 
-#define COMMAND_READ_HOLDING_REGISTER 0x03
 #define COMMAND_READ_INPUT_REGISTER   0x04
 
-#define IR_METER_STATUS              1
-#define IR_SPACE_CO2                 4
-#define IR_SPACE_TEMP                5
-#define IR_SPACE_HUMIDITY            6
-#define IR_TEMP_ADJUSTMENT           11
-#define IR_SENSOR_ETC_LOW            25
-#define IR_SENSOR_ETC_HIGH           26
-#define IR_SENSOR_TYPE_ID_LOW        27
-#define IR_SENSOR_TYPE_ID_HIGH       28
-#define IR_RELAY_STATE               29
+#define IR_METER_STATUS              0
+#define IR_SPACE_CO2                 3
+#define IR_SPACE_TEMP                4  // Not valid for S8 sensors
+#define IR_SPACE_HUMIDITY            5  // Only valid for Kx0 sensors
+#define IR_TEMP_ADJUSTMENT           10
+#define IR_SENSOR_ETC_LOW            24
+#define IR_SENSOR_ETC_HIGH           25
+#define IR_SENSOR_TYPE_ID_LOW        26
+#define IR_SENSOR_TYPE_ID_HIGH       27
+#define IR_RELAY_STATE               28
 
 #define SENSOR_TYPE_INIT             0
 #define SENSOR_TYPE_UNKNOWN          1
@@ -76,32 +75,30 @@ TasmotaModbus *SenseairModbus;
 const char kSenseairTypes[] PROGMEM = "Kx0|S8|S88";
 
 uint8_t senseair_type = SENSOR_TYPE_INIT;
-char senseair_types[7];
+char senseair_types[4];
 
 uint16_t senseair_co2 = 0;
 float senseair_temperature = 0;
 float senseair_humidity = 0;
 
-const uint8_t input_registers[] {
+const uint8_t input_registers[] = {
     IR_SENSOR_ETC_LOW,
     IR_SENSOR_TYPE_ID_LOW,
     IR_METER_STATUS,
     IR_SPACE_CO2,
     IR_SPACE_TEMP,
     IR_SPACE_HUMIDITY,
-//     IR_RELAY_STATE,
-//     IR_TEMP_ADJUSTMENT
 };
 
 #define INPUT_REGISTERS_LOOP_START 2
-#define INPUT_REGISTERS_LOOP_END_S8 4
-#define INPUT_REGISTERS_LOOP_END_S88 5
-#define INPUT_REGISTERS_LOOP_END_KX0 6
+#define INPUT_REGISTERS_LOOP_END_KX0 (sizeof input_registers / sizeof *input_registers)
+#define INPUT_REGISTERS_LOOP_END_S88 (INPUT_REGISTERS_LOOP_END_KX0 - 1)
+#define INPUT_REGISTERS_LOOP_END_S8 (INPUT_REGISTERS_LOOP_END_KX0 - 2)
 
 uint8_t senseair_read_state = 0;
 uint8_t senseair_send_retry = 0;
 
-void Senseair250ms(void)              // Every 250 mSec
+void Senseair250ms(void)
 {
   if (senseair_type == SENSOR_TYPE_INIT || senseair_type == SENSOR_TYPE_NONE) {
     return;
@@ -141,13 +138,11 @@ void Senseair250ms(void)              // Every 250 mSec
     }
 
     if (error) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_SENSEAIR "Read IR%d error %d"), input_registers[senseair_read_state], error);
+      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_SENSEAIR "Reg %d error %d"), input_registers[senseair_read_state], error);
     } else {
       // Process register contents.
       switch(input_registers[senseair_read_state]) {
-//         case IR_SENSOR_TYPE_ID_LOW:                // 0x1A (26) IR_SENSOR_TYPE_ID_LOW - S8: fe 04 02 01 77 ec 92
-//           break;
-        case IR_METER_STATUS:                // 0x00 (0) IR_METER_STATUS - fe 04 02 00 00 ad 24
+        case IR_METER_STATUS:
           switch (senseair_type) {
           case SENSOR_TYPE_S8: value &= 0x7f; break;
           case SENSOR_TYPE_S88: value &= 0xff; break;
@@ -157,24 +152,18 @@ void Senseair250ms(void)              // Every 250 mSec
             AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_SENSEAIR "Meter status 0x%04X"), value);
           }
           break;
-        case IR_SPACE_CO2:                // 0x03 (3) IR_SPACE_CO2 - fe 04 02 06 2c af 59
+        case IR_SPACE_CO2:
           senseair_co2 = value;
 #ifdef USE_LIGHT
           LightSetSignal(CO2_LOW, CO2_HIGH, senseair_co2);
 #endif  // USE_LIGHT
           break;
-        case IR_SPACE_TEMP:                // 0x04 (4) IR_SPACE_TEMP - S8: fe 84 02 f2 f1 - Illegal Data Address
+        case IR_SPACE_TEMP:
           senseair_temperature = ConvertTemp((float)value / 100);
           break;
-        case IR_SPACE_HUMIDITY:                // 0x05 (5) IR_SPACE_HUMIDITY - S8: fe 84 02 f2 f1 - Illegal Data Address
+        case IR_SPACE_HUMIDITY:
           senseair_humidity = ConvertHumidity((float)value / 100);
           break;
-//         case 5:                // 0x1C (28) IR_RELAY_STATE - S8: fe 04 02 01 54 ad 4b - firmware version
-//           AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_SENSEAIR "Relay state %d"), (value >> 8) & 1);
-//           break;
-//         case 6:                // 0x0A (10) READ_TEMP_ADJUSTMENT - S8: fe 84 02 f2 f1 - Illegal Data Address
-//           AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_SENSEAIR "Temp adjustment %d"), value);
-//           break;
       }
     }
 
@@ -204,9 +193,7 @@ void Senseair250ms(void)              // Every 250 mSec
   if (0 == senseair_send_retry || data_ready) {
     // Send the command (again).
     senseair_send_retry = 5;
-    const uint16_t start_address = input_registers[senseair_read_state] - 1;
-    const uint16_t count = 1;
-    SenseairModbus->Send(SENSEAIR_DEVICE_ADDRESS, COMMAND_READ_INPUT_REGISTER, start_address, count);
+    SenseairModbus->Send(SENSEAIR_BROADCAST_ADDRESS, COMMAND_READ_INPUT_REGISTER, input_registers[senseair_read_state], 1);
   } else {
     senseair_send_retry--;
   }
@@ -244,7 +231,7 @@ void SenseairShow(uint32_t function)
     ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_CO2 "\":%d"), senseair_types, senseair_co2);
     switch (senseair_type) {
       case SENSOR_TYPE_S88:
-        ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%f,\""), senseair_temperature);
+        ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%1_f"), &senseair_temperature);
         break;
       case SENSOR_TYPE_KX0:
         ResponseAppend_P(PSTR(","));
