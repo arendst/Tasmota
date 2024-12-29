@@ -1,5 +1,6 @@
 /////////////////////////////////////////////////////////////////////
 // compressed by tools/unishox/compress-html-uncompressed.py
+// input sha256: 996873eafc91c9d084e3f68b60d32a37a27e91dd1acd0863fc1096119d8de6a2
 /////////////////////////////////////////////////////////////////////
 
 const size_t HTTP_HEAD_LAST_SCRIPT32_SIZE = 1013;
