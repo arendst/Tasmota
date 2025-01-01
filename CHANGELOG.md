@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [14.4.1.2] 
 ### Added
 - Support for ESP32 Two-Wire Automotive Interface (TWAI) or Controller Area Network (CAN) busses
+- Support for Senseair S88 CO2 sensor (#22733)
 
 ### Breaking Changed
 
