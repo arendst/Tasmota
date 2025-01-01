@@ -532,6 +532,7 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_BL0906_RX            6  // Model number of phases, 2 (EM2), 6 (EM6)
 #define MAX_BL0942_RX            8  // Baudrates 1/5 (4800), 2/6 (9600), 3/7 (19200), 4/8 (38400), Support Positive values only 1..4, Support also negative values 5..8
 #define MAX_CSE7761              2  // Model 1/2 (DUALR3), 2/2 (POWCT)
+#define MAX_TWAI                 SOC_TWAI_CONTROLLER_NUM
 
 const uint16_t kGpioNiceList[] PROGMEM = {
   GPIO_NONE,                                     // Not used
@@ -1139,11 +1140,16 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_WOOLIIS
   AGPIO(GPIO_WOOLIIS_RX),                        // Wooliis Battery capacity monitor Serial interface
 #endif
+
+#ifdef ESP32
 #ifdef USE_ESP32_TWAI
-  AGPIO(GPIO_TWAI_TX),                           // ESP32 TWAI serial interface
-  AGPIO(GPIO_TWAI_RX),
-  AGPIO(GPIO_TWAI_BO),
-  AGPIO(GPIO_TWAI_CLK),
+#if SOC_TWAI_SUPPORTED
+  AGPIO(GPIO_TWAI_TX) + AGMAX(MAX_TWAI),         // ESP32 TWAI serial interface
+  AGPIO(GPIO_TWAI_RX) + AGMAX(MAX_TWAI),
+  AGPIO(GPIO_TWAI_BO) + AGMAX(MAX_TWAI),
+  AGPIO(GPIO_TWAI_CLK) + AGMAX(MAX_TWAI),
+#endif
+#endif
 #endif
 
 /*-------------------------------------------------------------------------------------------*\
