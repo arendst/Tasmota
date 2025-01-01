@@ -94,14 +94,24 @@ class twai_cls
     self.dz_flow_temp = 0
   end
 
+  #----------------------------------------------------------------------------------------------
+  Allow TWAI driver configuration on restart (if this file is installed by preinit.be)
+  ----------------------------------------------------------------------------------------------#
   def config(bus)
 #    if bus != 1 return nil end                       # Exit if not my bus
     return self.twai_mode << 3 | self.twai_speed     # Initial configure TWAI driver
   end
 
-  def decode(bus, ident, data1, data2)
+  #----------------------------------------------------------------------------------------------
+  This example decodes Remeha Calenta Ace CAN-bus messages and sends it to predefined Domoticz idx
+  ----------------------------------------------------------------------------------------------#
+  def decode(param, ident, data1, data2)
+    var bus = param & 0xF                            # Bus number (1..3)
 #    if bus != 1 return nil end                       # Exit if not my bus
-    var id = ident & 0x7ff                           # Remeha uses 11 bit Standard Frame Format
+    var len = param >> 4 & 0xF                       # Number of data bytes (0..8)
+    var extended = ident >> 31 & 0x1                 # Extended identifier flag (0..1)
+    if extended == 1 return nil end                  # Remeha uses 11-bit Standard Frame Format
+    var id = ident & 0x1fffffff
     if id == 0x076                                   # Incremental counter from 0 to 255
 #      tasmota.log(f"RMH: 0x{id:03x} Count {data1}", 3)
     elif id == 0x100                                 # Date and Time
@@ -130,7 +140,9 @@ class twai_cls
     self.active = 1                                  # At least one valid decode
   end
 
-  #- add sensor value to teleperiod -#
+  #----------------------------------------------------------------------------------------------
+  Add sensor value to teleperiod
+  ----------------------------------------------------------------------------------------------#
   def json_append()
     if !self.active return nil end                   # Exit if never decoded something
     import string
@@ -139,11 +151,17 @@ class twai_cls
     tasmota.response_append(msg)
   end
 
-  #- perform action just after teleperiod -#
+  #----------------------------------------------------------------------------------------------
+  Perform action just after teleperiod (not used)
+  ----------------------------------------------------------------------------------------------#
 #  def after_teleperiod() 
-  #- perform action every second -#
+  #----------------------------------------------------------------------------------------------
+  Perform action every second
+
+  As many datagrams can occur sending at teleperiod time takes too long
+  Also only send if changed to reduce TWAI wait time 
+  ----------------------------------------------------------------------------------------------#
   def every_second()
-    # Only send if changed to reduce TWAI wait time
     if self.dz_pressure != self.pressure
       tasmota.cmd('_DzSend1 523,' .. self.pressure)   # Send pressure to Domoticz
     end
@@ -165,7 +183,9 @@ class twai_cls
     self.dz_am014_substatus = self.am014_substatus
   end
 
-  #- display sensor value in the web UI -#
+  #----------------------------------------------------------------------------------------------
+  Display sensor value in the web UI
+  ----------------------------------------------------------------------------------------------#
   def web_sensor()
     if !self.active return nil end                   # Exit if never decoded something
     import string
@@ -178,6 +198,7 @@ class twai_cls
     tasmota.web_send_decimal(msg)
   end
 end
+
 twai = twai_cls()
 tasmota.add_driver(twai)
 
@@ -200,12 +221,13 @@ bool TWAIBerryDecode(uint32_t bus, uint32_t identifier, uint32_t data_length_cod
     if (be_getmember(vm, 1, "decode")) {  //  and function
       be_pushvalue(vm, -2);
 
-      uint32_t ident = identifier | data_length_code << 28;
+      uint32_t param = bus +1 | data_length_code << 4;
+      uint32_t ident = identifier;
       uint32_t data1 = data[3] << 24 | data[2] << 16 | data[1] << 8 | data[0];
       uint32_t data2 = data[7] << 24 | data[6] << 16 | data[5] << 8 | data[4];
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TWA: Bus%d ident %08X, data1 %08X, data2 %08X"), bus +1, ident, data1, data2);
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TWA: Bus%d param %08X, ident %08X, data1 %08X, data2 %08X"), bus +1, param, ident, data1, data2);
 
-      be_pushint(vm, bus +1);             // Bus 1, 2 or 3
+      be_pushint(vm, param);              // Bus 1, 2 or 3 | data_length
       be_pushint(vm, ident);
       be_pushint(vm, data1);
       be_pushint(vm, data2);
@@ -370,12 +392,13 @@ void TWAIRead(uint32_t bus) {
     // One or more messages received. Handle all.
     twai_message_t message;
     while (twai_receive_v2(Twai.bus[bus], &message, 0) == ESP_OK) {
+      uint32_t identifier = message.identifier | message.extd << 31;  // Add extended 29-bit flag
 #ifdef USE_BERRY
-      if (TWAIBerryDecode(bus, message.identifier, message.data_length_code, message.data)) { continue; }
+      if (TWAIBerryDecode(bus, identifier, message.data_length_code, message.data)) { continue; }
 #endif  // USE_BERRY
       // Show log if no berry found (Messages come too fast for supporting MQTT at this time)
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TWA: Bus%d Id 0x%08X, Rcvd '%*_H'"),
-        bus +1, message.identifier, message.data_length_code, message.data);
+        bus +1, identifier, message.data_length_code, message.data);
     }
   }
 }
