@@ -2950,6 +2950,18 @@ void WcUpdateStats(void) {
   Wc.loopcounter = 0;
 }
 
+void WcSensorStats(void) {
+  if (!Wc.up) { return; }
+
+  ResponseAppend_P(PSTR(",\"CAMERA\":{"
+                        "\"" D_WEBCAM_STATS_FPS "\":%d,"
+                        "\"" D_WEBCAM_STATS_CAMFAIL "\":%d,"
+                        "\"" D_WEBCAM_STATS_JPEGFAIL "\":%d,"
+                        "\"" D_WEBCAM_STATS_CLIENTFAIL "\":%d}"),
+                   WcStats.camfps, WcStats.camfail,
+                   WcStats.jpegfail, WcStats.clientfail);
+}
+
 #ifndef D_WEBCAM_STATE
 #define D_WEBCAM_STATE "State"
 #define D_WEBCAM_POWEREDOFF "PowerOff"
@@ -2993,6 +3005,9 @@ bool Xdrv99(uint32_t function) {
       break;
     case FUNC_EVERY_SECOND:
       WcUpdateStats();
+      break;
+    case FUNC_JSON_APPEND:
+      WcSensorStats();
       break;
     case FUNC_WEB_SENSOR:
       WcStatsShow();
