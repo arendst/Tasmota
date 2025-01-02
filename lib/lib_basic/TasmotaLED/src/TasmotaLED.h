@@ -91,6 +91,8 @@ public:
   TasmotaLED(uint16_t type, uint16_t num_leds);
   ~TasmotaLED();
 
+  void SetPixelCount(uint16_t num_leds);
+
   bool Begin(void);
   void SetPusher(TasmotaLEDPusher *pusher);   // needs to be called before `Begin()`, sets the hardware implementation
   void Show(void);                            // pushes the pixels to the LED strip

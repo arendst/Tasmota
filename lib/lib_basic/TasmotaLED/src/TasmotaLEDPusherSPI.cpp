@@ -104,7 +104,7 @@ TasmotaLEDPusherSPI::TasmotaLEDPusherSPI(int8_t pin) : _pin(pin) {
       .sclk_io_num = -1,
       .quadwp_io_num = -1,
       .quadhd_io_num = -1,
-      .max_transfer_sz = _pixel_count * _pixel_size * SPI_BYTES_PER_COLOR_BYTE,
+      .max_transfer_sz = 0, // _pixel_count * _pixel_size * SPI_BYTES_PER_COLOR_BYTE,
   };
   _err = spi_bus_initialize(spi_host, &spi_bus_cfg, _with_dma ? SPI_DMA_CH_AUTO : SPI_DMA_DISABLED);
   if (_err == ESP_OK) {
@@ -174,6 +174,39 @@ err:
   }
   _initialized = false;
   return false;
+}
+
+bool TasmotaLEDPusherSPI::SetPixelCount(uint16_t pixel_count) {
+  if (!_initialized) { return false; }
+  if (pixel_count > 0 && _pixel_count != pixel_count) {
+    _pixel_count = pixel_count;
+
+    if (_spi_strip.pixel_buf) {
+      heap_caps_free(_spi_strip.pixel_buf);
+      _spi_strip.pixel_buf = nullptr;
+    }
+
+    _spi_strip.strip_len = _pixel_count;
+    uint32_t mem_caps = MALLOC_CAP_DEFAULT;
+    if (_with_dma) {  // TODO
+      // DMA buffer must be placed in internal SRAM
+      mem_caps |= MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA;
+    }
+    _spi_strip.pixel_buf = (uint8_t *)heap_caps_calloc(1, _pixel_count * _pixel_size * SPI_BYTES_PER_COLOR_BYTE, mem_caps);
+    if (_spi_strip.pixel_buf == nullptr) {
+      AddLog(LOG_LEVEL_INFO, PSTR("LED: Error no mem for spi strip"));
+      if (_spi_strip.spi_device) {
+        spi_bus_remove_device(_spi_strip.spi_device);
+      }
+      if (_spi_strip.spi_host) {
+        spi_bus_free(_spi_strip.spi_host);
+      }
+      _initialized = false;
+      return false;
+    }
+    return true;
+  }
+  return true;
 }
 
 bool TasmotaLEDPusherSPI::CanShow(void) {
