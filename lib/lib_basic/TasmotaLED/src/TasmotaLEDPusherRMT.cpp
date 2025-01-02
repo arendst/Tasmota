@@ -213,6 +213,15 @@ bool TasmotaLEDPusherRMT::Begin(uint16_t pixel_count, uint16_t pixel_size, const
   return true;
 }
 
+bool TasmotaLEDPusherRMT::SetPixelCount(uint16_t pixel_count) {
+  if (!_initialized) { return false; }
+  if (pixel_count > 0 && _pixel_count != pixel_count) {
+    _pixel_count = pixel_count;
+    return true;
+  }
+  return true;
+}
+
 bool TasmotaLEDPusherRMT::CanShow(void) {
   if (_channel && _initialized) {
     return (ESP_OK == rmt_tx_wait_all_done(_channel, 0));

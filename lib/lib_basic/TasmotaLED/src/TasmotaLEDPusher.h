@@ -93,6 +93,7 @@ public:
   }
   virtual bool Push(uint8_t *buf) = 0;
   virtual bool CanShow(void) = 0;
+  virtual bool SetPixelCount(uint16_t pixel_count) = 0;
 
   static uint32_t ResolveHardware(uint32_t hw);    // convert to the appropriate hardware acceleration based on capacities of the SOC
   static TasmotaLEDPusher * Create(uint32_t hw, int8_t gpio);   // create instance for the provided type, or nullptr if failed
@@ -118,6 +119,7 @@ public:
   ~TasmotaLEDPusherRMT();
 
   bool Begin(uint16_t pixel_count, uint16_t pixel_size, const TasmotaLED_Timing * led_timing) override;
+  bool SetPixelCount(uint16_t pixel_count) override;
 
   bool Push(uint8_t *buf) override;
   bool CanShow(void) override;
@@ -152,6 +154,7 @@ public:
   ~TasmotaLEDPusherSPI();
 
   bool Begin(uint16_t pixel_count, uint16_t pixel_size, const TasmotaLED_Timing * led_timing) override;
+  bool SetPixelCount(uint16_t pixel_count) override;
 
   bool Push(uint8_t *buf) override;
   bool CanShow(void) override;

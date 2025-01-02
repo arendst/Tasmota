@@ -109,6 +109,22 @@ TasmotaLED::~TasmotaLED() {
   _buf_show = nullptr;
 }
 
+void TasmotaLED::SetPixelCount(uint16_t num_leds) {
+  if (num_leds != _pixel_count) {
+    _pixel_count = num_leds;
+    delete _buf_work;
+    _buf_work = new uint8_t[_pixel_count * _pixel_size];
+    memset(_buf_work, 0, _pixel_count * _pixel_size);
+    delete _buf_show;
+    _buf_show = new uint8_t[_pixel_count * _pixel_size];
+    memset(_buf_show, 0, _pixel_count * _pixel_size);
+    if (_pusher) {
+      _pusher->SetPixelCount(_pixel_count);
+    }
+  }
+}
+
+
 // Color is passed as 0xWWRRGGBB and copied as WWRRGGBB in _buf_work
 void TasmotaLED::ClearTo(uint32_t wrgb, int32_t first, int32_t last) {
   // adjust first and last to be in range of 0 to _pixel_count-1
