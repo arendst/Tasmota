@@ -8,18 +8,14 @@
 # 01 : begin        void -> void
 # 02 : show         void -> void
 # 03 : CanShow      void -> bool
-# 04 : IsDirty      void -> bool
-# 05 : Dirty        void -> void
+# 04 : IsDirty      void -> bool (deprecated)
+# 05 : Dirty        void -> void (deprecated)
 # 06 : Pixels       void -> bytes() (mapped to the buffer)
 # 07 : PixelSize    void -> int
 # 08 : PixelCount   void -> int
-# 09 : ClearTo      (color:??) -> void
-# 10 : SetPixelColor (idx:int, color:??) -> void
-# 11 : GetPixelColor (idx:int) -> color:??
-# 20 : RotateLeft   (rot:int [, first:int, last:int]) -> void
-# 21 : RotateRight  (rot:int [, first:int, last:int]) -> void
-# 22 : ShiftLeft    (rot:int [, first:int, last:int]) -> void
-# 23 : ShiftRight   (rot:int [, first:int, last:int]) -> void
+# 09 : ClearTo      (color:0xRRGGBB or 0xWWRRGGBB) -> void
+# 10 : SetPixelColor (idx:int, color:0xRRGGBB or 0xWWRRGGBB) -> void
+# 11 : GetPixelColor (idx:int) -> color:0xRRGGBB or 0xWWRRGGBB
 
 class Leds_ntv end
 
@@ -116,10 +112,10 @@ class Leds : Leds_ntv
   def can_show()
     return self.call_native(3)
   end
-  def is_dirty()
+  def is_dirty()                ## DEPRECATED
     return self.call_native(4)
   end
-  def dirty()
+  def dirty()                   ## DEPRECATED
     self.call_native(5)
   end
   def pixels_buffer(old_buf)
@@ -216,10 +212,10 @@ class Leds : Leds_ntv
       def can_show()
         return self.strip.can_show()
       end
-      def is_dirty()
+      def is_dirty()                ## DEPRECATED
         return self.strip.is_dirty()
       end
-      def dirty()
+      def dirty()                   ## DEPRECATED
         self.strip.dirty()
       end
       def pixels_buffer()
@@ -303,10 +299,10 @@ class Leds : Leds_ntv
       def can_show()
         return self.strip.can_show()
       end
-      def is_dirty()
+      def is_dirty()                ## DEPRECATED
         return self.strip.is_dirty()
       end
-      def dirty()
+      def dirty()                   ## DEPRECATED
         self.strip.dirty()
       end
       def pixels_buffer()
