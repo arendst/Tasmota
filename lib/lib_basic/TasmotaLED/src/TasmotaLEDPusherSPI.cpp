@@ -104,7 +104,7 @@ TasmotaLEDPusherSPI::TasmotaLEDPusherSPI(int8_t pin) : _pin(pin) {
       .sclk_io_num = -1,
       .quadwp_io_num = -1,
       .quadhd_io_num = -1,
-      .max_transfer_sz = 0; // _pixel_count * _pixel_size * SPI_BYTES_PER_COLOR_BYTE,
+      .max_transfer_sz = 0, // _pixel_count * _pixel_size * SPI_BYTES_PER_COLOR_BYTE,
   };
   _err = spi_bus_initialize(spi_host, &spi_bus_cfg, _with_dma ? SPI_DMA_CH_AUTO : SPI_DMA_DISABLED);
   if (_err == ESP_OK) {
