@@ -24,8 +24,8 @@
  * https://rainsensors.com/rg-9-15-protocol/
  *
  * Rule for Domoticz Rain sensor index 418:
- * on tele-rg-15#flowrate do var1 %value% endon
- * on tele-rg-15#event do backlog var2 %value%; mult1 100; event sendrain endon
+ * on tele-rg15#flowrate do var1 %value% endon
+ * on tele-rg15#event do backlog var2 %value%; mult1 100; event sendrain endon
  * on event#sendrain do dzsend1 418,%var1%;%var2% endon
 \*********************************************************************************************/
 
