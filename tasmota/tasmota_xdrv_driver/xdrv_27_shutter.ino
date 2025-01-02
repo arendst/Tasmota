@@ -1974,7 +1974,7 @@ bool Xdrv27(uint32_t function)
         }
         break;
       case FUNC_JSON_APPEND:
-        if (!sensor_data_reported || TasmotaGlobal.tele_period == 0) {
+        if (!sensor_data_reported || TasmotaGlobal.tele_period != 2) {
           sensor_data_reported = true;
           for (uint8_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
             uint8_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);

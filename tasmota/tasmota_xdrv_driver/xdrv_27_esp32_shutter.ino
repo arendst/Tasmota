@@ -2383,7 +2383,7 @@ bool Xdrv27(uint32_t function)
         }
         break;
       case FUNC_JSON_APPEND:
-        if (!ShutterGlobal.sensor_data_reported || TasmotaGlobal.tele_period == 0) {
+        if (!ShutterGlobal.sensor_data_reported || TasmotaGlobal.tele_period != 2) {          
           ShutterGlobal.sensor_data_reported = true;
           for (uint8_t i = 0; i < TasmotaGlobal.shutters_present; i++) {
             ResponseAppend_P(",");

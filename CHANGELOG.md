@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- Shutter discovery message regression from v14.4.1 (#22730)
 
 ### Removed
 
