@@ -105,8 +105,9 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | **Feature or Sensor**     | **l** | **t** | **k** | **s** | **i** | **d** | **Remarks**                 |
 | USE_I2C                   | -     | x / x | x     | x     | -     | x     |
 | USE_RTC_CHIPS             | -     | - / x | -     | -     | -     | -     |
-| -USE_DS3231               | -     | - / - | -     | -     | -     | -     |
 | -USE_BM8563               | -     | - / x | -     | -     | -     | -     |
+| -USE_DS3231               | -     | - / - | -     | -     | -     | -     |
+| -USE_PCF85063             | -     | - / - | -     | -     | -     | -     |
 | -USE_PCF85363             | -     | - / - | -     | -     | -     | -     |
 | -USE_RX8010               | -     | - / - | -     | -     | -     | -     |
 | USE_SHT                   | -     | - / x | -     | x     | -     | -     |
@@ -249,6 +250,7 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_DYP                   | -     | - / - | -     | -     | -     | -     |
 | USE_TM1638                | -     | - / x | -     | x     | -     | -     |
 | USE_HX711                 | -     | - / x | -     | x     | -     | -     |
+| -USE_HX711_M5SCALES       | -     | - / - | -     | -     | -     | -     |
 | USE_TX2x_WIND_SENSOR      | -     | - / - | -     | -     | -     | -     |
 | USE_WINDMETER             | -     | - / - | -     | -     | -     | -     |
 | USE_RC_SWITCH             | -     | - / x | -     | x     | -     | -     |
@@ -283,6 +285,7 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_SONOFF_SPM            |       | / x   |       |       |       |       |
 | USE_DISPLAY_TM1621_SONOFF |       | / x   |       |       |       |       |
 | USE_SHELLY_PRO            |       | / x   |       |       |       |       |
+| USE_ESP32_TWAI            |       | / x   |       |       |       |       |
 | USE_DALI                  |       | / x   |       |       |       |       |
 | USE_DINGTIAN_RELAY        |       | / -   |       |       |       |       |
 | USE_MATTER_DEVICE         |       | / x   |       |       |       |       | See SetOption151            |

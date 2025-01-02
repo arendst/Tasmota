@@ -114,6 +114,7 @@ class twai_cls
     var id = ident & 0x1fffffff
     if id == 0x076                                   # Incremental counter from 0 to 255
 #      tasmota.log(f"RMH: 0x{id:03x} Count {data1}", 3)
+#    elif id == 0x080                                 # Heartbeat every second
     elif id == 0x100                                 # Date and Time
       var epoch = 441763200 + (data2 * 24 * 60 * 60) + (data1 / 1000)
 #      tasmota.log(f"RMH: 0x{id:03x} Time {tasmota.time_str(epoch)}", 3)
@@ -411,8 +412,8 @@ void TWAIInit(void) {
   Twai.supported = false;
   for (uint32_t bus = 0; bus < MAX_TWAI; bus++) {
     if (PinUsed(GPIO_TWAI_TX, bus) && PinUsed(GPIO_TWAI_RX, bus)) { 
-      Twai.speed[bus] = TWAI_SPEED_1MBITS;
-      Twai.mode[bus] = TWAI_MODE_LISTEN_ONLY;  // 0 = TWAI_MODE_NORMAL, 1 = TWAI_MODE_NO_ACK, 2 = TWAI_MODE_LISTEN_ONLY
+      Twai.speed[bus] = TWAI_SPEED_100KBITS;
+      Twai.mode[bus] = TWAI_MODE_NORMAL;  // 0 = TWAI_MODE_NORMAL, 1 = TWAI_MODE_NO_ACK, 2 = TWAI_MODE_LISTEN_ONLY
 #ifdef USE_BERRY
       TWAIBerryConfig(bus);
 #endif  // USE_BERRY
