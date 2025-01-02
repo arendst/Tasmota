@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Support for ESP32 Two-Wire Automotive Interface (TWAI) or Controller Area Network (CAN) busses
 - Support for Senseair S88 CO2 sensor (#22733)
 - TasmotaLED change dynamically the number of pixels
+- Expand `Pixels` with reverse, height and alternate
 
 ### Breaking Changed
 
