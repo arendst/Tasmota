@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Support for Senseair S88 CO2 sensor (#22733)
 - ESP32 TasmotaLED change dynamically the number of pixels (#22754)
 - ESP32 expand `Pixels` with reverse, height and alternate (#22755)
+- Berry allow `bytes().append(nil)`
 
 ### Breaking Changed
 

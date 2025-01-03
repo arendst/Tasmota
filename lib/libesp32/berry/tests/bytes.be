@@ -155,6 +155,11 @@ assert(str(b1) == "bytes('AA')")
 b1.append('01')
 assert(str(b1) == "bytes('AA3031')")
 
+#- .. with nil -#
+b1 = bytes("1122")
+assert(str(b1 .. nil) == "bytes('1122')")
+assert(str(b1.append(nil)) == "bytes('1122')")
+
 #- item -#
 b = bytes("334455")
 assert(b[0] == 0x33)
