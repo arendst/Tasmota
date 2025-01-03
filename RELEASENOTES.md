@@ -120,6 +120,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for PCF85063 RTC [#22727](https://github.com/arendst/Tasmota/issues/22727)
 - Support for Senseair S88 CO2 sensor [#22733](https://github.com/arendst/Tasmota/issues/22733)
 - Support for ESP32 Two-Wire Automotive Interface (TWAI) or Controller Area Network (CAN) busses
+- ESP32 TasmotaLED change dynamically the number of pixels [#22754](https://github.com/arendst/Tasmota/issues/22754)
+- ESP32 expand `Pixels` with reverse, height and alternate [#22755](https://github.com/arendst/Tasmota/issues/22755)
 - Berry `animate.crenel` primitive [#22673](https://github.com/arendst/Tasmota/issues/22673)
 - Berry scroll to Leds_matrix [#22693](https://github.com/arendst/Tasmota/issues/22693)
 - Berry add unicode encoding to string parsing [#22713](https://github.com/arendst/Tasmota/issues/22713)
