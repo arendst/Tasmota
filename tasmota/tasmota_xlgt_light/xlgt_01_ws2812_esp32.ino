@@ -792,21 +792,21 @@ void CmndLed(void)
 void CmndPixels(void)
 {
   uint32_t parm[4] = { Settings->light_pixels, Settings->light_pixels_reverse,
-                       (uint32_t) Settings->light_pixels_height + 1, Settings->light_pixels_alternate };
+                       (uint32_t) Settings->light_pixels_height_1 + 1, Settings->light_pixels_alternate };
   if (ParseParameters(4, parm) > 0) {
     if ((parm[0] > 0) && (parm[0] <= WS2812_MAX_LEDS)) {
       Ws2812Clear();                     // Clear all known pixels
       Ws2812CanShowWait();
       Settings->light_pixels = parm[0];
       Settings->light_pixels_reverse = parm[1];
-      Settings->light_pixels_height = (parm[2] > 0) ? parm[2] - 1 : 1;
+      Settings->light_pixels_height_1 = (parm[2] > 0) ? parm[2] - 1 : 1;
       Settings->light_pixels_alternate = parm[3];
       Ws2812ChangePixelCount();
       Light.update = true;
     }
   }
   Response_P(PSTR("{\"Pixels\":%i,\"PixelsReverse\":%i,\"PixelsHeight\":%i,\"PixelsAlternate\":%i}"),
-    Settings->light_pixels, Settings->light_pixels_reverse, Settings->light_pixels_height + 1, Settings->light_pixels_alternate);
+    Settings->light_pixels, Settings->light_pixels_reverse, Settings->light_pixels_height_1 + 1, Settings->light_pixels_alternate);
 }
 
 void CmndStepPixels(void)
