@@ -789,7 +789,7 @@ typedef struct {
 
   uint8_t       free_eb0[20];              // EB0  20 bytes
 
-  uint16_t      light_pixels_height : 15;  // EC4  Pixels height minus 1, default 0 (0 means 1 line)
+  uint16_t      light_pixels_height_1 : 15;// EC4  Pixels height minus 1, default 0 (0 means 1 line)
   uint16_t      light_pixels_alternate : 1;// EC4  Indicates alternate lines in Pixels Matrix
   uint8_t       shift595_device_count;     // EC6
   uint8_t       sta_config;                // EC7
