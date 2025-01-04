@@ -597,30 +597,38 @@ class webserver_async
 
   #############################################################
   # Helper function to encode integer as int
-  static def bytes_format_int(b, i, default)
-    b.clear()
-    if (i == nil)   b .. default    return  end
-    var negative = false
-    # sanity check
-    if (i < 0)    i = -i    negative = true   end
-    if (i < 0)    return    end     # special case for MININT
-    if (i == 0)   b.resize(1)   b[0] = 0x30   return  end   # return bytes("30")
+  static def bytes_append_int(b, i, default)
+    var sz = size(b)
+    if (i == 0)         # just append '0'
+      b.resize(sz + 1)
+      b[sz] = 0x30
+    elif (i != nil)     # we have a non-zero value
+      var negative = false
+      # sanity check
+      if (i < 0)    i = -i    negative = true   end
+      if (i < 0)    return b   end     # special case for MININT
+  
+      if negative
+        b.resize(sz + 1)
+        b[sz] = 0x2D
+        sz += 1
+      end
+  
+      var start = sz
+      while i > 0
+        var digit = i % 10
+        b.resize(sz + 1)
+        b[sz] = 0x30 + digit
+        sz += 1
+        i = (i / 10)
+      end
+      # reverse order starting where the integer is
+      b.reverse(start)
 
-    b.resize(11)    # max size for 32 bits ints '-2147483647'
-    var len = 0
-    while i > 0
-      var digit = i % 10
-      b[len] = 0x30 + digit
-      len += 1
-      i = (i / 10)
+    else                # i is `nil`, append default
+      b.append(default)
     end
-    if negative
-      b[len] = 0x2D
-      len += 1
-    end
-    # reverse order
-    b.resize(len)
-    b.reverse()
+    return b
   end
 
   #############################################################
