@@ -155,10 +155,10 @@ assert(str(b1) == "bytes('AA')")
 b1.append('01')
 assert(str(b1) == "bytes('AA3031')")
 
-#- .. with nil -#
-b1 = bytes("1122")
-assert(str(b1 .. nil) == "bytes('1122')")
-assert(str(b1.append(nil)) == "bytes('1122')")
+#- appendhex -#
+assert(bytes().appendhex(bytes("DEADBEEF")) == bytes("4445414442454546"))
+assert(bytes("AABBCC").appendhex(bytes("DEADBEEF")) == bytes("AABBCC4445414442454546"))
+assert(bytes("AABBCC").appendhex(bytes("")) == bytes("AABBCC"))
 
 #- item -#
 b = bytes("334455")

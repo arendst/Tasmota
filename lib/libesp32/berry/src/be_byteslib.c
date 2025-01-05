@@ -18,6 +18,8 @@
 #include <ctype.h>
 #include "be_byteslib.h"
 
+static const char * hex = "0123456789ABCDEF";
+
 /********************************************************************
 ** Base64 lib from https://github.com/Densaugeo/base64_arduino
 **
@@ -715,7 +717,6 @@ buf_impl bytes_check_data(bvm *vm, size_t add_size) {
 }
 
 size_t be_bytes_tohex(char * out, size_t outsz, const uint8_t * in, size_t insz) {
-  static const char * hex = "0123456789ABCDEF";
   const uint8_t * pin = in;
   char * pout = out;
   for (; pin < in + insz; pout += 2, pin++) {
@@ -1317,17 +1318,15 @@ static int m_copy(bvm *vm)
     be_return(vm); /* return self */
 }
 
-/* accept bytes or int as operand */
+/* accept bytes or int or nil as operand */
 static int m_connect(bvm *vm)
 {
     int argc = be_top(vm);
     buf_impl attr = m_read_attributes(vm, 1);
     check_ptr_modifiable(vm, &attr);
     if (attr.fixed) { be_raise(vm, BYTES_RESIZE_ERROR, BYTES_RESIZE_MESSAGE); }
-    if (argc >= 2 && (be_isbytes(vm, 2) || be_isint(vm, 2) || be_isstring(vm, 2) || be_isnil(vm, 2))) {
-        if (be_isnil(vm, 2)) {
-            // do nothing
-        } else if (be_isint(vm, 2)) {
+    if (argc >= 2 && (be_isbytes(vm, 2) || be_isint(vm, 2) || be_isstring(vm, 2))) {
+        if (be_isint(vm, 2)) {
             bytes_resize(vm, &attr, attr.len + 1); /* resize */
             buf_add1(&attr, be_toint(vm, 2));
             m_write_attributes(vm, 1, &attr);  /* update instance */
@@ -1350,6 +1349,30 @@ static int m_connect(bvm *vm)
         be_return(vm); /* return self */
     }
     be_raise(vm, "type_error", "operand must be bytes or int or string");
+    be_return_nil(vm); /* return self */
+}
+
+static int m_appendhex(bvm *vm)
+{
+    int argc = be_top(vm);
+    buf_impl attr = m_read_attributes(vm, 1);
+    check_ptr_modifiable(vm, &attr);
+    if (attr.fixed) { be_raise(vm, BYTES_RESIZE_ERROR, BYTES_RESIZE_MESSAGE); }
+    if (argc >= 2 && be_isbytes(vm, 2)) {
+        buf_impl attr2 = m_read_attributes(vm, 2);
+        check_ptr(vm, &attr2);
+        bytes_resize(vm, &attr, attr.len + attr2.len * 2); /* resize */
+        
+        for (const uint8_t * pin = attr2.bufptr; pin < attr2.bufptr + attr2.len; pin++) {
+            buf_add1(&attr, hex[((*pin)>>4) & 0xF]);
+            buf_add1(&attr, hex[ (*pin)     & 0xF]);
+        }
+        
+        m_write_attributes(vm, 1, &attr);  /* update instance */
+        be_pushvalue(vm, 1);
+        be_return(vm); /* return self */
+    }
+    be_raise(vm, "type_error", "operand must be bytes");
     be_return_nil(vm); /* return self */
 }
 
@@ -1892,6 +1915,7 @@ class be_class_bytes (scope: global, name: bytes) {
     reverse, func(m_reverse)
     copy, func(m_copy)
     append, func(m_connect)
+    appendhex, func(m_appendhex)
     +, func(m_merge)
     .., func(m_connect)
     ==, func(m_equal)
