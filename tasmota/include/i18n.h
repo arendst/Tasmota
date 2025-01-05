@@ -36,6 +36,7 @@
 #define D_JSON_AP "AP"                   // Access Point
 #define D_JSON_APMAC_ADDRESS "APMac"
 #define D_JSON_APPENDED "Appended"
+#define D_JSON_AVAILABILITY "Availability"
 #define D_JSON_BANDWIDTH "Bandwidth"
 #define D_JSON_BAUDRATE "Baudrate"
 #define D_JSON_BLINK "Blink"
@@ -884,7 +885,6 @@
 #define D_LOG_LVGL "LVG: "         // LVGL graphics engine
 #define D_LOG_THERMOSTAT "THE: "   // Thermostat driver
 #define D_LOG_SENSOR "SNS: "       // Sensor driver
-#define D_LOG_SENSEAIR "SNA: "     // Senseair driver
 
 /********************************************************************************************/
 

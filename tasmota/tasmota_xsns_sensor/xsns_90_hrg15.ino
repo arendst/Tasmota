@@ -36,12 +36,14 @@
 #define RG15_READ_TIMEOUT  500
 #define RG15_EVENT_TIMEOUT 60
 #define RG15_BUFFER_SIZE   150
+#define RG15_REC_TIMEOUT   70         // Receiver timeout in seconds
 
 #include <TasmotaSerial.h>
 
 #ifdef USE_WEBSERVER
 const char HTTP_RG15[] PROGMEM =
   // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+   "{s}" RG15_NAME " " D_JSON_AVAILABILITY "{m}%s{e}"
    "{s}" RG15_NAME " " D_JSON_ACTIVE "{m}%2_f " D_UNIT_MILLIMETER "{e}"
    "{s}" RG15_NAME " " D_JSON_EVENT "{m}%2_f " D_UNIT_MILLIMETER "{e}"
    "{s}" RG15_NAME " " D_JSON_TOTAL "{m}%2_f " D_UNIT_MILLIMETER "{e}"
@@ -57,7 +59,11 @@ struct RG15 {
   float rate = NAN;
   uint16_t time = RG15_EVENT_TIMEOUT;
   uint8_t init_step;
+  uint32_t dataReceived = 0;
+  bool isSensorAvailable = false;
 } Rg15;
+
+#define BOOL_TO_STRING(b) ((b) ? "true" : "false")
 
 /*********************************************************************************************/
 
@@ -168,6 +174,14 @@ void Rg15Init(void) {
   }
 }
 
+void onSensorAvailabilityChanged(bool aNewStatus) {
+  AddLog(LOG_LEVEL_DEBUG, PSTR("HRG: onSensorAvailabilityChanged -> %s"), BOOL_TO_STRING(aNewStatus));
+  Rg15.isSensorAvailable = aNewStatus;
+
+  // todo trigger teleperiod or publish status
+
+} // onSensorAvailabilityChanged
+
 void Rg15Poll(void) {
   bool publish = false;
 
@@ -184,11 +198,32 @@ void Rg15Poll(void) {
   } else {
     char rg15_buffer[RG15_BUFFER_SIZE];      // Read what's available
     while (HydreonSerial->available()) {
-      Rg15ReadLine(rg15_buffer);
+      if (Rg15ReadLine(rg15_buffer)) {
+        // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Rg15Poll - Rg15ReadLine true"));
+      } else {
+        // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Rg15Poll - Rg15ReadLine false"));
+      }
+
       if (Rg15Process(rg15_buffer)) {        // Do NOT use "publish = Rg15Process(rg15_buffer)"
         publish = true;
+
+        Rg15.dataReceived = millis() / 1000;
+        if (!Rg15.isSensorAvailable) {
+          // isSensorAvailable changed
+          onSensorAvailabilityChanged(true);
+        }
       }
     }
+  }
+
+  if ((Rg15.dataReceived == 0) || (((millis() / 1000) - Rg15.dataReceived) > RG15_REC_TIMEOUT)) {
+    // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Rg15Poll - timeout"));
+    if (Rg15.isSensorAvailable) {
+      // isSensorAvailable changed
+      onSensorAvailabilityChanged(false);
+    }
+  } else {
+    // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Rg15Poll - no timeout"));
   }
 
   if (publish && !TasmotaGlobal.global_state.mqtt_down) {
@@ -212,19 +247,27 @@ void Rg15Poll(void) {
 }
 
 void Rg15Show(bool json) {
+  char aString[6]; // "true" and "false" have a maximum of 5 characters including '\0'
+  snprintf(aString, sizeof(aString), "%s", BOOL_TO_STRING(Rg15.isSensorAvailable));
+
   if (json) {
     // if the parsing wasn't completely successful then skip the update
     if( !isnan(Rg15.acc) && !isnan(Rg15.event) && !isnan(Rg15.total) && !isnan(Rg15.rate) ) {
       ResponseAppend_P(PSTR(",\"" RG15_NAME "\":{"));
+      ResponseAppend_P(PSTR("\"%s\":%s,"), D_JSON_AVAILABILITY, &aString);
       ResponseAppend_P(PSTR("\"%s\":%2_f,"), D_JSON_ACTIVE, &Rg15.acc);
       ResponseAppend_P(PSTR("\"%s\":%2_f,"), D_JSON_EVENT, &Rg15.event);
       ResponseAppend_P(PSTR("\"%s\":%2_f,"), D_JSON_TOTAL, &Rg15.total);
       ResponseAppend_P(PSTR("\"%s\":%2_f"), D_JSON_FLOWRATE, &Rg15.rate);
       ResponseAppend_P(PSTR("}"));
+  } else {
+      ResponseAppend_P(PSTR(",\"" RG15_NAME "\":{"));
+      ResponseAppend_P(PSTR("\"%s\":%s"), D_JSON_AVAILABILITY, &aString);
+      ResponseAppend_P(PSTR("}"));
     }
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_RG15, &Rg15.acc, &Rg15.event, &Rg15.total, &Rg15.rate);
+    WSContentSend_PD(HTTP_RG15, &aString, &Rg15.acc, &Rg15.event, &Rg15.total, &Rg15.rate);
 #endif  // USE_WEBSERVER
   }
 }
@@ -265,6 +308,7 @@ bool Xsns90(uint32_t function) {
     switch (function) {
       case FUNC_EVERY_SECOND:
         if((TasmotaGlobal.uptime % 60) == 0) {  // every minute
+          AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: isSensorAvailable %s"), BOOL_TO_STRING(Rg15.isSensorAvailable));
           ExecuteCommand("Sensor90 R", SRC_SENSOR);
         }
         Rg15Poll();
