@@ -633,6 +633,16 @@ bool Ws2812InitStrip(void)
   return false;
 }
 
+bool Ws2812ChangePixelCount(void)
+{
+  if (strip == nullptr) {
+    return true;
+  }
+  strip->SetPixelCount(Settings->light_pixels);
+  Ws2812Clear();
+  return true;
+}
+
 void Ws2812ModuleSelected(void)
 {
   if (Ws2812InitStrip()) {
@@ -680,6 +690,14 @@ uint32_t Ws2812PixelsSize(void) {
 bool Ws2812CanShow(void) {
   if (strip) { return strip->CanShow(); }
   return false;
+}
+
+void Ws2812CanShowWait(void) {
+  if (strip) {
+    while (!strip->CanShow()) {
+      yield();
+    }
+  }
 }
 
 bool Ws2812IsDirty(void) {
@@ -773,19 +791,22 @@ void CmndLed(void)
 
 void CmndPixels(void)
 {
-  if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= WS2812_MAX_LEDS)) {
-/*
-    Settings->light_pixels = XdrvMailbox.payload;
-    Settings->light_rotation = 0;
-    Ws2812ReinitStrip();   -- does not work with latest NeoPixelBus driver
-    Light.update = true;
-*/
-    Ws2812Clear();                     // Clear all known pixels
-    Settings->light_pixels = XdrvMailbox.payload;
-    Settings->light_rotation = 0;
-    TasmotaGlobal.restart_flag = 2;    // reboot instead
+  uint32_t parm[4] = { Settings->light_pixels, Settings->light_pixels_reverse,
+                       (uint32_t) Settings->light_pixels_height_1 + 1, Settings->light_pixels_alternate };
+  if (ParseParameters(4, parm) > 0) {
+    if ((parm[0] > 0) && (parm[0] <= WS2812_MAX_LEDS)) {
+      Ws2812Clear();                     // Clear all known pixels
+      Ws2812CanShowWait();
+      Settings->light_pixels = parm[0];
+      Settings->light_pixels_reverse = parm[1];
+      Settings->light_pixels_height_1 = (parm[2] > 0) ? parm[2] - 1 : 1;
+      Settings->light_pixels_alternate = parm[3];
+      Ws2812ChangePixelCount();
+      Light.update = true;
+    }
   }
-  ResponseCmndNumber(Settings->light_pixels);
+  Response_P(PSTR("{\"Pixels\":%i,\"PixelsReverse\":%i,\"PixelsHeight\":%i,\"PixelsAlternate\":%i}"),
+    Settings->light_pixels, Settings->light_pixels_reverse, Settings->light_pixels_height_1 + 1, Settings->light_pixels_alternate);
 }
 
 void CmndStepPixels(void)

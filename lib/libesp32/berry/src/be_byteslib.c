@@ -1324,13 +1324,13 @@ static int m_connect(bvm *vm)
     buf_impl attr = m_read_attributes(vm, 1);
     check_ptr_modifiable(vm, &attr);
     if (attr.fixed) { be_raise(vm, BYTES_RESIZE_ERROR, BYTES_RESIZE_MESSAGE); }
-    if (argc >= 2 && (be_isbytes(vm, 2) || be_isint(vm, 2) || be_isstring(vm, 2))) {
-        if (be_isint(vm, 2)) {
+    if (argc >= 2 && (be_isbytes(vm, 2) || be_isint(vm, 2) || be_isstring(vm, 2) || be_isnil(vm, 2))) {
+        if (be_isnil(vm, 2)) {
+            // do nothing
+        } else if (be_isint(vm, 2)) {
             bytes_resize(vm, &attr, attr.len + 1); /* resize */
             buf_add1(&attr, be_toint(vm, 2));
             m_write_attributes(vm, 1, &attr);  /* update instance */
-            be_pushvalue(vm, 1);
-            be_return(vm); /* return self */
         } else if (be_isstring(vm, 2)) {
             const char *str = be_tostring(vm, 2);
             size_t str_len = strlen(str);
@@ -1339,17 +1339,15 @@ static int m_connect(bvm *vm)
                 buf_add_raw(&attr, str, str_len);
                 m_write_attributes(vm, 1, &attr);  /* update instance */
             }
-            be_pushvalue(vm, 1);
-            be_return(vm); /* return self */
         } else {
             buf_impl attr2 = m_read_attributes(vm, 2);
             check_ptr(vm, &attr2);
             bytes_resize(vm, &attr, attr.len + attr2.len); /* resize buf1 for total size */
             buf_add_buf(&attr, &attr2);
             m_write_attributes(vm, 1, &attr);  /* update instance */
-            be_pushvalue(vm, 1);
-            be_return(vm); /* return self */
         }
+        be_pushvalue(vm, 1);
+        be_return(vm); /* return self */
     }
     be_raise(vm, "type_error", "operand must be bytes or int or string");
     be_return_nil(vm); /* return self */

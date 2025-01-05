@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Support for ESP32 Two-Wire Automotive Interface (TWAI) or Controller Area Network (CAN) busses
 - Support for Senseair S88 CO2 sensor (#22733)
+- ESP32 TasmotaLED change dynamically the number of pixels (#22754)
+- ESP32 expand `Pixels` with reverse, height and alternate (#22755)
+- Berry allow `bytes().append(nil)`
 
 ### Breaking Changed
 
@@ -856,6 +859,7 @@ All notable changes to this project will be documented in this file.
 - Berry provide lightweight options for `tasmota.wifi/eth/memory/rtc` (#20448)
 - Berry `tasmota.webcolor` (#20454)
 - Support for pipsolar inverter (#20408)
+- Berry add light_pixels values to `tasmota.settings`
 
 ### Changed
 - Renamed button "Consoles" to "Tools"
