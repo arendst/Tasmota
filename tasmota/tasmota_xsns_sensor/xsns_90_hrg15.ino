@@ -43,7 +43,7 @@
 #ifdef USE_WEBSERVER
 const char HTTP_RG15[] PROGMEM =
   // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-   "{s}" RG15_NAME " " D_JSON_AVAILABILITY "{m}%s{e}"
+   "{s}" RG15_NAME " " D_JSON_VALID "{m}%s{e}"
    "{s}" RG15_NAME " " D_JSON_ACTIVE "{m}%2_f " D_UNIT_MILLIMETER "{e}"
    "{s}" RG15_NAME " " D_JSON_EVENT "{m}%2_f " D_UNIT_MILLIMETER "{e}"
    "{s}" RG15_NAME " " D_JSON_TOTAL "{m}%2_f " D_UNIT_MILLIMETER "{e}"
@@ -63,7 +63,7 @@ struct RG15 {
   bool isSensorAvailable = false;
 } Rg15;
 
-#define BOOL_TO_STRING(b) ((b) ? "true" : "false")
+#define BOOL_TO_STRING(b) ((b) ? "1" : "0")
 
 /*********************************************************************************************/
 
@@ -247,23 +247,20 @@ void Rg15Poll(void) {
 }
 
 void Rg15Show(bool json) {
-  char aString[6]; // "true" and "false" have a maximum of 5 characters including '\0'
+  char aString[2]; // "1" / "0" including '\0'
   snprintf(aString, sizeof(aString), "%s", BOOL_TO_STRING(Rg15.isSensorAvailable));
 
   if (json) {
     // if the parsing wasn't completely successful then skip the update
     if( !isnan(Rg15.acc) && !isnan(Rg15.event) && !isnan(Rg15.total) && !isnan(Rg15.rate) ) {
       ResponseAppend_P(PSTR(",\"" RG15_NAME "\":{"));
-      ResponseAppend_P(PSTR("\"%s\":%s,"), D_JSON_AVAILABILITY, &aString);
+      ResponseAppend_P(PSTR("\"%s\":%s,"), D_JSON_VALID, &aString);
       ResponseAppend_P(PSTR("\"%s\":%2_f,"), D_JSON_ACTIVE, &Rg15.acc);
       ResponseAppend_P(PSTR("\"%s\":%2_f,"), D_JSON_EVENT, &Rg15.event);
       ResponseAppend_P(PSTR("\"%s\":%2_f,"), D_JSON_TOTAL, &Rg15.total);
       ResponseAppend_P(PSTR("\"%s\":%2_f"), D_JSON_FLOWRATE, &Rg15.rate);
       ResponseAppend_P(PSTR("}"));
   } else {
-      ResponseAppend_P(PSTR(",\"" RG15_NAME "\":{"));
-      ResponseAppend_P(PSTR("\"%s\":%s"), D_JSON_AVAILABILITY, &aString);
-      ResponseAppend_P(PSTR("}"));
     }
 #ifdef USE_WEBSERVER
   } else {
