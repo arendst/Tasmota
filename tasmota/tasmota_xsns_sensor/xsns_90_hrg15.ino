@@ -247,24 +247,24 @@ void Rg15Poll(void) {
 }
 
 void Rg15Show(bool json) {
-  char aString[2]; // "1" / "0" including '\0'
-  snprintf(aString, sizeof(aString), "%s", BOOL_TO_STRING(Rg15.isSensorAvailable));
-
   if (json) {
     // if the parsing wasn't completely successful then skip the update
     if( !isnan(Rg15.acc) && !isnan(Rg15.event) && !isnan(Rg15.total) && !isnan(Rg15.rate) ) {
       ResponseAppend_P(PSTR(",\"" RG15_NAME "\":{"));
-      ResponseAppend_P(PSTR("\"%s\":%s,"), D_JSON_VALID, &aString);
+      ResponseAppend_P(PSTR("\"%s\":%s,"), D_JSON_VALID, BOOL_TO_STRING(&Rg15.isSensorAvailable));
       ResponseAppend_P(PSTR("\"%s\":%2_f,"), D_JSON_ACTIVE, &Rg15.acc);
       ResponseAppend_P(PSTR("\"%s\":%2_f,"), D_JSON_EVENT, &Rg15.event);
       ResponseAppend_P(PSTR("\"%s\":%2_f,"), D_JSON_TOTAL, &Rg15.total);
       ResponseAppend_P(PSTR("\"%s\":%2_f"), D_JSON_FLOWRATE, &Rg15.rate);
       ResponseAppend_P(PSTR("}"));
-  } else {
+    } else {
+      ResponseAppend_P(PSTR(",\"" RG15_NAME "\":{"));
+      ResponseAppend_P(PSTR("\"%s\":%s"), D_JSON_VALID, "0");
+      ResponseAppend_P(PSTR("}"));
     }
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_RG15, &aString, &Rg15.acc, &Rg15.event, &Rg15.total, &Rg15.rate);
+    WSContentSend_PD(HTTP_RG15, BOOL_TO_STRING(&Rg15.isSensorAvailable), &Rg15.acc, &Rg15.event, &Rg15.total, &Rg15.rate);
 #endif  // USE_WEBSERVER
   }
 }
