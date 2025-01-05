@@ -127,6 +127,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry add unicode encoding to string parsing [#22713](https://github.com/arendst/Tasmota/issues/22713)
 - Berry `tasmota.int(v, min, max)` function [#22723](https://github.com/arendst/Tasmota/issues/22723)
 - Berry driver for M5Stack 8encoder [#22724](https://github.com/arendst/Tasmota/issues/22724)
+- Berry add light_pixels values to `tasmota.settings` [#22762](https://github.com/arendst/Tasmota/issues/22762)
+- Berry add `bytes().appendhex()` [#22767](https://github.com/arendst/Tasmota/issues/22767)
 
 ### Breaking Changed
 
