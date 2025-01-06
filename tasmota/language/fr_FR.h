@@ -1217,6 +1217,13 @@
 #define D_FP_PASSVERIFY "Mot-de-passe vérifié" // 0x21 Verify the fingerprint passed
 #define D_FP_UNKNOWNERROR "Erreur"             // Any other error
 
+// xsns_90_hrg15.ino
+#define D_HRG_VALID "Valid"
+#define D_HRG_ACTIVE "Active"
+#define D_HRG_EVENT "Event"
+#define D_HRG_TOTAL "Total"
+#define D_HRG_FLOWRATE "Flow Rate"
+
 // xsns_96_flowratemeter.ino
 #define D_FLOWRATEMETER_NAME "Débit"
 #define D_FLOWRATEMETER_AMOUNT_TODAY "Quantité aujourd'hui"
