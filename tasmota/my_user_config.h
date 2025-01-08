@@ -1409,6 +1409,7 @@
   #define USE_SHINE
   #define MP3_MIC_STREAM
   #define USE_I2S_AUDIO_BERRY
+  #define USE_I2S_AAC
 #endif // USE_I2S_ALL
 
 #endif  // _MY_USER_CONFIG_H_
