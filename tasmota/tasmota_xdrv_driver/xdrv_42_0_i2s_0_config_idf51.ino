@@ -52,6 +52,12 @@ enum : int8_t {
   I2S_SLOT_PHILIPS = 2,   // Philips
 };
 
+// I2S decoder type
+enum : uint32_t {
+  AAC_DECODER = 0,
+  MP3_DECODER = 1,
+};
+
 #define I2S_SLOTS   2
 #define AUDIO_SETTINGS_VERSION  2
 

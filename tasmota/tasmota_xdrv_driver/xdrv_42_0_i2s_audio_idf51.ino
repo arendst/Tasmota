@@ -30,7 +30,9 @@
 #include "AudioGeneratorTalkie.h"
 #include "AudioFileSourceICYStream.h"
 #include "AudioFileSourceBuffer.h"
+#ifdef USE_I2S_AAC
 #include "AudioGeneratorAAC.h"
+#endif // USE_I2S_AAC
 
 #include <layer3.h>
 
@@ -54,9 +56,9 @@
 extern FS *ufsp;
 extern FS *ffsp;
 
-const int preallocateBufferSize = 16*1024;
-const int preallocateCodecSize = 29192; // MP3 codec max mem needed
-//const int preallocateCodecSize = 85332; // AAC+SBR codec max mem needed
+constexpr int preallocateBufferSize = 16*1024;
+constexpr int preallocateCodecSize  = 29192; // MP3 codec max mem needed
+constexpr int preallocateCodecSizeAAC = 85332; // AAC+SBR codec max mem needed
 
 void sayTime(int hour, int minutes);
 void Cmndwav2mp3(void);
@@ -81,7 +83,7 @@ struct AUDIO_I2S_MP3_t {
 #endif // USE_I2S_MP3
 
 #if defined(USE_I2S_MP3) || defined(USE_I2S_WEBRADIO) || defined(USE_SHINE) || defined(MP3_MIC_STREAM)
-  AudioGeneratorMP3 *decoder = NULL;
+  AudioGenerator *decoder = nullptr;
   TaskHandle_t mp3_task_handle;
   TaskHandle_t mic_task_handle;
 #endif // defined(USE_I2S_MP3) || defined(USE_I2S_WEBRADIO)
