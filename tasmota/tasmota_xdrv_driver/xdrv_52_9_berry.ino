@@ -384,6 +384,12 @@ void BerryInit(void) {
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_BERRY "Berry initialized, RAM used %u bytes"), callBerryGC());
     berry_init_ok = true;
 
+    // reinit some specific information
+#ifdef USE_BERRY_LEDS_PANEL
+    // if no WS2812 configured, hide "Leds Panel" download button
+    berry.leds_panel_loaded = !PinUsed(GPIO_WS2812);
+#endif // USE_BERRY_LEDS_PANEL
+
     // we generate a synthetic event `autoexec`
     callBerryEventDispatcher(PSTR("preinit"), nullptr, 0, nullptr);
 
