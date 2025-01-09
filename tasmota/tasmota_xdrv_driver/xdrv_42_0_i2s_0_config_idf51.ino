@@ -56,6 +56,7 @@ enum : int8_t {
 enum : uint32_t {
   AAC_DECODER = 0,
   MP3_DECODER = 1,
+  OPUS_DECODER = 2,
 };
 
 #define I2S_SLOTS   2
