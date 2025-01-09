@@ -315,6 +315,7 @@ int32_t analogAttach(uint32_t pin, bool output_invert) {    // returns ledc chan
       (ledc_timer_t)timer,        // timer_sel
       0,            // duty
       0,            // hpoint
+      LEDC_SLEEP_MODE_KEEP_ALIVE,
       { output_invert ? 1u : 0u },// output_invert
   };
   ledc_channel_config(&ledc_channel);
