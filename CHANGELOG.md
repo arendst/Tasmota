@@ -11,7 +11,8 @@ All notable changes to this project will be documented in this file.
 - ESP32 expand `Pixels` with reverse, height and alternate (#22755)
 - Berry add light_pixels values to `tasmota.settings` (#22762)
 - Berry add `bytes().appendhex()` (#22767)
-- WS2812 real-time Leds panel as Berry app
+- I2S AAC support for web radio (#22787)
+- Berry WS2812 real-time Leds panel as app (#22788)
 
 ### Breaking Changed
 
