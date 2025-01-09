@@ -135,7 +135,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Breaking Changed
 
 ### Changed
-- GPIOViewer from v1.5.6 to v1.5.8
+- GPIOViewer from v1.5.6 to v1.5.9 (No functional change)
 - Postpone save_data during light animation when fade is Off
 - ESP32 disable PSRAM check (and on restart some relay toggles) with `#define DISABLE_PSRAMCHECK true` [#21266](https://github.com/arendst/Tasmota/issues/21266)
 - Berry bit-shift operators to `int64` [#22709](https://github.com/arendst/Tasmota/issues/22709)

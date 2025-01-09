@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- GPIOViewer from v1.5.8 to v1.5.9 (No functional change)
 
 ### Fixed
 - Shutter discovery message regression from v14.4.1 (#22730)
