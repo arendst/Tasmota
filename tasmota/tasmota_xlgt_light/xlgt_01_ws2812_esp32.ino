@@ -799,7 +799,7 @@ void CmndPixels(void)
       Ws2812CanShowWait();
       Settings->light_pixels = parm[0];
       Settings->light_pixels_reverse = parm[1];
-      Settings->light_pixels_height_1 = (parm[2] > 0) ? parm[2] - 1 : 1;
+      Settings->light_pixels_height_1 = (parm[2] > 0) ? parm[2] - 1 : 0;
       Settings->light_pixels_alternate = parm[3];
       Ws2812ChangePixelCount();
       Light.update = true;
