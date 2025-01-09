@@ -791,15 +791,15 @@ void CmndLed(void)
 
 void CmndPixels(void)
 {
-  uint32_t parm[4] = { Settings->light_pixels, Settings->light_pixels_reverse,
-                       (uint32_t) Settings->light_pixels_height_1 + 1, Settings->light_pixels_alternate };
+  uint32_t parm[4] = { Settings->light_pixels, 0 /* reverse = 0 */,
+                       0 /* height = 1 (minus 1) */, 0 /* alternate = 0 */ };
   if (ParseParameters(4, parm) > 0) {
     if ((parm[0] > 0) && (parm[0] <= WS2812_MAX_LEDS)) {
       Ws2812Clear();                     // Clear all known pixels
       Ws2812CanShowWait();
       Settings->light_pixels = parm[0];
       Settings->light_pixels_reverse = parm[1];
-      Settings->light_pixels_height_1 = (parm[2] > 0) ? parm[2] - 1 : 1;
+      Settings->light_pixels_height_1 = (parm[2] > 0) ? parm[2] - 1 : 0;
       Settings->light_pixels_alternate = parm[3];
       Ws2812ChangePixelCount();
       Light.update = true;
