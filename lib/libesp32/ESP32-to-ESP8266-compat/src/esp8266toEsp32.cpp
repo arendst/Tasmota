@@ -315,6 +315,9 @@ int32_t analogAttach(uint32_t pin, bool output_invert) {    // returns ledc chan
       (ledc_timer_t)timer,        // timer_sel
       0,            // duty
       0,            // hpoint
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 4, 0)
+      (ledc_sleep_mode_t) 2,
+#endif
       { output_invert ? 1u : 0u },// output_invert
   };
   ledc_channel_config(&ledc_channel);
