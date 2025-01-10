@@ -114,13 +114,14 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v14.4.1.2
+## Changelog v14.4.1.3
 ### Added
 - Command ``SetOption163 1`` to disable display of Device name in GUI header
 - Support for PCF85063 RTC [#22727](https://github.com/arendst/Tasmota/issues/22727)
 - Support for Senseair S88 CO2 sensor [#22733](https://github.com/arendst/Tasmota/issues/22733)
 - Support for ESP32 Two-Wire Automotive Interface (TWAI) or Controller Area Network (CAN) busses
 - I2S AAC support for web radio [#22787](https://github.com/arendst/Tasmota/issues/22787)
+- I2S Opus stream and file support for opus/aac [#22795](https://github.com/arendst/Tasmota/issues/22795)
 - ESP32 TasmotaLED change dynamically the number of pixels [#22754](https://github.com/arendst/Tasmota/issues/22754)
 - ESP32 expand `Pixels` with reverse, height and alternate [#22755](https://github.com/arendst/Tasmota/issues/22755)
 - Berry `animate.crenel` primitive [#22673](https://github.com/arendst/Tasmota/issues/22673)
@@ -135,8 +136,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Breaking Changed
 
 ### Changed
+- ESP32 Platform from 2024.12.30 to 2025.01.30, Framework (Arduino Core) from v3.1.0.241206 to v3.1.1.250109 and IDF to 5.3.2 [#22792](https://github.com/arendst/Tasmota/issues/22792)
 - GPIOViewer from v1.5.6 to v1.5.9 (No functional change)
 - Postpone save_data during light animation when fade is Off
+- Command `Pixels` has backwards compatible arguments fixing #22755 [#22791](https://github.com/arendst/Tasmota/issues/22791)
 - ESP32 disable PSRAM check (and on restart some relay toggles) with `#define DISABLE_PSRAMCHECK true` [#21266](https://github.com/arendst/Tasmota/issues/21266)
 - Berry bit-shift operators to `int64` [#22709](https://github.com/arendst/Tasmota/issues/22709)
 - HASPmota use 'roboto.ttf' for automatic sizing of default font [#22697](https://github.com/arendst/Tasmota/issues/22697)
