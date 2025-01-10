@@ -26,7 +26,6 @@ struct AUDIO_I2S_WEBRADIO_t {
   AudioFileSourceBuffer *buff = NULL;
   char wr_title[64];
   void *preallocateBuffer = NULL;
-  void *preallocateCodec = NULL;
 } Audio_webradio;
 
 void I2sMDCallback(void *cbData, const char *type, bool isUnicode, const char *str) {
@@ -46,46 +45,30 @@ void I2SWrStatusCB(void *cbData, int code, const char *str){
   AddLog(LOG_LEVEL_INFO, "I2S: status: %s",str);
 }
 
-bool I2SinitDecoder(uint32_t decoder_type){
-  switch(decoder_type){
-    case MP3_DECODER:
-      audio_i2s_mp3.decoder = dynamic_cast<AudioGenerator *>(new AudioGeneratorMP3(Audio_webradio.preallocateCodec, preallocateCodecSize));
-      break;
-#ifdef USE_I2S_AAC
-    case AAC_DECODER:
-      Audio_webradio.preallocateCodec = special_realloc(Audio_webradio.preallocateCodec, preallocateCodecSizeAAC);
-      if(Audio_webradio.preallocateCodec == nullptr){
-        AddLog(LOG_LEVEL_ERROR, "I2S: could not alloc heap for AAC");
-        return false;
-      }
-      audio_i2s_mp3.decoder = dynamic_cast<AudioGenerator *>(new AudioGeneratorAAC(Audio_webradio.preallocateCodec, preallocateCodecSizeAAC));
-      break;
-#endif //USE_I2S_AAC
-  }
-  if(audio_i2s_mp3.decoder == nullptr){
-    return false;
-  }
-  return true;
-}
-
 bool I2SWebradio(const char *url, uint32_t decoder_type) {
+
+  size_t wr_tasksize = 8000; // suitable for ACC and MP3
+  if(decoder_type == 2){ // opus needs a ton of stack
+    wr_tasksize = 26000;
+  }
+
   // allocate buffers if not already done
   if (Audio_webradio.preallocateBuffer == NULL) {
     Audio_webradio.preallocateBuffer = special_malloc(preallocateBufferSize);
   }
-  if (Audio_webradio.preallocateCodec == NULL) {
-    Audio_webradio.preallocateCodec = special_malloc(preallocateCodecSize);
+  if (audio_i2s_mp3.preallocateCodec == NULL) {
+    audio_i2s_mp3.preallocateCodec = special_malloc(preallocateCodecSize);
   }
   // check if we have buffers
-  if (Audio_webradio.preallocateBuffer == NULL || Audio_webradio.preallocateCodec == NULL) {
+  if (Audio_webradio.preallocateBuffer == NULL || audio_i2s_mp3.preallocateCodec == NULL) {
     AddLog(LOG_LEVEL_INFO, "I2S: cannot allocate buffers");
     if (Audio_webradio.preallocateBuffer != NULL) {
       free(Audio_webradio.preallocateBuffer);
       Audio_webradio.preallocateBuffer = NULL;
     }
-    if (Audio_webradio.preallocateCodec != NULL) {
-      free(Audio_webradio.preallocateCodec);
-      Audio_webradio.preallocateCodec = NULL;
+    if (audio_i2s_mp3.preallocateCodec != NULL) {
+      free(audio_i2s_mp3.preallocateCodec);
+      audio_i2s_mp3.preallocateCodec = NULL;
     }
     return false;
   }
@@ -118,7 +101,7 @@ bool I2SWebradio(const char *url, uint32_t decoder_type) {
   }
 
   AddLog(LOG_LEVEL_DEBUG,PSTR("I2S: will launch webradio task with decoder type %u"), decoder_type);
-  xTaskCreatePinnedToCore(I2sMp3WrTask, "MP3-WR", 8192, NULL, 3, &audio_i2s_mp3.mp3_task_handle, 1);
+  xTaskCreatePinnedToCore(I2sMp3WrTask, "MP3-WR", wr_tasksize, NULL, 3, &audio_i2s_mp3.mp3_task_handle, 1);
   return true;
 
 i2swr_fail:
