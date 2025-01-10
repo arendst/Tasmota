@@ -495,6 +495,69 @@ bool TfsRenameFile(const char *fname1, const char *fname2) {
 }
 
 /*********************************************************************************************\
+ * Log file
+ * 
+ * Rotate max 8 x 100kB log files /log1 -> /log2 ... /log8 -> /log1 ...
+ * Keep at least 100kB free on filesystem
+ * Filesystem needs to ba larger than 110kB
+\*********************************************************************************************/
+
+void FileLoggingAsync(bool refresh) {
+  static uint32_t index = 1;
+
+  if (!ffs_type || !Settings->filelog_level) { return; }
+  if (refresh && !NeedLogRefresh(Settings->filelog_level, index)) { return; }
+  if (UfsSize() < 110) { return; }       // File system too small
+
+  char fname[14];
+  bool file_delete = false;
+  File file;
+  while (1) {
+    snprintf_P(fname, sizeof(fname), PSTR(TASM_FILE_LOG), Settings->mbflag2.log_file_idx +1);  // /log1
+    if (file_delete) {
+      ffsp->remove(fname);               // Delete previous log file
+    }
+    file = ffsp->open(fname, "a");       // Append
+    if (!file) { 
+      file = ffsp->open(fname, "w");     // Make if not exists
+      if (!file) { 
+        AddLog(LOG_LEVEL_INFO, PSTR("FLG: Save failed"));
+        return;                          // Failed to make file
+      }
+    }
+    if (file.size() > 100000) {          // Rotate log file if size over 100k
+      file.close();
+      Settings->mbflag2.log_file_idx++;
+      if ((8 == Settings->mbflag2.log_file_idx) ||  // Keep max 100k x 8 log files
+          (UfsFree() < 110)) {           // Keep free space around 100k
+        Settings->mbflag2.log_file_idx = 0;
+        file_delete = true;
+      }
+    } else {
+      break;
+    }
+  }
+
+#ifdef USE_WEBCAM
+  WcInterrupt(0);  // Stop stream if active to fix TG1WDT_SYS_RESET
+#endif
+  char* line;
+  size_t len;
+  while (GetLog(Settings->filelog_level, &index, &line, &len)) {
+    // This will timeout on ESP32-webcam
+    // But now solved with WcInterrupt(0) in support_esp.ino
+    file.write((uint8_t*)line, len -1);
+    snprintf_P(fname, sizeof(fname), PSTR("\r\n"));
+    file.write((uint8_t*)fname, 2);
+  }
+#ifdef USE_WEBCAM
+  WcInterrupt(1);
+#endif
+
+  file.close();
+}
+
+/*********************************************************************************************\
  * File command execute support
 \*********************************************************************************************/
 

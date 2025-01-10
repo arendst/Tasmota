@@ -332,6 +332,7 @@
 #define D_CMND_OTAURL "OtaUrl"
 #define D_CMND_SERIALLOG "SerialLog"
 #define D_CMND_SYSLOG "SysLog"
+#define D_CMND_FILELOG "FileLog"
 #define D_CMND_LOGHOST "LogHost"
 #define D_CMND_LOGPORT "LogPort"
 #define D_CMND_IPADDRESS "IPAddress"
