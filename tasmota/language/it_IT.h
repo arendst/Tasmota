@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 26.12.2024
+ * Updated until v9.4.0.1 - Last update 10.01.2025
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -1193,35 +1193,35 @@
 #define D_FP_ENROLL_ACTIVE           "Attivo"
 #define D_FP_ENROLL_INACTIVE         "Non attivo"
 // Indexed by Adafruit_Fingerprint.h defines
-#define D_FP_PACKETRECIEVEERR    "Errore comunicazione"           // 0x01 Error when receiving data package
-#define D_FP_NOFINGER             ""                              // 0x02 No finger on the sensor
-#define D_FP_IMAGEFAIL           "Errore immagine"                // 0x03 Failed to enroll the finger
-#define D_FP_IMAGEMESS           "Immmagine troppo danneggiata"   // 0x06 Failed to generate character file due to overly disorderly fingerprint image
-#define D_FP_FEATUREFAIL         "Impronta troppo piccola"        // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
-#define D_FP_NOMATCH             "Nessuna corrispondenza"         // 0x08 Finger doesn't match
-#define D_FP_NOTFOUND            "Corrispondenza non trovata"     // 0x09 Failed to find matching finger
-#define D_FP_ENROLLMISMATCH      "L'impronta non corrisponde"     // 0x0A Failed to combine the character files
-#define D_FP_BADLOCATION         "Locazione errata"               // 0x0B Addressed PageID is beyond the finger library
-#define D_FP_DBRANGEFAIL         "Errore intervallo DB"           // 0x0C Error when reading template from library or invalid template
-#define D_FP_UPLOADFEATUREFAIL   "Errore funzione upload"         // 0x0D Error when uploading template
-#define D_FP_PACKETRESPONSEFAIL  "Errore risposta pacchetto"      // 0x0E Module failed to receive the following data packages
-#define D_FP_UPLOADFAIL          "Errore upload"                  // 0x0F Error when uploading image
-#define D_FP_DELETEFAIL          "Errore eliminazione"            // 0x10 Failed to delete the template
-#define D_FP_DBCLEARFAIL         "Errore azzeramento DB"          // 0x11 Failed to clear finger library
-#define D_FP_PASSFAIL            "Errore password"                // 0x13 Find whether the fingerprint passed or failed
-#define D_FP_INVALIDIMAGE        "Immagine non valida"            // 0x15 Failed to generate image because of lac of valid primary image
-#define D_FP_FLASHERR            "Errore scrittura flash"         // 0x18 Error when writing flash
-#define D_FP_INVALIDREG          "Numero non valido"              // 0x1A Invalid register number
-#define D_FP_ADDRCODE            "Codice indirizzo"               // 0x20 Address code
-#define D_FP_PASSVERIFY          "Password verificata"            // 0x21 Verify the fingerprint passed
-#define D_FP_UNKNOWNERROR        "Errore"                         // Any other error
+#define D_FP_PACKETRECIEVEERR        "Errore comunicazione"           // 0x01 Error when receiving data package
+#define D_FP_NOFINGER                ""                               // 0x02 No finger on the sensor
+#define D_FP_IMAGEFAIL               "Errore immagine"                // 0x03 Failed to enroll the finger
+#define D_FP_IMAGEMESS               "Immmagine troppo danneggiata"   // 0x06 Failed to generate character file due to overly disorderly fingerprint image
+#define D_FP_FEATUREFAIL             "Impronta troppo piccola"        // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
+#define D_FP_NOMATCH                 "Nessuna corrispondenza"         // 0x08 Finger doesn't match
+#define D_FP_NOTFOUND                "Corrispondenza non trovata"     // 0x09 Failed to find matching finger
+#define D_FP_ENROLLMISMATCH          "L'impronta non corrisponde"     // 0x0A Failed to combine the character files
+#define D_FP_BADLOCATION             "Locazione errata"               // 0x0B Addressed PageID is beyond the finger library
+#define D_FP_DBRANGEFAIL             "Errore intervallo DB"           // 0x0C Error when reading template from library or invalid template
+#define D_FP_UPLOADFEATUREFAIL       "Errore funzione upload"         // 0x0D Error when uploading template
+#define D_FP_PACKETRESPONSEFAIL      "Errore risposta pacchetto"      // 0x0E Module failed to receive the following data packages
+#define D_FP_UPLOADFAIL              "Errore upload"                  // 0x0F Error when uploading image
+#define D_FP_DELETEFAIL              "Errore eliminazione"            // 0x10 Failed to delete the template
+#define D_FP_DBCLEARFAIL             "Errore azzeramento DB"          // 0x11 Failed to clear finger library
+#define D_FP_PASSFAIL                "Errore password"                // 0x13 Find whether the fingerprint passed or failed
+#define D_FP_INVALIDIMAGE            "Immagine non valida"            // 0x15 Failed to generate image because of lac of valid primary image
+#define D_FP_FLASHERR                "Errore scrittura flash"         // 0x18 Error when writing flash
+#define D_FP_INVALIDREG              "Numero non valido"              // 0x1A Invalid register number
+#define D_FP_ADDRCODE                "Codice indirizzo"               // 0x20 Address code
+#define D_FP_PASSVERIFY              "Password verificata"            // 0x21 Verify the fingerprint passed
+#define D_FP_UNKNOWNERROR            "Errore"                         // Any other error
 
 // xsns_90_hrg15.ino
-#define D_HRG_VALID "Valid"
-#define D_HRG_ACTIVE "Active"
-#define D_HRG_EVENT "Event"
-#define D_HRG_TOTAL "Total"
-#define D_HRG_FLOWRATE "Flow Rate"
+#define D_HRG_VALID              "Valido"
+#define D_HRG_ACTIVE             "Attivo"
+#define D_HRG_EVENT              "Evento"
+#define D_HRG_TOTAL              "Totale"
+#define D_HRG_FLOWRATE           "Portata"
 
 // xsns_96_flowratemeter.ino
 #define D_FLOWRATEMETER_NAME              "Portata"
