@@ -21,11 +21,8 @@
 #if defined(USE_I2S_AUDIO) && defined(USE_I2S_WEBRADIO)
 
 struct AUDIO_I2S_WEBRADIO_t {
-  // Webradio
   AudioFileSourceICYStream *ifile = NULL;
-  AudioFileSourceBuffer *buff = NULL;
   char wr_title[64];
-  void *preallocateBuffer = NULL;
 } Audio_webradio;
 
 void I2sMDCallback(void *cbData, const char *type, bool isUnicode, const char *str) {
@@ -53,18 +50,18 @@ bool I2SWebradio(const char *url, uint32_t decoder_type) {
   }
 
   // allocate buffers if not already done
-  if (Audio_webradio.preallocateBuffer == NULL) {
-    Audio_webradio.preallocateBuffer = special_malloc(preallocateBufferSize);
+  if (audio_i2s_mp3.preallocateBuffer == NULL) {
+    audio_i2s_mp3.preallocateBuffer = special_malloc(preallocateBufferSize);
   }
   if (audio_i2s_mp3.preallocateCodec == NULL) {
     audio_i2s_mp3.preallocateCodec = special_malloc(preallocateCodecSize);
   }
   // check if we have buffers
-  if (Audio_webradio.preallocateBuffer == NULL || audio_i2s_mp3.preallocateCodec == NULL) {
+  if (audio_i2s_mp3.preallocateBuffer == NULL || audio_i2s_mp3.preallocateCodec == NULL) {
     AddLog(LOG_LEVEL_INFO, "I2S: cannot allocate buffers");
-    if (Audio_webradio.preallocateBuffer != NULL) {
-      free(Audio_webradio.preallocateBuffer);
-      Audio_webradio.preallocateBuffer = NULL;
+    if (audio_i2s_mp3.preallocateBuffer != NULL) {
+      free(audio_i2s_mp3.preallocateBuffer);
+      audio_i2s_mp3.preallocateBuffer = NULL;
     }
     if (audio_i2s_mp3.preallocateCodec != NULL) {
       free(audio_i2s_mp3.preallocateCodec);
@@ -82,11 +79,11 @@ bool I2SWebradio(const char *url, uint32_t decoder_type) {
   AddLog(LOG_LEVEL_INFO, "I2S: did connect to %s",url);
 
   I2SAudioPower(true);
-  Audio_webradio.buff = new AudioFileSourceBuffer(Audio_webradio.ifile, Audio_webradio.preallocateBuffer, preallocateBufferSize);
-  if(Audio_webradio.buff == nullptr){
+  audio_i2s_mp3.buff = new AudioFileSourceBuffer(Audio_webradio.ifile, audio_i2s_mp3.preallocateBuffer, preallocateBufferSize);
+  if(audio_i2s_mp3.buff == nullptr){
     goto i2swr_fail;
   }
-  Audio_webradio.buff->RegisterStatusCB(I2sStatusCallback, NULL);
+  audio_i2s_mp3.buff->RegisterStatusCB(I2sStatusCallback, NULL);
 
   if(I2SinitDecoder(decoder_type) == false){
     AddLog(LOG_LEVEL_DEBUG, "I2S: decoder init failed");
@@ -94,7 +91,7 @@ bool I2SWebradio(const char *url, uint32_t decoder_type) {
   }
 
   audio_i2s_mp3.decoder->RegisterStatusCB(I2sStatusCallback, NULL);
-  if(audio_i2s_mp3.decoder->begin(Audio_webradio.buff, audio_i2s.out)){
+  if(audio_i2s_mp3.decoder->begin(audio_i2s_mp3.buff, audio_i2s.out)){
     AddLog(LOG_LEVEL_DEBUG, "I2S: decoder started");
   } else {
     goto i2swr_fail;
@@ -146,10 +143,10 @@ void I2sWebRadioStopPlaying() {
     delete audio_i2s_mp3.decoder;
     audio_i2s_mp3.decoder = nullptr;
   }
-  if (Audio_webradio.buff) {
-    Audio_webradio.buff->close();
-    delete Audio_webradio.buff;
-    Audio_webradio.buff = NULL;
+  if (audio_i2s_mp3.buff) {
+    audio_i2s_mp3.buff->close();
+    delete audio_i2s_mp3.buff;
+    audio_i2s_mp3.buff = NULL;
   }
   if (Audio_webradio.ifile) {
     Audio_webradio.ifile->close();
