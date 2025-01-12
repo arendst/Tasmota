@@ -536,8 +536,8 @@ void UBXsendRecord(uint8_t *buf)
 	char stime[32];
 	UBX_t::entry_t *entry = (UBX_t::entry_t*)buf;
 	snprintf_P(stime, sizeof(stime), GetDT(entry->time).c_str());
-	char lat[12];
-	char lon[12];
+	char lat[FLOATSZ];
+	char lon[FLOATSZ];
 	dtostrfd((double)entry->lat/10000000.0f,7,lat);
 	dtostrfd((double)entry->lon/10000000.0f,7,lon);
 	snprintf_P(record, sizeof(record),PSTR("<trkpt\n\t lat=\"%s\" lon=\"%s\">\n\t<time>%s</time>\n</trkpt>\n"),lat ,lon, stime);
@@ -879,9 +879,9 @@ const char kGPSFix[] PROGMEM = D_SAT_FIX_NO_FIX "|" D_SAT_FIX_DEAD_RECK "|" D_SA
 void UBXShow(bool json) {
   char fix[32];
   GetTextIndexed(fix, sizeof(fix), UBX.state.gpsFix, kGPSFix);
-  char lat[12];
+  char lat[FLOATSZ];
   dtostrfd((double)UBX.rec_buffer.values.lat / 10000000.0f, 7, lat);  // degrees
-  char lon[12];
+  char lon[FLOATSZ];
   dtostrfd((double)UBX.rec_buffer.values.lon / 10000000.0f, 7, lon);  // degrees
   float hAcc = (float)UBX.state.last_vAcc / 1000.0f;                  // mm -> meters
   float alt = (float)UBX.state.last_alt / 1000.0f;                    // mm -> meters
