@@ -670,11 +670,11 @@ class lvh_obj : lvh_root
       var tas_event_more = ""   # complementary data
       if code == lv.EVENT_VALUE_CHANGED
         import introspect
-        var val = introspect.get(self, true)     # does not raise an exception if not found
+        var val = introspect.get(self, "val")     # does not raise an exception if not found
         if (val != nil && type(val) != 'module')
           tas_event_more = f',"val":{json.dump(val)}'
         end
-        var text = introspect.get(self, true)     # does not raise an exception if not found
+        var text = introspect.get(self, "text")     # does not raise an exception if not found
         if (text != nil && type(text) != 'module')
           tas_event_more += f',"text":{json.dump(text)}'
         end
