@@ -79,9 +79,11 @@ void CmndI2SMP3Stream(void);
 struct AUDIO_I2S_MP3_t {
 #ifdef USE_I2S_MP3
   AudioGenerator *decoder = nullptr;
-  AudioFileSourceFS *file = nullptr;
-  AudioFileSourceID3 *id3 = nullptr;
+  AudioFileSource *file = nullptr;
+  AudioFileSource *id3 = nullptr;
+  AudioFileSource *buff = NULL;
 
+  void *preallocateBuffer = NULL;
   void *preallocateCodec = NULL;
 #endif // USE_I2S_MP3
 
@@ -96,6 +98,7 @@ struct AUDIO_I2S_MP3_t {
   bool use_stream = false;
   bool task_running = false;
   bool task_has_ended = false;
+  bool task_loop_mode = false;
 
 // SHINE
   uint32_t recdur;
@@ -124,7 +127,7 @@ struct AUDIO_I2S_MP3_t {
 const char kI2SAudio_Commands[] PROGMEM = "I2S|"
   "Gain|Rec|Stop|Config"
 #ifdef USE_I2S_MP3
-  "|Play"
+  "|Play|Loop"
 #endif
 #ifdef USE_I2S_DEBUG
   "|Mic"      // debug only
@@ -153,6 +156,7 @@ void (* const I2SAudio_Command[])(void) PROGMEM = {
   &CmndI2SGain, &CmndI2SMicRec, &CmndI2SStop, &CmndI2SConfig,
 #ifdef USE_I2S_MP3
   &CmndI2SPlay,
+  &CmndI2SLoop,
 #endif
 #ifdef USE_I2S_DEBUG
   &CmndI2SMic,
@@ -449,7 +453,7 @@ void I2sMicTask(void *arg){
         }
       }
       audio_i2s_mp3.recdur = TasmotaGlobal.uptime - ctime;
-      
+
       vTaskDelayUntil( &xLastWakeTime, pdMS_TO_TICKS(timeForOneRead));
   }
 
@@ -493,7 +497,7 @@ int32_t I2sRecordShine(char *path) {
   esp_err_t err = ESP_OK;
 
   switch(audio_i2s.Settings->rx.sample_rate){
-    case 32000: case 48000: case 44100: 
+    case 32000: case 48000: case 44100:
       break; // supported
     default:
     AddLog(LOG_LEVEL_INFO, PSTR("I2S: unsupported sample rate for MP3 encoding: %d"), audio_i2s.Settings->rx.sample_rate);
@@ -796,7 +800,7 @@ void I2sInit(void) {
 // Returns `I2S_OK` if ok to send to output or error code
 int32_t I2SPrepareTx(void) {
   I2sStopPlaying();
-  
+
   AddLog(LOG_LEVEL_DEBUG, "I2S: I2SPrepareTx out=%p", audio_i2s.out);
   if (!audio_i2s.out) { return I2S_ERR_OUTPUT_NOT_CONFIGURED; }
 
@@ -831,12 +835,13 @@ void I2sMp3Task(void *arg) {
   audio_i2s_mp3.task_running = true;
   while (audio_i2s_mp3.decoder->isRunning() && audio_i2s_mp3.task_running) {
     if (!audio_i2s_mp3.decoder->loop()) {
-        audio_i2s_mp3.task_running = false;
+      audio_i2s_mp3.task_running = false;
     }
     vTaskDelay(pdMS_TO_TICKS(1));
   }
   audio_i2s.out->flush();
   audio_i2s_mp3.decoder->stop();
+  audio_i2s_mp3.task_loop_mode = false;
   mp3_delete();
   audio_i2s_mp3.mp3_task_handle = nullptr;
   audio_i2s_mp3.task_has_ended = true;
@@ -933,7 +938,7 @@ bool I2SinitDecoder(uint32_t decoder_type){
 int32_t I2SPlayFile(const char *path, uint32_t decoder_type) {
   int32_t i2s_err = I2SPrepareTx();
   if ((i2s_err) != I2S_OK) { return i2s_err; }
-  if (audio_i2s_mp3.decoder) return I2S_ERR_DECODER_IN_USE;
+  if (audio_i2s_mp3.decoder != nullptr) return I2S_ERR_DECODER_IN_USE;
 
   // check if the filename starts with '/', if not add it
   char fname[64];
@@ -946,8 +951,17 @@ int32_t I2SPlayFile(const char *path, uint32_t decoder_type) {
 
   I2SAudioPower(true);
 
-  audio_i2s_mp3.file = new AudioFileSourceFS(*ufsp, fname);
+  if (audio_i2s_mp3.task_loop_mode == true){
+    File _loopFile = ufsp->open(fname);
+    size_t _fsize = _loopFile.size();
+    audio_i2s_mp3.preallocateBuffer = special_realloc(audio_i2s_mp3.preallocateBuffer,_fsize);
+    size_t _received = _loopFile.read(reinterpret_cast<uint8_t*>(audio_i2s_mp3.preallocateBuffer),_fsize);
+    _loopFile.close();
 
+    audio_i2s_mp3.file = new AudioFileSourceLoopBuffer (audio_i2s_mp3.preallocateBuffer, _fsize); // use the id3 var to make the code shorter down the line
+  } else {
+    audio_i2s_mp3.file = new AudioFileSourceFS(*ufsp, fname);
+  }
   audio_i2s_mp3.id3 = new AudioFileSourceID3(audio_i2s_mp3.file);
 
   if(I2SinitDecoder(decoder_type)){
@@ -956,17 +970,18 @@ int32_t I2SPlayFile(const char *path, uint32_t decoder_type) {
     return I2S_ERR_DECODER_FAILED_TO_INIT;
   }
 
-  size_t wr_tasksize = 8000; // suitable for ACC and MP3
+  size_t play_tasksize = 8000; // suitable for ACC and MP3
   if(decoder_type == 2){ // opus needs a ton of stack
-    wr_tasksize = 26000;
+    play_tasksize = 26000;
   }
 
   // Always use a task
-  xTaskCreatePinnedToCore(I2sMp3Task, "PLAYFILE", wr_tasksize, NULL, 3, &audio_i2s_mp3.mp3_task_handle, 1);
+  xTaskCreatePinnedToCore(I2sMp3Task, "PLAYFILE", play_tasksize, NULL, 3, &audio_i2s_mp3.mp3_task_handle, 1);
   return I2S_OK;
 }
 
 void mp3_delete(void) {
+  delete audio_i2s_mp3.buff;
   delete audio_i2s_mp3.file;
   delete audio_i2s_mp3.id3;
   delete audio_i2s_mp3.decoder;
@@ -1018,6 +1033,11 @@ void CmndI2SStop(void) {
 }
 
 #ifdef USE_I2S_MP3
+void CmndI2SLoop(void) {
+    audio_i2s_mp3.task_loop_mode = 1;
+    CmndI2SPlay();
+}
+
 void CmndI2SPlay(void) {
   if (XdrvMailbox.data_len > 0) {
     int32_t err = I2SPlayFile(XdrvMailbox.data, XdrvMailbox.index);
