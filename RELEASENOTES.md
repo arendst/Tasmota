@@ -116,7 +116,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v14.4.1.3
 ### Added
-- Command ``SetOption163 1`` to disable display of Device name in GUI header
+- Command `SetOption163 1` to disable display of Device name in GUI header
+- Command `FileLog 0..4` to enable logging to filesystem using up to 16 rotating log files of 100kB (`#define FILE_LOG_SIZE 100`)
+- Command I2sLoop [#22807](https://github.com/arendst/Tasmota/issues/22807)
 - Support for PCF85063 RTC [#22727](https://github.com/arendst/Tasmota/issues/22727)
 - Support for Senseair S88 CO2 sensor [#22733](https://github.com/arendst/Tasmota/issues/22733)
 - Support for ESP32 Two-Wire Automotive Interface (TWAI) or Controller Area Network (CAN) busses
