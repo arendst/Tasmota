@@ -297,7 +297,6 @@ const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_confi
 #define TASM_FILE_ZIGBEE_DATA       "/zbdata"          // Zigbee last known values of devices
 #define TASM_FILE_AUTOEXEC          "/autoexec.bat"    // Commands executed after restart
 #define TASM_FILE_CONFIG            "/config.sys"      // Settings executed after restart
-#define TASM_FILE_LOG               "/log%d"           // Log file
 
 #ifndef DNS_TIMEOUT
 #define DNS_TIMEOUT                 1000       // Milliseconds

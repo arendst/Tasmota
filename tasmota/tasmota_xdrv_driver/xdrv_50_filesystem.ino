@@ -497,56 +497,55 @@ bool TfsRenameFile(const char *fname1, const char *fname2) {
 /*********************************************************************************************\
  * Log file
  * 
- * Rotate max 8 x 100kB log files /log1 -> /log2 ... /log8 -> /log1 ...
- * Keep at least 100kB free on filesystem
- * Filesystem needs to ba larger than 110kB
+ * Enable with command `FileLog 1..4`
+ * Rotate max 16 x FILE_LOG_SIZE kB log files /log01 -> /log02 ... /log16 -> /log01 ...
+ * Filesystem needs to be larger than FILE_LOG_SIZE + LOG_BUFFER_SIZE
 \*********************************************************************************************/
 
-void FileLoggingAsync(bool refresh) {
-  static uint32_t index = 1;
+#ifndef FILE_LOG_SIZE
+#define FILE_LOG_SIZE  100               // Log file size in kBytes (100kB is based on minimal filesystem of 320kB)
+#endif
+#define FILE_LOG_FREE FILE_LOG_SIZE+(LOG_BUFFER_SIZE/1000)  // Minimum free filesystem space in kBytes
+#define FILE_LOG_COUNT 16                // Number of log files (max 16 as four bits are reserved for index)
+#define FILE_LOG_NAME  "/log%02d"        // Log file name
 
-  if (!ffs_type || !Settings->filelog_level) { return; }
-  if (refresh && !NeedLogRefresh(Settings->filelog_level, index)) { return; }
-  if (UfsSize() < 110) { return; }       // File system too small
+void FileLoggingAsync(bool refresh) {
+  static uint32_t index = 1;             // Rotating log buffer entry pointer
+
+  if (!ffs_type || !Settings->filelog_level) { return; }  // No filesystem or [FileLog] disabled
+  if (refresh && !NeedLogRefresh(Settings->filelog_level, index)) { return; }  // No log buffer changes
+  if (UfsSize() < FILE_LOG_FREE) { 
+    Settings->filelog_level = 0;         // [FileLog] disable
+    AddLog(LOG_LEVEL_INFO, PSTR("FLG: Logging diabled. Filesystem too small"));  // Or FILE_LOG_SIZE too large
+    return;
+  }
 
   char fname[14];
-  bool file_delete = false;
-  File file;
-  while (1) {
-    snprintf_P(fname, sizeof(fname), PSTR(TASM_FILE_LOG), Settings->mbflag2.log_file_idx +1);  // /log1
-    if (file_delete) {
-      ffsp->remove(fname);               // Delete previous log file
+  snprintf_P(fname, sizeof(fname), PSTR(FILE_LOG_NAME), Settings->mbflag2.log_file_idx +1);  // /log01
+  File file = ffsp->open(fname, "a");    // Append to existing log file
+  if (!file) { 
+    if (UfsFree() < FILE_LOG_FREE) { 
+      Settings->filelog_level = 0;       // [FileLog] disable
+      AddLog(LOG_LEVEL_INFO, PSTR("FLG: Logging disabled. Filesystem full"));
+      return;
     }
-    file = ffsp->open(fname, "a");       // Append
+    file = ffsp->open(fname, "w");       // Make new log file
     if (!file) { 
-      file = ffsp->open(fname, "w");     // Make if not exists
-      if (!file) { 
-        AddLog(LOG_LEVEL_INFO, PSTR("FLG: Save failed"));
-        return;                          // Failed to make file
-      }
-    }
-    if (file.size() > 100000) {          // Rotate log file if size over 100k
-      file.close();
-      Settings->mbflag2.log_file_idx++;
-      if ((8 == Settings->mbflag2.log_file_idx) ||  // Keep max 100k x 8 log files
-          (UfsFree() < 110)) {           // Keep free space around 100k
-        Settings->mbflag2.log_file_idx = 0;
-        file_delete = true;
-      }
-    } else {
-      break;
+      Settings->filelog_level = 0;       // [FileLog] disable
+      AddLog(LOG_LEVEL_INFO, PSTR("FLG: Logging disabled. Save failed"));
+      return;                            // Failed to make file
     }
   }
 
 #ifdef USE_WEBCAM
-  WcInterrupt(0);  // Stop stream if active to fix TG1WDT_SYS_RESET
+  WcInterrupt(0);                        // Stop stream if active to fix TG1WDT_SYS_RESET
 #endif
   char* line;
   size_t len;
   while (GetLog(Settings->filelog_level, &index, &line, &len)) {
     // This will timeout on ESP32-webcam
     // But now solved with WcInterrupt(0) in support_esp.ino
-    file.write((uint8_t*)line, len -1);
+    file.write((uint8_t*)line, len -1);  // Write up to LOG_BUFFER_SIZE log data
     snprintf_P(fname, sizeof(fname), PSTR("\r\n"));
     file.write((uint8_t*)fname, 2);
   }
@@ -554,7 +553,25 @@ void FileLoggingAsync(bool refresh) {
   WcInterrupt(1);
 #endif
 
+  uint32_t file_size = file.size();
   file.close();
+  if (file_size > (FILE_LOG_SIZE * 1000)) { 
+    // Rotate log file(s) as size is over FILE_LOG_SIZE
+    // Taking into account non-sequential file names and different file sizes
+    uint32_t log_file_idx = Settings->mbflag2.log_file_idx;  // 0..15
+    log_file_idx++;
+    if (log_file_idx >= FILE_LOG_COUNT) { log_file_idx = 0; }  // Rotate max 16 log files
+    uint32_t idx = log_file_idx;
+    do {                                 // Need free space around FILE_LOG_SIZE so find oldest log file(s) and remove it
+      snprintf_P(fname, sizeof(fname), PSTR(FILE_LOG_NAME), idx +1);
+      ffsp->remove(fname);               // Remove oldest (non-)sequential log file(s)
+      idx++;
+      if (idx >= FILE_LOG_COUNT) { idx = 0; }
+    } while ((UfsFree() < FILE_LOG_FREE) && (idx != Settings->mbflag2.log_file_idx));
+    Settings->mbflag2.log_file_idx = log_file_idx;  // Save for restart or power on
+    snprintf_P(fname, sizeof(fname), PSTR(FILE_LOG_NAME), log_file_idx +1);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("FLG: Rotate file %s"), fname +1);  // Skip leading slash
+  }
 }
 
 /*********************************************************************************************\
