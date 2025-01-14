@@ -1055,8 +1055,8 @@ void CmndAdcParam(void) {
         if ((GPIO_ADC_INPUT == adc_type) ||
             (GPIO_ADC_TEMP == adc_type) ||
             (GPIO_ADC_RANGE == adc_type)) {
-          Adc[channel].param[2] = abs(strtol(ArgV(argument, 4), nullptr, 10));      // param3 = abs(int)
-          Adc[channel].param[3] = abs(strtol(ArgV(argument, 5), nullptr, 10));      // param4 = abs(int)
+          Adc[channel].param[2] = strtol(ArgV(argument, 4), nullptr, 10);           // param3 = int
+          Adc[channel].param[3] = strtol(ArgV(argument, 5), nullptr, 10);           // param4 = int
         } else {
           Adc[channel].param[2] = (int)(CharToFloat(ArgV(argument, 4)) * 10000);    // param3 = float
           if (ArgC() > 4) {
@@ -1068,7 +1068,7 @@ void CmndAdcParam(void) {
         if (GPIO_ADC_PH == adc_type) {
           float phLow = CharToFloat(ArgV(argument, 2));
           Adc[channel].param[0] = phLow * ANALOG_PH_DECIMAL_MULTIPLIER;             // param1 = float
-//            Adc[channel].param[1] = strtol(ArgV(argument, 3), nullptr, 10);           // param2 = int
+//          Adc[channel].param[1] = strtol(ArgV(argument, 3), nullptr, 10);           // param2 = int
           float phHigh = CharToFloat(ArgV(argument, 4));
           Adc[channel].param[2] = phHigh * ANALOG_PH_DECIMAL_MULTIPLIER;            // param3 = float
           Adc[channel].param[3] = strtol(ArgV(argument, 5), nullptr, 10);           // param4 = int
@@ -1084,9 +1084,9 @@ void CmndAdcParam(void) {
           }
         }
         if (GPIO_ADC_MQ == adc_type) {
-          float a = CharToFloat(ArgV(argument, 3));                           // param2 = float
-          float b = CharToFloat(ArgV(argument, 4));                           // param3 = float
-          float ratioMQCleanAir = CharToFloat(ArgV(argument, 5));             // param4 = float
+          float a = CharToFloat(ArgV(argument, 3));                                 // param2 = float
+          float b = CharToFloat(ArgV(argument, 4));                                 // param3 = float
+          float ratioMQCleanAir = CharToFloat(ArgV(argument, 5));                   // param4 = float
           if ((0 == a) && (0 == b) && (0 == ratioMQCleanAir)) {
             if (2 == Adc[channel].param[0]) {                                       // param1 = int
               a = 574.25;
@@ -1115,7 +1115,7 @@ void CmndAdcParam(void) {
 
 //            AddLog(LOG_LEVEL_INFO, PSTR("ADC: MQ reset mq%d, a = %2_f, b = %2_f, ratioMQCleanAir = %2_f"), Adc[channel].param[0], &a, &b, &ratioMQCleanAir);
         }
-      } else {                                         // Set default values based on current adc type
+      } else {                                                                      // Set default values based on current adc type
         // AdcParam 1
         AdcInitParams(channel);
       }
@@ -1124,7 +1124,7 @@ void CmndAdcParam(void) {
 
     // AdcParam / AdcGpio
     AdcGetSettings(channel);
-    Response_P(PSTR("{\"%s"), XdrvMailbox.command);      // {"AdcParam or {"AdcGpio
+    Response_P(PSTR("{\"%s"), XdrvMailbox.command);                                 // {"AdcParam or {"AdcGpio
     if (strstr_P(XdrvMailbox.command, PSTR(D_CMND_ADCGPIO))) {
 #ifdef ESP8266
       ResponseAppend_P(PSTR("\":["));
@@ -1139,18 +1139,18 @@ void CmndAdcParam(void) {
         (GPIO_ADC_TEMP == adc_type) ||
         (GPIO_ADC_RANGE == adc_type) ||
         (GPIO_ADC_MQ == adc_type)) {
-      ResponseAppend_P(PSTR(",%d,%d"), Adc[channel].param[2], Adc[channel].param[3]);    // param3 = int, param4 = int
+      ResponseAppend_P(PSTR(",%d,%d"), Adc[channel].param[2], Adc[channel].param[3]);  // param3 = int, param4 = int
     }
     else {
       float param = (float)Adc[channel].param[2] / 10000;
-      ResponseAppend_P(PSTR(",%*_f"), Decimals(Adc[channel].param[2]), &param);    // param3 = float
+      ResponseAppend_P(PSTR(",%*_f"), Decimals(Adc[channel].param[2]), &param);     // param3 = float
       if ((GPIO_ADC_CT_POWER == adc_type) ||
           (GPIO_ADC_VOLTAGE == adc_type) ||
           (GPIO_ADC_CURRENT == adc_type)) {
         param = (float)Adc[channel].param[3] / 10000;
-        ResponseAppend_P(PSTR(",%*_f"), Decimals(Adc[channel].param[3]), &param);  // param4 = float
+        ResponseAppend_P(PSTR(",%*_f"), Decimals(Adc[channel].param[3]), &param);   // param4 = float
       } else {
-        ResponseAppend_P(PSTR(",%d"), Adc[channel].param[3]);                      // param4 = int
+        ResponseAppend_P(PSTR(",%d"), Adc[channel].param[3]);                       // param4 = int
       }      
     }
     ResponseAppend_P(PSTR("]}"));
