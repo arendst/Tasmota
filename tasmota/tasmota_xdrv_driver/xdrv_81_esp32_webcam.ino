@@ -488,7 +488,7 @@ uint32_t WcSetup(int32_t fsiz) {
   camera_sensor_info_t *info = esp_camera_sensor_get_info(&wc_s->id);
 
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: %s Initialized"), info->name);
-
+  TasmotaGlobal.camera_initialized = true;
 
   Wc.up = 1;
   if (psram) { Wc.up = 2; }

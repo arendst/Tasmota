@@ -295,6 +295,9 @@ struct TasmotaGlobal_t {
   RulesBitfield rules_flag;                 // Rule state flags (16 bits)
 
   StateBitfield global_state;               // Global states (currently Wifi and Mqtt) (8 bits)
+#ifdef ESP32
+  bool camera_initialized;                  // For esp32-webcam, to be used in discovery
+#endif  // ESP32
   uint16_t pwm_inverted;                    // PWM inverted flag (1 = inverted) - extended to 16 bits for ESP32
 #ifdef ESP32
   int16_t pwm_cur_value[MAX_PWMS];          // Current effective values of PWMs as applied to GPIOs
