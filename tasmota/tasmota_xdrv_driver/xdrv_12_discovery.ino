@@ -85,7 +85,7 @@ void TasDiscoverMessage(void) {
 #ifdef ESP32
                    TasmotaGlobal.camera_initialized,
 #else
-                   0,
+                   false,
 #endif
                    GetStateText(0), GetStateText(1), GetStateText(2), GetStateText(3),
                    TasmotaGlobal.version,
