@@ -96,6 +96,9 @@ class Tasmota
       self._rules = []
     end
     if type(f) == 'function'
+      if (id != nil)
+        self.remove_rule(f, id)
+      end
       self._rules.push(Trigger(self.Rule_Matcher.parse(pat), f, id))
     else
       raise 'value_error', 'the second argument is not a function'
