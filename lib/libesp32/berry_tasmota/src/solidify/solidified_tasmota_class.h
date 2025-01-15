@@ -4,8 +4,8 @@
 \********************************************************************/
 #include "be_constobj.h"
 extern const bclass be_class_Tasmota;
-// compact class 'Tasmota' ktab size: 153, total: 287 (saved 1072 bytes)
-static const bvalue be_ktab_class_Tasmota[153] = {
+// compact class 'Tasmota' ktab size: 152, total: 286 (saved 1072 bytes)
+static const bvalue be_ktab_class_Tasmota[152] = {
   /* K0   */  be_nested_str(i2c_enabled),
   /* K1   */  be_nested_str(wire1),
   /* K2   */  be_nested_str(enabled),
@@ -85,80 +85,79 @@ static const bvalue be_ktab_class_Tasmota[153] = {
   /* K76  */  be_nested_str(tasmota_X2Eset_light_X28_X29_X20is_X20deprecated_X2C_X20use_X20light_X2Eset_X28_X29),
   /* K77  */  be_nested_str(light),
   /* K78  */  be_nested_str(set),
-  /* K79  */  be_nested_str(remove_rule),
-  /* K80  */  be_nested_str(Rule_Matcher),
-  /* K81  */  be_nested_str(parse),
-  /* K82  */  be_nested_str(the_X20second_X20argument_X20is_X20not_X20a_X20function),
-  /* K83  */  be_nested_str(_ccmd),
-  /* K84  */  be_nested_str(argument_X20must_X20be_X20a_X20function),
-  /* K85  */  be_nested_str(global),
-  /* K86  */  be_nested_str(fast_loop_enabled),
-  /* K87  */  be_nested_str(Tele),
-  /* K88  */  be_nested_str(ctypes_bytes_dyn),
-  /* K89  */  be_nested_str(_global_addr),
-  /* K90  */  be_nested_str(_global_def),
-  /* K91  */  be_nested_str(_settings_ptr),
-  /* K92  */  be_nested_str(settings),
-  /* K93  */  be_nested_str(toptr),
-  /* K94  */  be_nested_str(_settings_def),
-  /* K95  */  be_nested_str(wd),
-  /* K96  */  be_nested_str(),
-  /* K97  */  be_nested_str(contains),
-  /* K98  */  be_nested_str(add_cmd),
-  /* K99  */  be_nested_str(UrlFetch),
-  /* K100 */  be_const_class(be_class_Tasmota),
-  /* K101 */  be_nested_str(time_dump),
-  /* K102 */  be_nested_str(_X2504d_X2D_X2502d_X2D_X2502dT_X2502d_X3A_X2502d_X3A_X2502d),
-  /* K103 */  be_nested_str(year),
-  /* K104 */  be_nested_str(month),
-  /* K105 */  be_nested_str(day),
-  /* K106 */  be_nested_str(hour),
-  /* K107 */  be_nested_str(min),
-  /* K108 */  be_nested_str(sec),
-  /* K109 */  be_nested_str(endswith),
-  /* K110 */  be_nested_str(_X2Ebe),
-  /* K111 */  be_nested_str(BRY_X3A_X20file_X20_X27_X25s_X27_X20does_X20not_X20have_X20_X27_X2Ebe_X27_X20extension),
-  /* K112 */  be_nested_str(_X23),
-  /* K113 */  be_nested_str(BRY_X3A_X20cannot_X20compile_X20file_X20in_X20read_X2Donly_X20archive),
-  /* K114 */  be_nested_str(file),
-  /* K115 */  be_nested_str(BRY_X3A_X20empty_X20compiled_X20file),
-  /* K116 */  be_nested_str(BRY_X3A_X20failed_X20to_X20load_X20_X27_X25s_X27_X20_X28_X25s_X20_X2D_X20_X25s_X29),
-  /* K117 */  be_nested_str(c),
-  /* K118 */  be_nested_str(BRY_X3A_X20could_X20not_X20save_X20compiled_X20file_X20_X25s_X20_X28_X25s_X29),
-  /* K119 */  be_nested_str(_find_op),
-  /* K120 */  be_const_int(2147483647),
-  /* K121 */  be_nested_str(path),
-  /* K122 */  be_nested_str(startswith),
-  /* K123 */  be_nested_str(_X2F),
-  /* K124 */  be_nested_str(_X2E),
-  /* K125 */  be_nested_str(_X2Ebec),
-  /* K126 */  be_nested_str(BRY_X3A_X20file_X20extension_X20is_X20not_X20_X27_X2Ebe_X27_X20nor_X20_X27_X2Ebec_X27),
-  /* K127 */  be_nested_str(exists),
-  /* K128 */  be_nested_str(BRY_X3A_X20corrupt_X20bytecode_X20_X27_X25s_X27),
-  /* K129 */  be_nested_str(BRY_X3A_X20bytecode_X20has_X20wrong_X20version_X20_X27_X25s_X27_X20_X28_X25s_X29),
-  /* K130 */  be_nested_str(find_key_i),
-  /* K131 */  be_nested_str(resolvecmnd),
-  /* K132 */  be_nested_str(keys),
-  /* K133 */  be_nested_str(_X3F),
-  /* K134 */  be_nested_str(stop_iteration),
-  /* K135 */  be_nested_str(tasmota_X2Eget_light_X28_X29_X20is_X20deprecated_X2C_X20use_X20light_X2Eget_X28_X29),
-  /* K136 */  be_nested_str(collect),
-  /* K137 */  be_nested_str(allocated),
-  /* K138 */  be_nested_str(cb),
-  /* K139 */  be_nested_str(gen_cb),
-  /* K140 */  be_nested_str(split),
-  /* K141 */  be_nested_str(index_X2Ehtml),
-  /* K142 */  be_nested_str(webclient),
-  /* K143 */  be_nested_str(set_follow_redirects),
-  /* K144 */  be_nested_str(begin),
-  /* K145 */  be_nested_str(GET),
-  /* K146 */  be_nested_str(status_X3A_X20),
-  /* K147 */  be_nested_str(connection_error),
-  /* K148 */  be_nested_str(write_file),
-  /* K149 */  be_nested_str(close),
-  /* K150 */  be_nested_str(BRY_X3A_X20Fetched_X20),
-  /* K151 */  be_nested_str(maxlog_level),
-  /* K152 */  be_nested_str(_cmd),
+  /* K79  */  be_nested_str(Rule_Matcher),
+  /* K80  */  be_nested_str(parse),
+  /* K81  */  be_nested_str(the_X20second_X20argument_X20is_X20not_X20a_X20function),
+  /* K82  */  be_nested_str(_ccmd),
+  /* K83  */  be_nested_str(argument_X20must_X20be_X20a_X20function),
+  /* K84  */  be_nested_str(global),
+  /* K85  */  be_nested_str(fast_loop_enabled),
+  /* K86  */  be_nested_str(Tele),
+  /* K87  */  be_nested_str(ctypes_bytes_dyn),
+  /* K88  */  be_nested_str(_global_addr),
+  /* K89  */  be_nested_str(_global_def),
+  /* K90  */  be_nested_str(_settings_ptr),
+  /* K91  */  be_nested_str(settings),
+  /* K92  */  be_nested_str(toptr),
+  /* K93  */  be_nested_str(_settings_def),
+  /* K94  */  be_nested_str(wd),
+  /* K95  */  be_nested_str(),
+  /* K96  */  be_nested_str(contains),
+  /* K97  */  be_nested_str(add_cmd),
+  /* K98  */  be_nested_str(UrlFetch),
+  /* K99  */  be_const_class(be_class_Tasmota),
+  /* K100 */  be_nested_str(time_dump),
+  /* K101 */  be_nested_str(_X2504d_X2D_X2502d_X2D_X2502dT_X2502d_X3A_X2502d_X3A_X2502d),
+  /* K102 */  be_nested_str(year),
+  /* K103 */  be_nested_str(month),
+  /* K104 */  be_nested_str(day),
+  /* K105 */  be_nested_str(hour),
+  /* K106 */  be_nested_str(min),
+  /* K107 */  be_nested_str(sec),
+  /* K108 */  be_nested_str(endswith),
+  /* K109 */  be_nested_str(_X2Ebe),
+  /* K110 */  be_nested_str(BRY_X3A_X20file_X20_X27_X25s_X27_X20does_X20not_X20have_X20_X27_X2Ebe_X27_X20extension),
+  /* K111 */  be_nested_str(_X23),
+  /* K112 */  be_nested_str(BRY_X3A_X20cannot_X20compile_X20file_X20in_X20read_X2Donly_X20archive),
+  /* K113 */  be_nested_str(file),
+  /* K114 */  be_nested_str(BRY_X3A_X20empty_X20compiled_X20file),
+  /* K115 */  be_nested_str(BRY_X3A_X20failed_X20to_X20load_X20_X27_X25s_X27_X20_X28_X25s_X20_X2D_X20_X25s_X29),
+  /* K116 */  be_nested_str(c),
+  /* K117 */  be_nested_str(BRY_X3A_X20could_X20not_X20save_X20compiled_X20file_X20_X25s_X20_X28_X25s_X29),
+  /* K118 */  be_nested_str(_find_op),
+  /* K119 */  be_const_int(2147483647),
+  /* K120 */  be_nested_str(path),
+  /* K121 */  be_nested_str(startswith),
+  /* K122 */  be_nested_str(_X2F),
+  /* K123 */  be_nested_str(_X2E),
+  /* K124 */  be_nested_str(_X2Ebec),
+  /* K125 */  be_nested_str(BRY_X3A_X20file_X20extension_X20is_X20not_X20_X27_X2Ebe_X27_X20nor_X20_X27_X2Ebec_X27),
+  /* K126 */  be_nested_str(exists),
+  /* K127 */  be_nested_str(BRY_X3A_X20corrupt_X20bytecode_X20_X27_X25s_X27),
+  /* K128 */  be_nested_str(BRY_X3A_X20bytecode_X20has_X20wrong_X20version_X20_X27_X25s_X27_X20_X28_X25s_X29),
+  /* K129 */  be_nested_str(find_key_i),
+  /* K130 */  be_nested_str(resolvecmnd),
+  /* K131 */  be_nested_str(keys),
+  /* K132 */  be_nested_str(_X3F),
+  /* K133 */  be_nested_str(stop_iteration),
+  /* K134 */  be_nested_str(tasmota_X2Eget_light_X28_X29_X20is_X20deprecated_X2C_X20use_X20light_X2Eget_X28_X29),
+  /* K135 */  be_nested_str(collect),
+  /* K136 */  be_nested_str(allocated),
+  /* K137 */  be_nested_str(cb),
+  /* K138 */  be_nested_str(gen_cb),
+  /* K139 */  be_nested_str(split),
+  /* K140 */  be_nested_str(index_X2Ehtml),
+  /* K141 */  be_nested_str(webclient),
+  /* K142 */  be_nested_str(set_follow_redirects),
+  /* K143 */  be_nested_str(begin),
+  /* K144 */  be_nested_str(GET),
+  /* K145 */  be_nested_str(status_X3A_X20),
+  /* K146 */  be_nested_str(connection_error),
+  /* K147 */  be_nested_str(write_file),
+  /* K148 */  be_nested_str(close),
+  /* K149 */  be_nested_str(BRY_X3A_X20Fetched_X20),
+  /* K150 */  be_nested_str(maxlog_level),
+  /* K151 */  be_nested_str(_cmd),
 };
 
 
@@ -1016,7 +1015,7 @@ be_local_closure(class_Tasmota_add_rule,   /* name */
     &be_ktab_class_Tasmota,     /* shared constants */
     &be_const_str_add_rule,
     &be_const_str_solidified,
-    ( &(const binstruction[36]) {  /* code */
+    ( &(const binstruction[29]) {  /* code */
       0x8C100112,  //  0000  GETMET	R4	R0	K18
       0x5C180400,  //  0001  MOVE	R6	R2
       0x7C100400,  //  0002  CALL	R4	2
@@ -1031,28 +1030,21 @@ be_local_closure(class_Tasmota_add_rule,   /* name */
       0x5C140400,  //  000B  MOVE	R5	R2
       0x7C100200,  //  000C  CALL	R4	1
       0x1C10090D,  //  000D  EQ	R4	R4	K13
-      0x78120012,  //  000E  JMPF	R4	#0022
-      0x4C100000,  //  000F  LDNIL	R4
-      0x20100604,  //  0010  NE	R4	R3	R4
-      0x78120003,  //  0011  JMPF	R4	#0016
-      0x8C10014F,  //  0012  GETMET	R4	R0	K79
-      0x5C180400,  //  0013  MOVE	R6	R2
-      0x5C1C0600,  //  0014  MOVE	R7	R3
-      0x7C100600,  //  0015  CALL	R4	3
-      0x88100146,  //  0016  GETMBR	R4	R0	K70
-      0x8C100914,  //  0017  GETMET	R4	R4	K20
-      0xB81A2A00,  //  0018  GETNGBL	R6	K21
-      0x881C0150,  //  0019  GETMBR	R7	R0	K80
-      0x8C1C0F51,  //  001A  GETMET	R7	R7	K81
-      0x5C240200,  //  001B  MOVE	R9	R1
-      0x7C1C0400,  //  001C  CALL	R7	2
-      0x5C200400,  //  001D  MOVE	R8	R2
-      0x5C240600,  //  001E  MOVE	R9	R3
-      0x7C180600,  //  001F  CALL	R6	3
-      0x7C100400,  //  0020  CALL	R4	2
-      0x70020000,  //  0021  JMP		#0023
-      0xB0063552,  //  0022  RAISE	1	K26	K82
-      0x80000000,  //  0023  RET	0
+      0x7812000B,  //  000E  JMPF	R4	#001B
+      0x88100146,  //  000F  GETMBR	R4	R0	K70
+      0x8C100914,  //  0010  GETMET	R4	R4	K20
+      0xB81A2A00,  //  0011  GETNGBL	R6	K21
+      0x881C014F,  //  0012  GETMBR	R7	R0	K79
+      0x8C1C0F50,  //  0013  GETMET	R7	R7	K80
+      0x5C240200,  //  0014  MOVE	R9	R1
+      0x7C1C0400,  //  0015  CALL	R7	2
+      0x5C200400,  //  0016  MOVE	R8	R2
+      0x5C240600,  //  0017  MOVE	R9	R3
+      0x7C180600,  //  0018  CALL	R6	3
+      0x7C100400,  //  0019  CALL	R4	2
+      0x70020000,  //  001A  JMP		#001C
+      0xB0063551,  //  001B  RAISE	1	K26	K81
+      0x80000000,  //  001C  RET	0
     })
   )
 );
@@ -1114,9 +1106,9 @@ be_local_closure(class_Tasmota_remove_cmd,   /* name */
     &be_const_str_remove_cmd,
     &be_const_str_solidified,
     ( &(const binstruction[ 7]) {  /* code */
-      0x88080153,  //  0000  GETMBR	R2	R0	K83
+      0x88080152,  //  0000  GETMBR	R2	R0	K82
       0x780A0003,  //  0001  JMPF	R2	#0006
-      0x88080153,  //  0002  GETMBR	R2	R0	K83
+      0x88080152,  //  0002  GETMBR	R2	R0	K82
       0x8C080522,  //  0003  GETMET	R2	R2	K34
       0x5C100200,  //  0004  MOVE	R4	R1
       0x7C080400,  //  0005  CALL	R2	2
@@ -1159,9 +1151,9 @@ be_local_closure(class_Tasmota_add_fast_loop,   /* name */
       0x7C080200,  //  000C  CALL	R2	1
       0x2008050D,  //  000D  NE	R2	R2	K13
       0x780A0000,  //  000E  JMPF	R2	#0010
-      0xB0063554,  //  000F  RAISE	1	K26	K84
-      0x88080155,  //  0010  GETMBR	R2	R0	K85
-      0x900AAD08,  //  0011  SETMBR	R2	K86	K8
+      0xB0063553,  //  000F  RAISE	1	K26	K83
+      0x88080154,  //  0010  GETMBR	R2	R0	K84
+      0x900AAB08,  //  0011  SETMBR	R2	K85	K8
       0x8808010B,  //  0012  GETMBR	R2	R0	K11
       0x8C080514,  //  0013  GETMET	R2	R2	K20
       0x5C100200,  //  0014  MOVE	R4	R1
@@ -1298,7 +1290,7 @@ be_local_closure(class_Tasmota_exec_tele,   /* name */
       0x5C0C0200,  //  000E  MOVE	R3	R1
       0x60140013,  //  000F  GETGBL	R5	G19
       0x7C140000,  //  0010  CALL	R5	0
-      0x9816AE03,  //  0011  SETIDX	R5	K87	R3
+      0x9816AC03,  //  0011  SETIDX	R5	K86	R3
       0x5C0C0A00,  //  0012  MOVE	R3	R5
       0x58140005,  //  0013  LDCONST	R5	K5
       0x6018000C,  //  0014  GETGBL	R6	G12
@@ -1423,14 +1415,14 @@ be_local_closure(class_Tasmota_init,   /* name */
     &be_const_str_init,
     &be_const_str_solidified,
     ( &(const binstruction[34]) {  /* code */
-      0xB806B000,  //  0000  GETNGBL	R1	K88
-      0x88080159,  //  0001  GETMBR	R2	R0	K89
-      0x880C015A,  //  0002  GETMBR	R3	R0	K90
+      0xB806AE00,  //  0000  GETNGBL	R1	K87
+      0x88080158,  //  0001  GETMBR	R2	R0	K88
+      0x880C0159,  //  0002  GETMBR	R3	R0	K89
       0x7C040400,  //  0003  CALL	R1	2
-      0x9002AA01,  //  0004  SETMBR	R0	K85	R1
+      0x9002A801,  //  0004  SETMBR	R0	K84	R1
       0xA4061800,  //  0005  IMPORT	R1	K12
       0x60080015,  //  0006  GETGBL	R2	G21
-      0x880C015B,  //  0007  GETMBR	R3	R0	K91
+      0x880C015A,  //  0007  GETMBR	R3	R0	K90
       0x54120003,  //  0008  LDINT	R4	4
       0x7C080400,  //  0009  CALL	R2	2
       0x8C08052F,  //  000A  GETMET	R2	R2	K47
@@ -1438,21 +1430,21 @@ be_local_closure(class_Tasmota_init,   /* name */
       0x54160003,  //  000C  LDINT	R5	4
       0x7C080600,  //  000D  CALL	R2	3
       0x780A0006,  //  000E  JMPF	R2	#0016
-      0xB80EB000,  //  000F  GETNGBL	R3	K88
-      0x8C10035D,  //  0010  GETMET	R4	R1	K93
+      0xB80EAE00,  //  000F  GETNGBL	R3	K87
+      0x8C10035C,  //  0010  GETMET	R4	R1	K92
       0x5C180400,  //  0011  MOVE	R6	R2
       0x7C100400,  //  0012  CALL	R4	2
-      0x8814015E,  //  0013  GETMBR	R5	R0	K94
+      0x8814015D,  //  0013  GETMBR	R5	R0	K93
       0x7C0C0400,  //  0014  CALL	R3	2
-      0x9002B803,  //  0015  SETMBR	R0	K92	R3
-      0x9002BF60,  //  0016  SETMBR	R0	K95	K96
-      0xB80EAA00,  //  0017  GETNGBL	R3	K85
-      0x8C0C0761,  //  0018  GETMET	R3	R3	K97
+      0x9002B603,  //  0015  SETMBR	R0	K91	R3
+      0x9002BD5F,  //  0016  SETMBR	R0	K94	K95
+      0xB80EA800,  //  0017  GETNGBL	R3	K84
+      0x8C0C0760,  //  0018  GETMET	R3	R3	K96
       0x58140032,  //  0019  LDCONST	R5	K50
       0x7C0C0400,  //  001A  CALL	R3	2
       0x90026203,  //  001B  SETMBR	R0	K49	R3
-      0x8C0C0162,  //  001C  GETMET	R3	R0	K98
-      0x58140063,  //  001D  LDCONST	R5	K99
+      0x8C0C0161,  //  001C  GETMET	R3	R0	K97
+      0x58140062,  //  001D  LDCONST	R5	K98
       0x84180000,  //  001E  CLOSURE	R6	P0
       0x7C0C0600,  //  001F  CALL	R3	3
       0xA0000000,  //  0020  CLOSE	R0
@@ -1480,7 +1472,7 @@ be_local_closure(class_Tasmota_int,   /* name */
     &be_const_str_int,
     &be_const_str_solidified,
     ( &(const binstruction[46]) {  /* code */
-      0x580C0064,  //  0000  LDCONST	R3	K100
+      0x580C0063,  //  0000  LDCONST	R3	K99
       0x60100009,  //  0001  GETGBL	R4	G9
       0x5C140000,  //  0002  MOVE	R5	R0
       0x7C100200,  //  0003  CALL	R4	1
@@ -1549,17 +1541,17 @@ be_local_closure(class_Tasmota_time_str,   /* name */
     &be_const_str_time_str,
     &be_const_str_solidified,
     ( &(const binstruction[13]) {  /* code */
-      0x8C080165,  //  0000  GETMET	R2	R0	K101
+      0x8C080164,  //  0000  GETMET	R2	R0	K100
       0x5C100200,  //  0001  MOVE	R4	R1
       0x7C080400,  //  0002  CALL	R2	2
       0x600C0018,  //  0003  GETGBL	R3	G24
-      0x58100066,  //  0004  LDCONST	R4	K102
-      0x94140567,  //  0005  GETIDX	R5	R2	K103
-      0x94180568,  //  0006  GETIDX	R6	R2	K104
-      0x941C0569,  //  0007  GETIDX	R7	R2	K105
-      0x9420056A,  //  0008  GETIDX	R8	R2	K106
-      0x9424056B,  //  0009  GETIDX	R9	R2	K107
-      0x9428056C,  //  000A  GETIDX	R10	R2	K108
+      0x58100065,  //  0004  LDCONST	R4	K101
+      0x94140566,  //  0005  GETIDX	R5	R2	K102
+      0x94180567,  //  0006  GETIDX	R6	R2	K103
+      0x941C0568,  //  0007  GETIDX	R7	R2	K104
+      0x94200569,  //  0008  GETIDX	R8	R2	K105
+      0x9424056A,  //  0009  GETIDX	R9	R2	K106
+      0x9428056B,  //  000A  GETIDX	R10	R2	K107
       0x7C0C0E00,  //  000B  CALL	R3	7
       0x80040600,  //  000C  RET	1	R3
     })
@@ -1586,14 +1578,14 @@ be_local_closure(class_Tasmota_compile,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[84]) {  /* code */
       0xA40A7A00,  //  0000  IMPORT	R2	K61
-      0x8C0C056D,  //  0001  GETMET	R3	R2	K109
+      0x8C0C056C,  //  0001  GETMET	R3	R2	K108
       0x5C140200,  //  0002  MOVE	R5	R1
-      0x5818006E,  //  0003  LDCONST	R6	K110
+      0x5818006D,  //  0003  LDCONST	R6	K109
       0x7C0C0600,  //  0004  CALL	R3	3
       0x740E0007,  //  0005  JMPT	R3	#000E
       0x600C0001,  //  0006  GETGBL	R3	G1
       0x60100018,  //  0007  GETGBL	R4	G24
-      0x5814006F,  //  0008  LDCONST	R5	K111
+      0x5814006E,  //  0008  LDCONST	R5	K110
       0x5C180200,  //  0009  MOVE	R6	R1
       0x7C100400,  //  000A  CALL	R4	2
       0x7C0C0200,  //  000B  CALL	R3	1
@@ -1601,13 +1593,13 @@ be_local_closure(class_Tasmota_compile,   /* name */
       0x80040600,  //  000D  RET	1	R3
       0x8C0C051D,  //  000E  GETMET	R3	R2	K29
       0x5C140200,  //  000F  MOVE	R5	R1
-      0x58180070,  //  0010  LDCONST	R6	K112
+      0x5818006F,  //  0010  LDCONST	R6	K111
       0x7C0C0600,  //  0011  CALL	R3	3
       0x240C0705,  //  0012  GT	R3	R3	K5
       0x780E0006,  //  0013  JMPF	R3	#001B
       0x600C0001,  //  0014  GETGBL	R3	G1
       0x60100018,  //  0015  GETGBL	R4	G24
-      0x58140071,  //  0016  LDCONST	R5	K113
+      0x58140070,  //  0016  LDCONST	R5	K112
       0x7C100200,  //  0017  CALL	R4	1
       0x7C0C0200,  //  0018  CALL	R3	1
       0x500C0000,  //  0019  LDBOOL	R3	0	0
@@ -1616,7 +1608,7 @@ be_local_closure(class_Tasmota_compile,   /* name */
       0xA8020011,  //  001C  EXBLK	0	#002F
       0x6010000D,  //  001D  GETGBL	R4	G13
       0x5C140200,  //  001E  MOVE	R5	R1
-      0x58180072,  //  001F  LDCONST	R6	K114
+      0x58180071,  //  001F  LDCONST	R6	K113
       0x7C100400,  //  0020  CALL	R4	2
       0x5C0C0800,  //  0021  MOVE	R3	R4
       0x4C100000,  //  0022  LDNIL	R4
@@ -1624,7 +1616,7 @@ be_local_closure(class_Tasmota_compile,   /* name */
       0x78120007,  //  0024  JMPF	R4	#002D
       0x60100001,  //  0025  GETGBL	R4	G1
       0x60140018,  //  0026  GETGBL	R5	G24
-      0x58180073,  //  0027  LDCONST	R6	K115
+      0x58180072,  //  0027  LDCONST	R6	K114
       0x7C140200,  //  0028  CALL	R5	1
       0x7C100200,  //  0029  CALL	R4	1
       0x50100000,  //  002A  LDBOOL	R4	0	0
@@ -1636,7 +1628,7 @@ be_local_closure(class_Tasmota_compile,   /* name */
       0x7002000A,  //  0030  JMP		#003C
       0x60180001,  //  0031  GETGBL	R6	G1
       0x601C0018,  //  0032  GETGBL	R7	G24
-      0x58200074,  //  0033  LDCONST	R8	K116
+      0x58200073,  //  0033  LDCONST	R8	K115
       0x5C240200,  //  0034  MOVE	R9	R1
       0x5C280800,  //  0035  MOVE	R10	R4
       0x5C2C0A00,  //  0036  MOVE	R11	R5
@@ -1646,7 +1638,7 @@ be_local_closure(class_Tasmota_compile,   /* name */
       0x80040C00,  //  003A  RET	1	R6
       0x70020000,  //  003B  JMP		#003D
       0xB0080000,  //  003C  RAISE	2	R0	R0
-      0x00100375,  //  003D  ADD	R4	R1	K117
+      0x00100374,  //  003D  ADD	R4	R1	K116
       0xA8020005,  //  003E  EXBLK	0	#0045
       0x8C140136,  //  003F  GETMET	R5	R0	K54
       0x5C1C0800,  //  0040  MOVE	R7	R4
@@ -1658,7 +1650,7 @@ be_local_closure(class_Tasmota_compile,   /* name */
       0x70020009,  //  0046  JMP		#0051
       0x60180001,  //  0047  GETGBL	R6	G1
       0x601C0018,  //  0048  GETGBL	R7	G24
-      0x58200076,  //  0049  LDCONST	R8	K118
+      0x58200075,  //  0049  LDCONST	R8	K117
       0x5C240800,  //  004A  MOVE	R9	R4
       0x5C280A00,  //  004B  MOVE	R10	R5
       0x7C1C0600,  //  004C  CALL	R7	3
@@ -1695,22 +1687,22 @@ be_local_closure(class_Tasmota_add_cmd,   /* name */
       0x8C0C0112,  //  0000  GETMET	R3	R0	K18
       0x5C140400,  //  0001  MOVE	R5	R2
       0x7C0C0400,  //  0002  CALL	R3	2
-      0x880C0153,  //  0003  GETMBR	R3	R0	K83
+      0x880C0152,  //  0003  GETMBR	R3	R0	K82
       0x4C100000,  //  0004  LDNIL	R4
       0x1C0C0604,  //  0005  EQ	R3	R3	R4
       0x780E0002,  //  0006  JMPF	R3	#000A
       0x600C0013,  //  0007  GETGBL	R3	G19
       0x7C0C0000,  //  0008  CALL	R3	0
-      0x9002A603,  //  0009  SETMBR	R0	K83	R3
+      0x9002A403,  //  0009  SETMBR	R0	K82	R3
       0x600C0004,  //  000A  GETGBL	R3	G4
       0x5C100400,  //  000B  MOVE	R4	R2
       0x7C0C0200,  //  000C  CALL	R3	1
       0x1C0C070D,  //  000D  EQ	R3	R3	K13
       0x780E0002,  //  000E  JMPF	R3	#0012
-      0x880C0153,  //  000F  GETMBR	R3	R0	K83
+      0x880C0152,  //  000F  GETMBR	R3	R0	K82
       0x980C0202,  //  0010  SETIDX	R3	R1	R2
       0x70020000,  //  0011  JMP		#0013
-      0xB0063552,  //  0012  RAISE	1	K26	K82
+      0xB0063551,  //  0012  RAISE	1	K26	K81
       0x80000000,  //  0013  RET	0
     })
   )
@@ -1735,7 +1727,7 @@ be_local_closure(class_Tasmota_find_op,   /* name */
     &be_const_str_find_op,
     &be_const_str_solidified,
     ( &(const binstruction[31]) {  /* code */
-      0x8C080177,  //  0000  GETMET	R2	R0	K119
+      0x8C080176,  //  0000  GETMET	R2	R0	K118
       0x5C100200,  //  0001  MOVE	R4	R1
       0x7C080400,  //  0002  CALL	R2	2
       0x280C0505,  //  0003  GE	R3	R2	K5
@@ -1754,7 +1746,7 @@ be_local_closure(class_Tasmota_find_op,   /* name */
       0x40180606,  //  0010  CONNECT	R6	R3	R6
       0x94180206,  //  0011  GETIDX	R6	R1	R6
       0x40180A06,  //  0012  CONNECT	R6	R5	R6
-      0x40180978,  //  0013  CONNECT	R6	R4	K120
+      0x40180977,  //  0013  CONNECT	R6	R4	K119
       0x94180206,  //  0014  GETIDX	R6	R1	R6
       0x40180A06,  //  0015  CONNECT	R6	R5	R6
       0x80040A00,  //  0016  RET	1	R5
@@ -2056,7 +2048,7 @@ be_local_closure(class_Tasmota_load,   /* name */
       0x84180004,  //  0004  CLOSURE	R6	P4
       0x841C0005,  //  0005  CLOSURE	R7	P5
       0xA4227A00,  //  0006  IMPORT	R8	K61
-      0xA426F200,  //  0007  IMPORT	R9	K121
+      0xA426F000,  //  0007  IMPORT	R9	K120
       0x6028000C,  //  0008  GETGBL	R10	G12
       0x5C2C0200,  //  0009  MOVE	R11	R1
       0x7C280200,  //  000A  CALL	R10	1
@@ -2065,15 +2057,15 @@ be_local_closure(class_Tasmota_load,   /* name */
       0x50280000,  //  000D  LDBOOL	R10	0	0
       0xA0000000,  //  000E  CLOSE	R0
       0x80041400,  //  000F  RET	1	R10
-      0x8C28117A,  //  0010  GETMET	R10	R8	K122
+      0x8C281179,  //  0010  GETMET	R10	R8	K121
       0x5C300200,  //  0011  MOVE	R12	R1
-      0x5834007B,  //  0012  LDCONST	R13	K123
+      0x5834007A,  //  0012  LDCONST	R13	K122
       0x7C280600,  //  0013  CALL	R10	3
       0x742A0000,  //  0014  JMPT	R10	#0016
-      0x0006F601,  //  0015  ADD	R1	K123	R1
+      0x0006F401,  //  0015  ADD	R1	K122	R1
       0x8C28111D,  //  0016  GETMET	R10	R8	K29
       0x5C300200,  //  0017  MOVE	R12	R1
-      0x58340070,  //  0018  LDCONST	R13	K112
+      0x5834006F,  //  0018  LDCONST	R13	K111
       0x7C280600,  //  0019  CALL	R10	3
       0x242C1505,  //  001A  GT	R11	R10	K5
       0x782E0003,  //  001B  JMPF	R11	#0020
@@ -2084,43 +2076,43 @@ be_local_closure(class_Tasmota_load,   /* name */
       0x5C300200,  //  0020  MOVE	R12	R1
       0x782E0003,  //  0021  JMPF	R11	#0026
       0x00341508,  //  0022  ADD	R13	R10	K8
-      0x40341B78,  //  0023  CONNECT	R13	R13	K120
+      0x40341B77,  //  0023  CONNECT	R13	R13	K119
       0x9434020D,  //  0024  GETIDX	R13	R1	R13
       0x70020000,  //  0025  JMP		#0027
       0x5C340200,  //  0026  MOVE	R13	R1
       0x8C38111D,  //  0027  GETMET	R14	R8	K29
       0x5C401A00,  //  0028  MOVE	R16	R13
-      0x5844007C,  //  0029  LDCONST	R17	K124
+      0x5844007B,  //  0029  LDCONST	R17	K123
       0x7C380600,  //  002A  CALL	R14	3
       0x14381D05,  //  002B  LT	R14	R14	K5
       0x783A0001,  //  002C  JMPF	R14	#002F
-      0x0004036E,  //  002D  ADD	R1	R1	K110
-      0x00341B6E,  //  002E  ADD	R13	R13	K110
-      0x8C38116D,  //  002F  GETMET	R14	R8	K109
+      0x0004036D,  //  002D  ADD	R1	R1	K109
+      0x00341B6D,  //  002E  ADD	R13	R13	K109
+      0x8C38116C,  //  002F  GETMET	R14	R8	K108
       0x5C401A00,  //  0030  MOVE	R16	R13
-      0x5844006E,  //  0031  LDCONST	R17	K110
+      0x5844006D,  //  0031  LDCONST	R17	K109
       0x7C380600,  //  0032  CALL	R14	3
-      0x8C3C116D,  //  0033  GETMET	R15	R8	K109
+      0x8C3C116C,  //  0033  GETMET	R15	R8	K108
       0x5C441A00,  //  0034  MOVE	R17	R13
-      0x5848007D,  //  0035  LDCONST	R18	K125
+      0x5848007C,  //  0035  LDCONST	R18	K124
       0x7C3C0600,  //  0036  CALL	R15	3
       0x783E0001,  //  0037  JMPF	R15	#003A
       0x5C400200,  //  0038  MOVE	R16	R1
       0x70020000,  //  0039  JMP		#003B
-      0x00400375,  //  003A  ADD	R16	R1	K117
+      0x00400374,  //  003A  ADD	R16	R1	K116
       0x5C441C00,  //  003B  MOVE	R17	R14
       0x74460007,  //  003C  JMPT	R17	#0045
       0x5C441E00,  //  003D  MOVE	R17	R15
       0x74460005,  //  003E  JMPT	R17	#0045
       0x60440001,  //  003F  GETGBL	R17	G1
-      0x5848007E,  //  0040  LDCONST	R18	K126
+      0x5848007D,  //  0040  LDCONST	R18	K125
       0x7C440200,  //  0041  CALL	R17	1
       0x50440000,  //  0042  LDBOOL	R17	0	0
       0xA0000000,  //  0043  CLOSE	R0
       0x80042200,  //  0044  RET	1	R17
       0x50440000,  //  0045  LDBOOL	R17	0	0
       0x783E0008,  //  0046  JMPF	R15	#0050
-      0x8C48137F,  //  0047  GETMET	R18	R9	K127
+      0x8C48137E,  //  0047  GETMET	R18	R9	K126
       0x5C502000,  //  0048  MOVE	R20	R16
       0x7C480400,  //  0049  CALL	R18	2
       0x744A0002,  //  004A  JMPT	R18	#004E
@@ -2129,11 +2121,11 @@ be_local_closure(class_Tasmota_load,   /* name */
       0x80042400,  //  004D  RET	1	R18
       0x50440200,  //  004E  LDBOOL	R17	1	0
       0x70020014,  //  004F  JMP		#0065
-      0x8C48137F,  //  0050  GETMET	R18	R9	K127
+      0x8C48137E,  //  0050  GETMET	R18	R9	K126
       0x5C500200,  //  0051  MOVE	R20	R1
       0x7C480400,  //  0052  CALL	R18	2
       0x784A0007,  //  0053  JMPF	R18	#005C
-      0x8C48137F,  //  0054  GETMET	R18	R9	K127
+      0x8C48137E,  //  0054  GETMET	R18	R9	K126
       0x5C502000,  //  0055  MOVE	R20	R16
       0x7C480400,  //  0056  CALL	R18	2
       0x784A0002,  //  0057  JMPF	R18	#005B
@@ -2141,7 +2133,7 @@ be_local_closure(class_Tasmota_load,   /* name */
       0x5C4C2000,  //  0059  MOVE	R19	R16
       0x7C480200,  //  005A  CALL	R18	1
       0x70020008,  //  005B  JMP		#0065
-      0x8C48137F,  //  005C  GETMET	R18	R9	K127
+      0x8C48137E,  //  005C  GETMET	R18	R9	K126
       0x5C502000,  //  005D  MOVE	R20	R16
       0x7C480400,  //  005E  CALL	R18	2
       0x784A0001,  //  005F  JMPF	R18	#0062
@@ -2151,13 +2143,13 @@ be_local_closure(class_Tasmota_load,   /* name */
       0xA0000000,  //  0063  CLOSE	R0
       0x80042400,  //  0064  RET	1	R18
       0x782E0005,  //  0065  JMPF	R11	#006C
-      0x00481970,  //  0066  ADD	R18	R12	K112
-      0x9002BE12,  //  0067  SETMBR	R0	K95	R18
+      0x0048196F,  //  0066  ADD	R18	R12	K111
+      0x9002BC12,  //  0067  SETMBR	R0	K94	R18
       0x5C480400,  //  0068  MOVE	R18	R2
-      0x884C015F,  //  0069  GETMBR	R19	R0	K95
+      0x884C015E,  //  0069  GETMBR	R19	R0	K94
       0x7C480200,  //  006A  CALL	R18	1
       0x70020000,  //  006B  JMP		#006D
-      0x9002BF60,  //  006C  SETMBR	R0	K95	K96
+      0x9002BD5F,  //  006C  SETMBR	R0	K94	K95
       0x4C480000,  //  006D  LDNIL	R18
       0x78460025,  //  006E  JMPF	R17	#0095
       0x5C4C0800,  //  006F  MOVE	R19	R4
@@ -2169,7 +2161,7 @@ be_local_closure(class_Tasmota_load,   /* name */
       0x78560007,  //  0075  JMPF	R21	#007E
       0x60540001,  //  0076  GETGBL	R21	G1
       0x60580018,  //  0077  GETGBL	R22	G24
-      0x585C0080,  //  0078  LDCONST	R23	K128
+      0x585C007F,  //  0078  LDCONST	R23	K127
       0x5C602000,  //  0079  MOVE	R24	R16
       0x7C580400,  //  007A  CALL	R22	2
       0x7C540200,  //  007B  CALL	R21	1
@@ -2180,7 +2172,7 @@ be_local_closure(class_Tasmota_load,   /* name */
       0x78560007,  //  0080  JMPF	R21	#0089
       0x60540001,  //  0081  GETGBL	R21	G1
       0x60580018,  //  0082  GETGBL	R22	G24
-      0x585C0081,  //  0083  LDCONST	R23	K129
+      0x585C0080,  //  0083  LDCONST	R23	K128
       0x5C602000,  //  0084  MOVE	R24	R16
       0x5C642600,  //  0085  MOVE	R25	R19
       0x7C580600,  //  0086  CALL	R22	3
@@ -2209,7 +2201,7 @@ be_local_closure(class_Tasmota_load,   /* name */
       0x7C4C0200,  //  009D  CALL	R19	1
       0x782E0002,  //  009E  JMPF	R11	#00A2
       0x5C500600,  //  009F  MOVE	R20	R3
-      0x00541970,  //  00A0  ADD	R21	R12	K112
+      0x0054196F,  //  00A0  ADD	R21	R12	K111
       0x7C500200,  //  00A1  CALL	R20	1
       0xA0000000,  //  00A2  CLOSE	R0
       0x80042600,  //  00A3  RET	1	R19
@@ -2236,23 +2228,23 @@ be_local_closure(class_Tasmota_exec_cmd,   /* name */
     &be_const_str_exec_cmd,
     &be_const_str_solidified,
     ( &(const binstruction[27]) {  /* code */
-      0x88100153,  //  0000  GETMBR	R4	R0	K83
+      0x88100152,  //  0000  GETMBR	R4	R0	K82
       0x78120016,  //  0001  JMPF	R4	#0019
       0xA4128E00,  //  0002  IMPORT	R4	K71
       0x8C140948,  //  0003  GETMET	R5	R4	K72
       0x5C1C0600,  //  0004  MOVE	R7	R3
       0x7C140400,  //  0005  CALL	R5	2
-      0x8C180182,  //  0006  GETMET	R6	R0	K130
-      0x88200153,  //  0007  GETMBR	R8	R0	K83
+      0x8C180181,  //  0006  GETMET	R6	R0	K129
+      0x88200152,  //  0007  GETMBR	R8	R0	K82
       0x5C240200,  //  0008  MOVE	R9	R1
       0x7C180600,  //  0009  CALL	R6	3
       0x4C1C0000,  //  000A  LDNIL	R7
       0x201C0C07,  //  000B  NE	R7	R6	R7
       0x781E000B,  //  000C  JMPF	R7	#0019
-      0x8C1C0183,  //  000D  GETMET	R7	R0	K131
+      0x8C1C0182,  //  000D  GETMET	R7	R0	K130
       0x5C240C00,  //  000E  MOVE	R9	R6
       0x7C1C0400,  //  000F  CALL	R7	2
-      0x881C0153,  //  0010  GETMBR	R7	R0	K83
+      0x881C0152,  //  0010  GETMBR	R7	R0	K82
       0x941C0E06,  //  0011  GETIDX	R7	R7	R6
       0x5C200C00,  //  0012  MOVE	R8	R6
       0x5C240400,  //  0013  MOVE	R9	R2
@@ -2296,7 +2288,7 @@ be_local_closure(class_Tasmota_find_key_i,   /* name */
       0x7C140400,  //  0007  CALL	R5	2
       0x78160013,  //  0008  JMPF	R5	#001D
       0x60140010,  //  0009  GETGBL	R5	G16
-      0x8C180384,  //  000A  GETMET	R6	R1	K132
+      0x8C180383,  //  000A  GETMET	R6	R1	K131
       0x7C180200,  //  000B  CALL	R6	1
       0x7C140200,  //  000C  CALL	R5	1
       0xA802000B,  //  000D  EXBLK	0	#001A
@@ -2307,12 +2299,12 @@ be_local_closure(class_Tasmota_find_key_i,   /* name */
       0x7C1C0400,  //  0012  CALL	R7	2
       0x1C1C0E04,  //  0013  EQ	R7	R7	R4
       0x741E0001,  //  0014  JMPT	R7	#0017
-      0x1C1C0585,  //  0015  EQ	R7	R2	K133
+      0x1C1C0584,  //  0015  EQ	R7	R2	K132
       0x781E0001,  //  0016  JMPF	R7	#0019
       0xA8040001,  //  0017  EXBLK	1	1
       0x80040C00,  //  0018  RET	1	R6
       0x7001FFF3,  //  0019  JMP		#000E
-      0x58140086,  //  001A  LDCONST	R5	K134
+      0x58140085,  //  001A  LDCONST	R5	K133
       0xAC140200,  //  001B  CATCH	R5	1	0
       0xB0080000,  //  001C  RAISE	2	R0	R0
       0x80000000,  //  001D  RET	0
@@ -2340,7 +2332,7 @@ be_local_closure(class_Tasmota_get_light,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[16]) {  /* code */
       0x60080001,  //  0000  GETGBL	R2	G1
-      0x580C0087,  //  0001  LDCONST	R3	K135
+      0x580C0086,  //  0001  LDCONST	R3	K134
       0x7C080200,  //  0002  CALL	R2	1
       0xA40A9A00,  //  0003  IMPORT	R2	K77
       0x4C0C0000,  //  0004  LDNIL	R3
@@ -2379,9 +2371,9 @@ be_local_closure(class_Tasmota_gc,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[ 6]) {  /* code */
       0xA4065C00,  //  0000  IMPORT	R1	K46
-      0x8C080388,  //  0001  GETMET	R2	R1	K136
+      0x8C080387,  //  0001  GETMET	R2	R1	K135
       0x7C080200,  //  0002  CALL	R2	1
-      0x8C080389,  //  0003  GETMET	R2	R1	K137
+      0x8C080388,  //  0003  GETMET	R2	R1	K136
       0x7C080200,  //  0004  CALL	R2	1
       0x80040400,  //  0005  RET	1	R2
     })
@@ -2495,8 +2487,8 @@ be_local_closure(class_Tasmota_gen_cb,   /* name */
     &be_const_str_gen_cb,
     &be_const_str_solidified,
     ( &(const binstruction[ 5]) {  /* code */
-      0xA40B1400,  //  0000  IMPORT	R2	K138
-      0x8C0C058B,  //  0001  GETMET	R3	R2	K139
+      0xA40B1200,  //  0000  IMPORT	R2	K137
+      0x8C0C058A,  //  0001  GETMET	R3	R2	K138
       0x5C140200,  //  0002  MOVE	R5	R1
       0x7C0C0400,  //  0003  CALL	R3	2
       0x80040600,  //  0004  RET	1	R3
@@ -2527,9 +2519,9 @@ be_local_closure(class_Tasmota_urlfetch,   /* name */
       0x1C0C0403,  //  0001  EQ	R3	R2	R3
       0x780E000D,  //  0002  JMPF	R3	#0011
       0xA40E7A00,  //  0003  IMPORT	R3	K61
-      0x8C10078C,  //  0004  GETMET	R4	R3	K140
+      0x8C10078B,  //  0004  GETMET	R4	R3	K139
       0x5C180200,  //  0005  MOVE	R6	R1
-      0x581C007B,  //  0006  LDCONST	R7	K123
+      0x581C007A,  //  0006  LDCONST	R7	K122
       0x7C100600,  //  0007  CALL	R4	3
       0x8C10091E,  //  0008  GETMET	R4	R4	K30
       0x7C100200,  //  0009  CALL	R4	1
@@ -2539,16 +2531,16 @@ be_local_closure(class_Tasmota_urlfetch,   /* name */
       0x7C100200,  //  000D  CALL	R4	1
       0x1C100905,  //  000E  EQ	R4	R4	K5
       0x78120000,  //  000F  JMPF	R4	#0011
-      0x5808008D,  //  0010  LDCONST	R2	K141
-      0xB80F1C00,  //  0011  GETNGBL	R3	K142
+      0x5808008C,  //  0010  LDCONST	R2	K140
+      0xB80F1A00,  //  0011  GETNGBL	R3	K141
       0x7C0C0000,  //  0012  CALL	R3	0
-      0x8C10078F,  //  0013  GETMET	R4	R3	K143
+      0x8C10078E,  //  0013  GETMET	R4	R3	K142
       0x50180200,  //  0014  LDBOOL	R6	1	0
       0x7C100400,  //  0015  CALL	R4	2
-      0x8C100790,  //  0016  GETMET	R4	R3	K144
+      0x8C10078F,  //  0016  GETMET	R4	R3	K143
       0x5C180200,  //  0017  MOVE	R6	R1
       0x7C100400,  //  0018  CALL	R4	2
-      0x8C100791,  //  0019  GETMET	R4	R3	K145
+      0x8C100790,  //  0019  GETMET	R4	R3	K144
       0x7C100200,  //  001A  CALL	R4	1
       0x541600C7,  //  001B  LDINT	R5	200
       0x20140805,  //  001C  NE	R5	R4	R5
@@ -2556,18 +2548,18 @@ be_local_closure(class_Tasmota_urlfetch,   /* name */
       0x60140008,  //  001E  GETGBL	R5	G8
       0x5C180800,  //  001F  MOVE	R6	R4
       0x7C140200,  //  0020  CALL	R5	1
-      0x00172405,  //  0021  ADD	R5	K146	R5
-      0xB0072605,  //  0022  RAISE	1	K147	R5
-      0x8C140794,  //  0023  GETMET	R5	R3	K148
+      0x00172205,  //  0021  ADD	R5	K145	R5
+      0xB0072405,  //  0022  RAISE	1	K146	R5
+      0x8C140793,  //  0023  GETMET	R5	R3	K147
       0x5C1C0400,  //  0024  MOVE	R7	R2
       0x7C140400,  //  0025  CALL	R5	2
-      0x8C180795,  //  0026  GETMET	R6	R3	K149
+      0x8C180794,  //  0026  GETMET	R6	R3	K148
       0x7C180200,  //  0027  CALL	R6	1
       0x8C180149,  //  0028  GETMET	R6	R0	K73
       0x60200008,  //  0029  GETGBL	R8	G8
       0x5C240A00,  //  002A  MOVE	R9	R5
       0x7C200200,  //  002B  CALL	R8	1
-      0x00232C08,  //  002C  ADD	R8	K150	R8
+      0x00232A08,  //  002C  ADD	R8	K149	R8
       0x5824000A,  //  002D  LDCONST	R9	K10
       0x7C180600,  //  002E  CALL	R6	3
       0x80040800,  //  002F  RET	1	R4
@@ -2598,15 +2590,15 @@ be_local_closure(class_Tasmota_cmd,   /* name */
       0x50100200,  //  0001  LDBOOL	R4	1	0
       0x90028A04,  //  0002  SETMBR	R0	K69	R4
       0xB8120C00,  //  0003  GETNGBL	R4	K6
-      0x88100955,  //  0004  GETMBR	R4	R4	K85
-      0x88100997,  //  0005  GETMBR	R4	R4	K151
+      0x88100954,  //  0004  GETMBR	R4	R4	K84
+      0x88100996,  //  0005  GETMBR	R4	R4	K150
       0x780A0004,  //  0006  JMPF	R2	#000C
       0x28140909,  //  0007  GE	R5	R4	K9
       0x78160002,  //  0008  JMPF	R5	#000C
       0xB8160C00,  //  0009  GETNGBL	R5	K6
-      0x88140B55,  //  000A  GETMBR	R5	R5	K85
-      0x90172F08,  //  000B  SETMBR	R5	K151	K8
-      0x8C140198,  //  000C  GETMET	R5	R0	K152
+      0x88140B54,  //  000A  GETMBR	R5	R5	K84
+      0x90172D08,  //  000B  SETMBR	R5	K150	K8
+      0x8C140197,  //  000C  GETMET	R5	R0	K151
       0x5C1C0200,  //  000D  MOVE	R7	R1
       0x7C140400,  //  000E  CALL	R5	2
       0x4C140000,  //  000F  LDNIL	R5
@@ -2618,8 +2610,8 @@ be_local_closure(class_Tasmota_cmd,   /* name */
       0x90028A03,  //  0015  SETMBR	R0	K69	R3
       0x780A0002,  //  0016  JMPF	R2	#001A
       0xB81A0C00,  //  0017  GETNGBL	R6	K6
-      0x88180D55,  //  0018  GETMBR	R6	R6	K85
-      0x901B2E04,  //  0019  SETMBR	R6	K151	R4
+      0x88180D54,  //  0018  GETMBR	R6	R6	K84
+      0x901B2C04,  //  0019  SETMBR	R6	K150	R4
       0x80040A00,  //  001A  RET	1	R5
     })
   )
