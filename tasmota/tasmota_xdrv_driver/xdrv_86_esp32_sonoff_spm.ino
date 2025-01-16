@@ -67,6 +67,8 @@
  *   SspmOverload<relay> 10,0,0,0,235.2                   - Enable overload detection after 10 seconds for MaxVoltage
  *   SspmScan                   - Rescan ARM modbus taking around 20 seconds
  *   SspmReset 1                - Reset ARM and restart ESP
+ *   SspmPowerOnState2 0|1|2    - Set relay2 power on state (0 = Off, 1 = On, 2 = Saved) - Needs both main and 4relay at v1.2.0
+ *                                (4relay modules below v1.2.0 will be controlled by command PowerOnState)
  *
  * Todo:
  * Gui for Overload Protection entry (is handled by ARM processor).
@@ -251,6 +253,8 @@ typedef struct {
   float power_factor[SSPM_MAX_MODULES][4];        // 0.12
   float energy_today[SSPM_MAX_MODULES][4];        // 12345 kWh
   float energy_total[SSPM_MAX_MODULES][4];        // 12345 kWh total energy since last 6 month!!!
+
+  uint32_t relay_versions[SSPM_MAX_MODULES];
 
   float min_power;
   float max_power;
@@ -1032,9 +1036,9 @@ void SSPMAddModule(void) {
       Sspm->map_change = true;
     }
 
-    uint32_t relay_version = SspmBuffer[36] << 16 | SspmBuffer[37] << 8 | SspmBuffer[38];  // 0x00010000 or 0x00010200
-    if (relay_version < Sspm->relay_version) {
-      Sspm->relay_version = relay_version;      // Lowest version will be supported
+    Sspm->relay_versions[mapped] = SspmBuffer[36] << 16 | SspmBuffer[37] << 8 | SspmBuffer[38];  // 0x00010000 or 0x00010200
+    if (Sspm->relay_versions[mapped] < Sspm->relay_version) {
+      Sspm->relay_version = Sspm->relay_versions[mapped];        // Lowest version will be supported
     }
     mapped++;
     AddLog(LOG_LEVEL_INFO, PSTR("SPM: 4Relay %d (mapped to %d) type %d version %d.%d.%d found with id %12_H"),
@@ -1043,7 +1047,7 @@ void SSPMAddModule(void) {
     Sspm->module_max++;
 
     if (Settings->save_data) {
-      TasmotaGlobal.save_data_counter = Settings->save_data +2;            // Postpone flash write until all modules are scanned
+      TasmotaGlobal.save_data_counter = Settings->save_data +2;  // Postpone flash write until all modules are scanned
     }
   }
 }
@@ -2104,11 +2108,19 @@ void SSPMEvery100ms(void) {
       if (!Sspm->Settings.simulate_count) {
 #endif  // SSPM_SIMULATE
         if (Sspm->relay_version < SSPM_VERSION_1_2_0) {
-          // Set relay power on state based on Tasmota global setting
+          // Set relay power on state based on Tasmota global setting (only needed for 4Relay v1.0.0 modules)
           if (Sspm->power_on_state) {
-            TasmotaGlobal.power = Sspm->power_on_state;
-            Sspm->power_on_state = 0;            // Reset power on state solving re-scan
-            SetPowerOnState();                   // Set power on state now that all relays have been detected
+            for (uint32_t module = 0; module < Sspm->module_max; module++) {
+              if (Sspm->relay_versions[module] < SSPM_VERSION_1_2_0) {
+                uint32_t mask = 1 << (module *4);
+                for (uint32_t relay = 0; relay < 4; relay++) {
+                  uint32_t bit = (module *4) +relay;
+                  bitWrite(TasmotaGlobal.power, bit, bitRead(Sspm->power_on_state, bit));
+                }
+              }
+            }
+            Sspm->power_on_state = 0;          // Reset power on state solving re-scan
+            SetDevicePower(TasmotaGlobal.power, SRC_RESTART);  // Set power on state now that all relays have been detected
           }
         }
 #ifdef SSPM_SIMULATE
@@ -2662,6 +2674,7 @@ void CmndSSPMSend(void) {
 void CmndSSPMPowerOnState(void) {
   // SspmPowerOnState2 0|1|2 - Set relay2 power on state (0 = Off, 1 = On, 2 = Saved)
   // Needs both main and 4relay at v1.2.0
+  // 4relay modules below v1.2.0 will be controlled by command PowerOnState in state SPM_SCAN_COMPLETE)
   if (Sspm->main_version > SSPM_VERSION_1_0_0) {
     uint32_t max_index = Sspm->module_max *4;
     if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= max_index)) {

@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Allow negative values for AdcParam/AdcGpio INPUT, TEMP and RANGE parameters (#22809)
 
 ### Fixed
+- Sonoff SPM `PowerOnState` overrules `SSPMPowerOnState` in mixed 4Relay setup with 4Relay version 1.0.0
 
 ### Removed
 
