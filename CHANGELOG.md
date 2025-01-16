@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - ESP32 Platform from 2024.12.30 to 2025.01.30, Framework (Arduino Core) from v3.1.0.241206 to v3.1.1.250109 and IDF to 5.3.2 (#22792)
 - Allow negative values for AdcParam/AdcGpio INPUT, TEMP and RANGE parameters (#22809)
+- GPIOViewer from v1.5.9 to v1.6.0 (No functional change)
 
 ### Fixed
 - Sonoff SPM `PowerOnState` overrules `SSPMPowerOnState` in mixed 4Relay setup with 4Relay version 1.0.0
