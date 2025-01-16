@@ -124,7 +124,7 @@ bool TWAIBerryDecode(uint32_t bus, uint32_t identifier, uint32_t data_length_cod
       uint32_t ident = identifier;
       uint32_t data1 = data[3] << 24 | data[2] << 16 | data[1] << 8 | data[0];
       uint32_t data2 = data[7] << 24 | data[6] << 16 | data[5] << 8 | data[4];
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TWA: Bus%d param %08X, ident %08X, data1 %08X, data2 %08X"), bus +1, param, ident, data1, data2);
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TWA: Bus%d pm %02X, id %08X, d1 %08X, d2 %08X"), bus +1, param, ident, data1, data2);
 
       be_pushint(vm, param);              // Bus 1, 2 or 3 | data_length
       be_pushint(vm, ident);
@@ -296,7 +296,7 @@ void TWAIRead(uint32_t bus) {
       if (TWAIBerryDecode(bus, identifier, message.data_length_code, message.data)) { continue; }
 #endif  // USE_BERRY
       // Show log if no berry found (Messages come too fast for supporting MQTT at this time)
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TWA: Bus%d Id 0x%08X, Rcvd '%*_H'"),
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TWA: Bus%d Id %08X, Rcvd '%*_H'"),
         bus +1, identifier, message.data_length_code, message.data);
     }
   }
