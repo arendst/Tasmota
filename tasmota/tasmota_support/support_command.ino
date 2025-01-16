@@ -2163,8 +2163,22 @@ void CmndLogport(void)
 
 #ifdef USE_UFILESYS
 void CmndFilelog(void) {
-  if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_DEBUG_MORE)) {
-    Settings->filelog_level = XdrvMailbox.payload;
+  // Filelog 0      - Disable file logging
+  // Filelog 1..4   - Enable rotating file logging
+  // Filelog 10     - Remove log files and disable file logging
+  // Filelog 11..14 - Remove log files and enable file logging until filesystem is full or max rotates
+  if (XdrvMailbox.payload >= LOG_LEVEL_NONE) {
+    uint32_t filelog_level = XdrvMailbox.payload % 10;
+    uint32_t filelog_option = XdrvMailbox.payload / 10;
+    if (1 == filelog_option) {                 // Enable file logging until filesystem is full
+      FileLoggingDelete();                     // Remove all log files
+      if (LOG_LEVEL_NONE == filelog_level) {   // Remove log files and disable logging
+        filelog_option = 0;
+      }
+    }
+    if ((filelog_level >= LOG_LEVEL_NONE) && (filelog_level <= LOG_LEVEL_DEBUG_MORE)) {
+      Settings->filelog_level = (filelog_option * 10) + filelog_level;
+    }
   }
   ResponseCmndNumber(Settings->filelog_level);
 }

@@ -118,6 +118,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Added
 - Command `SetOption163 1` to disable display of Device name in GUI header
 - Command `FileLog 0..4` to enable logging to filesystem using up to 16 rotating log files of 100kB (`#define FILE_LOG_SIZE 100`)
+- Command `FileLog 10..14` to enable logging to filesystem using up to 16 log files of 100kB (`#define FILE_LOG_SIZE 100`)
 - Command I2sLoop [#22807](https://github.com/arendst/Tasmota/issues/22807)
 - Support for PCF85063 RTC [#22727](https://github.com/arendst/Tasmota/issues/22727)
 - Support for Senseair S88 CO2 sensor [#22733](https://github.com/arendst/Tasmota/issues/22733)
