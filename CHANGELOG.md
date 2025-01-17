@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Command `FileLog 10..14` to enable logging to filesystem using up to 16 log files of 100kB (`#define FILE_LOG_SIZE 100`)
 - I2S Opus stream and file support for opus/aac (#22795)
 - I2S command I2sLoop (#22807)
+- Berry `serial.read()` read only `n` bytes
 
 ### Breaking Changed
 
