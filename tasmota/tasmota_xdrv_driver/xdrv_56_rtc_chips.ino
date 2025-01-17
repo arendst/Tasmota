@@ -92,7 +92,7 @@ uint32_t DS3231ReadTime(void) {
   tm.hour = Bcd2Dec(I2cRead8(RtcChip.address, DS3231_HOURS, RtcChip.bus) & ~_BV(DS3231_HR1224)); // 24h mode
   tm.day_of_week = I2cRead8(RtcChip.address, DS3231_DAY, RtcChip.bus);
   tm.day_of_month = Bcd2Dec(I2cRead8(RtcChip.address, DS3231_DATE, RtcChip.bus));
-  tm.month = Bcd2Dec(I2cRead8(RtcChip.address, DS3231_MONTH, RtcChip.bus) & ~_BV(DS3231_CENTURY)); ;  // Don't use the Century bit
+  tm.month = Bcd2Dec(I2cRead8(RtcChip.address, DS3231_MONTH, RtcChip.bus) & ~_BV(DS3231_CENTURY));  // Don't use the Century bit
   // MakeTime requires tm.year as number of years since 1970, 
   // However DS3231 is supposed to hold the true year but before this PR it was written tm.year directly
   // Assuming we read ... means ...
