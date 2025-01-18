@@ -135,11 +135,12 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry add light_pixels values to `tasmota.settings` [#22762](https://github.com/arendst/Tasmota/issues/22762)
 - Berry add `bytes().appendhex()` [#22767](https://github.com/arendst/Tasmota/issues/22767)
 - Berry WS2812 real-time Leds panel as app [#22788](https://github.com/arendst/Tasmota/issues/22788)
+- Berry `serial.read()` read only `n` bytes [#22835](https://github.com/arendst/Tasmota/issues/22835)
 
 ### Breaking Changed
 
 ### Changed
-- ESP32 Platform from 2024.12.30 to 2025.01.30, Framework (Arduino Core) from v3.1.0.241206 to v3.1.1.250109 and IDF to 5.3.2 [#22792](https://github.com/arendst/Tasmota/issues/22792)
+- ESP32 Platform from 2024.12.30 to 2025.01.31, Framework (Arduino Core) from v3.1.0.241206 to v3.1.1.250109 and IDF to 5.3.2 [#22832](https://github.com/arendst/Tasmota/issues/22832)
 - GPIOViewer from v1.5.6 to v1.6.0 (No functional change)
 - Postpone save_data during light animation when fade is Off
 - Allow negative values for AdcParam/AdcGpio INPUT, TEMP and RANGE parameters [#22809](https://github.com/arendst/Tasmota/issues/22809)
@@ -152,6 +153,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Fixed
 - Shutter discovery message regression from v14.4.1 [#22730](https://github.com/arendst/Tasmota/issues/22730)
+- ESP32-Cx compilation fails on Windows [#22832](https://github.com/arendst/Tasmota/issues/22832)
 - Sonoff SPM `PowerOnState` overrules `SSPMPowerOnState` in mixed 4Relay setup with 4Relay version 1.0.0
 - Webcam compilation with `define USE_WEBCAM` but without `define ENABLE_RTSPSERVER` [#22686](https://github.com/arendst/Tasmota/issues/22686)
 - Berry Zigbee fix wrong attributes [#22684](https://github.com/arendst/Tasmota/issues/22684)
