@@ -23,6 +23,7 @@ data
 unpacked_fs
 unpacked_boards
 tasmota/user_config_override.h
+include/local_ca_descriptor.h
 variants
 variants3
 build
