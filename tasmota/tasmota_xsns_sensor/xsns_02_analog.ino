@@ -214,7 +214,6 @@ struct {
 
 struct {
   float *mq_samples;
-  float temperature;
   float current;
   float energy;
   int param[4];
@@ -581,6 +580,35 @@ void AdcEvery250ms(void) {
   }
 }
 
+float AdcGetTemperature(uint32_t channel) {
+  int adc = AdcRead(Adc[channel].pin, 2);
+  int param0 = Adc[channel].param[0];
+  int param1 = Adc[channel].param[1];
+  int param2 = Adc[channel].param[2];
+  int param3 = Adc[channel].param[3];
+  // Steinhart-Hart equation for thermistor as temperature sensor:
+  // float Rt = (adc * Adc[channel].param[0] * MAX_ADC_V) / (ANALOG_RANGE * ANALOG_V33 - (float)adc * MAX_ADC_V);
+  // MAX_ADC_V in ESP8266 is 1
+  // MAX_ADC_V in ESP32 is 3.3
+  float Rt;
+#ifdef ESP8266
+  if (param3) { // Alternate mode
+    Rt = (float)param0 * (ANALOG_RANGE * ANALOG_V33 - (float)adc) / (float)adc;
+  } else {
+    Rt = (float)param0 * (float)adc / (ANALOG_RANGE * ANALOG_V33 - (float)adc);
+  }
+#else
+  if (param3) { // Alternate mode
+    Rt = (float)param0 * (ANALOG_RANGE - (float)adc) / (float)adc;
+  } else {
+    Rt = (float)param0 * (float)adc / (ANALOG_RANGE - (float)adc);
+  }
+#endif
+  float BC = (float)param2;                                              // Shelly param3 = 3350 (ANALOG_NTC_B_COEFFICIENT)
+  float T = BC / (BC / ANALOG_T0 + TaylorLog(Rt / (float)param1));       // Shelly param2 = 10000 (ANALOG_NTC_RESISTANCE)
+  return ConvertTemp(TO_CELSIUS(T));
+}
+
 uint8_t AdcGetButton(uint32_t pin) {
   for (uint32_t channel = 0; channel < Adcs.present; channel++) {
     if (Adc[channel].pin == pin) {
@@ -676,8 +704,18 @@ float AdcGetRange(uint32_t channel) {
   // formula for calibration: value, fromLow, fromHigh, toLow, toHigh
   // Example: 514, 632, 236, 0, 100
   // int( ((<param2> - <analog-value>) / (<param2> - <param1>) ) * (<param3> - <param4>) ) + <param4> )
+/*
+  uint32_t factor = Adc[channel].param[0] / 100000;   // AdcGpio0 201100,1520,38,26 = factor 2
+  if ((0 == factor) || (factor > 6)) { factor = 5; }
+  int adc = AdcRead(Adc[channel].pin, factor);
+  int param0 = Adc[channel].param[0] % 100000;        // Param0 = 1100
+  float adcrange = ( ((float)Adc[channel].param[1] - (float)adc) / ( ((float)Adc[channel].param[1] - (float)param0)) * ((float)Adc[channel].param[2] - (float)Adc[channel].param[3]) + (float)Adc[channel].param[3] );
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBG: ADC%d, Factor %d, AdcRead %d, Range %4_f"), channel +1, factor, adc, &adcrange);
+*/
   int adc = AdcRead(Adc[channel].pin, 5);
   float adcrange = ( ((float)Adc[channel].param[1] - (float)adc) / ( ((float)Adc[channel].param[1] - (float)Adc[channel].param[0])) * ((float)Adc[channel].param[2] - (float)Adc[channel].param[3]) + (float)Adc[channel].param[3] );
+//  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBG: ADC%d, AdcRead %d, Range %4_f"), channel +1, adc, &adcrange);
+
   return adcrange;
 }
 
@@ -725,42 +763,15 @@ void AdcGetCurrentPower(uint32_t channel, uint32_t factor) {
 
 void AdcEverySecond(void) {
   for (uint32_t channel = 0; channel < Adcs.present; channel++) {
-    uint32_t type_index = Adc[channel].index;
     uint32_t adc_type = Adc[channel].type;
-    int param0 = Adc[channel].param[0];
-    int param1 = Adc[channel].param[1];
-    int param2 = Adc[channel].param[2];
-    int param3 = Adc[channel].param[3];
-    if (GPIO_ADC_TEMP == adc_type) {
-      int adc = AdcRead(Adc[channel].pin, 2);
-      // Steinhart-Hart equation for thermistor as temperature sensor:
-      // float Rt = (adc * Adc[channel].param[0] * MAX_ADC_V) / (ANALOG_RANGE * ANALOG_V33 - (float)adc * MAX_ADC_V);
-      // MAX_ADC_V in ESP8266 is 1
-      // MAX_ADC_V in ESP32 is 3.3
-      float Rt;
-#ifdef ESP8266
-      if (param3) { // Alternate mode
-        Rt = (float)param0 * (ANALOG_RANGE * ANALOG_V33 - (float)adc) / (float)adc;
-      } else {
-        Rt = (float)param0 * (float)adc / (ANALOG_RANGE * ANALOG_V33 - (float)adc);
-      }
-#else
-      if (param3) { // Alternate mode
-        Rt = (float)param0 * (ANALOG_RANGE - (float)adc) / (float)adc;
-      } else {
-        Rt = (float)param0 * (float)adc / (ANALOG_RANGE - (float)adc);
-      }
-#endif
-      float BC = (float)param2;                                              // Shelly param3 = 3350 (ANALOG_NTC_B_COEFFICIENT)
-      float T = BC / (BC / ANALOG_T0 + TaylorLog(Rt / (float)param1));       // Shelly param2 = 10000 (ANALOG_NTC_RESISTANCE)
-      Adc[channel].temperature = ConvertTemp(TO_CELSIUS(T));
-    }
-    else if (GPIO_ADC_CT_POWER == adc_type) {
-      AdcGetCurrentPower(channel, 5);
-    }
-    else if (GPIO_ADC_MQ == adc_type) {
-      AddSampleMq(channel);
-      AdcGetMq(channel);
+    switch (adc_type) {
+      case GPIO_ADC_CT_POWER:
+        AdcGetCurrentPower(channel, 5);
+        break;
+      case GPIO_ADC_MQ:
+        AddSampleMq(channel);
+        AdcGetMq(channel);
+        break;
     }
   }
 }
@@ -815,23 +826,25 @@ void AdcShow(bool json) {
         break;
       }
       case GPIO_ADC_TEMP: {
+        float temperature = AdcGetTemperature(channel);
         if (json) {
           AdcShowContinuation(&jsonflg);
-          ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "%s\":%*_f"), adc_channel, Settings->flag2.temperature_resolution, &Adc[channel].temperature);
+          ResponseAppend_P(PSTR("\"" D_JSON_TEMPERATURE "%s\":%*_f"), adc_channel, Settings->flag2.temperature_resolution, &temperature);
           if ((0 == TasmotaGlobal.tele_period) && (!domo_flag[ADC_TEMP])) {
 #ifdef USE_DOMOTICZ
-            DomoticzFloatSensor(DZ_TEMP, Adc[channel].temperature);
+            DomoticzFloatSensor(DZ_TEMP, temperature);
             domo_flag[ADC_TEMP] = true;
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
-            KnxSensor(KNX_TEMPERATURE, Adc[channel].temperature);
+            KnxSensor(KNX_TEMPERATURE, temperature);
 #endif  // USE_KNX
           }
 #ifdef USE_WEBSERVER
         } else {
-          WSContentSend_Temp(adc_name, Adc[channel].temperature);
+          WSContentSend_Temp(adc_name, temperature);
 #endif  // USE_WEBSERVER
         }
+
         break;
       }
       case GPIO_ADC_LIGHT: {
