@@ -127,6 +127,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - I2S Opus stream and file support for opus/aac [#22795](https://github.com/arendst/Tasmota/issues/22795)
 - ESP32 TasmotaLED change dynamically the number of pixels [#22754](https://github.com/arendst/Tasmota/issues/22754)
 - ESP32 expand `Pixels` with reverse, height and alternate [#22755](https://github.com/arendst/Tasmota/issues/22755)
+- Display template for Waveshare ESP32-C6 LCD 1.47 [#22863](https://github.com/arendst/Tasmota/issues/22863)
 - Berry `animate.crenel` primitive [#22673](https://github.com/arendst/Tasmota/issues/22673)
 - Berry scroll to Leds_matrix [#22693](https://github.com/arendst/Tasmota/issues/22693)
 - Berry add unicode encoding to string parsing [#22713](https://github.com/arendst/Tasmota/issues/22713)

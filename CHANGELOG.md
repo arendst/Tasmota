@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 - I2S Opus stream and file support for opus/aac (#22795)
 - I2S command I2sLoop (#22807)
 - Berry `serial.read()` read only `n` bytes (#22835)
-- Display template for Waveshare ESP32C6 LCD 1.47
+- Display template for Waveshare ESP32-C6 LCD 1.47 (#22863)
 
 ### Breaking Changed
 
