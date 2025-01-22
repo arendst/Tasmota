@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - I2S command I2sLoop (#22807)
 - Berry `serial.read()` read only `n` bytes (#22835)
 - Display template for Waveshare ESP32-C6 LCD 1.47 (#22863)
+- Berry `tasmota.global.tele_period` and `tasmota.settings.tele_period`
 
 ### Breaking Changed
 
