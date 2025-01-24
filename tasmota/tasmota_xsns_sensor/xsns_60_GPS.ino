@@ -295,6 +295,8 @@ struct UBX_t {
     uint32_t forceUTCupdate:1;
     uint32_t runningVPort:1;
     // TODO: more to come
+    uint8_t rx_pin;
+    uint16_t baudrate;
   } mode;
 
   union {
@@ -376,16 +378,20 @@ void UBXsendCFGLine(uint8_t _line)
 void UBXDetect(void)
 {
   UBX.mode.init = 0;
-  if (PinUsed(GPIO_GPS_RX) && PinUsed(GPIO_GPS_TX)) {
-    UBXSerial = new TasmotaSerial(Pin(GPIO_GPS_RX), Pin(GPIO_GPS_TX), 1, 0, UBX_SERIAL_BUFFER_SIZE); // 64 byte buffer is NOT enough
-    if (UBXSerial->begin(9600)) {
-      DEBUG_SENSOR_LOG(PSTR("UBX: started serial"));
+  if (PinUsed(GPIO_GPS_RX, GPIO_ANY) && PinUsed(GPIO_GPS_TX)) {
+    UBX.mode.baudrate = 4800;
+    UBX.mode.rx_pin = Pin(GPIO_GPS_RX, GPIO_ANY);
+    uint32_t baudrate = GetPin(UBX.mode.rx_pin) - AGPIO(GPIO_GPS_RX);  // 0 .. 3
+    UBX.mode.baudrate <<= baudrate;        // Support 1 (4800), 2 (9600), 3 (19200), 4 (38400)
+    UBXSerial = new TasmotaSerial(UBX.mode.rx_pin, Pin(GPIO_GPS_TX), 1, 0, UBX_SERIAL_BUFFER_SIZE); // 64 byte buffer is NOT enough
+    if (UBXSerial->begin(UBX.mode.baudrate)) {
+      DEBUG_SENSOR_LOG(PSTR("UBX: started serial at %d bps"), UBX.mode.baudrate);
       if (UBXSerial->hardwareSerial()) {
         ClaimSerial();
         DEBUG_SENSOR_LOG(PSTR("UBX: claim HW"));
       }
 #ifdef ESP32
-      AddLog(LOG_LEVEL_DEBUG, PSTR("UBX: Serial UART%d"), UBXSerial->getUart());
+      AddLog(LOG_LEVEL_DEBUG, PSTR("UBX: Serial UART%d at %d bps"), UBXSerial->getUart(), UBX.mode.baudrate);
 #endif
     }
   }
