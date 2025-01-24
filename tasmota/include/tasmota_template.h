@@ -1092,7 +1092,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_GPS
   AGPIO(GPIO_GPS_TX),                            // GPS serial interface
-  AGPIO(GPIO_GPS_RX) + MAX_GPS_RX,               // GPS serial interface
+  AGPIO(GPIO_GPS_RX) + AGMAX(MAX_GPS_RX),        // GPS serial interface
 #endif
 #ifdef USE_HM10
   AGPIO(GPIO_HM10_TX),                           // HM10 serial interface
