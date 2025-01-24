@@ -22,16 +22,17 @@
 
 enum TasmotaLEDTypesEncoding : uint16_t {
   // bits 0..3 encode for number of bytes per pixel
-  TasmotaLed_1_W    = 0x0,    // 1 byte per pixel (not used yet)
-  TasmotaLed_3_RGB  = 0x1,    // 3 bytes per pixel
-  TasmotaLed_4_WRGB = 0x2,    // 4 bytes per pixel
+  TasmotaLed_1_Def  = 0x0,      // Default value - identical to TasmotaLed_3_RGB
+  TasmotaLed_3_RGB  = 0x1,      // 3 bytes per pixel
+  TasmotaLed_4_WRGB = 0x2,      // 4 bytes per pixel
   // bits 4..6 encode for pixel order
-  TasmotaLed_GRB = 0b000 << 4,
-  TasmotaLed_GBR = 0b001 << 4,
+  TasmotaLed_Def = 0b000 << 4,  // Default value - identical to TasmotaLed_GRB
+  TasmotaLed_GRB = 0b001 << 4,
   TasmotaLed_RGB = 0b010 << 4,
   TasmotaLed_RBG = 0b011 << 4,
   TasmotaLed_BRG = 0b100 << 4,
   TasmotaLed_BGR = 0b101 << 4,
+  TasmotaLed_GBR = 0b110 << 4,
   // bit 7 sets the position for W channel
   TasmotaLed_xxxW = 0b0 << 7,   // W channel after color
   TasmotaLed_Wxxx = 0b1 << 7,   // W channel before color
@@ -92,6 +93,8 @@ public:
   ~TasmotaLED();
 
   void SetPixelCount(uint16_t num_leds);
+  void SetPixelSubType(uint8_t type);         // change only Pixel order and pixel size
+  void _adjustSubType(void);
 
   bool Begin(void);
   void SetPusher(TasmotaLEDPusher *pusher);   // needs to be called before `Begin()`, sets the hardware implementation
