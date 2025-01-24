@@ -326,15 +326,20 @@ int32_t analogAttach(uint32_t pin, bool output_invert) {    // returns ledc chan
   return chan;
 }
 
+void analogDetach(uint32_t pin) {
+  if (pin_to_channel[pin] > 0) {
+#if ESP_IDF_VERSION_MAJOR < 5
+    ledcDetachPin(pin);
+#else
+    ledcDetach(pin);
+#endif
+    pin_to_channel[pin] = 0;
+  }
+}
+
 void analogDetachAll(void) {
   for (uint32_t pin = 0; pin < SOC_GPIO_PIN_COUNT; pin++) { 
-    if (pin_to_channel[pin] > 0) {
-#if ESP_IDF_VERSION_MAJOR < 5
-      ledcDetachPin(pin);
-#else
-      ledcDetach(pin);
-#endif
-    }
+    analogDetach(pin);
   }
 }
 

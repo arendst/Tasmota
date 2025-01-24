@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - Allow negative values for AdcParam/AdcGpio INPUT, TEMP and RANGE parameters (#22809)
 - GPIOViewer from v1.5.9 to v1.6.0 (No functional change)
 - ESP32 Platform from 2025.01.30 to 2025.01.31 (#22832)
+- Berry `gpio.pin_mode` frees PWM on pin
 
 ### Fixed
 - Sonoff SPM `PowerOnState` overrules `SSPMPowerOnState` in mixed 4Relay setup with 4Relay version 1.0.0
