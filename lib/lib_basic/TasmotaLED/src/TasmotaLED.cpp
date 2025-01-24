@@ -24,13 +24,15 @@
 #include "TasmotaLED.h"
 
 // DRAM_ATTR to force in IRAM because we use this in show loop
-static const DRAM_ATTR uint8_t TASMOTALED_CHANNEL_ORDERS[6][3] = {
-    {1, 0, 2},  // GRB (0)
-    {2, 0, 1},  // GBR (1)
+static const DRAM_ATTR uint8_t TASMOTALED_CHANNEL_ORDERS[8][3] = {
+    {1, 0, 2},  // Def=GRB (0)
+    {1, 0, 2},  // GRB (1)
     {0, 1, 2},  // RGB (2)
     {0, 2, 1},  // RBG (3)
     {2, 1, 0},  // BRG (4)
-    {1, 2, 0}   // BGR (5)
+    {1, 2, 0},  // BGR (5)
+    {2, 0, 1},  // GBR (6)
+    {1, 0, 2}   // GRB (7)  // fallback if erroneous value
 };
 
 static const TasmotaLED_Timing TasmotaLED_Timings[] = {
@@ -61,8 +63,6 @@ enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_D
 
 TasmotaLED::TasmotaLED(uint16_t type, uint16_t num_leds) :
   _type(type),
-  _pixel_order((type >> 4) & 0x07),
-  _w_before(type & 0x08),
   _timing((type >> 8) & 0xFF),
   _started(false),
   _dirty(true),
@@ -70,19 +70,17 @@ TasmotaLED::TasmotaLED(uint16_t type, uint16_t num_leds) :
   _pixel_count(num_leds),
   _buf_work(nullptr),
   _buf_show(nullptr),
-  _pixel_matrix(&TASMOTALED_CHANNEL_ORDERS[0]),
   _pusher(nullptr)
 {
+  _adjustSubType();   // compute values for _pixel_order, _w_before, _pixel_matrix
   if (_timing > (TasmotaLed_TimingEnd >> 8)) {
     _timing = 0;
   }
   switch (_type & 0x0F) {
-    // case TasmotaLed_1_W:
-    //   _pixel_size = 1;
-    //   break;
     case TasmotaLed_4_WRGB:
       _pixel_size = 4;
       break;
+    case TasmotaLed_1_Def:
     case TasmotaLed_3_RGB:
     default:  // fallback
       _pixel_size = 3;
@@ -109,6 +107,13 @@ TasmotaLED::~TasmotaLED() {
   _buf_show = nullptr;
 }
 
+// Adjust all internal parameters accouring to sub-type
+void TasmotaLED::_adjustSubType(void) {
+  _pixel_order = (_type >> 4) & 0x07;
+  _pixel_matrix = &TASMOTALED_CHANNEL_ORDERS[_pixel_order];
+  _w_before = _type & 0x08;
+}
+
 void TasmotaLED::SetPixelCount(uint16_t num_leds) {
   if (num_leds != _pixel_count) {
     _pixel_count = num_leds;
@@ -122,6 +127,12 @@ void TasmotaLED::SetPixelCount(uint16_t num_leds) {
       _pusher->SetPixelCount(_pixel_count);
     }
   }
+}
+
+void TasmotaLED::SetPixelSubType(uint8_t subtype) {
+  // subtype is only the 8 lower bits of _type
+  _type = (_type & 0xFF00) | (subtype & 0xFF);
+  _adjustSubType();
 }
 
 

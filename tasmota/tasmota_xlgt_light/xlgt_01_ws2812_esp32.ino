@@ -44,10 +44,10 @@
 const uint8_t WS2812_SCHEMES = 10;      // Number of WS2812 schemes
 
 const char kWs2812Commands[] PROGMEM = "|"  // No prefix
-  D_CMND_LED "|" D_CMND_PIXELS "|" D_CMND_ROTATION "|" D_CMND_WIDTH "|" D_CMND_STEPPIXELS ;
+  D_CMND_LED "|" D_CMND_PIXELS "|" D_CMND_ROTATION "|" D_CMND_WIDTH "|" D_CMND_STEPPIXELS "|" D_CMND_PIXELTYPE ;
 
 void (* const Ws2812Command[])(void) PROGMEM = {
-  &CmndLed, &CmndPixels, &CmndRotation, &CmndWidth, &CmndStepPixels };
+  &CmndLed, &CmndPixels, &CmndRotation, &CmndWidth, &CmndStepPixels, &CmndPixelType };
 
 #include <TasmotaLED.h>
 
@@ -610,6 +610,17 @@ void Ws2812ShowScheme(void)
   }
 }
 
+// convert the Settings to a Led type compatible with TasmotaLED
+uint16_t Ws2812SettingsToLedType(void) {
+  uint16_t led_type = kTasLed_Type;         // default value from compile options
+  if (Settings->mbflag2.light_pixels_order != 0) {
+    led_type = (led_type & 0xFF00) | (Settings->mbflag2.light_pixels_order << 4)
+                                    | (Settings->mbflag2.light_pixels_w_first ? TasmotaLed_Wxxx : 0)
+                                    | (Settings->mbflag2.light_pixels_rgbw ? TasmotaLed_4_WRGB : TasmotaLed_3_RGB);
+  }
+  return led_type;
+}
+
 bool Ws2812InitStrip(void)
 {
   if (strip != nullptr) {
@@ -623,7 +634,8 @@ bool Ws2812InitStrip(void)
       AddLog(LOG_LEVEL_ERROR, "LED: No hardware supported");
       return false;
     }
-    strip = new TasmotaLED(kTasLed_Type, Settings->light_pixels);
+    uint16_t led_type = Ws2812SettingsToLedType();
+    strip = new TasmotaLED(led_type, Settings->light_pixels);
     strip->SetPusher(pusher);
     strip->Begin();
 
@@ -640,6 +652,21 @@ bool Ws2812ChangePixelCount(void)
   }
   strip->SetPixelCount(Settings->light_pixels);
   Ws2812Clear();
+  return true;
+}
+
+bool Ws2812ChangePixelType(bool clear)
+{
+  if (strip == nullptr) {
+    return true;
+  }
+  uint16_t led_type = Ws2812SettingsToLedType();
+  strip->SetPixelSubType(led_type & 0xFF);    // just submit the lower part
+  if (clear) {
+    Ws2812Clear();
+  } else {
+    Ws2812LibStripShow();
+  }
   return true;
 }
 
@@ -807,6 +834,37 @@ void CmndPixels(void)
   }
   Response_P(PSTR("{\"Pixels\":%i,\"PixelsReverse\":%i,\"PixelsHeight\":%i,\"PixelsAlternate\":%i}"),
     Settings->light_pixels, Settings->light_pixels_reverse, Settings->light_pixels_height_1 + 1, Settings->light_pixels_alternate);
+}
+
+void CmndPixelType(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32)) {
+    // Value is:
+    // 0 = use compile-time option (default value)
+    // 1..6 = Pixel Order: 1=GRB 2=RGB 3=RBG 4=BRG 5=BGR 6=GBR
+    // Modifiers:
+    // +8 = 4 channels RGBW strip - default is 3 channels RGB
+    // +16 = W channel is sent first - default W channel is sent last
+    uint32_t pixels_order = XdrvMailbox.payload & 0x07;
+    uint32_t pixels_w_first = (XdrvMailbox.payload & 0x08) ? 1 : 0;
+    uint32_t pixels_rgbw = (XdrvMailbox.payload & 0x10) ? 1 : 0;
+    // changing number of channels requires a reboot
+    bool reboot = pixels_rgbw != Settings->mbflag2.light_pixels_rgbw;
+    if (reboot) {
+      TasmotaGlobal.restart_flag = 2;             // force restart if number of channels changed
+    }
+
+    Settings->mbflag2.light_pixels_order = pixels_order;
+    Settings->mbflag2.light_pixels_w_first = pixels_w_first;
+    Settings->mbflag2.light_pixels_rgbw = (XdrvMailbox.payload & 0x10) ? 1 : 0;
+    Ws2812ChangePixelType(reboot);
+  }
+  uint32_t pixel_type = 0;
+  if (Settings->mbflag2.light_pixels_order != 0) {
+    pixel_type = Settings->mbflag2.light_pixels_order | (Settings->mbflag2.light_pixels_w_first ? 0x08 : 0)
+                                                      | (Settings->mbflag2.light_pixels_rgbw ? 0x10 : 0);
+  }
+  ResponseCmndNumber(pixel_type);
 }
 
 void CmndStepPixels(void)
