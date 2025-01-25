@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Berry `tasmota.global.tele_period` and `tasmota.settings.tele_period` (#22865)
 - Command `PixelType` to change the WS2812 color order and channel number
 - Berry driver for AXP2102 and M5CoreS3
+- LVLG/HASPmota add color names from OpenHASP
 
 ### Breaking Changed
 
