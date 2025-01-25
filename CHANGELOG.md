@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Display template for Waveshare ESP32-C6 LCD 1.47 (#22863)
 - Berry `tasmota.global.tele_period` and `tasmota.settings.tele_period` (#22865)
 - Command `PixelType` to change the WS2812 color order and channel number
+- Berry driver for AXP2102 and M5CoreS3
 
 ### Breaking Changed
 

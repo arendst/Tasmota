@@ -3,3 +3,4 @@
  *******************************************************************/
 #include "solidify/solidified_AXP192.h"
 #include "solidify/solidified_AXP202.h"
+#include "solidify/solidified_AXP2102.h"
