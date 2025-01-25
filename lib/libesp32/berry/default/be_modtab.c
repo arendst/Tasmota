@@ -217,6 +217,7 @@ be_extern_native_class(Wire);
 be_extern_native_class(I2C_Driver);
 be_extern_native_class(AXP192);
 be_extern_native_class(AXP202);
+be_extern_native_class(AXP2102);
 be_extern_native_class(OneWire);
 be_extern_native_class(Leds_ntv);
 be_extern_native_class(Leds);
@@ -279,6 +280,7 @@ BERRY_LOCAL bclass_array be_class_table = {
     &be_native_class(I2C_Driver),
     &be_native_class(AXP192),
     &be_native_class(AXP202),
+    &be_native_class(AXP2102),
 #endif // USE_I2C
     &be_native_class(md5),
 #ifdef USE_WEBCLIENT
