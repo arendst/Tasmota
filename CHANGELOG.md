@@ -12,9 +12,10 @@ All notable changes to this project will be documented in this file.
 - Berry `serial.read()` read only `n` bytes (#22835)
 - Display template for Waveshare ESP32-C6 LCD 1.47 (#22863)
 - Berry `tasmota.global.tele_period` and `tasmota.settings.tele_period` (#22865)
-- Command `PixelType` to change the WS2812 color order and channel number
-- Berry driver for AXP2102 and M5CoreS3
-- LVLG/HASPmota add color names from OpenHASP
+- ESP32 command `PixelType` to change the WS2812 color order and channel number (#22876)
+- Berry driver for AXP2102 and M5CoreS3 (#22878)
+- GPS driver select baudrate using GPIO GPS_RX1 (9600bps), GPS_RX2 (19200bps) or GPS_RX3 (38400bps) (#22869)
+- LVLG/HASPmota add color names from OpenHASP (#22879)
 
 ### Breaking Changed
 

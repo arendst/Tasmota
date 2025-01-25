@@ -533,6 +533,7 @@ const char kSensorNamesFixed[] PROGMEM =
 #define MAX_BL0942_RX            8  // Baudrates 1/5 (4800), 2/6 (9600), 3/7 (19200), 4/8 (38400), Support Positive values only 1..4, Support also negative values 5..8
 #define MAX_CSE7761              2  // Model 1/2 (DUALR3), 2/2 (POWCT)
 #define MAX_TWAI                 SOC_TWAI_CONTROLLER_NUM
+#define MAX_GPS_RX               3  // Baudrates 1 (9600), 2 (19200), 3 (38400)
 
 const uint16_t kGpioNiceList[] PROGMEM = {
   GPIO_NONE,                                     // Not used
@@ -1091,7 +1092,7 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_GPS
   AGPIO(GPIO_GPS_TX),                            // GPS serial interface
-  AGPIO(GPIO_GPS_RX),                            // GPS serial interface
+  AGPIO(GPIO_GPS_RX) + AGMAX(MAX_GPS_RX),        // GPS serial interface
 #endif
 #ifdef USE_HM10
   AGPIO(GPIO_HM10_TX),                           // HM10 serial interface

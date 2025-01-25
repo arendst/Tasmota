@@ -123,8 +123,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for PCF85063 RTC [#22727](https://github.com/arendst/Tasmota/issues/22727)
 - Support for Senseair S88 CO2 sensor [#22733](https://github.com/arendst/Tasmota/issues/22733)
 - Support for ESP32 Two-Wire Automotive Interface (TWAI) or Controller Area Network (CAN) busses
+- GPS driver select baudrate using GPIO GPS_RX1 (9600bps), GPS_RX2 (19200bps) or GPS_RX3 (38400bps) [#22869](https://github.com/arendst/Tasmota/issues/22869)
 - I2S AAC support for web radio [#22787](https://github.com/arendst/Tasmota/issues/22787)
 - I2S Opus stream and file support for opus/aac [#22795](https://github.com/arendst/Tasmota/issues/22795)
+- ESP32 command `PixelType` to change the WS2812 color order and channel number [#22876](https://github.com/arendst/Tasmota/issues/22876)
 - ESP32 TasmotaLED change dynamically the number of pixels [#22754](https://github.com/arendst/Tasmota/issues/22754)
 - ESP32 expand `Pixels` with reverse, height and alternate [#22755](https://github.com/arendst/Tasmota/issues/22755)
 - Display template for Waveshare ESP32-C6 LCD 1.47 [#22863](https://github.com/arendst/Tasmota/issues/22863)
@@ -138,6 +140,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry WS2812 real-time Leds panel as app [#22788](https://github.com/arendst/Tasmota/issues/22788)
 - Berry `serial.read()` read only `n` bytes [#22835](https://github.com/arendst/Tasmota/issues/22835)
 - Berry `tasmota.global.tele_period` and `tasmota.settings.tele_period` [#22865](https://github.com/arendst/Tasmota/issues/22865)
+- Berry driver for AXP2102 and M5CoreS3 [#22878](https://github.com/arendst/Tasmota/issues/22878)
+- LVLG/HASPmota add color names from OpenHASP [#22879](https://github.com/arendst/Tasmota/issues/22879)
 
 ### Breaking Changed
 
