@@ -30,6 +30,9 @@
  *   GvUrl 1                - Select default url (GV_BASE_URL)
  *   GvUrl https://thelastoutpostworkshop.github.io/microcontroller_devkit/gpio_viewer_1_5/
  * 
+ * Note 20250126
+ * - GVRelease 1.6.1 (No code change)
+ * 
  * Note 20250116
  * - GVRelease 1.6.0 (No code change)
  * 
@@ -83,7 +86,7 @@
 
 #define GV_KEEP_ALIVE         1000         // milliseconds - If no activity after this do a heap size event anyway
 
-const char *GVRelease = "1.6.0";
+const char *GVRelease = "1.6.1";
 
 /*********************************************************************************************/
 
