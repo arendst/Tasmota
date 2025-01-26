@@ -88,7 +88,8 @@ void LoraWanDecode(struct LoraNodeData_t* node_data) {
     uint8_t FPort;
   */
   if (bitRead(Lora->settings.flags, TAS_LORA_FLAG_DECODE_ENABLED)) {          // LoraOption3 1
-    if (0x00161600 == Lora->settings.end_node[node_data->node].DevEUIh) {     // MerryIoT
+    uint32_t manufacturer = Lora->settings.end_node[node_data->node].DevEUIh >> 8;
+    if (0x001616 == manufacturer) {                                           // MerryIoT
       if (120 == node_data->FPort) {                                          // MerryIoT door/window Sensor (DW10)
         if (9 == node_data->payload_len) {                                    // MerryIoT Sensor state 
           //  1  2  3  4  5 6  7 8 9
@@ -122,7 +123,7 @@ void LoraWanDecode(struct LoraNodeData_t* node_data) {
       }
     }
 
-    else if (0xA840410E == Lora->settings.end_node[node_data->node].DevEUIh) {  // Dragino
+    else if (0xA84041 == manufacturer) {                                      // Dragino
       if (10 == node_data->FPort) {                                           // Dragino LDS02
         // 8CD2 01 000010 000000 00 - Door Open, 3.282V
         // 0CD2 01 000011 000000 00 - Door Closed
