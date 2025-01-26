@@ -505,7 +505,7 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
           node_data.FPort = FPort;
           LoraWanDecode(&node_data);
 
-          if (0xA840410E == Lora->settings.end_node[node].DevEUIh) {   // Dragino
+          if (0xA84041 == Lora->settings.end_node[node].DevEUIh >> 8) {  // Dragino
             // Dragino v1.7 fails to set DR with ADR so set it using serial interface:
             // Password 123456
             // AT+CHS=868100000
