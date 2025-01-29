@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - Berry driver for AXP2102 and M5CoreS3 (#22878)
 - GPS driver select baudrate using GPIO GPS_RX1 (9600bps), GPS_RX2 (19200bps) or GPS_RX3 (38400bps) (#22869)
 - LVLG/HASPmota add color names from OpenHASP (#22879)
+- HASPmota support for `buttonmatrix` events
 
 ### Breaking Changed
 
