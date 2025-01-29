@@ -683,13 +683,24 @@ class lvh_obj : lvh_root
       if (self._tag != nil)
         tas_event_more += f',"tag":{json.dump(self._tag)}'
       end
-      var tas_event = format('{"hasp":{"p%ib%i":{"event":"%s"%s}}}', self._page._page_id, self.id, event_hasp, tas_event_more)
+      # add sub-index if any
+      var sub_index = self.get_sub_id()
+      var sub_index_str = (sub_index != nil) ? "_" + str(sub_index) : ""
+
+      var tas_event = format('{"hasp":{"p%ib%i%s":{"event":"%s"%s}}}', self._page._page_id, self.id, sub_index_str, event_hasp, tas_event_more)
       # print("val=",val)
       tasmota.set_timer(0,  def ()
                               tasmota.publish_rule(tas_event)
                               tasmota.log(f"HSP: publish {tas_event}", 4)
                             end)
     end
+  end
+
+  #====================================================================
+  #  `get_sub_id` get any sub_index (only for buttonmatrix currently)
+  #====================================================================
+  def get_sub_id()
+    return nil
   end
 
   #====================================================================
@@ -2438,6 +2449,18 @@ class lvh_btnmatrix : lvh_obj
   def get_options()
     return self._options
   end
+  def get_val()
+    return nil      # no 'value' for btnmatrix
+  end
+
+  #====================================================================
+  #  `get_sub_id` get any sub_index (only for buttonmatrix currently)
+  #====================================================================
+  def get_sub_id()
+    var btn_idx = self._lv_obj.get_selected_button()
+    return (btn_idx != lv.BUTTONMATRIX_BUTTON_NONE) ? btn_idx : nil
+  end
+
 end
 
 #====================================================================

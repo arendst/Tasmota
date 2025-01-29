@@ -12,7 +12,7 @@ import sys
 sys.path().push('src/embedded')   # allow to import from src/embedded
 
 # globals that need to exist to make compilation succeed
-var globs = "path,ctypes_bytes_dyn,tasmota,ccronexpr,gpio,light,webclient,load,MD5,lv,light_state,udp,tcpclientasync,"
+var globs = "path,ctypes_bytes_dyn,tasmota,ccronexpr,gpio,light,webclient,load,MD5,lv,light_state,udp,tcpclientasync,log,"
             "lv_clock,lv_clock_icon,lv_signal_arcs,lv_signal_bars,lv_wifi_arcs_icon,lv_wifi_arcs,"
             "lv_wifi_bars_icon,lv_wifi_bars,"
             "_lvgl,"
