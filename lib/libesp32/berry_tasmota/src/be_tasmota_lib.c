@@ -167,6 +167,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     find_list_i, closure(class_Tasmota_find_list_i_closure)
     find_op, closure(class_Tasmota_find_op_closure)
     add_rule, closure(class_Tasmota_add_rule_closure)
+    add_rule_once, closure(class_Tasmota_add_rule_once_closure)
     remove_rule, closure(class_Tasmota_remove_rule_closure)
     try_rule, closure(class_Tasmota_try_rule_closure)
     exec_rules, closure(class_Tasmota_exec_rules_closure)
