@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - GPS driver select baudrate using GPIO GPS_RX1 (9600bps), GPS_RX2 (19200bps) or GPS_RX3 (38400bps) (#22869)
 - LVLG/HASPmota add color names from OpenHASP (#22879)
 - HASPmota support for `buttonmatrix` events
+- Berry driver for PN532 NFC/Mifare reader
 
 ### Breaking Changed
 
