@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - LVLG/HASPmota add color names from OpenHASP (#22879)
 - HASPmota support for `buttonmatrix` events
 - Berry driver for PN532 NFC/Mifare reader
+- Berry `tasmota.add_rule_once` and auto-remove rules with same pattern and id
 
 ### Breaking Changed
 
