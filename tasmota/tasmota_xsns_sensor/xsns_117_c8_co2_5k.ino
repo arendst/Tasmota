@@ -49,8 +49,8 @@ void C8CO2_Init()
 {
     if (PinUsed(GPIO_C8_CO2_5K_RX))
     {
-        int rxPin = PinUsed(GPIO_C8_CO2_5K_TX) ? Pin(GPIO_C8_CO2_5K_TX) : -1;
-        c8co2_serial = new TasmotaSerial(Pin(GPIO_C8_CO2_5K_RX), rxPin, 1);
+        int txPin = PinUsed(GPIO_C8_CO2_5K_TX) ? Pin(GPIO_C8_CO2_5K_TX) : -1;
+        c8co2_serial = new TasmotaSerial(Pin(GPIO_C8_CO2_5K_RX), txPin, 1);
         if (c8co2_serial->begin(9600))
         {
             if (c8co2_serial->hardwareSerial())
