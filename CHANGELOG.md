@@ -16,9 +16,10 @@ All notable changes to this project will be documented in this file.
 - Berry driver for AXP2102 and M5CoreS3 (#22878)
 - GPS driver select baudrate using GPIO GPS_RX1 (9600bps), GPS_RX2 (19200bps) or GPS_RX3 (38400bps) (#22869)
 - LVLG/HASPmota add color names from OpenHASP (#22879)
-- HASPmota support for `buttonmatrix` events
-- Berry driver for PN532 NFC/Mifare reader
-- Berry `tasmota.add_rule_once` and auto-remove rules with same pattern and id
+- HASPmota support for `buttonmatrix` events (#22898)
+- Berry driver for PN532 NFC/Mifare reader (#22899)
+- Berry `tasmota.add_rule_once` and auto-remove rules with same pattern and id (#22900)
+- Berry example for HeatFan WiFi Controller
 
 ### Breaking Changed
 

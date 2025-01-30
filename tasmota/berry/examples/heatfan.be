@@ -7,7 +7,7 @@
   -#
 
   #------------------------------------------------------------
-  Version v1.2.4
+  Version v1.2.5
 
   ESP32-C2 based HeatFan WiFi Controller using Tasmota and Berry local CH Fan control
   https://heatfan.eu/product/wifi-controller/
@@ -108,7 +108,7 @@ class heatfan_cls
   #-----------------------------------------------------------#
 
   def init()
-    self.version = "1.2.4"
+    self.version = "1.2.5"
     self.persist_load()
     self.teleperiod = 0
     self.mode_states = 6                         # Number of modes (needs var as static doesn't work)
@@ -121,7 +121,16 @@ class heatfan_cls
 
     tasmota.log(f"HFN: HeatFan {self.version} started on {self.hostname}", 2)
 
-    tasmota.add_driver(self)
+    if global.heatfan_driver
+      global.heatfan_driver.stop() # Let previous instance bail out cleanly
+    end
+    tasmota.add_driver(global.heatfan_driver := self)
+    tasmota.add_rule("Analog#Range1", / value -> self.rule_range(value))
+  end
+
+  def stop()
+    tasmota.remove_driver(self)
+    tasmota.remove_rule("Analog#Range1")
   end
 
   #-----------------------------------------------------------#
@@ -264,7 +273,8 @@ class heatfan_cls
   end
 
   def web_add_main_button()
-    webserver.content_send(f"<p></p><button onclick='la(\"&m_group_rotate=1\");'>Rotate Group Modes</button><div style='text-align:right;font-size:11px;color:#aaa;'>HeatFan {self.version}</div>")
+    webserver.content_send("<p></p><button onclick='la(\"&m_group_rotate=1\");'>Rotate Group Modes</button>")
+    webserver.content_send(f"<div style='text-align:right;font-size:11px;color:#aaa;'>HeatFan {self.version}</div>")
   end
 
 end
@@ -289,9 +299,7 @@ tasmota.cmd("webrefresh 1000")       # Update GUI every second
 tasmota.cmd("Tempres 2")             # ADC2/3 temperature resolution
 tasmota.cmd("Freqres 2")             # ADC1 Range resolution
 tasmota.cmd("Teleperiod 60")         # Update HA every minute
-#tasmota.cmd("AdcGpio0 400,1710,60,20") # ADC1 range
-
-tasmota.add_rule("Analog#Range1", / value -> heatfan.rule_range(value))
+tasmota.cmd("AdcGpio0 400,1710,60,20") # ADC1 range
 
 if 0 == mode
   tasmota.set_power(0, false)        # Set mode 0

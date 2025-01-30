@@ -131,17 +131,21 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 expand `Pixels` with reverse, height and alternate [#22755](https://github.com/arendst/Tasmota/issues/22755)
 - Display template for Waveshare ESP32-C6 LCD 1.47 [#22863](https://github.com/arendst/Tasmota/issues/22863)
 - Berry `animate.crenel` primitive [#22673](https://github.com/arendst/Tasmota/issues/22673)
-- Berry scroll to Leds_matrix [#22693](https://github.com/arendst/Tasmota/issues/22693)
-- Berry add unicode encoding to string parsing [#22713](https://github.com/arendst/Tasmota/issues/22713)
 - Berry `tasmota.int(v, min, max)` function [#22723](https://github.com/arendst/Tasmota/issues/22723)
-- Berry driver for M5Stack 8encoder [#22724](https://github.com/arendst/Tasmota/issues/22724)
-- Berry add light_pixels values to `tasmota.settings` [#22762](https://github.com/arendst/Tasmota/issues/22762)
-- Berry add `bytes().appendhex()` [#22767](https://github.com/arendst/Tasmota/issues/22767)
-- Berry WS2812 real-time Leds panel as app [#22788](https://github.com/arendst/Tasmota/issues/22788)
+- Berry `bytes().appendhex()` [#22767](https://github.com/arendst/Tasmota/issues/22767)
 - Berry `serial.read()` read only `n` bytes [#22835](https://github.com/arendst/Tasmota/issues/22835)
 - Berry `tasmota.global.tele_period` and `tasmota.settings.tele_period` [#22865](https://github.com/arendst/Tasmota/issues/22865)
+- Berry `tasmota.add_rule_once` and auto-remove rules with same pattern and id [#22900](https://github.com/arendst/Tasmota/issues/22900)
+- Berry driver for M5Stack 8encoder [#22724](https://github.com/arendst/Tasmota/issues/22724)
 - Berry driver for AXP2102 and M5CoreS3 [#22878](https://github.com/arendst/Tasmota/issues/22878)
+- Berry driver for PN532 NFC/Mifare reader [#22899](https://github.com/arendst/Tasmota/issues/22899)
+- Berry example for HeatFan WiFi Controller
+- Berry WS2812 real-time Leds panel as app [#22788](https://github.com/arendst/Tasmota/issues/22788)
+- Berry scroll to Leds_matrix [#22693](https://github.com/arendst/Tasmota/issues/22693)
+- Berry unicode encoding to string parsing [#22713](https://github.com/arendst/Tasmota/issues/22713)
+- Berry light_pixels values to `tasmota.settings` [#22762](https://github.com/arendst/Tasmota/issues/22762)
 - LVLG/HASPmota add color names from OpenHASP [#22879](https://github.com/arendst/Tasmota/issues/22879)
+- HASPmota support for `buttonmatrix` events [#22898](https://github.com/arendst/Tasmota/issues/22898)
 
 ### Breaking Changed
 
