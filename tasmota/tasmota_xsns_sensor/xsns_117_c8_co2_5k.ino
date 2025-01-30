@@ -65,21 +65,18 @@ void C8CO2_Init()
 
 void C8CO2_EverySecond()
 {
-    if (!c8co2_serial || c8co2_serial->available() <= 0)
-        return;
-
     unsigned long start = millis();
-    while ((millis() - start) < C8CO2_READ_TIMEOUT && c8co2_serial->available())
+    while ((millis() - start) < C8CO2_READ_TIMEOUT && c8co2_serial->available() > 0)
     {
         c8co2_buffer[0] = c8co2_buffer[1];
         c8co2_buffer[1] = c8co2_serial->read();
 
-        if (c8co2_buffer[0] != 0x42 || c8co2_buffer[1] != 0x4D)
+        if (c8co2_buffer[0] != 0x42 || c8co2_buffer[1] != 0x4D) // Check for header bytes
             continue;
 
         if (c8co2_serial->readBytes(&c8co2_buffer[2], 14) != 14)
         {
-            AddLog(LOG_LEVEL_INFO, PSTR("C8-CO2-5K: Incomplete data received"));
+            AddLog(LOG_LEVEL_INFO, PSTR("C8-CO2-5K: ERROR Incomplete data received"));
             return;
         }
 
@@ -90,7 +87,7 @@ void C8CO2_EverySecond()
         }
         if (sum != c8co2_buffer[15])
         {
-            AddLog(LOG_LEVEL_INFO, PSTR("C8-CO2-5K: Checksum mismatch"));
+            AddLog(LOG_LEVEL_INFO, PSTR("C8-CO2-5K: ERROR Checksum mismatch"));
             return;
         }
 
