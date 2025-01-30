@@ -1,38 +1,38 @@
-  #-
-  heatfan.be - HeatFan support for Tasmota
+#-
+heatfan.be - HeatFan support for Tasmota
 
-  SPDX-FileCopyrightText: 2025 Theo Arends
+SPDX-FileCopyrightText: 2025 Theo Arends
 
-  SPDX-License-Identifier: GPL-3.0-only
-  -#
+SPDX-License-Identifier: GPL-3.0-only
+-#
 
-  #------------------------------------------------------------
-  Version v1.2.5
+#--------------------------------------------------------------
+Version v1.2.6
 
-  ESP32-C2 based HeatFan WiFi Controller using Tasmota and Berry local CH Fan control
-  https://heatfan.eu/product/wifi-controller/
+ESP32-C2 based HeatFan WiFi Controller using Tasmota and Berry local CH Fan control
+https://heatfan.eu/product/wifi-controller/
 
-  Template {"NAME":"HeatFan","GPIO":[4864,229,228,4737,4738,224,0,225,32,448,226,0,0,0,0,0,0,0,227,0,0],"FLAG":0,"BASE":1}
-  Module 0              # Enable above template
-  SO15 1                # (Light) COLOR/DIMMER/CT/CHANNEL (1)
-  SO68 0                # (Light) Enable Color PWM (0)
-  GroupTopic2 heatfans  # Allow MQTT group topic control using button "Rotate Group Modes"
+Template {"NAME":"HeatFan","GPIO":[4864,229,228,4737,4738,224,0,225,32,448,226,0,0,0,0,0,0,0,227,0,0],"FLAG":0,"BASE":1}
+Module 0              # Enable above template
+SO15 1                # (Light) COLOR/DIMMER/CT/CHANNEL (1)
+SO68 0                # (Light) Enable Color PWM (0)
+GroupTopic2 heatfans  # Allow MQTT group topic control using buttons "Copy Mode" and "Rotate Mode"
 
-  Relay1 to Relay6 control Leds for Modes 1 to 6 (interlocked)
+Relay1 to Relay6 control Leds for Modes 1 to 6 (interlocked)
 
-  GPIO00 = ADC1 range (temperature input from comparator)
-  GPIO01 = Relay6 (blue)
-  GPIO02 = Relay5 (red)
-  GPIO03 = ADC2 temperature (ADC_CH_TEMP)
-  GPIO04 = ADC3 temperature (ADC_CH_TMCU)
-  GPIO05 = Relay1 (red)
-  GPIO06 = gpio.digital_write (GPIO_FANS_EN)
-  GPIO07 = Relay2 (red)
-  GPIO08 = Button1
-  GPIO09 = PWM_i1 (20kHz fan control)
-  GPIO10 = Relay3 (red)
-  GPIO18 = Relay4 (red)
-  ------------------------------------------------------------#
+GPIO00 = ADC1 range (temperature input from comparator)
+GPIO01 = Relay6 (blue)
+GPIO02 = Relay5 (red)
+GPIO03 = ADC2 temperature (ADC_CH_TEMP)
+GPIO04 = ADC3 temperature (ADC_CH_TMCU)
+GPIO05 = Relay1 (red)
+GPIO06 = gpio.digital_write (GPIO_FANS_EN)
+GPIO07 = Relay2 (red)
+GPIO08 = Button1
+GPIO09 = PWM_i1 (20kHz fan control)
+GPIO10 = Relay3 (red)
+GPIO18 = Relay4 (red)
+--------------------------------------------------------------#
 
 import persist
 import string
@@ -108,7 +108,7 @@ class heatfan_cls
   #-----------------------------------------------------------#
 
   def init()
-    self.version = "1.2.5"
+    self.version = "1.2.6"
     self.persist_load()
     self.teleperiod = 0
     self.mode_states = 6                         # Number of modes (needs var as static doesn't work)
@@ -262,8 +262,15 @@ class heatfan_cls
                             self.speed, max_speed)
     tasmota.web_send_decimal(msg)
 
-    if webserver.has_arg("m_group_rotate")
-      # Rotate group topic power from off,1,2,3,4,5,6,off...
+    if webserver.has_arg("m_group_copy")
+      # Send current mode to group topic
+      if 0 == self.mode
+        tasmota.cmd("Publish cmnd/heatfans/Power0 0")
+      else
+        tasmota.cmd(f"Publish cmnd/heatfans/Power{self.mode} 1")
+      end
+    elif webserver.has_arg("m_group_rotate")
+      # Rotate group topic mode from off,1,2,3,4,5,6,off...
       if self.mode == self.mode_states
         tasmota.cmd(f"Publish cmnd/heatfans/Power{self.mode_states} 0")
       else
@@ -273,7 +280,10 @@ class heatfan_cls
   end
 
   def web_add_main_button()
-    webserver.content_send("<p></p><button onclick='la(\"&m_group_rotate=1\");'>Rotate Group Modes</button>")
+    webserver.content_send("<table style=\"width:100%\"><tr>")
+    webserver.content_send("<td style=\"width:50%\"><button onclick='la(\"&m_group_copy=1\");'>Copy Mode</button></td>")
+    webserver.content_send("<td style=\"width:50%\"><button onclick='la(\"&m_group_rotate=1\");'>Rotate Mode</button></td>")
+    webserver.content_send("</tr></table>")
     webserver.content_send(f"<div style='text-align:right;font-size:11px;color:#aaa;'>HeatFan {self.version}</div>")
   end
 
