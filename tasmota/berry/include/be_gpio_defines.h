@@ -50,6 +50,8 @@ const be_const_member_t lv_gpio_constants[] = {
     { "BS814_DAT", (int32_t) GPIO_BS814_DAT },
     { "BUZZER", (int32_t) GPIO_BUZZER },
     { "BUZZER_INV", (int32_t) GPIO_BUZZER_INV },
+    { "C8_CO2_5K_TX", (int32_t) GPIO_C8_CO2_5K_TX },
+    { "C8_CO2_5K_RX", (int32_t) GPIO_C8_CO2_5K_RX },
     { "CC1101_GDO0", (int32_t) GPIO_CC1101_GDO0 },
     { "CC1101_GDO2", (int32_t) GPIO_CC1101_GDO2 },
     { "CHANGE", CHANGE },

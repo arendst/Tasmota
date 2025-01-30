@@ -234,6 +234,7 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_HC8                   | -     | - / - | -     | -     | -     | -     |
 | USE_PIPSOLAR              | -     | - / - | -     | -     | -     | -     |
 | USE_WOOLIIS               | -     | - / - | -     | -     | -     | -     |
+| USE_C8_CO2_5K             | -     | - / - | -     | -     | -     | -     |
 |                           |       |       |       |       |       |       |
 | USE_NRF24                 | -     | - / - | -     | -     | -     | -     |
 | USE_MIBLE                 | -     | - / - | -     | -     | -     | -     |
