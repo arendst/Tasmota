@@ -30,6 +30,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Platform from 2025.01.30 to 2025.01.31 (#22832)
 - Berry `gpio.pin_mode` frees PWM on pin
 - GPIOViewer from v1.6.0 to v1.6.1 (No functional change)
+- Berry callback now passes 5 arguments instead of 4 (in line with documentation)
 
 ### Fixed
 - Sonoff SPM `PowerOnState` overrules `SSPMPowerOnState` in mixed 4Relay setup with 4Relay version 1.0.0
