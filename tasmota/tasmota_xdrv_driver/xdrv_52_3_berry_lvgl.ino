@@ -50,6 +50,8 @@ extern bool lvgl_started(void);
 extern void lvgl_set_screenshot_file(File * file);
 extern void lvgl_reset_screenshot_file(void);
 File * lvgl_get_screenshot_file(void);
+extern void lv_set_paint_cb(void* cb);
+extern void* lv_get_paint_cb(void);
 
 /********************************************************************
  * Structures used by LVGL_Berry
@@ -656,6 +658,19 @@ extern "C" {
       f.close();
     }
     be_pushstring(vm, fname);
+    be_return(vm);
+  }
+
+  /*********************************************************************************************\
+   * Screenshot in raw format
+  \********************************************************************************************/
+  int lv0_set_paint_cb(bvm *vm);
+  int lv0_set_paint_cb(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 1 && be_iscomptr(vm, 1)) {
+      lv_set_paint_cb(be_tocomptr(vm, 1));
+    }
+    be_pushcomptr(vm, lv_get_paint_cb());
     be_return(vm);
   }
 }
