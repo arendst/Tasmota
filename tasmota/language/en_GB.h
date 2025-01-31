@@ -1021,6 +1021,8 @@
 #define D_SENSOR_LOX_O2_RX     "LoxO2 Rx"
 #define D_GPIO_MAGIC_SWITCH    "MagicSwitch"
 #define D_SENSOR_WOOLIIS_RX    "Wooliis Rx"
+#define D_SENSOR_C8_CO2_5K_RX  "C8-CO2-5K Rx"
+#define D_SENSOR_C8_CO2_5K_TX  "C8-CO2-5K Tx"
 
 // Units
 #define D_UNIT_AMPERE "A"
