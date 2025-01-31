@@ -37,6 +37,7 @@
 
 #ifdef CONFIG_ULP_COPROC_TYPE_LP_CORE
   #include "ulp_lp_core.h"
+  #include "lp_core_uart.h"
   ulp_lp_core_cfg_t be_ulp_lp_core_cfg;
 #endif //CONFIG_ULP_COPROC_TYPE_LP_CORE
 
@@ -92,6 +93,30 @@ extern "C" {
     } else {
       return -1;
     }
+  }
+
+  // `ULP.uart_init(port:int, tx_pin:int, rx_pin:int, baudrate:int) -> nil`
+  void be_ULP_uart_init(gpio_num_t tx_pin, gpio_num_t rx_pin, int baudrate)
+  {
+    lp_core_uart_cfg_t cfg = {
+        .uart_pin_cfg = {
+            .tx_io_num = tx_pin,
+            .rx_io_num = rx_pin,
+            .rts_io_num = LP_UART_DEFAULT_RTS_GPIO_NUM,
+            .cts_io_num = LP_UART_DEFAULT_CTS_GPIO_NUM
+        },
+        .uart_proto_cfg = {
+            .baud_rate = baudrate,
+            .data_bits = UART_DATA_8_BITS,
+            .parity = UART_PARITY_DISABLE,
+            .stop_bits = UART_STOP_BITS_1,
+            .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+            .rx_flow_ctrl_thresh = 0
+        },
+        .lp_uart_source_clk = LP_UART_SCLK_DEFAULT
+    };
+    ESP_ERROR_CHECK(lp_core_uart_init(&cfg));
+    AddLog(LOG_LEVEL_INFO, "ULP: LP_CORE UART initialized successfully");
   }
 
   // `ULP.adc_config(channel:int, attenuation:int, width:int) -> error:int`
