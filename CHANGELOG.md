@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - Berry `tasmota.add_rule_once` and auto-remove rules with same pattern and id (#22900)
 - Berry example for HeatFan WiFi Controller
 - LVGL add `lv.set_paint_cb()` to register a callback when screen is refreshed
+- Berry `tasmota.settings` entries for PixelType
 
 ### Breaking Changed
 
