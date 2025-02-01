@@ -117,10 +117,8 @@ extern "C" {
       // #define UART_NB_BIT_7         0B00001000
       // #define UART_NB_BIT_8         0B00001100
       uint32_t data_bits = (mode & 0xc) >> 2;
-      AddLog(LOG_LEVEL_INFO, PSTR("ULP: data_bits: %d"), data_bits);
       // STOP BITS
       uint32_t stop_bits = (mode & 0x30) >> 4;
-      AddLog(LOG_LEVEL_INFO, PSTR("ULP: stop_bits: %d"), stop_bits);
       // #define UART_PARITY_NONE      0B00000000
       // #define UART_PARITY_EVEN      0B00000010
       // #define UART_PARITY_ODD       0B00000011
