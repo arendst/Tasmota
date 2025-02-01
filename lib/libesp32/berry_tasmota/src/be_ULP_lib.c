@@ -23,10 +23,8 @@ BE_FUNC_CTYPE_DECLARE(be_ULP_get_mem, "i", "i");
 extern int32_t be_ULP_gpio_init(int32_t pin, int32_t mode);
 BE_FUNC_CTYPE_DECLARE(be_ULP_gpio_init, "i", "ii");
 
-#ifdef CONFIG_ULP_COPROC_TYPE_LP_CORE
 extern void be_ULP_uart_init(bvm *vm);
 BE_FUNC_CTYPE_DECLARE(be_ULP_uart_init, "", "@iii[i]"); // pass: 1/ vm, 2/ int rx, 3/ int tx, 4/ int speed [, 5/ int mode]
-#endif // CONFIG_ULP_COPROC_TYPE_LP_CORE
 
 extern int32_t be_ULP_adc_config(struct bvm *vm, int32_t channel, int32_t attenuation, int32_t width);
 BE_FUNC_CTYPE_DECLARE(be_ULP_adc_config, "i", "@iii");
@@ -37,7 +35,6 @@ BE_FUNC_CTYPE_DECLARE(be_ULP_sleep, "", "[i]"); // optional int arg
 extern void be_ULP_load(struct bvm *vm, const uint8_t *buf, size_t size);
 BE_FUNC_CTYPE_DECLARE(be_ULP_load, "", "@(bytes)~"); // pass: 1/ vm, 2/ bytes point, 3/ bytes size
 
-#ifdef CONFIG_ULP_COPROC_TYPE_LP_CORE
 /* @const_object_info_begin
 module ULP (scope: global) {
   run,          ctype_func(be_ULP_run)
@@ -51,20 +48,6 @@ module ULP (scope: global) {
   uart_init,    ctype_func(be_ULP_uart_init)
 }
 @const_object_info_end */
-#else
-/* @const_object_info_begin
-module ULP (scope: global) {
-  run,          ctype_func(be_ULP_run)
-  load,         ctype_func(be_ULP_load)
-  set_mem,      ctype_func(be_ULP_set_mem)
-  get_mem,      ctype_func(be_ULP_get_mem)
-  gpio_init,    ctype_func(be_ULP_gpio_init)
-  wake_period,  ctype_func(be_ULP_wake_up_period)
-  sleep,        ctype_func(be_ULP_sleep)
-  adc_config,   ctype_func(be_ULP_adc_config)
-}
-@const_object_info_end */
-#endif // CONFIG_ULP_COPROC_TYPE_LP_CORE
 #include "be_fixed_ULP.h"
 
 #endif // USE_BERRY_ULP
