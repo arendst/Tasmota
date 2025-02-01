@@ -95,6 +95,7 @@ extern "C" {
     }
   }
 
+#ifdef CONFIG_ULP_COPROC_TYPE_LP_CORE
   // Berry: `ULP.uart_init(rx_gpio:int, tx_gpio:int, speed:int [, config:int]) -> nil`
   void be_ULP_uart_init(struct bvm *vm);
   void be_ULP_uart_init(struct bvm *vm) {
@@ -144,12 +145,12 @@ extern "C" {
           .lp_uart_source_clk = LP_UART_SCLK_DEFAULT
       };
 
-
       ESP_ERROR_CHECK(lp_core_uart_init(&cfg));
       AddLog(LOG_LEVEL_INFO, "ULP: LP_CORE UART initialized successfully");
     }
 
   }
+#endif //CONFIG_ULP_COPROC_TYPE_LP_CORE
 
 
   // `ULP.adc_config(channel:int, attenuation:int, width:int) -> error:int`
