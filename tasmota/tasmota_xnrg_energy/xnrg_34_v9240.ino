@@ -8,10 +8,10 @@
 
 #define XNRG_34             34
 
-#if 0
 #include <TasmotaSerial.h>
 #include <algorithm>
 
+#define V9240_SERIAL_BAUDRATE 2400
 
 namespace Address
 {
@@ -194,7 +194,7 @@ public:
     void close();
     void start();
     bool reset();
-    inline void loop() {read_data_from_port();};
+    inline void v9240_loop() {read_data_from_port();};
 
     float value(const parameter p) const;
     inline float operator [] (const parameter p) const {return  value(p);};
@@ -214,9 +214,10 @@ private:
     size_t step = 0;
 
     size_t next_read_len =  0;
-    size_t byte_readed = 0;
     char serial_buff[buffer_size];
     int32_t *ptr_read = nullptr;
+    uint32_t start_pause_timer = 0;
+    uint32_t timeout = 0 ;
 
     // chip memory
     int32_t rw_mem[rw_len];
@@ -335,6 +336,7 @@ void V9240::start()
     {
         step = 0;
         read(ro_mem,Address::SysSts,1);
+        timeout = millis();
     }
 }
 
@@ -349,7 +351,7 @@ float V9240::value(const V9240::parameter p) const
         v = float(IAAVG)*1e-6;
         break;
     case Frequency:
-        v = 0.00390625*19200.0*T8BAUD/float(FREQAVG);
+        v = 0.00390625*V9240_SERIAL_BAUDRATE*T8BAUD/float(FREQAVG);
         break;
     case Power:
         v = float(PAAVG)*1e-6;
@@ -460,40 +462,52 @@ void V9240::send_next()
         read(ro_mem,Address::RO_START,ro_len-1);
         step = 20;
     }
+
+    timeout = millis();
 }
 
 // next methods is platfrm-specific (serial port & Qt signals)
 void V9240::read_data_from_port()
 {
-    auto bytes = port->available();
-
-    if(byte_readed + bytes > buffer_size)
-        bytes = buffer_size - byte_readed;
-
-    port->read(serial_buff + byte_readed,bytes);
-
-    byte_readed += bytes;
-
-    if(byte_readed == buffer_size)
-        byte_readed = 0;
-
-    if(byte_readed == next_read_len)
+    if(next_read_len != 0 )
     {
-        char checksum =  calc_check(serial_buff+sizeof(packet),next_read_len-sizeof(packet)-1);
-        if(checksum == serial_buff[next_read_len-1])
+        auto bytes = port->available();
+        if(bytes >= next_read_len)
         {
-            packet &recv = *reinterpret_cast<packet*>( serial_buff + sizeof (packet) );
-            if(recv.ctrl == ctrl_read)
-            {
-                int32_t *data = (int32_t*)(serial_buff + sizeof (packet) + 3);
-                memcpy(ptr_read,data,sizeof (int32_t) * (recv.addr_l==0 ? 1 : recv.addr_l));
-            }
+            port->read(serial_buff,next_read_len);
 
+            char checksum =  calc_check(serial_buff+sizeof(packet),next_read_len-sizeof(packet)-1);
+            if(checksum == serial_buff[next_read_len-1])
+            {
+                packet &recv = *reinterpret_cast<packet*>( serial_buff + sizeof (packet) );
+                if(recv.ctrl == ctrl_read)
+                {
+                    int32_t *data = (int32_t*)(serial_buff + sizeof (packet) + 3);
+                    memcpy(ptr_read,data,sizeof (int32_t) * (recv.addr_l==0 ? 1 : recv.addr_l));
+                }
+
+            }
+            next_read_len = 0;
+            ptr_read = nullptr;
+    //        QTimer::singleShot(25,this,&V9240::send_next);
+            start_pause_timer = millis();
+            timeout = 0;
         }
-        next_read_len = 0;
-        byte_readed = 0;
-        ptr_read = nullptr;
-//        QTimer::singleShot(25,this,&V9240::send_next);
+        else if(timeout > 0 && millis() - timeout > 1000)
+        {
+            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "***V9240 timeout"));
+            port->read(serial_buff,bytes);
+            start_pause_timer = 0;
+
+            start();
+        }
+    }
+    else {
+        if(start_pause_timer != 0 && millis()-start_pause_timer > 10)
+        {
+            send_next();
+            start_pause_timer = 0;
+        }
     }
 }
 
@@ -503,8 +517,9 @@ bool V9240::open(char const *portName)
     if(port != nullptr)
         return false;
 
-    port = new TasmotaSerial(Pin(GPIO_V9240_RX),Pin(GPIO_V9240_TX),1);
-    port->begin(19200,SERIAL_8O1);
+    port = new TasmotaSerial(Pin(GPIO_V9240_RX),Pin(GPIO_V9240_TX));
+    port->setRxBufferSize(256);
+    port->begin(V9240_SERIAL_BAUDRATE,SERIAL_8O1);
 
     return true;
 }
@@ -556,7 +571,6 @@ bool V9240::read(int32_t *ptr, uint16_t address, size_t n)
     p.check = calc_check(p.buff,sizeof(p)-1);
 
     next_read_len = sizeof (p) + 4 + sizeof (int32_t)*n;
-    byte_readed = 0;
     ptr_read = ptr;
 
     port->write(p.buff,sizeof (p));
@@ -575,17 +589,11 @@ bool V9240::write(int16_t address, int32_t data)
     p.check = calc_check(p.buff,sizeof(p)-1);
 
     next_read_len = sizeof (p) + 4;
-    byte_readed = 0;
 
     port->write(p.buff,sizeof (p));
 
     return true;
 }
-
-
-
-
-
 
 void Xnrg34Init()
 {
@@ -594,7 +602,7 @@ void Xnrg34Init()
     Energy->frequency_common = true;  // Phase frequency = false, Common frequency = true
     Energy->type_dc = false;          // AC = false, DC = true;
     Energy->use_overtemp = true;      // Use global temperature for overtemp detection
-
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "***V9240 start"));
     V9240::instance().start();
 }
 
@@ -603,14 +611,16 @@ void Xnrg34Second()
     static int32_t last_power = 0;
 
     if (Energy->power_on) {
-    Energy->data_valid[0] = 0;
-    Energy->frequency[0] = 50;
-    Energy->voltage[0] = 200.0;
-    Energy->current[0] = 5.0;
-    Energy->active_power[0] = 1000.0;
-    Energy->kWhtoday_delta[0] += (Energy->active_power[0]+last_power) * 500.0 / 36.0; // trapezoid integration
-    last_power = Energy->active_power[0];
-    EnergyUpdateTotal();
+        Energy->data_valid[0] = 0;
+        Energy->frequency[0] = V9240::instance()[V9240::Frequency];
+        Energy->voltage[0] = V9240::instance()[V9240::Voltage];
+        Energy->current[0] = V9240::instance()[V9240::Amperage];
+        Energy->active_power[0] = V9240::instance()[V9240::Power];
+        Energy->reactive_power[0] = V9240::instance()[V9240::Reactive];
+
+        Energy->kWhtoday_delta[0] += (Energy->active_power[0]+last_power) * 500.0 / 36.0; // trapezoid integration
+        last_power = Energy->active_power[0];
+        EnergyUpdateTotal();
     }
 }
 
@@ -629,7 +639,7 @@ bool Xnrg34(uint32_t function) {
 
     switch (function) {
     case FUNC_LOOP:
-        V9240::instance().loop();
+        V9240::instance().v9240_loop();
         break;
     case FUNC_ENERGY_EVERY_SECOND:
         Xnrg34Second();
@@ -648,12 +658,6 @@ bool Xnrg34(uint32_t function) {
     }
     return result;
 }
-#else
-bool Xnrg34(uint32_t function) {
-    bool result = false;
-    return result;
-}
-#endif
 
 #endif  // USE_ENERGY_V9240
 #endif  // USE_ENERGY_SENSOR
