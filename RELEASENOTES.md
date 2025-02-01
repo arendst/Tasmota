@@ -122,6 +122,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Command I2sLoop [#22807](https://github.com/arendst/Tasmota/issues/22807)
 - Support for PCF85063 RTC [#22727](https://github.com/arendst/Tasmota/issues/22727)
 - Support for Senseair S88 CO2 sensor [#22733](https://github.com/arendst/Tasmota/issues/22733)
+- Support for C8-CO2-5K CO2 sensor [#22905](https://github.com/arendst/Tasmota/issues/22905)
 - Support for ESP32 Two-Wire Automotive Interface (TWAI) or Controller Area Network (CAN) busses
 - GPS driver select baudrate using GPIO GPS_RX1 (9600bps), GPS_RX2 (19200bps) or GPS_RX3 (38400bps) [#22869](https://github.com/arendst/Tasmota/issues/22869)
 - I2S AAC support for web radio [#22787](https://github.com/arendst/Tasmota/issues/22787)
@@ -135,6 +136,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `bytes().appendhex()` [#22767](https://github.com/arendst/Tasmota/issues/22767)
 - Berry `serial.read()` read only `n` bytes [#22835](https://github.com/arendst/Tasmota/issues/22835)
 - Berry `tasmota.global.tele_period` and `tasmota.settings.tele_period` [#22865](https://github.com/arendst/Tasmota/issues/22865)
+- Berry `tasmota.settings` entries for PixelType [#22912](https://github.com/arendst/Tasmota/issues/22912)
 - Berry `tasmota.add_rule_once` and auto-remove rules with same pattern and id [#22900](https://github.com/arendst/Tasmota/issues/22900)
 - Berry driver for M5Stack 8encoder [#22724](https://github.com/arendst/Tasmota/issues/22724)
 - Berry driver for AXP2102 and M5CoreS3 [#22878](https://github.com/arendst/Tasmota/issues/22878)
@@ -145,6 +147,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry unicode encoding to string parsing [#22713](https://github.com/arendst/Tasmota/issues/22713)
 - Berry light_pixels values to `tasmota.settings` [#22762](https://github.com/arendst/Tasmota/issues/22762)
 - LVLG/HASPmota add color names from OpenHASP [#22879](https://github.com/arendst/Tasmota/issues/22879)
+- LVGL `lv.set_paint_cb()` to register a callback when screen is refreshed [#22909](https://github.com/arendst/Tasmota/issues/22909)
 - HASPmota support for `buttonmatrix` events [#22898](https://github.com/arendst/Tasmota/issues/22898)
 
 ### Breaking Changed
@@ -158,6 +161,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP32 disable PSRAM check (and on restart some relay toggles) with `#define DISABLE_PSRAMCHECK true` [#21266](https://github.com/arendst/Tasmota/issues/21266)
 - Berry `gpio.pin_mode` frees PWM on pin
 - Berry bit-shift operators to `int64` [#22709](https://github.com/arendst/Tasmota/issues/22709)
+- Berry callback now passes 5 arguments instead of 4 (in line with documentation) [#22908](https://github.com/arendst/Tasmota/issues/22908)
 - HASPmota use 'roboto.ttf' for automatic sizing of default font [#22697](https://github.com/arendst/Tasmota/issues/22697)
 - HASPmota add 'tag' attribute for free-form JSON [#22698](https://github.com/arendst/Tasmota/issues/22698)
 - HASPmota support for `tabview` [#22707](https://github.com/arendst/Tasmota/issues/22707)
