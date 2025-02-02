@@ -3,6 +3,13 @@
 
 */
 
+//#ifndef USE_ENERGY_SENSOR
+//#define USE_ENERGY_SENSOR
+//#ifndef USE_V9240
+//#define USE_V9240
+//#endif
+//#endif
+
 #ifdef USE_ENERGY_SENSOR
 #ifdef USE_V9240
 
@@ -11,7 +18,7 @@
 #include <TasmotaSerial.h>
 #include <algorithm>
 
-#define V9240_SERIAL_BAUDRATE 2400
+#define V9240_SERIAL_BAUDRATE 19200
 
 namespace Address
 {
@@ -335,6 +342,7 @@ void V9240::start()
     if(port != nullptr)
     {
         step = 0;
+        port->flush();
         read(ro_mem,Address::SysSts,1);
         timeout = millis();
     }
@@ -380,6 +388,8 @@ char V9240::calc_check(char *buff, size_t len)
 
 void V9240::send_next()
 {
+    port->flush();
+
     switch (step++) {
     case 0:
         read(rw_mem,Address::SysCtrl,1);
@@ -472,6 +482,11 @@ void V9240::read_data_from_port()
     if(next_read_len != 0 )
     {
         auto bytes = port->available();
+//        if(bytes > 0)
+//        {
+//            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "***V9240 bytes: %d next: %d timeout: %d"),bytes,next_read_len,millis()-timeout);
+//        }
+
         if(bytes >= next_read_len)
         {
             port->read(serial_buff,next_read_len);
@@ -479,6 +494,8 @@ void V9240::read_data_from_port()
             char checksum =  calc_check(serial_buff+sizeof(packet),next_read_len-sizeof(packet)-1);
             if(checksum == serial_buff[next_read_len-1])
             {
+                AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "***V9240 response OK"));
+
                 packet &recv = *reinterpret_cast<packet*>( serial_buff + sizeof (packet) );
                 if(recv.ctrl == ctrl_read)
                 {
@@ -487,18 +504,30 @@ void V9240::read_data_from_port()
                 }
 
             }
+            else {
+                AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "***V9240 checksum error in: %d calc: %d")
+                       ,uint32_t(serial_buff[next_read_len-1]),uint32_t(checksum));
+            }
             next_read_len = 0;
             ptr_read = nullptr;
-    //        QTimer::singleShot(25,this,&V9240::send_next);
+
             start_pause_timer = millis();
             timeout = 0;
         }
         else if(timeout > 0 && millis() - timeout > 1000)
         {
-            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "***V9240 timeout"));
+            char text[bytes*3+1] ;
+            text[0]=0;
             port->read(serial_buff,bytes);
-            start_pause_timer = 0;
 
+            for(size_t i =  0 ;  i < bytes ; ++i)
+            {
+                sprintf_P(text+i*3,PSTR("%02X "),uint32_t(serial_buff[i]));
+            }
+            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "***V9240 timeout data %d | %s"),bytes, text);
+
+//            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "***V9240 timeout"));
+            start_pause_timer = 0;
             start();
         }
     }
@@ -517,10 +546,11 @@ bool V9240::open(char const *portName)
     if(port != nullptr)
         return false;
 
-    port = new TasmotaSerial(Pin(GPIO_V9240_RX),Pin(GPIO_V9240_TX));
-    port->setRxBufferSize(256);
-    port->begin(V9240_SERIAL_BAUDRATE,SERIAL_8O1);
-
+    port = new TasmotaSerial(Pin(GPIO_V9240_RX),Pin(GPIO_V9240_TX),1,0,256,false);
+    if (port->hardwareSerial()) {
+        ClaimSerial();
+        port->begin(V9240_SERIAL_BAUDRATE,SERIAL_8O1);
+    }
     return true;
 }
 
@@ -529,6 +559,7 @@ void V9240::close()
     if(port != nullptr)
     {
         port->end();
+        Serial.end();
         delete port;
         port = nullptr;
     }
@@ -536,27 +567,19 @@ void V9240::close()
 
 bool V9240::reset()
 {
-#if 0
-    if(port != nullptr && port->isOpen())
+    if(port != nullptr)
     {
-        port->blockSignals(true);
-        port->setBaudRate(102);
-        port->write("\0",1);
-        port->flush();
-        port->waitForReadyRead(1000);
-        port->read(1);
-        port->setBaudRate(QSerialPort::Baud19200);
-        port->blockSignals(false);
-
-        return true;
+        if (port->hardwareSerial()) {
+            ClaimSerial();
+            port->begin(100,SERIAL_8O1);
+        }
+        port->write(uint8_t(0));
+        char zero;
+        port->read(&zero,1);
+        port->begin(V9240_SERIAL_BAUDRATE,SERIAL_8O1);
     }
-    else
-    {
-        return false;
-    }
-#else
     return true;
-#endif
+
 }
 
 
@@ -574,6 +597,8 @@ bool V9240::read(int32_t *ptr, uint16_t address, size_t n)
     ptr_read = ptr;
 
     port->write(p.buff,sizeof (p));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "***V9240 read command send next_read_len %d"),next_read_len);
+
 
     return true;
 }
@@ -591,6 +616,7 @@ bool V9240::write(int16_t address, int32_t data)
     next_read_len = sizeof (p) + 4;
 
     port->write(p.buff,sizeof (p));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "***V9240 write command send next_read_len %d"),next_read_len);
 
     return true;
 }
@@ -630,6 +656,7 @@ void Xnrg34PreInit()
     {
       TasmotaGlobal.energy_driver = XNRG_34;
       V9240::instance().open("");
+      V9240::instance().reset();
     }
 
 }
