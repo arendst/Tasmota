@@ -59,6 +59,12 @@ enum : uint32_t {
   OPUS_DECODER = 2,
 };
 
+// I2S encoder type
+enum : uint8_t {
+  MP3_ENCODER = 1,
+  OPUS_ENCODER = 2,
+};
+
 #define I2S_SLOTS   2
 #define AUDIO_SETTINGS_VERSION  2
 
