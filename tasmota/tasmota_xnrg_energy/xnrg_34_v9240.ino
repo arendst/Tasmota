@@ -15,10 +15,15 @@
 
 #define XNRG_34             34
 
+#ifdef USE_UFILESYS
+#define  V9240_FILENAME "./v9240_param"
+#endif
+
 #include <TasmotaSerial.h>
 #include <algorithm>
 
 #define V9240_SERIAL_BAUDRATE 19200
+
 
 namespace Address
 {
@@ -181,7 +186,7 @@ class V9240
 private:
     static constexpr size_t rw_len = 23;
     static constexpr size_t ro_len = 22;
-    static constexpr size_t buffer_size = 256; // max response + max query
+    static constexpr size_t buffer_size = 128; // max response + max query
 
     explicit V9240();
     ~V9240();
@@ -202,6 +207,9 @@ public:
     void start();
     bool reset();
     inline void v9240_loop() {read_data_from_port();};
+
+
+    bool process_command();
 
     float value(const parameter p) const;
     inline float operator [] (const parameter p) const {return  value(p);};
@@ -330,6 +338,17 @@ V9240::V9240() :   port(nullptr)
     UDCC     = 1196289;
 
     BPFPARA  = 0x806764B6;
+
+#ifdef USE_UFILESYS
+    int file_data[rw_len];
+    char filename[20];
+    sprintf_P(filename, PSTR(V9240_FILENAME));
+    if (TfsLoadFile(filename, reinterpret_cast<uint8_t*>(file_data), sizeof(file_data)))
+    {
+        memcpy(rw_mem,file_data,sizeof(file_data));
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "*** V9240 calibratin parameters loaded"));
+    }
+#endif
 }
 
 V9240::~V9240()
@@ -464,6 +483,7 @@ void V9240::send_next()
         break;
     case 19:
         set_checksum();
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "*** V9240 started"));
         break;
     case 20:
         read(&ro_mem[ro_len-1],Address::T8BAUD,1);
@@ -482,10 +502,6 @@ void V9240::read_data_from_port()
     if(next_read_len != 0 )
     {
         auto bytes = port->available();
-//        if(bytes > 0)
-//        {
-//            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "***V9240 bytes: %d next: %d timeout: %d"),bytes,next_read_len,millis()-timeout);
-//        }
 
         if(bytes >= next_read_len)
         {
@@ -494,18 +510,15 @@ void V9240::read_data_from_port()
             char checksum =  calc_check(serial_buff+sizeof(packet),next_read_len-sizeof(packet)-1);
             if(checksum == serial_buff[next_read_len-1])
             {
-                AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "***V9240 response OK"));
-
                 packet &recv = *reinterpret_cast<packet*>( serial_buff + sizeof (packet) );
                 if(recv.ctrl == ctrl_read)
                 {
                     int32_t *data = (int32_t*)(serial_buff + sizeof (packet) + 3);
                     memcpy(ptr_read,data,sizeof (int32_t) * (recv.addr_l==0 ? 1 : recv.addr_l));
                 }
-
             }
             else {
-                AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "***V9240 checksum error in: %d calc: %d")
+                AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "*** V9240 checksum error in: %d calc: %d")
                        ,uint32_t(serial_buff[next_read_len-1]),uint32_t(checksum));
             }
             next_read_len = 0;
@@ -516,17 +529,7 @@ void V9240::read_data_from_port()
         }
         else if(timeout > 0 && millis() - timeout > 1000)
         {
-            char text[bytes*3+1] ;
-            text[0]=0;
-            port->read(serial_buff,bytes);
-
-            for(size_t i =  0 ;  i < bytes ; ++i)
-            {
-                sprintf_P(text+i*3,PSTR("%02X "),uint32_t(serial_buff[i]));
-            }
-            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "***V9240 timeout data %d | %s"),bytes, text);
-
-//            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "***V9240 timeout"));
+            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "*** V9240 timeout"));
             start_pause_timer = 0;
             start();
         }
@@ -569,17 +572,13 @@ bool V9240::reset()
 {
     if(port != nullptr)
     {
-        if (port->hardwareSerial()) {
-            ClaimSerial();
-            port->begin(100,SERIAL_8O1);
-        }
+        port->begin(100,SERIAL_8O1);
         port->write(uint8_t(0));
         char zero;
         port->read(&zero,1);
         port->begin(V9240_SERIAL_BAUDRATE,SERIAL_8O1);
     }
     return true;
-
 }
 
 
@@ -597,8 +596,6 @@ bool V9240::read(int32_t *ptr, uint16_t address, size_t n)
     ptr_read = ptr;
 
     port->write(p.buff,sizeof (p));
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "***V9240 read command send next_read_len %d"),next_read_len);
-
 
     return true;
 }
@@ -616,8 +613,56 @@ bool V9240::write(int16_t address, int32_t data)
     next_read_len = sizeof (p) + 4;
 
     port->write(p.buff,sizeof (p));
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "***V9240 write command send next_read_len %d"),next_read_len);
 
+    return true;
+}
+
+bool V9240::process_command()
+{
+    int32_t value = atoi(XdrvMailbox.data);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "*** V9240 command: %d value: %s"),Energy->command_code,XdrvMailbox.data);
+    XdrvMailbox.payload = value;
+
+    switch (Energy->command_code) {
+    case CMND_POWERCAL:
+        PADCC = value;
+        break;
+    case CMND_VOLTAGECAL:
+        UDCC = value;
+        break;
+    case CMND_CURRENTCAL:
+        IADCC = value;
+        break;
+    case CMND_FREQUENCYCAL:
+        break;
+    case CMND_POWERSET:
+        PAC = value;
+        break;
+    case CMND_VOLTAGESET:
+        UC = value;
+        break;
+    case CMND_CURRENTSET:
+        IAC = value;
+        break;
+    case CMND_FREQUENCYSET:
+        PHC = value;
+        break;
+    case CMND_MODULEADDRESS:
+        break;
+    case CMND_ENERGYCONFIG:
+        break;
+    default:
+        break;
+    }
+
+#ifdef USE_UFILESYS
+    char filename[20];
+    sprintf_P(filename, PSTR(V9240_FILENAME));
+    if (TfsSaveFile(filename, reinterpret_cast<const uint8_t*>(rw_mem), sizeof(rw_mem)))
+    {
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "*** V9240 calibratin parameters stored"));
+    }
+#endif
     return true;
 }
 
@@ -628,7 +673,6 @@ void Xnrg34Init()
     Energy->frequency_common = true;  // Phase frequency = false, Common frequency = true
     Energy->type_dc = false;          // AC = false, DC = true;
     Energy->use_overtemp = true;      // Use global temperature for overtemp detection
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "***V9240 start"));
     V9240::instance().start();
 }
 
@@ -661,6 +705,8 @@ void Xnrg34PreInit()
 
 }
 
+
+
 bool Xnrg34(uint32_t function) {
     bool result = false;
 
@@ -674,7 +720,7 @@ bool Xnrg34(uint32_t function) {
     case FUNC_EVERY_250_MSECOND:
         break;
     case FUNC_COMMAND:
-        result = true;
+        result = V9240::instance().process_command();
         break;
     case FUNC_INIT:
         Xnrg34Init();
