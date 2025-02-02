@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - LVGL `lv.set_paint_cb()` to register a callback when screen is refreshed (#22909)
 - Berry `tasmota.settings` entries for PixelType (#22912)
 - Support for C8-CO2-5K CO2 sensor (#22905)
+- `#define FIX_JSON_HEXADECIMAL` to change JSON hexadecimal value "FF5F78" into "0xFF5F78" (#22919)
 
 ### Breaking Changed
 
