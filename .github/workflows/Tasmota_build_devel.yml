@@ -90,20 +90,28 @@ jobs:
           python-version: '3.x'
       - uses: actions/download-artifact@v4
         with:
-          pattern: |
-            berry_tasmota
-            berry_matter
-            berry_animate
-            berry_lvgl
-            berry_haspmota
-            berry_header
-          path: |
-            ./lib/libesp32/berry_tasmota/src/solidify
-            ./lib/libesp32/berry_matter/src/solidify
-            ./lib/libesp32/berry_animate/src/solidify
-            ./lib/libesp32_lvgl/lv_binding_berry/src/solidify
-            ./lib/libesp32_lvgl/lv_haspmota/src/solidify
-            ./lib/libesp32/berry/generate
+          pattern: berry_tasmota
+          path: ./lib/libesp32/berry_tasmota/src/solidify
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: berry_matter
+          path: ./lib/libesp32/berry_matter/src/solidify
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: berry_animate
+          path: ./lib/libesp32/berry_animate/src/solidify
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: berry_lvgl
+          path: ./lib/libesp32_lvgl/lv_binding_berry/src/solidify
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: berry_haspmota
+          path: ./lib/libesp32_lvgl/lv_haspmota/src/solidify
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: berry_header
+          path: ./lib/libesp32/berry/generate
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: Solidified Code updated
