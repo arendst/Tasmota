@@ -290,7 +290,7 @@ jobs:
       - name: Upload language firmware artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.variant }}
+          name: ${{ matrix.variant }}-${{ matrix.language }}
           path: ./build_output
 
   Start_final_copy:
