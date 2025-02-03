@@ -51,9 +51,9 @@ jobs:
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload safeboot firmware artifacts
-        uses: jason2866/upload-artifact@v2.0.3
+        uses: actions/upload-artifact@v4
         with:
-          name: firmware_safeboot
+          name: ${{ matrix.variant }}
           path: ./build_output
 
   base-images:
@@ -92,9 +92,9 @@ jobs:
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
-        uses: jason2866/upload-artifact@v2.0.3
+        uses: actions/upload-artifact@v4
         with:
-          name: firmware
+          name: ${{ matrix.variant }}
           path: ./build_output
 
   base32-images:
@@ -134,9 +134,9 @@ jobs:
           pip install -U platformio
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
-        uses: jason2866/download-artifact@v3.0.4
+        uses: actions/download-artifact@v4
         with:
-          name: firmware_safeboot
+          pattern: tasmota32*
           path: ./firmware
       - name: Display downloaded files
         run: |
@@ -147,9 +147,9 @@ jobs:
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
-        uses: jason2866/upload-artifact@v2.0.3
+        uses: actions/upload-artifact@v4
         with:
-          name: firmware
+          name: ${{ matrix.variant }}
           path: ./build_output
 
   language-images:
@@ -175,9 +175,9 @@ jobs:
           pip install -U platformio
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
-        uses: jason2866/download-artifact@v3.0.4
+        uses: actions/download-artifact@v4
         with:
-          name: firmware_safeboot
+          pattern: tasmota32*
           path: ./firmware
       - name: Display downloaded files
         run: |
@@ -188,9 +188,9 @@ jobs:
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
       - name: Upload language firmware artifacts
-        uses: jason2866/upload-artifact@v2.0.3
+        uses: actions/upload-artifact@v4
         with:
-          name: firmware
+          name: ${{ matrix.variant }}
           path: ./build_output
 
   Release:
@@ -200,14 +200,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Download Tasmota firmwares
-      uses: jason2866/download-artifact@v3.0.4
+      uses: actions/download-artifact@v4
       with:
-        name: firmware
+        pattern: tasmota*
         path: ./mv_firmware
     - name: Download safeboot firmwares
-      uses: jason2866/download-artifact@v3.0.4
+      uses: actions/download-artifact@v4
       with:
-        name: firmware_safeboot
+        pattern: *-safeboot
         path: ./mv_firmware
     - name: Display structure of downloaded files
       run: ls -R ./mv_firmware/
