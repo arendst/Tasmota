@@ -7,6 +7,7 @@
 // be found in the AUTHORS file in the root of the source tree.
 #ifndef MKVMUXER_MKVMUXERUTIL_H_
 #define MKVMUXER_MKVMUXERUTIL_H_
+#ifdef ESP32
 
 #include <stdint.h>
 
@@ -112,4 +113,5 @@ bool IsPrimariesValueValid(uint64_t value);
 
 }  // namespace mkvmuxer
 
+#endif // ESP32
 #endif  // MKVMUXER_MKVMUXERUTIL_H_

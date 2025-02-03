@@ -7,6 +7,7 @@
 // be found in the AUTHORS file in the root of the source tree.
 
 #include "mkvmuxer.h"
+#ifdef ESP32
 
 #include <stdint.h>
 
@@ -4202,3 +4203,5 @@ bool Segment::DocTypeIsWebm() const {
 }
 
 }  // namespace mkvmuxer
+
+#endif //ESP32

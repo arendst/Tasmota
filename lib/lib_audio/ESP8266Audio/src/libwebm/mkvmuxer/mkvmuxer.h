@@ -8,6 +8,7 @@
 
 #ifndef MKVMUXER_MKVMUXER_H_
 #define MKVMUXER_MKVMUXER_H_
+#ifdef ESP32
 
 #include <stdint.h>
 
@@ -1921,4 +1922,5 @@ class Segment {
 
 }  // namespace mkvmuxer
 
+#endif // ESP32
 #endif  // MKVMUXER_MKVMUXER_H_
