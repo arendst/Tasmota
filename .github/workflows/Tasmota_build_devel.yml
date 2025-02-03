@@ -238,7 +238,7 @@ jobs:
       - name: Download safeboot firmwares
         uses: actions/download-artifact@v4
         with:
-          pattern: *
+          pattern: tasmota32*
           path: ./firmware
       - name: Add SHA to footer
         run: |
@@ -278,7 +278,7 @@ jobs:
       - name: Download safeboot firmwares
         uses: actions/download-artifact@v4
         with:
-          pattern: *
+          pattern: tasmota32*
           path: ./firmware
       - name: Add SHA to footer
         run: |

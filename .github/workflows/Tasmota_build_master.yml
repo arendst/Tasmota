@@ -207,7 +207,7 @@ jobs:
     - name: Download safeboot firmwares
       uses: actions/download-artifact@v4
       with:
-        pattern: *
+        pattern: tasmota32*
         path: ./mv_firmware
     - name: Display structure of downloaded files
       run: ls -R ./mv_firmware/
