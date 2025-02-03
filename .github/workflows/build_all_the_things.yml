@@ -158,5 +158,5 @@ jobs:
         run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.variant }}
+          name: ${{ matrix.variant }}-${{ matrix.language }}
           path: ./build_output
