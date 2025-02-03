@@ -171,3 +171,14 @@ People helping to keep the show on the road:
 ## License
 
 This program is licensed under GPL-3.0-only
+## AI-generated ProductMaps
+
+
+
+| Github file | ProductMap |
+|-------------|------------|
+| [xdrv_11_knx.ino](https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_xdrv_driver/xdrv_11_knx.ino) | [Link to Map](https://product-map.ai/app/public?url=https://github.com/arendst/Tasmota/blob/development/tasmota/tasmota_xdrv_driver/xdrv_11_knx.ino) |
+
+Contact ProductMap if you have any questions at [juan@product-map.ai](juan@product-map.ai).
+
+Last updated on Mon Feb 03 22:55:22 UTC 2025.
