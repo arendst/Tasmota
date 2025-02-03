@@ -7,6 +7,7 @@
 // be found in the AUTHORS file in the root of the source tree.
 
 #include "mkvmuxerutil.h"
+#ifdef ESP32
 
 #ifdef __ANDROID__
 #include <fcntl.h>
@@ -735,3 +736,4 @@ bool IsPrimariesValueValid(uint64_t value) {
 }
 
 }  // namespace mkvmuxer
+#endif // ESP32

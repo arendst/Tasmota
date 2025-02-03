@@ -9,9 +9,10 @@
 #ifndef MKVMUXER_MKVWRITER_H_
 #define MKVMUXER_MKVWRITER_H_
 
+#ifdef ESP32
 #include <stdio.h>
-#include "Fs.h"
 
+#include "Fs.h"
 #include "mkvmuxer.h"
 #include "mkvmuxertypes.h"
 
@@ -55,4 +56,5 @@ class MkvWriter : public IMkvWriter {
 
 }  // namespace mkvmuxer
 
+#endif // ESP32
 #endif  // MKVMUXER_MKVWRITER_H_

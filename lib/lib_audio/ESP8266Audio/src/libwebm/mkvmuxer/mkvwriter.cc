@@ -7,6 +7,7 @@
 // be found in the AUTHORS file in the root of the source tree.
 
 #include "mkvwriter.h"
+#ifdef ESP32
 
 #include <sys/types.h>
 
@@ -97,3 +98,4 @@ bool MkvWriter::Seekable() const {
 void MkvWriter::ElementStartNotify(uint64, int64) {}
 
 }  // namespace mkvmuxer
+#endif // ESP32
