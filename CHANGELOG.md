@@ -3,7 +3,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.4.1.3] 
+## [14.4.1.4]
+### Added
+- Formatter `%_U` for `ext_snprintf_P()` to print uint64_t variable as decimal equivalent to `%llu`
+- Support for RC-switch decoding of 64-bit received data
+
+### Breaking Changed
+
+### Changed
+- ESP32 Platform from 2025.01.31 to 2025.02.30, Framework (Arduino Core) from v3.1.1.250109 to v3.1.1.250203 and IDF to 5.3.2 (#22943)
+
+### Fixed
+
+### Removed
+
+## [14.4.1.3] 20250204
 ### Added
 - Command `FileLog 0..4` to enable logging to filesystem using up to 16 rotating log files of 100kB (`#define FILE_LOG_SIZE 100`)
 - Command `FileLog 10..14` to enable logging to filesystem using up to 16 log files of 100kB (`#define FILE_LOG_SIZE 100`)
@@ -25,8 +39,6 @@ All notable changes to this project will be documented in this file.
 - Support for C8-CO2-5K CO2 sensor (#22905)
 - `#define FIX_JSON_HEXADECIMAL` to change JSON hexadecimal value "FF5F78" into "0xFF5F78" (#22919)
 
-### Breaking Changed
-
 ### Changed
 - ESP32 Platform from 2024.12.30 to 2025.01.30, Framework (Arduino Core) from v3.1.0.241206 to v3.1.1.250109 and IDF to 5.3.2 (#22792)
 - Allow negative values for AdcParam/AdcGpio INPUT, TEMP and RANGE parameters (#22809)
@@ -40,9 +52,6 @@ All notable changes to this project will be documented in this file.
 - Sonoff SPM `PowerOnState` overrules `SSPMPowerOnState` in mixed 4Relay setup with 4Relay version 1.0.0
 - ESP32-Cx compilation fails on Windows (#22832)
 - LoraWan decoding of Dragino LDS02 and MerryIoT DW10 (#22880)
-
-### Removed
-
 
 ## [14.4.1.2] 20250110
 ### Added
