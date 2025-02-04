@@ -91,27 +91,27 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           pattern: berry_tasmota
-          path: ./lib/libesp32/berry_tasmota/src/solidify
+          path: ./lib/libesp32/berry_tasmota/src
       - uses: actions/download-artifact@v4
         with:
           pattern: berry_matter
-          path: ./lib/libesp32/berry_matter/src/solidify
+          path: ./lib/libesp32/berry_matter/src
       - uses: actions/download-artifact@v4
         with:
           pattern: berry_animate
-          path: ./lib/libesp32/berry_animate/src/solidify
+          path: ./lib/libesp32/berry_animate/src
       - uses: actions/download-artifact@v4
         with:
           pattern: berry_lvgl
-          path: ./lib/libesp32_lvgl/lv_binding_berry/src/solidify
+          path: ./lib/libesp32_lvgl/lv_binding_berry/src
       - uses: actions/download-artifact@v4
         with:
           pattern: berry_haspmota
-          path: ./lib/libesp32_lvgl/lv_haspmota/src/solidify
+          path: ./lib/libesp32_lvgl/lv_haspmota/src
       - uses: actions/download-artifact@v4
         with:
           pattern: berry_header
-          path: ./lib/libesp32/berry/generate
+          path: ./lib/libesp32/berry
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: Solidified Code updated
