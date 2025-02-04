@@ -93,37 +93,37 @@ jobs:
           pattern: berry_tasmota
           path: berry_tasmota
       - name: Move files back to orig folder
-        run: mv berry_tasmota/* ./lib/libesp32/berry_tasmota/src/solidify
+        run: mv berry_tasmota/berry_tasmota/* ./lib/libesp32/berry_tasmota/src/solidify
       - uses: actions/download-artifact@v4
         with:
           pattern: berry_matter
           path: berry_matter
       - name: Move files back to orig folder
-        run: mv berry_matter/* ./lib/libesp32/berry_matter/src/solidify
+        run: mv berry_matter/berry_matter/* ./lib/libesp32/berry_matter/src/solidify
       - uses: actions/download-artifact@v4
         with:
           pattern: berry_animate
           path: berry_animate
       - name: Move files back to orig folder
-        run: mv berry_animate/* ./lib/libesp32/berry_animate/src/solidify
+        run: mv berry_animate/berry_animate/* ./lib/libesp32/berry_animate/src/solidify
       - uses: actions/download-artifact@v4
         with:
           pattern: berry_lvgl
           path: berry_lvgl
       - name: Move files back to orig folder
-        run: mv berry_lvgl/* ./lib/libesp32_lvgl/lv_binding_berry/src/solidify
+        run: mv berry_lvgl/berry_lvgl/* ./lib/libesp32_lvgl/lv_binding_berry/src/solidify
       - uses: actions/download-artifact@v4
         with:
           pattern: berry_haspmota
           path: berry_haspmota
       - name: Move files back to orig folder
-        run: mv berry_haspmota/* ./lib/libesp32_lvgl/lv_haspmota/src/solidify
+        run: mv berry_haspmota/berry_haspmota/* ./lib/libesp32_lvgl/lv_haspmota/src/solidify
       - uses: actions/download-artifact@v4
         with:
           pattern: berry_header
           path: berry_header
       - name: Move files back to orig folder
-        run: mv berry_header/* ./lib/libesp32/berry/generate
+        run: mv berry_header/berry_header/* ./lib/libesp32/berry/generate
       #- uses: stefanzweifel/git-auto-commit-action@v5
         #with:
           #commit_message: Solidified Code updated
