@@ -247,7 +247,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: tasmota32*
-          path: ./firmware
+          path: ./temp
+      - name: Move safeboot files
+        run: |
+          mkdir -p ./firmware/firmware
+          find ./temp -type f -exec cp -t ./firmware/firmware {} +
       - name: Add SHA to footer
         run: |
           COMMIT_SHA_LONG=$(git rev-parse --short HEAD || echo "")
@@ -287,7 +291,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: tasmota32*
-          path: ./firmware
+          path: ./temp
+      - name: Move safeboot files
+        run: |
+          mkdir -p ./firmware/firmware
+          find ./temp -type f -exec cp -t ./firmware/firmware {} +
       - name: Add SHA to footer
         run: |
           COMMIT_SHA_LONG=$(git rev-parse --short HEAD || echo "")
