@@ -124,9 +124,9 @@ jobs:
           path: berry_header
       - name: Move files back to orig folder
         run: mv berry_header/berry_header/* ./lib/libesp32/berry/generate
-      #- uses: stefanzweifel/git-auto-commit-action@v5
-        #with:
-          #commit_message: Solidified Code updated
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: Solidified Code updated
 
   safeboot-images:
     needs: push_solidified
