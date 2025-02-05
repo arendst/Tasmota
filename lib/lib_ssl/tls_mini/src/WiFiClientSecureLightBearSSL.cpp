@@ -1000,7 +1000,7 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
     // ============================================================
     // Set the EC Private Key, only USE_MQTT_AWS_IOT
     // limited to P256 curve
-    br_ssl_client_set_single_ec(_sc.get(), _chain_P, 1,
+    br_ssl_client_set_single_ec(_sc.get(), _chain_P, _chain_P ? 1 : 0,
                                 _sk_ec_P, _allowed_usages,
                                 _cert_issuer_key_type, &br_ec_p256_m15, br_ecdsa_sign_asn1_get_default());
   #endif // USE_MQTT_AWS_IOT

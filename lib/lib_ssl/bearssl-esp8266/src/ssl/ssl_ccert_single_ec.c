@@ -59,7 +59,7 @@ cc_choose(const br_ssl_client_certificate_class **pctx,
 	scurve = br_ssl_client_get_server_curve(cc);
 
 	if ((zc->allowed_usages & BR_KEYTYPE_KEYX) != 0
-		&& scurve == zc->sk->curve)
+		&& zc->sk && scurve == zc->sk->curve)
 	{
 		int x;
 
