@@ -326,15 +326,16 @@ V9240::V9240() :   port(nullptr)
     memset(ro_mem,0,sizeof (ro_mem));
 
     // its calibration coeficients for my chip
-    PAC      = 0;
+
+    PAC      = EnergyGetCalibration(ENERGY_POWER_CALIBRATION, 0);
     PADCC    = 0;
-    PHC      = 0;
+    PHC      = EnergyGetCalibration(ENERGY_FREQUENCY_CALIBRATION, 0);
     QAC      = 0;
     QADCC    = 0;
-    IAC      = 0;
+    IAC      = EnergyGetCalibration(ENERGY_CURRENT_CALIBRATION, 0);
     IADCC    = 16758789;
 
-    UC       = -1103500000;
+    UC       = EnergyGetCalibration(ENERGY_VOLTAGE_CALIBRATION); //-1103500000;
     UDCC     = 1196289;
 
     BPFPARA  = 0x806764B6;
@@ -619,30 +620,39 @@ bool V9240::write(int16_t address, int32_t data)
 
 bool V9240::process_command()
 {
-    int32_t value = atoi(XdrvMailbox.data);
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "*** V9240 command: %d value: %s"),Energy->command_code,XdrvMailbox.data);
-    XdrvMailbox.payload = value;
+    float value = CharToFloat(XdrvMailbox.data);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "*** V9240 command: %d value: %f"),Energy->command_code,value);
+    XdrvMailbox.payload = 0;
+
+    auto calc_cor = [] (float new_value,float old_value,int32_t k) -> int32_t
+//    { return int32_t(float(INT_MAX) * (new_value * (1.0f + float(k) / float(INT_MAX)) / old_value - 1.0f)); };
+    { return int32_t( (float(INT_MAX) *( new_value - old_value ) + float(k) * new_value ) / old_value ); };
+
 
     switch (Energy->command_code) {
     case CMND_POWERCAL:
-        PADCC = value;
+//        PADCC = value;
         break;
     case CMND_VOLTAGECAL:
-        UDCC = value;
+//        UDCC = value;
         break;
     case CMND_CURRENTCAL:
-        IADCC = value;
+//        IADCC = value;
         break;
     case CMND_FREQUENCYCAL:
+        EnergySetCalibration(ENERGY_FREQUENCY_CALIBRATION, PHC, 0);
         break;
     case CMND_POWERSET:
-        PAC = value;
+        PAC = calc_cor (value,(*this)[Power],PAC);
+        EnergySetCalibration(ENERGY_POWER_CALIBRATION, PAC, 0);
         break;
     case CMND_VOLTAGESET:
-        UC = value;
+        UC = calc_cor (value,(*this)[Voltage],UC);
+        EnergySetCalibration(ENERGY_VOLTAGE_CALIBRATION, UC, 0);
         break;
     case CMND_CURRENTSET:
-        IAC = value;
+        IAC = calc_cor (value,(*this)[Amperage],IAC);
+        EnergySetCalibration(ENERGY_CURRENT_CALIBRATION, IAC, 0);
         break;
     case CMND_FREQUENCYSET:
         PHC = value;
@@ -654,6 +664,8 @@ bool V9240::process_command()
     default:
         break;
     }
+
+    step = 0;
 
 #ifdef USE_UFILESYS
     char filename[20];
