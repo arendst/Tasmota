@@ -413,7 +413,6 @@
 #define D_UPLOAD_ERR_14 "Nesuderinama"
 #define D_UPLOAD_ERROR_CODE "Įkėlimo klaidos kodas"
 
-
 #define D_ENTER_COMMAND "Įveskite komandą"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Įjunkite weblog 2, jei tikimasi atsakymo"
 #define D_NEED_USER_AND_PASSWORD "Reikalingas user=<vartotojas>&password=<slaptažodis>"
@@ -447,24 +446,6 @@
 #define D_3_RESPONSE_PACKETS_SENT "Išsiųsti 3 atsakymo paketai"
 
 // xdrv_07_domoticz.ino
-#define D_DOMOTICZ_PARAMETERS "Domoticz parameters"
-#define D_DOMOTICZ_IDX "Idx"
-#define D_DOMOTICZ_KEY_IDX "Key idx"
-#define D_DOMOTICZ_SWITCH_IDX "Switch idx"
-#define D_DOMOTICZ_SENSOR_IDX "Sensor idx"
-  #define D_DOMOTICZ_TEMP "Temp"
-  #define D_DOMOTICZ_TEMP_HUM "Temp,Hum"
-  #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Hum,Baro"
-  #define D_DOMOTICZ_POWER_ENERGY "Power,Energy"
-  #define D_DOMOTICZ_ILLUMINANCE "Illuminance"
-  #define D_DOMOTICZ_COUNT "Count/PM1"
-  #define D_DOMOTICZ_VOLTAGE "Voltage/PM2.5"
-  #define D_DOMOTICZ_CURRENT "Current/PM10"
-  #define D_DOMOTICZ_AIRQUALITY "AirQuality"
-  #define D_DOMOTICZ_P1_SMART_METER "P1SmartMeter"
-#define D_DOMOTICZ_UPDATE_TIMER "Update timer"
-
-// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Domoticz parametrai"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Rakto idx"
@@ -481,7 +462,6 @@
   #define D_DOMOTICZ_AIRQUALITY "Oro kokybė"
   #define D_DOMOTICZ_P1_SMART_METER "P1 išmanusis skaitiklis"
 #define D_DOMOTICZ_UPDATE_TIMER "Atnaujinimo laikmatis"
-
 
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Laikmatis"
@@ -655,7 +635,6 @@
 #define D_REFERENCE_WEIGHT "Nurodytas svoris"
 #define D_CALIBRATE "Kalibruoti"
 #define D_CALIBRATION "Kalibracija"
-
 
 //xsns_35_tx20.ino
 #define D_TX20_WIND_DIRECTION "Vėjo kryptis"
@@ -1240,7 +1219,6 @@
 #define D_FP_ADDRCODE "Adreso kodas"                 // 0x20 Address code
 #define D_FP_PASSVERIFY "Slaptažodis patvirtintas"   // 0x21 Verify the fingerprint passed
 #define D_FP_UNKNOWNERROR "Klaida"                   // Any other error
-
 
 // xsns_90_hrg15.ino
 #define D_HRG_VALID "Galiojantis"
