@@ -56,12 +56,14 @@ const char kTwaiSpeeds[] PROGMEM = "25K|50K|100K|125K|250K|500K|800K|1M";
 const char kTwaiModes[] PROGMEM = "Normal|No Ack|Listen Only";
 
 struct TWAIs {
-  twai_handle_t bus[MAX_TWAI];
-  twai_mode_t mode[MAX_TWAI];
-  uint8_t speed[MAX_TWAI];
-  bool installed[MAX_TWAI];
-  bool supported;
-} Twai;
+  twai_handle_t bus;
+  twai_mode_t mode;
+  uint8_t rx_queue_len;
+  uint8_t speed;
+  bool installed;
+} Twai[MAX_TWAI];
+
+bool Twai_supported;
 
 #ifdef USE_BERRY
 /*********************************************************************************************\
@@ -72,18 +74,28 @@ struct TWAIs {
 file twai_minimal.be contents:
 
 class twai_cls
-  var twai_speed, twai_mode    # (int, int)
+  var twai_speed, twai_mode, twai_rx_queue_len    # (int, int, int)
 
   def init()
-    self.twai_speed = 4        # 0 = 25K, 1 = 50K, 2 = 100K, 3 = 125K, 4 = 250K, 5 = 500K, 6 = 800K, 7 = 1Mbits
-    self.twai_mode = 2         # 0 = TWAI_MODE_NORMAL, 1 = TWAI_MODE_NO_ACK, 2 = TWAI_MODE_LISTEN_ONLY
+    self.twai_speed = 4         # 0 = 25K, 1 = 50K, 2 = 100K, 3 = 125K, 4 = 250K, 5 = 500K, 6 = 800K, 7 = 1Mbits
+    self.twai_mode = 2          # 0 = TWAI_MODE_NORMAL, 1 = TWAI_MODE_NO_ACK, 2 = TWAI_MODE_LISTEN_ONLY
+    self.twai_rx_queue_len = 8  # 1 .. 64
+
+    if global.twai_driver
+      global.twai_driver.stop() # Let previous instance bail out cleanly
+    end
+    tasmota.add_driver(global.twai_driver := self)
+  end
+
+  def stop()
+    tasmota.remove_driver(self)
   end
 
   #----------------------------------------------------------------------------------------------
   Allow TWAI driver configuration on restart (if this file is installed by preinit.be)
   ----------------------------------------------------------------------------------------------#
   def config(bus)                                    # This function name (config) is called by the TWAI driver!
-    return self.twai_mode << 3 | self.twai_speed     # Initial configure TWAI driver
+    return (self.twai_rx_queue_len -1) << 5 | self.twai_mode << 3 | self.twai_speed  # Initial configure TWAI driver
   end
 
   #----------------------------------------------------------------------------------------------
@@ -99,7 +111,6 @@ class twai_cls
 end
 
 twai = twai_cls()                                    # This class name (twai) is used by the TWAI driver!
-tasmota.add_driver(twai)
 
 // *******************************************************************************************
 
@@ -158,10 +169,19 @@ bool TWAIBerryConfig(uint32_t bus) {
       be_pop(vm, 2);
       if (be_isint(vm, -1)) {
         uint32_t config = be_toint(vm, -1);
-        Twai.speed[bus] = config & 0x7;   // User input check 0..7
+        // 3322222222221111111111
+        // 10987654321098765432109876543210
+        // xxxxxxxxxxxxxxxxxxxxxxxxxxxxx111 = speed 0..7
+        // xxxxxxxxxxxxxxxxxxxxxxxxxxx11xxx = mode 0..2
+        // xxxxxxxxxxxxxxxxxxxxx111111xxxxx = rx_queue_len 0..63
+        Twai[bus].speed = config & 0x7;   // User input check 0..7
         uint32_t mode = config >> 3 & 0x3;
         if (mode > 2) { mode = 2; }       // User input check 0..2
-        Twai.mode[bus] = (twai_mode_t)mode;
+        Twai[bus].mode = (twai_mode_t)mode;
+        uint32_t rx_queue_len = config >> 5 & 0x3f;
+        rx_queue_len++;                   // Rx queue len 1..64
+        if (rx_queue_len < 8) { rx_queue_len = 8; }  // User input check 8..64
+        Twai[bus].rx_queue_len = rx_queue_len;
         handled = true;
       }
     }
@@ -178,12 +198,12 @@ bool TWAIBerryConfig(uint32_t bus) {
 
 bool TWAIStart(int tx, int rx, uint32_t bus = 0);
 bool TWAIStart(int tx, int rx, uint32_t bus) {
-  twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT((gpio_num_t)tx, (gpio_num_t)rx, Twai.mode[bus]);
+  twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT((gpio_num_t)tx, (gpio_num_t)rx, Twai[bus].mode);
   g_config.controller_id = bus;
-  g_config.rx_queue_len = 32;
+  g_config.rx_queue_len = Twai[bus].rx_queue_len;
 
   twai_timing_config_t t_config;
-  switch (Twai.speed[bus]) {
+  switch (Twai[bus].speed) {
     case 0:
       t_config = TWAI_TIMING_CONFIG_25KBITS();
       break;
@@ -215,39 +235,39 @@ bool TWAIStart(int tx, int rx, uint32_t bus) {
 
   twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
 
-  if (twai_driver_install_v2(&g_config, &t_config, &f_config, &Twai.bus[bus]) != ESP_OK) {
+  if (twai_driver_install_v2(&g_config, &t_config, &f_config, &Twai[bus].bus) != ESP_OK) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("TWA: Bus%d Not installed"), bus +1);
     return false;
   }
-  if (twai_start_v2(Twai.bus[bus]) != ESP_OK) {
+  if (twai_start_v2(Twai[bus].bus) != ESP_OK) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("TWA: Bus%d Not started"), bus +1);
     return false;
   }
   // Reconfigure alerts to detect frame receive, Bus-Off error and RX queue full states
   uint32_t alerts_to_enable = TWAI_ALERT_RX_DATA | TWAI_ALERT_RX_QUEUE_FULL | TWAI_ALERT_TX_IDLE | TWAI_ALERT_TX_SUCCESS | TWAI_ALERT_TX_FAILED | TWAI_ALERT_ERR_PASS | TWAI_ALERT_BUS_ERROR;
-  if (twai_reconfigure_alerts_v2(Twai.bus[bus], alerts_to_enable, NULL) != ESP_OK) {
+  if (twai_reconfigure_alerts_v2(Twai[bus].bus, alerts_to_enable, NULL) != ESP_OK) {
     AddLog(LOG_LEVEL_DEBUG, PSTR("TWA: Bus%d Failed to reconfigure CAN alerts"), bus +1);
     return false;
   } 
 
   char smode[16];
-  GetTextIndexed(smode, sizeof(smode), Twai.mode[bus], kTwaiModes);
+  GetTextIndexed(smode, sizeof(smode), Twai[bus].mode, kTwaiModes);
   char sspeed[16];
-  GetTextIndexed(sspeed, sizeof(sspeed), Twai.speed[bus], kTwaiSpeeds);
+  GetTextIndexed(sspeed, sizeof(sspeed), Twai[bus].speed, kTwaiSpeeds);
   AddLog(LOG_LEVEL_DEBUG, PSTR("TWA: Bus%d using GPIO%02d(Tx) and GPIO%02d(Rx) started in %s Mode and %sbit/s"),
     bus +1, tx, rx, smode, sspeed);
 
-  Twai.installed[bus] = true;
+  Twai[bus].installed = true;
   return true;
 }
 
 /*********************************************************************************************/
 
 void TWAIStop(uint32_t bus) {
-  if (Twai.installed[bus]) {
-    twai_stop_v2(Twai.bus[bus]);
-    twai_driver_uninstall_v2(Twai.bus[bus]);
-    Twai.installed[bus] = false;
+  if (Twai[bus].installed) {
+    twai_stop_v2(Twai[bus].bus);
+    twai_driver_uninstall_v2(Twai[bus].bus);
+    Twai[bus].installed = false;
     AddLog(LOG_LEVEL_DEBUG, PSTR("TWA: Bus%d stopped"), bus +1);
   }
 }
@@ -256,9 +276,9 @@ void TWAIStop(uint32_t bus) {
 
 uint32_t TWAICheckAlerts(uint32_t bus) {
   uint32_t alerts_triggered;
-  twai_read_alerts_v2(Twai.bus[bus], &alerts_triggered, pdMS_TO_TICKS(TWAI_POLLING_RATE_MS));
+  twai_read_alerts_v2(Twai[bus].bus, &alerts_triggered, pdMS_TO_TICKS(TWAI_POLLING_RATE_MS));
   twai_status_info_t twaistatus;
-  twai_get_status_info_v2(Twai.bus[bus], &twaistatus);
+  twai_get_status_info_v2(Twai[bus].bus, &twaistatus);
 
   // Handle alerts
   if (alerts_triggered & TWAI_ALERT_ERR_PASS) {
@@ -290,7 +310,7 @@ void TWAIRead(uint32_t bus) {
   if (alerts_triggered & TWAI_ALERT_RX_DATA) {
     // One or more messages received. Handle all.
     twai_message_t message;
-    while (twai_receive_v2(Twai.bus[bus], &message, 0) == ESP_OK) {
+    while (twai_receive_v2(Twai[bus].bus, &message, 0) == ESP_OK) {
       uint32_t identifier = message.identifier | message.extd << 31;  // Add extended 29-bit flag
 #ifdef USE_BERRY
       if (TWAIBerryDecode(bus, identifier, message.data_length_code, message.data)) { continue; }
@@ -307,16 +327,17 @@ void TWAIRead(uint32_t bus) {
 \*********************************************************************************************/
 
 void TWAIInit(void) {
-  Twai.supported = false;
+  Twai_supported = false;
   for (uint32_t bus = 0; bus < MAX_TWAI; bus++) {
     if (PinUsed(GPIO_TWAI_TX, bus) && PinUsed(GPIO_TWAI_RX, bus)) { 
-      Twai.speed[bus] = TWAI_SPEED_100KBITS;
-      Twai.mode[bus] = TWAI_MODE_NORMAL;  // 0 = TWAI_MODE_NORMAL, 1 = TWAI_MODE_NO_ACK, 2 = TWAI_MODE_LISTEN_ONLY
+      Twai[bus].speed = TWAI_SPEED_100KBITS;
+      Twai[bus].mode = TWAI_MODE_NORMAL;  // 0 = TWAI_MODE_NORMAL, 1 = TWAI_MODE_NO_ACK, 2 = TWAI_MODE_LISTEN_ONLY
+      Twai[bus].rx_queue_len = 8;
 #ifdef USE_BERRY
       TWAIBerryConfig(bus);
 #endif  // USE_BERRY
       if (TWAIStart(Pin(GPIO_TWAI_TX, bus), Pin(GPIO_TWAI_RX, bus), bus)) { 
-        Twai.supported = true;
+        Twai_supported = true;
       }
     }
   }
@@ -341,7 +362,7 @@ void CmndTWAISend(void) {
   // TwaiSend2 {"ID":0x80000481,"DATA":[0x03,0x1E,0xFF,0xFF,0xFF,0x01,0x21]}
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_TWAI) && (XdrvMailbox.data_len > 0)) {
     uint32_t bus = XdrvMailbox.index -1;
-    if (!Twai.installed[bus]) { return; }
+    if (!Twai[bus].installed) { return; }
 
     uint32_t data[9] = { 0 };                      // Accomodate identifier and 8 data bytes
     uint32_t data_count = 0;
@@ -381,9 +402,9 @@ void CmndTWAISend(void) {
       message.data[i] = data[i +1];                // Payload
     }
 
-    twai_clear_receive_queue_v2(Twai.bus[bus]);
+    twai_clear_receive_queue_v2(Twai[bus].bus);
     //Queue message for transmission
-    if (twai_transmit_v2(Twai.bus[bus], &message, pdMS_TO_TICKS(TWAI_POLLING_RATE_MS)) == ESP_OK) {
+    if (twai_transmit_v2(Twai[bus].bus, &message, pdMS_TO_TICKS(TWAI_POLLING_RATE_MS)) == ESP_OK) {
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("TWA: Bus%d Message queued for transmission"), bus +1);
     } else {
       AddLog(LOG_LEVEL_DEBUG, PSTR("TWA: Bus%d Alert - Failed to queue message for transmission"), bus +1);
@@ -402,11 +423,11 @@ bool Xdrv91(uint32_t function) {
   if (FUNC_INIT == function) {
     TWAIInit();
   }
-  else if (Twai.supported) {
+  else if (Twai_supported) {
     switch (function) {
       case FUNC_LOOP:
         for (uint32_t bus = 0; bus < MAX_TWAI; bus++) {
-          if (Twai.installed[bus]) {
+          if (Twai[bus].installed) {
             TWAIRead(bus);
           }
         }
