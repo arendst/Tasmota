@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Formatter `%_U` for `ext_snprintf_P()` to print uint64_t variable as decimal equivalent to `%llu`
 - Support for RC-switch decoding of 64-bit received data
+- Berry `tasmota.defer()`
 
 ### Breaking Changed
 
