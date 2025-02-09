@@ -1,5 +1,5 @@
 /*
-  en-GB.h - localization for English - United Kingdom for Tasmota
+  lt-LT.h - localization for Lithuanian - Lithuanian for Tasmota
 
   Copyright (C) 2021  Theo Arends
 
@@ -28,11 +28,11 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1
+ * Updated until v14.4.1 - Last update 09.02.2024
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
-// https://www.science.co.il/language/Locale-codes.php
+
 #define LANGUAGE_LCID 1063
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "lt"
@@ -1314,4 +1314,4 @@
 #define D_CHARGING                        "Kraunasi"
 #define D_CAPACITY                        "Talpa"
 
-#endif  // _LANGUAGE_EN_GB_H_
+#endif  // _LANGUAGE_LT_LT_H_
