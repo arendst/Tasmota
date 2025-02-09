@@ -190,7 +190,7 @@ class Matter_Commissioning
   # Deferred until next tick.
   def start_operational_discovery_deferred(fabric)
     # defer to next click
-    tasmota.set_timer(0, /-> self.start_operational_discovery(fabric))
+    tasmota.defer(/-> self.start_operational_discovery(fabric))
   end
 
   #############################################################
@@ -199,7 +199,7 @@ class Matter_Commissioning
   # Deferred until next tick.
   def start_commissioning_complete_deferred(session)
     # defer to next click
-    tasmota.set_timer(0, /-> self.start_commissioning_complete(session))
+    tasmota.defer(/-> self.start_commissioning_complete(session))
   end
 
   #############################################################
