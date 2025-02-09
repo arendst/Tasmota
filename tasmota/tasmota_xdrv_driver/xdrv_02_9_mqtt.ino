@@ -1190,12 +1190,9 @@ void MqttReconnect(void) {
     MqttNonTLSWarning();
   }
 #ifdef USE_MQTT_AWS_IOT
-  // re-assign private keys in case it was updated in between
+  // re-assign private key in case it was updated in between
   if (Mqtt.mqtt_tls) {
     if ((nullptr != AWS_IoT_Private_Key) && (nullptr != AWS_IoT_Client_Certificate)) {
-      // if private key is there, we remove user/pwd
-      mqtt_user = nullptr;
-      mqtt_pwd  = nullptr;
       tlsClient->setClientECCert(AWS_IoT_Client_Certificate,
                                 AWS_IoT_Private_Key,
                                 0xFFFF /* all usages, don't care */, 0);
