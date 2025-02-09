@@ -3,7 +3,7 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
-// compact class 'Matter_Commissioning' ktab size: 132, total: 274 (saved 1136 bytes)
+// compact class 'Matter_Commissioning' ktab size: 132, total: 272 (saved 1120 bytes)
 static const bvalue be_ktab_class_Matter_Commissioning[132] = {
   /* K0   */  be_nested_str_weak(device),
   /* K1   */  be_nested_str_weak(sessions),
@@ -70,7 +70,7 @@ static const bvalue be_ktab_class_Matter_Commissioning[132] = {
   /* K62  */  be_nested_str_weak(up),
   /* K63  */  be_nested_str_weak(_matter),
   /* K64  */  be_nested_str_weak(_tcp),
-  /* K65  */  be_nested_str_weak(set_timer),
+  /* K65  */  be_nested_str_weak(defer),
   /* K66  */  be_nested_str_weak(crypto),
   /* K67  */  be_nested_str_weak(stop_basic_commissioning),
   /* K68  */  be_nested_str_weak(mdns_announce_op_discovery),
@@ -616,7 +616,7 @@ be_local_closure(class_Matter_Commissioning_mdns_remove_op_discovery,   /* name 
 ********************************************************************/
 be_local_closure(class_Matter_Commissioning_start_operational_discovery_deferred,   /* name */
   be_nested_proto(
-    6,                          /* nstack */
+    5,                          /* nstack */
     2,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
@@ -653,14 +653,13 @@ be_local_closure(class_Matter_Commissioning_start_operational_discovery_deferred
     &be_ktab_class_Matter_Commissioning,     /* shared constants */
     be_str_weak(start_operational_discovery_deferred),
     &be_const_str_solidified,
-    ( &(const binstruction[ 7]) {  /* code */
+    ( &(const binstruction[ 6]) {  /* code */
       0xB80A1000,  //  0000  GETNGBL	R2	K8
       0x8C080541,  //  0001  GETMET	R2	R2	K65
-      0x58100015,  //  0002  LDCONST	R4	K21
-      0x84140000,  //  0003  CLOSURE	R5	P0
-      0x7C080600,  //  0004  CALL	R2	3
-      0xA0000000,  //  0005  CLOSE	R0
-      0x80000000,  //  0006  RET	0
+      0x84100000,  //  0002  CLOSURE	R4	P0
+      0x7C080400,  //  0003  CALL	R2	2
+      0xA0000000,  //  0004  CLOSE	R0
+      0x80000000,  //  0005  RET	0
     })
   )
 );
@@ -1213,7 +1212,7 @@ be_local_closure(class_Matter_Commissioning_mdns_announce_op_discovery,   /* nam
 ********************************************************************/
 be_local_closure(class_Matter_Commissioning_start_commissioning_complete_deferred,   /* name */
   be_nested_proto(
-    6,                          /* nstack */
+    5,                          /* nstack */
     2,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
@@ -1250,14 +1249,13 @@ be_local_closure(class_Matter_Commissioning_start_commissioning_complete_deferre
     &be_ktab_class_Matter_Commissioning,     /* shared constants */
     be_str_weak(start_commissioning_complete_deferred),
     &be_const_str_solidified,
-    ( &(const binstruction[ 7]) {  /* code */
+    ( &(const binstruction[ 6]) {  /* code */
       0xB80A1000,  //  0000  GETNGBL	R2	K8
       0x8C080541,  //  0001  GETMET	R2	R2	K65
-      0x58100015,  //  0002  LDCONST	R4	K21
-      0x84140000,  //  0003  CLOSURE	R5	P0
-      0x7C080600,  //  0004  CALL	R2	3
-      0xA0000000,  //  0005  CLOSE	R0
-      0x80000000,  //  0006  RET	0
+      0x84100000,  //  0002  CLOSURE	R4	P0
+      0x7C080400,  //  0003  CALL	R2	2
+      0xA0000000,  //  0004  CLOSE	R0
+      0x80000000,  //  0005  RET	0
     })
   )
 );
