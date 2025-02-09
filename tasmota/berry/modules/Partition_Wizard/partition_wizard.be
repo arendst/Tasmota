@@ -266,7 +266,7 @@ class Partition_wizard_UI
       if max_fs_start_k > 0 && fs_max_size_k > 64
         webserver.content_send("<fieldset><legend><b>&nbsp;Resize FS&nbsp;</b></legend><p></p>")
 
-        webserver.content_send("<p>You can expand of shrink the file system.<br>Its content will be lost.</p>")
+        webserver.content_send("<p>You can expand or shrink the file system.<br>Its content will be lost.</p>")
 
         webserver.content_send("<form action='/part_wiz' method='post' ")
         webserver.content_send("onsubmit='return confirm(\"This will DELETE the content of the file system and cause a restart.\");'>")
