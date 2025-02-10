@@ -994,16 +994,16 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
     br_ssl_engine_set_buffers_bidi(_eng, _iobuf_in.get(), _iobuf_in_size, _iobuf_out.get(), _iobuf_out_size);
 
     // ============================================================
-    // allocate Private key if needed, only if USE_MQTT_AWS_IOT
+    // allocate Private key if needed, only if USE_MQTT_AWS_IOT/USE_MQTT_CUSTOM_CERT
     LOG_HEAP_SIZE("_connectSSL before PrivKey allocation");
-  #ifdef USE_MQTT_AWS_IOT
+  #if defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_CUSTOM_CERT)
     // ============================================================
-    // Set the EC Private Key, only USE_MQTT_AWS_IOT
+    // Set the EC Private Key, only USE_MQTT_AWS_IOT/USE_MQTT_CUSTOM_CERT
     // limited to P256 curve
     br_ssl_client_set_single_ec(_sc.get(), _chain_P, 1,
                                 _sk_ec_P, _allowed_usages,
                                 _cert_issuer_key_type, &br_ec_p256_m15, br_ecdsa_sign_asn1_get_default());
-  #endif // USE_MQTT_AWS_IOT
+  #endif // USE_MQTT_AWS_IOT/USE_MQTT_CUSTOM_CERT
 
     // ============================================================
     // Start TLS connection, ALL

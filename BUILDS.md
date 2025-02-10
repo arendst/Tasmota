@@ -15,6 +15,7 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_TASMOTA_DISCOVERY     | x     | x / x | x     | x     | x     | x     |
 | USE_MQTT_TLS\*            | -     | - / x | -     | -     | -     | -     |
 | USE_MQTT_AWS_IOT          | -     | - / - | -     | -     | -     | -     |
+| USE_MQTT_CUSTOM_CERT      | -     | - / - | -     | -     | -     | -     |
 | USE_4K_RSA                | -     | - / - | -     | -     | -     | -     |
 | USE_TELEGRAM              | -     | - / - | -     | -     | -     | -     |
 | USE_KNX                   | -     | - / x | x     | -     | -     | -     |

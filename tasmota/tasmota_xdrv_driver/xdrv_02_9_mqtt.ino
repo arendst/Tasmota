@@ -57,7 +57,7 @@ const char kMqttCommands[] PROGMEM = "|"  // No prefix
   D_CMND_MQTTFINGERPRINT "|"
 #endif
   D_CMND_MQTTUSER "|" D_CMND_MQTTPASSWORD "|" D_CMND_MQTTKEEPALIVE "|" D_CMND_MQTTTIMEOUT "|" D_CMND_MQTTWIFITIMEOUT "|"
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
+#if defined(USE_MQTT_TLS) && (defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_CUSTOM_CERT))
   D_CMND_TLSKEY "|"
 #endif
 #ifdef USE_MQTT_FILE
@@ -84,7 +84,7 @@ void (* const MqttCommand[])(void) PROGMEM = {
   &CmndMqttFingerprint,
 #endif
   &CmndMqttUser, &CmndMqttPassword, &CmndMqttKeepAlive, &CmndMqttTimeout, &CmndMqttWifiTimeout,
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
+#if defined(USE_MQTT_TLS) && (defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_CUSTOM_CERT))
   &CmndTlsKey,
 #endif
 #ifdef USE_MQTT_FILE
@@ -111,7 +111,7 @@ struct MQTT {
 #ifdef USE_MQTT_TLS
 
 // This part of code is necessary to store Private Key and Cert in Flash
-#ifdef USE_MQTT_AWS_IOT
+#if defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_CUSTOM_CERT)
 #include <base64.hpp>
 
 const br_ec_private_key *AWS_IoT_Private_Key = nullptr;
@@ -134,7 +134,7 @@ public:
 
 tls_dir_t tls_dir;          // memory copy of tls_dir from flash
 
-#endif  // USE_MQTT_AWS_IOT
+#endif  // USE_MQTT_AWS_IOT/USE_MQTT_CUSTOM_CERT
 
 // check whether the fingerprint is filled with a single value
 // Filled with 0x00 = accept any fingerprint and learn it for next time
@@ -250,7 +250,7 @@ void MqttInit(void) {
       static const char * alpn_mqtt = "mqtt";   // needs to be static
       tlsClient->setALPN(&alpn_mqtt, 1);         // need to set alpn to 'mqtt' for AWS IoT
     }
-#ifdef USE_MQTT_AWS_IOT
+#if defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_CUSTOM_CERT)
     loadTlsDir();   // load key and certificate data from Flash
     if ((nullptr != AWS_IoT_Private_Key) && (nullptr != AWS_IoT_Client_Certificate)) {
       tlsClient->setClientECCert(AWS_IoT_Client_Certificate,
@@ -818,7 +818,7 @@ void MqttPublishPayloadPrefixTopic_P(uint32_t prefix, const char* subtopic, cons
   free(romram);                         // Free 16k heap from 64 bytes
   MqttPublishPayload(stopic, payload, binary_length, retained);
 
-#if defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_AWS_IOT_LIGHT)
+#if defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_AWS_IOT_LIGHT) || defined(USE_MQTT_CUSTOM_CERT)
   if ((prefix > 0) && (Settings->flag4.awsiot_shadow) && (Mqtt.connected)) {    // placeholder for SetOptionXX
     // compute the target topic
     char *topic = SettingsText(SET_MQTT_TOPIC);
@@ -844,7 +844,7 @@ void MqttPublishPayloadPrefixTopic_P(uint32_t prefix, const char* subtopic, cons
     AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Updated shadow: %s"), romram);
     yield();  // #3313
   }
-#endif // USE_MQTT_AWS_IOT
+#endif // USE_MQTT_AWS_IOT/USE_MQTT_CUSTOM_CERT
 }
 
 void MqttPublishPayloadPrefixTopic_P(uint32_t prefix, const char* subtopic, const char* payload, uint32_t binary_length) {
@@ -1120,7 +1120,7 @@ void MqttReconnect(void) {
     if (!strlen(SettingsText(SET_MQTT_HOST)) || !Settings->mqtt_port) {
       Mqtt.allowed = false;
     }
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
+#if defined(USE_MQTT_TLS) && (defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_CUSTOM_CERT))
     // don't enable MQTT for AWS IoT if Private Key or Certificate are not set
     if (Mqtt.mqtt_tls) {
       if (0 == strlen(SettingsText(SET_MQTT_PWD))) {     // we anticipate that an empty password does not make sense with TLS. This avoids failed connections
@@ -1189,16 +1189,21 @@ void MqttReconnect(void) {
     MqttClient.setClient(EspClient);
     MqttNonTLSWarning();
   }
-#ifdef USE_MQTT_AWS_IOT
+#if defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_CUSTOM_CERT)
   // re-assign private key in case it was updated in between
   if (Mqtt.mqtt_tls) {
     if ((nullptr != AWS_IoT_Private_Key) && (nullptr != AWS_IoT_Client_Certificate)) {
+      #ifdef USE_MQTT_AWS_IOT
+        // if private key is there, we remove user/pwd
+        mqtt_user = nullptr;
+        mqtt_pwd = nullptr;
+      #endif
       tlsClient->setClientECCert(AWS_IoT_Client_Certificate,
                                 AWS_IoT_Private_Key,
                                 0xFFFF /* all usages, don't care */, 0);
     }
   }
-#endif  // USE_MQTT_AWS_IOT
+#endif  // USE_MQTT_AWS_IOT/USE_MQTT_CUSTOM_CERT
 #ifdef USE_MQTT_AZURE_IOT
   String azureMqtt_password = SettingsText(SET_MQTT_PWD);
   if (azureMqtt_password.indexOf("SharedAccessSignature") == -1) {
@@ -1798,7 +1803,7 @@ void CmndStatusRetain(void) {
 /*********************************************************************************************\
  * TLS private key and certificate - store into Flash
 \*********************************************************************************************/
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
+#if defined(USE_MQTT_TLS) && (defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_CUSTOM_CERT))
 
 #ifdef ESP32
 static uint8_t * tls_spi_start = nullptr;
