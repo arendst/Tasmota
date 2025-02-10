@@ -9,6 +9,7 @@ class Tasmota
   var _fl             # list of fast_loop registered closures
   var _rules
   var _timers         # holds both timers and cron
+  var _defer          # holds functions to be called at next millisecond
   var _crons
   var _ccmd
   var _drivers
@@ -273,13 +274,39 @@ class Tasmota
   def set_timer(delay,f,id)
     self.check_not_method(f)
     if self._timers == nil
-      self._timers=[]
+      self._timers = []
     end
     self._timers.push(Trigger(self.millis(delay),f,id))
   end
 
-  # run every 50ms tick
+  # special version to push a function that will be called immediately after 
+  def defer(f)
+    if self._defer == nil
+      self._defer = []
+    end
+    self._defer.push(f)
+    tasmota.global.deferred_ready = 1
+  end
+
+  # run any immediate function
   def run_deferred()
+    if self._defer
+      var sz = size(self._defer)    # make sure to run only those present at first, and not those inserted in between
+      while sz > 0
+        var f = self._defer[0]
+        self._defer.remove(0)
+        sz -= 1
+        f()
+      end
+      if size(self._defer) == 0
+        tasmota.global.deferred_ready = 0
+      end
+    end
+  end
+
+  # run every 50ms tick
+  def run_timers()
+    self.run_deferred()      # run immediate functions first
     if self._timers
       var i=0
       while i < self._timers.size()
@@ -699,7 +726,7 @@ class Tasmota
   def event(event_type, cmd, idx, payload, raw)
     import introspect
     if event_type=='every_50ms'
-      self.run_deferred()
+      self.run_timers()
     end  #- first run deferred events -#
 
     if event_type=='every_250ms'

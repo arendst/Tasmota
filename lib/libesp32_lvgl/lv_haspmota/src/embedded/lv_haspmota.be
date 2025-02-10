@@ -660,7 +660,7 @@ class lvh_obj : lvh_root
     var code = event.get_code()     # materialize to a local variable, otherwise the value can change (and don't capture event object)
     if self.action != "" && code == lv.EVENT_CLICKED
       # if clicked and action is declared, do the page change event
-      tasmota.set_timer(0, /-> hm.do_action(self, code))
+      tasmota.defer(/-> hm.do_action(self, code))
     end
 
     var event_hasp = self._event_map.find(code)
@@ -689,10 +689,10 @@ class lvh_obj : lvh_root
 
       var tas_event = format('{"hasp":{"p%ib%i%s":{"event":"%s"%s}}}', self._page._page_id, self.id, sub_index_str, event_hasp, tas_event_more)
       # print("val=",val)
-      tasmota.set_timer(0,  def ()
-                              tasmota.publish_rule(tas_event)
-                              tasmota.log(f"HSP: publish {tas_event}", 4)
-                            end)
+      tasmota.defer(def ()
+                      tasmota.publish_rule(tas_event)
+                      tasmota.log(f"HSP: publish {tas_event}", 4)
+                    end)
     end
   end
 
@@ -2235,7 +2235,7 @@ class lvh_tabview : lvh_obj
     if (v_max == 0)
       # probably not constructed yet
       if (!stop)
-        tasmota.set_timer(0, def () self.set_val(v, true #-stop propagation-#) end)
+        tasmota.defer(def () self.set_val(v, true #-stop propagation-#) end)
       end
     else
       if (v == nil)   v = 0           end
@@ -2747,9 +2747,9 @@ class lvh_page
 
     # send page events
     var event_str_in = format('{"hasp":{"p%i":"out"}}', self._hm.lvh_page_cur_idx)
-    tasmota.set_timer(0, /-> tasmota.publish_rule(event_str_in))
+    tasmota.defer(/-> tasmota.publish_rule(event_str_in))
     var event_str_out = format('{"hasp":{"p%i":"in"}}', self._page_id)
-    tasmota.set_timer(0, /-> tasmota.publish_rule(event_str_out))
+    tasmota.defer(/-> tasmota.publish_rule(event_str_out))
 
     # change current page
     self._hm.lvh_page_cur_idx = self._page_id

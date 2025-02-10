@@ -176,6 +176,26 @@ int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx,
   return ret;
 }
 
+// simple wrapper to call `tasmota.<method_name>()`
+static void callBerryTasmotaFunc(const char * method_name) {
+  bvm *vm = berry.vm;
+  if (be_getglobal(vm, "tasmota")) {
+    if (be_getmethod(vm, -1, method_name)) {
+      be_pushvalue(vm, -2); // add instance as first arg
+      BrTimeoutStart();
+      int32_t ret = be_pcall(vm, 1);
+      if (ret != 0) {
+        be_error_pop_all(berry.vm);             // clear Berry stack
+      }
+      BrTimeoutReset();
+      be_pop(vm, 1);
+    }
+    be_pop(vm, 1);  // remove method
+  }
+  be_pop(vm, 1);  // remove instance object
+  be_pop(vm, be_top(vm));   // clean
+}
+
 // Simplified version of event loop. Just call `tasmota.fast_loop()`
 // `every_5ms` is a flag to wait at least 5ms between calss to `tasmota.fast_loop()`
 void callBerryFastLoop(bool every_5ms) {
@@ -191,21 +211,13 @@ void callBerryFastLoop(bool every_5ms) {
   fast_loop_last_call = now;
 
   // TODO - can we make this dereferencing once for all?
-  if (be_getglobal(vm, "tasmota")) {
-    if (be_getmethod(vm, -1, "fast_loop")) {
-      be_pushvalue(vm, -2); // add instance as first arg
-      BrTimeoutStart();
-      int32_t ret = be_pcall(vm, 1);
-      if (ret != 0) {
-        be_error_pop_all(berry.vm);             // clear Berry stack
-      }
-      BrTimeoutReset();
-      be_pop(vm, 1);
-    }
-    be_pop(vm, 1);  // remove method
-  }
-  be_pop(vm, 1);  // remove instance object
-  be_pop(vm, be_top(vm));   // clean
+  callBerryTasmotaFunc("fast_loop");
+}
+
+// call `tasmota.run_immediate()`
+void callBerryRunDeferred(void) {
+  if (nullptr == berry.vm) { return; }
+  callBerryTasmotaFunc("run_deferred");
 }
 
 /*********************************************************************************************\
@@ -888,6 +900,9 @@ bool Xdrv52(uint32_t function)
 
   switch (function) {
     case FUNC_SLEEP_LOOP:
+      if (TasmotaGlobal.berry_deferred_ready) {      // there are immediate functions registered, call them first
+        callBerryRunDeferred();      // call `tasmota.run_immediate()`
+      }
       if (TasmotaGlobal.berry_fast_loop_enabled) {    // call only if enabled at global level
         callBerryFastLoop(true);      // call `tasmota.fast_loop()` optimized for minimal performance impact
       }
@@ -913,6 +928,9 @@ bool Xdrv52(uint32_t function)
           }
         }
 #endif  // USE_WEBSERVER
+      }
+      if (TasmotaGlobal.berry_deferred_ready) {      // there are immediate functions registered, call them first
+        callBerryRunDeferred();      // call `tasmota.run_immediate()`
       }
       if (TasmotaGlobal.berry_fast_loop_enabled) {    // call only if enabled at global level
         callBerryFastLoop(false);      // call `tasmota.fast_loop()` optimized for minimal performance impact

@@ -7,16 +7,15 @@ SPDX-License-Identifier: GPL-3.0-only
 -#
 
 #--------------------------------------------------------------
-Version v1.2.6
+Version v1.2.8
 
 ESP32-C2 based HeatFan WiFi Controller using Tasmota and Berry local CH Fan control
 https://heatfan.eu/product/wifi-controller/
 
 Template {"NAME":"HeatFan","GPIO":[4864,229,228,4737,4738,224,0,225,32,448,226,0,0,0,0,0,0,0,227,0,0],"FLAG":0,"BASE":1}
 Module 0              # Enable above template
-SO15 1                # (Light) COLOR/DIMMER/CT/CHANNEL (1)
-SO68 0                # (Light) Enable Color PWM (0)
-GroupTopic2 heatfans  # Allow MQTT group topic control using buttons "Copy Mode" and "Rotate Mode"
+SO15 0                # Disable light and enable PWM control
+GroupTopic2 heatfans  # Allow MQTT group topic control using buttons "Send Mode" and "Next Mode"
 
 Relay1 to Relay6 control Leds for Modes 1 to 6 (interlocked)
 
@@ -81,7 +80,7 @@ class heatfan_cls
   # bool
   var teleperiod
   # int
-  var mode, mode_persist, mode_states, speed, dimmer_change
+  var mode, mode_persist, mode_states, speed, pwm_fan_change
   # float
   var temp_ext, last_temp_ext, dz_temp_ext
   # string
@@ -108,7 +107,7 @@ class heatfan_cls
   #-----------------------------------------------------------#
 
   def init()
-    self.version = "1.2.6"
+    self.version = "1.2.8"
     self.persist_load()
     self.teleperiod = 0
     self.mode_states = 6                         # Number of modes (needs var as static doesn't work)
@@ -116,7 +115,7 @@ class heatfan_cls
     self.temp_ext = 0
     self.last_temp_ext = 0
     self.dz_temp_ext = 0
-    self.dimmer_change = -1
+    self.pwm_fan_change = -1
     self.hostname = tasmota.cmd('Hostname')['Hostname']
 
     tasmota.log(f"HFN: HeatFan {self.version} started on {self.hostname}", 2)
@@ -207,22 +206,22 @@ class heatfan_cls
       self.speed = 0
     end
 
-    var dimmer = 0
+    var pwm_fan = 0
     if self.speed > 0
-      dimmer = 30 + (self.speed * 6)
+      pwm_fan = 24 + (self.speed * 6)             # 30% .. 84%
     end
 
-#    tasmota.log(f"HFN: Range1 {self.temp_ext}, Mode {self.mode}, Speeds {speeds}, Step {temp_step}, Speed {self.speed}, Dimmer {dimmer}", 3)
+#    tasmota.log(f"HFN: Range1 {self.temp_ext}, Mode {self.mode}, Speeds {speeds}, Step {temp_step}, Speed {self.speed}, PwmFan {pwm_fan}", 3)
 
-    if dimmer != self.dimmer_change
-      if dimmer > 0
-        tasmota.cmd('Dimmer ' .. dimmer)         # Set fan speed
+    if pwm_fan != self.pwm_fan_change
+      if pwm_fan > 0
+        var duty = (1023 * pwm_fan) / 100
+        gpio.set_pwm(9, duty)                    # Set fan speed
         self.set_pin(6, 1)                       # GPIO_FANS_EN
       else
         self.set_pin(6, 0)                       # GPIO_FANS_EN
-        tasmota.set_power(6, false)              # Set Power7 off (power offset from 0)
       end
-      self.dimmer_change = dimmer
+      self.pwm_fan_change = pwm_fan
     end
 
     if self.teleperiod == 1                      # Needs to be executed here as tasmota.cmd destroys Response
@@ -262,14 +261,14 @@ class heatfan_cls
                             self.speed, max_speed)
     tasmota.web_send_decimal(msg)
 
-    if webserver.has_arg("m_group_copy")
+    if webserver.has_arg("m_grp_send")
       # Send current mode to group topic
       if 0 == self.mode
         tasmota.cmd("Publish cmnd/heatfans/Power0 0")
       else
         tasmota.cmd(f"Publish cmnd/heatfans/Power{self.mode} 1")
       end
-    elif webserver.has_arg("m_group_rotate")
+    elif webserver.has_arg("m_grp_next")
       # Rotate group topic mode from off,1,2,3,4,5,6,off...
       if self.mode == self.mode_states
         tasmota.cmd(f"Publish cmnd/heatfans/Power{self.mode_states} 0")
@@ -281,8 +280,8 @@ class heatfan_cls
 
   def web_add_main_button()
     webserver.content_send("<table style=\"width:100%\"><tr>")
-    webserver.content_send("<td style=\"width:50%\"><button onclick='la(\"&m_group_copy=1\");'>Copy Mode</button></td>")
-    webserver.content_send("<td style=\"width:50%\"><button onclick='la(\"&m_group_rotate=1\");'>Rotate Mode</button></td>")
+    webserver.content_send("<td style=\"width:50%\"><button onclick='la(\"&m_grp_send=1\");'>Send Mode</button></td>")
+    webserver.content_send("<td style=\"width:50%\"><button onclick='la(\"&m_grp_next=1\");'>Next Mode</button></td>")
     webserver.content_send("</tr></table>")
     webserver.content_send(f"<div style='text-align:right;font-size:11px;color:#aaa;'>HeatFan {self.version}</div>")
   end
@@ -301,8 +300,8 @@ tasmota.cmd("SO13 1")                # (Button) Support only single press (1)
 tasmota.cmd("SO73 1")                # (Button) Detach buttons from relays (1)
 tasmota.cmd("SO146 1")               # (ESP32) Show ESP32 internal temperature sensor
 tasmota.cmd("SO161 1")               # (GUI) Disable display of state text (1)
-tasmota.cmd("PwmFrequency 20000")    # Fan frequency to 20kHz
-tasmota.cmd("LedTable 0")            # Disable gamma correction
+tasmota.cmd("PwmRange 1023")         # Fan PWM duty cycle
+tasmota.cmd("PwmFrequency 20000")    # Fan PWM frequency to 20kHz
 tasmota.cmd("webtime 11,19")         # Enable GUI time HH:MM:SS
 tasmota.cmd("websensor2 0")          # Disable display of ADC information in GUI
 tasmota.cmd("webrefresh 1000")       # Update GUI every second
