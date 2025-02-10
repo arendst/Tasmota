@@ -24,16 +24,16 @@ extern int32_t be_ULP_gpio_init(int32_t pin, int32_t mode);
 BE_FUNC_CTYPE_DECLARE(be_ULP_gpio_init, "i", "ii");
 
 extern void be_ULP_uart_init(bvm *vm);
-BE_FUNC_CTYPE_DECLARE(be_ULP_uart_init, "", "@iii[i]"); // pass: 1/ vm, 2/ int rx, 3/ int tx, 4/ int speed [, 5/ int mode]
+BE_FUNC_CTYPE_DECLARE(be_ULP_uart_init, "", "@iii[i]");   // pass: 1/ vm, 2/ int rx, 3/ int tx, 4/ int speed [, 5/ int mode]
 
 extern int32_t be_ULP_adc_config(struct bvm *vm, int32_t channel, int32_t attenuation, int32_t width);
 BE_FUNC_CTYPE_DECLARE(be_ULP_adc_config, "i", "@iii");
 
 extern void be_ULP_sleep(int32_t wake_up_s);
-BE_FUNC_CTYPE_DECLARE(be_ULP_sleep, "", "[i]"); // optional int arg
+BE_FUNC_CTYPE_DECLARE(be_ULP_sleep, "", "[i]");   // optional int arg
 
 extern void be_ULP_load(struct bvm *vm, const uint8_t *buf, size_t size);
-BE_FUNC_CTYPE_DECLARE(be_ULP_load, "", "@(bytes)~"); // pass: 1/ vm, 2/ bytes point, 3/ bytes size
+BE_FUNC_CTYPE_DECLARE(be_ULP_load, "", "@(bytes)~");   // pass: 1/ vm, 2/ bytes point, 3/ bytes size
 
 /* @const_object_info_begin
 module ULP (scope: global) {
