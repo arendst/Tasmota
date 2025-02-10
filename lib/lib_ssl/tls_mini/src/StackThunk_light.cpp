@@ -44,7 +44,7 @@ uint32_t *stack_thunk_light_save = NULL;  /* Saved A1 while in BearSSL */
 uint32_t stack_thunk_light_refcnt = 0;
 
 //#define _stackSize (5600/4)
-#if defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_AWS_IOT_LIGHT) || defined(USE_MQTT_AZURE_IOT)
+#if defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_AWS_IOT_LIGHT) || defined(USE_MQTT_AZURE_IOT) || defined(USE_MQTT_CUSTOM_CERT)
   #define _stackSize (5300/4)   // using a light version of bearssl we can save 300 bytes
 #else
   #define _stackSize (4800/4)   // no private key, we can reduce a little, max observed 4300
