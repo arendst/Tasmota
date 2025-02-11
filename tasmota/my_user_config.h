@@ -462,10 +462,10 @@
 //#define USE_MQTT_TLS                             // Use TLS for MQTT connection (+34.5k code, +7.0k mem and +4.8k additional during connection handshake)
 //  #define USE_MQTT_TLS_CA_CERT                   // [DEPRECATED] Now TLS supports dual mode using SetOption132 - this flag is now ignored
 //  #define USE_MQTT_AWS_IOT_LIGHT                 // Enable MQTT for AWS IoT in light mode, with user/password instead of private certificate
-//  #define USE_MQTT_AWS_IOT                       // [Deprecated] Enable MQTT for AWS IoT - requires a private key (+11.9k code, +0.4k mem)
+//  #define USE_MQTT_CLIENT_CERT                   // Enable MQTT with custom client certificate - requires a private key (+11.9k code, +0.4k mem)
+//  #define USE_MQTT_AWS_IOT                       // [Deprecated] Enable MQTT for AWS IoT - it includes USE_MQTT_CLIENT_CERT but it forces no user account/password
                                                    //   Note: you need to generate a private key + certificate per device and update 'tasmota/tasmota_aws_iot.cpp'
                                                    //   Full documentation here: https://github.com/arendst/Tasmota/wiki/AWS-IoT
-//  #define USE_MQTT_CUSTOM_CERT                   // Enable MQTT with custom client certificate - requires a private key (+11.9k code, +0.4k mem)
 //  for USE_4K_RSA (support for 4096 bits certificates, instead of 2048), you need to uncommend `-DUSE_4K_RSA` in `build_flags` from `platform.ini` or `platform_override.ini`
 
 // -- MQTT - TLS - Azure IoT & IoT Central ---------
@@ -1338,6 +1338,9 @@
 #ifdef USE_CONFIG_OVERRIDE
   #include "user_config_override.h"              // Configuration overrides for my_user_config.h
 #endif
+#if defined(USE_MQTT_AWS_IOT) && !defined(USE_MQTT_CLIENT_CERT)
+  #define USE_MQTT_CLIENT_CERT                   // USE_MQTT_AWS_IOT requires USE_MQTT_CLIENT_CERT
+#endif
 
 /*********************************************************************************************\
  * Post-process obsoletes
@@ -1351,8 +1354,8 @@
  * Mutual exclude options
 \*********************************************************************************************/
 
-#if defined(ESP8266) && defined(USE_DISCOVERY) && (defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_AWS_IOT_LIGHT) || defined(USE_MQTT_CUSTOM_CERT))
-  #error "Select either USE_DISCOVERY or USE_MQTT_AWS_IOT/USE_MQTT_CUSTOM_CERT, mDNS takes too much code space and is not needed for AWS IoT"
+#if defined(ESP8266) && defined(USE_DISCOVERY) && (defined(USE_MQTT_CLIENT_CERT) || defined(USE_MQTT_AWS_IOT_LIGHT))
+  #error "Select either USE_DISCOVERY or USE_MQTT_CLIENT_CERT/USE_MQTT_AWS_IOT, mDNS takes too much code space and is not needed for AWS IoT"
 #endif
 
 #if defined(USE_RULES) && defined(USE_SCRIPT)
