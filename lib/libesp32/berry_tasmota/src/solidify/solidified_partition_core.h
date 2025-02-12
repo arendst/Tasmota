@@ -692,12 +692,12 @@ be_local_closure(class_Partition_parse,   /* name */
     &be_ktab_class_Partition,     /* shared constants */
     &be_const_str_parse,
     &be_const_str_solidified,
-    ( &(const binstruction[57]) {  /* code */
+    ( &(const binstruction[56]) {  /* code */
       0x60040010,  //  0000  GETGBL	R1	G16
       0x540A005D,  //  0001  LDINT	R2	94
       0x400A1A02,  //  0002  CONNECT	R2	K13	R2
       0x7C040200,  //  0003  CALL	R1	1
-      0xA802002F,  //  0004  EXBLK	0	#0035
+      0xA802002E,  //  0004  EXBLK	0	#0034
       0x5C080200,  //  0005  MOVE	R2	R1
       0x7C080000,  //  0006  CALL	R2	0
       0x540E001F,  //  0007  LDINT	R3	32
@@ -709,47 +709,46 @@ be_local_closure(class_Partition_parse,   /* name */
       0x400C0604,  //  000D  CONNECT	R3	R3	R4
       0x88100106,  //  000E  GETMBR	R4	R0	K6
       0x940C0803,  //  000F  GETIDX	R3	R4	R3
-      0x8C14070F,  //  0010  GETMET	R5	R3	K15
-      0x581C000D,  //  0011  LDCONST	R7	K13
-      0x58200010,  //  0012  LDCONST	R8	K16
-      0x7C140600,  //  0013  CALL	R5	3
-      0x5C100A00,  //  0014  MOVE	R4	R5
-      0x541650A9,  //  0015  LDINT	R5	20650
-      0x1C140805,  //  0016  EQ	R5	R4	R5
-      0x78160008,  //  0017  JMPF	R5	#0021
-      0xB8162200,  //  0018  GETNGBL	R5	K17
-      0x8C140B12,  //  0019  GETMET	R5	R5	K18
-      0x5C1C0600,  //  001A  MOVE	R7	R3
-      0x7C140400,  //  001B  CALL	R5	2
-      0x88180109,  //  001C  GETMBR	R6	R0	K9
-      0x8C180D13,  //  001D  GETMET	R6	R6	K19
-      0x5C200A00,  //  001E  MOVE	R8	R5
-      0x7C180400,  //  001F  CALL	R6	2
-      0x70020010,  //  0020  JMP		#0032
-      0x5416EBEA,  //  0021  LDINT	R5	60395
-      0x1C140805,  //  0022  EQ	R5	R4	R5
-      0x7816000C,  //  0023  JMPF	R5	#0031
-      0x5416001F,  //  0024  LDINT	R5	32
-      0x08140405,  //  0025  MUL	R5	R2	R5
-      0x541A000F,  //  0026  LDINT	R6	16
-      0x00140A06,  //  0027  ADD	R5	R5	R6
-      0x541A0020,  //  0028  LDINT	R6	33
-      0x08180406,  //  0029  MUL	R6	R2	R6
-      0x04180D0E,  //  002A  SUB	R6	R6	K14
-      0x40140A06,  //  002B  CONNECT	R5	R5	R6
-      0x88180106,  //  002C  GETMBR	R6	R0	K6
-      0x94140C05,  //  002D  GETIDX	R5	R6	R5
-      0x90022805,  //  002E  SETMBR	R0	K20	R5
-      0x70020002,  //  002F  JMP		#0033
+      0x8C10070F,  //  0010  GETMET	R4	R3	K15
+      0x5818000D,  //  0011  LDCONST	R6	K13
+      0x581C0010,  //  0012  LDCONST	R7	K16
+      0x7C100600,  //  0013  CALL	R4	3
+      0x541650A9,  //  0014  LDINT	R5	20650
+      0x1C140805,  //  0015  EQ	R5	R4	R5
+      0x78160008,  //  0016  JMPF	R5	#0020
+      0xB8162200,  //  0017  GETNGBL	R5	K17
+      0x8C140B12,  //  0018  GETMET	R5	R5	K18
+      0x5C1C0600,  //  0019  MOVE	R7	R3
+      0x7C140400,  //  001A  CALL	R5	2
+      0x88180109,  //  001B  GETMBR	R6	R0	K9
+      0x8C180D13,  //  001C  GETMET	R6	R6	K19
+      0x5C200A00,  //  001D  MOVE	R8	R5
+      0x7C180400,  //  001E  CALL	R6	2
+      0x70020010,  //  001F  JMP		#0031
+      0x5416EBEA,  //  0020  LDINT	R5	60395
+      0x1C140805,  //  0021  EQ	R5	R4	R5
+      0x7816000C,  //  0022  JMPF	R5	#0030
+      0x5416001F,  //  0023  LDINT	R5	32
+      0x08140405,  //  0024  MUL	R5	R2	R5
+      0x541A000F,  //  0025  LDINT	R6	16
+      0x00140A06,  //  0026  ADD	R5	R5	R6
+      0x541A0020,  //  0027  LDINT	R6	33
+      0x08180406,  //  0028  MUL	R6	R2	R6
+      0x04180D0E,  //  0029  SUB	R6	R6	K14
+      0x40140A06,  //  002A  CONNECT	R5	R5	R6
+      0x88180106,  //  002B  GETMBR	R6	R0	K6
+      0x94140C05,  //  002C  GETIDX	R5	R6	R5
+      0x90022805,  //  002D  SETMBR	R0	K20	R5
+      0x70020002,  //  002E  JMP		#0032
+      0x70020000,  //  002F  JMP		#0031
       0x70020000,  //  0030  JMP		#0032
-      0x70020000,  //  0031  JMP		#0033
-      0x7001FFD1,  //  0032  JMP		#0005
-      0xA8040001,  //  0033  EXBLK	1	1
-      0x70020002,  //  0034  JMP		#0038
-      0x58040015,  //  0035  LDCONST	R1	K21
-      0xAC040200,  //  0036  CATCH	R1	1	0
-      0xB0080000,  //  0037  RAISE	2	R0	R0
-      0x80000000,  //  0038  RET	0
+      0x7001FFD2,  //  0031  JMP		#0005
+      0xA8040001,  //  0032  EXBLK	1	1
+      0x70020002,  //  0033  JMP		#0037
+      0x58040015,  //  0034  LDCONST	R1	K21
+      0xAC040200,  //  0035  CATCH	R1	1	0
+      0xB0080000,  //  0036  RAISE	2	R0	R0
+      0x80000000,  //  0037  RET	0
     })
   )
 );
