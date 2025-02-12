@@ -131,6 +131,7 @@
 #define D_JSON_MODEL "Model"
 #define D_JSON_MOISTURE "Moisture"
 #define D_JSON_MQTT_COUNT "MqttCount"
+#define D_JSON_MQTT_TLS "MqttTLS"
 #define D_JSON_NULL "null"
 #define D_JSON_NO "No"
 #define D_JSON_NOISE "Noise"

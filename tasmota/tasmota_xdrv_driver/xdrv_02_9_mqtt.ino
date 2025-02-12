@@ -978,6 +978,10 @@ uint16_t MqttConnectCount(void) {
   return Mqtt.connect_count;
 }
 
+bool MqttTLSEnabled(void) {
+  return Mqtt.mqtt_tls;
+}
+
 void MqttDisconnected(int state) {
   /*
   // Possible values for state - PubSubClient.h
