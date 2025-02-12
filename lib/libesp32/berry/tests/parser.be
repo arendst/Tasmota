@@ -9,3 +9,17 @@ def f()
     end
 end
 assert(f() == 2)
+
+# Parser error reported in Feb 2025
+def parse_022025()
+    var s, value
+    var js = {'a':{'a':1}}
+    value = js['a']['a']
+
+    if value != nil
+        for x:0..1
+            return x
+        end
+    end
+end
+assert(parse_022025() == 0)

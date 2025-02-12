@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Platform from 2025.01.31 to 2025.02.30, Framework (Arduino Core) from v3.1.1.250109 to v3.1.1.250203 and IDF to 5.3.2 (#22943)
 
 ### Fixed
+- Berry fixed parser error in rare case
 
 ### Removed
 
