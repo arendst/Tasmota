@@ -2319,13 +2319,13 @@ be_local_closure(class_Matter_Device_register_http_remote,   /* name */
       0x78120009,  //  000C  JMPF	R4	#0017
       0x88100151,  //  000D  GETMBR	R4	R0	K81
       0x940C0801,  //  000E  GETIDX	R3	R4	R1
-      0x8C1407A9,  //  000F  GETMET	R5	R3	K169
-      0x7C140200,  //  0010  CALL	R5	1
-      0x14140405,  //  0011  LT	R5	R2	R5
-      0x78160002,  //  0012  JMPF	R5	#0016
-      0x8C1407AA,  //  0013  GETMET	R5	R3	K170
-      0x5C1C0400,  //  0014  MOVE	R7	R2
-      0x7C140400,  //  0015  CALL	R5	2
+      0x8C1007A9,  //  000F  GETMET	R4	R3	K169
+      0x7C100200,  //  0010  CALL	R4	1
+      0x14100404,  //  0011  LT	R4	R2	R4
+      0x78120002,  //  0012  JMPF	R4	#0016
+      0x8C1007AA,  //  0013  GETMET	R4	R3	K170
+      0x5C180400,  //  0014  MOVE	R6	R2
+      0x7C100400,  //  0015  CALL	R4	2
       0x70020011,  //  0016  JMP		#0029
       0xB8122800,  //  0017  GETNGBL	R4	K20
       0x8C1009AB,  //  0018  GETMET	R4	R4	K171
