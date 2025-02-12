@@ -1124,7 +1124,7 @@ void MqttReconnect(void) {
     if (!strlen(SettingsText(SET_MQTT_HOST)) || !Settings->mqtt_port) {
       Mqtt.allowed = false;
     }
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_CLIENT_CERT)
+#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
     // don't enable MQTT for AWS IoT if Private Key or Certificate are not set
     if (Mqtt.mqtt_tls) {
       if (0 == strlen(SettingsText(SET_MQTT_PWD))) {     // we anticipate that an empty password does not make sense with TLS. This avoids failed connections
