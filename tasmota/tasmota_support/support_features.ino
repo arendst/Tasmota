@@ -940,7 +940,9 @@ constexpr uint32_t feature[] = {
 #ifdef USE_C8_CO2_5K
   0x00001000 |  // xsns_117_c8_co2_5k.ino
 #endif
-//  0x00002000 |  //
+#ifdef USE_WIZMOTE
+  0x00002000 |  // xdrv_77_wizmote.ino
+#endif
 //  0x00004000 |  // 
 //  0x00008000 |  // 
 //  0x00010000 |  // 

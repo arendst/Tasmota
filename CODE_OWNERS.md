@@ -85,10 +85,10 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_71_magic_switch         | @barbudor
 | xdrv_72_pipsolar             | @chefpro
 | xdrv_73_lora                 | @arendst
-| xdrv_74                      |
+| xdrv_74_lorawan              | @arendst
 | xdrv_75_dali                 | @eeak, @arendst
-| xdrv_76                      |
-| xdrv_77                      |
+| xdrv_76_serial_i2c           | @s-hadinger
+| xdrv_77_wizmote              | @arendst
 | xdrv_78                      |
 | xdrv_79_esp32_ble            | @staars, @btsimonh
 | xdrv_81_esp32_webcam         | @gemu, @philrich

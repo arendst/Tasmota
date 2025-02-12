@@ -127,6 +127,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for ESP32 Two-Wire Automotive Interface (TWAI) or Controller Area Network (CAN) busses
 - `#define FIX_JSON_HEXADECIMAL` to change JSON hexadecimal value "FF5F78" into "0xFF5F78" [#22919](https://github.com/arendst/Tasmota/issues/22919)
 - Support for RC-switch decoding of 64-bit received data
+- Support for Wiz Smart Remote using `#define USE_WIZMOTE` and command `SetOption164 1`
+- `MqttTLS` field in `Status 6` to indicate if the MQTT connection is encrypted [#22995](https://github.com/arendst/Tasmota/issues/22995)
 - Formatter `%_U` for `ext_snprintf_P()` to print uint64_t variable as decimal equivalent to `%llu`
 - GPS driver select baudrate using GPIO GPS_RX1 (9600bps), GPS_RX2 (19200bps) or GPS_RX3 (38400bps) [#22869](https://github.com/arendst/Tasmota/issues/22869)
 - I2S AAC support for web radio [#22787](https://github.com/arendst/Tasmota/issues/22787)

@@ -246,6 +246,8 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_IR_RECEIVE            | -     | x / - | x     | x     | x     | x     |
 | USE_IR_REMOTE_FULL        | -     | - / - | -     | -     | x     | -     | Enable ALL protocols        |
 |                           |       |       |       |       |       |       |
+| USE_WIZMOTE               | -     | - / - | -     | -     | -     | -     |
+|                           |       |       |       |       |       |       |
 | USE_SR04                  | -     | - / - | -     | x     | -     | -     |
 | USE_ME007                 | -     | - / - | -     | -     | -     | -     |
 | USE_DYP                   | -     | - / - | -     | -     | -     | -     |

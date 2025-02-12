@@ -9,7 +9,8 @@ All notable changes to this project will be documented in this file.
 - Support for RC-switch decoding of 64-bit received data
 - Berry `tasmota.defer()` (#22976)
 - Support for Lithuanian language translations by zzdovydas (#22971)
-- `MqttTLS` field in `Status 6` to indicate if the MQTT connection is encrypted
+- `MqttTLS` field in `Status 6` to indicate if the MQTT connection is encrypted (#22995)
+- Support for Wiz Smart Remote using `#define USE_WIZMOTE` and command `SetOption164 1`
 
 ### Breaking Changed
 

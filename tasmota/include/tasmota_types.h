@@ -198,7 +198,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t gui_no_state_text : 1;        // bit 15 (v14.3.0.7) - SetOption161 - GUI_NOSHOW_STATETEXT - (GUI) Disable display of state text (1)
     uint32_t no_export_energy_today : 1;   // bit 16 (v14.3.0.7) - SetOption162 - (Energy) Do not add export energy to energy today (1)
     uint32_t gui_device_name : 1;          // bit 17 (v14.4.1.1) - SetOption163 - GUI_NOSHOW_DEVICENAME - (GUI) Disable display of GUI device name (1)
-    uint32_t spare18 : 1;                  // bit 18
+    uint32_t wizmote_enabled : 1;          // bit 18 (v14.4.1.4) - SetOption164 - (WizMote) Enable WiZ Smart Remote support (1)
     uint32_t spare19 : 1;                  // bit 19
     uint32_t spare20 : 1;                  // bit 20
     uint32_t spare21 : 1;                  // bit 21
@@ -242,9 +242,11 @@ typedef union {
   uint32_t data;                           // Allow bit manipulation
   struct {
     uint32_t log_file_idx : 4;             // bit 0.3   (v14.4.1.2) - FileLog log rotate index
-    uint32_t light_pixels_order : 3;       // bit 4.6   (v14.4.1.3) - LED light order <Compile>/GRB/RGB/RBG/BRG/BGR/GBR, high bit indicates W before (for RGBW)
-    uint32_t light_pixels_rgbw : 1;        // bit 7     (v14.4.1.3) - LED true is 4 channels RGBW, false is 3 channels RGB
-    uint32_t light_pixels_w_first : 1;     // bit 8     (v14.4.1.3) - LED true if W channel comes first, default is <RGB>W
+    uint32_t spare04 : 1;                  // bit 4
+    uint32_t spare05 : 1;                  // bit 5
+    uint32_t spare06 : 1;                  // bit 6
+    uint32_t spare07 : 1;                  // bit 7
+    uint32_t spare08 : 1;                  // bit 8
     uint32_t spare09 : 1;                  // bit 9
     uint32_t spare10 : 1;                  // bit 10
     uint32_t spare11 : 1;                  // bit 11
