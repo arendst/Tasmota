@@ -74,9 +74,8 @@ bool QuickEspNow::begin (uint8_t channel, uint32_t wifi_interface, bool synchron
     DEBUG_INFO (QESPNOW_TAG, "Starting ESP-NOW in in channel %u interface %s", channel, wifi_if == WIFI_IF_STA ? "STA" : "AP");
 
     this->channel = channel;
-    initComms ();
-    // addPeer (ESPNOW_BROADCAST_ADDRESS); // Not needed ?
-    return true;
+
+    return initComms ();
 }
 
 void QuickEspNow::stop () {
@@ -261,11 +260,12 @@ void QuickEspNow::enableTransmit (bool enable) {
     }
 }
 
-void QuickEspNow::initComms () {
+bool QuickEspNow::initComms () {
     if (esp_now_init ()) {
         DEBUG_ERROR (QESPNOW_TAG, "Failed to init ESP-NOW");
-        ESP.restart ();
-        delay (1);
+//        ESP.restart ();
+//        delay (1);
+        return false;
     }
 
     if (wifi_if == WIFI_IF_STA) {
@@ -288,6 +288,7 @@ void QuickEspNow::initComms () {
     os_timer_arm (&dataTPTimer, MEAS_TP_EVERY_MS, true);
 #endif // MEAS_TPUT
 
+    return true;
 }
 
 void QuickEspNow::espnowTxTask_cb (void* param) {

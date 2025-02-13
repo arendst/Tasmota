@@ -44,7 +44,7 @@ protected:
 	  * @brief Communication subsistem initialization
 	  * @param peerType Role that peer plays into the system, node or gateway.
 	  */
-	virtual void initComms () = 0;
+	virtual bool initComms () = 0;
 
 
 public:

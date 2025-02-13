@@ -127,7 +127,7 @@ protected:
     //uint8_t channel;
     bool followWiFiChannel = false;
 
-    void initComms ();
+    bool initComms ();
     static void espnowTxTask_cb (void* param);
     static void espnowRxTask_cb (void* param);
     int32_t sendEspNowMessage (comms_tx_queue_item_t* message);

@@ -46,8 +46,8 @@ bool QuickEspNow::begin (uint8_t channel, uint32_t wifi_interface, bool synchron
     DEBUG_INFO (QESPNOW_TAG, ARDUHAL_LOG_COLOR (ARDUHAL_LOG_COLOR_RED) "Starting ESP-NOW in in channel %u interface %s", channel, wifi_if == WIFI_IF_STA ? "STA" : "AP");
 
     this->channel = channel;
-    initComms ();
-    return true;
+
+    return initComms ();
 }
 
 void QuickEspNow::stop () {
@@ -303,11 +303,12 @@ bool QuickEspNow::addPeer (const uint8_t* peer_addr) {
     return error == ESP_OK;
 }
 
-void QuickEspNow::initComms () {
+bool QuickEspNow::initComms () {
     if (esp_now_init ()) {
         DEBUG_ERROR (QESPNOW_TAG, "Failed to init ESP-NOW");
-        ESP.restart ();
-        delay (1);
+//        ESP.restart ();
+//        delay (1);
+        return false;
     }
 
     esp_now_register_recv_cb (rx_cb);
@@ -328,6 +329,8 @@ void QuickEspNow::initComms () {
     dataTPTimer = xTimerCreate ("espnow_tp_timer", pdMS_TO_TICKS (MEAS_TP_EVERY_MS), pdTRUE, NULL, tp_timer_cb);
     xTimerStart (dataTPTimer, 0);
 #endif // MEAS_TPUT
+
+    return true;
 }
 
 void QuickEspNow::espnowTxTask_cb (void* param) {
