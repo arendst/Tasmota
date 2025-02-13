@@ -127,7 +127,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Support for ESP32 Two-Wire Automotive Interface (TWAI) or Controller Area Network (CAN) busses
 - `#define FIX_JSON_HEXADECIMAL` to change JSON hexadecimal value "FF5F78" into "0xFF5F78" [#22919](https://github.com/arendst/Tasmota/issues/22919)
 - Support for RC-switch decoding of 64-bit received data
-- Support for Wiz Smart Remote using `#define USE_WIZMOTE` and command `SetOption164 1`
+- Support for WiZ Smart Remote using `#define USE_WIZMOTE` and command `SetOption164 1`
 - `MqttTLS` field in `Status 6` to indicate if the MQTT connection is encrypted [#22995](https://github.com/arendst/Tasmota/issues/22995)
 - Formatter `%_U` for `ext_snprintf_P()` to print uint64_t variable as decimal equivalent to `%llu`
 - GPS driver select baudrate using GPIO GPS_RX1 (9600bps), GPS_RX2 (19200bps) or GPS_RX3 (38400bps) [#22869](https://github.com/arendst/Tasmota/issues/22869)
@@ -153,7 +153,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry unicode encoding to string parsing [#22713](https://github.com/arendst/Tasmota/issues/22713)
 - Berry light_pixels values to `tasmota.settings` [#22762](https://github.com/arendst/Tasmota/issues/22762)
 - Berry `tasmota.defer()` [#22976](https://github.com/arendst/Tasmota/issues/22976)
-
 - LVLG/HASPmota add color names from OpenHASP [#22879](https://github.com/arendst/Tasmota/issues/22879)
 - LVGL `lv.set_paint_cb()` to register a callback when screen is refreshed [#22909](https://github.com/arendst/Tasmota/issues/22909)
 - HASPmota support for `buttonmatrix` events [#22898](https://github.com/arendst/Tasmota/issues/22898)
@@ -182,6 +181,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Webcam compilation with `define USE_WEBCAM` but without `define ENABLE_RTSPSERVER` [#22686](https://github.com/arendst/Tasmota/issues/22686)
 - Berry Zigbee fix wrong attributes [#22684](https://github.com/arendst/Tasmota/issues/22684)
 - Berry walrus operator [#22685](https://github.com/arendst/Tasmota/issues/22685)
+- Berry parser error in rare case [#22997](https://github.com/arendst/Tasmota/issues/22997)
 - LVGL updated `Antiburn.tapp` [#22699](https://github.com/arendst/Tasmota/issues/22699)
 - Matter Air Quality sensor [#22708](https://github.com/arendst/Tasmota/issues/22708)
 

@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 - Berry `tasmota.defer()` (#22976)
 - Support for Lithuanian language translations by zzdovydas (#22971)
 - `MqttTLS` field in `Status 6` to indicate if the MQTT connection is encrypted (#22995)
-- Support for Wiz Smart Remote using `#define USE_WIZMOTE` and command `SetOption164 1`
+- Support for WiZ Smart Remote using `#define USE_WIZMOTE` and command `SetOption164 1`
 
 ### Breaking Changed
 
@@ -18,7 +18,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Platform from 2025.01.31 to 2025.02.30, Framework (Arduino Core) from v3.1.1.250109 to v3.1.1.250203 and IDF to 5.3.2 (#22943)
 
 ### Fixed
-- Berry fixed parser error in rare case
+- Berry parser error in rare case (#22997)
 
 ### Removed
 
