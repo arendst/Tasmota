@@ -812,7 +812,7 @@ class leds_panel
       log("LED: no leds configured, can't start leds_panel", 3)
       return
     end
-    if (port == nil)  self.PORT = 8886   end
+    if (port == nil)  port = self.PORT   end
     self.port = port
     self.web = global.webserver_async(port)
     self.sampling_interval = self.SAMPLING
