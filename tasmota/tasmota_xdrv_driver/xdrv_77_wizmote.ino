@@ -30,7 +30,7 @@ struct WizMote {
   int rssi;
   uint8_t index;
   uint8_t battery_level;
-  bool active;
+  uint8_t active;
 } WizMote;
 
 /*********************************************************************************************\
@@ -146,19 +146,36 @@ void EspNowDataReceived(uint8_t* mac, uint8_t* data, uint8_t len, signed int rss
   }
 }
 
-/*********************************************************************************************\
- * 
-\*********************************************************************************************/
-
 void EspNowInit(void) {
-  if (!WizMote.active) {
-    quickEspNow.onDataRcvd(EspNowDataReceived);
-#ifdef ESP32
-//    quickEspNow.setWiFiBandwidth (WIFI_IF_STA, WIFI_BW_HT20); // Only needed for ESP32 in case you need coexistence with ESP8266 in the same network
+  if (0 == Settings->flag4.network_wifi) {   // WiFi Off
+    if (WizMote.active != 2) {
+      uint32_t channel = 1;
+
+      quickEspNow.stop();
+      delay(500);                            // Allow time to finish stopped WiFi by WifiDisable()
+      WiFi.mode(WIFI_STA);
+#if defined ESP32
+      WiFi.disconnect(false, true);
+#elif defined ESP8266
+      WiFi.disconnect(false);
 #endif //ESP32
-    if (quickEspNow.begin()) {
-      AddLog(LOG_LEVEL_INFO, PSTR("NOW: ESP-NOW started"));
-      WizMote.active = true;
+      quickEspNow.onDataRcvd(EspNowDataReceived);
+      if (quickEspNow.begin(channel)) {      // Specify channel if no connected WiFi
+        AddLog(LOG_LEVEL_INFO, PSTR("NOW: ESP-NOW started on channel %d"), channel);
+        WizMote.active = 2;
+      }
+    }
+  } else {                                   // WiFi On
+    if (TasmotaGlobal.global_state.wifi_down) {
+      WizMote.active = 0;
+    } 
+    else if (WizMote.active != 1) {
+      quickEspNow.stop();
+      quickEspNow.onDataRcvd(EspNowDataReceived);
+      if (quickEspNow.begin()) {
+        AddLog(LOG_LEVEL_INFO, PSTR("NOW: ESP-NOW started"));
+        WizMote.active = 1;
+      }
     }
   }
 }
@@ -172,15 +189,8 @@ bool Xdrv77(uint32_t function) {
 
   bool result = false;
 
-/*
-  if (FUNC_INIT == function) {
+  if (FUNC_EVERY_SECOND == function) {
     EspNowInit();
-  }
-*/
-  if (FUNC_NETWORK_UP == function) {
-    if (!TasmotaGlobal.global_state.wifi_down) {
-      EspNowInit();
-    }
   }
   else if (WizMote.active) {
     switch (function) {

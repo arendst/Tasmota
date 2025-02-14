@@ -85,6 +85,7 @@ void QuickEspNow::stop () {
     esp_now_unregister_recv_cb ();
     esp_now_unregister_send_cb ();
     esp_now_deinit ();
+    followWiFiChannel = false;
 }
 
 bool QuickEspNow::readyToSendData () {

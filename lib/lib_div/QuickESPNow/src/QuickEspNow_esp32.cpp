@@ -52,11 +52,18 @@ bool QuickEspNow::begin (uint8_t channel, uint32_t wifi_interface, bool synchron
 
 void QuickEspNow::stop () {
     DEBUG_INFO (QESPNOW_TAG, "-------------> ESP-NOW STOP");
-    vTaskDelete (espnowTxTask);
-    vTaskDelete (espnowRxTask);
+    if (espnowTxTask) { 
+      vTaskDelete (espnowTxTask);
+      espnowTxTask = nullptr;
+    }
+    if (espnowRxTask) { 
+      vTaskDelete (espnowRxTask);
+      espnowRxTask = nullptr;
+    }
     esp_now_unregister_recv_cb ();
     esp_now_unregister_send_cb ();
     esp_now_deinit ();
+    followWiFiChannel = false;
 }
 
 bool QuickEspNow::readyToSendData () {
