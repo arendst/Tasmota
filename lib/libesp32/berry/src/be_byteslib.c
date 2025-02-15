@@ -1899,6 +1899,8 @@ void be_load_byteslib(bvm *vm)
         { "reverse", m_reverse },
         { "copy", m_copy },
         { "append", m_connect },
+        { "appendhex", m_appendhex },
+	{ "appendb64", m_appendb64 },
         { "+", m_merge },
         { "..", m_connect },
         { "==", m_equal },
