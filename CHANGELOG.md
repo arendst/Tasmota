@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Support for Lithuanian language translations by zzdovydas (#22971)
 - `MqttTLS` field in `Status 6` to indicate if the MQTT connection is encrypted (#22995)
 - Support for WiZ Smart Remote using `#define USE_WIZMOTE` and command `SetOption164 1`
+- Berry add `bytes().appendb64()` (#22767)
 
 ### Breaking Changed
 
