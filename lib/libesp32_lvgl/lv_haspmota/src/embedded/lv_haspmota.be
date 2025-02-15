@@ -2891,7 +2891,8 @@ class HASPmota
   #################################################################################
   static def sort(l)
     # insertion sort
-    for i:1..size(l)-1
+    var i = 0
+    while i < size(l)
       var k = l[i]
       var j = i
       while (j > 0) && (l[j-1] > k)
@@ -2899,6 +2900,7 @@ class HASPmota
         j -= 1
       end
       l[j] = k
+      i += 1
     end
     return l
   end
