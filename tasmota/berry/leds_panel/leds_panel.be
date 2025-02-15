@@ -750,7 +750,6 @@ class leds_panel
     '};'
 
     'function jd() {'
-      'lh = eb("leds_hex");'
       'led_canvas = eb("canvas");'
       'led_canvas_ctx = led_canvas.getContext("2d");'
       'initEventSource();'
