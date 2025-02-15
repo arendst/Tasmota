@@ -1399,7 +1399,7 @@ static int m_appendb64(bvm *vm)
             if (idx + len >= attr2.len) { len = attr2.len - idx; }
         }
         if (len > 0) {                              /* only if there is something to encode */
-            bytes_resize(vm, &attr, attr.len + encode_base64_length(len)); /* resize */
+            bytes_resize(vm, &attr, attr.len + encode_base64_length(len) + 1); /* resize */
         
             size_t converted = encode_base64(attr2.bufptr + idx, len, (unsigned char*)(attr.bufptr + attr.len));
             attr.len += converted;
