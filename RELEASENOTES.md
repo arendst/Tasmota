@@ -153,6 +153,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry unicode encoding to string parsing [#22713](https://github.com/arendst/Tasmota/issues/22713)
 - Berry light_pixels values to `tasmota.settings` [#22762](https://github.com/arendst/Tasmota/issues/22762)
 - Berry `tasmota.defer()` [#22976](https://github.com/arendst/Tasmota/issues/22976)
+- Berry `bytes().appendb64()` [#22767](https://github.com/arendst/Tasmota/issues/22767)
 - LVLG/HASPmota add color names from OpenHASP [#22879](https://github.com/arendst/Tasmota/issues/22879)
 - LVGL `lv.set_paint_cb()` to register a callback when screen is refreshed [#22909](https://github.com/arendst/Tasmota/issues/22909)
 - HASPmota support for `buttonmatrix` events [#22898](https://github.com/arendst/Tasmota/issues/22898)

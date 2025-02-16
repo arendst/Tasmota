@@ -22,6 +22,10 @@
 
 #define XDRV_77              77
 
+#ifndef WIZMOTE_CHANNEL
+#define WIZMOTE_CHANNEL      1                   // WiZ Smart Remote ESP-NOW channel if WiFi is disabled
+#endif
+
 #include <QuickEspNow.h>
 
 struct WizMote {
@@ -138,7 +142,7 @@ void EspNowDataReceived(uint8_t* mac, uint8_t* data, uint8_t len, signed int rss
   char _destMAC[18];
   ToHex_P(mac, 6, _destMAC, 18, ':');
 
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NOW: ESP-NOW Rcvd %*_H, RSSI %d dBm, From %s, %s"),
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("NOW: Rcvd %*_H, RSSI %d, MAC %s, %s"),
     len, data, rssi, _destMAC, broadcast ? "Broadcast" : "Unicast");
 
   if (data[0] == 0x91 || data[0] == 0x81 || data[0] == 0x80) {
@@ -147,21 +151,32 @@ void EspNowDataReceived(uint8_t* mac, uint8_t* data, uint8_t len, signed int rss
 }
 
 void EspNowInit(void) {
-  if (0 == Settings->flag4.network_wifi) {   // WiFi Off
+  if (0 == Settings->flag4.network_wifi) {   // WiFi Off ..
+    if (!TasmotaGlobal.global_state.wifi_down) { return; }  // .. and processed by WifiDisable()
+    if (1 == WizMote.active) {
+      WizMote.active--;                      // Add a second delay
+      return;
+    }
     if (WizMote.active != 2) {
-      uint32_t channel = 1;
+
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("NOW: Status %d, SSID '%s', Ch %d, IP %s, MAC %s"),
+//        WiFi.status(), WiFi.SSID().c_str(), WiFi.channel(), WiFi.localIP().toString().c_str(), WiFi.macAddress().c_str());
+
+      WiFi.mode(WIFI_STA);
+#ifdef ESP32
+      WiFi.disconnect(false, true);
+#else
+      WiFi.disconnect(false);
+#endif  // ESP32
+
+//      AddLog(LOG_LEVEL_DEBUG, PSTR("NOW: Status %d, SSID '%s', Ch %d, IP %s, MAC %s"),
+//        WiFi.status(), WiFi.SSID().c_str(), WiFi.channel(), WiFi.localIP().toString().c_str(), WiFi.macAddress().c_str());
 
       quickEspNow.stop();
-      delay(500);                            // Allow time to finish stopped WiFi by WifiDisable()
-      WiFi.mode(WIFI_STA);
-#if defined ESP32
-      WiFi.disconnect(false, true);
-#elif defined ESP8266
-      WiFi.disconnect(false);
-#endif //ESP32
-      quickEspNow.onDataRcvd(EspNowDataReceived);
-      if (quickEspNow.begin(channel)) {      // Specify channel if no connected WiFi
-        AddLog(LOG_LEVEL_INFO, PSTR("NOW: ESP-NOW started on channel %d"), channel);
+      if (quickEspNow.begin(WIZMOTE_CHANNEL)) {  // Specify channel if no connected WiFi
+        quickEspNow.onDataRcvd(EspNowDataReceived);
+        Settings->flag.global_state = 1;     // SetOption31 - (Wifi, MQTT) Control link led blinking (1)
+        AddLog(LOG_LEVEL_INFO, PSTR("NOW: Started on channel " STR(WIZMOTE_CHANNEL)));
         WizMote.active = 2;
       }
     }
@@ -171,9 +186,9 @@ void EspNowInit(void) {
     } 
     else if (WizMote.active != 1) {
       quickEspNow.stop();
-      quickEspNow.onDataRcvd(EspNowDataReceived);
       if (quickEspNow.begin()) {
-        AddLog(LOG_LEVEL_INFO, PSTR("NOW: ESP-NOW started"));
+        quickEspNow.onDataRcvd(EspNowDataReceived);
+        AddLog(LOG_LEVEL_INFO, PSTR("NOW: Started"));
         WizMote.active = 1;
       }
     }
@@ -185,7 +200,14 @@ void EspNowInit(void) {
 \*********************************************************************************************/
 
 bool Xdrv77(uint32_t function) {
-  if (!Settings->flag6.wizmote_enabled) { return false; }  // SetOption164 - (WizMote) Enable WiZ Smart Remote support (1)
+  if (!Settings->flag6.wizmote_enabled) {   // SetOption164 - (WizMote) Enable WiZ Smart Remote support (1)
+    if (WizMote.active) {
+      quickEspNow.stop();
+      AddLog(LOG_LEVEL_INFO, PSTR("NOW: Stopped"));
+      WizMote.active = 0;
+    }
+    return false;
+  }
 
   bool result = false;
 

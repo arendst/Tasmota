@@ -2750,6 +2750,8 @@ void CmndWifi(void) {
       {
         Settings->flag4.network_wifi = XdrvMailbox.payload;
         if (Settings->flag4.network_wifi) {
+//          TasmotaGlobal.wifi_state_flag = WIFI_RESTART;
+//          WifiConnect();
 #ifdef ESP32
           WifiConnect();
 #else   // ESP8266
