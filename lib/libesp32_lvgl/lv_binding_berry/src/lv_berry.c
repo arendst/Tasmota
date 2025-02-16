@@ -259,6 +259,143 @@ int lv0_lvobj__void_call(bvm *vm, fn_lvobj__void func) {
 }
 
 /*********************************************************************************************\
+ * Support for lv_style_transition_dsc `init()`
+ *
+ * Either encapsulate the pointer passed as `comptr` as arg1
+ * Or allocate a new empty style structure in memory. In this case, it is never freed.
+\*********************************************************************************************/
+
+static uint8_t *list_to_zbytes(bvm *vm, int index);
+
+int lv_be_style_transition_dsc_init(bvm *vm) {
+  int argc = be_top(vm);
+  lv_style_transition_dsc_t *trans = NULL;
+  // default values
+  lv_style_prop_t *props = NULL;
+  lv_anim_path_cb_t path_cb = NULL;
+  uint32_t time = 0;
+  uint32_t delay = 0;
+  void * user_data = NULL;
+
+  if (argc > 1) {
+    if ((argc == 2) && be_iscomptr(vm, 2)) {
+      // create from provided pointer
+      trans = (lv_style_transition_dsc_t *) be_convert_single_elt(vm, 2, NULL, NULL);
+    } else if (be_isbytes(vm, 2)) {
+      // take provided bytes (e.g. from lv_style_prop_arr)
+      be_pushvalue(vm, 2);
+      be_setmember(vm, 1, "_props");
+      be_pop(vm, 1);
+      props = (lv_style_prop_t *) be_convert_single_elt(vm, 2, NULL, NULL);
+    } else if (be_islistinstance(vm, 2)) {
+      // convert list to bytes
+      props = (lv_style_prop_t *) list_to_zbytes(vm, 2);
+      be_setmember(vm, 1, "_props");
+      be_pop(vm, 1);
+    } else {
+      be_raisef(vm, "type_error", "class %s: expecting parameter of type 'list', got value %s",
+        be_classname(vm, 1), be_tostring(vm, 2));
+    }
+  }
+  if (argc > 2) {
+    if (be_iscomptr(vm, 3)) {
+      path_cb = (lv_anim_path_cb_t) be_tocomptr(vm, 3);
+    } else if (be_isnil(vm, 3)) {
+      // keep default value
+    } else {
+      be_raisef(vm, "type_error", "class %s: expecting callback parameter type, got value %s",
+        be_classname(vm, 1), be_tostring(vm, 3));
+    }
+  }
+  if (argc > 3) {
+    if (be_isint(vm, 4)) {
+      time = be_toint(vm, 4);
+    } else {
+      be_raisef(vm, "type_error", "class %s: expecting parameter of type 'int', got value %s",
+        be_classname(vm, 1), be_tostring(vm, 4));
+    }
+  }
+  if (argc > 4) {
+    if (be_isint(vm, 5)) {
+      delay = be_toint(vm, 5);
+    } else {
+      be_raisef(vm, "type_error", "class %s: expecting parameter of type 'int', got value %s",
+        be_classname(vm, 1), be_tostring(vm, 5));
+    }
+  }
+  if (argc > 5) {
+    if (be_iscomptr(vm, 6)) {
+      user_data = (lv_anim_path_cb_t) be_tocomptr(vm, 6);
+    } else if (be_isnil(vm, 6)) {
+      // keep default value
+    } else {
+      be_raisef(vm, "type_error", "class %s: expecting callback parameter type, got value %s",
+        be_classname(vm, 1), be_tostring(vm, 6));
+    }
+  }
+  if (trans == NULL) {
+    // if no valid pointer passed, allocate a new empty style
+    trans = (lv_style_transition_dsc_t*) be_malloc(vm, sizeof(lv_style_transition_dsc_t));
+    if (trans == NULL) {
+        be_throw(vm, BE_MALLOC_FAIL);
+    }
+    if (trans != NULL) {
+      // initialize the lv_style_transition_dsc structure
+      lv_style_transition_dsc_init(trans, props, path_cb, time, delay, user_data);
+    }
+  }
+
+  be_pushcomptr(vm, trans);
+  be_setmember(vm, 1, "_p");
+  be_return_nil(vm);
+}
+
+// Helper function to create a zero-terminated bytes object from a list of integers.
+// Note that a zero byte will be added regardless of whether the list is already
+// zero-terminated or not.
+static uint8_t *list_to_zbytes(bvm *vm, int index) {
+  // call function 'size' on the list
+  be_getmember(vm, index, "size");
+  be_pushvalue(vm, index);
+  be_call(vm, 1);
+  be_pop(vm, 1);
+  size_t list_size = be_toint(vm, -1);
+  be_pop(vm, 1);
+
+  // create 'bytes' object of preallocated size and leave it on the stack
+  be_getbuiltin(vm, "bytes");
+  be_pushint(vm, -(list_size + 1));    // use fixed size and acount for an appended 0 byte
+  be_call(vm, 1);
+  be_pop(vm, 1);
+
+  // get the bytes' buffer
+  be_getmember(vm, -1, "_buffer");
+  be_pushvalue(vm, -2);
+  be_call(vm, 1);
+  uint8_t *buf = (uint8_t *)be_tocomptr(vm, -2);
+  be_pop(vm, 2);
+
+  // iterate over list and copy content to bytes' buffer
+  be_getmember(vm, index, ".p");
+  be_pushiter(vm, -1);
+  for (int i = 0; be_iter_hasnext(vm, -2); i++) {
+    be_iter_next(vm, -2);
+    bint val = be_toint(vm, -1);
+    be_pop(vm, 1);
+    if (val > 0xff || val < 0) {
+      be_raisef(vm, "value_error", "value %d out of range [0;255]", val);
+    }
+    buf[i] = (uint8_t)(val & 0xff);
+  }
+  be_pop(vm, 1);  // pop iter
+  be_pop(vm, 1);  // pop from be_getmember()
+
+  buf[list_size] = 0;     // zero-terminate bytes
+  return buf;
+}
+
+/*********************************************************************************************\
+
  * Support for lv_fonts
 \*********************************************************************************************/
 // load font by name on file-system

@@ -20,11 +20,13 @@ lv0 = []        # function in lvlg module
 lv_module = []
 lv_cb_types = ['lv_group_focus_cb', 'lv_event_cb', 'lv_timer_cb',
                'lv_constructor_cb',                 # 'constructor_cb', addition to LVGL8, also works for 'destructor_cb'
+               'lv_anim_path_cb',
                ]
 # list of callback types that will need each a separate C callback
 
 # For LVGL8, need to add synthetic lv_style, lv_font, lv_color, lv_theme
 lv['style'] = []
+lv['style_transition_dsc'] = []
 lv['font'] = []
 lv['color'] = []
 lv['theme'] = []
@@ -51,7 +53,7 @@ lv_widgets = lv_widgets + [ 'qrcode' ]
 # adding ad-hoc colorwheel from LVGL8 to LVGL9
 lv_widgets = lv_widgets + [ 'colorwheel' ]
 
-lv_prefix = ['group', 'style', 'indev', 'display', 'timer', 'anim', 'event', 'span'] + lv_widgets
+lv_prefix = ['group', 'style_transition_dsc', 'style', 'indev', 'display', 'timer', 'anim', 'event', 'span'] + lv_widgets
 
 # define here widget inheritance because it's hard to deduce from source
 lv_widget_inheritance = {
@@ -280,7 +282,6 @@ class type_mapper_class:
     "lv_color32_t *",
     "lv_color16_t *",
     "lv_color_filter_cb_t",
-    "lv_style_prop_t []",
     "lv_calendar_date_t []",
     "lv_indev_read_cb_t",
     "lv_vector_path_t *",
@@ -347,6 +348,8 @@ class type_mapper_class:
     "lv_style_selector_t": "i",
     # "lv_palette_t": "i",
     "lv_style_prop_t": "i",
+    "lv_style_prop_t *": "lv_style_prop_arr",
+    "lv_style_prop_t []": "lv_style_prop_arr",
     "lv_chart_update_mode_t": "i",
     "lv_style_res_t": "i",
     # LVGL 9
@@ -465,11 +468,13 @@ class type_mapper_class:
     "lv_group_focus_cb_t": "lv_group_focus_cb",
     "lv_event_cb_t": "lv_event_cb",
     "lv_timer_cb_t": "lv_timer_cb",
+    "lv_anim_path_cb_t": "lv_anim_path_cb",
   }
 
   lv_cb_types = ['lv_group_focus_cb', 'lv_event_cb', 'lv_timer_cb',
                 'lv_constructor_cb',                # 'constructor_cb', addition to LVGL8, also works for 'destructor_cb'
                 'lv_group_edge_cb',                 # new in LVGL9
+                'lv_anim_path_cb',                  # animation path callback
                 ]
 
   # how to transform a type used for Berry mapping into user-explicit
@@ -668,8 +673,8 @@ with open(lv_widgets_file) as f:
 
     be_func_name = ""
 
-    if c_func_name == "lv_style_init":
-      continue   # no need for init as it would collied with native init (and called behind the scene anyways)
+    if c_func_name in ["lv_style_init", "lv_style_transition_dsc_init"]:
+      continue   # no need for init as it would collide with native init (and called behind the scene anyways)
 
     found = False
     for subtype in lv_prefix:
@@ -915,6 +920,7 @@ extern int lv_x_tostring(bvm *vm);       // generic function
 extern int lv_be_style_init(bvm *vm);
 extern int lv_be_style_del(bvm *vm);
 extern int lv_be_anim_init(bvm *vm);
+extern int lv_be_style_transition_dsc_init(bvm *vm);
 extern int lv_x_tostring(bvm *vm);
 
 BE_EXPORT_VARIABLE extern const bclass be_class_lv_obj;
@@ -1029,6 +1035,20 @@ class be_class_lv_timer (scope: global, name: lv_timer, strings: weak) {
 class be_class_lv_anim (scope: global, name: lv_anim, strings: weak) {
     _p, var
     init, func(lv_be_anim_init)
+    tostring, func(lv_x_tostring)
+    member, func(lv_x_member)
+}
+@const_object_info_end */
+
+/********************************************************************
+** Solidified class: lv_style_transition_dsc
+********************************************************************/
+#include "be_fixed_be_class_lv_style_transition_dsc.h"
+/* @const_object_info_begin
+class be_class_lv_style_transition_dsc (scope: global, name: lv_style_transition_dsc, strings: weak) {
+    _p, var
+    _props, var
+    init, func(lv_be_style_transition_dsc_init)
     tostring, func(lv_x_tostring)
     member, func(lv_x_member)
 }
