@@ -86,6 +86,8 @@ class lvh_root
   var _parent_lvh                           # parent HASPmota object if 'parentid' was set, or 'nil'
   var _meta                                 # free form metadata
 
+  var _tag                                  # free-form JSON tag
+
   #====================================================================
   # Rule engine to map value and text to rules
   # hence enabling auto-updates ob objects
@@ -208,8 +210,22 @@ class lvh_root
       try
         font = lv.font_embedded("robotocondensed", t)
       except ..
+        import path
+        # try TTF file "roboto.ttf" or "RobotoCondensed-Regular.ttf"
         try
-          font = lv.font_embedded("montserrat", t)
+          var ttf_name = "roboto.ttf"
+          if !path.exists(ttf_name)
+            ttf_name = "RobotoCondensed-Regular.ttf"
+            if !path.exists(ttf_name)
+              ttf_name = nil
+            end
+          end
+          if ttf_name != nil
+            font = lv.load_freetype_font(ttf_name, t, 0)
+          else
+            print("HSP: 'roboto.ttf' file missing for size:", t)
+            return nil
+          end
         except ..
           print("HSP: Unsupported font:", t)
           return nil
@@ -297,6 +313,16 @@ class lvh_root
   #====================================================================
   def get_obj()
     return self._lv_obj
+  end
+
+  #====================================================================
+  # set_tag: create a free-form JSON tag
+  #====================================================================
+  def set_tag(t)
+    self._tag = t
+  end
+  def get_tag()
+    return self._tag
   end
 
   #====================================================================
@@ -634,7 +660,7 @@ class lvh_obj : lvh_root
     var code = event.get_code()     # materialize to a local variable, otherwise the value can change (and don't capture event object)
     if self.action != "" && code == lv.EVENT_CLICKED
       # if clicked and action is declared, do the page change event
-      tasmota.set_timer(0, /-> hm.do_action(self, code))
+      tasmota.defer(/-> hm.do_action(self, code))
     end
 
     var event_hasp = self._event_map.find(code)
@@ -644,19 +670,37 @@ class lvh_obj : lvh_root
       var tas_event_more = ""   # complementary data
       if code == lv.EVENT_VALUE_CHANGED
         import introspect
-        var val = introspect.get(self, true)     # does not raise an exception if not found
+        var val = introspect.get(self, "val")     # does not raise an exception if not found
         if (val != nil && type(val) != 'module')
           tas_event_more = f',"val":{json.dump(val)}'
         end
-        var text = introspect.get(self, true)     # does not raise an exception if not found
+        var text = introspect.get(self, "text")     # does not raise an exception if not found
         if (text != nil && type(text) != 'module')
           tas_event_more += f',"text":{json.dump(text)}'
         end
       end
-      var tas_event = format('{"hasp":{"p%ib%i":{"event":"%s"%s}}}', self._page._page_id, self.id, event_hasp, tas_event_more)
+      # add tag if present
+      if (self._tag != nil)
+        tas_event_more += f',"tag":{json.dump(self._tag)}'
+      end
+      # add sub-index if any
+      var sub_index = self.get_sub_id()
+      var sub_index_str = (sub_index != nil) ? "_" + str(sub_index) : ""
+
+      var tas_event = format('{"hasp":{"p%ib%i%s":{"event":"%s"%s}}}', self._page._page_id, self.id, sub_index_str, event_hasp, tas_event_more)
       # print("val=",val)
-      tasmota.set_timer(0, /-> tasmota.publish_rule(tas_event))
+      tasmota.defer(def ()
+                      tasmota.publish_rule(tas_event)
+                      tasmota.log(f"HSP: publish {tas_event}", 4)
+                    end)
     end
+  end
+
+  #====================================================================
+  #  `get_sub_id` get any sub_index (only for buttonmatrix currently)
+  #====================================================================
+  def get_sub_id()
+    return nil
   end
 
   #====================================================================
@@ -1429,12 +1473,12 @@ class lvh_spinner : lvh_arc
   # obj: (opt) LVGL object if it already exists and was created prior to init()
   # parent_lvh: HASPmota parent object defined by `parentid`
   #====================================================================
-  def init(parent, page, jline)
+  def init(parent, page, jline, lv_instance, parent_obj)
     var angle = jline.find("angle", 60)
     var speed = jline.find("speed", 1000)
     self._lv_obj = lv.spinner(parent)
     self._lv_obj.set_anim_params(speed, angle)
-    super(self).init(parent, page, jline, self._lv_obj)
+    super(self).init(parent, page, jline, self._lv_obj, parent_obj)
   end
 
   def set_angle(t) end
@@ -1702,7 +1746,7 @@ class lvh_dropdown_list : lvh_obj
     if isinstance(self._parent_lvh, self._page._hm.lvh_dropdown)
       self._lv_obj = lv.list(self._parent_lvh._lv_obj.get_list()._p)
     else
-      print("HSP: '_dropdown_list' should have a parent of type 'dropdown'")
+      print("HSP: 'dropdown_list' should have a parent of type 'dropdown'")
     end
     super(self).post_init()
   end
@@ -2023,6 +2067,8 @@ class lvh_span : lvh_root
       # print(">>> GOOD")
       self._lv_obj = self._parent_lvh._lv_obj.new_span()
       self._style = self._lv_obj.get_style()
+    else
+      print("HSP: 'span' should have a parent of type 'spangroup'")
     end
     # super(self).post_init()         # call super - not needed for lvh_root
   end
@@ -2127,6 +2173,182 @@ class lvh_span : lvh_root
 
 end
 
+#====================================================================
+#  tabview
+#====================================================================
+#@ solidify:lvh_tabview,weak
+class lvh_tabview : lvh_obj
+  static var _lv_class = lv.tabview
+  var _tab_list                             # list of tabs
+
+  # label do not need a sub-label
+  def post_init()
+    self._tab_list = []
+    super(self).post_init()         # call super -- not needed
+  end
+
+  #====================================================================
+  # direction for buttons
+  #====================================================================
+  static var _direction = [
+    lv.DIR_NONE,          # 0 = none
+    lv.DIR_TOP,           # 1 = top
+    lv.DIR_BOTTOM,        # 2 = bottom
+    lv.DIR_LEFT,          # 3 = left
+    lv.DIR_RIGHT,         # 4 = right
+  ]
+  def set_btn_pos(v)
+    v = int(v)
+    if (v == nil) || (v < 0) || (v >= size(self._direction))
+      v = 0
+    end
+    var direction = self._direction[v]
+    self._lv_obj.set_tab_bar_position(direction)
+  end
+
+  #====================================================================
+  # management of `_tab_list` list
+  #====================================================================
+  # add lvh_tab instance as they are created
+  def push_tab(t)
+    self._tab_list.push(t)
+  end
+  # returns the index of the tab instance, or `nil` if not found
+  def find_tab(t)
+    return self._tab_list.find(t)
+  end
+
+  #====================================================================
+  # count read-only attribute, returns number of tabs
+  #====================================================================
+  def get_count()
+    return self._lv_obj.get_tab_count()
+  end
+  def get_val()
+    return self._lv_obj.get_tab_active()
+  end
+  # change current tab
+  # v: value of new tab
+  # stop: (opt) if true, don't defer again to avoid infinite loop
+  def set_val(v, stop)
+    var v_max = self.get_count()
+    if (v_max == 0)
+      # probably not constructed yet
+      if (!stop)
+        tasmota.defer(def () self.set_val(v, true #-stop propagation-#) end)
+      end
+    else
+      if (v == nil)   v = 0           end
+      if (v < 0)      v = 0           end
+      if (v >= v_max) v = v_max - 1   end
+
+      self._lv_obj.set_active(v, lv.ANIM_OFF)
+    end
+  end
+  def get_text()
+    var val = self.get_val()
+    if (val >= 0) && (val < self.get_count())
+      return self._tab_list[val].get_text()
+    else
+      return nil
+    end
+  end
+end
+
+#====================================================================
+#  tab
+#====================================================================
+#@ solidify:lvh_tab.lvh_btn_tab,weak
+#@ solidify:lvh_tab,weak
+class lvh_tab : lvh_obj
+  static var _lv_class = nil
+  # label do not need a sub-label
+  var _text                           # text label of the tab
+  var _btn                            # btn lvh object
+
+  static class lvh_btn_tab : lvh_obj
+    static var _lv_class = lv.button
+    #====================================================================
+    # specific post-init wihtout events
+    #====================================================================
+    def post_init()
+      self._lv_obj.set_style_radius(0, 0)       # set default radius to `0` for rectangle tabs
+      # self.register_event_cb()
+    end
+  end
+
+  #====================================================================
+  # init
+  #
+  # parent: LVGL parent object (used to create a sub-object)
+  # page: HASPmota page object
+  # jline: JSONL definition of the object from HASPmota template (used in sub-classes)
+  # obj: (opt) LVGL object if it already exists and was created prior to init()
+  # parent_lvh: HASPmota parent object defined by `parentid`
+  #====================================================================
+  def init(parent, page, jline, lv_instance, parent_obj)
+    self.set_text(jline.find("text"))           # anticipate reading 'text' for creation
+    super(self).init(parent, page, jline, lv_instance, parent_obj)
+  end
+
+  def post_init()
+    self._lv_obj = nil                # default to nil object, whatever it was initialized with
+    # check if it is the parent is a spangroup
+    if isinstance(self._parent_lvh, self._page._hm.lvh_tabview)
+      if (self._text != nil)
+        self._lv_obj = self._parent_lvh._lv_obj.add_tab(self._text)
+
+        # get the last button object of the tab bar and create an instance of simplified btn
+        var tab_bar = self._parent_lvh._lv_obj.get_tab_bar()
+        var btn_class = lv.obj_class(lv.button._class)
+        var btn_count = tab_bar.get_child_count_by_type(btn_class)
+        var btn_obj = tab_bar.get_child_by_type(btn_count - 1, btn_class)   # get last button
+        self._btn = self.lvh_btn_tab(nil, self._page, {}, btn_obj, self) # instanciate a local lvh object
+
+        # add to parent list
+        self._parent_lvh.push_tab(self)
+      else
+        print("HSP: 'tab' requires 'text' attribute")
+      end
+    else
+      print("HSP: 'tab' should have a parent of type 'tabview'")
+    end
+    # super(self).post_init()         # call super - not needed for lvh_root
+  end
+
+  #====================================================================
+  def set_text(t)
+    self._text = str(t)
+  end
+  def get_text()
+    return self._text
+  end
+
+  #- ------------------------------------------------------------#
+  # `setmember` virtual setter
+  #
+  # If the key starts with `bar_`
+  # send to the corresponding object
+  #- ------------------------------------------------------------#
+  def setmember(k, v)
+    import string
+    if string.startswith(k, 'tab_')
+      self._btn.setmember(k[4..], v)
+    else
+      super(self).setmember(k, v)
+    end
+  end
+  def member(k)
+    import string
+    if string.startswith(k, 'tab_')
+      return self._btn.member(k[4..])
+    else
+      return super(self).member(k)
+    end
+  end
+
+end
+
 #################################################################################
 # Special case for lv.chart
 # Adapted to getting values one after the other
@@ -2227,6 +2449,18 @@ class lvh_btnmatrix : lvh_obj
   def get_options()
     return self._options
   end
+  def get_val()
+    return nil      # no 'value' for btnmatrix
+  end
+
+  #====================================================================
+  #  `get_sub_id` get any sub_index (only for buttonmatrix currently)
+  #====================================================================
+  def get_sub_id()
+    var btn_idx = self._lv_obj.get_selected_button()
+    return (btn_idx != lv.BUTTONMATRIX_BUTTON_NONE) ? btn_idx : nil
+  end
+
 end
 
 #====================================================================
@@ -2513,9 +2747,9 @@ class lvh_page
 
     # send page events
     var event_str_in = format('{"hasp":{"p%i":"out"}}', self._hm.lvh_page_cur_idx)
-    tasmota.set_timer(0, /-> tasmota.publish_rule(event_str_in))
+    tasmota.defer(/-> tasmota.publish_rule(event_str_in))
     var event_str_out = format('{"hasp":{"p%i":"in"}}', self._page_id)
-    tasmota.set_timer(0, /-> tasmota.publish_rule(event_str_out))
+    tasmota.defer(/-> tasmota.publish_rule(event_str_out))
 
     # change current page
     self._hm.lvh_page_cur_idx = self._page_id
@@ -2588,6 +2822,8 @@ class HASPmota
   static lvh_scale_line = lvh_scale_line
   static lvh_spangroup = lvh_spangroup
   static lvh_span = lvh_span
+  static lvh_tabview = lvh_tabview
+  static lvh_tab = lvh_tab
   static lvh_qrcode = lvh_qrcode
   # special cases
   static lvh_chart = lvh_chart
@@ -2655,7 +2891,8 @@ class HASPmota
   #################################################################################
   static def sort(l)
     # insertion sort
-    for i:1..size(l)-1
+    var i = 0
+    while i < size(l)
       var k = l[i]
       var j = i
       while (j > 0) && (l[j-1] > k)
@@ -2663,6 +2900,7 @@ class HASPmota
         j -= 1
       end
       l[j] = k
+      i += 1
     end
     return l
   end

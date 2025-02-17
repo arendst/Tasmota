@@ -3,6 +3,107 @@ All notable changes to this project will be documented in this file.
 
 ## [Released]
 
+## [14.5.0] 20250219
+- Release Ruth
+
+## [14.4.1.4] 20250219
+### Added
+- Formatter `%_U` for `ext_snprintf_P()` to print uint64_t variable as decimal equivalent to `%llu`
+- Support for RC-switch decoding of 64-bit received data
+- Berry `tasmota.defer()` (#22976)
+- Support for Lithuanian language translations by zzdovydas (#22971)
+- `MqttTLS` field in `Status 6` to indicate if the MQTT connection is encrypted (#22995)
+- Support for WiZ Smart Remote using `#define USE_WIZMOTE` and command `SetOption164 1`
+- Berry `bytes().appendb64()` (#22767)
+
+### Changed
+- ESP32 Platform from 2025.01.31 to 2025.02.30, Framework (Arduino Core) from v3.1.1.250109 to v3.1.1.250203 and IDF to 5.3.2 (#22943)
+
+### Fixed
+- Berry parser error in rare case (#22997)
+- ESP32 TasMesh broker MAC address all zeros (#23005)
+
+## [14.4.1.3] 20250204
+### Added
+- Command `FileLog 0..4` to enable logging to filesystem using up to 16 rotating log files of 100kB (`#define FILE_LOG_SIZE 100`)
+- Command `FileLog 10..14` to enable logging to filesystem using up to 16 log files of 100kB (`#define FILE_LOG_SIZE 100`)
+- I2S Opus stream and file support for opus/aac (#22795)
+- I2S command I2sLoop (#22807)
+- Berry `serial.read()` read only `n` bytes (#22835)
+- Display template for Waveshare ESP32-C6 LCD 1.47 (#22863)
+- Berry `tasmota.global.tele_period` and `tasmota.settings.tele_period` (#22865)
+- ESP32 command `PixelType` to change the WS2812 color order and channel number (#22876)
+- Berry driver for AXP2102 and M5CoreS3 (#22878)
+- GPS driver select baudrate using GPIO GPS_RX1 (9600bps), GPS_RX2 (19200bps) or GPS_RX3 (38400bps) (#22869)
+- LVLG/HASPmota add color names from OpenHASP (#22879)
+- HASPmota support for `buttonmatrix` events (#22898)
+- Berry driver for PN532 NFC/Mifare reader (#22899)
+- Berry `tasmota.add_rule_once` and auto-remove rules with same pattern and id (#22900)
+- Berry example for HeatFan WiFi Controller
+- LVGL `lv.set_paint_cb()` to register a callback when screen is refreshed (#22909)
+- Berry `tasmota.settings` entries for PixelType (#22912)
+- Support for C8-CO2-5K CO2 sensor (#22905)
+- `#define FIX_JSON_HEXADECIMAL` to change JSON hexadecimal value "FF5F78" into "0xFF5F78" (#22919)
+
+### Changed
+- ESP32 Platform from 2024.12.30 to 2025.01.30, Framework (Arduino Core) from v3.1.0.241206 to v3.1.1.250109 and IDF to 5.3.2 (#22792)
+- Allow negative values for AdcParam/AdcGpio INPUT, TEMP and RANGE parameters (#22809)
+- GPIOViewer from v1.5.9 to v1.6.0 (No functional change)
+- ESP32 Platform from 2025.01.30 to 2025.01.31 (#22832)
+- Berry `gpio.pin_mode` frees PWM on pin
+- GPIOViewer from v1.6.0 to v1.6.1 (No functional change)
+- Berry callback now passes 5 arguments instead of 4 (in line with documentation) (#22908)
+
+### Fixed
+- Sonoff SPM `PowerOnState` overrules `SSPMPowerOnState` in mixed 4Relay setup with 4Relay version 1.0.0
+- ESP32-Cx compilation fails on Windows (#22832)
+- LoraWan decoding of Dragino LDS02 and MerryIoT DW10 (#22880)
+
+## [14.4.1.2] 20250110
+### Added
+- Support for ESP32 Two-Wire Automotive Interface (TWAI) or Controller Area Network (CAN) busses
+- Support for Senseair S88 CO2 sensor (#22733)
+- ESP32 TasmotaLED change dynamically the number of pixels (#22754)
+- ESP32 expand `Pixels` with reverse, height and alternate (#22755)
+- Berry add light_pixels values to `tasmota.settings` (#22762)
+- Berry add `bytes().appendhex()` (#22767)
+- I2S AAC support for web radio (#22787)
+- Berry WS2812 real-time Leds panel as app (#22788)
+
+### Changed
+- GPIOViewer from v1.5.8 to v1.5.9 (No functional change)
+- `Pixels` has backwards compatible arguments fixing #22755 (#22791)
+
+### Fixed
+- Shutter discovery message regression from v14.4.1 (#22730)
+
+## [14.4.1.1] 20241231
+### Added
+- Command ``SetOption163 1`` to disable display of Device name in GUI header
+- Berry `animate.crenel` primitive (#22673)
+- Berry scroll to Leds_matrix (#22693)
+- HASPmota support for `tabview` (#22707)
+- Berry bit-shift operators to `int64` (#22709)
+- Berry add unicode encoding to string parsing (#22713)
+- Berry `tasmota.int(v, min, max)` function (#22723)
+- Berry driver for M5Stack 8encoder (#22724)
+- Support for PCF85063 RTC (#22727)
+
+### Changed
+- ESP32 disable PSRAM check (and on restart some relay toggles) with `#define DISABLE_PSRAMCHECK true` (#21266)
+- TLS disable ECDSA for MQTT to ensure we don't break fingerprints after #22649
+- GPIOViewer from v1.5.6 to v1.5.8
+- HASPmota use 'roboto.ttf' for automatic sizing of default font (#22697)
+- HASPmota add 'tag' attribute for free-form JSON (#22698)
+- Postpone save_data during light animation when fade is Off
+
+### Fixed
+- Berry Zigbee fix wrong attributes (#22684)
+- Berry walrus operator (#22685)
+- Webcam compilation with `define USE_WEBCAM` but without `define ENABLE_RTSPSERVER` (#22686)
+- LVGL updated `Antiburn.tapp` (#22699)
+- Matter Air Quality sensor (#22708)
+
 ## [14.4.1] 20241215
 - Release Rudolph
 

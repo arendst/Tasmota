@@ -1,4 +1,4 @@
-/* Solidification of i2c_axp192.h */
+/* Solidification of AXP192.h */
 /********************************************************************\
 * Generated code, don't edit                                         *
 \********************************************************************/
@@ -551,8 +551,8 @@ be_local_closure(class_AXP192_json_append,   /* name */
 ********************************************************************/
 be_local_closure(class_AXP192_init,   /* name */
   be_nested_proto(
-    5,                          /* nstack */
-    1,                          /* argc */
+    6,                          /* nstack */
+    2,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -562,16 +562,20 @@ be_local_closure(class_AXP192_init,   /* name */
     &be_ktab_class_AXP192,     /* shared constants */
     &be_const_str_init,
     &be_const_str_solidified,
-    ( &(const binstruction[ 9]) {  /* code */
-      0x60040003,  //  0000  GETGBL	R1	G3
-      0x5C080000,  //  0001  MOVE	R2	R0
-      0xB80E3000,  //  0002  GETNGBL	R3	K24
-      0x7C040400,  //  0003  CALL	R1	2
-      0x8C040319,  //  0004  GETMET	R1	R1	K25
-      0x580C001A,  //  0005  LDCONST	R3	K26
-      0x54120033,  //  0006  LDINT	R4	52
-      0x7C040600,  //  0007  CALL	R1	3
-      0x80000000,  //  0008  RET	0
+    ( &(const binstruction[13]) {  /* code */
+      0x4C080000,  //  0000  LDNIL	R2
+      0x1C080202,  //  0001  EQ	R2	R1	R2
+      0x780A0000,  //  0002  JMPF	R2	#0004
+      0x54060033,  //  0003  LDINT	R1	52
+      0x60080003,  //  0004  GETGBL	R2	G3
+      0x5C0C0000,  //  0005  MOVE	R3	R0
+      0xB8123000,  //  0006  GETNGBL	R4	K24
+      0x7C080400,  //  0007  CALL	R2	2
+      0x8C080519,  //  0008  GETMET	R2	R2	K25
+      0x5810001A,  //  0009  LDCONST	R4	K26
+      0x54160033,  //  000A  LDINT	R5	52
+      0x7C080600,  //  000B  CALL	R2	3
+      0x80000000,  //  000C  RET	0
     })
   )
 );
@@ -659,12 +663,12 @@ be_local_closure(class_AXP192_web_sensor,   /* name */
 
 
 /********************************************************************
-** Solidified function: set_chg_current
+** Solidified function: get_battery_charging_status
 ********************************************************************/
-be_local_closure(class_AXP192_set_chg_current,   /* name */
+be_local_closure(class_AXP192_get_battery_charging_status,   /* name */
   be_nested_proto(
-    8,                          /* nstack */
-    2,                          /* argc */
+    6,                          /* nstack */
+    1,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -672,21 +676,16 @@ be_local_closure(class_AXP192_set_chg_current,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     &be_ktab_class_AXP192,     /* shared constants */
-    &be_const_str_set_chg_current,
+    &be_const_str_get_battery_charging_status,
     &be_const_str_solidified,
-    ( &(const binstruction[12]) {  /* code */
-      0x8C08010F,  //  0000  GETMET	R2	R0	K15
-      0x54120032,  //  0001  LDINT	R4	51
-      0x8C140110,  //  0002  GETMET	R5	R0	K16
-      0x541E0032,  //  0003  LDINT	R7	51
-      0x7C140400,  //  0004  CALL	R5	2
-      0x541A00EF,  //  0005  LDINT	R6	240
-      0x2C140A06,  //  0006  AND	R5	R5	R6
-      0x541A000E,  //  0007  LDINT	R6	15
-      0x2C180206,  //  0008  AND	R6	R1	R6
-      0x30140A06,  //  0009  OR	R5	R5	R6
-      0x7C080600,  //  000A  CALL	R2	3
-      0x80000000,  //  000B  RET	0
+    ( &(const binstruction[ 7]) {  /* code */
+      0x8804010A,  //  0000  GETMBR	R1	R0	K10
+      0x8C04030B,  //  0001  GETMET	R1	R1	K11
+      0x880C010C,  //  0002  GETMBR	R3	R0	K12
+      0x58100000,  //  0003  LDCONST	R4	K0
+      0x58140000,  //  0004  LDCONST	R5	K0
+      0x7C040800,  //  0005  CALL	R1	4
+      0x80040200,  //  0006  RET	1	R1
     })
   )
 );
@@ -823,12 +822,12 @@ be_local_closure(class_AXP192_power_off,   /* name */
 
 
 /********************************************************************
-** Solidified function: get_battery_chargin_status
+** Solidified function: set_chg_current
 ********************************************************************/
-be_local_closure(class_AXP192_get_battery_chargin_status,   /* name */
+be_local_closure(class_AXP192_set_chg_current,   /* name */
   be_nested_proto(
-    6,                          /* nstack */
-    1,                          /* argc */
+    8,                          /* nstack */
+    2,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -836,16 +835,21 @@ be_local_closure(class_AXP192_get_battery_chargin_status,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     &be_ktab_class_AXP192,     /* shared constants */
-    &be_const_str_get_battery_chargin_status,
+    &be_const_str_set_chg_current,
     &be_const_str_solidified,
-    ( &(const binstruction[ 7]) {  /* code */
-      0x8804010A,  //  0000  GETMBR	R1	R0	K10
-      0x8C04030B,  //  0001  GETMET	R1	R1	K11
-      0x880C010C,  //  0002  GETMBR	R3	R0	K12
-      0x58100000,  //  0003  LDCONST	R4	K0
-      0x58140000,  //  0004  LDCONST	R5	K0
-      0x7C040800,  //  0005  CALL	R1	4
-      0x80040200,  //  0006  RET	1	R1
+    ( &(const binstruction[12]) {  /* code */
+      0x8C08010F,  //  0000  GETMET	R2	R0	K15
+      0x54120032,  //  0001  LDINT	R4	51
+      0x8C140110,  //  0002  GETMET	R5	R0	K16
+      0x541E0032,  //  0003  LDINT	R7	51
+      0x7C140400,  //  0004  CALL	R5	2
+      0x541A00EF,  //  0005  LDINT	R6	240
+      0x2C140A06,  //  0006  AND	R5	R5	R6
+      0x541A000E,  //  0007  LDINT	R6	15
+      0x2C180206,  //  0008  AND	R6	R1	R6
+      0x30140A06,  //  0009  OR	R5	R5	R6
+      0x7C080600,  //  000A  CALL	R2	3
+      0x80000000,  //  000B  RET	0
     })
   )
 );
@@ -891,12 +895,12 @@ be_local_class(AXP192,
     ( (struct bmapnode*) &(const bmapnode[]) {
         { be_const_key(set_dcdc_enable, -1), be_const_closure(class_AXP192_set_dcdc_enable_closure) },
         { be_const_key(get_bat_power, -1), be_const_closure(class_AXP192_get_bat_power_closure) },
-        { be_const_key(get_bat_charge_current, 3), be_const_closure(class_AXP192_get_bat_charge_current_closure) },
-        { be_const_key(get_battery_chargin_status, -1), be_const_closure(class_AXP192_get_battery_chargin_status_closure) },
+        { be_const_key(get_bat_charge_current, -1), be_const_closure(class_AXP192_get_bat_charge_current_closure) },
+        { be_const_key(set_chg_current, -1), be_const_closure(class_AXP192_set_chg_current_closure) },
         { be_const_key(get_warning_level, -1), be_const_closure(class_AXP192_get_warning_level_closure) },
         { be_const_key(power_off, -1), be_const_closure(class_AXP192_power_off_closure) },
         { be_const_key(get_vbus_current, 22), be_const_closure(class_AXP192_get_vbus_current_closure) },
-        { be_const_key(get_aps_voltage, -1), be_const_closure(class_AXP192_get_aps_voltage_closure) },
+        { be_const_key(get_aps_voltage, 17), be_const_closure(class_AXP192_get_aps_voltage_closure) },
         { be_const_key(set_exten, -1), be_const_closure(class_AXP192_set_exten_closure) },
         { be_const_key(battery_present, -1), be_const_closure(class_AXP192_battery_present_closure) },
         { be_const_key(get_vbus_voltage, -1), be_const_closure(class_AXP192_get_vbus_voltage_closure) },
@@ -906,9 +910,9 @@ be_local_class(AXP192,
         { be_const_key(init, 2), be_const_closure(class_AXP192_init_closure) },
         { be_const_key(get_bat_current, -1), be_const_closure(class_AXP192_get_bat_current_closure) },
         { be_const_key(web_sensor, -1), be_const_closure(class_AXP192_web_sensor_closure) },
-        { be_const_key(set_dc_voltage, -1), be_const_closure(class_AXP192_set_dc_voltage_closure) },
+        { be_const_key(get_battery_charging_status, -1), be_const_closure(class_AXP192_get_battery_charging_status_closure) },
         { be_const_key(get_temp, -1), be_const_closure(class_AXP192_get_temp_closure) },
-        { be_const_key(set_chg_current, 17), be_const_closure(class_AXP192_set_chg_current_closure) },
+        { be_const_key(set_dc_voltage, 3), be_const_closure(class_AXP192_set_dc_voltage_closure) },
         { be_const_key(get_bat_voltage, 5), be_const_closure(class_AXP192_get_bat_voltage_closure) },
         { be_const_key(json_append, -1), be_const_closure(class_AXP192_json_append_closure) },
         { be_const_key(get_input_power_status, -1), be_const_closure(class_AXP192_get_input_power_status_closure) },

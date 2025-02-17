@@ -159,7 +159,7 @@ struct {
   uint16_t width;
   uint16_t height;
   uint8_t  stream_active;
- #ifndef USE_WEBCAM_SETUP_ONLY
+#ifndef USE_WEBCAM_SETUP_ONLY
   WiFiClient client;
   ESP8266WebServer *CamServer;
   struct PICSTORE picstore[MAX_PICSTORE];
@@ -169,9 +169,9 @@ struct {
   CRtspSession *rtsp_session;
   WiFiClient rtsp_client;
   uint8_t rtsp_start;
-#endif // ENABLE_RTSPSERVER
   OV2640 cam;
   uint32_t rtsp_lastframe_time;
+#endif // ENABLE_RTSPSERVER
 #endif // USE_WEBCAM_SETUP_ONLY
 } Wc;
 
@@ -488,7 +488,7 @@ uint32_t WcSetup(int32_t fsiz) {
   camera_sensor_info_t *info = esp_camera_sensor_get_info(&wc_s->id);
 
   AddLog(LOG_LEVEL_INFO, PSTR("CAM: %s Initialized"), info->name);
-
+  TasmotaGlobal.camera_initialized = true;
 
   Wc.up = 1;
   if (psram) { Wc.up = 2; }
@@ -1503,6 +1503,18 @@ void WcUpdateStats(void) {
   WcStats.camcnt = 0;
 }
 
+void WcSensorStats(void) {
+  if (!Wc.up) { return; }
+
+  ResponseAppend_P(PSTR(",\"CAMERA\":{"
+                        "\"" D_WEBCAM_STATS_FPS "\":%d,"
+                        "\"" D_WEBCAM_STATS_CAMFAIL "\":%d,"
+                        "\"" D_WEBCAM_STATS_JPEGFAIL "\":%d,"
+                        "\"" D_WEBCAM_STATS_CLIENTFAIL "\":%d}"),
+                   WcStats.camfps, WcStats.camfail,
+                   WcStats.jpegfail, WcStats.clientfail);
+}
+
 const char HTTP_WEBCAM_FPS[] PROGMEM = "{s}%s " D_FRAME_RATE "{m}%d " D_UNIT_FPS  "{e}";
 
 void WcStatsShow(void) {
@@ -1532,6 +1544,8 @@ bool Xdrv81(uint32_t function) {
      break;
     case FUNC_EVERY_SECOND:
       WcUpdateStats();
+    case FUNC_JSON_APPEND:
+      WcSensorStats();
     case FUNC_WEB_SENSOR:
       WcStatsShow();
       break;

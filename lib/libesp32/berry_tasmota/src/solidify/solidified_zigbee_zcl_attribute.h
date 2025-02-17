@@ -775,24 +775,24 @@ be_local_closure(class_zcl_attribute_list_tostring,   /* name */
       0x4C0C0000,  //  0003  LDNIL	R3
       0x880C010D,  //  0004  GETMBR	R3	R0	K13
       0x4C100000,  //  0005  LDNIL	R4
-      0x200C0604,  //  0006  NE	R3	R3	R4
-      0x780E0005,  //  0007  JMPF	R3	#000E
-      0x8C0C050E,  //  0008  GETMET	R3	R2	K14
-      0x60140018,  //  0009  GETGBL	R5	G24
-      0x5818000F,  //  000A  LDCONST	R6	K15
-      0x5C1C0600,  //  000B  MOVE	R7	R3
-      0x7C140400,  //  000C  CALL	R5	2
-      0x7C0C0400,  //  000D  CALL	R3	2
+      0x20100604,  //  0006  NE	R4	R3	R4
+      0x78120005,  //  0007  JMPF	R4	#000E
+      0x8C10050E,  //  0008  GETMET	R4	R2	K14
+      0x60180018,  //  0009  GETGBL	R6	G24
+      0x581C000F,  //  000A  LDCONST	R7	K15
+      0x5C200600,  //  000B  MOVE	R8	R3
+      0x7C180400,  //  000C  CALL	R6	2
+      0x7C100400,  //  000D  CALL	R4	2
       0x880C0100,  //  000E  GETMBR	R3	R0	K0
       0x4C100000,  //  000F  LDNIL	R4
-      0x200C0604,  //  0010  NE	R3	R3	R4
-      0x780E0005,  //  0011  JMPF	R3	#0018
-      0x8C0C050E,  //  0012  GETMET	R3	R2	K14
-      0x60140018,  //  0013  GETGBL	R5	G24
-      0x58180010,  //  0014  LDCONST	R6	K16
-      0x5C1C0600,  //  0015  MOVE	R7	R3
-      0x7C140400,  //  0016  CALL	R5	2
-      0x7C0C0400,  //  0017  CALL	R3	2
+      0x20100604,  //  0010  NE	R4	R3	R4
+      0x78120005,  //  0011  JMPF	R4	#0018
+      0x8C10050E,  //  0012  GETMET	R4	R2	K14
+      0x60180018,  //  0013  GETGBL	R6	G24
+      0x581C0010,  //  0014  LDCONST	R7	K16
+      0x5C200600,  //  0015  MOVE	R8	R3
+      0x7C180400,  //  0016  CALL	R6	2
+      0x7C100400,  //  0017  CALL	R4	2
       0x58100011,  //  0018  LDCONST	R4	K17
       0x8C140112,  //  0019  GETMET	R5	R0	K18
       0x7C140200,  //  001A  CALL	R5	1
@@ -807,8 +807,8 @@ be_local_closure(class_zcl_attribute_list_tostring,   /* name */
       0x7001FFF6,  //  0023  JMP		#001B
       0x880C0102,  //  0024  GETMBR	R3	R0	K2
       0x4C180000,  //  0025  LDNIL	R6
-      0x200C0606,  //  0026  NE	R3	R3	R6
-      0x780E0005,  //  0027  JMPF	R3	#002E
+      0x20180606,  //  0026  NE	R6	R3	R6
+      0x781A0005,  //  0027  JMPF	R6	#002E
       0x8C18050E,  //  0028  GETMET	R6	R2	K14
       0x60200018,  //  0029  GETGBL	R8	G24
       0x58240015,  //  002A  LDCONST	R9	K21
@@ -817,8 +817,8 @@ be_local_closure(class_zcl_attribute_list_tostring,   /* name */
       0x7C180400,  //  002D  CALL	R6	2
       0x880C0104,  //  002E  GETMBR	R3	R0	K4
       0x4C180000,  //  002F  LDNIL	R6
-      0x200C0606,  //  0030  NE	R3	R3	R6
-      0x780E0005,  //  0031  JMPF	R3	#0038
+      0x20180606,  //  0030  NE	R6	R3	R6
+      0x781A0005,  //  0031  JMPF	R6	#0038
       0x8C18050E,  //  0032  GETMET	R6	R2	K14
       0x60200018,  //  0033  GETGBL	R8	G24
       0x58240016,  //  0034  LDCONST	R9	K22

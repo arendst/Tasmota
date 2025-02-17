@@ -31,6 +31,9 @@
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 
+// callback type when a screen paint is done
+typedef void (*lv_paint_cb_t)(int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint8_t *pixels);
+
 struct LVGL_Glue {
   lv_display_t *lv_display = nullptr;
   lv_indev_t *lv_indev = nullptr;
@@ -38,6 +41,7 @@ struct LVGL_Glue {
   void *lv_pixel_buf2 = nullptr;
   Ticker tick;
   File * screenshot = nullptr;
+  lv_paint_cb_t paint_cb = nullptr;
 };
 LVGL_Glue * lvgl_glue;
 
@@ -100,6 +104,20 @@ void lv_flush_callback(lv_display_t *disp, const lv_area_t *area, uint8_t *color
               chrono_time > 0 ? pixels_len / chrono_time : -1);
     }
   }
+  // if there is a display callback, call it
+  if (lvgl_glue->paint_cb != nullptr) {
+    lvgl_glue->paint_cb(area->x1, area->y1, area->x2, area->y2, color_p);
+  }
+}
+
+void lv_set_paint_cb(void* cb);
+void lv_set_paint_cb(void* cb) {
+  lvgl_glue->paint_cb = (lv_paint_cb_t) cb;
+}
+
+void * lv_get_paint_cb(void);
+void * lv_get_paint_cb(void) {
+  return (void*) lvgl_glue->paint_cb;
 }
 
 

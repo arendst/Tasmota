@@ -2624,7 +2624,6 @@ void MI32sendWidget(uint32_t slot){
 }
 
 void MI32InitGUI(void){
-  MI32.widgetSlot=0;
   WSContentStart_P("m32");
   WSContentSend_P(HTTP_MI32_SCRIPT_1);
   WSContentSendStyle();
@@ -2938,6 +2937,20 @@ int ExtStopBLE(){
 
 bool Xsns62(uint32_t function)
 {
+
+#ifdef USE_WEBSERVER
+#ifdef USE_MI_EXT_GUI
+  switch (function) {
+    case FUNC_WEB_ADD_MAIN_BUTTON:
+      WSContentSend_P(HTTP_BTN_MENU_MI32);
+      break;
+    case FUNC_WEB_ADD_HANDLER:
+      WebServer_on(PSTR("/m32"), MI32HandleWebGUI);
+      break;
+  }
+  #endif  //USE_MI_EXT_GUI
+#endif  //USE_WEBSERVER
+
   if (!Settings->flag5.mi32_enable) { return false; }  // SetOption115 - Enable ESP32 MI32 BLE
 
   bool result = false;
@@ -2977,14 +2990,6 @@ bool Xsns62(uint32_t function)
     case FUNC_WEB_SENSOR:
       MI32Show(0);
       break;
-#ifdef USE_MI_EXT_GUI
-      case FUNC_WEB_ADD_MAIN_BUTTON:
-        if (Settings->flag5.mi32_enable) WSContentSend_P(HTTP_BTN_MENU_MI32);
-        break;
-      case FUNC_WEB_ADD_HANDLER:
-        WebServer_on(PSTR("/m32"), MI32HandleWebGUI);
-        break;
-#endif  //USE_MI_EXT_GUI
 #endif  // USE_WEBSERVER
     }
   return result;

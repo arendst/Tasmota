@@ -21,35 +21,20 @@
 #ifdef USE_BERRY_ULP
 #include <berry.h>
 
-// #if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_ULP_COPROC_TYPE_LP_CORE)
 #if defined(CONFIG_ULP_COPROC_ENABLED)
 
 #if defined(CONFIG_IDF_TARGET_ESP32)
 #include "esp32/ulp.h"
 #endif // esp32
-// #if ESP_IDF_VERSION_MAJOR < 5
-//   #if defined(CONFIG_IDF_TARGET_ESP32S2)
-//   #include "esp32s2/ulp.h"
-//   #include "esp32s2/ulp_riscv.h"
-//   #include "esp32s2/ulp_riscv_adc.h"
-//   #endif // s2
-//   #if defined(CONFIG_IDF_TARGET_ESP32S3)
-//   #include "esp32s3/ulp.h"
-//   #include "esp32s3/ulp_riscv.h"
-//   #include "esp32s3/ulp_riscv_adc.h"
-//   #endif //s3
-// #endif // ESP_IDF_VERSION_MAJOR < 5
+
 #include "driver/rtc_io.h"
 #include "driver/gpio.h"
-// #if ESP_IDF_VERSION_MAJOR >= 5
-  #include "esp_adc/adc_oneshot.h"
-  #include "ulp_adc.h"
-  #if defined(CONFIG_ULP_COPROC_TYPE_RISCV) // S2 or S3
-    #include "ulp_riscv.h"
-  #endif // defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
-// #else
-//   #include "driver/adc.h"
-// #endif // ESP_IDF_VERSION_MAJOR >= 5
+
+#include "ulp_adc.h"
+#if defined(CONFIG_ULP_COPROC_TYPE_RISCV) // S2 or S3
+  #include "ulp_riscv.h"
+#endif // defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
+
 #ifdef CONFIG_ULP_COPROC_TYPE_LP_CORE
   #include "ulp_lp_core.h"
   ulp_lp_core_cfg_t be_ulp_lp_core_cfg;
@@ -109,10 +94,10 @@ extern "C" {
     }
   }
 
-  // `ULP.adc_config(channel:int, attenuation:int, width:int) -> nil`
+  // `ULP.adc_config(channel:int, attenuation:int, width:int) -> error:int`
   // 
   // enums: channel 0-7, attenuation 0-3, width  0-3
-  void be_ULP_adc_config(struct bvm *vm, int32_t channel, int32_t attenuation, int32_t width) {
+  int32_t be_ULP_adc_config(struct bvm *vm, int32_t channel, int32_t attenuation, int32_t width) {
 #if defined(CONFIG_IDF_TARGET_ESP32)
     ulp_adc_cfg_t cfg = {
         .adc_n    = ADC_UNIT_1,
@@ -141,9 +126,7 @@ extern "C" {
     be_raisef(vm, "ulp_adc_config_error", "ULP: not supported before ESP-IDF 5.4");
     esp_err_t err = ESP_FAIL;
 #endif
-    if (err != ESP_OK) {
-      be_raisef(vm, "ulp_adc_config_error", "ULP: invalid code err=%i", err);
-    }
+    return err;
   }
 
   /**

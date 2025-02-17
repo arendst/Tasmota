@@ -172,10 +172,13 @@ void TasmotaSerial::Esp32Begin(void) {
     // At 19200, 120 chars are ~60ms
     // At 76800, 120 chars are ~15ms
     uart_set_rx_full_threshold(m_uart, 120);
-  } else {
+  } else if (m_speed == 115200) {
     // At 115200, 256 chars are ~20ms
     // Zigbee requires to keep frames together, i.e. 256 bytes max
     uart_set_rx_full_threshold(m_uart, 256);
+  } else {
+    // At even higher speeds set 75% of the buffer
+    uart_set_rx_full_threshold(m_uart, serial_buffer_size * 3 / 4);
   }
   // For bitrate below 115200, set the Rx time out to 6 chars instead of the default 10
   if (m_speed < 115200) {

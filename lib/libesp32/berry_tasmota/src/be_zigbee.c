@@ -148,4 +148,4 @@ module zigbee (scope: global, strings: weak) {
 }
 @const_object_info_end */
 
-#endif // USE_LIGHT
+#endif // USE_ZIGBEE

@@ -16,7 +16,7 @@ var classes = [
     # ported from LVGL 8
     "colorwheel",
     # new internal names
-    "button", "image", "buttonmatrix", "msgbox"
+    "button", "image", "buttonmatrix", "msgbox", "tabview"
   ]
 
 for cl: classes

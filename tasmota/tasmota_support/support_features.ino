@@ -931,10 +931,18 @@ constexpr uint32_t feature[] = {
 #if defined(USE_I2C) && defined(USE_RTC_CHIPS) && defined(USE_RX8010)
   0x00000200 |  // xdrv_56_rtc_chips.ino
 #endif
-//  0x00000400 |  // 
-//  0x00000800 |  // 
-//  0x00001000 |  // 
-//  0x00002000 |  // 
+#if defined(USE_I2C) && defined(USE_RTC_CHIPS) && defined(USE_PCF85063)
+  0x00000400 |  // xdrv_56_rtc_chips.ino
+#endif
+#ifdef USE_ESP32_TWAI
+  0x00000800 |  // xdrv_91_esp32_twai.ino
+#endif
+#ifdef USE_C8_CO2_5K
+  0x00001000 |  // xsns_117_c8_co2_5k.ino
+#endif
+#ifdef USE_WIZMOTE
+  0x00002000 |  // xdrv_77_wizmote.ino
+#endif
 //  0x00004000 |  // 
 //  0x00008000 |  // 
 //  0x00010000 |  // 

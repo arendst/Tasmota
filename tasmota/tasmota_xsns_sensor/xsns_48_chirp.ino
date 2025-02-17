@@ -240,6 +240,8 @@ bool ChirpScan()
     delay(2);
     chirp_sensor[chirp_found_sensors].version = ChirpReadVersion(address);
     if (chirp_sensor[chirp_found_sensors].version > 0) {
+      // try to confirm by reading the address
+      if (address != I2cRead8(address, CHIRP_GET_ADDRESS)) { continue; }
       I2cSetActiveFound(address, "CHIRP");
       if (chirp_found_sensors<CHIRP_MAX_SENSOR_COUNT) {
         chirp_sensor[chirp_found_sensors].address = address; // push next sensor, as long as there is space in the array

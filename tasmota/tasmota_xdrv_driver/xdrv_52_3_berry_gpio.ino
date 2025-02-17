@@ -54,6 +54,7 @@ extern "C" {
       if (pin >= 0) {
         if (mode > 0) {
           // standard ESP mode
+          analogDetach(pin);
           pinMode(pin, mode);
         } else {
           // synthetic mode

@@ -802,6 +802,7 @@
 #define USE_KNX                                  // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
 #endif
 #define USE_DALI                                 // Add support for DALI gateway (+5k code)
+#define USE_ESP32_TWAI                           // Add support for TWAI/CAN interface (+7k code)
 
 #endif // FIRMWARE_TASMOTA32
 

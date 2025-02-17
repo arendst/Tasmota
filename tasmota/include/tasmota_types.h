@@ -24,38 +24,38 @@
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption0 .. SetOption31
-    uint32_t save_state : 1;               // bit 0              - SetOption0   - (Settings) Save power state (1) and use after restart
-    uint32_t button_restrict : 1;          // bit 1              - SetOption1   - (Button) Control button single press (1) or multipress (0)
+    uint32_t save_state : 1;               // bit 0              - SetOption0   - SAVE_STATE - (Settings) Save power state (1) and use after restart
+    uint32_t button_restrict : 1;          // bit 1              - SetOption1   - KEY_DISABLE_MULTIPRESS - (Button) Control button single press (1) or multipress (0)
     uint32_t mqtt_add_global_info : 1;     // bit 2              - SetOption2   - (MQTT) Add global temperature/humidity/pressure info to JSON sensor message
-    uint32_t mqtt_enabled : 1;             // bit 3              - SetOption3   - (MQTT) Enable (1)
-    uint32_t mqtt_response : 1;            // bit 4              - SetOption4   - (MQTT) Switch between RESULT (0) or COMMAND (1)
-    uint32_t mqtt_power_retain : 1;        // bit 5              - CMND_POWERRETAIN
-    uint32_t mqtt_button_retain : 1;       // bit 6              - CMND_BUTTONRETAIN
-    uint32_t mqtt_switch_retain : 1;       // bit 7              - CMND_SWITCHRETAIN
-    uint32_t temperature_conversion : 1;   // bit 8              - SetOption8   - (Temperature) Switch between Celsius (0) or Fahrenheit (1)
+    uint32_t mqtt_enabled : 1;             // bit 3              - SetOption3   - MQTT_USE - (MQTT) Enable (1)
+    uint32_t mqtt_response : 1;            // bit 4              - SetOption4   - MQTT_RESULT_COMMAND - (MQTT) Switch between RESULT (0) or COMMAND (1)
+    uint32_t mqtt_power_retain : 1;        // bit 5              - CMND_POWERRETAIN - MQTT_POWER_RETAIN
+    uint32_t mqtt_button_retain : 1;       // bit 6              - CMND_BUTTONRETAIN - MQTT_BUTTON_RETAIN
+    uint32_t mqtt_switch_retain : 1;       // bit 7              - CMND_SWITCHRETAIN - MQTT_SWITCH_RETAIN
+    uint32_t temperature_conversion : 1;   // bit 8              - SetOption8   - TEMP_CONVERSION - (Temperature) Switch between Celsius (0) or Fahrenheit (1)
     uint32_t mqtt_sensor_retain : 1;       // bit 9              - CMND_SENSORRETAIN
-    uint32_t mqtt_offline : 1;             // bit 10             - SetOption10  - (MQTT) Control LWT message format, Offline (1) or none (0)
-    uint32_t button_swap : 1;              // bit 11 (v5.1.6)    - SetOption11  - (Button) Swap (1) button single and double press functionality
-    uint32_t stop_flash_rotate : 1;        // bit 12 (v5.2.0)    - SetOption12  - (Settings) Switch between dynamic (0) or fixed (1) slot flash save location
-    uint32_t button_single : 1;            // bit 13 (v5.4.0)    - SetOption13  - (Button) Support only single press (1) to speed up button press recognition
-    uint32_t interlock : 1;                // bit 14 (v5.6.0)    - CMND_INTERLOCK - Enable (1) /disable (0) interlock
-    uint32_t pwm_control : 1;              // bit 15 (v5.8.1)    - SetOption15  - (Light) Switch between commands PWM (0) or COLOR/DIMMER/CT/CHANNEL (1)
-    uint32_t ws_clock_reverse : 1;         // bit 16 (v5.8.1)    - SetOption16  - (WS2812) Switch between clockwise (0) or counter-clockwise (1)
-    uint32_t decimal_text : 1;             // bit 17 (v5.8.1)    - SetOption17  - (Light) Switch between decimal (1) or hexadecimal (0) output
-    uint32_t light_signal : 1;             // bit 18 (v5.10.0c)  - SetOption18  - (Light) Pair light signal (1) with CO2 sensor
-    uint32_t hass_discovery : 1;           // bit 19 (v5.11.1a)  - SetOption19  - (HAss) Control automatic discovery (1) (See SetOption59)
-    uint32_t not_power_linked : 1;         // bit 20 (v5.11.1f)  - SetOption20  - (Light) Control power in relation to Dimmer/Color/Ct changes (1)
-    uint32_t no_power_on_check : 1;        // bit 21 (v5.11.1i)  - SetOption21  - (Energy) Show voltage even if powered off (1)
+    uint32_t mqtt_offline : 1;             // bit 10             - SetOption10  - MQTT_LWT_MESSAGE - (MQTT) Control LWT message format, Offline (1) or none (0)
+    uint32_t button_swap : 1;              // bit 11 (v5.1.6)    - SetOption11  - KEY_SWAP_DOUBLE_PRESS - (Button) Swap (1) button single and double press functionality
+    uint32_t stop_flash_rotate : 1;        // bit 12 (v5.2.0)    - SetOption12  - APP_FLASH_CYCLE - (Settings) Switch between dynamic (0) or fixed (1) slot flash save location
+    uint32_t button_single : 1;            // bit 13 (v5.4.0)    - SetOption13  - KEY_ONLY_SINGLE_PRESS - (Button) Support only single press (1) to speed up button press recognition
+    uint32_t interlock : 1;                // bit 14 (v5.6.0)    - CMND_INTERLOCK - APP_INTERLOCK_MODE - Enable (1) /disable (0) interlock
+    uint32_t pwm_control : 1;              // bit 15 (v5.8.1)    - SetOption15  - LIGHT_MODE - (Light) Switch between commands PWM (0) or COLOR/DIMMER/CT/CHANNEL (1)
+    uint32_t ws_clock_reverse : 1;         // bit 16 (v5.8.1)    - SetOption16  - LIGHT_CLOCK_DIRECTION - (WS2812) Switch between clockwise (0) or counter-clockwise (1)
+    uint32_t decimal_text : 1;             // bit 17 (v5.8.1)    - SetOption17  - LIGHT_COLOR_RADIX - (Light) Switch between decimal (1) or hexadecimal (0) output
+    uint32_t light_signal : 1;             // bit 18 (v5.10.0c)  - SetOption18  - LIGHT_PAIRS_CO2 - (Light) Pair light signal (1) with CO2 sensor
+    uint32_t hass_discovery : 1;           // bit 19 (v5.11.1a)  - SetOption19  - HOME_ASSISTANT_DISCOVERY_ENABLE - (HAss) Control automatic discovery (1) (See SetOption59)
+    uint32_t not_power_linked : 1;         // bit 20 (v5.11.1f)  - SetOption20  - LIGHT_POWER_CONTROL - (Light) Control power in relation to Dimmer/Color/Ct changes (1)
+    uint32_t no_power_on_check : 1;        // bit 21 (v5.11.1i)  - SetOption21  - ENERGY_VOLTAGE_ALWAYS - (Energy) Show voltage even if powered off (1)
     uint32_t mqtt_serial : 1;              // bit 22 (v5.12.0f)  - CMND_SERIALSEND and CMND_SERIALLOG
     uint32_t mqtt_serial_raw : 1;          // bit 23 (v6.1.1c)   - CMND_SERIALSEND3
-    uint32_t pressure_conversion : 1;      // bit 24 (v6.3.0.2)  - SetOption24  - (Pressure) switch between hPa (0)or mmHg (1) unit
-    uint32_t knx_enabled : 1;              // bit 25 (v5.12.0l)  - CMND_KNX_ENABLED
-    uint32_t device_index_enable : 1;      // bit 26 (v5.13.1a)  - SetOption26  - (MQTT, HAss) Switch between POWER (0) or POWER1 (1)
-    uint32_t knx_enable_enhancement : 1;   // bit 27 (v5.14.0a)  - CMND_KNX_ENHANCED
+    uint32_t pressure_conversion : 1;      // bit 24 (v6.3.0.2)  - SetOption24  - PRESSURE_CONVERSION - (Pressure) switch between hPa (0)or mmHg (1) unit
+    uint32_t knx_enabled : 1;              // bit 25 (v5.12.0l)  - CMND_KNX_ENABLED - KNX_ENABLED
+    uint32_t device_index_enable : 1;      // bit 26 (v5.13.1a)  - SetOption26  - MQTT_POWER_FORMAT - (MQTT, HAss) Switch between POWER (0) or POWER1 (1)
+    uint32_t knx_enable_enhancement : 1;   // bit 27 (v5.14.0a)  - CMND_KNX_ENHANCED - KNX_ENHANCED
     uint32_t rf_receive_decimal : 1;       // bit 28 (v6.0.0a)   - SetOption28  - (RF) Receive data format hexadecimal (0) or decimal (1)
-    uint32_t ir_receive_decimal : 1;       // bit 29 (v6.0.0a)   - SetOption29  - (IR) Receive data format hexadecimal (0) or decimal (1)
-    uint32_t hass_light : 1;               // bit 30 (v6.0.0b)   - SetOption30  - (HAss) enforce autodiscovery as light (1)
-    uint32_t global_state : 1;             // bit 31 (v6.1.0)    - SetOption31  - (Wifi, MQTT) Control link led blinking (1)
+    uint32_t ir_receive_decimal : 1;       // bit 29 (v6.0.0a)   - SetOption29  - IR_DATA_RADIX - (IR) Receive data format hexadecimal (0) or decimal (1)
+    uint32_t hass_light : 1;               // bit 30 (v6.0.0b)   - SetOption30  - HASS_AS_LIGHT - (HAss) enforce autodiscovery as light (1)
+    uint32_t global_state : 1;             // bit 31 (v6.1.0)    - SetOption31  - APP_ENABLE_LEDLINK - (Wifi, MQTT) Control link led blinking (1)
   };
 } SOBitfield;
 
@@ -63,39 +63,39 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption50 .. SetOption81
-    uint32_t timers_enable : 1;            // bit 0 (v6.1.1b)    - CMND_TIMERS
+    uint32_t timers_enable : 1;            // bit 0 (v6.1.1b)    - CMND_TIMERS - TIMERS_ENABLED
     uint32_t user_esp8285_enable : 1;      // bit 1 (v6.1.1.14)  - SetOption51  - (GPIO) Enable ESP8285 user GPIO's (1)
-    uint32_t time_append_timezone : 1;     // bit 2 (v6.2.1.2)   - SetOption52  - (Time) Append timezone to JSON time (1)
-    uint32_t gui_hostname_ip : 1;          // bit 3 (v6.2.1.20)  - SetOption53  - (GUI) Show hostname and IP address in GUI main menu (1)
-    uint32_t tuya_apply_o20 : 1;           // bit 4 (v6.3.0.4)   - SetOption54  - (Tuya) Apply SetOption20 settings to Tuya device (1)
-    uint32_t mdns_enabled : 1;             // bit 5 (v6.4.1.4)   - SetOption55  - (mDNS) Service on (1) or off (0)
-    uint32_t use_wifi_scan : 1;            // bit 6 (v6.3.0.10)  - SetOption56  - (Wifi) Scan network at restart for configured AP's (1) or used stored AP (0)
-    uint32_t use_wifi_rescan : 1;          // bit 7 (v6.3.0.10)  - SetOption57  - (Wifi) Scan network every 44 minutes for configured AP's (1)
-    uint32_t receive_raw : 1;              // bit 8 (v6.3.0.11)  - SetOption58  - (IR) Add IR Raw data to JSON message (1)
-    uint32_t hass_tele_on_power : 1;       // bit 9 (v6.3.0.13)  - SetOption59  - (MQTT) Send tele/%topic%/STATE in addition to stat/%topic%/RESULT (1)
-    uint32_t sleep_normal : 1;             // bit 10 (v6.3.0.15) - SetOption60  - (Sleep) Enable normal sleep (1) instead of dynamic sleep (0)
-    uint32_t button_switch_force_local : 1;// bit 11 (v6.3.0.16) - SetOption61  - (Button, Switch) Force local operation (1) when button/switch topic is set
-    uint32_t no_hold_retain : 1;           // bit 12 (v6.4.1.19) - SetOption62  - (MQTT) Don't use retain flag on HOLD messages (1)
-    uint32_t no_power_feedback : 1;        // bit 13 (v6.5.0.9)  - SetOption63  - (Power) Don't scan relay power state at restart (1)
-    uint32_t use_underscore : 1;           // bit 14 (v6.5.0.12) - SetOption64  - (JSON) Enable "_" (1) instead of "-" (0) as sensor index separator
-    uint32_t fast_power_cycle_disable : 1; // bit 15 (v6.6.0.20) - SetOption65  - (QPC) Disable (1) fast power cycle detection for device reset
-    uint32_t tuya_serial_mqtt_publish : 1; // bit 16 (v6.6.0.21) - SetOption66  - (Tuya) Enable (1) TuyaMcuReceived messages over Mqtt
-    uint32_t buzzer_enable : 1;            // bit 17 (v6.6.0.1)  - SetOption67  - (Buzzer) Enable (1) buzzer when available
-    uint32_t pwm_multi_channels : 1;       // bit 18 (v6.6.0.3)  - SetOption68  - (Light) Enable multi-channels PWM (1) instead of Color PWM (0)
+    uint32_t time_append_timezone : 1;     // bit 2 (v6.2.1.2)   - SetOption52  - MQTT_APPEND_TIMEZONE - (Time) Append timezone to JSON time (1)
+    uint32_t gui_hostname_ip : 1;          // bit 3 (v6.2.1.20)  - SetOption53  - GUI_SHOW_HOSTNAME - (GUI) Show hostname and IP address in GUI main menu (1)
+    uint32_t tuya_apply_o20 : 1;           // bit 4 (v6.3.0.4)   - SetOption54  - TUYA_SETOPTION_20 - (Tuya) Apply SetOption20 settings to Tuya device (1)
+    uint32_t mdns_enabled : 1;             // bit 5 (v6.4.1.4)   - SetOption55  - MDNS_ENABLED - (mDNS) Service on (1) or off (0)
+    uint32_t use_wifi_scan : 1;            // bit 6 (v6.3.0.10)  - SetOption56  - WIFI_SCAN_AT_RESTART - (Wifi) Scan network at restart for configured AP's (1) or used stored AP (0)
+    uint32_t use_wifi_rescan : 1;          // bit 7 (v6.3.0.10)  - SetOption57  - WIFI_SCAN_REGULARLY - (Wifi) Scan network every 44 minutes for configured AP's (1)
+    uint32_t receive_raw : 1;              // bit 8 (v6.3.0.11)  - SetOption58  - IR_ADD_RAW_DATA - (IR) Add IR Raw data to JSON message (1)
+    uint32_t hass_tele_on_power : 1;       // bit 9 (v6.3.0.13)  - SetOption59  - TELE_ON_POWER - (MQTT) Send tele/%topic%/STATE in addition to stat/%topic%/RESULT (1)
+    uint32_t sleep_normal : 1;             // bit 10 (v6.3.0.15) - SetOption60  - APP_NORMAL_SLEEP - (Sleep) Enable normal sleep (1) instead of dynamic sleep (0)
+    uint32_t button_switch_force_local : 1;// bit 11 (v6.3.0.16) - SetOption61  - MQTT_BUTTON_SWITCH_FORCE_LOCAL - (Button, Switch) Force local operation (1) when button/switch topic is set
+    uint32_t no_hold_retain : 1;           // bit 12 (v6.4.1.19) - SetOption62  - MQTT_NO_HOLD_RETAIN - (MQTT) Don't use retain flag on HOLD messages (1)
+    uint32_t no_power_feedback : 1;        // bit 13 (v6.5.0.9)  - SetOption63  - APP_NO_RELAY_SCAN - (Power) Don't scan relay power state at restart (1)
+    uint32_t use_underscore : 1;           // bit 14 (v6.5.0.12) - SetOption64  - MQTT_INDEX_SEPARATOR - (JSON) Enable "_" (1) instead of "-" (0) as sensor index separator
+    uint32_t fast_power_cycle_disable : 1; // bit 15 (v6.6.0.20) - SetOption65  - APP_DISABLE_POWERCYCLE - (QPC) Disable (1) fast power cycle detection for device reset
+    uint32_t tuya_serial_mqtt_publish : 1; // bit 16 (v6.6.0.21) - SetOption66  - MQTT_TUYA_RECEIVED - (Tuya) Enable (1) TuyaMcuReceived messages over Mqtt
+    uint32_t buzzer_enable : 1;            // bit 17 (v6.6.0.1)  - SetOption67  - BUZZER_ENABLE - (Buzzer) Enable (1) buzzer when available
+    uint32_t pwm_multi_channels : 1;       // bit 18 (v6.6.0.3)  - SetOption68  - LIGHT_CHANNEL_MODE - (Light) Enable multi-channels PWM (1) instead of Color PWM (0)
 //    uint32_t ex_tuya_dimmer_min_limit : 1; // bit 19 (v6.6.0.5)  - SetOption69  - (not used) Limits Tuya dimmers to minimum of 10% (25) when enabled
     uint32_t sb_receive_invert : 1;        // bit 19 (v14.2.0.3) - SetOption69  - (Serial) Invert Serial receive on SerialBridge (1)
     uint32_t energy_weekend : 1;           // bit 20 (v6.6.0.8)  - CMND_TARIFF
-    uint32_t dds2382_model : 1;            // bit 21 (v6.6.0.14) - SetOption71  - (DDS2382) Select different Modbus registers (1) for Active Energy (#6531)
-    uint32_t hardware_energy_total : 1;    // bit 22 (v6.6.0.15) - SetOption72  - (Energy) Enable (1) hardware energy total counter as reference (#6561)
-    uint32_t mqtt_buttons : 1;             // bit 23 (v8.2.0.3)  - SetOption73  - (Button) Detach buttons from relays (1) and enable MQTT action state for multipress
-    uint32_t ds18x20_internal_pullup : 1;  // bit 24 (v7.0.0.1)  - SetOption74  - (DS18x20) Enable internal pullup (1) for single DS18x20 sensor
-    uint32_t grouptopic_mode : 1;          // bit 25 (v7.0.0.1)  - SetOption75  - (MQTT) GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)
-    uint32_t bootcount_update : 1;         // bit 26 (v7.0.0.4)  - SetOption76  - (Deepsleep) Enable incrementing bootcount (1) when deepsleep is enabled
-    uint32_t slider_dimmer_stay_on : 1;    // bit 27 (v7.0.0.6)  - SetOption77  - (Light) Do not power off (1) if slider moved to far left
+    uint32_t dds2382_model : 1;            // bit 21 (v6.6.0.14) - SetOption71  - ENERGY_DDS2382_MODE - (DDS2382) Select different Modbus registers (1) for Active Energy (#6531)
+    uint32_t hardware_energy_total : 1;    // bit 22 (v6.6.0.15) - SetOption72  - ENERGY_HARDWARE_TOTALS - (Energy) Enable (1) hardware energy total counter as reference (#6561)
+    uint32_t mqtt_buttons : 1;             // bit 23 (v8.2.0.3)  - SetOption73  - MQTT_BUTTONS - (Button) Detach buttons from relays (1) and enable MQTT action state for multipress
+    uint32_t ds18x20_internal_pullup : 1;  // bit 24 (v7.0.0.1)  - SetOption74  - DS18X20_PULL_UP - (DS18x20) Enable internal pullup (1) for single DS18x20 sensor
+    uint32_t grouptopic_mode : 1;          // bit 25 (v7.0.0.1)  - SetOption75  - MQTT_GROUPTOPIC_FORMAT - (MQTT) GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)
+    uint32_t bootcount_update : 1;         // bit 26 (v7.0.0.4)  - SetOption76  - DEEPSLEEP_BOOTCOUNT - (Deepsleep) Enable incrementing bootcount (1) when deepsleep is enabled
+    uint32_t slider_dimmer_stay_on : 1;    // bit 27 (v7.0.0.6)  - SetOption77  - LIGHT_SLIDER_POWER - (Light) Do not power off (1) if slider moved to far left
     uint32_t ex_compatibility_check : 1;   // bit 28 (v7.1.2.6)  - SetOption78  - (not used) Disable OTA compatibility check
-    uint32_t counter_reset_on_tele : 1;    // bit 29 (v8.1.0.1)  - SetOption79  - (Counter) Enable resetting of counters (1) after telemetry was sent
-    uint32_t shutter_mode : 1;             // bit 30 (v6.6.0.14) - SetOption80  - (Shutter) Enable shutter support (1)
-    uint32_t pcf8574_ports_inverted : 1;   // bit 31 (v6.6.0.14) - SetOption81  - (PCF8574) Invert all ports on PCF8574 devices (1)
+    uint32_t counter_reset_on_tele : 1;    // bit 29 (v8.1.0.1)  - SetOption79  - COUNTER_RESET - (Counter) Enable resetting of counters (1) after telemetry was sent
+    uint32_t shutter_mode : 1;             // bit 30 (v6.6.0.14) - SetOption80  - SHUTTER_SUPPORT - (Shutter) Enable shutter support (1)
+    uint32_t pcf8574_ports_inverted : 1;   // bit 31 (v6.6.0.14) - SetOption81  - PCF8574_INVERT_PORTS - (PCF8574) Invert all ports on PCF8574 devices (1)
   };
 } SOBitfield3;
 
@@ -103,37 +103,37 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption82 .. SetOption113
-    uint32_t alexa_ct_range : 1;           // bit 0 (v8.1.0.2)   - SetOption82  - (Alexa) Reduced CT range for Alexa (1)
-    uint32_t zigbee_use_names : 1;         // bit 1 (v8.1.0.4)   - SetOption83  - (Zigbee) Use FriendlyNames (1) instead of ShortAddresses (0) when possible
+    uint32_t alexa_ct_range : 1;           // bit 0 (v8.1.0.2)   - SetOption82  - LIGHT_ALEXA_CT_RANGE - (Alexa) Reduced CT range for Alexa (1)
+    uint32_t zigbee_use_names : 1;         // bit 1 (v8.1.0.4)   - SetOption83  - ZIGBEE_FRIENDLY_NAMES - (Zigbee) Use FriendlyNames (1) instead of ShortAddresses (0) when possible
     uint32_t awsiot_shadow : 1;            // bit 2 (v8.1.0.5)   - SetOption84  - (AWS IoT) publish MQTT state to a device shadow (1)
     uint32_t device_groups_enabled : 1;    // bit 3 (v8.1.0.9)   - SetOption85  - (DevGroups) Enable Device Groups (1)
     uint32_t led_timeout : 1;              // bit 4 (v8.1.0.9)   - SetOption86  - (PWM Dimmer) Turn brightness LED's off (1) 5 seconds after last change
     uint32_t powered_off_led : 1;          // bit 5 (v8.1.0.9)   - SetOption87  - (PWM Dimmer) Turn red LED on (1) when powered off
     uint32_t multiple_device_groups : 1;   // bit 6 (v8.1.0.9)   - SetOption88  - (DevGroups) Enable relays in separate device groups/PWM Dimmer Buttons control remote devices (1)
-    uint32_t zigbee_distinct_topics : 1;   // bit 7 (v8.1.0.10)  - SetOption89  - (MQTT, Zigbee) Distinct MQTT topics per device for Zigbee (1) (#7835)
-    uint32_t only_json_message : 1;        // bit 8 (v8.2.0.3)   - SetOption90  - (MQTT) Disable non-json MQTT response (1)
+    uint32_t zigbee_distinct_topics : 1;   // bit 7 (v8.1.0.10)  - SetOption89  - ZIGBEE_DISTINCT_TOPICS - (MQTT, Zigbee) Distinct MQTT topics per device for Zigbee (1) (#7835)
+    uint32_t only_json_message : 1;        // bit 8 (v8.2.0.3)   - SetOption90  - MQTT_ONLY_JSON_OUTPUT - (MQTT) Disable non-json MQTT response (1)
     uint32_t fade_at_startup : 1;          // bit 9 (v8.2.0.3)   - SetOption91  - (Light) Enable light fading at start/power on (1)
-    uint32_t pwm_ct_mode : 1;              // bit 10 (v8.2.0.4)  - SetOption92  - (Light) Set PWM Mode from regular PWM (0) to ColorTemp (1) control (Xiaomi Philips ...)
+    uint32_t pwm_ct_mode : 1;              // bit 10 (v8.2.0.4)  - SetOption92  - LIGHT_PWM_CT_MODE - (Light) Set PWM Mode from regular PWM (0) to ColorTemp (1) control (Xiaomi Philips ...)
     uint32_t compress_rules_cpu : 1;       // bit 11 (v8.2.0.6)  - SetOption93  - (Compress) Keep uncompressed rules in memory to avoid CPU load of uncompressing at each tick (1)
     uint32_t max6675 : 1;                  // bit 12 (v8.3.1.2)  - SetOption94  - (MAXxxx) Implement simpler MAX6675 protocol (1) instead of MAX31855 (0)
-    uint32_t network_wifi : 1;             // bit 13 (v8.3.1.3)  - CMND_WIFI
-    uint32_t network_ethernet : 1;         // bit 14 (v8.3.1.3)  - CMND_ETHERNET
+    uint32_t network_wifi : 1;             // bit 13 (v8.3.1.3)  - CMND_WIFI - 1
+    uint32_t network_ethernet : 1;         // bit 14 (v8.3.1.3)  - CMND_ETHERNET - 1
     uint32_t tuyamcu_baudrate : 1;         // bit 15 (v8.3.1.6)  - SetOption97  - (Tuya) Set Baud rate for TuyaMCU serial communication to 9600 (0) or 115200 (1)
     uint32_t rotary_uses_rules : 1;        // bit 16 (v8.3.1.6)  - SetOption98  - (Rotary) Use rules (1) instead of light control (0)
     uint32_t zerocross_dimmer : 1;         // bit 17 (v8.3.1.4)  - SetOption99  - (PWM Dimmer) Enable zerocross dimmer (1)
-    uint32_t remove_zbreceived : 1;        // bit 18 (v8.3.1.7)  - SetOption100 - (Zigbee) Remove ZbReceived form JSON message (1)
-    uint32_t zb_index_ep : 1;              // bit 19 (v8.3.1.7)  - SetOption101 - (Zigbee) Add the source endpoint as suffix to attributes, ex `Power3` (1) instead of `Power` (0) if sent from endpoint 3
+    uint32_t remove_zbreceived : 1;        // bit 18 (v8.3.1.7)  - SetOption100 - ZIGBEE_RMV_ZBRECEIVED - (Zigbee) Remove ZbReceived form JSON message (1)
+    uint32_t zb_index_ep : 1;              // bit 19 (v8.3.1.7)  - SetOption101 - ZIGBEE_INDEX_EP - (Zigbee) Add the source endpoint as suffix to attributes, ex `Power3` (1) instead of `Power` (0) if sent from endpoint 3
     uint32_t obsolete1 : 1;                // bit 20 (v9.3.1.3)  - SetOption102 - teleinfo_baudrate Obsolete Teleinfo config has now a dedicated bit field
-    uint32_t mqtt_tls : 1;                 // bit 21 (v8.4.0.1)  - SetOption103 - (MQTT TLS) Enable TLS mode (1) (requires TLS version)
-    uint32_t mqtt_no_retain : 1;           // bit 22 (v8.4.0.1)  - SetOption104 - (MQTT) No Retain (1) - disable all MQTT retained messages, some brokers don't support it: AWS IoT, Losant
-    uint32_t white_blend_mode : 1;         // bit 23 (v8.4.0.1)  - SetOption105 - (Light) White Blend Mode (1) - used to be `RGBWWTable` last value `0`, now deprecated in favor of this option
-    uint32_t virtual_ct : 1;               // bit 24 (v8.4.0.1)  - SetOption106 - (Light) Virtual CT (1) - Creates a virtual White ColorTemp for RGBW lights
-    uint32_t virtual_ct_cw : 1;            // bit 25 (v8.4.0.1)  - SetOption107 - (Light) Virtual CT Channel (1) - signals whether the hardware white is cold CW (true) or warm WW (false)
+    uint32_t mqtt_tls : 1;                 // bit 21 (v8.4.0.1)  - SetOption103 - MQTT_TLS_ENABLED - (MQTT TLS) Enable TLS mode (1) (requires TLS version)
+    uint32_t mqtt_no_retain : 1;           // bit 22 (v8.4.0.1)  - SetOption104 - MQTT_NO_RETAIN - (MQTT) No Retain (1) - disable all MQTT retained messages, some brokers don't support it: AWS IoT, Losant
+    uint32_t white_blend_mode : 1;         // bit 23 (v8.4.0.1)  - SetOption105 - LIGHT_WHITE_BLEND_MODE - (Light) White Blend Mode (1) - used to be `RGBWWTable` last value `0`, now deprecated in favor of this option
+    uint32_t virtual_ct : 1;               // bit 24 (v8.4.0.1)  - SetOption106 - LIGHT_VIRTUAL_CT - (Light) Virtual CT (1) - Creates a virtual White ColorTemp for RGBW lights
+    uint32_t virtual_ct_cw : 1;            // bit 25 (v8.4.0.1)  - SetOption107 - LIGHT_VIRTUAL_CT_CW - (Light) Virtual CT Channel (1) - signals whether the hardware white is cold CW (true) or warm WW (false)
     uint32_t obsolete2 : 1;                // bit 26 (v9.3.1.3)  - SetOption108 - teleinfo_rawdata Obsolete Teleinfo config has now a dedicated bit field
-    uint32_t alexa_gen_1 : 1;              // bit 27 (v8.4.0.3)  - SetOption109 - (Alexa) Gen1 mode (1) - if you only have Echo Dot 2nd gen devices
+    uint32_t alexa_gen_1 : 1;              // bit 27 (v8.4.0.3)  - SetOption109 - EMULATION_HUE_1ST_GEN - (Alexa) Gen1 mode (1) - if you only have Echo Dot 2nd gen devices
     uint32_t zb_disable_autobind : 1;      // bit 28 (v8.5.0.1)  - SetOption110 - (Zigbee) Disable auto-config (1) when pairing new devices
     uint32_t buzzer_freq_mode : 1;         // bit 29 (v8.5.0.1)  - SetOption111 - (Buzzer) Use frequency output (1) for buzzer pin instead of on/off signal (0)
-    uint32_t zb_topic_fname : 1;           // bit 30 (v8.5.0.1)  - SetOption112 - (Zigbee) Use friendly name in zigbee topic (1) (use with SetOption89)
+    uint32_t zb_topic_fname : 1;           // bit 30 (v8.5.0.1)  - SetOption112 - ZIGBEE_TOPIC_FNAME - (Zigbee) Use friendly name in zigbee topic (1) (use with SetOption89)
     uint32_t rotary_poweron_dimlow : 1;    // bit 31 (v9.0.0.2)  - SetOption113 - (Rotary) Set dimmer low on rotary dial after power off (1)
   };
 } SOBitfield4;
@@ -142,38 +142,38 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption114 .. SetOption145
-    uint32_t mqtt_switches : 1;            // bit 0 (v9.0.0.3)   - SetOption114 - (Switch) Detach Switches from relays and enable MQTT action state for all the SwitchModes (1)
-    uint32_t mi32_enable : 1;              // bit 1 (v9.1.0.1)   - SetOption115 - (ESP32 BLE) Enable ESP32 MI32 BLE (1)
+    uint32_t mqtt_switches : 1;            // bit 0 (v9.0.0.3)   - SetOption114 - MQTT_SWITCHES - (Switch) Detach Switches from relays and enable MQTT action state for all the SwitchModes (1)
+    uint32_t mi32_enable : 1;              // bit 1 (v9.1.0.1)   - SetOption115 - BLE_ESP32_ENABLE - (ESP32 BLE) Enable ESP32 MI32 BLE (1)
     uint32_t zb_disable_autoquery : 1;     // bit 2 (v9.1.0.1)   - SetOption116 - (Zigbee) Disable auto-query of zigbee lights and devices (1)
     uint32_t fade_fixed_duration : 1;      // bit 3 (v9.1.0.2)   - SetOption117 - (Light) run fading at fixed duration instead of fixed slew rate
     uint32_t zb_received_as_subtopic : 1;  // bit 4 (v9.2.0.3)   - SetOption118 - (Zigbee) Move ZbReceived from JSON message and into the subtopic replacing "SENSOR" default
     uint32_t zb_omit_json_addr : 1;        // bit 5 (v9.2.0.3)   - SetOption119 - (Zigbee) Remove the device addr from json payload, can be used with zb_topic_fname where the addr is already known from the topic
     uint32_t zb_topic_endpoint : 1;        // bit 6 (v9.2.0.4)   - SetOption120 - (Zigbee) Append endpoint number to topic if device dependent (use with SetOption89)
-    uint32_t mqtt_state_retain : 1;        // bit 7 (v9.3.0.1)   - CMND_STATERETAIN
-    uint32_t mqtt_info_retain  : 1;        // bit 8 (v9.3.0.1)   - CMND_INFORETAIN
+    uint32_t mqtt_state_retain : 1;        // bit 7 (v9.3.0.1)   - CMND_STATERETAIN - MQTT_STATE_RETAIN
+    uint32_t mqtt_info_retain  : 1;        // bit 8 (v9.3.0.1)   - CMND_INFORETAIN - MQTT_INFO_RETAIN
     uint32_t wiegand_hex_output : 1;       // bit 9 (v9.3.1.1)   - SetOption123 - (Wiegand) switch tag number output to hex format (1)
     uint32_t wiegand_keypad_to_tag : 1;    // bit 10 (v9.3.1.1)  - SetOption124 - (Wiegand) send key pad stroke as single char (0) or one tag (ending char #) (1)
     uint32_t zigbee_hide_bridge_topic : 1; // bit 11 (v9.3.1.1)  - SetOption125 - (Zigbee) Hide bridge topic from zigbee topic (use with SetOption89) (1)
     uint32_t ds18x20_mean : 1;             // bit 12 (v9.3.1.2)  - SetOption126 - (DS18x20) Enable arithmetic mean over teleperiod for JSON temperature (1)
-    uint32_t wifi_no_sleep : 1;            // bit 13 (v9.5.0.2)  - SetOption127 - (Wifi) Keep wifi in no-sleep mode, prevents some occasional unresponsiveness
-    uint32_t disable_referer_chk : 1;      // bit 14 (v9.5.0.5)  - SetOption128 - (Web) Allow access without referer check
+    uint32_t wifi_no_sleep : 1;            // bit 13 (v9.5.0.2)  - SetOption127 - WIFI_NO_SLEEP - (Wifi) Keep wifi in no-sleep mode, prevents some occasional unresponsiveness
+    uint32_t disable_referer_chk : 1;      // bit 14 (v9.5.0.5)  - SetOption128 - DISABLE_REFERER_CHK - (Web) Allow access without referer check
     uint32_t energy_phase : 1;             // bit 15 (v9.5.0.9)  - SetOption129 - (Energy) Show phase information
     uint32_t show_heap_with_timestamp : 1; // bit 16 (v9.5.0.9)  - SetOption130 - (Debug) Show heap with logging timestamp
-    uint32_t tuya_allow_dimmer_0 : 1;      // bit 17 (v10.0.0.3) - SetOption131 - (Tuya) Allow save dimmer = 0 receved by MCU
-    uint32_t tls_use_fingerprint : 1;      // bit 18 (v10.0.0.4) - SetOption132 - (TLS) Use fingerprint validation instead of CA based
-    uint32_t shift595_invert_outputs : 1;  // bit 19 (v10.0.0.4) - SetOption133 - (Shift595) Invert outputs of 74x595 shift registers
+    uint32_t tuya_allow_dimmer_0 : 1;      // bit 17 (v10.0.0.3) - SetOption131 - TUYA_ALLOW_DIMMER_0 - (Tuya) Allow save dimmer = 0 receved by MCU
+    uint32_t tls_use_fingerprint : 1;      // bit 18 (v10.0.0.4) - SetOption132 - MQTT_TLS_FINGERPRINT - (TLS) Use fingerprint validation instead of CA based
+    uint32_t shift595_invert_outputs : 1;  // bit 19 (v10.0.0.4) - SetOption133 - SHIFT595_INVERT_OUTPUTS - (Shift595) Invert outputs of 74x595 shift registers
     uint32_t pwm_force_same_phase : 1;     // bit 20 (v10.1.0.6) - SetOption134 - (PWM) force PWM lights to start at same phase, default is to spread phases to minimze overlap (also needed for H-bridge)
     uint32_t display_no_splash : 1;        // bit 21 (v11.0.0.2) - SetOption135 - (Display & LVGL) force disabling default splash screen
     uint32_t tuyasns_no_immediate : 1;     // bit 22 (v11.0.0.4) - SetOption136 - (TuyaSNS) When ON disable publish single SNS value on Tuya Receive (keep Teleperiod)
-    uint32_t tuya_exclude_from_mqtt : 1;   // bit 23 (v11.0.0.5) - SetOption137 - (Tuya) When Set, avoid the (MQTT-) publish of defined Tuya CMDs (see xdrv_16_tuyamcu.ino) if SetOption66 is active
+    uint32_t tuya_exclude_from_mqtt : 1;   // bit 23 (v11.0.0.5) - SetOption137 - TUYA_SETOPTION_137 - (Tuya) When Set, avoid the (MQTT-) publish of defined Tuya CMDs (see xdrv_16_tuyamcu.ino) if SetOption66 is active
     uint32_t gui_table_align : 1;          // bit 24 (v11.0.0.7) - SetOption138 - (GUI) Align (energy) table values left (0) or right (1)
     uint32_t mm_vs_inch : 1;               // bit 25 (v11.1.0.1) - SetOption139 - (Pressure) Switch between mmHg (0) or inHg (1) when SO24 1
-    uint32_t mqtt_persistent : 1;          // bit 26 (v11.1.0.1) - SetOption140 - (MQTT) MQTT clean session (0 = default) or persistent session (1)
-    uint32_t gui_module_name : 1;          // bit 27 (v11.1.0.3) - SetOption141 - (GUI) Disable display of GUI module name (1)
+    uint32_t mqtt_persistent : 1;          // bit 26 (v11.1.0.1) - SetOption140 - MQTT_CLEAN_SESSION - (MQTT) MQTT clean session (0 = default) or persistent session (1)
+    uint32_t gui_module_name : 1;          // bit 27 (v11.1.0.3) - SetOption141 - GUI_NOSHOW_MODULE - (GUI) Disable display of GUI module name (1)
     uint32_t wait_for_wifi_result : 1;     // bit 28 (v11.1.0.4) - SetOption142 - (Wifi) Wait 1 second for wifi connection solving some FRITZ!Box modem issues (1)
     uint32_t zigbee_no_batt_autoprobe : 1; // bit 29 (v12.0.2.4) - SetOption143 - (Zigbee) Disable Battery auto-probe and using auto-binding
     uint32_t zigbee_include_time : 1;      // bit 30 (v12.0.2.4) - SetOption144 - (Zigbee) Include time in `ZbReceived` messages like other sensors
-    uint32_t mqtt_status_retain : 1;       // bit 31 (v12.1.0.1) - CMND_STATUSRETAIN
+    uint32_t mqtt_status_retain : 1;       // bit 31 (v12.1.0.1) - CMND_STATUSRETAIN - MQTT_STATUS_RETAIN
   };
 } SOBitfield5;
 
@@ -181,24 +181,24 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption146 .. SetOption177
     uint32_t use_esp32_temperature : 1;    // bit 0  (v12.1.1.1) - SetOption146 - (ESP32) Show ESP32 internal temperature sensor
-    uint32_t mqtt_disable_publish : 1;     // bit 1  (v12.1.1.2) - SetOption147 - (MQTT) Disable publish SSerialReceived/IRReceived MQTT messages, you must use event trigger rules instead.
+    uint32_t mqtt_disable_publish : 1;     // bit 1  (v12.1.1.2) - SetOption147 - MQTT_DISABLE_SSERIALRECEIVED - (MQTT) Disable publish SSerialReceived/IRReceived MQTT messages, you must use event trigger rules instead.
     uint32_t artnet_autorun : 1;           // bit 2  (v12.2.0.4) - SetOption148 - (Light) start DMX ArtNet at boot, listen to UDP port as soon as network is up
     uint32_t dns_ipv6_priority : 1;        // bit 3  (v12.2.0.6) - SetOption149 - (Wifi) prefer IPv6 DNS resolution to IPv4 address when available. Requires `#define USE_IPV6`
     uint32_t no_voltage_common : 1;        // bit 4  (v12.3.1.5) - SetOption150 - (Energy) Force no voltage/frequency common
-    uint32_t matter_enabled : 1;           // bit 5  (v12.3.1.5) - SetOption151 - (Matter) Enable Matter protocol over Wifi
+    uint32_t matter_enabled : 1;           // bit 5  (v12.3.1.5) - SetOption151 - MATTER_ENABLED - (Matter) Enable Matter protocol over Wifi
     uint32_t bistable_single_pin : 1;      // bit 6  (v12.5.0.1) - SetOption152 - (Power) Switch between two (0) or one (1) pin bistable relay control
     uint32_t berry_no_autoexec : 1;        // bit 7  (v12.5.0.3) - SetOption153 - (Berry) Disable autoexec.be on restart (1)
     uint32_t berry_light_scheme : 1;       // bit 8  (v12.5.0.3) - SetOption154 - (Berry) Handle berry led using RMT0 as additional WS2812 scheme
     uint32_t zcfallingedge : 1;            // bit 9  (v13.0.0.1) - SetOption155 - (ZCDimmer) Enable rare falling Edge dimmer instead of leading edge
     uint32_t sen5x_passive_mode : 1;       // bit 10 (v13.1.0.1) - SetOption156 - (Sen5x) Run in passive mode when there is another I2C master (e.g. Ikea Vindstyrka), i.e. do not set up Sen5x sensor, higher polling interval
     uint32_t neopool_outputsensitive : 1;  // bit 11 (v13.2.0.1) - SetOption157 - (NeoPool) Output sensitive data (1)
-    uint32_t mqtt_disable_modbus : 1;      // bit 12 (v13.3.0.5) - SetOption158 - (MQTT) Disable publish ModbusReceived MQTT messages (1), you must use event trigger rules instead
+    uint32_t mqtt_disable_modbus : 1;      // bit 12 (v13.3.0.5) - SetOption158 - MQTT_DISABLE_MODBUSRECEIVED - (MQTT) Disable publish ModbusReceived MQTT messages (1), you must use event trigger rules instead
     uint32_t counter_both_edges : 1;       // bit 13 (v13.3.0.5) - SetOption159 - (Counter) Enable counting on both rising and falling edge (1)
     uint32_t ld2410_use_pin : 1;           // bit 14 (v14.3.0.2) - SetOption160 - (LD2410) Disable generate moving event by sensor report - use LD2410 out pin for events (1)
-    uint32_t gui_no_state_text : 1;        // bit 15 (v14.3.0.7) - SetOption161 - (GUI) Disable display of state text (1)
+    uint32_t gui_no_state_text : 1;        // bit 15 (v14.3.0.7) - SetOption161 - GUI_NOSHOW_STATETEXT - (GUI) Disable display of state text (1)
     uint32_t no_export_energy_today : 1;   // bit 16 (v14.3.0.7) - SetOption162 - (Energy) Do not add export energy to energy today (1)
-    uint32_t spare17 : 1;                  // bit 17
-    uint32_t spare18 : 1;                  // bit 18
+    uint32_t gui_device_name : 1;          // bit 17 (v14.4.1.1) - SetOption163 - GUI_NOSHOW_DEVICENAME - (GUI) Disable display of GUI device name (1)
+    uint32_t wizmote_enabled : 1;          // bit 18 (v14.4.1.4) - SetOption164 - (WizMote) Enable WiZ Smart Remote support (1)
     uint32_t spare19 : 1;                  // bit 19
     uint32_t spare20 : 1;                  // bit 20
     uint32_t spare21 : 1;                  // bit 21
@@ -222,18 +222,18 @@ typedef union {
     uint32_t spare00 : 1;
     uint32_t speed_conversion : 3;         // (v8.1.0.10) - Tx2x sensor
     uint32_t time_format : 2;              // (v6.6.0.9)  - CMND_TIME
-    uint32_t calc_resolution : 3;
+    uint32_t calc_resolution : 3;          // CALC_RESOLUTION
     uint32_t weight_resolution : 2;
     uint32_t frequency_resolution : 2;
     uint32_t axis_resolution : 2;
-    uint32_t current_resolution : 2;
+    uint32_t current_resolution : 2;       // 2
     uint32_t voltage_resolution : 2;
     uint32_t wattage_resolution : 2;
-    uint32_t emulation : 2;
-    uint32_t energy_resolution : 3;
-    uint32_t pressure_resolution : 2;
-    uint32_t humidity_resolution : 2;
-    uint32_t temperature_resolution : 2;
+    uint32_t emulation : 2;                // EMULATION
+    uint32_t energy_resolution : 3;        // ENERGY_RESOLUTION
+    uint32_t pressure_resolution : 2;      // PRESSURE_RESOLUTION
+    uint32_t humidity_resolution : 2;      // HUMIDITY_RESOLUTION
+    uint32_t temperature_resolution : 2;   // TEMP_RESOLUTION
   };
 } SysMBitfield1;
 
@@ -241,15 +241,10 @@ typedef union {
 typedef union {
   uint32_t data;                           // Allow bit manipulation
   struct {
-    uint32_t spare00 : 1;                  // bit 0
-    uint32_t spare01 : 1;                  // bit 1
-    uint32_t spare02 : 1;                  // bit 2
-    uint32_t spare03 : 1;                  // bit 3
-    uint32_t spare04 : 1;                  // bit 4
-    uint32_t spare05 : 1;                  // bit 5
-    uint32_t spare06 : 1;                  // bit 6
-    uint32_t spare07 : 1;                  // bit 7
-    uint32_t spare08 : 1;                  // bit 8
+    uint32_t log_file_idx : 4;             // bit 0.3   (v14.4.1.2) - FileLog log rotate index
+    uint32_t light_pixels_order : 3;       // bit 4.6   (v14.4.1.3) - LED light order <Compile>/GRB/RGB/RBG/BRG/BGR/GBR, high bit indicates W before (for RGBW)
+    uint32_t light_pixels_rgbw : 1;        // bit 7     (v14.4.1.3) - LED true is 4 channels RGBW, false is 3 channels RGB
+    uint32_t light_pixels_w_first : 1;     // bit 8     (v14.4.1.3) - LED true if W channel comes first, default is <RGB>W
     uint32_t spare09 : 1;                  // bit 9
     uint32_t spare10 : 1;                  // bit 10
     uint32_t spare11 : 1;                  // bit 11
@@ -264,7 +259,7 @@ typedef union {
     uint32_t FTP_Mode : 2;                 // bit 24/25
     uint32_t tariff_forced : 2;            // bit 26/27 (v12.4.0.2) - Energy forced tariff : 0=tariff change on time, 1|2=tariff forced
     uint32_t sunrise_dawn_angle : 2;       // bit 28/29 (v12.1.1.4) -
-    uint32_t temperature_set_res : 2;      // bit 30/31 (v9.3.1.4) - (Tuya)
+    uint32_t temperature_set_res : 2;      // bit 30/31 (v9.3.1.4) - TUYA_TEMP_SET_RES - (Tuya)
   };
 } SysMBitfield2;
 
@@ -665,7 +660,8 @@ typedef struct {
   // ----------------------------------------
 #endif // ESP32S3
 
-  uint16_t      light_pixels;              // 496
+  uint16_t      light_pixels : 15;         // 496
+  uint16_t      light_pixels_reverse : 1;  // 496
   uint8_t       light_color[LST_MAX];      // 498  LST_MAX = 5
   uint8_t       light_correction;          // 49D
   uint8_t       light_dimmer;              // 49E
@@ -695,9 +691,7 @@ typedef struct {
   uint16_t      influxdb_period;           // 538 520
   uint16_t      rf_duplicate_time;         // 53A 522
   uint8_t       global_sensor_index[3];    // 53C 4C5
-
-  uint8_t       free_53F[1];               // 53F
-
+  uint8_t       filelog_level;             // 53F
   uint16_t      tcp_baudrate;              // 540 
   uint16_t      button_debounce;           // 542
   uint32_t      ipv4_address[5];           // 544
@@ -786,8 +780,10 @@ typedef struct {
   uint8_t       web_color2[2][3];          // EA0  Needs to be on integer / 3 distance from web_color
   uint16_t      zcdimmerset[5];            // EA6
 
-  uint8_t       free_eb0[22];              // EB0  22 bytes
+  uint8_t       free_eb0[20];              // EB0  20 bytes
 
+  uint16_t      light_pixels_height_1 : 15;// EC4  Pixels height minus 1, default 0 (0 means 1 line)
+  uint16_t      light_pixels_alternate : 1;// EC4  Indicates alternate lines in Pixels Matrix
   uint8_t       shift595_device_count;     // EC6
   uint8_t       sta_config;                // EC7
   uint8_t       sta_active;                // EC8

@@ -1,5 +1,6 @@
 /////////////////////////////////////////////////////////////////////
 // compressed by tools/unishox/compress-html-uncompressed.py
+// input sha256: 92e33b521e56657da8f50887c7e1431219de0a8f19048247211f3b6d4c9b68ba
 /////////////////////////////////////////////////////////////////////
 
 const size_t HTTP_SCRIPT_MODULE_TEMPLATE_SIZE = 589;

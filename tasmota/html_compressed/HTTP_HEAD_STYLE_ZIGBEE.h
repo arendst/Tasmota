@@ -1,5 +1,6 @@
 /////////////////////////////////////////////////////////////////////
 // compressed by tools/unishox/compress-html-uncompressed.py
+// input sha256: ee7e68972559c2ad3df6a6594445bfdfeb14a0a37dec2389ec20a197c26c9311
 /////////////////////////////////////////////////////////////////////
 
 const size_t HTTP_HEAD_STYLE_ZIGBEE_SIZE = 363;

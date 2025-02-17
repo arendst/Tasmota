@@ -20,9 +20,13 @@
 ###############################################################
 
 import unishox
-from os import listdir
-from os import path
+from sys import argv
 from datetime import datetime
+from pathlib import Path
+from hashlib import sha256
+
+self_dir = Path(__file__).absolute().parent
+base_dir = self_dir.parent.parent
 
 def extract_c_string(s: str) -> str:
   state = 0
@@ -48,18 +52,24 @@ def extract_c_string(s: str) -> str:
         out += c
   return out
 
-path_compressed   = path.join('..','..','tasmota','html_compressed')
-path_uncompressed = path.join('..','..','tasmota','html_uncompressed')
+def compress_html(source, target, argv=None, verbose=False):
+  if argv is None: argv = []
 
-files = listdir(path_uncompressed)
+  with open(source, "r") as f:
+    text = f.read()
 
-totalIn = 0
-totalSaved = 0
+  src_sha, old_sha = sha256(text.encode()).hexdigest(), None
 
-for file in files:
-  f = open(path_uncompressed + path.sep + file, "r")
-  text = f.read()
-  f.close()
+  if not ('--force' in argv):
+    with open(target, "r") as f:
+      for line in f:
+        prefix = line[:17]
+        if prefix == '// input sha256: ':
+          old_sha = line[17:17+64]
+          break
+
+    if src_sha == old_sha:
+      return (0, 0)
 
   #text = Tk().clipboard_get()
   # print(text)
@@ -109,8 +119,9 @@ for file in files:
           # print(text[lastel+1:pos:])
       lastel = pos
 
-  print("####### Parsing input from " + path_uncompressed + path.sep + file)
-  print("  Const char name: "+const_name)
+  if verbose:
+    print("####### Parsing input from " + str(source.relative_to(base_dir)))
+    print("  Const char name: "+const_name)
   #print('####### Cleaned input:')
   #print(input)
 
@@ -128,20 +139,27 @@ for file in files:
 
   UNISHOX = unishox.Unishox()
   out_len = UNISHOX.compress(in_bytes, len(in_bytes), out_bytes, len(out_bytes))
-  print("  ####### Compression result:")
-  print("  Compressed from {i} to {o}, -{p:.1f}%".format(i=in_len, o=out_len, p=(100-(float(out_len)/float(in_len)*100))))
+  if verbose:
+    print("  ####### Compression result:")
+    reduction = 100-(float(out_len)/float(in_len)*100)
+    print(f"  Compressed from {in_len} to {out_len}, -{reduction:.1f}%")
   out_bytes = out_bytes[:out_len]     # truncate to right size
 
   #PROGMEM is growing in steps 0,8,24,40,56,... bytes of data resulting in size of 0,16,32,48,64,... bytes
   for in_real in range(8,in_len+16,16):
       if in_real>=in_len:
-        print("  Old real PROGMEM-size:"+str(in_real+8)+"(unused bytes:"+str(in_real-in_len)+")")
+        if verbose:
+          print(f"  Old real PROGMEM-size:{in_real+8}(unused bytes:{in_real-in_len})")
         break
   for out_real in range(8,out_len+16,16):
       if out_real>=out_len:
-        print("  New real PROGMEM-size:"+str(out_real+8)+"(unused bytes:"+str(out_real-out_len)+")")
+        if verbose:
+          print(f"  New real PROGMEM-size:{out_real+8}(unused bytes:{out_real-out_len})")
         break
-  print("  the optimal case would be raw bytes + 8, real difference: "+str(in_real - out_real)+ "bytes")
+
+  if verbose:
+    print(f"  the optimal case would be raw bytes + 8, real difference: {in_real - out_real}bytes")
+
   # https://www.geeksforgeeks.org/break-list-chunks-size-n-python/
   def chunked(my_list, n):
       return [my_list[i * n:(i + 1) * n] for i in range((len(my_list) + n - 1) // n )]
@@ -150,27 +168,49 @@ for file in files:
   chunks = chunked(out_bytes, 20)
 
   lines_raw = [ "\"\\x" + "\\x".join( [ '{:02X}'.format(b) for b in chunk ] ) + "\"" for chunk in chunks ]
-  line_complete = "const char " + const_name + "_COMPRESSED" +"[] PROGMEM = " + ("\n" + " "*29).join(lines_raw) + ";"
-  lines = "\nconst size_t " + const_name +"_SIZE = {size};\n{lines}\n\n".format(size=in_len, lines=line_complete)
+  line_complete = f"const char {const_name}_COMPRESSED[] PROGMEM = " + ("\n" + " "*29).join(lines_raw) + ";"
+  lines = f"\nconst size_t {const_name}_SIZE = {in_len};\n{line_complete}\n\n"
 
   #print('####### Final output:')
   #print(lines)
 
-  definition = "#define  " + const_name +  "       Decompress(" + const_name + "_COMPRESSED" + "," + const_name +"_SIZE" + ").c_str()"
+  definition = f"#define  {const_name}       Decompress({const_name}_COMPRESSED,{const_name}_SIZE).c_str()"
   #print(definition)
 
   now = datetime.now() # current date and time
   percent = int((float(out_real)/float(in_real))*100.0)
   saving = in_real - out_real
-  totalIn = totalIn + in_real
-  totalSaved = totalSaved + saving
-  comment = "/////////////////////////////////////////////////////////////////////\n"
-  comment = comment + "// compressed by tools/unishox/compress-html-uncompressed.py\n"
-  comment = comment + "/////////////////////////////////////////////////////////////////////\n"
+  #totalIn = totalIn + in_real
+  #totalSaved = totalSaved + saving
+  comment  = "/////////////////////////////////////////////////////////////////////\n"
+  comment += "// compressed by tools/unishox/compress-html-uncompressed.py\n"
+  comment += f"// input sha256: {src_sha}\n"
+  comment += "/////////////////////////////////////////////////////////////////////\n"
 
-  f = open(path_compressed + path.sep + file, "w")
-  f.write(comment + lines + definition)
-  f.close()
-  print("####### Wrote output to " + path_compressed + path.sep + file)
+  with open(target, "w") as f:
+      f.write(comment + lines + definition)
 
-print("If all files are in use, total saving was "+str(totalSaved)+" out of "+str(totalIn))
+  return (in_real, saving)
+
+  if verbose:
+    print("####### Wrote output to " + str(target.relative_to(base_dir)))
+
+def compress_dir(source_dir, target_dir, argv=None, verbose=False):
+  totalIn, totalSaved = 0, 0
+
+  for source in source_dir.iterdir():
+    target = Path(target_dir, source.stem + ".h")
+    bytesIn, bytesSaved = compress_html(source, target, argv, verbose)
+    totalIn += bytesIn
+    totalSaved += bytesSaved
+
+  return (totalIn, totalSaved)
+
+if __name__ == '__main__':
+  path_uncompressed = Path(base_dir, 'tasmota', 'html_uncompressed')
+  path_compressed   = Path(base_dir, 'tasmota', 'html_compressed')
+
+  totalIn, totalSaved = compress_dir(path_uncompressed, path_compressed, argv, True)
+
+  if totalSaved > 0:
+    print(f"If all files are in use, total saving was {totalSaved} out of {totalIn}")

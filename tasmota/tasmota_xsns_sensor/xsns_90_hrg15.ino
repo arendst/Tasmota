@@ -24,8 +24,8 @@
  * https://rainsensors.com/rg-9-15-protocol/
  *
  * Rule for Domoticz Rain sensor index 418:
- * on tele-rg-15#flowrate do var1 %value% endon
- * on tele-rg-15#event do backlog var2 %value%; mult1 100; event sendrain endon
+ * on tele-rg15#flowrate do var1 %value% endon
+ * on tele-rg15#event do backlog var2 %value%; mult1 100; event sendrain endon
  * on event#sendrain do dzsend1 418,%var1%;%var2% endon
 \*********************************************************************************************/
 
@@ -36,16 +36,18 @@
 #define RG15_READ_TIMEOUT  500
 #define RG15_EVENT_TIMEOUT 60
 #define RG15_BUFFER_SIZE   150
+#define RG15_RCV_TIMEOUT   70    // Receiver timeout in seconds
 
 #include <TasmotaSerial.h>
 
 #ifdef USE_WEBSERVER
 const char HTTP_RG15[] PROGMEM =
   // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-   "{s}" RG15_NAME " " D_JSON_ACTIVE "{m}%2_f " D_UNIT_MILLIMETER "{e}"
-   "{s}" RG15_NAME " " D_JSON_EVENT "{m}%2_f " D_UNIT_MILLIMETER "{e}"
-   "{s}" RG15_NAME " " D_JSON_TOTAL "{m}%2_f " D_UNIT_MILLIMETER "{e}"
-   "{s}" RG15_NAME " " D_JSON_FLOWRATE "{m}%2_f " D_UNIT_MILLIMETER "/" D_UNIT_HOUR "{e}";
+   "{s}" RG15_NAME " " D_HRG_VALID "{m}%d{e}"
+   "{s}" RG15_NAME " " D_HRG_ACTIVE "{m}%2_f " D_UNIT_MILLIMETER "{e}"
+   "{s}" RG15_NAME " " D_HRG_EVENT "{m}%2_f " D_UNIT_MILLIMETER "{e}"
+   "{s}" RG15_NAME " " D_HRG_TOTAL "{m}%2_f " D_UNIT_MILLIMETER "{e}"
+   "{s}" RG15_NAME " " D_HRG_FLOWRATE "{m}%2_f " D_UNIT_MILLIMETER "/" D_UNIT_HOUR "{e}";
 #endif  // USE_WEBSERVER
 
 TasmotaSerial *HydreonSerial = nullptr;
@@ -55,8 +57,10 @@ struct RG15 {
   float event = NAN;
   float total = NAN;
   float rate = NAN;
+  uint32_t data_received = 0;
   uint16_t time = RG15_EVENT_TIMEOUT;
   uint8_t init_step;
+  bool sensor_valid = false;
 } Rg15;
 
 /*********************************************************************************************/
@@ -163,9 +167,17 @@ void Rg15Init(void) {
         AddLog(LOG_LEVEL_DEBUG, PSTR("HRG: Serial UART%d"), HydreonSerial->getUart());
 #endif
         Rg15.init_step = 5;                  // Perform RG-15 init
+        Rg15.data_received = TasmotaGlobal.uptime;
       }
     }
   }
+}
+
+void Rg15SensorValidChanged(bool new_status) {
+  AddLog(LOG_LEVEL_DEBUG, PSTR("HRG: Valid changed %d"), new_status);
+  Rg15.sensor_valid = new_status;
+
+  // todo trigger teleperiod or publish status
 }
 
 void Rg15Poll(void) {
@@ -187,7 +199,17 @@ void Rg15Poll(void) {
       Rg15ReadLine(rg15_buffer);
       if (Rg15Process(rg15_buffer)) {        // Do NOT use "publish = Rg15Process(rg15_buffer)"
         publish = true;
+        Rg15.data_received = TasmotaGlobal.uptime;
+        if (!Rg15.sensor_valid) {
+          Rg15SensorValidChanged(true);      // Reset timeout
+        }
       }
+    }
+  }
+
+  if ((TasmotaGlobal.uptime - Rg15.data_received) > RG15_RCV_TIMEOUT) {
+    if (Rg15.sensor_valid) {
+      Rg15SensorValidChanged(false);         // Timeout
     }
   }
 
@@ -214,17 +236,17 @@ void Rg15Poll(void) {
 void Rg15Show(bool json) {
   if (json) {
     // if the parsing wasn't completely successful then skip the update
-    if( !isnan(Rg15.acc) && !isnan(Rg15.event) && !isnan(Rg15.total) && !isnan(Rg15.rate) ) {
+    if (Rg15.sensor_valid && !isnan(Rg15.acc) && !isnan(Rg15.event) && !isnan(Rg15.total) && !isnan(Rg15.rate)) {
       ResponseAppend_P(PSTR(",\"" RG15_NAME "\":{"));
-      ResponseAppend_P(PSTR("\"%s\":%2_f,"), D_JSON_ACTIVE, &Rg15.acc);
-      ResponseAppend_P(PSTR("\"%s\":%2_f,"), D_JSON_EVENT, &Rg15.event);
-      ResponseAppend_P(PSTR("\"%s\":%2_f,"), D_JSON_TOTAL, &Rg15.total);
-      ResponseAppend_P(PSTR("\"%s\":%2_f"), D_JSON_FLOWRATE, &Rg15.rate);
+      ResponseAppend_P(PSTR("\"" D_JSON_ACTIVE "\":%2_f,"), &Rg15.acc);
+      ResponseAppend_P(PSTR("\"" D_JSON_EVENT "\":%2_f,"), &Rg15.event);
+      ResponseAppend_P(PSTR("\"" D_JSON_TOTAL "\":%2_f,"), &Rg15.total);
+      ResponseAppend_P(PSTR("\"" D_JSON_FLOWRATE "\":%2_f"), &Rg15.rate);
       ResponseAppend_P(PSTR("}"));
     }
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_RG15, &Rg15.acc, &Rg15.event, &Rg15.total, &Rg15.rate);
+    WSContentSend_PD(HTTP_RG15, Rg15.sensor_valid, &Rg15.acc, &Rg15.event, &Rg15.total, &Rg15.rate);
 #endif  // USE_WEBSERVER
   }
 }
@@ -264,7 +286,8 @@ bool Xsns90(uint32_t function) {
   else if (HydreonSerial) {
     switch (function) {
       case FUNC_EVERY_SECOND:
-        if((TasmotaGlobal.uptime % 60) == 0) {  // every minute
+        if ((TasmotaGlobal.uptime % 60) == 0) {  // every minute
+          AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("HRG: Valid %d"), Rg15.sensor_valid);
           ExecuteCommand("Sensor90 R", SRC_SENSOR);
         }
         Rg15Poll();

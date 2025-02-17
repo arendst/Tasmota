@@ -19,13 +19,13 @@ enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_D
 /*********************************************************************************************\
  * Callback structures
  * 
- * We allow 4 parameters, or 3 if method (first arg is `self`)
+ * We allow 5 parameters, or 4 if method (first arg is `self`)
  * This could be extended if needed
 \*********************************************************************************************/
-typedef int (*berry_callback_t)(int v0, int v1, int v2, int v3);
-static int call_berry_cb(int num, int v0, int v1, int v2, int v3);
+typedef int (*berry_callback_t)(int v0, int v1, int v2, int v3, int v4);
+static int call_berry_cb(int num, int v0, int v1, int v2, int v3, int v4);
 
-#define BERRY_CB(n) int berry_cb_##n(int v0, int v1, int v2, int v3) { return call_berry_cb(n, v0, v1, v2, v3); }
+#define BERRY_CB(n) int berry_cb_##n(int v0, int v1, int v2, int v3, int v4) { return call_berry_cb(n, v0, v1, v2, v3, v4); }
 // list the callbacks
 BERRY_CB(0);
 BERRY_CB(1);
@@ -242,7 +242,7 @@ static int be_cb_get_cb_list(bvm *vm) {
  * We allow 4 parameters, or 3 if method (first arg is `self`)
  * This could be extended if needed
 \*********************************************************************************************/
-static int call_berry_cb(int num, int v0, int v1, int v2, int v3) {
+static int call_berry_cb(int num, int v0, int v1, int v2, int v3, int v4) {
   // call berry cb dispatcher
   int32_t ret = 0;
   // retrieve vm and function
@@ -259,15 +259,16 @@ static int call_berry_cb(int num, int v0, int v1, int v2, int v3) {
   be_pushint(vm, v1);
   be_pushint(vm, v2);
   be_pushint(vm, v3);
+  be_pushint(vm, v4);
 
-  ret = be_pcall(vm, 4);   // 4 arguments
+  ret = be_pcall(vm, 5);   // 4 arguments
   if (ret != 0) {
     if (vm->obshook != NULL) (*vm->obshook)(vm, BE_OBS_PCALL_ERROR);
     be_pop(vm, be_top(vm));       // clear Berry stack
     return 0;
   }
-  ret = be_toint(vm, -5);
-  be_pop(vm, 5);    // remove result
+  ret = be_toint(vm, -6);
+  be_pop(vm, 6);    // remove result
   return ret;
 }
 

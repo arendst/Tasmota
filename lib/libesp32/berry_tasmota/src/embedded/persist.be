@@ -2,7 +2,7 @@
 #- -#
 #- To solidify: -#
 #-
-  # load only persis_module and persist_module.init
+  # load only persist_module and persist_module.init
   import solidify
   solidify.dump(persist_module.init)
   # copy and paste into `be_persist_lib.c`

@@ -1176,6 +1176,9 @@ void PerformEverySecond(void)
 #ifdef SYSLOG_UPDATE_SECOND
   SyslogAsync(false);
 #endif  // SYSLOG_UPDATE_SECOND
+#ifdef USE_UFILESYS
+  FileLoggingAsync(false);
+#endif  // USE_UFILESYS
 
   ResetGlobalValues();
 
@@ -1346,6 +1349,9 @@ void Every250mSeconds(void)
   // Check if log refresh needed in case of fast buffer fill
   MqttPublishLoggingAsync(true);
   SyslogAsync(true);
+#ifdef USE_UFILESYS
+  FileLoggingAsync(true);
+#endif  // USE_UFILESYS
 
 /*-------------------------------------------------------------------------------------------*\
  * Every second at 0.25 second interval

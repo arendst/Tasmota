@@ -877,5 +877,36 @@ int16_t TasmotaI2S::lowpassFilter(int16_t pcm_in) {
   return pcm_out;
 }
 
+#include "AudioFileSource.h"
+class AudioFileSourceLoopBuffer : public AudioFileSource
+{
+  public:
+    AudioFileSourceLoopBuffer(void *inBuff, uint32_t buffSizeBytes, uint32_t restartOffset = 0){
+      readPtr = 0;
+      buffer = reinterpret_cast<uint8_t*>(inBuff);
+      buffSize = buffSizeBytes;
+      restart = restartOffset;
+    }
+    virtual ~AudioFileSourceLoopBuffer() override {};
+    
+    virtual uint32_t read(void *data, uint32_t len) override {
+      uint32_t _availableBytes = len > (buffSize - readPtr) ? buffSize - readPtr : len;
+      memcpy(reinterpret_cast<uint8_t*>(data), buffer + readPtr, _availableBytes);
+      readPtr += len;
+      if(readPtr >= buffSize) {readPtr = restart;}
+      return _availableBytes;
+    }
+    virtual bool seek(int32_t pos, int dir) override {return false;}
+    virtual bool close() override {return true;}
+    virtual bool isOpen() override {return true;}
+    virtual uint32_t getSize() override {return buffSize;}
+    virtual uint32_t getPos() override {return readPtr;}
+  private:
+    uint32_t buffSize; 
+    uint8_t *buffer;
+    uint32_t readPtr;
+    uint32_t restart;
+};
+
 #endif // USE_I2S_AUDIO
 #endif // defined(ESP32) && ESP_IDF_VERSION_MAJOR >= 5

@@ -8,18 +8,14 @@
 # 01 : begin        void -> void
 # 02 : show         void -> void
 # 03 : CanShow      void -> bool
-# 04 : IsDirty      void -> bool
-# 05 : Dirty        void -> void
+# 04 : IsDirty      void -> bool (deprecated)
+# 05 : Dirty        void -> void (deprecated)
 # 06 : Pixels       void -> bytes() (mapped to the buffer)
 # 07 : PixelSize    void -> int
 # 08 : PixelCount   void -> int
-# 09 : ClearTo      (color:??) -> void
-# 10 : SetPixelColor (idx:int, color:??) -> void
-# 11 : GetPixelColor (idx:int) -> color:??
-# 20 : RotateLeft   (rot:int [, first:int, last:int]) -> void
-# 21 : RotateRight  (rot:int [, first:int, last:int]) -> void
-# 22 : ShiftLeft    (rot:int [, first:int, last:int]) -> void
-# 23 : ShiftRight   (rot:int [, first:int, last:int]) -> void
+# 09 : ClearTo      (color:0xRRGGBB or 0xWWRRGGBB) -> void
+# 10 : SetPixelColor (idx:int, color:0xRRGGBB or 0xWWRRGGBB) -> void
+# 11 : GetPixelColor (idx:int) -> color:0xRRGGBB or 0xWWRRGGBB
 
 class Leds_ntv end
 
@@ -116,16 +112,17 @@ class Leds : Leds_ntv
   def can_show()
     return self.call_native(3)
   end
-  def is_dirty()
+  def is_dirty()                ## DEPRECATED
     return self.call_native(4)
   end
-  def dirty()
+  def dirty()                   ## DEPRECATED
     self.call_native(5)
   end
   def pixels_buffer(old_buf)
     var buf = self.call_native(6)   # address of buffer in memory
-    if old_buf == nil
-      return bytes(buf, self.pixel_size() * self.pixel_count())
+    var sz = self.pixel_size() * self.pixel_count()
+    if (old_buf == nil || size(buf) != sz)
+      return bytes(buf, sz)
     else
       old_buf._change_buffer(buf)
       return old_buf
@@ -215,10 +212,10 @@ class Leds : Leds_ntv
       def can_show()
         return self.strip.can_show()
       end
-      def is_dirty()
+      def is_dirty()                ## DEPRECATED
         return self.strip.is_dirty()
       end
-      def dirty()
+      def dirty()                   ## DEPRECATED
         self.strip.dirty()
       end
       def pixels_buffer()
@@ -302,10 +299,10 @@ class Leds : Leds_ntv
       def can_show()
         return self.strip.can_show()
       end
-      def is_dirty()
+      def is_dirty()                ## DEPRECATED
         return self.strip.is_dirty()
       end
-      def dirty()
+      def dirty()                   ## DEPRECATED
         self.strip.dirty()
       end
       def pixels_buffer()
@@ -356,6 +353,103 @@ class Leds : Leds_ntv
           self.strip.set_pixel_color(x * self.w + self.h - y - 1 + self.offset, col, bri)
         else
           self.strip.set_pixel_color(x * self.w + y + self.offset, col, bri)
+        end
+      end
+
+      def scroll(direction, outshift, inshift) # 0 - up, 1 - left, 2 - down, 3 - right ; outshift mandatory, inshift optional
+        var buf = self.pix_buffer
+        var h = self.h
+        var sz = self.w * 3 # row size in bytes
+        var pos
+        if direction%2 == 0 #up/down
+          if direction == 0 #up
+            outshift.setbytes(0,(buf[0..sz-1]).reverse(0,nil,3))
+            var line = 0
+            while line < (h-1)
+              pos = 0
+              var offset_dst = line * sz
+              var offset_src = ((line+2) * sz) - 3
+              while pos < sz
+                var dst = pos + offset_dst
+                var src = offset_src - pos
+                buf[dst] = buf[src]
+                buf[dst+1] = buf[src+1]
+                buf[dst+2] = buf[src+2]
+                pos += 3
+              end
+              line += 1
+            end
+            var lastline = inshift ? inshift : outshift
+            if h%2 == 1
+              lastline.reverse(0,nil,3)
+            end
+            buf.setbytes((h-1) * sz, lastline)
+          else # down
+            outshift.setbytes(0,(buf[size(buf)-sz..]).reverse(0,nil,3))
+            var line = h - 1
+            while line > 0
+              buf.setbytes(line * sz,(buf[(line-1) * sz..line * sz-1]).reverse(0,nil,3))
+              line -= 1
+            end
+            var lastline = inshift ? inshift : outshift
+            if h%2 == 1
+              lastline.reverse(0,nil,3)
+            end
+            buf.setbytes(0, lastline)
+          end
+        else # left/right
+          var line = 0
+          var step = 3
+          if direction == 3 # right
+            step *= -1
+          end
+          while line < h
+            pos = line * sz
+            if step > 0
+                var line_end = pos + sz - step
+                outshift[(line * 3)] = buf[pos]
+                outshift[(line * 3) + 1] = buf[pos+1]
+                outshift[(line * 3) + 2] = buf[pos+2]
+                while pos < line_end
+                  buf[pos] = buf[pos+3]
+                  buf[pos+1] = buf[pos+4]
+                  buf[pos+2] = buf[pos+5]
+                  pos += step
+                end
+                if inshift == nil
+                  buf[line_end] = outshift[(line * 3)]
+                  buf[line_end+1] = outshift[(line * 3) + 1]
+                  buf[line_end+2] = outshift[(line * 3) + 2]
+                else
+                  buf[line_end] = inshift[(line * 3)]
+                  buf[line_end+1] = inshift[(line * 3) + 1]
+                  buf[line_end+2] = inshift[(line * 3) + 2]
+                end
+              else
+                var line_end = pos
+                pos = pos + sz + step
+                outshift[(line * 3)] = buf[pos]
+                outshift[(line * 3) + 1] = buf[pos+1]
+                outshift[(line * 3) + 2] = buf[pos+2]
+                while pos > line_end
+                  buf[pos] = buf[pos-3]
+                  buf[pos+1] = buf[pos-2]
+                  buf[pos+2] = buf[pos-1]
+                  pos += step
+                end
+                if inshift == nil
+                  buf[line_end] = outshift[(line * 3)]
+                  buf[line_end+1] = outshift[(line * 3) + 1]
+                  buf[line_end+2] = outshift[(line * 3) + 2]
+                else
+                  buf[line_end] = inshift[(line * 3)]
+                  buf[line_end+1] = inshift[(line * 3) + 1]
+                  buf[line_end+2] = inshift[(line * 3) + 2]
+                end
+              end
+              step *= -1
+              line += 1
+          end
         end
       end
     end

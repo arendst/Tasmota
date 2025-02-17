@@ -433,7 +433,7 @@ const char HTTP_COUNTER[] PROGMEM =
   "<br><div id='t' style='text-align:center;'></div>";
 
 const char HTTP_END[] PROGMEM =
-  "<div style='text-align:right;font-size:11px;'><hr/><a href='https://bit.ly/tasmota' target='_blank' style='color:#aaa;'>Tasmota %s %s " D_BY " Theo Arends</a></div>"
+  "<div style='text-align:right;font-size:11px;'><hr/><a href='https://github.com/arendst/Tasmota' target='_blank' style='color:#aaa;'>Tasmota %s %s " D_BY " Theo Arends</a></div>"
   "</div>"
   "</body>"
   "</html>";
@@ -985,11 +985,12 @@ void WSContentSendStyle_P(const char* formatP, ...) {
   WebColor(COL_TEXT_WARNING),
 #endif
   WebColor(COL_TITLE),
-  (Web.initial_config) ? "" : (Settings->flag5.gui_module_name) ? "" : ModuleName().c_str(), SettingsTextEscaped(SET_DEVICENAME).c_str());
+  (Web.initial_config) ? "" : (Settings->flag5.gui_module_name) ? "" : ModuleName().c_str(),  // SetOption141 - (GUI) Disable display of GUI module name (1)
+  (Settings->flag6.gui_device_name) ? "" : SettingsTextEscaped(SET_DEVICENAME).c_str());      // SetOption163 - (GUI) Disable display of GUI device name (1)
 
   // SetOption53 - Show hostname and IP address in GUI main menu
 #if (RESTART_AFTER_INITIAL_WIFI_CONFIG)
-  if (Settings->flag3.gui_hostname_ip) {               // SetOption53  - (GUI) Show hostname and IP address in GUI main menu
+  if (Settings->flag3.gui_hostname_ip) {            // SetOption53 - (GUI) Show hostname and IP address in GUI main menu
 #else
   if ( Settings->flag3.gui_hostname_ip || ( (WiFi.getMode() == WIFI_AP_STA) && (!Web.initial_config) )  ) {
 #endif

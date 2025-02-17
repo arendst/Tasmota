@@ -57,6 +57,11 @@ uint8_t ledcReadResolution(uint8_t chan);
 int32_t analogAttach(uint32_t pin, bool output_invert = false);   // returns the ledc channel, or -1 if failed. This is implicitly called by analogWrite if the channel was not already allocated
 
 //
+// analogDetach - detach attached GPIO from a hardware PWM
+//
+void analogDetach(uint32_t pin);
+
+//
 // analogDetachAll - detach all attached GPIOs from a hardware PWM
 //
 // This solves ghost PWM activity on reconfigured GPIOs after a restart

@@ -51,8 +51,9 @@
 
 #define XDRV_59            59
 
+#ifndef INFLUXDB_INITIAL
 #define INFLUXDB_INITIAL   7             // Initial number of seconds after wifi connect keeping in mind sensor initialization
-
+#endif
 #ifndef INFLUXDB_STATE
 #define INFLUXDB_STATE     0             // [Ifx] Influxdb initially Off (0) or On (1)
 #endif

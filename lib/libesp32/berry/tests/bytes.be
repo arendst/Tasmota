@@ -155,6 +155,11 @@ assert(str(b1) == "bytes('AA')")
 b1.append('01')
 assert(str(b1) == "bytes('AA3031')")
 
+#- appendhex -#
+assert(bytes().appendhex(bytes("DEADBEEF")) == bytes("4445414442454546"))
+assert(bytes("AABBCC").appendhex(bytes("DEADBEEF")) == bytes("AABBCC4445414442454546"))
+assert(bytes("AABBCC").appendhex(bytes("")) == bytes("AABBCC"))
+
 #- item -#
 b = bytes("334455")
 assert(b[0] == 0x33)
@@ -325,3 +330,22 @@ assert(bytes("02"))
 a = bytes("01020304")
 assert(a.get(1, 3) == 0x040302)
 assert(a.get(1, -3) == 0x020304)
+
+# append base64
+b = bytes("AABBCC")
+c = bytes("001122")
+assert(bytes().fromstring(bytes("001122").tob64()) == bytes('41424569'))
+assert(b.appendb64(c) == bytes("AABBCC41424569"))
+assert(b.appendb64(bytes()) == bytes("AABBCC41424569"))
+
+b = bytes("AABBCC")
+assert(bytes().fromstring(bytes("1122").tob64()) == bytes('4553493D'))
+assert(b.appendb64(c, 1) == bytes("AABBCC4553493D"))
+
+b = bytes("AABBCC")
+assert(bytes().fromstring(bytes("22").tob64()) == bytes('49673D3D'))
+assert(b.appendb64(c, 2) == bytes("AABBCC49673D3D"))
+
+b = bytes("AABBCC")
+assert(bytes().fromstring(bytes("11").tob64()) == bytes('45513D3D'))
+assert(b.appendb64(c, 1, 1) == bytes("AABBCC45513D3D"))

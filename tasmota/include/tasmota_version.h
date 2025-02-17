@@ -22,6 +22,6 @@
 
 #define TASMOTA_SHA_SHORT                      // Filled by Github sed
 
-const uint32_t TASMOTA_VERSION = 0x0E040100;   // 14.4.1.0
+const uint32_t TASMOTA_VERSION = 0x0E050000;   // 14.5.0.0
 
 #endif  // _TASMOTA_VERSION_H_

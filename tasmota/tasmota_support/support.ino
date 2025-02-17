@@ -2649,6 +2649,10 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
 
   uint32_t highest_loglevel = Settings->weblog_level;
   if (Settings->mqttlog_level > highest_loglevel) { highest_loglevel = Settings->mqttlog_level; }
+#ifdef USE_UFILESYS
+  uint32_t filelog_level = Settings->filelog_level % 10;
+  if (filelog_level > highest_loglevel) { highest_loglevel = filelog_level; }
+#endif  // USE_UFILESYS
   if (TasmotaGlobal.syslog_level > highest_loglevel) { highest_loglevel = TasmotaGlobal.syslog_level; }
   if (TasmotaGlobal.templog_level > highest_loglevel) { highest_loglevel = TasmotaGlobal.templog_level; }
   if (TasmotaGlobal.uptime < 3) { highest_loglevel = LOG_LEVEL_DEBUG_MORE; }  // Log all before setup correct log level
@@ -2697,6 +2701,9 @@ uint32_t HighestLogLevel() {
   uint32_t highest_loglevel = TasmotaGlobal.seriallog_level;
   if (Settings->weblog_level > highest_loglevel) { highest_loglevel = Settings->weblog_level; }
   if (Settings->mqttlog_level > highest_loglevel) { highest_loglevel = Settings->mqttlog_level; }
+#ifdef USE_UFILESYS
+  if (Settings->filelog_level > highest_loglevel) { highest_loglevel = Settings->filelog_level; }
+#endif  // USE_UFILESYS
   if (TasmotaGlobal.syslog_level > highest_loglevel) { highest_loglevel = TasmotaGlobal.syslog_level; }
   if (TasmotaGlobal.templog_level > highest_loglevel) { highest_loglevel = TasmotaGlobal.templog_level; }
   if (TasmotaGlobal.uptime < 3) { highest_loglevel = LOG_LEVEL_DEBUG_MORE; }  // Log all before setup correct log level

@@ -235,7 +235,7 @@ struct {
     uint32_t handleEveryDevice:1;
   } option;
 #ifdef USE_MI_EXT_GUI
-  uint32_t widgetSlot;
+  uint32_t widgetSlot = 0;
 #ifdef USE_ENERGY_SENSOR
   uint8_t energy_history[24];
 #endif //USE_ENERGY_SENSOR

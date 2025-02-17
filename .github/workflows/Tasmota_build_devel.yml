@@ -25,35 +25,31 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      #- name: Install clang compiler
-        #run: |
-          #sudo apt-get install -f clang
-      - name: Make Berry and Tasmota Berry code
+
+      - name: Make Berry and Solidify code
         run: |
           cd lib/libesp32/berry
           make
           cd ../berry_tasmota
           ../berry/berry -s -g solidify_all.be
-      - name: Matter Berry Code
-        run: |
-          cd lib/libesp32/berry_matter
+          cd ../berry_matter
           ../berry/berry -s -g solidify_all.be
-      - name: Berry Animate Code
-        run: |
-          cd lib/libesp32/berry_animate
+          cd ../berry_animate
           ../berry/berry -s -g solidify_all.be
-      - name: LVGL Berry Code
-        run: |
-          cd lib/libesp32_lvgl/lv_binding_berry
+          cd ../../libesp32_lvgl/lv_binding_berry
           ../../libesp32/berry/berry -s -g solidify_all.be
-      - name: HASPmota Berry Code
-        run: |
-          cd lib/libesp32_lvgl/lv_haspmota
+          cd ../lv_haspmota
           ../../libesp32/berry/berry -s -g solidify_all.be
-      - uses: jason2866/upload-artifact@v2.0.3
+      - uses: actions/upload-artifact@v4
         with:
-          name: '["berry_tasmota", "berry_matter", "berry_animate", "berry_lvgl", "berry_haspmota", "berry_header"]'
-          path: '["./lib/libesp32/berry_tasmota/src/solidify", "./lib/libesp32/berry_matter/src/solidify", "./lib/libesp32/berry_animate/src/solidify", "./lib/libesp32_lvgl/lv_binding_berry/src/solidify", "./lib/libesp32_lvgl/lv_haspmota/src/solidify", "./lib/libesp32/berry/generate"]'
+          name: berry
+          path: |
+            ./lib/libesp32/berry_tasmota/src/solidify
+            ./lib/libesp32/berry_matter/src/solidify
+            ./lib/libesp32/berry_animate/src/solidify
+            ./lib/libesp32_lvgl/lv_binding_berry/src/solidify
+            ./lib/libesp32_lvgl/lv_haspmota/src/solidify
+            ./lib/libesp32/berry/generate
 
   push_solidified:
     needs: be_solidify
@@ -66,22 +62,19 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - uses: jason2866/download-artifact@v3.0.4
+      - uses: actions/download-artifact@v4
         with:
-          name: |
-            berry_tasmota
-            berry_matter
-            berry_animate
-            berry_lvgl
-            berry_haspmota
-            berry_header
-          path: |
-            ./lib/libesp32/berry_tasmota/src/solidify
-            ./lib/libesp32/berry_matter/src/solidify
-            ./lib/libesp32/berry_animate/src/solidify
-            ./lib/libesp32_lvgl/lv_binding_berry/src/solidify
-            ./lib/libesp32_lvgl/lv_haspmota/src/solidify
-            ./lib/libesp32/berry/generate
+          pattern: berry
+          path: berry
+      - name: Move solidified Berry files back
+        run: |
+          ls -R ./berry
+          mv berry/berry/libesp32/berry_tasmota/src/solidify/* ./lib/libesp32/berry_tasmota/src/solidify
+          mv berry/berry/libesp32/berry_matter/src/solidify/* ./lib/libesp32/berry_matter/src/solidify
+          mv berry/berry/libesp32/berry_animate/src/solidify/* ./lib/libesp32/berry_animate/src/solidify
+          mv berry/berry/libesp32_lvgl/lv_binding_berry/src/solidify/* ./lib/libesp32_lvgl/lv_binding_berry/src/solidify
+          mv berry/berry/libesp32_lvgl/lv_haspmota/src/solidify/* ./lib/libesp32_lvgl/lv_haspmota/src/solidify
+          mv berry/berry/libesp32/berry/generate/* ./lib/libesp32/berry/generate
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: Solidified Code updated
@@ -129,9 +122,9 @@ jobs:
         #run: |
           #cp ./build_output/firmware/tasmota32solo1-safeboot.bin ./build_output/firmware/tasmota32-safeboot.bin 
       - name: Upload safeboot firmware artifacts
-        uses: jason2866/upload-artifact@v2.0.3
+        uses: actions/upload-artifact@v4
         with:
-          name: firmware_safeboot
+          name: ${{ matrix.variant }}
           path: ./build_output
 
   base-images:
@@ -172,9 +165,9 @@ jobs:
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
-        uses: jason2866/upload-artifact@v2.0.3
+        uses: actions/upload-artifact@v4
         with:
-          name: firmware
+          name: ${{ matrix.variant }}
           path: ./build_output
 
   base32-images:
@@ -214,10 +207,14 @@ jobs:
           pip install -U platformio
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
-        uses: jason2866/download-artifact@v3.0.4
+        uses: actions/download-artifact@v4
         with:
-          name: firmware_safeboot
-          path: ./firmware
+          pattern: tasmota32*
+          path: ./temp
+      - name: Move safeboot files
+        run: |
+          mkdir -p ./firmware/firmware
+          find ./temp -type f -exec cp -t ./firmware/firmware {} +
       - name: Add SHA to footer
         run: |
           COMMIT_SHA_LONG=$(git rev-parse --short HEAD || echo "")
@@ -226,9 +223,9 @@ jobs:
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
-        uses: jason2866/upload-artifact@v2.0.3
+        uses: actions/upload-artifact@v4
         with:
-          name: firmware
+          name: ${{ matrix.variant }}
           path: ./build_output
 
   language-images:
@@ -239,7 +236,7 @@ jobs:
     strategy:
       matrix:
         variant: [ tasmota, tasmota32 ]
-        language: [ AD, AF, BG, BR, CN, CZ, DE, ES, FR, FY, GR, HE, HU, IT, KO, NL, PL, PT, RO, RU, SE, SK, TR, TW, UK, VN ]
+        language: [ AD, AF, BG, BR, CN, CZ, DE, ES, FR, FY, GR, HE, HU, IT, KO, LT, NL, PL, PT, RO, RU, SE, SK, TR, TW, UK, VN ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -254,10 +251,14 @@ jobs:
           pip install -U platformio
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
-        uses: jason2866/download-artifact@v3.0.4
+        uses: actions/download-artifact@v4
         with:
-          name: firmware_safeboot
-          path: ./firmware
+          pattern: tasmota32*
+          path: ./temp
+      - name: Move safeboot files
+        run: |
+          mkdir -p ./firmware/firmware
+          find ./temp -type f -exec cp -t ./firmware/firmware {} +
       - name: Add SHA to footer
         run: |
           COMMIT_SHA_LONG=$(git rev-parse --short HEAD || echo "")
@@ -266,9 +267,9 @@ jobs:
       - name: Run PlatformIO
         run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
       - name: Upload language firmware artifacts
-        uses: jason2866/upload-artifact@v2.0.3
+        uses: actions/upload-artifact@v4
         with:
-          name: firmware
+          name: ${{ matrix.variant }}-${{ matrix.language }}
           path: ./build_output
 
   Start_final_copy:

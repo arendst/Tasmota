@@ -131,6 +131,7 @@
 #define D_JSON_MODEL "Model"
 #define D_JSON_MOISTURE "Moisture"
 #define D_JSON_MQTT_COUNT "MqttCount"
+#define D_JSON_MQTT_TLS "MqttTLS"
 #define D_JSON_NULL "null"
 #define D_JSON_NO "No"
 #define D_JSON_NOISE "Noise"
@@ -215,6 +216,7 @@
 #define D_JSON_UV_INDEX_TEXT "UvIndexText"
 #define D_JSON_UV_LEVEL "UvLevel"
 #define D_JSON_UV_POWER "UvPower"
+#define D_JSON_VALID "Valid"
 #define D_JSON_VCC "Vcc"
 #define D_JSON_VERSION "Version"
 #define D_JSON_VOLTAGE "Voltage"
@@ -331,6 +333,7 @@
 #define D_CMND_OTAURL "OtaUrl"
 #define D_CMND_SERIALLOG "SerialLog"
 #define D_CMND_SYSLOG "SysLog"
+#define D_CMND_FILELOG "FileLog"
 #define D_CMND_LOGHOST "LogHost"
 #define D_CMND_LOGPORT "LogPort"
 #define D_CMND_IPADDRESS "IPAddress"
@@ -530,6 +533,7 @@
 #define D_CMND_PALETTE "Palette"
 #define D_CMND_PIXELS "Pixels"
 #define D_CMND_STEPPIXELS "StepPixels"
+#define D_CMND_PIXELTYPE "PixelType"
 #define D_CMND_ARTNET "ArtNet"
 #define D_CMND_ARTNET_CONFIG "ArtNetConfig"
 #define D_SO_ARTNET_AUTORUN "ArtNetAutorun"
@@ -884,6 +888,7 @@
 #define D_LOG_LVGL "LVG: "         // LVGL graphics engine
 #define D_LOG_THERMOSTAT "THE: "   // Thermostat driver
 #define D_LOG_SENSOR "SNS: "       // Sensor driver
+#define D_LOG_SENSEAIR "SNA: "     // Senseair driver
 
 /********************************************************************************************/
 

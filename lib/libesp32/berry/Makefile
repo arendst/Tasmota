@@ -21,8 +21,7 @@ ifeq ($(OS), Windows_NT) # Windows
     PYTHON    ?= python # only for windows and need python3
     COC       := $(PYTHON) $(COC)
 else
-    CFLAGS    += -DUSE_READLINE_LIB
-    LIBS      += -lreadline -ldl
+    LIBS      += -ldl
     OS        := $(shell uname)
     ifeq ($(OS), Linux)
         LFLAGS += -Wl,--export-dynamic

@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 07.12.2024
+ * Updated until v9.4.0.1 - Last update 31.01.2025
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -761,8 +761,8 @@
 #define D_SENSOR_MBR_TX                 "ModBr - TX"
 #define D_SENSOR_MBR_RX                 "ModBr - RX"
 #define D_SENSOR_MBR_TX_ENA             "ModBr - TX ON"
-#define D_SENSOR_SR04_TRIG              "SR04 Tri - TX"
-#define D_SENSOR_SR04_ECHO              "SR04 Ech - RX"
+#define D_SENSOR_SR04_TRIG              "SR04 - Tri/TX"
+#define D_SENSOR_SR04_ECHO              "SR04 - Ech/RX"
 #define D_SENSOR_NRG_MBS_TX             "NrgMbs - TX"
 #define D_SENSOR_NRG_MBS_RX             "NrgMbs - RX"
 #define D_SENSOR_NRG_MBS_TX_ENA         "NrgMbs - TX ON"
@@ -1011,12 +1011,18 @@
 #define D_SENSOR_ME007_RX               "ME007 - RX"
 #define D_SENSOR_TUYAMCUBR_TX           "TuyaMCUBr - TX"
 #define D_SENSOR_TUYAMCUBR_RX           "TuyaMCUBr - RX"
+#define D_SENSOR_TWAI_TX                "TWAI - TX"
+#define D_SENSOR_TWAI_RX                "TWAI - RX"
+#define D_SENSOR_TWAI_BO                "TWAI - BusOff"
+#define D_SENSOR_TWAI_CLK               "TWAI - ClkOut"
 #define D_SENSOR_BIOPDU_PZEM0XX_TX      "BioPDU PZEM0XX - TX"
 #define D_SENSOR_BIOPDU_PZEM016_RX      "BioPDU PZEM016 - RX"
 #define D_SENSOR_BIOPDU_BIT             "BioPDU Bit"
 #define D_SENSOR_LOX_O2_RX              "LoxO2 - RX"
 #define D_GPIO_MAGIC_SWITCH             "MagicSwitch"
 #define D_SENSOR_WOOLIIS_RX             "Wooliis - RX"
+#define D_SENSOR_C8_CO2_5K_RX           "C8-CO2-5K - RX"
+#define D_SENSOR_C8_CO2_5K_TX           "C8-CO2-5K - TX"
 
 // Units
 #define D_UNIT_AMPERE                     "A"
@@ -1189,28 +1195,35 @@
 #define D_FP_ENROLL_ACTIVE           "Attivo"
 #define D_FP_ENROLL_INACTIVE         "Non attivo"
 // Indexed by Adafruit_Fingerprint.h defines
-#define D_FP_PACKETRECIEVEERR    "Errore comunicazione"           // 0x01 Error when receiving data package
-#define D_FP_NOFINGER             ""                              // 0x02 No finger on the sensor
-#define D_FP_IMAGEFAIL           "Errore immagine"                // 0x03 Failed to enroll the finger
-#define D_FP_IMAGEMESS           "Immmagine troppo danneggiata"   // 0x06 Failed to generate character file due to overly disorderly fingerprint image
-#define D_FP_FEATUREFAIL         "Impronta troppo piccola"        // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
-#define D_FP_NOMATCH             "Nessuna corrispondenza"         // 0x08 Finger doesn't match
-#define D_FP_NOTFOUND            "Corrispondenza non trovata"     // 0x09 Failed to find matching finger
-#define D_FP_ENROLLMISMATCH      "L'impronta non corrisponde"     // 0x0A Failed to combine the character files
-#define D_FP_BADLOCATION         "Locazione errata"               // 0x0B Addressed PageID is beyond the finger library
-#define D_FP_DBRANGEFAIL         "Errore intervallo DB"           // 0x0C Error when reading template from library or invalid template
-#define D_FP_UPLOADFEATUREFAIL   "Errore funzione upload"         // 0x0D Error when uploading template
-#define D_FP_PACKETRESPONSEFAIL  "Errore risposta pacchetto"      // 0x0E Module failed to receive the following data packages
-#define D_FP_UPLOADFAIL          "Errore upload"                  // 0x0F Error when uploading image
-#define D_FP_DELETEFAIL          "Errore eliminazione"            // 0x10 Failed to delete the template
-#define D_FP_DBCLEARFAIL         "Errore azzeramento DB"          // 0x11 Failed to clear finger library
-#define D_FP_PASSFAIL            "Errore password"                // 0x13 Find whether the fingerprint passed or failed
-#define D_FP_INVALIDIMAGE        "Immagine non valida"            // 0x15 Failed to generate image because of lac of valid primary image
-#define D_FP_FLASHERR            "Errore scrittura flash"         // 0x18 Error when writing flash
-#define D_FP_INVALIDREG          "Numero non valido"              // 0x1A Invalid register number
-#define D_FP_ADDRCODE            "Codice indirizzo"               // 0x20 Address code
-#define D_FP_PASSVERIFY          "Password verificata"            // 0x21 Verify the fingerprint passed
-#define D_FP_UNKNOWNERROR        "Errore"                         // Any other error
+#define D_FP_PACKETRECIEVEERR        "Errore comunicazione"           // 0x01 Error when receiving data package
+#define D_FP_NOFINGER                ""                               // 0x02 No finger on the sensor
+#define D_FP_IMAGEFAIL               "Errore immagine"                // 0x03 Failed to enroll the finger
+#define D_FP_IMAGEMESS               "Immmagine troppo danneggiata"   // 0x06 Failed to generate character file due to overly disorderly fingerprint image
+#define D_FP_FEATUREFAIL             "Impronta troppo piccola"        // 0x07 Failed to generate character file due to the lack of character point or small fingerprint image
+#define D_FP_NOMATCH                 "Nessuna corrispondenza"         // 0x08 Finger doesn't match
+#define D_FP_NOTFOUND                "Corrispondenza non trovata"     // 0x09 Failed to find matching finger
+#define D_FP_ENROLLMISMATCH          "L'impronta non corrisponde"     // 0x0A Failed to combine the character files
+#define D_FP_BADLOCATION             "Locazione errata"               // 0x0B Addressed PageID is beyond the finger library
+#define D_FP_DBRANGEFAIL             "Errore intervallo DB"           // 0x0C Error when reading template from library or invalid template
+#define D_FP_UPLOADFEATUREFAIL       "Errore funzione upload"         // 0x0D Error when uploading template
+#define D_FP_PACKETRESPONSEFAIL      "Errore risposta pacchetto"      // 0x0E Module failed to receive the following data packages
+#define D_FP_UPLOADFAIL              "Errore upload"                  // 0x0F Error when uploading image
+#define D_FP_DELETEFAIL              "Errore eliminazione"            // 0x10 Failed to delete the template
+#define D_FP_DBCLEARFAIL             "Errore azzeramento DB"          // 0x11 Failed to clear finger library
+#define D_FP_PASSFAIL                "Errore password"                // 0x13 Find whether the fingerprint passed or failed
+#define D_FP_INVALIDIMAGE            "Immagine non valida"            // 0x15 Failed to generate image because of lac of valid primary image
+#define D_FP_FLASHERR                "Errore scrittura flash"         // 0x18 Error when writing flash
+#define D_FP_INVALIDREG              "Numero non valido"              // 0x1A Invalid register number
+#define D_FP_ADDRCODE                "Codice indirizzo"               // 0x20 Address code
+#define D_FP_PASSVERIFY              "Password verificata"            // 0x21 Verify the fingerprint passed
+#define D_FP_UNKNOWNERROR            "Errore"                         // Any other error
+
+// xsns_90_hrg15.ino
+#define D_HRG_VALID              "Valido"
+#define D_HRG_ACTIVE             "Attivo"
+#define D_HRG_EVENT              "Evento"
+#define D_HRG_TOTAL              "Totale"
+#define D_HRG_FLOWRATE           "Portata"
 
 // xsns_96_flowratemeter.ino
 #define D_FLOWRATEMETER_NAME              "Portata"

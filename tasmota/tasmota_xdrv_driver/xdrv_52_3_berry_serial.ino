@@ -143,10 +143,18 @@ extern "C" {
   int32_t b_serial_read(struct bvm *vm) {
     be_getmember(vm, 1, ".p");
     TasmotaSerial * ser = (TasmotaSerial *) be_tocomptr(vm, -1);
+    int32_t max_lex = -1;     // -1 means unlimited
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 2 && be_isint(vm, 2)) {
+      max_lex = be_toint(vm, 2);
+    }
     if (ser) {
       int32_t len = ser->available();
       if (len < 0) { len = 0; }
       if (len > 0) {
+        if (max_lex >= 0 && len > max_lex) {
+          len = max_lex;
+        }
         // read bytes on stack
         char * rx_buf = new char[len];
         len = ser->read(rx_buf, len);

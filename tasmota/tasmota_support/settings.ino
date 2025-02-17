@@ -1105,7 +1105,10 @@ void SettingsDefaultSet2(void) {
   flag2.emulation |= EMULATION;
   flag4.alexa_gen_1 |= EMULATION_HUE_1ST_GEN;
 #endif // FIRMWARE_MINIMAL
+  flag5.gui_module_name |= GUI_NOSHOW_MODULE;
+  flag6.gui_device_name |= GUI_NOSHOW_DEVICENAME;
   flag3.gui_hostname_ip |= GUI_SHOW_HOSTNAME;
+  flag6.gui_no_state_text |= GUI_NOSHOW_STATETEXT;
   flag3.mdns_enabled |= MDNS_ENABLED;
   Settings->webserver = WEB_SERVER;
   Settings->weblog_level = WEB_LOG_LEVEL;
@@ -1156,6 +1159,7 @@ void SettingsDefaultSet2(void) {
   flag3.no_hold_retain |= MQTT_NO_HOLD_RETAIN;
   flag3.use_underscore |= MQTT_INDEX_SEPARATOR;
   flag3.grouptopic_mode |= MQTT_GROUPTOPIC_FORMAT;
+  flag4.only_json_message |= MQTT_ONLY_JSON_OUTPUT;
   SettingsUpdateText(SET_MQTT_HOST, MQTT_HOST);
   Settings->mqtt_port = MQTT_PORT;
   SettingsUpdateText(SET_MQTT_CLIENT, PSTR(MQTT_CLIENT_ID));
@@ -1244,7 +1248,6 @@ void SettingsDefaultSet2(void) {
 
   // RF Bridge
 #ifndef FIRMWARE_MINIMAL    // not needed in minimal/safeboot because of disabled feature and Settings are not saved anyways
-  flag.rf_receive_decimal |= RF_DATA_RADIX;
 //  for (uint32_t i = 0; i < 17; i++) { Settings->rf_code[i][0] = 0; }
   memcpy_P(Settings->rf_code[0], kDefaultRfCode, 9);
 #endif // FIRMWARE_MINIMAL
@@ -1855,7 +1858,6 @@ void SettingsDelta(void) {
       char scolor[10];
       WebHexCode(COL_BUTTON_OFF, GetTextIndexed(scolor, sizeof(scolor), COL_BUTTON_OFF, kWebColors));
     }
-
     if (Settings->version < 0x0E030007) {  // 14.3.0.7
       // move up uint8_t knx_CB_registered from 4A8 to 533
       memmove_P((uint8_t*)&Settings->knx_CB_registered, (uint8_t*)&Settings->switchmode, 1);

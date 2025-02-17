@@ -32,6 +32,7 @@ _Make sure your have performed every step and checked the applicable boxes befor
 - [ ] Searched the problem in [discussions](https://github.com/arendst/Tasmota/discussions)
 - [ ] Searched the problem in the [docs](https://tasmota.github.io/docs/FAQ)
 - [ ] Searched the problem in the [chat](https://discord.gg/Ks2Kzd4)
+- [ ] Problem is not scripter related, in this case open a discussion and tag @gemu2015
 - [ ] Device used (e.g., Sonoff Basic): _____
 - [ ] Tasmota binary firmware version number used: _____
   - [ ] Pre-compiled

@@ -315,6 +315,9 @@ int32_t analogAttach(uint32_t pin, bool output_invert) {    // returns ledc chan
       (ledc_timer_t)timer,        // timer_sel
       0,            // duty
       0,            // hpoint
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 4, 0)
+      (ledc_sleep_mode_t) 2,
+#endif
       { output_invert ? 1u : 0u },// output_invert
   };
   ledc_channel_config(&ledc_channel);
@@ -323,15 +326,20 @@ int32_t analogAttach(uint32_t pin, bool output_invert) {    // returns ledc chan
   return chan;
 }
 
+void analogDetach(uint32_t pin) {
+  if (pin_to_channel[pin] > 0) {
+#if ESP_IDF_VERSION_MAJOR < 5
+    ledcDetachPin(pin);
+#else
+    ledcDetach(pin);
+#endif
+    pin_to_channel[pin] = 0;
+  }
+}
+
 void analogDetachAll(void) {
   for (uint32_t pin = 0; pin < SOC_GPIO_PIN_COUNT; pin++) { 
-    if (pin_to_channel[pin] > 0) {
-#if ESP_IDF_VERSION_MAJOR < 5
-      ledcDetachPin(pin);
-#else
-      ledcDetach(pin);
-#endif
-    }
+    analogDetach(pin);
   }
 }
 
