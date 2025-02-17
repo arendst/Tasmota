@@ -93,24 +93,29 @@ const uint16_t VL53LXX_MAX_SENSORS = 8;     // Max number of VL53L0X sensors
 const uint8_t MAX_SR04 = 3; // Max number of SR04 ultrasonic sensors
 
 #ifdef ESP32
+
+// SPI
 const uint8_t MAX_SPI = 2;                  // Max number of Hardware SPI controllers (ESP32 = 2)
-const uint8_t MAX_I2S = 2;                  // Max number of Hardware I2S controllers (ESP32 = 2)
-  #if CONFIG_IDF_TARGET_ESP32
-  const uint8_t MAX_RMT = 8;                // Max number or RMT channels (ESP32 only)
-  #elif CONFIG_IDF_TARGET_ESP32S2
-  const uint8_t MAX_RMT = 4;                // Max number or RMT channels (ESP32S2 only)
-  #elif CONFIG_IDF_TARGET_ESP32S3
-  const uint8_t MAX_RMT = 1;                // Max number or RMT channels (ESP32S3 only)
-  #elif CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
-  const uint8_t MAX_RMT = 2;                // Max number or RMT channels (ESP32C3 only)
-  #else
-  const uint8_t MAX_RMT = 0;                // Max number or RMT channels (0 if unknown)
-  #endif
-#else
+
+// I2S
+#ifdef SOC_I2S_SUPPORTED
+  const uint8_t MAX_I2S = SOC_I2S_NUM;
+#else  // SOC_I2S_SUPPORTED
+  const uint8_t MAX_I2S = 0;
+#endif // SOC_I2S_SUPPORTED
+
+// RMT
+#ifdef SOC_RMT_SUPPORTED
+  const uint8_t MAX_RMT = (SOC_RMT_GROUPS) * (SOC_RMT_TX_CANDIDATES_PER_GROUP);
+#else // SOC_RMT_SUPPORTED
+  const uint8_t MAX_RMT = 0;
+#endif // SOC_RMT_SUPPORTED
+
+#else // ESP32 - now ESP8266
 const uint8_t MAX_SPI = 1;                  // Max number of Hardware SPI controllers
 const uint8_t MAX_I2S = 0;                  // Max number of Hardware I2S controllers (ESP8266 = 0, no choice)
 const uint8_t MAX_RMT = 0;                  // No RMT channel on ESP8266
-#endif
+#endif // ESP32
 
 // Changes to the following MAX_ defines need to be in line with enum SettingsTextIndex
 const uint8_t MAX_MQTT_PREFIXES = 3;        // Max number of MQTT prefixes (cmnd, stat, tele)
