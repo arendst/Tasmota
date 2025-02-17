@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - Berry parser error in rare case (#22997)
 - ESP32 TasMesh broker MAC address all zeros (#23005)
 - Wrong RMT channels for ESP32S3, now depends on `soc_caps.h`
+- HASPmota exception when clicking on a checkbox
 
 ### Removed
 

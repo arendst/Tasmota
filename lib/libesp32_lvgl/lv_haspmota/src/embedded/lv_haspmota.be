@@ -1051,7 +1051,7 @@ class lvh_obj : lvh_root
         style_modifier = self.digits_to_style(suffix_digits)
       end
     end
-    # print(f">>>: getmember {k=} {style_modifier=}")
+    #print(f">>>: member {k=} {style_modifier=}")
 
     # if attribute name is in ignore list, abort
     if self._attr_ignore.find(k) != nil return end
@@ -2537,7 +2537,19 @@ end
 #@ solidify:lvh_btn,weak
 class lvh_btn : lvh_obj         static var _lv_class = lv.button      end
 #@ solidify:lvh_checkbox,weak
-class lvh_checkbox : lvh_obj    static var _lv_class = lv.checkbox    end
+class lvh_checkbox : lvh_obj
+  static var _lv_class = lv.checkbox
+  static var _lv_part2_selector = lv.PART_INDICATOR
+  # static var _EVENTS = EVENTS_ALL
+  # map val to toggle
+  def set_val(t)
+    self._val = t
+    return self.set_toggle(t)
+  end
+  def get_val()
+    return self.get_toggle()
+  end
+end
 # class lvh_textarea : lvh_obj    static var _lv_class = lv.textarea    end
 # special case for scr (which is actually lv_obj)
 #@ solidify:lvh_scr,weak
