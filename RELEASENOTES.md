@@ -167,6 +167,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Allow negative values for AdcParam/AdcGpio INPUT, TEMP and RANGE parameters [#22809](https://github.com/arendst/Tasmota/issues/22809)
 - Command `Pixels` has backwards compatible arguments fixing #22755 [#22791](https://github.com/arendst/Tasmota/issues/22791)
 - ESP32 disable PSRAM check (and on restart some relay toggles) with `#define DISABLE_PSRAMCHECK true` [#21266](https://github.com/arendst/Tasmota/issues/21266)
+- ESP32 Webcam resolution changes since v14.4.0 [#22901](https://github.com/arendst/Tasmota/issues/22901)
 - Berry `gpio.pin_mode` frees PWM on pin
 - Berry bit-shift operators to `int64` [#22709](https://github.com/arendst/Tasmota/issues/22709)
 - Berry callback now passes 5 arguments instead of 4 (in line with documentation) [#22908](https://github.com/arendst/Tasmota/issues/22908)
