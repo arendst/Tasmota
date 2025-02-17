@@ -31,31 +31,62 @@
  * Supported commands:
  * WcInterrupt     = Control streaming, 0 = stop, 1 = start
  * WcResolution = Set resolution
- 0 = FRAMESIZE_96X96,    // 96x96
- 1 = FRAMESIZE_QQVGA,    // 160x120
- 2 = FRAMESIZE_QCIF,     // 176x144
- 3 = FRAMESIZE_HQVGA,    // 240x176
- 4 = FRAMESIZE_240X240,  // 240x240
- 5 = FRAMESIZE_QVGA,     // 320x240
- 6 = FRAMESIZE_CIF,      // 400x296
- 7 = FRAMESIZE_HVGA,     // 480x320
- 8 = FRAMESIZE_VGA,      // 640x480
- 9 = FRAMESIZE_SVGA,     // 800x600
+ **** Pre v14.4.0 ****
+  0 = FRAMESIZE_96X96,    // 96x96
+  1 = FRAMESIZE_QQVGA,    // 160x120
+  2 = FRAMESIZE_QCIF,     // 176x144
+  3 = FRAMESIZE_HQVGA,    // 240x176
+  4 = FRAMESIZE_240X240,  // 240x240
+  5 = FRAMESIZE_QVGA,     // 320x240
+  6 = FRAMESIZE_CIF,      // 400x296
+  7 = FRAMESIZE_HVGA,     // 480x320
+  8 = FRAMESIZE_VGA,      // 640x480
+  9 = FRAMESIZE_SVGA,     // 800x600
  10 = FRAMESIZE_XGA,      // 1024x768
  11 = FRAMESIZE_HD,       // 1280x720
  12 = FRAMESIZE_SXGA,     // 1280x1024
  13 = FRAMESIZE_UXGA,     // 1600x1200
- // 3MP Sensors above this no yet supported with this driver
+      // 3MP Sensors above this no yet supported with this driver
  14 = FRAMESIZE_FHD,      // 1920x1080
  15 = FRAMESIZE_P_HD,     //  720x1280
  16 = FRAMESIZE_P_3MP,    //  864x1536
  17 = FRAMESIZE_QXGA,     // 2048x1536
- // 5MP Sensors
+      // 5MP Sensors
  18 = FRAMESIZE_QHD,      // 2560x1440
  19 = FRAMESIZE_WQXGA,    // 2560x1600
  20 = FRAMESIZE_P_FHD,    // 1080x1920
  21 = FRAMESIZE_QSXGA,    // 2560x1920
  22 = FRAMESIZE_INVALID
+
+ **** Post v14.4.0 ****
+  0 = FRAMESIZE_96X96,    // 96x96
+  1 = FRAMESIZE_QQVGA,    // 160x120
+  2 = FRAMESIZE_128X128,  // 128x128
+  3 = FRAMESIZE_QCIF,     // 176x144
+  4 = FRAMESIZE_HQVGA,    // 240x176
+  5 = FRAMESIZE_240X240,  // 240x240
+  6 = FRAMESIZE_QVGA,     // 320x240
+  7 = FRAMESIZE_320X320,  // 320x320 (Known not to work. See https://github.com/espressif/arduino-esp32/pull/10814)
+  8 = FRAMESIZE_CIF,      // 400x296
+  9 = FRAMESIZE_HVGA,     // 480x320
+ 10 = FRAMESIZE_VGA,      // 640x480
+ 11 = FRAMESIZE_SVGA,     // 800x600
+ 12 = FRAMESIZE_XGA,      // 1024x768
+ 13 = FRAMESIZE_HD,       // 1280x720
+ 14 = FRAMESIZE_SXGA,     // 1280x1024
+ 15 = FRAMESIZE_UXGA,     // 1600x1200
+      // 3MP Sensors above this no yet supported with this driver
+ 16 = FRAMESIZE_FHD,      // 1920x1080
+ 17 = FRAMESIZE_P_HD,     //  720x1280
+ 18 = FRAMESIZE_P_3MP,    //  864x1536
+ 19 = FRAMESIZE_QXGA,     // 2048x1536
+      // 5MP Sensors
+ 20 = FRAMESIZE_QHD,      // 2560x1440
+ 21 = FRAMESIZE_WQXGA,    // 2560x1600
+ 22 = FRAMESIZE_P_FHD,    // 1080x1920
+ 23 = FRAMESIZE_QSXGA,    // 2560x1920
+ 24 = FRAMESIZE_5MP,      // 2592x1944
+ 25 = FRAMESIZE_INVALID
 
  * WcMirror     = Mirror picture, 0 = no, 1 = yes
  * WcFlip       = Flip picture, 0 = no, 1 = yes
