@@ -178,10 +178,12 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - LoraWan decoding of Dragino LDS02 and MerryIoT DW10 [#22880](https://github.com/arendst/Tasmota/issues/22880)
 - ESP32 TasMesh broker MAC address all zeros [#23005](https://github.com/arendst/Tasmota/issues/23005)
 - ESP32-Cx compilation fails on Windows [#22832](https://github.com/arendst/Tasmota/issues/22832)
+- Wrong RMT channels for ESP32S3, now depends on `soc_caps.h` [#23021](https://github.com/arendst/Tasmota/issues/23021)
 - Sonoff SPM `PowerOnState` overrules `SSPMPowerOnState` in mixed 4Relay setup with 4Relay version 1.0.0
 - Webcam compilation with `define USE_WEBCAM` but without `define ENABLE_RTSPSERVER` [#22686](https://github.com/arendst/Tasmota/issues/22686)
 - Berry Zigbee fix wrong attributes [#22684](https://github.com/arendst/Tasmota/issues/22684)
 - Berry walrus operator [#22685](https://github.com/arendst/Tasmota/issues/22685)
 - Berry parser error in rare case [#22997](https://github.com/arendst/Tasmota/issues/22997)
 - LVGL updated `Antiburn.tapp` [#22699](https://github.com/arendst/Tasmota/issues/22699)
+- HASPmota exception when clicking on a checkbox [#23022](https://github.com/arendst/Tasmota/issues/23022)
 - Matter Air Quality sensor [#22708](https://github.com/arendst/Tasmota/issues/22708)

@@ -11146,15 +11146,77 @@ be_local_class(lvh_btn,
 extern const bclass be_class_lvh_checkbox;
 
 /********************************************************************
+** Solidified function: set_val
+********************************************************************/
+be_local_closure(class_lvh_checkbox_set_val,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 2]) {     /* constants */
+    /* K0   */  be_nested_str_weak(_val),
+    /* K1   */  be_nested_str_weak(set_toggle),
+    }),
+    be_str_weak(set_val),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 5]) {  /* code */
+      0x90020001,  //  0000  SETMBR	R0	K0	R1
+      0x8C080101,  //  0001  GETMET	R2	R0	K1
+      0x5C100200,  //  0002  MOVE	R4	R1
+      0x7C080400,  //  0003  CALL	R2	2
+      0x80040400,  //  0004  RET	1	R2
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_val
+********************************************************************/
+be_local_closure(class_lvh_checkbox_get_val,   /* name */
+  be_nested_proto(
+    3,                          /* nstack */
+    1,                          /* argc */
+    2,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    ( &(const bvalue[ 1]) {     /* constants */
+    /* K0   */  be_nested_str_weak(get_toggle),
+    }),
+    be_str_weak(get_val),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 3]) {  /* code */
+      0x8C040100,  //  0000  GETMET	R1	R0	K0
+      0x7C040200,  //  0001  CALL	R1	1
+      0x80040200,  //  0002  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
 ** Solidified class: lvh_checkbox
 ********************************************************************/
 extern const bclass be_class_lvh_obj;
 be_local_class(lvh_checkbox,
     0,
     &be_class_lvh_obj,
-    be_nested_map(1,
+    be_nested_map(4,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_checkbox) },
+        { be_const_key_weak(get_val, 1), be_const_closure(class_lvh_checkbox_get_val_closure) },
+        { be_const_key_weak(set_val, -1), be_const_closure(class_lvh_checkbox_set_val_closure) },
+        { be_const_key_weak(_lv_part2_selector, -1), be_const_int(131072) },
+        { be_const_key_weak(_lv_class, 0), be_const_class(be_class_lv_checkbox) },
     })),
     be_str_weak(lvh_checkbox)
 );
