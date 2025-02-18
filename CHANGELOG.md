@@ -3,7 +3,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.4.1.4]
+## [14.5.0.1] 
+### Added
+
+### Breaking Changed
+
+### Changed
+
+### Fixed
+
+### Removed
+
+
+## [Released]
+
+## [14.5.0] 20250219
+- Release Ruth
+
+## [14.4.1.4] 20250219
 ### Added
 - Formatter `%_U` for `ext_snprintf_P()` to print uint64_t variable as decimal equivalent to `%llu`
 - Support for RC-switch decoding of 64-bit received data
@@ -12,8 +29,6 @@ All notable changes to this project will be documented in this file.
 - `MqttTLS` field in `Status 6` to indicate if the MQTT connection is encrypted (#22995)
 - Support for WiZ Smart Remote using `#define USE_WIZMOTE` and command `SetOption164 1`
 - Berry `bytes().appendb64()` (#22767)
-
-### Breaking Changed
 
 ### Changed
 - ESP32 Platform from 2025.01.31 to 2025.02.30, Framework (Arduino Core) from v3.1.1.250109 to v3.1.1.250203 and IDF to 5.3.2 (#22943)
@@ -24,8 +39,6 @@ All notable changes to this project will be documented in this file.
 - ESP32 TasMesh broker MAC address all zeros (#23005)
 - Wrong RMT channels for ESP32S3, now depends on `soc_caps.h` (#23021)
 - HASPmota exception when clicking on a checkbox (#23022)
-
-### Removed
 
 ## [14.4.1.3] 20250204
 ### Added
@@ -107,8 +120,6 @@ All notable changes to this project will be documented in this file.
 - Webcam compilation with `define USE_WEBCAM` but without `define ENABLE_RTSPSERVER` (#22686)
 - LVGL updated `Antiburn.tapp` (#22699)
 - Matter Air Quality sensor (#22708)
-
-## [Released]
 
 ## [14.4.1] 20241215
 - Release Rudolph
