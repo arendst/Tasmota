@@ -1557,7 +1557,7 @@ void SettingsDelta(void) {
       SettingsUpdateText(SET_STAPWD1, temp41);
       SettingsUpdateText(SET_STAPWD2, temp42);
 
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
+#if defined(USE_MQTT_TLS) && defined(USE_MQTT_CLIENT_CERT)
       if (!strlen(Settings->ex_mqtt_user)) {
         SettingsUpdateText(SET_MQTT_HOST, temp7);
         SettingsUpdateText(SET_MQTT_USER, temp9);
@@ -1567,10 +1567,10 @@ void SettingsDelta(void) {
         SettingsUpdateText(SET_MQTT_HOST, aws_mqtt_host);
         SettingsUpdateText(SET_MQTT_USER, "");
       }
-#else  // No USE_MQTT_TLS and USE_MQTT_AWS_IOT
+#else  // No USE_MQTT_TLS and USE_MQTT_CLIENT_CERT
       SettingsUpdateText(SET_MQTT_HOST, temp7);
       SettingsUpdateText(SET_MQTT_USER, temp9);
-#endif  // USE_MQTT_TLS and USE_MQTT_AWS_IOT
+#endif  // USE_MQTT_TLS and USE_MQTT_CLIENT_CERT
       SettingsUpdateText(SET_MQTT_PWD, temp10);
       SettingsUpdateText(SET_MQTT_TOPIC, temp11);
     }
