@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- LVGL, prepare for HASPmota theme, change: no-grow when clicked, DPI set to 160
 
 ### Fixed
 
