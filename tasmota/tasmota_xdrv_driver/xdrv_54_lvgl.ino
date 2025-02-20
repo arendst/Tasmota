@@ -484,6 +484,10 @@ void start_lvgl(const char * uconfig) {
   lv_obj_set_style_bg_color(lv_screen_active(), lv_color_hex(USE_LVGL_BG_DEFAULT), static_cast<uint32_t>(LV_PART_MAIN) | static_cast<uint32_t>(LV_STATE_DEFAULT));
   lv_obj_set_style_bg_opa(lv_screen_active(), LV_OPA_COVER, static_cast<uint32_t>(LV_PART_MAIN) | static_cast<uint32_t>(LV_STATE_DEFAULT));
 
+#ifdef USE_BERRY_LVGL_PANEL
+  berry.lvgl_panel_loaded = false;      // we can load the panel
+#endif // USE_BERRY_LVGL_PANEL
+
 #if LV_USE_LOG
   lv_log_register_print_cb(lvbe_debug);
 #endif // LV_USE_LOG

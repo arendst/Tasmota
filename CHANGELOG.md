@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [14.5.0.1] 
 ### Added
 - Berry experimental driver for AXP2101 for M5Core2v1.1
+- LVGL experimental mirroring of display on Web UI
 
 ### Breaking Changed
 
