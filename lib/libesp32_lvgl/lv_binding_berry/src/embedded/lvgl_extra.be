@@ -112,10 +112,10 @@ end
 class lv_style_prop_arr : bytes
   def init(l)
     if type(l) != 'instance' || !isinstance(l, list)  raise "value_error", "argument must be a list" end
-    super(self).init(size(l) * 4)
+    super(self).init(size(l))
 
     for e: l
-      self.add(int(e), 4)
+      self.add(int(e))
     end
   end
 end
