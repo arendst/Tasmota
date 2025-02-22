@@ -5,15 +5,16 @@ All notable changes to this project will be documented in this file.
 
 ## [14.5.0.1] 
 ### Added
-- Berry experimental driver for AXP2101 for M5Core2v1.1
-- LVGL experimental mirroring of display on Web UI
+- Berry experimental driver for AXP2101 for M5Core2v1.1 (#23039)
+- LVGL experimental mirroring of display on Web UI (#23041)
 
 ### Breaking Changed
+- Replaced `#define USE_MQTT_AWS_IOT` by `#define USE_MQTT_CLIENT_CERT` (#22998)
 
 ### Changed
-- LVGL, prepare for HASPmota theme, change: no-grow when clicked, DPI set to 160
-- LVGL Mirroring add checkbox to enable/disable the feature (in the iterim for a better solution)
-- Leds Panel add checkbox to enable/disable the feature (in the iterim for a better solution)
+- LVGL, prepare for HASPmota theme, change: no-grow when clicked, DPI set to 160 (#23040)
+- LVGL Mirroring add checkbox to enable/disable the feature (in the iterim for a better solution) (#23047)
+- Leds Panel add checkbox to enable/disable the feature (in the iterim for a better solution) (#23048)
 
 ### Fixed
 
