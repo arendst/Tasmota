@@ -37,6 +37,7 @@
 
 #ifdef CONFIG_ULP_COPROC_TYPE_LP_CORE
   #include "ulp_lp_core.h"
+  #include "lp_core_uart.h"
   ulp_lp_core_cfg_t be_ulp_lp_core_cfg;
 #endif //CONFIG_ULP_COPROC_TYPE_LP_CORE
 
@@ -93,6 +94,67 @@ extern "C" {
       return -1;
     }
   }
+
+  // Berry: `ULP.uart_init(rx_gpio:int, tx_gpio:int, speed:int [, config:int]) -> nil`
+  void be_ULP_uart_init(struct bvm *vm);
+  void be_ULP_uart_init(struct bvm *vm) {
+#ifdef CONFIG_ULP_COPROC_TYPE_LP_CORE
+
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 3 && be_isint(vm, 1) && be_isint(vm, 2) && be_isint(vm, 3)) {
+      int32_t rx = be_toint(vm, 1);
+      if ((rx >= 0) && !GPIO_IS_VALID_GPIO(rx)) { return; }
+      int32_t tx = be_toint(vm, 2);
+      if ((tx >= 0) && !GPIO_IS_VALID_OUTPUT_GPIO(tx)) { return; }
+
+      int32_t speed = be_toint(vm, 3);
+
+      int32_t mode = SERIAL_8N1;
+      if (argc >= 4 && be_isint(vm, 4)) {
+        mode = be_toint(vm, 4);
+      }
+
+      // #define UART_NB_BIT_5         0B00000000
+      // #define UART_NB_BIT_6         0B00000100
+      // #define UART_NB_BIT_7         0B00001000
+      // #define UART_NB_BIT_8         0B00001100
+      uint32_t data_bits = (mode & 0xc) >> 2;
+      // STOP BITS
+      uint32_t stop_bits = (mode & 0x30) >> 4;
+      // #define UART_PARITY_NONE      0B00000000
+      // #define UART_PARITY_EVEN      0B00000010
+      // #define UART_PARITY_ODD       0B00000011
+      uint32_t parity = mode & 0x3;
+
+      AddLog(LOG_LEVEL_DEBUG, PSTR("ULP: LP_CORE UART init: rx: %d, tx: %d, speed: %d, mode: %d"), rx, tx, speed, mode);
+
+      lp_core_uart_cfg_t cfg = {
+          .uart_pin_cfg = {
+              .tx_io_num = gpio_num_t(tx),
+              .rx_io_num = gpio_num_t(rx),
+              .rts_io_num = LP_UART_DEFAULT_RTS_GPIO_NUM,
+              .cts_io_num = LP_UART_DEFAULT_CTS_GPIO_NUM
+          },
+          .uart_proto_cfg = {
+              .baud_rate = speed,
+              .data_bits = uart_word_length_t(data_bits),
+              .parity = uart_parity_t(parity),
+              .stop_bits = uart_stop_bits_t(stop_bits),
+              .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+              .rx_flow_ctrl_thresh = 0
+          },
+          .lp_uart_source_clk = LP_UART_SCLK_DEFAULT
+      };
+
+      ESP_ERROR_CHECK(lp_core_uart_init(&cfg));
+      AddLog(LOG_LEVEL_INFO, "ULP: LP_CORE UART initialized successfully");
+    }
+#else
+    be_raisef(vm, "ulp_uart_init_error", "ULP: UART init not supported for non LP_CORE");
+#endif //CONFIG_ULP_COPROC_TYPE_LP_CORE
+
+  }
+
 
   // `ULP.adc_config(channel:int, attenuation:int, width:int) -> error:int`
   // 
