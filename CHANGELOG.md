@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - LVGL, prepare for HASPmota theme, change: no-grow when clicked, DPI set to 160
 - LVGL Mirroring add checkbox to enable/disable the feature (in the iterim for a better solution)
+- Leds Panel add checkbox to enable/disable the feature (in the iterim for a better solution)
 
 ### Fixed
 

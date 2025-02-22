@@ -1024,7 +1024,7 @@ class lvgl_panel
                       '<input type="checkbox" id="lvchk">&nbsp;LVGL screen mirroring&nbsp;'
                     '</label>'
                   '</legend>'
-                  '<iframe id="lvgl_iframe" src="about:blank" hidden="true"'
+                  '<iframe id="lvgl_iframe" src="about:blank" hidden="true" '
                     'style="color:#eaeaea; border:0px none;height:{height}px;width:{width}px;margin:0px 8px 0px 8px;padding:0px 0px;">'
                   '</iframe>'
                 '</fieldset>'            
