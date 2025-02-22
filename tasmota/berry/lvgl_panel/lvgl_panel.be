@@ -1018,8 +1018,13 @@ class lvgl_panel
           '<tbody>'
             '<tr>'
               '<td>'
-                '<fieldset style="background-color:{tasmota.webcolor(1)};"><legend style="text-align:left;">&nbsp;LVGL screen mirroring&nbsp;</legend>'
-                  '<iframe id="lvgl_iframe" src="http://{ip}:{self.port}/lvgl" '
+                '<fieldset style="background-color:{tasmota.webcolor(1)};">'
+                  '<legend style="text-align:left;">'
+                    '<label>'
+                      '<input type="checkbox" id="lvchk">&nbsp;LVGL screen mirroring&nbsp;'
+                    '</label>'
+                  '</legend>'
+                  '<iframe id="lvgl_iframe" src="about:blank" hidden="true"'
                     'style="color:#eaeaea; border:0px none;height:{height}px;width:{width}px;margin:0px 8px 0px 8px;padding:0px 0px;">'
                   '</iframe>'
                 '</fieldset>'            
@@ -1027,6 +1032,30 @@ class lvgl_panel
             '</tr>'
           '</tbody>'
         '</table>'
+        '<script>'
+          'const lvuri="http://{ip}:{self.port}/lvgl";'
+        '</script>'
+      )
+      webserver.content_send(
+        '<script>'
+        'function lvg(){'
+          'lvchk=eb("lvchk");'
+          # checkbox event
+          'lvchk.addEventListener("change",(event)=>{'
+            'const iframe=document.getElementById("lvgl_iframe");'
+            'if(lvchk.checked){'
+              # When checked, reload the original content
+              'iframe.src=lvuri;'
+              'iframe.hidden=false;'
+            '}else{'
+              # When unchecked, replace iframe with itself to unload it
+              'iframe.src="about:blank";'
+              'iframe.hidden=true;'
+            '}'
+          '});'
+        '}'
+        'wl(lvg);'
+        '</script>'
       )
     end
   end
