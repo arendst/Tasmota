@@ -7,9 +7,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Berry experimental driver for AXP2101 for M5Core2v1.1 (#23039)
 - LVGL experimental mirroring of display on Web UI (#23041)
+- Allow acl in mqtt when client certificate is in use with `#define USE_MQTT_CLIENT_CERT` (#22998)
 
 ### Breaking Changed
-- Replaced `#define USE_MQTT_AWS_IOT` by `#define USE_MQTT_CLIENT_CERT` (#22998)
 
 ### Changed
 - LVGL, prepare for HASPmota theme, change: no-grow when clicked, DPI set to 160 (#23040)
