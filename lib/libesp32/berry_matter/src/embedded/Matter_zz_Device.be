@@ -27,7 +27,7 @@ class Matter_Device
   static var PRODUCT_ID = 0x8000
   static var FILENAME = "_matter_device.json"
   static var EP = 2                   # first available endpoint number for devices
-  var started                         # is the Matter Device started (configured, mDNS and UDPServer started)
+  var started                         # is the Matter Device started (configured, mDNS and UDPServer started) - 'nil' means that we wait for Wifi to connect, 'false' means that the start is scheduled but not yet triggered
   var plugins                         # list of plugins instances
   var plugins_persist                 # true if plugins configuration needs to be saved
   static var plugins_classes = matter.plugins_classes                # map of registered classes by type name
@@ -68,7 +68,6 @@ class Matter_Device
     end    # abort if SetOption 151 is not set
 
     matter.profiler = matter.Profiler()
-    self.started = false
     self.tick = 0
     self.plugins = []
     self.plugins_persist = false                  # plugins need to saved only when the first fabric is associated
@@ -86,6 +85,7 @@ class Matter_Device
     self.zigbee = self.init_zigbee()
     self.ui = matter.UI(self, true)
 
+    tasmota.when_network_up(def () self.start() end)    # start when network is connected
     self.commissioning.init_basic_commissioning()
     tasmota.add_driver(self)
 
@@ -93,28 +93,14 @@ class Matter_Device
   end
 
   #############################################################
-  # Check if the network just started
-  def check_network()
-    if self.started  return end      # abort if already started
-    if tasmota.wifi()['up'] || tasmota.eth()['up']
-      self.start()
-    end
-  end
-
-
-  #############################################################
   # Start Matter device server when the first network is coming up
   def start()
-    if self.started  return end      # abort if already started
-
     # autoconfigure other plugins if needed
     self.autoconf_device()
 
     self._start_udp(self.UDP_PORT)
 
     self.commissioning.start_mdns_announce_hostnames()
-
-    self.started = true
   end
 
   #####################################################################
@@ -251,7 +237,6 @@ class Matter_Device
   # dispatch every 50ms
   # ticks
   def every_50ms()
-    self.check_network()
     self.tick += 1
     self.message_handler.every_50ms()
   end

@@ -3,8 +3,8 @@
 * Generated code, don't edit                                         *
 \********************************************************************/
 #include "be_constobj.h"
-// compact class 'Matter_Commissioning' ktab size: 132, total: 272 (saved 1120 bytes)
-static const bvalue be_ktab_class_Matter_Commissioning[132] = {
+// compact class 'Matter_Commissioning' ktab size: 127, total: 259 (saved 1056 bytes)
+static const bvalue be_ktab_class_Matter_Commissioning[127] = {
   /* K0   */  be_nested_str_weak(device),
   /* K1   */  be_nested_str_weak(sessions),
   /* K2   */  be_nested_str_weak(active_fabrics),
@@ -128,15 +128,10 @@ static const bvalue be_ktab_class_Matter_Commissioning[132] = {
   /* K120 */  be_nested_str_weak(_CM1),
   /* K121 */  be_nested_str_weak(MTR_X3A_X20starting_X20mDNS_X20on_X20_X25s_X20_X27_X25s_X27_X20ptr_X20to_X20_X60_X25s_X2Elocal_X60),
   /* K122 */  be_nested_str_weak(millis),
-  /* K123 */  be_nested_str_weak(mdns_announce_PASE),
-  /* K124 */  be_nested_str_weak(add_rule),
-  /* K125 */  be_nested_str_weak(Wifi_X23Connected),
-  /* K126 */  be_nested_str_weak(Eth_X23Connected),
-  /* K127 */  be_nested_str_weak(_mdns_announce_hostname),
-  /* K128 */  be_nested_str_weak(matter_mdns_host),
-  /* K129 */  be_nested_str_weak(get_fabric),
-  /* K130 */  be_nested_str_weak(get_admin_vendor_name),
-  /* K131 */  be_nested_str_weak(MTR_X3A_X20_X2D_X2D_X2D_X20Commissioning_X20complete_X20for_X20Fabric_X20_X27_X25s_X27_X20_X28Vendor_X20_X25s_X29_X20_X2D_X2D_X2D),
+  /* K123 */  be_nested_str_weak(when_network_up),
+  /* K124 */  be_nested_str_weak(get_fabric),
+  /* K125 */  be_nested_str_weak(get_admin_vendor_name),
+  /* K126 */  be_nested_str_weak(MTR_X3A_X20_X2D_X2D_X2D_X20Commissioning_X20complete_X20for_X20Fabric_X20_X27_X25s_X27_X20_X28Vendor_X20_X25s_X29_X20_X2D_X2D_X2D),
 };
 
 
@@ -1551,15 +1546,15 @@ be_local_closure(class_Matter_Commissioning_mdns_announce_PASE,   /* name */
 ********************************************************************/
 be_local_closure(class_Matter_Commissioning_start_basic_commissioning,   /* name */
   be_nested_proto(
-    13,                          /* nstack */
+    11,                          /* nstack */
     8,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 1]) {
       be_nested_proto(
-        4,                          /* nstack */
+        2,                          /* nstack */
         0,                          /* argc */
         0,                          /* varg */
         1,                          /* has upvals */
@@ -1569,55 +1564,16 @@ be_local_closure(class_Matter_Commissioning_start_basic_commissioning,   /* name
         0,                          /* has sup protos */
         NULL,                       /* no sub protos */
         1,                          /* has constants */
-        ( &(const bvalue[ 4]) {     /* constants */
+        ( &(const bvalue[ 1]) {     /* constants */
         /* K0   */  be_nested_str_weak(mdns_announce_PASE),
-        /* K1   */  be_nested_str_weak(tasmota),
-        /* K2   */  be_nested_str_weak(remove_rule),
-        /* K3   */  be_nested_str_weak(Wifi_X23Connected),
         }),
         be_str_weak(_anonymous_),
         &be_const_str_solidified,
-        ( &(const binstruction[ 9]) {  /* code */
+        ( &(const binstruction[ 4]) {  /* code */
           0x68000000,  //  0000  GETUPV	R0	U0
           0x8C000100,  //  0001  GETMET	R0	R0	K0
           0x7C000200,  //  0002  CALL	R0	1
-          0xB8020200,  //  0003  GETNGBL	R0	K1
-          0x8C000102,  //  0004  GETMET	R0	R0	K2
-          0x58080003,  //  0005  LDCONST	R2	K3
-          0x580C0000,  //  0006  LDCONST	R3	K0
-          0x7C000600,  //  0007  CALL	R0	3
-          0x80000000,  //  0008  RET	0
-        })
-      ),
-      be_nested_proto(
-        4,                          /* nstack */
-        0,                          /* argc */
-        0,                          /* varg */
-        1,                          /* has upvals */
-        ( &(const bupvaldesc[ 1]) {  /* upvals */
-          be_local_const_upval(1, 0),
-        }),
-        0,                          /* has sup protos */
-        NULL,                       /* no sub protos */
-        1,                          /* has constants */
-        ( &(const bvalue[ 4]) {     /* constants */
-        /* K0   */  be_nested_str_weak(mdns_announce_PASE),
-        /* K1   */  be_nested_str_weak(tasmota),
-        /* K2   */  be_nested_str_weak(remove_rule),
-        /* K3   */  be_nested_str_weak(Eth_X23Connected),
-        }),
-        be_str_weak(_anonymous_),
-        &be_const_str_solidified,
-        ( &(const binstruction[ 9]) {  /* code */
-          0x68000000,  //  0000  GETUPV	R0	U0
-          0x8C000100,  //  0001  GETMET	R0	R0	K0
-          0x7C000200,  //  0002  CALL	R0	1
-          0xB8020200,  //  0003  GETNGBL	R0	K1
-          0x8C000102,  //  0004  GETMET	R0	R0	K2
-          0x58080003,  //  0005  LDCONST	R2	K3
-          0x580C0000,  //  0006  LDCONST	R3	K0
-          0x7C000600,  //  0007  CALL	R0	3
-          0x80000000,  //  0008  RET	0
+          0x80000000,  //  0003  RET	0
         })
       ),
     }),
@@ -1625,7 +1581,7 @@ be_local_closure(class_Matter_Commissioning_start_basic_commissioning,   /* name
     &be_ktab_class_Matter_Commissioning,     /* shared constants */
     be_str_weak(start_basic_commissioning),
     &be_const_str_solidified,
-    ( &(const binstruction[40]) {  /* code */
+    ( &(const binstruction[19]) {  /* code */
       0xB8221000,  //  0000  GETNGBL	R8	K8
       0x8C20117A,  //  0001  GETMET	R8	R8	K122
       0x7C200200,  //  0002  CALL	R8	1
@@ -1640,32 +1596,11 @@ be_local_closure(class_Matter_Commissioning_start_basic_commissioning,   /* name
       0x90022406,  //  000B  SETMBR	R0	K18	R6
       0x90022607,  //  000C  SETMBR	R0	K19	R7
       0xB8221000,  //  000D  GETNGBL	R8	K8
-      0x8C201131,  //  000E  GETMET	R8	R8	K49
-      0x7C200200,  //  000F  CALL	R8	1
-      0x9420113E,  //  0010  GETIDX	R8	R8	K62
-      0x74220004,  //  0011  JMPT	R8	#0017
-      0xB8221000,  //  0012  GETNGBL	R8	K8
-      0x8C20112C,  //  0013  GETMET	R8	R8	K44
-      0x7C200200,  //  0014  CALL	R8	1
-      0x9420113E,  //  0015  GETIDX	R8	R8	K62
-      0x78220002,  //  0016  JMPF	R8	#001A
-      0x8C20017B,  //  0017  GETMET	R8	R0	K123
-      0x7C200200,  //  0018  CALL	R8	1
-      0x7002000B,  //  0019  JMP		#0026
-      0xB8221000,  //  001A  GETNGBL	R8	K8
-      0x8C20117C,  //  001B  GETMET	R8	R8	K124
-      0x5828007D,  //  001C  LDCONST	R10	K125
-      0x842C0000,  //  001D  CLOSURE	R11	P0
-      0x5830007B,  //  001E  LDCONST	R12	K123
-      0x7C200800,  //  001F  CALL	R8	4
-      0xB8221000,  //  0020  GETNGBL	R8	K8
-      0x8C20117C,  //  0021  GETMET	R8	R8	K124
-      0x5828007E,  //  0022  LDCONST	R10	K126
-      0x842C0001,  //  0023  CLOSURE	R11	P1
-      0x5830007B,  //  0024  LDCONST	R12	K123
-      0x7C200800,  //  0025  CALL	R8	4
-      0xA0000000,  //  0026  CLOSE	R0
-      0x80000000,  //  0027  RET	0
+      0x8C20117B,  //  000E  GETMET	R8	R8	K123
+      0x84280000,  //  000F  CLOSURE	R10	P0
+      0x7C200400,  //  0010  CALL	R8	2
+      0xA0000000,  //  0011  CLOSE	R0
+      0x80000000,  //  0012  RET	0
     })
   )
 );
@@ -1677,15 +1612,15 @@ be_local_closure(class_Matter_Commissioning_start_basic_commissioning,   /* name
 ********************************************************************/
 be_local_closure(class_Matter_Commissioning_start_mdns_announce_hostnames,   /* name */
   be_nested_proto(
-    6,                          /* nstack */
+    4,                          /* nstack */
     1,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
     1,                          /* has sup protos */
-    ( &(const struct bproto*[ 2]) {
+    ( &(const struct bproto*[ 1]) {
       be_nested_proto(
-        4,                          /* nstack */
+        3,                          /* nstack */
         0,                          /* argc */
         0,                          /* varg */
         1,                          /* has upvals */
@@ -1696,58 +1631,34 @@ be_local_closure(class_Matter_Commissioning_start_mdns_announce_hostnames,   /* 
         NULL,                       /* no sub protos */
         1,                          /* has constants */
         ( &(const bvalue[ 5]) {     /* constants */
-        /* K0   */  be_nested_str_weak(_mdns_announce_hostname),
-        /* K1   */  be_nested_str_weak(tasmota),
-        /* K2   */  be_nested_str_weak(remove_rule),
-        /* K3   */  be_nested_str_weak(Wifi_X23Connected),
-        /* K4   */  be_nested_str_weak(matter_mdns_host),
+        /* K0   */  be_nested_str_weak(tasmota),
+        /* K1   */  be_nested_str_weak(wifi),
+        /* K2   */  be_nested_str_weak(up),
+        /* K3   */  be_nested_str_weak(_mdns_announce_hostname),
+        /* K4   */  be_nested_str_weak(eth),
         }),
         be_str_weak(_anonymous_),
         &be_const_str_solidified,
-        ( &(const binstruction[10]) {  /* code */
-          0x68000000,  //  0000  GETUPV	R0	U0
-          0x8C000100,  //  0001  GETMET	R0	R0	K0
-          0x50080000,  //  0002  LDBOOL	R2	0	0
+        ( &(const binstruction[19]) {  /* code */
+          0xB8020000,  //  0000  GETNGBL	R0	K0
+          0x8C000101,  //  0001  GETMET	R0	R0	K1
+          0x58080002,  //  0002  LDCONST	R2	K2
           0x7C000400,  //  0003  CALL	R0	2
-          0xB8020200,  //  0004  GETNGBL	R0	K1
-          0x8C000102,  //  0005  GETMET	R0	R0	K2
-          0x58080003,  //  0006  LDCONST	R2	K3
-          0x580C0004,  //  0007  LDCONST	R3	K4
-          0x7C000600,  //  0008  CALL	R0	3
-          0x80000000,  //  0009  RET	0
-        })
-      ),
-      be_nested_proto(
-        4,                          /* nstack */
-        0,                          /* argc */
-        0,                          /* varg */
-        1,                          /* has upvals */
-        ( &(const bupvaldesc[ 1]) {  /* upvals */
-          be_local_const_upval(1, 0),
-        }),
-        0,                          /* has sup protos */
-        NULL,                       /* no sub protos */
-        1,                          /* has constants */
-        ( &(const bvalue[ 5]) {     /* constants */
-        /* K0   */  be_nested_str_weak(_mdns_announce_hostname),
-        /* K1   */  be_nested_str_weak(tasmota),
-        /* K2   */  be_nested_str_weak(remove_rule),
-        /* K3   */  be_nested_str_weak(Eth_X23Connected),
-        /* K4   */  be_nested_str_weak(matter_mdns_host),
-        }),
-        be_str_weak(_anonymous_),
-        &be_const_str_solidified,
-        ( &(const binstruction[10]) {  /* code */
-          0x68000000,  //  0000  GETUPV	R0	U0
-          0x8C000100,  //  0001  GETMET	R0	R0	K0
-          0x50080200,  //  0002  LDBOOL	R2	1	0
-          0x7C000400,  //  0003  CALL	R0	2
-          0xB8020200,  //  0004  GETNGBL	R0	K1
-          0x8C000102,  //  0005  GETMET	R0	R0	K2
-          0x58080003,  //  0006  LDCONST	R2	K3
-          0x580C0004,  //  0007  LDCONST	R3	K4
-          0x7C000600,  //  0008  CALL	R0	3
-          0x80000000,  //  0009  RET	0
+          0x78020003,  //  0004  JMPF	R0	#0009
+          0x68000000,  //  0005  GETUPV	R0	U0
+          0x8C000103,  //  0006  GETMET	R0	R0	K3
+          0x50080000,  //  0007  LDBOOL	R2	0	0
+          0x7C000400,  //  0008  CALL	R0	2
+          0xB8020000,  //  0009  GETNGBL	R0	K0
+          0x8C000104,  //  000A  GETMET	R0	R0	K4
+          0x58080002,  //  000B  LDCONST	R2	K2
+          0x7C000400,  //  000C  CALL	R0	2
+          0x78020003,  //  000D  JMPF	R0	#0012
+          0x68000000,  //  000E  GETUPV	R0	U0
+          0x8C000103,  //  000F  GETMET	R0	R0	K3
+          0x50080200,  //  0010  LDBOOL	R2	1	0
+          0x7C000400,  //  0011  CALL	R0	2
+          0x80000000,  //  0012  RET	0
         })
       ),
     }),
@@ -1755,39 +1666,13 @@ be_local_closure(class_Matter_Commissioning_start_mdns_announce_hostnames,   /* 
     &be_ktab_class_Matter_Commissioning,     /* shared constants */
     be_str_weak(start_mdns_announce_hostnames),
     &be_const_str_solidified,
-    ( &(const binstruction[32]) {  /* code */
+    ( &(const binstruction[ 6]) {  /* code */
       0xB8061000,  //  0000  GETNGBL	R1	K8
-      0x8C040331,  //  0001  GETMET	R1	R1	K49
-      0x7C040200,  //  0002  CALL	R1	1
-      0x9404033E,  //  0003  GETIDX	R1	R1	K62
-      0x78060003,  //  0004  JMPF	R1	#0009
-      0x8C04017F,  //  0005  GETMET	R1	R0	K127
-      0x500C0000,  //  0006  LDBOOL	R3	0	0
-      0x7C040400,  //  0007  CALL	R1	2
-      0x70020005,  //  0008  JMP		#000F
-      0xB8061000,  //  0009  GETNGBL	R1	K8
-      0x8C04037C,  //  000A  GETMET	R1	R1	K124
-      0x580C007D,  //  000B  LDCONST	R3	K125
-      0x84100000,  //  000C  CLOSURE	R4	P0
-      0x58140080,  //  000D  LDCONST	R5	K128
-      0x7C040800,  //  000E  CALL	R1	4
-      0xB8061000,  //  000F  GETNGBL	R1	K8
-      0x8C04032C,  //  0010  GETMET	R1	R1	K44
-      0x7C040200,  //  0011  CALL	R1	1
-      0x9404033E,  //  0012  GETIDX	R1	R1	K62
-      0x78060003,  //  0013  JMPF	R1	#0018
-      0x8C04017F,  //  0014  GETMET	R1	R0	K127
-      0x500C0200,  //  0015  LDBOOL	R3	1	0
-      0x7C040400,  //  0016  CALL	R1	2
-      0x70020005,  //  0017  JMP		#001E
-      0xB8061000,  //  0018  GETNGBL	R1	K8
-      0x8C04037C,  //  0019  GETMET	R1	R1	K124
-      0x580C007E,  //  001A  LDCONST	R3	K126
-      0x84100001,  //  001B  CLOSURE	R4	P1
-      0x58140080,  //  001C  LDCONST	R5	K128
-      0x7C040800,  //  001D  CALL	R1	4
-      0xA0000000,  //  001E  CLOSE	R0
-      0x80000000,  //  001F  RET	0
+      0x8C04037B,  //  0001  GETMET	R1	R1	K123
+      0x840C0000,  //  0002  CLOSURE	R3	P0
+      0x7C040400,  //  0003  CALL	R1	2
+      0xA0000000,  //  0004  CLOSE	R0
+      0x80000000,  //  0005  RET	0
     })
   )
 );
@@ -1872,7 +1757,7 @@ be_local_closure(class_Matter_Commissioning_start_commissioning_complete,   /* n
     be_str_weak(start_commissioning_complete),
     &be_const_str_solidified,
     ( &(const binstruction[23]) {  /* code */
-      0x8C080381,  //  0000  GETMET	R2	R1	K129
+      0x8C08037C,  //  0000  GETMET	R2	R1	K124
       0x7C080200,  //  0001  CALL	R2	1
       0x8C0C0504,  //  0002  GETMET	R3	R2	K4
       0x7C0C0200,  //  0003  CALL	R3	1
@@ -1882,11 +1767,11 @@ be_local_closure(class_Matter_Commissioning_start_commissioning_complete,   /* n
       0x7C0C0200,  //  0007  CALL	R3	1
       0x8C0C073B,  //  0008  GETMET	R3	R3	K59
       0x7C0C0200,  //  0009  CALL	R3	1
-      0x8C100582,  //  000A  GETMET	R4	R2	K130
+      0x8C10057D,  //  000A  GETMET	R4	R2	K125
       0x7C100200,  //  000B  CALL	R4	1
       0xB8164A00,  //  000C  GETNGBL	R5	K37
       0x60180018,  //  000D  GETGBL	R6	G24
-      0x581C0083,  //  000E  LDCONST	R7	K131
+      0x581C007E,  //  000E  LDCONST	R7	K126
       0x5C200600,  //  000F  MOVE	R8	R3
       0x5C240800,  //  0010  MOVE	R9	R4
       0x7C180600,  //  0011  CALL	R6	3
