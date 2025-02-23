@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Berry experimental driver for AXP2101 for M5Core2v1.1 (#23039)
 - LVGL experimental mirroring of display on Web UI (#23041)
 - Allow acl in mqtt when client certificate is in use with `#define USE_MQTT_CLIENT_CERT` (#22998)
+- Berry `tasmota.when_network_up()` and simplified Matter using it
 
 ### Breaking Changed
 

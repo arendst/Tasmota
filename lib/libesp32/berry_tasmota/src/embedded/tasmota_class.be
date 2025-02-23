@@ -13,6 +13,7 @@ class Tasmota
   var _crons
   var _ccmd
   var _drivers
+  var _wnu            # when_connected: list of closures to call when network is connected, or nil
   var wire1
   var wire2
   var cmd_res         # store the command result, nil if disables, true if capture enabled, contains return value
@@ -723,9 +724,45 @@ class Tasmota
     end
   end
 
+  # add a closure to the list to be called when network is connected
+  # or call immediately if network is already up
+  def when_network_up(cl)
+    self.check_not_method(cl)
+    var is_connected = tasmota.wifi()['up'] || tasmota.eth()['up']
+    if is_connected
+      cl()          # call closure
+    else
+      if (self._wnu == nil)
+        self._wnu = [ cl ]    # create list
+      else
+        self._wnu.push(cl)    # append to list
+      end
+    end
+  end
+
+  # run all pending closures when network is up
+  def run_network_up()
+    if (self._wnu == nil)   return    end
+    var is_connected = tasmota.wifi()['up'] || tasmota.eth()['up']
+    if is_connected
+      # run all closures in a safe loop
+      while (size(self._wnu) > 0)
+        var cl = self._wnu[0]
+        self._wnu.remove(0)     # failsafe, remove first to avoid an infinite loop if call fails
+        try
+          cl()
+        except .. as e,m
+          print(format("BRY: Exception> run_network_up '%s' - %s", e, m))
+        end
+      end
+      self._wnu = nil         # all done, clear list
+    end
+  end
+
   def event(event_type, cmd, idx, payload, raw)
     import introspect
     if event_type=='every_50ms'
+      if (self._wnu) self.run_network_up() end   # capture when network becomes connected
       self.run_timers()
     end  #- first run deferred events -#
 
