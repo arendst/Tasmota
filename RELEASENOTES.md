@@ -128,5 +128,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Leds Panel add checkbox to enable/disable the feature (in the iterim for a better solution) [#23048](https://github.com/arendst/Tasmota/issues/23048)
 
 ### Fixed
+- Too many zeros in RCSwitch received data regression from v14.4.1.4 [#23050](https://github.com/arendst/Tasmota/issues/23050)
 
 ### Removed
