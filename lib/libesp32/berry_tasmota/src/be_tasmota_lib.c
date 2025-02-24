@@ -107,7 +107,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     init, closure(class_Tasmota_init_closure)
 
     get_free_heap, func(l_getFreeHeap)
-    arch, func(l_arch)
+    arch, static_func(l_arch)
     publish, func(be_mqtt_publish)
     publish_result, func(l_publish_result)
     publish_rule, func(l_publish_rule)

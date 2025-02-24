@@ -137,6 +137,20 @@ static int m_toptr(bvm *vm)
     be_return_nil(vm);
 }
 
+static int m_isconst(bvm *vm)
+{
+    int top = be_top(vm);
+    if (top >= 1) {
+        bvalue *v = be_indexof(vm, 1);
+        if (var_basetype(v) >= BE_FUNCTION || var_type(v) == BE_COMPTR) {
+            bbool isconst = gc_isconst((bgcobject*)var_toobj(v));
+            be_pushbool(vm, isconst);
+            be_return(vm);
+        }
+    }
+    be_return_nil(vm);
+}
+
 static int m_fromptr(bvm *vm)
 {
     int top = be_top(vm);
@@ -245,6 +259,7 @@ be_native_module_attr_table(introspect) {
 
     be_native_module_function("toptr", m_toptr),
     be_native_module_function("fromptr", m_fromptr),
+    be_native_module_function("isconst", m_isconst),
 
     be_native_module_function("name", m_name),
 
@@ -266,6 +281,7 @@ module introspect (scope: global, depend: BE_USE_INTROSPECT_MODULE) {
 
     toptr, func(m_toptr)
     fromptr, func(m_fromptr)
+    isconst, func(m_isconst)
 
     name, func(m_name)
 
