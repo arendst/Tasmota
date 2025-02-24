@@ -281,7 +281,7 @@ module introspect (scope: global, depend: BE_USE_INTROSPECT_MODULE) {
 
     toptr, func(m_toptr)
     fromptr, func(m_fromptr)
-    soldified, func(m_solidified)
+    solidified, func(m_solidified)
 
     name, func(m_name)
 
