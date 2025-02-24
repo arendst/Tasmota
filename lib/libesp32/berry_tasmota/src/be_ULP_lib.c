@@ -23,6 +23,9 @@ BE_FUNC_CTYPE_DECLARE(be_ULP_get_mem, "i", "i");
 extern int32_t be_ULP_gpio_init(int32_t pin, int32_t mode);
 BE_FUNC_CTYPE_DECLARE(be_ULP_gpio_init, "i", "ii");
 
+extern void be_ULP_uart_init(bvm *vm);
+BE_FUNC_CTYPE_DECLARE(be_ULP_uart_init, "", "@iii[i]");   // pass: 1/ vm, 2/ int rx, 3/ int tx, 4/ int speed [, 5/ int mode]
+
 extern int32_t be_ULP_adc_config(struct bvm *vm, int32_t channel, int32_t attenuation, int32_t width);
 BE_FUNC_CTYPE_DECLARE(be_ULP_adc_config, "i", "@iii");
 
@@ -42,6 +45,7 @@ module ULP (scope: global) {
   wake_period,  ctype_func(be_ULP_wake_up_period)
   sleep,        ctype_func(be_ULP_sleep)
   adc_config,   ctype_func(be_ULP_adc_config)
+  uart_init,    ctype_func(be_ULP_uart_init)
 }
 @const_object_info_end */
 #include "be_fixed_ULP.h"
