@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - LVGL, prepare for HASPmota theme, change: no-grow when clicked, DPI set to 160 (#23040)
 - LVGL Mirroring add checkbox to enable/disable the feature (in the iterim for a better solution) (#23047)
 - Leds Panel add checkbox to enable/disable the feature (in the iterim for a better solution) (#23048)
+- GPIOViewer from v1.6.1 to v1.6.2 (No functional change)
 
 ### Fixed
 - Too many zeros in RCSwitch received data regression from v14.4.1.4 (#23050)

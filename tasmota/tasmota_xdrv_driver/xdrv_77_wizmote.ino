@@ -13,9 +13,10 @@
  * Enable with command `SetOption164 1`
  *
  * If USE_WIZMOTE_COMMISSION is enabled you have a WIZMOTE_COMMISSION_WINDOW after restart or
- * after command `SetOption164 1` to register a persistent WiZMote id. This supports multi-press
- * power control. If a light is configured it supports dimming control too. In that case no rule
- * is needed.
+ * after command `SetOption164 1` to register a persistent WiZMote id by pressing the ON button
+ * three times. This supports multi-press power control. If a light is configured it supports
+ * dimming control too. In that case no rule is needed.
+ * Pressing the OFF button three times will de-register the WizMote id.
  *
  * Example rule for color led
  * on wizmote#action do var1 %value% endon               - Store current button
@@ -164,7 +165,7 @@ void WizMoteResponse(void) {
 
 #ifdef USE_WIZMOTE_COMMISSION
   uint32_t now;
-  if (WizMote.comm_id == WizMote.id) {           // Commissionend id
+  if (WizMote.comm_id == WizMote.id) {           // Commissioned id
     now = millis();
     if (WizMote.delayed_index && WizMote.count && (WizMote.last_press < now)) {
       ExecuteCommandPower(WizMote.count, WizMote.delayed_index -1, SRC_REMOTE);
@@ -186,14 +187,17 @@ void WizMoteResponse(void) {
           Settings->keeloq_serial = WizMote.comm_id;
         }
         WizMote.comm_window = TasmotaGlobal.uptime;
-        AddLog(LOG_LEVEL_DEBUG, PSTR("WIZ: %sommissionend"), (WizMote.comm_id) ? "C" : "De-c");
+        AddLog(LOG_LEVEL_DEBUG, PSTR("WIZ: %sommissioned"), (WizMote.comm_id) ? "C" : "Dec");
+        ExecuteCommandPower(1, 2, SRC_REMOTE);   // Toggle light as feedback of (de)commission
+        delay(500);
+        ExecuteCommandPower(1, 2, SRC_REMOTE);
       }
     }
     WizMote.index = 0;
     return;
   }
 
-  if (WizMote.comm_id == WizMote.id) {           // Commissionend id
+  if (WizMote.comm_id == WizMote.id) {           // Commissioned id
     switch(WizMote.index) {
       case 1:      // OFF
       case 2:      // ON
