@@ -982,7 +982,7 @@ extern "C" {
     be_return(vm);
   }
 
-  // Berry: `arvh() -> string`
+  // Berry: `arch() -> string`
   // ESP object
   int32_t l_arch(bvm *vm);
   int32_t l_arch(bvm *vm) {
