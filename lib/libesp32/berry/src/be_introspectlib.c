@@ -137,7 +137,7 @@ static int m_toptr(bvm *vm)
     be_return_nil(vm);
 }
 
-static int m_isconst(bvm *vm)
+static int m_solidified(bvm *vm)
 {
     int top = be_top(vm);
     if (top >= 1) {
@@ -259,7 +259,7 @@ be_native_module_attr_table(introspect) {
 
     be_native_module_function("toptr", m_toptr),
     be_native_module_function("fromptr", m_fromptr),
-    be_native_module_function("isconst", m_isconst),
+    be_native_module_function("solidified", m_solidified),
 
     be_native_module_function("name", m_name),
 
@@ -281,7 +281,7 @@ module introspect (scope: global, depend: BE_USE_INTROSPECT_MODULE) {
 
     toptr, func(m_toptr)
     fromptr, func(m_fromptr)
-    isconst, func(m_isconst)
+    soldified, func(m_solidified)
 
     name, func(m_name)
 
