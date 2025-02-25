@@ -27,26 +27,26 @@ static int call_berry_cb(int num, int v0, int v1, int v2, int v3, int v4);
 
 #define BERRY_CB(n) int berry_cb_##n(int v0, int v1, int v2, int v3, int v4) { return call_berry_cb(n, v0, v1, v2, v3, v4); }
 // list the callbacks
-BERRY_CB(0);
-BERRY_CB(1);
-BERRY_CB(2);
-BERRY_CB(3);
-BERRY_CB(4);
-BERRY_CB(5);
-BERRY_CB(6);
-BERRY_CB(7);
-BERRY_CB(8);
-BERRY_CB(9);
-BERRY_CB(10);
-BERRY_CB(11);
-BERRY_CB(12);
-BERRY_CB(13);
-BERRY_CB(14);
-BERRY_CB(15);
-BERRY_CB(16);
-BERRY_CB(17);
-BERRY_CB(18);
-BERRY_CB(19);
+BERRY_CB(0)
+BERRY_CB(1)
+BERRY_CB(2)
+BERRY_CB(3)
+BERRY_CB(4)
+BERRY_CB(5)
+BERRY_CB(6)
+BERRY_CB(7)
+BERRY_CB(8)
+BERRY_CB(9)
+BERRY_CB(10)
+BERRY_CB(11)
+BERRY_CB(12)
+BERRY_CB(13)
+BERRY_CB(14)
+BERRY_CB(15)
+BERRY_CB(16)
+BERRY_CB(17)
+BERRY_CB(18)
+BERRY_CB(19)
 
 // array of callbacks
 static const berry_callback_t berry_callback_array[BE_MAX_CB] = {
