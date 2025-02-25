@@ -591,7 +591,7 @@ newframe: /* a new call frame */
             if (var_isstr(b)) {
                 bstring *name = var_tostr(b);
                 int idx = be_global_find(vm, name);
-                if (idx > -1) {
+                if (idx >= 0) {
                     *v = *be_global_var(vm, idx);
                 } else {
                     vm_error(vm, "attribute_error", "'%s' undeclared", str(name));
