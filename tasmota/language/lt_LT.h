@@ -44,7 +44,7 @@
 #define D_HOUR_MINUTE_SEPARATOR ":"
 #define D_MINUTE_SECOND_SEPARATOR ":"
 
-#define D_DAY3LIST "SekPirAntTreKetPenŠeŠe"
+#define D_DAY3LIST "SekPirAntTreKetPenŠe"
 #define D_MONTH3LIST "SauVasKovBalGegBirLieRugRgsSpaLapGru"
 
 // Non JSON decimal separator
@@ -184,7 +184,7 @@
 #define D_TEMPERATURE "Temperatūra"
 #define D_TO "į"
 #define D_TOGGLE "Perjungti"
-#define D_TOPIC "Topic"
+#define D_TOPIC "Tema"
 #define D_TOTAL_USAGE "Bendras naudojimas"
 #define D_TRANSMIT "Siųsti"
 #define D_TRUE "Įjungta"
@@ -226,7 +226,7 @@
 #define D_SYSLOG_LOGGING_REENABLED "„Syslog“ logging vėl įjungtas"
 
 #define D_SET_BAUDRATE_TO "Nustatyti duomenų perdavimo spartą į"
-#define D_RECEIVED_TOPIC "Gauta topic"
+#define D_RECEIVED_TOPIC "Gauta tema"
 #define D_DATA_SIZE "Duomenų dydis"
 #define D_ANALOG_INPUT "Analoginis"
 
@@ -330,7 +330,7 @@
 
 #define D_MQTT_PARAMETERS "MQTT parametrai"
 #define D_CLIENT "Klientas"
-#define D_FULL_TOPIC "Full Topic"
+#define D_FULL_TOPIC "Visa tema"
 
 #define D_LOGGING_PARAMETERS "Logging parametrai"
 #define D_SERIAL_LOG_LEVEL "Serijinio log lygis"
@@ -376,9 +376,9 @@
 #define D_MQTT_PORT "MQTT prievadas"
 #define D_MQTT_CLIENT "MQTT klientas"
 #define D_MQTT_USER "MQTT vartotojas"
-#define D_MQTT_TOPIC "MQTT topic"
-#define D_MQTT_GROUP_TOPIC "MQTT group topic"
-#define D_MQTT_FULL_TOPIC "MQTT full topic"
+#define D_MQTT_TOPIC "MQTT tema"
+#define D_MQTT_GROUP_TOPIC "MQTT grupės tema"
+#define D_MQTT_FULL_TOPIC "MQTT visa tema"
 #define D_MQTT_NO_RETAIN "MQTT No Retain"
 #define D_MDNS_DISCOVERY "mDNS Discovery"
 #define D_MDNS_ADVERTISE "mDNS Advertise"
@@ -669,7 +669,7 @@
 
 // xsns_86_tfminiplus.ino
 #define D_SIGNALSTRENGTH "Signalo stiprumas"
-#define D_CHIPTEMPERATURE "Lusto Temperature"
+#define D_CHIPTEMPERATURE "Lusto temperatūra"
 
 // xsns_60_GPS
 #define D_LATITUDE             "Platuma"
