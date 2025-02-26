@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 - Allow acl in mqtt when client certificate is in use with `#define USE_MQTT_CLIENT_CERT` (#22998)
 - Berry `tasmota.when_network_up()` and simplified Matter using it (#23057)
 - Berry `introspect.solidified()` to know if a Berry object is solidified or in RAM (#23063)
-- Berry `global.undef()` to undefine a global variable
+- Berry `global.undef()` to undefine a global variable (#23073)
 
 ### Breaking Changed
 
