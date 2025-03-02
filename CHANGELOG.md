@@ -3,7 +3,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.5.0.1] 
+## [14.5.0.2] 
+### Added
+
+### Breaking Changed
+
+### Changed
+- ESP32 Platform from 2025.02.30 to 2025.03.30, Framework (Arduino Core) from v3.1.1.250203 to v3.1.3.250302 and IDF from v5.3.2.250120 to 5.3.2.250228 (#23088)
+
+### Fixed
+
+### Removed
+
+
+## [14.5.0.1] 20250302
 ### Added
 - Berry experimental driver for AXP2101 for M5Core2v1.1 (#23039)
 - LVGL experimental mirroring of display on Web UI (#23041)
@@ -11,8 +24,6 @@ All notable changes to this project will be documented in this file.
 - Berry `tasmota.when_network_up()` and simplified Matter using it (#23057)
 - Berry `introspect.solidified()` to know if a Berry object is solidified or in RAM (#23063)
 - Berry `global.undef()` to undefine a global variable (#23073)
-
-### Breaking Changed
 
 ### Changed
 - LVGL, prepare for HASPmota theme, change: no-grow when clicked, DPI set to 160 (#23040)
@@ -22,9 +33,6 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Too many zeros in RCSwitch received data regression from v14.4.1.4 (#23050)
-
-### Removed
-
 
 ## [Released]
 
