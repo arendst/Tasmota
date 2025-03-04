@@ -128,6 +128,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Changed
 - ESP32 Platform from 2025.02.30 to 2025.03.30, Framework (Arduino Core) from v3.1.1.250203 to v3.1.3.250302 and IDF from v5.3.2.250120 to 5.3.2.250228 [#23088](https://github.com/arendst/Tasmota/issues/23088)
 - GPIOViewer from v1.6.1 to v1.6.2 (No functional change)
+- ESP32 enable webcam version 2 [#18732](https://github.com/arendst/Tasmota/issues/18732)
 - LVGL, prepare for HASPmota theme, change: no-grow when clicked, DPI set to 160 [#23040](https://github.com/arendst/Tasmota/issues/23040)
 - LVGL Mirroring add checkbox to enable/disable the feature (in the iterim for a better solution) [#23047](https://github.com/arendst/Tasmota/issues/23047)
 - Leds Panel add checkbox to enable/disable the feature (in the iterim for a better solution) [#23048](https://github.com/arendst/Tasmota/issues/23048)

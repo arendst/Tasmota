@@ -1739,7 +1739,7 @@ static void WCOperationTask(void *pvParameters){
           // every 100 frames or 5s
           if (!(loopcount % 100) || (statdur > 5000)){
             float framespersec = ((float)framecount)/(((float)(thismillis - laststatmillis))/1000.0);
-            AddLog(LOG_LEVEL_DEBUG,PSTR("CAM: avFPS %f %s FS:%d(%d) f:%u s:%u"), 
+            AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("CAM: avFPS %f %s FS:%d(%d) f:%u s:%u"), 
               framespersec, 
               jpeg_converted?"raw":"jpg", 
               wc_fb->len, 

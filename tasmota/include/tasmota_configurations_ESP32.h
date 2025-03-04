@@ -211,7 +211,8 @@
 #endif
 
 #define USE_WEBCAM
-#define ENABLE_RTSPSERVER
+  #define USE_WEBCAM_V2
+  #define ENABLE_RTSPSERVER
 #define USE_SPI
 #define USE_SDCARD
 

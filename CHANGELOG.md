@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - ESP32 Platform from 2025.02.30 to 2025.03.30, Framework (Arduino Core) from v3.1.1.250203 to v3.1.3.250302 and IDF from v5.3.2.250120 to 5.3.2.250228 (#23088)
+- ESP32 enable webcam version 2 (#18732)
 
 ### Fixed
 
