@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 enable webcam version 2 (#18732)
 
 ### Fixed
-- Berry prevent `import` from hiding a solidified class
+- Berry prevent `import` from hiding a solidified class (#23112)
 
 ### Removed
 
