@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [14.5.0.2] 
 ### Added
+- Berry load `.tapp` files in `/.extensions/` then in `/`
 
 ### Breaking Changed
 
