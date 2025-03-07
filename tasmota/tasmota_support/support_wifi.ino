@@ -185,9 +185,9 @@ void WiFiSetSleepMode(void)
   }
 */
   bool wifi_no_sleep = Settings->flag5.wifi_no_sleep;
-#ifdef CONFIG_IDF_TARGET_ESP32C3
-  wifi_no_sleep = true;                         // Temporary patch for IDF4.4, wifi sleeping may cause wifi drops
-#endif
+//#ifdef CONFIG_IDF_TARGET_ESP32C3
+//  wifi_no_sleep = true;                         // Temporary patch for IDF4.4, wifi sleeping may cause wifi drops
+//#endif
   if (0 == TasmotaGlobal.sleep || wifi_no_sleep) {
     if (!TasmotaGlobal.wifi_stay_asleep) {
       WiFiHelper::setSleepMode(WIFI_NONE_SLEEP);       // Disable sleep
