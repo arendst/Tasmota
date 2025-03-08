@@ -31,22 +31,22 @@ const char HTTP_FORM_TIMEPROP_CYCLELENGTH[] PROGMEM =
 const char HTTP_FORM_TIMEPROP_NUMPROPS[] PROGMEM =
     "<p><b>" D_TIMEPROP_NUMPROPS "</b> (5)<br>"
     "<select id=\"tp_num_props\" name=\"tp_num_props\">"
-    "<option value=\"0\">1</option>"
-    "<option value=\"1\">2</option>"
-    "<option value=\"2\">3</option>"
-    "<option value=\"3\">4</option>"
-    "<option selected=\"\" value=\"4\">5</option>"
-    "<option value=\"5\">6</option>"
-    "<option value=\"6\">7</option>"
-    "<option value=\"7\">8</option>"
+    "<option %s value=\"0\">1</option>"
+    "<option %s value=\"1\">2</option>"
+    "<option %s value=\"2\">3</option>"
+    "<option %s value=\"3\">4</option>"
+    "<option %s value=\"4\">5</option>"
+    "<option %s value=\"5\">6</option>"
+    "<option %s value=\"6\">7</option>"
+    "<option %s value=\"7\">8</option>"
     "</select>"
     "</p>";
 
 const char HTTP_FORM_TIMEPROP_LOADTYPE[] PROGMEM =
     "<p><b>" D_TIMEPROP_LOADTYPE "</b> (" D_TIMEPROP_LOADTYPE_DISTRIBUTION ")<br>"
     "<select id=\"tp_load_type\" name=\"tp_load_type\">"
-    "<option selected=\"\" value=\"0\">" D_TIMEPROP_LOADTYPE_DISTRIBUTION "</option>"
-    "<option value=\"1\">" D_TIMEPROP_LOADTYPE_COLLECTION " </option>"
+    "<option %s value=\"0\">" D_TIMEPROP_LOADTYPE_DISTRIBUTION "</option>"
+    "<option %s value=\"1\">" D_TIMEPROP_LOADTYPE_COLLECTION " </option>"
     "</select>"
     "</p>";
 
@@ -56,15 +56,12 @@ const char HTTP_FORM_TIMEPROP_FALLBACK[] PROGMEM =
 
 struct TIMEPROP
 {
-  bool enabled = false;
-  uint8_t cycle_length = 1;
-  // uint16_t connect_count = 0;            // MQTT re-connect count
-  // uint16_t retry_counter = 1;            // MQTT connection retry counter
-  // uint16_t retry_counter_delay = 1;      // MQTT retry counter multiplier
-  // uint8_t initial_connection_state = 2;  // MQTT connection messages state
-  // bool connected = false;                // MQTT virtual connection status
-  // bool allowed = false;                  // MQTT enabled and parameters valid
-  // bool mqtt_tls = false;                 // MQTT TLS is enabled
+  bool enabled = true;
+  uint8_t cycle_length = 2;
+  uint8_t num_timeprops = 3;
+  bool load_type = false;
+  uint8_t fallback_time = 30;
+  uint8_t fallback_value = 11;
 } Timeprop;
 
 void HandleTimepropConfiguration(void)
@@ -90,13 +87,25 @@ void HandleTimepropConfiguration(void)
   WSContentSend_P(HTTP_FORM_TIMEPROPSTRT);
 
   WSContentSend_P(HTTP_FORM_TIMEPROP_ENABLE, Timeprop.enabled ? PSTR(" checked") : "");
-  WSContentSend_P(HTTP_FORM_TIMEPROP_CYCLELENGTH, Timeprop.cycle_length == 0 ? PSTR("selected=\"\"") : "",
+  WSContentSend_P(HTTP_FORM_TIMEPROP_CYCLELENGTH,
+                  Timeprop.cycle_length == 0 ? PSTR("selected=\"\"") : "",
                   Timeprop.cycle_length == 1 ? PSTR("selected=\"\"") : "",
                   Timeprop.cycle_length == 2 ? PSTR("selected=\"\"") : "",
                   Timeprop.cycle_length == 3 ? PSTR("selected=\"\"") : "");
-  WSContentSend_P(HTTP_FORM_TIMEPROP_NUMPROPS);
-  WSContentSend_P(HTTP_FORM_TIMEPROP_LOADTYPE);
-  WSContentSend_P(HTTP_FORM_TIMEPROP_FALLBACK, 33, 44);
+  WSContentSend_P(HTTP_FORM_TIMEPROP_NUMPROPS,
+                  Timeprop.num_timeprops == 0 ? PSTR("selected=\"\"") : "",
+                  Timeprop.num_timeprops == 1 ? PSTR("selected=\"\"") : "",
+                  Timeprop.num_timeprops == 2 ? PSTR("selected=\"\"") : "",
+                  Timeprop.num_timeprops == 3 ? PSTR("selected=\"\"") : "",
+                  Timeprop.num_timeprops == 4 ? PSTR("selected=\"\"") : "",
+                  Timeprop.num_timeprops == 5 ? PSTR("selected=\"\"") : "",
+                  Timeprop.num_timeprops == 6 ? PSTR("selected=\"\"") : "",
+                  Timeprop.num_timeprops == 7 ? PSTR("selected=\"\"") : "");
+  WSContentSend_P(HTTP_FORM_TIMEPROP_LOADTYPE,
+                  !Timeprop.load_type ? PSTR("selected=\"\"") : "",
+                  Timeprop.load_type ? PSTR("selected=\"\"") : "");
+
+  WSContentSend_P(HTTP_FORM_TIMEPROP_FALLBACK, Timeprop.fallback_time, Timeprop.fallback_value);
 
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
