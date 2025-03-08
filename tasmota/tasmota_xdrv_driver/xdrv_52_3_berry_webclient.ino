@@ -658,6 +658,28 @@ extern "C" {
   }
 }
 
+extern "C" {
+  int32_t wc_getbytes(struct bvm *vm);
+  int32_t wc_getbytes(struct bvm *vm) {
+    HTTPClientLight * cl = wc_getclient(vm);
+    int32_t sz = cl->getSize();
+    // abort if we exceed 32KB size, things will not go well otherwise
+    if (sz >= 32767) {
+      be_raise(vm, "value_error", "response size too big (>32KB)");
+    }
+    // default to 1K starter if contetn-length not present
+    if (sz < 0) sz = 1024;
+    // create a bytes object at top of stack.
+    // the streamwriter knows how to get it. 
+    uint8_t * buf = (uint8_t*) be_pushbytes(vm, nullptr, sz);
+    StreamBeBytesWriter memory_writer(vm);
+    int32_t written = cl->writeToStream(&memory_writer);
+    cl->end();  // free allocated memory ~16KB
+    be_return(vm);  /* return code */
+  }
+}
+
+#endif // USE_WEBCLIENT
 
 // a stream which writes to the Bytes object on the top of the stack
 class StreamBeBytesWriter: public Stream
@@ -729,26 +751,4 @@ protected:
   size_t incr;           // amount to add to size if it does not fit.
 };
 
-extern "C" {
-  int32_t wc_getbytes(struct bvm *vm);
-  int32_t wc_getbytes(struct bvm *vm) {
-    HTTPClientLight * cl = wc_getclient(vm);
-    int32_t sz = cl->getSize();
-    // abort if we exceed 32KB size, things will not go well otherwise
-    if (sz >= 32767) {
-      be_raise(vm, "value_error", "response size too big (>32KB)");
-    }
-    // default to 1K starter if contetn-length not present
-    if (sz < 0) sz = 1024;
-    // create a bytes object at top of stack.
-    // the streamwriter knows how to get it. 
-    uint8_t * buf = (uint8_t*) be_pushbytes(vm, nullptr, sz);
-    StreamBeBytesWriter memory_writer(vm);
-    int32_t written = cl->writeToStream(&memory_writer);
-    cl->end();  // free allocated memory ~16KB
-    be_return(vm);  /* return code */
-  }
-}
-
-#endif // USE_WEBCLIENT
 #endif  // USE_BERRY
