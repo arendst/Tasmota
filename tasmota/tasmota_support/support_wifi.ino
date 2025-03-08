@@ -508,7 +508,7 @@ bool WifiGetIP(IPAddress *ip, bool exclude_ap = false);
 // Returns only IPv6 global address (no loopback and no link-local)
 bool WifiGetIPv4(IPAddress *ip)
 {
-  uint32_t wifi_uint = (uint32_t) WiFi.localIP();
+  uint32_t wifi_uint = (WL_CONNECTED == WiFi.status()) ? (uint32_t)WiFi.localIP() : 0;  // See issue #23115
   if (ip != nullptr) { *ip = wifi_uint; }
   return wifi_uint != 0;
 }
