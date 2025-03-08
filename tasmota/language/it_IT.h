@@ -58,6 +58,7 @@
 #define D_AS                   "come"
 #define D_AT                   "in"
 #define D_AUTO                 "AUTO"
+#define D_AUTO_UPDATE          "Auto Update"
 #define D_BATTERY              "Batteria"
 #define D_BATT                 "Batt"                 // Short for Battery
 #define D_BATTERY_CHARGE       "Carica"               // Battery charge in %
@@ -88,6 +89,7 @@
 #define D_DEBUG                "Debug"
 #define D_DEWPOINT             "Punto rugiada" //
 #define D_DISABLED             "Disabilitato/a"
+#define D_DISCONNECTED         "Disconnected"
 #define D_DISTANCE             "Distanza"
 #define D_DNS_SERVER           "Server DNS"
 #define D_DO                   "Ossigeno dissolto"
@@ -776,6 +778,8 @@
 #define D_SENSOR_SDM630_RX              "SDM630 - RX"
 #define D_SENSOR_WE517_TX               "WE517 - TX"
 #define D_SENSOR_WE517_RX               "WE517 - RX"
+#define D_SENSOR_LD2402_TX              "LD2402 - Tx"
+#define D_SENSOR_LD2402_RX              "LD2402 - Rx"
 #define D_SENSOR_LD2410_TX              "LD2410 - TX"
 #define D_SENSOR_LD2410_RX              "LD2410 - RX"
 #define D_SENSOR_LD2410S_TX             "LD2410S - TX"
