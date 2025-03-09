@@ -92,11 +92,16 @@
   #define BMS_SERIAL           0x4000
   #define BMS_MODULES_OK       0x8000
   #define BMS_CELL_VOLT_TEMP  0x10000
+  #define BMS_VOLT_LOW_ID     0x20000
+  #define BMS_VOLT_HIGH_ID    0x40000
+  #define BMS_TEMP_LOW_ID     0x80000
+  #define BMS_TEMP_HIGH_ID   0x100000
 
 struct BMS_Struct {
   uint32_t  setFields; // Bitwise fields set list
   char      name[17];
   uint16_t  stateOfCharge;
+  uint16_t  stateOfChargeHighRes;
   uint16_t  stateOfHealth;
   uint16_t  chargeVoltLimit; // Div 10
   uint16_t  dischargeVolt; // Div 10
@@ -118,6 +123,10 @@ struct BMS_Struct {
   uint16_t  maxCellVolt;
   uint16_t  cellTempLow;
   uint16_t  cellTempHigh;
+  char      minCellId[9];
+  char      maxCellId[9];
+  char      tempLowCellId[9];
+  char      tempHighCellId[9];
 } bms;
 
 #endif
@@ -207,6 +216,7 @@ void MCP2515_Read() {
         if (6 >= canFrame.can_dlc) {
           bms.stateOfCharge = (canFrame.data[1] << 8) | canFrame.data[0];
           bms.stateOfHealth = (canFrame.data[3] << 8) | canFrame.data[2];
+          bms.stateOfChargeHighRes = (canFrame.data[5] << 8) | canFrame.data[4];
           bms.setFields    |= BMS_SOC | BMS_SOH;
         } else {
           MCP2515_FrameSizeError(canFrame.can_dlc, canFrame.can_id);
@@ -228,7 +238,7 @@ void MCP2515_Read() {
         break;
       // Manufacturer name
       case 0x35E:
-        for (int i = 0; i < canFrame.can_dlc; i++) {
+        for (int i = 0; i < canFrame.can_dlc && i < 9; i++) {
           bms.manuf[i] = canFrame.data[i];
         }
         bms.setFields |= BMS_MANUFACTURER;
@@ -236,7 +246,7 @@ void MCP2515_Read() {
         break;
       // Battery Model / Firmware version
       case 0x35F:
-        if (4 == canFrame.can_dlc) {
+        if (4 >= canFrame.can_dlc) {
           bms.model       = (canFrame.data[1] << 8) | canFrame.data[0];
           bms.firmwareVer = (canFrame.data[3] << 8) | canFrame.data[2];
           bms.setFields  |= BMS_MODEL | BMS_FIRMWARE_VER;
@@ -247,7 +257,7 @@ void MCP2515_Read() {
       // Battery / BMS name
       case 0x370:
       case 0x371:
-        for (int i = 0; i < canFrame.can_dlc; i++) {
+        for (int i = 0; i < canFrame.can_dlc && i < 9; i++) {
           uint8_t nameStrPos = i + ((canFrame.can_id & 0x1) * 8); // If can_id is 0x371 then fill from byte 8 onwards
           bms.name[nameStrPos] = canFrame.data[i];
         }
@@ -258,7 +268,7 @@ void MCP2515_Read() {
         break;
       // Modules status
       case 0x372:
-        if (4 == canFrame.can_dlc) {
+        if (8 >= canFrame.can_dlc) {
           bms.nrModulesOk             = (canFrame.data[1] << 8) | canFrame.data[0];
           bms.nrModulesBlockingCharge = (canFrame.data[3] << 8) | canFrame.data[2];
           bms.nrModulesBlocking       = (canFrame.data[5] << 8) | canFrame.data[4];
@@ -270,7 +280,7 @@ void MCP2515_Read() {
         break;
       // Min/Max cell voltage/temperature
       case 0x373:
-        if (4 == canFrame.can_dlc) {
+        if (8 >= canFrame.can_dlc) {
           bms.minCellVolt  = (canFrame.data[1] << 8) | canFrame.data[0];
           bms.maxCellVolt  = (canFrame.data[3] << 8) | canFrame.data[2];
           bms.cellTempLow  = (canFrame.data[5] << 8) | canFrame.data[4];
@@ -282,12 +292,35 @@ void MCP2515_Read() {
         break;
       // Min. cell voltage id string
       case 0x374:
+        for (int i = 0; i < canFrame.can_dlc && i < 9; i++) {
+          bms.minCellId[i] = canFrame.data[i];
+        }
+        bms.setFields |= BMS_VOLT_LOW_ID;
+        bms.minCellId[8] = 0; // Ensure that the string is null terminated
+        break;
       // Max. cell voltage id string
       case 0x375:
+        for (int i = 0; i < canFrame.can_dlc && i < 9; i++) {
+          bms.maxCellId[i] = canFrame.data[i];
+        }
+        bms.setFields |= BMS_VOLT_HIGH_ID;
+        bms.maxCellId[8] = 0; // Ensure that the string is null terminated
+        break;
       // Min. cell temperature id string
       case 0x376:
+        for (int i = 0; i < canFrame.can_dlc && i < 9; i++) {
+          bms.tempLowCellId[i] = canFrame.data[i];
+        }
+        bms.setFields |= BMS_TEMP_LOW_ID;
+        bms.tempLowCellId[8] = 0; // Ensure that the string is null terminated
+        break;
       // Max. cell temperature id string
       case 0x377:
+        for (int i = 0; i < canFrame.can_dlc && i < 9; i++) {
+          bms.tempHighCellId[i] = canFrame.data[i];
+        }
+        bms.setFields |= BMS_TEMP_HIGH_ID;
+        bms.tempHighCellId[8] = 0; // Ensure that the string is null terminated
         break;
       // Installed capacity
       case 0x379:
@@ -301,7 +334,7 @@ void MCP2515_Read() {
       // Serial number
       case 0x380:
       case 0x381:
-        for (int i = 0; i < canFrame.can_dlc; i++) {
+        for (int i = 0; i < canFrame.can_dlc && i < 9; i++) {
           uint8_t serialNrStrPos = i + ((canFrame.can_id & 0x1) * 8); // If can_id is 0x381 then fill from byte 8 onwards
           bms.serialNr[serialNrStrPos] = canFrame.data[i];
         }
@@ -360,7 +393,7 @@ void MCP2515_Show(bool Json) {
           jsonFirstField = false;
         }
         if (bms.setFields & BMS_VOLT) {
-          ResponseAppend_P(PSTR("%s\"BattVolt\":%d.%d"), jsonFirstField ? PSTR("") : PSTR(","), bms.battVoltage / 100, bms.battVoltage % 100);
+          ResponseAppend_P(PSTR("%s\"BattVolt\":%d.%02d"), jsonFirstField ? PSTR("") : PSTR(","), bms.battVoltage / 100, bms.battVoltage % 100);
           jsonFirstField = false;
         }
         if (bms.setFields & BMS_AMP) {
@@ -391,6 +424,20 @@ void MCP2515_Show(bool Json) {
           ResponseAppend_P(PSTR("%s\"MaxDischargeAmp\":%d.%d"), jsonFirstField ? PSTR("") : PSTR(","), bms.maxDischargeCurrent / 10, bms.maxDischargeCurrent % 10);
           jsonFirstField = false;
         }
+        if (bms.setFields & BMS_MODULES_OK) {
+          ResponseAppend_P(PSTR("%s\"ModulesOk\":%d"), jsonFirstField ? PSTR("") : PSTR(","), bms.nrModulesOk);
+          ResponseAppend_P(PSTR("%s\"ModulesBlockingCharge\":%d"), PSTR(","), bms.nrModulesBlockingCharge);
+          ResponseAppend_P(PSTR("%s\"ModulesBlocking\":%d"), PSTR(","), bms.nrModulesBlocking);
+          ResponseAppend_P(PSTR("%s\"ModulesOffline\":%d"), PSTR(","), bms.nrModulesOffline);
+          jsonFirstField = false;
+        }
+        if (bms.setFields & BMS_CELL_VOLT_TEMP) {
+          ResponseAppend_P(PSTR("%s\"CellVoltMin\":%d"), jsonFirstField ? PSTR("") : PSTR(","), bms.minCellVolt);
+          ResponseAppend_P(PSTR("%s\"CellVoltMax\":%d"), PSTR(","), bms.maxCellVolt);
+          ResponseAppend_P(PSTR("%s\"CellTempLow\":%d"), PSTR(","), bms.cellTempLow);
+          ResponseAppend_P(PSTR("%s\"CellTempHigh\":%d"), PSTR(","), bms.cellTempHigh);
+          jsonFirstField = false;
+        }
 
         ResponseAppend_P(PSTR("}"));
       }
@@ -402,8 +449,16 @@ void MCP2515_Show(bool Json) {
   } else {
   #ifdef MCP2515_BMS_CLIENT
     if (bms.setFields & BMS_MANUFACTURER) {
+      if (bms.setFields & BMS_SERIAL) {
+        WSContentSend_PD(PSTR("{s}%s Serial number{m}%s {e}"), bms.manuf, bms.serialNr);
+      }
+      if (bms.setFields & BMS_CAPACITY) {
+        WSContentSend_PD(PSTR("{s}%s Installed Capacity{m}%d Ah{e}"), bms.manuf, bms.capacityAh);
+      }
       if (bms.setFields & BMS_SOC) {
-        WSContentSend_PD(HTTP_SNS_SOC, bms.manuf, bms.stateOfCharge);
+        char socStr[6];
+        dtostrf((float(bms.stateOfChargeHighRes) / 10), 5, 1, socStr);
+        WSContentSend_PD(PSTR("{s}%s State of Charge{m}%s%%{e}"), bms.manuf, socStr);
       }
       if (bms.setFields & BMS_SOH) {
         WSContentSend_PD(HTTP_SNS_SOH, bms.manuf, bms.stateOfHealth);
@@ -447,9 +502,17 @@ void MCP2515_Show(bool Json) {
       }
       if (bms.setFields & BMS_CELL_VOLT_TEMP) {
         WSContentSend_PD(PSTR("{s}%s Cell Voltage Min{m}%d " D_UNIT_MILLIVOLT "{e}"), bms.manuf, bms.minCellVolt);
-        WSContentSend_PD(PSTR("{s}%s Cell Voltage Max{m}%d " D_UNIT_MILLIVOLT "{e}"), bms.manuf, bms.maxCellVolt );
+        WSContentSend_PD(PSTR("{s}%s Cell Voltage Max{m}%d " D_UNIT_MILLIVOLT "{e}"), bms.manuf, bms.maxCellVolt);
         WSContentSend_PD(PSTR("{s}%s Cell Temp Low{m}%d " D_UNIT_KELVIN "{e}"), bms.manuf, bms.cellTempLow);
         WSContentSend_PD(PSTR("{s}%s Cell Temp High{m}%d " D_UNIT_KELVIN "{e}"), bms.manuf, bms.cellTempHigh);
+      }
+      if ((bms.setFields & BMS_VOLT_LOW_ID) && (bms.setFields & BMS_VOLT_HIGH_ID)) {
+        WSContentSend_PD(PSTR("{s}%s Cell Low Volt ID{m}%d {e}"), bms.manuf, bms.maxCellId);
+        WSContentSend_PD(PSTR("{s}%s Cell High Volt ID{m}%d {e}"), bms.manuf, bms.minCellId);
+      }
+      if ((bms.setFields & BMS_TEMP_LOW_ID) && (bms.setFields & BMS_TEMP_HIGH_ID)) {
+        WSContentSend_PD(PSTR("{s}%s Cell Low Temp ID{m}%d {e}"), bms.manuf, bms.tempLowCellId);
+        WSContentSend_PD(PSTR("{s}%s Cell High Temp ID{m}%d {e}"), bms.manuf, bms.tempHighCellId);
       }
 
     } else {
