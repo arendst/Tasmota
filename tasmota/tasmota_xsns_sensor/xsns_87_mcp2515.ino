@@ -101,6 +101,7 @@ struct BMS_Struct {
   uint32_t  setFields; // Bitwise fields set list
   char      name[17];
   uint16_t  stateOfCharge;
+  uint16_t  stateOfChargeHighRes;
   uint16_t  stateOfHealth;
   uint16_t  chargeVoltLimit; // Div 10
   uint16_t  dischargeVolt; // Div 10
@@ -215,6 +216,7 @@ void MCP2515_Read() {
         if (6 >= canFrame.can_dlc) {
           bms.stateOfCharge = (canFrame.data[1] << 8) | canFrame.data[0];
           bms.stateOfHealth = (canFrame.data[3] << 8) | canFrame.data[2];
+          bms.stateOfChargeHighRes = (canFrame.data[5] << 8) | canFrame.data[4];
           bms.setFields    |= BMS_SOC | BMS_SOH;
         } else {
           MCP2515_FrameSizeError(canFrame.can_dlc, canFrame.can_id);
@@ -391,7 +393,7 @@ void MCP2515_Show(bool Json) {
           jsonFirstField = false;
         }
         if (bms.setFields & BMS_VOLT) {
-          ResponseAppend_P(PSTR("%s\"BattVolt\":%d.%d"), jsonFirstField ? PSTR("") : PSTR(","), bms.battVoltage / 100, bms.battVoltage % 100);
+          ResponseAppend_P(PSTR("%s\"BattVolt\":%d.%02d"), jsonFirstField ? PSTR("") : PSTR(","), bms.battVoltage / 100, bms.battVoltage % 100);
           jsonFirstField = false;
         }
         if (bms.setFields & BMS_AMP) {
@@ -454,7 +456,9 @@ void MCP2515_Show(bool Json) {
         WSContentSend_PD(PSTR("{s}%s Installed Capacity{m}%d Ah{e}"), bms.manuf, bms.capacityAh);
       }
       if (bms.setFields & BMS_SOC) {
-        WSContentSend_PD(HTTP_SNS_SOC, bms.manuf, bms.stateOfCharge);
+        char socStr[6];
+        dtostrf((float(bms.stateOfChargeHighRes) / 10), 5, 1, socStr);
+        WSContentSend_PD(PSTR("{s}%s State of Charge{m}%s%%{e}"), bms.manuf, socStr);
       }
       if (bms.setFields & BMS_SOH) {
         WSContentSend_PD(HTTP_SNS_SOH, bms.manuf, bms.stateOfHealth);
