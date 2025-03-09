@@ -8,6 +8,7 @@
 
 #define XNRG_34             34
 
+#if 0
 #include <TasmotaSerial.h>
 #include <algorithm>
 
@@ -647,6 +648,12 @@ bool Xnrg34(uint32_t function) {
     }
     return result;
 }
+#else
+bool Xnrg34(uint32_t function) {
+    bool result = false;
+    return result;
+}
+#endif
 
 #endif  // USE_ENERGY_V9240
 #endif  // USE_ENERGY_SENSOR
