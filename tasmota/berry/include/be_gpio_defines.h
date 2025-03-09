@@ -358,7 +358,10 @@ const be_const_member_t lv_gpio_constants[] = {
     { "ZEROCROSS", (int32_t) GPIO_ZEROCROSS },
     { "ZIGBEE_RST", (int32_t) GPIO_ZIGBEE_RST },
     { "ZIGBEE_RX", (int32_t) GPIO_ZIGBEE_RX },
-    { "ZIGBEE_TX", (int32_t) GPIO_ZIGBEE_TX },
+    { "ZIGBEE_TX", (int32_t) GPIO_ZIGBEE_TX },    
+    { "V9240_RX", (int32_t) GPIO_V9240_RX },
+    { "V9240_TX", (int32_t) GPIO_V9240_TX },
+
 
 };
 

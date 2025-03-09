@@ -1314,4 +1314,7 @@
 #define D_CHARGING                        "Charging"
 #define D_CAPACITY                        "Capacity"
 
+#define D_SENSOR_V9240_TX "V9240_TX"
+#define D_SENSOR_V9240_RX "V9240_RX"
+
 #endif  // _LANGUAGE_BG_BG_H_

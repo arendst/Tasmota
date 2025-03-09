@@ -154,7 +154,11 @@ bool (* const xnrg_func_ptr[])(uint32_t) = {   // Energy driver Function Pointer
 #endif
 
 #ifdef XNRG_33  // Reserved for use by xsns_02_analog.ino
-  &Xnrg33
+  &Xnrg33,
+#endif
+
+#ifdef XNRG_34
+  &Xnrg34
 #endif
 };
 

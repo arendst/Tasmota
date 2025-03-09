@@ -943,6 +943,10 @@ constexpr uint32_t feature[] = {
 #ifdef USE_WIZMOTE
   0x00002000 |  // xdrv_77_wizmote.ino
 #endif
+#if defined(USE_ENERGY_SENSOR) && defined(USE_V9240)
+    0x00004000 |  // xnrg_34_v9240.ino
+#endif
+//  0x00002000 |  //
 //  0x00004000 |  // 
 //  0x00008000 |  // 
 //  0x00010000 |  // 
