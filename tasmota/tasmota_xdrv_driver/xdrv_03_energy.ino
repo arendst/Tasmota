@@ -45,7 +45,7 @@
 #define D_CMND_MODULEADDRESS "ModuleAddress"
 
 enum EnergyCalibration {
-  ENERGY_POWER_CALIBRATION, ENERGY_VOLTAGE_CALIBRATION, ENERGY_CURRENT_CALIBRATION, ENERGY_FREQUENCY_CALIBRATION };
+  ENERGY_POWER_CALIBRATION, ENERGY_VOLTAGE_CALIBRATION, ENERGY_CURRENT_CALIBRATION, ENERGY_FREQUENCY_CALIBRATION,ENERGY_REACTIVE_CALIBRATION };
 
 enum EnergyCommands {
   CMND_POWERCAL, CMND_VOLTAGECAL, CMND_CURRENTCAL, CMND_FREQUENCYCAL,
@@ -924,6 +924,8 @@ uint32_t EnergyGetCalibration(uint32_t cal_type, uint32_t chan = 0) {
       case ENERGY_POWER_CALIBRATION: return Settings->energy_power_calibration;
       case ENERGY_VOLTAGE_CALIBRATION: return Settings->energy_voltage_calibration;
       case ENERGY_CURRENT_CALIBRATION: return Settings->energy_current_calibration;
+      case ENERGY_REACTIVE_CALIBRATION: return Settings->energy_power_calibration2;
+
     }
   }
   return Settings->energy_frequency_calibration;
@@ -944,6 +946,7 @@ void EnergySetCalibration(uint32_t cal_type, uint32_t value, uint32_t chan = 0) 
       case ENERGY_VOLTAGE_CALIBRATION: Settings->energy_voltage_calibration = value; return;
       case ENERGY_CURRENT_CALIBRATION: Settings->energy_current_calibration = value; return;
       case ENERGY_FREQUENCY_CALIBRATION: Settings->energy_frequency_calibration = value; return;
+      case ENERGY_REACTIVE_CALIBRATION: Settings->energy_power_calibration2 = value; return;
     }
   }
 }
@@ -1300,7 +1303,6 @@ void EnergyShow(bool json) {
         else if (0 == Energy->current[i]) {
           reactive_power[i] = 0;
         }
-
       }
     }
   }
