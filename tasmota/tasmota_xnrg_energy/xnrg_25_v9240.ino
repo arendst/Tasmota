@@ -1,5 +1,5 @@
 /*
-  xnrg_34_v9240.ino - v9240 energy sensor support for Tasmota
+  xnrg_25_v9240.ino - v9240 energy sensor support for Tasmota
 
 */
 
@@ -13,7 +13,7 @@
 #ifdef USE_ENERGY_SENSOR
 #ifdef USE_V9240
 
-#define XNRG_34             34
+#define XNRG_25             25
 
 #ifdef USE_UFILESYS
 #define  V9240_FILENAME "./v9240_param"
@@ -748,7 +748,7 @@ void Xnrg34PreInit()
 {
     if (PinUsed(GPIO_V9240_RX) && PinUsed(GPIO_V9240_TX))
     {
-      TasmotaGlobal.energy_driver = XNRG_34;
+      TasmotaGlobal.energy_driver = XNRG_25;
       V9240::instance().open("");
       V9240::instance().reset();
     }
@@ -757,7 +757,7 @@ void Xnrg34PreInit()
 
 
 
-bool Xnrg34(uint32_t function) {
+bool Xnrg25(uint32_t function) {
     bool result = false;
 
     switch (function) {
