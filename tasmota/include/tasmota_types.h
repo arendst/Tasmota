@@ -476,6 +476,18 @@ typedef union {
   };
 } DisplayOptions;
 
+typedef union {
+  uint16_t data;
+  struct {
+    uint16_t enable : 1;
+    uint16_t num_timeprops : 3;
+    uint16_t cycle_length : 2;
+    uint16_t load_type : 1;
+    uint16_t fallback_value : 4;
+    uint16_t fallback_time : 5;
+  };
+} TimePropCfg;
+
 const uint32_t settings_text_size = 699;   // Settings->text_pool[size] = Settings->display_model (2D2) - Settings->text_pool (017)
 const uint8_t MAX_TUYA_FUNCTIONS = 16;
 const uint8_t PARAM8_SIZE = 18;            // Number of param bytes (SetOption)
@@ -889,8 +901,9 @@ typedef struct {
   uint8_t       hdmi_cec_device_type;      // F61  - v13.1.0.1 (was ex_modbus_sbaudrate v12.2.0.5)
   uint8_t       modbus_sconfig;            // F62
   uint8_t       windmeter_measure_intvl;   // F63
+  TimePropCfg   timeprop_cfg;              // F64
 
-  uint8_t       free_f64[8];               // F64 - Decrement if adding new Setting variables just above and below
+  uint8_t       free_f66[6];               // F66 - Decrement if adding new Setting variables just above and below
 
   // Only 32 bit boundary variables below
   float         ms5837_pressure_offset;    // F6C

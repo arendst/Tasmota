@@ -17,12 +17,12 @@ void (*const TimepropCommand[])(void) PROGMEM = {
 
 struct TIMEPROP
 {
-  bool enabled = true;
-  uint8_t cycle_length = 2;
-  uint8_t num_timeprops = 5;
+  bool enabled = false;
+  uint8_t cycle_length = 0;
+  uint8_t num_timeprops = 0;
   bool load_type = false;
-  uint8_t fallback_time = 30;
-  uint8_t fallback_value = 11;
+  uint8_t fallback_time = 0;
+  uint8_t fallback_value = 0;
 } Timeprop;
 
 /*********************************************************************************************\
@@ -162,6 +162,9 @@ void CmndTimePropEnable(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1))
   {
     Timeprop.enabled = XdrvMailbox.payload;
+
+    Settings->timeprop_cfg.enable = Timeprop.enabled;
+    SettingsSave(0);
   }
   ResponseCmndNumber(Timeprop.enabled);
 }
@@ -171,6 +174,9 @@ void CmndTimePropCycleLength(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3))
   {
     Timeprop.cycle_length = XdrvMailbox.payload;
+
+    Settings->timeprop_cfg.cycle_length = Timeprop.cycle_length;
+    SettingsSave(0);
   }
   ResponseCmndNumber(Timeprop.cycle_length);
 }
@@ -180,6 +186,9 @@ void CmndTimePropNumProps(void)
   if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 8))
   {
     Timeprop.num_timeprops = XdrvMailbox.payload;
+
+    Settings->timeprop_cfg.num_timeprops = Timeprop.num_timeprops;
+    SettingsSave(0);
   }
   ResponseCmndNumber(Timeprop.num_timeprops);
 }
@@ -189,6 +198,9 @@ void CmndTimePropLoadType(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1))
   {
     Timeprop.load_type = XdrvMailbox.payload;
+
+    Settings->timeprop_cfg.load_type = Timeprop.load_type;
+    SettingsSave(0);
   }
   ResponseCmndNumber(Timeprop.load_type);
 }
@@ -198,6 +210,9 @@ void CmndTimePropFallbackAfter(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 31))
   {
     Timeprop.fallback_time = XdrvMailbox.payload;
+
+    Settings->timeprop_cfg.fallback_time = Timeprop.fallback_time;
+    SettingsSave(0);
   }
   ResponseCmndNumber(Timeprop.fallback_time);
 }
@@ -207,6 +222,9 @@ void CmndTimePropFallbackValue(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100))
   {
     Timeprop.fallback_value = reduceFallbackValue(XdrvMailbox.payload);
+
+    Settings->timeprop_cfg.fallback_value = Timeprop.fallback_value;
+    SettingsSave(0);
   }
   ResponseCmndNumber(expandFallbackValue(Timeprop.fallback_value));
 }
