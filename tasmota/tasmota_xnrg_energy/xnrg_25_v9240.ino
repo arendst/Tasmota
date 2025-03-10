@@ -3,21 +3,11 @@
 
 */
 
-//#ifndef USE_ENERGY_SENSOR
-//#define USE_ENERGY_SENSOR
-//#ifndef USE_V9240
-//#define USE_V9240
-//#endif
-//#endif
 
 #ifdef USE_ENERGY_SENSOR
 #ifdef USE_V9240
 
 #define XNRG_25             25
-
-#ifdef USE_UFILESYS
-#define  V9240_FILENAME "./v9240_param"
-#endif
 
 #include <TasmotaSerial.h>
 #include <algorithm>
@@ -330,7 +320,7 @@ V9240::V9240() :   port(nullptr)
     PAC      = EnergyGetCalibration(ENERGY_POWER_CALIBRATION, 0);
     PADCC    = 0;
     PHC      = EnergyGetCalibration(ENERGY_FREQUENCY_CALIBRATION, 0);
-    QAC      = EnergyGetCalibration(ENERGY_REACTIVE_CALIBRATION, 0);
+    QAC      = -1;
     QADCC    = 0;
     IAC      = EnergyGetCalibration(ENERGY_CURRENT_CALIBRATION, 0);
     IADCC    = 75969; // 16758789;
@@ -340,16 +330,6 @@ V9240::V9240() :   port(nullptr)
 
     BPFPARA  = 0x806764B6;
 
-#ifdef USE_UFILESYS
-    int file_data[rw_len];
-    char filename[20];
-    sprintf_P(filename, PSTR(V9240_FILENAME));
-    if (TfsLoadFile(filename, reinterpret_cast<uint8_t*>(file_data), sizeof(file_data)))
-    {
-        memcpy(rw_mem,file_data,sizeof(file_data));
-        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "*** V9240 calibratin parameters loaded"));
-    }
-#endif
 }
 
 V9240::~V9240()
@@ -623,74 +603,36 @@ bool V9240::write(int16_t address, int32_t data)
 
 bool V9240::process_command()
 {
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "*** V9240 command: %d value: %s"),Energy->command_code,XdrvMailbox.data);
-    int pwr = 0;
-    char *buff  = XdrvMailbox.data;
-    if(Energy->command_code == CMND_POWERCAL || Energy->command_code ==  CMND_POWERSET)
-    {
-        if(XdrvMailbox.data[1]==' ')
-        {
-            buff = XdrvMailbox.data+2;
-            pwr = XdrvMailbox.data[0]-'0';
-        }
-    }
-    float value = atof(buff);
+    float value = atof(XdrvMailbox.data);
     XdrvMailbox.payload = 0;
 
     auto calc_cor = [] (float new_value,float old_value,int32_t k) -> int32_t
     { return int32_t( (float(INT_MAX) *( new_value - old_value ) + float(k) * new_value ) / old_value ); };
 
-
     switch (Energy->command_code) {
     case CMND_POWERCAL:
-        if(pwr == 0)
-        {
-            PADCC = float(INT_MAX)*value ; // calc_cor (value,(*this)[Power],P);
-            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "*** V9240 PAAVG %d PADCC %d"),PAAVG, PADCC);
-            EnergySetCalibration(ENERGY_REACTIVE_CALIBRATION, PADCC, 0);
-        }
-        else
-        {
-            QADCC = float(INT_MAX)*value ; // calc_cor (value,(*this)[Power],P);
-            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "*** V9240 QAVG %d QADCC %d"),QAVG, QADCC);
-        }
+//        PADCC = calc_cor (value,(*this)[Power],P);
         break;
     case CMND_VOLTAGECAL:
 //        UDCC = float(INT_MAX)*value;
-        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "*** V9240 UAVG %d UDCC %d"),UAVG,UDCC);
         break;
     case CMND_CURRENTCAL:
 //        IADCC = float(INT_MAX)*value;
-        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "*** V9240 IAAVG %d IADCC %d"),IAAVG,IADCC);
         break;
     case CMND_FREQUENCYCAL:
         PHC = value ;
-        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "*** V9240 PHC %d"),PHC);
         EnergySetCalibration(ENERGY_FREQUENCY_CALIBRATION, PHC, 0);
         break;
     case CMND_POWERSET:
-        if(pwr == 0)
-        {
-            if(value >0.0 && value < 2.0)
-                PAC = float(INT_MAX)*(value-1.0f); //calc_cor (value,(*this)[Power],PAC);
-            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "*** V9240 PAC %d"),PAC);
-            EnergySetCalibration(ENERGY_POWER_CALIBRATION, PAC, 0);
-        }
-        else
-        {
-            if(value >0.0 && value < 2.0)
-                QAC = float(INT_MAX)*(value-1.0f); //calc_cor (value,(*this)[Power],PAC);
-            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "*** V9240 QAC %d"),QAC);
-        }
+        PAC = calc_cor (value,(*this)[Power],PAC);
+        EnergySetCalibration(ENERGY_POWER_CALIBRATION, PAC, 0);
         break;
     case CMND_VOLTAGESET:
-        if(value >0.0 && value < 2.0)
-            UC = float(INT_MAX)*(value-1.0f); //calc_cor (value,(*this)[Voltage],UC);
+        UC = calc_cor (value,(*this)[Voltage],UC);
         EnergySetCalibration(ENERGY_VOLTAGE_CALIBRATION, UC, 0);
         break;
     case CMND_CURRENTSET:
-        if(value >0.0 && value < 2.0)
-            IAC = float(INT_MAX)*(value-1.0f); //calc_cor (value,(*this)[Amperage],IAC);
+        IAC = calc_cor (value,(*this)[Amperage],IAC);
         EnergySetCalibration(ENERGY_CURRENT_CALIBRATION, IAC, 0);
         break;
     case CMND_FREQUENCYSET:        
@@ -705,14 +647,6 @@ bool V9240::process_command()
 
     step = 0;
 
-#ifdef USE_UFILESYS
-    char filename[20];
-    sprintf_P(filename, PSTR(V9240_FILENAME));
-    if (TfsSaveFile(filename, reinterpret_cast<const uint8_t*>(rw_mem), sizeof(rw_mem)))
-    {
-        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "*** V9240 calibratin parameters stored"));
-    }
-#endif
     return true;
 }
 
