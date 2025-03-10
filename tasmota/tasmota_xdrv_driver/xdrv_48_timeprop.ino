@@ -87,7 +87,7 @@ void HandleTimepropConfiguration(void)
   if (Webserver->hasArg(F("save")))
   {
     TimePropSaveSettings();
-    // WebRestart(1); TODO: Enable
+    WebRestart(1);
     return;
   }
 
@@ -127,7 +127,14 @@ void HandleTimepropConfiguration(void)
 void TimePropSaveSettings(void)
 {
   String cmnd = F(D_CMND_BACKLOG "0 ");
-  cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_ENABLE), PSTR("tp_enable"), PSTR("1"));
+  if (Webserver->hasArg("tp_enable"))
+  {
+    cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_ENABLE), PSTR("1"), PSTR("1"));
+  }
+  else
+  {
+    cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_ENABLE), PSTR("0"), PSTR("0"));
+  }
   cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_CYCLE_LENGTH), PSTR("tp_cycle_length"), PSTR("2"));
   cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_NUM_PROPS), PSTR("tp_num_props"), PSTR("5"));
   cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_LOAD_TYPE), PSTR("tp_load_type"), PSTR("0"));
@@ -154,11 +161,29 @@ uint8_t expandFallbackValue(uint8_t fourBitValue)
 }
 
 /*********************************************************************************************\
+ * Init
+\*********************************************************************************************/
+void TimepropInit(void)
+{
+  LoadPersistentSettings();
+}
+
+void LoadPersistentSettings(void)
+{
+  Timeprop.enabled = Settings->timeprop_cfg.enable;
+  Timeprop.cycle_length = Settings->timeprop_cfg.cycle_length;
+  Timeprop.num_timeprops = Settings->timeprop_cfg.num_timeprops;
+  Timeprop.load_type = Settings->timeprop_cfg.load_type;
+  Timeprop.fallback_time = Settings->timeprop_cfg.fallback_time;
+  Timeprop.fallback_value = expandFallbackValue(Settings->timeprop_cfg.fallback_value);
+}
+
+/*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
 void CmndTimePropEnable(void)
 {
-  AddLog(LOG_LEVEL_INFO, PSTR("CmndTimePropEnable"));
+  // AddLog(LOG_LEVEL_INFO, PSTR("CmndTimePropEnable %s"), XdrvMailbox.payload);
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1))
   {
     Timeprop.enabled = XdrvMailbox.payload;
@@ -221,12 +246,13 @@ void CmndTimePropFallbackValue(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100))
   {
-    Timeprop.fallback_value = reduceFallbackValue(XdrvMailbox.payload);
 
-    Settings->timeprop_cfg.fallback_value = Timeprop.fallback_value;
+    Settings->timeprop_cfg.fallback_value = reduceFallbackValue(XdrvMailbox.payload);
+    Timeprop.fallback_value = expandFallbackValue(Settings->timeprop_cfg.fallback_value);
+
     SettingsSave(0);
   }
-  ResponseCmndNumber(expandFallbackValue(Timeprop.fallback_value));
+  ResponseCmndNumber(Timeprop.fallback_value);
 }
 
 bool Xdrv48(uint32_t function)
@@ -235,6 +261,9 @@ bool Xdrv48(uint32_t function)
 
   switch (function)
   {
+  case FUNC_INIT:
+    TimepropInit();
+    break;
 #ifdef USE_WEBSERVER
   case FUNC_WEB_ADD_BUTTON:
     WSContentSend_P(HTTP_BTN_MENU_TIMEPROP);
