@@ -805,6 +805,12 @@
 #define D_PRFX_I2S "I2S"
 #define D_JSON_I2S_CONFIG "Config"
 
+#define D_CMND_TIMEPROP_ENABLE "TimePropEnable"
+#define D_CMND_TIMEPROP_CYCLE_LENGTH "TimePropCycleLength"
+#define D_CMND_TIMEPROP_NUM_PROPS "TimePropNumProps"
+#define D_CMND_TIMEPROP_LOAD_TYPE "TimePropLoadType"
+#define D_CMND_TIMEPROP_FALLBACK_AFTER "TimePropFallbackAfter"
+#define D_CMND_TIMEPROP_FALLBACK_VALUE "TimePropFallbackValue"
 
 // Commands xdrv_52_berry.ino - Berry scripting language
 #define D_PRFX_BR "Br"

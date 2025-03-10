@@ -2,7 +2,28 @@
 
 #define XDRV_48 48
 
-#include "Timeprop.h"
+// #include "Timeprop.h"
+
+const char kTimepropCommands[] PROGMEM = "|" D_CMND_TIMEPROP_ENABLE "|" D_CMND_TIMEPROP_CYCLE_LENGTH "|" D_CMND_TIMEPROP_NUM_PROPS "|" D_CMND_TIMEPROP_LOAD_TYPE "|" D_CMND_TIMEPROP_FALLBACK_AFTER "|" D_CMND_TIMEPROP_FALLBACK_VALUE;
+
+void (*const TimepropCommand[])(void) PROGMEM = {
+    &CmndTimePropEnable,
+    &CmndTimePropCycleLength,
+    &CmndTimePropNumProps,
+    &CmndTimePropLoadType,
+    &CmndTimePropFallbackAfter,
+    &CmndTimePropFallbackValue,
+};
+
+struct TIMEPROP
+{
+  bool enabled = true;
+  uint8_t cycle_length = 2;
+  uint8_t num_timeprops = 3;
+  bool load_type = false;
+  uint8_t fallback_time = 30;
+  uint8_t fallback_value = 11;
+} Timeprop;
 
 /*********************************************************************************************\
  * WebUI
@@ -20,7 +41,7 @@ const char HTTP_FORM_TIMEPROP_ENABLE[] PROGMEM =
 
 const char HTTP_FORM_TIMEPROP_CYCLELENGTH[] PROGMEM =
     "<p><b>" D_TIMEPROP_CYCLELENGTH "</b> (15)<br>"
-    "<select id=\"tp_cycle_Length\" name=\"tp_cycle_Length\">"
+    "<select id=\"tp_cycle_length\" name=\"tp_cycle_Length\">"
     "<option %s value=\"0\">5 " D_UNIT_MINUTE "</option>"
     "<option %s value=\"1\">10 " D_UNIT_MINUTE " </option>"
     "<option %s value=\"2\">15 " D_UNIT_MINUTE " </option>"
@@ -54,16 +75,6 @@ const char HTTP_FORM_TIMEPROP_FALLBACK[] PROGMEM =
     "<p><b>" D_TIMEPROP_FALLBACK_AFTER "</b> (0) " D_UNIT_HOUR "<br><input id='tp_fallback_after' placeholder='0' value='%d'></p>"
     "<p><b>" D_TIMEPROP_FALLBACK_VALUE "</b> (0) (0-100)<br><input id='tp_fallback_value' placeholder='0' value='%d'></p>";
 
-struct TIMEPROP
-{
-  bool enabled = true;
-  uint8_t cycle_length = 2;
-  uint8_t num_timeprops = 3;
-  bool load_type = false;
-  uint8_t fallback_time = 30;
-  uint8_t fallback_value = 11;
-} Timeprop;
-
 void HandleTimepropConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess())
@@ -75,8 +86,8 @@ void HandleTimepropConfiguration(void)
 
   if (Webserver->hasArg(F("save")))
   {
-    // MqttSaveSettings();
-    WebRestart(1);
+    TimePropSaveSettings();
+    // WebRestart(1); TODO: Enable
     return;
   }
 
@@ -113,6 +124,43 @@ void HandleTimepropConfiguration(void)
   WSContentStop();
 }
 
+void TimePropSaveSettings(void)
+{
+  String cmnd = F(D_CMND_BACKLOG "0 ");
+  cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_ENABLE), PSTR("tp_enable"), PSTR("1"));
+  cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_CYCLE_LENGTH), PSTR("tp_cycle_length"), PSTR("2"));
+  cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_NUM_PROPS), PSTR("tp_num_props"), PSTR("5"));
+  cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_LOAD_TYPE), PSTR("tp_load_type"), PSTR("0"));
+  cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_FALLBACK_AFTER), PSTR("tp_fallback_after"), PSTR("0"));
+  cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_FALLBACK_VALUE), PSTR("tp_fallback_value"), PSTR("0"));
+  ExecuteWebCommand((char *)cmnd.c_str());
+}
+
+void CmndTimePropEnable(void)
+{
+  AddLog(LOG_LEVEL_INFO, PSTR("CmndTimePropEnable"));
+}
+void CmndTimePropCycleLength(void)
+{
+  AddLog(LOG_LEVEL_INFO, PSTR("CmndTimePropCycleLength"));
+}
+void CmndTimePropNumProps(void)
+{
+  AddLog(LOG_LEVEL_INFO, PSTR("CmndTimePropNumProps"));
+}
+void CmndTimePropLoadType(void)
+{
+  AddLog(LOG_LEVEL_INFO, PSTR("CmndTimePropLoadType"));
+}
+void CmndTimePropFallbackAfter(void)
+{
+  AddLog(LOG_LEVEL_INFO, PSTR("CmndTimePropFallbackAfter"));
+}
+void CmndTimePropFallbackValue(void)
+{
+  AddLog(LOG_LEVEL_INFO, PSTR("CmndTimePropFallbackValue"));
+}
+
 bool Xdrv48(uint32_t function)
 {
   bool result = false;
@@ -127,6 +175,9 @@ bool Xdrv48(uint32_t function)
     WebServer_on(PSTR("/" WEB_HANDLE_TIMEPROP), HandleTimepropConfiguration);
     break;
 #endif // USE_WEBSERVER
+  case FUNC_COMMAND:
+    result = DecodeCommand(kTimepropCommands, TimepropCommand);
+    break;
   }
 
   return result;
