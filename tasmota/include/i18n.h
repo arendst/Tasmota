@@ -805,6 +805,7 @@
 #define D_PRFX_I2S "I2S"
 #define D_JSON_I2S_CONFIG "Config"
 
+// Commands xdrv_48_timeprop
 #define D_CMND_TIMEPROP_ENABLE "TimePropEnable"
 #define D_CMND_TIMEPROP_CYCLE_LENGTH "TimePropCycleLength"
 #define D_CMND_TIMEPROP_NUM_PROPS "TimePropNumProps"

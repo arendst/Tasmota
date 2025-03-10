@@ -19,7 +19,7 @@ struct TIMEPROP
 {
   bool enabled = true;
   uint8_t cycle_length = 2;
-  uint8_t num_timeprops = 3;
+  uint8_t num_timeprops = 5;
   bool load_type = false;
   uint8_t fallback_time = 30;
   uint8_t fallback_value = 11;
@@ -52,14 +52,14 @@ const char HTTP_FORM_TIMEPROP_CYCLELENGTH[] PROGMEM =
 const char HTTP_FORM_TIMEPROP_NUMPROPS[] PROGMEM =
     "<p><b>" D_TIMEPROP_NUMPROPS "</b> (5)<br>"
     "<select id=\"tp_num_props\" name=\"tp_num_props\">"
-    "<option %s value=\"0\">1</option>"
-    "<option %s value=\"1\">2</option>"
-    "<option %s value=\"2\">3</option>"
-    "<option %s value=\"3\">4</option>"
-    "<option %s value=\"4\">5</option>"
-    "<option %s value=\"5\">6</option>"
-    "<option %s value=\"6\">7</option>"
-    "<option %s value=\"7\">8</option>"
+    "<option %s value=\"1\">1</option>"
+    "<option %s value=\"2\">2</option>"
+    "<option %s value=\"3\">3</option>"
+    "<option %s value=\"4\">4</option>"
+    "<option %s value=\"5\">5</option>"
+    "<option %s value=\"6\">6</option>"
+    "<option %s value=\"7\">7</option>"
+    "<option %s value=\"8\">8</option>"
     "</select>"
     "</p>";
 
@@ -104,14 +104,14 @@ void HandleTimepropConfiguration(void)
                   Timeprop.cycle_length == 2 ? PSTR("selected=\"\"") : "",
                   Timeprop.cycle_length == 3 ? PSTR("selected=\"\"") : "");
   WSContentSend_P(HTTP_FORM_TIMEPROP_NUMPROPS,
-                  Timeprop.num_timeprops == 0 ? PSTR("selected=\"\"") : "",
                   Timeprop.num_timeprops == 1 ? PSTR("selected=\"\"") : "",
                   Timeprop.num_timeprops == 2 ? PSTR("selected=\"\"") : "",
                   Timeprop.num_timeprops == 3 ? PSTR("selected=\"\"") : "",
                   Timeprop.num_timeprops == 4 ? PSTR("selected=\"\"") : "",
                   Timeprop.num_timeprops == 5 ? PSTR("selected=\"\"") : "",
                   Timeprop.num_timeprops == 6 ? PSTR("selected=\"\"") : "",
-                  Timeprop.num_timeprops == 7 ? PSTR("selected=\"\"") : "");
+                  Timeprop.num_timeprops == 7 ? PSTR("selected=\"\"") : "",
+                  Timeprop.num_timeprops == 8 ? PSTR("selected=\"\"") : "");
   WSContentSend_P(HTTP_FORM_TIMEPROP_LOADTYPE,
                   !Timeprop.load_type ? PSTR("selected=\"\"") : "",
                   Timeprop.load_type ? PSTR("selected=\"\"") : "");
@@ -136,29 +136,79 @@ void TimePropSaveSettings(void)
   ExecuteWebCommand((char *)cmnd.c_str());
 }
 
+/*********************************************************************************************\
+ * Internal
+\*********************************************************************************************/
+// takes percent value and returns the 4 bit value we use to store in config
+uint8_t reduceFallbackValue(uint8_t percentValue)
+{
+  float fourBitValue = (float)percentValue * 15.0f / 100.0f;
+  return round(fourBitValue);
+}
+
+// takes 4bit value and returns the percent value
+uint8_t expandFallbackValue(uint8_t fourBitValue)
+{
+  float percentValue = (float)fourBitValue * 100.0f / 15.0f;
+  return round(percentValue);
+}
+
+/*********************************************************************************************\
+ * Commands
+\*********************************************************************************************/
 void CmndTimePropEnable(void)
 {
   AddLog(LOG_LEVEL_INFO, PSTR("CmndTimePropEnable"));
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1))
+  {
+    Timeprop.enabled = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(Timeprop.enabled);
 }
+
 void CmndTimePropCycleLength(void)
 {
-  AddLog(LOG_LEVEL_INFO, PSTR("CmndTimePropCycleLength"));
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3))
+  {
+    Timeprop.cycle_length = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(Timeprop.cycle_length);
 }
+
 void CmndTimePropNumProps(void)
 {
-  AddLog(LOG_LEVEL_INFO, PSTR("CmndTimePropNumProps"));
+  if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 8))
+  {
+    Timeprop.num_timeprops = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(Timeprop.num_timeprops);
 }
+
 void CmndTimePropLoadType(void)
 {
-  AddLog(LOG_LEVEL_INFO, PSTR("CmndTimePropLoadType"));
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1))
+  {
+    Timeprop.load_type = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(Timeprop.load_type);
 }
+
 void CmndTimePropFallbackAfter(void)
 {
-  AddLog(LOG_LEVEL_INFO, PSTR("CmndTimePropFallbackAfter"));
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 31))
+  {
+    Timeprop.fallback_time = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(Timeprop.fallback_time);
 }
+
 void CmndTimePropFallbackValue(void)
 {
-  AddLog(LOG_LEVEL_INFO, PSTR("CmndTimePropFallbackValue"));
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100))
+  {
+    Timeprop.fallback_value = reduceFallbackValue(XdrvMailbox.payload);
+  }
+  ResponseCmndNumber(expandFallbackValue(Timeprop.fallback_value));
 }
 
 bool Xdrv48(uint32_t function)
