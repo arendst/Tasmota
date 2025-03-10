@@ -64,9 +64,7 @@ namespace Address
 } ;
 
 
-static const int32_t header = 0x7d;
-static const int32_t ctrl_read = 0x1;
-static const int32_t ctrl_write = 0x2;
+
 
 
 // register structures
@@ -177,6 +175,10 @@ private:
     static constexpr size_t rw_len = 23;
     static constexpr size_t ro_len = 22;
     static constexpr size_t buffer_size = 128; // max response + max query
+
+    static constexpr int32_t header = 0x7d;
+    static constexpr int32_t ctrl_read = 0x1;
+    static constexpr int32_t ctrl_write = 0x2;
 
     explicit V9240();
     ~V9240();
@@ -546,7 +548,6 @@ void V9240::close()
     if(port != nullptr)
     {
         port->end();
-        Serial.end();
         delete port;
         port = nullptr;
     }
