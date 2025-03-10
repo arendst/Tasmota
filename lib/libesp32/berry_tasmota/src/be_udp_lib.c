@@ -7,8 +7,6 @@
 #include "be_constobj.h"
 #include "be_mapping.h"
 
-#ifdef USE_WEBCLIENT
-
 extern int be_udp_read(struct bvm *vm);
 
 extern void *be_udp_init_ntv(void);
@@ -53,5 +51,3 @@ class be_class_udp (scope: global, name: udp) {
     close, ctype_func(be_udp_stop_ntv)
 }
 @const_object_info_end */
-
-#endif // USE_WEBCLIENT

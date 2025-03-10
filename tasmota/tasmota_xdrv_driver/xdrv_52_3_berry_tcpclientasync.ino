@@ -21,8 +21,6 @@
 
 #ifdef USE_BERRY
 
-#ifdef USE_WEBCLIENT
-
 #include <berry.h>
 // #include "be_sys.h"
 #include <lwip/sockets.h>
@@ -580,5 +578,4 @@ extern "C" {
 
 }
 
-#endif // USE_WEBCLIENT
 #endif  // USE_BERRY
