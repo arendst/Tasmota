@@ -19,7 +19,7 @@ struct TIMEPROP
 {
   bool enabled = false;
   uint8_t cycle_length = 0;
-  uint8_t num_timeprops = 0;
+  uint8_t num_timeprops = 1;
   bool load_type = false;
   uint8_t fallback_time = 0;
   uint8_t fallback_value = 0;
@@ -172,7 +172,7 @@ void LoadPersistentSettings(void)
 {
   Timeprop.enabled = Settings->timeprop_cfg.enable;
   Timeprop.cycle_length = Settings->timeprop_cfg.cycle_length;
-  Timeprop.num_timeprops = Settings->timeprop_cfg.num_timeprops;
+  Timeprop.num_timeprops = Settings->timeprop_cfg.num_timeprops + 1;
   Timeprop.load_type = Settings->timeprop_cfg.load_type;
   Timeprop.fallback_time = Settings->timeprop_cfg.fallback_time;
   Timeprop.fallback_value = expandFallbackValue(Settings->timeprop_cfg.fallback_value);
@@ -212,7 +212,7 @@ void CmndTimePropNumProps(void)
   {
     Timeprop.num_timeprops = XdrvMailbox.payload;
 
-    Settings->timeprop_cfg.num_timeprops = Timeprop.num_timeprops;
+    Settings->timeprop_cfg.num_timeprops = Timeprop.num_timeprops - 1;
     SettingsSave(0);
   }
   ResponseCmndNumber(Timeprop.num_timeprops);
