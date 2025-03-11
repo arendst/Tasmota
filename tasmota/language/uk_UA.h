@@ -58,6 +58,7 @@
 #define D_AS "як"
 #define D_AT "at"
 #define D_AUTO "АВТО"
+#define D_AUTO_UPDATE "Auto Update"
 #define D_BATTERY "Battery"
 #define D_BATT "Batt"                // Short for Battery
 #define D_BATTERY_CHARGE "Charge"   // Battery charge in %
@@ -88,6 +89,7 @@
 #define D_DEBUG "Налагодження"
 #define D_DEWPOINT "Tочка роси"
 #define D_DISABLED "Вимкнено"
+#define D_DISCONNECTED "Disconnected"
 #define D_DISTANCE "Відстань"
 #define D_DNS_SERVER "Сервер DNS"
 #define D_DO "Disolved Oxygen"
@@ -776,6 +778,8 @@
 #define D_SENSOR_SDM630_RX     "SDM630 Rx"
 #define D_SENSOR_WE517_TX      "WE517 Tx"
 #define D_SENSOR_WE517_RX      "WE517 Rx"
+#define D_SENSOR_LD2402_TX     "LD2402 Tx"
+#define D_SENSOR_LD2402_RX     "LD2402 Rx"
 #define D_SENSOR_LD2410_TX     "LD2410 Tx"
 #define D_SENSOR_LD2410_RX     "LD2410 Rx"
 #define D_SENSOR_LD2410S_TX     "LD2410S Tx"
