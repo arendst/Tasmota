@@ -924,6 +924,7 @@ uint32_t EnergyGetCalibration(uint32_t cal_type, uint32_t chan = 0) {
       case ENERGY_POWER_CALIBRATION: return Settings->energy_power_calibration;
       case ENERGY_VOLTAGE_CALIBRATION: return Settings->energy_voltage_calibration;
       case ENERGY_CURRENT_CALIBRATION: return Settings->energy_current_calibration;
+
     }
   }
   return Settings->energy_frequency_calibration;
@@ -1300,7 +1301,6 @@ void EnergyShow(bool json) {
         else if (0 == Energy->current[i]) {
           reactive_power[i] = 0;
         }
-
       }
     }
   }

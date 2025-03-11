@@ -1314,4 +1314,8 @@
 #define D_CHARGING                        "Cargando"
 #define D_CAPACITY                        "Capacidad"
 
+// xnrg_25_v9240.ino
+#define D_SENSOR_V9240_TX "V9240 TX"
+#define D_SENSOR_V9240_RX "V9240 RX"
+
 #endif  // _LANGUAGE_ES_ES_H_
