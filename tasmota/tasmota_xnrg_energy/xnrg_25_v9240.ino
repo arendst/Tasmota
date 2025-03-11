@@ -379,13 +379,23 @@ float V9240::value(const V9240::parameter p) const
 
 void V9240::set_checksum()
 {
-    CKSUM = UINT32_MAX - std::accumulate(rw_mem,rw_mem+rw_len-1 ,0);
+//    CKSUM = UINT32_MAX - std::accumulate(rw_mem,rw_mem+rw_len-1 ,0);
+    int init = 0;
+    for (uint32_t i = 0; i < rw_len-1; i++) {
+      init += rw_mem[i];
+    }
+    CKSUM = UINT32_MAX - init;
     write(Address::CKSUM,CKSUM);
 }
 
 char V9240::calc_check(char *buff, size_t len)
 {
-    return ~std::accumulate(buff,buff+len,0)+0x33;
+//    return ~std::accumulate(buff,buff+len,0)+0x33;
+    char init = 0;
+    for (uint32_t i = 0; i < len; i++) {
+      init += buff[i];
+    }
+    return ~init + 0x33;
 }
 
 
