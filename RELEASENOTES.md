@@ -116,6 +116,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v14.5.0.2
 ### Added
+- Support Vango Technologies V924x ultralow power, single-phase, power measurement [#23127](https://github.com/arendst/Tasmota/issues/23127)
 - Allow acl in mqtt when client certificate is in use with `#define USE_MQTT_CLIENT_CERT` [#22998](https://github.com/arendst/Tasmota/issues/22998)
 - Berry experimental driver for AXP2101 for M5Core2v1.1 [#23039](https://github.com/arendst/Tasmota/issues/23039)
 - Berry `tasmota.when_network_up()` and simplified Matter using it [#23057](https://github.com/arendst/Tasmota/issues/23057)

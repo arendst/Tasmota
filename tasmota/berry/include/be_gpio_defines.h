@@ -333,6 +333,8 @@ const be_const_member_t lv_gpio_constants[] = {
     { "TUYA_TX", (int32_t) GPIO_TUYA_TX },
     { "TX2X_TXD_BLACK", (int32_t) GPIO_TX2X_TXD_BLACK },
     { "TXD", (int32_t) GPIO_TXD },
+    { "V9240_RX", (int32_t) GPIO_V9240_RX },
+    { "V9240_TX", (int32_t) GPIO_V9240_TX },
     { "VINDRIKTNING_RX", (int32_t) GPIO_VINDRIKTNING_RX },
     { "VL53LXX_XSHUT1", (int32_t) GPIO_VL53LXX_XSHUT1 },
     { "WE517_RX", (int32_t) GPIO_WE517_RX },

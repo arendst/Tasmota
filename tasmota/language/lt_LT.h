@@ -1318,4 +1318,8 @@
 #define D_CHARGING                        "Kraunasi"
 #define D_CAPACITY                        "Talpa"
 
+// xnrg_34_v9240.ino
+#define D_SENSOR_V9240_TX "V9240 TX"
+#define D_SENSOR_V9240_RX "V9240 RX"
+
 #endif  // _LANGUAGE_LT_LT_H_

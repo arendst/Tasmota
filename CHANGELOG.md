@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [14.5.0.2] 
 ### Added
 - Berry load `.tapp` files in `/.extensions/` then in `/` (#23113)
+- Support Vango Technologies V924x ultralow power, single-phase, power measurement (#23127)
 
 ### Breaking Changed
 - Berry remove `Leds.create_matrix` from the standard library waiting for reimplementation (#23114)
