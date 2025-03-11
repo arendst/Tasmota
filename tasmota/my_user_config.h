@@ -950,7 +950,7 @@
 //  #define IEM3000_IEM3155                        // Compatibility fix for Iem3155 (changes Power and Energy total readout)
 //#define USE_WE517                                // Add support for Orno WE517-Modbus energy monitor (+1k code)
 //#define USE_MODBUS_ENERGY                        // Add support for generic modbus energy monitor using a user file in rule space (+5k)
-//#define USE_V9240                         // Add support for v9240
+//#define USE_V9240                              // Add support for Vango Technologies V924x ultralow power, single-phase, power measurement (+12k)
 
 // -- Low level interface devices -----------------
 #define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor (1k6 code)

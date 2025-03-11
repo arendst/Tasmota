@@ -1010,8 +1010,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
   AGPIO(GPIO_BL6523_RX),                         // BL6523 based Watt meter Serial interface
 #endif
 #ifdef USE_V9240
-    AGPIO(GPIO_V9240_RX),                          //  Serial V9240 interface
-    AGPIO(GPIO_V9240_TX),                          //  Serial V9240 interface
+  AGPIO(GPIO_V9240_TX),                          //  Serial V9240 interface
+  AGPIO(GPIO_V9240_RX),                          //  Serial V9240 interface
 #endif
 #endif  // USE_ENERGY_SENSOR
 

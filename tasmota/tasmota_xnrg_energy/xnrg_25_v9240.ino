@@ -1,16 +1,20 @@
 /*
   xnrg_25_v9240.ino - v9240 energy sensor support for Tasmota
 
-*/
+  SPDX-FileCopyrightText: 2025  Ivan Chopa (@aquaforum)
 
+  SPDX-License-Identifier: GPL-3.0-only
+*/
 
 #ifdef USE_ENERGY_SENSOR
 #ifdef USE_V9240
+/*********************************************************************************************\
+ * Support the Vango Technologies V924x ULTRALOW POWER, UART, SINGLE-PHASE, POWER MEASUREMENT IC
+\*********************************************************************************************/
 
 #define XNRG_25             25
 
 #include <TasmotaSerial.h>
-#include <algorithm>
 
 #define V9240_SERIAL_BAUDRATE 19200
 
@@ -62,9 +66,6 @@ namespace Address
 
     static const uint16_t RO_START    = SysSts;
 } ;
-
-
-
 
 
 // register structures
