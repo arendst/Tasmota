@@ -117,6 +117,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ## Changelog v14.5.0.2
 ### Added
 - Support Vango Technologies V924x ultralow power, single-phase, power measurement [#23127](https://github.com/arendst/Tasmota/issues/23127)
+- Support for HLK-LD2402 24GHz smart wave motion sensor [#23133](https://github.com/arendst/Tasmota/issues/23133)
 - Allow acl in mqtt when client certificate is in use with `#define USE_MQTT_CLIENT_CERT` [#22998](https://github.com/arendst/Tasmota/issues/22998)
 - Berry experimental driver for AXP2101 for M5Core2v1.1 [#23039](https://github.com/arendst/Tasmota/issues/23039)
 - Berry `tasmota.when_network_up()` and simplified Matter using it [#23057](https://github.com/arendst/Tasmota/issues/23057)
@@ -133,6 +134,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - GPIOViewer from v1.6.1 to v1.6.2 (No functional change)
 - ESP8266 enable FTP for >= 4MB variants [#23120](https://github.com/arendst/Tasmota/issues/23120)
 - ESP32 enable webcam version 2 [#18732](https://github.com/arendst/Tasmota/issues/18732)
+- Berry update flasher for Sonoff ZBBridge Pro [#23136](https://github.com/arendst/Tasmota/issues/23136)
 - LVGL, prepare for HASPmota theme, change: no-grow when clicked, DPI set to 160 [#23040](https://github.com/arendst/Tasmota/issues/23040)
 - LVGL Mirroring add checkbox to enable/disable the feature (in the iterim for a better solution) [#23047](https://github.com/arendst/Tasmota/issues/23047)
 - Leds Panel add checkbox to enable/disable the feature (in the iterim for a better solution) [#23048](https://github.com/arendst/Tasmota/issues/23048)

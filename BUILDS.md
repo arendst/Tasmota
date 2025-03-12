@@ -229,7 +229,9 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_MIEL_HVAC             | -     | - / - | -     | -     | -     | -     |
 | USE_PROJECTOR_CTRL        | -     | - / - | -     | -     | -     | -     |
 | USE_AS608                 | -     | - / - | -     | -     | -     | -     |
+| USE_LD2402                | -     | - / - | -     | -     | -     | -     |
 | USE_LD2410                | -     | - / - | -     | -     | -     | -     |
+| USE_LD2410S               | -     | - / - | -     | -     | -     | -     |
 | USE_GM861                 | -     | - / - | -     | -     | -     | -     |
 | USE_TCP_BRIDGE            | -     | - / - | -     | -     | -     | -     | zbbridge / zbbrdgpro        |
 | USE_HC8                   | -     | - / - | -     | -     | -     | -     |

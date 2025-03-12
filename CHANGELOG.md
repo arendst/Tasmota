@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Berry load `.tapp` files in `/.extensions/` then in `/` (#23113)
 - Support Vango Technologies V924x ultralow power, single-phase, power measurement (#23127)
+- Support for HLK-LD2402 24GHz smart wave motion sensor (#23133)
 
 ### Breaking Changed
 - Berry remove `Leds.create_matrix` from the standard library waiting for reimplementation (#23114)
@@ -15,7 +16,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Platform from 2025.02.30 to 2025.03.30, Framework (Arduino Core) from v3.1.1.250203 to v3.1.3.250302 and IDF from v5.3.2.250120 to 5.3.2.250228 (#23088)
 - ESP32 enable webcam version 2 (#18732)
 - ESP8266 enable FTP for >= 4MB variants (#23120)
-- Update flasher for Sonoff ZBBridge Pro
+- Berry update flasher for Sonoff ZBBridge Pro (#23136)
 
 ### Fixed
 - Berry prevent `import` from hiding a solidified class (#23112)
