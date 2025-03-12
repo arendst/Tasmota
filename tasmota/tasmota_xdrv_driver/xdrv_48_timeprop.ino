@@ -2,8 +2,6 @@
 
 #define XDRV_48 48
 
-// #include "Timeprop.h"
-
 const char kTimepropCommands[] PROGMEM = "|" D_CMND_TIMEPROP_ENABLE "|" D_CMND_TIMEPROP_CYCLE_LENGTH "|" D_CMND_TIMEPROP_NUM_PROPS "|" D_CMND_TIMEPROP_LOAD_TYPE "|" D_CMND_TIMEPROP_FALLBACK_AFTER "|" D_CMND_TIMEPROP_FALLBACK_VALUE;
 
 void (*const TimepropCommand[])(void) PROGMEM = {
@@ -15,6 +13,7 @@ void (*const TimepropCommand[])(void) PROGMEM = {
     &CmndTimePropFallbackValue,
 };
 
+// local "copy" of configuration
 struct TIMEPROP
 {
   bool enabled = false;
@@ -24,6 +23,9 @@ struct TIMEPROP
   uint8_t fallback_time = 0;
   uint8_t fallback_value = 0;
 } Timeprop;
+
+// array of individual timeprop values
+uint8_t *TimepropValues;
 
 /*********************************************************************************************\
  * WebUI
@@ -166,6 +168,8 @@ uint8_t expandFallbackValue(uint8_t fourBitValue)
 void TimepropInit(void)
 {
   LoadPersistentSettings();
+
+  AllocateTimepropValues();
 }
 
 void LoadPersistentSettings(void)
@@ -178,6 +182,14 @@ void LoadPersistentSettings(void)
   Timeprop.fallback_value = expandFallbackValue(Settings->timeprop_cfg.fallback_value);
 }
 
+void AllocateTimepropValues(void)
+{
+  if (Timeprop.enabled)
+  {
+    free(TimepropValues);
+    TimepropValues = (uint8_t *)malloc(Timeprop.num_timeprops * sizeof *TimepropValues);
+  }
+}
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
@@ -191,6 +203,9 @@ void CmndTimePropEnable(void)
     Settings->timeprop_cfg.enable = Timeprop.enabled;
     SettingsSave(0);
   }
+
+  AllocateTimepropValues();
+
   ResponseCmndNumber(Timeprop.enabled);
 }
 
@@ -215,6 +230,9 @@ void CmndTimePropNumProps(void)
     Settings->timeprop_cfg.num_timeprops = Timeprop.num_timeprops - 1;
     SettingsSave(0);
   }
+
+  AllocateTimepropValues();
+
   ResponseCmndNumber(Timeprop.num_timeprops);
 }
 
