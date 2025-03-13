@@ -382,7 +382,7 @@ void BerryInit(void) {
     }
     // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry code loaded, RAM used=%u"), be_gc_memcount(berry.vm));
     ret_code2 = be_pcall(berry.vm, 0);
-    if (ret_code1 != 0) {
+    if (ret_code2 != 0) {
       be_error_pop_all(berry.vm);             // clear Berry stack
       break;
     }
