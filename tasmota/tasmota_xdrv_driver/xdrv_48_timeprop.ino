@@ -2,9 +2,10 @@
 
 #define XDRV_48 48
 
-const char kTimepropCommands[] PROGMEM = "|" D_CMND_TIMEPROP_ENABLE "|" D_CMND_TIMEPROP_CYCLE_LENGTH "|" D_CMND_TIMEPROP_NUM_PROPS "|" D_CMND_TIMEPROP_LOAD_TYPE "|" D_CMND_TIMEPROP_FALLBACK_AFTER "|" D_CMND_TIMEPROP_FALLBACK_VALUE;
+const char kTimepropCommands[] PROGMEM = "|" D_CMND_TIMEPROP_SET "|" D_CMND_TIMEPROP_ENABLE "|" D_CMND_TIMEPROP_CYCLE_LENGTH "|" D_CMND_TIMEPROP_NUM_PROPS "|" D_CMND_TIMEPROP_LOAD_TYPE "|" D_CMND_TIMEPROP_FALLBACK_AFTER "|" D_CMND_TIMEPROP_FALLBACK_VALUE;
 
 void (*const TimepropCommand[])(void) PROGMEM = {
+    &CmndTimepropSet,
     &CmndTimePropEnable,
     &CmndTimePropCycleLength,
     &CmndTimePropNumProps,
@@ -193,6 +194,35 @@ void AllocateTimepropValues(void)
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
+void CmndTimepropSet(void)
+{
+  if (!Timeprop.enabled)
+  {
+    AddLog(LOG_LEVEL_ERROR, PSTR("TPR: Not enabled"));
+    return;
+  }
+
+  if (XdrvMailbox.index < 1 || XdrvMailbox.index > Timeprop.num_timeprops)
+  {
+    return;
+  }
+
+  if (XdrvMailbox.data_len > 0)
+  {
+    char sub_string[XdrvMailbox.data_len];
+
+    uint32_t incoming_value = atoi(subStr(sub_string, XdrvMailbox.data, ",", 1));
+    if (incoming_value < 0 || incoming_value > 100)
+    {
+      return;
+    }
+
+    TimepropValues[XdrvMailbox.index - 1] = incoming_value;
+  }
+
+  ResponseCmndIdxNumber(TimepropValues[XdrvMailbox.index - 1]);
+}
+
 void CmndTimePropEnable(void)
 {
   // AddLog(LOG_LEVEL_INFO, PSTR("CmndTimePropEnable %s"), XdrvMailbox.payload);
