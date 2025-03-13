@@ -303,6 +303,18 @@ void CmndTimePropFallbackValue(void)
   ResponseCmndNumber(Timeprop.fallback_value);
 }
 
+/*********************************************************************************************\
+ * Periodic
+\*********************************************************************************************/
+void TimepropEverySecond(void)
+{
+  if (!Timeprop.enabled) {
+    return;
+  }
+  
+  AddLog(LOG_LEVEL_INFO, PSTR("TPR: Periodic"));
+}
+
 bool Xdrv48(uint32_t function)
 {
   bool result = false;
@@ -311,6 +323,9 @@ bool Xdrv48(uint32_t function)
   {
   case FUNC_INIT:
     TimepropInit();
+    break;
+  case FUNC_EVERY_SECOND:
+    TimepropEverySecond();
     break;
 #ifdef USE_WEBSERVER
   case FUNC_WEB_ADD_BUTTON:
