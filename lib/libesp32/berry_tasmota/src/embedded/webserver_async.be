@@ -238,7 +238,10 @@ class webserver_async
     # pre: self.buf_in is not empty
     # post: self.buf_in has made progress (smaller or '')
     def parse_http_req_line()
-      var m = global._re_http_srv.match2(self.buf_in, self.buf_in_offset)
+      import re
+      # print("parse_http_req_line", "self.buf_in=", self.buf_in)
+      var m = re.match2(self.server.re_http_srv, self.buf_in, self.buf_in_offset)
+      # print(f"{m=}")
       # Ex: "GET / HTTP/1.1\r\n"
       if m
         var offset = m[0]
@@ -261,16 +264,18 @@ class webserver_async
     #############################################################
     # parse incoming headers
     def parse_http_headers()
+      import re
       while true
         # print("parse_http_headers", "self.buf_in_offset=", self.buf_in_offset)
-        var m = global._re_http_srv_header.match2(self.buf_in, self.buf_in_offset)
-        # print("m=", m)
+        var m = re.match2(self.server.re_http_srv_header, self.buf_in, self.buf_in_offset)
+        # print(f"{m=}")
         # Ex: [32, 'Content-Type', 'application/json']
         if m
           self.event_http_header(m[1], m[2])
           self.buf_in_offset += m[0]
         else  # no more headers
-          var m2 = global._re_http_srv_body.match2(self.buf_in, self.buf_in_offset)
+          var m2 = re.match2(self.server.re_http_srv_body, self.buf_in, self.buf_in_offset)
+          # print(f"{m2=}")
           if m2
             # end of headers
             # we keep \r\n which is used by pattern
@@ -519,9 +524,16 @@ class webserver_async
   var p1                                          # temporary object bytes() to avoid reallocation
 
   # static var TIMEOUT = 1000                       # default timeout: 1000ms
+
+  #############################################################
+  # pre-compile REGEX
+  #
   # static var HTTP_REQ = "^(\\w+) (\\S+) HTTP\\/(\\d\\.\\d)\r\n"
   # static var HTTP_HEADER_REGEX = "([A-Za-z0-9-]+): (.*?)\r\n"       # extract a header with its 2 parts
   # static var HTTP_BODY_REGEX   = "\r\n"                             # end of headers
+  static var re_http_srv          = re.compilebytes("^(\\w+) (\\S+) HTTP\\/(\\d\\.\\d)\r\n")
+  static var re_http_srv_header   = re.compilebytes("([A-Za-z0-9-]+): (.*?)\r\n")
+  static var re_http_srv_body     = re.compilebytes("\r\n")
 
   #############################################################
   # init
@@ -535,25 +547,10 @@ class webserver_async
     self.cors = false
     self.p1 = bytes(100)              # reserve 100 bytes by default
     # TODO what about max_clients ?
-    self.compile_re()
     # register cb
     tasmota.add_driver(self)
     self.fastloop_cb = def () self.loop() end
     tasmota.add_fast_loop(self.fastloop_cb)
-  end
-
-  #############################################################
-  # compile once for all the regex
-  def compile_re()
-    import re
-    if !global.contains("_re_http_srv")
-      # global._re_http_srv         = re.compile(self.HTTP_REQ)
-      # global._re_http_srv_header  = re.compile(self.HTTP_HEADER_REGEX)
-      # global._re_http_srv_body   = re.compile(self.HTTP_BODY_REGEX)
-      global._re_http_srv         = re.compile("^(\\w+) (\\S+) HTTP\\/(\\d\\.\\d)\r\n")
-      global._re_http_srv_header  = re.compile("([A-Za-z0-9-]+): (.*?)\r\n")
-      global._re_http_srv_body   = re.compile("\r\n")
-    end
   end
 
   #############################################################
