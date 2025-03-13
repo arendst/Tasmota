@@ -171,7 +171,7 @@ You need to register the ctype function handler at the launch of the Berry VM:
 void berry_launch(boid)
 {
     bvm *vm = be_vm_new();      /* Construct a VM */
-    be_set_ctype_func_hanlder(berry.vm, be_call_ctype_func);  /* register the ctype function handler */
+    be_set_ctype_func_handler(berry.vm, be_call_ctype_func);  /* register the ctype function handler */
 }
 ```
 

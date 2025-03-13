@@ -1408,7 +1408,7 @@ BERRY_API void be_set_obs_micros(bvm *vm, bmicrosfnct micros)
     vm->microsfnct = micros;
 }
 
-BERRY_API void be_set_ctype_func_hanlder(bvm *vm, bctypefunc handler)
+BERRY_API void be_set_ctype_func_handler(bvm *vm, bctypefunc handler)
 {
     vm->ctypefunc = handler;
 }
