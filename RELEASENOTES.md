@@ -135,6 +135,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - ESP8266 enable FTP for >= 4MB variants [#23120](https://github.com/arendst/Tasmota/issues/23120)
 - ESP32 enable webcam version 2 [#18732](https://github.com/arendst/Tasmota/issues/18732)
 - Berry update flasher for Sonoff ZBBridge Pro [#23136](https://github.com/arendst/Tasmota/issues/23136)
+- Berry `re` now accepts `bytes()` as precompiled patterns, added `re.compilebytes()` [#23149](https://github.com/arendst/Tasmota/issues/23149)
 - LVGL, prepare for HASPmota theme, change: no-grow when clicked, DPI set to 160 [#23040](https://github.com/arendst/Tasmota/issues/23040)
 - LVGL Mirroring add checkbox to enable/disable the feature (in the iterim for a better solution) [#23047](https://github.com/arendst/Tasmota/issues/23047)
 - Leds Panel add checkbox to enable/disable the feature (in the iterim for a better solution) [#23048](https://github.com/arendst/Tasmota/issues/23048)

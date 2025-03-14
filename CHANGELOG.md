@@ -17,7 +17,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 enable webcam version 2 (#18732)
 - ESP8266 enable FTP for >= 4MB variants (#23120)
 - Berry update flasher for Sonoff ZBBridge Pro (#23136)
-- Berry `re` now accepts `bytes()` as precompiled patterns, added `re.compilebytes()`
+- Berry `re` now accepts `bytes()` as precompiled patterns, added `re.compilebytes()` (#23149)
 
 ### Fixed
 - Berry prevent `import` from hiding a solidified class (#23112)
