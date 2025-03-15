@@ -2845,7 +2845,7 @@ class HASPmota
   def init()
     self.fix_lv_version()
     import re
-    self.re_page_target = re.compile("p\\d+")
+    self.re_page_target = re.compilebytes("p\\d+")
     # nothing to put here up to now
   end
 
@@ -3094,6 +3094,7 @@ class HASPmota
   #  Returns: the target page object if changed, or `nil` if still on same page
   #====================================================================
   def page_show(action, anim, duration)
+    import re
     # resolve between page numbers
     # p1 is either a number or nil (stored value)
     # p2 is the default value
@@ -3129,7 +3130,7 @@ class HASPmota
       if (to_page == cur_page.id())
         to_page = to_page_resolve(int(cur_page.next), sorted_pages_list[1], sorted_pages_list)
       end
-    elif self.re_page_target.match(action)
+    elif re.match(self.re_page_target, action)
       # action is supposed to be `p<number>` format
       to_page = to_page_resolve(int(action[1..-1]), nil #-default to nil-#, sorted_pages_list)
     end
