@@ -354,9 +354,6 @@ const bntvmodule_t be_native_module(_module) = {                  \
 
 #else
 
-// #define be_define_const_bytes(_name, ...)                    \
-//     const uint8_t be_const_bin_##_name[] = { __VA_ARGS__ }
-
 #define be_define_const_str_weak(_name, _s, _len)               \
 const bcstring be_const_str_##_name = {                         \
     NULL,                                                       \

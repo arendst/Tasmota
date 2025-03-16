@@ -324,8 +324,8 @@ static void end_func(bparser *parser)
     proto->codesize = finfo->pc;
     proto->ktab = be_vector_release(vm, &finfo->kvec);
     proto->nconst = be_vector_count(&finfo->kvec);
-    proto->nproto = be_vector_count(&finfo->pvec);
     proto->ptab = be_vector_release(vm, &finfo->pvec);
+    proto->nproto = be_vector_count(&finfo->pvec);
 #if BE_USE_MEM_ALIGNED
     proto->code = be_move_to_aligned(vm, proto->code, proto->codesize * sizeof(binstruction));     /* move `code` to 4-bytes aligned memory region */
     proto->ktab = be_move_to_aligned(vm, proto->ktab, proto->nconst * sizeof(bvalue));     /* move `ktab` to 4-bytes aligned memory region */
