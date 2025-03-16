@@ -732,11 +732,7 @@ class Matter_Device
     var keys = []
     for k: self.plugins_config.keys()   keys.push(int(k))    end
     for ep: keys
-      if ep == 0
-        log("MTR: invalid entry with ep '0'", 2)
-        self.plugins_config.remove(str(ep))
-        dirty = true
-      elif ep == matter.AGGREGATOR_ENDPOINT
+      if ep == matter.AGGREGATOR_ENDPOINT
         dirty = true
         log(f"MTR: endpoint {ep} collides wit aggregator, relocating to {self.next_ep}", 2)
         self.plugins_config[str(self.next_ep)] = self.plugins_config[str(ep)]

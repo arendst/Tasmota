@@ -40,7 +40,7 @@ class Matter_Autoconf
     var plugins = self.device.plugins
 
     # start with mandatory endpoint 0 for root node
-    plugins.push(matter.Plugin_Root(self.device, 0, {}))
+    plugins.push(matter.Plugin_Root(self.device, 0, config.find("0", {})))
     log("MTR: Configuring endpoints", 2)
     log(format("MTR:   endpoint = %5i type:%s%s", 0, 'root', ''), 2)
 
