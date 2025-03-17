@@ -231,6 +231,21 @@ int be_re_search_all(bvm *vm) {
   return be_re_match_search_all(vm, bfalse);
 }
 
+// Berry: `re.dump(b:bytes) -> nil``
+int be_re_dump(bvm *vm) {
+#ifdef USE_BERRY_DEBUG
+  int32_t argc = be_top(vm); // Get the number of arguments
+  if (argc >= 1 && be_isbytes(vm, 1)) {
+    ByteProg *code = (ByteProg*) be_tobytes(vm, 1, NULL);
+    re1_5_dumpcode(code);
+    be_return_nil(vm);
+  }
+  be_raise(vm, "type_error", NULL);
+#else // USE_BERRY_DEBUG
+  be_return_nil(vm);
+#endif
+}
+
 // Berry: `re_pattern.search(s:string [, offset:int]) -> list(string)`
 int re_pattern_search(bvm *vm) {
   int32_t argc = be_top(vm); // Get the number of arguments
@@ -415,6 +430,7 @@ module re (scope: global) {
   match2, func(be_re_match2)
   matchall, func(be_re_match_all)
   split, func(be_re_split)
+  dump, func(be_re_dump)
 }
 @const_object_info_end 
 
