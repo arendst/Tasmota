@@ -124,6 +124,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `introspect.solidified()` to know if a Berry object is solidified or in RAM [#23063](https://github.com/arendst/Tasmota/issues/23063)
 - Berry `global.undef()` to undefine a global variable [#23073](https://github.com/arendst/Tasmota/issues/23073)
 - Berry load `.tapp` files in `/.extensions/` then in `/` [#23113](https://github.com/arendst/Tasmota/issues/23113)
+- Matter prepare for ICD cluster [#23158](https://github.com/arendst/Tasmota/issues/23158)
 - LVGL experimental mirroring of display on Web UI [#23041](https://github.com/arendst/Tasmota/issues/23041)
 
 ### Breaking Changed
@@ -131,6 +132,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Changed
 - ESP32 Platform from 2025.02.30 to 2025.03.30, Framework (Arduino Core) from v3.1.1.250203 to v3.1.3.250302 and IDF from v5.3.2.250120 to 5.3.2.250228 [#23088](https://github.com/arendst/Tasmota/issues/23088)
+- RCSwitch `RCSWITCH_SEPARATION_LIMIT` from 4100 to 3600
 - GPIOViewer from v1.6.1 to v1.6.2 (No functional change)
 - ESP8266 enable FTP for >= 4MB variants [#23120](https://github.com/arendst/Tasmota/issues/23120)
 - ESP32 enable webcam version 2 [#18732](https://github.com/arendst/Tasmota/issues/18732)

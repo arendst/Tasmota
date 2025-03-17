@@ -66,7 +66,7 @@
 // according to discussion on issue #14 it might be more suitable to set the separation
 // limit to the same time as the 'low' part of the sync signal for the current protocol.
 // should be set to the minimum value of pulselength * the sync signal
-#define RCSWITCH_SEPARATION_LIMIT 4100
+#define RCSWITCH_SEPARATION_LIMIT 3600
 
 class RCSwitch {
 
