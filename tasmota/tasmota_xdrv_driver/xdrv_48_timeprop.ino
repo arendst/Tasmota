@@ -25,8 +25,11 @@ struct TIMEPROP
   uint8_t fallback_value = 0;
 } Timeprop;
 
-// array of individual timeprop values
 uint8_t *TimepropValues;
+uint16_t *TimepropStartTimes;
+uint16_t *TimepropSecondsLeft;
+
+uint16_t cycle_position = 0;
 
 /*********************************************************************************************\
  * WebUI
@@ -189,6 +192,12 @@ void AllocateTimepropValues(void)
   {
     free(TimepropValues);
     TimepropValues = (uint8_t *)malloc(Timeprop.num_timeprops * sizeof *TimepropValues);
+
+    free(TimepropStartTimes);
+    TimepropStartTimes = (uint16_t *)malloc(Timeprop.num_timeprops * sizeof *TimepropStartTimes);
+
+    free(TimepropSecondsLeft);
+    TimepropSecondsLeft = (uint16_t *)malloc(Timeprop.num_timeprops * sizeof *TimepropSecondsLeft);
   }
 }
 /*********************************************************************************************\
@@ -308,11 +317,70 @@ void CmndTimePropFallbackValue(void)
 \*********************************************************************************************/
 void TimepropEverySecond(void)
 {
-  if (!Timeprop.enabled) {
+  if (!Timeprop.enabled)
+  {
     return;
   }
-  
-  AddLog(LOG_LEVEL_INFO, PSTR("TPR: Periodic"));
+
+  uint16_t cycle_length_seconds = (Timeprop.cycle_length + 1) * 5 * 60;
+
+  for (uint8_t i = 0; i < Timeprop.num_timeprops; i++)
+  {
+    if (TimepropValues[i] == 0)
+    {
+      continue;
+    }
+    // maybe we can shift that to commands
+    if (Timeprop.load_type)
+    {
+      // load collection
+      TimepropStartTimes[i] = 0;
+    }
+    else
+    {
+      // load distribution
+      TimepropStartTimes[i] = (cycle_length_seconds / Timeprop.num_timeprops) * i;
+    }
+
+    if (TimepropStartTimes[i] == cycle_position)
+    {
+      // here we would start and turn the relais on
+      AddLog(LOG_LEVEL_INFO, PSTR("TPR: On %d. STart at: %d for %d"), i, TimepropStartTimes[i], GetOpenSeconds(i, cycle_length_seconds));
+      TimepropSecondsLeft[i] = GetOpenSeconds(i, cycle_length_seconds);
+    }
+
+    if (TimepropSecondsLeft[i] == 1)
+    {
+      // relais off
+      AddLog(LOG_LEVEL_INFO, PSTR("TPR: Off %d."), i);
+    }
+
+    if (TimepropSecondsLeft[i] > 0)
+    {
+      TimepropSecondsLeft[i]--;
+    }
+  }
+
+  // maintain cycle
+  if (cycle_position >= cycle_length_seconds - 1)
+  {
+    cycle_position = 0;
+  }
+  else
+  {
+    cycle_position++;
+  }
+}
+
+uint16_t GetOpenSeconds(uint8_t i, uint16_t cycle_length_seconds)
+{
+  if (TimepropValues[i] == 100)
+  {
+    // special for 100%. return a slightly longer value to prevent a slight off/on.
+    // that will make no difference but reduce part lifetime
+    return cycle_length_seconds + 2;
+  }
+  return cycle_length_seconds * TimepropValues[i] / 100;
 }
 
 bool Xdrv48(uint32_t function)
