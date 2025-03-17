@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Support Vango Technologies V924x ultralow power, single-phase, power measurement (#23127)
 - Support for HLK-LD2402 24GHz smart wave motion sensor (#23133)
 - Matter prepare for ICD cluster (#23158)
+- Berry `re.dump()`
 
 ### Breaking Changed
 - Berry remove `Leds.create_matrix` from the standard library waiting for reimplementation (#23114)
