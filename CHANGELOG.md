@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file.
 - Support Vango Technologies V924x ultralow power, single-phase, power measurement (#23127)
 - Support for HLK-LD2402 24GHz smart wave motion sensor (#23133)
 - Matter prepare for ICD cluster (#23158)
-- Berry `re.dump()`
+- Berry `re.dump()` (#23162)
 
 ### Breaking Changed
 - Berry remove `Leds.create_matrix` from the standard library waiting for reimplementation (#23114)
@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - Berry prevent `import` from hiding a solidified class (#23112)
 - ESP32-C3 WiFi sleep (#23096)
 - ESP32 intermittent exception on WiFi AP cannot be reached (#23115)
+- ESP32 receive incomplete serial data over 128 bytes (#23156)
 
 ### Removed
 
