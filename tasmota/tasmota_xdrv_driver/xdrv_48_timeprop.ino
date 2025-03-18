@@ -198,6 +198,13 @@ void AllocateTimepropValues(void)
 
     free(TimepropSecondsLeft);
     TimepropSecondsLeft = (uint16_t *)malloc(Timeprop.num_timeprops * sizeof *TimepropSecondsLeft);
+
+    for (uint8_t i = 0; i < Timeprop.num_timeprops; i++)
+    {
+      TimepropValues[i] = 0;
+      TimepropStartTimes[i] = 0;
+      TimepropSecondsLeft[i] = 0;
+    }
   }
 }
 /*********************************************************************************************\
@@ -234,7 +241,6 @@ void CmndTimepropSet(void)
 
 void CmndTimePropEnable(void)
 {
-  // AddLog(LOG_LEVEL_INFO, PSTR("CmndTimePropEnable %s"), XdrvMailbox.payload);
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1))
   {
     Timeprop.enabled = XdrvMailbox.payload;
@@ -344,15 +350,15 @@ void TimepropEverySecond(void)
 
     if (TimepropStartTimes[i] == cycle_position)
     {
-      // here we would start and turn the relais on
-      AddLog(LOG_LEVEL_INFO, PSTR("TPR: On %d. STart at: %d for %d"), i, TimepropStartTimes[i], GetOpenSeconds(i, cycle_length_seconds));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("TPR: On %d. STart at: %d for %d"), i, TimepropStartTimes[i], GetOpenSeconds(i, cycle_length_seconds));
       TimepropSecondsLeft[i] = GetOpenSeconds(i, cycle_length_seconds);
+      ExecuteCommandPower(i + 1, POWER_ON, SRC_IGNORE);
     }
 
     if (TimepropSecondsLeft[i] == 1)
     {
-      // relais off
-      AddLog(LOG_LEVEL_INFO, PSTR("TPR: Off %d."), i);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("TPR: Off %d."), i);
+      ExecuteCommandPower(i + 1, POWER_OFF, SRC_IGNORE);
     }
 
     if (TimepropSecondsLeft[i] > 0)
