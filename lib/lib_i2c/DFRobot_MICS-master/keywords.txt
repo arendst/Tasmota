@@ -1,0 +1,48 @@
+#######################################
+# Syntax Coloring DFRobot_MICS
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+DFRobot_MICS_I2C	KEYWORD1
+DFRobot_MICS_ADC	KEYWORD1
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+warmUpTime	KEYWORD2
+getADCData	KEYWORD2
+getGasData	KEYWORD2
+getGasExist	KEYWORD2
+sleepMode	KEYWORD2
+wakeUpMode	KEYWORD2
+getPowerState	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+MICS_ADDRESS_0	LITERAL1
+MICS_ADDRESS_1	LITERAL1
+MICS_ADDRESS_2	LITERAL1
+MICS_ADDRESS_3	LITERAL1
+OX_MODE	LITERAL1
+RED_MODE	LITERAL1
+ERROR	LITERAL1
+EXIST	LITERAL1
+NO_EXIST	LITERAL1
+CO	LITERAL1
+CH4	LITERAL1
+C2H5OH	LITERAL1
+C3H8	LITERAL1
+C4H10	LITERAL1
+H2	LITERAL1
+H2S	LITERAL1
+NH3	LITERAL1
+NO	LITERAL1
+NO2	LITERAL1
+SLEEP_MODE	LITERAL1
+WAKE_UP_MODE	LITERAL1
