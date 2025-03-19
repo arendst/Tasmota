@@ -20,11 +20,13 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#define MI32_VERSION "V0.9.2.4"
+#define MI32_VERSION "V0.9.2.5"
 /*
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.2.5 20250319  changed - added support for MI LYWSD02MMC with different device ID
+
   0.9.2.4 20240111  changed - Enhancement of debug log output                              
   -------
   0.9.2.3 20240101  changed - added initial support for MI LYWSD02MMC                              
