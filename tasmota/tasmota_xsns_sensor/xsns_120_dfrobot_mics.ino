@@ -106,6 +106,25 @@ void convertGasDataToString(void) {
   itoa(DFRobot_MICS_data.Ammonia_b, DFRobot_MICS_ch.Ammonia_b, 10);
   itoa(DFRobot_MICS_data.Nitric_Oxide_b, DFRobot_MICS_ch.Nitric_Oxide_b, 10);
   itoa(DFRobot_MICS_data.Nitrogen_Dioxide_b, DFRobot_MICS_ch.Nitrogen_Dioxide_b, 10);
+
+DFRobot_MICS_data.loop_count = 0;
+DFRobot_MICS_data.Methane = 0.0f;
+DFRobot_MICS_data.Ethanol = 0.0f;
+DFRobot_MICS_data.Hydrogen = 0.0f;
+DFRobot_MICS_data.Ammonia = 0.0f;
+DFRobot_MICS_data.Carbon_Monoxide = 0.0f;
+DFRobot_MICS_data.Nitrogen_Dioxide = 0.0f;
+
+DFRobot_MICS_data.Carbon_Monoxide_b = 0x00;
+DFRobot_MICS_data.Methane_b = 0x00;
+DFRobot_MICS_data.Ethanol_b = 0x00;
+DFRobot_MICS_data.Propane_b = 0x00;
+DFRobot_MICS_data.Iso_Butane_b = 0x00;
+DFRobot_MICS_data.Hydrogen_b = 0x00;
+DFRobot_MICS_data.Hydrothion_b = 0x00;
+DFRobot_MICS_data.Ammonia_b = 0x00;
+DFRobot_MICS_data.Nitric_Oxide_b = 0x00;
+DFRobot_MICS_data.Nitrogen_Dioxide_b = 0x00;
 }
 
 
