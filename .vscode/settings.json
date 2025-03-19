@@ -70,5 +70,6 @@
         "tooltip": "PlatformIO: Rebuild IntelliSense Index",
         "commands": "platformio-ide.rebuildProjectIndex"
       }
-    ]
+    ],
+    "cmake.sourceDirectory": "/wsl.localhost/Ubuntu/home/p/git/Tasmota"
   }
