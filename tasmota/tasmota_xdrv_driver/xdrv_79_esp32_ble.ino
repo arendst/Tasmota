@@ -2711,10 +2711,10 @@ void CmndBLEAddrFilter(void){
 
 //////////////////////////////////////////////////////////////
 // Scan options
-// BLEScan0 -> do a scan now if BLEMode == BLEModeScanByCommand
-// BLEScan0 <timesec> -> do a scan now if BLEMode == BLEModeScanByCommand for timesec seconds
-// BLEScan1 0 -> Scans are passive
-// BLEScan1 1 -> Scans are active
+// BLEScan0 0 -> Scans are passive
+// BLEScan0 1 -> Scans are active
+// BLEScan1 -> do a scan now if BLEMode == BLEModeScanByCommand
+// BLEScan1 <timesec> -> do a scan now if BLEMode == BLEModeScanByCommand for timesec seconds
 // more options could be added...
 void CmndBLEScan(void){
   switch(XdrvMailbox.index){
