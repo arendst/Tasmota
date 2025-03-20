@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Support for HLK-LD2402 24GHz smart wave motion sensor (#23133)
 - Matter prepare for ICD cluster (#23158)
 - Berry `re.dump()` (#23162)
+- Telnet server using command `Telnet <0|1|port>[,<IP filter>]`
 
 ### Breaking Changed
 - Berry remove `Leds.create_matrix` from the standard library waiting for reimplementation (#23114)

@@ -2639,16 +2639,26 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
 
   if ((loglevel <= TasmotaGlobal.seriallog_level) &&
       (TasmotaGlobal.masterlog_level <= TasmotaGlobal.seriallog_level)) {
-    TasConsole.printf("%s%s%s%s\r\n", mxtime, log_data, log_data_payload, log_data_retained);
+    char* data = ext_snprintf_malloc_P("%s%s%s%s\r\n", mxtime, log_data, log_data_payload, log_data_retained);
+    if (data) { 
+      TasConsole.print(data);
 #ifdef USE_SERIAL_BRIDGE
-    SerialBridgePrintf("%s%s%s%s\r\n", mxtime, log_data, log_data_payload, log_data_retained);
+      SerialBridgePrint(data);
 #endif  // USE_SERIAL_BRIDGE
+#ifdef USE_TELNET
+      TelnetPrint(data);
+#endif  // USE_TELNET
+      free(data);
+    }
   }
 
   if (!TasmotaGlobal.log_buffer) { return; }  // Leave now if there is no buffer available
 
-  uint32_t highest_loglevel = Settings->weblog_level;
+  uint32_t highest_loglevel = Settings->seriallog_level;  // Need this for Telnet
   if (Settings->mqttlog_level > highest_loglevel) { highest_loglevel = Settings->mqttlog_level; }
+#ifdef USE_WEBSERVER
+  if (Settings->weblog_level > highest_loglevel) { highest_loglevel = Settings->weblog_level; }
+#endif  // USE_WEBSERVER
 #ifdef USE_UFILESYS
   uint32_t filelog_level = Settings->filelog_level % 10;
   if (filelog_level > highest_loglevel) { highest_loglevel = filelog_level; }

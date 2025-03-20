@@ -116,6 +116,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v14.5.0.2
 ### Added
+- Telnet server using command `Telnet <0|1|port>[,<IP filter>]`
 - Support Vango Technologies V924x ultralow power, single-phase, power measurement [#23127](https://github.com/arendst/Tasmota/issues/23127)
 - Support for HLK-LD2402 24GHz smart wave motion sensor [#23133](https://github.com/arendst/Tasmota/issues/23133)
 - Allow acl in mqtt when client certificate is in use with `#define USE_MQTT_CLIENT_CERT` [#22998](https://github.com/arendst/Tasmota/issues/22998)

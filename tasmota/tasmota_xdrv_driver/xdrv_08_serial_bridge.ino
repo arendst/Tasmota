@@ -99,18 +99,11 @@ void SetSSerialConfig(uint32_t serial_config) {
   }
 }
 
-void SerialBridgePrintf(PGM_P formatP, ...) {
+void SerialBridgePrint(char *data) {
 #ifdef USE_SERIAL_BRIDGE_TEE
   if ((SB_TEE == Settings->sserial_mode) && serial_bridge_buffer) {
-    va_list arg;
-    va_start(arg, formatP);
-    char* data = ext_vsnprintf_malloc_P(formatP, arg);
-    va_end(arg);
-    if (data == nullptr) { return; }
-
 //    SerialBridgeSerial->printf(data);  // This resolves "MqttClientMask":"DVES_%06X" into "DVES_000002"
     SerialBridgeSerial->print(data);  // This does not resolve "DVES_%06X"
-    free(data);
   }
 #endif  // USE_SERIAL_BRIDGE_TEE
 }
@@ -274,7 +267,8 @@ void SerialBridgeInit(void) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("SBR: Serial UART%d"), SerialBridgeSerial->getUart());
 #endif
       SerialBridgeSerial->flush();
-      SerialBridgePrintf("\r\n");
+      char data[] = "\r\n";
+      SerialBridgePrint(data);
     }
   }
 }

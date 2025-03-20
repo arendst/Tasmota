@@ -89,8 +89,9 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_75_dali                 | @eeak, @arendst
 | xdrv_76_serial_i2c           | @s-hadinger
 | xdrv_77_wizmote              | @arendst
-| xdrv_78                      |
+| xdrv_78_telnet               | @arendst
 | xdrv_79_esp32_ble            | @staars, @btsimonh
+| xdrv_80                      |
 | xdrv_81_esp32_webcam         | @gemu, @philrich
 | xdrv_82_esp32_ethernet       | @arendst
 | xdrv_83_esp32_watch          | @gemu
