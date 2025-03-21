@@ -56,6 +56,7 @@ const char HTTP_FORM_TIMEPROP_CYCLELENGTH[] PROGMEM =
     "</select>"
     "</p>";
 
+// TODO: MAX_RELAYS
 const char HTTP_FORM_TIMEPROP_COUNT[] PROGMEM =
     "<p><b>" D_TIMEPROP_COUNT "</b> (5)<br>"
     "<select id=\"tpc\" name=\"tpc\">"
@@ -119,6 +120,7 @@ void HandleTimepropConfiguration(void)
                   Timeprop.count == 6 ? PSTR("selected=\"\"") : "",
                   Timeprop.count == 7 ? PSTR("selected=\"\"") : "",
                   Timeprop.count == 8 ? PSTR("selected=\"\"") : "");
+                  // TODO: MAX_RELAYS
   WSContentSend_P(HTTP_FORM_TIMEPROP_LOADTYPE,
                   !Timeprop.load_type ? PSTR("selected=\"\"") : "",
                   Timeprop.load_type ? PSTR("selected=\"\"") : "");
@@ -283,6 +285,7 @@ void CmndTimePropCycleLength(void)
 
 void CmndTimePropCount(void)
 {
+  // TODO: MAX_RELAYS
   if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 8))
   {
     Timeprop.count = XdrvMailbox.payload;
@@ -339,6 +342,7 @@ void CmndTimePropFallbackValue(void)
 /*********************************************************************************************\
  * Periodic
 \*********************************************************************************************/
+// TODO: Fallback
 void TimepropEverySecond(void)
 {
   if (!Timeprop.enabled)
