@@ -353,17 +353,6 @@ void TimepropEverySecond(void)
     {
       continue;
     }
-    // maybe we can shift that to commands
-    // if (Timeprop.load_type)
-    // {
-    //   // load collection
-    //   TimepropStartTimes[i] = 0;
-    // }
-    // else
-    // {
-    //   // load distribution
-    //   TimepropStartTimes[i] = (cycle_length_seconds / Timeprop.count) * i;
-    // }
 
     if (TimepropStartTimes[i] == cycle_position)
     {
