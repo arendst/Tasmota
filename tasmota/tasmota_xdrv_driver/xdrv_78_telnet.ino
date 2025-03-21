@@ -18,9 +18,22 @@
  *  Telnet 1, 192.168.2.1 - Enable telnet server and only allow connection from 192.168.2.1
  *  TelnetBuffer          - Show current input buffer size (default 256)
  *  TelnetBuffer 300      - Change input buffer size to 300 characters
+ *  TelnetColor           - Show prompt, response and log colors
+ *  TelnetColor 33,36,32  - Set prompt (yellow), response (cyan) and log (green) colors
  *
  * To start telnet at restart add a rule like
- *  on system#boot do telnet 1 endon
+ *  on system#boot do backlog telnetcolor 33,36,32; telnet 1 endon
+ * 
+ * Supported color codes:
+ *  Black   30
+ *  Red     31
+ *  Green   32
+ *  Yellow  33
+ *  Blue    34
+ *  Magenta 35
+ *  Cyan    36
+ *  White   37
+ *  Default 39
 \*********************************************************************************************/
 
 #define XDRV_78                78
@@ -29,8 +42,14 @@
 #define TELNET_BUF_SIZE        256                 // Size of input buffer
 #endif
 
-#ifndef TELNET_PROMPT_COLOR
-#define TELNET_PROMPT_COLOR    33                  // Yellow - ANSI color escape code
+#ifndef TELNET_COL_PROMPT
+#define TELNET_COL_PROMPT      33                  // Yellow - ANSI color escape code
+#endif
+#ifndef TELNET_COL_RESPONSE
+#define TELNET_COL_RESPONSE    36                  // Cyan - ANSI color escape code
+#endif
+#ifndef TELNET_COL_LOGGING
+#define TELNET_COL_LOGGING     32                  // Green - ANSI color escape code
 #endif
 
 struct {
@@ -39,8 +58,10 @@ struct {
   IPAddress   ip_filter;
   char       *buffer = nullptr;
   uint16_t    port;
-  uint16_t    buffer_size = TELNET_BUF_SIZE;
-  bool        ip_filter_enabled = false;
+  uint16_t    buffer_size;
+  uint8_t     prompt;
+  uint8_t     color[3];
+  bool        ip_filter_enabled;
 } Telnet;
 
 /********************************************************************************************/
@@ -49,8 +70,17 @@ void TelnetPrint(char *data) {
   if (Telnet.server) {
     WiFiClient &client = Telnet.client;
     if (client) { 
-//      client.printf(data);  // This resolves "MqttClientMask":"DVES_%06X" into "DVES_000002"
+      if (1 == Telnet.prompt) {
+        client.write("\r\n");
+        Telnet.prompt = 3;                         // Do not print linefeed for any data
+      }
+      if (Telnet.prompt > 1) {
+        client.printf("\x1b[%dm", Telnet.color[Telnet.prompt -1]);
+      }
       client.print(data);                          // This does not resolve "DVES_%06X"
+      if (Telnet.prompt > 1) {
+        client.printf("\x1b[0m");
+      }
     }
   }
 }
@@ -80,6 +110,7 @@ void TelnetLoop(void) {
     client = new_client;
     if (client) {
       client.printf("Tasmota %s %s (%s) %s\r\n\n", TasmotaGlobal.hostname, TasmotaGlobal.version, GetBuildDateAndTime().c_str(), GetDeviceHardware().c_str());
+      client.printf("\x1b[%dm", Telnet.color[2]);
       uint32_t index = 1;                          // Dump start of log buffer for restart messages
       char* line;
       size_t len;
@@ -88,15 +119,23 @@ void TelnetLoop(void) {
         client.write(line, len -1);
         client.write("\r\n");
       }
-//      client.printf("\e[%dm%s:#\e[0m ", TELNET_PROMPT_COLOR, TasmotaGlobal.hostname);  // \e[33m = Yellow, \e[0m = end color
-      client.printf("\x1b[%dm%s:#\x1b[0m ", TELNET_PROMPT_COLOR, TasmotaGlobal.hostname);  // \x1b[33m = Yellow, \x1b[0m = end color
+      client.printf("\x1b[0m");
+      Telnet.prompt = 0;
+    }
+  }
+
+  if (0 == Telnet.prompt) {
+    WiFiClient &client = Telnet.client;
+    if (client) {
+      client.printf("\x1b[%dm%s:#\x1b[0m ", Telnet.color[0], TasmotaGlobal.hostname);  // \x1b[33m = Yellow, \x1b[0m = end color
+      Telnet.prompt = 1;                           // Print single linefeed for non-requested data
     }
   }
 
   bool busy;
   uint32_t buf_len = 0;
   do {
-    busy = false;                                  // exit loop if no data was transferred
+    busy = false;                                  // Exit loop if no data was transferred
     bool overrun = false;
     WiFiClient &client = Telnet.client;
     while (client && (client.available())) {
@@ -113,15 +152,15 @@ void TelnetLoop(void) {
         else if (c == '\n') {
           Telnet.buffer[buf_len] = 0;              // Telnet data completed
           TasmotaGlobal.seriallog_level = (Settings->seriallog_level < LOG_LEVEL_INFO) ? (uint8_t)LOG_LEVEL_INFO : Settings->seriallog_level;
+          Telnet.prompt = 2;                       // Do not print linefeed for requested data
           if (overrun) {
             AddLog(LOG_LEVEL_INFO, PSTR("TLN: buffer overrun"));
           } else {
             AddLog(LOG_LEVEL_INFO, PSTR("TLN: %s"), Telnet.buffer);
             ExecuteCommand(Telnet.buffer, SRC_TELNET);
           }
+          Telnet.prompt = 0;                       // Print prompt
           client.flush();
-//          client.printf("\e[%dm%s:#\e[0m ", TELNET_PROMPT_COLOR, TasmotaGlobal.hostname);  // \e[33m = Yellow, \e[0m = end color
-          client.printf("\x1b[%dm%s:#\x1b[0m ", TELNET_PROMPT_COLOR, TasmotaGlobal.hostname);  // \x1b[33m = Yellow, \x1b[0m = end color
           return;
         }
       }
@@ -144,15 +183,22 @@ void TelnetStop(void) {
   Telnet.buffer = nullptr;
 }
 
+void TelnetInit(void) {
+  Telnet.buffer_size = TELNET_BUF_SIZE;
+  Telnet.color[0] = TELNET_COL_PROMPT;
+  Telnet.color[1] = TELNET_COL_RESPONSE;
+  Telnet.color[2] = TELNET_COL_LOGGING;
+}
+
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
 
 const char kTelnetCommands[] PROGMEM = "Telnet|"   // Prefix
-  "|Buffer";
+  "|Buffer|Color";
 
 void (* const TelnetCommand[])(void) PROGMEM = {
-  &CmndTelnet, &CmndTelnetBuffer };
+  &CmndTelnet, &CmndTelnetBuffer, &CmndTelnetColor };
 
 void CmndTelnet(void) {
   // Telnet                - Show telnet server state
@@ -220,6 +266,20 @@ void CmndTelnetBuffer(void) {
   ResponseCmndNumber(Telnet.buffer_size);
 }
 
+void CmndTelnetColor(void) {
+  // TelnetColor          - Show prompt, response and log colors
+  // TelnetColor 33,37,32 - Set prompt (yellow), response (white) and log (green) colors
+  if (XdrvMailbox.data_len > 0) {
+    uint32_t colors[] = { TELNET_COL_PROMPT, TELNET_COL_RESPONSE, TELNET_COL_LOGGING };
+    uint32_t count = ParseParameters(3, colors);
+    for (uint32_t i = 0; i < count; i++) {
+      Telnet.color[i] = colors[i];
+    }
+  }
+  Response_P(PSTR("{\"%s\":[%d,%d,%d]}"),
+    XdrvMailbox.command, Telnet.color[0], Telnet.color[1], Telnet.color[2]);
+}
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -227,7 +287,10 @@ void CmndTelnetBuffer(void) {
 bool Xdrv78(uint32_t function) {
   bool result = false;
 
-  if (FUNC_COMMAND == function) {
+  if (FUNC_INIT == function) {
+    TelnetInit();
+  }
+  else if (FUNC_COMMAND == function) {
     result = DecodeCommand(kTelnetCommands, TelnetCommand);
   } else if (Telnet.buffer) {
     switch (function) {
