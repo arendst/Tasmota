@@ -2607,6 +2607,22 @@ bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* l
   return false;
 }
 
+uint32_t HighestLogLevel(void) {
+  uint32_t highest_loglevel = TasmotaGlobal.seriallog_level;
+  if (Settings->mqttlog_level > highest_loglevel) { highest_loglevel = Settings->mqttlog_level; }
+#ifdef USE_WEBSERVER
+  if (Settings->weblog_level > highest_loglevel) { highest_loglevel = Settings->weblog_level; }
+#endif  // USE_WEBSERVER
+#ifdef USE_UFILESYS
+  uint32_t filelog_level = Settings->filelog_level % 10;
+  if (filelog_level > highest_loglevel) { highest_loglevel = filelog_level; }
+#endif  // USE_UFILESYS
+  if (TasmotaGlobal.syslog_level > highest_loglevel) { highest_loglevel = TasmotaGlobal.syslog_level; }
+  if (TasmotaGlobal.templog_level > highest_loglevel) { highest_loglevel = TasmotaGlobal.templog_level; }
+  if (TasmotaGlobal.uptime < 3) { highest_loglevel = LOG_LEVEL_DEBUG_MORE; }  // Log all before setup correct log level
+  return highest_loglevel;
+}
+
 void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_payload = nullptr, const char* log_data_retained = nullptr) {
   // Ignore any logging when maxlog_level = 0 OR logging for levels equal or lower than maxlog_level
   if (!TasmotaGlobal.maxlog_level || (loglevel > TasmotaGlobal.maxlog_level)) { return; }
@@ -2654,19 +2670,7 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
 
   if (!TasmotaGlobal.log_buffer) { return; }  // Leave now if there is no buffer available
 
-  uint32_t highest_loglevel = Settings->seriallog_level;  // Need this for Telnet
-  if (Settings->mqttlog_level > highest_loglevel) { highest_loglevel = Settings->mqttlog_level; }
-#ifdef USE_WEBSERVER
-  if (Settings->weblog_level > highest_loglevel) { highest_loglevel = Settings->weblog_level; }
-#endif  // USE_WEBSERVER
-#ifdef USE_UFILESYS
-  uint32_t filelog_level = Settings->filelog_level % 10;
-  if (filelog_level > highest_loglevel) { highest_loglevel = filelog_level; }
-#endif  // USE_UFILESYS
-  if (TasmotaGlobal.syslog_level > highest_loglevel) { highest_loglevel = TasmotaGlobal.syslog_level; }
-  if (TasmotaGlobal.templog_level > highest_loglevel) { highest_loglevel = TasmotaGlobal.templog_level; }
-  if (TasmotaGlobal.uptime < 3) { highest_loglevel = LOG_LEVEL_DEBUG_MORE; }  // Log all before setup correct log level
-
+  uint32_t highest_loglevel = HighestLogLevel();
   if ((loglevel <= highest_loglevel) &&    // Log only when needed
       (TasmotaGlobal.masterlog_level <= highest_loglevel)) {
     // Delimited, zero-terminated buffer of log lines.
@@ -2707,19 +2711,6 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
   }
 }
 
-uint32_t HighestLogLevel() {
-  uint32_t highest_loglevel = TasmotaGlobal.seriallog_level;
-  if (Settings->weblog_level > highest_loglevel) { highest_loglevel = Settings->weblog_level; }
-  if (Settings->mqttlog_level > highest_loglevel) { highest_loglevel = Settings->mqttlog_level; }
-#ifdef USE_UFILESYS
-  if (Settings->filelog_level > highest_loglevel) { highest_loglevel = Settings->filelog_level; }
-#endif  // USE_UFILESYS
-  if (TasmotaGlobal.syslog_level > highest_loglevel) { highest_loglevel = TasmotaGlobal.syslog_level; }
-  if (TasmotaGlobal.templog_level > highest_loglevel) { highest_loglevel = TasmotaGlobal.templog_level; }
-  if (TasmotaGlobal.uptime < 3) { highest_loglevel = LOG_LEVEL_DEBUG_MORE; }  // Log all before setup correct log level
-  return highest_loglevel;
-}
-
 void AddLog(uint32_t loglevel, PGM_P formatP, ...) {
 #ifdef ESP32
   if (xPortInIsrContext()) {
@@ -2731,7 +2722,6 @@ void AddLog(uint32_t loglevel, PGM_P formatP, ...) {
   }
 #endif
   uint32_t highest_loglevel = HighestLogLevel();
-
   // If no logging is requested then do not access heap to fight fragmentation
   if ((loglevel <= highest_loglevel) && (TasmotaGlobal.masterlog_level <= highest_loglevel)) {
     va_list arg;
