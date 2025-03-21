@@ -2,13 +2,13 @@
 
 #define XDRV_48 48
 
-const char kTimepropCommands[] PROGMEM = "|" D_CMND_TIMEPROP_SET "|" D_CMND_TIMEPROP_ENABLE "|" D_CMND_TIMEPROP_CYCLE_LENGTH "|" D_CMND_TIMEPROP_NUM_PROPS "|" D_CMND_TIMEPROP_LOAD_TYPE "|" D_CMND_TIMEPROP_FALLBACK_AFTER "|" D_CMND_TIMEPROP_FALLBACK_VALUE;
+const char kTimepropCommands[] PROGMEM = "|" D_CMND_TIMEPROP_SET "|" D_CMND_TIMEPROP_ENABLE "|" D_CMND_TIMEPROP_CYCLE_LENGTH "|" D_CMND_TIMEPROP_COUNT "|" D_CMND_TIMEPROP_LOAD_TYPE "|" D_CMND_TIMEPROP_FALLBACK_AFTER "|" D_CMND_TIMEPROP_FALLBACK_VALUE;
 
 void (*const TimepropCommand[])(void) PROGMEM = {
     &CmndTimepropSet,
     &CmndTimePropEnable,
     &CmndTimePropCycleLength,
-    &CmndTimePropNumProps,
+    &CmndTimePropCount,
     &CmndTimePropLoadType,
     &CmndTimePropFallbackAfter,
     &CmndTimePropFallbackValue,
@@ -19,7 +19,7 @@ struct TIMEPROP
 {
   bool enabled = false;
   uint8_t cycle_length = 0;
-  uint8_t num_timeprops = 1;
+  uint8_t count = 1;
   bool load_type = false;
   uint8_t fallback_time = 0;
   uint8_t fallback_value = 0;
@@ -30,6 +30,7 @@ uint16_t *TimepropStartTimes;
 uint16_t *TimepropSecondsLeft;
 
 uint16_t cycle_position = 0;
+uint16_t cycle_length_seconds = 0;
 
 /*********************************************************************************************\
  * WebUI
@@ -55,9 +56,9 @@ const char HTTP_FORM_TIMEPROP_CYCLELENGTH[] PROGMEM =
     "</select>"
     "</p>";
 
-const char HTTP_FORM_TIMEPROP_NUMPROPS[] PROGMEM =
-    "<p><b>" D_TIMEPROP_NUMPROPS "</b> (5)<br>"
-    "<select id=\"tp_num_props\" name=\"tp_num_props\">"
+const char HTTP_FORM_TIMEPROP_COUNT[] PROGMEM =
+    "<p><b>" D_TIMEPROP_COUNT "</b> (5)<br>"
+    "<select id=\"tp_count\" name=\"tp_count\">"
     "<option %s value=\"1\">1</option>"
     "<option %s value=\"2\">2</option>"
     "<option %s value=\"3\">3</option>"
@@ -109,15 +110,15 @@ void HandleTimepropConfiguration(void)
                   Timeprop.cycle_length == 1 ? PSTR("selected=\"\"") : "",
                   Timeprop.cycle_length == 2 ? PSTR("selected=\"\"") : "",
                   Timeprop.cycle_length == 3 ? PSTR("selected=\"\"") : "");
-  WSContentSend_P(HTTP_FORM_TIMEPROP_NUMPROPS,
-                  Timeprop.num_timeprops == 1 ? PSTR("selected=\"\"") : "",
-                  Timeprop.num_timeprops == 2 ? PSTR("selected=\"\"") : "",
-                  Timeprop.num_timeprops == 3 ? PSTR("selected=\"\"") : "",
-                  Timeprop.num_timeprops == 4 ? PSTR("selected=\"\"") : "",
-                  Timeprop.num_timeprops == 5 ? PSTR("selected=\"\"") : "",
-                  Timeprop.num_timeprops == 6 ? PSTR("selected=\"\"") : "",
-                  Timeprop.num_timeprops == 7 ? PSTR("selected=\"\"") : "",
-                  Timeprop.num_timeprops == 8 ? PSTR("selected=\"\"") : "");
+  WSContentSend_P(HTTP_FORM_TIMEPROP_COUNT,
+                  Timeprop.count == 1 ? PSTR("selected=\"\"") : "",
+                  Timeprop.count == 2 ? PSTR("selected=\"\"") : "",
+                  Timeprop.count == 3 ? PSTR("selected=\"\"") : "",
+                  Timeprop.count == 4 ? PSTR("selected=\"\"") : "",
+                  Timeprop.count == 5 ? PSTR("selected=\"\"") : "",
+                  Timeprop.count == 6 ? PSTR("selected=\"\"") : "",
+                  Timeprop.count == 7 ? PSTR("selected=\"\"") : "",
+                  Timeprop.count == 8 ? PSTR("selected=\"\"") : "");
   WSContentSend_P(HTTP_FORM_TIMEPROP_LOADTYPE,
                   !Timeprop.load_type ? PSTR("selected=\"\"") : "",
                   Timeprop.load_type ? PSTR("selected=\"\"") : "");
@@ -142,7 +143,7 @@ void TimePropSaveSettings(void)
     cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_ENABLE), PSTR("0"), PSTR("0"));
   }
   cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_CYCLE_LENGTH), PSTR("tp_cycle_length"), PSTR("2"));
-  cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_NUM_PROPS), PSTR("tp_num_props"), PSTR("5"));
+  cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_COUNT), PSTR("tp_count"), PSTR("5"));
   cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_LOAD_TYPE), PSTR("tp_load_type"), PSTR("0"));
   cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_FALLBACK_AFTER), PSTR("tp_fallback_after"), PSTR("0"));
   cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_FALLBACK_VALUE), PSTR("tp_fallback_value"), PSTR("0"));
@@ -180,7 +181,7 @@ void LoadPersistentSettings(void)
 {
   Timeprop.enabled = Settings->timeprop_cfg.enable;
   Timeprop.cycle_length = Settings->timeprop_cfg.cycle_length;
-  Timeprop.num_timeprops = Settings->timeprop_cfg.num_timeprops + 1;
+  Timeprop.count = Settings->timeprop_cfg.count + 1;
   Timeprop.load_type = Settings->timeprop_cfg.load_type;
   Timeprop.fallback_time = Settings->timeprop_cfg.fallback_time;
   Timeprop.fallback_value = expandFallbackValue(Settings->timeprop_cfg.fallback_value);
@@ -191,19 +192,33 @@ void AllocateTimepropValues(void)
   if (Timeprop.enabled)
   {
     free(TimepropValues);
-    TimepropValues = (uint8_t *)malloc(Timeprop.num_timeprops * sizeof *TimepropValues);
+    TimepropValues = (uint8_t *)malloc(Timeprop.count * sizeof *TimepropValues);
 
     free(TimepropStartTimes);
-    TimepropStartTimes = (uint16_t *)malloc(Timeprop.num_timeprops * sizeof *TimepropStartTimes);
+    TimepropStartTimes = (uint16_t *)malloc(Timeprop.count * sizeof *TimepropStartTimes);
 
     free(TimepropSecondsLeft);
-    TimepropSecondsLeft = (uint16_t *)malloc(Timeprop.num_timeprops * sizeof *TimepropSecondsLeft);
+    TimepropSecondsLeft = (uint16_t *)malloc(Timeprop.count * sizeof *TimepropSecondsLeft);
 
-    for (uint8_t i = 0; i < Timeprop.num_timeprops; i++)
+    cycle_length_seconds = (Timeprop.cycle_length + 1) * 5 * 60;
+
+    for (uint8_t i = 0; i < Timeprop.count; i++)
     {
       TimepropValues[i] = 0;
-      TimepropStartTimes[i] = 0;
       TimepropSecondsLeft[i] = 0;
+
+      if (Timeprop.load_type)
+      {
+        // load collection
+        TimepropStartTimes[i] = 0;
+      }
+      else
+      {
+        // load distribution
+        TimepropStartTimes[i] = (cycle_length_seconds / Timeprop.count) * i;
+      }
+  
+  
     }
   }
 }
@@ -218,7 +233,7 @@ void CmndTimepropSet(void)
     return;
   }
 
-  if (XdrvMailbox.index < 1 || XdrvMailbox.index > Timeprop.num_timeprops)
+  if (XdrvMailbox.index < 1 || XdrvMailbox.index > Timeprop.count)
   {
     return;
   }
@@ -266,19 +281,19 @@ void CmndTimePropCycleLength(void)
   ResponseCmndNumber(Timeprop.cycle_length);
 }
 
-void CmndTimePropNumProps(void)
+void CmndTimePropCount(void)
 {
   if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 8))
   {
-    Timeprop.num_timeprops = XdrvMailbox.payload;
+    Timeprop.count = XdrvMailbox.payload;
 
-    Settings->timeprop_cfg.num_timeprops = Timeprop.num_timeprops - 1;
+    Settings->timeprop_cfg.count = Timeprop.count - 1;
     SettingsSave(0);
   }
 
   AllocateTimepropValues();
 
-  ResponseCmndNumber(Timeprop.num_timeprops);
+  ResponseCmndNumber(Timeprop.count);
 }
 
 void CmndTimePropLoadType(void)
@@ -290,6 +305,9 @@ void CmndTimePropLoadType(void)
     Settings->timeprop_cfg.load_type = Timeprop.load_type;
     SettingsSave(0);
   }
+
+  AllocateTimepropValues();
+
   ResponseCmndNumber(Timeprop.load_type);
 }
 
@@ -328,25 +346,24 @@ void TimepropEverySecond(void)
     return;
   }
 
-  uint16_t cycle_length_seconds = (Timeprop.cycle_length + 1) * 5 * 60;
 
-  for (uint8_t i = 0; i < Timeprop.num_timeprops; i++)
+  for (uint8_t i = 0; i < Timeprop.count; i++)
   {
     if (TimepropValues[i] == 0)
     {
       continue;
     }
     // maybe we can shift that to commands
-    if (Timeprop.load_type)
-    {
-      // load collection
-      TimepropStartTimes[i] = 0;
-    }
-    else
-    {
-      // load distribution
-      TimepropStartTimes[i] = (cycle_length_seconds / Timeprop.num_timeprops) * i;
-    }
+    // if (Timeprop.load_type)
+    // {
+    //   // load collection
+    //   TimepropStartTimes[i] = 0;
+    // }
+    // else
+    // {
+    //   // load distribution
+    //   TimepropStartTimes[i] = (cycle_length_seconds / Timeprop.count) * i;
+    // }
 
     if (TimepropStartTimes[i] == cycle_position)
     {

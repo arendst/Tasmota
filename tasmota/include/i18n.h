@@ -809,7 +809,7 @@
 #define D_CMND_TIMEPROP_SET "TimePropSet"
 #define D_CMND_TIMEPROP_ENABLE "TimePropEnable"
 #define D_CMND_TIMEPROP_CYCLE_LENGTH "TimePropCycleLength"
-#define D_CMND_TIMEPROP_NUM_PROPS "TimePropNumProps"
+#define D_CMND_TIMEPROP_COUNT "TimePropCount"
 #define D_CMND_TIMEPROP_LOAD_TYPE "TimePropLoadType"
 #define D_CMND_TIMEPROP_FALLBACK_AFTER "TimePropFallbackAfter"
 #define D_CMND_TIMEPROP_FALLBACK_VALUE "TimePropFallbackValue"
