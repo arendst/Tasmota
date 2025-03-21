@@ -20,11 +20,13 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#define MI32_VERSION "V0.9.2.4"
+#define MI32_VERSION "V0.9.2.5"
 /*
   --------------------------------------------------------------------------------------------
   Version yyyymmdd  Action    Description
   --------------------------------------------------------------------------------------------
+  0.9.2.5 20250319  changed - added support for MI LYWSD02MMC with different device ID
+
   0.9.2.4 20240111  changed - Enhancement of debug log output                              
   -------
   0.9.2.3 20240101  changed - added initial support for MI LYWSD02MMC                              
@@ -492,8 +494,9 @@ void (*const MI32_Commands[])(void) PROGMEM = {
 #define AT_BTN         18
 #define MI_SJWS01LM    19
 #define MI_LYWSD02MMC  20
+#define MI_LYWSD02MMC2 21
 
-#define MI_MI32_TYPES  20 //count this manually
+#define MI_MI32_TYPES  21 //count this manually
 
 const uint16_t kMI32DeviceID[MI_MI32_TYPES]={
   0x0000, // Unkown
@@ -515,7 +518,8 @@ const uint16_t kMI32DeviceID[MI_MI32_TYPES]={
   0x066f, // CGDK2
   0x004e, // Avago Tech Bluetooth Buttons (Company Id)
   0x0863, // SJWS01LM
-  0x2542  // LYWSD02MMC
+  0x2542, // LYWSD02MMC
+  0x16e4  // LYWSD02MMC F3_A1 hardware revision, 2.0.1_0060 firmware revision
 };
 
 const char kMI32DeviceType0[] PROGMEM = "Unknown";
@@ -538,10 +542,11 @@ const char kMI32DeviceType16[] PROGMEM ="CGDK2";
 const char kMI32DeviceType17[] PROGMEM ="ATBTN";
 const char kMI32DeviceType18[] PROGMEM = "SJWS01LM";
 const char kMI32DeviceType19[] PROGMEM = "LYWSD02MMC";
+const char kMI32DeviceType20[] PROGMEM = "LYWSD02MMC";
 const char * kMI32DeviceType[] PROGMEM = {kMI32DeviceType0, kMI32DeviceType1, kMI32DeviceType2, kMI32DeviceType3,
   kMI32DeviceType4, kMI32DeviceType5, kMI32DeviceType6, kMI32DeviceType7, kMI32DeviceType8, kMI32DeviceType9,
   kMI32DeviceType10, kMI32DeviceType11, kMI32DeviceType12, kMI32DeviceType13, kMI32DeviceType14, kMI32DeviceType15,
-  kMI32DeviceType16, kMI32DeviceType17, kMI32DeviceType18, kMI32DeviceType19};
+  kMI32DeviceType16, kMI32DeviceType17, kMI32DeviceType18, kMI32DeviceType19, kMI32DeviceType20};
 
 typedef int BATREAD_FUNCTION(int slot);
 typedef int UNITWRITE_FUNCTION(int slot, int unit);
@@ -796,6 +801,7 @@ int genericSensorReadFn(int slot, int force){
       res = MI32Operation(slot, OP_READ_HT_LY, LYWSD03_Svc, nullptr, LYWSD03_BattNotifyChar);
       break;
     case MI_LYWSD02MMC:
+    case MI_LYWSD02MMC2:
       res = MI32Operation(slot, OP_READ_HT_LY, LYWSD03_Svc, nullptr, LYWSD03_BattNotifyChar);
       break;
     case MI_MHOC401:
@@ -944,6 +950,7 @@ int genericTimeWriteFn(int slot){
   int res = 0;
   switch (MIBLEsensors[slot].type){
     case MI_LYWSD02MMC:
+    case MI_LYWSD02MMC2:
     case MI_LYWSD02: {
       union {
         uint8_t buf[5];
@@ -2129,6 +2136,21 @@ int MI32parseMiPayload(int _slot, struct mi_beacon_data_t *parsed){
       MIBLEsensors[_slot].shallSendMQTT = 1;
       MIBLEsensors[_slot].feature.Btn = 1;
     } break;
+    case 0x4c01:{ // 'temperature'
+      const uint32_t payload32 = uint32_t(parsed->payload.data[0]) | (uint32_t(parsed->payload.data[1]) << 8) | (uint32_t(parsed->payload.data[2]) << 16) | (uint32_t(parsed->payload.data[3]) << 24);
+      float _tempFloat;
+      memcpy(&_tempFloat, &payload32, sizeof(_tempFloat));
+      MIBLEsensors[_slot].temp = _tempFloat;
+      MIBLEsensors[_slot].feature.temp = 1;
+      MIBLEsensors[_slot].eventType.temp = 1;
+    } break;
+    case 0x4c02:{ // 'humidity'
+      const uint8_t payload8 = parsed->payload.data[0];
+      float _tempFloat = (float)payload8 / 1.0f;
+      MIBLEsensors[_slot].hum = _tempFloat;
+      MIBLEsensors[_slot].feature.hum = 1;
+      MIBLEsensors[_slot].eventType.hum = 1;
+    } break;
 
     //Weight attributes	0x101A	600	0
     //No one moves over time	0x101B	1	1
@@ -2279,7 +2301,7 @@ void MI32notifyHT_LY(int _slot, char *_buf, int len){
       if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("M32: %s: LYWSD0x Hum updated %1_f"), MIaddrStr(MIBLEsensors[_slot].MAC), &MIBLEsensors[_slot].hum);
     }
     MIBLEsensors[_slot].eventType.tempHum  = 1;
-    if (MIBLEsensors[_slot].type == MI_LYWSD02MMC || MIBLEsensors[_slot].type == MI_LYWSD03MMC || MIBLEsensors[_slot].type == MI_MHOC401){
+    if (MIBLEsensors[_slot].type == MI_LYWSD02MMC || MIBLEsensors[_slot].type == MI_LYWSD02MMC2 || MIBLEsensors[_slot].type == MI_LYWSD03MMC || MIBLEsensors[_slot].type == MI_MHOC401){
       // ok, so CR2032 is 3.0v, but drops immediately to ~2.9.
       // so we'll go with the 2.1 min, 2.95 max.
       float minVolts = 2100.0;
