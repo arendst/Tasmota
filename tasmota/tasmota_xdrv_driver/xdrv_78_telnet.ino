@@ -9,19 +9,32 @@
 #ifdef USE_TELNET
 /*********************************************************************************************\
  * Telnet console support for a single connection
+ *
+ * Supported commands:
+ *  Telnet                - Show telnet server state
+ *  Telnet 0              - Disable telnet server
+ *  Telnet 1              - Enable telnet server on port 23
+ *  Telnet 23             - Enable telnet server on port 23
+ *  Telnet 1, 192.168.2.1 - Enable telnet server and only allow connection from 192.168.2.1
+ *  TelnetBuffer          - Show current input buffer size (default 256)
+ *  TelnetBuffer 300      - Change input buffer size to 300 characters
 \*********************************************************************************************/
 
 #define XDRV_78                78
 
 #ifndef TELNET_BUF_SIZE
-#define TELNET_BUF_SIZE        255  // size of the buffer
+#define TELNET_BUF_SIZE        256                 // Size of input buffer
+#endif
+
+#ifndef TELNET_PROMPT_COLOR
+#define TELNET_PROMPT_COLOR    33                  // Yellow - ANSI color escape code
 #endif
 
 struct {
   WiFiServer *server = nullptr;
   WiFiClient  client;
   IPAddress   ip_filter;
-  char       *buffer = nullptr;     // data transfer buffer
+  char       *buffer = nullptr;
   uint16_t    port;
   uint16_t    buffer_size = TELNET_BUF_SIZE;
   bool        ip_filter_enabled = false;
@@ -34,7 +47,7 @@ void TelnetPrint(char *data) {
     WiFiClient &client = Telnet.client;
     if (client) { 
 //      client.printf(data);  // This resolves "MqttClientMask":"DVES_%06X" into "DVES_000002"
-      client.print(data);  // This does not resolve "DVES_%06X"
+      client.print(data);                          // This does not resolve "DVES_%06X"
     }
   }
 }
@@ -52,8 +65,8 @@ void TelnetLoop(void) {
       if (Telnet.ip_filter != new_client.remoteIP()) {
         AddLog(LOG_LEVEL_INFO, PSTR("TLN: Rejected due to filtering"));
         new_client.stop();
-      } else {
-        AddLog(LOG_LEVEL_INFO, PSTR("TLN: Allowed through filter"));
+//      } else {
+//        AddLog(LOG_LEVEL_INFO, PSTR("TLN: Allowed through filter"));
       }
     }
 
@@ -63,8 +76,8 @@ void TelnetLoop(void) {
     }
     client = new_client;
     if (client) {
-      client.printf("Tasmota %s %s (%s)\r\n\n", TasmotaGlobal.hostname, TasmotaGlobal.version, GetBuildDateAndTime().c_str());
-      uint32_t index = 1;
+      client.printf("Tasmota %s %s (%s) %s\r\n\n", TasmotaGlobal.hostname, TasmotaGlobal.version, GetBuildDateAndTime().c_str(), GetDeviceHardware().c_str());
+      uint32_t index = 1;                          // Dump start of log buffer for restart messages
       char* line;
       size_t len;
       while (GetLog(TasmotaGlobal.seriallog_level, &index, &line, &len)) {
@@ -72,7 +85,8 @@ void TelnetLoop(void) {
         client.write(line, len -1);
         client.write("\r\n");
       }
-      client.printf("%s:# ", TasmotaGlobal.hostname);
+//      client.printf("\e[%dm%s:#\e[0m ", TELNET_PROMPT_COLOR, TasmotaGlobal.hostname);  // \e[33m = Yellow, \e[0m = end color
+      client.printf("\x1b[%dm%s:#\x1b[0m ", TELNET_PROMPT_COLOR, TasmotaGlobal.hostname);  // \x1b[33m = Yellow, \x1b[0m = end color
     }
   }
 
@@ -80,8 +94,8 @@ void TelnetLoop(void) {
   uint32_t buf_len = 0;
   do {
     busy = false;                                  // exit loop if no data was transferred
-    WiFiClient &client = Telnet.client;
     bool overrun = false;
+    WiFiClient &client = Telnet.client;
     while (client && (client.available())) {
       uint8_t c = client.read();
       if (c >= 0) {
@@ -100,21 +114,18 @@ void TelnetLoop(void) {
             AddLog(LOG_LEVEL_INFO, PSTR("TLN: buffer overrun"));
           } else {
             AddLog(LOG_LEVEL_INFO, PSTR("TLN: %s"), Telnet.buffer);
-            ExecuteCommand(Telnet.buffer, SRC_REMOTE);
+            ExecuteCommand(Telnet.buffer, SRC_TELNET);
           }
           client.flush();
-          client.printf("%s:# ", TasmotaGlobal.hostname);
+//          client.printf("\e[%dm%s:#\e[0m ", TELNET_PROMPT_COLOR, TasmotaGlobal.hostname);  // \e[33m = Yellow, \e[0m = end color
+          client.printf("\x1b[%dm%s:#\x1b[0m ", TELNET_PROMPT_COLOR, TasmotaGlobal.hostname);  // \x1b[33m = Yellow, \x1b[0m = end color
           return;
         }
       }
     }
-    yield();    // avoid WDT if heavy traffic
+    yield();                                       // Avoid WDT if heavy traffic
   } while (busy);
 }
-
-/*********************************************************************************************\
- * Commands
-\*********************************************************************************************/
 
 void TelnetStop(void) {
   Telnet.server->stop();
@@ -122,13 +133,19 @@ void TelnetStop(void) {
   Telnet.server = nullptr;
 
   WiFiClient &client = Telnet.client;
-  client.stop();
+  if (client) {
+    client.stop();
+  }
 
   free(Telnet.buffer);
   Telnet.buffer = nullptr;
 }
 
-const char kTelnetCommands[] PROGMEM = "Telnet|"    // prefix
+/*********************************************************************************************\
+ * Commands
+\*********************************************************************************************/
+
+const char kTelnetCommands[] PROGMEM = "Telnet|"   // Prefix
   "|Buffer";
 
 void (* const TelnetCommand[])(void) PROGMEM = {
@@ -149,23 +166,21 @@ void CmndTelnet(void) {
         Telnet.ip_filter.fromString(ArgV(sub_string, 2));
         Telnet.ip_filter_enabled = true;
       } else {
-        // Disable whitelist if previously set
-        Telnet.ip_filter_enabled = false;
+        Telnet.ip_filter_enabled = false;          // Disable whitelist if previously set
       }
 
       if (Telnet.server) {
         TelnetStop();
       }
-
       if (Telnet.port > 0) {
         if (!Telnet.buffer) {
           Telnet.buffer = (char*)malloc(Telnet.buffer_size);
-          if (!Telnet.buffer) { return; }
-
-          if (1 == Telnet.port) { Telnet.port = 23; }
-          Telnet.server = new WiFiServer(Telnet.port);
-          Telnet.server->begin(); // start TCP server
-          Telnet.server->setNoDelay(true);
+          if (Telnet.buffer) { 
+            if (1 == Telnet.port) { Telnet.port = 23; }
+            Telnet.server = new WiFiServer(Telnet.port);
+            Telnet.server->begin(); // start TCP server
+            Telnet.server->setNoDelay(true);
+          }
         }
       }
     }
@@ -178,16 +193,16 @@ void CmndTelnet(void) {
 }
 
 void CmndTelnetBuffer(void) {
-  // TelnetBuffer     - Show current input buffer size (default 255)
+  // TelnetBuffer     - Show current input buffer size (default 256)
   // TelnetBuffer 300 - Change input buffer size to 300 characters
   if (XdrvMailbox.data_len > 0) {
     uint16_t bsize = Telnet.buffer_size;
     Telnet.buffer_size = XdrvMailbox.payload;
     if (XdrvMailbox.payload < MIN_INPUT_BUFFER_SIZE) {
-      Telnet.buffer_size = MIN_INPUT_BUFFER_SIZE;          // 256 / 256
+      Telnet.buffer_size = MIN_INPUT_BUFFER_SIZE;  // 256 / 256
     }
     else if (XdrvMailbox.payload > INPUT_BUFFER_SIZE) {
-      Telnet.buffer_size = INPUT_BUFFER_SIZE;              // 256 / 800
+      Telnet.buffer_size = INPUT_BUFFER_SIZE;      // 800
     }
 
     if (Telnet.buffer && (bsize != Telnet.buffer_size)) {
@@ -215,6 +230,9 @@ bool Xdrv78(uint32_t function) {
     switch (function) {
       case FUNC_LOOP:
         TelnetLoop();
+        break;
+      case FUNC_SAVE_BEFORE_RESTART:
+        TelnetStop();
         break;
       case FUNC_ACTIVE:
         result = true;
