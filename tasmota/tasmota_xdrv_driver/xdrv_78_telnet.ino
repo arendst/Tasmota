@@ -18,6 +18,9 @@
  *  Telnet 1, 192.168.2.1 - Enable telnet server and only allow connection from 192.168.2.1
  *  TelnetBuffer          - Show current input buffer size (default 256)
  *  TelnetBuffer 300      - Change input buffer size to 300 characters
+ *
+ * To start telnet at restart add a rule like
+ *  on system#boot do telnet 1 endon
 \*********************************************************************************************/
 
 #define XDRV_78                78
@@ -175,12 +178,12 @@ void CmndTelnet(void) {
       if (Telnet.port > 0) {
         if (!Telnet.buffer) {
           Telnet.buffer = (char*)malloc(Telnet.buffer_size);
-          if (Telnet.buffer) { 
-            if (1 == Telnet.port) { Telnet.port = 23; }
-            Telnet.server = new WiFiServer(Telnet.port);
-            Telnet.server->begin(); // start TCP server
-            Telnet.server->setNoDelay(true);
-          }
+        }
+        if (Telnet.buffer) { 
+          if (1 == Telnet.port) { Telnet.port = 23; }
+          Telnet.server = new WiFiServer(Telnet.port);
+          Telnet.server->begin(); // start TCP server
+          Telnet.server->setNoDelay(true);
         }
       }
     }
