@@ -44,11 +44,11 @@ const char HTTP_FORM_TIMEPROPSTRT[] PROGMEM =
     "<form method='get' action='" WEB_HANDLE_TIMEPROP "'>";
 
 const char HTTP_FORM_TIMEPROP_ENABLE[] PROGMEM =
-    "<p><label><input id='tp_enable' type='checkbox' %s><b>" D_TIMEPROP_ENABLE "</b></label><br>";
+    "<p><label><input id='tpe' type='checkbox' %s><b>" D_TIMEPROP_ENABLE "</b></label><br>";
 
 const char HTTP_FORM_TIMEPROP_CYCLELENGTH[] PROGMEM =
     "<p><b>" D_TIMEPROP_CYCLELENGTH "</b> (15)<br>"
-    "<select id=\"tp_cycle_length\" name=\"tp_cycle_Length\">"
+    "<select id=\"tpl\" name=\"tpl\">"
     "<option %s value=\"0\">5 " D_UNIT_MINUTE "</option>"
     "<option %s value=\"1\">10 " D_UNIT_MINUTE " </option>"
     "<option %s value=\"2\">15 " D_UNIT_MINUTE " </option>"
@@ -58,7 +58,7 @@ const char HTTP_FORM_TIMEPROP_CYCLELENGTH[] PROGMEM =
 
 const char HTTP_FORM_TIMEPROP_COUNT[] PROGMEM =
     "<p><b>" D_TIMEPROP_COUNT "</b> (5)<br>"
-    "<select id=\"tp_count\" name=\"tp_count\">"
+    "<select id=\"tpc\" name=\"tpc\">"
     "<option %s value=\"1\">1</option>"
     "<option %s value=\"2\">2</option>"
     "<option %s value=\"3\">3</option>"
@@ -72,15 +72,15 @@ const char HTTP_FORM_TIMEPROP_COUNT[] PROGMEM =
 
 const char HTTP_FORM_TIMEPROP_LOADTYPE[] PROGMEM =
     "<p><b>" D_TIMEPROP_LOADTYPE "</b> (" D_TIMEPROP_LOADTYPE_DISTRIBUTION ")<br>"
-    "<select id=\"tp_load_type\" name=\"tp_load_type\">"
+    "<select id=\"tpt\" name=\"tpt\">"
     "<option %s value=\"0\">" D_TIMEPROP_LOADTYPE_DISTRIBUTION "</option>"
     "<option %s value=\"1\">" D_TIMEPROP_LOADTYPE_COLLECTION " </option>"
     "</select>"
     "</p>";
 
 const char HTTP_FORM_TIMEPROP_FALLBACK[] PROGMEM =
-    "<p><b>" D_TIMEPROP_FALLBACK_AFTER "</b> (0) " D_UNIT_HOUR "<br><input id='tp_fallback_after' placeholder='0' value='%d'></p>"
-    "<p><b>" D_TIMEPROP_FALLBACK_VALUE "</b> (0) (0-100)<br><input id='tp_fallback_value' placeholder='0' value='%d'></p>";
+    "<p><b>" D_TIMEPROP_FALLBACK_AFTER "</b> (0) " D_UNIT_HOUR "<br><input id='tpf' placeholder='0' value='%d'></p>"
+    "<p><b>" D_TIMEPROP_FALLBACK_VALUE "</b> (0) (0-100)<br><input id='tpv' placeholder='0' value='%d'></p>";
 
 void HandleTimepropConfiguration(void)
 {
@@ -134,7 +134,7 @@ void HandleTimepropConfiguration(void)
 void TimePropSaveSettings(void)
 {
   String cmnd = F(D_CMND_BACKLOG "0 ");
-  if (Webserver->hasArg("tp_enable"))
+  if (Webserver->hasArg("tpe"))
   {
     cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_ENABLE), PSTR("1"), PSTR("1"));
   }
@@ -142,11 +142,11 @@ void TimePropSaveSettings(void)
   {
     cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_ENABLE), PSTR("0"), PSTR("0"));
   }
-  cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_CYCLE_LENGTH), PSTR("tp_cycle_length"), PSTR("2"));
-  cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_COUNT), PSTR("tp_count"), PSTR("5"));
-  cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_LOAD_TYPE), PSTR("tp_load_type"), PSTR("0"));
-  cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_FALLBACK_AFTER), PSTR("tp_fallback_after"), PSTR("0"));
-  cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_FALLBACK_VALUE), PSTR("tp_fallback_value"), PSTR("0"));
+  cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_CYCLE_LENGTH), PSTR("tpl"), PSTR("2"));
+  cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_COUNT), PSTR("tpc"), PSTR("5"));
+  cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_LOAD_TYPE), PSTR("tpt"), PSTR("0"));
+  cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_FALLBACK_AFTER), PSTR("tpf"), PSTR("0"));
+  cmnd += AddWebCommand(PSTR(D_CMND_TIMEPROP_FALLBACK_VALUE), PSTR("tpv"), PSTR("0"));
   ExecuteWebCommand((char *)cmnd.c_str());
 }
 
