@@ -2784,6 +2784,7 @@ end
 
 # main class controller, meant to be a singleton and the only externally used class
 class HASPmota
+  var started                           # (bool) is HASPmota already started?
   var dark                              # (bool) use dark theme?
   var hres, vres                        # (int) resolution
   var scr                               # (lv_obj) default LVGL screen
@@ -2865,6 +2866,8 @@ class HASPmota
   # implicitly loads `pages.jsonl` from file-system // TODO allow to specicify file name
   #====================================================================
   def start(dark, templ_name)
+    if (self.started)      return    end
+
     import path
     if templ_name == nil   templ_name = self.def_templ_name end
     if !path.exists(templ_name)
@@ -2896,6 +2899,7 @@ class HASPmota
     self.lvh_pages = {}
     # load from JSONL
     self._load(templ_name)
+    self.started = true
   end
 
   #################################################################################
