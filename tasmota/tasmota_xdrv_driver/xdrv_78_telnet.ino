@@ -24,7 +24,7 @@
  * To start telnet at restart add a rule like
  *  on system#boot do backlog telnetcolor 33,36,32; telnet 1 endon
  * 
- * Supported color codes:
+ * Supported ANSI Escape Color codes:
  *  Black   30
  *  Red     31
  *  Green   32
@@ -39,17 +39,17 @@
 #define XDRV_78                78
 
 #ifndef TELNET_BUF_SIZE
-#define TELNET_BUF_SIZE        256                 // Size of input buffer
+#define TELNET_BUF_SIZE        256                   // Size of input buffer
 #endif
 
 #ifndef TELNET_COL_PROMPT
-#define TELNET_COL_PROMPT      33                  // Yellow - ANSI color escape code
+#define TELNET_COL_PROMPT      33                    // Yellow - ANSI color escape code
 #endif
 #ifndef TELNET_COL_RESPONSE
-#define TELNET_COL_RESPONSE    36                  // Cyan - ANSI color escape code
+#define TELNET_COL_RESPONSE    36                    // Cyan - ANSI color escape code
 #endif
 #ifndef TELNET_COL_LOGGING
-#define TELNET_COL_LOGGING     32                  // Green - ANSI color escape code
+#define TELNET_COL_LOGGING     32                    // Green - ANSI color escape code
 #endif
 
 struct {
@@ -59,8 +59,10 @@ struct {
   char       *buffer = nullptr;
   uint16_t    port;
   uint16_t    buffer_size;
+  uint16_t    in_byte_counter;
   uint8_t     prompt;
   uint8_t     color[3];
+  bool        overrun;
   bool        ip_filter_enabled;
 } Telnet;
 
@@ -72,12 +74,12 @@ void TelnetPrint(char *data) {
     if (client) { 
       if (1 == Telnet.prompt) {
         client.write("\r\n");
-        Telnet.prompt = 3;                         // Do not print linefeed for any data
+        Telnet.prompt = 3;                           // Do not print linefeed for any data
       }
       if (Telnet.prompt > 1) {
         client.printf("\x1b[%dm", Telnet.color[Telnet.prompt -1]);
       }
-      client.print(data);                          // This does not resolve "DVES_%06X"
+      client.print(data);                            // This does not resolve "DVES_%06X"
       if (Telnet.prompt > 1) {
         client.printf("\x1b[0m");
       }
@@ -94,7 +96,7 @@ void TelnetLoop(void) {
 
     AddLog(LOG_LEVEL_INFO, PSTR("TLN: Connection from %s"), new_client.remoteIP().toString().c_str());
 
-    if (Telnet.ip_filter_enabled) {                // Check for IP filtering if it's enabled
+    if (Telnet.ip_filter_enabled) {                  // Check for IP filtering if it's enabled
       if (Telnet.ip_filter != new_client.remoteIP()) {
         AddLog(LOG_LEVEL_INFO, PSTR("TLN: Rejected due to filtering"));
         new_client.stop();
@@ -111,7 +113,7 @@ void TelnetLoop(void) {
     if (client) {
       client.printf("Tasmota %s %s (%s) %s\r\n\n", TasmotaGlobal.hostname, TasmotaGlobal.version, GetBuildDateAndTime().c_str(), GetDeviceHardware().c_str());
       client.printf("\x1b[%dm", Telnet.color[2]);
-      uint32_t index = 1;                          // Dump start of log buffer for restart messages
+      uint32_t index = 1;                            // Dump start of log buffer for restart messages
       char* line;
       size_t len;
       while (GetLog(TasmotaGlobal.seriallog_level, &index, &line, &len)) {
@@ -124,61 +126,55 @@ void TelnetLoop(void) {
     }
   }
 
-  if (0 == Telnet.prompt) {
-    WiFiClient &client = Telnet.client;
-    if (client) {
+  WiFiClient &client = Telnet.client;
+  if (client) {
+    if (0 == Telnet.prompt) {
       client.printf("\x1b[%dm%s:#\x1b[0m ", Telnet.color[0], TasmotaGlobal.hostname);  // \x1b[33m = Yellow, \x1b[0m = end color
-      Telnet.prompt = 1;                           // Print single linefeed for non-requested data
+      Telnet.prompt = 1;                             // Print single linefeed for non-requested data
+      while (client.available()) { client.read(); }  // Flush input
+      return;
     }
-  }
 
-  bool busy;
-  uint32_t buf_len = 0;
-  do {
-    busy = false;                                  // Exit loop if no data was transferred
-    bool overrun = false;
-    WiFiClient &client = Telnet.client;
-    while (client && (client.available())) {
-      uint8_t c = client.read();
-      if (c >= 0) {
-        busy = true;
-        if (isprint(c)) {                          // Any char between 32 and 127
-          if (buf_len < Telnet.buffer_size -1) {   // Add char to string if it still fits
-            Telnet.buffer[buf_len++] = c;
-          } else {
-            overrun = true;                        // Signal overrun but continue reading input to flush until '\n' (EOL)
-          }
-        }
-        else if (c == '\n') {
-          Telnet.buffer[buf_len] = 0;              // Telnet data completed
-          TasmotaGlobal.seriallog_level = (Settings->seriallog_level < LOG_LEVEL_INFO) ? (uint8_t)LOG_LEVEL_INFO : Settings->seriallog_level;
-          Telnet.prompt = 2;                       // Do not print linefeed for requested data
-          if (overrun) {
-            AddLog(LOG_LEVEL_INFO, PSTR("TLN: buffer overrun"));
-          } else {
-            AddLog(LOG_LEVEL_INFO, PSTR("TLN: %s"), Telnet.buffer);
-            ExecuteCommand(Telnet.buffer, SRC_TELNET);
-          }
-          Telnet.prompt = 0;                       // Print prompt
-          client.flush();
-          return;
+    while (client.available()) {
+      yield();
+      uint8_t in_byte = client.read();
+      if (isprint(in_byte)) {                        // Any char between 32 and 127
+        if (Telnet.in_byte_counter < Telnet.buffer_size -1) {  // Add char to string if it still fits
+          Telnet.buffer[Telnet.in_byte_counter++] = in_byte;
+        } else {
+          Telnet.overrun = true;                     // Signal overrun but continue reading input to flush until '\n' (EOL)
         }
       }
+      else if (in_byte == '\n') {
+        Telnet.buffer[Telnet.in_byte_counter] = 0;   // Telnet data completed
+        TasmotaGlobal.seriallog_level = (Settings->seriallog_level < LOG_LEVEL_INFO) ? (uint8_t)LOG_LEVEL_INFO : Settings->seriallog_level;
+        client.printf("\r");                         // Move cursor to begin of line (needed for non-buffered input)
+        Telnet.prompt = 2;                           // Do not print linefeed for requested data
+        if (Telnet.overrun) {
+          AddLog(LOG_LEVEL_INFO, PSTR("TLN: buffer overrun"));
+        } else {
+          AddLog(LOG_LEVEL_INFO, PSTR("TLN: %s"), Telnet.buffer);
+          ExecuteCommand(Telnet.buffer, SRC_TELNET);
+        }
+        Telnet.in_byte_counter = 0;
+        Telnet.overrun = false;
+        Telnet.prompt = 0;                           // Print prompt
+        return;
+      }
     }
-    yield();                                       // Avoid WDT if heavy traffic
-  } while (busy);
+  }
 }
 
 void TelnetStop(void) {
-  Telnet.server->stop();
-  delete Telnet.server;
-  Telnet.server = nullptr;
-
+  if (Telnet.server) {
+    Telnet.server->stop();
+    delete Telnet.server;
+    Telnet.server = nullptr;
+  }
   WiFiClient &client = Telnet.client;
   if (client) {
     client.stop();
   }
-
   free(Telnet.buffer);
   Telnet.buffer = nullptr;
 }
@@ -215,7 +211,7 @@ void CmndTelnet(void) {
         Telnet.ip_filter.fromString(ArgV(sub_string, 2));
         Telnet.ip_filter_enabled = true;
       } else {
-        Telnet.ip_filter_enabled = false;          // Disable whitelist if previously set
+        Telnet.ip_filter_enabled = false;            // Disable whitelist if previously set
       }
 
       if (Telnet.server) {
@@ -228,7 +224,7 @@ void CmndTelnet(void) {
         if (Telnet.buffer) { 
           if (1 == Telnet.port) { Telnet.port = 23; }
           Telnet.server = new WiFiServer(Telnet.port);
-          Telnet.server->begin(); // start TCP server
+          Telnet.server->begin();                    // Start TCP server
           Telnet.server->setNoDelay(true);
         }
       }
@@ -248,10 +244,10 @@ void CmndTelnetBuffer(void) {
     uint16_t bsize = Telnet.buffer_size;
     Telnet.buffer_size = XdrvMailbox.payload;
     if (XdrvMailbox.payload < MIN_INPUT_BUFFER_SIZE) {
-      Telnet.buffer_size = MIN_INPUT_BUFFER_SIZE;  // 256 / 256
+      Telnet.buffer_size = MIN_INPUT_BUFFER_SIZE;    // 256 / 256
     }
     else if (XdrvMailbox.payload > INPUT_BUFFER_SIZE) {
-      Telnet.buffer_size = INPUT_BUFFER_SIZE;      // 800
+      Telnet.buffer_size = INPUT_BUFFER_SIZE;        // 800
     }
 
     if (Telnet.buffer && (bsize != Telnet.buffer_size)) {
