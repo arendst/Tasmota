@@ -2655,17 +2655,10 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
 
   if ((loglevel <= TasmotaGlobal.seriallog_level) &&
       (TasmotaGlobal.masterlog_level <= TasmotaGlobal.seriallog_level)) {
-    char* data = ext_snprintf_malloc_P("%s%s%s%s\r\n", mxtime, log_data, log_data_payload, log_data_retained);
-    if (data) { 
-      TasConsole.print(data);
+    TasConsole.printf("%s%s%s%s\r\n", mxtime, log_data, log_data_payload, log_data_retained);
 #ifdef USE_SERIAL_BRIDGE
-      SerialBridgePrint(data);
+    SerialBridgePrintf("%s%s%s%s\r\n", mxtime, log_data, log_data_payload, log_data_retained);
 #endif  // USE_SERIAL_BRIDGE
-#ifdef USE_TELNET
-      TelnetPrint(data);
-#endif  // USE_TELNET
-      free(data);
-    }
   }
 
   if (!TasmotaGlobal.log_buffer) { return; }  // Leave now if there is no buffer available
