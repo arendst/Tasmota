@@ -1089,8 +1089,11 @@ extern "C" {
     if (len+3 > LOGSZ) { strcat(log_data, "..."); }  // Actual data is more
     TasConsole.printf(log_data);
 #ifdef USE_SERIAL_BRIDGE
-    SerialBridgePrintf(log_data);
+    SerialBridgeWrite(log_data, strlen(log_data));
 #endif  // USE_SERIAL_BRIDGE
+#ifdef USE_TELNET
+    TelnetWrite(log_data, strlen(log_data));
+#endif  // USE_TELNET
   }
 
   void berry_log_C(const char * berry_buf, ...) {

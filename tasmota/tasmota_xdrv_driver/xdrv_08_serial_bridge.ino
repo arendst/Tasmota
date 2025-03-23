@@ -80,6 +80,7 @@ struct {
   uint32_t polling_window;
   int      in_byte_counter = 0;
   float    temperature;
+  uint8_t  log_index;
   bool     raw = false;
 } SBridge;
 
@@ -99,31 +100,51 @@ void SetSSerialConfig(uint32_t serial_config) {
   }
 }
 
-void SerialBridgePrintf(PGM_P formatP, ...) {
+void SerialBridgeWrite(char *line, uint32_t len) {
 #ifdef USE_SERIAL_BRIDGE_TEE
   if ((SB_TEE == Settings->sserial_mode) && serial_bridge_buffer) {
-    va_list arg;
-    va_start(arg, formatP);
-    char* data = ext_vsnprintf_malloc_P(formatP, arg);
-    va_end(arg);
-    if (data == nullptr) { return; }
-
-//    SerialBridgeSerial->printf(data);  // This resolves "MqttClientMask":"DVES_%06X" into "DVES_000002"
-    SerialBridgeSerial->print(data);  // This does not resolve "DVES_%06X"
-    free(data);
+    if (0 == SBridge.log_index) {
+//      SerialBridgeSerial->write("\r\n");
+      SerialBridgeGetLog();
+    } else {
+      SerialBridgeSerial->write(line, len);                                      // This does not resolve "DVES_%06X"
+      SerialBridgeSerial->write("\r\n");
+    }
   }
 #endif  // USE_SERIAL_BRIDGE_TEE
 }
 
+#ifdef USE_SERIAL_BRIDGE_TEE
+bool SerialBridgeGetLog(void) {
+  bool any_line = false;
+  if (SB_TEE == Settings->sserial_mode) {
+    uint32_t index = SBridge.log_index;                                          // Dump log buffer
+    char* line;
+    size_t len;
+    while (GetLog(TasmotaGlobal.seriallog_level, &index, &line, &len)) {
+      any_line = true;
+      SBridge.log_index = index;
+      SerialBridgeWrite(line, len -1);                                           // This does not resolve "DVES_%06X"
+    }
+  }
+  return any_line;
+}
+#endif  // USE_SERIAL_BRIDGE_TEE
+
 /********************************************************************************************/
 
-void SerialBridgeInput(void) {
+void SerialBridgeLoop(void) {
+/*
+#ifdef USE_SERIAL_BRIDGE_TEE
+  if (SerialBridgeGetLog()) { return; }
+#endif  // USE_SERIAL_BRIDGE_TEE
+*/
   while (SerialBridgeSerial->available()) {
     yield();
     uint8_t serial_in_byte = SerialBridgeSerial->read();
 
 #ifdef USE_SERIAL_BRIDGE_TEE
-    if (SB_TEE == Settings->sserial_mode) {                                   // CMND_SSERIALSEND9 - Enable logging tee to serialbridge
+    if (SB_TEE == Settings->sserial_mode) {                                      // CMND_SSERIALSEND9 - Enable logging tee to serialbridge
       static bool serial_bridge_overrun = false;
 
       if (isprint(serial_in_byte)) {                                             // Any char between 32 and 127
@@ -274,7 +295,7 @@ void SerialBridgeInit(void) {
       AddLog(LOG_LEVEL_DEBUG, PSTR("SBR: Serial UART%d"), SerialBridgeSerial->getUart());
 #endif
       SerialBridgeSerial->flush();
-      SerialBridgePrintf("\r\n");
+//      SerialBridgeWrite((char*)"", 0);
     }
   }
 }
@@ -456,7 +477,7 @@ bool Xdrv08(uint32_t function) {
     switch (function) {
       case FUNC_LOOP:
       case FUNC_SLEEP_LOOP:
-        SerialBridgeInput();
+        SerialBridgeLoop();
         break;
       case FUNC_JSON_APPEND:
         SerialBridgeShow(1);
