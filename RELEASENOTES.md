@@ -128,6 +128,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `re.dump()` (#23162)[#23162](https://github.com/arendst/Tasmota/issues/23162)
 - Matter prepare for ICD cluster [#23158](https://github.com/arendst/Tasmota/issues/23158)
 - LVGL experimental mirroring of display on Web UI [#23041](https://github.com/arendst/Tasmota/issues/23041)
+- HASPmota autostart when `pages.jsonl` exists [#23181](https://github.com/arendst/Tasmota/issues/23181)
 
 ### Breaking Changed
 - Berry remove `Leds.create_matrix` from the standard library waiting for reimplementation [#23114](https://github.com/arendst/Tasmota/issues/23114)

@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 - Matter prepare for ICD cluster (#23158)
 - Berry `re.dump()` (#23162)
 - Telnet server using command `Telnet <0|1|port>[,<IP filter>]`
-- HASPmota autostart when `pages.jsonl` exists
+- HASPmota autostart when `pages.jsonl` exists (#23181)
 
 ### Breaking Changed
 - Berry remove `Leds.create_matrix` from the standard library waiting for reimplementation (#23114)
