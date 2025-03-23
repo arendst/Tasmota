@@ -32,6 +32,8 @@ uint16_t *TimepropSecondsLeft;
 uint16_t cycle_position = 0;
 uint16_t cycle_length_seconds = 0;
 
+uint32_t seconds_since_set = 0;
+
 /*********************************************************************************************\
  * WebUI
 \*********************************************************************************************/
@@ -120,7 +122,7 @@ void HandleTimepropConfiguration(void)
                   Timeprop.count == 6 ? PSTR("selected=\"\"") : "",
                   Timeprop.count == 7 ? PSTR("selected=\"\"") : "",
                   Timeprop.count == 8 ? PSTR("selected=\"\"") : "");
-                  // TODO: MAX_RELAYS
+  // TODO: MAX_RELAYS
   WSContentSend_P(HTTP_FORM_TIMEPROP_LOADTYPE,
                   !Timeprop.load_type ? PSTR("selected=\"\"") : "",
                   Timeprop.load_type ? PSTR("selected=\"\"") : "");
@@ -219,8 +221,6 @@ void AllocateTimepropValues(void)
         // load distribution
         TimepropStartTimes[i] = (cycle_length_seconds / Timeprop.count) * i;
       }
-  
-  
     }
   }
 }
@@ -249,6 +249,8 @@ void CmndTimepropSet(void)
     {
       return;
     }
+
+    seconds_since_set = 0; // reset fallback counter
 
     TimepropValues[XdrvMailbox.index - 1] = incoming_value;
   }
@@ -350,6 +352,22 @@ void TimepropEverySecond(void)
     return;
   }
 
+  if (Timeprop.fallback_value > 0)
+  {
+    if (seconds_since_set == Timeprop.fallback_time * 60 * 60)
+    {
+      AddLog(LOG_LEVEL_INFO, PSTR("TPR: fallback reached %d"), Timeprop.fallback_value);
+      for (uint8_t i = 0; i < Timeprop.count; i++)
+      {
+        TimepropValues[i] = Timeprop.fallback_value;
+      }
+      seconds_since_set++; // increase so that we do it only once
+    }
+    else
+    {
+      seconds_since_set++; // increase fallback check
+    }
+  }
 
   for (uint8_t i = 0; i < Timeprop.count; i++)
   {
