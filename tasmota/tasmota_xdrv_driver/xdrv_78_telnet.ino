@@ -91,7 +91,7 @@ void TelnetWrite(char *line, uint32_t len) {
     Telnet.client.printf("\x1b[%dm", diffcolor);
     Telnet.client.write(line, time_len);
     Telnet.client.printf("\x1b[%dm", textcolor);
-    Telnet.client.write(time_end, len - time_len -1);
+    Telnet.client.write(time_end, len - time_len);
     Telnet.client.write("\x1b[0m\r\n");              // Restore colors
   }
 }
