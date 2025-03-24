@@ -21,10 +21,12 @@
  *  TelnetColor           - Show prompt, response and log colors
  *  TelnetColor 0         - Disable color codes from output
  *  TelnetColor 1         - Set colors to defined colors
+ *  TelnetColor 2         - Enable last set colors
  *  TelnetColor 33,32,37  - Set prompt (yellow), response (green) and log (white) colors
  *
- * To start telnet at restart add a rule like
+ * To start telnet at restart add one of below rules like
  *  on system#boot do backlog telnetcolor 33,32,36; telnet 1 endon
+ *  on system#boot do backlog telnetcolor 0; telnet 1 endon
  * 
  * Supported ANSI Escape Color codes:
  *          Normal   Bright
@@ -67,12 +69,13 @@ struct {
   uint8_t     prompt;
   uint8_t     color[3];
   bool        ip_filter_enabled;
+  bool        color_disable;
 } Telnet;
 
 /********************************************************************************************/
 
 void TelnetWriteColor(uint32_t color) {
-  if (color != 39) {                                 // No default color so use ANSI color escape codes
+  if (!Telnet.color_disable) {
     Telnet.client.printf("\x1b[%dm", color);
   }
 }
@@ -130,7 +133,7 @@ void TelnetLoop(void) {
       uint32_t index = 1;
       char* line;
       size_t len;
-      while (GetLog(TasmotaGlobal.seriallog_level, &index, &line, &len)) {
+      while (GetLog(Settings->seriallog_level, &index, &line, &len)) {
         TelnetWrite(line, len -1);
       }
       Telnet.prompt = 0;
@@ -156,7 +159,7 @@ void TelnetLoop(void) {
     char* line;
     size_t len;
     bool any_line = false;
-    while (GetLog(TasmotaGlobal.seriallog_level, &index, &line, &len)) {
+    while (GetLog(Settings->seriallog_level, &index, &line, &len)) {
       any_line = true;
       TelnetWrite(line, len -1);
     }
@@ -305,15 +308,15 @@ void CmndTelnetColor(void) {
   // TelnetColor          - Show prompt, response and log colors
   // TelnetColor 0        - Disable color codes from output
   // TelnetColor 1        - Set colors to defined colors
+  // TelnetColor 2        - Enable last set colors
   // TelnetColor 33,32,37 - Set prompt (yellow), response (green) and log (white) colors
   if (XdrvMailbox.data_len > 0) {
     uint32_t colors[sizeof(Telnet.color)];
     uint32_t count = ParseParameters(sizeof(Telnet.color), colors);
+    Telnet.color_disable = false;
     if (1 == count) {
       if (0 == colors[0]) {                          // TelnetColor 0
-        Telnet.color[0] = 39;
-        Telnet.color[1] = 39;
-        Telnet.color[2] = 39;
+        Telnet.color_disable = true;
       }
       else if (1 == colors[0]) {                     // TelnetColor 1
         Telnet.color[0] = TELNET_COL_PROMPT;
@@ -327,8 +330,12 @@ void CmndTelnetColor(void) {
       }
     }
   }
-  Response_P(PSTR("{\"%s\":[%d,%d,%d]}"),
-    XdrvMailbox.command, Telnet.color[0], Telnet.color[1], Telnet.color[2]);
+  if (Telnet.color_disable) {
+    ResponseCmndStateText(!Telnet.color_disable);
+  } else {
+    Response_P(PSTR("{\"%s\":[%d,%d,%d]}"),
+      XdrvMailbox.command, Telnet.color[0], Telnet.color[1], Telnet.color[2]);
+  }
 }
 
 /*********************************************************************************************\
