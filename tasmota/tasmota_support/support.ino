@@ -2608,7 +2608,7 @@ bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* l
 }
 
 uint32_t HighestLogLevel(void) {
-  uint32_t highest_loglevel = TasmotaGlobal.seriallog_level;
+  uint32_t highest_loglevel = Settings->seriallog_level;
   if (Settings->mqttlog_level > highest_loglevel) { highest_loglevel = Settings->mqttlog_level; }
 #ifdef USE_WEBSERVER
   if (Settings->weblog_level > highest_loglevel) { highest_loglevel = Settings->weblog_level; }
