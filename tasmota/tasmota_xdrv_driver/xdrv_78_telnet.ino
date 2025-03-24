@@ -19,7 +19,7 @@
  *  TelnetBuffer          - Show current input buffer size (default 256)
  *  TelnetBuffer 300      - Change input buffer size to 300 characters
  *  TelnetColor           - Show prompt, response and log colors
- *  TelnetColor 0         - Set all colors to default
+ *  TelnetColor 0         - Disable color codes from output
  *  TelnetColor 1         - Set colors to defined colors
  *  TelnetColor 33,32,37  - Set prompt (yellow), response (green) and log (white) colors
  *
@@ -71,11 +71,17 @@ struct {
 
 /********************************************************************************************/
 
+void TelnetWriteColor(uint32_t color) {
+  if (color != 39) {                                 // No default color so use ANSI color escape codes
+    Telnet.client.printf("\x1b[%dm", color);
+  }
+}
+
 void TelnetWrite(char *line, uint32_t len) {
   if (Telnet.client) {
     if (3 == Telnet.prompt) {                        // Print linefeed for non-requested data
       Telnet.prompt = 2;                             // Do not print linefeed for any data and use log color
-      Telnet.client.write("\r\n");
+      Telnet.client.println();
     }
     // line = 14:49:36.123-017 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}
     uint32_t textcolor = Telnet.color[Telnet.prompt];
@@ -88,11 +94,12 @@ void TelnetWrite(char *line, uint32_t len) {
     }
     char* time_end = (char*)memchr(line, ' ', len);  // Find first word (usually 14:49:36.123-017)
     uint32_t time_len = time_end - line;
-    Telnet.client.printf("\x1b[%dm", diffcolor);
+    TelnetWriteColor(diffcolor);
     Telnet.client.write(line, time_len);
-    Telnet.client.printf("\x1b[%dm", textcolor);
+    TelnetWriteColor(textcolor);
     Telnet.client.write(time_end, len - time_len);
-    Telnet.client.write("\x1b[0m\r\n");              // Restore colors
+    TelnetWriteColor(0);
+    Telnet.client.println();
   }
 }
 
@@ -137,7 +144,9 @@ void TelnetLoop(void) {
     // Output latest log buffer data
 #ifdef ESP32
     if (0 == Telnet.prompt) {
-      Telnet.client.printf("\x1b[%dm%s:#\x1b[0m ", Telnet.color[0], TasmotaGlobal.hostname);  // \x1b[33m = Yellow, \x1b[0m = end color
+      TelnetWriteColor(Telnet.color[0]);
+      Telnet.client.printf("%s:# ", TasmotaGlobal.hostname);
+      TelnetWriteColor(0);
       Telnet.prompt = 3;                             // Print linefeed for non-requested data
       while (Telnet.client.available()) { Telnet.client.read(); }  // Flush input
       return;
@@ -153,7 +162,9 @@ void TelnetLoop(void) {
     }
     if (any_line) {
       if ((0 == Telnet.log_index) || (Telnet.prompt != 2)) {
-        Telnet.client.printf("\x1b[%dm%s:#\x1b[0m ", Telnet.color[0], TasmotaGlobal.hostname);  // \x1b[33m = Yellow, \x1b[0m = end color
+        TelnetWriteColor(Telnet.color[0]);
+        Telnet.client.printf("%s:# ", TasmotaGlobal.hostname);
+        TelnetWriteColor(0);
         Telnet.prompt = 3;                           // Print linefeed for non-requested data
         while (Telnet.client.available()) { Telnet.client.read(); }  // Flush input
       }
@@ -292,7 +303,7 @@ void CmndTelnetBuffer(void) {
 
 void CmndTelnetColor(void) {
   // TelnetColor          - Show prompt, response and log colors
-  // TelnetColor 0        - Set all colors to default
+  // TelnetColor 0        - Disable color codes from output
   // TelnetColor 1        - Set colors to defined colors
   // TelnetColor 33,32,37 - Set prompt (yellow), response (green) and log (white) colors
   if (XdrvMailbox.data_len > 0) {
