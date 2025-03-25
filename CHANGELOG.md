@@ -3,7 +3,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.5.0.2] 
+## [14.5.0.3] 
+### Added
+
+### Breaking Changed
+
+### Changed
+- Output of commands `GPIO` and `GPIOs` swapped
+
+### Fixed
+
+### Removed
+
+
+
+## [14.5.0.2] 20250325
 ### Added
 - Berry load `.tapp` files in `/.extensions/` then in `/` (#23113)
 - Support Vango Technologies V924x ultralow power, single-phase, power measurement (#23127)
@@ -29,9 +43,6 @@ All notable changes to this project will be documented in this file.
 - ESP32-C3 WiFi sleep (#23096)
 - ESP32 intermittent exception on WiFi AP cannot be reached (#23115)
 - ESP32 receive incomplete serial data over 128 bytes (#23156)
-
-### Removed
-
 
 ## [14.5.0.1] 20250302
 ### Added
@@ -1623,7 +1634,6 @@ All notable changes to this project will be documented in this file.
 - Serial Bridge default internal serial rx buffer size from 64 to 256 (#17120)
 - Accept filename extensions to GUI file upload input fields (#16875)
 - AC PWM dimmer lineair power distribution (#17177)
-- Output of commands `GPIO` and `GPIOs` swapped
 
 ### Fixed
 - ModbusBridge baudrates over 76500 baud (#17106)
