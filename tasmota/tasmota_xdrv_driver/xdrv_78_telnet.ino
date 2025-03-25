@@ -41,6 +41,8 @@
  *  Cyan      36       96
  *  White     37       97
  *  Default   39
+ *
+ * Terminate telnet session with command exit or quit
 \*********************************************************************************************/
 
 #define XDRV_78                78
@@ -68,6 +70,8 @@
 #ifndef TELNET_COL_LOGGING
 #define TELNET_COL_LOGGING     36                    // [TelnetColor] ANSI color escape code (default 36 - Cyan)
 #endif
+
+const char kTelnetExits[] PROGMEM = "exit|quit";
 
 struct {
   WiFiServer *server = nullptr;
@@ -205,8 +209,14 @@ void TelnetLoop(void) {
         if (Telnet.in_byte_counter >= Telnet.buffer_size) {
           AddLog(LOG_LEVEL_INFO, PSTR("TLN: buffer overrun"));
         } else {
-          AddLog(LOG_LEVEL_INFO, PSTR("TLN: %s"), Telnet.buffer);
-          ExecuteCommand(Telnet.buffer, SRC_TELNET);
+          char command[CMDSZ];
+          if (GetCommandCode(command, sizeof(command), Telnet.buffer, kTelnetExits) >= 0) {
+            AddLog(LOG_LEVEL_INFO, PSTR("TLN: Connection closed"));
+            Telnet.client.stop();
+          } else {
+            AddLog(LOG_LEVEL_INFO, PSTR("TLN: %s"), Telnet.buffer);
+            ExecuteCommand(Telnet.buffer, SRC_TELNET);
+          }
         }
         Telnet.in_byte_counter = 0;
 #ifdef ESP32
