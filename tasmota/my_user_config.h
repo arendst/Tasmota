@@ -486,7 +486,14 @@
   #define USE_KNX_WEB_MENU                       // Enable KNX WEB MENU (+8.3k code, +144 mem)
 
 // -- Telnet --------------------------------------
-//#define USE_TELNET                               // Add support for telnet (+1k6 code)
+//#define USE_TELNET                               // Add support for telnet (+1k9 code)
+//  #define TELNET_BUF_SIZE        256             // [TelnetBuffer] Size of input buffer (default 256)
+//  #define TELNET_START           1               // [Telnet] Start telnet on network connection (default 0 - No start)
+//  #define TELNET_PORT            23              // [Telnet] Telnet port (default 23)
+//  #define TELNET_COL_DISABLE     1               // [TelnetColor] Disable colors (default 0 - Enable colors)
+//  #define TELNET_COL_PROMPT      33              // [TelnetColor] ANSI color escape code (default 33 - Yellow)
+//  #define TELNET_COL_RESPONSE    32              // [TelnetColor] ANSI color escape code (default 32 - Green)
+//  #define TELNET_COL_LOGGING     36              // [TelnetColor] ANSI color escape code (default 36 - Cyan)
 
 // -- HTTP ----------------------------------------
 #define USE_WEBSERVER                            // Enable web server and Wi-Fi Manager (+66k code, +8k mem)

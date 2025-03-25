@@ -13,7 +13,7 @@
  * Supported commands:
  *  Telnet                - Show telnet server state
  *  Telnet 0              - Disable telnet server
- *  Telnet 1              - Enable telnet server on port 23
+ *  Telnet 1              - Enable telnet server on port TELNET_PORT
  *  Telnet 23             - Enable telnet server on port 23
  *  Telnet 1, 192.168.2.1 - Enable telnet server and only allow connection from 192.168.2.1
  *  TelnetBuffer          - Show current input buffer size (default 256)
@@ -24,9 +24,11 @@
  *  TelnetColor 2         - Enable last set colors
  *  TelnetColor 33,32,37  - Set prompt (yellow), response (green) and log (white) colors
  *
- * To start telnet at restart add one of below rules like
- *  on system#boot do backlog telnetcolor 33,32,36; telnet 1 endon
- *  on system#boot do backlog telnetcolor 0; telnet 1 endon
+ * To start telnet at restart:
+ *  Add one of below rules like
+ *   on system#boot do backlog telnetcolor 33,32,36; telnet 1 endon
+ *   on system#boot do backlog telnetcolor 0; telnet 1 endon
+ *  Enable compile option TELNET_START
  * 
  * Supported ANSI Escape Color codes:
  *          Normal   Bright
@@ -44,17 +46,27 @@
 #define XDRV_78                78
 
 #ifndef TELNET_BUF_SIZE
-#define TELNET_BUF_SIZE        256                   // Size of input buffer
+#define TELNET_BUF_SIZE        256                   // [TelnetBuffer] Size of input buffer (default 256)
 #endif
 
+#ifndef TELNET_START
+#define TELNET_START           0                     // [Telnet] Start telnet on network connection (default 0 - No start)
+#endif
+#ifndef TELNET_PORT
+#define TELNET_PORT            23                    // [Telnet] Telnet port (default 23)
+#endif
+
+#ifndef TELNET_COL_DISABLE
+#define TELNET_COL_DISABLE     0                     // [TelnetColor] Disable colors (default 0 - Enable colors)
+#endif
 #ifndef TELNET_COL_PROMPT
-#define TELNET_COL_PROMPT      33                    // Yellow - ANSI color escape code
+#define TELNET_COL_PROMPT      33                    // [TelnetColor] ANSI color escape code (default 33 - Yellow)
 #endif
 #ifndef TELNET_COL_RESPONSE
-#define TELNET_COL_RESPONSE    32                    // Green - ANSI color escape code
+#define TELNET_COL_RESPONSE    32                    // [TelnetColor] ANSI color escape code (default 32 - Green)
 #endif
 #ifndef TELNET_COL_LOGGING
-#define TELNET_COL_LOGGING     36                    // Cyan - ANSI color escape code
+#define TELNET_COL_LOGGING     36                    // [TelnetColor] ANSI color escape code (default 36 - Cyan)
 #endif
 
 struct {
@@ -221,11 +233,33 @@ void TelnetStop(void) {
   Telnet.buffer = nullptr;
 }
 
+void TelnetStart(void) {
+  if (Telnet.server) {
+    TelnetStop();
+  }
+  if (Telnet.port > 0) {
+    if (!Telnet.buffer) {
+      Telnet.buffer = (char*)malloc(Telnet.buffer_size);
+    }
+    if (Telnet.buffer) { 
+      if (1 == Telnet.port) { Telnet.port = TELNET_PORT; }
+      Telnet.server = new WiFiServer(Telnet.port);
+      Telnet.server->begin();                    // Start TCP server
+      Telnet.server->setNoDelay(true);
+      AddLog(LOG_LEVEL_INFO, PSTR("TLN: Started"));
+      return;
+    }
+  }
+  AddLog(LOG_LEVEL_INFO, PSTR("TLN: Stopped"));
+}
+
 void TelnetInit(void) {
   Telnet.buffer_size = TELNET_BUF_SIZE;
+  Telnet.color_disable = TELNET_COL_DISABLE;
   Telnet.color[0] = TELNET_COL_PROMPT;
   Telnet.color[1] = TELNET_COL_RESPONSE;
   Telnet.color[2] = TELNET_COL_LOGGING;
+  Telnet.port = (TELNET_START) ? TELNET_PORT : 0;
 }
 
 /*********************************************************************************************\
@@ -241,7 +275,7 @@ void (* const TelnetCommand[])(void) PROGMEM = {
 void CmndTelnet(void) {
   // Telnet                - Show telnet server state
   // Telnet 0              - Disable telnet server
-  // Telnet 1              - Enable telnet server on port 23
+  // Telnet 1              - Enable telnet server on port TELNET_PORT
   // Telnet 23             - Enable telnet server on port 23
   // Telnet 1, 192.168.2.1 - Enable telnet server and only allow connection from 192.168.2.1
   if (!TasmotaGlobal.global_state.network_down) {
@@ -256,20 +290,7 @@ void CmndTelnet(void) {
         Telnet.ip_filter_enabled = false;            // Disable whitelist if previously set
       }
 
-      if (Telnet.server) {
-        TelnetStop();
-      }
-      if (Telnet.port > 0) {
-        if (!Telnet.buffer) {
-          Telnet.buffer = (char*)malloc(Telnet.buffer_size);
-        }
-        if (Telnet.buffer) { 
-          if (1 == Telnet.port) { Telnet.port = 23; }
-          Telnet.server = new WiFiServer(Telnet.port);
-          Telnet.server->begin();                    // Start TCP server
-          Telnet.server->setNoDelay(true);
-        }
-      }
+      TelnetStart();
     }
     if (Telnet.server) {
       ResponseCmndChar_P(PSTR("Started"));
@@ -345,16 +366,25 @@ void CmndTelnetColor(void) {
 bool Xdrv78(uint32_t function) {
   bool result = false;
 
-  if (FUNC_INIT == function) {
-    TelnetInit();
+  switch (function) {
+    case FUNC_INIT:
+      TelnetInit();
+      break;
+    case FUNC_NETWORK_UP:
+      if (!Telnet.server && (Telnet.port > 0) && !TasmotaGlobal.restart_flag) {
+        TelnetStart();
+      }
+      break;
+    case FUNC_COMMAND:
+      result = DecodeCommand(kTelnetCommands, TelnetCommand);
+      break;
   }
-  else if (FUNC_COMMAND == function) {
-    result = DecodeCommand(kTelnetCommands, TelnetCommand);
-  } else if (Telnet.buffer) {
+  if (Telnet.buffer) {
     switch (function) {
       case FUNC_LOOP:
         TelnetLoop();
         break;
+      case FUNC_NETWORK_DOWN:
       case FUNC_SAVE_BEFORE_RESTART:
         TelnetStop();
         break;

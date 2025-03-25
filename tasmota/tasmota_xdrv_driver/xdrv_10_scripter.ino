@@ -14114,9 +14114,6 @@ bool Xdrv10(uint32_t function) {
       WebServer82Loop();
 #endif
       break;
-
-    case FUNC_NETWORK_UP:
-      break;
     
     case FUNC_ACTIVE:
       result = true;
