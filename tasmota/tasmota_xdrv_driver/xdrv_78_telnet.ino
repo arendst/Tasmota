@@ -129,11 +129,11 @@ void TelnetLoop(void) {
   if ((Telnet.server) && (Telnet.server->hasClient())) {
     WiFiClient new_client = Telnet.server->available();
 
-    AddLog(LOG_LEVEL_INFO, PSTR("TLN: Connection from %s"), new_client.remoteIP().toString().c_str());
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TELNET "Connection from %s"), new_client.remoteIP().toString().c_str());
 
     if (Telnet.ip_filter_enabled) {                  // Check for IP filtering if it's enabled
       if (Telnet.ip_filter != new_client.remoteIP()) {
-        AddLog(LOG_LEVEL_INFO, PSTR("TLN: Rejected due to filtering"));
+        AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TELNET "Rejected due to filtering"));
         new_client.stop();
       }
     }
@@ -143,7 +143,7 @@ void TelnetLoop(void) {
     }
     Telnet.client = new_client;
     if (Telnet.client) {
-      Telnet.client.printf("Tasmota %s %s (%s) %s\r\n", TasmotaGlobal.hostname, TasmotaGlobal.version, GetBuildDateAndTime().c_str(), GetDeviceHardware().c_str());
+      Telnet.client.printf("Tasmota %s %s (%s) %s\r\n", NetworkHostname(), TasmotaGlobal.version, GetBuildDateAndTime().c_str(), GetDeviceHardware().c_str());
       Telnet.prompt = 3;
 #ifdef ESP32
       uint32_t index = 1;
@@ -164,7 +164,7 @@ void TelnetLoop(void) {
 #ifdef ESP32
     if (0 == Telnet.prompt) {
       TelnetWriteColor(Telnet.color[0]);
-      Telnet.client.printf("%s:# ", TasmotaGlobal.hostname);
+      Telnet.client.printf("%s:# ", NetworkHostname());
       TelnetWriteColor(0);
       Telnet.prompt = 3;                             // Print linefeed for non-requested data
       while (Telnet.client.available()) { Telnet.client.read(); }  // Flush input
@@ -182,7 +182,7 @@ void TelnetLoop(void) {
     if (any_line) {
       if ((0 == Telnet.log_index) || (Telnet.prompt != 2)) {
         TelnetWriteColor(Telnet.color[0]);
-        Telnet.client.printf("%s:# ", TasmotaGlobal.hostname);
+        Telnet.client.printf("%s:# ", NetworkHostname());
         TelnetWriteColor(0);
         Telnet.prompt = 3;                           // Print linefeed for non-requested data
         while (Telnet.client.available()) { Telnet.client.read(); }  // Flush input
@@ -207,14 +207,14 @@ void TelnetLoop(void) {
         Telnet.client.write("\r");                   // Move cursor to begin of line (needed for non-buffered input)
         Telnet.prompt = 1;                           // Do not print linefeed for requested data and use response color
         if (Telnet.in_byte_counter >= Telnet.buffer_size) {
-          AddLog(LOG_LEVEL_INFO, PSTR("TLN: buffer overrun"));
+          AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TELNET "Buffer overrun"));
         } else {
           char command[CMDSZ];
           if (GetCommandCode(command, sizeof(command), Telnet.buffer, kTelnetExits) >= 0) {
-            AddLog(LOG_LEVEL_INFO, PSTR("TLN: Connection closed"));
+            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TELNET "Connection closed"));
             Telnet.client.stop();
           } else {
-            AddLog(LOG_LEVEL_INFO, PSTR("TLN: %s"), Telnet.buffer);
+            AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TELNET "%s"), Telnet.buffer);
             ExecuteCommand(Telnet.buffer, SRC_TELNET);
           }
         }
@@ -254,13 +254,13 @@ void TelnetStart(void) {
     if (Telnet.buffer) { 
       if (1 == Telnet.port) { Telnet.port = TELNET_PORT; }
       Telnet.server = new WiFiServer(Telnet.port);
-      Telnet.server->begin();                    // Start TCP server
+      Telnet.server->begin();                    // Start Telnet server
       Telnet.server->setNoDelay(true);
-      AddLog(LOG_LEVEL_INFO, PSTR("TLN: Started"));
+      AddLogServerActive(PSTR(D_LOG_TELNET "Telnet"));
       return;
     }
   }
-  AddLog(LOG_LEVEL_INFO, PSTR("TLN: Stopped"));
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TELNET "Stopped"));
 }
 
 void TelnetInit(void) {

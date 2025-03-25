@@ -677,8 +677,7 @@ void StartWebserver(int type) {
     Webserver->begin(); // Web server start
   }
   if (Web.state != type) {
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"),
-      NetworkHostname(), (Mdns.begun) ? PSTR(".local") : "", IPGetListeningAddressStr().c_str());
+    AddLogServerActive(PSTR(D_LOG_HTTP "Web"));
     TasmotaGlobal.rules_flag.http_init = 1;
     Web.state = type;
   }

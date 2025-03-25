@@ -1623,6 +1623,7 @@ All notable changes to this project will be documented in this file.
 - Serial Bridge default internal serial rx buffer size from 64 to 256 (#17120)
 - Accept filename extensions to GUI file upload input fields (#16875)
 - AC PWM dimmer lineair power distribution (#17177)
+- Output of commands `GPIO` and `GPIOs` swapped
 
 ### Fixed
 - ModbusBridge baudrates over 76500 baud (#17106)

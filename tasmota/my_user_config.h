@@ -486,7 +486,7 @@
   #define USE_KNX_WEB_MENU                       // Enable KNX WEB MENU (+8.3k code, +144 mem)
 
 // -- Telnet --------------------------------------
-//#define USE_TELNET                               // Add support for telnet (+1k9 code)
+//#define USE_TELNET                               // Add support for telnet (+2k code)
 //  #define TELNET_BUF_SIZE        256             // [TelnetBuffer] Size of input buffer (default 256)
 //  #define TELNET_START           1               // [Telnet] Start telnet on network connection (default 0 - No start)
 //  #define TELNET_PORT            23              // [Telnet] Telnet port (default 23)

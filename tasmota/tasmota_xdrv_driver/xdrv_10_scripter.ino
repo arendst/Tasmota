@@ -10823,7 +10823,7 @@ void ScriptServeFile82(void) {
       if (ufsp->exists(cp)) {
 #endif
         if (glob_script_mem.download82_busy == true) {
-          AddLog(LOG_LEVEL_INFO, PSTR("UFS: 82 Download is busy"));
+          AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UFS "82 Download is busy"));
           return;
         }
         glob_script_mem.download82_busy = true;
@@ -10927,7 +10927,7 @@ int32_t SendFile(char *fname) {
 #ifdef ESP32
 #ifdef USE_DLTASK
   if (glob_script_mem.script_download_busy == true) {
-    AddLog(LOG_LEVEL_INFO, PSTR("UFS: Download is busy"));
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UFS "Download is busy"));
     return -1;
   }
   glob_script_mem.script_download_busy = true;

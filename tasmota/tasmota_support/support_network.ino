@@ -125,3 +125,11 @@ String NetworkUniqueId(void) {
   unique_id.replace(":", "");  // Full 12 chars MAC address as ID
   return unique_id;
 }
+
+void AddLogServerActive(const char *server) {
+  AddLog(LOG_LEVEL_INFO, PSTR("%s server active on %s%s with IP address %s"),
+    server,
+    NetworkHostname(),
+    (Mdns.begun) ? PSTR(".local") : "",
+    IPGetListeningAddressStr().c_str());
+}
