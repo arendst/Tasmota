@@ -236,101 +236,81 @@ void Ld2402HandleConfigData(void) {
 
 void Ld2402Input(void) {
   uint32_t avail;
-  while (LD2402Serial->available()) {
+  while ((avail = LD2402Serial->available()) && avail) {
+    static uint32_t byte_counter = 0;
     static uint32_union header;
-    static uint32_union footer;
-    static uint32_t data_type = 0, byte_counter = 0;
-    if (!data_type) {
-      if (!byte_counter) {
-        avail = LD2402Serial->available();
-        if (avail < 4) {
-          DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Don't have enough for header."));
-          break;
-        }
-        for (uint32_t i = 3; i; i--) {
-          header.buffer_32<<=8;
-          header.buffer[LD2402.is_big*3] = LD2402Serial->read();
-        }
-        byte_counter = 4;
+    uint32_t data_type;
+    if (0 == byte_counter) {
+      while (LD2402Serial->available() < 4) {
+        yield();
       }
-  
-      avail = LD2402Serial->available();
-      header.buffer_32<<=8;
-      header.buffer[LD2402.is_big*3] = LD2402Serial->read();
-
-      // I will get out of this mess with either:
-      //  - Config/Engineering header match, set data_type (most likely/quickest further processing)
-      //  - Known text match, process line, clear byte count for next line (less likely but no further processing)
-      //  - No header matches, continue, shift in the next character if/when available
-      data_type = (LD2402_engineering_header == header.buffer_32) ? 2 : 0;
-      if (!data_type) {
-        data_type = (LD2402_config_header == header.buffer_32) ? 3 : 0;
-        if (!data_type) {
-          if (LD2402_target_Error != header.buffer_32) {
-            if (LD2402_target_OFF != header.buffer_32) {
-              if (LD2402_target_distance != header.buffer_32) {
-                continue;
-              } else {
-                // process distance line
-                byte_counter = LD2402Serial->readBytesUntil(0x0A, LD2402.buffer, LD2402_BUFFER_SIZE);
-                LD2402.buffer[byte_counter] = 0;
-                DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Dist%s"), LD2402.buffer);
-                // ance:105\r\n
-                LD2402.detect_distance = atoi((char*) LD2402.buffer + 5);
-                LD2402.person = 2;
-              }
-            } else {
-              // process OFF line
-              LD2402.detect_distance = 0;
-              LD2402.person = 0;
-              LD2402Serial->read();
-            }
-            LD2402.report_type = 2;
-          } else {
-            // preocess Error line
-            byte_counter = LD2402Serial->readBytesUntil(0x0A, LD2402.buffer, LD2402_BUFFER_SIZE);
-            LD2402.buffer[byte_counter] = 0;
-            AddLog(LOG_LEVEL_INFO, PSTR(D_LD2402_LOG_PREFIX "Erro%s"), LD2402.buffer);
-            LD2402.report_type = 0;
-          }
-          byte_counter = 0;
-          break;
-        }
+      for (uint32_t i = 3; i; i--) {
+        header.buffer_32<<=8;
+        header.buffer[LD2402.is_big*3] = LD2402Serial->read();
       }
     }
+    header.buffer_32<<=8;
+    header.buffer[LD2402.is_big*3] = LD2402Serial->read();
+    byte_counter = 4;
 
-    static uint32_t length, got;
-    if (byte_counter < 6) {
-      avail = LD2402Serial->available();
-      if (avail < 2) {
-        DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Don't have enough for length."));
-        break;
-      }
-      length = LD2402Serial->read();
-      LD2402Serial->read();
-      got = 0;
-      if (length > LD2402_BUFFER_SIZE) {
-        data_type = 0;
+    // I will get out of this mess with either:
+    //  - Config/Engineering header match, set data_type (most likely/quickest further processing)
+    //  - Known text match, process line, clear byte count for next line (less likely but no further processing)
+    //  - No header matches, continue, shift in the next character if/when available
+    data_type = (LD2402_engineering_header == header.buffer_32) * 2;
+    if (!data_type) {
+      data_type = (LD2402_config_header == header.buffer_32) * 3;
+      if (!data_type) {
+        if (LD2402_target_Error != header.buffer_32) {
+          if (LD2402_target_OFF != header.buffer_32) {
+            if (LD2402_target_distance != header.buffer_32) {
+              if (LD2402_engineering_footer != header.buffer_32) {
+                continue;
+              }
+              DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Found engineering footer but have no header!"));
+            } else {
+              // process distance line
+              byte_counter = LD2402Serial->readBytesUntil(0x0A, LD2402.buffer, LD2402_BUFFER_SIZE);
+              LD2402.buffer[byte_counter] = 0;
+              DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Dist%s"), LD2402.buffer);
+              // ance:105\r\n
+              LD2402.detect_distance = atoi((char*) LD2402.buffer + 5);
+              LD2402.person = 2;
+            }
+          } else {
+            // process OFF line
+            LD2402.detect_distance = 0;
+            LD2402.person = 0;
+            LD2402Serial->read();
+          }
+          LD2402.report_type = 2;
+        } else {
+          // preocess Error line
+          byte_counter = LD2402Serial->readBytesUntil(0x0A, LD2402.buffer, LD2402_BUFFER_SIZE);
+          LD2402.buffer[byte_counter] = 0;
+          AddLog(LOG_LEVEL_INFO, PSTR(D_LD2402_LOG_PREFIX "Erro%s"), LD2402.buffer);
+          LD2402.report_type = 0;
+        }
         byte_counter = 0;
         break;
       }
-      byte_counter = 6;
     }
+    byte_counter = 0;
 
-    avail = LD2402Serial->available();
-    if (avail < (length - got)) {
-      got += LD2402Serial->readBytes(LD2402.buffer + got, avail);
+    while (LD2402Serial->available() < 2) { yield(); }
+    uint32_t length = LD2402Serial->read();
+    LD2402Serial->read();
+    if (length > LD2402_BUFFER_SIZE) {
       break;
     }
-    if (got < length) {
-      got += LD2402Serial->readBytes(LD2402.buffer + got, length - got);
-    }
 
-    avail = LD2402Serial->available();
-    if (avail < 4) {
-      DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Don't have enough for footer."));
+    if (LD2402Serial->readBytes(LD2402.buffer, length) < length) {
+      DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Wasn't able to get whole line!"));
       break;
     }
+
+    uint32_union footer;
+    while (LD2402Serial->available() < 4) { yield(); }
     for (uint32_t i = 4; i; i--) {
       footer.buffer_32<<=8;
       footer.buffer[LD2402.is_big*3] = LD2402Serial->read();
@@ -342,22 +322,19 @@ void Ld2402Input(void) {
       } else {
         DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Head %*_H"), 4, header.buffer);
         DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Eng %*_H"), length, LD2402.buffer);
-        DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "byte_counter: %d, avail: %d, got %d, length %d"), byte_counter, avail, got, length);
+        DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "avail: %d, length %d"), avail, length);
         DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Foot %*_H"), 4, footer.buffer);
       }
     } else {
       if (LD2402_config_footer == footer.buffer_32) {
         Ld2402HandleConfigData();
-        LD2402Serial->setReadChunkMode(0);
       } else {
         DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Head %*_H"), 4, header.buffer);
         DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Cmd %*_H"), length, LD2402.buffer);
-        DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "byte_counter: %d, avail: %d, got %d, length %d"), byte_counter, avail, got, length);
+        DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "avail: %d, length %d"), avail, length);
         DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Foot %*_H"), 4, footer.buffer);
       }
     }
-    data_type = 0;
-    byte_counter = 0;
     break;
   }
   // If here then LD2402.byte_counter could still be partial correct for next loop
@@ -381,7 +358,6 @@ void Ld2402SendCommand(uint8_t command, uint32_t val_len) {
 
   DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Send %*_H"), val_len + 12, buffer);
   LD2402.sent_ack = command;
-  LD2402Serial->setReadChunkMode(1);                            // Enable chunk mode introducing possible Hardware Watchdogs
   LD2402Serial->flush();
   LD2402Serial->write(buffer, val_len + 12);
 }
@@ -689,6 +665,7 @@ void Ld2402Detect(void) {
     LD2402Serial = new TasmotaSerial(Pin(GPIO_LD2402_RX), Pin(GPIO_LD2402_TX), 2, 0, LD2402_BUFFER_SIZE);
     if (LD2402Serial->begin(115200)) {
       if (LD2402Serial->hardwareSerial()) { ClaimSerial(); }
+      LD2402Serial->setTimeout(200);
 #ifdef ESP32
       AddLog(LOG_LEVEL_DEBUG, PSTR(D_LD2402_LOG_PREFIX "Serial UART%d"), LD2402Serial->getUart());
 #endif
@@ -836,7 +813,7 @@ void CmndLd2402Mode(void) {
   ArgV(Argument,1);
   memset(LD2402.cmnd_param, 0x00, 6);
   LD2402.cmnd_param[2] = atoi(Argument) ? 0x04 : 0x64;
-  Response_P(PSTR(D_COMMAND_PREFIX_JSON "%d}"), D_CMD_MODE, (0x04 == LD2402.cmnd_param[2]));
+  Response_P(PSTR(D_COMMAND_PREFIX_JSON "\"%s\"}"), D_CMD_MODE, (0x04 == LD2402.cmnd_param[2] ? "Engineering" : "Normal"));
   Ld2402ExecConfigCmnd(LD2402_CMND_MODE);
 }
 
