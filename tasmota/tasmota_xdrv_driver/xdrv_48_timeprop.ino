@@ -58,18 +58,14 @@ const char HTTP_FORM_TIMEPROP_CYCLELENGTH[] PROGMEM =
     "</select>"
     "</p>";
 
-// TODO: MAX_RELAYS
-const char HTTP_FORM_TIMEPROP_COUNT[] PROGMEM =
+const char HTTP_FORM_TIMEPROP_COUNT_BEGIN[] PROGMEM =
     "<p><b>" D_TIMEPROP_COUNT "</b> (5)<br>"
-    "<select id=\"tpc\" name=\"tpc\">"
-    "<option %s value=\"1\">1</option>"
-    "<option %s value=\"2\">2</option>"
-    "<option %s value=\"3\">3</option>"
-    "<option %s value=\"4\">4</option>"
-    "<option %s value=\"5\">5</option>"
-    "<option %s value=\"6\">6</option>"
-    "<option %s value=\"7\">7</option>"
-    "<option %s value=\"8\">8</option>"
+    "<select id=\"tpc\" name=\"tpc\">";
+
+const char HTTP_FORM_TIMEPROP_COUNT_LINE[] PROGMEM =
+    "<option %s value=\"%d\">%d</option>";
+
+const char HTTP_FORM_TIMEPROP_COUNT_END[] PROGMEM =
     "</select>"
     "</p>";
 
@@ -113,16 +109,14 @@ void HandleTimepropConfiguration(void)
                   Timeprop.cycle_length == 1 ? PSTR("selected=\"\"") : "",
                   Timeprop.cycle_length == 2 ? PSTR("selected=\"\"") : "",
                   Timeprop.cycle_length == 3 ? PSTR("selected=\"\"") : "");
-  WSContentSend_P(HTTP_FORM_TIMEPROP_COUNT,
-                  Timeprop.count == 1 ? PSTR("selected=\"\"") : "",
-                  Timeprop.count == 2 ? PSTR("selected=\"\"") : "",
-                  Timeprop.count == 3 ? PSTR("selected=\"\"") : "",
-                  Timeprop.count == 4 ? PSTR("selected=\"\"") : "",
-                  Timeprop.count == 5 ? PSTR("selected=\"\"") : "",
-                  Timeprop.count == 6 ? PSTR("selected=\"\"") : "",
-                  Timeprop.count == 7 ? PSTR("selected=\"\"") : "",
-                  Timeprop.count == 8 ? PSTR("selected=\"\"") : "");
-  // TODO: MAX_RELAYS
+
+  WSContentSend_P(HTTP_FORM_TIMEPROP_COUNT_BEGIN);
+  for (uint8_t i = 0; i < MAX_RELAYS; i++)
+  {
+    WSContentSend_P(HTTP_FORM_TIMEPROP_COUNT_LINE, Timeprop.count == i + 1 ? PSTR("selected=\"\"") : "", i + 1, i + 1);
+  }
+  WSContentSend_P(HTTP_FORM_TIMEPROP_COUNT_END);
+
   WSContentSend_P(HTTP_FORM_TIMEPROP_LOADTYPE,
                   !Timeprop.load_type ? PSTR("selected=\"\"") : "",
                   Timeprop.load_type ? PSTR("selected=\"\"") : "");
@@ -287,8 +281,7 @@ void CmndTimePropCycleLength(void)
 
 void CmndTimePropCount(void)
 {
-  // TODO: MAX_RELAYS
-  if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 8))
+  if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= MAX_RELAYS))
   {
     Timeprop.count = XdrvMailbox.payload;
 
@@ -344,7 +337,8 @@ void CmndTimePropFallbackValue(void)
 /*********************************************************************************************\
  * Periodic
 \*********************************************************************************************/
-// TODO: Fallback
+// TODO wenn fallback aufgeloest wird bleiben die anderen alle auf fallback value stehen.
+// wollen wir das? aktuell fühlt sich das richtig an
 void TimepropEverySecond(void)
 {
   if (!Timeprop.enabled)
