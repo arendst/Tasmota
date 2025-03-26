@@ -2785,7 +2785,6 @@ end
 # main class controller, meant to be a singleton and the only externally used class
 class HASPmota
   var started                           # (bool) is HASPmota already started?
-  var dark                              # (bool) use dark theme?
   var hres, vres                        # (int) resolution
   var scr                               # (lv_obj) default LVGL screen
   var r16                               # (lv_font) robotocondensed fonts size 16
@@ -2841,7 +2840,7 @@ class HASPmota
   # special cases
   static lvh_chart = lvh_chart
 
-  static def_templ_name = "pages.jsonl" # default template name
+  static var PAGES_JSONL = "pages.jsonl" # default template name
 
   def init()
     self.fix_lv_version()
@@ -2861,22 +2860,36 @@ class HASPmota
   #====================================================================
   # init
   #
-  # arg1: (bool) use dark theme if `true`
+  # Opt1: no arguments
+  #       load "pages.jsonl"
+  # Opt2:
+  #    arg1: (string) use it as template name
   #
-  # implicitly loads `pages.jsonl` from file-system // TODO allow to specicify file name
+  # Opt3:
+  #    arg1: (bool) set dark mode (deprecated)
+  #    arg2:  (string) use it as template name
+  #
   #====================================================================
-  def start(dark, templ_name)
+  def start(arg1, arg2)
     if (self.started)      return    end
 
+    var dark = false
+    var templ_name
+    if type(arg1) == 'string'
+      templ_name = arg1
+    elif type(arg2) == 'string'
+      templ_name = arg2
+      dark = bool(arg1)
+    else
+      templ_name = self.PAGES_JSONL       # use default PAGES.JSONL
+    end
+
     import path
-    if templ_name == nil   templ_name = self.def_templ_name end
     if !path.exists(templ_name)
       raise "io_erorr", "file '" + templ_name + "' not found"
     end
     # start lv if not already started. It does no harm to call lv.start() if LVGL was already started
     lv.start()
-
-    self.dark = bool(dark)
 
     self.hres = lv.get_hor_res()       # ex: 320
     self.vres = lv.get_ver_res()       # ex: 240
@@ -2889,9 +2902,9 @@ class HASPmota
     end
 
     # set the theme for HASPmota
-    var th2 = lv.theme_haspmota_init(0, lv.color(0xFF00FF), lv.color(0x303030), self.dark, self.r16)
+    var th2 = lv.theme_haspmota_init(0, lv.color(0xFF00FF), lv.color(0x303030), dark, self.r16)
     self.scr.get_disp().set_theme(th2)
-    self.scr.set_style_bg_color(self.dark ? lv.color(0x000000) : lv.color(0xFFFFFF),0)    # set background to white
+    self.scr.set_style_bg_color(dark ? lv.color(0x000000) : lv.color(0xFFFFFF),0)    # set background to white
     # apply theme to layer_top, but keep it transparent
     lv.theme_apply(lv.layer_top())
     lv.layer_top().set_style_bg_opa(0,0)
@@ -2952,21 +2965,19 @@ class HASPmota
     import string
     import json
 
-    var f = open(templ_name,"r")
-    var f_content =  f.read()
-    f.close()
-    
-    var jsonl = string.split(f_content, "\n")
-    f = nil   # allow deallocation
-    f_content = nil
-
+    var f = open(templ_name)
     # parse each line
-    while size(jsonl) > 0
-      var jline = json.load(jsonl[0])
+    while f.tell() < f.size()                 # while we're not at the end of the file
+      var line = f.readline()
 
+      if (size(line) == 0) || (line[0] == '#')    # skip empty lines and lines starting with '#'
+        continue
+      end
+
+      var jline = json.load(line)
       if type(jline) == 'instance'
         if tasmota.loglevel(4)
-          tasmota.log(f"HSP: parsing line '{jsonl[0]}'", 4)
+          tasmota.log(f"HSP: parsing line '{line}'", 4)
         end
         self.parse_page(jline)    # parse page first to create any page related objects, may change self.lvh_page_cur_idx_parsing
         # objects are created in the current page
@@ -2976,14 +2987,13 @@ class HASPmota
         self.parse_obj(jline, self.lvh_pages[self.lvh_page_cur_idx_parsing])    # then parse object within this page
       else
         # check if it's invalid json
-        if size(string.tr(jsonl[0], " \t", "")) > 0
-          tasmota.log(f"HSP: invalid JSON line '{jsonl[0]}'", 2)
+        if size(string.tr(line, " \t", "")) > 0
+          tasmota.log(f"HSP: invalid JSON line '{line}'", 2)
         end
       end
       jline = nil
-      jsonl.remove(0)
     end
-    jsonl = nil     # make all of it freeable
+    f.close()
 
     # current page is always 1 when we start
     var pages_sorted = self.pages_list_sorted(nil)            # nil for full list
