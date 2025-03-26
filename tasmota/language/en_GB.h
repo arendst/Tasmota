@@ -1334,4 +1334,16 @@
 #define D_SENSOR_V9240_TX "V9240 TX"
 #define D_SENSOR_V9240_RX "V9240 RX"
 
+// xdrv_48_timeprop.ino
+#define D_CONFIGURE_TIMEPROP "Timeprop"
+#define D_TIMEPROP_PARAMETERS "Timeprop Parameters"
+#define D_TIMEPROP_ENABLE "Enable Timeprop"
+#define D_TIMEPROP_CYCLELENGTH "Cycle Time Base"
+#define D_TIMEPROP_COUNT "Number of Timeprops"
+#define D_TIMEPROP_LOADTYPE "Load Type"
+#define D_TIMEPROP_LOADTYPE_DISTRIBUTION "Distribution"
+#define D_TIMEPROP_LOADTYPE_COLLECTION "Collection"
+#define D_TIMEPROP_FALLBACK_AFTER "Fallback After"
+#define D_TIMEPROP_FALLBACK_VALUE "Fallback Value"
+
 #endif  // _LANGUAGE_EN_GB_H_
