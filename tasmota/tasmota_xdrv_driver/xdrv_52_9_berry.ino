@@ -906,6 +906,7 @@ extern "C" bbool BerryBECLoader(const char * url) {
 bool Xdrv52(uint32_t function)
 {
   bool result = false;
+  if (berry.vm == NULL) { return result; }
 
   switch (function) {
     case FUNC_SLEEP_LOOP:
@@ -1029,7 +1030,7 @@ bool Xdrv52(uint32_t function)
     case FUNC_WEB_ADD_CONSOLE_BUTTON:
       if (XdrvMailbox.index) {
         XdrvMailbox.index++;
-      } else if (berry.vm != NULL) {
+      } else {
         WSContentSend_P(HTTP_BTN_BERRY_CONSOLE);
         HandleBerryBECLoaderButton();               // display buttons to load BEC files
         callBerryEventDispatcher(PSTR("web_add_button"), nullptr, 0, nullptr);
