@@ -2125,7 +2125,7 @@ bool LightApplyFade(void) {   // did the value chanegd and needs to be applied
     //Serial.printf("Fade: %d / %d - ", fade_current, Light.fade_duration);
     for (uint32_t i = 0; i < Light.subtype; i++) {
       Light.fade_cur_10[i] = fadeGamma(i,
-                                changeUIntScale(fadeGammaReverse(i, fade_current),
+                                changeUIntScale(fade_current,
                                              0, Light.fade_duration,
                                              fadeGammaReverse(i, Light.fade_start_10[i]),
                                              fadeGammaReverse(i, Light.fade_end_10[i])));
