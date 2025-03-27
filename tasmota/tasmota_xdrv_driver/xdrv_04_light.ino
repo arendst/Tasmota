@@ -2047,14 +2047,14 @@ int32_t ChannelWhite_when_PWMCT(void) {
 // Calculate the Gamma correction, if any, for fading, using the fast Gamma curve (10 bits in+out)
 uint16_t fadeGamma(uint32_t channel, uint16_t v) {
   if (isChannelGammaCorrected(channel)) {
-    return ledGammaFast(v);
+    return ledGamma10_10(v);
   } else {
     return v;
   }
 }
 uint16_t fadeGammaReverse(uint32_t channel, uint16_t vg) {
   if (isChannelGammaCorrected(channel)) {
-    return leddGammaReverseFast(vg);
+    return ledGammaReverse(vg);
   } else {
     return vg;
   }
