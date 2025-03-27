@@ -122,6 +122,18 @@ void TelnetWrite(char *line, uint32_t len) {
   }
 }
 
+void TelnetGetLog(void) {
+  uint32_t index = Telnet.log_index;                 // Dump log buffer
+  char* line;
+  size_t len;
+  bool any_line = false;
+  while (GetLog(TasmotaGlobal.seriallog_level, &index, &line, &len)) {
+    any_line = true;
+    TelnetWrite(line, len -1);
+  }
+  Telnet.log_index = index;
+}
+
 /********************************************************************************************/
 
 void TelnetLoop(void) {
@@ -143,54 +155,28 @@ void TelnetLoop(void) {
     }
     Telnet.client = new_client;
     if (Telnet.client) {
+      SetMinimumSeriallog();
       Telnet.client.printf("Tasmota %s %s (%s) %s\r\n", NetworkHostname(), TasmotaGlobal.version, GetBuildDateAndTime().c_str(), GetDeviceHardware().c_str());
-      Telnet.prompt = 3;
-#ifdef ESP32
-      uint32_t index = 1;
-      char* line;
-      size_t len;
-      while (GetLog(Settings->seriallog_level, &index, &line, &len)) {
-        TelnetWrite(line, len -1);
-      }
-      Telnet.prompt = 0;
-#else   // ESP8266
-      Telnet.log_index = 0;                          // Dump start of log buffer for restart messages
-#endif  // ESP32 - ESP8266
+      Telnet.prompt = 3;                             // Print linefeed for non-requested data and use log color
+      Telnet.log_index = 1;                          // Dump start of log buffer for restart messages
+      TelnetGetLog();
+      Telnet.prompt = 1;                             // Print prompt after requested data and use response color
     }
   }
 
   if (Telnet.client) {
-    // Output latest log buffer data
-#ifdef ESP32
-    if (0 == Telnet.prompt) {
+    // Output latest data
+#ifdef ESP8266
+    TelnetGetLog();                                  // As heap is low on ESP8266 it uses log output
+#endif
+    if (1 == Telnet.prompt) {
       TelnetWriteColor(Telnet.color[0]);
       Telnet.client.printf("%s:# ", NetworkHostname());
       TelnetWriteColor(0);
-      Telnet.prompt = 3;                             // Print linefeed for non-requested data
+      Telnet.prompt = 3;                             // Print linefeed for non-requested data and use log color
       while (Telnet.client.available()) { Telnet.client.read(); }  // Flush input
       return;
     }
-#else   // ESP8266
-    uint32_t index = Telnet.log_index;               // Dump log buffer
-    char* line;
-    size_t len;
-    bool any_line = false;
-    while (GetLog(Settings->seriallog_level, &index, &line, &len)) {
-      any_line = true;
-      TelnetWrite(line, len -1);
-    }
-    if (any_line) {
-      if ((0 == Telnet.log_index) || (Telnet.prompt != 2)) {
-        TelnetWriteColor(Telnet.color[0]);
-        Telnet.client.printf("%s:# ", NetworkHostname());
-        TelnetWriteColor(0);
-        Telnet.prompt = 3;                           // Print linefeed for non-requested data
-        while (Telnet.client.available()) { Telnet.client.read(); }  // Flush input
-      }
-      Telnet.log_index = index;
-      return;
-    }
-#endif  // ESP32 - ESP8266
 
     // Input keyboard data
     while (Telnet.client.available()) {
@@ -202,10 +188,10 @@ void TelnetLoop(void) {
         }
       }
       else if (in_byte == '\n') {
-        Telnet.buffer[Telnet.in_byte_counter] = 0;   // Telnet data completed
-        TasmotaGlobal.seriallog_level = (Settings->seriallog_level < LOG_LEVEL_INFO) ? (uint8_t)LOG_LEVEL_INFO : Settings->seriallog_level;
         Telnet.client.write("\r");                   // Move cursor to begin of line (needed for non-buffered input)
-        Telnet.prompt = 1;                           // Do not print linefeed for requested data and use response color
+        Telnet.buffer[Telnet.in_byte_counter] = 0;   // Telnet data completed
+        Telnet.prompt = 1;                           // Print prompt after requested data and use response color
+        SetMinimumSeriallog();
         if (Telnet.in_byte_counter >= Telnet.buffer_size) {
           AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TELNET "Buffer overrun"));
         } else {
@@ -219,9 +205,6 @@ void TelnetLoop(void) {
           }
         }
         Telnet.in_byte_counter = 0;
-#ifdef ESP32
-        Telnet.prompt = 0;                           // Print prompt
-#endif  // ESP32
         return;
       }
     }

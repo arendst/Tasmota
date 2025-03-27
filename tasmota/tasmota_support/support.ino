@@ -2398,6 +2398,10 @@ void SystemBusyDelayExecute(void) {
  *
 \*********************************************************************************************/
 
+void SetMinimumSeriallog(void) {
+  TasmotaGlobal.seriallog_level = (Settings->seriallog_level < LOG_LEVEL_INFO) ? (uint8_t)LOG_LEVEL_INFO : Settings->seriallog_level;
+}
+
 void SetTasConlog(uint32_t loglevel) {
   Settings->seriallog_level = loglevel;
   TasmotaGlobal.seriallog_level = loglevel;
@@ -2608,7 +2612,8 @@ bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* l
 }
 
 uint32_t HighestLogLevel(void) {
-  uint32_t highest_loglevel = Settings->seriallog_level;
+  uint32_t highest_loglevel = TasmotaGlobal.seriallog_level;
+  if (Settings->seriallog_level > highest_loglevel) { highest_loglevel = Settings->seriallog_level; }
   if (Settings->mqttlog_level > highest_loglevel) { highest_loglevel = Settings->mqttlog_level; }
 #ifdef USE_WEBSERVER
   if (Settings->weblog_level > highest_loglevel) { highest_loglevel = Settings->weblog_level; }
@@ -2703,11 +2708,15 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
     // These calls fail to show initial logging
     log_line += 2;                         // Skip log_buffer_pointer and loglevel
 #ifdef USE_SERIAL_BRIDGE
-    SerialBridgeWrite(log_line, log_data_len);
+    if (loglevel <= TasmotaGlobal.seriallog_level) {
+      SerialBridgeWrite(log_line, log_data_len);
+    }
 #endif  // USE_SERIAL_BRIDGE
 #ifdef USE_TELNET
 #ifdef ESP32
-    TelnetWrite(log_line, log_data_len);   // This uses too much heap on ESP8266
+    if (loglevel <= TasmotaGlobal.seriallog_level) {
+      TelnetWrite(log_line, log_data_len);  // This uses too much heap on ESP8266
+    }
 #endif  // ESP32
 #endif  // USE_TELNET
 

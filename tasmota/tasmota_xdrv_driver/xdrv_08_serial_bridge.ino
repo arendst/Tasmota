@@ -156,7 +156,7 @@ void SerialBridgeLoop(void) {
       }
       else if (serial_in_byte == '\n') {
         serial_bridge_buffer[SBridge.in_byte_counter] = 0;                       // Serial data completed
-        TasmotaGlobal.seriallog_level = (Settings->seriallog_level < LOG_LEVEL_INFO) ? (uint8_t)LOG_LEVEL_INFO : Settings->seriallog_level;
+        SetMinimumSeriallog();
         if (serial_bridge_overrun) {
           AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "SSerial buffer overrun"));
         } else {
