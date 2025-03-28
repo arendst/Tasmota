@@ -578,6 +578,7 @@ struct METER_DESC {
 #define ANALOG_FLG 0x02
 #define MEDIAN_FILTER_FLG 0x10
 #define NO_SYNC_FLG 0x20
+#define SML_CRC_METHOD_CCITT 0x40
 
 struct METER_DESC  meter_desc[MAX_METERS];
 
@@ -1428,15 +1429,9 @@ uint8_t ebus_CalculateCRC( uint8_t *Data, uint16_t DataLen ) {
 }
 
 #ifdef USE_SML_CRC
-uint16_t calculateSMLbinCRC(const uint8_t *data, uint16_t length, uint8_t crctype) {
-  switch (crctype) {
-    case 'c':
-      return FastCRC.ccitt(data, length);
-    case 'x':
-      return FastCRC.x25(data, length);
-    default:
-      return 0; // Invalid CRC type
-  }
+uint16_t calculateSMLbinCRC(const uint8_t *data, uint16_t length, uint8_t flag) {
+  if (flag & SML_CRC_METHOD_CCITT > 0) return FastCRC.ccitt(data, length);
+  return FastCRC.x25(data, length);
 }
 #endif
 
@@ -1500,7 +1495,7 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
               uint16_t extracted_crc = (mp->crcbuff[mp->crcbuff_pos - 1] << 8) | mp->crcbuff[mp->crcbuff_pos - 2];
               // Calculate the CRC for the data portion (excluding start, stop sequences, and CRC bytes)
               uint16_t len=mp->teleendpos-mp->telestartpos + 1;
-              uint16_t calculated_crc = calculateSMLbinCRC(&mp->crcbuff[mp->telestartpos], len-2, 'x');
+              uint16_t calculated_crc = calculateSMLbinCRC(&mp->crcbuff[mp->telestartpos], len-2, mp->flag);
               if (calculated_crc == extracted_crc) {
                 mp->crcfinecnt++;
                 //AddLog(LOG_LEVEL_INFO, PSTR("SML: CRC ok"));
