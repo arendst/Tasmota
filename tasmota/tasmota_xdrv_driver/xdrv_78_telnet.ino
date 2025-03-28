@@ -86,6 +86,7 @@ struct {
   uint8_t     color[3];
   bool        ip_filter_enabled;
   bool        color_disable;
+  bool        overrun;
 } Telnet;
 
 /********************************************************************************************/
@@ -126,9 +127,7 @@ void TelnetGetLog(void) {
   uint32_t index = Telnet.log_index;                 // Dump log buffer
   char* line;
   size_t len;
-  bool any_line = false;
   while (GetLog(TasmotaGlobal.seriallog_level, &index, &line, &len)) {
-    any_line = true;
     TelnetWrite(line, len -1);
   }
   Telnet.log_index = index;
@@ -185,6 +184,8 @@ void TelnetLoop(void) {
       if (isprint(in_byte)) {                        // Any char between 32 and 127
         if (Telnet.in_byte_counter < Telnet.buffer_size -1) {  // Add char to string if it still fits
           Telnet.buffer[Telnet.in_byte_counter++] = in_byte;
+        } else {
+          Telnet.overrun = true;
         }
       }
       else if (in_byte == '\n') {
@@ -192,7 +193,7 @@ void TelnetLoop(void) {
         Telnet.buffer[Telnet.in_byte_counter] = 0;   // Telnet data completed
         Telnet.prompt = 1;                           // Print prompt after requested data and use response color
         SetMinimumSeriallog();
-        if (Telnet.in_byte_counter >= Telnet.buffer_size) {
+        if (Telnet.overrun) {
           AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TELNET "Buffer overrun"));
         } else {
           char command[CMDSZ];
@@ -205,6 +206,7 @@ void TelnetLoop(void) {
           }
         }
         Telnet.in_byte_counter = 0;
+        Telnet.overrun = false;
         return;
       }
     }
