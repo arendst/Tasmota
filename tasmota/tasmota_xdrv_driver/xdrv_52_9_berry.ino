@@ -898,6 +898,13 @@ extern "C" bbool BerryBECLoader(const char * url) {
   return true;
 }
 
+#else   // No USE_WEBSERVER
+
+extern "C" bbool BerryBECLoader(const char * url) {
+  AddLog(LOG_LEVEL_INFO, "BRY: web server disabled");
+  return false;
+}
+
 #endif // USE_WEBSERVER
 
 /*********************************************************************************************\
