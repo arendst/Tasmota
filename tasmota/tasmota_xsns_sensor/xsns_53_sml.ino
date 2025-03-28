@@ -1456,7 +1456,7 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
             mp->crcbuff[mp->crcbuff_pos++] = mp->meter_ss->read();
         } else {
             // Buffer overflow, reset and log an error
-            AddLog(LOG_LEVEL_INFO, PSTR("SML: CRC buffer overflow"));
+            AddLog(LOG_LEVEL_INFO, PSTR("SML: CRC buffer overflow. Increase SML_CRC_BUFF_SIZE.";
             Hexdump(&mp->crcbuff[0], mp->crcbuff_pos);
             if (mp->teleendpos==-1) {
               if (mp->telestartpos==-1) {
