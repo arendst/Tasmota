@@ -505,14 +505,6 @@ struct METER_DESC {
   uint8_t so_fcode2;
   uint8_t so_bpos2;
 #endif // USE_SML_SPECOPT
-#ifdef USE_SML_CRC
-  uint8_t *crcbuff;
-  uint16_t crcbuff_pos;
-  uint32_t crcfailcnt;
-  uint32_t crcfinecnt;
-  sint16_t telestartpos;
-  sint16_t teleendpos;
-#endif // USE_SML_CRC
 #ifdef ESP32
 #ifndef USE_ESP32_SW_SERIAL
   HardwareSerial *meter_ss;
@@ -569,6 +561,17 @@ struct METER_DESC {
 #endif
 };
 
+#ifdef USE_SML_CRC
+struct SML_CRC_DATA {
+  uint8_t *crcbuff;
+  uint16_t crcbuff_pos;
+  uint32_t crcfailcnt;
+  uint32_t crcfinecnt;
+  sint16_t telestartpos;
+  sint16_t teleendpos;
+};
+struct SML_CRC_DATA  sml_crc_data[MAX_METERS];
+#endif // USE_SML_CRC
 
 
 #define TCP_MODE_FLG 0x7f
@@ -1451,79 +1454,80 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
   #ifdef USE_SML_CRC
   if (mp->type=='s') {
     // New handling with CRC validation
-        // Read data into the temporary buffer
-        if (mp->crcbuff_pos < SML_CRC_BUFF_SIZE) {
-            mp->crcbuff[mp->crcbuff_pos++] = mp->meter_ss->read();
-        } else {
-            // Buffer overflow, reset and log an error
-            AddLog(LOG_LEVEL_INFO, PSTR("SML: CRC buffer overflow. Increase SML_CRC_BUFF_SIZE.";
-            Hexdump(&mp->crcbuff[0], mp->crcbuff_pos);
-            if (mp->teleendpos==-1) {
-              if (mp->telestartpos==-1) {
-                AddLog(LOG_LEVEL_INFO, PSTR("SML: No start sequence was found."));
-              } else {
-                AddLog(LOG_LEVEL_INFO, PSTR("SML: Start sequence was found, but no stop sequence was found."));
-              }
-            }
-            mp->telestartpos=-1;
-            mp->teleendpos=-1;
-            mp->crcbuff_pos = 0;
-        }
-
-        // Check for start of message until it is found
-        if (mp->telestartpos==-1)  {
-          //check start of buffer for start sequence
-          if(mp->crcbuff_pos>=8) {
-            if (memcmp(&mp->crcbuff[0], "\x1B\x1B\x1B\x1B\x01\x01\x01\x01", 8) == 0 ) {
-              //found start sequence
-              mp->telestartpos=mp->crcbuff_pos-8;
-              //AddLog(LOG_LEVEL_INFO, PSTR("SML: Found start sequence at %d"),mp->telestartpos);
-            } else {
-              memmove(&mp->crcbuff[0], &mp->crcbuff[1], mp->crcbuff_pos-1);
-              mp->crcbuff_pos--;
-            }
-
-          }
-        } else {
-          if (mp->teleendpos==-1)  {
-            if(mp->crcbuff_pos>=16 && memcmp(&mp->crcbuff[mp->crcbuff_pos-8], "\x1B\x1B\x1B\x1B\x1A", 5) == 0 )
-            {
-              //found end sequence
-              mp->teleendpos=mp->crcbuff_pos-1;
-              //AddLog(LOG_LEVEL_INFO, PSTR("SML: Found stop sequence at %d length %d"),mp->teleendpos,len);
-              //Validate CRC
-              uint16_t extracted_crc = (mp->crcbuff[mp->crcbuff_pos - 1] << 8) | mp->crcbuff[mp->crcbuff_pos - 2];
-              // Calculate the CRC for the data portion (excluding start, stop sequences, and CRC bytes)
-              uint16_t len=mp->teleendpos-mp->telestartpos + 1;
-              uint16_t calculated_crc = calculateSMLbinCRC(&mp->crcbuff[mp->telestartpos], len-2, mp->flag);
-              if (calculated_crc == extracted_crc) {
-                mp->crcfinecnt++;
-                //AddLog(LOG_LEVEL_INFO, PSTR("SML: CRC ok"));
-                if (len > mp->sbsiz) {
-                  len = mp->sbsiz;
-                }
-                for (uint16_t i=mp->telestartpos+8; i<=mp->teleendpos-8-mp->sbsiz; i++) {
-                  if (mp->crcbuff[i] == SML_SYNC || ((mp->flag & NO_SYNC_FLG) != 0)) {
-                    if (i+len > mp->teleendpos) len--;
-                    memcpy(mp->sbuff, &mp->crcbuff[mp->telestartpos+i],len);
-                    SML_Decode(meters);
-                  }
-                }
-              } else {
-                mp->crcfailcnt++;
-                // CRC is invalid, log an error
-                AddLog(LOG_LEVEL_INFO, PSTR("SML: CRC error: message: %04x vs calculated: %04x. crc-fail: %d, crc-ok: %d"), extracted_crc, calculated_crc, mp->crcfailcnt, mp->crcfinecnt);
-                Hexdump(&mp->crcbuff[0], mp->crcbuff_pos);
-                //copy into CONFIG_SOC_BLUFI_SUPPORTED
-              }
-              mp->teleendpos=-1;
-              mp->telestartpos=-1;
-              mp->crcbuff_pos = 0;
-            }
+    // Read data into the temporary buffer
+    struct SML_CRC_DATA *cp = &sml_crc_data[meters];
+    if (cp->crcbuff_pos < SML_CRC_BUFF_SIZE) {
+        cp->crcbuff[cp->crcbuff_pos++] = mp->meter_ss->read();
+    } else {
+        // Buffer overflow, reset and log an error
+        AddLog(LOG_LEVEL_INFO, PSTR("SML: CRC buffer overflow. Increase SML_CRC_BUFF_SIZE."));
+        Hexdump(&cp->crcbuff[0], cp->crcbuff_pos);
+        if (cp->teleendpos==-1) {
+          if (cp->telestartpos==-1) {
+            AddLog(LOG_LEVEL_INFO, PSTR("SML: No start sequence was found."));
+          } else {
+            AddLog(LOG_LEVEL_INFO, PSTR("SML: Start sequence was found, but no stop sequence was found."));
           }
         }
-        return;
+        cp->telestartpos=-1;
+        cp->teleendpos=-1;
+        cp->crcbuff_pos = 0;
+    }
+
+    // Check for start of message until it is found
+    if (cp->telestartpos==-1)  {
+      //check start of buffer for start sequence
+      if(cp->crcbuff_pos>=8) {
+        if (memcmp(&cp->crcbuff[0], "\x1B\x1B\x1B\x1B\x01\x01\x01\x01", 8) == 0 ) {
+          //found start sequence
+          cp->telestartpos=cp->crcbuff_pos-8;
+          //AddLog(LOG_LEVEL_INFO, PSTR("SML: Found start sequence at %d"),mp->telestartpos);
+        } else {
+          memmove(&cp->crcbuff[0], &cp->crcbuff[1], cp->crcbuff_pos-1);
+          cp->crcbuff_pos--;
+        }
+
       }
+    } else {
+      if (cp->teleendpos==-1)  {
+        if(cp->crcbuff_pos>=16 && memcmp(&cp->crcbuff[cp->crcbuff_pos-8], "\x1B\x1B\x1B\x1B\x1A", 5) == 0 )
+        {
+          //found end sequence
+          cp->teleendpos=cp->crcbuff_pos-1;
+          //AddLog(LOG_LEVEL_INFO, PSTR("SML: Found stop sequence at %d length %d"),mp->teleendpos,len);
+          //Validate CRC
+          uint16_t extracted_crc = (cp->crcbuff[cp->crcbuff_pos - 1] << 8) | cp->crcbuff[cp->crcbuff_pos - 2];
+          // Calculate the CRC for the data portion (excluding start, stop sequences, and CRC bytes)
+          uint16_t len=cp->teleendpos-cp->telestartpos + 1;
+          uint16_t calculated_crc = calculateSMLbinCRC(&cp->crcbuff[cp->telestartpos], len-2, mp->flag);
+          if (calculated_crc == extracted_crc) {
+            cp->crcfinecnt++;
+            //AddLog(LOG_LEVEL_INFO, PSTR("SML: CRC ok"));
+            if (len > mp->sbsiz) {
+              len = mp->sbsiz;
+            }
+            for (uint16_t i=cp->telestartpos+8; i<=cp->teleendpos - 8 - mp->sbsiz; i++) {
+              if (cp->crcbuff[i] == SML_SYNC || ((mp->flag & NO_SYNC_FLG) != 0)) {
+                if (i+len > cp->teleendpos) len--;
+                memcpy(mp->sbuff, &cp->crcbuff[cp->telestartpos+i],len);
+                SML_Decode(meters);
+              }
+            }
+          } else {
+            cp->crcfailcnt++;
+            // CRC is invalid, log an error
+            AddLog(LOG_LEVEL_INFO, PSTR("SML: CRC error: message: %04x vs calculated: %04x. crc-fail: %d, crc-ok: %d"), extracted_crc, calculated_crc, cp->crcfailcnt, cp->crcfinecnt);
+            Hexdump(&cp->crcbuff[0], cp->crcbuff_pos);
+            //copy into CONFIG_SOC_BLUFI_SUPPORTED
+          }
+          cp->teleendpos=-1;
+          cp->telestartpos=-1;
+          cp->crcbuff_pos = 0;
+        }
+      }
+    }
+    return;
+  }
 #endif
 #ifdef USE_SML_DECRYPT
 	if (mp->use_crypt) {
@@ -3108,9 +3112,10 @@ void reset_sml_vars(uint16_t maxmeters) {
     mp->so_obis2 = 0;
 #endif
 #ifdef USE_SML_CRC
-    if (mp->crcbuff) {
-      free(mp->crcbuff);
-      mp->crcbuff = 0;
+    struct SML_CRC_DATA *cp = &sml_crc_data[meters];
+    if (cp->crcbuff) {
+      free(cp->crcbuff);
+      cp->crcbuff = 0;
     }
 #endif // USE_SML_CRC
     mp->so_flags.data = 0;
@@ -3512,12 +3517,13 @@ next_line:
 			memory += mp->sbsiz;
     }
 #ifdef USE_SML_CRC
+    struct SML_CRC_DATA *cp = &sml_crc_data[meters];
     if (SML_CRC_BUFF_SIZE>0) {
-      mp->crcbuff = (uint8_t*)calloc(SML_CRC_BUFF_SIZE, 1);
+      cp->crcbuff = (uint8_t*)calloc(SML_CRC_BUFF_SIZE, 1);
       memory += SML_CRC_BUFF_SIZE;
     }
-    mp->crcfailcnt=0;
-    mp->crcfinecnt=0;
+    cp->crcfailcnt=0;
+    cp->crcfinecnt=0;
 #endif // USE_SML_CRC
   }
   // initialize hardware
