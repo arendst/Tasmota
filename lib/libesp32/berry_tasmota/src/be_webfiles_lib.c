@@ -17,8 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_BERRY
-#ifdef USE_WEBSERVER
+#ifdef USE_WEBFILES
 
 #ifndef LOG_LOCAL_LEVEL
 #define LOG_LOCAL_LEVEL ESP_LOG_INFO
@@ -387,5 +386,4 @@ module webfiles (scope: global) {
 @const_object_info_end */
 #include "be_fixed_webfiles.h"
 
-#endif // USE_WEBSERVER
-#endif // USE_BERRY 
+#endif // USE_WEBFILES

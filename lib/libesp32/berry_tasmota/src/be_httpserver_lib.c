@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_BERRY
+#ifdef USE_HTTPSERVER
 
 #include <stddef.h>    // For NULL, size_t
 #include <stdbool.h>   // For bool, true, false
@@ -838,4 +838,4 @@ module httpserver (scope: global) {
 
 #include "be_fixed_httpserver.h"
 
-#endif // USE_BERRY
+#endif // USE_HTTPSERVER
