@@ -101,7 +101,6 @@ static void log_ws_frame_info(httpd_ws_frame_t *ws_pkt);
 static void handle_ws_message(int client_id, const char *message, size_t len);
 static void handle_client_disconnect(int client_slot);
 static void callBerryWsDispatcher(bvm *vm, int client_id, const char *event_name, const char *payload, int arg_count);
-static esp_err_t ws_handler(httpd_req_t *req);
 static void http_server_disconnect_handler(void* arg, int sockfd);
 static void check_clients(void);
 
@@ -211,11 +210,9 @@ static void callBerryWsDispatcher(bvm *vm, int client_id, const char *event_name
         ESP_LOGE(TAG, "Berry callback error for event '%s': %s", 
                  event_name, be_tostring(vm, -1));
         
-        // Following Tasmota pattern for Berry VM - clear entire stack on error
         be_error_pop_all(vm);
     } else {
         // Pop all arguments (including return value)
-        // This follows the Tasmota ZigBee implementation pattern
         be_pop(vm, arg_count);
         
         ESP_LOGI(TAG, "Stack after arg pop: top=%d", be_top(vm));
@@ -225,122 +222,6 @@ static void callBerryWsDispatcher(bvm *vm, int client_id, const char *event_name
         
         ESP_LOGI(TAG, "Final stack after cleanup: top=%d", be_top(vm));
     }
-}
-
-// WebSocket handler function
-// CONTEXT: ESP-IDF HTTP Server Task
-// This handler is called directly by the ESP-IDF HTTP server framework
-// Any Berry VM operations must be queued for the main task
-static esp_err_t ws_handler(httpd_req_t *req) {
-    ESP_LOGI(TAG, "Handling WebSocket frame");
-    
-    // Start with basic HTTP data
-    int client_slot = -1;
-    
-    // Initialize WebSocket frame structure
-    httpd_ws_frame_t ws_pkt = {0};
-    ws_pkt.type = HTTPD_WS_TYPE_TEXT; // Default to text frames
-    
-    // Get the client IP information for additional identification if needed
-    struct sockaddr_storage source_addr;
-    socklen_t addr_len = sizeof(source_addr);
-    int sock_fd = httpd_req_to_sockfd(req);
-    
-    if (getpeername(sock_fd, (struct sockaddr *)&source_addr, &addr_len) < 0) {
-        ESP_LOGE(TAG, "Failed to get peer name");
-    } else {
-        // Find or assign a client slot for this socket
-        client_slot = find_client_by_fd(sock_fd);
-        if (client_slot >= 0) {
-            // Update last activity timestamp
-            ws_clients[client_slot].last_activity = esp_timer_get_time() / 1000;
-        }
-    }
-    
-    if (client_slot < 0) {
-        ESP_LOGE(TAG, "No client slot available");
-        return ESP_OK; // Return OK to avoid breaking the connection
-    }
-    
-    // First receive the message length
-    esp_err_t ret = httpd_ws_recv_frame(req, &ws_pkt, 0);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "httpd_ws_recv_frame failed with %d", ret);
-        return ret;
-    }
-    
-    // If frame is larger than buffer, allocate memory and receive it in chunks
-    if (ws_pkt.len) {
-        // Allocate memory for the message
-        uint8_t *buf = malloc(ws_pkt.len + 1);
-        if (!buf) {
-            ESP_LOGE(TAG, "Failed to allocate memory for WebSocket message");
-            return ESP_OK; // Return OK to avoid breaking the connection
-        }
-        
-        // Now properly receive the complete message with the allocated buffer
-        ws_pkt.payload = buf;
-        ret = httpd_ws_recv_frame(req, &ws_pkt, ws_pkt.len);
-        if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "httpd_ws_recv_frame failed with %d", ret);
-            free(buf);
-            return ret;
-        }
-        
-        // Null-terminate if it's a text message
-        if (ws_pkt.type == HTTPD_WS_TYPE_TEXT) {
-            buf[ws_pkt.len] = 0;
-        }
-        
-        // Log information about the received frame
-        log_ws_frame_info(&ws_pkt);
-        
-        // Process the message based on type
-        switch (ws_pkt.type) {
-            case HTTPD_WS_TYPE_TEXT:
-            case HTTPD_WS_TYPE_BINARY:
-                // Queue the message for processing in the main task
-                // This avoids VM manipulation in the HTTP server task
-                ESP_LOGI(TAG, "PREPARE TO QUEUE: WebSocket message from client %d: '%s' (active=%d, sockfd=%d)", 
-                        client_slot, buf, ws_clients[client_slot].active, ws_clients[client_slot].sockfd);
-                
-                // Use the proper constant from httpserver_lib.h
-                bool queue_result = httpserver_queue_message(HTTP_MSG_WEBSOCKET, client_slot, 
-                                                   (const char*)buf, ws_pkt.len, NULL);
-                
-                if (queue_result) {
-                    ESP_LOGI(TAG, "WebSocket message successfully queued");
-                } else {
-                    ESP_LOGE(TAG, "Failed to queue WebSocket message!");
-                }
-                break;
-                
-            case HTTPD_WS_TYPE_CLOSE:
-                // Handle WebSocket close frame
-                handle_client_disconnect(client_slot);
-                break;
-                
-            case HTTPD_WS_TYPE_PING:
-                // Respond with a pong (handled automatically by the ESP-IDF framework)
-                // But we'll also update activity timestamp
-                ws_clients[client_slot].last_activity = esp_timer_get_time() / 1000;
-                break;
-                
-            case HTTPD_WS_TYPE_PONG:
-                // Update activity timestamp on pong response
-                ws_clients[client_slot].last_activity = esp_timer_get_time() / 1000;
-                break;
-                
-            default:
-                ESP_LOGW(TAG, "Unhandled WebSocket frame type: %d", ws_pkt.type);
-                break;
-        }
-        
-        // Clean up the allocated memory
-        free(buf);
-    }
-    
-    return ESP_OK;
 }
 
 // Process a WebSocket message in the main task context
@@ -371,13 +252,11 @@ void be_wsserver_handle_message(bvm *vm, int client_id, const char* data, size_t
                 client_id, (int)len, data);
         callBerryWsDispatcher(vm, client_id, "message", data, 3);
     }
-
 }
 
 // WebSocket Event Handler
 // CONTEXT: ESP-IDF HTTP Server Task
-// Called during WebSocket handshake initiation
-static esp_err_t ws_handler_connect(httpd_req_t *req) {
+static esp_err_t ws_handler(httpd_req_t *req) {
     if (req->method == HTTP_GET) {
         // Handshake handling
         ESP_LOGI(TAG, "WebSocket handshake received");
@@ -414,7 +293,7 @@ static esp_err_t ws_handler_connect(httpd_req_t *req) {
         return ESP_OK;
     }
     
-    ESP_LOGI(TAG, "WebSocket frame received");
+    ESP_LOGD(TAG, "WebSocket frame received");
     int sockfd = httpd_req_to_sockfd(req);
     int client_slot = find_client_by_fd(sockfd);
     
@@ -429,9 +308,9 @@ static esp_err_t ws_handler_connect(httpd_req_t *req) {
     ws_clients[client_slot].last_activity = esp_timer_get_time() / 1000;
     
     // Standard ESP-IDF WebSocket frame reception
-    httpd_ws_frame_t ws_pkt;
+    httpd_ws_frame_t ws_pkt = {0};
     uint8_t *buf = NULL;
-    memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
+
     ws_pkt.type = HTTPD_WS_TYPE_TEXT;  // Default type
 
     // Get the frame length
@@ -441,21 +320,23 @@ static esp_err_t ws_handler_connect(httpd_req_t *req) {
         return ret;
     }
     
-    ESP_LOGI(TAG, "Frame len is %d, type is %d", ws_pkt.len, ws_pkt.type);
+    ESP_LOGD(TAG, "Frame len is %d, type is %d", ws_pkt.len, ws_pkt.type);
     
     // Handle control frames immediately without involving Berry VM
+    if (ws_pkt.type == HTTPD_WS_TYPE_PONG) {
+        ESP_LOGI(TAG, "Received PONG from client %d", client_slot);
+        return ESP_OK;
+    } 
+    
     if (ws_pkt.type == HTTPD_WS_TYPE_CLOSE) {
-        // ----- PHASE 1: BERRY VM INTERACTION -----
+        ESP_LOGI(TAG, "Received CLOSE from client %d", client_slot);
         handle_client_disconnect(client_slot);
-        
-        // ----- PHASE 2: ESP-IDF WEBSOCKET OPERATIONS -----
         return ESP_OK;
     }
-    
+
     if (ws_pkt.type == HTTPD_WS_TYPE_PING) {
-        // Respond with PONG immediately, no Berry VM interaction needed
-        httpd_ws_frame_t pong;
-        memset(&pong, 0, sizeof(httpd_ws_frame_t));
+        ESP_LOGI(TAG, "Received PING from client %d", client_slot);
+        httpd_ws_frame_t pong = {0};
         pong.type = HTTPD_WS_TYPE_PONG;
         pong.len = 0;
         ret = httpd_ws_send_frame(req, &pong);
@@ -465,17 +346,14 @@ static esp_err_t ws_handler_connect(httpd_req_t *req) {
         return ESP_OK;
     }
     
-    // Allocate memory for the message payload
+    // Not a control frame , so allocate memory for the message payload
     if (ws_pkt.len) {
-        buf = malloc(ws_pkt.len + 1);
+        buf = calloc(1, ws_pkt.len + 1); 
         if (buf == NULL) {
             ESP_LOGE(TAG, "Failed to allocate memory for WS message");
             return ESP_ERR_NO_MEM;
         }
-        
-        memset(buf, 0, ws_pkt.len + 1);  // Clear the buffer including null terminator
-        ws_pkt.payload = buf;
-        
+        ws_pkt.payload = buf;  
         // Receive the actual message
         ret = httpd_ws_recv_frame(req, &ws_pkt, ws_pkt.len);
         if (ret != ESP_OK) {
@@ -522,7 +400,7 @@ void handle_ws_message(int client_id, const char *message, size_t len) {
     
     // If queue available, send to main task for processing
     if (httpserver_has_queue()) {
-        ESP_LOGI(TAG, "Queueing WebSocket message from client %d: '%.*s'", client_id, (int)len, message);
+        ESP_LOGD(TAG, "Queueing WebSocket message from client %d: '%.*s'", client_id, (int)len, message);
         
         // Make a copy of the message data for the queue
         char *data_copy = malloc(len);
@@ -569,7 +447,7 @@ static void handle_client_disconnect(int client_slot) {
                                            NULL, 0, NULL);
         
         if (queue_result) {
-            ESP_LOGI(TAG, "WebSocket disconnect event successfully queued");
+            ESP_LOGD(TAG, "WebSocket disconnect event successfully queued");
         } else {
             ESP_LOGE(TAG, "Failed to queue WebSocket disconnect event!");
             
@@ -624,8 +502,7 @@ static void ws_ping_timer_callback(void* arg) {
             }
             
             // Send ping
-            httpd_ws_frame_t ping;
-            memset(&ping, 0, sizeof(httpd_ws_frame_t));
+            httpd_ws_frame_t ping = {0};
             ping.type = HTTPD_WS_TYPE_PING;
             
             ESP_LOGI(TAG, "Sending PING to client %d", i);
@@ -718,12 +595,12 @@ static int w_wsserver_start(bvm *vm) {
             // Get optional ping parameters
             if (be_top(vm) >= 3 && be_isint(vm, 3)) {
                 ping_interval_s = be_toint(vm, 3);
-                ESP_LOGI(TAG, "Updated ping interval to %d seconds", ping_interval_s);
+                ESP_LOGD(TAG, "Updated ping interval to %d seconds", ping_interval_s);
             }
             
             if (be_top(vm) >= 4 && be_isint(vm, 4)) {
                 ping_timeout_s = be_toint(vm, 4);
-                ESP_LOGI(TAG, "Updated ping timeout to %d seconds", ping_timeout_s);
+                ESP_LOGD(TAG, "Updated ping timeout to %d seconds", ping_timeout_s);
             }
         }
         
@@ -751,20 +628,20 @@ static int w_wsserver_start(bvm *vm) {
                 
                 // Assign to global ws_server variable after validating it's not NULL
                 ws_server = http_handle;
-                ESP_LOGI(TAG, "Using existing HTTP server handle (comptr): %p", ws_server);
+                ESP_LOGD(TAG, "Using existing HTTP server handle (comptr): %p", ws_server);
             } 
             // If not comptr, try to get httpd_handle_t from Berry externally
             else {
                 // First log that we're attempting to get the handle
-                ESP_LOGI(TAG, "Attempting to retrieve HTTP server handle via be_httpserver_get_handle()");
+                ESP_LOGD(TAG, "Attempting to retrieve HTTP server handle via be_httpserver_get_handle()");
                 
                 // Try to get the handle from the HTTP server
                 httpd_handle_t handle = be_httpserver_get_handle();
-                ESP_LOGI(TAG, "Got HTTP server handle: %p", handle);
+                ESP_LOGD(TAG, "Got HTTP server handle: %p", handle);
                 if (handle) {
                     use_existing_handle = true;
                     ws_server = handle;
-                    ESP_LOGI(TAG, "Using HTTP server handle from httpserver module: %p", ws_server);
+                    ESP_LOGD(TAG, "Using HTTP server handle from httpserver module: %p", ws_server);
                 } else {
                     ESP_LOGE(TAG, "HTTP server module returned NULL handle");
                 }
@@ -811,7 +688,7 @@ static int w_wsserver_start(bvm *vm) {
             
             // Set disconnect handler
             config.close_fn = http_server_disconnect_handler;
-            ESP_LOGI(TAG, "Registering disconnect handler for new WebSocket server");
+            ESP_LOGD(TAG, "Registering disconnect handler for new WebSocket server");
             
             ESP_LOGI(TAG, "Starting new HTTP server on port %d", config.server_port);
             esp_err_t ret = httpd_start(&ws_server, &config);
@@ -829,7 +706,7 @@ static int w_wsserver_start(bvm *vm) {
         httpd_uri_t ws_uri = {
             .uri        = path,
             .method     = HTTP_GET,
-            .handler    = ws_handler_connect,  // Use the connect handler which properly registers clients
+            .handler    = ws_handler,  // Use the connect handler which properly registers clients
             .user_ctx   = NULL,
             .is_websocket = true,
             .handle_ws_control_frames = true  // Allow ESP-IDF to properly handle control frames
@@ -890,7 +767,7 @@ static int w_wsserver_client_info(bvm *vm) {
         int client_slot = be_toint(vm, 1);
         
         if (!is_client_valid(client_slot)) {
-            ESP_LOGI(TAG, "client_info: Invalid client %d, returning nil", client_slot);
+            ESP_LOGE(TAG, "client_info: Invalid client %d, returning nil", client_slot);
             be_pushnil(vm);
             
             // Check stack for consistency
@@ -1024,7 +901,6 @@ static int w_wsserver_send(bvm *vm) {
         be_return (vm);
     }
     
-    // ---- PHASE 1: BERRY VM INTERACTION ----
     // Get data and length based on type
     if (is_bytes) {
         // It's a bytes object - get raw length
@@ -1067,9 +943,7 @@ static int w_wsserver_send(bvm *vm) {
         be_return (vm);
     }
     
-    // Use proper ESP-IDF WebSocket frame sending
-    httpd_ws_frame_t ws_pkt;
-    memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
+    httpd_ws_frame_t ws_pkt = {0};
     
     // Create a copy of the data to ensure it remains valid during async operation
     data_copy = (uint8_t *)malloc(len);
@@ -1148,8 +1022,7 @@ static int w_wsserver_close(bvm *vm) {
         }
         
         // Send a close frame
-        httpd_ws_frame_t ws_pkt;
-        memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
+        httpd_ws_frame_t ws_pkt = {0};
         ws_pkt.type = HTTPD_WS_TYPE_CLOSE;
         ws_pkt.len = 0;
         
@@ -1291,8 +1164,7 @@ static int w_wsserver_stop(bvm *vm) {
             client_count++;
             
             // Send close frame
-            httpd_ws_frame_t ws_pkt;
-            memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
+            httpd_ws_frame_t ws_pkt = {0};
             ws_pkt.type = HTTPD_WS_TYPE_CLOSE;
             ws_pkt.len = 0;
             
