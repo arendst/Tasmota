@@ -640,7 +640,7 @@ static int w_httpserver_start(bvm *vm) {
     
     if (http_server != NULL) {
         be_pushbool(vm, true);  // Server already running
-        return 1;
+        be_return (vm);
     }
     
     // Initialize connection tracking
@@ -648,7 +648,7 @@ static int w_httpserver_start(bvm *vm) {
     if (!connection_tracking.mutex) {
         ESP_LOGE(TAG, "Failed to create connection tracking mutex");
         be_pushbool(vm, false);
-        return 1;
+        be_return (vm);
     }
     
     // Configure the server
@@ -671,7 +671,7 @@ static int w_httpserver_start(bvm *vm) {
         ESP_LOGE(TAG, "Failed to start HTTP server: %d", ret);
         vSemaphoreDelete(connection_tracking.mutex);
         be_pushbool(vm, false);
-        return 1;
+        be_return (vm);
     }
     
     ESP_LOGI(TAG, "HTTP server started successfully");
@@ -680,7 +680,7 @@ static int w_httpserver_start(bvm *vm) {
     init_http_queue();
     
     be_pushbool(vm, true);
-    return 1;
+    be_return (vm);
 }
 
 // Register a URI handler
@@ -737,19 +737,19 @@ static int w_httpserver_on(bvm *vm) {
         ESP_LOGE(TAG, "Failed to register URI handler: %d", ret);
         http_handlers[slot].active = false;
         be_pushbool(vm, false);
-        return 1;
+        be_return (vm);
     }
     
     // Return the handler slot
     be_pushint(vm, slot);
-    return 1;
+    be_return (vm);
 }
 
 // Stop the HTTP server
 static int w_httpserver_stop(bvm *vm) {
     if (http_server == NULL) {
         be_pushbool(vm, false);  // Server not running
-        return 1;
+        be_return (vm);
     }
     
     // Clean up handler registrations
@@ -771,13 +771,13 @@ static int w_httpserver_stop(bvm *vm) {
     }
     
     be_pushbool(vm, ret == ESP_OK);
-    return 1;
+    be_return (vm);
 }
 
 // Get the server handle (for advanced usage)
 static int w_httpserver_get_handle(bvm *vm) {
     be_pushint(vm, (int)(intptr_t)http_server);
-    return 1;
+    be_return (vm);
 }
 
 // Simple wrapper around httpd_resp_sendstr
@@ -800,11 +800,11 @@ static int w_httpserver_send(bvm *vm) {
             ESP_LOGE(TAG, "Failed to send response: %d", ret);
             // Don't complete the handler here - let the main handler do it
             be_pushbool(vm, false);
-            return 1;
+            be_return (vm);
         }
         
         be_pushbool(vm, true);
-        return 1;
+        be_return (vm);
     }
     
     be_return_nil(vm);
