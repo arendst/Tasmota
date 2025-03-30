@@ -280,61 +280,64 @@ static int w_webfiles_serve(bvm *vm) {
         
         ESP_LOGI(TAG, "Setting up file server with base path: %s, uri prefix: %s", path, prefix);
         
-        // Update base path
-        strlcpy(base_path, path, sizeof(base_path));
-        
-        // Update URI prefix
-        strlcpy(uri_prefix, prefix, sizeof(uri_prefix));
-        
-        // Check if directory exists
         struct stat st;
-        if (stat(base_path, &st) != 0 || !S_ISDIR(st.st_mode)) {
-            ESP_LOGE(TAG, "Base path is not a valid directory: %s", base_path);
+        if (stat(path, &st) != 0 || !S_ISDIR(st.st_mode)) {
+            ESP_LOGE(TAG, "Input path is not a valid directory: %s", path);
             be_pushbool(vm, false);
-            be_pop(vm, be_top(vm) - initial_top);
-            return 1;
+            // Clean up stack before returning
+            while (be_top(vm) > initial_top) {
+                be_pop(vm, 1);
+            }
+            be_return (vm); // Return directly
         }
-        
-        // Check if HTTP server is running
+
         httpd_handle_t server = be_httpserver_get_handle();
         if (!server) {
             ESP_LOGE(TAG, "HTTP server not running");
             be_pushbool(vm, false);
-            be_pop(vm, be_top(vm) - initial_top);
-            return 1;
+            while (be_top(vm) > initial_top) {
+                be_pop(vm, 1);
+            }
+            be_return (vm);
         }
+
+        strlcpy(base_path, path, sizeof(base_path));
+        strlcpy(uri_prefix, prefix, sizeof(uri_prefix));
         
-        // Register URI handler with wildcard support
-        // The * at the end allows it to match all URIs that start with prefix
-        char uri_pattern[64];
-        snprintf(uri_pattern, sizeof(uri_pattern), "%s*", prefix);
-        
-        ESP_LOGI(TAG, "Registering URI handler with pattern: %s", uri_pattern);
-        
+
+        // Use a static buffer for the URI pattern
+        static char registered_uri_pattern[64]; // ADD static keyword
+        // Ensure it's null-terminated even if snprintf truncates
+        registered_uri_pattern[sizeof(registered_uri_pattern) - 1] = '\0';
+        snprintf(registered_uri_pattern, sizeof(registered_uri_pattern), "%s*", prefix);
+
+        ESP_LOGI(TAG, "Registering URI handler with pattern: %s", registered_uri_pattern);
+
         httpd_uri_t uri_handler = {
-            .uri      = uri_pattern,
+            // Point to the static buffer
+            .uri      = registered_uri_pattern, // Use the static buffer
             .method   = HTTP_GET,
             .handler  = webfiles_handler,
             .is_websocket = false,
             .user_ctx = NULL
         };
-        
+
         esp_err_t ret = httpd_register_uri_handler(server, &uri_handler);
         if (ret != ESP_OK) {
             ESP_LOGE(TAG, "Failed to register URI handler: %d", ret);
             be_pushbool(vm, false);
             be_pop(vm, be_top(vm) - initial_top);
-            return 1;
+            be_return (vm);
         }
         
         be_pushbool(vm, true);
         be_pop(vm, be_top(vm) - initial_top);
-        return 1;
+        be_return (vm);
     }
     
     be_pushbool(vm, false);
     be_pop(vm, be_top(vm) - initial_top);
-    return 1;
+    be_return (vm);
 }
 
 // webfiles.serve_file(file_path, uri) -> bool
@@ -352,7 +355,7 @@ static int w_webfiles_serve_file(bvm *vm) {
             ESP_LOGE(TAG, "File not found: %s", file_path);
             be_pushbool(vm, false);
             be_pop(vm, be_top(vm) - initial_top);
-            return 1;
+            be_return (vm);
         }
         
         // TODO: Implement custom handler for specific files
@@ -361,12 +364,12 @@ static int w_webfiles_serve_file(bvm *vm) {
         ESP_LOGW(TAG, "serve_file not yet implemented");
         be_pushbool(vm, false);
         be_pop(vm, be_top(vm) - initial_top);
-        return 1;
+        be_return (vm);
     }
     
     be_pushbool(vm, false);
     be_pop(vm, be_top(vm) - initial_top);
-    return 1;
+    be_return (vm);
 }
 
 // Module definition

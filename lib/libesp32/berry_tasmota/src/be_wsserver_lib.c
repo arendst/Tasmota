@@ -238,8 +238,7 @@ static esp_err_t ws_handler(httpd_req_t *req) {
     int client_slot = -1;
     
     // Initialize WebSocket frame structure
-    httpd_ws_frame_t ws_pkt;
-    memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
+    httpd_ws_frame_t ws_pkt = {0};
     ws_pkt.type = HTTPD_WS_TYPE_TEXT; // Default to text frames
     
     // Get the client IP information for additional identification if needed
@@ -729,7 +728,7 @@ static int w_wsserver_start(bvm *vm) {
         }
         
         be_pushbool(vm, true);
-        return 1;
+        be_return (vm);
     }
     
     ESP_LOGI(TAG, "Init WebSocket server");
@@ -747,7 +746,7 @@ static int w_wsserver_start(bvm *vm) {
                 if (http_handle == NULL) {
                     ESP_LOGE(TAG, "HTTP server handle is NULL");
                     be_pushbool(vm, false);
-                    return 1;
+                    be_return (vm);
                 }
                 
                 // Assign to global ws_server variable after validating it's not NULL
@@ -821,7 +820,7 @@ static int w_wsserver_start(bvm *vm) {
                 wsserver_running = false;
                 ws_server = NULL;
                 be_pushbool(vm, false);
-                return 1;
+                be_return (vm);
             }
             ESP_LOGI(TAG, "New HTTP server started on port %d", config.server_port);
         }
@@ -855,7 +854,7 @@ static int w_wsserver_start(bvm *vm) {
                 }
                 wsserver_running = false;  // Mark as not running
                 be_pushbool(vm, false);
-                return 1;
+                be_return (vm);
             }
         }
                 
@@ -874,12 +873,12 @@ static int w_wsserver_start(bvm *vm) {
         wsserver_running = true;
         ESP_LOGI(TAG, "WebSocket server started successfully");
         be_pushbool(vm, true);
-        return 1;
+        be_return (vm);
     }
     
     ESP_LOGE(TAG, "Invalid path parameter");
     be_pushbool(vm, false);
-    return 1;
+    be_return (vm);
 }
 
 static int w_wsserver_client_info(bvm *vm) {
@@ -898,7 +897,7 @@ static int w_wsserver_client_info(bvm *vm) {
             int final_top = be_top(vm);
             ESP_LOGI(TAG, "client_info: Invalid client path - Final stack: %d (expected %d)", 
                      final_top, initial_top + 1);
-            return 1;
+            be_return (vm);
         }
         
         // Calculate time since last activity
@@ -940,7 +939,7 @@ static int w_wsserver_client_info(bvm *vm) {
         ESP_LOGI(TAG, "client_info: Final stack: %d (expected %d)", final_top, initial_top + 1);
         
         // The map is already on the stack as our return value
-        return 1;
+        be_return (vm);
     }
     
     // If we reach here, either there were no parameters or the parameter was not an integer
@@ -951,7 +950,7 @@ static int w_wsserver_client_info(bvm *vm) {
     int final_top = be_top(vm);
     ESP_LOGI(TAG, "client_info: Error path - Final stack: %d (expected %d)", 
              final_top, initial_top + 1);
-    return 1;
+    be_return (vm);
 }
 
 static int w_wsserver_count_clients(bvm *vm) {
@@ -970,7 +969,7 @@ static int w_wsserver_count_clients(bvm *vm) {
     int final_top = be_top(vm);
     ESP_LOGI(TAG, "wsserver_count_clients: Final stack: %d (expected %d), returning %d clients", 
              final_top, initial_top + 1, count);
-    return 1;
+    be_return (vm);
 }
 
 static int w_wsserver_send(bvm *vm) {
@@ -985,7 +984,7 @@ static int w_wsserver_send(bvm *vm) {
         int final_top = be_top(vm);
         ESP_LOGI(TAG, "wsserver_send: Error path - Final stack: %d (expected %d)", 
                  final_top, initial_top + 1);
-        return 1;
+        be_return (vm);
     }
     
     int client_slot = be_toint(vm, 1);
@@ -1001,7 +1000,7 @@ static int w_wsserver_send(bvm *vm) {
         int final_top = be_top(vm);
         ESP_LOGI(TAG, "wsserver_send: Invalid client - Final stack: %d (expected %d)", 
                  final_top, initial_top + 1);
-        return 1;
+        be_return (vm);
     }
 
     // Check if we're dealing with a string or bytes object
@@ -1022,7 +1021,7 @@ static int w_wsserver_send(bvm *vm) {
         int final_top = be_top(vm);
         ESP_LOGI(TAG, "wsserver_send: Invalid data type - Final stack: %d (expected %d)", 
                  final_top, initial_top + 1);
-        return 1;
+        be_return (vm);
     }
     
     // ---- PHASE 1: BERRY VM INTERACTION ----
@@ -1045,7 +1044,7 @@ static int w_wsserver_send(bvm *vm) {
         int final_top = be_top(vm);
         ESP_LOGI(TAG, "wsserver_send: Empty data - Final stack: %d (expected %d)", 
                  final_top, initial_top + 1);
-        return 1;
+        be_return (vm);
     }
     
     // Check for optional binary flag parameter
@@ -1065,10 +1064,10 @@ static int w_wsserver_send(bvm *vm) {
         int final_top = be_top(vm);
         ESP_LOGI(TAG, "wsserver_send: Client became invalid - Final stack: %d (expected %d)", 
                  final_top, initial_top + 1);
-        return 1;
+        be_return (vm);
     }
     
-
+    // Use proper ESP-IDF WebSocket frame sending
     httpd_ws_frame_t ws_pkt;
     memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
     
@@ -1081,7 +1080,7 @@ static int w_wsserver_send(bvm *vm) {
         int final_top = be_top(vm);
         ESP_LOGI(TAG, "wsserver_send: Memory allocation failed - Final stack: %d (expected %d)", 
                  final_top, initial_top + 1);
-        return 1;
+        be_return (vm);
     }
     
     // Copy the data
@@ -1123,7 +1122,7 @@ static int w_wsserver_send(bvm *vm) {
         int final_top = be_top(vm);
         ESP_LOGI(TAG, "wsserver_send: Send failed - Final stack: %d (expected %d)", 
                  final_top, initial_top + 1);
-        return 1;
+        be_return (vm);
     }
     
     // Success!
@@ -1133,7 +1132,7 @@ static int w_wsserver_send(bvm *vm) {
     int final_top = be_top(vm);
     ESP_LOGI(TAG, "wsserver_send: Success - Final stack: %d (expected %d)", 
              final_top, initial_top + 1);
-    return 1;
+    be_return (vm);
 }
 
 static int w_wsserver_close(bvm *vm) {
@@ -1145,7 +1144,7 @@ static int w_wsserver_close(bvm *vm) {
         if (!is_client_valid(client_slot)) {
             ESP_LOGE(TAG, "Invalid client ID: %d", client_slot);
             be_pushbool(vm, false);
-            return 1;
+            be_return (vm);
         }
         
         // Send a close frame
@@ -1164,12 +1163,12 @@ static int w_wsserver_close(bvm *vm) {
         handle_client_disconnect(client_slot);
         
         be_pushbool(vm, (ret == ESP_OK));
-        return 1;
+        be_return (vm);
     }
     
     ESP_LOGE(TAG, "Invalid parameters for close");
     be_pushbool(vm, false);
-    return 1;
+    be_return (vm);
 }
 
 static int w_wsserver_on(bvm *vm) {
@@ -1181,13 +1180,14 @@ static int w_wsserver_on(bvm *vm) {
     if (be_top(vm) >= 2 && be_isint(vm, 1) && 
         (be_isfunction(vm, 2) || be_isclosure(vm, 2))) {  // Accept both function and closure types
         
+        // Extract event type value (we'll need this in both phases)
         int event_type = be_toint(vm, 1);
         
         // Validate event type early
         if (event_type < 0 || event_type >= 3) {
             ESP_LOGE(TAG, "[ON-ERROR] Invalid event type: %d", event_type);
             be_pushbool(vm, false);
-            return 1;
+            be_return (vm);
         }
 
         // Log function type for debugging
@@ -1197,7 +1197,7 @@ static int w_wsserver_on(bvm *vm) {
         // Make a safe copy of the function value - CRITICAL for stack stability
         bvalue func_copy = *be_indexof(vm, 2);
         bool is_gc_obj = be_isgcobj(&func_copy);
-        
+
         // If there's already an active callback, unmark it for GC first
         if (wsserver_callbacks[event_type].active) {
             if (be_isgcobj(&wsserver_callbacks[event_type].func)) {
@@ -1226,12 +1226,12 @@ static int w_wsserver_on(bvm *vm) {
         
         // Return success
         be_pushbool(vm, true);
-        return 1;
+        be_return (vm);
     }
     
     ESP_LOGE(TAG, "[ON-ERROR] Invalid parameters for on");
     be_pushbool(vm, false);
-    return 1;
+    be_return (vm);
 }
 
 static int w_wsserver_is_connected(bvm *vm) {
@@ -1247,7 +1247,7 @@ static int w_wsserver_is_connected(bvm *vm) {
         int final_top = be_top(vm);
         ESP_LOGI(TAG, "wsserver_is_connected: Success - Final stack: %d (expected %d)", 
                  final_top, initial_top + 1);
-        return 1;
+        be_return (vm);
     }
     
     ESP_LOGE(TAG, "Invalid parameters for is_connected");
@@ -1256,7 +1256,7 @@ static int w_wsserver_is_connected(bvm *vm) {
     int final_top = be_top(vm);
     ESP_LOGI(TAG, "wsserver_is_connected: Invalid parameters - Final stack: %d (expected %d)", 
              final_top, initial_top + 1);
-    return 1;
+    be_return (vm);
 }
 
 static int w_wsserver_stop(bvm *vm) {
@@ -1267,11 +1267,12 @@ static int w_wsserver_stop(bvm *vm) {
         int final_top = be_top(vm);
         ESP_LOGI(TAG, "wsserver_stop: Server not running - Final stack: %d (expected %d)", 
                  final_top, 1);
-        return 1;
+        be_return (vm);
     }
     
     ESP_LOGI(TAG, "Stopping WebSocket server");
     
+    // ---- PHASE 1: Prepare data and handle Berry resources ----
     // First clear callbacks to release GC holds
     for (int i = 0; i < 3; i++) {
         if (wsserver_callbacks[i].active) {
@@ -1282,6 +1283,7 @@ static int w_wsserver_stop(bvm *vm) {
         }
     }
     
+    // ---- PHASE 2: External system operations ----
     // Close all client connections
     int client_count = 0;
     for (int i = 0; i < MAX_WS_CLIENTS; i++) {
@@ -1324,7 +1326,7 @@ static int w_wsserver_stop(bvm *vm) {
     int final_top = be_top(vm);
     ESP_LOGI(TAG, "wsserver_stop: Final stack: %d (expected %d), success: %s", 
              final_top, 2, (ret == ESP_OK) ? "true" : "false");
-    return 1;
+    be_return (vm);
 }
 
 // Deinitialize callbacks for VM shutdown
