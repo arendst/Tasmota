@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_WSSERVER
+#ifdef USE_BERRY_WSSERVER
 
 #ifndef LOG_LOCAL_LEVEL
 #define LOG_LOCAL_LEVEL ESP_LOG_INFO
@@ -1323,4 +1323,4 @@ module wsserver (scope: global) {
 @const_object_info_end */
 #include "be_fixed_wsserver.h"
 
-#endif // USE_WSSERVER
+#endif // USE_BERRY_WSSERVER
