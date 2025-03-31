@@ -62,7 +62,6 @@ typedef struct {
 } http_queue_msg_t;
 
 // Forward declarations for internal functions
-void be_httpserver_process_web_request(bvm *vm, http_queue_msg_t *msg);
 void be_httpserver_process_websocket_msg(bvm *vm, int client_id, const char *data, size_t len);
 bool httpserver_queue_message(http_msg_type_t type, int client_id, const void *data, size_t data_len, void *user_data);
 bool httpserver_queue_web_request(int handler_id, httpd_req_t *req, bvalue func);
@@ -127,10 +126,10 @@ static void http_connection_cleanup(void *arg) {
 void be_httpserver_process_websocket_msg(bvm *vm, int client_id, const char *data, size_t data_len) {
     // Log message details safely (handling NULL data for connect events)
     if (data) {
-        ESP_LOGI(TAG, "Processing WebSocket message in main task context: client=%d, data='%s', len=%d", 
+        ESP_LOGD(TAG, "Processing WebSocket message in main task context: client=%d, data='%s', len=%d", 
                  client_id, data, (int)data_len);
     } else {
-        ESP_LOGI(TAG, "Processing WebSocket event in main task context: client=%d", client_id);
+        ESP_LOGD(TAG, "Processing WebSocket event in main task context: client=%d", client_id);
     }
     
     // Forward to the WebSocket handler in be_wsserver_lib.c
@@ -143,107 +142,6 @@ static void be_httpserver_process_file_request(bvm *vm, void *user_data) {
     // Placeholder for file handling - to be extended as needed
 }
 
-// Web request processing function
-// CONTEXT: Main Tasmota Task (Berry VM Context)
-// This function processes queued web requests in the main task context
-void be_httpserver_process_web_request(bvm *vm, http_queue_msg_t *msg) {
-    ESP_LOGI(TAG, "PROCESSING WEB REQUEST: msg=%p", msg);
-    
-    if (!msg) {
-        ESP_LOGE(TAG, "Web request has NULL message handle");
-        return;
-    }
-    
-    ESP_LOGI(TAG, "Request details: req=%p, client_id=%d", msg->req, msg->client_id);
-    
-    if (!msg->req) {
-        ESP_LOGE(TAG, "Web request has NULL request handle");
-        return;
-    }
-    
-    // Get handler ID (passed in client_id field)
-    int handler_id = msg->client_id;
-    if (handler_id < 0 || handler_id >= HTTP_HANDLER_MAX || !http_handlers[handler_id].active) {
-        ESP_LOGE(TAG, "Invalid handler ID from queue: %d", handler_id);
-        httpd_resp_set_status(msg->req, "500 Internal Server Error");
-        httpd_resp_sendstr(msg->req, "Invalid handler ID");
-        httpd_req_async_handler_complete(msg->req);
-        return;
-    }
-    
-    ESP_LOGI(TAG, "Processing web request for URI: %s with handler %d", msg->req->uri, handler_id);
-    
-    // Get the Berry VM and handler function
-    bvm *handler_vm = http_handlers[handler_id].vm;
-    
-    if (handler_vm == NULL) {
-        ESP_LOGE(TAG, "Berry VM is NULL for handler %d", handler_id);
-        httpd_resp_set_status(msg->req, "500 Internal Server Error");
-        httpd_resp_sendstr(msg->req, "VM error");
-        httpd_req_async_handler_complete(msg->req);
-        return;
-    }
-    
-    ESP_LOGI(TAG, "STACK: Before pushing function, stack top = %d", be_top(handler_vm));
-    
-    // Push the function stored in the message
-    be_pushnil(handler_vm);
-    bvalue *top = be_indexof(handler_vm, -1);
-    *top = msg->func;
-    
-    current_request = msg->req;
-    
-    // Push URI as argument
-    be_pushstring(handler_vm, current_request->uri);
-    
-    // Call the Berry function
-    int result = be_pcall(handler_vm, 1);
-    
-    // Log stack state after call
-    ESP_LOGI(TAG, "STACK: After be_pcall, stack top = %d, result = %d", be_top(handler_vm), result);
-    
-    // Check for errors
-    if (result != 0) {
-        const char *err_msg = be_tostring(handler_vm, -1);
-        ESP_LOGE(TAG, "Berry handler error: %s", err_msg);
-        
-        // Send error response
-        httpd_resp_set_status(msg->req, "500 Internal Server Error");
-        httpd_resp_sendstr(msg->req, (char*)err_msg);
-        
-        be_error_pop_all(handler_vm);  // Clear entire stack on error
-    } else {
-        // Get return value
-        const char *response = be_tostring(handler_vm, -1);
-        ESP_LOGI(TAG, "Request processed. Response: %s", response ? response : "(null)");
-        
-        // Send success response if httpserver.send() wasn't used
-        if (response != NULL) {
-            httpd_resp_set_type(msg->req, "text/html"); 
-            httpd_resp_sendstr(msg->req, response);
-        }
-        
-        // Pop the argument (which has been replaced by the return value)
-        be_pop(handler_vm, 1);
-    }
-    
-    // Clear current_request AFTER all processing is done
-    current_request = NULL;
-    
-    // Complete the async request - ALWAYS call this to release the request
-    httpd_req_async_handler_complete(msg->req);
-    
-    // Pop the function if we didn't encounter an error
-    if (result == 0) {
-        // Pop the function
-        be_pop(handler_vm, 1);  // Pop the function reference
-    } else {
-        ESP_LOGE(TAG, "Function parsing error: %d", result);
-    }
-    
-    // Log final stack state
-    ESP_LOGI(TAG, "STACK: Final state, stack top = %d", be_top(handler_vm));
-}
 
 // Initialize the message queue
 static bool init_http_queue() {
@@ -285,9 +183,8 @@ bool httpserver_queue_message(http_msg_type_t type, int client_id, const void *d
     }
     
     // Create a message to queue
-    http_queue_msg_t msg;
-    memset(&msg, 0, sizeof(msg));
-    
+    http_queue_msg_t msg = {0};;
+
     msg.type = type;
     msg.client_id = client_id;
     msg.user_data = user_data;
@@ -327,13 +224,13 @@ bool httpserver_queue_message(http_msg_type_t type, int client_id, const void *d
     }
     
     // Message successfully queued
-    ESP_LOGI(TAG, "Message queued successfully (type %d, client %d)", type, client_id);
-    ESP_LOGI(TAG, "DIAGNOSTIC: Queue has %d messages waiting", uxQueueMessagesWaiting(http_msg_queue));
+    ESP_LOGD(TAG, "Message queued successfully (type %d, client %d)", type, client_id);
+    ESP_LOGD(TAG, "DIAGNOSTIC: Queue has %d messages waiting", uxQueueMessagesWaiting(http_msg_queue));
     
     if (msg.data) {
-        ESP_LOGI(TAG, "QUEUE ITEM: type=%d, client=%d, data_len=%d, data_ptr=%p, user_data=%p", 
+        ESP_LOGD(TAG, "QUEUE ITEM: type=%d, client=%d, data_len=%d, data_ptr=%p, user_data=%p", 
                 msg.type, msg.client_id, (int)msg.data_len, msg.data, msg.user_data);
-        ESP_LOGI(TAG, "QUEUE DATA: '%s'", msg.data);
+        ESP_LOGD(TAG, "QUEUE DATA: '%s'", msg.data);
     }
     
     xSemaphoreGive(http_queue_mutex);
@@ -369,8 +266,7 @@ bool httpserver_queue_web_request(int handler_id, httpd_req_t *req, bvalue func)
     }
     
     // Create a message to queue
-    http_queue_msg_t msg;
-    memset(&msg, 0, sizeof(msg));
+    http_queue_msg_t msg = {0};
     
     msg.type = HTTP_MSG_WEB;
     msg.client_id = handler_id;
@@ -389,17 +285,124 @@ bool httpserver_queue_web_request(int handler_id, httpd_req_t *req, bvalue func)
     }
     
     // Message successfully queued
-    ESP_LOGI(TAG, "HTTP request queued successfully (type %d, handler %d)", msg.type, msg.client_id);
-    ESP_LOGI(TAG, "DIAGNOSTIC: Queue has %d messages waiting", uxQueueMessagesWaiting(http_msg_queue));
-    ESP_LOGI(TAG, "QUEUE ITEM: type=%d, client=%d, data_len=%d, data_ptr=%p, user_data=%p, req=%p", 
+    ESP_LOGD(TAG, "HTTP request queued successfully (type %d, handler %d)", msg.type, msg.client_id);
+    ESP_LOGD(TAG, "DIAGNOSTIC: Queue has %d messages waiting", uxQueueMessagesWaiting(http_msg_queue));
+    ESP_LOGD(TAG, "QUEUE ITEM: type=%d, client=%d, data_len=%d, data_ptr=%p, user_data=%p, req=%p", 
             msg.type, msg.client_id, (int)msg.data_len, msg.data, msg.user_data, msg.req);
     
     xSemaphoreGive(http_queue_mutex);
     return true;
 }
 
+
 // ------------------------------------------------------------------------
-// Berry function to process queued messages
+// Web request processing function
+// CONTEXT: Main Tasmota Task (Berry VM Context)
+// This function processes queued web requests in the main task context
+// ------------------------------------------------------------------------
+
+void be_httpserver_process_web_request(bvm *vm, http_queue_msg_t *msg) {
+  ESP_LOGD(TAG, "Processing web request: msg=%p", msg);
+  
+  if (!msg) {
+      ESP_LOGE(TAG, "Web request has NULL message handle");
+      return;
+  }
+  
+  ESP_LOGD(TAG, "Request details: req=%p, client_id=%d", msg->req, msg->client_id);
+  
+  if (!msg->req) {
+      ESP_LOGE(TAG, "Web request has NULL request handle");
+      return;
+  }
+  
+  // Get handler ID (passed in client_id field)
+  int handler_id = msg->client_id;
+  if (handler_id < 0 || handler_id >= HTTP_HANDLER_MAX || !http_handlers[handler_id].active) {
+      ESP_LOGE(TAG, "Invalid handler ID from queue: %d", handler_id);
+      httpd_resp_set_status(msg->req, "500 Internal Server Error");
+      httpd_resp_sendstr(msg->req, "Invalid handler ID");
+      httpd_req_async_handler_complete(msg->req);
+      return;
+  }
+  
+  ESP_LOGI(TAG, "Processing web request for URI: %s with handler %d", msg->req->uri, handler_id);
+  
+  // Get the Berry VM and handler function
+  bvm *handler_vm = http_handlers[handler_id].vm;
+  
+  if (handler_vm == NULL) {
+      ESP_LOGE(TAG, "Berry VM is NULL for handler %d", handler_id);
+      httpd_resp_set_status(msg->req, "500 Internal Server Error");
+      httpd_resp_sendstr(msg->req, "VM error");
+      httpd_req_async_handler_complete(msg->req);
+      return;
+  }
+  
+  ESP_LOGI(TAG, "STACK: Before pushing function, stack top = %d", be_top(handler_vm));
+  
+  // Push the function stored in the message
+  be_pushnil(handler_vm);
+  bvalue *top = be_indexof(handler_vm, -1);
+  *top = msg->func;
+  
+  current_request = msg->req;
+  
+  // Push URI as argument
+  be_pushstring(handler_vm, current_request->uri);
+  
+  // Call the Berry function
+  int result = be_pcall(handler_vm, 1);
+  
+  // Log stack state after call
+  ESP_LOGI(TAG, "STACK: After be_pcall, stack top = %d, result = %d", be_top(handler_vm), result);
+  
+  // Check for errors
+  if (result != 0) {
+      const char *err_msg = be_tostring(handler_vm, -1);
+      ESP_LOGE(TAG, "Berry handler error: %s", err_msg);
+      
+      // Send error response
+      httpd_resp_set_status(msg->req, "500 Internal Server Error");
+      httpd_resp_sendstr(msg->req, (char*)err_msg);
+      
+      be_error_pop_all(handler_vm);  // Clear entire stack on error
+  } else {
+      // Get return value
+      const char *response = be_tostring(handler_vm, -1);
+      ESP_LOGI(TAG, "Request processed. Response: %s", response ? response : "(null)");
+      
+      // Send success response if httpserver.send() wasn't used
+      if (response != NULL) {
+          httpd_resp_set_type(msg->req, "text/html"); 
+          httpd_resp_sendstr(msg->req, response);
+      }
+      
+      // Pop the argument (which has been replaced by the return value)
+      be_pop(handler_vm, 1);
+  }
+  
+  // Clear current_request AFTER all processing is done
+  current_request = NULL;
+  
+  // Complete the async request - ALWAYS call this to release the request
+  httpd_req_async_handler_complete(msg->req);
+  
+  // Pop the function if we didn't encounter an error
+  if (result == 0) {
+      // Pop the function
+      be_pop(handler_vm, 1);  // Pop the function reference
+  } else {
+      ESP_LOGE(TAG, "Function parsing error: %d", result);
+  }
+  
+  // Log final stack state
+  ESP_LOGI(TAG, "STACK: Final state, stack top = %d", be_top(handler_vm));
+}
+
+
+// ------------------------------------------------------------------------
+// Berry mapped C function to process queued messages
 // CONTEXT: Main Tasmota Task (Berry VM Context)
 // This function is registered to fast_loop() by the Berry app and is called
 // periodically to process queued HTTP/WebSocket messages from the ESP-IDF HTTP server
@@ -432,16 +435,16 @@ static int w_httpserver_process_queue(bvm *vm) {
             processed++;
             
             // Diagnostic logging for queue state
-            ESP_LOGI(TAG, "QUEUE ITEM: type=%d, client=%d, data_len=%d, data_ptr=%p, user_data=%p, req=%p", 
+            ESP_LOGD(TAG, "QUEUE ITEM: type=%d, client=%d, data_len=%d, data_ptr=%p, user_data=%p, req=%p", 
                     msg.type, msg.client_id, msg.data_len, msg.data, msg.user_data, msg.req);
             
             // Process message based on type
             switch (msg.type) {
                 case HTTP_MSG_WEBSOCKET:
                     if (msg.data) {
-                        ESP_LOGI(TAG, "QUEUE DATA: '%.*s'", msg.data_len, (char*)msg.data);
+                        ESP_LOGD(TAG, "QUEUE DATA: '%.*s'", msg.data_len, (char*)msg.data);
                     } else {
-                        ESP_LOGI(TAG, "QUEUE DATA: '' (connect/disconnect event)");
+                        ESP_LOGD(TAG, "QUEUE DATA: '' (connect/disconnect event)");
                     }
                     be_httpserver_process_websocket_msg(vm, msg.client_id, msg.data, msg.data_len);
                     // Free the data buffer we allocated
@@ -457,13 +460,12 @@ static int w_httpserver_process_queue(bvm *vm) {
                     break;
                     
                 case HTTP_MSG_WEB:
-                    ESP_LOGI(TAG, "Processing web request from queue");
+                    ESP_LOGD(TAG, "Processing web request from queue");
                     if (msg.req == NULL) {
                         ESP_LOGE(TAG, "CRITICAL ERROR: HTTP request pointer is NULL, skipping processing");
                         break;
                     }
                     be_httpserver_process_web_request(vm, &msg);
-                    // The request should already be completed by be_httpserver_process_web_request
                     break;
                     
                 default:
