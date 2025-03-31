@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Output of commands `GPIO` and `GPIOs` swapped
 
 ### Fixed
+- INA226 driver fixes (#23197)
 
 ### Removed
 

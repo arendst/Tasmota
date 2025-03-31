@@ -150,6 +150,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Fixed
 - Too many zeros in RCSwitch received data regression from v14.4.1.4 [#23050](https://github.com/arendst/Tasmota/issues/23050)
+- INA226 driver fixes [#23197](https://github.com/arendst/Tasmota/issues/23197)
 - ESP32 receive incomplete serial data over 128 bytes [#23156](https://github.com/arendst/Tasmota/issues/23156)
 - ESP32 intermittent exception on WiFi AP cannot be reached [#23115](https://github.com/arendst/Tasmota/issues/23115)
 - ESP32-C3 WiFi sleep [#23096](https://github.com/arendst/Tasmota/issues/23096)
