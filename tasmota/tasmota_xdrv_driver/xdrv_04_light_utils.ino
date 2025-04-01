@@ -365,6 +365,6 @@ uint16_t ledGammaFast(uint16_t v) {
   return ledGamma_internal(v, gamma_table_fast);
 }
 
-uint16_t leddGammaReverseFast(uint16_t vg) {
+uint16_t ledGammaReverseFast(uint16_t vg) {
   return ledGammaReverse_internal(vg, gamma_table_fast);
 }

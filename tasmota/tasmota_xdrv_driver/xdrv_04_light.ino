@@ -2054,7 +2054,7 @@ uint16_t fadeGamma(uint32_t channel, uint16_t v) {
 }
 uint16_t fadeGammaReverse(uint32_t channel, uint16_t vg) {
   if (isChannelGammaCorrected(channel)) {
-    return leddGammaReverseFast(vg);
+    return ledGammaReverseFast(vg);
   } else {
     return vg;
   }
