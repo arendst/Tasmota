@@ -1774,8 +1774,11 @@ void ArduinoOtaLoop(void)
 
 /********************************************************************************************/
 
-void SerialInput(void)
-{
+void SerialInput(void) {
+#ifdef USE_XYZMODEM
+  if (XYZModemActive(TXMP_TASCONSOLE)) { return; }
+#endif  // USE_XYZMODEM
+
   static uint32_t serial_polling_window = 0;
   static bool serial_buffer_overrun = false;
 
@@ -1810,6 +1813,12 @@ void SerialInput(void)
       Serial.flush();
       return;
     }
+
+/*-------------------------------------------------------------------------------------------*/
+
+#ifdef USE_XYZMODEM
+    if (XYZModemStart(TXMP_TASCONSOLE, TasmotaGlobal.serial_in_byte)) { return; }
+#endif  // USE_XYZMODEM
 
 /*-------------------------------------------------------------------------------------------*/
 
@@ -1923,11 +1932,19 @@ void SerialInput(void)
 String console_buffer = "";
 
 void TasConsoleInput(void) {
+#ifdef USE_XYZMODEM
+  if (XYZModemActive(TXMP_TASCONSOLE)) { return; }
+#endif  // USE_XYZMODEM
+
   static bool console_buffer_overrun = false;
 
   while (TasConsole.available()) {
     delay(0);
     char console_in_byte = TasConsole.read();
+
+#ifdef USE_XYZMODEM
+    if (XYZModemStart(TXMP_TASCONSOLE, console_in_byte)) { return; }
+#endif  // USE_XYZMODEM
 
     if (isprint(console_in_byte)) {                       // Any char between 32 and 127
       if (console_buffer.length() < INPUT_BUFFER_SIZE) {  // Add char to string if it still fits

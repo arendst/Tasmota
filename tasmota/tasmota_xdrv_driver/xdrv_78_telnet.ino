@@ -136,6 +136,10 @@ void TelnetGetLog(void) {
 /********************************************************************************************/
 
 void TelnetLoop(void) {
+#ifdef USE_XYZMODEM
+  if (XYZModemActive(TXMP_TELNET)) { return; }
+#endif  // USE_XYZMODEM
+
   // check for a new client connection
   if ((Telnet.server) && (Telnet.server->hasClient())) {
     WiFiClient new_client = Telnet.server->available();
@@ -181,6 +185,11 @@ void TelnetLoop(void) {
     while (Telnet.client.available()) {
       yield();
       uint8_t in_byte = Telnet.client.read();
+
+#ifdef USE_XYZMODEM
+      if (XYZModemWifiClientStart(&Telnet.client, in_byte)) { return; }
+#endif  // USE_XYZMODEM
+
       if (isprint(in_byte)) {                        // Any char between 32 and 127
         if (Telnet.in_byte_counter < Telnet.buffer_size -1) {  // Add char to string if it still fits
           Telnet.buffer[Telnet.in_byte_counter++] = in_byte;
