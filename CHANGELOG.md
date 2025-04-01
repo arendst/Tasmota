@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Output of commands `GPIO` and `GPIOs` swapped
-- Smoothen light gamma curve when using `Fade`
+- Smoothen light gamma curve when using `Fade` (#23230)
 
 ### Fixed
 - INA226 driver fixes (#23197)

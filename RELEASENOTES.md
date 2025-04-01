@@ -138,6 +138,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Changed
 - ESP32 Platform from 2025.02.30 to 2025.03.30, Framework (Arduino Core) from v3.1.1.250203 to v3.1.3.250302 and IDF from v5.3.2.250120 to 5.3.2.250228 [#23088](https://github.com/arendst/Tasmota/issues/23088)
 - Output of commands `GPIO` and `GPIOs` swapped
+- Smoothen light gamma curve when using `Fade` [#23230](https://github.com/arendst/Tasmota/issues/23230)
 - RCSwitch `RCSWITCH_SEPARATION_LIMIT` from 4100 to 3600
 - GPIOViewer from v1.6.1 to v1.6.2 (No functional change)
 - ESP8266 enable FTP for >= 4MB variants [#23120](https://github.com/arendst/Tasmota/issues/23120)
