@@ -1476,7 +1476,6 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
 
   #ifdef USE_SML_CRC 
   if ((mp->type=='s') && (mp->sml_crc_data) && (mp->so_sml_crc & 0x0fff)) {
-    unsigned long previousTime = millis();
     // New handling with CRC validation
     // Read data into the temporary buffer
     struct SML_CRC_DATA *cp = mp->sml_crc_data;
@@ -1571,9 +1570,6 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
           cp->teleendpos=-1;
           cp->telestartpos=-1;
           cp->crcbuff_pos = 0;
-          unsigned long now = millis();
-          AddLog(LOG_LEVEL_INFO, PSTR("SML: CRC processing took: %d"), now-previousTime);
-      
         }
       }
     }
