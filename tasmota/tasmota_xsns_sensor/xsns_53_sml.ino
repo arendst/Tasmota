@@ -3067,7 +3067,7 @@ struct METER_DESC *mp = &meter_desc[mnum];
       break;
 #endif // USE_SML_DECRYPT
 #ifdef USE_SML_CRC
-    case 'C': //1,=soC,<bufsize>,<crcmode>  example: 1,=soC,1024,0 (mode=x25,1=ccitt,16=autodetect)
+    case 'C': //1,=soC,<bufsize>,<crcmode>  example: 1,=soC,1024,0 (mode=x25,1=ccitt,15=autodetect)
       cp += 2;
       mp->so_sml_crc = strtol(cp, &cp, 10)&0x0fff;
       if (*cp == ',') {
