@@ -303,7 +303,9 @@ int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port, int32_t timeout
     setLastError(ERR_TCP_CONNECT);
     return 0;
   }
-  return _connectSSL(_domain.isEmpty() ? nullptr : _domain.c_str());
+  bool success = _connectSSL(_domain.isEmpty() ? nullptr : _domain.c_str());
+  if (!success) { stop(); }
+  return success;
 }
 #else // ESP32
 int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port) {
@@ -313,7 +315,9 @@ int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port) {
     setLastError(ERR_TCP_CONNECT);
     return 0;
   }
-  return _connectSSL(_domain.isEmpty() ? nullptr : _domain.c_str());
+  bool success = _connectSSL(_domain.isEmpty() ? nullptr : _domain.c_str());
+  if (!success) { stop(); }
+  return success;
 }
 #endif
 
@@ -570,6 +574,7 @@ int WiFiClientSecure_light::_run_until(unsigned target, bool blocking) {
     
     if (((int32_t)(millis() - (t + this->_loopTimeout)) >= 0)){
       DEBUG_BSSL("_run_until: Timeout\n");
+      setLastError(ERR_TLS_TIMEOUT);
       return -1;
     }
 
