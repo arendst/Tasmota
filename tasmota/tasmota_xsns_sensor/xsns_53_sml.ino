@@ -118,6 +118,10 @@
 #include "han_Parser.h"
 #endif
 
+#ifdef USE_SML_CRC
+#include "FastCRC.h"
+FastCRC16 FastCRC;
+#endif
 
 #ifndef SML_TRX_BUFF_SIZE
 #define SML_TRX_BUFF_SIZE 1024
@@ -194,6 +198,11 @@ on esp8266 6 filters
 A:
 decryption flags (8 bits)
 
+C:
+crc buffers and algorithm (available when compiled with USE_SML_CRC)
+a. crc buffer size (bytes), must hold one full file
+b. crc-algorithm: 0=x25, 1=ccitt, 15=autodetect
+e.g. 1,=soC,1024,15
 */
 
 //#define MODBUS_DEBUG
@@ -467,6 +476,20 @@ typedef union {
 #define SML_PREFIX_SIZE 8
 #endif
 
+#ifdef USE_SML_CRC
+struct SML_CRC_DATA {
+  uint8_t crcmode; //currently used mode
+  uint8_t crcdetectstate; //current auto-detection state
+  uint8_t *crcbuff; //buffer, only allocated on meter that have crc enabled
+  uint16_t crcbuff_pos; //current buffer wiring position
+  uint32_t crcfailcnt; //cnt bad-crc telegrams
+  uint32_t crcfinecnt; //cnt good-crc telegrams
+  uint32_t overflowcnt; //cnt good-crc telegrams
+  sint8_t telestartpos; //-1=still searching, 0=found
+  sint16_t teleendpos; //end of the telegram in the buffer or -1 when waiting for it
+};
+#endif // USE_SML_CRC
+
 struct METER_DESC {
   int8_t srcpin;
   uint8_t type;
@@ -490,6 +513,10 @@ struct METER_DESC {
 	uint16_t tout_ms;
   SO_FLAGS so_flags;
   char meter_id[METER_ID_SIZE];
+#ifdef USE_SML_CRC
+  uint16_t so_sml_crc = 0;
+  struct SML_CRC_DATA* sml_crc_data;
+#endif 
 #ifdef USE_SML_SPECOPT
   uint32_t so_obis1;
   uint32_t so_obis2;
@@ -498,7 +525,6 @@ struct METER_DESC {
   uint8_t so_fcode2;
   uint8_t so_bpos2;
 #endif // USE_SML_SPECOPT
-
 #ifdef ESP32
 #ifndef USE_ESP32_SW_SERIAL
   HardwareSerial *meter_ss;
@@ -554,6 +580,7 @@ struct METER_DESC {
   int8_t uart_index;
 #endif
 };
+
 
 
 
@@ -1413,6 +1440,36 @@ uint8_t ebus_CalculateCRC( uint8_t *Data, uint16_t DataLen ) {
    return Crc;
 }
 
+#ifdef USE_SML_CRC
+uint16_t calculateSMLbinCRC(const uint8_t *data, uint16_t length, uint8_t crcmode) {
+  uint16_t res=0;
+  switch (crcmode % 6) {
+    case 0:
+      res = FastCRC.x25(data, length);
+      break;
+    case 1:
+      res = FastCRC.ccitt(data, length);
+      break;
+    case 2:
+      res = FastCRC.kermit(data, length);
+      break;
+    case 3:
+      res = FastCRC.modbus(data, length);
+      break;
+    case 4:
+      res = FastCRC.xmodem(data, length);
+      break;
+    case 5:
+      res = FastCRC.mcrf4xx(data, length);
+      break;
+  }
+  if (crcmode>5) {
+    res = (res >> 8) | (res << 8); // swap bytes
+  }
+  return res;
+}
+#endif
+
 void sml_empty_receiver(uint32_t meters) {
   while (meter_desc[meters].meter_ss->available()) {
     meter_desc[meters].meter_ss->read();
@@ -1426,6 +1483,108 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
 
   if (!mp->sbuff) return;
 
+  #ifdef USE_SML_CRC 
+  if ((mp->type=='s') && (mp->sml_crc_data) && (mp->so_sml_crc & 0x0fff)) {
+    // New handling with CRC validation
+    // Read data into the temporary buffer
+    struct SML_CRC_DATA *cp = mp->sml_crc_data;
+    if (cp->crcbuff_pos < (mp->so_sml_crc & 0x0fff)) {
+        cp->crcbuff[cp->crcbuff_pos++] = mp->meter_ss->read();
+    } else {
+        // Buffer overflow, reset and log an error
+        cp->overflowcnt++;
+        AddLog(LOG_LEVEL_INFO, PSTR("SML: CRC buffer overflow, increase crc buffer size in your script modifying the line '1,soC=<buffer size>,<mode>'. Error occured %d times."),cp->overflowcnt);
+        //Hexdump(&cp->crcbuff[0], cp->crcbuff_pos);
+        if (cp->teleendpos==-1) {
+          if (cp->telestartpos==-1) {
+            AddLog(LOG_LEVEL_DEBUG, "SML: No start sequence was found.");
+          } else {
+            AddLog(LOG_LEVEL_DEBUG, "SML: Start sequence was found, but no stop sequence was found.");
+          }
+        }
+        cp->telestartpos=-1;
+        cp->teleendpos=-1;
+        cp->crcbuff_pos = 0;
+    }
+
+    // Check for start of message until it is found
+    if (cp->telestartpos==-1)  {
+      //check start of buffer for start sequence
+      if(cp->crcbuff_pos>=8) {
+        if (memcmp(&cp->crcbuff[0], "\x1B\x1B\x1B\x1B\x01\x01\x01\x01", 8) == 0 ) {
+          //found start sequence
+          cp->telestartpos=0;
+        } else {
+          memmove(&cp->crcbuff[0], &cp->crcbuff[1], cp->crcbuff_pos-1);
+          cp->crcbuff_pos--;
+        }
+
+      }
+    } else {
+      if (cp->teleendpos==-1)  {
+        if(cp->crcbuff_pos>=16 && memcmp(&cp->crcbuff[cp->crcbuff_pos-8], "\x1B\x1B\x1B\x1B\x1A", 5) == 0 )
+        {
+          //found end sequence
+          cp->teleendpos=cp->crcbuff_pos-1;
+          //AddLog(LOG_LEVEL_INFO, PSTR("SML: Found stop sequence at %d length %d"),mp->teleendpos,len);
+          //Validate CRC
+          uint16_t extracted_crc = (cp->crcbuff[cp->crcbuff_pos - 1] << 8) | cp->crcbuff[cp->crcbuff_pos - 2];
+          // Calculate the CRC for the data portion (excluding start, stop sequences, and CRC bytes)
+          uint16_t len=cp->teleendpos + 1;
+          //testing: fake some error for testing 
+          //if (random(0, 50) < 30) {cp->crcbuff[12]=99;}
+          uint16_t calculated_crc = calculateSMLbinCRC(&cp->crcbuff[0], len-2, cp->crcmode);
+          if (calculated_crc == extracted_crc) {
+            cp->crcfinecnt++;
+            //AddLog(LOG_LEVEL_INFO, PSTR("SML: CRC ok"));
+            if (len > mp->sbsiz) {
+              len = mp->sbsiz;
+            }
+            for (uint16_t i=8; i<=cp->teleendpos - 8 - mp->sbsiz; i++) {
+              if (cp->crcbuff[i] == SML_SYNC || ((mp->flag & NO_SYNC_FLG) != 0)) {
+                if (i+len > cp->teleendpos) len--;
+                memcpy(mp->sbuff, &cp->crcbuff[i],len);
+                SML_Decode(meters);
+              }
+            }
+          } else {
+            cp->crcfailcnt++;
+            // CRC is invalid, log an error
+            AddLog(LOG_LEVEL_INFO, PSTR("SML: CRC error: len: %d file-crc: %04x calc-crc: %04x failcnt: %d okcnt: %d mode: %d state: %d"), cp->teleendpos, extracted_crc, calculated_crc, cp->crcfailcnt, cp->crcfinecnt, cp->crcmode, cp->crcdetectstate);
+            //Hexdump(&cp->crcbuff[0], cp->crcbuff_pos);
+          }
+          //auto-detect crc-mode from fine/fail-cnt if autodetect is running
+          if (cp->crcdetectstate>0){ //state=0 autodetect running
+            AddLog(LOG_LEVEL_DEBUG, PSTR("SML: CRC autodetection in progress. state: %d. probing mode: %d failcnt: %d okcnt: %d"), cp->crcdetectstate, cp->crcmode, cp->crcfailcnt, cp->crcfinecnt );
+            //check how far we have come an decide how to go on
+            if (cp->crcfailcnt>3) { //seems bad choice
+              if (cp->crcdetectstate>25) {
+                AddLog(LOG_LEVEL_INFO, "SML: CRC autodetection failed, you can turn of CRC checks of via removing '1,soC=<bufsz>,<mode>' from your meter definition.");
+              } else {
+                cp->crcdetectstate++;
+              }
+              cp->crcmode++;
+              if(cp->crcmode>11) cp->crcmode=0; //mode 0-11 supported (6-11 are 1-5 with reversed byte order)
+              //reset counters and start over
+              cp->crcfailcnt=0;
+              cp->crcfinecnt=0;
+              AddLog(LOG_LEVEL_INFO, PSTR("SML: CRC mode auto-changed to: %d"), cp->crcmode);
+            }
+            if (cp->crcfinecnt>3) {
+              //fine, stop detecting now
+              AddLog(LOG_LEVEL_DEBUG, PSTR("SML: CRC autodetection ok after probe #%d selected mode: %d"), cp->crcdetectstate, cp->crcmode);
+              cp->crcdetectstate=0; 
+            }
+          }
+          cp->teleendpos=-1;
+          cp->telestartpos=-1;
+          cp->crcbuff_pos = 0;
+        }
+      }
+    }
+    return;
+  }
+#endif
 #ifdef USE_SML_DECRYPT
 	if (mp->use_crypt) {
 		if (mp->hp) {
@@ -1433,7 +1592,7 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
 			if (timediff > mp->tout_ms) {
 				mp->hp->len = 0;
 				mp->spos = 0;
-				AddLog(LOG_LEVEL_DEBUG, PSTR("SML: sync"));
+				AddLog(LOG_LEVEL_DEBUG, "SML: sync");
 			}
 			mp->lastms = millis();
 			uint16_t len;
@@ -2916,7 +3075,18 @@ struct METER_DESC *mp = &meter_desc[mnum];
       mp->crypflags = strtol(cp, &cp, 10);
       break;
 #endif // USE_SML_DECRYPT
-		case '6':
+#ifdef USE_SML_CRC
+    case 'C': //1,=soC,<bufsize>,<crcmode>  example: 1,=soC,1024,0 (mode=x25,1=ccitt,15=autodetect)
+      cp += 2;
+      mp->so_sml_crc = strtol(cp, &cp, 10)&0x0fff;
+      if (*cp == ',') {
+        cp++;
+        mp->so_sml_crc |= strtol(cp, &cp, 10)<<12;
+      }
+      AddLog(LOG_LEVEL_INFO, PSTR("SML: CRC specialoptions (=soC) so_sml_crc='%x'"),mp->so_sml_crc);
+      break;
+#endif // USE_SML_CRC
+case '6':
 			cp += 2;
 			mp->tout_ms = strtol(cp, &cp, 10);
       break;
@@ -3008,6 +3178,17 @@ void reset_sml_vars(uint16_t maxmeters) {
     mp->so_obis1 = 0;
     mp->so_obis2 = 0;
 #endif
+#ifdef USE_SML_CRC
+    AddLog(LOG_LEVEL_INFO, "SML: CRC reset");
+    struct SML_CRC_DATA* cp = mp->sml_crc_data;
+    if (cp && (mp->so_sml_crc & 0x0fff)) {
+      AddLog(LOG_LEVEL_INFO, "SML: CRC free buffer");
+      free(mp->sml_crc_data->crcbuff);
+      free(mp->sml_crc_data);
+      mp->sml_crc_data=0;
+    }
+    mp->so_sml_crc=0;
+#endif // USE_SML_CRC
     mp->so_flags.data = 0;
     // addresses a bug in meter DWS74
 #ifdef DWS74_BUG
@@ -3056,6 +3237,9 @@ void reset_sml_vars(uint16_t maxmeters) {
 		memset(mp->auth, 0, SML_CRYPT_SIZE);
 #endif
 #endif // USE_SML_DECRYPT
+
+
+
   }
 }
 
@@ -3369,7 +3553,39 @@ dddef_exit:
           // 1,=h—————————————
           if (!strncmp_P(lp1 + 1, PSTR(",=h"), 3) || !strncmp_P(lp1 + 1, PSTR(",=so"), 4)) {
             if (!strncmp_P(lp1 + 1, PSTR(",=so"), 4)) {
-							SpecOptions(lp1 + 5, mnum - 1);
+              SpecOptions(lp1 + 5, mnum - 1);
+
+#ifdef USE_SML_CRC
+              if (mmp->so_sml_crc & 0x0fff) {
+                AddLog(LOG_LEVEL_INFO, "SML: CRC active -> init");
+                if (mmp->sml_crc_data) {
+                  AddLog(LOG_LEVEL_INFO, PSTR("SML: CRC config change - reinit. Buffersize: %d mode: %d"), mmp->so_sml_crc & 0x0fff, (mmp->so_sml_crc & 0xf000)>>12);
+                  free(mmp->sml_crc_data->crcbuff);
+                  free(mmp->sml_crc_data);
+                }
+                struct SML_CRC_DATA* cp = (struct SML_CRC_DATA*)calloc(sizeof(struct SML_CRC_DATA), 1);
+                cp->telestartpos=-1;
+                cp->teleendpos=-1;
+                memory += sizeof(struct SML_CRC_DATA);
+                cp->crcbuff = (uint8_t*)calloc(mmp->so_sml_crc & 0x0fff, 1);
+                memory += (mmp->so_sml_crc & 0x0fff);
+                cp->crcmode=(mmp->so_sml_crc & 0xf000)>>12;
+                if (cp->crcmode == 15) {
+                  //start autodetection probe mode 0 first
+                  cp->crcmode=0; 
+                  cp->crcdetectstate=1;
+                  AddLog(LOG_LEVEL_INFO, "SML: CRC mode autodetect");
+                } else {
+                  //keep mode as given, turn off autodetect
+                  if (cp->crcmode > 11) cp->crcmode=0; 
+                  cp->crcdetectstate=0;
+                  AddLog(LOG_LEVEL_INFO, PSTR("SML: CRC mode %d"),cp->crcmode);
+                }
+                mmp->sml_crc_data=cp;
+              }
+#endif // USE_SML_CRC
+          
+
             }
           } else {
             sml_globs.maxvars++;
@@ -3399,7 +3615,7 @@ next_line:
     *tp = 0;
     sml_globs.meter_p = sml_globs.script_meter;
 
-    // set serial buffers
+    // set serial and crc buffers 
   for (uint32_t meters = 0; meters < sml_globs.meters_used; meters++ ) {
     struct METER_DESC *mp = &meter_desc[meters];
     if (mp->sbsiz) {
@@ -3407,7 +3623,6 @@ next_line:
 			memory += mp->sbsiz;
     }
   }
-
   // initialize hardware
   typedef void (*function)();
   uint8_t cindex = 0;

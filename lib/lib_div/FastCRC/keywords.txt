@@ -1,0 +1,59 @@
+#######################################
+# Syntax Coloring Map For FastCRC
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+FastCRC7	KEYWORD1
+FastCRC8	KEYWORD1
+FastCRC14	KEYWORD1
+FastCRC16	KEYWORD1
+FastCRC32	KEYWORD1
+CRC7	KEYWORD1
+CRC8	KEYWORD1
+CRC14	KEYWORD1
+CRC16	KEYWORD1
+CRC32	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+crc7	KEYWORD2
+crc7_upd	KEYWORD2
+ccitt	KEYWORD2
+ccitt_upd	KEYWORD2
+kermit	KEYWORD2
+kermit_upd	KEYWORD2
+mcrf4xx	KEYWORD2
+mcrf4xx_upd	KEYWORD2
+modbus	KEYWORD2
+modbus_upd	KEYWORD2
+xmodem	KEYWORD2
+xmodem_upd	KEYWORD2
+x25	KEYWORD2
+x25_upd	KEYWORD2
+update	KEYWORD2
+update_upd	KEYWORD2
+generic	KEYWORD2
+crc32	KEYWORD2
+crc32_upd	KEYWORD2
+cksum	KEYWORD2
+cksum_upd	KEYWORD2
+darc	KEYWORD2
+darc_upd	KEYWORD2
+gsm	KEYWORD2
+gsm_upd	KEYWORD2
+eloran	KEYWORD2
+eloran_upd	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+CRC_FLAG_NOREFLECT	LITERAL1
+CRC_FLAG_REFLECT	LITERAL1
+CRC_FLAG_XOR	LITERAL1
+CRC_FLAG_NOREFLECT_8	LITERAL1
+CRC_FLAG_REFLECT_SWAP	LITERAL1
