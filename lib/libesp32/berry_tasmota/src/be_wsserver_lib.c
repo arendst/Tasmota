@@ -1299,7 +1299,7 @@ esp_err_t websocket_disconnect_handler(httpd_handle_t hd, int sockfd) {
 
 // Module definition
 /* @const_object_info_begin
-module wsserver (scope: global) {
+module wsserver (scope: global, strings: weak) {
     CONNECT, int(WSSERVER_EVENT_CONNECT)
     DISCONNECT, int(WSSERVER_EVENT_DISCONNECT)
     MESSAGE, int(WSSERVER_EVENT_MESSAGE)

@@ -374,7 +374,7 @@ static int w_webfiles_serve_file(bvm *vm) {
 
 // Module definition
 /* @const_object_info_begin
-module webfiles (scope: global) {
+module webfiles (scope: global, strings: weak) {
     serve, func(w_webfiles_serve)
     serve_file, func(w_webfiles_serve_file)
     

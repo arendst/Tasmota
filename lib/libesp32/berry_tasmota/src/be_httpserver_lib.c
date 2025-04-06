@@ -828,7 +828,7 @@ bool httpserver_has_queue() {
 }
 
 /* @const_object_info_begin
-module httpserver (scope: global) {
+module httpserver (scope: global, strings: weak) {
     start, func(w_httpserver_start)
     on, func(w_httpserver_on)
     send, func(w_httpserver_send)
