@@ -40,6 +40,17 @@ be_extern_native_module(gpio);
 be_extern_native_module(display);
 be_extern_native_module(energy);
 be_extern_native_module(webserver);
+#ifdef USE_BERRY_HTTPSERVER
+be_extern_native_module(httpserver);
+
+#ifdef USE_BERRY_WSSERVER
+be_extern_native_module(wsserver);
+#endif // USE_BERRY_WSSERVER
+
+#ifdef USE_BERRY_WEBFILES
+be_extern_native_module(webfiles);
+#endif // USE_BERRY_WEBFILES
+#endif // USE_BERRY_HTTPSERVER
 be_extern_native_module(flash);
 be_extern_native_module(path);
 be_extern_native_module(unishox);
@@ -170,6 +181,15 @@ BERRY_LOCAL const bntvmodule_t* const be_module_table[] = {
 #ifdef USE_WEBSERVER
     &be_native_module(webserver),
 #endif // USE_WEBSERVER
+#ifdef USE_BERRY_HTTPSERVER
+    &be_native_module(httpserver),
+#ifdef USE_BERRY_WSSERVER
+    &be_native_module(wsserver),
+#endif // USE_BERRY_WSSERVER
+#ifdef USE_BERRY_WEBFILES
+    &be_native_module(webfiles),
+#endif // USE_BERRY_WEBFILES
+#endif // USE_BERRY_HTTPSERVER
 #ifdef USE_ZIGBEE
     &be_native_module(zigbee),
     &be_native_module(matter_zigbee),
