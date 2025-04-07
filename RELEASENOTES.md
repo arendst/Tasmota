@@ -128,6 +128,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry load `.tapp` files in `/.extensions/` then in `/` [#23113](https://github.com/arendst/Tasmota/issues/23113)
 - Berry `re.dump()` [#23162](https://github.com/arendst/Tasmota/issues/23162)
 - Berry `bytes.add()` now accepts 3-bytes values [#23200](https://github.com/arendst/Tasmota/issues/23200)
+- Berry expose `esp_http_server` for websockets [#23206](https://github.com/arendst/Tasmota/issues/23206)
 - Matter prepare for ICD cluster [#23158](https://github.com/arendst/Tasmota/issues/23158)
 - LVGL experimental mirroring of display on Web UI [#23041](https://github.com/arendst/Tasmota/issues/23041)
 - HASPmota autostart when `pages.jsonl` exists [#23181](https://github.com/arendst/Tasmota/issues/23181)
