@@ -17,7 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef ESP32
 #ifdef USE_WEBSERVER
 #ifdef USE_ALPINEJS
 
@@ -771,4 +770,3 @@ bool Xdrv126(uint32_t function)
 
 #endif // USE_ALPINEJS
 #endif // USE_WEBSERVER
-#endif // ESP32
