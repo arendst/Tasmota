@@ -69,6 +69,10 @@ const uint16_t HTTP_OTA_RESTART_RECONNECT_TIME = 10000;  // milliseconds - Allow
   #include "./html_uncompressed/HTTP_HEADER1_ES6.h"
 #endif
 
+#ifdef USE_ALPINEJS
+#include "include/alpinejs.h"
+#endif  // USE_ALPINEJS
+
 const char HTTP_SCRIPT_COUNTER[] PROGMEM =
   "var cn=180;"                           // seconds
   "function u(){"
@@ -664,6 +668,9 @@ void StartWebserver(int type) {
 //      Webserver->on(F("/u2"), HTTP_POST, HandleUploadDone, HandleUploadLoop);  // this call requires 2 functions so we keep a direct call
       Webserver->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);  // this call requires 2 functions so we keep a direct call
 #ifndef FIRMWARE_MINIMAL
+#ifdef USE_ALPINEJS
+      Webserver->on("/alpinejs", HTTP_ANY, HandleAlpinejsRequest);
+#endif // USE_ALPINEJS
       XdrvXsnsCall(FUNC_WEB_ADD_HANDLER);
 #endif  // Not FIRMWARE_MINIMAL
 
@@ -1931,6 +1938,25 @@ bool HandleRootStatusRefresh(void) {
 }
 
 #ifndef FIRMWARE_MINIMAL
+
+#ifdef USE_ALPINEJS
+/*********************************************************************************************\
+ * Serve AlpineJS 2.8.2 in gzip format
+ * Content-Encoding: gzip
+ * Content-Type: text/javascript
+\*********************************************************************************************/
+
+void HandleAlpinejsRequest(void) {
+  Webserver->client().flush();
+  WSHeaderSend();
+  Webserver->sendHeader(F("Content-Encoding"), F("gzip"));
+  Webserver->sendHeader(F("Vary"), F("Accept-Encoding"));
+  Webserver->setContentLength(sizeof(alpine_min_js_gz));
+  Webserver->send(200, PSTR("text/javascript"), "");
+  Webserver->sendContent(alpine_min_js_gz, sizeof(alpine_min_js_gz));
+  Webserver->client().stop();
+}
+#endif  // USE_ALPINEJS
 
 /*********************************************************************************************\
  * HandleConfiguration
