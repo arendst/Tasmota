@@ -360,7 +360,7 @@ void Ld2402Input(void) {
     uint32_t data_type;
     if (0 == byte_counter) {
       while (LD2402Serial->available() < 4) {
-        yield();
+        return;
       }
       for (uint32_t i = 3; i; i--) {
         header.buffer_32<<=8;
@@ -374,6 +374,7 @@ void Ld2402Input(void) {
     // I will get out of this mess with either:
     //  - Config/Engineering header match, set data_type/state (most likely/quickest further processing)
     //  - Known text match, process line, set state, clear byte count for next line (less likely but no further processing)
+    //  - Engineering footer drop line, clear byte count for next line counter
     //  - No header matches, continue, shift in the next character if/when available
     data_type = (LD2402_engineering_header == header.buffer_32) * 2;
     if (!data_type) { // not engineering line
@@ -401,9 +402,6 @@ void Ld2402Input(void) {
             }
             // only allow OFF and Distance lines to get here
             LD2402.state = LD2402.NORMAL;
-          } else { // engineering footer
-            DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Found engineering footer but have no header!"));
-            LD2402.state = LD2402.ENGINEERING;
           }
         } else { // error header
           byte_counter = LD2402Serial->readBytesUntil(0x0A, LD2402.buffer, LD2402_BUFFER_SIZE);
@@ -412,7 +410,7 @@ void Ld2402Input(void) {
           LD2402.state = LD2402.ERROR;
         }
         byte_counter = 0;
-        break;
+        return;
       }
     } else { // engineering header
       LD2402.state = LD2402.ENGINEERING;
@@ -423,12 +421,12 @@ void Ld2402Input(void) {
     uint32_t length = LD2402Serial->read();
     LD2402Serial->read();
     if (length > LD2402_BUFFER_SIZE) {
-      break;
+      return;
     }
 
     if (LD2402Serial->readBytes(LD2402.buffer, length) < length) {
       DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Wasn't able to get whole line!"));
-      break;
+      return;
     }
 
     uint32_union footer;
@@ -457,7 +455,7 @@ void Ld2402Input(void) {
         DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Foot %*_H"), 4, footer.buffer);
       }
     }
-    break;
+    return;
   }
   // If here then LD2402.byte_counter could still be partial correct for next loop
 }
@@ -533,8 +531,8 @@ void Ld2402WriteThresholds(uint8_t *thresholds, uint32_t cmnd_param) {
   uint32_t i = 0, val;
   for (uint32_t j = 0; j < LD2402_NUM_GATES; j++) {
     ArgV(strbuf, j+1);
-    param = CharToFloat(strbuf) / 10.0f;
-    val = exp10(param > 9.5f ? 9.5f : param);
+    param = CharToFloat(strbuf) / 10.00f;
+    val = exp10(param > 9.500f ? 9.500f : param);
     thresholds[i++] = val & 0x000000FF;
     thresholds[i++] = val >> 8 & 0x000000FF;
     thresholds[i++] = val >> 16 & 0x000000FF;
@@ -546,12 +544,11 @@ void Ld2402WriteThresholds(uint8_t *thresholds, uint32_t cmnd_param) {
 }
 
 void Ld2402ResponseAppendGates(uint8_t *energies) {
-  const float multiplier = 10.0f / 2.302585f;
   uint32_t i = 0;
   float val;
   while (i < LD2402_NUM_GATES * 4) {
     val = energies[i++] | energies[i++] << 8 | energies[i++] << 16 | energies[i++] << 24;
-    val = (val ? multiplier * logf(val) : 0);
+    val = (val ? 10.0f / 2.302585f * logf(val) : 0);  // 10.0f / logf(10) * logf(val)
     if (4 != i) { ResponseAppend_P(PSTR(",")); }
     ResponseAppend_P(PSTR("%2_f"), &val);
   }
@@ -565,9 +562,7 @@ void Ld2402ResponseAppendReport() {
   } else {
     ResponseAppend_P(PSTR("\"" D_JSON_DISTANCE "\":%d"), LD2402.detect_distance);
     if (LD2402.ENGINEERING == LD2402.state) {
-      ResponseAppend_P(PSTR(",\"Motion\":%s"), (1 == LD2402.person ? "true" : "false"));
-      ResponseAppend_P(PSTR(",\"Occupancy\":%s"), (LD2402.person ? "true" : "false"));
-      ResponseAppend_P(PSTR(",\"PowerInterference\":%d"), LD2402.pwr_interf);
+      ResponseAppend_P(PSTR(",\"Motion\":%s,\"Occupancy\":%s,\"PowerInterference\":%d"), (1 == LD2402.person ? "true" : "false"), (LD2402.person ? "true" : "false"), LD2402.pwr_interf);
       if (2 == LD2402.pwr_interf) { ResponseAppend_P(PSTR(",\"InterferenceGates\":\"%s\""), LD2402.gates); }
       ResponseAppend_P(PSTR(",\"MotionEnergies\":["));
       Ld2402ResponseAppendGates(LD2402.motion_energy);
@@ -739,12 +734,9 @@ void CmndLd2402Status(void) {
     Ld2402ResponseAppendReport();
     ResponseJsonEnd();
   } else if (2 == status_type) {
-    ResponseAppend_P(PSTR("FWR\":{\"Version\":\"%s\","),LD2402.version);  
-    ResponseAppend_P(PSTR("\"SerialNumber\":\"%s\"}"),LD2402.serial_number);  
+    ResponseAppend_P(PSTR("FWR\":{\"Version\":\"%s\",\"SerialNumber\":\"%s\"}"), LD2402.version, LD2402.serial_number);
   } else {
-    ResponseAppend_P(PSTR("\":{\"MaximumDistance\":%d,"), LD2402.max_distance);
-    ResponseAppend_P(PSTR("\"DisappearenceDelay\":%d,"), LD2402.disp_delay);
-    ResponseAppend_P(PSTR("\"MotionThresholds\":["));
+    ResponseAppend_P(PSTR("\":{\"MaximumDistance\":%d,\"DisappearenceDelay\":%d,\"MotionThresholds\":["), LD2402.max_distance, LD2402.disp_delay);
     Ld2402ResponseAppendGates(LD2402.motion_threshold);
     ResponseAppend_P(PSTR("],\"MicroThresholds\":["));
     Ld2402ResponseAppendGates(LD2402.micro_threshold);
