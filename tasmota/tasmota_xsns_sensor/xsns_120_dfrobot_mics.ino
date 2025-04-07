@@ -63,12 +63,11 @@ struct {
 } DFRobot_MICS_ch;
 
 void DFRobot_MICS_init(void) {
-  AddLog(LOG_LEVEL_INFO, PSTR("DFROBOT: howdy sir"));
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DFROBOT: init"));
   if (!DFRobot_MICS_begin) {
     DFRobot_MICS_begin = mics.begin();
   }
   else if (!DFRobot_MICS_wakeup) {
-    AddLog(LOG_LEVEL_INFO, PSTR("DFROBOT: howdy wakeup sir"));  
     uint8_t mode = mics.getPowerState();
         if(mode == SLEEP_MODE){
             mics.wakeUpMode();
@@ -76,12 +75,11 @@ void DFRobot_MICS_init(void) {
         }
       
       DFRobot_MICS_wakeup = true;
-      AddLog(LOG_LEVEL_INFO, PSTR("DFROBOT: howdy end wakeup sir"));  
   }
   else if (!DFRobot_MICS_warmup) {
-    AddLog(LOG_LEVEL_INFO, PSTR("DFROBOT: howdy wormup sir"));  
+    AddLog(LOG_LEVEL_INFO, PSTR("DFROBOT: is warming up it takes 3 minutes!"));  
     DFRobot_MICS_warmup = mics.warmUpTime(CALIBRATION_TIME);
-      AddLog(LOG_LEVEL_INFO, PSTR("DFROBOT: howdy end warmup sir"));
+      AddLog(LOG_LEVEL_INFO, PSTR("DFROBOT: is warmed up will start to send startistics"));
   }
   
 }
@@ -129,7 +127,6 @@ DFRobot_MICS_data.Nitrogen_Dioxide_b = 0x00;
 
 
 void DFRobot_MICS_show(bool json) {
-  AddLog(LOG_LEVEL_INFO, PSTR("DFROBOT: howdy show sir"));
   convertGasDataToString();
     if (json) {
       ResponseAppend_P(PSTR(
@@ -171,13 +168,10 @@ void DFRobot_MICS_show(bool json) {
         DFRobot_MICS_ch.Nitric_Oxide_b,
         DFRobot_MICS_ch.Nitrogen_Dioxide_b
     );
-      //  ResponseAppend_P(PSTR("}"));
-      AddLog(LOG_LEVEL_INFO, PSTR(",\"DFRobotwritng data}" ));
     }
 }
 
 void DFRobot_MICS_measure(void) {
-  AddLog(LOG_LEVEL_INFO, PSTR("DFROBOT: howdy measurement sir"));
 
   float tempFloat;  // Temporary variable for getGasData() (float)
   int8_t tempInt;   // Temporary variable for getGasExist() (int8_t)
