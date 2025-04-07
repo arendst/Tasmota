@@ -1953,7 +1953,7 @@ void HandleAlpinejsRequest(void) {
   Webserver->sendHeader(F("Vary"), F("Accept-Encoding"));
   Webserver->setContentLength(sizeof(alpine_min_js_gz));
   Webserver->send(200, PSTR("text/javascript"), "");
-  Webserver->sendContent(alpine_min_js_gz, sizeof(alpine_min_js_gz));
+  Webserver->sendContent_P(alpine_min_js_gz, sizeof(alpine_min_js_gz));
   Webserver->client().stop();
 }
 #endif  // USE_ALPINEJS
