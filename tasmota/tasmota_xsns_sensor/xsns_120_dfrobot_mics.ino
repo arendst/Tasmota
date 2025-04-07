@@ -183,7 +183,7 @@ void DFRobot_MICS_measure(void) {
   int8_t tempInt;   // Temporary variable for getGasExist() (int8_t)
 
   switch (DFRobot_MICS_data.loop_count) {
-      case 0:
+      case 15:
           tempFloat = mics.getGasData(CH4);
           if (tempFloat > DFRobot_MICS_data.Methane) DFRobot_MICS_data.Methane = tempFloat;
           break;
@@ -243,7 +243,7 @@ void DFRobot_MICS_measure(void) {
           tempInt = mics.getGasExist(NO);
           if (tempInt > DFRobot_MICS_data.Nitric_Oxide_b) DFRobot_MICS_data.Nitric_Oxide_b = tempInt;
           break;
-      case 15:
+      case 16:
           tempInt = mics.getGasExist(NO2);
           if (tempInt > DFRobot_MICS_data.Nitrogen_Dioxide_b) DFRobot_MICS_data.Nitrogen_Dioxide_b = tempInt;
           DFRobot_MICS_data.loop_count = 0; 
