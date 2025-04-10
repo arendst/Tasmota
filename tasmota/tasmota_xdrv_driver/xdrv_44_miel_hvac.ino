@@ -899,7 +899,7 @@ miel_hvac_cmnd_settemp(void)
 		update->temp05 = miel_hvac_deg2temp(degc);
 	}
 
-	ResponseCmndNumber(degc);
+	ResponseCmndFloat(degc);
 }
 
 static void
