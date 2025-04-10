@@ -11947,7 +11947,7 @@ be_local_class(lvh_page,
     be_str_weak(lvh_page)
 );
 extern const bclass be_class_HASPmota;
-// compact class 'HASPmota' ktab size: 124, total: 197 (saved 584 bytes)
+// compact class 'HASPmota' ktab size: 124, total: 198 (saved 592 bytes)
 static const bvalue be_ktab_class_HASPmota[124] = {
   /* K0   */  be_nested_str_weak(global),
   /* K1   */  be_nested_str_weak(introspect),
@@ -12667,7 +12667,7 @@ be_local_closure(class_HASPmota__load,   /* name */
       0x6018000C,  //  000D  GETGBL	R6	G12
       0x5C1C0A00,  //  000E  MOVE	R7	R5
       0x7C180200,  //  000F  CALL	R6	1
-      0x1C180D06,  //  0010  EQ	R6	R6	K6
+      0x18180D20,  //  0010  LE	R6	R6	K32
       0x741A0002,  //  0011  JMPT	R6	#0015
       0x94180B06,  //  0012  GETIDX	R6	R5	K6
       0x1C180D39,  //  0013  EQ	R6	R6	K57

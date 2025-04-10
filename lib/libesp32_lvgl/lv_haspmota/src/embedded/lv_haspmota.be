@@ -2970,7 +2970,8 @@ class HASPmota
     while f.tell() < f.size()                 # while we're not at the end of the file
       var line = f.readline()
 
-      if (size(line) == 0) || (line[0] == '#')    # skip empty lines and lines starting with '#'
+      # if size is '1', the line is considered as empty because it's a '\n' character
+      if (size(line) <= 1) || (line[0] == '#')    # skip empty lines and lines starting with '#'
         continue
       end
 

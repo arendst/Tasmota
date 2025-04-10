@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - INA226 driver fixes (#23197)
 - TLS increase timeout and fix crash (#23249)
+- Berry `readline` when a line is exactly 98 characters
 
 ### Removed
 

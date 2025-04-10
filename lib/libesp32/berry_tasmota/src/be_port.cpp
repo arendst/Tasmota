@@ -315,11 +315,11 @@ char* be_fgets(void *hfile, void *buffer, int size)
     uint8_t * buf = (uint8_t*) buffer;
     if (hfile != nullptr && buffer != nullptr && size > 0) {
         File * f_ptr = (File*) hfile;
-        int ret = f_ptr->readBytesUntil('\n', buf, size - 2);
-        // Serial.printf("be_fgets ret=%d\n", ret);
+        int ret = f_ptr->readBytesUntil('\n', buf, size - 1);
+        // Serial.printf("be_fgets size=%d ret=%d\n", size, ret);
         if (ret >= 0) {
             buf[ret] = 0;           // add string terminator
-            if (ret > 0 && ret < size - 2) {
+            if (ret < size - 1) {
                 buf[ret] = '\n';
                 buf[ret+1] = 0;
             }
