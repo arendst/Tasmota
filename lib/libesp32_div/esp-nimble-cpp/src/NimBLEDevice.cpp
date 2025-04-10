@@ -50,10 +50,6 @@
 #  include "nimble/nimble/host/services/gatt/include/services/gatt/ble_svc_gatt.h"
 #endif
 
-#if defined(ESP_PLATFORM) && defined(CONFIG_ENABLE_ARDUINO_DEPENDS)
-#  include "esp32-hal-bt.h"
-#endif
-
 #include "NimBLELog.h"
 
 static const char* LOG_TAG = "NimBLEDevice";
@@ -867,11 +863,6 @@ void NimBLEDevice::init(const std::string &deviceName) {
         int rc=0;
 #ifdef ESP_PLATFORM
         esp_err_t errRc = ESP_OK;
-
-#ifdef CONFIG_ENABLE_ARDUINO_DEPENDS
-        // make sure the linker includes esp32-hal-bt.c so Arduino init doesn't release BLE memory.
-        btStarted();
-#endif
 
         errRc = nvs_flash_init();
 
