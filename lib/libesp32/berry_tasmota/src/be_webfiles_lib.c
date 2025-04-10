@@ -160,10 +160,11 @@ static void set_content_type_from_file(httpd_req_t *req, const char *filepath) {
 
 static esp_err_t webfiles_handler(httpd_req_t *req) {
   char filepath[FILE_PATH_MAX];
-  char brotli_filepath[FILE_PATH_MAX];
+  char compressed_filepath[FILE_PATH_MAX];
   FILE *file = NULL;
   struct stat file_stat;
-  bool use_brotli = false;
+  bool use_compression = false;
+  const char* compression_type = NULL;  // Only "gzip" for for now
 
   // Process any URL query parameters if needed
   char *query = strchr(req->uri, '?');
@@ -184,20 +185,24 @@ static esp_err_t webfiles_handler(httpd_req_t *req) {
   
   ESP_LOGI(TAG, "Requested file: %s", filepath);
   
-  // Check if file is .html, .css, or .js and if a .br version exists
+  // Check if file is .html, .css, .js, or .svg and if a compressed version exists
   const char *ext = strrchr(filepath, '.');
   if (ext && (strcasecmp(ext, ".html") == 0 || strcasecmp(ext, ".css") == 0 ||
                strcasecmp(ext, ".js") == 0 || strcasecmp(ext, ".svg") == 0)) {
-      // Check if client supports Brotli
-      char accept_encoding[64];
-      if (httpd_req_get_hdr_value_str(req, "Accept-Encoding", accept_encoding, sizeof(accept_encoding)) == ESP_OK &&
-          strstr(accept_encoding, "br") != NULL) {
-          // Construct Brotli filepath
-          snprintf(brotli_filepath, sizeof(brotli_filepath), "%s.br", filepath);
-          if (stat(brotli_filepath, &file_stat) == 0 && S_ISREG(file_stat.st_mode)) {
-              use_brotli = true;
-              strcpy(filepath, brotli_filepath); // Use the .br file
-              ESP_LOGI(TAG, "Found Brotli version: %s", filepath);
+      
+      // Check what compression formats the client supports
+      char accept_encoding[64] = {0};
+      if (httpd_req_get_hdr_value_str(req, "Accept-Encoding", accept_encoding, sizeof(accept_encoding)) == ESP_OK) {
+          ESP_LOGI(TAG, "Client supports compression: %s", accept_encoding);
+          if (!use_compression && strstr(accept_encoding, "gzip") != NULL) {
+              // Construct Gzip filepath
+              snprintf(compressed_filepath, sizeof(compressed_filepath), "%s.gz", filepath);
+              if (stat(compressed_filepath, &file_stat) == 0 && S_ISREG(file_stat.st_mode)) {
+                  use_compression = true;
+                  compression_type = "gzip";
+                  strcpy(filepath, compressed_filepath); // Use the .gz file
+                  ESP_LOGI(TAG, "Found Gzip version: %s", filepath);
+              }
           }
       }
   }
@@ -224,20 +229,23 @@ static esp_err_t webfiles_handler(httpd_req_t *req) {
       return ESP_FAIL;
   }
   
-  // Set content type based on file extension (use original path for MIME type if Brotli)
+  // Set content type based on file extension (use original path for MIME type if compressed)
   char original_filepath[FILE_PATH_MAX];
-  if (use_brotli) {
-      // Strip .br for MIME type detection
+  if (use_compression) {
+      // Strip compression extension for MIME type detection
       strcpy(original_filepath, filepath);
-      original_filepath[strlen(original_filepath) - 3] = '\0'; // Remove ".br"
+      char* dot_pos = strrchr(original_filepath, '.');
+      if (dot_pos) {
+          *dot_pos = '\0';  // Remove compression extension
+      }
       set_content_type_from_file(req, original_filepath);
   } else {
       set_content_type_from_file(req, filepath);
   }
   
-  // Set Brotli headers if applicable
-  if (use_brotli) {
-      httpd_resp_set_hdr(req, "Content-Encoding", "br");
+  // Set compression headers if applicable
+  if (use_compression) {
+      httpd_resp_set_hdr(req, "Content-Encoding", compression_type);
       httpd_resp_set_hdr(req, "Vary", "Accept-Encoding");
   }
 
@@ -260,7 +268,7 @@ static esp_err_t webfiles_handler(httpd_req_t *req) {
   
   // Finish the HTTP response
   httpd_resp_send_chunk(req, NULL, 0);
-  ESP_LOGI(TAG, "File sent successfully (%d bytes, %s)", (int)total_sent, use_brotli ? "Brotli" : "uncompressed");
+  ESP_LOGI(TAG, "File sent successfully (%d bytes, %s)", (int)total_sent, use_compression ? compression_type : "uncompressed");
   
   return ESP_OK;
 }
