@@ -164,7 +164,7 @@ static esp_err_t webfiles_handler(httpd_req_t *req) {
   FILE *file = NULL;
   struct stat file_stat;
   bool use_compression = false;
-  const char* compression_type = NULL;  // Only "gzip" for for now
+  const char* compression_type = NULL;  // Only Gzip for now
 
   // Process any URL query parameters if needed
   char *query = strchr(req->uri, '?');
