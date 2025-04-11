@@ -15,11 +15,12 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Output of commands `GPIO` and `GPIOs` swapped
 - Smoothen light gamma curve when using `Fade` (#23230)
+- ESP32 Platform from 2025.03.30 to 2025.04.30, Framework (Arduino Core) from v3.1.3.250302 to v3.1.3.250411 and IDF from v5.3.2.250228 to 5.3.2.250403 (#23280)
 
 ### Fixed
 - INA226 driver fixes (#23197)
 - TLS increase timeout and fix crash (#23249)
-- Berry `readline` when a line is exactly 98 characters
+- Berry `readline` when a line is exactly 98 characters (#23276)
 
 ### Removed
 
