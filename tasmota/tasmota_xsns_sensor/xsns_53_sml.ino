@@ -113,6 +113,15 @@
 #define USE_SML_MEDIAN_FILTER
 #endif
 
+// on ESP32 binary SML CRC check compile enabled by default
+// adds 17936 bytes due to large crc tables
+#ifdef ESP32
+#ifndef NO_USE_SML_CRC
+#undef USE_SML_CRC
+#define USE_SML_CRC
+#endif
+#endif
+
 
 #ifdef USE_SML_DECRYPT
 #include "han_Parser.h"
@@ -248,8 +257,8 @@ private:
   HardwareSerial *hws;
 };
 
-
-void IRAM_ATTR sml_callRxRead(void *self) { ((SML_ESP32_SERIAL*)self)->rxRead(); };
+void IRAM_ATTR sml_callRxRead(void *self);
+void sml_callRxRead(void *self) { ((SML_ESP32_SERIAL*)self)->rxRead(); };
 
 SML_ESP32_SERIAL::SML_ESP32_SERIAL(uint32_t index) {
   uart_index = index;
@@ -373,7 +382,7 @@ void SML_ESP32_SERIAL::updateBaudRate(uint32_t baud) {
 }
 
 // no wait mode only 8N1  (or 7X1, obis only, ignoring parity)
-void IRAM_ATTR SML_ESP32_SERIAL::rxRead(void) {
+void SML_ESP32_SERIAL::rxRead(void) {
   uint32_t diff;
   uint32_t level;
 
@@ -1722,6 +1731,10 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
           if (mp->spos == 6 + tlen) {
             mp->spos = 0;
             memmove(&mp->sbuff[0], &mp->sbuff[6], mp->sbsiz - 6);
+#ifdef MODBUS_DEBUG
+            AddLog(LOG_LEVEL_INFO, PSTR("meter %d, receive index >> %d"), meters, mp->index);
+            Hexdump(mp->sbuff, 10);
+#endif
             SML_Decode(meters);
             if (mp->client) {
               mp->client->flush();
@@ -1737,7 +1750,7 @@ void sml_shift_in(uint32_t meters, uint32_t shard) {
         if (mlen > mp->sbsiz) mlen = mp->sbsiz;
         if (mp->spos >= mlen) {
 #ifdef MODBUS_DEBUG
-          AddLog(LOG_LEVEL_INFO, PSTR("receive index >> %d"), mp->index);
+          AddLog(LOG_LEVEL_INFO, PSTR("meter %d, receive index >> %d"), meters, mp->index);
           Hexdump(mp->sbuff, 10);
 #endif
           SML_Decode(meters);
@@ -1917,11 +1930,11 @@ double sml_get_obis_value(uint8_t *data) {
 				break;
 		}
 		case CosemTypeLong64Signed: {
-				out = ntohll(item->l64s.data);
+				out = ntohll_ams(item->l64s.data);
 				break;
 		}
 		case CosemTypeLong64Unsigned: {
-				out = ntohll(item->l64u.data);
+				out = ntohll_ams(item->l64u.data);
 				break;
 		}
 	}
@@ -2312,6 +2325,13 @@ void SML_Decode(uint8_t index) {
               mp += 2;
             } else if (!strncmp_P(mp, PSTR("ffffffff"), 8)) {
               uint32_t val = (cp[0]<<24) | (cp[1]<<16) | (cp[2]<<8) | (cp[3]<<0);
+              float *fp = (float*)&val;
+              ebus_dval = *fp;
+              mbus_dval = *fp;
+              mp += 8;
+              cp += 4;
+            } else if (!strncmp_P(mp, PSTR("FFFFFFFF"), 8)) {
+              uint32_t val = (cp[0]<<0) | (cp[1]<<0) | (cp[2]<<16) | (cp[3]<<24);
               float *fp = (float*)&val;
               ebus_dval = *fp;
               mbus_dval = *fp;
@@ -4662,7 +4682,7 @@ void SML_Send_Seq(uint32_t meter, char *seq) {
 #ifdef MODBUS_DEBUG
   uint8_t type = mp->type;
   if (!sml_globs.dump2log && (type == 'm' || type == 'M' || type == 'k')) {
-    AddLog(LOG_LEVEL_INFO, PSTR("transmit index >> %d"),sml_globs.mp[meter].index);
+    AddLog(LOG_LEVEL_INFO, PSTR("meter %d, transmit index >> %d"), meter, sml_globs.mp[meter].index);
     Hexdump(sbuff, slen);
   }
 #endif
