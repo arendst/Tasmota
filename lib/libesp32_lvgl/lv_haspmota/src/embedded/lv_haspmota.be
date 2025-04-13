@@ -2360,6 +2360,7 @@ class lvh_chart : lvh_obj
   var _ser1, _ser2
   # y_min/y_max contain the main range for y. Since LVGL does not have getters, we need to memorize on our side the lates tvalues
   var _y_min, _y_max
+  var _y2_min, _y2_max
   # h_div/v_div contain the horizontal and vertical divisions, we need to memorize values because both are set from same API
   var _h_div, _v_div
 
@@ -2367,6 +2368,8 @@ class lvh_chart : lvh_obj
     # default values from LVGL are 0..100
     self._y_min = 0
     self._y_max = 100
+    self._y2_min = 0
+    self._y2_max = 100
     # default values
     #define LV_CHART_HDIV_DEF 3
     #define LV_CHART_VDIV_DEF 5
@@ -2376,7 +2379,7 @@ class lvh_chart : lvh_obj
     self._lv_obj.set_update_mode(lv.CHART_UPDATE_MODE_SHIFT)
 
     self._ser1 = self._lv_obj.add_series(lv.color(0xEE4444), lv.CHART_AXIS_PRIMARY_Y)
-    self._ser2 = self._lv_obj.add_series(lv.color(0x44EE44), lv.CHART_AXIS_PRIMARY_Y)
+    self._ser2 = self._lv_obj.add_series(lv.color(0x44EE44), lv.CHART_AXIS_SECONDARY_Y)
   end
 
   def add_point(v)
@@ -2399,6 +2402,12 @@ class lvh_chart : lvh_obj
   def get_y_max()
     return self._y_max
   end
+  def get_y2_min()
+    return self._y2_min
+  end
+  def get_y2_max()
+    return self._y2_max
+  end
   def set_y_min(_y_min)
     self._y_min = _y_min
     self._lv_obj.set_range(lv.CHART_AXIS_PRIMARY_Y, self._y_min, self._y_max)
@@ -2406,6 +2415,14 @@ class lvh_chart : lvh_obj
   def set_y_max(_y_max)
     self._y_max = _y_max
     self._lv_obj.set_range(lv.CHART_AXIS_PRIMARY_Y, self._y_min, self._y_max)
+  end
+  def set_y2_min(_y2_min)
+    self._y2_min = _y2_min
+    self._lv_obj.set_range(lv.CHART_AXIS_SECONDARY_Y, self._y2_min, self._y2_max)
+  end
+  def set_y2_max(_y2_max)
+    self._y2_max = _y2_max
+    self._lv_obj.set_range(lv.CHART_AXIS_SECONDARY_Y, self._y2_min, self._y2_max)
   end
 
   def set_series1_color(color)
