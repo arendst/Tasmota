@@ -3460,6 +3460,10 @@ bool Xdrv04(uint32_t function)
       case FUNC_EVERY_50_MSECOND:
         LightAnimate();
         break;
+      case FUNC_EVERY_SECOND:
+        Light.update = true;
+        LightAnimate();
+        break;
 #ifdef USE_DEVICE_GROUPS
       case FUNC_DEVICE_GROUP_ITEM:
         LightHandleDevGroupItem();
