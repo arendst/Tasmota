@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 
 ### Breaking Changed
 - HASPmota added `y2_min` and `y2_max` to control the second series of `chart`
+- HASPmota default theme is now Tasmota-style
 
 ### Changed
 - Output of commands `GPIO` and `GPIOs` swapped
