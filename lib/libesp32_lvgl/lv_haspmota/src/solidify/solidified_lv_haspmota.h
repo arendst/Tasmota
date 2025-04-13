@@ -10069,118 +10069,40 @@ be_local_class(lvh_tab,
     })),
     be_str_weak(lvh_tab)
 );
-// compact class 'lvh_chart' ktab size: 25, total: 56 (saved 248 bytes)
-static const bvalue be_ktab_class_lvh_chart[25] = {
+// compact class 'lvh_chart' ktab size: 28, total: 73 (saved 360 bytes)
+static const bvalue be_ktab_class_lvh_chart[28] = {
   /* K0   */  be_nested_str_weak(_y_min),
   /* K1   */  be_nested_str_weak(_lv_obj),
-  /* K2   */  be_nested_str_weak(set_next_value),
-  /* K3   */  be_nested_str_weak(_ser1),
-  /* K4   */  be_nested_str_weak(add_point2),
-  /* K5   */  be_nested_str_weak(set_range),
-  /* K6   */  be_nested_str_weak(lv),
-  /* K7   */  be_nested_str_weak(CHART_AXIS_PRIMARY_Y),
-  /* K8   */  be_nested_str_weak(_y_max),
-  /* K9   */  be_nested_str_weak(_ser2),
-  /* K10  */  be_nested_str_weak(set_series_color),
-  /* K11  */  be_nested_str_weak(parse_color),
-  /* K12  */  be_const_int(0),
-  /* K13  */  be_nested_str_weak(_h_div),
-  /* K14  */  be_const_int(3),
-  /* K15  */  be_nested_str_weak(_v_div),
-  /* K16  */  be_nested_str_weak(set_update_mode),
-  /* K17  */  be_nested_str_weak(CHART_UPDATE_MODE_SHIFT),
-  /* K18  */  be_nested_str_weak(add_series),
-  /* K19  */  be_nested_str_weak(color),
-  /* K20  */  be_const_int(15615044),
-  /* K21  */  be_const_int(4517444),
-  /* K22  */  be_nested_str_weak(_val),
-  /* K23  */  be_nested_str_weak(add_point),
+  /* K2   */  be_nested_str_weak(set_range),
+  /* K3   */  be_nested_str_weak(lv),
+  /* K4   */  be_nested_str_weak(CHART_AXIS_PRIMARY_Y),
+  /* K5   */  be_nested_str_weak(_y_max),
+  /* K6   */  be_nested_str_weak(set_next_value),
+  /* K7   */  be_nested_str_weak(_ser2),
+  /* K8   */  be_nested_str_weak(set_series_color),
+  /* K9   */  be_nested_str_weak(_ser1),
+  /* K10  */  be_nested_str_weak(parse_color),
+  /* K11  */  be_nested_str_weak(_y2_max),
+  /* K12  */  be_nested_str_weak(CHART_AXIS_SECONDARY_Y),
+  /* K13  */  be_nested_str_weak(_y2_min),
+  /* K14  */  be_const_int(0),
+  /* K15  */  be_nested_str_weak(_h_div),
+  /* K16  */  be_const_int(3),
+  /* K17  */  be_nested_str_weak(_v_div),
+  /* K18  */  be_nested_str_weak(set_update_mode),
+  /* K19  */  be_nested_str_weak(CHART_UPDATE_MODE_SHIFT),
+  /* K20  */  be_nested_str_weak(add_series),
+  /* K21  */  be_nested_str_weak(color),
+  /* K22  */  be_const_int(15615044),
+  /* K23  */  be_const_int(4517444),
   /* K24  */  be_nested_str_weak(set_div_line_count),
+  /* K25  */  be_nested_str_weak(add_point2),
+  /* K26  */  be_nested_str_weak(_val),
+  /* K27  */  be_nested_str_weak(add_point),
 };
 
 
 extern const bclass be_class_lvh_chart;
-
-/********************************************************************
-** Solidified function: get_y_min
-********************************************************************/
-be_local_closure(class_lvh_chart_get_y_min,   /* name */
-  be_nested_proto(
-    2,                          /* nstack */
-    1,                          /* argc */
-    10,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    &be_ktab_class_lvh_chart,     /* shared constants */
-    be_str_weak(get_y_min),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 2]) {  /* code */
-      0x88040100,  //  0000  GETMBR	R1	R0	K0
-      0x80040200,  //  0001  RET	1	R1
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: add_point
-********************************************************************/
-be_local_closure(class_lvh_chart_add_point,   /* name */
-  be_nested_proto(
-    6,                          /* nstack */
-    2,                          /* argc */
-    10,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    &be_ktab_class_lvh_chart,     /* shared constants */
-    be_str_weak(add_point),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 6]) {  /* code */
-      0x88080101,  //  0000  GETMBR	R2	R0	K1
-      0x8C080502,  //  0001  GETMET	R2	R2	K2
-      0x88100103,  //  0002  GETMBR	R4	R0	K3
-      0x5C140200,  //  0003  MOVE	R5	R1
-      0x7C080600,  //  0004  CALL	R2	3
-      0x80000000,  //  0005  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: set_val2
-********************************************************************/
-be_local_closure(class_lvh_chart_set_val2,   /* name */
-  be_nested_proto(
-    5,                          /* nstack */
-    2,                          /* argc */
-    10,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    &be_ktab_class_lvh_chart,     /* shared constants */
-    be_str_weak(set_val2),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 4]) {  /* code */
-      0x8C080104,  //  0000  GETMET	R2	R0	K4
-      0x5C100200,  //  0001  MOVE	R4	R1
-      0x7C080400,  //  0002  CALL	R2	2
-      0x80000000,  //  0003  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
 
 /********************************************************************
 ** Solidified function: set_y_min
@@ -10201,11 +10123,11 @@ be_local_closure(class_lvh_chart_set_y_min,   /* name */
     ( &(const binstruction[ 9]) {  /* code */
       0x90020001,  //  0000  SETMBR	R0	K0	R1
       0x88080101,  //  0001  GETMBR	R2	R0	K1
-      0x8C080505,  //  0002  GETMET	R2	R2	K5
-      0xB8120C00,  //  0003  GETNGBL	R4	K6
-      0x88100907,  //  0004  GETMBR	R4	R4	K7
+      0x8C080502,  //  0002  GETMET	R2	R2	K2
+      0xB8120600,  //  0003  GETNGBL	R4	K3
+      0x88100904,  //  0004  GETMBR	R4	R4	K4
       0x88140100,  //  0005  GETMBR	R5	R0	K0
-      0x88180108,  //  0006  GETMBR	R6	R0	K8
+      0x88180105,  //  0006  GETMBR	R6	R0	K5
       0x7C080800,  //  0007  CALL	R2	4
       0x80000000,  //  0008  RET	0
     })
@@ -10232,8 +10154,8 @@ be_local_closure(class_lvh_chart_add_point2,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[ 6]) {  /* code */
       0x88080101,  //  0000  GETMBR	R2	R0	K1
-      0x8C080502,  //  0001  GETMET	R2	R2	K2
-      0x88100109,  //  0002  GETMBR	R4	R0	K9
+      0x8C080506,  //  0001  GETMET	R2	R2	K6
+      0x88100107,  //  0002  GETMBR	R4	R0	K7
       0x5C140200,  //  0003  MOVE	R5	R1
       0x7C080600,  //  0004  CALL	R2	3
       0x80000000,  //  0005  RET	0
@@ -10261,40 +10183,9 @@ be_local_closure(class_lvh_chart_set_series1_color,   /* name */
     &be_const_str_solidified,
     ( &(const binstruction[ 8]) {  /* code */
       0x88080101,  //  0000  GETMBR	R2	R0	K1
-      0x8C08050A,  //  0001  GETMET	R2	R2	K10
-      0x88100103,  //  0002  GETMBR	R4	R0	K3
-      0x8C14010B,  //  0003  GETMET	R5	R0	K11
-      0x5C1C0200,  //  0004  MOVE	R7	R1
-      0x7C140400,  //  0005  CALL	R5	2
-      0x7C080600,  //  0006  CALL	R2	3
-      0x80000000,  //  0007  RET	0
-    })
-  )
-);
-/*******************************************************************/
-
-
-/********************************************************************
-** Solidified function: set_series2_color
-********************************************************************/
-be_local_closure(class_lvh_chart_set_series2_color,   /* name */
-  be_nested_proto(
-    8,                          /* nstack */
-    2,                          /* argc */
-    10,                          /* varg */
-    0,                          /* has upvals */
-    NULL,                       /* no upvals */
-    0,                          /* has sup protos */
-    NULL,                       /* no sub protos */
-    1,                          /* has constants */
-    &be_ktab_class_lvh_chart,     /* shared constants */
-    be_str_weak(set_series2_color),
-    &be_const_str_solidified,
-    ( &(const binstruction[ 8]) {  /* code */
-      0x88080101,  //  0000  GETMBR	R2	R0	K1
-      0x8C08050A,  //  0001  GETMET	R2	R2	K10
+      0x8C080508,  //  0001  GETMET	R2	R2	K8
       0x88100109,  //  0002  GETMBR	R4	R0	K9
-      0x8C14010B,  //  0003  GETMET	R5	R0	K11
+      0x8C14010A,  //  0003  GETMET	R5	R0	K10
       0x5C1C0200,  //  0004  MOVE	R7	R1
       0x7C140400,  //  0005  CALL	R5	2
       0x7C080600,  //  0006  CALL	R2	3
@@ -10322,15 +10213,72 @@ be_local_closure(class_lvh_chart_set_y_max,   /* name */
     be_str_weak(set_y_max),
     &be_const_str_solidified,
     ( &(const binstruction[ 9]) {  /* code */
-      0x90021001,  //  0000  SETMBR	R0	K8	R1
+      0x90020A01,  //  0000  SETMBR	R0	K5	R1
       0x88080101,  //  0001  GETMBR	R2	R0	K1
-      0x8C080505,  //  0002  GETMET	R2	R2	K5
-      0xB8120C00,  //  0003  GETNGBL	R4	K6
-      0x88100907,  //  0004  GETMBR	R4	R4	K7
+      0x8C080502,  //  0002  GETMET	R2	R2	K2
+      0xB8120600,  //  0003  GETNGBL	R4	K3
+      0x88100904,  //  0004  GETMBR	R4	R4	K4
       0x88140100,  //  0005  GETMBR	R5	R0	K0
-      0x88180108,  //  0006  GETMBR	R6	R0	K8
+      0x88180105,  //  0006  GETMBR	R6	R0	K5
       0x7C080800,  //  0007  CALL	R2	4
       0x80000000,  //  0008  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_y2_max
+********************************************************************/
+be_local_closure(class_lvh_chart_set_y2_max,   /* name */
+  be_nested_proto(
+    7,                          /* nstack */
+    2,                          /* argc */
+    10,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    &be_ktab_class_lvh_chart,     /* shared constants */
+    be_str_weak(set_y2_max),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 9]) {  /* code */
+      0x90021601,  //  0000  SETMBR	R0	K11	R1
+      0x88080101,  //  0001  GETMBR	R2	R0	K1
+      0x8C080502,  //  0002  GETMET	R2	R2	K2
+      0xB8120600,  //  0003  GETNGBL	R4	K3
+      0x8810090C,  //  0004  GETMBR	R4	R4	K12
+      0x8814010D,  //  0005  GETMBR	R5	R0	K13
+      0x8818010B,  //  0006  GETMBR	R6	R0	K11
+      0x7C080800,  //  0007  CALL	R2	4
+      0x80000000,  //  0008  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_y_min
+********************************************************************/
+be_local_closure(class_lvh_chart_get_y_min,   /* name */
+  be_nested_proto(
+    2,                          /* nstack */
+    1,                          /* argc */
+    10,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    &be_ktab_class_lvh_chart,     /* shared constants */
+    be_str_weak(get_y_min),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 2]) {  /* code */
+      0x88040100,  //  0000  GETMBR	R1	R0	K0
+      0x80040200,  //  0001  RET	1	R1
     })
   )
 );
@@ -10353,39 +10301,42 @@ be_local_closure(class_lvh_chart_post_init,   /* name */
     &be_ktab_class_lvh_chart,     /* shared constants */
     be_str_weak(post_init),
     &be_const_str_solidified,
-    ( &(const binstruction[32]) {  /* code */
-      0x9002010C,  //  0000  SETMBR	R0	K0	K12
+    ( &(const binstruction[35]) {  /* code */
+      0x9002010E,  //  0000  SETMBR	R0	K0	K14
       0x54060063,  //  0001  LDINT	R1	100
-      0x90021001,  //  0002  SETMBR	R0	K8	R1
+      0x90020A01,  //  0002  SETMBR	R0	K5	R1
       0x90021B0E,  //  0003  SETMBR	R0	K13	K14
-      0x54060004,  //  0004  LDINT	R1	5
-      0x90021E01,  //  0005  SETMBR	R0	K15	R1
-      0x88040101,  //  0006  GETMBR	R1	R0	K1
-      0x8C040310,  //  0007  GETMET	R1	R1	K16
-      0xB80E0C00,  //  0008  GETNGBL	R3	K6
-      0x880C0711,  //  0009  GETMBR	R3	R3	K17
-      0x7C040400,  //  000A  CALL	R1	2
-      0x88040101,  //  000B  GETMBR	R1	R0	K1
-      0x8C040312,  //  000C  GETMET	R1	R1	K18
-      0xB80E0C00,  //  000D  GETNGBL	R3	K6
-      0x8C0C0713,  //  000E  GETMET	R3	R3	K19
-      0x58140014,  //  000F  LDCONST	R5	K20
-      0x7C0C0400,  //  0010  CALL	R3	2
-      0xB8120C00,  //  0011  GETNGBL	R4	K6
-      0x88100907,  //  0012  GETMBR	R4	R4	K7
-      0x7C040600,  //  0013  CALL	R1	3
-      0x90020601,  //  0014  SETMBR	R0	K3	R1
-      0x88040101,  //  0015  GETMBR	R1	R0	K1
-      0x8C040312,  //  0016  GETMET	R1	R1	K18
-      0xB80E0C00,  //  0017  GETNGBL	R3	K6
-      0x8C0C0713,  //  0018  GETMET	R3	R3	K19
-      0x58140015,  //  0019  LDCONST	R5	K21
-      0x7C0C0400,  //  001A  CALL	R3	2
-      0xB8120C00,  //  001B  GETNGBL	R4	K6
-      0x88100907,  //  001C  GETMBR	R4	R4	K7
-      0x7C040600,  //  001D  CALL	R1	3
-      0x90021201,  //  001E  SETMBR	R0	K9	R1
-      0x80000000,  //  001F  RET	0
+      0x54060063,  //  0004  LDINT	R1	100
+      0x90021601,  //  0005  SETMBR	R0	K11	R1
+      0x90021F10,  //  0006  SETMBR	R0	K15	K16
+      0x54060004,  //  0007  LDINT	R1	5
+      0x90022201,  //  0008  SETMBR	R0	K17	R1
+      0x88040101,  //  0009  GETMBR	R1	R0	K1
+      0x8C040312,  //  000A  GETMET	R1	R1	K18
+      0xB80E0600,  //  000B  GETNGBL	R3	K3
+      0x880C0713,  //  000C  GETMBR	R3	R3	K19
+      0x7C040400,  //  000D  CALL	R1	2
+      0x88040101,  //  000E  GETMBR	R1	R0	K1
+      0x8C040314,  //  000F  GETMET	R1	R1	K20
+      0xB80E0600,  //  0010  GETNGBL	R3	K3
+      0x8C0C0715,  //  0011  GETMET	R3	R3	K21
+      0x58140016,  //  0012  LDCONST	R5	K22
+      0x7C0C0400,  //  0013  CALL	R3	2
+      0xB8120600,  //  0014  GETNGBL	R4	K3
+      0x88100904,  //  0015  GETMBR	R4	R4	K4
+      0x7C040600,  //  0016  CALL	R1	3
+      0x90021201,  //  0017  SETMBR	R0	K9	R1
+      0x88040101,  //  0018  GETMBR	R1	R0	K1
+      0x8C040314,  //  0019  GETMET	R1	R1	K20
+      0xB80E0600,  //  001A  GETNGBL	R3	K3
+      0x8C0C0715,  //  001B  GETMET	R3	R3	K21
+      0x58140017,  //  001C  LDCONST	R5	K23
+      0x7C0C0400,  //  001D  CALL	R3	2
+      0xB8120600,  //  001E  GETNGBL	R4	K3
+      0x8810090C,  //  001F  GETMBR	R4	R4	K12
+      0x7C040600,  //  0020  CALL	R1	3
+      0x90020E01,  //  0021  SETMBR	R0	K7	R1
+      0x80000000,  //  0022  RET	0
     })
   )
 );
@@ -10393,9 +10344,9 @@ be_local_closure(class_lvh_chart_post_init,   /* name */
 
 
 /********************************************************************
-** Solidified function: get_y_max
+** Solidified function: get_y2_min
 ********************************************************************/
-be_local_closure(class_lvh_chart_get_y_max,   /* name */
+be_local_closure(class_lvh_chart_get_y2_min,   /* name */
   be_nested_proto(
     2,                          /* nstack */
     1,                          /* argc */
@@ -10406,10 +10357,10 @@ be_local_closure(class_lvh_chart_get_y_max,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     &be_ktab_class_lvh_chart,     /* shared constants */
-    be_str_weak(get_y_max),
+    be_str_weak(get_y2_min),
     &be_const_str_solidified,
     ( &(const binstruction[ 2]) {  /* code */
-      0x88040108,  //  0000  GETMBR	R1	R0	K8
+      0x8804010D,  //  0000  GETMBR	R1	R0	K13
       0x80040200,  //  0001  RET	1	R1
     })
   )
@@ -10418,11 +10369,11 @@ be_local_closure(class_lvh_chart_get_y_max,   /* name */
 
 
 /********************************************************************
-** Solidified function: set_val
+** Solidified function: set_series2_color
 ********************************************************************/
-be_local_closure(class_lvh_chart_set_val,   /* name */
+be_local_closure(class_lvh_chart_set_series2_color,   /* name */
   be_nested_proto(
-    5,                          /* nstack */
+    8,                          /* nstack */
     2,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
@@ -10431,14 +10382,17 @@ be_local_closure(class_lvh_chart_set_val,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     &be_ktab_class_lvh_chart,     /* shared constants */
-    be_str_weak(set_val),
+    be_str_weak(set_series2_color),
     &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
-      0x90022C01,  //  0000  SETMBR	R0	K22	R1
-      0x8C080117,  //  0001  GETMET	R2	R0	K23
-      0x5C100200,  //  0002  MOVE	R4	R1
-      0x7C080400,  //  0003  CALL	R2	2
-      0x80000000,  //  0004  RET	0
+    ( &(const binstruction[ 8]) {  /* code */
+      0x88080101,  //  0000  GETMBR	R2	R0	K1
+      0x8C080508,  //  0001  GETMET	R2	R2	K8
+      0x88100107,  //  0002  GETMBR	R4	R0	K7
+      0x8C14010A,  //  0003  GETMET	R5	R0	K10
+      0x5C1C0200,  //  0004  MOVE	R7	R1
+      0x7C140400,  //  0005  CALL	R5	2
+      0x7C080600,  //  0006  CALL	R2	3
+      0x80000000,  //  0007  RET	0
     })
   )
 );
@@ -10446,11 +10400,11 @@ be_local_closure(class_lvh_chart_set_val,   /* name */
 
 
 /********************************************************************
-** Solidified function: set_v_div_line_count
+** Solidified function: set_y2_min
 ********************************************************************/
-be_local_closure(class_lvh_chart_set_v_div_line_count,   /* name */
+be_local_closure(class_lvh_chart_set_y2_min,   /* name */
   be_nested_proto(
-    6,                          /* nstack */
+    7,                          /* nstack */
     2,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
@@ -10459,16 +10413,18 @@ be_local_closure(class_lvh_chart_set_v_div_line_count,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     &be_ktab_class_lvh_chart,     /* shared constants */
-    be_str_weak(set_v_div_line_count),
+    be_str_weak(set_y2_min),
     &be_const_str_solidified,
-    ( &(const binstruction[ 7]) {  /* code */
-      0x90021E01,  //  0000  SETMBR	R0	K15	R1
+    ( &(const binstruction[ 9]) {  /* code */
+      0x90021A01,  //  0000  SETMBR	R0	K13	R1
       0x88080101,  //  0001  GETMBR	R2	R0	K1
-      0x8C080518,  //  0002  GETMET	R2	R2	K24
-      0x8810010D,  //  0003  GETMBR	R4	R0	K13
-      0x8814010F,  //  0004  GETMBR	R5	R0	K15
-      0x7C080600,  //  0005  CALL	R2	3
-      0x80000000,  //  0006  RET	0
+      0x8C080502,  //  0002  GETMET	R2	R2	K2
+      0xB8120600,  //  0003  GETNGBL	R4	K3
+      0x8810090C,  //  0004  GETMBR	R4	R4	K12
+      0x8814010D,  //  0005  GETMBR	R5	R0	K13
+      0x8818010B,  //  0006  GETMBR	R6	R0	K11
+      0x7C080800,  //  0007  CALL	R2	4
+      0x80000000,  //  0008  RET	0
     })
   )
 );
@@ -10492,11 +10448,175 @@ be_local_closure(class_lvh_chart_set_h_div_line_count,   /* name */
     be_str_weak(set_h_div_line_count),
     &be_const_str_solidified,
     ( &(const binstruction[ 7]) {  /* code */
-      0x90021A01,  //  0000  SETMBR	R0	K13	R1
+      0x90021E01,  //  0000  SETMBR	R0	K15	R1
       0x88080101,  //  0001  GETMBR	R2	R0	K1
       0x8C080518,  //  0002  GETMET	R2	R2	K24
-      0x8810010D,  //  0003  GETMBR	R4	R0	K13
-      0x8814010F,  //  0004  GETMBR	R5	R0	K15
+      0x8810010F,  //  0003  GETMBR	R4	R0	K15
+      0x88140111,  //  0004  GETMBR	R5	R0	K17
+      0x7C080600,  //  0005  CALL	R2	3
+      0x80000000,  //  0006  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_y2_max
+********************************************************************/
+be_local_closure(class_lvh_chart_get_y2_max,   /* name */
+  be_nested_proto(
+    2,                          /* nstack */
+    1,                          /* argc */
+    10,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    &be_ktab_class_lvh_chart,     /* shared constants */
+    be_str_weak(get_y2_max),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 2]) {  /* code */
+      0x8804010B,  //  0000  GETMBR	R1	R0	K11
+      0x80040200,  //  0001  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: get_y_max
+********************************************************************/
+be_local_closure(class_lvh_chart_get_y_max,   /* name */
+  be_nested_proto(
+    2,                          /* nstack */
+    1,                          /* argc */
+    10,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    &be_ktab_class_lvh_chart,     /* shared constants */
+    be_str_weak(get_y_max),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 2]) {  /* code */
+      0x88040105,  //  0000  GETMBR	R1	R0	K5
+      0x80040200,  //  0001  RET	1	R1
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_val2
+********************************************************************/
+be_local_closure(class_lvh_chart_set_val2,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    10,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    &be_ktab_class_lvh_chart,     /* shared constants */
+    be_str_weak(set_val2),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 4]) {  /* code */
+      0x8C080119,  //  0000  GETMET	R2	R0	K25
+      0x5C100200,  //  0001  MOVE	R4	R1
+      0x7C080400,  //  0002  CALL	R2	2
+      0x80000000,  //  0003  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_val
+********************************************************************/
+be_local_closure(class_lvh_chart_set_val,   /* name */
+  be_nested_proto(
+    5,                          /* nstack */
+    2,                          /* argc */
+    10,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    &be_ktab_class_lvh_chart,     /* shared constants */
+    be_str_weak(set_val),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 5]) {  /* code */
+      0x90023401,  //  0000  SETMBR	R0	K26	R1
+      0x8C08011B,  //  0001  GETMET	R2	R0	K27
+      0x5C100200,  //  0002  MOVE	R4	R1
+      0x7C080400,  //  0003  CALL	R2	2
+      0x80000000,  //  0004  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: add_point
+********************************************************************/
+be_local_closure(class_lvh_chart_add_point,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    10,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    &be_ktab_class_lvh_chart,     /* shared constants */
+    be_str_weak(add_point),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 6]) {  /* code */
+      0x88080101,  //  0000  GETMBR	R2	R0	K1
+      0x8C080506,  //  0001  GETMET	R2	R2	K6
+      0x88100109,  //  0002  GETMBR	R4	R0	K9
+      0x5C140200,  //  0003  MOVE	R5	R1
+      0x7C080600,  //  0004  CALL	R2	3
+      0x80000000,  //  0005  RET	0
+    })
+  )
+);
+/*******************************************************************/
+
+
+/********************************************************************
+** Solidified function: set_v_div_line_count
+********************************************************************/
+be_local_closure(class_lvh_chart_set_v_div_line_count,   /* name */
+  be_nested_proto(
+    6,                          /* nstack */
+    2,                          /* argc */
+    10,                          /* varg */
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
+    0,                          /* has sup protos */
+    NULL,                       /* no sub protos */
+    1,                          /* has constants */
+    &be_ktab_class_lvh_chart,     /* shared constants */
+    be_str_weak(set_v_div_line_count),
+    &be_const_str_solidified,
+    ( &(const binstruction[ 7]) {  /* code */
+      0x90022201,  //  0000  SETMBR	R0	K17	R1
+      0x88080101,  //  0001  GETMBR	R2	R0	K1
+      0x8C080518,  //  0002  GETMET	R2	R2	K24
+      0x8810010F,  //  0003  GETMBR	R4	R0	K15
+      0x88140111,  //  0004  GETMBR	R5	R0	K17
       0x7C080600,  //  0005  CALL	R2	3
       0x80000000,  //  0006  RET	0
     })
@@ -10510,30 +10630,36 @@ be_local_closure(class_lvh_chart_set_h_div_line_count,   /* name */
 ********************************************************************/
 extern const bclass be_class_lvh_obj;
 be_local_class(lvh_chart,
-    6,
+    8,
     &be_class_lvh_obj,
-    be_nested_map(20,
+    be_nested_map(26,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(get_y_min, -1), be_const_closure(class_lvh_chart_get_y_min_closure) },
-        { be_const_key_weak(_h_div, 16), be_const_var(4) },
-        { be_const_key_weak(set_v_div_line_count, -1), be_const_closure(class_lvh_chart_set_v_div_line_count_closure) },
-        { be_const_key_weak(set_val2, -1), be_const_closure(class_lvh_chart_set_val2_closure) },
         { be_const_key_weak(set_y_min, -1), be_const_closure(class_lvh_chart_set_y_min_closure) },
         { be_const_key_weak(add_point2, -1), be_const_closure(class_lvh_chart_add_point2_closure) },
+        { be_const_key_weak(_v_div, -1), be_const_var(7) },
+        { be_const_key_weak(_ser1, -1), be_const_var(0) },
         { be_const_key_weak(_ser2, -1), be_const_var(1) },
-        { be_const_key_weak(_ser1, 11), be_const_var(0) },
-        { be_const_key_weak(_v_div, 18), be_const_var(5) },
+        { be_const_key_weak(_y2_min, 6), be_const_var(4) },
+        { be_const_key_weak(get_y2_max, -1), be_const_closure(class_lvh_chart_get_y2_max_closure) },
+        { be_const_key_weak(set_v_div_line_count, -1), be_const_closure(class_lvh_chart_set_v_div_line_count_closure) },
+        { be_const_key_weak(set_y_max, 24), be_const_closure(class_lvh_chart_set_y_max_closure) },
+        { be_const_key_weak(_y2_max, -1), be_const_var(5) },
+        { be_const_key_weak(_y_min, 2), be_const_var(2) },
         { be_const_key_weak(set_series2_color, -1), be_const_closure(class_lvh_chart_set_series2_color_closure) },
-        { be_const_key_weak(set_y_max, 1), be_const_closure(class_lvh_chart_set_y_max_closure) },
-        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_chart) },
-        { be_const_key_weak(_y_max, -1), be_const_var(3) },
-        { be_const_key_weak(get_y_max, -1), be_const_closure(class_lvh_chart_get_y_max_closure) },
-        { be_const_key_weak(_y_min, 13), be_const_var(2) },
+        { be_const_key_weak(set_y2_min, -1), be_const_closure(class_lvh_chart_set_y2_min_closure) },
+        { be_const_key_weak(set_h_div_line_count, 7), be_const_closure(class_lvh_chart_set_h_div_line_count_closure) },
+        { be_const_key_weak(_h_div, 5), be_const_var(6) },
+        { be_const_key_weak(_y_max, 25), be_const_var(3) },
+        { be_const_key_weak(set_series1_color, 22), be_const_closure(class_lvh_chart_set_series1_color_closure) },
+        { be_const_key_weak(set_val2, 19), be_const_closure(class_lvh_chart_set_val2_closure) },
+        { be_const_key_weak(get_y2_min, 9), be_const_closure(class_lvh_chart_get_y2_min_closure) },
         { be_const_key_weak(set_val, -1), be_const_closure(class_lvh_chart_set_val_closure) },
+        { be_const_key_weak(set_y2_max, 15), be_const_closure(class_lvh_chart_set_y2_max_closure) },
+        { be_const_key_weak(add_point, -1), be_const_closure(class_lvh_chart_add_point_closure) },
+        { be_const_key_weak(get_y_max, -1), be_const_closure(class_lvh_chart_get_y_max_closure) },
+        { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_chart) },
         { be_const_key_weak(post_init, -1), be_const_closure(class_lvh_chart_post_init_closure) },
-        { be_const_key_weak(add_point, 2), be_const_closure(class_lvh_chart_add_point_closure) },
-        { be_const_key_weak(set_series1_color, 0), be_const_closure(class_lvh_chart_set_series1_color_closure) },
-        { be_const_key_weak(set_h_div_line_count, -1), be_const_closure(class_lvh_chart_set_h_div_line_count_closure) },
+        { be_const_key_weak(get_y_min, -1), be_const_closure(class_lvh_chart_get_y_min_closure) },
     })),
     be_str_weak(lvh_chart)
 );

@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - AlpineJS 2.8.2 - optional for now (#23259)
 
 ### Breaking Changed
+- HASPmota added `y2_min` and `y2_max` to control the second series of `chart`
 
 ### Changed
 - Output of commands `GPIO` and `GPIOs` swapped
