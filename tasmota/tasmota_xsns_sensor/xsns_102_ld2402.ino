@@ -36,647 +36,523 @@
  * LD2402_SetMotion n,n1..n16 - set motion threshold values (16)
  * LD2402_SetMicro n,n1..n16 - set micro threshold values (16)
  * LD2402_Mode 0/1 - set device output mode 0-normal, 1-engineering
- * LD2402_Save - save the internal device motion/micro thresholds
+ * LD2402_Save - save the internal device motion/micro thresholds (fw 3.3.2+)
  * LD2402_AutoUpdate 3.0,2.0,3.0 - start autoupdate trigger,keep,micro magnification factor
+ * LD2402_AutoGain - start autogain process (fw 3.3.5+)
  * LD2402_Follow 0/n - reports every n seconds
  *
 \*********************************************************************************************/
 
 #define XSNS_102                        102
 
-// Max line length is in engineering mode at 141 characters
-#define LD2402_BUFFER_SIZE              141
-
 #define LD2402_NUM_GATES                0x10
+#define LD2402_ENG_LINE_LENGTH          0x83
+// Max line length is in engineering mode at 141 characters
+#define LD2402_BUFFER_SIZE              LD2402_ENG_LINE_LENGTH + 10
 
-// control commands
-#define LD2402_CMND_NOCMND              0x02
+// step values which are a combination of the number of bytes for the command arg
+// the command and the delay amount +1 before sending the command
+// for example: 0x6121, 0x6 byte argument, 0x12 command change mode, 0 ticks delay)
+enum LD2402_Steps {
+  LD2402_CMND_READ_VERSION=0x0001,          // get version, no arg, no delay
+  LD2402_CMND_AUTO_PROGRESS=0x00A9,         // get auto progress, no arg, 8 ticks delay (2 seconds)
+  LD2402_CMND_READ_SERIAL=0x0111,           // get serial, no arg, no delay
+  LD2402_CMND_AUTO_INTERFERENCE=0x0141,     // get auto interference, no arg, no delay
+  LD2402_CMND_AUTO_GAIN=0x0EE1,             // run auto gain, no arg, no delay
+  LD2402_CMND_AUTO_GAIN_COMPLETE=0x0F01,    // notify auto gain complete, no arg, no delay (special processing required)
+  LD2402_CMND_SAVE_PARAM=0x0FD1,            // save parameters, no arg, no delay (fw 3.3.2+)
+  LD2402_CMND_END_CONFIGURATION=0x0FE1,     // end configuration mode, no arg, no delay
+  LD2402_CMND_READ_PARAM=0x2081,            // get a parameter, 2-byte arg, no delay
+  LD2402_CMND_START_CONFIGURATION=0x2FF1,   // start configuration mode, 2-byte arg, no delay
+  LD2402_CMND_WRITE_PARAM=0x6071,           // set a parameter, 6-byte arg, no delay
+  LD2402_CMND_AUTO_THRESHOLD=0x6091,        // run auto threshold, 6-byte arg, no delay
+  LD2402_CMND_MODE=0x6121,                  // set normal/engineering mode, 6-byte arg, no delay
+  LD2402_CMND_Wait_Timeout=0xFFF9           // special timeout counter, never sent, 8 ticks delay (2 seconds)
+};
 
-// use command values << 4 (to allow delay space) as steps
-#define LD2402_CMND_READ_VERSION        0x00F
-#define LD2402_CMND_READ_SERIAL         0x11F
-#define LD2402_CMND_WRITE_PARAM         0x07F
-#define LD2402_CMND_READ_PARAM          0x08F
-#define LD2402_CMND_AUTO_THRESHOLD      0x09F
-#define LD2402_CMND_AUTO_PROGRESS       0x0AF
-#define LD2402_CMND_MODE                0x12F
-#define LD2402_CMND_AUTO_INTERFERENCE   0x14F
-#define LD2402_CMND_SAVE_PARAM          0xFDF
-#define LD2402_CMND_END_CONFIGURATION   0xFEF
-#define LD2402_CMND_START_CONFIGURATION 0xFFF
+// parameter types
+enum LD2402_Parameters {
+  LD2402_MAX_DISTANCE=0x01,
+  LD2402_DISP_DELAY=0x04,
+  LD2402_PWR_INTERFER=0x05,
+  LD2402_MOTION_START=0x10,
+  LD2402_MOTION_END=LD2402_MOTION_START+LD2402_NUM_GATES-1,
+  LD2402_MICRO_START=0x30,
+  LD2402_MICRO_END=LD2402_MICRO_START+LD2402_NUM_GATES-1,
+  LD2402_DONE
+};
 
-#define CMD_LD2402_TIMEOUT_DELAY        8
-#define CMD_LD2402_BOOT_DELAY           3
-#define CMD_LD2402_Done                 0x01
-#define CMD_LD2402_Wait_Timeout         (CMD_LD2402_Done+CMD_LD2402_TIMEOUT_DELAY+1)
+// engineering types
+enum LD2402_EngTypes {
+  LD2402_NO_PERSON,
+  LD2402_PERSON_MOVING,
+  LD2402_PERSON_STILL,
+  LD2402_PERSON_UNKNOWN
+};
 
-#define CMD_LD2402_END_DELAY            2
-#define CMD_LD2402_PROGRESS_DELAY       7
+// quick lookup stubs
+enum LD2402_Stubs {
+  LD2402_target_Error=0x4572726f,         // Erro
+  LD2402_target_OFF=0x4F46460D,           // OFF
+  LD2402_target_distance=0x64697374,      // dist
+  LD2402_engineering_footer=0xF8F7F6F5,
+  LD2402_engineering_header=0xF4F3F2F1,
+  LD2402_config_footer=0x04030201,
+  LD2402_config_header=0xFDFCFBFA
+};
 
-#define LD2402_CMND_PARAM_MAX_DISTANCE  0x01
-#define LD2402_CMND_PARAM_DISP_DELAY    0x04
-#define LD2402_CMND_PARAM_PWR_INTERFER  0x05
-#define LD2402_CMND_PARAM_MOTION_START  0x10
-#define LD2402_CMND_PARAM_MOTION_END    LD2402_CMND_PARAM_MOTION_START + LD2402_NUM_GATES - 1
-#define LD2402_CMND_PARAM_MICRO_START   0x30
-#define LD2402_CMND_PARAM_MICRO_END     LD2402_CMND_PARAM_MICRO_START + LD2402_NUM_GATES - 1
+// read buffer state
+enum LD2402_State {
+  LD2402_DISCONNECTED,          // no response in timeout period, disconnected
+  LD2402_ERROR,                 // buffer not used, just received an error message
+  LD2402_NORMAL,                // buffer not used, just received a distance/off message
+  LD2402_UNKNOWN,               // for when we are unsure what is in the buffer
+  LD2402_CONFIGURATION,         // buffer holds configuration data
+  LD2402_AUTOUPDATE,            // buffer holds configuration data, running autoupdate
+  LD2402_ENGINEERING            // buffer holds engineering data
+};
 
-#define LD2402_target_Error             0x4572726f
-#define LD2402_target_OFF               0x4F46460D
-#define LD2402_target_distance          0x64697374
-#define LD2402_config_header            0xFDFCFBFA
-#define LD2402_config_header_a          {0xFD, 0xFC, 0xFB, 0xFA}
-#define LD2402_engineering_header       0xF4F3F2F1
-#define LD2402_config_footer            0x04030201
-const uint8_t LD2402_config_footer_a[4] {0x04, 0x03, 0x02, 0x01};
-#define LD2402_engineering_footer       0xF8F7F6F5
+#define LD2402_config_send_stub         {(LD2402_config_header>>24), (LD2402_config_header>>16)&0xFF, (LD2402_config_header>>8)&0xFF, LD2402_config_header&0xFF, 0x00, 0x00, 0x00, 0x00}
+#define LD2402_config_footer_a          {(LD2402_config_footer>>24), (LD2402_config_footer>>16)&0xFF, (LD2402_config_footer>>8)&0xFF, LD2402_config_footer&0xFF}
 
 #include <TasmotaSerial.h>
 TasmotaSerial *LD2402Serial = nullptr;
 
-union uint32_union {
-  uint8_t buffer[4];
-  uint32_t buffer_32;
-};
+#define LD2402_MOTION_ENERGY      LD2402.buffer+3
+#define LD2402_MICRO_ENERGY       LD2402_MOTION_ENERGY+64
 
 struct {
   uint8_t *buffer;
-  uint8_t cmnd_param[8] = {};
-  uint32_t initializing;
-  uint32_t busy;
-  uint32_t step;
-  uint32_t next_step;
-  uint32_t sent_ack = LD2402_CMND_NOCMND;
+  uint8_t cmnd_param[6] = {};   // global cmnd args
+  uint16_t sent_cmnd;           // this is the step with the delay part shifted off (2 bytes)
+  uint32_t step;                // this is a combination of arg bytes, command and delay (4 bytes)
+  uint32_t saved_step;          // saved step to enable configuration mode (4 bytes)
 // Static params
-  char *version = NULL;
-  char *serial_number = NULL;
+  char *version;                // version and serial number are pulled at start to ensure connection
+  char *serial_number;
 // Detection Parameters
-  uint32_t max_distance;
-  uint32_t disp_delay;
-  uint8_t motion_threshold[LD2402_NUM_GATES * 4];
-  uint8_t micro_threshold[LD2402_NUM_GATES * 4];
-// Results
-  uint32_t pwr_interf;
-  char gates[20] = "FFFF FFFF FFFF FFFF";
+  uint8_t pwr_interf;           // detail power interference information
+  uint8_t max_distance;         // maximum detection distanmce
+  uint16_t disp_delay;          // delay before an empty area is empty
+  uint8_t *motion_threshold;    // allocated on first use, to save memory if not needed
+  char *gates;                  // power interference gate information
 // Report values
-  uint32_t person;
-  uint32_t detect_distance;
-  uint8_t motion_energy[LD2402_NUM_GATES * 4];
-  uint8_t micro_energy[LD2402_NUM_GATES * 4];
+  enum LD2402_EngTypes person;  // engineering line type (0 - no one, 1 - someone, 2 - someone still)
+  uint16_t detect_distance;
+// autoupdate
+  uint8_t auto_upd_progress;
+// endianess
+  uint8_t endian_offset;
 // program flow
+#ifdef LD2402_INCLUDE_FOLLOW
   uint32_t follow;
   uint32_t timer;
-  uint32_t report_type;
-// autoupdate
-  uint32_t auto_upd_progress;
-// endianess
-  uint32_t is_big;
+#endif // LD2402_INCLUDE_FOLLOW
+  enum LD2402_State state;
 } LD2402;
 
-#define D_LD2402        "LD2402"
-#define D_LD2402_LOG_PREFIX  "LD2: "
-#define D_BUSY_MSG      "{\"" D_LD2402 "\":\"Busy, wait till finished current command.\"}"
-#define D_COMMAND_PREFIX_JSON      "{\"" D_LD2402 "_%s\":"
-#define D_COMMAND_HELP_MSG         D_COMMAND_PREFIX_JSON "\"%s\"}"
+#define D_LD2402                  "LD2402"
+#define D_LD2402_LOG_PREFIX       "LD2: "
+#define D_BUSY_MSG                "{\"" D_LD2402 "\":\"Busy, wait till finished current command.\"}"
+#define D_DISCONNECTED_MSG        "{\"" D_LD2402 "\":\"Disconnected, reconnect device.\"}"
+#define D_COMMAND_PREFIX_JSON     "{\"" D_LD2402 "_%s\":"
+#define D_COMMAND_HELP_MSG        D_COMMAND_PREFIX_JSON "\"%s\"}"
 /********************************************************************************************/
-
-void Ld2402HandleEngineeringData(void) {
-  /* 
-  01        - 0 type
-  9100      - 1,2 distance
-  F6110000 6C0A0000 3D020000 A3020000 20030000 50060000 57030000 48010000 F3010000 3B010000 07010000 00010000 D2000000 23010000 F3000000 F4000000 - 3+ motion gates
-  B1270300 F30B0100 703E0000 8E120000 C5080000 3F100000 25030000 7A060000 7F080000 7E070000 FB050000 64040000 F3040000 2D040000 F9030000 43040000 - 67micro gates
-  */
-  LD2402.report_type = 1;
-  LD2402.detect_distance = LD2402.buffer[2] << 8 | LD2402.buffer[1];
-  LD2402.person = LD2402.buffer[0];
-  memcpy(LD2402.motion_energy, LD2402.buffer + 3, LD2402_NUM_GATES * 4);
-  memcpy(LD2402.micro_energy, LD2402.buffer + 67, LD2402_NUM_GATES * 4);
-}
 
 void Ld2402ToBinary(char *buffer, uint32_t byte_h, uint32_t byte_l) {
   uint32_t mask_01 = 0x01, mask_10 = 0x10;
   for (uint32_t i = 4; i; i--) {
-    buffer[i-1] = (byte_h & mask_10) ? '1' : '0';
-    buffer[i+4] = (byte_h & mask_01) ? '1' : '0';
-    buffer[i+9] = (byte_l & mask_10) ? '1' : '0';
-    buffer[i+14] = (byte_h & mask_01) ? '1' : '0';
+    buffer[i-1] = '0' + (byte_h & mask_10);
+    buffer[i+4] = '0' + (byte_h & mask_01);
+    buffer[i+9] = '0' + (byte_l & mask_10);
+    buffer[i+14] = '0' + (byte_l & mask_01);
     mask_10<<=1;
     mask_01<<=1;
   }
+  buffer[4] = buffer[9] = buffer[14] = ' ';
+  buffer[19] = 0x0;
+}
+
+// arguments: results buffer, current LD2402_Parameters
+// updates internal detection parameter
+// sets LD2402.step to:
+//  READ_PARAM, AUTO_INTERFERENCE, END_CONFIGURATION
+// returns next LD2402_Parameters
+uint8_t Ld2402ProcessParameter(uint8_t *buffer, uint8_t parameter) {
+  LD2402.step = LD2402_CMND_READ_PARAM;       // default is read next parameter
+  if (LD2402_MAX_DISTANCE == parameter) {
+    LD2402.max_distance = buffer[0];
+    return LD2402_DISP_DELAY;
+  } else if (LD2402_DISP_DELAY == parameter) {
+    LD2402.disp_delay = buffer[1] << 8 | buffer[0];
+    return LD2402_PWR_INTERFER;
+  } else if (LD2402_PWR_INTERFER == parameter) {
+    LD2402.pwr_interf = buffer[0];
+    if (2 == LD2402.pwr_interf) {
+      LD2402.step = LD2402_CMND_AUTO_INTERFERENCE;  // sidetrack through interference details
+    }
+    return LD2402_MOTION_START;
+  } else {
+    if (LD2402_MOTION_END >= parameter) {
+      memcpy(LD2402.motion_threshold + (parameter & 0x0F) * 4, buffer, 4);
+      if (LD2402_MOTION_END == parameter) {
+        return LD2402_MICRO_START;
+      }
+    } else if (LD2402_MICRO_END >= parameter) {
+      memcpy(LD2402.motion_threshold + (parameter & 0x1F) * 4, buffer, 4);
+      if (LD2402_MICRO_END == parameter) {
+        LD2402.step = LD2402_CMND_END_CONFIGURATION;    // end configuration
+      }
+    }
+  }
+  return parameter + 1;
 }
 
 void Ld2402HandleConfigData(void) {
-  uint32_t rcvd_ack = LD2402.buffer[0];
-  if (rcvd_ack != LD2402.sent_ack) {
-    return;
-  }
-  if (1 != LD2402.buffer[1]) {
-    // maybe do a retry?
+  uint32_t rcvd_cmnd = LD2402.buffer[0];
+  if (rcvd_cmnd != (LD2402.sent_cmnd&0x0FF)) {
+    DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Command mismatch sent 0x%03X"), LD2402.sent_cmnd);
     return;
   }
 
-  if (LD2402_CMND_READ_VERSION>>4 == rcvd_ack) {
-    // 00010000060076332E332E32
-    // 0   2   4   6
-    uint32_t len = LD2402.buffer[4];
-    free(LD2402.version);
-    LD2402.version = (char*)malloc(len+1);
-    memcpy(LD2402.version, LD2402.buffer + 6, len);
-    LD2402.version[len] = 0;
+  if ((1 == LD2402.buffer[1]) && // is this a response
+      (LD2402.buffer[2] || LD2402.buffer[3])) { // did the command fail?
+    DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Command 0x%03X received ACK: 0x%02X%02X"), LD2402.sent_cmnd, LD2402.buffer[3], LD2402.buffer[2]);
+    if (LD2402_CMND_END_CONFIGURATION>>4 != LD2402.sent_cmnd) {  // for non end configuration errors try to end configuration
+      LD2402.step = LD2402_CMND_END_CONFIGURATION;
+    } else {  // we are still receiving messages, might be in bootloader mode
+      LD2402.state = LD2402_UNKNOWN;
+    }
+    return;
+  }
+
+  LD2402.step = LD2402_CMND_END_CONFIGURATION;  // default is end configuration
+  switch (LD2402.sent_cmnd) {
+  case LD2402_CMND_START_CONFIGURATION>>4:      // run before configuration commands
+    LD2402.state = LD2402_CONFIGURATION;
+    LD2402.step = LD2402.saved_step+1;          // restore saved step to run
+    break;
+
+  case LD2402_CMND_END_CONFIGURATION>>4:        // run after configuration commands
+    LD2402.state = LD2402_UNKNOWN;
+    LD2402.step = 0;
+    return;
+  
+  case LD2402_CMND_READ_VERSION>>4: {           // run on initialization and reconnect
+    uint32_t length = LD2402.buffer[4];
+    LD2402.version = LD2402.version ? LD2402.version : (char*)malloc(length+1);
+    memcpy(LD2402.version, LD2402.buffer + 6, length);
+    LD2402.version[length] = 0;
     DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Rcvd %s"), LD2402.version);
-  } else if (LD2402_CMND_READ_SERIAL>>4 == rcvd_ack) {
-    // 1101000008004646464646464646
-    // 0   2   4   6
-    uint32_t len = LD2402.buffer[4];
-    free(LD2402.serial_number);
-    LD2402.serial_number = (char*)malloc(len+1);
-    memcpy(LD2402.serial_number, LD2402.buffer + 6, len);
-    LD2402.serial_number[len] = 0;
+    LD2402.step = LD2402_CMND_READ_SERIAL;      // process read serial
+    }break;
+  
+  case LD2402_CMND_READ_SERIAL>>4: {            // run after read version
+    uint32_t length = LD2402.buffer[4];
+    LD2402.serial_number = LD2402.serial_number ? LD2402.serial_number : (char*)malloc(length+1);
+    memcpy(LD2402.serial_number, LD2402.buffer + 6, length);
+    LD2402.serial_number[length] = 0;
     DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Rcvd %s"), LD2402.serial_number);
-  } else if (LD2402_CMND_READ_PARAM>>4 == rcvd_ack) {
-    // 
-    switch (LD2402.cmnd_param[0]) {
-    // common params
-    case LD2402_CMND_PARAM_MAX_DISTANCE:
-      LD2402.max_distance = LD2402.buffer[4];
-      break;
-    case LD2402_CMND_PARAM_DISP_DELAY:
-      LD2402.disp_delay = LD2402.buffer[5] << 8 | LD2402.buffer[4];
-      break;
-    case LD2402_CMND_PARAM_PWR_INTERFER:
-      LD2402.pwr_interf = LD2402.buffer[4];
-      break;
-    default:
-      switch (LD2402.cmnd_param[0] & 0xF0) {
-      // gate specific params
-      case LD2402_CMND_PARAM_MOTION_START:
-        memcpy(LD2402.motion_threshold + (LD2402.cmnd_param[0] & 0x0F) * 4, LD2402.buffer + 4, 4);
-        break;
-      case LD2402_CMND_PARAM_MICRO_START:
-        memcpy(LD2402.micro_threshold + (LD2402.cmnd_param[0] & 0x0F) * 4, LD2402.buffer + 4, 4);
-        break;
-      default:
-        break;
-      }
-      break;
-    }
-  } else if ((LD2402_CMND_AUTO_PROGRESS>>4) == rcvd_ack) {
-    // 0A0100003C00
-    // 0   2   4
-    LD2402.auto_upd_progress = LD2402.buffer[4];
-    LD2402.report_type = 3;
-  } else if (LD2402_CMND_AUTO_INTERFERENCE>>4 == rcvd_ack) {
-    // 140100000000
-    // 0   2   4
+    }break;
+
+  // here I am processing the last thing
+  case LD2402_CMND_READ_PARAM>>4:               // run from terminal command
+    LD2402.cmnd_param[0] = Ld2402ProcessParameter(LD2402.buffer + 4, LD2402.cmnd_param[0]);
+    break;
+
+  case LD2402_CMND_AUTO_INTERFERENCE>>4:         // sidetracked here through read param go back to it
+    free(LD2402.gates);
+    LD2402.gates = (char*)malloc(LD2402_NUM_GATES+3+1);  // number of gates, three spaces, ending /0
     Ld2402ToBinary(LD2402.gates, LD2402.buffer[5], LD2402.buffer[4]);
-  }
-  Ld2402OnDemand(rcvd_ack);
-}
+    LD2402.step = LD2402_CMND_READ_PARAM;       // process next read parameter
+    break;
+  
+  case LD2402_CMND_AUTO_THRESHOLD>>4:           // run from terminal command
+    LD2402.state = LD2402_AUTOUPDATE;
+    LD2402.step = LD2402_CMND_AUTO_PROGRESS;    // start auto progress reading
+    return;                                     // no point running command right away
 
-void Ld2402Input(void) {
-  uint32_t avail;
-  while ((avail = LD2402Serial->available()) && avail) {
-    static uint32_t byte_counter = 0;
-    static uint32_union header;
-    uint32_t data_type;
-    if (0 == byte_counter) {
-      while (LD2402Serial->available() < 4) {
-        yield();
-      }
-      for (uint32_t i = 3; i; i--) {
-        header.buffer_32<<=8;
-        header.buffer[LD2402.is_big*3] = LD2402Serial->read();
-      }
+  case LD2402_CMND_AUTO_PROGRESS>>4:            // run after auto threshold
+    LD2402.state = LD2402_AUTOUPDATE;
+    LD2402.auto_upd_progress = LD2402.buffer[4];
+    if (100 > LD2402.auto_upd_progress) {
+      LD2402.step = LD2402_CMND_AUTO_PROGRESS;
+      return;                                   // no point running command right away
     }
-    header.buffer_32<<=8;
-    header.buffer[LD2402.is_big*3] = LD2402Serial->read();
-    byte_counter = 4;
+    LD2402.state = LD2402_CONFIGURATION;
+    break;
 
-    // I will get out of this mess with either:
-    //  - Config/Engineering header match, set data_type (most likely/quickest further processing)
-    //  - Known text match, process line, clear byte count for next line (less likely but no further processing)
-    //  - No header matches, continue, shift in the next character if/when available
-    data_type = (LD2402_engineering_header == header.buffer_32) * 2;
-    if (!data_type) {
-      data_type = (LD2402_config_header == header.buffer_32) * 3;
-      if (!data_type) {
-        if (LD2402_target_Error != header.buffer_32) {
-          if (LD2402_target_OFF != header.buffer_32) {
-            if (LD2402_target_distance != header.buffer_32) {
-              if (LD2402_engineering_footer != header.buffer_32) {
-                continue;
-              }
-              DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Found engineering footer but have no header!"));
-            } else {
-              // process distance line
-              byte_counter = LD2402Serial->readBytesUntil(0x0A, LD2402.buffer, LD2402_BUFFER_SIZE);
-              LD2402.buffer[byte_counter] = 0;
-              DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Dist%s"), LD2402.buffer);
-              // ance:105\r\n
-              LD2402.detect_distance = atoi((char*) LD2402.buffer + 5);
-              LD2402.person = 2;
-            }
-          } else {
-            // process OFF line
-            LD2402.detect_distance = 0;
-            LD2402.person = 0;
-            LD2402Serial->read();
-          }
-          LD2402.report_type = 2;
-        } else {
-          // preocess Error line
-          byte_counter = LD2402Serial->readBytesUntil(0x0A, LD2402.buffer, LD2402_BUFFER_SIZE);
-          LD2402.buffer[byte_counter] = 0;
-          AddLog(LOG_LEVEL_INFO, PSTR(D_LD2402_LOG_PREFIX "Erro%s"), LD2402.buffer);
-          LD2402.report_type = 0;
-        }
-        byte_counter = 0;
-        break;
-      }
-    }
-    byte_counter = 0;
+  case LD2402_CMND_AUTO_GAIN>>4:                // run from terminal command
+    LD2402.sent_cmnd = LD2402_CMND_AUTO_GAIN_COMPLETE>>4;  // auto gain complete is just received no command is sent
+    LD2402.step = LD2402_CMND_Wait_Timeout;     // pretend as if we sent a command and wait for it
+    break;
 
-    while (LD2402Serial->available() < 2) { yield(); }
-    uint32_t length = LD2402Serial->read();
-    LD2402Serial->read();
-    if (length > LD2402_BUFFER_SIZE) {
-      break;
-    }
-
-    if (LD2402Serial->readBytes(LD2402.buffer, length) < length) {
-      DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Wasn't able to get whole line!"));
-      break;
-    }
-
-    uint32_union footer;
-    while (LD2402Serial->available() < 4) { yield(); }
-    for (uint32_t i = 4; i; i--) {
-      footer.buffer_32<<=8;
-      footer.buffer[LD2402.is_big*3] = LD2402Serial->read();
-    }
-
-    if (2 == data_type) {
-      if (LD2402_engineering_footer == footer.buffer_32) {
-        Ld2402HandleEngineeringData();
-      } else {
-        DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Head %*_H"), 4, header.buffer);
-        DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Eng %*_H"), length, LD2402.buffer);
-        DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "avail: %d, length %d"), avail, length);
-        DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Foot %*_H"), 4, footer.buffer);
-      }
-    } else {
-      if (LD2402_config_footer == footer.buffer_32) {
-        Ld2402HandleConfigData();
-      } else {
-        DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Head %*_H"), 4, header.buffer);
-        DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Cmd %*_H"), length, LD2402.buffer);
-        DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "avail: %d, length %d"), avail, length);
-        DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Foot %*_H"), 4, footer.buffer);
-      }
+  // here I am setting up to do the next thing
+  case LD2402_CMND_WRITE_PARAM>>4:              // run from terminal command
+    if (((LD2402.cmnd_param[0]&0xF0 == LD2402_MICRO_START) || (LD2402.cmnd_param[0]&0xF0 == LD2402_MOTION_START)) &&  // motion/micro threshold
+        (LD2402.cmnd_param[0]&0x0F != (LD2402_NUM_GATES-1))) {                                                        // but not the last one
+      Ld2402LoadLastParam(LD2402.cmnd_param[0]+1);
+      LD2402.step = LD2402_CMND_WRITE_PARAM;  // process next write parameter
+    } else if (LD2402_MAX_DISTANCE == LD2402.cmnd_param[0]) {
+      Ld2402LoadLastParam(LD2402_DISP_DELAY);
+      LD2402.step = LD2402_CMND_WRITE_PARAM;    // process next write parameter
     }
     break;
   }
-  // If here then LD2402.byte_counter could still be partial correct for next loop
+  Ld2402Every250MSecond();  // immediately send the next command queued
 }
 
-void Ld2402SendCommand(uint8_t command, uint32_t val_len = 0);
-void Ld2402SendCommand(uint8_t command, uint32_t val_len) {
-  uint8_t buffer[20] = LD2402_config_header_a;
+// prcess uart messages from the module
+// first section finds the start of a line, for simple text lines they are processed immediately
+// second section processes command responses and engineering data
+void Ld2402Input(void) {
+  typedef union { // put in function so it doesn't interfere with anything else
+    uint8_t buffer[4];
+    uint32_t buffer_32;
+  } uint32_u;
+  static uint32_t need_counter = 5;
+  static uint32_u stub;
+  uint32_t avail = LD2402Serial->available();
+  // quickly exit if we don't have what we need
+  if (avail < need_counter) { return; }
 
-  if (val_len) {
-    memcpy(buffer+8,LD2402.cmnd_param,val_len);
-  } else if (LD2402_CMND_START_CONFIGURATION == command) {
-    const uint8_t start_cmnd[2] = {0x01, 0x00};
-    memcpy(buffer+8, start_cmnd, 2);
-    val_len = 2;
+  // load stub only when we are start finding a new line
+  if (5 == need_counter) {
+    for (uint32_t i = 4; i; i--) {
+      stub.buffer_32<<=8;
+      stub.buffer[LD2402.endian_offset] = LD2402Serial->read();
+      avail--;
+    }
+    need_counter = 1;
   }
 
-  buffer[4] = val_len + 2;
-  buffer[6] = command;
-  memcpy(buffer+8+val_len, LD2402_config_footer_a, sizeof(LD2402_config_footer_a));
+  // first section
+  uint32_t test_m = millis();
+  while (1 == need_counter) {  // header processing is done when we no longer need just one byte
+    yield();  // WDT needs to be yielded to
+    switch (stub.buffer_32) {
+    default:  // if there are no matches power through the available bytes
+      DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Available: %d, Header: %*_H, Yield: %d"), avail, 4, stub.buffer, millis() - test_m);
+      if (!avail--) {
+        return;
+      }
+      stub.buffer_32<<=8;
+      stub.buffer[LD2402.endian_offset] = LD2402Serial->read();
+      continue;
 
-  DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Send %*_H"), val_len + 12, buffer);
-  LD2402.sent_ack = command;
-  LD2402Serial->flush();
-  LD2402Serial->write(buffer, val_len + 12);
+    case LD2402_engineering_footer:
+    case LD2402_config_footer:
+      goto finished_line;
+    
+    case LD2402_target_OFF:
+      LD2402.detect_distance = 0;
+      LD2402.person = LD2402_NO_PERSON;
+      LD2402Serial->read();
+      DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "OFF"));
+      LD2402.state = LD2402_NORMAL;
+      goto finished_line;
+    
+    case LD2402_target_Error:
+      need_counter = LD2402Serial->readBytesUntil(0x0A, LD2402.buffer, LD2402_BUFFER_SIZE);
+      LD2402.buffer[need_counter] = 0;
+      DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Erro%s"), LD2402.buffer);
+      LD2402.state = LD2402_ERROR;
+      goto finished_line;
+
+    case LD2402_target_distance:
+      need_counter = LD2402Serial->readBytesUntil(0x0A, LD2402.buffer, LD2402_BUFFER_SIZE);
+      LD2402.buffer[need_counter] = 0;
+      DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Dist%s"), LD2402.buffer);
+      // ance:105\r\n
+      LD2402.detect_distance = atoi((char*) LD2402.buffer + 5);
+      LD2402.person = LD2402_PERSON_STILL;
+      LD2402.state = LD2402_NORMAL;
+      goto finished_line;
+
+    case LD2402_engineering_header:
+    case LD2402_config_header:
+      need_counter = 5 + LD2402Serial->read(); // unused length byte + length + footer
+      if (need_counter > LD2402_ENG_LINE_LENGTH+5) {
+        DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Line length %d too long for buffer"), need_counter - 5);
+        goto finished_line;
+      }
+      break;
+    }
+  }
+
+  // make sure we have everything we need waiting for us
+  // becuase the need counter will always be greater than
+  // 5 bytes we can return from here and will come back
+  // when we have all that we need
+  if (LD2402Serial->available() < need_counter) { return; }
+  need_counter -= 5;
+
+  // second section
+  LD2402Serial->read();                             // second byte of length, unused
+  LD2402Serial->readBytes(LD2402.buffer, need_counter);  // main information
+  LD2402Serial->readBytes(stub.buffer, 4);          // footer validation
+  LD2402.state = LD2402_UNKNOWN;                    // buffer used for motion energies has been overwritten
+  if (LD2402_ENG_LINE_LENGTH == need_counter) {     // only engineering lines are this long
+    DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Eng %*_H"), need_counter, LD2402.buffer);
+    //  reverse order, last digit is most likely to be "bad"
+    if (((uint8_t)(LD2402_engineering_footer&0xFF) == stub.buffer[3]) && ((uint8_t)(LD2402_engineering_footer>>8&0xFF) == stub.buffer[2]) &&
+        ((uint8_t)(LD2402_engineering_footer>>16&0xFF) == stub.buffer[1]) && ((uint8_t)(LD2402_engineering_footer>>24&0xFF) == stub.buffer[0])) {
+      LD2402.state = LD2402_ENGINEERING;
+      LD2402.detect_distance = LD2402.buffer[2] << 8 | LD2402.buffer[1];
+      LD2402.person = (enum LD2402_EngTypes)LD2402.buffer[0];
+    } else {
+      DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "avail: %d, length %d"), avail, need_counter);
+      DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Foot %*_H, 0x%08X"), 4, stub.buffer, stub.buffer_32);
+    }
+  } else {
+    DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Ret %*_H"), need_counter, LD2402.buffer);
+    //  reverse order, last digit is most likely to be "bad"
+    if (((uint8_t)(LD2402_config_footer&0xFF) == stub.buffer[3]) && ((uint8_t)(LD2402_config_footer>>8&0xFF) == stub.buffer[2]) &&
+        ((uint8_t)(LD2402_config_footer>>16&0xFF) == stub.buffer[1]) && ((uint8_t)(LD2402_config_footer>>24&0xFF) == stub.buffer[0])) {
+      LD2402.state = LD2402_CONFIGURATION;
+      Ld2402HandleConfigData();
+    } else {
+      DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "avail: %d, length %d"), avail, need_counter);
+      DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Foot %*_H, 0x%08X"), 4, stub.buffer, stub.buffer_32);
+    }
+  }
+// finished processing current line
+finished_line:
+  need_counter = 5;
 }
 
 void Ld2402LoadLastParam(uint32_t curr_param) {
-  memset(LD2402.cmnd_param, 0x00, 6);
+  memset(LD2402.cmnd_param + 2, 0x00, 4);
   LD2402.cmnd_param[0] = curr_param;
-  switch (curr_param) {
-  case LD2402_CMND_PARAM_MAX_DISTANCE:
+  if (LD2402_MAX_DISTANCE == curr_param) {
     LD2402.cmnd_param[2] = LD2402.max_distance;
-    break;
-  
-  case LD2402_CMND_PARAM_DISP_DELAY:
+  } else if (LD2402_DISP_DELAY == curr_param) {
     LD2402.cmnd_param[2] = LD2402.disp_delay & 0x00FF;
     LD2402.cmnd_param[3] = LD2402.disp_delay >> 8;
-    break;
-  
-  default:
-    switch (curr_param & 0xF0) {
-    case LD2402_CMND_PARAM_MOTION_START:
-      memcpy(LD2402.cmnd_param + 2, LD2402.motion_threshold + (curr_param & 0x0F) * 4, 4);
-      break;
-    
-    case LD2402_CMND_PARAM_MICRO_START:
-      memcpy(LD2402.cmnd_param + 2, LD2402.micro_threshold + (curr_param & 0x0F) * 4, 4);
-      break;
-    
-    default:
-      break;
-    }
-    break;
+  } else if (LD2402_MOTION_END >= curr_param) {
+    memcpy(LD2402.cmnd_param + 2, LD2402.motion_threshold + (curr_param & 0x0F) * 4, 4);
+  } else if (LD2402_MICRO_END >= curr_param) {
+    memcpy(LD2402.cmnd_param + 2, LD2402.motion_threshold + (curr_param & 0x1F) * 4, 4);
   }
-}
-
-void Ld2402WriteThresholds(uint8_t *thresholds, uint32_t cmnd_param) {
-  if (LD2402.busy) {
-    Response_P(PSTR(D_BUSY_MSG));
-    return;
-  }
-  if (ArgC() != 16) {
-    Response_P(PSTR("Use LS2410S_Set{Motion/Micro} 1,2,..16 (values are dB <= 95.00"));
-    return;
-  }
-  char strbuf[24];
-  float param;
-  uint32_t i = 0, val;
-  for (uint32_t j = 0; j < LD2402_NUM_GATES; j++) {
-    ArgV(strbuf, j+1);
-    param = CharToFloat(strbuf) / 10.0f;
-    val = exp10(param > 9.5f ? 9.5f : param);
-    thresholds[i++] = val & 0x000000FF;
-    thresholds[i++] = val >> 8 & 0x000000FF;
-    thresholds[i++] = val >> 16 & 0x000000FF;
-    thresholds[i++] = val >> 24;
-  }
-  Ld2402LoadLastParam(cmnd_param);
-  Ld2402ExecConfigCmnd(LD2402_CMND_WRITE_PARAM);
-  Response_P(PSTR("Accepted... Allow 2 seconds to write to device."));
 }
 
 void Ld2402ResponseAppendGates(uint8_t *energies) {
-  const float multiplier = 10.0f / 2.302585f;
+  if (!energies) { return; }
   uint32_t i = 0;
   float val;
   while (i < LD2402_NUM_GATES * 4) {
     val = energies[i++] | energies[i++] << 8 | energies[i++] << 16 | energies[i++] << 24;
-    val = (val ? multiplier * logf(val) : 0);
+    val = (val ? 10.0f / 2.302585f * logf(val) : 0);  // 10.0f / logf(10) * logf(val)
     if (4 != i) { ResponseAppend_P(PSTR(",")); }
     ResponseAppend_P(PSTR("%2_f"), &val);
   }
 }
 
 void Ld2402ResponseAppendReport() {
-  if (3 == LD2402.report_type) {
+  if (LD2402_AUTOUPDATE == LD2402.state) {
     ResponseAppend_P(PSTR("\"AutoUpdate\":\"%1d%%\""), LD2402.auto_upd_progress);
-  } else if (0 == LD2402.report_type) {
+  } else if (LD2402_DISCONNECTED == LD2402.state) {
     ResponseAppend_P(PSTR("\"Error\":\"Disconnected\""));
   } else {
     ResponseAppend_P(PSTR("\"" D_JSON_DISTANCE "\":%d"), LD2402.detect_distance);
-    if (1 == LD2402.report_type) {
-      ResponseAppend_P(PSTR(",\"Motion\":%s"), (1 == LD2402.person ? "true" : "false"));
-      ResponseAppend_P(PSTR(",\"Occupancy\":%s"), (LD2402.person ? "true" : "false"));
-      ResponseAppend_P(PSTR(",\"PowerInterference\":%d"), LD2402.pwr_interf);
-      if (2 == LD2402.pwr_interf) { ResponseAppend_P(PSTR(",\"InterferenceGates\":\"%s\""), LD2402.gates); }
-      ResponseAppend_P(PSTR(",\"MotionEnergies\":["));
-      Ld2402ResponseAppendGates(LD2402.motion_energy);
+    if (LD2402_ENGINEERING == LD2402.state) {
+      if (LD2402.gates) { ResponseAppend_P(PSTR(",\"InterferenceGates\":\"%s\""), LD2402.gates); }
+      ResponseAppend_P(PSTR(",\"Motion\":%s,\"Occupancy\":%s,\"PowerInterference\":%d,\"MotionEnergies\":["), (LD2402_PERSON_MOVING == LD2402.person ? "true" : "false"), (LD2402.person ? "true" : "false"), LD2402.pwr_interf);
+      Ld2402ResponseAppendGates(LD2402_MOTION_ENERGY);
       ResponseAppend_P(PSTR("],\"MicroEnergies\":["));
-      Ld2402ResponseAppendGates(LD2402.micro_energy);
+      Ld2402ResponseAppendGates(LD2402_MICRO_ENERGY);
       ResponseAppend_P(PSTR("]"));
     }
   }
 }
-void Ld2402ExecQuickCmnd(uint32_t cmnd) {
-  LD2402.busy = true;
-  LD2402.step = cmnd;
-}
-
-void Ld2402ExecConfigCmnd(uint32_t cmnd) {
-  LD2402.next_step = cmnd;
-  Ld2402ExecQuickCmnd(LD2402_CMND_START_CONFIGURATION);
-}
-
-void Ld2402DeviceDisconnected(void) {
-  AddLog(LOG_LEVEL_INFO, PSTR(D_LD2402_LOG_PREFIX "Device disconnected"));
-  LD2402.step = CMD_LD2402_Done;
-  LD2402.report_type = 0;
-}
 
 /********************************************************************************************/
 
-void Ld2402OnDemand(uint32_t ack_rcvd) {
-  switch (ack_rcvd) {
-  case LD2402_CMND_START_CONFIGURATION>>4:
-    LD2402.step = LD2402.next_step;
-    break;
-
-  case LD2402_CMND_END_CONFIGURATION>>4:
-    LD2402.step = CMD_LD2402_Done;
-    return;
-  
-  case LD2402_CMND_SAVE_PARAM>>4:
-    LD2402.step = LD2402_CMND_END_CONFIGURATION;
-    return;
-
-  case LD2402_CMND_AUTO_THRESHOLD>>4:
-    LD2402.step = LD2402_CMND_AUTO_PROGRESS;
-    return;
-
-  case LD2402_CMND_AUTO_PROGRESS>>4:
-    if (100 > LD2402.auto_upd_progress) {
-      LD2402.step = LD2402_CMND_AUTO_PROGRESS;
-      return;
-    }
-    LD2402.step = LD2402_CMND_READ_PARAM;
-    break;
-
-  case LD2402_CMND_AUTO_INTERFERENCE>>4:
-    LD2402.step = LD2402_CMND_READ_PARAM;
-    break;
-
-  case LD2402_CMND_MODE>>4:
-    LD2402.step = LD2402_CMND_END_CONFIGURATION;
-    return;
-
-  case LD2402_CMND_READ_VERSION>>4:
-    LD2402.step = LD2402_CMND_READ_SERIAL;
-    break;
-
-  case LD2402_CMND_READ_SERIAL>>4:
-    if (!LD2402.initializing) {
-      LD2402.step = LD2402_CMND_END_CONFIGURATION;
-      return;
-    }
-    LD2402.cmnd_param[0] = LD2402_CMND_PARAM_MAX_DISTANCE;
-    LD2402.next_step = LD2402_CMND_READ_PARAM;
-    LD2402.step = LD2402_CMND_START_CONFIGURATION;
-    break;
-
-  case LD2402_CMND_WRITE_PARAM>>4:
-    switch (LD2402.cmnd_param[0]) {
-    case LD2402_CMND_PARAM_MAX_DISTANCE:
-      Ld2402LoadLastParam(LD2402_CMND_PARAM_DISP_DELAY);
-      LD2402.step = LD2402_CMND_WRITE_PARAM;
-      break;
-
-    case LD2402_CMND_PARAM_DISP_DELAY:
-    case LD2402_CMND_PARAM_MOTION_END:
-    case LD2402_CMND_PARAM_MICRO_END:
-      LD2402.step = LD2402_CMND_END_CONFIGURATION;
-      return;
-
-    default:
-      switch (LD2402.cmnd_param[0] & 0xF0) {
-      // gate specific params
-      case LD2402_CMND_PARAM_MICRO_START:
-      case LD2402_CMND_PARAM_MOTION_START:
-        Ld2402LoadLastParam(++LD2402.cmnd_param[0]);
-        LD2402.step = LD2402_CMND_WRITE_PARAM;
-        break;
-      default:
-        LD2402.step = LD2402_CMND_END_CONFIGURATION;
-        return;
-      }
-    }
-    break;
-
-  case LD2402_CMND_READ_PARAM>>4:
-    switch (LD2402.cmnd_param[0]) {
-    case LD2402_CMND_PARAM_MAX_DISTANCE:
-      LD2402.cmnd_param[0] = LD2402_CMND_PARAM_DISP_DELAY;
-      break;
-    
-    case LD2402_CMND_PARAM_DISP_DELAY:
-      LD2402.cmnd_param[0] = LD2402_CMND_PARAM_PWR_INTERFER;
-      break;
-    
-    case LD2402_CMND_PARAM_PWR_INTERFER:
-      LD2402.cmnd_param[0] = LD2402_CMND_PARAM_MOTION_START;
-      if (2 == LD2402.pwr_interf) {
-        LD2402.step = LD2402_CMND_AUTO_INTERFERENCE;
-        return;
-      }
-      break;
-    
-    case LD2402_CMND_PARAM_MOTION_END:
-      LD2402.cmnd_param[0] = LD2402_CMND_PARAM_MICRO_START;
-      break;
-    
-    case LD2402_CMND_PARAM_MICRO_END:
-      LD2402.step = LD2402_CMND_END_CONFIGURATION;
-      return;
-    
-    default:
-      switch (LD2402.cmnd_param[0] & 0xF0) {
-      // gate specific params
-      case LD2402_CMND_PARAM_MOTION_START:
-      case LD2402_CMND_PARAM_MICRO_START:
-        LD2402.cmnd_param[0]++;
-        break;
-      default:
-        LD2402.step = LD2402_CMND_END_CONFIGURATION;
-        return;
-      }
-      break;
-    }
-    LD2402.step = LD2402_CMND_READ_PARAM;
-    break;
-
-  default:
-    return;
-  }
-  Ld2402EveryXMSecond();
-}
-
-void Ld2402EveryXMSecond(void) {
+// this gets run from the scheduler and from the command processing after the uart
+// processing main loop, in either case returning from here will release back to the main
+// scheduler
+void Ld2402Every250MSecond(void) {
   if (LD2402.step) {
-    uint32_t command = LD2402.step>>4;
-    switch (LD2402.step--) {
-    // special: get control of LD2402
-    case LD2402_CMND_READ_PARAM:
-      Ld2402SendCommand(command, 2);
-      break;
-
-    case LD2402_CMND_START_CONFIGURATION:
-      Ld2402SendCommand(command);
-      if (LD2402.initializing) {
-        LD2402.step = LD2402_CMND_START_CONFIGURATION+CMD_LD2402_BOOT_DELAY;
-        return;
+    LD2402.step--;
+    if ((LD2402_CMND_Wait_Timeout&0xFFF0) == LD2402.step) {  // Timeout countdown reaches zero
+      DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Device disconnected"));
+      LD2402.state = LD2402_DISCONNECTED;
+    } else if (!(LD2402.step&0x00F)) {  // Command reaches zero
+      // preprocess - ensure module is in configuration mode except for end configuration
+      if ((LD2402_CMND_END_CONFIGURATION&0x00F != LD2402.step) && (LD2402_CONFIGURATION != LD2402.state)) {
+        LD2402.saved_step = LD2402.step;
+        LD2402.sent_cmnd = LD2402_CMND_START_CONFIGURATION>>4;
+      } else {
+        LD2402.sent_cmnd = LD2402.step>>4;
       }
-      break;
+
+      // send configuration command
+      uint32_t val_len = LD2402.sent_cmnd>>8;
+      uint8_t stub[8] = LD2402_config_send_stub;
+      stub[4] = val_len + 2;
+      stub[6] = LD2402.sent_cmnd&0x0FF;
+      LD2402Serial->flush();
+      LD2402Serial->write(stub, 8);
+      if ((LD2402_CMND_START_CONFIGURATION>>4) == LD2402.sent_cmnd) {  // special override if we are setting configuration mode
+        stub[4] = 0x01;  // reuse already sent stub buffer
+        LD2402Serial->write(stub+4, 2);
+        DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Send 0x%03X, 0100"), LD2402.sent_cmnd);
+      } else if (val_len) {  // send configuration command argument
+        LD2402Serial->write(LD2402.cmnd_param, val_len);
+        DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Send 0x%03X, %*_H"), LD2402.sent_cmnd, val_len, LD2402.cmnd_param);
+      } else {
+        DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Send 0x%03X"), LD2402.sent_cmnd);
+      }
+      const uint8_t footer[4] = LD2402_config_footer_a;
+      LD2402Serial->write(footer, sizeof(footer));
     
-    case LD2402_CMND_AUTO_PROGRESS-CMD_LD2402_PROGRESS_DELAY:
-    case LD2402_CMND_AUTO_INTERFERENCE:
-    case LD2402_CMND_READ_VERSION:
-    case LD2402_CMND_READ_SERIAL:
-    case LD2402_CMND_SAVE_PARAM:
-    case LD2402_CMND_END_CONFIGURATION-CMD_LD2402_END_DELAY:
-      Ld2402SendCommand(command);
-      break;
-    
-    case LD2402_CMND_AUTO_THRESHOLD:
-    case LD2402_CMND_WRITE_PARAM:
-    case LD2402_CMND_MODE:
-      Ld2402SendCommand(command, 6);
-      break;
-
-    case CMD_LD2402_Wait_Timeout-CMD_LD2402_TIMEOUT_DELAY:
-      Ld2402DeviceDisconnected();
-      return;
-
-    case CMD_LD2402_Done:
-      LD2402.busy = 0;
-      LD2402.initializing = 0;
-      return;
-
-    default:
-      return;
+      LD2402.step = LD2402_CMND_Wait_Timeout;
     }
-    LD2402.step = CMD_LD2402_Wait_Timeout;
   }
 }
 
 void Ld2402EverySecond(void) {
-  static uint32_t person = 4;
-  if (!LD2402.report_type && !LD2402.initializing) {
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LD2402_LOG_PREFIX "Trying to reconnect."));
-    Ld2402ExecQuickCmnd(LD2402_CMND_READ_VERSION);
+  static enum LD2402_EngTypes person = LD2402_PERSON_UNKNOWN;
+  if (!LD2402.state || !LD2402.version || !LD2402.serial_number) {
+    DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Trying to connect."));
+    LD2402.step = LD2402_CMND_READ_VERSION;
     return;
   }
 
+#ifdef LD2402_INCLUDE_FOLLOW
+  // if person has not changed and timer is not set, return
   if (!LD2402.timer && (LD2402.person == person)) { return; }
+  // if timer is set, reduce timer
   if (LD2402.timer) { --LD2402.timer; }
+  // if person has not changed and timer is still set, return
   if (LD2402.timer && (LD2402.person == person)) { return; }
+  // if person has changed, save new person
   if (LD2402.person != person) { person = LD2402.person; }
+  // if timer is not set, set to follow
   if (!LD2402.timer) { LD2402.timer = LD2402.follow; }
+#else
+  // if person has not changed, return
+  if (LD2402.person == person) { return; }
+  person = LD2402.person;
+#endif // LD2402_INCLUDE_FOLLOW
 
   MqttPublishSensor();
 }
 
 void Ld2402Detect(void) {
   if (PinUsed(GPIO_LD2402_RX) && PinUsed(GPIO_LD2402_TX)) {
-    LD2402.buffer = (uint8_t*)malloc(LD2402_BUFFER_SIZE);
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LD2402_LOG_PREFIX "Buff size %d"), LD2402_BUFFER_SIZE);
-    if (!LD2402.buffer) { AddLog(LOG_LEVEL_DEBUG, PSTR(D_LD2402_LOG_PREFIX "No buff")); return; }
+    LD2402.buffer = (uint8_t*)malloc(LD2402_ENG_LINE_LENGTH);
+    DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Buff size %d"), LD2402_BUFFER_SIZE);
+    if (!LD2402.buffer) { DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "No buff")); return; }
     LD2402Serial = new TasmotaSerial(Pin(GPIO_LD2402_RX), Pin(GPIO_LD2402_TX), 2, 0, LD2402_BUFFER_SIZE);
     if (LD2402Serial->begin(115200)) {
       if (LD2402Serial->hardwareSerial()) { ClaimSerial(); }
       LD2402Serial->setTimeout(200);
 #ifdef ESP32
-      AddLog(LOG_LEVEL_DEBUG, PSTR(D_LD2402_LOG_PREFIX "Serial UART%d"), LD2402Serial->getUart());
+      DEBUG_SENSOR_LOG(PSTR(D_LD2402_LOG_PREFIX "Serial UART%d"), LD2402Serial->getUart());
 #endif
-    volatile uint32_t i=0x01234567;
-    LD2402.is_big = (*((uint8_t*)(&i))) != 0x67;
-    if (!LD2402.busy) {
-        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LD2402_LOG_PREFIX "Starting initialization."));
-        LD2402.initializing = true;
-        LD2402.step = LD2402_CMND_START_CONFIGURATION+CMD_LD2402_BOOT_DELAY;
-        LD2402.next_step = LD2402_CMND_READ_VERSION;
-      }
+      volatile uint32_t i=0x01234567;
+      LD2402.endian_offset = ((*((uint8_t*)(&i))) != 0x67)*3;
     }
   }
 }
@@ -685,44 +561,61 @@ void Ld2402Detect(void) {
  * Commands
 \*********************************************************************************************/
 
+#define D_CMD_HELP                  "Help"
+#define D_CMD_FOLLOW                "Follow"
 #define D_CMD_MODE                  "Mode"
 #define D_CMD_AUTOUPDATE            "AutoUpdate"
+#define D_CMD_AUTOGAIN              "AutoGain"
 #define D_CMD_STATUS                "Status"
 #define D_CMD_SETCOMMON             "SetCommon"
 #define D_CMD_SETMOTION             "SetMotion"
 #define D_CMD_SETMICRO              "SetMicro"
 #define D_CMD_SAVE                  "Save"
-#define D_CMD_HELP                  "Help"
 #define D_CMD_REREAD                "ReRead"
-#define D_CMD_FOLLOW                "Follow"
 
 const char kLd2402Commands[] PROGMEM = D_LD2402 "_|"  // Prefix
-  D_CMD_MODE "|" D_CMD_AUTOUPDATE "|" D_CMD_STATUS "|" D_CMD_SETCOMMON "|"
-  D_CMD_SETMOTION "|" D_CMD_SETMICRO "|" D_CMD_SAVE "|" D_CMD_HELP "|" D_CMD_REREAD "|"
-  D_CMD_FOLLOW;
+#ifdef LD2402_INCLUDE_HELP
+  D_CMD_HELP "|"
+#endif // LD2402_INCLUDE_HELP
+#ifdef LD2402_INCLUDE_FOLLOW
+  D_CMD_FOLLOW "|"
+#endif // LD2402_INCLUDE_FOLLOW
+  D_CMD_MODE "|" D_CMD_AUTOUPDATE "|" D_CMD_AUTOGAIN "|" D_CMD_STATUS "|" D_CMD_SETCOMMON "|"
+  D_CMD_SETMOTION "|" D_CMD_SETMICRO "|" D_CMD_SAVE "|" D_CMD_REREAD;
 
 void (* const Ld2402Command[])(void) PROGMEM = {
-  &CmndLd2402Mode, &CmndLd2402AutoUpdate, &CmndLd2402Status, &CmndLd2402Common,
-  &CmndLd2402Motion, &CmndLd2402Micro, &CmndLd2402Save, &CmndLd2402Help, &CmndLd2402ReRead,
-  &CmndLd2402Follow };
+#ifdef LD2402_INCLUDE_HELP
+  &CmndLd2402Help, 
+#endif // LD2402_INCLUDE_HELP
+#ifdef LD2402_INCLUDE_FOLLOW
+  , &CmndLd2402Follow
+#endif // LD2402_INCLUDE_FOLLOW
+  &CmndLd2402Mode, &CmndLd2402AutoUpdate, &CmndLd2402AutoGain, &CmndLd2402Status, &CmndLd2402Common,
+  &CmndLd2402Motion, &CmndLd2402Micro, &CmndLd2402Save, &CmndLd2402ReRead };
 
+#ifdef LD2402_INCLUDE_HELP
 void CmndLd2402Help(void) {
   Response_P(PSTR(D_COMMAND_PREFIX_JSON"\"%s"), D_CMD_HELP, "Available commands: ");
   ResponseAppend_P(PSTR(D_LD2402 "_" D_CMD_MODE", "));
   ResponseAppend_P(PSTR(D_LD2402 "_" D_CMD_AUTOUPDATE", "));
+  ResponseAppend_P(PSTR(D_LD2402 "_" D_CMD_AUTOGAIN" (fw 3.3.5+), "));
   ResponseAppend_P(PSTR(D_LD2402 "_" D_CMD_STATUS", "));
   ResponseAppend_P(PSTR(D_LD2402 "_" D_CMD_SETCOMMON", "));
   ResponseAppend_P(PSTR(D_LD2402 "_" D_CMD_SETMOTION", "));
   ResponseAppend_P(PSTR(D_LD2402 "_" D_CMD_SETMICRO", "));
-  ResponseAppend_P(PSTR(D_LD2402 "_" D_CMD_SAVE", "));
+  ResponseAppend_P(PSTR(D_LD2402 "_" D_CMD_SAVE" (fw 3.3.2+), "));
   ResponseAppend_P(PSTR(D_LD2402 "_" D_CMD_HELP", "));
   ResponseAppend_P(PSTR(D_LD2402 "_" D_CMD_REREAD", "));
   ResponseAppend_P(PSTR(D_LD2402 "_" D_CMD_FOLLOW"\"}"));
 }
+#endif // LD2402_INCLUDE_HELP
 
+#ifdef LD2402_INCLUDE_FOLLOW
 void CmndLd2402Follow(void) {
   if (ArgC() != 1) {
+#ifdef LD2402_INCLUDE_HELP
     Response_P(PSTR(D_COMMAND_HELP_MSG), D_CMD_FOLLOW, "Args: 0|n (MQTT update normal|MQTT update every n second(s))");
+#endif // LD2402_INCLUDE_HELP
     return;
   }
   char Argument[XdrvMailbox.data_len];
@@ -731,10 +624,19 @@ void CmndLd2402Follow(void) {
   LD2402.follow = LD2402.timer;
   Response_P(PSTR(D_COMMAND_PREFIX_JSON"%d}"), D_CMD_FOLLOW, LD2402.follow);
 }
+#endif // LD2402_INCLUDE_FOLLOW
 
 void CmndLd2402Status(void) {
+  if (LD2402_DISCONNECTED == LD2402.state) {
+#ifdef LD2402_INCLUDE_HELP
+    Response_P(PSTR(D_DISCONNECTED_MSG));
+#endif // LD2402_INCLUDE_HELP
+    return;
+  }
   if (ArgC() != 1) {
+#ifdef LD2402_INCLUDE_HELP
     Response_P(PSTR(D_COMMAND_HELP_MSG), D_CMD_STATUS, "Args: 0|1|2 (parameters|sensor|firmware)");
+#endif // LD2402_INCLUDE_HELP
     return;
   }
   uint32_t status_type = 0;
@@ -750,41 +652,47 @@ void CmndLd2402Status(void) {
     Ld2402ResponseAppendReport();
     ResponseJsonEnd();
   } else if (2 == status_type) {
-    ResponseAppend_P(PSTR("FWR\":{\"Version\":\"%s\","),LD2402.version);  
-    ResponseAppend_P(PSTR("\"SerialNumber\":\"%s\"}"),LD2402.serial_number);  
+    if (LD2402.version && LD2402.serial_number) {
+      ResponseAppend_P(PSTR("FWR\":{\"Version\":\"%s\",\"SerialNumber\":\"%s\"}"), LD2402.version, LD2402.serial_number);
+    }
   } else {
-    ResponseAppend_P(PSTR("\":{\"MaximumDistance\":%d,"), LD2402.max_distance);
-    ResponseAppend_P(PSTR("\"DisappearenceDelay\":%d,"), LD2402.disp_delay);
-    ResponseAppend_P(PSTR("\"MotionThresholds\":["));
+    ResponseAppend_P(PSTR("\":{\"MaximumDistance\":%d,\"DisappearenceDelay\":%d,\"MotionThresholds\":["), LD2402.max_distance, LD2402.disp_delay);
     Ld2402ResponseAppendGates(LD2402.motion_threshold);
     ResponseAppend_P(PSTR("],\"MicroThresholds\":["));
-    Ld2402ResponseAppendGates(LD2402.micro_threshold);
+    Ld2402ResponseAppendGates(LD2402.motion_threshold ? LD2402.motion_threshold + LD2402_NUM_GATES * 4 : LD2402.motion_threshold);
     ResponseAppend_P(PSTR("]}"));
   }
   ResponseJsonEnd();
 }
 
-void CmndLd2402ReRead(void) {
-  if (LD2402.busy) {
+void CmndLd2402AutoGain(void) {
+  if (LD2402.step) {
+#ifdef LD2402_INCLUDE_HELP
     Response_P(PSTR(D_BUSY_MSG));
+#endif // LD2402_INCLUDE_HELP
     return;
   }
   if (ArgC()) {
-    Response_P(PSTR(D_COMMAND_HELP_MSG), D_CMD_REREAD, "No Args: Retrieves common and threshold data from device");
+#ifdef LD2402_INCLUDE_HELP
+    Response_P(PSTR(D_COMMAND_HELP_MSG), D_CMD_AUTOGAIN, "No Args: Starts the modules's automatic gain adjustment");
+#endif // LD2402_INCLUDE_HELP
     return;
   }
-  LD2402.cmnd_param[0] = LD2402_CMND_PARAM_MAX_DISTANCE;
-  Ld2402ExecConfigCmnd(LD2402_CMND_READ_PARAM);
-  Response_P(PSTR(D_COMMAND_HELP_MSG), D_CMD_REREAD, "Retrieving ... wait six seconds for it to complete");
+  LD2402.step = LD2402_CMND_AUTO_GAIN;
+  Response_P(PSTR(D_COMMAND_HELP_MSG), D_CMD_AUTOGAIN, "Automatic gain ...");
 }
 
 void CmndLd2402Common(void) {
-  if (LD2402.busy) {
+  if (LD2402.step) {
+#ifdef LD2402_INCLUDE_HELP
     Response_P(PSTR(D_BUSY_MSG));
+#endif // LD2402_INCLUDE_HELP
     return;
   }
   if (ArgC() != 2) {
+#ifdef LD2402_INCLUDE_HELP
     Response_P(PSTR(D_COMMAND_HELP_MSG), D_CMD_SETCOMMON, "Args: MaximumDistance,DisappearanceDelay (decimeter,seconds)");
+#endif // LD2402_INCLUDE_HELP
     return;
   }
   uint32_t param[2] = { 0 };
@@ -795,18 +703,22 @@ void CmndLd2402Common(void) {
   if (param[1]>65535) {param[1] = 65535;}
   LD2402.max_distance = param[0];
   LD2402.disp_delay = param[1];
-  Ld2402LoadLastParam(LD2402_CMND_PARAM_MAX_DISTANCE);
-  Ld2402ExecConfigCmnd(LD2402_CMND_WRITE_PARAM);
+  Ld2402LoadLastParam(LD2402_MAX_DISTANCE);
+  LD2402.step = LD2402_CMND_WRITE_PARAM;
   CmndLd2402Status();
 }
 
 void CmndLd2402Mode(void) {
-  if (LD2402.busy) {
+  if (LD2402.step) {
+#ifdef LD2402_INCLUDE_HELP
     Response_P(PSTR(D_BUSY_MSG));
+#endif // LD2402_INCLUDE_HELP
     return;
   }
   if (ArgC() != 1) {
+#ifdef LD2402_INCLUDE_HELP
     Response_P(PSTR(D_COMMAND_HELP_MSG), D_CMD_MODE, "Args: 0|1 (normal|engineering)");
+#endif // LD2402_INCLUDE_HELP
     return;
   }
   char Argument[XdrvMailbox.data_len];
@@ -814,16 +726,20 @@ void CmndLd2402Mode(void) {
   memset(LD2402.cmnd_param, 0x00, 6);
   LD2402.cmnd_param[2] = atoi(Argument) ? 0x04 : 0x64;
   Response_P(PSTR(D_COMMAND_PREFIX_JSON "\"%s\"}"), D_CMD_MODE, (0x04 == LD2402.cmnd_param[2] ? "Engineering" : "Normal"));
-  Ld2402ExecConfigCmnd(LD2402_CMND_MODE);
+  LD2402.step = LD2402_CMND_MODE;
 }
 
 void CmndLd2402AutoUpdate(void) {
-  if (LD2402.busy) {
+  if (LD2402.step) {
+#ifdef LD2402_INCLUDE_HELP
     Response_P(PSTR(D_BUSY_MSG));
+#endif // LD2402_INCLUDE_HELP
     return;
   }
   if (ArgC() != 3) {
+#ifdef LD2402_INCLUDE_HELP
     Response_P(PSTR(D_COMMAND_HELP_MSG), D_CMD_AUTOUPDATE, "Args: trigger,keep,micro (magnification factor, 1.0 to 20.0)");
+#endif // LD2402_INCLUDE_HELP
     return;
   }
 
@@ -833,29 +749,96 @@ void CmndLd2402AutoUpdate(void) {
     float param = CharToFloat(strbuf);
     LD2402.cmnd_param[(i-1)*2] = (param < 1.0f) ? 10.0f : (param > 20.0f ? 200.0f : param * 10.0f);
   }
-  Ld2402ExecConfigCmnd(LD2402_CMND_AUTO_THRESHOLD);
+  LD2402.cmnd_param[3] = LD2402.cmnd_param[5] = 0x00;
+
+  LD2402.step = LD2402_CMND_AUTO_THRESHOLD;
   Response_P(PSTR(D_COMMAND_HELP_MSG), D_CMD_AUTOUPDATE, "Updating ...");
 }
 
 void CmndLd2402Save(void) {
-  if (LD2402.busy) {
+  if (LD2402.step) {
+#ifdef LD2402_INCLUDE_HELP
     Response_P(PSTR(D_BUSY_MSG));
+#endif // LD2402_INCLUDE_HELP
     return;
   }
   if (ArgC()) {
+#ifdef LD2402_INCLUDE_HELP
     Response_P(PSTR(D_COMMAND_HELP_MSG), D_CMD_SAVE, "No Args: Saves configuration parameters in case of power failure (v3.3.2 and above)");
+#endif // LD2402_INCLUDE_HELP
     return;
   }
-  Ld2402ExecConfigCmnd(LD2402_CMND_SAVE_PARAM);
+  LD2402.step = LD2402_CMND_SAVE_PARAM;
   Response_P(PSTR(D_COMMAND_HELP_MSG), D_CMD_SAVE, "Saving ...");
 }
 
+uint32_t Ld2402AllocThresholds(void) {
+  LD2402.motion_threshold = LD2402.motion_threshold ? LD2402.motion_threshold : (uint8_t*)malloc(2*LD2402_NUM_GATES*4);
+  if (!LD2402.motion_threshold) {
+#ifdef LD2402_INCLUDE_HELP
+    Response_P(PSTR(D_COMMAND_HELP_MSG), D_CMD_SETMOTION "/" D_CMD_SETMICRO, "No buffer: Can't allocate threshold buffers");
+#endif // LD2402_INCLUDE_HELP
+    return 0;
+  }
+  return 1;
+}
+
+void CmndLd2402ReRead(void) {
+  if (LD2402.step) {
+#ifdef LD2402_INCLUDE_HELP
+    Response_P(PSTR(D_BUSY_MSG));
+#endif // LD2402_INCLUDE_HELP
+    return;
+  }
+  if (ArgC()) {
+#ifdef LD2402_INCLUDE_HELP
+    Response_P(PSTR(D_COMMAND_HELP_MSG), D_CMD_REREAD, "No Args: Retrieves common and threshold data from device");
+#endif // LD2402_INCLUDE_HELP
+    return;
+  }
+  if (!Ld2402AllocThresholds()) { return; }
+  LD2402.cmnd_param[0] = LD2402_MAX_DISTANCE;
+  LD2402.step = LD2402_CMND_READ_PARAM;
+  Response_P(PSTR(D_COMMAND_HELP_MSG), D_CMD_REREAD, "Retrieving ... wait one second for it to complete");
+}
+
+void Ld2402WriteThresholds(uint8_t *thresholds, uint32_t cmnd_param) {
+  if (LD2402.step) {
+#ifdef LD2402_INCLUDE_HELP
+    Response_P(PSTR("\" D_BUSY_MSG \"}"));
+#endif // LD2402_INCLUDE_HELP
+    return;
+  }
+  if (ArgC() != 16) {
+#ifdef LD2402_INCLUDE_HELP
+    Response_P(PSTR(D_COMMAND_HELP_MSG), D_CMD_SETMOTION "/" D_CMD_SETMICRO, "No Args: Saves configuration parameters in case of power failure (v3.3.2 and above)");
+#endif // LD2402_INCLUDE_HELP
+    return;
+  }
+  if (!Ld2402AllocThresholds()) { return; }
+  char strbuf[24];
+  float param;
+  uint32_t i = 0, val;
+  for (uint32_t j = 0; j < LD2402_NUM_GATES; j++) {
+    ArgV(strbuf, j+1);
+    param = CharToFloat(strbuf) / 10.00f;
+    val = exp10(param > 9.500f ? 9.500f : param);
+    thresholds[i++] = val & 0x000000FF;
+    thresholds[i++] = val >> 8 & 0x000000FF;
+    thresholds[i++] = val >> 16 & 0x000000FF;
+    thresholds[i++] = val >> 24;
+  }
+  Ld2402LoadLastParam(cmnd_param);
+  LD2402.step = LD2402_CMND_WRITE_PARAM;
+  Response_P(PSTR(D_COMMAND_HELP_MSG),  D_CMD_SETMOTION "/" D_CMD_SETMICRO, "Saving ...");
+}
+
 void CmndLd2402Motion(void) {
-  Ld2402WriteThresholds(LD2402.motion_threshold, LD2402_CMND_PARAM_MOTION_START);
+  Ld2402WriteThresholds(LD2402.motion_threshold, LD2402_MOTION_START);
 }
 
 void CmndLd2402Micro(void) {
-  Ld2402WriteThresholds(LD2402.micro_threshold, LD2402_CMND_PARAM_MICRO_START);
+  Ld2402WriteThresholds(LD2402.motion_threshold + LD2402_NUM_GATES * 4, LD2402_MICRO_START);
 }
 
 /*********************************************************************************************\
@@ -865,6 +848,10 @@ void CmndLd2402Micro(void) {
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_LD2402_DIS[] PROGMEM =
   "{s}" D_LD2402 " " D_DISCONNECTED "{e}";
+const char HTTP_SNS_LD2402_ERR[] PROGMEM =
+  "{s}" D_LD2402 " " D_ERROR "{e}";
+const char HTTP_SNS_LD2402_INI[] PROGMEM =
+  "{s}" D_LD2402 " " D_INITIALIZED "{e}";
 const char HTTP_SNS_LD2402_CM[] PROGMEM =
   "{s}" D_LD2402 " " D_DISTANCE "{m}%d " D_UNIT_CENTIMETER "{e}";
 const char HTTP_SNS_LD2402_MV[] PROGMEM =
@@ -873,14 +860,18 @@ const char HTTP_SNS_LD2402_UPD[] PROGMEM =
   "{s}" D_LD2402 " " D_AUTO_UPDATE "{m}%d " D_UNIT_PERCENT "{e}";
 
 void Ld2402Web(void) {
-  if (3 == LD2402.report_type) {
+  if (LD2402_AUTOUPDATE == LD2402.state) {
     WSContentSend_PD(HTTP_SNS_LD2402_UPD, LD2402.auto_upd_progress);
-  } else if (2 == LD2402.report_type) {
+  } else if (LD2402_NORMAL == LD2402.state) {
     WSContentSend_PD(HTTP_SNS_LD2402_CM, LD2402.detect_distance);
-  } else if (1 == LD2402.report_type) {
-    WSContentSend_PD((1 == LD2402.person ? HTTP_SNS_LD2402_MV : HTTP_SNS_LD2402_CM), LD2402.detect_distance);
-  } else {
+  } else if (LD2402_ENGINEERING == LD2402.state) {
+    WSContentSend_PD((LD2402_PERSON_MOVING == LD2402.person ? HTTP_SNS_LD2402_MV : HTTP_SNS_LD2402_CM), LD2402.detect_distance);
+  } else if (LD2402_ERROR == LD2402.state) {
+    WSContentSend_PD(HTTP_SNS_LD2402_ERR);
+  } else if (LD2402_DISCONNECTED == LD2402.state) {
     WSContentSend_PD(HTTP_SNS_LD2402_DIS);
+  } else {
+    WSContentSend_PD(HTTP_SNS_LD2402_INI);
   }
 }
 #endif
@@ -907,10 +898,8 @@ bool Xsns102(uint32_t function) {
       case FUNC_SLEEP_LOOP:
         Ld2402Input();
         break;
-      case FUNC_EVERY_50_MSECOND:
-        Ld2402EveryXMSecond();
-      break;
-      case FUNC_EVERY_100_MSECOND:
+      case FUNC_EVERY_250_MSECOND:
+        Ld2402Every250MSecond();
         break;
       case FUNC_EVERY_SECOND:
         Ld2402EverySecond();
