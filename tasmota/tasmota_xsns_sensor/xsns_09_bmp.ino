@@ -19,41 +19,46 @@
 #ifdef USE_I2C
 #ifdef USE_BMP
 /*********************************************************************************************\
- * BMP085, BMP180, BMP280, BME280, BME680 - Pressure, Temperature, Humidity (BME280/BME680) and gas (BME680)
+ * BMP085, BMP180, BMP280, BME280, BME58X, BME680 - Pressure, Temperature, Humidity (BME280/BME58X/BME680) and gas (BME680)
  *
  * Source: Heiko Krupp and Adafruit Industries
  *
- * I2C Address: 0x76 or 0x77
+ * I2C Address: 0x76 or 0x77 or (0x46 or 0x47 for BME58x)
 \*********************************************************************************************/
 
-#define XSNS_09              9
-#define XI2C_10              10  // See I2CDEVICES.md
+#define XSNS_09                 9
+#define XI2C_10                 10  // See I2CDEVICES.md
 
 #ifdef USE_BME680
 #define USE_BME68X
 #endif
 
-#define BMP_ADDR1            0x76
-#define BMP_ADDR2            0x77
+#define BME58X_ADDR1            0x46
+#define BME58X_ADDR2            0x47
+#define BMP_ADDR1               0x76
+#define BMP_ADDR2               0x77
 
-#define BMP180_CHIPID        0x55
-#define BMP280_CHIPID        0x58
-#define BME280_CHIPID        0x60
-#define BME680_CHIPID        0x61
+#define BMP180_CHIPID           0x55
+#define BMP280_CHIPID           0x58
+#define BME280_CHIPID           0x60
+#define BME58X_CHIPID           0x50
+#define BME680_CHIPID           0x61
 
-#define BMP_REGISTER_CHIPID  0xD0
+#define BME58X_REGISTER_CHIPID  0x01
+#define BMP_REGISTER_CHIPID     0xD0
 
-#define BMP_REGISTER_RESET   0xE0  // Register to reset to power on defaults (used for sleep)
+#define BME58X_REGISTER_RESET   0x7E  // CMND Register to reset to power on defaults (used for sleep)
+#define BMP_REGISTER_RESET      0xE0  // Register to reset to power on defaults (used for sleep)
 
-#define BMP_CMND_RESET       0xB6  // I2C Parameter for RESET to put BMP into reset state
+#define BMP_CMND_RESET          0xB6  // I2C Parameter for RESET to put BMP into reset state
 
 #ifdef USE_I2C_BUS2
-  #define BMP_MAX_SENSORS    4     // 2 busses
+  #define BMP_MAX_SENSORS       4     // 2 busses
 #else
-  #define BMP_MAX_SENSORS    2
+  #define BMP_MAX_SENSORS       2
 #endif
 
-const char kBmpTypes[] PROGMEM = "BMP180|BMP280|BME280|BME680";
+const char kBmpTypes[] PROGMEM = "BMP180|BMP280|BME280|BME680|BME580";
 
 typedef struct {
   uint8_t bmp_address;    // I2C address
@@ -70,7 +75,9 @@ typedef struct {
   float bmp_humidity;
 } bmp_sensors_t;
 
+uint8_t BME58X_addresses[] = { BME58X_ADDR1, BME58X_ADDR2 };
 uint8_t bmp_addresses[] = { BMP_ADDR1, BMP_ADDR2 };
+
 uint8_t bmp_count = 0;
 #ifdef USE_DEEPSLEEP
 uint8_t bmp_deepsleep = 0;  // Prevent updating measurments once BMP has been put to sleep (just before ESP enters deepsleep)
@@ -476,6 +483,104 @@ void Bme680Read(uint8_t bmp_idx) {
 
 #endif  // USE_BME68X
 
+#ifdef USE_BME58X
+/*********************************************************************************************\
+ * BME58x support by Bosch https://github.com/boschsensortec/BMP5_SensorAPI
+\*********************************************************************************************/
+
+#include <bmp5.h>
+
+struct bmp5_dev *bmp5_device = nullptr;
+struct bmp5_osr_odr_press_config *bmp5_osr_odr_press_cfg = nullptr;
+struct bmp5_iir_config *bmp5_set_iir_cfg = nullptr;
+
+uint8_t Bmp5_bus = 0;
+
+// Bmp5 callbacks
+static void Bmp5_Delayus(uint32_t period, void *intf_ptr) {
+  delayMicroseconds(period);
+}
+int8_t Bmp5_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, void *intf_ptr) {
+  uint8_t dev_addr = *(uint8_t*)intf_ptr;
+  return I2cReadBuffer(dev_addr, reg_addr, reg_data, (uint16_t)len, Bmp5_bus);
+}
+int8_t Bmp5_i2c_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t len, void *intf_ptr) {
+  uint8_t dev_addr = *(uint8_t*)intf_ptr;
+  return I2cWriteBuffer(dev_addr, reg_addr, (uint8_t *)reg_data, (uint16_t)len, Bmp5_bus);
+}
+
+bool Bme5Init(uint8_t bmp_idx) {
+  Bmp5_bus = bmp_sensors[bmp_idx].bmp_bus;
+  int8_t rslt;
+  uint8_t por_status;
+
+  if (!bmp5_device) {
+    bmp5_device = (bmp5_dev*)malloc(BMP_MAX_SENSORS * sizeof(bmp5_dev));
+    bmp5_osr_odr_press_cfg = (bmp5_osr_odr_press_config*)malloc(BMP_MAX_SENSORS * sizeof(bmp5_osr_odr_press_config));
+    bmp5_set_iir_cfg = (bmp5_iir_config*)malloc(BMP_MAX_SENSORS * sizeof(bmp5_iir_config));
+  }
+  if (!bmp5_device) { return false; }
+
+  bmp5_device[bmp_idx].intf_ptr = &bmp_sensors[bmp_idx].bmp_address;
+  bmp5_device[bmp_idx].intf = BMP5_I2C_INTF;
+  bmp5_device[bmp_idx].read = Bmp5_i2c_read;
+  bmp5_device[bmp_idx].write = Bmp5_i2c_write;
+  bmp5_device[bmp_idx].delay_us = Bmp5_Delayus;
+  rslt = bmp5_get_interrupt_status(&por_status, &bmp5_device[bmp_idx]);
+  if (rslt != BMP5_OK) { return false; }
+
+  // Make sure it is in standby mode to start
+  rslt = bmp5_set_power_mode(BMP5_POWERMODE_STANDBY,  &bmp5_device[bmp_idx]);
+  if (rslt != BMP5_OK) { return false; }
+
+  // Enable pressure measurements (automatically enables temperature measurements)
+  bmp5_osr_odr_press_cfg[bmp_idx].press_en = BMP5_ENABLE;
+  // Set ODR as 10Hz
+  bmp5_osr_odr_press_cfg[bmp_idx].odr = BMP5_ODR_10_HZ;
+  // Set Over-sampling rate with respect to odr
+  bmp5_osr_odr_press_cfg[bmp_idx].osr_t = BMP5_OVERSAMPLING_64X;   // temperature Over-sampling
+  bmp5_osr_odr_press_cfg[bmp_idx].osr_p = BMP5_OVERSAMPLING_128X;  // pressure Over-sampling
+  rslt = bmp5_set_osr_odr_press_config(&bmp5_osr_odr_press_cfg[bmp_idx], &bmp5_device[bmp_idx]);
+  if (rslt != BMP5_OK) { return false; }
+
+  // Set filter
+  bmp5_set_iir_cfg[bmp_idx].iir_flush_forced_en = BMP5_ENABLE;
+  rslt = bmp5_set_iir_config(&bmp5_set_iir_cfg[bmp_idx], &bmp5_device[bmp_idx]);
+  if (rslt == BMP5_OK)
+  {
+    bmp5_set_iir_cfg[bmp_idx].set_iir_t = BMP5_IIR_FILTER_COEFF_1;
+    bmp5_set_iir_cfg[bmp_idx].set_iir_p = BMP5_IIR_FILTER_COEFF_1;
+    bmp5_set_iir_cfg[bmp_idx].shdw_set_iir_t = BMP5_ENABLE;
+    bmp5_set_iir_cfg[bmp_idx].shdw_set_iir_p = BMP5_ENABLE;
+    rslt = bmp5_set_iir_config(&bmp5_set_iir_cfg[bmp_idx], &bmp5_device[bmp_idx]);
+    if (rslt != BMP5_OK) { return false; }
+  }
+  return true;
+}
+
+void Bme5Read(uint8_t bmp_idx) {
+  if (!bmp5_device) { return; }
+
+  Bmp5_bus = bmp_sensors[bmp_idx].bmp_bus;
+  int8_t rslt = BMP5_OK;
+
+  if (BME58X_CHIPID == bmp_sensors[bmp_idx].bmp_type) {
+
+    rslt = bmp5_set_power_mode(BMP5_POWERMODE_FORCED, &bmp5_device[bmp_idx]);
+    if (rslt != BMP5_OK) { return; }
+
+    struct bmp5_sensor_data data;
+    rslt = bmp5_get_sensor_data(&data, &bmp5_osr_odr_press_cfg[bmp_idx], &bmp5_device[bmp_idx]);
+    if (rslt != BMP5_OK) { return; }
+
+    bmp_sensors[bmp_idx].bmp_temperature = data.temperature;     // Temperature in degree celsius
+    bmp_sensors[bmp_idx].bmp_pressure = data.pressure / 100.0f;  // Pressure in Pascal (converted to hPa)
+  }
+  return;
+}
+
+#endif //USE_BME58X
+
 /********************************************************************************************/
 
 void BmpDetect(void) {
@@ -486,10 +591,31 @@ void BmpDetect(void) {
 
   for (uint32_t i = 0; i < BMP_MAX_SENSORS; i++) {
     uint8_t bus = i >>1;
-    if (!I2cSetDevice(bmp_addresses[i &1], bus)) { continue; }
-    uint8_t bmp_type = I2cRead8(bmp_addresses[i &1], BMP_REGISTER_CHIPID, bus);
+    uint8_t bmp_type;
+    uint8_t address;
+    uint8_t chipidregister;
+
+    if (!I2cSetDevice(bmp_addresses[i &1], bus)) { 
+#ifdef USE_BME58X
+      if (!I2cSetDevice(BME58X_addresses[i &1], bus)) { continue; }
+      else
+      {
+          address = BME58X_addresses[i &1];
+          chipidregister = BME58X_REGISTER_CHIPID;
+      }
+#else
+      continue;
+#endif //USE_BME58X      
+    }
+    else
+    {
+      address = bmp_addresses[i &1];
+      chipidregister = BMP_REGISTER_CHIPID;          
+    }
+
+    bmp_type = I2cRead8(address, chipidregister, bus);
     if (bmp_type) {
-      bmp_sensors[bmp_count].bmp_address = bmp_addresses[i &1];
+      bmp_sensors[bmp_count].bmp_address = address;
       bmp_sensors[bmp_count].bmp_bus = bus;
       bmp_sensors[bmp_count].bmp_type = bmp_type;
       bmp_sensors[bmp_count].bmp_model = 0;
@@ -511,6 +637,12 @@ void BmpDetect(void) {
           success = Bme680Init(bmp_count);
           break;
 #endif  // USE_BME68X
+#ifdef USE_BME58X
+        case BME58X_CHIPID:
+          bmp_sensors[bmp_count].bmp_model = 4;  // 4
+          success = Bme5Init(bmp_count);
+          break;
+#endif
       }
       if (success) {
         GetTextIndexed(bmp_sensors[bmp_count].bmp_name, sizeof(bmp_sensors[bmp_count].bmp_name), bmp_sensors[bmp_count].bmp_model, kBmpTypes);
@@ -540,6 +672,11 @@ void BmpRead(void) {
         Bme680Read(bmp_idx);
         break;
 #endif  // USE_BME68X
+#ifdef USE_BME58X
+      case BME58X_CHIPID:
+        Bme5Read(bmp_idx);
+        break;
+#endif  // USE_BME58X
     }
   }
 }
@@ -608,20 +745,20 @@ void BmpShow(bool json) {
         ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f%s,\"" D_JSON_PRESSURE "\":%s%s%s}"),
           name,
           Settings->flag2.temperature_resolution, &bmp_temperature,
-          (bmp_sensors[bmp_idx].bmp_model >= 2) ? json_humidity : "",
+          (bmp_sensors[bmp_idx].bmp_model == 2 || bmp_sensors[bmp_idx].bmp_model == 3) ? json_humidity : "",
           pressure,
           (Settings->altitude != 0) ? json_sealevel : "",
-          (bmp_sensors[bmp_idx].bmp_model >= 3) ? json_gas : "");
+          (bmp_sensors[bmp_idx].bmp_model == 3) ? json_gas : "");
 #else
         ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%*_f%s,\"" D_JSON_PRESSURE "\":%s%s}"),
-          name, Settings->flag2.temperature_resolution, &bmp_temperature, (bmp_sensors[bmp_idx].bmp_model >= 2) ? json_humidity : "", pressure, (Settings->altitude != 0) ? json_sealevel : "");
+          name, Settings->flag2.temperature_resolution, &bmp_temperature, (bmp_sensors[bmp_idx].bmp_model == 2 || bmp_sensors[bmp_idx].bmp_model == 3) ? json_humidity : "", pressure, (Settings->altitude != 0) ? json_sealevel : "");
 #endif  // USE_BME68X
 
 #ifdef USE_DOMOTICZ
         if ((0 == TasmotaGlobal.tele_period) && (0 == bmp_idx)) {  // We want the same first sensor to report to Domoticz in case a read is missed
           DomoticzTempHumPressureSensor(bmp_temperature, bmp_humidity, bmp_pressure);
 #ifdef USE_BME68X
-          if (bmp_sensors[bmp_idx].bmp_model >= 3) { DomoticzSensor(DZ_AIRQUALITY, (uint32_t)bmp_sensors[bmp_idx].bmp_gas_resistance); }
+          if (bmp_sensors[bmp_idx].bmp_model == 3) { DomoticzSensor(DZ_AIRQUALITY, (uint32_t)bmp_sensors[bmp_idx].bmp_gas_resistance); }
 #endif  // USE_BME68X
         }
 #endif  // USE_DOMOTICZ
@@ -636,7 +773,7 @@ void BmpShow(bool json) {
 #ifdef USE_WEBSERVER
       } else {
         WSContentSend_Temp(name, bmp_temperature);
-        if (bmp_sensors[bmp_idx].bmp_model >= 2) {
+        if (bmp_sensors[bmp_idx].bmp_model == 2 || bmp_sensors[bmp_idx].bmp_model == 3) {
           WSContentSend_PD(HTTP_SNS_HUM, name, humidity);
           WSContentSend_PD(HTTP_SNS_DEW, name, dewpoint, TempUnit());
 #ifdef USE_HEAT_INDEX
@@ -648,7 +785,7 @@ void BmpShow(bool json) {
           WSContentSend_PD(HTTP_SNS_SEAPRESSURE, name, sea_pressure, PressureUnit().c_str());
         }
 #ifdef USE_BME68X
-        if (bmp_sensors[bmp_idx].bmp_model >= 3) {
+        if (bmp_sensors[bmp_idx].bmp_model == 3) {
           WSContentSend_PD(PSTR("{s}%s " D_GAS "{m}%s " D_UNIT_KILOOHM "{e}"), name, gas_resistance);
         }
 #endif  // USE_BME68X
@@ -670,6 +807,9 @@ void BMP_EnterSleep(void) {
         case BME280_CHIPID:
           I2cWrite8(bmp_sensors[bmp_idx].bmp_address, BMP_REGISTER_RESET, BMP_CMND_RESET, bmp_sensors[bmp_idx].bmp_bus);
           break;
+        case BME58X_CHIPID:
+          I2cWrite8(bmp_sensors[bmp_idx].bmp_address, BME58X_REGISTER_RESET, BMP_CMND_RESET, bmp_sensors[bmp_idx].bmp_bus);
+          break;          
         default:
           break;
       }

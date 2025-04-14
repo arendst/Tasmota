@@ -26,6 +26,7 @@ Index | Define              | Driver   | Device   | Address(es) | Bus2 | Descrip
   10  | USE_BMP             | xsns_09  | BMP180   | 0x76 - 0x77 | Yes  | Pressure and temperature sensor
   10  | USE_BMP             | xsns_09  | BMP280   | 0x76 - 0x77 | Yes  | Pressure and temperature sensor
   10  | USE_BMP             | xsns_09  | BME280   | 0x76 - 0x77 | Yes  | Pressure, temperature and humidity sensor
+  10  | USE_BMP             | xsns_09  | BME580   | 0x46 - 0x47 | Yes  | Pressure and temperature sensor  
   10  | USE_BMP             | xsns_09  | BME680   | 0x76 - 0x77 | Yes  | Pressure, temperature, humidity and gas sensor
   11  | USE_BH1750          | xsns_10  | BH1750   | 0x23, 0x5C  | Yes  | Ambient light intensity sensor
   12  | USE_VEML6070        | xsns_11  | VEML6070 | 0x38 - 0x39 |      | Ultra violet light intensity sensor

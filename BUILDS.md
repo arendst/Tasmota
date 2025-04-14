@@ -116,6 +116,7 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_SHT                   | -     | - / x | -     | x     | -     | -     |
 | USE_HTU                   | -     | - / x | -     | x     | -     | -     |
 | USE_BMP                   | -     | - / x | -     | x     | -     | -     |
+| -USE_BME58X               | -     | - / x | -     | x     | -     | -     |
 | -USE_BME68X               | -     | - / x | -     | x     | -     | -     |
 | USE_AMSX915               | -     | - / - | -     | -     | -     | -     |
 | USE_SPL06_007             | -     | - / - | -     | -     | -     | -     |
