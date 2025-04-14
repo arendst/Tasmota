@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [14.6.0] 20250416
 - Release Ryan
 
-## [14.5.0.3] 
+## [14.5.0.3] 20250416
 ### Added
 - Extend command `GPIO` with different display options and allowing updating of module GPIO's in one go
 - Berry `bytes.add()` now accepts 3-bytes values (#23200)
