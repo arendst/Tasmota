@@ -52,6 +52,7 @@
 
 // Common
 #define D_ABSOLUTE_HUMIDITY "Absoliuti drėgmė"
+#define D_ADDRESS "Address"
 #define D_ADMIN "Administratoriaus"
 #define D_AIR_QUALITY "Oro kokybė"
 #define D_AP "AP"                    // Access Point

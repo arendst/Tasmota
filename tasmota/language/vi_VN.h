@@ -52,6 +52,7 @@
 
 // Common
 #define D_ABSOLUTE_HUMIDITY "Abs Humidity"
+#define D_ADDRESS "Address"
 #define D_ADMIN "Quản trị"
 #define D_AIR_QUALITY "Chất lượng không khí"
 #define D_AP "Mạng wifi"                    // Access Point

@@ -52,6 +52,7 @@
 
 // Common
 #define D_ABSOLUTE_HUMIDITY "Abs Humidity"
+#define D_ADDRESS "Address"
 #define D_ADMIN "Admin"
 #define D_AIR_QUALITY "Qualitat Aire"
 #define D_AP "PA"                    // Access Point
