@@ -158,7 +158,7 @@ void PzemAcShow(bool json) {
     ResponseAppend_P(PSTR(",\"Address\":%s"), EnergyFmt(address, 0));
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_SNS_ADDRESS, WebEnergyFmt(address, 0, 2));
+    WSContentSend_PD(HTTP_SNS_ADDRESS, WebEnergyFmt(address, 0));
 #endif  // USE_WEBSERVER
   }
 }
