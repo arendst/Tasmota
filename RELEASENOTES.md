@@ -145,6 +145,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Smoothen light gamma curve when using `Fade` [#23230](https://github.com/arendst/Tasmota/issues/23230)
 - RCSwitch `RCSWITCH_SEPARATION_LIMIT` from 4100 to 3600
 - GPIOViewer from v1.6.1 to v1.6.2 (No functional change)
+- HLK-LD2402 updates for firmware 3.3.5+ [#23281](https://github.com/arendst/Tasmota/issues/23281)
 - ESP8266 enable FTP for >= 4MB variants [#23120](https://github.com/arendst/Tasmota/issues/23120)
 - ESP32 enable webcam version 2 [#18732](https://github.com/arendst/Tasmota/issues/18732)
 - Berry update flasher for Sonoff ZBBridge Pro [#23136](https://github.com/arendst/Tasmota/issues/23136)
