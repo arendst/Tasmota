@@ -106,6 +106,7 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_93_                     |
 | xdrv_94_                     |
 |                              |
+| xdrv_120_xyzmodem            | @arendst
 | xdrv_121_gpioviewer          | @arendst
 | xdrv_122_file_settings_demo  | @arendst
 | xdrv_122_file_json_settings_demo | @arendst

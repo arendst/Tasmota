@@ -119,7 +119,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Extend command `GPIO` with different display options and allowing updating of module GPIO's in one go
 - Support Vango Technologies V924x ultralow power, single-phase, power measurement [#23127](https://github.com/arendst/Tasmota/issues/23127)
 - Support for HLK-LD2402 24GHz smart wave motion sensor [#23133](https://github.com/arendst/Tasmota/issues/23133)
-- Telnet server using command `Telnet <0|1|port>[,<IP filter>]`
+- Support for Telnet server using command `Telnet <0|1|port>[,<IP filter>]` if enabled with `#define USE_TELNET`
+- Support for XMODEM over serial and telnet if enabled with `#define USE_XYZMODEM`
 - Allow acl in mqtt when client certificate is in use with `#define USE_MQTT_CLIENT_CERT` [#22998](https://github.com/arendst/Tasmota/issues/22998)
 - AlpineJS 2.8.2 - optional for now [#23259](https://github.com/arendst/Tasmota/issues/23259)
 - Berry experimental driver for AXP2101 for M5Core2v1.1 [#23039](https://github.com/arendst/Tasmota/issues/23039)

@@ -949,7 +949,9 @@ constexpr uint32_t feature[] = {
 #ifdef USE_TELNET
   0x00008000 |  // xdrv_80_telnet.ino
 #endif
-//  0x00010000 |  // 
+#ifdef USE_XYZMODEM
+  0x00010000 |  // xdrv_120_xyzmodem.ino
+#endif  
 //  0x00020000 |  // 
 //  0x00040000 |  // 
 //  0x00080000 |  // 

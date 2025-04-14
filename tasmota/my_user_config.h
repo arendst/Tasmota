@@ -495,6 +495,8 @@
 //  #define TELNET_COL_RESPONSE    32              // [TelnetColor] ANSI color escape code (default 32 - Green)
 //  #define TELNET_COL_LOGGING     36              // [TelnetColor] ANSI color escape code (default 36 - Cyan)
 
+//#define USE_XYZMODEM                             // Add support for XModem over serial and telnet (+5k code)
+
 // -- HTTP ----------------------------------------
 #define USE_WEBSERVER                            // Enable web server and Wi-Fi Manager (+66k code, +8k mem)
   #define WEB_PORT             80                // Web server Port for User and Admin mode

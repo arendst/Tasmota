@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Berry `bytes.add()` now accepts 3-bytes values (#23200)
 - Berry expose `esp_http_server` for websockets (#23206)
 - AlpineJS 2.8.2 - optional for now (#23259)
+- Support for XMODEM over serial and telnet if enabled with `#define USE_XYZMODEM`
 
 ### Breaking Changed
 - HASPmota added `y2_min` and `y2_max` to control the second series of `chart` (#23287)
@@ -28,7 +29,6 @@ All notable changes to this project will be documented in this file.
 ### Removed
 
 
-
 ## [14.5.0.2] 20250325
 ### Added
 - Berry load `.tapp` files in `/.extensions/` then in `/` (#23113)
@@ -36,7 +36,7 @@ All notable changes to this project will be documented in this file.
 - Support for HLK-LD2402 24GHz smart wave motion sensor (#23133)
 - Matter prepare for ICD cluster (#23158)
 - Berry `re.dump()` (#23162)
-- Telnet server using command `Telnet <0|1|port>[,<IP filter>]`
+- Support for Telnet server using command `Telnet <0|1|port>[,<IP filter>]` if enabled with `#define USE_TELNET`
 - HASPmota autostart when `pages.jsonl` exists (#23181)
 
 ### Breaking Changed

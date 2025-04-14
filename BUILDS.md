@@ -20,6 +20,7 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_TELEGRAM              | -     | - / - | -     | -     | -     | -     |
 | USE_KNX                   | -     | - / x | x     | -     | -     | -     |
 | USE_TELNET                | -     | - / - | -     | -     | -     | -     |
+| USE_XYZMODEM              | -     | - / - | -     | -     | -     | -     |
 | USE_WEBSERVER             | x     | x / x | x     | x     | x     | x     |
 | USE_WEBSEND_RESPONSE      | -     | - / - | -     | -     | -     | -     |
 | USE_EMULATION_HUE         | x     | x / x | -     | x     | -     | -     |
