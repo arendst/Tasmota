@@ -2360,6 +2360,7 @@ class lvh_chart : lvh_obj
   var _ser1, _ser2
   # y_min/y_max contain the main range for y. Since LVGL does not have getters, we need to memorize on our side the lates tvalues
   var _y_min, _y_max
+  var _y2_min, _y2_max
   # h_div/v_div contain the horizontal and vertical divisions, we need to memorize values because both are set from same API
   var _h_div, _v_div
 
@@ -2367,6 +2368,8 @@ class lvh_chart : lvh_obj
     # default values from LVGL are 0..100
     self._y_min = 0
     self._y_max = 100
+    self._y2_min = 0
+    self._y2_max = 100
     # default values
     #define LV_CHART_HDIV_DEF 3
     #define LV_CHART_VDIV_DEF 5
@@ -2376,7 +2379,7 @@ class lvh_chart : lvh_obj
     self._lv_obj.set_update_mode(lv.CHART_UPDATE_MODE_SHIFT)
 
     self._ser1 = self._lv_obj.add_series(lv.color(0xEE4444), lv.CHART_AXIS_PRIMARY_Y)
-    self._ser2 = self._lv_obj.add_series(lv.color(0x44EE44), lv.CHART_AXIS_PRIMARY_Y)
+    self._ser2 = self._lv_obj.add_series(lv.color(0x44EE44), lv.CHART_AXIS_SECONDARY_Y)
   end
 
   def add_point(v)
@@ -2399,6 +2402,12 @@ class lvh_chart : lvh_obj
   def get_y_max()
     return self._y_max
   end
+  def get_y2_min()
+    return self._y2_min
+  end
+  def get_y2_max()
+    return self._y2_max
+  end
   def set_y_min(_y_min)
     self._y_min = _y_min
     self._lv_obj.set_range(lv.CHART_AXIS_PRIMARY_Y, self._y_min, self._y_max)
@@ -2406,6 +2415,14 @@ class lvh_chart : lvh_obj
   def set_y_max(_y_max)
     self._y_max = _y_max
     self._lv_obj.set_range(lv.CHART_AXIS_PRIMARY_Y, self._y_min, self._y_max)
+  end
+  def set_y2_min(_y2_min)
+    self._y2_min = _y2_min
+    self._lv_obj.set_range(lv.CHART_AXIS_SECONDARY_Y, self._y2_min, self._y2_max)
+  end
+  def set_y2_max(_y2_max)
+    self._y2_max = _y2_max
+    self._lv_obj.set_range(lv.CHART_AXIS_SECONDARY_Y, self._y2_min, self._y2_max)
   end
 
   def set_series1_color(color)
@@ -2601,8 +2618,6 @@ class lvh_page
       self._lv_scr = lv.layer_top() # top layer, visible over all screens
     else
       self._lv_scr = lv.obj(0)      # allocate a new screen
-      var bg_color = lv.scr_act().get_style_bg_color(0 #- lv.PART_MAIN | lv.STATE_DEFAULT -#) # bg_color of default screen
-      self._lv_scr.set_style_bg_color(bg_color, 0 #- lv.PART_MAIN | lv.STATE_DEFAULT -#) # set white background
     end
 
     # page object is also stored in the object map at id `0` as instance of `lvg_scr`
@@ -2784,10 +2799,10 @@ end
 
 # main class controller, meant to be a singleton and the only externally used class
 class HASPmota
-  var dark                              # (bool) use dark theme?
+  var started                           # (bool) is HASPmota already started?
   var hres, vres                        # (int) resolution
   var scr                               # (lv_obj) default LVGL screen
-  var r16                               # (lv_font) robotocondensed fonts size 16
+  var r12, r16, r24                     # (lv_font) robotocondensed fonts size 12, 16 and 24
   # haspmota objects
   var lvh_pages                         # (list of lvg_page) list of pages
   var lvh_page_cur_idx                  # (int) current page index number
@@ -2840,12 +2855,12 @@ class HASPmota
   # special cases
   static lvh_chart = lvh_chart
 
-  static def_templ_name = "pages.jsonl" # default template name
+  static var PAGES_JSONL = "pages.jsonl" # default template name
 
   def init()
     self.fix_lv_version()
     import re
-    self.re_page_target = re.compile("p\\d+")
+    self.re_page_target = re.compilebytes("p\\d+")
     # nothing to put here up to now
   end
 
@@ -2860,35 +2875,72 @@ class HASPmota
   #====================================================================
   # init
   #
-  # arg1: (bool) use dark theme if `true`
+  # Opt1: no arguments
+  #       load "pages.jsonl"
+  # Opt2:
+  #    arg1: (string) use it as template name
   #
-  # implicitly loads `pages.jsonl` from file-system // TODO allow to specicify file name
+  # Opt3:
+  #    arg1: (bool) set dark mode (deprecated)
+  #    arg2:  (string) use it as template name
+  #
   #====================================================================
-  def start(dark, templ_name)
+  def start(arg1, arg2)
+    if (self.started)      return    end
+
+    var templ_name
+    if type(arg1) == 'string'
+      templ_name = arg1
+    elif type(arg2) == 'string'
+      templ_name = arg2
+    else
+      templ_name = self.PAGES_JSONL       # use default PAGES.JSONL
+    end
+
     import path
-    if templ_name == nil   templ_name = self.def_templ_name end
     if !path.exists(templ_name)
       raise "io_erorr", "file '" + templ_name + "' not found"
     end
     # start lv if not already started. It does no harm to call lv.start() if LVGL was already started
     lv.start()
 
-    self.dark = bool(dark)
-
     self.hres = lv.get_hor_res()       # ex: 320
     self.vres = lv.get_ver_res()       # ex: 240
     self.scr = lv.scr_act()            # LVGL default screean object
 
     try
+      self.r12 = lv.font_embedded("robotocondensed", 12)  # TODO what if does not exist
+    except ..
+      self.r12 = lv.font_embedded("montserrat", 10)  # TODO what if does not exist
+    end
+    try
       self.r16 = lv.font_embedded("robotocondensed", 16)  # TODO what if does not exist
     except ..
       self.r16 = lv.font_embedded("montserrat", 14)  # TODO what if does not exist
     end
+    try
+      self.r24 = lv.font_embedded("robotocondensed", 24)  # TODO what if does not exist
+    except ..
+      self.r24 = lv.font_embedded("montserrat", 20)  # TODO what if does not exist
+    end
 
     # set the theme for HASPmota
-    var th2 = lv.theme_haspmota_init(0, lv.color(0xFF00FF), lv.color(0x303030), self.dark, self.r16)
+    var primary_color = self.lvh_root.parse_color(tasmota.webcolor(10 #-COL_BUTTON-#))
+    var secondary_color = self.lvh_root.parse_color(tasmota.webcolor(11 #-COL_BUTTON_HOVER-#))
+    var color_scr = self.lvh_root.parse_color(tasmota.webcolor(1 #-COL_BACKGROUND-#))
+    var color_text = self.lvh_root.parse_color(tasmota.webcolor(9 #-COL_BUTTON_TEXT-#))
+    var color_card = self.lvh_root.parse_color(tasmota.webcolor(2 #-COL_FORM-#))
+    var color_grey = self.lvh_root.parse_color(tasmota.webcolor(2 #-COL_FORM-#))
+    var color_reset = self.lvh_root.parse_color(tasmota.webcolor(12 #-COL_BUTTON_RESET-#))
+    var color_reset_hover = self.lvh_root.parse_color(tasmota.webcolor(13 #-COL_BUTTON_RESET_HOVER-#))
+    var color_save = self.lvh_root.parse_color(tasmota.webcolor(14 #-COL_BUTTON_SAVE-#))
+    var color_save_hover = self.lvh_root.parse_color(tasmota.webcolor(15 #-COL_BUTTON_SAVE_HOVER-#))
+    var colors = lv.color_arr([primary_color, secondary_color, color_scr, color_text, color_card, color_grey,
+                               color_reset, color_reset_hover, color_save, color_save_hover])
+    
+    var th2 = lv.theme_haspmota_init(0, colors,
+                                     self.r12, self.r16, self.r24)
     self.scr.get_disp().set_theme(th2)
-    self.scr.set_style_bg_color(self.dark ? lv.color(0x000000) : lv.color(0xFFFFFF),0)    # set background to white
     # apply theme to layer_top, but keep it transparent
     lv.theme_apply(lv.layer_top())
     lv.layer_top().set_style_bg_opa(0,0)
@@ -2896,6 +2948,7 @@ class HASPmota
     self.lvh_pages = {}
     # load from JSONL
     self._load(templ_name)
+    self.started = true
   end
 
   #################################################################################
@@ -2948,21 +3001,20 @@ class HASPmota
     import string
     import json
 
-    var f = open(templ_name,"r")
-    var f_content =  f.read()
-    f.close()
-    
-    var jsonl = string.split(f_content, "\n")
-    f = nil   # allow deallocation
-    f_content = nil
-
+    var f = open(templ_name)
     # parse each line
-    while size(jsonl) > 0
-      var jline = json.load(jsonl[0])
+    while f.tell() < f.size()                 # while we're not at the end of the file
+      var line = f.readline()
 
+      # if size is '1', the line is considered as empty because it's a '\n' character
+      if (size(line) <= 1) || (line[0] == '#')    # skip empty lines and lines starting with '#'
+        continue
+      end
+
+      var jline = json.load(line)
       if type(jline) == 'instance'
         if tasmota.loglevel(4)
-          tasmota.log(f"HSP: parsing line '{jsonl[0]}'", 4)
+          tasmota.log(f"HSP: parsing line '{line}'", 4)
         end
         self.parse_page(jline)    # parse page first to create any page related objects, may change self.lvh_page_cur_idx_parsing
         # objects are created in the current page
@@ -2972,14 +3024,13 @@ class HASPmota
         self.parse_obj(jline, self.lvh_pages[self.lvh_page_cur_idx_parsing])    # then parse object within this page
       else
         # check if it's invalid json
-        if size(string.tr(jsonl[0], " \t", "")) > 0
-          tasmota.log(f"HSP: invalid JSON line '{jsonl[0]}'", 2)
+        if size(string.tr(line, " \t", "")) > 0
+          tasmota.log(f"HSP: invalid JSON line '{line}'", 2)
         end
       end
       jline = nil
-      jsonl.remove(0)
     end
-    jsonl = nil     # make all of it freeable
+    f.close()
 
     # current page is always 1 when we start
     var pages_sorted = self.pages_list_sorted(nil)            # nil for full list
@@ -3094,6 +3145,7 @@ class HASPmota
   #  Returns: the target page object if changed, or `nil` if still on same page
   #====================================================================
   def page_show(action, anim, duration)
+    import re
     # resolve between page numbers
     # p1 is either a number or nil (stored value)
     # p2 is the default value
@@ -3129,7 +3181,7 @@ class HASPmota
       if (to_page == cur_page.id())
         to_page = to_page_resolve(int(cur_page.next), sorted_pages_list[1], sorted_pages_list)
       end
-    elif self.re_page_target.match(action)
+    elif re.match(self.re_page_target, action)
       # action is supposed to be `p<number>` format
       to_page = to_page_resolve(int(action[1..-1]), nil #-default to nil-#, sorted_pages_list)
     end

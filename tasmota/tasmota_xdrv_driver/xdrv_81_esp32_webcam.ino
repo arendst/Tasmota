@@ -1575,8 +1575,10 @@ bool Xdrv81(uint32_t function) {
      break;
     case FUNC_EVERY_SECOND:
       WcUpdateStats();
+      break;
     case FUNC_JSON_APPEND:
       WcSensorStats();
+      break;
     case FUNC_WEB_SENSOR:
       WcStatsShow();
       break;

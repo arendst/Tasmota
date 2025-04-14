@@ -875,12 +875,11 @@ miel_hvac_cmnd_settemp(void)
 {
 	struct miel_hvac_softc *sc = miel_hvac_sc;
 	struct miel_hvac_msg_update_settings *update = &sc->sc_settings_update;
-	float degc;
 
 	if (XdrvMailbox.data_len == 0)
 		return;
 
-	degc = strtof(XdrvMailbox.data, nullptr);
+	float degc = CharToFloat(XdrvMailbox.data);
 	if (degc < MIEL_HVAC_SETTINGS_TEMP_MIN || degc > MIEL_HVAC_SETTINGS_TEMP_MAX)
 	{
 		miel_hvac_respond_unsupported();
@@ -899,7 +898,7 @@ miel_hvac_cmnd_settemp(void)
 		update->temp05 = miel_hvac_deg2temp(degc);
 	}
 
-	ResponseCmndNumber(degc);
+	ResponseCmndFloat(degc, Settings->flag2.temperature_resolution);
 }
 
 static void

@@ -97,7 +97,7 @@ enum uColorType { uCOLOR_BW, uCOLOR_COLOR };
 #define UDISP_WHITE       0xFFFF      /* 255, 255, 255 */
 #define UDISP_ORANGE      0xFD20      /* 255, 165,   0 */
 #define UDISP_GREENYELLOW 0xAFE5      /* 173, 255,  47 */
-#define UDISP_PINK        0xF81F
+#define UDISP_PINK        0xFc18      /* 255, 128, 192 */
 
 #ifdef ESP8266
 #define PIN_OUT_SET 0x60000304

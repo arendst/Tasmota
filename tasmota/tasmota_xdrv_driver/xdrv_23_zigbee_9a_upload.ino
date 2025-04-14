@@ -144,7 +144,7 @@ char XModemWaitACK(void)
 {
   char in_char;
   do {
-    uint8_t i = 0;
+    int i = 0;
     while (!ZigbeeSerial->available()) {
       delayMicroseconds(100);
       i++;

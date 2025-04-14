@@ -185,9 +185,9 @@ void WiFiSetSleepMode(void)
   }
 */
   bool wifi_no_sleep = Settings->flag5.wifi_no_sleep;
-#ifdef CONFIG_IDF_TARGET_ESP32C3
-  wifi_no_sleep = true;                         // Temporary patch for IDF4.4, wifi sleeping may cause wifi drops
-#endif
+//#ifdef CONFIG_IDF_TARGET_ESP32C3
+//  wifi_no_sleep = true;                         // Temporary patch for IDF4.4, wifi sleeping may cause wifi drops
+//#endif
   if (0 == TasmotaGlobal.sleep || wifi_no_sleep) {
     if (!TasmotaGlobal.wifi_stay_asleep) {
       WiFiHelper::setSleepMode(WIFI_NONE_SLEEP);       // Disable sleep
@@ -508,7 +508,7 @@ bool WifiGetIP(IPAddress *ip, bool exclude_ap = false);
 // Returns only IPv6 global address (no loopback and no link-local)
 bool WifiGetIPv4(IPAddress *ip)
 {
-  uint32_t wifi_uint = (uint32_t) WiFi.localIP();
+  uint32_t wifi_uint = (WL_CONNECTED == WiFi.status()) ? (uint32_t)WiFi.localIP() : 0;  // See issue #23115
   if (ip != nullptr) { *ip = wifi_uint; }
   return wifi_uint != 0;
 }

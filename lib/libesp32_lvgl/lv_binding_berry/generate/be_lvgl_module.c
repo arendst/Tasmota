@@ -174,7 +174,7 @@ const be_ntv_func_def_t lv_func[] = {
   { "theme_get_font_normal", { (const void*) &lv_theme_get_font_normal, "lv.font", "(lv.obj)" } },
   { "theme_get_font_small", { (const void*) &lv_theme_get_font_small, "lv.font", "(lv.obj)" } },
   { "theme_get_from_obj", { (const void*) &lv_theme_get_from_obj, "lv.theme", "(lv.obj)" } },
-  { "theme_haspmota_init", { (const void*) &lv_theme_haspmota_init, "lv.theme", "(lv.display)(lv.color)(lv.color)b(lv.font)" } },
+  { "theme_haspmota_init", { (const void*) &lv_theme_haspmota_init, "lv.theme", "(lv.display)(lv.color_arr)(lv.font)(lv.font)(lv.font)" } },
   { "theme_haspmota_is_inited", { (const void*) &lv_theme_haspmota_is_inited, "b", "" } },
   { "theme_set_parent", { (const void*) &lv_theme_set_parent, "", "(lv.theme)(lv.theme)" } },
   { "timer_create", { (const void*) &lv_timer_create, "lv.timer", "^lv_timer_cb^i." } },

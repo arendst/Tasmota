@@ -176,6 +176,29 @@ int32_t callBerryEventDispatcher(const char *type, const char *cmd, int32_t idx,
   return ret;
 }
 
+// execute an arbitrary string containing Berry code
+int32_t callBerryString(bvm *vm, const char *code_source);
+int32_t callBerryString(bvm *vm, const char *code_source) {
+  // do nothing if NULL or empty string
+  if (code_source == nullptr || code_source[0] == '\0') { return 0; }
+
+  int32_t ret_code;
+  ret_code = be_loadstring(vm, code_source);
+  if (ret_code == 0) {
+    ret_code = be_pcall(berry.vm, 0);
+    if (ret_code == 0) {
+      if (be_top(vm) > 1) {
+        be_error_pop_all(berry.vm);             // clear Berry stack
+      } else {
+        be_pop(berry.vm, 1);
+      }
+      return 0;                     // no error
+    }
+  }
+  be_error_pop_all(vm);             // clear Berry stack
+  return ret_code;
+}
+
 // simple wrapper to call `tasmota.<method_name>()`
 static void callBerryTasmotaFunc(const char * method_name) {
   bvm *vm = berry.vm;
@@ -364,7 +387,7 @@ void BerryInit(void) {
     be_set_obs_micros(berry.vm, (bmicrosfnct)&micros);
     comp_set_named_gbl(berry.vm);  /* Enable named globals in Berry compiler */
     comp_set_strict(berry.vm);  /* Enable strict mode in Berry compiler, equivalent of `import strict` */
-    be_set_ctype_func_hanlder(berry.vm, be_call_ctype_func);
+    be_set_ctype_func_handler(berry.vm, be_call_ctype_func);
 
     if (UsePSRAM()) {     // if PSRAM is available, raise the max size to 512kb
       berry.vm->bytesmaxsize = 512 * 1024;
@@ -375,22 +398,8 @@ void BerryInit(void) {
     // Set the GC threshold to 3584 bytes to avoid the first useless GC
     berry.vm->gc.threshold = 3584;
 
-    ret_code1 = be_loadstring(berry.vm, berry_prog);
-    if (ret_code1 != 0) {
-      be_error_pop_all(berry.vm);             // clear Berry stack
+    if (callBerryString(berry.vm, be_berry_init_code) != 0) {
       break;
-    }
-    // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry code loaded, RAM used=%u"), be_gc_memcount(berry.vm));
-    ret_code2 = be_pcall(berry.vm, 0);
-    if (ret_code1 != 0) {
-      be_error_pop_all(berry.vm);             // clear Berry stack
-      break;
-    }
-    // AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_BERRY "Berry code ran, RAM used=%u"), be_gc_memcount(berry.vm));
-    if (be_top(berry.vm) > 1) {
-      be_error_pop_all(berry.vm);             // clear Berry stack
-    } else {
-      be_pop(berry.vm, 1);
     }
 
     AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_BERRY "Berry initialized, RAM used %u bytes"), callBerryGC());
@@ -402,7 +411,7 @@ void BerryInit(void) {
     berry.leds_panel_loaded = !PinUsed(GPIO_WS2812);
 #endif // USE_BERRY_LEDS_PANEL
 
-    // we generate a synthetic event `autoexec`
+    // we generate a synthetic event `preinit`
     callBerryEventDispatcher(PSTR("preinit"), nullptr, 0, nullptr);
 
     // Run pre-init
@@ -889,6 +898,13 @@ extern "C" bbool BerryBECLoader(const char * url) {
   return true;
 }
 
+#else   // No USE_WEBSERVER
+
+extern "C" bbool BerryBECLoader(const char * url) {
+  AddLog(LOG_LEVEL_INFO, "BRY: web server disabled");
+  return false;
+}
+
 #endif // USE_WEBSERVER
 
 /*********************************************************************************************\
@@ -897,6 +913,7 @@ extern "C" bbool BerryBECLoader(const char * url) {
 bool Xdrv52(uint32_t function)
 {
   bool result = false;
+  if (berry.vm == NULL) { return result; }
 
   switch (function) {
     case FUNC_SLEEP_LOOP:
@@ -913,6 +930,7 @@ bool Xdrv52(uint32_t function)
         callBerryEventDispatcher(PSTR("autoexec"), nullptr, 0, nullptr);
 
         BrLoad("autoexec.be");   // run autoexec.be at first tick, so we know all modules are initialized
+        callBerryString(berry.vm, be_post_autoxec_code);
         berry.autoexec_done = true;
 
 #ifdef USE_WEBSERVER
@@ -1019,7 +1037,7 @@ bool Xdrv52(uint32_t function)
     case FUNC_WEB_ADD_CONSOLE_BUTTON:
       if (XdrvMailbox.index) {
         XdrvMailbox.index++;
-      } else if (berry.vm != NULL) {
+      } else {
         WSContentSend_P(HTTP_BTN_BERRY_CONSOLE);
         HandleBerryBECLoaderButton();               // display buttons to load BEC files
         callBerryEventDispatcher(PSTR("web_add_button"), nullptr, 0, nullptr);

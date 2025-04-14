@@ -10,28 +10,57 @@
 /*********************************************************************************************\
  * WiZ WiFi ESP-NOW Smart Remote decoder
  *
- * Example rule
+ * Enable with command `SetOption164 1`
+ *
+ * If USE_WIZMOTE_COMMISSION is enabled you have a WIZMOTE_COMMISSION_WINDOW after restart or
+ * after command `SetOption164 1` to register a persistent WiZMote id by pressing the ON button
+ * three times. This supports multi-press power control. If a light is configured it supports
+ * dimming control too. In that case no rule is needed.
+ * Pressing the OFF button three times will de-register the WizMote id.
+ *
+ * Example rule for color led
  * on wizmote#action do var1 %value% endon               - Store current button
- * on wizmote#id=12318994 do event action=%var1% endon   - Test for correct Id and execute event
+ * on wizmote#id=12318994 do event action=%var1% endon   - Test for correct Id (12318994) and execute event
  * on event#action=on do power 1 endon                   - On button ON do power 1
  * on event#action=off do power 0 endon                  - On button OFF do power 0
  * on event#action=bd do dimmer - endon                  - On button Brihtness - do dimmer - (10% decrease)
  * on event#action=bu do dimmer + endon                  - On button Brightness + do dimmer + (10% increase)
  * on event#action=bn do dimmer 20 endon                 - On button Moon do dimmer 20
+ * on event#action=b1 do scheme 0 endon                  - On button 1 do scheme 0 (fixed color)
+ * on event#action=b2 do scheme 3 endon                  - On button 2 do scheme 3 (rotating colors)
+ * on event#action=b3 do speed - endon                   - On button 3 do rotating speed decrease
+ * on event#action=b4 do speed + endon                   - On button 4 do rotating speed increase
 \*********************************************************************************************/
 
-#define XDRV_77              77
+#define XDRV_77                       77
 
 #ifndef WIZMOTE_CHANNEL
-#define WIZMOTE_CHANNEL      1                   // WiZ Smart Remote ESP-NOW channel if WiFi is disabled
+#define WIZMOTE_CHANNEL                1         // WiZ Smart Remote ESP-NOW channel if WiFi is disabled
+#endif
+
+//#define USE_WIZMOTE_COMMISSION                   // Enable commission support for control without rules (+0.5k code)
+#ifndef WIZMOTE_COMMISSION_WINDOW
+#define WIZMOTE_COMMISSION_WINDOW     10         // (seconds) Commission window
+#endif
+#ifndef WIZMOTE_MULTI_PRESS_WINDOW
+#define WIZMOTE_MULTI_PRESS_WINDOW   500         // (milliseconds) Multi-press detection window
 #endif
 
 #include <QuickEspNow.h>
 
 struct WizMote {
+  int rssi;
   uint32_t last_seq;
   uint32_t id;
-  int rssi;
+
+#ifdef USE_WIZMOTE_COMMISSION
+  uint32_t comm_id;
+  uint32_t comm_window;
+  uint32_t last_press;
+  uint8_t count;
+  uint8_t delayed_index;
+#endif  // USE_WIZMOTE_COMMISSION
+
   uint8_t index;
   uint8_t battery_level;
   uint8_t active;
@@ -121,11 +150,89 @@ void WizMoteHandleRemoteData(uint8_t *mac, uint8_t *incoming_data, size_t len, s
   WizMote.last_seq = incoming->sequence;
 }
 
+#ifdef USE_WIZMOTE_COMMISSION
+void WizMoteCommissionInit(void) {
+  WizMote.count = 0;
+  WizMote.comm_window = TasmotaGlobal.uptime + WIZMOTE_COMMISSION_WINDOW;
+  if (!PinUsed(GPIO_CC1101_GDO0)) {
+    WizMote.comm_id = Settings->keeloq_serial;
+  }
+}
+#endif  // USE_WIZMOTE_COMMISSION
+
 void WizMoteResponse(void) {
-  // This needs to be executed here as it will panic if placed within the above Callback
+  // This needs to be executed here as it will panic if placed within the WizMoteHandleRemoteData Callback
+
+#ifdef USE_WIZMOTE_COMMISSION
+  uint32_t now;
+  if (WizMote.comm_id == WizMote.id) {           // Commissioned id
+    now = millis();
+    if (WizMote.delayed_index && WizMote.count && (WizMote.last_press < now)) {
+      ExecuteCommandPower(WizMote.count, WizMote.delayed_index -1, SRC_REMOTE);
+      WizMote.delayed_index = 0;
+    }
+  }
+#endif  // USE_WIZMOTE_COMMISSION
+
+  if (0 == WizMote.index) { return; }            // No key pressed so exit
+
+#ifdef USE_WIZMOTE_COMMISSION
+  if (WizMote.comm_window > TasmotaGlobal.uptime) {  // Max WIZMOTE_COMMISSION_WINDOW seconds after restart or enabling SO164
+    if (((0 == WizMote.comm_id) && (2 == WizMote.index)) ||          // ON button commissioning
+       ((WizMote.id == WizMote.comm_id) && (1 == WizMote.index))) {  // OFF button de-commissioning
+      WizMote.count++;
+      if (3 == WizMote.count) {
+        WizMote.comm_id = (2 == WizMote.index) ? WizMote.id : 0;
+        if (!PinUsed(GPIO_CC1101_GDO0)) {
+          Settings->keeloq_serial = WizMote.comm_id;
+        }
+        WizMote.comm_window = TasmotaGlobal.uptime;
+        AddLog(LOG_LEVEL_DEBUG, PSTR("WIZ: %sommissioned"), (WizMote.comm_id) ? "C" : "Dec");
+        ExecuteCommandPower(1, 2, SRC_REMOTE);   // Toggle light as feedback of (de)commission
+        delay(500);
+        ExecuteCommandPower(1, 2, SRC_REMOTE);
+      }
+    }
+    WizMote.index = 0;
+    return;
+  }
+
+  if (WizMote.comm_id == WizMote.id) {           // Commissioned id
+    switch(WizMote.index) {
+      case 1:      // OFF
+      case 2:      // ON
+        if (WizMote.last_press < now) {
+          WizMote.count = 1;
+        } else {
+          WizMote.count++;
+        }
+        WizMote.last_press = now + WIZMOTE_MULTI_PRESS_WINDOW;
+        WizMote.delayed_index = WizMote.index;
+        WizMote.index = 0;
+        break;
+#ifdef USE_LIGHT
+      case 3:      // Moon
+      case 8:      // Bright up
+      case 9:      // Bright down
+        if (TasmotaGlobal.light_type) {          // Any light
+          char scmnd[16];
+          snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %s"),
+            (3 == WizMote.index) ? "20" : (8 == WizMote.index) ? "+" : "-");
+          ExecuteCommand(scmnd, SRC_REMOTE);
+          WizMote.index = 0;
+        }
+        break;
+#endif  // USE_LIGHT
+      default:
+        WizMote.delayed_index = 0;
+    }
+    if (!WizMote.index) { return; }
+  }
+#endif  // USE_WIZMOTE_COMMISSION
+
   char text[5];
-  Response_P(PSTR("{\"WiZMote\":{\"Id\":%d,\"Action\":\"%s\",\"RSSI\":%d,\"Battery\":%d}}"),
-    WizMote.id, GetTextIndexed(text, sizeof(text), WizMote.index, kWMButtons), WizMote.rssi, WizMote.battery_level);
+  Response_P(PSTR("{\"WiZMote\":{\"Id\":%d,\"Seq\":%d,\"Action\":\"%s\",\"RSSI\":%d,\"Batt\":%d}}"),
+    WizMote.id, WizMote.last_seq, GetTextIndexed(text, sizeof(text), WizMote.index, kWMButtons), WizMote.rssi, WizMote.battery_level);
   if (Settings->flag6.mqtt_disable_publish ) {  // SetOption147 - If it is activated, Tasmota will not publish MQTT message, but it will proccess event trigger rules
     XdrvRulesProcess(0);
   } else {
@@ -177,6 +284,11 @@ void EspNowInit(void) {
         quickEspNow.onDataRcvd(EspNowDataReceived);
         Settings->flag.global_state = 1;     // SetOption31 - (Wifi, MQTT) Control link led blinking (1)
         AddLog(LOG_LEVEL_INFO, PSTR("NOW: Started on channel " STR(WIZMOTE_CHANNEL)));
+
+#ifdef USE_WIZMOTE_COMMISSION
+        WizMoteCommissionInit();
+#endif  // USE_WIZMOTE_COMMISSION
+
         WizMote.active = 2;
       }
     }
@@ -189,6 +301,11 @@ void EspNowInit(void) {
       if (quickEspNow.begin()) {
         quickEspNow.onDataRcvd(EspNowDataReceived);
         AddLog(LOG_LEVEL_INFO, PSTR("NOW: Started"));
+
+#ifdef USE_WIZMOTE_COMMISSION
+        WizMoteCommissionInit();
+#endif  // USE_WIZMOTE_COMMISSION
+
         WizMote.active = 1;
       }
     }
@@ -217,9 +334,8 @@ bool Xdrv77(uint32_t function) {
   else if (WizMote.active) {
     switch (function) {
       case FUNC_LOOP:
-        if (WizMote.index > 0) {
-          WizMoteResponse();
-        }
+      case FUNC_SLEEP_LOOP:
+        WizMoteResponse();
         break;
       case FUNC_ACTIVE:
         result = true;

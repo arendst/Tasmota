@@ -23,9 +23,11 @@
 /*********************************************************************************************\
  * Handlers for Berry calls and async
  *
+ * This is called right after Berry is initialized
+ * and before the main loop is started.
 \*********************************************************************************************/
 
-const char berry_prog[] =
+const char be_berry_init_code[] =
 
   "import global "
 #ifdef USE_BERRY_PYTHON_COMPAT
@@ -97,6 +99,26 @@ const char berry_prog[] =
   "import matter "
   "global.matter_device = matter.Device() "
 #endif
-  ;
+;
+
+
+/*********************************************************************************************\
+ * This is called after `autoexec.be` is executed
+\*********************************************************************************************/
+const char be_post_autoxec_code[] =
+  ""                                    // fallback to empty string
+#if defined(USE_LVGL) && defined(USE_LVGL_HASPMOTA)
+  // HASPmota init
+  "do "
+    "import path "
+    "import display "
+    "if display.started() && path.exists('/pages.jsonl') "
+      "import haspmota "
+      "global.haspmota = haspmota "     // make sure the global is also defined
+      "haspmota.start() "
+    "end "
+  "end "
+#endif // USE_LVGL_HASPMOTA
+;
 
 #endif  // USE_BERRY

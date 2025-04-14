@@ -40,10 +40,15 @@
 #elif defined(_MSC_VER)
 #define popcount(v)   __popcnt(v)
 
+// Find a free slot in the space bitmask
+// Find the least significant 1-bit in x and return its 1-based index.
 static int ffs(unsigned x)
 {
     unsigned long i;
-    return _BitScanForward(&i, x) ? i : 0;
+    // NOTE: _BitScanForward is 0-based, see:
+    // https://learn.microsoft.com/en-us/cpp/intrinsics/bitscanforward-bitscanforward64?view=msvc-170
+    // _BitScanForward(&index, 12) populates index with 2
+    return _BitScanForward(&i, x) ? i + 1 : 0;
 }
 #else
 /* https://github.com/hcs0/Hackers-Delight/blob/master/pop.c.txt - count number of 1-bits */

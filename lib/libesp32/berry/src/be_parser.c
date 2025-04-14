@@ -324,8 +324,8 @@ static void end_func(bparser *parser)
     proto->codesize = finfo->pc;
     proto->ktab = be_vector_release(vm, &finfo->kvec);
     proto->nconst = be_vector_count(&finfo->kvec);
-    proto->nproto = be_vector_count(&finfo->pvec);
     proto->ptab = be_vector_release(vm, &finfo->pvec);
+    proto->nproto = be_vector_count(&finfo->pvec);
 #if BE_USE_MEM_ALIGNED
     proto->code = be_move_to_aligned(vm, proto->code, proto->codesize * sizeof(binstruction));     /* move `code` to 4-bytes aligned memory region */
     proto->ktab = be_move_to_aligned(vm, proto->ktab, proto->nconst * sizeof(bvalue));     /* move `ktab` to 4-bytes aligned memory region */
@@ -488,7 +488,10 @@ static void new_var(bparser *parser, bstring *name, bexpdesc *var)
         var->v.idx = new_localvar(parser, name); /* if local, contains the index in current local var list */
     } else {
         init_exp(var, ETGLOBAL, 0);
-        var->v.idx = be_global_new(parser->vm, name);
+        var->v.idx = be_global_find(parser->vm, name);
+        if (var->v.idx < 0) {
+            var->v.idx = be_global_new(parser->vm, name);
+        }
         if (var->v.idx > (int)IBx_MASK) {
             push_error(parser,
                 "too many global variables (in '%s')", str(name));

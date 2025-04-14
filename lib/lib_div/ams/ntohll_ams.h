@@ -3,6 +3,6 @@
 
 #include "lwip/def.h"
 
-uint64_t ntohll(uint64_t x);
+uint64_t ntohll_ams(uint64_t x);
 
 #endif

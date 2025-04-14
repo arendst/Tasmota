@@ -21,14 +21,6 @@
 
 #ifdef USE_BERRY
 
-
-#ifdef USE_WEBCLIENT
-
-// extern int be_udp_init(bvm *vm);
-// extern int be_udp_deinit(bvm *vm);
-// extern int be_udp_begin(bvm *vm);
-// extern int be_udp_begin_mcast(bvm *vm);
-
 #include <Arduino.h>
 #include <WiFiUdp.h>
 #include "be_mapping.h"
@@ -151,5 +143,4 @@ extern "C" {
   }
 }
 
-#endif // USE_WEBCLIENT
 #endif  // USE_BERRY

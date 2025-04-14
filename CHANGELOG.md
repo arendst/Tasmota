@@ -3,6 +3,77 @@ All notable changes to this project will be documented in this file.
 
 ## [Released]
 
+## [14.6.0] 20250416
+- Release Ryan
+
+## [14.5.0.3] 
+### Added
+- Extend command `GPIO` with different display options and allowing updating of module GPIO's in one go
+- Berry `bytes.add()` now accepts 3-bytes values (#23200)
+- Berry expose `esp_http_server` for websockets (#23206)
+- AlpineJS 2.8.2 - optional for now (#23259)
+- Support for XMODEM over serial and telnet if enabled with `#define USE_XYZMODEM`
+
+### Breaking Changed
+- HASPmota added `y2_min` and `y2_max` to control the second series of `chart` (#23287)
+- HASPmota default theme is now Tasmota-style (#23288)
+
+### Changed
+- Output of commands `GPIO` and `GPIOs` swapped
+- Smoothen light gamma curve when using `Fade` (#23230)
+- ESP32 Platform from 2025.03.30 to 2025.04.30, Framework (Arduino Core) from v3.1.3.250302 to v3.1.3.250411 and IDF from v5.3.2.250228 to 5.3.2.250403 (#23280)
+- HLK-LD2402 updates for firmware 3.3.5+ (#23281)
+
+### Fixed
+- INA226 driver fixes (#23197)
+- TLS increase timeout and fix crash (#23249)
+- Berry `readline` when a line is exactly 98 characters (#23276)
+
+## [14.5.0.2] 20250325
+### Added
+- Berry load `.tapp` files in `/.extensions/` then in `/` (#23113)
+- Support Vango Technologies V924x ultralow power, single-phase, power measurement (#23127)
+- Support for HLK-LD2402 24GHz smart wave motion sensor (#23133)
+- Matter prepare for ICD cluster (#23158)
+- Berry `re.dump()` (#23162)
+- Support for Telnet server using command `Telnet <0|1|port>[,<IP filter>]` if enabled with `#define USE_TELNET`
+- HASPmota autostart when `pages.jsonl` exists (#23181)
+
+### Breaking Changed
+- Berry remove `Leds.create_matrix` from the standard library waiting for reimplementation (#23114)
+
+### Changed
+- ESP32 Platform from 2025.02.30 to 2025.03.30, Framework (Arduino Core) from v3.1.1.250203 to v3.1.3.250302 and IDF from v5.3.2.250120 to 5.3.2.250228 (#23088)
+- ESP32 enable webcam version 2 (#18732)
+- ESP8266 enable FTP for >= 4MB variants (#23120)
+- Berry update flasher for Sonoff ZBBridge Pro (#23136)
+- Berry `re` now accepts `bytes()` as precompiled patterns, added `re.compilebytes()` (#23149)
+- RCSwitch `RCSWITCH_SEPARATION_LIMIT` from 4100 to 3600
+
+### Fixed
+- Berry prevent `import` from hiding a solidified class (#23112)
+- ESP32-C3 WiFi sleep (#23096)
+- ESP32 intermittent exception on WiFi AP cannot be reached (#23115)
+- ESP32 receive incomplete serial data over 128 bytes (#23156)
+
+## [14.5.0.1] 20250302
+### Added
+- Berry experimental driver for AXP2101 for M5Core2v1.1 (#23039)
+- LVGL experimental mirroring of display on Web UI (#23041)
+- Allow acl in mqtt when client certificate is in use with `#define USE_MQTT_CLIENT_CERT` (#22998)
+- Berry `tasmota.when_network_up()` and simplified Matter using it (#23057)
+- Berry `introspect.solidified()` to know if a Berry object is solidified or in RAM (#23063)
+- Berry `global.undef()` to undefine a global variable (#23073)
+
+### Changed
+- LVGL, prepare for HASPmota theme, change: no-grow when clicked, DPI set to 160 (#23040)
+- LVGL Mirroring add checkbox to enable/disable the feature (in the iterim for a better solution) (#23047)
+- Leds Panel add checkbox to enable/disable the feature (in the iterim for a better solution) (#23048)
+- GPIOViewer from v1.6.1 to v1.6.2 (No functional change)
+
+### Fixed
+- Too many zeros in RCSwitch received data regression from v14.4.1.4 (#23050)
+
 ## [14.5.0] 20250219
 - Release Ruth
 

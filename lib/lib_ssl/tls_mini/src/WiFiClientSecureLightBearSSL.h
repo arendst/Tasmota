@@ -137,7 +137,7 @@ class WiFiClientSecure_light : public WiFiClient {
     }
 
   private:
-    uint32_t _loopTimeout=5000;
+    uint32_t _loopTimeout=10000;
     void _clear();
     bool _ctx_present;
     std::shared_ptr<br_ssl_client_context> _sc;
@@ -192,7 +192,8 @@ class WiFiClientSecure_light : public WiFiClient {
 #define ERR_CANT_RESOLVE_IP -1001
 #define ERR_TCP_CONNECT     -1002
 // #define ERR_MISSING_EC_KEY  -1003   // deprecated, AWS IoT is not called if the private key is not present
-#define ERR_MISSING_CA      -1004
+// #define ERR_MISSING_CA      -1004   // deprecated
+#define ERR_TLS_TIMEOUT     -1005
 
 // For reference, BearSSL error codes:
 // #define BR_ERR_OK                      0

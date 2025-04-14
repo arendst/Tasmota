@@ -858,18 +858,21 @@
 // Log message prefix
 #define D_LOG_APPLICATION "APP: "  // Application
 #define D_LOG_BRIDGE "BRG: "       // Bridge
+#define D_LOG_BERRY "BRY: "        // Berry scripting language
 #define D_LOG_CONFIG "CFG: "       // Settings
 #define D_LOG_COMMAND "CMD: "      // Command
 #define D_LOG_DEBUG "DBG: "        // Debug
 #define D_LOG_DHT "DHT: "          // DHT sensor
 #define D_LOG_DOMOTICZ "DOM: "     // Domoticz
 #define D_LOG_DSB "DSB: "          // DS18xB20 sensor
+#define D_LOG_ETH "ETH: "          // Ethernet
 #define D_LOG_HTTP "HTP: "         // HTTP webserver
-#define D_LOG_HRE "HRE: "
+#define D_LOG_HRE "HRE: "          // Badger HR-E Water Meter
 #define D_LOG_I2C "I2C: "          // I2C
 #define D_LOG_IRR "IRR: "          // Infra Red Received
-#define D_LOG_KNX "KNX: "
+#define D_LOG_KNX "KNX: "          // KNX server
 #define D_LOG_LOG "LOG: "          // Logging
+#define D_LOG_LVGL "LVG: "         // LVGL graphics engine
 #define D_LOG_MODULE "MOD: "       // Module
 #define D_LOG_MDNS "mDN: "         // mDNS
 #define D_LOG_MQTT "MQT: "         // MQTT
@@ -877,18 +880,17 @@
 #define D_LOG_RESULT "RSL: "       // Result
 #define D_LOG_RFR "RFR: "          // RF Received
 #define D_LOG_SERIAL "SER: "       // Serial
+#define D_LOG_SENSEAIR "SNA: "     // Senseair driver
+#define D_LOG_SENSOR "SNS: "       // Sensor driver
 #define D_LOG_SHT1 "SHT: "         // SHT1x sensor
+#define D_LOG_TCP "TCP: "          // TCP bridge
+#define D_LOG_TELNET "TEL: "       // Telnet server
+#define D_LOG_THERMOSTAT "THE: "   // Thermostat driver
+#define D_LOG_UFS "UFS: "          // File system
 #define D_LOG_UPLOAD "UPL: "       // Upload
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
-#define D_LOG_ETH "ETH: "          // Ethernet
 #define D_LOG_ZIGBEE "ZIG: "       // Zigbee
-#define D_LOG_TCP "TCP: "          // TCP bridge
-#define D_LOG_BERRY "BRY: "        // Berry scripting language
-#define D_LOG_LVGL "LVG: "         // LVGL graphics engine
-#define D_LOG_THERMOSTAT "THE: "   // Thermostat driver
-#define D_LOG_SENSOR "SNS: "       // Sensor driver
-#define D_LOG_SENSEAIR "SNA: "     // Senseair driver
 
 /********************************************************************************************/
 

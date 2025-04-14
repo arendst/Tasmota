@@ -459,6 +459,7 @@ void start_lvgl(const char * uconfig) {
 
   // Initialize LvGL display driver
   lvgl_glue->lv_display = lv_display_create(renderer->width(), renderer->height());
+  lv_display_set_dpi(lvgl_glue->lv_display, 160);          // set display to 160 DPI instead of default 130 DPI to avoid some rounding in styles
   lv_display_set_flush_cb(lvgl_glue->lv_display, lv_flush_callback);
   lv_display_set_buffers(lvgl_glue->lv_display, lvgl_glue->lv_pixel_buf, lvgl_glue->lv_pixel_buf2, lvgl_buffer_size * (LV_COLOR_DEPTH / 8), LV_DISPLAY_RENDER_MODE_PARTIAL);
 
@@ -482,6 +483,10 @@ void start_lvgl(const char * uconfig) {
   // lv_disp_set_bg_opa(NULL, LV_OPA_COVER);
   lv_obj_set_style_bg_color(lv_screen_active(), lv_color_hex(USE_LVGL_BG_DEFAULT), static_cast<uint32_t>(LV_PART_MAIN) | static_cast<uint32_t>(LV_STATE_DEFAULT));
   lv_obj_set_style_bg_opa(lv_screen_active(), LV_OPA_COVER, static_cast<uint32_t>(LV_PART_MAIN) | static_cast<uint32_t>(LV_STATE_DEFAULT));
+
+#ifdef USE_BERRY_LVGL_PANEL
+  berry.lvgl_panel_loaded = false;      // we can load the panel
+#endif // USE_BERRY_LVGL_PANEL
 
 #if LV_USE_LOG
   lv_log_register_print_cb(lvbe_debug);

@@ -152,7 +152,7 @@ theme_get_font_large|lv.obj|lv.font|[lv_theme_get_font_large](https://docs.lvgl.
 theme_get_font_normal|lv.obj|lv.font|[lv_theme_get_font_normal](https://docs.lvgl.io/9.0/search.html?q=lv_theme_get_font_normal)
 theme_get_font_small|lv.obj|lv.font|[lv_theme_get_font_small](https://docs.lvgl.io/9.0/search.html?q=lv_theme_get_font_small)
 theme_get_from_obj|lv.obj|lv.theme|[lv_theme_get_from_obj](https://docs.lvgl.io/9.0/search.html?q=lv_theme_get_from_obj)
-theme_haspmota_init|lv.display, lv.color, lv.color, bool, lv.font|lv.theme|[lv_theme_haspmota_init](https://docs.lvgl.io/9.0/search.html?q=lv_theme_haspmota_init)
+theme_haspmota_init|lv.display, lv.color_arr, lv.font, lv.font, lv.font|lv.theme|[lv_theme_haspmota_init](https://docs.lvgl.io/9.0/search.html?q=lv_theme_haspmota_init)
 theme_haspmota_is_inited||bool|[lv_theme_haspmota_is_inited](https://docs.lvgl.io/9.0/search.html?q=lv_theme_haspmota_is_inited)
 theme_set_parent|lv.theme, lv.theme||[lv_theme_set_parent](https://docs.lvgl.io/9.0/search.html?q=lv_theme_set_parent)
 timer_create|\<closure\>, int, \<any\>|lv.timer|[lv_timer_create](https://docs.lvgl.io/9.0/search.html?q=lv_timer_create)

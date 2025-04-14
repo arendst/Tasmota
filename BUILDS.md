@@ -14,10 +14,13 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_HOME_ASSISTANT        | -     | - / - | -     | -     | -     | -     |
 | USE_TASMOTA_DISCOVERY     | x     | x / x | x     | x     | x     | x     |
 | USE_MQTT_TLS\*            | -     | - / x | -     | -     | -     | -     |
+| USE_MQTT_CLIENT_CERT      | -     | - / - | -     | -     | -     | -     |
 | USE_MQTT_AWS_IOT          | -     | - / - | -     | -     | -     | -     |
 | USE_4K_RSA                | -     | - / - | -     | -     | -     | -     |
 | USE_TELEGRAM              | -     | - / - | -     | -     | -     | -     |
 | USE_KNX                   | -     | - / x | x     | -     | -     | -     |
+| USE_TELNET                | -     | - / - | -     | -     | -     | -     |
+| USE_XYZMODEM              | -     | - / - | -     | -     | -     | -     |
 | USE_WEBSERVER             | x     | x / x | x     | x     | x     | x     |
 | USE_WEBSEND_RESPONSE      | -     | - / - | -     | -     | -     | -     |
 | USE_EMULATION_HUE         | x     | x / x | -     | x     | -     | -     |
@@ -228,7 +231,9 @@ Note: the `minimal` variant is not listed as it shouldn't be used outside of the
 | USE_MIEL_HVAC             | -     | - / - | -     | -     | -     | -     |
 | USE_PROJECTOR_CTRL        | -     | - / - | -     | -     | -     | -     |
 | USE_AS608                 | -     | - / - | -     | -     | -     | -     |
+| USE_LD2402                | -     | - / - | -     | -     | -     | -     |
 | USE_LD2410                | -     | - / - | -     | -     | -     | -     |
+| USE_LD2410S               | -     | - / - | -     | -     | -     | -     |
 | USE_GM861                 | -     | - / - | -     | -     | -     | -     |
 | USE_TCP_BRIDGE            | -     | - / - | -     | -     | -     | -     | zbbridge / zbbrdgpro        |
 | USE_HC8                   | -     | - / - | -     | -     | -     | -     |

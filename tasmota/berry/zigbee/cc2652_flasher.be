@@ -107,7 +107,6 @@ class cc2652_flasher
 
   # restart the MCU in BSL mode and establish communication
   def start(debug)
-    if debug == nil    debug = false end
     self.debug = bool(debug)
     self.reset_bsl()
     #
@@ -134,9 +133,9 @@ class cc2652_flasher
 
     self.ser.write(bytes("5555"))          # trigger auto baudrate detector
     var ret = self.recv_raw(100)
-    if self.debug print("ret=", ret) end
-    if ret != bytes('CC')
-      raise "protocol_error"
+    if self.debug print(f"reset_bsl ret='{ret}'") end
+    if ret[-1] != 0xCC
+      raise "protocol_error", f"received '{ret}'"
     end
   end
 
@@ -218,7 +217,7 @@ class cc2652_flasher
     if self.debug print("sending:", payload) end
     self.ser.write(payload)
     var ret = self.recv_raw(500)
-    if self.debug print("ret=", ret) end
+    if self.debug print(f"ret={ret}") end
     if no_response == true
       #ignore
       self.decode_ack(ret)

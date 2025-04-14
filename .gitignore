@@ -49,6 +49,9 @@ lib/libesp32/berry/berry
 *.bak
 *.code-workspace
 
+## IntelliJ ######
+.idea
+
 ## Python virtual environments for Platformio ##
 venv
 .venv

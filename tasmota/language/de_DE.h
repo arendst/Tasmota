@@ -58,6 +58,7 @@
 #define D_AS "als"
 #define D_AT "an"
 #define D_AUTO "AUTO"
+#define D_AUTO_UPDATE "Auto Update"
 #define D_BATTERY "Batterie"
 #define D_BATT "Batt"                // Short for Battery
 #define D_BATTERY_CHARGE "Ladung"    // Battery charge in %
@@ -88,6 +89,7 @@
 #define D_DEBUG "debug"
 #define D_DEWPOINT "Taupunkt"
 #define D_DISABLED "deaktiviert"
+#define D_DISCONNECTED "Disconnected"
 #define D_DISTANCE "Abstand"
 #define D_DNS_SERVER "DNS-Server"
 #define D_DO "gelöster Sauerstoff"
@@ -776,6 +778,8 @@
 #define D_SENSOR_SDM630_RX     "SDM630 Rx"
 #define D_SENSOR_WE517_TX      "WE517 Tx"
 #define D_SENSOR_WE517_RX      "WE517 Rx"
+#define D_SENSOR_LD2402_TX     "LD2402 Tx"
+#define D_SENSOR_LD2402_RX     "LD2402 Rx"
 #define D_SENSOR_LD2410_TX     "LD2410 Tx"
 #define D_SENSOR_LD2410_RX     "LD2410 Rx"
 #define D_SENSOR_LD2410S_TX     "LD2410S Tx"
@@ -1313,5 +1317,9 @@
 #define D_EXPORT                          "Export"
 #define D_CHARGING                        "Aufladen"
 #define D_CAPACITY                        "Kapazität"
+
+// xnrg_25_v9240.ino
+#define D_SENSOR_V9240_TX "V9240 TX"
+#define D_SENSOR_V9240_RX "V9240 RX"
 
 #endif  // _LANGUAGE_DE_DE_H_

@@ -383,6 +383,7 @@ class type_mapper_class:
     "int32_t *": "lv_int_arr",
     "int32_t []": "lv_int_arr",
     "uint32_t *": "lv_int_arr",
+    "lv_color_t *": "lv_color_arr",
     # "float *": "lv_float_arr",
     # layouts
     "lv_flex_align_t": "i",
