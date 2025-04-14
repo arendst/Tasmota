@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Berry expose `esp_http_server` for websockets (#23206)
 - AlpineJS 2.8.2 - optional for now (#23259)
 - Support for XMODEM over serial and telnet if enabled with `#define USE_XYZMODEM`
+- PZEM_AC device address in JSON and GUI (#23268)
 
 ### Breaking Changed
 - HASPmota added `y2_min` and `y2_max` to control the second series of `chart` (#23287)
