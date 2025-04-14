@@ -136,6 +136,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Breaking Changed
 - Berry remove `Leds.create_matrix` from the standard library waiting for reimplementation [#23114](https://github.com/arendst/Tasmota/issues/23114)
+- HASPmota added `y2_min` and `y2_max` to control the second series of `chart` [#23287](https://github.com/arendst/Tasmota/issues/23287)
+- HASPmota default theme is now Tasmota-style [#23288](https://github.com/arendst/Tasmota/issues/23288)
 
 ### Changed
 - ESP32 Platform from 2025.02.30 to 2025.04.30, Framework (Arduino Core) from v3.1.1.250203 to v3.1.3.250411 and IDF from v5.3.2.250120 to 5.3.2.250403 [#23280](https://github.com/arendst/Tasmota/issues/23280)

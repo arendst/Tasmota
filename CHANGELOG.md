@@ -11,8 +11,8 @@ All notable changes to this project will be documented in this file.
 - AlpineJS 2.8.2 - optional for now (#23259)
 
 ### Breaking Changed
-- HASPmota added `y2_min` and `y2_max` to control the second series of `chart`
-- HASPmota default theme is now Tasmota-style
+- HASPmota added `y2_min` and `y2_max` to control the second series of `chart` (#23287)
+- HASPmota default theme is now Tasmota-style (#23288)
 
 ### Changed
 - Output of commands `GPIO` and `GPIOs` swapped
