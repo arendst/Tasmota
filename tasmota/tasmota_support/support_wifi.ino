@@ -648,15 +648,18 @@ String DNSGetIPStr(uint32_t idx)
 
 //
 #include "lwip/dns.h"
+#include "esp_netif_net_stack.h"
 void WifiDumpAddressesIPv6(void)
 {
   for (netif* intf = netif_list; intf != nullptr; intf = intf->next) {
-    if (!ip_addr_isany_val(intf->ip_addr)) AddLog(LOG_LEVEL_DEBUG, "WIF: '%c%c%i' IPv4 %s", intf->name[0], intf->name[1], intf->num, IPAddress(&intf->ip_addr).toString(true).c_str());
+    esp_netif_t *esp_netif = esp_netif_get_handle_from_netif_impl(intf);
+    int32_t route_prio = esp_netif ? esp_netif_get_route_prio(esp_netif) : -1;
+    if (!ip_addr_isany_val(intf->ip_addr)) AddLog(LOG_LEVEL_DEBUG, "WIF: '%c%c%i' IPv4 %s (%i)", intf->name[0], intf->name[1], intf->num, IPAddress(&intf->ip_addr).toString(true).c_str(), route_prio);
     for (uint32_t i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
       if (!ip_addr_isany_val(intf->ip6_addr[i]))
-        AddLog(LOG_LEVEL_DEBUG, "IP : '%c%c%i' IPv6 %s %s", intf->name[0], intf->name[1], intf->num,
+        AddLog(LOG_LEVEL_DEBUG, "IP : '%c%c%i' IPv6 %s %s (%i)", intf->name[0], intf->name[1], intf->num,
                                 IPAddress(&intf->ip6_addr[i]).toString(true).c_str(),
-                                ip_addr_islinklocal(&intf->ip6_addr[i]) ? "local" : "");
+                                ip_addr_islinklocal(&intf->ip6_addr[i]) ? "local" : "", route_prio);
     }
   }
   AddLog(LOG_LEVEL_DEBUG, "IP : DNS: %s %s", IPAddress(dns_getserver(0)).toString().c_str(),  IPAddress(dns_getserver(1)).toString(true).c_str());
