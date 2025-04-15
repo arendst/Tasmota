@@ -373,6 +373,17 @@ uint8_t UfsReject(char *name) {
   return 0;
 }
 
+// return true if SDC
+bool UfsIsSDC(void) {
+#ifndef SDC_HIDE_INVISIBLES
+  return false;
+#else
+  if (((uint32_t)ufsp != (uint32_t)ffsp) && ((uint32_t)ffsp == (uint32_t)dfsp)) return false;
+  if (((uint32_t)ufsp == (uint32_t)ffsp) && (ufs_type != UFS_TSDC)) return false;
+  return true;
+#endif
+}
+
 /*********************************************************************************************\
  * Tfs low level functions
 \*********************************************************************************************/
@@ -478,8 +489,10 @@ bool TfsDeleteFile(const char *fname) {
   if (!ffs_type) { return false; }
 
   if (!ffsp->remove(fname)) {
-    AddLog(LOG_LEVEL_INFO, PSTR("TFS: Delete failed"));
-    return false;
+    if (!ffsp->rmdir(fname)) {
+      AddLog(LOG_LEVEL_INFO, PSTR("TFS: Delete failed"));
+      return false;
+    }
   }
   return true;
 }
@@ -912,7 +925,7 @@ char* UfsFilename(char* fname, char* fname_in) {
 }
 
 const char kUFSCommands[] PROGMEM = "Ufs|"  // Prefix
-  "|Type|Size|Free|Delete|Rename|Run"
+  "|Type|Size|Free|Delete|Rename|Run|List"
 #ifdef UFILESYS_STATIC_SERVING
   "|Serve"
 #endif
@@ -922,7 +935,7 @@ const char kUFSCommands[] PROGMEM = "Ufs|"  // Prefix
   ;
 
 void (* const kUFSCommand[])(void) PROGMEM = {
-  &UFSInfo, &UFSType, &UFSSize, &UFSFree, &UFSDelete, &UFSRename, &UFSRun
+  &UFSInfo, &UFSType, &UFSSize, &UFSFree, &UFSDelete, &UFSRename, &UFSRun, &UFSList
 #ifdef UFILESYS_STATIC_SERVING
   ,&UFSServe
 #endif
@@ -973,7 +986,7 @@ void UFSDelete(void) {
     if (ffs_type && (ffs_type != ufs_type) && (2 == XdrvMailbox.index)) {
       result = TfsDeleteFile(fname);
     } else {
-      result = (ufs_type && ufsp->remove(fname));
+      result = (ufs_type && (ufsp->remove(fname) || ufsp->rmdir(fname)));
     }
     if (!result) {
       ResponseCmndFailed();
@@ -1006,6 +1019,65 @@ void UFSRename(void) {
     } else {
       ResponseCmndDone();
     }
+  }
+}
+
+bool UFSListDir(char *path, bool hide_dot) {
+  bool update = false;
+
+  File dir = dfsp->open(path, UFS_FILE_READ);
+  if (dir) {
+    dir.rewindDirectory();
+    char *ep;
+    while (true) {
+      File entry = dir.openNextFile();
+      if (!entry) {
+        break;
+      }
+      // esp32 returns path here, shorten to filename
+      ep = (char*)entry.name();
+      if (*ep == '/') { ep++; }
+      char *lcp = strrchr(ep,'/');
+      if (lcp) {
+        ep = lcp + 1;
+      }
+      if (hide_dot && (*ep == '.')) { continue; }
+
+      // osx formatted disks contain a lot of stuff we dont want
+      bool hiddable = UfsReject((char*)ep);
+      if (!hiddable || !UfsIsSDC() ) {
+        String tstr = "";
+        if (!entry.isDirectory()) {   // ESP32 does not support isFile()
+          uint32_t tm = entry.getLastWrite();
+          tstr = GetDT(tm);
+        }
+        ResponseAppend_P(PSTR("%c[\"%s\",\"%s\",%d]"), (!update)?'[':',', EscapeJSONString(ep).c_str(), tstr.c_str(), entry.size());
+        update = true;
+        entry.close();
+
+        yield(); // trigger watchdog reset
+      }
+    }
+    dir.close();
+  }
+  return update;
+}
+
+void UFSList(void) {
+  // UfsList       - List all non-dot files and directories in root directory
+  // UfsList /     - List all non-dot files and directories in root directory
+  // UfsList2      - List all files and directories in root directory
+  // UfsList /dir1 - List all non-dot files and directories in directory dir1
+  bool hide_dot = (XdrvMailbox.index != 2);
+  strcpy(ufs_path, "/");
+  if (XdrvMailbox.data_len > 0) {
+    strlcpy(ufs_path, XdrvMailbox.data, sizeof(ufs_path));
+  }
+  ResponseCmnd();
+  if (UFSListDir(ufs_path, hide_dot)) {
+    ResponseAppend_P(PSTR("]}"));
+  } else {
+    ResponseCmndDone();
   }
 }
 
@@ -1182,8 +1254,6 @@ void UFSRun(void) {
     ResponseCmndChar(not_active ? PSTR(D_JSON_DONE) : PSTR(D_JSON_ABORTED));
   }
 }
-
-
 
 /*********************************************************************************************\
  * Web support
@@ -1387,7 +1457,7 @@ void UfsDirectory(void) {
 #ifdef GUI_EDIT_FILE
   WSContentSend_P(UFS_FORM_FILE_UPGb, ufs_path);
 #endif
-  if (!isSDC()) {
+  if (!UfsIsSDC()) {
     WSContentSend_P(UFS_FORM_FILE_UPGb1);
   }
   WSContentSend_P(UFS_FORM_FILE_UPGb2);
@@ -1396,17 +1466,6 @@ void UfsDirectory(void) {
   WSContentStop();
 
   Web.upload_file_type = UPL_UFSFILE;
-}
-
-// return true if SDC
-bool isSDC(void) {
-#ifndef SDC_HIDE_INVISIBLES
-  return false;
-#else
-  if (((uint32_t)ufsp != (uint32_t)ffsp) && ((uint32_t)ffsp == (uint32_t)dfsp)) return false;
-  if (((uint32_t)ufsp == (uint32_t)ffsp) && (ufs_type != UFS_TSDC)) return false;
-  return true;
-#endif
 }
 
 void UfsListDir(char *path, uint8_t depth) {
@@ -1462,7 +1521,7 @@ void UfsListDir(char *path, uint8_t depth) {
       // osx formatted disks contain a lot of stuff we dont want
       bool hiddable = UfsReject((char*)ep);
 
-      if (!hiddable || !isSDC() ) {
+      if (!hiddable || !UfsIsSDC() ) {
 
         for (uint8_t cnt = 0; cnt<depth; cnt++) {
           *cp++ = '-';
