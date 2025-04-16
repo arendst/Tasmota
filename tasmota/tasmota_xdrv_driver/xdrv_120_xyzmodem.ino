@@ -791,6 +791,7 @@ bool XYZModemLoop(void) {
       if (millis() > XYZModem.timeout) {
         XYZModem.timeout = millis() + (2 * 1000);    // Protocol 10 second receive timeout - here 2 seconds
         XYZModemSendNakOrC();
+        XYZModem.nak_count--;
         if (XYZModemReadAvailable(1)) {              // Timeout after 1 second
           XYZModem.nak_count = (XYZModem.oldChecksum) ? 10 : 3;
           AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: Receive started"));
