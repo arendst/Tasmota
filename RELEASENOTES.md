@@ -125,6 +125,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - PZEM_AC device address in JSON and GUI [#23268](https://github.com/arendst/Tasmota/issues/23268)
 - Allow acl in mqtt when client certificate is in use with `#define USE_MQTT_CLIENT_CERT` [#22998](https://github.com/arendst/Tasmota/issues/22998)
 - AlpineJS 2.8.2 - optional for now [#23259](https://github.com/arendst/Tasmota/issues/23259)
+- ESP32 show network interface priority in `Status 5` debug logging [#23302](https://github.com/arendst/Tasmota/issues/23302)
 - Berry experimental driver for AXP2101 for M5Core2v1.1 [#23039](https://github.com/arendst/Tasmota/issues/23039)
 - Berry `tasmota.when_network_up()` and simplified Matter using it [#23057](https://github.com/arendst/Tasmota/issues/23057)
 - Berry `introspect.solidified()` to know if a Berry object is solidified or in RAM [#23063](https://github.com/arendst/Tasmota/issues/23063)
