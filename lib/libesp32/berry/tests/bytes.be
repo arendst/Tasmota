@@ -354,3 +354,9 @@ assert(b.appendb64(c, 2) == bytes("AABBCC49673D3D"))
 b = bytes("AABBCC")
 assert(bytes().fromstring(bytes("11").tob64()) == bytes('45513D3D'))
 assert(b.appendb64(c, 1, 1) == bytes("AABBCC45513D3D"))
+
+#- asstring truncates if NULL is present -#
+s=bytes("414243").asstring()
+assert(size(s) == 3)
+s=bytes("410000").asstring()
+assert(size(s) == 1)
