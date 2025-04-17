@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Berry `bytes().asstring()` now truncates a string if buffer contains NULL
+- Berry string literals containing NULL are truncated
 
 ### Removed
 
