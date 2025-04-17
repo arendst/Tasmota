@@ -500,6 +500,7 @@ struct WEB {
   bool upload_services_stopped = false;
   bool reset_web_log_flag = false;                  // Reset web console log
   bool initial_config = false;
+  bool cflg;
 } Web;
 
 /*********************************************************************************************/
@@ -3737,16 +3738,22 @@ void HandleConsoleRefresh(void) {
     index = 0;
     Web.reset_web_log_flag = true;
   }
-  bool cflg = (index);
+  Web.cflg = (index);
   char* line;
   size_t len;
   while (GetLog(Settings->weblog_level, &index, &line, &len)) {
-    if (cflg) { WSContentSend_P(PSTR("\n")); }
-    WSContentSend(line, len -1);
-    cflg = true;
+    if (!LogDataJsonPrettyPrint(line, len -1, WSContentSendLDJsonPPCb)) {
+      WSContentSendLDJsonPPCb(line, len -1);
+    }
   }
   WSContentSend_P(PSTR("}1"));
   WSContentEnd();
+}
+
+void WSContentSendLDJsonPPCb(const char* line, uint32_t len) {
+  if (Web.cflg) { WSContentSend_P(PSTR("\n")); }
+  WSContentSend(line, len);
+  Web.cflg = true;
 }
 
 /********************************************************************************************/

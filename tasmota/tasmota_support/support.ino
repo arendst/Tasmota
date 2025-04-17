@@ -2611,6 +2611,95 @@ bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* l
   return false;
 }
 
+bool LogDataJsonPrettyPrint(const char *log_line, uint32_t log_data_len, std::function<void(const char*, uint32_t)> println) {
+  // log_line:
+  // 14:49:36.123 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}
+  // 14:30:16.749-172/38 MQT: tele/atomlite3/INFO3 = {"Info3":{"RestartReason":"Vbat power on reset","BootCount":74}}
+
+  if (!Settings->mbflag2.json_pretty_print) { return false; }  // [JsonPP] Number of indents
+  char *bch = (char*)memchr(log_line, '{', log_data_len);
+  if (!bch) { return false; }                // No JSON data
+
+  uint32_t pos_brace = bch - log_line;
+  uint32_t cnt_brace = 0;                    // {}
+  uint32_t len_mxtime = strchr(log_line, ' ') - log_line +2;
+  uint32_t pos_value_pair = pos_brace;
+  uint32_t cnt_bracket = 0;                  // []
+  uint32_t cnt_Indent = 0;                   // indent
+  bool quotes = false;                       // ""
+  bool bracket_comma = false;
+  bool pls_print = false;
+  for (uint32_t i = pos_brace; i < log_data_len; i++) {
+    char curchar = log_line[i];
+    char nxtchar = log_line[i +1];
+    cnt_Indent = cnt_brace + cnt_bracket;
+    if (curchar == '{') {
+      cnt_brace++;
+      pls_print = true;
+    }
+    else if (cnt_brace) {
+      if (nxtchar == '}') {
+        pls_print = true;
+      }
+      if (curchar == '}') {
+        cnt_brace--;
+        if (cnt_brace) {
+          if (nxtchar != ',') {
+            pls_print = true;
+            cnt_Indent = cnt_brace + cnt_bracket;
+          }
+        } else {
+          pls_print = true;
+          cnt_Indent = 0;
+        }
+      }
+      else if (curchar == '[') {
+        cnt_bracket++;
+        if (nxtchar == '[') {
+          pls_print = true;
+        }
+      }
+      else if (curchar == ']') {
+        cnt_bracket--;
+        if (nxtchar == ',') {
+          bracket_comma = true;
+        }
+        else {
+          pls_print = true;
+          if ((nxtchar == ']') || (nxtchar == '}')) {
+            cnt_Indent = cnt_brace + cnt_bracket;
+          }
+        }
+      }
+      else if (curchar == '"') {
+        quotes ^= 1;
+      }
+      else if (curchar == ',') {
+        if (!quotes && (!cnt_bracket || bracket_comma)) {
+          bracket_comma = false;
+          pls_print = true;
+        }
+      }
+    }
+
+    if (pls_print) {
+      pls_print = false;
+      uint32_t len_id = (pos_brace == i) ? pos_brace +1 : len_mxtime;
+      uint32_t len_indent = cnt_Indent * Settings->mbflag2.json_pretty_print;
+      uint32_t len_value_pair = (i - pos_value_pair) +1;
+      uint32_t len_full = len_id + len_indent + len_value_pair +1;
+
+      char line[len_full];              // Known max value pair size is 152
+      strlcpy(line, log_line, len_id);  // Repeat mxtime
+      sprintf(line, "%s%*s", line, len_indent, "");  // Add space indent
+      strncat(line, log_line + pos_value_pair, len_value_pair);
+      println(line, strlen(line));      // Callback for output
+      pos_value_pair = i +1;
+    }
+  }
+  return true;
+}
+
 uint32_t HighestLogLevel(void) {
   uint32_t highest_loglevel = TasmotaGlobal.seriallog_level;
   if (Settings->seriallog_level > highest_loglevel) { highest_loglevel = Settings->seriallog_level; }
@@ -2660,7 +2749,9 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
 
   if ((loglevel <= TasmotaGlobal.seriallog_level) &&
       (TasmotaGlobal.masterlog_level <= TasmotaGlobal.seriallog_level)) {
-    TasConsole.printf("%s%s%s%s\r\n", mxtime, log_data, log_data_payload, log_data_retained);
+    if (!Settings->mbflag2.json_pretty_print || !strchr(log_data_payload, '{')) {
+      TasConsole.printf("%s%s%s%s\r\n", mxtime, log_data, log_data_payload, log_data_retained);
+    }
   }
 
   if (!TasmotaGlobal.log_buffer) { return; }  // Leave now if there is no buffer available
@@ -2707,6 +2798,14 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
 
     // These calls fail to show initial logging
     log_line += 2;                         // Skip log_buffer_pointer and loglevel
+    // 14:49:36.123 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}
+    // 14:30:16.749-172/38 MQT: tele/atomlite3/INFO3 = {"Info3":{"RestartReason":"Vbat power on reset","BootCount":74}}
+
+    if ((loglevel <= TasmotaGlobal.seriallog_level) &&
+        (TasmotaGlobal.masterlog_level <= TasmotaGlobal.seriallog_level)) {
+      LogDataJsonPrettyPrint(log_line, log_data_len, TasConsoleLDJsonPPCb);
+    }
+
 #ifdef USE_SERIAL_BRIDGE
     if (loglevel <= TasmotaGlobal.seriallog_level) {
       SerialBridgeWrite(log_line, log_data_len);
@@ -2721,6 +2820,10 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
 #endif  // USE_TELNET
 
   }
+}
+
+void TasConsoleLDJsonPPCb(const char* line, uint32_t len) {
+  TasConsole.println(line);
 }
 
 void AddLog(uint32_t loglevel, PGM_P formatP, ...) {

@@ -116,6 +116,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v14.6.0.1
 ### Added
+- Command `JsonPP 0..7` to enable (>0) JSON Pretty Print on user interfaces and set number of indents
 
 ### Breaking Changed
 
