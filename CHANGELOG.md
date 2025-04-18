@@ -12,8 +12,8 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
-- Berry `bytes().asstring()` now truncates a string if buffer contains NULL
-- Berry string literals containing NULL are truncated
+- Berry `bytes().asstring()` now truncates a string if buffer contains NULL (#23311)
+- Berry string literals containing NULL are truncated (#23312)
 
 ### Removed
 

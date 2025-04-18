@@ -123,5 +123,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Changed
 
 ### Fixed
+- Berry `bytes().asstring()` now truncates a string if buffer contains NULL [#23311](https://github.com/arendst/Tasmota/issues/23311)
+- Berry string literals containing NULL are truncated [#23312](https://github.com/arendst/Tasmota/issues/23312)
 
 ### Removed
