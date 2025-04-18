@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 12.03.2025
+ * Updated until v9.4.0.1 - Last update 17.04.2025
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -52,7 +52,7 @@
 
 // Common
 #define D_ABSOLUTE_HUMIDITY    "Umidità ass"
-#define D_ADDRESS "Address"
+#define D_ADDRESS              "Indirizzo"
 #define D_ADMIN                "Admin"
 #define D_AIR_QUALITY          "Qualità dell'aria"
 #define D_AP                   "AP"                   // Access Point
