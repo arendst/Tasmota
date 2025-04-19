@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [14.6.0.1] 
 ### Added
 - Command `JsonPP 0..7` to enable (>0) JSON Pretty Print on user interfaces and set number of indents
+- Command `JsonPP <command>|backlog <command>;...` to enable JSON PP only once
 
 ### Breaking Changed
 

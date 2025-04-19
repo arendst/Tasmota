@@ -664,6 +664,35 @@ void CmndDelay(void) {
   ResponseCmndNumber(bl_delay);
 }
 
+void CmndJsonPP(void) {
+  // JsonPP 0                     - Disable JSON Pretty Print
+  // JsonPP 1..7                  - Enable JSON Pretty Print with 1..7 indent spaces
+  // JsonPP <command>             - If not enabled, enable JSON PP with 1 indent, execute command and restore JsonPP
+  // JsonPP Backlog <command>;... - If not enabled, enable JSON PP with 1 indent, execute command and restore JsonPP
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 7)) {
+    Settings->mbflag2.json_pretty_print = XdrvMailbox.payload;
+  }
+  else if (XdrvMailbox.data_len) {
+    uint32_t last_json_pretty_print = Settings->mbflag2.json_pretty_print;
+    if (0 == Settings->mbflag2.json_pretty_print) {
+      Settings->mbflag2.json_pretty_print = 1;  // Default 1 indent if not set
+    }
+    bool backlog = (strchr(XdrvMailbox.data, ';') != nullptr);
+    String cmnds = XdrvMailbox.data;
+    if (!last_json_pretty_print && backlog) {
+      cmnds += ";_JsonPP ";
+      cmnds += last_json_pretty_print;          // Restore JsonPP after execution of backlog commands
+    }
+    ExecuteCommand((char*)cmnds.c_str(), SRC_IGNORE);
+    if (!last_json_pretty_print && !backlog) {  // Restore JsonPP after execution of single command
+      Settings->mbflag2.json_pretty_print = last_json_pretty_print;
+    }
+    ResponseClear();
+    return;
+  }
+  ResponseCmndNumber(Settings->mbflag2.json_pretty_print);
+}
+
 void CmndPower(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TasmotaGlobal.devices_present)) {
@@ -1265,13 +1294,6 @@ void CmndOtaUrl(void)
     SettingsUpdateText(SET_OTAURL, (SC_DEFAULT == Shortcut()) ? PSTR(OTA_URL) : XdrvMailbox.data);
   }
   ResponseCmndChar(SettingsText(SET_OTAURL));
-}
-
-void CmndJsonPP(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 7)) {
-    Settings->mbflag2.json_pretty_print = XdrvMailbox.payload;
-  }
-  ResponseCmndNumber(Settings->mbflag2.json_pretty_print);
 }
 
 void CmndSeriallog(void)
