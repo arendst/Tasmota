@@ -65,8 +65,9 @@ enum XTrim1aModes { XYZT_NONE, XYZT_TRIM, XYZT_AUTO };
 enum XReceiveModes { XYZD_NONE, XYZD_SOH, XYZD_BLK1, XYZD_BLK2, XYZD_DATA };
 
 enum XYZFileSteps { XYZM_IDLE, 
-                    XYZM_SEND, XYZM_SEOT, XYZM_ACKT, XYZM_COMPLETE, XYZM_ERROR, XYZM_DONE,
-                    XYZM_RECEIVE, XYZM_RCV_START, XYZM_RCV_EOT };
+                    XYZM_SEND, XYZM_SND_ACK,
+                    XYZM_RECEIVE, XYZM_RCV_START, XYZM_RCV_EOT,
+                    XYZM_ERROR, XYZM_DONE };
 
 enum XReceiveStates { XYZS_OK, XYZS_TIMEOUT, XYZS_EOT, XYZS_CAN, XYZS_OTHER, XYZS_CHECKSUM, XYZS_PACKET, XYZS_FILE };
 
@@ -712,8 +713,7 @@ void XModemSendStart(void) {
     XYZFile.step = XYZM_SEND;
     AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: Send started"));
   } else {
-    XYZFile.step = XYZM_SEOT;
-    AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: Send aborted"));
+    XYZModemInit();
   }
 }
 
@@ -738,8 +738,8 @@ bool XYZModemLoop(void) {
     // *** Send
     case XYZM_SEND: {                                // *** Handle file send using XModem - upload
       if (XYZModemFileAvailable()) {
-        if (XYZFile.byte_counter && !(XYZFile.byte_counter % 10240)) {  // Show progress every 10kB
-          AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: Progress %d kB"), XYZFile.byte_counter / 1024);
+        if (XYZFile.byte_counter && !(XYZFile.byte_counter % 10240)) {  // Show progress every 10KB
+          AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: Progress %d KB"), XYZFile.byte_counter / 1024);
         }
         if (!XYZModemSend(XYZModem.packet_no)) {
           AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: Packet %d send failed"), XYZModem.packet_no);
@@ -748,21 +748,16 @@ bool XYZModemLoop(void) {
         }
         XYZModem.packet_no++;
       } else {
-        XYZFile.step = XYZM_SEOT;
-        AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: Send %d bytes"), XYZFile.size);
+        // Once the last block is ACKed by the target, the transfer should be finalized by an
+        // EOT (ASCII 0x04) packet from the source. This packet is confirmed via XModem ACK
+        // from the target.
+        XYZModemWrite(XYZM_EOT);                     // *** Send EOT
+        XYZModem.timeout = millis() + (30 * 1000);   // Allow 30 seconds to receive EOT ACK
+        XYZFile.step = XYZM_SND_ACK;
       }
       break;
     }
-    case XYZM_SEOT: {                                // *** Send EOT and wait for ACK
-      // Once the last block is ACKed by the target, the transfer should be finalized by an
-      // EOT (ASCII 0x04) packet from the source. This packet is confirmed via XModem ACK
-      // from the target.
-      XYZModemWrite(XYZM_EOT);
-      XYZModem.timeout = millis() + (30 * 1000);     // Allow 30 seconds to receive EOT ACK
-      XYZFile.step = XYZM_ACKT;
-      break;
-    }
-    case XYZM_ACKT: {                                // *** Send EOT and wait for ACK
+    case XYZM_SND_ACK: {                             // *** Wait for ACK
       // The ACK for the last XModem data packet may take much longer (1-3 seconds) than prior
       // data packets to be received.
       if (millis() > XYZModem.timeout) {
@@ -778,9 +773,8 @@ bool XYZModemLoop(void) {
           return true;
         }
         else if (XYZM_ACK == xmodem_ack) {
-          AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: Successful"));
-          XYZModem.timeout = millis() + (30 * 1000);  // Allow 30 seconds
-          XYZFile.byte_counter = 0;
+          // !!! Send an AddLog here as it previously would interfere with XModem protocol !!!
+          AddLog(LOG_LEVEL_INFO, PSTR("XMD: Send %d bytes succesful"), XYZFile.size);
           XYZFile.step = XYZM_DONE;
         }
       }
@@ -807,16 +801,15 @@ bool XYZModemLoop(void) {
       break;
     }
     case XYZM_RCV_START: {
-      if (XYZFile.byte_counter && !(XYZFile.byte_counter % 10240)) {  // Show progress every 10kB
-        AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: Progress %d kB"), XYZFile.byte_counter / 1024);
+      if (XYZFile.byte_counter && !(XYZFile.byte_counter % 10240)) {  // Show progress every 10KB
+        AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: Progress %d KB"), XYZFile.byte_counter / 1024);
       }
       int result = XYZModemReceive(XYZModem.packet_no);
       if (result) {
         switch (result) {
           case XYZS_EOT: {
-            AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: Received %d bytes"), XYZFile.byte_counter);
-            AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: Successful"));
             XYZModemFileWriteEot(1);
+            AddLog(LOG_LEVEL_INFO, PSTR("XMD: Received %d bytes succesful"), XYZFile.byte_counter);
             XYZFile.step = XYZM_DONE;
             break;
           }
@@ -875,17 +868,6 @@ bool XYZModemLoop(void) {
       break;
     }
     // *** Finish
-    case XYZM_COMPLETE: {                    // *** Wait for send complete
-      if (millis() > XYZModem.timeout) {
-        AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: Timeout"));
-        XYZFile.step = XYZM_ERROR;
-        return true;
-      } else {
-        XYZFile.state = XYZM_COMPLETE;
-        XYZFile.step = XYZM_DONE;
-      }
-      break;
-    }
     case XYZM_ERROR:
       XYZFile.state = XYZM_ERROR;
       AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: Failed"));
