@@ -4122,7 +4122,7 @@ void CmndWeblog(void) {
 /*-------------------------------------------------------------------------------------------*/
 
 void CmndWebRefresh(void) {
-  if ((XdrvMailbox.payload > 999) && (XdrvMailbox.payload <= 65000)) {
+  if ((XdrvMailbox.payload > 399) && (XdrvMailbox.payload <= 65000)) {
     Settings->web_refresh = XdrvMailbox.payload;
   }
   ResponseCmndNumber(Settings->web_refresh);
