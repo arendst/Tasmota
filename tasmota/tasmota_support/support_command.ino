@@ -673,6 +673,8 @@ void CmndJsonPP(void) {
     Settings->mbflag2.json_pretty_print = XdrvMailbox.payload;
   }
   else if (XdrvMailbox.data_len) {
+/*
+    // This fails displaying JsonPP from log buffer messages
     uint32_t last_json_pretty_print = Settings->mbflag2.json_pretty_print;
     if (0 == Settings->mbflag2.json_pretty_print) {
       Settings->mbflag2.json_pretty_print = 1;  // Default 1 indent if not set
@@ -689,6 +691,24 @@ void CmndJsonPP(void) {
     }
     ResponseClear();
     return;
+*/
+    uint32_t last_json_pretty_print = Settings->mbflag2.json_pretty_print;
+    if (0 == Settings->mbflag2.json_pretty_print) {
+      Settings->mbflag2.json_pretty_print = 1;  // Default 1 indent if not set
+    }
+    char cmnds[strlen(XdrvMailbox.data) + 32];
+    if (0 == last_json_pretty_print) {          // No need if JsonPP is already set
+      bool backlog = (0 == strncasecmp_P(XdrvMailbox.data, PSTR(D_CMND_BACKLOG), strlen(D_CMND_BACKLOG)));
+      snprintf_P(cmnds, sizeof(cmnds), PSTR("%s%s;_Delay %d;_JsonPP %d"),
+        (!backlog) ? "Backlog " : "",           // We need backlog to provide delay and restore JsonPP state
+        XdrvMailbox.data,
+        Settings->web_refresh / 98,             // To serve log buffer messages we need to delay a little over WebRefresh time
+        last_json_pretty_print);                // Restore JsonPP after execution of backlog commands
+    }
+    ExecuteCommand((0 == last_json_pretty_print) ? cmnds : XdrvMailbox.data, SRC_IGNORE);
+    ResponseClear();
+    return;
+
   }
   ResponseCmndNumber(Settings->mbflag2.json_pretty_print);
 }

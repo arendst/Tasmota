@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Breaking Changed
 
 ### Changed
+- Allow command `WebRefresh` minimum from 1000 to 400 mSec
 
 ### Fixed
 - Berry `bytes().asstring()` now truncates a string if buffer contains NULL (#23311)
