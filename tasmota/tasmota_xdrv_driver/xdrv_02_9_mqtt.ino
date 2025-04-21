@@ -2116,6 +2116,17 @@ bool Xdrv02(uint32_t function)
       case FUNC_WEB_ADD_HANDLER:
         WebServer_on(PSTR("/" WEB_HANDLE_MQTT), HandleMqttConfiguration);
         break;
+#ifdef USE_WEB_STATUS_LINE
+      case FUNC_WEB_STATUS:
+        // MqttConnectCount(), mqtt_tls
+        if (MqttIsConnected()) {
+          WSContentStatusSticker(PSTR("MQTT"), -1);
+          if (MqttTLSEnabled()) {
+            WSContentStatusSticker(PSTR("TLS"), -1);
+          }
+        }
+        break;
+#endif  // USE_WEB_STATUS_LINE
 #endif  // not FIRMWARE_MINIMAL
 #endif  // USE_WEBSERVER
       case FUNC_COMMAND:

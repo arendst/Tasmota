@@ -251,7 +251,7 @@ const char HTTP_HEAD_STYLE3[] PROGMEM =
 
   "</head>"
   "<body>"
-  "<div style='background:#%06x;text-align:left;display:inline-block;color:#%06x;min-width:340px;'>"  // COLOR_BACKGROUND, COLOR_TEXT
+  "<div style='background:#%06x;text-align:left;display:inline-block;color:#%06x;min-width:340px;position:relative;'>"  // COLOR_BACKGROUND, COLOR_TEXT
 #ifdef FIRMWARE_MINIMAL
 #ifdef FIRMWARE_SAFEBOOT
   "<span style='text-align:center;color:#%06x;'><h3>" D_SAFEBOOT "</h3></span>"  // COLOR_TEXT_WARNING
@@ -444,6 +444,18 @@ const char HTTP_END[] PROGMEM =
 
 const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button id='o%d' onclick='la(\"&o=%d\");'>%s%s</button></td>";  // ?o is related to WebGetArg(PSTR("o"), tmp, sizeof(tmp))
 const char HTTP_DEVICE_STATE[] PROGMEM = "<td style='width:%d%%;text-align:center;font-weight:%s;font-size:%dpx'>%s</td>";
+
+const char HTTP_STATUS_STICKER[] PROGMEM =
+  "<span style='"
+  "margin:2px;"
+  "cursor:default;"
+  "padding:1px 2px;"
+  "border-color:#%06x;border-radius:5px;border-style:solid;border-width:1px;"
+  "' "
+  "%s"    // optional 'title' attributes
+  ">"
+  "%s"
+  "</span>";
 
 enum ButtonTitle {
   BUTTON_RESTART, BUTTON_RESET_CONFIGURATION,
@@ -1150,6 +1162,36 @@ void WSContentStop(void) {
   WSContentSend_P(HTTP_END, TasmotaGlobal.version, TasmotaGlobal.image_name);
   WSContentEnd();
 }
+
+#ifdef USE_WEB_STATUS_LINE
+/*-------------------------------------------------------------------------------------------*/
+// Display a Sticker in the Status bar (upper right) with a name (MQTT, TlS, VPN)
+// and an optional tooltip text to indicate the duration of the connection (or -1 if none)
+//
+// Convert seconds to a string representing days, hours or minutes.
+// The string will contain the most coarse time only, rounded down (61m == 01h, 01h37m == 01h).
+void WSContentStatusSticker(const char *msg, int32_t seconds)
+{
+  char title_attr[64] = "";
+
+  if (seconds > 0) {
+    static const uint32_t conversions[4] = {24 * 3600, 3600, 60, 1};
+    static const char     units[4] = { 'd', 'h', 'm', 's'};   // day, hour, minute
+
+    char unit;
+    int32_t time_unit = seconds;
+    for(uint32_t i = 0; i < 4; ++i) {
+      unit = units[i];
+      if (time_unit >= conversions[i]) {    // always pass even if 00m
+        time_unit = seconds / conversions[i];
+        break;
+      }
+    }
+    ext_snprintf_P(title_attr, sizeof(title_attr), PSTR(" title='Connected for %i%c'"), time_unit, unit);
+  }
+  WSContentSend_P(HTTP_STATUS_STICKER, 0xAAAAAA, title_attr, msg);
+}
+#endif // USE_WEB_STATUS_LINE
 
 /*********************************************************************************************/
 
@@ -1883,6 +1925,13 @@ bool HandleRootStatusRefresh(void) {
   if (msg_exec_javascript) {
     WSContentSend_P(PSTR("\">"));
   }
+
+#ifdef USE_WEB_STATUS_LINE
+  // create a DIV for the upper status bar, positioned right-justified
+  WSContentSend_P(PSTR("<div style='font-size:9px;font-weight:bold;text-align:right;position:absolute;top:0;right:0;display:inline-flex;'>"));
+  XsnsXdrvCall(FUNC_WEB_STATUS);
+  WSContentSend_P(PSTR("</div>"));
+#endif // USE_WEB_STATUS_LINE
 
   WSContentSend_P(PSTR("{t}"));        // <table style='width:100%'>
   WSContentSeparator(3);               // Reset seperator to ignore previous outputs 

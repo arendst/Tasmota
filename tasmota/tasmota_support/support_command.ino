@@ -952,6 +952,7 @@ void CmndStatus(void)
     CmndStatusResponse(0);
   }
 
+  // Status 1 - StatusPRM
   if ((0 == payload) || (1 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS1_PARAMETER "\":{\"" D_JSON_BAUDRATE "\":%d,\"" D_CMND_SERIALCONFIG "\":\"%s\",\"" D_CMND_GROUPTOPIC "\":\"%s\",\"" D_CMND_OTAURL "\":\"%s\",\""
                           D_JSON_RESTARTREASON "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\",\"" D_JSON_STARTUPUTC "\":\"%s\",\"" D_CMND_SLEEP "\":%d,\""
@@ -970,6 +971,7 @@ void CmndStatus(void)
     CmndStatusResponse(1);
   }
 
+  // Status 2 - StatusFWR
   if ((0 == payload) || (2 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS2_FIRMWARE "\":{\"" D_JSON_VERSION "\":\"%s%s%s\",\"" D_JSON_BUILDDATETIME "\":\"%s\""
 #ifdef ESP8266
@@ -988,6 +990,7 @@ void CmndStatus(void)
     CmndStatusResponse(2);
   }
 
+  // Status 3 - StatusLOG
   if ((0 == payload) || (3 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS3_LOGGING "\":{\"" D_CMND_SERIALLOG "\":%d,\"" D_CMND_WEBLOG "\":%d,\"" D_CMND_MQTTLOG "\":%d,\"" 
 #ifdef USE_UFILESYS
@@ -1007,6 +1010,7 @@ void CmndStatus(void)
     CmndStatusResponse(3);
   }
 
+  // Status 4 - StatusMEM
   if ((0 == payload) || (4 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS4_MEMORY "\":{\"" D_JSON_PROGRAMSIZE "\":%d,\"" D_JSON_FREEMEMORY "\":%d,\"" D_JSON_HEAPSIZE "\":%d,\""
 #ifdef ESP32
@@ -1037,6 +1041,7 @@ void CmndStatus(void)
     CmndStatusResponse(4);
   }
 
+  // Status 5 - StatusNET
   if ((0 == payload) || (5 == payload)) {
 #ifdef USE_IPV6
     if (5 == payload) { WifiDumpAddressesIPv6(); }
@@ -1093,6 +1098,7 @@ void CmndStatus(void)
     CmndStatusResponse(5);
   }
 
+  // Status 6 - StatusMQT
   if (((0 == payload) || (6 == payload)) && Settings->flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
     uint32_t mqtt_tls = 0;
 #ifdef USE_MQTT_TLS
@@ -1134,6 +1140,7 @@ void CmndStatus(void)
   }
 #endif  // USE_ENERGY_MARGIN_DETECTION
 
+  // Status 8 / 10 - StatusSNS
   if ((0 == payload) || (8 == payload) || (10 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS10_SENSOR "\":"));
     MqttShowSensor(true);
@@ -1141,6 +1148,7 @@ void CmndStatus(void)
     CmndStatusResponse((8 == payload) ? 8 : 10);
   }
 
+  // Status 11 - StatusSTS
   if ((0 == payload) || (11 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS11_STATUS "\":"));
     MqttShowState();
@@ -1150,6 +1158,7 @@ void CmndStatus(void)
 
 #ifndef FIRMWARE_MINIMAL
   if (CrashFlag()) {
+    // Status 12 - StatusSTK
     if ((0 == payload) || (12 == payload)) {
       Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS12_STATUS "\":"));
       CrashDump();
@@ -1160,6 +1169,7 @@ void CmndStatus(void)
 #endif // FIRMWARE_MINIMAL
 
 #ifdef USE_SHUTTER
+  // Status 13
   if ((0 == payload) || (13 == payload)) {
     if (ShutterStatus()) { CmndStatusResponse(13); }
   }
