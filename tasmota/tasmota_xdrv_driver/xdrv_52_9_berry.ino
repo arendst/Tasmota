@@ -1061,6 +1061,11 @@ bool Xdrv52(uint32_t function)
       WebServer_on("/bc", HandleBerryConsole);
       WebServer_on("/tapp", HandleBerryBECLoader, HTTP_GET);
       break;
+#ifdef USE_WEB_STATUS_LINE
+      case FUNC_WEB_STATUS:
+        callBerryEventDispatcher(PSTR("web_status_line"), nullptr, 0, nullptr);
+        break;
+#endif  // USE_WEB_STATUS_LINE
 #endif // USE_WEBSERVER
     case FUNC_SAVE_BEFORE_RESTART:
       callBerryEventDispatcher(PSTR("save_before_restart"), nullptr, 0, nullptr);
