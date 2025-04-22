@@ -154,7 +154,23 @@ void LoraWanTickerSend(void) {
     LoraWan_Send.once_ms(TAS_LORAWAN_RECEIVE_DELAY2, LoraWanTickerSend);  // Retry after 1000 ms
   }
   if (Lora->rx) {                                   // If received in RX1 do not resend in RX2
+    // AU915-928 downlink config (for now ignoring sf12 for rx2)
+    const float f_tx = 923.3;  // do rx and tx frequency have a fixed relation or is a random pick ok? 
+    const float b_tx = 500.0;
+    // save uplink config
+    float f_rx = Lora->settings.frequency;
+    float b_rx = Lora->settings.bandwidth;
+    // set downlink config for sending
+    Lora->settings.frequency = f_tx;
+    Lora->settings.bandwidth = b_tx;
+    Lora->Config();
+
     LoraSend(Lora->send_buffer, Lora->send_buffer_len, true);
+    
+    // restore uplink config 
+    Lora->settings.frequency = f_rx;
+    Lora->settings.bandwidth = b_rx;
+    Lora->Config();
   }
 }
 
