@@ -118,6 +118,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Added
 - Command `JsonPP 0..7` to enable (>0) JSON Pretty Print on user interfaces and set number of indents
 - Command `JsonPP <command>|backlog <command>;...` to enable JSON PP only once
+- WebUI status line for MQTT and TLS, added `FUNC_WEB_STATUS` event [#23326](https://github.com/arendst/Tasmota/issues/23326)
 
 ### Breaking Changed
 
