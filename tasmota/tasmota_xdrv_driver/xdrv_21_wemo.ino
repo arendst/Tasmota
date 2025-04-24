@@ -369,6 +369,13 @@ bool Xdrv21(uint32_t function)
       case FUNC_ACTIVE:
         result = true;
         break;
+#ifdef USE_WEB_STATUS_LINE
+      case FUNC_WEB_STATUS:
+        if (udp_connected) {
+          WSContentStatusSticker(PSTR(D_WEMO), -1);
+        }
+        break;
+#endif  // USE_WEB_STATUS_LINE
     }
   }
   return result;

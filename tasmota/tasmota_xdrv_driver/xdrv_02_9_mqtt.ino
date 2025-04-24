@@ -2120,9 +2120,10 @@ bool Xdrv02(uint32_t function)
       case FUNC_WEB_STATUS:
         // MqttConnectCount(), mqtt_tls
         if (MqttIsConnected()) {
-          WSContentStatusSticker(PSTR("MQTT"), -1);
           if (MqttTLSEnabled()) {
-            WSContentStatusSticker(PSTR("TLS"), -1);
+            WSContentStatusSticker(PSTR(D_MQTT_TLS_ENABLE), -1);
+          } else {
+            WSContentStatusSticker(PSTR(D_MQTT), -1);
           }
         }
         break;
