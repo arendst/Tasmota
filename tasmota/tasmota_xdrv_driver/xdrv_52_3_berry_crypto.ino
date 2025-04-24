@@ -23,6 +23,8 @@
 #include <berry.h>
 #include "be_mem.h"
 #include "be_object.h"
+#include "include/ed25519.h"
+#include "include/poly1305_auth.h"
 
 /*********************************************************************************************\
  * members class
@@ -617,6 +619,75 @@ extern "C" {
 }
 
 /*********************************************************************************************\
+ * CHACHA20-POLY1305  class
+ * 
+\*********************************************************************************************/
+extern "C" {
+
+   // `chacha20_run(secret_key:bytes(32),iv:bytes(12),cipher:bytes(n*16),)-> int counter
+  int32_t m_chacha20_run(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 4  && be_isbytes(vm, 1)    // secret_key  - 32 bytes
+                   && be_isbytes(vm, 2)    // iv/nonce    - 12 bytes
+                   && be_isint(vm, 3)      // counter
+                   && be_isbytes(vm, 4)    // data/cipher
+                   ) {
+
+      size_t key_len = 0;
+      const void * key = be_tobytes(vm, 1, &key_len);
+      if (key_len != 32) {
+        AddLog(LOG_LEVEL_INFO, PSTR(" %d bytes"), key_len);
+        be_raise(vm, "value_error", "Key size must be 32 bytes");
+      }
+
+      size_t iv_len = 0;
+      void * iv = (void *) be_tobytes(vm, 2, &iv_len);
+      if (iv_len != 12) {
+        AddLog(LOG_LEVEL_INFO, PSTR(" %d bytes"), iv_len);
+        be_raise(vm, "value_error", "IV size must be 12");
+      }
+
+      int32_t cc = be_toint(vm, 3);
+
+      size_t data_len = 0;
+      void * data = (void *) be_tobytes(vm, 4, &data_len);
+
+      br_chacha20_run bc = br_chacha20_ct_run;
+    
+      int32_t new_cc = br_chacha20_ct_run(key, iv, cc, data, data_len);
+
+      be_pushint(vm, new_cc);
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // `poly_run(data:bytes(),poly_key:bytes(32),)-> tag:bytes(16)`
+  int m_poly1305_run(bvm *vm){
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 2 && be_isbytes(vm, 1)    // data in
+                  && be_isbytes(vm, 2)    // poly key
+    ) {
+      char tag[POLY1305_TAGLEN];
+
+      size_t data_len = 0;
+      const char * data = (const char *) be_tobytes(vm, 1, &data_len);
+
+      size_t polykey_len = 0;
+      char * polykey = (char *) be_tobytes(vm, 2, &polykey_len);
+      if (polykey_len != POLY1305_KEYLEN) {
+        AddLog(LOG_LEVEL_INFO, PSTR(" %d bytes"), polykey_len);
+        be_raise(vm, "value_error", "poly key size must be 32 bytes");
+      }
+      poly1305_auth(tag, data, data_len,polykey);
+      be_pushbytes(vm, tag, sizeof(tag));
+      be_return(vm); 
+    }
+  be_raise(vm, kTypeError, nullptr);
+  }
+}
+
+/*********************************************************************************************\
  * SHA256 class
  * 
 \*********************************************************************************************/
@@ -1170,6 +1241,174 @@ extern "C" {
         }
       }
       be_raise(vm, "value_error", "invalid input");
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+}
+
+  /*********************************************************************************************\
+ * ED25519 class
+ * 
+\*********************************************************************************************/
+extern "C" {
+  /* internal function to generate a secret key from a seed
+   * The secret key is 64 bytes long, the first 32 bytes are the seed
+   * and the last 32 bytes are the public key.
+   * The seed must be 32 bytes long.
+  */
+  void _ed25519_get_secret_key(unsigned char *private_key, const unsigned char *seed){
+    ge_p3 A;
+    unsigned char pub_key[32];
+
+    br_sha512_context ctx;
+    br_sha512_init(&ctx);
+    br_sha512_update(&ctx, seed, 32);
+    br_sha512_out(&ctx, private_key);
+    private_key[0] &= 248;
+    private_key[31] &= 63;
+    private_key[31] |= 64;
+
+    ge_scalarmult_base(&A, private_key);
+    ge_p3_tobytes(pub_key, &A);
+    memmove(private_key, seed, 32);
+    memmove(private_key + 32, pub_key, 32);
+  }
+
+  /*crypto.ED25519().secret_key(seed:bytes(32)) -> bytes(64)*/
+  int32_t m_ed25519_secret_key(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc == 2 && be_isbytes(vm, 2))  // seed
+    {
+      size_t seed_len = 0;
+      const unsigned char * seed = (const unsigned char *) be_tobytes(vm, 2, &seed_len);
+      if (seed_len != 32) {
+        be_raise(vm, "value_error", "seed size must be 32");
+      }
+      unsigned char sec_key[64];
+
+      _ed25519_get_secret_key(sec_key, seed);
+      be_pushbytes(vm, sec_key, 64);
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+
+  // https://github.com/rdeker/ed25519/blob/13a0661670949bc2e1cfcd8720082d9670768041/src/sign.c
+  /*crypto.ED25519().sign(message:bytes(), secret_key:bytes(64)) -> signature:bytes(64)*/
+  int32_t m_ed25519_sign(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc == 3 && be_isbytes(vm, 2)  // message
+                  && be_isbytes(vm, 3))  // secret key
+                  {
+      size_t msg_len = 0;
+      const void * msg = be_tobytes(vm, 2, &msg_len);
+
+      size_t sec_key_len = 0;
+      void * sec_key = (void *) be_tobytes(vm, 3, &sec_key_len);
+      if (sec_key_len != 64) {
+        be_raise(vm, "value_error", "Key size must be 64");
+      }
+
+      uint8_t sign[64];
+      unsigned char hram[64];
+      unsigned char r[64];
+      unsigned char az[64];
+      ge_p3 R;
+
+      br_sha512_context ctx;
+
+      br_sha512_init(&ctx);
+      br_sha512_update(&ctx, (unsigned char*)sec_key, 32);
+      br_sha512_out(&ctx, az);
+      az[0] &= 248;
+      az[31] &= 63;
+      az[31] |= 64;
+
+      br_sha512_init(&ctx);
+      br_sha512_update(&ctx, az + 32, 32);
+      br_sha512_update(&ctx, msg, msg_len);
+      br_sha512_out(&ctx, r);
+
+      memmove((unsigned char*)sign + 32, (unsigned char*)sec_key + 32, 32);
+      // memmove((unsigned char*)sign + 32, (unsigned char*)pub_key, 32);
+  
+      sc_reduce(r);
+      ge_scalarmult_base(&R, r);
+      ge_p3_tobytes((unsigned char*)sign, &R);
+
+
+      br_sha512_init(&ctx);
+      br_sha512_update(&ctx, sign, 64);
+      br_sha512_update(&ctx, msg, msg_len);
+      br_sha512_out(&ctx, hram);
+  
+      sc_reduce(hram);
+      sc_muladd((unsigned char*)sign + 32, hram, az, r);
+
+      be_pushbytes(vm, sign, 64);
+      be_return(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // https://github.com/rdeker/ed25519/blob/13a0661670949bc2e1cfcd8720082d9670768041/src/verify.c
+  /*crypto.ED25519().verify(message:bytes(), signature:bytes(64), public_key:bytes(32)) -> bool*/
+  int32_t m_ed25519_verify(bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 4 && be_isbytes(vm, 2)  // message
+                  && be_isbytes(vm, 3)  // signature
+                  && be_isbytes(vm, 4)) // public key
+                  {
+      size_t message_len = 0;
+      const void * message = be_tobytes(vm, 2, &message_len);
+
+      size_t sign_len = 0;
+      const unsigned char * signature = (const unsigned char *) be_tobytes(vm, 3, &sign_len);
+      if (sign_len != 64) {
+        be_raise(vm, "value_error", "signature size must be 64");
+      }
+
+      size_t pub_key_len = 0;
+      const unsigned char * public_key = (const unsigned char *) be_tobytes(vm, 4, &pub_key_len);
+      if (pub_key_len != 32) {
+        be_raise(vm, "value_error", "key size must be 32");
+      }
+
+      unsigned char h[64];
+      unsigned char checker[32];
+      br_sha512_context ctx;
+
+      ge_p3 A;
+      ge_p2 R;
+  
+      bbool success = false;
+      if (signature[63] & 224) {
+        AddLog(LOG_LEVEL_INFO, PSTR(" signature[63] & 224"));
+          goto eddsa_verify_exit;
+      }
+  
+      if (ge_frombytes_negate_vartime(&A, public_key) != 0) {
+        AddLog(LOG_LEVEL_INFO, PSTR(" ge_frombytes_negate_vartime(&A, public_key) != 0"));
+          goto eddsa_verify_exit;
+      }
+
+      br_sha512_init(&ctx);
+      br_sha512_update(&ctx, signature, 32);
+      br_sha512_update(&ctx, public_key, 32);
+      br_sha512_update(&ctx, message, message_len);
+      br_sha512_out(&ctx, h);
+  
+      sc_reduce(h);
+      ge_double_scalarmult_vartime(&R, h, &A, signature + 32);
+      ge_tobytes(checker, &R);
+  
+      if (memcmp(checker, signature, 32) == 0) {
+          success = true;
+      }
+eddsa_verify_exit:
+      be_pushbool(vm, success);
+      be_return(vm);
     }
     be_raise(vm, kTypeError, nullptr);
   }
