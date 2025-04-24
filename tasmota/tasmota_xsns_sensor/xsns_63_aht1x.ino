@@ -83,7 +83,8 @@ struct {
   bool write_ok = false;
   uint8_t addresses[2] = { AHT1X_ADDR1, AHT1X_ADDR2 };
   uint8_t count  = 0;
-  uint8_t Pcount = 0;
+  // Pcount = 98 for quick initialization
+  uint8_t Pcount = 98;
 } aht1x;
 
 struct {
@@ -99,7 +100,8 @@ bool AHT1XWrite(uint8_t aht1x_idx) {
   wire.write(AHTMeasureCmd, 3);
   if (wire.endTransmission() != 0)
     return false;
-  delay(AHT1X_MEAS_DELAY);
+  // not needed measure delay handled by loop timing
+  // delay(AHT1X_MEAS_DELAY);
   return true;
 }
 
@@ -124,13 +126,18 @@ bool AHT1XRead(uint8_t aht1x_idx) {
 
 // Polling the device without delays
 // Incompatible with other devices on I2C bus
+// Poll device once every 10 seconds
+// Function called every 100ms
+// Pcount should be initialized to 98 for quick initialization
+// Switch executes with Pcount 1-100 (100 times) and resets
+// Write on Pcount 99 and read on Pcount 100 to update at the end of a 10s period
 void AHT1XPoll(void) {  // We have 100ms for read. Sensor needs 80-95 ms
   aht1x.Pcount++;
   switch (aht1x.Pcount) {
-    case 10:
+    case 99:
       aht1x.write_ok = AHT1XWrite(0);
       break;
-    case 11:
+    case 100:
       if (aht1x.write_ok) AHT1XRead(0);
       aht1x.Pcount = 0;
       break;
@@ -210,7 +217,9 @@ bool Xsns63(uint32_t function)
   }
   else if (aht1x.count) {
     switch (function) {
-      case FUNC_EVERY_SECOND:
+      // case FUNC_EVERY_SECOND:
+      // call every 100msec so read occurs 100msec after write
+      case FUNC_EVERY_100_MSECOND:
         AHT1XPoll();
         break;
       case FUNC_JSON_APPEND:
