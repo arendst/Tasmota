@@ -257,13 +257,17 @@ bool IniFile::getCIDR(const char* section, const char* key, ip_addr_t *ip, ip_ad
 	return parseCIDR(cidr, ip, mask);
 }
 
-bool IniFile::getDomainPort(const char* section, const char* key, String &domain, uint16_t &port)
+bool IniFile::getDomainPort(const char* section, const char* key, String &domain, uint16_t &port, uint16_t default_port)
 {
 	if (!getValueString(section, key, domain)) return false; // error
 	int32_t colon = domain.indexOf(':');
-	if (colon < 0) { return false; }
-	port = domain.substring(colon + 1).toInt();
-	domain = domain.substring(0, colon);
+	if (colon == 0) { return false; }			// having an empty domain is wrong
+	if (colon > 0) {
+		port = domain.substring(colon + 1).toInt();
+		domain = domain.substring(0, colon);
+	} else {
+		port = default_port;
+	}
 	return true;
 }
 

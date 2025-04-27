@@ -85,7 +85,7 @@ bool WireguardLoadConfig(const char *filename) {
   valconf = valconf && ini.getCIDR("Interface", "Address", &config.address2, &config.subnet);
   valconf = valconf && ini.getValueBase64("Peer", "PublicKey", config.public_key2, sizeof(config.public_key2));
   valconf = valconf && ini.getValueBase64("Peer", "PresharedKey", config.preshared_key2, sizeof(config.preshared_key2));
-  valconf = valconf && ini.getDomainPort("Peer", "Endpoint", Wireguard.endpoint, Wireguard.config.port);
+  valconf = valconf && ini.getDomainPort("Peer", "Endpoint", Wireguard.endpoint, Wireguard.config.port, 51820 /*default port*/);
   // read optional NetMask
   ipaddr_aton(WIREGUARD_NETMASK, &config.netmask2);
   ini.getIPAddress("Tasmota", "Netmask", &Wireguard.config.netmask2);
@@ -147,13 +147,21 @@ bool WireguardConnect(void) {
   esp_err_t err = esp_wireguard_connect(&Wireguard.ctx);
   if (err == ESP_OK) {
     Wireguard.started = true;
-    for (const allowed_ips_t & allowedip : Wireguard.allowed_ips) {
-      err = esp_wireguard_add_allowed_ip(&Wireguard.ctx, allowedip.addr, allowedip.mask);
-      if (err != ESP_OK) {
-        AddLog(LOG_LEVEL_INFO, PSTR("WG : Failed to add allowed_ips %_I/%_I, no space left"), allowedip.addr, allowedip.mask);
-        break;
+    if (!Wireguard.allowed_ips.isEmpty()) {
+      for (const allowed_ips_t & allowedip : Wireguard.allowed_ips) {
+        err = esp_wireguard_add_allowed_ip(&Wireguard.ctx, allowedip.addr, allowedip.mask);
+        if (err != ESP_OK) {
+          AddLog(LOG_LEVEL_INFO, PSTR("WG : Failed to add allowed_ips, no space left"));
+          break;
+        }
+        AddLog(LOG_LEVEL_DEBUG, PSTR("WG : Added allowed_ips %s/%s"), IPAddress(&allowedip.addr).toString().c_str(),
+                                                                       IPAddress(&allowedip.mask).toString().c_str());
       }
-      AddLog(LOG_LEVEL_DEBUG, PSTR("WG : Added allowed_ips %_I/%_I"), allowedip.addr, allowedip.mask);
+    } else {
+      // allowed_ips is empty, so we add 0.0.0.0/0.0.0.0
+      ip_addr_t ip_zero = IPADDR4_INIT_BYTES(0, 0, 0, 0);
+      err = esp_wireguard_add_allowed_ip(&Wireguard.ctx, ip_zero, ip_zero);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("WG : Added default allowed_ips 0.0.0.0/0.0.0.0"));
     }
     return true;
   }
