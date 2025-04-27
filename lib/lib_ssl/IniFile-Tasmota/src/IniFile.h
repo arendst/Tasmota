@@ -3,12 +3,6 @@
 
 #include <stdint.h>
 
-#if defined(PREFER_SDFAT_LIBRARY)
-#include "SdFat.h"
-extern SdFat SD;
-#else
-#include "SD.h"
-#endif
 #include "IPAddress.h"
 
 #define INIFILE_VERSION "1.3.0"
