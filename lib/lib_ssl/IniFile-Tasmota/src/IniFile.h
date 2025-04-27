@@ -68,7 +68,7 @@ public:
 	static bool parseCIDR(String& str, ip_addr_t *ip, ip_addr_t *mask);
 	bool getCIDR(const char* section, const char* key, ip_addr_t *ip, ip_addr_t *mask);
 
-	bool getDomainPort(const char* section, const char* key, String &domain, uint16_t &port);
+	bool getDomainPort(const char* section, const char* key, String &domain, uint16_t &port, uint16_t default_port);
 
 	// From the file location saved in 'state' look for the next section and read its name.
 	// The name will be in the buffer. Returns false if no section found. 
