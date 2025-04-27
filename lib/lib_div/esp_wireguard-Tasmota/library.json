@@ -1,0 +1,55 @@
+{
+   "name": "esp_wireguard_tasmota",
+   "version": "0.4.2",
+   "description": "WireGuard implementation for Tasmota, based on the version for ESPHome",
+   "keywords":[
+      "tasmota",
+      "communication",
+      "network",
+      "wireguard",
+      "vpn"
+   ],
+   "authors":[
+      {
+         "name": "Stephan Hadinger",
+         "email": "stephan.hadinger@gmail.com",
+         "url": "https://github.com/arendst/Tasmota",
+         "maintainer": true
+      },
+      {
+         "name": "Simone Rossetto",
+         "email": "simros85@gmail.com",
+         "url": "https://github.com/droscy",
+         "maintainer": true
+      },
+      {
+         "name": "Tomoyuki Sakurai",
+         "email": "y@trombik.org",
+         "url": "https://github.com/trombik"
+      },
+      {
+         "name": "Daniel Hope",
+         "email": "daniel.hope@smartalock.com",
+         "url": "https://github.com/smartalock"
+      },
+      {
+         "name": "Kenta Ida",
+         "email": "fuga@fugafuga.org"
+      },
+      {
+         "name": "Matthew Dempsky"
+      },
+      {
+         "name": "D. J. Bernstein"
+      }
+   ],
+   "license": "BSD-3-Clause",
+   "platforms": [
+      "espressif32",
+      "espressif8266"
+   ],
+   "frameworks":[
+      "espidf",
+      "arduino"
+   ]
+}
