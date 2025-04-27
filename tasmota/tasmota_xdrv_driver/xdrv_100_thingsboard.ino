@@ -16,7 +16,7 @@ struct Telementary_data
 struct Telementary_data Tele[] = {
     {"POWER", ""},
     {"Color", ""},
-};
+    {"CT", ""}};
 
 bool Xdrv100(uint32_t function)
 {
@@ -42,6 +42,8 @@ bool Xdrv100(uint32_t function)
         if (strcmp(Tele[1].value, color_str) != 0)
         {
             snprintf_P(Tele[1].value, sizeof(Tele[1].value), PSTR("%s"), color_str);
+            if (LightGetColorTemp() != 0)
+                snprintf_P(Tele[2].value, sizeof(Tele[2].value), PSTR("%d"), LightGetColorTemp());
             change = true;
         }
 
