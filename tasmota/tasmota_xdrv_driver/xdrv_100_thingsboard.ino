@@ -52,6 +52,8 @@ bool Xdrv100(uint32_t function)
             SendThingsBoardTelemetry();
             change = false;
         }
+
+        FetchThingsBoardRPC();
         break;
     }
 #ifdef USE_WEBSERVER
@@ -124,18 +126,30 @@ void FetchThingsBoardRPC()
     url += THINGSBOARD_HOST;
     url += "/api/v1/";
     url += THINGSBOARD_TOKEN;
-    url = +"/rpc?timeout=1000";
+    url += "/rpc?timeout=1000";
 
     http.begin(client, url);
 
-    if (http.GET() == HTTP_CODE_OK)
+    uint16_t httpCode = http.GET();
+
+    if (httpCode == HTTP_CODE_OK)
     {
+        AddLog(LOG_LEVEL_INFO, PSTR("aha"));
         String payload = http.getString();
         AddLog(LOG_LEVEL_DEBUG, PSTR("TB: RPC %s"), payload.c_str());
 
         JsonParser parser((char *)payload.c_str());
         JsonParserObject root = parser.getRootObject();
+        String method = root[PSTR("method")].getStr();
+
+        if (method == "setCT")
+            LightSetColorTemp(root[PSTR("params")].getUInt());
     }
+    // else if (httpCode != HTTP_CODE_NO_CONTENT)
+    // {
+    //     AddLog(LOG_LEVEL_ERROR, PSTR("TB : RPC HTTP %d"), httpCode);
+    // }
+    http.end();
 }
 
 /*void HandleTB(void)
