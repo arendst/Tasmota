@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Command `JsonPP <command>|backlog <command>;...` to enable JSON PP only once
 - WebUI status line for MQTT and TLS, added `FUNC_WEB_STATUS` event (#23326)
 - Wireguard VPN (#23347)
+- Optional Wifi strength indicator in WebUI status line
 
 ### Breaking Changed
 
