@@ -3,7 +3,7 @@
 // input sha256: e0fcb684eb9f29a5fd0f678262046d9d05d055466b1752a58a35da2648ecd0e7
 /////////////////////////////////////////////////////////////////////
 
-const size_t HTTP_HEAD_LAST_SCRIPT_SIZE = 355;
+const size_t HTTP_HEAD_LAST_SCRIPT_SIZE = 355;    // compressed size 221 bytes
 const char HTTP_HEAD_LAST_SCRIPT_COMPRESSED[] PROGMEM = "\x30\x2F\x83\xAD\xCE\x46\xB1\x0E\xE9\xDE\x3D\xA6\x77\xF5\x47\xC3\x8C\xEA\x2D\x3E"
                              "\x09\x81\x8B\x1A\xFA\x8E\x86\xA1\x6F\xE6\x45\xE6\x13\x0E\xB3\xE5\x61\x04\x77\x4F"
                              "\xBD\xE1\x82\xE8\xEA\x1C\x2E\xAB\x38\xEA\xA6\x6C\xAB\xFB\xB3\xAB\xCC\x26\x1D\x1F"
