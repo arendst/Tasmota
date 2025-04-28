@@ -222,11 +222,13 @@ const char HTTP_SCRIPT_INFO_END[] PROGMEM =
   #include "./html_compressed/HTTP_HEAD_LAST_SCRIPT32.h"
   #include "./html_compressed/HTTP_HEAD_STYLE1.h"
   #include "./html_compressed/HTTP_HEAD_STYLE2.h"
+  #include "./html_compressed/HTTP_HEAD_STYLE_WIFI.h"
 #else
   #include "./html_uncompressed/HTTP_HEAD_LAST_SCRIPT.h"
   #include "./html_uncompressed/HTTP_HEAD_LAST_SCRIPT32.h"
   #include "./html_uncompressed/HTTP_HEAD_STYLE1.h"
   #include "./html_uncompressed/HTTP_HEAD_STYLE2.h"
+  #include "./html_uncompressed/HTTP_HEAD_STYLE_WIFI.h"
 #endif
 
 #ifdef USE_ZIGBEE
@@ -985,6 +987,9 @@ void WSContentSendStyle_P(const char* formatP, ...) {
   WSContentSend_P(HTTP_HEAD_STYLE2, WebColor(COL_BUTTON), WebColor(COL_BUTTON_TEXT), WebColor(COL_BUTTON_HOVER),
                   WebColor(COL_BUTTON_RESET), WebColor(COL_BUTTON_RESET_HOVER), WebColor(COL_BUTTON_SAVE), WebColor(COL_BUTTON_SAVE_HOVER),
                   WebColor(COL_BUTTON));
+#ifdef USE_WEB_STATUS_LINE_WIFI
+  WSContentSend_P(HTTP_HEAD_STYLE_WIFI, WebColor(COL_FORM), WebColor(COL_TITLE));
+#endif
 #ifdef USE_ZIGBEE
   WSContentSend_P(HTTP_HEAD_STYLE_ZIGBEE);
 #endif // USE_ZIGBEE
@@ -1927,8 +1932,24 @@ bool HandleRootStatusRefresh(void) {
   }
 
 #ifdef USE_WEB_STATUS_LINE
-  // create a DIV for the upper status bar, positioned right-justified
-  WSContentSend_P(PSTR("<div style='font-size:9px;font-weight:bold;text-align:right;position:absolute;top:0;right:0;display:inline-flex;'>"));
+#ifdef USE_WEB_STATUS_LINE_WIFI
+  // create a first DIV for the upper left status bar, positioned left-justified
+  // we use the same string literal for both lines to reduce Flash
+  WSContentSend_P(PSTR("<div style='font-size:9px;font-weight:bold;text-align:%s;position:absolute;top:0;%s:0;display:inline-flex;'>"), PSTR("left"), PSTR("left"));
+  if (Settings->flag4.network_wifi) {
+    int32_t rssi = WiFi.RSSI();
+    WSContentSend_P(PSTR("<div class='wifi' title='" D_RSSI " %d%%, %d dBm'><div class='arc a3 %s'></div><div class='arc a2 %s'></div><div class='arc a1 %s'></div><div class='arc a0 active'></div></div>"),
+                          WifiGetRssiAsQuality(rssi), rssi,
+                          rssi >= -55 ? "active" : "",
+                          rssi >= -70 ? "active" : "",
+                          rssi >= -85 ? "active" : "");
+  }
+  // display here anything that goes on the left side
+  WSContentSend_P(PSTR("</div>"));
+#endif // USE_WEB_STATUS_LINE_WIFI
+
+  // create a second DIV for the upper right status bar, positioned right-justified
+  WSContentSend_P(PSTR("<div style='font-size:9px;font-weight:bold;text-align:%s;position:absolute;top:0;%s:0;display:inline-flex;'>"), PSTR("right"), PSTR("right"));
   XsnsXdrvCall(FUNC_WEB_STATUS);
   WSContentSend_P(PSTR("</div>"));
 #endif // USE_WEB_STATUS_LINE
