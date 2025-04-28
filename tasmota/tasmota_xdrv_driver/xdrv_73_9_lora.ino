@@ -38,6 +38,8 @@ String LoraBandName(uint32_t bandIndex){
   return String(LoraBands[bandIndex]);
 }
 
+
+
 /*
  Sets LoRa values
 */
@@ -98,13 +100,13 @@ void LoraDefaults(uint32_t uBand = TAS_LORA_BAND_EU868, bool bRX=true, uint32_t 
      if(bRX){
       if(channel>71) channel=71;
       if(channel < 64){
-        frequency        = 915.2 + (channel * 0.2);
-        bandwidth        = 125.0;     //DR2
-        spreading_factor = 10;        //DR2
+        frequency        = TAS_LORA_AU915_FREQUENCY_UP1 + (channel * 0.2);
+        bandwidth        = TAS_LORA_AU915_BANDWIDTH_UP1;              //DR2
+        spreading_factor = TAS_LORA_AU915_SPREADING_FACTOR_UP1;        //DR2
       } else {
-        frequency        = 915.9 + (channel * 1.6);
-        bandwidth        = 500.0;     //DR6
-        spreading_factor = 8;         //DR6
+        frequency        = TAS_LORA_AU915_FREQUENCY_UP2 + (channel * 1.6);
+        bandwidth        = TAS_LORA_AU915_BANDWIDTH_UP2;                //DR6
+        spreading_factor = TAS_LORA_AU915_SPREADING_FACTOR_UP2;         //DR6
       }
 
      } else {
@@ -120,20 +122,19 @@ void LoraDefaults(uint32_t uBand = TAS_LORA_BAND_EU868, bool bRX=true, uint32_t 
       float    fFrequencyDiff;
       uint32_t uRxChannel;
       if(125.0 == Lora->settings.bandwidth){
-        fFrequencyDiff=Lora->settings.frequency - 915.2;
+        fFrequencyDiff=Lora->settings.frequency - TAS_LORA_AU915_FREQUENCY_UP1;
         uRxChannel = (uint32_t)(fFrequencyDiff / 0.2);
       } else {
-        fFrequencyDiff=Lora->settings.frequency - 915.9;
+        fFrequencyDiff=Lora->settings.frequency - TAS_LORA_AU915_FREQUENCY_UP2;
         uRxChannel = 64 + (uint32_t)(fFrequencyDiff / 1.6);
       }
       channel = uRxChannel%8;
       AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraDefaults(AU915) TX: uRxChannel=%u, new TX channel:%u"),uRxChannel,channel);
 
       //Should really have different DR for RX1 and RX2. But ... just rely on RX2 for now.
-      frequency        = 923.3 + (channel * 0.6);
-      bandwidth        = 500.0;     //DR8
-      spreading_factor = 12;        //DR8
-
+      frequency        = TAS_LORA_AU915_FREQUENCY_DN + (channel * 0.6);
+      bandwidth        = TAS_LORA_AU915_BANDWIDTH_DN;               //DR8
+      spreading_factor = TAS_LORA_AU915_SPREADING_FACTOR_DN;        //DR8
      }
 
      Lora->settings.frequency        = frequency;
@@ -334,7 +335,6 @@ bool LoraSend(uint8_t* data, uint32_t len, bool invert) {
     lora_time, len, data, invert, TimePassedSince(lora_time));
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: LoraSend() Changing to RX profile Current Freq:%1_f  "),&Lora->settings.frequency);
   Lora->settings = RXsettings;
-//  LoraDefaults(Lora->settings.band, true);   //Set RX profile
   Lora->Config();
   return result;
 }
@@ -431,10 +431,11 @@ void LoraInit(void) {
     else if (PinUsed(GPIO_LORA_DI0)) {
       // SX1276, RFM95W
       if (LoraSx127xInit()) {
-        Lora->Config = &LoraSx127xConfig;
+        Lora->Config    = &LoraSx127xConfig;
         Lora->Available = &LoraSx127xAvailable;
-        Lora->Receive = &LoraSx127xReceive;
-        Lora->Send = &LoraSx127xSend;
+        Lora->Receive   = &LoraSx127xReceive;
+        Lora->Send      = &LoraSx127xSend;
+        Lora->Init      = &LoraSx127xInit;
         strcpy_P(hardware, PSTR("SX127x"));
         present = true;
       }
@@ -444,10 +445,11 @@ void LoraInit(void) {
     else if (PinUsed(GPIO_LORA_DI1) && PinUsed(GPIO_LORA_BUSY)) {
       // SX1262, LilyGoT3S3
       if (LoraSx126xInit()) {
-        Lora->Config = &LoraSx126xConfig;
+        Lora->Config    = &LoraSx126xConfig;
         Lora->Available = &LoraSx126xAvailable;
-        Lora->Receive = &LoraSx126xReceive;
-        Lora->Send = &LoraSx126xSend;
+        Lora->Receive   = &LoraSx126xReceive;
+        Lora->Send      = &LoraSx126xSend;
+        Lora->Init      = &LoraSx126xInit;
         strcpy_P(hardware, PSTR("SX126x"));
         present = true;
       }
@@ -601,7 +603,7 @@ void CmndLoraConfig(void) {
     }
    else if (!strcmp_P(uData.c_str(), PSTR("AU915"))) { 
 #ifdef USE_LORA_DEBUG
-      AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Command AU915"));
+      AddLog(LOG_LEVEL_DEBUG, PSTR("ROBDBG: Command AU915"));
 #endif
       LoraDefaults(TAS_LORA_BAND_AU915);
       Lora->Config();

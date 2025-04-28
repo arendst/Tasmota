@@ -53,16 +53,42 @@
 
 /*
 These are default AU915 values when waiting for JOIN REQUEST 
+AU915 has 2 sets up UPLINK channels
 */
-//#ifndef TAS_LORA_AU915_FREQUENCY 
-//#define TAS_LORA_AU915_FREQUENCY                915.2  // Allowed values range from 915.2 to  927.8 MHz
-//#endif
-//#ifndef TAS_LORA_AU915_BANDWIDTH
-//#define TAS_LORA_AU915_BANDWIDTH                125.0  // Allowed values are 125.0 and 500.0 kHz
-//#endif
-//#ifndef TAS_LORA_AU915_SPREADING_FACTOR
-//#define TAS_LORA_AU915_SPREADING_FACTOR          10    // Allowed values range from 7 to 12
-//#endif
+#ifndef TAS_LORA_AU915_FREQUENCY_UP1 
+#define TAS_LORA_AU915_FREQUENCY_UP1            915.2  // Channel 0. There are 64 125 MHz channels (0-63), spaced 0.2 MHz apart.
+#endif
+#ifndef TAS_LORA_AU915_FREQUENCY_UP2 
+#define TAS_LORA_AU915_FREQUENCY_UP2            915.9  // Channel 64. There are 8 500 MHz channels (64-71), spaced 1.6 MHz apart
+#endif
+
+#ifndef TAS_LORA_AU915_BANDWIDTH_UP1
+#define TAS_LORA_AU915_BANDWIDTH_UP1            125.0  // Allowed values are 125.0 and 500.0 kHz
+#endif
+#ifndef TAS_LORA_AU915_BANDWIDTH_UP2
+#define TAS_LORA_AU915_BANDWIDTH_UP2            500.0  // Allowed values are 125.0 and 500.0 kHz
+#endif
+
+#ifndef TAS_LORA_AU915_SPREADING_FACTOR_UP1
+#define TAS_LORA_AU915_SPREADING_FACTOR_UP1      10    // Allowed values range from 7 to 12
+#endif
+#ifndef TAS_LORA_AU915_SPREADING_FACTOR_UP2
+#define TAS_LORA_AU915_SPREADING_FACTOR_UP2      8     // Allowed values range from 7 to 12
+#endif
+
+#ifndef TAS_LORA_AU915_FREQUENCY_DN 
+#define TAS_LORA_AU915_FREQUENCY_DN             923.3  //Channel 0 down
+#endif
+
+#ifndef TAS_LORA_AU915_BANDWIDTH_DN             
+#define TAS_LORA_AU915_BANDWIDTH_DN             500    //DR8
+#endif
+
+#ifndef TAS_LORA_AU915_SPREADING_FACTOR_DN
+#define TAS_LORA_AU915_SPREADING_FACTOR_DN      12     //DR8
+#endif
+
+
 #ifndef TAS_LORA_AU915_CODING_RATE
 #define TAS_LORA_AU915_CODING_RATE                5    // Allowed values range from 5 to 8
 #endif
@@ -226,6 +252,7 @@ typedef struct Lora_t {
   bool (* Available)(void);
   int (* Receive)(char*);
   bool (* Send)(uint8_t*, uint32_t, bool);
+  bool (* Init)(void);
   LoraSettings_t settings;                       // Persistent settings
   volatile uint32_t receive_time;
   float rssi;

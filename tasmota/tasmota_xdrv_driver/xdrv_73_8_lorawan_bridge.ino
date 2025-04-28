@@ -158,19 +158,18 @@ void LoraWanTickerSend(void) {
   if (Lora->rx) {                                   // If received in RX1 do not resend in RX2
     LoraSend(Lora->send_buffer, Lora->send_buffer_len, true);
   } else {
-    Lora->send_buffer_step = 0; //Nothing more to send
+    Lora->send_buffer_step = 0;                     //Nothing more to send
   }
 
-  if(0 == Lora->send_buffer_step){
+  if (0 == Lora->send_buffer_step){
     AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanTickerSend() SledgeHammer LoraSx126xInit() Start"));
-    LoraSx126xInit();
+    Lora->Init();                                   //Necessary to re-init the SXxxxx chip in cases where TX/RX frequencies differ //LoraSx126xInit();
     AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanTickerSend() SledgeHammer LoraSx126xInit() End"));
   }
 }
 
 void LoraWanSendResponse(uint8_t* buffer, size_t len, uint32_t lorawan_delay) {
   AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanSendResponse() Delay = %u LoraBand=%u"),lorawan_delay,Lora->settings.band);
-  //DBGROB:LoraWanSendResponse() Delay = 5000 LoraBand=1
      
   free(Lora->send_buffer);                          // Free previous buffer (if any)
   Lora->send_buffer = (uint8_t*)malloc(len +1);
@@ -182,6 +181,46 @@ void LoraWanSendResponse(uint8_t* buffer, size_t len, uint32_t lorawan_delay) {
 }
 
 /*-------------------------------------------------------------------------------------------*/
+/*
+ Returns CFList that can be used in JOIN-ACCEPT message to lock device to specific frequencies
+*/
+size_t LoraWanCFList(uint8_t band, uint8_t * CFList, size_t uLen){
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanCFList(band = %u, CFListlen=%u)"),band,uLen);
+  uint8_t dataIdx = 0;
+  String sBandName = LoraBandName(band);
+  
+  if (sBandName.equals(F("AU915"))) {
+      //Add 16 bytes
+      if(uLen < 16) return 0;
+      CFList[dataIdx++] = 0x01;   //Mask 0   0001 = 915.2
+      CFList[dataIdx++] = 0x00; 
+      
+      CFList[dataIdx++] = 0x00;   //Mask 1
+      CFList[dataIdx++] = 0x00;
+
+      CFList[dataIdx++] = 0x00;   //Mask 2
+      CFList[dataIdx++] = 0x00;
+
+      CFList[dataIdx++] = 0x00;   //Mask 3
+      CFList[dataIdx++] = 0x00;
+
+      CFList[dataIdx++] = 0x00;   //Mask 4
+      CFList[dataIdx++] = 0x00;
+
+      CFList[dataIdx++] = 0x00;   //RFU
+      CFList[dataIdx++] = 0x00;
+ 
+      CFList[dataIdx++] = 0x00;   //RFU
+      CFList[dataIdx++] = 0x00;
+      CFList[dataIdx++] = 0x00;
+ 
+      CFList[dataIdx++] = 0x01;   //CFLlistType      
+
+   } else {
+     //Default EU868
+  }
+  return dataIdx;
+}
 
 uint32_t LoraWanSpreadingFactorToDataRate(void) {
   /*
@@ -228,6 +267,8 @@ uint32_t LoraWanFrequencyToChannel(void) {
   }
   return channel;
 }
+
+
 
 /*********************************************************************************************/
 
@@ -355,11 +396,19 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
         join_data[join_data_index++] = DevAddr >> 8;
         join_data[join_data_index++] = DevAddr >> 16;
         join_data[join_data_index++] = DevAddr >> 24;
-        join_data[join_data_index++] = LoraWanSpreadingFactorToDataRate();  // DLSettings AU915=DR8
+        join_data[join_data_index++] = LoraWanSpreadingFactorToDataRate();  // DLSettings 
         join_data[join_data_index++] = 1;                                   // RXDelay; [12]
 
-
-        //AU915 Add CFList to instruct device to use one channel
+        //Add CFList to instruct device to use one channel
+        uint8_t CFList[16];
+        size_t  CFListSize = LoraWanCFList(Lora->settings.band, CFList, sizeof(CFList));
+        uint8_t CFListIdx  = 0;
+        while (CFListSize > 0 ){
+          join_data[join_data_index++] = CFList[CFListIdx++];  
+          CFListSize--;
+        }
+        
+/*
         if (LoraBandName(Lora->settings.band).equals(F("AU915"))) {
           //Add 16 bytes
           join_data[join_data_index++] = 0x01;   //Mask 0   0001 = 915.2
@@ -386,8 +435,8 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
 
           join_data[join_data_index++] = 0x01;   //CFLlistType      [28]
         }
+*/
 
-//        uint32_t NewMIC = LoraWanGenerateMIC(join_data, 13, Lora->settings.end_node[node].AppKey);
         uint32_t NewMIC = LoraWanGenerateMIC(join_data, join_data_index, Lora->settings.end_node[node].AppKey);
         join_data[join_data_index++] = NewMIC;
         join_data[join_data_index++] = NewMIC >> 8;
