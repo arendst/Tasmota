@@ -16,17 +16,152 @@
 
 /*********************************************************************************************/
 
-void LoraDefaults(void) {
-  Lora->settings.frequency = TAS_LORA_FREQUENCY;
-  Lora->settings.bandwidth = TAS_LORA_BANDWIDTH;
-  Lora->settings.spreading_factor = TAS_LORA_SPREADING_FACTOR;
-  Lora->settings.coding_rate = TAS_LORA_CODING_RATE;
-  Lora->settings.sync_word = TAS_LORA_SYNC_WORD;
-  Lora->settings.output_power = TAS_LORA_OUTPUT_POWER;
-  Lora->settings.preamble_length = TAS_LORA_PREAMBLE_LENGTH;
-  Lora->settings.current_limit = TAS_LORA_CURRENT_LIMIT;
-  Lora->settings.implicit_header = TAS_LORA_HEADER;
-  Lora->settings.crc_bytes = TAS_LORA_CRC_BYTES;
+/*
+For EU bands, the Uplink/Downlink (TX/RX) frequencies can be the same.
+For Others,  same Uplink/Downlink (TX/RX) frequencies may not be allowed.
+See: https://lora-alliance.org/wp-content/uploads/2020/11/RP_2-1.0.2.pdf
+*/
+enum LoRaBand_t {
+  TAS_LORA_BAND_EU868, 
+  TAS_LORA_BAND_AU915
+};
+
+//LoraBands: One for each enum above
+const char * const LoraBands[] PROGMEM = {
+	"EU868",
+	"AU915"
+};
+
+String LoraBandName(uint32_t bandIndex){
+  uint32_t uNumBands = sizeof(LoraBands)/sizeof(LoraBands[0]);
+  if(bandIndex>(uNumBands-1)) bandIndex = uNumBands - 1;
+  return String(LoraBands[bandIndex]);
+}
+
+/*
+ Sets LoRa values
+*/
+void LoraDefaults(uint32_t uBand = TAS_LORA_BAND_EU868, bool bRX=true, uint32_t channel=0){
+  switch(uBand){
+    case TAS_LORA_BAND_AU915:
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraDefaults(AU915) uBand=%u bRX=%u channel=%u"),uBand, bRX, channel);
+     /*    ref: https://lora-alliance.org/wp-content/uploads/2020/11/RP_2-1.0.2.pdf page 47
+    
+     DR0  LoRa: SF12 / 125 kHz 
+     DR1  LoRa: SF11 / 125 kHz 
+     DR2  LoRa: SF10 / 125 kHz   <-- JOIN REQUEST 
+     DR3  LoRa: SF9  / 125 kHz 
+     DR4  LoRa: SF8  / 125 kHz 
+     DR5  LoRa: SF7  / 125 kHz 
+     DR6  LoRa: SF8  / 500 kHz        Same as DR12
+     DR7  LR-FHSS CR1/3: 1.523 MHz OCW 162
+     DR8  LoRa: SF12 / 500 kHz
+     DR9  LoRa: SF11 / 500 kHz 
+     DR10 LoRa: SF10 / 500 kHz 
+     DR11 LoRa: SF9  / 500 kHz 
+     DR12 LoRa: SF8  / 500 kHz        Same as DR6
+     DR13 LoRa: SF7  / 500 kHz 
+
+     UPLINK (RX) CHANNELS
+     There are 72 channels
+       0-63: DR0 to 5. Starting 915.2, incrementing by 0.2 Mhz to 927.8  <-- JOIN REQUEST
+      64-71: DR6     . Starting 915.9, incrementing by 1.6 MHz to 927.1
+
+     DOWNLINK (TX) CHANNELS
+     There are 8 channels
+       0-7: DR8 to 13. Starting 923.3, incrementing by 0.6 MHz to 927.5
+
+     After an uplink:  Downlink (TX) link subchannel = Uplink (RX) Channel Number modulo 8   
+     e.g. --Uplink (RX)--     --Downlink (TX)--
+          Freq    Channel     Channel Frequency
+          915.2   0           0       923.3
+          927.8   63          7       927.1
+
+     After an uplink:  
+     Downlink DR for RX1 must follow this table
+     Uplink  Downlink
+     DR0     DR8
+     DR1     DR8
+     DR2     DR10   <----- channels 1-62
+     DR3     DR11
+     DR4     DR12
+     DR5     DR13
+     DR6     DR13  <------ channels 63-71
+
+     Downlink DR for RX2 must be DR8
+    
+     */
+     float   frequency;
+     float   bandwidth;
+     uint8_t spreading_factor;
+
+     if(bRX){
+      if(channel>71) channel=71;
+      if(channel < 64){
+        frequency        = 915.2 + (channel * 0.2);
+        bandwidth        = 125.0;     //DR2
+        spreading_factor = 10;        //DR2
+      } else {
+        frequency        = 915.9 + (channel * 1.6);
+        bandwidth        = 500.0;     //DR6
+        spreading_factor = 8;         //DR6
+      }
+
+     } else {
+      // TX
+      // Reference: https://lora-alliance.org/wp-content/uploads/2020/11/lorawan_regional_parameters_v1.0.3reva_0.pdf)
+      // Assume this is in response to an uplink RX, so we already know RX freq & bw & sf
+      // TX channel depends on RX freq
+      // DR for RX1 depends on incoming DR (and RX1DROffset)
+      // DR for RX2 is fixed ar DR8 
+      //
+      // Tasmota does not support different RX1 & RX2 DRs, so just use DR8 and rely on RX2 arriving at end device OK.
+      //
+      float    fFrequencyDiff;
+      uint32_t uRxChannel;
+      if(125.0 == Lora->settings.bandwidth){
+        fFrequencyDiff=Lora->settings.frequency - 915.2;
+        uRxChannel = (uint32_t)(fFrequencyDiff / 0.2);
+      } else {
+        fFrequencyDiff=Lora->settings.frequency - 915.9;
+        uRxChannel = 64 + (uint32_t)(fFrequencyDiff / 1.6);
+      }
+      channel = uRxChannel%8;
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraDefaults(AU915) TX: uRxChannel=%u, new TX channel:%u"),uRxChannel,channel);
+
+      //Should really have different DR for RX1 and RX2. But ... just rely on RX2 for now.
+      frequency        = 923.3 + (channel * 0.6);
+      bandwidth        = 500.0;     //DR8
+      spreading_factor = 12;        //DR8
+
+     }
+
+     Lora->settings.frequency        = frequency;
+     Lora->settings.bandwidth        = bandwidth;
+     Lora->settings.spreading_factor = spreading_factor;
+     Lora->settings.coding_rate      = TAS_LORA_AU915_CODING_RATE;
+     Lora->settings.sync_word        = TAS_LORA_AU915_SYNC_WORD;
+     Lora->settings.output_power     = TAS_LORA_AU915_OUTPUT_POWER;
+     Lora->settings.preamble_length  = TAS_LORA_AU915_PREAMBLE_LENGTH;
+     Lora->settings.current_limit    = TAS_LORA_AU915_CURRENT_LIMIT;
+     Lora->settings.implicit_header  = TAS_LORA_AU915_HEADER;
+     Lora->settings.crc_bytes        = TAS_LORA_AU915_CRC_BYTES;
+     Lora->settings.band             = TAS_LORA_BAND_AU915;
+     break;
+    
+    default: 
+     Lora->settings.frequency = TAS_LORA_FREQUENCY;
+     Lora->settings.bandwidth = TAS_LORA_BANDWIDTH;
+     Lora->settings.spreading_factor = TAS_LORA_SPREADING_FACTOR;
+     Lora->settings.coding_rate = TAS_LORA_CODING_RATE;
+     Lora->settings.sync_word = TAS_LORA_SYNC_WORD;
+     Lora->settings.output_power = TAS_LORA_OUTPUT_POWER;
+     Lora->settings.preamble_length = TAS_LORA_PREAMBLE_LENGTH;
+     Lora->settings.current_limit = TAS_LORA_CURRENT_LIMIT;
+     Lora->settings.implicit_header = TAS_LORA_HEADER;
+     Lora->settings.crc_bytes = TAS_LORA_CRC_BYTES;
+     Lora->settings.band      = TAS_LORA_BAND_EU868;
+  }
 }
 
 void LoraWanDefaults(void) {
@@ -40,6 +175,7 @@ void LoraWanDefaults(void) {
   Lora->settings.current_limit = TAS_LORAWAN_CURRENT_LIMIT;
   Lora->settings.implicit_header = TAS_LORAWAN_HEADER;
   Lora->settings.crc_bytes = TAS_LORAWAN_CRC_BYTES;
+  Lora->settings.band      = TAS_LORA_BAND_EU868;
 }
 
 void LoraSettings2Json(void) {
@@ -53,6 +189,7 @@ void LoraSettings2Json(void) {
   ResponseAppend_P(PSTR(",\"" D_JSON_CURRENT_LIMIT "\":%1_f"), &Lora->settings.current_limit);     // xx.x mA (Overcurrent Protection - OCP)
   ResponseAppend_P(PSTR(",\"" D_JSON_IMPLICIT_HEADER "\":%d"), Lora->settings.implicit_header);    // 0 = explicit
   ResponseAppend_P(PSTR(",\"" D_JSON_CRC_BYTES "\":%d"), Lora->settings.crc_bytes);                // bytes
+  ResponseAppend_P(PSTR(",\"" D_JSON_LORA_BAND "\":\"%s\""), LoraBands[Lora->settings.band]);      // enum 0=EU868,1=AU915   
 }
 
 void LoraJson2Settings(JsonParserObject root) {
@@ -66,6 +203,16 @@ void LoraJson2Settings(JsonParserObject root) {
   Lora->settings.current_limit = root.getFloat(PSTR(D_JSON_CURRENT_LIMIT), Lora->settings.current_limit);
   Lora->settings.implicit_header = root.getUInt(PSTR(D_JSON_IMPLICIT_HEADER), Lora->settings.implicit_header);
   Lora->settings.crc_bytes = root.getUInt(PSTR(D_JSON_CRC_BYTES), Lora->settings.crc_bytes);
+
+  uint uSize = sizeof(LoraBands)/sizeof(LoraBands[0]);  
+  String jsonBand =  root.getStr(PSTR(D_JSON_LORA_BAND));
+  jsonBand.toUpperCase();
+  for(uint i=0;i<uSize;i++){
+   if(!strcmp_P(jsonBand.c_str(), LoraBands[i])){
+      Lora->settings.band = i;
+      break;
+     };
+  }
 }
 
 /*********************************************************************************************\
@@ -112,6 +259,7 @@ bool LoraSaveData(void) {
   }
 #ifdef USE_LORAWAN_BRIDGE
   if (!LoraWanSaveData()) {
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: LoraSaveData() LoraWanSaveData() failed"));
     return false;
   }
 #endif  // USE_LORAWAN_BRIDGE
@@ -175,10 +323,19 @@ void LoraSettingsSave(void) {
 /*********************************************************************************************/
 
 bool LoraSend(uint8_t* data, uint32_t len, bool invert) {
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: LoraSend() Changing to TX profile. Current Freq:%1_f  "),&Lora->settings.frequency);
+  LoraSettings_t RXsettings = Lora->settings;  //make a copy
+  LoraDefaults(Lora->settings.band, false);    //Set TX profile
+  Lora->Config();
+
   uint32_t lora_time = millis();         // Time is important for LoRaWan RX windows
   bool result = Lora->Send(data, len, invert);
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LOR: Send (%u) '%*_H', Invert %d, Time %d"),
     lora_time, len, data, invert, TimePassedSince(lora_time));
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: LoraSend() Changing to RX profile Current Freq:%1_f  "),&Lora->settings.frequency);
+  Lora->settings = RXsettings;
+//  LoraDefaults(Lora->settings.band, true);   //Set RX profile
+  Lora->Config();
   return result;
 }
 
@@ -187,14 +344,16 @@ void LoraInput(void) {
 
   char data[TAS_LORA_MAX_PACKET_LENGTH] = { 0 };
   int packet_size = Lora->Receive(data);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: Rcvd packets %u bytes"),packet_size);
   if (!packet_size) { return; }
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LOR: Rcvd (%u) '%*_H', RSSI %1_f, SNR %1_f"),
     Lora->receive_time, packet_size, data, &Lora->rssi, &Lora->snr);
-
 #ifdef USE_LORAWAN_BRIDGE
   if (bitRead(Lora->settings.flags, TAS_LORA_FLAG_BRIDGE_ENABLED)) {
+   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: Calling(LoRaWanInput())"));
+
     if (LoraWanInput((uint8_t*)data, packet_size)) {
-      return;
+      return;   
     }
   }
 #endif  // USE_LORAWAN_BRIDGE
@@ -371,7 +530,7 @@ void CmndLoraSend(void) {
       char data[TAS_LORA_MAX_PACKET_LENGTH] = { 0 };
       uint32_t len = (XdrvMailbox.data_len < TAS_LORA_MAX_PACKET_LENGTH -1) ? XdrvMailbox.data_len : TAS_LORA_MAX_PACKET_LENGTH -2;
 #ifdef USE_LORA_DEBUG
-//      AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Len %d, Send %*_H"), len, len, XdrvMailbox.data);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Len %d, Send %*_H"), len, len, XdrvMailbox.data);
 #endif
       if (1 == XdrvMailbox.index) {                                         // "Hello Tiger\n"
         memcpy(data, XdrvMailbox.data, len);
@@ -425,15 +584,26 @@ void CmndLoraConfig(void) {
   // LoRaConfig                                       - Show all parameters
   // LoRaConfig 1                                     - Set default parameters
   // LoRaConfig 2                                     - Set default LoRaWan bridge parameters
+  // LoRaConfig AU915                                 - Set default for AU915 band
   // LoRaConfig {"Frequency":868.0,"Bandwidth":125.0} - Enter float parameters
   // LoRaConfig {"SyncWord":18}                       - Enter decimal parameter (=0x12)
   if (XdrvMailbox.data_len > 0) {
+    String uData =  XdrvMailbox.data;
+    uData.toUpperCase();
+    
     if (XdrvMailbox.payload == 1) {
       LoraDefaults();
       Lora->Config();
     }
     else if (XdrvMailbox.payload == 2) {
       LoraWanDefaults();
+      Lora->Config();
+    }
+   else if (!strcmp_P(uData.c_str(), PSTR("AU915"))) { 
+#ifdef USE_LORA_DEBUG
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Command AU915"));
+#endif
+      LoraDefaults(TAS_LORA_BAND_AU915);
       Lora->Config();
     }
     else {
@@ -449,6 +619,10 @@ void CmndLoraConfig(void) {
   ResponseAppend_P(PSTR("{"));
   LoraSettings2Json();
   ResponseAppend_P(PSTR("}}"));
+
+  uint32_t irq_stat = LoRaRadio.getIrqStatus();
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB: SendFlag:%u, ReceivedFlag:%u irq:%04X "), Lora->send_flag,Lora->received_flag, irq_stat);  
+
 }
 
 /*********************************************************************************************\

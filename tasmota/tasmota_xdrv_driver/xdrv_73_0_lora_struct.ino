@@ -21,7 +21,7 @@
 #define XDRV_73_KEY                "drvset73"
 
 #ifndef TAS_LORA_FREQUENCY
-#define TAS_LORA_FREQUENCY                868.0  // Allowed values range from 150.0 to 960.0 MHz
+#define TAS_LORA_FREQUENCY                868.1  // Allowed values range from 150.0 to 960.0 MHz
 #endif
 #ifndef TAS_LORA_BANDWIDTH
 #define TAS_LORA_BANDWIDTH                125.0  // Allowed values are 7.8, 10.4, 15.6, 20.8, 31.25, 41.7, 62.5, 125.0, 250.0 and 500.0 kHz
@@ -50,6 +50,41 @@
 #ifndef TAS_LORA_CRC_BYTES
 #define TAS_LORA_CRC_BYTES                  2    // No (0) or Number (1 to 4) of CRC bytes
 #endif
+
+/*
+These are default AU915 values when waiting for JOIN REQUEST 
+*/
+//#ifndef TAS_LORA_AU915_FREQUENCY 
+//#define TAS_LORA_AU915_FREQUENCY                915.2  // Allowed values range from 915.2 to  927.8 MHz
+//#endif
+//#ifndef TAS_LORA_AU915_BANDWIDTH
+//#define TAS_LORA_AU915_BANDWIDTH                125.0  // Allowed values are 125.0 and 500.0 kHz
+//#endif
+//#ifndef TAS_LORA_AU915_SPREADING_FACTOR
+//#define TAS_LORA_AU915_SPREADING_FACTOR          10    // Allowed values range from 7 to 12
+//#endif
+#ifndef TAS_LORA_AU915_CODING_RATE
+#define TAS_LORA_AU915_CODING_RATE                5    // Allowed values range from 5 to 8
+#endif
+#ifndef TAS_LORA_AU915_SYNC_WORD
+#define TAS_LORA_AU915_SYNC_WORD               0x34    // Allowed values range from 1 to 255
+#endif
+#ifndef TAS_LORA_AU915_OUTPUT_POWER
+#define TAS_LORA_AU915_OUTPUT_POWER              10    // Allowed values range from 1 to 20
+#endif
+#ifndef TAS_LORA_AU915_PREAMBLE_LENGTH
+#define TAS_LORA_AU915_PREAMBLE_LENGTH            8    // Allowed values range from 1 to 65535
+#endif
+#ifndef TAS_LORA_AU915_CURRENT_LIMIT
+#define TAS_LORA_AU915_CURRENT_LIMIT             60.0  // Overcurrent Protection - OCP in mA
+#endif
+#ifndef TAS_LORA_AU915_HEADER
+#define TAS_LORA_AU915_HEADER                     0    // Explicit (0) or Implicit (1 to 4) Header
+#endif
+#ifndef TAS_LORA_AU915_CRC_BYTES
+#define TAS_LORA_AU915_CRC_BYTES                  2    // No (0) or Number (1 to 4) of CRC bytes
+#endif
+
 
 #ifndef TAS_LORAWAN_FREQUENCY
 #define TAS_LORAWAN_FREQUENCY             868.1  // Allowed values range from 150.0 to 960.0 MHz
@@ -180,6 +215,7 @@ typedef struct LoraSettings_t {
   uint8_t implicit_header;                       // 0
   uint8_t crc_bytes;                             // 2 bytes
   uint8_t flags;
+  uint8_t band;                                  // 0=Default, 1=AU915, ...
 #ifdef USE_LORAWAN_BRIDGE
   LoraEndNode_t end_node[TAS_LORAWAN_ENDNODES];  // End node parameters
 #endif  // USE_LORAWAN_BRIDGE

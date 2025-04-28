@@ -49,11 +49,13 @@ void LoraSx126xOnInterrupt(void) {
   if (!Lora->send_flag && !Lora->received_flag && !Lora->receive_time) {
     Lora->receive_time = millis();
   }
+  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: LoraSx126xOnInterrupt() Setting RXflag"));
   Lora->received_flag = true;              // we got a packet, set the flag
 }
 
 bool LoraSx126xAvailable(void) {
   if (Lora->send_flag) {
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: LoraSx126xAvailable() SendFlag set. Re-setting RXflag (was %u)"),Lora->received_flag);
     Lora->received_flag = false;           // Reset receive flag as it was caused by send interrupt
 
     uint32_t time = millis();
@@ -73,14 +75,19 @@ bool LoraSx126xAvailable(void) {
 #endif  // USE_LORA_SX126X_DEBUG
 
     if (0 == (irq_stat & RADIOLIB_SX126X_IRQ_RX_DONE)) {
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: LoraSx126xAvailable() irq RX: NOT set"));
       Lora->received_flag = false;         // Reset receive flag
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: LoraSx126xAvailable() Re-setting RXflag as irq RX: NOT set"));
     }
+
   }
   return (Lora->received_flag);            // Check if the receive flag is set
 }
 
 int LoraSx126xReceive(char* data) {
   Lora->received_flag = false;             // Reset flag
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: LoraSx126xReceive() Re-setting RXflag"));
+
   int packet_size = LoRaRadio.getPacketLength();
   int state = LoRaRadio.readData((uint8_t*)data, TAS_LORA_MAX_PACKET_LENGTH -1);
   // LoRaWan downlink frames are sent without CRC, which will raise error on SX126x. We can ignore that error
@@ -120,6 +127,7 @@ bool LoraSx126xSend(uint8_t* data, uint32_t len, bool invert) {
 }
 
 bool LoraSx126xConfig(void) {
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraSx126xConfig() f=%1_f sf:bw=%u:%1_f"),&Lora->settings.frequency,Lora->settings.spreading_factor,&Lora->settings.bandwidth);
   LoRaRadio.setCodingRate(Lora->settings.coding_rate);
   LoRaRadio.setSyncWord(Lora->settings.sync_word);
   LoRaRadio.setPreambleLength(Lora->settings.preamble_length);
@@ -139,8 +147,10 @@ bool LoraSx126xConfig(void) {
 }
 
 bool LoraSx126xInit(void) {
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraSx126xInit() Start"));
   LoRaRadio = new Module(Pin(GPIO_LORA_CS), Pin(GPIO_LORA_DI1), Pin(GPIO_LORA_RST), Pin(GPIO_LORA_BUSY));
   if (RADIOLIB_ERR_NONE == LoRaRadio.begin(Lora->settings.frequency)) {
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraSx126xInit() About to call LoraSx126xConfig()"));
     LoraSx126xConfig();
     LoRaRadio.setDio1Action(LoraSx126xOnInterrupt);
     if (RADIOLIB_ERR_NONE == LoRaRadio.startReceive()) {
