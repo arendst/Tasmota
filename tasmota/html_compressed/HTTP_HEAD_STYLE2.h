@@ -3,7 +3,7 @@
 // input sha256: cff4350b756f01fb7866cbbffa2d169d4fe9eaca6ba45634f368ca1d714cd582
 /////////////////////////////////////////////////////////////////////
 
-const size_t HTTP_HEAD_STYLE2_SIZE = 496;
+const size_t HTTP_HEAD_STYLE2_SIZE = 496;    // compressed size 262 bytes
 const char HTTP_HEAD_STYLE2_COMPRESSED[] PROGMEM = "\x1C\x2E\xAB\x38\xF6\x8E\xCF\x88\xFE\x79\x9C\x67\x82\x04\x18\xA7\x5F\xEC\x4D\x17"
                              "\xE3\xCC\xE3\x3A\x59\x7D\x8D\x3C\x0E\xB0\xCD\x07\xBF\x82\xF8\x43\xCC\xF2\x3E\x8E"
                              "\x3E\x23\x61\xE0\x3C\x0B\x3E\x08\x52\x02\xDE\x67\x58\xA7\xA3\xC2\xA8\xF3\x39\x47"
