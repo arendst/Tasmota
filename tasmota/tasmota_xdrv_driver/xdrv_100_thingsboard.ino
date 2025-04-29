@@ -5,18 +5,18 @@
 /*const char HTTP_BTN_MENU_TB[] PROGMEM =
     "<p><form action='tb' method='get'><button>" D_CONFIGURE_MQTT "</button></form></p>";
 */
-bool change = false;
 
 struct Telementary_data
 {
-    char key[10];
+    const char *key;
     char value[20];
+    bool change;
 };
 
 struct Telementary_data Tele[] = {
-    {"POWER", ""},
-    {"Color", ""},
-    {"CT", ""}};
+    {"POWER", "", false},
+    {"Color", "", false},
+    {"CT", "", false}};
 
 bool Xdrv100(uint32_t function)
 {
@@ -31,29 +31,30 @@ bool Xdrv100(uint32_t function)
     case FUNC_SET_POWER:
     {
         snprintf_P(Tele[0].value, sizeof(Tele[0].value), PSTR("%s"), (XdrvMailbox.index == 1) ? "ON" : "OFF");
-        change = true;
+        Tele[0].change = true;
         break;
     }
     case FUNC_EVERY_SECOND:
     {
         char color_str[20];
+
+        FetchThingsBoardRPC();
+
         LightGetColor(color_str, sizeof(color_str));
 
         if (strcmp(Tele[1].value, color_str) != 0)
         {
             snprintf_P(Tele[1].value, sizeof(Tele[1].value), PSTR("%s"), color_str);
+            Tele[1].change = true;
             if (LightGetColorTemp() != 0)
+            {
                 snprintf_P(Tele[2].value, sizeof(Tele[2].value), PSTR("%d"), LightGetColorTemp());
-            change = true;
+                Tele[2].change = true;
+            }
         }
 
-        if (change)
-        {
-            SendThingsBoardTelemetry();
-            change = false;
-        }
+        SendThingsBoardTelemetry();
 
-        FetchThingsBoardRPC();
         break;
     }
 #ifdef USE_WEBSERVER
@@ -77,6 +78,26 @@ void SendThingsBoardTelemetry()
     if (!WiFi.isConnected())
         return;
 
+    String payload = "{";
+    uint8_t size = sizeof(Tele) / sizeof(Tele[0]);
+
+    for (uint8_t i = 0; i < size; i++)
+    {
+        if (Tele[i].change == true)
+        {
+            if (payload != "{")
+                payload += ",";
+
+            payload += "\"" + String(Tele[i].key) + "\":\"" + String(Tele[i].value) + "\"";
+            Tele[i].change = false;
+        }
+    }
+
+    if (payload == "{")
+        return;
+
+    payload += "}";
+
     WiFiClient client;
     HTTPClient http;
 
@@ -84,27 +105,16 @@ void SendThingsBoardTelemetry()
     url += THINGSBOARD_HOST;
     url += "/api/v1/";
     url += THINGSBOARD_TOKEN;
-    url += "/telemetry ";
+    url += "/telemetry";
 
     http.begin(client, url);
     http.addHeader("Content-Type", "application/json");
-
-    String payload = "{";
-    uint8_t size = sizeof(Tele) / sizeof(Tele[0]);
-
-    for (uint8_t i = 0; i < size; i++)
-    {
-        payload += "\"" + String(Tele[i].key) + "\":\"" + String(Tele[i].value);
-        if (i < size - 1)
-            payload += "\",";
-    }
-    payload += "\"}";
 
     uint16_t httpCode = http.POST(payload);
 
     if (httpCode > 0)
     {
-        AddLog(LOG_LEVEL_INFO, PSTR("TB : HTTP %d - Sent %s"), httpCode, payload.c_str());
+        AddLog(LOG_LEVEL_INFO, PSTR("TB : HTTP %d - Sent Telementary %s"), httpCode, payload.c_str());
     }
     else
     {
@@ -126,7 +136,7 @@ void FetchThingsBoardRPC()
     url += THINGSBOARD_HOST;
     url += "/api/v1/";
     url += THINGSBOARD_TOKEN;
-    url += "/rpc?timeout=1000";
+    url += "/rpc?timeout=500";
 
     http.begin(client, url);
 
