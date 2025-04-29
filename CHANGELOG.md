@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - WebUI status line for MQTT and TLS, added `FUNC_WEB_STATUS` event (#23326)
 - Wireguard VPN (#23347)
 - Optional Wifi strength indicator in WebUI status line
+- WebUI status line left and renamed events `FUNC_WEB_STATUS_left` and `FUNC_WEB_STATUS_RIGHT`
 
 ### Breaking Changed
 

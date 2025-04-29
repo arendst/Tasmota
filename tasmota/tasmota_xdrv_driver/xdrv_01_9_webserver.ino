@@ -1175,26 +1175,12 @@ void WSContentStop(void) {
 //
 // Convert seconds to a string representing days, hours or minutes.
 // The string will contain the most coarse time only, rounded down (61m == 01h, 01h37m == 01h).
-void WSContentStatusSticker(const char *msg, int32_t seconds)
+void WSContentStatusSticker(const char *msg, const char *attr = NULL);
+void WSContentStatusSticker(const char *msg, const char *attr)
 {
-  char title_attr[64] = "";
-
-  if (seconds > 0) {
-    static const uint32_t conversions[4] = {24 * 3600, 3600, 60, 1};
-    static const char     units[4] = { 'd', 'h', 'm', 's'};   // day, hour, minute
-
-    char unit;
-    int32_t time_unit = seconds;
-    for(uint32_t i = 0; i < 4; ++i) {
-      unit = units[i];
-      if (time_unit >= conversions[i]) {    // always pass even if 00m
-        time_unit = seconds / conversions[i];
-        break;
-      }
-    }
-    ext_snprintf_P(title_attr, sizeof(title_attr), PSTR(" title='Connected for %i%c'"), time_unit, unit);
-  }
-  WSContentSend_P(HTTP_STATUS_STICKER, 0xAAAAAA, title_attr, msg);
+  if (msg == NULL) { return; }
+  if (attr == NULL) { attr = ""; }
+  WSContentSend_P(HTTP_STATUS_STICKER, 0xAAAAAA, attr, msg);
 }
 #endif // USE_WEB_STATUS_LINE
 
@@ -1932,25 +1918,26 @@ bool HandleRootStatusRefresh(void) {
   }
 
 #ifdef USE_WEB_STATUS_LINE
-#ifdef USE_WEB_STATUS_LINE_WIFI
   // create a first DIV for the upper left status bar, positioned left-justified
   // we use the same string literal for both lines to reduce Flash
   WSContentSend_P(PSTR("<div style='font-size:9px;font-weight:bold;text-align:%s;position:absolute;top:0;%s:0;display:inline-flex;'>"), PSTR("left"), PSTR("left"));
+#ifdef USE_WEB_STATUS_LINE_WIFI
   if (Settings->flag4.network_wifi) {
     int32_t rssi = WiFi.RSSI();
-    WSContentSend_P(PSTR("<div class='wifi' title='" D_RSSI " %d%%, %d dBm'><div class='arc a3 %s'></div><div class='arc a2 %s'></div><div class='arc a1 %s'></div><div class='arc a0 active'></div></div>"),
+    WSContentSend_P(PSTR("<div class='wifi' title='" D_RSSI " %d%%, %d dBm' style='padding:0 2px 0 2px;'><div class='arc a3 %s'></div><div class='arc a2 %s'></div><div class='arc a1 %s'></div><div class='arc a0 active'></div></div>"),
                           WifiGetRssiAsQuality(rssi), rssi,
                           rssi >= -55 ? "active" : "",
                           rssi >= -70 ? "active" : "",
                           rssi >= -85 ? "active" : "");
   }
-  // display here anything that goes on the left side
-  WSContentSend_P(PSTR("</div>"));
 #endif // USE_WEB_STATUS_LINE_WIFI
+  // display here anything that goes on the left side
+  XsnsXdrvCall(FUNC_WEB_STATUS_LEFT);
+  WSContentSend_P(PSTR("</div>"));
 
   // create a second DIV for the upper right status bar, positioned right-justified
   WSContentSend_P(PSTR("<div style='font-size:9px;font-weight:bold;text-align:%s;position:absolute;top:0;%s:0;display:inline-flex;'>"), PSTR("right"), PSTR("right"));
-  XsnsXdrvCall(FUNC_WEB_STATUS);
+  XsnsXdrvCall(FUNC_WEB_STATUS_RIGHT);
   WSContentSend_P(PSTR("</div>"));
 #endif // USE_WEB_STATUS_LINE
 
