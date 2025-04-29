@@ -32,13 +32,44 @@ const char * const LoraBands[] PROGMEM = {
 	"AU915"
 };
 
-String LoraBandName(uint32_t bandIndex){
+String LoraBandName(uint32_t bandIdx){
   uint32_t uNumBands = sizeof(LoraBands)/sizeof(LoraBands[0]);
-  if(bandIndex>(uNumBands-1)) bandIndex = uNumBands - 1;
-  return String(LoraBands[bandIndex]);
+  if(bandIdx>(uNumBands-1)) bandIdx = uNumBands - 1;
+  return String(LoraBands[bandIdx]);
 }
 
+uint8_t LoraBandIdx(String sBand) {
+  uint8_t sizeLoraBands = sizeof(LoraBands)/sizeof(LoraBands[0]);
+  for(uint8_t i=0; i < sizeLoraBands; i++) {
+    String sLoraBand = String(LoraBands[i]);
+    if(sLoraBand == sBand ) return i;
+  }
+  return 0;
+}
 
+// Determines the channel from the current LoraSettings
+// return 0..71
+uint8_t LoraChannel(void) {
+  float    fFrequencyDiff;
+  uint16_t uChannel = 0;
+
+  switch( Lora->settings.band) {
+    case TAS_LORA_BAND_AU915: 
+      if(125.0 == Lora->settings.bandwidth){
+        fFrequencyDiff=Lora->settings.frequency - TAS_LORA_AU915_FREQUENCY_UP1;
+        uChannel = (uint32_t)(fFrequencyDiff / 0.2);
+      } else {
+        fFrequencyDiff=Lora->settings.frequency - TAS_LORA_AU915_FREQUENCY_UP2;
+        uChannel = 64 + (uint32_t)(fFrequencyDiff / 1.6);
+      }
+      return uChannel;
+      break;
+
+    //default:
+       //not implemented
+  }
+  return uChannel;
+}
 
 /*
  Sets LoRa values
@@ -98,13 +129,13 @@ void LoraDefaults(uint32_t uBand = TAS_LORA_BAND_EU868, bool bRX=true, uint32_t 
      uint8_t spreading_factor;
 
      if(bRX){
-      if(channel>71) channel=71;
-      if(channel < 64){
+      if (channel > 71) channel = 71;
+      if (channel < 64){
         frequency        = TAS_LORA_AU915_FREQUENCY_UP1 + (channel * 0.2);
         bandwidth        = TAS_LORA_AU915_BANDWIDTH_UP1;              //DR2
         spreading_factor = TAS_LORA_AU915_SPREADING_FACTOR_UP1;        //DR2
       } else {
-        frequency        = TAS_LORA_AU915_FREQUENCY_UP2 + (channel * 1.6);
+        frequency        = TAS_LORA_AU915_FREQUENCY_UP2 + ((channel-64) * 1.6);
         bandwidth        = TAS_LORA_AU915_BANDWIDTH_UP2;                //DR6
         spreading_factor = TAS_LORA_AU915_SPREADING_FACTOR_UP2;         //DR6
       }
@@ -120,7 +151,7 @@ void LoraDefaults(uint32_t uBand = TAS_LORA_BAND_EU868, bool bRX=true, uint32_t 
       // Tasmota does not support different RX1 & RX2 DRs, so just use DR8 and rely on RX2 arriving at end device OK.
       //
       float    fFrequencyDiff;
-      uint32_t uRxChannel;
+      uint16_t uRxChannel;
       if(125.0 == Lora->settings.bandwidth){
         fFrequencyDiff=Lora->settings.frequency - TAS_LORA_AU915_FREQUENCY_UP1;
         uRxChannel = (uint32_t)(fFrequencyDiff / 0.2);
@@ -128,6 +159,7 @@ void LoraDefaults(uint32_t uBand = TAS_LORA_BAND_EU868, bool bRX=true, uint32_t 
         fFrequencyDiff=Lora->settings.frequency - TAS_LORA_AU915_FREQUENCY_UP2;
         uRxChannel = 64 + (uint32_t)(fFrequencyDiff / 1.6);
       }
+
       channel = uRxChannel%8;
       AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraDefaults(AU915) TX: uRxChannel=%u, new TX channel:%u"),uRxChannel,channel);
 
@@ -582,11 +614,21 @@ void CmndLoraSend(void) {
   }
 }
 
+String ConfigBand(String uData) {
+   uData = uData.substring(0,5);   //AU915_0 -> AU915
+   for(uint8_t i=0;i<(sizeof(LoraBands)/sizeof(LoraBands[0]));i++){
+    if ( uData == LoraBands[i] ) return uData;
+   }
+   return String("");
+}
+
 void CmndLoraConfig(void) {
   // LoRaConfig                                       - Show all parameters
   // LoRaConfig 1                                     - Set default parameters
   // LoRaConfig 2                                     - Set default LoRaWan bridge parameters
-  // LoRaConfig AU915                                 - Set default for AU915 band
+  // LoRaConfig AU915                                 - Set default for AU915 band, channel 0
+  // LoRaConfig AU915_0                               - Set default for AU915 band, channel 0
+  // LoRaConfig AU915_10                              - Set default for AU915 band, channel 10 (e.g.)
   // LoRaConfig {"Frequency":868.0,"Bandwidth":125.0} - Enter float parameters
   // LoRaConfig {"SyncWord":18}                       - Enter decimal parameter (=0x12)
   if (XdrvMailbox.data_len > 0) {
@@ -601,12 +643,12 @@ void CmndLoraConfig(void) {
       LoraWanDefaults();
       Lora->Config();
     }
-   else if (!strcmp_P(uData.c_str(), PSTR("AU915"))) { 
-#ifdef USE_LORA_DEBUG
-      AddLog(LOG_LEVEL_DEBUG, PSTR("ROBDBG: Command AU915"));
-#endif
-      LoraDefaults(TAS_LORA_BAND_AU915);
-      Lora->Config();
+    else if (ConfigBand(uData) != String("")){
+      uint8_t uChannel = uData.substring(6).toInt();  //returns zero if empty or invalid substring
+      uint8_t uBandIdx = LoraBandIdx(ConfigBand(uData));
+      String sBand = ConfigBand(uData);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB: Command Band %s  uChannel:%u uBandIdx: %u sBand:%s"),uData.c_str(),uChannel, uBandIdx, sBand.c_str());
+      LoraDefaults(uBandIdx, true, uChannel);
     }
     else {
       JsonParser parser(XdrvMailbox.data);

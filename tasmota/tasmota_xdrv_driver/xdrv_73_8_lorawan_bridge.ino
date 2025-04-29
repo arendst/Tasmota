@@ -289,11 +289,37 @@ void LoraWanSendLinkADRReq(uint32_t node) {
   data[6] = FCnt;
   data[7] = FCnt >> 8;
   data[8] = TAS_LORAWAN_CID_LINK_ADR_REQ;
-  data[9] = LoraWanSpreadingFactorToDataRate() << 4 | 0x0F;  // DataRate 3 and unchanged TXPower
-  data[10] = 0x01 << LoraWanFrequencyToChannel();            // Single channel
-  data[11] = 0x00;
-  data[12] = 0x00;                                           // ChMaskCntl applies to Channels0..15, NbTrans is default (1)
 
+  //Next 4 bytes are Region Specific
+  if (LoraBandName(Lora->settings.band).equals(F("AU915"))) {
+    //Ref: https://lora-alliance.org/wp-content/uploads/2020/11/lorawan_regional_parameters_v1.0.3reva_0.pdf 
+    //     page 39
+    uint8_t uChannel   = LoraChannel();     //0..71
+    uint8_t ChMaskCntl = uChannel/16.0;     //0..4
+    uChannel           = uChannel%16;       //0..15
+    uint16_t uMask     = 0x01 << uChannel;
+
+    data[9] =  LoraWanSpreadingFactorToDataRate() << 4 | 0x0F;  // DataRate_TXPower Should be 8 & 15 = 0x8F
+
+    data[10] = uMask;                 // ChMask LSB
+    data[11] = uMask >> 8;            // ChMask MSB
+    
+    data[12] = ChMaskCntl << 4;       // Redundancy: 
+                                      //bits 7=RFU ------- 6:4=ChMaskCntl ----------- --- 3:0=NbTrans ---
+                                      //     0     000=Mask applies to Channels  0-15 0000 = Use Default
+                                      //           001=Mask applies to Channels 16-31
+                                      //           ....
+                                      //           100=Mask applies to Channels 64-71
+
+  } else {
+    //Default EU868
+    data[9]  = LoraWanSpreadingFactorToDataRate() << 4 | 0x0F; // DataRate 3 and unchanged TXPower
+    data[10] = 0x01 << LoraWanFrequencyToChannel();            // Single channel
+    data[11] = 0x00;
+    data[12] = 0x00;                                           // ChMaskCntl applies to Channels0..15, NbTrans is default (1)
+  }
+
+  
   uint32_t MIC = LoraWanComputeLegacyDownlinkMIC(NwkSKey, DevAddr, FCnt, data, 13);
   data[13] = MIC;
   data[14] = MIC >> 8;
@@ -408,35 +434,6 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
           CFListSize--;
         }
         
-/*
-        if (LoraBandName(Lora->settings.band).equals(F("AU915"))) {
-          //Add 16 bytes
-          join_data[join_data_index++] = 0x01;   //Mask 0   0001 = 915.2
-          join_data[join_data_index++] = 0x00;
-
-          join_data[join_data_index++] = 0x00;   //Mask 1
-          join_data[join_data_index++] = 0x00;
-
-          join_data[join_data_index++] = 0x00;   //Mask 2
-          join_data[join_data_index++] = 0x00;
-
-          join_data[join_data_index++] = 0x00;   //Mask 3
-          join_data[join_data_index++] = 0x00;
-
-          join_data[join_data_index++] = 0x00;   //Mask 4
-          join_data[join_data_index++] = 0x00;
- 
-          join_data[join_data_index++] = 0x00;   //RFU
-          join_data[join_data_index++] = 0x00;
-
-          join_data[join_data_index++] = 0x00;   //RFU
-          join_data[join_data_index++] = 0x00;
-          join_data[join_data_index++] = 0x00;
-
-          join_data[join_data_index++] = 0x01;   //CFLlistType      [28]
-        }
-*/
-
         uint32_t NewMIC = LoraWanGenerateMIC(join_data, join_data_index, Lora->settings.end_node[node].AppKey);
         join_data[join_data_index++] = NewMIC;
         join_data[join_data_index++] = NewMIC >> 8;
@@ -474,17 +471,19 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
     // 80    412E0100  80     2A00         0A     A58EF5E0D1DDE03424F0  6F2D56FA  - decrypt using AppSKey
     // 80    412E0100  80     2B00         0A     8F2F0D33E5C5027D57A6  F67C9DFE  - decrypt using AppSKey
     // 80    909AE100  00     0800         0A     EEC4A52568A346A8684E  F2D4BF05
-    // 40    412E0100  A0     1800         00     0395                  2C94B1D8  - FCtrl ADR support, Ack, FPort = 0 -> MAC commands, decrypt using NwkSKey
-    // 40    412E0100  A0     7800         00     78C9                  A60D8977  - FCtrl ADR support, Ack, FPort = 0 -> MAC commands, decrypt using NwkSKey
-    // 40    F3F51700  20     0100         00     2A7C                  407036A2  - FCtrl No ADR support, Ack, FPort = 0 -> MAC commands, decrypt using NwkSKey, response after LinkADRReq
+    // 40    412E0100  A0     1800         00     0395                  2C94B1D8  - FCtrl ADR support   , ADRACKReq=0, FPort = 0 -> MAC commands, decrypt using NwkSKey
+    // 40    412E0100  A0     7800         00     78C9                  A60D8977  - FCtrl ADR support   , ADRACKReq=0, FPort = 0 -> MAC commands, decrypt using NwkSKey
+    // 40    F3F51700  20     0100         00     2A7C                  407036A2  - FCtrl No ADR support, ADRACKReq=0, FPort = 0 -> MAC commands, decrypt using NwkSKey, response after LinkADRReq
     //                                                                            - MerryIoT
     // 40    422E0100  80     0400         78     B9C75DF9E8934C6651    A57DA6B1  - decrypt using AppSKey
     // 40    422E0100  80     0100         CC     7C462537AC00C07F99    5500BF2B  - decrypt using AppSKey
-    // 40    422E0100  A2     1800  0307   78     29FBF8FD9227729984    8C71E95B  - FCtrl ADR support, Ack, FOptsLen = 2 -> FOpts = MAC, response after LinkADRReq
-    // 40    F4F51700  A2     0200  0307   CC     6517D4AB06D32C9A9F    14CBA305  - FCtrl ADR support, Ack, FOptsLen = 2 -> FOpts = MAC, response after LinkADRReq
+    // 40    422E0100  A2     1800  0307   78     29FBF8FD9227729984    8C71E95B  - FCtrl ADR support, ADRACKReq=0, FOptsLen = 2 -> FOpts = MAC, response after LinkADRReq
+    // 40    F4F51700  A2     0200  0307   CC     6517D4AB06D32C9A9F    14CBA305  - FCtrl ADR support, ADRACKReq=0, FOptsLen = 2 -> FOpts = MAC, response after LinkADRReq
+    
+    bool bResponseSent = false; //Make sure do not send multiple responses
 
     uint32_t DevAddr = (uint32_t)data[1] | ((uint32_t)data[2] <<  8) | ((uint32_t)data[3] << 16) | ((uint32_t)data[4] << 24);
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB: Got Data Uplink. DevAddr = %08X)"),DevAddr);  
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB: Got Data Uplink. DevAddr = %08X"),DevAddr);  
     for (uint32_t node = 0; node < TAS_LORAWAN_ENDNODES; node++) {
       if (0 == Lora->settings.end_node[node].DevEUIh)  { continue; }   // No DevEUI so never joined
       if ((Lora->device_address +node) != DevAddr) { continue; }       // Not my device
@@ -503,8 +502,15 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
       uint32_t CalcMIC = LoraWanComputeLegacyUplinkMIC(NwkSKey, DevAddr, FCnt, data, packet_size -4);
       if (MIC != CalcMIC) { continue; }                                  // Same device address but never joined
 
-      bool FCtrl_ADR = bitRead(FCtrl, 7);
-      bool FCtrl_ACK = bitRead(FCtrl, 5);
+      bool FCtrl_ADR       = bitRead(FCtrl, 7);
+      bool FCtrl_ADRACKReq = bitRead(FCtrl, 6);  //Device is requesting a response, so that it knows comms is still up.
+                                                 // else device will eventually enter backoff mode and we loose comms
+                                                 // ref: https://lora-alliance.org/wp-content/uploads/2021/11/LoRaWAN-Link-Layer-Specification-v1.0.4.pdf
+                                                 //      page 19  
+                                                 // In testing with a Dragino LHT52 device, FCtrl_ADRACKReq was set after 64 (0x40) uplinks (= 21.3 hrs)
+      bool FCtrl_ACK       = bitRead(FCtrl, 5);
+      bool Fctrl_ClassB    = bitRead(FCtrl, 4);
+
 /*
       if ((0 == FOptsLen) && (0 == FOpts[0])) {                          // MAC response
         FOptsLen = payload_len;
@@ -612,6 +618,7 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
             i++;
           }
           if (mac_data_idx > 0) {
+            bResponseSent=true;
             LoraWanSendMacResponse(node, mac_data, mac_data_idx);
           }
         }
@@ -647,6 +654,7 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
             data[packet_size -3] = MIC >> 8;
             data[packet_size -2] = MIC >> 16;
             data[packet_size -1] = MIC >> 24;
+            bResponseSent=true;
             LoraWanSendResponse(data, packet_size, TAS_LORAWAN_RECEIVE_DELAY1);
           }
         }
@@ -654,10 +662,22 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
           if (!bitRead(Lora->settings.end_node[node].flags, TAS_LORAWAN_FLAG_LINK_ADR_REQ) &&
               FCtrl_ADR && !FCtrl_ACK) {
             // Try to fix single channel and datarate
+            bResponseSent=true;
             LoraWanSendLinkADRReq(node);                               // Resend LinkADRReq
           }
         }
-      }
+
+        if (FCtrl_ADRACKReq) {
+          AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB: FCtrl_ADRACKReq is SET. FCnt = %u)"),FCnt);  
+          AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB: Need to implement a (any) Class A response to prevent backoff behaviour)"));  
+        }
+        
+        if (!bResponseSent && FCtrl_ADRACKReq ) {
+          //FCtrl_ADRACKReq requires we send ANY Class A message. Here's one prepared earlier.
+          LoraWanSendLinkADRReq(node);
+        }
+
+      } //Not retransmission
       result = true;
       break;
     }
