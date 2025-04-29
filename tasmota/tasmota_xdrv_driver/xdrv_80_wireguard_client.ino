@@ -287,11 +287,11 @@ bool Xdrv80(uint32_t function) {
       WireguardLoop();
       break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_STATUS:
+    case FUNC_WEB_STATUS_RIGHT:
       if (Wireguard.started && Wireguard.peer_status == 1) {
         // number of seconds since connection, or -1 if no valid time
         int32_t seconds = Wireguard.connected_since_utc ? Rtc.utc_time - Wireguard.connected_since_utc : -1;
-        WSContentStatusSticker(PSTR("VPN"), seconds);
+        WSContentStatusSticker(PSTR("VPN"));
       }
       break;
 #endif // USE_WEBSERVER
