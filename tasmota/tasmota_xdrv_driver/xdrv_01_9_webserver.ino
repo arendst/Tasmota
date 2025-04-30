@@ -1931,6 +1931,9 @@ bool HandleRootStatusRefresh(void) {
                           rssi >= -85 ? "active" : "");
   }
 #endif // USE_WEB_STATUS_LINE_WIFI
+#ifdef USE_WEB_STATUS_LINE_HEAP
+  WSContentSend_P("<span>&nbsp;%ik</span>", ESP_getFreeHeap() / 1024);
+#endif // USE_WEB_STATUS_LINE_HEAP
   // display here anything that goes on the left side
   XsnsXdrvCall(FUNC_WEB_STATUS_LEFT);
   WSContentSend_P(PSTR("</div>"));

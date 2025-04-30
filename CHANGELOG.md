@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 - Wireguard VPN (#23347)
 - Optional Wifi strength indicator in WebUI status line (#23352)
 - WebUI status line left and renamed events `FUNC_WEB_STATUS_LEFT` and `FUNC_WEB_STATUS_RIGHT` (#23354)
+- WebUI heap status
 
 ### Breaking Changed
 
