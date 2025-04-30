@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Berry `bytes().asstring()` now truncates a string if buffer contains NULL (#23311)
 - Berry string literals containing NULL are truncated (#23312)
+- Berry `display.touch_update` wrongly applies resistive calibration
 
 ### Removed
 
