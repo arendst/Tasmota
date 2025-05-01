@@ -80,12 +80,20 @@ AU915 has 2 sets up UPLINK channels
 #define TAS_LORA_AU915_FREQUENCY_DN             923.3  //Channel 0 down
 #endif
 
-#ifndef TAS_LORA_AU915_BANDWIDTH_DN             
-#define TAS_LORA_AU915_BANDWIDTH_DN             500    //DR8
+#ifndef TAS_LORA_AU915_BANDWIDTH_RX1             
+#define TAS_LORA_AU915_BANDWIDTH_RX1             500    //DR8
 #endif
 
-#ifndef TAS_LORA_AU915_SPREADING_FACTOR_DN
-#define TAS_LORA_AU915_SPREADING_FACTOR_DN      12     //DR8
+#ifndef TAS_LORA_AU915_SPREADING_FACTOR_RX1
+#define TAS_LORA_AU915_SPREADING_FACTOR_RX1      12     //DR8
+#endif
+
+#ifndef TAS_LORA_AU915_BANDWIDTH_RX2             
+#define TAS_LORA_AU915_BANDWIDTH_RX2             500    //DR8
+#endif
+
+#ifndef TAS_LORA_AU915_SPREADING_FACTOR_RX2
+#define TAS_LORA_AU915_SPREADING_FACTOR_RX2      12     //DR8
 #endif
 
 
@@ -241,7 +249,7 @@ typedef struct LoraSettings_t {
   uint8_t implicit_header;                       // 0
   uint8_t crc_bytes;                             // 2 bytes
   uint8_t flags;
-  uint8_t band;                                  // 0=Default, 1=AU915, ...
+  uint8_t region;                                // 0=Default, 1=AU915, ...
 #ifdef USE_LORAWAN_BRIDGE
   LoraEndNode_t end_node[TAS_LORAWAN_ENDNODES];  // End node parameters
 #endif  // USE_LORAWAN_BRIDGE
@@ -270,6 +278,19 @@ typedef struct Lora_t {
 #endif  // USE_LORAWAN_BRIDGE
 } Lora_t;
 Lora_t* Lora = nullptr;
+
+enum LoRaRegion_t {
+  TAS_LORA_REGION_EU868, 
+  TAS_LORA_REGION_AU915
+};
+
+//LoraBands: One for each enum above
+const char * const LoraRegions[] PROGMEM = {
+	"EU868",
+	"AU915"
+};
+
+
 
 #endif  // USE_SPI_LORA
 #endif  // USE_SPI

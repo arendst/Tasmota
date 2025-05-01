@@ -169,7 +169,7 @@ void LoraWanTickerSend(void) {
 }
 
 void LoraWanSendResponse(uint8_t* buffer, size_t len, uint32_t lorawan_delay) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanSendResponse() Delay = %u LoraBand=%u"),lorawan_delay,Lora->settings.band);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanSendResponse() Delay = %u LoraBand=%u"),lorawan_delay,Lora->settings.region);
      
   free(Lora->send_buffer);                          // Free previous buffer (if any)
   Lora->send_buffer = (uint8_t*)malloc(len +1);
@@ -182,16 +182,26 @@ void LoraWanSendResponse(uint8_t* buffer, size_t len, uint32_t lorawan_delay) {
 
 /*-------------------------------------------------------------------------------------------*/
 /*
- Returns CFList that can be used in JOIN-ACCEPT message to lock device to specific frequencies
+ Populates CFList that for use in JOIN-ACCEPT message to lock device to specific frequencies
 */
-size_t LoraWanCFList(uint8_t band, uint8_t * CFList, size_t uLen){
-  AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanCFList(band = %u, CFListlen=%u)"),band,uLen);
+size_t LoraWanCFList(uint8_t * CFList, size_t uLen){
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanCFList(region = %u, CFListlen=%u)"),Lora->settings.region,uLen);
   uint8_t dataIdx = 0;
-  String sBandName = LoraBandName(band);
-  
-  if (sBandName.equals(F("AU915"))) {
-      //Add 16 bytes
-      if(uLen < 16) return 0;
+  if( TAS_LORA_REGION_AU915 == Lora->settings.region ) {
+      uint8_t uChannel   = LoraChannel();     //0..71
+      uint8_t uMaskByte  = uChannel/8;        //0..8
+      
+      //Add first 10  bytes
+      if( uLen < 16 ) return 0;
+        for (uint i=0; i<10 ; i++ ){
+          if (i == uMaskByte) {
+            CFList[dataIdx++] = 0x01 << uChannel%16;
+          } else {
+            CFList[dataIdx++] = 0x00;
+          }
+        }
+      
+      /*
       CFList[dataIdx++] = 0x01;   //Mask 0   0001 = 915.2
       CFList[dataIdx++] = 0x00; 
       
@@ -206,7 +216,9 @@ size_t LoraWanCFList(uint8_t band, uint8_t * CFList, size_t uLen){
 
       CFList[dataIdx++] = 0x00;   //Mask 4
       CFList[dataIdx++] = 0x00;
-
+      */
+     
+      //Add next 6  bytes
       CFList[dataIdx++] = 0x00;   //RFU
       CFList[dataIdx++] = 0x00;
  
@@ -230,10 +242,11 @@ uint32_t LoraWanSpreadingFactorToDataRate(void) {
       3:0= RX2DataRate  DateRate for RX2 window
   */
 
-  if(LoraBandName(Lora->settings.band).equals(F("AU915"))){
+  if (TAS_LORA_REGION_AU915 == Lora->settings.region) {
     return 8;  //AU915 must use DR8 for RX2
 
   } else {
+     //EU868
      // Allow only JoinReq message datarates (125kHz bandwidth)
      if (Lora->settings.spreading_factor > 12) {
        Lora->settings.spreading_factor = 12;
@@ -291,7 +304,7 @@ void LoraWanSendLinkADRReq(uint32_t node) {
   data[8] = TAS_LORAWAN_CID_LINK_ADR_REQ;
 
   //Next 4 bytes are Region Specific
-  if (LoraBandName(Lora->settings.band).equals(F("AU915"))) {
+  if (TAS_LORA_REGION_AU915 == Lora->settings.region) {
     //Ref: https://lora-alliance.org/wp-content/uploads/2020/11/lorawan_regional_parameters_v1.0.3reva_0.pdf 
     //     page 39
     uint8_t uChannel   = LoraChannel();     //0..71
@@ -427,7 +440,7 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
 
         //Add CFList to instruct device to use one channel
         uint8_t CFList[16];
-        size_t  CFListSize = LoraWanCFList(Lora->settings.band, CFList, sizeof(CFList));
+        size_t  CFListSize = LoraWanCFList(CFList, sizeof(CFList));
         uint8_t CFListIdx  = 0;
         while (CFListSize > 0 ){
           join_data[join_data_index++] = CFList[CFListIdx++];  

@@ -21,65 +21,36 @@ For EU bands, the Uplink/Downlink (TX/RX) frequencies can be the same.
 For Others,  same Uplink/Downlink (TX/RX) frequencies may not be allowed.
 See: https://lora-alliance.org/wp-content/uploads/2020/11/RP_2-1.0.2.pdf
 */
-enum LoRaBand_t {
-  TAS_LORA_BAND_EU868, 
-  TAS_LORA_BAND_AU915
+
+enum LoRaRadioMode_t {
+  TAS_LORA_RADIO_UPLINK,
+  TAS_LORA_RADIO_RX1,
+  TAS_LORA_RADIO_RX2
 };
 
-//LoraBands: One for each enum above
-const char * const LoraBands[] PROGMEM = {
-	"EU868",
-	"AU915"
-};
+typedef struct LoRaRadioInfo_t {
+  float   frequency;
+  float   bandwidth;
+  uint8_t spreading_factor;
+} LoRaRadioInfo_t;
 
-String LoraBandName(uint32_t bandIdx){
-  uint32_t uNumBands = sizeof(LoraBands)/sizeof(LoraBands[0]);
-  if(bandIdx>(uNumBands-1)) bandIdx = uNumBands - 1;
-  return String(LoraBands[bandIdx]);
-}
+/*****************************************************************************
+     LoraRadioInfo() 
+       Some regional profiles use different radio profiles for the Uplink, RX1, and RX2 transmissions
 
-uint8_t LoraBandIdx(String sBand) {
-  uint8_t sizeLoraBands = sizeof(LoraBands)/sizeof(LoraBands[0]);
-  for(uint8_t i=0; i < sizeLoraBands; i++) {
-    String sLoraBand = String(LoraBands[i]);
-    if(sLoraBand == sBand ) return i;
-  }
-  return 0;
-}
+       Get radio profiles for the Uplink, and RX1 & RX2 downlink transmissions
+                     RX1 & RX2 profiles are derived from Lora->settings
+     
+****************************************************************************/ 
+const uint8_t RX1DRs[] PROGMEM = {8,9,10,11,12,13,13};                //DR0..6
+const uint8_t SF[]     PROGMEM = {12,11,10,9,8,7,8,0,12,11,10,9,8,7}; //DR0..13
 
-// Determines the channel from the current LoraSettings
-// return 0..71
-uint8_t LoraChannel(void) {
-  float    fFrequencyDiff;
-  uint16_t uChannel = 0;
-
-  switch( Lora->settings.band) {
-    case TAS_LORA_BAND_AU915: 
-      if(125.0 == Lora->settings.bandwidth){
-        fFrequencyDiff=Lora->settings.frequency - TAS_LORA_AU915_FREQUENCY_UP1;
-        uChannel = (uint32_t)(fFrequencyDiff / 0.2);
-      } else {
-        fFrequencyDiff=Lora->settings.frequency - TAS_LORA_AU915_FREQUENCY_UP2;
-        uChannel = 64 + (uint32_t)(fFrequencyDiff / 1.6);
-      }
-      return uChannel;
-      break;
-
-    //default:
-       //not implemented
-  }
-  return uChannel;
-}
-
-/*
- Sets LoRa values
-*/
-void LoraDefaults(uint32_t uBand = TAS_LORA_BAND_EU868, bool bRX=true, uint32_t channel=0){
-  switch(uBand){
-    case TAS_LORA_BAND_AU915:
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraDefaults(AU915) uBand=%u bRX=%u channel=%u"),uBand, bRX, channel);
-     /*    ref: https://lora-alliance.org/wp-content/uploads/2020/11/RP_2-1.0.2.pdf page 47
-    
+void LoraRadioInfo(uint8_t mode, void* pInfo, uint8_t uChannel=0) {
+  LoRaRadioInfo_t* pResult = (LoRaRadioInfo_t*) pInfo;
+ 
+  if ( TAS_LORA_REGION_AU915 == Lora->settings.region ) {
+    //////////////// AU915 ////////////////////
+    /*    ref: https://lora-alliance.org/wp-content/uploads/2020/11/RP_2-1.0.2.pdf page 47
      DR0  LoRa: SF12 / 125 kHz 
      DR1  LoRa: SF11 / 125 kHz 
      DR2  LoRa: SF10 / 125 kHz   <-- JOIN REQUEST 
@@ -122,56 +93,122 @@ void LoraDefaults(uint32_t uBand = TAS_LORA_BAND_EU868, bool bRX=true, uint32_t 
      DR6     DR13  <------ channels 63-71
 
      Downlink DR for RX2 must be DR8
-    
-     */
-     float   frequency;
-     float   bandwidth;
-     uint8_t spreading_factor;
 
-     if(bRX){
-      if (channel > 71) channel = 71;
-      if (channel < 64){
-        frequency        = TAS_LORA_AU915_FREQUENCY_UP1 + (channel * 0.2);
-        bandwidth        = TAS_LORA_AU915_BANDWIDTH_UP1;              //DR2
-        spreading_factor = TAS_LORA_AU915_SPREADING_FACTOR_UP1;        //DR2
+     Downlink
+      Reference: https://lora-alliance.org/wp-content/uploads/2020/11/lorawan_regional_parameters_v1.0.3reva_0.pdf)
+      Assume this is in response to an uplink RX, so we already know RX freq & bw & sf
+      TX channel depends on RX freq
+      DR for RX1 depends on incoming DR (and RX1DROffset)
+      DR for RX2 is fixed ar DR8 
+      
+      Tasmota does not support different RX1 & RX2 DRs (yet), so just use DR8 and rely on RX2 arriving at end device OK.
+    */
+
+    uint8_t UplinkChannelBand = LoraChannel()%8; //0..7
+
+    if (TAS_LORA_RADIO_UPLINK == mode) {
+      if (uChannel > 71) uChannel = 71;
+      if (uChannel < 64){
+          (*pResult).frequency        = TAS_LORA_AU915_FREQUENCY_UP1 + (uChannel * 0.2);
+          (*pResult).bandwidth        = TAS_LORA_AU915_BANDWIDTH_UP1;               //DR2
+          (*pResult).spreading_factor = TAS_LORA_AU915_SPREADING_FACTOR_UP1;        //DR2
       } else {
-        frequency        = TAS_LORA_AU915_FREQUENCY_UP2 + ((channel-64) * 1.6);
-        bandwidth        = TAS_LORA_AU915_BANDWIDTH_UP2;                //DR6
-        spreading_factor = TAS_LORA_AU915_SPREADING_FACTOR_UP2;         //DR6
+          (*pResult).frequency        = TAS_LORA_AU915_FREQUENCY_UP2 + ((uChannel-64) * 1.6);
+          (*pResult).bandwidth        = TAS_LORA_AU915_BANDWIDTH_UP2;                //DR6
+          (*pResult).spreading_factor = TAS_LORA_AU915_SPREADING_FACTOR_UP2;         //DR6
       }
 
-     } else {
-      // TX
-      // Reference: https://lora-alliance.org/wp-content/uploads/2020/11/lorawan_regional_parameters_v1.0.3reva_0.pdf)
-      // Assume this is in response to an uplink RX, so we already know RX freq & bw & sf
-      // TX channel depends on RX freq
-      // DR for RX1 depends on incoming DR (and RX1DROffset)
-      // DR for RX2 is fixed ar DR8 
-      //
-      // Tasmota does not support different RX1 & RX2 DRs, so just use DR8 and rely on RX2 arriving at end device OK.
-      //
-      float    fFrequencyDiff;
-      uint16_t uRxChannel;
+    } else if ( TAS_LORA_RADIO_RX1 == mode) {
+      // RX1 DR depends on the Uplink settings
+      // https://lora-alliance.org/wp-content/uploads/2020/11/lorawan_regional_parameters_v1.0.3reva_0.pdf
+      // Page 41
+      uint8_t UplinkDR; //0..6
+      if ( 125.0 == Lora->settings.bandwidth ) {
+        UplinkDR = 12 - Lora->settings.spreading_factor;
+      } else {
+        //500 bandwidth
+        UplinkDR = 6;
+      }
+      uint8_t RX1DR    = RX1DRs[UplinkDR];
+      uint8_t RX1SF    = SF[RX1DR];
+      float   RX1BW    = ( RX1DR > 5 ) ? 500.0 : 125.0;      
+      (*pResult).frequency        = TAS_LORA_AU915_FREQUENCY_DN + (UplinkChannelBand * 0.6);
+      (*pResult).bandwidth        = RX1BW;
+      (*pResult).spreading_factor = RX1SF;
+    } else {
+      //TAS_LORA_RADIO_RX2
+      (*pResult).frequency        = TAS_LORA_AU915_FREQUENCY_DN;
+      (*pResult).bandwidth        = TAS_LORA_AU915_BANDWIDTH_RX2;
+      (*pResult).spreading_factor = TAS_LORA_AU915_SPREADING_FACTOR_RX2;
+    }
+
+  } //AU915
+  else  
+  {
+    //Default TX/RX1/TX1 same
+    (*pResult).frequency        = TAS_LORAWAN_FREQUENCY;
+    (*pResult).bandwidth        = TAS_LORA_BANDWIDTH;
+    (*pResult).spreading_factor = TAS_LORA_SPREADING_FACTOR;
+  }
+}
+
+
+/*
+String LoraBandName(uint32_t bandIdx){
+  uint32_t uNumBands = sizeof(LoraBands)/sizeof(LoraBands[0]);
+  if(bandIdx>(uNumBands-1)) bandIdx = uNumBands - 1;
+  return String(LoraBands[bandIdx]);
+}
+*/
+
+uint8_t LoraRegionIdx(String sRegion) {
+  uint8_t sizeLoraRegions = sizeof(LoraRegions)/sizeof(LoraRegions[0]);
+  //String sLoraRegion;
+  for(uint8_t i=0; i < sizeLoraRegions; i++) {
+    //sLoraRegion = String(LoraRegions[i]);
+    if(sRegion ==  String(LoraRegions[i])) return i;
+  }
+  return 0;
+}
+
+// Determines the channel from the current Uplink LoraSettings
+// return 0..71
+uint8_t LoraChannel(void) {
+  float    fFrequencyDiff;
+  uint16_t uChannel = 0;
+
+  switch( Lora->settings.region) {
+    case TAS_LORA_REGION_AU915: 
       if(125.0 == Lora->settings.bandwidth){
         fFrequencyDiff=Lora->settings.frequency - TAS_LORA_AU915_FREQUENCY_UP1;
-        uRxChannel = (uint32_t)(fFrequencyDiff / 0.2);
+        uChannel = (uint32_t)(fFrequencyDiff / 0.2);
       } else {
         fFrequencyDiff=Lora->settings.frequency - TAS_LORA_AU915_FREQUENCY_UP2;
-        uRxChannel = 64 + (uint32_t)(fFrequencyDiff / 1.6);
+        uChannel = 64 + (uint32_t)(fFrequencyDiff / 1.6);
       }
+      return uChannel;
+      break;
 
-      channel = uRxChannel%8;
-      AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraDefaults(AU915) TX: uRxChannel=%u, new TX channel:%u"),uRxChannel,channel);
+    //default:
+       //not implemented
+  }
+  return uChannel;
+}
 
-      //Should really have different DR for RX1 and RX2. But ... just rely on RX2 for now.
-      frequency        = TAS_LORA_AU915_FREQUENCY_DN + (channel * 0.6);
-      bandwidth        = TAS_LORA_AU915_BANDWIDTH_DN;               //DR8
-      spreading_factor = TAS_LORA_AU915_SPREADING_FACTOR_DN;        //DR8
-     }
+/*
+ Sets LoRa values
+*/
+void LoraDefaults(uint32_t uRegion=TAS_LORA_REGION_EU868, bool bUplink=true, uint32_t uChannel=0){
+  switch(uRegion){
+    case TAS_LORA_REGION_AU915:
+     AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraDefaults(AU915) uRegion=%u bUplink=%u channel=%u"),uRegion, bUplink, uChannel);
 
-     Lora->settings.frequency        = frequency;
-     Lora->settings.bandwidth        = bandwidth;
-     Lora->settings.spreading_factor = spreading_factor;
+     LoRaRadioInfo_t RadioInfo;
+     LoraRadioInfo( (bUplink ? TAS_LORA_RADIO_UPLINK : TAS_LORA_RADIO_RX2), &RadioInfo, uChannel);   //Region specific
+
+     Lora->settings.frequency        = RadioInfo.frequency;       
+     Lora->settings.bandwidth        = RadioInfo.bandwidth;     
+     Lora->settings.spreading_factor = RadioInfo.spreading_factor;
      Lora->settings.coding_rate      = TAS_LORA_AU915_CODING_RATE;
      Lora->settings.sync_word        = TAS_LORA_AU915_SYNC_WORD;
      Lora->settings.output_power     = TAS_LORA_AU915_OUTPUT_POWER;
@@ -179,7 +216,7 @@ void LoraDefaults(uint32_t uBand = TAS_LORA_BAND_EU868, bool bRX=true, uint32_t 
      Lora->settings.current_limit    = TAS_LORA_AU915_CURRENT_LIMIT;
      Lora->settings.implicit_header  = TAS_LORA_AU915_HEADER;
      Lora->settings.crc_bytes        = TAS_LORA_AU915_CRC_BYTES;
-     Lora->settings.band             = TAS_LORA_BAND_AU915;
+     Lora->settings.region           = TAS_LORA_REGION_AU915;
      break;
     
     default: 
@@ -193,7 +230,7 @@ void LoraDefaults(uint32_t uBand = TAS_LORA_BAND_EU868, bool bRX=true, uint32_t 
      Lora->settings.current_limit = TAS_LORA_CURRENT_LIMIT;
      Lora->settings.implicit_header = TAS_LORA_HEADER;
      Lora->settings.crc_bytes = TAS_LORA_CRC_BYTES;
-     Lora->settings.band      = TAS_LORA_BAND_EU868;
+     Lora->settings.region      = TAS_LORA_REGION_EU868;
   }
 }
 
@@ -208,13 +245,29 @@ void LoraWanDefaults(void) {
   Lora->settings.current_limit = TAS_LORAWAN_CURRENT_LIMIT;
   Lora->settings.implicit_header = TAS_LORAWAN_HEADER;
   Lora->settings.crc_bytes = TAS_LORAWAN_CRC_BYTES;
-  Lora->settings.band      = TAS_LORA_BAND_EU868;
+  Lora->settings.region      = TAS_LORA_REGION_EU868;
 }
 
 void LoraSettings2Json(void) {
-  ResponseAppend_P(PSTR("\"" D_JSON_FREQUENCY "\":%1_f"), &Lora->settings.frequency);              // xxx.x MHz
+  ResponseAppend_P(PSTR("\"" D_JSON_FREQUENCY "\":%1_f") , &Lora->settings.frequency);             // xxx.x MHz
   ResponseAppend_P(PSTR(",\"" D_JSON_BANDWIDTH "\":%1_f"), &Lora->settings.bandwidth);             // xxx.x kHz
   ResponseAppend_P(PSTR(",\"" D_JSON_SPREADING_FACTOR "\":%d"), Lora->settings.spreading_factor);
+
+  if ( LOG_LEVEL_DEBUG_MORE == Settings->weblog_level) {
+    LoRaRadioInfo_t Rx1Info;
+    LoRaRadioInfo_t Rx2Info;
+    LoraRadioInfo(TAS_LORA_RADIO_RX1, &Rx1Info);   //populate Rx1Info with values used for RX1 transmit window. (Region specific, calculated from Uplink radio settings)
+    LoraRadioInfo(TAS_LORA_RADIO_RX2, &Rx2Info);   //populate Rx2Info 
+    
+    ResponseAppend_P(PSTR(",\"" D_JSON_FREQUENCY "_RX1\":%1_f"),     &Rx1Info.frequency);             // xxx.x MHz
+    ResponseAppend_P(PSTR(",\"" D_JSON_BANDWIDTH "_RX1\":%1_f"),     &Rx1Info.bandwidth);             // xxx.x kHz
+    ResponseAppend_P(PSTR(",\"" D_JSON_SPREADING_FACTOR "_RX1\":%d"), Rx1Info.spreading_factor);
+  
+    ResponseAppend_P(PSTR(",\"" D_JSON_FREQUENCY "_RX2\":%1_f"),     &Rx2Info.frequency);             // xxx.x MHz
+    ResponseAppend_P(PSTR(",\"" D_JSON_BANDWIDTH "_RX2\":%1_f"),     &Rx2Info.bandwidth);             // xxx.x kHz
+    ResponseAppend_P(PSTR(",\"" D_JSON_SPREADING_FACTOR "_RX2\":%d"), Rx2Info.spreading_factor);
+  }
+
   ResponseAppend_P(PSTR(",\"" D_JSON_CODINGRATE4 "\":%d"), Lora->settings.coding_rate);
   ResponseAppend_P(PSTR(",\"" D_JSON_SYNCWORD "\":%d"), Lora->settings.sync_word);
   ResponseAppend_P(PSTR(",\"" D_JSON_OUTPUT_POWER "\":%d"), Lora->settings.output_power);          // dBm
@@ -222,7 +275,7 @@ void LoraSettings2Json(void) {
   ResponseAppend_P(PSTR(",\"" D_JSON_CURRENT_LIMIT "\":%1_f"), &Lora->settings.current_limit);     // xx.x mA (Overcurrent Protection - OCP)
   ResponseAppend_P(PSTR(",\"" D_JSON_IMPLICIT_HEADER "\":%d"), Lora->settings.implicit_header);    // 0 = explicit
   ResponseAppend_P(PSTR(",\"" D_JSON_CRC_BYTES "\":%d"), Lora->settings.crc_bytes);                // bytes
-  ResponseAppend_P(PSTR(",\"" D_JSON_LORA_BAND "\":\"%s\""), LoraBands[Lora->settings.band]);      // enum 0=EU868,1=AU915   
+  ResponseAppend_P(PSTR(",\"" D_JSON_LORA_REGION "\":\"%s\""), LoraRegions[Lora->settings.region]);// enum 0=EU868,1=AU915   
 }
 
 void LoraJson2Settings(JsonParserObject root) {
@@ -237,15 +290,9 @@ void LoraJson2Settings(JsonParserObject root) {
   Lora->settings.implicit_header = root.getUInt(PSTR(D_JSON_IMPLICIT_HEADER), Lora->settings.implicit_header);
   Lora->settings.crc_bytes = root.getUInt(PSTR(D_JSON_CRC_BYTES), Lora->settings.crc_bytes);
 
-  uint uSize = sizeof(LoraBands)/sizeof(LoraBands[0]);  
-  String jsonBand =  root.getStr(PSTR(D_JSON_LORA_BAND));
-  jsonBand.toUpperCase();
-  for(uint i=0;i<uSize;i++){
-   if(!strcmp_P(jsonBand.c_str(), LoraBands[i])){
-      Lora->settings.band = i;
-      break;
-     };
-  }
+  String sRegion = root.getStr(PSTR(D_JSON_LORA_REGION));
+  sRegion.toUpperCase();
+  Lora->settings.region = LoraRegionIdx(sRegion);
 }
 
 /*********************************************************************************************\
@@ -358,7 +405,7 @@ void LoraSettingsSave(void) {
 bool LoraSend(uint8_t* data, uint32_t len, bool invert) {
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: LoraSend() Changing to TX profile. Current Freq:%1_f  "),&Lora->settings.frequency);
   LoraSettings_t RXsettings = Lora->settings;  //make a copy
-  LoraDefaults(Lora->settings.band, false);    //Set TX profile
+  LoraDefaults(Lora->settings.region, false);    //Set Downlink profile
   Lora->Config();
 
   uint32_t lora_time = millis();         // Time is important for LoRaWan RX windows
@@ -614,10 +661,10 @@ void CmndLoraSend(void) {
   }
 }
 
-String ConfigBand(String uData) {
+String ConfigRegion(String uData) {
    uData = uData.substring(0,5);   //AU915_0 -> AU915
-   for(uint8_t i=0;i<(sizeof(LoraBands)/sizeof(LoraBands[0]));i++){
-    if ( uData == LoraBands[i] ) return uData;
+   for(uint8_t i=0;i<(sizeof(LoraRegions)/sizeof(LoraRegions[0]));i++){
+    if ( uData == LoraRegions[i] ) return uData;
    }
    return String("");
 }
@@ -626,9 +673,9 @@ void CmndLoraConfig(void) {
   // LoRaConfig                                       - Show all parameters
   // LoRaConfig 1                                     - Set default parameters
   // LoRaConfig 2                                     - Set default LoRaWan bridge parameters
-  // LoRaConfig AU915                                 - Set default for AU915 band, channel 0
-  // LoRaConfig AU915_0                               - Set default for AU915 band, channel 0
-  // LoRaConfig AU915_10                              - Set default for AU915 band, channel 10 (e.g.)
+  // LoRaConfig AU915                                 - Set default for AU915 region, channel 0
+  // LoRaConfig AU915 0                               - Set default for AU915 region, channel 0
+  // LoRaConfig AU915 10                              - Set default for AU915 region, channel 10 (e.g.)
   // LoRaConfig {"Frequency":868.0,"Bandwidth":125.0} - Enter float parameters
   // LoRaConfig {"SyncWord":18}                       - Enter decimal parameter (=0x12)
   if (XdrvMailbox.data_len > 0) {
@@ -643,12 +690,12 @@ void CmndLoraConfig(void) {
       LoraWanDefaults();
       Lora->Config();
     }
-    else if (ConfigBand(uData) != String("")){
+    else if (ConfigRegion(uData) != String("")){
       uint8_t uChannel = uData.substring(6).toInt();  //returns zero if empty or invalid substring
-      uint8_t uBandIdx = LoraBandIdx(ConfigBand(uData));
-      String sBand = ConfigBand(uData);
-      AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB: Command Band %s  uChannel:%u uBandIdx: %u sBand:%s"),uData.c_str(),uChannel, uBandIdx, sBand.c_str());
-      LoraDefaults(uBandIdx, true, uChannel);
+      uint8_t uRegionIdx = LoraRegionIdx(ConfigRegion(uData));
+      String sRegion = ConfigRegion(uData);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB: Command Region %s  uChannel:%u uBandIdx: %u sBand:%s"),uData.c_str(),uChannel, uRegionIdx, sRegion.c_str());
+      LoraDefaults(uRegionIdx, true, uChannel); //Set Uplink values
     }
     else {
       JsonParser parser(XdrvMailbox.data);

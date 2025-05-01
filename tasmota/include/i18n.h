@@ -60,7 +60,7 @@
 #define D_JSON_COUNT "Count"
 #define D_JSON_COUNTER "Counter"
 #define D_JSON_CRC_BYTES "CrcBytes"
-#define D_JSON_LORA_BAND "Band"
+#define D_JSON_LORA_REGION "Region"
 #define D_JSON_CURRENT "Current"         // As in Voltage and Current
 #define D_JSON_CURRENT_LIMIT "CurrentLimit"
 #define D_JSON_CURRENT_NEUTRAL "CurrentNeutral"
