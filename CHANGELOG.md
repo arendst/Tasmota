@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 - Wireguard VPN (#23347)
 - Optional Wifi strength indicator in WebUI status line (#23352)
 - WebUI status line left and renamed events `FUNC_WEB_STATUS_LEFT` and `FUNC_WEB_STATUS_RIGHT` (#23354)
-- WebUI heap status
+- WebUI heap status (#23356)
 
 ### Breaking Changed
 
@@ -21,7 +21,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Berry `bytes().asstring()` now truncates a string if buffer contains NULL (#23311)
 - Berry string literals containing NULL are truncated (#23312)
-- Berry `display.touch_update` wrongly applies resistive calibration
+- Berry `display.touch_update` wrongly applies resistive calibration (#23363)
 
 ### Removed
 
