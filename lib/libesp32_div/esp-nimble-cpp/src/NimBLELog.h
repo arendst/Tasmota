@@ -75,5 +75,28 @@
 
 #define NIMBLE_LOGC( tag, format, ... ) console_printf("CRIT %s: " format "\n", tag, ##__VA_ARGS__)
 
+// The LOG_LEVEL macros are used to set the log level for the NimBLE stack, but they pollute the global namespace and would override the loglevel enum of Tasmota.
+// So we undefine them here to avoid conflicts.
+
+#ifdef LOG_LEVEL_DEBUG
+#undef LOG_LEVEL_DEBUG
+#endif
+
+#ifdef LOG_LEVEL_DEBUG_MORE
+#undef LOG_LEVEL_DEBUG_MORE
+#endif
+
+#ifdef LOG_LEVEL_INFO
+#undef LOG_LEVEL_INFO
+#endif
+
+#ifdef LOG_LEVEL_NONE
+#undef LOG_LEVEL_NONE
+#endif
+
+#ifdef LOG_LEVEL_ERROR
+#undef LOG_LEVEL_ERROR
+#endif
+
 #endif /* CONFIG_BT_ENABLED */
 #endif /* MAIN_NIMBLELOG_H_ */
