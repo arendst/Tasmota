@@ -129,6 +129,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Allow command `WebRefresh` minimum from 1000 to 400 mSec
 
 ### Fixed
+- NimBLE log_level definition conflict [#23366](https://github.com/arendst/Tasmota/issues/23366)
 - Berry `bytes().asstring()` now truncates a string if buffer contains NULL [#23311](https://github.com/arendst/Tasmota/issues/23311)
 - Berry string literals containing NULL are truncated [#23312](https://github.com/arendst/Tasmota/issues/23312)
 - Berry `display.touch_update` wrongly applies resistive calibration [#23363](https://github.com/arendst/Tasmota/issues/23363)
