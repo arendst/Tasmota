@@ -574,6 +574,8 @@
   #define USE_DEVICE_GROUPS_SEND                 // Add support for the DevGroupSend command (+0k6 code)
 #define USE_PWM_DIMMER                           // Add support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+2k3 code, DGR=0k7)
   #define USE_PWM_DIMMER_REMOTE                  // Add support for remote switches to PWM Dimmer (requires USE_DEVICE_GROUPS) (+0k6 code)
+#define USE_DMX512                                  // Add support for sending raw data over DMX512
+  #define USE_DMX512_MAX_CHANNELS 32                // Maximum number of DMX channels handled
 //#define USE_KEELOQ                               // Add support for Jarolift rollers by Keeloq algorithm (+4k5 code)
 #define USE_SONOFF_D1                            // Add support for Sonoff D1 Dimmer (+0k7 code)
 #define USE_SHELLY_DIMMER                        // Add support for Shelly Dimmer (+3k code)

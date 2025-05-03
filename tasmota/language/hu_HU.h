@@ -1330,4 +1330,7 @@
 #define D_SENSOR_V9240_TX "V9240 TX"
 #define D_SENSOR_V9240_RX "V9240 RX"
 
+// xdrv_92_dmx512.ino
+#define D_SENSOR_DMX512_TX "DMX512 TX"
+
 #endif  // _LANGUAGE_HU_HU_H_

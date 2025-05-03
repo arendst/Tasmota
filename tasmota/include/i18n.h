@@ -841,7 +841,7 @@
 // xsns_71_veml7700.ino
 #define D_JSON_WHITE_CONTENT "WhiteContent"
 
-// xdrv_92_pipsolar.ino
+// xdrv_72_pipsolar.ino
 #define D_CMND_PIP_PREFIX "PipSolar"
 #define D_CMND_PIP_QT "QT"
 #define D_CMND_PIP_QET "QET"
@@ -892,6 +892,7 @@
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
 #define D_LOG_ZIGBEE "ZIG: "       // Zigbee
+#define D_LOG_DMX512 "DMX: "          // DMX512
 
 /********************************************************************************************/
 

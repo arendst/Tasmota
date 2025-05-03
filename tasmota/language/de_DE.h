@@ -63,7 +63,7 @@
 #define D_BATTERY "Batterie"
 #define D_BATT "Batt"                // Short for Battery
 #define D_BATTERY_CHARGE "Ladung"    // Battery charge in %
-#define D_BLINK "Blinken"
+#define D_BLINK "Blinken"7
 #define D_BLINKOFF "BlinkenAus"
 #define D_BOOT_COUNT "Startvorgänge"
 #define D_BRIGHTLIGHT "hell"
@@ -1322,5 +1322,8 @@
 // xnrg_25_v9240.ino
 #define D_SENSOR_V9240_TX "V9240 TX"
 #define D_SENSOR_V9240_RX "V9240 RX"
+
+// xdrv_92_dmx512.ino
+#define D_SENSOR_DMX512_TX "DMX512 TX"
 
 #endif  // _LANGUAGE_DE_DE_H_
