@@ -366,6 +366,21 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
+  // Berry: `webserver.content_status_sticker(msg:string) -> nil`
+  //
+  int32_t w_webserver_content_status_sticker(struct bvm *vm) {
+  #ifdef USE_WEB_STATUS_LINE
+    int32_t argc = be_top(vm); // Get the number of arguments
+    if (argc >= 1 && be_isstring(vm, 1)) {
+      const char * msg = be_tostring(vm, 1);
+      WSContentStatusSticker(msg);
+      be_return_nil(vm);
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+#else
+  be_return_nil(vm);
+#endif // USE_WEB_STATUS_LINE
 }
 
 #endif // USE_WEBSERVER

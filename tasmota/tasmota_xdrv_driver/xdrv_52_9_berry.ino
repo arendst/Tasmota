@@ -1062,8 +1062,11 @@ bool Xdrv52(uint32_t function)
       WebServer_on("/tapp", HandleBerryBECLoader, HTTP_GET);
       break;
 #ifdef USE_WEB_STATUS_LINE
-      case FUNC_WEB_STATUS:
-        callBerryEventDispatcher(PSTR("web_status_line"), nullptr, 0, nullptr);
+      case FUNC_WEB_STATUS_LEFT:
+        callBerryEventDispatcher(PSTR("web_status_line_left"), nullptr, 0, nullptr);
+        break;
+      case FUNC_WEB_STATUS_RIGHT:
+        callBerryEventDispatcher(PSTR("web_status_line_right"), nullptr, 0, nullptr);
         break;
 #endif  // USE_WEB_STATUS_LINE
 #endif // USE_WEBSERVER

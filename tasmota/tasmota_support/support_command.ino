@@ -912,6 +912,7 @@ void CmndStatus(void)
   char stemp[200];
   char stemp2[TOPSZ];
 
+  // Status
   if ((0 == payload) || (-99 == payload)) {
     uint32_t maxfn = (TasmotaGlobal.devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!TasmotaGlobal.devices_present) ? 1 : TasmotaGlobal.devices_present;
 #ifdef USE_SONOFF_IFAN
@@ -1111,6 +1112,7 @@ void CmndStatus(void)
     CmndStatusResponse(6);
   }
 
+  // Status 7 - StatusTIM
   if ((0 == payload) || (7 == payload)) {
     if (99 == Settings->timezone) {
       snprintf_P(stemp, sizeof(stemp), PSTR("%d" ), Settings->timezone);
@@ -1133,6 +1135,7 @@ void CmndStatus(void)
 
 #if defined(USE_ENERGY_SENSOR) && defined(USE_ENERGY_MARGIN_DETECTION)
   if (TasmotaGlobal.energy_driver) {
+    // Status 9 - StatusPTH
     if ((0 == payload) || (9 == payload)) {
       EnergyMarginStatus();
       CmndStatusResponse(9);
@@ -1169,7 +1172,7 @@ void CmndStatus(void)
 #endif // FIRMWARE_MINIMAL
 
 #ifdef USE_SHUTTER
-  // Status 13
+  // Status 13 - StatusSHT
   if ((0 == payload) || (13 == payload)) {
     if (ShutterStatus()) { CmndStatusResponse(13); }
   }

@@ -7,7 +7,11 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Command `JsonPP 0..7` to enable (>0) JSON Pretty Print on user interfaces and set number of indents
 - Command `JsonPP <command>|backlog <command>;...` to enable JSON PP only once
-- WebUI status line for MQTT and TLS, added `FUNC_WEB_STATUS` event
+- WebUI status line for MQTT and TLS, added `FUNC_WEB_STATUS` event (#23326)
+- Wireguard VPN (#23347)
+- Optional Wifi strength indicator in WebUI status line (#23352)
+- WebUI status line left and renamed events `FUNC_WEB_STATUS_LEFT` and `FUNC_WEB_STATUS_RIGHT` (#23354)
+- WebUI heap status (#23356)
 
 ### Breaking Changed
 
@@ -17,6 +21,8 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Berry `bytes().asstring()` now truncates a string if buffer contains NULL (#23311)
 - Berry string literals containing NULL are truncated (#23312)
+- Berry `display.touch_update` wrongly applies resistive calibration (#23363)
+- NimBLE log_level definition conflict (#23366)
 
 ### Removed
 

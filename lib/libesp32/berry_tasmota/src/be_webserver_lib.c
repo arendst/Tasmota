@@ -27,6 +27,7 @@ extern int w_webserver_content_flush(bvm *vm);
 extern int w_webserver_content_stop(bvm *vm);
 extern int w_webserver_content_close(bvm *vm);
 extern int w_webserver_content_button(bvm *vm);
+extern int w_webserver_content_status_sticker(bvm *vm);
 
 extern int w_webserver_html_escape(bvm *vm);
 
@@ -156,6 +157,8 @@ module webserver (scope: global) {
     content_stop, func(w_webserver_content_stop)
     content_close, func(w_webserver_content_close)
     content_button, func(w_webserver_content_button)
+
+    content_status_sticker, func(w_webserver_content_status_sticker)
 
     html_escape, func(w_webserver_html_escape)
 

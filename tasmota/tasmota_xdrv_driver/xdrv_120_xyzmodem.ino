@@ -12,8 +12,10 @@
  *
  * Usage:
  *  Use a tool able supporting XModem file transfer and to connect either using serial or telnet with Tasmota.
- *   TeraTerm
+ *   TeraTerm (When using telnet enable non-bare CR support with Tasmota command `Teraterm 1`)
  *   SyncTerm
+ *   SecureCRT (When using Telnet set all Telnet Advanced Options OFF EXCEPT 'Server requires bare CR`)
+ *
  *  To start XModem file transfer first execute Tasmota command XSend or XReceive,
  *   then start tool XModem receive or send.
  *
@@ -37,6 +39,8 @@
 
 #define XDRV_120     120
 
+//#define XYZM_DEBUG
+
 #define XYZM_SOH     0x01    // Start of 128 byte data
 #define XYZM_STX     0x02    // Start of 1024 byte data
 #define XYZM_EOT     0x04
@@ -51,7 +55,7 @@
 // Number of seconds until giving up hope of receiving sync packets from host.
 const uint8_t  XYZMODEM_SYNC_TIMEOUT = 30;
 const uint8_t  XYZMODEM_RECV_TIMEOUT_SHORT = 1;       // Protocol = 10 seconds
-const uint8_t  XYZMODEM_RECV_TIMEOUT_LONG = 20;       // Protocol = 60 seconds
+const uint8_t  XYZMODEM_RECV_TIMEOUT_LONG = 3;        // Protocol = 60 seconds
 
 // Number of times we try to send a packet to the host until we give up sending..
 const uint8_t  XYZMODEM_MAX_RETRY = 4;                // Protocol = 10 for total packets to be send. Here retry per packet
@@ -353,23 +357,51 @@ bool XYZModemReadAvailable(uint32_t timeout) {
 }
 
 int XYZModemReadByte(void) {
-  if (!XYZModemReadAvailable(XYZModem.receive_timeout)) {
-    return -1;
-  }
-  int in_char = XYZModemRead();
-  if (in_char >= 0) {
-    if (TXMP_TELNET == XYZModem.protocol) {
-      if (0xFF == in_char) {                         // Fix XModem over Telnet escape 
-        XYZModemRead();
-      }
-      if (XYZModem.teraterm && (0x0D == in_char)) {  // Fix TeraTerm
-        XYZModemRead();
-      }
+  uint8_t telnet_buffer[3];
+  while (true) {
+    if (!XYZModemReadAvailable(XYZModem.receive_timeout)) {
+      return -1;
     }
+    int in_char = XYZModemRead();
+#ifdef XYZM_DEBUG
+    Serial.printf("%02X",in_char);
+#endif
+    if (in_char >= 0) {
+      if (TXMP_TELNET == XYZModem.protocol) {
+        if (0xFF == in_char) {                       // Telnet IAC - Fix XModem over Telnet escape 
+          telnet_buffer[0] = in_char;
+          int in_char2 = XYZModemRead();
+#ifdef XYZM_DEBUG
+          Serial.printf("[%02X]",in_char2);
+#endif
+          if ((in_char2 >= 251) && (in_char2 <= 254)) {  // Telnet IAC - WILL, DO, WONT, DONT
+            if (251 == in_char2) {                   // 251 = 0xFB = WILL
+              telnet_buffer[1] = 254;                // 254 = 0xFE = DONT
+            }
+            else if (253 == in_char2) {              // 253 = 0xFD = DO
+              telnet_buffer[1] = 252;                // 252 = 0xFC = WONT
+            }
+            int in_char3 = XYZModemRead();
+            telnet_buffer[2] = in_char3;
+#ifdef XYZM_DEBUG
+            Serial.printf("(%02X)",in_char3);
+#endif
+            XYZModemWriteBuf(telnet_buffer, 3);      // Send not supported telnet functions reponse(s)
+            continue;
+          }
+        }
+        if (XYZModem.teraterm && (0x0D == in_char)) {  // Fix TeraTerm
+          int in_char2 = XYZModemRead();
+#ifdef XYZM_DEBUG
+          Serial.printf("[%02X]",in_char2);
+#endif
+        }
+      }
+      return in_char;
+    }
+    break;
   }
-//  AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: Rcvd %d"), in_char);
-
-  return in_char;
+  return -1;
 }
 
 /*********************************************************************************************\
@@ -499,7 +531,7 @@ void XYZModemSendNakOrC(void) {
   XYZModemWrite(out_char);
 }
 
-void XYZModemSendNak(void) {
+bool XYZModemSendNak(void) {
   // When the receiver wishes to <nak>, it should call a "PURGE" subroutine, to wait
   // for the line to clear.  Recall the sender tosses any characters in its buffer
   // immediately upon completing sending a block, to ensure no glitches were mis-interpreted.
@@ -516,13 +548,14 @@ void XYZModemSendNak(void) {
     XYZModem.nak_count--;
     if (0 == XYZModem.nak_count) {
       XYZModemCancel();                              // Cancel xfer
-      return;
+      return false;
     }
   }
 
   XYZModemWrite(XYZM_NAK);
 
   XYZModem.mode = XYZD_SOH;
+  return true;
 }
 
 bool XYZModemCheckPacket(uint8_t *buffer) {
@@ -630,21 +663,43 @@ int XYZModemReceive(uint32_t packet_no) {
       }
       case XYZD_BLK1: {
 //        AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: XYZD_BLK1"));
-
+/*
+        // Needed with SecureCRT unless Session Option - Telnet - Server requires bare CR is set
+        if (TXMP_TELNET == XYZModem.protocol) {
+          if (0x0D == in_char) {
+            int in_char2 = XYZModemRead();
+#ifdef XYZM_DEBUG
+            Serial.printf("[%02X]",in_char2);
+#endif
+          }
+        }
+*/
         xmodem_buffer[1] = in_char;
         XYZModem.mode = XYZD_BLK2;
         break;
       }
       case XYZD_BLK2: {
 //        AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: XYZD_BLK2 %02X, exor %02X"), in_char, (in_char ^ xmodem_buffer[1]));
-
+/*
+        // Needed with SecureCRT unless Session Option - Telnet - Server requires bare CR is set
+        if (TXMP_TELNET == XYZModem.protocol) {
+          if (0x0D == in_char) {
+            int in_char2 = XYZModemRead();
+#ifdef XYZM_DEBUG
+            Serial.printf("[%02X]",in_char2);
+#endif
+          }
+        }
+*/
         xmodem_buffer[2] = in_char;
         if (0xFF == (in_char ^ xmodem_buffer[1])) {
           xmodem_buffer_ptr = 3;
           packet_size = 3 + XYZModem.packet_size + ((XYZModem.oldChecksum) ? 1 : 2);
           XYZModem.mode = XYZD_DATA;
         } else {
-          XYZModemSendNak();
+          if (!XYZModemSendNak()) {
+            return XYZS_PACKET;
+          }
         }
         break;
       }
@@ -653,7 +708,6 @@ int XYZModemReceive(uint32_t packet_no) {
 
         xmodem_buffer[xmodem_buffer_ptr++] = in_char;
         if (xmodem_buffer_ptr >= packet_size) {
-//          XYZFile.byte_counter += XYZModem.packet_size;
           XYZFile.byte_counter = packet_no * XYZModem.packet_size;
           XYZModem.mode = XYZD_SOH;
           packet_ready = true;
@@ -806,6 +860,9 @@ bool XYZModemLoop(void) {
       }
       int result = XYZModemReceive(XYZModem.packet_no);
       if (result) {
+#ifdef XYZM_DEBUG
+        Serial.println();
+#endif
         switch (result) {
           case XYZS_EOT: {
             XYZModemFileWriteEot(1);
@@ -824,6 +881,7 @@ bool XYZModemLoop(void) {
             // Receive character timeout - will retry
             AddLog(LOG_LEVEL_DEBUG, PSTR("XMD: Timeout - retry"));
             XYZModem.retry--;
+            XYZFile.step = XYZM_RECEIVE;
             break;
           }
           case XYZS_OTHER: {
@@ -863,6 +921,9 @@ bool XYZModemLoop(void) {
           return true;
         }
       } else {
+#ifdef XYZM_DEBUG
+        Serial.println();
+#endif
         XYZModem.packet_no++;
       }
       break;
@@ -916,7 +977,6 @@ void CmndXSend(void) {
     if (!strcasecmp_P(XdrvMailbox.data, PSTR("Settings"))) {
       XYZFile.size = sizeof(TSettings);
       XYZFile.file = false;
-//      XYZModem.enabled = XYZM_SEND;
       ResponseCmndChar("Ready to start receive Settings");
 #ifdef USE_UFILESYS
     } else {
@@ -925,7 +985,6 @@ void CmndXSend(void) {
         XYZFile.size = TfsFileSize(XYZFile.file_name);
         if (XYZFile.size) {
           XYZFile.file = true;
-//          XYZModem.enabled = XYZM_SEND;
           ResponseCmndChar("Ready to start receive file");
         } else {
           ResponseCmndChar("File is empty");

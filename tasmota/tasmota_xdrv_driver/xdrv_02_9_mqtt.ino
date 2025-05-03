@@ -2117,12 +2117,12 @@ bool Xdrv02(uint32_t function)
         WebServer_on(PSTR("/" WEB_HANDLE_MQTT), HandleMqttConfiguration);
         break;
 #ifdef USE_WEB_STATUS_LINE
-      case FUNC_WEB_STATUS:
-        // MqttConnectCount(), mqtt_tls
+      case FUNC_WEB_STATUS_RIGHT:
         if (MqttIsConnected()) {
-          WSContentStatusSticker(PSTR("MQTT"), -1);
           if (MqttTLSEnabled()) {
-            WSContentStatusSticker(PSTR("TLS"), -1);
+            WSContentStatusSticker(PSTR(D_MQTT_TLS_ENABLE));
+          } else {
+            WSContentStatusSticker(PSTR(D_MQTT));
           }
         }
         break;
