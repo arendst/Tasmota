@@ -1910,6 +1910,10 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
   int newstate = GEN_STATE_STARTED;
   op->state = GEN_STATE_STARTED;
 
+  char addrstr[13];
+  const uint8_t* m_address = op->addr.getNative();
+  snprintf(addrstr, sizeof(addrstr), "%02X%02X%02X%02X%02X%02X", m_address[5], m_address[4], m_address[3], m_address[2], m_address[1], m_address[0]);
+
 #ifdef BLE_ESP32_DEBUG
   if (BLEDebugMode > 0) AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: BLETask: attempt connect %s"), ((std::string)op->addr).c_str());
 #endif
@@ -2120,21 +2124,21 @@ static void BLETaskRunCurrentOperation(BLE_ESP32::generic_sensor_t** pCurrentOpe
 
     switch (rc){
       case (0x0200+BLE_ERR_CONN_LIMIT ):
-        AddLog(LOG_LEVEL_ERROR,PSTR("BLE: Hit connection limit? - restarting NimBLE"));
+        AddLog(LOG_LEVEL_ERROR, PSTR("BLE: %s: Hit connection limit? - restarting NimBLE"), addrstr);
         BLERestartNimBLE = 1;
         BLERestartBLEReason = BLE_RESTART_BLE_REASON_CONN_LIMIT;
         break;
       case (0x0200+BLE_ERR_ACL_CONN_EXISTS):
-        AddLog(LOG_LEVEL_ERROR,PSTR("BLE: Connection exists? - restarting NimBLE"));
+        AddLog(LOG_LEVEL_ERROR, PSTR("BLE: %s: Connection exists? - restarting NimBLE"), addrstr);
         BLERestartNimBLE = 1;
         BLERestartBLEReason = BLE_RESTART_BLE_REASON_CONN_EXISTS;
         break;
     }
     if (rc){
-      AddLog(LOG_LEVEL_ERROR,PSTR("BLE: failed to connect to device low level rc 0x%x"), rc);
+      AddLog(LOG_LEVEL_ERROR, PSTR("BLE: %s: Failed to connect to device low level rc 0x%X"), addrstr, rc);
     }
     // failed to connect
-    AddLog(LOG_LEVEL_ERROR,PSTR("BLE: failed to connect to device"));
+    AddLog(LOG_LEVEL_ERROR, PSTR("BLE: %s: Failed to connect to device"), addrstr);
   }
   op->state = newstate;
 }
