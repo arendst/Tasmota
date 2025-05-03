@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Allow command `WebRefresh` minimum from 1000 to 400 mSec
+- GPIOViewer from v1.6.2 to v1.6.3 (No functional change)
 
 ### Fixed
 - Berry `bytes().asstring()` now truncates a string if buffer contains NULL (#23311)
