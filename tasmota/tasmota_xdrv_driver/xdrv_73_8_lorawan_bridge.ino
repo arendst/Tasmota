@@ -164,14 +164,14 @@ void LoraWanTickerSend(void) {
   } 
   
   //DBGROB: Not needed ?????????
-  else {
-    Lora->send_buffer_step = 0;                     //Nothing more to send
-   }
+  //else {
+  //  Lora->send_buffer_step = 0;                     //Nothing more to send
+  // }
 
   if (0 == Lora->send_buffer_step){
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanTickerSend() SledgeHammer LoraSx126xInit() Start"));
-    Lora->Init();                                   //Necessary to re-init the SXxxxx chip in cases where TX/RX frequencies differ //LoraSx126xInit();
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanTickerSend() SledgeHammer LoraSx126xInit() End"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanTickerSend() SledgeHammer LoraSx126xInit() Start "));
+    Lora->Init();                                   //Necessary to re-init the SXxxxx chip in cases where TX/RX frequencies differ
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanTickerSend() SledgeHammer LoraSx126xInit() End "));
   }
 }
 

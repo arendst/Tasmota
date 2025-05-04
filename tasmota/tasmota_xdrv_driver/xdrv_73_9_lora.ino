@@ -207,13 +207,19 @@ uint8_t LoraChannel(void) {
 /*
  Sets LoRa values
 */
-void LoraDefaults(uint32_t uRegion=TAS_LORA_REGION_EU868, bool bUplink=true, uint32_t uChannel=0){
+//void LoraDefaults(uint32_t uRegion=TAS_LORA_REGION_EU868, bool bUplink=true, uint32_t uChannel=0){
+void LoraDefaults(uint32_t uRegion=TAS_LORA_REGION_EU868, LoRaRadioMode_t mode=TAS_LORA_RADIO_UPLINK, uint32_t uChannel=0){
+
   switch(uRegion){
     case TAS_LORA_REGION_AU915:
-     AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraDefaults(AU915) uRegion=%u bUplink=%u channel=%u"),uRegion, bUplink, uChannel);
+     AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraDefaults(AU915) uRegion=%u mode(0:UPL,1:RX1,2:RX2)=%u channel=%u"),uRegion, mode, uChannel);
+
+     //TO DO: Need 3 profiles: Uplink, RX1, RX2
+     // Works OK for now as RX2 always received by end device.
 
      LoRaRadioInfo_t RadioInfo;
-     LoraRadioInfo( (bUplink ? TAS_LORA_RADIO_UPLINK : TAS_LORA_RADIO_RX2), &RadioInfo, uChannel);   //Region specific
+     //LoraRadioInfo( (bUplink ? TAS_LORA_RADIO_UPLINK : TAS_LORA_RADIO_RX2), &RadioInfo, uChannel);   //Region specific
+     LoraRadioInfo( mode, &RadioInfo, uChannel);   //Region specific
 
      Lora->settings.frequency        = RadioInfo.frequency;       
      Lora->settings.bandwidth        = RadioInfo.bandwidth;     
@@ -417,8 +423,8 @@ bool LoraSend(uint8_t* data, uint32_t len, bool invert, bool bUseUplinkProfile =
   if (!bUseUplinkProfile) { 
     // Different TX/RX profiles allowed. (e.g. LoRaWAN)
     // For CmndLoraSend() ... do not allow changes. 
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: LoraSend() Changing to TX profile. Current Freq:%1_f  "),&Lora->settings.frequency);
-    LoraDefaults(Lora->settings.region, false);    //Set Downlink profile
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: LoraSend() Changing to TX profile"));
+    LoraDefaults(Lora->settings.region, TAS_LORA_RADIO_RX2);    //Set Downlink profile   TO DO: Support different RX1 & RX2 profiles
     Lora->Config();  
   }
 
@@ -428,7 +434,7 @@ bool LoraSend(uint8_t* data, uint32_t len, bool invert, bool bUseUplinkProfile =
     lora_time, len, data, invert, TimePassedSince(lora_time));
   
   if (!bUseUplinkProfile) {
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: LoraSend() Changing to RX profile Current Freq:%1_f  "),&Lora->settings.frequency);
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: LoraSend() Changing to RX profile"));
     Lora->settings = RXsettings;
     Lora->Config();
   }
@@ -713,7 +719,7 @@ void CmndLoraConfig(void) {
       uint8_t uRegionIdx = LoraRegionIdx(ConfigRegion(uData));
       String sRegion = ConfigRegion(uData);
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: Command Region %s  uChannel:%u uBandIdx: %u sBand:%s"),uData.c_str(),uChannel, uRegionIdx, sRegion.c_str());
-      LoraDefaults(uRegionIdx, true, uChannel); //Set Uplink values
+      LoraDefaults(uRegionIdx, TAS_LORA_RADIO_UPLINK, uChannel); //Set Uplink values
       
       //DBGROB: does this work OK??
       Lora->Config();

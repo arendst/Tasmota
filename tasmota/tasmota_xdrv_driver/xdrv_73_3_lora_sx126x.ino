@@ -127,7 +127,7 @@ bool LoraSx126xSend(uint8_t* data, uint32_t len, bool invert) {
 }
 
 bool LoraSx126xConfig(void) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraSx126xConfig() f|sf|bw = %1_f|%u:|%1_f"),&Lora->settings.frequency,Lora->settings.spreading_factor,&Lora->settings.bandwidth);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraSx126xConfig() f|sf|bw = %1_f|%u|%1_f"),&Lora->settings.frequency,Lora->settings.spreading_factor,&Lora->settings.bandwidth);
   LoRaRadio.setCodingRate(Lora->settings.coding_rate);
   LoRaRadio.setSyncWord(Lora->settings.sync_word);
   LoRaRadio.setPreambleLength(Lora->settings.preamble_length);
