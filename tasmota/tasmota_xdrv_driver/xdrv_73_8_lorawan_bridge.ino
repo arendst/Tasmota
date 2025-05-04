@@ -149,7 +149,6 @@ void LoraWanDeleteData(void) {
 Ticker LoraWan_Send;
 
 void LoraWanTickerSend(void) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanTickerSend() send_buffer_step=%u"),Lora->send_buffer_step);
   Lora->send_buffer_step--;
   if (1 == Lora->send_buffer_step) {
     Lora->rx = true;                                // Always send during RX1
@@ -163,21 +162,12 @@ void LoraWanTickerSend(void) {
     LoraSend(Lora->send_buffer, Lora->send_buffer_len, true, bUseUplinkProfile);
   } 
   
-  //DBGROB: Not needed ?????????
-  //else {
-  //  Lora->send_buffer_step = 0;                     //Nothing more to send
-  // }
-
   if (0 == Lora->send_buffer_step){
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanTickerSend() SledgeHammer LoraSx126xInit() Start "));
     Lora->Init();                                   //Necessary to re-init the SXxxxx chip in cases where TX/RX frequencies differ
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanTickerSend() SledgeHammer LoraSx126xInit() End "));
   }
 }
 
-void LoraWanSendResponse(uint8_t* buffer, size_t len, uint32_t lorawan_delay) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanSendResponse() Delay = %u LoraBand=%u"),lorawan_delay,Lora->settings.region);
-     
+void LoraWanSendResponse(uint8_t* buffer, size_t len, uint32_t lorawan_delay) {     
   free(Lora->send_buffer);                          // Free previous buffer (if any)
   Lora->send_buffer = (uint8_t*)malloc(len +1);
   if (nullptr == Lora->send_buffer) { return; }
@@ -201,7 +191,6 @@ size_t LoraWanCFList(uint8_t * CFList, size_t uLen){
 
     uint8_t uChannel   = LoraChannel();     //0..71
     uint8_t uMaskByte  = uChannel/8;        //0..8
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanCFList(region = %u, CFListlen=%u uChannel=%u uMaskByte:%u)"),Lora->settings.region,uLen,uChannel,uMaskByte);
       
     //Add first 10 bytes
     for (uint i=0; i<10 ; i++ ) {
@@ -250,7 +239,6 @@ uint32_t LoraWanSpreadingFactorToDataRate(bool bDownlink) {
 }
 
 uint32_t LoraWanFrequencyToChannel(void) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanFrequencyToChannel() f=%1_f"),&Lora->settings.frequency);
   // EU863-870 (EU868) JoinReq message frequencies are 868.1, 868.3 and 868.5
   uint32_t frequency = (Lora->settings.frequency * 10);
   uint32_t channel = 250;
@@ -276,7 +264,6 @@ uint32_t LoraWanFrequencyToChannel(void) {
 /*********************************************************************************************/
 
 void LoraWanSendLinkADRReq(uint32_t node) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanSendLinkADRReq(node = %u)"),node);
   uint32_t DevAddr = Lora->device_address +node;
   uint16_t FCnt = Lora->settings.end_node[node].FCntDown++;
   uint8_t NwkSKey[TAS_LORAWAN_AES128_KEY_SIZE];
@@ -301,9 +288,6 @@ void LoraWanSendLinkADRReq(uint32_t node) {
     uint8_t ChMaskCntl = uChannel/16.0;     //0..4
     uChannel           = uChannel%16;       //0..15
     uint16_t uMask     = 0x01 << uChannel;
-
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanSendLinkADRReq() uChannel:%u ChMaskCntl:%u uChannel_mod16:%u uMask:%08X"), LoraChannel(), ChMaskCntl, uChannel, uMask);
-
 
     data[9] =  LoraWanSpreadingFactorToDataRate(false) << 4 | 0x0F;  // Uplink DataRate_TXPower Should be 'DR2' for & 'unchanged'  = 0x2F
 
@@ -337,8 +321,6 @@ void LoraWanSendLinkADRReq(uint32_t node) {
 }
 
 void LoraWanSendMacResponse(uint32_t node, uint8_t* FOpts, uint32_t FCtrl) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanSendMacResponse(node=%u, bytes=%u)"), node,FCtrl);
-
   if (FCtrl > 15) { return; }                                // FOpts = 0..15
  
   uint32_t DevAddr = Lora->device_address +node;
@@ -373,8 +355,6 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
   uint32_t MType = data[0] >> 5;                             // Upper three bits (used to be called FType)
 
   if (TAS_LORAWAN_MTYPE_JOIN_REQUEST == MType) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB: Got JoinRequest)"));  
-
     // 0007010000004140A8D64A89710E4140A82893A8AD137F - Dragino
     // 000600000000161600B51F000000161600FDA5D8127912 - MerryIoT
     uint64_t JoinEUI = (uint64_t)data[ 1]        | ((uint64_t)data[ 2] <<  8) |
@@ -389,12 +369,8 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
     uint32_t MIC = (uint32_t)data[19]        | ((uint32_t)data[20] <<  8) |
                   ((uint32_t)data[21] << 16) | ((uint32_t)data[22] << 24);
 
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB: JoinEUI %8_H, DevEUIh %08X, DevEUIl %08X, DevNonce %04X, MIC %08X"),
-                  (uint8_t*)&JoinEUI, DevEUIh, DevEUIl, DevNonce, MIC);    
     for (uint32_t node = 0; node < TAS_LORAWAN_ENDNODES; node++) {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("ROB:Try Node=%u AppKey:%16_H"),node,Lora->settings.end_node[node].AppKey);
       uint32_t CalcMIC = LoraWanGenerateMIC(data, 19, Lora->settings.end_node[node].AppKey);
-      //AddLog(LOG_LEVEL_DEBUG, PSTR("ROB: CalcMIC:%08X  RX MIC:%08X"),CalcMIC,MIC);
       if (MIC == CalcMIC) {                                  // Valid MIC based on LoraWanAppKey
         AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: JoinEUI %8_H, DevEUIh %08X, DevEUIl %08X, DevNonce %04X, MIC %08X"),
           (uint8_t*)&JoinEUI, DevEUIh, DevEUIl, DevNonce, MIC);
@@ -447,15 +423,10 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
         join_data[join_data_index++] = NewMIC >> 24;   //[16] or [32]
         uint8_t EncData[33];
         EncData[0] = join_data[0];
-    //  LoraWanEncryptJoinAccept(Lora->settings.end_node[node].AppKey, &join_data[1], 16, &EncData[1]);
         LoraWanEncryptJoinAccept(Lora->settings.end_node[node].AppKey, &join_data[1], join_data_index-1, &EncData[1]);
-
-//      AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: JoinData (Before Encryption) %17_H"), join_data);
-        AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: JoinData (Before Encryption  %u bytes) %*_H"),join_data_index,join_data_index ,join_data);
 
         // 203106E5000000412E010003017CB31DD4 - Dragino
         // 203206E5000000422E010003016A210EEA - MerryIoT
-//      LoraWanSendResponse(EncData, 17, TAS_LORAWAN_JOIN_ACCEPT_DELAY1);
         LoraWanSendResponse(EncData, join_data_index, TAS_LORAWAN_JOIN_ACCEPT_DELAY1);
 
         result = true;
@@ -489,7 +460,6 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
     bool bResponseSent = false; //Make sure do not send multiple responses
 
     uint32_t DevAddr = (uint32_t)data[1] | ((uint32_t)data[2] <<  8) | ((uint32_t)data[3] << 16) | ((uint32_t)data[4] << 24);
-    AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB: Got Data Uplink. DevAddr = %08X"),DevAddr);  
     for (uint32_t node = 0; node < TAS_LORAWAN_ENDNODES; node++) {
       if (0 == Lora->settings.end_node[node].DevEUIh)  { continue; }   // No DevEUI so never joined
       if ((Lora->device_address +node) != DevAddr) { continue; }       // Not my device
@@ -614,8 +584,6 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
                 mac_data[mac_data_idx++] = gps_time >> 24;
 //                uint32_t frac_time = RtcMillis();
                 mac_data[mac_data_idx++] = 0x00;                       // Fractional-second 1/256 sec
-
-                AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:TAS_LORAWAN_CID_DEVICE_TIME_ANS: gpsTime:%u (decimal)"),gps_time);
               }
             }
             else { 
@@ -672,12 +640,7 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
             LoraWanSendLinkADRReq(node);                               // Resend LinkADRReq
           }
         }
-
-        if (FCtrl_ADRACKReq) {
-          AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB: FCtrl_ADRACKReq is SET. FCnt = %u)"),FCnt);  
-          AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB: Need to implement a (any) Class A response to prevent backoff behaviour)"));  
-        }
-        
+      
         if (!bResponseSent && FCtrl_ADRACKReq ) {
           //FCtrl_ADRACKReq requires we send ANY Class A message. Here's one prepared earlier.
           LoraWanSendLinkADRReq(node);

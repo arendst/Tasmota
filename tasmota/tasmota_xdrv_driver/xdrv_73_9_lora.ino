@@ -107,8 +107,6 @@ void LoraRadioInfo(uint8_t mode, void* pInfo, uint8_t uChannel=0) {
       
       Tasmota does not support different RX1 & RX2 DRs (yet), so just use DR8 and rely on RX2 arriving at end device OK.
     */
-
-    //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB:LoraRadioInfo() About to call LoraChannel(AU915) "));
     uint8_t UplinkChannelBand = LoraChannel()%8; //0..7
 
     if (TAS_LORA_RADIO_UPLINK == mode) {
@@ -129,8 +127,6 @@ void LoraRadioInfo(uint8_t mode, void* pInfo, uint8_t uChannel=0) {
       // RX1 DR depends on the Uplink settings
       // https://lora-alliance.org/wp-content/uploads/2020/11/lorawan_regional_parameters_v1.0.3reva_0.pdf
       // Page 41
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB:LoraRadioInfo(AU915-RX1) UplinkChannelBand:%u LoraChannel():%u "), UplinkChannelBand,LoraChannel());
-
       uint8_t UplinkDR; //0..6
       if ( 125.0 == Lora->settings.bandwidth ) {
         UplinkDR = 12 - Lora->settings.spreading_factor;
@@ -200,7 +196,6 @@ uint8_t LoraChannel(void) {
     //default:
        //not implemented
   }
-  //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB:LoraChannel(AU915) Current BW:%1_f Freq:%1_f Returning:%u"),&Lora->settings.bandwidth,&Lora->settings.frequency,uChannel);
   return uChannel; 
 }
 
@@ -212,13 +207,10 @@ void LoraDefaults(uint32_t uRegion=TAS_LORA_REGION_EU868, LoRaRadioMode_t mode=T
 
   switch(uRegion){
     case TAS_LORA_REGION_AU915:
-     AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraDefaults(AU915) uRegion=%u mode(0:UPL,1:RX1,2:RX2)=%u channel=%u"),uRegion, mode, uChannel);
-
      //TO DO: Need 3 profiles: Uplink, RX1, RX2
      // Works OK for now as RX2 always received by end device.
 
      LoRaRadioInfo_t RadioInfo;
-     //LoraRadioInfo( (bUplink ? TAS_LORA_RADIO_UPLINK : TAS_LORA_RADIO_RX2), &RadioInfo, uChannel);   //Region specific
      LoraRadioInfo( mode, &RadioInfo, uChannel);   //Region specific
 
      Lora->settings.frequency        = RadioInfo.frequency;       
@@ -354,7 +346,6 @@ bool LoraSaveData(void) {
   }
 #ifdef USE_LORAWAN_BRIDGE
   if (!LoraWanSaveData()) {
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: LoraSaveData() LoraWanSaveData() failed"));
     return false;
   }
 #endif  // USE_LORAWAN_BRIDGE
@@ -423,7 +414,6 @@ bool LoraSend(uint8_t* data, uint32_t len, bool invert, bool bUseUplinkProfile =
   if (!bUseUplinkProfile) { 
     // Different TX/RX profiles allowed. (e.g. LoRaWAN)
     // For CmndLoraSend() ... do not allow changes. 
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: LoraSend() Changing to TX profile"));
     LoraDefaults(Lora->settings.region, TAS_LORA_RADIO_RX2);    //Set Downlink profile   TO DO: Support different RX1 & RX2 profiles
     Lora->Config();  
   }
@@ -434,7 +424,6 @@ bool LoraSend(uint8_t* data, uint32_t len, bool invert, bool bUseUplinkProfile =
     lora_time, len, data, invert, TimePassedSince(lora_time));
   
   if (!bUseUplinkProfile) {
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: LoraSend() Changing to RX profile"));
     Lora->settings = RXsettings;
     Lora->Config();
   }
@@ -446,14 +435,11 @@ void LoraInput(void) {
 
   char data[TAS_LORA_MAX_PACKET_LENGTH] = { 0 };
   int packet_size = Lora->Receive(data);
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: Rcvd packets %u bytes"),packet_size);
   if (!packet_size) { return; }
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LOR: Rcvd (%u) '%*_H', RSSI %1_f, SNR %1_f"),
     Lora->receive_time, packet_size, data, &Lora->rssi, &Lora->snr);
 #ifdef USE_LORAWAN_BRIDGE
   if (bitRead(Lora->settings.flags, TAS_LORA_FLAG_BRIDGE_ENABLED)) {
-   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: Calling(LoRaWanInput())"));
-
     if (LoraWanInput((uint8_t*)data, packet_size)) {
       return;   
     }
@@ -718,10 +704,7 @@ void CmndLoraConfig(void) {
       uint8_t uChannel = uData.substring(6).toInt();  //returns zero if empty or invalid substring
       uint8_t uRegionIdx = LoraRegionIdx(ConfigRegion(uData));
       String sRegion = ConfigRegion(uData);
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: Command Region %s  uChannel:%u uBandIdx: %u sBand:%s"),uData.c_str(),uChannel, uRegionIdx, sRegion.c_str());
       LoraDefaults(uRegionIdx, TAS_LORA_RADIO_UPLINK, uChannel); //Set Uplink values
-      
-      //DBGROB: does this work OK??
       Lora->Config();
       Lora->Init();
     }
@@ -740,8 +723,6 @@ void CmndLoraConfig(void) {
   ResponseAppend_P(PSTR("}}"));
 
   uint32_t irq_stat = LoRaRadio.getIrqStatus();
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: SendFlag:%u, ReceivedFlag:%u irq:%04X "), Lora->send_flag,Lora->received_flag, irq_stat);  
-
 }
 
 /*********************************************************************************************\
