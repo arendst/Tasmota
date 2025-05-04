@@ -989,12 +989,12 @@ int EQ3SendResult(char *requested, const char *result){
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_EQ3_ALIAS[]        PROGMEM = "{s}EQ3 %d Alias{m}%s{e}";
-const char HTTP_EQ3_MAC[]          PROGMEM = "{s}EQ3 %d " D_MAC_ADDRESS "{m}%s{e}";
-const char HTTP_EQ3_RSSI[]         PROGMEM = "{s}EQ3 %d " D_RSSI "{m}%d dBm{e}";
-const char HTTP_EQ3_TEMPERATURE[]  PROGMEM = "{s}EQ3 %d %s{m}%*_f " D_UNIT_DEGREE "%c{e}";
-const char HTTP_EQ3_DUTY_CYCLE[]   PROGMEM = "{s}EQ3 %d " D_THERMOSTAT_VALVE_POSITION "{m}%d " D_UNIT_PERCENT "{e}";
-const char HTTP_EQ3_BATTERY[]      PROGMEM = "{s}EQ3 %d " D_BATTERY "{m}%s{e}";
+const char HTTP_EQ3_TYPE[]         PROGMEM = "{s}%s " D_NEOPOOL_TYPE "{m}EQ3{e}";
+const char HTTP_EQ3_MAC[]          PROGMEM = "{s}%s " D_MAC_ADDRESS "{m}%s{e}";
+const char HTTP_EQ3_RSSI[]         PROGMEM = "{s}%s " D_RSSI "{m}%d dBm{e}";
+const char HTTP_EQ3_TEMPERATURE[]  PROGMEM = "{s}%s " D_THERMOSTAT_SET_POINT "{m}%*_f " D_UNIT_DEGREE "%c{e}";
+const char HTTP_EQ3_DUTY_CYCLE[]   PROGMEM = "{s}%s " D_THERMOSTAT_VALVE_POSITION "{m}%d " D_UNIT_PERCENT "{e}";
+const char HTTP_EQ3_BATTERY[]      PROGMEM = "{s}%s " D_BATTERY "{m}%s{e}";
 
 void EQ3Show(void)
 {
@@ -1005,15 +1005,21 @@ void EQ3Show(void)
     if (EQ3Devices[i].timeoutTime) {
       if (FirstSensorShown) WSContentSend_P(HTTP_SNS_HR_THIN);
       FirstSensorShown = true;
+      const char *label;
       const char *alias = BLE_ESP32::getAlias(EQ3Devices[i].addr);
       if (alias && *alias){
-        WSContentSend_P(HTTP_EQ3_ALIAS, i + 1, alias);
+        label = alias;
+        WSContentSend_P(HTTP_EQ3_TYPE, label);
+      } else {
+        char tlabel[8];
+        snprintf(tlabel, sizeof(tlabel), "EQ3-%d", i + 1);
+        label = tlabel;
       }
-      WSContentSend_P(HTTP_EQ3_MAC, i + 1, addrStr(EQ3Devices[i].addr));
-      WSContentSend_PD(HTTP_EQ3_RSSI, i + 1, EQ3Devices[i].RSSI);
-      WSContentSend_PD(HTTP_EQ3_TEMPERATURE, i + 1, D_THERMOSTAT_SET_POINT, Settings->flag2.temperature_resolution, &EQ3Devices[i].TargetTemp, c_unit);
-      WSContentSend_P(HTTP_EQ3_DUTY_CYCLE, i + 1, EQ3Devices[i].DutyCycle);
-      WSContentSend_P(HTTP_EQ3_BATTERY, i + 1, EQ3Devices[i].Battery ? D_NEOPOOL_LOW : D_OK);
+      WSContentSend_P(HTTP_EQ3_MAC, label, addrStr(EQ3Devices[i].addr));
+      WSContentSend_PD(HTTP_EQ3_RSSI, label, EQ3Devices[i].RSSI);
+      WSContentSend_PD(HTTP_EQ3_TEMPERATURE, label, Settings->flag2.temperature_resolution, &EQ3Devices[i].TargetTemp, c_unit);
+      WSContentSend_P(HTTP_EQ3_DUTY_CYCLE, label, EQ3Devices[i].DutyCycle);
+      WSContentSend_P(HTTP_EQ3_BATTERY, label, EQ3Devices[i].Battery ? D_NEOPOOL_LOW : D_OK);
     }
   }
 }
