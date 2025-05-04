@@ -86,7 +86,7 @@ bool LoraSx126xAvailable(void) {
 
 int LoraSx126xReceive(char* data) {
   Lora->received_flag = false;             // Reset flag
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: LoraSx126xReceive() Re-setting RXflag"));
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("DBGROB: LoraSx126xReceive() Re-setting received_flag"));
 
   int packet_size = LoRaRadio.getPacketLength();
   int state = LoRaRadio.readData((uint8_t*)data, TAS_LORA_MAX_PACKET_LENGTH -1);
@@ -127,7 +127,7 @@ bool LoraSx126xSend(uint8_t* data, uint32_t len, bool invert) {
 }
 
 bool LoraSx126xConfig(void) {
-  AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraSx126xConfig() f=%1_f sf:bw=%u:%1_f"),&Lora->settings.frequency,Lora->settings.spreading_factor,&Lora->settings.bandwidth);
+  AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraSx126xConfig() f|sf|bw = %1_f|%u:|%1_f"),&Lora->settings.frequency,Lora->settings.spreading_factor,&Lora->settings.bandwidth);
   LoRaRadio.setCodingRate(Lora->settings.coding_rate);
   LoRaRadio.setSyncWord(Lora->settings.sync_word);
   LoRaRadio.setPreambleLength(Lora->settings.preamble_length);

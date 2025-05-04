@@ -76,6 +76,8 @@
 #define D_JSON_FCNTDOWN "FCntDown"
 #define D_JSON_FLAGS    "Flags"
 
+bool LoraSend(uint8_t* data, uint32_t len, bool invert, bool bUseUplinkProfile); //Template
+
 bool LoraWanLoadData(void) {
   char key[12];                                    // Max 99 nodes (drvset73_1 to drvset73_99)
   for (uint32_t n = 0; n < TAS_LORAWAN_ENDNODES; n++) {
@@ -154,12 +156,17 @@ void LoraWanTickerSend(void) {
     Lora->receive_time = 0;                         // Reset receive timer
     LoraWan_Send.once_ms(TAS_LORAWAN_RECEIVE_DELAY2, LoraWanTickerSend);  // Retry after 1000 ms
   }
-
-  if (Lora->rx) {                                   // If received in RX1 do not resend in RX2
-    LoraSend(Lora->send_buffer, Lora->send_buffer_len, true);
-  } else {
+  
+  if (Lora->rx) {      
+    // If received in RX1 do not resend in RX2
+    bool bUseUplinkProfile = false;                             
+    LoraSend(Lora->send_buffer, Lora->send_buffer_len, true, bUseUplinkProfile);
+  } 
+  
+  //DBGROB: Not needed ?????????
+  else {
     Lora->send_buffer_step = 0;                     //Nothing more to send
-  }
+   }
 
   if (0 == Lora->send_buffer_step){
     AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanTickerSend() SledgeHammer LoraSx126xInit() Start"));
@@ -181,60 +188,43 @@ void LoraWanSendResponse(uint8_t* buffer, size_t len, uint32_t lorawan_delay) {
 }
 
 /*-------------------------------------------------------------------------------------------*/
-/*
- Populates CFList that for use in JOIN-ACCEPT message to lock device to specific frequencies
+/* LoraWanCFList()
+ Populates CFList for use in JOIN-ACCEPT message to lock device to specific frequencies
+ Returns: Number of bytes added
 */
 size_t LoraWanCFList(uint8_t * CFList, size_t uLen){
-  AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanCFList(region = %u, CFListlen=%u)"),Lora->settings.region,uLen);
-  uint8_t dataIdx = 0;
+  uint8_t idx = 0;
+
   if( TAS_LORA_REGION_AU915 == Lora->settings.region ) {
-      uint8_t uChannel   = LoraChannel();     //0..71
-      uint8_t uMaskByte  = uChannel/8;        //0..8
-      
-      //Add first 10  bytes
-      if( uLen < 16 ) return 0;
-        for (uint i=0; i<10 ; i++ ){
-          if (i == uMaskByte) {
-            CFList[dataIdx++] = 0x01 << uChannel%16;
-          } else {
-            CFList[dataIdx++] = 0x00;
-          }
-        }
-      
-      /*
-      CFList[dataIdx++] = 0x01;   //Mask 0   0001 = 915.2
-      CFList[dataIdx++] = 0x00; 
-      
-      CFList[dataIdx++] = 0x00;   //Mask 1
-      CFList[dataIdx++] = 0x00;
+    /////////////  AU915 //////////////////
+    if( uLen < 16 ) return 0;
 
-      CFList[dataIdx++] = 0x00;   //Mask 2
-      CFList[dataIdx++] = 0x00;
-
-      CFList[dataIdx++] = 0x00;   //Mask 3
-      CFList[dataIdx++] = 0x00;
-
-      CFList[dataIdx++] = 0x00;   //Mask 4
-      CFList[dataIdx++] = 0x00;
-      */
-     
-      //Add next 6  bytes
-      CFList[dataIdx++] = 0x00;   //RFU
-      CFList[dataIdx++] = 0x00;
+    uint8_t uChannel   = LoraChannel();     //0..71
+    uint8_t uMaskByte  = uChannel/8;        //0..8
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanCFList(region = %u, CFListlen=%u uChannel=%u uMaskByte:%u)"),Lora->settings.region,uLen,uChannel,uMaskByte);
+      
+    //Add first 10 bytes
+    for (uint i=0; i<10 ; i++ ) {
+      CFList[idx++] = (i == uMaskByte) ? ( 0x01 << uChannel%8 ) : 0x00;
+    }
+         
+    //Add next 6  bytes
+    CFList[idx++] = 0x00;   //RFU
+    CFList[idx++] = 0x00;
  
-      CFList[dataIdx++] = 0x00;   //RFU
-      CFList[dataIdx++] = 0x00;
-      CFList[dataIdx++] = 0x00;
+    CFList[idx++] = 0x00;   //RFU
+    CFList[idx++] = 0x00;
+    CFList[idx++] = 0x00;
  
-      CFList[dataIdx++] = 0x01;   //CFLlistType      
+    CFList[idx++] = 0x01;   //CFListType      
 
-   } else {
+  } else {
      //Default EU868
   }
-  return dataIdx;
+  return idx;
 }
 
-uint32_t LoraWanSpreadingFactorToDataRate(void) {
+uint32_t LoraWanSpreadingFactorToDataRate(bool bDownlink) {
   /*
   Returns DLSettings defined as
   Bits  7= RFA
@@ -243,7 +233,7 @@ uint32_t LoraWanSpreadingFactorToDataRate(void) {
   */
 
   if (TAS_LORA_REGION_AU915 == Lora->settings.region) {
-    return 8;  //AU915 must use DR8 for RX2
+    return bDownlink ? 8 : 2;  //AU915 must use DR8 for RX2, and we want to use DR2 for Uplinks
 
   } else {
      //EU868
@@ -312,7 +302,10 @@ void LoraWanSendLinkADRReq(uint32_t node) {
     uChannel           = uChannel%16;       //0..15
     uint16_t uMask     = 0x01 << uChannel;
 
-    data[9] =  LoraWanSpreadingFactorToDataRate() << 4 | 0x0F;  // DataRate_TXPower Should be 8 & 15 = 0x8F
+    AddLog(LOG_LEVEL_DEBUG, PSTR("DBGROB:LoraWanSendLinkADRReq() uChannel:%u ChMaskCntl:%u uChannel_mod16:%u uMask:%08X"), LoraChannel(), ChMaskCntl, uChannel, uMask);
+
+
+    data[9] =  LoraWanSpreadingFactorToDataRate(false) << 4 | 0x0F;  // Uplink DataRate_TXPower Should be 'DR2' for & 'unchanged'  = 0x2F
 
     data[10] = uMask;                 // ChMask LSB
     data[11] = uMask >> 8;            // ChMask MSB
@@ -326,7 +319,7 @@ void LoraWanSendLinkADRReq(uint32_t node) {
 
   } else {
     //Default EU868
-    data[9]  = LoraWanSpreadingFactorToDataRate() << 4 | 0x0F; // DataRate 3 and unchanged TXPower
+    data[9]  = LoraWanSpreadingFactorToDataRate(false) << 4 | 0x0F; // Uplink DataRate 3 and unchanged TXPower
     data[10] = 0x01 << LoraWanFrequencyToChannel();            // Single channel
     data[11] = 0x00;
     data[12] = 0x00;                                           // ChMaskCntl applies to Channels0..15, NbTrans is default (1)
@@ -435,8 +428,8 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
         join_data[join_data_index++] = DevAddr >> 8;
         join_data[join_data_index++] = DevAddr >> 16;
         join_data[join_data_index++] = DevAddr >> 24;
-        join_data[join_data_index++] = LoraWanSpreadingFactorToDataRate();  // DLSettings 
-        join_data[join_data_index++] = 1;                                   // RXDelay; [12]
+        join_data[join_data_index++] = LoraWanSpreadingFactorToDataRate(true);  // DLSettings - Downlink
+        join_data[join_data_index++] = 1;                                       // RXDelay; [12]
 
         //Add CFList to instruct device to use one channel
         uint8_t CFList[16];
