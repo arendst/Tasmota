@@ -134,5 +134,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `bytes().asstring()` now truncates a string if buffer contains NULL [#23311](https://github.com/arendst/Tasmota/issues/23311)
 - Berry string literals containing NULL are truncated [#23312](https://github.com/arendst/Tasmota/issues/23312)
 - Berry `display.touch_update` wrongly applies resistive calibration [#23363](https://github.com/arendst/Tasmota/issues/23363)
+- Matter and mDNS can be enabled at the same time [#23373](https://github.com/arendst/Tasmota/issues/23373)
 
 ### Removed
