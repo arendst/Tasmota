@@ -2711,7 +2711,7 @@ void CmndMi32Keys(void){
           return;
         }
 
-        AddLog(LOG_LEVEL_ERROR,PSTR("M32: Add key mac %s = key %s"), mac, key);
+        AddLog(LOG_LEVEL_INFO, PSTR("M32: Add key mac %s = key %s"), mac, key);
         char tmp[20];
         // convert mac back to string
         ToHex_P(addr,6,tmp,20,0);
