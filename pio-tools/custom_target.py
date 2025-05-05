@@ -21,13 +21,14 @@ import subprocess
 import shutil
 import json
 from colorama import Fore, Back, Style
+from platformio.project.config import ProjectConfig
 
 Import("env")
 platform = env.PioPlatform()
 board = env.BoardConfig()
 mcu = board.get("build.mcu", "esp32")
+esptoolpy = os.path.join(ProjectConfig.get_instance().get("platformio", "packages_dir"),("tool-esptoolpy") or "", "esptool.py")
 IS_WINDOWS = sys.platform.startswith("win")
-
 
 class FSType(Enum):
     LITTLEFS="littlefs"
@@ -49,7 +50,7 @@ class FSInfo:
 class FS_Info(FSInfo):
     def __init__(self, start, length, page_size, block_size):
         self.tool = env["MKFSTOOL"]
-        self.tool = join(platform.get_package_dir("tool-mklittlefs"), self.tool)
+        self.tool = os.path.join(ProjectConfig.get_instance().get("platformio", "packages_dir"), "tool-mklittlefs", self.tool)
         super().__init__(FSType.LITTLEFS, start, length, page_size, block_size)
     def __repr__(self):
         return f"{self.fs_type} Start {hex(self.start)} Len {hex(self.length)} Page size {hex(self.page_size)} Block size {hex(self.block_size)}"
@@ -151,7 +152,6 @@ def parse_partition_table(content):
             env["FS_BLOCK"] = int("0x1000", 16)
 
 def get_partition_table():
-    esptoolpy = join(platform.get_package_dir("tool-esptoolpy") or "", "esptool.py")
     upload_port = join(env.get("UPLOAD_PORT", "none"))
     download_speed = join(str(board.get("download.speed", "115200")))
     if "none" in upload_port:
@@ -205,7 +205,6 @@ def get_fs_type_start_and_length():
 
 def download_fs(fs_info: FSInfo):
     print(fs_info)
-    esptoolpy = join(platform.get_package_dir("tool-esptoolpy") or "", "esptool.py")
     upload_port = join(env.get("UPLOAD_PORT", "none"))
     download_speed = join(str(board.get("download.speed", "115200")))
     if "none" in upload_port:
@@ -270,7 +269,6 @@ def command_download_fs(*args, **kwargs):
         display_fs(unpacked_dir)
 
 def upload_factory(*args, **kwargs):
-    esptoolpy = join(platform.get_package_dir("tool-esptoolpy") or "", "esptool.py")
     upload_speed = join(str(board.get("upload.speed", "115200")))
     upload_port = join(env.get("UPLOAD_PORT", "none"))
     target_firm = join(env.subst("$PROJECT_DIR"),tasmotapiolib.get_final_bin_path(env).with_suffix(".bin" if mcu == "esp8266" else (".factory.bin")))
@@ -337,7 +335,6 @@ def esp32_use_external_crashreport(*args, **kwargs):
 
 
 def reset_target(*args, **kwargs):
-    esptoolpy = join(platform.get_package_dir("tool-esptoolpy") or "", "esptool.py")
     upload_port = join(env.get("UPLOAD_PORT", "none"))
     if "none" in upload_port:
         env.AutodetectUploadPort()
