@@ -132,10 +132,10 @@ static char* fixpath(bvm *vm, bstring *path, size_t *size)
     if (var_isclosure(func)) {
         base = str(cl->proto->source); /* get the source file path */
     } else {
-        base = "/";
+        base = "";
     }
 #else
-    base = "/";
+    base = "";
 #endif
     split = be_splitpath(base);
     *size = split - base + (size_t)str_len(path) + SUFFIX_LEN;
@@ -183,11 +183,14 @@ static int open_libfile(bvm *vm, char *path, size_t size)
         strcpy(path + size - SUFFIX_LEN, sfxs[idx]);
         res = open_script(vm, path);
     } while (idx++ < 2 && res == BE_IO_ERROR);
-    if (res == BE_IO_ERROR) {
 #if BE_USE_SHARED_LIB
+    if (res == BE_IO_ERROR) {
         strcpy(path + size - SUFFIX_LEN, DLL_SUFFIX);
         res = open_dllib(vm, path);
+    }
 #endif
+    if (res == BE_EXCEPTION) {
+        be_dumpexcept(vm);
     }
     be_free(vm, path, size);
     return res;
