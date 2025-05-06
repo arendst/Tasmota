@@ -2479,7 +2479,7 @@ int extQueueOperation(BLE_ESP32::generic_sensor_t** op){
   }
 
   if (!BLEMasterEnable){
-    AddLog(LOG_LEVEL_ERROR,PSTR("BLE: extQueueOperation: BLE is deiabled"));
+    AddLog(LOG_LEVEL_ERROR, PSTR("BLE: extQueueOperation: BLE is disabled"));
     return 0;
   }
 
@@ -2981,7 +2981,7 @@ void CmndBLEAlias(void){
           return;
         }
 
-        AddLog(LOG_LEVEL_ERROR,PSTR("BLE: Add Alias mac %s = name %s"), mac, p);
+        AddLog(LOG_LEVEL_INFO, PSTR("BLE: Add Alias mac %s = name %s"), mac, p);
         if (addAlias( addr, name )){
           added++;
         }
