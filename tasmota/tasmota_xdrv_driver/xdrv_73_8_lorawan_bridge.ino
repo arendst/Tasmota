@@ -9,7 +9,7 @@
 #ifdef USE_SPI_LORA
 #ifdef USE_LORAWAN_BRIDGE
 /*********************************************************************************************\
- * EU868 LoRaWan bridge support
+ * EU868 and AU915 LoRaWan bridge support
  * 
  * The goal of the LoRaWan Bridge is to receive from joined LoRaWan End-Devices or Nodes and
  *  provide decrypted MQTT data.
@@ -27,11 +27,11 @@
  *     spreadingfactor using command
  *      LoRaConfig 2 
  *     or individual commands
- *      LoRaFrequency 868.1 (or 868.3 and 868.5)
- *      LoRaSpreadingFactor 9 (or 7..12 equals LoRaWan DataRate 5..0)
- *      LoRaBandwidth 125
- *      LoRaCodingRate4 5
- *      LoRaSyncWord 52
+ *      LoRaConfig {"Frequency":868.1} (or 868.3 and 868.5)
+ *      LoRaConfig {"SpreadingFactor":9} (or 7..12 equals LoRaWan DataRate 5..0)
+ *      LoRaConfig {"Bandwidth":125}
+ *      LoRaConfig {"CodingRate4":5}
+ *      LoRaConfig {"SyncWord":52}
  *  - LoRaWan has to be enabled (#define USE_LORAWAN_BRIDGE) and configured for the End-Device
  *     32 character AppKey using command LoRaWanAppKey <vendor provided appkey>
  *  - The End-Device needs to start it's LoRaWan join process as documented by vendor.
@@ -110,7 +110,7 @@ bool LoraWanLoadData(void) {
 }
 
 bool LoraWanSaveData(void) {
-  bool result = false;
+  bool result = true;                                // Return true if no Endnodes
   for (uint32_t n = 0; n < TAS_LORAWAN_ENDNODES; n++) {
     if (Lora->settings.end_node[n].AppKey[0] > 0) {  // Only save used slots
       Response_P(PSTR("{\"" XDRV_73_KEY "_%d\":{\"" D_JSON_APPKEY "\":\"%16_H\""
@@ -126,17 +126,17 @@ bool LoraWanSaveData(void) {
         Lora->settings.end_node[n].FCntUp, Lora->settings.end_node[n].FCntDown,
         Lora->settings.end_node[n].flags,
         Lora->settings.end_node[n].name.c_str());
-      result = UfsJsonSettingsWrite(ResponseData());
+      result &= UfsJsonSettingsWrite(ResponseData());
     }
   }
   return result;
 }
 
 void LoraWanDeleteData(void) {
-  char key[12];                                    // Max 99 nodes (drvset73_1 to drvset73_99)
+  char key[12];                                      // Max 99 nodes (drvset73_1 to drvset73_99)
   for (uint32_t n = 0; n < TAS_LORAWAN_ENDNODES; n++) {
     snprintf_P(key, sizeof(key), PSTR(XDRV_73_KEY "_%d"), n +1);
-    UfsJsonSettingsDelete(key);                    // Use defaults
+    UfsJsonSettingsDelete(key);                      // Use defaults
   }
 }
 #endif  // USE_UFILESYS
@@ -149,37 +149,89 @@ Ticker LoraWan_Send;
 void LoraWanTickerSend(void) {
   Lora->send_buffer_step--;
   if (1 == Lora->send_buffer_step) {
-    Lora->rx = true;                                // Always send during RX1
-    Lora->receive_time = 0;                         // Reset receive timer
+    Lora->rx = true;                                 // Always send during RX1
+    Lora->receive_time = 0;                          // Reset receive timer
     LoraWan_Send.once_ms(TAS_LORAWAN_RECEIVE_DELAY2, LoraWanTickerSend);  // Retry after 1000 ms
   }
-  if (Lora->rx) {                                   // If received in RX1 do not resend in RX2
-    LoraSend(Lora->send_buffer, Lora->send_buffer_len, true);
+
+  bool uplink_profile = (Lora->settings.region == TAS_LORA_REGION_AU915);
+  if (Lora->rx) {                                    // If received in RX1 do not resend in RX2
+    LoraSend(Lora->send_buffer, Lora->send_buffer_len, true, uplink_profile);
+  } 
+  if (uplink_profile && (0 == Lora->send_buffer_step)) {
+    Lora->Init();                                    // Necessary to re-init the SXxxxx chip in cases where TX/RX frequencies differ
   }
 }
 
 void LoraWanSendResponse(uint8_t* buffer, size_t len, uint32_t lorawan_delay) {
-  free(Lora->send_buffer);                          // Free previous buffer (if any)
+  free(Lora->send_buffer);                           // Free previous buffer (if any)
   Lora->send_buffer = (uint8_t*)malloc(len +1);
   if (nullptr == Lora->send_buffer) { return; }
   memcpy(Lora->send_buffer, buffer, len);
   Lora->send_buffer_len = len;
-  Lora->send_buffer_step = 2;                       // Send at RX1 and RX2
+  Lora->send_buffer_step = 2;                        // Send at RX1 and RX2
   LoraWan_Send.once_ms(lorawan_delay - TimePassedSince(Lora->receive_time), LoraWanTickerSend);
 }
 
 /*-------------------------------------------------------------------------------------------*/
 
-uint32_t LoraWanSpreadingFactorToDataRate(void) {
-  // Allow only JoinReq message datarates (125kHz bandwidth)
-  if (Lora->settings.spreading_factor > 12) {
-    Lora->settings.spreading_factor = 12;
+size_t LoraWanCFList(uint8_t * CFList, size_t uLen) {
+  // Populates CFList for use in JOIN-ACCEPT message to lock device to specific frequencies
+  // Returns: Number of bytes added
+  uint8_t idx = 0;
+
+  switch (Lora->settings.region) {
+    case TAS_LORA_REGION_AU915: {
+      if (uLen < 16) return 0;
+
+      uint8_t uChannel   = LoraChannel();            // 0..71
+      uint8_t uMaskByte  = uChannel /8;              // 0..8
+        
+      // Add first 10 bytes
+      for (uint32_t i = 0; i < 10; i++) {
+        CFList[idx++] = (i == uMaskByte) ? (0x01 << uChannel %8) : 0x00;
+      }
+          
+      // Add next 6  bytes
+      CFList[idx++] = 0x00;   //RFU
+      CFList[idx++] = 0x00;
+  
+      CFList[idx++] = 0x00;   //RFU
+      CFList[idx++] = 0x00;
+      CFList[idx++] = 0x00;
+  
+      CFList[idx++] = 0x01;   //CFListType
+      break;
+    }
+    default: {  // TAS_LORA_REGION_EU868
+    }
   }
-  if (Lora->settings.spreading_factor < 7) {
-    Lora->settings.spreading_factor = 7;
+  return idx;
+}
+
+uint32_t LoraWanSpreadingFactorToDataRate(bool downlink) {
+  /*
+  Returns DLSettings defined as
+  Bits  7= RFA
+      6:4= RX1DROffset
+      3:0= RX2DataRate  DateRate for RX2 window
+  */
+  switch (Lora->settings.region) {
+    case TAS_LORA_REGION_AU915: {
+      return downlink ? 8 : 2;                       // AU915 must use DR8 for RX2, and we want to use DR2 for Uplinks
+    }
+    default: {  // TAS_LORA_REGION_EU868
+      // Allow only JoinReq message datarates (125kHz bandwidth)
+      if (Lora->settings.spreading_factor > 12) {
+        Lora->settings.spreading_factor = 12;
+      }
+      if (Lora->settings.spreading_factor < 7) {
+        Lora->settings.spreading_factor = 7;
+      }
+      Lora->settings.bandwidth = 125;
+      return 12 - Lora->settings.spreading_factor;
+    }
   }
-  Lora->settings.bandwidth = 125;
-  return 12 - Lora->settings.spreading_factor;
 }
 
 uint32_t LoraWanFrequencyToChannel(void) {
@@ -217,15 +269,42 @@ void LoraWanSendLinkADRReq(uint32_t node) {
   data[2] = DevAddr >> 8;
   data[3] = DevAddr >> 16;
   data[4] = DevAddr >> 24;
-  data[5] = 0x05;                                            // FCtrl with 5 FOpts
+  data[5] = 0x05;                                    // FCtrl with 5 FOpts
   data[6] = FCnt;
   data[7] = FCnt >> 8;
   data[8] = TAS_LORAWAN_CID_LINK_ADR_REQ;
-  data[9] = LoraWanSpreadingFactorToDataRate() << 4 | 0x0F;  // DataRate 3 and unchanged TXPower
-  data[10] = 0x01 << LoraWanFrequencyToChannel();            // Single channel
-  data[11] = 0x00;
-  data[12] = 0x00;                                           // ChMaskCntl applies to Channels0..15, NbTrans is default (1)
 
+  // Next 4 bytes are Region Specific
+  switch (Lora->settings.region) {
+    case TAS_LORA_REGION_AU915: {
+      //Ref: https://lora-alliance.org/wp-content/uploads/2020/11/lorawan_regional_parameters_v1.0.3reva_0.pdf 
+      //     page 39
+      uint8_t uChannel   = LoraChannel();            // 0..71
+      uint8_t ChMaskCntl = uChannel/16.0;            // 0..4
+      uChannel           = uChannel%16;              // 0..15
+      uint16_t uMask     = 0x01 << uChannel;
+
+      data[9] =  LoraWanSpreadingFactorToDataRate(false) << 4 | 0x0F;  // Uplink DataRate_TXPower Should be 'DR2' for & 'unchanged' = 0x2F
+
+      data[10] = uMask;                              // ChMask LSB
+      data[11] = uMask >> 8;                         // ChMask MSB
+      
+      data[12] = ChMaskCntl << 4;                    // Redundancy: 
+                                                     // bits 7=RFU ------- 6:4=ChMaskCntl ----------- --- 3:0=NbTrans ---
+                                                     //      0     000=Mask applies to Channels  0-15 0000 = Use Default
+                                                     //            001=Mask applies to Channels 16-31
+                                                     //            ....
+                                                     //            100=Mask applies to Channels 64-71
+      break;
+    }
+    default: {  // TAS_LORA_REGION_EU868
+      data[9]  = LoraWanSpreadingFactorToDataRate(false) << 4 | 0x0F; // Uplink DataRate 3 and unchanged TXPower
+      data[10] = 0x01 << LoraWanFrequencyToChannel();  // Single channel
+      data[11] = 0x00;
+      data[12] = 0x00;                               // ChMaskCntl applies to Channels0..15, NbTrans is default (1)
+    }
+  }
+  
   uint32_t MIC = LoraWanComputeLegacyDownlinkMIC(NwkSKey, DevAddr, FCnt, data, 13);
   data[13] = MIC;
   data[14] = MIC >> 8;
@@ -308,34 +387,43 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
         uint32_t DevAddr = Lora->device_address +node;
         uint32_t NetID = TAS_LORAWAN_NETID;
         uint8_t join_data[33] = { 0 };
-        join_data[0] = TAS_LORAWAN_MTYPE_JOIN_ACCEPT << 5;
-        join_data[1] = JoinNonce;
-        join_data[2] = JoinNonce >> 8;
-        join_data[3] = JoinNonce >> 16;
-        join_data[4] = NetID;
-        join_data[5] = NetID >> 8;
-        join_data[6] = NetID >> 16;
-        join_data[7] = DevAddr;
-        join_data[8] = DevAddr >> 8;
-        join_data[9] = DevAddr >> 16;
-        join_data[10] = DevAddr >> 24;
-        join_data[11] = LoraWanSpreadingFactorToDataRate();  // DLSettings
-        join_data[12] = 1;                                   // RXDelay;
+        uint8_t join_data_index = 0;
 
-        uint32_t NewMIC = LoraWanGenerateMIC(join_data, 13, Lora->settings.end_node[node].AppKey);
-        join_data[13] = NewMIC;
-        join_data[14] = NewMIC >> 8;
-        join_data[15] = NewMIC >> 16;
-        join_data[16] = NewMIC >> 24;
+        join_data[join_data_index++] = TAS_LORAWAN_MTYPE_JOIN_ACCEPT << 5;      // [0]
+        join_data[join_data_index++] = JoinNonce;
+        join_data[join_data_index++] = JoinNonce >> 8;
+        join_data[join_data_index++] = JoinNonce >> 16;
+        join_data[join_data_index++] = NetID;
+        join_data[join_data_index++] = NetID >> 8;
+        join_data[join_data_index++] = NetID >> 16;
+        join_data[join_data_index++] = DevAddr;
+        join_data[join_data_index++] = DevAddr >> 8;
+        join_data[join_data_index++] = DevAddr >> 16;
+        join_data[join_data_index++] = DevAddr >> 24;
+        join_data[join_data_index++] = LoraWanSpreadingFactorToDataRate(true);  // DLSettings - Downlink
+        join_data[join_data_index++] = 1;                                       // RXDelay; [12]
+
+        // Add CFList to instruct device to use one channel
+        uint8_t CFList[16];
+        size_t  CFListSize = LoraWanCFList(CFList, sizeof(CFList));
+        uint8_t CFListIdx  = 0;
+        while (CFListSize > 0 ) {
+          join_data[join_data_index++] = CFList[CFListIdx++];  
+          CFListSize--;
+        }
+        
+        uint32_t NewMIC = LoraWanGenerateMIC(join_data, join_data_index, Lora->settings.end_node[node].AppKey);
+        join_data[join_data_index++] = NewMIC;
+        join_data[join_data_index++] = NewMIC >> 8;
+        join_data[join_data_index++] = NewMIC >> 16;
+        join_data[join_data_index++] = NewMIC >> 24;   //[16] or [32]
         uint8_t EncData[33];
         EncData[0] = join_data[0];
-        LoraWanEncryptJoinAccept(Lora->settings.end_node[node].AppKey, &join_data[1], 16, &EncData[1]);
-
-//        AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Join %17_H"), join_data);
+        LoraWanEncryptJoinAccept(Lora->settings.end_node[node].AppKey, &join_data[1], join_data_index-1, &EncData[1]);
 
         // 203106E5000000412E010003017CB31DD4 - Dragino
         // 203206E5000000422E010003016A210EEA - MerryIoT
-        LoraWanSendResponse(EncData, 17, TAS_LORAWAN_JOIN_ACCEPT_DELAY1);
+        LoraWanSendResponse(EncData, join_data_index, TAS_LORAWAN_JOIN_ACCEPT_DELAY1);
 
         result = true;
         break;
@@ -356,14 +444,16 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
     // 80    412E0100  80     2A00         0A     A58EF5E0D1DDE03424F0  6F2D56FA  - decrypt using AppSKey
     // 80    412E0100  80     2B00         0A     8F2F0D33E5C5027D57A6  F67C9DFE  - decrypt using AppSKey
     // 80    909AE100  00     0800         0A     EEC4A52568A346A8684E  F2D4BF05
-    // 40    412E0100  A0     1800         00     0395                  2C94B1D8  - FCtrl ADR support, Ack, FPort = 0 -> MAC commands, decrypt using NwkSKey
-    // 40    412E0100  A0     7800         00     78C9                  A60D8977  - FCtrl ADR support, Ack, FPort = 0 -> MAC commands, decrypt using NwkSKey
-    // 40    F3F51700  20     0100         00     2A7C                  407036A2  - FCtrl No ADR support, Ack, FPort = 0 -> MAC commands, decrypt using NwkSKey, response after LinkADRReq
+    // 40    412E0100  A0     1800         00     0395                  2C94B1D8  - FCtrl ADR support   , ADRACKReq=0, FPort = 0 -> MAC commands, decrypt using NwkSKey
+    // 40    412E0100  A0     7800         00     78C9                  A60D8977  - FCtrl ADR support   , ADRACKReq=0, FPort = 0 -> MAC commands, decrypt using NwkSKey
+    // 40    F3F51700  20     0100         00     2A7C                  407036A2  - FCtrl No ADR support, ADRACKReq=0, FPort = 0 -> MAC commands, decrypt using NwkSKey, response after LinkADRReq
     //                                                                            - MerryIoT
     // 40    422E0100  80     0400         78     B9C75DF9E8934C6651    A57DA6B1  - decrypt using AppSKey
     // 40    422E0100  80     0100         CC     7C462537AC00C07F99    5500BF2B  - decrypt using AppSKey
-    // 40    422E0100  A2     1800  0307   78     29FBF8FD9227729984    8C71E95B  - FCtrl ADR support, Ack, FOptsLen = 2 -> FOpts = MAC, response after LinkADRReq
-    // 40    F4F51700  A2     0200  0307   CC     6517D4AB06D32C9A9F    14CBA305  - FCtrl ADR support, Ack, FOptsLen = 2 -> FOpts = MAC, response after LinkADRReq
+    // 40    422E0100  A2     1800  0307   78     29FBF8FD9227729984    8C71E95B  - FCtrl ADR support, ADRACKReq=0, FOptsLen = 2 -> FOpts = MAC, response after LinkADRReq
+    // 40    F4F51700  A2     0200  0307   CC     6517D4AB06D32C9A9F    14CBA305  - FCtrl ADR support, ADRACKReq=0, FOptsLen = 2 -> FOpts = MAC, response after LinkADRReq
+    
+    bool bResponseSent = false;                  // Make sure do not send multiple responses
 
     uint32_t DevAddr = (uint32_t)data[1] | ((uint32_t)data[2] <<  8) | ((uint32_t)data[3] << 16) | ((uint32_t)data[4] << 24);
     for (uint32_t node = 0; node < TAS_LORAWAN_ENDNODES; node++) {
@@ -384,8 +474,15 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
       uint32_t CalcMIC = LoraWanComputeLegacyUplinkMIC(NwkSKey, DevAddr, FCnt, data, packet_size -4);
       if (MIC != CalcMIC) { continue; }                                  // Same device address but never joined
 
-      bool FCtrl_ADR = bitRead(FCtrl, 7);
-      bool FCtrl_ACK = bitRead(FCtrl, 5);
+      bool FCtrl_ADR       = bitRead(FCtrl, 7);
+      bool FCtrl_ADRACKReq = bitRead(FCtrl, 6);  //Device is requesting a response, so that it knows comms is still up.
+                                                 // else device will eventually enter backoff mode and we loose comms
+                                                 // ref: https://lora-alliance.org/wp-content/uploads/2021/11/LoRaWAN-Link-Layer-Specification-v1.0.4.pdf
+                                                 //      page 19  
+                                                 // In testing with a Dragino LHT52 device, FCtrl_ADRACKReq was set after 64 (0x40) uplinks (= 21.3 hrs)
+      bool FCtrl_ACK       = bitRead(FCtrl, 5);
+      bool Fctrl_ClassB    = bitRead(FCtrl, 4);
+
 /*
       if ((0 == FOptsLen) && (0 == FOpts[0])) {                          // MAC response
         FOptsLen = payload_len;
@@ -491,6 +588,7 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
             i++;
           }
           if (mac_data_idx > 0) {
+            bResponseSent = true;
             LoraWanSendMacResponse(node, mac_data, mac_data_idx);
           }
         }
@@ -526,6 +624,7 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
             data[packet_size -3] = MIC >> 8;
             data[packet_size -2] = MIC >> 16;
             data[packet_size -1] = MIC >> 24;
+            bResponseSent = true;
             LoraWanSendResponse(data, packet_size, TAS_LORAWAN_RECEIVE_DELAY1);
           }
         }
@@ -533,10 +632,17 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
           if (!bitRead(Lora->settings.end_node[node].flags, TAS_LORAWAN_FLAG_LINK_ADR_REQ) &&
               FCtrl_ADR && !FCtrl_ACK) {
             // Try to fix single channel and datarate
+            bResponseSent = true;
             LoraWanSendLinkADRReq(node);                               // Resend LinkADRReq
           }
         }
-      }
+      
+        if (!bResponseSent && FCtrl_ADRACKReq ) {
+          // FCtrl_ADRACKReq requires we send ANY Class A message. Here's one prepared earlier.
+          LoraWanSendLinkADRReq(node);
+        }
+
+      } // Not retransmission
       result = true;
       break;
     }
