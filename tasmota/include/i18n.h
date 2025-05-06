@@ -163,6 +163,7 @@
 #define D_JSON_PUMP "Pumped"
 #define D_JSON_RED "Red"
 #define D_JSON_REFERENCETEMPERATURE "ReferenceTemperature"
+#define D_JSON_REGION "Region"
 #define D_JSON_REMAINING "Remaining"
 #define D_JSON_RESET "Reset"
 #define D_JSON_RESISTANCE "Resistance"
