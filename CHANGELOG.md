@@ -25,7 +25,7 @@ All notable changes to this project will be documented in this file.
 - Berry `display.touch_update` wrongly applies resistive calibration (#23363)
 - NimBLE log_level definition conflict (#23366)
 - Matter and mDNS can be enabled at the same time (#23373)
-- Berry `introspect.module()` failed to load modules in files
+- Berry `introspect.module()` failed to load modules in files (#23376)
 
 ### Removed
 
