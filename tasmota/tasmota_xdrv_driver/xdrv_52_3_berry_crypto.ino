@@ -24,7 +24,7 @@
 #include "be_mem.h"
 #include "be_object.h"
 #include "include/ed25519.h"
-#include "include/poly1305_auth.h"
+#include "crypto/refc/poly1305-donna.h"
 
 /*********************************************************************************************\
  * members class
@@ -668,18 +668,22 @@ extern "C" {
     if (argc >= 2 && be_isbytes(vm, 1)    // data in
                   && be_isbytes(vm, 2)    // poly key
     ) {
-      char tag[POLY1305_TAGLEN];
+      unsigned char tag[16];
 
       size_t data_len = 0;
-      const char * data = (const char *) be_tobytes(vm, 1, &data_len);
+      const unsigned char * data = (const unsigned char *) be_tobytes(vm, 1, &data_len);
 
       size_t polykey_len = 0;
-      char * polykey = (char *) be_tobytes(vm, 2, &polykey_len);
-      if (polykey_len != POLY1305_KEYLEN) {
+      const unsigned char * polykey = (const unsigned char *) be_tobytes(vm, 2, &polykey_len);
+      if (polykey_len != 32) {
         AddLog(LOG_LEVEL_INFO, PSTR(" %d bytes"), polykey_len);
         be_raise(vm, "value_error", "poly key size must be 32 bytes");
       }
-      poly1305_auth(tag, data, data_len,polykey);
+      poly1305_context ctx;
+      poly1305_init(&ctx, polykey);
+      poly1305_update(&ctx, data, data_len);
+      poly1305_finish(&ctx, tag);
+
       be_pushbytes(vm, tag, sizeof(tag));
       be_return(vm); 
     }
