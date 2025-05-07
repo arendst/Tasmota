@@ -1,7 +1,7 @@
 /*
-  xdrv_73_8_lorawan_bridge.ino - LoRaWan EU868 support for Tasmota
+  xdrv_73_8_lorawan_bridge.ino - LoRaWan EU868/AU915 support for Tasmota
 
-  SPDX-FileCopyrightText: 2024 Theo Arends
+  SPDX-FileCopyrightText: 2024 Theo Arends, Rob Clark
 
   SPDX-License-Identifier: GPL-3.0-only
 */
@@ -17,6 +17,7 @@
  * EU868 LoRaWan uses at minimum alternating 3 frequencies and 6 spreadingfactors (datarate or DR)
  *  which makes the use of single fixed frequency and spreadingfactor hardware like
  *  SX127x (LiliGo T3, M5 LoRa868 or RFM95W) or SX126x (LiLiGo T3S3) a challenge.
+ * AU915 LoRaWan uses different frequencies for upload and download.
  * This driver uses one fixed frequency and spreadingfactor trying to tell the End-Device to do
  *  the same using Over The Air Activation (OTAA). In some cases the End-Device needs to be
  *  (serial) configured to use a single channel and fixed datarate.
@@ -32,6 +33,8 @@
  *      LoRaConfig {"Bandwidth":125}
  *      LoRaConfig {"CodingRate4":5}
  *      LoRaConfig {"SyncWord":52}
+ *  - Tasmota Lora has to be configured for AU915 using command
+ *     LoRaConfig 42[,<channel>]
  *  - LoRaWan has to be enabled (#define USE_LORAWAN_BRIDGE) and configured for the End-Device
  *     32 character AppKey using command LoRaWanAppKey <vendor provided appkey>
  *  - The End-Device needs to start it's LoRaWan join process as documented by vendor.
@@ -378,25 +381,6 @@ void LoraWanTickerSend(void) {
     Lora->Init();                                    // Necessary to re-init the SXxxxx chip in cases where TX/RX frequencies differ
   }
 }
-
-/*
-void LoraWanTickerSend(void) {
-  Lora->send_buffer_step--;
-  if (1 == Lora->send_buffer_step) {
-    Lora->rx = true;                                 // Always send during RX1
-    Lora->receive_time = 0;                          // Reset receive timer
-    LoraWan_Send.once_ms(TAS_LORAWAN_RECEIVE_DELAY2, LoraWanTickerSend);  // Retry after 1000 ms
-  }
-
-  bool uplink_profile = (Lora->settings.region == TAS_LORA_REGION_AU915);
-  if (Lora->rx) {                                    // If received in RX1 do not resend in RX2
-    LoraSend(Lora->send_buffer, Lora->send_buffer_len, true, uplink_profile);
-  } 
-  if (uplink_profile && (0 == Lora->send_buffer_step)) {
-    Lora->Init();                                    // Necessary to re-init the SXxxxx chip in cases where TX/RX frequencies differ
-  }
-}
-*/
 
 void LoraWanSendResponse(uint8_t* buffer, size_t len, uint32_t lorawan_delay) {
   free(Lora->send_buffer);                           // Free previous buffer (if any)
