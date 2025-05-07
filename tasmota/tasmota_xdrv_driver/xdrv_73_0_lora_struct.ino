@@ -24,7 +24,7 @@
 
 // AU915 value
 #ifndef TAS_LORA_AU915_FREQUENCY
-#define TAS_LORA_AU915_FREQUENCY                   915.0  // Allowed values range from 150.0 to 960.0 MHz
+#define TAS_LORA_AU915_FREQUENCY                   915.2  // Allowed values range from 150.0 to 960.0 MHz
 #endif
 
 // EU868 value
@@ -206,6 +206,12 @@ enum TasLoraWanCIDNode {
   TAS_LORAWAN_CID_DEVICE_TIME_REQ
 };
 
+enum LoRaWanRadioMode_t {
+  TAS_LORAWAN_RADIO_UPLINK,
+  TAS_LORAWAN_RADIO_RX1,
+  TAS_LORAWAN_RADIO_RX2
+};
+
 enum TasLoraRegion {
   TAS_LORA_REGION_EU868,                         // 0
   TAS_LORA_REGION_US915,                         // 1
@@ -223,6 +229,12 @@ enum TasLoraRegion {
 const char kLoraRegions[] PROGMEM = "EU868|US915|CN779|EU433|AU915|CN470|AS923|KR920|IN865|RU864";
 
 /*********************************************************************************************/
+
+typedef struct LoRaWanRadioInfo_t {
+  float   frequency;
+  float   bandwidth;
+  uint8_t spreading_factor;
+} LoRaWanRadioInfo_t;
 
 typedef struct LoraNodeData_t {
   float rssi;

@@ -63,6 +63,191 @@
  *    LoRaWanBridge 1
 \*********************************************************************************************/
 
+/*
+For LoraWan EU bands, the Uplink/Downlink (TX/RX) frequencies can be the same.
+For Others, same Uplink/Downlink (TX/RX) frequencies may not be allowed.
+See: https://lora-alliance.org/wp-content/uploads/2020/11/RP_2-1.0.2.pdf
+*/
+
+// Determines the channel from the current Uplink LoraSettings
+// return 0..71
+uint32_t LoraWanChannel(void) {
+  float fFrequencyDiff;
+  uint8_t uChannel = 0;
+
+  switch (Lora->settings.region) {
+    case TAS_LORA_REGION_AU915: 
+      if (125.0 == Lora->settings.bandwidth) {
+        fFrequencyDiff = Lora->settings.frequency - TAS_LORAWAN_AU915_FREQUENCY_UP1;
+        uChannel = (0.01 + (fFrequencyDiff / 0.2));  // 0.01 to fix rounding errors
+      } else {
+        fFrequencyDiff = Lora->settings.frequency - TAS_LORAWAN_AU915_FREQUENCY_UP2;
+        uChannel = 64 + ((0.01 + (fFrequencyDiff / 1.6)));
+      }
+      break;
+
+    //default:
+       //not implemented
+  }
+  return uChannel; 
+}
+
+/*****************************************************************************
+     LoraWanRadioInfo() 
+       Some regional profiles use different radio profiles for the Uplink, RX1, and RX2 transmissions
+
+       Get radio profiles for the Uplink, and RX1 & RX2 downlink transmissions
+                     RX1 & RX2 profiles are derived from Lora->settings
+     
+****************************************************************************/ 
+const uint8_t RX1DRs[] PROGMEM = {8,9,10,11,12,13,13};                 // DR0..6
+const uint8_t SF[]     PROGMEM = {12,11,10,9,8,7,8,0,12,11,10,9,8,7};  // DR0..13
+
+void LoraWanRadioInfo(uint8_t mode, void* pInfo) {
+  LoRaWanRadioInfo_t* pResult = (LoRaWanRadioInfo_t*) pInfo;
+ 
+  switch (Lora->settings.region) {
+    case TAS_LORA_REGION_AU915: {
+      //////////////// AU915 ////////////////////
+      /*    ref: https://lora-alliance.org/wp-content/uploads/2020/11/RP_2-1.0.2.pdf page 47
+      DR0  LoRa: SF12 / 125 kHz 
+      DR1  LoRa: SF11 / 125 kHz 
+      DR2  LoRa: SF10 / 125 kHz   <-- JOIN REQUEST 
+      DR3  LoRa: SF9  / 125 kHz 
+      DR4  LoRa: SF8  / 125 kHz 
+      DR5  LoRa: SF7  / 125 kHz 
+      DR6  LoRa: SF8  / 500 kHz        Same as DR12
+      DR7  LR-FHSS CR1/3: 1.523 MHz OCW 162
+      DR8  LoRa: SF12 / 500 kHz
+      DR9  LoRa: SF11 / 500 kHz 
+      DR10 LoRa: SF10 / 500 kHz 
+      DR11 LoRa: SF9  / 500 kHz 
+      DR12 LoRa: SF8  / 500 kHz        Same as DR6
+      DR13 LoRa: SF7  / 500 kHz 
+
+      UPLINK (RX) CHANNELS
+      There are 72 channels
+        0-63: DR0 to 5. Starting 915.2, incrementing by 0.2 Mhz to 927.8  <-- JOIN REQUEST
+        64-71: DR6     . Starting 915.9, incrementing by 1.6 MHz to 927.1
+        NOTE: Testing with two Dragino end devices shows they do not play nice with channels 64-71
+            1) LHT52 will JOIN OK on Ch64, but never sends any sensor messages on same channel
+            2) LHT65 will not even broadcast JOIN requests on any of the channels (as required by RP002)
+            For this reason, channels above 63 are not permitted.
+
+      DOWNLINK (TX) CHANNELS
+      There are 8 channels
+        0-7: DR8 to 13. Starting 923.3, incrementing by 0.6 MHz to 927.5
+
+      After an uplink:  Downlink (TX) link subchannel = Uplink (RX) Channel Number modulo 8   
+      e.g. --Uplink (RX)--     --Downlink (TX)--
+            Freq    Channel     Channel Frequency
+            915.2   0           0       923.3
+            927.8   63          7       927.1
+
+      After an uplink:  
+      Downlink DR for RX1 must follow this table
+      Uplink  Downlink
+      DR0     DR8
+      DR1     DR8
+      DR2     DR10   <----- channels 1-62
+      DR3     DR11
+      DR4     DR12
+      DR5     DR13
+      DR6     DR13  <------ channels 63-71
+
+      Downlink DR for RX2 must be DR8
+
+      Downlink
+        Reference: https://lora-alliance.org/wp-content/uploads/2020/11/lorawan_regional_parameters_v1.0.3reva_0.pdf)
+        Assume this is in response to an uplink RX, so we already know RX freq & bw & sf
+        TX channel depends on RX freq
+        DR for RX1 depends on incoming DR (and RX1DROffset)
+        DR for RX2 is fixed ar DR8 
+        
+        Tasmota does not support different RX1 & RX2 DRs (yet), so just use DR8 and rely on RX2 arriving at end device OK.
+      */
+      uint32_t uChannel = LoraWanChannel();
+      uint8_t UplinkChannelBand = uChannel %8; //0..7
+      switch (mode) {
+        case TAS_LORAWAN_RADIO_UPLINK: {
+  //      if (uChannel > 71) uChannel = 71;   See note above
+          if (uChannel > 63) uChannel = 63;   
+          if (uChannel < 64) {
+              (*pResult).frequency        = TAS_LORAWAN_AU915_FREQUENCY_UP1 + (uChannel * 0.2);
+              (*pResult).bandwidth        = TAS_LORAWAN_AU915_BANDWIDTH_UP1;               // DR2
+              (*pResult).spreading_factor = TAS_LORAWAN_AU915_SPREADING_FACTOR_UP1;        // DR2
+          } else {
+              (*pResult).frequency        = TAS_LORAWAN_AU915_FREQUENCY_UP2 + ((uChannel-64) * 1.6);
+              (*pResult).bandwidth        = TAS_LORAWAN_AU915_BANDWIDTH_UP2;               // DR6
+              (*pResult).spreading_factor = TAS_LORAWAN_AU915_SPREADING_FACTOR_UP2;        // DR6
+          }
+          break;
+        }
+        case TAS_LORAWAN_RADIO_RX1: {
+          // RX1 DR depends on the Uplink settings
+          // https://lora-alliance.org/wp-content/uploads/2020/11/lorawan_regional_parameters_v1.0.3reva_0.pdf
+          // Page 41
+          uint32_t UplinkDR = (125.0 == Lora->settings.bandwidth) ? (12 - Lora->settings.spreading_factor) : 6;  // 0 .. 6
+          uint32_t RX1DR    = pgm_read_byte(&RX1DRs[UplinkDR]);
+          uint32_t RX1SF    = pgm_read_byte(&SF[RX1DR]);
+          float    RX1BW    = (RX1DR > 5) ? 500.0 : 125.0;      
+          (*pResult).frequency        = TAS_LORAWAN_AU915_FREQUENCY_DN + (UplinkChannelBand * 0.6);
+          (*pResult).bandwidth        = RX1BW;
+          (*pResult).spreading_factor = RX1SF;
+          break;
+        }
+        case TAS_LORAWAN_RADIO_RX2: {
+          (*pResult).frequency        = TAS_LORAWAN_AU915_FREQUENCY_DN;
+          (*pResult).bandwidth        = TAS_LORAWAN_AU915_BANDWIDTH_RX2;
+          (*pResult).spreading_factor = TAS_LORAWAN_AU915_SPREADING_FACTOR_RX2;
+          break;
+        }
+//        default:
+//          not implemented
+      }
+      break;
+    }
+    default: {  // TAS_LORA_REGION_EU868
+      //Default TX/RX1/TX1 same
+      (*pResult).frequency        = TAS_LORAWAN_FREQUENCY;
+      (*pResult).bandwidth        = TAS_LORAWAN_BANDWIDTH;
+      (*pResult).spreading_factor = TAS_LORAWAN_SPREADING_FACTOR;
+    }
+  }
+}
+
+bool LoraWanDefaults(uint32_t region = TAS_LORA_REGION_EU868, LoRaWanRadioMode_t mode = TAS_LORAWAN_RADIO_UPLINK) {
+  bool multi_profile = false;
+  Lora->settings.region           = region;
+  switch (region) {
+    case TAS_LORA_REGION_AU915:
+      // TO DO: Need 3 profiles: Uplink, RX1, RX2
+      // Works OK for now as RX2 always received by end device.
+      multi_profile = true;
+      if ((Lora->settings.frequency < 915.2) || (Lora->settings.frequency > 927.8)) {
+        Lora->settings.frequency = TAS_LORAWAN_AU915_FREQUENCY_UP1;
+      }
+      LoRaWanRadioInfo_t RadioInfo;
+      LoraWanRadioInfo(mode, &RadioInfo);          // Region specific
+      Lora->settings.frequency        = RadioInfo.frequency;       
+      Lora->settings.bandwidth        = RadioInfo.bandwidth;     
+      Lora->settings.spreading_factor = RadioInfo.spreading_factor;
+      break;
+    default:  // TAS_LORA_REGION_EU868
+      Lora->settings.frequency        = TAS_LORAWAN_FREQUENCY;
+      Lora->settings.bandwidth        = TAS_LORAWAN_BANDWIDTH;
+      Lora->settings.spreading_factor = TAS_LORAWAN_SPREADING_FACTOR;
+  }
+  Lora->settings.coding_rate      = TAS_LORAWAN_CODING_RATE;
+  Lora->settings.sync_word        = TAS_LORAWAN_SYNC_WORD;
+  Lora->settings.output_power     = TAS_LORAWAN_OUTPUT_POWER;
+  Lora->settings.preamble_length  = TAS_LORAWAN_PREAMBLE_LENGTH;
+  Lora->settings.current_limit    = TAS_LORAWAN_CURRENT_LIMIT;
+  Lora->settings.implicit_header  = TAS_LORAWAN_HEADER;
+  Lora->settings.crc_bytes        = TAS_LORAWAN_CRC_BYTES;
+  return multi_profile;
+}
+
 /*********************************************************************************************\
  * Driver Settings load and save
 \*********************************************************************************************/
@@ -146,6 +331,41 @@ void LoraWanDeleteData(void) {
 #include <Ticker.h>
 Ticker LoraWan_Send;
 
+void LoraWanSend(uint8_t* data, uint32_t len, bool uplink_profile) {
+  LoraSettings_t RXsettings;
+  if (uplink_profile) { 
+    // Different TX/RX profiles allowed. (e.g. LoRaWAN)
+    // For CmndLoraSend() ... do not allow changes. 
+    RXsettings = Lora->settings;                     // Make a copy;
+    LoraWanDefaults(Lora->settings.region, TAS_LORAWAN_RADIO_RX2);  // Set Downlink profile TO DO: Support different RX1 & RX2 profiles
+    Lora->Config();  
+  }
+  LoraSend(data, len, true);
+  if (uplink_profile) {
+    Lora->settings = RXsettings;                     // Restore copy
+    Lora->Config();
+  }
+}
+
+void LoraWanTickerSend(void) {
+  Lora->send_buffer_step--;
+  if (1 == Lora->send_buffer_step) {
+    Lora->rx = true;                                 // Always send during RX1
+    Lora->receive_time = 0;                          // Reset receive timer
+    LoraWan_Send.once_ms(TAS_LORAWAN_RECEIVE_DELAY2, LoraWanTickerSend);  // Retry after 1000 ms
+  }
+
+  bool uplink_profile = (Lora->settings.region == TAS_LORA_REGION_AU915);
+  if (Lora->rx) {                                    // If received in RX1 do not resend in RX2
+    LoraWanSend(Lora->send_buffer, Lora->send_buffer_len, uplink_profile);
+  }
+
+  if (uplink_profile && (0 == Lora->send_buffer_step)) {
+    Lora->Init();                                    // Necessary to re-init the SXxxxx chip in cases where TX/RX frequencies differ
+  }
+}
+
+/*
 void LoraWanTickerSend(void) {
   Lora->send_buffer_step--;
   if (1 == Lora->send_buffer_step) {
@@ -162,6 +382,7 @@ void LoraWanTickerSend(void) {
     Lora->Init();                                    // Necessary to re-init the SXxxxx chip in cases where TX/RX frequencies differ
   }
 }
+*/
 
 void LoraWanSendResponse(uint8_t* buffer, size_t len, uint32_t lorawan_delay) {
   free(Lora->send_buffer);                           // Free previous buffer (if any)
@@ -184,7 +405,7 @@ size_t LoraWanCFList(uint8_t * CFList, size_t uLen) {
     case TAS_LORA_REGION_AU915: {
       if (uLen < 16) return 0;
 
-      uint8_t uChannel   = LoraChannel();            // 0..71
+      uint8_t uChannel   = LoraWanChannel();         // 0..71
       uint8_t uMaskByte  = uChannel /8;              // 0..8
         
       // Add first 10 bytes
@@ -279,7 +500,7 @@ void LoraWanSendLinkADRReq(uint32_t node) {
     case TAS_LORA_REGION_AU915: {
       //Ref: https://lora-alliance.org/wp-content/uploads/2020/11/lorawan_regional_parameters_v1.0.3reva_0.pdf 
       //     page 39
-      uint8_t uChannel   = LoraChannel();            // 0..71
+      uint8_t uChannel   = LoraWanChannel();         // 0..71
       uint8_t ChMaskCntl = uChannel/16.0;            // 0..4
       uChannel           = uChannel%16;              // 0..15
       uint16_t uMask     = 0x01 << uChannel;
