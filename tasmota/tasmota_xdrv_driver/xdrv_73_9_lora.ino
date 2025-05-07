@@ -48,17 +48,17 @@ void LoraSettings2Json(bool show = false) {
 #ifdef USE_LORAWAN_BRIDGE
   if (show && (Lora->settings.region == TAS_LORA_REGION_AU915)) {
     LoRaWanRadioInfo_t Rx1Info;
-    LoraWanRadioInfo(TAS_LORAWAN_RADIO_RX1, &Rx1Info);   // Get Rx1Info with values used for RX1 transmit window. (Region specific, calculated from Uplink radio settings)
+    LoraWanRadioInfo(TAS_LORAWAN_RADIO_RX1, &Rx1Info, LoraWanFrequencyToChannel());  // Get Rx1Info with values used for RX1 transmit window. (Region specific, calculated from Uplink radio settings)
     LoRaWanRadioInfo_t Rx2Info;
-    LoraWanRadioInfo(TAS_LORAWAN_RADIO_RX2, &Rx2Info);   // Get Rx2Info 
+    LoraWanRadioInfo(TAS_LORAWAN_RADIO_RX2, &Rx2Info, LoraWanFrequencyToChannel());  // Get Rx2Info 
     ResponseAppend_P(PSTR(",\"" D_JSON_FREQUENCY "\":[%1_f,%1_f,%1_f]"), &Lora->settings.frequency, &Rx1Info.frequency, &Rx2Info.frequency);  // xxx.x MHz
     ResponseAppend_P(PSTR(",\"" D_JSON_BANDWIDTH "\":[%1_f,%1_f,%1_f]"), &Lora->settings.bandwidth, &Rx1Info.bandwidth, &Rx2Info.bandwidth);  // xxx.x kHz
     ResponseAppend_P(PSTR(",\"" D_JSON_SPREADING_FACTOR "\":[%d,%d,%d]"), Lora->settings.spreading_factor, Rx1Info.spreading_factor, Rx2Info.spreading_factor);
   } else
 #endif  // USE_LORAWAN_BRIDGE
   {
-    ResponseAppend_P(PSTR(",\"" D_JSON_FREQUENCY "\":%1_f"), &Lora->settings.frequency);             // xxx.x MHz
-    ResponseAppend_P(PSTR(",\"" D_JSON_BANDWIDTH "\":%1_f"), &Lora->settings.bandwidth);             // xxx.x kHz
+    ResponseAppend_P(PSTR(",\"" D_JSON_FREQUENCY "\":%1_f"), &Lora->settings.frequency);           // xxx.x MHz
+    ResponseAppend_P(PSTR(",\"" D_JSON_BANDWIDTH "\":%1_f"), &Lora->settings.bandwidth);           // xxx.x kHz
     ResponseAppend_P(PSTR(",\"" D_JSON_SPREADING_FACTOR "\":%d"), Lora->settings.spreading_factor);
   }
   ResponseAppend_P(PSTR(",\"" D_JSON_CODINGRATE4 "\":%d"), Lora->settings.coding_rate);
@@ -443,19 +443,33 @@ void CmndLoraConfig(void) {
   // LoRaConfig 1                                     - Set EU868 default parameters
   // LoRaConfig 2                                     - Set EU868 default LoRaWan bridge parameters
   // LoRaConfig 41                                    - Set AU915 default parameters
-  // LoRaConfig 42                                    - Set AU915 default LoRaWan bridge parameters
+  // LoRaConfig 42                                    - Set AU915 default LoRaWan bridge parameters with channel 0
+  // LoRaConfig 42,10                                 - Set AU915 default LoRaWan bridge parameters with channel 10
   // LoRaConfig {"Frequency":868.0,"Bandwidth":125.0} - Enter float parameters
   // LoRaConfig {"SyncWord":18}                       - Enter decimal parameter (=0x12)
   if (XdrvMailbox.data_len > 0) {
     if (XdrvMailbox.payload > 0) {
-      uint32_t region = XdrvMailbox.payload / 10;
-      uint32_t option = ((XdrvMailbox.payload -1) &1) +1;     // Option 1 or 2
+      uint32_t region = (XdrvMailbox.payload / 10) &0x0F;    // 0 .. 15
+      if (region > 9) { region = 0; }                        // 0 .. 9
+      uint32_t option = ((XdrvMailbox.payload -1) &0x01) +1; // Option 1 or 2
       switch (option) {
         case 1: 
           LoraDefaults(region);                               // Default region LoRa values
           break;
 #ifdef USE_LORAWAN_BRIDGE
-        case 2: 
+        case 2:
+          switch (region) {
+            case TAS_LORA_REGION_AU915:
+              uint32_t parm[2] = { 0, 0 };
+              ParseParameters(2, parm);                       // parm[1] will hold channel
+              Lora->settings.region = region;                 // Need valid region for LoraWanRadioInfo()
+              LoRaWanRadioInfo_t UpInfo;
+              LoraWanRadioInfo(TAS_LORAWAN_RADIO_UPLINK, &UpInfo, parm[1]);  // Set uplink frequency based on channel
+              Lora->settings.frequency = UpInfo.frequency;       
+              break;
+//            default:
+//              not implemented
+          }
           LoraWanDefaults(region);                            // Default region LoRaWan values
           break;
 #endif  // USE_LORAWAN_BRIDGE

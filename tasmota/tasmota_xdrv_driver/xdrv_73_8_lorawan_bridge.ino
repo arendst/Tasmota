@@ -69,27 +69,45 @@ For Others, same Uplink/Downlink (TX/RX) frequencies may not be allowed.
 See: https://lora-alliance.org/wp-content/uploads/2020/11/RP_2-1.0.2.pdf
 */
 
-// Determines the channel from the current Uplink LoraSettings
-// return 0..71
-uint32_t LoraWanChannel(void) {
-  float fFrequencyDiff;
-  uint8_t uChannel = 0;
+uint32_t LoraWanFrequencyToChannel(void) {
+  // Determines the channel from the current Uplink LoraSettings
+  uint32_t channel = 0;
 
   switch (Lora->settings.region) {
     case TAS_LORA_REGION_AU915: 
-      if (125.0 == Lora->settings.bandwidth) {
-        fFrequencyDiff = Lora->settings.frequency - TAS_LORAWAN_AU915_FREQUENCY_UP1;
-        uChannel = (0.01 + (fFrequencyDiff / 0.2));  // 0.01 to fix rounding errors
+      // Return 0 .. 71
+      if ((Lora->settings.frequency < 915.2) || (Lora->settings.frequency > 927.8)) {
+        Lora->settings.frequency = TAS_LORAWAN_AU915_FREQUENCY_UP1;  // Fix initial frequency
+        Lora->settings.bandwidth = TAS_LORAWAN_AU915_BANDWIDTH_UP1;  // Fix initial bandwidth
+      }
+      else if (125.0 == Lora->settings.bandwidth) {
+        float fFrequencyDiff = Lora->settings.frequency - TAS_LORAWAN_AU915_FREQUENCY_UP1;
+        channel = (0.01 + (fFrequencyDiff / 0.2));  // 0.01 to fix rounding errors
       } else {
-        fFrequencyDiff = Lora->settings.frequency - TAS_LORAWAN_AU915_FREQUENCY_UP2;
-        uChannel = 64 + ((0.01 + (fFrequencyDiff / 1.6)));
+        float fFrequencyDiff = Lora->settings.frequency - TAS_LORAWAN_AU915_FREQUENCY_UP2;
+        channel = 64 + ((0.01 + (fFrequencyDiff / 1.6)));
       }
       break;
-
-    //default:
-       //not implemented
+    default:  // TAS_LORA_REGION_EU868
+      // EU863-870 (EU868) JoinReq message frequencies are 868.1, 868.3 and 868.5
+      uint32_t frequency = (Lora->settings.frequency * 10);
+      uint32_t channel = 250;
+      if (8681 == frequency) {
+        channel = 0;
+      }
+      else if (8683 == frequency) {
+        channel = 1;
+      }
+      else if (8685 == frequency) {
+        channel = 2;
+      }
+      if (250 == channel) {
+        Lora->settings.frequency = 868.1;
+        Lora->Config();
+        channel = 0;
+      }
   }
-  return uChannel; 
+  return channel; 
 }
 
 /*****************************************************************************
@@ -103,7 +121,7 @@ uint32_t LoraWanChannel(void) {
 const uint8_t RX1DRs[] PROGMEM = {8,9,10,11,12,13,13};                 // DR0..6
 const uint8_t SF[]     PROGMEM = {12,11,10,9,8,7,8,0,12,11,10,9,8,7};  // DR0..13
 
-void LoraWanRadioInfo(uint8_t mode, void* pInfo) {
+void LoraWanRadioInfo(uint8_t mode, void* pInfo, uint32_t uChannel = 0) {
   LoRaWanRadioInfo_t* pResult = (LoRaWanRadioInfo_t*) pInfo;
  
   switch (Lora->settings.region) {
@@ -166,8 +184,7 @@ void LoraWanRadioInfo(uint8_t mode, void* pInfo) {
         
         Tasmota does not support different RX1 & RX2 DRs (yet), so just use DR8 and rely on RX2 arriving at end device OK.
       */
-      uint32_t uChannel = LoraWanChannel();
-      uint8_t UplinkChannelBand = uChannel %8; //0..7
+      uint8_t UplinkChannelBand = LoraWanFrequencyToChannel() %8;  // 0..7
       switch (mode) {
         case TAS_LORAWAN_RADIO_UPLINK: {
   //      if (uChannel > 71) uChannel = 71;   See note above
@@ -224,11 +241,8 @@ bool LoraWanDefaults(uint32_t region = TAS_LORA_REGION_EU868, LoRaWanRadioMode_t
       // TO DO: Need 3 profiles: Uplink, RX1, RX2
       // Works OK for now as RX2 always received by end device.
       multi_profile = true;
-      if ((Lora->settings.frequency < 915.2) || (Lora->settings.frequency > 927.8)) {
-        Lora->settings.frequency = TAS_LORAWAN_AU915_FREQUENCY_UP1;
-      }
       LoRaWanRadioInfo_t RadioInfo;
-      LoraWanRadioInfo(mode, &RadioInfo);          // Region specific
+      LoraWanRadioInfo(mode, &RadioInfo, LoraWanFrequencyToChannel());  // Region specific
       Lora->settings.frequency        = RadioInfo.frequency;       
       Lora->settings.bandwidth        = RadioInfo.bandwidth;     
       Lora->settings.spreading_factor = RadioInfo.spreading_factor;
@@ -405,7 +419,7 @@ size_t LoraWanCFList(uint8_t * CFList, size_t uLen) {
     case TAS_LORA_REGION_AU915: {
       if (uLen < 16) return 0;
 
-      uint8_t uChannel   = LoraWanChannel();         // 0..71
+      uint8_t uChannel   = LoraWanFrequencyToChannel();  // 0..71
       uint8_t uMaskByte  = uChannel /8;              // 0..8
         
       // Add first 10 bytes
@@ -455,27 +469,6 @@ uint32_t LoraWanSpreadingFactorToDataRate(bool downlink) {
   }
 }
 
-uint32_t LoraWanFrequencyToChannel(void) {
-  // EU863-870 (EU868) JoinReq message frequencies are 868.1, 868.3 and 868.5
-  uint32_t frequency = (Lora->settings.frequency * 10);
-  uint32_t channel = 250;
-  if (8681 == frequency) {
-    channel = 0;
-  }
-  else if (8683 == frequency) {
-    channel = 1;
-  }
-  else if (8685 == frequency) {
-    channel = 2;
-  }
-  if (250 == channel) {
-    Lora->settings.frequency = 868.1;
-    Lora->Config();
-    channel = 0;
-  }
-  return channel;
-}
-
 /*********************************************************************************************/
 
 void LoraWanSendLinkADRReq(uint32_t node) {
@@ -500,9 +493,9 @@ void LoraWanSendLinkADRReq(uint32_t node) {
     case TAS_LORA_REGION_AU915: {
       //Ref: https://lora-alliance.org/wp-content/uploads/2020/11/lorawan_regional_parameters_v1.0.3reva_0.pdf 
       //     page 39
-      uint8_t uChannel   = LoraWanChannel();         // 0..71
-      uint8_t ChMaskCntl = uChannel/16.0;            // 0..4
-      uChannel           = uChannel%16;              // 0..15
+      uint8_t uChannel   = LoraWanFrequencyToChannel();  // 0..71
+      uint8_t ChMaskCntl = uChannel /16.0;           // 0..4
+      uChannel           = uChannel %16;             // 0..15
       uint16_t uMask     = 0x01 << uChannel;
 
       data[9] =  LoraWanSpreadingFactorToDataRate(false) << 4 | 0x0F;  // Uplink DataRate_TXPower Should be 'DR2' for & 'unchanged' = 0x2F
