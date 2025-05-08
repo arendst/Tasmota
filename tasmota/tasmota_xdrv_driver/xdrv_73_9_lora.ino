@@ -449,9 +449,9 @@ void CmndLoraConfig(void) {
   // LoRaConfig {"SyncWord":18}                       - Enter decimal parameter (=0x12)
   if (XdrvMailbox.data_len > 0) {
     if (XdrvMailbox.payload > 0) {
-      uint32_t region = (XdrvMailbox.payload / 10) &0x0F;    // 0 .. 15
-      if (region > 9) { region = 0; }                        // 0 .. 9
-      uint32_t option = ((XdrvMailbox.payload -1) &0x01) +1; // Option 1 or 2
+      uint32_t region = (XdrvMailbox.payload / 10) &0x0F;     // 0 .. 15
+      if (region > 9) { region = 0; }                         // 0 .. 9
+      uint32_t option = ((XdrvMailbox.payload -1) &0x01) +1;  // Option 1 or 2
       switch (option) {
         case 1: 
           LoraDefaults(region);                               // Default region LoRa values
@@ -484,6 +484,8 @@ void CmndLoraConfig(void) {
         Lora->Config();
       }
     }
+    uint8_t data[1] = { 0 };
+    LoraSend(data, 0, false);                                 // Fix init SX12xx after config change
   }
   ResponseCmnd();  // {"LoRaConfig":
   ResponseAppend_P(PSTR("{"));
