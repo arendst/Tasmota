@@ -2,6 +2,10 @@
 
 #define XDRV_48 48
 
+#ifndef TIMEPROP_FALLBACKTIME_MULTIPLIER
+#define TIMEPROP_FALLBACKTIME_MULTIPLIER 2
+#endif
+
 const char kTimepropCommands[] PROGMEM = "|" D_CMND_TIMEPROP_SET "|" D_CMND_TIMEPROP_ENABLE "|" D_CMND_TIMEPROP_CYCLE_LENGTH "|" D_CMND_TIMEPROP_COUNT "|" D_CMND_TIMEPROP_LOAD_TYPE "|" D_CMND_TIMEPROP_FALLBACK_AFTER "|" D_CMND_TIMEPROP_FALLBACK_VALUE;
 
 void (*const TimepropCommand[])(void) PROGMEM = {
@@ -151,18 +155,38 @@ void TimePropSaveSettings(void)
 /*********************************************************************************************\
  * Internal
 \*********************************************************************************************/
-// takes percent value and returns the 4 bit value we use to store in config
+// takes percent value and returns the 3 bit value we use to store in config
 uint8_t reduceFallbackValue(uint8_t percentValue)
 {
-  float fourBitValue = (float)percentValue * 15.0f / 100.0f;
+  float fourBitValue = (float)percentValue * 7.0f / 100.0f;
   return round(fourBitValue);
 }
 
 // takes 4bit value and returns the percent value
 uint8_t expandFallbackValue(uint8_t fourBitValue)
 {
-  float percentValue = (float)fourBitValue * 100.0f / 15.0f;
+  float percentValue = (float)fourBitValue * 100.0f / 7.0f;
   return round(percentValue);
+}
+
+// takes percent value and returns the 3 bit value we use to store in config
+uint8_t reduceFallbackTime(uint8_t hourValue)
+{
+  uint8_t fourBitValue = hourValue / TIMEPROP_FALLBACKTIME_MULTIPLIER;
+
+  if (fourBitValue > 15)
+  {
+    fourBitValue = 15;
+  }
+
+  return fourBitValue;
+}
+
+// takes 4bit value and returns the percent value
+uint8_t expandFallbackTime(uint8_t fourBitValue)
+{
+  uint8_t hourValue = fourBitValue * TIMEPROP_FALLBACKTIME_MULTIPLIER;
+  return hourValue;
 }
 
 /*********************************************************************************************\
@@ -181,7 +205,7 @@ void LoadPersistentSettings(void)
   Timeprop.cycle_length = Settings->timeprop_cfg.cycle_length;
   Timeprop.count = Settings->timeprop_cfg.count + 1;
   Timeprop.load_type = Settings->timeprop_cfg.load_type;
-  Timeprop.fallback_time = Settings->timeprop_cfg.fallback_time;
+  Timeprop.fallback_time = expandFallbackTime(Settings->timeprop_cfg.fallback_time);
   Timeprop.fallback_value = expandFallbackValue(Settings->timeprop_cfg.fallback_value);
 }
 
@@ -311,11 +335,12 @@ void CmndTimePropLoadType(void)
 
 void CmndTimePropFallbackAfter(void)
 {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 31))
+  if (XdrvMailbox.payload >= 0)
   {
-    Timeprop.fallback_time = XdrvMailbox.payload;
 
-    Settings->timeprop_cfg.fallback_time = Timeprop.fallback_time;
+    Settings->timeprop_cfg.fallback_time = reduceFallbackTime(XdrvMailbox.payload);
+    Timeprop.fallback_time = expandFallbackTime(Settings->timeprop_cfg.fallback_time);
+
     SettingsSave(0);
   }
   ResponseCmndNumber(Timeprop.fallback_time);
@@ -346,7 +371,7 @@ void TimepropEverySecond(void)
     return;
   }
 
-  if (Timeprop.fallback_value > 0)
+  if (Timeprop.fallback_time > 0)
   {
     if (seconds_since_set == Timeprop.fallback_time * 60 * 60)
     {
@@ -374,12 +399,13 @@ void TimepropEverySecond(void)
     {
       AddLog(LOG_LEVEL_DEBUG, PSTR("TPR: On %d. STart at: %d for %d"), i, TimepropStartTimes[i], GetOpenSeconds(i, cycle_length_seconds));
       TimepropSecondsLeft[i] = GetOpenSeconds(i, cycle_length_seconds);
+      AddLog(LOG_LEVEL_INFO, PSTR("TPR: Trigger Power On %d"), i + 1);
       ExecuteCommandPower(i + 1, POWER_ON, SRC_IGNORE);
     }
 
     if (TimepropSecondsLeft[i] == 1)
     {
-      AddLog(LOG_LEVEL_DEBUG, PSTR("TPR: Off %d."), i);
+      AddLog(LOG_LEVEL_INFO, PSTR("TPR: Trigger Power Off %d"), i + 1);
       ExecuteCommandPower(i + 1, POWER_OFF, SRC_IGNORE);
     }
 

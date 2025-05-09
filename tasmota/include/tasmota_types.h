@@ -480,11 +480,11 @@ typedef union {
   uint16_t data;
   struct {
     uint16_t enable : 1;
-    uint16_t count : 3;
+    uint16_t count : 5;
     uint16_t cycle_length : 2;
     uint16_t load_type : 1;
-    uint16_t fallback_value : 4;
-    uint16_t fallback_time : 5;
+    uint16_t fallback_value : 3;
+    uint16_t fallback_time : 4;
   };
 } TimePropCfg;
 
