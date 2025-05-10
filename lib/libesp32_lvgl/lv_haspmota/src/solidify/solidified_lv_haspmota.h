@@ -12457,7 +12457,7 @@ be_local_class(lvh_page,
     be_str_weak(lvh_page)
 );
 extern const bclass be_class_HASPmota;
-// compact class 'HASPmota' ktab size: 129, total: 208 (saved 632 bytes)
+// compact class 'HASPmota' ktab size: 129, total: 209 (saved 640 bytes)
 static const bvalue be_ktab_class_HASPmota[129] = {
   /* K0   */  be_nested_str_weak(has),
   /* K1   */  be_nested_str_weak(page),
@@ -13905,7 +13905,7 @@ be_local_closure(class_HASPmota_parse,   /* name */
     &be_ktab_class_HASPmota,     /* shared constants */
     be_str_weak(parse),
     &be_const_str_solidified,
-    ( &(const binstruction[21]) {  /* code */
+    ( &(const binstruction[23]) {  /* code */
       0xA40ACC00,  //  0000  IMPORT	R2	K102
       0x8C0C056B,  //  0001  GETMET	R3	R2	K107
       0x5C140200,  //  0002  MOVE	R5	R1
@@ -13914,19 +13914,21 @@ be_local_closure(class_HASPmota_parse,   /* name */
       0x5C140600,  //  0005  MOVE	R5	R3
       0x7C100200,  //  0006  CALL	R4	1
       0x1C100941,  //  0007  EQ	R4	R4	K65
-      0x78120009,  //  0008  JMPF	R4	#0013
-      0x8C100170,  //  0009  GETMET	R4	R0	K112
-      0x5C180600,  //  000A  MOVE	R6	R3
-      0x7C100400,  //  000B  CALL	R4	2
-      0x8C100173,  //  000C  GETMET	R4	R0	K115
-      0x5C180600,  //  000D  MOVE	R6	R3
-      0x881C0105,  //  000E  GETMBR	R7	R0	K5
-      0x88200104,  //  000F  GETMBR	R8	R0	K4
-      0x941C0E08,  //  0010  GETIDX	R7	R7	R8
-      0x7C100600,  //  0011  CALL	R4	3
-      0x70020000,  //  0012  JMP		#0014
-      0xB006E37D,  //  0013  RAISE	1	K113	K125
-      0x80000000,  //  0014  RET	0
+      0x7812000B,  //  0008  JMPF	R4	#0015
+      0x88100104,  //  0009  GETMBR	R4	R0	K4
+      0x90020604,  //  000A  SETMBR	R0	K3	R4
+      0x8C100170,  //  000B  GETMET	R4	R0	K112
+      0x5C180600,  //  000C  MOVE	R6	R3
+      0x7C100400,  //  000D  CALL	R4	2
+      0x8C100173,  //  000E  GETMET	R4	R0	K115
+      0x5C180600,  //  000F  MOVE	R6	R3
+      0x881C0105,  //  0010  GETMBR	R7	R0	K5
+      0x88200103,  //  0011  GETMBR	R8	R0	K3
+      0x941C0E08,  //  0012  GETIDX	R7	R7	R8
+      0x7C100600,  //  0013  CALL	R4	3
+      0x70020000,  //  0014  JMP		#0016
+      0xB006E37D,  //  0015  RAISE	1	K113	K125
+      0x80000000,  //  0016  RET	0
     })
   )
 );

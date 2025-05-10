@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Platform from 2025.04.30 to 2025.05.40, Framework (Arduino Core) from v3.1.3.250411 to v3.2.0.250504 and IDF from v5.3.2.250403 to v5.4.1.250501 (#23397)
 
 ### Fixed
+- Fix `haspmota.parse()` page parsing
 
 ### Removed
 
