@@ -3,7 +3,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [14.6.0.1] 
+## [14.6.0.2]
+### Added
+
+### Breaking Changed
+
+### Changed
+- ESP32 Platform from 2025.04.30 to 2025.05.40, Framework (Arduino Core) from v3.1.3.250411 to v3.2.0.250504 and IDF from v5.3.2.250403 to v5.4.1.250501 (#23397)
+
+### Fixed
+
+### Removed
+
+## [14.6.0.1] 20250510
 ### Added
 - Command `JsonPP 0..7` to enable (>0) JSON Pretty Print on user interfaces and set number of indents
 - Command `JsonPP <command>|backlog <command>;...` to enable JSON PP only once
@@ -13,7 +25,7 @@ All notable changes to this project will be documented in this file.
 - WebUI status line left and renamed events `FUNC_WEB_STATUS_LEFT` and `FUNC_WEB_STATUS_RIGHT` (#23354)
 - WebUI heap status (#23356)
 - Support for multi channel AU915-928 LoRaWanBridge by Rob Clark (#23372)
-- HASPmota add `antiburn()`
+- HASPmota add `antiburn()` (#23400)
 
 ### Breaking Changed
 
@@ -28,10 +40,6 @@ All notable changes to this project will be documented in this file.
 - NimBLE log_level definition conflict (#23366)
 - Matter and mDNS can be enabled at the same time (#23373)
 - Berry `introspect.module()` failed to load modules in files (#23376)
-
-### Removed
-
-
 
 ## [Released]
 
