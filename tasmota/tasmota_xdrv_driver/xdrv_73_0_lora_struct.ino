@@ -251,6 +251,7 @@ typedef struct LoraEndNode_t {
   uint32_t FCntUp;
   uint32_t FCntDown;
   String name;
+  String decoder;
   uint16_t DevNonce;
   uint16_t flags;
   uint8_t AppKey[TAS_LORAWAN_AES128_KEY_SIZE];

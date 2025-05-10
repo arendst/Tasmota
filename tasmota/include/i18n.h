@@ -398,6 +398,7 @@
   #define D_JSON_FLAG "FLAG"
   #define D_JSON_BASE "BASE"
   #define D_JSON_CMND "CMND"
+  #define D_JSON_DCDR "DCDR"
 #define D_CMND_TEMPOFFSET "TempOffset"
 #define D_CMND_HUMOFFSET "HumOffset"
 #define D_CMND_GLOBAL_TEMP "GlobalTemp"

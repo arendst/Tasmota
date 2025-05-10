@@ -66,6 +66,87 @@
  *    LoRaWanBridge 1
 \*********************************************************************************************/
 
+/*********************************************************************************************\
+ * Driver Settings load and save
+\*********************************************************************************************/
+
+#ifdef USE_UFILESYS
+
+#define D_JSON_APPKEY   "AppKey"
+#define D_JSON_DEVEUI   "DevEUI"
+#define D_JSON_DEVNONCE "DevNonce"
+#define D_JSON_FCNTUP   "FCntUp"
+#define D_JSON_FCNTDOWN "FCntDown"
+#define D_JSON_FLAGS    "Flags"
+
+bool LoraWanLoadData(void) {
+  char key[12];                                    // Max 99 nodes (drvset73_1 to drvset73_99)
+  for (uint32_t n = 0; n < TAS_LORAWAN_ENDNODES; n++) {
+    snprintf_P(key, sizeof(key), PSTR(XDRV_73_KEY "_%d"), n +1);
+
+    String json = UfsJsonSettingsRead(key);
+    if (json.length() == 0) { continue; }          // Only load used slots
+
+    // {"AppKey":"00000000000000000000000000000000","DevEUI","0000000000000000","DevNonce":0,"FCntUp":0,"FCntDown":0,"Flags":0,"NAME":""}
+    JsonParser parser((char*)json.c_str());
+    JsonParserObject root = parser.getRootObject();
+    if (!root) { continue; }                       // Only load used slots
+
+    const char* app_key = nullptr;
+    app_key = root.getStr(PSTR(D_JSON_APPKEY), nullptr);
+    if (app_key && (strlen(app_key))) {
+      HexToBytes(app_key, Lora->settings.end_node[n].AppKey, TAS_LORAWAN_AES128_KEY_SIZE);
+    }
+    Lora->settings.end_node[n].DevEUIh = root.getUInt(PSTR(D_JSON_DEVEUI "h"), Lora->settings.end_node[n].DevEUIh);
+    Lora->settings.end_node[n].DevEUIl = root.getUInt(PSTR(D_JSON_DEVEUI "l"), Lora->settings.end_node[n].DevEUIl);
+    Lora->settings.end_node[n].DevNonce = root.getUInt(PSTR(D_JSON_DEVNONCE), Lora->settings.end_node[n].DevNonce);
+    Lora->settings.end_node[n].FCntUp = root.getUInt(PSTR(D_JSON_FCNTUP), Lora->settings.end_node[n].FCntUp);
+    Lora->settings.end_node[n].FCntDown = root.getUInt(PSTR(D_JSON_FCNTDOWN), Lora->settings.end_node[n].FCntDown);
+    Lora->settings.end_node[n].flags = root.getUInt(PSTR(D_JSON_FLAGS), Lora->settings.end_node[n].flags);
+    const char* ctemp = root.getStr(PSTR(D_JSON_NAME), nullptr);
+    if (ctemp) { Lora->settings.end_node[n].name = ctemp; }
+    ctemp = root.getStr(PSTR(D_JSON_DCDR), nullptr);
+    if (ctemp) { Lora->settings.end_node[n].decoder = ctemp; }
+  }
+  return true;
+}
+
+bool LoraWanSaveData(void) {
+  bool result = true;                                // Return true if no Endnodes
+  for (uint32_t n = 0; n < TAS_LORAWAN_ENDNODES; n++) {
+    if (Lora->settings.end_node[n].AppKey[0] > 0) {  // Only save used slots
+      Response_P(PSTR("{\"" XDRV_73_KEY "_%d\":{\"" D_JSON_APPKEY "\":\"%16_H\""
+                                              ",\"" D_JSON_DEVEUI "h\":%lu,\"" D_JSON_DEVEUI "l\":%lu"
+                                              ",\"" D_JSON_DEVNONCE "\":%u"
+                                              ",\"" D_JSON_FCNTUP "\":%u,\"" D_JSON_FCNTDOWN "\":%u"
+                                              ",\"" D_JSON_FLAGS "\":%u"
+                                              ",\"" D_JSON_NAME "\":\"%s\""
+                                              ",\"" D_JSON_DCDR "\":\"%s\"}}"),
+        n +1,
+        Lora->settings.end_node[n].AppKey,
+        Lora->settings.end_node[n].DevEUIh, Lora->settings.end_node[n].DevEUIl,
+        Lora->settings.end_node[n].DevNonce,
+        Lora->settings.end_node[n].FCntUp, Lora->settings.end_node[n].FCntDown,
+        Lora->settings.end_node[n].flags,
+        (Lora->settings.end_node[n].name) ? Lora->settings.end_node[n].name.c_str() : "",
+        (Lora->settings.end_node[n].decoder) ? Lora->settings.end_node[n].decoder.c_str() : "");
+      result &= UfsJsonSettingsWrite(ResponseData());
+    }
+  }
+  return result;
+}
+
+void LoraWanDeleteData(void) {
+  char key[12];                                      // Max 99 nodes (drvset73_1 to drvset73_99)
+  for (uint32_t n = 0; n < TAS_LORAWAN_ENDNODES; n++) {
+    snprintf_P(key, sizeof(key), PSTR(XDRV_73_KEY "_%d"), n +1);
+    UfsJsonSettingsDelete(key);                      // Use defaults
+  }
+}
+#endif  // USE_UFILESYS
+
+/*********************************************************************************************/
+
 /*
 For LoraWan EU bands, the Uplink/Downlink (TX/RX) frequencies can be the same.
 For Others, same Uplink/Downlink (TX/RX) frequencies may not be allowed.
@@ -264,84 +345,6 @@ bool LoraWanDefaults(uint32_t region = TAS_LORA_REGION_EU868, LoRaWanRadioMode_t
   Lora->settings.crc_bytes        = TAS_LORAWAN_CRC_BYTES;
   return multi_profile;
 }
-
-/*********************************************************************************************\
- * Driver Settings load and save
-\*********************************************************************************************/
-
-#ifdef USE_UFILESYS
-
-#define D_JSON_APPKEY   "AppKey"
-#define D_JSON_DEVEUI   "DevEUI"
-#define D_JSON_DEVNONCE "DevNonce"
-#define D_JSON_FCNTUP   "FCntUp"
-#define D_JSON_FCNTDOWN "FCntDown"
-#define D_JSON_FLAGS    "Flags"
-
-bool LoraWanLoadData(void) {
-  char key[12];                                    // Max 99 nodes (drvset73_1 to drvset73_99)
-  for (uint32_t n = 0; n < TAS_LORAWAN_ENDNODES; n++) {
-    snprintf_P(key, sizeof(key), PSTR(XDRV_73_KEY "_%d"), n +1);
-
-    String json = UfsJsonSettingsRead(key);
-    if (json.length() == 0) { continue; }          // Only load used slots
-
-    // {"AppKey":"00000000000000000000000000000000","DevEUI","0000000000000000","DevNonce":0,"FCntUp":0,"FCntDown":0,"Flags":0,"NAME":""}
-    JsonParser parser((char*)json.c_str());
-    JsonParserObject root = parser.getRootObject();
-    if (!root) { continue; }                       // Only load used slots
-
-    const char* app_key = nullptr;
-    app_key = root.getStr(PSTR(D_JSON_APPKEY), nullptr);
-    if (strlen(app_key)) {
-      HexToBytes(app_key, Lora->settings.end_node[n].AppKey, TAS_LORAWAN_AES128_KEY_SIZE);
-    }
-    Lora->settings.end_node[n].DevEUIh = root.getUInt(PSTR(D_JSON_DEVEUI "h"), Lora->settings.end_node[n].DevEUIh);
-    Lora->settings.end_node[n].DevEUIl = root.getUInt(PSTR(D_JSON_DEVEUI "l"), Lora->settings.end_node[n].DevEUIl);
-    Lora->settings.end_node[n].DevNonce = root.getUInt(PSTR(D_JSON_DEVNONCE), Lora->settings.end_node[n].DevNonce);
-    Lora->settings.end_node[n].FCntUp = root.getUInt(PSTR(D_JSON_FCNTUP), Lora->settings.end_node[n].FCntUp);
-    Lora->settings.end_node[n].FCntDown = root.getUInt(PSTR(D_JSON_FCNTDOWN), Lora->settings.end_node[n].FCntDown);
-    Lora->settings.end_node[n].flags = root.getUInt(PSTR(D_JSON_FLAGS), Lora->settings.end_node[n].flags);
-    const char* name = nullptr;
-    name = root.getStr(PSTR(D_JSON_NAME), nullptr);
-    if (strlen(app_key)) {
-      Lora->settings.end_node[n].name = name;
-    }
-  }
-  return true;
-}
-
-bool LoraWanSaveData(void) {
-  bool result = true;                                // Return true if no Endnodes
-  for (uint32_t n = 0; n < TAS_LORAWAN_ENDNODES; n++) {
-    if (Lora->settings.end_node[n].AppKey[0] > 0) {  // Only save used slots
-      Response_P(PSTR("{\"" XDRV_73_KEY "_%d\":{\"" D_JSON_APPKEY "\":\"%16_H\""
-                                              ",\"" D_JSON_DEVEUI "h\":%lu,\"" D_JSON_DEVEUI "l\":%lu"
-                                              ",\"" D_JSON_DEVNONCE "\":%u"
-                                              ",\"" D_JSON_FCNTUP "\":%u,\"" D_JSON_FCNTDOWN "\":%u"
-                                              ",\"" D_JSON_FLAGS "\":%u"
-                                              ",\"" D_JSON_NAME "\":\"%s\"}}"),
-        n +1,
-        Lora->settings.end_node[n].AppKey,
-        Lora->settings.end_node[n].DevEUIh, Lora->settings.end_node[n].DevEUIl,
-        Lora->settings.end_node[n].DevNonce,
-        Lora->settings.end_node[n].FCntUp, Lora->settings.end_node[n].FCntDown,
-        Lora->settings.end_node[n].flags,
-        Lora->settings.end_node[n].name.c_str());
-      result &= UfsJsonSettingsWrite(ResponseData());
-    }
-  }
-  return result;
-}
-
-void LoraWanDeleteData(void) {
-  char key[12];                                      // Max 99 nodes (drvset73_1 to drvset73_99)
-  for (uint32_t n = 0; n < TAS_LORAWAN_ENDNODES; n++) {
-    snprintf_P(key, sizeof(key), PSTR(XDRV_73_KEY "_%d"), n +1);
-    UfsJsonSettingsDelete(key);                      // Use defaults
-  }
-}
-#endif  // USE_UFILESYS
 
 /*********************************************************************************************/
 
@@ -580,7 +583,6 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
           ext_snprintf_P(name, sizeof(name), PSTR("0x%04X"), Lora->settings.end_node[node].DevEUIl & 0x0000FFFF);
           Lora->settings.end_node[node].name = name;
         }
-
         uint32_t JoinNonce = TAS_LORAWAN_JOINNONCE +node;
         uint32_t DevAddr = Lora->device_address +node;
         uint32_t NetID = TAS_LORAWAN_NETID;
@@ -856,12 +858,13 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
 #define D_CMND_LORAWANBRIDGE  "Bridge"
 #define D_CMND_LORAWANAPPKEY  "AppKey"
 #define D_CMND_LORAWANNAME    "Name"
+#define D_CMND_LORAWANDECODER "Decoder"
 
 const char kLoraWanCommands[] PROGMEM = "LoRaWan|"  // Prefix
-  D_CMND_LORAWANBRIDGE "|" D_CMND_LORAWANAPPKEY "|" D_CMND_LORAWANNAME;
+  D_CMND_LORAWANBRIDGE "|" D_CMND_LORAWANAPPKEY "|" D_CMND_LORAWANNAME "|" D_CMND_LORAWANDECODER;
 
 void (* const LoraWanCommand[])(void) PROGMEM = {
-  &CmndLoraWanBridge, &CmndLoraWanAppKey, &CmndLoraWanName };
+  &CmndLoraWanBridge, &CmndLoraWanAppKey, &CmndLoraWanName, &CmndLoraWanDecoder };
 
 void CmndLoraWanBridge(void) {
   // LoraWanBridge   - Show LoraOption1
@@ -914,6 +917,19 @@ void CmndLoraWanName(void) {
       }
     }
     ResponseCmndIdxChar(Lora->settings.end_node[node].name.c_str());
+  }
+}
+
+void CmndLoraWanDecoder(void) {
+  // LoraWanDecoder
+  // LoraWanDecoder DraginoLDS02  - Set Dragino LDS02 message decoder for node 1
+  // LoraWanDecoder2 MerryIoTDW10 - Set MerryIoT DW10 message decoder for node 2
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TAS_LORAWAN_ENDNODES)) {
+    uint32_t node = XdrvMailbox.index -1;
+    if (XdrvMailbox.data_len) {
+      Lora->settings.end_node[node].decoder = XdrvMailbox.data;
+    }
+    ResponseCmndIdxChar(Lora->settings.end_node[node].decoder.c_str());
   }
 }
 
