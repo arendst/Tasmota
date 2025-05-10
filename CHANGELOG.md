@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - WebUI status line left and renamed events `FUNC_WEB_STATUS_LEFT` and `FUNC_WEB_STATUS_RIGHT` (#23354)
 - WebUI heap status (#23356)
 - Support for multi channel AU915-928 LoRaWanBridge by Rob Clark (#23372)
+- HASPmota add `antiburn()`
 
 ### Breaking Changed
 
