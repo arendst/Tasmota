@@ -13921,7 +13921,7 @@ be_local_closure(class_HASPmota_parse,   /* name */
       0x8C100173,  //  000C  GETMET	R4	R0	K115
       0x5C180600,  //  000D  MOVE	R6	R3
       0x881C0105,  //  000E  GETMBR	R7	R0	K5
-      0x88200104,  //  000F  GETMBR	R8	R0	K4
+      0x88200103,  //  000F  GETMBR	R8	R0	K3
       0x941C0E08,  //  0010  GETIDX	R7	R7	R8
       0x7C100600,  //  0011  CALL	R4	3
       0x70020000,  //  0012  JMP		#0014
