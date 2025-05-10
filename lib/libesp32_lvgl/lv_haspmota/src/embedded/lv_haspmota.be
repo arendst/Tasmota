@@ -3140,6 +3140,7 @@ class HASPmota
     var jline = json.load(j)
 
     if type(jline) == 'instance'
+      self.lvh_page_cur_idx_parsing = self.lvh_page_cur_idx
       self.parse_page(jline)    # parse page first to create any page related objects, may change self.lvh_page_cur_idx_parsing
       # objects are created in the current page
       self.parse_obj(jline, self.lvh_pages[self.lvh_page_cur_idx_parsing])    # then parse object within this page
