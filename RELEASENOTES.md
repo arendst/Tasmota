@@ -119,16 +119,17 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Command `JsonPP 0..7` to enable (>0) JSON Pretty Print on user interfaces and set number of indents
 - Command `JsonPP <command>|backlog <command>;...` to enable JSON PP only once
 - Support for multi channel AU915-928 LoRaWanBridge by Rob Clark [#23372](https://github.com/arendst/Tasmota/issues/23372)
+- Allow temporary change of DisplayDimmer [#23406](https://github.com/arendst/Tasmota/issues/23406)
 - WebUI status line for MQTT and TLS, added `FUNC_WEB_STATUS_LEFT` and `FUNC_WEB_STATUS_RIGHT` event [#23354](https://github.com/arendst/Tasmota/issues/23354)
 - WebUI heap status [#23356](https://github.com/arendst/Tasmota/issues/23356)
 - Optional Wifi strength indicator in WebUI status line [#23352](https://github.com/arendst/Tasmota/issues/23352)
 - Wireguard VPN [#23347](https://github.com/arendst/Tasmota/issues/23347)
-- HASPmota add `antiburn()` [#23400](https://github.com/arendst/Tasmota/issues/23400)
+- HASPmota `antiburn()` [#23400](https://github.com/arendst/Tasmota/issues/23400)
 
 ### Breaking Changed
 
 ### Changed
-- ESP32 Platform from 2025.04.30 to 2025.05.40, Framework (Arduino Core) from v3.1.3.250411 to v3.2.0.250504 and IDF from v5.3.2.250403 to v5.4.1.250501 [#23397](https://github.com/arendst/Tasmota/issues/23397)
+- ESP32 Platform from 2025.04.30 to 2025.05.30, Framework (Arduino Core) from v3.1.3.250411 to v3.1.3.250504 and IDF from v5.3.2.250403 to v5.3.3.250501 [#23404](https://github.com/arendst/Tasmota/issues/23404)
 - GPIOViewer from v1.6.2 to v1.6.3 (No functional change)
 - Allow command `WebRefresh` minimum from 1000 to 400 mSec
 
@@ -139,5 +140,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `display.touch_update` wrongly applies resistive calibration [#23363](https://github.com/arendst/Tasmota/issues/23363)
 - Berry `introspect.module()` failed to load modules in files [#23376](https://github.com/arendst/Tasmota/issues/23376)
 - Matter and mDNS can be enabled at the same time [#23373](https://github.com/arendst/Tasmota/issues/23373)
+- Haspmota `haspmota.parse()` page parsing [#23403](https://github.com/arendst/Tasmota/issues/23403)
 
 ### Removed

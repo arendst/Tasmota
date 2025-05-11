@@ -5,14 +5,17 @@ All notable changes to this project will be documented in this file.
 
 ## [14.6.0.2]
 ### Added
+- Allow temporary change of DisplayDimmer (#23406)
 
 ### Breaking Changed
 
 ### Changed
 - ESP32 Platform from 2025.04.30 to 2025.05.40, Framework (Arduino Core) from v3.1.3.250411 to v3.2.0.250504 and IDF from v5.3.2.250403 to v5.4.1.250501 (#23397)
+- ESP32 Platform from 2025.05.40 to 2025.05.30, Framework (Arduino Core) from v3.2.0.250504 to v3.1.3.250504 and IDF from v5.4.1.250501 to v5.3.3.250501 (#23404)
 
 ### Fixed
-- Fix `haspmota.parse()` page parsing
+- Haspmota `haspmota.parse()` page parsing (#23403)
+- ESP32-S3 display stability regression from #23397 (#23404)
 
 ### Removed
 
@@ -26,7 +29,7 @@ All notable changes to this project will be documented in this file.
 - WebUI status line left and renamed events `FUNC_WEB_STATUS_LEFT` and `FUNC_WEB_STATUS_RIGHT` (#23354)
 - WebUI heap status (#23356)
 - Support for multi channel AU915-928 LoRaWanBridge by Rob Clark (#23372)
-- HASPmota add `antiburn()` (#23400)
+- HASPmota `antiburn()` (#23400)
 
 ### Breaking Changed
 
