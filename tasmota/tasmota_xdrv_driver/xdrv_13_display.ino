@@ -2006,12 +2006,12 @@ void CmndDisplayMode(void) {
 }
 
 // Apply the current display dimmer
-void ApplyDisplayDimmer(void) {
+void ApplyDisplayDimmer(uint8_t dimmer) {
   disp_apply_display_dimmer_request = true;
   if ((disp_power < 0) || !disp_device) { return; }  // Not initialized yet
   disp_apply_display_dimmer_request = false;
 
-  uint8_t dimmer8 = changeUIntScale(GetDisplayDimmer(), 0, 100, 0, 255);
+  uint8_t dimmer8 = changeUIntScale(dimmer, 0, 100, 0, 255);
   uint16_t dimmer10_gamma = ledGamma10(dimmer8);
   if (dimmer8 && !(disp_power)) {
     ExecuteCommandPower(disp_device, POWER_ON, SRC_DISPLAY);
@@ -2035,7 +2035,7 @@ void CmndDisplayDimmer(void) {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
     uint8_t dimmer = XdrvMailbox.payload;
     SetDisplayDimmer(dimmer);
-    ApplyDisplayDimmer();
+    ApplyDisplayDimmer(dimmer);
   }
   ResponseCmndNumber(GetDisplayDimmer());
 }
@@ -2923,7 +2923,7 @@ bool Xdrv13(uint32_t function) {
         break;
       case FUNC_INIT:
         if (disp_apply_display_dimmer_request) {
-          ApplyDisplayDimmer();  // Allowed here.
+          ApplyDisplayDimmer(GetDisplayDimmer());  // Allowed here.
         }
         break;
       case FUNC_EVERY_50_MSECOND:
