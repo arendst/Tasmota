@@ -114,18 +114,23 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v14.6.0.1
+## Changelog v14.6.0.2
 ### Added
 - Command `JsonPP 0..7` to enable (>0) JSON Pretty Print on user interfaces and set number of indents
 - Command `JsonPP <command>|backlog <command>;...` to enable JSON PP only once
+- Support for multi channel AU915-928 LoRaWanBridge by Rob Clark [#23372](https://github.com/arendst/Tasmota/issues/23372)
+- Allow temporary change of DisplayDimmer [#23406](https://github.com/arendst/Tasmota/issues/23406)
 - WebUI status line for MQTT and TLS, added `FUNC_WEB_STATUS_LEFT` and `FUNC_WEB_STATUS_RIGHT` event [#23354](https://github.com/arendst/Tasmota/issues/23354)
+- WebUI heap status [#23356](https://github.com/arendst/Tasmota/issues/23356)
 - Optional Wifi strength indicator in WebUI status line [#23352](https://github.com/arendst/Tasmota/issues/23352)
 - Wireguard VPN [#23347](https://github.com/arendst/Tasmota/issues/23347)
-- WebUI heap status [#23356](https://github.com/arendst/Tasmota/issues/23356)
+- HASPmota `antiburn()` [#23400](https://github.com/arendst/Tasmota/issues/23400)
 
 ### Breaking Changed
 
 ### Changed
+- ESP32 Platform from 2025.04.30 to 2025.05.30, Framework (Arduino Core) from v3.1.3.250411 to v3.1.3.250504 and IDF from v5.3.2.250403 to v5.3.3.250501 [#23404](https://github.com/arendst/Tasmota/issues/23404)
+- GPIOViewer from v1.6.2 to v1.6.3 (No functional change)
 - Allow command `WebRefresh` minimum from 1000 to 400 mSec
 
 ### Fixed
@@ -133,5 +138,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `bytes().asstring()` now truncates a string if buffer contains NULL [#23311](https://github.com/arendst/Tasmota/issues/23311)
 - Berry string literals containing NULL are truncated [#23312](https://github.com/arendst/Tasmota/issues/23312)
 - Berry `display.touch_update` wrongly applies resistive calibration [#23363](https://github.com/arendst/Tasmota/issues/23363)
+- Berry `introspect.module()` failed to load modules in files [#23376](https://github.com/arendst/Tasmota/issues/23376)
+- Matter and mDNS can be enabled at the same time [#23373](https://github.com/arendst/Tasmota/issues/23373)
+- Haspmota `haspmota.parse()` page parsing [#23403](https://github.com/arendst/Tasmota/issues/23403)
 
 ### Removed

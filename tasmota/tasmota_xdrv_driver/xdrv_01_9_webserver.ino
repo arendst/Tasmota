@@ -1924,7 +1924,8 @@ bool HandleRootStatusRefresh(void) {
 #ifdef USE_WEB_STATUS_LINE_WIFI
   if (Settings->flag4.network_wifi) {
     int32_t rssi = WiFi.RSSI();
-    WSContentSend_P(PSTR("<div class='wifi' title='" D_RSSI " %d%%, %d dBm' style='padding:0 2px 0 2px;'><div class='arc a3 %s'></div><div class='arc a2 %s'></div><div class='arc a1 %s'></div><div class='arc a0 active'></div></div>"),
+    WSContentSend_P(PSTR("<div class='wifi' title='%s: " D_RSSI " %d%%, %d dBm' style='padding:0 2px 0 2px;'><div class='arc a3 %s'></div><div class='arc a2 %s'></div><div class='arc a1 %s'></div><div class='arc a0 active'></div></div>"),
+                          SettingsTextEscaped(SET_STASSID1 + Settings->sta_active).c_str(),                      
                           WifiGetRssiAsQuality(rssi), rssi,
                           rssi >= -55 ? "active" : "",
                           rssi >= -70 ? "active" : "",

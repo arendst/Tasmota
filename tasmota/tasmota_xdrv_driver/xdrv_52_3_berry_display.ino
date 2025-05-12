@@ -61,13 +61,20 @@ extern "C" {
   int be_ntv_display_dimmer(struct bvm *vm) {
     int32_t argc = be_top(vm); // Get the number of arguments
     int32_t dimmer;
+    bool no_settings = false;   // by default change settings
     if (argc >= 1) {
       if (!be_isint(vm, 1)) { be_raise(vm, "type_error", "arg must be int"); }
       dimmer = be_toint(vm, 1);
+      if (argc >= 2) {
+        if (!be_isbool(vm, 2)) { be_raise(vm, "type_error", "arg2 must be bool"); }
+        no_settings = be_tobool(vm, 2);
+      }
       if ((dimmer < 0) || (dimmer > 100)) { be_raise(vm, "value_error", "value must be in range 0..100"); }
       be_pop(vm, argc);   // clear stack to avoid ripple errors in code called later
-      SetDisplayDimmer(dimmer);
-      ApplyDisplayDimmer();
+      if (!no_settings) {  // change settings
+        SetDisplayDimmer(dimmer);
+      }
+      ApplyDisplayDimmer(dimmer);
     }
     be_pushint(vm, GetDisplayDimmer());
     be_return(vm);

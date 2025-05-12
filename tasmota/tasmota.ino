@@ -266,6 +266,7 @@ struct TasmotaGlobal_t {
   uint32_t zc_offset;                       // Zero cross moment offset due to monitoring chip processing (microseconds)
   uint32_t zc_code_offset;                  // Zero cross moment offset due to executing power code (microseconds)
   uint32_t zc_interval;                     // Zero cross interval around 8333 (60Hz) or 10000 (50Hz) (microseconds)
+  uint32_t skip_sleep;                      // Skip sleep
   GpioOptionABits gpio_optiona;             // GPIO Option_A flags
   void *log_buffer_mutex;                   // Control access to log buffer
 
@@ -368,6 +369,7 @@ struct TasmotaGlobal_t {
   uint8_t restore_powered_off_led_counter;  // Seconds before powered-off LED (LEDLink) is restored
   uint8_t pwm_dimmer_led_bri;               // Adjusted brightness LED level
 #endif  // USE_PWM_DIMMER
+
   String mqtt_data;                         // Buffer filled by Response functions
   char version[16];                         // Composed version string like 255.255.255.255
   char image_name[33];                      // Code image and/or commit
@@ -745,10 +747,19 @@ void BacklogLoop(void) {
   }
 }
 
+bool SleepSkip(uint32_t no_sleep) {
+  if (0 == no_sleep) {
+    return !TimeReached(TasmotaGlobal.skip_sleep);
+  }
+  SetNextTimeInterval(TasmotaGlobal.skip_sleep, no_sleep);  // Skip sleep for some ms
+  return true;
+}
+
 void SleepDelay(uint32_t mseconds) {
+  if (SleepSkip(0)) { return; }       // Temporarily skip sleep to handle imminent interrupts outside interrupt handler
   if (!TasmotaGlobal.backlog_nodelay && mseconds) {
     uint32_t wait = millis() + mseconds;
-    while (!TimeReached(wait) && !Serial.available()) {  // We need to service serial buffer ASAP as otherwise we get uart buffer overrun
+    while (!TimeReached(wait) && !Serial.available() && !SleepSkip(0)) {  // We need to service serial buffer ASAP as otherwise we get uart buffer overrun
       XdrvXsnsCall(FUNC_SLEEP_LOOP);  // Main purpose is reacting ASAP on serial data availability or interrupt handling (ADE7880)
       delay(1);
     }

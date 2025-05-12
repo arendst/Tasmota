@@ -492,7 +492,7 @@ Renderer *Init_uDisplay(const char *desc) {
     }*/
     renderer->invertDisplay(iniinv);
 
-    ApplyDisplayDimmer();
+    ApplyDisplayDimmer(GetDisplayDimmer());
 
 #ifdef SHOW_SPLASH
     if (!Settings->flag5.display_no_splash) {  // SetOption135 - (Display & LVGL) force disabling default splash screen

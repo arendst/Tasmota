@@ -16,36 +16,51 @@
 
 /*********************************************************************************************/
 
-void LoraDefaults(void) {
-  Lora->settings.frequency = TAS_LORA_FREQUENCY;
-  Lora->settings.bandwidth = TAS_LORA_BANDWIDTH;
+void LoraDefaults(uint32_t region = TAS_LORA_REGION_EU868) {
+  Lora->settings.region           = region;
+  switch (region) {
+    case TAS_LORA_REGION_AU915:
+      Lora->settings.frequency    = TAS_LORA_AU915_FREQUENCY;
+      break;
+    default:  // TAS_LORA_REGION_EU868
+      Lora->settings.frequency    = TAS_LORA_FREQUENCY;
+  }  
+  Lora->settings.bandwidth        = TAS_LORA_BANDWIDTH;
   Lora->settings.spreading_factor = TAS_LORA_SPREADING_FACTOR;
-  Lora->settings.coding_rate = TAS_LORA_CODING_RATE;
-  Lora->settings.sync_word = TAS_LORA_SYNC_WORD;
-  Lora->settings.output_power = TAS_LORA_OUTPUT_POWER;
-  Lora->settings.preamble_length = TAS_LORA_PREAMBLE_LENGTH;
-  Lora->settings.current_limit = TAS_LORA_CURRENT_LIMIT;
-  Lora->settings.implicit_header = TAS_LORA_HEADER;
-  Lora->settings.crc_bytes = TAS_LORA_CRC_BYTES;
+  Lora->settings.coding_rate      = TAS_LORA_CODING_RATE;
+  Lora->settings.sync_word        = TAS_LORA_SYNC_WORD;
+  Lora->settings.output_power     = TAS_LORA_OUTPUT_POWER;
+  Lora->settings.preamble_length  = TAS_LORA_PREAMBLE_LENGTH;
+  Lora->settings.current_limit    = TAS_LORA_CURRENT_LIMIT;
+  Lora->settings.implicit_header  = TAS_LORA_HEADER;
+  Lora->settings.crc_bytes        = TAS_LORA_CRC_BYTES;
 }
 
-void LoraWanDefaults(void) {
-  Lora->settings.frequency = TAS_LORAWAN_FREQUENCY;
-  Lora->settings.bandwidth = TAS_LORAWAN_BANDWIDTH;
-  Lora->settings.spreading_factor = TAS_LORAWAN_SPREADING_FACTOR;
-  Lora->settings.coding_rate = TAS_LORAWAN_CODING_RATE;
-  Lora->settings.sync_word = TAS_LORAWAN_SYNC_WORD;
-  Lora->settings.output_power = TAS_LORAWAN_OUTPUT_POWER;
-  Lora->settings.preamble_length = TAS_LORAWAN_PREAMBLE_LENGTH;
-  Lora->settings.current_limit = TAS_LORAWAN_CURRENT_LIMIT;
-  Lora->settings.implicit_header = TAS_LORAWAN_HEADER;
-  Lora->settings.crc_bytes = TAS_LORAWAN_CRC_BYTES;
-}
+/*********************************************************************************************/
 
-void LoraSettings2Json(void) {
-  ResponseAppend_P(PSTR("\"" D_JSON_FREQUENCY "\":%1_f"), &Lora->settings.frequency);              // xxx.x MHz
-  ResponseAppend_P(PSTR(",\"" D_JSON_BANDWIDTH "\":%1_f"), &Lora->settings.bandwidth);             // xxx.x kHz
-  ResponseAppend_P(PSTR(",\"" D_JSON_SPREADING_FACTOR "\":%d"), Lora->settings.spreading_factor);
+void LoraSettings2Json(bool show = false) {
+  if (show) {
+    char region[8];
+    ResponseAppend_P(PSTR("\"" D_JSON_REGION "\":\"%s\""), GetTextIndexed(region, sizeof(region), Lora->settings.region, kLoraRegions));
+  } else {
+    ResponseAppend_P(PSTR("\"" D_JSON_REGION "\":%d"), Lora->settings.region);      // enum 0 = EU868, 1 = AU915
+  }
+#ifdef USE_LORAWAN_BRIDGE
+  if (show && (Lora->settings.region == TAS_LORA_REGION_AU915)) {
+    LoRaWanRadioInfo_t Rx1Info;
+    LoraWanRadioInfo(TAS_LORAWAN_RADIO_RX1, &Rx1Info, LoraWanFrequencyToChannel());  // Get Rx1Info with values used for RX1 transmit window. (Region specific, calculated from Uplink radio settings)
+    LoRaWanRadioInfo_t Rx2Info;
+    LoraWanRadioInfo(TAS_LORAWAN_RADIO_RX2, &Rx2Info, LoraWanFrequencyToChannel());  // Get Rx2Info 
+    ResponseAppend_P(PSTR(",\"" D_JSON_FREQUENCY "\":[%1_f,%1_f,%1_f]"), &Lora->settings.frequency, &Rx1Info.frequency, &Rx2Info.frequency);  // xxx.x MHz
+    ResponseAppend_P(PSTR(",\"" D_JSON_BANDWIDTH "\":[%1_f,%1_f,%1_f]"), &Lora->settings.bandwidth, &Rx1Info.bandwidth, &Rx2Info.bandwidth);  // xxx.x kHz
+    ResponseAppend_P(PSTR(",\"" D_JSON_SPREADING_FACTOR "\":[%d,%d,%d]"), Lora->settings.spreading_factor, Rx1Info.spreading_factor, Rx2Info.spreading_factor);
+  } else
+#endif  // USE_LORAWAN_BRIDGE
+  {
+    ResponseAppend_P(PSTR(",\"" D_JSON_FREQUENCY "\":%1_f"), &Lora->settings.frequency);           // xxx.x MHz
+    ResponseAppend_P(PSTR(",\"" D_JSON_BANDWIDTH "\":%1_f"), &Lora->settings.bandwidth);           // xxx.x kHz
+    ResponseAppend_P(PSTR(",\"" D_JSON_SPREADING_FACTOR "\":%d"), Lora->settings.spreading_factor);
+  }
   ResponseAppend_P(PSTR(",\"" D_JSON_CODINGRATE4 "\":%d"), Lora->settings.coding_rate);
   ResponseAppend_P(PSTR(",\"" D_JSON_SYNCWORD "\":%d"), Lora->settings.sync_word);
   ResponseAppend_P(PSTR(",\"" D_JSON_OUTPUT_POWER "\":%d"), Lora->settings.output_power);          // dBm
@@ -56,6 +71,7 @@ void LoraSettings2Json(void) {
 }
 
 void LoraJson2Settings(JsonParserObject root) {
+  Lora->settings.region = root.getUInt(PSTR(D_JSON_REGION), Lora->settings.region);
   Lora->settings.frequency = root.getFloat(PSTR(D_JSON_FREQUENCY), Lora->settings.frequency);
   Lora->settings.bandwidth = root.getFloat(PSTR(D_JSON_BANDWIDTH), Lora->settings.bandwidth);
   Lora->settings.spreading_factor = root.getUInt(PSTR(D_JSON_SPREADING_FACTOR), Lora->settings.spreading_factor);
@@ -104,7 +120,7 @@ bool LoraSaveData(void) {
                    "\"Flags\":%u,"),
                    Lora->settings.crc32,
                    Lora->settings.flags);
-  LoraSettings2Json();
+  LoraSettings2Json(false);
   ResponseAppend_P(PSTR("}}"));
 
   if (!UfsJsonSettingsWrite(ResponseData())) {
@@ -190,11 +206,10 @@ void LoraInput(void) {
   if (!packet_size) { return; }
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LOR: Rcvd (%u) '%*_H', RSSI %1_f, SNR %1_f"),
     Lora->receive_time, packet_size, data, &Lora->rssi, &Lora->snr);
-
 #ifdef USE_LORAWAN_BRIDGE
   if (bitRead(Lora->settings.flags, TAS_LORA_FLAG_BRIDGE_ENABLED)) {
     if (LoraWanInput((uint8_t*)data, packet_size)) {
-      return;
+      return;   
     }
   }
 #endif  // USE_LORAWAN_BRIDGE
@@ -272,10 +287,11 @@ void LoraInit(void) {
     else if (PinUsed(GPIO_LORA_DI0)) {
       // SX1276, RFM95W
       if (LoraSx127xInit()) {
-        Lora->Config = &LoraSx127xConfig;
+        Lora->Config    = &LoraSx127xConfig;
         Lora->Available = &LoraSx127xAvailable;
-        Lora->Receive = &LoraSx127xReceive;
-        Lora->Send = &LoraSx127xSend;
+        Lora->Receive   = &LoraSx127xReceive;
+        Lora->Send      = &LoraSx127xSend;
+        Lora->Init      = &LoraSx127xInit;
         strcpy_P(hardware, PSTR("SX127x"));
         present = true;
       }
@@ -285,10 +301,11 @@ void LoraInit(void) {
     else if (PinUsed(GPIO_LORA_DI1) && PinUsed(GPIO_LORA_BUSY)) {
       // SX1262, LilyGoT3S3
       if (LoraSx126xInit()) {
-        Lora->Config = &LoraSx126xConfig;
+        Lora->Config    = &LoraSx126xConfig;
         Lora->Available = &LoraSx126xAvailable;
-        Lora->Receive = &LoraSx126xReceive;
-        Lora->Send = &LoraSx126xSend;
+        Lora->Receive   = &LoraSx126xReceive;
+        Lora->Send      = &LoraSx126xSend;
+        Lora->Init      = &LoraSx126xInit;
         strcpy_P(hardware, PSTR("SX126x"));
         present = true;
       }
@@ -366,25 +383,25 @@ void CmndLoraSend(void) {
     invert = true;
   }
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 6)) {
-    Lora->raw = (XdrvMailbox.index > 3);                                    // Global flag set even without data
+    Lora->raw = (XdrvMailbox.index > 3);                                 // Global flag set even without data
     if (XdrvMailbox.data_len > 0) {
       char data[TAS_LORA_MAX_PACKET_LENGTH] = { 0 };
       uint32_t len = (XdrvMailbox.data_len < TAS_LORA_MAX_PACKET_LENGTH -1) ? XdrvMailbox.data_len : TAS_LORA_MAX_PACKET_LENGTH -2;
 #ifdef USE_LORA_DEBUG
-//      AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Len %d, Send %*_H"), len, len, XdrvMailbox.data);
+      AddLog(LOG_LEVEL_DEBUG, PSTR("DBG: Len %d, Send %*_H"), len, len, XdrvMailbox.data);
 #endif
-      if (1 == XdrvMailbox.index) {                                         // "Hello Tiger\n"
+      if (1 == XdrvMailbox.index) {                                      // "Hello Tiger\n"
         memcpy(data, XdrvMailbox.data, len);
         data[len++] = '\n';
       }
-      else if ((2 == XdrvMailbox.index) || (4 == XdrvMailbox.index)) {      // "Hello Tiger" or "A0"
+      else if ((2 == XdrvMailbox.index) || (4 == XdrvMailbox.index)) {   // "Hello Tiger" or "A0"
         memcpy(data, XdrvMailbox.data, len);
       }
-      else if (3 == XdrvMailbox.index) {                                    // "Hello\f"
+      else if (3 == XdrvMailbox.index) {                                 // "Hello\f"
         Unescape(XdrvMailbox.data, &len);
         memcpy(data, XdrvMailbox.data, len);
       }
-      else if (5 == XdrvMailbox.index) {                                    // "AA004566" as hex values
+      else if (5 == XdrvMailbox.index) {                                 // "AA004566" as hex values
         char *p;
         char stemp[3];
 
@@ -400,7 +417,7 @@ void CmndLoraSend(void) {
           codes += 2;
         }
       }
-      else if (6 == XdrvMailbox.index) {                                    // "72,101,108,108"
+      else if (6 == XdrvMailbox.index) {                                 // "72,101,108,108"
         char *p;
         uint8_t code;
         char *values = XdrvMailbox.data;
@@ -423,17 +440,40 @@ void CmndLoraSend(void) {
 
 void CmndLoraConfig(void) {
   // LoRaConfig                                       - Show all parameters
-  // LoRaConfig 1                                     - Set default parameters
-  // LoRaConfig 2                                     - Set default LoRaWan bridge parameters
+  // LoRaConfig 1                                     - Set EU868 default parameters
+  // LoRaConfig 2                                     - Set EU868 default LoRaWan bridge parameters
+  // LoRaConfig 41                                    - Set AU915 default parameters
+  // LoRaConfig 42                                    - Set AU915 default LoRaWan bridge parameters with channel 0
+  // LoRaConfig 42,10                                 - Set AU915 default LoRaWan bridge parameters with channel 10
   // LoRaConfig {"Frequency":868.0,"Bandwidth":125.0} - Enter float parameters
   // LoRaConfig {"SyncWord":18}                       - Enter decimal parameter (=0x12)
   if (XdrvMailbox.data_len > 0) {
-    if (XdrvMailbox.payload == 1) {
-      LoraDefaults();
-      Lora->Config();
-    }
-    else if (XdrvMailbox.payload == 2) {
-      LoraWanDefaults();
+    if (XdrvMailbox.payload > 0) {
+      uint32_t region = (XdrvMailbox.payload / 10) &0x0F;     // 0 .. 15
+      if (region > 9) { region = 0; }                         // 0 .. 9
+      uint32_t option = ((XdrvMailbox.payload -1) &0x01) +1;  // Option 1 or 2
+      switch (option) {
+        case 1: 
+          LoraDefaults(region);                               // Default region LoRa values
+          break;
+#ifdef USE_LORAWAN_BRIDGE
+        case 2:
+          switch (region) {
+            case TAS_LORA_REGION_AU915:
+              uint32_t parm[2] = { 0, 0 };
+              ParseParameters(2, parm);                       // parm[1] will hold channel
+              Lora->settings.region = region;                 // Need valid region for LoraWanRadioInfo()
+              LoRaWanRadioInfo_t UpInfo;
+              LoraWanRadioInfo(TAS_LORAWAN_RADIO_UPLINK, &UpInfo, parm[1]);  // Set uplink frequency based on channel
+              Lora->settings.frequency = UpInfo.frequency;       
+              break;
+//            default:
+//              not implemented
+          }
+          LoraWanDefaults(region);                            // Default region LoRaWan values
+          break;
+#endif  // USE_LORAWAN_BRIDGE
+      }
       Lora->Config();
     }
     else {
@@ -444,10 +484,12 @@ void CmndLoraConfig(void) {
         Lora->Config();
       }
     }
+    uint8_t data[1] = { 0 };
+    LoraSend(data, 0, false);                                 // Fix init SX12xx after config change
   }
   ResponseCmnd();  // {"LoRaConfig":
   ResponseAppend_P(PSTR("{"));
-  LoraSettings2Json();
+  LoraSettings2Json(true);
   ResponseAppend_P(PSTR("}}"));
 }
 

@@ -152,8 +152,11 @@ void LoraWanDecode(struct LoraNodeData_t* node_data) {
 
   // Joined device without decoding
   LoraWanPublishHeader(node_data->node);
-  ResponseAppend_P(PSTR(",\"DevEUIh\":\"%08X\",\"DevEUIl\":\"%08X\",\"FPort\":%d,\"Payload\":["),
-    Lora->settings.end_node[node_data->node].DevEUIh, Lora->settings.end_node[node_data->node].DevEUIl, node_data->FPort);
+  ResponseAppend_P(PSTR(",\"Decoder\":\"%s\",\"DevEUIh\":\"%08X\",\"DevEUIl\":\"%08X\",\"FPort\":%d,\"Payload\":["),
+    EscapeJSONString(Lora->settings.end_node[node_data->node].decoder.c_str()).c_str(),
+    Lora->settings.end_node[node_data->node].DevEUIh,
+    Lora->settings.end_node[node_data->node].DevEUIl,
+    node_data->FPort);
   for (uint32_t i = 0; i < node_data->payload_len; i++) {
     ResponseAppend_P(PSTR("%s%d"), (0==i)?"":",", node_data->payload[i]);
   }
