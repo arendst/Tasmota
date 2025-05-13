@@ -187,7 +187,7 @@ uint32_t LoraWanFrequencyToChannel(void) {
       }
       if (250 == channel) {
         Lora->settings.frequency = 868.1;
-        Lora->Config();
+        Lora->Config(false);
         channel = 0;
       }
   }
@@ -309,33 +309,50 @@ void LoraWanRadioInfo(uint8_t mode, void* pInfo, uint32_t uChannel = 0) {
       break;
     }
     default: {  // TAS_LORA_REGION_EU868
-      //Default TX/RX1/TX1 same
-      (*pResult).frequency        = TAS_LORAWAN_FREQUENCY;
-      (*pResult).bandwidth        = TAS_LORAWAN_BANDWIDTH;
-      (*pResult).spreading_factor = TAS_LORAWAN_SPREADING_FACTOR;
+      switch (mode) {
+        case TAS_LORAWAN_RADIO_UPLINK: {
+          (*pResult).frequency        = TAS_LORAWAN_FREQUENCY;
+          (*pResult).bandwidth        = TAS_LORAWAN_BANDWIDTH;
+          (*pResult).spreading_factor = TAS_LORAWAN_SPREADING_FACTOR;
+          break;
+        }
+        case TAS_LORAWAN_RADIO_RX1: {
+          // RX1 DR depends on the Uplink settings
+          // https://lora-alliance.org/wp-content/uploads/2020/11/lorawan_regional_parameters_v1.0.3reva_0.pdf
+          // Page 19
+          (*pResult).frequency        = TAS_LORAWAN_FREQUENCY;
+          (*pResult).bandwidth        = TAS_LORAWAN_BANDWIDTH_RX1;
+          (*pResult).spreading_factor = TAS_LORAWAN_SPREADING_FACTOR_RX1;
+          break;
+        }
+        case TAS_LORAWAN_RADIO_RX2: {
+          (*pResult).frequency        = TAS_LORAWAN_FREQUENCY_DN;
+          (*pResult).bandwidth        = TAS_LORAWAN_BANDWIDTH_RX2;
+          (*pResult).spreading_factor = TAS_LORAWAN_SPREADING_FACTOR_RX2;
+          break;
+        }
+//        default:
+//          not implemented
+      }
     }
   }
 }
 
-bool LoraWanDefaults(uint32_t region = TAS_LORA_REGION_EU868, LoRaWanRadioMode_t mode = TAS_LORAWAN_RADIO_UPLINK) {
-  bool multi_profile = false;
+bool LoraWanProfile(uint32_t mode) {
+  LoRaWanRadioInfo_t RadioInfo;
+  LoraWanRadioInfo(mode, &RadioInfo, LoraWanFrequencyToChannel());  // Region specific
+  bool changed = ((Lora->settings.frequency != RadioInfo.frequency) ||
+                  (Lora->settings.bandwidth != RadioInfo.bandwidth) ||
+                  (Lora->settings.spreading_factor != RadioInfo.spreading_factor));
+  Lora->settings.frequency = RadioInfo.frequency;
+  Lora->settings.bandwidth = RadioInfo.bandwidth;  
+  Lora->settings.spreading_factor = RadioInfo.spreading_factor;
+  return changed;
+}
+
+void LoraWanDefaults(uint32_t region) {
   Lora->settings.region           = region;
-  switch (region) {
-    case TAS_LORA_REGION_AU915:
-      // TO DO: Need 3 profiles: Uplink, RX1, RX2
-      // Works OK for now as RX2 always received by end device.
-      multi_profile = true;
-      LoRaWanRadioInfo_t RadioInfo;
-      LoraWanRadioInfo(mode, &RadioInfo, LoraWanFrequencyToChannel());  // Region specific
-      Lora->settings.frequency        = RadioInfo.frequency;       
-      Lora->settings.bandwidth        = RadioInfo.bandwidth;     
-      Lora->settings.spreading_factor = RadioInfo.spreading_factor;
-      break;
-    default:  // TAS_LORA_REGION_EU868
-      Lora->settings.frequency        = TAS_LORAWAN_FREQUENCY;
-      Lora->settings.bandwidth        = TAS_LORAWAN_BANDWIDTH;
-      Lora->settings.spreading_factor = TAS_LORAWAN_SPREADING_FACTOR;
-  }
+  LoraWanProfile(TAS_LORAWAN_RADIO_UPLINK);
   Lora->settings.coding_rate      = TAS_LORAWAN_CODING_RATE;
   Lora->settings.sync_word        = TAS_LORAWAN_SYNC_WORD;
   Lora->settings.output_power     = TAS_LORAWAN_OUTPUT_POWER;
@@ -343,45 +360,51 @@ bool LoraWanDefaults(uint32_t region = TAS_LORA_REGION_EU868, LoRaWanRadioMode_t
   Lora->settings.current_limit    = TAS_LORAWAN_CURRENT_LIMIT;
   Lora->settings.implicit_header  = TAS_LORAWAN_HEADER;
   Lora->settings.crc_bytes        = TAS_LORAWAN_CRC_BYTES;
-  return multi_profile;
 }
 
 /*********************************************************************************************/
 
 #include <Ticker.h>
-Ticker LoraWan_Send;
+Ticker LoraWan_Send_RX1;
+Ticker LoraWan_Send_RX2;
 
-void LoraWanSend(uint8_t* data, uint32_t len, bool uplink_profile) {
-  LoraSettings_t RXsettings;
-  if (uplink_profile) { 
-    // Different TX/RX profiles allowed. (e.g. LoRaWAN)
-    // For CmndLoraSend() ... do not allow changes. 
-    RXsettings = Lora->settings;                     // Make a copy;
-    LoraWanDefaults(Lora->settings.region, TAS_LORAWAN_RADIO_RX2);  // Set Downlink profile TO DO: Support different RX1 & RX2 profiles
-    Lora->Config();  
-  }
-  LoraSend(data, len, true);
-  if (uplink_profile) {
-    Lora->settings = RXsettings;                     // Restore copy
-    Lora->Config();
+void LoRaWanSend(void) {
+  if (!Lora->send_request) { return; }
+  Lora->send_request = false;
+  LoraSend(Lora->send_buffer, Lora->send_buffer_len, true);
+  if (Lora->profile_changed) {
+    Lora->settings = Lora->backup_settings;       // Restore copy for reception
+    if (0 == Lora->send_buffer_step) {
+      Lora->Init();                                  // Necessary to re-init the SXxxxx chip in cases where TX/RX frequencies differ
+    } else {
+      Lora->Config(false);
+    }
   }
 }
 
 void LoraWanTickerSend(void) {
+  // Need to stay here as short as possible to not initiate watchdog exception
+  // As SF12 can take over 1 sec do send in loop instead of here
   Lora->send_buffer_step--;
   if (1 == Lora->send_buffer_step) {
     Lora->rx = true;                                 // Always send during RX1
     Lora->receive_time = 0;                          // Reset receive timer
-    LoraWan_Send.once_ms(TAS_LORAWAN_RECEIVE_DELAY2, LoraWanTickerSend);  // Retry after 1000 ms
   }
-
-  bool uplink_profile = (Lora->settings.region == TAS_LORA_REGION_AU915);
   if (Lora->rx) {                                    // If received in RX1 do not resend in RX2
-    LoraWanSend(Lora->send_buffer, Lora->send_buffer_len, uplink_profile);
-  }
-
-  if (uplink_profile && (0 == Lora->send_buffer_step)) {
-    Lora->Init();                                    // Necessary to re-init the SXxxxx chip in cases where TX/RX frequencies differ
+    if (1 == Lora->send_buffer_step) {
+      Lora->profile_changed = LoraWanProfile(TAS_LORAWAN_RADIO_RX1);  // Set Downlink RX1 profile
+    } else {
+      Lora->profile_changed = LoraWanProfile(TAS_LORAWAN_RADIO_RX2);  // Set Downlink RX2 profile
+    }
+    if (Lora->profile_changed) {
+      Lora->Config(false);
+    }
+    Lora->send_request = true;                       // Send in loop fixing watchdogs
+#ifdef ESP8266
+    SleepSkip();                                     // Skip sleep
+#else   // ESP32
+    LoRaWanSend();
+#endif  // ESP8266/ESP32
   }
 }
 
@@ -391,8 +414,19 @@ void LoraWanSendResponse(uint8_t* buffer, size_t len, uint32_t lorawan_delay) {
   if (nullptr == Lora->send_buffer) { return; }
   memcpy(Lora->send_buffer, buffer, len);
   Lora->send_buffer_len = len;
+
+  Lora->send_request = false;
+  Lora->backup_settings = Lora->settings;         // Make a copy;
   Lora->send_buffer_step = 2;                        // Send at RX1 and RX2
-  LoraWan_Send.once_ms(lorawan_delay - TimePassedSince(Lora->receive_time), LoraWanTickerSend);
+
+  uint32_t delay_rx1 = lorawan_delay - TimePassedSince(Lora->receive_time);
+  LoraWan_Send_RX1.once_ms(delay_rx1, LoraWanTickerSend);
+  uint32_t delay_rx2 = delay_rx1 + TAS_LORAWAN_RECEIVE_DELAY2;
+  LoraWan_Send_RX2.once_ms(delay_rx2, LoraWanTickerSend);  // Retry after 1000 ms
+#ifdef USE_LORA_DEBUG
+  AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: About to send '%*_H' in %d and (optional) %d ms"),
+    Lora->send_buffer_len, Lora->send_buffer, delay_rx1, delay_rx2);
+#endif  // USE_LORA_DEBUG
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -400,12 +434,12 @@ void LoraWanSendResponse(uint8_t* buffer, size_t len, uint32_t lorawan_delay) {
 size_t LoraWanCFList(uint8_t * CFList, size_t uLen) {
   // Populates CFList for use in JOIN-ACCEPT message to lock device to specific frequencies
   // Returns: Number of bytes added
+  if (uLen < 16) return 0;
+
   uint8_t idx = 0;
 
   switch (Lora->settings.region) {
     case TAS_LORA_REGION_AU915: {
-      if (uLen < 16) return 0;
-
       uint8_t uChannel   = LoraWanFrequencyToChannel();  // 0..71
       uint8_t uMaskByte  = uChannel /8;              // 0..8
         
@@ -415,17 +449,28 @@ size_t LoraWanCFList(uint8_t * CFList, size_t uLen) {
       }
           
       // Add next 6  bytes
-      CFList[idx++] = 0x00;   //RFU
+      CFList[idx++] = 0x00;   // RFU
       CFList[idx++] = 0x00;
   
-      CFList[idx++] = 0x00;   //RFU
+      CFList[idx++] = 0x00;   // RFU
       CFList[idx++] = 0x00;
       CFList[idx++] = 0x00;
   
-      CFList[idx++] = 0x01;   //CFListType
+      CFList[idx++] = 0x01;   // CFListType
       break;
     }
     default: {  // TAS_LORA_REGION_EU868
+/*
+      uint32_t frequency = (Lora->settings.frequency * 10000);  // 868.1 -> 8681000
+
+      // Add first 15 bytes
+      for (uint32_t i = 0; i < 5; i++) {
+        CFList[idx++] = frequency;
+        CFList[idx++] = frequency >> 8;
+        CFList[idx++] = frequency >> 16;
+      }
+      CFList[idx++] = 0x00;   // CFListType
+*/
     }
   }
   return idx;
@@ -551,8 +596,9 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
   uint32_t MType = data[0] >> 5;                             // Upper three bits (used to be called FType)
 
   if (TAS_LORAWAN_MTYPE_JOIN_REQUEST == MType) {
-    // 0007010000004140A8D64A89710E4140A82893A8AD137F - Dragino
-    // 000600000000161600B51F000000161600FDA5D8127912 - MerryIoT
+    // 0007010000004140A8D64A89710E4140A82893A8AD137F - Dragino LDS02
+    // 0000010000004140A889AD5C17544140A849E1B2CAC27B - Dragino LHT52
+    // 000600000000161600B51F000000161600FDA5D8127912 - MerryIoT DW10
     uint64_t JoinEUI = (uint64_t)data[ 1]        | ((uint64_t)data[ 2] <<  8) |
                       ((uint64_t)data[ 3] << 16) | ((uint64_t)data[ 4] << 24) |
                       ((uint64_t)data[ 5] << 32) | ((uint64_t)data[ 6] << 40) |
@@ -569,8 +615,8 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
       uint32_t CalcMIC = LoraWanGenerateMIC(data, 19, Lora->settings.end_node[node].AppKey);
       if (MIC == CalcMIC) {                                  // Valid MIC based on LoraWanAppKey
 
-        AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: JoinEUI %8_H, DevEUIh %08X, DevEUIl %08X, DevNonce %04X, MIC %08X"),
-          (uint8_t*)&JoinEUI, DevEUIh, DevEUIl, DevNonce, MIC);
+        AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Node %d, JoinEUI %8_H, DevEUIh %08X, DevEUIl %08X, DevNonce %04X, MIC %08X"),
+          node +1, (uint8_t*)&JoinEUI, DevEUIh, DevEUIl, DevNonce, MIC);
 
         Lora->settings.end_node[node].DevEUIl = DevEUIl;
         Lora->settings.end_node[node].DevEUIh = DevEUIh;
@@ -583,6 +629,7 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
           ext_snprintf_P(name, sizeof(name), PSTR("0x%04X"), Lora->settings.end_node[node].DevEUIl & 0x0000FFFF);
           Lora->settings.end_node[node].name = name;
         }
+
         uint32_t JoinNonce = TAS_LORAWAN_JOINNONCE +node;
         uint32_t DevAddr = Lora->device_address +node;
         uint32_t NetID = TAS_LORAWAN_NETID;
@@ -621,8 +668,9 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
         EncData[0] = join_data[0];
         LoraWanEncryptJoinAccept(Lora->settings.end_node[node].AppKey, &join_data[1], join_data_index-1, &EncData[1]);
 
-        // 203106E5000000412E010003017CB31DD4 - Dragino
-        // 203206E5000000422E010003016A210EEA - MerryIoT
+        // 203106E5000000412E010003017CB31DD4 - Dragino LDS02
+        // 2026B4E06C390AFA1B166D465987F31EC4 - Dragino LHT52
+        // 203206E5000000422E010003016A210EEA - MerryIoT DW10
         LoraWanSendResponse(EncData, join_data_index, TAS_LORAWAN_JOIN_ACCEPT_DELAY1);
 
         result = true;

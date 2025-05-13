@@ -53,25 +53,27 @@ void LoraWanPublishFooter(uint32_t node) {
   InfluxDbProcess(1);                                 // Use a copy of ResponseData
 #endif
 
-  if (Settings->flag4.zigbee_distinct_topics) {       // SetOption89  - (MQTT, Zigbee) Distinct MQTT topics per device for Zigbee (1) (#7835)
-    char subtopic[TOPSZ];
-    // Clean special characters
-    char stemp[TOPSZ];
-    strlcpy(stemp, Lora->settings.end_node[node].name.c_str(), sizeof(stemp));
-    MakeValidMqtt(0, stemp);
-    if (Settings->flag5.zigbee_hide_bridge_topic) {   // SetOption125 - (Zigbee) Hide bridge topic from zigbee topic (use with SetOption89) (1)
-      snprintf_P(subtopic, sizeof(subtopic), PSTR("%s"), stemp);
+  if (!Settings->flag6.mqtt_disable_publish) {        // SetOption147 - If it is activated, Tasmota will not publish MQTT messages, but it will proccess event trigger rules
+    if (Settings->flag4.zigbee_distinct_topics) {     // SetOption89  - (MQTT, Zigbee) Distinct MQTT topics per device for Zigbee (1) (#7835)
+      char subtopic[TOPSZ];
+      // Clean special characters
+      char stemp[TOPSZ];
+      strlcpy(stemp, Lora->settings.end_node[node].name.c_str(), sizeof(stemp));
+      MakeValidMqtt(0, stemp);
+      if (Settings->flag5.zigbee_hide_bridge_topic) { // SetOption125 - (Zigbee) Hide bridge topic from zigbee topic (use with SetOption89) (1)
+        snprintf_P(subtopic, sizeof(subtopic), PSTR("%s"), stemp);
+      } else {
+        snprintf_P(subtopic, sizeof(subtopic), PSTR("%s/%s"), TasmotaGlobal.mqtt_topic, stemp);
+      }
+      char stopic[TOPSZ];
+      if (Settings->flag5.zb_received_as_subtopic)    // SetOption118 - (Zigbee) Move LwReceived from JSON message and into the subtopic replacing "SENSOR" default
+        GetTopic_P(stopic, TELE, subtopic, PSTR("LwReceived"));
+      else
+        GetTopic_P(stopic, TELE, subtopic, PSTR(D_RSLT_SENSOR));
+      MqttPublish(stopic, Settings->flag.mqtt_sensor_retain);
     } else {
-      snprintf_P(subtopic, sizeof(subtopic), PSTR("%s/%s"), TasmotaGlobal.mqtt_topic, stemp);
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);
     }
-    char stopic[TOPSZ];
-    if (Settings->flag5.zb_received_as_subtopic)      // SetOption118 - (Zigbee) Move LwReceived from JSON message and into the subtopic replacing "SENSOR" default
-      GetTopic_P(stopic, TELE, subtopic, PSTR("LwReceived"));
-    else
-      GetTopic_P(stopic, TELE, subtopic, PSTR(D_RSLT_SENSOR));
-    MqttPublish(stopic, Settings->flag.mqtt_sensor_retain);
-  } else {
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);
   }
   XdrvRulesProcess(0);                                // Apply rules
 }

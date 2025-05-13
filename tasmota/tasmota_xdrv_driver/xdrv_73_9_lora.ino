@@ -46,7 +46,7 @@ void LoraSettings2Json(bool show = false) {
     ResponseAppend_P(PSTR("\"" D_JSON_REGION "\":%d"), Lora->settings.region);      // enum 0 = EU868, 1 = AU915
   }
 #ifdef USE_LORAWAN_BRIDGE
-  if (show && (Lora->settings.region == TAS_LORA_REGION_AU915)) {
+  if (show && (bitRead(Lora->settings.flags, TAS_LORA_FLAG_BRIDGE_ENABLED))) {
     LoRaWanRadioInfo_t Rx1Info;
     LoraWanRadioInfo(TAS_LORAWAN_RADIO_RX1, &Rx1Info, LoraWanFrequencyToChannel());  // Get Rx1Info with values used for RX1 transmit window. (Region specific, calculated from Uplink radio settings)
     LoRaWanRadioInfo_t Rx2Info;
@@ -193,8 +193,8 @@ void LoraSettingsSave(void) {
 bool LoraSend(uint8_t* data, uint32_t len, bool invert) {
   uint32_t lora_time = millis();         // Time is important for LoRaWan RX windows
   bool result = Lora->Send(data, len, invert);
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LOR: Send (%u) '%*_H', Invert %d, Time %d"),
-    lora_time, len, data, invert, TimePassedSince(lora_time));
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LOR: Send (%u) '%*_H', Invert %d, Freq %1_f, BW %1_f, SF %d, Time %d"),
+    lora_time, len, data, invert, &Lora->settings.frequency, &Lora->settings.bandwidth, Lora->settings.spreading_factor, TimePassedSince(lora_time));
   return result;
 }
 
@@ -204,8 +204,8 @@ void LoraInput(void) {
   char data[TAS_LORA_MAX_PACKET_LENGTH] = { 0 };
   int packet_size = Lora->Receive(data);
   if (!packet_size) { return; }
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LOR: Rcvd (%u) '%*_H', RSSI %1_f, SNR %1_f"),
-    Lora->receive_time, packet_size, data, &Lora->rssi, &Lora->snr);
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LOR: Rcvd (%u) '%*_H', Freq %1_f, BW %1_f, SF %d, RSSI %1_f, SNR %1_f"),
+    Lora->receive_time, packet_size, data, &Lora->settings.frequency, &Lora->settings.bandwidth, Lora->settings.spreading_factor, &Lora->rssi, &Lora->snr);
 #ifdef USE_LORAWAN_BRIDGE
   if (bitRead(Lora->settings.flags, TAS_LORA_FLAG_BRIDGE_ENABLED)) {
     if (LoraWanInput((uint8_t*)data, packet_size)) {
@@ -457,9 +457,9 @@ void CmndLoraConfig(void) {
           LoraDefaults(region);                               // Default region LoRa values
           break;
 #ifdef USE_LORAWAN_BRIDGE
-        case 2:
+        case 2: {
           switch (region) {
-            case TAS_LORA_REGION_AU915:
+            case TAS_LORA_REGION_AU915: {
               uint32_t parm[2] = { 0, 0 };
               ParseParameters(2, parm);                       // parm[1] will hold channel
               Lora->settings.region = region;                 // Need valid region for LoraWanRadioInfo()
@@ -467,21 +467,23 @@ void CmndLoraConfig(void) {
               LoraWanRadioInfo(TAS_LORAWAN_RADIO_UPLINK, &UpInfo, parm[1]);  // Set uplink frequency based on channel
               Lora->settings.frequency = UpInfo.frequency;       
               break;
-//            default:
-//              not implemented
+            }
+            default:  // TAS_LORA_REGION_EU868
+              Lora->settings.frequency = TAS_LORAWAN_FREQUENCY;       
           }
           LoraWanDefaults(region);                            // Default region LoRaWan values
           break;
+        }
 #endif  // USE_LORAWAN_BRIDGE
       }
-      Lora->Config();
+      Lora->Config(true);
     }
     else {
       JsonParser parser(XdrvMailbox.data);
       JsonParserObject root = parser.getRootObject();
       if (root) { 
         LoraJson2Settings(root);
-        Lora->Config();
+        Lora->Config(true);
       }
     }
     uint8_t data[1] = { 0 };
@@ -507,6 +509,9 @@ bool Xdrv73(uint32_t function) {
     switch (function) {
       case FUNC_LOOP:
       case FUNC_SLEEP_LOOP:
+#ifdef USE_LORAWAN_BRIDGE
+        LoRaWanSend();
+#endif  // USE_LORAWAN_BRIDGE
         LoraInput();
         break;
       case FUNC_RESET_SETTINGS:

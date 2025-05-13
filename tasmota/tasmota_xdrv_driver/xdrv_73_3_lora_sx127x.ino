@@ -72,35 +72,37 @@ bool LoraSx127xSend(uint8_t* data, uint32_t len, bool invert) {
   return true;
 }
 
-bool LoraSx127xConfig(void) {
+bool LoraSx127xConfig(bool full) {
   LoRa.setFrequency(Lora->settings.frequency * 1000 * 1000);
   LoRa.setSignalBandwidth(Lora->settings.bandwidth * 1000);
   LoRa.setSpreadingFactor(Lora->settings.spreading_factor);
-  LoRa.setCodingRate4(Lora->settings.coding_rate);
-  LoRa.setSyncWord(Lora->settings.sync_word);
-  LoRa.setTxPower(Lora->settings.output_power);
-  LoRa.setPreambleLength(Lora->settings.preamble_length);
-  LoRa.setOCP(Lora->settings.current_limit);
-  if (Lora->settings.crc_bytes) {
-    LoRa.enableCrc();
-  } else {
-    LoRa.disableCrc();
-  }
+  if (full) {
+    LoRa.setCodingRate4(Lora->settings.coding_rate);
+    LoRa.setSyncWord(Lora->settings.sync_word);
+    LoRa.setTxPower(Lora->settings.output_power);
+    LoRa.setPreambleLength(Lora->settings.preamble_length);
+    LoRa.setOCP(Lora->settings.current_limit);
+    if (Lora->settings.crc_bytes) {
+      LoRa.enableCrc();
+    } else {
+      LoRa.disableCrc();
+    }
 /*    
-  if (Lora->settings.implicit_header) { 
-    LoRa.implicitHeaderMode();
-  } else { 
-    LoRa.explicitHeaderMode();
-  }
+    if (Lora->settings.implicit_header) { 
+      LoRa.implicitHeaderMode();
+    } else { 
+      LoRa.explicitHeaderMode();
+    }
 */
-  LoRa.disableInvertIQ();                  // normal mode
+    LoRa.disableInvertIQ();                  // normal mode
+  }
   return true;
 }
 
 bool LoraSx127xInit(void) {
   LoRa.setPins(Pin(GPIO_LORA_CS), Pin(GPIO_LORA_RST), Pin(GPIO_LORA_DI0));
   if (LoRa.begin(Lora->settings.frequency * 1000 * 1000)) {
-    LoraSx127xConfig();
+    LoraSx127xConfig(true);
     LoRa.onReceive(LoraSx127xOnReceive);
     LoRa.receive();
     return true;

@@ -106,13 +106,30 @@
 
 // EU868 values
 #ifndef TAS_LORAWAN_FREQUENCY
-#define TAS_LORAWAN_FREQUENCY                      868.1  // Allowed values range from 150.0 to 960.0 MHz
+#define TAS_LORAWAN_FREQUENCY                      868.1  // Allowed values are 868.1, 868.3 and 868.5 MHz
 #endif
 #ifndef TAS_LORAWAN_BANDWIDTH
-#define TAS_LORAWAN_BANDWIDTH                      125.0  // Allowed values are 7.8, 10.4, 15.6, 20.8, 31.25, 41.7, 62.5, 125.0, 250.0 and 500.0 kHz
+#define TAS_LORAWAN_BANDWIDTH                      125.0  // Allowed values are 125.0 and 250.0 kHz
 #endif
 #ifndef TAS_LORAWAN_SPREADING_FACTOR
-#define TAS_LORAWAN_SPREADING_FACTOR                 9    // Allowed values range from 5 to 12
+#define TAS_LORAWAN_SPREADING_FACTOR                 9    // Allowed values range from 7 to 12
+#endif
+
+#ifndef TAS_LORAWAN_BANDWIDTH_RX1
+#define TAS_LORAWAN_BANDWIDTH_RX1                  125.0  // DR3
+#endif
+#ifndef TAS_LORAWAN_SPREADING_FACTOR_RX1
+#define TAS_LORAWAN_SPREADING_FACTOR_RX1             9    // DR3
+#endif
+
+#ifndef TAS_LORAWAN_FREQUENCY_DN 
+#define TAS_LORAWAN_FREQUENCY_DN                   869.525  // Class B downlink channel
+#endif
+#ifndef TAS_LORAWAN_BANDWIDTH_RX2
+#define TAS_LORAWAN_BANDWIDTH_RX2                  125.0  // DR0
+#endif
+#ifndef TAS_LORAWAN_SPREADING_FACTOR_RX2
+#define TAS_LORAWAN_SPREADING_FACTOR_RX2            12    // DR0
 #endif
 
 // Common LoRaWan values
@@ -278,7 +295,7 @@ typedef struct LoraSettings_t {
 } LoraSettings_t;
 
 typedef struct Lora_t {
-  bool (* Config)(void);
+  bool (* Config)(bool);
   bool (* Available)(void);
   int (* Receive)(char*);
   bool (* Send)(uint8_t*, uint32_t, bool);
@@ -293,10 +310,13 @@ typedef struct Lora_t {
   bool raw;
 #ifdef USE_LORAWAN_BRIDGE
   uint32_t device_address;
+  LoraSettings_t backup_settings;
   uint8_t* send_buffer;
   uint8_t send_buffer_step;
   uint8_t send_buffer_len;
   bool rx;
+  bool send_request;
+  bool profile_changed;
 #endif  // USE_LORAWAN_BRIDGE
 } Lora_t;
 Lora_t* Lora = nullptr;

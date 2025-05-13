@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [14.6.0.2]
 ### Added
 - Allow temporary change of DisplayDimmer (#23406)
+- Support for LoRaWan Rx1 and Rx2 profiles (#23394)
 
 ### Breaking Changed
 
