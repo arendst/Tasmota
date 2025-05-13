@@ -1,6 +1,6 @@
  ## How to use the LoRaWan Device Decoder feature ##
  1. Download to local computer, then upload to your Tasmota File System:
-    - [LwDecoders.be](https://github.com/arendst/Tasmota/tree/master/tasmota/berry/lorawan/decoders/LwDecoders.be)
+    - [LwDecode.be](https://github.com/arendst/Tasmota/tree/master/tasmota/berry/lorawan/decoders/LwDecode.be)
     - the _Device Decoder File(s)_ for your _End Device(s)_
  2. Add this line to `autoexec.be` in the Tasmota File System (create if necessary)   
  `load("LwDecode.be")`
