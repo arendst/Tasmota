@@ -4,19 +4,19 @@
 var LwRegions = ["EU868", "US915", "IN865","AU915","KZ865","RU864","AS923", "AS923-1","AS923-2","AS923-3"]
 
 import mqtt 
-tasmota.cmd('SetOption100 off')
-tasmota.cmd('SetOption118 off')
-tasmota.cmd('SetOption119 off')
+tasmota.cmd('SetOption100 off')   # Keep LwReceived in JSON message
+tasmota.cmd('SetOption118 off')   # Keep SENSOR as subtopic name
+tasmota.cmd('SetOption119 off')   # Keep device address in JSON message
+tasmota.cmd('SetOption147 on')    # Hide LwReceived MQTT message but keep rule processing
 tasmota.cmd('LoRaWanBridge on')
 var thisDevice = tasmota.cmd('Status',true)['Status']['Topic']
 var LwDecoders = {}
 var LwDeco
 
-def LwDecode(topic, idx, data, databytes)
+def LwDecode(data)
   import json
 
-  var LwData = json.load(data)
-  if !LwData.contains('LwReceived') return true end # Processed
+  var LwData = type(data)=='string' ? json.load(data) : data
   var deviceData = LwData['LwReceived']
   var deviceName = deviceData.keys()()
   var Payload = deviceData[deviceName]['Payload']
@@ -31,6 +31,7 @@ def LwDecode(topic, idx, data, databytes)
   end 
 
   if Payload.size() && LwDecoders.find(decoder)
+   var topic = "tele/" + thisDevice + "/SENSOR"
    var decoded = LwDecoders[decoder].decodeUplink(FPort, Payload)	
    var mqttData = {"LwDecoded":{deviceName:decoded}}
    mqtt.publish	(topic, json.dump(mqttData))
@@ -39,4 +40,4 @@ def LwDecode(topic, idx, data, databytes)
   return true  #processed
 end
 
-mqtt.subscribe("tele/" + thisDevice + "/SENSOR",LwDecode)
+tasmota.add_rule("LwReceived", /value, trigger, payload -> LwDecode(payload))
