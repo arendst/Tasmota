@@ -16,8 +16,7 @@ var LwDeco
 def LwDecode(data)
   import json
 
-  var LwData = type(data)=='string' ? json.load(data) : data
-  var deviceData = LwData['LwReceived']
+  var deviceData = data['LwReceived']
   var deviceName = deviceData.keys()()
   var Payload = deviceData[deviceName]['Payload']
   var FPort = deviceData[deviceName]['FPort']
