@@ -73,7 +73,9 @@ class LwDecoLHT65
     data.insert("Exit_count", (Bytes[7] << 24) | (Bytes[8] << 16) | (Bytes[9] << 8) | Bytes[10])
    elif 9==Ext
     data.insert("Work_mode", 'DS18B20 & timestamp')
-    data.insert("Systimestamp", (Bytes[7] << 24) | (Bytes[8] << 16) | (Bytes[9] << 8) | Bytes[10])
+#    data.insert("Systimestamp", (Bytes[7] << 24) | (Bytes[8] << 16) | (Bytes[9] << 8) | Bytes[10])
+    var epoch = (Bytes[7] << 24) | (Bytes[8] << 16) | (Bytes[9] << 8) | Bytes[10]
+    data.insert("Systimestamp",tasmota.time_str(epoch))
    elif 15==Ext
     data.insert("Work_mode",'DS18B20ID')
     data.insert("ID",f"{Bytes[2]:%02X}" + f"{Bytes[3]:%02X}" + f"{Bytes[4]:%02X}" + f"{Bytes[5]:%02X}" + f"{Bytes[6]:%02X}" + f"{Bytes[8]:%02X}" + f"{Bytes[9]:%02X}" + f"{Bytes[10]:%02X}" ) 

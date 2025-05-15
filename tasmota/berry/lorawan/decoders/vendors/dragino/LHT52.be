@@ -32,7 +32,9 @@ class LwDecoLHT52
    
   data.insert("Hum_Internal", ((Bytes[2]<<8 ) | Bytes[3])/10.0)   
   data.insert("Ext_SensorType", Bytes[6])
-  data.insert("Systimestamp",(Bytes[7] << 24) | (Bytes[8] << 16) | (Bytes[9] << 8) | Bytes[10])
+#  data.insert("Systimestamp",(Bytes[7] << 24) | (Bytes[8] << 16) | (Bytes[9] << 8) | Bytes[10])
+  var epoch = (Bytes[7] << 24) | (Bytes[8] << 16) | (Bytes[9] << 8) | Bytes[10]
+  data.insert("Systimestamp",tasmota.time_str(epoch))
 
   ## STATUS DATA ##
   elif 5 == FPort && Bytes.size() == 7
