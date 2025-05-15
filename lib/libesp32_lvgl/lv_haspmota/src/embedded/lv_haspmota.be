@@ -34,60 +34,96 @@ class Antiburn
   var antiburn            # the lv_obj object used as a plain color
   var running
   static colors = [
-      0x000000,
-      0xff0000,
-      0x00ff00,
-      0x0000ff,
-      0xffffff
+    0x000000,
+    0xff0000,
+    0x00ff00,
+    0x0000ff,
+    0xffffff
   ]
   def init()
-      self.running = false
+    self.running = false
   end
   def start()
-      if self.running 
-          return
-      else
-          lv.start()
+    if self.running 
+      return
+    else
+      lv.start()
 
-          if self.antiburn == nil
-              var antiburn = lv.obj(lv.layer_sys())
-              antiburn.set_style_radius(0, 0)
-              antiburn.set_style_border_width(0, 0)
-              antiburn.set_style_bg_opa(255, 0)
-              antiburn.set_pos(0, 0)
-              antiburn.set_width(lv.get_hor_res())
-              antiburn.set_height(lv.get_ver_res())
-              
-              antiburn.add_event_cb(/->self.stop(), lv.EVENT_PRESSED, 0)
-              self.antiburn = antiburn
-          end
-          self.antiburn.set_style_bg_opa(255, 0)
-          self.antiburn.add_flag(lv.OBJ_FLAG_CLICKABLE)
-          self.antiburn.move_foreground()
-
-          self.running = true
-          self.cycle(0)
+      if self.antiburn == nil
+        var antiburn = lv.obj(lv.layer_sys())
+        antiburn.set_style_radius(0, 0)
+        antiburn.set_style_border_width(0, 0)
+        antiburn.set_style_bg_opa(255, 0)
+        antiburn.set_pos(0, 0)
+        antiburn.set_width(lv.get_hor_res())
+        antiburn.set_height(lv.get_ver_res())
+        
+        antiburn.add_event_cb(/->self.stop(), lv.EVENT_PRESSED, 0)
+        self.antiburn = antiburn
       end
+      self.antiburn.set_style_bg_opa(255, 0)
+      self.antiburn.add_flag(lv.OBJ_FLAG_CLICKABLE)
+      self.antiburn.move_foreground()
+
+      self.running = true
+      self.cycle(0)
+    end
   end
   def cycle(i)
-      if !self.running || self.antiburn == nil return nil end
-      if i < 30
-          self.antiburn.set_style_bg_color(lv.color_hex(self.colors[i % 5]), 0)
-          tasmota.set_timer(1000, /->self.cycle(i+1))
-      else
-          self.stop()
-      end
+    if !self.running || self.antiburn == nil return nil end
+    if i < 30
+      self.antiburn.set_style_bg_color(lv.color_hex(self.colors[i % 5]), 0)
+      tasmota.set_timer(1000, /->self.cycle(i+1))
+    else
+      self.stop()
+    end
   end
   def stop()
-      if self.running && self.antiburn != nil
-          self.antiburn.set_style_bg_opa(0, 0)
-          self.antiburn.clear_flag(lv.OBJ_FLAG_CLICKABLE)
-          self.running = false
-          self.antiburn.del()
-          self.antiburn = nil
-      end    
+    if self.running && self.antiburn != nil
+      self.antiburn.set_style_bg_opa(0, 0)
+      self.antiburn.clear_flag(lv.OBJ_FLAG_CLICKABLE)
+      self.running = false
+      self.antiburn.del()
+      self.antiburn = nil
+    end    
   end
 end
+
+
+#################################################################################
+# Class DimmedPanel
+#
+# The screen is dimmed so we disable any touch action except to
+# get out of dimmed mode
+#################################################################################
+#@ solidify:DimmedPanel,weak
+class DimmedPanel
+  var panel            # the lv_obj object used as a plain color
+
+  def init()
+    if self.panel == nil
+      var panel = lv.obj(lv.layer_sys())
+      panel.set_style_radius(0, 0)
+      panel.set_style_border_width(0, 0)
+      panel.set_style_bg_opa(0, 0)
+      panel.set_pos(0, 0)
+      panel.set_width(lv.get_hor_res())
+      panel.set_height(lv.get_ver_res())
+
+      panel.add_flag(lv.OBJ_FLAG_CLICKABLE)
+      panel.add_event_cb(/->self.stop(), lv.EVENT_PRESSED, 0)
+      self.panel = panel
+    end
+    self.panel.move_foreground()
+  end
+  def stop()
+    if (self.panel != nil)
+      self.panel.del()
+      self.panel = nil
+    end    
+  end
+end
+
 
 #################################################################################
 # Pre-defined events lists
@@ -119,9 +155,6 @@ class lvh_root
     "page",
     "comment",
     "parentid",
-    # "auto_size",    # TODO not sure it's still needed in LVGL8
-    # attributes for page
-    "prev", "next", "back",
     "berry_run",    # run Berry code after the object is created
   ]
 
@@ -2891,6 +2924,14 @@ class HASPmota
   # specific event_cb handling for less memory usage since we are registering a lot of callbacks
   var event                             # try to keep the event object around and reuse it
   var event_cb                          # the low-level callback for the closure to be registered
+  # auto-dimming for inactivity
+  var antiburn_time                     # number of minutes to perdiodically trigger antiburn for LCD
+  var dimming_time                      # number of minutes of inactivity to trigger auto-dimming (or 0 if disabled)
+  var dimming_min                       # minimum dimming value (1..100), by default it divides dimmer value by 4
+  var dimming_duration                  # number of seconds to keep low dimming before turning screen off
+  static var DIMMING_DURATION = 30      # default dimming duration is 30 seconds
+  var dimming_state                     # the current dimming state: 100=normal 25=dimmed_low 0=off
+  var dimmed_panel                      # the object used to mask any touch event with the screen is dimmed
 
   # assign lvh_page to a static attribute
   static lvh_root = lvh_root
@@ -2935,6 +2976,7 @@ class HASPmota
   static lvh_chart = lvh_chart
   # other helper classes
   static var Antiburn = Antiburn
+  static var DimmedPanel = DimmedPanel
 
   static var PAGES_JSONL = "pages.jsonl" # default template name
 
@@ -2943,6 +2985,14 @@ class HASPmota
     import re
     self.re_page_target = re.compilebytes("p\\d+")
     # nothing to put here up to now
+    # defaulting values
+    self.antiburn_time = 0
+    self.dimming_time = 0
+    self.dimming_min = 1
+    self.dimming_duration = self.DIMMING_DURATION
+    self.dimming_state = 100      # normal brightness from Settings
+    # register as driver
+    tasmota.add_driver(self)
   end
 
   # make sure that `lv.version` returns a version number
@@ -3057,6 +3107,75 @@ class HASPmota
   #################################################################################
   def antiburn()
     self.Antiburn().start()
+  end
+
+  #################################################################################
+  # auto_dimming
+  #################################################################################
+  def auto_dimming()
+    if (self.dimming_time <= 0)    return    end     # fast return if not enabled
+    var dim_event = nil
+
+    import display
+    var dimming_time_ms = self.dimming_time * 60000
+    var inactive_time_ms = lv.disp().get_inactive_time()
+
+    if (inactive_time_ms < dimming_time_ms)
+      # no dimming
+      if (self.dimmed_panel != nil)
+        self.dimmed_panel.stop()
+        self.dimmed_panel = nil
+      end
+      if (self.dimming_state < 100)
+        self.dimming_state = 100
+        display.dimmer(display.dimmer())    # restore dimmer value from settings
+        # trigger event
+        dim_event = "off"
+      end
+    elif (inactive_time_ms < dimming_time_ms + self.dimming_duration * 1000)
+      # low brightness dimming
+      if (self.dimmed_panel == nil)
+        self.dimmed_panel = self.DimmedPanel()
+      end
+      if (self.dimming_state > 25)
+        # lower dimmer
+        self.dimming_state = 25
+        var cur_dim = display.dimmer()
+        var relative_dim = (cur_dim > self.dimming_min) ? cur_dim - self.dimming_min : self.dimming_min
+        var low_dim = (relative_dim / 4) + self.dimming_min
+        display.dimmer(low_dim, true #-no settings-#)
+        # no event
+        dim_event = "short"
+      end
+    else
+      if (self.dimmed_panel == nil)
+        self.dimmed_panel = self.DimmedPanel()
+      end
+      # dimmer off
+      if (self.dimming_state > 0)
+        # needs to turn off
+        self.dimming_state = 0
+        display.dimmer(0, true #-no settings-#)
+        # trigger event
+        dim_event = "long"
+      end
+    end
+    # send event if any
+    if (dim_event != nil)
+      var tas_event = format('{"hasp":{"p0b0":{"idle":"%s"}}}', dim_event)
+      # print("val=",val)
+      tasmota.defer(def ()
+                      tasmota.publish_rule(tas_event)
+                      tasmota.log(f"HSP: publish {tas_event}", 4)
+                    end)
+    end
+  end
+
+  #################################################################################
+  # every_100ms
+  #################################################################################
+  def every_100ms()
+    self.auto_dimming()
   end
 
   #####################################################################
@@ -3296,7 +3415,7 @@ class HASPmota
   def parse_page(jline)
     if jline.has("page") && type(jline["page"]) == 'int'
       var page = int(jline["page"])
-      # print(f">>> parsing page {page}")
+      # print(f">>> parsing page {page} {jline=}")
       self.lvh_page_cur_idx_parsing = page    # change current page
       if (self.lvh_page_cur_idx == nil)       # also set current page if we haven't any yet
         self.lvh_page_cur_idx = page
@@ -3307,13 +3426,27 @@ class HASPmota
         var lvh_page_class = self.lvh_page
         self.lvh_pages[page] = lvh_page_class(page, self)
       end
+    end
 
-      # check if there is "id":0
-      if jline.find("id") == 0
-        var lvh_page_cur = self.get_page_cur_parsing()
-        lvh_page_cur.prev = int(jline.find("prev", nil))
-        lvh_page_cur.next = int(jline.find("next", nil))
-        lvh_page_cur.back = int(jline.find("back", nil))
+    # check if there is "id":0
+    if jline.find("id") == 0
+      var lvh_page_cur = self.get_page_cur_parsing()
+      lvh_page_cur.prev = int(jline.find("prev", nil))
+      lvh_page_cur.next = int(jline.find("next", nil))
+      lvh_page_cur.back = int(jline.find("back", nil))
+      jline.remove("prev")
+      jline.remove("next")
+      jline.remove("back")
+      # special case if it's also "page == 0"
+      if (lvh_page_cur._page_id == 0)
+        self.dimming_time = int(jline.find("dimming_time", self.dimming_time))
+        self.dimming_min = int(jline.find("dimming_min", self.dimming_min))
+        self.dimming_duration = int(jline.find("dimming_duration", self.dimming_duration))
+        self.antiburn_time = int(jline.find("antiburn", self.dimming_time))
+        jline.remove("dimming_time")
+        jline.remove("dimming_min")
+        jline.remove("dimming_duration")
+        jline.remove("antiburn")
       end
     end
   end

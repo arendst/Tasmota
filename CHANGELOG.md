@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Allow temporary change of DisplayDimmer (#23406)
 - Support for LoRaWan Rx1 and Rx2 profiles (#23394)
+- HASPmota auto-dimming when no touch
 
 ### Breaking Changed
 
