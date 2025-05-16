@@ -32,7 +32,7 @@ const char be_berry_init_code[] =
   "import global "
 #ifdef USE_BERRY_PYTHON_COMPAT
   // enable python syntax compatibility mode
-  "import python_compat "
+  "do import python_compat end "      // don't keep 'python_compat' in global namespace
 #endif
   "import cb "
 
@@ -55,7 +55,7 @@ const char be_berry_init_code[] =
 
 #ifdef USE_AUTOCONF
   // autoconf
-  "import autoconf "
+  "do import autoconf end "
 #endif // USE_AUTOCONF
 
 #ifdef USE_LVGL
@@ -80,11 +80,7 @@ const char be_berry_init_code[] =
   "import light "
 #endif // USE_LIGHT
 
-#if defined(USE_EMULATION) && defined(USE_EMULATION_HUE)
-  "import hue_bridge "
-#endif
-
-  "import tapp "
+  "do import tapp end "     // we don't need to keep `tapp` in the global namespace
 
 #ifdef USE_BERRY_DEBUG
   "import debug "
