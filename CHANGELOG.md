@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Support for LoRaWan Rx1 and Rx2 profiles (#23394)
 - HASPmota auto-dimming when no touch (#23425)
 - Provide serial upload port from VSC to PIO (#23436)
+- Berry support for `sortedmap`
 
 ### Breaking Changed
 
