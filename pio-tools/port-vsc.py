@@ -23,6 +23,15 @@ if os.environ.get("PLATFORMIO_CALLER") == "vscode":
     except KeyError:
         print("Unknown OS: " + os_name)
 
+    # If the database is not found, check if running in WSL
+    # and try to find the database in the Windows file system
+    if not os.path.exists(db_path) and os_name == "Linux":
+        try:
+            db_path = os.path.expanduser(os.path.expandvars(os_paths["Windows"]))
+            print("Windows running PIO in WSL")
+        except KeyError:
+            pass
+
     # Only when the database is found we can go on
     if os.path.exists(db_path):
         conn = sqlite3.connect(db_path)
