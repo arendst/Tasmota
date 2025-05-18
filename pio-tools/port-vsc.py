@@ -23,7 +23,7 @@ if os.environ.get("PLATFORMIO_CALLER") == "vscode":
     except KeyError:
         raise RuntimeError("Unknown OS: " + os_name)
 
-    # Only whem the database is found we can go on
+    # Only when the database is found we can go on
     if os.path.exists(db_path):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
