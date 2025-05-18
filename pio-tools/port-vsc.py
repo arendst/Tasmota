@@ -21,7 +21,7 @@ if os.environ.get("PLATFORMIO_CALLER") == "vscode":
     try:
         db_path = os.path.expanduser(os.path.expandvars(os_paths[os_name]))
     except KeyError:
-        raise RuntimeError("Unknown OS: " + os_name)
+        print("Unknown OS: " + os_name)
 
     # Only when the database is found we can go on
     if os.path.exists(db_path):
