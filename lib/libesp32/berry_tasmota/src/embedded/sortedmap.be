@@ -73,6 +73,11 @@ class sortedmap
     return self.keys
   end
   
+  # Return iterator to keys in sorted order
+  def keys()
+    return self.keys.iter()
+  end
+
   # String representation
   def tostring()
     import string
