@@ -116,6 +116,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v14.6.0.2
 ### Added
+- Provide serial upload port from VSC to PIO [#23436](https://github.com/arendst/Tasmota/issues/23436)
 - Command `JsonPP 0..7` to enable (>0) JSON Pretty Print on user interfaces and set number of indents
 - Command `JsonPP <command>|backlog <command>;...` to enable JSON PP only once
 - Support for multi channel AU915-928 LoRaWanBridge by Rob Clark [#23372](https://github.com/arendst/Tasmota/issues/23372)
@@ -126,6 +127,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Optional Wifi strength indicator in WebUI status line [#23352](https://github.com/arendst/Tasmota/issues/23352)
 - Wireguard VPN [#23347](https://github.com/arendst/Tasmota/issues/23347)
 - HASPmota `antiburn()` [#23400](https://github.com/arendst/Tasmota/issues/23400)
+- HASPmota auto-dimming when no touch [#23425](https://github.com/arendst/Tasmota/issues/23425)
 
 ### Breaking Changed
 
@@ -135,6 +137,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Allow command `WebRefresh` minimum from 1000 to 400 mSec
 
 ### Fixed
+- DNS setting with `IPAddress4/5` not persisted [#23426](https://github.com/arendst/Tasmota/issues/23426)
 - NimBLE log_level definition conflict [#23366](https://github.com/arendst/Tasmota/issues/23366)
 - Berry `bytes().asstring()` now truncates a string if buffer contains NULL [#23311](https://github.com/arendst/Tasmota/issues/23311)
 - Berry string literals containing NULL are truncated [#23312](https://github.com/arendst/Tasmota/issues/23312)

@@ -7,7 +7,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Allow temporary change of DisplayDimmer (#23406)
 - Support for LoRaWan Rx1 and Rx2 profiles (#23394)
-- HASPmota auto-dimming when no touch
+- HASPmota auto-dimming when no touch (#23425)
+- Provide serial upload port from VSC to PIO (#23436)
 
 ### Breaking Changed
 
@@ -18,7 +19,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Haspmota `haspmota.parse()` page parsing (#23403)
 - ESP32-S3 display stability regression from #23397 (#23404)
-- DNS setting with `IPAddress4/5` not persisted
+- DNS setting with `IPAddress4/5` not persisted (#23426)
 
 ### Removed
 
