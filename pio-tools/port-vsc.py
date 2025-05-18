@@ -21,20 +21,22 @@ if os.environ.get("PLATFORMIO_CALLER") == "vscode":
     try:
         db_path = os.path.expanduser(os.path.expandvars(os_paths[os_name]))
     except KeyError:
-        raise RuntimeError("Unknown OS: " + os_name)
+        print("Unknown OS: " + os_name)
 
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
+    # Only when the database is found we can go on
+    if os.path.exists(db_path):
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
 
-    for key in ['pioarduino.pioarduino-ide', 'platformio.platformio-ide']:
-        cursor.execute("SELECT value FROM ItemTable WHERE key = ?", (key,))
-        row = cursor.fetchone()
-        if row:
-            data = json.loads(row[0])
-            projects = data.get("projects", {})
-            project = projects.get(project_path)
-            if project and "customPort" in project:
-                print("USB port set in VSC:", project["customPort"])
-                env["UPLOAD_PORT"] = project["customPort"]
-                break
-    conn.close()
+        for key in ['pioarduino.pioarduino-ide', 'platformio.platformio-ide']:
+            cursor.execute("SELECT value FROM ItemTable WHERE key = ?", (key,))
+            row = cursor.fetchone()
+            if row:
+                data = json.loads(row[0])
+                projects = data.get("projects", {})
+                project = projects.get(project_path)
+                if project and "customPort" in project:
+                    print("USB port set in VSC:", project["customPort"])
+                    env["UPLOAD_PORT"] = project["customPort"]
+                    break
+        conn.close()
