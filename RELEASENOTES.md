@@ -126,6 +126,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - WebUI heap status [#23356](https://github.com/arendst/Tasmota/issues/23356)
 - Optional Wifi strength indicator in WebUI status line [#23352](https://github.com/arendst/Tasmota/issues/23352)
 - Wireguard VPN [#23347](https://github.com/arendst/Tasmota/issues/23347)
+- Berry support for `sortedmap` [#23441](https://github.com/arendst/Tasmota/issues/23441)
 - HASPmota `antiburn()` [#23400](https://github.com/arendst/Tasmota/issues/23400)
 - HASPmota auto-dimming when no touch [#23425](https://github.com/arendst/Tasmota/issues/23425)
 
