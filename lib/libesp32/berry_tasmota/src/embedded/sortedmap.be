@@ -6,24 +6,24 @@
 #################################################################################
 #@ solidify:sortedmap
 class sortedmap
-  var data    # internal map for storing key-value pairs
-  var keys    # list for maintaining sorted keys
+  var _data    # internal map for storing key-value pairs
+  var _keys    # list for maintaining sorted keys
   
   # Constructor
   def init()
-    self.data = {}
-    self.keys = []
+    self._data = {}
+    self._keys = []
   end
 
   # Insert a new key-value pair or update existing value
   def insert(key, value)
-    var is_new = !self.data.contains(key)
-    self.data[key] = value
+    var is_new = !self._data.contains(key)
+    self._data[key] = value
     
     if is_new
       # Binary search to find insert position to maintain sorted order
       var pos = self._find_insert_position(key)
-      self.keys.insert(pos, key)
+      self._keys.insert(pos, key)
       return true
     end
     return false
@@ -31,12 +31,12 @@ class sortedmap
   
   # Remove a key-value pair
   def remove(key)
-    if self.data.contains(key)
-      self.data.remove(key)
+    if self._data.contains(key)
+      self._data.remove(key)
       # Find key position in the list
-      var idx = self.keys.find(key)
+      var idx = self._keys.find(key)
       if idx != nil
-        self.keys.remove(idx)
+        self._keys.remove(idx)
       end
       return true
     end
@@ -45,12 +45,12 @@ class sortedmap
   
   # Get a value by key, with optional default if key doesn't exist
   def find(key, default)
-    return self.data.find(key, default)
+    return self._data.find(key, default)
   end
 
   # Access a value by key
   def item(key)
-    return self.data[key]
+    return self._data[key]
   end
   
   # Set a value by key
@@ -60,22 +60,22 @@ class sortedmap
   
   # Return true if map contains key
   def contains(key)
-    return self.data.contains(key)
+    return self._data.contains(key)
   end
   
   # Return number of key-value pairs
   def size()
-    return self.data.size()
+    return self._data.size()
   end
 
   # Return all sorted keys
   def get_keys()
-    return self.keys
+    return self._keys
   end
   
   # Return iterator to keys in sorted order
   def keys()
-    return self.keys.iter()
+    return self._keys.iter()
   end
 
   # String representation
@@ -84,9 +84,9 @@ class sortedmap
     var result = "{"
     var first = true
     
-    for i : 0..self.keys.size()-1
-      var key = self.keys[i]
-      var val = self.data[key]
+    for i : 0..self._keys.size()-1
+      var key = self._keys[i]
+      var val = self._data[key]
       
       if !first
         result += ", "
@@ -112,13 +112,13 @@ class sortedmap
   
   # Iterator method for 'for x: map' style iteration
   def iter()
-    return self.data.iter()
+    return self._data.iter()
   end
   
   # Clear all key-value pairs
   def clear()
-    self.data = {}
-    self.keys = []
+    self._data = {}
+    self._keys = []
   end
   
   # Remove entries with a specific value
@@ -126,9 +126,9 @@ class sortedmap
     var keys_to_remove = []
     
     # First pass: identify all keys with matching values
-    for i : 0..self.keys.size()-1
-      var key = self.keys[i]
-      if self.data[key] == value
+    for i : 0..self._keys.size()-1
+      var key = self._keys[i]
+      if self._data[key] == value
         keys_to_remove.push(key)
       end
     end
@@ -146,11 +146,11 @@ class sortedmap
   # Binary search to find insertion position for a new key
   def _find_insert_position(key)
     var low = 0
-    var high = self.keys.size() - 1
+    var high = self._keys.size() - 1
     
     while low <= high
       var mid = int((low + high) / 2)
-      var mid_key = self.keys[mid]
+      var mid_key = self._keys[mid]
       
       # Compare keys - this is the tricky part since Berry doesn't have 
       # a generic comparison operator for different types
