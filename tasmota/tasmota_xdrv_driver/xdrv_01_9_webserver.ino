@@ -1125,8 +1125,8 @@ void WSContentSend_Voltage(const char *types, float f_voltage) {
 
 /*-------------------------------------------------------------------------------------------*/
 
-void WSContentSend_CurrentMA(const char *types, float f_current) {
-  WSContentSend_PD(HTTP_SNS_F_CURRENT_MA, types, Settings->flag2.current_resolution, &f_current);
+void WSContentSend_Current(const char *types, float f_current) {
+  WSContentSend_PD(HTTP_SNS_F_CURRENT, types, Settings->flag2.current_resolution, &f_current);
 }
 
 /*-------------------------------------------------------------------------------------------*/
