@@ -278,8 +278,8 @@ static void module_init(bvm *vm) {
     }
 }
 
-/* load module to vm->top */
-int be_module_load(bvm *vm, bstring *path)
+/* load module to vm->top, option to cache or not */
+int be_module_load_nocache(bvm *vm, bstring *path, bbool nocache)
 {
     int res = BE_OK;
     if (!load_cached(vm, path)) {
@@ -287,12 +287,20 @@ int be_module_load(bvm *vm, bstring *path)
         if (res == BE_IO_ERROR)
             res = load_package(vm, path);
         if (res == BE_OK) {
-            /* on first load of the module, try running the '()' function */
+            /* on first load of the module, try running the 'init' function */
             module_init(vm);
-            be_cache_module(vm, path);
+            if (!nocache) { /* cache the module if it is loaded successfully */
+                be_cache_module(vm, path);
+            }
         }
     }
     return res;
+}
+
+/* load module to vm->top */
+int be_module_load(bvm *vm, bstring *path)
+{
+    return be_module_load_nocache(vm, path, btrue);
 }
 
 BERRY_API bbool be_getmodule(bvm *vm, const char *k)
