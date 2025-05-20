@@ -14,6 +14,7 @@
 
 extern int w_webserver_member(bvm *vm);
 extern int w_webserver_on(bvm *vm);
+extern int w_webserver_remove_route(bvm *vm);
 extern int w_webserver_state(bvm *vm);
 
 extern int w_webserver_check_privileged_access(bvm *vm);
@@ -95,9 +96,22 @@ static const berry_webserver_cb_t berry_callback_array[WEBSERVER_REQ_HANDLER_HOO
 // -1 if no more available
 berry_webserver_cb_t be_webserver_allocate_hook(bvm *vm, int32_t slot, bvalue *f) {
   if (slot < 0 || slot >= WEBSERVER_REQ_HANDLER_HOOK_MAX) return NULL;   // invalid call, avoid a crash
+  if (be_isgcobj(f)) {
+    be_gc_fix_set(vm, f->v.gc, btrue);    // mark the function as non-gc
+  }
   be_webserver_cb_hooks[slot].vm = vm;
   be_webserver_cb_hooks[slot].f = *f;
   return berry_callback_array[slot];
+}
+
+bbool be_webserver_deallocate_hook(bvm *vm, int32_t slot) {
+  if (slot < 0 || slot >= WEBSERVER_REQ_HANDLER_HOOK_MAX) return bfalse;   // invalid call, avoid a crash
+  bvalue f = be_webserver_cb_hooks[slot].f;
+  if (be_isgcobj(&f)) {
+    be_gc_fix_set(vm, f.v.gc, bfalse);    // remove the marker for non-gc
+  }
+  var_setnil(&be_webserver_cb_hooks[slot].f);
+  return btrue;
 }
 
 /*********************************************************************************************\
@@ -144,6 +158,7 @@ module webserver (scope: global) {
     member, func(w_webserver_member)
 
     on, func(w_webserver_on)
+    remove_route, func(w_webserver_remove_route)
     state, func(w_webserver_state)
 
     check_privileged_access, func(w_webserver_check_privileged_access)
