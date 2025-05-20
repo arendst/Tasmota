@@ -646,6 +646,13 @@ void WebServer_on(const char * prefix, void (*func)(void), uint8_t method = HTTP
 #endif  // ESP32
 }
 
+#ifdef ESP32
+void WebServer_removeRoute(const char * prefix, uint8_t method = HTTP_ANY) {
+  if (Webserver == nullptr) { return; }
+  Webserver->removeRoute(prefix, (HTTPMethod) method);
+}
+#endif  // ESP32
+
 /*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 
 // Always listens to all interfaces, so we don't need an IP address anymore

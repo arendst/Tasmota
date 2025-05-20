@@ -78,7 +78,8 @@ static uint8_t be_webserver_method[WEBSERVER_REQ_HANDLER_HOOK_MAX];
 extern "C" {
   typedef void (*berry_webserver_cb_t)(void);
   extern berry_webserver_cb_t be_webserver_allocate_hook(bvm *vm, int32_t num, bvalue *f);
-  // Berry: `webserver.on(prefix:string, callback:closure) -> nil`
+  extern bbool be_webserver_deallocate_hook(bvm *vm, int32_t slot);
+  // Berry: `webserver.on(prefix:string, callback:closure [, method:int]) -> nil`
   //
   // WARNING - this should be called only when receiving `web_add_handler` event.
   // If called before the WebServer is set up and Wifi on, it will crash.
@@ -119,9 +120,6 @@ extern "C" {
       // AddLog(LOG_LEVEL_INFO, ">>>: slot found = %i", slot);
 
       bvalue *v = be_indexof(vm, 2);
-      if (be_isgcobj(v)) {
-        be_gc_fix_set(vm, v->v.gc, btrue);    // mark the function as non-gc
-      }
       berry_webserver_cb_t cb = be_webserver_allocate_hook(vm, slot, v);
       if (cb == NULL) { be_raise(vm, kInternalError, nullptr); }
       be_webserver_prefix[slot] = prefix;
@@ -129,6 +127,45 @@ extern "C" {
 
       WebServer_on(prefix, cb, method);
       be_return_nil(vm);    // return, all good
+    }
+    be_raise(vm, kTypeError, nullptr);
+  }
+
+  // Berry: `webserver.remove_handler(prefix:string [, method:int]) -> nil`
+  //
+  // Remove a handler already added with `webserver.on()`
+  // Does nothing if the handler does not exist or was already removed
+  //
+  int32_t w_webserver_remove_route(struct bvm *vm);
+  int32_t w_webserver_remove_route(struct bvm *vm) {
+    int32_t argc = be_top(vm); // Get the number of arguments
+    bbool good = bfalse;
+    if (argc >= 1 && be_isstring(vm, 1) && (argc < 2 || be_isint(vm, 2)) ) {    // optional second argument must be int
+      uint8_t method =  HTTP_ANY;   // default method if not specified
+      const char * prefix = be_tostring(vm, 1);
+      if (argc >= 2) {
+        method = be_toint(vm, 2);
+      }
+
+      // find the slot that matches the prefix/method
+      int32_t slot;
+      for (slot = 0; slot < WEBSERVER_REQ_HANDLER_HOOK_MAX; slot++) {
+        if (be_webserver_prefix[slot] == prefix && be_webserver_method[slot] == method) {
+          break;
+        }
+      }
+
+      if (slot < WEBSERVER_REQ_HANDLER_HOOK_MAX) {
+        // remove from handler
+        WebServer_removeRoute(be_webserver_prefix[slot].c_str(), be_webserver_method[slot]);
+        // mark slot as free
+        be_webserver_prefix[slot] = "";
+        // Deallocate cb slot
+        be_webserver_deallocate_hook(vm, slot);
+        good = btrue;
+      }
+      be_pushbool(vm, good);
+      be_return(vm);    // return, all good
     }
     be_raise(vm, kTypeError, nullptr);
   }
