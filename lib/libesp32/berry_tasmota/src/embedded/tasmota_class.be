@@ -724,16 +724,12 @@ class Tasmota
     end
   end
 
-  # returns `true` if the network stack is connected
-  def is_network_up()
-    return tasmota.wifi()['up'] || tasmota.eth()['up']
-  end
-
   # add a closure to the list to be called when network is connected
   # or call immediately if network is already up
   def when_network_up(cl)
     self.check_not_method(cl)
-    if self.is_network_up()
+    var is_connected = tasmota.wifi()['up'] || tasmota.eth()['up']
+    if is_connected
       cl()          # call closure
     else
       if (self._wnu == nil)
@@ -747,7 +743,8 @@ class Tasmota
   # run all pending closures when network is up
   def run_network_up()
     if (self._wnu == nil)   return    end
-    if self.is_network_up()
+    var is_connected = tasmota.wifi()['up'] || tasmota.eth()['up']
+    if is_connected
       # run all closures in a safe loop
       while (size(self._wnu) > 0)
         var cl = self._wnu[0]
@@ -763,12 +760,13 @@ class Tasmota
   end
 
   def event(event_type, cmd, idx, payload, raw)
-    if (event_type == 'every_50ms')
+    import introspect
+    if event_type=='every_50ms'
       if (self._wnu) self.run_network_up() end   # capture when network becomes connected
       self.run_timers()
     end  #- first run deferred events -#
 
-    if (event_type == 'every_250ms')
+    if event_type=='every_250ms'
       self.run_cron()
     end
 
@@ -779,12 +777,11 @@ class Tasmota
       keep_going = true
     end
 
-    if   (event_type == 'cmd')  return self.exec_cmd(cmd, idx, payload)
-    elif (event_type == 'tele') return self.exec_tele(payload)
-    elif (event_type == 'rule') return self.exec_rules(payload, bool(idx))
-    elif (event_type == 'gc')   return self.gc()
+    if event_type=='cmd' return self.exec_cmd(cmd, idx, payload)
+    elif event_type=='tele' return self.exec_tele(payload)
+    elif event_type=='rule' return self.exec_rules(payload, bool(idx))
+    elif event_type=='gc' return self.gc()
     elif self._drivers
-      import introspect
       var i = 0
       while i < size(self._drivers)
         var d = self._drivers[i]
@@ -814,16 +811,6 @@ class Tasmota
     return done
   end
 
-  ######################################################################
-  # add_driver
-  #
-  # Add an instance to the dispatchin of Berry events
-  #
-  # Args:
-  #    - `d`: instance (or driver)
-  #           The events will be dispatched to this instance whenever
-  #           it has a method with the same name of the instance
-  ######################################################################
   def add_driver(d)
     if type(d) != 'instance'
       raise "value_error", "instance required"
@@ -837,35 +824,6 @@ class Tasmota
     end
   end
 
-  ######################################################################
-  # add_extension
-  #
-  # Add an instance to the dispatchin of Berry events
-  #
-  # Args:
-  #    - `d`: instance (or driver)
-  #           The events will be dispatched to this instance whenever
-  #           it has a method with the same name of the instance
-  #    - `name`: the name of the extension
-  #           Name to be used when listing active extensions
-  #           and providing option to `remove` it
-  ######################################################################
-  def add_extension(d, ext_name)    # add ext
-    if (type(d) != 'instance') || (type(ext_name) != 'string')
-      raise "value_error", "instance and name required"
-    end
-    if (ext_name != nil)
-      if self._ext == nil
-        self._ext = sortedmap()
-      end
-      if self._ext.contains(ext_name)
-        log(f"BRY: Extension '{ext_name}' already registered")
-      else
-        self._ext[ext_name] = d
-      end
-    end
-  end
-
   def remove_driver(d)
     if self._drivers
       var idx = self._drivers.find(d)
@@ -873,28 +831,6 @@ class Tasmota
         self._drivers.pop(idx)
       end
     end
-    # remove ext
-    if self._ext
-      self._ext.remove_by_value(d)
-    end
-  end
-
-  def unload_extension(name_or_instance)
-    if (self._ext == nil)   return  end
-    var d = name_or_instance    # d = driver
-
-    if type(name_or_instance) == 'string'
-      d = self._ext.find(name_or_instance)
-    end
-    if type(d) == 'instance'
-      import introspect
-
-      if introspect.contains(d, "unload")
-        d.unload()
-      end
-      self.remove_driver(d)
-    end
-
   end
 
   # cmd high-level function
