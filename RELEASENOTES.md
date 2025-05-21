@@ -127,6 +127,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Optional Wifi strength indicator in WebUI status line [#23352](https://github.com/arendst/Tasmota/issues/23352)
 - Wireguard VPN [#23347](https://github.com/arendst/Tasmota/issues/23347)
 - Berry support for `sortedmap` [#23441](https://github.com/arendst/Tasmota/issues/23441)
+- Berry `introspect.module` option to not cache module entry [#23451](https://github.com/arendst/Tasmota/issues/23451)
+- Berry `webserver.remove_route` to revert `webserver.on` [#23452](https://github.com/arendst/Tasmota/issues/23452)
 - HASPmota `antiburn()` [#23400](https://github.com/arendst/Tasmota/issues/23400)
 - HASPmota auto-dimming when no touch [#23425](https://github.com/arendst/Tasmota/issues/23425)
 
