@@ -6,6 +6,7 @@ from os.path import join
 import subprocess
 
 def firm_metrics(source, target, env):
+    print()
     if env["PIOPLATFORM"] == "espressif32":
         try:
             import tasmota_metrics

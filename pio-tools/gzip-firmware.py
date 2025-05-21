@@ -57,6 +57,7 @@ if tasmotapiolib.is_env_set(tasmotapiolib.ENABLE_ESP32_GZ, env) or env["PIOPLATF
         ORG_FIRMWARE_SIZE = bin_file.stat().st_size
         GZ_FIRMWARE_SIZE = gzip_file.stat().st_size
 
+        print()
         if ORG_FIRMWARE_SIZE > 995326 and env["PIOPLATFORM"] != "espressif32":
             print(Fore.RED + "!!! Tasmota firmware size is too big with {} bytes. Max size is 995326 bytes !!! ".format(
                     ORG_FIRMWARE_SIZE
