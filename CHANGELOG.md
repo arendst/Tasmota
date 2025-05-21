@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Berry support for `sortedmap` (#23441)
 - Berry `introspect.module` option to not cache module entry (#23451)
 - Berry `webserver.remove_route` to revert `webserver.on` (#23452)
+- Berry `compile` and `tasmota.compile` option to compile in local context
 
 ### Breaking Changed
 
