@@ -3,12 +3,16 @@ Import("env")
 import os
 import tasmotapiolib
 from os.path import join
+import subprocess
 
 def firm_metrics(source, target, env):
     if env["PIOPLATFORM"] == "espressif32":
         try:
             import tasmota_metrics
-            env.Execute("$PYTHONEXE -m tasmota_metrics \"" + str(tasmotapiolib.get_source_map_path(env).resolve()) + "\"")
+            map_file = str(tasmotapiolib.get_source_map_path(env).resolve())
+            subprocess.run([
+                env.subst("$PYTHONEXE"), "-m", "tasmota_metrics", map_file
+            ], check=False)
         except:
             pass
     elif env["PIOPLATFORM"] == "espressif8266":
@@ -24,5 +28,6 @@ def firm_metrics(source, target, env):
                         percentage = round(used_bytes / 0x8000 * 100,1)
                         print("Used static IRAM:",used_bytes,"bytes (",remaining_bytes,"remain,",percentage,"% used)")
 
-
-env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin",firm_metrics)
+silent_action = env.Action(firm_metrics)
+silent_action.strfunction = lambda target, source, env: '' # hack to silence scons command output
+env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", silent_action)

@@ -28,7 +28,9 @@ def map_gzip(source, target, env):
 
 
 if not tasmotapiolib.is_env_set(tasmotapiolib.DISABLE_MAP_GZ, env):
-    env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", [map_gzip])
+    silent_action = env.Action([map_gzip])
+    silent_action.strfunction = lambda target, source, env: '' # hack to silence scons command output
+    env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", silent_action)
 
 if tasmotapiolib.is_env_set(tasmotapiolib.ENABLE_ESP32_GZ, env) or env["PIOPLATFORM"] != "espressif32":
     import time
@@ -70,4 +72,6 @@ if tasmotapiolib.is_env_set(tasmotapiolib.ENABLE_ESP32_GZ, env) or env["PIOPLATF
             )
 
     if not tasmotapiolib.is_env_set(tasmotapiolib.DISABLE_BIN_GZ, env):
-        env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", [bin_gzip])
+        silent_action = env.Action([bin_gzip])
+        silent_action.strfunction = lambda target, source, env: '' # hack to silence scons command output
+        env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", silent_action)
