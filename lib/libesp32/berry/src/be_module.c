@@ -300,7 +300,7 @@ int be_module_load_nocache(bvm *vm, bstring *path, bbool nocache)
 /* load module to vm->top */
 int be_module_load(bvm *vm, bstring *path)
 {
-    return be_module_load_nocache(vm, path, btrue);
+    return be_module_load_nocache(vm, path, bfalse);
 }
 
 BERRY_API bbool be_getmodule(bvm *vm, const char *k)

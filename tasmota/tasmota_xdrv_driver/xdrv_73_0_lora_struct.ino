@@ -166,7 +166,7 @@
 #define TAS_LORAWAN_RECEIVE_DELAY2                1000    // LoRaWan Receive delay 2
 #define TAS_LORAWAN_JOIN_ACCEPT_DELAY1            5000    // LoRaWan Join accept delay 1
 #define TAS_LORAWAN_JOIN_ACCEPT_DELAY2            1000    // LoRaWan Join accept delay 2
-#define TAS_LORAWAN_ENDNODES                         4    // Max number of supported endnodes
+#define TAS_LORAWAN_ENDNODES                        16    // Max number of supported endnodes (every active node uses 68+ bytes)
 #define TAS_LORAWAN_AES128_KEY_SIZE                 16    // Size in bytes
 
 /*********************************************************************************************/
@@ -290,7 +290,7 @@ typedef struct LoraSettings_t {
   uint8_t flags;
   uint8_t region;                                // 0 = Default, 1 = AU915, ...
 #ifdef USE_LORAWAN_BRIDGE
-  LoraEndNode_t end_node[TAS_LORAWAN_ENDNODES];  // End node parameters
+  LoraEndNode_t *end_node[TAS_LORAWAN_ENDNODES]; // End node parameters
 #endif  // USE_LORAWAN_BRIDGE
 } LoraSettings_t;
 
@@ -314,6 +314,7 @@ typedef struct Lora_t {
   uint8_t* send_buffer;
   uint8_t send_buffer_step;
   uint8_t send_buffer_len;
+  uint8_t nodes;
   bool rx;
   bool send_request;
   bool profile_changed;

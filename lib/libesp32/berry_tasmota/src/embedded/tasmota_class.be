@@ -477,7 +477,7 @@ class Tasmota
     # compile in-memory
     var compiled_code
     try
-      compiled_code = compile(f_name, 'file')
+      compiled_code = compile(f_name, 'file', true)
       if (compiled_code == nil)
         print(f"BRY: empty compiled file")
         return false
