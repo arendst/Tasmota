@@ -270,7 +270,7 @@ static void free_from_pool(bvm *vm, void* ptr, size_t old_size) {
         while (pool16) {
             int32_t offset = (uint8_t*)ptr - (uint8_t*) &pool16->lines[0];
             // serial_debug("free_from_pool ptr=%p pool=%p offset=%i\n", ptr,pool16, offset);
-            if ((offset >= 0) && (offset < POOL16_SLOTS*16) && ((offset & 0x0F) == 0)) {
+            if ((offset >= 0) && (offset < POOL16_SLOTS*POOL16_SIZE) && ((offset & 0x0F) == 0)) {
                 int bit = offset >> 4;
                 // serial_debug("free_from_pool ptr=%p fond pool=%p bit=%i\n", ptr, pool16, bit);
                 // bitSet(pool16->bitmap, bit);
@@ -285,7 +285,7 @@ static void free_from_pool(bvm *vm, void* ptr, size_t old_size) {
         while (pool32) {
             int32_t offset = (uint8_t*)ptr - (uint8_t*) &pool32->lines[0];
             // serial_debug("free_from_pool pool=%p offset=%i\n", pool32, offset);
-            if ((offset >= 0) && (offset < POOL16_SLOTS*16) && ((offset & 0x1F) == 0)) {
+            if ((offset >= 0) && (offset < POOL32_SLOTS*POOL32_SIZE) && ((offset & 0x1F) == 0)) {
                 int bit = offset >> 5;
                 // serial_debug("free_from_pool ptr=%p fond pool=%p bit=%i\n", ptr, pool32, bit);
                 // bitSet(pool32->bitmap, bit);
