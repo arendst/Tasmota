@@ -66,6 +66,21 @@
  *    LoRaWanBridge 1
 \*********************************************************************************************/
 
+bool LoraWanAddNode(void) {
+  if (Lora->nodes < TAS_LORAWAN_ENDNODES) {
+    Lora->settings.end_node[Lora->nodes] = (LoraEndNode_t*)calloc(sizeof(LoraEndNode_t), 1);  // Need calloc to reset registers to 0/false
+    if (Lora->settings.end_node[Lora->nodes]) { 
+      Lora->nodes++;
+#ifdef USE_LORA_DEBUG
+      AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Allocated %d bytes for node %d at %08X"), 
+        sizeof(LoraEndNode_t), Lora->nodes, Lora->settings.end_node[Lora->nodes -1]);
+#endif  // USE_LORA_DEBUG
+      return true;
+    }
+  }
+  return false;
+}
+
 /*********************************************************************************************\
  * Driver Settings load and save
 \*********************************************************************************************/
@@ -80,41 +95,44 @@
 #define D_JSON_FLAGS    "Flags"
 
 bool LoraWanLoadData(void) {
-  char key[12];                                    // Max 99 nodes (drvset73_1 to drvset73_99)
+  char key[12];                                      // Max 99 nodes (drvset73_1 to drvset73_99)
   for (uint32_t n = 0; n < TAS_LORAWAN_ENDNODES; n++) {
     snprintf_P(key, sizeof(key), PSTR(XDRV_73_KEY "_%d"), n +1);
 
     String json = UfsJsonSettingsRead(key);
-    if (json.length() == 0) { continue; }          // Only load used slots
+    if (json.length() == 0) { continue; }            // Only load used slots
 
-    // {"AppKey":"00000000000000000000000000000000","DevEUI","0000000000000000","DevNonce":0,"FCntUp":0,"FCntDown":0,"Flags":0,"NAME":""}
+    // {"AppKey":"00000000000000000000000000000000","DevEUIh":1234567890,"DevEUIl":1234567890,"DevNonce":0,"FCntUp":0,"FCntDown":0,"Flags":0,"NAME":"","DCDR":""}
     JsonParser parser((char*)json.c_str());
     JsonParserObject root = parser.getRootObject();
-    if (!root) { continue; }                       // Only load used slots
+    if (!root) { continue; }                         // Only load used slots
+
+    if (!LoraWanAddNode()) { break; }                // Unable to allocate memory
 
     const char* app_key = nullptr;
     app_key = root.getStr(PSTR(D_JSON_APPKEY), nullptr);
     if (app_key && (strlen(app_key))) {
-      HexToBytes(app_key, Lora->settings.end_node[n].AppKey, TAS_LORAWAN_AES128_KEY_SIZE);
+      HexToBytes(app_key, Lora->settings.end_node[n]->AppKey, TAS_LORAWAN_AES128_KEY_SIZE);
     }
-    Lora->settings.end_node[n].DevEUIh = root.getUInt(PSTR(D_JSON_DEVEUI "h"), Lora->settings.end_node[n].DevEUIh);
-    Lora->settings.end_node[n].DevEUIl = root.getUInt(PSTR(D_JSON_DEVEUI "l"), Lora->settings.end_node[n].DevEUIl);
-    Lora->settings.end_node[n].DevNonce = root.getUInt(PSTR(D_JSON_DEVNONCE), Lora->settings.end_node[n].DevNonce);
-    Lora->settings.end_node[n].FCntUp = root.getUInt(PSTR(D_JSON_FCNTUP), Lora->settings.end_node[n].FCntUp);
-    Lora->settings.end_node[n].FCntDown = root.getUInt(PSTR(D_JSON_FCNTDOWN), Lora->settings.end_node[n].FCntDown);
-    Lora->settings.end_node[n].flags = root.getUInt(PSTR(D_JSON_FLAGS), Lora->settings.end_node[n].flags);
+    Lora->settings.end_node[n]->DevEUIh = root.getUInt(PSTR(D_JSON_DEVEUI "h"), Lora->settings.end_node[n]->DevEUIh);
+    Lora->settings.end_node[n]->DevEUIl = root.getUInt(PSTR(D_JSON_DEVEUI "l"), Lora->settings.end_node[n]->DevEUIl);
+    Lora->settings.end_node[n]->DevNonce = root.getUInt(PSTR(D_JSON_DEVNONCE), Lora->settings.end_node[n]->DevNonce);
+    Lora->settings.end_node[n]->FCntUp = root.getUInt(PSTR(D_JSON_FCNTUP), Lora->settings.end_node[n]->FCntUp);
+    Lora->settings.end_node[n]->FCntDown = root.getUInt(PSTR(D_JSON_FCNTDOWN), Lora->settings.end_node[n]->FCntDown);
+    Lora->settings.end_node[n]->flags = root.getUInt(PSTR(D_JSON_FLAGS), Lora->settings.end_node[n]->flags);
     const char* ctemp = root.getStr(PSTR(D_JSON_NAME), nullptr);
-    if (ctemp) { Lora->settings.end_node[n].name = ctemp; }
+    if (ctemp) { Lora->settings.end_node[n]->name = ctemp; }
     ctemp = root.getStr(PSTR(D_JSON_DCDR), nullptr);
-    if (ctemp) { Lora->settings.end_node[n].decoder = ctemp; }
+    if (ctemp) { Lora->settings.end_node[n]->decoder = ctemp; }
   }
+  AddLog(LOG_LEVEL_DEBUG, PSTR("CFG: LoraWan loaded %d node(s)"), Lora->nodes);
   return true;
 }
 
 bool LoraWanSaveData(void) {
   bool result = true;                                // Return true if no Endnodes
-  for (uint32_t n = 0; n < TAS_LORAWAN_ENDNODES; n++) {
-    if (Lora->settings.end_node[n].AppKey[0] > 0) {  // Only save used slots
+  for (uint32_t n = 0; n < Lora->nodes; n++) {
+    if (Lora->settings.end_node[n]->AppKey[0] > 0) { // Only save used slots
       Response_P(PSTR("{\"" XDRV_73_KEY "_%d\":{\"" D_JSON_APPKEY "\":\"%16_H\""
                                               ",\"" D_JSON_DEVEUI "h\":%lu,\"" D_JSON_DEVEUI "l\":%lu"
                                               ",\"" D_JSON_DEVNONCE "\":%u"
@@ -123,13 +141,13 @@ bool LoraWanSaveData(void) {
                                               ",\"" D_JSON_NAME "\":\"%s\""
                                               ",\"" D_JSON_DCDR "\":\"%s\"}}"),
         n +1,
-        Lora->settings.end_node[n].AppKey,
-        Lora->settings.end_node[n].DevEUIh, Lora->settings.end_node[n].DevEUIl,
-        Lora->settings.end_node[n].DevNonce,
-        Lora->settings.end_node[n].FCntUp, Lora->settings.end_node[n].FCntDown,
-        Lora->settings.end_node[n].flags,
-        (Lora->settings.end_node[n].name) ? Lora->settings.end_node[n].name.c_str() : "",
-        (Lora->settings.end_node[n].decoder) ? Lora->settings.end_node[n].decoder.c_str() : "");
+        Lora->settings.end_node[n]->AppKey,
+        Lora->settings.end_node[n]->DevEUIh, Lora->settings.end_node[n]->DevEUIl,
+        Lora->settings.end_node[n]->DevNonce,
+        Lora->settings.end_node[n]->FCntUp, Lora->settings.end_node[n]->FCntDown,
+        Lora->settings.end_node[n]->flags,
+        (Lora->settings.end_node[n]->name) ? Lora->settings.end_node[n]->name.c_str() : "",
+        (Lora->settings.end_node[n]->decoder) ? Lora->settings.end_node[n]->decoder.c_str() : "");
       result &= UfsJsonSettingsWrite(ResponseData());
     }
   }
@@ -373,7 +391,7 @@ void LoRaWanSend(void) {
   Lora->send_request = false;
   LoraSend(Lora->send_buffer, Lora->send_buffer_len, true);
   if (Lora->profile_changed) {
-    Lora->settings = Lora->backup_settings;       // Restore copy for reception
+    Lora->settings = Lora->backup_settings;          // Restore copy for reception
     if (0 == Lora->send_buffer_step) {
       Lora->Init();                                  // Necessary to re-init the SXxxxx chip in cases where TX/RX frequencies differ
     } else {
@@ -416,7 +434,7 @@ void LoraWanSendResponse(uint8_t* buffer, size_t len, uint32_t lorawan_delay) {
   Lora->send_buffer_len = len;
 
   Lora->send_request = false;
-  Lora->backup_settings = Lora->settings;         // Make a copy;
+  Lora->backup_settings = Lora->settings;            // Make a copy;
   Lora->send_buffer_step = 2;                        // Send at RX1 and RX2
 
   uint32_t delay_rx1 = lorawan_delay - TimePassedSince(Lora->receive_time);
@@ -488,15 +506,19 @@ uint32_t LoraWanSpreadingFactorToDataRate(bool downlink) {
       return downlink ? 8 : 2;                       // AU915 must use DR8 for RX2, and we want to use DR2 for Uplinks
     }
     default: {  // TAS_LORA_REGION_EU868
-      // Allow only JoinReq message datarates (125kHz bandwidth)
-      if (Lora->settings.spreading_factor > 12) {
-        Lora->settings.spreading_factor = 12;
+      if (downlink) {
+        return 0;                                    // RX2 = 869.525 MHz, DR0 (SF12, 125kHz)
+      } else {
+        // Allow only JoinReq message datarates (125kHz bandwidth)
+        if (Lora->settings.spreading_factor > 12) {
+          Lora->settings.spreading_factor = 12;
+        }
+        if (Lora->settings.spreading_factor < 7) {
+          Lora->settings.spreading_factor = 7;
+        }
+        Lora->settings.bandwidth = 125;
+        return 12 - Lora->settings.spreading_factor;
       }
-      if (Lora->settings.spreading_factor < 7) {
-        Lora->settings.spreading_factor = 7;
-      }
-      Lora->settings.bandwidth = 125;
-      return 12 - Lora->settings.spreading_factor;
     }
   }
 }
@@ -505,7 +527,7 @@ uint32_t LoraWanSpreadingFactorToDataRate(bool downlink) {
 
 void LoraWanSendLinkADRReq(uint32_t node) {
   uint32_t DevAddr = Lora->device_address +node;
-  uint16_t FCnt = Lora->settings.end_node[node].FCntDown++;
+  uint16_t FCnt = Lora->settings.end_node[node]->FCntDown++;
   uint8_t NwkSKey[TAS_LORAWAN_AES128_KEY_SIZE];
   LoraWanDeriveLegacyNwkSKey(node, NwkSKey);
 
@@ -565,7 +587,7 @@ void LoraWanSendMacResponse(uint32_t node, uint8_t* FOpts, uint32_t FCtrl) {
   if (FCtrl > 15) { return; }                                // FOpts = 0..15
  
   uint32_t DevAddr = Lora->device_address +node;
-  uint16_t FCnt = Lora->settings.end_node[node].FCntDown++;
+  uint16_t FCnt = Lora->settings.end_node[node]->FCntDown++;
   uint8_t NwkSKey[TAS_LORAWAN_AES128_KEY_SIZE];
   LoraWanDeriveLegacyNwkSKey(node, NwkSKey);
 
@@ -611,23 +633,23 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
     uint32_t MIC = (uint32_t)data[19]        | ((uint32_t)data[20] <<  8) |
                   ((uint32_t)data[21] << 16) | ((uint32_t)data[22] << 24);
 
-    for (uint32_t node = 0; node < TAS_LORAWAN_ENDNODES; node++) {
-      uint32_t CalcMIC = LoraWanGenerateMIC(data, 19, Lora->settings.end_node[node].AppKey);
+    for (uint32_t node = 0; node < Lora->nodes; node++) {
+      uint32_t CalcMIC = LoraWanGenerateMIC(data, 19, Lora->settings.end_node[node]->AppKey);
       if (MIC == CalcMIC) {                                  // Valid MIC based on LoraWanAppKey
 
         AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Node %d, JoinEUI %8_H, DevEUIh %08X, DevEUIl %08X, DevNonce %04X, MIC %08X"),
           node +1, (uint8_t*)&JoinEUI, DevEUIh, DevEUIl, DevNonce, MIC);
 
-        Lora->settings.end_node[node].DevEUIl = DevEUIl;
-        Lora->settings.end_node[node].DevEUIh = DevEUIh;
-        Lora->settings.end_node[node].DevNonce = DevNonce;
-        Lora->settings.end_node[node].FCntUp = 0;
-        Lora->settings.end_node[node].FCntDown = 0;
-        bitClear(Lora->settings.end_node[node].flags, TAS_LORAWAN_FLAG_LINK_ADR_REQ);
-        if (Lora->settings.end_node[node].name.equals(F("0x0000"))) {
+        Lora->settings.end_node[node]->DevEUIl = DevEUIl;
+        Lora->settings.end_node[node]->DevEUIh = DevEUIh;
+        Lora->settings.end_node[node]->DevNonce = DevNonce;
+        Lora->settings.end_node[node]->FCntUp = 0;
+        Lora->settings.end_node[node]->FCntDown = 0;
+        bitClear(Lora->settings.end_node[node]->flags, TAS_LORAWAN_FLAG_LINK_ADR_REQ);
+        if (Lora->settings.end_node[node]->name.equals(F("0x0000"))) {
           char name[10];
-          ext_snprintf_P(name, sizeof(name), PSTR("0x%04X"), Lora->settings.end_node[node].DevEUIl & 0x0000FFFF);
-          Lora->settings.end_node[node].name = name;
+          ext_snprintf_P(name, sizeof(name), PSTR("0x%04X"), Lora->settings.end_node[node]->DevEUIl & 0x0000FFFF);
+          Lora->settings.end_node[node]->name = name;
         }
 
         uint32_t JoinNonce = TAS_LORAWAN_JOINNONCE +node;
@@ -659,14 +681,14 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
           CFListSize--;
         }
         
-        uint32_t NewMIC = LoraWanGenerateMIC(join_data, join_data_index, Lora->settings.end_node[node].AppKey);
+        uint32_t NewMIC = LoraWanGenerateMIC(join_data, join_data_index, Lora->settings.end_node[node]->AppKey);
         join_data[join_data_index++] = NewMIC;
         join_data[join_data_index++] = NewMIC >> 8;
         join_data[join_data_index++] = NewMIC >> 16;
         join_data[join_data_index++] = NewMIC >> 24;   //[16] or [32]
         uint8_t EncData[33];
         EncData[0] = join_data[0];
-        LoraWanEncryptJoinAccept(Lora->settings.end_node[node].AppKey, &join_data[1], join_data_index-1, &EncData[1]);
+        LoraWanEncryptJoinAccept(Lora->settings.end_node[node]->AppKey, &join_data[1], join_data_index-1, &EncData[1]);
 
         // 203106E5000000412E010003017CB31DD4 - Dragino LDS02
         // 2026B4E06C390AFA1B166D465987F31EC4 - Dragino LHT52
@@ -704,13 +726,13 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
     bool bResponseSent = false;                  // Make sure do not send multiple responses
 
     uint32_t DevAddr = (uint32_t)data[1] | ((uint32_t)data[2] <<  8) | ((uint32_t)data[3] << 16) | ((uint32_t)data[4] << 24);
-    for (uint32_t node = 0; node < TAS_LORAWAN_ENDNODES; node++) {
-      if (0 == Lora->settings.end_node[node].DevEUIh)  { continue; }   // No DevEUI so never joined
+    for (uint32_t node = 0; node < Lora->nodes; node++) {
+      if (0 == Lora->settings.end_node[node]->DevEUIh)  { continue; }   // No DevEUI so never joined
       if ((Lora->device_address +node) != DevAddr) { continue; }       // Not my device
 
       uint32_t FCtrl = data[5];
       uint32_t FOptsLen = FCtrl & 0x0F;
-      uint32_t FCnt = (Lora->settings.end_node[node].FCntUp & 0xFFFF0000) | data[6] | (data[7] << 8);
+      uint32_t FCnt = (Lora->settings.end_node[node]->FCntUp & 0xFFFF0000) | data[6] | (data[7] << 8);
       uint8_t* FOpts = &data[8];
       uint32_t FPort = data[8 +FOptsLen];
       uint8_t* FRMPayload = &data[9 +FOptsLen];
@@ -761,17 +783,17 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
         DevAddr, FCtrl, FOptsLen, FCnt, FOptsLen, FOpts, FPort, org_payload_len, FRMPayload, org_payload_len, payload_decrypted, MIC);
 #endif  // USE_LORA_DEBUG
 
-      if (Lora->settings.end_node[node].FCntUp <= FCnt) {              // Skip re-transmissions
+      if (Lora->settings.end_node[node]->FCntUp <= FCnt) {              // Skip re-transmissions
         Lora->rx = false;                                              // Skip RX2 as this is a response from RX1
-        Lora->settings.end_node[node].FCntUp++;
-        if (Lora->settings.end_node[node].FCntUp < FCnt) {             // Report missed frames
-          uint32_t FCnt_missed = FCnt - Lora->settings.end_node[node].FCntUp;
+        Lora->settings.end_node[node]->FCntUp++;
+        if (Lora->settings.end_node[node]->FCntUp < FCnt) {             // Report missed frames
+          uint32_t FCnt_missed = FCnt - Lora->settings.end_node[node]->FCntUp;
           AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Missed frames %d"), FCnt_missed);
           if (FCnt_missed > 1) {                                       // Missed two or more frames
-            bitClear(Lora->settings.end_node[node].flags, TAS_LORAWAN_FLAG_LINK_ADR_REQ);  // Resend LinkADRReq
+            bitClear(Lora->settings.end_node[node]->flags, TAS_LORAWAN_FLAG_LINK_ADR_REQ);  // Resend LinkADRReq
           }
         }
-        Lora->settings.end_node[node].FCntUp = FCnt;
+        Lora->settings.end_node[node]->FCntUp = FCnt;
 
         if (FOptsLen) {
           uint8_t mac_data[16];
@@ -794,7 +816,7 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
               uint8_t status = FOpts[i];
               AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: MAC LinkADRAns PowerACK %d, DataRateACK %d, ChannelMaskACK %d"), 
                 bitRead(status, 2), bitRead(status, 1), bitRead(status, 0));
-              bitSet(Lora->settings.end_node[node].flags, TAS_LORAWAN_FLAG_LINK_ADR_REQ);
+              bitSet(Lora->settings.end_node[node]->flags, TAS_LORAWAN_FLAG_LINK_ADR_REQ);
             }
             else if (TAS_LORAWAN_CID_DUTY_CYCLE_ANS == FOpts[i]) {
               i++;
@@ -851,20 +873,20 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
           node_data.FPort = FPort;
           LoraWanDecode(&node_data);
 
-          if (0xA84041 == Lora->settings.end_node[node].DevEUIh >> 8) {  // Dragino
+          if (0xA84041 == Lora->settings.end_node[node]->DevEUIh >> 8) {  // Dragino
             // Dragino v1.7 fails to set DR with ADR so set it using serial interface:
             // Password 123456
             // AT+CHS=868100000
             // Start join using reset button
             // AT+CADR=0
             // AT+CDATARATE=3
-            bitSet(Lora->settings.end_node[node].flags, TAS_LORAWAN_FLAG_LINK_ADR_REQ);
+            bitSet(Lora->settings.end_node[node]->flags, TAS_LORAWAN_FLAG_LINK_ADR_REQ);
           }
 
           if (TAS_LORAWAN_MTYPE_CONFIRMED_DATA_UPLINK == MType) {
             data[0] = TAS_LORAWAN_MTYPE_UNCONFIRMED_DATA_DOWNLINK << 5;
             data[5] |= 0x20;                                           // FCtrl Set ACK bit
-            uint16_t FCnt = Lora->settings.end_node[node].FCntDown++;
+            uint16_t FCnt = Lora->settings.end_node[node]->FCntDown++;
             data[6] = FCnt;
             data[7] = FCnt >> 8;
             uint32_t MIC = LoraWanComputeLegacyDownlinkMIC(NwkSKey, DevAddr, FCnt, data, packet_size -4);
@@ -877,7 +899,7 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
           }
         }
         if (TAS_LORAWAN_MTYPE_UNCONFIRMED_DATA_UPLINK == MType) {
-          if (!bitRead(Lora->settings.end_node[node].flags, TAS_LORAWAN_FLAG_LINK_ADR_REQ) &&
+          if (!bitRead(Lora->settings.end_node[node]->flags, TAS_LORAWAN_FLAG_LINK_ADR_REQ) &&
               FCtrl_ADR && !FCtrl_ACK) {
             // Try to fix single channel and datarate
             bResponseSent = true;
@@ -932,19 +954,24 @@ void CmndLoraWanBridge(void) {
 void CmndLoraWanAppKey(void) {
   // LoraWanAppKey
   // LoraWanAppKey2 0123456789abcdef0123456789abcdef
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TAS_LORAWAN_ENDNODES)) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Lora->nodes +1)) {
+    if (Lora->nodes < XdrvMailbox.index) {
+      if (!LoraWanAddNode()) {
+        return;            // Memory allocation failed or TAS_LORAWAN_ENDNODES reached
+      }
+    }
     uint32_t node = XdrvMailbox.index -1;
     if (32 == XdrvMailbox.data_len) {
-      HexToBytes(XdrvMailbox.data, Lora->settings.end_node[node].AppKey, TAS_LORAWAN_AES128_KEY_SIZE);
-      if (0 == Lora->settings.end_node[node].name.length()) {
-        Lora->settings.end_node[node].name = F("0x0000");
+      HexToBytes(XdrvMailbox.data, Lora->settings.end_node[node]->AppKey, TAS_LORAWAN_AES128_KEY_SIZE);
+      if (0 == Lora->settings.end_node[node]->name.length()) {
+        Lora->settings.end_node[node]->name = F("0x0000");
       }
     }
     else if (0 == XdrvMailbox.payload) {
-      memset(&Lora->settings.end_node[node], 0, sizeof(LoraEndNode_t));
+      memset(Lora->settings.end_node[node], 0, sizeof(LoraEndNode_t));
     }
     char appkey[33];
-    ext_snprintf_P(appkey, sizeof(appkey), PSTR("%16_H"), Lora->settings.end_node[node].AppKey);
+    ext_snprintf_P(appkey, sizeof(appkey), PSTR("%16_H"), Lora->settings.end_node[node]->AppKey);
     ResponseCmndIdxChar(appkey);
   }
 }
@@ -953,18 +980,18 @@ void CmndLoraWanName(void) {
   // LoraWanName
   // LoraWanName 1        - Set to short DevEUI (or 0x0000 if not yet joined)
   // LoraWanName2 LDS02a
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TAS_LORAWAN_ENDNODES)) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Lora->nodes)) {
     uint32_t node = XdrvMailbox.index -1;
     if (XdrvMailbox.data_len) {
       if (1 == XdrvMailbox.payload) {
         char name[10];
-        ext_snprintf_P(name, sizeof(name), PSTR("0x%04X"), Lora->settings.end_node[node].DevEUIl & 0x0000FFFF);
-        Lora->settings.end_node[node].name = name;
+        ext_snprintf_P(name, sizeof(name), PSTR("0x%04X"), Lora->settings.end_node[node]->DevEUIl & 0x0000FFFF);
+        Lora->settings.end_node[node]->name = name;
       } else {
-        Lora->settings.end_node[node].name = XdrvMailbox.data;
+        Lora->settings.end_node[node]->name = XdrvMailbox.data;
       }
     }
-    ResponseCmndIdxChar(Lora->settings.end_node[node].name.c_str());
+    ResponseCmndIdxChar(Lora->settings.end_node[node]->name.c_str());
   }
 }
 
@@ -972,12 +999,12 @@ void CmndLoraWanDecoder(void) {
   // LoraWanDecoder
   // LoraWanDecoder DraginoLDS02  - Set Dragino LDS02 message decoder for node 1
   // LoraWanDecoder2 MerryIoTDW10 - Set MerryIoT DW10 message decoder for node 2
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= TAS_LORAWAN_ENDNODES)) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Lora->nodes)) {
     uint32_t node = XdrvMailbox.index -1;
     if (XdrvMailbox.data_len) {
-      Lora->settings.end_node[node].decoder = XdrvMailbox.data;
+      Lora->settings.end_node[node]->decoder = XdrvMailbox.data;
     }
-    ResponseCmndIdxChar(Lora->settings.end_node[node].decoder.c_str());
+    ResponseCmndIdxChar(Lora->settings.end_node[node]->decoder.c_str());
   }
 }
 
