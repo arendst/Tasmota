@@ -592,7 +592,7 @@ typedef struct {
   // End of remapping, next is all other CPUs
   // ----------------------------------------
 #else
-  myio          my_gp;                     // 3AC  2x18 bytes (ESP8266) / 2x40 bytes (ESP32) / 2x21 bytes (ESP32-C2) / 2x22 bytes (ESP32-C3) / 2x31 bytes (ESP32-C6) / 2x47 bytes (ESP32-S2)
+  myio          my_gp;                     // 3AC  2x18 bytes (ESP8266) / 2x40 bytes (ESP32) / 2x21 bytes (ESP32-C2) / 2x22 bytes (ESP32-C3) / 2x31 bytes (ESP32-C6) / 2x47 bytes (ESP32-S2) / 2x27 bytes (ESP32-C5)
 #ifdef ESP8266
   uint16_t      gpio16_converted;          // 3D0
   uint8_t       free_esp8266_3D2[42];      // 3D2
@@ -604,9 +604,11 @@ typedef struct {
   uint8_t       free_esp32c3_3D8[36];      // 3D8  - Due to smaller myio
   #elif CONFIG_IDF_TARGET_ESP32C6
   uint8_t       free_esp32c6_3EA[18];      // 3EA  - Due to smaller myio
+  #elif CONFIG_IDF_TARGET_ESP32C5
+  uint8_t       free_esp32c5_3E2[26];      // 3E2  - Due to smaller myio
   #endif  // CONFIG_IDF_TARGET_ESP32C2/3/6
 #endif  // ESP32
-  mytmplt       user_template;             // 3FC  2x15 bytes (ESP8266) / 2x37 bytes (ESP32) / 2x22 bytes (ESP32-C2) / 2x23 bytes (ESP32-C3) / 2x32 bytes (ESP32-C6) / 2x37 bytes (ESP32-S2)
+  mytmplt       user_template;             // 3FC  2x15 bytes (ESP8266) / 2x37 bytes (ESP32) / 2x22 bytes (ESP32-C2) / 2x23 bytes (ESP32-C3) / 2x32 bytes (ESP32-C6) / 2x37 bytes (ESP32-S2) / 2x28 bytes (ESP32-C5)
 #ifdef ESP8266
   uint8_t       free_esp8266_41A[55];      // 41A
 #endif  // ESP8266
@@ -617,6 +619,8 @@ typedef struct {
   uint8_t       free_esp32c3_42A[28];      // 42A  - Due to smaller mytmplt
   #elif CONFIG_IDF_TARGET_ESP32C6
   uint8_t       free_esp32c3_43C[10];      // 43C  - Due to smaller mytmplt
+  #elif CONFIG_IDF_TARGET_ESP32C5
+  uint8_t       free_esp32c5_434[18];      // 434  - Due to smaller mytmplt
   #endif  // CONFIG_IDF_TARGET_ESP32C2/3/6
 
   uint8_t       eth_type;                  // 446
