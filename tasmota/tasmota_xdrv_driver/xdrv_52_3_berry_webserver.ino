@@ -403,7 +403,7 @@ extern "C" {
     be_raise(vm, kTypeError, nullptr);
   }
 
-  // Berry: `webserver.content_status_sticker(msg:string,attr:string) -> nil`
+  // Berry: `webserver.content_status_sticker(msg:string [,attr:string]) -> nil`
   //
   int32_t w_webserver_content_status_sticker(struct bvm *vm) {
   #ifdef USE_WEB_STATUS_LINE
