@@ -63,7 +63,7 @@ const uint8_t MAX_PWMS_LEGACY = 5;          // Max number of PWM channels in fir
   const uint8_t MAX_PWMS = 16;              // ESP32: 16 ledc PWM channels in total - TODO for now
   #elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
   const uint8_t MAX_PWMS = 8;               // ESP32S2/S3: 8 ledc PWM channels in total
-  #elif CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
+  #elif CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6
   const uint8_t MAX_PWMS = 6;               // ESP32C2/C3/C6: 6 ledc PWM channels in total
   #else
   const uint8_t MAX_PWMS = 5;               // Unknown - revert to 5 PWM max
@@ -135,6 +135,8 @@ const uint8_t MAX_SWITCHES_TXT = 8;         // Max number of switches user text
 #ifdef ESP32
   #if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3
   const uint8_t MAX_ADCS = 5;               // Max number of ESP32-C3 ADC pins (ADC2 pins are unusable with Wifi enabled)
+  #elif CONFIG_IDF_TARGET_ESP32C5
+  const uint8_t MAX_ADCS = 6;               // Max number of ESP32 ADC pins (ADC2 pins are unusable with Wifi enabled)  
   #elif CONFIG_IDF_TARGET_ESP32C6
   const uint8_t MAX_ADCS = 7;               // Max number of ESP32 ADC pins (ADC2 pins are unusable with Wifi enabled)
   #else   // ESP32
