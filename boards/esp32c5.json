@@ -1,0 +1,44 @@
+{
+    "build": {
+      "core": "esp32",
+      "extra_flags": "-DARDUINO_TASMOTA -DARDUINO_USB_MODE=1 -DESP32_4M -DESP32C5 -DUSE_USB_CDC_CONSOLE",
+      "f_cpu": "240000000L",
+      "f_flash": "80000000L",
+      "flash_mode": "qio",
+      "mcu": "esp32c5",
+      "variant": "esp32c5",
+      "partitions": "partitions/esp32_partition_app2880k_fs320k.csv"
+    },
+    "connectivity": [
+      "wifi",
+      "bluetooth"
+    ],
+    "debug": {
+      "openocd_target": "esp32c5.cfg"
+    },
+    "frameworks": [
+      "arduino",
+      "espidf"
+    ],
+    "name": "Espressif Generic ESP32-C5 >= 4M Flash, Tasmota 2880k Code/OTA, 320k FS",
+    "upload": {
+      "arduino": {
+        "flash_extra_images": [
+          [
+            "0x10000",
+            "tasmota32c5-safeboot.bin"
+          ]
+        ]
+      },
+      "flash_size": "4MB",
+      "maximum_ram_size": 327680,
+      "maximum_size": 4194304,
+      "require_upload_port": true,
+      "speed": 2000000
+    },
+    "download": {
+      "speed": 2000000
+    },
+    "url": "https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32c5/esp32-c5-devkitc-1/index.html",
+    "vendor": "Espressif"
+  }

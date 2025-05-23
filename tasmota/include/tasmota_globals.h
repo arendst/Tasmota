@@ -148,15 +148,15 @@ const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_confi
 \*-------------------------------------------------------------------------------------------*/
 
 /*-------------------------------------------------------------------------------------------*\
- * Start ESP32-C3/C6 specific parameters - disable features not present in ESP32-C3/C6
+ * Start ESP32-C3/C5/C6 specific parameters - disable features not present in ESP32-C3/C5/C6
 \*-------------------------------------------------------------------------------------------*/
 
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6  // ESP32-C3/C6
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6   // ESP32-C3/C5/C6
 //#ifdef USE_ETHERNET
-//#undef USE_ETHERNET                                // ESP32-C3/C6 does not support ethernet
+//#undef USE_ETHERNET                                // ESP32-C3/C5/C6 does not support ethernet
 //#endif
 
-#endif  // CONFIG_IDF_TARGET_ESP32C3/C6
+#endif  // CONFIG_IDF_TARGET_ESP32C3/C5/C6
 
 /*-------------------------------------------------------------------------------------------*\
  * End ESP32-C3 specific parameters

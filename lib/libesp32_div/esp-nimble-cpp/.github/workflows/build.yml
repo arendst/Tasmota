@@ -16,7 +16,7 @@ jobs:
         # https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/tools/idf-docker-image.html
         # for details.
         idf_ver: ["release-v4.4", "release-v5.1"]
-        idf_target: ["esp32", "esp32s3", "esp32c2", "esp32c3", "esp32c6"]
+        idf_target: ["esp32", "esp32s3", "esp32c2", "esp32c3", "esp32c5", "esp32c6"]
         example:
           - Advanced/NimBLE_Client
           - Advanced/NimBLE_Server

@@ -1714,7 +1714,7 @@ void TemplateGpios(myio *gp)
     j++;
 #endif  // ESP8266
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6
+#if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6
     dest[i] = src[i];
 #elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
     if (22 == i) { j = 33; }    // skip 22-32
@@ -2203,7 +2203,7 @@ void SetSerial(uint32_t baudrate, uint32_t serial_config) {
 
 void ClaimSerial(void) {
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C5 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
 #ifdef USE_USB_CDC_CONSOLE
   if (!tasconsole_serial) {
     return;              // USB console does not use serial

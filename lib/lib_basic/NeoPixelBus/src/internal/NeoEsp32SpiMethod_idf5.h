@@ -30,7 +30,7 @@ License along with NeoPixel.  If not, see
 
 #if defined(ARDUINO_ARCH_ESP32)
 
-#if (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C6)) && !defined(HSPI_HOST)
+#if (defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C2) || defined(CONFIG_IDF_TARGET_ESP32C5) || defined(CONFIG_IDF_TARGET_ESP32C6)) && !defined(HSPI_HOST)
 // HSPI_HOST depreciated in C3
 #define HSPI_HOST   SPI2_HOST
 #endif

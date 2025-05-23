@@ -30,6 +30,7 @@ idf_component_register(
     "esp32s3"
     "esp32c2"
     "esp32c3"
+    "esp32c5"
     "esp32c6"
     "esp32h2"
   INCLUDE_DIRS
