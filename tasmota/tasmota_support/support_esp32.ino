@@ -882,7 +882,6 @@ typedef struct {
 #endif  // CONFIG_IDF_TARGET_ESP32C2
       return F("ESP32-C2");
     }
-    }
     case 23: {  // ESP32-C5
       /*
       ESP32-C5 Series
@@ -897,6 +896,7 @@ typedef struct {
       }
 #endif  // CONFIG_IDF_TARGET_ESP32C5
       return F("ESP32-C5");
+    }
     case 7:     // ESP32-C6(beta)
     case 13: {  // ESP32-C6
       /*
