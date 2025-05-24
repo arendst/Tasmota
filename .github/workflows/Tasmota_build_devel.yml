@@ -24,7 +24,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.13'
 
       - name: Make Berry and Solidify code
         run: |
@@ -61,7 +61,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.13'
       - uses: actions/download-artifact@v4
         with:
           pattern: berry
@@ -105,7 +105,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.13'
       - name: Install dependencies
         run: |
           pip install wheel
@@ -155,7 +155,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.13'
       - name: Install dependencies
         run: |
           pip install wheel
@@ -206,7 +206,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.13'
       - name: Install dependencies
         run: |
           pip install wheel
@@ -253,7 +253,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.13'
       - name: Install dependencies
         run: |
           pip install wheel
