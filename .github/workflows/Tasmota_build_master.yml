@@ -49,6 +49,9 @@ jobs:
         run: |
           sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT release-/g" ./tasmota/include/tasmota_version.h
       - name: Run PlatformIO
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload safeboot firmware artifacts
         uses: actions/upload-artifact@v4
@@ -90,6 +93,9 @@ jobs:
         run: |
           sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT release-/g" ./tasmota/include/tasmota_version.h
       - name: Run PlatformIO
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
         uses: actions/upload-artifact@v4
@@ -146,6 +152,9 @@ jobs:
         run: |
           sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT release-/g" ./tasmota/include/tasmota_version.h
       - name: Run PlatformIO
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }}
       - name: Upload firmware artifacts
         uses: actions/upload-artifact@v4
@@ -188,6 +197,9 @@ jobs:
         run: |
           sed -i -e "s/TASMOTA_SHA_SHORT/TASMOTA_SHA_SHORT release-/g" ./tasmota/include/tasmota_version.h
       - name: Run PlatformIO
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
       - name: Upload language firmware artifacts
         uses: actions/upload-artifact@v4
