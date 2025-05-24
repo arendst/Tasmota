@@ -31,15 +31,15 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.13'
       - name: Install dependencies
         run: |
           pip install wheel
-          #python -m pip install --upgrade pip
           pip install -U platformio
-          #platformio upgrade --dev
-          #platformio update
       - name: Run PlatformIO
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }}
       - uses: actions/upload-artifact@v4
         with:
@@ -59,15 +59,15 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.13'
       - name: Install dependencies
         run: |
           pip install wheel
-          #python -m pip install --upgrade pip
           pip install -U platformio
-          #platformio upgrade --dev
-          #platformio update
       - name: Run PlatformIO
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }}
       - uses: actions/upload-artifact@v4
         with:
@@ -117,16 +117,16 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.13'
       - name: Install dependencies
         run: |
           pip install wheel
-          #python -m pip install --upgrade pip
           pip install -U platformio
-          #platformio upgrade --dev
-          #platformio update
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Run PlatformIO
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }}
       - uses: actions/upload-artifact@v4
         with:
@@ -146,15 +146,15 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.13'
       - name: Install dependencies
         run: |
           pip install wheel
-          #python -m pip install --upgrade pip
           pip install -U platformio
-          #platformio upgrade --dev
-          #platformio update
       - name: Run PlatformIO
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
         run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
       - uses: actions/upload-artifact@v4
         with:
