@@ -161,6 +161,16 @@ void LoraWanDeleteData(void) {
     UfsJsonSettingsDelete(key);                      // Use defaults
   }
 }
+
+uint32_t LoraWanGetCfgCrc(void) {
+  uint32_t crc32 = 0;
+  for (uint32_t n = 0; n < Lora->nodes; n++) {
+    if (Lora->settings.end_node[n]->AppKey[0] > 0) { // Only save used slots
+      crc32 += GetCfgCrc32((uint8_t*)Lora->settings.end_node[n], sizeof(LoraEndNode_t));
+    }
+  }
+  return crc32;
+}
 #endif  // USE_UFILESYS
 
 /*********************************************************************************************/
