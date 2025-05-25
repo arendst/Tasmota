@@ -9,7 +9,7 @@ var LHT65_BatteryStatus = ["Very low <= 2.5V","Low <=2.55V","OK","Good >= 2.65V"
 global.lht65Nodes = {}
 
 class LwDecoLHT65
-  static def decodeUplink(FPort, Bytes)
+  static def decodeUplink(Node, FPort, Bytes)
     var data = {"Device":"Dragino LHT65"}
     data.insert("Node", Node)
     data.insert("poll_message_status",(Bytes[6] & 0x40) >> 6)
@@ -21,10 +21,12 @@ class LwDecoLHT65
     var temp_int = 1000
     var humidity
     var temp_ext = 1000
+    var door_open = 1000
     if global.lht65Nodes.find(Node)
       temp_int = global.lht65Nodes.item(Node)[1]
       humidity = global.lht65Nodes.item(Node)[2]
       temp_ext = global.lht65Nodes.item(Node)[3]
+      door_open = global.lht65Nodes.item(Node)[4]
     end
     ## SENSOR DATA ##
     if 2 == FPort && Bytes.size() == 11
@@ -83,8 +85,10 @@ class LwDecoLHT65
         end		
       elif 4 == Ext
         data.insert("Work_mode", 'Interrupt Sensor send')
+        door_open = ( Bytes[7] ) ? 0 : 1    # DS sensor
         data.insert("Exti_pin_level", Bytes[7] ? 'High' : 'Low')
         data.insert("Exti_status", Bytes[8] ? 'True' : 'False')
+        valid_values = true
       elif 5 == Ext
         data.insert("Work_mode", 'Illumination Sensor')
         data.insert("ILL_lx", (Bytes[7] << 8) | Bytes[8])
@@ -123,7 +127,7 @@ class LwDecoLHT65
       if global.lht65Nodes.find(Node)
         global.lht65Nodes.remove(Node)
       end
-      global.lht65Nodes.insert(Node, [Node, temp_int, humidity, temp_ext])
+      global.lht65Nodes.insert(Node, [Node, temp_int, humidity, temp_ext, door_open])
     end
 
 
@@ -142,6 +146,10 @@ class LwDecoLHT65
       if sensor[3] < 1000
         msg += string.format("{s}LHT65_%i Temperature ext.{m}%.1f °C{e}",
                              sensor[0], sensor[3])
+      end
+      if sensor[4] < 1000
+        msg += string.format("{s}LHT65_%i Door{m}%s{e}",
+                             sensor[0], (sensor[4]) ? "Open" : "Closed")
       end
     end
 
