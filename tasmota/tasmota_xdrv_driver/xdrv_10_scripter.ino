@@ -8216,7 +8216,7 @@ startline:
                 if (ifstck == 1) if_exe[ifstck] = 1;
                 else if_exe[ifstck] = if_exe[ifstck - 1];
                 and_or = 0;
-                if (if_result[ifstck - 1] == 0) {
+                if (if_exe[ifstck - 1] == 0) {
                   // not enabled
                   glob_script_mem.FLAGS.ignore_line = 1;
                   /*
