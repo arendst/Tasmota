@@ -9,19 +9,33 @@ import string
 global.lht52Nodes = {}
 
 class LwDecoLHT52
-  static def decodeUplink(Node, FPort, Bytes)
+  static def decodeUplink(Node, RSSI, FPort, Bytes)
     var data = {"Device":"Dragino LHT52"}
     data.insert("Node", Node)
 
     var valid_values = false
+    var last_seen
+    var battery_last_seen
+    var battery = 1000
+    var rssi = RSSI
     var temp_int
     var humidity
     var temp_ext = 1000
+    if global.lht52Nodes.find(Node)
+      last_seen = global.lht52Nodes.item(Node)[1]
+      battery_last_seen = global.lht52Nodes.item(Node)[2]
+      battery = global.lht52Nodes.item(Node)[3]
+      rssi = global.lht52Nodes.item(Node)[4]
+      temp_int = global.lht52Nodes.item(Node)[5]
+      humidity = global.lht52Nodes.item(Node)[6]
+      temp_ext = global.lht52Nodes.item(Node)[7]
+    end
     ## SENSOR DATA ##
     if 2 == FPort && Bytes.size() == 11
+      last_seen = tasmota.rtc('local')
+
       var TempC
-   
-      TempC = Bytes[0] << 8 | Bytes[1]
+         TempC = Bytes[0] << 8 | Bytes[1]
       if Bytes[0] > 0x7F
         TempC -= 0x10000
       end
@@ -55,8 +69,10 @@ class LwDecoLHT52
       data.insert("Firmware_Version", f'v{Bytes[1]:%u}.{Bytes[2]>>4:%u}.{Bytes[2]&0xF:%u}')
       data.insert("Freq_Band",LwRegions[Bytes[3]-1])
       data.insert("Sub_Band",Bytes[4])
-      data.insert("Bat_mV",(Bytes[5] << 8) | Bytes[6])
-
+      data.insert("BattV",((Bytes[5] << 8) | Bytes[6]) / 1000)
+      battery_last_seen = tasmota.rtc('local')
+      battery = ((Bytes[5] << 8) | Bytes[6]) / 1000
+      valid_values = true
     else
     # Ignore other Fports
     end #Fport
@@ -65,7 +81,7 @@ class LwDecoLHT52
       if global.lht52Nodes.find(Node)
         global.lht52Nodes.remove(Node)
       end
-      global.lht52Nodes.insert(Node, [Node, temp_int, humidity, temp_ext])
+      global.lht52Nodes.insert(Node, [Node, last_seen, battery_last_seen, battery, RSSI, temp_int, humidity, temp_ext])
     end
 
     return data
@@ -74,18 +90,28 @@ class LwDecoLHT52
   static def add_web_sensor()
     var msg = ""
     for sensor: global.lht52Nodes
-      msg += string.format("{s}LHT52_%i Temperature{m}%.1f °C{e}"..
-                           "{s}LHT52_%i Humidity{m}%.1f %%{e}",
-                           sensor[0], sensor[1],
-                           sensor[0], sensor[2])
-      if sensor[3] < 1000
-        msg += string.format("{s}LHT52_%i Temperature ext.{m}%.1f °C{e}",
-                             sensor[0], sensor[3])
-      end
-    end
+      # Sensor[0]    [1]        [2]                [3]      [4]   [5]       [6]       [7]
+      #       [Node, last_seen, battery_last_seen, battery, RSSI, temp_int, humidity, temp_ext]
 
+      var name = string.format("LHT52-%i", sensor[0])
+      var name_tooltip = "Dragino LHT52"
+      var battery = sensor[3]
+      var battery_last_seen = sensor[2]
+      var rssi = sensor[4]
+      var last_seen = sensor[1]
+      msg += lwdecode.header(name, name_tooltip, battery, battery_last_seen, rssi, last_seen)
+
+      # Sensors
+      msg += "<tr class='htr'><td colspan='4'>&#9478;"                    # |
+      msg += string.format(" &#x2600;&#xFE0F; %.1f°C", sensor[5])         # Sunshine - Temperature internal
+      msg += string.format(" &#x1F4A7; %.1f%%", sensor[6])                # Raindrop - Humidity
+      if sensor[7] < 1000
+        msg += string.format(" &#x2600;&#xFE0F; ext %.1f°C", sensor[7])   # Sunshine - Temperature external
+      end
+      msg += "{e}"                                                        # = </td></tr>
+    end
     return msg
-  end
+  end #add_web_sensor()
 end #class
 
 LwDeco = LwDecoLHT52
