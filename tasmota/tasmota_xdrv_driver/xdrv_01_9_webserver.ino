@@ -997,9 +997,6 @@ void WSContentSendStyle_P(const char* formatP, ...) {
 #ifdef USE_WEB_STATUS_LINE_WIFI
   WSContentSend_P(HTTP_HEAD_STYLE_WIFI, WebColor(COL_FORM), WebColor(COL_TITLE));
 #endif
-
-USE_LORAWAN_BRIDGE
-
 #if defined(USE_ZIGBEE) || defined(USE_LORAWAN_BRIDGE)
   WSContentSend_P(HTTP_HEAD_STYLE_ZIGBEE);
 #endif // USE_ZIGBEE
