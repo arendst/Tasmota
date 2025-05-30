@@ -5,7 +5,6 @@ var LwRegions = ["EU868", "US915", "IN865","AU915","KZ865","RU864","AS923", "AS9
 var LwDeco
 
 import mqtt 
-import string
 
 class lwdecode_cls
   var thisDevice
@@ -59,9 +58,7 @@ class lwdecode_cls
     var unit = "d"
     if since > (24 * 3600)
       since /= (24 * 3600)
-      if since > 99
-        since = 99
-      end
+      if since > 99 since = 99 end
     elif  since > 3600
       since /= 3600
       unit = "h"
@@ -69,42 +66,38 @@ class lwdecode_cls
       since /= 60
       unit = "m"
     end
-    return string.format("%02d%s", since, unit)
+    return format("%02d%s", since, unit)
   end
 
   def header(name, name_tooltip, battery, battery_last_seen, rssi, last_seen)
     var color_text = f'{tasmota.webcolor(0 #-COL_TEXT-#)}'    # '#eaeaea'
-    var msg = string.format("<tr class='ltd htr'>")           # ==== Start first table row
-    msg += string.format("<td><b title='%s'>%s</b></td>", name_tooltip, name)
-    if (battery < 1000)
+    var msg = "<tr class='ltd htr'>"                          # ==== Start first table row
+    msg += format("<td><b title='%s'>%s</b></td>", name_tooltip, name)
+    if battery < 1000
       # Battery low <= 2.5V (0%), high >= 3.1V (100%)
       var batt_percent = (battery * 1000) - 2500
       batt_percent /= 6                                       # 3.1V - 2.5V = 0.6V = 100%
-      if batt_percent < 0
-        batt_percent = 0
-      end
-      if batt_percent > 100
-        batt_percent = 100
-      end
-      batt_percent /= 7.14                                    # 1..14px showing battery load
-      msg += string.format("<td><i class=\"bt\" title=\"%.3fV (%s)\" style=\"--bl:%dpx;color:%s\"></i></td>",
-                          battery, self.dhm(battery_last_seen), batt_percent, color_text)
+      if batt_percent < 0 batt_percent = 0 end
+      if batt_percent > 98 batt_percent = 98 end              # 98% / 14px = 7
+      batt_percent /= 7                                       # 1..14px showing battery load
+      msg += format("<td><i class=\"bt\" title=\"%.3fV (%s)\" style=\"--bl:%dpx;color:%s\"></i></td>",
+                   battery, self.dhm(battery_last_seen), batt_percent, color_text)
     else
       msg += "<td>&nbsp;</td>"
     end
     if rssi < 1000
+      if rssi < -132 rssi = -132 end
       var num_bars = 4 - ((rssi * -1) / 33)
-      msg += string.format("<td><div title='RSSI %i' class='si'>",rssi)
+      msg += format("<td><div title='RSSI %i' class='si'>", rssi)
       for j:0..3
-        msg += string.format("<i class='b%d%s'></i>", 
-                            j, (num_bars < j) ? " o30" : "")  # Bars
+        msg += format("<i class='b%d%s'></i>", j, (num_bars < j) ? " o30" : "")         # Bars
       end
-      msg += string.format("</div></td>")                     # Close RSSI
+      msg += "</div></td>"                                    # Close RSSI
     else
       msg += "<td>&nbsp;</td>"
     end
-    msg += string.format("<td style='color:%s'>&#x1F557;%s</td>", # Clock
-                        color_text, self.dhm(last_seen))
+    msg += format("<td style='color:%s'>&#x1F557;%s</td>",    # Clock
+                 color_text, self.dhm(last_seen))
     msg += "</tr>"                                            # ==== End first table row
     return msg
   end #sensor()
@@ -114,30 +107,28 @@ class lwdecode_cls
   Called every WebRefresh time
   ------------------------------------------------------------#
   def web_sensor()
-    import string
-
     var msg = ""
     for decoder: self.LwDecoders
       msg += decoder.add_web_sensor()	
     end
     if msg
       var color_text = f'{tasmota.webcolor(0 #-COL_TEXT-#)}'  # '#eaeaea'
-      var full_msg = string.format("</table>"..       # Terminate current two column table and open new table
-        "<style>"..
+      var full_msg = format("</table>"                        # Terminate current two column table and open new table
+        "<style>"
         # Table CSS
-        ".ltd td:not(:first-child){width:20px;font-size:70%%}"..
-        ".ltd td:last-child{width:45px}"..
-        ".ltd .bt{margin-right:10px;}"..              # Margin right should be half of the not-first width
-        ".htr{line-height:20px}"..
+        ".ltd td:not(:first-child){width:20px;font-size:70%%}"
+        ".ltd td:last-child{width:45px}"
+        ".ltd .bt{margin-right:10px;}"                        # Margin right should be half of the not-first width
+        ".htr{line-height:20px}"
         # Signal Strength Indicator
-        ".si{display:inline-flex;align-items:flex-end;height:15px;padding:0}"..
-        ".si i{width:3px;margin-right:1px;border-radius:3px;background-color:%s}".. # WebColor(COL_TEXT)
-        ".si .b0{height:25%%}.si .b1{height:50%%}.si .b2{height:75%%}.si .b3{height:100%%}.o30{opacity:.3}"..
-        "</style>"..
-        "{t}",                                        # Open new table
+        ".si{display:inline-flex;align-items:flex-end;height:15px;padding:0}"
+        ".si i{width:3px;margin-right:1px;border-radius:3px;background-color:%s}" # WebColor(COL_TEXT)
+        ".si .b0{height:25%%}.si .b1{height:50%%}.si .b2{height:75%%}.si .b3{height:100%%}.o30{opacity:.3}"
+        "</style>"
+        "{t}",                                                # Open new table
         color_text)
       full_msg += msg
-      full_msg += "</table>{t}"                # Close table and open new table
+      full_msg += "</table>{t}"                               # Close table and open new table
 
       tasmota.web_send_decimal(full_msg)
     end
