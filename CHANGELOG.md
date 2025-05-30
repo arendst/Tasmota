@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Berry `introspect.module` option to not cache module entry (#23451)
 - Berry `webserver.remove_route` to revert `webserver.on` (#23452)
 - Berry `compile` and `tasmota.compile` option to compile in local context (#23457)
+- Support for AP33772S USB PD Sink Controller as used in CentyLab RotoPD
 
 ### Breaking Changed
 
