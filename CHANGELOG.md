@@ -27,6 +27,7 @@ All notable changes to this project will be documented in this file.
 - Haspmota `haspmota.parse()` page parsing (#23403)
 - ESP32-S3 display stability regression from #23397 (#23404)
 - DNS setting with `IPAddress4/5` not persisted (#23426)
+- Berry avoid json parsing for unmatched commands
 
 ### Removed
 
