@@ -37,9 +37,9 @@ static const bvalue be_ktab_class_Tasmota[164] = {
   /* K28  */  be_nested_str(_timers),
   /* K29  */  be_nested_str(millis),
   /* K30  */  be_nested_str(_ccmd),
-  /* K31  */  be_nested_str(json),
-  /* K32  */  be_nested_str(load),
-  /* K33  */  be_nested_str(find_key_i),
+  /* K31  */  be_nested_str(find_key_i),
+  /* K32  */  be_nested_str(json),
+  /* K33  */  be_nested_str(load),
   /* K34  */  be_nested_str(resolvecmnd),
   /* K35  */  be_nested_str(wifi),
   /* K36  */  be_nested_str(up),
@@ -527,26 +527,26 @@ be_local_closure(class_Tasmota_exec_cmd,   /* name */
     ( &(const binstruction[27]) {  /* code */
       0x8810011E,  //  0000  GETMBR	R4	R0	K30
       0x78120016,  //  0001  JMPF	R4	#0019
-      0xA4123E00,  //  0002  IMPORT	R4	K31
-      0x8C140920,  //  0003  GETMET	R5	R4	K32
-      0x5C1C0600,  //  0004  MOVE	R7	R3
-      0x7C140400,  //  0005  CALL	R5	2
-      0x8C180121,  //  0006  GETMET	R6	R0	K33
-      0x8820011E,  //  0007  GETMBR	R8	R0	K30
-      0x5C240200,  //  0008  MOVE	R9	R1
-      0x7C180600,  //  0009  CALL	R6	3
-      0x4C1C0000,  //  000A  LDNIL	R7
-      0x201C0C07,  //  000B  NE	R7	R6	R7
-      0x781E000B,  //  000C  JMPF	R7	#0019
+      0x8C10011F,  //  0002  GETMET	R4	R0	K31
+      0x8818011E,  //  0003  GETMBR	R6	R0	K30
+      0x5C1C0200,  //  0004  MOVE	R7	R1
+      0x7C100600,  //  0005  CALL	R4	3
+      0x4C140000,  //  0006  LDNIL	R5
+      0x20140805,  //  0007  NE	R5	R4	R5
+      0x7816000F,  //  0008  JMPF	R5	#0019
+      0xA4164000,  //  0009  IMPORT	R5	K32
+      0x8C180B21,  //  000A  GETMET	R6	R5	K33
+      0x5C200600,  //  000B  MOVE	R8	R3
+      0x7C180400,  //  000C  CALL	R6	2
       0x8C1C0122,  //  000D  GETMET	R7	R0	K34
-      0x5C240C00,  //  000E  MOVE	R9	R6
+      0x5C240800,  //  000E  MOVE	R9	R4
       0x7C1C0400,  //  000F  CALL	R7	2
       0x881C011E,  //  0010  GETMBR	R7	R0	K30
-      0x941C0E06,  //  0011  GETIDX	R7	R7	R6
-      0x5C200C00,  //  0012  MOVE	R8	R6
+      0x941C0E04,  //  0011  GETIDX	R7	R7	R4
+      0x5C200800,  //  0012  MOVE	R8	R4
       0x5C240400,  //  0013  MOVE	R9	R2
       0x5C280600,  //  0014  MOVE	R10	R3
-      0x5C2C0A00,  //  0015  MOVE	R11	R5
+      0x5C2C0C00,  //  0015  MOVE	R11	R6
       0x7C1C0800,  //  0016  CALL	R7	4
       0x501C0200,  //  0017  LDBOOL	R7	1	0
       0x80040E00,  //  0018  RET	1	R7
@@ -1549,8 +1549,8 @@ be_local_closure(class_Tasmota_exec_tele,   /* name */
     ( &(const binstruction[41]) {  /* code */
       0x88080106,  //  0000  GETMBR	R2	R0	K6
       0x780A0024,  //  0001  JMPF	R2	#0027
-      0xA40A3E00,  //  0002  IMPORT	R2	K31
-      0x8C0C0520,  //  0003  GETMET	R3	R2	K32
+      0xA40A4000,  //  0002  IMPORT	R2	K32
+      0x8C0C0521,  //  0003  GETMET	R3	R2	K33
       0x5C140200,  //  0004  MOVE	R5	R1
       0x7C0C0400,  //  0005  CALL	R3	2
       0x50100000,  //  0006  LDBOOL	R4	0	0
@@ -2250,11 +2250,11 @@ be_local_closure(class_Tasmota_exec_rules,   /* name */
       0x4C100000,  //  0003  LDNIL	R4
       0x20100604,  //  0004  NE	R4	R3	R4
       0x78120033,  //  0005  JMPF	R4	#003A
-      0xA4123E00,  //  0006  IMPORT	R4	K31
+      0xA4124000,  //  0006  IMPORT	R4	K32
       0x4C140000,  //  0007  LDNIL	R5
       0x90025605,  //  0008  SETMBR	R0	K43	R5
       0x50140000,  //  0009  LDBOOL	R5	0	0
-      0x8C180920,  //  000A  GETMET	R6	R4	K32
+      0x8C180921,  //  000A  GETMET	R6	R4	K33
       0x5C200200,  //  000B  MOVE	R8	R1
       0x7C180400,  //  000C  CALL	R6	2
       0x4C1C0000,  //  000D  LDNIL	R7
