@@ -29,6 +29,7 @@ All notable changes to this project will be documented in this file.
 - DNS setting with `IPAddress4/5` not persisted (#23426)
 - Berry avoid json parsing for unmatched commands
 - Berry fix integer and real parser to handle overflows
+- Berry fix potential pointer underflow with `string.endswith`
 
 ### Removed
 
