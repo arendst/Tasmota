@@ -1074,14 +1074,17 @@ static int str_endswith(bvm *vm)
         bbool result = bfalse;
         const char *s = be_tostring(vm, 1);
         const char *p = be_tostring(vm, 2);
-        size_t len = (size_t)be_strlen(vm, 2);
-        if (case_insensitive) {
-            if (str_strncasecmp(s + (int)strlen(s) - (int)len, p, len) == 0) {
-                result = btrue;
-            }
-        } else {
-            if (strncmp(s + (int)strlen(s) - (int)len, p, len) == 0) {
-                result = btrue;
+        size_t len_s = (size_t)be_strlen(vm, 1);
+        size_t len_p = (size_t)be_strlen(vm, 2);
+        if (len_s >= len_p) {
+            if (case_insensitive) {
+                if (str_strncasecmp(s + (int)len_s - (int)len_p, p, len_p) == 0) {
+                    result = btrue;
+                }
+            } else {
+                if (strncmp(s + (int)len_s - (int)len_p, p, len_p) == 0) {
+                    result = btrue;
+                }
             }
         }
         be_pushbool(vm, result);
