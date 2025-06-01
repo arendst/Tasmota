@@ -150,6 +150,9 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry string literals containing NULL are truncated [#23312](https://github.com/arendst/Tasmota/issues/23312)
 - Berry `display.touch_update` wrongly applies resistive calibration [#23363](https://github.com/arendst/Tasmota/issues/23363)
 - Berry `introspect.module()` failed to load modules in files [#23376](https://github.com/arendst/Tasmota/issues/23376)
+- Berry avoid json parsing for unmatched commands [#23494](https://github.com/arendst/Tasmota/issues/23494)
+- Berry integer and real parser to handle overflows [#23495](https://github.com/arendst/Tasmota/issues/23495)
+- Berry potential pointer underflow with `string.endswith` [#23496](https://github.com/arendst/Tasmota/issues/23496)
 - Matter and mDNS can be enabled at the same time [#23373](https://github.com/arendst/Tasmota/issues/23373)
 - Haspmota `haspmota.parse()` page parsing [#23403](https://github.com/arendst/Tasmota/issues/23403)
 
