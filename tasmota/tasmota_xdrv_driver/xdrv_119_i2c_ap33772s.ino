@@ -850,7 +850,7 @@ void AP33772S_WebUpdateButtonSliderState(void) {
     WSContentSend_P(PSTR("eb('i1192').value=%d;eb('s1192').innerHTML=%d/1000;"),
       Ap33772s->current_PPS, Ap33772s->current_PPS);
   }
-  WSContentSend_P(PSTR("eb('k119').style='background:#%06x';"),
+  WSContentSend_P(PSTR("eb('k119').style='height:46px;background:#%06x;'"),
     WebColor((Ap33772s->output) ? COL_BUTTON : COL_BUTTON_OFF));
   WSContentSend_P(PSTR("\">{t}"));             // Restart {t} = <table style='width:100%'>
 }
