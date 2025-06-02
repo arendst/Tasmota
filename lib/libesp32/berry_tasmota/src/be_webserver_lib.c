@@ -43,7 +43,7 @@ extern int w_webserver_header(bvm *vm);
 // model from Arduino framework.
 // We use our own list of callbacks
 
-#define WEBSERVER_REQ_HANDLER_HOOK_MAX       16      // max number of callbacks, each callback requires a distinct address
+#define WEBSERVER_REQ_HANDLER_HOOK_MAX       32      // max number of callbacks, each callback requires a distinct address
 typedef struct be_webserver_callback_hook_t {
   bvm *vm;                // make sure we are using the same VM
   bvalue f;               // the Berry function to call
@@ -71,6 +71,22 @@ WEBSERVER_HOOK_CB(12);
 WEBSERVER_HOOK_CB(13);
 WEBSERVER_HOOK_CB(14);
 WEBSERVER_HOOK_CB(15);
+WEBSERVER_HOOK_CB(16);
+WEBSERVER_HOOK_CB(17);
+WEBSERVER_HOOK_CB(18);
+WEBSERVER_HOOK_CB(19);
+WEBSERVER_HOOK_CB(20);
+WEBSERVER_HOOK_CB(21);
+WEBSERVER_HOOK_CB(22);
+WEBSERVER_HOOK_CB(23);
+WEBSERVER_HOOK_CB(24);
+WEBSERVER_HOOK_CB(25);
+WEBSERVER_HOOK_CB(26);
+WEBSERVER_HOOK_CB(27);
+WEBSERVER_HOOK_CB(28);
+WEBSERVER_HOOK_CB(29);
+WEBSERVER_HOOK_CB(30);
+WEBSERVER_HOOK_CB(31);
 
 // array of callbacks
 static const berry_webserver_cb_t berry_callback_array[WEBSERVER_REQ_HANDLER_HOOK_MAX] = {
@@ -90,6 +106,22 @@ static const berry_webserver_cb_t berry_callback_array[WEBSERVER_REQ_HANDLER_HOO
   berry_webserver_cb_13,
   berry_webserver_cb_14,
   berry_webserver_cb_15,
+  berry_webserver_cb_16,
+  berry_webserver_cb_17,
+  berry_webserver_cb_18,
+  berry_webserver_cb_19,
+  berry_webserver_cb_20,
+  berry_webserver_cb_21,
+  berry_webserver_cb_22,
+  berry_webserver_cb_23,
+  berry_webserver_cb_24,
+  berry_webserver_cb_25,
+  berry_webserver_cb_26,
+  berry_webserver_cb_27,
+  berry_webserver_cb_28,
+  berry_webserver_cb_29,
+  berry_webserver_cb_30,
+  berry_webserver_cb_31,
 };
 
 // Return slot number
