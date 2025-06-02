@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - ESP8266 platform update from 2024.09.00 to 2025.05.00 (#23448)
 - Increase number of supported LoRaWan nodes from 4 to 16
 - Berry change number parser for json to reuse same parser as lexer
+- Berry increase web hooks from 16 to 32
 
 ### Fixed
 - Haspmota `haspmota.parse()` page parsing (#23403)
