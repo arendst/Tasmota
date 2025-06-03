@@ -142,6 +142,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - GPIOViewer from v1.6.2 to v1.6.3 (No functional change)
 - Allow command `WebRefresh` minimum from 1000 to 400 mSec
 - Increase number of supported LoRaWan nodes from 4 to 16
+- Berry change number parser for json to reuse same parser as lexer [#23505](https://github.com/arendst/Tasmota/issues/23505)
+- Berry increase web hooks from 16 to 32 [#23507](https://github.com/arendst/Tasmota/issues/23507)
 
 ### Fixed
 - DNS setting with `IPAddress4/5` not persisted [#23426](https://github.com/arendst/Tasmota/issues/23426)
