@@ -446,6 +446,7 @@ void LoraWanSendResponse(uint8_t* buffer, size_t len, uint32_t lorawan_delay) {
   Lora->send_request = false;
   Lora->backup_settings = Lora->settings;            // Make a copy;
   Lora->send_buffer_step = 2;                        // Send at RX1 and RX2
+  Lora->delay_settings_save = ((lorawan_delay + TAS_LORAWAN_RECEIVE_DELAY2) / 1000) +2;  // Delay settings save
 
   uint32_t delay_rx1 = lorawan_delay - TimePassedSince(Lora->receive_time);
   LoraWan_Send_RX1.once_ms(delay_rx1, LoraWanTickerSend);
@@ -535,6 +536,43 @@ uint32_t LoraWanSpreadingFactorToDataRate(bool downlink) {
 
 /*********************************************************************************************/
 
+void LoraWanSendAppData(uint32_t node, uint8_t* FRMPayload, uint32_t len) {
+  if (len > 15) { return; }                           // M is region specific and depends on DataRate
+ 
+  uint32_t DevAddr = Lora->device_address +node;
+  uint16_t FCnt = Lora->settings.end_node[node]->FCntDown++;
+
+  uint8_t Key[TAS_LORAWAN_AES128_KEY_SIZE];
+  uint8_t FRMPayload_encrypted[TAS_LORAWAN_AES128_KEY_SIZE +9 +len];
+  LoraWanDeriveLegacyAppSKey(node, Key);
+  LoraWanEncryptDownlink(Key, DevAddr, FCnt, FRMPayload, len, 0, FRMPayload_encrypted);
+
+  uint32_t data_size = 13 + len;
+  uint8_t data[data_size];
+  data[0] = TAS_LORAWAN_MTYPE_UNCONFIRMED_DATA_DOWNLINK << 5;
+  data[1] = DevAddr;
+  data[2] = DevAddr >> 8;
+  data[3] = DevAddr >> 16;
+  data[4] = DevAddr >> 24;
+  data[5] = 0x00;                                    // FCtrl - No FOpts
+  data[6] = FCnt;
+  data[7] = FCnt >> 8;
+  data[8] = 0x01;                                    // FPort no MAC (as used by Dragino)
+  for (uint32_t i = 0; i < len; i++) {
+    data[9 +i] = FRMPayload_encrypted[i];
+  }
+  LoraWanDeriveLegacyNwkSKey(node, Key);
+  uint32_t MIC = LoraWanComputeLegacyDownlinkMIC(Key, DevAddr, FCnt, data, data_size -4);
+  data[data_size -4] = MIC;
+  data[data_size -3] = MIC >> 8;
+  data[data_size -2] = MIC >> 16;
+  data[data_size -1] = MIC >> 24;
+
+  LoraWanSendResponse(data, data_size, 10);
+}
+
+/*-------------------------------------------------------------------------------------------*/
+
 void LoraWanSendLinkADRReq(uint32_t node) {
   uint32_t DevAddr = Lora->device_address +node;
   uint16_t FCnt = Lora->settings.end_node[node]->FCntDown++;
@@ -623,6 +661,8 @@ void LoraWanSendMacResponse(uint32_t node, uint8_t* FOpts, uint32_t FCtrl) {
   LoraWanSendResponse(data, data_size, TAS_LORAWAN_RECEIVE_DELAY1);
 }
 
+/*-------------------------------------------------------------------------------------------*/
+
 bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
   bool result = false;
   uint32_t MType = data[0] >> 5;                             // Upper three bits (used to be called FType)
@@ -644,6 +684,8 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
                   ((uint32_t)data[21] << 16) | ((uint32_t)data[22] << 24);
 
     for (uint32_t node = 0; node < Lora->nodes; node++) {
+      if (bitRead(Lora->settings.end_node[node]->flags, TAS_LORAWAN_FLAG_DISABLED)) { continue; }  // Skip
+
       uint32_t CalcMIC = LoraWanGenerateMIC(data, 19, Lora->settings.end_node[node]->AppKey);
       if (MIC == CalcMIC) {                                  // Valid MIC based on LoraWanAppKey
 
@@ -733,12 +775,13 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
     // 40    422E0100  A2     1800  0307   78     29FBF8FD9227729984    8C71E95B  - FCtrl ADR support, ADRACKReq=0, FOptsLen = 2 -> FOpts = MAC, response after LinkADRReq
     // 40    F4F51700  A2     0200  0307   CC     6517D4AB06D32C9A9F    14CBA305  - FCtrl ADR support, ADRACKReq=0, FOptsLen = 2 -> FOpts = MAC, response after LinkADRReq
     
-    bool bResponseSent = false;                  // Make sure do not send multiple responses
+    bool bResponseSent = false;                                        // Make sure do not send multiple responses
 
     uint32_t DevAddr = (uint32_t)data[1] | ((uint32_t)data[2] <<  8) | ((uint32_t)data[3] << 16) | ((uint32_t)data[4] << 24);
     for (uint32_t node = 0; node < Lora->nodes; node++) {
-      if (0 == Lora->settings.end_node[node]->DevEUIh)  { continue; }   // No DevEUI so never joined
+      if (0 == Lora->settings.end_node[node]->DevEUIh)  { continue; }  // No DevEUI so never joined
       if ((Lora->device_address +node) != DevAddr) { continue; }       // Not my device
+      if (bitRead(Lora->settings.end_node[node]->flags, TAS_LORAWAN_FLAG_DISABLED)) { continue; }  // Skip
 
       uint32_t FCtrl = data[5];
       uint32_t FOptsLen = FCtrl & 0x0F;
@@ -752,16 +795,16 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
       uint8_t NwkSKey[TAS_LORAWAN_AES128_KEY_SIZE];
       LoraWanDeriveLegacyNwkSKey(node, NwkSKey);
       uint32_t CalcMIC = LoraWanComputeLegacyUplinkMIC(NwkSKey, DevAddr, FCnt, data, packet_size -4);
-      if (MIC != CalcMIC) { continue; }                                  // Same device address but never joined
+      if (MIC != CalcMIC) { continue; }                                // Same device address but never joined
 
       bool FCtrl_ADR       = bitRead(FCtrl, 7);
-      bool FCtrl_ADRACKReq = bitRead(FCtrl, 6);  //Device is requesting a response, so that it knows comms is still up.
+      bool FCtrl_ADRACKReq = bitRead(FCtrl, 6);  // Device is requesting a response, so that it knows comms is still up.
                                                  // else device will eventually enter backoff mode and we loose comms
                                                  // ref: https://lora-alliance.org/wp-content/uploads/2021/11/LoRaWAN-Link-Layer-Specification-v1.0.4.pdf
                                                  //      page 19  
                                                  // In testing with a Dragino LHT52 device, FCtrl_ADRACKReq was set after 64 (0x40) uplinks (= 21.3 hrs)
       bool FCtrl_ACK       = bitRead(FCtrl, 5);
-      bool Fctrl_ClassB    = bitRead(FCtrl, 4);
+      bool Fctrl_ClassB    = bitRead(FCtrl, 4);                        // Ready to receive scheduled downlink pings (Class B only)
 
 /*
       if ((0 == FOptsLen) && (0 == FOpts[0])) {                          // MAC response
@@ -794,7 +837,7 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
 #endif  // USE_LORA_DEBUG
 
       if (Lora->settings.end_node[node]->FCntUp <= FCnt) {              // Skip re-transmissions
-        Lora->rx = false;                                              // Skip RX2 as this is a response from RX1
+        Lora->rx = false;                                               // Skip RX2 as this is a response from RX1
         Lora->settings.end_node[node]->FCntUp++;
         if (Lora->settings.end_node[node]->FCntUp < FCnt) {             // Report missed frames
           uint32_t FCnt_missed = FCnt - Lora->settings.end_node[node]->FCntUp;
@@ -861,6 +904,15 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
 //                uint32_t frac_time = RtcMillis();
                 mac_data[mac_data_idx++] = 0x00;                       // Fractional-second 1/256 sec
               }
+            }
+            else if (TAS_LORAWAN_CID_PING_SLOT_INFO_REQ == FOpts[i]) {
+              i++;                                                    // PingSlotParam
+            }
+            else if (TAS_LORAWAN_CID_PING_SLOT_CHANNEL_ANS == FOpts[i]) {
+              i++;                                                    // Status
+            }
+            else if (TAS_LORAWAN_CID_BEACON_FREQ_ANS == FOpts[i]) {
+              i++;                                                    // Status
             }
             else { 
               // RFU
@@ -936,19 +988,25 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
 \*********************************************************************************************/
 
 #define D_CMND_LORAWANBRIDGE  "Bridge"
+#define D_CMND_LORAWANNODE    "Node"
 #define D_CMND_LORAWANAPPKEY  "AppKey"
 #define D_CMND_LORAWANNAME    "Name"
 #define D_CMND_LORAWANDECODER "Decoder"
+#define D_CMND_LORAWANSEND    "Send"
 
-const char kLoraWanCommands[] PROGMEM = "LoRaWan|"  // Prefix
-  D_CMND_LORAWANBRIDGE "|" D_CMND_LORAWANAPPKEY "|" D_CMND_LORAWANNAME "|" D_CMND_LORAWANDECODER;
+const char kLoraWanCommands[] PROGMEM = "LoRaWan"  // Prefix
+  "|" D_CMND_LORAWANBRIDGE "|" D_CMND_LORAWANNODE "|" D_CMND_LORAWANAPPKEY
+  "|" D_CMND_LORAWANNAME "|" D_CMND_LORAWANDECODER "|" D_CMND_LORAWANSEND;
 
 void (* const LoraWanCommand[])(void) PROGMEM = {
-  &CmndLoraWanBridge, &CmndLoraWanAppKey, &CmndLoraWanName, &CmndLoraWanDecoder };
+  &CmndLoraWanBridge, &CmndLoraWanNode, &CmndLoraWanAppKey,
+  &CmndLoraWanName, &CmndLoraWanDecoder, &CmndLoraWanSend };
 
 void CmndLoraWanBridge(void) {
-  // LoraWanBridge   - Show LoraOption1
-  // LoraWanBridge 1 - Set LoraOption1 1 = Enable LoraWanBridge
+  // Enable LoraWan bridge
+  //  LoraWanBridge <0|1>
+  //  LoraWanBridge            - Show LoraOption1
+  //  LoraWanBridge 1          - Set LoraOption1 1 = Enable LoraWanBridge
   uint32_t pindex = 0;
   if (XdrvMailbox.payload >= 0) {
     bitWrite(Lora->settings.flags, pindex, XdrvMailbox.payload);
@@ -961,13 +1019,33 @@ void CmndLoraWanBridge(void) {
   ResponseCmndChar(GetStateText(bitRead(Lora->settings.flags, pindex)));
 }
 
+void CmndLoraWanNode(void) {
+  // Disable joined node (for testing purposes on other gateway)
+  //  LoraWanNode<1..16> <0|1>
+  //  LoraWanNode              - Show current state
+  //  LoraWanNode2 1           - Enable node 2
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Lora->nodes)) {
+    uint32_t node = XdrvMailbox.index -1;
+    if (XdrvMailbox.data_len) {
+      if (1 == XdrvMailbox.payload) {
+        bitClear(Lora->settings.end_node[node]->flags, TAS_LORAWAN_FLAG_DISABLED);  // Enable (clears bit)
+      } else {
+        bitSet(Lora->settings.end_node[node]->flags, TAS_LORAWAN_FLAG_DISABLED);    // Disable (sets bit)
+      }
+    }
+    ResponseCmndIdxChar(bitRead(Lora->settings.end_node[node]->flags, TAS_LORAWAN_FLAG_DISABLED)?"Disabled":"Enabled");
+  }
+}
+
 void CmndLoraWanAppKey(void) {
-  // LoraWanAppKey
-  // LoraWanAppKey2 0123456789abcdef0123456789abcdef
+  // Configure node 32 digit AppKey
+  //  LoraWanAppKey<1..16> <appkey>
+  //  LoraWanAppKey            - Show current appkey
+  //  LoraWanAppKey2 0123456789abcdef0123456789abcdef
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Lora->nodes +1)) {
     if (Lora->nodes < XdrvMailbox.index) {
       if (!LoraWanAddNode()) {
-        return;            // Memory allocation failed or TAS_LORAWAN_ENDNODES reached
+        return;                // Memory allocation failed or TAS_LORAWAN_ENDNODES reached
       }
     }
     uint32_t node = XdrvMailbox.index -1;
@@ -987,9 +1065,11 @@ void CmndLoraWanAppKey(void) {
 }
 
 void CmndLoraWanName(void) {
-  // LoraWanName
-  // LoraWanName 1        - Set to short DevEUI (or 0x0000 if not yet joined)
-  // LoraWanName2 LDS02a
+  // Configure node name
+  //  LoraName<1..16> <1|name>
+  //  LoraWanName              - Show current name
+  //  LoraWanName 1            - Set to short DevEUI (or 0x0000 if not yet joined)
+  //  LoraWanName2 LDS02a
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Lora->nodes)) {
     uint32_t node = XdrvMailbox.index -1;
     if (XdrvMailbox.data_len) {
@@ -1006,15 +1086,45 @@ void CmndLoraWanName(void) {
 }
 
 void CmndLoraWanDecoder(void) {
-  // LoraWanDecoder
-  // LoraWanDecoder DraginoLDS02  - Set Dragino LDS02 message decoder for node 1
-  // LoraWanDecoder2 MerryIoTDW10 - Set MerryIoT DW10 message decoder for node 2
+  // Configure node berry decoder name
+  //  LoraWanDecoder<1..16> <decoder name>
+  //  LoraWanDecoder LDS02     - Set Dragino LDS02 message decoder for node 1
+  //  LoraWanDecoder2 DW10     - Set MerryIoT DW10 message decoder for node 2
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Lora->nodes)) {
     uint32_t node = XdrvMailbox.index -1;
     if (XdrvMailbox.data_len) {
       Lora->settings.end_node[node]->decoder = XdrvMailbox.data;
     }
     ResponseCmndIdxChar(Lora->settings.end_node[node]->decoder.c_str());
+  }
+}
+
+void CmndLoraWanSend(void) {
+  // Send downlink command to node. Works in Class C (which uses more power)
+  //  LoraWanSend<1..16> <hexdata>
+  //  LoraWanSend3 260014      - Set dragino RJTDC time interval to 20 minutes
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Lora->nodes)) {
+    uint32_t node = XdrvMailbox.index -1;
+    if (XdrvMailbox.data_len) {
+      char *codes = RemoveSpace(XdrvMailbox.data);
+      int size = strlen(XdrvMailbox.data);
+      if (size > 30) { return; }  // M is region specific and depends on DataRate
+      char *p;
+      char stemp[3];
+      uint8_t code;
+      uint8_t data[16];
+      uint32_t data_idx = 0;
+      while (size > 1) {
+        strlcpy(stemp, codes, sizeof(stemp));
+        code = strtol(stemp, &p, 16);
+        data[data_idx++] = code;  // "260014" as hex values
+        size -= 2;
+        codes += 2;
+      }
+      Lora->receive_time = millis();
+      LoraWanSendAppData(node, data, data_idx);
+      ResponseCmndDone();
+    }
   }
 }
 

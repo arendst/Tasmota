@@ -179,7 +179,8 @@ enum TasLoraFlags {
 };
 
 enum TasLoraWanFlags { 
-  TAS_LORAWAN_FLAG_LINK_ADR_REQ
+  TAS_LORAWAN_FLAG_LINK_ADR_REQ,
+  TAS_LORAWAN_FLAG_DISABLED
 };
 
 enum TasLoraWanMTypes { 
@@ -220,7 +221,13 @@ enum TasLoraWanCIDNode {
   TAS_LORAWAN_CID_DL_CHANNEL_ANS,
   TAS_LORAWAN_CID_RFU1_ANS,
   TAS_LORAWAN_CID_RFU2_ANS,
-  TAS_LORAWAN_CID_DEVICE_TIME_REQ
+  TAS_LORAWAN_CID_DEVICE_TIME_REQ,
+  TAS_LORAWAN_CID_RFU1,
+  TAS_LORAWAN_CID_RFU2,
+  TAS_LORAWAN_CID_PING_SLOT_INFO_REQ,            // Class B
+  TAS_LORAWAN_CID_PING_SLOT_CHANNEL_ANS,         // Class B
+  TAS_LORAWAN_CID_BEACON_TIMING_REQ,             // Class B - Deprecated
+  TAS_LORAWAN_CID_BEACON_FREQ_ANS                // Class B
 };
 
 enum LoRaWanRadioMode_t {
@@ -315,6 +322,7 @@ typedef struct Lora_t {
   uint8_t send_buffer_step;
   uint8_t send_buffer_len;
   uint8_t nodes;
+  uint8_t delay_settings_save;
   bool rx;
   bool send_request;
   bool profile_changed;
