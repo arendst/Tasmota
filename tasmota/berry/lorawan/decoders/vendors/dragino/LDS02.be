@@ -21,7 +21,6 @@ class LwDecoLDS02
     var door_open
     ## SENSOR DATA ##
     if 10 == FPort && Bytes.size() == 10
-      last_seen = tasmota.rtc('local')
       door_open = ( Bytes[0] & 0x80 ) ? 1 : 0
       data.insert("DoorOpen", ( door_open ) ? true : false)
       data.insert("BattV", ( Bytes[1] | (Bytes[0] << 8) & 0x3FFF ) / 1000.0)
@@ -36,6 +35,7 @@ class LwDecoLDS02
     end #Fport
 
     if valid_values
+      last_seen = tasmota.rtc('local')
       if global.lds02Nodes.find(Node)
         global.lds02Nodes.remove(Node)
       end

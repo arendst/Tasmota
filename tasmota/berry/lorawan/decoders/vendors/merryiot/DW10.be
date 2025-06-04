@@ -24,7 +24,6 @@ class LwDecoDW10
     var humidity
     ## SENSOR DATA ##
     if 120 == FPort && Bytes.size() == 9
-      last_seen = tasmota.rtc('local')
       door_open = ( Bytes[0] & 0x01 ) ? 1 : 0
       data.insert("DoorOpen", ( door_open ) ? true : false )
       button_pressed = ( Bytes[0] & 0x02 ) ? 1 : 0
@@ -47,6 +46,7 @@ class LwDecoDW10
     end #Fport
 
     if valid_values
+      last_seen = tasmota.rtc('local')
       if global.dw10Nodes.find(Node)
         global.dw10Nodes.remove(Node)
       end

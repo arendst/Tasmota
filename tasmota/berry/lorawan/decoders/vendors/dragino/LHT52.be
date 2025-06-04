@@ -32,8 +32,6 @@ class LwDecoLHT52
     end
     ## SENSOR DATA ##
     if 2 == FPort && Bytes.size() == 11
-      last_seen = tasmota.rtc('local')
-
       var TempC
          TempC = Bytes[0] << 8 | Bytes[1]
       if Bytes[0] > 0x7F
@@ -78,6 +76,7 @@ class LwDecoLHT52
     end #Fport
 
     if valid_values
+      last_seen = tasmota.rtc('local')
       if global.lht52Nodes.find(Node)
         global.lht52Nodes.remove(Node)
       end
