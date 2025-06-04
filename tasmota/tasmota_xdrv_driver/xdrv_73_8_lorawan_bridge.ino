@@ -549,7 +549,8 @@ void LoraWanSendAppData(uint32_t node, uint8_t* FRMPayload, uint32_t len) {
 
   uint32_t data_size = 13 + len;
   uint8_t data[data_size];
-  data[0] = TAS_LORAWAN_MTYPE_UNCONFIRMED_DATA_DOWNLINK << 5;
+//  data[0] = TAS_LORAWAN_MTYPE_UNCONFIRMED_DATA_DOWNLINK << 5;
+  data[0] = TAS_LORAWAN_MTYPE_CONFIRMED_DATA_DOWNLINK << 5;  // Dragino suggestion (ACKed in next regular message)
   data[1] = DevAddr;
   data[2] = DevAddr >> 8;
   data[3] = DevAddr >> 16;
@@ -1033,7 +1034,11 @@ void CmndLoraWanNode(void) {
         bitSet(Lora->settings.end_node[node]->flags, TAS_LORAWAN_FLAG_DISABLED);    // Disable (sets bit)
       }
     }
-    ResponseCmndIdxChar(bitRead(Lora->settings.end_node[node]->flags, TAS_LORAWAN_FLAG_DISABLED)?"Disabled":"Enabled");
+    ResponseCmnd();
+    for (uint32_t i = 0; i < Lora->nodes; i++) {
+      ResponseAppend_P(PSTR("%s%s%d"), (i) ? "," : "\"", (bitRead(Lora->settings.end_node[i]->flags, TAS_LORAWAN_FLAG_DISABLED)) ? "!" : "", i +1);
+    }
+    ResponseAppend_P(PSTR("\"}"));
   }
 }
 
