@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Berry `webserver.remove_route` to revert `webserver.on` (#23452)
 - Berry `compile` and `tasmota.compile` option to compile in local context (#23457)
 - Support for AP33772S USB PD Sink Controller as used in CentyLab RotoPD
+- Berry mqtt publish rule processing
 
 ### Breaking Changed
 
