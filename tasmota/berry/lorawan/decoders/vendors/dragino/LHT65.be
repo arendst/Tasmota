@@ -18,8 +18,8 @@ class LwDecoLHT65
     var NoConnect = (Bytes[6] & 0x80) >> 7
 
     var valid_values = false
-    var last_seen
-    var battery_last_seen
+    var last_seen = 0x7FFFFFFF
+    var battery_last_seen = 0x7FFFFFFF
     var battery = 1000
     var rssi = RSSI
     var temp_int = 1000
@@ -41,6 +41,7 @@ class LwDecoLHT65
       var TempC 
 
       if Ext == 9 #Sensor E3, Temperature Sensor, Datalog Mod
+        last_seen = tasmota.rtc('local')
         TempC = ((Bytes[0] << 8) | Bytes[1])
         if 0x7FFF == TempC
           data.insert("Ext_SensorConnected", false)
@@ -63,6 +64,7 @@ class LwDecoLHT65
       end
       
       if Ext != 0x0F 
+        last_seen = tasmota.rtc('local')
         TempC = ((Bytes[2] << 8) | Bytes[3])
         if Bytes[2]>0x7F
           TempC -= 0x10000
@@ -81,6 +83,7 @@ class LwDecoLHT65
       if 0 == Ext
         data.insert("Ext_sensor", 'No external sensor')
       elif 1==Ext
+        last_seen = tasmota.rtc('local')
         data.insert("Ext_sensor",'Temperature Sensor')
         TempC = ((Bytes[7] << 8) | Bytes[8])
         if 0x7FFF == TempC
@@ -95,6 +98,7 @@ class LwDecoLHT65
           valid_values = true
         end		
       elif 4 == Ext
+        last_seen = tasmota.rtc('local')
         data.insert("Work_mode", 'Interrupt Sensor send')
         door_open = ( Bytes[7] ) ? 0 : 1    # DS sensor
         data.insert("Exti_pin_level", Bytes[7] ? 'High' : 'Low')
@@ -107,7 +111,7 @@ class LwDecoLHT65
         data.insert("Work_mode", 'ADC Sensor')
         data.insert("ADC_V", ((Bytes[7] << 8) | Bytes[8]) / 1000.0)
       elif 7 == Ext
-        data.insert("Work_mode ", 'Interrupt Sensor count')
+        data.insert("Work_mode", 'Interrupt Sensor count')
         data.insert("Exit_count", (Bytes[7] << 8) | Bytes[8])
       elif 8 == Ext
         data.insert("Work_mode", 'Interrupt Sensor count')
@@ -137,7 +141,6 @@ class LwDecoLHT65
     end #Fport 
 
     if valid_values
-      last_seen = tasmota.rtc('local')
       if global.lht65Nodes.find(Node)
         global.lht65Nodes.remove(Node)
       end

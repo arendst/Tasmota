@@ -14,8 +14,8 @@ class LwDecoDW10
     data.insert("Node", Node)
 
     var valid_values = false
-    var last_seen
-    var battery_last_seen
+    var last_seen = 0x7FFFFFFF
+    var battery_last_seen = 0x7FFFFFFF
     var battery
     var rssi = RSSI
     var door_open
@@ -24,6 +24,7 @@ class LwDecoDW10
     var humidity
     ## SENSOR DATA ##
     if 120 == FPort && Bytes.size() == 9
+      last_seen = tasmota.rtc('local')
       door_open = ( Bytes[0] & 0x01 ) ? 1 : 0
       data.insert("DoorOpen", ( door_open ) ? true : false )
       button_pressed = ( Bytes[0] & 0x02 ) ? 1 : 0
@@ -40,13 +41,11 @@ class LwDecoDW10
       data.insert("DoorOpenLastDuration_mins", Bytes[4] | (Bytes[5] << 8))
       data.insert("DoorOpenEvents", Bytes[6] | (Bytes[7] << 8) | (Bytes[8] << 16 ))
       valid_values = true
-   
     else
       # Ignore other Fports
     end #Fport
 
     if valid_values
-      last_seen = tasmota.rtc('local')
       if global.dw10Nodes.find(Node)
         global.dw10Nodes.remove(Node)
       end
