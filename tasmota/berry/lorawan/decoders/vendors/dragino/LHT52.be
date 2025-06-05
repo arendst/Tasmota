@@ -67,9 +67,9 @@ class LwDecoLHT52
       data.insert("Firmware_Version", f'v{Bytes[1]:%u}.{Bytes[2]>>4:%u}.{Bytes[2]&0xF:%u}')
       data.insert("Freq_Band",LwRegions[Bytes[3]-1])
       data.insert("Sub_Band",Bytes[4])
-      data.insert("BattV",((Bytes[5] << 8) | Bytes[6]) / 1000)
+      data.insert("BattV",((Bytes[5] << 8) | Bytes[6]) / 1000.0)
       battery_last_seen = tasmota.rtc('local')
-      battery = ((Bytes[5] << 8) | Bytes[6]) / 1000
+      battery = ((Bytes[5] << 8) | Bytes[6]) / 1000.0
       valid_values = true
     else
     # Ignore other Fports
