@@ -17,7 +17,7 @@ extern "C" {
 #include "../misc/lv_timer.h"
 #include "../misc/lv_event.h"
 #include "../misc/lv_color.h"
-#include "../draw/lv_draw.h"
+#include "../misc/lv_area.h"
 
 /*********************
  *      DEFINES
@@ -54,7 +54,7 @@ typedef enum {
 
     /**
      * Always redraw the whole screen even if only one pixel has been changed.
-     * With 2 buffers in flush_cb only and address change is required.
+     * With 2 buffers in flush_cb only an address change is required.
      */
     LV_DISPLAY_RENDER_MODE_FULL,
 } lv_display_render_mode_t;
@@ -159,6 +159,13 @@ void lv_display_set_offset(lv_display_t * disp, int32_t x, int32_t y);
 void lv_display_set_rotation(lv_display_t * disp, lv_display_rotation_t rotation);
 
 /**
+ * Use matrix rotation for the display. This function is depended on `LV_DRAW_TRANSFORM_USE_MATRIX`
+ * @param disp      pointer to a display (NULL to use the default display)
+ * @param enable    true: enable matrix rotation, false: disable
+ */
+void lv_display_set_matrix_rotation(lv_display_t * disp, bool enable);
+
+/**
  * Set the DPI (dot per inch) of the display.
  * dpi = sqrt(hor_res^2 + ver_res^2) / diagonal"
  * @param disp      pointer to a display
@@ -179,6 +186,20 @@ int32_t lv_display_get_horizontal_resolution(const lv_display_t * disp);
  * @return          the vertical resolution of the display
  */
 int32_t lv_display_get_vertical_resolution(const lv_display_t * disp);
+
+/**
+ * Get the original horizontal resolution of a display without considering rotation
+ * @param disp      pointer to a display (NULL to use the default display)
+ * @return          the horizontal resolution of the display.
+ */
+int32_t lv_display_get_original_horizontal_resolution(const lv_display_t * disp);
+
+/**
+ * Get the original vertical resolution of a display without considering rotation
+ * @param disp      pointer to a display (NULL to use the default display)
+ * @return          the vertical resolution of the display
+ */
+int32_t lv_display_get_original_vertical_resolution(const lv_display_t * disp);
 
 /**
  * Get the physical horizontal resolution of a display
@@ -216,6 +237,13 @@ int32_t lv_display_get_offset_y(const lv_display_t * disp);
 lv_display_rotation_t lv_display_get_rotation(lv_display_t * disp);
 
 /**
+ * Get if matrix rotation is enabled for a display or not
+ * @param disp      pointer to a display (NULL to use the default display)
+ * @return          true: matrix rotation is enabled; false: disabled
+ */
+bool lv_display_get_matrix_rotation(lv_display_t * disp);
+
+/**
  * Get the DPI of the display
  * @param disp      pointer to a display (NULL to use the default display)
  * @return          dpi of the display
@@ -240,6 +268,21 @@ void lv_display_set_buffers(lv_display_t * disp, void * buf1, void * buf2, uint3
                             lv_display_render_mode_t render_mode);
 
 /**
+ * Set the frame buffers for a display, similarly to `lv_display_set_buffers`, but allow
+ * for a custom stride as required by a display controller.
+ * This allows the frame buffers to have a stride alignment different from the rest of
+ * the buffers`
+ * @param disp              pointer to a display
+ * @param buf1              first buffer
+ * @param buf2              second buffer (can be `NULL`)
+ * @param buf_size          buffer size in byte
+ * @param stride            buffer stride in bytes
+ * @param render_mode       LV_DISPLAY_RENDER_MODE_PARTIAL/DIRECT/FULL
+ */
+void lv_display_set_buffers_with_stride(lv_display_t * disp, void * buf1, void * buf2, uint32_t buf_size,
+                                        uint32_t stride, lv_display_render_mode_t render_mode);
+
+/**
  * Set the buffers for a display, accept a draw buffer pointer.
  * Normally use `lv_display_set_buffers` is enough for most cases.
  * Use this function when an existing lv_draw_buf_t is available.
@@ -248,6 +291,13 @@ void lv_display_set_buffers(lv_display_t * disp, void * buf1, void * buf2, uint3
  * @param buf2              second buffer (can be `NULL`)
  */
 void lv_display_set_draw_buffers(lv_display_t * disp, lv_draw_buf_t * buf1, lv_draw_buf_t * buf2);
+
+/**
+ * Set the third draw buffer for a display.
+ * @param disp              pointer to a display
+ * @param buf3              third buffer
+ */
+void lv_display_set_3rd_draw_buffer(lv_display_t * disp, lv_draw_buf_t * buf3);
 
 /**
  * Set display render mode
@@ -294,6 +344,20 @@ void lv_display_set_color_format(lv_display_t * disp, lv_color_format_t color_fo
 lv_color_format_t lv_display_get_color_format(lv_display_t * disp);
 
 /**
+ * Set the number of tiles for parallel rendering.
+ * @param disp              pointer to a display
+ * @param tile_cnt          number of tiles (1 =< tile_cnt < 256)
+ */
+void lv_display_set_tile_cnt(lv_display_t * disp, uint32_t tile_cnt);
+
+/**
+ * Get the number of tiles used for parallel rendering
+ * @param disp              pointer to a display
+ * @return                  number of tiles
+ */
+uint32_t lv_display_get_tile_cnt(lv_display_t * disp);
+
+/**
  * Enable anti-aliasing for the render engine
  * @param disp      pointer to a display
  * @param en        true/false
@@ -306,8 +370,6 @@ void lv_display_set_antialiasing(lv_display_t * disp, bool en);
  * @return          true/false
  */
 bool lv_display_get_antialiasing(lv_display_t * disp);
-
-//! @cond Doxygen_Suppress
 
 /**
  * Call from the display driver when the flushing is finished
@@ -323,8 +385,6 @@ LV_ATTRIBUTE_FLUSH_READY void lv_display_flush_ready(lv_display_t * disp);
  *                  false: there are other areas too which will be refreshed soon
  */
 LV_ATTRIBUTE_FLUSH_READY bool lv_display_flush_is_last(lv_display_t * disp);
-
-//! @endcond
 
 bool lv_display_is_double_buffered(lv_display_t * disp);
 
@@ -374,7 +434,7 @@ lv_obj_t * lv_display_get_layer_bottom(lv_display_t * disp);
  * Load a screen on the default display
  * @param scr       pointer to a screen
  */
-void lv_screen_load(struct lv_obj_t * scr);
+void lv_screen_load(struct _lv_obj_t * scr);
 
 /**
  * Switch screen with animation
@@ -466,6 +526,13 @@ uint32_t lv_display_remove_event_cb_with_user_data(lv_display_t * disp, lv_event
 lv_result_t lv_display_send_event(lv_display_t * disp, lv_event_code_t code, void * param);
 
 /**
+ * Get the area to be invalidated. Can be used in `LV_EVENT_INVALIDATE_AREA`
+ * @param e     pointer to an event
+ * @return      the area to invalidated (can be modified as required)
+ */
+lv_area_t * lv_event_get_invalidated_area(lv_event_t * e);
+
+/**
  * Set the theme of a display. If there are no user created widgets yet the screens' theme will be updated
  * @param disp      pointer to a display
  * @param th        pointer to a theme
@@ -520,6 +587,33 @@ lv_timer_t * lv_display_get_refr_timer(lv_display_t * disp);
  */
 void lv_display_delete_refr_timer(lv_display_t * disp);
 
+/**
+ * Register vsync event of a display. `LV_EVENT_VSYNC` event will be sent periodically.
+ * Please don't use it in display event listeners, as it may cause memory leaks and illegal access issues.
+ *
+ * @param disp      pointer to a display
+ * @param event_cb      an event callback
+ * @param user_data     optional user_data
+ */
+bool lv_display_register_vsync_event(lv_display_t * disp, lv_event_cb_t event_cb, void * user_data);
+
+/**
+ * Unregister vsync event of a display. `LV_EVENT_VSYNC` event won't be sent periodically.
+ * Please don't use it in display event listeners, as it may cause memory leaks and illegal access issues.
+ * @param disp      pointer to a display
+ * @param event_cb      an event callback
+ * @param user_data     optional user_data
+ */
+bool lv_display_unregister_vsync_event(lv_display_t * disp, lv_event_cb_t event_cb, void * user_data);
+
+/**
+ * Send an vsync event to a display
+ * @param disp          pointer to a display
+ * @param param         optional param
+ * @return              LV_RESULT_OK: disp wasn't deleted in the event.
+ */
+lv_result_t lv_display_send_vsync_event(lv_display_t * disp, void * param);
+
 void lv_display_set_user_data(lv_display_t * disp, void * user_data);
 void lv_display_set_driver_data(lv_display_t * disp, void * driver_data);
 void * lv_display_get_user_data(lv_display_t * disp);
@@ -532,6 +626,24 @@ lv_draw_buf_t * lv_display_get_buf_active(lv_display_t * disp);
  * @param area      pointer to an area to rotate
  */
 void lv_display_rotate_area(lv_display_t * disp, lv_area_t * area);
+
+/**
+ * Get the size of the draw buffers
+ * @param disp      pointer to a display
+ * @return          the size of the draw buffer in bytes for valid display, 0 otherwise
+ */
+uint32_t lv_display_get_draw_buf_size(lv_display_t * disp);
+
+/**
+ * Get the size of the invalidated draw buffer. Can be used in the flush callback
+ * to get the number of bytes used in the current render buffer.
+ * @param disp      pointer to a display
+ * @param width     the width of the invalidated area
+ * @param height    the height of the invalidated area
+ * @return          the size of the invalidated draw buffer in bytes, not accounting for
+ *                  any preceding palette information for a valid display, 0 otherwise
+ */
+uint32_t lv_display_get_invalidated_draw_buf_size(lv_display_t * disp, uint32_t width, uint32_t height);
 
 /**********************
  *      MACROS
@@ -557,32 +669,37 @@ void lv_display_rotate_area(lv_display_t * disp, lv_area_t * area);
 #endif
 
 /**
+ * See `lv_dpx()` and `lv_display_dpx()`.
  * Same as Android's DIP. (Different name is chosen to avoid mistype between LV_DPI and LV_DIP)
- * 1 dip is 1 px on a 160 DPI screen
- * 1 dip is 2 px on a 320 DPI screen
- * https://stackoverflow.com/questions/2025282/what-is-the-difference-between-px-dip-dp-and-sp
+ *
+ * - 40 dip is 40 px on a 160 DPI screen (distance = 1/4 inch).
+ * - 40 dip is 80 px on a 320 DPI screen (distance still = 1/4 inch).
+ *
+ * @sa https://stackoverflow.com/questions/2025282/what-is-the-difference-between-px-dip-dp-and-sp
  */
 #define LV_DPX_CALC(dpi, n)   ((n) == 0 ? 0 :LV_MAX((( (dpi) * (n) + 80) / 160), 1)) /*+80 for rounding*/
 #define LV_DPX(n)   LV_DPX_CALC(lv_display_get_dpi(NULL), n)
 
 /**
- * Scale the given number of pixels (a distance or size) relative to a 160 DPI display
- * considering the DPI of the default display.
- * It ensures that e.g. `lv_dpx(100)` will have the same physical size regardless to the
- * DPI of the display.
- * @param n     the number of pixels to scale
- * @return      `n x current_dpi/160`
+ * For default display, computes the number of pixels (a distance or size) as if the
+ * display had 160 DPI.  This allows you to specify 1/160-th fractions of an inch to
+ * get real distance on the display that will be consistent regardless of its current
+ * DPI.  It ensures `lv_dpx(100)`, for example, will have the same physical size
+ * regardless to the DPI of the display.
+ * @param n     number of 1/160-th-inch units to compute with
+ * @return      number of pixels to use to make that distance
  */
 int32_t lv_dpx(int32_t n);
 
 /**
- * Scale the given number of pixels (a distance or size) relative to a 160 DPI display
- * considering the DPI of the given display.
- * It ensures that e.g. `lv_dpx(100)` will have the same physical size regardless to the
- * DPI of the display.
- * @param disp   a display whose dpi should be considered
- * @param n     the number of pixels to scale
- * @return      `n x current_dpi/160`
+ * For specified display, computes the number of pixels (a distance or size) as if the
+ * display had 160 DPI.  This allows you to specify 1/160-th fractions of an inch to
+ * get real distance on the display that will be consistent regardless of its current
+ * DPI.  It ensures `lv_dpx(100)`, for example, will have the same physical size
+ * regardless to the DPI of the display.
+ * @param disp  pointer to display whose dpi should be considered
+ * @param n     number of 1/160-th-inch units to compute with
+ * @return      number of pixels to use to make that distance
  */
 int32_t lv_display_dpx(const lv_display_t * disp, int32_t n);
 

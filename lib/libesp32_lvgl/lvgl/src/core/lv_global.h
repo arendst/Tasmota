@@ -35,6 +35,10 @@ extern "C" {
 #include "../font/lv_font_fmt_txt_private.h"
 #endif
 
+#if LV_USE_OS != LV_OS_NONE && defined(__linux__)
+#include "../osal/lv_linux_private.h"
+#endif
+
 #include "../tick/lv_tick.h"
 #include "../layouts/lv_layout.h"
 
@@ -49,6 +53,7 @@ extern "C" {
 #include "../draw/sw/lv_draw_sw_mask_private.h"
 #include "../stdlib/builtin/lv_tlsf_private.h"
 #include "../others/sysmon/lv_sysmon_private.h"
+#include "../others/test/lv_test_private.h"
 #include "../layouts/lv_layout_private.h"
 
 /*********************
@@ -65,18 +70,18 @@ struct _snippet_stack;
 #endif
 
 #if LV_USE_FREETYPE
-struct lv_freetype_context_t;
+struct _lv_freetype_context_t;
 #endif
 
 #if LV_USE_PROFILER && LV_USE_PROFILER_BUILTIN
-struct lv_profiler_builtin_ctx_t;
+struct _lv_profiler_builtin_ctx_t;
 #endif
 
 #if LV_USE_NUTTX
-struct lv_nuttx_ctx_t;
+struct _lv_nuttx_ctx_t;
 #endif
 
-typedef struct lv_global_t {
+typedef struct _lv_global_t {
     bool inited;
     bool deinit_in_progress;     /**< Can be used e.g. in the LV_EVENT_DELETE to deinit the drivers too */
 
@@ -122,6 +127,7 @@ typedef struct lv_global_t {
     lv_cache_t * img_header_cache;
 
     lv_draw_global_info_t draw_info;
+    lv_ll_t draw_sw_blend_handler_ll;
 #if defined(LV_DRAW_SW_SHADOW_CACHE_SIZE) && LV_DRAW_SW_SHADOW_CACHE_SIZE > 0
     lv_draw_sw_shadow_cache_t sw_shadow_cache;
 #endif
@@ -169,6 +175,10 @@ typedef struct lv_global_t {
     lv_fs_drv_t win32_fs_drv;
 #endif
 
+#if LV_USE_FS_UEFI
+    lv_fs_drv_t uefi_fs_drv;
+#endif
+
 #if LV_USE_FS_LITTLEFS
     lv_fs_drv_t littlefs_fs_drv;
 #endif
@@ -182,7 +192,7 @@ typedef struct lv_global_t {
 #endif
 
 #if LV_USE_FREETYPE
-    struct lv_freetype_context_t * ft_context;
+    struct _lv_freetype_context_t * ft_context;
 #endif
 
 #if LV_USE_FONT_COMPRESSED
@@ -194,7 +204,7 @@ typedef struct lv_global_t {
 #endif
 
 #if LV_USE_PROFILER && LV_USE_PROFILER_BUILTIN
-    struct lv_profiler_builtin_ctx_t * profiler_context;
+    struct _lv_profiler_builtin_ctx_t * profiler_context;
 #endif
 
 #if LV_USE_FILE_EXPLORER != 0
@@ -214,12 +224,19 @@ typedef struct lv_global_t {
     uint32_t objid_count;
 #endif
 
+#if LV_USE_TEST
+    lv_test_state_t test_state;
+#endif
+
 #if LV_USE_NUTTX
-    struct lv_nuttx_ctx_t * nuttx_ctx;
+    struct _lv_nuttx_ctx_t * nuttx_ctx;
 #endif
 
 #if LV_USE_OS != LV_OS_NONE
     lv_mutex_t lv_general_mutex;
+#if defined(__linux__)
+    lv_proc_stat_t linux_last_proc_stat;
+#endif
 #endif
 
 #if LV_USE_OS == LV_OS_FREERTOS
@@ -229,6 +246,9 @@ typedef struct lv_global_t {
     bool freertos_idle_task_running;
 #endif
 
+#if LV_USE_EVDEV
+    lv_evdev_discovery_t * evdev_discovery;
+#endif
 
     void * user_data;
 } lv_global_t;

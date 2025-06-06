@@ -20,7 +20,7 @@
 #define profiler_ctx LV_GLOBAL_DEFAULT()->profiler_context
 
 #define LV_PROFILER_STR_MAX_LEN 128
-#define LV_PROFILER_TICK_PER_SEC_MAX 1000000
+#define LV_PROFILER_TICK_PER_SEC_MAX 1000000000 /* Maximum accuracy: 1 nanosecond */
 
 #if LV_USE_OS
     #define LV_PROFILER_MULTEX_INIT   lv_mutex_init(&profiler_ctx->mutex)
@@ -42,8 +42,8 @@
  * @brief Structure representing a built-in profiler item in LVGL
  */
 typedef struct {
+    uint64_t tick;     /**< The tick value of the profiler item */
     char tag;          /**< The tag of the profiler item */
-    uint32_t tick;     /**< The tick value of the profiler item */
     const char * func; /**< A pointer to the function associated with the profiler item */
 #if LV_USE_OS
     int tid;           /**< The thread ID of the profiler item */
@@ -54,7 +54,7 @@ typedef struct {
 /**
  * @brief Structure representing a context for the LVGL built-in profiler
  */
-typedef struct lv_profiler_builtin_ctx_t {
+typedef struct _lv_profiler_builtin_ctx_t {
     lv_profiler_builtin_item_t * item_arr; /**< Pointer to an array of profiler items */
     uint32_t item_num;                     /**< Number of profiler items in the array */
     uint32_t cur_index;                    /**< Index of the current profiler item */
@@ -69,6 +69,7 @@ typedef struct lv_profiler_builtin_ctx_t {
  *  STATIC PROTOTYPES
  **********************/
 
+static uint64_t default_tick_get_cb(void);
 static void default_flush_cb(const char * buf);
 static int default_tid_get_cb(void);
 static int default_cpu_get_cb(void);
@@ -92,7 +93,7 @@ void lv_profiler_builtin_config_init(lv_profiler_builtin_config_t * config)
     lv_memzero(config, sizeof(lv_profiler_builtin_config_t));
     config->buf_size = LV_PROFILER_BUILTIN_BUF_SIZE;
     config->tick_per_sec = 1000;
-    config->tick_get_cb = lv_tick_get;
+    config->tick_get_cb = default_tick_get_cb;
     config->flush_cb = default_flush_cb;
     config->tid_get_cb = default_tid_get_cb;
     config->cpu_get_cb = default_cpu_get_cb;
@@ -141,7 +142,7 @@ void lv_profiler_builtin_init(const lv_profiler_builtin_config_t * config)
         profiler_ctx->config.flush_cb("#\n");
     }
 
-    lv_profiler_builtin_set_enable(true);
+    lv_profiler_builtin_set_enable(LV_PROFILER_BUILTIN_DEFAULT_ENABLE);
 
     LV_LOG_INFO("init OK, item_num = %d", (int)num);
 }
@@ -208,6 +209,11 @@ void lv_profiler_builtin_write(const char * func, char tag)
  *   STATIC FUNCTIONS
  **********************/
 
+static uint64_t default_tick_get_cb(void)
+{
+    return lv_tick_get();
+}
+
 static void default_flush_cb(const char * buf)
 {
     LV_LOG("%s", buf);
@@ -235,23 +241,23 @@ static void flush_no_lock(void)
     uint32_t tick_per_sec = profiler_ctx->config.tick_per_sec;
     while(cur < profiler_ctx->cur_index) {
         lv_profiler_builtin_item_t * item = &profiler_ctx->item_arr[cur++];
-        uint32_t sec = item->tick / tick_per_sec;
-        uint32_t usec = (item->tick % tick_per_sec) * (LV_PROFILER_TICK_PER_SEC_MAX / tick_per_sec);
+        uint64_t sec = item->tick / tick_per_sec;
+        uint64_t nsec = (item->tick % tick_per_sec) * (LV_PROFILER_TICK_PER_SEC_MAX / tick_per_sec);
 
 #if LV_USE_OS
         lv_snprintf(buf, sizeof(buf),
-                    "   LVGL-%d [%d] %" LV_PRIu32 ".%06" LV_PRIu32 ": tracing_mark_write: %c|1|%s\n",
+                    "   LVGL-%d [%d] %" LV_PRIu64 ".%09" LV_PRIu64 ": tracing_mark_write: %c|1|%s\n",
                     item->tid,
                     item->cpu,
                     sec,
-                    usec,
+                    nsec,
                     item->tag,
                     item->func);
 #else
         lv_snprintf(buf, sizeof(buf),
-                    "   LVGL-1 [0] %" LV_PRIu32 ".%06" LV_PRIu32 ": tracing_mark_write: %c|1|%s\n",
+                    "   LVGL-1 [0] %" LV_PRIu64 ".%09" LV_PRIu64 ": tracing_mark_write: %c|1|%s\n",
                     sec,
-                    usec,
+                    nsec,
                     item->tag,
                     item->func);
 #endif

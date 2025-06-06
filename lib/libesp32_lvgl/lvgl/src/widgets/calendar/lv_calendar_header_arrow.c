@@ -40,7 +40,7 @@ const lv_obj_class_t lv_calendar_header_arrow_class = {
     .constructor_cb = my_constructor,
     .width_def = LV_PCT(100),
     .height_def = LV_DPI_DEF / 3,
-    .name = "calendar-header-arrow",
+    .name = "lv_calendar_header_arrow",
 };
 
 static const char * month_names_def[12] = LV_CALENDAR_DEFAULT_MONTH_NAMES;
@@ -53,7 +53,7 @@ static const char * month_names_def[12] = LV_CALENDAR_DEFAULT_MONTH_NAMES;
  *   GLOBAL FUNCTIONS
  **********************/
 
-lv_obj_t * lv_calendar_header_arrow_create(lv_obj_t * parent)
+lv_obj_t * lv_calendar_add_header_arrow(lv_obj_t * parent)
 {
     lv_obj_t * obj = lv_obj_class_create_obj(&lv_calendar_header_arrow_class, parent);
     lv_obj_class_init_obj(obj);
@@ -86,7 +86,7 @@ static void my_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj)
     lv_obj_remove_flag(mo_prev, LV_OBJ_FLAG_CLICK_FOCUSABLE);
 
     lv_obj_t * label = lv_label_create(obj);
-    lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_label_set_long_mode(label, LV_LABEL_LONG_MODE_SCROLL_CIRCULAR);
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_flex_grow(label, 1);
 
@@ -113,8 +113,8 @@ static void month_event_cb(lv_event_t * e)
     d = lv_calendar_get_showed_date(calendar);
     lv_calendar_date_t newd = *d;
 
-    LV_ASSERT_FORMAT_MSG(newd.year >= 0 && newd.month >= 1 && newd.month <= 12,
-                         "Invalid date: %d-%d", newd.year, newd.month);
+    LV_ASSERT_FORMAT_MSG(newd.month >= 1 && newd.month <= 12,
+                         "Invalid month: %d (expected 1-12)", newd.month);
 
     /*The last child is the right button*/
     if(lv_obj_get_child(header, 0) == btn) {
@@ -136,7 +136,7 @@ static void month_event_cb(lv_event_t * e)
         }
     }
 
-    lv_calendar_set_showed_date(calendar, newd.year, newd.month);
+    lv_calendar_set_month_shown(calendar, newd.year, newd.month);
 
     lv_obj_t * label = lv_obj_get_child(header, 1);
     lv_label_set_text_fmt(label, "%d %s", newd.year, month_names_def[newd.month - 1]);
@@ -148,8 +148,8 @@ static void value_changed_event_cb(lv_event_t * e)
     lv_obj_t * calendar = lv_obj_get_parent(header);
 
     const lv_calendar_date_t * date = lv_calendar_get_showed_date(calendar);
-    LV_ASSERT_FORMAT_MSG(date->year >= 0 && date->month >= 1 && date->month <= 12,
-                         "Invalid date: %d-%d", date->year, date->month);
+    LV_ASSERT_FORMAT_MSG(date->month >= 1 && date->month <= 12,
+                         "Invalid month: %d (expected 1-12)", date->month);
 
     lv_obj_t * label = lv_obj_get_child(header, 1);
     lv_label_set_text_fmt(label, "%d %s", date->year, month_names_def[date->month - 1]);

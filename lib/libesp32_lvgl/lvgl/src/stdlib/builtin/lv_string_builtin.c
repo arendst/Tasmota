@@ -55,7 +55,7 @@
 
 void * LV_ATTRIBUTE_FAST_MEM lv_memcpy(void * dst, const void * src, size_t len)
 {
-    uint8_t * d8 = dst;
+    volatile uint8_t * d8 = dst;
     const uint8_t * s8 = src;
 
     /*Simplify for small memories*/
@@ -191,6 +191,14 @@ size_t lv_strlen(const char * str)
     return i;
 }
 
+size_t lv_strnlen(const char * str, size_t max_len)
+{
+    size_t i = 0;
+    while(i < max_len && str[i]) i++;
+
+    return i;
+}
+
 size_t lv_strlcpy(char * dst, const char * src, size_t dst_size)
 {
     size_t i = 0;
@@ -232,6 +240,22 @@ int lv_strcmp(const char * s1, const char * s2)
     return *(const unsigned char *)s1 - *(const unsigned char *)s2;
 }
 
+int lv_strncmp(const char * s1, const char * s2, size_t len)
+{
+    if(len == 0) {
+        return 0;
+    }
+
+    while(len > 0 && *s1 && (*s1 == *s2)) {
+        if(--len == 0) {
+            return 0;
+        }
+        s1++;
+        s2++;
+    }
+    return *(const unsigned char *)s1 - *(const unsigned char *)s2;
+}
+
 char * lv_strdup(const char * src)
 {
     size_t len = lv_strlen(src) + 1;
@@ -239,6 +263,17 @@ char * lv_strdup(const char * src)
     if(dst == NULL) return NULL;
 
     lv_memcpy(dst, src, len); /*memcpy is faster than strncpy when length is known*/
+    return dst;
+}
+
+char * lv_strndup(const char * src, size_t max_len)
+{
+    size_t len = lv_strnlen(src, max_len);
+    char * dst = lv_malloc(len + 1);
+    if(dst == NULL) return NULL;
+
+    lv_memcpy(dst, src, len);
+    dst[len] = '\0';
     return dst;
 }
 
@@ -260,6 +295,21 @@ char * lv_strncat(char * dst, const char * src, size_t src_len)
     }
     *dst = '\0';
     return tmp;
+}
+
+char * lv_strchr(const char * s, int c)
+{
+    for(; ; s++) {
+        if(*s == c) {
+            return (char *)s;
+        }
+
+        if(*s == '\0') {
+            break;
+        }
+    }
+
+    return NULL;
 }
 
 /**********************

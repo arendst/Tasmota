@@ -36,12 +36,12 @@ typedef struct  {
     int32_t radius;             /**< The radius of the entry */
 } lv_draw_sw_mask_radius_circle_dsc_t;
 
-struct lv_draw_sw_mask_common_dsc_t {
+struct _lv_draw_sw_mask_common_dsc_t {
     lv_draw_sw_mask_xcb_t cb;
     lv_draw_sw_mask_type_t type;
 };
 
-struct lv_draw_sw_mask_line_param_t {
+struct _lv_draw_sw_mask_line_param_t {
     /** The first element must be the common descriptor */
     lv_draw_sw_mask_common_dsc_t dsc;
 
@@ -53,7 +53,7 @@ struct lv_draw_sw_mask_line_param_t {
         lv_point_t p2;
 
         /*Which side to keep?*/
-        lv_draw_sw_mask_line_side_t side : 2;
+        lv_draw_sw_mask_line_side_t side : 3;
     } cfg;
 
     /** A point of the line */
@@ -79,7 +79,7 @@ struct lv_draw_sw_mask_line_param_t {
     uint8_t inv: 1;
 };
 
-struct lv_draw_sw_mask_angle_param_t {
+struct _lv_draw_sw_mask_angle_param_t {
     /** The first element must be the common descriptor */
     lv_draw_sw_mask_common_dsc_t dsc;
 
@@ -94,7 +94,7 @@ struct lv_draw_sw_mask_angle_param_t {
     uint16_t delta_deg;
 };
 
-struct lv_draw_sw_mask_radius_param_t {
+struct _lv_draw_sw_mask_radius_param_t {
     /** The first element must be the common descriptor */
     lv_draw_sw_mask_common_dsc_t dsc;
 
@@ -108,7 +108,7 @@ struct lv_draw_sw_mask_radius_param_t {
     lv_draw_sw_mask_radius_circle_dsc_t * circle;
 };
 
-struct lv_draw_sw_mask_fade_param_t {
+struct _lv_draw_sw_mask_fade_param_t {
     /** The first element must be the common descriptor */
     lv_draw_sw_mask_common_dsc_t dsc;
 
@@ -122,7 +122,7 @@ struct lv_draw_sw_mask_fade_param_t {
 
 };
 
-struct lv_draw_sw_mask_map_param_t {
+struct _lv_draw_sw_mask_map_param_t {
     /** The first element must be the common descriptor */
     lv_draw_sw_mask_common_dsc_t dsc;
 

@@ -41,6 +41,13 @@ typedef enum {
     LV_SPAN_MODE_LAST       /**< Fence member */
 } lv_span_mode_t;
 
+/** Coords of a span */
+typedef struct _lv_span_coords_t {
+    lv_area_t heading;
+    lv_area_t middle;
+    lv_area_t trailing;
+} lv_span_coords_t;
+
 LV_ATTRIBUTE_EXTERN_DATA extern const lv_obj_class_t lv_spangroup_class;
 
 /**********************
@@ -62,7 +69,7 @@ lv_obj_t * lv_spangroup_create(lv_obj_t * parent);
  * @param obj       pointer to a spangroup object.
  * @return          pointer to the created span.
  */
-lv_span_t * lv_spangroup_new_span(lv_obj_t * obj);
+lv_span_t * lv_spangroup_add_span(lv_obj_t * obj);
 
 /**
  * Remove the span from the spangroup and free memory.
@@ -77,10 +84,39 @@ void lv_spangroup_delete_span(lv_obj_t * obj, lv_span_t * span);
 
 /**
  * Set a new text for a span. Memory will be allocated to store the text by the span.
+ * As the spangroup is not passed a redraw (invalidation) can't be triggered automatically.
+ * Therefore `lv_spangroup_refresh(spangroup)` needs to be called manually,
  * @param span  pointer to a span.
  * @param text  pointer to a text.
  */
 void lv_span_set_text(lv_span_t * span, const char * text);
+
+/**
+ * Set a static text. It will not be saved by the span so the 'text' variable
+ * has to be 'alive' while the span exist.
+ * As the spangroup is not passed a redraw (invalidation) can't be triggered automatically.
+ * Therefore `lv_spangroup_refresh(spangroup)` needs to be called manually,
+ *
+ * @param span  pointer to a span.
+ * @param text  pointer to a text.
+ */
+void lv_span_set_text_static(lv_span_t * span, const char * text);
+
+/**
+ * Set a new text for a span. Memory will be allocated to store the text by the span.
+ * @param obj   pointer to a spangroup widget.
+ * @param span  pointer to a span.
+ * @param text  pointer to a text.
+ */
+void lv_spangroup_set_span_text(lv_obj_t * obj, lv_span_t * span, const char * text);
+
+/**
+ * Set a new text for a span. Memory will be allocated to store the text by the span.
+ * @param obj   pointer to a spangroup widget.
+ * @param span  pointer to a span.
+ * @param text  pointer to a text.
+ */
+void lv_spangroup_set_span_text_static(lv_obj_t * obj, lv_span_t * span, const char * text);
 
 /**
  * Set a static text. It will not be saved by the span so the 'text' variable
@@ -91,6 +127,15 @@ void lv_span_set_text(lv_span_t * span, const char * text);
 void lv_span_set_text_static(lv_span_t * span, const char * text);
 
 /**
+ * Copy all style properties of style to the bbuilt-in static style of the span.
+ * @param obj       pointer_to a spangroup
+ * @param span      pointer to a span.
+ * @param style     pointer to a style to copy into the span's built-in style
+ */
+void lv_spangroup_set_span_style(lv_obj_t * obj, lv_span_t * span, const lv_style_t * style);
+
+/**
+ * DEPRECATED. Use the text_align style property instead
  * Set the align of the spangroup.
  * @param obj   pointer to a spangroup object.
  * @param align see lv_text_align_t for details.
@@ -112,6 +157,7 @@ void lv_spangroup_set_overflow(lv_obj_t * obj, lv_span_overflow_t overflow);
 void lv_spangroup_set_indent(lv_obj_t * obj, int32_t indent);
 
 /**
+ * DEPRECATED, set the width to LV_SIZE_CONTENT or fixed value to control expanding/wrapping"
  * Set the mode of the spangroup.
  * @param obj       pointer to a spangroup object.
  * @param mode      see lv_span_mode_t for details.
@@ -130,11 +176,19 @@ void lv_spangroup_set_max_lines(lv_obj_t * obj, int32_t lines);
  *====================*/
 
 /**
- * Get a pointer to the style of a span
+ * Get a pointer to the style of a span's built-in style.
+ * Any lv_style_set_... functions can be applied on the returned style.
  * @param span  pointer to the span
- * @return      pointer to the style. valid as long as the span is valid
-*/
+ * @return      pointer to the style. (valid as long as the span is valid)
+ */
 lv_style_t * lv_span_get_style(lv_span_t * span);
+
+/**
+ * Get a pointer to the text of a span
+ * @param span  pointer to the span
+ * @return      pointer to the text
+*/
+const char * lv_span_get_text(lv_span_t * span);
 
 /**
  * Get a spangroup child by its index.
@@ -214,6 +268,39 @@ uint32_t lv_spangroup_get_expand_width(lv_obj_t * obj, uint32_t max_width);
  */
 int32_t lv_spangroup_get_expand_height(lv_obj_t * obj, int32_t width);
 
+/**
+ * Get the span's coords in the spangroup.
+ * @note Before calling this function, please make sure that the layout of span group has been updated.
+ * Like calling lv_obj_update_layout() like function.
+ *
+ *     +--------+
+ *     |Heading +--->------------------+
+ *     |  Pos   |   |     Heading      |
+ *     +--------+---+------------------+
+ *     |                               |
+ *     |                               |
+ *     |                               |
+ *     |            Middle   +--------+|
+ *     |                     |Trailing||
+ *     |                   +-|  Pos   ||
+ *     |                   | +--------+|
+ *     +-------------------v-----------+
+ *     |     Trailing      |
+ *     +-------------------+
+ * @param obj       pointer to a spangroup object.
+ * @param span      pointer to a span.
+ * @return the span's coords in the spangroup.
+ */
+lv_span_coords_t lv_spangroup_get_span_coords(lv_obj_t * obj, const lv_span_t * span);
+
+/**
+ * Get the span object by point.
+ * @param obj       pointer to a spangroup object.
+ * @param point     pointer to point containing absolute coordinates
+ * @return          pointer to the span under the point or `NULL` if not found.
+ */
+lv_span_t * lv_spangroup_get_span_by_point(lv_obj_t * obj, const lv_point_t * point);
+
 /*=====================
  * Other functions
  *====================*/
@@ -222,7 +309,7 @@ int32_t lv_spangroup_get_expand_height(lv_obj_t * obj, int32_t width);
  * Update the mode of the spangroup.
  * @param obj   pointer to a spangroup object.
  */
-void lv_spangroup_refr_mode(lv_obj_t * obj);
+void lv_spangroup_refresh(lv_obj_t * obj);
 
 /**********************
  *      MACROS
