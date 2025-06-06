@@ -69,7 +69,7 @@ const lv_obj_class_t lv_bar_class = {
     .height_def = LV_DPI_DEF / 10,
     .instance_size = sizeof(lv_bar_t),
     .base_class = &lv_obj_class,
-    .name = "bar",
+    .name = "lv_bar",
 };
 
 /**********************
@@ -398,6 +398,12 @@ static void draw_indic(lv_event_t * e)
     bool hor_need_reversed = hor && base_dir == LV_BASE_DIR_RTL;
     bool reversed = bar->val_reversed ^ hor_need_reversed;
 
+    /* An area with width 0 is {x1 = 0 x2 = -1} so subtracting 1 from `anim_cur_value_x` causes...
+     *     anim_start_value_x = 0   anim_cur_value_x = 0   to be {x1 = 0 x2 = -1  } which is width 0
+     *     anim_start_value_x = 0   anim_cur_value_x = 300 to be {x1 = 0 x2 =  299} which is width 300
+     */
+    anim_cur_value_x -= 1;
+
     if(reversed) {
         /*Swap axes*/
         int32_t * tmp;
@@ -414,7 +420,7 @@ static void draw_indic(lv_event_t * e)
         *axis1 += anim_start_value_x;
     }
     else {
-        *axis1 = *axis2 - anim_cur_value_x + 1;
+        *axis1 = *axis2 - anim_cur_value_x;
         *axis2 -= anim_start_value_x;
     }
 
@@ -469,6 +475,7 @@ static void draw_indic(lv_event_t * e)
 
     lv_draw_rect_dsc_t draw_rect_dsc;
     lv_draw_rect_dsc_init(&draw_rect_dsc);
+    draw_rect_dsc.base.layer = layer;
     lv_obj_init_draw_rect_dsc(obj, LV_PART_INDICATOR, &draw_rect_dsc);
 
     int32_t bg_radius = lv_obj_get_style_radius(obj, LV_PART_MAIN);

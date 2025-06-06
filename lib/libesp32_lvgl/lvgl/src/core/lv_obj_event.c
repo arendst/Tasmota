@@ -86,7 +86,9 @@ lv_result_t lv_obj_event_base(const lv_obj_class_t * class_p, lv_event_t * e)
 
     /*Call the actual event callback*/
     e->user_data = NULL;
+    LV_PROFILER_EVENT_BEGIN_TAG(lv_event_code_get_name(e->code));
     base->event_cb(base, e);
+    LV_PROFILER_EVENT_END_TAG(lv_event_code_get_name(e->code));
 
     lv_result_t res = LV_RESULT_OK;
     /*Stop if the object is deleted*/
@@ -124,29 +126,30 @@ bool lv_obj_remove_event(lv_obj_t * obj, uint32_t index)
     return lv_event_remove(&obj->spec_attr->event_list, index);
 }
 
-bool lv_obj_remove_event_cb(lv_obj_t * obj, lv_event_cb_t event_cb)
-{
-    LV_ASSERT_NULL(obj);
-
-    uint32_t event_cnt = lv_obj_get_event_count(obj);
-    uint32_t i;
-    for(i = 0; i < event_cnt; i++) {
-        lv_event_dsc_t * dsc = lv_obj_get_event_dsc(obj, i);
-        if(dsc->cb == event_cb) {
-            lv_obj_remove_event(obj, i);
-            return true;
-        }
-    }
-
-    return false;
-}
-
 bool lv_obj_remove_event_dsc(lv_obj_t * obj, lv_event_dsc_t * dsc)
 {
     LV_ASSERT_NULL(obj);
     LV_ASSERT_NULL(dsc);
     if(obj->spec_attr == NULL) return false;
     return lv_event_remove_dsc(&obj->spec_attr->event_list, dsc);
+}
+
+uint32_t lv_obj_remove_event_cb(lv_obj_t * obj, lv_event_cb_t event_cb)
+{
+    LV_ASSERT_NULL(obj);
+
+    uint32_t event_cnt = lv_obj_get_event_count(obj);
+    uint32_t removed_count = 0;
+    uint32_t i;
+    for(i = 0; i < event_cnt; i++) {
+        lv_event_dsc_t * dsc = lv_obj_get_event_dsc(obj, i);
+        if(dsc && dsc->cb == event_cb) {
+            lv_obj_remove_event(obj, i);
+            removed_count++;
+        }
+    }
+
+    return removed_count;
 }
 
 uint32_t lv_obj_remove_event_cb_with_user_data(lv_obj_t * obj, lv_event_cb_t event_cb, void * user_data)
@@ -157,9 +160,11 @@ uint32_t lv_obj_remove_event_cb_with_user_data(lv_obj_t * obj, lv_event_cb_t eve
     uint32_t removed_count = 0;
     int32_t i;
 
+    if(event_cnt == 0) return 0;
+
     for(i = event_cnt - 1; i >= 0; i--) {
         lv_event_dsc_t * dsc = lv_obj_get_event_dsc(obj, i);
-        if(dsc && dsc->cb == event_cb && dsc->user_data == user_data) {
+        if(dsc && (event_cb == NULL || dsc->cb == event_cb) && dsc->user_data == user_data) {
             lv_obj_remove_event(obj, i);
             removed_count ++;
         }
@@ -371,7 +376,6 @@ static lv_result_t event_send_core(lv_event_t * e)
     if(parent && event_is_bubbled(e)) {
         e->current_target = parent;
         res = event_send_core(e);
-        if(res != LV_RESULT_OK || e->stop_processing || e->stop_bubbling) return res;
     }
 
     return res;

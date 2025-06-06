@@ -33,7 +33,7 @@ extern "C" {
  *      TYPEDEFS
  **********************/
 
-struct lv_matrix_t {
+struct _lv_matrix_t {
     float m[3][3];
 };
 
@@ -108,6 +108,13 @@ lv_point_precise_t lv_matrix_transform_precise_point(const lv_matrix_t * matrix,
  * @return the transformed area
  */
 lv_area_t lv_matrix_transform_area(const lv_matrix_t * matrix, const lv_area_t * area);
+
+/**
+ * Check if the matrix is identity
+ * @param matrix           pointer to a matrix
+ * @return true: the matrix is identity , false: the matrix is not identity
+ */
+bool lv_matrix_is_identity(const lv_matrix_t * matrix);
 
 /**
  * Check if the matrix is identity or translation matrix

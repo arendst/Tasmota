@@ -137,6 +137,8 @@ const uint8_t lv_style_builtin_prop_flag_lookup_table[LV_STYLE_NUM_BUILT_IN_PROP
     [LV_STYLE_LAYOUT] =                    LV_STYLE_PROP_FLAG_LAYOUT_UPDATE,
     [LV_STYLE_BASE_DIR] =                  LV_STYLE_PROP_FLAG_INHERITABLE | LV_STYLE_PROP_FLAG_LAYOUT_UPDATE,
     [LV_STYLE_BITMAP_MASK_SRC] =           LV_STYLE_PROP_FLAG_LAYER_UPDATE,
+    [LV_STYLE_RECOLOR] = 0,
+    [LV_STYLE_RECOLOR_OPA] = 0,
 
 #if LV_USE_FLEX
     [LV_STYLE_FLEX_FLOW] =                    LV_STYLE_PROP_FLAG_LAYOUT_UPDATE,
@@ -198,6 +200,36 @@ void lv_style_reset(lv_style_t * style)
 #endif
 }
 
+
+void lv_style_copy(lv_style_t * dst, const lv_style_t * src)
+{
+    if(lv_style_is_const(dst)) {
+        LV_LOG_WARN("The destination can not be a constant style");
+        return;
+    }
+
+    lv_style_reset(dst);
+
+    /*Source is empty*/
+    if(src->values_and_props == NULL) return;
+    if(src->prop_cnt == 0) return;
+
+    int32_t i;
+    if(lv_style_is_const(src)) {
+        lv_style_const_prop_t * props_and_values = (lv_style_const_prop_t *)src->values_and_props;
+        for(i = 0; props_and_values[i].prop != LV_STYLE_PROP_INV; i++) {
+            lv_style_set_prop(dst, props_and_values[i].prop, props_and_values[i].value);
+        }
+    }
+    else {
+        lv_style_prop_t * props = (lv_style_prop_t *)src->values_and_props + src->prop_cnt * sizeof(lv_style_value_t);
+        lv_style_value_t * values = (lv_style_value_t *)src->values_and_props;
+        for(i = 0; i < src->prop_cnt; i++) {
+            lv_style_set_prop(dst, props[i], values[i]);
+        }
+    }
+}
+
 lv_style_prop_t lv_style_register_prop(uint8_t flag)
 {
     if(lv_style_custom_prop_flag_lookup_table == NULL) {
@@ -250,6 +282,8 @@ bool lv_style_remove_prop(lv_style_t * style, lv_style_prop_t prop)
 
     if(style->prop_cnt == 0)  return false;
 
+    LV_PROFILER_STYLE_BEGIN;
+
     uint8_t * tmp = (lv_style_prop_t *)style->values_and_props + style->prop_cnt * sizeof(lv_style_value_t);
     uint8_t * old_props = (uint8_t *)tmp;
     uint32_t i;
@@ -259,7 +293,11 @@ bool lv_style_remove_prop(lv_style_t * style, lv_style_prop_t prop)
 
             size_t size = (style->prop_cnt - 1) * (sizeof(lv_style_value_t) + sizeof(lv_style_prop_t));
             uint8_t * new_values_and_props = lv_malloc(size);
-            if(new_values_and_props == NULL) return false;
+            if(new_values_and_props == NULL) {
+                LV_PROFILER_STYLE_END;
+                return false;
+            }
+
             style->values_and_props = new_values_and_props;
             style->prop_cnt--;
 
@@ -277,10 +315,12 @@ bool lv_style_remove_prop(lv_style_t * style, lv_style_prop_t prop)
             }
 
             lv_free(old_values);
+            LV_PROFILER_STYLE_END;
             return true;
         }
     }
 
+    LV_PROFILER_STYLE_END;
     return false;
 }
 
@@ -294,7 +334,7 @@ void lv_style_set_prop(lv_style_t * style, lv_style_prop_t prop, lv_style_value_
     }
 
     LV_ASSERT(prop != LV_STYLE_PROP_INV);
-
+    LV_PROFILER_STYLE_BEGIN;
     lv_style_prop_t * props;
     int32_t i;
 
@@ -304,6 +344,7 @@ void lv_style_set_prop(lv_style_t * style, lv_style_prop_t prop, lv_style_value_
             if(props[i] == prop) {
                 lv_style_value_t * values = (lv_style_value_t *)style->values_and_props;
                 values[i] = value;
+                LV_PROFILER_STYLE_END;
                 return;
             }
         }
@@ -311,7 +352,11 @@ void lv_style_set_prop(lv_style_t * style, lv_style_prop_t prop, lv_style_value_
 
     size_t size = (style->prop_cnt + 1) * (sizeof(lv_style_value_t) + sizeof(lv_style_prop_t));
     uint8_t * values_and_props = lv_realloc(style->values_and_props, size);
-    if(values_and_props == NULL) return;
+    if(values_and_props == NULL) {
+        LV_PROFILER_STYLE_END;
+        return;
+    }
+
     style->values_and_props = values_and_props;
 
     props = values_and_props + style->prop_cnt * sizeof(lv_style_value_t);
@@ -331,6 +376,7 @@ void lv_style_set_prop(lv_style_t * style, lv_style_prop_t prop, lv_style_value_
 
     uint32_t group = lv_style_get_prop_group(prop);
     style->has_group |= (uint32_t)1 << group;
+    LV_PROFILER_STYLE_END;
 }
 
 lv_style_res_t lv_style_get_prop(const lv_style_t * style, lv_style_prop_t prop, lv_style_value_t * value)
@@ -371,6 +417,7 @@ lv_style_value_t lv_style_prop_get_default(lv_style_prop_t prop)
         case LV_STYLE_LINE_COLOR:
         case LV_STYLE_TEXT_COLOR:
         case LV_STYLE_IMAGE_RECOLOR:
+        case LV_STYLE_RECOLOR:
             return (lv_style_value_t) {
                 .color = black
             };

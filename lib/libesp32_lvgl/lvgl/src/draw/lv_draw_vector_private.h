@@ -26,16 +26,16 @@ extern "C" {
  *      TYPEDEFS
  **********************/
 
-struct lv_vector_path_t {
+struct _lv_vector_path_t {
     lv_vector_path_quality_t quality;
     lv_array_t ops;
     lv_array_t points;
 };
 
-struct lv_vector_gradient_t {
+struct _lv_vector_gradient_t {
     lv_vector_gradient_style_t style;
-    lv_gradient_stop_t   stops[LV_GRADIENT_MAX_STOPS];  /**< A gradient stop array */
-    uint16_t             stops_count;                   /**< The number of used stops in the array */
+    lv_grad_stop_t   stops[LV_GRADIENT_MAX_STOPS];  /**< A gradient stop array */
+    uint16_t         stops_count;                   /**< The number of used stops in the array */
     float x1;
     float y1;
     float x2;
@@ -46,17 +46,18 @@ struct lv_vector_gradient_t {
     lv_vector_gradient_spread_t spread;
 };
 
-struct lv_vector_fill_dsc_t {
+struct _lv_vector_fill_dsc_t {
     lv_vector_draw_style_t style;
     lv_color32_t color;
     lv_opa_t opa;
     lv_vector_fill_t fill_rule;
+    lv_vector_fill_units_t fill_units;
     lv_draw_image_dsc_t img_dsc;
     lv_vector_gradient_t gradient;
     lv_matrix_t matrix;
 };
 
-struct lv_vector_stroke_dsc_t {
+struct _lv_vector_stroke_dsc_t {
     lv_vector_draw_style_t style;
     lv_color32_t color;
     lv_opa_t opa;
@@ -69,7 +70,7 @@ struct lv_vector_stroke_dsc_t {
     lv_matrix_t matrix;
 };
 
-struct lv_vector_draw_dsc_t {
+struct _lv_vector_draw_dsc_t {
     lv_vector_fill_dsc_t fill_dsc;
     lv_vector_stroke_dsc_t stroke_dsc;
     lv_matrix_t matrix;
@@ -77,18 +78,17 @@ struct lv_vector_draw_dsc_t {
     lv_area_t scissor_area;
 };
 
-struct lv_draw_vector_task_dsc_t {
+struct _lv_draw_vector_task_dsc_t {
     lv_draw_dsc_base_t base;
     lv_ll_t * task_list; /*draw task list.*/
 };
 
-struct lv_vector_dsc_t {
+struct _lv_vector_dsc_t {
     lv_layer_t * layer;
     lv_vector_draw_dsc_t current_dsc;
     /* private data */
     lv_draw_vector_task_dsc_t tasks;
 };
-
 
 /**********************
  * GLOBAL PROTOTYPES

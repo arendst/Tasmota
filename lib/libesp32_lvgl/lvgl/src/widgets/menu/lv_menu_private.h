@@ -27,16 +27,16 @@ extern "C" {
  *      TYPEDEFS
  **********************/
 
-struct lv_menu_load_page_event_data_t {
+struct _lv_menu_load_page_event_data_t {
     lv_obj_t * menu;
     lv_obj_t * page;
 };
 
-struct lv_menu_history_t {
+struct _lv_menu_history_t {
     lv_obj_t * page;
 };
 
-struct lv_menu_t {
+struct _lv_menu_t {
     lv_obj_t obj;
     lv_obj_t * storage; /**<  a pointer to obj that is the parent of all pages not displayed */
     lv_obj_t * main;
@@ -56,11 +56,11 @@ struct lv_menu_t {
     uint8_t cur_depth;
     uint8_t prev_depth;
     uint8_t sidebar_generated : 1;
-    lv_menu_mode_header_t mode_header : 2;
+    lv_menu_mode_header_t mode_header : 3;
     lv_menu_mode_root_back_button_t mode_root_back_btn : 1;
 };
 
-struct lv_menu_page_t {
+struct _lv_menu_page_t {
     lv_obj_t obj;
     char  *  title;
     bool     static_title;

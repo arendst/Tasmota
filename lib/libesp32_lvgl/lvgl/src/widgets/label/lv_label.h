@@ -46,11 +46,11 @@ LV_EXPORT_CONST_INT(LV_LABEL_TEXT_SELECTION_OFF);
 
 /** Long mode behaviors. Used in 'lv_label_ext_t'*/
 typedef enum {
-    LV_LABEL_LONG_WRAP,             /**< Keep the object width, wrap lines longer than object width and expand the object height*/
-    LV_LABEL_LONG_DOT,              /**< Keep the size and write dots at the end if the text is too long*/
-    LV_LABEL_LONG_SCROLL,           /**< Keep the size and roll the text back and forth*/
-    LV_LABEL_LONG_SCROLL_CIRCULAR,  /**< Keep the size and roll the text circularly*/
-    LV_LABEL_LONG_CLIP,             /**< Keep the size and clip the text out of it*/
+    LV_LABEL_LONG_MODE_WRAP,             /**< Keep the object width, wrap lines longer than object width and expand the object height*/
+    LV_LABEL_LONG_MODE_DOTS,             /**< Keep the size and write dots at the end if the text is too long*/
+    LV_LABEL_LONG_MODE_SCROLL,           /**< Keep the size and roll the text back and forth*/
+    LV_LABEL_LONG_MODE_SCROLL_CIRCULAR,  /**< Keep the size and roll the text circularly*/
+    LV_LABEL_LONG_MODE_CLIP,             /**< Keep the size and clip the text out of it*/
 } lv_label_long_mode_t;
 
 #if LV_USE_OBJ_PROPERTY
@@ -129,6 +129,14 @@ void lv_label_set_text_selection_start(lv_obj_t * obj, uint32_t index);
  */
 void lv_label_set_text_selection_end(lv_obj_t * obj, uint32_t index);
 
+/**
+ * Enable the recoloring by in-line commands
+ * @param obj           pointer to a label object
+ * @param en            true: enable recoloring, false: disable
+ * Example: "This is a #ff0000 red# word"
+ */
+void lv_label_set_recolor(lv_obj_t * obj, bool en);
+
 /*=====================
  * Getter functions
  *====================*/
@@ -187,6 +195,13 @@ uint32_t lv_label_get_text_selection_start(const lv_obj_t * obj);
  * @return          selection end index. `LV_LABEL_TXT_SEL_OFF` if nothing is selected.
  */
 uint32_t lv_label_get_text_selection_end(const lv_obj_t * obj);
+
+/**
+ * @brief Get the recoloring attribute
+ * @param obj       pointer to a label object.
+ * @return          true: recoloring is enabled, false: recoloring is disabled
+ */
+bool lv_label_get_recolor(const lv_obj_t * obj);
 
 /*=====================
  * Other functions

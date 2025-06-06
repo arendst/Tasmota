@@ -176,9 +176,6 @@ struct _haspmota_theme_t {
     bool inited;
     haspmota_theme_styles_t styles;
 
-    lv_color_filter_dsc_t dark_filter;
-    lv_color_filter_dsc_t grey_filter;
-
 #if LV_THEME_DEFAULT_TRANSITION_TIME
     lv_style_transition_dsc_t trans_delayed;
     lv_style_transition_dsc_t trans_normal;
@@ -226,7 +223,8 @@ static void style_init(haspmota_theme_t * theme)
         LV_STYLE_TRANSLATE_Y, LV_STYLE_TRANSLATE_X,
         LV_STYLE_TRANSFORM_ROTATION,
         LV_STYLE_TRANSFORM_SCALE_X, LV_STYLE_TRANSFORM_SCALE_Y,
-        LV_STYLE_COLOR_FILTER_OPA, LV_STYLE_COLOR_FILTER_DSC,
+        LV_STYLE_RECOLOR_OPA, LV_STYLE_RECOLOR,
+        // LV_STYLE_COLOR_FILTER_OPA, LV_STYLE_COLOR_FILTER_DSC,
         0
     };
 #endif
@@ -301,30 +299,28 @@ static void style_init(haspmota_theme_t * theme)
                         LV_DPX_CALC(theme->disp_dpi, theme->disp_size == DISP_LARGE ? 16 : theme->disp_size == DISP_MEDIUM ? 12 : 10));     // Tasmota min 10
     lv_style_set_bg_opa(&theme->styles.btn, LV_OPA_COVER);
     lv_style_set_bg_color(&theme->styles.btn, theme->color_grey);
+    // if(!(theme->base.flags & MODE_DARK)) {
+    //     lv_style_set_shadow_color(&theme->styles.btn, lv_palette_main(LV_PALETTE_GREY));
+    //     lv_style_set_shadow_width(&theme->styles.btn, LV_DPX(3));
+    //     lv_style_set_shadow_opa(&theme->styles.btn, LV_OPA_50);
+    //     lv_style_set_shadow_offset_y(&theme->styles.btn, LV_DPX_CALC(theme->disp_dpi, LV_DPX(4)));
+    // }
     lv_style_set_text_color(&theme->styles.btn, theme->color_text);
     lv_style_set_pad_hor(&theme->styles.btn, PAD_DEF);
     lv_style_set_pad_ver(&theme->styles.btn, PAD_SMALL);
     lv_style_set_pad_column(&theme->styles.btn, LV_DPX_CALC(theme->disp_dpi, 5));
     lv_style_set_pad_row(&theme->styles.btn, LV_DPX_CALC(theme->disp_dpi, 5));
 
-    style_init_reset(&theme->styles.btn_border_color);
-    lv_style_set_border_color(&theme->styles.btn_border_color, lv_color_mix(theme->color_text, theme->color_grey, LV_OPA_80));
-
-    style_init_reset(&theme->styles.btn_border);
-    lv_style_set_border_width(&theme->styles.btn_border, BORDER_WIDTH);
-    lv_style_set_border_side(&theme->styles.btn_border, LV_BORDER_SIDE_FULL);
-    lv_style_set_border_opa(&theme->styles.btn_border, LV_OPA_COVER);
-
-    lv_color_filter_dsc_init(&theme->dark_filter, dark_color_filter_cb);
-    lv_color_filter_dsc_init(&theme->grey_filter, grey_filter_cb);
-
     style_init_reset(&theme->styles.pressed);
-    lv_style_set_color_filter_dsc(&theme->styles.pressed, &theme->dark_filter);
-    lv_style_set_color_filter_opa(&theme->styles.pressed, LV_OPA_60);      // Tasmota from 35 ot LV_OPA_60 (153)
+    lv_style_set_recolor(&theme->styles.pressed, lv_color_black());
+    lv_style_set_recolor_opa(&theme->styles.pressed, 70);
 
     style_init_reset(&theme->styles.disabled);
-    lv_style_set_color_filter_dsc(&theme->styles.disabled, &theme->grey_filter);
-    lv_style_set_color_filter_opa(&theme->styles.disabled, LV_OPA_50);
+    if(theme_def->base.flags & MODE_DARK)
+        lv_style_set_recolor(&theme->styles.disabled, lv_palette_darken(LV_PALETTE_GREY, 2));
+    else
+        lv_style_set_recolor(&theme->styles.disabled, lv_palette_lighten(LV_PALETTE_GREY, 2));
+    lv_style_set_recolor_opa(&theme->styles.disabled, LV_OPA_50);
 
     style_init_reset(&theme->styles.clip_corner);
     lv_style_set_clip_corner(&theme->styles.clip_corner, true);
@@ -430,7 +426,6 @@ static void style_init(haspmota_theme_t * theme)
     style_init_reset(&theme->styles.dropdown_list);
     lv_style_set_max_height(&theme->styles.dropdown_list, LV_DPI_DEF * 2);
 #endif
-
 #if LV_USE_CHECKBOX
     style_init_reset(&theme->styles.cb_marker);
     lv_style_set_pad_all(&theme->styles.cb_marker, LV_DPX_CALC(theme->disp_dpi, 3));
@@ -1083,6 +1078,13 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
         lv_obj_add_style(obj, &theme->styles.bg_color_secondary_muted, LV_PART_ITEMS | LV_STATE_EDITED);
     }
 #endif
+
+#if LV_USE_LABEL && LV_USE_TEXTAREA
+    else if(lv_obj_check_type(obj, &lv_label_class) && lv_obj_check_type(parent, &lv_textarea_class)) {
+        lv_obj_add_style(obj, &theme->styles.bg_color_primary, LV_PART_SELECTED);
+    }
+#endif
+
 #if LV_USE_LIST
     else if(lv_obj_check_type(obj, &lv_list_class)) {
         lv_obj_add_style(obj, &theme->styles.card, 0);

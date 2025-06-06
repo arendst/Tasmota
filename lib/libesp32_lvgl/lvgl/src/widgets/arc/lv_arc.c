@@ -60,7 +60,7 @@ const lv_obj_class_t lv_arc_class  = {
     .instance_size = sizeof(lv_arc_t),
     .editable = LV_OBJ_CLASS_EDITABLE_TRUE,
     .base_class = &lv_obj_class,
-    .name = "arc",
+    .name = "lv_arc",
 };
 
 /**********************
@@ -509,12 +509,14 @@ static void lv_arc_event(const lv_obj_class_t * class_p, lv_event_t * e)
         angle -= arc->rotation;
         angle -= arc->bg_angle_start;  /*Make the angle relative to the start angle*/
 
+
         /* ensure the angle is in the range [0, 360) */
         while(angle < 0) angle += 360;
         while(angle >= 360) angle -= 360;
 
+
         const uint32_t circumference = (uint32_t)((2U * r * 314U) / 100U);  /* Equivalent to: 2r * 3.14, avoiding floats */
-        const lv_value_precise_t tolerance_deg = (360 * lv_dpx(50U)) / circumference;
+        const lv_value_precise_t tolerance_deg = (360 * lv_dpx(20U)) / circumference;
         const uint32_t min_close_prev = (uint32_t) arc->min_close;
 
         const bool is_angle_within_bg_bounds = lv_arc_angle_within_bg_bounds(obj, angle, tolerance_deg);
@@ -669,7 +671,7 @@ static void lv_arc_event(const lv_obj_class_t * class_p, lv_event_t * e)
         while(angle >= 360) angle -= 360;
 
         const uint32_t circumference = (uint32_t)((2U * r * 314U) / 100U);  /* Equivalent to: 2r * 3.14, avoiding floats */
-        const lv_value_precise_t tolerance_deg = (360 * lv_dpx(50U)) / circumference;
+        const lv_value_precise_t tolerance_deg = (360 * lv_dpx(20U)) / circumference;
 
         /* Check if the angle is outside the drawn background arc */
         const bool is_angle_within_bg_bounds = lv_arc_angle_within_bg_bounds(obj, angle, tolerance_deg);
@@ -721,6 +723,7 @@ static void lv_arc_draw(lv_event_t * e)
     lv_draw_arc_dsc_t arc_dsc;
     if(arc_r > 0) {
         lv_draw_arc_dsc_init(&arc_dsc);
+        arc_dsc.base.layer = layer;
         lv_obj_init_draw_arc_dsc(obj, LV_PART_MAIN, &arc_dsc);
         arc_dsc.center = center;
         arc_dsc.start_angle = arc->bg_angle_start + arc->rotation;
@@ -738,6 +741,7 @@ static void lv_arc_draw(lv_event_t * e)
 
     if(indic_r > 0) {
         lv_draw_arc_dsc_init(&arc_dsc);
+        arc_dsc.base.layer = layer;
         lv_obj_init_draw_arc_dsc(obj, LV_PART_INDICATOR, &arc_dsc);
         arc_dsc.center = center;
         arc_dsc.start_angle = arc->indic_angle_start + arc->rotation;
@@ -753,6 +757,7 @@ static void lv_arc_draw(lv_event_t * e)
 
     lv_draw_rect_dsc_t knob_rect_dsc;
     lv_draw_rect_dsc_init(&knob_rect_dsc);
+    knob_rect_dsc.base.layer = layer;
     lv_obj_init_draw_rect_dsc(obj, LV_PART_KNOB, &knob_rect_dsc);
     lv_draw_rect(layer, &knob_rect_dsc, &knob_area);
 }
@@ -964,10 +969,14 @@ static bool lv_arc_angle_within_bg_bounds(lv_obj_t * obj, const lv_value_precise
     lv_arc_t * arc = (lv_arc_t *)obj;
 
     lv_value_precise_t bounds_angle = arc->bg_angle_end - arc->bg_angle_start;
+    if(arc->bg_angle_end == arc->bg_angle_start) return false; /*The arc has 0 deg span*/
 
     /* ensure the angle is in the range [0, 360) */
     while(bounds_angle < 0) bounds_angle += 360;
     while(bounds_angle >= 360) bounds_angle -= 360;
+
+    /*Full circle*/
+    if(bounds_angle == 0) bounds_angle = 360;
 
     /* Angle is in the bounds */
     if(angle <= bounds_angle) {

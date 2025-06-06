@@ -186,6 +186,9 @@ vg_lite_buffer_format_t vglite_get_buf_format(lv_color_format_t cf)
         case LV_COLOR_FORMAT_L8:
             vg_buffer_format = VG_LITE_L8;
             break;
+        case LV_COLOR_FORMAT_A4:
+            vg_buffer_format = VG_LITE_A4;
+            break;
         case LV_COLOR_FORMAT_A8:
             vg_buffer_format = VG_LITE_A8;
             break;
@@ -204,8 +207,8 @@ vg_lite_buffer_format_t vglite_get_buf_format(lv_color_format_t cf)
         case LV_COLOR_FORMAT_RGB565:
             vg_buffer_format = VG_LITE_BGR565;
             break;
-        case LV_COLOR_FORMAT_RGB565A8:
-            vg_buffer_format = VG_LITE_ABGR8565;
+        case LV_COLOR_FORMAT_ARGB8565:
+            vg_buffer_format = VG_LITE_BGRA5658;
             break;
         case LV_COLOR_FORMAT_RGB888:
             vg_buffer_format = VG_LITE_BGR888;
@@ -233,6 +236,7 @@ uint8_t vglite_get_stride_alignment(lv_color_format_t cf)
         case LV_COLOR_FORMAT_I1:
         case LV_COLOR_FORMAT_I2:
         case LV_COLOR_FORMAT_I4:
+        case LV_COLOR_FORMAT_A4:
             align_bytes = 8;
             break;
         case LV_COLOR_FORMAT_I8:
@@ -243,7 +247,7 @@ uint8_t vglite_get_stride_alignment(lv_color_format_t cf)
         case LV_COLOR_FORMAT_RGB565:
             align_bytes = 32;
             break;
-        case LV_COLOR_FORMAT_RGB565A8:
+        case LV_COLOR_FORMAT_ARGB8565:
         case LV_COLOR_FORMAT_RGB888:
             align_bytes = 48;
             break;

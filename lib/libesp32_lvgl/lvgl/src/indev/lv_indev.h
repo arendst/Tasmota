@@ -47,6 +47,18 @@ typedef enum {
     LV_INDEV_MODE_EVENT,
 } lv_indev_mode_t;
 
+
+/* Supported types of gestures */
+typedef enum {
+    LV_INDEV_GESTURE_NONE = 0,
+    LV_INDEV_GESTURE_PINCH,
+    LV_INDEV_GESTURE_SWIPE,
+    LV_INDEV_GESTURE_ROTATE,
+    LV_INDEV_GESTURE_TWO_FINGERS_SWIPE,
+    LV_INDEV_GESTURE_SCROLL,            /* Used with scrollwheels */
+    LV_INDEV_GESTURE_CNT,               /* Total number of gestures types */
+} lv_indev_gesture_type_t;
+
 /** Data structure passed to an input driver to fill*/
 typedef struct {
     lv_point_t point; /**< For LV_INDEV_TYPE_POINTER the currently pressed point*/
@@ -56,6 +68,10 @@ typedef struct {
 
     lv_indev_state_t state; /**< LV_INDEV_STATE_RELEASED or LV_INDEV_STATE_PRESSED*/
     bool continue_reading;  /**< If set to true, the read callback is invoked again, unless the device is in event-driven mode*/
+
+    lv_indev_gesture_type_t gesture_type[LV_INDEV_GESTURE_CNT]; /* Current gesture types, per gesture */
+    void * gesture_data[LV_INDEV_GESTURE_CNT]; /* Used to store data per gesture */
+
 } lv_indev_data_t;
 
 typedef void (*lv_indev_read_cb_t)(lv_indev_t * indev, lv_indev_data_t * data);
@@ -143,7 +159,7 @@ void lv_indev_set_driver_data(lv_indev_t * indev, void * driver_data);
  * @param indev pointer to an input device
  * @param disp pointer to an display
  */
-void lv_indev_set_display(lv_indev_t * indev, struct lv_display_t * disp);
+void lv_indev_set_display(lv_indev_t * indev, struct _lv_display_t * disp);
 
 /**
  * Set long press time to indev
@@ -151,6 +167,13 @@ void lv_indev_set_display(lv_indev_t * indev, struct lv_display_t * disp);
  * @param  long_press_time  time long press time in ms
  */
 void lv_indev_set_long_press_time(lv_indev_t * indev, uint16_t long_press_time);
+
+/**
+ * Set long press repeat time to indev
+ * @param  indev            pointer to input device
+ * @param  long_press_repeat_time  long press repeat time in ms
+ */
+void lv_indev_set_long_press_repeat_time(lv_indev_t * indev, uint16_t long_press_repeat_time);
 
 /**
  * Set scroll limit to the input device
@@ -285,6 +308,15 @@ lv_dir_t lv_indev_get_gesture_dir(const lv_indev_t * indev);
  */
 uint32_t lv_indev_get_key(const lv_indev_t * indev);
 
+
+/**
+ * Get the counter for consecutive clicks within a short distance and time.
+ * The counter is updated before LV_EVENT_SHORT_CLICKED is fired.
+ * @param indev pointer to an input device
+ * @return short click streak counter
+ */
+uint8_t lv_indev_get_short_click_streak(const lv_indev_t * indev);
+
 /**
  * Check the current scroll direction of an input device (for LV_INDEV_TYPE_POINTER and
  * LV_INDEV_TYPE_BUTTON)
@@ -309,6 +341,13 @@ lv_obj_t * lv_indev_get_scroll_obj(const lv_indev_t * indev);
  * @param point pointer to a point to store the types.pointer.vector
  */
 void lv_indev_get_vect(const lv_indev_t * indev, lv_point_t * point);
+
+/**
+ * Get the cursor object of an input device (for LV_INDEV_TYPE_POINTER only)
+ * @param indev pointer to an input device
+ * @return pointer to the cursor object
+ */
+lv_obj_t * lv_indev_get_cursor(lv_indev_t * indev);
 
 /**
  * Do nothing until the next release

@@ -45,6 +45,11 @@ typedef enum {
 void lv_ffmpeg_init(void);
 
 /**
+ * De-initialize FFMPEG image decoder
+ */
+void lv_ffmpeg_deinit(void);
+
+/**
  * Get the number of frames contained in the file
  * @param path image or video file name
  * @return Number of frames, less than 0 means failed
@@ -59,7 +64,7 @@ int lv_ffmpeg_get_frame_num(const char * path);
 lv_obj_t * lv_ffmpeg_player_create(lv_obj_t * parent);
 
 /**
- * Set the path of the file to be played
+ * Set the path of the file to be played.
  * @param obj pointer to a ffmpeg_player object
  * @param path video file path
  * @return LV_RESULT_OK: no error; LV_RESULT_INVALID: can't get the info.

@@ -28,6 +28,7 @@ void lv_style_set_transform_width(lv_style_t * style, int32_t value);
 void lv_style_set_transform_height(lv_style_t * style, int32_t value);
 void lv_style_set_translate_x(lv_style_t * style, int32_t value);
 void lv_style_set_translate_y(lv_style_t * style, int32_t value);
+void lv_style_set_translate_radial(lv_style_t * style, int32_t value);
 void lv_style_set_transform_scale_x(lv_style_t * style, int32_t value);
 void lv_style_set_transform_scale_y(lv_style_t * style, int32_t value);
 void lv_style_set_transform_rotation(lv_style_t * style, int32_t value);
@@ -41,6 +42,7 @@ void lv_style_set_pad_left(lv_style_t * style, int32_t value);
 void lv_style_set_pad_right(lv_style_t * style, int32_t value);
 void lv_style_set_pad_row(lv_style_t * style, int32_t value);
 void lv_style_set_pad_column(lv_style_t * style, int32_t value);
+void lv_style_set_pad_radial(lv_style_t * style, int32_t value);
 void lv_style_set_margin_top(lv_style_t * style, int32_t value);
 void lv_style_set_margin_bottom(lv_style_t * style, int32_t value);
 void lv_style_set_margin_left(lv_style_t * style, int32_t value);
@@ -95,12 +97,18 @@ void lv_style_set_text_letter_space(lv_style_t * style, int32_t value);
 void lv_style_set_text_line_space(lv_style_t * style, int32_t value);
 void lv_style_set_text_decor(lv_style_t * style, lv_text_decor_t value);
 void lv_style_set_text_align(lv_style_t * style, lv_text_align_t value);
+void lv_style_set_text_outline_stroke_color(lv_style_t * style, lv_color_t value);
+void lv_style_set_text_outline_stroke_width(lv_style_t * style, int32_t value);
+void lv_style_set_text_outline_stroke_opa(lv_style_t * style, lv_opa_t value);
 void lv_style_set_radius(lv_style_t * style, int32_t value);
+void lv_style_set_radial_offset(lv_style_t * style, int32_t value);
 void lv_style_set_clip_corner(lv_style_t * style, bool value);
 void lv_style_set_opa(lv_style_t * style, lv_opa_t value);
 void lv_style_set_opa_layered(lv_style_t * style, lv_opa_t value);
 void lv_style_set_color_filter_dsc(lv_style_t * style, const lv_color_filter_dsc_t * value);
 void lv_style_set_color_filter_opa(lv_style_t * style, lv_opa_t value);
+void lv_style_set_recolor(lv_style_t * style, lv_color_t value);
+void lv_style_set_recolor_opa(lv_style_t * style, lv_opa_t value);
 void lv_style_set_anim(lv_style_t * style, const lv_anim_t * value);
 void lv_style_set_anim_duration(lv_style_t * style, uint32_t value);
 void lv_style_set_transition(lv_style_t * style, const lv_style_transition_dsc_t * value);
@@ -201,6 +209,11 @@ void lv_style_set_grid_cell_row_span(lv_style_t * style, int32_t value);
         .prop = LV_STYLE_TRANSLATE_Y, .value = { .num = (int32_t)val } \
     }
 
+#define LV_STYLE_CONST_TRANSLATE_RADIAL(val) \
+    { \
+        .prop = LV_STYLE_TRANSLATE_RADIAL, .value = { .num = (int32_t)val } \
+    }
+
 #define LV_STYLE_CONST_TRANSFORM_SCALE_X(val) \
     { \
         .prop = LV_STYLE_TRANSFORM_SCALE_X, .value = { .num = (int32_t)val } \
@@ -264,6 +277,11 @@ void lv_style_set_grid_cell_row_span(lv_style_t * style, int32_t value);
 #define LV_STYLE_CONST_PAD_COLUMN(val) \
     { \
         .prop = LV_STYLE_PAD_COLUMN, .value = { .num = (int32_t)val } \
+    }
+
+#define LV_STYLE_CONST_PAD_RADIAL(val) \
+    { \
+        .prop = LV_STYLE_PAD_RADIAL, .value = { .num = (int32_t)val } \
     }
 
 #define LV_STYLE_CONST_MARGIN_TOP(val) \
@@ -536,9 +554,29 @@ void lv_style_set_grid_cell_row_span(lv_style_t * style, int32_t value);
         .prop = LV_STYLE_TEXT_ALIGN, .value = { .num = (int32_t)val } \
     }
 
+#define LV_STYLE_CONST_TEXT_OUTLINE_STROKE_COLOR(val) \
+    { \
+        .prop = LV_STYLE_TEXT_OUTLINE_STROKE_COLOR, .value = { .color = val } \
+    }
+
+#define LV_STYLE_CONST_TEXT_OUTLINE_STROKE_WIDTH(val) \
+    { \
+        .prop = LV_STYLE_TEXT_OUTLINE_STROKE_WIDTH, .value = { .num = (int32_t)val } \
+    }
+
+#define LV_STYLE_CONST_TEXT_OUTLINE_STROKE_OPA(val) \
+    { \
+        .prop = LV_STYLE_TEXT_OUTLINE_STROKE_OPA, .value = { .num = (int32_t)val } \
+    }
+
 #define LV_STYLE_CONST_RADIUS(val) \
     { \
         .prop = LV_STYLE_RADIUS, .value = { .num = (int32_t)val } \
+    }
+
+#define LV_STYLE_CONST_RADIAL_OFFSET(val) \
+    { \
+        .prop = LV_STYLE_RADIAL_OFFSET, .value = { .num = (int32_t)val } \
     }
 
 #define LV_STYLE_CONST_CLIP_CORNER(val) \
@@ -564,6 +602,16 @@ void lv_style_set_grid_cell_row_span(lv_style_t * style, int32_t value);
 #define LV_STYLE_CONST_COLOR_FILTER_OPA(val) \
     { \
         .prop = LV_STYLE_COLOR_FILTER_OPA, .value = { .num = (int32_t)val } \
+    }
+
+#define LV_STYLE_CONST_RECOLOR(val) \
+    { \
+        .prop = LV_STYLE_RECOLOR, .value = { .color = val } \
+    }
+
+#define LV_STYLE_CONST_RECOLOR_OPA(val) \
+    { \
+        .prop = LV_STYLE_RECOLOR_OPA, .value = { .num = (int32_t)val } \
     }
 
 #define LV_STYLE_CONST_ANIM(val) \
