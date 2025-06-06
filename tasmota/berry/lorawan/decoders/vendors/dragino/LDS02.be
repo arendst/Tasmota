@@ -19,11 +19,22 @@ class LwDecoLDS02
     var battery
     var rssi = RSSI
     var door_open
+    var door_open_last_seen = 0x7FFFFFFF
+    if global.lds02Nodes.find(Node)
+      door_open = global.lds02Nodes.item(Node)[5]
+      door_open_last_seen = global.lds02Nodes.item(Node)[6]
+    end
     ## SENSOR DATA ##
     if 10 == FPort && Bytes.size() == 10
       last_seen = tasmota.rtc('local')
+
+      var last_door_open = door_open
       door_open = ( Bytes[0] & 0x80 ) ? 1 : 0
       data.insert("DoorOpen", ( door_open ) ? true : false)
+      if last_door_open != door_open
+        door_open_last_seen = tasmota.rtc('local')
+      end
+
       data.insert("BattV", ( Bytes[1] | (Bytes[0] << 8) & 0x3FFF ) / 1000.0)
       battery_last_seen = tasmota.rtc('local')
       battery = ( Bytes[1] | (Bytes[0] << 8) & 0x3FFF ) / 1000.0
@@ -39,7 +50,8 @@ class LwDecoLDS02
       if global.lds02Nodes.find(Node)
         global.lds02Nodes.remove(Node)
       end
-      global.lds02Nodes.insert(Node, [Node, last_seen, battery_last_seen, battery, RSSI, door_open])
+      #                         sensor[0]   [1]        [2]                [3]      [4]   [5]        [6]
+      global.lds02Nodes.insert(Node, [Node, last_seen, battery_last_seen, battery, RSSI, door_open, door_open_last_seen])
     end
 
     return data
@@ -48,9 +60,6 @@ class LwDecoLDS02
   static def add_web_sensor()
     var msg = ""
     for sensor: global.lds02Nodes
-      # Sensor[0]    [1]        [2]                [3]      [4]   [5]
-      #       [Node, last_seen, battery_last_seen, battery, RSSI, door_open]
-
       var name = string.format("LDS02-%i", sensor[0])
       var name_tooltip = "Dragino LDS02"
       var battery = sensor[3]
@@ -60,9 +69,12 @@ class LwDecoLDS02
       msg += lwdecode.header(name, name_tooltip, battery, battery_last_seen, rssi, last_seen)
 
       # Sensors
-      msg += "<tr class='htr'><td colspan='4'>&#9478;"                    # |
-      msg += string.format(" %s", (sensor[5]) ? "&#x1F513" : "&#x1F512")  # Open or Closed lock - Door
-      msg += "{e}"                                                        # = </td></tr>
+      var door_open = sensor[5]
+      var door_open_last_seen = sensor[6]
+      msg += "<tr class='htr'><td colspan='4'>&#9478;"                      # |
+      msg += string.format(" %s %s", (door_open) ? "&#x1F513" : "&#x1F512", # Open or Closed lock - Door
+                                     lwdecode.dhm(door_open_last_seen))
+      msg += "{e}"                                                          # = </td></tr>
     end
     return msg
   end #add_web_sensor()

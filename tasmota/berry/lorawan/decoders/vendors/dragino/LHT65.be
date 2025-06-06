@@ -14,9 +14,6 @@ class LwDecoLHT65
     data.insert("Node", Node)
     data.insert("poll_message_status",(Bytes[6] & 0x40) >> 6)
 
-    var Ext = Bytes[6] & 0x0F  #External sensor type
-    var NoConnect = (Bytes[6] & 0x80) >> 7
-
     var valid_values = false
     var last_seen = 0x7FFFFFFF
     var battery_last_seen = 0x7FFFFFFF
@@ -26,6 +23,7 @@ class LwDecoLHT65
     var humidity
     var temp_ext = 1000
     var door_open = 1000
+    var door_open_last_seen = 0x7FFFFFFF
     if global.lht65Nodes.find(Node)
       last_seen = global.lht65Nodes.item(Node)[1]
       battery_last_seen = global.lht65Nodes.item(Node)[2]
@@ -35,7 +33,12 @@ class LwDecoLHT65
       humidity = global.lht65Nodes.item(Node)[6]
       temp_ext = global.lht65Nodes.item(Node)[7]
       door_open = global.lht65Nodes.item(Node)[8]
+      door_open_last_seen = global.lht65Nodes.item(Node)[9]
     end
+
+    var Ext = Bytes[6] & 0x0F  #External sensor type
+    var NoConnect = (Bytes[6] & 0x80) >> 7
+
     ## SENSOR DATA ##
     if 2 == FPort && Bytes.size() == 11
       var TempC 
@@ -103,6 +106,9 @@ class LwDecoLHT65
         door_open = ( Bytes[7] ) ? 0 : 1    # DS sensor
         data.insert("Exti_pin_level", Bytes[7] ? 'High' : 'Low')
         data.insert("Exti_status", Bytes[8] ? 'True' : 'False')
+        if Bytes[8]
+          door_open_last_seen = tasmota.rtc('local')
+        end
         valid_values = true
       elif 5 == Ext
         data.insert("Work_mode", 'Illumination Sensor')
@@ -144,7 +150,8 @@ class LwDecoLHT65
       if global.lht65Nodes.find(Node)
         global.lht65Nodes.remove(Node)
       end
-      global.lht65Nodes.insert(Node, [Node, last_seen, battery_last_seen, battery, rssi, temp_int, humidity, temp_ext, door_open])
+      #                         sensor[0]   [1]        [2]                [3]      [4]   [5]       [6]       [7]       [8]        [9]
+      global.lht65Nodes.insert(Node, [Node, last_seen, battery_last_seen, battery, rssi, temp_int, humidity, temp_ext, door_open, door_open_last_seen])
     end
 
     return data
@@ -153,9 +160,6 @@ class LwDecoLHT65
   static def add_web_sensor()
     var msg = ""
     for sensor: global.lht65Nodes
-      # Sensor[0]    [1]        [2]                [3]      [4]   [5]       [6]       [7]       [8]
-      #       [Node, last_seen, battery_last_seen, battery, RSSI, temp_int, humidity, temp_ext, door_open]
-
       var name = string.format("LHT65-%i", sensor[0])
       var name_tooltip = "Dragino LHT65"
       var battery = sensor[3]
@@ -165,18 +169,24 @@ class LwDecoLHT65
       msg += lwdecode.header(name, name_tooltip, battery, battery_last_seen, rssi, last_seen)
 
       # Sensors
-      msg += "<tr class=\"htr\"><td colspan=\"4\">&#9478;"                # |
-      if sensor[5] < 1000
-        msg += string.format(" &#x2600;&#xFE0F; %.1f°C", sensor[5])       # Sunshine - Temperature
-        msg += string.format(" &#x1F4A7; %.1f%%", sensor[6])              # Raindrop - Humidity
+      var temp_int = sensor[5]
+      var humidity = sensor[6]
+      var temp_ext = sensor[7]
+      var door_open = sensor[8]
+      var door_open_last_seen = sensor[9]
+      msg += "<tr class=\"htr\"><td colspan=\"4\">&#9478;"               # |
+      if temp_int < 1000
+        msg += string.format(" &#x2600;&#xFE0F; %.1f°C", temp_int)       # Sunshine - Temperature
+        msg += string.format(" &#x1F4A7; %.1f%%", humidity)              # Raindrop - Humidity
       end
-      if sensor[7] < 1000
-        msg += string.format(" &#x2600;&#xFE0F; ext %.1f°C", sensor[7])   # Sunshine - Temperature external
+      if temp_ext < 1000
+        msg += string.format(" &#x2600;&#xFE0F; ext %.1f°C", temp_ext)   # Sunshine - Temperature external
       end
-      if sensor[8] < 1000
-        msg += string.format(" %s", (sensor[8]) ? "&#x1F513" : "&#x1F512")  # Open or Closed lock - Door
+      if door_open < 1000
+        msg += string.format(" %s %s", (door_open) ? "&#x1F513" : "&#x1F512", # Open or Closed lock - Door
+                                       lwdecode.dhm(door_open_last_seen))
       end
-      msg += "{e}"                                                        # = </td></tr>
+      msg += "{e}"                                                       # = </td></tr>
     end
     return msg
   end #add_web_sensor()

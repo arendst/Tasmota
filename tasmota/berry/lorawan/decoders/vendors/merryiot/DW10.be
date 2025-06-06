@@ -19,14 +19,25 @@ class LwDecoDW10
     var battery
     var rssi = RSSI
     var door_open
+    var door_open_last_seen = 0x7FFFFFFF
     var button_pressed
     var temperature
     var humidity
+    if global.dw10Nodes.find(Node)
+      door_open = global.dw10Nodes.item(Node)[5]
+      door_open_last_seen = global.dw10Nodes.item(Node)[6]
+    end
     ## SENSOR DATA ##
     if 120 == FPort && Bytes.size() == 9
       last_seen = tasmota.rtc('local')
+
+      var last_door_open = door_open
       door_open = ( Bytes[0] & 0x01 ) ? 1 : 0
       data.insert("DoorOpen", ( door_open ) ? true : false )
+      if last_door_open != door_open
+        door_open_last_seen = tasmota.rtc('local')
+      end
+
       button_pressed = ( Bytes[0] & 0x02 ) ? 1 : 0
       data.insert("ButtonPress", ( button_pressed ) ? true : false )
       data.insert("TamperDetect", ( Bytes[0] & 0x04 ) ? true : false )
@@ -49,7 +60,8 @@ class LwDecoDW10
       if global.dw10Nodes.find(Node)
         global.dw10Nodes.remove(Node)
       end
-      global.dw10Nodes.insert(Node, [Node, last_seen, battery_last_seen, battery, RSSI, door_open, button_pressed, temperature, humidity])
+      #                        sensor[0]   [1]        [2]                [3]      [4]   [5]        [6]                  [7]             [8]          [9]
+      global.dw10Nodes.insert(Node, [Node, last_seen, battery_last_seen, battery, RSSI, door_open, door_open_last_seen, button_pressed, temperature, humidity])
     end
 
     return data
@@ -58,9 +70,6 @@ class LwDecoDW10
   static def add_web_sensor()
     var msg = ""
     for sensor: global.dw10Nodes
-      # Sensor[0]    [1]        [2]                [3]      [4]   [5]        [6]             [7]          [8]
-      #       [Node, last_seen, battery_last_seen, battery, RSSI, door_open, button_pressed, temperature, humidity]
-
       var name = string.format("DW10-%i", sensor[0])
       var name_tooltip = "MerryIoT DW10"
       var battery = sensor[3]
@@ -70,11 +79,17 @@ class LwDecoDW10
       msg += lwdecode.header(name, name_tooltip, battery, battery_last_seen, rssi, last_seen)
 
       # Sensors
-      msg += "<tr class='htr'><td colspan='4'>&#9478;"                    # |
-      msg += string.format(" &#x2600;&#xFE0F; %.1f°C", sensor[7])         # Sunshine - Temperature
-      msg += string.format(" &#x1F4A7; %.1f%%", sensor[8])                # Raindrop - Humidity
-      msg += string.format(" %s", (sensor[5]) ? "&#x1F513" : "&#x1F512")  # Open or Closed lock - Door
-      msg += "{e}"                                                        # = </td></tr>
+      var door_open = sensor[5]
+      var door_open_last_seen = sensor[6]
+      var button_pressed = sensor[7]
+      var temperature = sensor[8]
+      var humidity = sensor[9]
+      msg += "<tr class='htr'><td colspan='4'>&#9478;"                      # |
+      msg += string.format(" &#x2600;&#xFE0F; %.1f°C", temperature)         # Sunshine - Temperature
+      msg += string.format(" &#x1F4A7; %.1f%%", humidity)                   # Raindrop - Humidity
+      msg += string.format(" %s %s", (door_open) ? "&#x1F513" : "&#x1F512", # Open or Closed lock - Door
+                                     lwdecode.dhm(door_open_last_seen))
+      msg += "{e}"                                                          # = </td></tr>
     end
     return msg
   end #add_web_sensor()

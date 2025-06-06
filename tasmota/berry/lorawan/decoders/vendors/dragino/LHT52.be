@@ -81,6 +81,7 @@ class LwDecoLHT52
       if global.lht52Nodes.find(Node)
         global.lht52Nodes.remove(Node)
       end
+      #                         sensor[0]   [1]        [2]                [3]      [4]   [5]       [6]       [7]
       global.lht52Nodes.insert(Node, [Node, last_seen, battery_last_seen, battery, RSSI, temp_int, humidity, temp_ext])
     end
 
@@ -90,9 +91,6 @@ class LwDecoLHT52
   static def add_web_sensor()
     var msg = ""
     for sensor: global.lht52Nodes
-      # Sensor[0]    [1]        [2]                [3]      [4]   [5]       [6]       [7]
-      #       [Node, last_seen, battery_last_seen, battery, RSSI, temp_int, humidity, temp_ext]
-
       var name = string.format("LHT52-%i", sensor[0])
       var name_tooltip = "Dragino LHT52"
       var battery = sensor[3]
@@ -102,13 +100,16 @@ class LwDecoLHT52
       msg += lwdecode.header(name, name_tooltip, battery, battery_last_seen, rssi, last_seen)
 
       # Sensors
-      msg += "<tr class='htr'><td colspan='4'>&#9478;"                    # |
-      msg += string.format(" &#x2600;&#xFE0F; %.1f°C", sensor[5])         # Sunshine - Temperature internal
-      msg += string.format(" &#x1F4A7; %.1f%%", sensor[6])                # Raindrop - Humidity
+      var temp_int = sensor[5]
+      var humidity = sensor[6]
+      var temp_ext = sensor[7]
+      msg += "<tr class='htr'><td colspan='4'>&#9478;"                   # |
+      msg += string.format(" &#x2600;&#xFE0F; %.1f°C", temp_int)         # Sunshine - Temperature internal
+      msg += string.format(" &#x1F4A7; %.1f%%", humidity)                # Raindrop - Humidity
       if sensor[7] < 1000
-        msg += string.format(" &#x2600;&#xFE0F; ext %.1f°C", sensor[7])   # Sunshine - Temperature external
+        msg += string.format(" &#x2600;&#xFE0F; ext %.1f°C", temp_ext)   # Sunshine - Temperature external
       end
-      msg += "{e}"                                                        # = </td></tr>
+      msg += "{e}"                                                       # = </td></tr>
     end
     return msg
   end #add_web_sensor()
