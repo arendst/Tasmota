@@ -15,15 +15,15 @@ class LwDecoLHT65
     data.insert("poll_message_status",(Bytes[6] & 0x40) >> 6)
 
     var valid_values = false
-    var last_seen = 0x7FFFFFFF
-    var battery_last_seen = 0x7FFFFFFF
+    var last_seen = 1451602800
+    var battery_last_seen = 1451602800
     var battery = 1000
     var rssi = RSSI
     var temp_int = 1000
     var humidity
     var temp_ext = 1000
     var door_open = 1000
-    var door_open_last_seen = 0x7FFFFFFF
+    var door_open_last_seen = 1451602800
     if global.lht65Nodes.find(Node)
       last_seen = global.lht65Nodes.item(Node)[1]
       battery_last_seen = global.lht65Nodes.item(Node)[2]

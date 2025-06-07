@@ -14,12 +14,12 @@ class LwDecoDW10
     data.insert("Node", Node)
 
     var valid_values = false
-    var last_seen = 0x7FFFFFFF
-    var battery_last_seen = 0x7FFFFFFF
+    var last_seen = 1451602800
+    var battery_last_seen = 1451602800
     var battery
     var rssi = RSSI
     var door_open
-    var door_open_last_seen = 0x7FFFFFFF
+    var door_open_last_seen = 1451602800
     var button_pressed
     var temperature
     var humidity
