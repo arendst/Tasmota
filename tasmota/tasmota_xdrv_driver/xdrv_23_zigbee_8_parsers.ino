@@ -908,6 +908,9 @@ int32_t ZNP_ReceiveStateChange(int32_t res, const SBuffer &buf) {
     case ZDO_DEV_NWK_ORPHAN:                      // 0x0A
       msg = PSTR("Device has lost its parent");
       break;
+    case ZDO_DEV_HOLD:
+      msg = PSTR("Failed to start in coordinator mode, try changing PanID");
+      break;
   };
 
   if (msg) {
