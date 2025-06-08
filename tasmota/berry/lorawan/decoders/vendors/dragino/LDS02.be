@@ -14,12 +14,12 @@ class LwDecoLDS02
     data.insert("Node", Node)
 
     var valid_values = false
-    var last_seen = 0x7FFFFFFF
-    var battery_last_seen = 0x7FFFFFFF
+    var last_seen = 1451602800
+    var battery_last_seen = 1451602800
     var battery
     var rssi = RSSI
     var door_open
-    var door_open_last_seen = 0x7FFFFFFF
+    var door_open_last_seen = 1451602800
     if global.lds02Nodes.find(Node)
       door_open = global.lds02Nodes.item(Node)[5]
       door_open_last_seen = global.lds02Nodes.item(Node)[6]

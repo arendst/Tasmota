@@ -14,11 +14,11 @@ class LwDecoLHT52
     data.insert("Node", Node)
 
     var valid_values = false
-    var last_seen = 0x7FFFFFFF
-    var battery_last_seen = 0x7FFFFFFF
+    var last_seen = 1451602800
+    var battery_last_seen = 1451602800
     var battery = 1000
     var rssi = RSSI
-    var temp_int
+    var temp_int = 1000
     var humidity
     var temp_ext = 1000
     if global.lht52Nodes.find(Node)
@@ -104,9 +104,11 @@ class LwDecoLHT52
       var humidity = sensor[6]
       var temp_ext = sensor[7]
       msg += "<tr class='htr'><td colspan='4'>&#9478;"                   # |
-      msg += string.format(" &#x2600;&#xFE0F; %.1f°C", temp_int)         # Sunshine - Temperature internal
-      msg += string.format(" &#x1F4A7; %.1f%%", humidity)                # Raindrop - Humidity
-      if sensor[7] < 1000
+      if temp_int < 1000
+        msg += string.format(" &#x2600;&#xFE0F; %.1f°C", temp_int)       # Sunshine - Temperature internal
+        msg += string.format(" &#x1F4A7; %.1f%%", humidity)              # Raindrop - Humidity
+      end
+      if temp_ext < 1000
         msg += string.format(" &#x2600;&#xFE0F; ext %.1f°C", temp_ext)   # Sunshine - Temperature external
       end
       msg += "{e}"                                                       # = </td></tr>
