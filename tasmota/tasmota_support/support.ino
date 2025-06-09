@@ -2462,7 +2462,7 @@ void SyslogAsync(bool refresh) {
         return;
       }
 
-      char header[64];
+      char header[100];
       /* Legacy format (until v13.3.0.1) - HOSTNAME TAG: MSG
          SYSLOG-MSG = wemos5 ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
          Result = 2023-12-20T13:41:11.825749+01:00 wemos5 ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
@@ -2484,11 +2484,7 @@ void SyslogAsync(bool refresh) {
          LOG_LEVEL_DEBUG      3 -> severity level 7 - Debug
          LOG_LEVEL_DEBUG_MORE 4 -> severity level 7 - Debug
       */
-      snprintf_P(header, sizeof(header), PSTR("<%d>%s ESP-"), 128 + min(loglevel * 3, 7), NetworkHostname());
-
-//       SYSLOG-MSG = <134>wemos5 Tasmota HTP: Web server active on wemos5 with IP address 192.168.2.172
-//       Result = 2023-12-21T11:31:50.378816+01:00 wemos5 Tasmota HTP: Web server active on wemos5 with IP address 192.168.2.172
-//      snprintf_P(header, sizeof(header), PSTR("<134>%s Tasmota "), NetworkHostname());
+//      snprintf_P(header, sizeof(header), PSTR("<%d>%s ESP-"), 128 + min(loglevel * 3, 7), NetworkHostname());
 
       /* RFC3164 - BSD syslog protocol - <PRI>TIMESTAMP HOSTNAME TAG: MSG
          <PRI> = Facility 16 (= local use 0), Severity 6 (= informational) => 16 * 8 + 6 = <134>
@@ -2500,11 +2496,7 @@ void SyslogAsync(bool refresh) {
       */
 //      snprintf_P(header, sizeof(header), PSTR("<134>%s %s ESP-"), GetSyslogDate(line).c_str(), NetworkHostname());
 
-//       SYSLOG-MSG = <134>Jan  1 00:00:02 wemos5 Tasmota HTP: Web server active on wemos5 with IP address 192.168.2.172
-//       Result = 2023-01-01T00:00:02+01:00 wemos5 Tasmota HTP: Web server active on wemos5 with IP address 192.168.2.172
-//      snprintf_P(header, sizeof(header), PSTR("<134>%s %s Tasmota "), GetSyslogDate(line).c_str(), NetworkHostname());
-
-      /* RFC5425 - Syslog protocol - <PRI>VERSION TIMESTAMP HOSTNAME APP_NAME PROCID STRUCTURED-DATA MSGID MSG
+      /* RFC5424 - Syslog protocol - <PRI>VERSION TIMESTAMP HOSTNAME APP_NAME PROCID STRUCTURED-DATA MSGID MSG
          <PRI> = Facility 16 (= local use 0), Severity 6 (= informational) => 16 * 8 + 6 = <134>
          VERSION = 1
          TIMESTAMP = yyyy-mm-ddThh:mm:ss.nnnnnn-hh:mm (= local with timezone)
@@ -2516,17 +2508,22 @@ void SyslogAsync(bool refresh) {
          Result = 1970-01-01T00:00:02.096000+00:00 wemos5 Tasmota ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
          Notice date and time is provided by Tasmota device.
       */
-//      char line_time[mxtime];
-//      subStr(line_time, line, " ", 1);                                 // 00:00:02.096-026
-//      subStr(line_time, line_time, "-", 1);                            // 00:00:02.096
-//      String systime = GetDate() + line_time + "000" + GetTimeZone();  // 1970-01-01T00:00:02.096000+01:00
-//      snprintf_P(header, sizeof(header), PSTR("<134>1 %s %s Tasmota - - ESP-"), systime.c_str(), NetworkHostname());
-
-//       SYSLOG-MSG = <134>1 1970-01-01T00:00:02.096000+01:00 wemos5 Tasmota - - HTP: Web server active on wemos5 with IP address 192.168.2.172
-//       Result = 1970-01-01T00:00:02.096000+00:00 wemos5 Tasmota HTP: Web server active on wemos5 with IP address 192.168.2.172
-//      snprintf_P(header, sizeof(header), PSTR("<134>1 %s %s Tasmota - - "), systime.c_str(), NetworkHostname());
+      char line_time[mxtime];
+      subStr(line_time, line, " ", 1);                                 // 00:00:02.096-026
+      subStr(line_time, line_time, "-", 1);                            // 00:00:02.096
+      String systime = GetDate() + line_time + "000" + GetTimeZone();  // 1970-01-01T00:00:02.096000+01:00
+//      snprintf_P(header, sizeof(header), PSTR("<%d>1 %s %s tasmota - - ESP-"), 128 + min(loglevel * 3, 7), systime.c_str(), NetworkHostname());
+      snprintf_P(header, sizeof(header), PSTR("<%d>1 %s %s tasmota - - -"), 128 + min(loglevel * 3, 7), systime.c_str(), NetworkHostname());
 
       char* line_start = line +mxtime;
+/*
+      TasConsole.printf("Header: '");
+      TasConsole.printf(header);
+      TasConsole.printf("', line: '");
+      TasConsole.write((uint8_t*)line_start, len -mxtime -1);
+      TasConsole.printf("'\r\n");
+*/
+
 #ifdef ESP8266
       // Packets over 1460 bytes are not send
       uint32_t line_len;

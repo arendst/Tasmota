@@ -26,7 +26,8 @@ All notable changes to this project will be documented in this file.
 - Berry change number parser for json to reuse same parser as lexer (#23505)
 - Berry increase web hooks from 16 to 32 (#23507)
 - ESP32 LVGL library from v9.2.2 to v9.3.0 (#23518)
-- Zigbee improved message when coordinator failed to start
+- Zigbee improved message when coordinator failed to start (#23525)
+- Format syslog messages according to RFC5424 adding local log time (#23509)
 
 ### Fixed
 - Haspmota `haspmota.parse()` page parsing (#23403)

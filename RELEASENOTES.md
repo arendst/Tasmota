@@ -144,6 +144,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - GPIOViewer from v1.6.2 to v1.6.3 (No functional change)
 - Allow command `WebRefresh` minimum from 1000 to 400 mSec
 - Increase number of supported LoRaWan nodes from 4 to 16
+- Format syslog messages according to RFC5424 adding local log time [#23509](https://github.com/arendst/Tasmota/issues/23509)
+- Zigbee improved message when coordinator failed to start [#23525](https://github.com/arendst/Tasmota/issues/23525)
 - Berry change number parser for json to reuse same parser as lexer [#23505](https://github.com/arendst/Tasmota/issues/23505)
 - Berry increase web hooks from 16 to 32 [#23507](https://github.com/arendst/Tasmota/issues/23507)
 
