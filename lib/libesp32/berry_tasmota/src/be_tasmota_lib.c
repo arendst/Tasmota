@@ -184,6 +184,7 @@ class be_class_tasmota (scope: global, name: Tasmota) {
     exec_cmd, closure(class_Tasmota_exec_cmd_closure)
     gc, closure(class_Tasmota_gc_closure)
     event, closure(class_Tasmota_event_closure)
+    is_network_up, closure(class_Tasmota_is_network_up_closure)
     when_network_up, closure(class_Tasmota_when_network_up_closure)
     run_network_up, closure(class_Tasmota_run_network_up_closure)
     add_driver, closure(class_Tasmota_add_driver_closure)
