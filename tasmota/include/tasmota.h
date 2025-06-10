@@ -442,6 +442,7 @@ enum XsnsFunctions { FUNC_SETTINGS_OVERRIDE, FUNC_SETUP_RING1, FUNC_SETUP_RING2,
                      FUNC_WEB_GET_ARG, FUNC_WEB_ADD_HANDLER, FUNC_SET_SCHEME, FUNC_HOTPLUG_SCAN, FUNC_TIME_SYNCED,
                      FUNC_DEVICE_GROUP_ITEM,
                      FUNC_NETWORK_UP, FUNC_NETWORK_DOWN,
+                     FUNC_WEB_STATUS_LEFT, FUNC_WEB_STATUS_RIGHT,
                      FUNC_return_result = 200,  // Insert function WITHOUT return results before here. Following functions return results
                      FUNC_PIN_STATE, FUNC_MODULE_INIT, FUNC_ADD_BUTTON, FUNC_ADD_SWITCH, FUNC_BUTTON_PRESSED, FUNC_BUTTON_MULTI_PRESSED,
                      FUNC_SET_DEVICE_POWER,

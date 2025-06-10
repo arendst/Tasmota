@@ -431,8 +431,9 @@ class type_mapper_class:
     "lv_point_precise_t *": "lv_point_precise",
     "lv_draw_image_dsc_t *": "lv_draw_image_dsc",
     "lv_event_dsc_t *": "lv_event_dsc",
+    "lv_span_coords_t": "lv_span_coords",
 
-    # "_lv_obj_t *": "lv_obj",    // no more used in LVGL 9.2
+    "_lv_obj_t *": "lv_obj",
     "lv_obj_t *": "lv_obj",
     "lv_event_t *": "lv_event",
     "lv_color_t": "lv_color",
@@ -441,7 +442,7 @@ class type_mapper_class:
     "lv_font_t *": "lv_font",
     "lv_theme_t *": "lv_theme",
     "lv_display_t *": "lv_display",
-    # '_lv_display_t *': "lv_display",  // no more used in LVGL 9.2
+    '_lv_display_t *': "lv_display",
     "lv_indev_t *": "lv_indev",
     "lv_point_t []": "lv_point_arr",
     "lv_span_t *": "lv_span",
@@ -461,6 +462,12 @@ class type_mapper_class:
     "constchar **": "c",      # treat as a simple pointer, decoding needs to be done at Berry level
     "void * []": "c",         # treat as a simple pointer, decoding needs to be done at Berry level
     "constchar * *": "c",
+    # new in 9.3.0
+    "lv_text_cmd_state_t *": "c",
+    "lv_font_info_t *": "lv_font_info",
+    "lv_switch_orientation_t": "i",
+    "lv_slider_orientation_t": "i",
+    "lv_draw_letter_dsc_t *": "lv_draw_letter_dsc",
 
     # callbacks
     "lv_group_focus_cb_t": "lv_group_focus_cb",

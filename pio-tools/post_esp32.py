@@ -34,8 +34,11 @@ import subprocess
 import codecs
 from colorama import Fore, Back, Style
 from SCons.Script import COMMAND_LINE_TARGETS
+from platformio.project.config import ProjectConfig
 
-sys.path.append(join(platform.get_package_dir("tool-esptoolpy")))
+esptoolpy = os.path.join(ProjectConfig.get_instance().get("platformio", "packages_dir"), "tool-esptoolpy")
+sys.path.append(esptoolpy)
+
 import esptool
 
 config = env.GetProjectConfig()
@@ -89,7 +92,6 @@ def esp32_detect_flashsize():
     if not "esptool" in uploader:
         return "4MB",False
     else:
-        esptoolpy = join(platform.get_package_dir("tool-esptoolpy") or "", "esptool.py")
         esptoolpy_flags = ["flash_id"]
         esptoolpy_cmd = [env["PYTHONEXE"], esptoolpy] + esptoolpy_flags
         try:
@@ -148,10 +150,14 @@ def esp32_create_chip_string(chip):
 
 def esp32_build_filesystem(fs_size):
     files = env.GetProjectOption("custom_files_upload").splitlines()
+    num_entries = len([f for f in files if f.strip()])
     filesystem_dir = join(env.subst("$BUILD_DIR"),"littlefs_data")
     if not os.path.exists(filesystem_dir):
         os.makedirs(filesystem_dir)
-    print("Creating filesystem with content:")
+    if num_entries > 1:
+        print()
+        print(Fore.GREEN + "Will create filesystem with the following files:")
+        print()
     for file in files:
         if "no_files" in file:
             continue
@@ -171,7 +177,7 @@ def esp32_build_filesystem(fs_size):
         else:
             shutil.copy(file, filesystem_dir)
     if not os.listdir(filesystem_dir):
-        print("No files added -> will NOT create littlefs.bin and NOT overwrite fs partition!")
+        #print("No files added -> will NOT create littlefs.bin and NOT overwrite fs partition!")
         return False
     tool = env.subst(env["MKFSTOOL"])
     cmd = (tool,"-c",filesystem_dir,"-s",fs_size,join(env.subst("$BUILD_DIR"),"littlefs.bin"))
@@ -183,14 +189,15 @@ def esp32_fetch_safeboot_bin(tasmota_platform):
     safeboot_fw_url = "http://ota.tasmota.com/tasmota32/release/" + tasmota_platform + "-safeboot.bin"
     safeboot_fw_name = join(variants_dir, tasmota_platform + "-safeboot.bin")
     if(exists(safeboot_fw_name)):
-        print("safeboot binary already in place.")
+        print(Fore.GREEN + "Safeboot binary already in place")
         return True
-    print("Will download safeboot binary from URL:")
-    print(safeboot_fw_url)
+    print()
+    print(Fore.GREEN + "Will download safeboot binary from URL:")
+    print(Fore.BLUE + safeboot_fw_url)
     try:
         response = requests.get(safeboot_fw_url)
         open(safeboot_fw_name, "wb").write(response.content)
-        print("safeboot binary written to variants dir.")
+        print(Fore.GREEN + "safeboot binary written to variants dir")
         return True
     except:
         print(Fore.RED + "Download of safeboot binary failed. Please check your Internet connection.")
@@ -218,7 +225,9 @@ def esp32_create_combined_bin(source, target, env):
     fs_offset = -1           # error code value
 
     with open(env.BoardConfig().get("build.partitions")) as csv_file:
+        print()
         print("Read partitions from ",env.BoardConfig().get("build.partitions"))
+        print("--------------------------------------------------------------------")
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
         for row in csv_reader:
@@ -242,7 +251,7 @@ def esp32_create_combined_bin(source, target, env):
                     if esp32_build_filesystem(partition_size):
                         fs_offset = int(row[3],base=16)
 
-
+    print()
     new_file_name = env.subst("$BUILD_DIR/${PROGNAME}.factory.bin")
     firmware_name = env.subst("$BUILD_DIR/${PROGNAME}.bin")
     tasmota_platform = esp32_create_chip_string(chip)
@@ -280,19 +289,21 @@ def esp32_create_combined_bin(source, target, env):
         if (fw_size > max_size):
             raise Exception(Fore.RED + "firmware binary too large: %d > %d" % (fw_size, max_size))
 
-        print("    Offset | File")
+        print()
+        print("    Offset   | File")
         for section in sections:
             sect_adr, sect_file = section.split(" ", 1)
-            print(f" -  {sect_adr} | {sect_file}")
+            print(f" -  {sect_adr.ljust(8)} | {sect_file}")
             cmd += [sect_adr, sect_file]
 
         # "main" firmware to app0 - mandatory, except we just built a new safeboot bin locally
         if ("safeboot" not in firmware_name):
-            print(f" - {hex(app_offset)} | {firmware_name}")
+            print(f" -  {hex(app_offset).ljust(8)} | {firmware_name}")
             cmd += [hex(app_offset), firmware_name]
 
         else:
-            print("Upload new safeboot binary only")
+            print()
+            print(Fore.GREEN + "Upload new safeboot binary only")
 
         upload_protocol = env.subst("$UPLOAD_PROTOCOL")
         if(upload_protocol == "esptool") and (fs_offset != -1):
@@ -300,7 +311,8 @@ def esp32_create_combined_bin(source, target, env):
             if exists(fs_bin):
                 before_reset = env.BoardConfig().get("upload.before_reset", "default_reset")
                 after_reset = env.BoardConfig().get("upload.after_reset", "hard_reset")
-                print(f" - {hex(fs_offset)}| {fs_bin}")
+                print(f" -  {hex(fs_offset).ljust(8)} | {fs_bin}")
+                print()
                 cmd += [hex(fs_offset), fs_bin]
                 env.Replace(
                 UPLOADERFLAGS=[
@@ -316,11 +328,22 @@ def esp32_create_combined_bin(source, target, env):
                 ],
                 UPLOADCMD='"$PYTHONEXE" "$UPLOADER" $UPLOADERFLAGS ' + " ".join(cmd[7:])
                 )
-                print("Will use custom upload command for flashing operation to add file system defined for this build target.")
+                print(Fore.GREEN + "Will use custom upload command for flashing operation to add file system defined for this build target.")
+                print()
 
         if("safeboot" not in firmware_name):
             #print('Using esptool.py arguments: %s' % ' '.join(cmd))
-            esptool.main(cmd)
+            with open(os.devnull, 'w') as devnull:
+                old_stdout = sys.stdout
+                old_stderr = sys.stderr
+                sys.stdout = devnull
+                sys.stderr = devnull
+                try:
+                    esptool.main(cmd)
+                finally:
+                    sys.stdout = old_stdout
+                    sys.stderr = old_stderr
 
-
-env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", esp32_create_combined_bin)
+silent_action = env.Action(esp32_create_combined_bin)
+silent_action.strfunction = lambda target, source, env: '' # hack to silence scons command output
+env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", silent_action)

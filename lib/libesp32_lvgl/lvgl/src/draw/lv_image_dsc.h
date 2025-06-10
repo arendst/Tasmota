@@ -29,7 +29,7 @@ LV_EXPORT_CONST_INT(LV_IMAGE_HEADER_MAGIC);
  *      TYPEDEFS
  **********************/
 
-typedef enum lv_image_flags_t {
+typedef enum _lvimage_flags_t {
     /**
      * For RGB map of the image data, mark if it's pre-multiplied with alpha.
      * For indexed image, this bit indicated palette data is pre-multiplied with alpha.
@@ -54,6 +54,11 @@ typedef enum lv_image_flags_t {
      * In image decoder post processing, this flag means we modify it in-place.
      */
     LV_IMAGE_FLAGS_MODIFIABLE       = 0x0020,
+
+    /**
+     * The image has custom drawing methods.
+     */
+    LV_IMAGE_FLAGS_CUSTOM_DRAW      = 0x0040,
 
     /**
      * Flags reserved for user, lvgl won't use these bits.
@@ -124,6 +129,7 @@ typedef struct {
     uint32_t data_size;         /**< Size of the image in bytes*/
     const uint8_t * data;       /**< Pointer to the data of the image*/
     const void * reserved;      /**< A reserved field to make it has same size as lv_draw_buf_t*/
+    const void * reserved_2;    /**< A reserved field to make it has same size as lv_draw_buf_t*/
 } lv_image_dsc_t;
 
 /**********************

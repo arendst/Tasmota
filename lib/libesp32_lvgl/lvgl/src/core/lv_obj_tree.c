@@ -23,6 +23,7 @@
 #define disp_ll_p &(LV_GLOBAL_DEFAULT()->disp_ll)
 
 #define OBJ_DUMP_STRING_LEN 128
+#define LV_OBJ_NAME_MAX_LEN 128
 
 /**********************
  *      TYPEDEFS
@@ -36,6 +37,9 @@ static void obj_delete_core(lv_obj_t * obj);
 static lv_obj_tree_walk_res_t walk_core(lv_obj_t * obj, lv_obj_tree_walk_cb_t cb, void * user_data);
 static void dump_tree_core(lv_obj_t * obj, int32_t depth);
 static lv_obj_t * lv_obj_get_first_not_deleting_child(lv_obj_t * obj);
+#if LV_USE_OBJ_NAME
+    static lv_obj_t * find_by_name_direct(const lv_obj_t * parent, const char * name, size_t len);
+#endif /*LV_USE_OBJ_NAME*/
 
 /**********************
  *  STATIC VARIABLES
@@ -416,6 +420,166 @@ uint32_t lv_obj_get_child_count_by_type(const lv_obj_t * obj, const lv_obj_class
     return cnt;
 }
 
+#if LV_USE_OBJ_NAME
+
+void lv_obj_set_name(lv_obj_t * obj, const char * name)
+{
+    LV_ASSERT_OBJ(obj, MY_CLASS);
+
+    lv_obj_allocate_spec_attr(obj);
+
+    if(!obj->spec_attr->name_static && obj->spec_attr->name) lv_free((void *)obj->spec_attr->name);
+
+    if(name == NULL) {
+        obj->spec_attr->name = NULL;
+        obj->spec_attr->name_static = 1;
+    }
+    else {
+        obj->spec_attr->name = lv_strdup(name);
+        obj->spec_attr->name_static = 0;
+    }
+}
+
+void lv_obj_set_name_static(lv_obj_t * obj, const char * name)
+{
+    LV_ASSERT_OBJ(obj, MY_CLASS);
+
+    lv_obj_allocate_spec_attr(obj);
+
+    if(!obj->spec_attr->name_static && obj->spec_attr->name) lv_free((void *)obj->spec_attr->name);
+
+    obj->spec_attr->name = name;
+    obj->spec_attr->name_static = 1;
+}
+
+const char * lv_obj_get_name(const lv_obj_t * obj)
+{
+    LV_ASSERT_OBJ(obj, MY_CLASS);
+
+    if(obj->spec_attr == NULL) return NULL;
+    else return obj->spec_attr->name;
+}
+
+void lv_obj_get_name_resolved(const lv_obj_t * obj, char buf[], size_t buf_size)
+{
+    LV_ASSERT_OBJ(obj, MY_CLASS);
+
+    const char * name = lv_obj_get_name(obj);
+    /*Use a default name which auto-indexing*/
+    char name_buf[LV_OBJ_NAME_MAX_LEN];
+    if(name == NULL) {
+        lv_snprintf(name_buf, sizeof(name_buf), "%s_#", obj->class_p->name);
+        name = name_buf;
+    }
+
+    size_t name_len = lv_strlen(name);
+    lv_obj_t * parent = lv_obj_get_parent(obj);
+
+    /*If the last character is # automatically index the children with the same name start*/
+    if(parent && name_len > 0 && name[name_len - 1] == '#') {
+        uint32_t child_cnt = lv_obj_get_child_count(parent);
+        uint32_t cnt = 0;
+        uint32_t i;
+        for(i = 0; i < child_cnt; i++) {
+            lv_obj_t * child = lv_obj_get_child(parent, i);
+            /*All siblings older siblings are checked, craft the name of this widget*/
+            if(child == obj) {
+                char num_buf[8];
+                size_t num_len;
+                num_len = lv_snprintf(num_buf, sizeof(num_buf), "%d", cnt);
+                /*Is there enough space for the name and the index?*/
+                if(buf_size > name_len + num_len) {
+                    /*E.g. buf = "some_name_", so trim the # from the end*/
+                    lv_strncpy(buf, name, name_len - 1);
+                    lv_strcpy(&buf[name_len - 1], num_buf);
+                }
+                else {
+                    /*Use the name as it is as a fallback*/
+                    lv_strlcpy(buf, obj->spec_attr->name, buf_size);
+                }
+                break;
+            }
+            /*Check the older siblings. IF they start with the same name count them*/
+            else {
+                const char * child_name = lv_obj_get_name(child);
+                if(child_name == NULL) {
+                    /*If the name we are looking for start with the child's class name
+                     *increment the index. E.g. <class_name>_#*/
+                    size_t class_name_len = lv_strlen(child->class_p->name);
+                    if(name_len > 3 && class_name_len == name_len - 2 &&
+                       lv_strncmp(child->class_p->name, name, class_name_len) == 0) {
+                        cnt++;
+                    }
+                }
+                /*The name is set, check if it's e.g. <some_name>#*/
+                else {
+                    if(lv_strcmp(child->spec_attr->name, name) == 0) {
+                        cnt++;
+                    }
+                }
+            }
+        }
+    }
+    else {
+        /*Just use the set name*/
+        lv_strlcpy(buf, obj->spec_attr->name, buf_size);
+    }
+}
+
+lv_obj_t * lv_obj_get_child_by_name(const lv_obj_t * parent, const char * path)
+{
+    LV_ASSERT_OBJ(parent, MY_CLASS);
+
+    if(parent == NULL || parent->spec_attr == NULL || path == NULL) return NULL;
+
+    while(*path) {
+        const char * segment = path;
+        uint32_t len = 0;
+
+        /* Calculate the length of the current segment */
+        while(path[len] && path[len] != '/')
+            len++;
+
+        /* Look for a child whose resolved name exactly matches the segment */
+        lv_obj_t * child = find_by_name_direct(parent, segment, len);
+        if(!child) return NULL; /*Segment not found*/
+
+        /* Advance to the next segment */
+        path += len;
+        if(*path == '/') path++; /* Skip the '/' */
+
+        /* If there is no further segment, we've found the target child */
+        if(*path == '\0') return child;
+
+        parent = child;
+    }
+
+    return NULL;
+
+}
+
+lv_obj_t * lv_obj_find_by_name(const lv_obj_t * parent, const char * name)
+{
+    if(parent == NULL) parent = lv_display_get_screen_active(NULL);
+    if(parent == NULL) return NULL;
+
+    lv_obj_t * child = find_by_name_direct(parent, name, UINT16_MAX);
+    if(child) return child;
+
+    /*Search children recursively*/
+    uint32_t child_cnt = lv_obj_get_child_count(parent);
+    uint32_t i;
+    for(i = 0; i < child_cnt; i++) {
+        child = parent->spec_attr->children[i];
+        lv_obj_t * found = lv_obj_find_by_name(child, name);
+        if(found != NULL) return found;
+    }
+
+    return NULL;
+}
+
+#endif /*LV_USE_OBJ_NAME*/
+
 int32_t lv_obj_get_index(const lv_obj_t * obj)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
@@ -634,7 +798,7 @@ static void dump_tree_core(lv_obj_t * obj, int32_t depth)
 #endif
 
     /*id of `obj0` is an invalid id for builtin id*/
-    LV_LOG_USER("parent:%p, obj:%p, id:%s;", (void *)(obj ? obj->parent : NULL), (void *)obj, id);
+    LV_LOG_USER("%*sobj:%p, id:%s;", (int)(2 * depth), "", (void *)obj, id);
 #endif /*LV_USE_LOG*/
 
     if(obj && obj->spec_attr && obj->spec_attr->child_cnt) {
@@ -660,3 +824,22 @@ static lv_obj_t * lv_obj_get_first_not_deleting_child(lv_obj_t * obj)
 
     return NULL;
 }
+
+#if LV_USE_OBJ_NAME
+
+static lv_obj_t * find_by_name_direct(const lv_obj_t * parent, const char * name, size_t len)
+{
+    uint32_t i;
+    uint32_t child_cnt = lv_obj_get_child_count(parent);
+    for(i = 0; i < child_cnt; i++) {
+        lv_obj_t * child = parent->spec_attr->children[i];
+
+        char child_name_resolved[LV_OBJ_NAME_MAX_LEN];
+        lv_obj_get_name_resolved(child, child_name_resolved, sizeof(child_name_resolved));
+        if(lv_strncmp(child_name_resolved, name, len) == 0) return child;
+    }
+
+    return NULL;
+}
+
+#endif /*LV_USE_OBJ_NAME*/

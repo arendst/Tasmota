@@ -219,6 +219,15 @@ BERRY_API int be_loadbuffer(bvm *vm,
     return be_protectedparser(vm, name, _sgets, &sbuf, bfalse);
 }
 
+BERRY_API int be_loadbuffer_local(bvm *vm,
+    const char *name, const char *buffer, size_t length, bbool islocal)
+{
+    struct strbuf sbuf;
+    sbuf.s = buffer;
+    sbuf.len = length;
+    return be_protectedparser(vm, name, _sgets, &sbuf, islocal);
+}
+
 static int fileparser(bvm *vm, const char *name, bbool islocal)
 {
     int res = BE_IO_ERROR;

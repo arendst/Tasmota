@@ -63,7 +63,16 @@ void TCPLoop(void)
   if ((server_tcp) && (server_tcp->hasClient())) {
     WiFiClient new_client = server_tcp->available();
 
-    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "Got connection from %s"), new_client.remoteIP().toString().c_str());
+    // count already connected ports
+    uint32_t connected = 0;
+    for (uint32_t i=0; i<nitems(client_tcp); i++) {
+      WiFiClient &client = client_tcp[i];
+      if (client.connected()) {
+        connected++;
+      }
+    }
+
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_TCP "Got connection from %s (%i already connected)"), new_client.remoteIP().toString().c_str(), connected);
     // Check for IP filtering if it's enabled.
     if (ip_filter_enabled) {
       if (ip_filter != new_client.remoteIP()) {
@@ -80,13 +89,17 @@ void TCPLoop(void)
       WiFiClient &client = client_tcp[i];
       if (!client) {
         client = new_client;
+        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "Adding connection to slot %i"), i);
         break;
       }
     }
     if (i >= nitems(client_tcp)) {
       i = client_next++ % nitems(client_tcp);
       WiFiClient &client = client_tcp[i];
-      client.stop();
+      if (client.connected()) {
+        AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_TCP "Replacing connection in slot %i, closing connection from %s"), i, client.remoteIP().toString().c_str());
+        client.stop();
+      }
       client = new_client;
     }
   }

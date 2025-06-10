@@ -3,7 +3,7 @@
 // input sha256: ee7e68972559c2ad3df6a6594445bfdfeb14a0a37dec2389ec20a197c26c9311
 /////////////////////////////////////////////////////////////////////
 
-const size_t HTTP_HEAD_STYLE_ZIGBEE_SIZE = 363;
+const size_t HTTP_HEAD_STYLE_ZIGBEE_SIZE = 363;    // compressed size 240 bytes
 const char HTTP_HEAD_STYLE_ZIGBEE_COMPRESSED[] PROGMEM = "\x3A\x0E\xA3\xDA\x3B\x0D\x87\x5F\xB4\xDB\xBC\x3C\x79\x8E\xCF\x88\xFE\x75\x8E\xC3"
                              "\x61\xE0\x66\x7B\x6B\x73\x8F\x3F\xB0\xAE\xB4\xCD\x9E\x04\xDF\x0C\x0A\xCC\x8F\x3D"
                              "\xE0\xB7\x99\xD6\x38\x2C\x0C\xD0\xF0\x3F\xA2\x50\xA3\xCC\xE5\x32\x18\x6C\x3C\x0A"

@@ -60,6 +60,11 @@ size_t lv_strlen(const char * str)
     return strlen(str);
 }
 
+size_t lv_strnlen(const char * str, size_t max_len)
+{
+    return strnlen(str, max_len);
+}
+
 size_t lv_strlcpy(char * dst, const char * src, size_t dst_size)
 {
     size_t src_len = strlen(src);
@@ -86,6 +91,11 @@ int lv_strcmp(const char * s1, const char * s2)
     return strcmp(s1, s2);
 }
 
+int lv_strncmp(const char * s1, const char * s2, size_t len)
+{
+    return strncmp(s1, s2, len);
+}
+
 char * lv_strdup(const char * src)
 {
     /*strdup uses malloc, so use the lv_malloc when LV_USE_STDLIB_MALLOC is not LV_STDLIB_CLIB */
@@ -97,6 +107,17 @@ char * lv_strdup(const char * src)
     return dst;
 }
 
+char * lv_strndup(const char * src, size_t max_len)
+{
+    size_t len = lv_strnlen(src, max_len);
+    char * dst = lv_malloc(len + 1);
+    if(dst == NULL) return NULL;
+
+    lv_memcpy(dst, src, len);
+    dst[len] = '\0';
+    return dst;
+}
+
 char * lv_strcat(char * dst, const char * src)
 {
     return strcat(dst, src);
@@ -105,6 +126,11 @@ char * lv_strcat(char * dst, const char * src)
 char * lv_strncat(char * dst, const char * src, size_t src_len)
 {
     return strncat(dst, src, src_len);
+}
+
+char * lv_strchr(const char * str, int c)
+{
+    return strchr(str, c);
 }
 
 /**********************

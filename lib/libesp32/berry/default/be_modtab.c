@@ -224,6 +224,7 @@ BERRY_LOCAL const bntvmodule_t* const be_module_table[] = {
 };
 
 be_extern_native_class(dyn);
+be_extern_native_class(sortedmap);
 be_extern_native_class(tasmota);
 be_extern_native_class(Trigger);
 be_extern_native_class(Driver);
@@ -281,6 +282,7 @@ BERRY_LOCAL bclass_array be_class_table = {
 #ifdef TASMOTA
     /* first list are direct classes */
     &be_native_class(dyn),
+    &be_native_class(sortedmap),
     &be_native_class(tasmota),
     &be_native_class(Trigger),
     &be_native_class(Driver),

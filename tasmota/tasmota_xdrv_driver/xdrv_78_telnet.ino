@@ -97,6 +97,25 @@ void TelnetWriteColor(uint32_t color) {
   }
 }
 
+void TelnetLDJsonPPCb(const char* line, uint32_t len) {
+  uint32_t textcolor = Telnet.color[Telnet.prompt];
+  uint32_t diffcolor = textcolor;
+  if ((textcolor >= 30) && (textcolor <= 37)) {
+    diffcolor += 60;                               // Highlight color
+  }
+  else if ((textcolor >= 90) && (textcolor <= 97)) {
+    diffcolor -= 60;                               // Lowlight color
+  }
+  char* time_end = (char*)memchr(line, ' ', len);  // Find first word (usually 14:49:36.123-017)
+  uint32_t time_len = time_end - line;
+  TelnetWriteColor(diffcolor);
+  Telnet.client.write(line, time_len);
+  TelnetWriteColor(textcolor);
+  Telnet.client.write(time_end, len - time_len);
+  TelnetWriteColor(0);
+  Telnet.client.println();
+}
+
 void TelnetWrite(char *line, uint32_t len) {
   if (Telnet.client) {
     if (3 == Telnet.prompt) {                        // Print linefeed for non-requested data
@@ -104,22 +123,10 @@ void TelnetWrite(char *line, uint32_t len) {
       Telnet.client.println();
     }
     // line = 14:49:36.123-017 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}
-    uint32_t textcolor = Telnet.color[Telnet.prompt];
-    uint32_t diffcolor = textcolor;
-    if ((textcolor >= 30) && (textcolor <= 37)) {
-      diffcolor += 60;                               // Highlight color
+
+    if (!LogDataJsonPrettyPrint(line, len, TelnetLDJsonPPCb)) { 
+      TelnetLDJsonPPCb(line, len);
     }
-    else if ((textcolor >= 90) && (textcolor <= 97)) {
-      diffcolor -= 60;                               // Lowlight color
-    }
-    char* time_end = (char*)memchr(line, ' ', len);  // Find first word (usually 14:49:36.123-017)
-    uint32_t time_len = time_end - line;
-    TelnetWriteColor(diffcolor);
-    Telnet.client.write(line, time_len);
-    TelnetWriteColor(textcolor);
-    Telnet.client.write(time_end, len - time_len);
-    TelnetWriteColor(0);
-    Telnet.client.println();
   }
 }
 
@@ -182,9 +189,23 @@ void TelnetLoop(void) {
     }
 
     // Input keyboard data
+    bool telnet_iac = false;
     while (Telnet.client.available()) {
       yield();
       uint8_t in_byte = Telnet.client.read();
+
+      if (telnet_iac) {
+        telnet_iac = false;
+        if (in_byte != 0xFF)  {
+          // Process telnet Interpret as Command (IAC) codes
+          AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_TELNET "IAC %d"), in_byte);
+          continue;
+        }
+      }
+      else if (0xFF == in_byte) {                    // Telnet Interpret as Command (IAC)
+        telnet_iac = true;
+        continue;
+      }
 
 #ifdef USE_XYZMODEM
       if (XYZModemWifiClientStart(&Telnet.client, in_byte)) { return; }

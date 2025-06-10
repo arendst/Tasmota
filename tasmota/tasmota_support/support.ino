@@ -2437,7 +2437,7 @@ void SyslogAsync(bool refresh) {
 
   char* line;
   size_t len;
-  while (GetLog(TasmotaGlobal.syslog_level, &index, &line, &len)) {
+  while (int loglevel = GetLog(TasmotaGlobal.syslog_level, &index, &line, &len)) {
     // <--- mxtime ---> TAG: <---------------------- MSG ---------------------------->
     // 00:00:02.096-029 HTP: Web server active on wemos5 with IP address 192.168.2.172
     //                  HTP: Web server active on wemos5 with IP address 192.168.2.172
@@ -2462,7 +2462,7 @@ void SyslogAsync(bool refresh) {
         return;
       }
 
-      char header[64];
+      char header[128];
       /* Legacy format (until v13.3.0.1) - HOSTNAME TAG: MSG
          SYSLOG-MSG = wemos5 ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
          Result = 2023-12-20T13:41:11.825749+01:00 wemos5 ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
@@ -2473,16 +2473,18 @@ void SyslogAsync(bool refresh) {
 //      snprintf_P(header, sizeof(header), PSTR("%s ESP-"), NetworkHostname());
 
       /* Legacy format - <PRI>HOSTNAME TAG: MSG
-         <PRI> = Facility 16 (= local use 0), Severity 6 (= informational) => 16 * 8 + 6 = <134>
+         <PRI> = Facility 16 (= local use 0), Severity 6 (= informational) => 16 * 8 + 6 = 128 + 6 = <134>
          SYSLOG-MSG = <134>wemos5 ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
          Result = 2023-12-21T11:31:50.378816+01:00 wemos5 ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
          Notice in both cases the date and time is taken from the syslog server. Uncompression message is gone.
-      */
-      snprintf_P(header, sizeof(header), PSTR("<134>%s ESP-"), NetworkHostname());
 
-//       SYSLOG-MSG = <134>wemos5 Tasmota HTP: Web server active on wemos5 with IP address 192.168.2.172
-//       Result = 2023-12-21T11:31:50.378816+01:00 wemos5 Tasmota HTP: Web server active on wemos5 with IP address 192.168.2.172
-//      snprintf_P(header, sizeof(header), PSTR("<134>%s Tasmota "), NetworkHostname());
+         Translate Tasmota loglevel to syslog severity level:
+         LOG_LEVEL_ERROR      1 -> severity level 3 - Error
+         LOG_LEVEL_INFO       2 -> severity level 6 - Informational
+         LOG_LEVEL_DEBUG      3 -> severity level 7 - Debug
+         LOG_LEVEL_DEBUG_MORE 4 -> severity level 7 - Debug
+      */
+//      snprintf_P(header, sizeof(header), PSTR("<%d>%s ESP-"), 128 + min(loglevel * 3, 7), NetworkHostname());
 
       /* RFC3164 - BSD syslog protocol - <PRI>TIMESTAMP HOSTNAME TAG: MSG
          <PRI> = Facility 16 (= local use 0), Severity 6 (= informational) => 16 * 8 + 6 = <134>
@@ -2494,48 +2496,67 @@ void SyslogAsync(bool refresh) {
       */
 //      snprintf_P(header, sizeof(header), PSTR("<134>%s %s ESP-"), GetSyslogDate(line).c_str(), NetworkHostname());
 
-//       SYSLOG-MSG = <134>Jan  1 00:00:02 wemos5 Tasmota HTP: Web server active on wemos5 with IP address 192.168.2.172
-//       Result = 2023-01-01T00:00:02+01:00 wemos5 Tasmota HTP: Web server active on wemos5 with IP address 192.168.2.172
-//      snprintf_P(header, sizeof(header), PSTR("<134>%s %s Tasmota "), GetSyslogDate(line).c_str(), NetworkHostname());
+      char* msg_start = line +mxtime;
+      uint32_t msg_len = len -mxtime -1;
 
-      /* RFC5425 - Syslog protocol - <PRI>VERSION TIMESTAMP HOSTNAME APP_NAME PROCID STRUCTURED-DATA MSGID MSG
+      /* RFC5424 - Syslog protocol - <PRI>VERSION TIMESTAMP HOSTNAME APP_NAME PROCID STRUCTURED-DATA MSGID MSG
          <PRI> = Facility 16 (= local use 0), Severity 6 (= informational) => 16 * 8 + 6 = <134>
          VERSION = 1
          TIMESTAMP = yyyy-mm-ddThh:mm:ss.nnnnnn-hh:mm (= local with timezone)
-         APP_NAME = Tasmota
+         APP_NAME = tasmota
          PROCID = -
          STRUCTURED-DATA = -
-         MSGID = ESP-HTP:
+         MSGID = HTP:
          SYSLOG-MSG = <134>1 1970-01-01T00:00:02.096000+01:00 wemos5 Tasmota - - ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
          Result = 1970-01-01T00:00:02.096000+00:00 wemos5 Tasmota ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
          Notice date and time is provided by Tasmota device.
       */
-//      char line_time[mxtime];
-//      subStr(line_time, line, " ", 1);                                 // 00:00:02.096-026
-//      subStr(line_time, line_time, "-", 1);                            // 00:00:02.096
-//      String systime = GetDate() + line_time + "000" + GetTimeZone();  // 1970-01-01T00:00:02.096000+01:00
-//      snprintf_P(header, sizeof(header), PSTR("<134>1 %s %s Tasmota - - ESP-"), systime.c_str(), NetworkHostname());
-
-//       SYSLOG-MSG = <134>1 1970-01-01T00:00:02.096000+01:00 wemos5 Tasmota - - HTP: Web server active on wemos5 with IP address 192.168.2.172
-//       Result = 1970-01-01T00:00:02.096000+00:00 wemos5 Tasmota HTP: Web server active on wemos5 with IP address 192.168.2.172
-//      snprintf_P(header, sizeof(header), PSTR("<134>1 %s %s Tasmota - - "), systime.c_str(), NetworkHostname());
-
-      char* line_start = line +mxtime;
+      char timestamp[mxtime];
+      subStr(timestamp, line, " ", 1);                        // 00:00:02.096-026
+      subStr(timestamp, timestamp, "-", 1);                   // 00:00:02.096
+/*
+      snprintf_P(header, sizeof(header), PSTR("<%d>1 %s%s000%s %s tasmota - - -"),
+        128 + min(loglevel * 3, 7),
+        GetDate().c_str(), timestamp, GetTimeZone().c_str(),  // 1970-01-01T00:00:02.096000+01:00
+        NetworkHostname());
+*/
+      char msgid[5];
+      char* line_msgid = strchr(msg_start, ' ');
+      if (line_msgid - msg_start < sizeof(msgid)) {           // Only 3 character message ids supported
+        subStr(msgid, msg_start, " ", 1);                     // HTP:
+        msg_start += strlen(msgid);
+        msg_len -= strlen(msgid);
+      } else {
+        strcpy(msgid, "-");                                   // -
+      }
+      snprintf_P(header, sizeof(header), PSTR("<%d>1 %s%s000%s %s tasmota - - %s"),
+        128 + min(loglevel * 3, 7),                           // Error (1) = 131, Info (2) = 134, Debug (3) = 135, DebugMore = (4) 135
+        GetDate().c_str(), timestamp, GetTimeZone().c_str(),  // 1970-01-01T00:00:02.096000+01:00
+        NetworkHostname(), msgid);
+/*
+      TasConsole.printf("Loglevel ");
+      TasConsole.print(loglevel);
+      TasConsole.printf(", Header '");
+      TasConsole.printf(header);
+      TasConsole.printf("', Msg '");
+      TasConsole.write((uint8_t*)msg_start, msg_len);
+      TasConsole.printf("'\r\n");
+*/
 #ifdef ESP8266
       // Packets over 1460 bytes are not send
-      uint32_t line_len;
-      int32_t log_len = len -mxtime -1;
+      uint32_t package_len;
+      int32_t log_len = msg_len;
       while (log_len > 0) {
         PortUdp.write(header);
-        line_len = (log_len > 1460) ? 1460 : log_len;
-        PortUdp.write((uint8_t*)line_start, line_len);
+        package_len = (log_len > 1460) ? 1460 : log_len;
+        PortUdp.write((uint8_t*)msg_start, package_len);
         PortUdp.endPacket();
         log_len -= 1460;
-        line_start += 1460;
+        msg_start += 1460;
       }
 #else
       PortUdp.write((const uint8_t*)header, strlen(header));
-      PortUdp.write((uint8_t*)line_start, len -mxtime -1);
+      PortUdp.write((uint8_t*)msg_start, msg_len);
       PortUdp.endPacket();
 #endif
 
@@ -2562,12 +2583,12 @@ bool NeedLogRefresh(uint32_t req_loglevel, uint32_t index) {
   return ((line - TasmotaGlobal.log_buffer) < LOG_BUFFER_SIZE / 4);
 }
 
-bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* len_p) {
-  if (!TasmotaGlobal.log_buffer) { return false; }  // Leave now if there is no buffer available
-  if (TasmotaGlobal.uptime < 3) { return false; }   // Allow time to setup correct log level
+uint32_t GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* len_p) {
+  if (!TasmotaGlobal.log_buffer) { return 0; }  // Leave now if there is no buffer available
+  if (TasmotaGlobal.uptime < 3) { return 0; }   // Allow time to setup correct log level
 
   uint32_t index = *index_p;
-  if (!req_loglevel || (index == TasmotaGlobal.log_buffer_pointer)) { return false; }
+  if (!req_loglevel || (index == TasmotaGlobal.log_buffer_pointer)) { return 0; }
 
 #ifdef ESP32
   // this takes the mutex, and will be release when the class is destroyed -
@@ -2604,11 +2625,100 @@ bool GetLog(uint32_t req_loglevel, uint32_t* index_p, char** entry_pp, size_t* l
         (TasmotaGlobal.masterlog_level <= req_loglevel)) {
       *entry_pp = entry_p;
       *len_p = len;
-      return true;
+      return loglevel;
     }
     delay(0);
   } while (index != TasmotaGlobal.log_buffer_pointer);
-  return false;
+  return 0;
+}
+
+bool LogDataJsonPrettyPrint(const char *log_line, uint32_t log_data_len, std::function<void(const char*, uint32_t)> println) {
+  // log_line:
+  // 14:49:36.123 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}
+  // 14:30:16.749-172/38 MQT: tele/atomlite3/INFO3 = {"Info3":{"RestartReason":"Vbat power on reset","BootCount":74}}
+
+  if (!Settings->mbflag2.json_pretty_print) { return false; }  // [JsonPP] Number of indents
+  char *bch = (char*)memchr(log_line, '{', log_data_len);
+  if (!bch) { return false; }                // No JSON data
+
+  uint32_t pos_brace = bch - log_line;
+  uint32_t cnt_brace = 0;                    // {}
+  uint32_t len_mxtime = strchr(log_line, ' ') - log_line +2;
+  uint32_t pos_value_pair = pos_brace;
+  uint32_t cnt_bracket = 0;                  // []
+  uint32_t cnt_Indent = 0;                   // indent
+  bool quotes = false;                       // ""
+  bool bracket_comma = false;
+  bool pls_print = false;
+  for (uint32_t i = pos_brace; i < log_data_len; i++) {
+    char curchar = log_line[i];
+    char nxtchar = log_line[i +1];
+    cnt_Indent = cnt_brace + cnt_bracket;
+    if (curchar == '{') {
+      cnt_brace++;
+      pls_print = true;
+    }
+    else if (cnt_brace) {
+      if (nxtchar == '}') {
+        pls_print = true;
+      }
+      if (curchar == '}') {
+        cnt_brace--;
+        if (cnt_brace) {
+          if (nxtchar != ',') {
+            pls_print = true;
+            cnt_Indent = cnt_brace + cnt_bracket;
+          }
+        } else {
+          pls_print = true;
+          cnt_Indent = 0;
+        }
+      }
+      else if (curchar == '[') {
+        cnt_bracket++;
+        if (nxtchar == '[') {
+          pls_print = true;
+        }
+      }
+      else if (curchar == ']') {
+        cnt_bracket--;
+        if (nxtchar == ',') {
+          bracket_comma = true;
+        }
+        else {
+          pls_print = true;
+          if ((nxtchar == ']') || (nxtchar == '}')) {
+            cnt_Indent = cnt_brace + cnt_bracket;
+          }
+        }
+      }
+      else if (curchar == '"') {
+        quotes ^= 1;
+      }
+      else if (curchar == ',') {
+        if (!quotes && (!cnt_bracket || bracket_comma)) {
+          bracket_comma = false;
+          pls_print = true;
+        }
+      }
+    }
+
+    if (pls_print) {
+      pls_print = false;
+      uint32_t len_id = (pos_brace == i) ? pos_brace +1 : len_mxtime;
+      uint32_t len_indent = cnt_Indent * Settings->mbflag2.json_pretty_print;
+      uint32_t len_value_pair = (i - pos_value_pair) +1;
+      uint32_t len_full = len_id + len_indent + len_value_pair +1;
+
+      char line[len_full];              // Known max value pair size is 152
+      strlcpy(line, log_line, len_id);  // Repeat mxtime
+      sprintf(line, "%s%*s", line, len_indent, "");  // Add space indent
+      strncat(line, log_line + pos_value_pair, len_value_pair);
+      println(line, strlen(line));      // Callback for output
+      pos_value_pair = i +1;
+    }
+  }
+  return true;
 }
 
 uint32_t HighestLogLevel(void) {
@@ -2660,7 +2770,9 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
 
   if ((loglevel <= TasmotaGlobal.seriallog_level) &&
       (TasmotaGlobal.masterlog_level <= TasmotaGlobal.seriallog_level)) {
-    TasConsole.printf("%s%s%s%s\r\n", mxtime, log_data, log_data_payload, log_data_retained);
+    if (!Settings->mbflag2.json_pretty_print || !strchr(log_data_payload, '{')) {
+      TasConsole.printf("%s%s%s%s\r\n", mxtime, log_data, log_data_payload, log_data_retained);
+    }
   }
 
   if (!TasmotaGlobal.log_buffer) { return; }  // Leave now if there is no buffer available
@@ -2707,6 +2819,14 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
 
     // These calls fail to show initial logging
     log_line += 2;                         // Skip log_buffer_pointer and loglevel
+    // 14:49:36.123 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}
+    // 14:30:16.749-172/38 MQT: tele/atomlite3/INFO3 = {"Info3":{"RestartReason":"Vbat power on reset","BootCount":74}}
+
+    if ((loglevel <= TasmotaGlobal.seriallog_level) &&
+        (TasmotaGlobal.masterlog_level <= TasmotaGlobal.seriallog_level)) {
+      LogDataJsonPrettyPrint(log_line, log_data_len, TasConsoleLDJsonPPCb);
+    }
+
 #ifdef USE_SERIAL_BRIDGE
     if (loglevel <= TasmotaGlobal.seriallog_level) {
       SerialBridgeWrite(log_line, log_data_len);
@@ -2721,6 +2841,10 @@ void AddLogData(uint32_t loglevel, const char* log_data, const char* log_data_pa
 #endif  // USE_TELNET
 
   }
+}
+
+void TasConsoleLDJsonPPCb(const char* line, uint32_t len) {
+  TasConsole.println(line);
 }
 
 void AddLog(uint32_t loglevel, PGM_P formatP, ...) {

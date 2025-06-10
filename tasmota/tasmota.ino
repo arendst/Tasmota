@@ -327,6 +327,7 @@ struct TasmotaGlobal_t {
 
   uint8_t user_globals[3];                  // User set global temp/hum/press
   uint8_t busy_time;                        // Time in ms to allow executing of time critical functions
+  uint8_t skip_sleep;                       // Skip sleep loops
   uint8_t init_state;                       // Tasmota init state
   uint8_t heartbeat_inverted;               // Heartbeat pulse inverted flag
   uint8_t spi_enabled;                      // SPI configured (bus1)
@@ -368,6 +369,7 @@ struct TasmotaGlobal_t {
   uint8_t restore_powered_off_led_counter;  // Seconds before powered-off LED (LEDLink) is restored
   uint8_t pwm_dimmer_led_bri;               // Adjusted brightness LED level
 #endif  // USE_PWM_DIMMER
+
   String mqtt_data;                         // Buffer filled by Response functions
   char version[16];                         // Composed version string like 255.255.255.255
   char image_name[33];                      // Code image and/or commit
@@ -745,11 +747,18 @@ void BacklogLoop(void) {
   }
 }
 
+void SleepSkip(void) {
+  TasmotaGlobal.skip_sleep = 250;     // Skip sleep for 250 loops;
+}
+
 void SleepDelay(uint32_t mseconds) {
   if (!TasmotaGlobal.backlog_nodelay && mseconds) {
     uint32_t wait = millis() + mseconds;
-    while (!TimeReached(wait) && !Serial.available()) {  // We need to service serial buffer ASAP as otherwise we get uart buffer overrun
+    while (!TasmotaGlobal.skip_sleep &&  // We need to service imminent interrupts ASAP
+           !TimeReached(wait) &&
+           !Serial.available()) {     // We need to service serial buffer ASAP as otherwise we get uart buffer overrun
       XdrvXsnsCall(FUNC_SLEEP_LOOP);  // Main purpose is reacting ASAP on serial data availability or interrupt handling (ADE7880)
+      if (TasmotaGlobal.skip_sleep) { break; }
       delay(1);
     }
   } else {
@@ -835,19 +844,22 @@ void loop(void) {
 
   uint32_t my_activity = millis() - my_sleep;
 
-  if (Settings->flag3.sleep_normal) {              // SetOption60 - Enable normal sleep instead of dynamic sleep
-    //  yield();                                   // yield == delay(0), delay contains yield, auto yield in loop
-    SleepDelay(TasmotaGlobal.sleep);               // https://github.com/esp8266/Arduino/issues/2021
+  if (TasmotaGlobal.skip_sleep) {
+    TasmotaGlobal.skip_sleep--;                    // Temporarily skip sleep to handle imminent interrupts outside interrupt handler
   } else {
-    if (my_activity < (uint32_t)TasmotaGlobal.sleep) {
-      SleepDelay((uint32_t)TasmotaGlobal.sleep - my_activity);  // Provide time for background tasks like wifi
+    if (Settings->flag3.sleep_normal) {            // SetOption60 - Enable normal sleep instead of dynamic sleep
+      //  yield();                                 // yield == delay(0), delay contains yield, auto yield in loop
+      SleepDelay(TasmotaGlobal.sleep);             // https://github.com/esp8266/Arduino/issues/2021
     } else {
-      if (TasmotaGlobal.global_state.network_down) {
-        SleepDelay(my_activity /2);                // If wifi down and my_activity > setoption36 then force loop delay to 1/2 of my_activity period
+      if (my_activity < (uint32_t)TasmotaGlobal.sleep) {
+        SleepDelay((uint32_t)TasmotaGlobal.sleep - my_activity);  // Provide time for background tasks like wifi
+      } else {
+        if (TasmotaGlobal.global_state.network_down) {
+          SleepDelay(my_activity /2);              // If wifi down and my_activity > setoption36 then force loop delay to 1/2 of my_activity period
+        }
       }
     }
   }
-
   if (!my_activity) { my_activity++; }             // We cannot divide by 0
   uint32_t loop_delay = TasmotaGlobal.sleep;
   if (!loop_delay) { loop_delay++; }               // We cannot divide by 0

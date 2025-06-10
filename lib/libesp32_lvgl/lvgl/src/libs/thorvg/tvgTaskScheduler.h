@@ -28,9 +28,17 @@
 
 #include <mutex>
 #include <condition_variable>
+#include <thread>
 
 #include "tvgCommon.h"
 #include "tvgInlist.h"
+
+using std::mutex;
+using std::condition_variable;
+using std::unique_lock;
+using std::thread;
+using std::atomic;
+using std::try_to_lock;
 
 namespace tvg {
 
@@ -112,6 +120,7 @@ struct TaskScheduler
 }  //namespace
 
 #endif //_TVG_TASK_SCHEDULER_H_
+ 
 
 #endif /* LV_USE_THORVG_INTERNAL */
 

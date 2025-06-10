@@ -110,7 +110,7 @@ void lv_glfw_window_delete(lv_glfw_window_t * window)
     if(window->use_indev) {
         lv_glfw_texture_t * texture;
         LV_LL_READ(&window->textures, texture) {
-            lv_indev_delete(texture->indev);
+            if(texture->indev != NULL) lv_indev_delete(texture->indev);
         }
     }
     lv_ll_clear(&window->textures);
@@ -120,6 +120,11 @@ void lv_glfw_window_delete(lv_glfw_window_t * window)
     if(lv_ll_is_empty(&glfw_window_ll)) {
         lv_glfw_window_quit();
     }
+}
+
+void * lv_glfw_window_get_glfw_window(lv_glfw_window_t * window)
+{
+    return (void *)(window->window);
 }
 
 lv_glfw_texture_t * lv_glfw_window_add_texture(lv_glfw_window_t * window, unsigned int texture_id, int32_t w, int32_t h)
@@ -300,7 +305,14 @@ static void window_update_handler(lv_timer_t * t)
                 lv_refr_now(texture_disp);
             }
 
-            lv_opengles_render_texture(texture->texture_id, &texture->area, texture->opa, window->hor_res, window->ver_res);
+            lv_area_t clip_area = texture->area;
+#if LV_USE_DRAW_OPENGLES
+            lv_opengles_render_texture(texture->texture_id, &texture->area, texture->opa, window->hor_res, window->ver_res,
+                                       &clip_area, texture_disp == NULL);
+#else
+            lv_opengles_render_texture(texture->texture_id, &texture->area, texture->opa, window->hor_res, window->ver_res,
+                                       &clip_area, true);
+#endif
         }
 
         /* Swap front and back buffers */

@@ -284,7 +284,8 @@ static void tr_string(blexer *lexer)
             break;
         }
     }
-    lexer->buf.len = dst - lexbuf(lexer);
+    size_t len = dst - lexbuf(lexer);
+    lexer->buf.len = strnlen(lexbuf(lexer), len);
 }
 
 static int skip_newline(blexer *lexer)

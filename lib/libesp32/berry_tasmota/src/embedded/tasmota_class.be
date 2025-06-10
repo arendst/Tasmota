@@ -423,10 +423,10 @@ class Tasmota
   # Execute custom command
   def exec_cmd(cmd, idx, payload)
     if self._ccmd
-      import json
-      var payload_json = json.load(payload)
       var cmd_found = self.find_key_i(self._ccmd, cmd)  # name of the command as registered (case insensitive search)
       if cmd_found != nil
+        import json
+        var payload_json = json.load(payload)
         self.resolvecmnd(cmd_found)   # set the command name in XdrvMailbox.command as it was registered first
         self._ccmd[cmd_found](cmd_found, idx, payload, payload_json)
         return true
@@ -477,7 +477,7 @@ class Tasmota
     # compile in-memory
     var compiled_code
     try
-      compiled_code = compile(f_name, 'file')
+      compiled_code = compile(f_name, 'file', true)
       if (compiled_code == nil)
         print(f"BRY: empty compiled file")
         return false

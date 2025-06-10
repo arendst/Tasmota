@@ -8,7 +8,6 @@ typedef int dummy_t;     /* Make GCC on windows happy, avoid empty translation u
 #ifndef _WIN32
 
 #include "lv_wayland_smm.h"
-#include "../../display/lv_display.h"
 
 #if LV_USE_WAYLAND
 
@@ -144,7 +143,7 @@ static struct {
 } smm_instance;
 
 
-void smm_init(struct smm_events * evs)
+void smm_init(const struct smm_events * evs)
 {
     memcpy(&smm_instance.cbs, evs, sizeof(struct smm_events));
     srand((unsigned int)clock());
@@ -175,7 +174,7 @@ smm_group_t * smm_create(void)
 {
     struct smm_group * grp;
 
-    /* Allocate and intialize a new buffer group */
+    /* Allocate and initialize a new buffer group */
     grp = malloc(sizeof(struct smm_group));
     if(grp != NULL) {
         grp->size = smm_instance.page_sz;
@@ -406,7 +405,7 @@ size_t calc_buffer_size(struct smm_buffer * buf)
 struct smm_buffer * get_from_pool(struct smm_group * grp)
 {
     int ret;
-    size_t buf_sz;
+    size_t buf_sz = 0;
     struct smm_buffer * buf;
     struct smm_buffer * last = NULL;
 
@@ -644,7 +643,7 @@ struct smm_buffer * alloc_buffer(struct smm_buffer * last, size_t offset)
         offset
     };
 
-    /* Allocate and intialize a new buffer (including linking in to pool) */
+    /* Allocate and initialize a new buffer (including linking in to pool) */
     buf = malloc(sizeof(struct smm_buffer));
     if(buf != NULL) {
         memcpy(&buf->props, &initial_props, sizeof(struct smm_buffer_properties));

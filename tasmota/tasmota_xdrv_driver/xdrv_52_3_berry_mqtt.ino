@@ -63,6 +63,9 @@ extern "C" {
       be_pop(vm, be_top(vm));   // clear stack to avoid any indirect warning message in subsequent calls to Berry
 
       MqttPublishPayload(topic, payload, is_binary ? len : 0 /*if string don't send length*/, retain);
+      if (!is_binary) {
+        XdrvRulesProcess(0, payload);  // Process rules on berry publish
+      }
 
       be_return_nil(vm); // Return
     }

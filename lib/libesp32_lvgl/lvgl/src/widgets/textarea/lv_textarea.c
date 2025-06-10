@@ -157,7 +157,7 @@ const lv_obj_class_t lv_textarea_class = {
     .editable = LV_OBJ_CLASS_EDITABLE_TRUE,
     .instance_size = sizeof(lv_textarea_t),
     .base_class = &lv_obj_class,
-    .name = "textarea",
+    .name = "lv_textarea",
 #if LV_USE_OBJ_PROPERTY
     .prop_index_start = LV_PROPERTY_TEXTAREA_START,
     .prop_index_end = LV_PROPERTY_TEXTAREA_END,
@@ -948,7 +948,8 @@ static void lv_textarea_constructor(const lv_obj_class_t * class_p, lv_obj_t * o
     ta->label = lv_label_create(obj);
     lv_obj_set_width(ta->label, lv_pct(100));
     lv_label_set_text(ta->label, "");
-    lv_obj_add_event_cb(ta->label, label_event_cb, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ta->label, label_event_cb, LV_EVENT_STYLE_CHANGED, NULL);
+    lv_obj_add_event_cb(ta->label, label_event_cb, LV_EVENT_SIZE_CHANGED, NULL);
     lv_obj_add_flag(obj, LV_OBJ_FLAG_SCROLL_ON_FOCUS);
     lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLL_WITH_ARROW);
 
@@ -1160,7 +1161,7 @@ static void start_cursor_blink(lv_obj_t * obj)
         lv_anim_set_var(&a, ta);
         lv_anim_set_exec_cb(&a, cursor_blink_anim_cb);
         lv_anim_set_duration(&a, blink_time);
-        lv_anim_set_playback_duration(&a, blink_time);
+        lv_anim_set_reverse_duration(&a, blink_time);
         lv_anim_set_values(&a, 1, 0);
         lv_anim_set_path_cb(&a, lv_anim_path_step);
         lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
@@ -1398,6 +1399,7 @@ static void draw_placeholder(lv_event_t * e)
     if(txt[0] == '\0' && ta->placeholder_txt && ta->placeholder_txt[0] != 0) {
         lv_draw_label_dsc_t ph_dsc;
         lv_draw_label_dsc_init(&ph_dsc);
+        ph_dsc.base.layer = layer;
         lv_obj_init_draw_label_dsc(obj, LV_PART_TEXTAREA_PLACEHOLDER, &ph_dsc);
 
         if(ta->one_line) ph_dsc.flag |= LV_TEXT_FLAG_EXPAND;
@@ -1429,6 +1431,7 @@ static void draw_cursor(lv_event_t * e)
 
     lv_draw_rect_dsc_t cur_dsc;
     lv_draw_rect_dsc_init(&cur_dsc);
+    cur_dsc.base.layer = layer;
     lv_obj_init_draw_rect_dsc(obj, LV_PART_CURSOR, &cur_dsc);
 
     /*Draw he cursor according to the type*/
@@ -1457,6 +1460,7 @@ static void draw_cursor(lv_event_t * e)
     lv_color_t label_color = lv_obj_get_style_text_color(ta->label, 0);
     lv_draw_label_dsc_t cur_label_dsc;
     lv_draw_label_dsc_init(&cur_label_dsc);
+    cur_label_dsc.base.layer = layer;
     lv_obj_init_draw_label_dsc(obj, LV_PART_CURSOR, &cur_label_dsc);
     if(cur_dsc.bg_opa > LV_OPA_MIN || !lv_color_eq(cur_label_dsc.color, label_color)) {
         cur_label_dsc.text = letter_buf;
