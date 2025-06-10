@@ -2462,7 +2462,7 @@ void SyslogAsync(bool refresh) {
         return;
       }
 
-      char header[100];
+      char header[128];
       /* Legacy format (until v13.3.0.1) - HOSTNAME TAG: MSG
          SYSLOG-MSG = wemos5 ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
          Result = 2023-12-20T13:41:11.825749+01:00 wemos5 ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
@@ -2496,49 +2496,67 @@ void SyslogAsync(bool refresh) {
       */
 //      snprintf_P(header, sizeof(header), PSTR("<134>%s %s ESP-"), GetSyslogDate(line).c_str(), NetworkHostname());
 
+      char* msg_start = line +mxtime;
+      uint32_t msg_len = len -mxtime -1;
+
       /* RFC5424 - Syslog protocol - <PRI>VERSION TIMESTAMP HOSTNAME APP_NAME PROCID STRUCTURED-DATA MSGID MSG
          <PRI> = Facility 16 (= local use 0), Severity 6 (= informational) => 16 * 8 + 6 = <134>
          VERSION = 1
          TIMESTAMP = yyyy-mm-ddThh:mm:ss.nnnnnn-hh:mm (= local with timezone)
-         APP_NAME = Tasmota
+         APP_NAME = tasmota
          PROCID = -
          STRUCTURED-DATA = -
-         MSGID = ESP-HTP:
+         MSGID = HTP:
          SYSLOG-MSG = <134>1 1970-01-01T00:00:02.096000+01:00 wemos5 Tasmota - - ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
          Result = 1970-01-01T00:00:02.096000+00:00 wemos5 Tasmota ESP-HTP: Web server active on wemos5 with IP address 192.168.2.172
          Notice date and time is provided by Tasmota device.
       */
-      char line_time[mxtime];
-      subStr(line_time, line, " ", 1);                                 // 00:00:02.096-026
-      subStr(line_time, line_time, "-", 1);                            // 00:00:02.096
-      String systime = GetDate() + line_time + "000" + GetTimeZone();  // 1970-01-01T00:00:02.096000+01:00
-//      snprintf_P(header, sizeof(header), PSTR("<%d>1 %s %s tasmota - - ESP-"), 128 + min(loglevel * 3, 7), systime.c_str(), NetworkHostname());
-      snprintf_P(header, sizeof(header), PSTR("<%d>1 %s %s tasmota - - -"), 128 + min(loglevel * 3, 7), systime.c_str(), NetworkHostname());
-
-      char* line_start = line +mxtime;
+      char timestamp[mxtime];
+      subStr(timestamp, line, " ", 1);                        // 00:00:02.096-026
+      subStr(timestamp, timestamp, "-", 1);                   // 00:00:02.096
 /*
-      TasConsole.printf("Header: '");
+      snprintf_P(header, sizeof(header), PSTR("<%d>1 %s%s000%s %s tasmota - - -"),
+        128 + min(loglevel * 3, 7),
+        GetDate().c_str(), timestamp, GetTimeZone().c_str(),  // 1970-01-01T00:00:02.096000+01:00
+        NetworkHostname());
+*/
+      char msgid[5];
+      char* line_msgid = strchr(msg_start, ' ');
+      if (line_msgid - msg_start < sizeof(msgid)) {           // Only 3 character message ids supported
+        subStr(msgid, msg_start, " ", 1);                     // HTP:
+        msg_start += strlen(msgid);
+        msg_len -= strlen(msgid);
+      } else {
+        strcpy(msgid, "-");                                   // -
+      }
+      snprintf_P(header, sizeof(header), PSTR("<%d>1 %s%s000%s %s tasmota - - %s"),
+        128 + min(loglevel * 3, 7),                           // Error (1) = 131, Info (2) = 134, Debug (3) = 135, DebugMore = (4) 135
+        GetDate().c_str(), timestamp, GetTimeZone().c_str(),  // 1970-01-01T00:00:02.096000+01:00
+        NetworkHostname(), msgid);
+/*
+      TasConsole.printf("Loglevel ");
+      TasConsole.print(loglevel);
+      TasConsole.printf(", Header '");
       TasConsole.printf(header);
-      TasConsole.printf("', line: '");
-      TasConsole.write((uint8_t*)line_start, len -mxtime -1);
+      TasConsole.printf("', Msg '");
+      TasConsole.write((uint8_t*)msg_start, msg_len);
       TasConsole.printf("'\r\n");
 */
-
 #ifdef ESP8266
       // Packets over 1460 bytes are not send
-      uint32_t line_len;
-      int32_t log_len = len -mxtime -1;
+      uint32_t package_len;
+      int32_t log_len = msg_len;
       while (log_len > 0) {
         PortUdp.write(header);
-        line_len = (log_len > 1460) ? 1460 : log_len;
-        PortUdp.write((uint8_t*)line_start, line_len);
+        package_len = (log_len > 1460) ? 1460 : log_len;
+        PortUdp.write((uint8_t*)msg_start, package_len);
         PortUdp.endPacket();
         log_len -= 1460;
-        line_start += 1460;
+        msg_start += 1460;
       }
 #else
       PortUdp.write((const uint8_t*)header, strlen(header));
-      PortUdp.write((uint8_t*)line_start, len -mxtime -1);
+      PortUdp.write((uint8_t*)msg_start, msg_len);
       PortUdp.endPacket();
 #endif
 
