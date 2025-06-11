@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Released]
 
-## [14.6.0] 20250613
+## [15.0.0] 20250613
 - Release Sharon
 
 ## [14.6.0.2] 20250613
