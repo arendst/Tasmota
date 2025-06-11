@@ -37,6 +37,7 @@ All notable changes to this project will be documented in this file.
 - Berry avoid json parsing for unmatched commands (#23494)
 - Berry integer and real parser to handle overflows (#23495)
 - Berry potential pointer underflow with `string.endswith` (#23496)
+- Autoconf failing when last line has no trailing LF
 
 ### Removed
 
