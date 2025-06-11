@@ -292,6 +292,7 @@ void Script_ticker4_end(void) {
 #define SCRIPT_UDP_BUFFER_SIZE 128
 #endif
 #define SCRIPT_UDP_PORT 1999
+#endif
 
 // EEPROM MACROS
 // i2c eeprom
@@ -1529,6 +1530,7 @@ char *script;
 }
 
 
+#ifdef USE_SCRIPT_GLOBVARS
 int32_t udp_call(char *url, uint32_t port, char *sbuf) {
   WiFiUDP udp;
   IPAddress adr;
@@ -1597,20 +1599,22 @@ void Script_PollUdp(void) {
   if (glob_script_mem.udp_flags.udp_connected ) {
     uint32_t timeout = millis();
     while (1) {
+      char *packet_buffer = glob_script_mem.packet_buffer;
       uint16_t plen = glob_script_mem.Script_PortUdp.parsePacket();
       if (!plen || plen > glob_script_mem.pb_size) {
-        glob_script_mem.Script_PortUdp.flush();
+        if (plen > 0) {
+          glob_script_mem.Script_PortUdp.read(packet_buffer, glob_script_mem.pb_size - 1);
+          glob_script_mem.Script_PortUdp.flush();
+        }
         break;
       }
 
       // not more then 500 ms
       if (millis() - timeout > 500) { break;}
-      char *packet_buffer = glob_script_mem.packet_buffer;
-      int32_t len = glob_script_mem.Script_PortUdp.read(packet_buffer, glob_script_mem.pb_size);
+      int32_t len = glob_script_mem.Script_PortUdp.read(packet_buffer, glob_script_mem.pb_size - 1);
       packet_buffer[len] = 0;
       glob_script_mem.script_udp_remote_ip = glob_script_mem.Script_PortUdp.remoteIP();
 #ifdef SCRIPT_DEBUG_UDP
-      //AddLog(LOG_LEVEL_DEBUG, PSTR("UDP: Packet %s - %d - %s"), packet_buffer, len, script_udp_remote_ip.toString().c_str());
       AddLog(LOG_LEVEL_DEBUG, PSTR("UDP: received Packet %s - %d - %_I"), packet_buffer, len, (uint32_t)glob_script_mem.script_udp_remote_ip);
 #endif
       char *lp = packet_buffer;
@@ -1706,7 +1710,12 @@ void script_udp_sendvar(char *vname, TS_FLOAT *fp, char *sp, uint16_t alen) {
   if (!glob_script_mem.udp_flags.udp_used) return;
   if (!glob_script_mem.udp_flags.udp_connected) return;
 
-  char sbuf[SCRIPT_MAX_SBSIZE + 4];
+  uint16_t ubsiz = SCRIPT_MAX_SBSIZE + 16;
+  if (ubsiz < 32) {
+    ubsiz = 32;
+  }
+  char sbuf[ubsiz];
+
   strcpy(sbuf, "=>");
   strcat(sbuf, vname);
   if (glob_script_mem.udp_flags.udp_binary_payload == 0 || !fp) {
@@ -8218,10 +8227,14 @@ startline:
                 and_or = 0;
                 if (if_exe[ifstck - 1] == 0) {
                   // not enabled
+#if 0     
                   glob_script_mem.FLAGS.ignore_line = 1;
-                  /*
+                // AddLog(LOG_LEVEL_INFO, PSTR(">>> %d"),ifstck);
+#else                  
+                //  AddLog(LOG_LEVEL_INFO, PSTR(">>> %d"),ifstck);            
                   while (*lp) {
                     if (*lp == SCRIPT_EOL) {
+                      lp--;
                       break;
                     }
                     if (*lp == '{') {
@@ -8232,7 +8245,7 @@ startline:
                     lp++;
                   }
                   goto next_line;
-                  */
+#endif                  
                 }
             } else if (!strncmp(lp, "then", 4) && if_state[ifstck] == 1) {
                 lp += 4;
