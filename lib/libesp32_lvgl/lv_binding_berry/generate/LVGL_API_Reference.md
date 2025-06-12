@@ -1215,6 +1215,7 @@ set_scale_x|int||[lv_image_set_scale_x](https://docs.lvgl.io/9.0/search.html?q=l
 set_scale_y|int||[lv_image_set_scale_y](https://docs.lvgl.io/9.0/search.html?q=lv_image_set_scale_y)
 set_src|\<any\>||[lv_image_set_src](https://docs.lvgl.io/9.0/search.html?q=lv_image_set_src)
 set_tasmota_logo|||[lv_image_set_tasmota_logo](https://docs.lvgl.io/9.0/search.html?q=lv_image_set_tasmota_logo)
+set_tasmota_logo36|||[lv_image_set_tasmota_logo36](https://docs.lvgl.io/9.0/search.html?q=lv_image_set_tasmota_logo36)
 set_zoom|int||[lv_image_set_scale](https://docs.lvgl.io/9.0/search.html?q=lv_image_set_scale)
 
 ### widget `lv.label`

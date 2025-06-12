@@ -1606,6 +1606,7 @@ bool lv_theme_haspmota_is_inited(void)
 // ../src/lv_berry.h
 void be_load_lvgl_classes(bvm *vm)
 void lv_image_set_tasmota_logo(lv_obj_t * img)
+void lv_image_set_tasmota_logo36(lv_obj_t * img)
 lv_area_t * lv_bar_get_indic_area(lv_obj_t * bar)
 
 // ../src/lv_colorwheel.h
