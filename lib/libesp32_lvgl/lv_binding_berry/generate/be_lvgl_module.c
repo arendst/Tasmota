@@ -237,6 +237,8 @@ const be_const_member_t lv0_constants[] = {
     { "ALIGN_TOP_MID", be_cconst_int(LV_ALIGN_TOP_MID) },
     { "ALIGN_TOP_RIGHT", be_cconst_int(LV_ALIGN_TOP_RIGHT) },
     { "ANIM_IMAGE_PART_MAIN", be_cconst_int(LV_ANIM_IMAGE_PART_MAIN) },
+    { "ANIM_OFF", be_cconst_int(LV_ANIM_OFF) },
+    { "ANIM_ON", be_cconst_int(LV_ANIM_ON) },
     { "ANIM_PLAYTIME_INFINITE", be_cconst_int(LV_ANIM_PLAYTIME_INFINITE) },
     { "ANIM_REPEAT_INFINITE", be_cconst_int(LV_ANIM_REPEAT_INFINITE) },
     { "ARC_MODE_NORMAL", be_cconst_int(LV_ARC_MODE_NORMAL) },
