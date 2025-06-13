@@ -132,6 +132,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `introspect.module` option to not cache module entry [#23451](https://github.com/arendst/Tasmota/issues/23451)
 - Berry `webserver.remove_route` to revert `webserver.on` [#23452](https://github.com/arendst/Tasmota/issues/23452)
 - Berry `compile` and `tasmota.compile` option to compile in local context [#23457](https://github.com/arendst/Tasmota/issues/23457)
+- Berry `tasmota.is_network_up()` [#23532](https://github.com/arendst/Tasmota/issues/23532)
 - HASPmota `antiburn()` [#23400](https://github.com/arendst/Tasmota/issues/23400)
 - HASPmota auto-dimming when no touch [#23425](https://github.com/arendst/Tasmota/issues/23425)
 
@@ -151,6 +152,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ### Fixed
 - DNS setting with `IPAddress4/5` not persisted [#23426](https://github.com/arendst/Tasmota/issues/23426)
+- Autoconf failing when last line has no trailing LF [#23537](https://github.com/arendst/Tasmota/issues/23537)
 - NimBLE log_level definition conflict [#23366](https://github.com/arendst/Tasmota/issues/23366)
 - Berry `bytes().asstring()` now truncates a string if buffer contains NULL [#23311](https://github.com/arendst/Tasmota/issues/23311)
 - Berry string literals containing NULL are truncated [#23312](https://github.com/arendst/Tasmota/issues/23312)
@@ -159,6 +161,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry avoid json parsing for unmatched commands [#23494](https://github.com/arendst/Tasmota/issues/23494)
 - Berry integer and real parser to handle overflows [#23495](https://github.com/arendst/Tasmota/issues/23495)
 - Berry potential pointer underflow with `string.endswith` [#23496](https://github.com/arendst/Tasmota/issues/23496)
+- LVGL Tasmota logo splash screen [#23538](https://github.com/arendst/Tasmota/issues/23538)
 - Matter and mDNS can be enabled at the same time [#23373](https://github.com/arendst/Tasmota/issues/23373)
 - Haspmota `haspmota.parse()` page parsing [#23403](https://github.com/arendst/Tasmota/issues/23403)
 

@@ -1112,6 +1112,7 @@ const be_ntv_func_def_t lv_image_func[] = {
   { "set_scale_y", { (const void*) &lv_image_set_scale_y, "", "(lv.obj)i" } },
   { "set_src", { (const void*) &lv_image_set_src, "", "(lv.obj)." } },
   { "set_tasmota_logo", { (const void*) &lv_image_set_tasmota_logo, "", "(lv.obj)" } },
+  { "set_tasmota_logo36", { (const void*) &lv_image_set_tasmota_logo36, "", "(lv.obj)" } },
   { "set_zoom", { (const void*) &lv_image_set_scale, "", "(lv.obj)i" } },
 };
 #endif // BE_LV_WIDGET_IMAGE

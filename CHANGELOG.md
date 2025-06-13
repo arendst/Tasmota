@@ -18,7 +18,7 @@ All notable changes to this project will be documented in this file.
 - Berry `compile` and `tasmota.compile` option to compile in local context (#23457)
 - Support for AP33772S USB PD Sink Controller as used in CentyLab RotoPD
 - Berry mqtt publish rule processing
-- Berry `tasmota.is_network_up()`
+- Berry `tasmota.is_network_up()` (#23532)
 
 ### Changed
 - ESP32 Platform from 2025.04.30 to 2025.05.40, Framework (Arduino Core) from v3.1.3.250411 to v3.2.0.250504 and IDF from v5.3.2.250403 to v5.4.1.250501 (#23397)
@@ -38,6 +38,8 @@ All notable changes to this project will be documented in this file.
 - Berry avoid json parsing for unmatched commands (#23494)
 - Berry integer and real parser to handle overflows (#23495)
 - Berry potential pointer underflow with `string.endswith` (#23496)
+- Autoconf failing when last line has no trailing LF (#23537)
+- LVGL Tasmota logo splash screen (#23538)
 
 ## [14.6.0.1] 20250510
 ### Added

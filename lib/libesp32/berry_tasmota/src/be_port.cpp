@@ -319,7 +319,7 @@ char* be_fgets(void *hfile, void *buffer, int size)
         // Serial.printf("be_fgets size=%d ret=%d\n", size, ret);
         if (ret >= 0) {
             buf[ret] = 0;           // add string terminator
-            if (ret < size - 1) {
+            if ((ret != 0) && (ret < size - 1)) {
                 buf[ret] = '\n';
                 buf[ret+1] = 0;
             }
