@@ -15,7 +15,7 @@ All notable changes to this project will be documented in this file.
 - Berry `compile` and `tasmota.compile` option to compile in local context (#23457)
 - Support for AP33772S USB PD Sink Controller as used in CentyLab RotoPD
 - Berry mqtt publish rule processing
-- Berry `tasmota.is_network_up()`
+- Berry `tasmota.is_network_up()` (#23532)
 
 ### Breaking Changed
 
@@ -37,8 +37,8 @@ All notable changes to this project will be documented in this file.
 - Berry avoid json parsing for unmatched commands (#23494)
 - Berry integer and real parser to handle overflows (#23495)
 - Berry potential pointer underflow with `string.endswith` (#23496)
-- Autoconf failing when last line has no trailing LF
-- LVGL Tasmota logo splash screen
+- Autoconf failing when last line has no trailing LF (#23537)
+- LVGL Tasmota logo splash screen (#23538)
 
 ### Removed
 
