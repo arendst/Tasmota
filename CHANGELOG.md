@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
+- LVGL regression missing `lv.ANIM_OFF` and `lv.ANIM_ON`
 
 ### Removed
 
