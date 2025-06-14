@@ -515,7 +515,7 @@ void be_load_listlib(bvm *vm)
         { "reverse", m_reverse },
         { "copy", m_copy },
         { "keys", m_keys },
-        { "tobool", m_tobool }
+        { "tobool", m_tobool },
         { "..", m_connect },
         { "+", m_merge },
         { "==", m_equal },
