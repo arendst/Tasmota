@@ -75,7 +75,7 @@ Latest released binaries can be downloaded from
 - http://ota.tasmota.com/tasmota/release
 
 Historical binaries can be downloaded from
-- http://ota.tasmota.com/tasmota/release-15.0.0
+- http://ota.tasmota.com/tasmota/release-15.0.1
 
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
@@ -104,7 +104,7 @@ Latest released binaries can be downloaded from
 - https://ota.tasmota.com/tasmota32/release
 
 Historical binaries can be downloaded from
-- https://ota.tasmota.com/tasmota32/release-15.0.0
+- https://ota.tasmota.com/tasmota32/release-15.0.1
 
 The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasmota.com/tasmota32/release/tasmota32.bin``
 
@@ -114,7 +114,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v15.0.0.1
+## Changelog v15.0.1.1
 ### Added
 
 ### Breaking Changed
@@ -122,8 +122,5 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Changed
 
 ### Fixed
-- Berry fix `realline` [#23546](https://github.com/arendst/Tasmota/issues/23546)
-- LVGL regression missing `lv.ANIM_OFF` and `lv.ANIM_ON` [#23544](https://github.com/arendst/Tasmota/issues/23544)
-- LVGL HASPmota fix regression introduced with LVGL 9.3.0 [#23547](https://github.com/arendst/Tasmota/issues/23547)
 
 ### Removed
