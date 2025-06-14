@@ -316,10 +316,12 @@ char* be_fgets(void *hfile, void *buffer, int size)
     if (hfile != nullptr && buffer != nullptr && size > 0) {
         File * f_ptr = (File*) hfile;
         int ret = f_ptr->readBytesUntil('\n', buf, size - 1);
-        // Serial.printf("be_fgets size=%d ret=%d\n", size, ret);
+        // Serial.printf("be_fgets size=%d ret=%d, tell=%i, fsize=%i\n", size, ret, f_ptr->position(), f_ptr->size());
         if (ret >= 0) {
             buf[ret] = 0;           // add string terminator
-            if ((ret != 0) && (ret < size - 1)) {
+            if ((ret == 0) && (f_ptr->position() >= f_ptr->size())) {
+                return NULL;
+            } else if (ret < size - 1) {
                 buf[ret] = '\n';
                 buf[ret+1] = 0;
             }
@@ -327,7 +329,7 @@ char* be_fgets(void *hfile, void *buffer, int size)
         }
     }
 #endif // USE_UFILESYS
-    return nullptr;
+    return NULL;
     // return fgets(buffer, size, hfile);
 }
 
