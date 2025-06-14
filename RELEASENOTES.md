@@ -122,5 +122,8 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Changed
 
 ### Fixed
+- Berry fix `realline` [#23546](https://github.com/arendst/Tasmota/issues/23546)
+- LVGL regression missing `lv.ANIM_OFF` and `lv.ANIM_ON` [#23544](https://github.com/arendst/Tasmota/issues/23544)
+- LVGL HASPmota fix regression introduced with LVGL 9.3.0 [#23547](https://github.com/arendst/Tasmota/issues/23547)
 
 ### Removed

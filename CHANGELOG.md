@@ -11,9 +11,9 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 ### Fixed
-- LVGL regression missing `lv.ANIM_OFF` and `lv.ANIM_ON`
-- Berry fix `realline`
-- LVGL HASPmora fix regression introduced with LVGL 9.3.0
+- LVGL regression missing `lv.ANIM_OFF` and `lv.ANIM_ON` (#23544)
+- Berry fix `realline` (#23546)
+- LVGL HASPmota fix regression introduced with LVGL 9.3.0 (#23547)
 
 ### Removed
 
