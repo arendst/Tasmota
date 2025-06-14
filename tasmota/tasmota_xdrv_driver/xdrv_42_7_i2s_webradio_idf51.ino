@@ -22,7 +22,6 @@
 
 struct AUDIO_I2S_WEBRADIO_t {
   AudioFileSourceICYStream *ifile = NULL;
-  char wr_title[64];
 } Audio_webradio;
 
 void I2sMDCallback(void *cbData, const char *type, bool isUnicode, const char *str) {
@@ -30,9 +29,8 @@ void I2sMDCallback(void *cbData, const char *type, bool isUnicode, const char *s
   (void) isUnicode; // Punt this ball for now
   (void) ptr;
   if (strstr_P(type, PSTR("Title"))) {
-    strncpy(Audio_webradio.wr_title, str, sizeof(Audio_webradio.wr_title));
-    Audio_webradio.wr_title[sizeof(Audio_webradio.wr_title)-1] = 0;
-    //AddLog(LOG_LEVEL_INFO,PSTR("WR-Title: %s"),wr_title);
+    strncpy(audio_i2s_mp3.audio_title, str, sizeof(audio_i2s_mp3.audio_title));
+    audio_i2s_mp3.audio_title[sizeof(audio_i2s_mp3.audio_title)-1] = 0;
   } else {
     // Who knows what to do?  Not me!
   }
@@ -106,21 +104,6 @@ i2swr_fail:
     I2sWebRadioStopPlaying();
     return false;
 }
-
-#ifdef USE_WEBSERVER
-const char HTTP_WEBRADIO[] PROGMEM =
-   "{s}" "Webradio:" "{m}%s{e}";
-
-void I2sWrShow(bool json) {
-    if (audio_i2s_mp3.decoder) {
-      if (json) {
-        ResponseAppend_P(PSTR(",\"WebRadio\":{\"Title\":\"%s\"}"), Audio_webradio.wr_title);
-      } else {
-        WSContentSend_PD(HTTP_WEBRADIO,Audio_webradio.wr_title);
-      }
-    }
-}
-#endif  // USE_WEBSERVER
 
 void CmndI2SWebRadio(void) {
   if (I2SPrepareTx() != I2S_OK) return;

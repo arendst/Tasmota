@@ -90,6 +90,7 @@ struct AUDIO_I2S_MP3_t {
 #if defined(USE_I2S_MP3) || defined(USE_I2S_WEBRADIO) || defined(USE_SHINE) || defined(MP3_MIC_STREAM)
   TaskHandle_t mp3_task_handle;
   TaskHandle_t mic_task_handle;
+  char audio_title[64];
 #endif // defined(USE_I2S_MP3) || defined(USE_I2S_WEBRADIO)
 
   char mic_path[32];
@@ -120,6 +121,25 @@ struct AUDIO_I2S_MP3_t {
 
 #define I2S_AUDIO_MODE_MIC 1
 #define I2S_AUDIO_MODE_SPK 2
+
+/*********************************************************************************************\
+ * Presentation
+\*********************************************************************************************/
+
+#ifdef USE_WEBSERVER
+const char HTTP_I2SAUDIO[] PROGMEM =
+   "{s}" "Audio:" "{m}%s{e}";
+
+void I2sWrShow(bool json) {
+    if (audio_i2s_mp3.decoder) {
+      if (json) {
+        ResponseAppend_P(PSTR(",\"Audio\":{\"Title\":\"%s\"}"), audio_i2s_mp3.audio_title);
+      } else {
+        WSContentSend_PD(HTTP_I2SAUDIO,audio_i2s_mp3.audio_title);
+      }
+    }
+}
+#endif  // USE_WEBSERVER
 
 /*********************************************************************************************\
  * Commands definitions
@@ -774,6 +794,9 @@ int32_t I2SPlayFile(const char *path, uint32_t decoder_type) {
   }
   if (!ufsp->exists(fname)) { return I2S_ERR_FILE_NOT_FOUND; }
 
+  strncpy(audio_i2s_mp3.audio_title, fname, sizeof(audio_i2s_mp3.audio_title));
+  audio_i2s_mp3.audio_title[sizeof(audio_i2s_mp3.audio_title)-1] = 0;
+
   I2SAudioPower(true);
 
   if (audio_i2s_mp3.task_loop_mode == true){
@@ -869,7 +892,7 @@ void CmndI2SPlay(void) {
     // display return message
     switch (err) {
       case I2S_OK:
-        ResponseCmndDone();
+        ResponseCmndChar("Started");
         break;
       case I2S_ERR_OUTPUT_NOT_CONFIGURED:
         ResponseCmndChar("I2S output not configured");
@@ -968,6 +991,14 @@ void CmndI2SMicRec(void) {
   }
 }
 
+void I2sEventHandler(){
+  if(audio_i2s_mp3.task_has_ended == true){
+    audio_i2s_mp3.task_has_ended = false;
+    MqttPublishPayloadPrefixTopicRulesProcess_P(RESULT_OR_STAT,PSTR(""),PSTR("{\"Event\":{\"I2SPlay\":\"Ended\"}}"));
+    // Rule1 ON event#i2splay=ended DO <something> ENDON
+  }
+}
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -982,6 +1013,9 @@ bool Xdrv42(uint32_t function) {
   switch (function) {
     case FUNC_INIT:
       I2sInit();
+      break;
+    case FUNC_EVERY_50_MSECOND:
+      I2sEventHandler();
       break;
     case FUNC_COMMAND:
       result = DecodeCommand(kI2SAudio_Commands, I2SAudio_Command);
