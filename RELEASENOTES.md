@@ -75,7 +75,7 @@ Latest released binaries can be downloaded from
 - http://ota.tasmota.com/tasmota/release
 
 Historical binaries can be downloaded from
-- http://ota.tasmota.com/tasmota/release-15.0.0
+- http://ota.tasmota.com/tasmota/release-15.0.1
 
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
@@ -104,7 +104,7 @@ Latest released binaries can be downloaded from
 - https://ota.tasmota.com/tasmota32/release
 
 Historical binaries can be downloaded from
-- https://ota.tasmota.com/tasmota32/release-15.0.0
+- https://ota.tasmota.com/tasmota32/release-15.0.1
 
 The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasmota.com/tasmota32/release/tasmota32.bin``
 
@@ -113,6 +113,12 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 [List](MODULES.md) of embedded modules.
 
 [Complete list](BUILDS.md) of available feature and sensors.
+
+## Changelog v15.0.1 Sharon
+### Fixed
+- Berry fix `realline` [#23546](https://github.com/arendst/Tasmota/issues/23546)
+- LVGL regression missing `lv.ANIM_OFF` and `lv.ANIM_ON` [#23544](https://github.com/arendst/Tasmota/issues/23544)
+- LVGL HASPmota fix regression introduced with LVGL 9.3.0 [#23547](https://github.com/arendst/Tasmota/issues/23547)
 
 ## Changelog v15.0.0 Sharon
 ### Added
@@ -135,8 +141,6 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry `tasmota.is_network_up()` [#23532](https://github.com/arendst/Tasmota/issues/23532)
 - HASPmota `antiburn()` [#23400](https://github.com/arendst/Tasmota/issues/23400)
 - HASPmota auto-dimming when no touch [#23425](https://github.com/arendst/Tasmota/issues/23425)
-
-### Breaking Changed
 
 ### Changed
 - ESP8266 platform update from 2024.09.00 to 2025.05.00 [#23448](https://github.com/arendst/Tasmota/issues/23448)
@@ -164,5 +168,3 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - LVGL Tasmota logo splash screen [#23538](https://github.com/arendst/Tasmota/issues/23538)
 - Matter and mDNS can be enabled at the same time [#23373](https://github.com/arendst/Tasmota/issues/23373)
 - Haspmota `haspmota.parse()` page parsing [#23403](https://github.com/arendst/Tasmota/issues/23403)
-
-### Removed
