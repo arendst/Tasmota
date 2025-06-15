@@ -1,0 +1,25 @@
+## IDF Component Manager Manifest File
+version: "2.3.0"
+license: "Apache-2.0"
+description: "C++ wrapper for the NimBLE BLE stack"
+url: "https://github.com/h2zero/esp-nimble-cpp"
+repository: "https://github.com/h2zero/esp-nimble-cpp"
+maintainers:
+  - Ryan Powell <ryan@nable-embedded.io>
+documentation: "https://h2zero.github.io/esp-nimble-cpp/"
+tags:
+  - BLE
+  - NimBLE
+dependencies:
+  espressif/esp_hosted:
+    version: "*"
+    rules:
+      - if: "target in [esp32p4]"
+  espressif/esp_wifi_remote:
+    version: ">=0.5.3"
+    rules:
+      - if: "target in [esp32p4]"
+  idf:
+    version: ">=5.3.0"
+    rules:
+      - if: "target in [esp32p4]"

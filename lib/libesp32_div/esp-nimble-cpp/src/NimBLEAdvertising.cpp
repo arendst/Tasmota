@@ -1,336 +1,153 @@
 /*
- * NimBLEAdvertising.cpp
+ * Copyright 2020-2025 Ryan Powell <ryan@nable-embedded.io> and
+ * esp-nimble-cpp, NimBLE-Arduino contributors.
  *
- *  Created: on March 3, 2020
- *      Author H2zero
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Originally:
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * BLEAdvertising.cpp
- *
- * This class encapsulates advertising a BLE Server.
- *  Created on: Jun 21, 2017
- *      Author: kolban
- *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-#include "nimconfig.h"
-#if (defined(CONFIG_BT_ENABLED) && \
-    defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER) && \
-    !CONFIG_BT_NIMBLE_EXT_ADV) || defined(_DOXYGEN_)
 
-#if defined(CONFIG_NIMBLE_CPP_IDF)
-#include "services/gap/ble_svc_gap.h"
-#else
-#include "nimble/nimble/host/services/gap/include/services/gap/ble_svc_gap.h"
-#endif
 #include "NimBLEAdvertising.h"
-#include "NimBLEDevice.h"
-#include "NimBLEServer.h"
-#include "NimBLEUtils.h"
-#include "NimBLELog.h"
+#if (CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER && !CONFIG_BT_NIMBLE_EXT_ADV) || defined(_DOXYGEN_)
+
+# if defined(CONFIG_NIMBLE_CPP_IDF)
+#  include "services/gap/ble_svc_gap.h"
+# else
+#  include "nimble/nimble/host/services/gap/include/services/gap/ble_svc_gap.h"
+# endif
+# include "NimBLEDevice.h"
+# include "NimBLEServer.h"
+# include "NimBLEUtils.h"
+# include "NimBLELog.h"
 
 static const char* LOG_TAG = "NimBLEAdvertising";
-
 
 /**
  * @brief Construct a default advertising object.
  */
-NimBLEAdvertising::NimBLEAdvertising() {
-    reset();
+NimBLEAdvertising::NimBLEAdvertising()
+    : m_advData{},
+      m_scanData{},
+      m_advParams{},
+      m_advCompCb{nullptr},
+      m_slaveItvl{0},
+      m_duration{BLE_HS_FOREVER},
+      m_scanResp{false},
+      m_advDataSet{false} {
+# if !CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+    m_advParams.conn_mode = BLE_GAP_CONN_MODE_NON;
+# else
+    m_advParams.conn_mode = BLE_GAP_CONN_MODE_UND;
+    m_advData.setFlags(BLE_HS_ADV_F_DISC_GEN);
+# endif
+    m_advParams.disc_mode = BLE_GAP_DISC_MODE_GEN;
 } // NimBLEAdvertising
-
 
 /**
  * @brief Stops the current advertising and resets the advertising data to the default values.
+ * @return True if successful.
  */
-void NimBLEAdvertising::reset() {
-    if(NimBLEDevice::getInitialized() && isAdvertising()) {
-        stop();
+bool NimBLEAdvertising::reset() {
+    if (!stop()) {
+        return false;
     }
-    memset(&m_advData, 0, sizeof m_advData);
-    memset(&m_scanData, 0, sizeof m_scanData);
-    memset(&m_advParams, 0, sizeof m_advParams);
-    memset(&m_slaveItvl, 0, sizeof m_slaveItvl);
-    const char *name = ble_svc_gap_device_name();
 
-    m_advData.name                   = (uint8_t *)name;
-    m_advData.name_len               = strlen(name);
-    m_advData.name_is_complete       = 1;
-    m_advData.tx_pwr_lvl             = NimBLEDevice::getPower();
-    m_advData.flags                  = (BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP);
-
-#if !defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
-    m_advParams.conn_mode            = BLE_GAP_CONN_MODE_NON;
-#else
-    m_advParams.conn_mode            = BLE_GAP_CONN_MODE_UND;
-#endif
-    m_advParams.disc_mode            = BLE_GAP_DISC_MODE_GEN;
-    m_customAdvData                  = false;
-    m_customScanResponseData         = false;
-    m_scanResp                       = false;
-    m_advDataSet                     = false;
-    // Set this to non-zero to prevent auto start if host reset before started by app.
-    m_duration                       = BLE_HS_FOREVER;
-    m_advCompCB                      = nullptr;
+    *this = NimBLEAdvertising();
+    return true;
 } // reset
 
-
 /**
- * @brief Add a service uuid to exposed list of services.
- * @param [in] serviceUUID The UUID of the service to expose.
- */
-void NimBLEAdvertising::addServiceUUID(const NimBLEUUID &serviceUUID) {
-    m_serviceUUIDs.push_back(serviceUUID);
-    m_advDataSet = false;
-} // addServiceUUID
-
-
-/**
- * @brief Add a service uuid to exposed list of services.
- * @param [in] serviceUUID The string representation of the service to expose.
- */
-void NimBLEAdvertising::addServiceUUID(const char* serviceUUID) {
-    addServiceUUID(NimBLEUUID(serviceUUID));
-    m_advDataSet = false;
-} // addServiceUUID
-
-
-/**
- * @brief Remove a service UUID from the advertisment.
- * @param [in] serviceUUID The UUID of the service to remove.
- */
-void NimBLEAdvertising::removeServiceUUID(const NimBLEUUID &serviceUUID) {
-    for(auto it = m_serviceUUIDs.begin(); it != m_serviceUUIDs.end(); ++it) {
-        if((*it) == serviceUUID) {
-            m_serviceUUIDs.erase(it);
-            break;
-        }
-    }
-    m_advDataSet = false;
-} // addServiceUUID
-
-
-/**
- * @brief Remove all service UUIDs from the advertisment.
- */
-void NimBLEAdvertising::removeServices() {
-    std::vector<NimBLEUUID>().swap(m_serviceUUIDs);
-    m_advDataSet = false;
-} // removeServices
-
-
-/**
- * @brief Set the device appearance in the advertising data.
- * @param [in] appearance The appearance of the device in the advertising data.
- */
-void NimBLEAdvertising::setAppearance(uint16_t appearance) {
-    m_advData.appearance = appearance;
-    m_advData.appearance_is_present = 1;
-    m_advDataSet = false;
-} // setAppearance
-
-
-/**
- * @brief Add the transmission power level to the advertisement packet.
- */
-void NimBLEAdvertising::addTxPower() {
-    m_advData.tx_pwr_lvl_is_present = 1;
-    m_advDataSet = false;
-} // addTxPower
-
-
-/**
- * @brief Set the advertised name of the device.
- * @param [in] name The name to advertise.
- */
-void NimBLEAdvertising::setName(const std::string &name) {
-    std::vector<uint8_t>(name.begin(), name.end()).swap(m_name);
-    m_advData.name = &m_name[0];
-    m_advData.name_len = m_name.size();
-    m_advDataSet = false;
-} // setName
-
-
-/**
- * @brief Set the advertised manufacturer data.
- * @param [in] data The data to advertise.
- */
-void NimBLEAdvertising::setManufacturerData(const std::string &data) {
-    std::vector<uint8_t>(data.begin(), data.end()).swap(m_mfgData);
-    m_advData.mfg_data = &m_mfgData[0];
-    m_advData.mfg_data_len = m_mfgData.size();
-    m_advDataSet = false;
-} // setManufacturerData
-
-
-/**
- * @brief Set the advertised manufacturer data.
- * @param [in] data The data to advertise.
- */
-void NimBLEAdvertising::setManufacturerData(const std::vector<uint8_t> &data) {
-    m_mfgData = data;
-    m_advData.mfg_data = &m_mfgData[0];
-    m_advData.mfg_data_len = m_mfgData.size();
-    m_advDataSet = false;
-} // setManufacturerData
-
-
-/**
- * @brief Set the advertised URI.
- * @param [in] uri The URI to advertise.
- */
-void NimBLEAdvertising::setURI(const std::string &uri) {
-    std::vector<uint8_t>(uri.begin(), uri.end()).swap(m_uri);
-    m_advData.uri = &m_uri[0];
-    m_advData.uri_len = m_uri.size();
-    m_advDataSet = false;
-} // setURI
-
-
-/**
- * @brief Set the service data advertised for the UUID.
- * @param [in] uuid The UUID the service data belongs to.
- * @param [in] data The data to advertise.
- * @note If data length is 0 the service data will not be advertised.
- */
-void NimBLEAdvertising::setServiceData(const NimBLEUUID &uuid, const std::string &data) {
-    switch (uuid.bitSize()) {
-        case 16: {
-            std::vector<uint8_t>((uint8_t*)&uuid.getNative()->u16.value,
-                                 (uint8_t*)&uuid.getNative()->u16.value + 2).swap(m_svcData16);
-            m_svcData16.insert(m_svcData16.end(), data.begin(), data.end());
-            m_advData.svc_data_uuid16 = (uint8_t*)&m_svcData16[0];
-            m_advData.svc_data_uuid16_len = (data.length() > 0) ? m_svcData16.size() : 0;
-            break;
-        }
-
-        case 32: {
-            std::vector<uint8_t>((uint8_t*)&uuid.getNative()->u32.value,
-                                 (uint8_t*)&uuid.getNative()->u32.value + 4).swap(m_svcData32);
-            m_svcData32.insert(m_svcData32.end(), data.begin(), data.end());
-            m_advData.svc_data_uuid32 = (uint8_t*)&m_svcData32[0];
-            m_advData.svc_data_uuid32_len = (data.length() > 0) ? m_svcData32.size() : 0;
-            break;
-        }
-
-        case 128: {
-            std::vector<uint8_t>(uuid.getNative()->u128.value,
-                                 uuid.getNative()->u128.value + 16).swap(m_svcData128);
-            m_svcData128.insert(m_svcData128.end(), data.begin(), data.end());
-            m_advData.svc_data_uuid128 = (uint8_t*)&m_svcData128[0];
-            m_advData.svc_data_uuid128_len = (data.length() > 0) ? m_svcData128.size() : 0;
-            break;
-        }
-
-        default:
-            return;
-    }
-
-    m_advDataSet = false;
-} // setServiceData
-
-
-/**
- * @brief Set the type of advertisment to use.
- * @param [in] adv_type:
+ * @brief Set the type of connectable mode to advertise.
+ * @param [in] mode The connectable mode:
  * * BLE_GAP_CONN_MODE_NON    (0) - not connectable advertising
  * * BLE_GAP_CONN_MODE_DIR    (1) - directed connectable advertising
  * * BLE_GAP_CONN_MODE_UND    (2) - undirected connectable advertising
+ * @return True if the connectable mode was set, false if the mode is invalid.
  */
-void NimBLEAdvertising::setAdvertisementType(uint8_t adv_type){
-    m_advParams.conn_mode = adv_type;
+bool NimBLEAdvertising::setConnectableMode(uint8_t mode) {
+    if (mode > BLE_GAP_CONN_MODE_UND) {
+        NIMBLE_LOGE(LOG_TAG, "Invalid connectable mode: %u", mode);
+        return false;
+    }
+
+    if (mode == BLE_GAP_CONN_MODE_NON) { // Non-connectable advertising doesn't need flags.
+        m_advData.setFlags(0);
+    }
+
+    m_advParams.conn_mode = mode;
+    return true;
 } // setAdvertisementType
 
+/**
+ * @brief Set the discoverable mode to use.
+ * @param [in] mode The discoverable mode:
+ * * BLE_GAP_DISC_MODE_NON    (0) - non-discoverable
+ * * BLE_GAP_DISC_MODE_LTD    (1) - limited discoverable
+ * * BLE_GAP_DISC_MODE_GEN    (2) - general discoverable
+ * @return True if the discoverable mode was set, false if the mode is invalid.
+ */
+bool NimBLEAdvertising::setDiscoverableMode(uint8_t mode) {
+    switch (mode) {
+        case BLE_GAP_DISC_MODE_NON:
+            m_advData.setFlags(BLE_HS_ADV_F_BREDR_UNSUP);
+            break;
+        case BLE_GAP_DISC_MODE_LTD:
+            m_advData.setFlags(BLE_HS_ADV_F_DISC_LTD);
+            break;
+        case BLE_GAP_DISC_MODE_GEN:
+            m_advData.setFlags(BLE_HS_ADV_F_DISC_GEN);
+            break;
+        default:
+            NIMBLE_LOGE(LOG_TAG, "Invalid discoverable mode: %u", mode);
+            return false;
+    }
+
+    m_advParams.disc_mode = mode;
+    return true;
+} // setDiscoverableMode
+
+/**
+ * @brief Set the advertising interval.
+ * @param [in] interval The advertising interval in 0.625ms units, 0 = use default.
+ */
+void NimBLEAdvertising::setAdvertisingInterval(uint16_t interval) {
+    m_advParams.itvl_min = interval;
+    m_advParams.itvl_max = interval;
+} // setAdvertisingInterval
 
 /**
  * @brief Set the minimum advertising interval.
- * @param [in] mininterval Minimum value for advertising interval in 0.625ms units, 0 = use default.
+ * @param [in] minInterval Minimum value for advertising interval in 0.625ms units, 0 = use default.
  */
-void NimBLEAdvertising::setMinInterval(uint16_t mininterval) {
-    m_advParams.itvl_min = mininterval;
+void NimBLEAdvertising::setMinInterval(uint16_t minInterval) {
+    m_advParams.itvl_min = minInterval;
 } // setMinInterval
-
 
 /**
  * @brief Set the maximum advertising interval.
- * @param [in] maxinterval Maximum value for advertising interval in 0.625ms units, 0 = use default.
+ * @param [in] maxInterval Maximum value for advertising interval in 0.625ms units, 0 = use default.
  */
-void NimBLEAdvertising::setMaxInterval(uint16_t maxinterval) {
-    m_advParams.itvl_max = maxinterval;
+void NimBLEAdvertising::setMaxInterval(uint16_t maxInterval) {
+    m_advParams.itvl_max = maxInterval;
 } // setMaxInterval
 
-
 /**
- * @brief Set the advertised min connection interval preferred by this device.
- * @param [in] mininterval the max interval value. Range = 0x0006 to 0x0C80.
- * @details Values not within the range will cancel advertising of this data.\n
- * Consumes 6 bytes of advertising space (combined with max interval).
+ * @brief Enable scan response data.
+ * @param [in] enable If true, scan response data will be available, false disabled, default = disabled.
+ * @details The scan response data is sent in response to a scan request from a peer device.
  */
-void NimBLEAdvertising::setMinPreferred(uint16_t mininterval) {
-    // invalid paramters, set the slave interval to null
-    if(mininterval < 0x0006 || mininterval > 0x0C80) {
-        m_advData.slave_itvl_range = nullptr;
-        return;
-    }
-
-    if(m_advData.slave_itvl_range == nullptr) {
-        m_advData.slave_itvl_range = m_slaveItvl;
-    }
-
-    m_slaveItvl[0] = mininterval;
-    m_slaveItvl[1] = mininterval >> 8;
-
-    uint16_t maxinterval = *(uint16_t*)(m_advData.slave_itvl_range+2);
-
-    // If mininterval is higher than the maxinterval make them the same
-    if(mininterval > maxinterval) {
-        m_slaveItvl[2] = m_slaveItvl[0];
-        m_slaveItvl[3] = m_slaveItvl[1];
-    }
-
+void NimBLEAdvertising::enableScanResponse(bool enable) {
+    m_scanResp   = enable;
     m_advDataSet = false;
-} // setMinPreferred
-
-
-/**
- * @brief Set the advertised max connection interval preferred by this device.
- * @param [in] maxinterval the max interval value. Range = 0x0006 to 0x0C80.
- * @details Values not within the range will cancel advertising of this data.\n
- * Consumes 6 bytes of advertising space (combined with min interval).
- */
-void NimBLEAdvertising::setMaxPreferred(uint16_t maxinterval) {
-    // invalid paramters, set the slave interval to null
-    if(maxinterval < 0x0006 || maxinterval > 0x0C80) {
-        m_advData.slave_itvl_range = nullptr;
-        return;
-    }
-    if(m_advData.slave_itvl_range == nullptr) {
-        m_advData.slave_itvl_range = m_slaveItvl;
-    }
-    m_slaveItvl[2] = maxinterval;
-    m_slaveItvl[3] = maxinterval >> 8;
-
-    uint16_t mininterval = *(uint16_t*)(m_advData.slave_itvl_range);
-
-    // If mininterval is higher than the maxinterval make them the same
-    if(mininterval > maxinterval) {
-        m_slaveItvl[0] = m_slaveItvl[2];
-        m_slaveItvl[1] = m_slaveItvl[3];
-    }
-
-    m_advDataSet = false;
-} // setMaxPreferred
-
-
-/**
- * @brief Set if scan response is available.
- * @param [in] set true = scan response available.
- */
-void NimBLEAdvertising::setScanResponse(bool set) {
-    m_scanResp = set;
-    m_advDataSet = false;
-} // setScanResponse
-
+} // enableScanResponse
 
 /**
  * @brief Set the filtering for the scan filter.
@@ -338,434 +155,148 @@ void NimBLEAdvertising::setScanResponse(bool set) {
  * @param [in] connectWhitelistOnly If true, only allow connections from those on the white list.
  */
 void NimBLEAdvertising::setScanFilter(bool scanRequestWhitelistOnly, bool connectWhitelistOnly) {
-    NIMBLE_LOGD(LOG_TAG, ">> setScanFilter: scanRequestWhitelistOnly: %d, connectWhitelistOnly: %d",
-                scanRequestWhitelistOnly, connectWhitelistOnly);
     if (!scanRequestWhitelistOnly && !connectWhitelistOnly) {
         m_advParams.filter_policy = BLE_HCI_ADV_FILT_NONE;
-        NIMBLE_LOGD(LOG_TAG, "<< setScanFilter");
         return;
     }
     if (scanRequestWhitelistOnly && !connectWhitelistOnly) {
         m_advParams.filter_policy = BLE_HCI_ADV_FILT_SCAN;
-        NIMBLE_LOGD(LOG_TAG, "<< setScanFilter");
         return;
     }
     if (!scanRequestWhitelistOnly && connectWhitelistOnly) {
         m_advParams.filter_policy = BLE_HCI_ADV_FILT_CONN;
-        NIMBLE_LOGD(LOG_TAG, "<< setScanFilter");
         return;
     }
     if (scanRequestWhitelistOnly && connectWhitelistOnly) {
         m_advParams.filter_policy = BLE_HCI_ADV_FILT_BOTH;
-        NIMBLE_LOGD(LOG_TAG, "<< setScanFilter");
         return;
     }
 } // setScanFilter
 
-
-/**
- * @brief Set the advertisement data that is to be published in a regular advertisement.
- * @param [in] advertisementData The data to be advertised.
- * @details The use of this function will replace any data set with addServiceUUID\n
- * or setAppearance. If you wish for these to be advertised you must include them\n
- * in the advertisementData parameter sent.
- */
-
-void NimBLEAdvertising::setAdvertisementData(NimBLEAdvertisementData& advertisementData) {
-    NIMBLE_LOGD(LOG_TAG, ">> setAdvertisementData");
-    int rc = ble_gap_adv_set_data(
-        (uint8_t*)advertisementData.getPayload().data(),
-        advertisementData.getPayload().length());
-    if (rc != 0) {
-        NIMBLE_LOGE(LOG_TAG, "ble_gap_adv_set_data: %d %s",
-                    rc, NimBLEUtils::returnCodeToString(rc));
-    }
-    m_customAdvData = true;   // Set the flag that indicates we are using custom advertising data.
-    NIMBLE_LOGD(LOG_TAG, "<< setAdvertisementData");
-} // setAdvertisementData
-
-
-/**
- * @brief Set the advertisement data that is to be published in a scan response.
- * @param [in] advertisementData The data to be advertised.
- * @details Calling this without also using setAdvertisementData will have no effect.\n
- * When using custom scan response data you must also use custom advertisement data.
- */
-void NimBLEAdvertising::setScanResponseData(NimBLEAdvertisementData& advertisementData) {
-    NIMBLE_LOGD(LOG_TAG, ">> setScanResponseData");
-    int rc = ble_gap_adv_rsp_set_data(
-        (uint8_t*)advertisementData.getPayload().data(),
-        advertisementData.getPayload().length());
-    if (rc != 0) {
-        NIMBLE_LOGE(LOG_TAG, "ble_gap_adv_rsp_set_data: %d %s",
-                    rc,  NimBLEUtils::returnCodeToString(rc));
-    }
-    m_customScanResponseData = true;   // Set the flag that indicates we are using custom scan response data.
-    NIMBLE_LOGD(LOG_TAG, "<< setScanResponseData");
-} // setScanResponseData
-
-
 /**
  * @brief Start advertising.
  * @param [in] duration The duration, in milliseconds, to advertise, 0 == advertise forever.
- * @param [in] advCompleteCB A pointer to a callback to be invoked when advertising ends.
  * @param [in] dirAddr The address of a peer to directly advertise to.
  * @return True if advertising started successfully.
  */
-bool NimBLEAdvertising::start(uint32_t duration, advCompleteCB_t advCompleteCB, NimBLEAddress* dirAddr) {
-    NIMBLE_LOGD(LOG_TAG, ">> Advertising start: customAdvData: %d, customScanResponseData: %d",
-                m_customAdvData, m_customScanResponseData);
+bool NimBLEAdvertising::start(uint32_t duration, const NimBLEAddress* dirAddr) {
+    NIMBLE_LOGD(LOG_TAG,
+                ">> Advertising start: duration=%" PRIu32 ", dirAddr=%s",
+                duration,
+                dirAddr ? dirAddr->toString().c_str() : "NULL");
 
-    // If Host is not synced we cannot start advertising.
-    if(!NimBLEDevice::m_synced) {
-        NIMBLE_LOGE(LOG_TAG, "Host reset, wait for sync.");
+    if (!NimBLEDevice::m_synced) {
+        NIMBLE_LOGE(LOG_TAG, "Host not synced!");
         return false;
     }
 
-#if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
-    NimBLEServer* pServer = NimBLEDevice::getServer();
-    if(pServer != nullptr) {
-        if(!pServer->m_gattsStarted){
-            pServer->start();
-        } else if(pServer->getConnectedCount() >= NIMBLE_MAX_CONNECTIONS) {
-            NIMBLE_LOGE(LOG_TAG, "Max connections reached - not advertising");
-            return false;
-        }
-    }
-#endif
-
-    // If already advertising just return
-    if(ble_gap_adv_active()) {
+    if (ble_gap_adv_active()) {
         NIMBLE_LOGW(LOG_TAG, "Advertising already active");
         return true;
     }
 
-    // Save the duration incase of host reset so we can restart with the same params
-    m_duration = duration;
-
-    if(duration == 0){
-        duration = BLE_HS_FOREVER;
+# if CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+    NimBLEServer* pServer = NimBLEDevice::getServer();
+    if (pServer != nullptr) {
+        pServer->start(); // make sure the GATT server is ready before advertising
     }
+# endif
 
-    m_advCompCB = advCompleteCB;
-
-    m_advParams.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    m_advData.flags = (BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP);
-    if(m_advParams.conn_mode == BLE_GAP_CONN_MODE_NON) {
-        if(!m_scanResp) {
-            m_advParams.disc_mode = BLE_GAP_DISC_MODE_NON;
-            // non-connectable advertising does not require AD flags.
-            m_advData.flags = 0;
-        }
-    }
-
-    int rc = 0;
-
-    if (!m_customAdvData && !m_advDataSet) {
-        //start with 3 bytes for the flags data if required
-        uint8_t payloadLen = (m_advData.flags > 0) ? (2 + 1) : 0;
-        if(m_advData.mfg_data_len > 0)
-            payloadLen += (2 + m_advData.mfg_data_len);
-
-        if(m_advData.svc_data_uuid16_len > 0)
-            payloadLen += (2 + m_advData.svc_data_uuid16_len);
-
-        if(m_advData.svc_data_uuid32_len > 0)
-            payloadLen += (2 + m_advData.svc_data_uuid32_len);
-
-        if(m_advData.svc_data_uuid128_len > 0)
-            payloadLen += (2 + m_advData.svc_data_uuid128_len);
-
-        if(m_advData.uri_len > 0)
-            payloadLen += (2 + m_advData.uri_len);
-
-        if(m_advData.appearance_is_present)
-            payloadLen += (2 + BLE_HS_ADV_APPEARANCE_LEN);
-
-        if(m_advData.tx_pwr_lvl_is_present)
-            payloadLen += (2 + BLE_HS_ADV_TX_PWR_LVL_LEN);
-
-        if(m_advData.slave_itvl_range != nullptr)
-            payloadLen += (2 + BLE_HS_ADV_SLAVE_ITVL_RANGE_LEN);
-
-        for(auto &it : m_serviceUUIDs) {
-            if(it.getNative()->u.type == BLE_UUID_TYPE_16) {
-                int add = (m_advData.num_uuids16 > 0) ? 2 : 4;
-                if((payloadLen + add) > BLE_HS_ADV_MAX_SZ){
-                    m_advData.uuids16_is_complete = 0;
-                    continue;
-                }
-                payloadLen += add;
-
-                if(nullptr == (m_advData.uuids16 = (ble_uuid16_t*)realloc((void*)m_advData.uuids16,
-                                                   (m_advData.num_uuids16 + 1) * sizeof(ble_uuid16_t))))
-                {
-                    NIMBLE_LOGE(LOG_TAG, "Error, no mem");
-                    return false;
-                }
-                memcpy((void*)&m_advData.uuids16[m_advData.num_uuids16],
-                       &it.getNative()->u16, sizeof(ble_uuid16_t));
-                m_advData.uuids16_is_complete = 1;
-                m_advData.num_uuids16++;
-            }
-            if(it.getNative()->u.type == BLE_UUID_TYPE_32) {
-                int add = (m_advData.num_uuids32 > 0) ? 4 : 6;
-                if((payloadLen + add) > BLE_HS_ADV_MAX_SZ){
-                    m_advData.uuids32_is_complete = 0;
-                    continue;
-                }
-                payloadLen += add;
-
-                if(nullptr == (m_advData.uuids32 = (ble_uuid32_t*)realloc((void*)m_advData.uuids32,
-                                                   (m_advData.num_uuids32 + 1) * sizeof(ble_uuid32_t))))
-                {
-                    NIMBLE_LOGE(LOG_TAG, "Error, no mem");
-                    return false;
-                }
-                memcpy((void*)&m_advData.uuids32[m_advData.num_uuids32],
-                       &it.getNative()->u32, sizeof(ble_uuid32_t));
-                m_advData.uuids32_is_complete = 1;
-                m_advData.num_uuids32++;
-            }
-            if(it.getNative()->u.type == BLE_UUID_TYPE_128){
-                int add = (m_advData.num_uuids128 > 0) ? 16 : 18;
-                if((payloadLen + add) > BLE_HS_ADV_MAX_SZ){
-                    m_advData.uuids128_is_complete = 0;
-                    continue;
-                }
-                payloadLen += add;
-
-                if(nullptr == (m_advData.uuids128 = (ble_uuid128_t*)realloc((void*)m_advData.uuids128,
-                              (m_advData.num_uuids128 + 1) * sizeof(ble_uuid128_t))))
-                {
-                    NIMBLE_LOGE(LOG_TAG, "Error, no mem");
-                    return false;
-                }
-                memcpy((void*)&m_advData.uuids128[m_advData.num_uuids128],
-                       &it.getNative()->u128, sizeof(ble_uuid128_t));
-                m_advData.uuids128_is_complete = 1;
-                m_advData.num_uuids128++;
-            }
-        }
-
-        // check if there is room for the name, if not put it in scan data
-        if((payloadLen + (2 + m_advData.name_len)) > BLE_HS_ADV_MAX_SZ) {
-            if(m_scanResp && !m_customScanResponseData){
-                m_scanData.name = m_advData.name;
-                m_scanData.name_len = m_advData.name_len;
-                if(m_scanData.name_len > BLE_HS_ADV_MAX_SZ - 2) {
-                    m_scanData.name_len = BLE_HS_ADV_MAX_SZ - 2;
-                    m_scanData.name_is_complete = 0;
-                } else {
-                    m_scanData.name_is_complete = 1;
-                }
-                m_advData.name = nullptr;
-                m_advData.name_len = 0;
-                m_advData.name_is_complete = 0;
-            } else {
-                if(m_advData.tx_pwr_lvl_is_present) {
-                    m_advData.tx_pwr_lvl_is_present = 0;
-                    payloadLen -= (2 + 1);
-                }
-                // if not using scan response just cut the name down
-                // leaving 2 bytes for the data specifier.
-                if(m_advData.name_len > (BLE_HS_ADV_MAX_SZ - payloadLen - 2)) {
-                    m_advData.name_len = (BLE_HS_ADV_MAX_SZ - payloadLen - 2);
-                    m_advData.name_is_complete = 0;
-                }
-            }
-        }
-
-        if(m_scanResp && !m_customScanResponseData) {
-            rc = ble_gap_adv_rsp_set_fields(&m_scanData);
-            switch(rc) {
-                case 0:
-                    break;
-
-                case BLE_HS_EBUSY:
-                    NIMBLE_LOGE(LOG_TAG, "Already advertising");
-                    break;
-
-                case BLE_HS_EMSGSIZE:
-                    NIMBLE_LOGE(LOG_TAG, "Scan data too long");
-                    break;
-
-                default:
-                    NIMBLE_LOGE(LOG_TAG, "Error setting scan response data; rc=%d, %s",
-                                rc, NimBLEUtils::returnCodeToString(rc));
-                    break;
-            }
-        }
-
-        if(rc == 0) {
-            rc = ble_gap_adv_set_fields(&m_advData);
-            switch(rc) {
-                case 0:
-                    break;
-
-                case BLE_HS_EBUSY:
-                    NIMBLE_LOGE(LOG_TAG, "Already advertising");
-                    break;
-
-                case BLE_HS_EMSGSIZE:
-                    NIMBLE_LOGE(LOG_TAG, "Advertisement data too long");
-                    break;
-
-                default:
-                    NIMBLE_LOGE(LOG_TAG, "Error setting advertisement data; rc=%d, %s",
-                                rc, NimBLEUtils::returnCodeToString(rc));
-                    break;
-            }
-        }
-
-        if(m_advData.num_uuids128 > 0) {
-            free((void*)m_advData.uuids128);
-            m_advData.uuids128 = nullptr;
-            m_advData.num_uuids128 = 0;
-        }
-
-        if(m_advData.num_uuids32 > 0) {
-            free((void*)m_advData.uuids32);
-            m_advData.uuids32 = nullptr;
-            m_advData.num_uuids32 = 0;
-        }
-
-        if(m_advData.num_uuids16 > 0) {
-            free((void*)m_advData.uuids16);
-            m_advData.uuids16 = nullptr;
-            m_advData.num_uuids16 = 0;
-        }
-
-        if(rc !=0) {
+    if (!m_advDataSet) {
+        if (!setAdvertisementData(m_advData)) {
             return false;
         }
 
-        m_advDataSet = true;
+        if (m_scanResp && m_scanData.getPayload().size() > 0) {
+            if (!setScanResponseData(m_scanData)) {
+                return false;
+            }
+        }
     }
 
-    ble_addr_t peerAddr;
-    if (dirAddr != nullptr) {
-        memcpy(&peerAddr.val, dirAddr->getNative(), 6);
-        peerAddr.type = dirAddr->getType();
+    // Save the duration incase of host reset so we can restart with the same params
+    m_duration = duration;
+    if (duration == 0) {
+        duration = BLE_HS_FOREVER;
     }
 
-#if defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
-    rc = ble_gap_adv_start(NimBLEDevice::m_own_addr_type,
-                           (dirAddr != nullptr) ? &peerAddr : NULL,
-                           duration,
-                           &m_advParams,
-                           (pServer != nullptr) ? NimBLEServer::handleGapEvent :
-                                                  NimBLEAdvertising::handleGapEvent,
-                           (void*)this);
-#else
-    rc = ble_gap_adv_start(NimBLEDevice::m_own_addr_type,
-                           (dirAddr != nullptr) ? &peerAddr : NULL,
-                           duration,
-                           &m_advParams,
-                           NimBLEAdvertising::handleGapEvent,
-                           (void*)this);
-#endif
-    switch(rc) {
-        case 0:
-             break;
-
-        case BLE_HS_EALREADY:
-             NIMBLE_LOGI(LOG_TAG, "Advertisement Already active");
-             break;
-
-        case BLE_HS_EINVAL:
-             NIMBLE_LOGE(LOG_TAG, "Unable to advertise - Duration too long");
-             break;
-
-        case BLE_HS_EPREEMPTED:
-             NIMBLE_LOGE(LOG_TAG, "Unable to advertise - busy");
-             break;
-
-        case BLE_HS_ETIMEOUT_HCI:
-        case BLE_HS_EOS:
-        case BLE_HS_ECONTROLLER:
-        case BLE_HS_ENOTSYNCED:
-             NIMBLE_LOGE(LOG_TAG, "Unable to advertise - Host Reset");
-             break;
-
-        default:
-            NIMBLE_LOGE(LOG_TAG, "Error enabling advertising; rc=%d, %s",
-                        rc, NimBLEUtils::returnCodeToString(rc));
-            break;
+# if CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+    int rc = ble_gap_adv_start(NimBLEDevice::m_ownAddrType,
+                               (dirAddr != nullptr) ? dirAddr->getBase() : NULL,
+                               duration,
+                               &m_advParams,
+                               (pServer != nullptr) ? NimBLEServer::handleGapEvent : NimBLEAdvertising::handleGapEvent,
+                               this);
+# else
+    int rc =
+        ble_gap_adv_start(NimBLEDevice::m_ownAddrType, NULL, duration, &m_advParams, NimBLEAdvertising::handleGapEvent, this);
+# endif
+    if (rc != 0 && rc != BLE_HS_EALREADY) {
+        NIMBLE_LOGE(LOG_TAG, "Error enabling advertising; rc=%d, %s", rc, NimBLEUtils::returnCodeToString(rc));
+        return false;
     }
 
     NIMBLE_LOGD(LOG_TAG, "<< Advertising start");
-    return (rc == 0 || rc == BLE_HS_EALREADY);
+    return true;
 } // start
-
 
 /**
  * @brief Stop advertising.
  * @return True if advertising stopped successfully.
  */
 bool NimBLEAdvertising::stop() {
-    NIMBLE_LOGD(LOG_TAG, ">> stop");
-
     int rc = ble_gap_adv_stop();
     if (rc != 0 && rc != BLE_HS_EALREADY) {
-        NIMBLE_LOGE(LOG_TAG, "ble_gap_adv_stop rc=%d %s",
-                    rc, NimBLEUtils::returnCodeToString(rc));
+        NIMBLE_LOGE(LOG_TAG, "ble_gap_adv_stop rc=%d %s", rc, NimBLEUtils::returnCodeToString(rc));
         return false;
     }
 
-    NIMBLE_LOGD(LOG_TAG, "<< stop");
     return true;
 } // stop
 
-
 /**
- * @brief Handles the callback when advertising stops.
+ * @brief Set the callback to be invoked when advertising stops.
+ * @param [in] callback The callback to be invoked when advertising stops.
  */
-void NimBLEAdvertising::advCompleteCB() {
-    if(m_advCompCB != nullptr) {
-        m_advCompCB(this);
-    }
-} // advCompleteCB
-
+void NimBLEAdvertising::setAdvertisingCompleteCallback(advCompleteCB_t callback) {
+    m_advCompCb = callback;
+} // setAdvertisingCompleteCallback
 
 /**
  * @brief Check if currently advertising.
- * @return true if advertising is active.
+ * @return True if advertising is active.
  */
 bool NimBLEAdvertising::isAdvertising() {
     return ble_gap_adv_active();
 } // isAdvertising
-
 
 /*
  * Host reset seems to clear advertising data,
  * we need clear the flag so it reloads it.
  */
 void NimBLEAdvertising::onHostSync() {
-    NIMBLE_LOGD(LOG_TAG, "Host re-synced");
-
     m_advDataSet = false;
     // If we were advertising forever, restart it now
-    if(m_duration == 0) {
-        start(m_duration, m_advCompCB);
+    if (m_duration == 0) {
+        start(m_duration);
     } else {
-    // Otherwise we should tell the app that advertising stopped.
-        advCompleteCB();
+        // Otherwise we should tell the app that advertising stopped.
+        if (m_advCompCb != nullptr) {
+            m_advCompCb(this);
+        }
     }
 } // onHostSync
-
 
 /**
  * @brief Handler for gap events when not using peripheral role.
  * @param [in] event the event data.
  * @param [in] arg pointer to the advertising instance.
  */
-/*STATIC*/
-int NimBLEAdvertising::handleGapEvent(struct ble_gap_event *event, void *arg) {
-    NimBLEAdvertising *pAdv = (NimBLEAdvertising*)arg;
+int NimBLEAdvertising::handleGapEvent(struct ble_gap_event* event, void* arg) {
+    NimBLEAdvertising* pAdv = (NimBLEAdvertising*)arg;
 
-    if(event->type == BLE_GAP_EVENT_ADV_COMPLETE) {
-        switch(event->adv_complete.reason) {
+    if (event->type == BLE_GAP_EVENT_ADV_COMPLETE) {
+        switch (event->adv_complete.reason) {
             // Don't call the callback if host reset, we want to
             // preserve the active flag until re-sync to restart advertising.
             case BLE_HS_ETIMEOUT_HCI:
@@ -778,310 +309,315 @@ int NimBLEAdvertising::handleGapEvent(struct ble_gap_event *event, void *arg) {
             default:
                 break;
         }
-        pAdv->advCompleteCB();
+
+        if (pAdv->m_advCompCb != nullptr) {
+            pAdv->m_advCompCb(pAdv);
+        }
     }
     return 0;
-}
+} // handleGapEvent
 
+/* -------------------------------------------------------------------------- */
+/*                             Advertisement Data                             */
+/* -------------------------------------------------------------------------- */
 
 /**
- * @brief Add data to the payload to be advertised.
- * @param [in] data The data to be added to the payload.
+ * @brief Set the advertisement data that is to be broadcast in a regular advertisement.
+ * @param [in] data The data to be broadcast.
+ * @return True if the data was set successfully.
  */
-void NimBLEAdvertisementData::addData(const std::string &data) {
-    if ((m_payload.length() + data.length()) > BLE_HS_ADV_MAX_SZ) {
-        NIMBLE_LOGE(LOG_TAG, "Advertisement data length exceeded");
-        return;
+bool NimBLEAdvertising::setAdvertisementData(const NimBLEAdvertisementData& data) {
+    int rc = ble_gap_adv_set_data(&data.getPayload()[0], data.getPayload().size());
+    if (rc != 0) {
+        NIMBLE_LOGE(LOG_TAG, "ble_gap_adv_set_data: %d %s", rc, NimBLEUtils::returnCodeToString(rc));
+        return false;
     }
-    m_payload.append(data);
-} // addData
 
-
-/**
- * @brief Add data to the payload to be advertised.
- * @param [in] data The data to be added to the payload.
- * @param [in] length The size of data to be added to the payload.
- */
-void NimBLEAdvertisementData::addData(char * data, size_t length) {
-    addData(std::string(data, length));
-} // addData
-
+    NIMBLE_LOGD(LOG_TAG, "setAdvertisementData: %s", data.toString().c_str());
+    m_advData    = data; // make a copy in the member object in case this is custom.
+    m_advDataSet = true; // Set the flag that indicates the data was set already so we don't set it again.
+    return true;
+} // setAdvertisementData
 
 /**
- * @brief Set the appearance.
- * @param [in] appearance The appearance code value.
+ * @brief Get the current advertisement data.
+ * @returns a reference to the current advertisement data.
  */
-void NimBLEAdvertisementData::setAppearance(uint16_t appearance) {
-    char cdata[2];
-    cdata[0] = 3;
-    cdata[1] = BLE_HS_ADV_TYPE_APPEARANCE; // 0x19
-    addData(std::string(cdata, 2) + std::string((char*) &appearance, 2));
+const NimBLEAdvertisementData& NimBLEAdvertising::getAdvertisementData() {
+    return m_advData;
+} // getAdvertisementData
+
+/**
+ * @brief Set the data that is to be provided in a scan response.
+ * @param [in] data The data to be provided in the scan response
+ * @return True if the data was set successfully.
+ * @details The scan response data is sent in response to a scan request from a peer device.
+ * If this is set without setting the advertisement data when advertising starts this may be overwritten.
+ */
+bool NimBLEAdvertising::setScanResponseData(const NimBLEAdvertisementData& data) {
+    int rc = ble_gap_adv_rsp_set_data(&data.getPayload()[0], data.getPayload().size());
+    if (rc != 0) {
+        NIMBLE_LOGE(LOG_TAG, "ble_gap_adv_rsp_set_data: %d %s", rc, NimBLEUtils::returnCodeToString(rc));
+        return false;
+    }
+
+    NIMBLE_LOGD(LOG_TAG, "setScanResponseData: %s", data.toString().c_str());
+    m_scanData = data; // copy the data into the member object in case this is custom.
+    return true;
+} // setScanResponseData
+
+/**
+ * @brief Get the current scan response data.
+ * @returns a reference to the current scan response data.
+ */
+const NimBLEAdvertisementData& NimBLEAdvertising::getScanData() {
+    return m_advData;
+} // getScanData
+
+/**
+ * @brief Clear the advertisement and scan response data and set the flags to BLE_HS_ADV_F_DISC_GEN.
+ */
+void NimBLEAdvertising::clearData() {
+    m_advData.clearData();
+    m_advData.setFlags(BLE_HS_ADV_F_DISC_GEN);
+    m_scanData.clearData();
+    m_advDataSet = false;
+} // clearData
+
+/**
+ * @brief Refresh advertsing data dynamically without stop/start cycle.
+ * For instance allows refreshing manufacturer data dynamically.
+ *
+ * @return True if the data was set successfully.
+ * @details If scan response is enabled it will be refreshed as well.
+ */
+bool NimBLEAdvertising::refreshAdvertisingData() {
+    bool success = setAdvertisementData(m_advData);
+    if (m_scanResp) {
+        success = setScanResponseData(m_scanData);
+    }
+
+    return success;
+} // refreshAdvertisingData
+
+/**
+ * @brief Add a service uuid to exposed list of services.
+ * @param [in] serviceUUID The UUID of the service to expose.
+ * @return True if the service was added successfully.
+ */
+bool NimBLEAdvertising::addServiceUUID(const NimBLEUUID& serviceUUID) {
+    if (!m_advData.addServiceUUID(serviceUUID)) {
+        if (!m_scanData.addServiceUUID(serviceUUID)) {
+            return false;
+        }
+    }
+
+    m_advDataSet = false;
+    return true;
+} // addServiceUUID
+
+/**
+ * @brief Add a service uuid to exposed list of services.
+ * @param [in] serviceUUID The string representation of the service to expose.
+ * @return True if the service was added successfully.
+ */
+bool NimBLEAdvertising::addServiceUUID(const char* serviceUUID) {
+    return addServiceUUID(NimBLEUUID(serviceUUID));
+} // addServiceUUID
+
+/**
+ * @brief Remove a service UUID from the advertisement.
+ * @param [in] serviceUUID The UUID of the service to remove.
+ * @return True if the service was removed successfully.
+ */
+bool NimBLEAdvertising::removeServiceUUID(const NimBLEUUID& serviceUUID) {
+    bool success = m_advData.removeServiceUUID(serviceUUID);
+    success      = m_scanData.removeServiceUUID(serviceUUID);
+    m_advDataSet = false;
+    return success;
+} // removeServiceUUID
+
+/**
+ * @brief Remove a service UUID from the advertisement.
+ * @param [in] serviceUUID The UUID of the service to remove.
+ * @return True if the service was removed successfully.
+ */
+bool NimBLEAdvertising::removeServiceUUID(const char* serviceUUID) {
+    return removeServiceUUID(NimBLEUUID(serviceUUID));
+} // removeServiceUUID
+
+/**
+ * @brief Remove all service UUIDs from the advertisement.
+ * @return True if the services were removed successfully.
+ */
+bool NimBLEAdvertising::removeServices() {
+    bool success = m_advData.removeServices();
+    success = m_advDataSet = m_scanData.removeServices();
+    m_advDataSet           = false;
+    return success;
+} // removeServices
+
+/**
+ * @brief Set the device appearance in the advertising data.
+ * @param [in] appearance The appearance of the device in the advertising data.
+ * If the appearance value is 0 then the appearance will not be in the advertisement.
+ * @return True if the appearance was set successfully.
+ */
+bool NimBLEAdvertising::setAppearance(uint16_t appearance) {
+    if (!m_advData.setAppearance(appearance)) {
+        if (!m_scanData.setAppearance(appearance)) {
+            return false;
+        }
+    }
+
+    m_advDataSet = false;
+    return true;
 } // setAppearance
 
-
 /**
- * @brief Set the advertisement flags.
- * @param [in] flag The flags to be set in the advertisement.
- * * BLE_HS_ADV_F_DISC_LTD
- * * BLE_HS_ADV_F_DISC_GEN
- * * BLE_HS_ADV_F_BREDR_UNSUP - must always use with NimBLE
+ * @brief Set the preferred min and max connection intervals to advertise.
+ * @param [in] minInterval The minimum preferred connection interval.
+ * @param [in] maxInterval The Maximum preferred connection interval.
+ * @return True if the preferred connection interval was set successfully.
+ * @details  Range = 0x0006(7.5ms) to 0x0C80(4000ms), values not within the range will be limited to this range.
  */
-void NimBLEAdvertisementData::setFlags(uint8_t flag) {
-    char cdata[3];
-    cdata[0] = 2;
-    cdata[1] = BLE_HS_ADV_TYPE_FLAGS;  // 0x01
-    cdata[2] = flag | BLE_HS_ADV_F_BREDR_UNSUP;
-    addData(std::string(cdata, 3));
-} // setFlag
-
-
-/**
- * @brief Set manufacturer specific data.
- * @param [in] data The manufacturer data to advertise.
- */
-void NimBLEAdvertisementData::setManufacturerData(const std::string &data) {
-    char cdata[2];
-    cdata[0] = data.length() + 1;
-    cdata[1] = BLE_HS_ADV_TYPE_MFG_DATA ;  // 0xff
-    addData(std::string(cdata, 2) + data);
-} // setManufacturerData
-
-
-/**
- * @brief Set manufacturer specific data.
- * @param [in] data The manufacturer data to advertise.
- */
-void NimBLEAdvertisementData::setManufacturerData(const std::vector<uint8_t> &data) {
-    char cdata[2];
-    cdata[0] = data.size() + 1;
-    cdata[1] = BLE_HS_ADV_TYPE_MFG_DATA ;  // 0xff
-    addData(std::string(cdata, 2) + std::string((char*)&data[0], data.size()));
-} // setManufacturerData
-
-
-/**
- * @brief Set the URI to advertise.
- * @param [in] uri The uri to advertise.
- */
-void NimBLEAdvertisementData::setURI(const std::string &uri) {
-    char cdata[2];
-    cdata[0] = uri.length() + 1;
-    cdata[1] = BLE_HS_ADV_TYPE_URI;
-    addData(std::string(cdata, 2) + uri);
-} // setURI
-
-
-/**
- * @brief Set the complete name of this device.
- * @param [in] name The name to advertise.
- */
-void NimBLEAdvertisementData::setName(const std::string &name) {
-    char cdata[2];
-    cdata[0] = name.length() + 1;
-    cdata[1] = BLE_HS_ADV_TYPE_COMP_NAME;  // 0x09
-    addData(std::string(cdata, 2) + name);
-} // setName
-
-
-/**
- * @brief Set a single service to advertise as a complete list of services.
- * @param [in] uuid The service to advertise.
- */
-void NimBLEAdvertisementData::setCompleteServices(const NimBLEUUID &uuid) {
-    setServices(true, uuid.bitSize(), {uuid});
-} // setCompleteServices
-
-
-/**
- * @brief Set the complete list of 16 bit services to advertise.
- * @param [in] v_uuid A vector of 16 bit UUID's to advertise.
- */
-void NimBLEAdvertisementData::setCompleteServices16(const std::vector<NimBLEUUID>& v_uuid) {
-    setServices(true, 16, v_uuid);
-} // setCompleteServices16
-
-
-/**
- * @brief Set the complete list of 32 bit services to advertise.
- * @param [in] v_uuid A vector of 32 bit UUID's to advertise.
- */
-void NimBLEAdvertisementData::setCompleteServices32(const std::vector<NimBLEUUID>& v_uuid) {
-    setServices(true, 32, v_uuid);
-} // setCompleteServices32
-
-
-/**
- * @brief Set a single service to advertise as a partial list of services.
- * @param [in] uuid The service to advertise.
- */
-void NimBLEAdvertisementData::setPartialServices(const NimBLEUUID &uuid) {
-    setServices(false, uuid.bitSize(), {uuid});
-} // setPartialServices
-
-
-/**
- * @brief Set the partial list of services to advertise.
- * @param [in] v_uuid A vector of 16 bit UUID's to advertise.
- */
-void NimBLEAdvertisementData::setPartialServices16(const std::vector<NimBLEUUID>& v_uuid) {
-    setServices(false, 16, v_uuid);
-} // setPartialServices16
-
-
-/**
- * @brief Set the partial list of services to advertise.
- * @param [in] v_uuid A vector of 32 bit UUID's to advertise.
- */
-void NimBLEAdvertisementData::setPartialServices32(const std::vector<NimBLEUUID>& v_uuid) {
-    setServices(false, 32, v_uuid);
-} // setPartialServices32
-
-
-/**
- * @brief Utility function to create the list of service UUID's from a vector.
- * @param [in] complete If true the vector is the complete set of services.
- * @param [in] size The bit size of the UUID's in the vector. (16, 32, or 128).
- * @param [in] v_uuid The vector of service UUID's to advertise.
- */
-void NimBLEAdvertisementData::setServices(const bool complete, const uint8_t size,
-                                          const std::vector<NimBLEUUID> &v_uuid)
-{
-    char cdata[2];
-    cdata[0] = (size / 8) * v_uuid.size() + 1;
-    switch(size) {
-        case 16:
-            cdata[1] = complete ? BLE_HS_ADV_TYPE_COMP_UUIDS16 : BLE_HS_ADV_TYPE_INCOMP_UUIDS16;
-            break;
-        case 32:
-            cdata[1] = complete ? BLE_HS_ADV_TYPE_COMP_UUIDS32 : BLE_HS_ADV_TYPE_INCOMP_UUIDS32;
-            break;
-        case 128:
-            cdata[1] = complete ? BLE_HS_ADV_TYPE_COMP_UUIDS128 : BLE_HS_ADV_TYPE_INCOMP_UUIDS128;
-            break;
-        default:
-            return;
-    }
-
-    std::string uuids;
-
-    for(auto &it : v_uuid){
-        if(it.bitSize() != size) {
-            NIMBLE_LOGE(LOG_TAG, "Service UUID(%d) invalid", size);
-            return;
-        } else {
-            switch(size) {
-                case 16:
-                    uuids += std::string((char*)&it.getNative()->u16.value, 2);
-                    break;
-                case 32:
-                    uuids += std::string((char*)&it.getNative()->u32.value, 4);
-                    break;
-                case 128:
-                    uuids += std::string((char*)&it.getNative()->u128.value, 16);
-                    break;
-                default:
-                    return;
-            }
+bool NimBLEAdvertising::setPreferredParams(uint16_t minInterval, uint16_t maxInterval) {
+    if (!m_advData.setPreferredParams(minInterval, maxInterval)) {
+        if (!m_scanData.setPreferredParams(minInterval, maxInterval)) {
+            return false;
         }
     }
 
-    addData(std::string(cdata, 2) + uuids);
-} // setServices
-
-
-/**
- * @brief Set the service data (UUID + data)
- * @param [in] uuid The UUID to set with the service data.
- * @param [in] data The data to be associated with the service data advertised.
- */
-void NimBLEAdvertisementData::setServiceData(const NimBLEUUID &uuid, const std::string &data) {
-    char cdata[2];
-    switch (uuid.bitSize()) {
-        case 16: {
-            // [Len] [0x16] [UUID16] data
-            cdata[0] = data.length() + 3;
-            cdata[1] = BLE_HS_ADV_TYPE_SVC_DATA_UUID16;  // 0x16
-            addData(std::string(cdata, 2) + std::string((char*) &uuid.getNative()->u16.value, 2) + data);
-            break;
-        }
-
-        case 32: {
-            // [Len] [0x20] [UUID32] data
-            cdata[0] = data.length() + 5;
-            cdata[1] = BLE_HS_ADV_TYPE_SVC_DATA_UUID32; // 0x20
-            addData(std::string(cdata, 2) + std::string((char*) &uuid.getNative()->u32.value, 4) + data);
-            break;
-        }
-
-        case 128: {
-            // [Len] [0x21] [UUID128] data
-            cdata[0] = data.length() + 17;
-            cdata[1] = BLE_HS_ADV_TYPE_SVC_DATA_UUID128;  // 0x21
-            addData(std::string(cdata, 2) + std::string((char*) &uuid.getNative()->u128.value, 16) + data);
-            break;
-        }
-
-        default:
-            return;
-    }
-} // setServiceData
-
-
-/**
- * @brief Set the short name.
- * @param [in] name The short name of the device.
- */
-void NimBLEAdvertisementData::setShortName(const std::string &name) {
-    char cdata[2];
-    cdata[0] = name.length() + 1;
-    cdata[1] = BLE_HS_ADV_TYPE_INCOMP_NAME;  // 0x08
-    addData(std::string(cdata, 2) + name);
-} // setShortName
-
-
-/**
- * @brief Adds Tx power level to the advertisement data.
- */
-void NimBLEAdvertisementData::addTxPower() {
-    char cdata[3];
-    cdata[0] = BLE_HS_ADV_TX_PWR_LVL_LEN + 1;
-    cdata[1] = BLE_HS_ADV_TYPE_TX_PWR_LVL;
-    cdata[2] = NimBLEDevice::getPower();
-    addData(cdata, 3);
-} // addTxPower
-
-
-/**
- * @brief Set the preferred connection interval parameters.
- * @param [in] min The minimum interval desired.
- * @param [in] max The maximum interval desired.
- */
-void NimBLEAdvertisementData::setPreferredParams(uint16_t min, uint16_t max) {
-    char cdata[6];
-    cdata[0] = BLE_HS_ADV_SLAVE_ITVL_RANGE_LEN + 1;
-    cdata[1] = BLE_HS_ADV_TYPE_SLAVE_ITVL_RANGE;
-    cdata[2] = min;
-    cdata[3] = min >> 8;
-    cdata[4] = max;
-    cdata[5] = max >> 8;
-    addData(cdata, 6);
+    m_advDataSet = false;
+    return true;
 } // setPreferredParams
 
+/**
+ * @brief Add the transmission power level to the advertisement packet.
+ * @return True if the transmission power level was added successfully.
+ */
+bool NimBLEAdvertising::addTxPower() {
+    if (!m_advData.addTxPower()) {
+        if (!m_scanData.addTxPower()) {
+            return false;
+        }
+    }
+
+    m_advDataSet = false;
+    return true;
+} // addTxPower
 
 /**
- * @brief Retrieve the payload that is to be advertised.
- * @return The payload that is to be advertised.
+ * @brief Set the advertised name of the device.
+ * @param [in] name The name to advertise.
+ * @return True if the name was set successfully.
+ * @note If the name is too long it will be truncated.
+ * @details If scan response is enabled the name will be set in the scan response data.
  */
-std::string NimBLEAdvertisementData::getPayload() {
-    return m_payload;
-} // getPayload
+bool NimBLEAdvertising::setName(const std::string& name) {
+    if (m_scanResp && m_scanData.setName(name)) {
+        m_advDataSet = false;
+        return true;
+    }
 
+    if (!m_advData.setName(name)) {
+        return false;
+    }
+
+    m_advDataSet = false;
+    return true;
+} // setName
 
 /**
- * @brief Clear the advertisement data for reuse.
+ * @brief Set the advertised manufacturer data.
+ * @param [in] data The data to advertise.
+ * @param [in] length The length of the data.
+ * @return True if the manufacturer data was set successfully.
  */
-void NimBLEAdvertisementData::clearData() {
-    m_payload.clear();
-}
+bool NimBLEAdvertising::setManufacturerData(const uint8_t* data, size_t length) {
+    if (!m_advData.setManufacturerData(data, length)) {
+        if (!m_scanData.setManufacturerData(data, length)) {
+            return false;
+        }
+    }
 
-#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER  && !CONFIG_BT_NIMBLE_EXT_ADV */
+    m_advDataSet = false;
+    return true;
+} // setManufacturerData
+
+/**
+ * @brief Set the advertised manufacturer data.
+ * @param [in] data The data to advertise.
+ * @return True if the manufacturer data was set successfully.
+ */
+bool NimBLEAdvertising::setManufacturerData(const std::string& data) {
+    return setManufacturerData(reinterpret_cast<const uint8_t*>(data.data()), data.length());
+} // setManufacturerData
+
+/**
+ * @brief Set the advertised manufacturer data.
+ * @param [in] data The data to advertise.
+ * @return True if the manufacturer data was set successfully.
+ */
+bool NimBLEAdvertising::setManufacturerData(const std::vector<uint8_t>& data) {
+    return setManufacturerData(&data[0], data.size());
+} // setManufacturerData
+
+/**
+ * @brief Set the advertised URI.
+ * @param [in] uri The URI to advertise.
+ * @return True if the URI was set successfully.
+ */
+bool NimBLEAdvertising::setURI(const std::string& uri) {
+    if (!m_advData.setURI(uri)) {
+        if (!m_scanData.setURI(uri)) {
+            return false;
+        }
+    }
+
+    m_advDataSet = false;
+    return true;
+} // setURI
+
+/**
+ * @brief Set the service data advertised for the UUID.
+ * @param [in] uuid The UUID the service data belongs to.
+ * @param [in] data The data to advertise.
+ * @param [in] length The length of the data.
+ * @return True if the service data was set successfully.
+ * @note If data length is 0 the service data will not be advertised.
+ */
+bool NimBLEAdvertising::setServiceData(const NimBLEUUID& uuid, const uint8_t* data, size_t length) {
+    if (!m_advData.setServiceData(uuid, data, length)) {
+        if (!m_scanData.setServiceData(uuid, data, length)) {
+            return false;
+        }
+    }
+
+    m_advDataSet = false;
+    return true;
+} // setServiceData
+
+/**
+ * @brief Set the service data advertised for the UUID.
+ * @param [in] uuid The UUID the service data belongs to.
+ * @param [in] data The data to advertise.
+ * @return True if the service data was set successfully.
+ * @note If data length is 0 the service data will not be advertised.
+ */
+bool NimBLEAdvertising::setServiceData(const NimBLEUUID& uuid, const std::vector<uint8_t>& data) {
+    return setServiceData(uuid, data.data(), data.size());
+} // setServiceData
+
+/**
+ * @brief Set the service data advertised for the UUID.
+ * @param [in] uuid The UUID the service data belongs to.
+ * @param [in] data The data to advertise.
+ * @return True if the service data was set successfully.
+ * @note If data length is 0 the service data will not be advertised.
+ */
+bool NimBLEAdvertising::setServiceData(const NimBLEUUID& uuid, const std::string& data) {
+    return setServiceData(uuid, reinterpret_cast<const uint8_t*>(data.data()), data.length());
+} // setServiceData
+
+#endif // (CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER && !CONFIG_BT_NIMBLE_EXT_ADV) || defined(_DOXYGEN_)

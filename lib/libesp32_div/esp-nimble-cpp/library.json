@@ -1,8 +1,23 @@
 {
-    "name": "esp-nimble-cpp",
-    "keywords": "esp32, bluetooth",
-    "description": "Bluetooth low energy (BLE) library for esp32 based on NimBLE",
-    "version": "1.4.1",
-    "frameworks": "arduino",
-    "platforms": "espressif32"
+  "name": "esp-nimble-cpp",
+  "version": "2.2.1",
+  "description": "C++ wrapper for the NimBLE BLE stack",
+  "keywords": [
+    "BLE",
+    "espidf",
+    "espressif",
+    "esp32",
+    "nimble"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/h2zero/esp-nimble-cpp"
+  },
+  "authors": {
+    "name": "Ryan Powell",
+    "email": "ryan@nable-embedded.io",
+    "url": "https://github.com/h2zero/esp-nimble-cpp",
+    "maintainer": true
+  }
 }

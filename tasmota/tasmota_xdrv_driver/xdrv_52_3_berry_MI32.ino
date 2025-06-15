@@ -104,8 +104,8 @@ extern "C" {
   extern bool MI32setBerryCtxSvc(const char *Svc, bbool discoverAttributes);
   extern bool MI32setBerryCtxChr(const char *Chr);
   extern bool MI32setBerryCtxMAC(uint8_t *MAC, uint8_t type);
-  extern bool MI32addMACtoBlockList(uint8_t *MAC, uint8_t type);
   extern bool MI32addMACtoWatchList(uint8_t *MAC, uint8_t type);
+  extern void MI32setBerryStoreRec(uint8_t *buffer, size_t size);
 
   int be_BLE_init(bvm *vm);
   int be_BLE_init(bvm *vm) {
@@ -118,6 +118,10 @@ extern "C" {
 
   void be_BLE_loop(void){
     MI32BerryLoop();
+  }
+
+  void be_BLE_store(uint8_t *buf, size_t size){    
+    MI32setBerryStoreRec(buf, size);
   }
 
   void be_BLE_reg_conn_cb(void* function, uint8_t *buffer);
@@ -198,20 +202,6 @@ extern "C" {
     be_raisef(vm, "ble_error", "BLE: could not run operation");
   }
 
-  void be_BLE_adv_block(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type);
-  void be_BLE_adv_block(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type){
-    if(!be_BLE_MAC_size(vm, size)){
-      return;
-    }
-    uint8_t _type = 0;
-    if(type){
-      _type = type;
-    }
-    if(MI32addMACtoBlockList(buf, _type)) return;
-
-  be_raisef(vm, "ble_error", "BLE: could not block MAC");
-  }
-
   void be_BLE_adv_watch(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type);
   void be_BLE_adv_watch(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type){
     if(!be_BLE_MAC_size(vm, size)){
@@ -232,7 +222,7 @@ extern "C" {
     if(!device){
       return NimBLEDevice::getServer()->getPeerInfo(0);
     } else {
-      return NimBLEDevice::getClientList()->front()->getConnInfo();
+      return device->getConnInfo();
     }
   }
 
@@ -280,7 +270,7 @@ extern "C" {
     if(MI32.mode.connected == 1 || MI32.ServerTask != nullptr){
       NimBLEClient* _device = nullptr;
       if(MI32.mode.connected == 1){
-        _device = NimBLEDevice::getClientList()->front();
+        _device = NimBLEDevice::getClientByHandle(MI32.connID);
       }
       NimBLEConnInfo _info = be_BLE_get_ConnInfo(_device);
 
@@ -295,7 +285,17 @@ extern "C" {
       be_map_insert_bool(vm, "master", _info.isMaster());
       be_map_insert_bool(vm, "encrypted", _info.isEncrypted());
       be_map_insert_bool(vm, "authenticated", _info.isAuthenticated());
-      if(_device == nullptr) be_map_insert_str(vm, "name", NimBLEDevice::getServer()->getPeerName(_info).c_str()); // ESP32 is server
+      if(_device == nullptr) {
+        auto _remote_client = NimBLEDevice::getServer()->getClient(_info);
+        if(_remote_client != nullptr){
+          auto _name = _remote_client->getValue(NimBLEUUID((uint16_t)0x1800), NimBLEUUID((uint16_t)0x2A00)); //GAP, name
+          if(_name){
+            be_map_insert_str(vm, "name", _name.c_str()); // ESP32 is server
+          }
+        } else {
+          be_map_insert_str(vm, "name", "");
+        }
+      }
 
       ble_store_value_sec value_sec;
       ble_sm_read_bond(_info.getConnHandle(), &value_sec);
@@ -368,7 +368,6 @@ BLE.conn_cb(cb,buffer)
 BLE.adv_cb(cb,buffer)
 BLE.serv_cb(cb,buffer)
 BLE.adv_watch(MAC)
-BLE.adv_block(MAC)
 
 MI32.devices()
 MI32.get_name(slot)

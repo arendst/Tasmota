@@ -70,7 +70,7 @@
 
 void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify);
 void MI32AddKey(mi_bindKey_t keyMAC);
-void MI32HandleEveryDevice(NimBLEAdvertisedDevice* advertisedDevice, uint8_t addr[6], int RSSI);
+void MI32HandleEveryDevice(const NimBLEAdvertisedDevice* advertisedDevice, uint8_t addr[6], int RSSI);
 
 std::vector<mi_sensor_t> MIBLEsensors;
 RingbufHandle_t BLERingBufferQueue = nullptr;
@@ -88,6 +88,7 @@ class MI32SensorCallback : public NimBLEClientCallbacks {
     MI32.infoMsg = MI32_DID_CONNECT;
     MI32.mode.willConnect = 0;
     MI32.mode.connected = 1;
+    MI32.connID = pclient->getConnHandle();
     pclient->updateConnParams(8,16,0,1000);
   }
   void onDisconnect(NimBLEClient* pclient, int reason) {
@@ -101,20 +102,20 @@ class MI32SensorCallback : public NimBLEClientCallbacks {
 };
 
 class MI32AdvCallbacks: public NimBLEScanCallbacks {
-  void onScanEnd(NimBLEScanResults results) {
+  void onScanEnd(const NimBLEScanResults &results, int reason) {
     MI32.infoMsg = MI32_SCAN_ENDED;
     MI32.mode.runningScan = 0;
     MI32.mode.deleteScanTask = 1; // if scan ended dew to a BLE controller error, make sure we stop the task
   }
 
-  void IRAM_ATTR onResult(NimBLEAdvertisedDevice* advertisedDevice) {
+  void IRAM_ATTR onResult(const NimBLEAdvertisedDevice* advertisedDevice) {
     static bool _mutex = false;
     if(_mutex) return;
     _mutex = true;
 
     int RSSI = advertisedDevice->getRSSI();
     uint8_t addr[6];
-    memcpy(addr,advertisedDevice->getAddress().getNative(),6);
+    memcpy(addr,advertisedDevice->getAddress().getVal(),6);
     MI32_ReverseMAC(addr);
     size_t ServiceDataLength = 0;
 
@@ -123,8 +124,8 @@ class MI32AdvCallbacks: public NimBLEScanCallbacks {
       memcpy(_packet->MAC,addr,6);
       _packet->addressType = advertisedDevice->getAddressType();
       _packet->RSSI = (uint8_t)RSSI;
-      uint8_t *_payload = advertisedDevice->getPayload();
-      _packet->length = advertisedDevice->getPayloadLength();
+      const uint8_t *_payload = advertisedDevice->getPayload().data();
+      _packet->length = advertisedDevice->getPayload().size();
       memcpy(_packet->payload,_payload, _packet->length);
       MI32.mode.triggerBerryAdvCB = 1;
     }
@@ -137,7 +138,7 @@ class MI32AdvCallbacks: public NimBLEScanCallbacks {
       return;
     }
 
-    uint16_t UUID = advertisedDevice->getServiceDataUUID(0).getNative()->u16.value;
+    uint16_t UUID = *(uint16_t*)advertisedDevice->getServiceDataUUID(0).getValue();
     ServiceDataLength = advertisedDevice->getServiceData(0).length();
 
     if(UUID==0xfe95) {
@@ -168,7 +169,7 @@ class MI32ServerCallbacks: public NimBLEServerCallbacks {
         } item;
         item.header.length = 6;
         item.header.type = BLE_OP_ON_CONNECT;
-        memcpy(item.buffer,connInfo.getAddress().getNative(),6);
+        memcpy(item.buffer,connInfo.getAddress().getVal(),6);
         xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t) + 6 , pdMS_TO_TICKS(1));
         MI32.infoMsg = MI32_SERV_CLIENT_CONNECTED;
     };
@@ -187,7 +188,7 @@ class MI32ServerCallbacks: public NimBLEServerCallbacks {
         NimBLEDevice::startAdvertising();
 #endif
     };
-    void onAuthenticationComplete(const NimBLEConnInfo& connInfo) {
+    void onAuthenticationComplete(NimBLEConnInfo& connInfo) {
       struct{
         BLERingBufferItem_t header;
         uint8_t buffer[sizeof(ble_store_value_sec)];
@@ -203,13 +204,13 @@ class MI32ServerCallbacks: public NimBLEServerCallbacks {
 };
 
 class MI32CharacteristicCallbacks: public NimBLECharacteristicCallbacks {
-    void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo){
+    void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
         struct{
           BLERingBufferItem_t header;
         } item;
         item.header.length = 0;
         item.header.type = BLE_OP_ON_READ;
-        item.header.returnCharUUID = pCharacteristic->getUUID().getNative()->u16.value;
+        item.header.returnCharUUID = *(uint16_t*)pCharacteristic->getUUID().getValue();
         item.header.handle = pCharacteristic->getHandle();
         xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t), pdMS_TO_TICKS(1));
     };
@@ -219,11 +220,11 @@ class MI32CharacteristicCallbacks: public NimBLECharacteristicCallbacks {
           BLERingBufferItem_t header;
           uint8_t buffer[255];
         } item;
-        item.header.length = pCharacteristic->getDataLength();;
+        item.header.length = pCharacteristic->getValue().size();
         item.header.type = BLE_OP_ON_WRITE;
-        item.header.returnCharUUID = pCharacteristic->getUUID().getNative()->u16.value;
+        item.header.returnCharUUID = *(uint16_t*)pCharacteristic->getUUID().getValue();
         item.header.handle = pCharacteristic->getHandle();
-        memcpy(item.buffer,pCharacteristic->getValue(),pCharacteristic->getDataLength());
+        memcpy(item.buffer,pCharacteristic->getValue().data(),pCharacteristic->getValue().size());
         xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t) + item.header.length , pdMS_TO_TICKS(1));
     };
 
@@ -237,7 +238,7 @@ class MI32CharacteristicCallbacks: public NimBLECharacteristicCallbacks {
         } item;
         item.header.length = 4;
         item.header.type = BLE_OP_ON_STATUS;
-        item.header.returnCharUUID = pCharacteristic->getUUID().getNative()->u16.value;
+        item.header.returnCharUUID = *(uint16_t*)pCharacteristic->getUUID().getValue();
         item.header.handle = pCharacteristic->getHandle();
         xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t) + 4, pdMS_TO_TICKS(1));
     };
@@ -248,7 +249,7 @@ class MI32CharacteristicCallbacks: public NimBLECharacteristicCallbacks {
         } item;
         item.header.length = 0;
         item.header.type = BLE_OP_ON_UNSUBSCRIBE + subValue;;
-        item.header.returnCharUUID = pCharacteristic->getUUID().getNative()->u16.value;
+        item.header.returnCharUUID = *(uint16_t*)pCharacteristic->getUUID().getValue();
         item.header.handle = pCharacteristic->getHandle();
         xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t), pdMS_TO_TICKS(1));
     };
@@ -264,7 +265,7 @@ void MI32notifyCB(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* pD
     item.header.length = length;
     // item.header.type = 103;  does not matter for now
     memcpy(item.buffer,pData,length);
-    item.header.returnCharUUID = pRemoteCharacteristic->getUUID().getNative()->u16.value;
+    item.header.returnCharUUID = *(uint16_t*)pRemoteCharacteristic->getUUID().getValue();
     item.header.handle = pRemoteCharacteristic->getHandle();
     xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t) + length , pdMS_TO_TICKS(5));
     MI32.mode.readingDone = 1;
@@ -733,6 +734,14 @@ extern "C" {
     MI32BLELoop();
   }
 
+  void MI32setBerryStoreRec(uint8_t *buffer, size_t size){
+    constexpr size_t sec_size = sizeof(ble_store_value_sec);
+    if(sec_size == size){
+      ble_store_write_peer_sec((const struct ble_store_value_sec*)&buffer);
+      AddLog(LOG_LEVEL_INFO,PSTR("BLE: write peer"));
+    }
+  }
+
   bool MI32runBerryConfig(uint16_t operation){
     bool success = false;
     #ifdef CONFIG_BT_NIMBLE_EXT_ADV
@@ -758,7 +767,7 @@ extern "C" {
         if(MI32.conCtx->buffer[0] == 5){
           uint16_t itvl_min = MI32.conCtx->buffer[2] + (MI32.conCtx->buffer[3] << 8);
           uint16_t itvl_max = MI32.conCtx->buffer[4] + (MI32.conCtx->buffer[5] << 8);
-          pAdvertising->setAdvertisementType(MI32.conCtx->buffer[1]);
+          pAdvertising->setConnectableMode(MI32.conCtx->buffer[1]);
           pAdvertising->setMinInterval(itvl_min);
           pAdvertising->setMaxInterval(itvl_max);
           AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: adv params: type: %u, min: %u, max: %u"),MI32.conCtx->buffer[1], (uint16_t)(itvl_min * 0.625), (uint16_t)(itvl_max * 0.625)) ;
@@ -867,7 +876,7 @@ extern "C" {
     if(MI32.conCtx != nullptr){
       MI32.conCtx->charUUID = NimBLEUUID(Chr);
       AddLog(LOG_LEVEL_DEBUG,PSTR("M32: CHR: %s"),MI32.conCtx->charUUID.toString().c_str());
-      uint16_t _uuid = MI32.conCtx->charUUID.getNative()->u16.value; //if not "notify op" -> present requested characteristic as return UUID
+      uint16_t _uuid = *(uint16_t*)MI32.conCtx->charUUID.getValue(); //if not "notify op" -> present requested characteristic as return UUID
       MI32.conCtx->returnCharUUID = _uuid;
       AddLog(LOG_LEVEL_DEBUG,PSTR("M32: return 16-bit UUID: %04x"),MI32.conCtx->returnCharUUID);
       return true;
@@ -888,11 +897,6 @@ extern "C" {
   void MI32setBerryAdvCB(void* function, uint8_t *buffer){
     MI32.beAdvCB = function;
     MI32.beAdvBuf = buffer;
-  }
-
-  bool MI32addMACtoBlockList(uint8_t *MAC, uint8_t type){
-    NimBLEDevice::addIgnored(NimBLEAddress(MAC,type));
-    return NimBLEDevice::isIgnored(NimBLEAddress(MAC,type));
   }
 
   bool MI32addMACtoWatchList(uint8_t *MAC, uint8_t type){
@@ -1224,7 +1228,7 @@ bool MI32ConnectActiveSensor(){ // only use inside a task !!
   }
 
   MI32Client = nullptr;
-  if(NimBLEDevice::getClientListSize()) {
+  if(NimBLEDevice::getCreatedClientCount() > 0) {
     MI32Client = NimBLEDevice::getClientByPeerAddress(_address);
   }
   if (!MI32Client){
@@ -1247,17 +1251,18 @@ bool MI32ConnectActiveSensor(){ // only use inside a task !!
  *        ... next service
  */
 void MI32ConnectionGetServices(){
-  std::vector<NimBLERemoteService*> *srvvector = MI32Client->getServices(true); // refresh
-  MI32.conCtx->buffer[1] = srvvector->size(); // number of services
+  std::vector<NimBLERemoteService*> srvvector = MI32Client->getServices(true); // refresh
+  MI32.conCtx->buffer[1] = srvvector.size(); // number of services
   uint32_t i = 2;
-  for (auto &srv: *srvvector) {
+  for (auto &srv: srvvector) {
     MI32.conCtx->buffer[i] = srv->getUUID().bitSize(); // 16/128 bit
     if(MI32.conCtx->buffer[i] == 16){
-      MI32.conCtx->buffer[i+1] = srv->getUUID().getNative()->u16.value & 0xff;
-      MI32.conCtx->buffer[i+2] = srv->getUUID().getNative()->u16.value >> 8;
+      const uint16_t _uuid16 =  *(uint16_t*)srv->getUUID().getValue();
+      MI32.conCtx->buffer[i+1] = _uuid16 & 0xff;
+      MI32.conCtx->buffer[i+2] = _uuid16 >> 8;
     }
     else{
-      memcpy((MI32.conCtx->buffer)+i+1,srv->getUUID().getNative()->u128.value,MI32.conCtx->buffer[i]); // the UUID
+      memcpy((MI32.conCtx->buffer)+i+1,srv->getUUID().getValue(),MI32.conCtx->buffer[i]); // the UUID
     }
     i += 1 + (MI32.conCtx->buffer[i]/8);
   }
@@ -1276,17 +1281,17 @@ void MI32ConnectionGetServices(){
  */
 void MI32ConnectionGetCharacteristics(NimBLERemoteService* pSvc);
 void MI32ConnectionGetCharacteristics(NimBLERemoteService* pSvc){
-  std::vector<NimBLERemoteCharacteristic*> *charvector = pSvc->getCharacteristics(true); // refresh
-  MI32.conCtx->buffer[1] = charvector->size(); // number of characteristics
+  auto charvector = pSvc->getCharacteristics(); // refresh
+  MI32.conCtx->buffer[1] = charvector.size(); // number of characteristics
   uint32_t i = 2;
-  for (auto &chr: *charvector) {
+  for (auto &chr: charvector) {
     MI32.conCtx->buffer[i] = chr->getUUID().bitSize(); // 16/128 bit
     if(MI32.conCtx->buffer[i] == 16){
-      MI32.conCtx->buffer[i+1] = chr->getUUID().getNative()->u16.value & 0xff;
-      MI32.conCtx->buffer[i+2] = chr->getUUID().getNative()->u16.value >> 8;
+      MI32.conCtx->buffer[i+1] = *(uint16_t*)chr->getUUID().getValue() & 0xff;
+      MI32.conCtx->buffer[i+2] = *(uint16_t*)chr->getUUID().getValue() >> 8;
     }
     else{
-      memcpy((MI32.conCtx->buffer)+i+1,chr->getUUID().getNative()->u128.value,MI32.conCtx->buffer[i]); // the UUID
+      memcpy((MI32.conCtx->buffer)+i+1,chr->getUUID().getValue(),MI32.conCtx->buffer[i]); // the UUID
     }
     i += 1 + (MI32.conCtx->buffer[i]/8);
     MI32.conCtx->buffer[i] = chr->getProperties(); // flags as bitfield
@@ -1342,7 +1347,7 @@ void MI32ConnectionTask(void *pvParameters){
       }
       NimBLERemoteService* pSvc = nullptr;
       NimBLERemoteCharacteristic* pChr = nullptr;
-      std::vector<NimBLERemoteCharacteristic*>*charvector = nullptr;
+      std::vector<NimBLERemoteCharacteristic*>charvector;
 
       // AddLog(LOG_LEVEL_INFO,PSTR("M32: start connection loop"));
       bool keepConnectionAlive = true;
@@ -1439,7 +1444,7 @@ void MI32ConnectionTask(void *pvParameters){
               else { //  characteristic selected by UUID
                 charvector = pSvc->getCharacteristics(true); // always try to subscribe to all characteristics with the same UUID
                 uint32_t position = 1;
-                for (auto &it: *charvector) {
+                for (auto &it: charvector) {
                   if (it->getUUID() == MI32.conCtx->charUUID) {
                     if (it->canNotify()) {
                       if(!it->subscribe(true, MI32notifyCB, MI32.conCtx->response)) {
@@ -1552,7 +1557,7 @@ void MI32ServerSetAdv(NimBLEServer *pServer, std::vector<NimBLEService*>& servic
 #ifdef CONFIG_BT_NIMBLE_EXT_ADV
     //TODO
 #else
-    pAdvertising->setAdvertisementType(MI32.conCtx->arg1);
+    pAdvertising->setConnectableMode(MI32.conCtx->arg1);
     // AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: AdvertisementType: %u"),MI32.conCtx->arg1);
 #endif
     // AddLog(LOG_LEVEL_DEBUG,PSTR("BLE: AdvertisementType: %u"),MI32.conCtx->arg1);
@@ -1600,7 +1605,7 @@ void MI32ServerSetAdv(NimBLEServer *pServer, std::vector<NimBLEService*>& servic
   }
 #else
   NimBLEAdvertisementData adv;
-  adv.addData((char *)&MI32.conCtx->buffer[1], MI32.conCtx->buffer[0]);
+  adv.addData((const uint8_t*)&MI32.conCtx->buffer[1], MI32.conCtx->buffer[0]);
   if(MI32.conCtx->operation == BLE_OP_SET_ADV){
     pAdvertising->setAdvertisementData(adv); // replace whole advertisement with our custom data from the Berry side
     if(pAdvertising->isAdvertising() == false && !shallStartServices){ // first advertisement
@@ -1610,7 +1615,7 @@ void MI32ServerSetAdv(NimBLEServer *pServer, std::vector<NimBLEService*>& servic
   } else
   {
     pAdvertising->setScanResponseData(adv);
-    pAdvertising->setScanResponse(true);
+    pAdvertising->enableScanResponse(true);
   }
 #endif //CONFIG_BT_NIMBLE_EXT_ADV
 
@@ -1670,7 +1675,7 @@ void MI32ServerSetCharacteristic(NimBLEServer *pServer, std::vector<NimBLEServic
   } item;
   item.header.length = 0;
   item.header.type = BLE_OP_SET_CHARACTERISTIC;
-  item.header.returnCharUUID = pCharacteristic->getUUID().getNative()->u16.value;
+  item.header.returnCharUUID = *(uint16_t*)pCharacteristic->getUUID().getValue();
   item.header.handle = pCharacteristic->getHandle();
   xRingbufferSend(BLERingBufferQueue, (const void*)&item, sizeof(BLERingBufferItem_t), pdMS_TO_TICKS(1));
 }
@@ -1678,7 +1683,9 @@ void MI32ServerSetCharacteristic(NimBLEServer *pServer, std::vector<NimBLEServic
 void MI32ServerTask(void *pvParameters){
   MI32.conCtx->error = MI32_CONN_NO_ERROR;
   NimBLEServer *pServer = NimBLEDevice::createServer();
-  pServer->setCallbacks(new MI32ServerCallbacks());
+  auto _srvCB = new MI32ServerCallbacks();  
+  pServer->setCallbacks(_srvCB,true);
+
   MI32.mode.readyForNextServerJob = 1;
   MI32.mode.deleteServerTask = 0;
   std::vector<NimBLEService*> servicesToStart;
@@ -2146,11 +2153,11 @@ uint16_t MI32checkRPA(uint8_t *addr) {
   return 0xff;
 }
 
-void MI32HandleEveryDevice(NimBLEAdvertisedDevice* advertisedDevice, uint8_t addr[6], int RSSI) {
+void MI32HandleEveryDevice(const NimBLEAdvertisedDevice* advertisedDevice, uint8_t addr[6], int RSSI) {
 
     uint16_t _slot;
     if (advertisedDevice->getAddressType() == BLE_ADDR_PUBLIC) { _slot = MIBLEgetSensorSlot(addr, 0, 0);}
-    else if (advertisedDevice->getAddress().isRpa() && MI32.mode.IRKinCfg == 1) { _slot = MI32checkRPA(addr);}
+    else if (advertisedDevice->getAddressType() == BLE_ADDR_RANDOM && MI32.mode.IRKinCfg == 1) { _slot = MI32checkRPA(addr);}
     else {return;}
 
     if(_slot==0xff) {
@@ -2168,8 +2175,8 @@ void MI32HandleEveryDevice(NimBLEAdvertisedDevice* advertisedDevice, uint8_t add
       _sensor.payload = new uint8_t[64]();
     }
     if(_sensor.payload != nullptr) {
-      memcpy(_sensor.payload, advertisedDevice->getPayload(), advertisedDevice->getPayloadLength());
-      _sensor.payload_len = advertisedDevice->getPayloadLength();
+      memcpy(_sensor.payload, advertisedDevice->getPayload().data(), advertisedDevice->getPayload().size());
+      _sensor.payload_len = advertisedDevice->getPayload().size();
       bitSet(MI32.widgetSlot,_slot);
       MI32addHistory(_sensor.temp_history, 0.0f, 3); // reuse temp_history as sighting history
       _sensor.RSSI=RSSI;
@@ -2624,6 +2631,7 @@ void MI32sendWidget(uint32_t slot){
 }
 
 void MI32InitGUI(void){
+  MI32.widgetSlot=0;
   WSContentStart_P("m32");
   WSContentSend_P(HTTP_MI32_SCRIPT_1);
   WSContentSendStyle();
