@@ -26,6 +26,113 @@ config NIMBLE_CPP_LOG_LEVEL
     default 3 if NIMBLE_CPP_LOG_LEVEL_INFO
     default 4 if NIMBLE_CPP_LOG_LEVEL_DEBUG
 
+config NIMBLE_CPP_LOG_OVERRIDE_COLOR
+    bool "Enable log color override."
+    default "n"
+    help
+        Enabling this option will allow NimBLE log levels to have
+        specific colors assigned.
+
+menu "NIMBLE Log Override Colors"
+    depends on NIMBLE_CPP_LOG_OVERRIDE_COLOR
+
+    choice NIMBLE_CPP_LOG_OVERRIDE_COLOR_ERR
+        prompt "NimBLE CPP log override color Error"
+        default NIMBLE_CPP_LOG_OVERRIDE_COLOR_ERR_NONE
+        help
+            Select NimBLE CPP log override error color.
+
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_ERR_NONE
+            bool "None"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_ERR_BLACK
+            bool "Black"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_ERR_RED
+            bool "Red"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_ERR_GREEN
+            bool "Green"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_ERR_YELLOW
+            bool "Yellow"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_ERR_BLUE
+            bool "Blue"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_ERR_PURPLE
+            bool "Purple"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_ERR_CYAN
+            bool "Cyan"
+    endchoice #NIMBLE_CPP_LOG_OVERRIDE_COLOR_ERR
+
+    choice NIMBLE_CPP_LOG_OVERRIDE_COLOR_WARN
+        prompt "NimBLE CPP log override color Warning"
+        default NIMBLE_CPP_LOG_OVERRIDE_COLOR_WARN_NONE
+        help
+            Select NimBLE CPP log override warning color.
+
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_WARN_NONE
+            bool "None"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_WARN_BLACK
+            bool "Black"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_WARN_RED
+            bool "Red"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_WARN_GREEN
+            bool "Green"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_WARN_YELLOW
+            bool "Yellow"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_WARN_BLUE
+            bool "Blue"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_WARN_PURPLE
+            bool "Purple"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_WARN_CYAN
+            bool "Cyan"
+    endchoice #NIMBLE_CPP_LOG_OVERRIDE_COLOR_WARN
+
+    choice NIMBLE_CPP_LOG_OVERRIDE_COLOR_INFO
+        prompt "NimBLE CPP log override color Info"
+        default NIMBLE_CPP_LOG_OVERRIDE_COLOR_INFO_NONE
+        help
+            Select NimBLE CPP log override info color.
+
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_INFO_NONE
+            bool "None"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_INFO_BLACK
+            bool "Black"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_INFO_RED
+            bool "Red"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_INFO_GREEN
+            bool "Green"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_INFO_YELLOW
+            bool "Yellow"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_INFO_BLUE
+            bool "Blue"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_INFO_PURPLE
+            bool "Purple"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_INFO_CYAN
+            bool "Cyan"
+    endchoice #NIMBLE_CPP_LOG_OVERRIDE_COLOR_INFO
+
+    choice NIMBLE_CPP_LOG_OVERRIDE_COLOR_DEBUG
+        prompt "NimBLE CPP log override color Debug"
+        default NIMBLE_CPP_LOG_OVERRIDE_COLOR_DEBUG_NONE
+        help
+            Select NimBLE CPP log override debug color.
+
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_DEBUG_NONE
+            bool "None"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_DEBUG_BLACK
+            bool "Black"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_DEBUG_RED
+            bool "Red"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_DEBUG_GREEN
+            bool "Green"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_DEBUG_YELLOW
+            bool "Yellow"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_DEBUG_BLUE
+            bool "Blue"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_DEBUG_PURPLE
+            bool "Purple"
+        config NIMBLE_CPP_LOG_OVERRIDE_COLOR_DEBUG_CYAN
+            bool "Cyan"
+    endchoice #NIMBLE_CPP_LOG_OVERRIDE_COLOR_DEBUG
+endmenu
+
 config NIMBLE_CPP_ENABLE_RETURN_CODE_TEXT
     bool "Show NimBLE return codes as text in debug log."
     default "n"
@@ -49,6 +156,20 @@ config NIMBLE_CPP_ENABLE_ADVERTISEMENT_TYPE_TEXT
         Enabling this option will display advertisment types recieved
         while scanning as text messages in the debug log.
         This will use approximately 250 bytes of flash memory.
+
+config NIMBLE_CPP_ADDR_FMT_EXCLUDE_DELIMITER
+    bool "Exclude colon characters when printing address."
+    default "n"
+    help
+        Enabling this option will format MAC addresses without
+        colon characters when printing.
+
+config NIMBLE_CPP_ADDR_FMT_UPPERCASE
+    bool "Use uppercase letters when printing address."
+    default "n"
+    help
+        Enabling this option will format MAC addresses in
+        uppercase letters when printing.
 
 config NIMBLE_CPP_ATT_VALUE_TIMESTAMP_ENABLED
     bool "Enable timestamps to be stored with attribute values."
@@ -75,5 +196,59 @@ config NIMBLE_CPP_DEBUG_ASSERT_ENABLED
     help
         Enabling this option will add debug asserts to the NimBLE CPP library.
         This will use approximately 1kB of flash memory.
+
+config NIMBLE_CPP_FREERTOS_TASK_BLOCK_BIT
+    int "FreeRTOS task block bit."
+    default 31
+    help
+        Configure the bit to set in the task notification value when a task is blocked waiting for an event.
+        This should be set to a bit that is not used by other notifications in the system.
+
+#
+# BT config
+#
+config BT_ENABLED
+    bool "Bluetooth"
+    default "y"
+    help
+        Select this option to enable Bluetooth and show the submenu with Bluetooth configuration choices.
+
+
+config BT_NIMBLE_ENABLED
+    bool "NimBLE - BLE only"
+    default "y"
+    help
+        This option is recommended for BLE only usecases to save on memory
+
+if IDF_TARGET_ESP32P4
+
+    config BT_NIMBLE_TRANSPORT_UART
+        bool "Enable Uart Transport"
+        default "n"
+
+    #
+    # Enable ESP Hosted BT
+    # Used as VHCI transport between BT Host and Controller
+    #
+    config ESP_ENABLE_BT
+        bool "Enable Hosted Bluetooth support"
+        default "y"
+        help
+            Enable Bluetooth Support via Hosted
+
+    choice ESP_WIFI_REMOTE_LIBRARY
+        prompt "Choose WiFi-remote implementation"
+        default ESP_WIFI_REMOTE_LIBRARY_HOSTED
+        help
+            Select type of WiFi Remote implementation
+
+            ESP-HOSTED is the default and most versatile option.
+            It's also possible to use EPPP, which uses PPPoS link between micros and NAPT, so it's slower
+            and less universal.
+
+        config ESP_WIFI_REMOTE_LIBRARY_HOSTED
+            bool "ESP-HOSTED"
+    endchoice
+endif
 
 endmenu

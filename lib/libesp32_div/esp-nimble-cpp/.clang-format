@@ -1,0 +1,42 @@
+BasedOnStyle: Google
+Language: Cpp
+ColumnLimit: 120
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+SortIncludes: Never
+PPIndentWidth : 1
+IndentPPDirectives: AfterHash
+ReflowComments: true
+SpacesBeforeTrailingComments: 1
+AlignTrailingComments: true
+AlignAfterOpenBracket: Align
+AlignConsecutiveMacros:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: true
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: true
+  AlignCompound: true
+  PadOperators: true
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: true
+AlignEscapedNewlines: Left
+AccessModifierOffset: -2
+AlignArrayOfStructures: Right
+AlignOperands: Align
+AllowAllArgumentsOnNextLine: false
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortBlocksOnASingleLine: Empty
+BreakBeforeBinaryOperators: None
+BinPackArguments: false
+BinPackParameters: false
+DerivePointerAlignment: false
+PenaltyBreakAssignment: 4
+PenaltyExcessCharacter: 4
+PenaltyBreakBeforeFirstCallParameter: 1
+PointerAlignment: Left

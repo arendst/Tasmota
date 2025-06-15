@@ -189,6 +189,7 @@ struct {
   TaskHandle_t ConnTask = nullptr;
   TaskHandle_t ServerTask = nullptr;
   MI32connectionContextBerry_t *conCtx = nullptr;
+  uint16_t connID;
   union {
     struct {
       uint32_t init:1;

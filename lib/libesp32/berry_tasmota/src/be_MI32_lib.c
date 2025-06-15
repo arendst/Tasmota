@@ -1,6 +1,6 @@
 /********************************************************************
  * Tasmota lib
- *
+ * 
  * To use: `import MI32`
  *******************************************************************/
 #include "be_constobj.h"
@@ -44,7 +44,7 @@ module MI32 (scope: global) {
 
 /********************************************************************
  * Tasmota lib
- *
+ * 
  * To use: `import BLE`
  *******************************************************************/
 
@@ -73,14 +73,14 @@ BE_FUNC_CTYPE_DECLARE(be_BLE_set_characteristic, "", "@s");
 extern void be_BLE_run(struct bvm *vm, uint8_t operation, bbool response, int32_t arg1);
 BE_FUNC_CTYPE_DECLARE(be_BLE_run, "", "@i[bi]");
 
+extern void be_BLE_store(uint8_t *buf, size_t size);
+BE_FUNC_CTYPE_DECLARE(be_BLE_store, "", "(bytes)~");
+
 extern void be_BLE_set_service(struct bvm *vm, const char *Svc, bbool discoverAttributes);
 BE_FUNC_CTYPE_DECLARE(be_BLE_set_service, "", "@s[b]");
 
 extern void be_BLE_adv_watch(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type);
 BE_FUNC_CTYPE_DECLARE(be_BLE_adv_watch, "", "@(bytes)~[i]");
-
-extern void be_BLE_adv_block(struct bvm *vm, uint8_t *buf, size_t size, uint8_t type);
-BE_FUNC_CTYPE_DECLARE(be_BLE_adv_block, "", "@(bytes)~[i]");
 
 
 #include "be_fixed_BLE.h"
@@ -93,11 +93,11 @@ module BLE (scope: global) {
   conn_cb,    ctype_func(be_BLE_reg_conn_cb)
   set_svc,    ctype_func(be_BLE_set_service)
   run,        ctype_func(be_BLE_run)
+  store,      ctype_func(be_BLE_store)
   set_chr,    ctype_func(be_BLE_set_characteristic)
   adv_cb,     ctype_func(be_BLE_reg_adv_cb)
   set_MAC,    ctype_func(be_BLE_set_MAC)
   adv_watch,  ctype_func(be_BLE_adv_watch)
-  adv_block,  ctype_func(be_BLE_adv_block)
   serv_cb,    ctype_func(be_BLE_reg_server_cb)
 }
 @const_object_info_end */
