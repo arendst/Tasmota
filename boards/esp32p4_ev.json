@@ -2,7 +2,7 @@
   "build": {
     "core": "esp32",
     "extra_flags": [
-      "-DARDUINO_TASMOTA -DARDUINO_USB_MODE=1 -DESP32_4M -DESP32P4 -DUSE_USB_CDC_CONSOLE -DCONFIG_ESP_WIFI_REMOTE_ENABLED"
+      "-DARDUINO_TASMOTA -DESP32P4"
     ],
     "f_cpu": "360000000L",
     "f_flash": "80000000L",
@@ -25,6 +25,14 @@
   ],
   "name": "Espressif ESP32-P4 Function EV Board",
   "upload": {
+    "arduino": {
+      "flash_extra_images": [
+        [
+          "0x10000",
+          "tasmota32p4-safeboot.bin"
+        ]
+      ]
+    },
     "flash_size": "16MB",
     "maximum_ram_size": 512000,
     "maximum_size": 16777216,
