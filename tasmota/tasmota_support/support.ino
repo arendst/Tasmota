@@ -1809,6 +1809,8 @@ bool RedPin(uint32_t pin) {            // Pin may be dangerous to change, displa
   return (26 == pin) || (28 == pin);   // ESP32C6: GPIOs 26 28 are usually used for Flash (mode QIO/QOUT)
 #elif CONFIG_IDF_TARGET_ESP32S2
   return false;                        // No red pin on ESP32S3
+#elif  CONFIG_IDF_TARGET_ESP32P4
+  return (34 <= pin) && (38 >= pin);   // strapping pins on ESP32P4
 #elif CONFIG_IDF_TARGET_ESP32S3
   return (33 <= pin) && (37 >= pin);   // ESP32S3: GPIOs 33..37 are usually used for PSRAM
 #else   // ESP32 red pins are 6-11 for original ESP32, other models like PICO are not impacted if flash pins are condfigured

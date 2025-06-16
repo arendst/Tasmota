@@ -1454,6 +1454,20 @@ const char PINS_WEMOS[] PROGMEM = "IOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOIO-
 //                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021222324252627282930313233343536373839404142434445464748
 const char PINS_WEMOS[] PROGMEM = "IOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOIO--------FLFLFLFLFLFLFLIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIO";
 
+#elif CONFIG_IDF_TARGET_ESP32P4
+/* ****************************************
+ * ESP32P4
+ * GPIOs 0..54
+ * - 34..38 strapping pins
+ * ****************************************/
+#define MAX_GPIO_PIN       55   // Number of supported GPIO, 0..55
+#define MIN_FLASH_PINS     00   // Number of flash chip pins unusable for configuration (22-25 don't exist, 26-32 for SPI)
+#define MAX_USER_PINS      55   // MAX_GPIO_PIN - MIN_FLASH_PINS
+#define WEMOS_MODULE       0    // Wemos module
+
+//                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354
+const char PINS_WEMOS[] PROGMEM = "IOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOAOAOAOAOAOAOAOAOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOAOAOAOAOAOAO";
+
 #else  // not CONFIG_IDF_TARGET_ESP32C2/C3/C6 nor CONFIG_IDF_TARGET_ESP32S2 - ESP32
 
 /* ****************************************
@@ -1485,7 +1499,7 @@ const char PINS_WEMOS[] PROGMEM = "IOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOAOIO-
 //                                  0 1 2 3 4 5 6 7 8 9101112131415161718192021222324252627282930313233343536373839
 const char PINS_WEMOS[] PROGMEM = "IOTXIORXIOIOFLFLFLFLFLFLIOIOIOIOIOIOIOIOIOIOIOIOIOIOIOIO--------AOAOIAIAIAIAIAIA";
 
-#endif  // ESP32/S2/C2/C3/C6 selection
+#endif  // ESP32/S2/C2/C3/C6/P4 selection
 #endif  // ESP32
 
 /********************************************************************************************\
@@ -3110,6 +3124,94 @@ const mytmplt kModules[] PROGMEM = {
     0,                           // 28      IO                  GPIO28, SPIHD - Free if flash DIO/DOUT
     0,                           // 29      IO                  GPIO29, SPICLK
     0,                           // 30      IO                  GPIO30, SPID
+    0                            // Flag
+  },
+};
+
+/*********************************************************************************************\
+ Known templates
+\*********************************************************************************************/
+#elif CONFIG_IDF_TARGET_ESP32P4
+/********************************************************************************************\
+ * ESP32-P4 Module templates
+\********************************************************************************************/
+
+#define USER_MODULE        255
+
+// Supported hardware modules
+enum SupportedModulesESP32P4 {
+  WEMOS, // not really correct, a placeholder for now
+  WT32_ETH01,
+  MAXMODULE };
+
+// Default module settings
+const uint8_t kModuleNiceList[] PROGMEM = {
+  WEMOS,
+};
+
+// !!! Update this list in the same order as kModuleNiceList !!!
+const char kModuleNames[] PROGMEM =
+  "ESP32P4|"
+  ;
+
+// !!! Update this list in the same order as SupportedModulesESP32P4 !!!
+const mytmplt kModules[] PROGMEM = {
+  {                              // Generic ESP32P4 device
+    AGPIO(GPIO_USER),            // 0       IO                  GPIO0, LP_GPIO0
+    AGPIO(GPIO_USER),            // 1       IO                  GPIO1, LP_GPIO1
+    AGPIO(GPIO_USER),            // 2       IO                  GPIO2, TOUCH0, LP_GPIO2
+    AGPIO(GPIO_USER),            // 3       IO                  GPIO3, TOUCH1, LP_GPIO3
+    AGPIO(GPIO_USER),            // 4       IO                  GPIO4, TOUCH2, LP_GPIO4
+    AGPIO(GPIO_USER),            // 5       IO                  GPIO5, TOUCH3, LP_GPIO5
+    AGPIO(GPIO_USER),            // 6       IO                  GPIO6, TOUCH4, LP_GPIO6
+    AGPIO(GPIO_USER),            // 7       IO                  GPIO7, TOUCH5, LP_GPIO7
+    AGPIO(GPIO_USER),            // 8       IO                  GPIO8, TOUCH6, LP_GPIO8
+    AGPIO(GPIO_USER),            // 9       IO                  GPIO9, TOUCH7, LP_GPIO9
+    AGPIO(GPIO_USER),            // 10      IO                  GPIO10, TOUCH8, LP_GPIO10
+    AGPIO(GPIO_USER),            // 11      IO                  GPIO11, TOUCH9, LP_GPIO11
+    AGPIO(GPIO_USER),            // 12      IO                  GPIO12, TOUCH10, LP_GPIO12
+    AGPIO(GPIO_USER),            // 13      IO                  GPIO13, TOUCH11, LP_GPIO13
+    AGPIO(GPIO_USER),            // 14      IO                  GPIO14, TOUCH12, LP_GPIO14
+    AGPIO(GPIO_USER),            // 15      IO                  GPIO15, TOUCH13, LP_GPIO15
+    AGPIO(GPIO_USER),            // 16      IO                  GPIO16, ADC1_CH0
+    AGPIO(GPIO_USER),            // 17      IO                  GPIO17, ADC1_CH1
+    AGPIO(GPIO_USER),            // 18      IO                  GPIO18, ADC1_CH2
+    AGPIO(GPIO_USER),            // 19      IO                  GPIO19, ADC1_CH3
+    AGPIO(GPIO_USER),            // 20      IO                  GPIO20, ADC1_CH4
+    AGPIO(GPIO_USER),            // 21      IO                  GPIO21, ADC1_CH5
+    AGPIO(GPIO_USER),            // 22      IO                  GPIO22, ADC1_CH6
+    AGPIO(GPIO_USER),            // 23      IO                  GPIO23, ADC1_CH7
+    AGPIO(GPIO_USER),            // 24      IO                  GPIO24
+    AGPIO(GPIO_USER),            // 25      IO                  GPIO25
+    AGPIO(GPIO_USER),            // 26      IO                  GPIO26
+    AGPIO(GPIO_USER),            // 27      IO                  GPIO27
+    AGPIO(GPIO_USER),            // 28      IO                  GPIO28
+    AGPIO(GPIO_USER),            // 29      IO                  GPIO29
+    AGPIO(GPIO_USER),            // 30      IO                  GPIO30
+    AGPIO(GPIO_USER),            // 31      IO                  GPIO31
+    AGPIO(GPIO_USER),            // 32      IO                  GPIO32
+    AGPIO(GPIO_USER),            // 33      IO                  GPIO33
+    AGPIO(GPIO_USER),            // 34      IO                  GPIO34, Strapping pin
+    AGPIO(GPIO_USER),            // 35      IO                  GPIO35, Strapping pin
+    AGPIO(GPIO_USER),            // 36      IO                  GPIO36, Strapping pin
+    AGPIO(GPIO_USER),            // 37      IO                  GPIO37, Strapping pin
+    AGPIO(GPIO_USER),            // 38      IO                  GPIO38, Strapping pin
+    AGPIO(GPIO_USER),            // 39      IO                  GPIO39
+    AGPIO(GPIO_USER),            // 40      IO                  GPIO40
+    AGPIO(GPIO_USER),            // 41      IO                  GPIO41
+    AGPIO(GPIO_USER),            // 42      IO                  GPIO42
+    AGPIO(GPIO_USER),            // 43      IO                  GPIO43
+    AGPIO(GPIO_USER),            // 44      IO                  GPIO44
+    AGPIO(GPIO_USER),            // 45      IO                  GPIO45
+    AGPIO(GPIO_USER),            // 46      IO                  GPIO46
+    AGPIO(GPIO_USER),            // 47      IO                  GPIO47
+    AGPIO(GPIO_USER),            // 48      IO                  GPIO48
+    AGPIO(GPIO_USER),            // 49      IO                  GPIO49, ADC1_CH8
+    AGPIO(GPIO_USER),            // 50      IO                  GPIO50, ADC1_CH9
+    AGPIO(GPIO_USER),            // 51      IO                  GPIO51, ADC1_CH10, ANA_CMPR_CH0 reference voltage
+    AGPIO(GPIO_USER),            // 52      IO                  GPIO52, ADC1_CH11, ANA_CMPR_CH0 input (non-inverting)
+    AGPIO(GPIO_USER),            // 53      IO                  GPIO53, ADC1_CH12, ANA_CMPR_CH1 reference voltage
+    AGPIO(GPIO_USER),            // 54      IO                  GPIO54, ADC1_CH13, ANA_CMPR_CH1 input (non-inverting)
     0                            // Flag
   },
 };

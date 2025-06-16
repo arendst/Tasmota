@@ -256,7 +256,7 @@ extern "C" {
   #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32h2 is located at 0x0000
 #elif CONFIG_IDF_TARGET_ESP32P4   // ESP32-P4
   #include "esp32p4/rom/spi_flash.h"
-  #define ESP_FLASH_IMAGE_BASE 0x0000     // Esp32p4 is located at 0x0000
+  #define ESP_FLASH_IMAGE_BASE 0x2000  // Esp32p4 is located at 0x2000
 #else
     #error Target CONFIG_IDF_TARGET is not supported
 #endif
@@ -598,6 +598,8 @@ extern "C" {
 bool FoundPSRAM(void) {
 #if CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || DISABLE_PSRAMCHECK || CORE32SOLO1
   return psramFound();
+#elif CONFIG_IDF_TARGET_ESP32P4
+  return ESP.getPsramSize() > 0;
 #else
   return psramFound() && esp_psram_is_initialized();
 #endif

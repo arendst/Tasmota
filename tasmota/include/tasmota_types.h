@@ -622,7 +622,9 @@ typedef struct {
   uint8_t       eth_type;                  // 446
   uint8_t       eth_clk_mode;              // 447
 
+#ifndef CONFIG_IDF_TARGET_ESP32P4
   uint8_t       free_esp32_448[4];         // 448
+#endif //CONFIG_IDF_TARGET_ESP32P4
   #ifdef CONFIG_IDF_TARGET_ESP32S2
   uint8_t       free_esp32s2_456[2];       // 456 - fix 32-bit offset for WebCamCfg
   #endif
@@ -634,8 +636,13 @@ typedef struct {
   char          serial_delimiter;          // 451
   uint8_t       seriallog_level;           // 452
   uint8_t       sleep;                     // 453
+#ifndef CONFIG_IDF_TARGET_ESP32P4
   uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX];      // 454
   uint16_t      domoticz_sensor_idx[MAX_DOMOTICZ_SNS_IDX];  // 45C
+#else
+  uint16_t      domoticz_switch_idx[3];      // 454
+  uint16_t      domoticz_sensor_idx[3];  // 45C
+#endif //CONFIG_IDF_TARGET_ESP32P4
   uint8_t       module;                    // 474
   uint8_t       ws_color[4][3];            // 475
   uint8_t       ws_width[3];               // 481
@@ -647,7 +654,9 @@ typedef struct {
 #ifdef CONFIG_IDF_TARGET_ESP32S2
   uint8_t       free_esp32s2_494[1];       // 494 - 2 bytes extra because of WebCamCfg 32-bit offset
 #else
+#ifndef CONFIG_IDF_TARGET_ESP32P4
   uint8_t       free_esp32_484[17];        // 484
+#endif //CONFIG_IDF_TARGET_ESP32P4
 #endif
 #endif  // ESP32
 
@@ -777,9 +786,9 @@ typedef struct {
   uint8_t       weight_change;             // E9F
   uint8_t       web_color2[2][3];          // EA0  Needs to be on integer / 3 distance from web_color
   uint16_t      zcdimmerset[5];            // EA6
-
+#ifndef CONFIG_IDF_TARGET_ESP32P4
   uint8_t       free_eb0[20];              // EB0  20 bytes
-
+#endif //CONFIG_IDF_TARGET_ESP32P4
   uint16_t      light_pixels_height_1 : 15;// EC4  Pixels height minus 1, default 0 (0 means 1 line)
   uint16_t      light_pixels_alternate : 1;// EC4  Indicates alternate lines in Pixels Matrix
   uint8_t       shift595_device_count;     // EC6
@@ -840,7 +849,9 @@ typedef struct {
   uint8_t       modbus_sconfig;            // F62
   uint8_t       windmeter_measure_intvl;   // F63
 
+  #ifndef CONFIG_IDF_TARGET_ESP32P4
   uint8_t       free_f64[8];               // F64 - Decrement if adding new Setting variables just above and below
+  #endif //CONFIG_IDF_TARGET_ESP32P4
 
   // Only 32 bit boundary variables below
   float         ms5837_pressure_offset;    // F6C

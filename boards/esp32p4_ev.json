@@ -2,7 +2,7 @@
   "build": {
     "core": "esp32",
     "extra_flags": [
-      "-DARDUINO_TASMOTA -DESP32P4"
+      "-DARDUINO_TASMOTA -DESP32P4 -DBOARD_HAS_PSRAM"
     ],
     "f_cpu": "360000000L",
     "f_flash": "80000000L",
