@@ -116,10 +116,13 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 ## Changelog v15.0.1.1
 ### Added
+- I2S additions [#23543](https://github.com/arendst/Tasmota/issues/23543)
 
 ### Breaking Changed
 
 ### Changed
+- BLE updates for esp-nimble-cpp v2.x [#23553](https://github.com/arendst/Tasmota/issues/23553)
+- Library names [#23560](https://github.com/arendst/Tasmota/issues/23560)
 
 ### Fixed
 
