@@ -3138,10 +3138,11 @@ const mytmplt kModules[] PROGMEM = {
 
 #define USER_MODULE        255
 
+#define WT32_ETH01         4 //TODO: Why needed?
+
 // Supported hardware modules
 enum SupportedModulesESP32P4 {
   WEMOS, // not really correct, a placeholder for now
-  WT32_ETH01,
   MAXMODULE };
 
 // Default module settings

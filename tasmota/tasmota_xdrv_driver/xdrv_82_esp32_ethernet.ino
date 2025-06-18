@@ -273,7 +273,11 @@ void EthernetInit(void) {
   bool init_ok = false;
   if (!eth_uses_spi) {
 #if CONFIG_ETH_USE_ESP32_EMAC
-    init_ok = (ETH.begin((eth_phy_type_t)eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, (eth_clock_mode_t)Settings->eth_clk_mode));
+    #ifdef CONFIG_IDF_TARGET_ESP32P4
+        init_ok = (ETH.begin((eth_phy_type_t)eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, EMAC_CLK_EXT_IN));
+    #else
+        init_ok = (ETH.begin((eth_phy_type_t)eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, (eth_clock_mode_t)Settings->eth_clk_mode));
+    #endif //CONFIG_IDF_TARGET_ESP32P4
 #endif  // CONFIG_ETH_USE_ESP32_EMAC
   } else {
     // ETH_SPI_SUPPORTS_CUSTOM
