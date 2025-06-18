@@ -916,11 +916,6 @@ typedef struct {
       return F("ESP32-H2");
     }
     case 18: {  // ESP32-P4
-#ifdef CONFIG_IDF_TARGET_ESP32P4
-      switch (pkg_version) {
-        case 0:              return F("ESP32-P4");
-      }
-#endif  // CONFIG_IDF_TARGET_ESP32P4
       return F("ESP32-P4");
     }
   }
