@@ -14,7 +14,8 @@
   "connectivity": [
     "wifi",
     "bluetooth",
-    "openthread"
+    "openthread",
+    "ethernet"
   ],
   "debug": {
     "openocd_target": "esp32p4.cfg"
@@ -34,7 +35,7 @@
       ]
     },
     "flash_size": "16MB",
-    "maximum_ram_size": 512000,
+    "maximum_ram_size": 768000,
     "maximum_size": 16777216,
     "require_upload_port": true,
     "speed": 1500000
