@@ -1790,6 +1790,8 @@ bool FlashPin(uint32_t pin) {
   return ((pin == 24) || (pin == 25) || (pin == 27) || (pin == 29) || (pin == 30));  // ESP32C6 has GPIOs 24-30 reserved for Flash, with some boards GPIOs 26 28 are useable
 #elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
   return (pin > 21) && (pin < 33);     // ESP32S2 skip 22-32
+#elif CONFIG_IDF_TARGET_ESP32P4
+  return false;                        // ESP32P4 has no flash pins, but GPIOs 34-38 are strapping pins
 #else
   return (pin >= 28) && (pin <= 31);   // ESP32 skip 28-31
 #endif  // ESP32C2/C3/C6 and S2/S3
@@ -1810,7 +1812,7 @@ bool RedPin(uint32_t pin) {            // Pin may be dangerous to change, displa
 #elif CONFIG_IDF_TARGET_ESP32S2
   return false;                        // No red pin on ESP32S3
 #elif  CONFIG_IDF_TARGET_ESP32P4
-  return (34 <= pin) && (38 >= pin);   // strapping pins on ESP32P4
+  return (34 >= pin) && (38 <= pin);   // strapping pins on ESP32P4
 #elif CONFIG_IDF_TARGET_ESP32S3
   return (33 <= pin) && (37 >= pin);   // ESP32S3: GPIOs 33..37 are usually used for PSRAM
 #else   // ESP32 red pins are 6-11 for original ESP32, other models like PICO are not impacted if flash pins are condfigured
