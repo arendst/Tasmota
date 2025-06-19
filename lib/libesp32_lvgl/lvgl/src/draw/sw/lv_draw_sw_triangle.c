@@ -18,7 +18,7 @@
 #include "../../misc/lv_color.h"
 #include "../../stdlib/lv_string.h"
 #include "../lv_draw_triangle_private.h"
-#include "lv_draw_sw_gradient_private.h"
+#include "lv_draw_sw_grad.h"
 
 /*********************
  *      DEFINES
@@ -44,7 +44,7 @@
  *   GLOBAL FUNCTIONS
  **********************/
 
-void lv_draw_sw_triangle(lv_draw_unit_t * draw_unit, const lv_draw_triangle_dsc_t * dsc)
+void lv_draw_sw_triangle(lv_draw_task_t * t, const lv_draw_triangle_dsc_t * dsc)
 {
 #if LV_DRAW_SW_COMPLEX
     lv_area_t tri_area;
@@ -55,7 +55,7 @@ void lv_draw_sw_triangle(lv_draw_unit_t * draw_unit, const lv_draw_triangle_dsc_
 
     bool is_common;
     lv_area_t draw_area;
-    is_common = lv_area_intersect(&draw_area, &tri_area, draw_unit->clip_area);
+    is_common = lv_area_intersect(&draw_area, &tri_area, &t->clip_area);
     if(!is_common) return;
 
     lv_point_t p[3];
@@ -126,17 +126,19 @@ void lv_draw_sw_triangle(lv_draw_unit_t * draw_unit, const lv_draw_triangle_dsc_
     lv_area_t blend_area = draw_area;
     blend_area.y2 = blend_area.y1;
     lv_draw_sw_blend_dsc_t blend_dsc;
-    blend_dsc.color = dsc->bg_color;
-    blend_dsc.opa = dsc->bg_opa;
+    blend_dsc.color = dsc->color;
+    blend_dsc.opa = dsc->opa;
     blend_dsc.mask_buf = mask_buf;
     blend_dsc.blend_area = &blend_area;
     blend_dsc.mask_area = &blend_area;
+    blend_dsc.mask_stride = 0;
     blend_dsc.blend_mode = LV_BLEND_MODE_NORMAL;
     blend_dsc.src_buf = NULL;
 
-    lv_grad_dir_t grad_dir = dsc->bg_grad.dir;
+    lv_grad_dir_t grad_dir = dsc->grad.dir;
 
-    lv_grad_t * grad = lv_gradient_get(&dsc->bg_grad, lv_area_get_width(&tri_area), lv_area_get_height(&tri_area));
+    lv_draw_sw_grad_calc_t * grad = lv_draw_sw_grad_get(&dsc->grad, lv_area_get_width(&tri_area),
+                                                        lv_area_get_height(&tri_area));
     lv_opa_t * grad_opa_map = NULL;
     if(grad && grad_dir == LV_GRAD_DIR_HOR) {
         blend_dsc.src_area = &blend_area;
@@ -152,9 +154,10 @@ void lv_draw_sw_triangle(lv_draw_unit_t * draw_unit, const lv_draw_triangle_dsc_
         lv_memset(mask_buf, 0xff, area_w);
         blend_dsc.mask_res = lv_draw_sw_mask_apply(masks, mask_buf, draw_area.x1, y, area_w);
         if(grad_dir == LV_GRAD_DIR_VER) {
+            LV_ASSERT_NULL(grad);
             blend_dsc.color = grad->color_map[y - tri_area.y1];
             blend_dsc.opa = grad->opa_map[y - tri_area.y1];
-            if(dsc->bg_opa < LV_OPA_MAX) blend_dsc.opa = LV_OPA_MIX2(blend_dsc.opa, dsc->bg_opa);
+            if(dsc->opa < LV_OPA_MAX) blend_dsc.opa = LV_OPA_MIX2(blend_dsc.opa, dsc->opa);
         }
         else if(grad_dir == LV_GRAD_DIR_HOR) {
             if(grad_opa_map) {
@@ -174,7 +177,7 @@ void lv_draw_sw_triangle(lv_draw_unit_t * draw_unit, const lv_draw_triangle_dsc_
                 }
             }
         }
-        lv_draw_sw_blend(draw_unit, &blend_dsc);
+        lv_draw_sw_blend(t, &blend_dsc);
     }
 
     lv_free(mask_buf);
@@ -183,11 +186,11 @@ void lv_draw_sw_triangle(lv_draw_unit_t * draw_unit, const lv_draw_triangle_dsc_
     lv_draw_sw_mask_free_param(&mask_right);
 
     if(grad) {
-        lv_gradient_cleanup(grad);
+        lv_draw_sw_grad_cleanup(grad);
     }
 
 #else
-    LV_UNUSED(draw_unit);
+    LV_UNUSED(t);
     LV_UNUSED(dsc);
     LV_LOG_WARN("Can't draw triangles with LV_DRAW_SW_COMPLEX == 0");
 #endif /*LV_DRAW_SW_COMPLEX*/

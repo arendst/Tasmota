@@ -884,7 +884,6 @@ int32_t ZNP_DataConfirm(int32_t res, const SBuffer &buf) {
 int32_t ZNP_ReceiveStateChange(int32_t res, const SBuffer &buf) {
   uint8_t           state = buf.get8(2);
   const char *      msg = nullptr;
-
   switch (state) {
     case ZDO_DEV_NWK_DISC:                        // 0x02
       msg = PSTR("Scanning Zigbee network");
@@ -908,6 +907,9 @@ int32_t ZNP_ReceiveStateChange(int32_t res, const SBuffer &buf) {
     case ZDO_DEV_NWK_ORPHAN:                      // 0x0A
       msg = PSTR("Device has lost its parent");
       break;
+    case ZDO_DEV_HOLD:
+      msg = PSTR("Failed to start in coordinator mode, try changing PanID");
+      break;
   };
 
   if (msg) {
@@ -921,6 +923,8 @@ int32_t ZNP_ReceiveStateChange(int32_t res, const SBuffer &buf) {
 
   if ((ZDO_DEV_END_DEVICE == state) || (ZDO_DEV_ROUTER == state) || (ZDO_DEV_ZB_COORD == state)) {
     return 0;         // device sucessfully started
+  } else if (ZDO_DEV_HOLD == state) {
+    return -2;        // device failed to start, try changing PanID
   } else {
     return -1;        // ignore
   }

@@ -59,12 +59,12 @@ static void transform_vect_recursive(lv_obj_t * roller, lv_point_t * vect);
 static const lv_property_ops_t properties[] = {
     {
         .id = LV_PROPERTY_ROLLER_OPTIONS,
-        .setter = NULL,
+        .setter = lv_roller_set_options,
         .getter = lv_roller_get_options,
     },
     {
         .id = LV_PROPERTY_ROLLER_SELECTED,
-        .setter = NULL,
+        .setter = lv_roller_set_selected,
         .getter = lv_roller_get_selected,
     },
     {
@@ -84,7 +84,7 @@ const lv_obj_class_t lv_roller_class = {
     .editable = LV_OBJ_CLASS_EDITABLE_TRUE,
     .group_def = LV_OBJ_CLASS_GROUP_DEF_TRUE,
     .base_class = &lv_obj_class,
-    .name = "roller",
+    .name = "lv_roller",
 #if LV_USE_OBJ_PROPERTY
     .prop_index_start = LV_PROPERTY_ROLLER_START,
     .prop_index_end = LV_PROPERTY_ROLLER_END,
@@ -102,7 +102,7 @@ const lv_obj_class_t lv_roller_label_class  = {
     .event_cb = lv_roller_label_event,
     .instance_size = sizeof(lv_label_t),
     .base_class = &lv_label_class,
-    .name = "roller-label",
+    .name = "lv_roller_label",
 };
 
 /**********************
@@ -218,6 +218,33 @@ void lv_roller_set_selected(lv_obj_t * obj, uint32_t sel_opt, lv_anim_enable_t a
     roller->sel_opt_id_ori = roller->sel_opt_id;
 
     refr_position(obj, anim);
+}
+
+bool lv_roller_set_selected_str(lv_obj_t * obj, const char * sel_opt, lv_anim_enable_t anim)
+{
+    const char * options = lv_roller_get_options(obj);
+    size_t options_len = lv_strlen(options);
+
+    bool option_found = false;
+
+    uint32_t current_option = 0;
+    size_t line_start = 0;
+
+    for(size_t i = 0; i < options_len; i++) {
+        if(options[i] == '\n') {
+            /* See if this is the correct option */
+            if(lv_strncmp(&options[line_start], sel_opt, i - line_start) == 0) {
+                lv_roller_set_selected(obj, current_option, anim);
+                option_found = true;
+                break;
+            }
+
+            current_option++;
+            line_start = i + 1;
+        }
+    }
+
+    return option_found;
 }
 
 void lv_roller_set_visible_row_count(lv_obj_t * obj, uint32_t row_cnt)
@@ -360,6 +387,11 @@ static void lv_roller_event(const lv_obj_class_t * class_p, lv_event_t * e)
         roller->moved = 0;
         lv_anim_delete(get_label(obj), set_y_anim);
     }
+    else if(code == LV_EVENT_CLICKED) {
+        if(roller->moved == 1) {
+            lv_event_stop_processing(e);
+        }
+    }
     else if(code == LV_EVENT_PRESSING) {
         if(roller->option_cnt <= 1) return;
 
@@ -492,6 +524,7 @@ static void draw_main(lv_event_t * e)
         get_sel_area(obj, &sel_area);
         lv_draw_rect_dsc_t sel_dsc;
         lv_draw_rect_dsc_init(&sel_dsc);
+        sel_dsc.base.layer = layer;
         lv_obj_init_draw_rect_dsc(obj, LV_PART_SELECTED, &sel_dsc);
         lv_draw_rect(layer, &sel_dsc, &sel_area);
     }
@@ -501,6 +534,7 @@ static void draw_main(lv_event_t * e)
 
         lv_draw_label_dsc_t label_dsc;
         lv_draw_label_dsc_init(&label_dsc);
+        label_dsc.base.layer = layer;
         lv_obj_init_draw_label_dsc(obj, LV_PART_SELECTED, &label_dsc);
 
         /*Redraw the text on the selected area*/
@@ -511,6 +545,7 @@ static void draw_main(lv_event_t * e)
         area_ok = lv_area_intersect(&mask_sel, &layer->_clip_area, &sel_area);
         if(area_ok) {
             lv_obj_t * label = get_label(obj);
+            if(lv_label_get_recolor(label)) label_dsc.flag |= LV_TEXT_FLAG_RECOLOR;
 
             /*Get the size of the "selected text"*/
             lv_point_t label_sel_size;
@@ -566,10 +601,12 @@ static void draw_label(lv_event_t * e)
      * and a lower (below the selected area)*/
     lv_obj_t * label_obj = lv_event_get_current_target(e);
     lv_obj_t * roller = lv_obj_get_parent(label_obj);
+    lv_layer_t * layer = lv_event_get_layer(e);
     lv_draw_label_dsc_t label_draw_dsc;
     lv_draw_label_dsc_init(&label_draw_dsc);
+    label_draw_dsc.base.layer = layer;
     lv_obj_init_draw_label_dsc(roller, LV_PART_MAIN, &label_draw_dsc);
-    lv_layer_t * layer = lv_event_get_layer(e);
+    if(lv_label_get_recolor(label_obj)) label_draw_dsc.flag |= LV_TEXT_FLAG_RECOLOR;
 
     /*If the roller has shadow or outline it has some ext. draw size
      *therefore the label can overflow the roller's boundaries.
@@ -849,11 +886,19 @@ static void transform_vect_recursive(lv_obj_t * roller, lv_point_t * vect)
         angle += lv_obj_get_style_transform_rotation(parent, 0);
         int32_t zoom_act_x = lv_obj_get_style_transform_scale_x_safe(parent, 0);
         int32_t zoom_act_y = lv_obj_get_style_transform_scale_y_safe(parent, 0);
-        scale_x = (scale_y * zoom_act_x) >> 8;
+        scale_x = (scale_x * zoom_act_x) >> 8;
         scale_y = (scale_y * zoom_act_y) >> 8;
         parent = lv_obj_get_parent(parent);
     }
     lv_point_t pivot = { 0, 0 };
+
+    if(scale_x == 0) {
+        scale_x = 1;
+    }
+
+    if(scale_y == 0) {
+        scale_y = 1;
+    }
 
     scale_x = 256 * 256 / scale_x;
     scale_y = 256 * 256 / scale_y;

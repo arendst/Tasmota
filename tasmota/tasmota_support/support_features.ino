@@ -952,8 +952,12 @@ constexpr uint32_t feature[] = {
 #ifdef USE_XYZMODEM
   0x00010000 |  // xdrv_120_xyzmodem.ino
 #endif  
-//  0x00020000 |  // 
-//  0x00040000 |  // 
+#ifdef USE_WIREGUARD
+  0x00020000 |  // xdrv_80_wireguard_client
+#endif  
+#if defined(USE_I2C) && defined(USE_AP33772S)
+  0x00040000 |  // xdrv_119_i2c_ap33772s
+#endif  
 //  0x00080000 |  // 
 //  0x00100000 |  // 
 //  0x00200000 |  // 

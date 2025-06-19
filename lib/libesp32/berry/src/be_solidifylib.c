@@ -69,7 +69,7 @@ static unsigned toidentifier_length(const char *s)
     unsigned len = 1;
     const char * p = s;
     while (*p) {
-        if (p[0] == '_' && p[1] == 'X') {
+        if (p[0] == '_' && p[1] != '\0' && p[1] == 'X') {
             len += 3;
             p += 2;
         } else if (isalnum(p[0]) || p[0] == '_') {

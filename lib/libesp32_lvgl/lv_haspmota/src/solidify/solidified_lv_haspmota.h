@@ -4705,13 +4705,13 @@ be_local_class(lvh_obj,
         { be_const_key_weak(_event_map, -1), be_const_simple_instance(be_nested_simple_instance(&be_class_map, {
         be_const_map( *     be_nested_map(7,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_int(7, -1), be_nested_str_weak(up) },
-        { be_const_key_int(8, 2), be_nested_str_weak(release) },
+        { be_const_key_int(35, -1), be_nested_str_weak(changed) },
+        { be_const_key_int(8, 5), be_nested_str_weak(long) },
+        { be_const_key_int(9, -1), be_nested_str_weak(hold) },
+        { be_const_key_int(10, 6), be_nested_str_weak(up) },
+        { be_const_key_int(11, -1), be_nested_str_weak(release) },
         { be_const_key_int(1, -1), be_nested_str_weak(down) },
         { be_const_key_int(3, -1), be_nested_str_weak(lost) },
-        { be_const_key_int(32, -1), be_nested_str_weak(changed) },
-        { be_const_key_int(5, -1), be_nested_str_weak(long) },
-        { be_const_key_int(6, -1), be_nested_str_weak(hold) },
     }))    ) } )) },
         { be_const_key_weak(register_event_cb, -1), be_const_closure(class_lvh_obj_register_event_cb_closure) },
         { be_const_key_weak(get_pad_left, 11), be_const_closure(class_lvh_obj_get_pad_left_closure) },
@@ -4745,7 +4745,7 @@ be_local_class(lvh_obj,
         { be_const_key_weak(_lv_label, -1), be_const_var(0) },
         { be_const_key_weak(get_pad_right, 9), be_const_closure(class_lvh_obj_get_pad_right_closure) },
         { be_const_key_weak(set_value_font, -1), be_const_closure(class_lvh_obj_set_value_font_closure) },
-        { be_const_key_weak(_EVENTS, 16), be_const_bytes_instance(010703080520) },
+        { be_const_key_weak(_EVENTS, 16), be_const_bytes_instance(010A030B0823) },
         { be_const_key_weak(get_pad_bottom, 50), be_const_closure(class_lvh_obj_get_pad_bottom_closure) },
         { be_const_key_weak(set_text_font, -1), be_const_closure(class_lvh_obj_set_text_font_closure) },
         { be_const_key_weak(set_pad_right2, -1), be_const_closure(class_lvh_obj_set_pad_right2_closure) },
@@ -9520,7 +9520,7 @@ static const bvalue be_ktab_class_lvh_spangroup[6] = {
   /* K1   */  be_nested_str_weak(set_mode),
   /* K2   */  be_nested_str_weak(lv),
   /* K3   */  be_nested_str_weak(SPAN_MODE_BREAK),
-  /* K4   */  be_nested_str_weak(refr_mode),
+  /* K4   */  be_nested_str_weak(refresh),
   /* K5   */  be_nested_str_weak(post_init),
 };
 
@@ -9566,9 +9566,9 @@ be_local_closure(class_lvh_spangroup_post_init,   /* name */
 
 
 /********************************************************************
-** Solidified function: refr_mode
+** Solidified function: refresh
 ********************************************************************/
-be_local_closure(class_lvh_spangroup_refr_mode,   /* name */
+be_local_closure(class_lvh_spangroup_refresh,   /* name */
   be_nested_proto(
     3,                          /* nstack */
     1,                          /* argc */
@@ -9579,7 +9579,7 @@ be_local_closure(class_lvh_spangroup_refr_mode,   /* name */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
     &be_ktab_class_lvh_spangroup,     /* shared constants */
-    be_str_weak(refr_mode),
+    be_str_weak(refresh),
     &be_const_str_solidified,
     ( &(const binstruction[ 4]) {  /* code */
       0x88040100,  //  0000  GETMBR	R1	R0	K0
@@ -9601,7 +9601,7 @@ be_local_class(lvh_spangroup,
     &be_class_lvh_obj,
     be_nested_map(3,
     ( (struct bmapnode*) &(const bmapnode[]) {
-        { be_const_key_weak(refr_mode, -1), be_const_closure(class_lvh_spangroup_refr_mode_closure) },
+        { be_const_key_weak(refresh, -1), be_const_closure(class_lvh_spangroup_refresh_closure) },
         { be_const_key_weak(_lv_class, -1), be_const_class(be_class_lv_spangroup) },
         { be_const_key_weak(post_init, 0), be_const_closure(class_lvh_spangroup_post_init_closure) },
     })),
@@ -9627,14 +9627,14 @@ static const bvalue be_ktab_class_lvh_span[31] = {
   /* K15  */  be_nested_str_weak(is_color_attribute),
   /* K16  */  be_nested_str_weak(parse_color),
   /* K17  */  be_nested_str_weak(_parent_lvh),
-  /* K18  */  be_nested_str_weak(refr_mode),
+  /* K18  */  be_nested_str_weak(refresh),
   /* K19  */  be_nested_str_weak(_X20for_X20),
   /* K20  */  be_nested_str_weak(HSP_X3A_X20Could_X20not_X20find_X20function_X20set_),
   /* K21  */  be_nested_str_weak(_lv_obj),
   /* K22  */  be_nested_str_weak(_page),
   /* K23  */  be_nested_str_weak(_hm),
   /* K24  */  be_nested_str_weak(lvh_spangroup),
-  /* K25  */  be_nested_str_weak(new_span),
+  /* K25  */  be_nested_str_weak(add_span),
   /* K26  */  be_nested_str_weak(get_style),
   /* K27  */  be_nested_str_weak(HSP_X3A_X20_X27span_X27_X20should_X20have_X20a_X20parent_X20of_X20type_X20_X27spangroup_X27),
   /* K28  */  be_nested_str_weak(parse_font),
@@ -10632,7 +10632,7 @@ be_local_class(lvh_tab,
 static const bvalue be_ktab_class_lvh_chart[29] = {
   /* K0   */  be_nested_str_weak(_y_min),
   /* K1   */  be_nested_str_weak(_lv_obj),
-  /* K2   */  be_nested_str_weak(set_range),
+  /* K2   */  be_nested_str_weak(set_axis_range),
   /* K3   */  be_nested_str_weak(lv),
   /* K4   */  be_nested_str_weak(CHART_AXIS_PRIMARY_Y),
   /* K5   */  be_nested_str_weak(_y_max),

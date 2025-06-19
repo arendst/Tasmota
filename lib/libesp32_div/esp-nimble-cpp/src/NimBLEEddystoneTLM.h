@@ -1,25 +1,31 @@
 /*
- * NimBLEEddystoneTLM.h
+ * Copyright 2020-2025 Ryan Powell <ryan@nable-embedded.io> and
+ * esp-nimble-cpp, NimBLE-Arduino contributors.
  *
- *  Created: on March 15 2020
- *      Author H2zero
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Originally:
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * BLEEddystoneTLM.h
- *
- *  Created on: Mar 12, 2018
- *      Author: pcbreflux
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-#ifndef _NimBLEEddystoneTLM_H_
-#define _NimBLEEddystoneTLM_H_
+#ifndef NIMBLE_CPP_EDDYSTONETLM_H_
+#define NIMBLE_CPP_EDDYSTONETLM_H_
 
-#include "NimBLEUUID.h"
+#include "nimconfig.h"
+#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER
 
-#include <string>
+class NimBLEUUID;
 
-#define EDDYSTONE_TLM_FRAME_TYPE 0x20
+# include <string>
+
+# define EDDYSTONE_TLM_FRAME_TYPE 0x20
 
 /**
  * @brief Representation of a beacon.
@@ -27,35 +33,38 @@
  * * https://github.com/google/eddystone
  */
 class NimBLEEddystoneTLM {
-public:
-    NimBLEEddystoneTLM();
-    std::string getData();
-    NimBLEUUID   getUUID();
-    uint8_t  getVersion();
-    uint16_t    getVolt();
-    float      getTemp();
-    uint32_t    getCount();
-    uint32_t    getTime();
-    std::string toString();
-    void        setData(const std::string &data);
-    void        setUUID(const NimBLEUUID &l_uuid);
-    void        setVersion(uint8_t version);
-    void        setVolt(uint16_t volt);
-    void        setTemp(float temp);
-    void        setCount(uint32_t advCount);
-    void        setTime(uint32_t tmil);
+  public:
+    struct BeaconData {
+        uint8_t  frameType{EDDYSTONE_TLM_FRAME_TYPE};
+        uint8_t  version{0};
+        uint16_t volt{3300};
+        uint16_t temp{23 * 256};
+        uint32_t advCount{0};
+        uint32_t tmil{0};
+    } __attribute__((packed));
 
-private:
-    uint16_t beaconUUID;
-    struct {
-        uint8_t frameType;
-        uint8_t version;
-        uint16_t volt;
-        uint16_t temp;
-        uint32_t advCount;
-        uint32_t tmil;
-    } __attribute__((packed)) m_eddystoneData;
+    const BeaconData getData();
+    NimBLEUUID       getUUID();
+    uint8_t          getVersion();
+    uint16_t         getVolt();
+    int16_t          getTemp();
+    uint32_t         getCount();
+    uint32_t         getTime();
+    std::string      toString();
+    void             setData(const uint8_t* data, uint8_t length);
+    void             setData(const BeaconData& data);
+    void             setUUID(const NimBLEUUID& l_uuid);
+    void             setVersion(uint8_t version);
+    void             setVolt(uint16_t volt);
+    void             setTemp(int16_t temp);
+    void             setCount(uint32_t advCount);
+    void             setTime(uint32_t tmil);
+
+  private:
+    uint16_t   beaconUUID{0xFEAA};
+    BeaconData m_eddystoneData;
 
 }; // NimBLEEddystoneTLM
 
-#endif /* _NimBLEEddystoneTLM_H_ */
+#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER
+#endif // NIMBLE_CPP_EDDYSTONETLM_H_

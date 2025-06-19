@@ -33,12 +33,17 @@ extern "C" {
 #include "src/misc/lv_profiler_builtin.h"
 #include "src/misc/lv_rb.h"
 #include "src/misc/lv_utils.h"
+#include "src/misc/lv_iter.h"
+#include "src/misc/lv_circle_buf.h"
+#include "src/misc/lv_tree.h"
+#include "src/misc/cache/lv_cache.h"
 
 #include "src/tick/lv_tick.h"
 
 #include "src/core/lv_obj.h"
 #include "src/core/lv_group.h"
 #include "src/indev/lv_indev.h"
+#include "src/indev/lv_indev_gesture.h"
 #include "src/core/lv_refr.h"
 #include "src/display/lv_display.h"
 
@@ -78,6 +83,7 @@ extern "C" {
 #include "src/widgets/textarea/lv_textarea.h"
 #include "src/widgets/tileview/lv_tileview.h"
 #include "src/widgets/win/lv_win.h"
+#include "src/widgets/3dtexture/lv_3dtexture.h"
 
 #include "src/others/snapshot/lv_snapshot.h"
 #include "src/others/sysmon/lv_sysmon.h"
@@ -88,6 +94,10 @@ extern "C" {
 #include "src/others/observer/lv_observer.h"
 #include "src/others/ime/lv_ime_pinyin.h"
 #include "src/others/file_explorer/lv_file_explorer.h"
+#include "src/others/font_manager/lv_font_manager.h"
+#include "src/others/xml/lv_xml.h"
+#include "src/others/xml/lv_xml_component.h"
+#include "src/others/test/lv_test.h"
 
 #include "src/libs/barcode/lv_barcode.h"
 #include "src/libs/bin_decoder/lv_bin_decoder.h"
@@ -104,13 +114,14 @@ extern "C" {
 #include "src/libs/rlottie/lv_rlottie.h"
 #include "src/libs/ffmpeg/lv_ffmpeg.h"
 #include "src/libs/tiny_ttf/lv_tiny_ttf.h"
+#include "src/libs/svg/lv_svg.h"
+#include "src/libs/svg/lv_svg_render.h"
 
 #include "src/layouts/lv_layout.h"
 
-#include "src/draw/lv_draw.h"
 #include "src/draw/lv_draw_buf.h"
 #include "src/draw/lv_draw_vector.h"
-#include "src/draw/sw/lv_draw_sw.h"
+#include "src/draw/sw/lv_draw_sw_utils.h"
 
 #include "src/themes/lv_theme.h"
 
@@ -123,6 +134,7 @@ extern "C" {
 #if LV_USE_PRIVATE_API
 #include "src/lvgl_private.h"
 #endif
+
 
 /*********************
  *      DEFINES

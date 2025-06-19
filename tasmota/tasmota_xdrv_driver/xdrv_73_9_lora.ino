@@ -175,7 +175,14 @@ void LoraSettingsLoad(bool erase) {
 void LoraSettingsSave(void) {
   // Called from FUNC_SAVE_SETTINGS every SaveData second and at restart
 #ifdef USE_UFILESYS
+  if (Lora->delay_settings_save) {       // Delay settings update when expecting cascading changes
+    Lora->delay_settings_save--;
+    return;
+  }
   uint32_t crc32 = GetCfgCrc32((uint8_t*)&Lora->settings +4, sizeof(LoraSettings_t) -4);  // Skip crc32
+#ifdef USE_LORAWAN_BRIDGE
+  crc32 += LoraWanGetCfgCrc();
+#endif  // USE_LORAWAN_BRIDGE
   if (crc32 != Lora->settings.crc32) {
     Lora->settings.crc32 = crc32;
     if (LoraSaveData()) {
@@ -193,7 +200,7 @@ void LoraSettingsSave(void) {
 bool LoraSend(uint8_t* data, uint32_t len, bool invert) {
   uint32_t lora_time = millis();         // Time is important for LoRaWan RX windows
   bool result = Lora->Send(data, len, invert);
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LOR: Send (%u) '%*_H', Invert %d, Freq %1_f, BW %1_f, SF %d, Time %d"),
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LOR: Send (%u) '%*_H', Invert %d, Freq %3_f, BW %1_f, SF %d, Time %d"),
     lora_time, len, data, invert, &Lora->settings.frequency, &Lora->settings.bandwidth, Lora->settings.spreading_factor, TimePassedSince(lora_time));
   return result;
 }
@@ -204,7 +211,7 @@ void LoraInput(void) {
   char data[TAS_LORA_MAX_PACKET_LENGTH] = { 0 };
   int packet_size = Lora->Receive(data);
   if (!packet_size) { return; }
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LOR: Rcvd (%u) '%*_H', Freq %1_f, BW %1_f, SF %d, RSSI %1_f, SNR %1_f"),
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LOR: Rcvd (%u) '%*_H', Freq %3_f, BW %1_f, SF %d, RSSI %1_f, SNR %1_f"),
     Lora->receive_time, packet_size, data, &Lora->settings.frequency, &Lora->settings.bandwidth, Lora->settings.spreading_factor, &Lora->rssi, &Lora->snr);
 #ifdef USE_LORAWAN_BRIDGE
   if (bitRead(Lora->settings.flags, TAS_LORA_FLAG_BRIDGE_ENABLED)) {

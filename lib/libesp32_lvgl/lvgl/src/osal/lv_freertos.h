@@ -23,7 +23,7 @@ extern "C" {
 
 #if LV_USE_OS == LV_OS_FREERTOS
 
-#if (ESP_PLATFORM)
+#ifdef ESP_PLATFORM
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
@@ -84,13 +84,6 @@ void lv_freertos_task_switch_in(const char * name);
  */
 void lv_freertos_task_switch_out(void);
 
-/**
- * Set it for `LV_SYSMON_GET_IDLE` to show the CPU usage
- * as reported based the usage of FreeRTOS's idle task
- * If it's important when a GPU is used.
- * @return the idle percentage since the last call
- */
-uint32_t lv_os_get_idle_percent(void);
 
 /**********************
  *      MACROS

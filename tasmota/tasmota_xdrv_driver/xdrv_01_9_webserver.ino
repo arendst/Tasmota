@@ -231,8 +231,8 @@ const char HTTP_SCRIPT_INFO_END[] PROGMEM =
   #include "./html_uncompressed/HTTP_HEAD_STYLE_WIFI.h"
 #endif
 
-#ifdef USE_ZIGBEE
-// Styles used for Zigbee Web UI
+#if defined(USE_ZIGBEE) || defined(USE_LORAWAN_BRIDGE)
+// Styles used for Zigbee and LoRaWan Web UI
 // Battery icon from https://css.gg/battery
 //
   #ifdef USE_UNISHOX_COMPRESSION
@@ -997,7 +997,7 @@ void WSContentSendStyle_P(const char* formatP, ...) {
 #ifdef USE_WEB_STATUS_LINE_WIFI
   WSContentSend_P(HTTP_HEAD_STYLE_WIFI, WebColor(COL_FORM), WebColor(COL_TITLE));
 #endif
-#ifdef USE_ZIGBEE
+#if defined(USE_ZIGBEE) || defined(USE_LORAWAN_BRIDGE)
   WSContentSend_P(HTTP_HEAD_STYLE_ZIGBEE);
 #endif // USE_ZIGBEE
   if (formatP != nullptr) {

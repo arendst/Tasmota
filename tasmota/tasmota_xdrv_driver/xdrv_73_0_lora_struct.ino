@@ -166,7 +166,7 @@
 #define TAS_LORAWAN_RECEIVE_DELAY2                1000    // LoRaWan Receive delay 2
 #define TAS_LORAWAN_JOIN_ACCEPT_DELAY1            5000    // LoRaWan Join accept delay 1
 #define TAS_LORAWAN_JOIN_ACCEPT_DELAY2            1000    // LoRaWan Join accept delay 2
-#define TAS_LORAWAN_ENDNODES                         4    // Max number of supported endnodes
+#define TAS_LORAWAN_ENDNODES                        16    // Max number of supported endnodes (every active node uses 68+ bytes)
 #define TAS_LORAWAN_AES128_KEY_SIZE                 16    // Size in bytes
 
 /*********************************************************************************************/
@@ -179,7 +179,8 @@ enum TasLoraFlags {
 };
 
 enum TasLoraWanFlags { 
-  TAS_LORAWAN_FLAG_LINK_ADR_REQ
+  TAS_LORAWAN_FLAG_LINK_ADR_REQ,
+  TAS_LORAWAN_FLAG_DISABLED
 };
 
 enum TasLoraWanMTypes { 
@@ -220,7 +221,13 @@ enum TasLoraWanCIDNode {
   TAS_LORAWAN_CID_DL_CHANNEL_ANS,
   TAS_LORAWAN_CID_RFU1_ANS,
   TAS_LORAWAN_CID_RFU2_ANS,
-  TAS_LORAWAN_CID_DEVICE_TIME_REQ
+  TAS_LORAWAN_CID_DEVICE_TIME_REQ,
+  TAS_LORAWAN_CID_RFU1,
+  TAS_LORAWAN_CID_RFU2,
+  TAS_LORAWAN_CID_PING_SLOT_INFO_REQ,            // Class B
+  TAS_LORAWAN_CID_PING_SLOT_CHANNEL_ANS,         // Class B
+  TAS_LORAWAN_CID_BEACON_TIMING_REQ,             // Class B - Deprecated
+  TAS_LORAWAN_CID_BEACON_FREQ_ANS                // Class B
 };
 
 enum LoRaWanRadioMode_t {
@@ -290,7 +297,7 @@ typedef struct LoraSettings_t {
   uint8_t flags;
   uint8_t region;                                // 0 = Default, 1 = AU915, ...
 #ifdef USE_LORAWAN_BRIDGE
-  LoraEndNode_t end_node[TAS_LORAWAN_ENDNODES];  // End node parameters
+  LoraEndNode_t *end_node[TAS_LORAWAN_ENDNODES]; // End node parameters
 #endif  // USE_LORAWAN_BRIDGE
 } LoraSettings_t;
 
@@ -314,6 +321,8 @@ typedef struct Lora_t {
   uint8_t* send_buffer;
   uint8_t send_buffer_step;
   uint8_t send_buffer_len;
+  uint8_t nodes;
+  uint8_t delay_settings_save;
   bool rx;
   bool send_request;
   bool profile_changed;

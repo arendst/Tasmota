@@ -2153,12 +2153,12 @@ class lvh_spangroup : lvh_obj
   # label do not need a sub-label
   def post_init(jline)
     self._lv_obj.set_mode(lv.SPAN_MODE_BREAK)           # use lv.SPAN_MODE_BREAK by default
-    self._lv_obj.refr_mode()
+    self._lv_obj.refresh()
     super(self).post_init(jline)         # call super -- not needed
   end
   # refresh mode
-  def refr_mode()
-    self._lv_obj.refr_mode()
+  def refresh()
+    self._lv_obj.refresh()
   end
 end
 
@@ -2176,7 +2176,7 @@ class lvh_span : lvh_root
     # check if it is the parent is a spangroup
     if isinstance(self._parent_lvh, self._page._hm.lvh_spangroup)
       # print(">>> GOOD")
-      self._lv_obj = self._parent_lvh._lv_obj.new_span()
+      self._lv_obj = self._parent_lvh._lv_obj.add_span()
       self._style = self._lv_obj.get_style()
     else
       print("HSP: 'span' should have a parent of type 'spangroup'")
@@ -2194,7 +2194,7 @@ class lvh_span : lvh_root
     var font = self.parse_font(t)
     if font != nil
       self._style.set_text_font(font)
-      self._parent_lvh.refr_mode()
+      self._parent_lvh.refresh()
     end
   end
   
@@ -2271,7 +2271,7 @@ class lvh_span : lvh_root
       # invoke
       try
         f(self._style, v)
-        self._parent_lvh.refr_mode()
+        self._parent_lvh.refresh()
       except .. as e, m
         raise e, m + " for " + k
       end
@@ -2522,19 +2522,19 @@ class lvh_chart : lvh_obj
   end
   def set_y_min(_y_min)
     self._y_min = _y_min
-    self._lv_obj.set_range(lv.CHART_AXIS_PRIMARY_Y, self._y_min, self._y_max)
+    self._lv_obj.set_axis_range(lv.CHART_AXIS_PRIMARY_Y, self._y_min, self._y_max)
   end
   def set_y_max(_y_max)
     self._y_max = _y_max
-    self._lv_obj.set_range(lv.CHART_AXIS_PRIMARY_Y, self._y_min, self._y_max)
+    self._lv_obj.set_axis_range(lv.CHART_AXIS_PRIMARY_Y, self._y_min, self._y_max)
   end
   def set_y2_min(_y2_min)
     self._y2_min = _y2_min
-    self._lv_obj.set_range(lv.CHART_AXIS_SECONDARY_Y, self._y2_min, self._y2_max)
+    self._lv_obj.set_axis_range(lv.CHART_AXIS_SECONDARY_Y, self._y2_min, self._y2_max)
   end
   def set_y2_max(_y2_max)
     self._y2_max = _y2_max
-    self._lv_obj.set_range(lv.CHART_AXIS_SECONDARY_Y, self._y2_min, self._y2_max)
+    self._lv_obj.set_axis_range(lv.CHART_AXIS_SECONDARY_Y, self._y2_min, self._y2_max)
   end
 
   def set_series1_color(color)
