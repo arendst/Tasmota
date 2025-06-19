@@ -12,19 +12,21 @@
  * LoRaWan node decode and presentation
 \*********************************************************************************************/
 
-void LoraWanPublishHeader(uint32_t node) {
+void LoraWanPublishHeader(uint32_t node, bool decoded) {
   ResponseClear();                                    // clear string
 
   // Do we prefix with `LwReceived`?
   if (!Settings->flag4.remove_zbreceived &&           // SetOption100 - (Zigbee) Remove LwReceived form JSON message (1)
       !Settings->flag5.zb_received_as_subtopic) {     // SetOption118 - (Zigbee) Move LwReceived from JSON message and into the subtopic replacing "SENSOR" default
+    char prefix[16];
+    snprintf_P(prefix, sizeof(prefix), PSTR("%s"), (decoded) ? PSTR("LwDecoded") : PSTR("LwReceived"));
     if (Settings->flag5.zigbee_include_time &&        // SetOption144 - (Zigbee) Include time in `LwReceived` messages like other sensors
        (Rtc.utc_time >= START_VALID_TIME)) {
       // Add time if needed (and if time is valid)
       ResponseAppendTimeFormat(Settings->flag2.time_format);  // CMND_TIME
-      ResponseAppend_P(PSTR(",\"LwReceived\":"));
+      ResponseAppend_P(PSTR(",\"%s\":"), prefix);
     } else {
-      ResponseAppend_P(PSTR("{\"LwReceived\":"));
+      ResponseAppend_P(PSTR("{\"%s\":"), prefix);
     }
   }
 
@@ -40,7 +42,7 @@ void LoraWanPublishHeader(uint32_t node) {
 
 /*********************************************************************************************/
 
-void LoraWanPublishFooter(uint32_t node) {
+void LoraWanPublishFooter(uint32_t node, bool decoded) {
   if (!Settings->flag5.zb_omit_json_addr) {           // SetOption119 - (Zigbee) Remove the device addr from json payload, can be used with zb_topic_fname where the addr is already known from the topic
     ResponseAppend_P(PSTR("}"));
   }
@@ -53,7 +55,22 @@ void LoraWanPublishFooter(uint32_t node) {
   InfluxDbProcess(1);                                 // Use a copy of ResponseData
 #endif
 
+#ifdef ESP8266
   if (!Settings->flag6.mqtt_disable_publish) {        // SetOption147 - If it is activated, Tasmota will not publish MQTT messages, but it will proccess event trigger rules
+#else  // ESP32
+  bool decode_successful = false;
+  if (!decoded) {
+    String mqtt_data = TasmotaGlobal.mqtt_data;       // Backup as being destroyed by berry
+    uint32_t restart_flag = TasmotaGlobal.restart_flag; // Backup restart_flag
+    TasmotaGlobal.restart_flag += 17;                 // Set to non-zero (default) state
+    XdrvRulesProcess(0);                              // Apply berry decoding which may reset TasmotaGlobal.restart_flag
+    decode_successful = (0 == TasmotaGlobal.restart_flag);
+    TasmotaGlobal.restart_flag = restart_flag;        // Restore restart_flag
+    TasmotaGlobal.mqtt_data = mqtt_data;              // Restore response data
+  }
+  if (!decode_successful &&
+      !Settings->flag6.mqtt_disable_publish) {        // SetOption147 - If it is activated, Tasmota will not publish MQTT messages, but it will proccess event trigger rules
+#endif  // ESP32
     if (Settings->flag4.zigbee_distinct_topics) {     // SetOption89  - (MQTT, Zigbee) Distinct MQTT topics per device for Zigbee (1) (#7835)
       char subtopic[TOPSZ];
       // Clean special characters
@@ -67,7 +84,7 @@ void LoraWanPublishFooter(uint32_t node) {
       }
       char stopic[TOPSZ];
       if (Settings->flag5.zb_received_as_subtopic)    // SetOption118 - (Zigbee) Move LwReceived from JSON message and into the subtopic replacing "SENSOR" default
-        GetTopic_P(stopic, TELE, subtopic, PSTR("LwReceived"));
+        GetTopic_P(stopic, TELE, subtopic, (decoded) ? PSTR("LwDecoded") : PSTR("LwReceived"));
       else
         GetTopic_P(stopic, TELE, subtopic, PSTR(D_RSLT_SENSOR));
       MqttPublish(stopic, Settings->flag.mqtt_sensor_retain);
@@ -75,7 +92,10 @@ void LoraWanPublishFooter(uint32_t node) {
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings->flag.mqtt_sensor_retain);
     }
   }
-  XdrvRulesProcess(0);                                // Apply rules
+#ifdef ESP32
+  if (decoded)
+#endif  // ESP32
+    XdrvRulesProcess(0);                              // Apply rules
 }
 
 /*********************************************************************************************/
@@ -111,7 +131,7 @@ void LoraWanDecode(struct LoraNodeData_t* node_data) {
             &battery_volt,
             temperature, humidity);
 #endif  // USE_LORA_DEBUG
-          LoraWanPublishHeader(node_data->node);
+          LoraWanPublishHeader(node_data->node, true);
           ResponseAppend_P(PSTR(",\"Events\":%d,\"LastEvent\":%d,\"DoorOpen\":%d,\"Button\":%d,\"Tamper\":%d,\"Tilt\":%d"
                                 ",\"Battery\":%1_f,"),
             events, elapsed_time,
@@ -119,7 +139,7 @@ void LoraWanDecode(struct LoraNodeData_t* node_data) {
             &battery_volt);
           ResponseAppendTHD(temperature, humidity);
           ResponseAppend_P(PSTR("}"));
-          LoraWanPublishFooter(node_data->node);
+          LoraWanPublishFooter(node_data->node, true);
           return;
         }
       }
@@ -143,17 +163,17 @@ void LoraWanDecode(struct LoraNodeData_t* node_data) {
           &battery_volt,
           bitRead(alarm, 0));
 #endif  // USE_LORA_DEBUG
-        LoraWanPublishHeader(node_data->node);
+        LoraWanPublishHeader(node_data->node, true);
         ResponseAppend_P(PSTR(",\"Events\":%d,\"LastEvent\":%d,\"DoorOpen\":%d,\"Alarm\":%d,\"Battery\":%3_f}"),
           events, open_duration, bitRead(status, 7), bitRead(alarm, 0), &battery_volt);
-        LoraWanPublishFooter(node_data->node);
+        LoraWanPublishFooter(node_data->node, true);
         return;
       }
     }
   }
 
   // Joined device without decoding
-  LoraWanPublishHeader(node_data->node);
+  LoraWanPublishHeader(node_data->node, false);
   ResponseAppend_P(PSTR(",\"Decoder\":\"%s\",\"DevEUIh\":\"%08X\",\"DevEUIl\":\"%08X\",\"FPort\":%d,\"Payload\":["),
     EscapeJSONString(Lora->settings.end_node[node_data->node]->decoder.c_str()).c_str(),
     Lora->settings.end_node[node_data->node]->DevEUIh,
@@ -163,7 +183,7 @@ void LoraWanDecode(struct LoraNodeData_t* node_data) {
     ResponseAppend_P(PSTR("%s%d"), (0==i)?"":",", node_data->payload[i]);
   }
   ResponseAppend_P(PSTR("]}"));
-  LoraWanPublishFooter(node_data->node);
+  LoraWanPublishFooter(node_data->node, false);
 }
 
 #endif  // USE_LORAWAN_BRIDGE

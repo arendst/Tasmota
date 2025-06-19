@@ -37,7 +37,7 @@ class lwdecode_cls
     
     if !self.LwDecoders.find(decoder)
       LwDeco = nil
-      load(decoder)  #sets LwDeco if found
+      load(decoder)  # Sets LwDeco if found
       if LwDeco
         self.LwDecoders.insert(decoder, LwDeco)
       end
@@ -48,6 +48,7 @@ class lwdecode_cls
       var decoded = self.LwDecoders[decoder].decodeUplink(Node, RSSI, FPort, Payload)	
       var mqttData = {"LwDecoded":{deviceName:decoded}}
       mqtt.publish(topic, json.dump(mqttData))
+      tasmota.global.restart_flag = 0 # Signal LwDecoded successful (default state)
     end 
 
     return true  #processed
@@ -141,5 +142,5 @@ tasmota.cmd('LoraOption3 off')    # Disable embedded decoding
 tasmota.cmd('SetOption100 off')   # Keep LwReceived in JSON message
 tasmota.cmd('SetOption118 off')   # Keep SENSOR as subtopic name
 tasmota.cmd('SetOption119 off')   # Keep device address in JSON message
-tasmota.cmd('SetOption147 on')    # Hide LwReceived MQTT message but keep rule processing
+#tasmota.cmd('SetOption147 on')    # Hide LwReceived MQTT message but keep rule processing
 tasmota.cmd('LoRaWanBridge on')
