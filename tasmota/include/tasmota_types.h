@@ -636,13 +636,14 @@ typedef struct {
   char          serial_delimiter;          // 451
   uint8_t       seriallog_level;           // 452
   uint8_t       sleep;                     // 453
-#ifndef CONFIG_IDF_TARGET_ESP32P4
+#ifdef CONFIG_IDF_TARGET_ESP32P4
+#undef MAX_DOMOTICZ_IDX
+#undef MAX_DOMOTICZ_SNS_IDX
+#define MAX_DOMOTICZ_IDX 3
+#define MAX_DOMOTICZ_SNS_IDX 3
+#endif //CONFIG_IDF_TARGET_ESP32P4
   uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX];      // 454
   uint16_t      domoticz_sensor_idx[MAX_DOMOTICZ_SNS_IDX];  // 45C
-#else
-  uint16_t      domoticz_switch_idx[3];      // 454
-  uint16_t      domoticz_sensor_idx[3];  // 45C
-#endif //CONFIG_IDF_TARGET_ESP32P4
   uint8_t       module;                    // 474
   uint8_t       ws_color[4][3];            // 475
   uint8_t       ws_width[3];               // 481
