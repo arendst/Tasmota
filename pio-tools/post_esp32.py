@@ -85,6 +85,17 @@ if not variants_dir:
     variants_dir = join(FRAMEWORK_DIR, "variants", "tasmota")
     env.BoardConfig().update("build.variants_dir", variants_dir)
 
+def esptool_call(cmd):
+    try:
+        esptool.main(cmd)
+    except SystemExit as e:
+        # Fetch sys.exit() without leaving the script
+        if e.code == 0:
+            return True
+        else:
+            print(f"❌ esptool failed with exit code: {e.code}")
+            return False
+
 def esp32_detect_flashsize():
     uploader = env.subst("$UPLOADER")
     if not "upload" in COMMAND_LINE_TARGETS:
@@ -339,7 +350,7 @@ def esp32_create_combined_bin(source, target, env):
                 sys.stdout = devnull
                 sys.stderr = devnull
                 try:
-                    esptool.main(cmd)
+                    esptool_call(cmd)
                 finally:
                     sys.stdout = old_stdout
                     sys.stderr = old_stderr
