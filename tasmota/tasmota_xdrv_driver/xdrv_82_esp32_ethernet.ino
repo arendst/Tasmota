@@ -93,6 +93,7 @@
 
 const uint8_t eth_type_xtable[] = {
 #if CONFIG_ETH_USE_ESP32_EMAC
+  0,
   ETH_PHY_LAN8720,      //  0 = LAN8720
   ETH_PHY_TLK110,       //  1 = TLK110/IP101
   ETH_PHY_RTL8201,      //  2 = RTL8201
@@ -286,7 +287,7 @@ void EthernetInit(void) {
     init_ok = (ETH.begin((eth_phy_type_t)eth_type, Settings->eth_address, eth_mdc, eth_mdio, eth_power, SPI, ETH_PHY_SPI_FREQ_MHZ));
   }
   if (!init_ok) {
-    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "Bad EthType or init error"));
+    AddLog(LOG_LEVEL_DEBUG, PSTR(D_LOG_ETH "Bad EthType %i or init error"),eth_type);
     return;
   };
 
