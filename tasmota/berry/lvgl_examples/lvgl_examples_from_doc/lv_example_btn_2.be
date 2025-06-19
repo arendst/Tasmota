@@ -4,7 +4,6 @@
 
 # Init the style for the default state
 style = lv.style()
-style.init()
 
 style.set_radius(3)
 
@@ -29,7 +28,6 @@ style.set_pad_all(10)
 
 # Init the pressed style
 style_pr = lv.style()
-style_pr.init()
 
 # Add a large outline when pressed
 style_pr.set_outline_width(30)
@@ -41,9 +39,10 @@ style_pr.set_bg_color(lv.palette_darken(lv.PALETTE_BLUE, 2))
 style_pr.set_bg_grad_color(lv.palette_darken(lv.PALETTE_BLUE, 4))
 
 # Add a transition to the outline
-trans = lv.style_transition_dsc()
 props = lv.style_prop_arr([lv.STYLE_OUTLINE_WIDTH, lv.STYLE_OUTLINE_OPA, 0])
-trans.init(props, lv.anim_path_linear, 300, 0, nil)
+trans = lv.style_transition_dsc(props, lv.anim_path_linear, 300, 0, nil)
+# or directly use the properties array (trailing 0 automatically added):
+#trans = lv.style_transition_dsc([lv.STYLE_OUTLINE_WIDTH, lv.STYLE_OUTLINE_OPA], lv.anim_path_linear, 300, 0, nil)
 
 style_pr.set_transition(trans)
 
