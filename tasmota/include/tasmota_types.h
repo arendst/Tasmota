@@ -576,7 +576,7 @@ typedef struct {
   uint8_t       eth_type;                  // 40E
   uint8_t       eth_clk_mode;              // 40F
   mytmplt       user_template;             // 410  (9x4E) 2x39 bytes (ESP32-S3)
-  uint8_t       eth_address;               // 45E
+  int8_t       eth_address;               // 45E
   uint8_t       module;                    // 45F
   WebCamCfg     webcam_config;             // 460
   uint8_t       ws_width[3];               // 464
@@ -630,7 +630,7 @@ typedef struct {
   #endif
 
   WebCamCfg     webcam_config;             // 44C
-  uint8_t       eth_address;               // 450
+  int8_t        eth_address;               // 450
 #endif  // ESP32
 
   char          serial_delimiter;          // 451

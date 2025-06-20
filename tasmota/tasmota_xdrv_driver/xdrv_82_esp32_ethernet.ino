@@ -382,7 +382,7 @@ void CmndEthernet(void) {
 }
 
 void CmndEthAddress(void) {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 31)) {
+  if ((XdrvMailbox.payload >= -1) && (XdrvMailbox.payload <= 31)) {
     Settings->eth_address = XdrvMailbox.payload;
     TasmotaGlobal.restart_flag = 2;
   }
