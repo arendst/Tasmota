@@ -130,6 +130,9 @@ public:
     AddLog(LOG_LEVEL_DEBUG,"I2S: SetRate: %i was %i tx_running=%i", hz, this->hertz, _tx_running);
     if (hz == (int) this->hertz) { return true; }
     this->hertz = hz;
+        
+    I2SAudioSampleRate(hz); // update sample rate for berry audio events, probably for a codec
+
     return updateClockConfig();
   }
 

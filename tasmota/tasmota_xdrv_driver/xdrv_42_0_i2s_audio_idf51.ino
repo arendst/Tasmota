@@ -385,6 +385,11 @@ void I2SAudioPower(bool power) {
   callBerryEventDispatcher(PSTR("audio"), PSTR("power"), power, nullptr, 0);
 }
 
+// signal to an external Berry driver that we change the output audio sample rate
+void I2SAudioSampleRate(uint32_t rate) {
+  callBerryEventDispatcher(PSTR("audio"), PSTR("rate"), rate, nullptr, 0);
+}
+
 //
 // I2SSettingsLoad(erase:bool)
 //
