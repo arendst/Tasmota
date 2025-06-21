@@ -70,7 +70,7 @@ public:
   // Constructor takes no parameter, everything is configured from template and config file
   TasmotaI2S() {
     // set some defaults
-    hertz = 16000;
+    hertz = audio_i2s.Settings->tx.sample_rate; // default 16 kHz, can be changed later
     bps = I2S_DATA_BIT_WIDTH_16BIT;   // bps sent to consumeAudio (this is different from channels of I2S stream)
     channels = 2;     // number of channels sent to consumeAudio (this is different from channels of I2S stream)
     gainF2P6 = 32;    // equivalent of 0.5
@@ -517,6 +517,7 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
   
   esp_err_t err = ESP_OK;
   gpio_num_t _DIN = rx ? (gpio_num_t)_gpio_din : I2S_GPIO_UNUSED;          // no input pin if no Rx
+  bool _duplex_started = false;
 
   if (tx && !isDACMode()) {
     // default dma_desc_num = 6 (DMA buffers), dma_frame_num = 240 (frames per buffer)
@@ -570,10 +571,11 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
       return false;
     }
 
-    if (rx) {   // full duplex mode
+    if (rx && !_exclusive) {   // full duplex mode
       err = i2s_channel_init_std_mode(_rx_handle, &tx_std_cfg);
       AddLog(LOG_LEVEL_DEBUG, "I2S: i2s_channel_init_std_mode err:%i", err);
       AddLog(LOG_LEVEL_DEBUG, "I2S: RX channel added in full duplex mode");
+      _duplex_started = true;
     }
   }   // if (tx)
 
@@ -600,8 +602,8 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
   }   // if (tx) && DAC
 #endif // SOC_DAC_SUPPORTED
 
-  // configure Rx Microphone
-  if (rx) {
+  // configure Rx Microphone, if not in duplex mode
+  if (rx && !_duplex_started) {
     gpio_num_t clk_gpio;
 
     i2s_slot_mode_t rx_slot_mode = (_rx_channels == 1) ? I2S_SLOT_MODE_MONO : I2S_SLOT_MODE_STEREO;
