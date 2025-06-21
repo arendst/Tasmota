@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [15.0.1.1]
 ### Added
 - I2S additions (#23543)
+- NeoPool add Redox tank alarm (#19811)
 
 ### Breaking Changed
 
