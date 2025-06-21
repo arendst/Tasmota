@@ -841,24 +841,58 @@ uint32_t Ws2812GetPixelColor(uint32_t idx) {
 
 void CmndLed(void)
 {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Settings->light_pixels)) {
-    if (XdrvMailbox.data_len > 0) {
+  // if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Settings->light_pixels)) {
+  /* ledbar function enhancement to color strings of ws2812 leds:
+        if #number > #ws28leds, start coloring from led1 until modulo remainer
+        if #number > 1sss1eeee ( where s & e = 0-9), start color at led s to e (including)
+            if eee < sss do the same backwards startting at end towards start
+      example: suppose leds in ws2812 string = 6, command:
+          led1 ff0000       --> colors led1 to red  
+          led7 00ff00       --> colors led1 to 6 with green
+          led1002004 0000ff --> colors led2 to 4 as blue
+          led1005003 ff0000 --> colors led6 reverse to 3 to 5 as red
+  */
+  if (XdrvMailbox.index > 0) {
+    uint16_t idx1 = XdrvMailbox.index;
+    uint16_t idx2 = XdrvMailbox.index;    
+    if (XdrvMailbox.index > 1001000 && XdrvMailbox.index < 2000000) {  // check for start end led addressing
+        // && XdrvMailbox.index < (1000000+((WS2812_MAX_LEDS+1)*1000)+WS2812_MAX_LEDS+1) // check forward only
+      idx1 = ((XdrvMailbox.index - 1000000) / 1000) % Settings->light_pixels ; // modulo  start 
+      idx2 = ((XdrvMailbox.index - 1000000) % 1000) % Settings->light_pixels ; // remainder end
+      if ((idx1 > idx2 || idx1 == 0) && idx2 > 0) {   // if start > end, do bar starting backward at end
+        uint16_t idx3 = idx1;    // swap start and end via intermediate
+        idx1 = idx2;
+        idx2 = idx3;
+      } 
+      if (idx1 == 0 || idx1 > Settings->light_pixels) idx1 = 1;       // ensure within range
+    } else if (XdrvMailbox.index > Settings->light_pixels) {        // do range 1 to modulo end
+      idx1 = 1;
+      idx2 = XdrvMailbox.index % Settings->light_pixels;
+    }
+    if (idx2 == 0 || idx2 > Settings->light_pixels) idx2 = Settings->light_pixels; // set to end of range
+    idx2++;
+    if (XdrvMailbox.data_len > 0) {                     // if command has a color-value
       char *p;
       uint16_t idx = XdrvMailbox.index;
       Ws2812ForceSuspend();
-      for (char *color = strtok_r(XdrvMailbox.data, " ", &p); color; color = strtok_r(nullptr, " ", &p)) {
-        if (LightColorEntry(color, strlen(color))) {
-          Ws2812SetColor(idx, Light.entry_color[0], Light.entry_color[1], Light.entry_color[2], Light.entry_color[3]);
-          idx++;
-          if (idx > Settings->light_pixels) { break; }
-        } else {
-          break;
+      for (uint16_t idx0 = idx1; idx0 < idx2; idx0++ )  // color start to end led-address
+      {
+        char *p;
+        uint16_t idx = idx0;
+        for (char *color = strtok_r(XdrvMailbox.data, " ", &p); color; color = strtok_r(nullptr, " ", &p)) {
+          if (LightColorEntry(color, strlen(color))) {
+            Ws2812SetColor(idx, Light.entry_color[0], Light.entry_color[1], Light.entry_color[2], Light.entry_color[3]);
+            idx++;
+            if (idx > Settings->light_pixels) { break; }
+          } else {
+            break;
+          }
         }
       }
       Ws2812ForceUpdate();
     }
     char scolor[LIGHT_COLOR_SIZE];
-    ResponseCmndIdxChar(Ws2812GetColor(XdrvMailbox.index, scolor));
+    ResponseCmndIdxChar(Ws2812GetColor(idx1, scolor));    // return color value of indicated start-led
   }
 }
 
