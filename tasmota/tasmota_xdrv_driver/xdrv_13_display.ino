@@ -1,6 +1,6 @@
 /*
   xdrv_13_display.ino - Display support for Tasmota
-  peter
+  
   Copyright (C) 2021  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
