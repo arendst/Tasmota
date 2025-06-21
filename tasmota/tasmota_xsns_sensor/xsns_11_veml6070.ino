@@ -30,6 +30,8 @@
   --------------------------------------------------------------------------------------------
   Version Date      Action    Description
   --------------------------------------------------------------------------------------------
+  1.0.0.4 20250521  fixed     - in Veml6070Detect check for the presence of both addresses in
+                                the bus to avoid misdetection with ATH20/21
 
   1.0.0.3 20181006  fixed     - missing "" around the UV Index text
                               - thanks to Lisa she had tested it on here mqtt system.
@@ -128,7 +130,9 @@ char       str_uvrisk_text[10];
 
 void Veml6070Detect(void)
 {
-  if (!I2cSetDevice(VEML6070_ADDR_L)) { return; }
+  // check for presence of both addresses do avoid misdetection
+  if (!I2cSetDevice(VEML6070_ADDR_L)
+    || !I2cSetDevice(VEML6070_ADDR_H)) { return; }
 
   // init the UV sensor
   Wire.beginTransmission(VEML6070_ADDR_L);
