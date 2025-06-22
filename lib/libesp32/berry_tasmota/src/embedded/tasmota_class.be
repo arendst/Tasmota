@@ -503,6 +503,7 @@ class Tasmota
   #    load("autoexec.be")        -- loads file from .be or .bec if .be is not here, remove .bec if .be exists
   #    load("autoexec")           -- same as above
   #    load("autoexec.bec")       -- load only .bec file and ignore .be
+  #    load("app.tapp")           -- loads app, internally adds "#autoexec.be"
   #    load("app.tapp#module.be") -- loads from tapp arhive
   #
   # Returns 'true' if succesful of 'false' if file is not found or corrupt
@@ -597,6 +598,12 @@ class Tasmota
     if !string.startswith(f_name, '/')   f_name = '/' + f_name   end
     # Ex: f_name = '/app.zip#autoexec'
 
+    # if ends with ".tapp", add "#autoexec"
+    # there's a trick here, since actual prefix may be ".tapp" or "._tapp" (the later for no-autp-run)
+    if string.endswith(f_name, 'tapp')
+      f_name += "#autoexec"
+    end
+
     var f_find_hash = string.find(f_name, '#')
     var f_archive = (f_find_hash > 0)                     # is the file in an archive
     var f_prefix = f_archive ? f_name[0..f_find_hash - 1] : f_name
@@ -685,6 +692,7 @@ class Tasmota
     # remove path prefix
     if f_archive
       pop_path(f_prefix + "#")
+      self.wd = ""
     end
 
     return run_ok
