@@ -321,11 +321,11 @@ void I2sMicTask(void *arg){
     __enctime = millis();
     if(bytes_read != 0){
       written = mic_enc->encode(bytes_read >> 1); //transmit samples, written is an error code
+      if(written < 0){
+        break;
+      }
     }
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("_mic: %u , %i, %i"), millis() - __enctime, written, bytes_read);
-    if(written < 0){
-      break;
-    }
 
     if (audio_i2s_mp3.use_stream) {
       if (!audio_i2s_mp3.client.connected()) {
@@ -409,6 +409,7 @@ int32_t I2sRecord(char *path, uint32_t encoder_type) {
   audio_i2s_mp3.mic_stop = 0;
 
   audio_i2s.in->startRx();
+  audio_i2s.in->setRate(audio_i2s.Settings->rx.sample_rate);
   err = xTaskCreatePinnedToCore(I2sMicTask, "MIC", stack, NULL, 3, &audio_i2s_mp3.mic_task_handle, 1);
   return err;
 }

@@ -467,8 +467,8 @@ void I2sInit(void) {
   I2SSettingsLoad(AUDIO_CONFIG_FILENAME, false);    // load configuration (no-erase)
   if (!audio_i2s.Settings) { return; }     // fatal error, could not allocate memory for configuration
 
-  bool duplex = false;      // the same ports are used for input and output
-  bool exclusive = false;   // signals that in/out have a shared GPIO and need to un/install driver before use
+  // bool duplex = false;      // the same ports are used for input and output
+  // bool exclusive = false;   // signals that in/out have a shared GPIO and need to un/install driver before use
   bool dac_mode = (gpio_dac_0 >= 0);
   if (dac_mode) {
     audio_i2s.Settings->tx.mode = I2S_MODE_DAC;
@@ -496,12 +496,15 @@ void I2sInit(void) {
     // if neither input, nor output, nor DAC/ADC skip (WS could is only needed for DAC but supports only port 0)
     if (din < 0 && dout < 0 && (!(dac_mode && port == 0))) { continue; }
 
-    duplex = (din >= 0) && (dout >= 0);
-    if (duplex) {
+    if ((din >= 0) && (dout >= 0)) { // duplex or exclusive
       if (audio_i2s.Settings->rx.mode == I2S_MODE_PDM || audio_i2s.Settings->tx.mode == I2S_MODE_PDM ){
-        exclusive = true;
+        audio_i2s.Settings->sys.exclusive = true;
+        AddLog(LOG_LEVEL_DEBUG, "I2S: enabling exclusive mode");
+      } else {
+        audio_i2s.Settings->sys.duplex = true;
+        AddLog(LOG_LEVEL_DEBUG, "I2S: enabling full duplex mode");
       }
-      AddLog(LOG_LEVEL_DEBUG, "I2S: enabling duplex mode, exclusive:%i", exclusive);
+      
     }
 
     const char *err_msg = nullptr;   // to save code, we indicate an error with a message configured
@@ -515,7 +518,7 @@ void I2sInit(void) {
         if (ws0 >= 0) {
           ws = ws0;
           AddLog(LOG_LEVEL_DEBUG, "I2S: I2S%i WS is shared, using WS from port 0 (%i)", port, ws);
-          exclusive = true;
+          audio_i2s.Settings->sys.exclusive = true;
         }
         if (ws < 0) {
           err_msg = "no WS pin configured";
@@ -593,23 +596,28 @@ void I2sInit(void) {
 
     bool init_tx_ok = false;
     bool init_rx_ok = false;
-    if (tx && rx && exclusive) {
+    if (audio_i2s.Settings->sys.exclusive == true) {
       i2s->setExclusive(true);
-      audio_i2s.Settings->sys.exclusive = exclusive;
       // in exclusive mode, we need to intialize in sequence Tx and Rx
       init_tx_ok = i2s->startI2SChannel(true, false);
       init_rx_ok = i2s->startI2SChannel(false, true);
-    } else if (tx && rx) {
+    } else if (audio_i2s.Settings->sys.duplex == true) {
+      i2s->setDuplex(true);
       init_tx_ok = init_rx_ok = i2s->startI2SChannel(true, true);
     } else {
       if (tx) { init_tx_ok = i2s->startI2SChannel(true, false); }
       if (rx) { init_rx_ok = i2s->startI2SChannel(false, true); }
     }
-    if (init_tx_ok) { audio_i2s.out = i2s; }
+    if (init_tx_ok) { 
+      audio_i2s.out = i2s;
+      if(audio_i2s.Settings->sys.duplex){
+        audio_i2s.in = i2s;
+      }
+    }
     if (init_rx_ok) { audio_i2s.in = i2s; }
     audio_i2s.Settings->sys.tx |= init_tx_ok; // Do not set to zero id already configured on another channnel
     audio_i2s.Settings->sys.rx |= init_rx_ok;
-    if (init_tx_ok && init_rx_ok) { audio_i2s.Settings->sys.duplex = true; }
+    // if (init_tx_ok && init_rx_ok) { audio_i2s.Settings->sys.duplex = true; }
 
     // if intput and output are configured, don't proceed with other IS2 ports
     if (audio_i2s.out && audio_i2s.in) {
@@ -619,8 +627,8 @@ void I2sInit(void) {
   }
 
   // do we have exclusive mode?
-  if (audio_i2s.out) { audio_i2s.out->setExclusive(exclusive); }
-  if (audio_i2s.in) { audio_i2s.in->setExclusive(exclusive); }
+  // if (audio_i2s.out) { audio_i2s.out->setExclusive(audio_i2s.Settings->sys.exclusive); }
+  // if (audio_i2s.in) { audio_i2s.in->setExclusive(audio_i2s.Settings->sys.exclusive); }
 
   // if(audio_i2s.out != nullptr){
   //   audio_i2s.out->SetGain(((float)(audio_i2s.Settings->tx.gain + 1)/ 100.0));
@@ -1001,6 +1009,7 @@ void I2sEventHandler(){
   if(audio_i2s_mp3.task_has_ended == true){
     audio_i2s_mp3.task_has_ended = false;
     MqttPublishPayloadPrefixTopicRulesProcess_P(RESULT_OR_STAT,PSTR(""),PSTR("{\"Event\":{\"I2SPlay\":\"Ended\"}}"));
+    I2SAudioPower(false); // signal to Berry that we stopped playing
     // Rule1 ON event#i2splay=ended DO <something> ENDON
     I2SAudioPower(false);
   }
