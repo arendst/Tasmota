@@ -379,8 +379,11 @@ String WiFiHelper::macAddress(void) {
 #else
   uint8_t mac[6] = {0,0,0,0,0,0};
   char macStr[18] = { 0 };
-
+#ifdef CONFIG_SOC_HAS_WIFI
   esp_read_mac(mac, ESP_MAC_WIFI_STA);
+#else
+  esp_read_mac(mac, ESP_MAC_BASE);
+#endif // CONFIG_SOC_HAS_WIFI
   snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
   return String(macStr);
 #endif
