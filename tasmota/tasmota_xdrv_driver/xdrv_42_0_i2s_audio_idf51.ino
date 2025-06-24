@@ -593,6 +593,9 @@ void I2sInit(void) {
       i2s->setRxChannels(audio_i2s.Settings->rx.channels);
       i2s->setRxGain(audio_i2s.Settings->rx.gain);
     }
+    // TODO: prevent duplex for now, needs more investigation 
+    // audio_i2s.Settings->sys.exclusive = true;
+    // audio_i2s.Settings->sys.duplex = false;
 
     bool init_tx_ok = false;
     bool init_rx_ok = false;
