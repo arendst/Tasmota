@@ -112,29 +112,29 @@ public:
   void setRxFreq(uint16_t freq) {
     if (freq == _rx_freq) { return; } // no change
     _rx_freq = freq;
-    if(_duplex && _last_configured_sample_rate == freq) {
-      return;
-    }
-    _last_configured_sample_rate = freq;
-    esp_err_t err = ESP_OK;
-    if(_rx_running){
-      err += i2s_channel_disable(_rx_handle);
-      if(_duplex) {
-        err += i2s_channel_disable(_tx_handle);
-      }
-    }
-    i2s_std_clk_config_t clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(audio_i2s.Settings->rx.sample_rate);
-    err += i2s_channel_reconfig_std_clock(_rx_handle, &clk_cfg);
-    if(_duplex) {
-      err += i2s_channel_reconfig_std_clock(_tx_handle, &clk_cfg);
-    }
-    if(_rx_running){
-      err += i2s_channel_enable(_rx_handle);
-      if(_duplex) {
-        err += i2s_channel_enable(_tx_handle);
-      }
-    }
-    AddLog(LOG_LEVEL_DEBUG, "I2S: setRxFreq: %i, err=%i", freq, err);
+    // if(_duplex && _last_configured_sample_rate == freq) {
+    //   return;
+    // }
+    // _last_configured_sample_rate = freq;
+    // esp_err_t err = ESP_OK;
+    // if(_rx_running){
+    //   err += i2s_channel_disable(_rx_handle);
+    //   if(_duplex) {
+    //     err += i2s_channel_disable(_tx_handle);
+    //   }
+    // }
+    // i2s_std_clk_config_t clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(audio_i2s.Settings->rx.sample_rate);
+    // err += i2s_channel_reconfig_std_clock(_rx_handle, &clk_cfg);
+    // if(_duplex) {
+    //   err += i2s_channel_reconfig_std_clock(_tx_handle, &clk_cfg);
+    // }
+    // if(_rx_running){
+    //   err += i2s_channel_enable(_rx_handle);
+    //   if(_duplex) {
+    //     err += i2s_channel_enable(_tx_handle);
+    //   }
+    // }
+    // AddLog(LOG_LEVEL_DEBUG, "I2S: setRxFreq: %i, err=%i", freq, err);
   }
 
   // Settings from superclass
@@ -158,7 +158,7 @@ public:
     if (hz == (int) this->hertz) { return true; }
     this->hertz = hz;
         
-    I2SAudioSampleRate(hz); // update sample rate for berry audio events, probably for a codec
+    I2SAudioSampleRate(hz,0); // update sample rate for berry audio events, probably for a codec
 
     return updateClockConfig();
   }

@@ -55,7 +55,7 @@ class AudioEncoderShineMP3 :  public AudioEncoder
     };
     ~AudioEncoderShineMP3() override {
       if (s) {shine_close(s);}
-      // if(inBuffer){free(inBuffer); }
+      if(inBuffer){free(inBuffer); }
       if(file) {file->close();}
       if(client) {client->stop();}
     };
@@ -360,7 +360,7 @@ exit:
 
 int32_t I2sRecord(char *path, uint32_t encoder_type) {
   esp_err_t err = ESP_OK;
-  uint32_t stack = 8000;
+  uint32_t stack = 10000;
 
   #ifdef USE_I2S_MP3
     if (audio_i2s_mp3.decoder) return 0;
@@ -412,8 +412,9 @@ int32_t I2sRecord(char *path, uint32_t encoder_type) {
   }
   audio_i2s_mp3.mic_stop = 0;
 
+  I2SPrepareRx();
   audio_i2s.in->startRx();
-  // audio_i2s.in->setRate(audio_i2s.Settings->rx.sample_rate);
+
   err = xTaskCreatePinnedToCore(I2sMicTask, "MIC", stack, NULL, 3, &audio_i2s_mp3.mic_task_handle, 1);
   return err;
 }

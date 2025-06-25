@@ -386,8 +386,8 @@ void I2SAudioPower(bool power) {
 }
 
 // signal to an external Berry driver that we change the output audio sample rate
-void I2SAudioSampleRate(uint32_t rate) {
-  callBerryEventDispatcher(PSTR("audio"), PSTR("rate"), rate, nullptr, 0);
+void I2SAudioSampleRate(uint32_t rate, uint8_t io) { // io: 0 - output, 1 - input
+  callBerryEventDispatcher(PSTR("audio"), PSTR("rate"), rate, (const char *)&io, 1);
 }
 
 //
@@ -683,6 +683,10 @@ int32_t I2SPrepareRx(void) {
 
   if (audio_i2s.Settings->sys.exclusive) {
     // TODO - deconfigure input driver
+  }
+  if (audio_i2s.Settings->sys.duplex) {
+    audio_i2s.in->setRate( audio_i2s.in->getRxRate());
+    // I2SAudioSampleRate(audio_i2s.in->getRxRate(), 1); // 1 - input
   }
   return I2S_OK;
 }
