@@ -55,7 +55,7 @@ class AudioEncoderShineMP3 :  public AudioEncoder
     };
     ~AudioEncoderShineMP3() override {
       if (s) {shine_close(s);}
-      if(inBuffer){free(inBuffer); }
+      // if(inBuffer){free(inBuffer); }
       if(file) {file->close();}
       if(client) {client->stop();}
     };
@@ -371,6 +371,7 @@ int32_t I2sRecord(char *path, uint32_t encoder_type) {
     case MP3_ENCODER:
       switch(audio_i2s.Settings->rx.sample_rate){
         case 32000: case 48000: case 44100:
+          audio_i2s.in->setRxFreq(audio_i2s.Settings->rx.sample_rate); // could have been changed at runtime before
           break; // supported
         default:
         AddLog(LOG_LEVEL_ERROR, PSTR("I2S: unsupported sample rate for MP3 encoding: %d Hz"), audio_i2s.Settings->rx.sample_rate);
@@ -384,6 +385,7 @@ int32_t I2sRecord(char *path, uint32_t encoder_type) {
     case OPUS_ENCODER:
       switch(audio_i2s.Settings->rx.sample_rate){
         case 48000: case 24000: case 16000: case 12000: case 8000:
+          audio_i2s.in->setRxFreq(audio_i2s.Settings->rx.sample_rate); // could have been changed at runtime before
           break;
         default:
          AddLog(LOG_LEVEL_ERROR, PSTR("I2S: unsupported sample rate for OPUS encoding: %d Hz"), audio_i2s.Settings->rx.sample_rate);
