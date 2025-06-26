@@ -594,8 +594,8 @@ void I2sInit(void) {
       i2s->setRxGain(audio_i2s.Settings->rx.gain);
     }
     // TODO: prevent duplex for now, needs more investigation 
-    // audio_i2s.Settings->sys.exclusive = true;
-    // audio_i2s.Settings->sys.duplex = false;
+    audio_i2s.Settings->sys.exclusive = true;
+    audio_i2s.Settings->sys.duplex = false;
 
     bool init_tx_ok = false;
     bool init_rx_ok = false;
@@ -682,11 +682,11 @@ int32_t I2SPrepareRx(void) {
   if (!audio_i2s.in) return I2S_ERR_OUTPUT_NOT_CONFIGURED;
 
   if (audio_i2s.Settings->sys.exclusive) {
+    I2SAudioSampleRate(audio_i2s.in->getRxRate(), 1); // 1 - input
     // TODO - deconfigure input driver
   }
   if (audio_i2s.Settings->sys.duplex) {
     audio_i2s.in->setRate( audio_i2s.in->getRxRate());
-    // I2SAudioSampleRate(audio_i2s.in->getRxRate(), 1); // 1 - input
   }
   return I2S_OK;
 }

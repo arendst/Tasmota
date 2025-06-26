@@ -112,29 +112,17 @@ public:
   void setRxFreq(uint16_t freq) {
     if (freq == _rx_freq) { return; } // no change
     _rx_freq = freq;
-    // if(_duplex && _last_configured_sample_rate == freq) {
-    //   return;
-    // }
-    // _last_configured_sample_rate = freq;
-    // esp_err_t err = ESP_OK;
-    // if(_rx_running){
-    //   err += i2s_channel_disable(_rx_handle);
-    //   if(_duplex) {
-    //     err += i2s_channel_disable(_tx_handle);
-    //   }
-    // }
-    // i2s_std_clk_config_t clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(audio_i2s.Settings->rx.sample_rate);
-    // err += i2s_channel_reconfig_std_clock(_rx_handle, &clk_cfg);
-    // if(_duplex) {
-    //   err += i2s_channel_reconfig_std_clock(_tx_handle, &clk_cfg);
-    // }
-    // if(_rx_running){
-    //   err += i2s_channel_enable(_rx_handle);
-    //   if(_duplex) {
-    //     err += i2s_channel_enable(_tx_handle);
-    //   }
-    // }
-    // AddLog(LOG_LEVEL_DEBUG, "I2S: setRxFreq: %i, err=%i", freq, err);
+    if(_duplex) {return; } // in duplex mode we change clock for Tx and RX in updateClockConfig()
+    esp_err_t err = ESP_OK;
+    if(_rx_running){
+      err += i2s_channel_disable(_rx_handle);
+    }
+    i2s_std_clk_config_t clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(_rx_freq);
+    err += i2s_channel_reconfig_std_clock(_rx_handle, &clk_cfg);
+    if(_rx_running){
+      err += i2s_channel_enable(_rx_handle);
+    }
+    AddLog(LOG_LEVEL_DEBUG, "I2S: setRxFreq: %i, err=%i", freq, err);
   }
 
   // Settings from superclass
@@ -263,7 +251,6 @@ protected:
 
   bool    _exclusive = false;             // in exclusive mode, stopping this instance needs to uninstall driver, and reinstall for next use
   bool    _duplex = false;                // true if both Tx and Rx are configured using same clock GPIOs, needs standard I2S mode
-  uint32_t _last_configured_sample_rate = 0; // last configured sample rate, used to detect changes for full duplex reconfiguration
   i2s_port_t  _i2s_port = I2S_NUM_AUTO;   // I2S port, I2S_NUM_0/I2S_NUM_1/I2S_NUM_AUTO
 
   // local copy of useful settings for audio
@@ -542,7 +529,7 @@ bool TasmotaI2S::startI2SChannel(bool tx, bool rx) {
   if (rx && _rx_handle) { return true; }
 
   if (_exclusive) {
-    // in exclusive mode, we may need to remove exisiting driver
+    // in exclusive mode, we may need to remove existing driver
     if (tx && _rx_handle) {
       AddLog(LOG_LEVEL_DEBUG, "I2S: (exclusive mode) forcing stopRx");
       stopRx();
@@ -766,7 +753,6 @@ bool TasmotaI2S::updateClockConfig(void) {
       }
     }
     i2s_std_clk_config_t clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(hertz);
-    _last_configured_sample_rate = hertz; // remember last configured sample rate
   #ifdef SOC_I2S_SUPPORTS_APLL
     if (_apll) {
       clk_cfg.clk_src = I2S_CLK_SRC_APLL;
