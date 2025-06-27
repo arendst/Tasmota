@@ -8,6 +8,36 @@
 // include this header to force compilation fo this module
 #define BE_MAX_CB       20      // max number of callbacks, each callback requires a distinct address
 
+/*********************************************************************************************\
+ * SECURITY CONFIGURATION - BM-001 Patch
+\*********************************************************************************************/
+// Security limits
+#define BE_MAPPING_MAX_NAME_LENGTH 256        // Maximum total name length
+#define BE_MAPPING_MAX_MODULE_NAME_LENGTH 64  // Maximum module name part
+#define BE_MAPPING_MAX_MEMBER_NAME_LENGTH 192 // Maximum member name part
+#define BE_MAPPING_MAX_FUNCTION_ARGS 8        // Maximum function arguments
+
+// Security features (can be disabled for performance if needed)
+#ifndef BE_MAPPING_ENABLE_INPUT_VALIDATION
+#define BE_MAPPING_ENABLE_INPUT_VALIDATION 0
+#endif
+
+// Input validation macros
+#if BE_MAPPING_ENABLE_INPUT_VALIDATION
+    #define BE_VALIDATE_STRING_INPUT(str, max_len, context) \
+        do { \
+            if ((str) == NULL) { \
+                be_raise(vm, "value_error", "NULL string input in " context); \
+            } \
+            size_t __len = strlen(str); \
+            if (__len > (max_len)) { \
+                be_raise(vm, "value_error", "invalid input"); \
+            } \
+        } while(0)
+#else
+    #define BE_VALIDATE_STRING_INPUT(str, max_len, context) do {} while(0)
+#endif
+
 #ifdef __cplusplus
   #define be_const_ctype_func(_f) {                               \
       bvaldata((const void*) &ctype_func_def##_f),                \
