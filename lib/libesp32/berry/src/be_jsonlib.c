@@ -10,6 +10,7 @@
 #include "be_lexer.h"
 #include <string.h>
 #include <math.h>
+#include <ctype.h>
 
 #if BE_USE_JSON_MODULE
 
@@ -19,6 +20,9 @@
 #define MAX_INDENT      24
 #define INDENT_WIDTH    2
 #define INDENT_CHAR     ' '
+
+/* Security: Maximum JSON string length to prevent memory exhaustion attacks */
+#define MAX_JSON_STRING_LEN  (1024 * 1024)  /* 1MB limit */
 
 static const char* parser_value(bvm *vm, const char *json);
 static void value_dump(bvm *vm, int *indent, int idx, int fmt);
@@ -62,21 +66,66 @@ static int is_object(bvm *vm, const char *class, int idx)
     return  0;
 }
 
-static int json_strlen(const char *json)
+/* Calculate the actual buffer size needed for JSON string parsing
+ * accounting for Unicode expansion and security limits */
+static size_t json_strlen_safe(const char *json, size_t *actual_len)
 {
     int ch;
     const char *s = json + 1; /* skip '"' */
-    /* get string length "(\\.|[^"])*" */
+    size_t char_count = 0;
+    size_t byte_count = 0;
+    
     while ((ch = *s) != '\0' && ch != '"') {
+        char_count++;
+        if (char_count > MAX_JSON_STRING_LEN) {
+            return SIZE_MAX; /* String too long */
+        }
+        
         ++s;
         if (ch == '\\') {
             ch = *s++;
             if (ch == '\0') {
-                return -1;
+                return SIZE_MAX; /* Malformed string */
             }
+            
+            switch (ch) {
+            case '"': case '\\': case '/':
+            case 'b': case 'f': case 'n': case 'r': case 't':
+                byte_count += 1;
+                break;
+            case 'u':
+                /* Unicode can expand to 1-3 UTF-8 bytes
+                 * We conservatively assume 3 bytes for safety */
+                byte_count += 3;
+                /* Verify we have 4 hex digits following */
+                for (int i = 0; i < 4; i++) {
+                    if (!s[i] || !isxdigit((unsigned char)s[i])) {
+                        return SIZE_MAX; /* Invalid unicode sequence */
+                    }
+                }
+                s += 4; /* Skip the 4 hex digits */
+                break;
+            default:
+                return SIZE_MAX; /* Invalid escape sequence */
+            }
+        } else if (ch >= 0 && ch <= 0x1f) {
+            return SIZE_MAX; /* Unescaped control character */
+        } else {
+            byte_count += 1;
+        }
+        
+        /* Check for potential overflow */
+        if (byte_count > MAX_JSON_STRING_LEN) {
+            return SIZE_MAX;
         }
     }
-    return ch ? cast_int(s - json - 1) : -1;
+    
+    if (ch != '"') {
+        return SIZE_MAX; /* Unterminated string */
+    }
+    
+    *actual_len = char_count;
+    return byte_count;
 }
 
 static void json2berry(bvm *vm, const char *class)
@@ -117,55 +166,94 @@ static const char* parser_null(bvm *vm, const char *json)
 
 static const char* parser_string(bvm *vm, const char *json)
 {
-    if (*json == '"') {
-        int len = json_strlen(json++);
-        if (len > -1) {
-            int ch;
-            char *buf, *dst = buf = be_malloc(vm, len);
-            while ((ch = *json) != '\0' && ch != '"') {
-                ++json;
-                if (ch == '\\') {
-                    ch = *json++; /* skip '\' */
-                    switch (ch) {
-                    case '"': *dst++ = '"'; break;
-                    case '\\': *dst++ = '\\'; break;
-                    case '/': *dst++ = '/'; break;
-                    case 'b': *dst++ = '\b'; break;
-                    case 'f': *dst++ = '\f'; break;
-                    case 'n': *dst++ = '\n'; break;
-                    case 'r': *dst++ = '\r'; break;
-                    case 't': *dst++ = '\t'; break;
-                    case 'u': { /* load unicode */
-                        dst = be_load_unicode(dst, json);
-                        if (dst == NULL) {
-                            be_free(vm, buf, len);
-                            return NULL;
-                        }
-                        json += 4;
-                        break;
-                    }
-                    default: be_free(vm, buf, len); return NULL; /* error */
-                    }
-                } else if(ch >= 0 && ch <= 0x1f) {
-                    /* control characters must be escaped
-                       as per https://www.rfc-editor.org/rfc/rfc7159#section-7 */
-                    be_free(vm, buf, len);
+    if (*json != '"') {
+        return NULL;
+    }
+    
+    size_t char_len;
+    size_t byte_len = json_strlen_safe(json, &char_len);
+    
+    if (byte_len == SIZE_MAX) {
+        return NULL; /* Invalid or too long string */
+    }
+    
+    if (byte_len == 0) {
+        /* Empty string */
+        be_stack_require(vm, 1 + BE_STACK_FREE_MIN);
+        be_pushstring(vm, "");
+        return json + 2; /* Skip opening and closing quotes */
+    }
+    
+    /* Allocate buffer - size is correctly calculated by json_strlen_safe */
+    char *buf = be_malloc(vm, byte_len + 1);
+    if (!buf) {
+        return NULL; /* Out of memory */
+    }
+    
+    char *dst = buf;
+    const char *src = json + 1; /* Skip opening quote */
+    int ch;
+    
+    while ((ch = *src) != '\0' && ch != '"') {
+        ++src;
+        if (ch == '\\') {
+            ch = *src++;
+            switch (ch) {
+            case '"': 
+                *dst++ = '"'; 
+                break;
+            case '\\': 
+                *dst++ = '\\'; 
+                break;
+            case '/': 
+                *dst++ = '/'; 
+                break;
+            case 'b': 
+                *dst++ = '\b'; 
+                break;
+            case 'f': 
+                *dst++ = '\f'; 
+                break;
+            case 'n': 
+                *dst++ = '\n'; 
+                break;
+            case 'r': 
+                *dst++ = '\r'; 
+                break;
+            case 't': 
+                *dst++ = '\t'; 
+                break;
+            case 'u': {
+                dst = be_load_unicode(dst, src);
+                if (dst == NULL) {
+                    be_free(vm, buf, byte_len + 1);
                     return NULL;
-                } else {
-                    *dst++ = (char)ch;
                 }
+                src += 4;
+                break;
             }
-            be_assert(ch == '"');
-            /* require the stack to have some free space for the string, 
-               since parsing deeply nested objects might
-               crash the VM due to insufficient stack space. */
-            be_stack_require(vm, 1 + BE_STACK_FREE_MIN);
-            be_pushnstring(vm, buf, cast_int(dst - buf));
-            be_free(vm, buf, len);
-            return json + 1; /* skip '"' */
+            default: 
+                be_free(vm, buf, byte_len + 1);
+                return NULL; /* Invalid escape */
+            }
+        } else if (ch >= 0 && ch <= 0x1f) {
+            be_free(vm, buf, byte_len + 1);
+            return NULL; /* Unescaped control character */
+        } else {
+            *dst++ = (char)ch;
         }
     }
-    return NULL;
+    
+    if (ch != '"') {
+        be_free(vm, buf, byte_len + 1);
+        return NULL; /* Unterminated string */
+    }
+    
+    /* Success - create Berry string */
+    be_stack_require(vm, 1 + BE_STACK_FREE_MIN);
+    be_pushnstring(vm, buf, (size_t)(dst - buf));
+    be_free(vm, buf, byte_len + 1);
+    return src + 1; /* Skip closing quote */
 }
 
 static const char* parser_field(bvm *vm, const char *json)
