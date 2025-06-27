@@ -1,14 +1,14 @@
-# and, or, xor
+# Test bitwise operations
 a = 11
-assert(a & 0xFE == 10)
-assert(a | 32 == 43)
-assert(a ^ 33 == 42)
+assert(a & 0xFE == 10)  # AND operation
+assert(a | 32 == 43)    # OR operation  
+assert(a ^ 33 == 42)    # XOR operation
 
-# same with literal
+# Test with literals
 assert(11 & 0xFE == 10)
 assert(11 | 32 == 43)
 assert(11 ^ 33 == 42)
 
-# flip
+# Test bitwise NOT
 assert(~a == -12)
 assert(~11 == -12)
