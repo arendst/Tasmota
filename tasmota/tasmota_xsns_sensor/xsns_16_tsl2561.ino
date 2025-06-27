@@ -73,6 +73,9 @@ void Tsl2561Detect(void)
     uint8_t id;
     Tsl.begin();
     if (!Tsl.id(id)) return;
+    // check the correct ID was returned
+    // datasheet says reg 0xA (ID) returns 0x1r (r = nibble revision)
+    if ((id & 0xF0) != 0x10) return; 
     if (Tsl.on()) {
       tsl2561_type = 1;
       I2cSetActiveFound(Tsl.address(), tsl2561_types);
