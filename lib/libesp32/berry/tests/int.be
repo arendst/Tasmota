@@ -1,13 +1,13 @@
-#- toint() converts any instance to int -#
+# Test int() conversion function
 class Test_int
-    def toint()
+    def toint()  # Custom conversion method
         return 42
     end
 end
-t=Test_int()
-assert(int(t) == 42)
+t = Test_int()
+assert(int(t) == 42)  # Test custom toint() method
 
-#- int can parse hex strings -#
+# Test hex string parsing
 assert(int("0x00") == 0)
 assert(int("0X1") == 1)
 assert(int("0x000000F") == 15)
