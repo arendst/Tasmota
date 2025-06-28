@@ -38,6 +38,8 @@ Adafruit_TSL2591 tsl = Adafruit_TSL2591();
 uint8_t tsl2591_type = 0;
 uint8_t tsl2591_valid = 0;
 float tsl2591_lux = 0;
+uint16_t tsl2591_lux_bb = 0;
+uint16_t tsl2591_lux_ir = 0;
 
 tsl2591Gain_t gain_enum_array[4] = {TSL2591_GAIN_LOW,TSL2591_GAIN_MED,TSL2591_GAIN_HIGH,TSL2591_GAIN_MAX};
 tsl2591IntegrationTime_t int_enum_array[6] = {TSL2591_INTEGRATIONTIME_100MS,TSL2591_INTEGRATIONTIME_200MS,TSL2591_INTEGRATIONTIME_300MS,TSL2591_INTEGRATIONTIME_400MS,TSL2591_INTEGRATIONTIME_500MS,TSL2591_INTEGRATIONTIME_600MS};
@@ -62,6 +64,8 @@ void Tsl2591Read(void)
   ir = lum >> 16;
   full = lum & 0xFFFF;
   tsl2591_lux = tsl.calculateLux(full, ir);
+  tsl2591_lux_bb = full;
+  tsl2591_lux_ir = ir;
   tsl2591_valid = 1;
 }
 
@@ -81,7 +85,8 @@ void Tsl2591Show(bool json)
     char lux_str[10];
     dtostrf(tsl2591_lux, sizeof(lux_str)-1, 3, lux_str);
     if (json) {
-      ResponseAppend_P(PSTR(",\"TSL2591\":{\"" D_JSON_ILLUMINANCE "\":%s}"), lux_str);
+      ResponseAppend_P(PSTR(",\"TSL2591\":{\"" D_JSON_ILLUMINANCE "\":%s,\"IR\":%u,\"Broadband\":%u}"),
+        lux_str,tsl2591_lux_ir,tsl2591_lux_ir);
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) { DomoticzSensor(DZ_ILLUMINANCE, tsl2591_lux); }
 #endif  // USE_DOMOTICZ
