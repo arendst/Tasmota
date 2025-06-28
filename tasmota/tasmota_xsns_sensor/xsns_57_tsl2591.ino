@@ -86,7 +86,7 @@ void Tsl2591Show(bool json)
     dtostrf(tsl2591_lux, sizeof(lux_str)-1, 3, lux_str);
     if (json) {
       ResponseAppend_P(PSTR(",\"TSL2591\":{\"" D_JSON_ILLUMINANCE "\":%s,\"IR\":%u,\"Broadband\":%u}"),
-        lux_str,tsl2591_lux_ir,tsl2591_lux_ir);
+        lux_str,tsl2591_lux_ir,tsl2591_lux_bb);
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) { DomoticzSensor(DZ_ILLUMINANCE, tsl2591_lux); }
 #endif  // USE_DOMOTICZ
