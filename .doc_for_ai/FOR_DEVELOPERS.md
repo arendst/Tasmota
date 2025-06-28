@@ -30,14 +30,28 @@ Tasmota is a modular firmware that transforms ESP8266/ESP8285 and ESP32 microcon
 
 ```
 tasmota/
-├── tasmota.ino          # Main firmware file
-├── xdrv_*.ino          # Driver files (displays, interfaces, etc.)
-├── xsns_*.ino          # Sensor files
-├── xlgt_*.ino          # Light driver files
-├── xnrg_*.ino          # Energy monitoring files
-├── support_*.ino       # Support functions
-├── settings.h          # Configuration structure
-└── my_user_config.h    # User configuration overrides
+├── tasmota.ino                    # Main firmware file
+├── tasmota_xdrv_driver/           # Driver files directory (187 files)
+│   ├── xdrv_01_9_webserver.ino   # Web server driver
+│   ├── xdrv_02_9_mqtt.ino        # MQTT driver
+│   ├── xdrv_04_light.ino         # Light driver
+│   └── xdrv_##_name.ino          # Other drivers
+├── tasmota_xsns_sensor/           # Sensor files directory (143 files)
+│   ├── xsns_01_counter.ino       # Counter sensor
+│   ├── xsns_02_analog.ino        # Analog sensor
+│   └── xsns_##_name.ino          # Other sensors
+├── tasmota_xlgt_light/            # Light driver files directory
+├── tasmota_xnrg_energy/           # Energy monitoring files directory
+├── tasmota_support/               # Support functions directory (29 files)
+│   ├── support.ino                # Core support functions
+│   ├── settings.ino               # Settings management
+│   └── support_*.ino              # Other support modules
+├── include/                       # Header files directory (18 files)
+│   ├── tasmota.h                  # Main header
+│   ├── tasmota_types.h            # Type definitions
+│   ├── tasmota_globals.h          # Global variables
+│   └── *.h                        # Other headers
+└── my_user_config.h              # User configuration overrides
 ```
 
 ### Command System
@@ -159,151 +173,122 @@ bool Xsns_XX(byte function) {
 
 ### Complete Driver Callback Functions Reference
 
-#### Core System Callbacks
+**VERIFIED FROM SOURCE CODE**: `tasmota/include/tasmota.h` lines 433-454
 
-| Function | ID | Purpose | Frequency | Parameters |
-|----------|----|---------|-----------|-----------| 
-| `FUNC_INIT` | 0 | Initialize driver/sensor | Once at startup | None |
-| `FUNC_LOOP` | 1 | Main loop processing | Every loop cycle (~1ms) | None |
-| `FUNC_EVERY_50_MSECOND` | 2 | Fast polling operations | Every 50ms | None |
-| `FUNC_EVERY_100_MSECOND` | 3 | Medium polling | Every 100ms | None |
-| `FUNC_EVERY_200_MSECOND` | 4 | Slower polling | Every 200ms | None |
-| `FUNC_EVERY_250_MSECOND` | 5 | Quarter second tasks | Every 250ms | None |
-| `FUNC_EVERY_SECOND` | 6 | Regular updates | Every second | None |
-| `FUNC_PREP_BEFORE_TELEPERIOD` | 7 | Prepare telemetry data | Before TelePeriod | None |
-| `FUNC_JSON_APPEND` | 8 | Add JSON telemetry | Every TelePeriod | None |
-| `FUNC_BUTTON_PRESSED` | 9 | Handle button press | On button event | button_index |
-| `FUNC_SAVE_BEFORE_RESTART` | 10 | Save critical data | Before restart | None |
-| `FUNC_AFTER_TELEPERIOD` | 11 | Post-telemetry cleanup | After TelePeriod | None |
+#### Core System Callbacks (Functions WITHOUT return results)
 
-#### Communication Callbacks
+| Function | Purpose | When Called | Parameters |
+|----------|---------|-------------|-----------|
+| `FUNC_SETTINGS_OVERRIDE` | Override default settings | Before settings load | None |
+| `FUNC_SETUP_RING1` | Early setup phase 1 | System initialization | None |
+| `FUNC_SETUP_RING2` | Early setup phase 2 | System initialization | None |
+| `FUNC_PRE_INIT` | Pre-initialization | Before main init | None |
+| `FUNC_INIT` | Initialize driver/sensor | Once at startup | None |
+| `FUNC_ACTIVE` | Check if driver is active | Status queries | None |
+| `FUNC_ABOUT_TO_RESTART` | Prepare for restart | Before system restart | None |
 
-| Function | ID | Purpose | When Called | Parameters |
-|----------|----|---------|-----------|-----------| 
-| `FUNC_COMMAND` | 12 | Process commands | Command received | XdrvMailbox |
-| `FUNC_MQTT_SUBSCRIBE` | 13 | Subscribe to MQTT topics | MQTT connect | None |
-| `FUNC_MQTT_INIT` | 14 | Initialize MQTT | MQTT setup | None |
-| `FUNC_MQTT_DATA` | 15 | Process MQTT data | MQTT message | XdrvMailbox |
-| `FUNC_SET_POWER` | 16 | Handle power changes | Power state change | None |
-| `FUNC_SHOW_SENSOR` | 17 | Display sensor data | Status request | None |
-| `FUNC_RULES_PROCESS` | 18 | Process rules | Rule evaluation | None |
+#### Loop and Timing Callbacks
+
+| Function | Purpose | Frequency | Parameters |
+|----------|---------|-----------|-----------|
+| `FUNC_LOOP` | Main loop processing | Every loop cycle (~1ms) | None |
+| `FUNC_SLEEP_LOOP` | Sleep mode processing | During sleep cycles | None |
+| `FUNC_EVERY_50_MSECOND` | Fast polling operations | Every 50ms | None |
+| `FUNC_EVERY_100_MSECOND` | Medium polling | Every 100ms | None |
+| `FUNC_EVERY_200_MSECOND` | Slower polling | Every 200ms | None |
+| `FUNC_EVERY_250_MSECOND` | Quarter second tasks | Every 250ms | None |
+| `FUNC_EVERY_SECOND` | Regular updates | Every second | None |
+
+#### Settings and Configuration Callbacks
+
+| Function | Purpose | When Called | Parameters |
+|----------|---------|-------------|-----------|
+| `FUNC_RESET_SETTINGS` | Reset to defaults | Settings reset | None |
+| `FUNC_RESTORE_SETTINGS` | Restore from backup | Settings restore | None |
+| `FUNC_SAVE_SETTINGS` | Save current settings | Settings save | None |
+| `FUNC_SAVE_AT_MIDNIGHT` | Midnight save operations | Daily at 00:00 | None |
+| `FUNC_SAVE_BEFORE_RESTART` | Save critical data | Before restart | None |
+
+#### Interrupt and System Control
+
+| Function | Purpose | When Called | Parameters |
+|----------|---------|-------------|-----------|
+| `FUNC_INTERRUPT_STOP` | Stop interrupts | Before critical section | None |
+| `FUNC_INTERRUPT_START` | Resume interrupts | After critical section | None |
+| `FUNC_FREE_MEM` | Memory cleanup | Low memory conditions | None |
+
+#### Telemetry and JSON Callbacks
+
+| Function | Purpose | When Called | Parameters |
+|----------|---------|-------------|-----------|
+| `FUNC_AFTER_TELEPERIOD` | Post-telemetry cleanup | After TelePeriod | None |
+| `FUNC_JSON_APPEND` | Add JSON telemetry | Every TelePeriod | None |
+| `FUNC_TELEPERIOD_RULES_PROCESS` | Rules after telemetry | Post-TelePeriod | None |
 
 #### Web Interface Callbacks
 
-| Function | ID | Purpose | When Called | Parameters |
-|----------|----|---------|-----------|-----------| 
-| `FUNC_WEB_ADD_BUTTON` | 19 | Add web buttons | Main page load | None |
-| `FUNC_WEB_ADD_MAIN_BUTTON` | 20 | Add main menu button | Main page | None |
-| `FUNC_WEB_ADD_HANDLER` | 21 | Add URL handlers | Web server init | None |
-| `FUNC_WEB_SENSOR` | 22 | Show sensor on web | Sensor page load | None |
-| `FUNC_WEB_ADD_CONSOLE_BUTTON` | 23 | Add console button | Console page | None |
-| `FUNC_WEB_ADD_MANAGEMENT_BUTTON` | 24 | Add config button | Config page | None |
+| Function | Purpose | When Called | Parameters |
+|----------|---------|-------------|-----------|
+| `FUNC_WEB_SENSOR` | Show sensor on web | Sensor page load | None |
+| `FUNC_WEB_COL_SENSOR` | Column sensor display | Web page layout | None |
+| `FUNC_WEB_ADD_BUTTON` | Add web buttons | Main page load | None |
+| `FUNC_WEB_ADD_CONSOLE_BUTTON` | Add console button | Console page | None |
+| `FUNC_WEB_ADD_MANAGEMENT_BUTTON` | Add config button | Config page | None |
+| `FUNC_WEB_ADD_MAIN_BUTTON` | Add main menu button | Main page | None |
+| `FUNC_WEB_GET_ARG` | Process web arguments | Form submission | None |
+| `FUNC_WEB_ADD_HANDLER` | Add URL handlers | Web server init | None |
+| `FUNC_WEB_STATUS_LEFT` | Left status column | Status page | None |
+| `FUNC_WEB_STATUS_RIGHT` | Right status column | Status page | None |
 
-#### Network and Protocol Callbacks
+#### MQTT and Communication Callbacks
 
-| Function | ID | Purpose | When Called | Parameters |
-|----------|----|---------|-----------|-----------| 
-| `FUNC_NETWORK_UP` | 25 | Network connected | WiFi/Ethernet up | None |
-| `FUNC_NETWORK_DOWN` | 26 | Network disconnected | WiFi/Ethernet down | None |
-| `FUNC_MQTT_CONNECTED` | 27 | MQTT broker connected | MQTT connect | None |
-| `FUNC_MQTT_DISCONNECTED` | 28 | MQTT broker disconnected | MQTT disconnect | None |
-| `FUNC_SET_DEVICE_POWER` | 29 | Device power control | Power command | device, power |
-| `FUNC_SHOW_SENSOR_JSON` | 30 | JSON sensor output | JSON request | None |
+| Function | Purpose | When Called | Parameters |
+|----------|---------|-------------|-----------|
+| `FUNC_MQTT_SUBSCRIBE` | Subscribe to MQTT topics | MQTT connect | None |
+| `FUNC_MQTT_INIT` | Initialize MQTT | MQTT setup | None |
+
+#### Power and Hardware Control
+
+| Function | Purpose | When Called | Parameters |
+|----------|---------|-------------|-----------|
+| `FUNC_SET_POWER` | Handle power changes | Power state change | None |
+| `FUNC_SHOW_SENSOR` | Display sensor data | Status request | None |
+| `FUNC_ANY_KEY` | Handle any key press | Key event | None |
+| `FUNC_LED_LINK` | Control link LED | Network state change | None |
+| `FUNC_ENERGY_EVERY_SECOND` | Energy monitoring | Every second | None |
+| `FUNC_ENERGY_RESET` | Reset energy counters | Reset command | None |
 
 #### Advanced System Callbacks
 
-| Function | ID | Purpose | When Called | Parameters |
-|----------|----|---------|-----------|-----------| 
-| `FUNC_SERIAL` | 31 | Serial data processing | Serial input | None |
-| `FUNC_FREE_MEM` | 32 | Memory cleanup | Low memory | None |
-| `FUNC_BUTTON_MULTI_PRESSED` | 33 | Multi-button press | Button combo | button_code |
-| `FUNC_ENERGY_EVERY_SECOND` | 34 | Energy monitoring | Every second | None |
-| `FUNC_ACTIVE` | 35 | Driver active check | Status query | None |
-| `FUNC_PIN_STATE` | 36 | GPIO state change | Pin change | gpio, state |
-| `FUNC_TELEPERIOD_RULES_PROCESS` | 37 | Rules after telemetry | Post-TelePeriod | None |
+| Function | Purpose | When Called | Parameters |
+|----------|---------|-------------|-----------|
+| `FUNC_SET_SCHEME` | Set color scheme | Theme change | None |
+| `FUNC_HOTPLUG_SCAN` | Scan for hotplug devices | Device detection | None |
+| `FUNC_TIME_SYNCED` | Time synchronization | NTP sync complete | None |
+| `FUNC_DEVICE_GROUP_ITEM` | Device group processing | Group operations | None |
+| `FUNC_NETWORK_UP` | Network connected | WiFi/Ethernet up | None |
+| `FUNC_NETWORK_DOWN` | Network disconnected | WiFi/Ethernet down | None |
 
-#### Display and UI Callbacks
+#### Callback Functions WITH Return Results (ID >= 200)
 
-| Function | ID | Purpose | When Called | Parameters |
-|----------|----|---------|-----------|-----------| 
-| `FUNC_DISPLAY_INIT_DRIVER` | 38 | Initialize display | Display setup | None |
-| `FUNC_DISPLAY_MODEL` | 39 | Set display model | Display config | None |
-| `FUNC_DISPLAY_MODE` | 40 | Set display mode | Mode change | None |
-| `FUNC_DISPLAY_POWER` | 41 | Display power control | Power change | None |
-| `FUNC_DISPLAY_CLEAR` | 42 | Clear display | Clear command | None |
-| `FUNC_DISPLAY_DRAW_HLINE` | 43 | Draw horizontal line | Draw command | x, y, len, color |
-| `FUNC_DISPLAY_DRAW_VLINE` | 44 | Draw vertical line | Draw command | x, y, len, color |
-| `FUNC_DISPLAY_DRAW_CIRCLE` | 45 | Draw circle | Draw command | x, y, rad, color |
-| `FUNC_DISPLAY_FILL_CIRCLE` | 46 | Fill circle | Draw command | x, y, rad, color |
-| `FUNC_DISPLAY_DRAW_RECTANGLE` | 47 | Draw rectangle | Draw command | x, y, w, h, color |
-| `FUNC_DISPLAY_FILL_RECTANGLE` | 48 | Fill rectangle | Draw command | x, y, w, h, color |
-| `FUNC_DISPLAY_TEXT_SIZE` | 49 | Set text size | Text command | size |
-| `FUNC_DISPLAY_FONT_SIZE` | 50 | Set font size | Font command | size |
-| `FUNC_DISPLAY_DRAW_STRING` | 51 | Draw text string | Text command | x, y, text, color |
-| `FUNC_DISPLAY_DRAW_STRING_AT` | 52 | Draw text at position | Text command | x, y, text, color |
-| `FUNC_DISPLAY_PRINTF` | 53 | Printf to display | Text command | format, args |
-| `FUNC_DISPLAY_ROTATION` | 54 | Set rotation | Rotation command | angle |
-| `FUNC_DISPLAY_DRAW_FRAME` | 55 | Draw frame | Draw command | None |
+These functions are expected to return boolean results:
 
-#### Berry Script Integration Callbacks
-
-| Function | ID | Purpose | When Called | Parameters |
-|----------|----|---------|-----------|-----------| 
-| `FUNC_BERRY_INIT` | 56 | Initialize Berry | Berry startup | None |
-| `FUNC_BERRY_LOOP` | 57 | Berry main loop | Every loop | None |
-| `FUNC_BERRY_EVERY_50_MSECOND` | 58 | Berry fast timer | Every 50ms | None |
-| `FUNC_BERRY_EVERY_100_MSECOND` | 59 | Berry medium timer | Every 100ms | None |
-| `FUNC_BERRY_EVERY_SECOND` | 60 | Berry second timer | Every second | None |
-| `FUNC_BERRY_RULES_PROCESS` | 61 | Berry rules processing | Rule trigger | None |
-
-#### Matter Protocol Callbacks (ESP32)
-
-| Function | ID | Purpose | When Called | Parameters |
-|----------|----|---------|-----------|-----------| 
-| `FUNC_MATTER_INIT` | 62 | Initialize Matter | Matter startup | None |
-| `FUNC_MATTER_LOOP` | 63 | Matter processing | Every loop | None |
-| `FUNC_MATTER_EVERY_50_MSECOND` | 64 | Matter fast timer | Every 50ms | None |
-| `FUNC_MATTER_EVERY_SECOND` | 65 | Matter second timer | Every second | None |
-| `FUNC_MATTER_COMMAND` | 66 | Matter commands | Matter command | None |
-| `FUNC_MATTER_JSON_APPEND` | 67 | Matter JSON data | Telemetry | None |
-
-#### Audio and Media Callbacks
-
-| Function | ID | Purpose | When Called | Parameters |
-|----------|----|---------|-----------|-----------| 
-| `FUNC_AUDIO_INIT` | 68 | Initialize audio | Audio setup | None |
-| `FUNC_AUDIO_LOOP` | 69 | Audio processing | Audio loop | None |
-| `FUNC_AUDIO_COMMAND` | 70 | Audio commands | Audio command | None |
-| `FUNC_AUDIO_SHOW_SENSOR` | 71 | Audio sensor data | Status request | None |
-
-#### Zigbee Protocol Callbacks
-
-| Function | ID | Purpose | When Called | Parameters |
-|----------|----|---------|-----------|-----------| 
-| `FUNC_ZIGBEE_INIT` | 72 | Initialize Zigbee | Zigbee startup | None |
-| `FUNC_ZIGBEE_LOOP` | 73 | Zigbee processing | Every loop | None |
-| `FUNC_ZIGBEE_EVERY_50_MSECOND` | 74 | Zigbee fast timer | Every 50ms | None |
-| `FUNC_ZIGBEE_COMMAND` | 75 | Zigbee commands | Zigbee command | None |
-| `FUNC_ZIGBEE_JSON_APPEND` | 76 | Zigbee JSON data | Telemetry | None |
-
-#### Energy Management Callbacks
-
-| Function | ID | Purpose | When Called | Parameters |
-|----------|----|---------|-----------|-----------| 
-| `FUNC_ENERGY_INIT` | 77 | Initialize energy monitor | Energy setup | None |
-| `FUNC_ENERGY_LOOP` | 78 | Energy processing | Every loop | None |
-| `FUNC_ENERGY_SHOW_SENSOR` | 79 | Energy sensor display | Status request | None |
-| `FUNC_ENERGY_RESET` | 80 | Reset energy counters | Reset command | None |
-
-#### Light Control Callbacks
-
-| Function | ID | Purpose | When Called | Parameters |
-|----------|----|---------|-----------|-----------| 
-| `FUNC_LIGHT_INIT` | 81 | Initialize lighting | Light setup | None |
-| `FUNC_LIGHT_LOOP` | 82 | Light processing | Every loop | None |
-| `FUNC_LIGHT_EVERY_50_MSECOND` | 83 | Light fast updates | Every 50ms | None |
-| `FUNC_LIGHT_SCHEME_CHANGE` | 84 | Light scheme change | Scheme update | None |
-| `FUNC_LIGHT_POWER_CHANGE` | 85 | Light power change | Power update | None |
+| Function | Purpose | When Called | Return Value |
+|----------|---------|-------------|--------------|
+| `FUNC_PIN_STATE` | GPIO state query | Pin state check | true if handled |
+| `FUNC_MODULE_INIT` | Module initialization | Module setup | true if success |
+| `FUNC_ADD_BUTTON` | Add button handler | Button config | true if added |
+| `FUNC_ADD_SWITCH` | Add switch handler | Switch config | true if added |
+| `FUNC_BUTTON_PRESSED` | Handle button press | Button event | true if handled |
+| `FUNC_BUTTON_MULTI_PRESSED` | Multi-button press | Button combo | true if handled |
+| `FUNC_SET_DEVICE_POWER` | Device power control | Power command | true if handled |
+| `FUNC_MQTT_DATA` | Process MQTT data | MQTT message | true if handled |
+| `FUNC_SERIAL` | Serial data processing | Serial input | true if handled |
+| `FUNC_COMMAND` | Process commands | Command received | true if handled |
+| `FUNC_COMMAND_SENSOR` | Sensor commands | Sensor command | true if handled |
+| `FUNC_COMMAND_DRIVER` | Driver commands | Driver command | true if handled |
+| `FUNC_RULES_PROCESS` | Process rules | Rule evaluation | true if handled |
+| `FUNC_SET_CHANNELS` | Set PWM channels | Channel update | true if handled |
 
 #### Callback Implementation Pattern
 
@@ -498,6 +483,31 @@ snprintf(result, sizeof(result), "%d,%d", value1, value2);
 ```
 
 ## Communication Protocols
+
+### Command Context Structure
+
+All command handlers receive context through the global XdrvMailbox structure:
+
+```c
+struct XDRVMAILBOX {
+  bool          grpflg;        // Group flag
+  bool          usridx;        // User index flag
+  uint16_t      command_code;  // Command code
+  uint32_t      index;         // Command index
+  uint32_t      data_len;      // Parameter length
+  int32_t       payload;       // Numeric parameter
+  char         *topic;         // MQTT topic
+  char         *data;          // Command parameters
+  char         *command;       // Command name
+} XdrvMailbox;
+```
+
+**Key Fields:**
+- `command`: The command name (e.g., "Power", "Status")
+- `data`: Raw parameter string
+- `payload`: Numeric value of first parameter
+- `data_len`: Length of parameter string
+- `index`: Command index for numbered commands (Power1, Power2, etc.)
 
 ### MQTT Integration
 
