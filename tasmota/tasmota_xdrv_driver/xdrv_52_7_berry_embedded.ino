@@ -80,6 +80,10 @@ const char be_berry_init_code[] =
   "import light "
 #endif // USE_LIGHT
 
+#if defined(USE_EMULATION) && defined(USE_EMULATION_HUE)
+  "import hue_bridge "
+#endif
+
   "do import tapp end "     // we don't need to keep `tapp` in the global namespace
 
 #ifdef USE_BERRY_DEBUG
