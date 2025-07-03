@@ -53,13 +53,13 @@ class AudioEncoderShineMP3 :  public AudioEncoder
       file = rec_file;
       client = wifi;
     };
-    ~AudioEncoderShineMP3() override {
+    virtual ~AudioEncoderShineMP3() {
       if (s) {shine_close(s);}
       if(inBuffer){free(inBuffer); }
       if(file) {file->close();}
       if(client) {client->stop();}
     };
-    uint32_t begin(uint32_t samplingRate, uint32_t inputChannels) override {
+    virtual uint32_t begin(uint32_t samplingRate, uint32_t inputChannels) {
       shine_set_config_mpeg_defaults(&config.mpeg);
       if (inputChannels == 1) {
         config.mpeg.mode = MONO;
@@ -80,13 +80,13 @@ class AudioEncoderShineMP3 :  public AudioEncoder
       return 0;
     };
 
-    size_t stop() override {
+    virtual size_t stop() {
       int written;
       outFrame = shine_flush(s, &written);
       return written;
     }
 
-    int encode(size_t samples) override{
+    virtual int encode(size_t samples) {
       int written;
       outFrame = shine_encode_buffer_interleaved(s, inBuffer, &written);
       return write(written);
@@ -122,7 +122,7 @@ class AudioEncoderOpusWebm : public AudioEncoder
       client = wifi;
     };
 
-    ~AudioEncoderOpusWebm() override {
+    virtual ~AudioEncoderOpusWebm() {
       if(inBuffer){ free(inBuffer); }
       if(outFrame){ free(outFrame); }
       opus_encoder_destroy(encoder);
@@ -132,7 +132,7 @@ class AudioEncoderOpusWebm : public AudioEncoder
       delete muxer;
     };
 
-    uint32_t begin(uint32_t samplingRate, uint32_t inputChannels) override {
+    virtual uint32_t begin(uint32_t samplingRate, uint32_t inputChannels) {
       int error;
       encoder = opus_encoder_create(samplingRate, inputChannels, samplingRate > 16000 ? OPUS_APPLICATION_AUDIO : OPUS_APPLICATION_VOIP, &error);
       if (error != 0) { return error; }
@@ -179,7 +179,7 @@ class AudioEncoderOpusWebm : public AudioEncoder
       return 0;
     }
 
-    int encode(size_t samples) override {
+    virtual int encode(size_t samples) {
       opus_int32 len = opus_encode(encoder, inBuffer, samplesPerPass, outFrame, maxBytes);
       if (len < 0) { return -1; }
       if (len > 2) // ignore packets shorter than or equal to 2 bytes.
@@ -192,7 +192,7 @@ class AudioEncoderOpusWebm : public AudioEncoder
       return 0;
     }
 
-    size_t stop() override{
+    virtual size_t stop() {
       bool success = muxerSegment.Finalize();
       muxer->Close();
       return success;
@@ -294,13 +294,13 @@ void I2sMicTask(void *arg){
     }
   }
 
-  error = mic_enc->begin(audio_i2s.in->getRxRate(), audio_i2s.Settings->rx.channels);
+  error = mic_enc->begin(audio_i2s.Settings->rx.sample_rate, audio_i2s.Settings->rx.channels);
   if(error != 0){
     goto exit;
   }
 
   ctime = TasmotaGlobal.uptime;
-  timeForOneRead = 1000 / ((audio_i2s.in->getRxRate() / (mic_enc->samplesPerPass * audio_i2s.Settings->rx.channels )));
+  timeForOneRead = 1000 / ((audio_i2s.Settings->rx.sample_rate / (mic_enc->samplesPerPass * audio_i2s.Settings->rx.channels )));
   // timeForOneRead -= 1; // be very in time
   AddLog(LOG_LEVEL_DEBUG, PSTR("I2S: samples %u, bytesize %u, time: %u"),mic_enc->samplesPerPass, mic_enc->byteSize, timeForOneRead);
   xLastWakeTime = xTaskGetTickCount();
@@ -321,11 +321,11 @@ void I2sMicTask(void *arg){
     __enctime = millis();
     if(bytes_read != 0){
       written = mic_enc->encode(bytes_read >> 1); //transmit samples, written is an error code
-      if(written < 0){
-        break;
-      }
     }
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("_mic: %u , %i, %i"), millis() - __enctime, written, bytes_read);
+    if(written < 0){
+      break;
+    }
 
     if (audio_i2s_mp3.use_stream) {
       if (!audio_i2s_mp3.client.connected()) {
@@ -360,7 +360,7 @@ exit:
 
 int32_t I2sRecord(char *path, uint32_t encoder_type) {
   esp_err_t err = ESP_OK;
-  uint32_t stack = 10000;
+  uint32_t stack = 8000;
 
   #ifdef USE_I2S_MP3
     if (audio_i2s_mp3.decoder) return 0;
@@ -371,29 +371,25 @@ int32_t I2sRecord(char *path, uint32_t encoder_type) {
     case MP3_ENCODER:
       switch(audio_i2s.Settings->rx.sample_rate){
         case 32000: case 48000: case 44100:
-          audio_i2s.in->setRxFreq(audio_i2s.Settings->rx.sample_rate); // could have been changed at runtime before
           break; // supported
         default:
         AddLog(LOG_LEVEL_ERROR, PSTR("I2S: unsupported sample rate for MP3 encoding: %d Hz"), audio_i2s.Settings->rx.sample_rate);
-        audio_i2s.in->setRxFreq(32000); // set to default
-        AddLog(LOG_LEVEL_ERROR, PSTR("I2S: use default 32000Hz for MP3 encoding"));
+        return -1;
       }
-      AddLog(LOG_LEVEL_DEBUG, PSTR("I2S: start MP3 encoding: %d Hz"), audio_i2s.in->getRxRate());
+      AddLog(LOG_LEVEL_DEBUG, PSTR("I2S: start MP3 encoding: %d Hz"), audio_i2s.Settings->rx.sample_rate);
       break;
 #endif // MP3_MIC_STREAM
 #ifdef USE_I2S_OPUS
     case OPUS_ENCODER:
       switch(audio_i2s.Settings->rx.sample_rate){
         case 48000: case 24000: case 16000: case 12000: case 8000:
-          audio_i2s.in->setRxFreq(audio_i2s.Settings->rx.sample_rate); // could have been changed at runtime before
+          stack = audio_i2s.Settings->rx.sample_rate/2 + 30000; //not the exact value, but okay'ish
           break;
         default:
          AddLog(LOG_LEVEL_ERROR, PSTR("I2S: unsupported sample rate for OPUS encoding: %d Hz"), audio_i2s.Settings->rx.sample_rate);
-         audio_i2s.in->setRxFreq(24000); // set to default
-         AddLog(LOG_LEVEL_ERROR, PSTR("I2S: use default 24000Hz for OPUS encoding"));
+         return -1;
       }
-      stack = audio_i2s.in->getRxRate()/2 + 30000; //not the exact value, but okay'ish
-      AddLog(LOG_LEVEL_DEBUG, PSTR("I2S: start OPUS encoding: %d Hz"), audio_i2s.in->getRxRate());
+      AddLog(LOG_LEVEL_DEBUG, PSTR("I2S: start OPUS encoding: %d Hz"), audio_i2s.Settings->rx.sample_rate);
       break;
 #endif // USE_I2S_OPUS
     default:
@@ -412,9 +408,7 @@ int32_t I2sRecord(char *path, uint32_t encoder_type) {
   }
   audio_i2s_mp3.mic_stop = 0;
 
-  I2SPrepareRx();
   audio_i2s.in->startRx();
-
   err = xTaskCreatePinnedToCore(I2sMicTask, "MIC", stack, NULL, 3, &audio_i2s_mp3.mic_task_handle, 1);
   return err;
 }
