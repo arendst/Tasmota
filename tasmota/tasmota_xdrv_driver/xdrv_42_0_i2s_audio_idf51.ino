@@ -588,6 +588,7 @@ void I2sInit(void) {
 
     bool init_tx_ok = false;
     bool init_rx_ok = false;
+    exclusive = true; //TODO: try fix full dupleyx mode
     if (tx && rx && exclusive) {
       i2s->setExclusive(true);
       audio_i2s.Settings->sys.exclusive = exclusive;
