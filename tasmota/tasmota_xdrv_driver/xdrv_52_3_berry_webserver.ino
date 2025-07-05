@@ -249,7 +249,7 @@ extern "C" {
       } else {
         html = (const char*) be_tocomptr(vm, 1);
       }
-      WSContentSend_P(PSTR("%s"), html);
+      WSContentSendRaw_P(html);
       be_return_nil(vm);
     }
     be_raise(vm, kTypeError, nullptr);
