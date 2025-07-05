@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [15.0.1.1]
 ### Added
 - I2S additions (#23543)
-- Berry f-strings now support ':' in expression
+- Berry f-strings now support ':' in expression (#23618)
 
 ### Breaking Changed
 
@@ -17,10 +17,10 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - LVGL restore `lv_chart.set_range` removed in LVGL 9.3.0 in favor of `lv_chart.set_axis_range` (#23567)
-- Berry vulnerability in JSON parsing for unicode
-- Berry fix security issues in `int64` and improve documentation
-- Berry fix security issues in `berry_mapping` and improve documentation
-- Berry Hue fix regression from #23429
+- Berry vulnerability in JSON parsing for unicode (#23603)
+- Berry security issues in `int64` and improve documentation (#23605)
+- Berry security issues in `berry_mapping` and improve documentation (#23606)
+- Berry Hue regression from #23429 (#23623)
 
 ### Removed
 
