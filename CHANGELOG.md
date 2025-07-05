@@ -15,7 +15,8 @@ All notable changes to this project will be documented in this file.
 - BLE updates for esp-nimble-cpp v2.x (#23553)
 - Library names (#23560)
 - ESP32 LoRaWan decoding won't duplicate non-decoded message if `SO147 0`
-- CSS uses named colors variables
+- VEML6070 and AHT2x device detection (#23581)
+- CSS uses named colors variables (#23597)
 
 ### Fixed
 - LVGL restore `lv_chart.set_range` removed in LVGL 9.3.0 in favor of `lv_chart.set_axis_range` (#23567)
@@ -23,6 +24,7 @@ All notable changes to this project will be documented in this file.
 - Berry security issues in `int64` and improve documentation (#23605)
 - Berry security issues in `berry_mapping` and improve documentation (#23606)
 - Berry Hue regression from #23429 (#23623)
+- AHT30 sensor start with null values after deep sleep (#23624)
 
 ### Removed
 
