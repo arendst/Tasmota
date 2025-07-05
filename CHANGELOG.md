@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - NeoPool add Redox tank alarm (#19811)
 - Berry f-strings now support ':' in expression (#23618)
 - Universal display driver for ZJY169S0800TG01 ST7789 280x240 (#23638)
+- Commands `LoRaWanDecoder "` and `LoRaWanName "` to clear name (#23394)
 
 ### Breaking Changed
 
