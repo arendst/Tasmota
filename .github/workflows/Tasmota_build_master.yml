@@ -42,8 +42,8 @@ jobs:
           python-version: '3.13'
       - name: Install dependencies
         run: |
-          pip install wheel
-          pip install -U platformio
+          pip install uv
+          uv pip install --system platformio
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Add "release" to footer
         run: |
@@ -86,8 +86,8 @@ jobs:
           python-version: '3.13'
       - name: Install dependencies
         run: |
-          pip install wheel
-          pip install -U platformio
+          pip install uv
+          uv pip install --system platformio
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Add "release" to footer
         run: |
@@ -136,8 +136,8 @@ jobs:
           python-version: '3.13'
       - name: Install dependencies
         run: |
-          pip install wheel
-          pip install -U platformio
+          pip install uv
+          uv pip install --system platformio
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
         uses: actions/download-artifact@v4
@@ -181,8 +181,8 @@ jobs:
           python-version: '3.13'
       - name: Install dependencies
         run: |
-          pip install wheel
-          pip install -U platformio
+          pip install uv
+          uv pip install --system platformio
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
         uses: actions/download-artifact@v4

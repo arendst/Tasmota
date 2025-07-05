@@ -781,9 +781,10 @@ bool I2SinitDecoder(uint32_t decoder_type){
 //
 // Returns I2S_error_t
 int32_t I2SPlayFile(const char *path, uint32_t decoder_type) {
+  if (audio_i2s_mp3.decoder != nullptr) return I2S_ERR_DECODER_IN_USE;
+
   int32_t i2s_err = I2SPrepareTx();
   if ((i2s_err) != I2S_OK) { return i2s_err; }
-  if (audio_i2s_mp3.decoder != nullptr) return I2S_ERR_DECODER_IN_USE;
 
   // check if the filename starts with '/', if not add it
   char fname[64];
@@ -819,7 +820,7 @@ int32_t I2SPlayFile(const char *path, uint32_t decoder_type) {
   }
 
   size_t play_tasksize = 8000; // suitable for ACC and MP3
-  if(decoder_type == 2){ // opus needs a ton of stack
+  if(decoder_type == OPUS_DECODER){ // opus needs a ton of stack
     play_tasksize = 26000;
   }
 
@@ -996,6 +997,7 @@ void I2sEventHandler(){
     audio_i2s_mp3.task_has_ended = false;
     MqttPublishPayloadPrefixTopicRulesProcess_P(RESULT_OR_STAT,PSTR(""),PSTR("{\"Event\":{\"I2SPlay\":\"Ended\"}}"));
     // Rule1 ON event#i2splay=ended DO <something> ENDON
+    I2SAudioPower(false);
   }
 }
 
@@ -1004,8 +1006,6 @@ void I2sEventHandler(){
 \*********************************************************************************************/
 
 void I2sStreamLoop(void);
-void I2sMp3Init(uint32_t on);
-void MP3ShowStream(void);
 
 bool Xdrv42(uint32_t function) {
   bool result = false;

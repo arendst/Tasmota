@@ -19,7 +19,7 @@ on:
 
 jobs:
   os-check-win:
-    runs-on: windows-2019
+    runs-on: windows-latest
     if: github.repository == 'arendst/Tasmota'
     strategy:
       fail-fast: true
@@ -34,8 +34,8 @@ jobs:
           python-version: '3.13'
       - name: Install dependencies
         run: |
-          pip install wheel
-          pip install -U platformio
+          pip install uv
+          uv pip install --system platformio
       - name: Run PlatformIO
         env:
           PYTHONIOENCODING: utf-8
@@ -62,8 +62,8 @@ jobs:
           python-version: '3.13'
       - name: Install dependencies
         run: |
-          pip install wheel
-          pip install -U platformio
+          pip install uv
+          uv pip install --system platformio
       - name: Run PlatformIO
         env:
           PYTHONIOENCODING: utf-8
@@ -120,8 +120,8 @@ jobs:
           python-version: '3.13'
       - name: Install dependencies
         run: |
-          pip install wheel
-          pip install -U platformio
+          pip install uv
+          uv pip install --system platformio
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Run PlatformIO
         env:
@@ -149,8 +149,8 @@ jobs:
           python-version: '3.13'
       - name: Install dependencies
         run: |
-          pip install wheel
-          pip install -U platformio
+          pip install uv
+          uv pip install --system platformio
       - name: Run PlatformIO
         env:
           PYTHONIOENCODING: utf-8
