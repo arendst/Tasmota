@@ -159,7 +159,7 @@ void Z_Mapper::dumpInternals(void) const {
 
     const char *fname = device.friendlyName;
     if (fname != nullptr) {
-      WSContentSend_P(PSTR("%s"), EscapeJSONString(fname).c_str());
+      WSContentSendRaw_P(EscapeJSONString(fname).c_str());
     } else {
       WSContentSend_P(PSTR("0x%04X"), device.shortaddr);
     }

@@ -1773,7 +1773,7 @@ void UfsEditor(void) {
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_UFS "UfsEditor: read=%d"), l);
         if (l < 0) { break; }
         buf[l] = '\0';
-        WSContentSend_P(PSTR("%s"), HtmlEscape((char*)buf).c_str());
+        WSContentSendRaw_P(HtmlEscape((char*)buf).c_str());
         filelen -= l;
       }
       fp.close();

@@ -912,15 +912,19 @@ void WSContentSend(const char* content, size_t size) {
 
 /*-------------------------------------------------------------------------------------------*/
 
+void WSContentSendRaw_P(const char* content) {   // Content sent without formatting
+  if (NULL == content || content[0] == '\0') { return; }
+  WSContentSeparator(2);                           // Print separator on next WSContentSeparator(1)
+  _WSContentSendBufferChunk(content);
+}
+
+/*-------------------------------------------------------------------------------------------*/
+
 void _WSContentSendBuffer(bool decimal, const char * formatP, va_list arg) {
   char* content = ext_vsnprintf_malloc_P(formatP, arg);
   if (content == nullptr) { return; }              // Avoid crash
 
   int len = strlen(content);
-  if (0 == len) { return; }                        // No content
-
-  WSContentSeparator(2);                           // Print separator on next WSContentSeparator(1)
-
   if (decimal && (D_DECIMAL_SEPARATOR[0] != '.')) {
     for (uint32_t i = 0; i < len; i++) {
       if ('.' == content[i]) {
@@ -929,7 +933,7 @@ void _WSContentSendBuffer(bool decimal, const char * formatP, va_list arg) {
     }
   }
 
-  _WSContentSendBufferChunk(content);
+  WSContentSendRaw_P(content);
   free(content);
 }
 
@@ -1009,14 +1013,14 @@ void WSContentSendStyle_P(const char* formatP, ...) {
                   WebColor(COL_CONSOLE_TEXT)        // --c_csltxt
   );
 
-  WSContentSend_P(PSTR("%s"), HTTP_HEAD_STYLE1);
-  WSContentSend_P(PSTR("%s"), HTTP_HEAD_STYLE2);
+  WSContentSendRaw_P(HTTP_HEAD_STYLE1);
+  WSContentSendRaw_P(HTTP_HEAD_STYLE2);
   
 #ifdef USE_WEB_STATUS_LINE_WIFI
-  WSContentSend_P(PSTR("%s"), HTTP_HEAD_STYLE_WIFI);
+  WSContentSendRaw_P(HTTP_HEAD_STYLE_WIFI);
 #endif
 #if defined(USE_ZIGBEE) || defined(USE_LORAWAN_BRIDGE)
-  WSContentSend_P(HTTP_HEAD_STYLE_ZIGBEE);
+  WSContentSendRaw_P(HTTP_HEAD_STYLE_ZIGBEE);
 #endif // USE_ZIGBEE
   if (formatP != nullptr) {
     // This uses char strings. Be aware of sending %% if % is needed
