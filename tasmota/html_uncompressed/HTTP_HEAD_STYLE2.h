@@ -1,5 +1,5 @@
 const char HTTP_HEAD_STYLE2[] PROGMEM =
-  "button{border:0;border-radius:0.3rem;background:var(--c_btn);color:var(--c_btntxt);line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;cursor:pointer;}"  // COLOR_BUTTON, COLOR_BUTTON_TEXT
+  "button{border:0;border-radius:0.3rem;background:var(--c_btn);color:var(--c_btntxt);line-height:2.4rem;font-size:1.2rem;width:100%%;-webkit-transition-duration:0.4s;transition-duration:0.4s;cursor:pointer;}"  // COLOR_BUTTON, COLOR_BUTTON_TEXT
   "button:hover{background:var(--c_btnhvr);}"  // COLOR_BUTTON_HOVER
   ".bred{background:var(--c_btnrst);}"  // COLOR_BUTTON_RESET
   ".bred:hover{background:var(--c_btnrsthvr);}"  // COLOR_BUTTON_RESET_HOVER

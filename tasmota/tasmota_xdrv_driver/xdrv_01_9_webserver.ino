@@ -250,7 +250,7 @@ const char HTTP_HEAD_STYLE_SSI[] PROGMEM =
   // Signal Strength Indicator
   ".si{display:inline-flex;align-items:flex-end;height:15px;padding:0}"
   ".si i{width:3px;margin-right:1px;border-radius:3px;background-color:var(--c_txt)}"
-  ".si .b0{height:25%}.si .b1{height:50%}.si .b2{height:75%}.si .b3{height:100%}.o30{opacity:.3}";
+  ".si .b0{height:25%%}.si .b1{height:50%%}.si .b2{height:75%%}.si .b3{height:100%%}.o30{opacity:.3}";
 
 // special case if MINIMAL, then we don't use compressed version
 #ifdef FIRMWARE_MINIMAL
@@ -1009,11 +1009,11 @@ void WSContentSendStyle_P(const char* formatP, ...) {
                   WebColor(COL_CONSOLE_TEXT)        // --c_csltxt
   );
 
-  WSContentSend_P(PSTR("%s"), HTTP_HEAD_STYLE1);
-  WSContentSend_P(PSTR("%s"), HTTP_HEAD_STYLE2);
+  WSContentSend_P(HTTP_HEAD_STYLE1);
+  WSContentSend_P(HTTP_HEAD_STYLE2);
   
 #ifdef USE_WEB_STATUS_LINE_WIFI
-  WSContentSend_P(PSTR("%s"), HTTP_HEAD_STYLE_WIFI);
+  WSContentSend_P(HTTP_HEAD_STYLE_WIFI);
 #endif
 #if defined(USE_ZIGBEE) || defined(USE_LORAWAN_BRIDGE)
   WSContentSend_P(HTTP_HEAD_STYLE_ZIGBEE);
@@ -2482,7 +2482,7 @@ void HandleWifiConfiguration(void) {
   if (WifiIsInManagerMode()) { WSContentSend_P(HTTP_SCRIPT_HIDE); }
   if (WIFI_TESTING == Wifi.wifiTest) { WSContentSend_P(HTTP_SCRIPT_RELOAD_TIME, HTTP_RESTART_RECONNECT_TIME); }
 #ifdef USE_ENHANCED_GUI_WIFI_SCAN
-  WSContentSendStyle_P("%s", HTTP_HEAD_STYLE_SSI);
+  WSContentSendStyle_P(HTTP_HEAD_STYLE_SSI);
 #else
   WSContentSendStyle();
 #endif  // USE_ENHANCED_GUI_WIFI_SCAN
