@@ -882,7 +882,7 @@ void WSContentFlush(void) {
 /*-------------------------------------------------------------------------------------------*/
 
 void _WSContentSendBufferChunk(const char* content) {
-  int len = strlen_P(content);
+  int len = strlen(content);
   if (len < CHUNKED_BUFFER_SIZE) {                 // Append chunk buffer with small content
     Web.chunk_buffer += content;
     len = Web.chunk_buffer.length();
@@ -890,9 +890,8 @@ void _WSContentSendBufferChunk(const char* content) {
   if (len >= CHUNKED_BUFFER_SIZE) {                // Either content or chunk buffer is oversize
     WSContentFlush();                              // Send chunk buffer before possible content oversize
   }
-  len = strlen_P(content);
-  if (len >= CHUNKED_BUFFER_SIZE) {                // Content is oversize
-    _WSContentSend(content, len);                  // Send content
+  if (strlen(content) >= CHUNKED_BUFFER_SIZE) {    // Content is oversize
+    _WSContentSend(content);                       // Send content
   }
 }
 
@@ -913,19 +912,15 @@ void WSContentSend(const char* content, size_t size) {
 
 /*-------------------------------------------------------------------------------------------*/
 
-void WSContentSendRaw_P(const char* content) {   // Content sent without formatting
-  if (nullptr == content || !strlen_P(content)) { return; }
-  WSContentSeparator(2);                           // Print separator on next WSContentSeparator(1)
-  _WSContentSendBufferChunk(content);
-}
-
-/*-------------------------------------------------------------------------------------------*/
-
 void _WSContentSendBuffer(bool decimal, const char * formatP, va_list arg) {
   char* content = ext_vsnprintf_malloc_P(formatP, arg);
   if (content == nullptr) { return; }              // Avoid crash
 
   int len = strlen(content);
+  if (0 == len) { return; }                        // No content
+
+  WSContentSeparator(2);                           // Print separator on next WSContentSeparator(1)
+
   if (decimal && (D_DECIMAL_SEPARATOR[0] != '.')) {
     for (uint32_t i = 0; i < len; i++) {
       if ('.' == content[i]) {
@@ -934,7 +929,7 @@ void _WSContentSendBuffer(bool decimal, const char * formatP, va_list arg) {
     }
   }
 
-  WSContentSendRaw_P(content);
+  _WSContentSendBufferChunk(content);
   free(content);
 }
 
@@ -1014,14 +1009,14 @@ void WSContentSendStyle_P(const char* formatP, ...) {
                   WebColor(COL_CONSOLE_TEXT)        // --c_csltxt
   );
 
-  WSContentSendRaw_P(HTTP_HEAD_STYLE1);
-  WSContentSendRaw_P(HTTP_HEAD_STYLE2);
+  WSContentSend_P(PSTR("%s"), HTTP_HEAD_STYLE1);
+  WSContentSend_P(PSTR("%s"), HTTP_HEAD_STYLE2);
   
 #ifdef USE_WEB_STATUS_LINE_WIFI
-  WSContentSendRaw_P(HTTP_HEAD_STYLE_WIFI);
+  WSContentSend_P(PSTR("%s"), HTTP_HEAD_STYLE_WIFI);
 #endif
 #if defined(USE_ZIGBEE) || defined(USE_LORAWAN_BRIDGE)
-  WSContentSendRaw_P(HTTP_HEAD_STYLE_ZIGBEE);
+  WSContentSend_P(HTTP_HEAD_STYLE_ZIGBEE);
 #endif // USE_ZIGBEE
   if (formatP != nullptr) {
     // This uses char strings. Be aware of sending %% if % is needed

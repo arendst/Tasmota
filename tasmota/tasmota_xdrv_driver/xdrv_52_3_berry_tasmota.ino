@@ -800,7 +800,7 @@ extern "C" {
       const char *msg = be_tostring(vm, 2);
       be_pop(vm, top);  // avoid Error be_top is non zero message
 #ifdef USE_WEBSERVER
-      WSContentSendRaw_P(msg);
+      WSContentSend_P(PSTR("%s"), msg);
 #endif  // USE_WEBSERVER
       be_return_nil(vm); // Return nil when something goes wrong
     }
