@@ -890,8 +890,9 @@ void _WSContentSendBufferChunk(const char* content) {
   if (len >= CHUNKED_BUFFER_SIZE) {                // Either content or chunk buffer is oversize
     WSContentFlush();                              // Send chunk buffer before possible content oversize
   }
-  if (strlen_P(content) >= CHUNKED_BUFFER_SIZE) {    // Content is oversize
-    _WSContentSend(content);                       // Send content
+  len = strlen_P(content);
+  if (len >= CHUNKED_BUFFER_SIZE) {                // Content is oversize
+    _WSContentSend(content, len);                  // Send content
   }
 }
 
@@ -913,7 +914,7 @@ void WSContentSend(const char* content, size_t size) {
 /*-------------------------------------------------------------------------------------------*/
 
 void WSContentSendRaw_P(const char* content) {   // Content sent without formatting
-  if (NULL == content || pgm_read_byte(content) == '\0') { return; }
+  if (nullptr == content || !strlen_P(content)) { return; }
   WSContentSeparator(2);                           // Print separator on next WSContentSeparator(1)
   _WSContentSendBufferChunk(content);
 }
