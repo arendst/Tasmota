@@ -36,9 +36,7 @@ from colorama import Fore, Back, Style
 from SCons.Script import COMMAND_LINE_TARGETS
 from platformio.project.config import ProjectConfig
 
-esptoolpy = os.path.join(ProjectConfig.get_instance().get("platformio", "packages_dir"), "tool-esptoolpy")
-sys.path.append(esptoolpy)
-
+esptoolpy = [env.subst("$OBJCOPY")]
 import esptool
 
 config = env.GetProjectConfig()
@@ -104,7 +102,7 @@ def esp32_detect_flashsize():
         return "4MB",False
     else:
         esptoolpy_flags = ["flash-id"]
-        esptoolpy_cmd = [env["PYTHONEXE"], esptoolpy] + esptoolpy_flags
+        esptoolpy_cmd = esptoolpy + esptoolpy_flags
         try:
             output = subprocess.run(esptoolpy_cmd, capture_output=True).stdout.splitlines()
             for l in output:
