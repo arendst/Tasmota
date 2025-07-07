@@ -335,7 +335,7 @@ def esp32_create_combined_bin(source, target, env):
                 "--flash-freq", "${__get_board_f_flash(__env__)}",
                 "--flash-size", flash_size
                 ],
-                UPLOADCMD='"$PYTHONEXE" "$UPLOADER" $UPLOADERFLAGS ' + " ".join(cmd[7:])
+                UPLOADCMD='"$UPLOADER" $UPLOADERFLAGS ' + " ".join(cmd[7:])
                 )
                 print(Fore.GREEN + "Will use custom upload command for flashing operation to add file system defined for this build target.")
                 print()
