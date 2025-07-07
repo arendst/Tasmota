@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Berry f-strings now support ':' in expression (#23618)
 - Universal display driver for ZJY169S0800TG01 ST7789 280x240 (#23638)
 - Commands `LoRaWanDecoder "` and `LoRaWanName "` to clear name (#23394)
+- Internal function 'WSContentSendRaw_P' (#23641)
 
 ### Breaking Changed
 
