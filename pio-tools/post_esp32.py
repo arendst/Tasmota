@@ -103,7 +103,7 @@ def esp32_detect_flashsize():
     if not "esptool" in uploader:
         return "4MB",False
     else:
-        esptoolpy_flags = ["flash_id"]
+        esptoolpy_flags = ["flash-id"]
         esptoolpy_cmd = [env["PYTHONEXE"], esptoolpy] + esptoolpy_flags
         try:
             output = subprocess.run(esptoolpy_cmd, capture_output=True).stdout.splitlines()
@@ -282,14 +282,14 @@ def esp32_create_combined_bin(source, target, env):
         cmd = [
             "--chip",
             chip,
-            "merge_bin",
+            "merge-bin",
             "-o",
             new_file_name,
-            "--flash_mode",
+            "--flash-mode",
             flash_mode,
-            "--flash_freq",
+            "--flash-freq",
             flash_freq,
-            "--flash_size",
+            "--flash-size",
             flash_size,
         ]
         # platformio estimates the flash space used to store the firmware.
@@ -320,8 +320,8 @@ def esp32_create_combined_bin(source, target, env):
         if(upload_protocol == "esptool") and (fs_offset != -1):
             fs_bin = join(env.subst("$BUILD_DIR"),"littlefs.bin")
             if exists(fs_bin):
-                before_reset = env.BoardConfig().get("upload.before_reset", "default_reset")
-                after_reset = env.BoardConfig().get("upload.after_reset", "hard_reset")
+                before_reset = env.BoardConfig().get("upload.before_reset", "default-reset")
+                after_reset = env.BoardConfig().get("upload.after_reset", "hard-reset")
                 print(f" -  {hex(fs_offset).ljust(8)} | {fs_bin}")
                 print()
                 cmd += [hex(fs_offset), fs_bin]
@@ -332,10 +332,10 @@ def esp32_create_combined_bin(source, target, env):
                 "--baud", "$UPLOAD_SPEED",
                 "--before", before_reset,
                 "--after", after_reset,
-                "write_flash", "-z",
-                "--flash_mode", "${__get_board_flash_mode(__env__)}",
-                "--flash_freq", "${__get_board_f_flash(__env__)}",
-                "--flash_size", flash_size
+                "write-flash", "-z",
+                "--flash-mode", "${__get_board_flash_mode(__env__)}",
+                "--flash-freq", "${__get_board_f_flash(__env__)}",
+                "--flash-size", flash_size
                 ],
                 UPLOADCMD='"$PYTHONEXE" "$UPLOADER" $UPLOADERFLAGS ' + " ".join(cmd[7:])
                 )
