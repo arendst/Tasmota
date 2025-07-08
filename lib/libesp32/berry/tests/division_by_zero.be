@@ -1,17 +1,17 @@
 
+# Test division by zero error handling
+
 try
-    # Test integer division
+    # Test integer division by zero
     var div = 1/0
     assert(false) # Should not reach this point
 except .. as e,m
-    
     assert(e == "divzero_error")
     assert(m == "division by zero")
 end
 
-
 try
-    # Test integer modulo
+    # Test integer modulo by zero
     var div = 1%0
     assert(false)
 except .. as e,m
@@ -20,7 +20,7 @@ except .. as e,m
 end
 
 try
-    # Test float division
+    # Test float division by zero
     var div = 1.1/0.0
     assert(false)
 except .. as e,m
@@ -29,7 +29,7 @@ except .. as e,m
 end
 
 try
-    # Test float modulo
+    # Test float modulo by zero
     var div = 1.1%0.0
     assert(false)
 except .. as e,m
@@ -37,8 +37,7 @@ except .. as e,m
     assert(m == "division by zero")
 end
 
-
-# Check normal division & modulo
+# Test normal division & modulo operations
 assert(1/2 == 0)
 assert(1%2 == 1)
 assert(1.0/2.0 == 0.5)

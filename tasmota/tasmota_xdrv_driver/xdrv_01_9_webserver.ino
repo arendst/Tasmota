@@ -220,14 +220,18 @@ const char HTTP_SCRIPT_INFO_END[] PROGMEM =
 #ifdef USE_UNISHOX_COMPRESSION
   #include "./html_compressed/HTTP_HEAD_LAST_SCRIPT.h"
   #include "./html_compressed/HTTP_HEAD_LAST_SCRIPT32.h"
+  #include "./html_compressed/HTTP_HEAD_STYLE_ROOT_COLOR.h"
   #include "./html_compressed/HTTP_HEAD_STYLE1.h"
   #include "./html_compressed/HTTP_HEAD_STYLE2.h"
+  #include "./html_compressed/HTTP_HEAD_STYLE3.h"
   #include "./html_compressed/HTTP_HEAD_STYLE_WIFI.h"
 #else
   #include "./html_uncompressed/HTTP_HEAD_LAST_SCRIPT.h"
   #include "./html_uncompressed/HTTP_HEAD_LAST_SCRIPT32.h"
+  #include "./html_uncompressed/HTTP_HEAD_STYLE_ROOT_COLOR.h"
   #include "./html_uncompressed/HTTP_HEAD_STYLE1.h"
   #include "./html_uncompressed/HTTP_HEAD_STYLE2.h"
+  #include "./html_uncompressed/HTTP_HEAD_STYLE3.h"
   #include "./html_uncompressed/HTTP_HEAD_STYLE_WIFI.h"
 #endif
 
@@ -245,32 +249,26 @@ const char HTTP_SCRIPT_INFO_END[] PROGMEM =
 const char HTTP_HEAD_STYLE_SSI[] PROGMEM =
   // Signal Strength Indicator
   ".si{display:inline-flex;align-items:flex-end;height:15px;padding:0}"
-  ".si i{width:3px;margin-right:1px;border-radius:3px;background-color:#%06x}"
-  ".si .b0{height:25%%}.si .b1{height:50%%}.si .b2{height:75%%}.si .b3{height:100%%}.o30{opacity:.3}";
+  ".si i{width:3px;margin-right:1px;border-radius:3px;background-color:var(--c_txt)}"
+  ".si .b0{height:25%}.si .b1{height:50%}.si .b2{height:75%}.si .b3{height:100%}.o30{opacity:.3}";
 
-const char HTTP_HEAD_STYLE3[] PROGMEM =
+// special case if MINIMAL, then we don't use compressed version
+#ifdef FIRMWARE_MINIMAL
+const char HTTP_HEAD_STYLE3_MINIMAL[] PROGMEM =
   "</style>"
 
   "</head>"
   "<body>"
-  "<div style='background:#%06x;text-align:left;display:inline-block;color:#%06x;min-width:340px;position:relative;'>"  // COLOR_BACKGROUND, COLOR_TEXT
-#ifdef FIRMWARE_MINIMAL
+  "<div style='background:var(--c_bg);text-align:left;display:inline-block;color:var(--c_txt);min-width:340px;position:relative;'>"
 #ifdef FIRMWARE_SAFEBOOT
-  "<span style='text-align:center;color:#%06x;'><h3>" D_SAFEBOOT "</h3></span>"  // COLOR_TEXT_WARNING
+  "<span style='text-align:center;color:var(--c_txtwrn);'><h3>" D_SAFEBOOT "</h3></span>"
 #else
-  "<div style='text-align:center;color:#%06x;'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"  // COLOR_TEXT_WARNING
+  "<div style='text-align:center;color:var(--c_txtwrn);'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"
 #endif  // FIRMWARE_SAFEBOOT
-#endif  // FIRMWARE_MINIMAL
-  "<div style='text-align:center;color:#%06x;'><noscript>" D_NOSCRIPT "<br></noscript>" // COLOR_TITLE
-/*
-#ifdef LANGUAGE_MODULE_NAME
-  "<h3>" D_MODULE " %s</h3>"
-#else
-  "<h3>%s " D_MODULE "</h3>"
-#endif
-*/
+  "<div style='text-align:center;color:var(--c_ttl);'><noscript>" D_NOSCRIPT "<br></noscript>"
   "<h3>%s</h3>"    // Module name
   "<h2>%s</h2>";   // Device name
+#endif  // FIRMWARE_MINIMAL
 
 const char HTTP_MENU_HEAD[] PROGMEM =
   "<div style='padding:0px 5px;text-align:center;'><h3><hr/>%s<hr/></h3></div>";
@@ -883,18 +881,28 @@ void WSContentFlush(void) {
 
 /*-------------------------------------------------------------------------------------------*/
 
-void _WSContentSendBufferChunk(const char* content) {
-  int len = strlen(content);
+void _WSContentSendBufferChunk_P(const char* content) {
+  int len = strlen_P(content);
   if (len < CHUNKED_BUFFER_SIZE) {                 // Append chunk buffer with small content
-    Web.chunk_buffer += content;
+    Web.chunk_buffer += (const __FlashStringHelper *)content;
     len = Web.chunk_buffer.length();
   }
   if (len >= CHUNKED_BUFFER_SIZE) {                // Either content or chunk buffer is oversize
     WSContentFlush();                              // Send chunk buffer before possible content oversize
   }
-  if (strlen(content) >= CHUNKED_BUFFER_SIZE) {    // Content is oversize
-    _WSContentSend(content);                       // Send content
+  len = strlen_P(content);
+  if (len >= CHUNKED_BUFFER_SIZE) {                // Content is oversize
+    _WSContentSend(content, len);                  // Send content
   }
+}
+
+/*-------------------------------------------------------------------------------------------*/
+
+void WSContentSendRaw_P(const char* content) {     // Content sent without formatting
+  if (nullptr == content || !strlen_P(content)) { return; }
+
+  WSContentSeparator(2);                           // Print separator on next WSContentSeparator(1)
+  _WSContentSendBufferChunk_P(content);
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -905,7 +913,7 @@ void WSContentSend(const char* content, size_t size) {
     // Terminate non-terminated content
     char buffer[size +1];
     strlcpy(buffer, content, sizeof(buffer));      // Terminate with '\0'
-    _WSContentSendBufferChunk(buffer);
+    _WSContentSendBufferChunk_P(buffer);
   } else {
     WSContentFlush();                              // Flush chunk buffer
     _WSContentSend(content, size);
@@ -919,10 +927,6 @@ void _WSContentSendBuffer(bool decimal, const char * formatP, va_list arg) {
   if (content == nullptr) { return; }              // Avoid crash
 
   int len = strlen(content);
-  if (0 == len) { return; }                        // No content
-
-  WSContentSeparator(2);                           // Print separator on next WSContentSeparator(1)
-
   if (decimal && (D_DECIMAL_SEPARATOR[0] != '.')) {
     for (uint32_t i = 0; i < len; i++) {
       if ('.' == content[i]) {
@@ -931,7 +935,7 @@ void _WSContentSendBuffer(bool decimal, const char * formatP, va_list arg) {
     }
   }
 
-  _WSContentSendBufferChunk(content);
+  WSContentSendRaw_P(content);
   free(content);
 }
 
@@ -989,16 +993,36 @@ void WSContentSendStyle_P(const char* formatP, ...) {
   WSContentSend_P(HTTP_HEAD_LAST_SCRIPT);
 #endif
 
-  WSContentSend_P(HTTP_HEAD_STYLE1, WebColor(COL_FORM), WebColor(COL_INPUT), WebColor(COL_INPUT_TEXT), WebColor(COL_INPUT),
-                  WebColor(COL_INPUT_TEXT), WebColor(COL_CONSOLE), WebColor(COL_CONSOLE_TEXT), WebColor(COL_BACKGROUND));
-  WSContentSend_P(HTTP_HEAD_STYLE2, WebColor(COL_BUTTON), WebColor(COL_BUTTON_TEXT), WebColor(COL_BUTTON_HOVER),
-                  WebColor(COL_BUTTON_RESET), WebColor(COL_BUTTON_RESET_HOVER), WebColor(COL_BUTTON_SAVE), WebColor(COL_BUTTON_SAVE_HOVER),
-                  WebColor(COL_BUTTON));
+  // Output style root colors by names
+  WSContentSend_P(HTTP_HEAD_STYLE_ROOT_COLOR,
+                  WebColor(COL_BACKGROUND),         // --c_bg
+                  WebColor(COL_FORM),               // --c_frm
+                  WebColor(COL_TITLE),              // --c_ttl
+                  WebColor(COL_TEXT),               // --c_txt
+                  WebColor(COL_TEXT_WARNING),       // --c_txtwrn
+                  WebColor(COL_TEXT_SUCCESS),       // --c_txtscc
+                  WebColor(COL_BUTTON),             // --c_btn
+                  WebColor(COL_BUTTON_OFF),         // --c_btnoff
+                  WebColor(COL_BUTTON_TEXT),        // --c_btntxt
+                  WebColor(COL_BUTTON_HOVER),       // --c_btnhvr
+                  WebColor(COL_BUTTON_RESET),       // --c_btnrst
+                  WebColor(COL_BUTTON_RESET_HOVER), // --c_btnrsthvr
+                  WebColor(COL_BUTTON_SAVE),        // --c_btnsv
+                  WebColor(COL_BUTTON_SAVE_HOVER),  // --c_btnsvhvr
+                  WebColor(COL_INPUT),              // --c_in
+                  WebColor(COL_INPUT_TEXT),         // --c_intxt
+                  WebColor(COL_CONSOLE),            // --c_csl
+                  WebColor(COL_CONSOLE_TEXT)        // --c_csltxt
+  );
+
+  WSContentSendRaw_P(HTTP_HEAD_STYLE1);
+  WSContentSendRaw_P(HTTP_HEAD_STYLE2);
+
 #ifdef USE_WEB_STATUS_LINE_WIFI
-  WSContentSend_P(HTTP_HEAD_STYLE_WIFI, WebColor(COL_FORM), WebColor(COL_TITLE));
+  WSContentSendRaw_P(HTTP_HEAD_STYLE_WIFI);
 #endif
 #if defined(USE_ZIGBEE) || defined(USE_LORAWAN_BRIDGE)
-  WSContentSend_P(HTTP_HEAD_STYLE_ZIGBEE);
+  WSContentSendRaw_P(HTTP_HEAD_STYLE_ZIGBEE);
 #endif // USE_ZIGBEE
   if (formatP != nullptr) {
     // This uses char strings. Be aware of sending %% if % is needed
@@ -1011,13 +1035,17 @@ void WSContentSendStyle_P(const char* formatP, ...) {
 //    WSContentSend_P(PSTR("body{background:%s;background-repeat:no-repeat;background-attachment:fixed;background-size:cover;}"), SettingsText(SET_CANVAS));
     WSContentSend_P(PSTR("body{background:%s 0 0 / cover no-repeat fixed;}"), SettingsText(SET_CANVAS));
   }
-  WSContentSend_P(HTTP_HEAD_STYLE3, WebColor(COL_BACKGROUND), WebColor(COL_TEXT),
 #ifdef FIRMWARE_MINIMAL
-  WebColor(COL_TEXT_WARNING),
-#endif
-  WebColor(COL_TITLE),
-  (Web.initial_config) ? "" : (Settings->flag5.gui_module_name) ? "" : ModuleName().c_str(),  // SetOption141 - (GUI) Disable display of GUI module name (1)
-  (Settings->flag6.gui_device_name) ? "" : SettingsTextEscaped(SET_DEVICENAME).c_str());      // SetOption163 - (GUI) Disable display of GUI device name (1)
+  WSContentSend_P(HTTP_HEAD_STYLE3_MINIMAL,
+    (Web.initial_config) ? "" : (Settings->flag5.gui_module_name) ? "" : ModuleName().c_str(),  // SetOption141 - (GUI) Disable display of GUI module name (1)
+    (Settings->flag6.gui_device_name) ? "" : SettingsTextEscaped(SET_DEVICENAME).c_str());      // SetOption163 - (GUI) Disable display of GUI device name (1)
+#else // FIRMWARE_MINIMAL
+  WSContentSend_P(HTTP_HEAD_STYLE3,
+    PSTR(D_NOSCRIPT),
+    (Web.initial_config) ? "" : (Settings->flag5.gui_module_name) ? "" : ModuleName().c_str(),  // SetOption141 - (GUI) Disable display of GUI module name (1)
+    (Settings->flag6.gui_device_name) ? "" : SettingsTextEscaped(SET_DEVICENAME).c_str());      // SetOption163 - (GUI) Disable display of GUI device name (1)
+
+#endif // FIRMWARE_MINIMAL
 
   // SetOption53 - Show hostname and IP address in GUI main menu
 #if (RESTART_AFTER_INITIAL_WIFI_CONFIG)
@@ -1666,7 +1694,7 @@ void HandleRoot(void) {
 #endif  // USE_SONOFF_IFAN
 
     if (not_active) {
-      WSContentSend_P(PSTR("eb('o%d').style.background='#%06x';"), idx, WebColor(COL_BUTTON_OFF));
+      WSContentSend_P(PSTR("eb('o%d').style.background='var(--c_btnoff)';"), idx);
     }
   }
   WSContentSend_P(PSTR("</script>"));
@@ -1856,8 +1884,8 @@ bool HandleRootStatusRefresh(void) {
       }
 #endif  // USE_SONOFF_IFAN
 
-      WSContentSend_P(PSTR("eb('o%d').style.background='#%06x';"),
-        idx, WebColor((active) ? COL_BUTTON : COL_BUTTON_OFF));
+      WSContentSend_P(PSTR("eb('o%d').style.background='var(--c_btn%s)';"),
+        idx, (active) ? PSTR("") : PSTR("off"));
     }
   }
 
@@ -2460,7 +2488,7 @@ void HandleWifiConfiguration(void) {
   if (WifiIsInManagerMode()) { WSContentSend_P(HTTP_SCRIPT_HIDE); }
   if (WIFI_TESTING == Wifi.wifiTest) { WSContentSend_P(HTTP_SCRIPT_RELOAD_TIME, HTTP_RESTART_RECONNECT_TIME); }
 #ifdef USE_ENHANCED_GUI_WIFI_SCAN
-  WSContentSendStyle_P(HTTP_HEAD_STYLE_SSI, WebColor(COL_TEXT));
+  WSContentSendStyle_P("%s", HTTP_HEAD_STYLE_SSI);
 #else
   WSContentSendStyle();
 #endif  // USE_ENHANCED_GUI_WIFI_SCAN

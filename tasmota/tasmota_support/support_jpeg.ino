@@ -22,7 +22,7 @@
 #ifdef JPEG_PICTS
 
 #include "img_converters.h"
-#include "esp_jpg_decode.h"
+#include "jpeg_decoder.h"
 
 void rgb888_to_565(uint8_t *in, uint16_t *out, uint32_t len) {
 uint8_t red, grn, blu;

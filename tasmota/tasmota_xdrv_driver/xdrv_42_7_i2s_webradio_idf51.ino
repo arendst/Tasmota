@@ -20,10 +20,6 @@
 #if defined(ESP32) && ESP_IDF_VERSION_MAJOR >= 5
 #if defined(USE_I2S_AUDIO) && defined(USE_I2S_WEBRADIO)
 
-struct AUDIO_I2S_WEBRADIO_t {
-  AudioFileSourceICYStream *ifile = NULL;
-} Audio_webradio;
-
 void I2sMDCallback(void *cbData, const char *type, bool isUnicode, const char *str) {
   const char *ptr = reinterpret_cast<const char *>(cbData);
   (void) isUnicode; // Punt this ball for now
@@ -43,7 +39,7 @@ void I2SWrStatusCB(void *cbData, int code, const char *str){
 bool I2SWebradio(const char *url, uint32_t decoder_type) {
 
   size_t wr_tasksize = 8000; // suitable for ACC and MP3
-  if(decoder_type == 2){ // opus needs a ton of stack
+  if(decoder_type == OPUS_DECODER){ // opus needs a ton of stack
     wr_tasksize = 26000;
   }
 
