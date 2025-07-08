@@ -114,9 +114,10 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-## Changelog v15.0.1.1
+## Changelog v15.0.1.2
 ### Added
 - Commands `LoRaWanDecoder "` and `LoRaWanName "` to clear name [#23394](https://github.com/arendst/Tasmota/issues/23394)
+- Command `I2sPause` [#23646](https://github.com/arendst/Tasmota/issues/23646)
 - Internal function 'WSContentSendRaw_P' [#23641](https://github.com/arendst/Tasmota/issues/23641)
 - Universal display driver for ZJY169S0800TG01 ST7789 280x240 [#23638](https://github.com/arendst/Tasmota/issues/23638)
 - NeoPool add Redox tank alarm [#19811](https://github.com/arendst/Tasmota/issues/19811)
@@ -126,6 +127,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ### Breaking Changed
 
 ### Changed
+- ESP32 Platform from 2025.05.30 to 2025.07.30, Framework (Arduino Core) from v3.1.3.250504 to v3.1.3.250707 and IDF from v5.3.3.250501 to v5.3.3.250707 [#23642](https://github.com/arendst/Tasmota/issues/23642)
 - Library names [#23560](https://github.com/arendst/Tasmota/issues/23560)
 - CSS uses named colors variables [#23597](https://github.com/arendst/Tasmota/issues/23597)
 - VEML6070 and AHT2x device detection [#23581](https://github.com/arendst/Tasmota/issues/23581)

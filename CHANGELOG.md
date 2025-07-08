@@ -3,7 +3,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [15.0.1.1]
+## [15.0.1.2]
+### Added
+- Command `I2sPause` (#23646)
+
+### Breaking Changed
+
+### Changed
+- ESP32 Platform from 2025.05.30 to 2025.07.30, Framework (Arduino Core) from v3.1.3.250504 to v3.1.3.250707 and IDF from v5.3.3.250501 to v5.3.3.250707 (#23642)
+
+### Fixed
+
+### Removed
+
+
+
+## [15.0.1.1] 20250708
 ### Added
 - I2S additions (#23543)
 - NeoPool add Redox tank alarm (#19811)
@@ -11,8 +26,6 @@ All notable changes to this project will be documented in this file.
 - Universal display driver for ZJY169S0800TG01 ST7789 280x240 (#23638)
 - Commands `LoRaWanDecoder "` and `LoRaWanName "` to clear name (#23394)
 - Internal function 'WSContentSendRaw_P' (#23641)
-
-### Breaking Changed
 
 ### Changed
 - BLE updates for esp-nimble-cpp v2.x (#23553)
@@ -28,9 +41,6 @@ All notable changes to this project will be documented in this file.
 - Berry security issues in `berry_mapping` and improve documentation (#23606)
 - Berry Hue regression from #23429 (#23623)
 - AHT30 sensor start with null values after deep sleep (#23624)
-
-### Removed
-
 
 ## [Released]
 
