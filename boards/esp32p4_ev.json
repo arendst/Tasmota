@@ -1,0 +1,46 @@
+{
+  "build": {
+    "core": "esp32",
+    "extra_flags": [
+      "-DARDUINO_TASMOTA -DESP32P4 -DBOARD_HAS_PSRAM -DARDUINO_USB_MODE=1 -DUSE_USB_CDC_CONSOLE"
+    ],
+    "f_cpu": "360000000L",
+    "f_flash": "80000000L",
+    "flash_mode": "qio",
+    "mcu": "esp32p4",
+    "variant": "esp32p4",
+    "partitions": "partitions/esp32_partition_app3904k_fs3392k.csv"
+  },
+  "connectivity": [
+    "wifi",
+    "bluetooth",
+    "openthread",
+    "ethernet"
+  ],
+  "debug": {
+    "openocd_target": "esp32p4.cfg"
+  },
+  "frameworks": [
+    "arduino",
+    "espidf"
+  ],
+  "name": "Espressif ESP32-P4 Function EV Board",
+  "upload": {
+    "arduino": {
+      "flash_extra_images": [
+        [
+          "0x10000",
+          "tasmota32p4-safeboot.bin"
+        ]
+      ]
+    },
+    "flash_size": "16MB",
+    "maximum_ram_size": 768000,
+    "maximum_size": 16777216,
+    "require_upload_port": true,
+    "speed": 1500000
+  },
+  "url": "https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32p4/esp32-p4-function-ev-board/index.html",
+  "vendor": "Espressif"
+}
+
