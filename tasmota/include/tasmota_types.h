@@ -604,6 +604,8 @@ typedef struct {
   uint8_t       free_esp32c3_3D8[36];      // 3D8  - Due to smaller myio
   #elif CONFIG_IDF_TARGET_ESP32C6
   uint8_t       free_esp32c6_3EA[18];      // 3EA  - Due to smaller myio
+  #elif CONFIG_IDF_TARGET_ESP32P4
+  uint8_t       free_esp32c3_43C[8];       // ___  - ___ ???
   #endif  // CONFIG_IDF_TARGET_ESP32C2/3/6
 #endif  // ESP32
   mytmplt       user_template;             // 3FC  2x15 bytes (ESP8266) / 2x37 bytes (ESP32) / 2x22 bytes (ESP32-C2) / 2x23 bytes (ESP32-C3) / 2x32 bytes (ESP32-C6) / 2x37 bytes (ESP32-S2)
@@ -622,9 +624,7 @@ typedef struct {
   uint8_t       eth_type;                  // 446
   uint8_t       eth_clk_mode;              // 447
 
-#ifndef CONFIG_IDF_TARGET_ESP32P4
   uint8_t       free_esp32_448[4];         // 448
-#endif //CONFIG_IDF_TARGET_ESP32P4
   #ifdef CONFIG_IDF_TARGET_ESP32S2
   uint8_t       free_esp32s2_456[2];       // 456 - fix 32-bit offset for WebCamCfg
   #endif
@@ -636,14 +636,10 @@ typedef struct {
   char          serial_delimiter;          // 451
   uint8_t       seriallog_level;           // 452
   uint8_t       sleep;                     // 453
-#ifdef CONFIG_IDF_TARGET_ESP32P4
-#undef MAX_DOMOTICZ_IDX
-#undef MAX_DOMOTICZ_SNS_IDX
-#define MAX_DOMOTICZ_IDX 3
-#define MAX_DOMOTICZ_SNS_IDX 3
-#endif //CONFIG_IDF_TARGET_ESP32P4
+#ifndef CONFIG_IDF_TARGET_ESP32P4
   uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX];      // 454
   uint16_t      domoticz_sensor_idx[MAX_DOMOTICZ_SNS_IDX];  // 45C
+#endif //CONFIG_IDF_TARGET_ESP32P4
   uint8_t       module;                    // 474
   uint8_t       ws_color[4][3];            // 475
   uint8_t       ws_width[3];               // 481
