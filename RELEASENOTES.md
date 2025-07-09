@@ -98,6 +98,12 @@ The following binary downloads have been compiled with ESP32/Arduino library cor
 - **tasmota32-nspanel.bin** = The Sonoff NSPanel Smart Scene Wall Switch version with HASPmota display support.
 - **tasmota32-webcam.bin** = The Webcam version adds webcam support for 4M+ flash.
 - **tasmota32-zbbridgepro.bin** - The Sonoff Zigbee Bridge Pro version with CC2652P firmware load support.
+- **tasmota32-pipsolar.bin** = The pipsolar inverter version.
+- **tasmota32c2-pipsolar.bin** = The pipsolar inverter version.
+- **tasmota32c3-pipsolar.bin** = The pipsolar inverter version.
+- **tasmota32c6-pipsolar.bin** = The pipsolar inverter version.
+- **tasmota32s2-pipsolar.bin** = The pipsolar inverter version.
+- **tasmota32s3-pipsolar.bin** = The pipsolar inverter version.
 
 Latest released binaries can be downloaded from
 - https://github.com/arendst/Tasmota-firmware/tree/firmware/release-firmware

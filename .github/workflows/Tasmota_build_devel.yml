@@ -199,6 +199,12 @@ jobs:
           - tasmota32s2cdc
           - tasmota32s3
           - tasmota32solo1
+          - tasmota32-pipsolar
+          - tasmota32c2-pipsolar
+          - tasmota32c3-pipsolar
+          - tasmota32c6-pipsolar
+          - tasmota32s2-pipsolar
+          - tasmota32s3-pipsolar
     steps:
       - uses: actions/checkout@v4
         with:
