@@ -131,6 +131,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Library names [#23560](https://github.com/arendst/Tasmota/issues/23560)
 - CSS uses named colors variables [#23597](https://github.com/arendst/Tasmota/issues/23597)
 - VEML6070 and AHT2x device detection [#23581](https://github.com/arendst/Tasmota/issues/23581)
+- ESP32 Domoticz supports persistent settings for all relays, keys and switches using filesystem
 - ESP32 LoRaWan decoding won't duplicate non-decoded message if `SO147 0`
 - BLE updates for esp-nimble-cpp v2.x [#23553](https://github.com/arendst/Tasmota/issues/23553)
 
