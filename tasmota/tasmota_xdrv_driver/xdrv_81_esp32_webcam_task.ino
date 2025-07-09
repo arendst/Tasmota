@@ -279,7 +279,7 @@ These will save or append a picture to a file.  The picture must have been first
 #include "sensor.h"
 #include "fb_gfx.h"
 #include "camera_pins.h"
-#include "esp_jpg_decode.h"
+#include "jpeg_decoder.h"
 //#include "img_converters.h"
 
 #ifdef USE_UFILESYS
