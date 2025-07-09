@@ -1184,7 +1184,13 @@ void WSContentSend_THD(const char *types, float f_temperature, float f_humidity)
 
 void WSContentEnd(void) {
   WSContentFlush();                                // Flush chunk buffer
-  _WSContentSend("");                              // Signal end of chunked content
+//  _WSContentSend("");                              // Signal end of chunked content using multiple writes
+
+  // Fix UDP response #23613
+  const char *footer_empty = "0\r\n\r\n";
+  Webserver->client().write(footer_empty, 5);      // Signal end of chunked content in one write (doesn't clear core _chunked)
+  delay(5);
+
   Webserver->client().stop();
 #if defined(USE_MI_ESP32) && !defined(USE_BLE_ESP32)
   MI32resumeScanTask();
