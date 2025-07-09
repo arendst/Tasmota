@@ -346,9 +346,10 @@ void GVHandleEspInfo(void) {
   jsonResponse += "\",\"cycle_count\":" + String(ESP.getCycleCount());
   jsonResponse += ",\"mac\":\"" + ESP_getEfuseMac();
 
+#ifndef CONFIG_IDF_TARGET_ESP32P4
   const FlashMode_t flashMode = ESP.getFlashChipMode(); // enum
   jsonResponse += "\",\"flash_mode\":" + String(flashMode);
-
+#endif // CONFIG_IDF_TARGET_ESP32P4
 #ifdef ESP8266
   jsonResponse += ",\"flash_chip_size\":" + String(ESP.getFlashChipRealSize());
 #else   // ESP32
