@@ -103,7 +103,7 @@ def esp32_detect_flashsize():
         return "4MB",False
     else:
         esptoolpy_flags = ["flash-id"]
-        esptoolpy_cmd = esptoolpy + esptoolpy_flags
+        esptoolpy_cmd = ["esptool"] + esptoolpy_flags
         try:
             output = subprocess.run(esptoolpy_cmd, capture_output=True).stdout.splitlines()
             for l in output:
