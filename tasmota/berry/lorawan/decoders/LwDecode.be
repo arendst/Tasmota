@@ -138,6 +138,116 @@ end
 
 lwdecode = lwdecode_cls()
 
+import webserver
+class webPageLoRaWAN : Driver
+  def sendNodeButton(node)
+     webserver.content_send("<td><button onclick='selNode("+str(node)+")' id='n"+str(node)+"' class='button inactive' style='width:30px'>"+str(node)+"</button>")
+  end
+
+  def web_add_config_button()
+    webserver.content_send("<p><form id=ac action='lrw' style='display: block;' method='get'><button>LoRaWAN</button></form></p>")
+  end
+
+  #- this method displays the web page -#
+  def pageLoRaWAN()
+    if !webserver.check_privileged_access() return nil end
+
+    var inode=1
+    var cmdArg  
+    if webserver.has_arg('save')
+     inode = webserver.arg('node')
+     tasmota.cmd('LoRaWanAppKey'+inode+' '+ webserver.arg('ak'),true)
+     cmdArg = webserver.arg('dc')
+     if !cmdArg cmdArg='"' end
+     tasmota.cmd('LoRaWanDecoder'+inode+' '+cmdArg,true)
+     cmdArg = webserver.arg('an')
+     if !cmdArg cmdArg='"' end
+     tasmota.cmd('LoRaWanName'+inode+' '+cmdArg,true)
+    end
+
+    webserver.content_start("LoRaWAN")           #- title of the web page -#
+    webserver.content_send_style()               #- send standard Tasmota styles -#
+    webserver.content_send(
+     "<style>.inactive{background:#10537c;}.active{background:#1fa3ec;}</style>"
+     "<h2>LoRaWAN End Devices</h2>"
+     "<script>"
+     "function selNode(n){"
+     " var i;var d=4;"
+     " var e=document.getElementById('n'+n);"
+     " var o=document.getElementsByClassName('button active');"
+     " if(o.length){"
+     "  for(i=0;i<o.length;i++){"
+     "  o[i].classList.add('inactive');"
+     "  o[i].classList.remove('active');"
+     "  }"
+     " }"
+     " e.classList.add('active');"
+     " for(i=1;i<=16;i++){"
+     "  document.getElementById('nd'+i).style.display=(i==n)?'block':'none';"
+     " }"
+     "}"
+     "window.onload = function(){selNode("+str(inode)+");};"
+     "</script>")
+
+    var arg, appKey, decoder, name
+    var hintAK='32 character Application Key'
+    var hintDecoder='Decoder file, ending in .be'
+    var hintAN='Device name for MQTT messages'
+    webserver.content_send("<table><tr>")
+    for node:1..8
+        self.sendNodeButton(node)
+    end
+    webserver.content_send("<tr>")
+    for node:9..16
+        self.sendNodeButton(node)
+    end
+    webserver.content_send("</table>")
+    for node:1..16
+     arg='LoRaWanAppKey' + str(node)
+     appKey=tasmota.cmd(arg,true).find(arg)
+     arg='LoRaWanName' + str(node)
+     name=tasmota.cmd(arg,true).find(arg)
+     arg='LoRaWanDecoder' + str(node)
+     decoder=tasmota.cmd(arg,true).find(arg)
+     webserver.content_send(
+      "<div id='nd"+str(node)+"' style='display:none'>"
+      "<fieldset>"
+      "<legend><b>&nbsp;End Device "+str(node)+"&nbsp;</b></legend>"
+      "<form action='' method='post'>"
+      "<p>Application Key"
+      "<input title='"+hintAK+"' pattern='[A-Fa-f0-9]{32}' id='ak' minlength='32' maxlength='32' required='' placeholder='"+hintAK+"' value='"+appKey+ "' name='ak' style='font-size:smaller'>"
+      "</p>"
+      "<p></p>"
+      "<p>Device Name"
+      "<input id='an' placeholder='"+hintAN+"' value='"+name+ "' name='an'>"
+      "</p>"
+      "<p></p>"
+      "<p>Decoder File"
+      "<input title='"+hintDecoder+"' id='dc'  placeholder='"+hintDecoder+"' value='"+decoder+"' name='dc'>"
+      "</p>"
+      "<p></p>"
+      "<button name='save' class='button bgrn'>Save</button>"
+      "<input type='hidden' name='node' value='"+str(node)+"'>"
+      "</form>"
+      "</fieldset>"
+      "</div>")
+    end
+
+    webserver.content_button(webserver.BUTTON_CONFIGURATION) #- button back to conf page -#
+    webserver.content_stop()                        #- end of web page -#
+  end
+
+  #- this is called at Tasmota start-up, as soon as Wifi/Eth is up and web server running -#
+  def web_add_handler()
+    #- we need to register a closure, not just a function, that captures the current instance -#
+    webserver.on("/lrw", / -> self.pageLoRaWAN())
+  end
+end
+
+#- create and register driver in Tasmota -#
+webPageLoRaWAN_instance = webPageLoRaWAN()
+tasmota.add_driver(webPageLoRaWAN_instance)
+
 tasmota.cmd('LoraOption3 off')    # Disable embedded decoding
 tasmota.cmd('SetOption100 off')   # Keep LwReceived in JSON message
 tasmota.cmd('SetOption118 off')   # Keep SENSOR as subtopic name
