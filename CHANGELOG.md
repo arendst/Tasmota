@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [15.0.1.2]
 ### Added
 - Command `I2sPause` (#23646)
+- Basic support for ESP32-P4 (#23663)
 
 ### Breaking Changed
 

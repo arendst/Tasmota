@@ -122,6 +122,7 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Universal display driver for ZJY169S0800TG01 ST7789 280x240 [#23638](https://github.com/arendst/Tasmota/issues/23638)
 - NeoPool add Redox tank alarm [#19811](https://github.com/arendst/Tasmota/issues/19811)
 - I2S additions [#23543](https://github.com/arendst/Tasmota/issues/23543)
+- Basic support for ESP32-P4 (#23663)[#23663](https://github.com/arendst/Tasmota/issues/23663)
 - Berry f-strings now support ':' in expression [#23618](https://github.com/arendst/Tasmota/issues/23618)
 
 ### Breaking Changed
