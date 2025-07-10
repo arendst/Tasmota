@@ -536,100 +536,52 @@ typedef struct {
   uint8_t       tuyamcu_topic;             // 33F  Manage tuyaSend topic. ex_energy_power_delta on 6.6.0.20, replaced on 8.5.0.1
   uint16_t      domoticz_update_timer;     // 340
   uint16_t      pwm_range;                 // 342
+#ifndef CONFIG_IDF_TARGET_ESP32P4
   uint32_t      domoticz_relay_idx[MAX_DOMOTICZ_IDX];  // 344
   uint32_t      domoticz_key_idx[MAX_DOMOTICZ_IDX];    // 354
-  uint32_t      energy_power_calibration;    // 364
-  uint32_t      energy_voltage_calibration;  // 368
-  uint32_t      energy_current_calibration;  // 36C
-  uint32_t      energy_power_calibration2;   // 370 - ex_energy_kWhtoday
-  uint32_t      energy_voltage_calibration2; // 374 - ex_energy_kWhyesterday
-  uint32_t      energy_current_calibration2; // 378 - ex_energy_kWhdoy, ex_energy_min_power
-  uint16_t      energy_max_power;          // 37C
-  uint16_t      energy_min_voltage;        // 37E
-  uint16_t      energy_max_voltage;        // 380
-  uint16_t      energy_min_current;        // 382
-  uint16_t      energy_max_current;        // 384
-  uint16_t      energy_max_power_limit;              // 386  MaxPowerLimit
-  uint16_t      energy_max_power_limit_hold;         // 388  MaxPowerLimitHold
-  uint16_t      energy_max_power_limit_window;       // 38A  MaxPowerLimitWindow
-  uint16_t      ex_energy_max_power_safe_limit;         // 38C  MaxSafePowerLimit - Free since 14.1.0.3
-  uint16_t      ex_energy_max_power_safe_limit_hold;    // 38E  MaxSafePowerLimitHold - Free since 14.1.0.3
-  uint16_t      ex_energy_max_power_safe_limit_window;  // 390  MaxSafePowerLimitWindow - Free since 14.1.0.3
-  uint16_t      energy_max_energy;         // 392  MaxEnergy
-  uint16_t      energy_max_energy_start;   // 394  MaxEnergyStart
-  uint16_t      mqtt_retry;                // 396
-  uint8_t       poweronstate;              // 398
-  uint8_t       last_module;               // 399
-  uint16_t      blinktime;                 // 39A
-  uint16_t      blinkcount;                // 39C
-  uint16_t      light_rotation;            // 39E
-  SOBitfield3   flag3;                     // 3A0
-  uint16_t      energy_kWhdoy;             // 3A4
-  uint16_t      energy_min_power;          // 3A6
-  uint32_t      pn532_password;            // 3A8 - ex_switchmode4-7, Free since 9.2.0.6
+#endif  // CONFIG_IDF_TARGET_ESP32P4
+  uint32_t      energy_power_calibration;    // 364 (P4 344)
+  uint32_t      energy_voltage_calibration;  // 368 (P4 348)
+  uint32_t      energy_current_calibration;  // 36C (P4 34C)
+  uint32_t      energy_power_calibration2;   // 370 (P4 350) - ex_energy_kWhtoday
+  uint32_t      energy_voltage_calibration2; // 374 (P4 354) - ex_energy_kWhyesterday
+  uint32_t      energy_current_calibration2; // 378 (P4 358) - ex_energy_kWhdoy, ex_energy_min_power
+  uint16_t      energy_max_power;          // 37C (P4 35C)
+  uint16_t      energy_min_voltage;        // 37E (P4 35E)
+  uint16_t      energy_max_voltage;        // 380 (P4 360)
+  uint16_t      energy_min_current;        // 382 (P4 362)
+  uint16_t      energy_max_current;        // 384 (P4 364)
+  uint16_t      energy_max_power_limit;                 // 386 (P4 366)  MaxPowerLimit
+  uint16_t      energy_max_power_limit_hold;            // 388 (P4 368)  MaxPowerLimitHold
+  uint16_t      energy_max_power_limit_window;          // 38A (P4 36A)  MaxPowerLimitWindow
+  uint16_t      ex_energy_max_power_safe_limit;         // 38C (P4 36C)  MaxSafePowerLimit - Free since 14.1.0.3
+  uint16_t      ex_energy_max_power_safe_limit_hold;    // 38E (P4 36E)  MaxSafePowerLimitHold - Free since 14.1.0.3
+  uint16_t      ex_energy_max_power_safe_limit_window;  // 390 (P4 370)  MaxSafePowerLimitWindow - Free since 14.1.0.3
+  uint16_t      energy_max_energy;         // 392 (P4 372)  MaxEnergy
+  uint16_t      energy_max_energy_start;   // 394 (P4 374)  MaxEnergyStart
+  uint16_t      mqtt_retry;                // 396 (P4 376)
+  uint8_t       poweronstate;              // 398 (P4 378)
+  uint8_t       last_module;               // 399 (P4 379)
+  uint16_t      blinktime;                 // 39A (P4 37A)
+  uint16_t      blinkcount;                // 39C (P4 37C)
+  uint16_t      light_rotation;            // 39E (P4 37E)
+  SOBitfield3   flag3;                     // 3A0 (P4 380)
+  uint16_t      energy_kWhdoy;             // 3A4 (P4 384)
+  uint16_t      energy_min_power;          // 3A6 (P4 386)
+  uint32_t      pn532_password;            // 3A8 (P4 388) - ex_switchmode4-7, Free since 9.2.0.6
 
-#ifdef CONFIG_IDF_TARGET_ESP32S3
-  // ------------------------------------
-  // Remapping of the section for ESP32S3
-  // ------------------------------------
-  myio          my_gp;                     // 3AC  (+x62) 2x49 bytes (ESP32-S3)
-  uint8_t       eth_type;                  // 40E
-  uint8_t       eth_clk_mode;              // 40F
-  mytmplt       user_template;             // 410  (9x4E) 2x39 bytes (ESP32-S3)
-  uint8_t       eth_address;               // 45E
-  uint8_t       module;                    // 45F
-  WebCamCfg     webcam_config;             // 460
-  uint8_t       ws_width[3];               // 464
-  char          serial_delimiter;          // 467
-  uint8_t       seriallog_level;           // 468
-  uint8_t       sleep;                     // 469
-  uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX];      // 46A (+8)
-  uint16_t      domoticz_sensor_idx[MAX_DOMOTICZ_SNS_IDX];  // 472 (+x18)
-  uint8_t       ws_color[4][3];            // 48A (+xC)
-                                           // 496
-
-  // ----------------------------------------
-  // End of remapping, next is all other CPUs
-  // ----------------------------------------
-#else
-  myio          my_gp;                     // 3AC  2x18 bytes (ESP8266) / 2x40 bytes (ESP32) / 2x21 bytes (ESP32-C2) / 2x22 bytes (ESP32-C3) / 2x31 bytes (ESP32-C6) / 2x47 bytes (ESP32-S2)
 #ifdef ESP8266
+  // --------------------------------------------------------------
+  // Mapping 0x3AC to 0x496 for ESP8266
+  // --------------------------------------------------------------
+  myio          my_gp;                     // 3AC  2x18 bytes (ESP8266)
   uint16_t      gpio16_converted;          // 3D0
+
   uint8_t       free_esp8266_3D2[42];      // 3D2
-#endif  // ESP8266
-#ifdef ESP32
-  #if CONFIG_IDF_TARGET_ESP32C2
-  uint8_t       free_esp32c2_3D6[38];      // 3D6  - Due to smaller myio
-  #elif CONFIG_IDF_TARGET_ESP32C3
-  uint8_t       free_esp32c3_3D8[36];      // 3D8  - Due to smaller myio
-  #elif CONFIG_IDF_TARGET_ESP32C6
-  uint8_t       free_esp32c6_3EA[18];      // 3EA  - Due to smaller myio
-  #endif  // CONFIG_IDF_TARGET_ESP32C2/3/6
-#endif  // ESP32
-  mytmplt       user_template;             // 3FC  2x15 bytes (ESP8266) / 2x37 bytes (ESP32) / 2x22 bytes (ESP32-C2) / 2x23 bytes (ESP32-C3) / 2x32 bytes (ESP32-C6) / 2x37 bytes (ESP32-S2)
-#ifdef ESP8266
+
+  mytmplt       user_template;             // 3FC  2x15 bytes (ESP8266)
+
   uint8_t       free_esp8266_41A[55];      // 41A
-#endif  // ESP8266
-#ifdef ESP32
-  #if CONFIG_IDF_TARGET_ESP32C2
-  uint8_t       free_esp32c2_428[30];      // 428  - Due to smaller mytmplt
-  #elif CONFIG_IDF_TARGET_ESP32C3
-  uint8_t       free_esp32c3_42A[28];      // 42A  - Due to smaller mytmplt
-  #elif CONFIG_IDF_TARGET_ESP32C6
-  uint8_t       free_esp32c3_43C[10];      // 43C  - Due to smaller mytmplt
-  #endif  // CONFIG_IDF_TARGET_ESP32C2/3/6
-
-  uint8_t       eth_type;                  // 446
-  uint8_t       eth_clk_mode;              // 447
-
-  uint8_t       free_esp32_448[4];         // 448
-  #ifdef CONFIG_IDF_TARGET_ESP32S2
-  uint8_t       free_esp32s2_456[2];       // 456 - fix 32-bit offset for WebCamCfg
-  #endif
-
-  WebCamCfg     webcam_config;             // 44C
-  uint8_t       eth_address;               // 450
-#endif  // ESP32
 
   char          serial_delimiter;          // 451
   uint8_t       seriallog_level;           // 452
@@ -639,24 +591,120 @@ typedef struct {
   uint8_t       module;                    // 474
   uint8_t       ws_color[4][3];            // 475
   uint8_t       ws_width[3];               // 481
-
-#ifdef ESP8266
   myio8         ex_my_gp8;                 // 484 17 bytes (ESP8266) - Free since 9.0.0.1
+  uint8_t       ex_my_adc0;                // 495  Free since 9.0.0.1 - Do not use anymore because of ESP32S3
+                                           // 496
 #endif  // ESP8266
 #ifdef ESP32
-#ifdef CONFIG_IDF_TARGET_ESP32S2
-  uint8_t       free_esp32s2_494[1];       // 494 - 2 bytes extra because of WebCamCfg 32-bit offset
+#if CONFIG_IDF_TARGET_ESP32P4
+  // --------------------------------------------------------------
+  // Mapping 0x38C to 0x496 for ESP32P4 (Domoticz in filesystem)
+  // --------------------------------------------------------------
+  myio          my_gp;                     // 38C  2x55 bytes (ESP32-P4)
+  uint8_t       eth_type;                  // 3FA
+  uint8_t       eth_clk_mode;              // 3FB
+  mytmplt       user_template;             // 3FC  2x56 bytes (ESP32-P4)
+  WebCamCfg     webcam_config;             // 46C
+  int8_t        eth_address;               // 470
+  uint8_t       module;                    // 471
+  uint8_t       ws_width[3];               // 472
+  char          serial_delimiter;          // 475
+  uint8_t       seriallog_level;           // 476
+  uint8_t       sleep;                     // 477
+  uint8_t       ws_color[4][3];            // 478  (+xC)
+
+  uint8_t       free_esp32_484[18];        // 484
+                                           // 496
+#elif CONFIG_IDF_TARGET_ESP32S3
+  // --------------------------------------------------------------
+  // Mapping 0x3AC to 0x496 for ESP32S3
+  // --------------------------------------------------------------
+  myio          my_gp;                     // 3AC  2x49 bytes (ESP32-S3)
+  uint8_t       eth_type;                  // 40E
+  uint8_t       eth_clk_mode;              // 40F
+  mytmplt       user_template;             // 410  2x39 bytes (ESP32-S3)
+  int8_t        eth_address;               // 45E
+  uint8_t       module;                    // 45F
+  WebCamCfg     webcam_config;             // 460
+  uint8_t       ws_width[3];               // 464
+  char          serial_delimiter;          // 467
+  uint8_t       seriallog_level;           // 468
+  uint8_t       sleep;                     // 469
+  uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX];      // 46A (+8)
+  uint16_t      domoticz_sensor_idx[MAX_DOMOTICZ_SNS_IDX];  // 472 (+x18)
+  uint8_t       ws_color[4][3];            // 48A  (+xC)
+                                           // 496
+#elif CONFIG_IDF_TARGET_ESP32S2
+  // --------------------------------------------------------------
+  // Mapping 0x3AC to 0x496 for ESP32S2
+  // --------------------------------------------------------------
+  myio          my_gp;                     // 3AC  2x47 bytes (ESP32-S2)
+  mytmplt       user_template;             // 40A  2x37 bytes (ESP32-S2)
+  uint8_t       eth_type;                  // 454
+  uint8_t       eth_clk_mode;              // 455
+
+  uint8_t       free_esp32s2_456[6];       // 456
+
+  WebCamCfg     webcam_config;             // 45C
+  int8_t        eth_address;               // 460
+  char          serial_delimiter;          // 461
+  uint8_t       seriallog_level;           // 462
+  uint8_t       sleep;                     // 463
+  uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX];      // 464
+  uint16_t      domoticz_sensor_idx[MAX_DOMOTICZ_SNS_IDX];  // 46C
+  uint8_t       module;                    // 484
+  uint8_t       ws_color[4][3];            // 485
+  uint8_t       ws_width[3];               // 491
+
+  uint8_t       free_esp32s2_494[2];       // 494
+                                           // 496
 #else
-  uint8_t       free_esp32_484[17];        // 484
-#endif
+  // --------------------------------------------------------------
+  // Mapping 0x3AC to 0x496 for ESP32, ESP32C2, ESP32C3 and ESP32C6
+  // --------------------------------------------------------------
+  myio          my_gp;                     // 3AC  2x40 bytes (ESP32) / 2x21 bytes (ESP32-C2) / 2x22 bytes (ESP32-C3) / 2x31 bytes (ESP32-C6)
+
+  #if CONFIG_IDF_TARGET_ESP32C2
+  uint8_t       free_esp32c2_3D6[38];      // 3D6  - Due to smaller myio
+  #elif CONFIG_IDF_TARGET_ESP32C3
+  uint8_t       free_esp32c3_3D8[36];      // 3D8  - Due to smaller myio
+  #elif CONFIG_IDF_TARGET_ESP32C6
+  uint8_t       free_esp32c6_3EA[18];      // 3EA  - Due to smaller myio
+  #endif  // CONFIG_IDF_TARGET_ESP32C2/3/6
+
+  mytmplt       user_template;             // 3FC  2x37 bytes (ESP32) / 2x22 bytes (ESP32-C2) / 2x23 bytes (ESP32-C3) / 2x32 bytes (ESP32-C6)
+
+  #if CONFIG_IDF_TARGET_ESP32C2
+  uint8_t       free_esp32c2_428[30];      // 428  - Due to smaller mytmplt
+  #elif CONFIG_IDF_TARGET_ESP32C3
+  uint8_t       free_esp32c3_42A[28];      // 42A  - Due to smaller mytmplt
+  #elif CONFIG_IDF_TARGET_ESP32C6
+  uint8_t       free_esp32c6_43C[10];      // 43C  - Due to smaller mytmplt
+  #endif  // CONFIG_IDF_TARGET_ESP32C2/3/6
+
+  uint8_t       eth_type;                  // 446
+  uint8_t       eth_clk_mode;              // 447
+
+  uint8_t       free_esp32_448[4];         // 448
+
+  WebCamCfg     webcam_config;             // 44C
+  int8_t        eth_address;               // 450
+  char          serial_delimiter;          // 451
+  uint8_t       seriallog_level;           // 452
+  uint8_t       sleep;                     // 453
+  uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX];      // 454
+  uint16_t      domoticz_sensor_idx[MAX_DOMOTICZ_SNS_IDX];  // 45C
+  uint8_t       module;                    // 474
+  uint8_t       ws_color[4][3];            // 475
+  uint8_t       ws_width[3];               // 481
+
+  uint8_t       free_esp32_484[18];        // 484
+                                           // 496
+#endif  // ESP32 Mapping
 #endif  // ESP32
-
-  uint8_t       ex_my_adc0;                // 495  Free since 9.0.0.1 - Do not use anymore because of ESP32S3
-
-  // ----------------------------------------
-  // End of remapping for non-ESP32S3
-  // ----------------------------------------
-#endif // ESP32S3
+  // --------------------------------------------------------------
+  // End of CPU specific Mapping
+  // --------------------------------------------------------------
 
   uint16_t      light_pixels : 15;         // 496
   uint16_t      light_pixels_reverse : 1;  // 496
@@ -777,9 +825,7 @@ typedef struct {
   uint8_t       weight_change;             // E9F
   uint8_t       web_color2[2][3];          // EA0  Needs to be on integer / 3 distance from web_color
   uint16_t      zcdimmerset[5];            // EA6
-
   uint8_t       free_eb0[20];              // EB0  20 bytes
-
   uint16_t      light_pixels_height_1 : 15;// EC4  Pixels height minus 1, default 0 (0 means 1 line)
   uint16_t      light_pixels_alternate : 1;// EC4  Indicates alternate lines in Pixels Matrix
   uint8_t       shift595_device_count;     // EC6
@@ -872,6 +918,8 @@ typedef struct {
 } TSettings;
 
 static_assert(sizeof(TSettings) == 4096, "TSettings Size is not correct");
+
+
 
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint16_t data;                           // Allow bit manipulation
