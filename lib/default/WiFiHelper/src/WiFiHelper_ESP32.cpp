@@ -166,6 +166,10 @@ int WiFiHelper::getPhyMode() {
       WIFI_PHY_MODE_HE20, // PHY mode for Bandwidth HE20 (11ax)
     } wifi_phy_mode_t;
   */
+ #ifndef SOC_WIFI_SUPPORTED
+  // ESP32-P4 does not support PHY modes, return 0
+  return 0;
+#else
   int phy_mode = 0;  // "low rate|11b|11g|HT20|HT40|HE20"
   wifi_phy_mode_t WiFiMode;
   if (esp_wifi_sta_get_negotiated_phymode(&WiFiMode) == ESP_OK) {
@@ -175,9 +179,13 @@ int WiFiHelper::getPhyMode() {
     }
   }
   return phy_mode;
+# endif
 }
 
 bool WiFiHelper::setPhyMode(WiFiPhyMode_t mode) {
+# ifndef SOC_WIFI_SUPPORTED
+  return false;  // ESP32-P4 does not support PHY modes
+# else
   uint8_t protocol_bitmap = WIFI_PROTOCOL_11B;      // 1
   switch (mode) {
 #if ESP_IDF_VERSION_MAJOR >= 5
@@ -187,6 +195,7 @@ bool WiFiHelper::setPhyMode(WiFiPhyMode_t mode) {
     case 2: protocol_bitmap |= WIFI_PROTOCOL_11G;   // 2
   }
   return (ESP_OK == esp_wifi_set_protocol(WIFI_IF_STA, protocol_bitmap));
+#endif // CONFIG_IDF_TARGET_ESP32P4
 }
 
 void WiFiHelper::setOutputPower(int n) {
@@ -370,8 +379,11 @@ String WiFiHelper::macAddress(void) {
 #else
   uint8_t mac[6] = {0,0,0,0,0,0};
   char macStr[18] = { 0 };
-
+#ifdef CONFIG_SOC_HAS_WIFI
   esp_read_mac(mac, ESP_MAC_WIFI_STA);
+#else
+  esp_read_mac(mac, ESP_MAC_BASE);
+#endif // CONFIG_SOC_HAS_WIFI
   snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
   return String(macStr);
 #endif
