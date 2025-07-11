@@ -3,25 +3,46 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [15.0.1.1]
+## [15.0.1.2]
 ### Added
-- I2S additions (#23543)
+- Command `I2sPause` (#23646)
+- Basic support for ESP32-P4 (#23663)
 
 ### Breaking Changed
+
+### Changed
+- ESP32 Platform from 2025.05.30 to 2025.07.30, Framework (Arduino Core) from v3.1.3.250504 to v3.1.3.250707 and IDF from v5.3.3.250501 to v5.3.3.250707 (#23642)
+- ESP32 Domoticz supports persistent settings for all relays, keys and switches using filesystem
+
+### Fixed
+
+### Removed
+
+
+
+## [15.0.1.1] 20250708
+### Added
+- I2S additions (#23543)
+- NeoPool add Redox tank alarm (#19811)
+- Berry f-strings now support ':' in expression (#23618)
+- Universal display driver for ZJY169S0800TG01 ST7789 280x240 (#23638)
+- Commands `LoRaWanDecoder "` and `LoRaWanName "` to clear name (#23394)
+- Internal function 'WSContentSendRaw_P' (#23641)
 
 ### Changed
 - BLE updates for esp-nimble-cpp v2.x (#23553)
 - Library names (#23560)
 - ESP32 LoRaWan decoding won't duplicate non-decoded message if `SO147 0`
+- VEML6070 and AHT2x device detection (#23581)
+- CSS uses named colors variables (#23597)
 
 ### Fixed
 - LVGL restore `lv_chart.set_range` removed in LVGL 9.3.0 in favor of `lv_chart.set_axis_range` (#23567)
-- Berry vulnerability in JSON parsing for unicode
-- Berry fix security issues in `int64` and improve documentation
-- Berry fix security issues in `berry_mapping` and improve documentation
-
-### Removed
-
+- Berry vulnerability in JSON parsing for unicode (#23603)
+- Berry security issues in `int64` and improve documentation (#23605)
+- Berry security issues in `berry_mapping` and improve documentation (#23606)
+- Berry Hue regression from #23429 (#23623)
+- AHT30 sensor start with null values after deep sleep (#23624)
 
 ## [Released]
 

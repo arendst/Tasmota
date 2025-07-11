@@ -658,17 +658,6 @@ void RCSwitch::send(unsigned long long code, unsigned int length) {
       else
         this->transmit(protocol.zero);
     }
-    // for kilok, there should be a duration of 66, and 64 significant data codes are stored
-    // send two more bits for even count
-    if (length == 64) {
-      if (nRepeat == 0) {
-        this->transmit(protocol.zero);
-        this->transmit(protocol.zero);
-      } else {
-        this->transmit(protocol.one);
-        this->transmit(protocol.one);
-      }
-     }
     // Set the guard Time
     if (protocol.Guard > 0) {
       digitalWrite(this->nTransmitterPin, LOW);
