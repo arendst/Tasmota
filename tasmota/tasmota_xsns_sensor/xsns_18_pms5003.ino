@@ -208,7 +208,7 @@ bool ZH03ReadDataPassive() // process the passive mode response of the ZH03x sen
   for (uint32_t i = 1; i < 8; i++) {
     sum += buffer[i];
   }
-  sum=(~(sum&255))+1;
+  sum=~(sum)+1;
   if (sum != buffer[8]) { 
     AddLog(LOG_LEVEL_DEBUG, PSTR("ZH03x: " D_CHECKSUM_FAILURE));
     return false;
