@@ -62,6 +62,9 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #endif  // ESP32
 
   D_CMND_SETSENSOR "|" D_CMND_SENSOR "|" D_CMND_DRIVER "|" D_CMND_JSON "|" D_CMND_JSON_PP
+#ifdef CONFIG_ESP_WIFI_REMOTE_ENABLED
+"|" D_CMND_HOSTEDOTA
+#endif //CONFIG_ESP_WIFI_REMOTE_ENABLED
 #endif  //FIRMWARE_MINIMAL
   ;
 
@@ -111,6 +114,9 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #endif  // ESP32
 
   &CmndSetSensor, &CmndSensor, &CmndDriver, &CmndJson, &CmndJsonPP
+#ifdef CONFIG_ESP_WIFI_REMOTE_ENABLED
+  , &CmdHostedOta
+#endif //CONFIG_ESP_WIFI_REMOTE_ENABLED
 #endif   //FIRMWARE_MINIMAL
   };
 
@@ -980,6 +986,9 @@ void CmndStatus(void)
 #endif
                           ",\"" D_JSON_COREVERSION "\":\"" ARDUINO_CORE_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\","
                           "\"CpuFrequency\":%d,\"Hardware\":\"%s\""
+#ifdef CONFIG_ESP_WIFI_REMOTE_ENABLED
+                          ",\"HostedMCU\":{\"Hardware\":\"" CONFIG_ESP_HOSTED_IDF_SLAVE_TARGET"\",\"Version\":\"%s\"}"
+#endif
                           "%s}}"),
                           TasmotaGlobal.version, TasmotaGlobal.image_name, GetCodeCores().c_str(), GetBuildDateAndTime().c_str()
 #ifdef ESP8266
@@ -987,6 +996,9 @@ void CmndStatus(void)
 #endif
                           , ESP.getSdkVersion(),
                           ESP.getCpuFreqMHz(), GetDeviceHardwareRevision().c_str(),
+#ifdef CONFIG_ESP_WIFI_REMOTE_ENABLED
+                          GetHostedMCUFwVersion().c_str(),
+#endif
                           GetStatistics().c_str());
     CmndStatusResponse(2);
   }
@@ -3096,5 +3108,12 @@ void CmndTouchThres(void) {
   ResponseCmndNumber(Settings->touch_threshold);
 }
 #endif  // ESP32 SOC_TOUCH_VERSION_1 or SOC_TOUCH_VERSION_2
+
+void CmdHostedOta() {
+  if (XdrvMailbox.data_len > 0) {
+    OTAHostedMCU(XdrvMailbox.data);
+  }
+  ResponseCmndDone();
+}
 
 #endif  // ESP32
