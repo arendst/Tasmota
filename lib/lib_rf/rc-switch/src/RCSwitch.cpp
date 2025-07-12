@@ -154,6 +154,7 @@ static const RCSwitch::Protocol PROGMEM proto[] = {
   { 250,  0, { 0, 0 }, 1, {  18,  6 }, { 1,  3 }, { 3, 1 }, false,  0 },  // 36 Dooya remote DC2700AC for Dooya DT82TV curtains motor
   { 200,  0, { 0, 0 }, 0, {   0,  0 }, { 1,  3 }, { 3, 1 }, false, 20 },	// 37 DEWENWILS Power Strip
   { 500,  0, { 0, 0 }, 1, {   7,  1 }, { 2,  1 }, { 4, 1 }, true,   0 },  // 38 temperature and humidity sensor, various brands, nexus protocol, 36 bits + start impulse  
+  { 560,  0, { 0, 0 }, 1, {   15, 1 }, { 3,  1 }, { 7, 1 }, true,   0 }   // 39 Hyundai WS Senzor 77/77TH, 36 bits (requires disabled protocol 38: 'RfProtocol38 0')
 };
 
 enum {
