@@ -40,6 +40,7 @@ uint8_t tsl2591_valid = 0;
 float tsl2591_lux = 0;
 uint16_t tsl2591_lux_bb = 0;
 uint16_t tsl2591_lux_ir = 0;
+uint8_t tsl2591_gainval = 0;
 
 tsl2591Gain_t gain_enum_array[4] = {TSL2591_GAIN_LOW,TSL2591_GAIN_MED,TSL2591_GAIN_HIGH,TSL2591_GAIN_MAX};
 tsl2591IntegrationTime_t int_enum_array[6] = {TSL2591_INTEGRATIONTIME_100MS,TSL2591_INTEGRATIONTIME_200MS,TSL2591_INTEGRATIONTIME_300MS,TSL2591_INTEGRATIONTIME_400MS,TSL2591_INTEGRATIONTIME_500MS,TSL2591_INTEGRATIONTIME_600MS};
@@ -57,6 +58,55 @@ void Tsl2591Init(void)
   }
 }
 
+void Tsl2591AGC() {
+  tsl2591Gain_t gain = tsl.getGain();
+  static int8_t last_gainmove = 0; // -1 = decrease, 0 = keep, 1 = increase
+  int8_t gainmove = 0;
+  // one of the channels is overloaded?
+  if(tsl2591_lux_bb == 0xFFFF || tsl2591_lux_ir == 0xFFFF) {
+    switch(gain) {
+      case TSL2591_GAIN_MED:
+        gain = TSL2591_GAIN_LOW;
+        gainmove = -1;
+        break;
+      case TSL2591_GAIN_HIGH:
+        gain = TSL2591_GAIN_MED;
+        gainmove = -1;
+        break;
+      case TSL2591_GAIN_MAX:
+        gain = TSL2591_GAIN_HIGH;
+        gainmove = -1;
+        break;
+      default:
+        last_gainmove = 0;
+        return; // nothing to do! set as invalid??
+    }
+  // the broadband channel is too low and the last adjustment wasn't a gain decrease?
+  } else if(tsl2591_lux_bb < 0x07FF && last_gainmove >= 0) {
+      switch(gain) {
+        case TSL2591_GAIN_LOW:
+          gain = TSL2591_GAIN_MED;
+          gainmove = 1;
+          break;
+        case TSL2591_GAIN_MED:
+          gain = TSL2591_GAIN_HIGH;
+          gainmove = 1;
+          break;
+        case TSL2591_GAIN_HIGH:
+          gain = TSL2591_GAIN_MAX;
+          gainmove = 1;
+          break;
+        default:
+          last_gainmove = 0;
+          return; // already max, nothing to do!
+      }
+  }
+  if( gainmove != 0 ) {
+    tsl.setGain(gain);
+  }
+  last_gainmove = gainmove;
+}
+
 void Tsl2591Read(void)
 {
   uint32_t lum = tsl.getFullLuminosity();
@@ -67,6 +117,8 @@ void Tsl2591Read(void)
   tsl2591_lux_bb = full;
   tsl2591_lux_ir = ir;
   tsl2591_valid = 1;
+  tsl2591_gainval = tsl.getGain()>>4;
+  Tsl2591AGC(); // adjust gain if needed
 }
 
 void Tsl2591EverySecond(void)
@@ -85,8 +137,8 @@ void Tsl2591Show(bool json)
     char lux_str[10];
     dtostrf(tsl2591_lux, sizeof(lux_str)-1, 3, lux_str);
     if (json) {
-      ResponseAppend_P(PSTR(",\"TSL2591\":{\"" D_JSON_ILLUMINANCE "\":%s,\"IR\":%u,\"Broadband\":%u}"),
-        lux_str,tsl2591_lux_ir,tsl2591_lux_bb);
+      ResponseAppend_P(PSTR(",\"TSL2591\":{\"" D_JSON_ILLUMINANCE "\":%s,\"IR\":%u,\"Broadband\":%u,\"Gain\":%u}"),
+        lux_str,tsl2591_lux_ir,tsl2591_lux_bb,tsl2591_gainval);
 #ifdef USE_DOMOTICZ
       if (0 == TasmotaGlobal.tele_period) { DomoticzSensor(DZ_ILLUMINANCE, tsl2591_lux); }
 #endif  // USE_DOMOTICZ
