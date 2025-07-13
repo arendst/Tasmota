@@ -57,10 +57,6 @@ class FS_Info(FSInfo):
     def get_extract_cmd(self, input_file, output_dir):
         return f'"{self.tool}" -b {self.block_size} -s {self.length} -p {self.page_size} --unpack "{output_dir}" "{input_file}"'
 
-# SPIFFS helpers copied from ESP32, https://github.com/platformio/platform-espressif32/blob/develop/builder/main.py
-# Copyright 2014-present PlatformIO <contact@platformio.org>
-# Licensed under the Apache License, Version 2.0 (the "License");
-
 def _parse_size(value):
     if isinstance(value, int):
         return value
@@ -72,11 +68,6 @@ def _parse_size(value):
         base = 1024 if value[-1].upper() == "K" else 1024 * 1024
         return int(value[:-1]) * base
     return value
-
-## FS helpers for ESP8266
-# copied from https://github.com/platformio/platform-espressif8266/blob/develop/builder/main.py
-# Copyright 2014-present PlatformIO <contact@platformio.org>
-# Licensed under the Apache License, Version 2.0 (the "License");
 
 def _parse_ld_sizes(ldscript_path):
     assert ldscript_path
@@ -134,6 +125,29 @@ def esp8266_fetch_fs_size(env):
 
         env[k] = _value
 
+def switch_off_ldf():
+    """
+    Configure `lib_ldf_mode = off` for pre-script execution.
+    to avoid the time consuming library dependency resolution
+    """
+    import sys
+    
+    # only do this if one of the optimized targets is requested
+    optimized_targets = ["reset_target", "downloadfs", "factory_flash", "metrics-only"]
+
+    argv_string = " ".join(sys.argv)
+    is_optimized_targets = any(target in argv_string for target in optimized_targets)
+    
+    if is_optimized_targets:
+        # Project config modification
+        projectconfig = env.GetProjectConfig()
+        env_section = "env:" + env["PIOENV"]
+        if not projectconfig.has_section(env_section):
+            projectconfig.add_section(env_section)
+        projectconfig.set(env_section, "lib_ldf_mode", "off")
+
+switch_off_ldf()
+
 ## Script interface functions
 def parse_partition_table(content):
     entries = [e for e in content.split(b'\xaaP') if len(e) > 0]
@@ -157,14 +171,17 @@ def get_partition_table():
     if "none" in upload_port:
         env.AutodetectUploadPort()
         upload_port = join(env.get("UPLOAD_PORT", "none"))
-    fs_file = join(env["PROJECT_DIR"], "partition_table_from_flash.bin")
+        build_dir = env.subst("$BUILD_DIR")
+        if not os.path.exists(build_dir):
+            os.makedirs(build_dir)
+    fs_file = join(env.subst("$BUILD_DIR"), "partition_table_from_flash.bin")
     esptoolpy_flags = [
             "--chip", mcu,
             "--port", upload_port,
             "--baud",  download_speed,
-            "--before", "default_reset",
-            "--after", "hard_reset",
-            "read_flash",
+            "--before", "default-reset",
+            "--after", "hard-reset",
+            "read-flash",
             "0x8000",
             "0x1000",
             fs_file
@@ -215,9 +232,9 @@ def download_fs(fs_info: FSInfo):
             "--chip", mcu,
             "--port", upload_port,
             "--baud",  download_speed,
-            "--before", "default_reset",
-            "--after", "hard_reset",
-            "read_flash",
+            "--before", "default-reset",
+            "--after", "hard-reset",
+            "read-flash",
             hex(fs_info.start),
             hex(fs_info.length),
             fs_file
@@ -235,6 +252,9 @@ def unpack_fs(fs_info: FSInfo, downloaded_file: str):
     # by writing custom_unpack_dir = some_dir in the platformio.ini, one can
     # control the unpack directory
     unpack_dir = env.GetProjectOption("custom_unpack_dir", "unpacked_fs")
+    current_build_dir = env.subst("$BUILD_DIR")
+    filename = f"downloaded_fs_{hex(fs_info.start)}_{hex(fs_info.length)}.bin"
+    downloaded_file = join(current_build_dir, filename)
     if not os.path.exists(downloaded_file):
         print(f"ERROR: {downloaded_file} with filesystem not found, maybe download failed due to download_speed setting being too high.")
         assert(0)
@@ -280,7 +300,7 @@ def upload_factory(*args, **kwargs):
                 "--chip", mcu,
                 "--port", upload_port,
                 "--baud", env.subst("$UPLOAD_SPEED"),
-                "write_flash",
+                "write-flash",
                 "0x0",
                 target_firm
         ]
@@ -333,7 +353,6 @@ def esp32_use_external_crashreport(*args, **kwargs):
         )
         print(Fore.YELLOW + output[0]+": \n"+output[1]+" in "+output[2])
 
-
 def reset_target(*args, **kwargs):
     upload_port = join(env.get("UPLOAD_PORT", "none"))
     if "none" in upload_port:
@@ -343,13 +362,13 @@ def reset_target(*args, **kwargs):
         "--no-stub",
         "--chip", mcu,
         "--port", upload_port,
-        "flash_id"
+        "flash-id"
     ]
     esptoolpy_cmd = [env["PYTHONEXE"], esptoolpy] + esptoolpy_flags
     print("Try to reset device")
     subprocess.call(esptoolpy_cmd, shell=False)
 
-
+# Custom Target Definitions
 env.AddCustomTarget(
     name="reset_target",
     dependencies=None,
@@ -359,7 +378,6 @@ env.AddCustomTarget(
     title="Reset ESP32 target",
     description="This command resets ESP32x target via esptoolpy",
 )
-
 
 env.AddCustomTarget(
     name="downloadfs",
