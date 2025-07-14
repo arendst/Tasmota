@@ -95,6 +95,7 @@ jobs:
           - tasmota32c2
           - tasmota32c3
           - tasmota32c6
+          - tasmota32p4
           - tasmota32s2
           - tasmota32s2cdc
           - tasmota32s3
@@ -112,6 +113,7 @@ jobs:
           - tasmota32c2-safeboot
           - tasmota32c3-safeboot
           - tasmota32c6-safeboot
+          - tasmota32p4-safeboot
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
