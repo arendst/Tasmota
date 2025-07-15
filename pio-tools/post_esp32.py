@@ -37,7 +37,7 @@ from SCons.Script import COMMAND_LINE_TARGETS
 from platformio.project.config import ProjectConfig
 
 esptoolpy = os.path.join(ProjectConfig.get_instance().get("platformio", "packages_dir"), "tool-esptoolpy")
-sys.path.append(esptoolpy)
+sys.path.insert(0, esptoolpy)
 import esptool
 
 config = env.GetProjectConfig()
