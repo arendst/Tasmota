@@ -36,10 +36,8 @@ from colorama import Fore, Back, Style
 from SCons.Script import COMMAND_LINE_TARGETS
 from platformio.project.config import ProjectConfig
 
-esptool = env.subst("$OBJCOPY")
-if "esptool" not in esptool:
-    esptool = os.path.join(ProjectConfig.get_instance().get("platformio", "packages_dir"),("tool-esptoolpy") or "", "esptool.py")
-sys.path.append(esptool)
+esptoolpy = os.path.join(ProjectConfig.get_instance().get("platformio", "packages_dir"), "tool-esptoolpy")
+sys.path.append(esptoolpy)
 import esptool
 
 config = env.GetProjectConfig()
