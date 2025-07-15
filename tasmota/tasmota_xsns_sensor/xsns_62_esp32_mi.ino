@@ -1669,7 +1669,7 @@ void MI32ServerSetCharacteristic(NimBLEServer *pServer, std::vector<NimBLEServic
     MI32.infoMsg = MI32_SERV_CHARACTERISTIC_ADDED;
   }
   pCharacteristic->setValue(MI32.conCtx->buffer + 1, MI32.conCtx->buffer[0]); // set value
-  pCharacteristic->notify(true); // TODO: fallback to indication
+  MI32.conCtx->response ? pCharacteristic->indicate() : pCharacteristic->notify(); // use response to select indicate vs notification
   struct{
     BLERingBufferItem_t header;
   } item;
