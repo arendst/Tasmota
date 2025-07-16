@@ -25,7 +25,6 @@ import os
 from os.path import join, getsize
 import csv
 import requests
-import shlex
 import shutil
 import subprocess
 import codecs
@@ -307,15 +306,16 @@ def esp32_create_combined_bin(source, target, env):
                 "--flash-freq", "${__get_board_f_flash(__env__)}",
                 "--flash-size", flash_size
                 ],
-                UPLOADCMD='"$UPLOADER" $UPLOADERFLAGS ' + " ".join(normalize_paths(cmd[7:]))
+                UPLOADCMD='"$OBJCOPY" $UPLOADERFLAGS ' + " ".join(normalize_paths(cmd[7:]))
                 )
                 print(Fore.GREEN + "Will use custom upload command for flashing operation to add file system defined for this build target.")
                 print()
 
         if("safeboot" not in firmware_name):
-            cmdline = shlex.split(os.path.normpath(env.subst("$OBJCOPY"))) + normalize_paths(cmd)
-            # print('Command Line: %s' % cmdline)
+            cmdline = [env["PYTHONEXE"], env.subst("$OBJCOPY")] + normalize_paths(cmd)
+            print('Command Line: %s' % cmdline)
             result = subprocess.run(cmdline, text=True, check=False, stdout=subprocess.DEVNULL)
+            print(Fore.GREEN + f"esptool create firmware with exit code: {result.returncode}")
             if result.returncode != 0:
                 print(Fore.RED + f"esptool create firmware failed with exit code: {result.returncode}")
 
