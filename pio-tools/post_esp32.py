@@ -20,22 +20,20 @@
 # - 0xe0000 | ~\Tasmota\.pio\build\<env name>/firmware.bin
 # - 0x3b0000| ~\Tasmota\.pio\build\<env name>/littlefs.bin
 
-env = DefaultEnvironment()
-platform = env.PioPlatform()
-
 from genericpath import exists
 import os
-import sys
 from os.path import join, getsize
 import csv
 import requests
+import shlex
 import shutil
 import subprocess
 import codecs
-from colorama import Fore, Back, Style
+from colorama import Fore
 from SCons.Script import COMMAND_LINE_TARGETS
-from platformio.project.config import ProjectConfig
 
+env = DefaultEnvironment()
+platform = env.PioPlatform()
 config = env.GetProjectConfig()
 variants_dir = env.BoardConfig().get("build.variants_dir", "")
 variant = env.BoardConfig().get("build.variant", "")
@@ -327,25 +325,11 @@ def esp32_create_combined_bin(source, target, env):
                 print()
 
         if("safeboot" not in firmware_name):
-            #print('Using arguments: %s' % ' '.join(cmd))
-            with open(os.devnull, 'w') as devnull:
-                old_stdout = sys.stdout
-                old_stderr = sys.stderr
-                sys.stdout = devnull
-                sys.stderr = devnull
-                try:
-                    result = subprocess.run([[env["PYTHONEXE"], env.subst("$OBJCOPY")]] + cmd, 
-                                          capture_output=True, text=True, check=False)
-         
-                    if result.returncode != 0:
-                        print(f"❌ esptool failed with exit code: {result.returncode}")
-                        if result.stderr:
-                            print(result.stderr)
-                except Exception as e:
-                    print(f"❌ Exception during esptool call: {e}")
-                finally:
-                    sys.stdout = old_stdout
-                    sys.stderr = old_stderr
+            # print('Using arguments: %s' % ' '.join(cmd))
+            cmdline = shlex.split(env.subst("$OBJCOPY")) + cmd
+            result = subprocess.run(cmdline, text=True, check=False, stdout=subprocess.DEVNULL)
+            if result.returncode != 0:
+                print(Fore.RED + f"esptool create firmware failed with exit code: {result.returncode}")
 
 silent_action = env.Action(esp32_create_combined_bin)
 silent_action.strfunction = lambda target, source, env: '' # hack to silence scons command output
