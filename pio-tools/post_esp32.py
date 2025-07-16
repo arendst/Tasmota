@@ -36,6 +36,7 @@ env = DefaultEnvironment()
 platform = env.PioPlatform()
 config = env.GetProjectConfig()
 variants_dir = os.path.normpath(env.BoardConfig().get("build.variants_dir", ""))
+print("Board Config Variants directory:", variants_dir)
 variant = env.BoardConfig().get("build.variant", "")
 sections = env.subst(env.get("FLASH_EXTRA_IMAGES"))
 chip = env.get("BOARD_MCU")
@@ -177,7 +178,8 @@ def esp32_fetch_safeboot_bin(tasmota_platform):
     try:
         response = requests.get(safeboot_fw_url)
         open(safeboot_fw_name, "wb").write(response.content)
-        print(Fore.GREEN + "safeboot binary written to variants dir")
+        print(Fore.GREEN + "Safeboot binary written to variants path:")
+        print(Fore.BLUE + safeboot_fw_name)
         return True
     except:
         print(Fore.RED + "Download of safeboot binary failed. Please check your Internet connection.")
