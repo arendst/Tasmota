@@ -36,10 +36,6 @@ from colorama import Fore, Back, Style
 from SCons.Script import COMMAND_LINE_TARGETS
 from platformio.project.config import ProjectConfig
 
-esptoolpy = os.path.join(ProjectConfig.get_instance().get("platformio", "packages_dir"), "tool-esptoolpy")
-sys.path.insert(0, esptoolpy)
-import esptool
-
 config = env.GetProjectConfig()
 variants_dir = env.BoardConfig().get("build.variants_dir", "")
 variant = env.BoardConfig().get("build.variant", "")
@@ -83,17 +79,6 @@ if variants_dir:
 if not variants_dir:
     variants_dir = join(FRAMEWORK_DIR, "variants", "tasmota")
     env.BoardConfig().update("build.variants_dir", variants_dir)
-
-def esptool_call(cmd):
-    try:
-        esptool.main(cmd)
-    except SystemExit as e:
-        # Fetch sys.exit() without leaving the script
-        if e.code == 0:
-            return True
-        else:
-            print(f"❌ esptool failed with exit code: {e.code}")
-            return False
 
 def esp32_detect_flashsize():
     uploader = env.subst("$UPLOADER")
@@ -342,14 +327,22 @@ def esp32_create_combined_bin(source, target, env):
                 print()
 
         if("safeboot" not in firmware_name):
-            #print('Using esptool.py arguments: %s' % ' '.join(cmd))
+            #print('Using arguments: %s' % ' '.join(cmd))
             with open(os.devnull, 'w') as devnull:
                 old_stdout = sys.stdout
                 old_stderr = sys.stderr
                 sys.stdout = devnull
                 sys.stderr = devnull
                 try:
-                    esptool_call(cmd)
+                    result = subprocess.run([[env["PYTHONEXE"], env.subst("$OBJCOPY")]] + cmd, 
+                                          capture_output=True, text=True, check=False)
+         
+                    if result.returncode != 0:
+                        print(f"❌ esptool failed with exit code: {result.returncode}")
+                        if result.stderr:
+                            print(result.stderr)
+                except Exception as e:
+                    print(f"❌ Exception during esptool call: {e}")
                 finally:
                     sys.stdout = old_stdout
                     sys.stderr = old_stderr
