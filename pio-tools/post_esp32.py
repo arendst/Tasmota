@@ -35,7 +35,7 @@ from SCons.Script import COMMAND_LINE_TARGETS
 env = DefaultEnvironment()
 platform = env.PioPlatform()
 config = env.GetProjectConfig()
-variants_dir = env.BoardConfig().get("build.variants_dir", "")
+variants_dir = os.path.normpath(env.BoardConfig().get("build.variants_dir", ""))
 variant = env.BoardConfig().get("build.variant", "")
 sections = env.subst(env.get("FLASH_EXTRA_IMAGES"))
 chip = env.get("BOARD_MCU")
