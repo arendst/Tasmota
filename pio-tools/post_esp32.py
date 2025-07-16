@@ -312,7 +312,7 @@ def esp32_create_combined_bin(source, target, env):
                 print()
 
         if("safeboot" not in firmware_name):
-            cmdline = [env["PYTHONEXE"], env.subst("$OBJCOPY")] + normalize_paths(cmd)
+            cmdline = [env.subst("$OBJCOPY")] + normalize_paths(cmd)
             print('Command Line: %s' % cmdline)
             result = subprocess.run(cmdline, text=True, check=False, stdout=subprocess.DEVNULL)
             print(Fore.GREEN + f"esptool create firmware with exit code: {result.returncode}")
