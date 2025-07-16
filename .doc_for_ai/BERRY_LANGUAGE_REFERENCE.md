@@ -2,6 +2,32 @@
 
 Note: this file is supposed to use as a reference manual for Generative AI in a compact form. For Claude AI it costs ~6k tokens.
 
+## Command Line Options
+
+When running Berry from the command line in Tasmota, several options are available:
+
+```
+berry [options]
+```
+
+Available options:
+- `-s`: Enable strict mode for the Berry compiler
+- `-g`: Force named globals in VM (required for solidification)
+- `-i`: Enter interactive mode after executing script
+- `-l`: Parse all variables in script as local
+- `-e`: Load script source string and execute
+- `-m <path>`: Custom module search path(s)
+- `-c <file>`: Compile script file to bytecode
+- `-o <file>`: Save bytecode to file
+- `-v`: Show version information
+- `-h`: Show help information
+
+Common usage in Tasmota:
+```
+berry -s -g
+```
+This runs Berry with strict mode enabled and named globals, which is the recommended configuration for code that will be solidified.
+
 ## Introduction
 
 Berry is an ultra-lightweight, dynamically typed embedded scripting language designed for resource-constrained environments. The language primarily supports procedural programming, with additional support for object-oriented and functional programming paradigms. Berry's key design goal is to run efficiently on embedded devices with very limited memory, making the language highly streamlined while maintaining rich scripting capabilities.
