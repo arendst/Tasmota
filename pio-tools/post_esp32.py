@@ -245,8 +245,8 @@ def esp32_create_combined_bin(source, target, env):
                         fs_offset = int(row[3],base=16)
 
     print()
-    new_file_name = env.subst("$BUILD_DIR/${PROGNAME}.factory.bin")
-    firmware_name = env.subst("$BUILD_DIR/${PROGNAME}.bin")
+    new_file_name = os.path.normpath(env.subst("$BUILD_DIR/${PROGNAME}.factory.bin"))
+    firmware_name = os.path.normpath(env.subst("$BUILD_DIR/${PROGNAME}.bin"))
     tasmota_platform = esp32_create_chip_string(chip)
 
     if not os.path.exists(variants_dir):
