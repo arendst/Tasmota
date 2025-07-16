@@ -93,7 +93,7 @@ def esp32_detect_flashsize():
 flash_size_from_esp, flash_size_was_overridden = esp32_detect_flashsize()
 
 def patch_partitions_bin(size_string):
-    partition_bin_path = os.path.normpath(join(env.subst("$BUILD_DIR"),"partitions.bin"))
+    partition_bin_path = os.path.normpath(join(env.subst("$BUILD_DIR"), "partitions.bin"))
     with open(partition_bin_path, 'r+b') as file:
         binary_data = file.read(0xb0)
         import hashlib
@@ -124,7 +124,7 @@ def esp32_create_chip_string(chip):
 def esp32_build_filesystem(fs_size):
     files = env.GetProjectOption("custom_files_upload").splitlines()
     num_entries = len([f for f in files if f.strip()])
-    filesystem_dir = os.path.normpath(join(env.subst("$BUILD_DIR"),"littlefs_data"))
+    filesystem_dir = os.path.normpath(join(env.subst("$BUILD_DIR"), "littlefs_data"))
     if not os.path.exists(filesystem_dir):
         os.makedirs(filesystem_dir)
     if num_entries > 1:
@@ -137,9 +137,9 @@ def esp32_build_filesystem(fs_size):
         if "http" and "://" in file:
             response = requests.get(file.split(" ")[0])
             if response.ok:
-                target = join(filesystem_dir,file.split(os.path.sep)[-1])
+                target = os.path.normpath(join(filesystem_dir, file.split(os.path.sep)[-1]))
                 if len(file.split(" ")) > 1:
-                    target = join(filesystem_dir,file.split(" ")[1])
+                    target = os.path.normpath(join(filesystem_dir, file.split(" ")[1]))
                     print("Renaming",(file.split(os.path.sep)[-1]).split(" ")[0],"to",file.split(" ")[1])
                 open(target, "wb").write(response.content)
             else:
@@ -280,7 +280,7 @@ def esp32_create_combined_bin(source, target, env):
 
         upload_protocol = env.subst("$UPLOAD_PROTOCOL")
         if(upload_protocol == "esptool") and (fs_offset != -1):
-            fs_bin = os.path.normpath(join(env.subst("$BUILD_DIR"),"littlefs.bin"))
+            fs_bin = os.path.normpath(join(env.subst("$BUILD_DIR"), "littlefs.bin"))
             if exists(fs_bin):
                 before_reset = env.BoardConfig().get("upload.before_reset", "default-reset")
                 after_reset = env.BoardConfig().get("upload.after_reset", "hard-reset")
