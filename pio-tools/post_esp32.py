@@ -35,7 +35,6 @@ env = DefaultEnvironment()
 platform = env.PioPlatform()
 config = env.GetProjectConfig()
 variants_dir = env.BoardConfig().get("build.variants_dir", "")
-print("Board Config Variants directory:", variants_dir)
 variant = env.BoardConfig().get("build.variant", "")
 sections = env.subst(env.get("FLASH_EXTRA_IMAGES"))
 chip = env.get("BOARD_MCU")
@@ -78,7 +77,7 @@ def esp32_detect_flashsize():
         return "4MB",False
     else:
         esptool_flags = ["flash-id"]
-        esptool_cmd = [env["PYTHONEXE"], env.subst("$OBJCOPY")] + esptool_flags
+        esptool_cmd = [env.subst("$OBJCOPY")] + esptool_flags
         try:
             output = subprocess.run(esptool_cmd, capture_output=True).stdout.splitlines()
             for l in output:
@@ -313,9 +312,8 @@ def esp32_create_combined_bin(source, target, env):
 
         if("safeboot" not in firmware_name):
             cmdline = [env.subst("$OBJCOPY")] + normalize_paths(cmd)
-            print('Command Line: %s' % cmdline)
+            # print('Command Line: %s' % cmdline)
             result = subprocess.run(cmdline, text=True, check=False, stdout=subprocess.DEVNULL)
-            print(Fore.GREEN + f"esptool create firmware with exit code: {result.returncode}")
             if result.returncode != 0:
                 print(Fore.RED + f"esptool create firmware failed with exit code: {result.returncode}")
 
