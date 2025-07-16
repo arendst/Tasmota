@@ -6,6 +6,16 @@ import pathlib
 import shutil
 from colorama import Fore, Back, Style
 
+# Ensure the variants directory is correctly formatted based on the OS
+# This is necessary to avoid issues with path handling in different environments
+variants_dir = env.BoardConfig().get("build.variants_dir", "")
+if variants_dir:
+    if os.name == "nt":
+        variants_dir = variants_dir.replace("/", "\\")
+        env.BoardConfig().update("build.variants_dir", variants_dir)
+    else:
+        variants_dir = variants_dir.replace("\\", "/")
+        env.BoardConfig().update("build.variants_dir", variants_dir)
 
 project_dir = os.path.normpath(env["PROJECT_DIR"])
 if " " in project_dir:

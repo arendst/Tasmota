@@ -35,7 +35,7 @@ from SCons.Script import COMMAND_LINE_TARGETS
 env = DefaultEnvironment()
 platform = env.PioPlatform()
 config = env.GetProjectConfig()
-variants_dir = os.path.normpath(env.BoardConfig().get("build.variants_dir", ""))
+variants_dir = env.BoardConfig().get("build.variants_dir", "")
 print("Board Config Variants directory:", variants_dir)
 variant = env.BoardConfig().get("build.variant", "")
 sections = env.subst(env.get("FLASH_EXTRA_IMAGES"))
@@ -69,7 +69,6 @@ def normalize_paths(cmd):
     for i, arg in enumerate(cmd):
         if isinstance(arg, str) and '/' in arg:
             cmd[i] = os.path.normpath(arg)
-            print("Normalized path:", cmd[i])
     return cmd
 
 def esp32_detect_flashsize():
