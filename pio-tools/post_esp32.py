@@ -64,6 +64,12 @@ if not variants_dir:
     variants_dir = os.path.normpath(join(FRAMEWORK_DIR, "variants", "tasmota"))
     env.BoardConfig().update("build.variants_dir", variants_dir)
 
+def normalize_paths(cmd):
+    for i, arg in enumerate(cmd):
+        if isinstance(arg, str) and '/' in arg:
+            cmd[i] = os.path.normpath(arg)
+    return cmd
+
 def esp32_detect_flashsize():
     uploader = env.subst("$UPLOADER")
     if not "upload" in COMMAND_LINE_TARGETS:
@@ -299,14 +305,14 @@ def esp32_create_combined_bin(source, target, env):
                 "--flash-freq", "${__get_board_f_flash(__env__)}",
                 "--flash-size", flash_size
                 ],
-                UPLOADCMD='"$UPLOADER" $UPLOADERFLAGS ' + " ".join(cmd[7:])
+                UPLOADCMD='"$UPLOADER" $UPLOADERFLAGS ' + " ".join(normalize_paths(cmd[7:]))
                 )
                 print(Fore.GREEN + "Will use custom upload command for flashing operation to add file system defined for this build target.")
                 print()
 
         if("safeboot" not in firmware_name):
-            # print('Using arguments: %s' % ' '.join(cmd))
-            cmdline = shlex.split(env.subst("$OBJCOPY")) + cmd
+            cmdline = shlex.split(os.path.normpath(env.subst("$OBJCOPY"))) + normalize_paths(cmd)
+            # print('Command Line: %s' % cmdline)
             result = subprocess.run(cmdline, text=True, check=False, stdout=subprocess.DEVNULL)
             if result.returncode != 0:
                 print(Fore.RED + f"esptool create firmware failed with exit code: {result.returncode}")
