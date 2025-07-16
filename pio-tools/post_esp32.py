@@ -68,6 +68,7 @@ def normalize_paths(cmd):
     for i, arg in enumerate(cmd):
         if isinstance(arg, str) and '/' in arg:
             cmd[i] = os.path.normpath(arg)
+            print("Normalized path:", cmd[i])
     return cmd
 
 def esp32_detect_flashsize():
