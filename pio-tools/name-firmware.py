@@ -15,8 +15,7 @@ def bin_map_copy(source, target, env):
     map_file = tasmotapiolib.get_final_map_path(env)
     bin_file = tasmotapiolib.get_final_bin_path(env)
     one_bin_file = bin_file
-    firmware_name = os.path.normpath(env.subst("$BUILD_DIR/${PROGNAME}.bin"))
-
+    firmware_name = env.subst("$BUILD_DIR/${PROGNAME}.bin")
     if env["PIOPLATFORM"] == "espressif32":
         if("safeboot" in firmware_name):
             SAFEBOOT_SIZE = firsttarget.stat().st_size
