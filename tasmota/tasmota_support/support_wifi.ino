@@ -2004,6 +2004,10 @@ uint64_t WifiGetNtp(void) {
 // Respond to some Arduino/esp-idf events for better IPv6 support
 // --------------------------------------------------------------------------------
 #ifdef ESP32
+extern esp_netif_t* get_esp_interface_netif(esp_interface_t interface);
+
+// typedef void (*WiFiEventSysCb)(arduino_event_t *event);
+
 /**
  * Event handler for ESP32 WiFi and network events
  * 
