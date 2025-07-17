@@ -1626,6 +1626,18 @@ void EspRestart(void) {
 }
 
 #ifdef ESP8266
+//
+// Gratuitous ARP, backported from https://github.com/esp8266/Arduino/pull/6889
+//
+extern "C" {
+#if LWIP_VERSION_MAJOR == 1
+#include "netif/wlan_lwip_if.h" // eagle_lwip_getif()
+#include "netif/etharp.h" // gratuitous arp
+#else
+#include "lwip/etharp.h" // gratuitous arp
+#endif
+}
+
 /**
  * Sends a Gratuitous ARP packet to update network ARP tables
  * 
