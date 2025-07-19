@@ -4,8 +4,8 @@
   "description": "TLS mini client derived from Arduino",
   "license": "MIT",
   "homepage": "https://github.com/arendst/Tasmota",
-  "frameworks": "*",
-  "platforms": "*",
+  "frameworks": "arduino",
+  "platforms": "espressif32, espressif8266",
   "authors":
   {
     "name": "Stephan Hadinger",

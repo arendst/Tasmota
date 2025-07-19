@@ -1,6 +1,6 @@
 {
   "name":"freetype",
-  "version": "2.10.4",
+  "version": "2.13.2",
   "description":"Software library to render fonts",
   "keywords":"freetype",
   "license": "FreeType License",
@@ -8,15 +8,17 @@
     "type": "git",
     "url": "https://gitlab.freedesktop.org/freetype"
 	},
-  "frameworks": "*",
-  "platforms": "*",
+  "frameworks": "arduino",
+  "platforms": "espressif32",
   "build": {
     "srcFilter": [
         "+<base/ftsystem.c>",
         "+<base/ftinit.c>",
         "+<base/ftdebug.c>",
+        "+<base/ftbitmap.c>",
 
         "+<base/ftbase.c>",
+        "+<base/ftstroke.c>",
 
         "+<base/ftbbox.c>",
         "+<base/ftglyph.c>",

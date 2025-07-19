@@ -6,7 +6,7 @@ This firmware is to be used with Tube'z Zigbee EFR32 based gateway:
 
 ### Currently recommended versions
 
-- `MGM210PA32JIA_ncp-uart-sw_6.7.9.gbl` - EZSP version 6.7.9
+- `MGM210PA32JIA_ncp-uart-sw_6.7.9.ota` - EZSP version 6.7.9
 
 The device comes pre-flashed with EZSP 6.9.1_2 but there are unresolved issues with Tasmota and we currently only support 6.7.x. You need to downgrade the flash firmware to 6.7.9. Simply use the **Firmware Upggrade** feature of Tasmota, it will automatically detect that the firmware is for the EFR32 and not for Tasmota.
 

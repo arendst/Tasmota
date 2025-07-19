@@ -136,7 +136,8 @@ FLAC__uint8 FLAC__crc8(const FLAC__byte *data, unsigned len)
 
 	return crc;
 }
-
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 unsigned FLAC__crc16(const FLAC__byte *data, unsigned len)
 {
 	unsigned crc = 0;
@@ -146,3 +147,4 @@ unsigned FLAC__crc16(const FLAC__byte *data, unsigned len)
 
 	return crc;
 }
+#pragma GCC diagnostic pop

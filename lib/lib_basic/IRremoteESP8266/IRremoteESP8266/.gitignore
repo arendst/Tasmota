@@ -1,0 +1,55 @@
+#----------------------------------------#
+# .gitingore for IRremoteESP8266 library #
+#----------------------------------------#
+
+### Files to ignore.
+
+## Editors
+# vi/vim
+**/*.swp
+
+# vscode
+.vscode
+
+## Build environments
+# Platformio
+**/.pio/
+**/.pioenvs/
+**/.piolibdeps/
+**/.clang_complete
+**/.gcc-flags.json
+examples/**/lib
+examples/**/.travis.yml
+examples/**/.gitignore
+lib/readme.txt
+lib/googletest/
+
+# GCC pre-compiled headers.
+**/*.gch
+
+# Python compiled files
+**/*.pyc
+
+# Unit Test builds
+test/*.o
+test/*.a
+test/*_test
+
+# Tools builds
+tools/*.o
+tools/*.a
+tools/gc_decode
+tools/mode2_decode
+tools/code_to_raw
+
+.pioenvs
+.piolibdeps
+.clang_complete
+.gcc-flags.json
+
+#Cygwin builds
+*.exe
+
+# Mac extended attributes
+.DS_Store
+/.vs

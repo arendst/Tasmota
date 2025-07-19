@@ -25,8 +25,7 @@ class Button_counter_demo : Driver
     end
 
     #- display the counter in its own line -#
-    import string
-    webserver.content_send(string.format("{s}Counter{m}%i{e}", self.counter))
+    webserver.content_send(format("{s}Counter{m}%i{e}", self.counter))
   end
 
   #- display button for Increase Counter and trigger 'incr_counter=1' when pressed -#

@@ -1,0 +1,30 @@
+{
+  "build": {
+    "arduino": {
+      "ldscript": "eagle.flash.16m14m.ld"
+    },
+    "core": "esp8266",
+    "extra_flags": "-DARDUINO_TASMOTA -DESP8266 -DARDUINO_ARCH_ESP8266 -DARDUINO_ESP8266_ESP01 -DESP8266_16M -DESP8266_16M14M",
+    "f_cpu": "80000000L",
+    "f_flash": "40000000L",
+    "flash_mode": "dout",
+    "mcu": "esp8266",
+    "variant": "generic"
+  },
+  "connectivity": [
+    "wifi"
+  ],
+  "frameworks": [
+    "arduino"
+  ],
+  "name": "Espressif Generic ESP8266 Tasmota 1M sketch 1M OTA 14M FS",
+  "upload": {
+    "maximum_ram_size": 81920,
+    "maximum_size": 995326,
+    "require_upload_port": true,
+    "resetmethod": "ck",
+    "speed": 115200
+  },
+  "url": "http://www.esp8266.com/wiki/doku.php?id=esp8266-module-family",
+  "vendor": "Espressif"
+}

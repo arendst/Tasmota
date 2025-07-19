@@ -223,7 +223,7 @@ Word64 MADD64(Word64 sum64, int x, int y);
 /* toolchain:           ARM ADS or RealView
  * target architecture: ARM v.4 and above (requires 'M' type processor for 32x32->64 multiplier)
  */
-#elif defined (__arm) && defined (__ARMCC_VERSION)
+#elif defined (XXX__arm) && defined (__ARMCC_VERSION)
 
 static __inline int MULSHIFT32(int x, int y)
 {
@@ -336,7 +336,7 @@ static __inline Word64 MADD64(Word64 sum64, int x, int y)
 /* toolchain:           ARM gcc
  * target architecture: ARM v.4 and above (requires 'M' type processor for 32x32->64 multiplier)
  */
-#elif defined(__GNUC__) && defined(__arm__)
+#elif defined(__GNUC__) && defined(XXXX__arm__)
 
 static inline int MULSHIFT32(int x, int y)
 {
@@ -558,7 +558,7 @@ static __inline int CLZ(int x)
 typedef union _U64 {
 	Word64 w64;
 	struct {
-#ifdef __XTENSA__		
+#if defined(__XTENSA__) || defined (__riscv)		
 		unsigned int lo32;
 		signed int   hi32;
 #else

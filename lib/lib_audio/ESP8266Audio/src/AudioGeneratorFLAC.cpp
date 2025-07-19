@@ -177,9 +177,9 @@ FLAC__StreamDecoderWriteStatus AudioGeneratorFLAC::write_cb(const FLAC__StreamDe
   // Hackish warning here.  FLAC sends the buffer but doesn't free it until the next call to decode_frame, so we stash
   // the pointers here and use it in our loop() instead of memcpy()'ing into yet another buffer.
   buffLen = frame->header.blocksize;
-  buff[0] = buffer[0];
-  if (frame->header.channels>1) buff[1] = buffer[1];
-  else buff[1] = buffer[0];
+  buff[0] = (const int *)buffer[0];
+  if (frame->header.channels>1) buff[1] = (const int *)buffer[1];
+  else buff[1] = (const int *)buffer[0];
   buffPtr = 0;
   return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
 }

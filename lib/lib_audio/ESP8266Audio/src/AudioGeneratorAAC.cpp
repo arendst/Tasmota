@@ -18,7 +18,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma GCC optimize ("O3")
+#pragma GCC optimize ("Os")
 
 #include "AudioGeneratorAAC.h"
 
@@ -144,8 +144,13 @@ bool AudioGeneratorAAC::loop()
 
   // If we've got data, try and pump it out...
   while (validSamples) {
-    lastSample[0] = outSample[curSample*2];
-    lastSample[1] = outSample[curSample*2 + 1];
+    if (lastChannels == 1) {
+       lastSample[0] = outSample[curSample];
+       lastSample[1] = outSample[curSample];
+    } else {
+      lastSample[0] = outSample[curSample*2];
+      lastSample[1] = outSample[curSample*2 + 1];
+    }
     if (!output->ConsumeSample(lastSample)) goto done; // Can't send, but no error detected
     validSamples--;
     curSample++;

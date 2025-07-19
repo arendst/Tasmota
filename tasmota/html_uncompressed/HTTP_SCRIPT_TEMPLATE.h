@@ -1,9 +1,9 @@
 const char HTTP_SCRIPT_TEMPLATE[] PROGMEM =
   "function ld(u,f){"
     "var x=new XMLHttpRequest();"
-    "x.onreadystatechange=function(){"
-      "if(this.readyState==4&&this.status==200){"
-        "f(this);"
+    "x.onreadystatechange=()=>{"
+      "if(x.readyState==4&&x.status==200){"
+        "f(x);"
       "}"
     "};"
     "x.open('GET',u,true);"

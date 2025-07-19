@@ -15,3 +15,9 @@
 *.PDF	 diff=astextplain
 *.rtf	 diff=astextplain
 *.RTF	 diff=astextplain
+
+# No changes for zip files
+*.zip binary
+*.autoconf binary
+*.bin binary
+*.tapp binary

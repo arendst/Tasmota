@@ -1436,7 +1436,7 @@ void op_free(OggOpusFile *_of);
    Some of these functions may be used successfully on the partially open
     streams returned by op_test_callbacks() or one of the associated
     convenience functions.
-   Their documention will indicate so explicitly.*/
+   Their documentation will indicate so explicitly.*/
 /*@{*/
 
 /**Returns whether or not the stream being read is seekable.

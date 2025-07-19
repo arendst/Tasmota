@@ -2,7 +2,7 @@
 //
 //   Auto-fitter data for blue strings.
 //
-// Copyright (C) 2013-2020 by
+// Copyright (C) 2013-2023 by
 // David Turner, Robert Wilhelm, and Werner Lemberg.
 //
 // This file is part of the FreeType project, and may only be used,
@@ -89,7 +89,7 @@ AF_BLUE_STRING_ENUM AF_BLUE_STRINGS_ARRAY AF_BLUE_STRING_MAX_LEN:
     "ت ث ط ظ ك"
   // We don't necessarily have access to medial forms via Unicode in case
   // Arabic presentational forms are missing.  The only character that is
-  // guaranteed to have the same vertical position with joining (this is,
+  // guaranteed to have the same vertical position with joining (that is,
   // non-isolated) forms is U+0640, ARABIC TATWEEL, which must join both
   // round and flat curves.
   AF_BLUE_STRING_ARABIC_JOIN

@@ -74,7 +74,7 @@ static const char SFLenTab[16][2] = {
  * Return:      none
  *
  * Notes:       set order of short blocks to s[band][window] instead of s[window][band]
- *                so that we index through consectutive memory locations when unpacking 
+ *                so that we index through consecutive memory locations when unpacking 
  *                (make sure dequantizer follows same convention)
  *              Illegal Intensity Position = 7 (always) for MPEG1 scale factors
  **************************************************************************************/

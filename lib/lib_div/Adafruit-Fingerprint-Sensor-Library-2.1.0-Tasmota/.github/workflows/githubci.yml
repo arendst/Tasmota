@@ -1,0 +1,38 @@
+name: Arduino Library CI
+
+on: [pull_request, push, repository_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arduino-platform: ["uno", "leonardo", "mega2560", "zero", "esp8266", "esp32", "metro_m4", "trinket_m0"]
+
+    steps:
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v2
+    - uses: actions/checkout@v2
+      with:
+         repository: adafruit/ci-arduino
+         path: ci
+
+    - name: pre-install
+      run: bash ci/actions_install.sh
+
+    - name: test platforms
+      run: python3 ci/build_platform.py ${{ matrix.arduino-platform }}
+
+    - name: clang
+      run: python3 ci/run-clang-format.py -e "ci/*" -e "bin/*" -r . 
+
+    - name: doxygen
+      env:
+        GH_REPO_TOKEN: ${{ secrets.GH_REPO_TOKEN }}
+        PRETTYNAME : "Adafruit Fingerprint Arduino Library"
+      run: bash ci/doxy_gen_and_deploy.sh
+
+

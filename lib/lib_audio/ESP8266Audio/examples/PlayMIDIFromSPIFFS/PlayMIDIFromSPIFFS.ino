@@ -25,6 +25,7 @@ void setup()
   WiFi.mode(WIFI_OFF); 
 
   Serial.begin(115200);
+  SPIFFS.begin();
   Serial.println("Starting up...\n");
 
   audioLogger = &Serial;

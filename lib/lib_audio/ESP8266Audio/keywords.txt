@@ -22,6 +22,7 @@ AudioGeneratorWAV	KEYWORD1
 AudioOutput	KEYWORD1
 AudioOutputI2S	KEYWORD1
 AudioOutputI2SNoDAC	KEYWORD1
+AudioOutputI2SClass	KEYWORD1
 AudioOutputNull	KEYWORD1
 AudioOutputBuffer	KEYWORD1
 AudioOutputSerialWAV	KEYWORD1

@@ -201,7 +201,7 @@ and 3, above.
 4.2 Compatible Source Licenses. Software modules that have been independently
 developed without any use of Covered Code and which contain no portion of the
 Covered Code, Modifications or other Derivative Works, but are used or combined
-in any way wtih the Covered Code or any Derivative Work to form a larger
+in any way with the Covered Code or any Derivative Work to form a larger
 Derivative Work, are exempt from the conditions described in Section 4.1 but
 only to the extent that: the software module, including any software that is
 linked to, integrated with, or part of the same applications as, the software

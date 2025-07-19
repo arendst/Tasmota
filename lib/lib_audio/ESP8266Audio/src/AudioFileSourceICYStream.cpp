@@ -17,7 +17,12 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#define _GNU_SOURCE
+
+#if defined(ESP32) || defined(ESP8266)
+
+#ifndef _GNU_SOURCE
+  #define _GNU_SOURCE
+#endif
 
 #include "AudioFileSourceICYStream.h"
 #include <string.h>
@@ -40,16 +45,15 @@ bool AudioFileSourceICYStream::open(const char *url)
 {
   static const char *hdr[] = { "icy-metaint", "icy-name", "icy-genre", "icy-br" };
   pos = 0;
-  http.begin(client, url);
+  if (!http.begin(client, url)) {
+    cb.st(STATUS_HTTPFAIL, PSTR("Can't connect to url"));
+    return false;
+  }
   http.addHeader("Icy-MetaData", "1");
   http.collectHeaders( hdr, 4 );
   http.setReuse(true);
+  http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
   int code = http.GET();
-  if (code != HTTP_CODE_OK) {
-    http.end();
-    cb.st(STATUS_HTTPFAIL, PSTR("Can't open HTTP request"));
-    return false;
-  }
   if (http.hasHeader(hdr[0])) {
     String ret = http.header(hdr[0]);
     icyMetaInt = ret.toInt();
@@ -83,12 +87,16 @@ AudioFileSourceICYStream::~AudioFileSourceICYStream()
 
 uint32_t AudioFileSourceICYStream::readInternal(void *data, uint32_t len, bool nonBlock)
 {
+  // Ensure we can't possibly read 2 ICY headers in a single go #355
+  if (icyMetaInt > 1) {
+    len = std::min((int)(icyMetaInt >> 1), (int)len);
+  }
 retry:
   if (!http.connected()) {
     cb.st(STATUS_DISCONNECTED, PSTR("Stream disconnected"));
     http.end();
     for (int i = 0; i < reconnectTries; i++) {
-      char buff[32];
+      char buff[64];
       sprintf_P(buff, PSTR("Attempting to reconnect, try %d"), i);
       cb.st(STATUS_RECONNECTING, buff);
       delay(reconnectDelayMs);
@@ -211,3 +219,5 @@ retry:
   icyByteCount += ret;
   return read;
 }
+
+#endif

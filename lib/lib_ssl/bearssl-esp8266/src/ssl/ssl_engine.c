@@ -1232,6 +1232,21 @@ void
 br_ssl_engine_close(br_ssl_engine_context *cc)
 {
 	if (!br_ssl_engine_closed(cc)) {
+		/*
+		 * If we are not already closed, then we need to
+		 * initiate the closure. Once closing, any incoming
+		 * application data is discarded; we should also discard
+		 * application data which is already there but has not
+		 * been acknowledged by the application yet (this mimics
+		 * usual semantics on BSD sockets: you cannot read()
+		 * once you called close(), even if there was some
+		 * unread data already buffered).
+		 */
+		size_t len;
+
+		if (br_ssl_engine_recvapp_buf(cc, &len) != NULL && len != 0) {
+			br_ssl_engine_recvapp_ack(cc, len);
+		}
 		jump_handshake(cc, 1);
 	}
 }

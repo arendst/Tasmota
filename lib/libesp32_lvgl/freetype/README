@@ -1,4 +1,4 @@
-FreeType 2.10.4
+FreeType 2.13.2
 ===============
 
 Homepage: https://www.freetype.org
@@ -16,7 +16,9 @@ Read the files `docs/INSTALL*`  for installation instructions; see the
 file `docs/LICENSE.TXT` for the available licenses.
 
 For using FreeType's git repository  instead of a distribution bundle,
-please read file `README.git`.
+please read file  `README.git`.  Note that you have  to actually clone
+the repository; using a snapshot will  not work (in other words, don't
+use gitlab's 'Download' button).
 
 The FreeType 2 API reference is located in directory `docs/reference`;
 use the file  `index.html` as the top entry point.   [Please note that
@@ -30,9 +32,9 @@ sites.  Go to
 
 and download one of the following files.
 
-  freetype-doc-2.10.4.tar.xz
-  freetype-doc-2.10.4.tar.gz
-  ftdoc2104.zip
+  freetype-doc-2.13.2.tar.xz
+  freetype-doc-2.13.2.tar.gz
+  ftdoc2132.zip
 
 To view the documentation online, go to
 
@@ -88,12 +90,11 @@ Details on the process can be found here:
 
 Enjoy!
 
-
   The FreeType Team
 
 ----------------------------------------------------------------------
 
-Copyright (C) 2006-2021 by
+Copyright (C) 2006-2023 by
 David Turner, Robert Wilhelm, and Werner Lemberg.
 
 This  file is  part of  the FreeType  project, and  may only  be used,

@@ -2021,6 +2021,8 @@ FLAC__bool frame_sync_(FLAC__StreamDecoder *decoder)
 	return true;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 FLAC__bool read_frame_(FLAC__StreamDecoder *decoder, FLAC__bool *got_a_frame, FLAC__bool do_full_decode)
 {
 	uint32_t channel;
@@ -2167,6 +2169,7 @@ FLAC__bool read_frame_(FLAC__StreamDecoder *decoder, FLAC__bool *got_a_frame, FL
 	decoder->protected_->state = FLAC__STREAM_DECODER_SEARCH_FOR_FRAME_SYNC;
 	return true;
 }
+#pragma GCC diagnostic pop
 
 FLAC__bool read_frame_header_(FLAC__StreamDecoder *decoder)
 {
@@ -2196,14 +2199,14 @@ FLAC__bool read_frame_header_(FLAC__StreamDecoder *decoder)
 	 * Three kinds of things can go wrong when reading the frame header:
 	 *  1) We may have sync'ed incorrectly and not landed on a frame header.
 	 *     If we don't find a sync code, it can end up looking like we read
-	 *     a valid but unparseable header, until getting to the frame header
+	 *     a valid but unparsable header, until getting to the frame header
 	 *     CRC.  Even then we could get a false positive on the CRC.
-	 *  2) We may have sync'ed correctly but on an unparseable frame (from a
+	 *  2) We may have sync'ed correctly but on an unparsable frame (from a
 	 *     future encoder).
-	 *  3) We may be on a damaged frame which appears valid but unparseable.
+	 *  3) We may be on a damaged frame which appears valid but unparsable.
 	 *
 	 * For all these reasons, we try and read a complete frame header as
-	 * long as it seems valid, even if unparseable, up until the frame
+	 * long as it seems valid, even if unparsable, up until the frame
 	 * header CRC.
 	 */
 
@@ -2780,7 +2783,7 @@ FLAC__bool read_residual_partitioned_rice_(FLAC__StreamDecoder *decoder, uint32_
 		if(rice_parameter < pesc) {
 			partitioned_rice_contents->raw_bits[partition] = 0;
 			u = (partition_order == 0 || partition > 0)? partition_samples : partition_samples - predictor_order;
-			if(!FLAC__bitreader_read_rice_signed_block(decoder->private_->input, residual + sample, u, rice_parameter))
+			if(!FLAC__bitreader_read_rice_signed_block(decoder->private_->input, (int*) residual + sample, u, rice_parameter))
 				return false; /* read_callback_ sets the state for us */
 			sample += u;
 		}
@@ -2789,7 +2792,7 @@ FLAC__bool read_residual_partitioned_rice_(FLAC__StreamDecoder *decoder, uint32_
 				return false; /* read_callback_ sets the state for us */
 			partitioned_rice_contents->raw_bits[partition] = rice_parameter;
 			for(u = (partition_order == 0 || partition > 0)? 0 : predictor_order; u < partition_samples; u++, sample++) {
-				if(!FLAC__bitreader_read_raw_int32(decoder->private_->input, &i, rice_parameter))
+				if(!FLAC__bitreader_read_raw_int32(decoder->private_->input, (long int*) &i, rice_parameter))
 					return false; /* read_callback_ sets the state for us */
 				residual[sample] = i;
 			}
@@ -2836,7 +2839,7 @@ FLAC__bool read_callback_(FLAC__byte buffer[], size_t *bytes, void *client_data)
 		 * FLAC__STREAM_DECODER_UNPARSEABLE_STREAM and increment its
 		 * unparseable_frame_count.  But there is a remote possibility
 		 * that it is properly synced at such a "future-codec frame",
-		 * so to make sure, we wait to see many "unparseable" errors in
+		 * so to make sure, we wait to see many "unparsable" errors in
 		 * a row before bailing out.
 		 */
 		if(decoder->private_->is_seeking && decoder->private_->unparseable_frame_count > 20) {
@@ -3143,7 +3146,7 @@ FLAC__bool seek_to_absolute_sample_(FLAC__StreamDecoder *decoder, FLAC__uint64 s
 			return false;
 		}
 		/* Now we need to get a frame.  First we need to reset our
-		 * unparseable_frame_count; if we get too many unparseable
+		 * unparseable_frame_count; if we get too many unparsable
 		 * frames in a row, the read callback will return
 		 * FLAC__STREAM_DECODER_READ_STATUS_ABORT, causing
 		 * FLAC__stream_decoder_process_single() to return false.

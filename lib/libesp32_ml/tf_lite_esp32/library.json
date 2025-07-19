@@ -1,0 +1,15 @@
+{
+    "name": "tf_lite_esp32",
+    "version": "0.0.1",
+    "keywords": "tensor flow",
+    "description": "Tensor flow lite for Arduino-ESP32",
+    "frameworks": "arduino",
+    "platforms": "espressif32",
+    "build": {
+        "libArchive": true,
+        "flags": [
+            "-I Source/include",
+            "-I Source/esp-nn/include"
+        ]
+    }
+}

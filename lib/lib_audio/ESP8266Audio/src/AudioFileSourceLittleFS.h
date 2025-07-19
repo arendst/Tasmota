@@ -18,10 +18,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AUDIOFILESOURCESPIFFS_H
-#define _AUDIOFILESOURCESPIFFS_H
-
-#ifndef ESP32 // No LittleFS there, yet
+#ifndef _AUDIOFILESOURCELITTLEFS_H
+#define _AUDIOFILESOURCELITTLEFS_H
 
 #include <Arduino.h>
 #include <LittleFS.h>
@@ -36,8 +34,6 @@ class AudioFileSourceLittleFS : public AudioFileSourceFS
     AudioFileSourceLittleFS(const char *filename) : AudioFileSourceFS(LittleFS, filename) {};
     // Others are inherited from base
 };
-
-#endif
 
 #endif
 

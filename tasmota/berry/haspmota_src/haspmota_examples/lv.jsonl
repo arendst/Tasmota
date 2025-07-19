@@ -1,0 +1,44 @@
+{"page":0,"comment":"---------- Upper stat line ----------"}
+{"id":0,"text_color":"#FFFFFF"}
+{"id":11,"obj":"label","x":0,"y":0,"w":320,"pad_right":90,"h":22,"bg_color":"#D00000","bg_opa":255,"radius":0,"border_side":0,"text":"Tasmota","text_font":"montserrat-20"}
+
+{"id":15,"obj":"lv_wifi_arcs","x":291,"y":0,"w":29,"h":22,"radius":0,"border_side":0,"bg_color":"#000000","line_color":"#FFFFFF"}
+{"id":16,"obj":"lv_clock","x":232,"y":3,"w":55,"h":16,"radius":0,"border_side":0}
+
+{"comment":"---------- Bottom buttons - prev/home/next ----------"}
+{"id":101,"obj":"btn","x":20,"y":210,"w":80,"h":25,"action":"prev","bg_color":"#1fa3ec","radius":10,"border_side":1,"text":"\uF053","text_font":"montserrat-20"}
+{"id":102,"obj":"btn","x":120,"y":210,"w":80,"h":25,"action":"back","bg_color":"#1fa3ec","radius":10,"border_side":1,"text":"\uF015","text_font":"montserrat-20"}
+{"id":103,"obj":"btn","x":220,"y":210,"w":80,"h":25,"action":"next","bg_color":"#1fa3ec","radius":10,"border_side":1,"text":"\uF054","text_font":"montserrat-20"}
+
+{"page":2,"comment":"---------- Page 2 ----------"}
+{"id":0,"bg_color":"#0000A0","bg_grad_color":"#000000","bg_grad_dir":1,"text_color":"#FFFFFF"}
+
+{"comment":"---------- Wifi status ----------"}
+{"id":20,"obj":"lv_wifi_graph","x":257,"y":25,"w":60,"h":40,"radius":0}
+{"id":21,"obj":"lv_tasmota_info","x":3,"y":25,"w":251,"h":40,"radius":0}
+{"id":22,"obj":"lv_tasmota_log","x":3,"y":68,"w":314,"h":90,"radius":0,"text_font":12}
+
+{"page":1,"comment":"---------- Page 1 ----------"}
+{"id":0,"bg_color":"#0000A0","bg_grad_color":"#000000","bg_grad_dir":1,"text_color":"#FFFFFF"}
+
+{"id":2,"obj":"arc","x":20,"y":65,"w":80,"h":100,"border_side":0,"type":0,"rotation":0,"start_angle":180,"end_angle":0,"start_angle1":180,"value_font":12,"value_ofs_x":0,"value_ofs_y":-14,"bg_opa":0,"text":"--.-°C","min":200,"max":800,"val":0,"val_rule":"ESP32#Temperature","val_rule_formula":"val * 10","text_rule":"ESP32#Temperature","text_rule_format":"%2.1f °C"}
+
+{"id":5,"obj":"label","x":2,"y":35,"w":140,"text":"Temperature","align":1}
+
+{"id":10,"obj":"label","x":172,"y":35,"w":140,"text":"MPU","align":0}
+{"id":11,"obj":"label","x":172,"y":55,"w":140,"text":"x=","align":0,"text_rule":"MPU9250#AX","text_rule_format":"x=%6.3f","text_rule_formula":"val / 1000"}
+{"id":12,"obj":"label","x":172,"y":75,"w":140,"text":"y=","align":0,"text_rule":"MPU9250#AY","text_rule_format":"y=%6.3f","text_rule_formula":"val / 1000"}
+{"id":13,"obj":"label","x":172,"y":95,"w":140,"text":"z=","align":0,"text_rule":"MPU9250#AZ","text_rule_format":"z=%6.3f","text_rule_formula":"val / 1000"}
+
+
+{"page":3,"comment":"---------- Page 3 ----------"}
+{"page":3,"id":1,"obj":"btn","x":0,"y":20,"w":240,"h":30,"text":"PAGE 3","text_font":16,"bg_color":"#2C3E50","text_color":"#FFFFFF","radius":0,"border_side":0,"click":0}
+
+{"page":3,"id":11,"obj":"img","src":"A:/noun_Fan_35097_140.png","auto_size":1,"w":140,"h":140,"x":50,"y":75,"image_recolor":"lime","image_recolor_opa":150}
+{"page":3,"id":12,"obj":"spinner","parentid":11,"x":7,"y":6,"w":126,"h":126,"bg_opa":0,"border_width":0,"line_width":7,"line_width1":7,"type":2,"angle":120,"speed":1000,"value_str":3,"value_font":24}
+
+{"page":4,"comment":"---------- Page 4 ----------"}
+{"page":4,"id":1,"obj":"btn","x":0,"y":20,"w":240,"h":30,"text":"PAGE 4","value_font":24,"bg_color":"#2C3E50","text_color":"#FFFFFF","radius":0,"border_side":0,"click":0}
+{"page":4,"id":2,"obj":"obj","x":5,"y":35,"w":230,"h":250,"click":0}
+
+{"comment":"--- Trigger sensors every 2 seconds ---","berry_run":"tasmota.add_cron('*/2 * * * * *', def () tasmota.publish_rule(tasmota.read_sensors()) end, 'oh_every_5_s')"}

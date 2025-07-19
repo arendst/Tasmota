@@ -38,6 +38,9 @@ fast picture write
 //  Serial.printf(">%d,\n", stage);
 //
 
+enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE};
+extern void AddLog(uint32_t loglevel, PGM_P formatP, ...);
+
 const uint16_t RA8876_colors[]={RA8876_BLACK,RA8876_WHITE,RA8876_RED,RA8876_GREEN,RA8876_BLUE,RA8876_CYAN,RA8876_MAGENTA,\
   RA8876_YELLOW,RA8876_NAVY,RA8876_DARKGREEN,RA8876_DARKCYAN,RA8876_MAROON,RA8876_PURPLE,RA8876_OLIVE,\
 RA8876_LIGHTGREY,RA8876_DARKGREY,RA8876_ORANGE,RA8876_GREENYELLOW,RA8876_PINK};
@@ -191,6 +194,10 @@ void RA8876::DisplayOnff(int8_t on) {
   if (on) {
     dim(dimmer);
   }
+}
+
+void RA8876::dim10(uint8_t contrast, uint16_t contrast_gamma) {
+  dim(contrast / 16); 
 }
 
 // 0-15
@@ -486,7 +493,7 @@ void RA8876::DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font) {
 
 bool RA8876::initDisplay() {
 
-  lvgl_param.fluslines = 10;
+  lvgl_param.flushlines = 10;
 
   SPI.beginTransaction(m_spiSettings);
 
@@ -1292,6 +1299,102 @@ void RA8876::selectInternalFont(enum FontSize size, enum FontEncoding enc) {
 void RA8876::setDrawMode(uint8_t mode) {
   drawmode=mode;
   setDrawMode_reg(mode);
+}
+
+//#define RA_FT5206_VENDID           0x11
+#define RA_FT5206_VENDID           0x79
+#define RA_FT5206U_CHIPID          0x64
+#define RA_FT5316_CHIPID           0x0a
+#define RA_FT5206_VENDID_REG       (0xA8)
+#define RA_FT5206_CHIPID_REG       (0xA3)
+#define RA_FT5206_TOUCHES_REG      (0x02)
+#define RA_FT5206_MODE_REG         (0x00)
+#define RA_FT5206_address 0x38
+
+int RA8876::_readByte(uint8_t reg, uint8_t nbytes, uint8_t *data) {
+  _i2cPort->beginTransmission(RA_FT5206_address);
+  _i2cPort->write(reg);
+  _i2cPort->endTransmission();
+  _i2cPort->requestFrom(RA_FT5206_address, (size_t)nbytes);
+  uint8_t index = 0;
+  while (_i2cPort->available()) {
+    data[index++] = _i2cPort->read();
+  }
+  return 0;
+}
+
+int RA8876::_writeByte(uint8_t reg, uint8_t nbytes, uint8_t *data) {
+  _i2cPort->beginTransmission(RA_FT5206_address);
+  _i2cPort->write(reg);
+  for (uint8_t i = 0; i < nbytes; i++) {
+    _i2cPort->write(data[i]);
+  }
+  _i2cPort->endTransmission();
+  return 0;
+}
+
+bool RA8876::utouch_Init(char **name) {
+  strcpy(ut_name, "FT5316");
+  *name = ut_name;
+
+  _i2cPort = &Wire;
+
+  uint8_t val; 
+  _readByte(RA_FT5206_VENDID_REG, 1, &val);
+  //AddLog(LOG_LEVEL_INFO, PSTR("UTDBG %02x"), val);
+
+  if (val != RA_FT5206_VENDID) {
+    return false;
+  }
+  
+  _readByte(RA_FT5206_CHIPID_REG, 1, &val);
+  //AddLog(LOG_LEVEL_INFO, PSTR("UTDBG %02x"), val);
+
+  if (val != RA_FT5316_CHIPID) {
+    return false;
+  }
+
+  return true;
+}
+
+uint16_t RA8876::touched(void) {
+  uint8_t data[16];
+
+  uint8_t  val = 0;
+  _readByte(RA_FT5206_MODE_REG, 1, &val);
+  if (val) {
+    val = 0;
+    _writeByte(RA_FT5206_MODE_REG, 1, &val);
+  }
+
+  _readByte(RA_FT5206_MODE_REG, 16, data);
+
+  if (data[2]) {
+    ut_x = data[3] << 8;
+    ut_x |= data[4];
+    ut_y = data[5] << 8;
+    ut_y |= data[6];
+    ut_x &= 0xfff;
+    ut_y &= 0xfff;
+  }
+  return data[2];
+}
+
+int16_t RA8876::getPoint_x() {
+  return ut_x;
+}
+
+int16_t RA8876::getPoint_y() {
+  return ut_y;
+}
+
+void RA8876::TS_RotConvert(int16_t *x, int16_t *y) {
+int16_t temp;
+  *x = *x * width() / 800;
+  *y = *y * height() / 480;
+
+  *x = width() - *x;
+  *y = height() - *y;
 }
 
 void RA8876::setDrawMode_reg(uint8_t mode)  {

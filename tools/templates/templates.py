@@ -275,6 +275,7 @@ GPIO_CONVERT = [
 def is_old_template(template):
   """find out it the template is old format"""
   # Old format <=> 13 gpios AND all gpios <= 255
+#  print(f"Template {template}\n")
   if "GPIO" in template and len(template["GPIO"]) == 13:
     for g in template["GPIO"]:
       if g > 255:
@@ -340,7 +341,10 @@ def main():
   # Write to root/TEMPLATES.md
   fout = open(TEMPLATES,"w+")
 
-  fout.write("<img src=\"/tools/logo/TASMOTA_FullLogo_Vector.svg\" alt=\"Logo\" align=\"right\" height=\"76\"/>\n")
+  fout.write("<picture>\n")
+  fout.write("  <source media=\"(prefers-color-scheme: dark)\" srcset=\"./tools/logo/TASMOTA_FullLogo_Vector_White.svg\">\n")
+  fout.write("  <img alt=\"Logo\" src=\"./tools/logo/TASMOTA_FullLogo_Vector.svg\" align=\"right\" height=\"76\">\n")
+  fout.write("</picture>\n")
   fout.write("\n")
   fout.write("# Templates\n")
   fout.write("\n")
@@ -360,14 +364,17 @@ def main():
         pass
       else:
         json_start = line.find("{")
-        name = line[:json_start].strip()
-        try:
-          template = json.loads(line[json_start:])
-          template = convert_template(template)
-        except json.decoder.JSONDecodeError as ex:
-          template = "Not available"
+        if json_start > -1:
+          name = line[:json_start].strip()
+          try:
+            template = json.loads(line[json_start:])
+            template = convert_template(template)
+          except json.decoder.JSONDecodeError as ex:
+            template = "Not available"
 
-        fout.write(f"{name:<{COLUMN}}  {json.dumps(template, separators=(',', ':'))}\n")
+          fout.write(f"{name:<{COLUMN}}  {json.dumps(template, separators=(',', ':'))}\n")
+#        else:
+#          fout.write(line+'\n')
 
   fout.write('```\n')
 

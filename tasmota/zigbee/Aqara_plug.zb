@@ -1,0 +1,6 @@
+#Z2Tv1
+# Aqara Smart Plug EU
+# https://zigbee.blakadder.com/Aqara_SP-EUC01.html
+:lumi.plug.*,LUMI
+0B04/050B=0B04/FFFF         # ignore the original ActivePower since it returns always zero
+000C/0055=0B04/050B

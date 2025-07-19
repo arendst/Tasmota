@@ -12,7 +12,7 @@ const char HTTP_SCRIPT_MODULE_TEMPLATE[] PROGMEM =
     "l=hs.length;"                        // Find max indexes for s
     "for(i=0;i<l;i++){c=hs[i]&0xffe0;if(a==c){b=hs[i]&0x001f;break;}}"
     "s>>=5;"                              // Add options
-    "for(i=1;i<=b;i++){ce((i<10)?(' '+i):i,t);}"
+    "for(i=0;i<=b;i++){ce(i+1,t);}"       // Add index 1 to 32
     "eb('h'+g).value=u+1;"                // Set selected value
     "t.style.visibility=(b>0)?'':'hidden';"
   "}"

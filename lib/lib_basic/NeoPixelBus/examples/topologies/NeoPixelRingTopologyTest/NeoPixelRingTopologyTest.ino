@@ -34,6 +34,11 @@ class MyRingsLayout
 {
 protected:
     const uint16_t Rings[7] = {0, 1, 7, 19, 35, 59, PixelCount}; 
+    
+    uint8_t _ringCount() const
+    {
+        return sizeof(Rings) / sizeof(Rings[0]);
+    }
 };
 
 // use the MyRingsLayout to declare the topo object
@@ -97,4 +102,3 @@ void loop()
     strip.ClearTo(black);
     strip.Show();
 }
-

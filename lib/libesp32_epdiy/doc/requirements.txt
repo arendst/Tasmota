@@ -1,2 +1,0 @@
-breathe>=4
-Sphinx>=3

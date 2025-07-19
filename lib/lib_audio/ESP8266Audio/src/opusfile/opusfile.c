@@ -3001,7 +3001,7 @@ static const float OP_STEREO_DOWNMIX[OP_NCHANNELS_MAX-2][OP_NCHANNELS_MAX][2]={
 #endif
 
 #if defined(OP_FIXED_POINT)
-#if 0
+
 /*Matrices for downmixing from the supported channel counts to stereo.
   The matrices with 5 or more channels are normalized to a total volume of 2.0,
    since most mixes sound too quiet if normalized to 1.0 (as there is generally
@@ -3010,6 +3010,7 @@ static const float OP_STEREO_DOWNMIX[OP_NCHANNELS_MAX-2][OP_NCHANNELS_MAX][2]={
    32-bit number.*/
 static const opus_int16 OP_STEREO_DOWNMIX_Q14
  [OP_NCHANNELS_MAX-2][OP_NCHANNELS_MAX][2]={
+#if  OP_NCHANNELS_MAX>2
   /*3.0*/
   {
     {9598,0},{6786,6786},{0,9598}
@@ -3036,8 +3037,9 @@ static const opus_int16 OP_STEREO_DOWNMIX_Q14
     {6368,0},{4502,4502},{0,6368},{5515,3183},{3183,5515},{5515,3183},
     {3183,5515},{4502,4502}
   }
+#endif // OP_NCHANNELS_MAX>2
 };
-#endif
+
 int op_read(OggOpusFile *_of,opus_int16 *_pcm,int _buf_size,int *_li){
   return op_read_native(_of,_pcm,_buf_size,_li);
 }
@@ -3055,7 +3057,6 @@ static int op_stereo_filter(OggOpusFile *_of,void *_dst,int _dst_sz,
       for(i=0;i<_nsamples;i++)dst[2*i+0]=dst[2*i+1]=_src[i];
     }
     else{
-#if 0
       for(i=0;i<_nsamples;i++){
         opus_int32 l;
         opus_int32 r;
@@ -3071,8 +3072,6 @@ static int op_stereo_filter(OggOpusFile *_of,void *_dst,int _dst_sz,
         dst[2*i+0]=(opus_int16)OP_CLAMP(-32768,l+8192>>14,32767);
         dst[2*i+1]=(opus_int16)OP_CLAMP(-32768,r+8192>>14,32767);
       }
-#endif
-      // noop, removed for RAM savings
     }
   }
   return _nsamples;

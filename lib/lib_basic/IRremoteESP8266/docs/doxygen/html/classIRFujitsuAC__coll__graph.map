@@ -1,5 +1,0 @@
-<map id="IRFujitsuAC" name="IRFujitsuAC">
-<area shape="rect" id="node1" title="Class for handling detailed Fujitsu A/C messages." alt="" coords="49,95,145,121"/>
-<area shape="rect" id="node2" href="$classIRsend.html" title="Class for sending all basic IR protocols." alt="" coords="5,5,72,32"/>
-<area shape="rect" id="node3" href="$unionFujitsuProtocol.html" title="Native representation of a Fujitsu A/C message." alt="" coords="97,5,215,32"/>
-</map>

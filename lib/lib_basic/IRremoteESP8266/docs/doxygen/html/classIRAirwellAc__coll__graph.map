@@ -1,5 +1,0 @@
-<map id="IRAirwellAc" name="IRAirwellAc">
-<area shape="rect" id="node1" title="Class for handling detailed Airwell A/C messages." alt="" coords="49,95,145,121"/>
-<area shape="rect" id="node2" href="$classIRsend.html" title="Class for sending all basic IR protocols." alt="" coords="5,5,72,32"/>
-<area shape="rect" id="node3" href="$unionAirwellProtocol.html" title="Native representation of a Airwell A/C message." alt="" coords="96,5,216,32"/>
-</map>

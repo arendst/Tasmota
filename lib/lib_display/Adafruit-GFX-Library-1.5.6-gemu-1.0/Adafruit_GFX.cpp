@@ -31,6 +31,10 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef ESP32
+#define USE_UFILESYS
+#endif
+
 #include "Adafruit_GFX.h"
 #include "glcdfont.c"
 #ifdef __AVR__
@@ -1610,10 +1614,12 @@ void Adafruit_GFX_Button::drawButton(boolean inverted) {
     text    = _fillcolor;
   }
 
+  #if defined USE_UFILESYS
   if (_label[0]=='/') {
     draw_picture(_label, _x1, _y1, _w, _h, outline, inverted);
     _gfx->drawRect(_x1, _y1, _w, _h, text);
   } else {
+  #endif
     uint8_t r = min(_w, _h) / 4; // Corner radius
     _gfx->fillRoundRect(_x1, _y1, _w, _h, r, fill);
     _gfx->drawRoundRect(_x1, _y1, _w, _h, r, outline);
@@ -1622,7 +1628,9 @@ void Adafruit_GFX_Button::drawButton(boolean inverted) {
     _gfx->setTextColor(text);
     _gfx->setTextSize(_textsize_x, _textsize_y);
     _gfx->print(_label);
+  #if defined USE_UFILESYS
   }
+  #endif
 }
 
 /**************************************************************************/

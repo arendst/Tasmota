@@ -32,14 +32,21 @@ License along with NeoPixel.  If not, see
 
 #ifdef ARDUINO_ARCH_ESP8266
 
+#include "Arduino.h"
+
 extern "C"
 {
-#include "Arduino.h"
 #include "osapi.h"
 #include "ets_sys.h"
 
 #include "i2s_reg.h"
-#include "i2s.h"
+
+#ifdef ARDUINO_ESP8266_MAJOR    //this define was added in ESP8266 Arduino Core version v3.0.1
+  #include "core_esp8266_i2s.h" //for Arduino core >= 3.0.1
+#else
+  #include "i2s.h"              //for Arduino core <= 3.0.0
+#endif
+
 #include "eagle_soc.h"
 #include "esp8266_peri.h"
 #include "slc_register.h"
@@ -226,7 +233,72 @@ const uint16_t c_maxDmaBlockSize = 4095;
 const uint16_t c_dmaBytesPerPixelBytes = 4;
 const uint8_t c_I2sPin = 3; // due to I2S hardware, the pin used is restricted to this
 
-template<typename T_SPEED> class NeoEsp8266DmaMethodBase
+class NeoEsp8266DmaMethodCore
+{
+protected:
+    static NeoEsp8266DmaMethodCore* s_this; // for the ISR
+
+    volatile NeoDmaState _dmaState;
+
+    slc_queue_item* _i2sBufDesc;  // dma block descriptors
+    uint16_t _i2sBufDescCount;   // count of block descriptors in _i2sBufDesc
+
+
+    // This routine is called as soon as the DMA routine has something to tell us. All we
+    // handle here is the RX_EOF_INT status, which indicate the DMA has sent a buffer whose
+    // descriptor has the 'EOF' field set to 1.
+    // in the case of this code, the second to last state descriptor
+    static void IRAM_ATTR i2s_slc_isr(void)
+    {
+        ETS_SLC_INTR_DISABLE();
+
+        uint32_t slc_intr_status = SLCIS;
+
+        SLCIC = 0xFFFFFFFF;
+
+        if ((slc_intr_status & SLCIRXEOF) && s_this)
+        {
+            switch (s_this->_dmaState)
+            {
+            case NeoDmaState_Idle:
+                break;
+
+            case NeoDmaState_Pending:
+            {
+                slc_queue_item* finished_item = (slc_queue_item*)SLCRXEDA;
+
+                // data block has pending data waiting to send, prepare it
+                // point last state block to top 
+                (finished_item + 1)->next_link_ptr = s_this->_i2sBufDesc;
+
+                s_this->_dmaState = NeoDmaState_Sending;
+            }
+            break;
+
+            case NeoDmaState_Sending:
+            {
+                slc_queue_item* finished_item = (slc_queue_item*)SLCRXEDA;
+
+                // the data block had actual data sent
+                // point last state block to first state block thus
+                // just looping and not sending the data blocks
+                (finished_item + 1)->next_link_ptr = finished_item;
+
+                s_this->_dmaState = NeoDmaState_Zeroing;
+            }
+            break;
+
+            case NeoDmaState_Zeroing:
+                s_this->_dmaState = NeoDmaState_Idle;
+                break;
+            }
+        }
+
+        ETS_SLC_INTR_ENABLE();
+    }
+};
+
+template<typename T_SPEED> class NeoEsp8266DmaMethodBase : NeoEsp8266DmaMethodCore
 {
 public:
     typedef NeoNoSettings SettingsObject;
@@ -432,8 +504,6 @@ public:
     }
 
 private:
-    static NeoEsp8266DmaMethodBase* s_this; // for the ISR
-
     const size_t  _sizeData;    // Size of '_data' buffer 
     uint8_t*  _data;        // Holds LED color values
 
@@ -445,64 +515,8 @@ private:
     // buffer size = (24 * (reset time / 50)) / 6
     uint8_t _i2sZeroes[(24L * (T_SPEED::ResetTimeUs / 50L)) / 6L];
 
-    slc_queue_item* _i2sBufDesc;  // dma block descriptors
-    uint16_t _i2sBufDescCount;   // count of block descriptors in _i2sBufDesc
     uint16_t _is2BufMaxBlockSize; // max size based on size of a pixel of a single block
 
-    volatile NeoDmaState _dmaState;
-
-    // This routine is called as soon as the DMA routine has something to tell us. All we
-    // handle here is the RX_EOF_INT status, which indicate the DMA has sent a buffer whose
-    // descriptor has the 'EOF' field set to 1.
-    // in the case of this code, the second to last state descriptor
-    static void IRAM_ATTR i2s_slc_isr(void)
-    {
-        ETS_SLC_INTR_DISABLE();
-
-        uint32_t slc_intr_status = SLCIS;
-
-        SLCIC = 0xFFFFFFFF;
-
-        if ((slc_intr_status & SLCIRXEOF) && s_this)
-        {
-            switch (s_this->_dmaState)
-            {
-            case NeoDmaState_Idle:
-                break;
-
-            case NeoDmaState_Pending:
-                {
-                    slc_queue_item* finished_item = (slc_queue_item*)SLCRXEDA;
-
-                    // data block has pending data waiting to send, prepare it
-                    // point last state block to top 
-                    (finished_item + 1)->next_link_ptr = s_this->_i2sBufDesc;
-
-                    s_this->_dmaState = NeoDmaState_Sending;
-                }
-                break;
-
-            case NeoDmaState_Sending:
-                {
-                    slc_queue_item* finished_item = (slc_queue_item*)SLCRXEDA;
-
-                    // the data block had actual data sent
-                    // point last state block to first state block thus
-                    // just looping and not sending the data blocks
-                    (finished_item + 1)->next_link_ptr = finished_item;
-
-                    s_this->_dmaState = NeoDmaState_Zeroing;
-                }
-                break;
-
-            case NeoDmaState_Zeroing:
-                s_this->_dmaState = NeoDmaState_Idle;
-                break;
-            }
-        }
-
-        ETS_SLC_INTR_ENABLE();
-    }
 
     void FillBuffers()
     {
@@ -544,23 +558,24 @@ private:
 };
 
 
-template<typename T_SPEED> 
-NeoEsp8266DmaMethodBase<T_SPEED>* NeoEsp8266DmaMethodBase<T_SPEED>::s_this;
 
 // normal
 typedef NeoEsp8266DmaMethodBase<NeoEsp8266DmaSpeedWs2812x> NeoEsp8266DmaWs2812xMethod;
 typedef NeoEsp8266DmaMethodBase<NeoEsp8266DmaSpeedSk6812> NeoEsp8266DmaSk6812Method;
 typedef NeoEsp8266DmaMethodBase<NeoEsp8266DmaSpeedTm1814> NeoEsp8266DmaTm1814Method;
 typedef NeoEsp8266DmaMethodBase<NeoEsp8266DmaSpeedTm1829> NeoEsp8266DmaTm1829Method;
+typedef NeoEsp8266DmaTm1814Method NeoEsp8266DmaTm1914Method;
 typedef NeoEsp8266DmaMethodBase<NeoEsp8266DmaSpeed800Kbps> NeoEsp8266Dma800KbpsMethod;
 typedef NeoEsp8266DmaMethodBase<NeoEsp8266DmaSpeed400Kbps> NeoEsp8266Dma400KbpsMethod;
 typedef NeoEsp8266DmaMethodBase<NeoEsp8266DmaSpeedApa106> NeoEsp8266DmaApa106Method;
+
 
 // inverted
 typedef NeoEsp8266DmaMethodBase<NeoEsp8266DmaInvertedSpeedWs2812x> NeoEsp8266DmaInvertedWs2812xMethod;
 typedef NeoEsp8266DmaMethodBase<NeoEsp8266DmaInvertedSpeedSk6812> NeoEsp8266DmaInvertedSk6812Method;
 typedef NeoEsp8266DmaMethodBase<NeoEsp8266DmaInvertedSpeedTm1814> NeoEsp8266DmaInvertedTm1814Method;
 typedef NeoEsp8266DmaMethodBase<NeoEsp8266DmaInvertedSpeedTm1829> NeoEsp8266DmaInvertedTm1829Method;
+typedef NeoEsp8266DmaInvertedTm1814Method NeoEsp8266DmaInvertedTm1914Method;
 typedef NeoEsp8266DmaMethodBase<NeoEsp8266DmaInvertedSpeed800Kbps> NeoEsp8266DmaInverted800KbpsMethod;
 typedef NeoEsp8266DmaMethodBase<NeoEsp8266DmaInvertedSpeed400Kbps> NeoEsp8266DmaInverted400KbpsMethod;
 typedef NeoEsp8266DmaMethodBase<NeoEsp8266DmaInvertedSpeedApa106> NeoEsp8266DmaInvertedApa106Method;
@@ -573,6 +588,7 @@ typedef NeoEsp8266DmaWs2812xMethod NeoWs2811Method;
 typedef NeoEsp8266DmaSk6812Method NeoSk6812Method;
 typedef NeoEsp8266DmaTm1814Method NeoTm1814Method;
 typedef NeoEsp8266DmaTm1829Method NeoTm1829Method;
+typedef NeoEsp8266DmaTm1914Method NeoTm1914Method;
 typedef NeoEsp8266DmaSk6812Method NeoLc8812Method;
 typedef NeoEsp8266DmaApa106Method NeoApa106Method;
 
@@ -587,6 +603,7 @@ typedef NeoEsp8266DmaInvertedWs2812xMethod NeoWs2811InvertedMethod;
 typedef NeoEsp8266DmaInvertedSk6812Method NeoSk6812InvertedMethod;
 typedef NeoEsp8266DmaInvertedTm1814Method NeoTm1814InvertedMethod;
 typedef NeoEsp8266DmaInvertedTm1829Method NeoTm1829InvertedMethod;
+typedef NeoEsp8266DmaInvertedTm1914Method NeoTm1914InvertedMethod;
 typedef NeoEsp8266DmaInvertedSk6812Method NeoLc8812InvertedMethod;
 typedef NeoEsp8266DmaInvertedApa106Method NeoApa106InvertedMethod;
 
