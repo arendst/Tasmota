@@ -453,6 +453,8 @@
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Rakto idx"
 #define D_DOMOTICZ_SWITCH_IDX "Jungiklio idx"
+#define D_DOMOTICZ_KEY "Key"
+#define D_DOMOTICZ_SWITCH "Switch"
 #define D_DOMOTICZ_SENSOR_IDX "Jutiklio idx"
   #define D_DOMOTICZ_TEMP "Temperatūra"
   #define D_DOMOTICZ_TEMP_HUM "Temperatūra, Drėgmė"

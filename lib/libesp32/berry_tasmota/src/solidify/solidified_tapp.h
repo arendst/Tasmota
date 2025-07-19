@@ -4,8 +4,8 @@
 \********************************************************************/
 #include "be_constobj.h"
 extern const bclass be_class_Tapp;
-// compact class 'Tapp' ktab size: 17, total: 18 (saved 8 bytes)
-static const bvalue be_ktab_class_Tapp[17] = {
+// compact class 'Tapp' ktab size: 16, total: 17 (saved 8 bytes)
+static const bvalue be_ktab_class_Tapp[16] = {
   /* K0   */  be_nested_str(tasmota),
   /* K1   */  be_nested_str(add_driver),
   /* K2   */  be_nested_str(autoexec_dir),
@@ -21,8 +21,7 @@ static const bvalue be_ktab_class_Tapp[17] = {
   /* K12  */  be_nested_str(TAP_X3A_X20Loaded_X20Tasmota_X20App_X20_X27_X25s_X25s_X27),
   /* K13  */  be_const_int(2),
   /* K14  */  be_nested_str(load),
-  /* K15  */  be_nested_str(_X23autoexec_X2Ebe),
-  /* K16  */  be_nested_str(stop_iteration),
+  /* K15  */  be_nested_str(stop_iteration),
 };
 
 
@@ -102,7 +101,7 @@ be_local_closure(class_Tapp_autoexec_dir,   /* name */
     &be_ktab_class_Tapp,     /* shared constants */
     &be_const_str_autoexec_dir,
     &be_const_str_solidified,
-    ( &(const binstruction[34]) {  /* code */
+    ( &(const binstruction[33]) {  /* code */
       0x58040005,  //  0000  LDCONST	R1	K5
       0xA40A0C00,  //  0001  IMPORT	R2	K6
       0xA40E0E00,  //  0002  IMPORT	R3	K7
@@ -111,14 +110,14 @@ be_local_closure(class_Tapp_autoexec_dir,   /* name */
       0x5C1C0000,  //  0005  MOVE	R7	R0
       0x7C140400,  //  0006  CALL	R5	2
       0x7C100200,  //  0007  CALL	R4	1
-      0xA8020014,  //  0008  EXBLK	0	#001E
+      0xA8020013,  //  0008  EXBLK	0	#001D
       0x5C140800,  //  0009  MOVE	R5	R4
       0x7C140000,  //  000A  CALL	R5	0
       0x8C180709,  //  000B  GETMET	R6	R3	K9
       0x5C200A00,  //  000C  MOVE	R8	R5
       0x5824000A,  //  000D  LDCONST	R9	K10
       0x7C180600,  //  000E  CALL	R6	3
-      0x781A000C,  //  000F  JMPF	R6	#001D
+      0x781A000B,  //  000F  JMPF	R6	#001C
       0xB81A1600,  //  0010  GETNGBL	R6	K11
       0x601C0018,  //  0011  GETGBL	R7	G24
       0x5820000C,  //  0012  LDCONST	R8	K12
@@ -130,13 +129,12 @@ be_local_closure(class_Tapp_autoexec_dir,   /* name */
       0xB81A0000,  //  0018  GETNGBL	R6	K0
       0x8C180D0E,  //  0019  GETMET	R6	R6	K14
       0x00200005,  //  001A  ADD	R8	R0	R5
-      0x0020110F,  //  001B  ADD	R8	R8	K15
-      0x7C180400,  //  001C  CALL	R6	2
-      0x7001FFEA,  //  001D  JMP		#0009
-      0x58100010,  //  001E  LDCONST	R4	K16
-      0xAC100200,  //  001F  CATCH	R4	1	0
-      0xB0080000,  //  0020  RAISE	2	R0	R0
-      0x80000000,  //  0021  RET	0
+      0x7C180400,  //  001B  CALL	R6	2
+      0x7001FFEB,  //  001C  JMP		#0009
+      0x5810000F,  //  001D  LDCONST	R4	K15
+      0xAC100200,  //  001E  CATCH	R4	1	0
+      0xB0080000,  //  001F  RAISE	2	R0	R0
+      0x80000000,  //  0020  RET	0
     })
   )
 );

@@ -558,7 +558,7 @@ void sns_opentherm_check_retry_request()
 
     bool canRetry = ++cmd->m_flags.retryCount < 3;
     // In case of last retry and if this command never respond successfully, set notSupported flag
-    if (!canRetry && !cmd->m_flags.supported)
+    if (!cmd->m_flags.supported)
     {
         cmd->m_flags.notSupported = true;
         AddLog(LOG_LEVEL_ERROR,

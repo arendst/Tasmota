@@ -1,22 +1,11 @@
 Import("env")
 
 import os
-import tasmotapiolib
 from os.path import join
-import subprocess
 
 def firm_metrics(source, target, env):
     print()
-    if env["PIOPLATFORM"] == "espressif32":
-        try:
-            import tasmota_metrics
-            map_file = str(tasmotapiolib.get_source_map_path(env).resolve())
-            subprocess.run([
-                env.subst("$PYTHONEXE"), "-m", "tasmota_metrics", map_file
-            ], check=False)
-        except:
-            pass
-    elif env["PIOPLATFORM"] == "espressif8266":
+    if env["PIOPLATFORM"] == "espressif8266":
         map_file = join(env.subst("$BUILD_DIR")) + os.sep + "firmware.map"
         with open(map_file,'r', encoding='utf-8') as f:
             phrase = "_text_end = ABSOLUTE (.)"

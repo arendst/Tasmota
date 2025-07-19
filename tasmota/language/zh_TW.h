@@ -453,6 +453,8 @@
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
 #define D_DOMOTICZ_SWITCH_IDX "開關 idx"
+#define D_DOMOTICZ_KEY "Key"
+#define D_DOMOTICZ_SWITCH "Switch"
 #define D_DOMOTICZ_SENSOR_IDX "感應器 idx"
   #define D_DOMOTICZ_TEMP "溫度"
   #define D_DOMOTICZ_TEMP_HUM "溫度、濕度"

@@ -1,3 +1,4 @@
+# Test to check for tab characters in source files
 import os
 
 def strfind(st, char)
@@ -32,4 +33,4 @@ def findpath(path)
     end
 end
 
-findpath('.')
+findpath('.')  # Check current directory recursively

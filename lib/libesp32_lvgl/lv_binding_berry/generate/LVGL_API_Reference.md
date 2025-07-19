@@ -1470,6 +1470,7 @@ set_div_line_count|int, int||[lv_chart_set_div_line_count](https://docs.lvgl.io/
 set_next_value|lv.chart_series, int||[lv_chart_set_next_value](https://docs.lvgl.io/9.0/search.html?q=lv_chart_set_next_value)
 set_next_value2|lv.chart_series, int, int||[lv_chart_set_next_value2](https://docs.lvgl.io/9.0/search.html?q=lv_chart_set_next_value2)
 set_point_count|int||[lv_chart_set_point_count](https://docs.lvgl.io/9.0/search.html?q=lv_chart_set_point_count)
+set_range|int, int, int||[lv_chart_set_axis_range](https://docs.lvgl.io/9.0/search.html?q=lv_chart_set_axis_range)
 set_series_color|lv.chart_series, lv.color||[lv_chart_set_series_color](https://docs.lvgl.io/9.0/search.html?q=lv_chart_set_series_color)
 set_series_ext_x_array|lv.chart_series, lv.int_arr||[lv_chart_set_series_ext_x_array](https://docs.lvgl.io/9.0/search.html?q=lv_chart_set_series_ext_x_array)
 set_series_ext_y_array|lv.chart_series, lv.int_arr||[lv_chart_set_series_ext_y_array](https://docs.lvgl.io/9.0/search.html?q=lv_chart_set_series_ext_y_array)

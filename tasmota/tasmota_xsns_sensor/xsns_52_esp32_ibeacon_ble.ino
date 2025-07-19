@@ -202,7 +202,7 @@ int advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
   struct IBEACON ib;
   if (!iBeaconEnable) return 0;
 
-  BLEAdvertisedDevice *advertisedDevice = pStruct->advertisedDevice;
+  const BLEAdvertisedDevice *advertisedDevice = pStruct->advertisedDevice;
 
   char sRSSI[6];
   itoa(pStruct->RSSI,sRSSI,10);
@@ -237,9 +237,9 @@ int advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
         manufacturerData[1] == 0x00)
     {
       BLEBeacon oBeacon = BLEBeacon();
-      oBeacon.setData(std::string((char *)manufacturerData, manufacturerDataLen));
+      oBeacon.setData(manufacturerData, manufacturerDataLen);
       uint8_t UUID[16];
-      memcpy(UUID,oBeacon.getProximityUUID().getNative()->u128.value,16);
+      memcpy(UUID,oBeacon.getProximityUUID().getValue(),16); //TODO: check correct size
       ESP32BLE_ReverseStr(UUID,16);
 
 //      uint16_t    Major = ENDIAN_CHANGE_U16(oBeacon.getMajor());

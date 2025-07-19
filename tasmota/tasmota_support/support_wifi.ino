@@ -46,6 +46,17 @@ const uint8_t WIFI_RETRY_OFFSET_SEC = WIFI_RETRY_SECONDS;  // seconds
   #include "esp_netif.h"
 #endif  // ESP32
 
+/**
+ * Converts WiFi RSSI (signal strength) to a quality percentage
+ * 
+ * @param rssi The RSSI value in dBm (typically negative, e.g. -70)
+ * @return Quality as a percentage (0-100)
+ * 
+ * The function maps RSSI values to a percentage scale:
+ * - RSSI <= -100 dBm: 0% quality (very poor/no signal)
+ * - RSSI >= -50 dBm: 100% quality (excellent signal)
+ * - Values in between are linearly mapped (each 2.5 dBm = 5%)
+ */
 int WifiGetRssiAsQuality(int rssi) {
   int quality = 0;
 
@@ -67,6 +78,18 @@ const char kWifiEncryptionTypes[] PROGMEM = "OPEN|WEP|WPA/PSK|WPA2/PSK|WPA/WPA2/
 #endif  // ESP32
 ;
 
+/**
+ * Returns a string representation of the WiFi encryption type
+ * 
+ * @param i Index of the network in the WiFi scan results
+ * @return String containing the encryption type (e.g., "WPA2/PSK")
+ * 
+ * The function maps the encryption type values from WiFi.encryptionType() to
+ * human-readable strings defined in kWifiEncryptionTypes.
+ * 
+ * ESP8266 and ESP32 use different encryption type enumerations, so this function
+ * normalizes them to a consistent set of values.
+ */
 String WifiEncryptionType(uint32_t i) {
 #ifdef ESP8266
   // Reference. WiFi.encryptionType =
@@ -86,6 +109,18 @@ String WifiEncryptionType(uint32_t i) {
   return stemp1;
 }
 
+/**
+ * Manages the WiFi configuration timeout counter
+ * 
+ * @return Current state of the WiFi configuration counter (true if active, false if not)
+ * 
+ * If the WiFi configuration counter is active, this function resets it to the maximum
+ * value (WIFI_CONFIG_SEC). This extends the time available for configuration before
+ * the device automatically restarts.
+ * 
+ * The function is typically called during user interaction with WiFi configuration
+ * to prevent timeout while the user is actively configuring.
+ */
 bool WifiConfigCounter(void)
 {
   if (Wifi.config_counter) {
@@ -94,6 +129,24 @@ bool WifiConfigCounter(void)
   return (Wifi.config_counter);
 }
 
+/**
+ * Initiates a WiFi configuration mode
+ * 
+ * @param type The configuration mode to activate (from enum WifiConfigModes)
+ * 
+ * This function handles the transition to different WiFi configuration modes:
+ * - WIFI_RESTART: Triggers a device restart
+ * - WIFI_SERIAL: Enables configuration via serial for 3 minutes
+ * - WIFI_MANAGER/WIFI_MANAGER_RESET_ONLY: Activates the WiFi manager web interface
+ * 
+ * The function sets up a timeout counter (Wifi.config_counter) that will trigger
+ * appropriate actions when it expires. It also disconnects from any current WiFi
+ * connection before changing modes.
+ * 
+ * Error handling:
+ * - Ignores requests for WIFI_RETRY or WIFI_WAIT if already in configuration mode
+ * - Falls back to WIFI_SERIAL if WIFI_MANAGER is requested but webserver is disabled
+ */
 void WifiConfig(uint8_t type)
 {
   if (!Wifi.config_type) {
@@ -134,6 +187,23 @@ void WifiConfig(uint8_t type)
 extern "C" void phy_bbpll_en_usb(bool en);
 #endif  // CONFIG_IDF_TARGET_ESP32C3
 
+/**
+ * Sets the WiFi operating mode with proper handling for different ESP platforms
+ * 
+ * @param wifi_mode The WiFi mode to set (WIFI_OFF, WIFI_STA, WIFI_AP, WIFI_AP_STA)
+ * 
+ * This function handles platform-specific requirements when changing WiFi modes:
+ * - For ESP32-C3: Enables USB serial-jtag after WiFi startup
+ * - Ensures the hostname is set before mode changes
+ * - Handles proper sleep/wake transitions for power management
+ * 
+ * The function includes retry logic if setting the mode fails on the first attempt.
+ * For WIFI_OFF mode, it properly puts the WiFi into deep sleep to save power.
+ * 
+ * Error handling:
+ * - Retries mode setting up to 2 times if it fails
+ * - Adds delay between attempts to allow hardware to stabilize
+ */
 void WifiSetMode(WiFiMode_t wifi_mode) {
 #ifdef CONFIG_IDF_TARGET_ESP32C3
   // https://github.com/espressif/arduino-esp32/issues/6264#issuecomment-1094376906
@@ -162,6 +232,25 @@ void WifiSetMode(WiFiMode_t wifi_mode) {
   delay(100);  // Must allow for some time to init.
 }
 
+/**
+ * Configures the WiFi sleep mode based on system settings
+ * 
+ * This function sets the appropriate WiFi sleep mode to balance power consumption
+ * and network responsiveness according to user settings:
+ * 
+ * - WIFI_NONE_SLEEP: No sleep (highest power consumption, fastest response)
+ * - WIFI_LIGHT_SLEEP: Light sleep during idle times (medium power saving)
+ * - WIFI_MODEM_SLEEP: Default sleep mode (moderate power saving)
+ * 
+ * The sleep mode is determined by:
+ * - TasmotaGlobal.sleep: Global sleep setting
+ * - Settings->flag5.wifi_no_sleep: Option to disable sleep
+ * - Settings->flag3.sleep_normal: SetOption60 - Use normal sleep instead of dynamic sleep
+ * - TasmotaGlobal.wifi_stay_asleep: Flag to maintain sleep state
+ * 
+ * Note: Sleep modes affect power consumption and network responsiveness.
+ * Some ESP32 variants may have specific sleep behavior requirements.
+ */
 void WiFiSetSleepMode(void)
 {
 /* Excerpt from the esp8266 non os sdk api reference (v2.2.1):
@@ -202,6 +291,29 @@ void WiFiSetSleepMode(void)
   delay(100);
 }
 
+/**
+ * Initiates a WiFi connection with the specified parameters
+ * 
+ * @param flag WiFi AP selection: 0=AP1, 1=AP2, 2=Toggle between APs, 3=Current AP
+ * @param channel Optional WiFi channel to connect on (0 for auto)
+ * 
+ * This function handles the WiFi connection process:
+ * 1. Disconnects from any current connections
+ * 2. Sets the WiFi mode to station mode
+ * 3. Configures sleep mode and power settings
+ * 4. Attempts to connect to the selected access point
+ * 
+ * The function supports multiple connection scenarios:
+ * - Connecting to a specific AP (primary or backup)
+ * - Toggling between configured APs
+ * - Connecting to a specific channel and BSSID for multi-AP installations
+ * - Using static IP configuration if specified in settings
+ * 
+ * Error handling:
+ * - Skips empty SSIDs by toggling to the alternate AP
+ * - Logs connection details for troubleshooting
+ * - Optionally waits for connection result based on settings
+ */
 void WifiBegin(uint8_t flag, uint8_t channel) {
 #ifdef USE_EMULATION
   UdpDisconnect();
@@ -267,6 +379,34 @@ void WifiBegin(uint8_t flag, uint8_t channel) {
   }
 }
 
+/**
+ * Manages WiFi network scanning and connection based on scan results
+ * 
+ * This function implements a state machine for WiFi scanning operations:
+ * - States 1-5: Network scanning for automatic connection
+ * - States 6-69: Network scanning for the wifiscan command
+ * 
+ * For automatic connection (states 1-5):
+ * 1. Initializes scan parameters
+ * 2. Starts an asynchronous WiFi scan
+ * 3. Processes scan results to find the best network
+ * 4. Connects to the best available network
+ * 
+ * For wifiscan command (states 6-69):
+ * 1. Performs a WiFi scan
+ * 2. Formats and publishes scan results via MQTT
+ * 3. Maintains scan results for 1 minute before cleanup
+ * 
+ * The function selects networks based on:
+ * - Signal strength (RSSI)
+ * - Match with configured SSIDs
+ * - Security type (open networks require no password)
+ * 
+ * Error handling:
+ * - Logs scan progress and results
+ * - Handles scan failures gracefully
+ * - Manages memory by cleaning up scan results
+ */
 void WifiBeginAfterScan(void)
 {
   // Not active
@@ -432,16 +572,58 @@ void WifiBeginAfterScan(void)
 
 }
 
+/**
+ * Returns the number of successful WiFi connections since boot
+ * 
+ * @return Number of successful WiFi connections
+ * 
+ * This function provides access to the internal counter that tracks
+ * how many times the device has successfully connected to WiFi networks.
+ * The counter is incremented each time a connection is established.
+ */
 uint16_t WifiLinkCount(void)
 {
   return Wifi.link_count;
 }
 
+/**
+ * Returns the total time the device has been disconnected from WiFi
+ * 
+ * @return String representation of the total disconnected time
+ * 
+ * This function calculates the cumulative time the device has spent
+ * without a WiFi connection since boot. The time is formatted as a
+ * human-readable duration string (e.g., "1h 23m 45s").
+ * 
+ * The downtime is tracked by recording timestamps when disconnections
+ * occur and calculating the difference when connections are restored.
+ */
 String WifiDowntime(void)
 {
   return GetDuration(Wifi.downtime);
 }
 
+/**
+ * Updates the WiFi connection state and triggers related events
+ * 
+ * @param state The new WiFi state (1 = connected, 0 = disconnected)
+ * 
+ * This function manages the WiFi connection state tracking:
+ * 1. When connected (state=1):
+ *    - Sets the wifi_connected rules flag
+ *    - Increments the connection counter
+ *    - Updates the total downtime
+ * 2. When disconnected (state=0):
+ *    - Sets the wifi_disconnected rules flag
+ *    - Records the disconnection timestamp
+ * 
+ * The function also updates the global state variables:
+ * - TasmotaGlobal.global_state.wifi_down (inverted state)
+ * - TasmotaGlobal.global_state.network_down (cleared when WiFi is up)
+ * 
+ * This state tracking enables proper event handling and metrics for
+ * WiFi connection reliability.
+ */
 void WifiSetState(uint8_t state)
 {
   if (state == TasmotaGlobal.global_state.wifi_down) {
@@ -507,22 +689,63 @@ void WifiSetState(uint8_t state)
 bool WifiGetIP(IPAddress *ip, bool exclude_ap = false);
 // IPv4 for Wifi
 // Returns only IPv6 global address (no loopback and no link-local)
+/**
+ * Retrieves the IPv4 address of the WiFi interface
+ * 
+ * @param ip Pointer to store the IPv4 address (can be nullptr to just check existence)
+ * @return true if a valid IPv4 address exists, false otherwise
+ * 
+ * This function gets the current IPv4 address of the WiFi interface if connected.
+ * If the ip parameter is provided, the address is copied to it.
+ * The function returns true only if a valid (non-zero) IPv4 address exists.
+ */
 bool WifiGetIPv4(IPAddress *ip)
 {
   uint32_t wifi_uint = (WL_CONNECTED == WiFi.status()) ? (uint32_t)WiFi.localIP() : 0;  // See issue #23115
   if (ip != nullptr) { *ip = wifi_uint; }
   return wifi_uint != 0;
 }
+
+/**
+ * Checks if the WiFi interface has a valid IPv4 address
+ * 
+ * @return true if a valid IPv4 address exists, false otherwise
+ * 
+ * This is a convenience wrapper around WifiGetIPv4() that only checks
+ * for the existence of an IPv4 address without retrieving it.
+ */
 bool WifiHasIPv4(void)
 {
   return WifiGetIPv4(nullptr);
 }
+
+/**
+ * Returns the WiFi IPv4 address as a string
+ * 
+ * @return String containing the IPv4 address or empty string if none
+ * 
+ * This function returns the current IPv4 address of the WiFi interface
+ * formatted as a string (e.g., "192.168.1.100"). If no valid IPv4 address
+ * exists, an empty string is returned.
+ */
 String WifiGetIPv4Str(void)
 {
   IPAddress ip;
   return WifiGetIPv4(&ip) ? ip.toString() : String();
 }
 
+/**
+ * Retrieves the IPv4 address of the Ethernet interface
+ * 
+ * @param ip Pointer to store the IPv4 address (can be nullptr to just check existence)
+ * @return true if a valid IPv4 address exists, false otherwise
+ * 
+ * This function gets the current IPv4 address of the Ethernet interface if connected.
+ * If the ip parameter is provided, the address is copied to it.
+ * The function returns true only if a valid (non-zero) IPv4 address exists.
+ * 
+ * On platforms without Ethernet support, this always returns false.
+ */
 bool EthernetGetIPv4(IPAddress *ip)
 {
 //#if defined(ESP32) && CONFIG_IDF_TARGET_ESP32 && defined(USE_ETHERNET)
@@ -535,10 +758,29 @@ bool EthernetGetIPv4(IPAddress *ip)
   return false;
 #endif
 }
+
+/**
+ * Checks if the Ethernet interface has a valid IPv4 address
+ * 
+ * @return true if a valid IPv4 address exists, false otherwise
+ * 
+ * This is a convenience wrapper around EthernetGetIPv4() that only checks
+ * for the existence of an IPv4 address without retrieving it.
+ */
 bool EthernetHasIPv4(void)
 {
   return EthernetGetIPv4(nullptr);
 }
+
+/**
+ * Returns the Ethernet IPv4 address as a string
+ * 
+ * @return String containing the IPv4 address or empty string if none
+ * 
+ * This function returns the current IPv4 address of the Ethernet interface
+ * formatted as a string (e.g., "192.168.1.100"). If no valid IPv4 address
+ * exists, an empty string is returned.
+ */
 String EthernetGetIPv4Str(void)
 {
   IPAddress ip;
@@ -831,6 +1073,32 @@ bool HasIP(void) {
   return false;
 }
 
+/**
+ * Verifies WiFi connection status and manages reconnection
+ * 
+ * This function checks if the device has a valid WiFi connection with an IP address.
+ * It handles connection state transitions and reconnection attempts:
+ * 
+ * 1. If connected with a valid IP:
+ *    - Updates connection state
+ *    - Resets retry counters
+ *    - Stores network parameters for quick reconnection
+ *    - Updates DNS server information
+ * 
+ * 2. If disconnected or connection issues:
+ *    - Updates connection state
+ *    - Manages retry attempts based on failure type
+ *    - Triggers appropriate reconnection strategy
+ *    - Handles fallback to WiFi configuration modes
+ * 
+ * The function implements an adaptive retry mechanism that adjusts based on
+ * the type of connection failure (AP not found, wrong password, etc.).
+ * 
+ * Error handling:
+ * - Logs specific connection failure reasons
+ * - Implements exponential backoff for retries
+ * - Triggers device restart after excessive failures (100 max retries)
+ */
 void WifiCheckIp(void) {
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_WIFI D_CHECKING_CONNECTION));
   Wifi.counter = WIFI_CHECK_SEC;
@@ -930,6 +1198,28 @@ void WifiCheckIp(void) {
   }
 }
 
+/**
+ * Main WiFi management function called periodically from the main loop
+ * 
+ * @param param Configuration mode parameter (WIFI_SERIAL, WIFI_MANAGER, etc.)
+ * 
+ * This function serves as the central WiFi management routine that:
+ * 1. Decrements the WiFi check counter
+ * 2. Handles WiFi configuration modes (WIFI_SERIAL, WIFI_MANAGER)
+ * 3. Manages configuration timeout countdown
+ * 4. Calls WifiCheckIp() to verify connection status
+ * 5. Updates WiFi state based on connection status
+ * 6. Triggers periodic network rescans if enabled
+ * 
+ * The function implements a state machine that manages:
+ * - WiFi configuration timeouts
+ * - Connection monitoring
+ * - Periodic rescanning of networks
+ * - WiFi scan state processing
+ * 
+ * It's designed to be called regularly from the main loop to maintain
+ * WiFi connectivity and handle configuration changes.
+ */
 void WifiCheck(uint8_t param)
 {
   Wifi.counter--;
@@ -966,6 +1256,20 @@ void WifiCheck(uint8_t param)
   }
 }
 
+/**
+ * Returns the current WiFi state or configuration mode
+ * 
+ * @return Current WiFi state:
+ *         - WIFI_RESTART: WiFi is being restarted
+ *         - WIFI_SERIAL: Serial configuration mode active
+ *         - WIFI_MANAGER: WiFi manager configuration mode active
+ *         - WIFI_MANAGER_RESET_ONLY: WiFi manager reset-only mode active
+ *         - -1: WiFi is down (not connected)
+ * 
+ * This function provides the current WiFi state for status reporting and
+ * decision making. It returns the active configuration mode if one is running,
+ * WIFI_RESTART if WiFi is up and running normally, or -1 if WiFi is down.
+ */
 int WifiState(void)
 {
   int state = -1;
@@ -975,6 +1279,16 @@ int WifiState(void)
   return state;
 }
 
+/**
+ * Gets the current WiFi transmit power
+ * 
+ * @return Current WiFi transmit power in dBm as a float
+ * 
+ * This function returns the current WiFi transmit power setting.
+ * If a fixed power is set in Settings->wifi_output_power, that value is used.
+ * The power is stored internally as an integer (tenths of dBm) and
+ * returned as a float value in dBm.
+ */
 float WifiGetOutputPower(void) {
   if (Settings->wifi_output_power) {
     Wifi.last_tx_pwr = Settings->wifi_output_power;
@@ -982,6 +1296,19 @@ float WifiGetOutputPower(void) {
   return (float)(Wifi.last_tx_pwr) / 10;
 }
 
+/**
+ * Sets the WiFi transmit power based on settings
+ * 
+ * This function configures the WiFi transmit power:
+ * - If Settings->wifi_output_power is non-zero, it sets a fixed power level
+ * - If Settings->wifi_output_power is zero, it enables dynamic power management
+ * 
+ * For fixed power, the value is converted from tenths of dBm to dBm
+ * (e.g., 170 becomes 17.0 dBm).
+ * 
+ * The function adds a delay after setting the power to allow the hardware
+ * to stabilize.
+ */
 void WifiSetOutputPower(void) {
   if (Settings->wifi_output_power) {
     WiFiHelper::setOutputPower((float)(Settings->wifi_output_power) / 10);
@@ -991,6 +1318,28 @@ void WifiSetOutputPower(void) {
   }
 }
 
+/**
+ * Dynamically adjusts WiFi transmit power based on signal strength
+ * 
+ * This function implements dynamic power management to optimize power consumption
+ * while maintaining reliable WiFi connectivity. It works by:
+ * 
+ * 1. Measuring the current RSSI (signal strength)
+ * 2. Calculating the minimum required transmit power based on:
+ *    - Current RSSI
+ *    - WiFi sensitivity threshold for the current PHY mode
+ *    - Maximum allowed transmit power for the current PHY mode
+ * 
+ * The function adjusts power based on different WiFi standards:
+ * - 802.11b: Different sensitivity and max power than other modes
+ * - 802.11g: Optimized for 54Mbps operation
+ * - 802.11n/ax: Higher sensitivity requirements
+ * 
+ * This helps reduce overall power consumption while maintaining connection quality.
+ * The function is only active when Settings->wifi_output_power is 0 (dynamic mode).
+ * 
+ * Original concept by ESPEasy (@TD-er).
+ */
 void WiFiSetTXpowerBasedOnRssi(void) {
   // Dynamic WiFi transmit power based on RSSI lowering overall DC power usage.
   // Original idea by ESPEasy (@TD-er)
@@ -1070,6 +1419,14 @@ RF_PRE_INIT()
 }
 #endif  // WIFI_RF_PRE_INIT
 
+/**
+ * Enables WiFi by setting the check counter to trigger immediate processing
+ * 
+ * This function activates WiFi by setting the Wifi.counter to 1, which will
+ * cause the WifiCheck function to process WiFi operations on the next cycle.
+ * It's a simple way to trigger WiFi initialization or reconnection from
+ * other parts of the code.
+ */
 void WifiEnable(void) {
   Wifi.counter = 1;
 }
@@ -1082,6 +1439,26 @@ void WifiEnable(void) {
 void WifiEvents(arduino_event_t *event);
 #endif
 
+/**
+ * Initializes WiFi connection parameters and starts the connection process
+ * 
+ * This function sets up the WiFi system for initial connection:
+ * 1. Registers event handlers for ESP32
+ * 2. Initializes WiFi state variables
+ * 3. Sets up retry timers with a randomized offset based on chip ID
+ * 4. Configures WiFi for non-persistent settings
+ * 
+ * The function is typically called during device startup or after a
+ * WiFi reconfiguration. It prepares the WiFi subsystem but doesn't
+ * actually establish the connection (that happens in subsequent
+ * WifiCheck calls).
+ * 
+ * The retry timing includes a chip-specific offset to prevent multiple
+ * devices from attempting to reconnect simultaneously, which helps
+ * avoid network congestion in multi-device installations.
+ * 
+ * Note: This function will not do anything if network_wifi flag is disabled.
+ */
 void WifiConnect(void)
 {
   if (!Settings->flag4.network_wifi) { return; }
@@ -1117,6 +1494,26 @@ void WifiConnect(void)
 #endif  // WIFI_RF_PRE_INIT
 }
 
+/**
+ * Performs a clean shutdown of WiFi connections and services
+ * 
+ * @param option If true, performs a more thorough cleanup including SDK WiFi calibration data
+ * 
+ * This function properly terminates WiFi connections and related services:
+ * 1. Disconnects any active UDP emulation services
+ * 2. Disconnects MQTT if enabled
+ * 3. Disconnects from WiFi with appropriate cleanup based on the option parameter
+ * 
+ * When option=true (used with WIFI_FORCE_RF_CAL_ERASE enabled):
+ * - Performs a simple disconnect
+ * - Erases SDK WiFi configuration and calibration data
+ * 
+ * When option=false (default, used for normal shutdown and DeepSleep):
+ * - Performs a more standard disconnect that preserves calibration data
+ * 
+ * The function includes delays to ensure network buffers are properly flushed
+ * before disconnection.
+ */
 void WifiShutdown(bool option) {
   // option = false - Legacy disconnect also used by DeepSleep
   // option = true  - Disconnect with SDK wifi calibrate sector erase when WIFI_FORCE_RF_CAL_ERASE enabled
@@ -1155,6 +1552,18 @@ void WifiShutdown(bool option) {
   delay(100);                 // Flush anything in the network buffers.
 }
 
+/**
+ * Completely disables WiFi functionality
+ * 
+ * This function performs a full shutdown of WiFi:
+ * 1. Checks if WiFi is already disabled to avoid redundant operations
+ * 2. Calls WifiShutdown() to properly terminate connections
+ * 3. Sets WiFi mode to WIFI_OFF to disable the radio
+ * 4. Updates the global state to indicate WiFi is down
+ * 
+ * After calling this function, WiFi will remain disabled until explicitly
+ * re-enabled. This is useful for power saving or when WiFi is not needed.
+ */
 void WifiDisable(void) {
   if (!TasmotaGlobal.global_state.wifi_down) {
     WifiShutdown();
@@ -1163,6 +1572,26 @@ void WifiDisable(void) {
   TasmotaGlobal.global_state.wifi_down = 1;
 }
 
+/**
+ * Performs a clean device restart with proper shutdown procedures
+ * 
+ * This function handles different types of restart operations:
+ * 1. Normal restart: Performs cleanup and calls ESP.restart()
+ * 2. Halt (TasmotaGlobal.restart_halt): Enters an infinite loop with watchdog feeding
+ * 3. Deep sleep (TasmotaGlobal.restart_deepsleep): Enters deep sleep mode
+ * 
+ * Before restarting, the function:
+ * 1. Resets PWM outputs
+ * 2. Performs a clean WiFi shutdown
+ * 3. Clears any crash dump data
+ * 4. For ESP32-C3: Forces GPIO hold for relays to maintain state during reset
+ * 
+ * The halt mode is useful for debugging, as it keeps the device running
+ * but in a known state with visual LED feedback.
+ * 
+ * Deep sleep mode puts the device into the lowest power state, with only
+ * hardware-triggered wake up possible.
+ */
 void EspRestart(void) {
   ResetPwm();
   WifiShutdown(true);
@@ -1209,6 +1638,22 @@ extern "C" {
 #endif
 }
 
+/**
+ * Sends a Gratuitous ARP packet to update network ARP tables
+ * 
+ * This function sends a Gratuitous ARP announcement to inform other devices
+ * on the network about the device's MAC and IP address mapping. This helps
+ * maintain connectivity by refreshing ARP cache entries on network devices,
+ * particularly useful with routers that might otherwise expire ARP entries.
+ * 
+ * The function:
+ * 1. Finds the active station interface
+ * 2. Verifies it has a valid IP address
+ * 3. Sends a gratuitous ARP packet
+ * 
+ * This implementation handles differences between LWIP v1 and v2.
+ * Backported from https://github.com/esp8266/Arduino/pull/6889
+ */
 void stationKeepAliveNow(void) {
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_WIFI "Sending Gratuitous ARP"));
   for (netif* interface = netif_list; interface != nullptr; interface = interface->next)
@@ -1229,6 +1674,22 @@ void stationKeepAliveNow(void) {
   }
 }
 
+/**
+ * Periodically sends Gratuitous ARP packets to maintain network presence
+ * 
+ * This function manages the timing for sending Gratuitous ARP packets
+ * based on the configured interval in Settings->param[P_ARP_GRATUITOUS].
+ * 
+ * The timing can be configured as:
+ * - Values 1-100: Seconds between ARP packets
+ * - Values >100: Minutes between ARP packets (value - 100)
+ *   e.g., 105 = 5 minutes, 110 = 10 minutes
+ * - Value 0: Feature disabled
+ * 
+ * This helps maintain connectivity with network devices that might
+ * otherwise expire ARP cache entries, particularly useful with some
+ * router models that aggressively clear their ARP tables.
+ */
 void wifiKeepAlive(void) {
   static uint32_t wifi_timer = millis();                     // Wifi keepalive timer
 
@@ -1246,11 +1707,37 @@ void wifiKeepAlive(void) {
 }
 #endif  // ESP8266
 
-// expose a function to be called by WiFi32
+/**
+ * Returns the configured DNS resolution timeout
+ * 
+ * @return DNS timeout value in milliseconds from settings
+ * 
+ * This function exposes the DNS timeout setting to be used by WiFi32
+ * and other components that need to know how long to wait for DNS
+ * resolution before timing out.
+ */
 int32_t WifiDNSGetTimeout(void) {
   return Settings->dns_timeout;
 }
-// read Settings for DNS IPv6 priority
+/**
+ * Determines if IPv6 should be prioritized for DNS resolution
+ * 
+ * @return true if IPv6 should be prioritized, false otherwise
+ * 
+ * This function determines whether IPv6 addresses should be prioritized
+ * over IPv4 for DNS resolution based on:
+ * 
+ * 1. User settings (Settings->flag6.dns_ipv6_priority)
+ * 2. Availability of IPv4 and IPv6 addresses
+ * 
+ * The logic ensures that:
+ * - If only IPv4 is available, IPv4 is prioritized regardless of settings
+ * - If only IPv6 is available, IPv6 is prioritized regardless of settings
+ * - If both are available, the user setting determines priority
+ * 
+ * When the priority changes, the DNS cache is cleared on ESP32 to ensure
+ * proper resolution with the new priority.
+ */
 bool WifiDNSGetIPv6Priority(void) {
 #ifdef USE_IPV6
   // we prioritize IPv6 only if a global IPv6 address is available, otherwise revert to IPv4 if we have one as well
@@ -1280,6 +1767,22 @@ bool WifiDNSGetIPv6Priority(void) {
   return false;
 }
 
+/**
+ * Resolves a hostname to an IP address with enhanced handling
+ * 
+ * @param aHostname The hostname to resolve
+ * @param aResult Reference to store the resulting IP address
+ * @return true if resolution was successful, false otherwise
+ * 
+ * This function extends the standard hostname resolution with:
+ * 1. Direct IP address parsing (for ESP_IDF_VERSION_MAJOR >= 5 with IPv6)
+ * 2. IPv6 zone auto-fixing for link-local addresses
+ * 3. Timeout handling based on Settings->dns_timeout
+ * 4. Detailed logging of resolution results and timing
+ * 
+ * The function is used throughout Tasmota for all DNS resolution needs,
+ * providing consistent behavior and error handling.
+ */
 bool WifiHostByName(const char* aHostname, IPAddress& aResult) {
 #ifdef USE_IPV6
 #if ESP_IDF_VERSION_MAJOR >= 5
@@ -1305,11 +1808,40 @@ bool WifiHostByName(const char* aHostname, IPAddress& aResult) {
   return false;
 }
 
+/**
+ * Checks if a hostname can be resolved via DNS
+ * 
+ * @param aHostname The hostname to check
+ * @return true if the hostname can be resolved, false otherwise
+ * 
+ * This is a convenience wrapper around WifiHostByName that simply checks
+ * if a hostname can be resolved without needing the resulting IP address.
+ */
 bool WifiDnsPresent(const char* aHostname) {
   IPAddress aResult;
   return WifiHostByName(aHostname, aResult);
 }
 
+/**
+ * Periodically polls NTP servers to synchronize device time
+ * 
+ * This function manages the NTP time synchronization process:
+ * 1. Determines when to attempt synchronization based on:
+ *    - Initial sync attempt shortly after boot
+ *    - Hourly sync attempts thereafter
+ *    - Forced sync requests via TasmotaGlobal.ntp_force_sync
+ * 
+ * 2. Calls WifiGetNtp() to retrieve the current time from NTP servers
+ * 
+ * 3. Updates the RTC time if a valid time is received
+ * 
+ * The function implements a staggered sync schedule based on the device's
+ * chip ID to prevent all devices from querying NTP servers simultaneously.
+ * 
+ * Time synchronization is skipped if:
+ * - The network is down
+ * - The user has manually set the time
+ */
 void WifiPollNtp() {
   static uint8_t ntp_sync_minute = 0;
   static uint32_t ntp_run_time = 0;
@@ -1348,6 +1880,27 @@ void WifiPollNtp() {
   }
 }
 
+/**
+ * Retrieves the current time from an NTP server
+ * 
+ * @return Current time in nanoseconds since Unix epoch, or 0 on failure
+ * 
+ * This function implements the NTP client protocol:
+ * 1. Selects an NTP server from configured options or fallbacks
+ * 2. Resolves the server hostname to an IP address
+ * 3. Creates a UDP socket with a random local port
+ * 4. Sends an NTP request packet
+ * 5. Waits for and processes the response
+ * 
+ * The function handles various error conditions:
+ * - DNS resolution failures
+ * - Socket creation failures
+ * - Packet send/receive errors
+ * - Invalid or unsynchronized server responses
+ * 
+ * If a server fails, the function increments ntp_server_id to try
+ * the next configured server on the next attempt.
+ */
 uint64_t WifiGetNtp(void) {
   static uint8_t ntp_server_id = 0;
 
@@ -1466,6 +2019,30 @@ uint64_t WifiGetNtp(void) {
 extern esp_netif_t* get_esp_interface_netif(esp_interface_t interface);
 
 // typedef void (*WiFiEventSysCb)(arduino_event_t *event);
+
+/**
+ * Event handler for ESP32 WiFi and network events
+ * 
+ * @param event Pointer to the arduino_event_t structure containing event details
+ * 
+ * This function processes WiFi and network events on ESP32 platforms:
+ * 
+ * 1. IPv6 address assignment:
+ *    - Logs when global or local IPv6 addresses are assigned
+ *    - Distinguishes between WiFi and Ethernet interfaces
+ * 
+ * 2. WiFi connection events:
+ *    - Creates IPv6 link-local addresses when WiFi connects
+ *    - Works around race conditions in the ESP-IDF LWIP implementation
+ * 
+ * 3. IPv4 address assignment:
+ *    - Logs when IPv4 addresses are assigned
+ *    - Includes subnet mask and gateway information
+ * 
+ * The function also ensures DNS servers are properly maintained by calling
+ * WiFiHelper::scrubDNS() to restore DNS settings that might be zeroed by
+ * internal reconnection processes.
+ */
 void WifiEvents(arduino_event_t *event) {
   switch (event->event_id) {
 

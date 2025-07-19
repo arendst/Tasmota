@@ -1,42 +1,44 @@
 /*
- * NimBLE2904.h
+ * Copyright 2020-2025 Ryan Powell <ryan@nable-embedded.io> and
+ * esp-nimble-cpp, NimBLE-Arduino contributors.
  *
- *  Created: on March 13, 2020
- *      Author H2zero
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Originally:
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * BLE2904.h
- *
- *  Created on: Dec 23, 2017
- *      Author: kolban
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-#ifndef MAIN_NIMBLE2904_H_
-#define MAIN_NIMBLE2904_H_
+#ifndef NIMBLE_CPP_2904_H_
+#define NIMBLE_CPP_2904_H_
+
 #include "nimconfig.h"
-#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BT_NIMBLE_ROLE_PERIPHERAL)
+#if CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
 
-#include "NimBLEDescriptor.h"
+# include "NimBLEDescriptor.h"
 
-struct BLE2904_Data {
-    uint8_t  m_format;
-    int8_t   m_exponent;
-    uint16_t m_unit;      // See https://www.bluetooth.com/specifications/assigned-numbers/units
-    uint8_t  m_namespace;
-    uint16_t m_description;
-
+struct NimBLE2904Data {
+    uint8_t  m_format{0};
+    int8_t   m_exponent{0};
+    uint16_t m_unit{0x2700};   // Unitless; See https://www.bluetooth.com/specifications/assigned-numbers/units
+    uint8_t  m_namespace{1};   // 1 = Bluetooth SIG Assigned Numbers
+    uint16_t m_description{0}; // unknown description
 } __attribute__((packed));
-
 
 /**
  * @brief Descriptor for Characteristic Presentation Format.
  *
  * This is a convenience descriptor for the Characteristic Presentation Format which has a UUID of 0x2904.
  */
-class NimBLE2904: public NimBLEDescriptor {
-public:
-    NimBLE2904(NimBLECharacteristic* pCharacterisitic = nullptr);
+class NimBLE2904 : public NimBLEDescriptor {
+  public:
+    NimBLE2904(NimBLECharacteristic* pChr = nullptr);
     static const uint8_t FORMAT_BOOLEAN   = 1;
     static const uint8_t FORMAT_UINT2     = 2;
     static const uint8_t FORMAT_UINT4     = 3;
@@ -64,17 +66,18 @@ public:
     static const uint8_t FORMAT_UTF8      = 25;
     static const uint8_t FORMAT_UTF16     = 26;
     static const uint8_t FORMAT_OPAQUE    = 27;
+    static const uint8_t FORMAT_MEDASN1   = 28;
 
-    void setDescription(uint16_t);
+    void setDescription(uint16_t description);
     void setExponent(int8_t exponent);
     void setFormat(uint8_t format);
     void setNamespace(uint8_t namespace_value);
     void setUnit(uint16_t unit);
 
-private:
+  private:
     friend class NimBLECharacteristic;
-    BLE2904_Data m_data;
-}; // BLE2904
+    NimBLE2904Data m_data{};
+}; // NimBLE2904
 
-#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL */
-#endif /* MAIN_NIMBLE2904_H_ */
+#endif // CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_PERIPHERAL
+#endif // NIMBLE_CPP_2904_H_

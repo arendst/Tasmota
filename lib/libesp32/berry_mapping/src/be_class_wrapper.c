@@ -69,7 +69,61 @@ void be_create_class_wrapper(bvm *vm, const char * class_name, void * ptr) {
 
 
 /*********************************************************************************************\
- * Find an object by global or composite name.
+ * Safe string splitting helper function - BM-001 Security Patch
+\*********************************************************************************************/
+static bbool safe_split_name(const char *name, char *prefix_buf, size_t prefix_size, 
+                            char *suffix_buf, size_t suffix_size) {
+    // Find the first dot
+    const char *dot_pos = strchr(name, '.');
+    
+    if (dot_pos == NULL) {
+        // No dot found - entire string is prefix
+        size_t name_len = strlen(name);
+        if (name_len >= prefix_size) {
+            return bfalse;
+        }
+        strncpy(prefix_buf, name, prefix_size - 1);
+        prefix_buf[prefix_size - 1] = '\0';
+        suffix_buf[0] = '\0';  // Empty suffix
+        return btrue;
+    }
+    
+    // Calculate prefix and suffix lengths
+    size_t prefix_len = dot_pos - name;
+    size_t suffix_len = strlen(dot_pos + 1);
+    
+    // Validate lengths
+    if (prefix_len == 0) {
+        return bfalse;
+    }
+    
+    if (prefix_len >= prefix_size) {
+        return bfalse;
+    }
+    
+    if (suffix_len >= suffix_size) {
+        return bfalse;
+    }
+    
+    // Safe copy with explicit null termination
+    strncpy(prefix_buf, name, prefix_len);
+    prefix_buf[prefix_len] = '\0';
+    
+    strncpy(suffix_buf, dot_pos + 1, suffix_size - 1);
+    suffix_buf[suffix_size - 1] = '\0';
+    
+    return btrue;
+}
+
+/*********************************************************************************************\
+ * SECURITY PATCHED: Find an object by global or composite name.
+ * 
+ * SECURITY IMPROVEMENTS (BM-001 Patch):
+ * - Input validation with length limits
+ * - Fixed-size stack buffers instead of dangerous VLA
+ * - Safe string operations with bounds checking
+ * - Comprehensive error handling and security logging
+ * - Protection against stack exhaustion attacks
  * 
  * I.e. `lv.lv_object` will check for a global called `lv` and a member `lv_object`
  * 
@@ -85,49 +139,63 @@ void be_create_class_wrapper(bvm *vm, const char * class_name, void * ptr) {
  * Returns the number of elements pushed on the stack: 1 for module, 2 for instance method, 0 if not found
 \*********************************************************************************************/
 int be_find_global_or_module_member(bvm *vm, const char * name) {
-  char *saveptr;
-
-  if (name == NULL) {
-    be_pushnil(vm);
-    return 0;
-  }
-  char name_buf[strlen(name)+1];
-  strcpy(name_buf, name);
-
-  char * prefix = strtok_r(name_buf, ".", &saveptr);
-  char * suffix = strtok_r(NULL, ".", &saveptr);
-  if (suffix) {
-    if (!be_getglobal(vm, prefix)) {
-      // global not found, try module
-      be_pop(vm, 1);
-      if (!be_getmodule(vm, prefix)) {
+    // SECURITY: Input validation using macro - BM-001 patch
+    BE_VALIDATE_STRING_INPUT(name, BE_MAPPING_MAX_NAME_LENGTH, "be_find_global_or_module_member");
+    
+    // SECURITY: Use fixed-size buffers instead of dangerous VLA - BM-001 patch
+    char prefix_buf[BE_MAPPING_MAX_MODULE_NAME_LENGTH];
+    char suffix_buf[BE_MAPPING_MAX_MEMBER_NAME_LENGTH];
+    
+    // Initialize buffers for safety
+    prefix_buf[0] = '\0';
+    suffix_buf[0] = '\0';
+    
+    // SECURITY: Safe string splitting with bounds checking - BM-001 patch
+    if (!safe_split_name(name, prefix_buf, sizeof(prefix_buf), 
+                        suffix_buf, sizeof(suffix_buf))) {
+        be_raisef(vm, "value_error", "Failed to safely split name: %s", name);
         return 0;
-      }
     }
-    if (!be_isnil(vm, -1)) {
-      if (be_getmember(vm, -1, suffix)) {
-        if (be_isinstance(vm, -2)) {  // instance, so we need to push method + instance
-          be_pushvalue(vm, -2);
-          be_remove(vm, -3);
-          return 2;
-        } else {  // not instane, so keep only the top object
-          be_remove(vm, -2);
-          return 1;
+    
+    // Check if we have a suffix (composite name like "module.member")
+    if (suffix_buf[0] != '\0') {
+        // Try to get global first
+        if (!be_getglobal(vm, prefix_buf)) {
+            // Global not found, try module
+            be_pop(vm, 1);
+            if (!be_getmodule(vm, prefix_buf)) {
+                return 0;
+            }
         }
-      } else {
-        be_pop(vm, 2);
+        
+        if (!be_isnil(vm, -1)) {
+            if (be_getmember(vm, -1, suffix_buf)) {
+                if (be_isinstance(vm, -2)) {  
+                    // Instance method - push method + instance
+                    be_pushvalue(vm, -2);
+                    be_remove(vm, -3);
+                    return 2;
+                } else {  
+                    // Regular member - keep only the member
+                    be_remove(vm, -2);
+                    return 1;
+                }
+            } else {
+                // Member not found
+                be_pop(vm, 2);
+                return 0;
+            }
+        }
+        be_pop(vm, 1);  // Remove nil
         return 0;
-      }
+    } else {  
+        // No suffix - simple global lookup
+        if (be_getglobal(vm, prefix_buf)) {
+            return 1;
+        }
+        be_pop(vm, 1);
+        return 0;
     }
-    be_pop(vm, 1);  // remove nil
-    return 0;
-  } else {  // no suffix, get the global object
-    if (be_getglobal(vm, prefix)) {
-      return 1;
-    }
-    be_pop(vm, 1);
-    return 0;
-  }
 }
 
 
@@ -317,6 +385,7 @@ intptr_t be_convert_single_elt(bvm *vm, int idx, const char * arg_type, int *buf
 //
 // Returns the number of parameters sent to the function
 //
+// SECURITY PATCHED: Added bounds checking for BM-003 vulnerability
 int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, intptr_t p[8]) {
   bbool arg_type_check = (arg_type != NULL);      // is type checking activated
   int32_t arg_idx = 0;              // position in arg_type string
@@ -326,9 +395,24 @@ int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, i
   uint32_t p_idx = 0; // index in p[], is incremented with each parameter except '-'
   int32_t buf_len = -1;   // stores the length of a bytes() buffer to be used as '~' attribute
 
+#if BE_MAPPING_ENABLE_INPUT_VALIDATION
+  // SECURITY: Validate input parameters - BM-003 patch
+  if (argc > BE_MAPPING_MAX_FUNCTION_ARGS) {
+    be_raisef(vm, "value_error", "Too many function arguments: %d > %d", argc, BE_MAPPING_MAX_FUNCTION_ARGS);
+    return -1;
+  }
+#endif // BE_MAPPING_ENABLE_INPUT_VALIDATION
+
   // special case when first parameter is '@', pass pointer to VM
   if (NULL != arg_type && arg_type[arg_idx] == '@') {
     arg_idx++;
+#if BE_MAPPING_ENABLE_INPUT_VALIDATION
+    // SECURITY: Bounds check before array access - BM-003 patch
+    if (p_idx >= 8) {
+      be_raise(vm, "internal_error", "Parameter array overflow at VM pointer insertion");
+      return -1;
+    }
+#endif // BE_MAPPING_ENABLE_INPUT_VALIDATION
     p[p_idx] = (intptr_t) vm;
     p_idx++;
   }
@@ -382,6 +466,13 @@ int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, i
     if (arg_type_check && type_short_name[0] == 0) {
       be_raisef(vm, "value_error", "Too many arguments");
     }
+    
+    // SECURITY: Bounds check before array access - BM-003 patch
+    if (p_idx >= 8) {
+      be_raisef(vm, "internal_error", "Parameter array overflow at index %u (max 8 parameters)", p_idx);
+      return -1;
+    }
+    
     p[p_idx] = be_convert_single_elt(vm, i + arg_start, arg_type_check ? type_short_name : NULL, (int*)&buf_len);
     // berry_log_C("< ret[%i]=%i", p_idx, p[p_idx]);
     p_idx++;
@@ -390,6 +481,13 @@ int be_check_arg_type(bvm *vm, int arg_start, int argc, const char * arg_type, i
       if (buf_len < 0) {
         be_raisef(vm, "value_error", "no bytes() length known");
       }
+      
+      // SECURITY: Bounds check for virtual parameter - BM-003 patch
+      if (p_idx >= 8) {
+        be_raise(vm, "internal_error", "Parameter array overflow at virtual parameter");
+        return -1;
+      }
+      
       p[p_idx] = buf_len; // add the previous buffer len
       p_idx++;
       arg_idx++; // skip this arg

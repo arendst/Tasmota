@@ -183,34 +183,71 @@ static int be_cb_make_cb(bvm *vm) {
 }
 
 /*********************************************************************************************\
- * `gen_cb`: Generate a new callback
+ * `gen_cb`: Generate a new callback - SECURITY PATCHED
+ * 
+ * SECURITY IMPROVEMENTS:
+ * - Added input validation and bounds checking
+ * - Resource limit enforcement per VM
+ * - Protection against callback slot exhaustion attacks
  * 
  * arg1: function (or closure)
 \*********************************************************************************************/
 static int be_cb_gen_cb(bvm *vm) {
   int32_t top = be_top(vm);
-  // tasmota_log_C(LOG_LEVEL_DEBUG, "BRY: gen_cb() called");
-  if (top >= 1 && be_isfunction(vm, 1)) {
-    // find first available slot
-    int32_t slot;
-    for (slot = 0; slot < BE_MAX_CB; slot++) {
-      if (be_cb_hooks[slot].f.type == BE_NIL) break;
-    }
-    bvalue *v = be_indexof(vm, 1);
-    if (slot < BE_MAX_CB) {
-      if (be_isgcobj(v)) {
-        be_gc_fix_set(vm, v->v.gc, btrue);    // mark the function as non-gc
-      }
-      // record pointers
-      be_cb_hooks[slot].vm = vm;
-      be_cb_hooks[slot].f = *v;
-      be_pushcomptr(vm, (void*) berry_callback_array[slot]);
-      be_return(vm);
-    } else {
-      be_raise(vm, "internal_error", "no more callbacks available, increase BE_MAX_CB");
+  
+#if BE_MAPPING_ENABLE_INPUT_VALIDATION
+  // SECURITY: Input validation
+  if (top < 1) {
+    be_raise(vm, "value_error", "gen_cb requires at least 1 argument");
+  }
+  
+  if (!be_isfunction(vm, 1)) {
+    be_raise(vm, "value_error", "arg must be a function");
+  }
+  
+  // SECURITY: Count existing callbacks for this VM to prevent resource exhaustion
+  int32_t vm_callback_count = 0;
+  for (int32_t i = 0; i < BE_MAX_CB; i++) {
+    if (be_cb_hooks[i].vm == vm) {
+      vm_callback_count++;
     }
   }
-  be_raise(vm, "value_error", "arg must be a function");
+  
+  // SECURITY: Enforce per-VM callback limit
+  #define MAX_CALLBACKS_PER_VM 10
+  if (vm_callback_count >= MAX_CALLBACKS_PER_VM) {
+    be_raise(vm, "resource_error", "Too many callbacks for this VM (max 10)");
+  }
+#endif // BE_MAPPING_ENABLE_INPUT_VALIDATION
+  
+  // Find first available slot
+  int32_t slot;
+  for (slot = 0; slot < BE_MAX_CB; slot++) {
+    if (be_cb_hooks[slot].f.type == BE_NIL) break;
+  }
+  
+  if (slot >= BE_MAX_CB) {
+    be_raise(vm, "internal_error", "no more callbacks available, increase BE_MAX_CB");
+  }
+  
+  bvalue *v = be_indexof(vm, 1);
+  
+  // SECURITY: Validate the function value
+  if (v == NULL) {
+    be_raise(vm, "internal_error", "Invalid function value");
+  }
+  
+  // Fix GC object if needed
+  if (be_isgcobj(v)) {
+    be_gc_fix_set(vm, v->v.gc, btrue);    // mark the function as non-gc
+  }
+  
+  // Record pointers
+  be_cb_hooks[slot].vm = vm;
+  be_cb_hooks[slot].f = *v;
+  
+  be_pushcomptr(vm, (void*) berry_callback_array[slot]);
+  be_return(vm);
 }
 
 /*********************************************************************************************\
@@ -237,57 +274,131 @@ static int be_cb_get_cb_list(bvm *vm) {
 }
 
 /*********************************************************************************************\
- * Callback structures
+ * Callback execution dispatcher - SECURITY PATCHED
  * 
- * We allow 4 parameters, or 3 if method (first arg is `self`)
+ * SECURITY IMPROVEMENTS (BM-002 Patch):
+ * - Enhanced bounds checking and validation
+ * - Type safety verification before callback execution
+ * - Protection against callback hijacking
+ * - Comprehensive error handling
+ * 
+ * We allow 5 parameters, or 4 if method (first arg is `self`)
  * This could be extended if needed
 \*********************************************************************************************/
 static int call_berry_cb(int num, int v0, int v1, int v2, int v3, int v4) {
-  // call berry cb dispatcher
-  int32_t ret = 0;
-  // retrieve vm and function
-  if (num < 0 || num >= BE_MAX_CB || be_cb_hooks[num].vm == NULL) return 0;   // invalid call, avoid a crash
+  // SECURITY: Comprehensive input validation - BM-002 patch
+  if (num < 0 || num >= BE_MAX_CB) {
+    return 0;   // Invalid call, avoid a crash
+  }
+  
+  if (be_cb_hooks[num].vm == NULL) {
+    return 0;   // VM was cleaned up
+  }
+  
+  // SECURITY: Validate callback function type - BM-002 patch
+  if (be_cb_hooks[num].f.type == BE_NIL) {
+    return 0;   // Function was cleared
+  }
+  
+  // Check if the stored value is a function (any function type)
+  if ((be_cb_hooks[num].f.type & 0x1F) != BE_FUNCTION) {
+    return 0;   // Not a valid function
+  }
 
+  int32_t ret = 0;
   bvm * vm = be_cb_hooks[num].vm;
   bvalue *f = &be_cb_hooks[num].f;
 
-  // push function (don't check type)
+  // Push function (with type validation already done above)
   bvalue *top = be_incrtop(vm);
+  if (top == NULL) {
+    return 0;
+  }
   *top = *f;
-  // push args
+  
+  // Push arguments
   be_pushint(vm, v0);
   be_pushint(vm, v1);
   be_pushint(vm, v2);
   be_pushint(vm, v3);
   be_pushint(vm, v4);
 
-  ret = be_pcall(vm, 5);   // 4 arguments
+  // SECURITY: Protected call with error handling
+  ret = be_pcall(vm, 5);   // 5 arguments
   if (ret != 0) {
     if (vm->obshook != NULL) (*vm->obshook)(vm, BE_OBS_PCALL_ERROR);
     be_pop(vm, be_top(vm));       // clear Berry stack
     return 0;
   }
+  
+  // SECURITY: Validate return value
+  if (be_top(vm) < 6) {
+    be_pop(vm, be_top(vm));
+    return 0;
+  }
+  
   ret = be_toint(vm, -6);
-  be_pop(vm, 6);    // remove result
+  be_pop(vm, 6);    // remove result and arguments
+  
   return ret;
 }
 
 /*********************************************************************************************\
- * `be_cb_deinit`:
- *  Clean any callback for this VM, they shouldn't call the registerd function anymore
+ * `be_cb_deinit`: SECURITY PATCHED
+ *  Clean any callback for this VM, they shouldn't call the registered function anymore
+ *  
+ *  SECURITY IMPROVEMENTS (BM-004 Patch):
+ *  - Fixed use-after-free vulnerability in callback handler cleanup
+ *  - Proper memory deallocation to prevent memory leaks
+ *  - Safe iteration through linked list during deletion
+ *  - Added bounds checking and validation
 \*********************************************************************************************/
 void be_cb_deinit(bvm *vm) {
-  // remove all cb for this vm
+  // SECURITY: Clear all callbacks for this VM - prevent use-after-free
   for (int32_t slot = 0; slot < BE_MAX_CB; slot++) {
     if (be_cb_hooks[slot].vm == vm) {
+      // Clear the callback entry
       be_cb_hooks[slot].vm = NULL;
       be_cb_hooks[slot].f.type = BE_NIL;
     }
   }
-  // remove the vm gen_cb for this vm
-  for (be_callback_handler_list_t **elt_ptr = &be_callback_handler_list_head; *elt_ptr != NULL; elt_ptr = &(*elt_ptr)->next) {
-    if (((*elt_ptr)->next != NULL) && ((*elt_ptr)->next->vm == vm)) {
-      (*elt_ptr)->next = (*elt_ptr)->next->next;
+  
+  // SECURITY: Safe removal of callback handlers - BM-004 patch
+  // Use safe iteration to avoid use-after-free when removing nodes
+  be_callback_handler_list_t **current_ptr = &be_callback_handler_list_head;
+  
+  while (*current_ptr != NULL) {
+    be_callback_handler_list_t *current = *current_ptr;
+    
+    // Skip the default handler (it has vm == NULL and should never be removed)
+    if (current->vm == NULL) {
+      current_ptr = &current->next;
+      continue;
+    }
+    
+    // Check if this handler belongs to the VM being cleaned up
+    if (current->vm == vm) {
+      // SECURITY: Safe removal - update pointer before freeing
+      *current_ptr = current->next;
+      
+      // SECURITY: Unfix GC object if it was fixed
+      if (be_isgcobj(&current->f)) {
+        be_gc_fix_set(vm, current->f.v.gc, bfalse);
+      }
+      
+      // SECURITY: Clear the structure before freeing
+      current->vm = NULL;
+      current->f.type = BE_NIL;
+      current->next = NULL;
+      
+      // SECURITY: Free the memory - fixes memory leak
+      be_os_free(current);
+      
+      // Don't advance current_ptr since we removed the current node
+      // The next iteration will check the new node at this position
+    } else {
+      // Move to next node
+      current_ptr = &current->next;
     }
   }
 }

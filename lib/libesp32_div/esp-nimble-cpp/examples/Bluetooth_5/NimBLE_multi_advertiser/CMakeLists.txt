@@ -3,5 +3,4 @@
 cmake_minimum_required(VERSION 3.5)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-set(SUPPORTED_TARGETS esp32c3 esp32s3)
 project(NimBLE_multi_advertiser)

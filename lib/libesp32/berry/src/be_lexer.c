@@ -539,9 +539,11 @@ static void scan_f_string(blexer *lexer)
                     /* if end of string is reached before '}' raise en error */
                     for (; i < buf_unparsed_fstr.len; i++) {
                         ch = buf_unparsed_fstr.s[i];
-                        if (ch == ':' || ch == '}') { break; }
-                        save_char(lexer, ch);       /* copy any character unless it's ':' or '}' */
+                        /* stop parsing if single ':' or '}' */
+                        if (ch == '}' || (ch == ':' && buf_unparsed_fstr.s[i+1] != ':')) { break; }
+                        save_char(lexer, ch);       /* copy any character unless it's '}' or single ':' */
                         if (ch == '=') { break; }   /* '=' is copied but breaks parsing as well */
+                        if (ch == ':') { save_char(lexer, ch); i++; }     /* if '::' then encode the second ':' but don't parse it again in next iteration */
                     }
                     /* safe check if we reached the end of the string */
                     if (i >= buf_unparsed_fstr.len) { be_raise(lexer->vm, "syntax_error", "'}' expected"); }
@@ -588,11 +590,17 @@ static void scan_f_string(blexer *lexer)
             save_char(lexer, ',');       /* add ',' to start next argument to `format()` */
             for (; i < buf_unparsed_fstr.len; i++) {
                 ch = buf_unparsed_fstr.s[i];
-                if (ch == '=' || ch == ':' || ch == '}') { break; }
-                save_char(lexer, ch);   /* copy expression until we reach ':', '=' or '}' */
+                if (ch == ':' && (buf_unparsed_fstr.s[i+1] == ':')) {
+                    save_char(lexer, ch);
+                    i++;                    /* skip second ':' */
+                } else if (ch == '=' || ch == ':' || ch == '}') {
+                    break;
+                } else {
+                    save_char(lexer, ch);   /* copy expression until we reach ':', '=' or '}' */
+                }
             }
             /* no need to check for end of string here, it was done already in first pass */
-            if (ch == ':' || ch == '=') {       /* if '=' or ':', skip everyting until '}' */
+            if (ch == '=' || ch == ':') {       /* if '=' or ':', skip everyting until '}' */
                 i++;
                 for (; i < buf_unparsed_fstr.len; i++) {
                     ch = buf_unparsed_fstr.s[i];

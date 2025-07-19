@@ -453,6 +453,8 @@
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Ключ idx"
 #define D_DOMOTICZ_SWITCH_IDX "Перемикач idx"
+#define D_DOMOTICZ_KEY "Ключ"
+#define D_DOMOTICZ_SWITCH "Перемикач"
 #define D_DOMOTICZ_SENSOR_IDX "Давач idx"
   #define D_DOMOTICZ_TEMP "Температура"
   #define D_DOMOTICZ_TEMP_HUM "Темп,Волог"

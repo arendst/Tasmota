@@ -453,6 +453,8 @@
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Nyckel idx"
 #define D_DOMOTICZ_SWITCH_IDX "Switch idx"
+#define D_DOMOTICZ_KEY "Nyckel"
+#define D_DOMOTICZ_SWITCH "Switch"
 #define D_DOMOTICZ_SENSOR_IDX "Sensor idx"
   #define D_DOMOTICZ_TEMP "Temp"
   #define D_DOMOTICZ_TEMP_HUM "Temp,Fuk"

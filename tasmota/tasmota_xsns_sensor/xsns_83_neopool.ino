@@ -325,6 +325,12 @@ enum NeoPoolConstAndBitMask {
   MBMSK_PH_STATUS_MODULE_PRESENT          = 0x8000, // 15 Detected pH measurement module
 
   // MBF_RX_STATUS                                  // bit
+  MBMSK_RX_STATUS_ALARM                   = 0x0007, // Rx alarm. The possible alarm values are depending on the regulation model
+  // Valid alarm values for pH regulation with acid and base:
+  MBV_RX_ALARM0                           = 0,      // no alarm
+  MBV_RX_ALARM6                           = 6,      // ! tank level alarm
+
+  MBMSK_RX_STATUS_RX_TOO_LOW              = 0x0080, //  ! Redox too low
   MBMSK_RX_STATUS_RX_PUMP_ACTIVE          = 0x1000, // 12 Redox pump relay on (pump activated)
   MBMSK_RX_STATUS_CTRL_ACTIVE             = 0x2000, // 13 Active Redox control module and controlling pump
   MBMSK_RX_STATUS_MEASURE_ACTIVE          = 0x4000, // 14 Active Redox measurement module and performing measurements. If this bit is at 1, the Redox bar should be displayed on the screen.
@@ -2100,6 +2106,7 @@ void NeoPoolShow(bool json)
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_REDOX  "\":{"));
       ResponseAppend_P(PSTR("\""  D_JSON_DATA  "\":"  NEOPOOL_FMT_RX), NeoPoolGetData(MBF_MEASURE_RX));
       ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_SETPOINT  "\":"  NEOPOOL_FMT_RX), NeoPoolGetData(MBF_PAR_RX1));
+      ResponseAppend_P(PSTR(",\""  D_NEOPOOL_JSON_TANK  "\":%d"), (MBV_RX_ALARM6 == (NeoPoolGetData(MBF_RX_STATUS) & MBMSK_RX_STATUS_ALARM)) ? 0 : 1);
       ResponseJsonEnd();
     }
 
@@ -2360,9 +2367,11 @@ void NeoPoolShow(bool json)
       // S2
       if ((NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_ALARM) > 0) {
         GetTextIndexed(stemp, sizeof(stemp), NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_ALARM, kNeoPoolpHAlarms);
-        WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_ACTIVE, stemp);
+        if (strlen(stemp)) {
+          WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_ACTIVE, stemp);
+          WSContentSend_PD(PSTR(" "));
+        }
       }
-      WSContentSend_PD(PSTR(" "));
       // S3
       if (NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_CTRL_ACTIVE) {
         if (MBV_PH_ACID_BASE_ALARM6 == (NeoPoolGetData(MBF_PH_STATUS) & MBMSK_PH_STATUS_ALARM)) {
@@ -2397,6 +2406,15 @@ void NeoPoolShow(bool json)
       WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color,
         (NeoPoolGetData(MBF_HIDRO_CURRENT) ? HTTP_SNS_NEOPOOL_STATUS_ACTIVE : HTTP_SNS_NEOPOOL_STATUS_INACTIVE),
         stemp);
+      WSContentSend_PD(PSTR(" "));
+      // S2
+      if (NeoPoolGetData(MBF_RX_STATUS) & MBMSK_RX_STATUS_CTRL_ACTIVE) {
+        if (MBV_RX_ALARM6 == (NeoPoolGetData(MBF_RX_STATUS) & MBMSK_RX_STATUS_ALARM)) {
+          WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_ACTIVE, PSTR(D_NEOPOOL_STATUS_TANK));
+        }
+      } else {
+          WSContentSend_PD(HTTP_SNS_NEOPOOL_STATUS, bg_color, HTTP_SNS_NEOPOOL_STATUS_DISABLED, PSTR(D_NEOPOOL_STATUS_OFF));
+      }
       WSContentSend_PD(PSTR("{e}"));
     }
 

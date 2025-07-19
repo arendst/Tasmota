@@ -453,6 +453,8 @@
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
 #define D_DOMOTICZ_SWITCH_IDX "스위치 idx"
+#define D_DOMOTICZ_KEY "Key"
+#define D_DOMOTICZ_SWITCH "Switch"
 #define D_DOMOTICZ_SENSOR_IDX "센서 idx"
   #define D_DOMOTICZ_TEMP "온도"
   #define D_DOMOTICZ_TEMP_HUM "온도,습도"

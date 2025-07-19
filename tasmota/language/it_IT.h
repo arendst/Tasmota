@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v9.4.0.1 - Last update 17.04.2025
+ * Updated until v9.4.0.1 - Last update 15.07.2025
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -453,6 +453,8 @@
 #define D_DOMOTICZ_IDX              "Idx"
 #define D_DOMOTICZ_KEY_IDX          "Idx - chiave"
 #define D_DOMOTICZ_SWITCH_IDX       "Idx - switch"
+#define D_DOMOTICZ_KEY              "Chiave"
+#define D_DOMOTICZ_SWITCH           "Switch"
 #define D_DOMOTICZ_SENSOR_IDX       "Idx - sensore"
 #define D_DOMOTICZ_TEMP             "Temp"
 #define D_DOMOTICZ_TEMP_HUM         "Temp,Umd"

@@ -677,14 +677,14 @@ bool MI32Operation(int slot, int optype, const char *svc, const char *charactist
   }
 
   if (slot >= 0){
-    op->addr = NimBLEAddress(MIBLEsensors[slot].MAC);
+    op->addr = NimBLEAddress(MIBLEsensors[slot].MAC,0);
   } else {
     if (!addr){
       AddLog(LOG_LEVEL_ERROR, PSTR("M32: No addr"));
       BLE_ESP32::freeOperation(&op);
       return 0;
     }
-    op->addr = NimBLEAddress(addr);
+    op->addr = NimBLEAddress(addr, 0);
   }
 
   bool havechar = false;
@@ -992,7 +992,7 @@ int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
   uint8_t addrrev[6];
   memcpy(addrrev, MIBLEsensors[slot].MAC, 6);
   //BLE_ESP32::ReverseMAC(addrrev);
-  NimBLEAddress addr(addrrev);
+  NimBLEAddress addr(addrrev, 0);
 
   bool fail = false;
   if (op->addr != addr){
@@ -1077,7 +1077,7 @@ int genericOpCompleteFn(BLE_ESP32::generic_sensor_t *op){
 int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
 {
   // we will try not to use this...
-  BLEAdvertisedDevice *advertisedDevice = pStruct->advertisedDevice;
+  const BLEAdvertisedDevice *advertisedDevice = pStruct->advertisedDevice;
 
   // AddLog(LOG_LEVEL_DEBUG, PSTR("M32: Advertised Device: %s Buffer: %u"),advertisedDevice->getAddress().toString().c_str(),advertisedDevice->getServiceData(0).length());
   int RSSI = pStruct->RSSI;
@@ -1106,12 +1106,12 @@ int MI32advertismentCallback(BLE_ESP32::ble_advertisment_t *pStruct)
 
   NimBLEUUID UUIDBig = advertisedDevice->getServiceDataUUID(0);//.getNative()->u16.value;
 
-  const ble_uuid_any_t* native = UUIDBig.getNative();
-  if (native->u.type != 16){
+  const ble_uuid_t* native = UUIDBig.getBase();
+  if (native->type != 16){
     //not interested in 128 bit;
     return 0;
   }
-  uint16_t UUID = native->u16.value;
+  uint16_t UUID = *(uint16_t*)UUIDBig.getValue();
 
   if (BLE_ESP32::BLEDebugMode) AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("M32: %s: svc[0] UUID (%x)"), MIaddrStr(addr), UUID);
   std::string ServiceDataStr = advertisedDevice->getServiceData(0);

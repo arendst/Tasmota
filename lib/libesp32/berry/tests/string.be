@@ -175,6 +175,13 @@ assert(f"S = {a}" == 'S = foobar{0}')
 assert(f"S = {a:i}" == 'S = 0')
 assert(f"{a=}" == 'a=foobar{0}')
 
+# new option for f-strings, '::' encodes for ':'
+assert(f"{true ? 1 :: 2}" == "1")
+assert(f"{false ? 1 :: 2}" == "2")
+assert(f"{false ? 1 :: 2 : i}" == " 2")
+assert(f"{false ? 1 :: 2:i}" == "2")
+assert(f"{false ? 1 :: 2:04i}" == "0002")
+
 # startswith case sensitive
 assert(string.startswith("", "") == true)
 assert(string.startswith("qwerty", "qw") == true)

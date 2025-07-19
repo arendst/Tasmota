@@ -212,7 +212,7 @@ WiFiUDP PortUdp;                            // UDP Syslog and Alexa
     CONFIG_IDF_TARGET_ESP32S2 ||            // support USB via USBCDC
     CONFIG_IDF_TARGET_ESP32S3               // support USB via HWCDC using JTAG interface or USBCDC
 */
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4
 
 //#if CONFIG_TINYUSB_CDC_ENABLED              // This define is not recognized here so use USE_USB_CDC_CONSOLE
 #ifdef USE_USB_CDC_CONSOLE
@@ -493,7 +493,7 @@ void setup(void) {
   }
 
 #ifdef ESP32
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3 || CONFIG_IDF_TARGET_ESP32P4
 #ifdef USE_USB_CDC_CONSOLE
 
   bool is_connected_to_USB = false;
@@ -644,6 +644,17 @@ void setup(void) {
 //        Settings->last_module = Settings->fallback_module;
       }
       AddLog(LOG_LEVEL_INFO, PSTR("FRC: " D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
+#ifdef ESP32
+#ifndef FIRMWARE_MINIMAL
+      if (RtcReboot.fast_reboot_count > Settings->param[P_BOOT_LOOP_OFFSET] +8) {  // Restarted 10 times
+        if (EspPrepSwitchPartition(0)) {             // Switch to safeboot
+          RtcReboot.fast_reboot_count = 0;           // Reset for next user restart
+          RtcRebootSave();
+          EspRestart();                              // Restart in safeboot mode
+        }
+      }
+#endif  // FIRMWARE_MINIMAL
+#endif  // ESP32
     }
   }
 

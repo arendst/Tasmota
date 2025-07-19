@@ -2,23 +2,28 @@
 # CMakeLists in this exact order for cmake to work correctly
 cmake_minimum_required(VERSION 3.5)
 
-idf_build_get_property(__hack_component_targets __COMPONENT_TARGETS)
-
-if("esp-nimble-component" IN_LIST BUILD_COMPONENTS OR "__esp-nimble-component" IN_LIST __hack_component_targets)
+if(__COMPONENT_TARGETS MATCHES "___idf_esp-nimble-component")
     list(APPEND ESP_NIMBLE_PRIV_REQUIRES
         esp-nimble-component
     )
-elseif("nimble" IN_LIST BUILD_COMPONENTS OR "__nimble" IN_LIST __hack_component_targets)
+elseif(__COMPONENT_TARGETS MATCHES "__idf_nimble")
     list(APPEND ESP_NIMBLE_PRIV_REQUIRES
         nimble
     )
 endif()
 
-if("arduino" IN_LIST BUILD_COMPONENTS OR __hack_component_targets MATCHES "__idf_arduino")
+# Arduino install using IDF component manager
+if(__COMPONENT_TARGETS MATCHES "___idf_espressif__arduino-esp32")
+    list(APPEND ESP_NIMBLE_PRIV_REQUIRES
+        arduino-esp32
+    )
+# Manual installation of Arduino framework
+elseif(__COMPONENT_TARGETS MATCHES "__idf_arduino")
     list(APPEND ESP_NIMBLE_PRIV_REQUIRES
         arduino
     )
-elseif("framework-arduinoespressif32" IN_LIST BUILD_COMPONENTS OR __hack_component_targets MATCHES "___idf_framework-arduinoespressif32")
+# PlatformIO
+elseif(__COMPONENT_TARGETS MATCHES "___idf_framework-arduinoespressif32")
     list(APPEND ESP_NIMBLE_PRIV_REQUIRES
         framework-arduinoespressif32
     )
@@ -30,27 +35,33 @@ idf_component_register(
     "esp32s3"
     "esp32c2"
     "esp32c3"
+    "esp32c5"
     "esp32c6"
     "esp32h2"
+    "esp32p4"
   INCLUDE_DIRS
     "src"
   SRCS
     "src/NimBLE2904.cpp"
     "src/NimBLEAddress.cpp"
     "src/NimBLEAdvertisedDevice.cpp"
+    "src/NimBLEAdvertisementData.cpp"
     "src/NimBLEAdvertising.cpp"
+    "src/NimBLEAttValue.cpp"
     "src/NimBLEBeacon.cpp"
     "src/NimBLECharacteristic.cpp"
     "src/NimBLEClient.cpp"
     "src/NimBLEDescriptor.cpp"
     "src/NimBLEDevice.cpp"
     "src/NimBLEEddystoneTLM.cpp"
-    "src/NimBLEEddystoneURL.cpp"
     "src/NimBLEExtAdvertising.cpp"
     "src/NimBLEHIDDevice.cpp"
+    "src/NimBLEL2CAPChannel.cpp"
+    "src/NimBLEL2CAPServer.cpp"
     "src/NimBLERemoteCharacteristic.cpp"
     "src/NimBLERemoteDescriptor.cpp"
     "src/NimBLERemoteService.cpp"
+    "src/NimBLERemoteValueAttribute.cpp"
     "src/NimBLEScan.cpp"
     "src/NimBLEServer.cpp"
     "src/NimBLEService.cpp"

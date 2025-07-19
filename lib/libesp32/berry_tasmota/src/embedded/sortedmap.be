@@ -114,6 +114,11 @@ class sortedmap
   def iter()
     return self._data.iter()
   end
+
+  # Get by index number
+  def get_by_index(idx)
+    return self._data[self._keys[idx]]
+  end
   
   # Clear all key-value pairs
   def clear()

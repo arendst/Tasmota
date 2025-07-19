@@ -226,6 +226,8 @@ synonym_functions = {
   "set_transform_zoom": "set_transform_scale",
 
   "scr_load_anim": "screen_load_anim",
+
+  "set_range": "set_axis_range",
 }
 
 def get_synonyms(name):

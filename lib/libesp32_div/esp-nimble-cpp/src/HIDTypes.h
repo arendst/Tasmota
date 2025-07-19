@@ -25,9 +25,9 @@
 #define HID_VERSION_1_11    (0x0111)
 
 /* HID Class */
-#define HID_CLASS           (3)
-#define HID_SUBCLASS_NONE   (0)
-#define HID_PROTOCOL_NONE   (0)
+#define BLE_HID_CLASS           (3)
+#define BLE_HID_SUBCLASS_NONE   (0)
+#define BLE_HID_PROTOCOL_NONE   (0)
 
 /* Descriptors */
 #define HID_DESCRIPTOR          (33)

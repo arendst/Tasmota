@@ -1075,6 +1075,7 @@ void CmndLoraWanName(void) {
   //  LoraWanName              - Show current name
   //  LoraWanName 1            - Set to short DevEUI (or 0x0000 if not yet joined)
   //  LoraWanName2 LDS02a
+  //  LoraWanName2 "           - Clear name
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Lora->nodes)) {
     uint32_t node = XdrvMailbox.index -1;
     if (XdrvMailbox.data_len) {
@@ -1083,7 +1084,7 @@ void CmndLoraWanName(void) {
         ext_snprintf_P(name, sizeof(name), PSTR("0x%04X"), Lora->settings.end_node[node]->DevEUIl & 0x0000FFFF);
         Lora->settings.end_node[node]->name = name;
       } else {
-        Lora->settings.end_node[node]->name = XdrvMailbox.data;
+        Lora->settings.end_node[node]->name = ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data;
       }
     }
     ResponseCmndIdxChar(Lora->settings.end_node[node]->name.c_str());
@@ -1095,10 +1096,11 @@ void CmndLoraWanDecoder(void) {
   //  LoraWanDecoder<1..16> <decoder name>
   //  LoraWanDecoder LDS02     - Set Dragino LDS02 message decoder for node 1
   //  LoraWanDecoder2 DW10     - Set MerryIoT DW10 message decoder for node 2
+  //  LoraWanDecoder2 "        - Clear decoder name
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Lora->nodes)) {
     uint32_t node = XdrvMailbox.index -1;
     if (XdrvMailbox.data_len) {
-      Lora->settings.end_node[node]->decoder = XdrvMailbox.data;
+      Lora->settings.end_node[node]->decoder = ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data;
     }
     ResponseCmndIdxChar(Lora->settings.end_node[node]->decoder.c_str());
   }

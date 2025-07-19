@@ -51,8 +51,9 @@ bool be_hue_status(String* response, uint32_t device_id) {
       return handled;
     }
     // AddLog(LOG_LEVEL_DEBUG_MORE, ">be_hue_status response='%s' device_id=%i", response->c_str(), device_id);
+    be_pop(vm, 1);
   }
-  be_pop(vm, 2);
+  be_pop(vm, 1);
 
   return false;
 }
@@ -70,6 +71,7 @@ void be_hue_discovery(String* response, bool* appending) {
       int32_t ret = be_pcall(vm, 1);   // 2 params: self
       if (ret != 0) {
         be_error_pop_all(vm);             // clear Berry stack
+        return;
       }
       be_pop(vm, 1);
       if (be_isstring(vm, -1)) {
@@ -81,8 +83,9 @@ void be_hue_discovery(String* response, bool* appending) {
       }
     }
     // AddLog(LOG_LEVEL_DEBUG_MORE, ">be_hue_discovery");
+    be_pop(vm, 1);
   }
-  be_pop(vm, 2);
+  be_pop(vm, 1);
 }
 
 // Groups command, list all ids prefixed by ',', ex: ",11,23"
@@ -98,6 +101,7 @@ void be_hue_groups(String* response) {
       int32_t ret = be_pcall(vm, 1);   // 2 params: self
       if (ret != 0) {
         be_error_pop_all(vm);             // clear Berry stack
+        return;
       }
       be_pop(vm, 1);
       if (be_isstring(vm, -1)) {
@@ -106,8 +110,9 @@ void be_hue_groups(String* response) {
         *response += buf;
       }
     }
+    be_pop(vm, 1);
   }
-  be_pop(vm, 2);
+  be_pop(vm, 1);
 }
 
 // handle incoming command
@@ -130,6 +135,7 @@ bool be_hue_command(uint8_t device, uint32_t device_id, String* response) {
       int32_t ret = be_pcall(vm, 3);   // 2 params: self, id, args
       if (ret != 0) {
         be_error_pop_all(vm);             // clear Berry stack
+        return false;
       }
       be_pop(vm, 3);
       if (be_isstring(vm, -1)) {
@@ -141,8 +147,9 @@ bool be_hue_command(uint8_t device, uint32_t device_id, String* response) {
       return handled;
     }
     // AddLog(LOG_LEVEL_DEBUG_MORE, ">be_hue_status response='%s' device_id=%i", response->c_str(), device_id);
+    be_pop(vm, 1);
   }
-  be_pop(vm, 2);
+  be_pop(vm, 1);
 
   return false;
 }

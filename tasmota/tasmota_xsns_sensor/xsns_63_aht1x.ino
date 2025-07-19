@@ -83,7 +83,7 @@ struct {
   bool write_ok = false;
   uint8_t addresses[2] = { AHT1X_ADDR1, AHT1X_ADDR2 };
   uint8_t count  = 0;
-  uint8_t Pcount = 0;
+  uint8_t Pcount = 9;
 } aht1x;
 
 struct {

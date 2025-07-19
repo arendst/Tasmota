@@ -20,7 +20,7 @@ tapp_module.init = def (m)
       for d: path.listdir(dir_name)
         if string.endswith(d, ".tapp")
           log(f"TAP: Loaded Tasmota App '{dir_name}{d}'", 2)
-          tasmota.load(dir_name + d + "#autoexec.be")
+          tasmota.load(dir_name + d)
         end
       end
     end

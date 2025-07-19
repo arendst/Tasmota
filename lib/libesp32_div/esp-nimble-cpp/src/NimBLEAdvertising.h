@@ -1,150 +1,109 @@
 /*
- * NimBLEAdvertising.h
+ * Copyright 2020-2025 Ryan Powell <ryan@nable-embedded.io> and
+ * esp-nimble-cpp, NimBLE-Arduino contributors.
  *
- *  Created: on March 3, 2020
- *      Author H2zero
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Originally:
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * BLEAdvertising.h
- *
- *  Created on: Jun 21, 2017
- *      Author: kolban
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-#ifndef MAIN_BLEADVERTISING_H_
-#define MAIN_BLEADVERTISING_H_
-#include "nimconfig.h"
-#if (defined(CONFIG_BT_ENABLED) && \
-    defined(CONFIG_BT_NIMBLE_ROLE_BROADCASTER) && \
-    !CONFIG_BT_NIMBLE_EXT_ADV) || defined(_DOXYGEN_)
+#ifndef NIMBLE_CPP_ADVERTISING_H_
+#define NIMBLE_CPP_ADVERTISING_H_
 
-#if defined(CONFIG_NIMBLE_CPP_IDF)
-#include "host/ble_gap.h"
-#else
-#include "nimble/nimble/host/include/host/ble_gap.h"
-#endif
+#include "nimconfig.h"
+#if (CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER && !CONFIG_BT_NIMBLE_EXT_ADV) || defined(_DOXYGEN_)
+
+# if defined(CONFIG_NIMBLE_CPP_IDF)
+#  include "host/ble_gap.h"
+# else
+#  include "nimble/nimble/host/include/host/ble_gap.h"
+# endif
 
 /****  FIX COMPILATION ****/
-#undef min
-#undef max
+# undef min
+# undef max
 /**************************/
 
-#include "NimBLEUUID.h"
-#include "NimBLEAddress.h"
+# include "NimBLEUUID.h"
+# include "NimBLEAddress.h"
+# include "NimBLEAdvertisementData.h"
 
-#include <functional>
-#include <vector>
-
-/* COMPATIBILITY - DO NOT USE */
-#define ESP_BLE_ADV_FLAG_LIMIT_DISC         (0x01 << 0)
-#define ESP_BLE_ADV_FLAG_GEN_DISC           (0x01 << 1)
-#define ESP_BLE_ADV_FLAG_BREDR_NOT_SPT      (0x01 << 2)
-#define ESP_BLE_ADV_FLAG_DMT_CONTROLLER_SPT (0x01 << 3)
-#define ESP_BLE_ADV_FLAG_DMT_HOST_SPT       (0x01 << 4)
-#define ESP_BLE_ADV_FLAG_NON_LIMIT_DISC     (0x00 )
- /* ************************* */
+# include <functional>
+# include <string>
+# include <vector>
 
 class NimBLEAdvertising;
-
 typedef std::function<void(NimBLEAdvertising*)> advCompleteCB_t;
 
 /**
- * @brief Advertisement data set by the programmer to be published by the %BLE server.
- */
-class NimBLEAdvertisementData {
-    // Only a subset of the possible BLE architected advertisement fields are currently exposed.  Others will
-    // be exposed on demand/request or as time permits.
-    //
-public:
-    void setAppearance(uint16_t appearance);
-    void setCompleteServices(const NimBLEUUID &uuid);
-    void setCompleteServices16(const std::vector<NimBLEUUID> &v_uuid);
-    void setCompleteServices32(const std::vector<NimBLEUUID> &v_uuid);
-    void setFlags(uint8_t);
-    void setManufacturerData(const std::string &data);
-    void setManufacturerData(const std::vector<uint8_t> &data);
-    void setURI(const std::string &uri);
-    void setName(const std::string &name);
-    void setPartialServices(const NimBLEUUID &uuid);
-    void setPartialServices16(const std::vector<NimBLEUUID> &v_uuid);
-    void setPartialServices32(const std::vector<NimBLEUUID> &v_uuid);
-    void setServiceData(const NimBLEUUID &uuid, const std::string &data);
-    void setShortName(const std::string &name);
-    void addData(const std::string &data);  // Add data to the payload.
-    void addData(char * data, size_t length);
-    void addTxPower();
-    void setPreferredParams(uint16_t min, uint16_t max);
-    std::string getPayload();               // Retrieve the current advert payload.
-    void clearData();                       // Clear the advertisement data.
-
-private:
-    friend class NimBLEAdvertising;
-    void setServices(const bool complete, const uint8_t size,
-                     const std::vector<NimBLEUUID> &v_uuid);
-    std::string m_payload;   // The payload of the advertisement.
-};   // NimBLEAdvertisementData
-
-
-/**
- * @brief Perform and manage %BLE advertising.
+ * @brief Perform and manage BLE advertising.
  *
- * A %BLE server will want to perform advertising in order to make itself known to %BLE clients.
+ * A BLE server will want to perform advertising in order to make itself known to BLE clients.
  */
 class NimBLEAdvertising {
-public:
+  public:
     NimBLEAdvertising();
-    void addServiceUUID(const NimBLEUUID &serviceUUID);
-    void addServiceUUID(const char* serviceUUID);
-    void removeServiceUUID(const NimBLEUUID &serviceUUID);
-    bool start(uint32_t duration = 0, advCompleteCB_t advCompleteCB = nullptr, NimBLEAddress* dirAddr = nullptr);
-    void removeServices();
+    bool start(uint32_t duration = 0, const NimBLEAddress* dirAddr = nullptr);
+    void setAdvertisingCompleteCallback(advCompleteCB_t callback);
     bool stop();
-    void setAppearance(uint16_t appearance);
-    void setName(const std::string &name);
-    void setManufacturerData(const std::string &data);
-    void setManufacturerData(const std::vector<uint8_t> &data);
-    void setURI(const std::string &uri);
-    void setServiceData(const NimBLEUUID &uuid, const std::string &data);
-    void setAdvertisementType(uint8_t adv_type);
-    void setMaxInterval(uint16_t maxinterval);
-    void setMinInterval(uint16_t mininterval);
-    void setAdvertisementData(NimBLEAdvertisementData& advertisementData);
-    void setScanFilter(bool scanRequestWhitelistOnly, bool connectWhitelistOnly);
-    void setScanResponseData(NimBLEAdvertisementData& advertisementData);
-    void setScanResponse(bool);
-    void setMinPreferred(uint16_t);
-    void setMaxPreferred(uint16_t);
-    void addTxPower();
-    void reset();
-    void advCompleteCB();
+    bool setConnectableMode(uint8_t mode);
+    bool setDiscoverableMode(uint8_t mode);
+    bool reset();
     bool isAdvertising();
+    void setScanFilter(bool scanRequestWhitelistOnly, bool connectWhitelistOnly);
+    void enableScanResponse(bool enable);
+    void setAdvertisingInterval(uint16_t interval);
+    void setMaxInterval(uint16_t maxInterval);
+    void setMinInterval(uint16_t minInterval);
 
-private:
+    bool                           setAdvertisementData(const NimBLEAdvertisementData& advertisementData);
+    bool                           setScanResponseData(const NimBLEAdvertisementData& advertisementData);
+    const NimBLEAdvertisementData& getAdvertisementData();
+    const NimBLEAdvertisementData& getScanData();
+    void                           clearData();
+    bool                           refreshAdvertisingData();
+
+    bool addServiceUUID(const NimBLEUUID& serviceUUID);
+    bool addServiceUUID(const char* serviceUUID);
+    bool removeServiceUUID(const NimBLEUUID& serviceUUID);
+    bool removeServiceUUID(const char* serviceUUID);
+    bool removeServices();
+    bool setAppearance(uint16_t appearance);
+    bool setPreferredParams(uint16_t minInterval, uint16_t maxInterval);
+    bool addTxPower();
+    bool setName(const std::string& name);
+    bool setManufacturerData(const uint8_t* data, size_t length);
+    bool setManufacturerData(const std::string& data);
+    bool setManufacturerData(const std::vector<uint8_t>& data);
+    bool setURI(const std::string& uri);
+    bool setServiceData(const NimBLEUUID& uuid, const uint8_t* data, size_t length);
+    bool setServiceData(const NimBLEUUID& uuid, const std::string& data);
+    bool setServiceData(const NimBLEUUID& uuid, const std::vector<uint8_t>& data);
+
+  private:
     friend class NimBLEDevice;
     friend class NimBLEServer;
 
-    void                    onHostSync();
-    static int              handleGapEvent(struct ble_gap_event *event, void *arg);
+    void       onHostSync();
+    static int handleGapEvent(ble_gap_event* event, void* arg);
 
-    ble_hs_adv_fields       m_advData;
-    ble_hs_adv_fields       m_scanData;
+    NimBLEAdvertisementData m_advData;
+    NimBLEAdvertisementData m_scanData;
     ble_gap_adv_params      m_advParams;
-    std::vector<NimBLEUUID> m_serviceUUIDs;
-    bool                    m_customAdvData;
-    bool                    m_customScanResponseData;
-    bool                    m_scanResp;
-    bool                    m_advDataSet;
-    advCompleteCB_t         m_advCompCB{nullptr};
+    advCompleteCB_t         m_advCompCb;
     uint8_t                 m_slaveItvl[4];
     uint32_t                m_duration;
-    std::vector<uint8_t>    m_svcData16;
-    std::vector<uint8_t>    m_svcData32;
-    std::vector<uint8_t>    m_svcData128;
-    std::vector<uint8_t>    m_name;
-    std::vector<uint8_t>    m_mfgData;
-    std::vector<uint8_t>    m_uri;
+    bool                    m_scanResp : 1;
+    bool                    m_advDataSet : 1;
 };
 
-#endif /* CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER  && !CONFIG_BT_NIMBLE_EXT_ADV */
-#endif /* MAIN_BLEADVERTISING_H_ */
+#endif // (CONFIG_BT_ENABLED && CONFIG_BT_NIMBLE_ROLE_BROADCASTER && !CONFIG_BT_NIMBLE_EXT_ADV) || defined(_DOXYGEN_)
+#endif // NIMBLE_CPP_ADVERTISING_H_

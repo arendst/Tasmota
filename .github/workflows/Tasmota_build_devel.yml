@@ -98,6 +98,8 @@ jobs:
           - tasmota32s3ser-safeboot
           - tasmota32c6-safeboot
           - tasmota32c6ser-safeboot
+          - tasmota32p4-safeboot
+          - tasmota32p4ser-safeboot
     steps:
       - uses: actions/checkout@v4
         with:
@@ -108,8 +110,8 @@ jobs:
           python-version: '3.13'
       - name: Install dependencies
         run: |
-          pip install wheel
-          pip install -U platformio
+          pip install uv
+          uv pip install --system platformio
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Add SHA to footer
         run: |
@@ -158,8 +160,8 @@ jobs:
           python-version: '3.13'
       - name: Install dependencies
         run: |
-          pip install wheel
-          pip install -U platformio
+          pip install uv
+          uv pip install --system platformio
       - name: Add SHA to footer
         run: |
           COMMIT_SHA_LONG=$(git rev-parse --short HEAD || echo "")
@@ -195,6 +197,7 @@ jobs:
           - tasmota32c2
           - tasmota32c3
           - tasmota32c6
+          - tasmota32p4
           - tasmota32s2
           - tasmota32s2cdc
           - tasmota32s3
@@ -209,8 +212,8 @@ jobs:
           python-version: '3.13'
       - name: Install dependencies
         run: |
-          pip install wheel
-          pip install -U platformio
+          pip install uv
+          uv pip install --system platformio
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
         uses: actions/download-artifact@v4
@@ -256,8 +259,8 @@ jobs:
           python-version: '3.13'
       - name: Install dependencies
         run: |
-          pip install wheel
-          pip install -U platformio
+          pip install uv
+          uv pip install --system platformio
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
         uses: actions/download-artifact@v4

@@ -1,6 +1,6 @@
 Import("env")
 
-import os
+import pathlib
 import shutil
 import tasmotapiolib
 import gzip
@@ -8,7 +8,7 @@ from colorama import Fore, Back, Style
 
 def map_gzip(source, target, env):
     # create string with location and file names based on variant
-    map_file = tasmotapiolib.get_final_map_path(env)
+    map_file = pathlib.Path(tasmotapiolib.get_final_map_path(env))
 
     if map_file.is_file():
         gzip_file = map_file.with_suffix(".map.gz")
@@ -19,7 +19,7 @@ def map_gzip(source, target, env):
 
         # write gzip map file
         with map_file.open("rb") as fp:
-            with gzip.open(gzip_file, "wb", compresslevel=9) as f:
+            with gzip.open(str(gzip_file), "wb", compresslevel=9) as f:
                 shutil.copyfileobj(fp, f)
 
         # remove map file
@@ -39,16 +39,16 @@ if tasmotapiolib.is_env_set(tasmotapiolib.ENABLE_ESP32_GZ, env) or env["PIOPLATF
 
     def bin_gzip(source, target, env):
         # create string with location and file names based on variant
-        bin_file = tasmotapiolib.get_final_bin_path(env)
+        bin_file = pathlib.Path(tasmotapiolib.get_final_bin_path(env))
         gzip_file = bin_file.with_suffix(".bin.gz")
 
         # check if new target files exist and remove if necessary
-        if os.path.isfile(gzip_file):
-            os.remove(gzip_file)
+        if gzip_file.is_file():
+            gzip_file.unlink()
 
         # write gzip firmware file
-        with open(bin_file, "rb") as fp:
-            with open(gzip_file, "wb") as f:
+        with bin_file.open("rb") as fp:
+            with gzip_file.open("wb") as f:
                 time_start = time.time()
                 gz = tasmotapiolib.compress(fp.read(), gzip_level)
                 time_delta = time.time() - time_start
