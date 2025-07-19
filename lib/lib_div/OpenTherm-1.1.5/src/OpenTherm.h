@@ -167,7 +167,7 @@ public:
     ~OpenTherm();
     volatile OpenThermStatus status;
     void begin(void (*handleInterruptCallback)(void));
-    void begin(void (*handleInterruptCallback)(void), void (*processResponseCallback)(unsigned long, OpenThermResponseStatus));
+    void begin(void (*handleInterruptCallback)(void), void (*processResponseCallback)(unsigned long, int));
 #if !defined(__AVR__)
     void begin();
     void begin(std::function<void(unsigned long, OpenThermResponseStatus)> processResponseFunction);
@@ -176,10 +176,6 @@ public:
     unsigned long sendRequest(unsigned long request);
     bool sendResponse(unsigned long request);
     bool sendRequestAsync(unsigned long request);
-    [[deprecated("Use OpenTherm::sendRequestAsync(unsigned long) instead")]]
-    bool sendRequestAync(unsigned long request) {
-        return sendRequestAsync(request);
-    }
     static unsigned long buildRequest(OpenThermMessageType type, OpenThermMessageID id, unsigned int data);
     static unsigned long buildResponse(OpenThermMessageType type, OpenThermMessageID id, unsigned int data);
     unsigned long getLastResponse();
@@ -243,7 +239,7 @@ private:
 
     void sendBit(bool high);
     void processResponse();
-    void (*processResponseCallback)(unsigned long, OpenThermResponseStatus);
+    void (*processResponseCallback)(unsigned long, int);
 #if !defined(__AVR__)
     std::function<void(unsigned long, OpenThermResponseStatus)> processResponseFunction;
 #endif

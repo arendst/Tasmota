@@ -43,7 +43,7 @@ void OpenTherm::begin(void (*handleInterruptCallback)(void))
     status = OpenThermStatus::READY;
 }
 
-void OpenTherm::begin(void (*handleInterruptCallback)(void), void (*processResponseCallback)(unsigned long, OpenThermResponseStatus))
+void OpenTherm::begin(void (*handleInterruptCallback)(void), void (*processResponseCallback)(unsigned long, int))
 {
     begin(handleInterruptCallback);
     this->processResponseCallback = processResponseCallback;
@@ -287,7 +287,7 @@ void OpenTherm::processResponse()
 {
     if (processResponseCallback != NULL)
     {
-        processResponseCallback(response, responseStatus);
+        processResponseCallback(response, (int)responseStatus);
     }
 #if !defined(__AVR__)
     if (this->processResponseFunction != NULL)
