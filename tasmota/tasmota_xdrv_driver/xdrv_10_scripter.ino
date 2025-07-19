@@ -98,7 +98,7 @@ const uint8_t SCRIPT_VERS[2] = {5, 5};
 #define SPI_FLASH_2SEC_SIZE SPI_FLASH_SEC_SIZE*2
 
 #define UNIX_TS_OFFSET 0
-//1740389573 
+//1740389573
 
 #define SCRIPT_EOL '\n'
 #define SCRIPT_FLOAT_PRECISION 2
@@ -1056,7 +1056,7 @@ char *script;
     //char *strings_p = strings;
     //char *strings_op = (char*)calloc(maxsvars * SCRIPT_MAXSSIZE, 1);
     char *strings_op = (char*)calloc(maxsvars * glob_script_mem.max_ssize, 1);
-    
+
     char *strings_p = strings_op;
     if (!strings_op) {
       free(imemptr);
@@ -1673,7 +1673,7 @@ void Script_PollUdp(void) {
               if (alen < index) {
                 index = alen;
               }
-            } 
+            }
             for (uint16_t count = 0; count < index; count++) {
               TS_FLOAT udpf;
               uint8_t *ucp = (uint8_t*) &udpf;
@@ -2917,7 +2917,7 @@ TS_FLOAT fvar;
   SCRIPT_SKIP_SPACES
   char str[SCRIPT_MAX_SBSIZE];
   str[0] = 0;
-  
+
   if (index < 1) index = 1;
   index--;
   if (gv) gv->strind = index;
@@ -3671,20 +3671,20 @@ extern void W8960_SetGain(uint8_t sel, uint16_t value);
             if (fvar > 0) {
               esp_sleep_enable_timer_wakeup(fvar * 1000000);
             }
-            SCRIPT_SKIP_SPACES 
+            SCRIPT_SKIP_SPACES
             if (*lp != ')') {
               lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
               if (fvar != -1) {
                 gpio_num_t gpio_num = (gpio_num_t)fvar;
                 lp = GetNumericArgument(lp, OPER_EQU, &fvar, gv);
-#if SOC_PM_SUPPORT_EXT1_WAKEUP   
+#if SOC_PM_SUPPORT_EXT1_WAKEUP
                 if (fvar == 0) {
                   esp_sleep_enable_ext1_wakeup_io(1 << gpio_num, ESP_EXT1_WAKEUP_ANY_HIGH);
 #if SOC_RTCIO_INPUT_OUTPUT_SUPPORTED
                   rtc_gpio_pullup_dis(gpio_num);
                   rtc_gpio_pulldown_en(gpio_num);
 #else
-_Pragma("GCC warning \"'rtc io' not supported\"") 
+_Pragma("GCC warning \"'rtc io' not supported\"")
 #endif
                 } else {
 #if CONFIG_IDF_TARGET_ESP32
@@ -3706,7 +3706,7 @@ _Pragma("GCC warning \"'EXT 1 wakeup' not supported using gpio mode\"")
                   .pin_bit_mask = BIT(gpio_num),
                   .mode = GPIO_MODE_INPUT,
                   .pull_up_en = (gpio_pullup_t)!fvar,
-                  .pull_down_en = (gpio_pulldown_t)fvar 
+                  .pull_down_en = (gpio_pulldown_t)fvar
 
                 };
                 gpio_config(&config);
@@ -3742,6 +3742,25 @@ _Pragma("GCC warning \"'EXT 1 wakeup' not supported using gpio mode\"")
           tind->index = SCRIPT_EVENT_HANDLED;
           goto exit_settable;
         }
+#ifdef ROTARY_V1
+        if (!strncmp_XP(lp, XPSTR("encabs["), 7)) { // Absolute encoder value
+          GetNumericArgument(lp + 7, OPER_EQU, &fvar, gv);
+          uint8_t index = fvar;
+          if (index < 1 || index > MAX_ROTARIES) index = 1;
+          fvar = Encoder[index - 1].abs_position[0];
+          len += 1;
+          goto exit;
+        }
+        if (!strncmp_XP(lp, XPSTR("encrel["), 7)) { // Relative encoder value (will be reset after reading)
+          GetNumericArgument(lp + 7, OPER_EQU, &fvar, gv);
+          uint8_t index = fvar;
+          if (index < 1 || index > MAX_ROTARIES) index = 1;
+          fvar = Encoder[index - 1].rel_position;
+          Encoder[index - 1].rel_position = 0;
+          len += 1;
+          goto exit;
+        }
+#endif
 #ifdef USE_ENERGY_SENSOR
         if (!strncmp_XP(lp, XPSTR("enrg["), 5)) {
           lp = GetNumericArgument(lp + 5, OPER_EQU, &fvar, gv);
@@ -4563,7 +4582,7 @@ _Pragma("GCC warning \"'EXT 1 wakeup' not supported using gpio mode\"")
                   if (delimc) {
                     char *xp = strchr(rstring, delimc);
                      if (xp) {
-                      *xp = 0;              
+                      *xp = 0;
                     }
                   }
                   free(mqd);
@@ -4978,7 +4997,7 @@ _Pragma("GCC warning \"'EXT 1 wakeup' not supported using gpio mode\"")
           uint8_t selector = fvar;
           switch (selector) {
             case 0:
-              { 
+              {
                 // start streaming
                 char url[SCRIPT_MAX_SBSIZE];
                 lp = GetStringArgument(lp, OPER_EQU, url, 0);
@@ -5484,7 +5503,7 @@ int32_t I2SPlayFile(const char *path, uint32_t decoder_type);
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
           uint32_t ivar = *(uint32_t*)&fvar;
           ivar = *(uint32_t*)ivar;
-          *(uint32_t*)&fvar = ivar; 
+          *(uint32_t*)&fvar = ivar;
           goto nfuncexit;
         }
         break;
@@ -5862,7 +5881,7 @@ int32_t I2SPlayFile(const char *path, uint32_t decoder_type);
             if (Is_gpio_used(rxpin) || Is_gpio_used(txpin)) {
               AddLog(LOG_LEVEL_INFO, PSTR("SCR: warning, pins already used"));
             }
- 
+
             glob_script_mem.sp = new TasmotaSerial(rxpin, txpin, HARDWARE_FALLBACK, 0, rxbsiz);
 
             if (glob_script_mem.sp) {
@@ -6355,7 +6374,7 @@ int32_t I2SPlayFile(const char *path, uint32_t decoder_type);
           goto strexit;
         }
 
-       
+
 #ifdef USE_FEXTRACT
         if (!strncmp_XP(lp, XPSTR("s2t("), 4)) {
           lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, 0);
@@ -6789,7 +6808,7 @@ void tmod_directModeOutput(uint32_t pin);
                 for (uint16_t cnt = 0; cnt < slen; cnt++) {
                   buff[cnt] = glob_script_mem.tcp_client.read();
                 }
-                buff[slen] = 0; 
+                buff[slen] = 0;
                 if (sp) strlcpy(sp, buff, glob_script_mem.max_ssize);
             }
           }
@@ -6858,7 +6877,7 @@ void tmod_directModeOutput(uint32_t pin);
                       dlen++;
                       break;
                     case 1:
-                      { 
+                      {
                         uint16_t wval = *fpd++;
                         //glob_script_mem.tcp_client.write(wval >> 8);
                         //glob_script_mem.tcp_client.write(wval);
@@ -7183,7 +7202,7 @@ int32_t play_wave(char *path) {
           break;
     }
 
-    i2s_std_config_t std_cfg = { 
+    i2s_std_config_t std_cfg = {
         .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(8000),
         .slot_cfg = slot_cfg,
         .gpio_cfg = {
@@ -7211,10 +7230,10 @@ File wf = ufsp->open(path, FS_FILE_READ);
     return -1;
   }
 
-  int16_t buffer[512]; 
+  int16_t buffer[512];
 
   uint32_t fsize = wf.size();
- 
+
   // check for RIFF
    wf.readBytes((char*)buffer, sizeof(wav_header_t));
    wav_header_t *wh = (wav_header_t *)buffer;
@@ -8190,7 +8209,7 @@ startline:
         while (*lp == '\t' || *lp == ' ') {
           lp++;
         }
-        
+
         // skip comment
         if (*lp == ';') goto next_line;
         if (!*lp) break;
@@ -8227,11 +8246,11 @@ startline:
                 and_or = 0;
                 if (if_exe[ifstck - 1] == 0) {
                   // not enabled
-#if 0     
+#if 0
                   glob_script_mem.FLAGS.ignore_line = 1;
                 // AddLog(LOG_LEVEL_INFO, PSTR(">>> %d"),ifstck);
-#else                  
-                //  AddLog(LOG_LEVEL_INFO, PSTR(">>> %d"),ifstck);            
+#else
+                //  AddLog(LOG_LEVEL_INFO, PSTR(">>> %d"),ifstck);
                   while (*lp) {
                     if (*lp == SCRIPT_EOL) {
                       lp--;
@@ -8245,7 +8264,7 @@ startline:
                     lp++;
                   }
                   goto next_line;
-#endif                  
+#endif
                 }
             } else if (!strncmp(lp, "then", 4) && if_state[ifstck] == 1) {
                 lp += 4;
@@ -10806,7 +10825,7 @@ bool ScriptCommand(void) {
         char *lp = XdrvMailbox.data;
         lp++;
         Response_P(PSTR("{\"script\":{"));
-        while (1) {  
+        while (1) {
           while (*lp==' ') lp++;
           char *cp = strchr(lp, ';');
           if (cp) {
@@ -10840,7 +10859,7 @@ bool ScriptCommand(void) {
 #endif
 #endif //SUPPORT_MQTT_EVENT
 #ifdef USE_UFILESYS
-#ifndef NO_SCRIPT_VARBSIZE  
+#ifndef NO_SCRIPT_VARBSIZE
     } else if (CMND_BSIZE  == command_code) {
       // set script buffer size
       if (XdrvMailbox.payload >= 1000) {
@@ -10855,7 +10874,7 @@ bool ScriptCommand(void) {
       serviced = true;
 #endif
 #endif
-    
+
   }
   return serviced;
 }
@@ -12155,7 +12174,7 @@ const char *gc_str;
   if ((dogui && !(glob_script_mem.specopt & WSO_FORCEGUI)) || (!dogui && (glob_script_mem.specopt & WSO_FORCEGUI))) {
   //if ( ((!mc && (*lin != '$')) || (mc == 'w' && (*lin != '$'))) && (!(glob_script_mem.specopt & WSO_FORCEMAIN)) || (glob_script_mem.specopt & WSO_FORCEGUI)) {
     // normal web section
-#ifdef SCRIPT_WEB_DEBUG    
+#ifdef SCRIPT_WEB_DEBUG
     AddLog(LOG_LEVEL_INFO, PSTR("WEB GUI section"));
 #endif
     if (*lin == '@') {
@@ -12565,7 +12584,7 @@ const char *gc_str;
     // end standard web interface
   } else {
     //  main section interface
-#ifdef SCRIPT_WEB_DEBUG    
+#ifdef SCRIPT_WEB_DEBUG
     AddLog(LOG_LEVEL_INFO, PSTR("WEB main section"));
 #endif
     if ( (*lin == mc) || (mc == 'z') || (glob_script_mem.specopt & WSO_FORCEMAIN)) {
@@ -12577,7 +12596,7 @@ const char *gc_str;
         }
       }
 exgc:
-#ifdef SCRIPT_WEB_DEBUG    
+#ifdef SCRIPT_WEB_DEBUG
       AddLog(LOG_LEVEL_INFO, PSTR("WEB GC section"));
 #endif
       char *lp;
@@ -13004,7 +13023,7 @@ exgc:
       } else {
         WSContentSend_P(PSTR("%s"), lin);
       }
-      
+
 #else
 
       if (mc != 'z') {
@@ -13017,9 +13036,9 @@ exgc:
           //  WSContentSend_P(PSTR("%s"),lin);
 #endif //USE_GOOGLE_CHARTS
     }
-    
+
   }
-  
+
   WS_LINE_RETURN
 }
 
@@ -13438,12 +13457,12 @@ int32_t http_req(char *host, char *header, char *request) {
 Powerwall powerwall = Powerwall();
 
 int32_t call2pwl(const char *url) {
-  
+
   if (*url == '@') {
     powerwall.GetRequest(String(url));
     return 0;
   }
-  
+
   uint8_t debug = 0;
   if (*url == 'D') {
     url++;
@@ -13645,7 +13664,7 @@ uint32_t script_i2c(uint8_t sel, uint16_t val, uint32_t val1) {
       if (val & 128) {
         XsnsCall(FUNC_INIT);
       }
-#endif     
+#endif
       break;
   }
   return rval;
@@ -14105,7 +14124,7 @@ bool Xdrv10(uint32_t function) {
       glob_script_mem.FLAGS.eeprom = false;
       glob_script_mem.script_pram = (uint8_t*)Settings->script_pram[0];
       glob_script_mem.script_pram_size = PMEM_SIZE;
-      
+
 #ifdef USE_UFILESYS
       if (ufs_type) {
 #ifndef NO_SCRIPT_VARBSIZE
@@ -14431,7 +14450,7 @@ bool Xdrv10(uint32_t function) {
       WebServer82Loop();
 #endif
       break;
-    
+
     case FUNC_ACTIVE:
       result = true;
       break;
