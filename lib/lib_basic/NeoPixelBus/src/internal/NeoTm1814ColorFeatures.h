@@ -83,7 +83,7 @@ public:
 
     static const uint8_t* pixels(const uint8_t* pData)
     {
-        return pData;
+        return pData + SettingsSize;
     }
 };
 

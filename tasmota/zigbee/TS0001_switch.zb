@@ -1,0 +1,4 @@
+#Z2Tv1
+# TuYa generic switch https://www.zigbee2mqtt.io/devices/TS0001_switch_module.html
+:TS0001,_TZ3000_*
+0006/8002%30,StartUpOnOff

@@ -35,20 +35,40 @@
 
 extern "C" {
 
+extern void yield();
+extern bool can_yield();
+
 uint32_t *stack_thunk_light_ptr = NULL;
 uint32_t *stack_thunk_light_top = NULL;
 uint32_t *stack_thunk_light_save = NULL;  /* Saved A1 while in BearSSL */
 uint32_t stack_thunk_light_refcnt = 0;
 
 //#define _stackSize (5600/4)
-#if defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_AZURE_IOT)
+#if defined(USE_MQTT_CLIENT_CERT) || defined(USE_MQTT_AWS_IOT_LIGHT) || defined(USE_MQTT_AZURE_IOT)
   #define _stackSize (5300/4)   // using a light version of bearssl we can save 300 bytes
-#elif defined(USE_MQTT_TLS_FORCE_EC_CIPHER) || defined(USE_4K_RSA)
-  #define _stackSize (4800/4)   // no private key, we can reduce a little, max observed 4300
 #else
-  #define _stackSize (3800/4)   // using a light version of bearssl we can save 2k
+  #define _stackSize (4800/4)   // no private key, we can reduce a little, max observed 4300
 #endif
 #define _stackPaint 0xdeadbeef
+
+void stack_thunk_yield()
+{
+    if (can_yield()) {
+        uint32_t tmp;
+        register uint32_t* save __asm__("a3") = stack_thunk_light_save;
+
+        __asm__ __volatile__ (
+            "mov.n %0, a1\n\t"
+            "mov.n a1, %1\n\t"
+        : "=r"(tmp) : "r"(save) : "memory");
+
+        yield();
+
+        __asm__ __volatile__ (
+            "mov.n a1, %0\n\t"
+        :: "r"(tmp) : "memory");
+    }
+}
 
 /* Add a reference, and allocate the stack if necessary */
 void stack_thunk_light_add_ref()

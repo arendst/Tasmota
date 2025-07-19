@@ -3,7 +3,7 @@
   
   S/PDIF output via I2S
   
-  Needs transciever from CMOS level to either optical or coaxial interface
+  Needs transceiver from CMOS level to either optical or coaxial interface
   See: https://www.epanorama.net/documents/audio/spdif.html
 
   Original idea and sources: 
@@ -30,8 +30,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AUDIOOUTPUTSPDIF_H
-#define _AUDIOOUTPUTSPDIF_H
+#if defined(ESP32) || defined(ESP8266)
+#pragma once
 
 #include "AudioOutput.h"
 

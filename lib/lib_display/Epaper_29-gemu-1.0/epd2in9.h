@@ -30,6 +30,10 @@
 #include "epdpaint.h"
 
 
+#define DISPLAY_INIT_MODE 0
+#define DISPLAY_INIT_PARTIAL 1
+#define DISPLAY_INIT_FULL 2
+
 // Display resolution
 #define EPD_WIDTH       128
 #define EPD_HEIGHT      296
@@ -91,21 +95,28 @@ public:
 
     void DisplayOnff(int8_t on);
     void DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font);
-    void Begin(int16_t p1,int16_t p2,int16_t p3);
+    void Begin(int16_t cs,int16_t mosi,int16_t sclk, int16_t rst = -1, int16_t busy = -1);
+
     void Updateframe();
 
 private:
     unsigned int reset_pin;
     unsigned int dc_pin;
-    unsigned int busy_pin;
     const unsigned char* lut;
     unsigned int cs_pin;
+    signed int rst_pin;
+    signed int busy_pin;
     unsigned int mosi_pin;
     unsigned int sclk_pin;
-
+    unsigned char mode;
+    uint8_t iniz = 0;
+    void delay_busy(uint32_t wait);
     void SetLut(const unsigned char* lut);
     void SetMemoryArea(int x_start, int y_start, int x_end, int y_end);
     void SetMemoryPointer(int x, int y);
+    void SetLut_by_host(const unsigned char* lut);
+    void SetFrameMemory_Partial(const unsigned char* image_buffer,int x,int y,int image_width,int image_height);
+    void DisplayFrame_Partial(void);
     //void fastSPIwrite(uint8_t d,uint8_t dc);
 };
 

@@ -94,7 +94,12 @@ def on_message(client, userdata, msg):
             if "Started" in rcv_code:
                return
             if "Error" in rcv_code:
-               print("Error: "+rcv_code)
+               if "1" in rcv_code: print("Error: Wrong password")
+               else:
+                  if "2" in rcv_code: print("Error: Bad chunk size")
+                  else:
+                     if "3" in rcv_code: print("Error: Invalid file type")
+                     else: print("Error: "+rcv_code)
                Err_flag = True
                return
          if "Command" in root:
@@ -145,13 +150,16 @@ def on_message(client, userdata, msg):
    Ack_flag = False
 
 def wait_for_ack():
-   timeout = 100
+   global Err_flag
+
+   timeout = 500
    while Ack_flag and Err_flag == False and timeout > 0:
       time.sleep(0.01)
       timeout = timeout -1
 
    if 0 == timeout:
       print("Error: Timeout")
+      Err_flag = True
 
    return Ack_flag
 

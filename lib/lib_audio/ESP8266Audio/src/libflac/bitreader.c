@@ -121,6 +121,8 @@ struct FLAC__BitReader {
 	void *client_data;
 };
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 static inline void crc16_update_word_(FLAC__BitReader *br, brword word)
 {
 	unsigned crc = br->read_crc16;
@@ -149,6 +151,7 @@ static inline void crc16_update_word_(FLAC__BitReader *br, brword word)
 #endif
 	br->crc16_align = 0;
 }
+#pragma GCC diagnostic pop
 
 static FLAC__bool bitreader_read_from_client_(FLAC__BitReader *br)
 {
@@ -338,6 +341,8 @@ void FLAC__bitreader_reset_read_crc16(FLAC__BitReader *br, FLAC__uint16 seed)
 	br->crc16_align = br->consumed_bits;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 FLAC__uint16 FLAC__bitreader_get_read_crc16(FLAC__BitReader *br)
 {
 	FLAC__ASSERT(0 != br);
@@ -353,6 +358,7 @@ FLAC__uint16 FLAC__bitreader_get_read_crc16(FLAC__BitReader *br)
 	}
 	return br->read_crc16;
 }
+#pragma GCC diagnostic pop
 
 inline FLAC__bool FLAC__bitreader_is_consumed_byte_aligned(const FLAC__BitReader *br)
 {

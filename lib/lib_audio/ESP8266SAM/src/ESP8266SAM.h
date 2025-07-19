@@ -1,7 +1,7 @@
 /*
   ESP8266SAM
   Port of SAM to the ESP8266
-
+  
   Copyright (C) 2017  Earle F. Philhower, III
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ public:
     speed = 0;
     output = NULL;
   };
-
+  
   ~ESP8266SAM()
   {
   }
@@ -70,3 +70,4 @@ private:
 };
 
 #endif
+

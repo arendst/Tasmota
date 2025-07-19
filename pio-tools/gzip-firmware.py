@@ -1,37 +1,78 @@
-Import('env')
+Import("env")
+
 import os
 import shutil
+import tasmotapiolib
 import gzip
+from colorama import Fore, Back, Style
 
-platform = env.PioPlatform()
-board = env.BoardConfig()
-mcu = board.get("build.mcu", "esp32")
-# gzip only for ESP8266
-if env["PIOPLATFORM"] != "espressif32":
+def map_gzip(source, target, env):
+    # create string with location and file names based on variant
+    map_file = tasmotapiolib.get_final_map_path(env)
 
-    OUTPUT_DIR = "build_output{}".format(os.path.sep)
+    if map_file.is_file():
+        gzip_file = map_file.with_suffix(".map.gz")
 
-    def bin_gzip(source, target, env):
-        variant = str(target[0]).split(os.path.sep)[2]
+        # check if new target map files exist and remove if necessary
+        if gzip_file.is_file():
+            gzip_file.unlink()
 
-        # create string with location and file names based on variant
-        bin_file = "{}firmware{}{}.bin".format(OUTPUT_DIR, os.path.sep, variant)
-        gzip_file = "{}firmware{}{}.bin.gz".format(OUTPUT_DIR, os.path.sep, variant)
-
-        # check if new target files exist and remove if necessary
-        if os.path.isfile(gzip_file): os.remove(gzip_file)
-
-        # write gzip firmware file
-        with open(bin_file,"rb") as fp:
-            with gzip.open(gzip_file, "wb", compresslevel = 9) as f:
+        # write gzip map file
+        with map_file.open("rb") as fp:
+            with gzip.open(gzip_file, "wb", compresslevel=9) as f:
                 shutil.copyfileobj(fp, f)
 
-        ORG_FIRMWARE_SIZE = os.stat(bin_file).st_size
-        GZ_FIRMWARE_SIZE = os.stat(gzip_file).st_size
+        # remove map file
+        if map_file.is_file():
+            map_file.unlink()
 
-        if ORG_FIRMWARE_SIZE > 995326:
-            print("\u001b[31;1m!!! Tasmota firmware size is too big with {} bytes. Max size is 995326 bytes !!! \u001b[0m".format(ORG_FIRMWARE_SIZE))
+
+if not tasmotapiolib.is_env_set(tasmotapiolib.DISABLE_MAP_GZ, env):
+    silent_action = env.Action([map_gzip])
+    silent_action.strfunction = lambda target, source, env: '' # hack to silence scons command output
+    env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", silent_action)
+
+if tasmotapiolib.is_env_set(tasmotapiolib.ENABLE_ESP32_GZ, env) or env["PIOPLATFORM"] != "espressif32":
+    import time
+
+    gzip_level = int(env['ENV'].get('GZIP_LEVEL', 10))
+
+    def bin_gzip(source, target, env):
+        # create string with location and file names based on variant
+        bin_file = tasmotapiolib.get_final_bin_path(env)
+        gzip_file = bin_file.with_suffix(".bin.gz")
+
+        # check if new target files exist and remove if necessary
+        if os.path.isfile(gzip_file):
+            os.remove(gzip_file)
+
+        # write gzip firmware file
+        with open(bin_file, "rb") as fp:
+            with open(gzip_file, "wb") as f:
+                time_start = time.time()
+                gz = tasmotapiolib.compress(fp.read(), gzip_level)
+                time_delta = time.time() - time_start
+                f.write(gz)
+
+        ORG_FIRMWARE_SIZE = bin_file.stat().st_size
+        GZ_FIRMWARE_SIZE = gzip_file.stat().st_size
+
+        print()
+        if ORG_FIRMWARE_SIZE > 995326 and env["PIOPLATFORM"] != "espressif32":
+            print(Fore.RED + "!!! Tasmota firmware size is too big with {} bytes. Max size is 995326 bytes !!! ".format(
+                    ORG_FIRMWARE_SIZE
+                )
+            )
         else:
-            print("Compression reduced firmware size by {:.0f}% (was {} bytes, now {} bytes)".format((GZ_FIRMWARE_SIZE / ORG_FIRMWARE_SIZE) * 100, ORG_FIRMWARE_SIZE, GZ_FIRMWARE_SIZE))
-            
-    env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", [bin_gzip])
+            print(Fore.GREEN + "Compression reduced firmware size to {:.0f}% (was {} bytes, now {} bytes, took {:.3f} seconds)".format(
+                    (GZ_FIRMWARE_SIZE / ORG_FIRMWARE_SIZE) * 100,
+                    ORG_FIRMWARE_SIZE,
+                    GZ_FIRMWARE_SIZE,
+                    time_delta,
+                )
+            )
+
+    if not tasmotapiolib.is_env_set(tasmotapiolib.DISABLE_BIN_GZ, env):
+        silent_action = env.Action([bin_gzip])
+        silent_action.strfunction = lambda target, source, env: '' # hack to silence scons command output
+        env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", silent_action)

@@ -1,34 +1,53 @@
-Import('env')
+Import("env")
+
 import os
 import shutil
+import pathlib
+import tasmotapiolib
+from os.path import join
+from colorama import Fore, Back, Style
 
-OUTPUT_DIR = "build_output{}".format(os.path.sep)
 
 def bin_map_copy(source, target, env):
-    variant = str(target[0]).split(os.path.sep)[2]
-    
-    # check if output directories exist and create if necessary
-    if not os.path.isdir(OUTPUT_DIR):
-        os.mkdir(OUTPUT_DIR)
+    firsttarget = pathlib.Path(target[0].path)
 
-    for d in ['firmware', 'map']:
-        if not os.path.isdir("{}{}".format(OUTPUT_DIR, d)):
-            os.mkdir("{}{}".format(OUTPUT_DIR, d))
+    # get locations and file names based on variant
+    map_file = tasmotapiolib.get_final_map_path(env)
+    bin_file = tasmotapiolib.get_final_bin_path(env)
+    one_bin_file = bin_file
+    firmware_name = env.subst("$BUILD_DIR/${PROGNAME}.bin")
 
-    # create string with location and file names based on variant
-    map_file = "{}map{}{}.map".format(OUTPUT_DIR, os.path.sep, variant)
-    bin_file = "{}firmware{}{}.bin".format(OUTPUT_DIR, os.path.sep, variant)
+    if env["PIOPLATFORM"] == "espressif32":
+        if("safeboot" in firmware_name):
+            SAFEBOOT_SIZE = firsttarget.stat().st_size
+            if SAFEBOOT_SIZE > 851967:
+                print(Fore.RED + "!!! Tasmota safeboot size is too big with {} bytes. Max size is 851967 bytes !!! ".format(
+                        SAFEBOOT_SIZE
+                    )
+                )
+        if("safeboot" not in firmware_name):
+            factory_tmp = pathlib.Path(firsttarget).with_suffix("")
+            factory = factory_tmp.with_suffix(factory_tmp.suffix + ".factory.bin")
+            one_bin_tmp = pathlib.Path(bin_file).with_suffix("")
+            one_bin_file = one_bin_tmp.with_suffix(one_bin_tmp.suffix + ".factory.bin")
 
     # check if new target files exist and remove if necessary
-    for f in [map_file, bin_file]:
-        if os.path.isfile(f):
-            os.remove(f)
+    for f in [map_file, bin_file, one_bin_file]:
+        if f.is_file():
+            f.unlink()
 
-    # copy firmware.bin to firmware/<variant>.bin
-    shutil.copy(str(target[0]), bin_file)
+    # copy firmware.bin and map to final destination
+    shutil.copy(firsttarget, bin_file)
+    if env["PIOPLATFORM"] == "espressif32":
+        # the map file is needed later for firmware-metrics.py
+        shutil.copy(tasmotapiolib.get_source_map_path(env), map_file)
+        if("safeboot" not in firmware_name):
+            shutil.copy(factory, one_bin_file)
+    else:
+        map_firm = join(env.subst("$BUILD_DIR")) + os.sep + "firmware.map"
+        shutil.copy(tasmotapiolib.get_source_map_path(env), map_firm)
+        shutil.move(tasmotapiolib.get_source_map_path(env), map_file)
 
-    # copy firmware.map to map/<variant>.map
-    if os.path.isfile("firmware.map"):
-        shutil.move("firmware.map", map_file)
-
-env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", [bin_map_copy])
+silent_action = env.Action(bin_map_copy)
+silent_action.strfunction = lambda target, source, env: '' # hack to silence scons command output
+env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", silent_action)

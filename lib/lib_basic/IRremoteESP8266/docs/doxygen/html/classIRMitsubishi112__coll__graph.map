@@ -1,5 +1,0 @@
-<map id="IRMitsubishi112" name="IRMitsubishi112">
-<area shape="rect" id="node1" title="Class for handling detailed Mitsubishi 122&#45;bit A/C messages." alt="" coords="96,95,223,121"/>
-<area shape="rect" id="node2" href="$unionMitsubishi112Protocol.html" title="Native representation of a Mitsubishi 112&#45;bit A/C message." alt="" coords="5,5,172,32"/>
-<area shape="rect" id="node3" href="$classIRsend.html" title="Class for sending all basic IR protocols." alt="" coords="197,5,263,32"/>
-</map>

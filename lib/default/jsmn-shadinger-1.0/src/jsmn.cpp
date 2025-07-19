@@ -391,7 +391,7 @@ static uint32_t json_encode_utf8(char* str, uint32_t val) {
 
 void json_unescape(char* string) {
 	size_t outlength = 0;
-	uint32_t hexval, numbytes;
+	uint32_t numbytes;
 
   char c;
 	for (uint32_t i = 0; (c = string[i]) != 0; i++) {

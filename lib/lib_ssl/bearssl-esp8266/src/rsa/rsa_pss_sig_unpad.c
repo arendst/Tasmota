@@ -114,7 +114,7 @@ br_rsa_pss_sig_unpad(const br_hash_class *hf_data,
 	 * in the string.
 	 */
 	for (u = 0; u < hash_len; u ++) {
-		r |= tmp[u] ^ x[(xlen - salt_len - 1) + u];
+		r |= tmp[u] ^ x[(xlen - hash_len - 1) + u];
 	}
 
 	return EQ0(r);

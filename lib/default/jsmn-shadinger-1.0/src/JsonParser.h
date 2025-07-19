@@ -25,9 +25,6 @@
 #include <stdlib.h>
 #include <Arduino.h>
 
-// #define strcmp_P(x, y) strcmp(x,y)
-// #define strcasecmp_P(x,y) strcasecmp(x,y)
-// #define pgm_read_byte(x)  (*(uint8_t*)(x))
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
@@ -162,6 +159,7 @@ public:
   const char * findConstCharNull(const char * needle) const;
 
   // all-in-one methods: search for key (case insensitive), convert value and set default
+  bool getBool(const char *, bool val) const;
   int32_t getInt(const char *, int32_t) const;
   uint32_t getUInt(const char *, uint32_t) const;
   uint64_t getULong(const char *, uint64_t) const;

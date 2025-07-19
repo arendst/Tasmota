@@ -1,5 +1,3 @@
-FROM gitpod/workspace-full
-                    
-USER gitpod
+FROM gitpod/workspace-python-3.11
 
-RUN pip3 install -U platformio && brew install uncrustify
+USER gitpod

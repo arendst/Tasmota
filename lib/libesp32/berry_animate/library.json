@@ -1,0 +1,17 @@
+{
+  "name": "Berry animation library for WS2812 leds",
+  "version": "0.1",
+  "description": "Berry animation library for WS2812 leds",
+  "license": "MIT",
+  "homepage": "https://github.com/arendst/Tasmota",
+  "frameworks": "arduino",
+  "platforms": "espressif32",
+  "authors":
+  {
+    "name": "Stephan Hadinger",
+    "maintainer": true
+  },
+  "build": {
+    "flags": [ "-I$PROJECT_DIR/include", "-includetasmota_options.h" ]
+  }
+}

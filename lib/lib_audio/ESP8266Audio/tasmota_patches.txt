@@ -1,0 +1,27 @@
+# below are the high-level patches made to the standard ESP8266audio libraries
+
+# For Arduino 3 (gcc has a higher level of checks
+
+libmad/layer3.c replace (line 1639)
+    void fastsdct(mad_fixed_t const x[9], mad_fixed_t y[18])
+to
+    void fastsdct(mad_fixed_t const x[9], mad_fixed_t y[17])
+
+
+libflac/stream_decoder.c
+line 2786
+			if(!FLAC__bitreader_read_rice_signed_block(decoder->private_->input, residual + sample, u, rice_parameter))
+to
+			if(!FLAC__bitreader_read_rice_signed_block(decoder->private_->input, (int*) residual + sample, u, rice_parameter))
+
+line 2795
+				if(!FLAC__bitreader_read_raw_int32(decoder->private_->input, &i, rice_parameter))
+to
+				if(!FLAC__bitreader_read_raw_int32(decoder->private_->input, (long int*) &i, rice_parameter))
+
+
+l3loop.cpp
+remove all 'register'
+
+mult_noarch_gcc.h
+remove all 'register'

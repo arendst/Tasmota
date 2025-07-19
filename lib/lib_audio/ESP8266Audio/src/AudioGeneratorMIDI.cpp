@@ -1,6 +1,6 @@
 /*
   AudioGeneratorMIDI
-  Audio output generator that plays MIDI files using a SF2 SoundFont
+  Audio output generator that plays MIDI files using an SF2 SoundFont
     
   Copyright (C) 2017  Earle F. Philhower, III
 
@@ -57,6 +57,10 @@
 
 
 #include "AudioGeneratorMIDI.h"
+
+#if defined(ESP32)
+// Do not build, Espressif's GCC8+ has a compiler bug
+#else // __GNUC__ == 8
 
 #pragma GCC optimize ("O3")
 
@@ -172,7 +176,7 @@ unsigned int AudioGeneratorMIDI::buffer_int32 (int offset) {
 
 unsigned long AudioGeneratorMIDI::get_varlen (int *ptr) {
   /* Get a 1-4 byte variable-length value and adjust the pointer past it.
-    These are a succession of 7-bit values with a MSB bit of zero marking the end */
+    These are a succession of 7-bit values with an MSB bit of zero marking the end */
 
   unsigned long val;
   int i, byte;
@@ -331,7 +335,7 @@ note_off:
 }
 
 
-// Open file, parse headers, get ready tio process MIDI
+// Open file, parse headers, get ready to process MIDI
 void AudioGeneratorMIDI::PrepareMIDI(AudioFileSource *src)
 {
   MakeStreamFromAFS(src, &afsMIDI);
@@ -364,7 +368,7 @@ void AudioGeneratorMIDI::PrepareMIDI(AudioFileSource *src)
 int AudioGeneratorMIDI::PlayMIDI()
 {
   /* Continue processing all tracks, in an order based on the simulated time.
-    This is not unlike multiway merging used for tape sorting algoritms in the 50's! */
+    This is not unlike multiway merging used for tape sorting algorithms in the 50's! */
 
   do {                         /* while there are still track notes to process */
     static struct track_status *trk;
@@ -637,3 +641,4 @@ void AudioGeneratorMIDI::MakeStreamFromAFS(AudioFileSource *src, tsf_stream *afs
   afs->size = &afs_size;
 }
 
+#endif //__GNUC__ == 8

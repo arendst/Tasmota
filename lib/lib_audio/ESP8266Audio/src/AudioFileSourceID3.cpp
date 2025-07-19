@@ -143,6 +143,7 @@ uint32_t AudioFileSourceID3::read(void *data, uint32_t len)
   if (ret<10) return ret;
 
   if ((buff[0]!='I') || (buff[1]!='D') || (buff[2]!='3') || (buff[3]>0x04) || (buff[3]<0x02) || (buff[4]!=0)) {
+    cb.md("eof", false, "id3");
     return 10 + src->read(buff+10, len-10);
   }
 
@@ -212,9 +213,9 @@ uint32_t AudioFileSourceID3::read(void *data, uint32_t len)
 
       // Read the value and send to callback
       char value[64];
-      uint16_t i;
+      uint32_t i;
       bool isUnicode = (id3.getByte()==1) ? true : false;
-      for (i=0; i<framesize-1; i++) {
+      for (i=0; i<(uint32_t)framesize-1; i++) {
         if (i<sizeof(value)-1) value[i] = id3.getByte();
         else (void)id3.getByte();
       }
@@ -231,9 +232,23 @@ uint32_t AudioFileSourceID3::read(void *data, uint32_t len)
       } else if ( (frameid[0]=='T' && frameid[1]=='Y' && frameid[2]=='E' && frameid[3] == 'R') ||
                   (frameid[0]=='T' && frameid[1]=='Y' && frameid[2]=='E' && rev==2) ) {
         cb.md("Year", isUnicode, value);
+      } else if ( (frameid[0]=='T' && frameid[1]=='R' && frameid[2]=='C' && frameid[3] == 'K') ||
+                  (frameid[0]=='T' && frameid[1]=='R' && frameid[2]=='K' && rev==2) ) {
+        cb.md("track", isUnicode, value);
+      } else if ( (frameid[0]=='T' && frameid[1]=='P' && frameid[2]=='O' && frameid[3] == 'S') ||
+                  (frameid[0]=='T' && frameid[1]=='P' && frameid[2]=='A' && rev==2) ) {
+        cb.md("Set", isUnicode, value);
+      } else if ( (frameid[0]=='P' && frameid[1]=='O' && frameid[2]=='P' && frameid[3] == 'M') ||
+                  (frameid[0]=='P' && frameid[1]=='O' && frameid[2]=='P' && rev==2) ) {
+        cb.md("Popularimeter", isUnicode, value);
+      } else if ( (frameid[0]=='T' && frameid[1]=='C' && frameid[2]=='M' && frameid[3] == 'P') ) {
+        cb.md("Compilation", isUnicode, value);
       }
     }
   } while (!id3.eof());
+
+  // use callback function to signal end of tags and beginning of content.
+  cb.md("eof", false, "id3");
 
   // All ID3 processing done, return to main caller
   return src->read(data, len);

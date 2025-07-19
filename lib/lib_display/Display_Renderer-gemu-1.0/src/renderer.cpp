@@ -58,6 +58,11 @@ uint16_t Renderer::GetColorFromIndex(uint8_t index) {
 }
 
 void Renderer::dim(uint8_t contrast) {
+  uint8_t contrast8 = ((uint32_t)contrast * 255) / 15;
+  dim10(contrast8, contrast8 * 4);
+}
+
+void Renderer::dim10(uint8_t contrast, uint16_t contrast_gamma) {
 
 }
 
@@ -81,6 +86,10 @@ void Renderer::Begin(int16_t p1,int16_t p2,int16_t p3) {
 
 }
 
+void Renderer::Sleep(void) {
+
+}
+
 void Renderer::Updateframe() {
 
 }
@@ -99,7 +108,7 @@ uint8_t *Renderer::allocate_framebuffer(uint32_t size) {
 
 void Renderer::setTextSize(uint8_t sf) {
   if (sf < 1) sf = 1;
-  if (sf > 4) sf = 4;
+  if (sf > 16) sf = 16;
   tsize = sf;
   Adafruit_GFX::setTextSize(sf);
 }
@@ -614,6 +623,22 @@ int8_t Renderer::color_type(void) {
  return 0;
 }
 
+bool Renderer::utouch_Init(char **name) {
+  return false;
+}
+
+uint16_t Renderer::touched(void) {
+  return false;
+}
+
+int16_t Renderer::getPoint_x(void) {
+  return 0;
+}
+
+int16_t Renderer::getPoint_y(void) {
+  return 0;
+}
+
 void Renderer::Splash(void) {
 
 }
@@ -628,6 +653,15 @@ LVGL_PARAMS *Renderer::lvgl_pars(void) {
   return &lvgl_param;
 }
 
+void Renderer::ep_update_mode(uint8_t mode) {
+}
+
+void Renderer::ep_update_area(uint16_t xp, uint16_t yp, uint16_t width, uint16_t height, uint8_t mode) {
+}
+
+uint32_t Renderer::get_sr_touch(uint32_t xp, uint32_t xm, uint32_t yp, uint32_t ym) {
+  return 0;
+}
 
 // #ifndef USE_DISPLAY_LVGL_ONLY
 
@@ -635,6 +669,18 @@ void VButton::xdrawButton(bool inverted) {
   wr_redir=1;
   drawButton(inverted);
   wr_redir=0;
+}
+
+void VButton::xinitButtonUL(Renderer *renderer, int16_t gxp, int16_t gyp, uint16_t gxs, uint16_t gys, uint16_t outline,\
+  uint16_t fill, uint16_t textcolor , char *label, uint8_t textsize) {
+
+  initButtonUL(renderer, gxp, gyp, gxs, gys, outline, fill, textcolor, label, textsize);
+
+  spars.xp = gxp;
+  spars.yp = gyp;
+  spars.xs = gxs;
+  spars.ys = gys;
+
 }
 
 boolean VButton::didhit(int16_t x, int16_t y) {

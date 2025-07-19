@@ -8,8 +8,8 @@
 runcolor = nil
 
 def runcolor()
-  var pwr = energy.read().find('activepower',0)
-  print(pwr)
+  var pwr = energy.active_power
+  #print(pwr)
   var red = tasmota.scale_uint(int(pwr), 0, 2500, 0, 255)
   var green = 255 - red
   var channels = [red, green, 0]

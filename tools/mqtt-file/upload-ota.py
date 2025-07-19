@@ -50,7 +50,7 @@ myfiletype = 1                         # Tasmota firmware file type
 
 # **** End of User Configuration Section
 
-use_base64 = False
+use_base64 = True
 
 # Derive fulltopic from broker LWT message
 mypublish = "cmnd/"+mytopic+"/fileupload"
@@ -87,7 +87,12 @@ def on_message(client, userdata, msg):
       if "Started" in rcv_code:
          return
       if "Error" in rcv_code:
-         print("Error: "+rcv_code)
+         if "1" in rcv_code: print("Error: Wrong password")
+         else:
+            if "2" in rcv_code: print("Error: Bad chunk size")
+            else:
+               if "3" in rcv_code: print("Error: Invalid file type")
+               else: print("Error: "+rcv_code)
          Err_flag = True
          return
    if "Command" in root:
@@ -104,13 +109,16 @@ def on_message(client, userdata, msg):
    Ack_flag = False
 
 def wait_for_ack():
-   timeout = 100
+   global Err_flag
+
+   timeout = 500
    while Ack_flag and Err_flag == False and timeout > 0:
       time.sleep(0.01)
       timeout = timeout -1
 
    if 0 == timeout:
       print("Error: Timeout")
+      Err_flag = True
 
    return Ack_flag
 
@@ -150,7 +158,7 @@ while Run_flag:
             # Message length used by Tasmota (FileTransferHeaderSize)
             client.publish(mypublish, "{\"Id\":"+str("%3d"%file_id)+",\"Data\":\""+base64_data+"\"}")
          else:
-            client.publish(mypublish+"201", chunk)
+            client.publish(mypublish+"301", chunk)
          file_pos = file_pos + file_chunk_size
          if file_pos % 102400 < file_chunk_size:
             progress = round((file_pos / 10240)) * 10

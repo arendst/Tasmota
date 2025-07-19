@@ -47,8 +47,8 @@ public:
 
 class XPT2046_Touchscreen {
 public:
-	constexpr XPT2046_Touchscreen(uint8_t cspin, uint8_t tirq=255)
-		: csPin(cspin), tirqPin(tirq) { }
+	constexpr XPT2046_Touchscreen(uint8_t cspin, uint8_t tirq=255, uint8_t bus=0, uint8_t sclk=0, uint8_t miso=0, uint8_t mosi=0)
+		: csPin(cspin), tirqPin(tirq), bus(bus), sclk(sclk), miso(miso), mosi(mosi) { }
 	bool begin(SPIClass &wspi = SPI);
 #if defined(_FLEXIO_SPI_H_)
 	bool begin(FlexIOSPI &wflexspi);
@@ -66,7 +66,7 @@ public:
 
 private:
 	void update();
-	uint8_t csPin, tirqPin, rotation=1;
+	uint8_t csPin, tirqPin, rotation=1, bus=0, sclk=0, miso=0, mosi=0;
 	int16_t xraw=0, yraw=0, zraw=0;
 	uint32_t msraw=0x80000000;
 	SPIClass *_pspi = nullptr;

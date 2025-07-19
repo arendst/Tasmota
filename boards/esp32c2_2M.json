@@ -1,0 +1,44 @@
+{
+    "build": {
+      "core": "esp32",
+      "extra_flags": "-DARDUINO_TASMOTA -DESP32_2M -DESP32C2",
+      "f_cpu": "120000000L",
+      "f_flash": "60000000L",
+      "flash_mode": "qio",
+      "mcu": "esp32c2",
+      "variant": "esp32c2",
+      "partitions": "partitions/esp32_partition_app1245k_fs64k.csv"
+    },
+    "connectivity": [
+      "wifi",
+      "bluetooth"
+    ],
+    "debug": {
+      "openocd_target": "esp32c2.cfg"
+    },
+    "frameworks": [
+      "arduino",
+      "espidf"
+    ],
+    "name": "Espressif Generic ESP32-C2 = 2M Flash, Tasmota 1245kB Code/OTA, 64k FS",
+    "upload": {
+      "arduino": {
+        "flash_extra_images": [
+          [
+            "0x10000",
+            "tasmota32c2-safeboot.bin"
+          ]
+        ]
+      },
+      "flash_size": "2MB",
+      "maximum_ram_size": 278528,
+      "maximum_size": 2097152,
+      "require_upload_port": true,
+      "speed": 460800
+    },
+    "download": {
+      "speed": 230400
+    },
+    "url": "https://docs.espressif.com/projects/espressif-esp-dev-kits/en/latest/esp8684/esp8684-devkitm-1/user_guide.html",
+    "vendor": "Espressif"
+  }

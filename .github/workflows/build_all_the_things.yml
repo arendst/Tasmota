@@ -1,0 +1,162 @@
+name: Tasmota CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: development
+    paths:
+      - '**.c'
+      - '**.cpp'
+      - '**.be'
+      - '**.h'
+      - '**.hpp'
+      - '**.ino'
+      - '**.json'
+      - '**.properties'
+      - 'pio-tools/*.py'
+      - '**.ini'
+      - '.github/workflows/build_all_the_things.yml'
+
+jobs:
+  os-check-win:
+    runs-on: windows-2019
+    if: github.repository == 'arendst/Tasmota'
+    strategy:
+      fail-fast: true
+      matrix:
+        variant:
+          - tasmota32-webcam
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install dependencies
+        run: |
+          pip install wheel
+          pip install -U platformio
+      - name: Run PlatformIO
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
+        run: platformio run -e ${{ matrix.variant }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.variant }}
+          path: ./build_output
+
+  os-check-mac:
+    runs-on: macos-14
+    if: github.repository == 'arendst/Tasmota'
+    strategy:
+      fail-fast: true
+      matrix:
+        variant:
+          - tasmota32solo1-safeboot
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install dependencies
+        run: |
+          pip install wheel
+          pip install -U platformio
+      - name: Run PlatformIO
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
+        run: platformio run -e ${{ matrix.variant }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.variant }}
+          path: ./build_output
+
+  base-images:
+    runs-on: ubuntu-latest
+    if: github.repository == 'arendst/Tasmota'
+    strategy:
+      fail-fast: true
+      matrix:
+        variant:
+          - tasmota
+          - tasmota-4M
+          - tasmota-display
+          - tasmota-ir
+          - tasmota-knx
+          - tasmota-lite
+          - tasmota-minimal
+          - tasmota-sensors
+          - tasmota-zbbridge
+          - tasmota32
+          - tasmota32solo1
+          - tasmota32c2
+          - tasmota32c3
+          - tasmota32c6
+          - tasmota32s2
+          - tasmota32s2cdc
+          - tasmota32s3
+          - tasmota32-zbbrdgpro
+          - tasmota-zigbee
+          - tasmota32-bluetooth
+          - tasmota32-nspanel
+          - tasmota32-display
+          - tasmota32-ir
+          - tasmota32-lvgl
+          - tasmota32-safeboot
+          - tasmota32s2-safeboot
+          - tasmota32s2cdc-safeboot
+          - tasmota32s3-safeboot
+          - tasmota32c2-safeboot
+          - tasmota32c3-safeboot
+          - tasmota32c6-safeboot
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install dependencies
+        run: |
+          pip install wheel
+          pip install -U platformio
+          cp ./platformio_override_sample.ini ./platformio_override.ini
+      - name: Run PlatformIO
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
+        run: platformio run -e ${{ matrix.variant }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.variant }}
+          path: ./build_output
+
+  language-images:
+    runs-on: ubuntu-latest
+    if: github.repository == 'arendst/Tasmota'
+    strategy:
+      fail-fast: true
+      matrix:
+        variant: [ tasmota ]
+        language: [ AD, AF, BG, BR, CN, CZ, DE, ES, FR, FY, GR, HE, HU, IT, KO, LT, NL, PL, PT, RO, RU, SE, SK, TR, TW, UK, VN ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install dependencies
+        run: |
+          pip install wheel
+          pip install -U platformio
+      - name: Run PlatformIO
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: '1'
+        run: platformio run -e ${{ matrix.variant }}-${{ matrix.language }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.variant }}-${{ matrix.language }}
+          path: ./build_output

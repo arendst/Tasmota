@@ -1,8 +1,0 @@
-{
-    "name": "M5 Stack Core2 library",
-    "keywords": "esp32, sensor, mqtt, m2m, iot",
-    "description": "M5 Stack Core2 library",
-    "version": "1.0",
-    "frameworks": "arduino",
-    "platforms": "espressif32"
-}

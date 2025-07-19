@@ -1,0 +1,57 @@
+.config
+*.o
+*.i
+*.s
+*.orig
+*.pyc
+
+# gtags
+GTAGS
+GRTAGS
+GPATH
+
+# emacs
+.dir-locals.el
+
+# emacs temp file suffixes
+*~
+.#*
+\#*#
+
+# eclipse setting
+.settings
+
+# MacOS directory files
+.DS_Store
+
+# Example project files
+examples/**/sdkconfig
+examples/**/sdkconfig.old
+examples/**/build
+
+# Test app files
+test_app/build
+test_app/sdkconfig
+test_app/sdkconfig.old
+
+# Doc build artifacts
+docs/_build/
+docs/doxygen-warning-log.txt
+docs/sphinx-warning-log.txt
+docs/sphinx-warning-log-sanitized.txt
+docs/xml/
+docs/xml_in/
+docs/man/
+docs/doxygen_sqlite3.db
+
+TEST_LOGS
+
+
+# gcov coverage reports
+*.gcda
+*.gcno
+coverage.info
+coverage_report/
+
+# VS Code Settings
+.vscode/

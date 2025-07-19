@@ -56,33 +56,58 @@
 
 /* Protocol description format
  *
- * {Pulse length, Preamble, Sync bit, "0" bit, "1" bit, Inverted Signal, Guard time}
+ * {
+ *    Pulse length,
  *
- * Pulse length: pulse duration Te in microseconds,
- *               example 350
- * Preamble: Alternating high and low levels
- *           {20, 1} means 20 alternations of 1 Te duration
- *      _   _   _   _   _   _   _   _   _   _
- *     | |_| |_| |_| |_| |_| |_| |_| |_| |_| |_
- * Sync bit: Header and clock
- *           {1, 31} means 1 pulse long Te high and 31 low
+ *    PreambleFactor,
+ *    Preamble {high,low},
+ *
+ *    HeaderFactor,
+ *    Header {high,low},
+ *
+ *    "0" bit {high,low},
+ *    "1" bit {high,low},
+ *
+ *    Inverted Signal,
+ *    Guard time
+ * }
+ *
+ * Pulse length: pulse duration (Te) in microseconds,
+ *               for example 350
+ * PreambleFactor: Number of high and low states to send
+ *                 (One pulse = 2 states, in orther words, number of pulses is
+ *                 ceil(PreambleFactor/2).)
+ * Preamble: Pulse shape which defines a preamble bit.
+ *           Sent ceil(PreambleFactor/2) times.
+ *           For example, {1, 2} with factor 3 would send
+ *      _    _
+ *     | |__| |__         (each horizontal bar has a duration of Te,
+ *                         vertical bars are ignored)
+ * HeaderFactor: Number of times to send the header pulse.
+ * Header: Pulse shape which defines a header (or "sync"/"clock") pulse.
+ *           {1, 31} means one pulse of duration 1 Te high and 31 Te low
  *      _
  *     | |_______________________________ (don't count the vertical bars)
+ *
  * "0" bit: pulse shape defining a data bit, which is a logical "0"
  *          {1, 3} means 1 pulse duration Te high level and 3 low
  *      _
  *     | |___
+ *
  * "1" bit: pulse shape that defines the data bit, which is a logical "1"
  *          {3, 1} means 3 pulses with a duration of Te high level and 1 low
  *      ___
  *     |   |_
  *
- * (note: to form the state bit Z (Tri-State bit), these two codes are combined)
+ * (note: to form the state bit Z (Tri-State bit), two codes are combined)
+ *
  * Inverted Signal: Signal inversion - if true the signal is inverted
  *                  replacing high to low in a transmitted / received packet
- * Guard time: Safety time, followed by the next preamble of the next packet
- *             for example 39 pulses of low duration Te
+ * Guard time: Separation time between two retries. It will be followed by the
+ *             next preamble of the next packet. In number of Te.
+ *             e.g. 39 pulses of duration Te low level
  */
+
 #if defined(ESP8266) || defined(ESP32)
 static const VAR_ISR_ATTR RCSwitch::Protocol proto[] = {
 #else
@@ -124,8 +149,11 @@ static const RCSwitch::Protocol PROGMEM proto[] = {
   { 400,  0, { 0, 0 }, 1, {   1,  1 }, { 1,  2 }, { 2, 1 }, false, 43 },  // 31 (Mertik Maxitrol G6R-H4T1)
   { 365,  0, { 0, 0 }, 1, {  18,  1 }, { 3,  1 }, { 1, 3 }, true,   0 },  // 32 (1ByOne Doorbell) from @Fatbeard https://github.com/sui77/rc-switch/pull/277
   { 340,  0, { 0, 0 }, 1, {  14,  4 }, { 1,  2 }, { 2, 1 }, false,  0 },  // 33 (Dooya Control DC2708L)
-  { 120,  0, { 0, 0 }, 1, {   1, 28 }, { 1,  3 }, { 3, 1 }, false,  0 },   // 34 DIGOO SD10
-  { 20,   0, { 0, 0 }, 1, { 239, 78 }, {20, 35 }, {35, 20}, false, 10000 } // 35 Dooya 5-Channel blinds remote DC1603
+  { 120,  0, { 0, 0 }, 1, {   1, 28 }, { 1,  3 }, { 3, 1 }, false,  0 },  // 34 DIGOO SD10 - so as to use this protocol RCSWITCH_SEPARATION_LIMIT must be set to 2600
+  { 20,   0, { 0, 0 }, 1, { 239, 78 }, {20, 35 }, {35, 20}, false, 10000},// 35 Dooya 5-Channel blinds remote DC1603
+  { 250,  0, { 0, 0 }, 1, {  18,  6 }, { 1,  3 }, { 3, 1 }, false,  0 },  // 36 Dooya remote DC2700AC for Dooya DT82TV curtains motor
+  { 200,  0, { 0, 0 }, 0, {   0,  0 }, { 1,  3 }, { 3, 1 }, false, 20 },	// 37 DEWENWILS Power Strip
+  { 500,  0, { 0, 0 }, 1, {   7,  1 }, { 2,  1 }, { 4, 1 }, true,   0 },  // 38 temperature and humidity sensor, various brands, nexus protocol, 36 bits + start impulse  
 };
 
 enum {
@@ -139,11 +167,7 @@ volatile unsigned int RCSwitch::nReceivedBitlength = 0;
 volatile unsigned int RCSwitch::nReceivedDelay = 0;
 volatile unsigned int RCSwitch::nReceivedProtocol = 0;
 int RCSwitch::nReceiveTolerance = 60;
-const unsigned int RCSwitch::nSeparationLimit = 2600;    // 4300 default
-// separationLimit: minimum microseconds between received codes, closer codes are ignored.
-// according to discussion on issue #14 it might be more suitable to set the separation
-// limit to the same time as the 'low' part of the sync signal for the current protocol.
-// should be set to the minimum value of pulselength * the sync signal
+unsigned int RCSwitch::nSeparationLimit = RCSWITCH_SEPARATION_LIMIT;
 unsigned int RCSwitch::timings[RCSWITCH_MAX_CHANGES];
 unsigned int RCSwitch::buftimings[4];
 #endif
@@ -215,8 +239,50 @@ void RCSwitch::setReceiveTolerance(int nPercent) {
   RCSwitch::nReceiveTolerance = nPercent;
 }
 
-void RCSwitch::setReceiveProtocolMask(unsigned long long mask) {
+bool RCSwitch::setReceiveProtocolMask(unsigned long long mask) {
   RCSwitch::nReceiveProtocolMask = mask;
+  return updateSeparationLimit();
+}
+
+bool RCSwitch::updateSeparationLimit()
+{
+  unsigned int longestPulseTime = std::numeric_limits<unsigned int>::max();
+  unsigned int shortestPulseTime = 0;
+
+  unsigned long long thisMask = 1;
+  for(unsigned int i = 0; i < numProto; i++) {
+    if (RCSwitch::nReceiveProtocolMask & thisMask) {
+      const unsigned int headerShortPulseCount = std::min(proto[i].Header.high, proto[i].Header.low);
+      const unsigned int headerLongPulseCount = std::max(proto[i].Header.high, proto[i].Header.low);
+
+      // This must be the longest pulse-length of this protocol. nSeparationLimit must of this length or shorter.
+      // This pulse will be used to detect the beginning of a transmission.
+      const unsigned int headerLongPulseTime = proto[i].pulseLength * headerLongPulseCount;
+
+      // nSeparationLimit must be longer than any of the following pulses to avoid detecting a new transmission in the middle of a frame.
+      unsigned int longestDataPulseCount = headerShortPulseCount;
+      longestDataPulseCount = std::max<unsigned int>(longestDataPulseCount, proto[i].zero.high);
+      longestDataPulseCount = std::max<unsigned int>(longestDataPulseCount, proto[i].zero.low);
+      longestDataPulseCount = std::max<unsigned int>(longestDataPulseCount, proto[i].one.high);
+      longestDataPulseCount = std::max<unsigned int>(longestDataPulseCount, proto[i].one.low);
+
+      const unsigned int longestDataPulseTime = proto[i].pulseLength * longestDataPulseCount;
+
+      longestPulseTime = std::min(longestPulseTime, headerLongPulseTime);
+      shortestPulseTime = std::max(shortestPulseTime, longestDataPulseTime);
+    }
+    thisMask <<= 1;
+  }
+
+  if (longestPulseTime <= shortestPulseTime) {
+    // incompatible protocols enabled, fall back to default value
+    nSeparationLimit = RCSWITCH_SEPARATION_LIMIT;
+    return false;
+  }
+
+  const unsigned int timeDiff = longestPulseTime - shortestPulseTime;
+  nSeparationLimit = longestPulseTime - (timeDiff / 2);
+  return true;
 }
 #endif
 
@@ -735,7 +801,7 @@ bool RECEIVE_ATTR RCSwitch::receiveProtocol(const int p, unsigned int changeCoun
     unsigned int sdelay = 0;
     if (syncLengthInPulses > 0) {
       sdelay = RCSwitch::timings[FirstTiming] / syncLengthInPulses;
-    } else {
+    } else if (pro.PreambleFactor > 0) {
       sdelay = RCSwitch::timings[FirstTiming-2] / pro.PreambleFactor;
     }
     const unsigned int delay = sdelay;

@@ -1,4 +1,0 @@
-(fp_lib_table
-  (lib (name epaper-breakout)(type KiCad)(uri ${KIPRJMOD}/epaper-breakout.pretty)(options "")(descr ""))
-  (lib (name esp32-wrover)(type KiCad)(uri ${KIPRJMOD}/esp32-wrover-kicad/esp32-wrover.pretty)(options "")(descr ""))
-)

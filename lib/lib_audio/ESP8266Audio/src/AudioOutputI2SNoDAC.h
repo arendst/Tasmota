@@ -18,8 +18,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AUDIOOUTPUTI2SNODAC_H
-#define _AUDIOOUTPUTI2SNODAC_H
+#pragma once
 
 #include "AudioOutputI2S.h"
 
@@ -28,6 +27,7 @@ class AudioOutputI2SNoDAC : public AudioOutputI2S
   public:
     AudioOutputI2SNoDAC(int port = 0);
     virtual ~AudioOutputI2SNoDAC() override;
+    virtual bool begin() override { return AudioOutputI2S::begin(false); }
     virtual bool ConsumeSample(int16_t sample[2]) override;
     
     bool SetOversampling(int os);
@@ -41,6 +41,3 @@ class AudioOutputI2SNoDAC : public AudioOutputI2S
     fixed24p8_t lastSamp; // Last sample value
     fixed24p8_t cumErr;   // Running cumulative error since time began
 };
-
-#endif
-

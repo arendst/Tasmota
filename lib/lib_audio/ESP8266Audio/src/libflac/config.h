@@ -2,10 +2,10 @@
 
 #ifdef DEBUG
   #undef NDEBUG
-#endif
-
-#ifndef NDEBUG
-  #define NDEBUG
+#else
+  #ifndef NDEBUG
+    #define NDEBUG
+  #endif
 #endif
 
 /* config.h.  Generated from config.h.in by configure.  */

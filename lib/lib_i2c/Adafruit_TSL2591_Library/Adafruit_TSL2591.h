@@ -1,6 +1,6 @@
 /**************************************************************************/
-/*! 
-    @file     Adafruit_TSL2591.h
+/*!
+    @file     Adafruit_TSL2591.h 
     @author   KT0WN (adafruit.com)
 
     This is a library for the Adafruit TSL2591 breakout board

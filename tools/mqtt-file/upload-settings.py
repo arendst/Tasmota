@@ -44,7 +44,7 @@ broker_port = 1883                     # MQTT broker port
 
 mypassword = ""                        # Tasmota MQTT password
 mytopic = "demo"                       # Tasmota MQTT topic
-myfile = "Config_demo_9.4.0.4.dmp"     # Tasmota Settings file name
+myfile = "Config_demo_9.5.0.2.dmp"     # Tasmota Settings file name
 myfiletype = 2                         # Tasmota Settings file type
 
 # **** End of User Configuration Section
@@ -86,7 +86,12 @@ def on_message(client, userdata, msg):
       if "Started" in rcv_code:
          return
       if "Error" in rcv_code:
-         print("Error: "+rcv_code)
+         if "1" in rcv_code: print("Error: Wrong password")
+         else:
+            if "2" in rcv_code: print("Error: Bad chunk size")
+            else:
+               if "3" in rcv_code: print("Error: Invalid file type")
+               else: print("Error: "+rcv_code)
          Err_flag = True
          return
    if "Command" in root:
@@ -103,13 +108,16 @@ def on_message(client, userdata, msg):
    Ack_flag = False
 
 def wait_for_ack():
-   timeout = 100
+   global Err_flag
+
+   timeout = 500
    while Ack_flag and Err_flag == False and timeout > 0:
       time.sleep(0.01)
       timeout = timeout -1
 
    if 0 == timeout:
       print("Error: Timeout")
+      Err_flag = True
 
    return Ack_flag
 
@@ -148,7 +156,7 @@ while Run_flag:
             # Message length used by Tasmota (FileTransferHeaderSize)
             client.publish(mypublish, "{\"Id\":"+str("%3d"%file_id)+",\"Data\":\""+base64_data+"\"}")
          else:
-            client.publish(mypublish+"201", chunk)
+            client.publish(mypublish+"301", chunk)
          Ack_flag = True
 
       else:

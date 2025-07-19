@@ -1,7 +1,7 @@
 {
     "name": "ESP8266SAM",
-    "description": "Speech synthesizer SAM ported to ESP8266/ESP32",
-    "keywords": "ESP8266, ESP32, Speecn Synthesis, SAM",
+    "description": "Speech synthesizer SAM ported to ESP8266/ESP32/RP2040",
+    "keywords": "ESP8266, ESP32, RP2040, Speecn Synthesis, SAM",
     "authors": [
         {
             "name": "Earle F. Philhower, III",
@@ -14,10 +14,9 @@
         "type": "git",
          "url": "https://github.com/earlephilhower/ESP8266SAM"
     },
-    "version": "1.0",
+    "version": "1.0.1",
     "homepage": "https://github.com/earlephilhower/ESP8266SAM",
     "frameworks": "Arduino",
-    "platforms": ["espressif8266", "espressif32"],
     "examples": [
         "examples/*/*.ino"
     ]

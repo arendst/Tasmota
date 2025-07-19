@@ -1,0 +1,18 @@
+{
+    "name": "TasmotaLED",
+    "version": "0.1",
+    "keywords": [
+      "ws2816", "sk6812", "leds"
+    ],
+    "description": "Lightweight implementation for adressable leds.",
+    "repository":
+    {
+        "type": "git",
+        "url": "https://github.com/arendst/Tasmota/lib/lib_basic/TasmotaLED"
+    },
+    "frameworks": "arduino",
+    "libCompatMode": "strict",
+    "platforms": [
+      "espressif32"
+    ]
+}

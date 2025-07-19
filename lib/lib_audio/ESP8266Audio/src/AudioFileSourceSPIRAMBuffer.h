@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _AUDIOFILESOURCESPIRAMBUFFER_H
-#define _AUDIOFILESOURCESPIRAMBUFFER_H
+#if defined(ESP32) || defined(ESP8266)
+#pragma once
 
 #include "AudioFileSource.h"
 #include <SPI.h>

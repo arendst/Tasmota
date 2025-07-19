@@ -47,7 +47,7 @@ bool Tsl2561::begin() {
 
 bool Tsl2561::readByte( register_t reg, uint8_t &val ) {
   _wire.beginTransmission(_addr);
-  _wire.write(reg | CONTROL_CMD);
+  _wire.write(reg | static_cast<uint8_t>(CONTROL_CMD));
   if( (_status = static_cast<status_t>(_wire.endTransmission(false))) == ERR_OK ) {
     if( _wire.requestFrom(_addr, 1) == 1 ) {
       val = static_cast<uint8_t>(_wire.read());
@@ -61,7 +61,7 @@ bool Tsl2561::readByte( register_t reg, uint8_t &val ) {
 
 bool Tsl2561::readWord( register_t reg, uint16_t &val ) {
   _wire.beginTransmission(_addr);
-  _wire.write(reg | CONTROL_CMD);
+  _wire.write(reg |  static_cast<uint8_t>(CONTROL_CMD));
   if( (_status = static_cast<status_t>(_wire.endTransmission(false))) == ERR_OK ) {
     if( _wire.requestFrom(_addr, 2) == 2 ) {
       val = static_cast<uint16_t>(_wire.read()) & 0xff;
@@ -76,7 +76,7 @@ bool Tsl2561::readWord( register_t reg, uint16_t &val ) {
 
 bool Tsl2561::writeByte( register_t reg, uint8_t val ) {
   _wire.beginTransmission(_addr);
-  _wire.write(reg | CONTROL_CMD);
+  _wire.write(reg |  static_cast<uint8_t>(CONTROL_CMD));
   _wire.write(val);
   return (_status = static_cast<status_t>(_wire.endTransmission())) == ERR_OK;
 }
@@ -118,7 +118,7 @@ bool Tsl2561::off() {
 }
 
 bool Tsl2561::setSensitivity( bool gain, exposure_t exposure ) {
-  return writeByte(REG_TIMING, (gain ? GAIN_ON : GAIN_OFF) | exposure);
+  return writeByte(REG_TIMING, (gain ? GAIN_ON : GAIN_OFF) |  static_cast<uint8_t>(exposure));
 }
 
 bool Tsl2561::getSensitivity( bool &gain, exposure_t &exposure )

@@ -21,6 +21,6 @@
 #define __TASMOTA_INCLUDE__
 
 #include "../tasmota/my_user_config.h"
-#include "../tasmota/tasmota_configurations.h"
+#include "../tasmota/include/tasmota_configurations.h"
 
 #endif // __TASMOTA_INCLUDE__

@@ -35,6 +35,7 @@ class AudioGenerator
     virtual bool loop() { return false; };
     virtual bool stop() { return false; };
     virtual bool isRunning() { return false;};
+    virtual void desync () { };
 
   public:
     virtual bool RegisterMetadataCB(AudioStatus::metadataCBFn fn, void *data) { return cb.RegisterMetadataCB(fn, data); }

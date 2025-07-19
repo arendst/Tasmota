@@ -1251,8 +1251,8 @@ static inline void
 br_ssl_engine_set_versions(br_ssl_engine_context *cc,
 	unsigned version_min, unsigned version_max)
 {
-	cc->version_min = version_min;
-	cc->version_max = version_max;
+	cc->version_min = (uint16_t)version_min;
+	cc->version_max = (uint16_t)version_max;
 }
 
 /**
@@ -1325,7 +1325,7 @@ br_ssl_engine_set_protocol_names(br_ssl_engine_context *ctx,
 	const char **names, size_t num)
 {
 	ctx->protocol_names = names;
-	ctx->protocol_names_num = num;
+	ctx->protocol_names_num = (uint16_t)num;
 }
 
 /**

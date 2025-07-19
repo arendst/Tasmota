@@ -1,0 +1,39 @@
+language: generic
+env:
+  global:
+    - IDE_VERSION=1.8.2
+  matrix:
+    - BOARD="arduino:avr:uno"
+    - BOARD="arduino:avr:micro"
+    - BOARD="arduino:avr:mega:cpu=atmega2560"
+    - BOARD="arduino:samd:arduino_zero_edbg"
+    - BOARD="arduino:samd:mkr1000"
+    - BOARD="arduino:samd:mkrzero"
+    - BOARD="arduino:samd:mkrwan1300"
+    - BOARD="arduino:samd:mkrwan1310"
+before_install:
+  - wget http://downloads.arduino.cc/arduino-$IDE_VERSION-linux64.tar.xz
+  - tar xf arduino-$IDE_VERSION-linux64.tar.xz
+  - mv arduino-$IDE_VERSION $HOME/arduino-ide
+  - export PATH=$PATH:$HOME/arduino-ide
+  - if [[ "$BOARD" =~ "arduino:samd:" ]]; then
+      arduino --install-boards arduino:samd &> /dev/null;
+    fi
+  - buildExampleSketch() { arduino --verbose-build --verify --board $BOARD $PWD/examples/$1/$1.ino; }
+install:
+  - mkdir -p $HOME/Arduino/libraries
+  - ln -s $PWD $HOME/Arduino/libraries/LoRa
+script:
+  - buildExampleSketch LoRaDumpRegisters
+  - buildExampleSketch LoRaDuplex
+  - if [[ "$BOARD" != "arduino:samd:mkrwan1300" ]]; then
+      buildExampleSketch LoRaDuplexCallback;
+    fi
+  - buildExampleSketch LoRaReceiver
+  - if [[ "$BOARD" != "arduino:samd:mkrwan1300" ]]; then
+      buildExampleSketch LoRaReceiverCallback;
+    fi
+  - buildExampleSketch LoRaSender
+  - buildExampleSketch LoRaSenderNonBlocking
+  - buildExampleSketch LoRaSetSpread
+  - buildExampleSketch LoRaSetSyncWord

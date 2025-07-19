@@ -1,0 +1,53 @@
+#######################################
+# Syntax Coloring Map
+#######################################
+# https://spencer.bliven.us/index.php/2012/01/18/arduino-ide-keywords/
+# KEYWORD1 Classes, datatypes, and C++ keywords
+# KEYWORD2 Methods and functions
+# KEYWORD3 setup and loop functions, as well as the Serial keywords
+# LITERAL1 Constants
+# LITERAL2 Built-in variables (unused by default)
+
+
+#######################################
+# Classes, datatypes (KEYWORD1)
+#######################################
+ENS210	KEYWORD1
+ens210	KEYWORD1
+sciosense_ens210	KEYWORD1
+Sciosense_ens210	KEYWORD1
+ScioSense_ens210	KEYWORD1
+sciosense_ENS210	KEYWORD1
+Sciosense_ENS210	KEYWORD1
+ScioSense_ENS210	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+begin						KEYWORD2
+setSingleMode				KEYWORD2
+available					KEYWORD2
+getPartID					KEYWORD2
+getHighUID					KEYWORD2
+measure						KEYWORD2
+getTempKelvin				KEYWORD2
+getTempCelsius				KEYWORD2
+getTempFahrenheit			KEYWORD2
+getHumidityPercent			KEYWORD2
+getAbsoluteHumidityPercent	KEYWORD2
+getStatusT					KEYWORD2
+getDataT					KEYWORD2
+getStatusH					KEYWORD2
+getDataH					KEYWORD2
+status_str					KEYWORD2
+correction_set				KEYWORD2
+correction_get				KEYWORD2
+
+######################################
+# Constants (LITERAL1)
+#######################################
+
+ENS210_STATUS_I2CERROR		LITERAL1
+ENS210_STATUS_CRCERROR		LITERAL1
+ENS210_STATUS_INVALID		LITERAL1
+ENS210_STATUS_OK			LITERAL1

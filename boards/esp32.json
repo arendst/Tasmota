@@ -1,0 +1,46 @@
+{
+    "build": {
+      "core": "esp32",
+      "extra_flags": "-DARDUINO_TASMOTA -DBOARD_HAS_PSRAM -DESP32_4M",
+      "f_cpu": "160000000L",
+      "f_flash": "40000000L",
+      "flash_mode": "dio",
+      "mcu": "esp32",
+      "variant": "esp32",
+      "partitions": "partitions/esp32_partition_app2880k_fs320k.csv"
+    },
+    "connectivity": [
+      "wifi",
+      "bluetooth",
+      "ethernet",
+      "can"
+    ],
+    "debug": {
+      "openocd_target": "esp32.cfg"
+    },
+    "frameworks": [
+      "arduino",
+      "espidf"
+    ],
+    "name": "Espressif Generic ESP32 >= 4M Flash PSRAM, Tasmota 2880k Code/OTA, 320k FS",
+    "upload": {
+      "arduino": {
+        "flash_extra_images": [
+          [
+            "0x10000",
+            "tasmota32-safeboot.bin"
+          ]
+        ]
+      },
+      "flash_size": "4MB",
+      "maximum_ram_size": 327680,
+      "maximum_size": 4194304,
+      "require_upload_port": true,
+      "speed": 460800
+    },
+    "download": {
+      "speed": 230400
+    },
+    "url": "https://en.wikipedia.org/wiki/ESP32",
+    "vendor": "Espressif"
+  }

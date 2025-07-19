@@ -1,0 +1,8 @@
+{
+    "name": "esp-nimble-cpp",
+    "keywords": "esp32, bluetooth",
+    "description": "Bluetooth low energy (BLE) library for esp32 based on NimBLE",
+    "version": "1.4.1",
+    "frameworks": "arduino",
+    "platforms": "espressif32"
+}

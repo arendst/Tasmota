@@ -2,7 +2,7 @@
 #include <string.h>
 #include "reciter.h"
 #include "ReciterTabs.h"
-#include "samdebug.h"
+#include "esp8266sam_debug.h"
 #include "SamData.h"
 
 unsigned char A, X, Y;
@@ -527,7 +527,7 @@ pos37455:
 	Y = mem64;
 	mem61 = mem60;
 
-	if (sam_debug)
+	if (DEBUG_ESP8266SAM_LIB)
 		PrintRule(mem62);
 
 pos37461:

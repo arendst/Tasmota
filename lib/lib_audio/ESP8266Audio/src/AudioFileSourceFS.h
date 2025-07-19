@@ -29,8 +29,8 @@
 class AudioFileSourceFS : public AudioFileSource
 {
   public:
-    AudioFileSourceFS(FS &fs) { filesystem = &fs; }
-    AudioFileSourceFS(FS &fs, const char *filename);
+    AudioFileSourceFS(fs::FS &fs) { filesystem = &fs; }
+    AudioFileSourceFS(fs::FS &fs, const char *filename);
     virtual ~AudioFileSourceFS() override;
     
     virtual bool open(const char *filename) override;
@@ -42,8 +42,8 @@ class AudioFileSourceFS : public AudioFileSource
     virtual uint32_t getPos() override { if (!f) return 0; else return f.position(); };
 
   private:
-    FS *filesystem;
-    File f;
+    fs::FS *filesystem;
+    fs::File f;
 };
 
 
