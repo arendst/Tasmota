@@ -161,6 +161,16 @@ char *Get_esc_char(char *cp, char *esc_chr);
 
 #endif // USE_UFILESYS
 
+#ifdef USE_SCRIPT_MDNS
+#ifdef ESP32
+  #include <ESPmDNS.h>
+#else
+  #include <ESP8266mDNS.h>
+  MDNSResponder::hMDNSService hMDNSService = 0; // handle of the http service in the MDNS responder
+  MDNSResponder::hMDNSService hMDNSService2 = 0; // handle of the shelly service in the MDNS responder
+#endif
+#endif
+
 #include <unishox.h>
 #define SCRIPT_COMPRESS compressor.unishox_compress
 #define SCRIPT_DECOMPRESS compressor.unishox_decompress
@@ -592,6 +602,13 @@ typedef struct {
 } ScriptOneWire;
 #endif // USE_SCRIPT_ONEWIRE
 
+typedef struct {
+    char shelly_name[26];
+    char shelly_gen[2];
+    char shelly_fw_id[32];
+    char type[16];
+} SCRIPT_MDNS;
+
 #define SFS_MAX 4
 // global memory
 typedef struct {
@@ -641,10 +658,17 @@ typedef struct {
     UDP_FLAGS udp_flags;
     IPAddress last_udp_ip;
     WiFiUDP Script_PortUdp;
+    WiFiUDP *Script_PortUdp_1;
+    uint16_t udp1_port;
     IPAddress script_udp_remote_ip;
     char *packet_buffer;
     uint16_t pb_size = SCRIPT_UDP_BUFFER_SIZE;
 #endif // USE_SCRIPT_GLOBVARS
+
+#ifdef USE_SCRIPT_MDNS
+    SCRIPT_MDNS mdns = {"","2","20241011-114455/1.4.4-g6d2a586",""};
+#endif // USE_SCRIPT_MDNS
+
     char web_mode;
     char *glob_script = 0;
     char *fast_script = 0;
@@ -859,13 +883,68 @@ void script_sort_array(TS_FLOAT *array, uint16_t size);
 uint32_t Touch_Status(int32_t sel);
 int32_t play_wave(char *path);
 
+#ifdef USE_SCRIPT_MDNS
+int32_t script_mdns(char *name, char *mac, char *xtype) {
+
+  strcpy(glob_script_mem.mdns.type, xtype);
+  char shelly_mac[13];
+  strcpy(glob_script_mem.mdns.shelly_name, name);
+  if (*mac == '-') {
+    uint8_t mac[6];
+    WiFi.macAddress(mac);
+    sprintf(shelly_mac, "%02x%02x%02x%02x%02x%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    strcat(glob_script_mem.mdns.shelly_name, shelly_mac);
+  } else {
+    strcat(glob_script_mem.mdns.shelly_name, mac);
+  }
+
+  if (!MDNS.begin(glob_script_mem.mdns.shelly_name)) {
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP "SCR: Error setting up MDNS responder!"));
+  }
+
+#ifdef ESP32
+    MDNS.addService("http", "tcp", 80);
+    MDNS.addService((const char*)glob_script_mem.mdns.type, "tcp", 80);
+    mdns_txt_item_t serviceTxtData[4] = {
+      { "fw_id", glob_script_mem.mdns.shelly_fw_id },
+      { "arch", "esp8266" },
+      { "id", glob_script_mem.mdns.shelly_name },
+      { "gen", glob_script_mem.mdns.shelly_gen }
+    };
+    mdns_service_instance_name_set("_http", "_tcp", glob_script_mem.mdns.shelly_name);
+    mdns_service_txt_set("_http", "_tcp", serviceTxtData, 4);
+    mdns_service_instance_name_set("_shelly", "_tcp", glob_script_mem.mdns.shelly_name);
+    mdns_service_txt_set("_shelly", "_tcp", serviceTxtData, 4);
+#else
+    hMDNSService = MDNS.addService(0, "http", "tcp", 80);
+    hMDNSService2 = MDNS.addService(0, glob_script_mem.mdns.type, "tcp", 80);
+    if (hMDNSService) {
+      MDNS.setServiceName(hMDNSService, glob_script_mem.mdns.shelly_name);
+      MDNS.addServiceTxt(hMDNSService, "fw_id", glob_script_mem.mdns.shelly_fw_id);
+      MDNS.addServiceTxt(hMDNSService, "arch", "esp8266");
+      MDNS.addServiceTxt(hMDNSService, "id", glob_script_mem.mdns.shelly_name);
+      MDNS.addServiceTxt(hMDNSService, "gen", glob_script_mem.mdns.shelly_gen);
+    }
+    if (hMDNSService2) {
+      MDNS.setServiceName(hMDNSService2, glob_script_mem.mdns.shelly_name);
+      MDNS.addServiceTxt(hMDNSService2, "fw_id", glob_script_mem.mdns.shelly_fw_id);
+      MDNS.addServiceTxt(hMDNSService2, "arch", "esp8266");
+      MDNS.addServiceTxt(hMDNSService2, "id", glob_script_mem.mdns.shelly_name);
+      MDNS.addServiceTxt(hMDNSService2, "gen", glob_script_mem.mdns.shelly_gen);
+    }
+#endif
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP "SCR: mDNS responder started: %s"),glob_script_mem.mdns.shelly_name);
+  return 0;
+}
+#endif // USE_SCRIPT_MDNS
+
 
 #if defined(USE_BINPLUGINS) && !defined(USE_SML_M)
 SML_TABLE *get_sml_table(void) {
   if (Plugin_Query(53, 0, 0)) {
     return (SML_TABLE*)Plugin_Query(53, 1, 0);
-  } else {
-    return 0;
+    } else {
+      return 0;
   }
 }
 #endif
@@ -1572,8 +1651,6 @@ void Script_Init_UDP() {
 
   glob_script_mem.packet_buffer = (char*)malloc(glob_script_mem.pb_size);
 
-
-  //if (glob_script_mem.Script_PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), SCRIPT_UDP_PORT)) {
 #ifdef ESP8266
   if (glob_script_mem.Script_PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), SCRIPT_UDP_PORT)) {
 #else
@@ -5263,6 +5340,19 @@ _Pragma("GCC warning \"'EXT 1 wakeup' not supported using gpio mode\"")
           if (sp) strlcpy(sp, NetworkUniqueId().c_str(), glob_script_mem.max_ssize);
           goto strexit;
         }
+
+#ifdef USE_SCRIPT_MDNS
+        if (!strncmp_XP(vname, XPSTR("mdns("), 5)) {
+          char name[SCRIPT_MAX_SBSIZE];
+          lp = GetStringArgument(lp + 5, OPER_EQU, name, 0);
+          char mac[SCRIPT_MAX_SBSIZE];
+          lp = GetStringArgument(lp, OPER_EQU, mac, 0);
+          char type[SCRIPT_MAX_SBSIZE];
+          lp = GetStringArgument(lp, OPER_EQU, type, 0);
+          fvar = script_mdns(name, mac, type);
+          goto nfuncexit;
+        }
+  #endif // USE_SCRIPT_MDNS
         break;
 
       case 'n':
@@ -6612,13 +6702,91 @@ void tmod_directModeOutput(uint32_t pin);
 
 #ifdef USE_SCRIPT_GLOBVARS
         if (!strncmp_XP(lp, XPSTR("udp("), 4)) {
-          char url[SCRIPT_MAX_SBSIZE];
-          lp = GetStringArgument(lp + 4, OPER_EQU, url, 0);
-          TS_FLOAT port;
-          lp = GetNumericArgument(lp, OPER_EQU, &port, gv);
-          char payload[SCRIPT_MAX_SBSIZE];
-          lp = GetStringArgument(lp, OPER_EQU, payload, 0);
-          fvar = udp_call(url, port, payload);
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
+          uint8_t sel = fvar;
+          if (sel == 0) {
+            // open port
+            TS_FLOAT port;
+            lp = GetNumericArgument(lp, OPER_EQU, &port, gv);
+            if (!glob_script_mem.Script_PortUdp_1) {
+              glob_script_mem.Script_PortUdp_1 = new WiFiUDP;
+            }
+            glob_script_mem.udp1_port = port;
+            fvar = glob_script_mem.Script_PortUdp_1->begin(port);
+          }
+          if (sel == 1 && glob_script_mem.Script_PortUdp_1) {
+            // rec from port
+            if (TasmotaGlobal.global_state.wifi_down) {
+              if (sp) *sp = 0;
+            } else {
+              int32_t packetSize = glob_script_mem.Script_PortUdp_1->parsePacket();
+              if (packetSize > 0) {
+                char packet[SCRIPT_MAX_SBSIZE];
+                int32_t len = glob_script_mem.Script_PortUdp_1->read(packet, SCRIPT_MAX_SBSIZE);
+                packet[len] = 0;
+                if (sp) strlcpy(sp, packet, glob_script_mem.max_ssize);
+              } else {
+                if (sp) *sp = 0;
+              }
+            }
+            lp++;
+            len = 0;
+            goto strexit;
+          }
+          if (sel == 2 && glob_script_mem.Script_PortUdp_1) {
+            // send to recive port up to 3 text buffers
+            char payload[SCRIPT_MAX_SBSIZE * 3];
+            char part1[SCRIPT_MAX_SBSIZE];
+            lp = GetStringArgument(lp, OPER_EQU, part1, 0);
+            SCRIPT_SKIP_SPACES
+            strcpy(payload, part1);
+            if (*lp != ')') {
+              // get next part
+              lp = GetStringArgument(lp, OPER_EQU, part1, 0);
+              SCRIPT_SKIP_SPACES
+              strcat(payload, part1);
+              if (*lp != ')') {
+                // get next part
+                lp = GetStringArgument(lp, OPER_EQU, part1, 0);
+                SCRIPT_SKIP_SPACES
+                strcat(payload, part1);
+              }
+            }
+            glob_script_mem.Script_PortUdp_1->beginPacket(glob_script_mem.Script_PortUdp_1->remoteIP(), glob_script_mem.Script_PortUdp_1->remotePort());
+            glob_script_mem.Script_PortUdp_1->write((unsigned char*)payload, strlen(payload));
+            glob_script_mem.Script_PortUdp_1->endPacket();
+            glob_script_mem.Script_PortUdp_1->flush();
+          }
+          if (sel == 3 && glob_script_mem.Script_PortUdp_1) {
+            char url[SCRIPT_MAX_SBSIZE];
+            lp = GetStringArgument(lp, OPER_EQU, url, 0);
+            char payload[SCRIPT_MAX_SBSIZE];
+            lp = GetStringArgument(lp, OPER_EQU, payload, 0);
+            IPAddress adr;
+            adr.fromString(url);
+            glob_script_mem.Script_PortUdp_1->beginPacket(adr, glob_script_mem.udp1_port);
+            glob_script_mem.Script_PortUdp_1->write((unsigned char*)payload, strlen(payload));
+            glob_script_mem.Script_PortUdp_1->endPacket();
+          }
+          if (sel == 4) {
+            if (sp) strlcpy(sp, glob_script_mem.Script_PortUdp_1->remoteIP().toString().c_str(), glob_script_mem.max_ssize);
+            lp++;
+            len = 0;
+            goto strexit;
+          }
+          if (sel == 5) {
+            fvar = glob_script_mem.Script_PortUdp_1->remotePort();
+          }
+          if (sel == 6) {
+            // generic send to url and port
+            char url[SCRIPT_MAX_SBSIZE];
+            lp = GetStringArgument(lp, OPER_EQU, url, 0);
+            TS_FLOAT port;
+            lp = GetNumericArgument(lp, OPER_EQU, &port, gv);
+            char payload[SCRIPT_MAX_SBSIZE];
+            lp = GetStringArgument(lp, OPER_EQU, payload, 0);
+            fvar = udp_call(url, port, payload);
+          }
           goto nfuncexit;
         }
 #endif
@@ -6939,6 +7107,46 @@ void tmod_directModeOutput(uint32_t pin);
           uint32_t lval = *(uint32_t*)&fvar;
           *(uint32_t*)ivar = lval;
           goto nfuncexit;
+        }
+
+        if (!strncmp_XP(lp, XPSTR("won("), 4)) {
+          lp = GetNumericArgument(lp + 4, OPER_EQU, &fvar, gv);
+          char url[SCRIPT_MAX_SBSIZE];
+          lp = GetStringArgument(lp, OPER_EQU, url, 0);
+          bool glob = false;
+          if (url[strlen(url) - 1] == '*') {
+            glob = true;
+          }
+          switch ((uint8_t)fvar) {
+            case 1:
+              if (glob) {
+                Webserver->on(UriGlob(url), HTTP_GET, ScriptWebOn1);
+              } else {
+                Webserver->on(url, HTTP_GET, ScriptWebOn1);
+              }
+              break;
+            case 2:
+               if (glob) {
+                Webserver->on(UriGlob(url), HTTP_GET, ScriptWebOn2);
+              } else {
+                Webserver->on(url, HTTP_GET, ScriptWebOn2);
+              }
+              break;
+            case 3:
+                if (glob) {
+                Webserver->on(UriGlob(url), HTTP_GET, ScriptWebOn3);
+              } else {
+                Webserver->on(url, HTTP_GET, ScriptWebOn3);
+              }
+              break;
+          }           
+          goto nfuncexit;
+        }
+        if (!strncmp_XP(lp, XPSTR("warg"), 4)) {
+          if (sp) strlcpy(sp, Webserver->uri().c_str(), glob_script_mem.max_ssize);
+          lp++;
+          len = 0;
+          goto strexit;
         }
         break;
 
@@ -11134,6 +11342,23 @@ String ScriptUnsubscribe(const char * data, int data_len)
 #endif //     SUPPORT_MQTT_EVENT
 
 
+void ScriptWebOn1(void) {
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  Run_Scripter1(">on1", 4, 0);
+}
+
+void ScriptWebOn2(void) {
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  Run_Scripter1(">on2", 4, 0);
+}
+
+void ScriptWebOn3(void) {
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  Run_Scripter1(">on3", 4, 0);
+}
+
+
+
 #if defined(ESP32) && defined(USE_UFILESYS) && defined(USE_SCRIPT_ALT_DOWNLOAD)
 
 #ifndef SCRIPT_DLPORT
@@ -14388,6 +14613,7 @@ bool Xdrv10(uint32_t function) {
 #if defined(USE_UFILESYS) && defined(USE_SCRIPT_ALT_DOWNLOAD)
       WebServer82Init();
 #endif // USE_SCRIPT_ALT_DOWNLOAD
+      Run_Scripter1(">ah", 3, 0);
       break;
 #endif // USE_WEBSERVER
 
@@ -14448,6 +14674,11 @@ bool Xdrv10(uint32_t function) {
 #endif //USE_SCRIPT_GLOBVARS
 #ifdef USE_SCRIPT_ALT_DOWNLOAD
       WebServer82Loop();
+#endif
+#ifdef USE_SCRIPT_MDNS
+#ifndef ESP32
+      MDNS.update();
+#endif
 #endif
       break;
 
