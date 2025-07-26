@@ -1,4 +1,4 @@
-#ifdef USE_THINGSBOARD_HTTP
+#ifdef USE_THINGSBOARD_HTTP_LIGHTBULB
 
 #define XDRV_100 100
 
@@ -57,18 +57,18 @@ bool Xdrv100(uint32_t function)
 
         break;
     }
-#ifdef USE_WEBSERVER
-    // case FUNC_WEB_ADD_BUTTON:
-    // {
-    //     WSContentSend_P()
-    //     break;
-    // }
-    // case FUNC_WEB_ADD_HANDLER:
-    // {
-    //     WebServer.on("/thingsboard", HandleTB);
-    //     break;
-    // }
-#endif // USE_WEBSERVER
+        // #ifdef USE_WEBSERVER
+        //     // case FUNC_WEB_ADD_BUTTON:
+        //     // {
+        //     //     WSContentSend_P()
+        //     //     break;
+        //     // }
+        //     // case FUNC_WEB_ADD_HANDLER:
+        //     // {
+        //     //     WebServer.on("/thingsboard", HandleTB);
+        //     //     break;
+        //     // }
+        // #endif // USE_WEBSERVER
     }
     return false;
 }
@@ -152,8 +152,34 @@ void FetchThingsBoardRPC()
         JsonParserObject root = parser.getRootObject();
         String method = root[PSTR("method")].getStr();
 
-        if (method == "setCT")
+        if (method == "setCT") // params: 153-500
             LightSetColorTemp(root[PSTR("params")].getUInt());
+        else if (method == "setHue")
+        { // params: 0-359
+            uint16_t hue = root[PSTR("params")].getUInt();
+            char cmd[24];
+            snprintf(cmd, sizeof(cmd), "HsbColor1 %u", hue);
+            ExecuteCommand(cmd, SRC_WEBGUI); // updates light & telemetry
+        }
+        else if (method == "setSaturation")
+        { // params: 0-100
+            uint8_t sat = root[PSTR("params")].getUInt();
+            char cmd[24];
+            snprintf(cmd, sizeof(cmd), "HsbColor2 %u", sat);
+            ExecuteCommand(cmd, SRC_WEBGUI);
+        }
+        else if (method == "setDimmer")
+        { // params: 0-100
+            uint8_t dimm = root[PSTR("params")].getUInt();
+            LightSetDimmer(dimm);
+        }
+        else if (method == "setPower")
+        { // params: true/false or 1/0
+            bool on = root[PSTR("params")].getBool();
+            char cmd[12];
+            snprintf(cmd, sizeof(cmd), "Power %u", on);
+            ExecuteCommand(cmd, SRC_WEBGUI);
+        }
     }
     // else if (httpCode != HTTP_CODE_NO_CONTENT)
     // {
