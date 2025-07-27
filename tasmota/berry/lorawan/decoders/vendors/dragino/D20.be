@@ -19,7 +19,7 @@ class LwDecoDrgD20
     var rssi = RSSI
     var tempC1 = 1000
     var tempC2 = 1000
-	var tempC3 = 1000
+    var tempC3 = 1000
 	
     if global.DrgD20Nodes.find(Node)
       last_seen         = global.DrgD20Nodes.item(Node)[2]
@@ -27,36 +27,38 @@ class LwDecoDrgD20
       battery           = global.DrgD20Nodes.item(Node)[4]
       rssi              = global.DrgD20Nodes.item(Node)[5]
       tempC1            = global.DrgD20Nodes.item(Node)[6]
-	    tempC2            = global.DrgD20Nodes.item(Node)[7]										
+      tempC2            = global.DrgD20Nodes.item(Node)[7]										
       tempC3            = global.DrgD20Nodes.item(Node)[8]
     end
 
     ## SENSOR DATA ##
     if 2 == FPort && Bytes.size() == 11
-      last_seen = tasmota.rtc('local')
-	  
-	  var mode=(Bytes[6] & 0x7C)>>2
+      last_seen = tasmota.rtc('local')  
+      var mode=(Bytes[6] & 0x7C)>>2
+
       if 3==mode
-	    battery = (Bytes[0]<<8 | Bytes[1])/1000	
+	battery = (Bytes[0]<<8 | Bytes[1])/1000
+	data.insert("BattV", battery)
+        battery_last_seen = tasmota.rtc('local')
 		
-		    # 0x07FF = 2047 =  no temp sensor 
+        # 0x07FF = 2047 =  no temp sensor 
 		
         tempC1 = Bytes[2] << 8 | Bytes[3]
         if Bytes[2]>0x7F tempC1-=0x10000 end
-		    tempC1 /= 10.0
+	  tempC1 /= 10.0
         data.insert("TempC1", tempC1)
 
         tempC2 = Bytes[7] << 8 | Bytes[8]
         if Bytes[7]>0x7F tempC2-=0x10000 end
-		    tempC2 /= 10.0
+	  tempC2 /= 10.0
         data.insert("TempC2", tempC2)
 
         tempC3 = Bytes[9] << 8 | Bytes[10]
         if Bytes[9]>0x7F tempC3-=0x10000 end
-		    tempC3 /= 10.0
+	  tempC3 /= 10.0
         data.insert("TempC3", tempC3)
 		
-	  end
+      end
 	  
       valid_values = true
 
