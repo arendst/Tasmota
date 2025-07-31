@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - OpenTherm library from v0.9.0 to v1.1.5 (#23704)
 
 ### Fixed
+- NeoPool fix reset to default settings
 
 ### Removed
 
