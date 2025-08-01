@@ -92,8 +92,7 @@ import animation
 
 # Palette Showcase - Demonstrates all palette features
 # This example shows the full range of palette capabilities
-var strip = global.Leds(60)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(60)
 # Example 1: Fire palette with hex colors
 var fire_gradient_ = bytes("00000000" "20330000" "40660000" "60CC0000" "80FF3300" "A0FF6600" "C0FF9900" "E0FFCC00" "FFFFFF00")
 # Example 2: Ocean palette with named colors

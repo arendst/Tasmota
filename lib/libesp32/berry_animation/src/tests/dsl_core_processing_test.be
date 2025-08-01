@@ -157,9 +157,9 @@ def test_strip_configuration()
   print("Testing strip configuration...")
   
   var strip_tests = [
-    ["strip length 30", "var strip = global.Leds(30)"],
-    ["strip length 60", "var strip = global.Leds(60)"],
-    ["strip length 120", "var strip = global.Leds(120)"]
+    ["strip length 30", "var engine = animation.init_strip(30)"],
+    ["strip length 60", "var engine = animation.init_strip(60)"],
+    ["strip length 120", "var engine = animation.init_strip(120)"]
   ]
   
   for test : strip_tests
@@ -169,7 +169,6 @@ def test_strip_configuration()
     var berry_code = animation.compile_dsl(dsl_input)
     assert(berry_code != nil, "Should compile strip config: " + dsl_input)
     assert(string.find(berry_code, expected_output) >= 0, "Should contain: " + expected_output)
-    assert(string.find(berry_code, "var engine = animation.create_engine(strip)") >= 0, "Should create engine")
   end
   
   print("✓ Strip configuration test passed")

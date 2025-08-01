@@ -73,8 +73,7 @@ import animation
 
 # Meteor Shower - Multiple meteors with trails
 # Fast moving bright objects with fading trails
-var strip = global.Leds(60)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(60)
 # Dark space background
 var space_bg_ = 0xFF000011
 var background_ = animation.solid(animation.global('space_bg_', 'space_bg'))

@@ -50,8 +50,7 @@ import animation
 
 # Comet Chase - Moving comet with trailing tail
 # Bright head with fading tail
-var strip = global.Leds(60)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(60)
 # Dark blue background
 var space_blue_ = 0xFF000066  # Note: opaque 0xFF alpha channel is implicitly added
 var background_ = animation.solid(animation.global('space_blue_', 'space_blue'))

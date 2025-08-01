@@ -51,8 +51,7 @@ import animation
 
 # Palette Demo - Shows how to use custom palettes in DSL
 # This demonstrates the new palette syntax
-var strip = global.Leds(30)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(30)
 # Define a fire palette
 var fire_colors_ = bytes("00000000" "40800000" "80FF0000" "C0FF8000" "FFFFFF00")
 # Define an ocean palette

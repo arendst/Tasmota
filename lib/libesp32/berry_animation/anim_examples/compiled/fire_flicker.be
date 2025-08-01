@@ -43,8 +43,7 @@ import animation
 
 # Fire Flicker - Realistic fire simulation
 # Warm colors with random flickering intensity
-var strip = global.Leds(60)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(60)
 # Define fire palette from black to yellow
 var fire_colors_ = bytes("00000000" "40800000" "80FF0000" "C0FF4500" "FFFFFF00")
 # Create base fire animation with palette

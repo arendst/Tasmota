@@ -62,8 +62,7 @@ import animation
 
 # Ocean Waves - Blue-green wave simulation
 # Flowing water colors with wave motion
-var strip = global.Leds(60)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(60)
 # Define ocean color palette
 var ocean_colors_ = bytes("00000080" "400040C0" "800080FF" "C040C0FF" "FF80FFFF")
 # Base ocean animation with slow color cycling

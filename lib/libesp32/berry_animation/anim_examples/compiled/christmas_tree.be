@@ -71,8 +71,7 @@ import animation
 
 # Christmas Tree - Festive holiday colors
 # Green base with colorful ornaments and twinkling
-var strip = global.Leds(60)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(60)
 # Green tree base
 var tree_green_ = 0xFF006600
 var tree_base_ = animation.solid(animation.global('tree_green_', 'tree_green'))

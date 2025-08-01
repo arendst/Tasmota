@@ -74,8 +74,7 @@ import animation
 
 # Lava Lamp - Slow flowing warm colors
 # Organic movement like a lava lamp
-var strip = global.Leds(60)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(60)
 # Define lava colors (warm oranges and reds)
 var lava_colors_ = bytes("00330000" "40660000" "80CC3300" "C0FF6600" "FFFFAA00")
 # Base lava animation - very slow color changes

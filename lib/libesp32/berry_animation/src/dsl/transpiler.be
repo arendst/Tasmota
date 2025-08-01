@@ -252,8 +252,7 @@ class SimpleDSLTranspiler
     if prop == "length"
       var length = self.expect_number()
       var inline_comment = self.collect_inline_comment()
-      self.add(f"var strip = global.Leds({length}){inline_comment}")
-      self.add(f"var engine = animation.create_engine(strip)")
+      self.add(f"var engine = animation.init_strip({length}){inline_comment}")
       self.strip_initialized = true  # Mark that strip was initialized
     end
   end
@@ -1112,8 +1111,7 @@ class SimpleDSLTranspiler
     end
     
     self.add("# Auto-generated strip initialization (using Tasmota configuration)")
-    self.add("var strip = global.Leds()  # Get strip length from Tasmota configuration")
-    self.add("var engine = animation.create_engine(strip)")
+    self.add("var engine = animation.init_strip()")
     self.add("")
     self.strip_initialized = true
   end

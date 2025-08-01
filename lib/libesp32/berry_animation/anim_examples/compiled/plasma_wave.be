@@ -68,8 +68,7 @@ import animation
 
 # Plasma Wave - Smooth flowing plasma colors
 # Continuous color waves like plasma display
-var strip = global.Leds(60)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(60)
 # Define plasma color palette with smooth transitions
 var plasma_colors_ = bytes("00FF0080" "33FF8000" "66FFFF00" "9980FF00" "CC00FF80" "FF0080FF")
 # Base plasma animation with medium speed

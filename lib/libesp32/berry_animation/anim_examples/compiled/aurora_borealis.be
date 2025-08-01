@@ -50,8 +50,7 @@ import animation
 #strip length 60
 # Define aurora color palette
 # Auto-generated strip initialization (using Tasmota configuration)
-var strip = global.Leds()  # Get strip length from Tasmota configuration
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip()
 
 var aurora_colors_ = bytes("00000022" "40004400" "8000AA44" "C044AA88" "FF88FFAA")
 # Secondary purple palette

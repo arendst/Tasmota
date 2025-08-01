@@ -40,8 +40,7 @@ import animation
 
 # Twinkle Stars - Random sparkling white stars
 # White sparkles on dark blue background
-var strip = global.Leds(60)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(60)
 # Dark blue background
 var night_sky_ = 0xFF000033
 var background_ = animation.solid(animation.global('night_sky_', 'night_sky'))

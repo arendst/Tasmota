@@ -59,8 +59,7 @@ import animation
 
 # Lightning Storm - Random lightning flashes
 # Dark stormy background with bright lightning
-var strip = global.Leds(60)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(60)
 # Dark stormy background with subtle purple/blue
 var storm_colors_ = bytes("00000011" "80110022" "FF220033")
 var storm_bg_ = animation.rich_palette_animation(animation.global('storm_colors_', 'storm_colors'), 12000, animation.global('smooth_', 'smooth'), 100)

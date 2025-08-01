@@ -63,8 +63,7 @@ import animation
 
 # Disco Strobe - Fast colorful strobing
 # Rapid color changes with strobe effects
-var strip = global.Leds(60)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(60)
 # Define disco color palette
 var disco_colors_ = bytes("00FF0000" "2AFF8000" "55FFFF00" "8000FF00" "AA0000FF" "D58000FF" "FFFF00FF")
 # Fast color cycling base

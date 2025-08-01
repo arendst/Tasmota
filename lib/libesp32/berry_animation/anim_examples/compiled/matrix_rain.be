@@ -68,8 +68,7 @@ import animation
 
 # Matrix Rain - Digital rain effect
 # Green cascading code like The Matrix
-var strip = global.Leds(60)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(60)
 # Dark background
 var matrix_bg_ = 0xFF000000
 var background_ = animation.solid(animation.global('matrix_bg_', 'matrix_bg'))

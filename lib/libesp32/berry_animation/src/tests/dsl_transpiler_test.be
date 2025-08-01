@@ -25,7 +25,7 @@ def test_basic_transpilation()
   var berry_code = animation.compile_dsl(dsl_source)
   
   assert(berry_code != nil, "Should generate Berry code")
-  assert(string.find(berry_code, "var strip = global.Leds(60)") >= 0, "Should generate strip configuration")
+  assert(string.find(berry_code, "var engine = animation.init_strip(60)") >= 0, "Should generate strip configuration")
   assert(string.find(berry_code, "var custom_red_ = 0xFFFF0000") >= 0, "Should generate color definition")
   assert(string.find(berry_code, "def sequence_demo()") >= 0, "Should generate sequence function")
   assert(string.find(berry_code, "sequence_demo()") >= 0, "Should generate sequence call")
@@ -97,9 +97,9 @@ def test_strip_configuration()
   print("Testing strip configuration...")
   
   var config_tests = [
-    ["strip length 30", "var strip = global.Leds(30)"],
-    ["strip length 60", "var strip = global.Leds(60)"],
-    ["strip length 120", "var strip = global.Leds(120)"]
+    ["strip length 30", "var engine = animation.init_strip(30)"],
+    ["strip length 60", "var engine = animation.init_strip(60)"],
+    ["strip length 120", "var engine = animation.init_strip(120)"]
   ]
   
   for test : config_tests
@@ -377,7 +377,7 @@ def test_complex_dsl()
     print("Complex DSL compiled successfully!")
     
     # Check for key components
-    assert(string.find(berry_code, "var strip = global.Leds(60)") >= 0, "Should have strip config")
+    assert(string.find(berry_code, "var engine = animation.init_strip(60)") >= 0, "Should have strip config")
     assert(string.find(berry_code, "var custom_red_ = 0xFFFF0000") >= 0, "Should have color definitions")
     assert(string.find(berry_code, "def sequence_demo()") >= 0, "Should have sequence definition")
     assert(string.find(berry_code, "sequence_demo()") >= 0, "Should have execution")

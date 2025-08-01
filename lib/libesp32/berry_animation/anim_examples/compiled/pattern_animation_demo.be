@@ -68,8 +68,7 @@ import animation
 
 # Unified Pattern-Animation Demo
 # This DSL example demonstrates the new unified architecture where Animation extends Pattern
-var strip = global.Leds(30)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(30)
 # UNIFIED ARCHITECTURE: solid() returns Animation (which IS a Pattern)
 # No more artificial distinction between patterns and animations
 var solid_red_ = animation.solid(0xFFFF0000)  # Animation: solid red (infinite duration)

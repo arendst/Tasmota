@@ -76,8 +76,7 @@ import animation
 
 # Neon Glow - Electric neon tube effect
 # Bright saturated colors with flickering
-var strip = global.Leds(60)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(60)
 # Define neon colors
 var neon_colors_ = bytes("00FF0080" "5500FF80" "AA8000FF" "FFFF8000")
 # Main neon glow with color cycling

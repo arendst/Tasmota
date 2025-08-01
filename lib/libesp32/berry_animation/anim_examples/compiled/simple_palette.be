@@ -34,8 +34,7 @@ import animation
 
 # Simple Palette Example
 # Demonstrates basic palette usage in the DSL
-var strip = global.Leds(20)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(20)
 # Define a simple rainbow palette
 var rainbow_ = bytes("00FF0000" "40FFA500" "80FFFF00" "C0008000" "FF0000FF")
 # Create an animation using the palette

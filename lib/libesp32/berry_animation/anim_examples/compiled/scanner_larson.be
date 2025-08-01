@@ -47,8 +47,7 @@ import animation
 
 # Scanner (Larson) - Knight Rider style scanner
 # Red dot bouncing back and forth
-var strip = global.Leds(60)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(60)
 # Dark background
 var scanner_bg_ = 0xFF110000
 var background_ = animation.solid(animation.global('scanner_bg_', 'scanner_bg'))

@@ -24,8 +24,7 @@ import animation
 
 # Rainbow Cycle - Classic WLED effect
 # Smooth rainbow colors cycling across the strip
-var strip = global.Leds(60)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(60)
 # Create smooth rainbow cycle animation
 var rainbow_cycle_ = animation.color_cycle_animation([0xFFFF0000, 0xFFFF8000, 0xFFFFFF00, 0xFF00FF00, 0xFF0000FF, 0xFF8000FF, 0xFFFF00FF], 5000)
 # Start the animation

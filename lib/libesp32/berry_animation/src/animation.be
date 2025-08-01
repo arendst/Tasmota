@@ -1,24 +1,41 @@
-# this is the entry point for animation Framework
-# it imports all other modules and register in the "animation" object
+# Berry Animation Framework - Main Entry Point
+# 
+# This is the central module that imports and registers all animation framework components
+# into a unified "animation" object for use in Tasmota LED strip control.
 #
-# launch with "./berry -s -g -m lib/libesp32/berry_animation"
+# The framework provides:
+# - Unified Pattern-Animation architecture (Animation extends Pattern)
+# - DSL (Domain Specific Language) for declarative animation definitions  
+# - Value providers for dynamic parameters (oscillators, color providers)
+# - Event system for interactive animations
+# - Optimized performance for embedded ESP32 systems
+#
+# Usage in Tasmota:
+#   import animation
+#   var engine = animation.create_engine(strip)
+#   var pulse_anim = animation.pulse(animation.solid(0xFF0000), 2000, 50, 255)
+#   engine.add_animation(pulse_anim).start()
+#
+# Launch standalone with: "./berry -s -g -m lib/libesp32/berry_animation"
 
-# import in global scope all that is needed
+# Import Tasmota integration if available (for embedded use)
 import global
 if !global.contains("tasmota")
   import tasmota
 end
 
+# Create the main animation module and make it globally accessible
+# The @solidify directive enables compilation to C++ for performance
 #@ solidify:animation,weak
 var animation = module("animation")
 global.animation = animation
 
-# Version information
+# Version information for compatibility tracking
 # Format: 0xAABBCCDD (AA=major, BB=minor, CC=patch, DD=build)
 animation.VERSION = 0x00010000
 
-# Convert version number to string format "major.minor.patch"
- def animation_version_string(version_num)
+# Convert version number to human-readable string format "major.minor.patch"
+def animation_version_string(version_num)
   if version_num == nil version_num = animation.VERSION end
   var major = (version_num >> 24) & 0xFF
   var minor = (version_num >> 16) & 0xFF
@@ -29,32 +46,44 @@ animation.version_string = animation_version_string
 
 import sys
 
-# Takes a map returned by "import XXX" and add each key/value to module `animation`
+# Helper function to register all exports from imported modules into the main animation object
+# This creates a flat namespace where all animation functions are accessible as animation.function_name()
+# Takes a map returned by "import XXX" and adds each key/value to module `animation`
 def register_to_animation(m)
   for k: m.keys()
     animation.(k) = m[k]
   end
 end
 
-# Import the core classes
+# Import core framework components
+# These provide the fundamental architecture for the animation system
+
+# Frame buffer management for LED strip pixel data
 import "core/frame_buffer" as frame_buffer
 register_to_animation(frame_buffer)
+
+# Base Pattern class - foundation for all visual elements
 import "core/pattern_base" as pattern_base
 register_to_animation(pattern_base)
+
+# Base Animation class - extends Pattern with temporal behavior
 import "core/animation_base" as animation_base
 register_to_animation(animation_base)
+
+# Sequence manager for complex animation choreography
 import "core/sequence_manager" as sequence_manager
 register_to_animation(sequence_manager)
 
-# Import the unified animation engine
+# Unified animation engine - central controller for all animations
+# Provides priority-based layering, automatic blending, and performance optimization
 import "core/animation_engine" as animation_engine
 register_to_animation(animation_engine)
 
-# Import event system
+# Event system for interactive animations (button presses, timers, etc.)
 import "core/event_handler" as event_handler
 register_to_animation(event_handler)
 
-# Import user functions registry
+# User-defined function registry for DSL extensibility
 import "core/user_functions" as user_functions
 register_to_animation(user_functions)
 
@@ -139,19 +168,36 @@ register_to_animation(dsl_transpiler)
 import "dsl/runtime.be" as dsl_runtime
 register_to_animation(dsl_runtime)
 
+# Function called to initialize the `Leds` and `engine` objects
+#
+# Parameters:
+#   l - list of arguments (vararg)
+#
+# Returns:
+#   An instance of `AnimationEngine` managing the strip
+def animation_init_strip(*l)
+  import global
+  import animation
+  var strip = call(global.Leds, l)    # call global.Leds() with vararg
+  var engine = animation.create_engine(strip)
+  return engine
+end
+animation.init_strip = animation_init_strip
+
 # Global variable resolver with error checking
-# First checks animation module, then global scope
+# Used by DSL transpiler to resolve variable names during compilation
+# First checks animation module, then global scope for user-defined variables
 def animation_global(name, module_name)
   import global
   import introspect
   import animation
   
-  # First try to find in animation module
+  # First try to find in animation module (built-in functions/classes)
   if (module_name != nil) && introspect.contains(animation, module_name)
     return animation.(module_name)
   end
   
-  # Then try global scope
+  # Then try global scope (user-defined variables)
   if global.contains(name)
     return global.(name)
   else
@@ -160,19 +206,30 @@ def animation_global(name, module_name)
 end
 animation.global = animation_global
 
+# This function is called from C++ code to set up the Berry animation environment
+# It creates a mutable 'animation' module on top of the immutable solidified
+#
+# Parameters:
+#   m - Solidified immutable module
+#
+# Returns:
+#   A new animation module instance that is return for `import animation`
 def animation_init(m)
-  var animation_new = module("animation")   # create new non-solidified module
-  animation_new._ntv = m                    # keep the native module
-  animation_new.event_manager = m.EventManager()  # create monad for event manager
+  var animation_new = module("animation")         # Create new non-solidified module for runtime use
+  animation_new._ntv = m                          # Keep reference to native solidified module
+  animation_new.event_manager = m.EventManager()  # Create event manager instance for handling triggers
   
-  # create a member function that looks in current module then in solidified
+  # Create dynamic member lookup function for extensibility
+  # This allows the module to find members in both Berry and solidified components
+  #
+  # Note: if the module already contained the member, then `member()` would not be called in the first place
   animation_new.member = def (k)
     import animation
     import introspect
     if introspect.contains(animation._ntv, k)
-      return animation._ntv.(k)
+      return animation._ntv.(k)              # Return native solidified member if available
     else
-      return module("undefined")
+      return module("undefined")             # Return undefined module for missing members
     end
   end
 

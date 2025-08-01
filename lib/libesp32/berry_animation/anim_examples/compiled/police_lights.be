@@ -48,8 +48,7 @@ import animation
 
 # Police Lights - Red and blue alternating flashes
 # Emergency vehicle style lighting
-var strip = global.Leds(60)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(60)
 # Define zones for left and right halves
 var half_length_ = 30
 # Left side red flashing

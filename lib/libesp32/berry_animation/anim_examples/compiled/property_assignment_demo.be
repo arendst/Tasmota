@@ -54,8 +54,7 @@ import animation
 
 # Property Assignment Demo
 # Shows how to set animation properties after creation
-var strip = global.Leds(60)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(60)
 # Define colors
 var red_custom_ = 0xFFFF0000
 var blue_custom_ = 0xFF0000FF

@@ -52,8 +52,7 @@ import animation
 
 # Breathing Colors - Slow color breathing effect
 # Gentle pulsing through different colors
-var strip = global.Leds(60)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(60)
 # Define breathing colors
 var breathe_red_ = 0xFFFF0000
 var breathe_green_ = 0xFF00FF00

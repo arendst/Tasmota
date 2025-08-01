@@ -57,8 +57,7 @@ import animation
 
 # Candy Cane - Red and white stripes
 # Classic Christmas candy cane pattern
-var strip = global.Leds(60)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(60)
 # Define stripe colors
 var candy_red_ = 0xFFFF0000
 var candy_white_ = 0xFFFFFFFF

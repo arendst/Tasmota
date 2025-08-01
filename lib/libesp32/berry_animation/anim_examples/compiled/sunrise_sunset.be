@@ -68,8 +68,7 @@ import animation
 
 # Sunrise Sunset - Warm color transition
 # Gradual transition from night to day colors
-var strip = global.Leds(60)
-var engine = animation.create_engine(strip)
+var engine = animation.init_strip(60)
 # Define time-of-day color palette
 var daylight_colors_ = bytes("00000011" "20001133" "40FF4400" "60FFAA00" "80FFFF88" "A0FFAA44" "C0FF6600" "E0AA2200" "FF220011")
 # Main daylight cycle - very slow transition
