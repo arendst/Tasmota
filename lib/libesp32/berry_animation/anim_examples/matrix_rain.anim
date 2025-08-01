@@ -1,0 +1,57 @@
+# Matrix Rain - Digital rain effect
+# Green cascading code like The Matrix
+
+strip length 60
+
+# Dark background
+color matrix_bg = #000000
+animation background = solid(matrix_bg)
+
+# Define matrix green palette
+palette matrix_greens = [
+  (0, #000000),    # Black
+  (64, #003300),   # Dark green
+  (128, #006600),  # Medium green
+  (192, #00AA00),  # Bright green
+  (255, #00FF00)   # Neon green
+]
+
+# Create multiple cascading streams
+pattern stream1_pattern = rich_palette_color_provider(matrix_greens, 2s, linear, 255)
+animation stream1 = comet_animation(
+  stream1_pattern, # color source
+  15,             # long tail
+  1.5s            # speed
+)
+stream1.priority = 10
+
+pattern stream2_pattern = rich_palette_color_provider(matrix_greens, 1.8s, linear, 200)
+animation stream2 = comet_animation(
+  stream2_pattern, # color source
+  12,             # medium tail
+  2.2s            # different speed
+)
+stream2.priority = 8
+
+pattern stream3_pattern = rich_palette_color_provider(matrix_greens, 2.5s, linear, 180)
+animation stream3 = comet_animation(
+  stream3_pattern, # color source
+  10,             # shorter tail
+  1.8s            # another speed
+)
+stream3.priority = 6
+
+# Add random bright flashes (like code highlights)
+animation code_flash = twinkle_animation(
+  #00FFAA,  # Bright cyan-green
+  3,        # density (few flashes)
+  150ms     # twinkle speed (quick flash)
+)
+code_flash.priority = 20
+
+# Start all animations
+run background
+run stream1
+run stream2
+run stream3
+run code_flash

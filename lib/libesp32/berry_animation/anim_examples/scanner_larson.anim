@@ -1,0 +1,36 @@
+# Scanner (Larson) - Knight Rider style scanner
+# Red dot bouncing back and forth
+
+strip length 60
+
+# Dark background
+color scanner_bg = #110000
+animation background = solid(scanner_bg)
+
+# Main scanner pulse that bounces
+animation scanner = pulse_position_animation(
+  #FF0000,  # Bright red
+  2,        # initial position
+  3,        # pulse width
+  2         # fade region
+)
+scanner.priority = 10
+
+# Bouncing position from left to right and back
+scanner.pos = triangle(2, 57, 2s)
+
+# Add trailing glow effect
+animation scanner_trail = pulse_position_animation(
+  #660000,  # Dim red trail
+  2,        # initial position
+  6,        # wider trail
+  4         # more fade
+)
+scanner_trail.priority = 5
+scanner_trail.pos = triangle(2, 57, 2s)
+scanner_trail.opacity = 128  # Half brightness
+
+# Start all animations
+run background
+run scanner_trail
+run scanner

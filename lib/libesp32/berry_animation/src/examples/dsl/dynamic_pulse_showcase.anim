@@ -1,0 +1,120 @@
+# Dynamic pulse DSL demonstration
+# Showcases: Multiple pulse types, dynamic parameters, interactive control
+# Demonstrates: Advanced DSL features, value providers, event system
+#
+# This creates multiple pulse types with different characteristics
+
+strip length 50
+
+# Define background with subtle color cycling
+palette bg_colors = [
+  (0, #001122),
+  (85, #002211), 
+  (170, #112200),
+  (255, #220011)
+]
+
+animation cycling_bg = filled(
+  color_cycle(bg_colors, 30s, smooth),
+  loop
+)
+
+# Create multiple pulse types with different characteristics
+
+# 1. Breathing pulse with oscillating size
+animation breathe_pulse = pulse_position(
+  #FF0000,  # red
+  5,        # initial size
+  1,        # slew
+  10,       # priority
+  loop
+)
+breathe_pulse.pulse_size = smooth(2, 12, 4s)
+breathe_pulse.pos = linear(5, 35, 8s)  # 50-15 = 35
+
+# 2. Strobe pulse with square wave intensity  
+animation strobe_pulse = pulse_position(
+  #00FF00,  # green
+  3,        # size
+  1,        # slew
+  15,       # priority
+  loop
+)
+strobe_pulse.opacity = square(50, 255, 800ms, 25)  # Fast strobe, 25% duty
+strobe_pulse.pos = linear(40, 5, 6s)  # Opposite direction
+
+# 3. Rainbow pulse with dynamic color
+animation rainbow_pulse = pulse_position(
+  #0000FF,  # blue (will be overridden)
+  8,        # size
+  2,        # slew
+  20,       # priority
+  loop
+)
+rainbow_pulse.color = rainbow(5s, smooth, 255)
+rainbow_pulse.pos = smooth(12, 37, 10s)  # 50/4 to 3*50/4
+
+# 4. Fire pulse with fire palette
+palette fire_colors = [
+  (0, #000000),    # Black
+  (64, #800000),   # Dark red
+  (128, #FF0000),  # Red
+  (192, #FF8000),  # Orange
+  (255, #FFFF00)   # Yellow
+]
+
+animation fire_pulse = pulse_position(
+  #FF4400,  # orange (will be overridden)
+  6,        # size
+  3,        # slew
+  25,       # priority
+  loop
+)
+fire_pulse.color = rich_palette(fire_colors, 3s, linear, 255)
+fire_pulse.pulse_size = linear(4, 15, 7s)
+fire_pulse.pos = 25  # Fixed center position
+
+# Interactive event handlers for dynamic control
+on speed_up:
+  # Double all animation speeds by halving durations
+  breathe_pulse.pulse_size.duration = 2s
+  breathe_pulse.pos.duration = 4s
+  strobe_pulse.opacity.duration = 400ms
+  strobe_pulse.pos.duration = 3s
+  rainbow_pulse.color.duration = 2.5s
+  rainbow_pulse.pos.duration = 5s
+  fire_pulse.color.duration = 1.5s
+  fire_pulse.pulse_size.duration = 3.5s
+
+on slow_down:
+  # Halve all animation speeds by doubling durations
+  breathe_pulse.pulse_size.duration = 8s
+  breathe_pulse.pos.duration = 16s
+  strobe_pulse.opacity.duration = 1600ms
+  strobe_pulse.pos.duration = 12s
+  rainbow_pulse.color.duration = 10s
+  rainbow_pulse.pos.duration = 20s
+  fire_pulse.color.duration = 6s
+  fire_pulse.pulse_size.duration = 14s
+
+on randomize_positions:
+  # Set random positions for all pulses
+  breathe_pulse.pos = random(5, 35)
+  strobe_pulse.pos = random(5, 35)
+  rainbow_pulse.pos = random(12, 37)
+  # fire_pulse keeps center position
+
+on toggle_pulse:
+  # Toggle individual pulses (would need pulse name in event data)
+  # This is a simplified version - real implementation would check event data
+  if breathe_pulse.running:
+    stop breathe_pulse
+  else:
+    run breathe_pulse
+
+# Start all animations
+run cycling_bg
+run breathe_pulse
+run strobe_pulse
+run rainbow_pulse
+run fire_pulse

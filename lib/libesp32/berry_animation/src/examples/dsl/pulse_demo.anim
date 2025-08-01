@@ -1,0 +1,45 @@
+# DSL version of the moving pulse effect
+# Original: animate_demo_pulse.be with complex oscillator and palette setup
+# DSL: Clean declarative syntax for moving pulse with color cycling
+#
+# This recreates the moving pulse with oscillating position and cycling color
+
+strip length 25
+
+# Define background color (matches original anim.set_back_color(0x2222AA))
+color background_blue = #2222AA
+
+# Create background animation
+animation background = solid(background_blue, loop)
+
+# Define color palette for the pulse (matches PALETTE_STANDARD_VAL)
+palette standard_colors = [
+  (0, #FF0000),    # Red
+  (64, #FFFF00),   # Yellow  
+  (128, #00FF00),  # Green
+  (192, #00FFFF),  # Cyan
+  (255, #0000FF)   # Blue
+]
+
+# Create moving pulse with dynamic properties
+# This replaces animate.pulse(0xFF4444, 2, 1) + oscillator callbacks
+animation moving_pulse = pulse_position(
+  #FF4444,         # base color (will be overridden by palette)
+  2,               # pulse size
+  1,               # slew (fade region)
+  10,              # priority (higher than background)
+  loop
+)
+
+# Set dynamic position (matches animate.oscillator(-3, 26, 5000, animate.COSINE))
+moving_pulse.pos = smooth(-3, 26, 5s)
+
+# Set cycling color (matches animate.palette(animate.PALETTE_STANDARD_VAL, 30000))
+moving_pulse.color = rich_palette(standard_colors, 30s, smooth, 255)
+
+# Set brightness to 60% (matches original anim.set_bri(60))
+moving_pulse.opacity = 153  # 60% of 255
+
+# Run both animations
+run background
+run moving_pulse

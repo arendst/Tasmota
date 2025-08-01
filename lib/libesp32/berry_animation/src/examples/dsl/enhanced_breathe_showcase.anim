@@ -1,0 +1,68 @@
+# Enhanced DSL version with multiple breathing layers
+# Showcases: Multiple colors, layering, dynamic parameters
+# Demonstrates: Advanced DSL features, event system integration
+#
+# This creates a more sophisticated breathing effect with multiple layers
+
+strip length 30
+
+# Define multiple colors for layered breathing
+color red = #FF0000
+color green = #00FF00  
+color blue = #0000FF
+color yellow = #FFFF00
+color magenta = #FF00FF
+
+# Create background rainbow that slowly cycles
+animation rainbow_bg = filled(
+  rainbow(20s, smooth, 50),  # Slow, dim rainbow
+  loop
+)
+
+# Create multiple breathing layers with different phases and speeds
+animation breathe_red = breathe(red, 150, 3s, loop)
+breathe_red.opacity = smooth(30, 200, 3s)
+breathe_red.priority = 2
+
+animation breathe_green = breathe(green, 150, 4s, loop) 
+breathe_green.opacity = smooth(30, 200, 4s)
+breathe_green.opacity.phase = 20  # 20% phase offset
+breathe_green.priority = 4
+
+animation breathe_blue = breathe(blue, 150, 5s, loop)
+breathe_blue.opacity = smooth(30, 200, 5s) 
+breathe_blue.opacity.phase = 40  # 40% phase offset
+breathe_blue.priority = 6
+
+animation breathe_yellow = breathe(yellow, 150, 3.5s, loop)
+breathe_yellow.opacity = smooth(30, 200, 3.5s)
+breathe_yellow.opacity.phase = 60  # 60% phase offset  
+breathe_yellow.priority = 8
+
+animation breathe_magenta = breathe(magenta, 150, 4.5s, loop)
+breathe_magenta.opacity = smooth(30, 200, 4.5s)
+breathe_magenta.opacity.phase = 80  # 80% phase offset
+breathe_magenta.priority = 10
+
+# Event handlers for interactive control
+on button_press:
+  # Speed up all breathing animations
+  breathe_red.duration = 1.5s
+  breathe_green.duration = 2s
+  breathe_blue.duration = 2.5s
+  breathe_yellow.duration = 1.75s
+  breathe_magenta.duration = 2.25s
+
+on timer(10s):
+  # Add temporary sparkle overlay every 10 seconds
+  animation sparkles = twinkle(#FFFFFF, 5, 500ms, 2s, once)
+  sparkles.priority = 100
+  run sparkles
+
+# Start all animations
+run rainbow_bg
+run breathe_red
+run breathe_green  
+run breathe_blue
+run breathe_yellow
+run breathe_magenta

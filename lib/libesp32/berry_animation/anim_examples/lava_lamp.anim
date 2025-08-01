@@ -1,0 +1,63 @@
+# Lava Lamp - Slow flowing warm colors
+# Organic movement like a lava lamp
+
+strip length 60
+
+# Define lava colors (warm oranges and reds)
+palette lava_colors = [
+  (0, #330000),    # Dark red
+  (64, #660000),   # Medium red
+  (128, #CC3300),  # Bright red
+  (192, #FF6600),  # Orange
+  (255, #FFAA00)   # Yellow-orange
+]
+
+# Base lava animation - very slow color changes
+animation lava_base = rich_palette_animation(lava_colors, 15s, smooth, 180)
+
+# Add slow-moving lava blobs
+pattern blob1_pattern = rich_palette_color_provider(lava_colors, 12s, smooth, 255)
+animation lava_blob1 = pulse_position_animation(
+  blob1_pattern, # color source
+  9,            # initial position
+  18,           # large blob
+  12            # very soft edges
+)
+lava_blob1.priority = 10
+lava_blob1.pos = smooth(9, 51, 20s)  # Very slow movement
+
+pattern blob2_pattern = rich_palette_color_provider(lava_colors, 10s, smooth, 220)
+animation lava_blob2 = pulse_position_animation(
+  blob2_pattern, # color source
+  46,           # initial position
+  14,           # medium blob
+  10            # soft edges
+)
+lava_blob2.priority = 8
+lava_blob2.pos = smooth(46, 14, 25s)  # Opposite direction, slower
+
+pattern blob3_pattern = rich_palette_color_provider(lava_colors, 8s, smooth, 200)
+animation lava_blob3 = pulse_position_animation(
+  blob3_pattern, # color source
+  25,           # initial position
+  10,           # smaller blob
+  8             # soft edges
+)
+lava_blob3.priority = 6
+lava_blob3.pos = smooth(25, 35, 18s)  # Small movement range
+
+# Add subtle heat shimmer effect
+pattern shimmer_pattern = rich_palette_color_provider(lava_colors, 6s, smooth, 255)
+animation heat_shimmer = twinkle_animation(
+  shimmer_pattern, # color source
+  6,              # density (shimmer points)
+  1.5s            # twinkle speed (slow shimmer)
+)
+heat_shimmer.priority = 15
+
+# Start all animations
+run lava_base
+run lava_blob1
+run lava_blob2
+run lava_blob3
+run heat_shimmer

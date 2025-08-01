@@ -1,0 +1,36 @@
+# Aurora Borealis - Northern lights simulation
+# Flowing green and purple aurora colors
+
+#strip length 60
+
+# Define aurora color palette
+palette aurora_colors = [
+  (0, #000022),    # Dark night sky
+  (64, #004400),   # Dark green
+  (128, #00AA44),  # Aurora green
+  (192, #44AA88),  # Light green
+  (255, #88FFAA)   # Bright aurora
+]
+
+# Secondary purple palette
+palette aurora_purple = [
+  (0, #220022),    # Dark purple
+  (64, #440044),   # Medium purple
+  (128, #8800AA),  # Bright purple
+  (192, #AA44CC),  # Light purple
+  (255, #CCAAFF)   # Pale purple
+]
+
+# Base aurora animation with slow flowing colors
+animation aurora_base = rich_palette_animation(
+  aurora_colors,  # palette
+  10s,            # cycle period
+  smooth,         # transition type (explicit for clarity)
+  180             # brightness (dimmed for aurora effect)
+)
+
+sequence demo {
+  play aurora_base  # infinite duration (no 'for' clause)
+}
+
+run demo

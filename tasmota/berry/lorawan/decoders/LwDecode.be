@@ -98,6 +98,13 @@ class lwdecode_cls
       batt_percent /= 7                                       # 1..14px showing battery load
       msg += format("<td><i class=\"bt\" title=\"%.3fV (%s)\" style=\"--bl:%dpx;color:%s\"></i></td>",
                    battery, self.dhm(battery_last_seen), batt_percent, color_text)
+    elif battery >= 100000 && battery <= 100100               # battery already expressed in %
+      var pbatt = battery - 100000
+      var batt_percent = pbatt
+      if batt_percent > 98 batt_percent = 98 end              # 98% / 14px = 7
+      batt_percent /= 7                                       # 1..14px showing battery load
+      msg += format("<td><i class=\"bt\" title=\"%d%% (%s)\" style=\"--bl:%dpx;color:%s\"></i></td>",
+                   pbatt, self.dhm(battery_last_seen), batt_percent, color_text)
     else
       msg += "<td>&nbsp;</td>"
     end
@@ -163,21 +170,29 @@ class webPageLoRaWAN : Driver
   def pageLoRaWAN()
     if !webserver.check_privileged_access() return nil end
 
-    var inode=1
+    var inode = 1
     var cmdArg  
     if webserver.has_arg('save')
      inode = webserver.arg('node')
-     tasmota.cmd('LoRaWanAppKey'+inode+' '+ webserver.arg('ak'),true)
+     tasmota.cmd('LoRaWanAppKey' + inode + ' '+ webserver.arg('ak'), true)
      cmdArg = webserver.arg('dc')
-     if !cmdArg cmdArg='"' end
-     tasmota.cmd('LoRaWanDecoder'+inode+' '+cmdArg,true)
+     if !cmdArg cmdArg = '"' end
+     tasmota.cmd('LoRaWanDecoder' + inode + ' ' + cmdArg, true)
      cmdArg = webserver.arg('an')
-     if !cmdArg cmdArg='"' end
-     tasmota.cmd('LoRaWanName'+inode+' '+cmdArg,true)
+     if !cmdArg cmdArg = '"' end
+     tasmota.cmd('LoRaWanName' + inode + ' ' + cmdArg, true)
      cmdArg = webserver.arg('ce')
-     if !cmdArg cmdArg='0' else cmdArg='1' end
-     tasmota.cmd('LoRaWanNode'+inode+' '+cmdArg,true)
+     if !cmdArg cmdArg = '0' else cmdArg = '1' end
+     tasmota.cmd('LoRaWanNode' + inode + ' ' + cmdArg, true)
     end
+
+    var appKey, decoder, name, enabled
+    var hintAK = '32 character Application Key'
+    var hintDecoder = 'Decoder file, ending in .be'
+    var hintAN = 'Device name for MQTT messages'
+    var arg = 'LoRaWanNode'
+    var enables = string.split(tasmota.cmd(arg, true).find(arg), ',') # [1,!2,!3,!4,5,6]
+    var maxnode = enables.size()
 
     webserver.content_start("LoRaWAN")           #- title of the web page -#
     webserver.content_send_style()               #- send standard Tasmota styles -#
@@ -200,41 +215,33 @@ class webPageLoRaWAN : Driver
        "}"
       "}"
       "e.classList.add('active');"
-      "for(i=1;i<=16;i++){"
+      "for(i=1;i<="+str(maxnode)+";i++){"
        "document.getElementById('nd'+i).style.display=(i==n)?'block':'none';"
       "}"
      "}"
      "window.onload = function(){selNode("+str(inode)+");};"
      "</script>")
 
-    var arg, appKey, decoder, name, enables, enabled
-    var hintAK='32 character Application Key'
-    var hintDecoder='Decoder file, ending in .be'
-    var hintAN='Device name for MQTT messages'
-
     webserver.content_send(
     f"<fieldset>"
      "<legend><b>&nbsp;LoRaWan End Device&nbsp;</b></legend>"
      "<br><div>")                                #- Add space and indent to align form tabs -#
-    for node:1..16
+    for node:1 .. maxnode
      webserver.content_send(f"<button type='button' onclick='selNode({node})' id='n{node}' class='tl inactive'>{node}</button>")
     end
     webserver.content_send(
     f"</div><br><br><br><br>")                   #- Terminate indent and add space -#
-
-    arg='LoRaWanNode'
-    enables=string.split(tasmota.cmd(arg,true).find(arg), ',') # [1,!2,!3,!4,5,6,7,8,9,10,11,12,13,14,15,16]
-    for node:1..16
-     enabled=""
+    for node:1 .. maxnode
+     enabled = ""
      if enables[node-1][0] != '!'
-       enabled=' checked'
+       enabled = ' checked'
      end
-     arg='LoRaWanAppKey' + str(node)
-     appKey=tasmota.cmd(arg,true).find(arg)
-     arg='LoRaWanName' + str(node)
-     name=tasmota.cmd(arg,true).find(arg)
-     arg='LoRaWanDecoder' + str(node)
-     decoder=tasmota.cmd(arg,true).find(arg)
+     arg = 'LoRaWanAppKey' + str(node)
+     appKey = tasmota.cmd(arg, true).find(arg)
+     arg = 'LoRaWanName' + str(node)
+     name = tasmota.cmd(arg, true).find(arg)
+     arg = 'LoRaWanDecoder' + str(node)
+     decoder = tasmota.cmd(arg, true).find(arg)
      webserver.content_send(
      f"<div id='nd{node}' style='display:none'>"
       "<form action='' method='post'>"

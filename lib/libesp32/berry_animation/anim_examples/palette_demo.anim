@@ -1,0 +1,40 @@
+# Palette Demo - Shows how to use custom palettes in DSL
+# This demonstrates the new palette syntax
+
+strip length 30
+
+# Define a fire palette
+palette fire_colors = [
+  (0, #000000),    # Black
+  (64, #800000),   # Dark red
+  (128, #FF0000),  # Red
+  (192, #FF8000),  # Orange
+  (255, #FFFF00)   # Yellow
+]
+
+# Define an ocean palette
+palette ocean_colors = [
+  (0, #000080),    # Navy blue
+  (64, #0000FF),   # Blue
+  (128, #00FFFF),  # Cyan
+  (192, #00FF80),  # Spring green
+  (255, #008000)   # Green
+]
+
+# Create animations using the palettes
+animation fire_anim = rich_palette_animation(fire_colors, 5s)
+
+animation ocean_anim = rich_palette_animation(ocean_colors, 8s)
+
+# Sequence to show both palettes
+sequence palette_demo {
+  play fire_anim for 10s
+  wait 1s
+  play ocean_anim for 10s
+  wait 1s
+  repeat 2 times:
+    play fire_anim for 3s
+    play ocean_anim for 3s
+}
+
+run palette_demo

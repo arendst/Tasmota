@@ -200,7 +200,7 @@ void LoraSettingsSave(void) {
 bool LoraSend(uint8_t* data, uint32_t len, bool invert) {
   uint32_t lora_time = millis();         // Time is important for LoRaWan RX windows
   bool result = Lora->Send(data, len, invert);
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LOR: Send (%u) '%*_H', Invert %d, Freq %3_f, BW %1_f, SF %d, Time %d"),
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("LOR: Send (%u) '%*_H', Invert %d, Freq %3_f, BW %1_f, SF %d, TimeToSend %d ms"),
     lora_time, len, data, invert, &Lora->settings.frequency, &Lora->settings.bandwidth, Lora->settings.spreading_factor, TimePassedSince(lora_time));
   return result;
 }
@@ -348,6 +348,7 @@ void CmndLoraOption(void) {
   // LoraOption2 1 - Enable LoRaWanBridge Join
   // LoraOption3 1 - Enable LoRaWanBridge decoding
   // LoraOption4 1 - Enable LoRaCommand reception
+  // LoraOption5 1 - Skip LoRaWanBridge RX2 window send
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 8)) {
     uint32_t pindex = XdrvMailbox.index -1;
     if (XdrvMailbox.payload >= 0) {

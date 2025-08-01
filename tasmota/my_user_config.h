@@ -620,6 +620,8 @@
 // #define USE_LIGHT_ARTNET                         // Add support for DMX/ArtNet via UDP on port 6454 (+3.5k code)
   #define USE_LIGHT_ARTNET_MCAST 239,255,25,54   // Multicast address used to listen: 239.255.25.54
 
+  // #define USE_BERRY_ANIMATION                    // New animation framework with dedicated language (ESP32x only, experimental, big)
+
 // -- Counter input -------------------------------
 #define USE_COUNTER                              // Enable inputs as counter (+0k8 code)
 

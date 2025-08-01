@@ -139,6 +139,9 @@ class Leds : Leds_ntv
   def pixel_count()
     return self.call_native(8)
   end
+  def length()
+    return self.pixel_count()
+  end
   def pixel_offset()
     return 0
   end

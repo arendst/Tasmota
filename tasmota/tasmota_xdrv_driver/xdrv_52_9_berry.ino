@@ -33,6 +33,9 @@ extern "C" {
 #endif
 #ifdef USE_WS2812
   #include "berry_animate.h"
+  #ifdef USE_BERRY_ANIMATION
+    #include "berry_animation.h"
+  #endif // USE_BERRY_ANIMATION
 #endif
 #include "be_vm.h"
 #include "ZipReadFS.h"

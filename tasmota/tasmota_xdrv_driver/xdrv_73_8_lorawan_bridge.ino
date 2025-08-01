@@ -450,8 +450,11 @@ void LoraWanSendResponse(uint8_t* buffer, size_t len, uint32_t lorawan_delay) {
 
   uint32_t delay_rx1 = lorawan_delay - TimePassedSince(Lora->receive_time);
   LoraWan_Send_RX1.once_ms(delay_rx1, LoraWanTickerSend);
-  uint32_t delay_rx2 = delay_rx1 + TAS_LORAWAN_RECEIVE_DELAY2;
-  LoraWan_Send_RX2.once_ms(delay_rx2, LoraWanTickerSend);  // Retry after 1000 ms
+  uint32_t delay_rx2 = 0;                            // Skip RX2 to receive early RX1 response from device 
+  if (!bitRead(Lora->settings.flags, TAS_LORA_FLAG_SKIP_RX2)) {
+    uint32_t delay_rx2 = delay_rx1 + TAS_LORAWAN_RECEIVE_DELAY2;
+    LoraWan_Send_RX2.once_ms(delay_rx2, LoraWanTickerSend);  // Retry after 1000 ms
+  }
 #ifdef USE_LORA_DEBUG
   AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: About to send '%*_H' in %d and (optional) %d ms"),
     Lora->send_buffer_len, Lora->send_buffer, delay_rx1, delay_rx2);
@@ -755,27 +758,29 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
   }
   else if ((TAS_LORAWAN_MTYPE_UNCONFIRMED_DATA_UPLINK == MType) ||
            (TAS_LORAWAN_MTYPE_CONFIRMED_DATA_UPLINK == MType)) {
-    //  0     1 2 3 4   5      6 7   8  9   8      9101112131415...     packet_size -4
-    // PHYPayload --------------------------------------------------------------
-    // MHDR  MACPayload ----------------------------------------------  MIC ----
-    // MHDR  FHDR -----------------------  FPort  FRMPayload ---------  MIC ----
-    // MHDR  DevAddr   FCtrl  FCnt  FOpts  FPort  FRMPayload ---------  MIC ----
-    // 1     4         1      2     0..15  0..1   0..N                  4         - Number of octets
-    // Not encrypted ---------------------------  Encrypted ----------  Not encr
-    //                                                                            - Dragino
-    // 40    412E0100  80     2500         0A     6A6FEFD6A16B0C7AC37B  5F95FABC  - decrypt using AppSKey
-    // 80    412E0100  80     2A00         0A     A58EF5E0D1DDE03424F0  6F2D56FA  - decrypt using AppSKey
-    // 80    412E0100  80     2B00         0A     8F2F0D33E5C5027D57A6  F67C9DFE  - decrypt using AppSKey
-    // 80    909AE100  00     0800         0A     EEC4A52568A346A8684E  F2D4BF05
-    // 40    412E0100  A0     1800         00     0395                  2C94B1D8  - FCtrl ADR support   , ADRACKReq=0, FPort = 0 -> MAC commands, decrypt using NwkSKey
-    // 40    412E0100  A0     7800         00     78C9                  A60D8977  - FCtrl ADR support   , ADRACKReq=0, FPort = 0 -> MAC commands, decrypt using NwkSKey
-    // 40    F3F51700  20     0100         00     2A7C                  407036A2  - FCtrl No ADR support, ADRACKReq=0, FPort = 0 -> MAC commands, decrypt using NwkSKey, response after LinkADRReq
-    //                                                                            - MerryIoT
-    // 40    422E0100  80     0400         78     B9C75DF9E8934C6651    A57DA6B1  - decrypt using AppSKey
-    // 40    422E0100  80     0100         CC     7C462537AC00C07F99    5500BF2B  - decrypt using AppSKey
-    // 40    422E0100  A2     1800  0307   78     29FBF8FD9227729984    8C71E95B  - FCtrl ADR support, ADRACKReq=0, FOptsLen = 2 -> FOpts = MAC, response after LinkADRReq
-    // 40    F4F51700  A2     0200  0307   CC     6517D4AB06D32C9A9F    14CBA305  - FCtrl ADR support, ADRACKReq=0, FOptsLen = 2 -> FOpts = MAC, response after LinkADRReq
-    
+    //  0     1 2 3 4   5      6 7   8  9   8      9101112131415...       packet_size -4
+    // PHYPayload ----------------------------------------------------------------
+    // MHDR  MACPayload ------------------------------------------------  MIC ----
+    // MHDR  FHDR -----------------------  FPort  FRMPayload -----------  MIC ----
+    // MHDR  DevAddr   FCtrl  FCnt  FOpts  FPort  FRMPayload -----------  MIC ----
+    // 1     4         1      2     0..15  0..1   0..N                    4         - Number of octets
+    // Not encrypted ---------------------------  Encrypted ------------  Not encr
+    //                                                                              - Dragino
+    // 40    412E0100  80     2500         0A     6A6FEFD6A16B0C7AC37B    5F95FABC  - decrypt using AppSKey
+    // 80    412E0100  80     2A00         0A     A58EF5E0D1DDE03424F0    6F2D56FA  - decrypt using AppSKey
+    // 80    412E0100  80     2B00         0A     8F2F0D33E5C5027D57A6    F67C9DFE  - decrypt using AppSKey
+    // 80    909AE100  00     0800         0A     EEC4A52568A346A8684E    F2D4BF05
+    // 40    412E0100  A0     1800         00     0395                    2C94B1D8  - FCtrl ADR support   , ADRACKReq=0, FPort = 0 -> MAC commands, decrypt using NwkSKey
+    // 40    412E0100  A0     7800         00     78C9                    A60D8977  - FCtrl ADR support   , ADRACKReq=0, FPort = 0 -> MAC commands, decrypt using NwkSKey
+    // 40    F3F51700  20     0100         00     2A7C                    407036A2  - FCtrl No ADR support, ADRACKReq=0, FPort = 0 -> MAC commands, decrypt using NwkSKey, response after LinkADRReq
+    // 40    8CF0DF00  00     0000         02     077C3ED4A9FF674BB1E986  20A8A878  - No FCtrl, FPort = 2, SN50v3 working mode 1 (Default Mode) 11 octet data
+    //
+    //                                                                              - MerryIoT
+    // 40    422E0100  80     0400         78     B9C75DF9E8934C6651      A57DA6B1  - decrypt using AppSKey
+    // 40    422E0100  80     0100         CC     7C462537AC00C07F99      5500BF2B  - decrypt using AppSKey
+    // 40    422E0100  A2     1800  0307   78     29FBF8FD9227729984      8C71E95B  - FCtrl ADR support, ADRACKReq=0, FOptsLen = 2 -> FOpts = MAC, response after LinkADRReq
+    // 40    F4F51700  A2     0200  0307   CC     6517D4AB06D32C9A9F      14CBA305  - FCtrl ADR support, ADRACKReq=0, FOptsLen = 2 -> FOpts = MAC, response after LinkADRReq
+
     bool bResponseSent = false;                                        // Make sure do not send multiple responses
 
     uint32_t DevAddr = (uint32_t)data[1] | ((uint32_t)data[2] <<  8) | ((uint32_t)data[3] << 16) | ((uint32_t)data[4] << 24);
@@ -934,6 +939,10 @@ bool LoraWanInput(uint8_t* data, uint32_t packet_size) {
           node_data.payload_len = payload_len;
           node_data.node = node;
           node_data.FPort = FPort;
+#ifdef USE_LORA_DEBUG
+          AddLog(LOG_LEVEL_DEBUG, PSTR("LOR: Decode Node %d, FPort %d, Payload %*_H, RSSI %1_f, SNR %1_f"),
+            node_data.node +1, node_data.FPort, node_data.payload_len, node_data.payload, &node_data.rssi, &node_data.snr);
+#endif  // USE_LORA_DEBUG
           LoraWanDecode(&node_data);
 
           if (0xA84041 == Lora->settings.end_node[node]->DevEUIh >> 8) {  // Dragino
