@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - ESP32-P4 command `HostedOta` (#23675)
 - Support for RV3028 RTC (#23672)
 - Berry preview of animation framework (#23740)
+- Berry `call()` now works for classes
 
 ### Breaking Changed
 

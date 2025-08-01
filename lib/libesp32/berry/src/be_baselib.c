@@ -319,7 +319,7 @@ int be_baselib_iterator(bvm *vm)
 static int l_call(bvm *vm)
 {
     int top = be_top(vm);
-    if (top >= 1 && be_isfunction(vm, 1)) {
+    if (top >= 1 && (be_isfunction(vm, 1) || be_isclass(vm, 1))) {
         size_t arg_count = top - 1;  /* we have at least 'top - 1' arguments */
         /* test if last argument is a list */
 
@@ -354,7 +354,7 @@ static int l_call(bvm *vm)
 
         be_return(vm);
     }
-    be_raise(vm, "value_error", "first argument must be a function");
+    be_raise(vm, "value_error", "first argument must be a function or a class");
     be_return_nil(vm);
 }
 
