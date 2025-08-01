@@ -98,6 +98,13 @@ class lwdecode_cls
       batt_percent /= 7                                       # 1..14px showing battery load
       msg += format("<td><i class=\"bt\" title=\"%.3fV (%s)\" style=\"--bl:%dpx;color:%s\"></i></td>",
                    battery, self.dhm(battery_last_seen), batt_percent, color_text)
+    elif battery >= 100000 && battery <= 100100               # battery already expressed in %
+      battery -= 100000
+      var batt_percent = battery
+      if batt_percent > 98 batt_percent = 98 end              # 98% / 14px = 7
+      batt_percent /= 7                                       # 1..14px showing battery load
+      msg += format("<td><i class=\"bt\" title=\"%d%% (%s)\" style=\"--bl:%dpx;color:%s\"></i></td>",
+                   battery, self.dhm(battery_last_seen), batt_percent, color_text)
     else
       msg += "<td>&nbsp;</td>"
     end
@@ -174,9 +181,6 @@ class webPageLoRaWAN : Driver
      cmdArg = webserver.arg('an')
      if !cmdArg cmdArg='"' end
      tasmota.cmd('LoRaWanName'+inode+' '+cmdArg,true)
-     cmdArg = webserver.arg('ce')
-     if !cmdArg cmdArg='0' else cmdArg='1' end
-     tasmota.cmd('LoRaWanNode'+inode+' '+cmdArg,true)
     end
 
     webserver.content_start("LoRaWAN")           #- title of the web page -#
@@ -207,7 +211,7 @@ class webPageLoRaWAN : Driver
      "window.onload = function(){selNode("+str(inode)+");};"
      "</script>")
 
-    var arg, appKey, decoder, name, enables, enabled
+    var arg, appKey, decoder, name
     var hintAK='32 character Application Key'
     var hintDecoder='Decoder file, ending in .be'
     var hintAN='Device name for MQTT messages'
@@ -221,14 +225,7 @@ class webPageLoRaWAN : Driver
     end
     webserver.content_send(
     f"</div><br><br><br><br>")                   #- Terminate indent and add space -#
-
-    arg='LoRaWanNode'
-    enables=string.split(tasmota.cmd(arg,true).find(arg), ',') # [1,!2,!3,!4,5,6,7,8,9,10,11,12,13,14,15,16]
     for node:1..16
-     enabled=""
-     if enables[node-1][0] != '!'
-       enabled=' checked'
-     end
      arg='LoRaWanAppKey' + str(node)
      appKey=tasmota.cmd(arg,true).find(arg)
      arg='LoRaWanName' + str(node)
@@ -238,7 +235,6 @@ class webPageLoRaWAN : Driver
      webserver.content_send(
      f"<div id='nd{node}' style='display:none'>"
       "<form action='' method='post'>"
-       "<p><label><input id='ce' name='ce' type='checkbox'{enabled}><b>Enabled</b></label></p>"
        "<p><b>Application Key</b>"
         "<input title='{hintAK}' pattern='[A-Fa-f0-9]{{32}}' id='ak' minlength='32' maxlength='32' required='' placeholder='{hintAK}' value='{appKey}' name='ak' style='font-size:smaller'>"
        "</p>"
