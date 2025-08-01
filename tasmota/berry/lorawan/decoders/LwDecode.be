@@ -99,12 +99,12 @@ class lwdecode_cls
       msg += format("<td><i class=\"bt\" title=\"%.3fV (%s)\" style=\"--bl:%dpx;color:%s\"></i></td>",
                    battery, self.dhm(battery_last_seen), batt_percent, color_text)
     elif battery >= 100000 && battery <= 100100               # battery already expressed in %
-      battery -= 100000
-      var batt_percent = battery
+      var pbatt = battery - 100000
+      var batt_percent = pbatt
       if batt_percent > 98 batt_percent = 98 end              # 98% / 14px = 7
       batt_percent /= 7                                       # 1..14px showing battery load
       msg += format("<td><i class=\"bt\" title=\"%d%% (%s)\" style=\"--bl:%dpx;color:%s\"></i></td>",
-                   battery, self.dhm(battery_last_seen), batt_percent, color_text)
+                   pbatt, self.dhm(battery_last_seen), batt_percent, color_text)
     else
       msg += "<td>&nbsp;</td>"
     end
