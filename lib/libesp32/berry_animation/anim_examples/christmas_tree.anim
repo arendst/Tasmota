@@ -1,0 +1,60 @@
+# Christmas Tree - Festive holiday colors
+# Green base with colorful ornaments and twinkling
+
+strip length 60
+
+# Green tree base
+color tree_green = #006600
+animation tree_base = solid(tree_green)
+
+# Define ornament colors
+palette ornament_colors = [
+  (0, #FF0000),    # Red
+  (64, #FFD700),   # Gold
+  (128, #0000FF),  # Blue
+  (192, #FFFFFF),  # White
+  (255, #FF00FF)   # Magenta
+]
+
+# Colorful ornaments as twinkling lights
+pattern ornament_pattern = rich_palette_color_provider(ornament_colors, 3s, linear, 255)
+animation ornaments = twinkle_animation(
+  ornament_pattern, # color source
+  15,              # density (many ornaments)
+  800ms            # twinkle speed (slow twinkle)
+)
+ornaments.priority = 10
+
+# Star on top (bright yellow pulse)
+animation tree_star = pulse_position_animation(
+  #FFFF00,  # Bright yellow
+  58,       # position (near the top)
+  3,        # star size
+  1         # sharp edges
+)
+tree_star.priority = 20
+tree_star.opacity = smooth(200, 255, 2s)  # Gentle pulsing
+
+# Add some white sparkles for snow/magic
+animation snow_sparkles = twinkle_animation(
+  #FFFFFF,  # White snow
+  8,        # density (sparkle count)
+  400ms     # twinkle speed (quick sparkles)
+)
+snow_sparkles.priority = 15
+
+# Garland effect - moving colored lights
+pattern garland_pattern = rich_palette_color_provider(ornament_colors, 2s, linear, 200)
+animation garland = comet_animation(
+  garland_pattern, # color source
+  6,              # garland length (tail length)
+  4s              # slow movement (speed)
+)
+garland.priority = 5
+
+# Start all animations
+run tree_base
+run ornaments
+run tree_star
+run snow_sparkles
+run garland

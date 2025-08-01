@@ -1,0 +1,38 @@
+# Comet Chase - Moving comet with trailing tail
+# Bright head with fading tail
+
+strip length 60
+
+# Dark background
+color space_blue = #000066
+animation background = solid(space_blue)
+
+# Main comet with bright white head and blue tail
+animation comet_main = comet_animation(
+  #FFFFFF,  # White head
+  10,       # tail length
+  2s        # speed
+)
+comet_main.priority = 7
+
+# Secondary comet in different color, opposite direction
+animation comet_secondary = comet_animation(
+  #FF4500,  # Orange head
+  8,        # shorter tail
+  3s        # slower speed
+)
+comet_secondary.priority = 5
+
+# Add sparkle trail behind main comet
+animation comet_sparkles = twinkle_animation(
+  #AAAAFF,  # Light blue sparkles
+  8,        # density (moderate sparkles)
+  400ms     # twinkle speed (quick sparkle)
+)
+comet_sparkles.priority = 8
+
+# Start all animations
+run background
+run comet_main
+run comet_secondary
+run comet_sparkles

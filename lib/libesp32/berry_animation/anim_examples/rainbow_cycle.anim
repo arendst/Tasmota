@@ -1,0 +1,13 @@
+# Rainbow Cycle - Classic WLED effect
+# Smooth rainbow colors cycling across the strip
+
+strip length 60
+
+# Create smooth rainbow cycle animation
+animation rainbow_cycle = color_cycle_animation(
+  [#FF0000, #FF8000, #FFFF00, #00FF00, #0000FF, #8000FF, #FF00FF], # rainbow colors
+  5s  # cycle period
+)
+
+# Start the animation
+run rainbow_cycle
