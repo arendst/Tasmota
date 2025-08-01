@@ -9,8 +9,8 @@ def test_basic_transpilation()
   # Create a simple DSL program with custom color names (not predefined ones)
   var dsl_code = 
     "strip length 30\n"
-    "color my_red = #FF0000\n"
-    "color my_blue = #0000FF\n"
+    "color my_red = 0xFF0000\n"
+    "color my_blue = 0x0000FF\n"
     "pattern solid_red = solid(my_red)\n"
     "animation pulse_red = pulse(solid_red, 2s)\n"
     "sequence demo {\n"
@@ -89,7 +89,7 @@ def test_error_handling()
   print("Testing error handling...")
   
   # Test with syntax that should cause transpiler errors
-  var dsl_code = "color = #FF0000"  # Missing color name
+  var dsl_code = "color = 0xFF0000"  # Missing color name
   
   try
     var berry_code = animation.compile_dsl(dsl_code)

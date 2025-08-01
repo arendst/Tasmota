@@ -13,13 +13,13 @@
 # 
 # # Define disco color palette
 # palette disco_colors = [
-#   (0, #FF0000),    # Red
-#   (42, #FF8000),   # Orange
-#   (85, #FFFF00),   # Yellow
-#   (128, #00FF00),  # Green
-#   (170, #0000FF),  # Blue
-#   (213, #8000FF),  # Purple
-#   (255, #FF00FF)   # Magenta
+#   (0, 0xFF0000),    # Red
+#   (42, 0xFF8000),   # Orange
+#   (85, 0xFFFF00),   # Yellow
+#   (128, 0x00FF00),  # Green
+#   (170, 0x0000FF),  # Blue
+#   (213, 0x8000FF),  # Purple
+#   (255, 0xFF00FF)   # Magenta
 # ]
 # 
 # # Fast color cycling base
@@ -29,7 +29,7 @@
 # disco_base.opacity = square(0, 255, 100ms, 30)  # Fast strobe
 # 
 # # Add white flash overlay
-# animation white_flash = solid(#FFFFFF)
+# animation white_flash = solid(0xFFFFFF)
 # white_flash.opacity = square(0, 255, 50ms, 10)  # Quick white flashes
 # white_flash.priority = 20
 # 

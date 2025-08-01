@@ -8,26 +8,26 @@ set half_length = 30
 
 # Left side red flashing
 animation left_red = pulse_position_animation(
-  #FF0000,  # Bright red
-  15,       # center of left half
-  15,       # half the strip
-  2         # sharp edges
+  0xFF0000,  # Bright red
+  15,        # center of left half
+  15,        # half the strip
+  2          # sharp edges
 )
 left_red.priority = 10
 left_red.opacity = square(0, 255, 400ms, 50)  # 50% duty cycle
 
 # Right side blue flashing (opposite phase)
 animation right_blue = pulse_position_animation(
-  #0000FF,  # Bright blue
-  45,       # center of right half
-  15,       # half the strip
-  2         # sharp edges
+  0x0000FF,  # Bright blue
+  45,        # center of right half
+  15,        # half the strip
+  2          # sharp edges
 )
 right_blue.priority = 10
 right_blue.opacity = square(255, 0, 400ms, 50)  # Opposite phase
 
 # Add white strobe overlay occasionally
-animation white_strobe = solid(#FFFFFF)
+animation white_strobe = solid(0xFFFFFF)
 white_strobe.opacity = square(0, 255, 100ms, 5)  # Quick bright flashes
 white_strobe.priority = 20
 

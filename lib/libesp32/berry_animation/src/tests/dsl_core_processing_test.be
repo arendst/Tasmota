@@ -14,9 +14,9 @@ def test_color_processing()
   
   # Test hex colors
   var hex_tests = [
-    ["color custom_red = #FF0000", "var custom_red_ = 0xFFFF0000"],
-    ["color custom_blue = #0000FF", "var custom_blue_ = 0xFF0000FF"],
-    ["color custom_green = #00FF00", "var custom_green_ = 0xFF00FF00"]
+    ["color custom_red = 0xFF0000", "var custom_red_ = 0xFFFF0000"],
+    ["color custom_blue = 0x0000FF", "var custom_blue_ = 0xFF0000FF"],
+    ["color custom_green = 0x00FF00", "var custom_green_ = 0xFF00FF00"]
   ]
   
   for test : hex_tests
@@ -54,7 +54,7 @@ def test_pattern_processing()
   
   # Test solid patterns
   var pattern_tests = [
-    ["color red_alt = #FF0100\n"
+    ["color red_alt = 0xFF0100\n"
      "pattern solid_red = solid(red_alt)",
      "var solid_red_ = animation.solid(animation.global('red_alt_', 'red_alt'))"],
     ["pattern solid_blue = solid(blue)",
@@ -80,7 +80,7 @@ def test_animation_processing()
   
   # Test direct color to animation
   var color_anim_tests = [
-    ["color red_alt = #FF0100\n"
+    ["color red_alt = 0xFF0100\n"
      "animation red_anim = red_alt",
      "var red_anim_ = animation.global('red_alt_', 'red_alt')"],
     ["animation blue_anim = blue",
@@ -205,7 +205,7 @@ def test_sequence_processing()
   print("Testing sequence processing...")
   
   # Test basic sequence
-  var basic_seq_dsl = "color custom_red = #FF0000\n" +
+  var basic_seq_dsl = "color custom_red = 0xFF0000\n" +
     "animation red_anim = custom_red\n" +
     "sequence demo {\n" +
     "  play red_anim for 2s\n" +
@@ -223,7 +223,7 @@ def test_sequence_processing()
   assert(string.find(berry_code, "engine.start()") >= 0, "Should start engine")
   
   # Test repeat in sequence
-  var repeat_seq_dsl = "color custom_blue = #0000FF\n" +
+  var repeat_seq_dsl = "color custom_blue = 0x0000FF\n" +
     "animation blue_anim = custom_blue\n" +
     "sequence test {\n" +
     "  repeat 3 times:\n" +
@@ -293,7 +293,7 @@ def test_property_assignments()
   print("Testing property assignments...")
   
   var property_tests = [
-    ["color custom_red = #FF0000\nanimation red_anim = solid(custom_red)\nred_anim.pos = 15", 
+    ["color custom_red = 0xFF0000\nanimation red_anim = solid(custom_red)\nred_anim.pos = 15", 
      "animation.global('red_anim_').pos = 15"],
     ["animation test_anim = solid(blue)\ntest_anim.opacity = 128", 
      "animation.global('test_anim_').opacity = 128"],
@@ -321,14 +321,14 @@ def test_reserved_name_validation()
   
   # Test predefined color rejection
   var predefined_color_tests = [
-    "color red = #800000",      # Predefined color
-    "color blue = #000080",     # Predefined color
-    "color green = #008000",    # Predefined color
-    "color white = #FFFFFF",    # Predefined color
-    "color black = #000000",    # Predefined color
-    "color yellow = #FFFF00",   # Predefined color
-    "color orange = #FFA500",   # Predefined color
-    "color purple = #800080"    # Predefined color
+    "color red = 0x800000",      # Predefined color
+    "color blue = 0x000080",     # Predefined color
+    "color green = 0x008000",    # Predefined color
+    "color white = 0xFFFFFF",    # Predefined color
+    "color black = 0x000000",    # Predefined color
+    "color yellow = 0xFFFF00",   # Predefined color
+    "color orange = 0xFFA500",   # Predefined color
+    "color purple = 0x800080"    # Predefined color
   ]
   
   for dsl_input : predefined_color_tests
@@ -353,7 +353,7 @@ def test_reserved_name_validation()
   
   # Test DSL keyword rejection (these should be handled by existing system)
   var dsl_keyword_tests = [
-    "color color = #FF0000",    # DSL keyword
+    "color color = 0xFF0000",    # DSL keyword
     "animation strip = solid(red)"  # DSL keyword
     # Note: easing functions (smooth, linear, etc.) are no longer keywords
   ]
@@ -374,12 +374,12 @@ def test_reserved_name_validation()
   
   # Test valid custom names (should succeed)
   var valid_name_tests = [
-    "color my_red = #FF0000",
-    "color custom_blue = #0000FF", 
-    "color fire_color = #FF4500",
-    "color ocean_blue = #006994",
-    "color red_custom = #800000",
-    "color smooth_custom = #808080",
+    "color my_red = 0xFF0000",
+    "color custom_blue = 0x0000FF", 
+    "color fire_color = 0xFF4500",
+    "color ocean_blue = 0x006994",
+    "color red_custom = 0x800000",
+    "color smooth_custom = 0x808080",
     # Easing function names are now valid as user-defined names
     "pattern smooth = solid(blue)",
     "animation linear = solid(green)"

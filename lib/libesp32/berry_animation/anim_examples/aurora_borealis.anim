@@ -5,20 +5,20 @@
 
 # Define aurora color palette
 palette aurora_colors = [
-  (0, #000022),    # Dark night sky
-  (64, #004400),   # Dark green
-  (128, #00AA44),  # Aurora green
-  (192, #44AA88),  # Light green
-  (255, #88FFAA)   # Bright aurora
+  (0, 0x000022),    # Dark night sky
+  (64, 0x004400),   # Dark green
+  (128, 0x00AA44),  # Aurora green
+  (192, 0x44AA88),  # Light green
+  (255, 0x88FFAA)   # Bright aurora
 ]
 
 # Secondary purple palette
 palette aurora_purple = [
-  (0, #220022),    # Dark purple
-  (64, #440044),   # Medium purple
-  (128, #8800AA),  # Bright purple
-  (192, #AA44CC),  # Light purple
-  (255, #CCAAFF)   # Pale purple
+  (0, 0x220022),    # Dark purple
+  (64, 0x440044),   # Medium purple
+  (128, 0x8800AA),  # Bright purple
+  (192, 0xAA44CC),  # Light purple
+  (255, 0xCCAAFF)   # Pale purple
 ]
 
 # Base aurora animation with slow flowing colors

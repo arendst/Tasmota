@@ -12,20 +12,20 @@
 # strip length 60
 # 
 # # Define breathing colors
-# color breathe_red = #FF0000
-# color breathe_green = #00FF00
-# color breathe_blue = #0000FF
-# color breathe_purple = #800080
-# color breathe_orange = #FF8000
+# color breathe_red = 0xFF0000
+# color breathe_green = 0x00FF00
+# color breathe_blue = 0x0000FF
+# color breathe_purple = 0x800080
+# color breathe_orange = 0xFF8000
 # 
 # # Create breathing animation that cycles through colors
 # palette breathe_palette = [
-#   (0, #FF0000),    # Red
-#   (51, #FF8000),   # Orange
-#   (102, #FFFF00),  # Yellow
-#   (153, #00FF00),  # Green
-#   (204, #0000FF),  # Blue
-#   (255, #800080)   # Purple
+#   (0, 0xFF0000),    # Red
+#   (51, 0xFF8000),   # Orange
+#   (102, 0xFFFF00),  # Yellow
+#   (153, 0x00FF00),  # Green
+#   (204, 0x0000FF),  # Blue
+#   (255, 0x800080)   # Purple
 # ]
 # 
 # # Create a rich palette color provider

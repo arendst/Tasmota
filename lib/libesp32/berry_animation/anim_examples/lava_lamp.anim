@@ -5,11 +5,11 @@ strip length 60
 
 # Define lava colors (warm oranges and reds)
 palette lava_colors = [
-  (0, #330000),    # Dark red
-  (64, #660000),   # Medium red
-  (128, #CC3300),  # Bright red
-  (192, #FF6600),  # Orange
-  (255, #FFAA00)   # Yellow-orange
+  (0, 0x330000),    # Dark red
+  (64, 0x660000),   # Medium red
+  (128, 0xCC3300),  # Bright red
+  (192, 0xFF6600),  # Orange
+  (255, 0xFFAA00)   # Yellow-orange
 ]
 
 # Base lava animation - very slow color changes

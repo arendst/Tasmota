@@ -12,7 +12,7 @@ def test_basic_transpilation()
   print("Testing basic DSL transpilation...")
   
   var dsl_source = "strip length 60\n" +
-    "color custom_red = #FF0000\n" +
+    "color custom_red = 0xFF0000\n" +
     "pattern solid_red = solid(custom_red)\n" +
     "animation red_anim = solid_red\n" +
     "\n" +
@@ -44,8 +44,8 @@ def test_color_definitions()
   print("Testing color definitions...")
   
   var color_tests = [
-    ["color custom_red = #FF0000", "var custom_red_ = 0xFFFF0000"],
-    ["color custom_blue = #0000FF", "var custom_blue_ = 0xFF0000FF"],
+    ["color custom_red = 0xFF0000", "var custom_red_ = 0xFFFF0000"],
+    ["color custom_blue = 0x0000FF", "var custom_blue_ = 0xFF0000FF"],
     ["color my_white = white", "var my_white_ = 0xFFFFFFFF"],
     ["color my_green = green", "var my_green_ = 0xFF008000"]
   ]
@@ -69,23 +69,14 @@ def test_color_alpha_channel()
   
   var alpha_color_tests = [
     # Test 8-character hex with alpha (should preserve alpha)
-    ["color red_opaque = #FFFF0000", "var red_opaque_ = 0xFFFF0000"],
-    ["color red_half = #80FF0000", "var red_half_ = 0x80FF0000"],
-    ["color blue_quarter = #400000FF", "var blue_quarter_ = 0x400000FF"],
-    ["color clear = #00000000", "var clear_ = 0x00000000"],
+    ["color red_opaque = 0xFFFF0000", "var red_opaque_ = 0xFFFF0000"],
+    ["color red_half = 0x80FF0000", "var red_half_ = 0x80FF0000"],
+    ["color blue_quarter = 0x400000FF", "var blue_quarter_ = 0x400000FF"],
+    ["color clear = 0x00000000", "var clear_ = 0x00000000"],
     
     # Test 6-character hex without alpha (should add FF for opaque)
-    ["color custom_red = #FF0000", "var custom_red_ = 0xFFFF0000"],
-    ["color custom_lime = #00FF00", "var custom_lime_ = 0xFF00FF00"],
-    
-    # Test 4-character short form with alpha
-    ["color red_half_short = #8F00", "var red_half_short_ = 0x88FF0000"],
-    ["color blue_quarter_short = #400F", "var blue_quarter_short_ = 0x440000FF"],
-    
-    # Test 3-character short form without alpha (should add FF for opaque)
-    ["color red_short = #F00", "var red_short_ = 0xFFFF0000"],
-    ["color lime_short = #0F0", "var lime_short_ = 0xFF00FF00"],
-    ["color blue_short = #00F", "var blue_short_ = 0xFF0000FF"]
+    ["color custom_red = 0xFF0000", "var custom_red_ = 0xFFFF0000"],
+    ["color custom_lime = 0x00FF00", "var custom_lime_ = 0xFF00FF00"]
   ]
   
   for test : alpha_color_tests
@@ -128,7 +119,7 @@ end
 def test_simple_patterns()
   print("Testing simple patterns...")
   
-  var dsl_source = "color custom = #FF8080\n"
+  var dsl_source = "color custom = 0xFF8080\n"
     "pattern solid_red = solid(red)\n"
     "pattern solid_custom = solid(custom)"
   
@@ -151,7 +142,7 @@ end
 def test_sequences()
   print("Testing sequences...")
   
-  var dsl_source = "color custom_blue = #0000FF\n"
+  var dsl_source = "color custom_blue = 0x0000FF\n"
     "animation blue_anim = custom_blue\n"
     "\n"
     "sequence test_seq {\n"
@@ -178,9 +169,9 @@ def test_multiple_run_statements()
   
   # Test with multiple animations
   var dsl_source = "strip length 30\n" +
-    "color custom_red = #FF0000\n" +
-    "color custom_blue = #0000FF\n" +
-    "color custom_green = #00FF00\n" +
+    "color custom_red = 0xFF0000\n" +
+    "color custom_blue = 0x0000FF\n" +
+    "color custom_green = 0x00FF00\n" +
     "\n" +
     "animation red_anim = pulse_position_animation(custom_red, 5, 5, 2)\n" +
     "animation blue_anim = pulse_position_animation(custom_blue, 5, 5, 2)\n" +
@@ -232,8 +223,8 @@ def test_multiple_run_statements()
   
   # Test with mixed animations and sequences
   var mixed_dsl = "strip length 30\n" +
-    "color custom_red = #FF0000\n" +
-    "color custom_blue = #0000FF\n" +
+    "color custom_red = 0xFF0000\n" +
+    "color custom_blue = 0x0000FF\n" +
     "\n" +
     "animation red_anim = pulse_position_animation(custom_red, 5, 5, 2)\n" +
     "\n" +
@@ -319,8 +310,8 @@ def test_forward_references()
   
   var dsl_source = "# Forward reference: pattern uses color defined later\n" +
     "pattern fire_pattern = gradient(red, orange)\n" +
-    "color red = #FF0000\n" +
-    "color orange = #FF8000"
+    "color red = 0xFF0000\n" +
+    "color orange = 0xFF8000"
   
   var lexer = animation.DSLLexer(dsl_source)
   var tokens = lexer.tokenize()
@@ -348,8 +339,8 @@ def test_complex_dsl()
     "strip length 60\n" +
     "\n" +
     "# Color Definitions\n" +
-    "color custom_red = #FF0000\n" +
-    "color custom_blue = #0000FF\n" +
+    "color custom_red = 0xFF0000\n" +
+    "color custom_blue = 0x0000FF\n" +
     "\n" +
     "# Variable Definitions\n" +
     "set cycle_time = 5s\n" +
@@ -427,7 +418,7 @@ def test_transpiler_components()
   print("Testing basic transpiler instantiation...")
   
   # Test token processing
-  var lexer = animation.DSLLexer("color red = #FF0000")
+  var lexer = animation.DSLLexer("color red = 0xFF0000")
   var tokens = lexer.tokenize()
   assert(size(tokens) >= 4, "Should have multiple tokens")
   
@@ -443,7 +434,7 @@ def test_core_processing_methods()
   print("Testing core processing methods...")
   
   # Test pulse animation generation
-  var pulse_dsl = "color custom_red = #FF0000\n" +
+  var pulse_dsl = "color custom_red = 0xFF0000\n" +
     "animation pulse_red = pulse(solid(custom_red), 2s, 20%, 100%)"
   
   var berry_code = animation.compile_dsl(pulse_dsl)
@@ -451,7 +442,7 @@ def test_core_processing_methods()
   assert(string.find(berry_code, "animation.pulse") >= 0, "Should generate pulse animation")
   
   # Test control flow
-  var control_dsl = "color custom_blue = #0000FF\n" +
+  var control_dsl = "color custom_blue = 0x0000FF\n" +
     "animation blue_anim = solid(custom_blue)\n" +
     "sequence test {\n" +
     "  repeat 2 times:\n" +
@@ -483,8 +474,8 @@ def test_event_system_dsl()
   print("Testing event system DSL compilation...")
   
   var event_dsl = "strip length 30\n" +
-    "color custom_red = #FF0000\n" +
-    "color custom_blue = #0000FF\n" +
+    "color custom_red = 0xFF0000\n" +
+    "color custom_blue = 0x0000FF\n" +
     "\n" +
     "# Event handlers\n" +
     "on button_press: solid(red)\n" +
@@ -526,7 +517,7 @@ end
 def test_property_assignments()
   print("Testing property assignments...")
   
-  var dsl_with_properties = "color custom_red = #FF0000\n" +
+  var dsl_with_properties = "color custom_red = 0xFF0000\n" +
     "animation red_anim = solid(custom_red)\n" +
     "red_anim.pos = 15\n" +
     "red_anim.opacity = 128\n" +
@@ -561,7 +552,7 @@ def test_comment_preservation()
   var dsl_with_comments = "# Header comment\n" +
     "strip length 30  # Strip config comment\n" +
     "# Color section\n" +
-    "color custom_red = #FF0000  # Red color\n" +
+    "color custom_red = 0xFF0000  # Red color\n" +
     "pattern solid_red = solid(custom_red)  # Red pattern\n" +
     "sequence demo {\n" +
     "  # Play red\n" +
@@ -626,7 +617,7 @@ def test_easing_keywords()
   
   # Test easing keywords as function calls (regression test for breathing_colors.anim issue)
   var dsl_with_function_calls = "strip length 30\n" +
-    "color custom_red = #FF0000\n" +
+    "color custom_red = 0xFF0000\n" +
     "animation test_anim = pulse_position_animation(custom_red, 5, 5, 2)\n" +
     "test_anim.opacity = smooth(100, 255, 4s)\n" +
     "run test_anim"

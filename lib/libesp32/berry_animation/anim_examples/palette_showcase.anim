@@ -5,15 +5,15 @@ strip length 60
 
 # Example 1: Fire palette with hex colors
 palette fire_gradient = [
-  (0, #000000),    # Black (no fire)
-  (32, #330000),   # Very dark red
-  (64, #660000),   # Dark red
-  (96, #CC0000),   # Red
-  (128, #FF3300),  # Red-orange
-  (160, #FF6600),  # Orange
-  (192, #FF9900),  # Light orange
-  (224, #FFCC00),  # Yellow-orange
-  (255, #FFFF00)   # Bright yellow
+  (0, 0x000000),    # Black (no fire)
+  (32, 0x330000),   # Very dark red
+  (64, 0x660000),   # Dark red
+  (96, 0xCC0000),   # Red
+  (128, 0xFF3300),  # Red-orange
+  (160, 0xFF6600),  # Orange
+  (192, 0xFF9900),  # Light orange
+  (224, 0xFFCC00),  # Yellow-orange
+  (255, 0xFFFF00)   # Bright yellow
 ]
 
 # Example 2: Ocean palette with named colors
@@ -27,20 +27,20 @@ palette ocean_depths = [
 
 # Example 3: Aurora palette (from the original example)
 palette aurora_borealis = [
-  (0, #000022),    # Dark night sky
-  (64, #004400),   # Dark green
-  (128, #00AA44),  # Aurora green
-  (192, #44AA88),  # Light green
-  (255, #88FFAA)   # Bright aurora
+  (0, 0x000022),    # Dark night sky
+  (64, 0x004400),   # Dark green
+  (128, 0x00AA44),  # Aurora green
+  (192, 0x44AA88),  # Light green
+  (255, 0x88FFAA)   # Bright aurora
 ]
 
 # Example 4: Sunset palette mixing hex and named colors
 palette sunset_sky = [
-  (0, #191970),    # Midnight blue
-  (64, purple),    # Purple twilight
-  (128, #FF69B4),  # Hot pink
-  (192, orange),   # Sunset orange
-  (255, yellow)    # Sun
+  (0, 0x191970),    # Midnight blue
+  (64, purple),     # Purple twilight
+  (128, 0xFF69B4),  # Hot pink
+  (192, orange),    # Sunset orange
+  (255, yellow)     # Sun
 ]
 
 # Create animations using each palette

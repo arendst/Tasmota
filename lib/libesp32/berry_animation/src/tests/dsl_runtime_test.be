@@ -23,7 +23,7 @@ def test_dsl_runtime()
   
   var simple_dsl =
     "strip length 30\n"
-    "color custom_red = #FF0000\n"
+    "color custom_red = 0xFF0000\n"
     "pattern solid_red = solid(custom_red)\n"
     "animation red_anim = solid(custom_red)\n"
     "sequence demo {\n"
@@ -108,7 +108,7 @@ def test_dsl_runtime()
   
   var dsl1 = 
     "strip length 30\n" +
-    "color custom_blue = #0000FF\n" +
+    "color custom_blue = 0x0000FF\n" +
     "animation blue_anim = solid(custom_blue)\n" +
     "sequence blue_demo {\n" +
     "  play blue_anim for 1s\n" +
@@ -117,7 +117,7 @@ def test_dsl_runtime()
   
   var dsl2 = 
     "strip length 30\n" +
-    "color custom_green = #00FF00\n" +
+    "color custom_green = 0x00FF00\n" +
     "animation green_anim = solid(custom_green)\n" +
     "sequence green_demo {\n" +
     "  play green_anim for 1s\n" +
@@ -174,7 +174,7 @@ def test_dsl_file_operations()
   # Create a test DSL file
   var test_filename = "/tmp/test_animation.dsl"
   var test_dsl_content = "strip length 20\n" +
-    "color custom_purple = #800080\n" +
+    "color custom_purple = 0x800080\n" +
     "animation purple_anim = solid(custom_purple)\n" +
     "sequence file_test {\n" +
     "  play purple_anim for 2s\n" +

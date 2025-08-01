@@ -12,9 +12,9 @@
 # strip length 60
 # 
 # # Define colors
-# color red_custom = #FF0000
-# color blue_custom = #0000FF
-# color green_custom = #00FF00
+# color red_custom = 0xFF0000
+# color blue_custom = 0x0000FF
+# color green_custom = 0x00FF00
 # 
 # # Create animations
 # animation left_pulse = pulse_position_animation(red_custom, 15, 15, 3)

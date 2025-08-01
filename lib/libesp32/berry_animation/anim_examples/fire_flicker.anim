@@ -5,11 +5,11 @@ strip length 60
 
 # Define fire palette from black to yellow
 palette fire_colors = [
-  (0, #000000),    # Black
-  (64, #800000),   # Dark red
-  (128, #FF0000),  # Red
-  (192, #FF4500),  # Orange red
-  (255, #FFFF00)   # Yellow
+  (0, 0x000000),    # Black
+  (64, 0x800000),   # Dark red
+  (128, 0xFF0000),  # Red
+  (192, 0xFF4500),  # Orange red
+  (255, 0xFFFF00)   # Yellow
 ]
 
 # Create base fire animation with palette

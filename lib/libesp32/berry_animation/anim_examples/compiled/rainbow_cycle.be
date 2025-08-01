@@ -13,7 +13,7 @@
 # 
 # # Create smooth rainbow cycle animation
 # animation rainbow_cycle = color_cycle_animation(
-#   [#FF0000, #FF8000, #FFFF00, #00FF00, #0000FF, #8000FF, #FF00FF], # rainbow colors
+#   [0xFF0000, 0xFF8000, 0xFFFF00, 0x00FF00, 0x0000FF, 0x8000FF, 0xFF00FF], # rainbow colors
 #   5s  # cycle period
 # )
 # 

@@ -12,51 +12,51 @@
 # strip length 60
 # 
 # # Dark space background
-# color space_bg = #000011
+# color space_bg = 0x000011
 # animation background = solid(space_bg)
 # 
 # # Multiple meteors with different speeds and colors
 # animation meteor1 = comet_animation(
-#   #FFFFFF,  # Bright white
-#   12,       # long trail
-#   1.5s      # fast speed
+#   0xFFFFFF,  # Bright white
+#   12,        # long trail
+#   1.5s       # fast speed
 # )
 # meteor1.priority = 15
 # 
 # animation meteor2 = comet_animation(
-#   #FFAA00,  # Orange
-#   10,       # medium trail
-#   2s        # medium speed
+#   0xFFAA00,  # Orange
+#   10,        # medium trail
+#   2s         # medium speed
 # )
 # meteor2.priority = 12
 # 
 # animation meteor3 = comet_animation(
-#   #AAAAFF,  # Blue-white
-#   8,        # shorter trail
-#   1.8s      # fast speed
+#   0xAAAAFF,  # Blue-white
+#   8,         # shorter trail
+#   1.8s       # fast speed
 # )
 # meteor3.priority = 10
 # 
 # animation meteor4 = comet_animation(
-#   #FFAAAA,  # Pink-white
-#   14,       # long trail
-#   2.5s      # slower speed
+#   0xFFAAAA,  # Pink-white
+#   14,        # long trail
+#   2.5s       # slower speed
 # )
 # meteor4.priority = 8
 # 
 # # Add distant stars
 # animation stars = twinkle_animation(
-#   #CCCCCC,  # Dim white
-#   12,       # density (many stars)
-#   2s        # twinkle speed (slow twinkle)
+#   0xCCCCCC,  # Dim white
+#   12,        # density (many stars)
+#   2s         # twinkle speed (slow twinkle)
 # )
 # stars.priority = 5
 # 
 # # Add occasional bright flash (meteor explosion)
 # animation meteor_flash = twinkle_animation(
-#   #FFFFFF,  # Bright white
-#   1,        # density (single flash)
-#   100ms     # twinkle speed (very quick)
+#   0xFFFFFF,  # Bright white
+#   1,         # density (single flash)
+#   100ms      # twinkle speed (very quick)
 # )
 # meteor_flash.priority = 25
 # 

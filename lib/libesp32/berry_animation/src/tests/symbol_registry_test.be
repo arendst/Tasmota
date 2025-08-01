@@ -12,7 +12,7 @@ import string
 def test_basic_symbol_registration()
   print("Testing basic symbol registration...")
   
-  var dsl_source = "color custom_red = #FF0000\n" +
+  var dsl_source = "color custom_red = 0xFF0000\n" +
     "pattern solid_red = solid(custom_red)\n" +
     "animation red_anim = solid_red"
   
@@ -41,7 +41,7 @@ def test_forward_reference_resolution()
   
   # DSL with forward reference: pattern uses color defined later
   var dsl_source = "pattern fire_pattern = solid(custom_red)\n" +
-    "color custom_red = #FF0000"
+    "color custom_red = 0xFF0000"
   
   var lexer = animation.DSLLexer(dsl_source)
   var tokens = lexer.tokenize()
@@ -127,7 +127,7 @@ end
 def test_definition_generation()
   print("Testing definition generation...")
   
-  var dsl_source = "color custom_blue = #0000FF"
+  var dsl_source = "color custom_blue = 0x0000FF"
   
   var lexer = animation.DSLLexer(dsl_source)
   var tokens = lexer.tokenize()
@@ -154,7 +154,7 @@ def test_complex_forward_references()
   # Complex DSL with multiple forward references
   var dsl_source = "animation complex_anim = pulse(gradient_pattern, 3s)\n" +
     "pattern gradient_pattern = solid(primary_color)\n" +
-    "color primary_color = #FF8000\n" +
+    "color primary_color = 0xFF8000\n" +
     "sequence demo {\n" +
     "  play complex_anim for 5s\n" +
     "}\n" +

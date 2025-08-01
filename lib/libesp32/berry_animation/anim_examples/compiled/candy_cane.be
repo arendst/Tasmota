@@ -12,8 +12,8 @@
 # strip length 60
 # 
 # # Define stripe colors
-# color candy_red = #FF0000
-# color candy_white = #FFFFFF
+# color candy_red = 0xFF0000
+# color candy_white = 0xFFFFFF
 # 
 # # Create alternating red and white pattern
 # # Using multiple pulse positions to create stripes

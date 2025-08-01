@@ -7,7 +7,7 @@ def test_global_variable_access()
   print("Testing global variable access in generated code...")
   
   var dsl_code = 
-    "color red_alt = #FF0100\n"
+    "color red_alt = 0xFF0100\n"
     "pattern solid_red = solid(red_alt)"
   
   var berry_code = animation.compile_dsl(dsl_code)

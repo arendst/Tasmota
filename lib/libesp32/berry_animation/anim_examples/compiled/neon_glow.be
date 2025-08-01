@@ -13,10 +13,10 @@
 # 
 # # Define neon colors
 # palette neon_colors = [
-#   (0, #FF0080),    # Hot pink
-#   (85, #00FF80),   # Neon green
-#   (170, #8000FF),  # Electric purple
-#   (255, #FF8000)   # Neon orange
+#   (0, 0xFF0080),    # Hot pink
+#   (85, 0x00FF80),   # Neon green
+#   (170, 0x8000FF),  # Electric purple
+#   (255, 0xFF8000)   # Neon orange
 # ]
 # 
 # # Main neon glow with color cycling
@@ -26,7 +26,7 @@
 # neon_main.opacity = smooth(220, 255, 200ms)
 # 
 # # Add occasional electrical surge
-# animation neon_surge = solid(#FFFFFF)  # White surge
+# animation neon_surge = solid(0xFFFFFF)  # White surge
 # neon_surge.opacity = square(0, 255, 50ms, 2)  # Quick bright surges
 # neon_surge.priority = 20
 # 
@@ -58,9 +58,9 @@
 # 
 # # Add electrical arcing between segments
 # animation arc_sparkles = twinkle_animation(
-#   #AAAAFF,  # Electric blue
-#   4,        # density (few arcs)
-#   100ms     # twinkle speed (quick arcs)
+#   0xAAAAFF,  # Electric blue
+#   4,         # density (few arcs)
+#   100ms      # twinkle speed (quick arcs)
 # )
 # arc_sparkles.priority = 15
 # 

@@ -4,16 +4,16 @@
 strip length 60
 
 # Green tree base
-color tree_green = #006600
+color tree_green = 0x006600
 animation tree_base = solid(tree_green)
 
 # Define ornament colors
 palette ornament_colors = [
-  (0, #FF0000),    # Red
-  (64, #FFD700),   # Gold
-  (128, #0000FF),  # Blue
-  (192, #FFFFFF),  # White
-  (255, #FF00FF)   # Magenta
+  (0, 0xFF0000),    # Red
+  (64, 0xFFD700),   # Gold
+  (128, 0x0000FF),  # Blue
+  (192, 0xFFFFFF),  # White
+  (255, 0xFF00FF)   # Magenta
 ]
 
 # Colorful ornaments as twinkling lights
@@ -27,19 +27,19 @@ ornaments.priority = 10
 
 # Star on top (bright yellow pulse)
 animation tree_star = pulse_position_animation(
-  #FFFF00,  # Bright yellow
-  58,       # position (near the top)
-  3,        # star size
-  1         # sharp edges
+  0xFFFF00,  # Bright yellow
+  58,        # position (near the top)
+  3,         # star size
+  1          # sharp edges
 )
 tree_star.priority = 20
 tree_star.opacity = smooth(200, 255, 2s)  # Gentle pulsing
 
 # Add some white sparkles for snow/magic
 animation snow_sparkles = twinkle_animation(
-  #FFFFFF,  # White snow
-  8,        # density (sparkle count)
-  400ms     # twinkle speed (quick sparkles)
+  0xFFFFFF,  # White snow
+  8,         # density (sparkle count)
+  400ms      # twinkle speed (quick sparkles)
 )
 snow_sparkles.priority = 15
 

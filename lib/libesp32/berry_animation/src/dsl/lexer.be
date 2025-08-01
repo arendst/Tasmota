@@ -58,7 +58,9 @@ class DSLLexer
       self.column = 1
       return
     elif ch == '#'
-      self.scan_comment_or_color()
+      self.scan_comment()
+    elif ch == '0' && self.peek() == 'x'
+      self.scan_hex_color_0x()
     elif self.is_alpha(ch) || ch == '_'
       self.scan_identifier_or_keyword()
     elif self.is_digit(ch)
@@ -72,30 +74,27 @@ class DSLLexer
     end
   end
   
-  # Scan comment or hex color (both start with #)
-  def scan_comment_or_color()
+  # Scan comment (now unambiguous - only starts with #)
+  def scan_comment()
     var start_pos = self.position - 1
     var start_column = self.column - 1
     
-    # Look ahead to see if this is a hex color
-    if self.position < size(self.source) && self.is_hex_digit(self.source[self.position])
-      # This is a hex color
-      self.scan_hex_color()
-    else
-      # This is a comment - consume until end of line
-      while !self.at_end() && self.peek() != '\n'
-        self.advance()
-      end
-      
-      var comment_text = self.source[start_pos..self.position-1]
-      self.add_token(37 #-animation.Token.COMMENT-#, comment_text, self.position - start_pos)
+    # This is a comment - consume until end of line
+    while !self.at_end() && self.peek() != '\n'
+      self.advance()
     end
+    
+    var comment_text = self.source[start_pos..self.position-1]
+    self.add_token(37 #-animation.Token.COMMENT-#, comment_text, self.position - start_pos)
   end
   
-  # Scan hex color (#RRGGBB, #RGB, #AARRGGBB, or #ARGB)
-  def scan_hex_color()
-    var start_pos = self.position - 1  # Include the #
+  # Scan hex color (0xRRGGBB, 0xAARRGGBB)
+  def scan_hex_color_0x()
+    var start_pos = self.position - 1  # Include the '0'
     var start_column = self.column - 1
+    
+    # Advance past 'x'
+    self.advance()
     var hex_digits = 0
     
     # Count hex digits
@@ -106,11 +105,11 @@ class DSLLexer
     
     var color_value = self.source[start_pos..self.position-1]
     
-    # Validate hex color format - support alpha channel
-    if hex_digits == 3 || hex_digits == 4 || hex_digits == 6 || hex_digits == 8
+    # Validate hex color format - support 6 (RGB) or 8 (ARGB) digits
+    if hex_digits == 6 || hex_digits == 8
       self.add_token(4 #-animation.Token.COLOR-#, color_value, size(color_value))
     else
-      self.add_error("Invalid hex color format: " + color_value)
+      self.add_error("Invalid hex color format: " + color_value + " (expected 0xRRGGBB or 0xAARRGGBB)")
       self.add_token(39 #-animation.Token.ERROR-#, color_value, size(color_value))
     end
   end

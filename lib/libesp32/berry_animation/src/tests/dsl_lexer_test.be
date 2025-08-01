@@ -10,7 +10,7 @@ import animation
 def test_basic_tokenization()
   print("Testing basic DSL tokenization...")
   
-  var dsl_source = "strip length 60\ncolor red = #FF0000\nrun demo"
+  var dsl_source = "strip length 60\ncolor red = 0xFF0000\nrun demo"
   
   var lexer = animation.DSLLexer(dsl_source)
   var tokens = lexer.tokenize()
@@ -35,12 +35,12 @@ def test_basic_tokenization()
   for token : tokens
     if token.type == animation.Token.KEYWORD && token.value == "color"
       found_color_keyword = true
-    elif token.type == animation.Token.COLOR && token.value == "#FF0000"
+    elif token.type == animation.Token.COLOR && token.value == "0xFF0000"
       found_color_value = true
     end
   end
   assert(found_color_keyword, "Should find 'color' keyword")
-  assert(found_color_value, "Should find '#FF0000' color value")
+  assert(found_color_value, "Should find '0xFF0000' color value")
   
   # Should have no errors
   assert(!lexer.has_errors(), "Should have no lexical errors")
@@ -54,7 +54,7 @@ def test_color_tokenization()
   print("Testing color tokenization...")
   
   var color_tests = [
-    ["#FF0000", animation.Token.COLOR],
+    ["0xFF0000", animation.Token.COLOR],
     ["red", animation.Token.COLOR],
     ["blue", animation.Token.COLOR],
     ["white", animation.Token.COLOR]  # transparent is a keyword, so use white instead
@@ -294,7 +294,7 @@ def test_comments()
   
   var comment_tests = [
     "# This is a comment",
-    "color red = #FF0000  # Inline comment"
+    "color red = 0xFF0000  # Inline comment"
   ]
   
   for comment_test : comment_tests
@@ -325,7 +325,7 @@ def test_complex_dsl()
     "strip brightness 80%\n" +
     "\n" +
     "# Color Definitions\n" +
-    "color red = #FF0000\n" +
+    "color red = 0xFF0000\n" +
     "color orange = rgb(255, 128, 0)\n" +
     "color yellow = hsv(60, 100, 100)\n" +
     "\n" +
@@ -387,9 +387,9 @@ def test_error_handling()
   assert(lexer1.has_errors(), "Invalid character should produce error")
   
   # Test invalid hex color
-  var lexer2 = animation.DSLLexer("color red = #GGGGGG")
+  var lexer2 = animation.DSLLexer("color red = 0xGGGGGG")
   var tokens2 = lexer2.tokenize()
-  # Note: This might not be an error depending on implementation
+  assert(lexer2.has_errors(), "Invalid hex color should produce error")
   
   # Test unterminated string
   var lexer3 = animation.DSLLexer('text = "unterminated')

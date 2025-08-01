@@ -9,7 +9,7 @@ This document explains the organization of the Tasmota Berry Animation Framework
 ├── docs/                        # User documentation
 ├── lib/libesp32/berry_animation/ # Framework source code
 ├── anim_examples/               # DSL animation examples (.anim files)
-├── compiled/                    # Compiled Berry code from DSL examples
+├── anim_examples/compiled/      # Compiled Berry code from DSL examples
 ├── .kiro/                       # Project specifications and design docs
 └── .docs_archive/               # Archived technical implementation docs
 ```
@@ -113,12 +113,12 @@ anim_examples/
 └── simple_pulse.anim          # Basic pulsing effect
 ```
 
-## Compiled Examples (`compiled/`)
+## Compiled Examples (`anim_examples/compiled/`)
 
 Berry code generated from DSL examples (for reference):
 
 ```
-compiled/
+anim_examples/compiled/
 ├── aurora_borealis.be         # Compiled from aurora_borealis.anim
 ├── breathing_colors.be        # Compiled from breathing_colors.anim
 └── ... (compiled versions of .anim files)
@@ -200,7 +200,7 @@ Technical implementation documents moved from active documentation:
 
 ### DSL Files
 - **`*.anim`** - DSL animation files
-- **`*.be`** (in compiled/) - Compiled Berry code from DSL
+- **`*.be`** (in anim_examples/compiled/) - Compiled Berry code from DSL
 
 ## Navigation Tips
 

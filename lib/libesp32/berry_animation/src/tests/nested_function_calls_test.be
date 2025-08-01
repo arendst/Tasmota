@@ -11,7 +11,7 @@ def test_basic_nested_calls()
   
   var dsl_code = 
     "strip length 30\n"
-    "color custom_red = #FF0000\n"
+    "color custom_red = 0xFF0000\n"
     "animation pulse_red = pulse_animation(solid(custom_red), 3s)\n"
     "run pulse_red"
   
@@ -146,10 +146,10 @@ def test_complex_real_world_example()
   
   var dsl_code = 
     "strip length 60\n"
-    "color sunset_red = #FF4500\n"
-    "color ocean_blue = #0077AA\n"
-    "color star_white = #FFFFFF\n"
-    "color deep_blue = #000080\n"
+    "color sunset_red = 0xFF4500\n"
+    "color ocean_blue = 0x0077AA\n"
+    "color star_white = 0xFFFFFF\n"
+    "color deep_blue = 0x000080\n"
     "animation evening = fade(\n"
     "  overlay(\n"
     "    shift_right(gradient(sunset_red, orange, yellow), 400ms),\n"
@@ -183,7 +183,7 @@ def test_generated_code_validity()
   
   var dsl_code = 
     "strip length 30\n"
-    "color custom_red = #FF0000\n"
+    "color custom_red = 0xFF0000\n"
     "animation test = pulse_animation(solid(custom_red), 3s)\n"
     "run test"
   

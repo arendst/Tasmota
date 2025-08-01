@@ -13,15 +13,15 @@
 # 
 # # Define time-of-day color palette
 # palette daylight_colors = [
-#   (0, #000011),    # Night - dark blue
-#   (32, #001133),   # Pre-dawn
-#   (64, #FF4400),   # Sunrise orange
-#   (96, #FFAA00),   # Morning yellow
-#   (128, #FFFF88),  # Midday bright
-#   (160, #FFAA44),  # Afternoon
-#   (192, #FF6600),  # Sunset orange
-#   (224, #AA2200),  # Dusk red
-#   (255, #220011)   # Night - dark red
+#   (0, 0x000011),    # Night - dark blue
+#   (32, 0x001133),   # Pre-dawn
+#   (64, 0xFF4400),   # Sunrise orange
+#   (96, 0xFFAA00),   # Morning yellow
+#   (128, 0xFFFF88),  # Midday bright
+#   (160, 0xFFAA44),  # Afternoon
+#   (192, 0xFF6600),  # Sunset orange
+#   (224, 0xAA2200),  # Dusk red
+#   (255, 0x220011)   # Night - dark red
 # ]
 # 
 # # Main daylight cycle - very slow transition
@@ -29,10 +29,10 @@
 # 
 # # Add sun position effect - bright spot that moves
 # animation sun_position = pulse_position_animation(
-#   #FFFFAA,  # Bright yellow sun
-#   5,        # initial position
-#   8,        # sun size
-#   4         # soft glow
+#   0xFFFFAA,  # Bright yellow sun
+#   5,         # initial position
+#   8,         # sun size
+#   4          # soft glow
 # )
 # sun_position.priority = 10
 # sun_position.pos = smooth(5, 55, 30s)  # Sun arc across sky
@@ -40,10 +40,10 @@
 # 
 # # Add atmospheric glow around sun
 # animation sun_glow = pulse_position_animation(
-#   #FFCC88,  # Warm glow
-#   5,        # initial position
-#   16,       # larger glow
-#   8         # very soft
+#   0xFFCC88,  # Warm glow
+#   5,         # initial position
+#   16,        # larger glow
+#   8          # very soft
 # )
 # sun_glow.priority = 5
 # sun_glow.pos = smooth(5, 55, 30s)  # Follow sun
@@ -51,9 +51,9 @@
 # 
 # # Add twinkling stars during night phases
 # animation stars = twinkle_animation(
-#   #FFFFFF,  # White stars
-#   6,        # density (star count)
-#   1s        # twinkle speed (slow twinkle)
+#   0xFFFFFF,  # White stars
+#   6,         # density (star count)
+#   1s         # twinkle speed (slow twinkle)
 # )
 # stars.priority = 15
 # stars.opacity = smooth(255, 0, 30s)  # Fade out during day

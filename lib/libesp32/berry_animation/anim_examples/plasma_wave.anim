@@ -5,12 +5,12 @@ strip length 60
 
 # Define plasma color palette with smooth transitions
 palette plasma_colors = [
-  (0, #FF0080),    # Magenta
-  (51, #FF8000),   # Orange
-  (102, #FFFF00),  # Yellow
-  (153, #80FF00),  # Yellow-green
-  (204, #00FF80),  # Cyan-green
-  (255, #0080FF)   # Blue
+  (0, 0xFF0080),    # Magenta
+  (51, 0xFF8000),   # Orange
+  (102, 0xFFFF00),  # Yellow
+  (153, 0x80FF00),  # Yellow-green
+  (204, 0x00FF80),  # Cyan-green
+  (255, 0x0080FF)   # Blue
 ]
 
 # Base plasma animation with medium speed

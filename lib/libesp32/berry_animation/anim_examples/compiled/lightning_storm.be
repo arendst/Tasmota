@@ -13,38 +13,38 @@
 # 
 # # Dark stormy background with subtle purple/blue
 # palette storm_colors = [
-#   (0, #000011),    # Very dark blue
-#   (128, #110022),  # Dark purple
-#   (255, #220033)   # Slightly lighter purple
+#   (0, 0x000011),    # Very dark blue
+#   (128, 0x110022),  # Dark purple
+#   (255, 0x220033)   # Slightly lighter purple
 # ]
 # 
 # animation storm_bg = rich_palette_animation(storm_colors, 12s, smooth, 100)
 # 
 # # Random lightning flashes - full strip
-# animation lightning_main = solid(#FFFFFF)  # Bright white
+# animation lightning_main = solid(0xFFFFFF)  # Bright white
 # lightning_main.opacity = square(0, 255, 80ms, 3)  # Quick bright flashes
 # lightning_main.priority = 20
 # 
 # # Secondary lightning - partial strip
 # animation lightning_partial = pulse_position_animation(
-#   #FFFFAA,  # Slightly yellow white
-#   30,       # center position
-#   20,       # covers part of strip
-#   5         # soft edges
+#   0xFFFFAA,  # Slightly yellow white
+#   30,        # center position
+#   20,        # covers part of strip
+#   5          # soft edges
 # )
 # lightning_partial.priority = 15
 # lightning_partial.opacity = square(0, 200, 120ms, 4)  # Different timing
 # 
 # # Add blue afterglow
-# animation afterglow = solid(#4444FF)  # Blue glow
+# animation afterglow = solid(0x4444FF)  # Blue glow
 # afterglow.opacity = square(0, 80, 200ms, 8)  # Longer, dimmer glow
 # afterglow.priority = 10
 # 
 # # Distant thunder (dim flashes)
 # animation distant_flash = twinkle_animation(
-#   #666699,  # Dim blue-white
-#   4,        # density (few flashes)
-#   300ms     # twinkle speed (medium duration)
+#   0x666699,  # Dim blue-white
+#   4,         # density (few flashes)
+#   300ms      # twinkle speed (medium duration)
 # )
 # distant_flash.priority = 5
 # 

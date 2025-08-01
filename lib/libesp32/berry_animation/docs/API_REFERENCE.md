@@ -104,12 +104,13 @@ Adds temporal behavior to patterns.
 
 **`animation.solid(color, priority=0, duration=0, loop=false, opacity=255, name="")`**
 - Creates solid color animation
-- **color**: ARGB color value (0xAARRGGBB)
+- **color**: ARGB color value (0xAARRGGBB) or ValueProvider instance
 - Returns: `PatternAnimation` instance
 
 ```berry
 var red = animation.solid(0xFFFF0000)
 var blue = animation.solid(0xFF0000FF, 10, 5000, true, 200, "blue_anim")
+var dynamic = animation.solid(animation.smooth(0xFF000000, 0xFFFFFFFF, 3000))
 ```
 
 **`animation.pulse(pattern, period_ms, min_brightness=0, max_brightness=255, priority=0, duration=0, loop=false, opacity=255, name="")`**
@@ -126,12 +127,13 @@ var pulse_red = animation.pulse(animation.solid(0xFFFF0000), 2000, 50, 255)
 
 **`animation.breathe(color, period_ms, priority=0, duration=0, loop=false, opacity=255, name="")`**
 - Creates smooth breathing effect
-- **color**: ARGB color value
+- **color**: ARGB color value or ValueProvider instance
 - **period_ms**: Breathing period in milliseconds
 - Returns: `BreatheAnimation` instance
 
 ```berry
 var breathe_blue = animation.breathe(0xFF0000FF, 4000)
+var dynamic_breathe = animation.breathe(animation.color_cycle_color_provider([0xFFFF0000, 0xFF00FF00], 2000), 4000)
 ```
 
 ### Palette-Based Animations
@@ -152,48 +154,53 @@ var rainbow = animation.rich_palette_animation(animation.PALETTE_RAINBOW, 5000, 
 
 **`animation.pulse_position_animation(color, pos, pulse_size, slew_size=0, priority=0, duration=0, loop=false, opacity=255, name="")`**
 - Creates pulse at specific position
-- **color**: ARGB color value
-- **pos**: Pixel position (0-based)
-- **pulse_size**: Width of pulse in pixels
-- **slew_size**: Fade region size in pixels
+- **color**: ARGB color value or ValueProvider instance
+- **pos**: Pixel position (0-based) or ValueProvider instance
+- **pulse_size**: Width of pulse in pixels or ValueProvider instance
+- **slew_size**: Fade region size in pixels or ValueProvider instance
 - Returns: `PulsePositionAnimation` instance
 
 ```berry
 var center_pulse = animation.pulse_position_animation(0xFFFFFFFF, 15, 3, 2)
+var moving_pulse = animation.pulse_position_animation(0xFFFF0000, animation.smooth(0, 29, 3000), 3, 2)
 ```
 
 **`animation.comet_animation(color, tail_length, speed_ms, priority=0, duration=0, loop=false, opacity=255, name="")`**
 - Creates moving comet effect
-- **color**: ARGB color value
+- **color**: ARGB color value or ValueProvider instance
 - **tail_length**: Length of comet tail in pixels
 - **speed_ms**: Movement speed in milliseconds per pixel
 - Returns: `CometAnimation` instance
 
 ```berry
 var comet = animation.comet_animation(0xFF00FFFF, 8, 100)
+var rainbow_comet = animation.comet_animation(animation.rich_palette_color_provider(animation.PALETTE_RAINBOW, 3000), 8, 100)
 ```
 
 **`animation.twinkle_animation(color, density, speed_ms, priority=0, duration=0, loop=false, opacity=255, name="")`**
 - Creates twinkling stars effect
-- **color**: ARGB color value
+- **color**: ARGB color value or ValueProvider instance
 - **density**: Number of twinkling pixels
 - **speed_ms**: Twinkle speed in milliseconds
 - Returns: `TwinkleAnimation` instance
 
 ```berry
 var stars = animation.twinkle_animation(0xFFFFFFFF, 5, 500)
+var color_changing_stars = animation.twinkle_animation(animation.color_cycle_color_provider([0xFFFF0000, 0xFF00FF00, 0xFF0000FF], 4000), 5, 500)
 ```
 
 ### Fire and Natural Effects
 
-**`animation.fire_animation(intensity=200, speed_ms=100, priority=0, duration=0, loop=false, opacity=255, name="")`**
+**`animation.fire_animation(color=nil, intensity=200, speed_ms=100, priority=0, duration=0, loop=false, opacity=255, name="")`**
 - Creates realistic fire simulation
+- **color**: ARGB color value, ValueProvider instance, or nil for default fire palette
 - **intensity**: Fire intensity (0-255)
 - **speed_ms**: Animation speed in milliseconds
 - Returns: `FireAnimation` instance
 
 ```berry
-var fire = animation.fire_animation(180, 150)
+var fire = animation.fire_animation(nil, 180, 150)  # Default fire palette
+var blue_fire = animation.fire_animation(0xFF0066FF, 180, 150)  # Blue fire
 ```
 
 ### Advanced Pattern Animations
@@ -208,11 +215,12 @@ var fire = animation.fire_animation(180, 150)
 
 **`animation.noise_single_color(color, scale, speed, strip_length, priority)`**
 - Creates single-color noise pattern
-- **color**: ARGB color value
+- **color**: ARGB color value or ValueProvider instance
 - Returns: `NoiseAnimation` instance
 
-**`animation.noise_fractal(color_source, scale, speed, octaves, strip_length, priority)`**
+**`animation.noise_fractal(color, scale, speed, octaves, strip_length, priority)`**
 - Creates multi-octave fractal noise
+- **color**: ARGB color value, ValueProvider instance, or nil for rainbow
 - **octaves**: Number of noise octaves (1-4)
 - Returns: `NoiseAnimation` instance
 
@@ -229,7 +237,7 @@ var fractal = animation.noise_fractal(nil, 40, 50, 3, 30, 10)
 
 **`animation.plasma_single_color(color, time_speed, strip_length, priority)`**
 - Creates single-color plasma effect
-- **color**: ARGB color value
+- **color**: ARGB color value or ValueProvider instance
 - Returns: `PlasmaAnimation` instance
 
 ```berry
@@ -245,7 +253,7 @@ var purple_plasma = animation.plasma_single_color(0xFF8800FF, 60, 30, 10)
 
 **`animation.sparkle_colored(color, density, fade_speed, strip_length, priority)`**
 - Creates colored sparkles
-- **color**: ARGB color value
+- **color**: ARGB color value or ValueProvider instance
 - Returns: `SparkleAnimation` instance
 
 **`animation.sparkle_rainbow(density, fade_speed, strip_length, priority)`**
@@ -266,11 +274,12 @@ var rainbow_sparkles = animation.sparkle_rainbow(60, 40, 30, 10)
 
 **`animation.wave_single_sine(color, amplitude, wave_speed, strip_length, priority)`**
 - Creates single-color sine wave
-- **color**: ARGB color value
+- **color**: ARGB color value or ValueProvider instance
 - Returns: `WaveAnimation` instance
 
-**`animation.wave_custom(color_source, wave_type, amplitude, frequency, strip_length, priority)`**
+**`animation.wave_custom(color, wave_type, amplitude, frequency, strip_length, priority)`**
 - Creates custom wave with specified type
+- **color**: ARGB color value, ValueProvider instance, or nil for rainbow
 - **wave_type**: 0=sine, 1=triangle, 2=square, 3=sawtooth
 - **frequency**: Wave frequency/density (0-255)
 - Returns: `WaveAnimation` instance
@@ -447,11 +456,19 @@ var static_position = 15
 - Returns: `OscillatorValueProvider`
 
 **`animation.linear(start, end, period_ms)`**
-- Triangle wave oscillation
+- Triangle wave oscillation (goes from start to end, then back to start)
+- Returns: `OscillatorValueProvider`
+
+**`animation.triangle(start, end, period_ms)`**
+- Alias for `linear()` - triangle wave oscillation
 - Returns: `OscillatorValueProvider`
 
 **`animation.ramp(start, end, period_ms)`**
-- Sawtooth wave oscillation
+- Sawtooth wave oscillation (linear progression from start to end)
+- Returns: `OscillatorValueProvider`
+
+**`animation.sawtooth(start, end, period_ms)`**
+- Alias for `ramp()` - sawtooth wave oscillation
 - Returns: `OscillatorValueProvider`
 
 **`animation.square(start, end, period_ms, duty_cycle=50)`**

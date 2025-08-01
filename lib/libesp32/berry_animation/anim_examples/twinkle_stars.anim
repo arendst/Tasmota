@@ -4,22 +4,22 @@
 strip length 60
 
 # Dark blue background
-color night_sky = #000033
+color night_sky = 0x000033
 animation background = solid(night_sky)
 
 # White twinkling stars
 animation stars = twinkle_animation(
-  #FFFFFF,  # White stars
-  8,        # density (number of stars)
-  500ms     # twinkle speed (twinkle duration)
+  0xFFFFFF,  # White stars
+  8,         # density (number of stars)
+  500ms      # twinkle speed (twinkle duration)
 )
 stars.priority = 10
 
 # Add occasional bright flash
 animation bright_flash = twinkle_animation(
-  #FFFFAA,  # Bright yellow-white
-  2,        # density (fewer bright flashes)
-  300ms     # twinkle speed (quick flash)
+  0xFFFFAA,  # Bright yellow-white
+  2,         # density (fewer bright flashes)
+  300ms      # twinkle speed (quick flash)
 )
 bright_flash.priority = 15
 

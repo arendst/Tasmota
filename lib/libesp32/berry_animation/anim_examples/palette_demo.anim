@@ -5,20 +5,20 @@ strip length 30
 
 # Define a fire palette
 palette fire_colors = [
-  (0, #000000),    # Black
-  (64, #800000),   # Dark red
-  (128, #FF0000),  # Red
-  (192, #FF8000),  # Orange
-  (255, #FFFF00)   # Yellow
+  (0, 0x000000),    # Black
+  (64, 0x800000),   # Dark red
+  (128, 0xFF0000),  # Red
+  (192, 0xFF8000),  # Orange
+  (255, 0xFFFF00)   # Yellow
 ]
 
 # Define an ocean palette
 palette ocean_colors = [
-  (0, #000080),    # Navy blue
-  (64, #0000FF),   # Blue
-  (128, #00FFFF),  # Cyan
-  (192, #00FF80),  # Spring green
-  (255, #008000)   # Green
+  (0, 0x000080),    # Navy blue
+  (64, 0x0000FF),   # Blue
+  (128, 0x00FFFF),  # Cyan
+  (192, 0x00FF80),  # Spring green
+  (255, 0x008000)   # Green
 ]
 
 # Create animations using the palettes

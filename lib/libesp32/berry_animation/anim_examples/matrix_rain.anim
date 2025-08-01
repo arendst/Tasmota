@@ -4,16 +4,16 @@
 strip length 60
 
 # Dark background
-color matrix_bg = #000000
+color matrix_bg = 0x000000
 animation background = solid(matrix_bg)
 
 # Define matrix green palette
 palette matrix_greens = [
-  (0, #000000),    # Black
-  (64, #003300),   # Dark green
-  (128, #006600),  # Medium green
-  (192, #00AA00),  # Bright green
-  (255, #00FF00)   # Neon green
+  (0, 0x000000),    # Black
+  (64, 0x003300),   # Dark green
+  (128, 0x006600),  # Medium green
+  (192, 0x00AA00),  # Bright green
+  (255, 0x00FF00)   # Neon green
 ]
 
 # Create multiple cascading streams
@@ -43,9 +43,9 @@ stream3.priority = 6
 
 # Add random bright flashes (like code highlights)
 animation code_flash = twinkle_animation(
-  #00FFAA,  # Bright cyan-green
-  3,        # density (few flashes)
-  150ms     # twinkle speed (quick flash)
+  0x00FFAA,  # Bright cyan-green
+  3,         # density (few flashes)
+  150ms      # twinkle speed (quick flash)
 )
 code_flash.priority = 20
 

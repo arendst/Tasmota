@@ -870,7 +870,16 @@ class SimpleDSLTranspiler
   # Conversion helpers
   def convert_color(color_str)
     import string
-    # Handle hex colors
+    # Handle 0x hex colors (new format)
+    if string.startswith(color_str, "0x")
+      if size(color_str) == 10  # 0xAARRGGBB (with alpha channel)
+        return color_str
+      elif size(color_str) == 8   # 0xRRGGBB (without alpha channel - add opaque alpha)
+        return f"0xFF{color_str[2..]}"
+      end
+    end
+    
+    # Handle legacy # hex colors (for backward compatibility during transition)
     if string.startswith(color_str, "#")
       if size(color_str) == 9  # #AARRGGBB (with alpha channel)
         return f"0x{color_str[1..]}"

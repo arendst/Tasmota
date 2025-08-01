@@ -13,11 +13,11 @@
 # 
 # # Define ocean color palette
 # palette ocean_colors = [
-#   (0, #000080),    # Deep blue
-#   (64, #0040C0),   # Ocean blue
-#   (128, #0080FF),  # Light blue
-#   (192, #40C0FF),  # Cyan
-#   (255, #80FFFF)   # Light cyan
+#   (0, 0x000080),    # Deep blue
+#   (64, 0x0040C0),   # Ocean blue
+#   (128, 0x0080FF),  # Light blue
+#   (192, 0x40C0FF),  # Cyan
+#   (255, 0x80FFFF)   # Light cyan
 # ]
 # 
 # # Base ocean animation with slow color cycling
@@ -46,9 +46,9 @@
 # 
 # # Add foam sparkles
 # animation foam = twinkle_animation(
-#   #FFFFFF,  # White foam
-#   6,        # density (sparkle count)
-#   300ms     # twinkle speed (quick sparkles)
+#   0xFFFFFF,  # White foam
+#   6,         # density (sparkle count)
+#   300ms      # twinkle speed (quick sparkles)
 # )
 # foam.priority = 15
 # 
