@@ -218,43 +218,37 @@ end
 
 # Event system functions to monad
 def register_event_handler(event_name, callback_func, priority, condition, metadata)
-  import global
-  return global._event_manager.register_handler(event_name, callback_func, priority, condition, metadata)
+  return animation.event_manager.register_handler(event_name, callback_func, priority, condition, metadata)
 end
 
 def unregister_event_handler(handler)
-  import global
-  global._event_manager.unregister_handler(handler)
+  animation.event_manager.unregister_handler(handler)
 end
 
 def trigger_event(event_name, event_data)
-  import global
-  global._event_manager.trigger_event(event_name, event_data)
+  animation.event_manager.trigger_event(event_name, event_data)
 end
 
 def get_registered_events()
-  return global._event_manager.get_registered_events()
+  return animation.event_manager.get_registered_events()
 end
 
 def get_event_handlers(event_name)
-  import global
-  return global._event_manager.get_handlers(event_name)
+  return animation.event_manager.get_handlers(event_name)
 end
 
 def clear_all_event_handlers()
-  import global
-  global._event_manager.clear_all_handlers()
+  animation.event_manager.clear_all_handlers()
 end
 
 def set_event_active(event_name, active)
-  import global
-  global._event_manager.set_event_active(event_name, active)
+  animation.event_manager.set_event_active(event_name, active)
 end
 
 # Export classes
 return {
   "event_handler": EventHandler,
-  "event_manager": EventManager,
+  "EventManager": EventManager,
   'register_event_handler': register_event_handler,
   'unregister_event_handler': unregister_event_handler,
   'trigger_event': trigger_event,

@@ -58,13 +58,6 @@ register_to_animation(event_handler)
 import "core/user_functions" as user_functions
 register_to_animation(user_functions)
 
-def animation_init(m)
-  import global
-  global._event_manager = m.event_manager()
-  return m
-end
-animation.init = animation_init
-
 # Import effects
 import "effects/filled" as filled_animation
 register_to_animation(filled_animation)
@@ -151,6 +144,7 @@ register_to_animation(dsl_runtime)
 def animation_global(name, module_name)
   import global
   import introspect
+  import animation
   
   # First try to find in animation module
   if (module_name != nil) && introspect.contains(animation, module_name)
@@ -165,5 +159,25 @@ def animation_global(name, module_name)
   end
 end
 animation.global = animation_global
+
+def animation_init(m)
+  var animation_new = module("animation")   # create new non-solidified module
+  animation_new._ntv = m                    # keep the native module
+  animation_new.event_manager = m.EventManager()  # create monad for event manager
+  
+  # create a member function that looks in current module then in solidified
+  animation_new.member = def (k)
+    import animation
+    import introspect
+    if introspect.contains(animation._ntv, k)
+      return animation._ntv.(k)
+    else
+      return module("undefined")
+    end
+  end
+
+  return animation_new
+end
+animation.init = animation_init
 
 return animation

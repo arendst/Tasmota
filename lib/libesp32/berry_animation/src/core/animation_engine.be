@@ -294,10 +294,10 @@ class AnimationEngine
   
   # Event processing methods
   def _process_events(current_time)
-    # Process any queued events from the global event manager
+    # Process any queued events from the animation event manager
     # This is called during fast_loop to handle events asynchronously
-    if global._event_manager != nil
-      global._event_manager._process_queued_events()
+    if animation.event_manager != nil
+      animation.event_manager._process_queued_events()
     end
   end
   

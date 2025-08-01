@@ -39,7 +39,7 @@ end
 
 # Test 2: Event Manager Registration
 def test_event_manager_registration()
-  var manager = global._event_manager
+  var manager = animation.event_manager
   var callback_called = false
   
   var handler = manager.register_handler("button_press", def(data) callback_called = true end, 0, nil, nil)
@@ -52,7 +52,7 @@ end
 
 # Test 3: Event Priority Ordering
 def test_event_priority_ordering()
-  var manager = global._event_manager
+  var manager = animation.event_manager
   var execution_order = []
   
   # Register handlers with different priorities
@@ -72,7 +72,7 @@ end
 
 # Test 4: Event Conditions
 def test_event_conditions()
-  var manager = global._event_manager
+  var manager = animation.event_manager
   var callback_called = false
   
   # Register handler with condition
@@ -92,7 +92,7 @@ end
 
 # Test 5: Global Event Handlers
 def test_global_event_handlers()
-  var manager = global._event_manager
+  var manager = animation.event_manager
   var global_events = []
   
   # Register global handler
@@ -157,7 +157,7 @@ end
 
 # Test 9: Event Handler Deactivation
 def test_event_handler_deactivation()
-  var manager = global._event_manager
+  var manager = animation.event_manager
   var callback_called = false
   
   var handler = manager.register_handler("deactivation_test", def(data) callback_called = true end, 0, nil, nil)
@@ -173,7 +173,7 @@ end
 
 # Test 10: Event Queue Processing
 def test_event_queue_processing()
-  var manager = global._event_manager
+  var manager = animation.event_manager
   var events_processed = []
   
   # Register handler that triggers another event (tests queue)
@@ -208,7 +208,7 @@ end
 
 # Test 12: Event Metadata Handling
 def test_event_metadata_handling()
-  var manager = global._event_manager
+  var manager = animation.event_manager
   var received_metadata = nil
   
   var metadata = {"interval": 1000, "repeat": true}
