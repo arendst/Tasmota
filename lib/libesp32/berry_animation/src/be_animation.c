@@ -22,9 +22,9 @@
  * 
  *******************************************************************/
 
+#ifdef USE_BERRY_ANIMATION
 #include "be_constobj.h"
 #include "be_mapping.h"
 
-#ifdef USE_BERRY_ANIMATION
 #include "solidify/solidified_animation.h"
 #endif

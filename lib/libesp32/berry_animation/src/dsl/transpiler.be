@@ -437,6 +437,20 @@ class SimpleDSLTranspiler
       return "nil"
     end
     
+    # Handle unary minus for negative numbers
+    if tok.type == animation.Token.MINUS
+      self.next()  # consume the minus
+      var next_tok = self.current()
+      if next_tok != nil && next_tok.type == animation.Token.NUMBER
+        var value = "-" + next_tok.value
+        self.next()  # consume the number
+        return value
+      else
+        self.error("Expected number after '-'")
+        return "0"
+      end
+    end
+    
     # Function call: identifier or easing keyword followed by '('
     if (tok.type == animation.Token.KEYWORD || tok.type == animation.Token.IDENTIFIER) && 
        self.peek() != nil && self.peek().type == animation.Token.LEFT_PAREN

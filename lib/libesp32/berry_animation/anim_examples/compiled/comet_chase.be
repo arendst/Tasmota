@@ -11,11 +11,11 @@
 # 
 # strip length 60
 # 
-# # Dark background
-# color space_blue = #000066
+# # Dark blue background
+# color space_blue = #000066    # Note: opaque 0xFF alpha channel is implicitly added
 # animation background = solid(space_blue)
 # 
-# # Main comet with bright white head and blue tail
+# # Main comet with bright white head
 # animation comet_main = comet_animation(
 #   #FFFFFF,  # White head
 #   10,       # tail length
@@ -27,11 +27,12 @@
 # animation comet_secondary = comet_animation(
 #   #FF4500,  # Orange head
 #   8,        # shorter tail
-#   3s        # slower speed
+#   3s,       # slower speed
+#   -1        # other direction
 # )
 # comet_secondary.priority = 5
 # 
-# # Add sparkle trail behind main comet
+# # Add sparkle trail behind comets but on top of blue background
 # animation comet_sparkles = twinkle_animation(
 #   #AAAAFF,  # Light blue sparkles
 #   8,        # density (moderate sparkles)
@@ -51,16 +52,16 @@ import animation
 # Bright head with fading tail
 var strip = global.Leds(60)
 var engine = animation.create_engine(strip)
-# Dark background
-var space_blue_ = 0xFF000066
+# Dark blue background
+var space_blue_ = 0xFF000066  # Note: opaque 0xFF alpha channel is implicitly added
 var background_ = animation.solid(animation.global('space_blue_', 'space_blue'))
-# Main comet with bright white head and blue tail
+# Main comet with bright white head
 var comet_main_ = animation.comet_animation(0xFFFFFFFF, 10, 2000)
 animation.global('comet_main_').priority = 7
 # Secondary comet in different color, opposite direction
-var comet_secondary_ = animation.comet_animation(0xFFFF4500, 8, 3000)
+var comet_secondary_ = animation.comet_animation(0xFFFF4500, 8, 3000, -1)
 animation.global('comet_secondary_').priority = 5
-# Add sparkle trail behind main comet
+# Add sparkle trail behind comets but on top of blue background
 var comet_sparkles_ = animation.twinkle_animation(0xFFAAAAFF, 8, 400)
 animation.global('comet_sparkles_').priority = 8
 # Start all animations
