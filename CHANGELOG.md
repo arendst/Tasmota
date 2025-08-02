@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - ESP32 Platform from 2025.07.30 to 2025.07.31, Framework (Arduino Core) from v3.1.3.250707 to v3.1.3.250712 and IDF from v5.3.3.250707 to v5.3.3.250707 (#23685)
 - ESP8266 platform update from 2025.05.00 to 2025.07.00 (#23700)
 - OpenTherm library from v0.9.0 to v1.1.5 (#23704)
+- Berry raise webserver hooks from 16 to 32
 
 ### Fixed
 - NeoPool reset to default settings (#23734)

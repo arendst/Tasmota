@@ -71,7 +71,7 @@ extern "C" {
  * 
 \*********************************************************************************************/
 
-#define WEBSERVER_REQ_HANDLER_HOOK_MAX       16      // max number of callbacks, each callback requires a distinct address
+#define WEBSERVER_REQ_HANDLER_HOOK_MAX       32      // max number of callbacks, each callback requires a distinct address
 static String be_webserver_prefix[WEBSERVER_REQ_HANDLER_HOOK_MAX];
 static uint8_t be_webserver_method[WEBSERVER_REQ_HANDLER_HOOK_MAX];
 
