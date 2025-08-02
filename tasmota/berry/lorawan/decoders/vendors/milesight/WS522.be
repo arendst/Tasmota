@@ -154,10 +154,11 @@ class LwDecoWS522
       var current = sensor[8]
       var button_state = sensor[9] ? "&#x23FD;" : "&#x2B58;"
       var voltage_ls = sensor[10]
-      var power_factor_ls = sensor[11]
-      var energy_sum_ls = sensor[12]
-      var current_ls = sensor[13]
-      var button_state_ls = sensor[14]
+      var active_power_ls = sensor[11]
+      var power_factor_ls = sensor[12]
+      var energy_sum_ls = sensor[13]
+      var current_ls = sensor[14]
+      var button_state_ls = sensor[15]
 
       msg += "<tr class='htr'><td colspan='4'>&#9478;"                               # |
       msg += string.format(" %s",       button_state)                                # Button Sate ON | OFF icon
