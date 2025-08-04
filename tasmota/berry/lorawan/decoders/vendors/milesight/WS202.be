@@ -102,6 +102,7 @@ class LwDecoWS202
       var light_ls  = lwdecode.dhm_tt(sensor[9])
       var light_alt = (sensor[8] == 0) ? "Moon" : "Sun"
 
+      var fmt = LwSensorFormatter_cls()
       msg += fmt.start_line()
         .add_sensor( "string", pir,   pir_ls,   pir_alt )
         .add_sensor( "string", light, light_ls, light_alt )
