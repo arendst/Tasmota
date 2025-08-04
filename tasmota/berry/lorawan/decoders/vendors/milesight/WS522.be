@@ -246,24 +246,30 @@ class LwDecoWS522
       var power_factor = sensor[6]
       var energy_sum = sensor[7]
       var current = sensor[8]
-      var button_state = sensor[9] ? "&#x23FD;" : "&#x2B58;"
-      var voltage_ls = sensor[10]
-      var active_power_ls = sensor[11]
-      var power_factor_ls = sensor[12]
-      var energy_sum_ls = sensor[13]
-      var current_ls = sensor[14]
-      var button_state_ls = sensor[15]
+      var button_status = (sensor[9] ? "ON" : "OFF")
+      var button_state = "Power " + button_status
 
-      msg += "<tr class='htr'><td colspan='4'>&#9478;"                               # |
-      msg += string.format(" %s %.1fV", "&#x26A1;",  voltage)                        # High Voltage Icon
-      msg += string.format(" %s %dmA",  "&#x1F50C;", current)                        # Electric Plug Icon
-      msg += string.format(" %s %d%%",  "&#x1F4CA;", power_factor)                   # Bar Chart Icon
-      msg += string.format(" %s %dw",   "&#x1F4A1;", active_power)                   # Light Bulb Icon
-      msg += "{e}<tr class='htr'><td colspan='4'>&#9478;"                               # |
-      msg += string.format(" %s",       button_state)                                # Button Sate ON | OFF icon
-      msg += string.format(" %s %s",    "&#x23F1;",  lwdecode.dhm(button_state_ls))  # Stopwatch icon
-      msg += string.format(" %s %dWh",  "&#x1F9EE;", energy_sum)                     # Abacus Icon
-      msg += "{e}"                                                                   # = </td></tr>
+      var voltage_ls = lwdecode.dhm_tt(sensor[10])
+      var active_power_ls = lwdecode.dhm_tt(sensor[11])
+      var power_factor_ls = lwdecode.dhm_tt(sensor[12])
+      var energy_sum_ls = lwdecode.dhm_tt(sensor[13])
+      var current_ls = lwdecode.dhm_tt(sensor[14])
+      var button_state_ls = lwdecode.dhm_tt(sensor[15])
+
+      var fmt = LwSensorFormatter_cls()
+
+      #             Formatter         Value           Tooltip                          alternative icon
+      #             ================  ============    ===============================  ================
+      msg += fmt.start_line()
+        .add_sensor("volt",           voltage,        voltage_ls )
+        .add_sensor("milliamp",       current,        current_ls )
+        .add_sensor("power_factor%",  power_factor,   power_factor_ls )
+        .add_sensor("power",          active_power,   active_power_ls )
+        .next_line()
+        .add_sensor("string",         button_status,  button_state,                    button_state)
+        .add_sensor("energy",         energy_sum,     string.format("Total Power Usage (%s)",energy_sum_ls) )
+        .end_line()
+        .get_msg()
     end
     return msg
   end #add_web_sensor()

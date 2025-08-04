@@ -94,20 +94,19 @@ class LwDecoWS202
       msg += lwdecode.header(name, name_tooltip, battery + 100000, battery_last_seen, rssi, last_seen)
 
       # Sensors
-      var pir = sensor[6]
-      var pir_last_seen = sensor[7]
-      var light = sensor[8]
-      var light_last_seen = sensor[9]
+      var pir = (sensor[6] == true ? "Busy" : "Free")
+      var pir_ls = lwdecode.dhm_tt(sensor[7])
+      var pir_alt = (sensor[6] == true ? "No Entry" : "Free")
+      
+      var light     = (sensor[8] == 0) ? "Dark" : "Light"
+      var light_ls  = lwdecode.dhm_tt(sensor[9])
+      var light_alt = (sensor[8] == 0) ? "Moon" : "Sun"
 
-      msg += "<tr class='htr'><td colspan='4'>&#9478;"                  # |
-
-      msg += string.format(" %s %s", pir == true ? "&#x1F6AB" : "&#x1F193",   # PIR Free or Busy
-                                     lwdecode.dhm(pir_last_seen))
-
-      msg += string.format(" %s %s", light == 0 ? "&#x1F315" : "&#x1F31E",   # Light
-                                     lwdecode.dhm(light_last_seen))
-
-      msg += "{e}"                                                          # = </td></tr>
+      msg += fmt.start_line()
+        .add_sensor( "string", pir,   pir_ls,   pir_alt )
+        .add_sensor( "string", light, light_ls, light_alt )
+        .end_line()
+        .get_msg()
     end
     return msg
   end #add_web_sensor()
