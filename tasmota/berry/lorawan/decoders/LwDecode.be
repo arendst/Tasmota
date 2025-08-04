@@ -12,7 +12,16 @@ var LwSensorIcons = {
   "Stopwatch":        "&#x23F1;",   # Stopwatch Icon
   "Abacus":           "&#x1F9EE;",  # Abacus Icon
   "Power ON":         "&#x23FD;",   # Button State ON Icon
-  "Power OFF":        "&#x2B58;"    # Button State OFF Icon
+  "Power OFF":        "&#x2B58;",   # Button State OFF Icon
+  "Locked":           "&#x1F512;",  # Lock Close Icon
+  "Unlocked":         "&#x1F513;",  # Lock Open Icon
+  "Check Mark":       "&#x2705;",
+  "Crosscheck Mark":  "&#x274C;",
+  "Free":             "&#x1F193;",
+  "No Entry":         "&#x1F6AB;",
+  "Moon":             "&#x1F315;",
+  "Sun":              "&#x1F31E;",
+  "Radio Button":     "&#x1F518;"
 }
 
 var LwSensorFormatter = {
@@ -173,6 +182,10 @@ class lwdecode_cls
       unit = "m"
     end
     return format("%02d%s", since, unit)
+  end
+
+  def dhm_tt(last_time)
+    return format( "Received %s ago", self.dhm(last_time) )
   end
 
   def header(name, name_tooltip, battery, battery_last_seen, rssi, last_seen)
