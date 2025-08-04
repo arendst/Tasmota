@@ -144,27 +144,30 @@ void FetchThingsBoardRPC()
 
     if (httpCode == HTTP_CODE_OK)
     {
-        AddLog(LOG_LEVEL_INFO, PSTR("aha"));
         String payload = http.getString();
-        AddLog(LOG_LEVEL_DEBUG, PSTR("TB: RPC %s"), payload.c_str());
 
         JsonParser parser((char *)payload.c_str());
         JsonParserObject root = parser.getRootObject();
         String method = root[PSTR("method")].getStr();
 
-        if (method == "setCT") // params: 153-500
+        AddLog(LOG_LEVEL_INFO, PSTR("TB: received RPC %s"), method.c_str());
+
+        if (method == "setCT")
+        { // params: 153-500
             LightSetColorTemp(root[PSTR("params")].getUInt());
+            LightPreparePower(2);
+        }
         else if (method == "setHue")
         { // params: 0-359
             uint16_t hue = root[PSTR("params")].getUInt();
-            char cmd[24];
+            char cmd[30];
             snprintf(cmd, sizeof(cmd), "HsbColor1 %u", hue);
             ExecuteCommand(cmd, SRC_WEBGUI); // updates light & telemetry
         }
         else if (method == "setSaturation")
         { // params: 0-100
             uint8_t sat = root[PSTR("params")].getUInt();
-            char cmd[24];
+            char cmd[30];
             snprintf(cmd, sizeof(cmd), "HsbColor2 %u", sat);
             ExecuteCommand(cmd, SRC_WEBGUI);
         }
@@ -172,11 +175,12 @@ void FetchThingsBoardRPC()
         { // params: 0-100
             uint8_t dimm = root[PSTR("params")].getUInt();
             LightSetDimmer(dimm);
+            LightPreparePower(2);
         }
         else if (method == "setPower")
         { // params: true/false or 1/0
             bool on = root[PSTR("params")].getBool();
-            char cmd[12];
+            char cmd[30];
             snprintf(cmd, sizeof(cmd), "Power %u", on);
             ExecuteCommand(cmd, SRC_WEBGUI);
         }
