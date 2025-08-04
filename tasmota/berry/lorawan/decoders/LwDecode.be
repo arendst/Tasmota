@@ -4,8 +4,98 @@
 var LwRegions = ["EU868","US915","IN865","AU915","KZ865","RU864","AS923","AS923-1","AS923-2","AS923-3"]
 var LwDeco
 
+var LwSensorIcons = {
+  "High Voltage":     "&#x26A1;",   # High Voltage Icon
+  "Electric Plug":    "&#x1F50C;",  # Electric Plug Icon  
+  "Bar Chart":        "&#x1F4CA;",  # Bar Chart Icon
+  "Light Bulb":       "&#x1F4A1;",  # Light Bulb Icon
+  "Stopwatch":        "&#x23F1;",   # Stopwatch Icon
+  "Abacus":           "&#x1F9EE;",  # Abacus Icon
+  "Power ON":         "&#x23FD;",   # Button State ON Icon
+  "Power OFF":        "&#x2B58;"    # Button State OFF Icon
+}
+
+var LwSensorFormatter = {
+  "string":           { "unit": nil,      "format": "%s",     "icon": nil             },
+  "volt":             { "unit": "V",      "format": "%.1f",   "icon": "High Voltage"  },
+  "milliamp":         { "unit": "mA",     "format": "%.0f",   "icon": "Electric Plug" },
+  "power_factor%":    { "unit": "%",      "format": "%.0f",   "icon": "Bar Chart"     },
+  "power":            { "unit": "W",      "format": "%.0f",   "icon": "Light Bulb"    },
+  "energy":           { "unit": "Wh",     "format": "%.0f",   "icon": "Abacus"        }
+}
+
 import mqtt 
 import string
+
+class LwSensorFormatter_cls
+  var Msg
+
+  def init()
+    self.Msg = ""
+  end
+  
+  def start_line()
+    self.Msg += format("<tr class='htr'><td colspan='4'>&#9478;")  # | <sensor1><sensor2>...
+    return self
+  end
+
+  def end_line()
+    self.Msg += "{e}"  # End of line
+    return self
+  end
+
+  def next_line()
+    return self.end_line().start_line()  # End of current line and start new line
+  end
+
+  def get_icon(icon)
+    return LwSensorIcons.find(icon) ? LwSensorIcons[icon] : icon
+  end
+
+  def begin_tooltip(ttip)
+    self.Msg += string.format("&nbsp;<div title='%s' class='si'>", ttip)
+    return self
+  end
+
+  def end_tooltip()
+    self.Msg += "</div>"
+    return self
+  end
+
+  def add_sensor(formatter, value, tooltip, alt_icon)
+    if tooltip
+      self.begin_tooltip(tooltip)
+    end
+
+    var fmt = LwSensorFormatter.find(formatter)
+
+    if alt_icon 
+      self.Msg += format(" %s", self.get_icon(alt_icon) )  # Use alternative icon
+    elif fmt && fmt.find("icon") && fmt["icon"]
+      self.Msg += format(" %s", self.get_icon(fmt["icon"]) )  # Use icon from formatter
+    end
+
+    if fmt && fmt.find("format") && fmt["format"]
+      self.Msg += string.format(fmt["format"], value)
+    else
+      self.Msg += str(value)  # Default to string representation
+    end
+
+    if fmt && fmt.find("unit") && fmt["unit"]
+      self.Msg += string.format("%s", fmt["unit"])  # Append unit if defined
+    end
+
+    if tooltip
+      self.end_tooltip()
+    end
+
+    return self
+  end
+
+  def get_msg()
+    return self.Msg
+  end
+end
 
 class lwdecode_cls
   var LwDecoders
