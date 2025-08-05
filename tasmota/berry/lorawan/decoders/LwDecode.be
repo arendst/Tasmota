@@ -82,7 +82,7 @@ class LwSensorFormatter_cls
 
     if alt_icon 
       self.Msg += format(" %s", self.get_icon(alt_icon) )  # Use alternative icon
-    elif fmt && fmt.find("icon") && fmt["i"]
+    elif fmt && fmt.find("i") && fmt["i"]
       self.Msg += format(" %s", self.get_icon(fmt["i"]) )  # Use icon from formatter
     end
 
