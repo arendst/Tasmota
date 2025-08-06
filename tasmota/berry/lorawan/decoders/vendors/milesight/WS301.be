@@ -94,18 +94,18 @@ class LwDecoWS301
       msg += lwdecode.header(name, name_tooltip, battery + 100000, battery_last_seen, rssi, last_seen)
 
       # Sensors
-      var dopen = (sensor[6] == true ? "Opened" : "Closed")
-      var dopen_ls = lwdecode.dhm_tt(sensor[7])
+      var dopen = lwdecode.dhm(sensor[7])
+      var dopen_tt = nil
       var dopen_alt = (sensor[6] == true) ? "Unlocked" : "Locked"
 
-      var inst = (sensor[8] == true ? "Installed" : "Not Installed") 
-      var inst_ls = lwdecode.dhm_tt(sensor[9])
+      var inst = lwdecode.dhm(sensor[9])
+      var inst_tt = nil
       var inst_alt =  (sensor[8] == true) ? "Check Mark" : "Crosscheck Mark"
 
       var fmt = LwSensorFormatter_cls()
       msg += fmt.start_line()
-        .add_sensor( "string", dopen, dopen_ls, dopen_alt )
-        .add_sensor( "string", inst,  inst_ls,  inst_alt )
+        .add_sensor( "string", dopen, dopen_tt, dopen_alt )
+        .add_sensor( "string", inst,  inst_tt,  inst_alt )
         .end_line()
         .get_msg()
     end
