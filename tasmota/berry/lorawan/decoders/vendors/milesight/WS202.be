@@ -94,13 +94,13 @@ class LwDecoWS202
       msg += lwdecode.header(name, name_tooltip, battery + 100000, battery_last_seen, rssi, last_seen)
 
       # Sensors
-      var pir = (sensor[6] == true ? "Busy" : "Free")
+      var pir = lwdecode.dhm(sensor[7])
       var pir_ls = lwdecode.dhm_tt(sensor[7])
-      var pir_alt = (sensor[6] == true ? "No Entry" : "Free")
+      var pir_alt = (sensor[6] == true ? "&#x1F6AB;" : "&#x1F193;") # No Entry 🚫 / Free 🆓
       
-      var light     = (sensor[8] == 0) ? "Dark" : "Light"
+      var light     = lwdecode.dhm(sensor[9])
       var light_ls  = lwdecode.dhm_tt(sensor[9])
-      var light_alt = (sensor[8] == 0) ? "Moon" : "Sun"
+      var light_alt = (sensor[8] == 0) ? "&#x1F315;" : "&#x1F31E;"  # Moon 🌕 / Sun 🌞
 
       var fmt = LwSensorFormatter_cls()
       msg += fmt.start_line()

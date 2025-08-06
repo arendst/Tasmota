@@ -246,28 +246,28 @@ class LwDecoWS522
       var power_factor = sensor[6]
       var energy_sum = sensor[7]
       var current = sensor[8]
-      var button_status = (sensor[9] ? "ON" : "OFF")
-      var button_state = "Power " + button_status
+      var button_status = lwdecode.dhm(sensor[15])
+      var button_icon = (sensor[9] ? "&#x23FD;" : "&#x2B58;")
 
-      var voltage_ls = lwdecode.dhm_tt(sensor[10])
-      var active_power_ls = lwdecode.dhm_tt(sensor[11])
-      var power_factor_ls = lwdecode.dhm_tt(sensor[12])
-      var energy_sum_ls = lwdecode.dhm_tt(sensor[13])
-      var current_ls = lwdecode.dhm_tt(sensor[14])
-      var button_state_ls = lwdecode.dhm_tt(sensor[15])
+      var voltage_tt = lwdecode.dhm_tt(sensor[10])
+      var active_power_tt = lwdecode.dhm_tt(sensor[11])
+      var power_factor_tt = lwdecode.dhm_tt(sensor[12])
+      var energy_sum_tt = string.format( "Total Power Usage (%s)", lwdecode.dhm_tt(sensor[13] )
+      var current_tt = lwdecode.dhm_tt(sensor[14])
+      var button_state_tt = lwdecode.dhm_tt(sensor[15])
 
       var fmt = LwSensorFormatter_cls()
 
-      #             Formatter         Value           Tooltip                          alternative icon
-      #             ================  ============    ===============================  ================
+      #             Formatter         Value           Tooltip             alternative icon
+      #             ================  ============    ==================  ================
       msg += fmt.start_line()
-        .add_sensor("volt",           voltage,        voltage_ls )
-        .add_sensor("milliamp",       current,        current_ls )
-        .add_sensor("power_factor%",  power_factor,   power_factor_ls )
-        .add_sensor("power",          active_power,   active_power_ls )
+        .add_sensor("volt",           voltage,        voltage_tt )
+        .add_sensor("milliamp",       current,        current_tt )
+        .add_sensor("power_factor%",  power_factor,   power_factor_tt )
+        .add_sensor("power",          active_power,   active_power_tt )
         .next_line()
-        .add_sensor("string",         button_status,  button_state,                    button_state)
-        .add_sensor("energy",         energy_sum,     string.format("Total Power Usage (%s)",energy_sum_ls) )
+        .add_sensor("string",         button_status,  button_state_tt,    button_icon )
+        .add_sensor("energy",         energy_sum,     energy_sum_tt )
         .end_line()
         .get_msg()
     end

@@ -10,35 +10,14 @@ import string
 class LwSensorFormatter_cls
   var Msg
 
-  static Icons = {
-    "Sensor Line":      "9478",   # | <sensor1><sensor2>... 
-    "High Voltage":     "x26A1",   # High Voltage Icon
-    "Electric Plug":    "x1F50C",  # Electric Plug Icon  
-    "Bar Chart":        "x1F4CA",  # Bar Chart Icon
-    "Light Bulb":       "x1F4A1",  # Light Bulb Icon
-    "Stopwatch":        "x23F1",   # Stopwatch Icon
-    "Abacus":           "x1F9EE",  # Abacus Icon
-    "Power ON":         "x23FD",   # Button State ON Icon
-    "Power OFF":        "x2B58",   # Button State OFF Icon
-    "Locked":           "x1F512",  # Lock Close Icon
-    "Unlocked":         "x1F513",  # Lock Open Icon
-    "Check Mark":       "x2705",
-    "Crosscheck Mark":  "x274C",
-    "Free":             "x1F193",
-    "No Entry":         "x1F6AB",
-    "Moon":             "x1F315",
-    "Sun":              "x1F31E",
-    "Radio Button":     "x1F518"
-  }
-
   static Formatter = {
-    "string":           { "u": nil,      "f": "%s",     "i": nil             },
-    "volt":             { "u": "V",      "f": "%.1f",   "i": "High Voltage"  },
-    "milliamp":         { "u": "mA",     "f": "%.0f",   "i": "Electric Plug" },
-    "power_factor%":    { "u": "%",      "f": "%.0f",   "i": "Bar Chart"     },
-    "power":            { "u": "W",      "f": "%.0f",   "i": "Light Bulb"    },
-    "energy":           { "u": "Wh",     "f": "%.0f",   "i": "Abacus"        },
-    "empty":            { "u": nil,      "f": nil,      "i": nil             }
+    "string":           { "u": nil,      "f": "%s",     "i": nil         },
+    "volt":             { "u": "V",      "f": "%.1f",   "i": "&#x26A1;"  }, # High Voltage    ⚡ 
+    "milliamp":         { "u": "mA",     "f": "%.0f",   "i": "&#x1F50C;" }, # Electric Plug   🔌
+    "power_factor%":    { "u": "%",      "f": "%.0f",   "i": "&#x1F4CA;" }, # Bar Chart       📊      
+    "power":            { "u": "W",      "f": "%.0f",   "i": "&#x1F4A1;" }, # Light Bulb      💡    
+    "energy":           { "u": "Wh",     "f": "%.0f",   "i": "&#x1F9EE;" }, # Abacus          🧮
+    "empty":            { "u": nil,      "f": nil,      "i": nil         }
   }
 
   def init()
@@ -46,7 +25,7 @@ class LwSensorFormatter_cls
   end
   
   def start_line()
-    self.Msg += format("<tr class='htr'><td colspan='4'>" + self.get_icon("Sensor Line") )  # | <sensor1><sensor2>...
+    self.Msg += format("<tr class='htr'><td colspan='4'>&#9478;" )  # | <sensor1><sensor2>...
     return self
   end
 
@@ -59,10 +38,6 @@ class LwSensorFormatter_cls
     return self.end_line().start_line()  # End of current line and start new line
   end
 
-  def get_icon(icon)
-    return self.Icons.find(icon) ? "&#" + self.Icons[icon] + ";" : icon
-  end
-
   def begin_tooltip(ttip)
     self.Msg += format("&nbsp;<div title='%s' class='si'>", ttip)
     return self
@@ -70,6 +45,11 @@ class LwSensorFormatter_cls
 
   def end_tooltip()
     self.Msg += "</div>"
+    return self
+  end
+
+  def add_link(title, url)
+    self.Msg += " <a target=_maps href='" + url + "'>" + title + "</a>"
     return self
   end
 
@@ -81,9 +61,9 @@ class LwSensorFormatter_cls
     var fmt = self.Formatter.find(formatter)
 
     if alt_icon 
-      self.Msg += format(" %s", self.get_icon(alt_icon) )  # Use alternative icon
+      self.Msg += format(" %s", alt_icon )  # Use alternative icon
     elif fmt && fmt.find("i") && fmt["i"]
-      self.Msg += format(" %s", self.get_icon(fmt["i"]) )  # Use icon from formatter
+      self.Msg += format(" %s", fmt["i"] )  # Use icon from formatter
     end
 
     if fmt && fmt.find("f") && fmt["f"]

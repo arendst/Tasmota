@@ -96,11 +96,11 @@ class LwDecoWS301
       # Sensors
       var dopen = lwdecode.dhm(sensor[7])
       var dopen_tt = nil
-      var dopen_alt = (sensor[6] == true) ? "Unlocked" : "Locked"
+      var dopen_alt = (sensor[6] == true) ? "&#x1F513;" : "&#x1F512;" # Open Lock 🔓 / Lock 🔒
 
       var inst = lwdecode.dhm(sensor[9])
       var inst_tt = nil
-      var inst_alt =  (sensor[8] == true) ? "Check Mark" : "Crosscheck Mark"
+      var inst_alt =  (sensor[8] == true) ? "&#x2705;" : "&#x274C;" # Heavy Check Mark ✅ / Cross Mark ❌
 
       var fmt = LwSensorFormatter_cls()
       msg += fmt.start_line()
