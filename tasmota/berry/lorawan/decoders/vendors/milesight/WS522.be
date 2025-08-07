@@ -119,6 +119,38 @@ class LwDecoWS522
         data.insert("Button_State", button_state ? "Open" : "Close" )
         i += 1
 
+      # FE02(ReportInterval) 3C00=>06
+      elif channel_id == 0xFE && channel_type == 0x02
+        data.insert("Period", ((Bytes[i+1] << 8) | Bytes[i]) )
+        i += 2
+
+      # FF01(ProtocolVersion) 01=>V1 
+      elif channel_id == 0xFF && channel_type == 0x01
+        data.insert("Protocol Version", Bytes[i] )
+        i += 1
+
+      # FF09(HardwareVersion) 0140=>V1.4 
+      elif channel_id == 0xFF && channel_type == 0x09
+        data.insert("Hardware Version",  format("v%02x.%02x", Bytes[i], Bytes[i+1]) )
+        i += 2
+
+      # FF0a(SoftwareVersion) 0114=>V1.14 
+      elif channel_id == 0xFF && channel_type == 0x0A
+        data.insert("Software Version",  format("v%02x.%02x", Bytes[i], Bytes[i+1]) )
+        i += 2
+
+      # FF0b(PowerOn) Deviceison
+      elif channel_id == 0xFF && channel_type == 0x0B
+        i += 1
+
+      # FF16(DeviceSN) 16digits
+      elif channel_id == 0xFF && channel_type == 0x16
+        i += 8
+
+      # FF0f(DeviceType) 00:ClassA,01:ClassB,02:ClassC
+      elif channel_id == 0xFF && channel_type == 0x0F
+        i += 1
+
       else
         log( string.format("WS522: something missing? id={%s} type={%s}", channel_id, channel_type), 1)
 
@@ -130,58 +162,42 @@ class LwDecoWS522
 
     if valid_values
       if !command_init
-          tasmota.add_cmd( "LoraWS522Power",
-              def (cmd, idx, payload)
-                  if global.ws522Nodes.find(idx)
-                      if payload == "1" || string.toupper(payload) == "ON"
-                          tasmota.cmd(string.format("LoraWanSend%d 080100FF",idx))  
-                      elif payload == "0" || string.toupper(payload) == "OFF"
-                          tasmota.cmd(string.format("LoraWanSend%d 080000FF",idx))  
-                      else
-                          # nothing else
-                      end
-                  end
+          tasmota.add_cmd( "LwWS522Power",
+            def (cmd, idx, payload)
+              if payload == "1" || string.toupper(payload) == "ON"
+                  return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, '080100FF', 'ON')
+              elif payload == "0" || string.toupper(payload) == "OFF"
+                  return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, '080000FF', 'OFF')
               end
+            end
           )
 
-          tasmota.add_cmd( "LoraWS522Period",
-              def (cmd, idx, payload)
-                  if global.ws522Nodes.find(idx)
-                      if number(payload) > 30  
-                          tasmota.cmd( string.format("LoraWanSend%d FF02%s", idx, uint16le(number(payload))) )
-                      end
-                  end
-              end
+          tasmota.add_cmd( "LwWS522Period",
+            def (cmd, idx, payload)
+                return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, format('FF02%s',uint16le(number(payload))), number(payload))
+            end
           )
 
-          tasmota.add_cmd( "LoraWS522Reboot",
-              def (cmd, idx, payload)
-                  if global.ws522Nodes.find(idx)
-                      tasmota.cmd( string.format("LoraWanSend%d FF10FF", idx) )
-                  end
-              end
+          tasmota.add_cmd( "LwWS522Reboot",
+            def (cmd, idx, payload)
+                return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, 'FF10FF', 'Done')
+            end
           )
 
-          tasmota.add_cmd( "LoraWS522ResetPowerUsage",
-              def (cmd, idx, payload)
-                  if global.ws522Nodes.find(idx)
-                      tasmota.cmd( string.format("LoraWanSend%d FF27FF", idx) )
-                  end
-              end
+          tasmota.add_cmd( "LwWS522ResetPowerUsage",
+            def (cmd, idx, payload)
+                return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, 'FF27FF', 'Done')
+            end
           )
 
-          tasmota.add_cmd( "LoraWS522PowerLock",
-              def (cmd, idx, payload)
-                  if global.ws522Nodes.find(idx)
-                      if payload == "1" || string.toupper(payload) == "ON"
-                          tasmota.cmd(string.format("LoraWanSend%d FF250080",idx))  
-                      elif payload == "0" || string.toupper(payload) == "OFF"
-                          tasmota.cmd(string.format("LoraWanSend%d FF250000",idx))  
-                      else
-                          # nothing else
-                      end
-                  end
+          tasmota.add_cmd( "LwWS522PowerLock", 
+            def (cmd, idx, payload)
+              if payload == "1" || string.toupper(payload) == "ON"
+                return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, 'FF250080', 'ON')
+              elif payload == "0" || string.toupper(payload) == "OFF"
+                return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, 'FF250080', 'OFF')
               end
+            end
           )
           command_init = true
       end
@@ -233,28 +249,25 @@ class LwDecoWS522
       
       msg += lwdecode.header(name, name_tooltip, 1000, last_seen, rssi, last_seen)
 
-      # IEC Power Symbols
-      #  Power	        &#x23FB; ⏻
-      #  Toggle Power	  &#x23FC; ⏼
-      #  Power On	      &#x23FD; ⏽
-      #  Power Off	    &#x2B58; ⭘
-      #  Sleep Mode	    &#x23FE; ⏾
-
       # Sensors
       var voltage = sensor[4]
-      var active_power = sensor[5]
-      var power_factor = sensor[6]
-      var energy_sum = sensor[7]
-      var current = sensor[8]
-      var button_status = lwdecode.dhm(sensor[15])
-      var button_icon = (sensor[9] ? "&#x23FD;" : "&#x2B58;")
+      var voltage_tt = lwdecode.dhm(sensor[10])
 
-      var voltage_tt = lwdecode.dhm_tt(sensor[10])
-      var active_power_tt = lwdecode.dhm_tt(sensor[11])
-      var power_factor_tt = lwdecode.dhm_tt(sensor[12])
-      var energy_sum_tt = string.format( "Total Power Usage (%s)", lwdecode.dhm_tt(sensor[13] )
-      var current_tt = lwdecode.dhm_tt(sensor[14])
-      var button_state_tt = lwdecode.dhm_tt(sensor[15])
+      var active_power = sensor[5]
+      var active_power_tt = lwdecode.dhm(sensor[11])
+
+      var power_factor = sensor[6]
+      var power_factor_tt = lwdecode.dhm(sensor[12])
+
+      var current = sensor[8]
+      var current_tt = lwdecode.dhm(sensor[14])
+
+      var button_state = lwdecode.dhm(sensor[15])
+      var button_state_tt = lwdecode.dhm(sensor[15])
+      var button_state_icon = (sensor[9] ? " &#x1F7E2; " : " &#x26AB; ") # Large Green Circle 🟢 | Medium Black Circle ⚫
+
+      var energy_sum = sensor[7]
+      var energy_sum_tt = lwdecode.dhm(sensor[13] )
 
       var fmt = LwSensorFormatter_cls()
 
@@ -266,7 +279,7 @@ class LwDecoWS522
         .add_sensor("power_factor%",  power_factor,   power_factor_tt )
         .add_sensor("power",          active_power,   active_power_tt )
         .next_line()
-        .add_sensor("string",         button_status,  button_state_tt,    button_icon )
+        .add_sensor("string",         button_state,   button_state_tt,    button_state_icon )
         .add_sensor("energy",         energy_sum,     energy_sum_tt )
         .end_line()
         .get_msg()
