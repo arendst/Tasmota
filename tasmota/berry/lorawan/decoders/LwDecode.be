@@ -11,13 +11,14 @@ class LwSensorFormatter_cls
   var Msg
 
   static Formatter = {
-    "string":           { "u": nil,      "f": "%s",     "i": nil         },
-    "volt":             { "u": "V",      "f": "%.1f",   "i": "&#x26A1;"  }, # High Voltage    ⚡ 
-    "milliamp":         { "u": "mA",     "f": "%.0f",   "i": "&#x1F50C;" }, # Electric Plug   🔌
-    "power_factor%":    { "u": "%",      "f": "%.0f",   "i": "&#x1F4CA;" }, # Bar Chart       📊      
-    "power":            { "u": "W",      "f": "%.0f",   "i": "&#x1F4A1;" }, # Light Bulb      💡    
-    "energy":           { "u": "Wh",     "f": "%.0f",   "i": "&#x1F9EE;" }, # Abacus          🧮
-    "empty":            { "u": nil,      "f": nil,      "i": nil         }
+    "string":           { "u": nil,   "f": " %s",    "i": nil         },
+    "volt":             { "u": "V",   "f": " %.1f",  "i": "&#x26A1;"  }, # High Voltage    ⚡ 
+    "milliamp":         { "u": "mA",  "f": " %.0f",  "i": "&#x1F50C;" }, # Electric Plug   🔌
+    "power_factor%":    { "u": "%",   "f": " %.0f",  "i": "&#x1F4CA;" }, # Bar Chart       📊      
+    "power":            { "u": "W",   "f": " %.0f",  "i": "&#x1F4A1;" }, # Light Bulb      💡    
+    "energy":           { "u": "Wh",  "f": " %.0f",  "i": "&#x1F9EE;" }, # Abacus          🧮
+    "altitude":         { "u": "mt",  "f": " %d",    "i": "&#x26F0;"  }, # Moutain         ⛰
+    "empty":            { "u": nil,   "f": nil,     "i": nil         }
   }
 
   def init()
@@ -48,8 +49,8 @@ class LwSensorFormatter_cls
     return self
   end
 
-  def add_link(title, url)
-    self.Msg += " <a target=_maps href='" + url + "'>" + title + "</a>"
+  def add_link(title, url, target)
+    self.Msg += format( " <a target=%s href='%s'>%s</a>", ( target ? target : "_blank" ), url, title )
     return self
   end
 
@@ -105,6 +106,17 @@ class lwdecode_cls
     end
     tasmota.add_driver(global.lwdecode_driver := self)
     tasmota.add_rule("LwReceived", /value, trigger, payload -> self.LwDecode(payload))
+  end
+
+  def SendDownlink(nodes, cmd, idx, payload, ok_result)
+    if nodes.find(idx)
+      var sendcmd = 'LoRaWanSend'
+      var output = tasmota.cmd( f'{sendcmd}{idx} {payload}', true)
+      if output.find(sendcmd) == 'Done'
+        return tasmota.resp_cmnd(f'{{"{cmd}{idx}":"{ok_result}"}}')
+      end
+      return output
+    end
   end
 
   def LwDecode(data)
