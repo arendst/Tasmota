@@ -1,174 +1,225 @@
 # Decoder files are modeled on the *.js files found here:
 #  https://github.com/TheThingsNetwork/lorawan-devices/tree/master/vendor
 
+
+
+
+import mqtt
+import string
+
 var LwRegions = ["EU868","US915","IN865","AU915","KZ865","RU864","AS923","AS923-1","AS923-2","AS923-3"]
 var LwDeco
 
-import mqtt 
-import string
-
 class LwSensorFormatter_cls
-  var Msg
-
-  static Formatter = {
+  static var Formatter = {
     "string":           { "u": nil,   "f": " %s",    "i": nil         },
-    "volt":             { "u": "V",   "f": " %.1f",  "i": "&#x26A1;"  }, # High Voltage    ⚡ 
-    "milliamp":         { "u": "mA",  "f": " %.0f",  "i": "&#x1F50C;" }, # Electric Plug   🔌
-    "power_factor%":    { "u": "%",   "f": " %.0f",  "i": "&#x1F4CA;" }, # Bar Chart       📊      
-    "power":            { "u": "W",   "f": " %.0f",  "i": "&#x1F4A1;" }, # Light Bulb      💡    
-    "energy":           { "u": "Wh",  "f": " %.0f",  "i": "&#x1F9EE;" }, # Abacus          🧮
-    "altitude":         { "u": "mt",  "f": " %d",    "i": "&#x26F0;"  }, # Moutain         ⛰
-    "empty":            { "u": nil,   "f": nil,     "i": nil         }
+    "volt":             { "u": "V",   "f": " %.1f",  "i": "&#x26A1;"  },
+    "milliamp":         { "u": "mA",  "f": " %.0f",  "i": "&#x1F50C;" },
+    "power_factor%":    { "u": "%",   "f": " %.0f",  "i": "&#x1F4CA;" },
+    "power":            { "u": "W",   "f": " %.0f",  "i": "&#x1F4A1;" },
+    "energy":           { "u": "Wh",  "f": " %.0f",  "i": "&#x1F9EE;" },
+    "altitude":         { "u": "mt",  "f": " %d",    "i": "&#x26F0;"  },
+    "empty":            { "u": nil,   "f": nil,      "i": nil         }
   }
 
+  var msg_buffer
+
   def init()
-    self.Msg = ""
+    self.msg_buffer = bytes(512)
+    self.msg_buffer.clear()
   end
-  
+
   def start_line()
-    self.Msg += format("<tr class='htr'><td colspan='4'>&#9478;" )  # | <sensor1><sensor2>...
+    self.msg_buffer .. "<tr class='htr'><td colspan='4'>&#9478;"
     return self
   end
 
   def end_line()
-    self.Msg += "{e}"  # End of line
+    self.msg_buffer .. "{e}"
     return self
   end
 
   def next_line()
-    return self.end_line().start_line()  # End of current line and start new line
+    self.msg_buffer .. "{e}<tr class='htr'><td colspan='4'>&#9478;"
+    return self
   end
 
   def begin_tooltip(ttip)
-    self.Msg += format("&nbsp;<div title='%s' class='si'>", ttip)
+    self.msg_buffer .. format("&nbsp;<div title='%s' class='si'>", ttip)
     return self
   end
 
   def end_tooltip()
-    self.Msg += "</div>"
+    self.msg_buffer .. "</div>"
     return self
   end
 
   def add_link(title, url, target)
-    self.Msg += format( " <a target=%s href='%s'>%s</a>", ( target ? target : "_blank" ), url, title )
+    if !target target = "_blank" end
+    self.msg_buffer .. format(" <a target=%s href='%s'>%s</a>", target, url, title)
     return self
   end
 
   def add_sensor(formatter, value, tooltip, alt_icon)
-    if tooltip
-      self.begin_tooltip(tooltip)
-    end
+
+    if tooltip self.begin_tooltip(tooltip) end
 
     var fmt = self.Formatter.find(formatter)
 
-    if alt_icon 
-      self.Msg += format(" %s", alt_icon )  # Use alternative icon
+    if alt_icon
+      self.msg_buffer .. format(" %s", alt_icon)
     elif fmt && fmt.find("i") && fmt["i"]
-      self.Msg += format(" %s", fmt["i"] )  # Use icon from formatter
+      self.msg_buffer .. format(" %s", fmt["i"])
     end
 
     if fmt && fmt.find("f") && fmt["f"]
-      self.Msg += format(fmt["f"], value)
+      self.msg_buffer .. format(fmt["f"], value)
     else
-      self.Msg += str(value)  # Default to string representation
+      self.msg_buffer .. str(value)
     end
 
     if fmt && fmt.find("u") && fmt["u"]
-      self.Msg += format("%s", fmt["u"])  # Append unit if defined
+      self.msg_buffer .. format("%s", fmt["u"])
     end
 
-    if tooltip
-      return self.end_tooltip()
-    end
-
+    if tooltip self.end_tooltip() end
     return self
   end
 
   def get_msg()
-    return self.Msg
+    return self.msg_buffer.asstring()
   end
 end
 
 class lwdecode_cls
-  var LwDecoders
-  var topic
+  var lw_decoders
+  var topic_cached
+  var last_payload_hash
+  var web_msg_cache
+  var cache_timeout
 
   def init()
-    self.LwDecoders = {}
-    self.topic = string.replace(string.replace(
-                   tasmota.cmd('_FullTopic',true)['FullTopic'],
-                   '%topic%', tasmota.cmd('_Status',true)['Status']['Topic']),
-                   '%prefix%', tasmota.cmd('_Prefix',true)['Prefix3'])  # tele
-                 + 'SENSOR'
+    self.lw_decoders = {}
+    self.last_payload_hash = 0
+    self.web_msg_cache = ""
+    self.cache_timeout = 0
+    self.decoder_timestamps = {}
+
+    self._cache_topic()
 
     if global.lwdecode_driver
       global.lwdecode_driver.stop() # Let previous instance bail out cleanly
     end
     tasmota.add_driver(global.lwdecode_driver := self)
-    tasmota.add_rule("LwReceived", /value, trigger, payload -> self.LwDecode(payload))
+    tasmota.add_rule("LwReceived", /value, trigger, payload -> self.lw_decode(payload))
+  end
+
+  def _cache_topic()
+    var full_topic = tasmota.cmd('_FullTopic',true)['FullTopic']
+    var topic = tasmota.cmd('_Status',true)['Status']['Topic']
+    var prefix = tasmota.cmd('_Prefix',true)['Prefix3']
+
+    self.topic_cached = string.replace(string.replace(full_topic, '%topic%', topic), '%prefix%', prefix) + 'SENSOR'
   end
 
   def SendDownlink(nodes, cmd, idx, payload, ok_result)
-    if nodes.find(idx)
-      var sendcmd = 'LoRaWanSend'
-      var output = tasmota.cmd( f'{sendcmd}{idx} {payload}', true)
-      if output.find(sendcmd) == 'Done'
-        return tasmota.resp_cmnd(f'{{"{cmd}{idx}":"{ok_result}"}}')
-      end
-      return output
+    if !nodes.find(idx) return nil end
+
+    var sendcmd = 'LoRaWanSend'
+    var output = tasmota.cmd(format('%s%i %s', sendcmd, idx, payload), true)
+    if output.find(sendcmd) == 'Done'
+      return tasmota.resp_cmnd(format('{"%s%i":"%s"}', cmd, idx, ok_result))
+
+
     end
+    return output
   end
 
-  def LwDecode(data)
+  def _calculate_payload_hash(payload)
+
+
+    var hash = 0
+    for i:0..payload.size()-1
+      hash = (hash * 31 + payload[i]) & 0xFFFFFFFF
+    end
+    return hash
+  end
+
+  def lw_decode(data)
     import json
 
-    var deviceData = data['LwReceived']
-    var deviceName = deviceData.keys()()
-    var Name = deviceData[deviceName]['Name']
-    var Node = deviceData[deviceName]['Node']
-    var RSSI = deviceData[deviceName]['RSSI']
-    var Payload = deviceData[deviceName]['Payload']
-    var FPort = deviceData[deviceName]['FPort']
-    var decoder = deviceData[deviceName].find('Decoder')
-    if !decoder 
-      return true
+    var device_data = data['LwReceived']
+    var device_name = device_data.keys()()
+    var device_info = device_data[device_name]
+
+    var decoder = device_info.find('Decoder')
+    if !decoder return true end
+
+    var payload = device_info['Payload']
+    if !payload || payload.size() == 0 return true end
+
+    var current_hash = self._calculate_payload_hash(payload)
+    if current_hash == self.last_payload_hash return true end
+    self.last_payload_hash = current_hash
+
+    if !self.lw_decoders.find(decoder)
+      try
+        LwDeco = nil
+        load(decoder)
+        if LwDeco
+          self.lw_decoders[decoder] = LwDeco
+        else
+          return true
+        end
+      except .. as e, m
+        print(format("Decoder load error: %s", m))
+        return true
+      end
     end
-    
-    if !self.LwDecoders.find(decoder)
-      LwDeco = nil
-      load(decoder)  # Sets LwDeco if found
-      if LwDeco
-        self.LwDecoders.insert(decoder, LwDeco)
-      end
-    end 
 
-    if Payload.size() && self.LwDecoders.find(decoder)
-      var decoded = self.LwDecoders[decoder].decodeUplink(Name, Node, RSSI, FPort, Payload)	
-      decoded.insert("Node", Node)
-      decoded.insert("RSSI", RSSI)
-      var mqttData = {deviceName:decoded}
-      # Abuse SetOption83 - (Zigbee) Use FriendlyNames (1) instead of ShortAddresses (0) when possible
+    try
+      var decoded = self.lw_decoders[decoder].decodeUplink(
+        device_info['Name'],
+        device_info['Node'],
+        device_info['RSSI'],
+        device_info['FPort'],
+        payload
+      )
+
+      decoded['Node'] = device_info['Node']
+      decoded['RSSI'] = device_info['RSSI']
+
+      var mqtt_data
       if tasmota.get_option(83) == 0  # SetOption83 - Remove LwDecoded form JSON message (1)
-        mqttData = {"LwDecoded":{deviceName:decoded}}
+        mqtt_data = {"LwDecoded": {device_name: decoded}}
+      else
+        mqtt_data = {device_name: decoded}
       end
-      var topic = self.topic
-      if tasmota.get_option(89) == 1  # SetOption89 - Distinct MQTT topics per device (1)
-        topic = self.topic + "/" + deviceData[deviceName]['DevEUIh'] + deviceData[deviceName]['DevEUIl']
-      end
-      mqtt.publish(topic, json.dump(mqttData))
-      tasmota.global.restart_flag = 0 # Signal LwDecoded successful (default state)
-    end 
 
-    return true  #processed
+      var topic
+      if tasmota.get_option(89) == 1  # SetOption89 - Distinct MQTT topics per device (1)
+        topic = format("%s/%s%s", self.topic_cached, device_info['DevEUIh'], device_info['DevEUIl'])
+      else
+        topic = self.topic_cached
+      end
+
+      mqtt.publish(topic, json.dump(mqtt_data))
+      tasmota.global.restart_flag = 0 # Signal LwDecoded successful (default state)
+
+    except .. as e, m
+      print(format("Decode error for %s: %s", device_name, m))
+    end
+
+    return true
   end
 
   def dhm(last_time)
     var since = tasmota.rtc('local') - last_time
     var unit = "d"
-    if since > (24 * 3600)
-      since /= (24 * 3600)
+    if since > 86400
+      since /= 86400
       if since > 99 since = 99 end
-    elif  since > 3600
+    elif since > 3600
       since /= 3600
       unit = "h"
     else
@@ -179,13 +230,13 @@ class lwdecode_cls
   end
 
   def dhm_tt(last_time)
-    return format( "Received %s ago", self.dhm(last_time) )
+    return format("Received %s ago", self.dhm(last_time))
   end
 
   def header(name, name_tooltip, battery, battery_last_seen, rssi, last_seen)
-    var color_text = f'{tasmota.webcolor(0 #-COL_TEXT-#)}'    # '#eaeaea'
-    var msg = "<tr class='ltd htr'>"                          # ==== Start first table row
-    msg += format("<td><b title='%s'>%s</b></td>", name_tooltip, name)
+    var color_text = format('%s', tasmota.webcolor(0))
+    var msg = format("<tr class='ltd htr'><td><b title='%s'>%s</b></td>", name_tooltip, name)
+
     if battery < 1000
       # Battery low <= 2.5V (0%), high >= 3.1V (100%)
       var batt_percent = (battery * 1000) - 2500
@@ -205,6 +256,7 @@ class lwdecode_cls
     else
       msg += "<td>&nbsp;</td>"
     end
+
     if rssi < 1000
       if rssi < -132 rssi = -132 end
       var num_bars = 4 - ((rssi * -1) / 33)
@@ -216,9 +268,9 @@ class lwdecode_cls
     else
       msg += "<td>&nbsp;</td>"
     end
-    msg += format("<td style='color:%s'>&#x1F557;%s</td>",    # Clock
-                 color_text, self.dhm(last_seen))
-    msg += "</tr>"                                            # ==== End first table row
+
+    msg += format("<td style='color:%s'>&#x1F557;%s</td></tr>", color_text, self.dhm(last_seen))
+
     return msg
   end #sensor()
 
@@ -227,13 +279,21 @@ class lwdecode_cls
   Called every WebRefresh time
   ------------------------------------------------------------#
   def web_sensor()
-    var msg = ""
-    for decoder: self.LwDecoders
-      msg += decoder.add_web_sensor()	
+    var current_time = tasmota.millis()
+
+    if current_time < self.cache_timeout
+      tasmota.web_send_decimal(self.web_msg_cache)
+      return
     end
+
+    var msg = ""
+    for decoder: self.lw_decoders
+      msg += decoder.add_web_sensor()
+    end
+
     if msg
-      var color_text = f'{tasmota.webcolor(0 #-COL_TEXT-#)}'  # '#eaeaea'
-      var full_msg = format("</table>"                        # Terminate current two column table and open new table
+      var color_text = format('%s', tasmota.webcolor(0 #-COL_TEXT-#))   # '#eaeaea'
+      var full_msg = format("</table>"                                  # Terminate current two column table and open new table
         "<style>"
         # Table CSS
         ".ltd td:not(:first-child){width:20px;font-size:70%%}"
@@ -245,11 +305,11 @@ class lwdecode_cls
         ".si i{width:3px;margin-right:1px;border-radius:3px;background-color:%s}" # WebColor(COL_TEXT)
         ".si .b0{height:25%%}.si .b1{height:50%%}.si .b2{height:75%%}.si .b3{height:100%%}.o30{opacity:.3}"
         "</style>"
-        "{t}",                                                # Open new table
-        color_text)
-      full_msg += msg
-      full_msg += "</table>{t}"                               # Close table and open new table
+        "{t}%s</table>{t}",
+        color_text, msg)
 
+      self.web_msg_cache = full_msg
+      self.cache_timeout = current_time + 5000
       tasmota.web_send_decimal(full_msg)
     end
   end
@@ -259,8 +319,22 @@ lwdecode = lwdecode_cls()
 
 import webserver
 class webPageLoRaWAN : Driver
+  var max_node_cached
+
+  def init()
+    self.max_node_cached = nil
+  end
+
   def web_add_config_button()
     webserver.content_send("<p><form id=ac action='lrw' style='display: block;' method='get'><button>LoRaWAN</button></form></p>")
+  end
+
+  def _get_max_nodes()
+    if !self.max_node_cached
+      var enables = string.split(tasmota.cmd('LoRaWanNode', true).find('LoRaWanNode'), ',')
+      self.max_node_cached = enables.size()
+    end
+    return self.max_node_cached
   end
 
   #- this method displays the web page -#
@@ -268,19 +342,23 @@ class webPageLoRaWAN : Driver
     if !webserver.check_privileged_access() return nil end
 
     var inode = 1
-    var cmdArg  
+    var cmdArg
     if webserver.has_arg('save')
-     inode = webserver.arg('node')
-     tasmota.cmd('LoRaWanAppKey' + inode + ' '+ webserver.arg('ak'), true)
-     cmdArg = webserver.arg('dc')
-     if !cmdArg cmdArg = '"' end
-     tasmota.cmd('LoRaWanDecoder' + inode + ' ' + cmdArg, true)
-     cmdArg = webserver.arg('an')
-     if !cmdArg cmdArg = '"' end
-     tasmota.cmd('LoRaWanName' + inode + ' ' + cmdArg, true)
-     cmdArg = webserver.arg('ce')
-     if !cmdArg cmdArg = '0' else cmdArg = '1' end
-     tasmota.cmd('LoRaWanNode' + inode + ' ' + cmdArg, true)
+      inode = int(webserver.arg('node'))
+      tasmota.cmd(format('LoRaWanAppKey%i %s', inode, webserver.arg('ak')), true)
+      cmdArg = webserver.arg('dc')
+      if !cmdArg cmdArg = '"' end
+      tasmota.cmd(format('LoRaWanDecoder%i %s', inode, cmdArg), true)
+      cmdArg = webserver.arg('an')
+      if !cmdArg cmdArg = '"' end
+      tasmota.cmd(format('LoRaWanName%i %s', inode, cmdArg), true)
+      cmdArg = webserver.arg('ce')
+      if !cmdArg
+        cmdArg = '0'
+      else
+        cmdArg = '1'
+      end
+      tasmota.cmd(format('LoRaWanNode%i %s', inode, cmdArg), true)
     end
 
     var appKey, decoder, name, enabled
@@ -293,6 +371,7 @@ class webPageLoRaWAN : Driver
 
     webserver.content_start("LoRaWAN")           #- title of the web page -#
     webserver.content_send_style()               #- send standard Tasmota styles -#
+
     webserver.content_send(
      "<style>"
      ".tl{float:left;border-radius:0;border:1px solid var(--c_frm);padding:1px;width:12.5%;}"
@@ -312,59 +391,61 @@ class webPageLoRaWAN : Driver
        "}"
       "}"
       "e.classList.add('active');"
-      "for(i=1;i<="+str(maxnode)+";i++){"
+      "for(i=1;i<=" + str(maxnode) + ";i++){"
        "document.getElementById('nd'+i).style.display=(i==n)?'block':'none';"
       "}"
      "}"
-     "window.onload = function(){selNode("+str(inode)+");};"
+     "window.onload = function(){selNode(" + str(inode) + ");};"
      "</script>")
 
     webserver.content_send(
-    f"<fieldset>"
+    format("<fieldset>"
      "<legend><b>&nbsp;LoRaWan End Device&nbsp;</b></legend>"
-     "<br><div>")                                #- Add space and indent to align form tabs -#
+     "<br><div>"))                               #- Add space and indent to align form tabs -#
     for node:1 .. maxnode
-     webserver.content_send(f"<button type='button' onclick='selNode({node})' id='n{node}' class='tl inactive'>{node}</button>")
+     webserver.content_send(format("<button type='button' onclick='selNode(%i)' id='n%i' class='tl inactive'>%i</button>", node, node, node))
     end
-    webserver.content_send(
-    f"</div><br><br><br><br>")                   #- Terminate indent and add space -#
+    webserver.content_send("</div><br><br><br><br>")    #- Terminate indent and add space -#
+
     for node:1 .. maxnode
      enabled = ""
      if enables[node-1][0] != '!'
        enabled = ' checked'
      end
-     arg = 'LoRaWanAppKey' + str(node)
+     arg = format('LoRaWanAppKey%i', node)
      appKey = tasmota.cmd(arg, true).find(arg)
-     arg = 'LoRaWanName' + str(node)
+     arg = format('LoRaWanName%i', node)
      name = tasmota.cmd(arg, true).find(arg)
-     arg = 'LoRaWanDecoder' + str(node)
+     arg = format('LoRaWanDecoder%i', node)
      decoder = tasmota.cmd(arg, true).find(arg)
+
      webserver.content_send(
-     f"<div id='nd{node}' style='display:none'>"
+     format("<div id='nd%i' style='display:none'>"
       "<form action='' method='post'>"
-       "<p><label><input id='ce' name='ce' type='checkbox'{enabled}><b>Enabled</b></label></p>"
+       "<p><label><input id='ce' name='ce' type='checkbox'%s><b>Enabled</b></label></p>"
        "<p><b>Application Key</b>"
-        "<input title='{hintAK}' pattern='[A-Fa-f0-9]{{32}}' id='ak' minlength='32' maxlength='32' required='' placeholder='{hintAK}' value='{appKey}' name='ak' style='font-size:smaller'>"
+        "<input title='%s' pattern='[A-Fa-f0-9]{32}' id='ak' minlength='32' maxlength='32' required='' placeholder='%s' value='%s' name='ak' style='font-size:smaller'>"
        "</p>"
        "<p></p>"
        "<p><b>Device Name</b>"
-        "<input id='an' placeholder='{hintAN}' value='{name}' name='an'>"
+        "<input id='an' placeholder='%s' value='%s' name='an'>"
        "</p>"
        "<p></p>"
        "<p><b>Decoder File</b>"
-        "<input title='{hintDecoder}' id='dc' placeholder='{hintDecoder}' value='{decoder}' name='dc'>"
+        "<input title='%s' id='dc' placeholder='%s' value='%s' name='dc'>"
        "</p>"
        "<br>"
        "<button name='save' class='button bgrn'>Save</button>"
-       "<input type='hidden' name='node' value='{node}'>"
+       "<input type='hidden' name='node' value='%i'>"
       "</form>"
-      "</div>")
+      "</div>", node, enabled, hintAK, hintAK, appKey, hintAN, name, hintDecoder, hintDecoder, decoder, node))
     end
-    webserver.content_send(
-    f"</fieldset>")
+
+    webserver.content_send("</fieldset>")
+
 
     webserver.content_button(webserver.BUTTON_CONFIGURATION) #- button back to conf page -#
-    webserver.content_stop()                        #- end of web page -#
+    webserver.content_stop()                                 #- end of web page -#
   end
 
   #- this is called at Tasmota start-up, as soon as Wifi/Eth is up and web server running -#
