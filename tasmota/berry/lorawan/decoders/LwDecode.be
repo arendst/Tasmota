@@ -1,9 +1,6 @@
 # Decoder files are modeled on the *.js files found here:
 #  https://github.com/TheThingsNetwork/lorawan-devices/tree/master/vendor
 
-
-
-
 import mqtt
 import string
 
@@ -129,15 +126,22 @@ class lwdecode_cls
     var output = tasmota.cmd(format('%s%i %s', sendcmd, idx, payload), true)
     if output.find(sendcmd) == 'Done'
       return tasmota.resp_cmnd(format('{"%s%i":"%s"}', cmd, idx, ok_result))
-
-
     end
     return output
   end
 
+  def SendDownlinkMap(nodes, cmd, idx, payload, choice_map)
+    var key = string.toupper(str(payload))
+    for choice_key : choice_map.keys()
+      if string.find(choice_key, key) >= 0 && (choice_key == key || string.find(choice_key, '|' + key + '|') >= 0 || string.find(choice_key, key + '|') == 0 || string.find(choice_key, '|' + key) == size(choice_key) - size(key) - 1)
+        var choice = choice_map[choice_key]
+        return self.SendDownlink(nodes, cmd, idx, choice[0], choice[1])
+      end
+    end
+    return tasmota.resp_cmnd_error()
+  end
+
   def _calculate_payload_hash(payload)
-
-
     var hash = 0
     for i:0..payload.size()-1
       hash = (hash * 31 + payload[i]) & 0xFFFFFFFF
