@@ -94,6 +94,7 @@ class lwdecode_cls
   var last_payload_hash
   var web_msg_cache
   var cache_timeout
+  var decoder_timestamps
 
   def init()
     self.lw_decoders = {}
@@ -109,6 +110,7 @@ class lwdecode_cls
     end
     tasmota.add_driver(global.lwdecode_driver := self)
     tasmota.add_rule("LwReceived", /value, trigger, payload -> self.lw_decode(payload))
+    tasmota.add_cmd('LwReload', /cmd, idx, payload, payload_json -> self.cmd_reload_decoder(cmd, idx, payload))
   end
 
   def _cache_topic()
@@ -139,6 +141,58 @@ class lwdecode_cls
       end
     end
     return tasmota.resp_cmnd_error()
+  end
+
+  def reload_decoder(decoder_name)
+    try
+      if self.lw_decoders.find(decoder_name)
+        self.lw_decoders.remove(decoder_name)
+      end
+      
+      LwDeco = nil
+      load(decoder_name)
+      
+      if LwDeco
+        self.lw_decoders[decoder_name] = LwDeco
+        self.decoder_timestamps[decoder_name] = tasmota.millis()
+        print(format("Decoder %s reloaded successfully", decoder_name))
+        return true
+      else
+        print(format("Failed to reload decoder %s", decoder_name))
+        return false
+      end
+      
+    except .. as e, m
+      print(format("Error reloading decoder %s: %s", decoder_name, m))
+      return false
+    end
+  end
+
+  def cmd_reload_decoder(cmd, idx, payload)
+    if payload == ""
+      var reloaded = []
+      var failed = []
+      
+      for decoder_name : self.lw_decoders.keys()
+        if self.reload_decoder(decoder_name)
+          reloaded.push(decoder_name)
+        else
+          failed.push(decoder_name)
+        end
+      end
+      
+      var result = format("Reloaded: %i", reloaded.size())
+      if failed.size() > 0
+        result += format(", Failed: %i", failed.size())
+      end
+      
+      return tasmota.resp_cmnd(format('{"LwReload":"%s"}', result))
+      
+    else
+      var success = self.reload_decoder(payload)
+      var status = success ? "OK" : "Failed"
+      return tasmota.resp_cmnd(format('{"LwReload":"%s %s"}', payload, status))
+    end
   end
 
   def _calculate_payload_hash(payload)
