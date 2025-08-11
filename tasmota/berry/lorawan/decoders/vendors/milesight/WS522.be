@@ -176,36 +176,42 @@ class LwDecoWS522
 
           var pfx = 'LwWS522'
 
+          tasmota.remove_cmd( pfx + 'Power' )
           tasmota.add_cmd( pfx + 'Power',
             def (cmd, idx, payload)
               return lwdecode.SendDownlinkMap(global.ws522Nodes, cmd, idx, payload, { '1|ON': ['080100FF', 'ON'], '0|OFF': ['080000FF', 'OFF']  })
             end
           )
 
+          tasmota.remove_cmd( pfx + 'Period' )
           tasmota.add_cmd( pfx + 'Period',
             def (cmd, idx, payload)
               return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, format('FF03%s',lwdecode.uint16le(number(payload))), number(payload))
             end
           )
 
+          tasmota.remove_cmd( pfx + 'Reboot' )
           tasmota.add_cmd( pfx + 'Reboot',
             def (cmd, idx, payload)
               return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, 'FF10FF', 'Done')
             end
           )
 
+          tasmota.remove_cmd( pfx + 'ResetPowerUsage' )
           tasmota.add_cmd( pfx + 'ResetPowerUsage',
             def (cmd, idx, payload)
               return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, 'FF27FF', 'Done')
             end
           )
 
+          tasmota.remove_cmd( pfx + 'PowerLock' )
           tasmota.add_cmd( pfx + 'PowerLock',
             def (cmd, idx, payload)
               return lwdecode.SendDownlinkMap(global.ws522Nodes, cmd, idx, payload, { '1|ON': ['FF250080', 'ON'], '0|OFF': ['FF250000', 'OFF']  })
             end
           )
 
+          tasmota.remove_cmd( pfx + 'DelayTask' )
           tasmota.add_cmd( pfx + 'DelayTask',
             def (cmd, idx, payload)
               var parts = string.split(payload,',')
@@ -218,12 +224,14 @@ class LwDecoWS522
             end
           )
 
+          tasmota.remove_cmd( pfx + 'DelTask' )
           tasmota.add_cmd( pfx + 'DelTask',
             def (cmd, idx, payload)
               return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, 'FF2300FF', 'Done')
             end
           )
 
+          tasmota.remove_cmd( pfx + 'OcAlarm' )
           tasmota.add_cmd( pfx + 'OcAlarm',
             def (cmd, idx, payload)
               var parts = string.split(payload,',')
@@ -236,24 +244,28 @@ class LwDecoWS522
             end
           )
 
+          tasmota.remove_cmd( pfx + 'PwrUsage' )
           tasmota.add_cmd( pfx + 'PwrUsage',
             def (cmd, idx, payload)
               return lwdecode.SendDownlinkMap(global.ws522Nodes, cmd, idx, payload, { '1|ON': ['FF2601FF', 'ON'], '0|OFF': ['FF2600FF', 'OFF'] })
             end
           )
 
+          tasmota.remove_cmd( pfx + 'Status' )
           tasmota.add_cmd( pfx + 'Status',
            def (cmd, idx, payload)
              return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, 'FF28FF', 'Done')
            end
           )
 
+          tasmota.remove_cmd( pfx + 'LED' )
           tasmota.add_cmd( pfx + 'LED',
            def (cmd, idx, payload)
              return lwdecode.SendDownlinkMap(global.ws522Nodes, cmd, idx, payload, { '1|ON': ['FF2F01', 'ON'], '0|OFF': ['FF2F00', 'OFF'] })
            end
           )
 
+          tasmota.remove_cmd( pfx + 'OcProt' )
           tasmota.add_cmd( pfx + 'OcProt',
            def (cmd, idx, payload)
              var parts = string.split(payload,',')
