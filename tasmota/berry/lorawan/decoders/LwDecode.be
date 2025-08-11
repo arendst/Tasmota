@@ -113,6 +113,22 @@ class lwdecode_cls
     tasmota.add_cmd('LwReload', /cmd, idx, payload, payload_json -> self.cmd_reload_decoder(cmd, idx, payload))
   end
 
+  def uint16le(value)
+    return string.format( "%02x%02x",
+      value & 0xFF,
+      (value >> 8) & 0xFF
+    )
+  end
+
+  def uint32le(value)
+    return string.format( "%02x%02x%02x%02x",
+      value & 0xFF,
+      (value >> 8)  & 0xFF,
+      (value >> 16) & 0xFF,
+      (value >> 24) & 0xFF
+    )
+  end
+
   def _cache_topic()
     var full_topic = tasmota.cmd('_FullTopic',true)['FullTopic']
     var topic = tasmota.cmd('_Status',true)['Status']['Topic']
@@ -124,12 +140,20 @@ class lwdecode_cls
   def SendDownlink(nodes, cmd, idx, payload, ok_result)
     if !nodes.find(idx) return nil end
 
-    var sendcmd = 'LoRaWanSend'
-    var output = tasmota.cmd(format('%s%i %s', sendcmd, idx, payload), true)
-    if output.find(sendcmd) == 'Done'
-      return tasmota.resp_cmnd(format('{"%s%i":"%s"}', cmd, idx, ok_result))
-    end
-    return output
+    var _send    = 'LoRaWanSend'
+    var _cmdSend = _send + str(idx) + ' ' + payload
+    var _out     = tasmota.cmd(_cmdSend, true)
+
+    return tasmota.resp_cmnd(
+      format('{"%s%i":"%s","%s":"%s","Payload":"%s"}',
+        cmd,
+        idx,
+        ok_result,
+        _send,
+        _out[_send],
+        payload
+      )
+    )
   end
 
   def SendDownlinkMap(nodes, cmd, idx, payload, choice_map)
@@ -148,10 +172,8 @@ class lwdecode_cls
       if self.lw_decoders.find(decoder_name)
         self.lw_decoders.remove(decoder_name)
       end
-      
       LwDeco = nil
       load(decoder_name)
-      
       if LwDeco
         self.lw_decoders[decoder_name] = LwDeco
         self.decoder_timestamps[decoder_name] = tasmota.millis()
@@ -161,7 +183,6 @@ class lwdecode_cls
         print(format("Failed to reload decoder %s", decoder_name))
         return false
       end
-      
     except .. as e, m
       print(format("Error reloading decoder %s: %s", decoder_name, m))
       return false
@@ -172,7 +193,6 @@ class lwdecode_cls
     if payload == ""
       var reloaded = []
       var failed = []
-      
       for decoder_name : self.lw_decoders.keys()
         if self.reload_decoder(decoder_name)
           reloaded.push(decoder_name)
@@ -180,14 +200,11 @@ class lwdecode_cls
           failed.push(decoder_name)
         end
       end
-      
       var result = format("Reloaded: %i", reloaded.size())
       if failed.size() > 0
         result += format(", Failed: %i", failed.size())
       end
-      
       return tasmota.resp_cmnd(format('{"LwReload":"%s"}', result))
-      
     else
       var success = self.reload_decoder(payload)
       var status = success ? "OK" : "Failed"
