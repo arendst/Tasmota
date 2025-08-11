@@ -2,28 +2,12 @@
 #
 # References
 #  WS522 User Manual:     https://resource.milesight.com/milesight/iot/document/ws52x-user-guide-en.pdf
-#  TTN Device Repository: https://github.com/TheThingsNetwork/lorawan-devices/blob/master/vendor/milesight-iot/ws52x.js
+#  Device Decoder:        https://github.com/Milesight-IoT/SensorDecoders/blob/main/WS_Series/WS52x/WS52x_Decoder.js
 
 import string
 
 if !global.ws522Nodes      # data survive to decoder reload
   global.ws522Nodes = {}
-end
-
-def uint16le(value)
-  return string.format( "%02x%02x",
-    value & 0xFF,
-    (value >> 8) & 0xFF
-  )
-end
-
-def uint32le(value)
-  return string.format( "%02x%02x%02x%02x", 
-    value & 0xFF,
-    (value >> 8)  & 0xFF,
-    (value >> 16) & 0xFF,
-    (value >> 24) & 0xFF
-  )
 end
 
 class LwDecoWS522
@@ -121,7 +105,7 @@ class LwDecoWS522
         data.insert("Button_State", button_state ? "Open" : "Close" )
         i += 1
 
-      # FE02(ReportInterval) 3C00=>06
+      # FE03(ReportInterval) 3C00=>60  5802=>600
       elif channel_id == 0xFE && channel_type == 0x02
         data.insert("Period", ((Bytes[i+1] << 8) | Bytes[i]) )
         i += 2
@@ -141,17 +125,23 @@ class LwDecoWS522
         data.insert("Software Version",  format("v%02x.%02x", Bytes[i], Bytes[i+1]) )
         i += 2
 
-      # FF0b(PowerOn) Deviceison
-      elif channel_id == 0xFF && channel_type == 0x0B
-        i += 1
+      elif channel_id == 0xFF && channel_type == 0x0B i += 1  # FF0b(PowerOn) Deviceison
+      elif channel_id == 0xFF && channel_type == 0x16 i += 8  # FF16(DeviceSN) 16digits
+      elif channel_id == 0xFF && channel_type == 0x0F i += 1  # FF0f(DeviceType) 00:ClassA,01:ClassB,02:ClassC
+      elif channel_id == 0xFF && channel_type == 0xFF i += 2  # TSL VERSION
+      elif channel_id == 0xFF && channel_type == 0xFE i += 1  # RESET EVENT
 
-      # FF16(DeviceSN) 16digits
-      elif channel_id == 0xFF && channel_type == 0x16
-        i += 8
-
-      # FF0f(DeviceType) 00:ClassA,01:ClassB,02:ClassC
-      elif channel_id == 0xFF && channel_type == 0x0F
-        i += 1
+      elif channel_id == 0xFE && channel_type == 0x03 i += 2  # id=0xFE yy  Downlink Reporting Event
+      elif channel_id == 0xFE && channel_type == 0x10 i += 1
+      elif channel_id == 0xFE && channel_type == 0x22 i += 4
+      elif channel_id == 0xFE && channel_type == 0x23 i += 2
+      elif channel_id == 0xFE && channel_type == 0x24 i += 2
+      elif channel_id == 0xFE && channel_type == 0x25 i += 2
+      elif channel_id == 0xFE && channel_type == 0x26 i += 1
+      elif channel_id == 0xFE && channel_type == 0x27 i += 1
+      elif channel_id == 0xFE && channel_type == 0x28 i += 1
+      elif channel_id == 0xFE && channel_type == 0x2F i += 1
+      elif channel_id == 0xFE && channel_type == 0x30 i += 2
 
       else
         log( string.format("WS522: something missing? id={%s} type={%s}", channel_id, channel_type), 1)
@@ -164,43 +154,118 @@ class LwDecoWS522
 
     if valid_values
       if !command_init
-          tasmota.add_cmd( "LwWS522Power",
+          #   
+          #      Downlink            Commands 
+          #      =================   ===============================
+          #   ✅ 08 00 00 FF         Close
+          #   ✅ 08 01 00 FF         Open
+          #   ✅ FF 03 ss ss         SetReportingInterval (2 bytes, seconds)
+          #   ✅ FF 10 FF            Reboot
+          #   ✅ FF 22 00 ss ss aa   AddDelayTask (ss=delay seconds, aa=action 10=close/11=open)
+          #   ✅ FF 23 00 FF         DeleteDelayTask
+          #   ❓ FF 24 xx yy         OvercurrentAlarm (xx: 00=off/01=on, yy=threshold)
+          #   ✅ FF 25 00 xx         ButtonLock (xx: 00=off/80=on)
+          #   ✅ FF 26 yy            PowerConsumption (yy: 00=off/01=on)
+          #   ✅ FF 27 FF            ResetPowerConsumption
+          #   ✅ FF 28 FF            EnquireElectricalStatus
+          #   ✅ FF 2F xx            LEDMode (xx: 00=off/01=on)
+          #   ❓ FF 30 xx yy         OvercurrentProtection (XX: 00=off/01=on, YY=threshold)
+          #   
+          #   ✅ = Verified  ❓= Not verified yet   ❌=Issue, under investigation
+          #
+
+          var pfx = 'LwWS522'
+
+          tasmota.add_cmd( pfx + 'Power',
             def (cmd, idx, payload)
-              if payload == "1" || string.toupper(payload) == "ON"
-                  return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, '080100FF', 'ON')
-              elif payload == "0" || string.toupper(payload) == "OFF"
-                  return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, '080000FF', 'OFF')
+              return lwdecode.SendDownlinkMap(global.ws522Nodes, cmd, idx, payload, { '1|ON': ['080100FF', 'ON'], '0|OFF': ['080000FF', 'OFF']  })
+            end
+          )
+
+          tasmota.add_cmd( pfx + 'Period',
+            def (cmd, idx, payload)
+              return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, format('FF03%s',lwdecode.uint16le(number(payload))), number(payload))
+            end
+          )
+
+          tasmota.add_cmd( pfx + 'Reboot',
+            def (cmd, idx, payload)
+              return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, 'FF10FF', 'Done')
+            end
+          )
+
+          tasmota.add_cmd( pfx + 'ResetPowerUsage',
+            def (cmd, idx, payload)
+              return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, 'FF27FF', 'Done')
+            end
+          )
+
+          tasmota.add_cmd( pfx + 'PowerLock',
+            def (cmd, idx, payload)
+              return lwdecode.SendDownlinkMap(global.ws522Nodes, cmd, idx, payload, { '1|ON': ['FF250080', 'ON'], '0|OFF': ['FF250000', 'OFF']  })
+            end
+          )
+
+          tasmota.add_cmd( pfx + 'DelayTask',
+            def (cmd, idx, payload)
+              var parts = string.split(payload,',')
+              if parts.size() != 2
+                return tasmota.resp_cmnd_str("Usage: delay_seconds,action (action: 0=close, 1=open)")
               end
+              var delay = number(parts[0])
+              var action = number(parts[1]) == 1 ? '11' : '10'
+              return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, format('FF2200%s%s',lwdecode.uint16le(delay),action), payload)
             end
           )
 
-          tasmota.add_cmd( "LwWS522Period",
+          tasmota.add_cmd( pfx + 'DelTask',
             def (cmd, idx, payload)
-                return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, format('FF02%s',uint16le(number(payload))), number(payload))
+              return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, 'FF2300FF', 'Done')
             end
           )
 
-          tasmota.add_cmd( "LwWS522Reboot",
+          tasmota.add_cmd( pfx + 'OcAlarm',
             def (cmd, idx, payload)
-                return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, 'FF10FF', 'Done')
-            end
-          )
-
-          tasmota.add_cmd( "LwWS522ResetPowerUsage",
-            def (cmd, idx, payload)
-                return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, 'FF27FF', 'Done')
-            end
-          )
-
-          tasmota.add_cmd( "LwWS522PowerLock", 
-            def (cmd, idx, payload)
-              if payload == "1" || string.toupper(payload) == "ON"
-                return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, 'FF250080', 'ON')
-              elif payload == "0" || string.toupper(payload) == "OFF"
-                return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, 'FF250080', 'OFF')
+              var parts = string.split(payload,',')
+              if parts.size() != 2 
+                return tasmota.resp_cmnd_str("Usage: enable,threshold (enable: 0/1, threshold: 0-255)")
               end
+              var enable = number(parts[0]) ? '01' : '00'
+              var threshold = format('%02X', number(parts[1]))
+              return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, format('FF24%s%s',enable,threshold), payload)
             end
           )
+
+          tasmota.add_cmd( pfx + 'PwrUsage',
+            def (cmd, idx, payload)
+              return lwdecode.SendDownlinkMap(global.ws522Nodes, cmd, idx, payload, { '1|ON': ['FF2601FF', 'ON'], '0|OFF': ['FF2600FF', 'OFF'] })
+            end
+          )
+
+          tasmota.add_cmd( pfx + 'Status',
+           def (cmd, idx, payload)
+             return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, 'FF28FF', 'Done')
+           end
+          )
+
+          tasmota.add_cmd( pfx + 'LED',
+           def (cmd, idx, payload)
+             return lwdecode.SendDownlinkMap(global.ws522Nodes, cmd, idx, payload, { '1|ON': ['FF2F01', 'ON'], '0|OFF': ['FF2F00', 'OFF'] })
+           end
+          )
+
+          tasmota.add_cmd( pfx + 'OcProt',
+           def (cmd, idx, payload)
+             var parts = string.split(payload,',')
+             if parts.size() != 2
+               return tasmota.resp_cmnd_str("Usage: enable,threshold (enable: 0/1, threshold: 0-255)")
+             end
+             var enable = number(parts[0]) ? '01' : '00'
+             var threshold = format('%02X', number(parts[1]))
+             return lwdecode.SendDownlink(global.ws522Nodes, cmd, idx, format('FF30%s%s',enable,threshold), payload)
+           end
+          )
+
           command_init = true
       end
 
