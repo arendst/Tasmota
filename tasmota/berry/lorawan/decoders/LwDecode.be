@@ -233,10 +233,6 @@ class lwdecode_cls
     var payload = device_info['Payload']
     if !payload || payload.size() == 0 return true end
 
-    var current_hash = self._calculate_payload_hash(payload)
-    if current_hash == self.last_payload_hash return true end
-    self.last_payload_hash = current_hash
-
     if !self.lw_decoders.find(decoder)
       try
         LwDeco = nil
@@ -244,12 +240,27 @@ class lwdecode_cls
         if LwDeco
           self.lw_decoders[decoder] = LwDeco
         else
+          log("LwD: Unable to load decoder",1)
           return true
         end
       except .. as e, m
-        print(format("Decoder load error: %s", m))
+        log(format("LwD: Decoder load error: %s", m),1)
         return true
       end
+    end
+
+    var hashCheck
+    # check if the decoder driver have the hashCheck properties
+    try
+      hashCheck = self.lw_decoders[decoder].hashCheck
+    except .. as e, m
+      hashCheck = true
+    end
+    
+    if hashCheck
+      var current_hash = self._calculate_payload_hash(payload)
+      if current_hash == self.last_payload_hash return true end
+      self.last_payload_hash = current_hash
     end
 
     try
@@ -282,7 +293,7 @@ class lwdecode_cls
       tasmota.global.restart_flag = 0 # Signal LwDecoded successful (default state)
 
     except .. as e, m
-      print(format("Decode error for %s: %s", device_name, m))
+      log(format("LwD: Decode error for %s: %s", device_name, m),1)
     end
 
     return true
