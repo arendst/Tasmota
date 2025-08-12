@@ -1,6 +1,9 @@
 .pio
+.vscode
 build/
+build.clang
 sdkconfig.old
+sdkconfig
 **/build/
 .ccls-cache
 doc/source/xml/
@@ -16,3 +19,10 @@ fp-info-cache
 __pycache__
 examples/weather/components
 sdkconfig
+managed_components/
+epaper-breakout-backups/
+dependencies.lock
+ED*.h
+ES*.h
+examples/private_*/
+*.code-workspace

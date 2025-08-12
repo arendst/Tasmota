@@ -1,0 +1,11 @@
+BasedOnStyle: chromium
+IndentWidth: 4
+ColumnLimit: 100
+AlignAfterOpenBracket: BlockIndent
+IncludeBlocks: Preserve
+BreakBeforeBinaryOperators: All
+Cpp11BracedListStyle: false
+AllowAllParametersOfDeclarationOnNextLine: true
+BinPackArguments: false
+BinPackParameters: false
+SortIncludes: false

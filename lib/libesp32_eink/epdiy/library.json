@@ -1,0 +1,32 @@
+{
+  "name": "epdiy",
+  "version": "2.0.0",
+  "description": "Drive parallel e-Paper displays with epdiy-based boards.",
+  "keywords": "epd, driver, e-ink",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vroland/epdiy.git"
+  },
+  "authors": [
+    {
+      "name": "Valentin Roland",
+      "email": "github@vroland.de",
+      "maintainer": true
+    }
+  ],
+  "license": "LGPL-3.0",
+  "frameworks": [
+    "arduino",
+    "espidf"
+  ],
+  "platforms": "espressif32",
+  "export": {
+    "exclude": [
+      "hardware"
+    ]
+  },
+  "build": {
+    "includeDir": "include",
+    "srcDir": "src/"
+  }
+}

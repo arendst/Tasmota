@@ -17,7 +17,7 @@ args = parser.parse_args()
 im = Image.open(args.inputfile)
 # convert to grayscale
 im = im.convert(mode='L')
-im.thumbnail((args.max_width, args.max_height), Image.ANTIALIAS)
+im.thumbnail((args.max_width, args.max_height), Image.LANCZOS)
 
 # Write out the output file.
 with open(args.outputfile, 'w') as f:
