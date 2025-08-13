@@ -42,9 +42,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "latest"
+          enable-cache: false
       - name: Install dependencies
         run: |
-          pip install uv
           uv pip install --system platformio
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Add "release" to footer
@@ -86,9 +90,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "latest"
+          enable-cache: false
       - name: Install dependencies
         run: |
-          pip install uv
           uv pip install --system platformio
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Add "release" to footer
@@ -137,9 +145,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "latest"
+          enable-cache: false
       - name: Install dependencies
         run: |
-          pip install uv
           uv pip install --system platformio
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
@@ -182,9 +194,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "latest"
+          enable-cache: false
       - name: Install dependencies
         run: |
-          pip install uv
           uv pip install --system platformio
           cp ./platformio_override_sample.ini ./platformio_override.ini
       - name: Download safeboot firmwares
