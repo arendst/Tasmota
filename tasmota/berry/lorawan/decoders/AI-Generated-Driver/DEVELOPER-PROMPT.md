@@ -132,6 +132,7 @@ outputs:
       - Uplink coverage matrix
       - Performance metrics
       - Integration examples
+      - always include a snippet of code to test the payload decoding
       - Generation prompt
       
   emoji_reference:
@@ -140,6 +141,12 @@ outputs:
       - Add new mappings
       - Update usage counts
       - Log timestamp
+      
+  driver_list_reference:
+    path: ${output}/GENERATED-DRIVER-LIST.md
+    update:
+      - add new generated driver in a comprensive list with versioning 
+      - keep the list up to date
 ```
 
 ### Phase 3: Validation
