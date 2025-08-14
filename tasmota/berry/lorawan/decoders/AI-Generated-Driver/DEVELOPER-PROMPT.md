@@ -1,110 +1,233 @@
-# AI Assistant for LoRaWAN IoT Sensor Driver Development
+# LoRaWAN IoT Sensor Driver Development Specification
 
-## Objective
-Create a complete driver implementation for the specified IoT sensor using the LwDecode framework architecture.
+## Task Definition
+Generate complete Berry driver implementation for LoRaWAN sensor from PDF specification using LwDecode framework.
 
-## Context
-- **Tasmota Home Path**: `C:\Project\tasmota\Tasmota`
-- **Berry Language Reference**: Use `<TASMOTA_HOME_PATH>/.doc_for_ai/BERRY_LANGUAGE_REFERENCE.md` and `<TASMOTA_HOME_PATH>/.doc_for_ai/BERRY_TASMOTA.md` if not already provided as attachment
-- **LwDecode Home**: `<TASMOTA_HOME_PATH>/tasmota/berry/lorawan/decoders`
-- **Framework**: LwDecode framework, find it in `<LWDECODE_HOME>` if not already provided as attachment
-- **Output Home Path**: Use `<LWDECODE_HOME>/AI-Generated-Driver`
-- **Emoji Reference file**: Use `<OUTPUT_HOME>/emoji-reference.md`
-- **Reference Templates**: Can be provided as attachment; if not provided use `<LWDECODE_HOME>/DEFAULT_AI_TEMPLATE.md`; if file not present, draft the default template using framework patterns
-- **Target Device**: IoT sensor specified in PDF documentation
-- **Documentation**: Device specification PDF (attached)
+## Environment Configuration
+```yaml
+base_path: C:\Project\tasmota\Tasmota
+paths:
+  berry_docs: ${base_path}/.doc_for_ai/
+  lwdecode: ${base_path}/tasmota/berry/lorawan/decoders/
+  output: ${lwdecode}/AI-Generated-Driver/
+  vendor: ${output}/vendor/${vendor_lowercase}/
 
-## Requirements
+required_inputs:
+  - PDF specification (attached)
+  - Vendor name (extract from PDF)
+  - Model name (extract from PDF)
 
-### Driver Implementation
-1. **Core Functionality**
-   - ESP32 Limits considerations
-   - Parse sensor payload data according to PDF specifications
-   - Implement all documented measurement types and data formats
-   - Handle device configuration and status messages
-   - Implement error handling and data validation
-   - Keep the code minimal but readable
-   - Keep updated the revision history inside the code, create it if not present
+auto_load:
+  - ${berry_docs}/BERRY_LANGUAGE_REFERENCE.md
+  - ${berry_docs}/BERRY_TASMOTA.md
+  - ${lwdecode}/DEFAULT_AI_TEMPLATE.md
+  - ${output}/emoji-reference.md
+```
 
-2. **Framework Compliance**
-   - Follow Berry for tasmota implementation
-   - Follow LwDecode architectural patterns
-   - Use provided driver templates as reference
-   - Implement required interface methods and data structures
-   - Maintain compatibility with framework components
+## Implementation Rules
 
-3. **Data Processing**
-   - Decode all sensor measurement values per specification
-   - Apply unit conversions as documented
-   - Handle calibration parameters if present
-   - Support all documented transmission modes
+### Priority 1: Core Driver
+```
+constraints:
+  - ESP32 memory limit: 4MB flash, 320KB RAM
+  - Berry stack limit: 256 levels
+  - String concat limit: minimize operations
+  - Object creation: pool where possible
+  
+requirements:
+  - Decode ALL uplinks from PDF
+  - Binary payload parsing per specification
+  - Little/Big endian handling per docs
+  - CRC/checksum validation if specified
+  - Error codes: return nil on failure
 
-### UI/Display Guidelines
-- **Emoji Usage**: Use emojis instead of text labels whenever possible
-- **Emoji Consistency**: Always use same emoji for same unit (reference emoji-reference.md)
-- **Measurement Display**: For numeric measurements (temperature, watts, etc.), show value next to emoji
-- **Status Display**: For non-measurement data, show device "last seen" timestamp instead of value
-- **Implementation Coverage**: Implement ALL uplinks documented in specification
-- **Mandatory Check**: Verify emoji usage against existing reference before implementation
-- **Text Label Enforcement**: Strictly avoid text labels unless absolutely impossible to represent with emoji
-- **Tooltip Management**: Use descriptive tooltips only when emoji meaning requires clarification
-- **UI Compliance**: Ensure all display elements follow emoji-first approach with minimal text overlay
-- **Single Line Display**: Driver output should generally occupy 1 line; if >2 lines, rationalize displayed information
-- **Logical Sequence**: Organize sensor sequence with logical ordering (priority, measurement type, etc.)
-- **Minimal & Efficient**: Keep UI minimal and efficient for intended scope
+critical_requirements:
+  decode_completeness:
+    - "MUST decode EVERY channel type mentioned in the PDF"
+    - "MUST NOT skip ANY uplink data - all fields are important"
+    - "Include ALL metadata fields: versions, SN, device type, reset events"
+    - "Include ALL configuration states reported in uplinks"
+    - "If a channel appears in the PDF, it MUST be decoded to data{}"
+    - "Never use 'elif channel_id == X && channel_type == Y i += Z' without decoding"
+    
+  validation_checklist:
+    before_completion:
+      - "Count all unique channel types in PDF"
+      - "Count all decoded channel types in code"
+      - "Verify 100% match between PDF and implementation"
+      - "Check no 'skip' comments without actual data extraction"
+      
+  code_patterns:
+    forbidden:
+      - "Skipping known channel types without decoding"
+      - "Comments like '# Skip' or '# Unused' for documented channels"
+    required:
+      - "Every channel must either decode data OR log as unknown"
+      - "All configuration states must be stored and reported"
+```
 
-### Automated Documentation
-- **Keep the Emoji Tool**: Automatically generate and maintain `<OUTPUT_HOME>/emoji-reference.md`
-- **Format**: Table with emoji symbol, unicode code, name, sensor usage list from legacy drivers, sensor usage list from AI Generated drivers
-- **Update**: Add new emojis during driver development, maintain existing entries
-- **Consistency Enforcement**: Use existing emoji-reference.md to ensure same emoji for same units
-- **Version History**: Maintain version history section in emoji-reference.md with changes and dates
+### Priority 2: Display Format
+```
+ui_rules:
+  emoji_only: true
+  text_labels: forbidden
+  line_count: 1 (max 2 if justified)
+  value_format: "emoji value unit"
+  status_format: "emoji last_seen"
+  
+emoji_selection:
+  1. Check emoji-reference.md
+  2. Use existing mapping if found
+  3. Add new if needed with justification
+  4. Update reference file
+```
 
-### Code Quality
-- Follow Berry coding standards and Tasmota conventions from template drivers
-- Add comprehensive code comments in English
-- Include parameter descriptions, valid ranges, and units
-- Document error codes and handling logic
-- Ensure cross-platform compatibility (Windows/Linux/macOS paths)
+### Priority 3: Code Standards
+```
+structure:
+  - Class: LwDecode_${MODEL}
+  - Methods: decodeUplink(), add_web_sensor()
+  - Error handling: try/except blocks
+  - Comments: English, inline, concise
+  
+patterns:
+  - Use bitwise operations for flags
+  - Pre-calculate constants
+  - Cache repeated calculations
+  - Avoid string concatenation loops
+```
 
-## Process Guidelines
-- **Clarification Required**: Ask for clarification on any ambiguous measurements/sensors/uplinks before implementation
-- **File Management**: Always check if files exist before writing, request permission for overwrites
-- **No Step-by-Step Display**: Do not show processing steps during development
-- **Super Minimal Output**: Provide only ESSENTIAL information after work
-- **No Code Generation Display**: Do not show code generation of the artifacts
-- **Error Handling**: Report any file access issues or missing dependencies
+## Execution Workflow
 
-## Deliverables
-1. **Driver Source Code**
-   - Complete implementation following framework patterns
-   - Comprehensive inline documentation
-   - Error handling and validation logic
-   - If decoder already exists, backup the current version, and replace it
-   - Naming convention and output file: `<OUTPUT_HOME>/vendor/[vendor_name_lowercase]/[DRIVER_NAME_uppercase].be`
-     (example for "Milesight WS522" -> `<OUTPUT_HOME>/vendor/milesight/WS522.be`)
+### Phase 1: Analysis
+```
+1. Parse PDF → Extract:
+   - Vendor/Model identifiers
+   - Uplink types and IDs
+   - Payload structures
+   - Unit conversions
+   - Bit field definitions
 
-2. **Pull Request Description** (Markdown format)
-   - Feature overview and implementation approach
-   - Technical details and architectural decisions
-   - Testing methodology and validation results
-   - Breaking changes or compatibility notes
-   - Usage examples and integration instructions
-   - References to PDF specification sections
-   - Naming convention & output file: same of the source code, but with `.md` extension
-   - Add usage and statistics metric about the execution of the workloads
-   - Include at the end a reusable prompt that describe how this driver was generated
+2. Verify existing implementation:
+   - Check ${vendor}/${MODEL}.be
+   - Backup if exists → ${MODEL}.${VERSION}.be
+```
 
-3. **Emoji Reference Tool** (Markdown format)
-   - Create and maintain comprehensive emoji usage list
-   - Save as markdown file in the output directory
-   - Include: emoji symbol, unicode code, name, sensors using it, and so on
+### Phase 2: Generation
+```
+outputs:
+  driver:
+    path: ${vendor}/${MODEL}.be
+    content:
+      - Header with revision history
+      - Class definition
+      - Decode methods for ALL uplinks
+      - Display formatter
+      - Helper functions, if the helper function can be useful in general propose the implementations directly at the framework level
+      
+  documentation:
+    path: ${vendor}/${MODEL}.md
+    sections:
+      - Implementation summary
+      - Uplink coverage matrix
+      - Performance metrics
+      - Integration examples
+      - Generation prompt
+      
+  emoji_reference:
+    path: ${output}/emoji-reference.md
+    update:
+      - Add new mappings
+      - Update usage counts
+      - Log timestamp
+```
 
-4. **Final Recap** (Minimal summary of generated components)
+### Phase 3: Validation
+```
+checklist:
+  ✓ All uplinks implemented
+  ✓ Payload sizes match spec
+  ✓ Units correctly converted
+  ✓ Emoji mappings consistent
+  ✓ Memory usage optimized
+  ✓ Error paths tested
+```
 
-## Validation Criteria
-- Successfully parse all documented payload formats
-- Pass framework compliance review
-- Handle edge cases and error conditions
-- Maintain consistent code style with existing drivers
-- Complete coverage of all documented uplinks
+## Output Requirements
+
+### File Operations
+- Check existence before write
+- Request permission for overwrites
+- Report access failures immediately
+- Use atomic writes when possible
+
+### Response Format
+```markdown
+## Completed
+Driver: ${path}
+Documentation: ${path}
+Emoji Reference: [updated|created]
+Coverage: X/Y uplinks
+Performance: XXms decode time
+```
+
+### Prohibited Actions
+- No step-by-step narration
+- No code preview in response
+- No implementation details shown
+- No verbose explanations
+- No artifact generation display
+
+## Critical Constraints
+
+### Memory Optimization
+- Reuse objects where possible
+- Minimize string operations
+- Use integer math over float
+- Preallocate buffers
+- Clear unused references
+
+### Error Handling
+- Silent failure with nil return
+- Log only critical errors
+- No exception propagation
+- Graceful degradation
+- Timeout protection
+
+### Compatibility
+- Berry 0.1.10+ syntax only
+- Tasmota 13.0+ APIs
+- UTF-8 encoding throughout
+- CRLF line endings (Windows)
+- No external dependencies
+
+## Quality Metrics
+```yaml
+success_criteria:
+  functional:
+    - 100% uplink coverage
+    - Zero runtime errors
+    - <50ms decode time
+    
+  code:
+    - <500 lines total
+    - <80 chars per line
+    - >30% comment ratio
+    
+  ui:
+    - 100% emoji usage
+    - Single line display
+    - Clear value presentation
+```
+
+## Example Execution
+```
+Input: "Generate driver for attached PDF"
+Process: [Silent analysis and generation]
+Output: "## Completed
+Driver: vendor/milesight/WS301.be
+Documentation: vendor/milesight/WS301.md
+Emoji Reference: updated
+Coverage: 12/12 uplinks
+Performance: 23ms decode time"
+```
