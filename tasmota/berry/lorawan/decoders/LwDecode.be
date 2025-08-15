@@ -83,6 +83,24 @@ class LwSensorFormatter_cls
     return self
   end
 
+  def add_status(text, icon, tooltip)
+    if tooltip 
+      self.begin_tooltip(tooltip) 
+    end
+    
+    if icon
+      self.msg_buffer .. format(" %s", icon)
+    end
+    
+    self.msg_buffer .. format(" %s", text)
+    
+    if tooltip 
+      self.end_tooltip() 
+    end
+    
+    return self
+  end
+
   def get_msg()
     return self.msg_buffer.asstring()
   end
