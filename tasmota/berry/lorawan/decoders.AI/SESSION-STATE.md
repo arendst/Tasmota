@@ -1,5 +1,5 @@
 # Session Recreation Settings
-# Version: 1.2.0 | Updated: 2025-01-17
+# Version: 1.3.0 | Updated: 2025-01-17
 
 ## Style Configuration
 **Style**: Concise Mode
@@ -50,3 +50,85 @@
 - Framework and driver files
 
 This setup provides context for continuing LoRaWAN framework development with enhanced error handling and debugging capabilities.
+
+## Prompt Library & Usage Patterns
+
+### Framework Operations
+- `load the new session state` - Reload settings after changes
+- `verify [file/structure]` - Read-only inspection (no changes)
+- `check if [component] is up to date` - Status verification
+- `show git commands for [action]` - Display commit format
+- `list all available drivers` - Inventory check
+- `show framework status` - Health check
+
+### Driver Generation
+- `Generate driver for [VENDOR] [MODEL]` - Full driver creation
+- `Load PDF and create [MODEL] driver` - With document upload
+- `Update existing [MODEL] driver with [changes]` - Modification
+- `Test driver with payload [HEX]` - Validation
+- `Create minimal driver for [TYPE] sensor` - Basic template
+- `Generate batch drivers from [folder] PDFs` - Multiple sensors
+- `Convert legacy driver to v1.8.0 format` - Migration
+- `Add downlink commands to [MODEL]` - Enhancement
+- `Optimize [MODEL] for memory usage` - Performance tuning
+
+### Framework Development
+- `Update framework to v[X.Y.Z]` - Version upgrade
+- `Patch all drivers for [feature]` - Bulk modifications
+- `Add [functionality] to framework core` - Enhancement
+- `Migrate drivers from [old] to [new] structure` - Refactoring
+- `Implement new formatter for [unit]` - Display extension
+- `Add error handling pattern for [scenario]` - Robustness
+- `Create helper function for [operation]` - Utility
+- `Benchmark framework performance` - Analysis
+
+### Documentation Maintenance
+- `Update README.md to reflect v[X.Y.Z]` - Version sync
+- `Generate changelog for v[X.Y.Z]` - Release notes
+- `Verify documentation consistency` - Cross-reference check
+- `Update emoji-reference.md with [new mappings]` - Standardization
+- `Create API documentation for [module]` - Reference
+- `Generate driver compatibility matrix` - Coverage report
+- `Update DEVELOPER-PROMPT.md template` - Instruction refresh
+
+### Testing & Validation
+- `Test all drivers with sample payloads` - Comprehensive check
+- `Validate [MODEL] against PDF specs` - Compliance verify
+- `Check memory footprint of drivers` - Resource analysis
+- `Benchmark decode performance` - Speed testing
+- `Test error scenarios for [component]` - Edge cases
+- `Validate emoji display on different devices` - UI testing
+- `Check Berry syntax compliance` - Language validation
+
+### Pipeline Operations
+```
+verify current state → update component → test changes → commit with (AI) format
+check dependencies → generate driver → validate output → update references
+list outdated drivers → batch update → test collection → commit changes
+analyze PDF → extract specs → generate MAP → create driver → test → document
+```
+
+### Maintenance & Cleanup
+- `Clean up temporary files` - Housekeeping
+- `Remove deprecated drivers` - Cleanup
+- `Archive old versions` - Organization
+- `Update driver dependencies` - Maintenance
+- `Consolidate duplicate functions` - Refactoring
+- `Check for unused emojis` - Reference cleanup
+- `Validate git history integrity` - Quality assurance
+
+### Emergency & Recovery
+- `Rollback framework to v[X.Y.Z]` - Emergency revert
+- `Restore driver from backup` - Recovery
+- `Fix broken driver [MODEL]` - Emergency repair
+- `Debug framework crash` - Critical analysis
+- `Recover from corrupted session` - State restoration
+- `Emergency disable problematic driver` - Safety measure
+
+### Development Workflow
+- `Start new feature branch` - Version control
+- `Prepare release candidate` - Release management
+- `Review code quality standards` - QA check
+- `Update coding guidelines` - Standards maintenance
+- `Create development roadmap` - Planning
+- `Schedule maintenance window` - Operations
