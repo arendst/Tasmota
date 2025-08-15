@@ -4,6 +4,8 @@
 
 LwDecode is a AI Powered Berry framework for Tasmota ESP32 that provides a standardized interface for decoding LoRaWAN sensor payloads. It integrates with Tasmota's LoRaWAN bridge functionality to decode device uplinks, display sensor data in the web UI, and manage downlink commands.
 
+**Enhanced Error Handling**: v1.8.0 introduces comprehensive error handling with stack traces, retry mechanisms, and detailed logging for improved debugging and reliability.
+
 ## Architecture
 
 ### Core Components
@@ -219,7 +221,37 @@ Built-in formatters with units and icons:
 4. Prefer `next_line()` for multi-line displays
 5. Always add header before sensor lines
 
-### Helper Functions
+### Error Handling and Debugging
+
+#### Enhanced Error Logging (v1.8.0+)
+The framework provides comprehensive error handling with detailed stack traces:
+
+```berry
+# Detailed error logging with stack traces
+lwdecode.log_error(context, error, message, payload_info)
+
+# Safe decoder loading with retry mechanism
+var decoder = lwdecode.safe_load_decoder("vendor/model.be")
+
+# Protected property access
+var value = lwdecode.get_decoder_property(decoder, "hashCheck", true)
+
+# Validated decoding with input/output checks
+var result = lwdecode.safe_decode_uplink(decoder, name, node, rssi, fport, payload)
+```
+
+#### Error Categories
+- **LOAD**: Decoder file loading and validation errors
+- **PROPERTY**: Decoder property access failures
+- **DECODE**: Payload decoding and validation errors
+- **RELOAD**: Dynamic decoder reloading issues
+
+#### Debugging Features
+- Stack trace capture for all exceptions
+- Retry mechanism for transient failures (3 attempts)
+- Input/output validation for all decoder calls
+- Detailed context in error messages
+- Performance timing for decoder operations
 
 #### lwdecode.header(name, tooltip, battery, battery_ls, rssi, last_seen)
 Generates standard device header with battery/RSSI indicators
