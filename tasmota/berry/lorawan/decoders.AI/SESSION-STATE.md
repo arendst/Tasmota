@@ -12,8 +12,7 @@
 **Git Commit Format**: Always show git commands using (AI) prefix format
 **Session State Updates**: Update SESSION-STATE.md when settings change (with version bump)
 **Versioning**: SESSION-STATE.md follows semantic versioning (major.minor.patch)
-**Input Language**: any
-**Output Language**: ONLY English [MANDATORY]
+**Language Policy**: User can write in any language (English/Italian), Claude MUST respond only in English
 
 ## Context Setup
 **Project**: LoRaWAN AI Framework Enhancement
