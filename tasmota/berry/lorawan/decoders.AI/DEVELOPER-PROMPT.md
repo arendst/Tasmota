@@ -1,5 +1,5 @@
 # LoRaWAN Decoder AI Generation Template
-## Version: 2.1.8 | Framework: LwDecode | Platform: Tasmota Berry
+## Version: 2.1.9 | Framework: LwDecode | Platform: Tasmota Berry
 
 ---
 
@@ -111,7 +111,7 @@ optimization_rules:
 # LoRaWAN AI-Generated Decoder for [VENDOR] [MODEL]
 #
 # Generated: [DATE] | Version: [VERSION] | Revision: [REV]
-#            by "LoRaWAN Decoder AI Generation Template", v2.1.8
+#            by "LoRaWAN Decoder AI Generation Template", v2.1.9
 #
 # Official Links
 # - Homepage:  [MODEL_HOMEPAGE_LINK]
@@ -212,7 +212,8 @@ class LwDecode_[MODEL]
             return data
             
         except .. as e, m
-            print(f"LwDecode_[MODEL] error: {m}")
+            lwdecode.log_error("DECODE_[MODEL]", e, m, 
+                format("Device:%s, Node:%s, FPort:%d, PayloadSize:%d", name, node, fport, size(payload)))
             return nil
         end
     end
@@ -311,14 +312,15 @@ class LwDecode_[MODEL]
         
         # [MANDATORY: Implement ALL downlink commands from PDF]
         # Each downlink type must have a corresponding Tasmota command
-        # Command format: [MODEL]<Function><node_index> <parameters>
+        # Command format: Lw[MODEL]<Function><node_index> <parameters>
+        # ALL COMMANDS MUST START WITH "Lw" PREFIX FOR CONSISTENCY
         # use the SendDownlinkMap helper function when possible like ON|OFF|0|1 , LOW|MID|HIGH, ENABLED|DISABLE|0|1 
         # use SendDownlink for other use case
         
         # Example: Basic control command (ON/OFF) using SendDownlinkMap
-        tasmota.remove_cmd("[MODEL]Control")
-        tasmota.add_cmd("[MODEL]Control", def(cmd, idx, payload_str)
-            # Format: [MODEL]Control<node> <on|off|1|0>
+        tasmota.remove_cmd("Lw[MODEL]Control")
+        tasmota.add_cmd("Lw[MODEL]Control", def(cmd, idx, payload_str)
+            # Format: Lw[MODEL]Control<node> <on|off|1|0>
             # SendDownlinkMap handles validation and node lookup
             return lwdecode.SendDownlinkMap(global.[MODEL]_nodes, cmd, idx, payload_str, { 
                 '1|ON':  ['08FF', 'ON' ],     # Maps "1" or "ON" to hex 08FF then return result "ON"
@@ -327,9 +329,9 @@ class LwDecode_[MODEL]
         end)
         
         # Example: Configuration parameter with range validation
-        tasmota.remove_cmd("[MODEL]SetParam")
-        tasmota.add_cmd("[MODEL]SetParam", def(cmd, idx, payload_str)
-            # Format: [MODEL]SetParam<node> <value>
+        tasmota.remove_cmd("Lw[MODEL]SetParam")
+        tasmota.add_cmd("Lw[MODEL]SetParam", def(cmd, idx, payload_str)
+            # Format: Lw[MODEL]SetParam<node> <value>
             var value = int(payload_str)
             if value < [MIN] || value > [MAX]
                 return tasmota.resp_cmnd_str(f"Invalid: range {[MIN]}-{[MAX]}")
@@ -341,12 +343,12 @@ class LwDecode_[MODEL]
         end)
         
         # Example: Multi-parameter command with validation
-        tasmota.remove_cmd("[MODEL]Config")
-        tasmota.add_cmd("[MODEL]Config", def(cmd, idx, payload_str)
-            # Format: [MODEL]Config<node> <param1>,<param2>
+        tasmota.remove_cmd("Lw[MODEL]Config")
+        tasmota.add_cmd("Lw[MODEL]Config", def(cmd, idx, payload_str)
+            # Format: Lw[MODEL]Config<node> <param1>,<param2>
             var parts = string.split(payload_str, ',')
             if size(parts) != 2
-                return tasmota.resp_cmnd_str("Usage: [MODEL]Config<node> <param1>,<param2>")
+                return tasmota.resp_cmnd_str("Usage: Lw[MODEL]Config<node> <param1>,<param2>")
             end
             
             var param1 = int(parts[0])
@@ -399,8 +401,8 @@ end
 LwDeco = LwDecode_[MODEL]()
 
 # Test command registration (recreated on each load)
-tasmota.remove_cmd("[MODEL]TestPayload")
-tasmota.add_cmd("[MODEL]TestPayload", def(cmd, idx, payload_str)
+tasmota.remove_cmd("Lw[MODEL]TestPayload")
+tasmota.add_cmd("Lw[MODEL]TestPayload", def(cmd, idx, payload_str)
     # Parse hex string to bytes
     var test_payload = bytes(payload_str)
     
@@ -416,8 +418,8 @@ tasmota.add_cmd("[MODEL]TestPayload", def(cmd, idx, payload_str)
 end)
 
 # Node management commands
-tasmota.remove_cmd("[MODEL]NodeStats")
-tasmota.add_cmd("[MODEL]NodeStats", def(cmd, idx, node_id)
+tasmota.remove_cmd("Lw[MODEL]NodeStats")
+tasmota.add_cmd("Lw[MODEL]NodeStats", def(cmd, idx, node_id)
     var stats = LwDeco.get_node_stats(node_id)
     if stats != nil
         import json
@@ -427,8 +429,8 @@ tasmota.add_cmd("[MODEL]NodeStats", def(cmd, idx, node_id)
     end
 end)
 
-tasmota.remove_cmd("[MODEL]ClearNode")
-tasmota.add_cmd("[MODEL]ClearNode", def(cmd, idx, node_id)
+tasmota.remove_cmd("Lw[MODEL]ClearNode")
+tasmota.add_cmd("Lw[MODEL]ClearNode", def(cmd, idx, node_id)
     if LwDeco.clear_node_data(node_id)
         tasmota.resp_cmnd_done()
     else
@@ -975,29 +977,29 @@ measurement_units:
 
 | Command | Description | Usage | Downlink Hex |
 |---------|-------------|-------|---------------|
-| [MODEL]Control | Basic control | `[MODEL]Control1 on/off` | `[HEX]` |
-| [MODEL]SetParam | Set parameter | `[MODEL]SetParam1 <value>` | `[HEX]` |
-| [MODEL]Config | Configuration | `[MODEL]Config1 <p1> <p2>` | `[HEX]` |
-| [MODEL]Reset | Device reset | `[MODEL]Reset1` | `[HEX]` |
-| [MODEL]Status | Request status | `[MODEL]Status1` | `[HEX]` |
+| Lw[MODEL]Control | Basic control | `Lw[MODEL]Control1 on/off` | `[HEX]` |
+| Lw[MODEL]SetParam | Set parameter | `Lw[MODEL]SetParam1 <value>` | `[HEX]` |
+| Lw[MODEL]Config | Configuration | `Lw[MODEL]Config1 <p1> <p2>` | `[HEX]` |
+| Lw[MODEL]Reset | Device reset | `Lw[MODEL]Reset1` | `[HEX]` |
+| Lw[MODEL]Status | Request status | `Lw[MODEL]Status1` | `[HEX]` |
 
 ### Downlink Usage Examples
 
 ```
 # Control device on node 1
-[MODEL]Control1 on
+Lw[MODEL]Control1 on
 
 # Set parameter to 60 for node 2
-[MODEL]SetParam2 60
+Lw[MODEL]SetParam2 60
 
 # Configure device on node 1
-[MODEL]Config1 param1 param2
+Lw[MODEL]Config1 param1 param2
 
 # Request status from node 3
-[MODEL]Status3
+Lw[MODEL]Status3
 
 # Reset device on node 1
-[MODEL]Reset1
+Lw[MODEL]Reset1
 ```
 
 Note: The node index in the command (e.g., `1` in `[MODEL]Control1`) corresponds to the LoRaWAN node to send the downlink to.
@@ -1010,13 +1012,13 @@ Note: The node index in the command (e.g., `1` in `[MODEL]Control1`) corresponds
 \`\`\`berry
 # Test periodic data uplink
 var test_payload = bytes("01670110026850FF01020304050607080900")
-var result = LwDeco.decodeUplink("TestDevice", "node123", -85, 1, test_payload)
+var result = LwDeco.decodeUplink([MODEL_NAME]-node, idx, -85, 1, test_payload)
 print(json.dump(result))
 # Expected: {"temperature": 27.2, "humidity": 40.0, ...}
 
 # Test alert uplink
 var alert_payload = bytes("020101670120")
-var result = LwDeco.decodeUplink("TestDevice", "node123", -85, 2, alert_payload)
+var result = LwDeco.decodeUplink([MODEL_NAME]-node, idx, -85, 2, alert_payload)
 print(json.dump(result))
 # Expected: {"alert": true, "temperature": 28.8}
 \`\`\`
@@ -1024,38 +1026,38 @@ print(json.dump(result))
 #### Tasmota Console Commands
 \`\`\`
 # Test periodic data (on framework LwDecode driver istance #1)
-[MODEL]TestPayload1 01670110026850FF01020304050607080900
+Lw[MODEL]TestPayload1 01670110026850FF01020304050607080900
 
 # Test alert message (on framework LwDecode driver istance #2)
-[MODEL]TestPayload2 020101670120
+Lw[MODEL]TestPayload2 020101670120
 
 # Test configuration data (on framework LwDecode driver istance #3)
-[MODEL]TestPayload3 FF01020304050607080900
+Lw[MODEL]TestPayload3 FF01020304050607080900
 
 # Test battery status (on framework LwDecode istance driver #4)
-[MODEL]TestPayload4 01010FA0
+Lw[MODEL]TestPayload4 01010FA0
 
 # Test reset event (#5)
-[MODEL]TestPayload5 8001
+Lw[MODEL]TestPayload5 8001
 
 # Test multi-channel data (#1)
-[MODEL]TestPayload1 01670110026850036901000467AABB
+Lw[MODEL]TestPayload1 01670110026850036901000467AABB
 
 # Test error conditions
-[MODEL]TestPayload1 ""              # Empty payload
-[MODEL]TestPayload1 01               # Incomplete payload
-[MODEL]TestPayload1 FFFFFFFFFF       # Invalid data
+Lw[MODEL]TestPayload1 ""              # Empty payload
+Lw[MODEL]TestPayload1 01               # Incomplete payload
+Lw[MODEL]TestPayload1 FFFFFFFFFF       # Invalid data
 
 # Node management
-[MODEL]NodeStats test_node           # Get node statistics
-[MODEL]NodeStats node_12345          # Get specific node stats
-[MODEL]ClearNode test_node           # Clear node data
-[MODEL]ClearNode node_12345          # Clear specific node
+Lw[MODEL]NodeStats test_node           # Get node statistics
+Lw[MODEL]NodeStats node_12345          # Get specific node stats
+Lw[MODEL]ClearNode test_node           # Clear node data
+Lw[MODEL]ClearNode node_12345          # Clear specific node
 
 # Downlink commands
-[MODEL]Control1 on                   # Turn on device 1
-[MODEL]Control1 off                  # Turn off device 1
-[MODEL]SetParam2 100                 # Set parameter for device 2
+Lw[MODEL]Control1 on                   # Turn on device 1
+Lw[MODEL]Control1 off                  # Turn off device 1
+Lw[MODEL]SetParam2 100                 # Set parameter for device 2
 \`\`\`
 
 #### Expected Responses
@@ -1107,17 +1109,17 @@ load("[MODEL].be")
 
 # The driver auto-registers as LwDeco
 # Web UI will automatically show sensor data
-# Test command [MODEL]TestPayload is available in console
-# Downlink commands [MODEL]* are available in console
+# Test command Lw[MODEL]TestPayload is available in console
+# Downlink commands Lw[MODEL]* are available in console
 \`\`\`
 
 ### Testing Workflow
 1. Load the driver: `load("[MODEL].be")`
-2. Test with command: `[MODEL]TestPayload1 YOUR_HEX_PAYLOAD`
+2. Test with command: `Lw[MODEL]TestPayload1 YOUR_HEX_PAYLOAD`
 3. Check response in console for decoded JSON
 4. Verify Web UI shows formatted sensor data
 5. Test all documented uplink types using different port indices
-6. Test downlink commands: `[MODEL]Control1 on`
+6. Test downlink commands: `Lw[MODEL]Control1 on`
 
 ## Performance Metrics
 - Decode Time: [X]ms average, [Y]ms max
@@ -1363,19 +1365,19 @@ lwdecode.unpack_bits(bytes)    # Extract bits from bytes
 ### Testing Commands
 ```berry
 # In Tasmota console - Using test command
-[MODEL]TestPayload1 YOUR_HEX_PAYLOAD_PORT1
-[MODEL]TestPayload2 YOUR_HEX_PAYLOAD_PORT2
-[MODEL]TestPayload3 YOUR_HEX_PAYLOAD_PORT3
+Lw[MODEL]TestPayload1 YOUR_HEX_PAYLOAD_PORT1
+Lw[MODEL]TestPayload2 YOUR_HEX_PAYLOAD_PORT2
+Lw[MODEL]TestPayload3 YOUR_HEX_PAYLOAD_PORT3
 # Port number in command matches fport parameter
 
 # Downlink commands
-[MODEL]Control1 on           # Control device 1
-[MODEL]SetParam2 100         # Set parameter for device 2
-[MODEL]Config3 p1 p2         # Configure device 3
+Lw[MODEL]Control1 on           # Control device 1
+Lw[MODEL]SetParam2 100         # Set parameter for device 2
+Lw[MODEL]Config3 p1 p2         # Configure device 3
 
 # Node management commands
-[MODEL]NodeStats node_id     # Get statistics for a node
-[MODEL]ClearNode node_id     # Clear data for a node
+Lw[MODEL]NodeStats node_id     # Get statistics for a node
+Lw[MODEL]ClearNode node_id     # Clear data for a node
 
 # In Berry console - Direct testing
 load("vendor/[vendor]/[MODEL].be")
@@ -1402,7 +1404,7 @@ This template ensures:
 Remember: The goal is a **perfect, complete decoder** that handles **100% of the device's capabilities** as documented in the manufacturer's PDF, including ALL uplink decoding and ALL downlink command generation.
 
 ---
-*Template Version: 2.1.8 | Last Updated: 2025-08-15*
+*Template Version: 2.1.9 | Last Updated: 2025-08-15*
 
 ---
 

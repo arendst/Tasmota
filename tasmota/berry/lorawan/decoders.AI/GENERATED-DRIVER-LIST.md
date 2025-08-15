@@ -12,36 +12,24 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 
 ## Driver Registry
 
-### Browan
-| Model | Version | Date | Channels | Description |
-|-------|---------|------|----------|-------------|
-| EBL-OC | 1.0.0 | 2025-08-14 | 5/5 | Open/Close sensor with environmental monitoring |
-
-### Dragino
-| Model | Version | Date | Channels | Description |
-|-------|---------|------|----------|-------------|
-| LHT65 | 1.0.0 | 2025-08-14 | 12/12 | Temperature, humidity, GPIO, ADC sensor |
-| SE01-LB | 1.0.0 | 2025-08-14 | 8/8 | Soil monitoring with EC and dielectric |
-
 ### Milesight
 | Model | Version | Date | Channels | Description |
 |-------|---------|------|----------|-------------|
 | AM300 | 1.1.0 | 2025-08-15 | 20/20 | 8-in-1 indoor air quality monitor |
-| WS202 | 1.0.0 | 2025-08-14 | 9/9 | PIR & Light sensor for motion and illuminance detection |
-| WS301 | 1.0.0 | 2025-08-14 | 10/10 | Magnetic door/window sensor |
-| WS523 | 1.0.0 | 2025-08-14 | 33/33 | Smart socket with power monitoring |
-| WS52x | 2.0.0 | 2025-08-15 | 33/33 | Smart socket series - REGENERATED with template v2.1.8 |
+| WS101 | 1.0.0 | 2025-08-15 | 8/8 | Smart button with multiple press types |
+| WS202 | 1.1.0 | 2025-08-15 | 9/9 | PIR & Light sensor for motion and illuminance detection |
+| WS301 | 1.1.0 | 2025-08-15 | 10/10 | Magnetic door/window sensor |
+| WS523 | 2.0.0 | 2025-08-15 | 33/33 | Portable smart socket with power monitoring |
+| WS52x | 2.0.0 | 2025-08-15 | 33/33 | Smart socket series with comprehensive power monitoring |
 
 ## Coverage Statistics
 
 ### By Vendor
-- **Browan**: 1 driver, 5 total channels
-- **Dragino**: 2 drivers, 20 total channels  
-- **Milesight**: 5 drivers, 105 total channels
+- **Milesight**: 6 drivers, 113 total channels
 
 ### Total
-- **Drivers**: 8
-- **Channels**: 130
+- **Drivers**: 6
+- **Channels**: 113
 - **Coverage**: 100% (all documented channels implemented)
 
 ## Technical Standards
@@ -64,7 +52,7 @@ All drivers follow these standards:
 - ✅ Complete uplink decoding (100% coverage)
 - ✅ Global persistent node storage
 - ✅ Recovery after driver reload
-- ✅ Battery trend tracking
+- ✅ Device trend tracking (battery, power, energy)
 - ✅ Device reset detection
 - ✅ Last seen timestamp tracking
 - ✅ Test command with port-specific payloads
@@ -92,22 +80,24 @@ Each driver has been validated for:
 
 ## Changelog
 
-### 2025-08-15: WS52x Complete Regeneration
-- WS52x updated to v2.0.0 with complete regeneration using template v2.1.8
-- Enhanced framework integration with v1.8.0 error handling
-- Complete uplink/downlink coverage (33/33 channels, 12/12 commands)
-- Added comprehensive power monitoring formatters
-- Improved global storage handling with power/energy trends
+### 2025-08-15: Template v2.1.9 Command Prefix Update
+- Updated AI template to v2.1.9 with "Lw" prefix requirement
+- ALL commands now must start with "Lw" prefix for consistency
+- Repository cleanup: removed deprecated drivers from other vendors
+- Updated driver list to reflect current repository state
+- All Milesight drivers updated to latest template v2.1.8
+- Enhanced framework integration across all drivers
+- Improved global storage handling
+- Added comprehensive downlink commands
 
-### 2025-08-14: Framework v2.0.0 Standardization
-- All drivers renumbered to v1.0.0 following new versioning strategy
-- Standardized publish date to 2025-08-14 (post-framework start)
-- Added global node storage to all drivers
-- Added test command registration to all drivers
-- Enhanced documentation with complete test examples
+### Previous Changes
+- v2.0.0 complete regenerations for WS52x and WS523
+- Framework v2.0.0 standardization
+- Global node storage implementation
+- Test command registration
 
 ---
-*Last Updated: 2025-08-15 - WS52x v2.0.0 regeneration*
+*Last Updated: 2025-08-15 - Repository cleanup and driver list recreation*
 
 ---
 
