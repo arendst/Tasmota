@@ -160,3 +160,7 @@ When adding support for a new sensor type:
 
 ---
 *This reference tool is automatically maintained as part of LwDecode driver development*
+
+---
+
+*Author: [ZioFabry](https://github.com/ZioFabry)*

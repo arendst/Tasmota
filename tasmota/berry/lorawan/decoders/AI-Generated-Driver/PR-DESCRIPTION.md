@@ -224,3 +224,7 @@ For help with testing or generation:
 This framework has proven potential to dramatically accelerate LoRaWAN driver development. With community validation, we can ensure it works reliably across the entire sensor ecosystem. Your testing and feedback are crucial for making this tool production-ready for everyone.
 
 **Please test any drivers for sensors you own and report results. Together we can build comprehensive LoRaWAN support for Tasmota.**
+
+---
+
+*Author: [ZioFabry](https://github.com/ZioFabry)*

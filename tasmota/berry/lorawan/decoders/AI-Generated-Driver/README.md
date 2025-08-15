@@ -315,3 +315,7 @@ AI-generated code is considered derivative work of input specifications.
 ---
 
 *Framework Version: 1.1.0 | Proven with 30+ production drivers*
+
+---
+
+*Author: [ZioFabry](https://github.com/ZioFabry)*
