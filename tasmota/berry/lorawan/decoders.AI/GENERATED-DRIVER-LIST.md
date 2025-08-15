@@ -13,14 +13,14 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 ## Driver Registry
 
 ### Milesight
-| Model | Version | Date | Channels | Description |
-|-------|---------|------|----------|-------------|
-| AM300 | 1.1.0 | 2025-08-15 | 20/20 | 8-in-1 indoor air quality monitor |
-| WS101 | 1.0.0 | 2025-08-15 | 8/8 | Smart button with multiple press types |
-| WS202 | 1.1.0 | 2025-08-15 | 9/9 | PIR & Light sensor for motion and illuminance detection |
-| WS301 | 1.1.0 | 2025-08-15 | 10/10 | Magnetic door/window sensor |
-| WS523 | 2.0.0 | 2025-08-15 | 33/33 | Portable smart socket with power monitoring |
-| WS52x | 2.0.0 | 2025-08-15 | 33/33 | Smart socket series with comprehensive power monitoring |
+| Model | Version | Date | Channels | Model Version | Prompt Ver | Description |
+|-------|---------|------|----------|---------------|------------|-------------|
+| AM300 | 1.1.0 | 2025-08-15 | 20/20 | AM300(L) Series | v2.1.8 | 8-in-1 indoor air quality monitor |
+| WS101 | 1.0.0 | 2025-08-15 | 8/8 | WS101 | v2.1.8 | Smart button with multiple press types |
+| WS202 | 1.1.0 | 2025-08-15 | 9/9 | WS202 | v2.1.8 | PIR & Light sensor for motion and illuminance detection |
+| WS301 | 1.1.0 | 2025-08-15 | 10/10 | WS301 | v2.1.8 | Magnetic door/window sensor |
+| WS523 | 2.0.0 | 2025-08-15 | 33/33 | WS523 | v2.1.8 | Portable smart socket with power monitoring |
+| WS52x | 2.0.0 | 2025-08-15 | 33/33 | WS52x Series | v2.1.8 | Smart socket series with comprehensive power monitoring |
 
 ## Coverage Statistics
 
