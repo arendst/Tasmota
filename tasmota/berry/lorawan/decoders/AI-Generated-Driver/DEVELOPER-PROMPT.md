@@ -1,5 +1,5 @@
 # LoRaWAN Decoder AI Generation Template
-## Version: 2.1.6 | Framework: LwDecode | Platform: Tasmota Berry
+## Version: 2.1.7 | Framework: LwDecode | Platform: Tasmota Berry
 
 ---
 
@@ -702,6 +702,17 @@ end
 
 # Usage: fmt.add_sensor(formatter, value, tooltip, icon)
 # For status text: fmt.add_sensor("string", "ON", nil, "🟢")
+
+# ENCOURAGED: Create custom formatters for device-specific units
+# Example: Temperature, Humidity, CO2, Pressure, etc.
+# Add to your driver's init() or as needed:
+LwSensorFormatter_cls.Formatter["temperature"] = {"u": "°C", "f": " %.1f", "i": "🌡️"}
+LwSensorFormatter_cls.Formatter["humidity"] = {"u": "%RH", "f": " %.0f", "i": "💧"}
+LwSensorFormatter_cls.Formatter["co2"] = {"u": "ppm", "f": " %d", "i": "💨"}
+LwSensorFormatter_cls.Formatter["pressure"] = {"u": "hPa", "f": " %.0f", "i": "🔵"}
+LwSensorFormatter_cls.Formatter["distance"] = {"u": "m", "f": " %.2f", "i": "📏"}
+LwSensorFormatter_cls.Formatter["lux"] = {"u": "lx", "f": " %d", "i": "☀️"}
+LwSensorFormatter_cls.Formatter["battery"] = {"u": "%", "f": " %d", "i": "🔋"}
 ```
 
 ### ⚠️ CRITICAL: Formatter Chain Usage
@@ -1378,7 +1389,7 @@ This template ensures:
 Remember: The goal is a **perfect, complete decoder** that handles **100% of the device's capabilities** as documented in the manufacturer's PDF, including ALL uplink decoding and ALL downlink command generation.
 
 ---
-*Template Version: 2.1.6 | Last Updated: 2025-01-17*
+*Template Version: 2.1.7 | Last Updated: 2025-01-17*
 
 ---
 
