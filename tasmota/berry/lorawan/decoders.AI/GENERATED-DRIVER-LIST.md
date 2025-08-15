@@ -26,11 +26,11 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 ### Milesight
 | Model | Version | Date | Channels | Description |
 |-------|---------|------|----------|-------------|
-| AM300 | 1.0.0 | 2025-08-14 | 20/20 | 8-in-1 indoor air quality monitor |
+| AM300 | 1.1.0 | 2025-08-15 | 20/20 | 8-in-1 indoor air quality monitor |
 | WS202 | 1.0.0 | 2025-08-14 | 9/9 | PIR & Light sensor for motion and illuminance detection |
 | WS301 | 1.0.0 | 2025-08-14 | 10/10 | Magnetic door/window sensor |
 | WS523 | 1.0.0 | 2025-08-14 | 33/33 | Smart socket with power monitoring |
-| WS52x | 1.0.0 | 2025-08-14 | 33/33 | Smart socket series (WS522/WS523) with power monitoring |
+| WS52x | 2.0.0 | 2025-08-15 | 33/33 | Smart socket series - REGENERATED with template v2.1.8 |
 
 ## Coverage Statistics
 
@@ -92,6 +92,13 @@ Each driver has been validated for:
 
 ## Changelog
 
+### 2025-08-15: WS52x Complete Regeneration
+- WS52x updated to v2.0.0 with complete regeneration using template v2.1.8
+- Enhanced framework integration with v1.8.0 error handling
+- Complete uplink/downlink coverage (33/33 channels, 12/12 commands)
+- Added comprehensive power monitoring formatters
+- Improved global storage handling with power/energy trends
+
 ### 2025-08-14: Framework v2.0.0 Standardization
 - All drivers renumbered to v1.0.0 following new versioning strategy
 - Standardized publish date to 2025-08-14 (post-framework start)
@@ -100,7 +107,7 @@ Each driver has been validated for:
 - Enhanced documentation with complete test examples
 
 ---
-*Last Updated: 2025-08-14 - Framework v2.0.0 standardization*
+*Last Updated: 2025-08-15 - WS52x v2.0.0 regeneration*
 
 ---
 
