@@ -1,5 +1,5 @@
 # Session Recreation Settings
-# Version: 1.1.0 | Updated: 2025-01-17
+# Version: 1.2.0 | Updated: 2025-01-17
 
 ## Style Configuration
 **Style**: Concise Mode
@@ -13,6 +13,7 @@
 **Session State Updates**: Update SESSION-STATE.md when settings change (with version bump)
 **Versioning**: SESSION-STATE.md follows semantic versioning (major.minor.patch)
 **Language Policy**: User can write in any language (English/Italian), Claude MUST respond only in English
+**Read-Only Commands**: "verify", "check", "show", "list" = NO file changes allowed, read-only operations only. In pipeline operations, this restriction applies only to the specific step, not the entire sequence.
 
 ## Context Setup
 **Project**: LoRaWAN AI Framework Enhancement
