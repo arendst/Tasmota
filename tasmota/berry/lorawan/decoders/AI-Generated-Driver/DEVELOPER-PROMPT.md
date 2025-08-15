@@ -1,5 +1,5 @@
 # LoRaWAN Decoder AI Generation Template
-## Version: 2.1.5 | Framework: LwDecode | Platform: Tasmota Berry
+## Version: 2.1.6 | Framework: LwDecode | Platform: Tasmota Berry
 
 ---
 
@@ -1301,10 +1301,6 @@ end
 # Display formatting
 LwSensorFormatter_cls()     # Display formatter class
 
-# Data conversion
-bytes_to_hex(bytes)         # Convert bytes to hex string
-hex_to_bytes(hex_str)       # Convert hex to bytes
-
 # Downlink helpers (from lwdecode module)
 lwdecode.SendDownlink(nodes, cmd, idx, hex_payload)
     # Send raw hex downlink to node
@@ -1315,17 +1311,29 @@ lwdecode.SendDownlinkMap(nodes, cmd, idx, input, mapping)
     # mapping format: {'1|ON': ['08FF', 'ON'], '0|OFF': ['0800', 'OFF']}
     # Returns: tasmota response
 
-lwdecode.uint16le(value)    # Convert to 16-bit little endian hex
-lwdecode.uint32le(value)    # Convert to 32-bit little endian hex
-lwdecode.uint16be(value)    # Convert to 16-bit big endian hex
-lwdecode.uint32be(value)    # Convert to 32-bit big endian hex
+# Integer encoding (returns hex string)
+lwdecode.uint16le(value)    # 16-bit little endian
+lwdecode.uint32le(value)    # 32-bit little endian
+lwdecode.uint16be(value)    # 16-bit big endian
+lwdecode.uint32be(value)    # 32-bit big endian
+lwdecode.int16le(value)     # Signed 16-bit little endian
+lwdecode.int32le(value)     # Signed 32-bit little endian
+
+# Float encoding
+lwdecode.float32le(value)   # IEEE 754 float little endian
+lwdecode.float32be(value)   # IEEE 754 float big endian
+
+# BCD encoding
+lwdecode.bcd_encode(value)   # Integer to BCD hex string
+lwdecode.bcd_decode(hex_str) # BCD hex string to integer
 
 # CRC/validation
-crc16_modbus(data)          # Calculate Modbus CRC16
+lwdecode.crc16_modbus(data)  # Calculate Modbus CRC16
+lwdecode.crc8(data)          # Calculate CRC8
 
-# Data decoding
-decode_float32(bytes)       # IEEE 754 float decode
-decode_timestamp(bytes)     # Unix timestamp decode
+# Bit manipulation
+lwdecode.pack_bits(bit_array)  # Convert bit array to bytes
+lwdecode.unpack_bits(bytes)    # Extract bits from bytes
 ```
 
 ### Testing Commands
@@ -1370,7 +1378,7 @@ This template ensures:
 Remember: The goal is a **perfect, complete decoder** that handles **100% of the device's capabilities** as documented in the manufacturer's PDF, including ALL uplink decoding and ALL downlink command generation.
 
 ---
-*Template Version: 2.1.5 | Last Updated: 2025-01-17*
+*Template Version: 2.1.6 | Last Updated: 2025-01-17*
 
 ---
 
