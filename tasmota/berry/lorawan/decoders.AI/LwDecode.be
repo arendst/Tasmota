@@ -277,6 +277,78 @@ class lwdecode_cls
     return bits
   end
 
+  def log_error(context, error, message, payload_info)
+    import debug
+    var stack = "Stack unavailable"
+    try
+      stack = debug.traceback()
+    except ..
+      stack = "Stack trace failed"
+    end
+    log(format("LwD ERROR [%s]: %s | %s | Payload: %s | Stack: %s", 
+      context, error, message, payload_info, stack), 1)
+  end
+
+  def safe_load_decoder(decoder_name)
+    var attempts = 0
+    while attempts < 3
+      try
+        LwDeco = nil
+        load(decoder_name)
+        if LwDeco && LwDeco.decodeUplink
+          return LwDeco
+        else
+          self.log_error("LOAD", "Invalid decoder", 
+            format("Missing decodeUplink method attempt %d", attempts), decoder_name)
+        end
+      except .. as e, m
+        self.log_error("LOAD", e, m, format("attempt %d for %s", attempts, decoder_name))
+        attempts += 1
+        if attempts < 3
+          tasmota.delay(100)  # Brief retry delay
+        end
+      end
+    end
+    return nil
+  end
+
+  def get_decoder_property(decoder, property, default_value)
+    try
+      if decoder.contains(property)
+        return decoder[property]
+      else
+        return default_value
+      end
+    except .. as e, m
+      self.log_error("PROPERTY", e, 
+        format("Failed to get %s", property), "decoder property access")
+      return default_value
+    end
+  end
+
+  def safe_decode_uplink(decoder, name, node, rssi, fport, payload)
+    try
+      # Validate inputs
+      if !name || !node || !payload return nil end
+      if payload.size() == 0 return nil end
+      
+      var decoded = decoder.decodeUplink(name, node, rssi, fport, payload)
+      
+      # Validate output
+      if decoded && type(decoded) == 'map'
+        return decoded
+      else
+        self.log_error("DECODE", "Invalid result", 
+          format("Expected map, got %s", type(decoded)), 
+          format("FPort:%d, Size:%d", fport, payload.size()))
+        return nil
+      end
+    except .. as e, m
+      self.log_error("DECODE", e, m, 
+        format("Device:%s, Node:%s, FPort:%d, Size:%d", name, node, fport, payload.size()))
+      return nil
+    end
+  end
   def _cache_topic()
     var full_topic = tasmota.cmd('_FullTopic',true)['FullTopic']
     var topic = tasmota.cmd('_Status',true)['Status']['Topic']
@@ -320,19 +392,19 @@ class lwdecode_cls
       if self.lw_decoders.find(decoder_name)
         self.lw_decoders.remove(decoder_name)
       end
-      LwDeco = nil
-      load(decoder_name)
-      if LwDeco
-        self.lw_decoders[decoder_name] = LwDeco
+      
+      var decoder = self.safe_load_decoder(decoder_name)
+      if decoder
+        self.lw_decoders[decoder_name] = decoder
         self.decoder_timestamps[decoder_name] = tasmota.millis()
         print(format("Decoder %s reloaded successfully", decoder_name))
         return true
       else
-        print(format("Failed to reload decoder %s", decoder_name))
+        self.log_error("RELOAD", "Load failed", "Failed to reload decoder", decoder_name)
         return false
       end
     except .. as e, m
-      print(format("Error reloading decoder %s: %s", decoder_name, m))
+      self.log_error("RELOAD", e, m, decoder_name)
       return false
     end
   end
@@ -382,28 +454,16 @@ class lwdecode_cls
     if !payload || payload.size() == 0 return true end
 
     if !self.lw_decoders.find(decoder)
-      try
-        LwDeco = nil
-        load(decoder)
-        if LwDeco
-          self.lw_decoders[decoder] = LwDeco
-        else
-          log("LwD: Unable to load decoder",1)
-          return true
-        end
-      except .. as e, m
-        log(format("LwD: Decoder load error: %s", m),1)
+      var loaded_decoder = self.safe_load_decoder(decoder)
+      if loaded_decoder
+        self.lw_decoders[decoder] = loaded_decoder
+      else
+        self.log_error("LOAD", "Decoder unavailable", "Unable to load decoder", decoder)
         return true
       end
     end
 
-    var hashCheck
-    # check if the decoder driver have the hashCheck properties
-    try
-      hashCheck = self.lw_decoders[decoder].hashCheck
-    except .. as e, m
-      hashCheck = true
-    end
+    var hashCheck = self.get_decoder_property(self.lw_decoders[decoder], 'hashCheck', true)
     
     if hashCheck
       var current_hash = self._calculate_payload_hash(payload)
@@ -411,14 +471,20 @@ class lwdecode_cls
       self.last_payload_hash = current_hash
     end
 
-    try
-      var decoded = self.lw_decoders[decoder].decodeUplink(
+    var decoded = self.safe_decode_uplink(
+        self.lw_decoders[decoder],
         device_info['Name'],
         device_info['Node'],
         device_info['RSSI'],
         device_info['FPort'],
         payload
       )
+
+      if !decoded
+        self.log_error("DECODE", "Decode failed", "Decoder returned nil", 
+          format("Device:%s, FPort:%d", device_name, device_info['FPort']))
+        return true
+      end
 
       decoded['Node'] = device_info['Node']
       decoded['RSSI'] = device_info['RSSI']
@@ -439,10 +505,6 @@ class lwdecode_cls
 
       mqtt.publish(topic, json.dump(mqtt_data))
       tasmota.global.restart_flag = 0 # Signal LwDecoded successful (default state)
-
-    except .. as e, m
-      log(format("LwD: Decode error for %s: %s", device_name, m),1)
-    end
 
     return true
   end
