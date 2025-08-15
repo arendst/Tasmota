@@ -3,19 +3,21 @@
 #
 # LoRaWAN AI-Generated Decoder for Milesight WS101
 #
-# Generated: 2025-08-15 | Version: 1.0.0 | Revision: 1
-#            by "LoRaWAN Decoder AI Generation Template", v2.1.8
+# Generated: 2025-08-16 | Version: 1.1.0 | Revision: 1
+#            by "LoRaWAN Decoder AI Generation Template", v2.1.9
 #
 # Official Links
 # - Homepage:  https://www.milesight.com/iot/product/lorawan-sensor/ws101
 # - Userguide: https://resource.milesight-iot.com/milesight/iot/document/ws101-user-guide.pdf
 # - Decoder:   https://github.com/Milesight-IoT/SensorDecoders
 # -------------------------------------------------------------
+# v1.1.0 (2025-08-16): Regenerated from MAP file with template v2.1.9
+#                      - Enhanced framework integration
+#                      - Added Lw command prefix requirement
+#                      - Improved global storage handling
+#                      - Added comprehensive button press tracking
+#                      - Enhanced error handling
 # v1.0.0 (2025-08-15): Initial generation from specifications
-#                      - Smart button with multiple press types
-#                      - Framework integration with button formatters
-#                      - Global storage for button event tracking
-#                      - Comprehensive downlink commands
 # -------------------------------------------------------------
 
 class LwDecode_WS101
@@ -226,7 +228,8 @@ class LwDecode_WS101
             return data
             
         except .. as e, m
-            print(f"LwDecode_WS101 error: {m}")
+            lwdecode.log_error("DECODE_WS101", e, m, 
+                format("Device:%s, Node:%s, FPort:%d, PayloadSize:%d", name, node, fport, size(payload)))
             return nil
         end
     end
