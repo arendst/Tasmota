@@ -394,8 +394,8 @@ class LwDecode_WS52x
         import string
         
         # Socket Control (ON/OFF)
-        tasmota.remove_cmd("WS52xControl")
-        tasmota.add_cmd("WS52xControl", def(cmd, idx, payload_str)
+        tasmota.remove_cmd("LwWS52xControl")
+        tasmota.add_cmd("LwWS52xControl", def(cmd, idx, payload_str)
             return lwdecode.SendDownlinkMap(global.WS52x_nodes, cmd, idx, payload_str, { 
                 '1|ON':  ['08FF', 'ON'],
                 '0|OFF': ['0800', 'OFF']
@@ -403,8 +403,8 @@ class LwDecode_WS52x
         end)
         
         # Set Reporting Interval
-        tasmota.remove_cmd("WS52xInterval")
-        tasmota.add_cmd("WS52xInterval", def(cmd, idx, payload_str)
+        tasmota.remove_cmd("LwWS52xInterval")
+        tasmota.add_cmd("LwWS52xInterval", def(cmd, idx, payload_str)
             var minutes = int(payload_str)
             if minutes < 1 || minutes > 65535
                 return tasmota.resp_cmnd_str("Invalid: range 1-65535 minutes")
@@ -414,11 +414,11 @@ class LwDecode_WS52x
         end)
         
         # All other downlink commands per specification
-        tasmota.remove_cmd("WS52xOCAlarm")
-        tasmota.add_cmd("WS52xOCAlarm", def(cmd, idx, payload_str)
+        tasmota.remove_cmd("LwWS52xOCAlarm")
+        tasmota.add_cmd("LwWS52xOCAlarm", def(cmd, idx, payload_str)
             var parts = string.split(payload_str, ',')
             if size(parts) != 2
-                return tasmota.resp_cmnd_str("Usage: WS52xOCAlarm<node> <enabled>,<threshold_A>")
+                return tasmota.resp_cmnd_str("Usage: LwWS52xOCAlarm<node> <enabled>,<threshold_A>")
             end
             
             var enabled = (parts[0] == "1" || string.toupper(parts[0]) == "ON") ? 1 : 0
@@ -439,8 +439,8 @@ end
 LwDeco = LwDecode_WS52x()
 
 # Test command registration (recreated on each load)
-tasmota.remove_cmd("WS52xTestPayload")
-tasmota.add_cmd("WS52xTestPayload", def(cmd, idx, payload_str)
+tasmota.remove_cmd("LwWS52xTestPayload")
+tasmota.add_cmd("LwWS52xTestPayload", def(cmd, idx, payload_str)
     var test_payload = bytes(payload_str)
     var result = LwDeco.decodeUplink("TestWS52x", "test_node", -85, idx, test_payload)
     
@@ -453,8 +453,8 @@ tasmota.add_cmd("WS52xTestPayload", def(cmd, idx, payload_str)
 end)
 
 # Node management commands
-tasmota.remove_cmd("WS52xNodeStats")
-tasmota.add_cmd("WS52xNodeStats", def(cmd, idx, node_id)
+tasmota.remove_cmd("LwWS52xNodeStats")
+tasmota.add_cmd("LwWS52xNodeStats", def(cmd, idx, node_id)
     var stats = LwDeco.get_node_stats(node_id)
     if stats != nil
         import json
@@ -464,8 +464,8 @@ tasmota.add_cmd("WS52xNodeStats", def(cmd, idx, node_id)
     end
 end)
 
-tasmota.remove_cmd("WS52xClearNode")
-tasmota.add_cmd("WS52xClearNode", def(cmd, idx, node_id)
+tasmota.remove_cmd("LwWS52xClearNode")
+tasmota.add_cmd("LwWS52xClearNode", def(cmd, idx, node_id)
     if LwDeco.clear_node_data(node_id)
         tasmota.resp_cmnd_done()
     else

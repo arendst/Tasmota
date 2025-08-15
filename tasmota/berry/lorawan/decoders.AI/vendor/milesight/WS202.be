@@ -344,8 +344,8 @@ class LwDecode_WS202
         import string
         
         # Set Reporting Interval
-        tasmota.remove_cmd("WS202Interval")
-        tasmota.add_cmd("WS202Interval", def(cmd, idx, payload_str)
+        tasmota.remove_cmd("LwWS202Interval")
+        tasmota.add_cmd("LwWS202Interval", def(cmd, idx, payload_str)
             var minutes = int(payload_str)
             if minutes < 1 || minutes > 65535
                 return tasmota.resp_cmnd_str("Invalid: range 1-65535 minutes")
@@ -355,8 +355,8 @@ class LwDecode_WS202
         end)
         
         # PIR Sensitivity Configuration
-        tasmota.remove_cmd("WS202PIRSensitivity")
-        tasmota.add_cmd("WS202PIRSensitivity", def(cmd, idx, payload_str)
+        tasmota.remove_cmd("LwWS202PIRSensitivity")
+        tasmota.add_cmd("LwWS202PIRSensitivity", def(cmd, idx, payload_str)
             var sensitivity = int(payload_str)
             if sensitivity < 1 || sensitivity > 10
                 return tasmota.resp_cmnd_str("Invalid: range 1-10")
@@ -366,8 +366,8 @@ class LwDecode_WS202
         end)
         
         # PIR Retry Configuration
-        tasmota.remove_cmd("WS202PIRRetry")
-        tasmota.add_cmd("WS202PIRRetry", def(cmd, idx, payload_str)
+        tasmota.remove_cmd("LwWS202PIRRetry")
+        tasmota.add_cmd("LwWS202PIRRetry", def(cmd, idx, payload_str)
             var retry = int(payload_str)
             if retry < 1 || retry > 255
                 return tasmota.resp_cmnd_str("Invalid: range 1-255")
@@ -377,8 +377,8 @@ class LwDecode_WS202
         end)
         
         # Light Threshold Configuration
-        tasmota.remove_cmd("WS202LightThreshold")
-        tasmota.add_cmd("WS202LightThreshold", def(cmd, idx, payload_str)
+        tasmota.remove_cmd("LwWS202LightThreshold")
+        tasmota.add_cmd("LwWS202LightThreshold", def(cmd, idx, payload_str)
             var threshold = int(payload_str)
             if threshold < 0 || threshold > 65535
                 return tasmota.resp_cmnd_str("Invalid: range 0-65535 lux")
@@ -388,8 +388,8 @@ class LwDecode_WS202
         end)
         
         # Device Reboot
-        tasmota.remove_cmd("WS202Reboot")
-        tasmota.add_cmd("WS202Reboot", def(cmd, idx, payload_str)
+        tasmota.remove_cmd("LwWS202Reboot")
+        tasmota.add_cmd("LwWS202Reboot", def(cmd, idx, payload_str)
             var hex_cmd = "FF10FF"
             return lwdecode.SendDownlink(global.WS202_nodes, cmd, idx, hex_cmd)
         end)
@@ -402,8 +402,8 @@ end
 LwDeco = LwDecode_WS202()
 
 # Test command registration (recreated on each load)
-tasmota.remove_cmd("WS202TestPayload")
-tasmota.add_cmd("WS202TestPayload", def(cmd, idx, payload_str)
+tasmota.remove_cmd("LwWS202TestPayload")
+tasmota.add_cmd("LwWS202TestPayload", def(cmd, idx, payload_str)
     # Parse hex string to bytes
     var test_payload = bytes(payload_str)
     
@@ -419,8 +419,8 @@ tasmota.add_cmd("WS202TestPayload", def(cmd, idx, payload_str)
 end)
 
 # Node management commands
-tasmota.remove_cmd("WS202NodeStats")
-tasmota.add_cmd("WS202NodeStats", def(cmd, idx, node_id)
+tasmota.remove_cmd("LwWS202NodeStats")
+tasmota.add_cmd("LwWS202NodeStats", def(cmd, idx, node_id)
     var stats = LwDeco.get_node_stats(node_id)
     if stats != nil
         import json
@@ -430,8 +430,8 @@ tasmota.add_cmd("WS202NodeStats", def(cmd, idx, node_id)
     end
 end)
 
-tasmota.remove_cmd("WS202ClearNode")
-tasmota.add_cmd("WS202ClearNode", def(cmd, idx, node_id)
+tasmota.remove_cmd("LwWS202ClearNode")
+tasmota.add_cmd("LwWS202ClearNode", def(cmd, idx, node_id)
     if LwDeco.clear_node_data(node_id)
         tasmota.resp_cmnd_done()
     else

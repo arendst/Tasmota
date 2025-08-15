@@ -372,8 +372,8 @@ class LwDecode_WS301
         import string
         
         # Set Reporting Interval
-        tasmota.remove_cmd("WS301Interval")
-        tasmota.add_cmd("WS301Interval", def(cmd, idx, payload_str)
+        tasmota.remove_cmd("LwWS301Interval")
+        tasmota.add_cmd("LwWS301Interval", def(cmd, idx, payload_str)
             var minutes = int(payload_str)
             if minutes < 1 || minutes > 65535
                 return tasmota.resp_cmnd_str("Invalid: range 1-65535 minutes")
@@ -383,8 +383,8 @@ class LwDecode_WS301
         end)
         
         # Device Reboot
-        tasmota.remove_cmd("WS301Reboot")
-        tasmota.add_cmd("WS301Reboot", def(cmd, idx, payload_str)
+        tasmota.remove_cmd("LwWS301Reboot")
+        tasmota.add_cmd("LwWS301Reboot", def(cmd, idx, payload_str)
             var hex_cmd = "FF10FF"
             return lwdecode.SendDownlink(global.WS301_nodes, cmd, idx, hex_cmd)
         end)
@@ -397,8 +397,8 @@ end
 LwDeco = LwDecode_WS301()
 
 # Test command registration (recreated on each load)
-tasmota.remove_cmd("WS301TestPayload")
-tasmota.add_cmd("WS301TestPayload", def(cmd, idx, payload_str)
+tasmota.remove_cmd("LwWS301TestPayload")
+tasmota.add_cmd("LwWS301TestPayload", def(cmd, idx, payload_str)
     # Parse hex string to bytes
     var test_payload = bytes(payload_str)
     
@@ -414,8 +414,8 @@ tasmota.add_cmd("WS301TestPayload", def(cmd, idx, payload_str)
 end)
 
 # Node management commands
-tasmota.remove_cmd("WS301NodeStats")
-tasmota.add_cmd("WS301NodeStats", def(cmd, idx, node_id)
+tasmota.remove_cmd("LwWS301NodeStats")
+tasmota.add_cmd("LwWS301NodeStats", def(cmd, idx, node_id)
     var stats = LwDeco.get_node_stats(node_id)
     if stats != nil
         import json
@@ -425,8 +425,8 @@ tasmota.add_cmd("WS301NodeStats", def(cmd, idx, node_id)
     end
 end)
 
-tasmota.remove_cmd("WS301ClearNode")
-tasmota.add_cmd("WS301ClearNode", def(cmd, idx, node_id)
+tasmota.remove_cmd("LwWS301ClearNode")
+tasmota.add_cmd("LwWS301ClearNode", def(cmd, idx, node_id)
     if LwDeco.clear_node_data(node_id)
         tasmota.resp_cmnd_done()
     else

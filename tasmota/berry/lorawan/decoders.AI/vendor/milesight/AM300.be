@@ -444,8 +444,8 @@ class LwDecode_AM300
         import string
         
         # Set Reporting Interval
-        tasmota.remove_cmd("AM300Interval")
-        tasmota.add_cmd("AM300Interval", def(cmd, idx, payload_str)
+        tasmota.remove_cmd("LwAM300Interval")
+        tasmota.add_cmd("LwAM300Interval", def(cmd, idx, payload_str)
             var minutes = int(payload_str)
             if minutes < 1 || minutes > 65535
                 return tasmota.resp_cmnd_str("Invalid: range 1-65535 minutes")
@@ -455,8 +455,8 @@ class LwDecode_AM300
         end)
         
         # Buzzer Control
-        tasmota.remove_cmd("AM300Buzzer")
-        tasmota.add_cmd("AM300Buzzer", def(cmd, idx, payload_str)
+        tasmota.remove_cmd("LwAM300Buzzer")
+        tasmota.add_cmd("LwAM300Buzzer", def(cmd, idx, payload_str)
             return lwdecode.SendDownlinkMap(global.AM300_nodes, cmd, idx, payload_str, { 
                 '1|ON|ENABLE':   ['FF2801', 'ENABLED'],
                 '0|OFF|DISABLE': ['FF2800', 'DISABLED']
@@ -464,8 +464,8 @@ class LwDecode_AM300
         end)
         
         # Device Reboot
-        tasmota.remove_cmd("AM300Reboot")
-        tasmota.add_cmd("AM300Reboot", def(cmd, idx, payload_str)
+        tasmota.remove_cmd("LwAM300Reboot")
+        tasmota.add_cmd("LwAM300Reboot", def(cmd, idx, payload_str)
             var hex_cmd = "FF10FF"
             return lwdecode.SendDownlink(global.AM300_nodes, cmd, idx, hex_cmd)
         end)
@@ -478,8 +478,8 @@ end
 LwDeco = LwDecode_AM300()
 
 # Test command registration (recreated on each load)
-tasmota.remove_cmd("AM300TestPayload")
-tasmota.add_cmd("AM300TestPayload", def(cmd, idx, payload_str)
+tasmota.remove_cmd("LwAM300TestPayload")
+tasmota.add_cmd("LwAM300TestPayload", def(cmd, idx, payload_str)
     # Parse hex string to bytes
     var test_payload = bytes(payload_str)
     
@@ -495,8 +495,8 @@ tasmota.add_cmd("AM300TestPayload", def(cmd, idx, payload_str)
 end)
 
 # Node management commands
-tasmota.remove_cmd("AM300NodeStats")
-tasmota.add_cmd("AM300NodeStats", def(cmd, idx, node_id)
+tasmota.remove_cmd("LwAM300NodeStats")
+tasmota.add_cmd("LwAM300NodeStats", def(cmd, idx, node_id)
     var stats = LwDeco.get_node_stats(node_id)
     if stats != nil
         import json
@@ -506,8 +506,8 @@ tasmota.add_cmd("AM300NodeStats", def(cmd, idx, node_id)
     end
 end)
 
-tasmota.remove_cmd("AM300ClearNode")
-tasmota.add_cmd("AM300ClearNode", def(cmd, idx, node_id)
+tasmota.remove_cmd("LwAM300ClearNode")
+tasmota.add_cmd("LwAM300ClearNode", def(cmd, idx, node_id)
     if LwDeco.clear_node_data(node_id)
         tasmota.resp_cmnd_done()
     else
