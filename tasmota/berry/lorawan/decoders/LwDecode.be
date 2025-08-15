@@ -147,6 +147,136 @@ class lwdecode_cls
     )
   end
 
+  def uint16be(value)
+    return string.format( "%02x%02x",
+      (value >> 8) & 0xFF,
+      value & 0xFF
+    )
+  end
+
+  def uint32be(value)
+    return string.format( "%02x%02x%02x%02x",
+      (value >> 24) & 0xFF,
+      (value >> 16) & 0xFF,
+      (value >> 8)  & 0xFF,
+      value & 0xFF
+    )
+  end
+
+  def int16le(value)
+    if value < 0
+      value = 0x10000 + value
+    end
+    return self.uint16le(value)
+  end
+
+  def int32le(value)
+    if value < 0
+      value = 0x100000000 + value
+    end
+    return self.uint32le(value)
+  end
+
+  def float32le(value)
+    import struct
+    var b = struct.pack('f', value)
+    return string.format("%02x%02x%02x%02x", b[0], b[1], b[2], b[3])
+  end
+
+  def float32be(value)
+    import struct
+    var b = struct.pack('f', value)
+    return string.format("%02x%02x%02x%02x", b[3], b[2], b[1], b[0])
+  end
+
+  def bcd_encode(value)
+    var hex = ""
+    while value > 0
+      var digit = value % 10
+      value = value / 10
+      var next_digit = value % 10
+      value = value / 10
+      hex = string.format("%02x", (next_digit << 4) | digit) + hex
+    end
+    return hex
+  end
+
+  def bcd_decode(hex_str)
+    var value = 0
+    for i: 0..size(hex_str)-1..2
+      var byte = int('0x' + hex_str[i..i+1])
+      value = value * 10 + ((byte >> 4) & 0x0F)
+      value = value * 10 + (byte & 0x0F)
+    end
+    return value
+  end
+
+  def crc16_modbus(data)
+    var crc = 0xFFFF
+    for i: 0..size(data)-1
+      crc ^= data[i]
+      for j: 0..7
+        if crc & 0x0001
+          crc = (crc >> 1) ^ 0xA001
+        else
+          crc = crc >> 1
+        end
+      end
+    end
+    return crc
+  end
+
+  def crc8(data)
+    var crc = 0x00
+    for i: 0..size(data)-1
+      crc ^= data[i]
+      for j: 0..7
+        if crc & 0x80
+          crc = (crc << 1) ^ 0x07
+        else
+          crc = crc << 1
+        end
+      end
+    end
+    return crc & 0xFF
+  end
+
+  def pack_bits(bit_array)
+    var result = bytes()
+    var byte = 0
+    var bit_count = 0
+    
+    for bit: bit_array
+      if bit
+        byte |= (1 << (7 - bit_count))
+      end
+      bit_count += 1
+      
+      if bit_count == 8
+        result.add(byte)
+        byte = 0
+        bit_count = 0
+      end
+    end
+    
+    if bit_count > 0
+      result.add(byte)
+    end
+    
+    return result
+  end
+
+  def unpack_bits(data)
+    var bits = []
+    for i: 0..size(data)-1
+      var byte = data[i]
+      for j: 7..0..-1
+        bits.push((byte >> j) & 0x01)
+      end
+    end
+    return bits
+  end
+
   def _cache_topic()
     var full_topic = tasmota.cmd('_FullTopic',true)['FullTopic']
     var topic = tasmota.cmd('_Status',true)['Status']['Topic']
