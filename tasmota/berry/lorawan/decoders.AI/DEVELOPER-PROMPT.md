@@ -1,5 +1,5 @@
 # LoRaWAN Decoder AI Generation Template
-## Version: 2.1.11 | Framework: LwDecode | Platform: Tasmota Berry
+## Version: 2.1.12 | Framework: LwDecode | Platform: Tasmota Berry
 
 ---
 
@@ -82,9 +82,39 @@ except, raise, static, assert, global, lambda
 ❌ var fmt = LwSensorFormatter()      # Wrong - class doesn't exist
 ❌ def LwSensorFormatter()             # Wrong - don't wrap framework
 ❌ SendDownlink(...)                   # Wrong - must use lwdecode prefix
+
+# CRITICAL: F-string and Ternary Operator Issues
+# Berry parser has trouble with nested quotes in f-strings with conditionals
+❌ BROKEN: print(f"Status: {'enabled' if flag else 'disabled'}")
+✅ FIXED:  var status = flag ? "enabled" : "disabled"
+           print(f"Status: {status}")
+
+# Always extract ternary operators to separate variables before f-string interpolation
 ```
 
-### 3. MEMORY CONSTRAINTS
+### 3. ESP32 FILESYSTEM CONSTRAINTS
+```yaml
+esp32_limitations:
+  filesystem: "LittleFS - NO SUBDIRECTORIES SUPPORTED"
+  max_filename: 31 characters
+  path_structure: "flat - all files in root only"
+  file_operations: "standard create/read/write/delete only"
+  
+file_organization:
+  all_drivers: "stored in single flat directory"
+  naming_convention: "vendor_model.be format required"
+  examples:
+    ✅ correct: "milesight_ws52x.be"
+    ✅ correct: "dragino_lht65.be"
+    ❌ broken:  "vendor/milesight/ws52x.be"
+    ❌ broken:  "drivers/sensors/temp.be"
+    
+  load_commands:
+    ✅ correct: 'load("milesight_ws52x.be")'
+    ❌ broken:  'load("vendor/milesight/ws52x.be")'
+```
+
+### 4. MEMORY CONSTRAINTS
 ```yaml
 esp32_limits:
   flash: 4MB
@@ -1517,6 +1547,8 @@ end
 16. **No parameter validation**: Always validate inputs and ranges
 17. **Missing downlink docs**: Document all commands in .md file
 18. **Formatter chain errors**: Never use += with formatter chains, only with get_msg() result
+19. **🚨 F-string syntax errors**: Extract ternary operators before f-string interpolation
+20. **🚨 Filesystem violations**: No subdirectories on ESP32 - use flat naming convention
 
 ---
 
@@ -1614,7 +1646,7 @@ This template ensures:
 Remember: The goal is a **perfect, complete decoder** that handles **100% of the device's capabilities** as documented in the manufacturer's PDF, including ALL uplink decoding and ALL downlink command generation.
 
 ---
-*Template Version: 2.1.11 | Last Updated: 2025-08-16*
+*Template Version: 2.1.12 | Last Updated: 2025-08-16*
 
 ---
 
