@@ -1,5 +1,5 @@
 # LoRaWAN Decoder AI Generation Template
-## Version: 2.1.9 | Framework: LwDecode | Platform: Tasmota Berry
+## Version: 2.1.10 | Framework: LwDecode | Platform: Tasmota Berry
 
 ---
 
@@ -111,7 +111,7 @@ optimization_rules:
 # LoRaWAN AI-Generated Decoder for [VENDOR] [MODEL]
 #
 # Generated: [DATE] | Version: [VERSION] | Revision: [REV]
-#            by "LoRaWAN Decoder AI Generation Template", v2.1.9
+#            by "LoRaWAN Decoder AI Generation Template", v2.1.10
 #
 # Official Links
 # - Homepage:  [MODEL_HOMEPAGE_LINK]
@@ -401,13 +401,38 @@ end
 LwDeco = LwDecode_[MODEL]()
 
 # Test command registration (recreated on each load)
+# Command usage: Lw[MODEL]TestPayload<node> <hex_payload>
+#                Lw[MODEL]TestPayload<node> <fport>,<hex_payload>
+#                Lw[MODEL]TestPayload<node> <rssi>,<fport>,<hex_payload>
+# Default: fport=<node>, rssi=-85
+
 tasmota.remove_cmd("Lw[MODEL]TestPayload")
 tasmota.add_cmd("Lw[MODEL]TestPayload", def(cmd, idx, payload_str)
+    # Parse parameters: payload_str can be "hex", "fport,hex", or "rssi,fport,hex"
+    var parts = string.split(payload_str, ',')
+    var rssi = -85          # Default RSSI
+    var fport = idx         # Default fport = node index
+    var hex_payload = payload_str
+    
+    if size(parts) == 1
+        # Format: <hex_payload>
+        hex_payload = parts[0]
+    elif size(parts) == 2
+        # Format: <fport>,<hex_payload>
+        fport = int(parts[0])
+        hex_payload = parts[1]
+    elif size(parts) == 3
+        # Format: <rssi>,<fport>,<hex_payload>
+        rssi = int(parts[0])
+        fport = int(parts[1])
+        hex_payload = parts[2]
+    end
+    
     # Parse hex string to bytes
-    var test_payload = bytes(payload_str)
+    var test_payload = bytes(hex_payload)
     
     # Force driver load by LwDecode framework
-    var result = LwDeco.decodeUplink("Test[MODEL]", "test_node", -85, idx, test_payload)
+    var result = LwDeco.decodeUplink("[NAME-{idx}]", idx, rssi, fport, test_payload)
     
     if result != nil
         import json
@@ -1025,23 +1050,23 @@ print(json.dump(result))
 
 #### Tasmota Console Commands
 \`\`\`
-# Test periodic data (on framework LwDecode driver istance #1)
+# Test with default parameters (fport=1, rssi=-85)
 Lw[MODEL]TestPayload1 01670110026850FF01020304050607080900
 
-# Test alert message (on framework LwDecode driver istance #2)
-Lw[MODEL]TestPayload2 020101670120
+# Test with custom fport (fport=2, rssi=-85)
+Lw[MODEL]TestPayload1 2,020101670120
 
-# Test configuration data (on framework LwDecode driver istance #3)
-Lw[MODEL]TestPayload3 FF01020304050607080900
+# Test with custom rssi and fport (rssi=-90, fport=3)
+Lw[MODEL]TestPayload1 -90,3,FF01020304050607080900
 
-# Test battery status (on framework LwDecode istance driver #4)
+# Test battery status with default parameters (fport=4, rssi=-85)
 Lw[MODEL]TestPayload4 01010FA0
 
-# Test reset event (#5)
-Lw[MODEL]TestPayload5 8001
+# Test reset event with custom fport (fport=5, rssi=-85)
+Lw[MODEL]TestPayload1 5,8001
 
-# Test multi-channel data (#1)
-Lw[MODEL]TestPayload1 01670110026850036901000467AABB
+# Test multi-channel data with custom rssi (rssi=-75, fport=1)
+Lw[MODEL]TestPayload1 -75,1,01670110026850036901000467AABB
 
 # Test error conditions
 Lw[MODEL]TestPayload1 ""              # Empty payload
@@ -1404,7 +1429,7 @@ This template ensures:
 Remember: The goal is a **perfect, complete decoder** that handles **100% of the device's capabilities** as documented in the manufacturer's PDF, including ALL uplink decoding and ALL downlink command generation.
 
 ---
-*Template Version: 2.1.9 | Last Updated: 2025-08-15*
+*Template Version: 2.1.10 | Last Updated: 2025-08-16*
 
 ---
 
