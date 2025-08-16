@@ -16,6 +16,8 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 | Model | Version | Date | Channels | Model Version | Prompt Ver | Description |
 |-------|---------|------|----------|---------------|------------|-------------|
 | D2x | 1.0.0 | 2025-08-16 | 15/15 | D20/D20S/D22/D23-LB/LS | v2.1.9 | Multi-probe temperature sensor series |
+| DDS75L | 1.0.0 | 2025-08-16 | 8/8 | DDS75-LB/LS | v2.1.8 | Ultrasonic distance detection sensor |
+| LDS02 | 1.0.0 | 2025-08-16 | 8/8 | LDS02 | v2.1.8 | Magnetic door sensor with event counting |
 
 ### Milesight
 | Model | Version | Date | Channels | Model Version | Prompt Ver | Description |
@@ -30,12 +32,12 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 ## Coverage Statistics
 
 ### By Vendor
-- **Dragino**: 1 driver, 15 total channels
+- **Dragino**: 3 drivers, 31 total channels
 - **Milesight**: 6 drivers, 113 total channels
 
 ### Total
-- **Drivers**: 7
-- **Channels**: 128
+- **Drivers**: 9
+- **Channels**: 144
 - **Coverage**: 100% (all documented channels implemented)
 
 ## Technical Standards
@@ -86,6 +88,30 @@ Each driver has been validated for:
 
 ## Changelog
 
+### 2025-08-16: LDS02 Door Sensor Driver Addition
+- Added Dragino LDS02 magnetic door sensor driver
+- 8 channels implemented with 100% coverage (normal mode + EDC mode)
+- 9 downlink commands: interval, EDC mode, reset, confirm, clear, alarm, ADR/DR, timeout, set count
+- Magnetic reed switch door detection with ~10mm threshold
+- Event counting with cumulative door open events tracking
+- Last door open duration monitoring (up to 16.7M minutes)
+- Timeout alarm feature for doors left open too long
+- EDC mode (Event-Driven Counting) for power optimization
+- Battery life: 16,000-70,000 uplinks with 2x AAA batteries
+- State change detection (opened/closed/keep-alive events)
+- Template v2.1.8 with "Lw" command prefix compliance
+
+### 2025-08-16: DDS75L Driver Addition
+- Added Dragino DDS75-LB/LS distance detection sensor driver
+- 8 channels implemented with 100% coverage (periodic data + device status)
+- 5 downlink commands: interval, interrupt, delta detect, status request, poll
+- Enhanced error handling for sensor disconnection and invalid readings
+- Distance measurement with ultrasonic technology (280mm-7500mm range)
+- Support for optional DS18B20 temperature sensor
+- Delta detection mode for power-efficient operation
+- Datalog feature for network outage recovery
+- Template v2.1.8 with "Lw" command prefix compliance
+
 ### 2025-08-15: Template v2.1.9 Command Prefix Update
 - Updated AI template to v2.1.9 with "Lw" prefix requirement
 - ALL commands now must start with "Lw" prefix for consistency
@@ -103,7 +129,7 @@ Each driver has been validated for:
 - Test command registration
 
 ---
-*Last Updated: 2025-08-15 - Repository cleanup and driver list recreation*
+*Last Updated: 2025-08-16 - Added LDS02 magnetic door sensor*
 
 ---
 
