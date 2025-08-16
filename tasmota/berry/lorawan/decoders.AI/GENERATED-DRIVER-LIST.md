@@ -16,7 +16,7 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 | Model | Version | Date | Channels | Model Version | Prompt Ver | Description |
 |-------|---------|------|----------|---------------|------------|-------------|
 | D2x | 1.0.0 | 2025-08-16 | 15/15 | D20/D20S/D22/D23-LB/LS | v2.1.9 | Multi-probe temperature sensor series |
-| DDS75L | 1.0.0 | 2025-08-16 | 8/8 | DDS75-LB/LS | v2.1.8 | Ultrasonic distance detection sensor |
+| DDS75-LB | 1.0.0 | 2025-08-16 | 8/8 | DDS75-LB/LS | v2.1.8 | Ultrasonic distance detection sensor |
 | LDS02 | 1.0.0 | 2025-08-16 | 8/8 | LDS02 | v2.1.8 | Magnetic door sensor with event counting |
 
 ### Milesight
@@ -101,8 +101,8 @@ Each driver has been validated for:
 - State change detection (opened/closed/keep-alive events)
 - Template v2.1.8 with "Lw" command prefix compliance
 
-### 2025-08-16: DDS75L Driver Addition
-- Added Dragino DDS75-LB/LS distance detection sensor driver
+### 2025-08-16: DDS75-LB Driver Addition
+- Added Dragino DDS75-LB distance detection sensor driver
 - 8 channels implemented with 100% coverage (periodic data + device status)
 - 5 downlink commands: interval, interrupt, delta detect, status request, poll
 - Enhanced error handling for sensor disconnection and invalid readings
