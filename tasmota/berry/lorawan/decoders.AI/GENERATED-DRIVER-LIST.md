@@ -18,6 +18,7 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 | D2x | 1.0.0 | 2025-08-16 | 15/15 | D20/D20S/D22/D23-LB/LS | v2.1.9 | Multi-probe temperature sensor series |
 | DDS75-LB | 1.0.0 | 2025-08-16 | 8/8 | DDS75-LB/LS | v2.1.8 | Ultrasonic distance detection sensor |
 | LDS02 | 1.0.0 | 2025-08-16 | 8/8 | LDS02 | v2.1.8 | Magnetic door sensor with event counting |
+| LHT65 | 1.0.0 | 2025-08-16 | 18/18 | LHT65 | v2.1.8 | Temperature & humidity sensor with 9 external sensor types |
 
 ### Milesight
 | Model | Version | Date | Channels | Model Version | Prompt Ver | Description |
@@ -32,12 +33,12 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 ## Coverage Statistics
 
 ### By Vendor
-- **Dragino**: 3 drivers, 31 total channels
+- **Dragino**: 4 drivers, 49 total channels
 - **Milesight**: 6 drivers, 113 total channels
 
 ### Total
-- **Drivers**: 9
-- **Channels**: 144
+- **Drivers**: 10
+- **Channels**: 162
 - **Coverage**: 100% (all documented channels implemented)
 
 ## Technical Standards
@@ -88,6 +89,18 @@ Each driver has been validated for:
 
 ## Changelog
 
+### 2025-08-16: LHT65 Multi-Sensor Driver Addition
+- Added Dragino LHT65 temperature & humidity sensor driver
+- 18 channels implemented with 100% coverage (9 external sensor types)
+- 8 downlink commands: interval, external sensor config, probe ID, time sync, datalog management
+- Built-in SHT20 temperature and humidity sensor
+- Support for 9 external sensor types: E1 temperature, E4 interrupt, E5 illumination, E6 ADC, E7 counting (16/32-bit), E9 datalog
+- Advanced features: datalog polling, Unix timestamps, alarm mode, cable status monitoring
+- Battery monitoring with 4-level status indication
+- Error detection for disconnected sensors (327.67°C indicator)
+- Global node storage with battery trend tracking and event counting
+- Template v2.1.8 with "Lw" command prefix compliance
+
 ### 2025-08-16: LDS02 Door Sensor Driver Addition
 - Added Dragino LDS02 magnetic door sensor driver
 - 8 channels implemented with 100% coverage (normal mode + EDC mode)
@@ -129,7 +142,7 @@ Each driver has been validated for:
 - Test command registration
 
 ---
-*Last Updated: 2025-08-16 - Added LDS02 magnetic door sensor*
+*Last Updated: 2025-08-16 - Added LHT65 temperature & humidity multi-sensor*
 
 ---
 

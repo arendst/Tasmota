@@ -137,8 +137,8 @@ When adding support for a new sensor type:
 
 ## Current Driver Coverage
 
-### AI-Generated Drivers (26 emojis)
-- **Dragino**: LHT65 (8 emojis), SE01-LB (7 emojis)
+### AI-Generated Drivers (28 emojis)
+- **Dragino**: LHT65 (6 emojis), LHT52 (4 emojis), SE01-LB (7 emojis)
 - **MerryIoT**: DW10 (8 emojis)
 - **Milesight**: AM300 (16 emojis), WS301 (4 emojis), WS52X (3 emojis)
 
@@ -154,6 +154,13 @@ When adding support for a new sensor type:
 - v1.02: Updated with AI-generated drivers scan (35 total emojis, 21 from AI drivers)
 - v1.03: Added SE01-LB driver with soil monitoring emojis (🧪 for EC, ⚗️ for dielectric constant)
 - v1.04: Added AI-optimized DW10 driver with tilt detection emoji (📦 for tilt sensor)
+- v1.05: Added LHT65 temperature & humidity multi-sensor driver
+  - Confirmed usage of 🌡️ for temperature (modern style)
+  - Confirmed usage of 💧 for humidity
+  - Confirmed usage of 💡 for illuminance (E5 sensor)
+  - Confirmed usage of ⚡ for ADC voltage (E6 sensor)
+  - Confirmed usage of 🔢 for event counting (E7 sensors)
+  - Confirmed usage of ⚠️ for sensor disconnection warnings
 - Added comprehensive guidelines and reserved emoji categories
 - Documented legacy vs modern emoji preferences
 - Added specific air quality and soil measurement emoji patterns
