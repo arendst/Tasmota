@@ -1,5 +1,5 @@
 # LoRaWAN Decoder AI Generation Template
-## Version: 2.1.10 | Framework: LwDecode | Platform: Tasmota Berry
+## Version: 2.1.11 | Framework: LwDecode | Platform: Tasmota Berry
 
 ---
 
@@ -102,6 +102,25 @@ optimization_rules:
 ---
 
 ## 🏗️ DRIVER STRUCTURE
+
+### Tasmota Command Slot Concept
+```
+CRITICAL: Understanding Driver Slots vs Device Nodes
+
+Driver Slot (idx): Position in Tasmota's driver array (0-15)
+- Each driver instance occupies one slot
+- Commands use slot number: Lw[MODEL]Control<slot>
+- Example: Driver in slot 2 → Lw[MODEL]Control2
+
+Device Node: LoRaWAN device identifier from network
+- Can be MAC address, device ID, or custom identifier
+- Used internally for device identification
+- Multiple devices can use same driver (same slot)
+
+Command Format:
+✅ CORRECT: Lw[MODEL]Control<slot> <parameters>
+❌ WRONG:   Lw[MODEL]Control<node> <parameters>
+```
 
 ### Class Template
 ```berry
@@ -312,16 +331,17 @@ class LwDecode_[MODEL]
         
         # [MANDATORY: Implement ALL downlink commands from PDF]
         # Each downlink type must have a corresponding Tasmota command
-        # Command format: Lw[MODEL]<Function><node_index> <parameters>
+        # Command format: Lw[MODEL]<Function><slot> <parameters>
         # ALL COMMANDS MUST START WITH "Lw" PREFIX FOR CONSISTENCY
+        # <slot> is the driver slot number (0-15), NOT the device node ID
         # use the SendDownlinkMap helper function when possible like ON|OFF|0|1 , LOW|MID|HIGH, ENABLED|DISABLE|0|1 
         # use SendDownlink for other use case
         
         # Example: Basic control command (ON/OFF) using SendDownlinkMap
         tasmota.remove_cmd("Lw[MODEL]Control")
         tasmota.add_cmd("Lw[MODEL]Control", def(cmd, idx, payload_str)
-            # Format: Lw[MODEL]Control<node> <on|off|1|0>
-            # SendDownlinkMap handles validation and node lookup
+            # Format: Lw[MODEL]Control<slot> <on|off|1|0>
+            # idx = driver slot (0-15), SendDownlinkMap handles node lookup
             return lwdecode.SendDownlinkMap(global.[MODEL]_nodes, cmd, idx, payload_str, { 
                 '1|ON':  ['08FF', 'ON' ],     # Maps "1" or "ON" to hex 08FF then return result "ON"
                 '0|OFF': ['0800', 'OFF']      # Maps "0" or "OFF" to hex 0800 then return result "OFF"
@@ -331,7 +351,7 @@ class LwDecode_[MODEL]
         # Example: Configuration parameter with range validation
         tasmota.remove_cmd("Lw[MODEL]SetParam")
         tasmota.add_cmd("Lw[MODEL]SetParam", def(cmd, idx, payload_str)
-            # Format: Lw[MODEL]SetParam<node> <value>
+            # Format: Lw[MODEL]SetParam<slot> <value>
             var value = int(payload_str)
             if value < [MIN] || value > [MAX]
                 return tasmota.resp_cmnd_str(f"Invalid: range {[MIN]}-{[MAX]}")
@@ -345,10 +365,10 @@ class LwDecode_[MODEL]
         # Example: Multi-parameter command with validation
         tasmota.remove_cmd("Lw[MODEL]Config")
         tasmota.add_cmd("Lw[MODEL]Config", def(cmd, idx, payload_str)
-            # Format: Lw[MODEL]Config<node> <param1>,<param2>
+            # Format: Lw[MODEL]Config<slot> <param1>,<param2>
             var parts = string.split(payload_str, ',')
             if size(parts) != 2
-                return tasmota.resp_cmnd_str("Usage: Lw[MODEL]Config<node> <param1>,<param2>")
+                return tasmota.resp_cmnd_str("Usage: Lw[MODEL]Config<slot> <param1>,<param2>")
             end
             
             var param1 = int(parts[0])
@@ -401,17 +421,19 @@ end
 LwDeco = LwDecode_[MODEL]()
 
 # Test command registration (recreated on each load)
-# Command usage: Lw[MODEL]TestPayload<node> <hex_payload>
-#                Lw[MODEL]TestPayload<node> <fport>,<hex_payload>
-#                Lw[MODEL]TestPayload<node> <rssi>,<fport>,<hex_payload>
-# Default: fport=<node>, rssi=-85
+# Command usage: Lw[MODEL]TestPayload<slot> <hex_payload>
+#                Lw[MODEL]TestPayload<slot> <fport>,<hex_payload>
+#                Lw[MODEL]TestPayload<slot> <rssi>,<fport>,<hex_payload>
+# Where <slot> is the driver slot (0-15), NOT the device node ID
+# Default: fport=[DEFAULT_PORT], rssi=-85
 
 tasmota.remove_cmd("Lw[MODEL]TestPayload")
 tasmota.add_cmd("Lw[MODEL]TestPayload", def(cmd, idx, payload_str)
+    # idx = driver slot number (0-15) assigned by Tasmota
     # Parse parameters: payload_str can be "hex", "fport,hex", or "rssi,fport,hex"
     var parts = string.split(payload_str, ',')
     var rssi = -85          # Default RSSI
-    var fport = idx         # Default fport = node index
+    var fport = [DEFAULT_PORT]  # Default fport for [MODEL] (replace with actual port)
     var hex_payload = payload_str
     
     if size(parts) == 1
@@ -431,8 +453,11 @@ tasmota.add_cmd("Lw[MODEL]TestPayload", def(cmd, idx, payload_str)
     # Parse hex string to bytes
     var test_payload = bytes(hex_payload)
     
-    # Force driver load by LwDecode framework
-    var result = LwDeco.decodeUplink("[NAME-{idx}]", idx, rssi, fport, test_payload)
+    # Use slot number for device name, but test node ID for protocol
+    var device_name = format("[MODEL]-slot%d", idx)
+    var node_id = format("test_%d", idx)  # Use slot-based node ID for testing
+    
+    var result = LwDeco.decodeUplink(device_name, node_id, rssi, fport, test_payload)
     
     if result != nil
         import json
@@ -460,6 +485,47 @@ tasmota.add_cmd("Lw[MODEL]ClearNode", def(cmd, idx, node_id)
         tasmota.resp_cmnd_done()
     else
         tasmota.resp_cmnd_str("Node not found")
+    end
+end)
+
+# Debug version - TestReal command for UI testing without hardware
+# ONLY INCLUDE THIS SECTION WHEN DEBUG VERSION IS REQUESTED
+# Command usage: Lw[MODEL]TestReal<slot> <scenario>
+tasmota.remove_cmd("Lw[MODEL]TestReal")
+tasmota.add_cmd("Lw[MODEL]TestReal", def(cmd, idx, payload_str)
+    # Predefined realistic test scenarios for UI development
+    var test_scenarios = {
+        # Define realistic test payloads for different device states
+        "normal":    "[NORMAL_HEX_PAYLOAD]",     # Normal operation
+        "low":       "[LOW_BATTERY_HEX_PAYLOAD]", # Low battery/values
+        "high":      "[HIGH_VALUES_HEX_PAYLOAD]", # High values/alerts  
+        "alert":     "[ALERT_HEX_PAYLOAD]",      # Alert conditions
+        "config":    "[CONFIG_HEX_PAYLOAD]",     # Configuration response
+        "info":      "[INFO_HEX_PAYLOAD]"        # Device information
+    }
+    
+    var scenario = payload_str.find(' ') > 0 ? payload_str[0..payload_str.find(' ')-1] : payload_str
+    var hex_payload = test_scenarios.find(scenario, test_scenarios["normal"])
+    
+    if hex_payload == nil
+        var scenarios_list = ""
+        for key: test_scenarios.keys()
+            scenarios_list += key + " "
+        end
+        return tasmota.resp_cmnd_str(format("Available scenarios: %s", scenarios_list))
+    end
+    
+    var test_payload = bytes(hex_payload)
+    var device_name = format("[MODEL]-slot%d", idx)
+    var node_id = format("test_%d", idx)
+    
+    var result = LwDeco.decodeUplink(device_name, node_id, -75, [DEFAULT_PORT], test_payload)
+    
+    if result != nil
+        import json
+        tasmota.resp_cmnd(json.dump(result))
+    else
+        tasmota.resp_cmnd_error()
     end
 end)
 ```
@@ -980,8 +1046,127 @@ measurement_units:
 - **Driver Version**: [VERSION]
 - **Generated**: [DATE]
 - **Coverage**: [X]/[Y] uplinks implemented, [X]/[Y] downlinks implemented
-- **Average Decode Time**: [XX]ms
-- **Memory Usage**: [XX] bytes
+- **Framework**: [FRAMEWORK_VERSION]
+- **Template**: [TEMPLATE_VERSION]
+
+## Expected UI Examples
+
+Based on the device capabilities and typical usage scenarios:
+
+### Example 1: Normal Operation
+```
+┌─────────────────────────────────────┐
+│ 🏠 [MODEL]-slot2  [VENDOR] [MODEL]  │
+│ 🔋 3.6V 📶 -78dBm ⏱️ 2m ago        │
+├─────────────────────────────────────┤
+│ 🌡️ 23.4°C 💧 65% 💨 420ppm        │
+│ 🔋 85% ✅ Normal                    │
+└─────────────────────────────────────┘
+```
+
+### Example 2: Alert Condition
+```
+┌─────────────────────────────────────┐
+│ 🏠 [MODEL]-slot2  [VENDOR] [MODEL]  │
+│ 🔋 3.2V 📶 -85dBm ⏱️ 5m ago        │
+├─────────────────────────────────────┤
+│ 🌡️ 45.2°C 💧 85% 💨 850ppm        │
+│ ⚠️ High Temp 🚨 CO2 Alert          │
+└─────────────────────────────────────┘
+```
+
+### Example 3: Low Battery
+```
+┌─────────────────────────────────────┐
+│ 🏠 [MODEL]-slot2  [VENDOR] [MODEL]  │
+│ 🔋 2.8V 📶 -92dBm ⏱️ 15m ago       │
+├─────────────────────────────────────┤
+│ 🌡️ 22.1°C 💧 58% 💨 380ppm        │
+│ 🪫 Low Battery ⚠️ Weak Signal       │
+└─────────────────────────────────────┘
+```
+
+### Example 4: Device Configuration
+```
+┌─────────────────────────────────────┐
+│ 🏠 [MODEL]-slot2  [VENDOR] [MODEL]  │
+│ 🔋 3.6V 📶 -80dBm ⏱️ 1m ago        │
+├─────────────────────────────────────┤
+│ ⚙️ Config Mode 📊 v2.1.5           │
+│ 🕐 15min interval ✅ Setup OK       │
+└─────────────────────────────────────┘
+```
+
+### Example 5: Power/Socket Control (if applicable)
+```
+┌─────────────────────────────────────┐
+│ 🏠 [MODEL]-slot2  [VENDOR] [MODEL]  │
+│ 🔌 Mains Power 📶 -70dBm ⏱️ 30s     │
+├─────────────────────────────────────┤
+│ 🟢 ON ⚡ 230V 🔌 1.2A 💡 276W      │
+│ 📊 1.25kWh 📈 85% PF                │
+└─────────────────────────────────────┘
+```
+
+### Example 6: Offline/No Data
+```
+┌─────────────────────────────────────┐
+│ 🏠 [MODEL]-slot2  [VENDOR] [MODEL]  │
+│ 🔋 --- 📶 --- ⏱️ 2h ago            │
+├─────────────────────────────────────┤
+│ ❌ No Data ⏱️ Last: 14:30          │
+│ 📡 Check Connection                 │
+└─────────────────────────────────────┘
+```
+
+## Command Reference
+
+**Test Commands** (slot = driver slot 0-15):
+| Command | Description | Usage | Example |
+|---------|-------------|-------|---------|
+| Lw[MODEL]TestPayload<slot> | Test decoder | `<hex>` or `<fport>,<hex>` | `Lw[MODEL]TestPayload2 037401AB` |
+| Lw[MODEL]TestReal<slot> | UI scenarios | `<scenario>` | `Lw[MODEL]TestReal2 normal` |
+
+**Control Commands** (slot = driver slot 0-15):
+| Command | Description | Usage | Downlink Hex |
+|---------|-------------|-------|---------------|
+| Lw[MODEL]Control<slot> | Basic control | `on/off` | `[HEX]` |
+| Lw[MODEL]SetParam<slot> | Set parameter | `<value>` | `[HEX]` |
+| Lw[MODEL]Config<slot> | Configuration | `<p1>,<p2>` | `[HEX]` |
+| Lw[MODEL]Reset<slot> | Device reset | (no params) | `[HEX]` |
+| Lw[MODEL]Status<slot> | Request status | (no params) | `[HEX]` |
+
+**Node Management**:
+| Command | Description | Usage | 
+|---------|-------------|-------|
+| Lw[MODEL]NodeStats | Get node stats | `<node_id>` |
+| Lw[MODEL]ClearNode | Clear node data | `<node_id>` |
+
+### Usage Examples
+
+#### Driver in Slot 2:
+```bash
+# Test realistic scenarios
+Lw[MODEL]TestReal2 normal      # Normal operation
+Lw[MODEL]TestReal2 alert       # Alert condition  
+Lw[MODEL]TestReal2 low         # Low battery
+Lw[MODEL]TestReal2 config      # Configuration mode
+
+# Control device (sends to all nodes managed by this driver instance)
+Lw[MODEL]Control2 on           # Turn device ON
+Lw[MODEL]SetParam2 60          # Set parameter to 60
+Lw[MODEL]Config2 1,30          # Configure with params 1,30
+
+# Node-specific management
+Lw[MODEL]NodeStats ABC123      # Get stats for node ABC123
+Lw[MODEL]ClearNode ABC123      # Clear data for node ABC123
+```
+
+#### Key Concepts:
+- **Slot Number**: Driver position in Tasmota (0-15)
+- **Node ID**: Individual device identifier from LoRaWAN network  
+- **One Driver = Multiple Devices**: Same driver slot can handle multiple device nodes
+- **Commands use Slot**: All Lw commands use slot number, not node ID
 
 ## Uplink Coverage Matrix
 | Port | Type | Description | Status | Notes |
@@ -1429,7 +1614,7 @@ This template ensures:
 Remember: The goal is a **perfect, complete decoder** that handles **100% of the device's capabilities** as documented in the manufacturer's PDF, including ALL uplink decoding and ALL downlink command generation.
 
 ---
-*Template Version: 2.1.10 | Last Updated: 2025-08-16*
+*Template Version: 2.1.11 | Last Updated: 2025-08-16*
 
 ---
 
