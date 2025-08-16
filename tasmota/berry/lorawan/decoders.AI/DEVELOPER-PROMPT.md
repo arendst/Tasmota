@@ -129,6 +129,58 @@ optimization_rules:
   - Clear unused references immediately
 ```
 
+### 5. DEBUG MODE PATTERN
+```berry
+# MANDATORY: When debug version is requested, include this pattern:
+class LwDecode_[MODEL]
+    var debug_mode     # Debug mode for enhanced logging
+    
+    def init()
+        self.debug_mode = true  # Enable debug for development
+        
+        if self.debug_mode
+            print("[MODEL]: Decoder initialized with debug mode enabled")
+        end
+    end
+    
+    def decodeUplink(name, node, rssi, fport, payload)
+        if self.debug_mode
+            print(f"[MODEL]: Decoding node={node}, fport={fport}, size={size(payload)}")
+            print(f"[MODEL]: Payload hex: {payload.tohex()}")
+        end
+        
+        # Throughout decode process, add debug logging:
+        if self.debug_mode
+            print(f"[MODEL]: Temperature = {temperature}°C")
+            print(f"[MODEL]: Battery = {battery}V")
+        end
+    end
+    
+    # Optional: Debug control command
+    def register_downlink_commands()
+        # ... other commands ...
+        
+        tasmota.remove_cmd("Lw[MODEL]Debug")
+        tasmota.add_cmd("Lw[MODEL]Debug", def(cmd, idx, payload_str)
+            var enable = payload_str == "on" || payload_str == "1"
+            LwDeco.set_debug_mode(enable)
+            var status = enable ? "enabled" : "disabled"
+            tasmota.resp_cmnd_str(f"Debug mode {status}")
+        end)
+    end
+    
+    def set_debug_mode(enabled)
+        self.debug_mode = enabled
+        var status = enabled ? "enabled" : "disabled"
+        print(f"[MODEL]: Debug mode {status}")
+    end
+end
+
+# Detection Rules for Registry Classification:
+# 🟢 Active = var debug_mode exists AND enabled in code
+# 🔴 Inactive = No var debug_mode property found
+```
+
 ---
 
 ## 🏗️ DRIVER STRUCTURE
