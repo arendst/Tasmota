@@ -46,7 +46,7 @@ class LwDecode_WS52x
             global.WS52x_cmdInit = false
         end
         
-        # Expand framework with power monitoring formatters
+        # Standard formatters for WS52x (emojis defined in formatters)
         LwSensorFormatter_cls.Formatter["voltage"] = {"u": "V", "f": " %.1f", "i": "⚡"}
         LwSensorFormatter_cls.Formatter["current"] = {"u": "mA", "f": " %.0f", "i": "🔌"}
         LwSensorFormatter_cls.Formatter["active_power"] = {"u": "W", "f": " %.0f", "i": "💡"}

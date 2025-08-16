@@ -44,10 +44,8 @@ class LwDecode_D2x
             global.D2x_cmdInit = false
         end
         
-        # Expand framework with temperature sensor formatters
+        # Standard formatters for D2x (emojis defined in formatters)
         LwSensorFormatter_cls.Formatter["temperature"] = {"u": "°C", "f": " %.1f", "i": "🌡️"}
-        LwSensorFormatter_cls.Formatter["alarm"] = {"u": "", "f": "", "i": "🚨"}
-        LwSensorFormatter_cls.Formatter["datalog"] = {"u": "", "f": "", "i": "💾"}
     end
     
     def decodeUplink(name, node, rssi, fport, payload)
@@ -270,7 +268,7 @@ class LwDecode_D2x
         if data_to_show.contains('is_datalog')
             # Datalog display
             fmt.start_line()
-            fmt.add_sensor("datalog", data_to_show.find('datalog_count', 0), "Datalog Entries", nil)
+            fmt.add_sensor("string", f"{data_to_show.find('datalog_count', 0)} entries", "Datalog", "💾")
             var latest_entry = data_to_show.find('datalog_entries', [])
             if size(latest_entry) > 0
                 var entry = latest_entry[0]
@@ -287,15 +285,15 @@ class LwDecode_D2x
             # Show available temperature probes
             var temp_count = 0
             if data_to_show.contains('temp_red_white') && data_to_show['temp_red_white'] != 327.67
-                fmt.add_sensor("temperature", data_to_show['temp_red_white'], "T1", "🌡️")
+                fmt.add_sensor("temperature", data_to_show['temp_red_white'], "T1", nil)
                 temp_count += 1
             end
             if data_to_show.contains('temp_white') && data_to_show['temp_white'] != 327.67
-                fmt.add_sensor("temperature", data_to_show['temp_white'], "T2", "🌡️")
+                fmt.add_sensor("temperature", data_to_show['temp_white'], "T2", nil)
                 temp_count += 1
             end
             if data_to_show.contains('temp_black') && data_to_show['temp_black'] != 327.67
-                fmt.add_sensor("temperature", data_to_show['temp_black'], "T3", "🌡️")
+                fmt.add_sensor("temperature", data_to_show['temp_black'], "T3", nil)
                 temp_count += 1
             end
             

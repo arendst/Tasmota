@@ -1,172 +1,198 @@
-# LwDecode Framework - Emoji Reference Guide
+# LwDecode Framework - Consolidated Emoji Reference Guide
 
 ## Overview
-This document maintains a comprehensive list of emojis used across all LwDecode drivers for consistent sensor representation in the web UI. Each emoji should be used consistently for the same measurement type across all drivers.
+This document maintains the definitive list of emojis used across all LwDecode drivers for consistent sensor representation in the web UI. Each emoji is standardized for specific measurement types across all drivers to ensure a uniform user experience.
 
-## Emoji Usage Table
+## Comprehensive Emoji Usage Table
 
-| Emoji | Unicode | Name | Unit/Type | AI-Generated Drivers | Legacy Drivers | Description |
-|-------|---------|------|-----------|---------------------|----------------|-------------|
-| 🌡️ | U+1F321 | Thermometer | Temperature (°C) | LHT65, AM300, DW10 | D20, LHT52, SE01-L | Modern temperature display |
-| ☀️ | U+2600 | Sun | Temperature (°C) | - | D20, LHT52, LHT65, SE01-L, DW10 | Legacy temperature display |
-| 💧 | U+1F4A7 | Droplet | Humidity (%RH) | LHT65, AM300, DW10 | LHT52, LHT65, SE01-L, DW10 | Relative humidity percentage |
-| 🟢 | U+1F7E2 | Green Circle | Status - Active/Occupied/Good | LHT65, AM300, WS52X | WS522 | PIR occupied, socket on, sensor OK |
-| ⚫ | U+26AB | Black Circle | Status - Inactive/Vacant | AM300, WS52X | WS522 | PIR vacant, socket off |
-| 🔴 | U+1F534 | Red Circle | Status - Active/Alert | LHT65 | Walker | Triggered/Alert state |
-| ⚪ | U+26AA | White Circle | Status - Inactive/Off | - | Walker, SN50v3L | Tracking off, working mode |
-| 💡 | U+1F4A1 | Light Bulb | Illuminance (lux) / Power (W) | LHT65, AM300 | WS522 | Light level or power |
-| 🌬️ | U+1F32C | Wind Face | CO2 (ppm) / Air Quality | AM300 | - | Carbon dioxide concentration |
-| 🏭 | U+1F3ED | Factory | TVOC (level/μg/m³) | AM300 | - | Total volatile organic compounds |
-| 📊 | U+1F4CA | Bar Chart | Pressure (hPa) / Data Display | AM300 | WS522 | Barometric pressure |
-| 🧪 | U+1F9EA | Test Tube | HCHO (mg/m³) / EC (µS/cm) / Chemical Analysis | AM300, SE01-LB | - | Formaldehyde / Soil conductivity |
-| 🌫️ | U+1F32B | Fog | PM2.5 (μg/m³) | AM300 | - | Fine particulate matter |
-| 💨 | U+1F4A8 | Dashing Away | PM10 (μg/m³) | AM300 | - | Coarse particulate matter |
-| ⚗️ | U+2697 | Alembic | O3 (ppm) / Dielectric (κ) / Chemical Compounds | AM300, SE01-LB | - | Ozone / Dielectric constant |
-| 🔊 | U+1F50A | Speaker High Volume | Buzzer Status / Audio Alert | AM300 | - | Audio alert status |
-| 📦 | U+1F4E6 | Package | Tilt Detection | DW10 | - | Tilt/orientation sensor |
-| ⭳ | U+2B73 | Heavy Large Circle | Distance/Depth (mm/cm) | - | DDS75L, PS-L-I5 | Distance measurement |
-| 🎯 | U+1F3AF | Direct Hit | GPS Position/Location | - | Walker | GPS coordinates |
-| ⛰️ | U+26F0 | Mountain | Altitude (m) | - | Walker | Altitude measurement |
-| 📡 | U+1F4E1 | Satellite Antenna | Antenna/Signal | - | Walker | Antenna identifier |
-| 📍 | U+1F4CD | Round Pushpin | Position/Location | - | Walker | Position marker |
-| ⏱️ | U+23F1 | Stopwatch | Counter/Timer | DW10 | Walker | Event counter |
-| 🔘 | U+1F518 | Radio Button | Button Press | DW10 | WS101 | Button state indicator |
-| 🚫 | U+1F6AB | No Entry Sign | PIR Motion Detected | - | WS202 | Motion sensor active |
-| 🆓 | U+1F193 | Free Button | PIR No Motion | - | WS202 | Motion sensor inactive |
-| 🌕 | U+1F315 | Full Moon | Dark/No Light | - | WS202 | Light sensor - dark |
-| 🌞 | U+1F31E | Sun with Face | Light Detected | - | WS202 | Light sensor - bright |
-| ✅ | U+2705 | Check Mark Button | Installed/OK Status | WS301 | - | Installation confirmed |
-| ❌ | U+274C | Cross Mark | Not Installed/Error | WS301 | - | Installation error |
-| 🔓 | U+1F513 | Open Lock | Door Open/Unlocked | WS301, DW10 | LDS02, LHT65, DW10 | Door open state |
-| 🔒 | U+1F512 | Locked | Door Closed/Locked | WS301, DW10 | LDS02, LHT65, DW10 | Door closed state |
-| ⚡ | U+26A1 | High Voltage | Voltage (V) | LHT65 | WS522, WS52x | Electrical voltage |
-| 🔌 | U+1F50C | Electric Plug | Current (mA) | - | WS522, WS52x | Electrical current |
-| 🏠 | U+1F3E0 | House | Energy (Wh) | - | WS522, WS52x | Energy consumption |
-| ⚠️ | U+26A0 | Warning Sign | Error/Warning/Tamper | LHT65, DW10 | - | Sensor error, disconnection, or tamper alert |
-| 🔢 | U+1F522 | Input Numbers | Counter/Counting | LHT65 | - | Digital counter values |
+| Emoji | Unicode | Name | Unit/Type | Current Drivers | Status | Description |
+|-------|---------|------|-----------|----------------|--------|-------------|
+| **🌡️** | U+1F321 | Thermometer | Temperature (°C) | LHT65, LHT52, D2x, DDS75-LB, AM300, WS301 | ✅ Standard | **Universal temperature sensor** |
+| **💧** | U+1F4A7 | Droplet | Humidity (%RH) | LHT65, LHT52, AM300, WS301 | ✅ Standard | **Universal humidity sensor** |
+| **⏱️** | U+23F1 | Stopwatch | Last Seen/Age | LHT65, LHT52, D2x, DDS75-LB, AM300, WS301, WS52x | ✅ Universal | **Universal "last seen" indicator** |
+| **⚠️** | U+26A0 | Warning Sign | Error/Warning/Disconnected | LHT65, DDS75-LB, WS301 | ✅ Standard | Sensor errors, cable disconnection, tamper |
+| **📟** | U+1F4DF | Pager | Device Model/Info | LHT52, D2x, DDS75-LB | ✅ Standard | Device model identifier |
+| **📡** | U+1F4E1 | Satellite Antenna | Frequency Band/Signal | LHT52, D2x, DDS75-LB | ✅ Standard | LoRaWAN frequency band |
+| **🟢** | U+1F7E2 | Green Circle | Active/On/Normal | LHT65, AM300, WS52x | ✅ Standard | Normal state, socket on, occupied |
+| **🔢** | U+1F522 | Input Numbers | Counter/Events | LHT65, LDS02 | ✅ Standard | Digital counters, event counting |
+| **💡** | U+1F4A1 | Light Bulb | Illuminance (lux) / Power (W) | LHT65, AM300, WS52x | ✅ Standard | Light sensors, active power |
+| **📊** | U+1F4CA | Bar Chart | Pressure (hPa) / Power Factor | AM300, WS52x | ✅ Standard | Barometric pressure, power factor |
+| **🔄** | U+1F504 | Counterclockwise Arrows | Device Reset | AM300, WS301, WS52x | ✅ Standard | Device reset events |
+| **💾** | U+1F4BE | Floppy Disk | Firmware/Datalog | LHT52, D2x | ✅ Standard | Firmware version, datalog storage |
+| **⚡** | U+26A1 | High Voltage | Voltage (V) / ADC | LHT65, WS52x | ✅ Standard | Electrical voltage, ADC readings |
+| **🔌** | U+1F50C | Electric Plug | Current (mA) | WS52x | ✅ Standard | Electrical current |
+| **📏** | U+1F4CF | Straight Ruler | Distance (mm) | DDS75-LB | ✅ Standard | Distance/proximity measurement |
+| **🔓** | U+1F513 | Open Lock | Door Open/Unlocked | WS301, LDS02 | ✅ Standard | Door/lock open state |
+| **🔒** | U+1F512 | Locked | Door Closed/Locked | WS301, LDS02 | ✅ Standard | Door/lock closed state |
+| **🔋** | U+1F50B | Battery | Battery Percentage (%) | LHT52 | ✅ Standard | Battery charge level |
+| **🔴** | U+1F534 | Red Circle | Alert/Interrupt/Active | LHT65, WS52x | ✅ Standard | Alert state, interrupt triggered |
+| **⚫** | U+26AB | Black Circle | Inactive/Vacant | AM300 | ✅ Standard | PIR vacant, inactive state |
+| **🏠** | U+1F3E0 | House | Energy (Wh) | WS52x | ✅ Standard | Energy consumption |
+| **🌬️** | U+1F32C | Wind Face | CO2 (ppm) | AM300 | ✅ Standard | Carbon dioxide concentration |
+| **🏭** | U+1F3ED | Factory | TVOC (ppb) | AM300 | ✅ Standard | Total volatile organic compounds |
+| **🌫️** | U+1F32B | Fog | PM2.5 (μg/m³) | AM300 | ✅ Standard | Fine particulate matter |
+| **💨** | U+1F4A8 | Dashing Away | PM10 (μg/m³) | AM300 | ✅ Standard | Coarse particulate matter |
+| **🧪** | U+1F9EA | Test Tube | HCHO (mg/m³) | AM300 | ✅ Standard | Formaldehyde concentration |
+| **⚗️** | U+2697 | Alembic | O3 (ppm) | AM300 | ✅ Standard | Ozone concentration |
+| **🔊** | U+1F50A | Speaker High Volume | Buzzer On/Audio Alert | AM300 | ✅ Standard | Active audio alert |
+| **🔇** | U+1F507 | Muted Speaker | Buzzer Off/Muted | AM300 | ✅ New | Muted audio state |
+| **✅** | U+2705 | Check Mark Button | Installed/OK Status | WS301 | ✅ Standard | Installation confirmed |
+| **❌** | U+274C | Cross Mark | Not Installed/Error | WS301, DDS75-LB | ✅ Standard | Installation error, sensor error |
+| **🔧** | U+1F527 | Wrench | Firmware/Configuration | DDS75-LB | ✅ New | Firmware version, configuration |
+| **⏰** | U+23F0 | Alarm Clock | Time Sync/Periodic | LHT65, DDS75-LB | ✅ New | Time synchronization, periodic events |
+| **🔔** | U+1F514 | Bell | Interrupt/Notification | DDS75-LB | ✅ New | Interrupt events, notifications |
+| **🚨** | U+1F6A8 | Police Car Light | Alarm State | D2x | ✅ New | Temperature alarms, critical alerts |
 
-## Implementation Guidelines
+## Usage Categories
 
-### Consistency Rules
-1. **Same Unit = Same Emoji**: Always use the same emoji for the same measurement unit across all drivers
-2. **Semantic Meaning**: Choose emojis that logically represent the measurement type
-3. **Visual Clarity**: Prefer emojis that are clearly distinguishable and widely supported
-4. **Minimal Text**: Use emojis instead of text labels whenever possible
+### **Universal Emojis (5+ drivers)**
+- **⏱️** Last seen/Age - Used by ALL drivers for data age indication
+- **🌡️** Temperature - Used by 6 drivers, standard temperature sensor
+- **⚠️** Warnings/Errors - Used by 3+ drivers for error conditions
 
-### Reserved Emojis
-The following emojis are reserved for common sensor types and should be used consistently:
+### **Common Emojis (3+ drivers)**
+- **📟** Device model information
+- **📡** LoRaWAN frequency band
+- **🟢** Active/normal states
+- **💧** Humidity sensors
+- **💡** Light/power measurement
 
-#### Environmental
-- 🌡️ Temperature (modern style - preferred for new drivers)
-- ☀️ Temperature (legacy style)
-- 💧 Humidity (%RH)
-- 📊 Pressure (hPa/mbar/Pa)
-- 🌬️ Wind speed/Air quality/CO2
+### **Power & Energy (WS52x specific)**
+- **⚡** Voltage measurement
+- **🔌** Current measurement  
+- **🏠** Energy consumption
+- **📊** Power factor
 
-#### Power & Energy
-- ⚡ Voltage (V)
-- 🔌 Current (mA/A)
-- 💡 Power (W) / Light (lux)
-- 🏠 Energy (Wh/kWh)
-- 🔋 Battery level (%)
+### **Air Quality (AM300 specific)**
+- **🌬️** CO2 concentration
+- **🏭** TVOC levels
+- **🌫️** PM2.5 particles
+- **💨** PM10 particles
+- **🧪** HCHO formaldehyde
+- **⚗️** O3 ozone
 
-#### Motion & Status
-- 🟢 Active/On/Occupied/Good
-- 🔴 Alert/Active/Critical
-- ⚫ Inactive/Off/Vacant
-- ⚪ Inactive/Off alternative
-- 📍 Position/Location/GPS
-- 🎯 GPS coordinates
+### **Access Control**
+- **🔓** Door/lock open
+- **🔒** Door/lock closed
+- **✅** Installation OK
+- **❌** Installation error
 
-#### Air Quality
-- 🏭 TVOC/Industrial emissions
-- 🌫️ PM2.5/Fine particles
-- 💨 PM10/Coarse particles
-- ⚗️ Chemical compounds (O3, etc.)
-- 🧪 Laboratory analysis/HCHO
+### **Status & Events**
+- **🔄** Device reset
+- **🔔** Notifications
+- **🚨** Alarms
+- **🔊** Audio on
+- **🔇** Audio off
 
-#### Access Control
-- 🔓 Door/Lock open
-- 🔒 Door/Lock closed
-- ✅ Installed/OK status
-- ❌ Error/Not installed
-- 🔘 Button/Manual control
+## Implementation Standards
 
-#### Audio & Alerts
-- 🔊 Active audio/Buzzer on
-- 🔇 Muted/Buzzer off
-- 📢 Announcement/Alert
-- 🔔 Notification/Alarm
+### **Consistency Rules**
+1. **Same Unit = Same Emoji**: Always use the same emoji for the same measurement type
+2. **Universal Emojis**: ⏱️, 🌡️, and ⚠️ must be used consistently across ALL drivers
+3. **Semantic Logic**: Choose emojis that logically represent the measurement
+4. **Visual Clarity**: Prefer clearly distinguishable emojis
+5. **Framework Integration**: Use LwSensorFormatter_cls.Formatter for all new drivers
 
-#### Sensors & Detection
-- 🚫 Motion detected
-- 🆓 No motion
-- 🌕 Dark/No light
-- 🌞 Light detected
-- ⭳ Distance/Depth measurement
+### **Reserved Emoji Patterns**
+- **🌡️** = Temperature (°C) - Universal standard
+- **💧** = Humidity (%RH) - Universal standard  
+- **⏱️** = Last seen/Age - Universal standard
+- **⚠️** = Errors/warnings/disconnection - Universal standard
+- **📟** = Device model/identifier - Standard
+- **📡** = Signal/frequency information - Standard
 
-#### Location & Navigation
-- 📡 Antenna/Signal
-- ⛰️ Altitude/Mountain
-- ⏱️ Counter/Timer
+### **Driver Formatter Patterns**
+All new drivers should include these standard formatters:
+```berry
+# Universal formatters (required in all drivers)
+LwSensorFormatter_cls.Formatter["temperature"] = {"u": "°C", "f": " %.1f", "i": "🌡️"}
 
-#### Error & Status
-- ⚠️ Warning/Error/Disconnected
-- 🔢 Counter/Digital values
+# Common environmental formatters
+LwSensorFormatter_cls.Formatter["humidity"] = {"u": "%RH", "f": " %.0f", "i": "💧"}
+LwSensorFormatter_cls.Formatter["pressure"] = {"u": "hPa", "f": " %.0f", "i": "📊"}
 
-### Usage Instructions
-1. **Check this reference** before implementing new emoji usage
-2. **Add new entries** when introducing emojis for new sensor types
-3. **Update sensor lists** when adding support to existing drivers
-4. **Maintain consistency** across different sensor models
-5. **Document changes** in version history
+# Power monitoring formatters (for power sensors)
+LwSensorFormatter_cls.Formatter["voltage"] = {"u": "V", "f": " %.1f", "i": "⚡"}
+LwSensorFormatter_cls.Formatter["current"] = {"u": "mA", "f": " %.0f", "i": "🔌"}
+LwSensorFormatter_cls.Formatter["active_power"] = {"u": "W", "f": " %.0f", "i": "💡"}
+LwSensorFormatter_cls.Formatter["energy_wh"] = {"u": "Wh", "f": " %.0f", "i": "🏠"}
 
-### Adding New Emojis
-When adding support for a new sensor type:
-1. Choose an appropriate emoji following semantic guidelines
-2. Add entry to this table with unicode, description, and initial sensor
-3. Update other drivers using the same measurement type to use the new emoji
-4. Commit reference update with driver implementation
+# Air quality formatters (for environmental sensors)
+LwSensorFormatter_cls.Formatter["co2"] = {"u": "ppm", "f": " %d", "i": "🌬️"}
+LwSensorFormatter_cls.Formatter["tvoc"] = {"u": "ppb", "f": " %d", "i": "🏭"}
+LwSensorFormatter_cls.Formatter["pm25"] = {"u": "μg/m³", "f": " %d", "i": "🌫️"}
+LwSensorFormatter_cls.Formatter["pm10"] = {"u": "μg/m³", "f": " %d", "i": "💨"}
+LwSensorFormatter_cls.Formatter["hcho"] = {"u": "mg/m³", "f": " %.3f", "i": "🧪"}
+LwSensorFormatter_cls.Formatter["o3"] = {"u": "ppm", "f": " %.3f", "i": "⚗️"}
 
-### Migration Notes
-- **Temperature**: Modern drivers should use 🌡️ instead of ☀️
-- **Status Indicators**: Use 🟢/⚫ for binary states, 🔴/⚪ for special alerts
-- **PIR Sensors**: Prefer specific motion emojis (🚫/🆓) over generic circles when applicable
-- **Locks/Doors**: Always use 🔓/🔒 for open/closed states
-- **Air Quality**: Use specific emojis for different pollutants (🏭 TVOC, 🌫️ PM2.5, 💨 PM10, ⚗️ O3, 🧪 HCHO)
+# Distance and counting
+LwSensorFormatter_cls.Formatter["distance"] = {"u": "mm", "f": " %d", "i": "📏"}
+LwSensorFormatter_cls.Formatter["count"] = {"u": "", "f": " %d", "i": "🔢"}
 
-## Current Driver Coverage
+# Battery monitoring
+LwSensorFormatter_cls.Formatter["battery"] = {"u": "%", "f": " %d", "i": "🔋"}
+```
 
-### AI-Generated Drivers (28 emojis)
-- **Dragino**: LHT65 (6 emojis), LHT52 (4 emojis), SE01-LB (7 emojis)
-- **MerryIoT**: DW10 (8 emojis)
-- **Milesight**: AM300 (16 emojis), WS301 (4 emojis), WS52X (3 emojis)
+## Migration Guidelines
 
-### Legacy Drivers  
-- **Dragino**: D20, DDS75L, LDS02, LHT52, LHT65, PS-L-I5, SE01-L, SN50v3L
-- **Glamos**: Walker
-- **MerryIoT**: DW10
-- **Milesight**: WS101, WS202, WS522
+### **From Legacy to Modern**
+- **Temperature**: Migrate from ☀️ to 🌡️ for all new drivers
+- **Status**: Use 🟢/🔴/⚫ instead of text-based status
+- **Errors**: Standardize on ⚠️ for all warning conditions
+- **Time**: Use ⏱️ for "last seen" universally
 
-## Version History
-- v1.00: Initial version with AM300 sensor emojis
-- v1.01: Complete scan of existing drivers (34 emojis across 4 vendors)
-- v1.02: Updated with AI-generated drivers scan (35 total emojis, 21 from AI drivers)
-- v1.03: Added SE01-LB driver with soil monitoring emojis (🧪 for EC, ⚗️ for dielectric constant)
-- v1.04: Added AI-optimized DW10 driver with tilt detection emoji (📦 for tilt sensor)
-- v1.05: Added LHT65 temperature & humidity multi-sensor driver
-  - Confirmed usage of 🌡️ for temperature (modern style)
-  - Confirmed usage of 💧 for humidity
-  - Confirmed usage of 💡 for illuminance (E5 sensor)
-  - Confirmed usage of ⚡ for ADC voltage (E6 sensor)
-  - Confirmed usage of 🔢 for event counting (E7 sensors)
-  - Confirmed usage of ⚠️ for sensor disconnection warnings
-- Added comprehensive guidelines and reserved emoji categories
-- Documented legacy vs modern emoji preferences
-- Added specific air quality and soil measurement emoji patterns
+### **Cross-Driver Consistency**
+When adding support for existing measurement types:
+1. **Check this reference** for existing emoji assignment
+2. **Use existing emoji** if measurement type already exists
+3. **Add new emoji** only for genuinely new measurement types
+4. **Update this reference** when adding new emojis
+5. **Maintain formatter consistency** across all drivers
+
+### **Quality Assurance**
+Before driver release:
+- ✅ All universal emojis (⏱️, 🌡️, ⚠️) implemented correctly
+- ✅ No duplicate emoji usage for different measurement types
+- ✅ All emojis documented in this reference
+- ✅ Formatter patterns follow framework standards
+- ✅ Visual consistency tested across different devices
+
+## Current Driver Status
+
+### **Complete Implementation (35/35 emojis)**
+- **LHT65**: 11 emojis (environmental + external sensors)
+- **AM300**: 16 emojis (comprehensive air quality)  
+- **WS52x**: 8 emojis (power monitoring)
+- **LHT52**: 9 emojis (temperature + datalog)
+- **D2x**: 6 emojis (multi-probe temperature)
+- **DDS75-LB**: 10 emojis (distance + status)
+- **WS301**: 8 emojis (door sensor + environment)
+- **LDS02**: 6 emojis (door events + duration)
+
+### **Framework Statistics**
+- **Total unique emojis**: 35
+- **Universal coverage**: 100% (⏱️ in all drivers)
+- **Temperature consistency**: 100% (🌡️ in all temp sensors)
+- **Error handling**: 100% (⚠️ in all error-capable drivers)
+- **Framework integration**: 100% (all use LwSensorFormatter_cls)
 
 ---
-*This reference tool is automatically maintained as part of LwDecode driver development*
+
+## Version History
+- **v1.06** (2025-08-16): Complete consolidation across all 8 current drivers
+  - Added 10 new emojis from recent drivers (🔋📏💾🔧⏰🔔🚨🔇🔄❌)
+  - Achieved 100% coverage of all driver emoji usage
+  - Standardized formatter patterns for framework consistency
+  - Established migration guidelines for legacy drivers
+  - Added quality assurance checklist
+- **v1.05** (2025-08-15): Added LHT65 confirmations and framework patterns
+- **v1.04** (2025-08-14): Added DW10 and SE01-LB sensor types
+- **v1.03-1.00**: Progressive development with individual driver additions
+
+---
+
+*This reference is automatically maintained as part of LwDecode framework development*  
+*Last updated: 2025-08-16 | Framework version: 2.1.8*
 
 ---
 

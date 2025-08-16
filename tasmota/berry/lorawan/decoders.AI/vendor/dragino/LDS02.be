@@ -40,7 +40,7 @@ class LwDecode_LDS02
             global.LDS02_cmdInit = false
         end
         
-        # Add custom formatters for this sensor
+        # Standard formatters for LDS02 (emojis defined in formatters)
         LwSensorFormatter_cls.Formatter["door_events"] = {"u": " events", "f": " %d", "i": "🔢"}
         LwSensorFormatter_cls.Formatter["duration"] = {"u": "min", "f": " %d", "i": "⏱️"}
     end

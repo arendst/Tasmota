@@ -47,7 +47,7 @@ class LwDecode_LHT65
             global.LHT65_cmdInit = false
         end
         
-        # Add custom formatters for LHT65
+        # Standard formatters for LHT65 (emojis defined in formatters)
         LwSensorFormatter_cls.Formatter["temperature"] = {"u": "°C", "f": " %.1f", "i": "🌡️"}
         LwSensorFormatter_cls.Formatter["humidity"] = {"u": "%RH", "f": " %.0f", "i": "💧"}
         LwSensorFormatter_cls.Formatter["illuminance"] = {"u": "lx", "f": " %d", "i": "💡"}
@@ -393,8 +393,8 @@ class LwDecode_LHT65
         fmt.start_line()
         
         # Built-in sensors (always present)
-        fmt.add_sensor("temperature", data_to_show.find('temperature'), "Built-in Temp", "🌡️")
-        fmt.add_sensor("humidity", data_to_show.find('humidity'), "Built-in Humidity", "💧")
+        fmt.add_sensor("temperature", data_to_show.find('temperature'), "Built-in Temp", nil)
+        fmt.add_sensor("humidity", data_to_show.find('humidity'), "Built-in Humidity", nil)
         
         # External sensor display based on type
         var ext_type = data_to_show.find('ext_type', 0)
@@ -407,7 +407,7 @@ class LwDecode_LHT65
                     if ext_temp == 327.67
                         fmt.add_status("E1 disconnected", "⚠️", "DS18B20 temperature sensor not connected")
                     else
-                        fmt.add_sensor("temperature", ext_temp, "External Temp", "🌡️")
+                        fmt.add_sensor("temperature", ext_temp, "External Temp", nil)
                     end
                 end
                 
@@ -428,7 +428,7 @@ class LwDecode_LHT65
             elif ext_type == 0x05  # Illumination sensor
                 var cable_ok = data_to_show.find('cable_connected', false)
                 if cable_ok
-                    fmt.add_sensor("illuminance", data_to_show.find('illuminance'), "Light", "💡")
+                    fmt.add_sensor("illuminance", data_to_show.find('illuminance'), "Light", nil)
                 else
                     fmt.add_status("E5 disconnected", "⚠️", "Illumination sensor cable not connected")
                 end
@@ -436,7 +436,7 @@ class LwDecode_LHT65
             elif ext_type == 0x06  # ADC sensor
                 var cable_ok = data_to_show.find('cable_connected', false)
                 if cable_ok
-                    fmt.add_sensor("adc_voltage", data_to_show.find('adc_voltage'), "ADC", "⚡")
+                    fmt.add_sensor("adc_voltage", data_to_show.find('adc_voltage'), "ADC", nil)
                 else
                     fmt.add_status("E6 disconnected", "⚠️", "ADC sensor cable not connected")
                 end
@@ -444,7 +444,7 @@ class LwDecode_LHT65
             elif ext_type == 0x07 || ext_type == 0x08  # Counting sensors
                 var cable_ok = data_to_show.find('cable_connected', true)  # 32-bit has no cable status
                 if cable_ok
-                    fmt.add_sensor("count", data_to_show.find('event_count'), "Events", "🔢")
+                    fmt.add_sensor("count", data_to_show.find('event_count'), "Events", nil)
                 else
                     fmt.add_status("E7 disconnected", "⚠️", "Counting sensor cable not connected")
                 end

@@ -44,10 +44,9 @@ class LwDecode_WS301
             global.WS301_cmdInit = false
         end
         
-        # Expand framework with door sensor formatters
+        # Standard formatters for WS301 (emojis defined in formatters)
         LwSensorFormatter_cls.Formatter["temperature"] = {"u": "°C", "f": " %.1f", "i": "🌡️"}
         LwSensorFormatter_cls.Formatter["humidity"] = {"u": "%RH", "f": " %.0f", "i": "💧"}
-        LwSensorFormatter_cls.Formatter["door"] = {"u": "", "f": "", "i": "🔒"}
     end
     
     def decodeUplink(name, node, rssi, fport, payload)

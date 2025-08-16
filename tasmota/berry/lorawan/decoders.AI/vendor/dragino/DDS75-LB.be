@@ -40,7 +40,7 @@ class LwDecode_DDS75_LB
             global.DDS75_LB_cmdInit = false
         end
         
-        # Add custom formatters for this sensor
+        # Standard formatters for DDS75-LB (emojis defined in formatters)
         LwSensorFormatter_cls.Formatter["distance"] = {"u": "mm", "f": " %d", "i": "📏"}
         LwSensorFormatter_cls.Formatter["temperature"] = {"u": "°C", "f": " %.1f", "i": "🌡️"}
     end
@@ -264,16 +264,16 @@ class LwDecode_DDS75_LB
                 # Show distance in appropriate units
                 if distance_mm >= 1000
                     var distance_m = distance_mm / 1000.0
-                    fmt.add_sensor("distance", distance_m, "Distance", "📏")
+                    fmt.add_sensor("distance", distance_m, "Distance", nil)
                 else
-                    fmt.add_sensor("distance", distance_mm, "Distance", "📏")
+                    fmt.add_sensor("distance", distance_mm, "Distance", nil)
                 end
             end
         end
         
         # Temperature if available
         if data_to_show.contains('temperature')
-            fmt.add_sensor("temperature", data_to_show['temperature'], "Temperature", "🌡️")
+            fmt.add_sensor("temperature", data_to_show['temperature'], "Temperature", nil)
         end
         
         # Trigger type indicator

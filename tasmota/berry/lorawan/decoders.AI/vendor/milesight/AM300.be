@@ -44,7 +44,7 @@ class LwDecode_AM300
             global.AM300_cmdInit = false
         end
         
-        # Expand framework with comprehensive air quality formatters
+        # Standard formatters for AM300 (emojis defined in formatters)
         LwSensorFormatter_cls.Formatter["temperature"] = {"u": "°C", "f": " %.1f", "i": "🌡️"}
         LwSensorFormatter_cls.Formatter["humidity"] = {"u": "%RH", "f": " %.0f", "i": "💧"}
         LwSensorFormatter_cls.Formatter["co2"] = {"u": "ppm", "f": " %d", "i": "🌬️"}

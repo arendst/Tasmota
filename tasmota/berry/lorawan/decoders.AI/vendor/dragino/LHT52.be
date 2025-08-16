@@ -48,16 +48,10 @@ class LwDecode_LHT52
             global.LHT52_cmdInit = false
         end
         
-        # Add custom formatters for LHT52
-        if !LwSensorFormatter_cls.Formatter.contains("temperature")
-            LwSensorFormatter_cls.Formatter["temperature"] = {"u": "°C", "f": " %.1f", "i": "🌡️"}
-        end
-        if !LwSensorFormatter_cls.Formatter.contains("humidity")
-            LwSensorFormatter_cls.Formatter["humidity"] = {"u": "%RH", "f": " %.0f", "i": "💧"}
-        end
-        if !LwSensorFormatter_cls.Formatter.contains("battery")
-            LwSensorFormatter_cls.Formatter["battery"] = {"u": "%", "f": " %d", "i": "🔋"}
-        end
+        # Standard formatters for LHT52 (emojis defined in formatters)
+        LwSensorFormatter_cls.Formatter["temperature"] = {"u": "°C", "f": " %.1f", "i": "🌡️"}
+        LwSensorFormatter_cls.Formatter["humidity"] = {"u": "%RH", "f": " %.0f", "i": "💧"}
+        LwSensorFormatter_cls.Formatter["battery"] = {"u": "%", "f": " %d", "i": "🔋"}
     end
     
     def decodeUplink(name, node, rssi, fport, payload)
@@ -319,22 +313,22 @@ class LwDecode_LHT52
         
         # Temperature
         if data_to_show.contains('temperature')
-            fmt.add_sensor("temperature", data_to_show['temperature'], "Temperature", "🌡️")
+            fmt.add_sensor("temperature", data_to_show['temperature'], "Temperature", nil)
         end
         
         # Humidity
         if data_to_show.contains('humidity')
-            fmt.add_sensor("humidity", data_to_show['humidity'], "Humidity", "💧")
+            fmt.add_sensor("humidity", data_to_show['humidity'], "Humidity", nil)
         end
         
         # External temperature if available
         if data_to_show.contains('external_temperature')
-            fmt.add_sensor("temperature", data_to_show['external_temperature'], "External Temp", "🌡️")
+            fmt.add_sensor("temperature", data_to_show['external_temperature'], "External Temp", nil)
         end
         
         # Battery percentage
         if data_to_show.contains('battery_pct')
-            fmt.add_sensor("battery", data_to_show['battery_pct'], "Battery", "🔋")
+            fmt.add_sensor("battery", data_to_show['battery_pct'], "Battery", nil)
         end
         
         fmt.end_line()
