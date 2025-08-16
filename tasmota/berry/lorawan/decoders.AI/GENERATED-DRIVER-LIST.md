@@ -26,11 +26,11 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 | Model | Version | Date | Channels | Test Status | Model Version | Prompt Ver | Description |
 |-------|---------|------|----------|-------------|---------------|------------|-------------|
 | AM300 | 1.1.0 | 2025-08-15 | 20/20 | 🔲 None | AM300(L) Series | v2.1.8 | 8-in-1 indoor air quality monitor |
-| WS101 | 1.0.0 | 2025-08-15 | 8/8 | 🔲 None | WS101 | v2.1.8 | Smart button with multiple press types |
-| WS202 | 1.1.0 | 2025-08-15 | 9/9 | 🔲 None | WS202 | v2.1.8 | PIR & Light sensor for motion and illuminance detection |
-| WS301 | 1.1.0 | 2025-08-15 | 10/10 | 🔲 None | WS301 | v2.1.8 | Magnetic door/window sensor |
+| WS101 | 1.0.0 | 2025-08-15 | 8/8 | 🏃 Running | WS101 | v2.1.8 | Smart button with multiple press types |
+| WS202 | 1.1.0 | 2025-08-15 | 9/9 | 🏃 Running | WS202 | v2.1.8 | PIR & Light sensor for motion and illuminance detection |
+| WS301 | 1.1.0 | 2025-08-15 | 10/10 | 🏃 Running | WS301 | v2.1.8 | Magnetic door/window sensor |
 | WS523 | 2.0.0 | 2025-08-15 | 33/33 | 🔲 None | WS523 | v2.1.8 | Portable smart socket with power monitoring |
-| WS52x | 2.0.0 | 2025-08-15 | 33/33 | 🔲 None | WS52x Series | v2.1.8 | Smart socket series with comprehensive power monitoring |
+| WS52x | 2.0.0 | 2025-08-15 | 33/33 | 🏃 Running | WS52x Series | v2.1.8 | Smart socket series with comprehensive power monitoring |
 
 ## Coverage Statistics
 
@@ -46,9 +46,9 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 ## Physical Test Statistics
 
 ### Test Status Summary
-- **🔲 None**: 12 drivers (100%)
+- **🔲 None**: 8 drivers (67%)
 - **📋 Queued**: 0 drivers (0%)
-- **🏃 Running**: 0 drivers (0%)
+- **🏃 Running**: 4 drivers (33%)
 - **✅ Passed**: 0 drivers (0%)
 - **⚠️ Partial**: 0 drivers (0%)
 - **❌ Failed**: 0 drivers (0%)
@@ -58,10 +58,10 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 - **⏸️ Paused**: 0 drivers (0%)
 
 ### Test Progress
-- **Total Tested**: 0/12 drivers (0%)
+- **Total Tested**: 4/12 drivers (33%)
 - **Successful**: 0/12 drivers (0%)
 - **Need Attention**: 0/12 drivers (0%)
-- **Untested**: 12/12 drivers (100%)
+- **Untested**: 8/12 drivers (67%)
 
 ### Test Status Legend
 - 🔲 **None** - No physical test planned or requested
