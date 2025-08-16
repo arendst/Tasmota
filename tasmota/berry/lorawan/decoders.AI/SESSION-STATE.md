@@ -29,6 +29,7 @@
 - Auto-reload file changes when detected
 - Work silently
 - **Language**: English ONLY (all responses must be in English)
+- **Path Format**: Always use relative paths from decoders.AI/ directory in all commands and references
 
 ## Recent Activity
 - **Last Generated**: DDS75-LB v1.0.0 + LDS02 v1.0.0 (2025-08-16)
