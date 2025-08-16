@@ -8,7 +8,7 @@ This document maintains the definitive list of emojis used across all LwDecode d
 | Emoji | Unicode | Name | Unit/Type | Current Drivers | Status | Description |
 |-------|---------|------|-----------|----------------|--------|-------------|
 | **🌡️** | U+1F321 | Thermometer | Temperature (°C) | LHT65, LHT52, D2x, DDS75-LB, AM300, WS301 | ✅ Standard | **Universal temperature sensor** |
-| **💧** | U+1F4A7 | Droplet | Humidity (%RH) | LHT65, LHT52, AM300, WS301 | ✅ Standard | **Universal humidity sensor** |
+| **💧** | U+1F4A7 | Droplet | Humidity (%RH) / Water Depth (m) | LHT65, LHT52, AM300, WS301, PS-LB | ✅ Standard | **Universal humidity sensor / water depth** |
 | **⏱️** | U+23F1 | Stopwatch | Last Seen/Age | LHT65, LHT52, D2x, DDS75-LB, AM300, WS301, WS52x | ✅ Universal | **Universal "last seen" indicator** |
 | **⚠️** | U+26A0 | Warning Sign | Error/Warning/Disconnected | LHT65, DDS75-LB, WS301 | ✅ Standard | Sensor errors, cable disconnection, tamper |
 | **📟** | U+1F4DF | Pager | Device Model/Info | LHT52, D2x, DDS75-LB | ✅ Standard | Device model identifier |
@@ -16,11 +16,11 @@ This document maintains the definitive list of emojis used across all LwDecode d
 | **🟢** | U+1F7E2 | Green Circle | Active/On/Normal | LHT65, AM300, WS52x | ✅ Standard | Normal state, socket on, occupied |
 | **🔢** | U+1F522 | Input Numbers | Counter/Events | LHT65, LDS02 | ✅ Standard | Digital counters, event counting |
 | **💡** | U+1F4A1 | Light Bulb | Illuminance (lux) / Power (W) | LHT65, AM300, WS52x | ✅ Standard | Light sensors, active power |
-| **📊** | U+1F4CA | Bar Chart | Pressure (hPa) / Power Factor | AM300, WS52x | ✅ Standard | Barometric pressure, power factor |
+| **📊** | U+1F4CA | Bar Chart | Pressure (hPa/MPa) / Power Factor | AM300, WS52x, PS-LB | ✅ Standard | Barometric pressure, power factor |
 | **🔄** | U+1F504 | Counterclockwise Arrows | Device Reset | AM300, WS301, WS52x | ✅ Standard | Device reset events |
 | **💾** | U+1F4BE | Floppy Disk | Firmware/Datalog | LHT52, D2x | ✅ Standard | Firmware version, datalog storage |
-| **⚡** | U+26A1 | High Voltage | Voltage (V) / ADC | LHT65, WS52x | ✅ Standard | Electrical voltage, ADC readings |
-| **🔌** | U+1F50C | Electric Plug | Current (mA) | WS52x | ✅ Standard | Electrical current |
+| **⚡** | U+26A1 | High Voltage | Voltage (V) / ADC | LHT65, WS52x, PS-LB | ✅ Standard | Electrical voltage, ADC readings |
+| **🔌** | U+1F50C | Electric Plug | Current (mA) | WS52x, PS-LB | ✅ Standard | Electrical current |
 | **📏** | U+1F4CF | Straight Ruler | Distance (mm) | DDS75-LB | ✅ Standard | Distance/proximity measurement |
 | **🔓** | U+1F513 | Open Lock | Door Open/Unlocked | WS301, LDS02 | ✅ Standard | Door/lock open state |
 | **🔒** | U+1F512 | Locked | Door Closed/Locked | WS301, LDS02 | ✅ Standard | Door/lock closed state |
@@ -168,6 +168,7 @@ Before driver release:
 - **DDS75-LB**: 10 emojis (distance + status)
 - **WS301**: 8 emojis (door sensor + environment)
 - **LDS02**: 6 emojis (door events + duration)
+- **PS-LB**: 8 emojis (pressure/water depth + ROC status)
 
 ### **Framework Statistics**
 - **Total unique emojis**: 35
@@ -179,6 +180,12 @@ Before driver release:
 ---
 
 ## Version History
+- **v1.07** (2025-08-16): Added PS-LB pressure sensor emojis
+  - Added pressure sensor specific formatters (pressure_mpa, water_depth)
+  - Updated existing emojis for multi-purpose usage (💧 for both humidity and water depth)
+  - Standardized 📊 for all pressure types (atmospheric, hydraulic, differential)
+  - Added 🔌 current measurement support for 4-20mA probe signals
+  - Framework now supports 9 drivers with complete emoji coverage
 - **v1.06** (2025-08-16): Complete consolidation across all 8 current drivers
   - Added 10 new emojis from recent drivers (🔋📏💾🔧⏰🔔🚨🔇🔄❌)
   - Achieved 100% coverage of all driver emoji usage

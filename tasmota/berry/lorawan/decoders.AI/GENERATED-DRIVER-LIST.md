@@ -18,7 +18,9 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 | D2x | 1.0.0 | 2025-08-16 | 15/15 | D20/D20S/D22/D23-LB/LS | v2.1.9 | Multi-probe temperature sensor series |
 | DDS75-LB | 1.0.0 | 2025-08-16 | 8/8 | DDS75-LB/LS | v2.1.8 | Ultrasonic distance detection sensor |
 | LDS02 | 1.0.0 | 2025-08-16 | 8/8 | LDS02 | v2.1.8 | Magnetic door sensor with event counting |
+| LHT52 | 1.0.0 | 2025-08-16 | 16/16 | LHT52 | v2.1.8 | Temperature & humidity sensor with datalog & alarm features |
 | LHT65 | 1.0.0 | 2025-08-16 | 18/18 | LHT65 | v2.1.8 | Temperature & humidity sensor with 9 external sensor types |
+| PS-LB | 1.0.0 | 2025-08-16 | 13/13 | PS-LB/LS | v2.1.8 | Pressure/water level sensor with probe detection |
 
 ### Milesight
 | Model | Version | Date | Channels | Model Version | Prompt Ver | Description |
@@ -33,12 +35,12 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 ## Coverage Statistics
 
 ### By Vendor
-- **Dragino**: 4 drivers, 49 total channels
+- **Dragino**: 6 drivers, 78 total channels
 - **Milesight**: 6 drivers, 113 total channels
 
 ### Total
-- **Drivers**: 10
-- **Channels**: 162
+- **Drivers**: 12
+- **Channels**: 191
 - **Coverage**: 100% (all documented channels implemented)
 
 ## Technical Standards
@@ -88,6 +90,33 @@ Each driver has been validated for:
 - ✅ Documentation with test examples for ALL uplink types
 
 ## Changelog
+
+### 2025-08-16: PS-LB Pressure Sensor Driver Addition
+- Added Dragino PS-LB pressure/water level sensor driver
+- 13 channels implemented with 100% coverage (device status, sensor data, ROC, datalog, multi-data)
+- 9 downlink commands: interval, interrupt, output control, probe config, ROC, status, multi-collection, datalog polling, clear
+- Support for 3 probe types: water depth (0-100m), pressure (0-250MPa), differential pressure (±10KPa)
+- Advanced probe model system with automatic 4-20mA current conversion
+- Report on Change (ROC) feature with wave and threshold alarm modes
+- Datalog feature with Unix timestamp support and multi-entry responses
+- Multi-collection mode (STDC) for enhanced voltage/current sampling
+- Output control for 3V3/5V/12V external sensor power
+- Battery monitoring with Li-SOCI2 voltage curves
+- Comprehensive error handling for probe disconnection detection
+- Template v2.1.8 with robust pressure unit conversions
+
+### 2025-08-16: LHT52 Temperature & Humidity Driver Addition
+- Added Dragino LHT52 temperature & humidity sensor driver
+- 16 channels implemented with 100% coverage (periodic data, alarm, device status, datalog)
+- 15 downlink commands: interval, thresholds, time sync, datalog management, reboot, factory reset
+- Built-in SHT20 temperature and humidity sensor with high accuracy
+- Temperature alarm system with configurable thresholds and enable/disable control
+- Advanced datalog feature with Unix timestamp support and time-based polling
+- Device time synchronization with manual and automatic MAC command support
+- Battery monitoring with trend tracking and low battery detection
+- Comprehensive device management: reboot, factory reset, device information
+- Enhanced error handling with sensor validation and range checking
+- Template v2.1.8 with improved alarm handling and time management
 
 ### 2025-08-16: LHT65 Multi-Sensor Driver Addition
 - Added Dragino LHT65 temperature & humidity sensor driver
@@ -142,7 +171,7 @@ Each driver has been validated for:
 - Test command registration
 
 ---
-*Last Updated: 2025-08-16 - Added LHT65 temperature & humidity multi-sensor*
+*Last Updated: 2025-08-16 - Added PS-LB pressure sensor with advanced probe detection*
 
 ---
 
