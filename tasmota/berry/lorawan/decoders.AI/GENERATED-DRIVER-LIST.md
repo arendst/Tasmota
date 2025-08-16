@@ -30,17 +30,17 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 | WS202 | 1.1.0 | 2025-08-15 | 9/9 | 🏃 Running | WS202 | v2.1.8 | PIR & Light sensor for motion and illuminance detection |
 | WS301 | 1.1.0 | 2025-08-15 | 10/10 | 🏃 Running | WS301 | v2.1.8 | Magnetic door/window sensor |
 | WS523 | 2.0.0 | 2025-08-15 | 33/33 | 🔲 None | WS523 | v2.1.8 | Portable smart socket with power monitoring |
-| WS52x | 2.0.0 | 2025-08-15 | 33/33 | 🏃 Running | WS52x Series | v2.1.8 | Smart socket series with comprehensive power monitoring |
+| WS52x | 1.1.0 | 2025-08-16 | 24/24 | 🏃 Running | WS52x Series | v2.1.10 | Smart socket series with comprehensive power monitoring |
 
 ## Coverage Statistics
 
 ### By Vendor
 - **Dragino**: 6 drivers, 78 total channels
-- **Milesight**: 6 drivers, 113 total channels
+- **Milesight**: 6 drivers, 104 total channels
 
 ### Total
 - **Drivers**: 12
-- **Channels**: 191
+- **Channels**: 182
 - **Coverage**: 100% (all documented channels implemented)
 
 ## Physical Test Statistics
@@ -122,6 +122,19 @@ Each driver has been validated for:
 - ✅ Documentation with test examples for ALL uplink types
 
 ## Changelog
+
+### 2025-08-16: WS52x v1.1.0 Framework v2.1.10 Regeneration
+- Regenerated Milesight WS52x smart power socket driver using latest framework v2.1.10
+- Enhanced TestPayload command with multi-parameter support (rssi,fport,payload)
+- Enforced "Lw" command prefix for all downlink commands
+- Complete uplink coverage: 24/24 channels (power monitoring, device info, configuration, events)
+- Complete downlink coverage: 12/12 commands (socket control, configuration, energy reset)
+- Improved global node storage with energy history tracking
+- Enhanced power monitoring features with signed power support
+- Better error handling and recovery patterns
+- Updated documentation with comprehensive test examples
+- Memory optimizations for ESP32 devices
+- Framework integration improvements
 
 ### 2025-08-16: PS-LB v1.1.0 Complete Regeneration
 - Regenerated Dragino PS-LB driver from scratch using framework v2.1.10
