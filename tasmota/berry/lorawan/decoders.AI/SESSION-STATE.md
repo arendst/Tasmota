@@ -134,13 +134,45 @@
 
 ## Commit Message Template
 ```
-(AI) <MODEL> v<VERSION> <short_description_with_key_features>
+(AI) <MODEL> v<VERSION> <full_description>
 ```
 
 **Examples:**
-- `(AI) DDS75-LB v1.0.0 ultrasonic distance detection sensor with delta mode and datalog features`
-- `(AI) LDS02 v1.0.0 magnetic door sensor with event counting and EDC mode for power optimization`
+```
+commit 072521e9390c4a024be247fa19bbf841a34a4907
+Author: Fabrizio Amodio <ziofabry@hotmail.com>
+Date:   Sat Aug 16 02:24:51 2025 +0200
 
+    (AI) D2x v1.0.0 Dragino temperature sensor series decoder
+
+    Complete support for D20/D20S/D22/D23-LB/LS models:
+    - Multi-probe temperature monitoring (1-3 probes)
+    - Device status, sensor data, and datalog decoding
+    - Temperature alarm and historical data features
+    - Automatic model detection from active probes
+    - Enhanced framework integration with lwdecode v1.8.0
+    - Comprehensive downlink commands (8 types)
+    - Template v2.1.9 with Lw command prefix
+    - Updated driver registry: 7 drivers, 128 total channels
+
+commit c912797aa6e256e55e0900008cb101227a3edddd
+Author: Fabrizio Amodio <ziofabry@hotmail.com>
+Date:   Sat Aug 16 02:06:36 2025 +0200
+
+    (AI) EXAMPLE-PROMPTS v1.0.0 comprehensive prompt library for LoRaWAN development
+
+    Created exhaustive prompt library with 50+ categorized examples:
+    - Driver Management: creation, regeneration, framework upgrades
+    - Versioning & Documentation: version control, cross-references
+    - Code Patching: single/multi-driver patches, vendor operations
+    - Display & UI: emoji management, display optimization
+    - Testing & Validation: comprehensive test suites, performance
+    - Maintenance: cleanup operations, quality assurance
+    - Advanced: framework development, integration features
+    - Quick Actions: rapid fixes, instant operations
+
+    Versioned document enabling consistent AI-assisted development.
+```
 ## Error Recovery Patterns
 - **Berry Syntax**: Auto-fix reserved words (e.g., type→sensor_type)
   └── Last Applied: None in current session
