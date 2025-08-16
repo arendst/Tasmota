@@ -1,12 +1,60 @@
 # Session State v2.3.0
 
-## ⚠️ READ ONLY FILE WARNING ⚠️
+## ⚠️ READ ONLY FILE WARNING ⚠️ (NEVER IGNORE)
 - this file it's a read only file, execpt for the specific command `save to default session`
 - when the a session is save to default:
    1) increase the version
    2) update all the dynamic sections
    3) populate the section `Session Override` with the difference of the local session with the session file
    4) DON'T MODIFY ANYTHING ELSE
+
+## Root Directory
+```
+C:\Project\tasmota\Tasmota\tasmota\berry\lorawan\decoders.AI
+```
+
+## ⚠️ Critical Constraints ⚠️ (NEVER IGNORE)
+- **Path Restriction**: NEVER access folders above ROOT
+- **Edit Policy**: Only edit/run/create when directly asked
+- **Language**: English ONLY for all responses
+- **Path Format**: Always use relative paths from ROOT
+- **Response Mode**: Concise by default, detailed when requested
+
+## Awaiting Input
+- **PDF Upload**: For new driver generation
+- **Driver Updates**: For existing driver modifications
+- **Test Management**: Update physical test status
+- **Framework Updates**: For system enhancements
+- **Documentation**: For guide improvements
+- **Statistics**: Real-time channel/driver tracking
+
+## Response Additions **FOR EVERY RESPONSE**
+- at the end of the process produce in sequence:
+  1) if modified file > 0 then render git commands snippet by `Git Workflow`
+  2) detailed statistics about token used by this action
+
+## Session Override
+```
+```
+
+## Git Workflow
+```bash
+# Driver files (single line)
+git add vendor/vendor_name/MODEL.be vendor/vendor_name/MODEL.md vendor/vendor_name/MODEL-MAP.md
+
+# Framework files (one per line)
+git add GENERATED-DRIVER-LIST.md
+git add SESSION-STATE.md
+git add emoji-reference.md
+
+# Commit template
+git commit -m "(AI) [MODEL|MODULE] v1.0.0 (FW v2.1.12) <title>
+<description>
+<token usage statististc>
+"
+
+# NO PUSH
+```
 
 ## System Status (Dynamic)
 - **Framework**: ✅ LwDecode v1.8.0 Stable
@@ -16,24 +64,7 @@
 - **Performance**: ✅ <3ms Average Decode Time
 - **Memory**: ✅ ESP32 Optimized (<600 bytes/decode)
 
-## Root Directory
-```
-C:\Project\tasmota\Tasmota\tasmota\berry\lorawan\decoders.AI/
-```
-
-## Critical Constraints
-- **Path Restriction**: NEVER access folders above ROOT
-- **Edit Policy**: Only edit/run/create when directly asked
-- **Language**: English ONLY for all responses
-- **Path Format**: Always use relative paths from ROOT
-- **Response Mode**: Concise by default, detailed when requested
-
-## Response Additions **FOR EVERY RESPONSE**
-- at the end of the process produce in sequence:
-  1) if modified file > 0 then render git commands snippet by `Git Workflow`
-  2) detailed statistics about token used by this action
-
-## File Structure (Verified) (Dynamic)
+## File Structure (Dynamic)
 ```
 ROOT/
 ├── Core Framework (14 files)
@@ -92,36 +123,6 @@ ROOT/
 - **Version Control**: Automated git workflow integration
 - **Filesystem Safety**: ESP32 flat structure enforcement
 
-## Template v2.1.12 Features (Dynamic)
-- **Enhanced TestPayload**: Multi-parameter support
-  - Format: `Lw[MODEL]TestPayload<node> <hex>`
-  - Format: `Lw[MODEL]TestPayload<node> <fport>,<hex>`
-  - Format: `Lw[MODEL]TestPayload<node> <rssi>,<fport>,<hex>`
-- **Command Prefix**: "Lw" enforced for all commands
-- **Parameter Validation**: Enhanced range/enum checking
-- **Error Handling**: Memory/stack overflow recovery
-- **Troubleshooting**: Complete issue/solution matrix
-- **F-string Safety**: Ternary operator extraction enforcement
-- **ESP32 Filesystem**: Flat structure constraint validation
-
-## Git Workflow
-```bash
-cd <C:\Project\tasmota\Tasmota\tasmota\berry\lorawan\decoders.AI>
-
-# Driver files (single line)
-git add vendor/vendor_name/MODEL.be vendor/vendor_name/MODEL.md vendor/vendor_name/MODEL-MAP.md
-
-# Framework files (one per line)
-git add GENERATED-DRIVER-LIST.md
-git add SESSION-STATE.md
-git add emoji-reference.md
-
-# Commit template
-git commit -m "(AI) [MODEL|MODULE] v1.0.0 (FW v2.1.12) <description>"
-
-# NO PUSH
-```
-
 ## Ready State (Dynamic)
 - ✅ Framework v1.8.0 loaded and operational
 - ✅ Template v2.1.12 with critical constraints added
@@ -136,24 +137,6 @@ git commit -m "(AI) [MODEL|MODULE] v1.0.0 (FW v2.1.12) <description>"
 - ✅ F-string syntax validation active
 - ✅ ESP32 filesystem constraints enforced
 
-## Awaiting Input
-- **PDF Upload**: For new driver generation
-- **Driver Updates**: For existing driver modifications
-- **Test Management**: Update physical test status
-- **Framework Updates**: For system enhancements
-- **Documentation**: For guide improvements
-- **Statistics**: Real-time channel/driver tracking
-
-## Session Override
-```
-CURRENT SESSION - Updated 2025-08-16:
-- DEVELOPER-PROMPT.md updated to v2.1.12
-- Added critical f-string ternary operator constraints
-- Added ESP32 filesystem flat structure constraints
-- File count updated: 14 framework files (was 10)
-- Template version synced with system status
-- All dynamic sections refreshed with current state
-```
 
 ---
 *Session State v2.3.0 - Critical Constraints Added and Statistics Updated*  
