@@ -13,24 +13,24 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 ## Driver Registry
 
 ### Dragino
-| Model | Version | Date | Channels | Model Version | Prompt Ver | Description |
-|-------|---------|------|----------|---------------|------------|-------------|
-| D2x | 1.0.0 | 2025-08-16 | 15/15 | D20/D20S/D22/D23-LB/LS | v2.1.9 | Multi-probe temperature sensor series |
-| DDS75-LB | 1.0.0 | 2025-08-16 | 8/8 | DDS75-LB/LS | v2.1.8 | Ultrasonic distance detection sensor |
-| LDS02 | 1.0.0 | 2025-08-16 | 8/8 | LDS02 | v2.1.8 | Magnetic door sensor with event counting |
-| LHT52 | 1.0.0 | 2025-08-16 | 16/16 | LHT52 | v2.1.8 | Temperature & humidity sensor with datalog & alarm features |
-| LHT65 | 1.0.0 | 2025-08-16 | 18/18 | LHT65 | v2.1.8 | Temperature & humidity sensor with 9 external sensor types |
-| PS-LB | 1.0.0 | 2025-08-16 | 13/13 | PS-LB/LS | v2.1.8 | Pressure/water level sensor with probe detection |
+| Model | Version | Date | Channels | Test Status | Model Version | Prompt Ver | Description |
+|-------|---------|------|----------|-------------|---------------|------------|-------------|
+| D2x | 1.0.0 | 2025-08-16 | 15/15 | 🔲 None | D20/D20S/D22/D23-LB/LS | v2.1.9 | Multi-probe temperature sensor series |
+| DDS75-LB | 1.0.0 | 2025-08-16 | 8/8 | 🔲 None | DDS75-LB/LS | v2.1.8 | Ultrasonic distance detection sensor |
+| LDS02 | 1.0.0 | 2025-08-16 | 8/8 | 🔲 None | LDS02 | v2.1.8 | Magnetic door sensor with event counting |
+| LHT52 | 1.0.0 | 2025-08-16 | 16/16 | 🔲 None | LHT52 | v2.1.8 | Temperature & humidity sensor with datalog & alarm features |
+| LHT65 | 1.0.0 | 2025-08-16 | 18/18 | 🔲 None | LHT65 | v2.1.8 | Temperature & humidity sensor with 9 external sensor types |
+| PS-LB | 1.1.0 | 2025-08-16 | 13/13 | 🔲 None | PS-LB/LS | v2.1.10 | Pressure/water level sensor with probe detection |
 
 ### Milesight
-| Model | Version | Date | Channels | Model Version | Prompt Ver | Description |
-|-------|---------|------|----------|---------------|------------|-------------|
-| AM300 | 1.1.0 | 2025-08-15 | 20/20 | AM300(L) Series | v2.1.8 | 8-in-1 indoor air quality monitor |
-| WS101 | 1.0.0 | 2025-08-15 | 8/8 | WS101 | v2.1.8 | Smart button with multiple press types |
-| WS202 | 1.1.0 | 2025-08-15 | 9/9 | WS202 | v2.1.8 | PIR & Light sensor for motion and illuminance detection |
-| WS301 | 1.1.0 | 2025-08-15 | 10/10 | WS301 | v2.1.8 | Magnetic door/window sensor |
-| WS523 | 2.0.0 | 2025-08-15 | 33/33 | WS523 | v2.1.8 | Portable smart socket with power monitoring |
-| WS52x | 2.0.0 | 2025-08-15 | 33/33 | WS52x Series | v2.1.8 | Smart socket series with comprehensive power monitoring |
+| Model | Version | Date | Channels | Test Status | Model Version | Prompt Ver | Description |
+|-------|---------|------|----------|-------------|---------------|------------|-------------|
+| AM300 | 1.1.0 | 2025-08-15 | 20/20 | 🔲 None | AM300(L) Series | v2.1.8 | 8-in-1 indoor air quality monitor |
+| WS101 | 1.0.0 | 2025-08-15 | 8/8 | 🔲 None | WS101 | v2.1.8 | Smart button with multiple press types |
+| WS202 | 1.1.0 | 2025-08-15 | 9/9 | 🔲 None | WS202 | v2.1.8 | PIR & Light sensor for motion and illuminance detection |
+| WS301 | 1.1.0 | 2025-08-15 | 10/10 | 🔲 None | WS301 | v2.1.8 | Magnetic door/window sensor |
+| WS523 | 2.0.0 | 2025-08-15 | 33/33 | 🔲 None | WS523 | v2.1.8 | Portable smart socket with power monitoring |
+| WS52x | 2.0.0 | 2025-08-15 | 33/33 | 🔲 None | WS52x Series | v2.1.8 | Smart socket series with comprehensive power monitoring |
 
 ## Coverage Statistics
 
@@ -42,6 +42,38 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 - **Drivers**: 12
 - **Channels**: 191
 - **Coverage**: 100% (all documented channels implemented)
+
+## Physical Test Statistics
+
+### Test Status Summary
+- **🔲 None**: 12 drivers (100%)
+- **📋 Queued**: 0 drivers (0%)
+- **🏃 Running**: 0 drivers (0%)
+- **✅ Passed**: 0 drivers (0%)
+- **⚠️ Partial**: 0 drivers (0%)
+- **❌ Failed**: 0 drivers (0%)
+- **🔄 Retest**: 0 drivers (0%)
+- **🚫 Blocked**: 0 drivers (0%)
+- **📊 Analysis**: 0 drivers (0%)
+- **⏸️ Paused**: 0 drivers (0%)
+
+### Test Progress
+- **Total Tested**: 0/12 drivers (0%)
+- **Successful**: 0/12 drivers (0%)
+- **Need Attention**: 0/12 drivers (0%)
+- **Untested**: 12/12 drivers (100%)
+
+### Test Status Legend
+- 🔲 **None** - No physical test planned or requested
+- 📋 **Queued** - Physical test scheduled but not started
+- 🏃 **Running** - Physical test currently in progress
+- ✅ **Passed** - Physical test completed successfully (all features work)
+- ⚠️ **Partial** - Physical test completed with some features working
+- ❌ **Failed** - Physical test completed with errors/failures
+- 🔄 **Retest** - Physical test needs to be repeated (issues found)
+- 🚫 **Blocked** - Physical test cannot proceed (hardware unavailable)
+- 📊 **Analysis** - Physical test completed, results under review
+- ⏸️ **Paused** - Physical test temporarily suspended
 
 ## Technical Standards
 
@@ -91,19 +123,20 @@ Each driver has been validated for:
 
 ## Changelog
 
-### 2025-08-16: PS-LB Pressure Sensor Driver Addition
-- Added Dragino PS-LB pressure/water level sensor driver
-- 13 channels implemented with 100% coverage (device status, sensor data, ROC, datalog, multi-data)
-- 9 downlink commands: interval, interrupt, output control, probe config, ROC, status, multi-collection, datalog polling, clear
-- Support for 3 probe types: water depth (0-100m), pressure (0-250MPa), differential pressure (±10KPa)
-- Advanced probe model system with automatic 4-20mA current conversion
-- Report on Change (ROC) feature with wave and threshold alarm modes
-- Datalog feature with Unix timestamp support and multi-entry responses
-- Multi-collection mode (STDC) for enhanced voltage/current sampling
-- Output control for 3V3/5V/12V external sensor power
-- Battery monitoring with Li-SOCI2 voltage curves
-- Comprehensive error handling for probe disconnection detection
-- Template v2.1.8 with robust pressure unit conversions
+### 2025-08-16: PS-LB v1.1.0 Complete Regeneration
+- Regenerated Dragino PS-LB driver from scratch using framework v2.1.10
+- Enhanced uplink coverage: all fport types with improved validation
+- Complete downlink command implementation with proper hex formatting
+- Improved pressure probe model conversion algorithms
+- Enhanced ROC (Report on Change) feature with proper flag handling
+- Optimized datalog parsing with Unix timestamp conversion
+- Better multi-collection mode support for voltage/current sampling
+- Advanced battery monitoring with trend analysis
+- Enhanced web UI with custom formatters and status indicators
+- Improved global node storage with persistence across reloads
+- Memory optimization for ESP32 constraints
+- Better error handling and validation throughout
+- Template v2.1.10 with "Lw" command prefix compliance
 
 ### 2025-08-16: LHT52 Temperature & Humidity Driver Addition
 - Added Dragino LHT52 temperature & humidity sensor driver
@@ -171,7 +204,7 @@ Each driver has been validated for:
 - Test command registration
 
 ---
-*Last Updated: 2025-08-16 - Added PS-LB pressure sensor with advanced probe detection*
+*Last Updated: 2025-08-16 - Added physical test status tracking and PS-LB pressure sensor*
 
 ---
 
