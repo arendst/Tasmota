@@ -1,5 +1,5 @@
 # Milesight WS52x Protocol MAP
-# Generated: 2025-01-17 | PDF Version: v1.1
+# Generated: 2025-08-16 | PDF Version: v1.1
 # Source: WS52x_LoRaWAN_Application_Guide.pdf
 
 device_info:
