@@ -12,6 +12,11 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 
 ## Driver Registry
 
+### Dragino
+| Model | Version | Date | Channels | Model Version | Prompt Ver | Description |
+|-------|---------|------|----------|---------------|------------|-------------|
+| D2x | 1.0.0 | 2025-08-16 | 15/15 | D20/D20S/D22/D23-LB/LS | v2.1.9 | Multi-probe temperature sensor series |
+
 ### Milesight
 | Model | Version | Date | Channels | Model Version | Prompt Ver | Description |
 |-------|---------|------|----------|---------------|------------|-------------|
@@ -25,11 +30,12 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 ## Coverage Statistics
 
 ### By Vendor
+- **Dragino**: 1 driver, 15 total channels
 - **Milesight**: 6 drivers, 113 total channels
 
 ### Total
-- **Drivers**: 6
-- **Channels**: 113
+- **Drivers**: 7
+- **Channels**: 128
 - **Coverage**: 100% (all documented channels implemented)
 
 ## Technical Standards
