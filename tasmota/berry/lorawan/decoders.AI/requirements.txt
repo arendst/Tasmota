@@ -1,0 +1,2 @@
+# Auto-Update Dependencies
+watchdog>=2.1.0
