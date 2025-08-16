@@ -13,24 +13,26 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 ## Driver Registry
 
 ### Dragino
-| Model | Version | Date | Channels | Test Status | Model Version | Prompt Ver | Description |
-|-------|---------|------|----------|-------------|---------------|------------|-------------|
-| D2x | 1.0.0 | 2025-08-16 | 15/15 | 🔲 None | D20/D20S/D22/D23-LB/LS | v2.1.9 | Multi-probe temperature sensor series |
-| DDS75-LB | 1.0.0 | 2025-08-16 | 8/8 | 🔲 None | DDS75-LB/LS | v2.1.8 | Ultrasonic distance detection sensor |
-| LDS02 | 1.0.0 | 2025-08-16 | 8/8 | 🔲 None | LDS02 | v2.1.8 | Magnetic door sensor with event counting |
-| LHT52 | 1.0.0 | 2025-08-16 | 16/16 | 🔲 None | LHT52 | v2.1.8 | Temperature & humidity sensor with datalog & alarm features |
-| LHT65 | 1.0.0 | 2025-08-16 | 18/18 | 🔲 None | LHT65 | v2.1.8 | Temperature & humidity sensor with 9 external sensor types |
-| PS-LB | 1.1.0 | 2025-08-16 | 13/13 | 🔲 None | PS-LB/LS | v2.1.10 | Pressure/water level sensor with probe detection |
+| Model | Version | Date | Channels | Test | | | Debug Mode | Model Version | Prompt Ver | Description |
+|-------|---------|------|----------|------|------|------|------------|---------------|------------|-------------|
+| | | | | Uplink | Downlink | Others | | | | |
+| D2x | 1.0.0 | 2025-08-16 | 15/15 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | D20/D20S/D22/D23-LB/LS | v2.1.9 | Multi-probe temperature sensor series |
+| DDS75-LB | 1.0.0 | 2025-08-16 | 8/8 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | DDS75-LB/LS | v2.1.8 | Ultrasonic distance detection sensor |
+| LDS02 | 1.0.0 | 2025-08-16 | 8/8 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | LDS02 | v2.1.8 | Magnetic door sensor with event counting |
+| LHT52 | 1.0.0 | 2025-08-16 | 16/16 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | LHT52 | v2.1.8 | Temperature & humidity sensor with datalog & alarm features |
+| LHT65 | 1.0.0 | 2025-08-16 | 18/18 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | LHT65 | v2.1.8 | Temperature & humidity sensor with 9 external sensor types |
+| PS-LB | 1.1.0 | 2025-08-16 | 13/13 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | PS-LB/LS | v2.1.10 | Pressure/water level sensor with probe detection |
 
 ### Milesight
-| Model | Version | Date | Channels | Test Status | Model Version | Prompt Ver | Description |
-|-------|---------|------|----------|-------------|---------------|------------|-------------|
-| AM300 | 1.1.0 | 2025-08-15 | 20/20 | 🔲 None | AM300(L) Series | v2.1.8 | 8-in-1 indoor air quality monitor |
-| WS101 | 1.0.0 | 2025-08-15 | 8/8 | 🏃 Running | WS101 | v2.1.8 | Smart button with multiple press types |
-| WS202 | 1.1.0 | 2025-08-15 | 9/9 | 🏃 Running | WS202 | v2.1.8 | PIR & Light sensor for motion and illuminance detection |
-| WS301 | 1.1.0 | 2025-08-15 | 10/10 | 🏃 Running | WS301 | v2.1.8 | Magnetic door/window sensor |
-| WS523 | 2.0.0 | 2025-08-15 | 33/33 | 🔲 None | WS523 | v2.1.8 | Portable smart socket with power monitoring |
-| WS52x | 1.1.0 | 2025-08-16 | 24/24 | 🏃 Running | WS52x Series | v2.1.10 | Smart socket series with comprehensive power monitoring |
+| Model | Version | Date | Channels | Test | | | Debug Mode | Model Version | Prompt Ver | Description |
+|-------|---------|------|----------|------|------|------|------------|---------------|------------|-------------|
+| | | | | Uplink | Downlink | Others | | | | |
+| AM300 | 1.1.0 | 2025-08-15 | 20/20 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | AM300(L) Series | v2.1.8 | 8-in-1 indoor air quality monitor |
+| WS101 | 1.0.0 | 2025-08-15 | 8/8 | 🏃 Running | 🔲 None | 🔲 None | 🟢 Active | WS101 | v2.1.8 | Smart button with multiple press types |
+| WS202 | 1.1.0 | 2025-08-15 | 9/9 | 🏃 Running | 🔲 None | 🔲 None | 🟢 Active | WS202 | v2.1.8 | PIR & Light sensor for motion and illuminance detection |
+| WS301 | 1.1.0 | 2025-08-15 | 10/10 | 🏃 Running | 🔲 None | 🔲 None | 🟢 Active | WS301 | v2.1.8 | Magnetic door/window sensor |
+| WS523 | 2.0.0 | 2025-08-15 | 33/33 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | WS523 | v2.1.8 | Portable smart socket with power monitoring |
+| WS52x | 1.1.0 | 2025-08-16 | 24/24 | 🏃 Running | 🔲 None | 🔲 None | 🟢 Active | WS52x Series | v2.1.10 | Smart socket series with comprehensive power monitoring |
 
 ## Coverage Statistics
 
@@ -43,37 +45,42 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 - **Channels**: 182
 - **Coverage**: 100% (all documented channels implemented)
 
-## Physical Test Statistics
+## Test Statistics
 
-### Test Status Summary
-- **🔲 None**: 8 drivers (67%)
-- **📋 Queued**: 0 drivers (0%)
-- **🏃 Running**: 4 drivers (33%)
-- **✅ Passed**: 0 drivers (0%)
-- **⚠️ Partial**: 0 drivers (0%)
-- **❌ Failed**: 0 drivers (0%)
-- **🔄 Retest**: 0 drivers (0%)
-- **🚫 Blocked**: 0 drivers (0%)
-- **📊 Analysis**: 0 drivers (0%)
-- **⏸️ Paused**: 0 drivers (0%)
+### Test Summary by Type
+- **Uplink Tests**: 
+  - 🔲 None: 8 drivers (67%)
+  - 🏃 Running: 4 drivers (33%)
+  - Others: 0 drivers (0%)
+- **Downlink Tests**:
+  - 🔲 None: 12 drivers (100%)
+  - Others: 0 drivers (0%)
+- **Other Tests**:
+  - 🔲 None: 12 drivers (100%)
+  - Others: 0 drivers (0%)
 
-### Test Progress
-- **Total Tested**: 4/12 drivers (33%)
-- **Successful**: 0/12 drivers (0%)
-- **Need Attention**: 0/12 drivers (0%)
-- **Untested**: 8/12 drivers (67%)
+### Debug Mode Summary
+- **🟢 Active**: 4 drivers (33%) - WS101, WS202, WS301, WS52x
+- **🔴 Inactive**: 8 drivers (67%) - All Dragino + AM300, WS523
 
 ### Test Status Legend
-- 🔲 **None** - No physical test planned or requested
-- 📋 **Queued** - Physical test scheduled but not started
-- 🏃 **Running** - Physical test currently in progress
-- ✅ **Passed** - Physical test completed successfully (all features work)
-- ⚠️ **Partial** - Physical test completed with some features working
-- ❌ **Failed** - Physical test completed with errors/failures
-- 🔄 **Retest** - Physical test needs to be repeated (issues found)
-- 🚫 **Blocked** - Physical test cannot proceed (hardware unavailable)
-- 📊 **Analysis** - Physical test completed, results under review
-- ⏸️ **Paused** - Physical test temporarily suspended
+- 🔲 **None** - No test planned or requested
+- 📋 **Queued** - Test scheduled but not started
+- 🏃 **Running** - Test currently in progress
+- ✅ **Passed** - Test completed successfully
+- ⚠️ **Partial** - Test completed with some features working
+- ❌ **Failed** - Test completed with errors/failures
+- 🔄 **Retest** - Test needs to be repeated
+- 🚫 **Blocked** - Test cannot proceed (hardware unavailable)
+- 📊 **Analysis** - Test completed, results under review
+- ⏸️ **Paused** - Test temporarily suspended
+
+### Debug Mode Legend
+- 🟢 **Active** - Driver actively being tested/debugged
+- 🔴 **Inactive** - Driver not currently in debug mode
+- 🟠 **Partial** - Driver partially working (some features fail)
+- 🔵 **Debug** - Driver under active debugging for issues
+- ⚪ **Blocked** - Debugging blocked (dependencies missing)
 
 ## Technical Standards
 
@@ -217,7 +224,7 @@ Each driver has been validated for:
 - Test command registration
 
 ---
-*Last Updated: 2025-08-16 - Added physical test status tracking and PS-LB pressure sensor*
+*Last Updated: 2025-08-16 - Restructured test tracking with dedicated uplink/downlink/others columns and debug mode status*
 
 ---
 
