@@ -28,6 +28,7 @@
 - Maintain full quality for code/artifacts
 - Auto-reload file changes when detected
 - Work silently
+- **Language**: English ONLY (all responses must be in English)
 
 ## Recent Activity
 - **Last Generated**: DDS75-LB v1.0.0 + LDS02 v1.0.0 (2025-08-16)
