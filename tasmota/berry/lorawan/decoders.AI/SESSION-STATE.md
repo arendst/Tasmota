@@ -31,7 +31,7 @@ C:\Project\tasmota\Tasmota\tasmota\berry\lorawan\decoders.AI
 ## Response Additions **FOR EVERY RESPONSE**
 - at the end of the process produce in sequence:
   1) if modified file > 0 then render git commands snippet by `Git Workflow`
-  2) detailed statistics about token used by this action
+  2) detailed statistics about token used by this action with the progressive totals 
 
 ## Session Override
 ```
@@ -63,6 +63,7 @@ git commit -m "(AI) [MODEL|MODULE] v1.0.0 (FW v2.1.12) <title>
 - **Dependencies**: ✅ All Core Documents Loaded
 - **Performance**: ✅ <3ms Average Decode Time
 - **Memory**: ✅ ESP32 Optimized (<600 bytes/decode)
+- **Tokens**: [token statistics with total usage counting]
 
 ## File Structure (Dynamic)
 ```
