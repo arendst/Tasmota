@@ -26,6 +26,11 @@ class LwSensorFormatter_cls
     self.msg_buffer.clear()
   end
 
+  def header(name, name_tooltip, battery, battery_last_seen, rssi, self.last_update)
+    self.msg_buffer .. lwdecode.header(name, name_tooltip, battery, battery_last_seen, rssi, self.last_update)
+    return self
+  end
+
   def start_line()
     self.msg_buffer .. "<tr class='htr'><td colspan='4'>&#9478;"
     return self
