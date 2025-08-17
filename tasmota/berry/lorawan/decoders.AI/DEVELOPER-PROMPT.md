@@ -1,5 +1,5 @@
 # LoRaWAN Decoder AI Generation Template
-## Version: 2.1.12 | Framework: LwDecode | Platform: Tasmota Berry
+## Version: 2.1.13 | Framework: LwDecode | Platform: Tasmota Berry
 
 ---
 
@@ -313,8 +313,10 @@ class LwDecode_[MODEL]
             return data
             
         except .. as e, m
-            lwdecode.log_error("DECODE_[MODEL]", e, m, 
-                format("Device:%s, Node:%s, FPort:%d, PayloadSize:%d", name, node, fport, size(payload)))
+            if self.debug_mode
+                print(f"[MODEL]: Exception in decode - {e}: {m}")
+            end
+            print(f"[MODEL]: Decode error - {e}: {m}")
             return nil
         end
     end
@@ -349,9 +351,8 @@ class LwDecode_[MODEL]
         var battery_last_seen = last_update
         var rssi = data_to_show.find('rssi', 1000)  # Use 1000 if no RSSI
         
-        msg += lwdecode.header(name, name_tooltip, battery, battery_last_seen, rssi, last_update)
-        
         # Build display using emoji formatter
+        fmt.header(name, name_tooltip, battery, battery_last_seen, rssi, last_update)
         fmt.start_line()
         [DISPLAY_LOGIC]
         fmt.end_line()
@@ -486,7 +487,7 @@ class LwDecode_[MODEL]
         
         # Example: Complex multi-field payload
         if cmd_type == "complex_config"
-            # Build using framework helpers when available:
+            # Build using framework helpers when available or add it to the framework before use it, if justified for some reason
             # lwdecode.uint16le(value) - 16-bit little endian
             # lwdecode.uint32le(value) - 32-bit little endian
             # lwdecode.uint16be(value) - 16-bit big endian
@@ -536,8 +537,8 @@ tasmota.add_cmd("Lw[MODEL]TestPayload", def(cmd, idx, payload_str)
     var test_payload = bytes(hex_payload)
     
     # Use slot number for device name, but test node ID for protocol
-    var device_name = format("[MODEL]-slot%d", idx)
-    var node_id = format("test_%d", idx)  # Use slot-based node ID for testing
+    var device_name = format("[MODEL]-%d", idx)
+    var node_id = idx
     
     var result = LwDeco.decodeUplink(device_name, node_id, rssi, fport, test_payload)
     
@@ -570,6 +571,9 @@ tasmota.add_cmd("Lw[MODEL]ClearNode", def(cmd, idx, node_id)
     end
 end)
 
+# MANDATORY: Register driver for web UI integration
+tasmota.add_driver(LwDeco)
+
 # Debug version - TestReal command for UI testing without hardware
 # ONLY INCLUDE THIS SECTION WHEN DEBUG VERSION IS REQUESTED
 # Command usage: Lw[MODEL]TestReal<slot> <scenario>
@@ -598,8 +602,8 @@ tasmota.add_cmd("Lw[MODEL]TestReal", def(cmd, idx, payload_str)
     end
     
     var test_payload = bytes(hex_payload)
-    var device_name = format("[MODEL]-slot%d", idx)
-    var node_id = format("test_%d", idx)
+    var device_name = format("[MODEL]-%d", idx)
+    var node_id = idx
     
     var result = LwDeco.decodeUplink(device_name, node_id, -75, [DEFAULT_PORT], test_payload)
     
@@ -727,7 +731,11 @@ var bit1 = (flags & 0x02) != 0
 var bits_4_7 = (flags >> 4) & 0x0F
 
 # Float conversion (IEEE 754)
-# Use framework helper if available or implement inline
+
+# Framework Helper Functions
+- use it if avaiable
+- consider to add directly to the framework if can be reused
+- otherwise implement inline
 ```
 
 ### Channel Type Handling
@@ -814,8 +822,8 @@ def add_web_sensor()
     var rssi = self.last_data.find('rssi', 1000)
     
     # Add header (REQUIRED FOR ALL DRIVERS)
-    msg += lwdecode.header(name, name_tooltip, battery, battery_last_seen, rssi, self.last_update)
-    
+    fmt.header(name, name_tooltip, battery, battery_last_seen, rssi, self.last_update)
+
     # Then add sensor lines
     fmt.start_line()
     # ... sensor display logic
@@ -835,7 +843,7 @@ def add_web_sensor()
     var fmt = LwSensorFormatter_cls()
     
     # MANDATORY: Add header first
-    msg = lwdecode.header(name, tooltip, battery, battery_ls, rssi, last_seen)
+    fmt.header(name, tooltip, battery, battery_ls, rssi, last_seen)
     
     # Single line format (preferred) - NO CHAINING
     fmt.start_line()
@@ -901,7 +909,21 @@ LwSensorFormatter_cls.Formatter["battery"] = {"u": "%", "f": " %d", "i": "🔋"}
 # - Consider backwards compatibility with existing drivers
 ```
 
-### ⚠️ CRITICAL: Formatter Chain Usage
+### ⚠️ CRITICAL: String Concatenation Safety
+
+The LwSensorFormatter_cls can return `nil` from `get_msg()`. Always check before concatenation:
+
+```berry
+# ❌ WRONG - Can cause type_error
+var age_msg = fmt.get_msg()
+msg = msg + age_msg  # Error if age_msg is nil
+
+# ✅ CORRECT - Safe concatenation
+var age_msg = fmt.get_msg()
+if age_msg != nil && age_msg != ""
+    msg = msg + age_msg
+end
+```
 
 The LwSensorFormatter_cls uses method chaining. NEVER concatenate with += operator during chain building:
 
@@ -941,7 +963,7 @@ msg = msg + fmt.get_msg()  # Use explicit concatenation, not +=
 4. **Get string at end** - Only call `get_msg()` after all formatting
 5. **Test for nil** - Always check if msg is nil before concatenation
 6. **Use next_line()** - Prefer `fmt.next_line()` over `fmt.end_line()` + `fmt.start_line()` for multi-line display
-7. **Header is mandatory** - Always call `lwdecode.header()` before sensor lines
+7. **Header is mandatory** - Always call `fmt.header()` before sensor lines
 
 ### Emoji Selection Rules
 ```yaml
@@ -1601,6 +1623,8 @@ end
 18. **Formatter chain errors**: Never use += with formatter chains, only with get_msg() result
 19. **🚨 F-string syntax errors**: Extract ternary operators before f-string interpolation
 20. **🚨 Filesystem violations**: No subdirectories on ESP32 - use flat naming convention
+21. **🚨 String concatenation with nil**: Always check `if msg != nil && msg != ""` before concatenation
+22. **🚨 Missing driver registration**: Always add `tasmota.add_driver(LwDeco)` at file end
 
 ---
 
