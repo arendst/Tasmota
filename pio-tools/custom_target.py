@@ -377,8 +377,8 @@ env.AddCustomTarget(
     actions=[
         reset_target
     ],
-    title="Reset ESP32 target",
-    description="This command resets ESP32x target via esptool",
+    title="Reset connected device",
+    description="This command resets the connected device via esptool",
 )
 
 env.AddCustomTarget(
