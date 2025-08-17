@@ -21,13 +21,13 @@ import subprocess
 import shutil
 import json
 from colorama import Fore, Back, Style
+from platformio.compat import IS_WINDOWS
 from platformio.project.config import ProjectConfig
 
 Import("env")
-platform = env.PioPlatform()
+platform = env["PIOPLATFORM"]
 board = env.BoardConfig()
-mcu = board.get("build.mcu", "esp32")
-IS_WINDOWS = sys.platform.startswith("win")
+mcu = board.get("build.mcu", "esp32").lower()
 
 class FSType(Enum):
     LITTLEFS="littlefs"
@@ -185,7 +185,8 @@ def get_partition_table():
             "0x1000",
             fs_file
     ]
-    esptool_cmd = [env["PYTHONEXE"], env.subst("$OBJCOPY")] + esptool_flags
+    ESPTOOL_EXE = env.get("ERASETOOL") if platform == "espressif8266" else env.get("OBJCOPY")
+    esptool_cmd = [ESPTOOL_EXE] + esptool_flags
     try:
         returncode = subprocess.call(esptool_cmd, shell=False)
     except subprocess.CalledProcessError as exc:
@@ -195,7 +196,6 @@ def get_partition_table():
         parse_partition_table(content)
 
 def get_fs_type_start_and_length():
-    platform = env["PIOPLATFORM"]
     if platform == "espressif32":
         print(f"Retrieving filesystem info for {mcu}.")
         get_partition_table()
@@ -238,7 +238,8 @@ def download_fs(fs_info: FSInfo):
             hex(fs_info.length),
             fs_file
     ]
-    esptool_cmd = [env["PYTHONEXE"], env.subst("$OBJCOPY")] + esptool_flags
+    ESPTOOL_EXE = env.get("ERASETOOL") if platform == "espressif8266" else env.get("OBJCOPY")
+    esptool_cmd = [ESPTOOL_EXE] + esptool_flags
     print("Download filesystem image")
     try:
         returncode = subprocess.call(esptool_cmd, shell=False)
@@ -303,7 +304,8 @@ def upload_factory(*args, **kwargs):
                 "0x0",
                 target_firm
         ]
-        esptool_cmd = [env["PYTHONEXE"], env.subst("$OBJCOPY")] + esptool_flags
+        ESPTOOL_EXE = env.get("ERASETOOL") if platform == "espressif8266" else env.get("OBJCOPY")
+        esptool_cmd = [ESPTOOL_EXE] + esptool_flags
         print("Flash firmware at address 0x0")
         subprocess.call(esptool_cmd, shell=False)
 
@@ -363,7 +365,8 @@ def reset_target(*args, **kwargs):
         "--port", upload_port,
         "flash-id"
     ]
-    esptool_cmd = [env["PYTHONEXE"], env.subst("$OBJCOPY")] + esptool_flags
+    ESPTOOL_EXE = env.get("ERASETOOL") if platform == "espressif8266" else env.get("OBJCOPY")
+    esptool_cmd = [ESPTOOL_EXE] + esptool_flags
     print("Try to reset device")
     subprocess.call(esptool_cmd, shell=False)
 
