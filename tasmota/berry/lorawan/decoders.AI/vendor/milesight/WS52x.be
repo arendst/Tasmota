@@ -1,37 +1,32 @@
-# -------------------------------------------------------------
-# Originally Prompted by: ZioFabry
 #
 # LoRaWAN AI-Generated Decoder for Milesight WS52x
 #
-# Generated: 2025-08-16 | Version: 1.0.0 | Revision: 1
-#            by "LoRaWAN Decoder AI Generation Template", v2.1.10
+# Generated: 2025-08-20 | Version: 1.4.0 | Revision: 0
+#            by "LoRaWAN Decoder AI Generation Template", v2.2.6
 #
-# Official Links
-# - Homepage:  https://www.milesight.com/iot/product/lorawan-sensor/ws52x
-# - Userguide: https://www.milesight.com/iot/product/lorawan-sensor/ws52x
-# - Decoder:   https://github.com/Milesight-IoT/SensorDecoders
-# -------------------------------------------------------------
-# CHANGELOG
-# v1.0.0 (2025-08-16): Initial generation from PDF specification with debug capabilities
-# -------------------------------------------------------------
+# Homepage:  https://www.milesight.com/iot/product/lorawan-sensor/ws52x
+# Userguide: WS52x LoRaWAN Application Guide v1.1
+# Decoder:   Official Milesight Decoder v1.0.3
+# 
+# v1.4.0 (2025-08-20): Framework v2.2.6 regeneration with enhanced error handling
+# v1.3.0 (2025-08-19): Framework v2.2.1 debug version generation
+# v1.2.0 (2025-08-17): Framework v2.1.13 regeneration
+# v1.1.0 (2025-08-16): Framework v2.1.10 regeneration
+# v1.0.0 (2025-08-15): Initial generation from PDF specification
 
 class LwDecode_WS52x
-    var hashCheck       # Duplicate payload detection flag (true = skip duplicates)
-    var crcCheck        # CRC validation flag (if required by specs)
+    var hashCheck      # Duplicate payload detection flag (true = skip duplicates)
     var name           # Device name from LoRaWAN
     var node           # Node identifier
     var last_data      # Cached decoded data
     var last_update    # Timestamp of last update
-    var debug_mode     # Debug mode for enhanced logging
-    
+
     def init()
         self.hashCheck = true   # Enable duplicate detection by default
-        self.crcCheck = false   # WS52x doesn't require CRC validation per spec
         self.name = nil
         self.node = nil
         self.last_data = {}
         self.last_update = 0
-        self.debug_mode = true  # Enable debug for development
         
         # Initialize global node storage (survives decoder reload)
         import global
@@ -41,28 +36,15 @@ class LwDecode_WS52x
         if !global.contains("WS52x_cmdInit")
             global.WS52x_cmdInit = false
         end
-        
-        # Add custom formatters for WS52x-specific measurements
-        LwSensorFormatter_cls.Formatter["power"] = {"u": "W", "f": " %d", "i": "⚡"}
-        LwSensorFormatter_cls.Formatter["power_factor"] = {"u": "%", "f": " %d", "i": "📊"}
-        LwSensorFormatter_cls.Formatter["energy"] = {"u": "Wh", "f": " %d", "i": "🔋"}
-        LwSensorFormatter_cls.Formatter["current"] = {"u": "mA", "f": " %d", "i": "🔌"}
-        LwSensorFormatter_cls.Formatter["voltage"] = {"u": "V", "f": " %.1f", "i": "⚡"}
-        LwSensorFormatter_cls.Formatter["socket"] = {"u": "", "f": " %s", "i": "🔌"}
-        
-        if self.debug_mode
-            print("WS52x: Decoder initialized with debug mode enabled")
-        end
     end
     
-    def decodeUplink(name, node, rssi, fport, payload)
+    def decodeUplink(name, node, rssi, fport, payload, simulated)
         import string
         import global
         var data = {}
         
         # Validate inputs
         if payload == nil || size(payload) < 1
-            if self.debug_mode print("WS52x: Invalid payload") end
             return nil
         end
         
@@ -72,22 +54,151 @@ class LwDecode_WS52x
             self.node = node
             data['rssi'] = rssi
             data['fport'] = fport
-            
-            if self.debug_mode
-                print(f"WS52x: Decoding node={node}, fport={fport}, size={size(payload)}")
-                print(f"WS52x: Payload hex: {payload.tohex()}")
-            end
+            data['simulated'] = simulated
             
             # Retrieve node history from global storage
             var node_data = global.WS52x_nodes.find(node, {})
             
-            # WS52x uses port 85 for all data
+            # Decode based on fport 85 (standard WS52x data port)
             if fport == 85
-                self.decode_data_payload(payload, data)
-            else
-                if self.debug_mode print(f"WS52x: Unknown fport {fport}") end
-                data['unknown_port'] = fport
-                data['raw_payload'] = payload.tohex()
+                var i = 0
+                while i < size(payload)
+                    var channel_id = payload[i]
+                    var channel_type = payload[i+1]
+                    i += 2
+                    
+                    # Power monitoring channels
+                    if channel_id == 0x03 && channel_type == 0x74  # Voltage
+                        var voltage = ((payload[i+1] << 8) | payload[i]) / 10.0
+                        data['voltage'] = voltage
+                        i += 2
+                        
+                    elif channel_id == 0x04 && channel_type == 0x80  # Active Power (signed)
+                        var power = (payload[i+3] << 24) | (payload[i+2] << 16) | (payload[i+1] << 8) | payload[i]
+                        if power > 2147483647  # Convert to signed 32-bit
+                            power = power - 4294967296
+                        end
+                        data['active_power'] = power
+                        i += 4
+                        
+                    elif channel_id == 0x05 && channel_type == 0x81  # Power Factor
+                        data['power_factor'] = payload[i]
+                        i += 1
+                        
+                    elif channel_id == 0x06 && channel_type == 0x83  # Energy
+                        var energy = (payload[i+3] << 24) | (payload[i+2] << 16) | (payload[i+1] << 8) | payload[i]
+                        data['energy_wh'] = energy
+                        i += 4
+                        
+                    elif channel_id == 0x07 && channel_type == 0xC9  # Current
+                        var current = (payload[i+1] << 8) | payload[i]
+                        data['current'] = current
+                        i += 2
+                        
+                    elif channel_id == 0x08 && channel_type == 0x70  # Socket State
+                        data['socket_state'] = (payload[i] == 0x01) ? "ON" : "OFF"
+                        data['socket_on'] = (payload[i] == 0x01)
+                        i += 1
+                        
+                    # Device information channels
+                    elif channel_id == 0xFF && channel_type == 0x01  # Protocol Version
+                        data['protocol_version'] = payload[i]
+                        i += 1
+                        
+                    elif channel_id == 0xFF && channel_type == 0x09  # Hardware Version
+                        data['hw_version'] = f"{payload[i]}.{payload[i+1]}"
+                        i += 2
+                        
+                    elif channel_id == 0xFF && channel_type == 0x0A  # Software Version
+                        data['sw_version'] = f"{payload[i]}.{payload[i+1]}"
+                        i += 2
+                        
+                    elif channel_id == 0xFF && channel_type == 0x0B  # Power On Event
+                        data['power_on_event'] = true
+                        i += 1
+                        
+                    elif channel_id == 0xFF && channel_type == 0x0F  # Device Class
+                        var classes = ["Class A", "Class B", "Class C"]
+                        data['device_class'] = payload[i] < size(classes) ? classes[payload[i]] : f"Unknown({payload[i]})"
+                        i += 1
+                        
+                    elif channel_id == 0xFF && channel_type == 0x16  # Serial Number
+                        var serial = ""
+                        for j: 0..7
+                            serial += f"{payload[i+j]:02X}"
+                        end
+                        data['serial_number'] = serial
+                        i += 8
+                        
+                    elif channel_id == 0xFF && channel_type == 0x24  # OC Alarm Config
+                        data['oc_alarm_enabled'] = (payload[i] == 0x01)
+                        data['oc_alarm_threshold'] = payload[i+1]
+                        i += 2
+                        
+                    elif channel_id == 0xFF && channel_type == 0x25  # Button Lock Config
+                        var lock_value = (payload[i+1] << 8) | payload[i]
+                        data['button_locked'] = (lock_value == 0x8000)
+                        i += 2
+                        
+                    elif channel_id == 0xFF && channel_type == 0x26  # Power Recording Config
+                        data['power_recording'] = (payload[i] == 0x01)
+                        i += 1
+                        
+                    elif channel_id == 0xFF && channel_type == 0x2F  # LED Config
+                        data['led_enabled'] = (payload[i] == 0x01)
+                        i += 1
+                        
+                    elif channel_id == 0xFF && channel_type == 0x30  # OC Protection Config
+                        data['oc_protection_enabled'] = (payload[i] == 0x01)
+                        data['oc_protection_threshold'] = payload[i+1]
+                        i += 2
+                        
+                    elif channel_id == 0xFF && channel_type == 0x3F  # Power Outage Event
+                        data['power_outage_event'] = true
+                        i += 1
+                        
+                    elif channel_id == 0xFF && channel_type == 0xFE  # Reset Event
+                        var reset_types = ["POR", "BOR", "WDT", "CMD"]
+                        data['device_reset'] = true
+                        data['reset_type'] = payload[i] < size(reset_types) ? reset_types[payload[i]] : f"Unknown({payload[i]})"
+                        i += 1
+                        
+                    elif channel_id == 0xFF && channel_type == 0xFF  # TSL Version
+                        data['tsl_version'] = f"{payload[i]}.{payload[i+1]}"
+                        i += 2
+                        
+                    # Configuration channels
+                    elif channel_id == 0xFE && channel_type == 0x02  # Reporting Interval
+                        var interval = (payload[i+1] << 8) | payload[i]
+                        data['report_interval_min'] = interval
+                        i += 2
+                        
+                    # Acknowledgment channels
+                    elif channel_id == 0xFE && channel_type == 0x03  # Interval ACK
+                        var ack_interval = (payload[i+1] << 8) | payload[i]
+                        data['interval_ack'] = ack_interval
+                        i += 2
+                        
+                    elif channel_id == 0xFE && channel_type == 0x10  # Reboot ACK
+                        data['reboot_ack'] = true
+                        i += 1
+                        
+                    elif channel_id == 0xFE && channel_type == 0x22  # Delay Task ACK
+                        var task_seconds = (payload[i+3] << 24) | (payload[i+2] << 16) | (payload[i+1] << 8) | payload[i]
+                        data['delay_task_ack'] = task_seconds
+                        i += 4
+                        
+                    elif channel_id == 0xFE && channel_type == 0x23  # Delete Task ACK
+                        var task_number = (payload[i+1] << 8) | payload[i]
+                        data['delete_task_ack'] = task_number
+                        i += 2
+                        
+                    else
+                        # Unknown channel - log and try to continue
+                        print(f"WS52x: Unknown channel ID={channel_id:02X} Type={channel_type:02X}")
+                        break
+                    end
+                end
             end
             
             # Update node history in global storage
@@ -95,21 +206,33 @@ class LwDecode_WS52x
             node_data['last_update'] = tasmota.rtc()['local']
             node_data['name'] = name
             
-            # Track reset events
-            if data.contains('reset_event') && data['reset_event']
+            # Track energy consumption history
+            if data.contains('energy_wh')
+                if !node_data.contains('energy_history')
+                    node_data['energy_history'] = []
+                end
+                node_data['energy_history'].push(data['energy_wh'])
+                if size(node_data['energy_history']) > 10
+                    node_data['energy_history'].pop(0)
+                end
+            end
+            
+            # Track socket state changes
+            if data.contains('socket_on')
+                var prev_state = node_data.find('last_socket_state', nil)
+                if prev_state != nil && prev_state != data['socket_on']
+                    node_data['socket_changes'] = node_data.find('socket_changes', 0) + 1
+                end
+                node_data['last_socket_state'] = data['socket_on']
+            end
+            
+            # Store reset count if detected
+            if data.contains('device_reset') && data['device_reset']
                 node_data['reset_count'] = node_data.find('reset_count', 0) + 1
                 node_data['last_reset'] = tasmota.rtc()['local']
-                if self.debug_mode print(f"WS52x: Reset event detected, count={node_data['reset_count']}") end
             end
             
-            # Track power outage events
-            if data.contains('power_outage_event') && data['power_outage_event']
-                node_data['power_outage_count'] = node_data.find('power_outage_count', 0) + 1
-                node_data['last_power_outage'] = tasmota.rtc()['local']
-                if self.debug_mode print(f"WS52x: Power outage event detected") end
-            end
-            
-            # Register downlink commands if not done yet
+            # Initialize downlink commands once
             if !global.contains("WS52x_cmdInit") || !global.WS52x_cmdInit
                 self.register_downlink_commands()
                 global.WS52x_cmdInit = true
@@ -122,278 +245,12 @@ class LwDecode_WS52x
             self.last_data = data
             self.last_update = node_data['last_update']
             
-            if self.debug_mode
-                print(f"WS52x: Decoded successfully, channels: {size(data)}")
-            end
-            
             return data
             
         except .. as e, m
-            lwdecode.log_error("DECODE_WS52x", e, m, 
-                format("Device:%s, Node:%s, FPort:%d, PayloadSize:%d", name, node, fport, size(payload)))
+            print(f"WS52x: Decode error - {e}: {m}")
             return nil
         end
-    end
-    
-    def decode_data_payload(payload, data)
-        var i = 0
-        var channels_decoded = 0
-        
-        while i < size(payload)
-            if i + 1 >= size(payload) break end
-            
-            var channel_id = payload[i]
-            var channel_type = payload[i+1]
-            i += 2
-            channels_decoded += 1
-            
-            if self.debug_mode
-                print(f"WS52x: Channel {channels_decoded}: ID=0x{channel_id:02X} Type=0x{channel_type:02X}")
-            end
-            
-            # Voltage (Channel 0x03, Type 0x74)
-            if channel_id == 0x03 && channel_type == 0x74
-                if i + 1 >= size(payload) break end
-                var voltage = (payload[i] | (payload[i+1] << 8)) / 10.0
-                data['voltage'] = voltage
-                i += 2
-                if self.debug_mode print(f"WS52x: Voltage = {voltage}V") end
-                
-            # Active Power (Channel 0x04, Type 0x80)
-            elif channel_id == 0x04 && channel_type == 0x80
-                if i + 3 >= size(payload) break end
-                var power = payload[i] | (payload[i+1] << 8) | (payload[i+2] << 16) | (payload[i+3] << 24)
-                # Convert from unsigned to signed 32-bit
-                if power > 2147483647
-                    power = power - 4294967296
-                end
-                data['active_power'] = power
-                i += 4
-                if self.debug_mode print(f"WS52x: Active Power = {power}W") end
-                
-            # Power Factor (Channel 0x05, Type 0x81)
-            elif channel_id == 0x05 && channel_type == 0x81
-                if i >= size(payload) break end
-                var power_factor = payload[i]
-                data['power_factor'] = power_factor
-                i += 1
-                if self.debug_mode print(f"WS52x: Power Factor = {power_factor}%") end
-                
-            # Energy (Channel 0x06, Type 0x83)
-            elif channel_id == 0x06 && channel_type == 0x83
-                if i + 3 >= size(payload) break end
-                var energy = payload[i] | (payload[i+1] << 8) | (payload[i+2] << 16) | (payload[i+3] << 24)
-                data['energy'] = energy
-                i += 4
-                if self.debug_mode print(f"WS52x: Energy = {energy}Wh") end
-                
-            # Current (Channel 0x07, Type 0xC9)
-            elif channel_id == 0x07 && channel_type == 0xC9
-                if i + 1 >= size(payload) break end
-                var current = payload[i] | (payload[i+1] << 8)
-                data['current'] = current
-                i += 2
-                if self.debug_mode print(f"WS52x: Current = {current}mA") end
-                
-            # Socket State (Channel 0x08, Type 0x70)
-            elif channel_id == 0x08 && channel_type == 0x70
-                if i >= size(payload) break end
-                var socket_state = payload[i]
-                data['socket_state'] = socket_state
-                data['socket_state_text'] = socket_state == 0x01 ? "ON" : "OFF"
-                i += 1
-                if self.debug_mode print(f"WS52x: Socket State = {data['socket_state_text']}") end
-                
-            # Device Information and Configuration Channels (0xFF prefix)
-            elif channel_id == 0xFF
-                i = self.decode_device_info_channel(payload, i-1, data, channel_type)
-                
-            # Reporting and ACK Channels (0xFE prefix)
-            elif channel_id == 0xFE
-                i = self.decode_reporting_channel(payload, i-1, data, channel_type)
-                
-            else
-                # Unknown channel - log and try to skip
-                if self.debug_mode 
-                    print(f"WS52x: Unknown channel ID=0x{channel_id:02X} Type=0x{channel_type:02X}")
-                end
-                data[f'unknown_ch_{channel_id:02X}_{channel_type:02X}'] = "present"
-                # Try to continue - this is risky but better than failing
-                i += 1  # Skip one byte and hope for the best
-            end
-        end
-        
-        if self.debug_mode
-            print(f"WS52x: Decoded {channels_decoded} channels total")
-        end
-    end
-    
-    def decode_device_info_channel(payload, start_idx, data, channel_type)
-        var i = start_idx + 2  # Skip channel_id and channel_type
-        
-        if channel_type == 0x01  # Protocol Version
-            if i < size(payload)
-                data['protocol_version'] = payload[i]
-                i += 1
-                if self.debug_mode print(f"WS52x: Protocol Version = {data['protocol_version']}") end
-            end
-            
-        elif channel_type == 0x09  # Hardware Version
-            if i + 1 < size(payload)
-                data['hw_version'] = f"{payload[i]}.{payload[i+1]}"
-                i += 2
-                if self.debug_mode print(f"WS52x: HW Version = {data['hw_version']}") end
-            end
-            
-        elif channel_type == 0x0A  # Software Version
-            if i + 1 < size(payload)
-                data['sw_version'] = f"{payload[i]}.{payload[i+1]}"
-                i += 2
-                if self.debug_mode print(f"WS52x: SW Version = {data['sw_version']}") end
-            end
-            
-        elif channel_type == 0x0B  # Power On Event
-            data['power_on_event'] = true
-            if self.debug_mode print("WS52x: Power On Event detected") end
-            
-        elif channel_type == 0x0F  # Device Class
-            if i < size(payload)
-                var dev_class = payload[i]
-                data['device_class_code'] = dev_class
-                data['device_class'] = dev_class == 0x00 ? "Class A" : (dev_class == 0x01 ? "Class B" : "Class C")
-                i += 1
-                if self.debug_mode print(f"WS52x: Device Class = {data['device_class']}") end
-            end
-            
-        elif channel_type == 0x16  # Serial Number
-            if i + 7 < size(payload)
-                var serial = ""
-                for j: 0..7
-                    serial += f"{payload[i+j]:02X}"
-                end
-                data['serial_number'] = serial
-                i += 8
-                if self.debug_mode print(f"WS52x: Serial Number = {serial}") end
-            end
-            
-        elif channel_type == 0x24  # OC Alarm Config
-            if i + 1 < size(payload)
-                var enabled = payload[i]
-                var threshold = payload[i+1]
-                data['oc_alarm_enabled'] = enabled == 0x01
-                data['oc_alarm_threshold'] = threshold
-                i += 2
-                if self.debug_mode print(f"WS52x: OC Alarm = {data['oc_alarm_enabled']}, Threshold = {threshold}A") end
-            end
-            
-        elif channel_type == 0x25  # Button Lock Config
-            if i + 1 < size(payload)
-                var lock_state = (payload[i+1] << 8) | payload[i]
-                data['button_locked'] = lock_state == 0x0080
-                i += 2
-                if self.debug_mode print(f"WS52x: Button Locked = {data['button_locked']}") end
-            end
-            
-        elif channel_type == 0x26  # Power Recording Config
-            if i < size(payload)
-                data['power_recording_enabled'] = payload[i] == 0x01
-                i += 1
-                if self.debug_mode print(f"WS52x: Power Recording = {data['power_recording_enabled']}") end
-            end
-            
-        elif channel_type == 0x2F  # LED Config
-            if i < size(payload)
-                data['led_enabled'] = payload[i] == 0x01
-                i += 1
-                if self.debug_mode print(f"WS52x: LED Enabled = {data['led_enabled']}") end
-            end
-            
-        elif channel_type == 0x30  # OC Protection Config
-            if i + 1 < size(payload)
-                var enabled = payload[i]
-                var threshold = payload[i+1]
-                data['oc_protection_enabled'] = enabled == 0x01
-                data['oc_protection_threshold'] = threshold
-                i += 2
-                if self.debug_mode print(f"WS52x: OC Protection = {data['oc_protection_enabled']}, Threshold = {threshold}A") end
-            end
-            
-        elif channel_type == 0x3F  # Power Outage Event
-            data['power_outage_event'] = true
-            if self.debug_mode print("WS52x: Power Outage Event detected") end
-            
-        elif channel_type == 0xFE  # Reset Event
-            if i < size(payload)
-                var reset_reason = payload[i]
-                data['reset_event'] = true
-                var reset_reasons = {0x00: "POR", 0x01: "BOR", 0x02: "WDT", 0x03: "CMD"}
-                data['reset_reason'] = reset_reasons.find(reset_reason, f"Unknown({reset_reason})")
-                i += 1
-                if self.debug_mode print(f"WS52x: Reset Event = {data['reset_reason']}") end
-            end
-            
-        elif channel_type == 0xFF  # TSL Version
-            if i + 1 < size(payload)
-                data['tsl_version'] = f"{payload[i]}.{payload[i+1]}"
-                i += 2
-                if self.debug_mode print(f"WS52x: TSL Version = {data['tsl_version']}") end
-            end
-            
-        else
-            if self.debug_mode print(f"WS52x: Unknown device info type 0x{channel_type:02X}") end
-            # Skip 1 byte for unknown types
-            i += 1
-        end
-        
-        return i
-    end
-    
-    def decode_reporting_channel(payload, start_idx, data, channel_type)
-        var i = start_idx + 2  # Skip channel_id and channel_type
-        
-        if channel_type == 0x02  # Reporting Interval
-            if i + 1 < size(payload)
-                var interval = (payload[i+1] << 8) | payload[i]
-                data['reporting_interval'] = interval
-                i += 2
-                if self.debug_mode print(f"WS52x: Reporting Interval = {interval} minutes") end
-            end
-            
-        elif channel_type == 0x03  # Interval ACK
-            if i + 1 < size(payload)
-                var interval = (payload[i+1] << 8) | payload[i]
-                data['interval_ack'] = interval
-                i += 2
-                if self.debug_mode print(f"WS52x: Interval ACK = {interval} minutes") end
-            end
-            
-        elif channel_type == 0x10  # Reboot ACK
-            data['reboot_ack'] = true
-            if self.debug_mode print("WS52x: Reboot ACK received") end
-            
-        elif channel_type == 0x22  # Delay Task ACK
-            if i + 3 < size(payload)
-                var seconds = (payload[i+3] << 24) | (payload[i+2] << 16) | (payload[i+1] << 8) | payload[i]
-                data['delay_task_ack'] = seconds
-                i += 4
-                if self.debug_mode print(f"WS52x: Delay Task ACK = {seconds} seconds") end
-            end
-            
-        elif channel_type == 0x23  # Delete Task ACK
-            if i + 1 < size(payload)
-                var task_number = (payload[i+1] << 8) | payload[i]
-                data['delete_task_ack'] = task_number
-                i += 2
-                if self.debug_mode print(f"WS52x: Delete Task ACK = {task_number}") end
-            end
-            
-        else
-            if self.debug_mode print(f"WS52x: Unknown reporting type 0x{channel_type:02X}") end
-            # Skip 1 byte for unknown types
-            i += 1
-        end
-        
-        return i
     end
     
     def add_web_sensor()
@@ -422,77 +279,104 @@ class LwDecode_WS52x
             name = f"WS52x-{self.node}"
         end
         var name_tooltip = "Milesight WS52x Smart Power Socket"
-        var battery = 1000  # No battery - hide battery indicator
-        var battery_last_seen = 0
-        var rssi = data_to_show.find('rssi', 1000)  # Use 1000 to hide if no RSSI
-        
-        msg += lwdecode.header(name, name_tooltip, battery, battery_last_seen, rssi, last_update)
+        var battery = 1000  # Use 1000 if no battery (mains powered)
+        var battery_last_seen = last_update
+        var rssi = data_to_show.find('rssi', 1000)  # Use 1000 if no RSSI
+        var simulated = data_to_show.find('simulated', false) # Simulated payload indicator
         
         # Build display using emoji formatter
+        fmt.header(name, name_tooltip, battery, battery_last_seen, rssi, last_update, simulated)
         fmt.start_line()
         
-        # Socket state (most important - show first)
-        if data_to_show.contains('socket_state_text')
-            var socket_status = data_to_show['socket_state_text']
-            var socket_emoji = socket_status == "ON" ? "🟢" : "🔴"
-            fmt.add_sensor("socket", socket_status, "Socket", socket_emoji)
+        # Socket state with voltage
+        var socket_state = data_to_show.find('socket_on')
+        if socket_state != nil
+            if socket_state
+                fmt.add_status("ON", "🟢", "Socket is ON")
+            else
+                fmt.add_status("OFF", "🔴", "Socket is OFF")
+            end
         end
         
-        # Power measurements
-        if data_to_show.contains('active_power')
-            fmt.add_sensor("power", data_to_show['active_power'], "Power", "⚡")
-        end
-        
+        # Voltage
         if data_to_show.contains('voltage')
-            fmt.add_sensor("voltage", data_to_show['voltage'], "Voltage", "⚡")
+            fmt.add_sensor("volt", data_to_show['voltage'], "Voltage", "⚡")
         end
         
+        # Current
         if data_to_show.contains('current')
-            fmt.add_sensor("current", data_to_show['current'], "Current", "🔌")
+            fmt.add_sensor("milliamp", data_to_show['current'], "Current", "🔌")
         end
         
-        # Continue to next line for secondary measurements
-        fmt.next_line()
-        
-        if data_to_show.contains('energy')
-            fmt.add_sensor("energy", data_to_show['energy'], "Energy", "🔋")
+        # Active Power
+        if data_to_show.contains('active_power')
+            fmt.add_sensor("power", data_to_show['active_power'], "Power", "💡")
         end
         
+        # Power Factor
         if data_to_show.contains('power_factor')
-            fmt.add_sensor("power_factor", data_to_show['power_factor'], "PF", "📊")
+            fmt.add_sensor("power_factor%", data_to_show['power_factor'], "Power Factor", "📊")
         end
         
-        # Alerts and status indicators
-        if data_to_show.contains('reset_event') && data_to_show['reset_event']
-            fmt.add_status(data_to_show.find('reset_reason', 'Reset'), "⚠️", "Device was reset")
-        end
-        
-        if data_to_show.contains('power_outage_event') && data_to_show['power_outage_event']
-            fmt.add_status("Power Outage", "⚠️", "Power outage detected")
-        end
-        
-        # Configuration status
-        if data_to_show.contains('oc_protection_enabled') && data_to_show['oc_protection_enabled']
-            fmt.add_status("OC Prot", "🛡️", f"Overcurrent protection active ({data_to_show.find('oc_protection_threshold', 0)}A)")
-        end
-        
-        fmt.end_line()
-        msg += fmt.get_msg()
-        
-        # Add debug info if in debug mode and data is old
-        if self.debug_mode && last_update > 0
-            var age = tasmota.rtc()['local'] - last_update
-            if age > 300  # Data older than 5 minutes in debug mode
-                fmt.start_line()
-                fmt.add_status(self.format_age(age), "⏱️", nil)
-                fmt.end_line()
-                var age_msg = fmt.get_msg()
-                if age_msg != nil
-                    msg = msg + age_msg
+        # Energy on next line if available
+        if data_to_show.contains('energy_wh')
+            fmt.next_line()
+            fmt.add_sensor("energy", data_to_show['energy_wh'], "Energy", "🏠")
+            
+            # Show energy increase if we have history
+            var node_data = global.WS52x_nodes.find(self.node, {})
+            var energy_history = node_data.find('energy_history', [])
+            if size(energy_history) > 1
+                var energy_delta = energy_history[-1] - energy_history[-2]
+                if energy_delta > 0
+                    fmt.add_sensor("energy", energy_delta, "Delta", "📈")
                 end
             end
         end
         
+        # Device information if available
+        if data_to_show.contains('sw_version')
+            fmt.next_line()
+            fmt.add_status(f"v{data_to_show['sw_version']}", "📟", "Software Version")
+        end
+        
+        # Configuration status
+        if data_to_show.contains('oc_protection_enabled') && data_to_show['oc_protection_enabled']
+            fmt.add_status("OC Prot", "🛡️", f"Over-current protection: {data_to_show.find('oc_protection_threshold', 0)}A")
+        end
+        
+        if data_to_show.contains('button_locked') && data_to_show['button_locked']
+            fmt.add_status("Locked", "🔒", "Button locked")
+        end
+        
+        # Events
+        if data_to_show.contains('power_on_event') && data_to_show['power_on_event']
+            fmt.next_line()
+            fmt.add_status("Power On", "⚡", "Power-on event detected")
+        end
+        
+        if data_to_show.contains('power_outage_event') && data_to_show['power_outage_event']
+            fmt.add_status("Outage", "⚠️", "Power outage detected")
+        end
+        
+        if data_to_show.contains('device_reset') && data_to_show['device_reset']
+            fmt.add_status(f"Reset({data_to_show.find('reset_type', 'Unknown')})", "🔄", "Device reset detected")
+        end
+        
+        # Add last seen info if data is old
+        if last_update > 0
+            var age = tasmota.rtc()['local'] - last_update
+            if age > 3600  # Data older than 1 hour
+                fmt.next_line()
+                fmt.add_status(self.format_age(age), "⏱️", nil)
+            end
+        end
+        
+        fmt.end_line()
+        
+        # ONLY get_msg() return a string that can be used with +=
+        msg += fmt.get_msg()
+
         return msg
     end
     
@@ -514,8 +398,9 @@ class LwDecode_WS52x
             'last_update': node_data.find('last_update', 0),
             'reset_count': node_data.find('reset_count', 0),
             'last_reset': node_data.find('last_reset', 0),
-            'power_outage_count': node_data.find('power_outage_count', 0),
-            'last_power_outage': node_data.find('last_power_outage', 0),
+            'energy_history': node_data.find('energy_history', []),
+            'socket_changes': node_data.find('socket_changes', 0),
+            'last_socket_state': node_data.find('last_socket_state', nil),
             'name': node_data.find('name', 'Unknown')
         }
     end
@@ -530,123 +415,108 @@ class LwDecode_WS52x
         return false
     end
     
-    # Set debug mode
-    def set_debug_mode(enabled)
-        self.debug_mode = enabled
-        var status = enabled ? "enabled" : "disabled"
-        print(f"WS52x: Debug mode {status}")
-    end
-    
     # Register downlink commands for device control
     def register_downlink_commands()
         import string
         
-        # Socket Control Command (ON/OFF) using SendDownlinkMap
+        # Socket Control (ON/OFF)
         tasmota.remove_cmd("LwWS52xControl")
         tasmota.add_cmd("LwWS52xControl", def(cmd, idx, payload_str)
-            # Format: LwWS52xControl<node> <on|off|1|0>
+            # Format: LwWS52xControl<slot> <on|off|1|0>
             return lwdecode.SendDownlinkMap(global.WS52x_nodes, cmd, idx, payload_str, { 
-                '1|ON':  ['08FF', 'Socket ON'],     # Maps "1" or "ON" to hex 08FF
-                '0|OFF': ['0800', 'Socket OFF']     # Maps "0" or "OFF" to hex 0800
+                '1|ON':  ['08FF', 'ON' ],     # Maps "1" or "ON" to hex 08FF
+                '0|OFF': ['0800', 'OFF']      # Maps "0" or "OFF" to hex 0800
             })
         end)
         
         # Set Reporting Interval
         tasmota.remove_cmd("LwWS52xInterval")
         tasmota.add_cmd("LwWS52xInterval", def(cmd, idx, payload_str)
-            # Format: LwWS52xInterval<node> <minutes>
+            # Format: LwWS52xInterval<slot> <minutes>
             var minutes = int(payload_str)
             if minutes < 1 || minutes > 65535
                 return tasmota.resp_cmnd_str("Invalid: range 1-65535 minutes")
             end
             
-            # Build hex command per PDF specification (little endian)
-            var hex_cmd = f"FE02{minutes & 0xFF:02X}{(minutes >> 8) & 0xFF:02X}"
+            # Build hex command (little endian)
+            var hex_cmd = f"FE02{lwdecode.uint16le(minutes)}"
             return lwdecode.SendDownlink(global.WS52x_nodes, cmd, idx, hex_cmd)
         end)
         
-        # OC Alarm Configuration
+        # Over-Current Alarm Configuration
         tasmota.remove_cmd("LwWS52xOCAlarm")
         tasmota.add_cmd("LwWS52xOCAlarm", def(cmd, idx, payload_str)
-            # Format: LwWS52xOCAlarm<node> <enabled>,<threshold_A>
+            # Format: LwWS52xOCAlarm<slot> <enabled>,<threshold>
             var parts = string.split(payload_str, ',')
             if size(parts) != 2
-                return tasmota.resp_cmnd_str("Usage: LwWS52xOCAlarm<node> <0|1>,<1-30>")
+                return tasmota.resp_cmnd_str("Usage: LwWS52xOCAlarm<slot> <enabled>,<threshold>")
             end
             
-            var enabled = int(parts[0])
+            var enabled = (parts[0] == "1" || string.toupper(parts[0]) == "ON") ? 1 : 0
             var threshold = int(parts[1])
             
-            if enabled < 0 || enabled > 1
-                return tasmota.resp_cmnd_str("Invalid enabled: use 0 or 1")
-            end
-            
             if threshold < 1 || threshold > 30
-                return tasmota.resp_cmnd_str("Invalid threshold: range 1-30 A")
+                return tasmota.resp_cmnd_str("Invalid threshold: range 1-30A")
             end
             
             var hex_cmd = f"FF24{enabled:02X}{threshold:02X}"
             return lwdecode.SendDownlink(global.WS52x_nodes, cmd, idx, hex_cmd)
         end)
         
-        # OC Protection Configuration
+        # Over-Current Protection Configuration
         tasmota.remove_cmd("LwWS52xOCProtection")
         tasmota.add_cmd("LwWS52xOCProtection", def(cmd, idx, payload_str)
-            # Format: LwWS52xOCProtection<node> <enabled>,<threshold_A>
+            # Format: LwWS52xOCProtection<slot> <enabled>,<threshold>
             var parts = string.split(payload_str, ',')
             if size(parts) != 2
-                return tasmota.resp_cmnd_str("Usage: LwWS52xOCProtection<node> <0|1>,<1-30>")
+                return tasmota.resp_cmnd_str("Usage: LwWS52xOCProtection<slot> <enabled>,<threshold>")
             end
             
-            var enabled = int(parts[0])
+            var enabled = (parts[0] == "1" || string.toupper(parts[0]) == "ON") ? 1 : 0
             var threshold = int(parts[1])
             
-            if enabled < 0 || enabled > 1
-                return tasmota.resp_cmnd_str("Invalid enabled: use 0 or 1")
-            end
-            
             if threshold < 1 || threshold > 30
-                return tasmota.resp_cmnd_str("Invalid threshold: range 1-30 A")
+                return tasmota.resp_cmnd_str("Invalid threshold: range 1-30A")
             end
             
             var hex_cmd = f"FF30{enabled:02X}{threshold:02X}"
             return lwdecode.SendDownlink(global.WS52x_nodes, cmd, idx, hex_cmd)
         end)
         
-        # Button Lock Configuration using SendDownlinkMap
+        # Button Lock Control
         tasmota.remove_cmd("LwWS52xButtonLock")
         tasmota.add_cmd("LwWS52xButtonLock", def(cmd, idx, payload_str)
-            # Format: LwWS52xButtonLock<node> <locked|unlocked|1|0>
+            # Format: LwWS52xButtonLock<slot> <locked|unlocked|1|0>
             return lwdecode.SendDownlinkMap(global.WS52x_nodes, cmd, idx, payload_str, { 
-                '1|LOCKED':   ['FF250080', 'Button Locked'],
-                '0|UNLOCKED': ['FF250000', 'Button Unlocked']
+                '1|LOCKED':    ['FF250080', 'LOCKED'],     # Button locked
+                '0|UNLOCKED':  ['FF250000', 'UNLOCKED']    # Button unlocked
             })
         end)
         
-        # LED Mode Configuration using SendDownlinkMap
+        # LED Mode Control
         tasmota.remove_cmd("LwWS52xLED")
         tasmota.add_cmd("LwWS52xLED", def(cmd, idx, payload_str)
-            # Format: LwWS52xLED<node> <on|off|1|0>
+            # Format: LwWS52xLED<slot> <on|off|1|0>
             return lwdecode.SendDownlinkMap(global.WS52x_nodes, cmd, idx, payload_str, { 
-                '1|ON':  ['FF2F01', 'LED Enabled'],
-                '0|OFF': ['FF2F00', 'LED Disabled']
+                '1|ON':  ['FF2F01', 'ON' ],     # LED enabled
+                '0|OFF': ['FF2F00', 'OFF']      # LED disabled
             })
         end)
         
-        # Power Recording Configuration using SendDownlinkMap
+        # Power Recording Control
         tasmota.remove_cmd("LwWS52xPowerRecording")
         tasmota.add_cmd("LwWS52xPowerRecording", def(cmd, idx, payload_str)
-            # Format: LwWS52xPowerRecording<node> <on|off|1|0>
+            # Format: LwWS52xPowerRecording<slot> <on|off|1|0>
             return lwdecode.SendDownlinkMap(global.WS52x_nodes, cmd, idx, payload_str, { 
-                '1|ON':  ['FF2601', 'Power Recording Enabled'],
-                '0|OFF': ['FF2600', 'Power Recording Disabled']
+                '1|ON':  ['FF2601', 'ON' ],     # Power recording enabled
+                '0|OFF': ['FF2600', 'OFF']      # Power recording disabled
             })
         end)
         
         # Reset Energy Counter
         tasmota.remove_cmd("LwWS52xResetEnergy")
         tasmota.add_cmd("LwWS52xResetEnergy", def(cmd, idx, payload_str)
-            # Format: LwWS52xResetEnergy<node>
+            # Format: LwWS52xResetEnergy<slot>
             var hex_cmd = "FF2700"
             return lwdecode.SendDownlink(global.WS52x_nodes, cmd, idx, hex_cmd)
         end)
@@ -654,7 +524,7 @@ class LwDecode_WS52x
         # Status Enquiry
         tasmota.remove_cmd("LwWS52xStatus")
         tasmota.add_cmd("LwWS52xStatus", def(cmd, idx, payload_str)
-            # Format: LwWS52xStatus<node>
+            # Format: LwWS52xStatus<slot>
             var hex_cmd = "FF2800"
             return lwdecode.SendDownlink(global.WS52x_nodes, cmd, idx, hex_cmd)
         end)
@@ -662,133 +532,43 @@ class LwDecode_WS52x
         # Device Reboot
         tasmota.remove_cmd("LwWS52xReboot")
         tasmota.add_cmd("LwWS52xReboot", def(cmd, idx, payload_str)
-            # Format: LwWS52xReboot<node>
+            # Format: LwWS52xReboot<slot>
             var hex_cmd = "FF10FF"
             return lwdecode.SendDownlink(global.WS52x_nodes, cmd, idx, hex_cmd)
         end)
         
-        # Delay Task (schedule socket operation)
+        # Delay Task
         tasmota.remove_cmd("LwWS52xDelayTask")
         tasmota.add_cmd("LwWS52xDelayTask", def(cmd, idx, payload_str)
-            # Format: LwWS52xDelayTask<node> <seconds>
+            # Format: LwWS52xDelayTask<slot> <seconds>
             var seconds = int(payload_str)
             if seconds < 0 || seconds > 4294967295
                 return tasmota.resp_cmnd_str("Invalid: range 0-4294967295 seconds")
             end
             
-            # Build hex command using framework helper (little endian)
-            var hex_cmd = "FE22" + lwdecode.uint32le(seconds)
+            var hex_cmd = f"FE22{lwdecode.uint32le(seconds)}"
             return lwdecode.SendDownlink(global.WS52x_nodes, cmd, idx, hex_cmd)
         end)
         
         # Delete Task
         tasmota.remove_cmd("LwWS52xDeleteTask")
         tasmota.add_cmd("LwWS52xDeleteTask", def(cmd, idx, payload_str)
-            # Format: LwWS52xDeleteTask<node> <task_number>
+            # Format: LwWS52xDeleteTask<slot> <task_number>
             var task_number = int(payload_str)
             if task_number < 0 || task_number > 65535
                 return tasmota.resp_cmnd_str("Invalid: range 0-65535")
             end
             
-            # Build hex command using framework helper (little endian)
-            var hex_cmd = "FE23" + lwdecode.uint16le(task_number)
+            var hex_cmd = f"FE23{lwdecode.uint16le(task_number)}"
             return lwdecode.SendDownlink(global.WS52x_nodes, cmd, idx, hex_cmd)
         end)
         
-        # Debug Control Command
-        tasmota.remove_cmd("LwWS52xDebug")
-        tasmota.add_cmd("LwWS52xDebug", def(cmd, idx, payload_str)
-            # Format: LwWS52xDebug <on|off|1|0>
-            var enable = payload_str == "on" || payload_str == "1"
-            LwDeco.set_debug_mode(enable)
-            var status = enable ? "enabled" : "disabled"
-            tasmota.resp_cmnd_str(f"Debug mode {status}")
-        end)
-        
-        print("WS52x: All downlink commands registered successfully")
+        print("WS52x: Downlink commands registered")
     end
 end
 
 # Global instance
 LwDeco = LwDecode_WS52x()
-
-# Test command registration with debug scenarios
-tasmota.remove_cmd("LwWS52xTestPayload")
-tasmota.add_cmd("LwWS52xTestPayload", def(cmd, idx, payload_str)
-    # Parse parameters: payload_str can be "hex", "fport,hex", or "rssi,fport,hex"
-    var parts = string.split(payload_str, ',')
-    var rssi = -85          # Default RSSI
-    var fport = 85          # Default fport for WS52x
-    var hex_payload = payload_str
-    
-    if size(parts) == 1
-        # Format: <hex_payload>
-        hex_payload = parts[0]
-    elif size(parts) == 2
-        # Format: <fport>,<hex_payload>
-        fport = int(parts[0])
-        hex_payload = parts[1]
-    elif size(parts) == 3
-        # Format: <rssi>,<fport>,<hex_payload>
-        rssi = int(parts[0])
-        fport = int(parts[1])
-        hex_payload = parts[2]
-    end
-    
-    # Parse hex string to bytes
-    var test_payload = bytes(hex_payload)
-    
-    # Force driver load by LwDecode framework
-    var result = LwDeco.decodeUplink(f"WS52x-{idx}", idx, rssi, fport, test_payload)
-    
-    if result != nil
-        import json
-        tasmota.resp_cmnd(json.dump(result))
-    else
-        tasmota.resp_cmnd_error()
-    end
-end)
-
-# Test scenarios for UI development
-tasmota.remove_cmd("LwWS52xTestReal")
-tasmota.add_cmd("LwWS52xTestReal", def(cmd, idx, scenario)
-    # Pre-defined test scenarios for UI development
-    var test_scenarios = {
-        # Scenario 1: Normal operation - socket ON with normal power consumption
-        "normal": "037410F004800F27000005810A0683D007C9E003087001",
-        
-        # Scenario 2: Low power consumption - socket ON but minimal load
-        "low": "037408F804800A000000058100068301000000C90A00087001",
-        
-        # Scenario 3: High power consumption - socket ON with high load
-        "high": "0374B40B048088130000058164068340E2010007C9501D087001",
-        
-        # Scenario 4: Alert scenario - overcurrent protection triggered
-        "alert": "037410F004800F27000005810A0683D007C9E003087001FF30010A",
-        
-        # Scenario 5: Configuration info - device settings
-        "config": "FF0101FF090203FF0A0106FF25008000262601FF2F01FF24010A",
-        
-        # Scenario 6: Device info - version and serial
-        "info": "FF0101FF090203FF0A0106FF16AABBCCDDEEFF0011FF01FF0110"
-    }
-    
-    var payload_hex = test_scenarios.find(scenario, nil)
-    if payload_hex == nil
-        tasmota.resp_cmnd_str("Usage: LwWS52xTestReal<node> <normal|low|high|alert|config|info>")
-        return
-    end
-    
-    var test_payload = bytes(payload_hex)
-    var result = LwDeco.decodeUplink(f"WS52x-{idx}", idx, -85, 85, test_payload)
-    
-    if result != nil
-        import json
-        tasmota.resp_cmnd(json.dump(result))
-    else
-        tasmota.resp_cmnd_error()
-    end
-end)
 
 # Node management commands
 tasmota.remove_cmd("LwWS52xNodeStats")
@@ -810,3 +590,35 @@ tasmota.add_cmd("LwWS52xClearNode", def(cmd, idx, node_id)
         tasmota.resp_cmnd_str("Node not found")
     end
 end)
+
+# Command usage: LwWS52xTestUI<slot> <scenario>
+tasmota.remove_cmd("LwWS52xTestUI")
+tasmota.add_cmd("LwWS52xTestUI", def(cmd, idx, payload_str)
+    # Predefined realistic test scenarios for UI development
+    var test_scenarios = {
+        "normal":    "037410F0048000000064058164068300127A8007C900FE08701",      # Normal operation: 240V, 100W, 100%, 4730Wh, 420mA, ON
+        "low":       "0374005A048000000019058132068300012710070032080700",      # Low values: 90V, 25W, 50%, 4721Wh, 50mA, OFF
+        "high":      "037413880480000003E8058164068300129F4C07C93E8080701",    # High values: 500V, 1000W, 100%, 5MB0Wh, 1000mA, ON
+        "alert":     "0374108C048000000320058150068300127A8007C902BC080701FF3F01", # Alert: 420V, 800W, 80%, 4730Wh, 700mA, ON, power outage
+        "config":    "FF0A0103FF2401050AFF2F01FF2600FE020A00",                  # Config: SW v1.3, OC alarm 5A, LED on, power rec off, 10min interval
+        "info":      "FF0101FF09010AFF0A0103FF0F00FF16123456789ABCDEF0"         # Device info: Protocol v1, HW v1.10, SW v1.3, Class A, Serial
+    }
+    
+    var hex_payload = test_scenarios.find(payload_str ? payload_str : 'nil', 'not_found')
+    
+    if hex_payload == 'not_found'
+      var scenarios_list = ""
+      for key: test_scenarios.keys()
+        scenarios_list += key + " "
+      end
+      return tasmota.resp_cmnd_str(format("Available scenarios: %s", scenarios_list))
+    end
+    
+    var rssi = -75
+    var fport = 85
+
+    return tasmota.cmd(f'LwSimulate{idx} {rssi},{fport},{hex_payload}')
+end)
+
+# MANDATORY: Register driver for web UI integration
+tasmota.add_driver(LwDeco)

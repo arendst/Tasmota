@@ -1,6 +1,7 @@
 # Milesight WS52x Protocol MAP
-# Generated: 2025-08-16 | PDF Version: v1.1
+# Generated: 2025-08-19 15:30:42 | PDF Version: v1.1
 # Source: WS52x_LoRaWAN_Application_Guide.pdf
+# Last Updated: 2025-08-19 (Framework v2.2.4 regeneration)
 
 device_info:
   vendor: Milesight
@@ -292,3 +293,10 @@ measurement_units:
   energy: "Wh"
   power_factor: "%"
   rssi: "dBm"
+
+# Framework Integration Notes
+framework_version: "2.2.4"
+driver_version: "1.3.0"
+last_regenerated: "2025-08-19"
+uplink_coverage: "25/25 channels"
+downlink_coverage: "12/12 commands"
