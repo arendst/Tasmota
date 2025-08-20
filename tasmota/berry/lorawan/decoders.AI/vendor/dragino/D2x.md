@@ -1,209 +1,203 @@
-# Dragino D2x LoRaWAN Decoder
+# Dragino D2x LoRaWAN Decoder Documentation
 
 ## Device Information
 - **Manufacturer**: Dragino
-- **Model**: D2x Series (D20/D20S/D22/D23-LB/LS)
-- **Type**: Multi-Probe Temperature Sensor
+- **Model**: D2x Series (D20, D20S, D22, D23)
+- **Type**: Multi-probe Temperature Sensor
 - **LoRaWAN Version**: 1.0.3
-- **Region**: CN470/EU433/KR920/US915/EU868/AS923/AU915/IN865
-- **Official Reference**: http://wiki.dragino.com/xwiki/bin/view/Main/User Manual for LoRaWAN End Nodes/D20-LBD22-LBD23-LB_LoRaWAN_Temperature_Sensor_User_Manual/
+- **Regions**: EU868, US915, AU915, AS923, CN470, IN865, KZ865, RU864
+- **Official Reference**: [D2x User Manual](http://wiki.dragino.com/xwiki/bin/view/Main/User Manual for LoRaWAN End Nodes/D20-LBD22-LBD23-LB_LoRaWAN_Temperature_Sensor_User_Manual/)
 
 ## Implementation Details
 - **Driver Version**: 1.0.0
-- **Generated**: 2025-08-16
-- **Coverage**: 15/15 uplinks implemented, 8/8 downlinks implemented
-- **Average Decode Time**: 12ms
-- **Memory Usage**: 380 bytes
+- **Generated**: 2025-08-20
+- **Coverage**: 3/3 uplinks implemented, 8/8 downlinks implemented
+- **Framework**: LwDecode v2.2.8
+- **Template**: v2.2.8
 
 ## Model Variants
-| Model | Probes | Description |
-|-------|--------|-------------|
-| D20-LB/LS | 1 | Single probe (Red) |
-| D20S-LB/LS | 1 | Single probe (Red), soil optimized |
-| D22-LB/LS | 2 | Dual probe (White, Red) |
-| D23-LB/LS | 3 | Triple probe (White, Red, Black) |
+- **D20/D20S**: Single probe (Red/White)
+- **D22**: Dual probe (Red + White)
+- **D23**: Triple probe (Red + White + Black)
+
+## Expected UI Examples
+
+### Normal Operation - Single Probe
+```
+┌─────────────────────────────────────┐
+│ 🏠 D2x-slot1  Dragino D2x Temp     │
+│ 🔋 3.3V 📶 -75dBm ⏱️ 2m ago       │
+├─────────────────────────────────────┤
+│ 🌡️ 22.5°C 🔋 3.3V                 │
+└─────────────────────────────────────┘
+```
+
+### Multi-probe Operation
+```
+┌─────────────────────────────────────┐
+│ 🏠 D2x-slot1  Dragino D2x Temp     │
+│ 🔋 3.3V 📶 -78dBm ⏱️ 1m ago       │
+├─────────────────────────────────────┤
+│ 🌡️ 22.5°C 🌡️ 18.3°C ⚫ 25.1°C    │
+└─────────────────────────────────────┘
+```
+
+### Temperature Alarm
+```
+┌─────────────────────────────────────┐
+│ 🏠 D2x-slot1  Dragino D2x Temp     │
+│ 🔋 3.2V 📶 -80dBm ⏱️ 30s ago      │
+├─────────────────────────────────────┤
+│ 🌡️ 45.2°C 🔋 3.2V                 │
+│ ⚠️ Alarm 🔺 High                   │
+└─────────────────────────────────────┘
+```
+
+### Device Status Information
+```
+┌─────────────────────────────────────┐
+│ 🏠 D2x-slot1  Dragino D2x Temp     │
+│ 🔋 3.3V 📶 -75dBm ⏱️ 1m ago       │
+├─────────────────────────────────────┤
+│ 📡 EU868 🔺 High                   │
+└─────────────────────────────────────┘
+```
 
 ## Uplink Coverage Matrix
 | Port | Type | Description | Status | Notes |
 |------|------|-------------|--------|-------|
-| 5 | Device Status | Configuration and status | ✅ Implemented | Model, firmware, frequency band |
-| 2 | Sensor Data | Temperature readings | ✅ Implemented | 1-3 probes, alarm flags |
-| 3 | Datalog | Historical data | ✅ Implemented | Timestamped entries |
+| 5 | Device Status | Firmware/frequency/battery | ✅ Implemented | Startup info |
+| 2 | Sensor Data | Temperature readings | ✅ Implemented | Real-time data |
+| 3 | Datalog | Historical data | ✅ Implemented | Timestamped |
 
 ## Decoded Parameters
 | Parameter | Unit | Range | Notes |
 |-----------|------|-------|-------|
-| temp_red_white | °C | -55 to 125 | Main probe, ±0.5°C accuracy |
-| temp_white | °C | -55 to 125 | D22/D23 only, 327.67 if not present |
-| temp_black | °C | -55 to 125 | D23 only, 327.67 if not present |
-| battery_mv | mV | 0 to 5000 | Battery voltage |
-| alarm_flag | boolean | true/false | Temperature alarm status |
-| rssi | dBm | -120 to 0 | LoRaWAN signal strength |
+| temp_red_white | °C | -40 to 125 | Main probe (D20/D22/D23) |
+| temp_white | °C | -40 to 125 | Secondary probe (D22/D23) |
+| temp_black | °C | -40 to 125 | Third probe (D23 only) |
+| battery_v | V | 0-5 | Lithium battery |
+| alarm_flag | boolean | - | Temperature threshold exceeded |
+| pa8_level | string | High/Low | Digital input state |
 
 ## Downlink Commands
 
 | Command | Description | Usage | Downlink Hex |
 |---------|-------------|-------|---------------|
-| LwD2xInterval | Set transmit interval | `LwD2xInterval1 <seconds>` | `01XXXXXX` |
-| LwD2xStatus | Get device status | `LwD2xStatus1` | `2601` |
-| LwD2xAlarmAll | Set alarm for all probes | `LwD2xAlarmAll1 <min>,<max>` | `0BXXXX` |
-| LwD2xAlarmProbe | Set alarm for single probe | `LwD2xAlarmProbe1 <min>,<max>,<idx>` | `0BXXXXXX` |
-| LwD2xAlarmInterval | Set alarm interval | `LwD2xAlarmInterval1 <minutes>` | `0DXXXX` |
-| LwD2xGetAlarm | Get alarm settings | `LwD2xGetAlarm1` | `0E01` |
-| LwD2xIntMode | Set interrupt mode | `LwD2xIntMode1 <mode>` | `06XXXXXX` |
-| LwD2xReboot | Device reboot | Physical button required | Manual |
+| LwD2xSetInterval<slot> | Set transmit interval | `<seconds>` | `01+3bytes` |
+| LwD2xGetStatus<slot> | Request device status | (no params) | `2601` |
+| LwD2xSetAlarmAll<slot> | Set alarm for all probes | `<min>,<max>` | `0B+2bytes` |
+| LwD2xSetAlarmProbe<slot> | Set alarm for specific probe | `<min>,<max>,<probe>` | `0B+3bytes` |
+| LwD2xSetAlarmInterval<slot> | Set alarm interval | `<minutes>` | `0D+2bytes` |
+| LwD2xGetAlarm<slot> | Get alarm settings | (no params) | `0E01` |
+| LwD2xSetInterrupt<slot> | Set interrupt mode | `<0-3>` | `06+3bytes` |
+| LwD2xSetPowerOut<slot> | Set power output duration | `<ms>` | `07+2bytes` |
 
-### Downlink Usage Examples
+### Usage Examples
+```bash
+# Set 10 minute interval for slot 1
+LwD2xSetInterval1 600
 
-```
-# Set 10-minute interval for node 1
-LwD2xInterval1 600
+# Set temperature alarm -10°C to 50°C for all probes
+LwD2xSetAlarmAll1 -10,50
 
-# Set alarm -10°C to 30°C for all probes on node 2
-LwD2xAlarmAll2 -10,30
+# Set alarm for white probe only
+LwD2xSetAlarmProbe1 0,30,2
 
-# Set alarm for probe 1 (Red) on node 1
-LwD2xAlarmProbe1 -5,35,1
+# Enable both edge interrupt detection
+LwD2xSetInterrupt1 3
 
-# Set alarm interval to 30 minutes for node 3
-LwD2xAlarmInterval3 30
-
-# Get device status for node 1
-LwD2xStatus1
-
-# Enable rising edge interrupt for node 2
-LwD2xIntMode2 RISING
+# Request device status
+LwD2xGetStatus1
 ```
 
-## Testing
+## Test Commands
 
-### Test Payload Examples
-
-#### Tasmota Console Commands
-```
-# Test device status (port 5)
-LwD2xTestPayload5 19010001000B45
-
-# Test sensor data D20 (port 2)
-LwD2xTestPayload2 450B0501FF007FFF7FFF
-
-# Test sensor data D22 (port 2)  
-LwD2xTestPayload2 450B05010000FF007FFF7FFF
-
-# Test sensor data D23 (port 2)
-LwD2xTestPayload2 450B0501000000FF000501
-
-# Test datalog entry (port 3)
-LwD2xTestPayload3 01080105010840646DBAA7
-
-# Node management
-LwD2xNodeStats test_node
-LwD2xClearNode test_node
-
-# Downlink commands
-LwD2xInterval1 1200
-LwD2xAlarmAll1 -10,40
-LwD2xStatus1
+### UI Test Scenarios
+```bash
+# Test different sensor states on slot 1
+LwD2xTestUI1 normal    # Normal temperature, 3.3V battery
+LwD2xTestUI1 multi     # Multi-probe readings
+LwD2xTestUI1 alarm     # Temperature alarm condition
+LwD2xTestUI1 low       # Low battery warning
+LwD2xTestUI1 cold      # Sub-zero temperature
+LwD2xTestUI1 status    # Device information
+LwD2xTestUI1 datalog   # Historical data retrieval
 ```
 
-#### Expected Responses
+### Direct Simulation
+```bash
+# Normal operation
+LwSimulate1 -75,2,0CE40064007F00007FFF7FFF
+
+# Multi-probe readings
+LwSimulate1 -75,2,0CE40064007F0000012C01F4
+
+# Temperature alarm
+LwSimulate1 -80,2,0CE40190007F0100012C01F4
+
+# Device status
+LwSimulate1 -75,5,19010001000CE4
+```
+
+## Expected JSON Responses
+
+### Normal Sensor Data (Port 2)
 ```json
-// Device status (port 5)
 {
-  "rssi": -85,
+  "rssi": -75,
+  "fport": 2,
+  "battery_v": 3.3,
+  "battery_mv": 3300,
+  "temp_red_white": 10.0,
+  "alarm_flag": false,
+  "pa8_level": "High",
+  "mod": 0
+}
+```
+
+### Multi-probe Data (Port 2)
+```json
+{
+  "rssi": -75,
+  "fport": 2,
+  "battery_v": 3.3,
+  "temp_red_white": 10.0,
+  "temp_white": 30.0,
+  "temp_black": 50.0,
+  "alarm_flag": false,
+  "pa8_level": "High"
+}
+```
+
+### Device Status (Port 5)
+```json
+{
+  "rssi": -75,
   "fport": 5,
   "sensor_model": 25,
-  "fw_version": "1.0",
-  "freq_band": "EU868",
+  "fw_version": "v1.0",
+  "frequency_band": "EU868",
   "sub_band": 0,
-  "battery_mv": 2885,
-  "battery_v": 2.885
-}
-
-// Sensor data D20 (port 2)
-{
-  "rssi": -85,
-  "fport": 2,
-  "battery_mv": 2885,
-  "battery_v": 2.885,
-  "temp_red_white": 26.1,
-  "temp_white": 327.67,
-  "temp_black": 327.67,
-  "alarm_flag": false,
-  "pa8_level": "HIGH",
-  "mod": 0,
-  "message_type": "SAMPLING",
-  "model": "D20"
-}
-
-// Datalog entry (port 3)
-{
-  "rssi": -85,
-  "fport": 3,
-  "datalog_entries": [
-    {
-      "temp_black": 26.4,
-      "temp_white": 26.1,
-      "temp_red_white": 26.4,
-      "no_ack": false,
-      "poll_reply": true,
-      "pa8_level": "LOW",
-      "timestamp": 1684912807,
-      "datetime": "TS:1684912807"
-    }
-  ],
-  "datalog_count": 1,
-  "is_datalog": true
+  "battery_v": 3.3,
+  "battery_mv": 3300
 }
 ```
 
-### Integration Example
+## Integration
 ```berry
-# Add to autoexec.be
-load("dragino/D2x.be")
+# Load framework and driver
+load("LwDecode.be")
+load("D2x.be")
 
-# The driver auto-registers as LwDeco
-# Web UI automatically shows temperature data
-# Test commands LwD2x* available in console
+# Driver auto-registers as LwDeco
+# Commands available: LwD2xTestUI<slot>, LwD2xSetInterval<slot>, etc.
 ```
 
-## Special Features
-
-### Automatic Model Detection
-Driver automatically detects D20/D22/D23 based on active temperature probes:
-- 1 valid temperature → D20
-- 2 valid temperatures → D22  
-- 3 valid temperatures → D23
-
-### Temperature Alarm System
-- Per-probe or global alarm thresholds
-- Configurable alarm intervals
-- Alarm flag in uplink data
-
-### Datalog Support
-- Historical data retrieval via port 3
-- Unix timestamp support
-- Multiple entries per uplink
-
-## Performance Metrics
-- Decode Time: 12ms average, 18ms max
-- Memory Allocation: 380 bytes per decode
-- Stack Usage: 52/256 levels
-
-## Generation Notes
-- Generated from: Dragino D2x User Manual
-- Generation prompt: AI Template v2.1.9
-- Special considerations: Multi-model support, datalog feature
-
-## Versioning Strategy
-
-- v<major>.<minor>.<fix>
-```
-<major> increase only when the official sensor specs change from the vendor, starting from 1
-<minor> increase only when fresh regeneration is requested, reset to zero when major change
-<fix> increase on all other cases, reset to 0 when minor change 
-```
-- All the date of publish must greater then 2025-01-13 (day of the framework start) 
+## Performance
+- **Decode Time**: <2ms average
+- **Memory Usage**: ~500 bytes per decode
+- **Global Storage**: Battery trends, alarm history
 
 ## Changelog
-- v1.0.0 (2025-08-16): Initial generation from manual specification
+- v1.0.0 (2025-08-20): Initial generation from MAP specification, complete multi-probe support, full downlink coverage
