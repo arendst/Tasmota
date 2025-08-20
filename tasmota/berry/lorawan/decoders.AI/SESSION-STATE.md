@@ -35,14 +35,14 @@ C:\Project\tasmota\Tasmota\tasmota\berry\lorawan\decoders.AI
 
 ## Session Override
 ```
-# Updated: 2025-08-20 22:15:00
-# System refresh: All core documents cached and references updated
+# Updated: 2025-08-20 22:30:00
+# Developer prompt refreshed: v2.3.2 → v2.3.3
 # Total files: 52 (17 framework + 35 drivers)
 # Framework version: LwDecode v2.2.8 (refreshed cache)
-# Template version: v2.3.0 (refreshed cache)
+# Template version: v2.3.3 (refreshed and incremented)
 # Berry Reference: v1.2.0 (refreshed cache)
 # Example Prompts: v2.0.0 (refreshed cache) 
-# All document caches synchronized and ready for operations
+# Template ready for enhanced driver generations
 ```
 
 ## Git Workflow
@@ -66,7 +66,7 @@ git commit -m "(AI) [MODEL|MODULE] v1.0.0 (FW v2.1.12) <title>
 
 ## System Status (Dynamic)
 - **Framework**: ✅ LwDecode v2.2.8 Stable
-- **Template**: ✅ v2.3.0 Critical Hex Payload Validation
+- **Template**: ✅ v2.3.3 Critical Hex Payload Validation
 - **File System**: ✅ Complete Structure Mapped (49 files)
 - **Dependencies**: ✅ All Core Documents Loaded
 - **Performance**: ✅ <3ms Average Decode Time
@@ -78,7 +78,7 @@ git commit -m "(AI) [MODEL|MODULE] v1.0.0 (FW v2.1.12) <title>
 ROOT/
 ├── Core Framework (15 files)
 │   ├── SESSION-STATE.md           ← This file
-│   ├── DEVELOPER-PROMPT.md        ← Template v2.3.0
+│   ├── DEVELOPER-PROMPT.md        ← Template v2.3.3
 │   ├── README.md                  ← Framework overview
 │   ├── FRAMEWORK.md               ← Implementation guide
 │   ├── LwDecode.be               ← Core framework code v2.2.8
@@ -137,7 +137,7 @@ ROOT/
 
 ## Ready State (Dynamic)
 - ✅ Framework v2.2.8 loaded and operational
-- ✅ Template v2.3.0 Critical Hex Payload Validation
+- ✅ Template v2.3.3 Critical Hex Payload Validation
 - ✅ Complete file system mapped (52 files verified)
 - ✅ All 17 core documents loaded in memory
 - ✅ Driver registry updated with current statistics
@@ -155,6 +155,6 @@ ROOT/
 
 
 ---
-*Session State v2.5.3 - Framework v2.2.8 + Template v2.3.0*  
+*Session State v2.5.3 - Framework v2.2.8 + Template v2.3.3*  
 *Last Updated: 2025-08-20*  
 *Status: Cache Refreshed and Ready*

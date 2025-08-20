@@ -1,5 +1,5 @@
 # LoRaWAN Decoder AI Generation Template
-## Version: 2.3.0 | Framework: LwDecode | Platform: Tasmota Berry
+## Version: 2.3.3 | Framework: LwDecode | Platform: Tasmota Berry
 
 ---
 
@@ -14,7 +14,7 @@ Generate production-ready Berry driver for LoRaWAN sensors from manufacturer PDF
 ```yaml
 required_files_cached_in_memory:
   - PDF specification (manufacturer datasheet)
-  - BERRY-CUSTOM-LANGUAGE-REFERENCE.md v1.2.0 (loaded)
+  - BERRY-CUSTOM-LANGUAGE-REFERENCE.md v1.2.0
   - README.md (AI Powered LoRaWAN Driver Development Framework)
   - FRAMEWORK.md (Framework Implementation)
   - GENERATED-DRIVER-LIST.md (AI Mantianed LoRaWAN Driver List)
@@ -32,7 +32,7 @@ environment_paths:
 - [ ] If MAP file exists, use cached data instead of PDF
 - [ ] Extract vendor name and model
 - [ ] Identify ALL uplink types and port numbers
-- [ ] Document payload structures and byte ordering
+- [ ] Document payload structures and byte ordering **IMPORTANT**
 - [ ] List all channel types and IDs
 - [ ] Note CRC/checksum requirements
 - [ ] Catalog all measurement units
@@ -1014,6 +1014,7 @@ uplinks:
         unit: "°C"
         resolution: 0.1
         range: [-40, 125]
+        endian: "little"
       - id: 0x02
         type: 0x68
         name: "Humidity"
@@ -1622,7 +1623,7 @@ This template ensures:
 Remember: The goal is a **perfect, complete decoder** that handles **100% of the device's capabilities** as documented in the manufacturer's PDF, including ALL uplink decoding and ALL downlink command generation.
 
 ---
-*Template Version: 2.3.0 | Last Updated: 2025-08-20*
+*Template Version: 2.3.3 | Last Updated: 2025-08-20*
 
 ---
 
