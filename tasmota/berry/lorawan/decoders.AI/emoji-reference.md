@@ -168,7 +168,7 @@ Before driver release:
 
 ## Current Driver Status
 
-### **Complete Implementation (37/37 emojis)**
+### **Complete Implementation (38/38 emojis)**
 - **LHT65**: 11 emojis (environmental + external sensors)
 - **AM300**: 16 emojis (comprehensive air quality)  
 - **WS52x**: 8 emojis (power monitoring)
@@ -179,9 +179,10 @@ Before driver release:
 - **LDS02**: 6 emojis (door events + duration)
 - **PS-LB**: 8 emojis (pressure/water depth + ROC status)
 - **SN50v3-LB**: 10 emojis (multi-mode sensor node with 12 working modes)
+- **MTC-AQ01**: 6 emojis (air quality with heartbeat monitoring)
 
 ### **Framework Statistics**
-- **Total unique emojis**: 37
+- **Total unique emojis**: 38
 - **Universal coverage**: 100% (⏱️ in all drivers)
 - **Temperature consistency**: 100% (🌡️ in all temp sensors)
 - **Error handling**: 100% (⚠️ in all error-capable drivers)
@@ -209,7 +210,7 @@ Before driver release:
 ---
 
 *This reference is automatically maintained as part of LwDecode framework development*  
-*Last updated: 2025-08-19 | Framework version: 2.2.1*
+*Last updated: 2025-08-20 | Framework version: 2.3.3*
 
 ---
 

@@ -36,24 +36,31 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 | WS523 | 2.0.0 | 2025-08-15 | 33/33 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | WS523 | v2.1.8 | Portable smart socket with power monitoring (missing MAP, REPORT) |
 | WS52x | 1.4.0 | 2025-08-20 | 25/25 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | WS52x Series | v2.2.6 | Smart socket series with comprehensive power monitoring (missing REPORT) |
 
+### Mutelcor
+| Model | Version | Date | Channels | Test | | | Debug Mode | Model Version | Prompt Ver | Description |
+|-------|---------|------|----------|------|------|------|------------|---------------|------------|-------------|
+| | | | | Uplink | Downlink | Others | | | | |
+| MTC-AQ01 | 1.0.0 | 2025-08-20 | 12/12 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | MTC-AQ01/02/03 | v2.3.3 | Air quality sensor with temperature, humidity & pressure |
+
 ## Coverage Statistics
 
 ### By Vendor
 - **Dragino**: 8 drivers, 142 total channels
 - **Milesight**: 6 drivers, 104 total channels
+- **Mutelcor**: 1 driver, 12 total channels
 
 ### Total
-- **Drivers**: 14
-- **Channels**: 246
+- **Drivers**: 15
+- **Channels**: 258
 - **Coverage**: 100% (all documented channels implemented)
 
 ### File Statistics
-- **Driver Files (.be)**: 14
-- **Documentation (.md)**: 14
-- **MAP Cache Files**: 12 (Dragino: 8, Milesight: 4)
+- **Driver Files (.be)**: 15
+- **Documentation (.md)**: 15
+- **MAP Cache Files**: 13 (Dragino: 8, Milesight: 4, Mutelcor: 1)
 - **Report Files**: 10 (Dragino: 7, Milesight: 3)
 - **Framework Files**: 15
-- **Total Project Files**: 60
+- **Total Project Files**: 63
 
 ### Framework Compliance Verification
 - ✅ **Command Naming**: All commands use "Lw[MODEL][Function]" pattern
@@ -66,18 +73,18 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 
 ### Test Summary by Type
 - **Uplink Tests**: 
-  - 🔲 None: 9 drivers (69%)
-  - 🏃 Running: 4 drivers (31%)
+  - 🔲 None: 14 drivers (93%)
+  - 🏃 Running: 1 driver (7%)
   - Others: 0 drivers (0%)
 - **Downlink Tests**:
-  - 🔲 None: 13 drivers (100%)
+  - 🔲 None: 15 drivers (100%)
   - Others: 0 drivers (0%)
 - **Other Tests**:
-  - 🔲 None: 13 drivers (100%)
+  - 🔲 None: 15 drivers (100%)
   - Others: 0 drivers (0%)
 
 ### Debug Mode Summary
-- **🔴 Inactive**: 13 drivers (100%) - All drivers are production-ready
+- **🔴 Inactive**: 15 drivers (100%) - All drivers are production-ready
 
 ### Test Status Legend
 - 🔲 **None** - No test planned or requested
@@ -156,6 +163,23 @@ Each driver has been validated for:
 - ✅ Documentation with test examples for ALL uplink types
 
 ## Changelog
+
+### 2025-08-20: MTC-AQ01 v1.0.0 Framework v2.3.3 Complete Generation from URL
+- Successfully generated Mutelcor MTC-AQ01 air quality sensor driver from online documentation
+- Complete extraction from official payload specification v1.6.0 with all protocol details
+- Generated comprehensive MTC-AQ01-MAP.md with complete protocol specification cache
+- Framework v2.3.3 with FROM_URL generation capability and enhanced constraints
+- Complete uplink coverage: 12/12 channels implemented across 3 payload types (heartbeat, measurements, thresholds)
+- Complete downlink coverage: 6/6 commands implemented (alert, info, show, update, reset, rejoin)
+- Multi-message support: heartbeat (0x00), measurements (0x03), thresholds (0x05)
+- Air quality monitoring: temperature (-40 to 85°C), humidity (0-100%), pressure (300-1100hPa)
+- Advanced threshold alerting with trigger/stop flags and configurable feedbacks
+- 5-year battery life tracking with 2x AA alkaline batteries
+- IP30/IP67/IP54 variant support for indoor/outdoor/splash-resistant applications
+- Enhanced global node storage with battery trend tracking and alert history
+- Comprehensive test scenarios: normal, hot, cold, dry, humid, low battery, pressure variations, threshold alerts
+- Production-ready status: Complete implementation with framework v2.3.3 compliance
+- Template v2.3.3 with URL-based documentation parsing and enhanced protocol handling
 
 ### 2025-08-20: SN50v3-LB v1.0.0 Framework v2.2.9 Complete Generation from Wiki
 - Successfully generated Dragino SN50v3-LB generic sensor node driver from wiki documentation
