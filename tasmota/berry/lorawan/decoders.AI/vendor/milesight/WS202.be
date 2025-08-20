@@ -1,14 +1,14 @@
 #
-# LoRaWAN AI-Generated Decoder for Milesight WS202 Prompted by ZioFabry 
+# LoRaWAN AI-Generated Decoder for Milesight WS202 Prompted by ZioFabry
 #
 # Generated: 2025-08-20 | Version: 1.0.0 | Revision: 1
-#            by "LoRaWAN Decoder AI Generation Template", v2.2.8
+#            by "LoRaWAN Decoder AI Generation Template", v2.2.9
 #
 # Homepage:  https://resource.milesight.com/milesight/iot/document/ws202-user-guide-en.pdf
 # Userguide: https://resource.milesight.com/milesight/iot/document/ws202-user-guide-en.pdf
-# Decoder:   https://github.com/Milesight-IoT/SensorDecoders
+# Decoder:   https://resource.milesight.com/milesight/iot/document/ws202-user-guide-en.pdf
 # 
-# v1.0.0 (2025-08-20): Initial generation from MAP specification
+# v1.0.0 (2025-08-20): Initial generation from PDF specification
 
 class LwDecode_WS202
     var hashCheck      # Duplicate payload detection flag (true = skip duplicates)
@@ -58,6 +58,7 @@ class LwDecode_WS202
             # Decode based on fport
             if fport == 85
                 var i = 0
+                
                 while i < size(payload)
                     if i + 1 >= size(payload) break end
                     
@@ -65,92 +66,78 @@ class LwDecode_WS202
                     var channel_type = payload[i+1]
                     i += 2
                     
-                    # Device information channels
-                    if channel_id == 0xFF && channel_type == 0x01
-                        # Protocol version
-                        if i < size(payload)
-                            data['protocol_version'] = f"V{payload[i]}"
-                            i += 1
-                        end
-                        
-                    elif channel_id == 0xFF && channel_type == 0x08
-                        # Device serial number
-                        if i + 5 < size(payload)
-                            var serial = ""
-                            for j: i..(i+5)
-                                serial += string.format("%02X", payload[j])
+                    # Device Information channels
+                    if channel_id == 0xFF
+                        if channel_type == 0x01  # Protocol Version
+                            if i < size(payload)
+                                data['protocol_version'] = payload[i]
+                                i += 1
                             end
-                            data['serial_number'] = serial
-                            i += 6
-                        end
-                        
-                    elif channel_id == 0xFF && channel_type == 0x09
-                        # Hardware version
-                        if i + 1 < size(payload)
-                            data['hw_version'] = f"V{payload[i]}.{payload[i+1]}"
-                            i += 2
-                        end
-                        
-                    elif channel_id == 0xFF && channel_type == 0x0A
-                        # Software version
-                        if i + 1 < size(payload)
-                            data['sw_version'] = f"V{payload[i]}.{payload[i+1]}"
-                            i += 2
-                        end
-                        
-                    elif channel_id == 0xFF && channel_type == 0x0B
-                        # Power on event
-                        if i < size(payload)
-                            data['power_on_event'] = payload[i] == 0xFF
-                            i += 1
-                        end
-                        
-                    elif channel_id == 0xFF && channel_type == 0x0F
-                        # Device type
-                        if i < size(payload)
-                            var device_type = payload[i]
-                            if device_type == 0x00
-                                data['device_class'] = "Class A"
-                            elif device_type == 0x01
-                                data['device_class'] = "Class B"
-                            elif device_type == 0x02
-                                data['device_class'] = "Class C"
-                            else
-                                data['device_class'] = f"Unknown ({device_type})"
+                        elif channel_type == 0x08  # Device Serial Number
+                            if i + 5 < size(payload)
+                                var serial = ""
+                                for j: 0..5
+                                    serial += string.format("%02X", payload[i+j])
+                                end
+                                data['serial_number'] = serial
+                                i += 6
                             end
-                            i += 1
+                        elif channel_type == 0x09  # Hardware Version
+                            if i + 1 < size(payload)
+                                var hw_major = payload[i]
+                                var hw_minor = payload[i+1]
+                                data['hw_version'] = string.format("V%d.%d", hw_major, hw_minor)
+                                i += 2
+                            end
+                        elif channel_type == 0x0A  # Software Version
+                            if i + 1 < size(payload)
+                                var sw_major = payload[i]
+                                var sw_minor = payload[i+1]
+                                data['sw_version'] = string.format("V%d.%d", sw_major, sw_minor)
+                                i += 2
+                            end
+                        elif channel_type == 0x0B  # Power On Event
+                            if i < size(payload)
+                                data['power_on_event'] = payload[i] == 0xFF
+                                if data['power_on_event']
+                                    data['device_reset'] = true
+                                end
+                                i += 1
+                            end
+                        elif channel_type == 0x0F  # Device Type
+                            if i < size(payload)
+                                var device_type = payload[i]
+                                data['device_class'] = device_type == 0 ? "Class A" : 
+                                                      device_type == 1 ? "Class B" : 
+                                                      device_type == 2 ? "Class C" : "Unknown"
+                                i += 1
+                            end
+                        else
+                            # Unknown device info channel
+                            break
                         end
-                        
-                    # Sensor data channels
-                    elif channel_id == 0x01 && channel_type == 0x75
-                        # Battery level
+                    # Sensor Data channels
+                    elif channel_id == 0x01 && channel_type == 0x75  # Battery Level
                         if i < size(payload)
                             data['battery_pct'] = payload[i]
-                            data['battery_v'] = 100000 + payload[i]  # Framework format for percentage
+                            data['battery_v'] = 100000 + payload[i]  # Format for framework
                             i += 1
                         end
-                        
-                    elif channel_id == 0x03 && channel_type == 0x00
-                        # PIR status
+                    elif channel_id == 0x03 && channel_type == 0x00  # PIR Status
                         if i < size(payload)
-                            var pir_status = payload[i]
-                            data['pir_status'] = pir_status == 0x01 ? "Occupied" : "Vacant"
-                            data['pir_occupied'] = pir_status == 0x01
+                            data['pir_status'] = payload[i] == 1
+                            data['occupancy'] = data['pir_status'] ? "Occupied" : "Vacant"
                             i += 1
                         end
-                        
-                    elif channel_id == 0x04 && channel_type == 0x00
-                        # Light status
+                    elif channel_id == 0x04 && channel_type == 0x00  # Light Status
                         if i < size(payload)
-                            var light_status = payload[i]
-                            data['light_status'] = light_status == 0x01 ? "Bright" : "Dark"
-                            data['light_bright'] = light_status == 0x01
+                            data['light_status'] = payload[i] == 1
+                            data['illuminance'] = data['light_status'] ? "Bright" : "Dark"
                             i += 1
                         end
-                        
                     else
-                        # Unknown channel, try to skip safely
-                        print(f"WS202: Unknown channel ID={channel_id:02X} Type={channel_type:02X}")
+                        # Unknown channel
+                        print(f"WS202: Unknown channel: ID={channel_id:02X} Type={channel_type:02X}")
                         break
                     end
                 end
@@ -174,7 +161,7 @@ class LwDecode_WS202
             end
             
             # Store reset count if detected
-            if data.contains('power_on_event') && data['power_on_event']
+            if data.contains('device_reset') && data['device_reset']
                 node_data['reset_count'] = node_data.find('reset_count', 0) + 1
                 node_data['last_reset'] = tasmota.rtc()['local']
             end
@@ -235,48 +222,65 @@ class LwDecode_WS202
         fmt.header(name, name_tooltip, battery, battery_last_seen, rssi, last_update, simulated)
         fmt.start_line()
         
-        # PIR and Light status
-        if data_to_show.contains('pir_status')
-            var pir_icon = data_to_show['pir_occupied'] ? "🚶" : "🏠"
-            var pir_tooltip = f"PIR: {data_to_show['pir_status']}"
-            fmt.add_sensor("string", data_to_show['pir_status'], pir_tooltip, pir_icon)
+        # Main sensor line
+        if data_to_show.contains('occupancy')
+            var pir_icon = data_to_show['pir_status'] ? "🚶" : "🏠"
+            fmt.add_sensor("string", data_to_show['occupancy'], "PIR Motion Sensor", pir_icon)
         end
         
-        if data_to_show.contains('light_status')
-            var light_icon = data_to_show['light_bright'] ? "☀️" : "🌙"
-            var light_tooltip = f"Light: {data_to_show['light_status']}"
-            fmt.add_sensor("string", data_to_show['light_status'], light_tooltip, light_icon)
+        if data_to_show.contains('illuminance')
+            var light_icon = data_to_show['light_status'] ? "☀️" : "🌙"
+            fmt.add_sensor("string", data_to_show['illuminance'], "Light Sensor", light_icon)
         end
         
-        # Battery percentage if available
         if data_to_show.contains('battery_pct')
             fmt.add_sensor("string", f"{data_to_show['battery_pct']}%", "Battery Level", "🔋")
         end
         
-        # Device events
+        # Device info line (if present)
+        var has_device_info = false
+        if data_to_show.contains('sw_version') || data_to_show.contains('hw_version') || data_to_show.contains('device_class')
+            fmt.next_line()
+            if data_to_show.contains('sw_version')
+                fmt.add_sensor("string", data_to_show['sw_version'], "Software Version", "💿")
+                has_device_info = true
+            end
+            if data_to_show.contains('hw_version')
+                fmt.add_sensor("string", data_to_show['hw_version'], "Hardware Version", "🔧")
+                has_device_info = true
+            end
+            if data_to_show.contains('device_class')
+                fmt.add_sensor("string", data_to_show['device_class'], "LoRaWAN Class", "📡")
+                has_device_info = true
+            end
+        end
+        
+        # Event line (if present)
         var has_events = false
         if data_to_show.contains('power_on_event') && data_to_show['power_on_event']
-            fmt.next_line()
-            fmt.add_status("Power On", "⚡", "Device power on event")
+            if !has_device_info
+                fmt.next_line()
+            else
+                fmt.next_line()
+            end
+            fmt.add_sensor("string", "Power On", "Device Event", "⚡")
             has_events = true
         end
         
-        # Device info if available
-        if data_to_show.contains('device_class')
-            if !has_events
+        if data_to_show.contains('device_reset') && data_to_show['device_reset']
+            if !has_events && !has_device_info
                 fmt.next_line()
-                has_events = true
             end
-            fmt.add_sensor("string", data_to_show['device_class'], "LoRaWAN Class", "📡")
+            fmt.add_sensor("string", "Reset", "Device Event", "🔄")
+            has_events = true
         end
         
         # Add last seen info if data is old
         if last_update > 0
             var age = tasmota.rtc()['local'] - last_update
             if age > 3600  # Data older than 1 hour
-                if !has_events
+                if !has_events && !has_device_info
                     fmt.next_line()
-                    has_events = true
                 end
                 fmt.add_status(self.format_age(age), "⏱️", nil)
             end
@@ -327,21 +331,21 @@ class LwDecode_WS202
     def register_downlink_commands()
         import string
         
-        # Set reporting interval command
+        # Set Reporting Interval command
         tasmota.remove_cmd("LwWS202SetInterval")
         tasmota.add_cmd("LwWS202SetInterval", def(cmd, idx, payload_str)
-            # Format: LwWS202SetInterval<slot> <interval_seconds>
+            # Format: LwWS202SetInterval<slot> <seconds>
             var interval = int(payload_str)
             if interval < 60 || interval > 64800
                 return tasmota.resp_cmnd_str("Invalid: range 60-64800 seconds")
             end
             
-            # Build hex command per PDF specification: FF03 + 2 bytes little endian
+            # Build hex command: FF03 + 16-bit little endian interval
             var hex_cmd = f"FF03{lwdecode.uint16le(interval)}"
             return lwdecode.SendDownlink(global.WS202_nodes, cmd, idx, hex_cmd)
         end)
         
-        # Reboot device command
+        # Reboot Device command
         tasmota.remove_cmd("LwWS202Reboot")
         tasmota.add_cmd("LwWS202Reboot", def(cmd, idx, payload_str)
             # Format: LwWS202Reboot<slot>
@@ -382,12 +386,12 @@ tasmota.remove_cmd("LwWS202TestUI")
 tasmota.add_cmd("LwWS202TestUI", def(cmd, idx, payload_str)
     # Predefined realistic test scenarios for UI development
     var test_scenarios = {
-        "normal":    "017564030000040000",      # Normal: 100% battery, vacant, dark
-        "occupied":  "017564030001040001",      # Occupied: 100% battery, occupied, bright
-        "vacant":    "017564030000040001",      # Vacant bright: 100% battery, vacant, bright
-        "low":       "01750A030001040000",      # Low battery: 10% battery, occupied, dark
-        "info":      "FF0BFF FF0101 FF086538B2232131 FF090100 FF0A0101 FF0F00",  # Device info
-        "config":    "017550030000040001"       # Config response: 80% battery, vacant, bright
+        "device_info": "FF0BFF FF0101 FF086538B2232131 FF090140 FF0A0114 FF0F00",
+        "normal":      "017564 030000 040000",
+        "occupied":    "017564 030001 040001",
+        "vacant":      "017564 030000 040001",
+        "low":         "01750A 030001 040000",
+        "power_on":    "FF0BFF 017550 030000 040000"
     }
     
     var hex_payload = test_scenarios.find(payload_str ? payload_str : 'nil', 'not_found')
