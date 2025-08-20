@@ -1,5 +1,5 @@
 # LoRaWAN Decoder AI Generation Template
-## Version: 2.2.9 | Framework: LwDecode | Platform: Tasmota Berry
+## Version: 2.3.0 | Framework: LwDecode | Platform: Tasmota Berry
 
 ---
 
@@ -446,12 +446,12 @@ tasmota.remove_cmd("Lw[MODEL]TestUI")
 tasmota.add_cmd("Lw[MODEL]TestUI", def(cmd, idx, payload_str)
     # Predefined realistic test scenarios for UI development
     var test_scenarios = {
-        #
         # ⚠️ CRITICAL REQUIREMENT 
-        # - the payload is an hex string like 'FF01E5' (2 bytes x char), the len CANT'BE odd !
+        # - the payload is an hex string like 'FF01E5' (2 chars x byte), the len CANT'BE odd !
         # - Define realistic test payloads for different device states
         # - DOUBLE CHECK THIS LIST, trying to decoding back, otherwise TOO many errors
-        # - Hex strings must be continuous without spaces for proper Berry parsing in LwSimulate commands.
+        # - Hex strings MUST be continuous without spaces for proper Berry parsing in LwSimulate commands.
+        # - NO SPACES ALLOWED: "FF0BFF" ✅ correct, "FF0B FF" ❌ breaks parsing
         #
         "normal":    "[NORMAL_HEX_PAYLOAD]",      # Normal operation
         "low":       "[LOW_BATTERY_HEX_PAYLOAD]", # Low battery/values
@@ -1622,7 +1622,7 @@ This template ensures:
 Remember: The goal is a **perfect, complete decoder** that handles **100% of the device's capabilities** as documented in the manufacturer's PDF, including ALL uplink decoding and ALL downlink command generation.
 
 ---
-*Template Version: 2.2.9 | Last Updated: 2025-08-20*
+*Template Version: 2.3.0 | Last Updated: 2025-08-20*
 
 ---
 

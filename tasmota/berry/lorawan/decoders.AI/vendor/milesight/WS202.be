@@ -1,13 +1,14 @@
 #
 # LoRaWAN AI-Generated Decoder for Milesight WS202 Prompted by ZioFabry
 #
-# Generated: 2025-08-20 | Version: 1.0.0 | Revision: 1
+# Generated: 2025-08-20 | Version: 1.0.1 | Revision: 2
 #            by "LoRaWAN Decoder AI Generation Template", v2.2.9
 #
 # Homepage:  https://resource.milesight.com/milesight/iot/document/ws202-user-guide-en.pdf
 # Userguide: https://resource.milesight.com/milesight/iot/document/ws202-user-guide-en.pdf
 # Decoder:   https://resource.milesight.com/milesight/iot/document/ws202-user-guide-en.pdf
 # 
+# v1.0.1 (2025-08-20): Fixed hex payload spaces in TestUI scenarios
 # v1.0.0 (2025-08-20): Initial generation from PDF specification
 
 class LwDecode_WS202
@@ -386,12 +387,12 @@ tasmota.remove_cmd("LwWS202TestUI")
 tasmota.add_cmd("LwWS202TestUI", def(cmd, idx, payload_str)
     # Predefined realistic test scenarios for UI development
     var test_scenarios = {
-        "device_info": "FF0BFF FF0101 FF086538B2232131 FF090140 FF0A0114 FF0F00",
-        "normal":      "017564 030000 040000",
-        "occupied":    "017564 030001 040001",
-        "vacant":      "017564 030000 040001",
-        "low":         "01750A 030001 040000",
-        "power_on":    "FF0BFF 017550 030000 040000"
+        "device_info": "FF0BFFFF0101FF086538B2232131FF090140FF0A0114FF0F00",
+        "normal":      "017564030000040000",
+        "occupied":    "017564030001040001",
+        "vacant":      "017564030000040001",
+        "low":         "01750A030001040000",
+        "power_on":    "FF0BFF017550030000040000"
     }
     
     var hex_payload = test_scenarios.find(payload_str ? payload_str : 'nil', 'not_found')

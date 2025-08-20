@@ -1,4 +1,4 @@
-# Session State v2.5.1
+# Session State v2.5.2
 
 ## ⚠️ READ ONLY FILE WARNING ⚠️ (NEVER IGNORE)
 - this file it's a read only file, execpt for the specific command `save to default session`
@@ -35,11 +35,11 @@ C:\Project\tasmota\Tasmota\tasmota\berry\lorawan\decoders.AI
 
 ## Session Override
 ```
-# Updated: 2025-08-20 21:35:00
-# Template refreshed from v2.2.8 to v2.2.9 with critical updates
+# Updated: 2025-08-20 21:50:00
+# Template updated from v2.2.9 to v2.3.0 with critical hex parsing constraints
 # Total files: 52 (17 framework + 35 drivers)
 # Framework version: LwDecode v2.2.8
-# Template version: v2.2.9 (Enhanced ESP32 constraints & Berry syntax)
+# Template version: v2.3.0 (Enhanced hex payload validation)
 # Berry Reference: v1.2.0 Enhanced syntax constraints
 # Example Prompts: v2.0.0 Advanced operations library
 # Complete regenerations: WS202, WS301, WS52x, D2x, DDS75-LB
@@ -66,7 +66,7 @@ git commit -m "(AI) [MODEL|MODULE] v1.0.0 (FW v2.1.12) <title>
 
 ## System Status (Dynamic)
 - **Framework**: ✅ LwDecode v2.2.8 Stable
-- **Template**: ✅ v2.2.9 Critical ESP32 & Berry Compliance Updates
+- **Template**: ✅ v2.3.0 Critical Hex Payload Validation
 - **File System**: ✅ Complete Structure Mapped (49 files)
 - **Dependencies**: ✅ All Core Documents Loaded
 - **Performance**: ✅ <3ms Average Decode Time
@@ -78,7 +78,7 @@ git commit -m "(AI) [MODEL|MODULE] v1.0.0 (FW v2.1.12) <title>
 ROOT/
 ├── Core Framework (15 files)
 │   ├── SESSION-STATE.md           ← This file
-│   ├── DEVELOPER-PROMPT.md        ← Template v2.2.9
+│   ├── DEVELOPER-PROMPT.md        ← Template v2.3.0
 │   ├── README.md                  ← Framework overview
 │   ├── FRAMEWORK.md               ← Implementation guide
 │   ├── LwDecode.be               ← Core framework code v2.2.8
@@ -137,7 +137,7 @@ ROOT/
 
 ## Ready State (Dynamic)
 - ✅ Framework v2.2.8 loaded and operational
-- ✅ Template v2.2.9 Critical ESP32 & Berry Compliance Updates
+- ✅ Template v2.3.0 Critical Hex Payload Validation
 - ✅ Complete file system mapped (52 files verified)
 - ✅ All 17 core documents loaded in memory
 - ✅ Driver registry updated with current statistics
@@ -155,6 +155,6 @@ ROOT/
 
 
 ---
-*Session State v2.5.1 - Framework v2.2.8 + Template v2.2.9*  
+*Session State v2.5.2 - Framework v2.2.8 + Template v2.3.0*  
 *Last Updated: 2025-08-20*  
-*Status: Updated and Ready*
+*Status: Fixed and Ready*
