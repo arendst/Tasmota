@@ -1,6 +1,90 @@
 # LoRaWAN Decoder AI Prompt Library
-# Version: 1.0.0 | Last Updated: 2025-08-16
+# Version: 2.0.0 | Last Updated: 2025-08-20
 # Framework: LwDecode for Tasmota Berry
+
+---
+
+## 🚀 Advanced Driver Operations
+
+### Multi-Sensor Complex Devices
+```
+Generate a driver for [VENDOR] [MODEL] multi-parameter environmental sensor.
+- Handle 15+ measurement types with different units
+- Implement advanced alarm thresholds for each parameter
+- Support calibration coefficients and device-specific corrections
+- Include data logging with timestamp support
+- Generate comprehensive test scenarios covering all measurement ranges
+```
+
+### Power Management & Energy Monitoring
+```
+Create a LoRaWAN driver for [VENDOR] [MODEL] power monitoring device.
+- Implement signed power values (bidirectional energy flow)
+- Support energy accumulation with overflow handling
+- Include power factor calculation and reactive power
+- Handle 3-phase measurements if applicable
+- Generate realistic load profile test scenarios
+```
+
+### Error Recovery & Debugging Enhancements
+```
+Regenerate [MODEL] driver with enhanced error handling:
+- Add debug mode with conditional logging
+- Implement payload validation with detailed error messages
+- Include malformed payload recovery mechanisms
+- Add performance timing measurements
+- Generate error simulation test scenarios
+```
+
+### Batch Processing & Optimization
+```
+Optimize existing drivers for memory efficiency:
+- Review [MODEL1], [MODEL2], [MODEL3] drivers
+- Consolidate common formatter patterns
+- Reduce global storage footprint
+- Implement lazy loading for infrequent features
+- Benchmark before/after performance metrics
+```
+
+### Custom Protocol Extensions
+```
+Extend [MODEL] driver with custom protocol features:
+- Add proprietary encryption/decryption support
+- Implement custom CRC validation algorithms
+- Support vendor-specific command acknowledgments
+- Handle non-standard payload structures
+- Maintain backward compatibility with standard protocol
+```
+
+### Framework Enhancement Requests
+```
+Enhance LwDecode framework with new capabilities:
+- Add support for [SPECIFIC_FEATURE]
+- Implement automatic MAP cache validation
+- Create driver migration tools for version upgrades
+- Add real-time performance monitoring
+- Generate framework usage statistics
+```
+
+### Testing & Validation Workflows
+```
+Create comprehensive test suite for [MODEL] driver:
+- Generate edge case payloads (boundary conditions)
+- Create stress test scenarios (rapid payload sequence)
+- Implement automated regression testing
+- Add hardware-in-the-loop test patterns
+- Document expected vs actual behavior analysis
+```
+
+### Documentation & Maintenance
+```
+Update driver documentation ecosystem:
+- Regenerate all driver documentation with latest template
+- Create cross-driver compatibility matrix
+- Update emoji reference with new sensor types
+- Generate framework migration guide
+- Create troubleshooting decision tree
+```
 
 ---
 
@@ -315,6 +399,7 @@ Update driver registry: [MODEL] v[VERSION] generated [DATE] with template v[TEMP
 ---
 
 **Version History:**
+- v2.0.0 (2025-08-20): Added advanced driver operations, multi-sensor complex devices, power management patterns, error recovery workflows, batch optimization, custom protocol extensions, testing workflows, and documentation maintenance
 - v1.0.0 (2025-08-16): Initial comprehensive prompt library with 50+ categorized examples
 
 ---
