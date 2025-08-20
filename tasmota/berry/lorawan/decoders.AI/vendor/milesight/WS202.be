@@ -1,35 +1,25 @@
-# -------------------------------------------------------------
-# Originally Prompted by: ZioFabry
 #
-# LoRaWAN AI-Generated Decoder for Milesight WS202
+# LoRaWAN AI-Generated Decoder for Milesight WS202 Prompted by ZioFabry 
 #
-# Generated: 2025-08-15 | Version: 1.1.0 | Revision: 2
-#            by "LoRaWAN Decoder AI Generation Template", v2.1.8
+# Generated: 2025-08-20 | Version: 1.0.0 | Revision: 1
+#            by "LoRaWAN Decoder AI Generation Template", v2.2.8
 #
-# Official Links
-# - Homepage:  https://www.milesight.com/iot/product/lorawan-sensor/ws202
-# - Userguide: https://resource.milesight-iot.com/milesight/iot/document/ws202-user-guide.pdf
-# - Decoder:   https://github.com/Milesight-IoT/SensorDecoders
-# -------------------------------------------------------------
-# v1.1.0 (2025-08-15): Regenerated with AI template v2.1.8
-#                      - Enhanced framework integration
-#                      - Added formatter expansions
-#                      - Improved global storage handling
-#                      - Added comprehensive downlink commands
-# v1.0.0 (2025-08-14): Initial generation from PDF specification
-# -------------------------------------------------------------
+# Homepage:  https://resource.milesight.com/milesight/iot/document/ws202-user-guide-en.pdf
+# Userguide: https://resource.milesight.com/milesight/iot/document/ws202-user-guide-en.pdf
+# Decoder:   https://github.com/Milesight-IoT/SensorDecoders
+# 
+# v1.0.0 (2025-08-20): Initial generation from MAP specification
 
 class LwDecode_WS202
-    var hashCheck       # Duplicate payload detection flag (true = skip duplicates)
-    var crcCheck        # CRC validation flag (if required by specs)
+    var hashCheck      # Duplicate payload detection flag (true = skip duplicates)
     var name           # Device name from LoRaWAN
     var node           # Node identifier
     var last_data      # Cached decoded data
     var last_update    # Timestamp of last update
-    
+    var lwdecode       # global instance of the driver
+
     def init()
         self.hashCheck = true   # Enable duplicate detection by default
-        self.crcCheck = false   # No CRC validation required per specs
         self.name = nil
         self.node = nil
         self.last_data = {}
@@ -43,10 +33,6 @@ class LwDecode_WS202
         if !global.contains("WS202_cmdInit")
             global.WS202_cmdInit = false
         end
-        
-        # Expand framework with motion sensor formatters
-        LwSensorFormatter_cls.Formatter["illuminance"] = {"u": "lux", "f": " %d", "i": "💡"}
-        LwSensorFormatter_cls.Formatter["motion"] = {"u": "", "f": "", "i": "🚶"}
     end
     
     def decodeUplink(name, node, rssi, fport, payload)
@@ -69,110 +55,105 @@ class LwDecode_WS202
             # Retrieve node history from global storage
             var node_data = global.WS202_nodes.find(node, {})
             
-            # Decode based on fport 85 (WS202 uses single port)
+            # Decode based on fport
             if fport == 85
                 var i = 0
                 while i < size(payload)
+                    if i + 1 >= size(payload) break end
+                    
                     var channel_id = payload[i]
                     var channel_type = payload[i+1]
                     i += 2
                     
-                    # PIR Motion (0x00, 0x00) - 1 byte
-                    if channel_id == 0x00 && channel_type == 0x00 && i < size(payload)
-                        data['pir_motion'] = payload[i] == 0x01
-                        data['motion_text'] = payload[i] == 0x01 ? "MOTION" : "NO MOTION"
-                        i += 1
-                        
-                    # Light Sensor (0x01, 0x65) - 2 bytes
-                    elif channel_id == 0x01 && channel_type == 0x65 && i + 1 < size(payload)
-                        var illuminance = (payload[i+1] << 8) | payload[i]
-                        data['illuminance'] = illuminance
-                        data['light_text'] = illuminance > 20 ? "BRIGHT" : "DARK"
-                        i += 2
-                        
-                    # Battery (0x01, 0x75) - 1 byte
-                    elif channel_id == 0x01 && channel_type == 0x75 && i < size(payload)
-                        data['battery_pct'] = payload[i]
-                        data['battery_v'] = 2.0 + (payload[i] / 100.0) * 1.2  # Estimate voltage
-                        i += 1
-                        
-                    # Device information channels (0xFF)
-                    elif channel_id == 0xFF
-                        if channel_type == 0x01 && i < size(payload)  # Protocol Version
-                            data['protocol_version'] = payload[i]
+                    # Device information channels
+                    if channel_id == 0xFF && channel_type == 0x01
+                        # Protocol version
+                        if i < size(payload)
+                            data['protocol_version'] = f"V{payload[i]}"
                             i += 1
-                        elif channel_type == 0x09 && i + 1 < size(payload)  # Hardware Version
-                            data['hw_version'] = f"{payload[i]}.{payload[i+1]}"
-                            i += 2
-                        elif channel_type == 0x0A && i + 1 < size(payload)  # Software Version
-                            data['sw_version'] = f"{payload[i]}.{payload[i+1]}"
-                            i += 2
-                        elif channel_type == 0x0B && i < size(payload)  # Power On Event
-                            data['power_on_event'] = payload[i] == 0x01
-                            i += 1
-                        elif channel_type == 0x0F && i < size(payload)  # Device Class
-                            var dev_class = ["Class A", "Class B", "Class C"]
-                            if payload[i] < size(dev_class)
-                                data['device_class'] = dev_class[payload[i]]
-                            end
-                            i += 1
-                        elif channel_type == 0x16 && i + 7 < size(payload)  # Serial Number
-                            var serial = ""
-                            for j: 0..7
-                                serial += f"{payload[i+j]:02X}"
-                            end
-                            data['serial_number'] = serial
-                            i += 8
-                        elif channel_type == 0x22 && i + 1 < size(payload)  # PIR Sensitivity
-                            data['pir_sensitivity'] = (payload[i+1] << 8) | payload[i]
-                            i += 2
-                        elif channel_type == 0x23 && i + 1 < size(payload)  # PIR Retry
-                            data['pir_retry'] = (payload[i+1] << 8) | payload[i]
-                            i += 2
-                        elif channel_type == 0x2C && i + 1 < size(payload)  # Light Threshold
-                            data['light_threshold'] = (payload[i+1] << 8) | payload[i]
-                            i += 2
-                        elif channel_type == 0xFE && i < size(payload)  # Reset Event
-                            var reset_types = ["POR", "BOR", "WDT", "CMD"]
-                            if payload[i] < size(reset_types)
-                                data['reset_type'] = reset_types[payload[i]]
-                                data['device_reset'] = true
-                            end
-                            i += 1
-                        elif channel_type == 0xFF && i + 1 < size(payload)  # TSL Version
-                            data['tsl_version'] = f"{payload[i]}.{payload[i+1]}"
-                            i += 2
-                        else
-                            print(f"Unknown FF channel: type={channel_type:02X}")
-                            i += 1  # Skip unknown
                         end
                         
-                    # Configuration acknowledgment channels (0xFE)
-                    elif channel_id == 0xFE
-                        if channel_type == 0x02 && i + 1 < size(payload)  # Reporting Interval
-                            var interval = (payload[i+1] << 8) | payload[i]
-                            data['reporting_interval'] = interval
+                    elif channel_id == 0xFF && channel_type == 0x08
+                        # Device serial number
+                        if i + 5 < size(payload)
+                            var serial = ""
+                            for j: i..(i+5)
+                                serial += string.format("%02X", payload[j])
+                            end
+                            data['serial_number'] = serial
+                            i += 6
+                        end
+                        
+                    elif channel_id == 0xFF && channel_type == 0x09
+                        # Hardware version
+                        if i + 1 < size(payload)
+                            data['hw_version'] = f"V{payload[i]}.{payload[i+1]}"
                             i += 2
-                        elif channel_type == 0x03 && i + 1 < size(payload)  # Interval ACK
-                            var ack_interval = (payload[i+1] << 8) | payload[i]
-                            data['interval_ack'] = ack_interval
+                        end
+                        
+                    elif channel_id == 0xFF && channel_type == 0x0A
+                        # Software version
+                        if i + 1 < size(payload)
+                            data['sw_version'] = f"V{payload[i]}.{payload[i+1]}"
                             i += 2
-                        elif channel_type == 0x10 && i < size(payload)  # Reboot ACK
-                            data['reboot_ack'] = payload[i] == 0xFF
+                        end
+                        
+                    elif channel_id == 0xFF && channel_type == 0x0B
+                        # Power on event
+                        if i < size(payload)
+                            data['power_on_event'] = payload[i] == 0xFF
                             i += 1
-                        else
-                            print(f"Unknown FE channel: type={channel_type:02X}")
-                            i += 1  # Skip unknown
+                        end
+                        
+                    elif channel_id == 0xFF && channel_type == 0x0F
+                        # Device type
+                        if i < size(payload)
+                            var device_type = payload[i]
+                            if device_type == 0x00
+                                data['device_class'] = "Class A"
+                            elif device_type == 0x01
+                                data['device_class'] = "Class B"
+                            elif device_type == 0x02
+                                data['device_class'] = "Class C"
+                            else
+                                data['device_class'] = f"Unknown ({device_type})"
+                            end
+                            i += 1
+                        end
+                        
+                    # Sensor data channels
+                    elif channel_id == 0x01 && channel_type == 0x75
+                        # Battery level
+                        if i < size(payload)
+                            data['battery_pct'] = payload[i]
+                            data['battery_v'] = 100000 + payload[i]  # Framework format for percentage
+                            i += 1
+                        end
+                        
+                    elif channel_id == 0x03 && channel_type == 0x00
+                        # PIR status
+                        if i < size(payload)
+                            var pir_status = payload[i]
+                            data['pir_status'] = pir_status == 0x01 ? "Occupied" : "Vacant"
+                            data['pir_occupied'] = pir_status == 0x01
+                            i += 1
+                        end
+                        
+                    elif channel_id == 0x04 && channel_type == 0x00
+                        # Light status
+                        if i < size(payload)
+                            var light_status = payload[i]
+                            data['light_status'] = light_status == 0x01 ? "Bright" : "Dark"
+                            data['light_bright'] = light_status == 0x01
+                            i += 1
                         end
                         
                     else
-                        print(f"Unknown channel: ID={channel_id:02X} Type={channel_type:02X}")
-                        break  # Exit on unknown channel
+                        # Unknown channel, try to skip safely
+                        print(f"WS202: Unknown channel ID={channel_id:02X} Type={channel_type:02X}")
+                        break
                     end
                 end
-            else
-                print(f"Unknown fport: {fport}")
-                return nil
             end
             
             # Update node history in global storage
@@ -181,23 +162,24 @@ class LwDecode_WS202
             node_data['name'] = name
             
             # Store battery trend if available
-            if data.contains('battery_v')
+            if data.contains('battery_pct')
                 if !node_data.contains('battery_history')
                     node_data['battery_history'] = []
                 end
-                node_data['battery_history'].push(data['battery_v'])
+                # Keep last 10 battery readings
+                node_data['battery_history'].push(data['battery_pct'])
                 if size(node_data['battery_history']) > 10
                     node_data['battery_history'].pop(0)
                 end
             end
             
             # Store reset count if detected
-            if data.contains('device_reset') && data['device_reset']
+            if data.contains('power_on_event') && data['power_on_event']
                 node_data['reset_count'] = node_data.find('reset_count', 0) + 1
                 node_data['last_reset'] = tasmota.rtc()['local']
             end
             
-            # Register downlink commands if not already done
+            # Initialize downlink commands
             if !global.contains("WS202_cmdInit") || !global.WS202_cmdInit
                 self.register_downlink_commands()
                 global.WS202_cmdInit = true
@@ -213,7 +195,7 @@ class LwDecode_WS202
             return data
             
         except .. as e, m
-            print(f"LwDecode_WS202 error: {m}")
+            print(f"WS202: Decode error - {e}: {m}")
             return nil
         end
     end
@@ -243,66 +225,68 @@ class LwDecode_WS202
         if name == nil || name == ""
             name = f"WS202-{self.node}"
         end
-        var name_tooltip = "Milesight WS202 PIR & Light Sensor"
-        var battery = data_to_show.find('battery_v', 1000)
+        var name_tooltip = "Milesight WS202"
+        var battery = data_to_show.find('battery_v', 1000)  # Use 1000 if no battery
         var battery_last_seen = last_update
-        var rssi = data_to_show.find('rssi', 1000)
+        var rssi = data_to_show.find('rssi', 1000)  # Use 1000 if no RSSI
+        var simulated = data_to_show.find('simulated', false) # Simulated payload indicator
         
-        msg = msg + lwdecode.header(name, name_tooltip, battery, battery_last_seen, rssi, last_update)
-        
-        # Build compact motion and light display
+        # Build display using emoji formatter
+        fmt.header(name, name_tooltip, battery, battery_last_seen, rssi, last_update, simulated)
         fmt.start_line()
         
-        # Motion status with dynamic emoji
-        if data_to_show.contains('pir_motion')
-            var motion_emoji = data_to_show['pir_motion'] ? "🚶" : "🚫"
-            var motion_text = data_to_show.find('motion_text', "UNKNOWN")
-            fmt.add_sensor("string", motion_text, "Motion Detection", motion_emoji)
+        # PIR and Light status
+        if data_to_show.contains('pir_status')
+            var pir_icon = data_to_show['pir_occupied'] ? "🚶" : "🏠"
+            var pir_tooltip = f"PIR: {data_to_show['pir_status']}"
+            fmt.add_sensor("string", data_to_show['pir_status'], pir_tooltip, pir_icon)
         end
         
-        # Light level
-        if data_to_show.contains('illuminance')
-            fmt.add_sensor("illuminance", data_to_show['illuminance'], "Light Level", nil)
+        if data_to_show.contains('light_status')
+            var light_icon = data_to_show['light_bright'] ? "☀️" : "🌙"
+            var light_tooltip = f"Light: {data_to_show['light_status']}"
+            fmt.add_sensor("string", data_to_show['light_status'], light_tooltip, light_icon)
         end
         
-        # Light status with emoji (if light level available)
-        if data_to_show.contains('light_text')
-            var light_emoji = data_to_show['illuminance'] > 20 ? "🌞" : "🌕"
-            fmt.add_sensor("string", data_to_show['light_text'], "Light Status", light_emoji)
+        # Battery percentage if available
+        if data_to_show.contains('battery_pct')
+            fmt.add_sensor("string", f"{data_to_show['battery_pct']}%", "Battery Level", "🔋")
         end
         
-        fmt.end_line()
-        var sensor_msg = fmt.get_msg()
-        if sensor_msg != nil
-            msg = msg + sensor_msg
+        # Device events
+        var has_events = false
+        if data_to_show.contains('power_on_event') && data_to_show['power_on_event']
+            fmt.next_line()
+            fmt.add_status("Power On", "⚡", "Device power on event")
+            has_events = true
         end
         
-        # Add alert line for reset events
-        if data_to_show.find('device_reset', false)
-            fmt.start_line()
-            var reset_text = data_to_show.find('reset_type', 'Reset')
-            fmt.add_status(reset_text, "🔄", "Device Reset")
-            fmt.end_line()
-            var alert_msg = fmt.get_msg()
-            if alert_msg != nil
-                msg = msg + alert_msg
+        # Device info if available
+        if data_to_show.contains('device_class')
+            if !has_events
+                fmt.next_line()
+                has_events = true
             end
+            fmt.add_sensor("string", data_to_show['device_class'], "LoRaWAN Class", "📡")
         end
         
         # Add last seen info if data is old
         if last_update > 0
             var age = tasmota.rtc()['local'] - last_update
             if age > 3600  # Data older than 1 hour
-                fmt.start_line()
-                fmt.add_status(self.format_age(age), "⏱️", nil)
-                fmt.end_line()
-                var age_msg = fmt.get_msg()
-                if age_msg != nil
-                    msg = msg + age_msg
+                if !has_events
+                    fmt.next_line()
+                    has_events = true
                 end
+                fmt.add_status(self.format_age(age), "⏱️", nil)
             end
         end
         
+        fmt.end_line()
+        
+        # ONLY get_msg() return a string that can be used with +=
+        msg += fmt.get_msg()
+
         return msg
     end
     
@@ -343,53 +327,24 @@ class LwDecode_WS202
     def register_downlink_commands()
         import string
         
-        # Set Reporting Interval
-        tasmota.remove_cmd("LwWS202Interval")
-        tasmota.add_cmd("LwWS202Interval", def(cmd, idx, payload_str)
-            var minutes = int(payload_str)
-            if minutes < 1 || minutes > 65535
-                return tasmota.resp_cmnd_str("Invalid: range 1-65535 minutes")
+        # Set reporting interval command
+        tasmota.remove_cmd("LwWS202SetInterval")
+        tasmota.add_cmd("LwWS202SetInterval", def(cmd, idx, payload_str)
+            # Format: LwWS202SetInterval<slot> <interval_seconds>
+            var interval = int(payload_str)
+            if interval < 60 || interval > 64800
+                return tasmota.resp_cmnd_str("Invalid: range 60-64800 seconds")
             end
-            var hex_cmd = f"FE02{lwdecode.uint16le(minutes)}"
+            
+            # Build hex command per PDF specification: FF03 + 2 bytes little endian
+            var hex_cmd = f"FF03{lwdecode.uint16le(interval)}"
             return lwdecode.SendDownlink(global.WS202_nodes, cmd, idx, hex_cmd)
         end)
         
-        # PIR Sensitivity Configuration
-        tasmota.remove_cmd("LwWS202PIRSensitivity")
-        tasmota.add_cmd("LwWS202PIRSensitivity", def(cmd, idx, payload_str)
-            var sensitivity = int(payload_str)
-            if sensitivity < 1 || sensitivity > 10
-                return tasmota.resp_cmnd_str("Invalid: range 1-10")
-            end
-            var hex_cmd = f"FF22{lwdecode.uint16le(sensitivity)}"
-            return lwdecode.SendDownlink(global.WS202_nodes, cmd, idx, hex_cmd)
-        end)
-        
-        # PIR Retry Configuration
-        tasmota.remove_cmd("LwWS202PIRRetry")
-        tasmota.add_cmd("LwWS202PIRRetry", def(cmd, idx, payload_str)
-            var retry = int(payload_str)
-            if retry < 1 || retry > 255
-                return tasmota.resp_cmnd_str("Invalid: range 1-255")
-            end
-            var hex_cmd = f"FF23{lwdecode.uint16le(retry)}"
-            return lwdecode.SendDownlink(global.WS202_nodes, cmd, idx, hex_cmd)
-        end)
-        
-        # Light Threshold Configuration
-        tasmota.remove_cmd("LwWS202LightThreshold")
-        tasmota.add_cmd("LwWS202LightThreshold", def(cmd, idx, payload_str)
-            var threshold = int(payload_str)
-            if threshold < 0 || threshold > 65535
-                return tasmota.resp_cmnd_str("Invalid: range 0-65535 lux")
-            end
-            var hex_cmd = f"FF2C{lwdecode.uint16le(threshold)}"
-            return lwdecode.SendDownlink(global.WS202_nodes, cmd, idx, hex_cmd)
-        end)
-        
-        # Device Reboot
+        # Reboot device command
         tasmota.remove_cmd("LwWS202Reboot")
         tasmota.add_cmd("LwWS202Reboot", def(cmd, idx, payload_str)
+            # Format: LwWS202Reboot<slot>
             var hex_cmd = "FF10FF"
             return lwdecode.SendDownlink(global.WS202_nodes, cmd, idx, hex_cmd)
         end)
@@ -400,23 +355,6 @@ end
 
 # Global instance
 LwDeco = LwDecode_WS202()
-
-# Test command registration (recreated on each load)
-tasmota.remove_cmd("LwWS202TestPayload")
-tasmota.add_cmd("LwWS202TestPayload", def(cmd, idx, payload_str)
-    # Parse hex string to bytes
-    var test_payload = bytes(payload_str)
-    
-    # Force driver load by LwDecode framework
-    var result = LwDeco.decodeUplink("TestWS202", "test_node", -85, idx, test_payload)
-    
-    if result != nil
-        import json
-        tasmota.resp_cmnd(json.dump(result))
-    else
-        tasmota.resp_cmnd_error()
-    end
-end)
 
 # Node management commands
 tasmota.remove_cmd("LwWS202NodeStats")
@@ -438,3 +376,35 @@ tasmota.add_cmd("LwWS202ClearNode", def(cmd, idx, node_id)
         tasmota.resp_cmnd_str("Node not found")
     end
 end)
+
+# Command usage: LwWS202TestUI<slot> <scenario>
+tasmota.remove_cmd("LwWS202TestUI")
+tasmota.add_cmd("LwWS202TestUI", def(cmd, idx, payload_str)
+    # Predefined realistic test scenarios for UI development
+    var test_scenarios = {
+        "normal":    "017564030000040000",      # Normal: 100% battery, vacant, dark
+        "occupied":  "017564030001040001",      # Occupied: 100% battery, occupied, bright
+        "vacant":    "017564030000040001",      # Vacant bright: 100% battery, vacant, bright
+        "low":       "01750A030001040000",      # Low battery: 10% battery, occupied, dark
+        "info":      "FF0BFF FF0101 FF086538B2232131 FF090100 FF0A0101 FF0F00",  # Device info
+        "config":    "017550030000040001"       # Config response: 80% battery, vacant, bright
+    }
+    
+    var hex_payload = test_scenarios.find(payload_str ? payload_str : 'nil', 'not_found')
+    
+    if hex_payload == 'not_found'
+      var scenarios_list = ""
+      for key: test_scenarios.keys()
+        scenarios_list += key + " "
+      end
+      return tasmota.resp_cmnd_str(format("Available scenarios: %s", scenarios_list))
+    end
+    
+    var rssi = -75
+    var fport = 85
+
+    return tasmota.cmd(f'LwSimulate{idx} {rssi},{fport},{hex_payload}')
+end)
+
+# MANDATORY: Register driver for web UI integration
+tasmota.add_driver(LwDeco)
