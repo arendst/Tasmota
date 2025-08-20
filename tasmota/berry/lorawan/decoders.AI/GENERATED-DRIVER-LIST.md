@@ -16,23 +16,23 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 | Model | Version | Date | Channels | Test | | | Debug Mode | Model Version | Prompt Ver | Description |
 |-------|---------|------|----------|------|------|------|------------|---------------|------------|-------------|
 | | | | | Uplink | Downlink | Others | | | | |
-| D2x | 1.0.0 | 2025-08-16 | 15/15 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | D20/D20S/D22/D23-LB/LS | v2.1.9 | Multi-probe temperature sensor series |
+| D2x | 1.0.0 | 2025-08-20 | 15/15 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | D20/D20S/D22/D23-LB/LS | v2.2.8 | Multi-probe temperature sensor series |
 | DDS75-LB | 1.0.0 | 2025-08-16 | 8/8 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | DDS75-LB/LS | v2.1.8 | Ultrasonic distance detection sensor |
 | LDS02 | 1.0.0 | 2025-08-16 | 8/8 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | LDS02 | v2.1.8 | Magnetic door sensor with event counting |
 | LHT52 | 1.0.0 | 2025-08-16 | 16/16 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | LHT52 | v2.1.8 | Temperature & humidity sensor with datalog & alarm features |
 | LHT65 | 1.0.0 | 2025-08-16 | 18/18 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | LHT65 | v2.1.8 | Temperature & humidity sensor with 9 external sensor types |
-| PS-LB | 1.1.0 | 2025-08-16 | 13/13 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | PS-LB/LS | v2.1.10 | Pressure/water level sensor with probe detection |
+| PS-LB | 1.1.0 | 2025-08-16 | 13/13 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | PS-LB/LS | v2.1.10 | Pressure/water level sensor with probe detection (missing REPORT) |
 
 ### Milesight
 | Model | Version | Date | Channels | Test | | | Debug Mode | Model Version | Prompt Ver | Description |
 |-------|---------|------|----------|------|------|------|------------|---------------|------------|-------------|
 | | | | | Uplink | Downlink | Others | | | | |
-| AM300 | 1.1.0 | 2025-08-15 | 20/20 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | AM300(L) Series | v2.1.8 | 8-in-1 indoor air quality monitor |
+| AM300 | 1.1.0 | 2025-08-15 | 20/20 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | AM300(L) Series | v2.1.8 | 8-in-1 indoor air quality monitor (missing MAP, REPORT) |
 | WS101 | 1.0.0 | 2025-08-15 | 8/8 | 🏃 Running | 🔲 None | 🔲 None | 🔴 Inactive | WS101 | v2.1.8 | Smart button with multiple press types |
 | WS202 | 1.2.0 | 2025-08-20 | 9/9 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | WS202 | v2.2.6 | PIR & Light sensor for motion and illuminance detection |
-| WS301 | 1.3.0 | 2025-08-20 | 10/10 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | WS301 | v2.2.6 | Magnetic door/window sensor |
-| WS523 | 2.0.0 | 2025-08-15 | 33/33 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | WS523 | v2.1.8 | Portable smart socket with power monitoring |
-| WS52x | 1.4.0 | 2025-08-20 | 25/25 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | WS52x Series | v2.2.6 | Smart socket series with comprehensive power monitoring |
+| WS301 | 1.3.0 | 2025-08-20 | 10/10 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | WS301 | v2.2.6 | Magnetic door/window sensor (missing REPORT) |
+| WS523 | 2.0.0 | 2025-08-15 | 33/33 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | WS523 | v2.1.8 | Portable smart socket with power monitoring (missing MAP, REPORT) |
+| WS52x | 1.4.0 | 2025-08-20 | 25/25 | 🔲 None | 🔲 None | 🔲 None | 🔴 Inactive | WS52x Series | v2.2.6 | Smart socket series with comprehensive power monitoring (missing REPORT) |
 
 ## Coverage Statistics
 
@@ -48,9 +48,10 @@ This document maintains a comprehensive list of all AI-generated drivers for the
 ### File Statistics
 - **Driver Files (.be)**: 12
 - **Documentation (.md)**: 12
-- **MAP Cache Files**: 8 (Dragino: 6, Milesight: 2)
-- **Framework Files**: 14
-- **Total Project Files**: 46
+- **MAP Cache Files**: 10 (Dragino: 6, Milesight: 4)
+- **Report Files**: 8 (Dragino: 5, Milesight: 3)
+- **Framework Files**: 15
+- **Total Project Files**: 52
 
 ### Framework Compliance Verification
 - ✅ **Command Naming**: All commands use "Lw[MODEL][Function]" pattern
