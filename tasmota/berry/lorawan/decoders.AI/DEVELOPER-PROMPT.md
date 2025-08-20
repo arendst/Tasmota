@@ -1,5 +1,5 @@
 # LoRaWAN Decoder AI Generation Template
-## Version: 2.1.13 | Framework: LwDecode | Platform: Tasmota Berry
+## Version: 2.2.8 | Framework: LwDecode | Platform: Tasmota Berry
 
 ---
 
@@ -12,10 +12,9 @@ Generate production-ready Berry driver for LoRaWAN sensors from manufacturer PDF
 
 ### Input Requirements
 ```yaml
-required_files:
+required_files_cached_in_memory:
   - PDF specification (manufacturer datasheet)
-  - BERRY_LANGUAGE_REFERENCE.md (loaded)
-  - BERRY_TASMOTA.md (loaded)
+  - BERRY-CUSTOM-LANGUAGE-REFERENCE.md v1.2.0 (loaded)
   - README.md (AI Powered LoRaWAN Driver Development Framework)
   - FRAMEWORK.md (Framework Implementation)
   - GENERATED-DRIVER-LIST.md (AI Mantianed LoRaWAN Driver List)
@@ -63,33 +62,9 @@ MANDATORY: Every uplink/downlink type in PDF MUST be implemented
 - Acknowledgment uplinks must be decoded
 ```
 
-### 2. BERRY LANGUAGE CONSTRAINTS
+### 2. ADDIOTIONAL BERRY LANGUAGE CONSTRAINTS
+
 ```berry
-# FORBIDDEN variable names (Berry reserved words):
-type, class, import, def, end, var, return, if, elif, else
-for, while, break, continue, true, false, nil, as, do, try
-except, raise, static, assert, global, lambda
-
-# REQUIRED naming patterns:
-✅ channel_type, dev_type, msg_type, sensor_type
-✅ dev_class, node_class, data_class
-✅ config_import, var_name, def_name
-❌ type, class, import (bare reserved words)
-
-# Framework usage:
-✅ var fmt = LwSensorFormatter_cls()  # Correct - instantiate formatter
-✅ lwdecode.SendDownlink(...)         # Correct - use module function
-❌ var fmt = LwSensorFormatter()      # Wrong - class doesn't exist
-❌ def LwSensorFormatter()             # Wrong - don't wrap framework
-❌ SendDownlink(...)                   # Wrong - must use lwdecode prefix
-
-# CRITICAL: F-string and Ternary Operator Issues
-# Berry parser has trouble with nested quotes in f-strings with conditionals
-❌ BROKEN: print(f"Status: {'enabled' if flag else 'disabled'}")
-✅ FIXED:  var status = flag ? "enabled" : "disabled"
-           print(f"Status: {status}")
-
-# Always extract ternary operators to separate variables before f-string interpolation
 ```
 
 ### 3. ESP32 FILESYSTEM CONSTRAINTS
@@ -99,18 +74,21 @@ esp32_limitations:
   max_filename: 31 characters
   path_structure: "flat - all files in root only"
   file_operations: "standard create/read/write/delete only"
-  
-file_organization:
-  all_drivers: "stored in single flat directory"
-  naming_convention: "vendor_model.be format required"
+
+  file_organization:
+  all_drivers: "stored in vendor subdirectories"
+  naming_convention: "[MODEL].be format required"
   examples:
-    ✅ correct: "milesight_ws52x.be"
-    ✅ correct: "dragino_lht65.be"
+    ✅ correct: "WS52x.be" (in vendor/milesight/)
+    ✅ correct: "LHT65.be" (in vendor/dragino/)
+    ❌ broken:  "milesight_ws52x.be"    
+    ❌ correct: "dragino_lht65.be"
     ❌ broken:  "vendor/milesight/ws52x.be"
     ❌ broken:  "drivers/sensors/temp.be"
     
   load_commands:
-    ✅ correct: 'load("milesight_ws52x.be")'
+    ✅ correct: 'load("WS52x.be")'
+    ✅ correct: 'load("LHT65.be")'
     ❌ broken:  'load("vendor/milesight/ws52x.be")'
 ```
 
@@ -129,58 +107,6 @@ optimization_rules:
   - Clear unused references immediately
 ```
 
-### 5. DEBUG MODE PATTERN
-```berry
-# MANDATORY: When debug version is requested, include this pattern:
-class LwDecode_[MODEL]
-    var debug_mode     # Debug mode for enhanced logging
-    
-    def init()
-        self.debug_mode = true  # Enable debug for development
-        
-        if self.debug_mode
-            print("[MODEL]: Decoder initialized with debug mode enabled")
-        end
-    end
-    
-    def decodeUplink(name, node, rssi, fport, payload)
-        if self.debug_mode
-            print(f"[MODEL]: Decoding node={node}, fport={fport}, size={size(payload)}")
-            print(f"[MODEL]: Payload hex: {payload.tohex()}")
-        end
-        
-        # Throughout decode process, add debug logging:
-        if self.debug_mode
-            print(f"[MODEL]: Temperature = {temperature}°C")
-            print(f"[MODEL]: Battery = {battery}V")
-        end
-    end
-    
-    # Optional: Debug control command
-    def register_downlink_commands()
-        # ... other commands ...
-        
-        tasmota.remove_cmd("Lw[MODEL]Debug")
-        tasmota.add_cmd("Lw[MODEL]Debug", def(cmd, idx, payload_str)
-            var enable = payload_str == "on" || payload_str == "1"
-            LwDeco.set_debug_mode(enable)
-            var status = enable ? "enabled" : "disabled"
-            tasmota.resp_cmnd_str(f"Debug mode {status}")
-        end)
-    end
-    
-    def set_debug_mode(enabled)
-        self.debug_mode = enabled
-        var status = enabled ? "enabled" : "disabled"
-        print(f"[MODEL]: Debug mode {status}")
-    end
-end
-
-# Detection Rules for Registry Classification:
-# 🟢 Active = var debug_mode exists AND enabled in code
-# 🔴 Inactive = No var debug_mode property found
-```
-
 ---
 
 ## 🏗️ DRIVER STRUCTURE
@@ -189,7 +115,7 @@ end
 ```
 CRITICAL: Understanding Driver Slots vs Device Nodes
 
-Driver Slot (idx): Position in Tasmota's driver array (0-15)
+Driver Slot (idx): Position in Tasmota's driver array (1-16)
 - Each driver instance occupies one slot
 - Commands use slot number: Lw[MODEL]Control<slot>
 - Example: Driver in slot 2 → Lw[MODEL]Control2
@@ -197,7 +123,7 @@ Driver Slot (idx): Position in Tasmota's driver array (0-15)
 Device Node: LoRaWAN device identifier from network
 - Can be MAC address, device ID, or custom identifier
 - Used internally for device identification
-- Multiple devices can use same driver (same slot)
+- Multiple devices can use same driver on different slot
 
 Command Format:
 ✅ CORRECT: Lw[MODEL]Control<slot> <parameters>
@@ -206,33 +132,28 @@ Command Format:
 
 ### Class Template
 ```berry
-# -------------------------------------------------------------
-# Originally Prompted by: [AUTHOR]
 #
-# LoRaWAN AI-Generated Decoder for [VENDOR] [MODEL]
+# LoRaWAN AI-Generated Decoder for [VENDOR] [MODEL] Prompted by [AUTHOR] 
 #
 # Generated: [DATE] | Version: [VERSION] | Revision: [REV]
-#            by "LoRaWAN Decoder AI Generation Template", v2.1.10
+#            by "LoRaWAN Decoder AI Generation Template", [FRAMEWORK_VERSION]
 #
-# Official Links
-# - Homepage:  [MODEL_HOMEPAGE_LINK]
-# - Userguide: [MODEL_USERGUIDE_LINK]
-# - Decoder:   [MODEL_OFFICIALDECODER_LINK]
-# -------------------------------------------------------------
+# Homepage:  [MODEL_HOMEPAGE_LINK]
+# Userguide: [MODEL_USERGUIDE_LINK]
+# Decoder:   [MODEL_OFFICIALDECODER_LINK]
+# 
 # [CHANGELOG]
-# -------------------------------------------------------------
 
 class LwDecode_[MODEL]
-    var hashCheck       # Duplicate payload detection flag (true = skip duplicates)
-    var crcCheck        # CRC validation flag (if required by specs)
+    var hashCheck      # Duplicate payload detection flag (true = skip duplicates)
     var name           # Device name from LoRaWAN
     var node           # Node identifier
     var last_data      # Cached decoded data
     var last_update    # Timestamp of last update
-    
+    var lwdecode       # global instance of the driver
+
     def init()
         self.hashCheck = true   # Enable duplicate detection by default
-        self.crcCheck = false   # Set true only if PDF requires CRC validation
         self.name = nil
         self.node = nil
         self.last_data = {}
@@ -313,9 +234,6 @@ class LwDecode_[MODEL]
             return data
             
         except .. as e, m
-            if self.debug_mode
-                print(f"[MODEL]: Exception in decode - {e}: {m}")
-            end
             print(f"[MODEL]: Decode error - {e}: {m}")
             return nil
         end
@@ -350,28 +268,26 @@ class LwDecode_[MODEL]
         var battery = data_to_show.find('battery_v', 1000)  # Use 1000 if no battery
         var battery_last_seen = last_update
         var rssi = data_to_show.find('rssi', 1000)  # Use 1000 if no RSSI
-        
+        var simulated = data_to_show.find('simulated', false) # Simulated payload indicator
         # Build display using emoji formatter
-        fmt.header(name, name_tooltip, battery, battery_last_seen, rssi, last_update)
+        fmt.header(name, name_tooltip, battery, battery_last_seen, rssi, last_update, simulated)
         fmt.start_line()
         [DISPLAY_LOGIC]
-        fmt.end_line()
-        msg += fmt.get_msg()
         
         # Add last seen info if data is old
         if last_update > 0
             var age = tasmota.rtc()['local'] - last_update
             if age > 3600  # Data older than 1 hour
-                fmt.start_line()
+                fmt.next_line()
                 fmt.add_status(self.format_age(age), "⏱️", nil)
-                fmt.end_line()
-                var age_msg = fmt.get_msg()
-                if age_msg != nil
-                    msg = msg + age_msg
-                end
             end
         end
         
+        fmt.end_line()
+        
+        # ONLY get_msg() return a string that can be used with +=
+        msg += fmt.get_msg()
+
         return msg
     end
     
@@ -412,11 +328,12 @@ class LwDecode_[MODEL]
     def register_downlink_commands()
         import string
         
-        # [MANDATORY: Implement ALL downlink commands from PDF]
+        # [MANDATORY]
+        # Implement ALL downlink commands from PDF
         # Each downlink type must have a corresponding Tasmota command
         # Command format: Lw[MODEL]<Function><slot> <parameters>
         # ALL COMMANDS MUST START WITH "Lw" PREFIX FOR CONSISTENCY
-        # <slot> is the driver slot number (0-15), NOT the device node ID
+        # <slot> is the driver slot number (1-16), NOT the device node ID
         # use the SendDownlinkMap helper function when possible like ON|OFF|0|1 , LOW|MID|HIGH, ENABLED|DISABLE|0|1 
         # use SendDownlink for other use case
         
@@ -503,53 +420,6 @@ end
 # Global instance
 LwDeco = LwDecode_[MODEL]()
 
-# Test command registration (recreated on each load)
-# Command usage: Lw[MODEL]TestPayload<slot> <hex_payload>
-#                Lw[MODEL]TestPayload<slot> <fport>,<hex_payload>
-#                Lw[MODEL]TestPayload<slot> <rssi>,<fport>,<hex_payload>
-# Where <slot> is the driver slot (0-15), NOT the device node ID
-# Default: fport=[DEFAULT_PORT], rssi=-85
-
-tasmota.remove_cmd("Lw[MODEL]TestPayload")
-tasmota.add_cmd("Lw[MODEL]TestPayload", def(cmd, idx, payload_str)
-    # idx = driver slot number (0-15) assigned by Tasmota
-    # Parse parameters: payload_str can be "hex", "fport,hex", or "rssi,fport,hex"
-    var parts = string.split(payload_str, ',')
-    var rssi = -85          # Default RSSI
-    var fport = [DEFAULT_PORT]  # Default fport for [MODEL] (replace with actual port)
-    var hex_payload = payload_str
-    
-    if size(parts) == 1
-        # Format: <hex_payload>
-        hex_payload = parts[0]
-    elif size(parts) == 2
-        # Format: <fport>,<hex_payload>
-        fport = int(parts[0])
-        hex_payload = parts[1]
-    elif size(parts) == 3
-        # Format: <rssi>,<fport>,<hex_payload>
-        rssi = int(parts[0])
-        fport = int(parts[1])
-        hex_payload = parts[2]
-    end
-    
-    # Parse hex string to bytes
-    var test_payload = bytes(hex_payload)
-    
-    # Use slot number for device name, but test node ID for protocol
-    var device_name = format("[MODEL]-%d", idx)
-    var node_id = idx
-    
-    var result = LwDeco.decodeUplink(device_name, node_id, rssi, fport, test_payload)
-    
-    if result != nil
-        import json
-        tasmota.resp_cmnd(json.dump(result))
-    else
-        tasmota.resp_cmnd_error()
-    end
-end)
-
 # Node management commands
 tasmota.remove_cmd("Lw[MODEL]NodeStats")
 tasmota.add_cmd("Lw[MODEL]NodeStats", def(cmd, idx, node_id)
@@ -571,49 +441,45 @@ tasmota.add_cmd("Lw[MODEL]ClearNode", def(cmd, idx, node_id)
     end
 end)
 
+# Command usage: Lw[MODEL]TestUI<slot> <scenario>
+tasmota.remove_cmd("Lw[MODEL]TestUI")
+tasmota.add_cmd("Lw[MODEL]TestUI", def(cmd, idx, payload_str)
+    # Predefined realistic test scenarios for UI development
+    var test_scenarios = {
+        #
+        # ⚠️ CRITICAL REQUIREMENT 
+        # - the payload is an hex string like 'FF01E5' (2 bytes x char), the len CANT'BE odd !
+        # - Define realistic test payloads for different device states
+        # - DOUBLE CHECK THIS LIST, trying to decoding back, otherwise TOO many errors
+        # - Hex strings must be continuous without spaces for proper Berry parsing in LwSimulate commands.
+        #
+        "normal":    "[NORMAL_HEX_PAYLOAD]",      # Normal operation
+        "low":       "[LOW_BATTERY_HEX_PAYLOAD]", # Low battery/values
+        "high":      "[HIGH_VALUES_HEX_PAYLOAD]", # High values/alerts  
+        "alert":     "[ALERT_HEX_PAYLOAD]",       # Alert conditions
+        "config":    "[CONFIG_HEX_PAYLOAD]",      # Configuration response
+        "info":      "[INFO_HEX_PAYLOAD]"         # Device information
+    }
+    
+    var hex_payload = test_scenarios.find(payload_str ? payload_str : 'nil', 'not_found')
+    
+    if hex_payload == 'not_found'
+      var scenarios_list = ""
+      for key: test_scenarios.keys()
+        scenarios_list += key + " "
+      end
+      return tasmota.resp_cmnd_str(format("Available scenarios: %s", scenarios_list))
+    end
+    
+    var rssi = -75
+    var fport = [DEFAULT_FPORT]
+
+    return tasmota.cmd(f'LwSimulate{idx} {rssi},{fport},{hex_payload}')
+end)
+
 # MANDATORY: Register driver for web UI integration
 tasmota.add_driver(LwDeco)
 
-# Debug version - TestReal command for UI testing without hardware
-# ONLY INCLUDE THIS SECTION WHEN DEBUG VERSION IS REQUESTED
-# Command usage: Lw[MODEL]TestReal<slot> <scenario>
-tasmota.remove_cmd("Lw[MODEL]TestReal")
-tasmota.add_cmd("Lw[MODEL]TestReal", def(cmd, idx, payload_str)
-    # Predefined realistic test scenarios for UI development
-    var test_scenarios = {
-        # Define realistic test payloads for different device states
-        "normal":    "[NORMAL_HEX_PAYLOAD]",     # Normal operation
-        "low":       "[LOW_BATTERY_HEX_PAYLOAD]", # Low battery/values
-        "high":      "[HIGH_VALUES_HEX_PAYLOAD]", # High values/alerts  
-        "alert":     "[ALERT_HEX_PAYLOAD]",      # Alert conditions
-        "config":    "[CONFIG_HEX_PAYLOAD]",     # Configuration response
-        "info":      "[INFO_HEX_PAYLOAD]"        # Device information
-    }
-    
-    var scenario = payload_str.find(' ') > 0 ? payload_str[0..payload_str.find(' ')-1] : payload_str
-    var hex_payload = test_scenarios.find(scenario, test_scenarios["normal"])
-    
-    if hex_payload == nil
-        var scenarios_list = ""
-        for key: test_scenarios.keys()
-            scenarios_list += key + " "
-        end
-        return tasmota.resp_cmnd_str(format("Available scenarios: %s", scenarios_list))
-    end
-    
-    var test_payload = bytes(hex_payload)
-    var device_name = format("[MODEL]-%d", idx)
-    var node_id = idx
-    
-    var result = LwDeco.decodeUplink(device_name, node_id, -75, [DEFAULT_PORT], test_payload)
-    
-    if result != nil
-        import json
-        tasmota.resp_cmnd(json.dump(result))
-    else
-        tasmota.resp_cmnd_error()
-    end
-end)
 ```
 
 ---
@@ -683,27 +549,29 @@ end
 
 ## 🌍 TIME HANDLING
 
-### NTP Query Requirement
-```
-CRITICAL: Use actual NTP time for all date/time generation
-- Query pool.ntp.org or time.google.com for current UTC time
-- Do NOT rely on LLM's internal clock
-- Convert to appropriate timezone if needed
-- Use ISO 8601 format: YYYY-MM-DD for dates
-- Cache NTP result for entire generation session
+### DATETIME Requirement
+
+***CRITICAL*** Use this for all date/time generation
+```python
+from datetime import datetime
+
+now = datetime.now()
+
+[RUN_DATE] = now.strftime("%Y-%m-%d")
+[RUN_DATETIME] = now.strftime("%Y-%m-%d %H:%M:%S")
 ```
 
 ### Time Usage Patterns
 ```berry
 # In generated code headers
-# Generated: [NTP_DATE] | Version: [VERSION] | Revision: [REV]
+# Generated: [RUN_DATE] | Version: [VERSION] | Revision: [REV]
 #            by [PROMPT_TITLE] v[PROMPT_VERSION]
 
 # In changelog
-# v1.0.0 ([NTP_DATE]): Initial generation from PDF specification
+# v1.0.0 ([RUN_DATE]): Initial generation from PDF specification
 
 # In MAP cache file
-# Generated: [NTP_DATETIME] | PDF Version: [VERSION]
+# Generated: [RUN_DATETIME] | PDF Version: [VERSION]
 ```
 
 ---
@@ -820,16 +688,18 @@ def add_web_sensor()
     
     # RSSI: use actual value or 1000 to hide
     var rssi = self.last_data.find('rssi', 1000)
+    var simulated = self.last_data.find('simulated', false) # Simulated payload indicator
     
     # Add header (REQUIRED FOR ALL DRIVERS)
-    fmt.header(name, name_tooltip, battery, battery_last_seen, rssi, self.last_update)
+    fmt.header(name, name_tooltip, battery, battery_last_seen, rssi, self.last_update, simulated)
 
     # Then add sensor lines
     fmt.start_line()
     # ... sensor display logic
     fmt.end_line()
+
     msg += fmt.get_msg()
-    
+   
     return msg
 end
 ```
@@ -843,35 +713,34 @@ def add_web_sensor()
     var fmt = LwSensorFormatter_cls()
     
     # MANDATORY: Add header first
-    fmt.header(name, tooltip, battery, battery_ls, rssi, last_seen)
+    fmt.header(name, tooltip, battery, battery_ls, rssi, last_seen, simulated)
     
-    # Single line format (preferred) - NO CHAINING
+    # Single line format (preferred) - Chaining when possibile 
     fmt.start_line()
-    fmt.add_sensor("volt", self.last_data.find('battery_v'), "Battery", "🔋")
-    fmt.add_sensor("string", self.last_data.find('temperature'), "Temp", "🌡️")
-    fmt.add_sensor("milliamp", self.last_data.find('current'), "Current", "🔌")
-    fmt.add_sensor("power", self.last_data.find('power'), "Power", "💡")
+       .add_sensor("volt", self.last_data.find('battery_v'), "Battery", "🔋")
+       .add_sensor("string", self.last_data.find('temperature'), "Temp", "🌡️")
+       .add_sensor("milliamp", self.last_data.find('current'), "Current", "🔌")
+       .add_sensor("power", self.last_data.find('power'), "Power", "💡")
+    
     # For multi-line: use next_line() instead of end_line() + start_line()
     fmt.next_line()  # Preferred for continuing to next line
-    fmt.add_sensor("altitude", self.last_data.find('altitude'), "Alt", "⛰")
-    fmt.add_status("OK", "✅", "Device operational")
-    fmt.end_line()
-    msg = msg + fmt.get_msg()  # Get string AFTER building
+       .add_sensor("altitude", self.last_data.find('altitude'), "Alt", "⛰")
+       .add_status("OK", "✅", "Device operational")
+       .end_line()
+
+    msg = msg + fmt.get_msg()  # Get string AFTER building (this clear the formatter buffer for possible re-using)
     
     # Only use start_line() for separate blocks (e.g., alerts)
     if self.last_data.find('device_reset')
-        fmt.start_line()  # New separate block
+        fmt.start_line()  # New separate block (the buffer was clear with the last get_msg() call)
         fmt.add_status("Reset detected", "⚠️", nil)
         fmt.end_line()
-        var alert_msg = fmt.get_msg()
-        if alert_msg != nil
-            msg = msg + alert_msg
-        end
+
+        msg += fmt.get_msg()
     end
     
     return msg
 end
-```
 ```
 
 ### Available Formatters
@@ -889,16 +758,30 @@ end
 # Usage: fmt.add_sensor(formatter, value, tooltip, icon)
 # For status text: fmt.add_sensor("string", "ON", nil, "🟢")
 
-# ENCOURAGED: Create custom formatters for device-specific units
+# ENCOURAGED: Add new formatters for device-specific units
 # Example: Temperature, Humidity, CO2, Pressure, etc.
-# Add to your driver's init() or as needed:
-LwSensorFormatter_cls.Formatter["temperature"] = {"u": "°C", "f": " %.1f", "i": "🌡️"}
-LwSensorFormatter_cls.Formatter["humidity"] = {"u": "%RH", "f": " %.0f", "i": "💧"}
-LwSensorFormatter_cls.Formatter["co2"] = {"u": "ppm", "f": " %d", "i": "💨"}
-LwSensorFormatter_cls.Formatter["pressure"] = {"u": "hPa", "f": " %.0f", "i": "🔵"}
-LwSensorFormatter_cls.Formatter["distance"] = {"u": "m", "f": " %.2f", "i": "📏"}
-LwSensorFormatter_cls.Formatter["lux"] = {"u": "lx", "f": " %d", "i": "☀️"}
-LwSensorFormatter_cls.Formatter["battery"] = {"u": "%", "f": " %d", "i": "🔋"}
+# Add to your driver requirement into the LwDecode.be and bump his version:
+
+  static var Formatter = {
+    "string":           { "u": nil,   "f": " %s",    "i": nil         },
+    "volt":             { "u": "V",   "f": " %.1f",  "i": "&#x26A1;"  }, # TODO - Convert Unicode code in emoji
+    "milliamp":         { "u": "mA",  "f": " %.0f",  "i": "&#x1F50C;" }, # TODO - Convert Unicode code in emoji
+    "power_factor%":    { "u": "%",   "f": " %.0f",  "i": "&#x1F4CA;" }, # TODO - Convert Unicode code in emoji
+    "power":            { "u": "W",   "f": " %.0f",  "i": "&#x1F4A1;" }, # TODO - Convert Unicode code in emoji
+    "energy":           { "u": "Wh",  "f": " %.0f",  "i": "&#x1F9EE;" }, # TODO - Convert Unicode code in emoji
+    "altitude":         { "u": "mt",  "f": " %d",    "i": "&#x26F0;"  }, # TODO - Convert Unicode code in emoji
+    "temp":             { "u": "°C",  "f": " %.1f",  "i": "🌡️"  },
+
+## Driver Added formatter begin here - Danger zone - AI Generated - don't manually edit this section
+
+    "distance":         { "u": "m",   "f": " %.2f",  "i": "📏"        }, # Added by [MODEL] at [RUN_DATETIME]
+    "lux":              { "u": "lx",  "f": " %d",    "i": "☀️"        }, # Added by [MODEL] at [RUN_DATETIME]
+    "co2":              { "u": "ppm", "f": " %d",    "i": "💨"        }, # Added by [MODEL] at [RUN_DATETIME]
+
+## Driver Added formatter stop here
+
+    "empty":            { "u": nil,   "f": nil,      "i": nil         }
+  }
 
 # FRAMEWORK EXPANSION: Add new reusable formatters to benefit all sensors
 # When creating device-specific drivers, you can extend the framework with
@@ -911,59 +794,92 @@ LwSensorFormatter_cls.Formatter["battery"] = {"u": "%", "f": " %d", "i": "🔋"}
 
 ### ⚠️ CRITICAL: String Concatenation Safety
 
-The LwSensorFormatter_cls can return `nil` from `get_msg()`. Always check before concatenation:
-
-```berry
-# ❌ WRONG - Can cause type_error
-var age_msg = fmt.get_msg()
-msg = msg + age_msg  # Error if age_msg is nil
-
-# ✅ CORRECT - Safe concatenation
-var age_msg = fmt.get_msg()
-if age_msg != nil && age_msg != ""
-    msg = msg + age_msg
-end
-```
-
 The LwSensorFormatter_cls uses method chaining. NEVER concatenate with += operator during chain building:
+The LwSensorFormatter_cls is thinked for 1 time use of the get_msg() function, so don't reuse after that function call.
+The get_msg() function IT'S the only formatter function that return a concatenable string, the function it's now safe, nil is correcly handled.
 
 ```berry
 # ❌ WRONG - Will cause type_error
 var msg = ""
 msg += fmt.start_line()  # ERROR: Can't concatenate string with instance
+msg += fmt.add_...()     # ERROR: Can't concatenate string with instance
+msg += fmt.next_line()   # ERROR: Can't concatenate string with instance
 
-# ❌ WRONG - Chaining across multiple lines with dots
+# ✅ CORRECT - Chaining across multiple lines with dots
 fmt.start_line()
-    .add_sensor("temp", value, "°C", "🌡️")  # This can fail
+    .add_sensor("temp", value)
     .end_line()
 
 # ✅ CORRECT - Each method on separate line WITHOUT dots
 fmt.start_line()
-fmt.add_sensor("temp", value, "°C", "🌡️")
+fmt.add_sensor("temp", value)
 fmt.end_line()
-var msg = fmt.get_msg()  # Get string AFTER building
+
+var msg = fmt.get_msg()  # Get string AFTER building (this clear the formatter buffer for re-using)
 
 # ✅ CORRECT - For multiple blocks
 fmt.start_line()
-fmt.add_sensor("temp", value, "°C", "🌡️")
+fmt.add_sensor("km", value, "km")
 fmt.end_line()
 var msg = fmt.get_msg()
 
-# Add second block if needed
-fmt.start_line()
-fmt.add_status("Alert", "⚠️")
-fmt.end_line()
-msg = msg + fmt.get_msg()  # Use explicit concatenation, not +=
+# ✅ CORRECT - if the last call is to get_msg()
+msg += fmt.start_line()
+        .add_sensor("temp", value)
+        .end_line()
+        .get_msg()  # this return a string safe with nil
+
+```
+
+### 🚫 CRITICAL: Prevent Empty Lines in Conditional Content
+
+When adding conditional content (events, alerts, device info), use this pattern to avoid empty lines:
+
+```berry
+# ❌ WRONG - Can create empty lines
+fmt.next_line()
+if data_to_show.contains('device_reset') && data_to_show['device_reset']
+    fmt.add_sensor("string", "Reset", "Device Event", "🔄")
+end
+fmt.end_line()  # May create empty line if no content added
+
+# ✅ CORRECT - Conditional line building pattern
+# Collect optional content first
+var has_events = false
+var event_content = []
+
+if data_to_show.contains('device_reset') && data_to_show['device_reset']
+    event_content.push(['string', 'Reset', 'Device Event', '🔄'])
+    has_events = true
+end
+
+if data_to_show.contains('power_on_event') && data_to_show['power_on_event']
+    event_content.push(['string', 'Power On', 'Device Event', '⚡'])
+    has_events = true
+end
+
+if data_to_show.contains('low_battery') && data_to_show['low_battery']
+    event_content.push(['string', 'Low Battery', 'Warning', '⚠️'])
+    has_events = true
+end
+
+# Only create line if there's content
+if has_events
+    fmt.next_line()
+    for content : event_content
+        fmt.add_sensor(content[0], content[1], content[2], content[3])
+    end
+end
+
+fmt.end_line()  # Always execute end_line() regardless of conditional content
 ```
 
 ### Important Rules for Formatter:
-1. **NO chaining with dots** - Call each method separately
-2. **NO += operator** - Use `msg = msg + fmt.get_msg()` instead
-3. **Call methods individually** - `fmt.start_line()` then `fmt.add_sensor()` then `fmt.end_line()`
-4. **Get string at end** - Only call `get_msg()` after all formatting
-5. **Test for nil** - Always check if msg is nil before concatenation
-6. **Use next_line()** - Prefer `fmt.next_line()` over `fmt.end_line()` + `fmt.start_line()` for multi-line display
-7. **Header is mandatory** - Always call `fmt.header()` before sensor lines
+1. **chaining with dots** - You can use it.
+2. **NO += operator without get_msg()** - you can concatenate ONLY if get_msg() it's the last call of chaining
+3. **Get string at end** - Only call `get_msg()` after all formatting
+4. **Use next_line()** - Prefer `fmt.next_line()` over `fmt.end_line()` + `fmt.start_line()` for multi-line display
+5. **Header is mandatory** - Always call `fmt.header()` before sensor lines
 
 ### Emoji Selection Rules
 ```yaml
@@ -1002,16 +918,6 @@ if size(payload) < expected_min_size
     return nil
 end
 
-# CRC validation (only if required by device specification)
-if self.crcCheck
-    var calculated_crc = self.calculate_crc(payload, 0, size(payload)-2)
-    var received_crc = (payload[-1] << 8) | payload[-2]
-    if calculated_crc != received_crc
-        print(f"CRC mismatch: calc={calculated_crc:04X} recv={received_crc:04X}")
-        return nil
-    end
-end
-
 # Range validation
 if temperature < -40 || temperature > 125
     print(f"Temperature out of range: {temperature}")
@@ -1022,6 +928,12 @@ end
 ```
 
 ### Helper Functions
+
+[] Add to your driver requirement helper function into the LwDecode_cls 
+[] if needed reorder the class member functions with a logic
+[] bump up LwDecode version
+[] use it from your driver via the lwdecode variable instance
+
 ```berry
 # Battery voltage to percentage (common pattern)
 def voltage_to_percent(voltage)
@@ -1070,7 +982,7 @@ end
 ### MAP Cache File ([MODEL]-MAP.md)
 ```yaml
 # [VENDOR] [MODEL] Protocol MAP
-# Generated: [NTP_DATETIME] | PDF Version: [VERSION]
+# Generated: [RUN_DATETIME] | PDF Version: [VERSION]
 # Source: [PDF_FILENAME]
 
 device_info:
@@ -1135,10 +1047,10 @@ measurement_units:
 ```
 
 ### Driver Documentation (MODEL.md)
-```markdown
-# [VENDOR] [MODEL] LoRaWAN Decoder
 
-## Device Information
+#### [VENDOR] [MODEL] LoRaWAN Decoder
+
+#### Device Information
 - **Manufacturer**: [VENDOR]
 - **Model**: [MODEL]
 - **Type**: [SENSOR_TYPE]
@@ -1146,18 +1058,18 @@ measurement_units:
 - **Region**: [EU868/US915/etc]
 - **Official Reference**: [MODEL_LINKS]
 
-## Implementation Details
+#### Implementation Details
 - **Driver Version**: [VERSION]
 - **Generated**: [DATE]
 - **Coverage**: [X]/[Y] uplinks implemented, [X]/[Y] downlinks implemented
 - **Framework**: [FRAMEWORK_VERSION]
 - **Template**: [TEMPLATE_VERSION]
 
-## Expected UI Examples
+#### Expected UI Examples
 
 Based on the device capabilities and typical usage scenarios:
 
-### Example 1: Normal Operation
+##### Example 1: Normal Operation
 ```
 ┌─────────────────────────────────────┐
 │ 🏠 [MODEL]-slot2  [VENDOR] [MODEL]  │
@@ -1168,7 +1080,7 @@ Based on the device capabilities and typical usage scenarios:
 └─────────────────────────────────────┘
 ```
 
-### Example 2: Alert Condition
+##### Example 2: Alert Condition
 ```
 ┌─────────────────────────────────────┐
 │ 🏠 [MODEL]-slot2  [VENDOR] [MODEL]  │
@@ -1179,7 +1091,7 @@ Based on the device capabilities and typical usage scenarios:
 └─────────────────────────────────────┘
 ```
 
-### Example 3: Low Battery
+##### Example 3: Low Battery
 ```
 ┌─────────────────────────────────────┐
 │ 🏠 [MODEL]-slot2  [VENDOR] [MODEL]  │
@@ -1190,7 +1102,7 @@ Based on the device capabilities and typical usage scenarios:
 └─────────────────────────────────────┘
 ```
 
-### Example 4: Device Configuration
+##### Example 4: Device Configuration
 ```
 ┌─────────────────────────────────────┐
 │ 🏠 [MODEL]-slot2  [VENDOR] [MODEL]  │
@@ -1201,7 +1113,7 @@ Based on the device capabilities and typical usage scenarios:
 └─────────────────────────────────────┘
 ```
 
-### Example 5: Power/Socket Control (if applicable)
+##### Example 5: Power/Socket Control (if applicable)
 ```
 ┌─────────────────────────────────────┐
 │ 🏠 [MODEL]-slot2  [VENDOR] [MODEL]  │
@@ -1212,7 +1124,7 @@ Based on the device capabilities and typical usage scenarios:
 └─────────────────────────────────────┘
 ```
 
-### Example 6: Offline/No Data
+##### Example 6: Offline/No Data
 ```
 ┌─────────────────────────────────────┐
 │ 🏠 [MODEL]-slot2  [VENDOR] [MODEL]  │
@@ -1223,15 +1135,14 @@ Based on the device capabilities and typical usage scenarios:
 └─────────────────────────────────────┘
 ```
 
-## Command Reference
+### Command Reference
 
-**Test Commands** (slot = driver slot 0-15):
+**Test Commands** (slot = driver slot 1-16):
 | Command | Description | Usage | Example |
 |---------|-------------|-------|---------|
-| Lw[MODEL]TestPayload<slot> | Test decoder | `<hex>` or `<fport>,<hex>` | `Lw[MODEL]TestPayload2 037401AB` |
-| Lw[MODEL]TestReal<slot> | UI scenarios | `<scenario>` | `Lw[MODEL]TestReal2 normal` |
+| Lw[MODEL]TestUI<slot> | UI scenarios | `<scenario>` | `Lw[MODEL]TestUI2 normal` |
 
-**Control Commands** (slot = driver slot 0-15):
+**Control Commands** (slot = driver slot 1-16):
 | Command | Description | Usage | Downlink Hex |
 |---------|-------------|-------|---------------|
 | Lw[MODEL]Control<slot> | Basic control | `on/off` | `[HEX]` |
@@ -1246,15 +1157,15 @@ Based on the device capabilities and typical usage scenarios:
 | Lw[MODEL]NodeStats | Get node stats | `<node_id>` |
 | Lw[MODEL]ClearNode | Clear node data | `<node_id>` |
 
-### Usage Examples
+#### Usage Examples
 
-#### Driver in Slot 2:
+##### Driver in Slot 2:
 ```bash
-# Test realistic scenarios
-Lw[MODEL]TestReal2 normal      # Normal operation
-Lw[MODEL]TestReal2 alert       # Alert condition  
-Lw[MODEL]TestReal2 low         # Low battery
-Lw[MODEL]TestReal2 config      # Configuration mode
+# Test realistic scenarios 
+Lw[MODEL]TestUI2 normal      # Normal operation
+Lw[MODEL]TestUI2 alert       # Alert condition  
+Lw[MODEL]TestUI2 low         # Low battery
+Lw[MODEL]TestUI2 config      # Configuration mode
 
 # Control device (sends to all nodes managed by this driver instance)
 Lw[MODEL]Control2 on           # Turn device ON
@@ -1262,24 +1173,24 @@ Lw[MODEL]SetParam2 60          # Set parameter to 60
 Lw[MODEL]Config2 1,30          # Configure with params 1,30
 
 # Node-specific management
-Lw[MODEL]NodeStats ABC123      # Get stats for node ABC123
-Lw[MODEL]ClearNode ABC123      # Clear data for node ABC123
+Lw[MODEL]NodeStats [MODEL]-[slot]  # Get stats for node
+Lw[MODEL]ClearNode [MODEL]-[slot]  # Clear data for node
 ```
 
-#### Key Concepts:
-- **Slot Number**: Driver position in Tasmota (0-15)
+##### Key Concepts:
+- **Slot Number**: Driver position in Tasmota (0-15) -> Slot (1-16)
 - **Node ID**: Individual device identifier from LoRaWAN network  
 - **One Driver = Multiple Devices**: Same driver slot can handle multiple device nodes
 - **Commands use Slot**: All Lw commands use slot number, not node ID
 
-## Uplink Coverage Matrix
+### Uplink Coverage Matrix
 | Port | Type | Description | Status | Notes |
 |------|------|-------------|--------|-------|
 | 1 | 0x01 | Periodic Data | ✅ Implemented | All channels decoded |
 | 2 | 0x02 | Alert Message | ✅ Implemented | Includes threshold data |
 | 3 | 0xFF | Configuration | ✅ Implemented | Device info and settings |
 
-## Decoded Parameters
+### Decoded Parameters
 | Parameter | Unit | Range | Notes |
 |-----------|------|-------|-------|
 | temperature | °C | -40 to 125 | ±0.1°C accuracy |
@@ -1287,17 +1198,17 @@ Lw[MODEL]ClearNode ABC123      # Clear data for node ABC123
 | battery_v | V | 0 to 5 | Lithium battery voltage |
 | rssi | dBm | -120 to 0 | LoRaWAN signal strength |
 
-## Downlink Commands
+### Downlink Commands
 
 | Command | Description | Usage | Downlink Hex |
 |---------|-------------|-------|---------------|
-| Lw[MODEL]Control | Basic control | `Lw[MODEL]Control1 on/off` | `[HEX]` |
-| Lw[MODEL]SetParam | Set parameter | `Lw[MODEL]SetParam1 <value>` | `[HEX]` |
-| Lw[MODEL]Config | Configuration | `Lw[MODEL]Config1 <p1> <p2>` | `[HEX]` |
-| Lw[MODEL]Reset | Device reset | `Lw[MODEL]Reset1` | `[HEX]` |
-| Lw[MODEL]Status | Request status | `Lw[MODEL]Status1` | `[HEX]` |
+| Lw[MODEL]Power<slot> | Basic control | `Lw[MODEL]Power1 on/off` | `[HEX]` |
+| Lw[MODEL]SetParam<slot> | Set parameter | `Lw[MODEL]SetParam1 <value>` | `[HEX]` |
+| Lw[MODEL]Config<slot> | Configuration | `Lw[MODEL]Config1 <p1> <p2>` | `[HEX]` |
+| Lw[MODEL]Reset<slot> | Device reset | `Lw[MODEL]Reset1` | `[HEX]` |
+| Lw[MODEL]Status<slot> | Request status | `Lw[MODEL]Status1` | `[HEX]` |
 
-### Downlink Usage Examples
+#### Downlink Usage Examples
 
 ```
 # Control device on node 1
@@ -1318,64 +1229,45 @@ Lw[MODEL]Reset1
 
 Note: The node index in the command (e.g., `1` in `[MODEL]Control1`) corresponds to the LoRaWAN node to send the downlink to.
 
-## Testing
+### Testing
 
-### Test Payload Examples
+#### Test Payload Examples
 
-#### Direct Berry Testing
-\`\`\`berry
-# Test periodic data uplink
-var test_payload = bytes("01670110026850FF01020304050607080900")
-var result = LwDeco.decodeUplink([MODEL_NAME]-node, idx, -85, 1, test_payload)
+##### Direct Berry Testing
+```berry
+# Test data uplink on slot 2
+result = tasmota.cmd('LwSimulate2 -70,85,01670110026850FF01020304050607080900')
 print(json.dump(result))
-# Expected: {"temperature": 27.2, "humidity": 40.0, ...}
 
-# Test alert uplink
-var alert_payload = bytes("020101670120")
-var result = LwDeco.decodeUplink([MODEL_NAME]-node, idx, -85, 2, alert_payload)
+# Test alert uplink on slot 2
+result = tasmota.cmd('LwSimulate2 -70,85,020101670120')
 print(json.dump(result))
-# Expected: {"alert": true, "temperature": 28.8}
-\`\`\`
+```
 
-#### Tasmota Console Commands
-\`\`\`
-# Test with default parameters (fport=1, rssi=-85)
-Lw[MODEL]TestPayload1 01670110026850FF01020304050607080900
+##### Tasmota Console Commands
+```
+# Send a simulated payload to the driver on slot 1 with custom rssi and fport (fport=85, rssi=-75)
+LwSimulate1 -75,85,01670110026850FF01020304050607080900
 
-# Test with custom fport (fport=2, rssi=-85)
-Lw[MODEL]TestPayload1 2,020101670120
+# ... on slot 4 with default rssi and custom fport (rssi=[BY_MODEL] , fport=77)
+# Test with default rssi and custom fport (rssi=[BY_MODEL] , fport=77) on slot 4
+LwSimulate4 77,01010FA0
 
-# Test with custom rssi and fport (rssi=-90, fport=3)
-Lw[MODEL]TestPayload1 -90,3,FF01020304050607080900
-
-# Test battery status with default parameters (fport=4, rssi=-85)
-Lw[MODEL]TestPayload4 01010FA0
-
-# Test reset event with custom fport (fport=5, rssi=-85)
-Lw[MODEL]TestPayload1 5,8001
-
-# Test multi-channel data with custom rssi (rssi=-75, fport=1)
-Lw[MODEL]TestPayload1 -75,1,01670110026850036901000467AABB
-
-# Test error conditions
-Lw[MODEL]TestPayload1 ""              # Empty payload
-Lw[MODEL]TestPayload1 01               # Incomplete payload
-Lw[MODEL]TestPayload1 FFFFFFFFFF       # Invalid data
+# ... on slot 2 with default rssi and fport (rssi=[BY_MODEL] , fport=[BY_MODEL_OR_UPLINK])
+LwSimulate2 FF01020304050607080900
 
 # Node management
-Lw[MODEL]NodeStats test_node           # Get node statistics
-Lw[MODEL]NodeStats node_12345          # Get specific node stats
-Lw[MODEL]ClearNode test_node           # Clear node data
-Lw[MODEL]ClearNode node_12345          # Clear specific node
+Lw[MODEL]NodeStats [MODEL]-[slot]      # Get node statistics
+Lw[MODEL]ClearNode [MODEL]-[slot]      # Clear specific node
 
 # Downlink commands
-Lw[MODEL]Control1 on                   # Turn on device 1
-Lw[MODEL]Control1 off                  # Turn off device 1
+Lw[MODEL]Power1 on                     # Turn on device 1
+Lw[MODEL]Power1 off                    # Turn off device 1
 Lw[MODEL]SetParam2 100                 # Set parameter for device 2
-\`\`\`
+```
 
-#### Expected Responses
-\`\`\`json
+##### Expected Responses
+```json
 // Port 1 - Periodic data response
 {
   "rssi": -85,
@@ -1414,22 +1306,24 @@ Lw[MODEL]SetParam2 100                 # Set parameter for device 2
   "battery_history": [4.1, 4.0, 3.9, 3.9, 3.8],
   "name": "Test[MODEL]"
 }
-\`\`\`
+```
 
-### Integration Example
-\`\`\`berry
+#### Integration Example
+```berry
 # Add to autoexec.be
+load("LwDecode.be")
 load("[MODEL].be")
 
 # The driver auto-registers as LwDeco
 # Web UI will automatically show sensor data
-# Test command Lw[MODEL]TestPayload is available in console
+# Test command `Lw[MODEL]TestUI<slot> <scenario>` is available in console
 # Downlink commands Lw[MODEL]* are available in console
-\`\`\`
+```
 
 ### Testing Workflow
+0. Load the framework: `load("LwDecode.be")`
 1. Load the driver: `load("[MODEL].be")`
-2. Test with command: `Lw[MODEL]TestPayload1 YOUR_HEX_PAYLOAD`
+2. Test with command: `Lw[MODEL]TestUI<slot> <scenario>`
 3. Check response in console for decoded JSON
 4. Verify Web UI shows formatted sensor data
 5. Test all documented uplink types using different port indices
@@ -1442,7 +1336,7 @@ load("[MODEL].be")
 
 ## Generation Notes
 - Generated from: [PDF_FILENAME]
-- Generation prompt: AI Template v2.1.3
+- Generation prompt: AI Template [FRAMEWORK_VERSION]
 - Special considerations: [Any device-specific notes]
 
 ## Versioning Strategy
@@ -1456,7 +1350,8 @@ load("[MODEL].be")
 - All the date of publish must greater then 2025-01-13 (day of the framework start) 
 
 ## Changelog
-- v1.0.0 ([DATE]): Initial generation from PDF specification
+```
+- v1.0.0 ([RUN_DATE]): Initial generation from PDF specification
 ```
 
 ---
@@ -1476,15 +1371,15 @@ load("[MODEL].be")
 10. Generate or update [MODEL]-MAP.md cache file
 
 ### Phase 2: Generation (Silent)
-1. Query NTP for accurate current datetime (don't trust LLM time)
+1. Update the current date time as described in `TIME HANDLING`
 2. Generate driver code with 100% uplink coverage
 3. Implement ALL downlink commands from PDF
 4. Add test command registration with auto-cleanup
 5. Register downlink commands with validation
 6. Implement all helper functions needed
 7. Create comprehensive documentation
-8. Generate test payload examples for ALL uplink types
-9. Document ALL downlink commands with examples
+8. Document ALL downlink commands with examples
+9. Generate all test scenario for TestUI with REAL(verified) & REALISTIC payload
 10. Create Tasmota command examples for each payload type
 11. Update emoji-reference.md if needed
 12. Update `GENERATED-DRIVER-LIST.md` when needed
@@ -1495,10 +1390,11 @@ load("[MODEL].be")
 2. Check framework usage correctness
 3. Validate all uplinks decoded
 4. Validate all downlinks implemented
-5. Confirm memory optimizations
-6. Test error handling paths
-7. Verify command parameter validation
-8. Check downlink hex payload accuracy
+5. Validate all payload in TestUI
+6. Confirm memory optimizations
+7. Test error handling paths
+8. Verify command parameter validation
+9. Check downlink hex payload accuracy
 
 ### Phase 4: Output (Visible)
 ```markdown
@@ -1513,6 +1409,11 @@ load("[MODEL].be")
 **Validation**: All checks passed
 ```
 
+### Phase 5: Save Generation Report (Visible) *MADATORY*
+[] Save the brief final report to [MODEL]-REPORT.md
+[] Include also detailed statistics about the token usage for this generation
+[] Be concise!
+
 ---
 
 ## 🔍 QUALITY CHECKLIST
@@ -1525,7 +1426,6 @@ load("[MODEL].be")
 - [ ] Memory optimizations applied
 - [ ] Comments explain complex logic
 - [ ] hashCheck property correctly set (duplicate detection)
-- [ ] crcCheck property only if PDF requires it
 - [ ] Test command properly registered with cleanup
 - [ ] Global node storage initialized
 - [ ] Node data persistence implemented
@@ -1533,7 +1433,7 @@ load("[MODEL].be")
 
 ### Downlink Implementation
 - [ ] All PDF-documented downlinks have Tasmota commands
-- [ ] Command names follow pattern [MODEL]<Function>
+- [ ] Command names follow pattern Lw[MODEL]<Function>
 - [ ] Proper parameter validation and error messages
 - [ ] Hex payload generation matches PDF specification
 - [ ] Commands registered in register_downlink_commands()
@@ -1545,6 +1445,7 @@ load("[MODEL].be")
 ### Functional Completeness
 - [ ] 100% uplink type coverage
 - [ ] 100% downlink command coverage
+- [ ] 100% TestUI payload checked
 - [ ] All metadata fields captured
 - [ ] Configuration states tracked
 - [ ] Reset events detected
@@ -1591,16 +1492,6 @@ self.hashCheck = false  # Framework will process all payloads
 # The framework uses this to avoid processing the same payload twice
 ```
 
-### crcCheck Property (Custom)
-```berry
-# Only add if PDF specifies CRC validation
-self.crcCheck = true    # Driver will validate CRC
-# Then implement CRC validation in decodeUplink()
-if self.crcCheck
-    # Your CRC validation code here
-end
-```
-
 ## ❌ COMMON PITFALLS TO AVOID
 
 1. **Using reserved words**: Never use `type`, `class`, etc. as variables
@@ -1630,8 +1521,7 @@ end
 
 ## 📚 REFERENCE LINKS
 
-- Berry Language: BERRY_LANGUAGE_REFERENCE.md
-- Tasmota Integration: BERRY_TASMOTA.md
+- Berry Language/Tasmota Integration: BERRY-CUSTOM-LANGUAGE-REFERENCE.md v1.2.0
 - Emoji Mappings: emoji-reference.md
 - Framework Docs: lwdecode/README.md
 - Driver Examples: AI-Generated-Driver/vendor/
@@ -1682,10 +1572,11 @@ lwdecode.unpack_bits(bytes)    # Extract bits from bytes
 
 ### Testing Commands
 ```berry
-# In Tasmota console - Using test command
-Lw[MODEL]TestPayload1 YOUR_HEX_PAYLOAD_PORT1
-Lw[MODEL]TestPayload2 YOUR_HEX_PAYLOAD_PORT2
-Lw[MODEL]TestPayload3 YOUR_HEX_PAYLOAD_PORT3
+# In Tasmota console - Using TestUI command (cover all the possibility)
+Lw[MODEL]TestUI1            # List all possible scenario of node 1
+Lw[MODEL]TestUI1 normal     # Test Scanario "normal" on node 1
+Lw[MODEL]TestUI1 emergency  # Test Scanario "emergency" on node 1
+Lw[MODEL]TestUI1 ocevent    # Test Scanario "ocevnt" on node 1
 # Port number in command matches fport parameter
 
 # Downlink commands
@@ -1694,13 +1585,13 @@ Lw[MODEL]SetParam2 100         # Set parameter for device 2
 Lw[MODEL]Config3 p1 p2         # Configure device 3
 
 # Node management commands
-Lw[MODEL]NodeStats node_id     # Get statistics for a node
-Lw[MODEL]ClearNode node_id     # Clear data for a node
+Lw[MODEL]NodeStats node        # Get statistics for a node
+Lw[MODEL]ClearNode node        # Clear data for a node
 
 # In Berry console - Direct testing
-load("vendor/[vendor]/[MODEL].be")
-var test = bytes("YOUR_HEX_PAYLOAD")
-var result = LwDeco.decodeUplink("Test", "node", -85, 1, test)
+load("[MODEL].be")
+var result = tasmota.cmd("LwSimulate1 -70,85,FF01AAFA1222")
+import json
 print(json.dump(result))
 
 # Check global storage
@@ -1722,7 +1613,7 @@ This template ensures:
 Remember: The goal is a **perfect, complete decoder** that handles **100% of the device's capabilities** as documented in the manufacturer's PDF, including ALL uplink decoding and ALL downlink command generation.
 
 ---
-*Template Version: 2.1.12 | Last Updated: 2025-08-16*
+*Template Version: 2.2.8 | Last Updated: 2025-08-20*
 
 ---
 
