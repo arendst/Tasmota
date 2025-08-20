@@ -1,5 +1,5 @@
 # LoRaWAN Decoder AI Generation Template
-## Version: 2.2.8 | Framework: LwDecode | Platform: Tasmota Berry
+## Version: 2.2.9 | Framework: LwDecode | Platform: Tasmota Berry
 
 ---
 
@@ -625,7 +625,16 @@ while i < size(payload)
         var value = payload[i] / 2.0
         data['humidity'] = value
         i += 1
-        
+
+    # prefer a channel_id gruoping style based on the logic
+    # but if you consider better to do in diffente way, insert a short comment in the code to explain why
+    elif channel_id == 0x0F
+        if channel_type == 0x77
+            ...
+        elif channel_type == 0x78
+            ...
+        elif channel_type == 0x79
+
     # Continue for ALL channels in PDF
     else
         # Log unknown but don't skip
@@ -1613,7 +1622,7 @@ This template ensures:
 Remember: The goal is a **perfect, complete decoder** that handles **100% of the device's capabilities** as documented in the manufacturer's PDF, including ALL uplink decoding and ALL downlink command generation.
 
 ---
-*Template Version: 2.2.8 | Last Updated: 2025-08-20*
+*Template Version: 2.2.9 | Last Updated: 2025-08-20*
 
 ---
 
