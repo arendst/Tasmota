@@ -4,13 +4,13 @@
 
 LwDecode is a AI Powered Berry framework for Tasmota ESP32 that provides a standardized interface for decoding LoRaWAN sensor payloads. It integrates with Tasmota's LoRaWAN bridge functionality to decode device uplinks, display sensor data in the web UI, and manage downlink commands.
 
-**Enhanced Error Handling**: v1.8.0 introduces comprehensive error handling with stack traces, retry mechanisms, and detailed logging for improved debugging and reliability.
+**Enhanced Error Handling**: v2.2.8 introduces comprehensive error handling with stack traces, retry mechanisms, and detailed logging for improved debugging and reliability.
 
 ## Architecture
 
 ### Core Components
 
-1. **LwDecode.be** - Main framework providing:
+1. **LwDecode.be** (v2.2.8) - Main framework providing:
    - Payload decoding infrastructure
    - Web UI integration with caching
    - MQTT message publishing
@@ -23,7 +23,7 @@ LwDecode is a AI Powered Berry framework for Tasmota ESP32 that provides a stand
    - Must implement `LwDecode_<MODEL>` class
    - Required methods: `decodeUplink()` and `add_web_sensor()`
 
-3. **LwSensorFormatter** - UI formatting helper providing:
+3. **LwSensorFormatter_cls** - UI formatting helper integrated in LwDecode.be providing:
    - Standardized sensor display with icons
    - Tooltips and units support
    - Multi-line sensor display
@@ -36,57 +36,169 @@ LwDecode is a AI Powered Berry framework for Tasmota ESP32 that provides a stand
 
 ```berry
 class LwDecode_<MODEL>
-  var hashCheck       # Duplicate detection (default: true)
-  var name           # Device name
+  var hashCheck      # Duplicate payload detection flag (true = skip duplicates)
+  var name           # Device name from LoRaWAN
   var node           # Node identifier
   var last_data      # Cached decoded data
-  var last_update    # Last update timestamp
+  var last_update    # Timestamp of last update
+  var lwdecode       # global instance of the driver
   
   def init()
-    self.hashCheck = true
+    self.hashCheck = true   # Enable duplicate detection by default
     self.name = nil
     self.node = nil
     self.last_data = {}
     self.last_update = 0
     
-    # Initialize global node storage
+    # Initialize global node storage (survives decoder reload)
     import global
-    if !global.contains("<MODEL>_nodes")
-      global.<MODEL>_nodes = {}
+    if !global.contains("[MODEL]_nodes")
+        global.[MODEL]_nodes = {}
+    end
+    if !global.contains("[MODEL]_cmdInit")
+        global.[MODEL]_cmdInit = false
     end
   end
   
-  def decodeUplink(name, node, rssi, fport, payload)
+  def decodeUplink(name, node, rssi, fport, payload, simulated)
+    import string
+    import global
     var data = {}
-    # Decode logic here
-    self.name = name
-    self.node = node
-    self.last_data = data
+    
+    if payload == nil || size(payload) < 1
+        return nil
+    end
+    
+    try
+      # Store device info
+      self.name = name
+      self.node = node
+      data['rssi'] = rssi
+      data['fport'] = fport
+      data['simulated'] = simulated
+      
+      # Retrieve node history from global storage
+      var node_data = global.[MODEL]_nodes.find(node, {})
+      
+      # Decode based on fport (if device uses port-based protocol)
+      if fport == [PORT_NUMBER]
+          # Implementation for each uplink type
+          [DECODE_LOGIC]
+      end
+      
+      # Update node history in global storage
+      node_data['last_data'] = data
+      node_data['last_update'] = tasmota.rtc()['local']
+      node_data['name'] = name
+      
+      # Store battery trend if available
+      if data.contains('battery_v')
+          if !node_data.contains('battery_history')
+              node_data['battery_history'] = []
+          end
+          # Keep last 10 battery readings
+          node_data['battery_history'].push(data['battery_v'])
+          if size(node_data['battery_history']) > 10
+              node_data['battery_history'].pop(0)
+          end
+      end
+      
+      # Store reset count if detected
+      if data.contains('device_reset') && data['device_reset']
+          node_data['reset_count'] = node_data.find('reset_count', 0) + 1
+          node_data['last_reset'] = tasmota.rtc()['local']
+      end
+      
+      # Implement downlinks if present and create relative tasmota commands
+      if !global.contains("[MODEL]_cmdInit") || !global.[MODEL]_cmdInit
+          self.register_downlink_commands()
+          global.[MODEL]_cmdInit = true
+      end
+
+      # Save back to global storage
+      global.[MODEL]_nodes[node] = node_data
+      
+      # Update instance cache
+      self.last_data = data
+      self.last_update = node_data['last_update']
+
+    except .. as e, m
+      node_data['ex'] = e
+      node_data['exmsg'] = m
+      log(f"[MODEL]: Decode error - {e}: {m}", 1)
+
+    end
+
     return data
   end
   
   def add_web_sensor()
-    if size(self.last_data) == 0 return nil end
+    import global
+
+    var data_to_show = self.last_data
+    var last_update = self.last_update
     
+    if size(data_to_show) == 0 && self.node != nil
+        var node_data = global.[MODEL]_nodes.find(self.node, {})
+        data_to_show = node_data.find('last_data', {})
+        last_update = node_data.find('last_update', 0)
+    end
+    
+    if size(data_to_show) == 0 
+        return nil 
+    end
+    
+    import string
     var msg = ""
     var fmt = LwSensorFormatter_cls()
     
-    # MANDATORY: Add header
-    var name = self.name ? self.name : f"<MODEL>-{self.node}"
-    msg = lwdecode.header(name, "Device Description", 
-                         self.last_data.find('battery_v', 1000),
-                         self.last_update,
-                         self.last_data.find('rssi', 1000),
-                         self.last_update)
+  # MANDATORY: Add header line with device info
+    var name = self.name
+    if name == nil || name == ""
+        name = f"[MODEL]-{self.node}"
+    end
+    var name_tooltip = "[VENDOR] [MODEL]"
     
-    # Add sensor data
+    var battery = data_to_show.find('battery_v', 1000)  # Use 1000 if no battery
+    var battery_last_seen = last_update
+    var rssi = data_to_show.find('rssi', 1000)  # Use 1000 if no RSSI
+    
+    var simulated = data_to_show.find('simulated', false) # Simulated payload indicator
+    
+    # Build display using emoji formatter
+    fmt.header(name, name_tooltip, battery, battery_last_seen, rssi, last_update, simulated)
+    
     fmt.start_line()
-    fmt.add_sensor("volt", value, "tooltip", "🔋")
-    fmt.next_line()  # Use for multi-line
-    fmt.add_sensor("power", value, nil, "⚡")
+
+    if data_to_show.contains('socket_state')
+      var state_emoji = data_to_show['socket_state'] ? "🟢" : "⚫"
+      var state_text = data_to_show['socket_state'] ? "ON" : "OFF"
+      fmt.add_sensor("string", state_text, "Socket State", state_emoji)
+    end
+
+    if data_to_show.contains('voltage')
+      fmt.add_sensor("volt", data_to_show['voltage'], "Voltage", "⚡")
+    end
+
+    if data_to_show.contains('current')
+      fmt.add_sensor("milliamp", data_to_show['current'], "Current", "🔌")
+    end
+
+    if data_to_show.contains('active_power')
+      fmt.add_sensor("power", data_to_show['active_power'], "Power", "💡")
+    end
+
+    fmt.next_line()
+
+    if data_to_show.contains('energy')
+      fmt.add_sensor("energy", data_to_show['energy'], "Energy", "🏠")
+    end
+    if data_to_show.contains('power_factor')
+      fmt.add_sensor("power_factor%", data_to_show['power_factor'], "Power Factor", "📊")
+    end
     fmt.end_line()
-    msg = msg + fmt.get_msg()
     
+    msg += fmt.get_msg()
     return msg
   end
 end
@@ -97,7 +209,7 @@ LwDeco = LwDecode_<MODEL>()
 
 ### Decoder Method Details
 
-#### decodeUplink(name, node, rssi, fport, payload)
+#### decodeUplink(name, node, rssi, fport, payload, simulated)
 
 **Parameters:**
 - `name` (string): Device name from LoRaWanName configuration
@@ -105,12 +217,13 @@ LwDeco = LwDecode_<MODEL>()
 - `rssi` (int): Signal strength in dBm
 - `fport` (int): LoRaWAN port number
 - `payload` (bytes): Raw payload data
+- `simulated` (bool): Simulated flag indicator
 
 **Returns:** Map containing decoded data
 
 **Example:**
 ```berry
-def decodeUplink(name, node, rssi, fport, payload)
+def decodeUplink(name, node, rssi, fport, payload, simulated)
   import global
   var data = {}
   
@@ -119,6 +232,7 @@ def decodeUplink(name, node, rssi, fport, payload)
   self.node = node
   data['rssi'] = rssi
   data['fport'] = fport
+  data['simulated'] = simulated
   
   # Decode based on fport
   if fport == 1 && size(payload) >= 4
@@ -144,8 +258,8 @@ end
 **Returns:** HTML string for web UI display
 
 **Requirements:**
-- MUST include header via `lwdecode.header()`
 - Use `LwSensorFormatter_cls()` for sensor display
+- MUST include header via `fmt.header()`
 - Handle data recovery from global storage
 
 **Example:**
@@ -166,16 +280,20 @@ def add_web_sensor()
   
   if size(data_to_show) == 0 return nil end
   
+  var simulated = data_to_show.find('simulated', false) # Simulated payload indicator
+  
   var msg = ""
   var fmt = LwSensorFormatter_cls()
   
   # Header (MANDATORY)
   var name = self.name ? self.name : f"<MODEL>-{self.node}"
-  msg = lwdecode.header(name, "Device Model", 
-                       data_to_show.find('battery_v', 1000),
-                       last_update,
-                       data_to_show.find('rssi', 1000),
-                       last_update)
+  var name_tooltip = "Device Model"
+  var battery = data_to_show.find('battery_v', 1000)
+  var battery_last_seen = last_update
+  var rssi = data_to_show.find('rssi', 1000)
+  var simulated = data_to_show.find('simulated', false)
+  
+  fmt.header(name, name_tooltip, battery, battery_last_seen, rssi, last_update, simulated)
   
   # Sensor data
   fmt.start_line()
@@ -202,6 +320,11 @@ Built-in formatters with units and icons:
 - `"power"`: W unit, 💡 icon
 - `"energy"`: Wh unit, 🧮 icon
 - `"altitude"`: mt unit, ⛰ icon
+- `"temp"`: °C unit, 🌡️ icon
+- `"humidity"`: % unit, 💧 icon
+- `"co2"`: ppm unit, 💨 icon
+- `"distance"`: m unit, 📏 icon
+- `"lux"`: lx unit, ☀️ icon
 - `"empty"`: No display
 
 #### Methods
@@ -216,7 +339,7 @@ Built-in formatters with units and icons:
 
 **Important Usage Rules:**
 1. NO method chaining with dots across lines
-2. Use `msg = msg + fmt.get_msg()` not `+=`
+2. Use `msg += fmt.get_msg()` as last to retrive the msg, after the the message buffer will be cleared
 3. Call methods individually without dots
 4. Prefer `next_line()` for multi-line displays
 5. Always add header before sensor lines
@@ -250,10 +373,10 @@ var result = lwdecode.safe_decode_uplink(decoder, name, node, rssi, fport, paylo
 - Stack trace capture for all exceptions
 - Retry mechanism for transient failures (3 attempts)
 - Input/output validation for all decoder calls
-- Detailed context in error messages
+- Detailed context in error messages with source/line of the exceptions
 - Performance timing for decoder operations
 
-#### lwdecode.header(name, tooltip, battery, battery_ls, rssi, last_seen)
+#### lwdecode.header(name, tooltip, battery, battery_ls, rssi, last_seen, simulated)
 Generates standard device header with battery/RSSI indicators
 
 **Parameters:**
@@ -300,12 +423,24 @@ end
 
 ### Utility Functions
 
-#### uint16le(value) / uint32le(value)
-Convert integers to little-endian hex strings
+#### Encoding Functions
+Convert values to hex strings for downlink payloads:
 
 ```berry
-lwdecode.uint16le(value)  # Returns 2-byte hex string
-lwdecode.uint32le(value)  # Returns 4-byte hex string
+lwdecode.uint16le(value)   # 16-bit little endian
+lwdecode.uint32le(value)   # 32-bit little endian  
+lwdecode.uint16be(value)   # 16-bit big endian
+lwdecode.uint32be(value)   # 32-bit big endian
+lwdecode.int16le(value)    # Signed 16-bit little endian
+lwdecode.int32le(value)    # Signed 32-bit little endian
+lwdecode.float32le(value)  # IEEE 754 float little endian
+lwdecode.float32be(value)  # IEEE 754 float big endian
+lwdecode.bcd_encode(value) # Binary Coded Decimal
+lwdecode.bcd_decode(hex)   # BCD to integer
+lwdecode.crc16_modbus(data) # Modbus CRC16
+lwdecode.crc8(data)        # CRC8
+lwdecode.pack_bits(array)  # Bit array to bytes
+lwdecode.unpack_bits(data) # Bytes to bit array
 ```
 
 ## Data Persistence Pattern
@@ -343,7 +478,7 @@ global.<MODEL>_nodes[node] = node_data
 1. Use global storage sparingly
 2. Implement `hashCheck = false` if duplicates expected
 3. Clear unused data: `global.<MODEL>_nodes.remove(node)`
-4. Reuse formatter instances
+4. Reuse formatter instances only after get_msg() or clear()
 5. Use compact variable names
 
 ### ESP32 Constraints
@@ -371,16 +506,11 @@ Navigate to **Configuration → LoRaWAN** to configure nodes
 ### Console Commands
 - `LwReload` - Reload all decoders
 - `LwReload <decoder>` - Reload specific decoder
-- `<MODEL>TestPayload<port> <hex>` - Test decoder
-- `<MODEL>NodeStats <node>` - Get node statistics
-- `<MODEL>ClearNode <node>` - Clear node data
+- `Lw<MODEL>TestUI<node> <scenario>` - Test decoder UI
+- `Lw<MODEL>NodeStats <node>` - Get node statistics
+- `Lw<MODEL>ClearNode <node>` - Clear node data
 
 ## Debugging
-
-### Enable Debug Logging
-```
-WebLog 4
-```
 
 ### Common Issues
 1. **Decoder not loading**: Check file path and syntax
@@ -391,12 +521,14 @@ WebLog 4
 ### Testing
 ```berry
 # Test in Berry console
-load("vendor/vendor/model.be")
-var result = LwDeco.decodeUplink("Test", 1, -50, 1, bytes("0102"))
-print(result)
+load("LwDecode.be")
+load("[MODEL].be")
+var result = tasmota.cmd("LwSimulate1 -70,85,0102")
+import json
+print(json.dump(result))
 
 # Test via Tasmota console
-<MODEL>TestPayload1 0102030405
+LwSimulate1 -70,85,0102
 ```
 
 ## Framework Settings
@@ -420,7 +552,7 @@ When implementing decoders:
 2. **Follow Conventions**
    - Class: `LwDecode_<MODEL>`
    - Global: `global.<MODEL>_nodes`
-   - Commands: `<MODEL><Function><node>`
+   - Commands: `Lw<MODEL><Function><node> <args_comma_separated>`
 
 3. **Implementation Requirements**
    - 100% channel coverage
@@ -450,6 +582,10 @@ When implementing decoders:
 - v1.5.0 - Downlink command framework
 - v1.6.0 - Hash-based duplicate detection
 - v1.7.0 - Added `add_status()` method
+- v2.0.0 - Major refactoring and improvements
+- v2.1.0 - Enhanced error handling and validation
+- v2.2.0 - Added simulation support and UI enhancements
+- v2.2.8 - Current version with comprehensive helper functions and simulated payload support
 
 ## License
 

@@ -1,11 +1,12 @@
-# Decoder files are modeled on the *.js files found here:
-#  https://github.com/TheThingsNetwork/lorawan-devices/tree/master/vendor
+## Version: 2.2.8 | Framework: LwDecode | Platform: Tasmota Berry
 
 import mqtt
 import string
 
 var LwRegions = ["EU868","US915","IN865","AU915","KZ865","RU864","AS923","AS923-1","AS923-2","AS923-3"]
 var LwDeco
+var lwdecode
+var webpage
 
 class LwSensorFormatter_cls
   static var Formatter = {
@@ -16,6 +17,10 @@ class LwSensorFormatter_cls
     "power":            { "u": "W",   "f": " %.0f",  "i": "&#x1F4A1;" },
     "energy":           { "u": "Wh",  "f": " %.0f",  "i": "&#x1F9EE;" },
     "altitude":         { "u": "mt",  "f": " %d",    "i": "&#x26F0;"  },
+
+## Driver Added formatter begin here - AI Generated don't edit this section
+## Driver Added formatter stop here
+
     "empty":            { "u": nil,   "f": nil,      "i": nil         }
   }
 
@@ -26,8 +31,12 @@ class LwSensorFormatter_cls
     self.msg_buffer.clear()
   end
 
-  def header(name, name_tooltip, battery, battery_last_seen, rssi, self.last_update)
-    self.msg_buffer .. lwdecode.header(name, name_tooltip, battery, battery_last_seen, rssi, self.last_update)
+  def clear()
+    self.msg_buffer.clear()
+  end
+
+  def header(name, name_tooltip, battery, battery_last_seen, rssi, last_update, simulated)
+    self.msg_buffer .. lwdecode.header(name, name_tooltip, battery, battery_last_seen, rssi, last_update, simulated)
     return self
   end
 
@@ -47,7 +56,7 @@ class LwSensorFormatter_cls
   end
 
   def begin_tooltip(ttip)
-    self.msg_buffer .. format("&nbsp;<div title='%s' class='si'>", ttip)
+    if ttip   self.msg_buffer .. format("&nbsp;<div title='%s' class='si'>", ttip) end
     return self
   end
 
@@ -57,16 +66,18 @@ class LwSensorFormatter_cls
   end
 
   def add_link(title, url, target)
-    if !target target = "_blank" end
-    self.msg_buffer .. format(" <a target=%s href='%s'>%s</a>", target, url, title)
+    var _t = title ? title : ""
+    var _u = url ? url : ""
+    var _tg = target ? target : "_blank"
+
+    self.msg_buffer .. format(" <a target=%s href='%s'>%s</a>", _tg, _u, _t)
     return self
   end
 
   def add_sensor(formatter, value, tooltip, alt_icon)
-
     if tooltip self.begin_tooltip(tooltip) end
 
-    var fmt = self.Formatter.find(formatter)
+    var fmt = formatter ? self.Formatter.find(formatter) : self.Formatter.find("empty")
 
     if alt_icon
       self.msg_buffer .. format(" %s", alt_icon)
@@ -107,11 +118,16 @@ class LwSensorFormatter_cls
   end
 
   def get_msg()
-    return self.msg_buffer.asstring()
+    var buff = self.msg_buffer.asstring()
+    self.clear()
+    return ( buff ? buff : "nil" )
   end
 end
 
-class lwdecode_cls
+#
+# LwDecode driver
+#
+class LwDecode_cls : Driver
   var lw_decoders
   var topic_cached
   var last_payload_hash
@@ -134,6 +150,45 @@ class lwdecode_cls
     tasmota.add_driver(global.lwdecode_driver := self)
     tasmota.add_rule("LwReceived", /value, trigger, payload -> self.lw_decode(payload))
     tasmota.add_cmd('LwReload', /cmd, idx, payload, payload_json -> self.cmd_reload_decoder(cmd, idx, payload))
+    tasmota.add_cmd('LwSimulate', /cmd, idx, payload, payload_json -> self.cmd_simulate(cmd, idx, payload))
+
+    log("LwD: Driver running",1)
+  end
+
+  def stop()
+    log("LwD: Driver stopped",1)
+  end
+
+  #
+  # Helper funtion to execute a command (with index option) and return the result, 
+  #
+  # example of command: LoRaWanAppKey3 12345678123456781234567812345678
+  #                     LoRaWanNode
+  #
+  # example of use:     appKey = lwdecode._cmd_result(node,'LoRaWanAppKey') # get the AppKey for index 3
+  #                     lwdecode._cmd_result(node,'LoRaWanAppKey',key)      # set 'key'  as AppKey for index 3
+  #                     var enables = string.split( lwdecode._cmd_result(nil,'LoRaWanNode'), ',') # [1,!2,!3,!4,5,6]
+
+  def _cmd_result(node,cmd,arg)
+    var full_cmd = format('%s%s%s', cmd, ( node ? node : ""), (arg ? " "+arg : ""))
+    var out 
+    out = tasmota.cmd(full_cmd, true)
+    if type(out) == "string"
+      return out
+    elif out.find(cmd..node)
+      return out[cmd..node]
+    elif out.find(cmd)
+      return out[cmd]
+    else
+      return out
+    end
+  end
+
+  #
+  # Helper funtion for Tasmota convention to qualify an empty string (a single double quote char) into the console command
+  #
+  def _empty(val)
+    return (val ? val : '"')
   end
 
   def uint16le(value)
@@ -283,15 +338,7 @@ class lwdecode_cls
   end
 
   def log_error(context, error, message, payload_info)
-    import debug
-    var stack = "Stack unavailable"
-    try
-      stack = debug.traceback()
-    except ..
-      stack = "Stack trace failed"
-    end
-    log(format("LwD ERROR [%s]: %s | %s | Payload: %s | Stack: %s", 
-      context, error, message, payload_info, stack), 1)
+    log(format("LwD: ERROR [%s]: e=%s m=%s p='%s'", context, error, message, payload_info), 1)
   end
 
   def safe_load_decoder(decoder_name)
@@ -319,41 +366,41 @@ class lwdecode_cls
 
   def get_decoder_property(decoder, property, default_value)
     try
-      if decoder.contains(property)
+      if decoder.find(property)
         return decoder[property]
       else
         return default_value
       end
     except .. as e, m
-      self.log_error("PROPERTY", e, 
-        format("Failed to get %s", property), "decoder property access")
       return default_value
     end
   end
 
-  def safe_decode_uplink(decoder, name, node, rssi, fport, payload)
+  def safe_decode_uplink(decoder, name, node, rssi, fport, payload, simulated)
     try
       # Validate inputs
       if !name || !node || !payload return nil end
       if payload.size() == 0 return nil end
       
-      var decoded = decoder.decodeUplink(name, node, rssi, fport, payload)
-      
-      # Validate output
-      if decoded && type(decoded) == 'map'
-        return decoded
-      else
-        self.log_error("DECODE", "Invalid result", 
-          format("Expected map, got %s", type(decoded)), 
-          format("FPort:%d, Size:%d", fport, payload.size()))
-        return nil
-      end
+      return decoder.decodeUplink(name, node, rssi, fport, payload, simulated)
+
+      # var decoded = decoder.decodeUplink(name, node, rssi, fport, payload, simulated)
+      #  
+      # # Validate output
+      # if decoded && type(decoded) == 'map'
+      #   return decoded
+      # else
+      #   self.log_error("DECODE", "Invalid result", 
+      #     format("Expected map, got %s", type(decoded)), 
+      #     format("FPort:%d, Size:%d", fport, payload.size()))
+      #   return nil
+      # end
     except .. as e, m
-      self.log_error("DECODE", e, m, 
-        format("Device:%s, Node:%s, FPort:%d, Size:%d", name, node, fport, payload.size()))
+      self.log_error("DECODE", e, m, format("Device:%s, Node:%s, FPort:%d, Size:%d", name, node, fport, payload.size()))
       return nil
     end
   end
+
   def _cache_topic()
     var full_topic = tasmota.cmd('_FullTopic',true)['FullTopic']
     var topic = tasmota.cmd('_Status',true)['Status']['Topic']
@@ -437,6 +484,63 @@ class lwdecode_cls
     end
   end
 
+  def cmd_simulate(cmd, idx, payload)
+    import string
+
+    if !payload return end
+    
+    tasmota.resp_cmnd_done()
+    
+    tasmota.set_timer(0, def ()
+      # Parse parameters: "rssi,fport,hex_payload"
+      # Or use defaults: "hex_payload" only
+      var parts = string.split(payload, ',')
+      
+      var name = self._cmd_result(idx,'LoRaWanName')
+      var decoder = self._cmd_result(idx,'LoRaWanDecoder')
+      var node = f'{idx}'
+      var rssi = -75
+      var fport = 85
+      var hex_payload = payload
+      
+      if size(parts) == 3
+          rssi = int(parts[0])
+          fport = int(parts[1])
+          hex_payload = parts[2]
+      elif size(parts) == 2
+          # Simple format: fport,hex
+          fport = int(parts[0])
+          hex_payload = parts[1]
+      end
+      
+      import json
+
+      var _b = bytes(hex_payload)
+      var _p = []
+      for i: 0..size(_b)-1
+          _p.push(_b[i])
+      end
+
+      # Create the event payload
+      var event_payload = {}
+      event_payload['LwReceived'] = {}
+      event_payload['LwReceived'][name] = {
+        'Name': name,
+        'Node': node,
+        'RSSI': rssi,
+        'FPort': fport,
+        'Decoder': decoder,
+        'Payload': _p,
+        'simulated': true,
+      }
+
+      var _evp = json.dump(event_payload)
+
+      # Trigger the LwReceived rule
+      tasmota.exec_rules(_evp, true)
+    end)
+  end
+
   def _calculate_payload_hash(payload)
     var hash = 0
     for i:0..payload.size()-1
@@ -454,6 +558,15 @@ class lwdecode_cls
 
     var decoder = device_info.find('Decoder')
     if !decoder return true end
+
+    var simulated = device_info.find('simulated') ? device_info['simulated'] : false
+
+    if simulated
+        log(f"LwD: simulated uplink received", 1)
+
+        device_info['DevEUIh'] = 'simu'
+        device_info['DevEUIl'] = 'lated'
+    end
 
     var payload = device_info['Payload']
     if !payload || payload.size() == 0 return true end
@@ -477,39 +590,41 @@ class lwdecode_cls
     end
 
     var decoded = self.safe_decode_uplink(
-        self.lw_decoders[decoder],
-        device_info['Name'],
-        device_info['Node'],
-        device_info['RSSI'],
-        device_info['FPort'],
-        payload
-      )
+      self.lw_decoders[decoder],
+      device_info['Name'],
+      device_info['Node'],
+      device_info['RSSI'],
+      device_info['FPort'],
+      payload,
+      simulated
+    )
 
-      if !decoded
-        self.log_error("DECODE", "Decode failed", "Decoder returned nil", 
-          format("Device:%s, FPort:%d", device_name, device_info['FPort']))
-        return true
-      end
+    if !decoded
+      self.log_error("DECODE", "Decode failed", "Decoder returned nil", 
+        format("Device:%s, FPort:%d", device_name, device_info['FPort']))
+      return true
+    end
 
-      decoded['Node'] = device_info['Node']
-      decoded['RSSI'] = device_info['RSSI']
+    decoded['Node'] = device_info['Node']
+    decoded['RSSI'] = device_info['RSSI']
+    decoded['simulated'] = simulated
 
-      var mqtt_data
-      if tasmota.get_option(83) == 0  # SetOption83 - Remove LwDecoded form JSON message (1)
-        mqtt_data = {"LwDecoded": {device_name: decoded}}
-      else
-        mqtt_data = {device_name: decoded}
-      end
+    var mqtt_data
+    if tasmota.get_option(83) == 0  # SetOption83 - Remove LwDecoded form JSON message (1)
+      mqtt_data = {"LwDecoded": {device_name: decoded}}
+    else
+      mqtt_data = {device_name: decoded}
+    end
 
-      var topic
-      if tasmota.get_option(89) == 1  # SetOption89 - Distinct MQTT topics per device (1)
-        topic = format("%s/%s%s", self.topic_cached, device_info['DevEUIh'], device_info['DevEUIl'])
-      else
-        topic = self.topic_cached
-      end
+    var topic
+    if tasmota.get_option(89) == 1  # SetOption89 - Distinct MQTT topics per device (1)
+      topic = format("%s/%s%s", self.topic_cached, device_info['DevEUIh'], device_info['DevEUIl'])
+    else
+      topic = self.topic_cached
+    end
 
-      mqtt.publish(topic, json.dump(mqtt_data))
-      tasmota.global.restart_flag = 0 # Signal LwDecoded successful (default state)
+    mqtt.publish(topic, json.dump(mqtt_data))
+    tasmota.global.restart_flag = 0 # Signal LwDecoded successful (default state)
 
     return true
   end
@@ -534,8 +649,8 @@ class lwdecode_cls
     return format("Received %s ago", self.dhm(last_time))
   end
 
-  def header(name, name_tooltip, battery, battery_last_seen, rssi, last_seen)
-    var msg = format("<tr class='ltd htr'><td><b title='%s'>%s</b></td>", name_tooltip, name)
+  def header(name, name_tooltip, battery, battery_last_seen, rssi, last_seen, simulated)
+    var msg = format("<tr class='ltd htr'><td><b title='%s'>%s%s</b></td>", name_tooltip, name, simulated ? '&nbsp;&nbsp;&nbsp;🔧' : '')
 
     if battery < 1000
       # Battery low <= 2.5V (0%), high >= 3.1V (100%)
@@ -614,7 +729,8 @@ class lwdecode_cls
   end
 end
 
-lwdecode = lwdecode_cls()
+import global
+lwdecode = LwDecode_cls()
 
 import webserver
 class webPageLoRaWAN : Driver
@@ -641,31 +757,19 @@ class webPageLoRaWAN : Driver
     if !webserver.check_privileged_access() return nil end
 
     var inode = 1
-    var cmdArg
     if webserver.has_arg('save')
       inode = int(webserver.arg('node'))
-      tasmota.cmd(format('LoRaWanAppKey%i %s', inode, webserver.arg('ak')), true)
-      cmdArg = webserver.arg('dc')
-      if !cmdArg cmdArg = '"' end
-      tasmota.cmd(format('LoRaWanDecoder%i %s', inode, cmdArg), true)
-      cmdArg = webserver.arg('an')
-      if !cmdArg cmdArg = '"' end
-      tasmota.cmd(format('LoRaWanName%i %s', inode, cmdArg), true)
-      cmdArg = webserver.arg('ce')
-      if !cmdArg
-        cmdArg = '0'
-      else
-        cmdArg = '1'
-      end
-      tasmota.cmd(format('LoRaWanNode%i %s', inode, cmdArg), true)
+      lwdecode._cmd_result(inode, 'LoRaWanAppKey',  webserver.arg('ak') )
+      lwdecode._cmd_result(inode, 'LoRaWanDecoder', lwdecode._empty(webserver.arg('dc')) )
+      lwdecode._cmd_result(inode, 'LoRaWanName',    lwdecode._empty(webserver.arg('an')) )
+      lwdecode._cmd_result(inode, 'LoRaWanNode',    ( webserver.arg('ce') ? '1' : '0' ) )
     end
 
     var appKey, decoder, name, enabled
     var hintAK = '32 character Application Key'
     var hintDecoder = 'Decoder file, ending in .be'
     var hintAN = 'Device name for MQTT messages'
-    var arg = 'LoRaWanNode'
-    var enables = string.split(tasmota.cmd(arg, true).find(arg), ',') # [1,!2,!3,!4,5,6]
+    var enables = string.split( lwdecode._cmd_result(nil,'LoRaWanNode'), ',')
     var maxnode = enables.size()
 
     webserver.content_start("LoRaWAN")           #- title of the web page -#
@@ -711,12 +815,10 @@ class webPageLoRaWAN : Driver
      if enables[node-1][0] != '!'
        enabled = ' checked'
      end
-     arg = format('LoRaWanAppKey%i', node)
-     appKey = tasmota.cmd(arg, true).find(arg)
-     arg = format('LoRaWanName%i', node)
-     name = tasmota.cmd(arg, true).find(arg)
-     arg = format('LoRaWanDecoder%i', node)
-     decoder = tasmota.cmd(arg, true).find(arg)
+     
+     appKey   = lwdecode._cmd_result(node,'LoRaWanAppKey')
+     name     = lwdecode._cmd_result(node,'LoRaWanName')
+     decoder  = lwdecode._cmd_result(node,'LoRaWanDecoder')
 
      webserver.content_send(
      format("<div id='nd%i' style='display:none'>"
@@ -742,7 +844,6 @@ class webPageLoRaWAN : Driver
 
     webserver.content_send("</fieldset>")
 
-
     webserver.content_button(webserver.BUTTON_CONFIGURATION) #- button back to conf page -#
     webserver.content_stop()                                 #- end of web page -#
   end
@@ -755,8 +856,8 @@ class webPageLoRaWAN : Driver
 end
 
 #- create and register driver in Tasmota -#
-webPageLoRaWAN_instance = webPageLoRaWAN()
-tasmota.add_driver(webPageLoRaWAN_instance)
+webpage = webPageLoRaWAN()
+tasmota.add_driver(webpage)
 
 tasmota.cmd('LoraOption3 off')    # Disable embedded decoding
 tasmota.cmd('SetOption100 off')   # Keep LwReceived in JSON message
