@@ -21,7 +21,10 @@ This document maintains the definitive list of emojis used across all LwDecode d
 | **💾** | U+1F4BE | Floppy Disk | Firmware/Datalog | LHT52, D2x | ✅ Standard | Firmware version, datalog storage |
 | **⚡** | U+26A1 | High Voltage | Voltage (V) / ADC | LHT65, WS52x, PS-LB | ✅ Standard | Electrical voltage, ADC readings |
 | **🔌** | U+1F50C | Electric Plug | Current (mA) | WS52x, PS-LB | ✅ Standard | Electrical current |
-| **📏** | U+1F4CF | Straight Ruler | Distance (mm) | DDS75-LB | ✅ Standard | Distance/proximity measurement |
+| **📏** | U+1F4CF | Straight Ruler | Distance (mm/cm) | DDS75-LB, SN50v3-LB | ✅ Standard | Distance/proximity measurement |
+| **⚖️** | U+2696 | Balance Scale | Weight (kg) | SN50v3-LB | ✅ Standard | Weight/load measurement |
+| **🔢** | U+1F522 | Input Numbers | Counter/Events | LHT65, LDS02, SN50v3-LB | ✅ Standard | Digital counters, event counting |
+| **〰️** | U+3030 | Wavy Dash | PWM/Frequency | SN50v3-LB | ✅ Standard | PWM frequency, waveform signals |
 | **🔓** | U+1F513 | Open Lock | Door Open/Unlocked | WS301, LDS02 | ✅ Standard | Door/lock open state |
 | **🔒** | U+1F512 | Locked | Door Closed/Locked | WS301, LDS02 | ✅ Standard | Door/lock closed state |
 | **🔋** | U+1F50B | Battery | Battery Percentage (%) | LHT52 | ✅ Standard | Battery charge level |
@@ -56,12 +59,18 @@ This document maintains the definitive list of emojis used across all LwDecode d
 - **🟢** Active/normal states
 - **💧** Humidity sensors
 - **💡** Light/power measurement
+- **🔢** Counter/event tracking
 
 ### **Power & Energy (WS52x specific)**
 - **⚡** Voltage measurement
 - **🔌** Current measurement  
 - **🏠** Energy consumption
 - **📊** Power factor
+
+### **Measurement & Sensing (Multi-sensor nodes)**
+- **📏** Distance/proximity sensors
+- **⚖️** Weight/load measurement
+- **〰️** PWM/frequency signals
 
 ### **Air Quality (AM300 specific)**
 - **🌬️** CO2 concentration
@@ -159,7 +168,7 @@ Before driver release:
 
 ## Current Driver Status
 
-### **Complete Implementation (35/35 emojis)**
+### **Complete Implementation (37/37 emojis)**
 - **LHT65**: 11 emojis (environmental + external sensors)
 - **AM300**: 16 emojis (comprehensive air quality)  
 - **WS52x**: 8 emojis (power monitoring)
@@ -169,9 +178,10 @@ Before driver release:
 - **WS301**: 8 emojis (door sensor + environment)
 - **LDS02**: 6 emojis (door events + duration)
 - **PS-LB**: 8 emojis (pressure/water depth + ROC status)
+- **SN50v3-LB**: 10 emojis (multi-mode sensor node with 12 working modes)
 
 ### **Framework Statistics**
-- **Total unique emojis**: 35
+- **Total unique emojis**: 37
 - **Universal coverage**: 100% (⏱️ in all drivers)
 - **Temperature consistency**: 100% (🌡️ in all temp sensors)
 - **Error handling**: 100% (⚠️ in all error-capable drivers)

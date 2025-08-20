@@ -22,6 +22,8 @@ class LwSensorFormatter_cls
     "temp":              { "u": "°C",  "f": " %.1f",  "i": "🌡️"        }, # Added by SE01LB at 2025-08-20 14:42:35
     "humidity":          { "u": "%",   "f": " %.1f",  "i": "💧"        }, # Added by SE01LB at 2025-08-20 14:42:35
     "conductivity":      { "u": "µS/cm", "f": " %d",    "i": "⚡"        }, # Added by SE01LB at 2025-08-20 14:42:35
+    "distance":          { "u": "cm",  "f": " %.1f",  "i": "📏"        }, # Added by SN50v3LB at 2025-08-20 16:30:00
+    "weight":            { "u": "kg",  "f": " %.1f",  "i": "⚖️"        }, # Added by SN50v3LB at 2025-08-20 16:30:00
 ## Driver Added formatter stop here
 
     "empty":            { "u": nil,   "f": nil,      "i": nil         }
