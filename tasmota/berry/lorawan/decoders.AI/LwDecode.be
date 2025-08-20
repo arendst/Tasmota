@@ -1,4 +1,4 @@
-## Version: 2.2.8 | Framework: LwDecode | Platform: Tasmota Berry
+## Version: 2.2.9 | Framework: LwDecode | Platform: Tasmota Berry
 
 import mqtt
 import string
@@ -19,6 +19,9 @@ class LwSensorFormatter_cls
     "altitude":         { "u": "mt",  "f": " %d",    "i": "&#x26F0;"  },
 
 ## Driver Added formatter begin here - AI Generated don't edit this section
+    "temp":              { "u": "°C",  "f": " %.1f",  "i": "🌡️"        }, # Added by SE01LB at 2025-08-20 14:42:35
+    "humidity":          { "u": "%",   "f": " %.1f",  "i": "💧"        }, # Added by SE01LB at 2025-08-20 14:42:35
+    "conductivity":      { "u": "µS/cm", "f": " %d",    "i": "⚡"        }, # Added by SE01LB at 2025-08-20 14:42:35
 ## Driver Added formatter stop here
 
     "empty":            { "u": nil,   "f": nil,      "i": nil         }
