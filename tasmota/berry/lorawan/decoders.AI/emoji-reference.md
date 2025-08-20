@@ -7,7 +7,7 @@ This document maintains the definitive list of emojis used across all LwDecode d
 
 | Emoji | Unicode | Name | Unit/Type | Current Drivers | Status | Description |
 |-------|---------|------|-----------|----------------|--------|-------------|
-| **🌡️** | U+1F321 | Thermometer | Temperature (°C) | LHT65, LHT52, D2x, DDS75-LB, AM300, WS301 | ✅ Standard | **Universal temperature sensor** |
+| **🌡️** | U+1F321 | Thermometer | Temperature (°C) | LHT65, LHT52, D2x, DDS75-LB, AM300, WS301, MTC-AQ01, MLR003, BOB-ASSISTANT | ✅ Standard | **Universal temperature sensor** |
 | **💧** | U+1F4A7 | Droplet | Humidity (%RH) / Water Depth (m) | LHT65, LHT52, AM300, WS301, PS-LB | ✅ Standard | **Universal humidity sensor / water depth** |
 | **⏱️** | U+23F1 | Stopwatch | Last Seen/Age | LHT65, LHT52, D2x, DDS75-LB, AM300, WS301, WS52x | ✅ Universal | **Universal "last seen" indicator** |
 | **⚠️** | U+26A0 | Warning Sign | Error/Warning/Disconnected | LHT65, DDS75-LB, WS301 | ✅ Standard | Sensor errors, cable disconnection, tamper |
@@ -37,11 +37,14 @@ This document maintains the definitive list of emojis used across all LwDecode d
 | **💨** | U+1F4A8 | Dashing Away | PM10 (μg/m³) | AM300 | ✅ Standard | Coarse particulate matter |
 | **🧪** | U+1F9EA | Test Tube | HCHO (mg/m³) | AM300 | ✅ Standard | Formaldehyde concentration |
 | **⚗️** | U+2697 | Alembic | O3 (ppm) | AM300 | ✅ Standard | Ozone concentration |
-| **🔊** | U+1F50A | Speaker High Volume | Buzzer On/Audio Alert | AM300 | ✅ Standard | Active audio alert |
+| **🔊** | U+1F50A | Speaker High Volume | Frequency/Audio | AM300, BOB-ASSISTANT | ✅ Standard | Buzzer on/audio alert, peak frequency |
+| **📳** | U+1F4F3 | Vibration Mode | Vibration (g) | BOB-ASSISTANT | ✅ New | Vibration monitoring, predictive maintenance |
+| **🧠** | U+1F9E0 | Brain | Machine Learning | BOB-ASSISTANT | ✅ New | ML learning progress, AI anomaly detection |
 | **🔇** | U+1F507 | Muted Speaker | Buzzer Off/Muted | AM300 | ✅ New | Muted audio state |
 | **✅** | U+2705 | Check Mark Button | Installed/OK Status | WS301 | ✅ Standard | Installation confirmed |
 | **❌** | U+274C | Cross Mark | Not Installed/Error | WS301, DDS75-LB | ✅ Standard | Installation error, sensor error |
-| **🔧** | U+1F527 | Wrench | Firmware/Configuration | DDS75-LB | ✅ New | Firmware version, configuration |
+| **🔧** | U+1F527 | Wrench | Configuration/Valve | DDS75-LB, MLR003 | ✅ Standard | Firmware/configuration, valve control |
+| **🌊** | U+1F30A | Ocean Wave | Flow Temperature | MLR003 | ✅ New | Radiator flow water temperature |
 | **⏰** | U+23F0 | Alarm Clock | Time Sync/Periodic | LHT65, DDS75-LB | ✅ New | Time synchronization, periodic events |
 | **🔔** | U+1F514 | Bell | Interrupt/Notification | DDS75-LB | ✅ New | Interrupt events, notifications |
 | **🚨** | U+1F6A8 | Police Car Light | Alarm State | D2x | ✅ New | Temperature alarms, critical alerts |
@@ -168,7 +171,7 @@ Before driver release:
 
 ## Current Driver Status
 
-### **Complete Implementation (39/39 emojis)**
+### **Complete Implementation (42/42 emojis)**
 - **LHT65**: 11 emojis (environmental + external sensors)
 - **AM300**: 16 emojis (comprehensive air quality)  
 - **WS52x**: 8 emojis (power monitoring)
@@ -181,9 +184,10 @@ Before driver release:
 - **SN50v3-LB**: 10 emojis (multi-mode sensor node with 12 working modes)
 - **MTC-AQ01**: 6 emojis (air quality with heartbeat monitoring)
 - **MLR003**: 6 emojis (thermostatic valve with energy harvesting)
+- **BOB-ASSISTANT**: 8 emojis (vibration sensor with ML anomaly detection)
 
 ### **Framework Statistics**
-- **Total unique emojis**: 39
+- **Total unique emojis**: 42
 - **Universal coverage**: 100% (⏱️ in all drivers)
 - **Temperature consistency**: 100% (🌡️ in all temp sensors)
 - **Error handling**: 100% (⚠️ in all error-capable drivers)
