@@ -199,7 +199,7 @@ Before driver release:
 ---
 
 *This reference is automatically maintained as part of LwDecode framework development*  
-*Last updated: 2025-08-16 | Framework version: 2.1.8*
+*Last updated: 2025-08-19 | Framework version: 2.2.1*
 
 ---
 
