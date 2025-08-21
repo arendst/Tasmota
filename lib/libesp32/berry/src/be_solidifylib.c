@@ -426,7 +426,7 @@ static void m_solidify_closure(bvm *vm, bbool str_literal, const bclosure *clo, 
     const char * func_name = str(pr->name);
 
     if (clo->nupvals > 0) {
-        logfmt("--> Unsupported upvals in closure <---");
+        logfmt("--> Unsupported upvals in closure in '%s' <---", str(clo->proto->name));
         // be_raise(vm, "internal_error", "Unsupported upvals in closure");
     }
 
