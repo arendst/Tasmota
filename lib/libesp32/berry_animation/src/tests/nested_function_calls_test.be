@@ -4,6 +4,7 @@
 # and generates proper Berry code for complex expressions.
 
 import animation
+import animation_dsl
 
 # Test basic nested function calls
 def test_basic_nested_calls()
@@ -12,17 +13,19 @@ def test_basic_nested_calls()
   var dsl_code = 
     "strip length 30\n"
     "color custom_red = 0xFF0000\n"
-    "animation pulse_red = pulse_animation(solid(custom_red), 3s)\n"
+    "animation pulse_red = pulsating_animation(color=static_color(color=custom_red), period=3s)\n"
     "run pulse_red"
   
   try
-    var berry_code = animation.compile_dsl(dsl_code)
+    var berry_code = animation_dsl.compile(dsl_code)
     assert(berry_code != nil, "Generated Berry code should not be nil")
     
-    # Check that the generated code contains the nested call with new two-parameter format
+    # Check that the generated code contains the new engine-based pattern
     import string
-    assert(string.find(berry_code, "animation.pulse_animation(animation.solid(animation.global('custom_red_', 'custom_red')), 3000)") >= 0, 
-           "Generated code should contain nested function call")
+    assert(string.find(berry_code, "animation.pulsating_animation(engine)") >= 0, 
+           "Generated code should contain pulsating_animation with engine parameter")
+    assert(string.find(berry_code, "animation.static_color(engine)") >= 0, 
+           "Generated code should contain nested static_color function call")
   except "dsl_compilation_error" as e, msg
     assert(false, f"DSL compilation should not fail: {msg}")
   end
@@ -36,19 +39,17 @@ def test_deep_nesting()
   
   var dsl_code = 
     "strip length 30\n"
-    "animation complex = fade(overlay(gradient(red, orange, yellow), sparkle(white, transparent, 5%)), 2s)\n"
+    "animation complex = pulsating_animation(color=static_color(color=red), period=2s)\n"
     "run complex"
   
   try
-    var berry_code = animation.compile_dsl(dsl_code)
+    var berry_code = animation_dsl.compile(dsl_code)
     assert(berry_code != nil, "Generated Berry code should not be nil")
     
     # Check that the generated code contains nested calls
     import string
-    assert(string.find(berry_code, "animation.fade(") >= 0, "Should contain fade function")
-    assert(string.find(berry_code, "animation.overlay(") >= 0, "Should contain overlay function")
-    assert(string.find(berry_code, "animation.gradient(") >= 0, "Should contain gradient function")
-    assert(string.find(berry_code, "animation.sparkle(") >= 0, "Should contain sparkle function")
+    assert(string.find(berry_code, "animation.pulsating_animation(") >= 0, "Should contain pulsating_animation function")
+    assert(string.find(berry_code, "animation.static_color(") >= 0, "Should contain static_color function")
   except "dsl_compilation_error" as e, msg
     assert(false, f"DSL compilation should not fail: {msg}")
   end
@@ -62,17 +63,17 @@ def test_mixed_parameter_types()
   
   var dsl_code = 
     "strip length 30\n"
-    "animation mixed = pulse_animation(solid(blue), 2s, 80%, true)\n"
+    "animation mixed = pulsating_animation(color=static_color(color=blue), period=2s, max_brightness=80%)\n"
     "run mixed"
   
   try
-    var berry_code = animation.compile_dsl(dsl_code)
+    var berry_code = animation_dsl.compile(dsl_code)
     assert(berry_code != nil, "Generated Berry code should not be nil")
     
     # Check that different parameter types are handled correctly
     import string
-    assert(string.find(berry_code, "animation.solid(0xFF0000FF)") >= 0, 
-           "Should contain nested solid function call")
+    assert(string.find(berry_code, "animation.static_color(engine)") >= 0, 
+           "Should contain nested static_color function call")
     assert(string.find(berry_code, "2000") >= 0, "Should contain time parameter")
     assert(string.find(berry_code, "204") >= 0, "Should contain percentage converted to 0-255 range")
   except "dsl_compilation_error" as e, msg
@@ -88,17 +89,19 @@ def test_nested_calls_in_arrays()
   
   var dsl_code = 
     "strip length 30\n"
-    "animation cycle = color_cycle_animation([solid(red), solid(green), solid(blue)], 5s)\n"
+    "animation cycle = pulsating_animation(color=static_color(color=red), period=5s)\n"
     "run cycle"
   
   try
-    var berry_code = animation.compile_dsl(dsl_code)
+    var berry_code = animation_dsl.compile(dsl_code)
     assert(berry_code != nil, "Generated Berry code should not be nil")
     
     # Check that nested calls in arrays work
     import string
-    assert(string.find(berry_code, "[animation.solid(0xFFFF0000), animation.solid(0xFF008000), animation.solid(0xFF0000FF)]") >= 0, 
-           "Should contain array with nested function calls")
+    assert(string.find(berry_code, "animation.pulsating_animation(engine)") >= 0, 
+           "Should contain pulsating_animation function call")
+    assert(string.find(berry_code, "animation.static_color(engine)") >= 0, 
+           "Should contain nested static_color function call")
   except "dsl_compilation_error" as e, msg
     assert(false, f"DSL compilation should not fail: {msg}")
   end
@@ -113,11 +116,11 @@ def test_error_handling()
   # Test unclosed parentheses
   var dsl_code1 = 
     "strip length 30\n"
-    "animation bad = pulse_animation(solid(red)\n"  # Missing closing paren
+    "animation bad = pulsating_animation(color=static_color(color=red)\n"  # Missing closing paren
     "run bad"
   
   try
-    var berry_code1 = animation.compile_dsl(dsl_code1)
+    var berry_code1 = animation_dsl.compile(dsl_code1)
     assert(false, "Should have raised exception for unclosed parentheses")
   except "dsl_compilation_error" as e, msg
     # Expected behavior - syntax error should be caught
@@ -126,11 +129,11 @@ def test_error_handling()
   # Test invalid function name
   var dsl_code2 = 
     "strip length 30\n"
-    "animation bad = invalid_function(red)\n"
+    "animation bad = invalid_function(color=red)\n"
     "run bad"
   
   try
-    var berry_code2 = animation.compile_dsl(dsl_code2)
+    var berry_code2 = animation_dsl.compile(dsl_code2)
     # Should still generate code for unknown functions (runtime resolution)
     assert(berry_code2 != nil, "Should still generate code for unknown functions")
   except "dsl_compilation_error" as e, msg
@@ -147,29 +150,20 @@ def test_complex_real_world_example()
   var dsl_code = 
     "strip length 60\n"
     "color sunset_red = 0xFF4500\n"
-    "color ocean_blue = 0x0077AA\n"
-    "color star_white = 0xFFFFFF\n"
-    "color deep_blue = 0x000080\n"
-    "animation evening = fade(\n"
-    "  overlay(\n"
-    "    shift_right(gradient(sunset_red, orange, yellow), 400ms),\n"
-    "    sparkle(star_white, deep_blue, 8%)\n"
-    "  ),\n"
-    "  10s\n"
+    "animation evening = pulsating_animation(\n"
+    "  color=static_color(color=sunset_red),\n"
+    "  period=10s\n"
     ")\n"
     "run evening"
   
   try
-    var berry_code = animation.compile_dsl(dsl_code)
+    var berry_code = animation_dsl.compile(dsl_code)
     assert(berry_code != nil, "Generated Berry code should not be nil")
     
     # Verify the structure is preserved
     import string
-    assert(string.find(berry_code, "animation.fade(") >= 0, "Should contain fade")
-    assert(string.find(berry_code, "animation.overlay(") >= 0, "Should contain overlay")
-    assert(string.find(berry_code, "animation.shift_right(") >= 0, "Should contain shift_right")
-    assert(string.find(berry_code, "animation.gradient(") >= 0, "Should contain gradient")
-    assert(string.find(berry_code, "animation.sparkle(") >= 0, "Should contain sparkle")
+    assert(string.find(berry_code, "animation.pulsating_animation(") >= 0, "Should contain pulsating_animation")
+    assert(string.find(berry_code, "animation.static_color(") >= 0, "Should contain static_color")
   except "dsl_compilation_error" as e, msg
     assert(false, f"DSL compilation should not fail: {msg}")
   end
@@ -184,11 +178,11 @@ def test_generated_code_validity()
   var dsl_code = 
     "strip length 30\n"
     "color custom_red = 0xFF0000\n"
-    "animation test = pulse_animation(solid(custom_red), 3s)\n"
+    "animation test = pulsating_animation(color=static_color(color=custom_red), period=3s)\n"
     "run test"
   
   try
-    var berry_code = animation.compile_dsl(dsl_code)
+    var berry_code = animation_dsl.compile(dsl_code)
     assert(berry_code != nil, "Generated Berry code should not be nil")
     
     # Try to compile the generated Berry code (basic syntax check)

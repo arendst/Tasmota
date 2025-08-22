@@ -1,7 +1,7 @@
 # Simple Palette Example
 # Demonstrates basic palette usage in the DSL
 
-strip length 20
+#strip length 20
 
 # Define a simple rainbow palette
 palette rainbow = [
@@ -13,7 +13,7 @@ palette rainbow = [
 ]
 
 # Create an animation using the palette
-animation rainbow_cycle = rich_palette_animation(rainbow, 3s)
+animation rainbow_cycle = rich_palette_animation(palette=rainbow, cycle_period=3s)
 
 # Simple sequence
 sequence demo {

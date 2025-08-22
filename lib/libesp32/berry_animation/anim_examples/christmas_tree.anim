@@ -1,11 +1,11 @@
 # Christmas Tree - Festive holiday colors
 # Green base with colorful ornaments and twinkling
 
-strip length 60
+#strip length 60
 
 # Green tree base
 color tree_green = 0x006600
-animation tree_base = solid(tree_green)
+animation tree_base = solid(color=tree_green)
 
 # Define ornament colors
 palette ornament_colors = [
@@ -17,38 +17,38 @@ palette ornament_colors = [
 ]
 
 # Colorful ornaments as twinkling lights
-pattern ornament_pattern = rich_palette_color_provider(ornament_colors, 3s, linear, 255)
+color ornament_pattern = rich_palette(palette=ornament_colors, cycle_period=3s, transition_type=LINEAR, brightness=255)
 animation ornaments = twinkle_animation(
-  ornament_pattern, # color source
-  15,              # density (many ornaments)
-  800ms            # twinkle speed (slow twinkle)
+  color=ornament_pattern, # color source
+  density=15,             # density (many ornaments)
+  twinkle_speed=800ms     # twinkle speed (slow twinkle)
 )
 ornaments.priority = 10
 
 # Star on top (bright yellow pulse)
-animation tree_star = pulse_position_animation(
-  0xFFFF00,  # Bright yellow
-  58,        # position (near the top)
-  3,         # star size
-  1          # sharp edges
+animation tree_star = beacon_animation(
+  color=0xFFFF00,  # Bright yellow
+  pos=58,          # position (near the top)
+  beacon_size=3,    # star size
+  slew_size=1      # sharp edges
 )
 tree_star.priority = 20
-tree_star.opacity = smooth(200, 255, 2s)  # Gentle pulsing
+tree_star.opacity = smooth(min_value=200, max_value=255, duration=2s)  # Gentle pulsing
 
 # Add some white sparkles for snow/magic
 animation snow_sparkles = twinkle_animation(
-  0xFFFFFF,  # White snow
-  8,         # density (sparkle count)
-  400ms      # twinkle speed (quick sparkles)
+  color=0xFFFFFF,  # White snow
+  density=8,       # density (sparkle count)
+  twinkle_speed=400ms # twinkle speed (quick sparkles)
 )
 snow_sparkles.priority = 15
 
 # Garland effect - moving colored lights
-pattern garland_pattern = rich_palette_color_provider(ornament_colors, 2s, linear, 200)
+color garland_pattern = rich_palette(palette=ornament_colors, cycle_period=2s, transition_type=LINEAR, brightness=200)
 animation garland = comet_animation(
-  garland_pattern, # color source
-  6,              # garland length (tail length)
-  4s              # slow movement (speed)
+  color=garland_pattern, # color source
+  tail_length=6,         # garland length (tail length)
+  speed=4s               # slow movement (speed)
 )
 garland.priority = 5
 

@@ -1,215 +1,221 @@
-# Tasmota Berry Animation Framework
+# Berry Animation Framework
 
-A powerful, lightweight animation framework for controlling addressable LED strips in Tasmota using Berry scripting language.
+A powerful, lightweight animation framework for controlling addressable LED strips in Tasmota using a simple Domain-Specific Language (DSL).
 
 ## ✨ Features
 
-- **🎨 Rich Animation Effects** - Pulse, breathe, fire, comet, twinkle, and more
-- **🌈 Advanced Color System** - Palettes, gradients, color cycling with smooth transitions
-- **📝 Domain-Specific Language (DSL)** - Write animations in intuitive, declarative syntax
+- **🎨 Rich Animation Effects** - Pulse, breathe, fire, comet, sparkle, wave, and more
+- **🌈 Advanced Color System** - Predefined palettes, custom gradients, smooth color cycling
+- **📝 Simple DSL Syntax** - Write animations in intuitive, declarative language
 - **⚡ High Performance** - Optimized for embedded systems with minimal memory usage
-- **🔧 Extensible** - Create custom animations and user-defined functions
+- **🔧 Extensible** - Create custom animations and effects
 - **🎯 Position-Based Effects** - Precise control over individual LED positions
-- **📊 Dynamic Parameters** - Animate colors, positions, sizes with value providers
-- **🎭 Event System** - Responsive animations that react to button presses, timers, and sensors
+- **📊 Dynamic Parameters** - Animate colors, positions, sizes with oscillating values
+- **🎭 Sequences** - Create complex shows with timing and loops
 
 ## 🚀 Quick Start
 
-### 1. Basic Berry Animation
-
-```berry
-import animation
-
-# Create LED strip (60 LEDs)
-var strip = Leds(60)
-var engine = animation.create_engine(strip)
-
-# Create a pulsing red animation
-var pulse_red = animation.pulse(
-  animation.solid(0xFFFF0000),  # Red color
-  2000,                         # 2 second period
-  50,                          # Min brightness (0-255)
-  255                          # Max brightness (0-255)
-)
-
-# Start the animation
-engine.add_animation(pulse_red)
-engine.start()
-```
-
-### 2. Using the Animation DSL
-
-Create a file `my_animation.anim`:
+### Simple Pulsing Animation
 
 ```dsl
 # Define colors
 color red = #FF0000
-color blue = #0000FF
 
-# Create animations
-animation pulse_red = pulse(solid(red), 2s, 20%, 100%)
-animation pulse_blue = pulse(solid(blue), 3s, 30%, 100%)
+# Create pulsing animation
+animation pulse_red = pulsating_animation(color=red, period=3s)
 
-# Create a sequence
-sequence demo {
-  play pulse_red for 5s
-  wait 1s
-  play pulse_blue for 5s
-  repeat 3 times:
-    play pulse_red for 2s
-    play pulse_blue for 2s
-}
-
-run demo
+# Run it
+run pulse_red
 ```
 
-Load and run the DSL:
-
-```berry
-import animation
-
-var strip = Leds(60)
-var runtime = animation.DSLRuntime(animation.create_engine(strip))
-runtime.load_dsl_file("my_animation.anim")
-```
-
-### 3. Palette-Based Animations
+### Rainbow Color Cycling
 
 ```dsl
-# Define a fire palette
-palette fire_colors = [
-  (0, #000000),    # Black
-  (64, #800000),   # Dark red
-  (128, #FF0000),  # Red
-  (192, #FF8000),  # Orange
-  (255, #FFFF00)   # Yellow
+# Use predefined rainbow palette
+animation rainbow_cycle = rich_palette(
+  palette=PALETTE_RAINBOW,
+  cycle_period=5s,
+  transition_type=1
+)
+
+run rainbow_cycle
+```
+
+### Custom Color Palette
+
+```dsl
+# Define a sunset palette
+palette sunset = [
+  (0, #191970),    # Midnight blue
+  (64, purple),    # Purple
+  (128, #FF69B4),  # Hot pink
+  (192, orange),   # Orange
+  (255, yellow)    # Yellow
 ]
 
-# Create fire animation
-animation fire_effect = rich_palette_animation(fire_colors, 3s, smooth, 255)
+# Create palette animation
+animation sunset_glow = rich_palette(
+  palette=sunset,
+  cycle_period=8s,
+  transition_type=1
+)
 
-run fire_effect
+run sunset_glow
+```
+
+### Animation Sequences
+
+```dsl
+animation red_pulse = pulsating_animation(color=red, period=2s)
+animation green_pulse = pulsating_animation(color=green, period=2s)
+animation blue_pulse = pulsating_animation(color=blue, period=2s)
+
+sequence rgb_show {
+  play red_pulse for 3s
+  wait 500ms
+  play green_pulse for 3s
+  wait 500ms
+  play blue_pulse for 3s
+  
+  repeat 2 times:
+    play red_pulse for 1s
+    play green_pulse for 1s
+    play blue_pulse for 1s
+}
+
+run rgb_show
 ```
 
 ## 📚 Documentation
 
-### User Guides
+### Getting Started
 - **[Quick Start Guide](docs/QUICK_START.md)** - Get up and running in 5 minutes
-- **[API Reference](docs/API_REFERENCE.md)** - Complete Berry API documentation
-- **[Examples](docs/EXAMPLES.md)** - Curated examples with explanations
+- **[DSL Reference](docs/DSL_REFERENCE.md)** - Complete DSL syntax and features
+- **[Examples](docs/EXAMPLES.md)** - Comprehensive examples and tutorials
+
+### Reference
+- **[Animation Class Hierarchy](docs/ANIMATION_CLASS_HIERARCHY.md)** - All available animations and parameters
+- **[Oscillation Patterns](docs/OSCILLATION_PATTERNS.md)** - Dynamic value patterns and waveforms
 - **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 
-### DSL (Domain-Specific Language)
-- **[DSL Reference](.kiro/specs/berry-animation-framework/dsl-specification.md)** - Complete DSL syntax guide
-- **[DSL Grammar](.kiro/specs/berry-animation-framework/dsl-grammar.md)** - Formal grammar specification
-- **[Palette Guide](.kiro/specs/berry-animation-framework/palette-quick-reference.md)** - Working with color palettes
-
-### Advanced Topics
-- **[User Functions](.kiro/specs/berry-animation-framework/USER_FUNCTIONS.md)** - Create custom animation functions
-- **[Event System](.kiro/specs/berry-animation-framework/EVENT_SYSTEM.md)** - Responsive, interactive animations
-- **[Project Structure](docs/PROJECT_STRUCTURE.md)** - Navigate the codebase
-
-### Framework Design
-- **[Requirements](.kiro/specs/berry-animation-framework/requirements.md)** - Project goals and requirements (✅ Complete)
-- **[Architecture](.kiro/specs/berry-animation-framework/design.md)** - Framework design and architecture
-- **[Future Features](.kiro/specs/berry-animation-framework/future_features.md)** - Planned enhancements
+### Advanced
+- **[User Functions](docs/USER_FUNCTIONS.md)** - Create custom animation functions
+- **[Animation Development](docs/ANIMATION_DEVELOPMENT.md)** - Create custom animations
 
 ## 🎯 Core Concepts
 
-### Unified Architecture
-The framework uses a **unified pattern-animation architecture** where `Animation` extends `Pattern`. This means:
-- Animations ARE patterns with temporal behavior
-- Infinite composition: animations can use other animations as base patterns
-- Consistent API across all visual elements
+### DSL-First Design
+Write animations using simple, declarative syntax:
+```dsl
+animation fire_effect = fire_animation(intensity=200, cooling=55, sparking=120)
+run fire_effect
+```
 
-### Animation Engine
-The `AnimationEngine` is the heart of the framework:
-- Manages multiple animations with priority-based layering
-- Handles timing, blending, and LED output
-- Integrates with Tasmota's `fast_loop` for smooth performance
+### Dynamic Parameters
+Use oscillating values to create complex effects:
+```dsl
+animation pulsing_comet = comet_animation(
+  color=red,
+  tail_length=smooth_oscillator(5, 15, 3s),
+  speed=2
+)
+```
 
-### Value Providers
-Dynamic parameters that change over time:
-- **Static values**: `solid(red)` 
-- **Oscillators**: `pulse(solid(red), smooth(50, 255, 2s))`
-- **Color providers**: `rich_palette_animation(fire_palette, 3s)`
+### Color Palettes
+Rich color transitions with predefined or custom palettes:
+```dsl
+palette custom = [(0, blue), (128, purple), (255, pink)]
+animation palette_cycle = rich_palette(palette=custom, cycle_period=4s)
+```
 
 ## 🎨 Animation Types
 
-### Basic Animations
-- **`solid(color)`** - Static color fill
-- **`pulse(pattern, period, min, max)`** - Pulsing brightness
-- **`breathe(color, period)`** - Smooth breathing effect
+### Basic Effects
+- **Pulse** - Breathing/pulsing effects with smooth transitions
+- **Sparkle** - Random twinkling and starfield effects
+- **Fire** - Realistic fire simulation with warm colors
+- **Comet** - Moving comet with customizable tail
 
-### Pattern-Based Animations  
-- **`rich_palette_animation(palette, period, easing, brightness)`** - Palette color cycling
-- **`gradient(color1, color2, ...)`** - Color gradients
-- **`fire_animation(intensity, speed)`** - Realistic fire simulation
+### Color Animations  
+- **Rich Palette** - Smooth color transitions using predefined palettes
+- **Color Cycling** - Custom color sequences with smooth blending
+- **Gradient** - Linear and radial color gradients
+- **Plasma** - Classic plasma effects with sine wave interference
 
-### Position-Based Animations
-- **`pulse_position_animation(color, pos, size, fade)`** - Localized pulse
-- **`comet_animation(color, tail_length, speed)`** - Moving comet effect
-- **`twinkle_animation(color, density, speed)`** - Twinkling stars
+### Pattern Effects
+- **Wave** - Mathematical waveforms (sine, triangle, square, sawtooth)
+- **Noise** - Organic patterns using Perlin noise
+- **Position-Based** - Precise control over individual LED positions
 
 ### Motion Effects
-- **`shift_left(pattern, speed)`** - Move pattern left
-- **`shift_right(pattern, speed)`** - Move pattern right
-- **`bounce(pattern, period)`** - Bouncing motion
+- **Bounce** - Physics-based bouncing with gravity and damping
+- **Shift** - Scrolling and translation effects
+- **Scale** - Size transformation and breathing effects
+- **Jitter** - Add random variations to any animation
 
 ## 🔧 Installation
 
-### For Tasmota Development
-1. Copy the `lib/libesp32/berry_animation/` directory to your Tasmota build
-2. The framework will be available as the `animation` module
-3. Use `import animation` in your Berry scripts
+### Prerequisites
+- Tasmota firmware with Berry support
+- Addressable LED strip (WS2812, SK6812, etc.)
 
-### For Testing/Development
-1. Install Berry interpreter with Tasmota extensions
-2. Set module path: `berry -m lib/libesp32/berry_animation`
-3. Run examples: `berry examples/simple_engine_test.be`
+### Setup
+1. **Enable Berry** in Tasmota configuration
+2. **Configure LED strip** using Tasmota's LED configuration
+3. **Import the framework**:
+   ```berry
+   import animation
+   ```
+4. **Create your first animation** using the DSL
 
-## 🧪 Examples
+## 🌈 Predefined Palettes
 
-The framework includes comprehensive examples:
+The framework includes several built-in color palettes:
 
-### Berry Examples
-- **[Basic Engine](lib/libesp32/berry_animation/examples/simple_engine_test.be)** - Simple animation setup
-- **[Color Providers](lib/libesp32/berry_animation/examples/color_provider_demo.be)** - Dynamic color effects
-- **[Position Effects](lib/libesp32/berry_animation/examples/pulse_position_animation_demo.be)** - Localized animations
-- **[Event System](lib/libesp32/berry_animation/examples/event_system_demo.be)** - Interactive animations
+- **PALETTE_RAINBOW** - Standard 7-color rainbow (Red → Orange → Yellow → Green → Blue → Indigo → Violet)
+- **PALETTE_RGB** - Simple RGB cycle (Red → Green → Blue)
+- **PALETTE_FIRE** - Warm fire colors (Black → Dark Red → Red → Orange → Yellow)
+- **PALETTE_SUNSET_TICKS** - Sunset colors (Orange Red → Dark Orange → Gold → Hot Pink → Purple → Midnight Blue)
+- **PALETTE_OCEAN** - Blue and green ocean tones (Navy → Blue → Cyan → Spring Green → Green)
+- **PALETTE_FOREST** - Various green forest tones (Dark Green → Forest Green → Lime Green → Mint Green → Light Green)
 
-### DSL Examples
-- **[Aurora Borealis](anim_examples/aurora_borealis.anim)** - Northern lights effect
-- **[Breathing Colors](anim_examples/breathing_colors.anim)** - Smooth color breathing
-- **[Fire Effect](anim_examples/fire_demo.anim)** - Realistic fire simulation
+```dsl
+# Use any predefined palette
+animation ocean_waves = rich_palette(
+  palette=PALETTE_OCEAN,
+  cycle_period=8s,
+  transition_type=1
+)
+run ocean_waves
+```
+
+## ⚡ Performance
+
+Optimized for embedded systems:
+
+- **Memory Efficient** - Minimal RAM usage
+- **CPU Optimized** - Efficient rendering algorithms  
+- **Scalable** - Handles strips from 10 to 1000+ LEDs
+- **Real-time** - Smooth 30+ FPS animation
+
+### Performance Tips
+- Use longer animation periods (2-5 seconds) for smoother performance
+- Limit simultaneous animations (3-5 max recommended)
+- Consider strip length when designing complex effects
 
 ## 🤝 Contributing
 
-### Running Tests
-```bash
-# Run all tests
-berry lib/libesp32/berry_animation/tests/test_all.be
-
-# Run specific test
-berry lib/libesp32/berry_animation/tests/animation_engine_test.be
-```
-
-### Code Style
-- Follow Berry language conventions
-- Use descriptive variable names
-- Include comprehensive comments
-- Add test coverage for new features
+Contributions are welcome! Areas for contribution:
+- New animation effects
+- Performance optimizations  
+- Documentation improvements
+- Example animations
+- Bug fixes and testing
 
 ## 📄 License
 
-This project is part of the Tasmota ecosystem and follows the same licensing terms.
-
-## 🙏 Acknowledgments
-
-- **Tasmota Team** - For the excellent IoT platform
-- **Berry Language** - For the lightweight scripting language
-- **Community Contributors** - For testing, feedback, and improvements
+This project is licensed under the MIT License.
 
 ---
 
-**Ready to create amazing LED animations?** Start with the [Quick Start Guide](docs/QUICK_START.md)!
+**Happy Animating!** 🎨✨

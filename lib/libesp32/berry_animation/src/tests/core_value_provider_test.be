@@ -110,11 +110,11 @@ def test_core_functionality()
   end
   
   # Test with static value
-  var static_result = resolve_parameter(123, "pulse_size", 1000)
+  var static_result = resolve_parameter(123, "beacon_size", 1000)
   assert(static_result == 123, "Should return static value")
   
   # Test with provider using specific method
-  var provider_result = resolve_parameter(static_provider, "pulse_size", 1000)
+  var provider_result = resolve_parameter(static_provider, "beacon_size", 1000)
   assert(provider_result == 42, "Should return value from provider via get_pulse_size")
   
   # Test with provider using generic method

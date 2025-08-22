@@ -6,22 +6,31 @@
 import animation
 import string
 
+# Use global.Leds for testing instead of mock objects
+
 # Test basic BounceAnimation creation and functionality
 def test_bounce_animation_basic()
   print("Testing basic BounceAnimation...")
   
-  # Create a simple source animation
-  var source = animation.filled_animation(0xFFFF0000, 10, 0, true, "test_source")
+  # Create LED strip and engine
+  var strip = global.Leds(10)
+  var engine = animation.animation_engine(strip)
   
-  # Test with default parameters
-  var bounce_anim = animation.bounce_animation(source, nil, nil, nil, nil, 10, 10, 0, true, "test_bounce")
+  # Create a simple source animation
+  var source = animation.solid(engine)
+  source.color = 0xFFFF0000
+  source.name = "test_source"
+  
+  # Test with default parameters using new parameterized pattern
+  var bounce_anim = animation.bounce_animation(engine)
+  bounce_anim.source_animation = source
+  bounce_anim.name = "test_bounce"
   
   assert(bounce_anim != nil, "BounceAnimation should be created")
   assert(bounce_anim.bounce_speed == 128, "Default bounce_speed should be 128")
   assert(bounce_anim.bounce_range == 0, "Default bounce_range should be 0")
   assert(bounce_anim.damping == 250, "Default damping should be 250")
   assert(bounce_anim.gravity == 0, "Default gravity should be 0")
-  assert(bounce_anim.strip_length == 10, "Strip length should be 10")
   assert(bounce_anim.is_running == false, "Animation should not be running initially")
   
   print("✓ Basic BounceAnimation test passed")
@@ -31,19 +40,35 @@ end
 def test_bounce_animation_custom()
   print("Testing BounceAnimation with custom parameters...")
   
-  var source = animation.filled_animation(0xFF00FF00, 10, 0, true, "test_source")
+  # Create LED strip and engine
+  var strip = global.Leds(20)
+  var engine = animation.animation_engine(strip)
   
-  # Test with custom parameters
-  var bounce_anim = animation.bounce_animation(source, 200, 15, 240, 50, 20, 15, 5000, false, "custom_bounce")
+  var source = animation.solid(engine)
+  source.color = 0xFF00FF00
+  source.name = "test_source"
+  
+  # Test with custom parameters using new parameterized pattern
+  var bounce_anim = animation.bounce_animation(engine)
+  bounce_anim.source_animation = source
+  bounce_anim.bounce_speed = 200
+  bounce_anim.bounce_range = 15
+  bounce_anim.damping = 240
+  bounce_anim.gravity = 50
+  bounce_anim.priority = 15
+  bounce_anim.duration = 5000
+  bounce_anim.loop = false
+  bounce_anim.opacity = 200
+  bounce_anim.name = "custom_bounce"
   
   assert(bounce_anim.bounce_speed == 200, "Custom bounce_speed should be 200")
   assert(bounce_anim.bounce_range == 15, "Custom bounce_range should be 15")
   assert(bounce_anim.damping == 240, "Custom damping should be 240")
   assert(bounce_anim.gravity == 50, "Custom gravity should be 50")
-  assert(bounce_anim.strip_length == 20, "Custom strip length should be 20")
   assert(bounce_anim.priority == 15, "Custom priority should be 15")
   assert(bounce_anim.duration == 5000, "Custom duration should be 5000")
-  assert(bounce_anim.loop == 0, "Custom loop should be 0 (false)")
+  assert(bounce_anim.loop == false, "Custom loop should be false")
+  assert(bounce_anim.opacity == 200, "Custom opacity should be 200")
   
   print("✓ Custom BounceAnimation test passed")
 end
@@ -52,25 +77,33 @@ end
 def test_bounce_animation_parameters()
   print("Testing BounceAnimation parameter changes...")
   
-  var source = animation.filled_animation(0xFF0000FF, 10, 0, true, "test_source")
-  var bounce_anim = animation.bounce_animation(source, nil, nil, nil, nil, 15, 10, 0, true, "param_test")
+  # Create LED strip and engine
+  var strip = global.Leds(15)
+  var engine = animation.animation_engine(strip)
   
-  # Test parameter changes
-  bounce_anim.set_param("bounce_speed", 180)
+  var source = animation.solid(engine)
+  source.color = 0xFF0000FF
+  source.name = "test_source"
+  
+  var bounce_anim = animation.bounce_animation(engine)
+  bounce_anim.source_animation = source
+  bounce_anim.name = "param_test"
+  
+  # Test parameter changes using virtual member assignment
+  bounce_anim.bounce_speed = 180
   assert(bounce_anim.bounce_speed == 180, "Bounce speed should be updated to 180")
   
-  bounce_anim.set_param("bounce_range", 25)
+  bounce_anim.bounce_range = 25
   assert(bounce_anim.bounce_range == 25, "Bounce range should be updated to 25")
   
-  bounce_anim.set_param("damping", 200)
+  bounce_anim.damping = 200
   assert(bounce_anim.damping == 200, "Damping should be updated to 200")
   
-  bounce_anim.set_param("gravity", 80)
+  bounce_anim.gravity = 80
   assert(bounce_anim.gravity == 80, "Gravity should be updated to 80")
   
-  bounce_anim.set_param("strip_length", 25)
-  assert(bounce_anim.strip_length == 25, "Strip length should be updated to 25")
-  assert(bounce_anim.current_colors.size() == 25, "Current colors array should be resized")
+  # Note: strip_length is no longer a parameter - it comes from the engine
+  assert(engine.get_strip_length() == 15, "Strip length should come from engine")
   
   print("✓ BounceAnimation parameter test passed")
 end
@@ -79,8 +112,21 @@ end
 def test_bounce_animation_physics()
   print("Testing BounceAnimation physics simulation...")
   
-  var source = animation.filled_animation(0xFFFFFF00, 10, 0, true, "test_source")
-  var bounce_anim = animation.bounce_animation(source, 100, 0, 250, 0, 10, 10, 0, true, "physics_test")
+  # Create LED strip and engine
+  var strip = global.Leds(10)
+  var engine = animation.animation_engine(strip)
+  
+  var source = animation.solid(engine)
+  source.color = 0xFFFFFF00
+  source.name = "test_source"
+  
+  var bounce_anim = animation.bounce_animation(engine)
+  bounce_anim.source_animation = source
+  bounce_anim.bounce_speed = 100
+  bounce_anim.bounce_range = 0
+  bounce_anim.damping = 250
+  bounce_anim.gravity = 0
+  bounce_anim.name = "physics_test"
   
   # Start animation
   bounce_anim.start(1000)
@@ -106,8 +152,22 @@ end
 def test_bounce_animation_update_render()
   print("Testing BounceAnimation update and render...")
   
-  var source = animation.filled_animation(0xFFFF00FF, 10, 0, true, "test_source")
-  var bounce_anim = animation.bounce_animation(source, 100, 0, 250, 0, 10, 10, 0, true, "update_test")
+  # Create LED strip and engine
+  var strip = global.Leds(10)
+  var engine = animation.animation_engine(strip)
+  
+  var source = animation.solid(engine)
+  source.color = 0xFFFF00FF
+  source.name = "test_source"
+  
+  var bounce_anim = animation.bounce_animation(engine)
+  bounce_anim.source_animation = source
+  bounce_anim.bounce_speed = 100
+  bounce_anim.bounce_range = 0
+  bounce_anim.damping = 250
+  bounce_anim.gravity = 0
+  bounce_anim.name = "update_test"
+  
   var frame = animation.frame_buffer(10)
   
   # Start animation
@@ -141,29 +201,37 @@ end
 def test_bounce_constructors()
   print("Testing bounce constructor functions...")
   
-  var source = animation.filled_animation(0xFF00FFFF, 10, 0, true, "test_source")
+  # Create LED strip and engine
+  var strip = global.Leds(15)
+  var engine = animation.animation_engine(strip)
+  
+  var source = animation.solid(engine)
+  source.color = 0xFF00FFFF
+  source.name = "test_source"
   
   # Test bounce_basic
-  var basic_bounce = animation.bounce_basic(source, 150, 240, 15, 12)
+  var basic_bounce = animation.bounce_basic(engine)
+  basic_bounce.source_animation = source
   assert(basic_bounce != nil, "bounce_basic should create animation")
-  assert(basic_bounce.bounce_speed == 150, "Basic bounce should have correct speed")
-  assert(basic_bounce.damping == 240, "Basic bounce should have correct damping")
-  assert(basic_bounce.strip_length == 15, "Basic bounce should have correct strip length")
-  assert(basic_bounce.priority == 12, "Basic bounce should have correct priority")
+  assert(basic_bounce.bounce_speed == 128, "Basic bounce should have default speed")
+  assert(basic_bounce.damping == 250, "Basic bounce should have default damping")
   assert(basic_bounce.gravity == 0, "Basic bounce should have no gravity")
+  assert(basic_bounce.bounce_range == 0, "Basic bounce should have full range")
   
   # Test bounce_gravity
-  var gravity_bounce = animation.bounce_gravity(source, 120, 80, 20, 8)
+  var gravity_bounce = animation.bounce_gravity(engine)
+  gravity_bounce.source_animation = source
   assert(gravity_bounce != nil, "bounce_gravity should create animation")
-  assert(gravity_bounce.bounce_speed == 120, "Gravity bounce should have correct speed")
-  assert(gravity_bounce.gravity == 80, "Gravity bounce should have correct gravity")
+  assert(gravity_bounce.bounce_speed == 100, "Gravity bounce should have correct speed")
+  assert(gravity_bounce.gravity == 128, "Gravity bounce should have correct gravity")
   assert(gravity_bounce.damping == 240, "Gravity bounce should have high damping")
   
   # Test bounce_constrained
-  var constrained_bounce = animation.bounce_constrained(source, 100, 10, 25, 15)
+  var constrained_bounce = animation.bounce_constrained(engine)
+  constrained_bounce.source_animation = source
   assert(constrained_bounce != nil, "bounce_constrained should create animation")
-  assert(constrained_bounce.bounce_speed == 100, "Constrained bounce should have correct speed")
-  assert(constrained_bounce.bounce_range == 10, "Constrained bounce should have correct range")
+  assert(constrained_bounce.bounce_speed == 150, "Constrained bounce should have correct speed")
+  assert(constrained_bounce.bounce_range == 15, "Constrained bounce should have correct range")
   assert(constrained_bounce.gravity == 0, "Constrained bounce should have no gravity")
   
   print("✓ Bounce constructor functions test passed")
@@ -173,8 +241,21 @@ end
 def test_bounce_animation_gravity()
   print("Testing BounceAnimation gravity effects...")
   
-  var source = animation.filled_animation(0xFFFFFFFF, 10, 0, true, "test_source")
-  var gravity_bounce = animation.bounce_animation(source, 100, 0, 240, 100, 10, 10, 0, true, "gravity_test")
+  # Create LED strip and engine
+  var strip = global.Leds(10)
+  var engine = animation.animation_engine(strip)
+  
+  var source = animation.solid(engine)
+  source.color = 0xFFFFFFFF
+  source.name = "test_source"
+  
+  var gravity_bounce = animation.bounce_animation(engine)
+  gravity_bounce.source_animation = source
+  gravity_bounce.bounce_speed = 100
+  gravity_bounce.bounce_range = 0
+  gravity_bounce.damping = 240
+  gravity_bounce.gravity = 100
+  gravity_bounce.name = "gravity_test"
   
   gravity_bounce.start(1000)
   
@@ -195,8 +276,22 @@ end
 def test_bounce_tostring()
   print("Testing BounceAnimation string representation...")
   
-  var source = animation.filled_animation(0xFF888888, 10, 0, true, "test_source")
-  var bounce_anim = animation.bounce_animation(source, 75, 10, 240, 30, 12, 10, 0, true, "string_test")
+  # Create LED strip and engine
+  var strip = global.Leds(12)
+  var engine = animation.animation_engine(strip)
+  
+  var source = animation.solid(engine)
+  source.color = 0xFF888888
+  source.name = "test_source"
+  
+  var bounce_anim = animation.bounce_animation(engine)
+  bounce_anim.source_animation = source
+  bounce_anim.bounce_speed = 75
+  bounce_anim.bounce_range = 10
+  bounce_anim.damping = 240
+  bounce_anim.gravity = 30
+  bounce_anim.name = "string_test"
+  
   var str_repr = str(bounce_anim)
   
   assert(type(str_repr) == "string", "String representation should be a string")

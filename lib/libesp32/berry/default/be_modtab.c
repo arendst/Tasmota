@@ -86,6 +86,9 @@ be_extern_native_module(haspmota);
 #ifdef USE_WS2812
 #ifdef USE_BERRY_ANIMATION
 be_extern_native_module(animation);
+#ifdef USE_BERRY_ANIMATION_DSL
+be_extern_native_module(animation_dsl);
+#endif // USE_BERRY_ANIMATION_DSL
 #endif // USE_BERRY_ANIMATION
 #endif // USE_WS2812
 be_extern_native_module(matter);
@@ -225,6 +228,9 @@ BERRY_LOCAL const bntvmodule_t* const be_module_table[] = {
 #ifdef USE_WS2812
 #ifdef USE_BERRY_ANIMATION
     &be_native_module(animation),
+#ifdef USE_BERRY_ANIMATION_DSL
+    &be_native_module(animation_dsl),
+#endif // USE_BERRY_ANIMATION_DSL
 #endif // USE_BERRY_ANIMATION
 #endif // USE_WS2812
 #endif // TASMOTA

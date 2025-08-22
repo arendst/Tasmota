@@ -16,6 +16,7 @@ class AnimationEngine
   # State management
   var is_running            # Whether engine is active
   var last_update           # Last update time in milliseconds
+  var time_ms               # Current time in milliseconds (updated each frame)
   var fast_loop_closure     # Stored closure for fast_loop registration
   
   # Performance optimization
@@ -39,6 +40,7 @@ class AnimationEngine
     # Initialize state
     self.is_running = false
     self.last_update = 0
+    self.time_ms = 0
     self.fast_loop_closure = nil
     self.render_needed = false
   end
@@ -165,6 +167,9 @@ class AnimationEngine
     if current_time == nil
       current_time = tasmota.millis()
     end
+    
+    # Update engine time
+    self.time_ms = current_time
     
     # Throttle updates to ~5ms intervals
     var delta_time = current_time - self.last_update
@@ -348,6 +353,10 @@ class AnimationEngine
   # Utility methods for compatibility
   def get_strip()
     return self.strip
+  end
+  
+  def get_strip_length()
+    return self.width
   end
   
   def is_active()

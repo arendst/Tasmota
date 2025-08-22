@@ -1,16 +1,20 @@
 # Test for global variable access with new animation.global() signature
 # Verifies that generated code properly uses animation.global(name, module_name)
+#
+# Command to run test is:
+#    ./berry -s -g -m lib/libesp32/berry_animation -e "import tasmota" lib/libesp32/berry_animation/tests/global_variable_test.be
 
 import animation
+import animation_dsl
 
 def test_global_variable_access()
   print("Testing global variable access in generated code...")
   
   var dsl_code = 
     "color red_alt = 0xFF0100\n"
-    "pattern solid_red = solid(red_alt)"
+    "animation solid_red = solid(color=red_alt)"
   
-  var berry_code = animation.compile_dsl(dsl_code)
+  var berry_code = animation_dsl.compile(dsl_code)
   
   assert(berry_code != nil, "Should compile DSL code")
   
@@ -19,10 +23,10 @@ def test_global_variable_access()
   
   # With simplified transpiler, variables use direct names without prefixes
   assert(string.find(berry_code, "var red_alt_ = 0xFFFF0100") >= 0, "Should define red_alt variable")
-  assert(string.find(berry_code, "var solid_red_ = ") >= 0, "Should define solid_red variable")
+  assert(string.find(berry_code, "var solid_red_ = animation.solid(engine)") >= 0, "Should define solid_red variable with new pattern")
   
   # Variable references should use new two-parameter animation.global() calls
-  assert(string.find(berry_code, "animation.global('red_alt_', 'red_alt')") >= 0, "Should use animation.global('red_alt_', 'red_alt') for variable reference")
+  assert(string.find(berry_code, "solid_red_.color = animation.global('red_alt_', 'red_alt')") >= 0, "Should use animation.global('red_alt_', 'red_alt') for variable reference")
   
   # Verify the generated code actually compiles by executing it
   try
@@ -40,14 +44,14 @@ end
 def test_undefined_variable_exception()
   print("Testing undefined variable exception behavior...")
   
-  var dsl_code = "pattern test = solid(undefined_var)"
-  var berry_code = animation.compile_dsl(dsl_code)
+  var dsl_code = "animation test = solid(color=undefined_var)"
+  var berry_code = animation_dsl.compile(dsl_code)
   
   assert(berry_code != nil, "Should compile DSL code")
   
   # Check that animation.global() is used for the fallback with new two-parameter format
   import string
-  assert(string.find(berry_code, "animation.global('undefined_var_', 'undefined_var')") >= 0, "Should use animation.global('undefined_var_', 'undefined_var') for undefined variable")
+  assert(string.find(berry_code, "test_.color = animation.global('undefined_var_', 'undefined_var')") >= 0, "Should use animation.global('undefined_var_', 'undefined_var') for undefined variable")
   
   # Verify the generated code compiles
   var compiled_code = compile(berry_code)

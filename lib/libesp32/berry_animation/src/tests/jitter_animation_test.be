@@ -10,11 +10,17 @@ import string
 def test_jitter_animation_basic()
   print("Testing basic JitterAnimation...")
   
+  # Create LED strip and engine
+  var strip = global.Leds(10)
+  var engine = animation.animation_engine(strip)
+  
   # Create a simple source animation
-  var source = animation.filled_animation(0xFFFF0000, 10, 0, true, "test_source")
+  var source = animation.solid(engine)
+  source.color = 0xFFFF0000
   
   # Test with default parameters
-  var jitter_anim = animation.jitter_animation(source, nil, nil, nil, nil, nil, nil, 10, 10, 0, true, "test_jitter")
+  var jitter_anim = animation.jitter_animation(engine)
+  jitter_anim.source_animation = source
   
   assert(jitter_anim != nil, "JitterAnimation should be created")
   assert(jitter_anim.jitter_intensity == 100, "Default jitter_intensity should be 100")
@@ -23,8 +29,6 @@ def test_jitter_animation_basic()
   assert(jitter_anim.position_range == 50, "Default position_range should be 50")
   assert(jitter_anim.color_range == 30, "Default color_range should be 30")
   assert(jitter_anim.brightness_range == 40, "Default brightness_range should be 40")
-  assert(jitter_anim.strip_length == 10, "Strip length should be 10")
-  assert(jitter_anim.is_running == false, "Animation should not be running initially")
   
   print("✓ Basic JitterAnimation test passed")
 end
@@ -33,10 +37,22 @@ end
 def test_jitter_animation_custom()
   print("Testing JitterAnimation with custom parameters...")
   
-  var source = animation.filled_animation(0xFF00FF00, 10, 0, true, "test_source")
+  # Create LED strip and engine
+  var strip = global.Leds(20)
+  var engine = animation.animation_engine(strip)
+  
+  var source = animation.solid(engine)
+  source.color = 0xFF00FF00
   
   # Test with custom parameters
-  var jitter_anim = animation.jitter_animation(source, 150, 120, 2, 80, 60, 70, 20, 15, 5000, false, "custom_jitter")
+  var jitter_anim = animation.jitter_animation(engine)
+  jitter_anim.source_animation = source
+  jitter_anim.jitter_intensity = 150
+  jitter_anim.jitter_frequency = 120
+  jitter_anim.jitter_type = 2
+  jitter_anim.position_range = 80
+  jitter_anim.color_range = 60
+  jitter_anim.brightness_range = 70
   
   assert(jitter_anim.jitter_intensity == 150, "Custom jitter_intensity should be 150")
   assert(jitter_anim.jitter_frequency == 120, "Custom jitter_frequency should be 120")
@@ -44,10 +60,6 @@ def test_jitter_animation_custom()
   assert(jitter_anim.position_range == 80, "Custom position_range should be 80")
   assert(jitter_anim.color_range == 60, "Custom color_range should be 60")
   assert(jitter_anim.brightness_range == 70, "Custom brightness_range should be 70")
-  assert(jitter_anim.strip_length == 20, "Custom strip length should be 20")
-  assert(jitter_anim.priority == 15, "Custom priority should be 15")
-  assert(jitter_anim.duration == 5000, "Custom duration should be 5000")
-  assert(jitter_anim.loop == 0, "Custom loop should be 0 (false)")
   
   print("✓ Custom JitterAnimation test passed")
 end
@@ -56,32 +68,38 @@ end
 def test_jitter_animation_parameters()
   print("Testing JitterAnimation parameter changes...")
   
-  var source = animation.filled_animation(0xFF0000FF, 10, 0, true, "test_source")
-  var jitter_anim = animation.jitter_animation(source, nil, nil, nil, nil, nil, nil, 15, 10, 0, true, "param_test")
+  # Create LED strip and engine
+  var strip = global.Leds(15)
+  var engine = animation.animation_engine(strip)
   
-  # Test parameter changes
-  jitter_anim.set_param("jitter_intensity", 180)
+  var source = animation.solid(engine)
+  source.color = 0xFF0000FF
+  
+  var jitter_anim = animation.jitter_animation(engine)
+  jitter_anim.source_animation = source
+  
+  # Test parameter changes using virtual member assignment
+  jitter_anim.jitter_intensity = 180
   assert(jitter_anim.jitter_intensity == 180, "Jitter intensity should be updated to 180")
   
-  jitter_anim.set_param("jitter_frequency", 100)
+  jitter_anim.jitter_frequency = 100
   assert(jitter_anim.jitter_frequency == 100, "Jitter frequency should be updated to 100")
   
-  jitter_anim.set_param("jitter_type", 3)
+  jitter_anim.jitter_type = 3
   assert(jitter_anim.jitter_type == 3, "Jitter type should be updated to 3")
   
-  jitter_anim.set_param("position_range", 80)
+  jitter_anim.position_range = 80
   assert(jitter_anim.position_range == 80, "Position range should be updated to 80")
   
-  jitter_anim.set_param("color_range", 50)
+  jitter_anim.color_range = 50
   assert(jitter_anim.color_range == 50, "Color range should be updated to 50")
   
-  jitter_anim.set_param("brightness_range", 60)
+  jitter_anim.brightness_range = 60
   assert(jitter_anim.brightness_range == 60, "Brightness range should be updated to 60")
   
-  jitter_anim.set_param("strip_length", 25)
-  assert(jitter_anim.strip_length == 25, "Strip length should be updated to 25")
-  assert(jitter_anim.current_colors.size() == 25, "Current colors array should be resized")
-  assert(jitter_anim.jitter_offsets.size() == 25, "Jitter offsets array should be resized")
+  # Test that arrays are properly sized based on engine strip length
+  assert(jitter_anim.current_colors.size() == 15, "Current colors array should match strip length")
+  assert(jitter_anim.jitter_offsets.size() == 15, "Jitter offsets array should match strip length")
   
   print("✓ JitterAnimation parameter test passed")
 end
@@ -90,22 +108,31 @@ end
 def test_jitter_animation_types()
   print("Testing JitterAnimation jitter types...")
   
-  var source = animation.filled_animation(0xFFFFFF00, 10, 0, true, "test_source")
+  # Create LED strip and engine
+  var strip = global.Leds(10)
+  var engine = animation.animation_engine(strip)
+  
+  var source = animation.solid(engine)
+  source.color = 0xFFFFFF00
   
   # Test position jitter (type 0)
-  var position_jitter = animation.jitter_animation(source, 100, 60, 0, 50, 30, 40, 10, 10, 0, true, "position_test")
+  var position_jitter = animation.jitter_position(engine)
+  position_jitter.source_animation = source
   assert(position_jitter.jitter_type == 0, "Position jitter should have type 0")
   
   # Test color jitter (type 1)
-  var color_jitter = animation.jitter_animation(source, 100, 60, 1, 50, 30, 40, 10, 10, 0, true, "color_test")
+  var color_jitter = animation.jitter_color(engine)
+  color_jitter.source_animation = source
   assert(color_jitter.jitter_type == 1, "Color jitter should have type 1")
   
   # Test brightness jitter (type 2)
-  var brightness_jitter = animation.jitter_animation(source, 100, 60, 2, 50, 30, 40, 10, 10, 0, true, "brightness_test")
+  var brightness_jitter = animation.jitter_brightness(engine)
+  brightness_jitter.source_animation = source
   assert(brightness_jitter.jitter_type == 2, "Brightness jitter should have type 2")
   
   # Test all jitter (type 3)
-  var all_jitter = animation.jitter_animation(source, 100, 60, 3, 50, 30, 40, 10, 10, 0, true, "all_test")
+  var all_jitter = animation.jitter_all(engine)
+  all_jitter.source_animation = source
   assert(all_jitter.jitter_type == 3, "All jitter should have type 3")
   
   print("✓ JitterAnimation types test passed")
@@ -115,13 +142,20 @@ end
 def test_jitter_animation_update_render()
   print("Testing JitterAnimation update and render...")
   
-  var source = animation.filled_animation(0xFFFF00FF, 10, 0, true, "test_source")
-  var jitter_anim = animation.jitter_animation(source, 100, 60, 0, 50, 30, 40, 10, 10, 0, true, "update_test")
+  # Create LED strip and engine
+  var strip = global.Leds(10)
+  var engine = animation.animation_engine(strip)
+  
+  var source = animation.solid(engine)
+  source.color = 0xFFFF00FF
+  
+  var jitter_anim = animation.jitter_animation(engine)
+  jitter_anim.source_animation = source
+  
   var frame = animation.frame_buffer(10)
   
   # Start animation
   jitter_anim.start(1000)
-  assert(jitter_anim.is_running == true, "Animation should be running after start")
   
   # Test update
   var result = jitter_anim.update(1500)
@@ -146,8 +180,15 @@ end
 def test_jitter_animation_random()
   print("Testing JitterAnimation random generation...")
   
-  var source = animation.filled_animation(0xFF00FFFF, 10, 0, true, "test_source")
-  var jitter_anim = animation.jitter_animation(source, 100, 60, 0, 50, 30, 40, 10, 10, 0, true, "random_test")
+  # Create LED strip and engine
+  var strip = global.Leds(10)
+  var engine = animation.animation_engine(strip)
+  
+  var source = animation.solid(engine)
+  source.color = 0xFF00FFFF
+  
+  var jitter_anim = animation.jitter_animation(engine)
+  jitter_anim.source_animation = source
   
   # Test random number generation
   var random1 = jitter_anim._random()
@@ -168,31 +209,46 @@ end
 def test_jitter_constructors()
   print("Testing jitter constructor functions...")
   
-  var source = animation.filled_animation(0xFFAAAAAA, 10, 0, true, "test_source")
+  # Create LED strip and engine
+  var strip = global.Leds(15)
+  var engine = animation.animation_engine(strip)
+  
+  var source = animation.solid(engine)
+  source.color = 0xFFAAAAAA
   
   # Test jitter_position
-  var position_jitter = animation.jitter_position(source, 120, 80, 15, 12)
+  var position_jitter = animation.jitter_position(engine)
+  position_jitter.source_animation = source
+  position_jitter.jitter_intensity = 120
+  position_jitter.jitter_frequency = 80
   assert(position_jitter != nil, "jitter_position should create animation")
   assert(position_jitter.jitter_intensity == 120, "Position jitter should have correct intensity")
   assert(position_jitter.jitter_frequency == 80, "Position jitter should have correct frequency")
   assert(position_jitter.jitter_type == 0, "Position jitter should have type 0")
-  assert(position_jitter.strip_length == 15, "Position jitter should have correct strip length")
-  assert(position_jitter.priority == 12, "Position jitter should have correct priority")
   
   # Test jitter_color
-  var color_jitter = animation.jitter_color(source, 100, 60, 20, 8)
+  var color_jitter = animation.jitter_color(engine)
+  color_jitter.source_animation = source
+  color_jitter.jitter_intensity = 100
+  color_jitter.jitter_frequency = 60
   assert(color_jitter != nil, "jitter_color should create animation")
   assert(color_jitter.jitter_intensity == 100, "Color jitter should have correct intensity")
   assert(color_jitter.jitter_type == 1, "Color jitter should have type 1")
   
   # Test jitter_brightness
-  var brightness_jitter = animation.jitter_brightness(source, 80, 40, 25, 15)
+  var brightness_jitter = animation.jitter_brightness(engine)
+  brightness_jitter.source_animation = source
+  brightness_jitter.jitter_intensity = 80
+  brightness_jitter.jitter_frequency = 40
   assert(brightness_jitter != nil, "jitter_brightness should create animation")
   assert(brightness_jitter.jitter_intensity == 80, "Brightness jitter should have correct intensity")
   assert(brightness_jitter.jitter_type == 2, "Brightness jitter should have type 2")
   
   # Test jitter_all
-  var all_jitter = animation.jitter_all(source, 150, 100, 30, 10)
+  var all_jitter = animation.jitter_all(engine)
+  all_jitter.source_animation = source
+  all_jitter.jitter_intensity = 150
+  all_jitter.jitter_frequency = 100
   assert(all_jitter != nil, "jitter_all should create animation")
   assert(all_jitter.jitter_intensity == 150, "All jitter should have correct intensity")
   assert(all_jitter.jitter_type == 3, "All jitter should have type 3")
@@ -204,8 +260,17 @@ end
 def test_jitter_animation_color_effects()
   print("Testing JitterAnimation color effects...")
   
-  var source = animation.filled_animation(0xFF808080, 10, 0, true, "test_source")
-  var jitter_anim = animation.jitter_animation(source, 100, 60, 1, 50, 50, 40, 10, 10, 0, true, "color_test")
+  # Create LED strip and engine
+  var strip = global.Leds(10)
+  var engine = animation.animation_engine(strip)
+  
+  var source = animation.solid(engine)
+  source.color = 0xFF808080
+  
+  var jitter_anim = animation.jitter_animation(engine)
+  jitter_anim.source_animation = source
+  jitter_anim.jitter_type = 1
+  jitter_anim.color_range = 50
   
   # Test color jitter application
   var original_color = 0xFF808080  # Gray color
@@ -223,8 +288,19 @@ end
 def test_jitter_tostring()
   print("Testing JitterAnimation string representation...")
   
-  var source = animation.filled_animation(0xFF666666, 10, 0, true, "test_source")
-  var jitter_anim = animation.jitter_animation(source, 100, 60, 2, 50, 30, 40, 12, 10, 0, true, "string_test")
+  # Create LED strip and engine
+  var strip = global.Leds(12)
+  var engine = animation.animation_engine(strip)
+  
+  var source = animation.solid(engine)
+  source.color = 0xFF666666
+  
+  var jitter_anim = animation.jitter_animation(engine)
+  jitter_anim.source_animation = source
+  jitter_anim.jitter_type = 2
+  jitter_anim.jitter_intensity = 100
+  jitter_anim.jitter_frequency = 60
+  
   var str_repr = str(jitter_anim)
   
   assert(type(str_repr) == "string", "String representation should be a string")

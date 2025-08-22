@@ -4,7 +4,7 @@
 #@ solidify:Token,weak
 class Token
   # Basic token types
-  static var KEYWORD = 0        # strip, color, pattern, animation, sequence, etc.
+  static var KEYWORD = 0        # strip, color, animation, sequence, etc.
   static var IDENTIFIER = 1     # user-defined names
   static var NUMBER = 2         # 123, 3.14
   static var STRING = 3         # "hello", 'world'
@@ -26,7 +26,7 @@ class Token
   ]
   
   static var statement_keywords = [
-    "strip", "set", "color", "palette", "pattern", "animation", 
+    "strip", "set", "color", "palette", "animation", 
     "sequence", "function", "zone", "on", "run"
   ]
   
@@ -35,16 +35,15 @@ class Token
     "strip", "set",
     
     # Definition keywords
-    "color", "palette", "pattern", "animation", "sequence", "function", "zone",
+    "color", "palette", "animation", "sequence", "function", "zone",
     
     # Control flow keywords
     "play", "for", "with", "repeat", "times", "forever", "if", "else", "elif",
     "choose", "random", "on", "run", "wait", "goto", "interrupt", "resume",
     "while", "from", "to", "return",
     
-    # Modifier keywords
-    "at", "opacity", "offset", "speed", "weight", "ease", "sync", "every",
-    "stagger", "across", "pixels",
+    # Modifier keywords (only actual DSL syntax keywords)
+    "at", "ease", "sync", "every", "stagger", "across", "pixels",
     
     # Core built-in functions (minimal set for essential DSL operations)
     "rgb", "hsv",
@@ -219,7 +218,7 @@ class Token
   # @param new_type: int - New token type
   # @return Token - New token with same position but different type
   def with_type(new_type)
-    return animation.Token(new_type, self.value, self.line, self.column, self.length)
+    return animation_dsl.Token(new_type, self.value, self.line, self.column, self.length)
   end
   
   # Create a copy of this token with a different value
@@ -227,7 +226,7 @@ class Token
   # @param new_value: string - New value
   # @return Token - New token with same position but different value
   def with_value(new_value)
-    return animation.Token(self.type, new_value, self.line, self.column, size(new_value))
+    return animation_dsl.Token(self.type, new_value, self.line, self.column, size(new_value))
   end
   
   # Get a string representation of the token for debugging
@@ -381,7 +380,7 @@ class Token
     return false
   end
   
-  # Check if this token is a DSL function name (for pattern/animation expressions)
+  # Check if this token is a DSL function name (for animation expressions)
   # Uses dynamic introspection to check if function exists in animation module
   #
   # @return bool - True if token is a DSL function name
@@ -416,7 +415,7 @@ end
 # @param column: int - Column number
 # @return Token - EOF token
 def create_eof_token(line, column)
-  return animation.Token(38 #-animation.Token.EOF-#, "", line, column, 0)
+  return animation_dsl.Token(38 #-animation_dsl.Token.EOF-#, "", line, column, 0)
 end
 
 # Create an error token with a message
@@ -426,7 +425,7 @@ end
 # @param column: int - Column number
 # @return Token - Error token
 def create_error_token(message, line, column)
-  return animation.Token(39 #-animation.Token.ERROR-#, message, line, column, size(message))
+  return animation_dsl.Token(39 #-animation_dsl.Token.ERROR-#, message, line, column, size(message))
 end
 
 # Create a newline token
@@ -435,7 +434,7 @@ end
 # @param column: int - Column number
 # @return Token - Newline token
 def create_newline_token(line, column)
-  return animation.Token(35 #-animation.Token.NEWLINE-#, "\n", line, column, 1)
+  return animation_dsl.Token(35 #-animation_dsl.Token.NEWLINE-#, "\n", line, column, 1)
 end
 
 # Check if a string is a reserved keyword
@@ -443,7 +442,7 @@ end
 # @param word: string - Word to check
 # @return bool - True if word is a reserved keyword
 def is_keyword(word)
-  for keyword : animation.Token.keywords
+  for keyword : animation_dsl.Token.keywords
     if word == keyword
       return true
     end
@@ -456,7 +455,7 @@ end
 # @param word: string - Word to check
 # @return bool - True if word is a predefined color name
 def is_color_name(word)
-  for color : animation.Token.color_names
+  for color : animation_dsl.Token.color_names
     if word == color
       return true
     end
@@ -469,20 +468,20 @@ end
 # @param token: Token - Operator token
 # @return int - Precedence level (higher number = higher precedence)
 def get_operator_precedence(token)
-  if token.type == 22 #-animation.Token.LOGICAL_OR-#
+  if token.type == 22 #-animation_dsl.Token.LOGICAL_OR-#
     return 1
-  elif token.type == 21 #-animation.Token.LOGICAL_AND-#
+  elif token.type == 21 #-animation_dsl.Token.LOGICAL_AND-#
     return 2
-  elif token.type == 15 #-animation.Token.EQUAL-# || token.type == 16 #-animation.Token.NOT_EQUAL-#
+  elif token.type == 15 #-animation_dsl.Token.EQUAL-# || token.type == 16 #-animation_dsl.Token.NOT_EQUAL-#
     return 3
-  elif token.type == 17 #-animation.Token.LESS_THAN-# || token.type == 18 #-animation.Token.LESS_EQUAL-# ||
-       token.type == 19 #-animation.Token.GREATER_THAN-# || token.type == 20 #-animation.Token.GREATER_EQUAL-#
+  elif token.type == 17 #-animation_dsl.Token.LESS_THAN-# || token.type == 18 #-animation_dsl.Token.LESS_EQUAL-# ||
+       token.type == 19 #-animation_dsl.Token.GREATER_THAN-# || token.type == 20 #-animation_dsl.Token.GREATER_EQUAL-#
     return 4
-  elif token.type == 9 #-animation.Token.PLUS-# || token.type == 10 #-animation.Token.MINUS-#
+  elif token.type == 9 #-animation_dsl.Token.PLUS-# || token.type == 10 #-animation_dsl.Token.MINUS-#
     return 5
-  elif token.type == 11 #-animation.Token.MULTIPLY-# || token.type == 12 #-animation.Token.DIVIDE-# || token.type == 13 #-animation.Token.MODULO-#
+  elif token.type == 11 #-animation_dsl.Token.MULTIPLY-# || token.type == 12 #-animation_dsl.Token.DIVIDE-# || token.type == 13 #-animation_dsl.Token.MODULO-#
     return 6
-  elif token.type == 14 #-animation.Token.POWER-#
+  elif token.type == 14 #-animation_dsl.Token.POWER-#
     return 7
   end
   return 0  # Not an operator or unknown operator
@@ -493,7 +492,7 @@ end
 # @param token: Token - Operator token
 # @return bool - True if operator is right-associative
 def is_right_associative(token)
-  return token.type == 14 #-animation.Token.POWER-#  # Only power operator is right-associative
+  return token.type == 14 #-animation_dsl.Token.POWER-#  # Only power operator is right-associative
 end
 
 return {

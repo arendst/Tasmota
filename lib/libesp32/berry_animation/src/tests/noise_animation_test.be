@@ -10,14 +10,17 @@ import string
 def test_noise_animation_basic()
   print("Testing basic NoiseAnimation...")
   
+  # Create LED strip and engine
+  var strip = global.Leds(10)
+  var engine = animation.animation_engine(strip)
+  
   # Test with default parameters
-  var noise_anim = animation.noise_animation(nil, nil, nil, nil, nil, nil, 10, 10, 0, true, "test_noise")
+  var noise_anim = animation.noise_animation(engine)
   
   assert(noise_anim != nil, "NoiseAnimation should be created")
   assert(noise_anim.scale == 50, "Default scale should be 50")
   assert(noise_anim.speed == 30, "Default speed should be 30")
   assert(noise_anim.octaves == 1, "Default octaves should be 1")
-  assert(noise_anim.strip_length == 10, "Strip length should be 10")
   assert(noise_anim.is_running == false, "Animation should not be running initially")
   
   print("✓ Basic NoiseAnimation test passed")
@@ -27,18 +30,30 @@ end
 def test_noise_animation_custom()
   print("Testing NoiseAnimation with custom parameters...")
   
+  # Create LED strip and engine
+  var strip = global.Leds(20)
+  var engine = animation.animation_engine(strip)
+  
   # Test with custom parameters
-  var noise_anim = animation.noise_animation(0xFF00FF00, 100, 80, 2, 200, 12345, 20, 15, 5000, false, "custom_noise")
+  var noise_anim = animation.noise_animation(engine)
+  noise_anim.color = 0xFF00FF00
+  noise_anim.scale = 100
+  noise_anim.speed = 80
+  noise_anim.octaves = 2
+  noise_anim.persistence = 200
+  noise_anim.seed = 12345
+  noise_anim.priority = 15
+  noise_anim.duration = 5000
+  noise_anim.loop = false
   
   assert(noise_anim.scale == 100, "Custom scale should be 100")
   assert(noise_anim.speed == 80, "Custom speed should be 80")
   assert(noise_anim.octaves == 2, "Custom octaves should be 2")
   assert(noise_anim.persistence == 200, "Custom persistence should be 200")
   assert(noise_anim.seed == 12345, "Custom seed should be 12345")
-  assert(noise_anim.strip_length == 20, "Custom strip length should be 20")
   assert(noise_anim.priority == 15, "Custom priority should be 15")
   assert(noise_anim.duration == 5000, "Custom duration should be 5000")
-  assert(noise_anim.loop == 0, "Custom loop should be 0 (false)")
+  assert(noise_anim.loop == false, "Custom loop should be false")
   
   print("✓ Custom NoiseAnimation test passed")
 end
@@ -47,21 +62,25 @@ end
 def test_noise_animation_parameters()
   print("Testing NoiseAnimation parameter changes...")
   
-  var noise_anim = animation.noise_animation(nil, nil, nil, nil, nil, nil, 15, 10, 0, true, "param_test")
+  # Create LED strip and engine
+  var strip = global.Leds(15)
+  var engine = animation.animation_engine(strip)
   
-  # Test parameter changes
-  noise_anim.set_param("scale", 75)
+  var noise_anim = animation.noise_animation(engine)
+  
+  # Test parameter changes via virtual member assignment
+  noise_anim.scale = 75
   assert(noise_anim.scale == 75, "Scale should be updated to 75")
   
-  noise_anim.set_param("speed", 120)
+  noise_anim.speed = 120
   assert(noise_anim.speed == 120, "Speed should be updated to 120")
   
-  noise_anim.set_param("octaves", 3)
+  noise_anim.octaves = 3
   assert(noise_anim.octaves == 3, "Octaves should be updated to 3")
   
-  noise_anim.set_param("strip_length", 25)
-  assert(noise_anim.strip_length == 25, "Strip length should be updated to 25")
-  assert(noise_anim.current_colors.size() == 25, "Current colors array should be resized")
+  # Test that current_colors array adapts to engine strip length
+  var initial_size = size(noise_anim.current_colors)
+  assert(initial_size == 15, "Current colors array should match engine strip length")
   
   print("✓ NoiseAnimation parameter test passed")
 end
@@ -70,7 +89,15 @@ end
 def test_noise_animation_update_render()
   print("Testing NoiseAnimation update and render...")
   
-  var noise_anim = animation.noise_animation(0xFFFF0000, 60, 40, 1, 128, nil, 10, 10, 0, true, "update_test")
+  # Create LED strip and engine
+  var strip = global.Leds(10)
+  var engine = animation.animation_engine(strip)
+  
+  var noise_anim = animation.noise_animation(engine)
+  noise_anim.color = 0xFFFF0000
+  noise_anim.scale = 60
+  noise_anim.speed = 40
+  
   var frame = animation.frame_buffer(10)
   
   # Start animation
@@ -104,24 +131,28 @@ end
 def test_noise_constructors()
   print("Testing noise constructor functions...")
   
+  # Create LED strip and engine
+  var strip = global.Leds(15)
+  var engine = animation.animation_engine(strip)
+  
   # Test noise_rainbow
-  var rainbow_noise = animation.noise_rainbow(80, 60, 15, 12)
+  var rainbow_noise = animation.noise_rainbow(engine)
   assert(rainbow_noise != nil, "noise_rainbow should create animation")
-  assert(rainbow_noise.scale == 80, "Rainbow noise should have correct scale")
-  assert(rainbow_noise.speed == 60, "Rainbow noise should have correct speed")
-  assert(rainbow_noise.strip_length == 15, "Rainbow noise should have correct strip length")
-  assert(rainbow_noise.priority == 12, "Rainbow noise should have correct priority")
+  assert(rainbow_noise.scale == 50, "Rainbow noise should have correct scale")
+  assert(rainbow_noise.speed == 30, "Rainbow noise should have correct speed")
+  assert(rainbow_noise.octaves == 1, "Rainbow noise should have correct octaves")
   
   # Test noise_single_color
-  var single_noise = animation.noise_single_color(0xFF00FFFF, 90, 70, 20, 8)
+  var single_noise = animation.noise_single_color(engine)
   assert(single_noise != nil, "noise_single_color should create animation")
-  assert(single_noise.scale == 90, "Single color noise should have correct scale")
-  assert(single_noise.speed == 70, "Single color noise should have correct speed")
+  assert(single_noise.scale == 50, "Single color noise should have correct scale")
+  assert(single_noise.speed == 30, "Single color noise should have correct speed")
+  assert(single_noise.color == 0xFFFFFFFF, "Single color noise should have white color")
   
   # Test noise_fractal
-  var fractal_noise = animation.noise_fractal(0xFFFFFF00, 40, 30, 3, 25, 15)
+  var fractal_noise = animation.noise_fractal(engine)
   assert(fractal_noise != nil, "noise_fractal should create animation")
-  assert(fractal_noise.scale == 40, "Fractal noise should have correct scale")
+  assert(fractal_noise.scale == 30, "Fractal noise should have correct scale")
   assert(fractal_noise.octaves == 3, "Fractal noise should have correct octaves")
   
   print("✓ Noise constructor functions test passed")
@@ -131,7 +162,16 @@ end
 def test_noise_tostring()
   print("Testing NoiseAnimation string representation...")
   
-  var noise_anim = animation.noise_animation(nil, 75, 45, 2, 150, nil, 12, 10, 0, true, "string_test")
+  # Create LED strip and engine
+  var strip = global.Leds(12)
+  var engine = animation.animation_engine(strip)
+  
+  var noise_anim = animation.noise_animation(engine)
+  noise_anim.scale = 75
+  noise_anim.speed = 45
+  noise_anim.octaves = 2
+  noise_anim.persistence = 150
+  
   var str_repr = str(noise_anim)
   
   assert(type(str_repr) == "string", "String representation should be a string")
@@ -140,6 +180,28 @@ def test_noise_tostring()
   assert(string.find(str_repr, "45") >= 0, "String should contain speed value")
   
   print("✓ NoiseAnimation string representation test passed")
+end
+
+# Test integer color conversion to gradient
+def test_noise_integer_color_conversion()
+  print("Testing NoiseAnimation integer color conversion...")
+  
+  # Create LED strip and engine
+  var strip = global.Leds(5)
+  var engine = animation.animation_engine(strip)
+  
+  var noise_anim = animation.noise_animation(engine)
+  
+  # Set an integer color - should be converted to gradient provider
+  noise_anim.color = 0xFFFF0000  # Red
+  
+  # Check the raw parameter value (should be a color provider)
+  var raw_color = noise_anim.get_param("color")
+  
+  # Test that the raw parameter is a color provider (the conversion worked)
+  assert(animation.is_color_provider(raw_color), "Integer color should be converted to color provider")
+  
+  print("✓ NoiseAnimation integer color conversion test passed")
 end
 
 # Run all tests
@@ -153,6 +215,7 @@ def run_noise_animation_tests()
     test_noise_animation_update_render()
     test_noise_constructors()
     test_noise_tostring()
+    test_noise_integer_color_conversion()
     
     print("=== All NoiseAnimation tests passed! ===")
     return true

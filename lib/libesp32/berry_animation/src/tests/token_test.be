@@ -3,6 +3,7 @@
 
 import string
 import animation
+import animation_dsl
 
 # Test Token constants and utilities
 def test_token_type_constants()
@@ -10,20 +11,20 @@ def test_token_type_constants()
   
   # Test that all constants are defined and unique
   var token_types = [
-    animation.Token.KEYWORD, animation.Token.IDENTIFIER, animation.Token.NUMBER,
-    animation.Token.STRING, animation.Token.COLOR, animation.Token.TIME,
-    animation.Token.PERCENTAGE, animation.Token.MULTIPLIER, animation.Token.ASSIGN,
-    animation.Token.PLUS, animation.Token.MINUS, animation.Token.MULTIPLY,
-    animation.Token.DIVIDE, animation.Token.MODULO, animation.Token.POWER,
-    animation.Token.EQUAL, animation.Token.NOT_EQUAL, animation.Token.LESS_THAN,
-    animation.Token.LESS_EQUAL, animation.Token.GREATER_THAN, animation.Token.GREATER_EQUAL,
-    animation.Token.LOGICAL_AND, animation.Token.LOGICAL_OR, animation.Token.LOGICAL_NOT,
-    animation.Token.LEFT_PAREN, animation.Token.RIGHT_PAREN, animation.Token.LEFT_BRACE,
-    animation.Token.RIGHT_BRACE, animation.Token.LEFT_BRACKET, animation.Token.RIGHT_BRACKET,
-    animation.Token.COMMA, animation.Token.SEMICOLON, animation.Token.COLON,
-    animation.Token.DOT, animation.Token.ARROW, animation.Token.NEWLINE,
-    animation.Token.VARIABLE_REF, animation.Token.COMMENT, animation.Token.EOF,
-    animation.Token.ERROR
+    animation_dsl.Token.KEYWORD, animation_dsl.Token.IDENTIFIER, animation_dsl.Token.NUMBER,
+    animation_dsl.Token.STRING, animation_dsl.Token.COLOR, animation_dsl.Token.TIME,
+    animation_dsl.Token.PERCENTAGE, animation_dsl.Token.MULTIPLIER, animation_dsl.Token.ASSIGN,
+    animation_dsl.Token.PLUS, animation_dsl.Token.MINUS, animation_dsl.Token.MULTIPLY,
+    animation_dsl.Token.DIVIDE, animation_dsl.Token.MODULO, animation_dsl.Token.POWER,
+    animation_dsl.Token.EQUAL, animation_dsl.Token.NOT_EQUAL, animation_dsl.Token.LESS_THAN,
+    animation_dsl.Token.LESS_EQUAL, animation_dsl.Token.GREATER_THAN, animation_dsl.Token.GREATER_EQUAL,
+    animation_dsl.Token.LOGICAL_AND, animation_dsl.Token.LOGICAL_OR, animation_dsl.Token.LOGICAL_NOT,
+    animation_dsl.Token.LEFT_PAREN, animation_dsl.Token.RIGHT_PAREN, animation_dsl.Token.LEFT_BRACE,
+    animation_dsl.Token.RIGHT_BRACE, animation_dsl.Token.LEFT_BRACKET, animation_dsl.Token.RIGHT_BRACKET,
+    animation_dsl.Token.COMMA, animation_dsl.Token.SEMICOLON, animation_dsl.Token.COLON,
+    animation_dsl.Token.DOT, animation_dsl.Token.ARROW, animation_dsl.Token.NEWLINE,
+    animation_dsl.Token.VARIABLE_REF, animation_dsl.Token.COMMENT, animation_dsl.Token.EOF,
+    animation_dsl.Token.ERROR
   ]
   
   # Check that all values are different
@@ -37,10 +38,10 @@ def test_token_type_constants()
   end
   
   # Test to_string method
-  assert(animation.Token.to_string(animation.Token.KEYWORD) == "KEYWORD")
-  assert(animation.Token.to_string(animation.Token.IDENTIFIER) == "IDENTIFIER")
-  assert(animation.Token.to_string(animation.Token.EOF) == "EOF")
-  assert(animation.Token.to_string(999) == "UNKNOWN")
+  assert(animation_dsl.Token.to_string(animation_dsl.Token.KEYWORD) == "KEYWORD")
+  assert(animation_dsl.Token.to_string(animation_dsl.Token.IDENTIFIER) == "IDENTIFIER")
+  assert(animation_dsl.Token.to_string(animation_dsl.Token.EOF) == "EOF")
+  assert(animation_dsl.Token.to_string(999) == "UNKNOWN")
   
   print("✓ Token constants test passed")
   return true
@@ -51,19 +52,19 @@ def test_token_basic()
   print("Testing Token basic functionality...")
   
   # Test basic token creation
-  var token = animation.Token(animation.Token.KEYWORD, "color", 1, 5, 5)
-  assert(token.type == animation.Token.KEYWORD)
+  var token = animation_dsl.Token(animation_dsl.Token.KEYWORD, "color", 1, 5, 5)
+  assert(token.type == animation_dsl.Token.KEYWORD)
   assert(token.value == "color")
   assert(token.line == 1)
   assert(token.column == 5)
   assert(token.length == 5)
   
   # Test default length calculation
-  var token2 = animation.Token(animation.Token.IDENTIFIER, "red", 2, 10)
+  var token2 = animation_dsl.Token(animation_dsl.Token.IDENTIFIER, "red", 2, 10)
   assert(token2.length == 3)  # Should default to size of "red"
   
   # Test nil handling
-  var token3 = animation.Token(animation.Token.EOF, nil, nil, nil)
+  var token3 = animation_dsl.Token(animation_dsl.Token.EOF, nil, nil, nil)
   assert(token3.value == "")
   assert(token3.line == 1)
   assert(token3.column == 1)
@@ -76,16 +77,16 @@ end
 def test_token_type_checking()
   print("Testing Token type checking methods...")
   
-  var keyword_token = animation.Token(animation.Token.KEYWORD, "color", 1, 1)
-  var identifier_token = animation.Token(animation.Token.IDENTIFIER, "red", 1, 1)
-  var number_token = animation.Token(animation.Token.NUMBER, "123", 1, 1)
-  var operator_token = animation.Token(animation.Token.PLUS, "+", 1, 1)
-  var delimiter_token = animation.Token(animation.Token.LEFT_PAREN, "(", 1, 1)
-  var separator_token = animation.Token(animation.Token.COMMA, ",", 1, 1)
+  var keyword_token = animation_dsl.Token(animation_dsl.Token.KEYWORD, "color", 1, 1)
+  var identifier_token = animation_dsl.Token(animation_dsl.Token.IDENTIFIER, "red", 1, 1)
+  var number_token = animation_dsl.Token(animation_dsl.Token.NUMBER, "123", 1, 1)
+  var operator_token = animation_dsl.Token(animation_dsl.Token.PLUS, "+", 1, 1)
+  var delimiter_token = animation_dsl.Token(animation_dsl.Token.LEFT_PAREN, "(", 1, 1)
+  var separator_token = animation_dsl.Token(animation_dsl.Token.COMMA, ",", 1, 1)
   
   # Test is_type
-  assert(keyword_token.is_type(animation.Token.KEYWORD))
-  assert(!keyword_token.is_type(animation.Token.IDENTIFIER))
+  assert(keyword_token.is_type(animation_dsl.Token.KEYWORD))
+  assert(!keyword_token.is_type(animation_dsl.Token.IDENTIFIER))
   
   # Test is_keyword
   assert(keyword_token.is_keyword("color"))
@@ -122,9 +123,9 @@ def test_token_value_extraction()
   print("Testing Token value extraction methods...")
   
   # Test boolean tokens
-  var true_token = animation.Token(animation.Token.KEYWORD, "true", 1, 1)
-  var false_token = animation.Token(animation.Token.KEYWORD, "false", 1, 1)
-  var other_token = animation.Token(animation.Token.KEYWORD, "color", 1, 1)
+  var true_token = animation_dsl.Token(animation_dsl.Token.KEYWORD, "true", 1, 1)
+  var false_token = animation_dsl.Token(animation_dsl.Token.KEYWORD, "false", 1, 1)
+  var other_token = animation_dsl.Token(animation_dsl.Token.KEYWORD, "color", 1, 1)
   
   assert(true_token.is_boolean())
   assert(false_token.is_boolean())
@@ -135,10 +136,10 @@ def test_token_value_extraction()
   assert(other_token.get_boolean_value() == nil)
   
   # Test numeric tokens
-  var number_token = animation.Token(animation.Token.NUMBER, "123.45", 1, 1)
-  var time_token = animation.Token(animation.Token.TIME, "2s", 1, 1)
-  var percent_token = animation.Token(animation.Token.PERCENTAGE, "50%", 1, 1)
-  var multiplier_token = animation.Token(animation.Token.MULTIPLIER, "2.5x", 1, 1)
+  var number_token = animation_dsl.Token(animation_dsl.Token.NUMBER, "123.45", 1, 1)
+  var time_token = animation_dsl.Token(animation_dsl.Token.TIME, "2s", 1, 1)
+  var percent_token = animation_dsl.Token(animation_dsl.Token.PERCENTAGE, "50%", 1, 1)
+  var multiplier_token = animation_dsl.Token(animation_dsl.Token.MULTIPLIER, "2.5x", 1, 1)
   
   assert(number_token.is_numeric())
   assert(time_token.is_numeric())
@@ -151,10 +152,10 @@ def test_token_value_extraction()
   assert(multiplier_token.get_numeric_value() == 640)  # 2.5x = 2.5 * 256 = 640
   
   # Test time conversion
-  var ms_token = animation.Token(animation.Token.TIME, "500ms", 1, 1)
-  var s_token = animation.Token(animation.Token.TIME, "3s", 1, 1)
-  var m_token = animation.Token(animation.Token.TIME, "2m", 1, 1)
-  var h_token = animation.Token(animation.Token.TIME, "1h", 1, 1)
+  var ms_token = animation_dsl.Token(animation_dsl.Token.TIME, "500ms", 1, 1)
+  var s_token = animation_dsl.Token(animation_dsl.Token.TIME, "3s", 1, 1)
+  var m_token = animation_dsl.Token(animation_dsl.Token.TIME, "2m", 1, 1)
+  var h_token = animation_dsl.Token(animation_dsl.Token.TIME, "1h", 1, 1)
   
   assert(ms_token.get_numeric_value() == 500)
   assert(s_token.get_numeric_value() == 3000)
@@ -162,9 +163,9 @@ def test_token_value_extraction()
   assert(h_token.get_numeric_value() == 3600000)
   
   # Test percentage to 255 conversion
-  var percent_0 = animation.Token(animation.Token.PERCENTAGE, "0%", 1, 1)
-  var percent_50 = animation.Token(animation.Token.PERCENTAGE, "50%", 1, 1)
-  var percent_100 = animation.Token(animation.Token.PERCENTAGE, "100%", 1, 1)
+  var percent_0 = animation_dsl.Token(animation_dsl.Token.PERCENTAGE, "0%", 1, 1)
+  var percent_50 = animation_dsl.Token(animation_dsl.Token.PERCENTAGE, "50%", 1, 1)
+  var percent_100 = animation_dsl.Token(animation_dsl.Token.PERCENTAGE, "100%", 1, 1)
   
   assert(percent_0.get_numeric_value() == 0)
   assert(percent_50.get_numeric_value() == 127 || percent_50.get_numeric_value() == 128)  # Allow rounding
@@ -178,29 +179,29 @@ end
 def test_token_utilities()
   print("Testing Token utility methods...")
   
-  var token = animation.Token(animation.Token.IDENTIFIER, "test", 5, 10, 4)
+  var token = animation_dsl.Token(animation_dsl.Token.IDENTIFIER, "test", 5, 10, 4)
   
   # Test end_column
   assert(token.end_column() == 13)  # 10 + 4 - 1
   
   # Test with_type
-  var new_token = token.with_type(animation.Token.KEYWORD)
-  assert(new_token.type == animation.Token.KEYWORD)
+  var new_token = token.with_type(animation_dsl.Token.KEYWORD)
+  assert(new_token.type == animation_dsl.Token.KEYWORD)
   assert(new_token.value == "test")
   assert(new_token.line == 5)
   assert(new_token.column == 10)
   
   # Test with_value
   var new_token2 = token.with_value("newvalue")
-  assert(new_token2.type == animation.Token.IDENTIFIER)
+  assert(new_token2.type == animation_dsl.Token.IDENTIFIER)
   assert(new_token2.value == "newvalue")
   assert(new_token2.length == 8)  # size of "newvalue"
   
   # Test expression checking
-  var literal_token = animation.Token(animation.Token.NUMBER, "123", 1, 1)
-  var identifier_token = animation.Token(animation.Token.IDENTIFIER, "test", 1, 1)
-  var paren_token = animation.Token(animation.Token.LEFT_PAREN, "(", 1, 1)
-  var keyword_token = animation.Token(animation.Token.KEYWORD, "color", 1, 1)
+  var literal_token = animation_dsl.Token(animation_dsl.Token.NUMBER, "123", 1, 1)
+  var identifier_token = animation_dsl.Token(animation_dsl.Token.IDENTIFIER, "test", 1, 1)
+  var paren_token = animation_dsl.Token(animation_dsl.Token.LEFT_PAREN, "(", 1, 1)
+  var keyword_token = animation_dsl.Token(animation_dsl.Token.KEYWORD, "color", 1, 1)
   
   assert(literal_token.can_start_expression())
   assert(identifier_token.can_start_expression())
@@ -219,10 +220,10 @@ end
 def test_token_string_representations()
   print("Testing Token string representations...")
   
-  var keyword_token = animation.Token(animation.Token.KEYWORD, "color", 1, 5)
-  var eof_token = animation.Token(animation.Token.EOF, "", 10, 1)
-  var error_token = animation.Token(animation.Token.ERROR, "Invalid character", 2, 8)
-  var long_token = animation.Token(animation.Token.STRING, "This is a very long string that should be truncated", 3, 1)
+  var keyword_token = animation_dsl.Token(animation_dsl.Token.KEYWORD, "color", 1, 5)
+  var eof_token = animation_dsl.Token(animation_dsl.Token.EOF, "", 10, 1)
+  var error_token = animation_dsl.Token(animation_dsl.Token.ERROR, "Invalid character", 2, 8)
+  var long_token = animation_dsl.Token(animation_dsl.Token.STRING, "This is a very long string that should be truncated", 3, 1)
   
   # Test tostring
   var keyword_str = keyword_token.tostring()
@@ -251,57 +252,57 @@ def test_utility_functions()
   print("Testing utility functions...")
   
   # Test create_eof_token
-  var eof_token = animation.create_eof_token(5, 10)
-  assert(eof_token.type == animation.Token.EOF)
+  var eof_token = animation_dsl.create_eof_token(5, 10)
+  assert(eof_token.type == animation_dsl.Token.EOF)
   assert(eof_token.line == 5)
   assert(eof_token.column == 10)
   
   # Test create_error_token
-  var error_token = animation.create_error_token("Test error", 3, 7)
-  assert(error_token.type == animation.Token.ERROR)
+  var error_token = animation_dsl.create_error_token("Test error", 3, 7)
+  assert(error_token.type == animation_dsl.Token.ERROR)
   assert(error_token.value == "Test error")
   assert(error_token.line == 3)
   assert(error_token.column == 7)
   
   # Test create_newline_token
-  var newline_token = animation.create_newline_token(2, 15)
-  assert(newline_token.type == animation.Token.NEWLINE)
+  var newline_token = animation_dsl.create_newline_token(2, 15)
+  assert(newline_token.type == animation_dsl.Token.NEWLINE)
   assert(newline_token.value == "\n")
   assert(newline_token.line == 2)
   assert(newline_token.column == 15)
   
   # Test is_keyword
-  assert(animation.is_keyword("color"))
-  assert(animation.is_keyword("pattern"))
-  assert(animation.is_keyword("animation"))
-  assert(animation.is_keyword("sequence"))
-  assert(animation.is_keyword("true"))
-  assert(animation.is_keyword("false"))
-  assert(!animation.is_keyword("red"))
-  assert(!animation.is_keyword("my_pattern"))
+  assert(animation_dsl.is_keyword("color"))
+  assert(animation_dsl.is_keyword("animation"))
+  assert(animation_dsl.is_keyword("sequence"))
+  assert(animation_dsl.is_keyword("true"))
+  assert(animation_dsl.is_keyword("false"))
+  assert(!animation_dsl.is_keyword("red"))
+  assert(!animation_dsl.is_keyword("my_pattern"))
+  assert(!animation_dsl.is_keyword("pattern"))  # "pattern" is not a DSL keyword
   
   # Test is_color_name
-  assert(animation.is_color_name("red"))
-  assert(animation.is_color_name("blue"))
-  assert(animation.is_color_name("white"))
-  assert(animation.is_color_name("transparent"))
-  assert(!animation.is_color_name("color"))
-  assert(!animation.is_color_name("my_color"))
+  assert(animation_dsl.is_color_name("red"))
+  assert(animation_dsl.is_color_name("blue"))
+  assert(animation_dsl.is_color_name("white"))
+  assert(animation_dsl.is_color_name("transparent"))
+  assert(!animation_dsl.is_color_name("color"))
+  assert(!animation_dsl.is_color_name("my_color"))
   
   # Test operator precedence
-  var plus_token = animation.Token(animation.Token.PLUS, "+", 1, 1)
-  var multiply_token = animation.Token(animation.Token.MULTIPLY, "*", 1, 1)
-  var power_token = animation.Token(animation.Token.POWER, "^", 1, 1)
-  var and_token = animation.Token(animation.Token.LOGICAL_AND, "&&", 1, 1)
+  var plus_token = animation_dsl.Token(animation_dsl.Token.PLUS, "+", 1, 1)
+  var multiply_token = animation_dsl.Token(animation_dsl.Token.MULTIPLY, "*", 1, 1)
+  var power_token = animation_dsl.Token(animation_dsl.Token.POWER, "^", 1, 1)
+  var and_token = animation_dsl.Token(animation_dsl.Token.LOGICAL_AND, "&&", 1, 1)
   
-  assert(animation.get_operator_precedence(multiply_token) > animation.get_operator_precedence(plus_token))
-  assert(animation.get_operator_precedence(power_token) > animation.get_operator_precedence(multiply_token))
-  assert(animation.get_operator_precedence(plus_token) > animation.get_operator_precedence(and_token))
+  assert(animation_dsl.get_operator_precedence(multiply_token) > animation_dsl.get_operator_precedence(plus_token))
+  assert(animation_dsl.get_operator_precedence(power_token) > animation_dsl.get_operator_precedence(multiply_token))
+  assert(animation_dsl.get_operator_precedence(plus_token) > animation_dsl.get_operator_precedence(and_token))
   
   # Test associativity
-  assert(animation.is_right_associative(power_token))
-  assert(!animation.is_right_associative(plus_token))
-  assert(!animation.is_right_associative(multiply_token))
+  assert(animation_dsl.is_right_associative(power_token))
+  assert(!animation_dsl.is_right_associative(plus_token))
+  assert(!animation_dsl.is_right_associative(multiply_token))
   
   print("✓ Utility functions test passed")
   return true
@@ -312,7 +313,7 @@ def test_edge_cases()
   print("Testing edge cases...")
   
   # Test empty values
-  var empty_token = animation.Token(animation.Token.STRING, "", 1, 1)
+  var empty_token = animation_dsl.Token(animation_dsl.Token.STRING, "", 1, 1)
   assert(empty_token.value == "")
   assert(empty_token.length == 0)
   
@@ -321,21 +322,21 @@ def test_edge_cases()
   for i : 0..99
     long_value += "x"
   end
-  var long_token = animation.Token(animation.Token.STRING, long_value, 1, 1)
+  var long_token = animation_dsl.Token(animation_dsl.Token.STRING, long_value, 1, 1)
   assert(size(long_token.value) == 100)
   assert(long_token.length == 100)
   
   # Test invalid time formats (should not crash)
-  var invalid_time = animation.Token(animation.Token.TIME, "invalid", 1, 1)
+  var invalid_time = animation_dsl.Token(animation_dsl.Token.TIME, "invalid", 1, 1)
   assert(invalid_time.get_numeric_value() == nil)
   
   # Test invalid percentage formats
-  var invalid_percent = animation.Token(animation.Token.PERCENTAGE, "invalid%", 1, 1)
+  var invalid_percent = animation_dsl.Token(animation_dsl.Token.PERCENTAGE, "invalid%", 1, 1)
   # Should not crash, but may return nil or 0
   
   # Test boundary values
-  var zero_percent = animation.Token(animation.Token.PERCENTAGE, "0%", 1, 1)
-  var max_percent = animation.Token(animation.Token.PERCENTAGE, "100%", 1, 1)
+  var zero_percent = animation_dsl.Token(animation_dsl.Token.PERCENTAGE, "0%", 1, 1)
+  var max_percent = animation_dsl.Token(animation_dsl.Token.PERCENTAGE, "100%", 1, 1)
   assert(zero_percent.get_numeric_value() == 0)
   assert(max_percent.get_numeric_value() == 255)
   

@@ -1,8 +1,7 @@
-# Test suite for ValueProvider system
+# Test suite for ValueProvider base class
 #
-# This test verifies that the ValueProvider system works correctly
-# with both static values and dynamic providers, and that time_ms
-# is correctly passed to all provider methods.
+# This test verifies that the base ValueProvider class works correctly
+# and follows the parameterized class specification with produce_value() API.
 
 import animation
 
@@ -10,138 +9,58 @@ import animation
 def test_value_provider_interface()
   print("Testing ValueProvider interface...")
   
-  var provider = animation.value_provider()
+  # Create engine for testing
+  var strip = global.Leds()
+  var engine = animation.animation_engine(strip)
   
-  # Test default methods
-  assert(provider.get_value(1000) == nil, "Default get_value should return nil")
-  assert(provider.update(1000) == false, "Default update should return false")
+  var provider = animation.value_provider(engine)
+  
+  # Test default produce_value method
+  var result = provider.produce_value("test_param", 1000)
+  assert(type(result) == "module", "Default produce_value should return module('undefined')")
+  
+  # Test that it has the engine reference
+  assert(provider.engine != nil, "Provider should have engine reference")
+  assert(provider.engine == engine, "Provider should have correct engine reference")
   
   print("✓ ValueProvider interface test passed")
-end
-
-# Test the StaticValueProvider
-def test_static_value_provider()
-  print("Testing StaticValueProvider...")
-  
-  # Test with integer value
-  var int_provider = animation.static_value_provider(42)
-  assert(int_provider.get_value(1000) == 42, "Should return static integer value")
-  assert(int_provider.update(1000) == false, "Update should return false")
-  
-  # Test with string value
-  var str_provider = animation.static_value_provider("hello")
-  assert(str_provider.get_value(2000) == "hello", "Should return static string value")
-  
-  # Test member() construct for get_XXX methods
-  var pulse_size_method = int_provider.("get_pulse_size")
-  assert(type(pulse_size_method) == "function", "Should return function for get_pulse_size")
-  assert(pulse_size_method(1000) == 42, "get_pulse_size should return static value")
-  
-  var pos_method = int_provider.("get_pos")
-  assert(type(pos_method) == "function", "Should return function for get_pos")
-  assert(pos_method(1000) == 42, "get_pos should return static value")
-  
-  # Test non-get methods should use default behavior
-  try
-    var other_method = int_provider.("some_other_method")
-    assert(false, "member should have failed")
-  except "attribute_error"
-    # all good, exception is expected
-  end
-  
-  print("✓ StaticValueProvider test passed")
-end
-
-# Test the helper functions in Animation base class
-def test_animation_helpers()
-  print("Testing Animation helper methods...")
-  
-  # Create a simple animation for testing
-  var test_anim = animation.animation(10, 0, false, "test")
-  
-  # Register a test parameter
-  test_anim.register_param("test_param", {"default": 0})
-  
-  # Test with static value
-  assert(test_anim.set_param("test_param", 123) == true, "Should set static value")
-  var retrieved = test_anim.get_param("test_param", 1000)
-  assert(retrieved == 123, "Should retrieve static value")
-  
-  # Test with value provider
-  var provider = animation.static_value_provider(456)
-  assert(test_anim.set_param("test_param", provider) == true, "Should set provider")
-  retrieved = test_anim.get_param_value("test_param", 1000)
-  assert(retrieved == 456, "Should retrieve value from provider")
-  
-  # Test that time_ms is correctly passed to providers
-  class TimeAwareProvider : animation.value_provider
-    var last_time_received
-    
-    def init()
-      self.last_time_received = nil
-    end
-    
-    def get_value(time_ms)
-      self.last_time_received = time_ms
-      return time_ms / 10  # Return a value based on time
-    end
-    
-    def get_test_param(time_ms)
-      self.last_time_received = time_ms
-      return time_ms / 5  # Different calculation for specific method
-    end
-  end
-  
-  var time_provider = TimeAwareProvider()
-  test_anim.set_param("test_param", time_provider)
-  
-  # Test generic get_value method (when specific method doesn't exist)
-  test_anim.register_param("unknown_param", {"default": 0})
-  test_anim.set_param("unknown_param", time_provider)
-  var result = test_anim.get_param_value("unknown_param", 2000)
-  assert(time_provider.last_time_received == 2000, "Should pass time_ms to get_value")
-  assert(result == 200, "Should return time-based value from get_value")
-  
-  # Test specific get_test_param method
-  result = test_anim.get_param_value("test_param", 1500)
-  assert(time_provider.last_time_received == 1500, "Should pass time_ms to get_test_param")
-  assert(result == 300, "Should return time-based value from get_test_param")
-  
-  print("✓ Animation helper methods test passed")
 end
 
 # Test with a custom value provider
 def test_custom_value_provider()
   print("Testing custom ValueProvider...")
   
-  # Create a simple time-based provider
+  # Create engine for testing
+  var strip = global.Leds()
+  var engine = animation.animation_engine(strip)
+  
+  # Create a simple time-based provider using new API
   class TimeBasedProvider : animation.value_provider
-    var multiplier
+    # Parameter definitions
+    static var PARAMS = {
+      "multiplier": {"default": 1}
+    }
     
-    def init(multiplier)
-      self.multiplier = multiplier != nil ? multiplier : 1
+    def init(engine)
+      super(self).init(engine)
     end
     
-    def get_value(time_ms)
-      return (time_ms / 100) * self.multiplier  # Changes every 100ms
-    end
-    
-    def get_pulse_size(time_ms)
-      var value = self.get_value(time_ms)
-      return value > 0 ? value : 1  # Ensure positive
+    def produce_value(name, time_ms)
+      var multiplier = self.multiplier
+      return (time_ms / 100) * multiplier  # Changes every 100ms
     end
   end
   
-  var provider = TimeBasedProvider(2)
+  var provider = TimeBasedProvider(engine)
+  provider.multiplier = 2  # Set parameter using virtual member assignment
   
   # Test at different times
-  assert(provider.get_value(0) == 0, "Should return 0 at time 0")
-  assert(provider.get_value(100) == 2, "Should return 2 at time 100")
-  assert(provider.get_value(500) == 10, "Should return 10 at time 500")
+  assert(provider.produce_value("test", 0) == 0, "Should return 0 at time 0")
+  assert(provider.produce_value("test", 100) == 2, "Should return 2 at time 100")
+  assert(provider.produce_value("test", 500) == 10, "Should return 10 at time 500")
   
-  # Test specific method
-  assert(provider.get_pulse_size(100) == 2, "get_pulse_size should return 2")
-  assert(provider.get_pulse_size(0) == 1, "get_pulse_size should return 1 (minimum)")
+  # Test parameter access
+  assert(provider.multiplier == 2, "Should access parameter via virtual member")
   
   print("✓ Custom ValueProvider test passed")
 end
@@ -150,10 +69,12 @@ end
 def test_is_value_provider()
   print("Testing is_value_provider function...")
   
-  var static_provider = animation.static_value_provider(42)
-  var base_provider = animation.value_provider()
+  # Create engine for testing
+  var strip = global.Leds()
+  var engine = animation.animation_engine(strip)
   
-  assert(animation.is_value_provider(static_provider) == true, "StaticValueProvider should be detected")
+  var base_provider = animation.value_provider(engine)
+  
   assert(animation.is_value_provider(base_provider) == true, "ValueProvider should be detected")
   assert(animation.is_value_provider(42) == false, "Integer should not be detected")
   assert(animation.is_value_provider("hello") == false, "String should not be detected")
@@ -162,48 +83,93 @@ def test_is_value_provider()
   print("✓ is_value_provider test passed")
 end
 
-# Test ColorProvider inheritance from ValueProvider
-def test_color_provider_inheritance()
-  print("Testing ColorProvider inheritance...")
+# Test parameterized object integration
+def test_parameterized_object_integration()
+  print("Testing ParameterizedObject integration...")
   
-  # Test that ColorProviders are also ValueProviders
-  var solid_color = animation.solid_color_provider(0xFF00FF00)  # Green
-  var base_color = animation.color_provider()
+  # Create engine for testing
+  var strip = global.Leds()
+  var engine = animation.animation_engine(strip)
   
-  assert(animation.is_value_provider(solid_color) == true, "SolidColorProvider should be a ValueProvider")
-  assert(animation.is_color_provider(solid_color) == true, "SolidColorProvider should be a ColorProvider")
-  assert(animation.is_value_provider(base_color) == true, "ColorProvider should be a ValueProvider")
-  assert(animation.is_color_provider(base_color) == true, "ColorProvider should be a ColorProvider")
+  var provider = animation.value_provider(engine)
   
-  # Test that color providers work with the parameter system
-  var test_anim = animation.animation(10, 0, false, "test")
-  test_anim.register_param("color", {"default": 0xFFFFFFFF})
+  # Test that it has the engine reference
+  assert(provider.engine != nil, "Provider should have engine reference")
+  assert(provider.engine == engine, "Provider should have correct engine reference")
   
-  # Test with color provider
-  assert(test_anim.set_param_value("color", solid_color) == true, "Should set color provider")
-  var retrieved = test_anim.get_param_value("color", 1000)
-  assert(retrieved == 0xFF00FF00, "Should retrieve color from provider via get_color()")
+  # Test parameter system methods exist
+  assert(type(provider.get_params_metadata) == "function", "Should have get_params_metadata method")
+  assert(type(provider.set_param) == "function", "Should have set_param method")
+  assert(type(provider.get_param) == "function", "Should have get_param method")
   
-  # Test that get_value() delegates to get_color()
-  assert(solid_color.get_value(1000) == 0xFF00FF00, "get_value() should delegate to get_color()")
-  assert(solid_color.get_color(1000) == 0xFF00FF00, "get_color() should return the color")
+  # Test lifecycle method exists
+  assert(type(provider.start) == "function", "Should have start method")
   
-  print("✓ ColorProvider inheritance test passed")
+  print("✓ ParameterizedObject integration test passed")
+end
+
+# Test lifecycle methods
+def test_lifecycle_methods()
+  print("Testing lifecycle methods...")
+  
+  # Create engine for testing
+  var strip = global.Leds()
+  var engine = animation.animation_engine(strip)
+  
+  # Create a provider that tracks start calls
+  class LifecycleProvider : animation.value_provider
+    var start_called
+    var start_time
+    
+    def init(engine)
+      super(self).init(engine)
+      self.start_called = false
+      self.start_time = 0
+    end
+    
+    def start(time_ms)
+      self.start_called = true
+      if time_ms == nil
+        time_ms = self.engine.time_ms
+      end
+      self.start_time = time_ms
+      return self
+    end
+    
+    def produce_value(name, time_ms)
+      return self.start_time
+    end
+  end
+  
+  var provider = LifecycleProvider(engine)
+  engine.time_ms = 1000
+  
+  # Test start method
+  provider.start(500)
+  assert(provider.start_called == true, "start() should be called")
+  assert(provider.start_time == 500, "start_time should be set to provided value")
+  
+  # Test start with nil (should use engine time)
+  provider.start_called = false
+  provider.start(nil)
+  assert(provider.start_called == true, "start() should be called with nil")
+  assert(provider.start_time == 1000, "start_time should use engine time when nil")
+  
+  print("✓ Lifecycle methods test passed")
 end
 
 # Run all tests
 def run_value_provider_tests()
-  print("=== ValueProvider System Tests ===")
+  print("=== ValueProvider Base Class Tests ===")
   
   try
     test_value_provider_interface()
-    test_static_value_provider()
-    test_animation_helpers()
     test_custom_value_provider()
     test_is_value_provider()
-    test_color_provider_inheritance()
+    test_parameterized_object_integration()
+    test_lifecycle_methods()
     
-    print("=== All ValueProvider tests passed! ===")
+    print("=== All ValueProvider base class tests passed! ===")
     return true
   except .. as e, msg
     print(f"Test failed: {e} - {msg}")

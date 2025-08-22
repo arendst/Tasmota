@@ -30,7 +30,7 @@ def test_palette_definition()
     "run demo"
   
   # Compile the DSL
-  var berry_code = animation.compile_dsl(dsl_source)
+  var berry_code = animation_dsl.compile(dsl_source)
   
   assert(berry_code != nil, "DSL compilation should succeed")
   
@@ -63,7 +63,7 @@ def test_palette_with_named_colors()
     "  (255, blue)\n" +
     "]\n"
   
-  var berry_code = animation.compile_dsl(dsl_source)
+  var berry_code = animation_dsl.compile(dsl_source)
   assert(berry_code != nil, "DSL compilation with named colors should succeed")
   
   # Check that named colors are properly converted
@@ -92,7 +92,7 @@ def test_palette_with_custom_colors()
     "  (255, #CCAAFF)     # Pale purple\n" +
     "]\n"
   
-  var berry_code = animation.compile_dsl(dsl_source)
+  var berry_code = animation_dsl.compile(dsl_source)
   assert(berry_code != nil, "DSL compilation with custom colors should succeed")
   
   print("✓ Palette with custom colors test passed")
@@ -108,7 +108,7 @@ def test_palette_error_handling()
     "  (0, #FF0000)\n" +
     "]\n"
   
-  var result1 = animation.compile_dsl(invalid_dsl1)
+  var result1 = animation_dsl.compile(invalid_dsl1)
   assert(result1 == nil, "Should fail with missing opening bracket")
   
   # Test missing comma in tuple
@@ -117,7 +117,7 @@ def test_palette_error_handling()
     "  (0 #FF0000)\n" +
     "]\n"
   
-  var result2 = animation.compile_dsl(invalid_dsl2)
+  var result2 = animation_dsl.compile(invalid_dsl2)
   assert(result2 == nil, "Should fail with missing comma in tuple")
   
   print("✓ Palette error handling test passed")
@@ -138,7 +138,7 @@ def test_palette_integration()
     "  (255, #FFFF00)   # Yellow\n" +
     "]\n"
   
-  var berry_code = animation.compile_dsl(dsl_source)
+  var berry_code = animation_dsl.compile(dsl_source)
   assert(berry_code != nil, "DSL compilation should succeed")
   
   # Try to execute the compiled code
@@ -177,7 +177,7 @@ def test_vrgb_format_validation()
     "  (255, #88FFAA)   # Bright aurora\n" +
     "]\n"
   
-  var berry_code = animation.compile_dsl(dsl_source)
+  var berry_code = animation_dsl.compile(dsl_source)
   assert(berry_code != nil, "Aurora palette compilation should succeed")
   
   # Execute and verify VRGB format
@@ -257,7 +257,7 @@ def test_complete_workflow()
     "run color_demo"
   
   # Test compilation
-  var berry_code = animation.compile_dsl(complete_dsl)
+  var berry_code = animation_dsl.compile(complete_dsl)
   assert(berry_code != nil, "Complete workflow DSL should compile")
   
   # Verify generated code contains required elements
@@ -304,12 +304,12 @@ def test_palette_keyword_recognition()
   print("Testing palette keyword recognition...")
   
   var simple_palette_dsl = "palette test = [(0, #FF0000)]"
-  var lexer = animation.DSLLexer(simple_palette_dsl)
+  var lexer = animation_dsl.DSLLexer(simple_palette_dsl)
   var tokens = lexer.tokenize()
   
   var found_palette_keyword = false
   for token : tokens
-    if token.type == animation.Token.KEYWORD && token.value == "palette"
+    if token.type == animation_dsl.Token.KEYWORD && token.value == "palette"
       found_palette_keyword = true
       break
     end

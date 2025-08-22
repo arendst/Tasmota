@@ -23,10 +23,10 @@ palette aurora_purple = [
 
 # Base aurora animation with slow flowing colors
 animation aurora_base = rich_palette_animation(
-  aurora_colors,  # palette
-  10s,            # cycle period
-  smooth,         # transition type (explicit for clarity)
-  180             # brightness (dimmed for aurora effect)
+  palette=aurora_colors,  # palette
+  cycle_period=10s,       # cycle period
+  transition_type=SINE,          # transition type (explicit for clarity)
+  brightness=180          # brightness (dimmed for aurora effect)
 )
 
 sequence demo {

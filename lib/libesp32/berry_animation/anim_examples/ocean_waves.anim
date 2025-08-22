@@ -1,7 +1,7 @@
 # Ocean Waves - Blue-green wave simulation
 # Flowing water colors with wave motion
 
-strip length 60
+#strip length 60
 
 # Define ocean color palette
 palette ocean_colors = [
@@ -13,34 +13,34 @@ palette ocean_colors = [
 ]
 
 # Base ocean animation with slow color cycling
-animation ocean_base = rich_palette_animation(ocean_colors, 8s, smooth, 200)
+animation ocean_base = rich_palette_animation(palette=ocean_colors, cycle_period=8s, transition_type=SINE, brightness=200)
 
 # Add wave motion with moving pulses
-pattern wave1_pattern = rich_palette_color_provider(ocean_colors, 6s, smooth, 255)
-animation wave1 = pulse_position_animation(
-  wave1_pattern, # color source
-  0,            # initial position
-  12,           # wave width
-  6             # soft edges
+color wave1_pattern = rich_palette(palette=ocean_colors, cycle_period=6s, transition_type=SINE, brightness=255)
+animation wave1 = beacon_animation(
+  color=wave1_pattern, # color source
+  pos=0,               # initial position
+  beacon_size=12,       # wave width
+  slew_size=6          # soft edges
 )
 wave1.priority = 10
-wave1.pos = sawtooth(0, 48, 5s)  # 60-12 = 48
+wave1.pos = sawtooth(min_value=0, max_value=48, duration=5s)  # 60-12 = 48
 
-pattern wave2_pattern = rich_palette_color_provider(ocean_colors, 4s, smooth, 180)
-animation wave2 = pulse_position_animation(
-  wave2_pattern, # color source
-  52,           # initial position
-  8,            # smaller wave
-  4             # soft edges
+color wave2_pattern = rich_palette(palette=ocean_colors, cycle_period=4s, transition_type=SINE, brightness=180)
+animation wave2 = beacon_animation(
+  color=wave2_pattern, # color source
+  pos=52,              # initial position
+  beacon_size=8,        # smaller wave
+  slew_size=4          # soft edges
 )
 wave2.priority = 8
-wave2.pos = sawtooth(52, 8, 7s)  # Opposite direction
+wave2.pos = sawtooth(min_value=52, max_value=8, duration=7s)  # Opposite direction
 
 # Add foam sparkles
 animation foam = twinkle_animation(
-  0xFFFFFF,  # White foam
-  6,         # density (sparkle count)
-  300ms      # twinkle speed (quick sparkles)
+  color=0xFFFFFF,  # White foam
+  density=6,       # density (sparkle count)
+  twinkle_speed=300ms      # twinkle speed (quick sparkles)
 )
 foam.priority = 15
 

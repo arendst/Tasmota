@@ -1,7 +1,7 @@
 # Palette Demo - Shows how to use custom palettes in DSL
 # This demonstrates the new palette syntax
 
-strip length 30
+#strip length 30
 
 # Define a fire palette
 palette fire_colors = [
@@ -22,9 +22,9 @@ palette ocean_colors = [
 ]
 
 # Create animations using the palettes
-animation fire_anim = rich_palette_animation(fire_colors, 5s)
+animation fire_anim = rich_palette_animation(palette=fire_colors, cycle_period=5s)
 
-animation ocean_anim = rich_palette_animation(ocean_colors, 8s)
+animation ocean_anim = rich_palette_animation(palette=ocean_colors, cycle_period=8s)
 
 # Sequence to show both palettes
 sequence palette_demo {

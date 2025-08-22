@@ -2,18 +2,19 @@
 
 Common issues and solutions for the Tasmota Berry Animation Framework.
 
+**Note**: This guide focuses on DSL usage, which is the recommended way to create animations. For programmatic API issues, see the [Animation Development Guide](ANIMATION_DEVELOPMENT.md).
+
 ## Installation Issues
 
 ### Framework Not Found
 
-**Problem:** `import animation` fails with "module not found"
+**Problem:** `import animation` or `import animation_dsl` fails with "module not found"
 
 **Solutions:**
-1. **Check Module Path:**
+1. **Check Module Import:**
    ```berry
-   # Verify the animation module exists
-   import sys
-   print(sys.path())
+   import animation      # Core framework
+   import animation_dsl  # DSL compiler
    ```
 
 2. **Set Module Path:**
@@ -25,8 +26,9 @@ Common issues and solutions for the Tasmota Berry Animation Framework.
    ```
    lib/libesp32/berry_animation/
    ├── animation.be          # Main module file
+   ├── dsl/                  # DSL components
    ├── core/                 # Core classes
-   ├── effects/              # Animation effects
+   ├── animations/           # Animation effects
    └── ...
    ```
 
@@ -56,47 +58,54 @@ Common issues and solutions for the Tasmota Berry Animation Framework.
 
 ### Animations Not Starting
 
-**Problem:** Animations created but LEDs don't change
+**Problem:** DSL animations compile but LEDs don't change
 
 **Diagnostic Steps:**
 ```berry
 import animation
+import animation_dsl
 
-var strip = Leds(30)
-var engine = animation.create_engine(strip)
-var anim = animation.solid(0xFFFF0000)
+# Test basic DSL execution
+var dsl_code = "color red = 0xFF0000\n" +
+               "animation red_anim = solid(color=red)\n" +
+               "run red_anim"
 
-# Check each step
-print("Engine created:", engine != nil)
-print("Animation created:", anim != nil)
-
-engine.add_animation(anim)
-print("Animation added, count:", engine.size())
-
-engine.start()
-print("Engine started:", engine.is_active())
+try
+  animation_dsl.execute(dsl_code)
+  print("DSL executed successfully")
+except .. as e, msg
+  print("DSL Error:", msg)
+end
 ```
 
 **Common Solutions:**
 
-1. **Forgot to Start Engine:**
-   ```berry
-   engine.add_animation(anim)
-   engine.start()  # Don't forget this!
+1. **Missing Strip Declaration:**
+   ```dsl
+   # Add explicit strip length if needed
+   strip length 30
+   
+   color red = 0xFF0000
+   animation red_anim = solid(color=red)
+   run red_anim
    ```
 
-2. **Animation Not Added:**
-   ```berry
-   # Make sure animation is added to engine
-   engine.add_animation(anim)
-   print("Animation count:", engine.size())  # Should be > 0
+2. **Animation Not Executed:**
+   ```dsl
+   # Make sure you have a 'run' statement
+   color red = 0xFF0000
+   animation red_anim = solid(color=red)
+   run red_anim  # Don't forget this!
    ```
 
-3. **Strip Not Configured:**
-   ```berry
-   # Check strip configuration
-   var strip = Leds(30)  # 30 LEDs
-   print("Strip created:", strip != nil)
+3. **Strip Auto-Detection Issues:**
+   ```dsl
+   # Force strip length if auto-detection fails
+   strip length 30  # Must be first statement
+   
+   color red = 0xFF0000
+   animation red_anim = solid(color=red)
+   run red_anim
    ```
 
 ### Colors Look Wrong
@@ -106,29 +115,36 @@ print("Engine started:", engine.is_active())
 **Common Issues:**
 
 1. **Missing Alpha Channel:**
-   ```berry
-   # Wrong - missing alpha
-   var red = 0xFF0000
+   ```dsl
+   # Note: 0xFF0000 is valid RGB format (alpha defaults to 0xFF)
+   color red = 0xFF0000      # RGB format (alpha=255 assumed)
    
-   # Correct - with alpha channel
-   var red = 0xFFFF0000  # ARGB format
+   # Explicit alpha channel (ARGB format)
+   color red = 0xFFFF0000    # ARGB format (alpha=255, red=255)
+   color semi_red = 0x80FF0000  # ARGB format (alpha=128, red=255)
    ```
 
 2. **Color Format Confusion:**
-   ```berry
+   ```dsl
    # ARGB format: 0xAARRGGBB
-   var red = 0xFFFF0000      # Alpha=FF, Red=FF, Green=00, Blue=00
-   var green = 0xFF00FF00    # Alpha=FF, Red=00, Green=FF, Blue=00
-   var blue = 0xFF0000FF     # Alpha=FF, Red=00, Green=00, Blue=FF
+   color red = 0xFFFF0000      # Alpha=FF, Red=FF, Green=00, Blue=00
+   color green = 0xFF00FF00    # Alpha=FF, Red=00, Green=FF, Blue=00
+   color blue = 0xFF0000FF     # Alpha=FF, Red=00, Green=00, Blue=FF
    ```
 
 3. **Brightness Issues:**
-   ```berry
-   # Check opacity settings
-   anim.set_opacity(255)  # Full brightness
+   ```dsl
+   # Use opacity parameter or property assignment
+   animation red_anim = solid(color=red, opacity=255)  # Full brightness
    
-   # Check pulse brightness ranges
-   var pulse = animation.pulse(pattern, 2000, 50, 255)  # Min=50, Max=255
+   # Or assign after creation
+   animation pulse_red = pulsating_animation(color=red, period=2s)
+   pulse_red.opacity = 200  # Adjust brightness
+   
+   # Use value providers for dynamic brightness
+   set brightness = smooth(min_value=50, max_value=255, period=3s)
+   animation breathing = solid(color=red)
+   breathing.opacity = brightness
    ```
 
 ### Animations Too Fast/Slow
@@ -138,28 +154,35 @@ print("Engine started:", engine.is_active())
 **Solutions:**
 
 1. **Check Time Units:**
-   ```berry
-   # Berry uses milliseconds
-   var pulse = animation.pulse(pattern, 2000, 50, 255)  # 2 seconds
-   
-   # DSL uses time units
-   # animation pulse_anim = pulse(pattern, 2s, 20%, 100%)  # 2 seconds
+   ```dsl
+   # DSL uses time units (converted to milliseconds)
+   animation pulse_anim = pulsating_animation(color=red, period=2s)    # 2 seconds
+   animation fast_pulse = pulsating_animation(color=blue, period=500ms) # 0.5 seconds
    ```
 
 2. **Adjust Periods:**
-   ```berry
+   ```dsl
    # Too fast - increase period
-   var slow_pulse = animation.pulse(pattern, 5000, 50, 255)  # 5 seconds
+   animation slow_pulse = pulsating_animation(color=red, period=5s)   # 5 seconds
    
    # Too slow - decrease period
-   var fast_pulse = animation.pulse(pattern, 500, 50, 255)   # 0.5 seconds
+   animation fast_pulse = pulsating_animation(color=red, period=500ms) # 0.5 seconds
    ```
 
 3. **Performance Limitations:**
-   ```berry
-   # Reduce number of simultaneous animations
-   engine.clear()  # Remove all animations
-   engine.add_animation(single_animation)
+   ```dsl
+   # Use sequences instead of multiple simultaneous animations
+   sequence optimized_show {
+     play animation1 for 3s
+     play animation2 for 3s
+     play animation3 for 3s
+   }
+   run optimized_show
+   
+   # Instead of:
+   # run animation1
+   # run animation2  
+   # run animation3
    ```
 
 ## DSL Issues
@@ -171,7 +194,7 @@ print("Engine started:", engine.is_active())
 **Diagnostic Approach:**
 ```berry
 try
-  var berry_code = animation.compile_dsl(dsl_source)
+  var berry_code = animation_dsl.compile(dsl_source)
   print("Compilation successful")
 except "dsl_compilation_error" as e, msg
   print("DSL Error:", msg)
@@ -183,38 +206,63 @@ end
 1. **Undefined Colors:**
    ```dsl
    # Wrong - color not defined
-   animation red_anim = solid(red)
+   animation red_anim = solid(color=red)
    
    # Correct - define color first
-   color red = #FF0000
-   animation red_anim = solid(red)
+   color red = 0xFF0000
+   animation red_anim = solid(color=red)
    ```
 
 2. **Invalid Color Format:**
    ```dsl
-   # Wrong - invalid hex format
-   color red = FF0000
-   
-   # Correct - with # prefix
+   # Wrong - # prefix not supported (conflicts with comments)
    color red = #FF0000
+   
+   # Correct - use 0x prefix
+   color red = 0xFF0000
    ```
 
 3. **Missing Time Units:**
    ```dsl
    # Wrong - no time unit
-   animation pulse_anim = pulse(solid(red), 2000, 50%, 100%)
+   animation pulse_anim = pulsating_animation(color=red, period=2000)
    
    # Correct - with time unit
-   animation pulse_anim = pulse(solid(red), 2s, 50%, 100%)
+   animation pulse_anim = pulsating_animation(color=red, period=2s)
    ```
 
 4. **Reserved Name Conflicts:**
    ```dsl
    # Wrong - 'red' is a predefined color
-   color red = #800000
+   color red = 0x800000
    
    # Correct - use different name
-   color dark_red = #800000
+   color dark_red = 0x800000
+   ```
+
+5. **Invalid Parameter Names:**
+   ```dsl
+   # Wrong - invalid parameter name
+   animation pulse_anim = pulsating_animation(color=red, invalid_param=123)
+   # Error: "Parameter 'invalid_param' is not valid for pulsating_animation"
+   
+   # Correct - use valid parameters (see DSL_REFERENCE.md for complete list)
+   animation pulse_anim = pulsating_animation(color=red, period=2s)
+   ```
+
+6. **Parameter Constraint Violations:**
+   ```dsl
+   # Wrong - negative period not allowed
+   animation bad_pulse = pulsating_animation(color=red, period=-2s)
+   # Error: "Parameter 'period' value -2000 violates constraint: min=1"
+   
+   # Wrong - invalid enum value
+   animation bad_comet = comet_animation(color=red, direction=5)
+   # Error: "Parameter 'direction' value 5 not in allowed values: [-1, 1]"
+   
+   # Correct - valid parameters within constraints
+   animation good_pulse = pulsating_animation(color=red, period=2s)
+   animation good_comet = comet_animation(color=red, direction=1)
    ```
 
 ### DSL Runtime Errors
@@ -228,20 +276,40 @@ end
    # Add strip declaration if needed
    strip length 30
    
-   color red = #FF0000
-   animation red_anim = solid(red)
+   color red = 0xFF0000
+   animation red_anim = solid(color=red)
    run red_anim
    ```
 
 2. **Sequence Issues:**
    ```dsl
    # Make sure animations are defined before sequences
-   color red = #FF0000
-   animation red_anim = solid(red)  # Define first
+   color red = 0xFF0000
+   animation red_anim = solid(color=red)  # Define first
    
    sequence demo {
      play red_anim for 3s  # Use after definition
+     wait 1s               # Optional pause between animations
    }
+   run demo
+   ```
+
+3. **Undefined References:**
+   ```dsl
+   # Wrong - using undefined animation in sequence
+   sequence bad_demo {
+     play undefined_animation for 3s
+   }
+   # Error: "Undefined reference: 'undefined_animation'"
+   
+   # Correct - define all references first
+   color blue = 0x0000FF
+   animation blue_anim = solid(color=blue)
+   
+   sequence good_demo {
+     play blue_anim for 3s
+   }
+   run good_demo
    ```
 
 ## Performance Issues
@@ -252,37 +320,44 @@ end
 
 **Solutions:**
 
-1. **Reduce Animation Count:**
-   ```berry
-   # Good - 1-3 animations
-   engine.clear()
-   engine.add_animation(main_animation)
+1. **Use Sequences Instead of Multiple Animations:**
+   ```dsl
+   # Good - sequential playback
+   sequence smooth_show {
+     play animation1 for 3s
+     play animation2 for 3s
+     play animation3 for 3s
+   }
+   run smooth_show
    
    # Avoid - too many simultaneous animations
-   # engine.add_animation(anim1)
-   # engine.add_animation(anim2)
-   # ... (10+ animations)
+   # run animation1
+   # run animation2
+   # run animation3
    ```
 
 2. **Increase Animation Periods:**
-   ```berry
+   ```dsl
    # Smooth - longer periods
-   var smooth_pulse = animation.pulse(pattern, 3000, 50, 255)  # 3 seconds
+   animation smooth_pulse = pulsating_animation(color=red, period=3s)
    
    # Choppy - very short periods
-   var choppy_pulse = animation.pulse(pattern, 50, 50, 255)    # 50ms
+   animation choppy_pulse = pulsating_animation(color=red, period=50ms)
    ```
 
 3. **Optimize Value Providers:**
-   ```berry
+   ```dsl
    # Efficient - reuse providers
-   var breathing = animation.smooth(50, 255, 2000)
-   var anim1 = animation.pulse(pattern1, breathing)
-   var anim2 = animation.pulse(pattern2, breathing)  # Reuse
+   set breathing = smooth(min_value=50, max_value=255, period=2s)
    
-   # Inefficient - create new providers
-   var anim1 = animation.pulse(pattern1, animation.smooth(50, 255, 2000))
-   var anim2 = animation.pulse(pattern2, animation.smooth(50, 255, 2000))
+   color red = 0xFF0000
+   color blue = 0x0000FF
+   
+   animation anim1 = pulsating_animation(color=red, period=2s)
+   anim1.opacity = breathing
+   
+   animation anim2 = pulsating_animation(color=blue, period=2s)
+   anim2.opacity = breathing  # Reuse same provider
    ```
 
 ### Memory Issues
@@ -405,7 +480,15 @@ var strip = Leds(30)  # 30 LEDs
 strip.set_pixel_color(0, 0xFFFF0000)  # Set first pixel red
 strip.show()  # Update LEDs
 
-# If this doesn't work, check hardware
+# Test with animation framework
+import animation
+var engine = animation.create_engine(strip)
+var red_anim = animation.solid(engine)
+red_anim.color = 0xFFFF0000
+engine.add_animation(red_anim)
+engine.start()
+
+# If basic strip works but animation doesn't, check framework setup
 ```
 
 ### Wrong Colors on Hardware
@@ -435,20 +518,45 @@ strip.show()  # Update LEDs
 
 ## Debugging Techniques
 
-### Enable Debug Mode
+### DSL vs Berry API Debugging
 
+**For DSL Issues (Recommended):**
 ```berry
-# Enable debug output
-var runtime = animation.DSLRuntime(engine, true)  # Debug mode on
+# Enable DSL debug output
+import animation_dsl
 
-# Check generated code
+var dsl_code = "color red = 0xFF0000\nanimation test = solid(color=red)\nrun test"
+
+# Check compilation
 try
-  var berry_code = animation.compile_dsl(dsl_source)
+  var berry_code = animation_dsl.compile(dsl_code)
+  print("DSL compilation successful")
   print("Generated Berry code:")
   print(berry_code)
-except "dsl_compilation_error" as e, msg
-  print("Compilation error:", msg)
+except .. as e, msg
+  print("DSL compilation error:", msg)
 end
+
+# Execute with debug
+try
+  animation_dsl.execute(dsl_code, true)  # debug=true
+except .. as e, msg
+  print("DSL execution error:", msg)
+end
+```
+
+**For Framework Issues (Advanced):**
+```berry
+# Direct Berry API debugging (for framework developers)
+import animation
+
+var strip = Leds(30)
+var engine = animation.create_engine(strip, true)  # debug=true
+
+var anim = animation.solid(engine)
+anim.color = 0xFFFF0000
+engine.add_animation(anim)
+engine.start()
 ```
 
 ### Step-by-Step Testing
@@ -464,7 +572,8 @@ var engine = animation.create_engine(strip)
 print("Engine created:", engine != nil)
 
 print("3. Creating animation...")
-var anim = animation.solid(0xFFFF0000)
+var anim = animation.solid(engine)
+anim.color = 0xFFFF0000
 print("Animation created:", anim != nil)
 
 print("4. Adding animation...")
@@ -529,8 +638,8 @@ When asking for help, include:
 
 **Code:**
 ```dsl
-color red = #FF0000
-animation red_anim = solid(red)
+color red = 0xFF0000
+animation red_anim = solid(color=red)
 run red_anim
 ```
 
@@ -595,5 +704,55 @@ This format helps identify issues quickly and provide targeted solutions.
    - Adequate power supply
    - Proper wiring and connections
    - Appropriate LED strip for application
+
+## Quick Reference: Common DSL Patterns
+
+### Basic Animation
+```dsl
+color red = 0xFF0000
+animation red_solid = solid(color=red)
+run red_solid
+```
+
+### Animation with Parameters
+```dsl
+color blue = 0x0000FF
+animation blue_pulse = pulsating_animation(color=blue, period=2s, opacity=200)
+run blue_pulse
+```
+
+### Using Value Providers
+```dsl
+set breathing = smooth(min_value=50, max_value=255, period=3s)
+color green = 0x00FF00
+animation breathing_green = solid(color=green)
+breathing_green.opacity = breathing
+run breathing_green
+```
+
+### Sequences
+```dsl
+color red = 0xFF0000
+color blue = 0x0000FF
+
+animation red_anim = solid(color=red)
+animation blue_anim = solid(color=blue)
+
+sequence demo {
+  play red_anim for 2s
+  wait 500ms
+  play blue_anim for 2s
+}
+run demo
+```
+
+### Multiple Strip Lengths
+```dsl
+strip length 60  # Must be first statement
+
+color rainbow = rainbow_color_provider(period=5s)
+animation rainbow_anim = solid(color=rainbow)
+run rainbow_anim
+```
 
 Following these guidelines will help you avoid most common issues and create reliable LED animations.

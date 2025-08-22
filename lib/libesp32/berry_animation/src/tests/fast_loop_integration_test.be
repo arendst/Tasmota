@@ -12,36 +12,32 @@ import animation
 # Using global.Leds instead of MockStrip
 import global
 
-# Create a mock animation for testing
-class MockAnimation : animation.animation
+# Test animation that tracks method calls
+class TestAnimation : animation.animation
   var render_called
-  var render_result
   var update_called
   var update_time
   
-  def init(priority)
-    super(self).init(priority, 0, false, "mock_animation")
+  def init(engine)
+    super(self).init(engine)
     self.render_called = false
-    self.render_result = true
     self.update_called = false
     self.update_time = 0
   end
   
   def render(frame)
     self.render_called = true
-    
-    # Fill the frame with a test pattern
+    # Fill frame with red for testing
     if frame != nil
-      frame.fill_pixels(animation.frame_buffer.to_color(255, 0, 0, 255))  # Solid red
+      frame.fill_pixels(0xFF0000FF)
     end
-    
-    return self.render_result
+    return true
   end
   
   def update(time_ms)
     self.update_called = true
     self.update_time = time_ms
-    return true
+    return super(self).update(time_ms)
   end
   
   def reset_test_state()
@@ -80,7 +76,8 @@ def test_on_tick_performance()
   var engine = animation.create_engine(strip)
   
   # Add a test animation
-  var anim = MockAnimation(1)
+  var anim = TestAnimation(engine)
+  anim.priority = 1
   engine.add_animation(anim)
   anim.start(tasmota.millis())
   
@@ -126,7 +123,8 @@ def test_animation_update_timing()
   var engine = animation.create_engine(strip)
   
   # Add a test animation
-  var anim = MockAnimation(1)
+  var anim = TestAnimation(engine)
+  anim.priority = 1
   engine.add_animation(anim)
   
   # Start the animation and engine

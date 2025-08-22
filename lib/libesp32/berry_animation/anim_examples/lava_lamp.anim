@@ -1,7 +1,7 @@
 # Lava Lamp - Slow flowing warm colors
 # Organic movement like a lava lamp
 
-strip length 60
+#strip length 60
 
 # Define lava colors (warm oranges and reds)
 palette lava_colors = [
@@ -13,45 +13,45 @@ palette lava_colors = [
 ]
 
 # Base lava animation - very slow color changes
-animation lava_base = rich_palette_animation(lava_colors, 15s, smooth, 180)
+animation lava_base = rich_palette_animation(palette=lava_colors, cycle_period=15s, transition_type=SINE, brightness=180)
 
 # Add slow-moving lava blobs
-pattern blob1_pattern = rich_palette_color_provider(lava_colors, 12s, smooth, 255)
-animation lava_blob1 = pulse_position_animation(
-  blob1_pattern, # color source
-  9,            # initial position
-  18,           # large blob
-  12            # very soft edges
+color blob1_pattern = rich_palette(palette=lava_colors, cycle_period=12s, transition_type=SINE, brightness=255)
+animation lava_blob1 = beacon_animation(
+  color=blob1_pattern, # color source
+  pos=9,               # initial position
+  beacon_size=18,       # large blob
+  slew_size=12         # very soft edges
 )
 lava_blob1.priority = 10
-lava_blob1.pos = smooth(9, 51, 20s)  # Very slow movement
+lava_blob1.pos = smooth(min_value=9, max_value=51, duration=20s)  # Very slow movement
 
-pattern blob2_pattern = rich_palette_color_provider(lava_colors, 10s, smooth, 220)
-animation lava_blob2 = pulse_position_animation(
-  blob2_pattern, # color source
-  46,           # initial position
-  14,           # medium blob
-  10            # soft edges
+color blob2_pattern = rich_palette(palette=lava_colors, cycle_period=10s, transition_type=SINE, brightness=220)
+animation lava_blob2 = beacon_animation(
+  color=blob2_pattern, # color source
+  pos=46,              # initial position
+  beacon_size=14,       # medium blob
+  slew_size=10         # soft edges
 )
 lava_blob2.priority = 8
-lava_blob2.pos = smooth(46, 14, 25s)  # Opposite direction, slower
+lava_blob2.pos = smooth(min_value=46, max_value=14, duration=25s)  # Opposite direction, slower
 
-pattern blob3_pattern = rich_palette_color_provider(lava_colors, 8s, smooth, 200)
-animation lava_blob3 = pulse_position_animation(
-  blob3_pattern, # color source
-  25,           # initial position
-  10,           # smaller blob
-  8             # soft edges
+color blob3_pattern = rich_palette(palette=lava_colors, cycle_period=8s, transition_type=SINE, brightness=200)
+animation lava_blob3 = beacon_animation(
+  color=blob3_pattern, # color source
+  pos=25,              # initial position
+  beacon_size=10,       # smaller blob
+  slew_size=8          # soft edges
 )
 lava_blob3.priority = 6
-lava_blob3.pos = smooth(25, 35, 18s)  # Small movement range
+lava_blob3.pos = smooth(min_value=25, max_value=35, duration=18s)  # Small movement range
 
 # Add subtle heat shimmer effect
-pattern shimmer_pattern = rich_palette_color_provider(lava_colors, 6s, smooth, 255)
+color shimmer_pattern = rich_palette(palette=lava_colors, cycle_period=6s, transition_type=SINE, brightness=255)
 animation heat_shimmer = twinkle_animation(
-  shimmer_pattern, # color source
-  6,              # density (shimmer points)
-  1.5s            # twinkle speed (slow shimmer)
+  color=shimmer_pattern, # color source
+  density=6,             # density (shimmer points)
+  twinkle_speed=1.5s     # twinkle speed (slow shimmer)
 )
 heat_shimmer.priority = 15
 

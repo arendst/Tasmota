@@ -44,6 +44,8 @@ def run_all_tests()
 
     # Core framework tests
     "lib/libesp32/berry_animation/tests/frame_buffer_test.be",
+    "lib/libesp32/berry_animation/tests/nillable_parameter_test.be",
+    "lib/libesp32/berry_animation/tests/parameterized_object_test.be",  # Tests parameter management base class
     "lib/libesp32/berry_animation/tests/animation_test.be",
     "lib/libesp32/berry_animation/tests/animation_engine_test.be",
     "lib/libesp32/berry_animation/tests/fast_loop_integration_test.be",
@@ -56,16 +58,18 @@ def run_all_tests()
     "lib/libesp32/berry_animation/tests/breathe_animation_test.be",
     "lib/libesp32/berry_animation/tests/color_cycle_animation_test.be",
     "lib/libesp32/berry_animation/tests/rich_palette_animation_test.be",
+    "lib/libesp32/berry_animation/tests/rich_palette_animation_class_test.be",
     "lib/libesp32/berry_animation/tests/comet_animation_test.be",
     "lib/libesp32/berry_animation/tests/fire_animation_test.be",
     "lib/libesp32/berry_animation/tests/twinkle_animation_test.be",
     "lib/libesp32/berry_animation/tests/crenel_position_animation_test.be",
-    "lib/libesp32/berry_animation/tests/pulse_position_animation_test.be",
+    "lib/libesp32/berry_animation/tests/beacon_animation_test.be",
     "lib/libesp32/berry_animation/tests/gradient_animation_test.be",
     "lib/libesp32/berry_animation/tests/noise_animation_test.be",
     "lib/libesp32/berry_animation/tests/plasma_animation_test.be",
     "lib/libesp32/berry_animation/tests/sparkle_animation_test.be",
     "lib/libesp32/berry_animation/tests/wave_animation_test.be",
+    "lib/libesp32/berry_animation/tests/palette_pattern_animation_test.be",
     
     # Motion effects tests
     "lib/libesp32/berry_animation/tests/shift_animation_test.be",
@@ -77,9 +81,7 @@ def run_all_tests()
     # Color and parameter tests
     "lib/libesp32/berry_animation/tests/crenel_position_color_test.be",
     "lib/libesp32/berry_animation/tests/get_param_value_test.be",
-    "lib/libesp32/berry_animation/tests/resolve_value_test.be",
     "lib/libesp32/berry_animation/tests/parameter_validation_test.be",
-    "lib/libesp32/berry_animation/tests/pattern_animation_distinction_test.be",
     
     # Sequence and timing tests
     "lib/libesp32/berry_animation/tests/sequence_manager_test.be",
@@ -92,6 +94,7 @@ def run_all_tests()
     "lib/libesp32/berry_animation/tests/oscillator_value_provider_test.be",
     "lib/libesp32/berry_animation/tests/oscillator_ease_test.be",
     "lib/libesp32/berry_animation/tests/oscillator_elastic_bounce_test.be",
+    "lib/libesp32/berry_animation/tests/breathe_color_provider_test.be",
     
     # DSL tests
     "lib/libesp32/berry_animation/tests/dsl_lexer_test.be",
@@ -105,6 +108,8 @@ def run_all_tests()
     "lib/libesp32/berry_animation/tests/nested_function_calls_test.be",
     "lib/libesp32/berry_animation/tests/user_functions_test.be",
     "lib/libesp32/berry_animation/tests/palette_dsl_test.be",
+    "lib/libesp32/berry_animation/tests/dsl_parameter_validation_test.be",
+    "lib/libesp32/berry_animation/tests/dsl_value_provider_validation_test.be",
     
     # Event system tests
     "lib/libesp32/berry_animation/tests/event_system_test.be"

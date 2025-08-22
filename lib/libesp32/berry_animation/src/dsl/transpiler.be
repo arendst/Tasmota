@@ -2,6 +2,19 @@
 # Single-pass transpiler with minimal complexity
 # Leverages Berry's runtime for symbol resolution
 
+# Mock engine class for parameter validation during transpilation
+class MockEngine
+  var time_ms
+  
+  def init()
+    self.time_ms = 0
+  end
+  
+  def get_strip_length()
+    return 30  # Default strip length for validation
+  end
+end
+
 #@ solidify:SimpleDSLTranspiler,weak
 class SimpleDSLTranspiler
   var tokens          # Token stream from lexer
@@ -63,31 +76,31 @@ class SimpleDSLTranspiler
   # Process statements - simplified approach
   def process_statement()
     var tok = self.current()
-    if tok == nil || tok.type == animation.Token.EOF
+    if tok == nil || tok.type == animation_dsl.Token.EOF
       return
     end
     
     # Handle comments - preserve them in generated code
-    if tok.type == animation.Token.COMMENT
+    if tok.type == animation_dsl.Token.COMMENT
       self.add(tok.value)  # Add comment as-is to output
       self.next()
       return
     end
     
     # Skip whitespace (newlines)
-    if tok.type == animation.Token.NEWLINE
+    if tok.type == animation_dsl.Token.NEWLINE
       self.next()
       return
     end
     
     # Check if this is the first non-comment, non-whitespace statement
     var is_first_real_statement = self.first_statement
-    if tok.type == animation.Token.KEYWORD || tok.type == animation.Token.IDENTIFIER
+    if tok.type == animation_dsl.Token.KEYWORD || tok.type == animation_dsl.Token.IDENTIFIER
       self.first_statement = false
     end
     
     # Handle keywords
-    if tok.type == animation.Token.KEYWORD
+    if tok.type == animation_dsl.Token.KEYWORD
       if tok.value == "strip"
         if !is_first_real_statement
           self.error("'strip' declaration must be the first statement")
@@ -105,8 +118,6 @@ class SimpleDSLTranspiler
           self.process_color()
         elif tok.value == "palette"
           self.process_palette()
-        elif tok.value == "pattern"  
-          self.process_pattern()
         elif tok.value == "animation"
           self.process_animation()
         elif tok.value == "set"
@@ -121,7 +132,7 @@ class SimpleDSLTranspiler
           self.skip_statement()
         end
       end
-    elif tok.type == animation.Token.IDENTIFIER
+    elif tok.type == animation_dsl.Token.IDENTIFIER
       # For property assignments, ensure strip is initialized
       if !self.strip_initialized
         self.generate_default_strip_initialization()
@@ -133,7 +144,7 @@ class SimpleDSLTranspiler
     end
   end
   
-  # Process color definition: color red = #FF0000
+  # Process color definition: color red = #FF0000 or color cycle_red = color_cycle(palette=[red, blue])
   def process_color()
     self.next()  # skip 'color'
     var name = self.expect_identifier()
@@ -145,9 +156,50 @@ class SimpleDSLTranspiler
     end
     
     self.expect_assign()
-    var value = self.process_value("color")
-    var inline_comment = self.collect_inline_comment()
-    self.add(f"var {name}_ = {value}{inline_comment}")
+    
+    # Check if this is a function call with named arguments (color provider)
+    var tok = self.current()
+    if (tok.type == animation_dsl.Token.KEYWORD || tok.type == animation_dsl.Token.IDENTIFIER) && 
+       self.peek() != nil && self.peek().type == animation_dsl.Token.LEFT_PAREN
+      
+      # This is a function call - check if it's a user function or built-in color provider
+      var func_name = tok.value
+      self.next()  # consume function name
+      
+      var inline_comment = ""
+      # Check for inline comment before opening paren
+      if self.current() != nil && self.current().type == animation_dsl.Token.COMMENT
+        inline_comment = "  " + self.current().value
+        self.next()
+      end
+      
+      # Check if this is a user-defined function
+      if animation.is_user_function(func_name)
+        # User functions use positional parameters with engine as first argument
+        var args = self.process_function_arguments()
+        var full_args = args != "" ? f"engine, {args}" : "engine"
+        self.add(f"var {name}_ = animation.get_user_function('{func_name}')({full_args}){inline_comment}")
+      else
+        # Built-in functions use the new engine-first + named parameters pattern
+        # Validate that the factory function exists at transpilation time
+        if !self._validate_color_provider_factory_exists(func_name)
+          self.error(f"Color provider factory function '{func_name}' does not exist. Check the function name and ensure it's available in the animation module.")
+          self.skip_statement()
+          return
+        end
+        
+        # Generate the base function call immediately
+        self.add(f"var {name}_ = animation.{func_name}(engine){inline_comment}")
+        
+        # Process named arguments with validation
+        self._process_named_arguments_for_color_provider(f"{name}_", func_name)
+      end
+    else
+      # Regular value assignment (simple color value)
+      var value = self.process_value("color")
+      var inline_comment = self.collect_inline_comment()
+      self.add(f"var {name}_ = {value}{inline_comment}")
+    end
   end
   
   # Process palette definition: palette aurora_colors = [(0, #000022), (64, #004400), ...]
@@ -187,7 +239,7 @@ class SimpleDSLTranspiler
       
       self.skip_whitespace()
       
-      if self.current() != nil && self.current().type == animation.Token.COMMA
+      if self.current() != nil && self.current().type == animation_dsl.Token.COMMA
         self.next()  # skip comma
         self.skip_whitespace()
       elif !self.check_right_bracket()
@@ -211,24 +263,7 @@ class SimpleDSLTranspiler
     self.add(f"var {name}_ = bytes({palette_data}){inline_comment}")
   end
   
-  # Process pattern definition: pattern solid_red = solid(red)
-  def process_pattern()
-    self.next()  # skip 'pattern'
-    var name = self.expect_identifier()
-    
-    # Validate that the pattern name is not reserved
-    if !self.validate_user_name(name, "pattern")
-      self.skip_statement()
-      return
-    end
-    
-    self.expect_assign()
-    var value = self.process_value("pattern")
-    var inline_comment = self.collect_inline_comment()
-    self.add(f"var {name}_ = {value}{inline_comment}")
-  end
-  
-  # Process animation definition: animation pulse_red = pulse(solid_red, 2s)
+  # Process animation definition: animation pulse_red = pulse(color=red, period=2s)
   def process_animation()
     self.next()  # skip 'animation'
     var name = self.expect_identifier()
@@ -240,9 +275,52 @@ class SimpleDSLTranspiler
     end
     
     self.expect_assign()
-    var value = self.process_value("animation")
-    var inline_comment = self.collect_inline_comment()
-    self.add(f"var {name}_ = {value}{inline_comment}")
+    
+    # Check if this is a function call with named arguments
+    var tok = self.current()
+    if (tok.type == animation_dsl.Token.KEYWORD || tok.type == animation_dsl.Token.IDENTIFIER) && 
+       self.peek() != nil && self.peek().type == animation_dsl.Token.LEFT_PAREN
+      
+      # This is a function call - check if it's a user function or built-in
+      var func_name = tok.value
+      self.next()  # consume function name
+      
+      var inline_comment = ""
+      # Check for inline comment before opening paren
+      if self.current() != nil && self.current().type == animation_dsl.Token.COMMENT
+        inline_comment = "  " + self.current().value
+        self.next()
+      end
+      
+      # Check if this is a user-defined function
+      if animation.is_user_function(func_name)
+        # User functions use positional parameters with engine as first argument
+        var args = self.process_function_arguments()
+        var full_args = args != "" ? f"engine, {args}" : "engine"
+        self.add(f"var {name}_ = animation.get_user_function('{func_name}')({full_args}){inline_comment}")
+      else
+        # Built-in functions use the new engine-first + named parameters pattern
+        # Validate that the factory function creates an animation instance at transpile time
+        if !self._validate_animation_factory_creates_animation(func_name)
+          self.error(f"Animation factory function '{func_name}' does not exist or does not create an instance of animation.animation class. Check the function name and ensure it returns an animation object.")
+          self.skip_statement()
+          return
+        end
+        
+        # Generate the base function call immediately
+        self.add(f"var {name}_ = animation.{func_name}(engine){inline_comment}")
+        
+        # Process named arguments with validation
+        self._process_named_arguments_for_animation(f"{name}_", func_name)
+      end
+    else
+      # Regular value assignment (identifier, color, etc.)
+      var value = self.process_value("animation")
+      var inline_comment = self.collect_inline_comment()
+      self.add(f"var {name}_ = {value}{inline_comment}")
+      
+      # Note: For identifier references, type checking happens at runtime via animation.global()
+    end
   end
   
   # Process strip configuration: strip length 60
@@ -305,44 +383,56 @@ class SimpleDSLTranspiler
   # Process statements inside sequences
   def process_sequence_statement()
     var tok = self.current()
-    if tok == nil || tok.type == animation.Token.EOF
+    if tok == nil || tok.type == animation_dsl.Token.EOF
       return
     end
     
     # Handle comments - preserve them in generated code with proper indentation
-    if tok.type == animation.Token.COMMENT
+    if tok.type == animation_dsl.Token.COMMENT
       self.add("  " + tok.value)  # Add comment with sequence indentation
       self.next()
       return
     end
     
     # Skip whitespace (newlines)
-    if tok.type == animation.Token.NEWLINE
+    if tok.type == animation_dsl.Token.NEWLINE
       self.next()
       return
     end
     
-    if tok.type == animation.Token.KEYWORD && tok.value == "play"
+    if tok.type == animation_dsl.Token.KEYWORD && tok.value == "play"
       self.next()  # skip 'play'
-      var anim_name = self.expect_identifier()
+      
+      # Check if this is a function call or an identifier
+      var anim_ref = ""
+      var current_tok = self.current()
+      if current_tok != nil && (current_tok.type == animation_dsl.Token.IDENTIFIER || current_tok.type == animation_dsl.Token.KEYWORD) &&
+         self.peek() != nil && self.peek().type == animation_dsl.Token.LEFT_PAREN
+        # This is a function call - process it as a nested function call
+        anim_ref = self.process_nested_function_call()
+      else
+        # This is an identifier reference
+        var anim_name = self.expect_identifier()
+        anim_ref = f"animation.global('{anim_name}_')"
+      end
       
       # Handle optional 'for duration'
       var duration = "0"
-      if self.current() != nil && self.current().type == animation.Token.KEYWORD && self.current().value == "for"
+      if self.current() != nil && self.current().type == animation_dsl.Token.KEYWORD && self.current().value == "for"
         self.next()  # skip 'for'
         duration = str(self.process_time_value())
       end
       
       var inline_comment = self.collect_inline_comment()
-      self.add(f"  steps.push(animation.create_play_step(animation.global('{anim_name}_'), {duration})){inline_comment}")
+      self.add(f"  steps.push(animation.create_play_step({anim_ref}, {duration})){inline_comment}")
       
-    elif tok.type == animation.Token.KEYWORD && tok.value == "wait"
+    elif tok.type == animation_dsl.Token.KEYWORD && tok.value == "wait"
       self.next()  # skip 'wait'
       var duration = self.process_time_value()
       var inline_comment = self.collect_inline_comment()
       self.add(f"  steps.push(animation.create_wait_step({duration})){inline_comment}")
       
-    elif tok.type == animation.Token.KEYWORD && tok.value == "repeat"
+    elif tok.type == animation_dsl.Token.KEYWORD && tok.value == "repeat"
       self.next()  # skip 'repeat'
       var count = self.expect_number()
       self.expect_keyword("times")
@@ -353,32 +443,44 @@ class SimpleDSLTranspiler
       # Process repeat body
       while !self.at_end() && !self.check_right_brace()
         var inner_tok = self.current()
-        if inner_tok == nil || inner_tok.type == animation.Token.EOF
+        if inner_tok == nil || inner_tok.type == animation_dsl.Token.EOF
           break
         end
-        if inner_tok.type == animation.Token.COMMENT
+        if inner_tok.type == animation_dsl.Token.COMMENT
           self.add("    " + inner_tok.value)  # Add comment with repeat body indentation
           self.next()
           continue
         end
-        if inner_tok.type == animation.Token.NEWLINE
+        if inner_tok.type == animation_dsl.Token.NEWLINE
           self.next()
           continue
         end
-        if inner_tok.type == animation.Token.KEYWORD && inner_tok.value == "play"
+        if inner_tok.type == animation_dsl.Token.KEYWORD && inner_tok.value == "play"
           self.next()  # skip 'play'
-          var anim_name = self.expect_identifier()
+          
+          # Check if this is a function call or an identifier
+          var anim_ref = ""
+          var current_tok = self.current()
+          if current_tok != nil && (current_tok.type == animation_dsl.Token.IDENTIFIER || current_tok.type == animation_dsl.Token.KEYWORD) &&
+             self.peek() != nil && self.peek().type == animation_dsl.Token.LEFT_PAREN
+            # This is a function call - process it as a nested function call
+            anim_ref = self.process_nested_function_call()
+          else
+            # This is an identifier reference
+            var anim_name = self.expect_identifier()
+            anim_ref = f"animation.global('{anim_name}_')"
+          end
           
           var duration = "0"
-          if self.current() != nil && self.current().type == animation.Token.KEYWORD && self.current().value == "for"
+          if self.current() != nil && self.current().type == animation_dsl.Token.KEYWORD && self.current().value == "for"
             self.next()  # skip 'for'
             duration = str(self.process_time_value())
           end
           
           var inline_comment = self.collect_inline_comment()
-          self.add(f"    steps.push(animation.create_play_step(animation.global('{anim_name}_'), {duration})){inline_comment}")
+          self.add(f"    steps.push(animation.create_play_step({anim_ref}, {duration})){inline_comment}")
           
-        elif inner_tok.type == animation.Token.KEYWORD && inner_tok.value == "wait"
+        elif inner_tok.type == animation_dsl.Token.KEYWORD && inner_tok.value == "wait"
           self.next()  # skip 'wait'
           var duration = self.process_time_value()
           var inline_comment = self.collect_inline_comment()
@@ -412,7 +514,7 @@ class SimpleDSLTranspiler
     var object_name = self.expect_identifier()
     
     # Check if next token is a dot
-    if self.current() != nil && self.current().type == animation.Token.DOT
+    if self.current() != nil && self.current().type == animation_dsl.Token.DOT
       self.next()  # skip '.'
       var property_name = self.expect_identifier()
       self.expect_assign()
@@ -437,10 +539,10 @@ class SimpleDSLTranspiler
     end
     
     # Handle unary minus for negative numbers
-    if tok.type == animation.Token.MINUS
+    if tok.type == animation_dsl.Token.MINUS
       self.next()  # consume the minus
       var next_tok = self.current()
-      if next_tok != nil && next_tok.type == animation.Token.NUMBER
+      if next_tok != nil && next_tok.type == animation_dsl.Token.NUMBER
         var value = "-" + next_tok.value
         self.next()  # consume the number
         return value
@@ -451,48 +553,54 @@ class SimpleDSLTranspiler
     end
     
     # Function call: identifier or easing keyword followed by '('
-    if (tok.type == animation.Token.KEYWORD || tok.type == animation.Token.IDENTIFIER) && 
-       self.peek() != nil && self.peek().type == animation.Token.LEFT_PAREN
-      return self.process_function_call(context)
+    if (tok.type == animation_dsl.Token.KEYWORD || tok.type == animation_dsl.Token.IDENTIFIER) && 
+       self.peek() != nil && self.peek().type == animation_dsl.Token.LEFT_PAREN
+      
+      # Check if this is a nested function call or a variable assignment with named parameters
+      if context == "argument" || context == "property" || context == "variable"
+        return self.process_nested_function_call()
+      else
+        return self.process_function_call(context)
+      end
     end
     
     # Color value
-    if tok.type == animation.Token.COLOR
+    if tok.type == animation_dsl.Token.COLOR
       self.next()
       return self.convert_color(tok.value)
     end
     
     # Time value
-    if tok.type == animation.Token.TIME
+    if tok.type == animation_dsl.Token.TIME
       return str(self.process_time_value())
     end
     
     # Percentage value
-    if tok.type == animation.Token.PERCENTAGE
+    if tok.type == animation_dsl.Token.PERCENTAGE
       return str(self.process_percentage_value())
     end
     
     # Number value
-    if tok.type == animation.Token.NUMBER
+    if tok.type == animation_dsl.Token.NUMBER
       var value = tok.value
       self.next()
       return value
     end
     
     # String value
-    if tok.type == animation.Token.STRING
+    if tok.type == animation_dsl.Token.STRING
       var value = tok.value
       self.next()
       return f'"{value}"'
     end
     
     # Array literal
-    if tok.type == animation.Token.LEFT_BRACKET
+    if tok.type == animation_dsl.Token.LEFT_BRACKET
       return self.process_array_literal()
     end
     
-    # Identifier - could be color, pattern, animation, or variable
-    if tok.type == animation.Token.IDENTIFIER
+    # Identifier - could be color, animation, or variable
+    if tok.type == animation_dsl.Token.IDENTIFIER
       var name = tok.value
       self.next()
       
@@ -503,7 +611,7 @@ class SimpleDSLTranspiler
       end
       
       # Check if it's a named color
-      if animation.is_color_name(name)
+      if animation_dsl.is_color_name(name)
         return self.get_named_color_value(name)
       end
       
@@ -512,14 +620,14 @@ class SimpleDSLTranspiler
     end
     
     # Boolean keywords
-    if tok.type == animation.Token.KEYWORD && (tok.value == "true" || tok.value == "false")
+    if tok.type == animation_dsl.Token.KEYWORD && (tok.value == "true" || tok.value == "false")
       var value = tok.value
       self.next()
       return value
     end
     
     # Handle keywords that should be treated as identifiers (not sure this actually happens)
-    if tok.type == animation.Token.KEYWORD
+    if tok.type == animation_dsl.Token.KEYWORD
       var name = tok.value
       self.next()
       return f"animation.{name}"
@@ -530,13 +638,13 @@ class SimpleDSLTranspiler
     return "nil"
   end
   
-  # Process function call
+  # Process function call (legacy - for non-animation contexts)
   def process_function_call(context)
     var tok = self.current()
     var func_name = ""
     
     # Handle both identifiers and keywords as function names
-    if tok != nil && (tok.type == animation.Token.IDENTIFIER || tok.type == animation.Token.KEYWORD)
+    if tok != nil && (tok.type == animation_dsl.Token.IDENTIFIER || tok.type == animation_dsl.Token.KEYWORD)
       func_name = tok.value
       self.next()
     else
@@ -548,7 +656,8 @@ class SimpleDSLTranspiler
     
     # Check if it's a user-defined function first
     if animation.is_user_function(func_name)
-      return f"animation.get_user_function('{func_name}')({args})"
+      var full_args = args != "" ? f"engine, {args}" : "engine"
+      return f"animation.get_user_function('{func_name}')({full_args})"
     else
       # All functions are resolved from the animation module
       # No context-specific mapping needed with unified architecture
@@ -559,11 +668,11 @@ class SimpleDSLTranspiler
   # Process time value - simplified
   def process_time_value()
     var tok = self.current()
-    if tok != nil && tok.type == animation.Token.TIME
+    if tok != nil && tok.type == animation_dsl.Token.TIME
       var time_str = tok.value
       self.next()
       return self.convert_time_to_ms(time_str)
-    elif tok != nil && tok.type == animation.Token.NUMBER
+    elif tok != nil && tok.type == animation_dsl.Token.NUMBER
       var num = tok.value
       self.next()
       return int(real(num)) * 1000  # assume seconds
@@ -576,12 +685,12 @@ class SimpleDSLTranspiler
   # Process percentage value - simplified
   def process_percentage_value()
     var tok = self.current()
-    if tok != nil && tok.type == animation.Token.PERCENTAGE
+    if tok != nil && tok.type == animation_dsl.Token.PERCENTAGE
       var percent_str = tok.value
       self.next()
       var percent = real(percent_str[0..-2])
       return int(percent * 255 / 100)
-    elif tok != nil && tok.type == animation.Token.NUMBER
+    elif tok != nil && tok.type == animation_dsl.Token.NUMBER
       var num = tok.value
       self.next()
       return int(real(num))
@@ -608,13 +717,13 @@ class SimpleDSLTranspiler
   
   def at_end()
     return self.pos >= size(self.tokens) || 
-           (self.current() != nil && self.current().type == animation.Token.EOF)
+           (self.current() != nil && self.current().type == animation_dsl.Token.EOF)
   end
   
   def skip_whitespace()
     while !self.at_end()
       var tok = self.current()
-      if tok != nil && (tok.type == animation.Token.NEWLINE || tok.type == animation.Token.COMMENT)
+      if tok != nil && (tok.type == animation_dsl.Token.NEWLINE || tok.type == animation_dsl.Token.COMMENT)
         self.next()
       else
         break
@@ -625,7 +734,7 @@ class SimpleDSLTranspiler
   # Collect inline comment if present and return it formatted for Berry code
   def collect_inline_comment()
     var tok = self.current()
-    if tok != nil && tok.type == animation.Token.COMMENT
+    if tok != nil && tok.type == animation_dsl.Token.COMMENT
       var comment = "  " + tok.value  # Add spacing before comment
       self.next()
       return comment
@@ -635,9 +744,9 @@ class SimpleDSLTranspiler
   
   def expect_identifier()
     var tok = self.current()
-    if tok != nil && (tok.type == animation.Token.IDENTIFIER || 
-                      tok.type == animation.Token.COLOR ||
-                      (tok.type == animation.Token.KEYWORD && self.can_use_as_identifier(tok.value)))
+    if tok != nil && (tok.type == animation_dsl.Token.IDENTIFIER || 
+                      tok.type == animation_dsl.Token.COLOR ||
+                      (tok.type == animation_dsl.Token.KEYWORD && self.can_use_as_identifier(tok.value)))
       var name = tok.value
       self.next()
       return name
@@ -650,8 +759,8 @@ class SimpleDSLTranspiler
   def can_use_as_identifier(keyword)
     # Keywords that can be used as identifiers in variable contexts
     var identifier_keywords = [
-      "opacity", "offset", "speed", "weight", "brightness", "duration", 
-      "count", "length", "width", "height", "size", "scale",
+      # DSL keywords that might be used as parameter names or variable names
+      "color", "animation", "palette",
       # Event names that can be used as identifiers
       "startup", "shutdown", "button_press", "button_hold", "motion_detected",
       "brightness_change", "timer", "time", "sound_peak", "network_message"
@@ -665,7 +774,7 @@ class SimpleDSLTranspiler
     return false
   end
   
-  # Process function arguments
+  # Process function arguments (legacy - kept for compatibility)
   def process_function_arguments()
     self.expect_left_paren()
     var args = []
@@ -682,7 +791,7 @@ class SimpleDSLTranspiler
       
       self.skip_whitespace()
       
-      if self.current() != nil && self.current().type == animation.Token.COMMA
+      if self.current() != nil && self.current().type == animation_dsl.Token.COMMA
         self.next()  # skip comma
         self.skip_whitespace()
       elif !self.check_right_paren()
@@ -704,9 +813,109 @@ class SimpleDSLTranspiler
     return result
   end
   
+  # Process nested function call (generates temporary variable)
+  def process_nested_function_call()
+    var tok = self.current()
+    var func_name = ""
+    
+    # Handle both identifiers and keywords as function names
+    if tok != nil && (tok.type == animation_dsl.Token.IDENTIFIER || tok.type == animation_dsl.Token.KEYWORD)
+      func_name = tok.value
+      self.next()
+    else
+      self.error("Expected function name")
+      return "nil"
+    end
+    
+    # Check if this is a user-defined function
+    if animation.is_user_function(func_name)
+      # User functions use positional parameters with engine as first argument
+      var args = self.process_function_arguments()
+      var full_args = args != "" ? f"engine, {args}" : "engine"
+      return f"animation.get_user_function('{func_name}')({full_args})"
+    else
+      # Built-in functions use the new engine-first + named parameters pattern
+      # Validate that the factory function exists at transpilation time
+      if !self._validate_animation_factory_exists(func_name)
+        self.error(f"Animation factory function '{func_name}' does not exist. Check the function name and ensure it's available in the animation module.")
+        self.skip_function_arguments()  # Skip the arguments to avoid parsing errors
+        return "nil"
+      end
+      
+      # Generate unique temporary variable name using position
+      var temp_var = f"temp_{func_name}_{self.pos}"
+      
+      # Generate the base function call
+      self.add(f"var {temp_var} = animation.{func_name}(engine)")
+      
+      # Process named arguments for the temporary variable with validation
+      self._process_named_arguments_for_animation(temp_var, func_name)
+      
+      # Return the temporary variable name
+      return temp_var
+    end
+  end
+  
+  # Process named arguments for a variable (new simpler pattern with parameter validation)
+  def process_named_arguments_for_variable(var_name)
+    self.expect_left_paren()
+    
+    # Extract function name from variable name for validation
+    var func_name = ""
+    import string
+    if string.find(var_name, "temp_") == 0
+      # Extract function name from temp variable: temp_breathe_123 -> breathe
+      var parts = string.split(var_name, "_")
+      if size(parts) >= 2
+        func_name = parts[1]
+      end
+    end
+    
+    # Create animation instance once for parameter validation
+    var animation_instance = nil
+    if func_name != ""
+      animation_instance = self._create_animation_instance_for_validation(func_name)
+    end
+    
+    while !self.at_end() && !self.check_right_paren()
+      self.skip_whitespace()
+      
+      if self.check_right_paren()
+        break
+      end
+      
+      # Parse named argument: param_name=value
+      var param_name = self.expect_identifier()
+      
+      # Validate parameter immediately as it's parsed
+      if animation_instance != nil && func_name != ""
+        self._validate_single_parameter(func_name, param_name, animation_instance)
+      end
+      
+      self.expect_assign()
+      var param_value = self.process_value("argument")
+      var inline_comment = self.collect_inline_comment()
+      
+      # Generate parameter assignment immediately
+      self.add(f"{var_name}.{param_name} = {param_value}{inline_comment}")
+      
+      self.skip_whitespace()
+      
+      if self.current() != nil && self.current().type == animation_dsl.Token.COMMA
+        self.next()  # skip comma
+        self.skip_whitespace()
+      elif !self.check_right_paren()
+        self.error("Expected ',' or ')' in function arguments")
+        break
+      end
+    end
+    
+    self.expect_right_paren()
+  end
+  
   def expect_assign()
     var tok = self.current()
-    if tok != nil && tok.type == animation.Token.ASSIGN
+    if tok != nil && tok.type == animation_dsl.Token.ASSIGN
       self.next()
     else
       self.error("Expected '='")
@@ -715,7 +924,7 @@ class SimpleDSLTranspiler
   
   def expect_left_paren()
     var tok = self.current()
-    if tok != nil && tok.type == animation.Token.LEFT_PAREN
+    if tok != nil && tok.type == animation_dsl.Token.LEFT_PAREN
       self.next()
     else
       self.error("Expected '('")
@@ -724,7 +933,7 @@ class SimpleDSLTranspiler
   
   def expect_right_paren()
     var tok = self.current()
-    if tok != nil && tok.type == animation.Token.RIGHT_PAREN
+    if tok != nil && tok.type == animation_dsl.Token.RIGHT_PAREN
       self.next()
     else
       self.error("Expected ')'")
@@ -733,12 +942,12 @@ class SimpleDSLTranspiler
   
   def check_right_paren()
     var tok = self.current()
-    return tok != nil && tok.type == animation.Token.RIGHT_PAREN
+    return tok != nil && tok.type == animation_dsl.Token.RIGHT_PAREN
   end
   
   def expect_comma()
     var tok = self.current()
-    if tok != nil && tok.type == animation.Token.COMMA
+    if tok != nil && tok.type == animation_dsl.Token.COMMA
       self.next()
     else
       self.error("Expected ','")
@@ -747,7 +956,7 @@ class SimpleDSLTranspiler
   
   def expect_left_brace()
     var tok = self.current()
-    if tok != nil && tok.type == animation.Token.LEFT_BRACE
+    if tok != nil && tok.type == animation_dsl.Token.LEFT_BRACE
       self.next()
     else
       self.error("Expected '{'")
@@ -756,7 +965,7 @@ class SimpleDSLTranspiler
   
   def expect_right_brace()
     var tok = self.current()
-    if tok != nil && tok.type == animation.Token.RIGHT_BRACE
+    if tok != nil && tok.type == animation_dsl.Token.RIGHT_BRACE
       self.next()
     else
       self.error("Expected '}'")
@@ -765,12 +974,12 @@ class SimpleDSLTranspiler
   
   def check_right_brace()
     var tok = self.current()
-    return tok != nil && tok.type == animation.Token.RIGHT_BRACE
+    return tok != nil && tok.type == animation_dsl.Token.RIGHT_BRACE
   end
   
   def expect_number()
     var tok = self.current()
-    if tok != nil && tok.type == animation.Token.NUMBER
+    if tok != nil && tok.type == animation_dsl.Token.NUMBER
       var value = tok.value
       self.next()
       return value
@@ -782,7 +991,7 @@ class SimpleDSLTranspiler
   
   def expect_keyword(keyword)
     var tok = self.current()
-    if tok != nil && tok.type == animation.Token.KEYWORD && tok.value == keyword
+    if tok != nil && tok.type == animation_dsl.Token.KEYWORD && tok.value == keyword
       self.next()
     else
       self.error(f"Expected '{keyword}'")
@@ -791,7 +1000,7 @@ class SimpleDSLTranspiler
   
   def expect_colon()
     var tok = self.current()
-    if tok != nil && tok.type == animation.Token.COLON
+    if tok != nil && tok.type == animation_dsl.Token.COLON
       self.next()
     else
       self.error("Expected ':'")
@@ -800,7 +1009,7 @@ class SimpleDSLTranspiler
   
   def expect_left_bracket()
     var tok = self.current()
-    if tok != nil && tok.type == animation.Token.LEFT_BRACKET
+    if tok != nil && tok.type == animation_dsl.Token.LEFT_BRACKET
       self.next()
     else
       self.error("Expected '['")
@@ -809,7 +1018,7 @@ class SimpleDSLTranspiler
   
   def expect_right_bracket()
     var tok = self.current()
-    if tok != nil && tok.type == animation.Token.RIGHT_BRACKET
+    if tok != nil && tok.type == animation_dsl.Token.RIGHT_BRACKET
       self.next()
     else
       self.error("Expected ']'")
@@ -818,7 +1027,7 @@ class SimpleDSLTranspiler
   
   def check_right_bracket()
     var tok = self.current()
-    return tok != nil && tok.type == animation.Token.RIGHT_BRACKET
+    return tok != nil && tok.type == animation_dsl.Token.RIGHT_BRACKET
   end
   
 
@@ -833,7 +1042,7 @@ class SimpleDSLTranspiler
       var item = self.process_value("array_element")
       items.push(item)
       
-      if self.current() != nil && self.current().type == animation.Token.COMMA
+      if self.current() != nil && self.current().type == animation_dsl.Token.COMMA
         self.next()  # skip comma
       elif !self.check_right_bracket()
         self.error("Expected ',' or ']' in array literal")
@@ -859,10 +1068,28 @@ class SimpleDSLTranspiler
     # Skip to next statement (newline or EOF)
     while !self.at_end()
       var tok = self.current()
-      if tok.type == animation.Token.NEWLINE || tok.type == animation.Token.EOF
+      if tok.type == animation_dsl.Token.NEWLINE || tok.type == animation_dsl.Token.EOF
         break
       end
       self.next()
+    end
+  end
+  
+  # Skip function arguments when validation fails
+  def skip_function_arguments()
+    if self.current() != nil && self.current().type == animation_dsl.Token.LEFT_PAREN
+      self.next()  # consume '('
+      var paren_count = 1
+      
+      while !self.at_end() && paren_count > 0
+        var tok = self.current()
+        if tok.type == animation_dsl.Token.LEFT_PAREN
+          paren_count += 1
+        elif tok.type == animation_dsl.Token.RIGHT_PAREN
+          paren_count -= 1
+        end
+        self.next()
+      end
     end
   end
   
@@ -899,7 +1126,7 @@ class SimpleDSLTranspiler
     end
     
     # Handle named colors - use framework's color name system
-    if animation.is_color_name(color_str)
+    if animation_dsl.is_color_name(color_str)
       return self.get_named_color_value(color_str)
     end
     
@@ -910,15 +1137,23 @@ class SimpleDSLTranspiler
   # Get the ARGB value for a named color
   # This should match the colors supported by is_color_name()
   def get_named_color_value(color_name)
-    return animation.SimpleDSLTranspiler.named_colors.find(color_name, "0xFFFFFFFF")
+    return animation_dsl.SimpleDSLTranspiler.named_colors.find(color_name, "0xFFFFFFFF")
   end
   
-  # Validate that a user-defined name is not a predefined color
+  # Validate that a user-defined name is not a predefined color or DSL keyword
   def validate_user_name(name, definition_type)
     # Check if it's a predefined color name
-    for color : animation.Token.color_names
+    for color : animation_dsl.Token.color_names
       if name == color
         self.error(f"Cannot redefine predefined color '{name}'. Use a different name like '{name}_custom' or 'my_{name}'")
+        return false
+      end
+    end
+    
+    # Check if it's a DSL statement keyword
+    for keyword : animation_dsl.Token.statement_keywords
+      if name == keyword
+        self.error(f"Cannot use DSL keyword '{name}' as {definition_type} name. Use a different name like '{name}_custom' or 'my_{name}'")
         return false
       end
     end
@@ -1045,7 +1280,7 @@ class SimpleDSLTranspiler
     
     # Check for event parameters (e.g., timer(5s))
     var event_params = "{}"
-    if self.current() != nil && self.current().type == animation.Token.LEFT_PAREN
+    if self.current() != nil && self.current().type == animation_dsl.Token.LEFT_PAREN
       event_params = self.process_event_parameters()
     end
     
@@ -1060,7 +1295,7 @@ class SimpleDSLTranspiler
     # Process the event action - simple function call or identifier
     var tok = self.current()
     if tok != nil
-      if tok.type == animation.Token.KEYWORD && tok.value == "interrupt"
+      if tok.type == animation_dsl.Token.KEYWORD && tok.value == "interrupt"
         self.next()  # skip 'interrupt'
         var target = self.expect_identifier()
         if target == "current"
@@ -1090,7 +1325,7 @@ class SimpleDSLTranspiler
     # For timer events, convert time to milliseconds
     if !self.at_end() && !self.check_right_paren()
       var tok = self.current()
-      if tok != nil && tok.type == animation.Token.TIME
+      if tok != nil && tok.type == animation_dsl.Token.TIME
         var time_ms = self.process_time_value()
         params += f"\"interval\": {time_ms}"
       else
@@ -1115,12 +1350,203 @@ class SimpleDSLTranspiler
     self.add("")
     self.strip_initialized = true
   end
+  
+  # Process named arguments for animation declarations with parameter validation
+  #
+  # @param var_name: string - Variable name to assign parameters to
+  # @param func_name: string - Animation function name for validation
+  def _process_named_arguments_for_animation(var_name, func_name)
+    self.expect_left_paren()
+    
+    # Create animation instance once for parameter validation
+    var animation_instance = self._create_animation_instance_for_validation(func_name)
+    
+    while !self.at_end() && !self.check_right_paren()
+      self.skip_whitespace()
+      
+      if self.check_right_paren()
+        break
+      end
+      
+      # Parse named argument: param_name=value
+      var param_name = self.expect_identifier()
+      
+      # Validate parameter immediately as it's parsed
+      if animation_instance != nil
+        self._validate_single_parameter(func_name, param_name, animation_instance)
+      end
+      
+      self.expect_assign()
+      var param_value = self.process_value("argument")
+      var inline_comment = self.collect_inline_comment()
+      
+      # Generate parameter assignment immediately
+      self.add(f"{var_name}.{param_name} = {param_value}{inline_comment}")
+      
+      self.skip_whitespace()
+      
+      if self.current() != nil && self.current().type == animation_dsl.Token.COMMA
+        self.next()  # skip comma
+        self.skip_whitespace()
+      elif !self.check_right_paren()
+        self.error("Expected ',' or ')' in function arguments")
+        break
+      end
+    end
+    
+    self.expect_right_paren()
+  end
+  
+  # Create instance for parameter validation at transpile time
+  def _create_instance_for_validation(func_name)
+    try
+      var mock_engine = animation_dsl.MockEngine()
+      import introspect
+      
+      if introspect.contains(animation, func_name)
+        var factory_func = animation.(func_name)
+        if type(factory_func) == "class" || type(factory_func) == "function"
+          return factory_func(mock_engine)
+        end
+      end
+      return nil
+    except .. as e, msg
+      return nil
+    end
+  end
+  
+  # Create animation instance for parameter validation
+  def _create_animation_instance_for_validation(func_name)
+    return self._create_instance_for_validation(func_name)
+  end
+  
+  # Validate a single parameter immediately as it's parsed
+  #
+  # @param func_name: string - Name of the animation function
+  # @param param_name: string - Name of the parameter being validated
+  # @param animation_instance: instance - Pre-created animation instance for validation
+  def _validate_single_parameter(func_name, param_name, animation_instance)
+    try
+      import introspect
+      
+      # Validate parameter using the _has_param method
+      if animation_instance != nil && introspect.contains(animation_instance, "_has_param")
+        if !animation_instance._has_param(param_name)
+          var line = self.current() != nil ? self.current().line : 0
+          self.error(f"Animation '{func_name}' does not have parameter '{param_name}'. Check the animation documentation for valid parameters.")
+        end
+      end
+      
+    except .. as e, msg
+      # If validation fails for any reason, just continue
+      # This ensures the transpiler is robust even if validation has issues
+    end
+  end
+  
+  # Validate factory function at transpile time by creating instance and checking type
+  def _validate_factory_function(func_name, expected_base_class)
+    try
+      import introspect
+      
+      # Check if the animation module has the function
+      if !introspect.contains(animation, func_name)
+        return false
+      end
+      
+      var factory_func = animation.(func_name)
+      
+      # Check if it's callable (function or class)
+      var func_type = type(factory_func)
+      if func_type != "function" && func_type != "class"
+        return false
+      end
+      
+      # If no type checking needed, just return true
+      if expected_base_class == nil
+        return true
+      end
+      
+      # Create instance at transpile time to validate type
+      var mock_engine = animation_dsl.MockEngine()
+      try
+        var instance = factory_func(mock_engine)
+        return isinstance(instance, expected_base_class)
+      except .. as e, msg
+        return false
+      end
+      
+    except .. as e, msg
+      return false
+    end
+  end
+  
+  # Validate animation factory exists and creates animation.animation instance
+  def _validate_animation_factory_exists(func_name)
+    return self._validate_factory_function(func_name, nil)
+  end
+  
+  def _validate_animation_factory_creates_animation(func_name)
+    return self._validate_factory_function(func_name, animation.animation)
+  end
+  
+  # Validate color provider factory exists and creates animation.color_provider instance  
+  def _validate_color_provider_factory_exists(func_name)
+    return self._validate_factory_function(func_name, animation.color_provider)
+  end
+  
+  # Process named arguments with parameter validation at transpile time
+  def _process_named_arguments_generic(var_name, func_name)
+    self.expect_left_paren()
+    
+    # Create instance once for parameter validation
+    var instance = self._create_instance_for_validation(func_name)
+    
+    while !self.at_end() && !self.check_right_paren()
+      self.skip_whitespace()
+      
+      if self.check_right_paren()
+        break
+      end
+      
+      # Parse named argument: param_name=value
+      var param_name = self.expect_identifier()
+      
+      # Validate parameter immediately as it's parsed
+      if instance != nil
+        self._validate_single_parameter(func_name, param_name, instance)
+      end
+      
+      self.expect_assign()
+      var param_value = self.process_value("argument")
+      var inline_comment = self.collect_inline_comment()
+      
+      # Generate parameter assignment immediately
+      self.add(f"{var_name}.{param_name} = {param_value}{inline_comment}")
+      
+      self.skip_whitespace()
+      
+      if self.current() != nil && self.current().type == animation_dsl.Token.COMMA
+        self.next()  # skip comma
+        self.skip_whitespace()
+      elif !self.check_right_paren()
+        self.error("Expected ',' or ')' in function arguments")
+        break
+      end
+    end
+    
+    self.expect_right_paren()
+  end
+  
+  # Process named arguments for color provider declarations with parameter validation
+  def _process_named_arguments_for_color_provider(var_name, func_name)
+    self._process_named_arguments_generic(var_name, func_name)
+  end
 
 end
 
 # DSL compilation function
 def compile_dsl(source)
-  var lexer = animation.DSLLexer(source)
+  var lexer = animation_dsl.DSLLexer(source)
   var tokens = lexer.tokenize()
   
   if lexer.has_errors()
@@ -1131,7 +1557,7 @@ def compile_dsl(source)
     raise "dsl_compilation_error", error_msg
   end
   
-  var transpiler = animation.SimpleDSLTranspiler(tokens)
+  var transpiler = animation_dsl.SimpleDSLTranspiler(tokens)
   var berry_code = transpiler.transpile()
   
   if transpiler.has_errors()
@@ -1149,4 +1575,5 @@ end
 return {
   "SimpleDSLTranspiler": SimpleDSLTranspiler,
   "compile_dsl": compile_dsl,
+  "MockEngine": MockEngine
 }

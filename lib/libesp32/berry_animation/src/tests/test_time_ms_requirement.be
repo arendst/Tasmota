@@ -107,7 +107,7 @@ def test_time_ms_requirement()
   print("3. Testing parameter resolution with time_ms...")
   
   def resolve_parameter(param_value, param_name, time_ms)
-    if param_value != nil && type(param_value) == "instance" && isinstance(param_value, ValueProvider)
+    if isinstance(param_value, ValueProvider)
       # Try specific method first using introspection
       import introspect
       var method_name = "get_" + param_name
@@ -123,7 +123,7 @@ def test_time_ms_requirement()
   end
   
   # Test with static value
-  result = resolve_parameter(123, "pulse_size", 1000)
+  result = resolve_parameter(123, "beacon_size", 1000)
   assert(result == 123, "Should return static value")
   
   # Test with provider using specific method directly

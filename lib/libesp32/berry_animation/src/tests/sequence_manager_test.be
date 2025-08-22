@@ -35,8 +35,17 @@ def test_sequence_manager_step_creation()
   assert(animation.create_wait_step != nil, "create_wait_step function should be defined")
   assert(animation.create_stop_step != nil, "create_stop_step function should be defined")
   
-  # Create test animation
-  var test_anim = animation.filled_animation(animation.solid_color_provider(0xFFFF0000), 0, 0, true, "test")
+  # Create test animation using new parameterized API
+  var strip = global.Leds(30)
+  var engine = animation.animation_engine(strip)
+  var color_provider = animation.static_color(engine)
+  color_provider.color = 0xFFFF0000
+  var test_anim = animation.solid(engine)
+  test_anim.color = color_provider
+  test_anim.priority = 0
+  test_anim.duration = 0
+  test_anim.loop = true
+  test_anim.name = "test"
   
   # Test play step creation
   var play_step = animation.create_play_step(test_anim, 5000)
@@ -65,9 +74,24 @@ def test_sequence_manager_execution()
   var engine = animation.create_engine(strip)
   var seq_manager = animation.SequenceManager(engine)
   
-  # Create test animations
-  var anim1 = animation.filled_animation(animation.solid_color_provider(0xFFFF0000), 0, 0, true, "anim1")
-  var anim2 = animation.filled_animation(animation.solid_color_provider(0xFF00FF00), 0, 0, true, "anim2")
+  # Create test animations using new parameterized API
+  var color_provider1 = animation.static_color(engine)
+  color_provider1.color = 0xFFFF0000
+  var anim1 = animation.solid(engine)
+  anim1.color = color_provider1
+  anim1.priority = 0
+  anim1.duration = 0
+  anim1.loop = true
+  anim1.name = "anim1"
+  
+  var color_provider2 = animation.static_color(engine)
+  color_provider2.color = 0xFF00FF00
+  var anim2 = animation.solid(engine)
+  anim2.color = color_provider2
+  anim2.priority = 0
+  anim2.duration = 0
+  anim2.loop = true
+  anim2.name = "anim2"
   
   # Create sequence steps
   var steps = []
@@ -78,6 +102,8 @@ def test_sequence_manager_execution()
   
   # Test sequence start
   tasmota.set_millis(10000)
+  engine.start()  # Start the engine
+  engine.on_tick(10000)  # Update engine time
   seq_manager.start_sequence(steps)
   
   assert(seq_manager.is_running == true, "Sequence should be running after start")
@@ -98,8 +124,15 @@ def test_sequence_manager_timing()
   var engine = animation.create_engine(strip)
   var seq_manager = animation.SequenceManager(engine)
   
-  # Create test animation
-  var test_anim = animation.filled_animation(animation.solid_color_provider(0xFFFF0000), 0, 0, true, "test")
+  # Create test animation using new parameterized API
+  var color_provider = animation.static_color(engine)
+  color_provider.color = 0xFFFF0000
+  var test_anim = animation.solid(engine)
+  test_anim.color = color_provider
+  test_anim.priority = 0
+  test_anim.duration = 0
+  test_anim.loop = true
+  test_anim.name = "test"
   
   # Create simple sequence with timed steps
   var steps = []
@@ -108,6 +141,8 @@ def test_sequence_manager_timing()
   
   # Start sequence at time 20000
   tasmota.set_millis(20000)
+  engine.start()  # Start the engine
+  engine.on_tick(20000)  # Update engine time
   seq_manager.start_sequence(steps)
   
   # Update immediately - should still be on first step
@@ -117,16 +152,19 @@ def test_sequence_manager_timing()
   
   # Update after 500ms - should still be on first step
   tasmota.set_millis(20500)
+  engine.on_tick(20500)  # Update engine time
   seq_manager.update()
   assert(seq_manager.step_index == 0, "Should still be on first step after 500ms")
   
   # Update after 1000ms - should advance to second step (wait)
   tasmota.set_millis(21000)
+  engine.on_tick(21000)  # Update engine time
   seq_manager.update()
   assert(seq_manager.step_index == 1, "Should advance to second step after 1000ms")
   
   # Update after additional 500ms - should complete sequence
   tasmota.set_millis(21500)
+  engine.on_tick(21500)  # Update engine time
   seq_manager.update()
   assert(seq_manager.is_running == false, "Sequence should complete after all steps")
   
@@ -145,14 +183,23 @@ def test_sequence_manager_step_info()
   var step_info = seq_manager.get_current_step_info()
   assert(step_info == nil, "Step info should be nil when not running")
   
-  # Create test sequence
-  var test_anim = animation.filled_animation(animation.solid_color_provider(0xFFFF0000), 0, 0, true, "test")
+  # Create test sequence using new parameterized API
+  var color_provider = animation.static_color(engine)
+  color_provider.color = 0xFFFF0000
+  var test_anim = animation.solid(engine)
+  test_anim.color = color_provider
+  test_anim.priority = 0
+  test_anim.duration = 0
+  test_anim.loop = true
+  test_anim.name = "test"
   var steps = []
   steps.push(animation.create_play_step(test_anim, 2000))
   steps.push(animation.create_wait_step(1000))
   
   # Start sequence
   tasmota.set_millis(30000)
+  engine.start()  # Start the engine
+  engine.on_tick(30000)  # Update engine time
   seq_manager.start_sequence(steps)
   
   # Get step info
@@ -174,13 +221,22 @@ def test_sequence_manager_stop()
   var engine = animation.create_engine(strip)
   var seq_manager = animation.SequenceManager(engine)
   
-  # Create test sequence
-  var test_anim = animation.filled_animation(animation.solid_color_provider(0xFFFF0000), 0, 0, true, "test")
+  # Create test sequence using new parameterized API
+  var color_provider = animation.static_color(engine)
+  color_provider.color = 0xFFFF0000
+  var test_anim = animation.solid(engine)
+  test_anim.color = color_provider
+  test_anim.priority = 0
+  test_anim.duration = 0
+  test_anim.loop = true
+  test_anim.name = "test"
   var steps = []
   steps.push(animation.create_play_step(test_anim, 5000))
   
   # Start sequence
   tasmota.set_millis(40000)
+  engine.start()  # Start the engine
+  engine.on_tick(40000)  # Update engine time
   seq_manager.start_sequence(steps)
   assert(seq_manager.is_running == true, "Sequence should be running")
   
@@ -203,17 +259,27 @@ def test_sequence_manager_is_running()
   # Test initial state
   assert(seq_manager.is_sequence_running() == false, "Sequence should not be running initially")
   
-  # Create and start sequence
-  var test_anim = animation.filled_animation(animation.solid_color_provider(0xFFFF0000), 0, 0, true, "test")
+  # Create and start sequence using new parameterized API
+  var color_provider = animation.static_color(engine)
+  color_provider.color = 0xFFFF0000
+  var test_anim = animation.solid(engine)
+  test_anim.color = color_provider
+  test_anim.priority = 0
+  test_anim.duration = 0
+  test_anim.loop = true
+  test_anim.name = "test"
   var steps = []
   steps.push(animation.create_play_step(test_anim, 1000))
   
   tasmota.set_millis(50000)
+  engine.start()  # Start the engine
+  engine.on_tick(50000)  # Update engine time
   seq_manager.start_sequence(steps)
   assert(seq_manager.is_sequence_running() == true, "Sequence should be running after start")
   
   # Complete sequence
   tasmota.set_millis(51000)
+  engine.on_tick(51000)  # Update engine time
   seq_manager.update()
   assert(seq_manager.is_sequence_running() == false, "Sequence should not be running after completion")
   
@@ -228,10 +294,33 @@ def test_sequence_manager_complex_sequence()
   var engine = animation.create_engine(strip)
   var seq_manager = animation.SequenceManager(engine)
   
-  # Create multiple test animations
-  var red_anim = animation.filled_animation(animation.solid_color_provider(0xFFFF0000), 0, 0, true, "red")
-  var green_anim = animation.filled_animation(animation.solid_color_provider(0xFF00FF00), 0, 0, true, "green")
-  var blue_anim = animation.filled_animation(animation.solid_color_provider(0xFF0000FF), 0, 0, true, "blue")
+  # Create multiple test animations using new parameterized API
+  var red_provider = animation.static_color(engine)
+  red_provider.color = 0xFFFF0000
+  var red_anim = animation.solid(engine)
+  red_anim.color = red_provider
+  red_anim.priority = 0
+  red_anim.duration = 0
+  red_anim.loop = true
+  red_anim.name = "red"
+  
+  var green_provider = animation.static_color(engine)
+  green_provider.color = 0xFF00FF00
+  var green_anim = animation.solid(engine)
+  green_anim.color = green_provider
+  green_anim.priority = 0
+  green_anim.duration = 0
+  green_anim.loop = true
+  green_anim.name = "green"
+  
+  var blue_provider = animation.static_color(engine)
+  blue_provider.color = 0xFF0000FF
+  var blue_anim = animation.solid(engine)
+  blue_anim.color = blue_provider
+  blue_anim.priority = 0
+  blue_anim.duration = 0
+  blue_anim.loop = true
+  blue_anim.name = "blue"
   
   # Create complex sequence
   var steps = []
@@ -244,30 +333,36 @@ def test_sequence_manager_complex_sequence()
   
   # Start sequence
   tasmota.set_millis(60000)
+  engine.start()  # Start the engine
+  engine.on_tick(60000)  # Update engine time
   seq_manager.start_sequence(steps)
   
   # Test sequence progression step by step
   
   # After 1000ms: red completes, should advance to green (step 1)
   tasmota.set_millis(61000)
+  engine.on_tick(61000)  # Update engine time
   seq_manager.update()
   assert(seq_manager.step_index == 1, "Should advance to step 1 (green) after red completes")
   assert(seq_manager.is_running == true, "Sequence should still be running")
   
   # After 1800ms: green completes, should advance to wait (step 2)
   tasmota.set_millis(61800)
+  engine.on_tick(61800)  # Update engine time
   seq_manager.update()
   assert(seq_manager.step_index == 2, "Should advance to step 2 (wait) after green completes")
   assert(seq_manager.is_running == true, "Sequence should still be running")
   
   # After 2000ms: wait completes, should advance to blue (step 3)
   tasmota.set_millis(62000)
+  engine.on_tick(62000)  # Update engine time
   seq_manager.update()
   assert(seq_manager.step_index == 3, "Should advance to step 3 (blue) after wait completes")
   assert(seq_manager.is_running == true, "Sequence should still be running")
   
   # After 3500ms: blue completes, should advance to stop red (step 4)
   tasmota.set_millis(63500)
+  engine.on_tick(63500)  # Update engine time
   seq_manager.update()
   assert(seq_manager.step_index == 4, "Should advance to step 4 (stop red) after blue completes")
   assert(seq_manager.is_running == true, "Sequence should still be running")
@@ -297,13 +392,22 @@ def test_sequence_manager_integration()
   var seq_manager = animation.SequenceManager(engine)
   engine.add_sequence_manager(seq_manager)
   
-  # Create test sequence
-  var test_anim = animation.filled_animation(animation.solid_color_provider(0xFFFF0000), 0, 0, true, "test")
+  # Create test sequence using new parameterized API
+  var color_provider = animation.static_color(engine)
+  color_provider.color = 0xFFFF0000
+  var test_anim = animation.solid(engine)
+  test_anim.color = color_provider
+  test_anim.priority = 0
+  test_anim.duration = 0
+  test_anim.loop = true
+  test_anim.name = "test"
   var steps = []
   steps.push(animation.create_play_step(test_anim, 1000))
   
   # Start sequence
   tasmota.set_millis(70000)
+  engine.start()  # Start the engine
+  engine.on_tick(70000)  # Update engine time
   seq_manager.start_sequence(steps)
   
   # Test that engine's on_tick calls sequence manager update

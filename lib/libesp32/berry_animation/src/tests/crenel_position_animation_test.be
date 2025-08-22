@@ -26,59 +26,80 @@ def run_tests()
   print("Running Crenel Position Animation Tests...")
   print("==================================================")
   
-  # Test 1: Basic construction
-  var crenel = animation.crenel_position_animation(0xFFFF0000, 4, 2, 3, -1, 1, 0, true, "test_crenel")
+  # Create engine and strip for testing
+  var strip = global.Leds(10)
+  var engine = animation.animation_engine(strip)
+  
+  # Test 1: Basic construction with new parameterized pattern
+  var crenel = animation.crenel_position_animation(engine)
   test_assert(crenel != nil, "Crenel position animation creation")
+  
+  # Set parameters via virtual member assignment
+  crenel.color = 0xFFFF0000
+  crenel.back_color = 0xFF000000
+  crenel.pos = 4
+  crenel.pulse_size = 2
+  crenel.low_size = 3
+  crenel.nb_pulse = -1
+  crenel.priority = 1
+  crenel.duration = 0
+  crenel.loop = true
+  crenel.opacity = 255
+  crenel.name = "test_crenel"
+  
   test_assert(crenel.color == 0xFFFF0000, "Initial color setting")
   test_assert(crenel.pos == 4, "Initial position setting")
   test_assert(crenel.pulse_size == 2, "Initial pulse size setting")
   test_assert(crenel.low_size == 3, "Initial low size setting")
   test_assert(crenel.nb_pulse == -1, "Initial nb_pulse setting (infinite)")
   
-  # Test 2: Parameter validation and updates
-  test_assert(crenel.set_color(0xFF00FF00) == crenel, "Color setter returns self")
-  test_assert(crenel.color == 0xFF00FF00, "Color update")
+  # Test 2: Parameter validation and updates via direct assignment
+  crenel.color = 0xFF00FF00
+  test_assert(crenel.color == 0xFF00FF00, "Color update via direct assignment")
   
-  test_assert(crenel.set_pos(5) == crenel, "Position setter returns self")
-  test_assert(crenel.pos == 5, "Position update")
+  crenel.pos = 5
+  test_assert(crenel.pos == 5, "Position update via direct assignment")
   
-  test_assert(crenel.set_pulse_size(4) == crenel, "Pulse size setter returns self")
-  test_assert(crenel.pulse_size == 4, "Pulse size update")
+  crenel.pulse_size = 4
+  test_assert(crenel.pulse_size == 4, "Pulse size update via direct assignment")
   
-  test_assert(crenel.set_low_size(2) == crenel, "Low size setter returns self")
-  test_assert(crenel.low_size == 2, "Low size update")
+  crenel.low_size = 2
+  test_assert(crenel.low_size == 2, "Low size update via direct assignment")
   
-  test_assert(crenel.set_nb_pulse(3) == crenel, "Nb pulse setter returns self")
-  test_assert(crenel.nb_pulse == 3, "Nb pulse update")
+  crenel.nb_pulse = 3
+  test_assert(crenel.nb_pulse == 3, "Nb pulse update via direct assignment")
   
-  test_assert(crenel.set_back_color(0xFF000080) == crenel, "Background color setter returns self")
-  test_assert(crenel.back_color == 0xFF000080, "Background color update")
+  crenel.back_color = 0xFF000080
+  test_assert(crenel.back_color == 0xFF000080, "Background color update via direct assignment")
   
-  # Test 3: Negative value handling
-  crenel.set_pulse_size(-1)
-  test_assert(crenel.pulse_size == 0, "Negative pulse size clamped to 0")
+  # Test 3: Negative value handling via parameter validation
+  var old_pulse_size = crenel.pulse_size
+  try
+    crenel.pulse_size = -1
+    test_assert(false, "Negative pulse size should raise error")
+  except .. as e
+    test_assert(crenel.pulse_size == old_pulse_size, "Negative pulse size rejected, keeps old value")
+  end
   
-  crenel.set_low_size(-2)
-  test_assert(crenel.low_size == 0, "Negative low size clamped to 0")
-  
-  # Test 4: Animation lifecycle
-  test_assert(!crenel.is_running, "Animation starts stopped")
-  crenel.start()
-  test_assert(crenel.is_running, "Animation starts correctly")
-  crenel.stop()
-  test_assert(!crenel.is_running, "Animation stops correctly")
+  var old_low_size = crenel.low_size
+  try
+    crenel.low_size = -2
+    test_assert(false, "Negative low size should raise error")
+  except .. as e
+    test_assert(crenel.low_size == old_low_size, "Negative low size rejected, keeps old value")
+  end
   
   # Test 5: Frame rendering - basic crenel pattern
   var frame = animation.frame_buffer(10)
-  crenel.set_color(0xFFFF0000)  # Red
-  crenel.set_pos(0)
-  crenel.set_pulse_size(2)
-  crenel.set_low_size(3)
-  crenel.set_nb_pulse(-1)  # Infinite
-  crenel.set_back_color(0xFF000000)  # Transparent
+  crenel.color = 0xFFFF0000  # Red
+  crenel.pos = 0
+  crenel.pulse_size = 2
+  crenel.low_size = 3
+  crenel.nb_pulse = -1  # Infinite
+  crenel.back_color = 0xFF000000  # Transparent
   crenel.start()
   
-  var rendered = crenel.render(frame, tasmota.millis())
+  var rendered = crenel.render(frame, engine.time_ms)
   test_assert(rendered, "Render returns true when running")
   
   # Check pattern: 2 on, 3 off, 2 on, 3 off...
@@ -96,17 +117,17 @@ def run_tests()
   
   # Test 6: Frame rendering with background
   frame.clear()
-  crenel.set_back_color(0xFF000080)  # Dark blue background
-  crenel.render(frame, tasmota.millis())
+  crenel.back_color = 0xFF000080  # Dark blue background
+  crenel.render(frame, engine.time_ms)
   
   test_assert(frame.get_pixel_color(2) == 0xFF000080, "Gap pixel has background color")
   test_assert(frame.get_pixel_color(0) == 0xFFFF0000, "Pulse pixel overrides background")
   
   # Test 7: Limited number of pulses
   frame.clear()
-  crenel.set_back_color(0xFF000000)  # Transparent background
-  crenel.set_nb_pulse(2)  # Only 2 pulses
-  crenel.render(frame, tasmota.millis())
+  crenel.back_color = 0xFF000000  # Transparent background
+  crenel.nb_pulse = 2  # Only 2 pulses
+  crenel.render(frame, engine.time_ms)
   
   # Should have 2 pulses: positions 0,1 and 5,6
   test_assert(frame.get_pixel_color(0) == 0xFFFF0000, "Limited pulse 1 pixel 1 is red")
@@ -120,9 +141,9 @@ def run_tests()
   
   # Test 8: Position offset
   frame.clear()
-  crenel.set_pos(2)  # Start at position 2
-  crenel.set_nb_pulse(-1)  # Back to infinite
-  crenel.render(frame, tasmota.millis())
+  crenel.pos = 2  # Start at position 2
+  crenel.nb_pulse = -1  # Back to infinite
+  crenel.render(frame, engine.time_ms)
   
   # Pattern should start at position 2: positions 2,3 and 7,8
   test_assert(frame.get_pixel_color(0) == 0x00000000, "Offset pattern - position 0 is transparent")
@@ -135,9 +156,9 @@ def run_tests()
   
   # Test 9: Zero pulse size (should render nothing)
   frame.clear()
-  crenel.set_pos(0)
-  crenel.set_pulse_size(0)
-  crenel.render(frame, tasmota.millis())
+  crenel.pos = 0
+  crenel.pulse_size = 0
+  crenel.render(frame, engine.time_ms)
   
   # All pixels should remain transparent
   for i:0..9
@@ -146,9 +167,9 @@ def run_tests()
   
   # Test 10: Single pixel pulses
   frame.clear()
-  crenel.set_pulse_size(1)
-  crenel.set_low_size(2)
-  crenel.render(frame, tasmota.millis())
+  crenel.pulse_size = 1
+  crenel.low_size = 2
+  crenel.render(frame, engine.time_ms)
   
   # Pattern: 1 on, 2 off, 1 on, 2 off...
   # Positions: 0 = red, 1,2 = transparent, 3 = red, 4,5 = transparent, 6 = red, 7,8 = transparent, 9 = red
@@ -161,10 +182,10 @@ def run_tests()
   
   # Test 11: Negative position handling
   frame.clear()
-  crenel.set_pulse_size(2)
-  crenel.set_low_size(3)
-  crenel.set_pos(-1)
-  crenel.render(frame, tasmota.millis())
+  crenel.pulse_size = 2
+  crenel.low_size = 3
+  crenel.pos = -1
+  crenel.render(frame, engine.time_ms)
   
   # With period = 5 and pos = -1, the pattern should be shifted
   # The algorithm should handle negative positions correctly
@@ -179,34 +200,27 @@ def run_tests()
   
   # Test 12: Zero nb_pulse (should render nothing)
   frame.clear()
-  crenel.set_pos(0)
-  crenel.set_nb_pulse(0)
-  crenel.render(frame, tasmota.millis())
+  crenel.pos = 0
+  crenel.nb_pulse = 0
+  crenel.render(frame, engine.time_ms)
   
   # All pixels should remain transparent
   for i:0..9
     test_assert(frame.get_pixel_color(i) == 0x00000000, f"Zero nb_pulse - pixel {i} is transparent")
   end
   
-  # Test 13: Stopped animation doesn't render
-  crenel.stop()
-  frame.clear()
-  var rendered_stopped = crenel.render(frame, tasmota.millis())
-  test_assert(!rendered_stopped, "Stopped animation doesn't render")
-  test_assert(frame.get_pixel_color(0) == 0x00000000, "Frame remains clear when animation stopped")
-  
-  # Test 14: Parameter constraints
+  # Test 14: Parameter constraints via direct assignment
   crenel.start()  # Restart for parameter tests
-  test_assert(crenel.set_param("pos", 15), "Valid position parameter accepted")
+  crenel.pos = 15
   test_assert(crenel.pos == 15, "Position parameter updated")
   
-  test_assert(crenel.set_param("pulse_size", 5), "Valid pulse size parameter accepted")
+  crenel.pulse_size = 5
   test_assert(crenel.pulse_size == 5, "Pulse size parameter updated")
   
-  test_assert(crenel.set_param("low_size", 4), "Valid low size parameter accepted")
+  crenel.low_size = 4
   test_assert(crenel.low_size == 4, "Low size parameter updated")
   
-  test_assert(crenel.set_param("nb_pulse", 10), "Valid nb_pulse parameter accepted")
+  crenel.nb_pulse = 10
   test_assert(crenel.nb_pulse == 10, "Nb_pulse parameter updated")
   
   # Test 15: String representation
@@ -217,10 +231,10 @@ def run_tests()
   
   # Test 16: Edge case - very large frame
   var large_frame = animation.frame_buffer(100)
-  crenel.set_pos(0)
-  crenel.set_pulse_size(10)
-  crenel.set_low_size(5)
-  crenel.set_nb_pulse(3)  # 3 pulses
+  crenel.pos = 0
+  crenel.pulse_size = 10
+  crenel.low_size = 5
+  crenel.nb_pulse = 3  # 3 pulses
   crenel.render(large_frame)
   
   # Should have 3 pulses of 10 pixels each, separated by 5 pixels

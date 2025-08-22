@@ -2,6 +2,7 @@
 # Verifies that the simplified version produces the same results as the original
 
 import animation
+import animation_dsl
 
 def test_basic_transpilation()
   print("Testing basic DSL transpilation...")
@@ -11,8 +12,8 @@ def test_basic_transpilation()
     "strip length 30\n"
     "color my_red = 0xFF0000\n"
     "color my_blue = 0x0000FF\n"
-    "pattern solid_red = solid(my_red)\n"
-    "animation pulse_red = pulse(solid_red, 2s)\n"
+    "animation solid_red = solid(color=my_red)\n"
+    "animation pulse_red = pulsating_animation(color=my_red, period=2000)\n"
     "sequence demo {\n"
     "  play pulse_red for 3s\n"
     "  wait 1s\n"
@@ -20,7 +21,7 @@ def test_basic_transpilation()
     "run demo"
   
   # Compile the DSL
-  var berry_code = animation.compile_dsl(dsl_code)
+  var berry_code = animation_dsl.compile(dsl_code)
   
   if berry_code == nil
     print("✗ Compilation failed")
@@ -37,11 +38,11 @@ def test_color_resolution()
   # Test that named colors work
   var dsl_code = 
     "strip length 10\n"
-    "pattern red_pattern = solid(red)\n"
-    "pattern blue_pattern = solid(blue)\n"
+    "animation red_pattern = solid(color=red)\n"
+    "animation blue_pattern = solid(color=blue)\n"
     "run red_pattern"
   
-  var berry_code = animation.compile_dsl(dsl_code)
+  var berry_code = animation_dsl.compile(dsl_code)
   
   if berry_code == nil
     print("✗ Color resolution test failed")
@@ -64,10 +65,11 @@ def test_function_calls()
   
   var dsl_code = 
     "strip length 20\n"
-    "animation test_anim = pulse(solid(red), 1s, 50%)\n"
+    "animation solid_red = solid(color=red)\n"
+    "animation test_anim = pulsating_animation(color=red, period=1000)\n"
     "run test_anim"
   
-  var berry_code = animation.compile_dsl(dsl_code)
+  var berry_code = animation_dsl.compile(dsl_code)
   
   if berry_code == nil
     print("✗ Function call test failed")
@@ -76,7 +78,7 @@ def test_function_calls()
   
   # Check that function calls are properly generated
   import string
-  if string.find(berry_code, "animation.pulse") == -1
+  if string.find(berry_code, "animation.pulsating_animation(engine)") == -1
     print("✗ Function call not properly generated")
     return false
   end
@@ -92,7 +94,7 @@ def test_error_handling()
   var dsl_code = "color = 0xFF0000"  # Missing color name
   
   try
-    var berry_code = animation.compile_dsl(dsl_code)
+    var berry_code = animation_dsl.compile(dsl_code)
     # Should not reach here - should throw exception for invalid syntax
     print("✗ Error handling test failed - should have thrown exception")
     return false

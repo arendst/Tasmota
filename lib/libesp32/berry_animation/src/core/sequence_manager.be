@@ -26,7 +26,7 @@ class SequenceManager
     
     self.steps = steps
     self.step_index = 0
-    self.step_start_time = tasmota.millis()
+    self.step_start_time = self.controller.time_ms
     self.is_running = true
     
     if size(self.steps) > 0
@@ -48,7 +48,7 @@ class SequenceManager
       return
     end
     
-    var current_time = tasmota.millis()
+    var current_time = self.controller.time_ms
     var current_step = self.steps[self.step_index]
     
     # Check if current step has completed
@@ -80,7 +80,7 @@ class SequenceManager
       
       # Set duration if specified
       if step.contains("duration") && step["duration"] > 0
-        anim.set_duration(step["duration"])
+        anim.duration = step["duration"]
       end
       
     elif step["type"] == "wait"
@@ -89,11 +89,10 @@ class SequenceManager
       
     elif step["type"] == "stop"
       var anim = step["animation"]
-      anim.stop()
       self.controller.remove_animation(anim)
     end
     
-    self.step_start_time = tasmota.millis()
+    self.step_start_time = self.controller.time_ms
   end
   
   # Advance to the next step in the sequence
@@ -102,7 +101,6 @@ class SequenceManager
     var current_step = self.steps[self.step_index]
     if current_step["type"] == "play" && current_step.contains("duration")
       var anim = current_step["animation"]
-      anim.stop()
       self.controller.remove_animation(anim)
     end
     
@@ -131,7 +129,7 @@ class SequenceManager
       "step_index": self.step_index,
       "total_steps": size(self.steps),
       "current_step": self.steps[self.step_index],
-      "elapsed_ms": tasmota.millis() - self.step_start_time
+      "elapsed_ms": self.controller.time_ms - self.step_start_time
     }
   end
 end

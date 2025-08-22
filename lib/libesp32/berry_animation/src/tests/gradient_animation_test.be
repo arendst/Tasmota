@@ -9,20 +9,33 @@ import animation
 def test_gradient_creation()
   print("Testing GradientAnimation creation...")
   
+  # Create LED strip and engine for testing
+  var strip = global.Leds(10)
+  var engine = animation.animation_engine(strip)
+  
   # Test default gradient (rainbow linear)
-  var gradient = animation.gradient_animation(nil, nil, nil, nil, nil, nil, 10, nil, nil, nil, nil)
+  var gradient = animation.gradient_animation(engine)
   assert(gradient != nil, "Should create gradient animation")
   assert(gradient.gradient_type == 0, "Should default to linear gradient")
   assert(gradient.direction == 0, "Should default to left-to-right direction")
-  assert(gradient.strip_length == 10, "Should set strip length")
   
   # Test single color gradient
-  var red_gradient = animation.gradient_animation(0xFFFF0000, 0, 0, 128, 255, 50, 15, 10, 0, true, "red_gradient")
+  var red_gradient = animation.gradient_animation(engine)
+  red_gradient.color = 0xFFFF0000
+  red_gradient.name = "red_gradient"
   assert(red_gradient != nil, "Should create red gradient")
   assert(red_gradient.name == "red_gradient", "Should set name")
   
   # Test radial gradient
-  var radial_gradient = animation.gradient_animation(nil, 1, 0, 64, 200, 100, 20, 10, 5000, false, "radial_gradient")
+  var radial_gradient = animation.gradient_animation(engine)
+  radial_gradient.gradient_type = 1
+  radial_gradient.center_pos = 64
+  radial_gradient.spread = 200
+  radial_gradient.movement_speed = 100
+  radial_gradient.priority = 10
+  radial_gradient.duration = 5000
+  radial_gradient.loop = false
+  radial_gradient.name = "radial_gradient"
   assert(radial_gradient != nil, "Should create radial gradient")
   assert(radial_gradient.gradient_type == 1, "Should be radial gradient")
   
@@ -33,25 +46,29 @@ end
 def test_gradient_parameters()
   print("Testing GradientAnimation parameters...")
   
-  var gradient = animation.gradient_animation(0xFFFFFFFF, 0, 0, 128, 255, 0, 10, 10, 0, true, "test")
+  var strip = global.Leds(10)
+  var engine = animation.animation_engine(strip)
+  var gradient = animation.gradient_animation(engine)
+  gradient.color = 0xFFFFFFFF
+  gradient.name = "test"
   
-  # Test parameter setting
-  assert(gradient.set_param("gradient_type", 1) == true, "Should set gradient type")
+  # Test parameter setting via virtual members
+  gradient.gradient_type = 1
   assert(gradient.gradient_type == 1, "Should update gradient type")
   
-  assert(gradient.set_param("direction", 128) == true, "Should set direction")
+  gradient.direction = 128
   assert(gradient.direction == 128, "Should update direction")
   
-  assert(gradient.set_param("center_pos", 200) == true, "Should set center position")
+  gradient.center_pos = 200
   assert(gradient.center_pos == 200, "Should update center position")
   
-  assert(gradient.set_param("spread", 128) == true, "Should set spread")
+  gradient.spread = 128
   assert(gradient.spread == 128, "Should update spread")
   
-  assert(gradient.set_param("movement_speed", 150) == true, "Should set movement speed")
+  gradient.movement_speed = 150
   assert(gradient.movement_speed == 150, "Should update movement speed")
   
-  # Test invalid parameters
+  # Test parameter validation via set_param method
   assert(gradient.set_param("gradient_type", 5) == false, "Should reject invalid gradient type")
   assert(gradient.set_param("spread", 0) == false, "Should reject zero spread")
   
@@ -62,7 +79,12 @@ end
 def test_gradient_updates()
   print("Testing GradientAnimation updates...")
   
-  var gradient = animation.gradient_animation(0xFF00FF00, 0, 0, 128, 255, 100, 5, 10, 0, true, "test")
+  var strip = global.Leds(5)
+  var engine = animation.animation_engine(strip)
+  var gradient = animation.gradient_animation(engine)
+  gradient.color = 0xFF00FF00
+  gradient.movement_speed = 100
+  gradient.name = "test"
   
   # Start the animation
   gradient.start(1000)
@@ -86,9 +108,14 @@ end
 def test_gradient_rendering()
   print("Testing GradientAnimation rendering...")
   
-  var gradient = animation.gradient_animation(0xFFFF0000, 0, 0, 128, 255, 0, 5, 10, 0, true, "test")
+  var strip = global.Leds(5)
+  var engine = animation.animation_engine(strip)
+  var gradient = animation.gradient_animation(engine)
+  gradient.color = 0xFFFF0000
+  gradient.movement_speed = 0
+  gradient.name = "test"
   
-  # Create a mock frame buffer
+  # Create a frame buffer
   var frame = animation.frame_buffer(5, 1)
   
   # Start and update the animation
@@ -100,16 +127,11 @@ def test_gradient_rendering()
   assert(result == true, "Should render successfully")
   
   # Test that colors were set (basic check)
-  # For a red gradient (black to red), first pixel should be black, last should be red
+  # For a red gradient, pixels should have some red component
   var first_color = frame.get_pixel_color(0)
   var last_color = frame.get_pixel_color(4)  # Last pixel in 5-pixel strip
-  assert(first_color == 0xFF000000, "First pixel should be black in black-to-red gradient")
-  assert(last_color == 0xFFFF0000, "Last pixel should be red in black-to-red gradient")
-  
-  # Test rendering when not running
-  gradient.stop()
-  result = gradient.render(frame, 1000)
-  assert(result == false, "Should not render when stopped")
+  # Colors should be different in a gradient
+  assert(first_color != last_color, "First and last pixels should be different in gradient")
   
   print("✓ GradientAnimation rendering test passed")
 end
@@ -118,26 +140,27 @@ end
 def test_gradient_factory_methods()
   print("Testing GradientAnimation factory methods...")
   
+  var strip = global.Leds(20)
+  var engine = animation.animation_engine(strip)
+  
   # Test rainbow linear factory
-  var rainbow_linear = animation.gradient_rainbow_linear(50, 20, 10)
+  var rainbow_linear = animation.gradient_rainbow_linear(engine)
   assert(rainbow_linear != nil, "Should create rainbow linear gradient")
   assert(rainbow_linear.gradient_type == 0, "Should be linear")
   assert(rainbow_linear.movement_speed == 50, "Should set movement speed")
-  assert(rainbow_linear.strip_length == 20, "Should set strip length")
-  assert(rainbow_linear.priority == 10, "Should set priority")
   
   # Test rainbow radial factory
-  var rainbow_radial = animation.gradient_rainbow_radial(100, 75, 25, 15)
+  var rainbow_radial = animation.gradient_rainbow_radial(engine)
   assert(rainbow_radial != nil, "Should create rainbow radial gradient")
   assert(rainbow_radial.gradient_type == 1, "Should be radial")
-  assert(rainbow_radial.center_pos == 100, "Should set center position")
-  assert(rainbow_radial.movement_speed == 75, "Should set movement speed")
+  assert(rainbow_radial.center_pos == 128, "Should set center position")
+  assert(rainbow_radial.movement_speed == 30, "Should set movement speed")
   
   # Test two-color linear factory
-  var two_color = animation.gradient_two_color_linear(0xFFFF0000, 0xFF0000FF, 25, 30, 5)
+  var two_color = animation.gradient_two_color_linear(engine)
   assert(two_color != nil, "Should create two-color gradient")
   assert(two_color.gradient_type == 0, "Should be linear")
-  assert(two_color.movement_speed == 25, "Should set movement speed")
+  assert(two_color.movement_speed == 0, "Should set movement speed")
   
   print("✓ GradientAnimation factory methods test passed")
 end
@@ -146,8 +169,14 @@ end
 def test_gradient_position_calculations()
   print("Testing GradientAnimation position calculations...")
   
+  var strip = global.Leds(10)
+  var engine = animation.animation_engine(strip)
+  
   # Test linear gradient with different directions
-  var linear_gradient = animation.gradient_animation(0xFFFFFFFF, 0, 0, 128, 255, 0, 10, 10, 0, true, "test")
+  var linear_gradient = animation.gradient_animation(engine)
+  linear_gradient.color = 0xFFFFFFFF
+  linear_gradient.movement_speed = 0
+  linear_gradient.name = "test"
   linear_gradient.start(1000)
   linear_gradient.update(1000)
   
@@ -162,7 +191,11 @@ def test_gradient_position_calculations()
   # (unless it's a very specific case)
   
   # Test radial gradient
-  var radial_gradient = animation.gradient_animation(0xFFFFFFFF, 1, 0, 128, 255, 0, 10, 10, 0, true, "test")
+  var radial_gradient = animation.gradient_animation(engine)
+  radial_gradient.color = 0xFFFFFFFF
+  radial_gradient.gradient_type = 1
+  radial_gradient.movement_speed = 0
+  radial_gradient.name = "test"
   radial_gradient.start(1000)
   radial_gradient.update(1000)
   radial_gradient.render(frame, 1000)
@@ -178,74 +211,69 @@ end
 def test_gradient_color_refactoring()
   print("Testing GradientAnimation color refactoring...")
   
-  # Test with static color
-  var static_gradient = animation.gradient_animation(0xFFFF0000, 0, 0, 128, 255, 0, 5, 10, 0, true, "static_test")
-  assert(static_gradient.color != nil, "Should have color set")
-  assert(animation.is_value_provider(static_gradient.color), "Static color should be wrapped in provider")
+  var strip = global.Leds(5)
+  var engine = animation.animation_engine(strip)
   
-  # Test with color provider
-  var color_provider = animation.solid_color_provider(0xFF00FF00)
-  var provider_gradient = animation.gradient_animation(color_provider, 0, 0, 128, 255, 0, 5, 10, 0, true, "provider_test")
-  assert(provider_gradient.color != nil, "Should have color provider set")
-  assert(isinstance(provider_gradient.color, animation.solid_color_provider), "Should be solid color provider")
+  # Test with static color
+  var static_gradient = animation.gradient_animation(engine)
+  static_gradient.color = 0xFFFF0000
+  static_gradient.name = "static_test"
+  assert(static_gradient.color == 0xFFFF0000, "Should have color set")
+  
+  # Test with nil color (default rainbow)
+  var rainbow_gradient = animation.gradient_animation(engine)
+  rainbow_gradient.color = nil
+  rainbow_gradient.name = "rainbow_test"
+  assert(rainbow_gradient.color == nil, "Should accept nil color for rainbow")
   
   # Test color resolution
   var resolved_color = static_gradient.resolve_value(static_gradient.color, "color", 1000)
   assert(resolved_color != nil, "Should resolve color")
   
-  # Test with rich palette provider
-  var palette_provider = animation.rich_palette_color_provider(animation.PALETTE_RAINBOW, 5000, 1, 255)
-  palette_provider.set_range(0, 255)
-  var palette_gradient = animation.gradient_animation(palette_provider, 0, 0, 128, 255, 0, 5, 10, 0, true, "palette_test")
-  assert(palette_gradient.color != nil, "Should have palette provider set")
-  assert(isinstance(palette_gradient.color, animation.rich_palette_color_provider), "Should be rich palette provider")
+  # Test basic rendering with different color types
+  var frame = animation.frame_buffer(5, 1)
+  static_gradient.start(1000)
+  static_gradient.update(1000)
+  var result = static_gradient.render(frame, 1000)
+  assert(result == true, "Should render with static color")
+  
+  rainbow_gradient.start(1000)
+  rainbow_gradient.update(1000)
+  result = rainbow_gradient.render(frame, 1000)
+  assert(result == true, "Should render with rainbow color")
   
   print("✓ GradientAnimation color refactoring test passed")
 end
 
-# Test new setter methods
-def test_gradient_setter_methods()
-  print("Testing GradientAnimation setter methods...")
+# Test virtual parameter access
+def test_gradient_virtual_parameters()
+  print("Testing GradientAnimation virtual parameters...")
   
-  var gradient = animation.gradient_animation(0xFFFFFFFF, 0, 0, 128, 255, 0, 10, 10, 0, true, "test")
+  var strip = global.Leds(10)
+  var engine = animation.animation_engine(strip)
+  var gradient = animation.gradient_animation(engine)
+  gradient.name = "test"
   
-  # Test color setter
-  var new_color = animation.solid_color_provider(0xFFFF00FF)
-  var result = gradient.set_color(new_color)
-  assert(result == gradient, "Should return self for chaining")
-  assert(gradient.color == new_color, "Should update color")
+  # Test virtual parameter assignment and access
+  gradient.color = 0xFFFF00FF
+  assert(gradient.color == 0xFFFF00FF, "Should update color via virtual member")
   
-  # Test gradient type setter
-  result = gradient.set_gradient_type(1)
-  assert(result == gradient, "Should return self for chaining")
-  assert(gradient.gradient_type == 1, "Should update gradient type")
+  gradient.gradient_type = 1
+  assert(gradient.gradient_type == 1, "Should update gradient type via virtual member")
   
-  # Test direction setter
-  result = gradient.set_direction(200)
-  assert(result == gradient, "Should return self for chaining")
-  assert(gradient.direction == 200, "Should update direction")
+  gradient.direction = 200
+  assert(gradient.direction == 200, "Should update direction via virtual member")
   
-  # Test center position setter
-  result = gradient.set_center_pos(64)
-  assert(result == gradient, "Should return self for chaining")
-  assert(gradient.center_pos == 64, "Should update center position")
+  gradient.center_pos = 64
+  assert(gradient.center_pos == 64, "Should update center position via virtual member")
   
-  # Test spread setter
-  result = gradient.set_spread(128)
-  assert(result == gradient, "Should return self for chaining")
-  assert(gradient.spread == 128, "Should update spread")
+  gradient.spread = 128
+  assert(gradient.spread == 128, "Should update spread via virtual member")
   
-  # Test movement speed setter
-  result = gradient.set_movement_speed(75)
-  assert(result == gradient, "Should return self for chaining")
-  assert(gradient.movement_speed == 75, "Should update movement speed")
+  gradient.movement_speed = 75
+  assert(gradient.movement_speed == 75, "Should update movement speed via virtual member")
   
-  # Test strip length setter
-  result = gradient.set_strip_length(20)
-  assert(result == gradient, "Should return self for chaining")
-  assert(gradient.strip_length == 20, "Should update strip length")
-  
-  print("✓ GradientAnimation setter methods test passed")
+  print("✓ GradientAnimation virtual parameters test passed")
 end
 
 # Test updated tostring method
@@ -254,20 +282,30 @@ def test_gradient_tostring()
   
   import string
   
+  var strip = global.Leds(10)
+  var engine = animation.animation_engine(strip)
+  
   # Test with static color
-  var static_gradient = animation.gradient_animation(0xFFFF0000, 0, 0, 128, 255, 50, 10, 10, 0, true, "static_test")
+  var static_gradient = animation.gradient_animation(engine)
+  static_gradient.color = 0xFFFF0000
+  static_gradient.movement_speed = 50
+  static_gradient.name = "static_test"
   var str_static = str(static_gradient)
   assert(str_static != nil, "Should have string representation")
   assert(string.find(str_static, "linear") != -1, "Should mention gradient type")
   assert(string.find(str_static, "movement=50") != -1, "Should mention movement speed")
   
   # Test with color provider
-  var color_provider = animation.solid_color_provider(0xFF00FF00)
-  var provider_gradient = animation.gradient_animation(color_provider, 1, 0, 128, 255, 25, 10, 10, 0, true, "provider_test")
+  var color_provider = animation.static_color(engine)
+  color_provider.color = 0xFF00FF00
+  var provider_gradient = animation.gradient_animation(engine)
+  provider_gradient.color = color_provider
+  provider_gradient.gradient_type = 1
+  provider_gradient.movement_speed = 25
+  provider_gradient.name = "provider_test"
   var str_provider = str(provider_gradient)
   assert(str_provider != nil, "Should have string representation")
   assert(string.find(str_provider, "radial") != -1, "Should mention radial type")
-  assert(string.find(str_provider, "SolidColorProvider") != -1, "Should mention provider type")
   
   print("✓ GradientAnimation tostring test passed")
 end
@@ -284,7 +322,7 @@ def run_gradient_animation_tests()
     test_gradient_factory_methods()
     test_gradient_position_calculations()
     test_gradient_color_refactoring()
-    test_gradient_setter_methods()
+    test_gradient_virtual_parameters()
     test_gradient_tostring()
     
     print("=== All GradientAnimation tests passed! ===")

@@ -4,7 +4,6 @@
 # into a unified "animation" object for use in Tasmota LED strip control.
 #
 # The framework provides:
-# - Unified Pattern-Animation architecture (Animation extends Pattern)
 # - DSL (Domain Specific Language) for declarative animation definitions  
 # - Value providers for dynamic parameters (oscillators, color providers)
 # - Event system for interactive animations
@@ -58,15 +57,15 @@ end
 # Import core framework components
 # These provide the fundamental architecture for the animation system
 
+# Base class for parameter management - shared by Animation and ValueProvider
+import "core/parameterized_object" as parameterized_object
+register_to_animation(parameterized_object)
+
 # Frame buffer management for LED strip pixel data
 import "core/frame_buffer" as frame_buffer
 register_to_animation(frame_buffer)
 
-# Base Pattern class - foundation for all visual elements
-import "core/pattern_base" as pattern_base
-register_to_animation(pattern_base)
-
-# Base Animation class - extends Pattern with temporal behavior
+# Base Animation class - unified foundation for all visual elements
 import "core/animation_base" as animation_base
 register_to_animation(animation_base)
 
@@ -87,57 +86,6 @@ register_to_animation(event_handler)
 import "core/user_functions" as user_functions
 register_to_animation(user_functions)
 
-# Import effects
-import "effects/filled" as filled_animation
-register_to_animation(filled_animation)
-import "effects/pulse" as pulse_animation
-register_to_animation(pulse_animation)
-import "effects/pulse_position" as pulse_position_animation
-register_to_animation(pulse_position_animation)
-import "effects/crenel_position" as crenel_position_animation
-register_to_animation(crenel_position_animation)
-import "effects/breathe" as breathe_animation
-register_to_animation(breathe_animation)
-import "effects/palette_pattern" as palette_pattern_animation
-register_to_animation(palette_pattern_animation)
-import "effects/comet" as comet_animation
-register_to_animation(comet_animation)
-import "effects/fire" as fire_animation
-register_to_animation(fire_animation)
-import "effects/twinkle" as twinkle_animation
-register_to_animation(twinkle_animation)
-import "effects/gradient" as gradient_animation
-register_to_animation(gradient_animation)
-import "effects/noise" as noise_animation
-register_to_animation(noise_animation)
-import "effects/plasma" as plasma_animation
-register_to_animation(plasma_animation)
-import "effects/sparkle" as sparkle_animation
-register_to_animation(sparkle_animation)
-import "effects/wave" as wave_animation
-register_to_animation(wave_animation)
-import "effects/shift" as shift_animation
-register_to_animation(shift_animation)
-import "effects/bounce" as bounce_animation
-register_to_animation(bounce_animation)
-import "effects/scale" as scale_animation
-register_to_animation(scale_animation)
-import "effects/jitter" as jitter_animation
-register_to_animation(jitter_animation)
-
-# Import palette examples
-import "effects/palettes" as palettes
-register_to_animation(palettes)
-
-# Import pattern implementations
-import "patterns/solid_pattern" as solid_pattern_impl
-register_to_animation(solid_pattern_impl)
-
-# Import animation implementations
-# Note: pulse_animation is already imported from effects/pulse.be
-import "effects/pattern_animation" as pattern_animation_impl
-register_to_animation(pattern_animation_impl)
-
 # Import value providers
 import "providers/value_provider.be" as value_provider
 register_to_animation(value_provider)
@@ -153,20 +101,58 @@ import "providers/color_cycle_color_provider.be" as color_cycle_color_provider
 register_to_animation(color_cycle_color_provider)
 import "providers/composite_color_provider.be" as composite_color_provider
 register_to_animation(composite_color_provider)
-import "providers/solid_color_provider.be" as solid_color_provider
-register_to_animation(solid_color_provider)
+import "providers/static_color_provider.be" as static_color_provider
+register_to_animation(static_color_provider)
 import "providers/rich_palette_color_provider.be" as rich_palette_color_provider
 register_to_animation(rich_palette_color_provider)
+import "providers/breathe_color_provider.be" as breathe_color_provider
+register_to_animation(breathe_color_provider)
 
-# Import DSL components
-import "dsl/token.be" as dsl_token
-register_to_animation(dsl_token)
-import "dsl/lexer.be" as dsl_lexer
-register_to_animation(dsl_lexer)
-import "dsl/transpiler.be" as dsl_transpiler
-register_to_animation(dsl_transpiler)
-import "dsl/runtime.be" as dsl_runtime
-register_to_animation(dsl_runtime)
+# Import animations
+import "animations/solid" as solid_impl
+register_to_animation(solid_impl)
+import "animations/beacon" as beacon_animation
+register_to_animation(beacon_animation)
+import "animations/crenel_position" as crenel_position_animation
+register_to_animation(crenel_position_animation)
+import "animations/breathe" as breathe_animation
+register_to_animation(breathe_animation)
+import "animations/palette_pattern" as palette_pattern_animation
+register_to_animation(palette_pattern_animation)
+import "animations/comet" as comet_animation
+register_to_animation(comet_animation)
+import "animations/fire" as fire_animation
+register_to_animation(fire_animation)
+import "animations/twinkle" as twinkle_animation
+register_to_animation(twinkle_animation)
+import "animations/gradient" as gradient_animation
+register_to_animation(gradient_animation)
+import "animations/noise" as noise_animation
+register_to_animation(noise_animation)
+import "animations/plasma" as plasma_animation
+register_to_animation(plasma_animation)
+import "animations/sparkle" as sparkle_animation
+register_to_animation(sparkle_animation)
+import "animations/wave" as wave_animation
+register_to_animation(wave_animation)
+import "animations/shift" as shift_animation
+register_to_animation(shift_animation)
+import "animations/bounce" as bounce_animation
+register_to_animation(bounce_animation)
+import "animations/scale" as scale_animation
+register_to_animation(scale_animation)
+import "animations/jitter" as jitter_animation
+register_to_animation(jitter_animation)
+
+# Import palette examples
+import "animations/palettes" as palettes
+register_to_animation(palettes)
+
+# Import specialized animation classes
+import "animations/rich_palette_animation" as rich_palette_animation
+register_to_animation(rich_palette_animation)
+
+# DSL components are now in separate animation_dsl module
 
 # Function called to initialize the `Leds` and `engine` objects
 #
@@ -185,7 +171,7 @@ end
 animation.init_strip = animation_init_strip
 
 # Global variable resolver with error checking
-# Used by DSL transpiler to resolve variable names during compilation
+# Used by DSL-generated code to resolve variable names during execution
 # First checks animation module, then global scope for user-defined variables
 def animation_global(name, module_name)
   import global

@@ -6,42 +6,17 @@
 #
 # This provider uses the member() construct to respond to any get_XXX() method
 # call with the same static value, making it a universal static provider.
+#
+# Follows the parameterized class specification:
+# - Constructor takes only 'engine' parameter
+# - Value is set via virtual member assignment after creation
 
 #@ solidify:StaticValueProvider,weak
 class StaticValueProvider : animation.value_provider
-  var value           # The static value to provide
-  
-  # Initialize a new StaticValueProvider
-  #
-  # @param value: any - The static value to provide
-  def init(value)
-    self.value = value
-  end
-  
-  # Get the static value
-  #
-  # @param time_ms: int - Current time in milliseconds (ignored)
-  # @return any - The static value
-  def get_value(time_ms)
-    return self.value
-  end
-  
-  # Update internal state (no-op for static value)
-  #
-  # @param time_ms: int - Current time in milliseconds (ignored)
-  # @return bool - Always false (no state change)
-  def update(time_ms)
-    return false  # No state change
-  end
-  
-  # Set a new static value
-  #
-  # @param value: any - The new static value
-  # @return self for method chaining
-  def set_value(value)
-    self.value = value
-    return self
-  end
+  # Parameter definitions
+  static var PARAMS = {
+    "value": {"default": nil, "type": "any"}
+  }
   
   # Comparison operators to make StaticValueProvider work with validation code
   def <(other)
@@ -68,23 +43,23 @@ class StaticValueProvider : animation.value_provider
     return self.value != int(other)
   end
   
-  # Universal member access using member() construct
-  # This allows the provider to respond to any get_XXX() method call
-  # with the same static value, making it work for any parameter type
-  def member(name)
-    # Check if it's a get_XXX method call
-    if type(name) == "string" && name[0..3] == "get_"
-      # Return a function that returns our static value
-      return def(time_ms) return self.value end
-    end
-    # for every other return undefined
-    return module("undefined")
+  # Produce the static value for any parameter name
+  #
+  # @param name: string - Parameter name being requested (ignored)
+  # @param time_ms: int - Current time in milliseconds (ignored)
+  # @return any - The static value
+  def produce_value(name, time_ms)
+    return self.value
   end
   
   # String representation of the provider
   def tostring()
-    return f"StaticValueProvider(value={self.value})"
+    try
+      return f"StaticValueProvider(value={self.value})"
+    except ..
+      return "StaticValueProvider(value=unset)"
+    end
   end
 end
 
-return {'static_value_provider': StaticValueProvider}
+return {'static_value': StaticValueProvider}

@@ -27,4 +27,7 @@
 #include "be_mapping.h"
 
 #include "solidify/solidified_animation.h"
+  #ifdef USE_BERRY_ANIMATION_DSL
+  #include "solidify/solidified_animation_dsl.h"
+  #endif
 #endif

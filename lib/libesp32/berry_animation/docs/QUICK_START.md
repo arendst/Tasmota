@@ -1,94 +1,45 @@
 # Quick Start Guide
 
-Get up and running with the Tasmota Berry Animation Framework in 5 minutes!
+Get up and running with the Berry Animation Framework in 5 minutes using the DSL!
 
 ## Prerequisites
 
 - Tasmota device with Berry support
 - Addressable LED strip (WS2812, SK6812, etc.)
-- Basic familiarity with Tasmota console
 
-## Step 1: Basic Setup
+## Step 1: Your First Animation
 
-### Import the Framework
-```berry
-import animation
-```
+Create a simple pulsing red light:
 
-### Create LED Strip and Engine
-```berry
-# Create LED strip (adjust count for your setup)
-var strip = Leds(30)  # 30 LEDs
-
-# Create animation engine
-var engine = animation.create_engine(strip)
-```
-
-## Step 2: Your First Animation
-
-### Simple Solid Color
-```berry
-# Create a solid red animation
-var red_anim = animation.solid(0xFFFF0000)  # ARGB format
-
-# Add to engine and start
-engine.add_animation(red_anim)
-engine.start()
-```
-
-### Pulsing Effect
-```berry
-# Create pulsing blue animation
-var pulse_blue = animation.pulse(
-  animation.solid(0xFF0000FF),  # Blue color
-  2000,                         # 2 second period
-  50,                          # Min brightness (0-255)
-  255                          # Max brightness (0-255)
-)
-
-engine.clear()  # Clear previous animations
-engine.add_animation(pulse_blue)
-engine.start()
-```
-
-## Step 3: Using the DSL
-
-The DSL (Domain-Specific Language) makes animations much easier to write.
-
-### Create Animation File
-Create `my_first.anim`:
 ```dsl
 # Define colors
 color red = #FF0000
-color blue = #0000FF
 
 # Create pulsing animation
-animation pulse_red = pulse(solid(red), 3s, 20%, 100%)
+animation pulse_red = pulsating_animation(color=red, period=3s)
 
 # Run it
 run pulse_red
 ```
 
-### Load DSL Animation
-```berry
-import animation
+## Step 2: Color Cycling
 
-var strip = Leds(30)
-var runtime = animation.DSLRuntime(animation.create_engine(strip))
+Create smooth color transitions:
 
-# Load from string
-var dsl_code = '''
-color blue = #0000FF
-animation pulse_blue = pulse(solid(blue), 2s, 30%, 100%)
-run pulse_blue
-'''
+```dsl
+# Use predefined rainbow palette
+animation rainbow_cycle = rich_palette(
+  palette=PALETTE_RAINBOW,
+  cycle_period=5s,
+  transition_type=1
+)
 
-runtime.load_dsl(dsl_code)
+run rainbow_cycle
 ```
 
-## Step 4: Color Palettes
+## Step 3: Custom Palettes
 
-Palettes create smooth color transitions:
+Create your own color palettes:
 
 ```dsl
 # Define a sunset palette
@@ -101,23 +52,23 @@ palette sunset = [
 ]
 
 # Create palette animation
-animation sunset_glow = rich_palette_animation(sunset, 5s, smooth, 200)
+animation sunset_glow = rich_palette(
+  palette=sunset,
+  cycle_period=8s,
+  transition_type=1
+)
 
 run sunset_glow
 ```
 
-## Step 5: Sequences
+## Step 4: Sequences
 
 Create complex shows with sequences:
 
 ```dsl
-color red = #FF0000
-color green = #00FF00
-color blue = #0000FF
-
-animation red_pulse = pulse(solid(red), 2s, 50%, 100%)
-animation green_pulse = pulse(solid(green), 2s, 50%, 100%)
-animation blue_pulse = pulse(solid(blue), 2s, 50%, 100%)
+animation red_pulse = pulsating_animation(color=red, period=2s)
+animation green_pulse = pulsating_animation(color=green, period=2s)
+animation blue_pulse = pulsating_animation(color=blue, period=2s)
 
 sequence rgb_show {
   play red_pulse for 3s
@@ -125,7 +76,7 @@ sequence rgb_show {
   play green_pulse for 3s
   wait 500ms
   play blue_pulse for 3s
-  wait 500ms
+  
   repeat 2 times:
     play red_pulse for 1s
     play green_pulse for 1s
@@ -135,119 +86,112 @@ sequence rgb_show {
 run rgb_show
 ```
 
-## Step 6: Interactive Animations
+## Step 5: Dynamic Effects
 
-Add event handling for interactive effects:
+Add movement and variation to your animations:
 
 ```dsl
-color white = #FFFFFF
-color red = #FF0000
+# Breathing effect with smooth oscillation
+animation breathing = pulsating_animation(
+  color=blue,
+  min_brightness=50,
+  max_brightness=255,
+  period=4s
+)
 
-animation flash_white = solid(white)
-animation normal_red = solid(red)
+# Moving comet effect
+animation comet = comet_animation(
+  color=white,
+  tail_length=8,
+  speed=2000
+)
 
-# Flash white when button pressed
-on button_press: flash_white
+# Sparkle effect
+animation sparkles = sparkle_animation(
+  color=white,
+  density=80,
+  fade_speed=60
+)
 
-# Main animation
-run normal_red
+run breathing
 ```
 
 ## Common Patterns
 
 ### Fire Effect
 ```dsl
-palette fire = [
-  (0, #000000),    # Black
-  (64, #800000),   # Dark red  
-  (128, #FF0000),  # Red
-  (192, #FF8000),  # Orange
-  (255, #FFFF00)   # Yellow
-]
+animation fire = rich_palette(
+  palette=PALETTE_FIRE,
+  cycle_period=2s,
+  transition_type=1
+)
 
-animation fire_effect = rich_palette_animation(fire, 2s, smooth, 255)
-run fire_effect
+run fire
 ```
 
-### Rainbow Cycle
+### Ocean Waves
 ```dsl
-palette rainbow = [
-  (0, red), (42, orange), (84, yellow),
-  (126, green), (168, blue), (210, indigo), (255, violet)
-]
+animation ocean = rich_palette(
+  palette=PALETTE_OCEAN,
+  cycle_period=6s,
+  transition_type=1
+)
 
-animation rainbow_cycle = rich_palette_animation(rainbow, 10s, smooth, 255)
-run rainbow_cycle
-```
-
-### Breathing Effect
-```dsl
-color soft_blue = #4080FF
-animation breathing = pulse(solid(soft_blue), 4s, 10%, 100%)
-run breathing
+run ocean
 ```
 
 ## Tips for Success
 
-### 1. Start Simple
-Begin with solid colors and basic pulses before moving to complex effects.
+1. **Start Simple** - Begin with solid colors and basic effects
+2. **Use Predefined Palettes** - Try PALETTE_RAINBOW, PALETTE_FIRE, PALETTE_OCEAN
+3. **Test Incrementally** - Add one animation at a time
+4. **Use Named Colors** - red, blue, green, white, etc.
+5. **Start with Longer Periods** - 3-5 seconds, then adjust as needed
 
-### 2. Use the DSL
-The DSL is much easier than writing Berry code directly.
+## Loading DSL Files
 
-### 3. Test Incrementally
-Add one animation at a time and test before adding complexity.
+Save your DSL code in `.anim` files and load them:
 
-### 4. Check Your Colors
-Use hex color codes (#RRGGBB) or named colors (red, blue, green).
-
-### 5. Mind the Timing
-Start with longer periods (3-5 seconds) and adjust as needed.
-
-## Troubleshooting
-
-### Animation Not Starting
 ```berry
-# Make sure to start the engine
-engine.start()
+import animation
 
-# Check if animation was added
-print(engine.size())  # Should be > 0
+# Load DSL file
+var runtime = animation.load_dsl_file("my_animation.anim")
 ```
 
-### Colors Look Wrong
-```berry
-# Check color format (ARGB with alpha channel)
-var red = 0xFFFF0000  # Correct: Alpha=FF, Red=FF, Green=00, Blue=00
-var red = 0xFF0000    # Wrong: Missing alpha channel
-```
+## User-Defined Functions
 
-### DSL Compilation Errors
+Create custom animation functions in Berry and use them in DSL:
+
 ```berry
-# Use try/catch for better error messages
-try
-  runtime.load_dsl(dsl_code)
-except "dsl_compilation_error" as e, msg
-  print("DSL Error:", msg)
+# Define custom function - engine must be first parameter
+def my_sparkle(engine, color, density, speed)
+  var anim = animation.twinkle_animation(engine)
+  anim.color = color
+  anim.density = density
+  anim.speed = speed
+  return anim
 end
+
+# Register for DSL use
+animation.register_user_function("sparkle", my_sparkle)
 ```
 
-### Performance Issues
-```berry
-# Limit number of simultaneous animations
-engine.clear()  # Remove all animations
-engine.add_animation(new_animation)  # Add just one
-
-# Use longer periods for smoother performance
-animation pulse_slow = pulse(solid(red), 5s, 50%, 100%)  # 5 seconds instead of 1
+```dsl
+# Use in DSL - engine is automatically passed
+animation gold_sparkles = sparkle(#FFD700, 8, 500ms)
+run gold_sparkles
 ```
+
+**Note**: The DSL automatically passes `engine` as the first argument to user functions.
 
 ## Next Steps
 
-- **[DSL Reference](.kiro/specs/berry-animation-framework/dsl-specification.md)** - Complete DSL syntax
-- **[API Reference](API_REFERENCE.md)** - Berry API documentation  
-- **[Examples](EXAMPLES.md)** - More complex examples
-- **[User Functions](.kiro/specs/berry-animation-framework/USER_FUNCTIONS.md)** - Create custom functions
-- **[Event System](.kiro/specs/berry-animation-framework/EVENT_SYSTEM.md)** - Interactive animations
+- **[DSL Reference](DSL_REFERENCE.md)** - Complete DSL syntax and features
+- **[User Functions](USER_FUNCTIONS.md)** - Create custom animation functions
+- **[Examples](EXAMPLES.md)** - More complex animation examples
+- **[Animation Class Hierarchy](ANIMATION_CLASS_HIERARCHY.md)** - All available animations and parameters
+- **[Oscillation Patterns](OSCILLATION_PATTERNS.md)** - Dynamic value patterns
+- **[Troubleshooting](TROUBLESHOOTING.md)** - Common issues and solutions
 
 Happy animating! 🎨✨

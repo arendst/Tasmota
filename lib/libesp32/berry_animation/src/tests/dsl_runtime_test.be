@@ -6,13 +6,14 @@
 
 import string
 import animation
+import animation_dsl
 
 def test_dsl_runtime()
   print("=== DSL Runtime Integration Test ===")
   
   # Create strip and runtime
   var strip = global.Leds(30)
-  var runtime = animation.create_dsl_runtime(strip, true)  # Debug mode enabled
+  var runtime = animation_dsl.create_runtime(strip, true)  # Debug mode enabled
   
   var tests_passed = 0
   var tests_total = 0
@@ -24,8 +25,7 @@ def test_dsl_runtime()
   var simple_dsl =
     "strip length 30\n"
     "color custom_red = 0xFF0000\n"
-    "pattern solid_red = solid(custom_red)\n"
-    "animation red_anim = solid(custom_red)\n"
+    "animation red_anim = pulsating_animation(color=static_color(color=custom_red), period=2s)\n"
     "sequence demo {\n"
     "  play red_anim for 1s\n"
     "}\n"
@@ -82,7 +82,7 @@ def test_dsl_runtime()
   print("\nTest 4: Error handling")
   
   var invalid_dsl = "color invalid_syntax = \n" +
-    "pattern broken = unknown_function()"
+    "animation broken = unknown_function(param=value)"
   
   if !runtime.load_dsl(invalid_dsl)
     print("✓ Error handling working - invalid DSL rejected")
@@ -109,7 +109,7 @@ def test_dsl_runtime()
   var dsl1 = 
     "strip length 30\n" +
     "color custom_blue = 0x0000FF\n" +
-    "animation blue_anim = solid(custom_blue)\n" +
+    "animation blue_anim = pulsating_animation(color=static_color(color=custom_blue), period=2s)\n" +
     "sequence blue_demo {\n" +
     "  play blue_anim for 1s\n" +
     "}\n" +
@@ -118,7 +118,7 @@ def test_dsl_runtime()
   var dsl2 = 
     "strip length 30\n" +
     "color custom_green = 0x00FF00\n" +
-    "animation green_anim = solid(custom_green)\n" +
+    "animation green_anim = pulsating_animation(color=static_color(color=custom_green), period=2s)\n" +
     "sequence green_demo {\n" +
     "  play green_anim for 1s\n" +
     "}\n" +
@@ -175,7 +175,7 @@ def test_dsl_file_operations()
   var test_filename = "/tmp/test_animation.dsl"
   var test_dsl_content = "strip length 20\n" +
     "color custom_purple = 0x800080\n" +
-    "animation purple_anim = solid(custom_purple)\n" +
+    "animation purple_anim = pulsating_animation(color=static_color(color=custom_purple), period=2s)\n" +
     "sequence file_test {\n" +
     "  play purple_anim for 2s\n" +
     "}\n" +
@@ -191,7 +191,7 @@ def test_dsl_file_operations()
       
       # Test file loading
       var strip = global.Leds(20)
-      var runtime = animation.create_dsl_runtime(strip, true)
+      var runtime = animation_dsl.create_runtime(strip, true)
       
       if runtime.load_dsl_file(test_filename)
         print("✓ DSL file loading successful")

@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Epdiy library from v1.0.0 to v2.0.0
 - ESP8266 platform update from 2025.07.00 to 2025.08.00 (#23801)
 - Support for ESP32-C5 (#23804)
+- Berry update of preview of animation framework
 
 ### Fixed
 - Syslog RFC5424 compliance (#23509)

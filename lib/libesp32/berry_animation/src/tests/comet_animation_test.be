@@ -1,5 +1,5 @@
 # Comet Animation Test Suite
-# Comprehensive tests for the CometAnimation class
+# Comprehensive tests for the CometAnimation class following parameterized class specification
 #
 # Command to run:
 #    ./berry -s -g -m lib/libesp32/berry_animation -e "import tasmota" lib/libesp32/berry_animation/tests/comet_animation_test.be
@@ -37,145 +37,208 @@ def assert_false(condition, message)
   assert_test(condition == false, message)
 end
 
+# Create LED strip and animation engine following specification
+var strip = global.Leds(30)  # Use global.Leds() for testing as per specification
+var engine = animation.animation_engine(strip)
+print("Created LED strip and animation engine")
+
 # Test 1: Basic Construction
 print("\n--- Test 1: Basic Construction ---")
 
-var comet = animation.comet_animation(0xFFFF0000, 5, 2560, 1, true, 179, 30, 10, 0, true, "test_comet")
+var comet = animation.comet_animation(engine)
 assert_not_nil(comet, "Comet animation should be created")
-assert_equals(comet.name, "test_comet", "Animation name should be set correctly")
-assert_equals(comet.priority, 10, "Priority should be set correctly")
-assert_equals(comet.tail_length, 5, "Tail length should be set correctly")
-assert_equals(comet.speed, 2560, "Speed should be set correctly")
-assert_equals(comet.direction, 1, "Direction should be set correctly")
-assert_true(comet.wrap_around, "Wrap around should be enabled")
-assert_equals(comet.fade_factor, 179, "Fade factor should be set correctly")
-assert_equals(comet.strip_length, 30, "Strip length should be set correctly")
+assert_equals(comet.engine, engine, "Animation should have correct engine reference")
 
-# Test 2: Factory Methods
-print("\n--- Test 2: Factory Methods ---")
+# Test default values
+assert_equals(comet.color, 0xFFFFFFFF, "Default color should be white")
+assert_equals(comet.tail_length, 5, "Default tail length should be 5")
+assert_equals(comet.speed, 2560, "Default speed should be 2560")
+assert_equals(comet.direction, 1, "Default direction should be 1 (forward)")
+assert_equals(comet.wrap_around, 1, "Default wrap around should be enabled")
+assert_equals(comet.fade_factor, 179, "Default fade factor should be 179")
 
-var solid_comet = animation.comet_animation.solid(0xFF00FF00, 8, 3840, 25, 5)
-assert_not_nil(solid_comet, "Solid comet should be created")
-assert_equals(solid_comet.tail_length, 8, "Solid comet tail length should be correct")
-print(f"Actual speed: {solid_comet.speed}")
-assert_equals(solid_comet.speed, solid_comet.speed, "Solid comet speed should be correct")
+# Test parameter assignment using virtual members
+comet.color = 0xFFFF0000
+comet.tail_length = 8
+comet.speed = 5120
+comet.direction = -1
+comet.wrap_around = 0
+comet.fade_factor = 150
+comet.priority = 15
+comet.name = "test_comet"
 
-var cycle_comet = animation.comet_animation.color_cycle([0xFFFF0000, 0xFF00FF00], 2000, 6, 3072, 20, 8)
-assert_not_nil(cycle_comet, "Color cycle comet should be created")
-assert_equals(cycle_comet.tail_length, 6, "Color cycle comet tail length should be correct")
+assert_equals(comet.color, 0xFFFF0000, "Color should be set correctly")
+assert_equals(comet.tail_length, 8, "Tail length should be set correctly")
+assert_equals(comet.speed, 5120, "Speed should be set correctly")
+assert_equals(comet.direction, -1, "Direction should be set correctly")
+assert_equals(comet.wrap_around, 0, "Wrap around should be disabled")
+assert_equals(comet.fade_factor, 150, "Fade factor should be set correctly")
+assert_equals(comet.priority, 15, "Priority should be set correctly")
+assert_equals(comet.name, "test_comet", "Name should be set correctly")
 
-var palette_comet = animation.comet_animation.rich_palette(animation.PALETTE_RAINBOW, 3000, 7, 2048, 30, 12)
-assert_not_nil(palette_comet, "Rich palette comet should be created")
-assert_equals(palette_comet.tail_length, 7, "Rich palette comet tail length should be correct")
+# Test 2: Multiple Comet Animations
+print("\n--- Test 2: Multiple Comet Animations ---")
+
+var comet2 = animation.comet_animation(engine)
+comet2.color = 0xFF00FF00
+comet2.tail_length = 8
+comet2.speed = 3840
+assert_not_nil(comet2, "Second comet should be created")
+assert_equals(comet2.tail_length, 8, "Second comet tail length should be correct")
+assert_equals(comet2.speed, 3840, "Second comet speed should be correct")
+
+var comet3 = animation.comet_animation(engine)
+comet3.color = 0xFF0000FF
+comet3.tail_length = 6
+comet3.speed = 3072
+assert_not_nil(comet3, "Third comet should be created")
+assert_equals(comet3.tail_length, 6, "Third comet tail length should be correct")
 
 # Test 3: Parameter Validation
 print("\n--- Test 3: Parameter Validation ---")
 
-# Valid parameters
-assert_true(comet.set_param("tail_length", 10), "Valid tail length should be accepted")
-assert_true(comet.set_param("speed", 1408), "Valid speed should be accepted")
-assert_true(comet.set_param("direction", -1), "Valid direction should be accepted")
-assert_true(comet.set_param("fade_factor", 128), "Valid fade factor should be accepted")
+# Valid parameters using virtual member assignment
+comet.tail_length = 10
+assert_equals(comet.tail_length, 10, "Valid tail length should be accepted")
 
-# Invalid parameters
-assert_false(comet.set_param("tail_length", 0), "Invalid tail length should be rejected")
-assert_false(comet.set_param("tail_length", 100), "Too large tail length should be rejected")
-assert_false(comet.set_param("speed", 0), "Invalid speed should be rejected")
-assert_false(comet.set_param("direction", 0), "Invalid direction should be rejected")
-assert_false(comet.set_param("fade_factor", -1), "Invalid fade factor should be rejected")
-assert_false(comet.set_param("fade_factor", 256), "Invalid fade factor should be rejected")
+comet.speed = 1408
+assert_equals(comet.speed, 1408, "Valid speed should be accepted")
 
-# Test 4: Animation Lifecycle
-print("\n--- Test 4: Animation Lifecycle ---")
+comet.direction = -1
+assert_equals(comet.direction, -1, "Valid direction should be accepted")
 
-assert_false(comet.is_running, "Animation should not be running initially")
+comet.fade_factor = 128
+assert_equals(comet.fade_factor, 128, "Valid fade factor should be accepted")
 
-comet.start()
-assert_true(comet.is_running, "Animation should be running after start")
+# Test parameter validation with invalid values
+try
+  comet.tail_length = 0  # Should fail validation (min is 1)
+  assert_test(false, "Should have failed validation for tail_length = 0")
+except "value_error"
+  assert_test(true, "Parameter validation correctly rejected tail_length = 0")
+end
 
-comet.stop()
-assert_false(comet.is_running, "Animation should not be running after stop")
+try
+  comet.tail_length = 100  # Should fail validation (max is 50)
+  assert_test(false, "Should have failed validation for tail_length = 100")
+except "value_error"
+  assert_test(true, "Parameter validation correctly rejected tail_length = 100")
+end
 
-comet.start()
-comet.pause()
-assert_false(comet.is_running, "Animation should not be running after pause")
+try
+  comet.direction = 0  # Should fail validation (enum is [-1, 1])
+  assert_test(false, "Should have failed validation for direction = 0")
+except "value_error"
+  assert_test(true, "Parameter validation correctly rejected direction = 0")
+end
 
-comet.resume()
-assert_true(comet.is_running, "Animation should be running after resume")
+try
+  comet.fade_factor = 300  # Should fail validation (max is 255)
+  assert_test(false, "Should have failed validation for fade_factor = 300")
+except "value_error"
+  assert_test(true, "Parameter validation correctly rejected fade_factor = 300")
+end
 
-# Test 5: Position Updates
-print("\n--- Test 5: Position Updates ---")
+# Test 4: Position Updates
+print("\n--- Test 4: Position Updates ---")
 
-# Reset comet for position testing
-var pos_comet = animation.comet_animation.solid(0xFFFFFFFF, 3, 2560, 30, 1)  # 10 pixels/sec (10 * 256)
+# Create comet for position testing
+var pos_comet = animation.comet_animation(engine)
+pos_comet.color = 0xFFFFFFFF
+pos_comet.tail_length = 3
+pos_comet.speed = 2560  # 10 pixels/sec (10 * 256)
 
-var start_time = 0
+# Use engine time for testing
+engine.time_ms = 1000
+var start_time = engine.time_ms
 pos_comet.start(start_time)
-var test_time = start_time + 1000  # 1 second later
 
-pos_comet.update(test_time)
+engine.time_ms = start_time + 1000  # 1 second later
+pos_comet.update(engine.time_ms)
+
 # After 1 second at 10 pixels/sec, should have moved ~10 pixels (10 * 256 = 2560 subpixels)
 var expected_pos = 2560  # 10 pixels in subpixels
 assert_test(pos_comet.head_position >= (expected_pos - 256) && pos_comet.head_position <= (expected_pos + 256), 
            f"Position should be around {expected_pos} subpixels after 1 second (actual: {pos_comet.head_position})")
 
-# Test 6: Direction Changes
-print("\n--- Test 6: Direction Changes ---")
+# Test 5: Direction Changes
+print("\n--- Test 5: Direction Changes ---")
 
-var dir_comet = animation.comet_animation.solid(0xFFFFFFFF, 3, 2560, 30, 1)  # 10 pixels/sec
-dir_comet.set_direction(-1)  # Backward
+var dir_comet = animation.comet_animation(engine)
+dir_comet.color = 0xFFFFFFFF
+dir_comet.tail_length = 3
+dir_comet.speed = 2560  # 10 pixels/sec
+dir_comet.direction = -1  # Backward
 
-start_time = 0
+engine.time_ms = 2000
+start_time = engine.time_ms
 dir_comet.start(start_time)
 dir_comet.update(start_time)
 var initial_pos = dir_comet.head_position
 
-test_time = start_time + 500  # 0.5 seconds later
-dir_comet.update(test_time)
+engine.time_ms = start_time + 500  # 0.5 seconds later
+dir_comet.update(engine.time_ms)
 # Should have moved backward (position should decrease)
 assert_test(dir_comet.head_position < initial_pos, 
            f"Position should decrease with backward direction (initial: {initial_pos}, current: {dir_comet.head_position})")
 
-# Test 7: Wrap Around vs Bounce
-print("\n--- Test 7: Wrap Around vs Bounce ---")
+# Test 6: Wrap Around vs Bounce
+print("\n--- Test 6: Wrap Around vs Bounce ---")
+
+# Create smaller strip for faster testing
+var small_strip = global.Leds(10)
+var small_engine = animation.animation_engine(small_strip)
 
 # Test wrap around
-var wrap_comet = animation.comet_animation.solid(0xFFFFFFFF, 3, 25600, 10, 1)  # Very fast (100 pixels/sec), small strip
-wrap_comet.set_wrap_around(true)
+var wrap_comet = animation.comet_animation(small_engine)
+wrap_comet.color = 0xFFFFFFFF
+wrap_comet.tail_length = 3
+wrap_comet.speed = 25600  # Very fast (100 pixels/sec)
+wrap_comet.wrap_around = 1  # Enable wrapping
 
-start_time = 0
+small_engine.time_ms = 3000
+start_time = small_engine.time_ms
 wrap_comet.start(start_time)
-test_time = start_time + 2000  # 2 seconds - should wrap multiple times
-wrap_comet.update(test_time)
+small_engine.time_ms = start_time + 2000  # 2 seconds - should wrap multiple times
+wrap_comet.update(small_engine.time_ms)
 var strip_length_subpixels = 10 * 256
 assert_test(wrap_comet.head_position >= 0 && wrap_comet.head_position < strip_length_subpixels, 
            f"Wrapped position should be within strip bounds (position: {wrap_comet.head_position})")
 
 # Test bounce
-var bounce_comet = animation.comet_animation.solid(0xFFFFFFFF, 3, 25600, 10, 1)  # Very fast
-bounce_comet.set_wrap_around(false)
+var bounce_comet = animation.comet_animation(small_engine)
+bounce_comet.color = 0xFFFFFFFF
+bounce_comet.tail_length = 3
+bounce_comet.speed = 25600  # Very fast
+bounce_comet.wrap_around = 0  # Disable wrapping (enable bouncing)
 
-start_time = 0
+small_engine.time_ms = 4000
+start_time = small_engine.time_ms
 bounce_comet.start(start_time)
-test_time = start_time + 200  # Should hit the end and bounce
-bounce_comet.update(test_time)
+small_engine.time_ms = start_time + 200  # Should hit the end and bounce
+bounce_comet.update(small_engine.time_ms)
 # Direction should have changed due to bouncing
 assert_test(bounce_comet.direction == -1, 
            f"Direction should change to -1 after bouncing (direction: {bounce_comet.direction})")
 
-# Test 8: Frame Buffer Rendering
-print("\n--- Test 8: Frame Buffer Rendering ---")
+# Test 7: Frame Buffer Rendering
+print("\n--- Test 7: Frame Buffer Rendering ---")
 
 var frame = animation.frame_buffer(10)
-var render_comet = animation.comet_animation.solid(0xFFFF0000, 3, 256, 10, 1)  # Red, slow (1 pixel/sec)
-render_comet.start(0)
+var render_comet = animation.comet_animation(small_engine)
+render_comet.color = 0xFFFF0000  # Red
+render_comet.tail_length = 3
+render_comet.speed = 256  # Slow (1 pixel/sec)
 
-# Update once to initialize the color
-render_comet.update(0)
+small_engine.time_ms = 5000
+render_comet.start(small_engine.time_ms)
+
+# Update once to initialize position
+render_comet.update(small_engine.time_ms)
 
 # Clear frame and render
 frame.clear()
-var rendered = render_comet.render(frame, tasmota.millis())
+var rendered = render_comet.render(frame, small_engine.time_ms)
 assert_true(rendered, "Render should return true when successful")
 
 # Check that pixels were set (comet should be at position 0 with tail)
@@ -191,43 +254,48 @@ var head_alpha = (head_color >> 24) & 0xFF
 var tail_alpha = (tail_color >> 24) & 0xFF
 assert_test(head_alpha > tail_alpha, f"Head should be less transparent than tail (head alpha: {head_alpha}, tail alpha: {tail_alpha})")
 
-# Test 9: Color Provider Integration
-print("\n--- Test 9: Color Provider Integration ---")
+# Test 8: Color Provider Integration
+print("\n--- Test 8: Color Provider Integration ---")
 
 # Test with solid color provider
-var solid_provider = animation.solid_color_provider(0xFF00FFFF)
-var provider_comet = animation.comet_animation(solid_provider, 4, 1280, 1, true, 153, 20, 5, 0, true, "provider_test")
+var solid_provider = animation.static_color(engine)
+solid_provider.color = 0xFF00FFFF
+var provider_comet = animation.comet_animation(engine)
+provider_comet.color = solid_provider
+provider_comet.tail_length = 4
+provider_comet.speed = 1280
+
 assert_not_nil(provider_comet, "Comet with color provider should be created")
 
-provider_comet.start(0)
-provider_comet.update(0)
-# Test that the color can be resolved properly
-var resolved_color = provider_comet.resolve_value(provider_comet.color, "color", 0)
+engine.time_ms = 6000
+provider_comet.start(engine.time_ms)
+provider_comet.update(engine.time_ms)
+
+# Test that the color can be resolved properly through virtual member access
+var resolved_color = provider_comet.color
 assert_test(resolved_color != 0, "Color should be resolved from provider")
 assert_equals(resolved_color, 0xFF00FFFF, "Resolved color should match provider color")
 
-# Test 10: Parameter Setters
-print("\n--- Test 10: Parameter Setters ---")
+# Test 9: Engine Integration
+print("\n--- Test 9: Engine Integration ---")
 
-var setter_comet = animation.comet_animation.solid(0xFFFFFFFF, 5, 2560, 30, 1)
+var engine_comet = animation.comet_animation(engine)
+engine_comet.color = 0xFFFFFFFF
+engine_comet.tail_length = 5
+engine_comet.speed = 2560
 
-setter_comet.set_tail_length(12)
-assert_equals(setter_comet.get_param("tail_length"), 12, "Tail length setter should work")
+# Test adding to engine
+engine.add_animation(engine_comet)
+assert_test(true, "Animation should be added to engine successfully")
 
-setter_comet.set_speed(6528)
-assert_equals(setter_comet.get_param("speed"), 6528, "Speed setter should work")
+# Test strip length from engine
+var strip_length = engine_comet.engine.get_strip_length()
+assert_equals(strip_length, 30, "Strip length should come from engine")
 
-setter_comet.set_direction(-1)
-assert_equals(setter_comet.get_param("direction"), -1, "Direction setter should work")
-
-setter_comet.set_wrap_around(false)
-assert_equals(setter_comet.get_param("wrap_around"), false, "Wrap around setter should work")
-
-setter_comet.set_fade_factor(230)
-assert_equals(setter_comet.get_param("fade_factor"), 230, "Fade factor setter should work")
-
-setter_comet.set_strip_length(50)
-assert_equals(setter_comet.get_param("strip_length"), 50, "Strip length setter should work")
+# Test engine time usage
+engine.time_ms = 7000
+engine_comet.start(engine.time_ms)
+assert_equals(engine_comet.start_time, 7000, "Animation should use engine time for start")
 
 # Test Results
 print(f"\n=== Test Results ===")

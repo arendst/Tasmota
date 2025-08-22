@@ -11,121 +11,74 @@
 
 # Waveform constants
 var SAWTOOTH = 1
+var LINEAR = 1
 var TRIANGLE = 2
 var SQUARE = 3
 var COSINE = 4
-var EASE_IN = 5
-var EASE_OUT = 6
-var ELASTIC = 7
-var BOUNCE = 8
+var SINE = 5
+var EASE_IN = 6
+var EASE_OUT = 7
+var ELASTIC = 8
+var BOUNCE = 9
 
 #@ solidify:OscillatorValueProvider,weak
 class OscillatorValueProvider : animation.value_provider
-  var a                 # starting value
-  var b                 # end value
-  var duration_ms       # duration of one complete cycle in ms
-  var form              # waveform type (1-4)
-  var phase             # 0..100% - phase shift, default 0
-  var duty_cycle        # 0..100% - duty cycle, default 50%
+  # Non-parameter instance variables only
   var origin            # origin time in ms for cycle calculation
   var value             # current calculated value
   
   # Static array for better solidification (moved from inline array)
-  static var form_names = ["", "SAWTOOTH", "TRIANGLE", "SQUARE", "COSINE", "EASE_IN", "EASE_OUT", "ELASTIC", "BOUNCE"]
+  static var form_names = ["", "SAWTOOTH", "TRIANGLE", "SQUARE", "COSINE", "SINE", "EASE_IN", "EASE_OUT", "ELASTIC", "BOUNCE"]
+  
+  # Parameter definitions for the oscillator
+  static var PARAMS = {
+    "min_value": {"default": 0},
+    "max_value": {"default": 100},
+    "duration": {"min": 1, "default": 1000},
+    "form": {"enum": [1, 2, 3, 4, 5, 6, 7, 8, 9], "default": 1},
+    "phase": {"min": 0, "max": 100, "default": 0},
+    "duty_cycle": {"min": 0, "max": 100, "default": 50}
+  }
   
   # Initialize a new OscillatorValueProvider
   #
-  # @param a: number - Starting value, defaults to 0 if nil
-  # @param b: number - End value, defaults to 100 if nil
-  # @param duration_ms: int - Duration of one complete cycle in milliseconds, defaults to 1000ms if nil
-  # @param form: int - Waveform type (1=SAWTOOTH, 2=TRIANGLE, 3=SQUARE, 4=COSINE), defaults to SAWTOOTH if nil
-  def init(a, b, duration_ms, form)
-    self.a = a != nil ? a : 0
-    self.b = b != nil ? b : 100
-    self.duration_ms = duration_ms != nil ? duration_ms : 1000
-    self.form = form != nil ? form : animation.SAWTOOTH
-    self.phase = 0
-    self.duty_cycle = 50
-    self.origin = tasmota.millis()  # Initialize with current time
-    self.value = self.a
+  # @param engine: AnimationEngine - Reference to the animation engine (required)
+  def init(engine)
+    super(self).init(engine)  # Initialize parameter system
+    
+    # Initialize non-parameter instance variables
+    self.origin = 0 # Will be set when `start` is called
+    self.value = 0  # Will be calculated on first produce_value call
   end
   
-  # Set phase shift (0-100%)
+  # Start/restart the oscillator at a specific time
   #
-  # @param phase: int - Phase shift percentage (0-100)
+  # @param time_ms: int - Time in milliseconds to set as origin (optional, uses engine time if nil)
   # @return self for method chaining
-  def set_phase(phase)
-    if phase < 0    phase = 0     end
-    if phase > 100  phase = 100   end
-    self.phase = phase
-    return self
-  end
-  
-  # Set duty cycle (0-100%)
-  #
-  # @param duty_cycle: int - Duty cycle percentage (0-100)
-  # @return self for method chaining
-  def set_duty_cycle(duty_cycle)
-    if duty_cycle < 0   duty_cycle = 0    end
-    if duty_cycle > 100 duty_cycle = 100  end
-    self.duty_cycle = duty_cycle
-    return self
-  end
-  
-  # Set starting value
-  #
-  # @param a: number - Starting value
-  # @return self for method chaining
-  def set_a(a)
-    self.a = a
-    return self
-  end
-  
-  # Set ending value
-  #
-  # @param b: number - Ending value
-  # @return self for method chaining
-  def set_b(b)
-    self.b = b
-    return self
-  end
-  
-  # Set waveform type
-  #
-  # @param form: int - Waveform type (1-4)
-  # @return self for method chaining
-  def set_form(form)
-    if form == nil    form = animation.SAWTOOTH    end
-    self.form = form
-    return self
-  end
-  
-  # Set cycle duration
-  #
-  # @param duration_ms: int - Duration in milliseconds
-  # @return self for method chaining
-  def set_duration_ms(duration_ms)
-    if duration_ms != nil && duration_ms > 0
-      self.duration_ms = duration_ms
+  def start(time_ms)
+    if time_ms == nil
+      time_ms = self.engine.time_ms
     end
+    self.origin = time_ms
     return self
   end
-  
-  # Reset the oscillator origin to current time
+
+  # Produce oscillator value for any parameter name
   #
-  # @return self for method chaining
-  def reset()
-    self.origin = tasmota.millis()
-    return self
-  end
-  
-  # Calculate oscillator value based on time
-  #
+  # @param name: string - Parameter name being requested (ignored)
   # @param time_ms: int - Current time in milliseconds
   # @return number - Calculated oscillator value
-  def get_value(time_ms)
-    if self.duration_ms == nil || self.duration_ms <= 0
-      return self.a
+  def produce_value(name, time_ms)
+    # Get parameter values using virtual member access
+    var duration = self.duration
+    var min_value = self.min_value
+    var max_value = self.max_value
+    var form = self.form
+    var phase = self.phase
+    var duty_cycle = self.duty_cycle
+    
+    if duration == nil || duration <= 0
+      return min_value
     end
     
     # Calculate elapsed time since origin
@@ -134,65 +87,67 @@ class OscillatorValueProvider : animation.value_provider
       past = 0
     end
     
-    var duration_ms = self.duration_ms
-    var duration_ms_mid = tasmota.scale_uint(self.duty_cycle, 0, 100, 0, duration_ms)
+    var duration_ms_mid = tasmota.scale_uint(duty_cycle, 0, 100, 0, duration)
     
     # Handle cycle wrapping
-    if past >= duration_ms
-      var cycles = past / duration_ms
-      self.origin += cycles * duration_ms
-      past = past % duration_ms
+    if past >= duration
+      var cycles = past / duration
+      self.origin += cycles * duration
+      past = past % duration
     end
     
-    var a = self.a
-    var b = self.b
     var past_with_phase = past
     
     # Apply phase shift
-    if self.phase > 0
-      past_with_phase += tasmota.scale_uint(self.phase, 0, 100, 0, duration_ms)
-      if past_with_phase >= duration_ms
-        past_with_phase -= duration_ms
+    if phase > 0
+      past_with_phase += tasmota.scale_uint(phase, 0, 100, 0, duration)
+      if past_with_phase >= duration
+        past_with_phase -= duration
       end
     end
     
     # Calculate value based on waveform
-    if self.form == animation.SAWTOOTH
-      self.value = tasmota.scale_uint(past_with_phase, 0, duration_ms - 1, a, b)
-    elif self.form == animation.TRIANGLE
+    if form == animation.SAWTOOTH
+      self.value = tasmota.scale_uint(past_with_phase, 0, duration - 1, min_value, max_value)
+    elif form == animation.TRIANGLE
       if past_with_phase < duration_ms_mid
-        self.value = tasmota.scale_uint(past_with_phase, 0, duration_ms_mid - 1, a, b)
+        self.value = tasmota.scale_uint(past_with_phase, 0, duration_ms_mid - 1, min_value, max_value)
       else
-        self.value = tasmota.scale_uint(past_with_phase, duration_ms_mid, duration_ms - 1, b, a)
+        self.value = tasmota.scale_uint(past_with_phase, duration_ms_mid, duration - 1, max_value, min_value)
       end
-    elif self.form == animation.SQUARE
+    elif form == animation.SQUARE
       if past_with_phase < duration_ms_mid
-        self.value = a
+        self.value = min_value
       else
-        self.value = b
+        self.value = max_value
       end
-    elif self.form == animation.COSINE
+    elif form == animation.COSINE
       # Map timing to 0..32767 for sine calculation
-      var angle = tasmota.scale_uint(past_with_phase, 0, duration_ms - 1, 0, 32767)
+      var angle = tasmota.scale_uint(past_with_phase, 0, duration - 1, 0, 32767)
       var x = tasmota.sine_int(angle - 8192)   # -4096 .. 4096, dephase from cosine to sine
-      self.value = tasmota.scale_uint(x, -4096, 4096, a, b)
-    elif self.form == animation.EASE_IN
+      self.value = tasmota.scale_uint(x, -4096, 4096, min_value, max_value)
+    elif form == animation.SINE
+      # Map timing to 0..32767 for sine calculation
+      var angle = tasmota.scale_uint(past_with_phase, 0, duration - 1, 0, 32767)
+      var x = tasmota.sine_int(angle)   # -4096 .. 4096, pure sine wave
+      self.value = tasmota.scale_uint(x, -4096, 4096, min_value, max_value)
+    elif form == animation.EASE_IN
       # Quadratic ease-in: starts slow, accelerates
-      var t = tasmota.scale_uint(past_with_phase, 0, duration_ms - 1, 0, 255)  # 0..255
+      var t = tasmota.scale_uint(past_with_phase, 0, duration - 1, 0, 255)  # 0..255
       var eased = (t * t) / 255  # t^2 scaled back to 0..255
-      self.value = tasmota.scale_uint(eased, 0, 255, a, b)
-    elif self.form == animation.EASE_OUT
+      self.value = tasmota.scale_uint(eased, 0, 255, min_value, max_value)
+    elif form == animation.EASE_OUT
       # Quadratic ease-out: starts fast, decelerates
-      var t = tasmota.scale_uint(past_with_phase, 0, duration_ms - 1, 0, 255)  # 0..255
+      var t = tasmota.scale_uint(past_with_phase, 0, duration - 1, 0, 255)  # 0..255
       var eased = 255 - ((255 - t) * (255 - t)) / 255  # 1 - (1-t)^2 scaled to 0..255
-      self.value = tasmota.scale_uint(eased, 0, 255, a, b)
-    elif self.form == animation.ELASTIC
+      self.value = tasmota.scale_uint(eased, 0, 255, min_value, max_value)
+    elif form == animation.ELASTIC
       # Elastic easing: overshoots and oscillates like a spring
-      var t = tasmota.scale_uint(past_with_phase, 0, duration_ms - 1, 0, 255)  # 0..255
+      var t = tasmota.scale_uint(past_with_phase, 0, duration - 1, 0, 255)  # 0..255
       if t == 0
-        self.value = a
+        self.value = min_value
       elif t == 255
-        self.value = b
+        self.value = max_value
       else
         # Elastic formula: -2^(10*(t-1)) * sin((t-1-s)*2*pi/p) where s=p/4, p=0.3
         # Simplified for integer math: amplitude decreases exponentially, frequency is high
@@ -200,17 +155,17 @@ class OscillatorValueProvider : animation.value_provider
         var freq_angle = tasmota.scale_uint(t, 0, 255, 0, 32767 * 6)  # High frequency oscillation
         var oscillation = tasmota.sine_int(freq_angle % 32767)  # -4096 to 4096
         var elastic_offset = (oscillation * decay) / 4096  # Scale oscillation by decay
-        var base_progress = tasmota.scale_uint(t, 0, 255, 0, b - a)
-        self.value = a + base_progress + elastic_offset
+        var base_progress = tasmota.scale_uint(t, 0, 255, 0, max_value - min_value)
+        self.value = min_value + base_progress + elastic_offset
         # Clamp to reasonable bounds to prevent extreme overshoots
-        var value_range = b - a
+        var value_range = max_value - min_value
         var max_overshoot = value_range / 4  # Allow 25% overshoot
-        if self.value > b + max_overshoot  self.value = b + max_overshoot  end
-        if self.value < a - max_overshoot  self.value = a - max_overshoot  end
+        if self.value > max_value + max_overshoot  self.value = max_value + max_overshoot  end
+        if self.value < min_value - max_overshoot  self.value = min_value - max_overshoot  end
       end
-    elif self.form == animation.BOUNCE
+    elif form == animation.BOUNCE
       # Bounce easing: like a ball bouncing with decreasing amplitude
-      var t = tasmota.scale_uint(past_with_phase, 0, duration_ms - 1, 0, 255)  # 0..255
+      var t = tasmota.scale_uint(past_with_phase, 0, duration - 1, 0, 255)  # 0..255
       var bounced_t = 0
       
       # Simplified bounce with 3 segments for better behavior
@@ -227,26 +182,18 @@ class OscillatorValueProvider : animation.value_provider
         bounced_t = 255 - ((255 - bounce_val) * 64) / 255  # Settle towards full value
       end
       
-      self.value = tasmota.scale_uint(bounced_t, 0, 255, a, b)
+      self.value = tasmota.scale_uint(bounced_t, 0, 255, min_value, max_value)
     end
     
     return self.value
   end
   
-  # Update internal state (calculates current value)
-  #
-  # @param time_ms: int - Current time in milliseconds
-  # @return bool - True if value changed, false otherwise
-  def update(time_ms)
-    var old_value = self.value
-    self.get_value(time_ms)
-    return self.value != old_value
-  end
+
   
   # String representation of the provider
   def tostring()
-    var form_name = self.form >= 1 && self.form <= 8 ? self.form_names[self.form] : "UNKNOWN"
-    return f"OscillatorValueProvider(a={self.a}, b={self.b}, duration={self.duration_ms}ms, form={form_name})"
+    var form_name = self.form >= 1 && self.form <= 9 ? self.form_names[self.form] : "UNKNOWN"
+    return f"OscillatorValueProvider(min_value={self.min_value}, max_value={self.max_value}, duration={self.duration}ms, form={form_name})"
   end
 end
 
@@ -257,107 +204,112 @@ end
 
 # Create a ramp (same as oscillator, for semantic clarity)
 #
-# @param a: number - Starting value
-# @param b: number - End value
-# @param duration_ms: int - Ramp duration in milliseconds
+# @param engine: AnimationEngine - Animation engine reference
 # @return OscillatorValueProvider - New ramp instance
-def ramp(a, b, duration_ms)
-  return animation.oscillator_value_provider(a, b, duration_ms, animation.SAWTOOTH)
+def ramp(engine)
+  var osc = animation.oscillator_value(engine)
+  osc.form = animation.SAWTOOTH
+  return osc
 end
 
 # Create a linear oscillator (triangle wave)
 #
-# @param a: number - Starting value
-# @param b: number - End value
-# @param duration_ms: int - Cycle duration in milliseconds
+# @param engine: AnimationEngine - Animation engine reference
 # @return OscillatorValueProvider - New linear oscillator instance
-def linear(a, b, duration_ms)
-  return animation.oscillator_value_provider(a, b, duration_ms, animation.TRIANGLE)
+def linear(engine)
+  var osc = animation.oscillator_value(engine)
+  osc.form = animation.TRIANGLE
+  return osc
 end
 
 # Create a smooth oscillator (cosine wave)
 #
-# @param a: number - Starting value
-# @param b: number - End value
-# @param duration_ms: int - Cycle duration in milliseconds
+# @param engine: AnimationEngine - Animation engine reference
 # @return OscillatorValueProvider - New smooth oscillator instance
-def smooth(a, b, duration_ms)
-  return animation.oscillator_value_provider(a, b, duration_ms, animation.COSINE)
+def smooth(engine)
+  var osc = animation.oscillator_value(engine)
+  osc.form = animation.COSINE
+  return osc
+end
+
+# Create a sine wave oscillator
+#
+# @param engine: AnimationEngine - Animation engine reference
+# @return OscillatorValueProvider - New sine wave instance
+def sine(engine)
+  var osc = animation.oscillator_value(engine)
+  osc.form = animation.SINE
+  return osc
 end
 
 # Create a square wave oscillator
 #
-# @param a: number - Starting value
-# @param b: number - End value
-# @param duration_ms: int - Cycle duration in milliseconds
-# @param duty_cycle: int - Duty cycle percentage (optional, default 50)
+# @param engine: AnimationEngine - Animation engine reference
 # @return OscillatorValueProvider - New square wave instance
-def square(a, b, duration_ms, duty_cycle)
-  var osc = animation.oscillator_value_provider(a, b, duration_ms, animation.SQUARE)
-  if duty_cycle != nil
-    osc.set_duty_cycle(duty_cycle)
-  end
+def square(engine)
+  var osc = animation.oscillator_value(engine)
+  osc.form = animation.SQUARE
   return osc
 end
 
 # Create an ease-in oscillator (quadratic acceleration)
 #
-# @param a: number - Starting value
-# @param b: number - End value
-# @param duration_ms: int - Cycle duration in milliseconds
+# @param engine: AnimationEngine - Animation engine reference
 # @return OscillatorValueProvider - New ease-in instance
-def ease_in(a, b, duration_ms)
-  return animation.oscillator_value_provider(a, b, duration_ms, animation.EASE_IN)
+def ease_in(engine)
+  var osc = animation.oscillator_value(engine)
+  osc.form = animation.EASE_IN
+  return osc
 end
 
 # Create an ease-out oscillator (quadratic deceleration)
 #
-# @param a: number - Starting value
-# @param b: number - End value
-# @param duration_ms: int - Cycle duration in milliseconds
+# @param engine: AnimationEngine - Animation engine reference
 # @return OscillatorValueProvider - New ease-out instance
-def ease_out(a, b, duration_ms)
-  return animation.oscillator_value_provider(a, b, duration_ms, animation.EASE_OUT)
+def ease_out(engine)
+  var osc = animation.oscillator_value(engine)
+  osc.form = animation.EASE_OUT
+  return osc
 end
 
 # Create an elastic oscillator (spring-like overshoot and oscillation)
 #
-# @param a: number - Starting value
-# @param b: number - End value
-# @param duration_ms: int - Cycle duration in milliseconds
+# @param engine: AnimationEngine - Animation engine reference
 # @return OscillatorValueProvider - New elastic instance
-def elastic(a, b, duration_ms)
-  return animation.oscillator_value_provider(a, b, duration_ms, animation.ELASTIC)
+def elastic(engine)
+  var osc = animation.oscillator_value(engine)
+  osc.form = animation.ELASTIC
+  return osc
 end
 
 # Create a bounce oscillator (ball-like bouncing with decreasing amplitude)
 #
-# @param a: number - Starting value
-# @param b: number - End value
-# @param duration_ms: int - Cycle duration in milliseconds
+# @param engine: AnimationEngine - Animation engine reference
 # @return OscillatorValueProvider - New bounce instance
-def bounce(a, b, duration_ms)
-  return animation.oscillator_value_provider(a, b, duration_ms, animation.BOUNCE)
+def bounce(engine)
+  var osc = animation.oscillator_value(engine)
+  osc.form = animation.BOUNCE
+  return osc
 end
 
-# Create a sawtooth oscillator (alias for ramp - linear progression from a to b)
+# Create a sawtooth oscillator (alias for ramp - linear progression from min_value to max_value)
 #
-# @param a: number - Starting value
-# @param b: number - End value
-# @param duration_ms: int - Cycle duration in milliseconds
+# @param engine: AnimationEngine - Animation engine reference
 # @return OscillatorValueProvider - New sawtooth instance
-def sawtooth(a, b, duration_ms)
-  return animation.oscillator_value_provider(a, b, duration_ms, animation.SAWTOOTH)
+def sawtooth(engine)
+  var osc = animation.oscillator_value(engine)
+  osc.form = animation.SAWTOOTH
+  return osc
 end
 
-# Create a triangle oscillator (alias for linear - triangle wave from a to b and back)
+# Create a triangle oscillator (alias for linear - triangle wave from min_value to max_value and back)
 #
-# @param a: number - Starting value
-# @param b: number - End value
-# @param duration_ms: int - Cycle duration in milliseconds
+# @param engine: AnimationEngine - Animation engine reference
 # @return OscillatorValueProvider - New triangle instance
-def triangle(a, b, duration_ms)
-  return animation.oscillator_value_provider(a, b, duration_ms, animation.TRIANGLE)
+def triangle(engine)
+  var osc = animation.oscillator_value(engine)
+  osc.form = animation.TRIANGLE
+  return osc
 end
 
 return {'ramp': ramp,
@@ -365,17 +317,20 @@ return {'ramp': ramp,
         'linear': linear,
         'triangle': triangle,
         'smooth': smooth,
+        'sine': sine,
         'square': square,
         'ease_in': ease_in,
         'ease_out': ease_out,
         'elastic': elastic,
         'bounce': bounce,
         'SAWTOOTH': SAWTOOTH,
+        'LINEAR': LINEAR,
         'TRIANGLE': TRIANGLE,
         'SQUARE': SQUARE,
         'COSINE': COSINE,
+        'SINE': SINE,
         'EASE_IN': EASE_IN,
         'EASE_OUT': EASE_OUT,
         'ELASTIC': ELASTIC,
         'BOUNCE': BOUNCE,
-        'oscillator_value_provider': OscillatorValueProvider}
+        'oscillator_value': OscillatorValueProvider}

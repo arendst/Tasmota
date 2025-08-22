@@ -6,6 +6,7 @@
 #    ./berry -s -g -m lib/libesp32/berry_animation -e "import tasmota" lib/libesp32/berry_animation/tests/symbol_registry_test.be
 
 import animation
+import animation_dsl
 import string
 
 # Test basic symbol registration (simplified transpiler approach)
@@ -13,12 +14,12 @@ def test_basic_symbol_registration()
   print("Testing basic symbol registration...")
   
   var dsl_source = "color custom_red = 0xFF0000\n" +
-    "pattern solid_red = solid(custom_red)\n" +
+    "animation solid_red = solid(color=custom_red)\n" +
     "animation red_anim = solid_red"
   
-  var lexer = animation.DSLLexer(dsl_source)
+  var lexer = animation_dsl.DSLLexer(dsl_source)
   var tokens = lexer.tokenize()
-  var transpiler = animation.SimpleDSLTranspiler(tokens)
+  var transpiler = animation_dsl.SimpleDSLTranspiler(tokens)
   
   # Process the DSL
   var berry_code = transpiler.transpile()
@@ -28,8 +29,9 @@ def test_basic_symbol_registration()
   
   # Check that definitions appear in generated code (with underscore suffix)
   assert(string.find(berry_code, "var custom_red_ = 0xFFFF0000") >= 0, "Should generate color definition")
-  assert(string.find(berry_code, "var solid_red_") >= 0, "Should generate pattern definition")
-  assert(string.find(berry_code, "var red_anim_") >= 0, "Should generate animation definition")
+  assert(string.find(berry_code, "var solid_red_ = animation.solid(engine)") >= 0, "Should generate animation definition")
+  assert(string.find(berry_code, "solid_red_.color = animation.global('custom_red_', 'custom_red')") >= 0, "Should set color parameter")
+  assert(string.find(berry_code, "var red_anim_") >= 0, "Should generate animation reference")
   
   print("✓ Basic symbol registration test passed")
   return true
@@ -39,13 +41,13 @@ end
 def test_forward_reference_resolution()
   print("Testing forward reference resolution...")
   
-  # DSL with forward reference: pattern uses color defined later
-  var dsl_source = "pattern fire_pattern = solid(custom_red)\n" +
+  # DSL with forward reference: animation uses color defined later
+  var dsl_source = "animation fire_pattern = solid(color=custom_red)\n" +
     "color custom_red = 0xFF0000"
   
-  var lexer = animation.DSLLexer(dsl_source)
+  var lexer = animation_dsl.DSLLexer(dsl_source)
   var tokens = lexer.tokenize()
-  var transpiler = animation.SimpleDSLTranspiler(tokens)
+  var transpiler = animation_dsl.SimpleDSLTranspiler(tokens)
   
   var berry_code = transpiler.transpile()
   
@@ -55,7 +57,8 @@ def test_forward_reference_resolution()
   
   # Check generated code contains both definitions (with underscore suffix)
   assert(string.find(berry_code, "var custom_red_ = 0xFFFF0000") >= 0, "Should define custom_red color")
-  assert(string.find(berry_code, "var fire_pattern_") >= 0, "Should define fire pattern")
+  assert(string.find(berry_code, "var fire_pattern_ = animation.solid(engine)") >= 0, "Should define fire animation")
+  assert(string.find(berry_code, "fire_pattern_.color = animation.global('custom_red_', 'custom_red')") >= 0, "Should reference custom_red")
   
   print("✓ Forward reference resolution test passed")
   return true
@@ -66,11 +69,11 @@ def test_undefined_reference_handling()
   print("Testing undefined reference handling...")
   
   # DSL with undefined reference
-  var dsl_source = "pattern test_pattern = solid(undefined_color)"
+  var dsl_source = "animation test_pattern = solid(color=undefined_color)"
   
-  var lexer = animation.DSLLexer(dsl_source)
+  var lexer = animation_dsl.DSLLexer(dsl_source)
   var tokens = lexer.tokenize()
-  var transpiler = animation.SimpleDSLTranspiler(tokens)
+  var transpiler = animation_dsl.SimpleDSLTranspiler(tokens)
   
   var berry_code = transpiler.transpile()
   
@@ -102,12 +105,12 @@ def test_builtin_reference_handling()
   print("Testing built-in reference handling...")
   
   # DSL using built-in color names and animation functions
-  var dsl_source = "pattern red_pattern = solid(red)\n" +
-    "animation pulse_anim = pulse(red_pattern, 2s)"
+  var dsl_source = "animation red_pattern = solid(color=red)\n" +
+    "animation pulse_anim = pulsating_animation(color=red, period=2000)"
   
-  var lexer = animation.DSLLexer(dsl_source)
+  var lexer = animation_dsl.DSLLexer(dsl_source)
   var tokens = lexer.tokenize()
-  var transpiler = animation.SimpleDSLTranspiler(tokens)
+  var transpiler = animation_dsl.SimpleDSLTranspiler(tokens)
   
   var berry_code = transpiler.transpile()
   
@@ -116,8 +119,8 @@ def test_builtin_reference_handling()
   assert(!transpiler.has_errors(), "Should handle built-in references without errors")
   
   # Check generated code
-  assert(string.find(berry_code, "animation.solid(0xFFFF0000)") >= 0, "Should use built-in red color")
-  assert(string.find(berry_code, "animation.pulse") >= 0, "Should use built-in pulse function")
+  assert(string.find(berry_code, "red_pattern_.color = 0xFFFF0000") >= 0, "Should use built-in red color")
+  assert(string.find(berry_code, "animation.pulsating_animation(engine)") >= 0, "Should use built-in pulsating_animation function")
   
   print("✓ Built-in reference handling test passed")
   return true
@@ -129,9 +132,9 @@ def test_definition_generation()
   
   var dsl_source = "color custom_blue = 0x0000FF"
   
-  var lexer = animation.DSLLexer(dsl_source)
+  var lexer = animation_dsl.DSLLexer(dsl_source)
   var tokens = lexer.tokenize()
-  var transpiler = animation.SimpleDSLTranspiler(tokens)
+  var transpiler = animation_dsl.SimpleDSLTranspiler(tokens)
   
   var berry_code = transpiler.transpile()
   
@@ -152,17 +155,17 @@ def test_complex_forward_references()
   print("Testing complex forward references...")
   
   # Complex DSL with multiple forward references
-  var dsl_source = "animation complex_anim = pulse(gradient_pattern, 3s)\n" +
-    "pattern gradient_pattern = solid(primary_color)\n" +
+  var dsl_source = "animation complex_anim = pulsating_animation(color=primary_color, period=3000)\n" +
+    "animation gradient_pattern = solid(color=primary_color)\n" +
     "color primary_color = 0xFF8000\n" +
     "sequence demo {\n" +
     "  play complex_anim for 5s\n" +
     "}\n" +
     "run demo"
   
-  var lexer = animation.DSLLexer(dsl_source)
+  var lexer = animation_dsl.DSLLexer(dsl_source)
   var tokens = lexer.tokenize()
-  var transpiler = animation.SimpleDSLTranspiler(tokens)
+  var transpiler = animation_dsl.SimpleDSLTranspiler(tokens)
   
   var berry_code = transpiler.transpile()
   

@@ -4,6 +4,7 @@
 import string
 import introspect
 import animation
+import animation_dsl
 
 # Test counter for tracking test results
 var test_count = 0
@@ -131,7 +132,7 @@ def test_dsl_event_compilation()
     "on button_press: solid(custom_red)\n"
     "run solid(custom_red)"
   
-  var compiled_code = animation.compile_dsl(dsl_code)
+  var compiled_code = animation_dsl.compile(dsl_code)
   
   # Check that compiled code contains event handler registration
   return compiled_code != nil &&
@@ -147,7 +148,7 @@ def test_dsl_event_with_parameters()
     "on timer(5s): solid(custom_blue)\n"
     "run solid(custom_blue)"
   
-  var compiled_code = animation.compile_dsl(dsl_code)
+  var compiled_code = animation_dsl.compile(dsl_code)
   
   # Check that compiled code contains timer parameters
   return compiled_code != nil &&

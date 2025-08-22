@@ -28,7 +28,7 @@ class DSLRuntime
     end
     
     try
-      var berry_code = animation.compile_dsl(source_code)
+      var berry_code = animation_dsl.compile(source_code)
       # Execute the compiled Berry code
       return self.execute_berry_code(berry_code, source_code)
     except "dsl_compilation_error" as e, msg
@@ -100,7 +100,7 @@ class DSLRuntime
     
     # Generate code with exception handling
     try
-      return animation.compile_dsl(source_code)
+      return animation_dsl.compile(source_code)
     except "dsl_compilation_error" as e, msg
       if self.debug_mode
         print("DSL: Code generation failed - " + msg)
@@ -166,7 +166,7 @@ end
 # Factory function for easy creation
 def create_dsl_runtime(strip, debug_mode)
   var engine = animation.create_engine(strip)
-  return animation.DSLRuntime(engine, debug_mode)
+  return animation_dsl.DSLRuntime(engine, debug_mode)
 end
 
 # Return module exports

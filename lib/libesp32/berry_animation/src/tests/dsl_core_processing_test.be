@@ -6,6 +6,7 @@
 
 import tasmota
 import animation
+import animation_dsl
 import string
 
 # Test basic color processing
@@ -23,7 +24,7 @@ def test_color_processing()
     var dsl_input = test[0]
     var expected_output = test[1]
     
-    var berry_code = animation.compile_dsl(dsl_input)
+    var berry_code = animation_dsl.compile(dsl_input)
     assert(berry_code != nil, "Should compile color: " + dsl_input)
     assert(string.find(berry_code, expected_output) >= 0, "Should contain: " + expected_output)
   end
@@ -39,7 +40,7 @@ def test_color_processing()
     var dsl_input = test[0]
     var expected_output = test[1]
     
-    var berry_code = animation.compile_dsl(dsl_input)
+    var berry_code = animation_dsl.compile(dsl_input)
     assert(berry_code != nil, "Should compile named color: " + dsl_input)
     assert(string.find(berry_code, expected_output) >= 0, "Should contain: " + expected_output)
   end
@@ -48,29 +49,29 @@ def test_color_processing()
   return true
 end
 
-# Test basic pattern processing
-def test_pattern_processing()
-  print("Testing pattern processing...")
+# Test basic animation processing with named arguments
+def test_animation_with_named_args()
+  print("Testing animation processing with named arguments...")
   
-  # Test solid patterns
-  var pattern_tests = [
+  # Test animations with named arguments
+  var animation_tests = [
     ["color red_alt = 0xFF0100\n"
-     "pattern solid_red = solid(red_alt)",
-     "var solid_red_ = animation.solid(animation.global('red_alt_', 'red_alt'))"],
-    ["pattern solid_blue = solid(blue)",
-     "var solid_blue_ = animation.solid(0xFF0000FF)"]
-  ]
+     "animation solid_red = solid(color=red_alt)",
+     "var solid_red_ = animation.solid(engine)\nsolid_red_.color = animation.global('red_alt_', 'red_alt')"],
+    ["animation solid_blue = solid(color=blue)",
+    "var solid_blue_ = animation.solid(engine)\nsolid_blue_.color = 0xFF0000FF"]
+    ]
   
-  for test : pattern_tests
+  for test : animation_tests
     var dsl_input = test[0]
     var expected_output = test[1]
     
-    var berry_code = animation.compile_dsl(dsl_input)
-    assert(berry_code != nil, "Should compile pattern: " + dsl_input)
+    var berry_code = animation_dsl.compile(dsl_input)
+    assert(berry_code != nil, "Should compile animation: " + dsl_input)
     assert(string.find(berry_code, expected_output) >= 0, "Should contain: " + expected_output)
   end
   
-  print("✓ Pattern processing test passed")
+  print("✓ Animation processing with named arguments test passed")
   return true
 end
 
@@ -91,55 +92,39 @@ def test_animation_processing()
     var dsl_input = test[0]
     var expected_output = test[1]
     
-    var berry_code = animation.compile_dsl(dsl_input)
+    var berry_code = animation_dsl.compile(dsl_input)
     assert(berry_code != nil, "Should compile color animation: " + dsl_input)
     assert(string.find(berry_code, expected_output) >= 0, "Should contain: " + expected_output)
   end
   
-  # Test pattern to animation
-  var pattern_anim_tests = [
-    ["pattern solid_red = solid(red)\n"
+  # Test animation to animation reference
+  var anim_ref_tests = [
+    ["animation solid_red = solid(color=red)\n"
      "animation red_anim = solid_red", 
      "var red_anim_ = animation.global('solid_red_', 'solid_red')"]
   ]
   
-  for test : pattern_anim_tests
+  for test : anim_ref_tests
     var dsl_input = test[0]
     var expected_output = test[1]
     
-    var berry_code = animation.compile_dsl(dsl_input)
-    assert(berry_code != nil, "Should compile pattern animation: " + dsl_input)
+    var berry_code = animation_dsl.compile(dsl_input)
+    assert(berry_code != nil, "Should compile animation reference: " + dsl_input)
     assert(string.find(berry_code, expected_output) >= 0, "Should contain: " + expected_output)
   end
   
-  # Test solid() as animation
-  var solid_anim_tests = [
-    ["pattern solid_red = solid(red)\n"
-     "animation red_anim = solid_red",
-     "var red_anim_ = animation.global('solid_red_', 'solid_red')"]
-  ]
-  
-  for test : solid_anim_tests
-    var dsl_input = test[0]
-    var expected_output = test[1]
-    
-    var berry_code = animation.compile_dsl(dsl_input)
-    assert(berry_code != nil, "Should compile solid animation: " + dsl_input)
-    assert(string.find(berry_code, expected_output) >= 0, "Should contain: " + expected_output)
-  end
-  
-  # Test pulse animations
+  # Test pulse animations with named arguments
   var pulse_tests = [
-    ["pattern solid_red = solid(red)\n"
-     "animation pulse_red = pulse_animation(solid_red, 2s)",
-     "var pulse_red_ = animation.pulse_animation(animation.global('solid_red_', 'solid_red'), 2000)"]
+    ["animation solid_red = solid(color=red)\n"
+     "animation pulse_red = pulsating_animation(color=red, period=2000)",
+     "var pulse_red_ = animation.pulsating_animation(engine)\npulse_red_.color = 0xFFFF0000\npulse_red_.period = 2000"]
   ]
   
   for test : pulse_tests
     var dsl_input = test[0]
     var expected_output = test[1]
     
-    var berry_code = animation.compile_dsl(dsl_input)
+    var berry_code = animation_dsl.compile(dsl_input)
     # print("Generated Berry code:")
     # print("==================================================")
     # print(berry_code)
@@ -166,7 +151,7 @@ def test_strip_configuration()
     var dsl_input = test[0]
     var expected_output = test[1]
     
-    var berry_code = animation.compile_dsl(dsl_input)
+    var berry_code = animation_dsl.compile(dsl_input)
     assert(berry_code != nil, "Should compile strip config: " + dsl_input)
     assert(string.find(berry_code, expected_output) >= 0, "Should contain: " + expected_output)
   end
@@ -190,7 +175,7 @@ def test_variable_assignments()
     var dsl_input = test[0]
     var expected_output = test[1]
     
-    var berry_code = animation.compile_dsl(dsl_input)
+    var berry_code = animation_dsl.compile(dsl_input)
     assert(berry_code != nil, "Should compile variable: " + dsl_input)
     assert(string.find(berry_code, expected_output) >= 0, "Should contain: " + expected_output)
   end
@@ -211,7 +196,7 @@ def test_sequence_processing()
     "}\n" +
     "run demo"
   
-  var berry_code = animation.compile_dsl(basic_seq_dsl)
+  var berry_code = animation_dsl.compile(basic_seq_dsl)
 
   assert(berry_code != nil, "Should compile basic sequence")
   assert(string.find(berry_code, "def sequence_demo()") >= 0, "Should define sequence function")
@@ -231,7 +216,7 @@ def test_sequence_processing()
     "}\n" +
     "run test"
   
-  berry_code = animation.compile_dsl(repeat_seq_dsl)
+  berry_code = animation_dsl.compile(repeat_seq_dsl)
   
   # print("Generated Berry code:")
   # print("==================================================")
@@ -261,7 +246,7 @@ def test_value_conversions()
     var dsl_input = test[0]
     var expected_output = test[1]
     
-    var berry_code = animation.compile_dsl(dsl_input)
+    var berry_code = animation_dsl.compile(dsl_input)
     assert(berry_code != nil, "Should compile time value: " + dsl_input)
     assert(string.find(berry_code, expected_output) >= 0, "Should contain: " + expected_output)
   end
@@ -278,7 +263,7 @@ def test_value_conversions()
     var dsl_input = test[0]
     var expected_output = test[1]
     
-    var berry_code = animation.compile_dsl(dsl_input)
+    var berry_code = animation_dsl.compile(dsl_input)
     assert(berry_code != nil, "Should compile percentage: " + dsl_input)
     assert(string.find(berry_code, expected_output) >= 0, "Should contain: " + expected_output)
   end
@@ -292,11 +277,11 @@ def test_property_assignments()
   print("Testing property assignments...")
   
   var property_tests = [
-    ["color custom_red = 0xFF0000\nanimation red_anim = solid(custom_red)\nred_anim.pos = 15", 
+    ["color custom_red = 0xFF0000\nanimation red_anim = solid(color=custom_red)\nred_anim.pos = 15", 
      "animation.global('red_anim_').pos = 15"],
-    ["animation test_anim = solid(blue)\ntest_anim.opacity = 128", 
+    ["animation test_anim = solid)\ntest_anim.opacity = 128", 
      "animation.global('test_anim_').opacity = 128"],
-    ["animation pulse_anim = pulse(solid(red), 2s)\npulse_anim.priority = 5", 
+    ["animation solid_red = solid(color=red)\nanimation pulse_anim = pulsating_animation(color=red, period=2000)\npulse_anim.priority = 5", 
      "animation.global('pulse_anim_').priority = 5"]
   ]
   
@@ -304,7 +289,7 @@ def test_property_assignments()
     var dsl_input = test[0]
     var expected_output = test[1]
     
-    var berry_code = animation.compile_dsl(dsl_input)
+    var berry_code = animation_dsl.compile(dsl_input)
     assert(berry_code != nil, "Should compile property assignment: " + dsl_input)
     assert(string.find(berry_code, expected_output) >= 0, "Should contain: " + expected_output)
   end
@@ -335,7 +320,7 @@ def test_reserved_name_validation()
     var error_message = ""
     
     try
-      var berry_code = animation.compile_dsl(dsl_input)
+      var berry_code = animation_dsl.compile(dsl_input)
       assert(false, "Should have raised exception for predefined color: " + dsl_input)
     except "dsl_compilation_error" as e, msg
       exception_caught = true
@@ -353,7 +338,7 @@ def test_reserved_name_validation()
   # Test DSL keyword rejection (these should be handled by existing system)
   var dsl_keyword_tests = [
     "color color = 0xFF0000",    # DSL keyword
-    "animation strip = solid(red)"  # DSL keyword
+    "animation strip = solid(color=red)"  # DSL keyword
     # Note: easing functions (smooth, linear, etc.) are no longer keywords
   ]
   
@@ -361,7 +346,7 @@ def test_reserved_name_validation()
     var exception_caught = false
     
     try
-      var berry_code = animation.compile_dsl(dsl_input)
+      var berry_code = animation_dsl.compile(dsl_input)
       assert(false, "Should have raised exception for DSL keyword: " + dsl_input)
     except "dsl_compilation_error" as e, msg
       exception_caught = true
@@ -380,13 +365,13 @@ def test_reserved_name_validation()
     "color red_custom = 0x800000",
     "color smooth_custom = 0x808080",
     # Easing function names are now valid as user-defined names
-    "pattern smooth = solid(blue)",
-    "animation linear = solid(green)"
+    "animation smooth = solid(color=blue)",
+    "animation linear = solid(color=green)"
   ]
   
   for dsl_input : valid_name_tests
     try
-      var berry_code = animation.compile_dsl(dsl_input)
+      var berry_code = animation_dsl.compile(dsl_input)
       assert(berry_code != nil, "Should accept valid custom name: " + dsl_input)
     except "dsl_compilation_error" as e, msg
       assert(false, "Should not raise exception for valid name: " + dsl_input + " - Error: " + msg)
@@ -405,7 +390,7 @@ def run_core_processing_tests()
   
   var tests = [
     test_color_processing,
-    test_pattern_processing,
+    test_animation_with_named_args,
     test_animation_processing,
     test_strip_configuration,
     test_variable_assignments,

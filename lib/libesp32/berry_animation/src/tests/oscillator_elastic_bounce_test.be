@@ -6,25 +6,33 @@
 import animation
 import string
 
+# Create a real engine for testing using global.Leds()
+var strip = global.Leds(10)
+var engine = animation.animation_engine(strip)
+
 # Test the ELASTIC waveform
 def test_elastic_waveform()
   print("Testing ELASTIC waveform...")
   
-  var provider = animation.oscillator_value_provider(0, 100, 1000, animation.ELASTIC)
+  var provider = animation.elastic(engine)
+  provider.min_value = 0
+  provider.max_value = 100
+  provider.duration = 1000
+  provider.start(0)  # Start at time 0
   
   # Test at key points in the cycle
   # At t=0, should be at starting value (0)
-  var value_0 = provider.get_value(provider.origin)
+  var value_0 = provider.produce_value("test", 0)
   assert(value_0 == 0, f"ELASTIC at t=0 should be 0, got {value_0}")
   
   # At t=1000ms (100% through), should be at end value (100)
-  var value_100 = provider.get_value(provider.origin + 999)  # Just before wrap
+  var value_100 = provider.produce_value("test", 999)  # Just before wrap
   assert(value_100 == 100, f"ELASTIC at 100% should be 100, got {value_100}")
   
   # Test that elastic shows oscillation (overshoots and undershoots)
   var values = []
   for i: [100, 200, 300, 400, 500, 600, 700, 800, 900]
-    values.push(provider.get_value(provider.origin + i))
+    values.push(provider.produce_value("test", i))
   end
   
   # Check that we have some variation indicating oscillation
@@ -46,21 +54,25 @@ end
 def test_bounce_waveform()
   print("Testing BOUNCE waveform...")
   
-  var provider = animation.oscillator_value_provider(0, 100, 1000, animation.BOUNCE)
+  var provider = animation.bounce(engine)
+  provider.min_value = 0
+  provider.max_value = 100
+  provider.duration = 1000
+  provider.start(0)  # Start at time 0
   
   # Test at key points in the cycle
   # At t=0, should be at starting value (0)
-  var value_0 = provider.get_value(provider.origin)
+  var value_0 = provider.produce_value("test", 0)
   assert(value_0 == 0, f"BOUNCE at t=0 should be 0, got {value_0}")
   
   # At t=1000ms (100% through), should be at end value (100)
-  var value_100 = provider.get_value(provider.origin + 999)  # Just before wrap
+  var value_100 = provider.produce_value("test", 999)  # Just before wrap
   assert(value_100 >= 95 && value_100 <= 100, f"BOUNCE at 100% should be ~100, got {value_100}")
   
   # Test bounce characteristics - should have multiple peaks
   var values = []
   for i: [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 999]
-    values.push(provider.get_value(provider.origin + i))
+    values.push(provider.produce_value("test", i))
   end
   
   # Check for bounce-like behavior - should have some variation and settle high
@@ -93,17 +105,23 @@ def test_elastic_bounce_constructors()
   print("Testing elastic and bounce constructor functions...")
   
   # Test elastic constructor
-  var elastic_provider = animation.elastic(10, 90, 2000)
-  assert(elastic_provider.a == 10, "elastic should set correct start value")
-  assert(elastic_provider.b == 90, "elastic should set correct end value")
-  assert(elastic_provider.duration_ms == 2000, "elastic should set correct duration")
+  var elastic_provider = animation.elastic(engine)
+  elastic_provider.min_value = 10
+  elastic_provider.max_value = 90
+  elastic_provider.duration = 2000
+  assert(elastic_provider.min_value == 10, "elastic should set correct start value")
+  assert(elastic_provider.max_value == 90, "elastic should set correct end value")
+  assert(elastic_provider.duration == 2000, "elastic should set correct duration")
   assert(elastic_provider.form == animation.ELASTIC, "elastic should set ELASTIC form")
   
   # Test bounce constructor
-  var bounce_provider = animation.bounce(20, 80, 1500)
-  assert(bounce_provider.a == 20, "bounce should set correct start value")
-  assert(bounce_provider.b == 80, "bounce should set correct end value")
-  assert(bounce_provider.duration_ms == 1500, "bounce should set correct duration")
+  var bounce_provider = animation.bounce(engine)
+  bounce_provider.min_value = 20
+  bounce_provider.max_value = 80
+  bounce_provider.duration = 1500
+  assert(bounce_provider.min_value == 20, "bounce should set correct start value")
+  assert(bounce_provider.max_value == 80, "bounce should set correct end value")
+  assert(bounce_provider.duration == 1500, "bounce should set correct duration")
   assert(bounce_provider.form == animation.BOUNCE, "bounce should set BOUNCE form")
   
   print("✓ Elastic and bounce constructor functions test passed")
@@ -114,17 +132,25 @@ def test_elastic_bounce_value_ranges()
   print("Testing elastic and bounce with different value ranges...")
   
   # Test with negative values
-  var neg_elastic = animation.elastic(-50, 50, 1000)
-  var neg_value_0 = neg_elastic.get_value(neg_elastic.origin)
-  var neg_value_100 = neg_elastic.get_value(neg_elastic.origin + 999)
+  var neg_elastic = animation.elastic(engine)
+  neg_elastic.min_value = -50
+  neg_elastic.max_value = 50
+  neg_elastic.duration = 1000
+  neg_elastic.start(0)  # Start at time 0
+  var neg_value_0 = neg_elastic.produce_value("test", 0)
+  var neg_value_100 = neg_elastic.produce_value("test", 999)
   
   assert(neg_value_0 == -50, "Negative range elastic should start at -50")
   assert(neg_value_100 == 50, "Negative range elastic should end at 50")
   
   # Test with small ranges
-  var small_bounce = animation.bounce(100, 110, 1000)
-  var small_value_0 = small_bounce.get_value(small_bounce.origin)
-  var small_value_100 = small_bounce.get_value(small_bounce.origin + 999)
+  var small_bounce = animation.bounce(engine)
+  small_bounce.min_value = 100
+  small_bounce.max_value = 110
+  small_bounce.duration = 1000
+  small_bounce.start(0)  # Start at time 0
+  var small_value_0 = small_bounce.produce_value("test", 0)
+  var small_value_100 = small_bounce.produce_value("test", 999)
   
   assert(small_value_0 == 100, "Small range bounce should start at 100")
   assert(small_value_100 >= 108 && small_value_100 <= 110, "Small range bounce should end at ~110")
@@ -136,8 +162,14 @@ end
 def test_elastic_bounce_tostring()
   print("Testing elastic and bounce tostring representation...")
   
-  var elastic_provider = animation.elastic(0, 255, 3000)
-  var bounce_provider = animation.bounce(10, 200, 2500)
+  var elastic_provider = animation.elastic(engine)
+  elastic_provider.min_value = 0
+  elastic_provider.max_value = 255
+  elastic_provider.duration = 3000
+  var bounce_provider = animation.bounce(engine)
+  bounce_provider.min_value = 10
+  bounce_provider.max_value = 200
+  bounce_provider.duration = 2500
   
   var elastic_str = elastic_provider.tostring()
   var bounce_str = bounce_provider.tostring()
@@ -152,12 +184,18 @@ end
 def test_elastic_bounce_constants()
   print("Testing elastic and bounce constants export...")
   
-  assert(animation.ELASTIC == 7, "ELASTIC constant should be 7")
-  assert(animation.BOUNCE == 8, "BOUNCE constant should be 8")
-  
   # Test that constants work with direct constructor
-  var direct_elastic = animation.oscillator_value_provider(0, 100, 1000, animation.ELASTIC)
-  var direct_bounce = animation.oscillator_value_provider(0, 100, 1000, animation.BOUNCE)
+  var direct_elastic = animation.oscillator_value(engine)
+  direct_elastic.min_value = 0
+  direct_elastic.max_value = 100
+  direct_elastic.duration = 1000
+  direct_elastic.form = animation.ELASTIC
+  
+  var direct_bounce = animation.oscillator_value(engine)
+  direct_bounce.min_value = 0
+  direct_bounce.max_value = 100
+  direct_bounce.duration = 1000
+  direct_bounce.form = animation.BOUNCE
   
   assert(direct_elastic.form == animation.ELASTIC, "Direct ELASTIC should work")
   assert(direct_bounce.form == animation.BOUNCE, "Direct BOUNCE should work")
@@ -170,10 +208,14 @@ def test_elastic_bounce_characteristics()
   print("Testing elastic and bounce specific characteristics...")
   
   # Test elastic overshoot behavior
-  var elastic = animation.elastic(0, 100, 2000)
+  var elastic = animation.elastic(engine)
+  elastic.min_value = 0
+  elastic.max_value = 100
+  elastic.duration = 2000
+  elastic.start(0)  # Start at time 0
   var mid_values = []
   for i: [800, 900, 1000, 1100, 1200]  # Around middle of animation
-    mid_values.push(elastic.get_value(elastic.origin + i))
+    mid_values.push(elastic.produce_value("test", i))
   end
   
   # Elastic should show some overshoot (values outside 0-100 range or rapid changes)
@@ -187,10 +229,14 @@ def test_elastic_bounce_characteristics()
   assert(has_variation, "ELASTIC should show oscillation/direction changes")
   
   # Test bounce settling behavior
-  var bounce = animation.bounce(0, 100, 2000)
-  var early_val = bounce.get_value(bounce.origin + 400)   # 20% through
-  var late_val = bounce.get_value(bounce.origin + 1600)   # 80% through
-  var final_val = bounce.get_value(bounce.origin + 1999)  # 99.95% through
+  var bounce = animation.bounce(engine)
+  bounce.min_value = 0
+  bounce.max_value = 100
+  bounce.duration = 2000
+  bounce.start(0)  # Start at time 0
+  var early_val = bounce.produce_value("test", 400)   # 20% through
+  var late_val = bounce.produce_value("test", 1600)   # 80% through
+  var final_val = bounce.produce_value("test", 1999)  # 99.95% through
   
   # Bounce should show decreasing amplitude over time
   assert(final_val > late_val, "BOUNCE should settle higher over time")

@@ -1,7 +1,9 @@
 # DSL Lexer (Tokenizer) for Animation DSL
 # Converts DSL source code into a stream of tokens for the single-pass transpiler
 
-# Get reference to animation module (avoid circular import)
+# Import token functions and Token class
+import "dsl/token.be" as token_module
+var Token = token_module["Token"]
 
 #@ solidify:DSLLexer,weak
 class DSLLexer
@@ -39,7 +41,7 @@ class DSLLexer
     end
     
     # Add EOF token
-    self.add_token(38 #-animation.Token.EOF-#, "", 0)
+    self.add_token(38 #-animation_dsl.Token.EOF-#, "", 0)
     
     return self.tokens
   end
@@ -53,7 +55,7 @@ class DSLLexer
       # Skip whitespace (but not newlines - they can be significant)
       return
     elif ch == '\n'
-      self.add_token(35 #-animation.Token.NEWLINE-#, "\n", 1)
+      self.add_token(35 #-animation_dsl.Token.NEWLINE-#, "\n", 1)
       self.line += 1
       self.column = 1
       return
@@ -85,7 +87,7 @@ class DSLLexer
     end
     
     var comment_text = self.source[start_pos..self.position-1]
-    self.add_token(37 #-animation.Token.COMMENT-#, comment_text, self.position - start_pos)
+    self.add_token(37 #-animation_dsl.Token.COMMENT-#, comment_text, self.position - start_pos)
   end
   
   # Scan hex color (0xRRGGBB, 0xAARRGGBB)
@@ -107,10 +109,10 @@ class DSLLexer
     
     # Validate hex color format - support 6 (RGB) or 8 (ARGB) digits
     if hex_digits == 6 || hex_digits == 8
-      self.add_token(4 #-animation.Token.COLOR-#, color_value, size(color_value))
+      self.add_token(4 #-animation_dsl.Token.COLOR-#, color_value, size(color_value))
     else
       self.add_error("Invalid hex color format: " + color_value + " (expected 0xRRGGBB or 0xAARRGGBB)")
-      self.add_token(39 #-animation.Token.ERROR-#, color_value, size(color_value))
+      self.add_token(39 #-animation_dsl.Token.ERROR-#, color_value, size(color_value))
     end
   end
   
@@ -128,12 +130,12 @@ class DSLLexer
     var token_type
     
     # Check for color names first (they take precedence over keywords)
-    if animation.is_color_name(text)
-      token_type = 4 #-animation.Token.COLOR-#
-    elif animation.is_keyword(text)
-      token_type = 0 #-animation.Token.KEYWORD-#
+    if animation_dsl.is_color_name(text)
+      token_type = 4 #-animation_dsl.Token.COLOR-#
+    elif animation_dsl.is_keyword(text)
+      token_type = 0 #-animation_dsl.Token.KEYWORD-#
     else
-      token_type = 1 #-animation.Token.IDENTIFIER-#
+      token_type = 1 #-animation_dsl.Token.IDENTIFIER-#
     end
     
     self.add_token(token_type, text, size(text))
@@ -167,18 +169,18 @@ class DSLLexer
     # Check for time unit suffixes
     if self.check_time_suffix()
       var suffix = self.scan_time_suffix()
-      self.add_token(5 #-animation.Token.TIME-#, number_text + suffix, size(number_text + suffix))
+      self.add_token(5 #-animation_dsl.Token.TIME-#, number_text + suffix, size(number_text + suffix))
     # Check for percentage suffix
     elif !self.at_end() && self.peek() == '%'
       self.advance()
-      self.add_token(6 #-animation.Token.PERCENTAGE-#, number_text + "%", size(number_text) + 1)
+      self.add_token(6 #-animation_dsl.Token.PERCENTAGE-#, number_text + "%", size(number_text) + 1)
     # Check for multiplier suffix
     elif !self.at_end() && self.peek() == 'x'
       self.advance()
-      self.add_token(7 #-animation.Token.MULTIPLIER-#, number_text + "x", size(number_text) + 1)
+      self.add_token(7 #-animation_dsl.Token.MULTIPLIER-#, number_text + "x", size(number_text) + 1)
     else
       # Plain number
-      self.add_token(2 #-animation.Token.NUMBER-#, number_text, size(number_text))
+      self.add_token(2 #-animation_dsl.Token.NUMBER-#, number_text, size(number_text))
     end
   end
   
@@ -258,11 +260,11 @@ class DSLLexer
     
     if self.at_end()
       self.add_error("Unterminated string literal")
-      self.add_token(39 #-animation.Token.ERROR-#, value, self.position - start_pos)
+      self.add_token(39 #-animation_dsl.Token.ERROR-#, value, self.position - start_pos)
     else
       # Consume closing quote
       self.advance()
-      self.add_token(3 #-animation.Token.STRING-#, value, self.position - start_pos)
+      self.add_token(3 #-animation_dsl.Token.STRING-#, value, self.position - start_pos)
     end
   end
   
@@ -273,7 +275,7 @@ class DSLLexer
     
     if self.at_end() || !(self.is_alpha(self.peek()) || self.peek() == '_')
       self.add_error("Invalid variable reference: $ must be followed by identifier")
-      self.add_token(39 #-animation.Token.ERROR-#, "$", 1)
+      self.add_token(39 #-animation_dsl.Token.ERROR-#, "$", 1)
       return
     end
     
@@ -283,7 +285,7 @@ class DSLLexer
     end
     
     var var_ref = self.source[start_pos..self.position-1]
-    self.add_token(36 #-animation.Token.VARIABLE_REF-#, var_ref, size(var_ref))
+    self.add_token(36 #-animation_dsl.Token.VARIABLE_REF-#, var_ref, size(var_ref))
   end
   
   # Scan operator or delimiter
@@ -292,93 +294,93 @@ class DSLLexer
     
     if ch == '='
       if self.match('=')
-        self.add_token(15 #-animation.Token.EQUAL-#, "==", 2)
+        self.add_token(15 #-animation_dsl.Token.EQUAL-#, "==", 2)
       else
-        self.add_token(8 #-animation.Token.ASSIGN-#, "=", 1)
+        self.add_token(8 #-animation_dsl.Token.ASSIGN-#, "=", 1)
       end
     elif ch == '!'
       if self.match('=')
-        self.add_token(16 #-animation.Token.NOT_EQUAL-#, "!=", 2)
+        self.add_token(16 #-animation_dsl.Token.NOT_EQUAL-#, "!=", 2)
       else
-        self.add_token(23 #-animation.Token.LOGICAL_NOT-#, "!", 1)
+        self.add_token(23 #-animation_dsl.Token.LOGICAL_NOT-#, "!", 1)
       end
     elif ch == '<'
       if self.match('=')
-        self.add_token(18 #-animation.Token.LESS_EQUAL-#, "<=", 2)
+        self.add_token(18 #-animation_dsl.Token.LESS_EQUAL-#, "<=", 2)
       elif self.match('<')
         # Left shift - not used in DSL but included for completeness
-        self.add_token(39 #-animation.Token.ERROR-#, "<<", 2)
+        self.add_token(39 #-animation_dsl.Token.ERROR-#, "<<", 2)
       else
-        self.add_token(17 #-animation.Token.LESS_THAN-#, "<", 1)
+        self.add_token(17 #-animation_dsl.Token.LESS_THAN-#, "<", 1)
       end
     elif ch == '>'
       if self.match('=')
-        self.add_token(20 #-animation.Token.GREATER_EQUAL-#, ">=", 2)
+        self.add_token(20 #-animation_dsl.Token.GREATER_EQUAL-#, ">=", 2)
       elif self.match('>')
         # Right shift - not used in DSL but included for completeness
-        self.add_token(39 #-animation.Token.ERROR-#, ">>", 2)
+        self.add_token(39 #-animation_dsl.Token.ERROR-#, ">>", 2)
       else
-        self.add_token(19 #-animation.Token.GREATER_THAN-#, ">", 1)
+        self.add_token(19 #-animation_dsl.Token.GREATER_THAN-#, ">", 1)
       end
     elif ch == '&'
       if self.match('&')
-        self.add_token(21 #-animation.Token.LOGICAL_AND-#, "&&", 2)
+        self.add_token(21 #-animation_dsl.Token.LOGICAL_AND-#, "&&", 2)
       else
         self.add_error("Single '&' not supported in DSL")
-        self.add_token(39 #-animation.Token.ERROR-#, "&", 1)
+        self.add_token(39 #-animation_dsl.Token.ERROR-#, "&", 1)
       end
     elif ch == '|'
       if self.match('|')
-        self.add_token(22 #-animation.Token.LOGICAL_OR-#, "||", 2)
+        self.add_token(22 #-animation_dsl.Token.LOGICAL_OR-#, "||", 2)
       else
         self.add_error("Single '|' not supported in DSL")
-        self.add_token(39 #-animation.Token.ERROR-#, "|", 1)
+        self.add_token(39 #-animation_dsl.Token.ERROR-#, "|", 1)
       end
     elif ch == '-'
       if self.match('>')
-        self.add_token(34 #-animation.Token.ARROW-#, "->", 2)
+        self.add_token(34 #-animation_dsl.Token.ARROW-#, "->", 2)
       else
-        self.add_token(10 #-animation.Token.MINUS-#, "-", 1)
+        self.add_token(10 #-animation_dsl.Token.MINUS-#, "-", 1)
       end
     elif ch == '+'
-      self.add_token(9 #-animation.Token.PLUS-#, "+", 1)
+      self.add_token(9 #-animation_dsl.Token.PLUS-#, "+", 1)
     elif ch == '*'
-      self.add_token(11 #-animation.Token.MULTIPLY-#, "*", 1)
+      self.add_token(11 #-animation_dsl.Token.MULTIPLY-#, "*", 1)
     elif ch == '/'
-      self.add_token(12 #-animation.Token.DIVIDE-#, "/", 1)
+      self.add_token(12 #-animation_dsl.Token.DIVIDE-#, "/", 1)
     elif ch == '%'
-      self.add_token(13 #-animation.Token.MODULO-#, "%", 1)
+      self.add_token(13 #-animation_dsl.Token.MODULO-#, "%", 1)
     elif ch == '^'
-      self.add_token(14 #-animation.Token.POWER-#, "^", 1)
+      self.add_token(14 #-animation_dsl.Token.POWER-#, "^", 1)
     elif ch == '('
-      self.add_token(24 #-animation.Token.LEFT_PAREN-#, "(", 1)
+      self.add_token(24 #-animation_dsl.Token.LEFT_PAREN-#, "(", 1)
     elif ch == ')'
-      self.add_token(25 #-animation.Token.RIGHT_PAREN-#, ")", 1)
+      self.add_token(25 #-animation_dsl.Token.RIGHT_PAREN-#, ")", 1)
     elif ch == '{'
-      self.add_token(26 #-animation.Token.LEFT_BRACE-#, "{", 1)
+      self.add_token(26 #-animation_dsl.Token.LEFT_BRACE-#, "{", 1)
     elif ch == '}'
-      self.add_token(27 #-animation.Token.RIGHT_BRACE-#, "}", 1)
+      self.add_token(27 #-animation_dsl.Token.RIGHT_BRACE-#, "}", 1)
     elif ch == '['
-      self.add_token(28 #-animation.Token.LEFT_BRACKET-#, "[", 1)
+      self.add_token(28 #-animation_dsl.Token.LEFT_BRACKET-#, "[", 1)
     elif ch == ']'
-      self.add_token(29 #-animation.Token.RIGHT_BRACKET-#, "]", 1)
+      self.add_token(29 #-animation_dsl.Token.RIGHT_BRACKET-#, "]", 1)
     elif ch == ','
-      self.add_token(30 #-animation.Token.COMMA-#, ",", 1)
+      self.add_token(30 #-animation_dsl.Token.COMMA-#, ",", 1)
     elif ch == ';'
-      self.add_token(31 #-animation.Token.SEMICOLON-#, ";", 1)
+      self.add_token(31 #-animation_dsl.Token.SEMICOLON-#, ";", 1)
     elif ch == ':'
-      self.add_token(32 #-animation.Token.COLON-#, ":", 1)
+      self.add_token(32 #-animation_dsl.Token.COLON-#, ":", 1)
     elif ch == '.'
       if self.match('.')
         # Range operator (..) - treat as two dots for now
-        self.add_token(33 #-animation.Token.DOT-#, ".", 1)
-        self.add_token(33 #-animation.Token.DOT-#, ".", 1)
+        self.add_token(33 #-animation_dsl.Token.DOT-#, ".", 1)
+        self.add_token(33 #-animation_dsl.Token.DOT-#, ".", 1)
       else
-        self.add_token(33 #-animation.Token.DOT-#, ".", 1)
+        self.add_token(33 #-animation_dsl.Token.DOT-#, ".", 1)
       end
     else
       self.add_error("Unexpected character: '" + ch + "'")
-      self.add_token(39 #-animation.Token.ERROR-#, ch, 1)
+      self.add_token(39 #-animation_dsl.Token.ERROR-#, ch, 1)
     end
   end
   
@@ -447,7 +449,7 @@ class DSLLexer
   
   # Add token to tokens list
   def add_token(token_type, value, length)
-    var token = animation.Token(token_type, value, self.line, self.column - length, length)
+    var token = animation_dsl.Token(token_type, value, self.line, self.column - length, length)
     self.tokens.push(token)
   end
   
@@ -521,7 +523,7 @@ end
 # @param source: string - DSL source code
 # @return list - Array of Token objects
 def tokenize_dsl(source)
-  var lexer = animation.DSLLexer(source)
+  var lexer = animation_dsl.DSLLexer(source)
   return lexer.tokenize()
 end
 
@@ -530,7 +532,7 @@ end
 # @param source: string - DSL source code
 # @return map - {tokens: list, errors: list, success: bool}
 def tokenize_dsl_with_errors(source)
-  var lexer = animation.DSLLexer(source)
+  var lexer = animation_dsl.DSLLexer(source)
   return lexer.tokenize_with_errors()
 end
 

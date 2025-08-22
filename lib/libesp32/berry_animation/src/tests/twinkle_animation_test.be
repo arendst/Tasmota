@@ -12,7 +12,17 @@ print("=== Comprehensive Twinkle Animation Test ===")
 
 # Test 1: Basic Twinkle Animation Creation
 print("\n1. Testing basic twinkle animation creation...")
-var twinkle = animation.twinkle_animation(0xFFFFFFFF, 128, 6, 180, 32, 255, 30, 10, 0, true, "test_twinkle")
+var strip = global.Leds(30)
+var engine = animation.animation_engine(strip)
+var twinkle = animation.twinkle_animation(engine)
+twinkle.color = 0xFFFFFFFF
+twinkle.density = 128
+twinkle.twinkle_speed = 6
+twinkle.fade_speed = 180
+twinkle.min_brightness = 32
+twinkle.max_brightness = 255
+twinkle.priority = 10
+twinkle.name = "test_twinkle"
 print(f"Created twinkle animation: {twinkle}")
 print(f"Initial state - running: {twinkle.is_running}, priority: {twinkle.priority}")
 
@@ -30,9 +40,12 @@ print(f"Set twinkle_speed to 6000 (invalid): {result4}")
 
 # Test 3: DSL Issue Reproduction and Fix Verification
 print("\n3. Testing DSL issue reproduction and fix...")
-print("Creating: animation.twinkle_animation(0xFFAAAAFF, 4, 400) - original problematic DSL parameters")
+print("Creating: twinkle with 0xFFAAAAFF, density=4, twinkle_speed=400ms - original problematic DSL parameters")
 
-var dsl_twinkle = animation.twinkle_animation(0xFFAAAAFF, 4, 400)
+var dsl_twinkle = animation.twinkle_animation(engine)
+dsl_twinkle.color = 0xFFAAAAFF
+dsl_twinkle.density = 4
+dsl_twinkle.twinkle_speed = 400  # Should convert from 400ms to Hz
 print(f"Created: {dsl_twinkle}")
 print(f"Parameters after fix: density={dsl_twinkle.density}, twinkle_speed={dsl_twinkle.twinkle_speed}Hz (converted from 400ms)")
 
@@ -91,7 +104,10 @@ while i < size(time_test_cases)
   var input_val = time_test_cases[i][0]
   var description = time_test_cases[i][1]
   
-  var test_twinkle = animation.twinkle_animation(0xFFFFFFFF, 64, input_val)
+  var test_twinkle = animation.twinkle_animation(engine)
+  test_twinkle.color = 0xFFFFFFFF
+  test_twinkle.density = 64
+  test_twinkle.twinkle_speed = input_val
   print(f"{description} -> actual: {test_twinkle.twinkle_speed}Hz")
   i += 1
 end
@@ -103,7 +119,10 @@ var density_test_cases = [1, 2, 4, 8, 16, 32]
 i = 0
 while i < size(density_test_cases)
   var test_density = density_test_cases[i]
-  var density_twinkle = animation.twinkle_animation(0xFFFFFFFF, test_density, 6)
+  var density_twinkle = animation.twinkle_animation(engine)
+  density_twinkle.color = 0xFFFFFFFF
+  density_twinkle.density = test_density
+  density_twinkle.twinkle_speed = 6
   density_twinkle.start()
   
   # Run a few cycles to test the new algorithm
@@ -132,11 +151,11 @@ end
 
 # Test 6: Factory Methods
 print("\n6. Testing factory methods...")
-var twinkle_classic = animation.twinkle_animation.classic(150, 30, 5)
-var twinkle_solid = animation.twinkle_animation.solid(0xFF0080FF, 100, 30, 5)  # Blue
-var twinkle_rainbow = animation.twinkle_animation.rainbow(120, 30, 5)
-var twinkle_gentle = animation.twinkle_animation.gentle(0xFFFFD700, 30, 5)  # Gold
-var twinkle_intense = animation.twinkle_animation.intense(0xFFFF0000, 30, 5)  # Red
+var twinkle_classic = animation.twinkle_classic(engine)
+var twinkle_solid = animation.twinkle_solid(engine)
+var twinkle_rainbow = animation.twinkle_rainbow(engine)
+var twinkle_gentle = animation.twinkle_gentle(engine)
+var twinkle_intense = animation.twinkle_intense(engine)
 
 print(f"Classic twinkle: {twinkle_classic}")
 print(f"Solid twinkle: {twinkle_solid}")
@@ -218,7 +237,15 @@ print(f"Average non-black pixels per cycle: {total_non_black / size(non_black_co
 
 # Test 9: Deterministic Behavior Test (with fixed seed)
 print("\n9. Testing deterministic behavior...")
-var deterministic_twinkle = animation.twinkle_animation(0xFFFF0000, 64, 10, 100, 128, 255, 10, 10, 0, true, "deterministic")
+var deterministic_twinkle = animation.twinkle_animation(engine)
+deterministic_twinkle.color = 0xFFFF0000
+deterministic_twinkle.density = 64
+deterministic_twinkle.twinkle_speed = 10
+deterministic_twinkle.fade_speed = 100
+deterministic_twinkle.min_brightness = 128
+deterministic_twinkle.max_brightness = 255
+deterministic_twinkle.priority = 10
+deterministic_twinkle.name = "deterministic"
 deterministic_twinkle.start()
 
 # Force a specific random seed for reproducible results
@@ -271,31 +298,35 @@ print(f"Active twinkle states: {active_twinkles}")
 
 # Test 11: Parameter Updates
 print("\n11. Testing parameter updates...")
-print(f"Original density: {twinkle.get_param('density')}")
-twinkle.set_density(64)
-print(f"Updated density: {twinkle.get_param('density')}")
+print(f"Original density: {twinkle.density}")
+twinkle.density = 64
+print(f"Updated density: {twinkle.density}")
 
-print(f"Original fade_speed: {twinkle.get_param('fade_speed')}")
-twinkle.set_fade_speed(220)
-print(f"Updated fade_speed: {twinkle.get_param('fade_speed')}")
+print(f"Original fade_speed: {twinkle.fade_speed}")
+twinkle.fade_speed = 220
+print(f"Updated fade_speed: {twinkle.fade_speed}")
 
 # Test parameter updates with time conversion
-var param_update_twinkle = animation.twinkle_animation(0xFFFFFFFF, 64, 6)
+var param_update_twinkle = animation.twinkle_animation(engine)
+param_update_twinkle.color = 0xFFFFFFFF
+param_update_twinkle.density = 64
+param_update_twinkle.twinkle_speed = 6
 print(f"Initial twinkle_speed: {param_update_twinkle.twinkle_speed}Hz")
 
 # Update with ms value
-var ms_result = param_update_twinkle.set_param("twinkle_speed", 300)  # 300ms -> ~3.33Hz
-print(f"Set to 300ms: {ms_result}, new speed: {param_update_twinkle.twinkle_speed}Hz")
+param_update_twinkle.twinkle_speed = 300  # 300ms -> ~3.33Hz
+print(f"Set to 300ms, new speed: {param_update_twinkle.twinkle_speed}Hz")
 
 # Update with Hz value
-var hz_result = param_update_twinkle.set_param("twinkle_speed", 8)  # 8Hz
-print(f"Set to 8Hz: {hz_result}, new speed: {param_update_twinkle.twinkle_speed}Hz")
+param_update_twinkle.twinkle_speed = 8  # 8Hz
+print(f"Set to 8Hz, new speed: {param_update_twinkle.twinkle_speed}Hz")
 
 # Test 12: Brightness Range
 print("\n12. Testing brightness range...")
-print(f"Original brightness range: {twinkle.get_param('brightness_min')}-{twinkle.get_param('brightness_max')}")
-twinkle.set_brightness_range(64, 200)
-print(f"Updated brightness range: {twinkle.get_param('brightness_min')}-{twinkle.get_param('brightness_max')}")
+print(f"Original brightness range: {twinkle.min_brightness}-{twinkle.max_brightness}")
+twinkle.min_brightness = 64
+twinkle.max_brightness = 200
+print(f"Updated brightness range: {twinkle.min_brightness}-{twinkle.max_brightness}")
 
 # Test 13: Color Updates
 print("\n13. Testing color updates...")
@@ -303,24 +334,24 @@ var original_color = twinkle.color
 print(f"Original color type: {type(original_color)}")
 
 # Set to solid color
-twinkle.set_color(0xFF00FF00)  # Green
+twinkle.color = 0xFF00FF00  # Green
 print("Set to solid green color")
 
 # Set back to white
-twinkle.set_color(0xFFFFFFFF)
+twinkle.color = 0xFFFFFFFF
 print("Set back to white")
-
-# Test 14: Animation Stop/Start
-print("\n14. Testing stop/start...")
-twinkle.stop()
-print(f"After stop - running: {twinkle.is_running}")
-
-twinkle.start()
-print(f"After restart - running: {twinkle.is_running}")
 
 # Test 15: High Density Test (should definitely produce visible results)
 print("\n15. Testing high density animation...")
-var high_density_twinkle = animation.twinkle_animation(0xFFFFFFFF, 255, 20, 50, 200, 255, 10, 10, 0, true, "high_density")
+var high_density_twinkle = animation.twinkle_animation(engine)
+high_density_twinkle.color = 0xFFFFFFFF
+high_density_twinkle.density = 255
+high_density_twinkle.twinkle_speed = 20
+high_density_twinkle.fade_speed = 50
+high_density_twinkle.min_brightness = 200
+high_density_twinkle.max_brightness = 255
+high_density_twinkle.priority = 10
+high_density_twinkle.name = "high_density"
 high_density_twinkle.start()
 
 var hd_frame = animation.frame_buffer(10)
@@ -352,7 +383,10 @@ end
 print("\n16. Testing edge cases...")
 
 # Very small strip
-var tiny_twinkle = animation.twinkle_animation.classic(200, 1, 5)
+var tiny_strip = global.Leds(1)
+var tiny_engine = animation.animation_engine(tiny_strip)
+var tiny_twinkle = animation.twinkle_classic(tiny_engine)
+tiny_twinkle.density = 200
 tiny_twinkle.start()
 tiny_twinkle.update(current_time + 167)
 var tiny_frame = animation.frame_buffer(1)
@@ -360,7 +394,8 @@ tiny_twinkle.render(tiny_frame)
 print("Tiny twinkle (1 pixel) created and rendered successfully")
 
 # Zero density
-var no_twinkle = animation.twinkle_animation.classic(0, 10, 5)
+var no_twinkle = animation.twinkle_classic(engine)
+no_twinkle.density = 0
 no_twinkle.start()
 no_twinkle.update(current_time + 334)
 var no_frame = animation.frame_buffer(10)
@@ -368,7 +403,8 @@ no_twinkle.render(no_frame)
 print("No twinkle (0 density) created and rendered successfully")
 
 # Maximum density
-var max_twinkle = animation.twinkle_animation.classic(255, 10, 5)
+var max_twinkle = animation.twinkle_classic(engine)
+max_twinkle.density = 255
 max_twinkle.start()
 max_twinkle.update(current_time + 501)
 var max_frame = animation.frame_buffer(10)
@@ -379,7 +415,13 @@ print("Max twinkle (255 density) created and rendered successfully")
 print("\n17. Testing alpha-based fading (stars should fade via alpha channel)...")
 
 # Test new stars start at full brightness with variable alpha
-var alpha_test_twinkle = animation.twinkle_animation(0xFFFF0000, 255, 6, 50, 128, 255)  # Red stars, high density, fast fade
+var alpha_test_twinkle = animation.twinkle_animation(engine)
+alpha_test_twinkle.color = 0xFFFF0000  # Red stars
+alpha_test_twinkle.density = 255  # High density
+alpha_test_twinkle.twinkle_speed = 6
+alpha_test_twinkle.fade_speed = 50  # Fast fade
+alpha_test_twinkle.min_brightness = 128
+alpha_test_twinkle.max_brightness = 255
 alpha_test_twinkle.start()
 alpha_test_twinkle.random_seed = 12345  # Reproducible results
 
@@ -417,7 +459,11 @@ else
 end
 
 # Test alpha fading over time
-var fade_twinkle = animation.twinkle_animation(0xFFFFFFFF, 0, 6, 100)  # White stars, zero density, medium fade
+var fade_twinkle = animation.twinkle_animation(engine)
+fade_twinkle.color = 0xFFFFFFFF  # White stars
+fade_twinkle.density = 0  # Zero density
+fade_twinkle.twinkle_speed = 6
+fade_twinkle.fade_speed = 100  # Medium fade
 fade_twinkle.start()
 
 # Manually create a star at full alpha
@@ -468,7 +514,11 @@ else
 end
 
 # Test star reset when alpha reaches zero
-var reset_twinkle = animation.twinkle_animation(0xFF00FF00, 0, 6, 255)  # Green stars, zero density, max fade speed
+var reset_twinkle = animation.twinkle_animation(engine)
+reset_twinkle.color = 0xFF00FF00  # Green stars
+reset_twinkle.density = 0  # Zero density
+reset_twinkle.twinkle_speed = 6
+reset_twinkle.fade_speed = 255  # Max fade speed
 reset_twinkle.start()
 
 # Create a star with very low alpha (should disappear quickly)
@@ -491,7 +541,10 @@ end
 print("\n18. Testing transparency (background should be transparent)...")
 
 # Test with zero density (no twinkles) - simplified test
-var zero_density_twinkle = animation.twinkle_animation(0xFFFFFFFF, 0, 6)  # Zero density
+var zero_density_twinkle = animation.twinkle_animation(engine)
+zero_density_twinkle.color = 0xFFFFFFFF
+zero_density_twinkle.density = 0  # Zero density
+zero_density_twinkle.twinkle_speed = 6
 zero_density_twinkle.start()
 zero_density_twinkle.update(18000)
 
@@ -549,10 +602,10 @@ assert(result1 == true, "Valid density parameter should be accepted")
 assert(result2 == false, "Invalid density parameter should be rejected")
 assert(result3 == true, "Valid twinkle_speed parameter should be accepted")
 assert(result4 == false, "Invalid twinkle_speed parameter should be rejected")
-assert(twinkle.get_param('density') == 64, "Density should be updated to 64")
-assert(twinkle.get_param('fade_speed') == 220, "Fade speed should be updated to 220")
-assert(twinkle.get_param('brightness_min') == 64, "Min brightness should be updated to 64")
-assert(twinkle.get_param('brightness_max') == 200, "Max brightness should be updated to 200")
+assert(twinkle.density == 64, "Density should be updated to 64")
+assert(twinkle.fade_speed == 220, "Fade speed should be updated to 220")
+assert(twinkle.min_brightness == 64, "Min brightness should be updated to 64")
+assert(twinkle.max_brightness == 200, "Max brightness should be updated to 200")
 
 # Check DSL fix results
 if dsl_total_pixels > 0
@@ -607,6 +660,74 @@ print("4. ✅ Alpha-based fading: stars fade via alpha channel, not brightness d
 print("5. ✅ Transparent background: off pixels no longer block other animations")
 print("6. ✅ Backward compatibility: existing animations continue to work")
 print("7. ✅ Animation engine integration: DSL parameters work in full system")
+
+# Test 20: Undefined Parameter Exception Test
+print("\n20. Testing undefined parameter exception behavior...")
+
+# Test setting an undefined attribute 'speed' (which is not defined in TwinkleAnimation PARAMS)
+print("Testing direct assignment to undefined parameter 'speed'...")
+var exception_caught = false
+var actual_exception_type = nil
+var actual_exception_msg = nil
+
+try
+  twinkle.speed = 42  # 'speed' is not defined in TwinkleAnimation PARAMS
+  assert(false, "Setting undefined parameter should raise an exception")
+except .. as e, msg
+  exception_caught = true
+  actual_exception_type = e
+  actual_exception_msg = msg
+  print(f"    Exception type: {e}")
+  print(f"    Exception message: {msg}")
+end
+
+assert(exception_caught, "Should have caught an exception when setting undefined parameter")
+assert(actual_exception_type == "attribute_error", "Should raise attribute_error for undefined parameter")
+
+# Check that the error message contains the expected text
+import string
+var msg_contains_attribute = string.find(actual_exception_msg, "has no attribute") >= 0
+var msg_contains_param_name = string.find(actual_exception_msg, "speed") >= 0
+assert(msg_contains_attribute && msg_contains_param_name, "Should mention missing attribute in error message")
+
+print("✅ Undefined parameter 'speed' correctly raises attribute_error")
+
+# Test reading undefined parameter 'speed'
+print("Testing reading undefined parameter 'speed'...")
+var read_exception_caught = false
+var read_exception_type = nil
+var read_exception_msg = nil
+
+try
+  var undefined_speed = twinkle.speed
+  assert(false, "Reading undefined parameter should raise an exception")
+except .. as e, msg
+  read_exception_caught = true
+  read_exception_type = e
+  read_exception_msg = msg
+  print("    Exception type: " + e)
+  print("    Exception message: " + msg)
+end
+
+assert(read_exception_caught, "Should have caught an exception when reading undefined parameter")
+assert(read_exception_type == "attribute_error", "Should raise attribute_error for undefined parameter read")
+
+# Check that the error message contains the expected text
+import string
+var read_msg_contains_attribute = string.find(read_exception_msg, "has no attribute") >= 0
+var read_msg_contains_param_name = string.find(read_exception_msg, "speed") >= 0
+assert(read_msg_contains_attribute && read_msg_contains_param_name, "Should mention missing attribute in read error message")
+
+print("✅ Reading undefined parameter 'speed' correctly raises attribute_error")
+
+# Verify that defined parameters still work correctly after undefined parameter access
+print("Verifying defined parameters still work after undefined parameter test...")
+var original_density = twinkle.density
+twinkle.density = 100
+assert(twinkle.density == 100, "Defined parameter should still work after undefined parameter test")
+twinkle.density = original_density  # Restore original value
+
+print("✅ Defined parameters continue to work correctly")
 
 print("\nAll tests passed successfully!")
 return true
