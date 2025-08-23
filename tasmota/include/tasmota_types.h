@@ -662,26 +662,26 @@ typedef struct {
   // -----------------------------------------------------------------------
   // Mapping 0x3AC to 0x496 for ESP32, ESP32C2, ESP32C3, ESP32C5 and ESP32C6
   // -----------------------------------------------------------------------
-  myio          my_gp;                     // 3AC  2x40 bytes (ESP32) / 2x21 bytes (ESP32-C2) / 2x22 bytes (ESP32-C3) / 2x27 bytes (ESP32-C5) / 2x31 bytes (ESP32-C6)
+  myio          my_gp;                     // 3AC  2x40 bytes (ESP32) / 2x21 bytes (ESP32-C2) / 2x22 bytes (ESP32-C3) / 2x29 bytes (ESP32-C5) / 2x31 bytes (ESP32-C6)
 
   #if CONFIG_IDF_TARGET_ESP32C2
   uint8_t       free_esp32c2_3D6[38];      // 3D6  - Due to smaller myio
   #elif CONFIG_IDF_TARGET_ESP32C3
   uint8_t       free_esp32c3_3D8[36];      // 3D8  - Due to smaller myio
   #elif CONFIG_IDF_TARGET_ESP32C5
-  uint8_t       free_esp32c5_3E2[26];      // 3E2  - Due to smaller myio
+  uint8_t       free_esp32c5_3E4[22];      // 3E4  - Due to smaller myio
   #elif CONFIG_IDF_TARGET_ESP32C6
   uint8_t       free_esp32c6_3EA[18];      // 3EA  - Due to smaller myio
   #endif  // CONFIG_IDF_TARGET_ESP32C2/3/5/6
 
-  mytmplt       user_template;             // 3FC  2x37 bytes (ESP32) / 2x22 bytes (ESP32-C2) / 2x23 bytes (ESP32-C3) / 2x28 bytes (ESP32-C5) / 2x32 bytes (ESP32-C6)
+  mytmplt       user_template;             // 3FC  2x37 bytes (ESP32) / 2x22 bytes (ESP32-C2) / 2x23 bytes (ESP32-C3) / 2x30 bytes (ESP32-C5) / 2x32 bytes (ESP32-C6)
 
   #if CONFIG_IDF_TARGET_ESP32C2
   uint8_t       free_esp32c2_428[30];      // 428  - Due to smaller mytmplt
   #elif CONFIG_IDF_TARGET_ESP32C3
   uint8_t       free_esp32c3_42A[28];      // 42A  - Due to smaller mytmplt
   #elif CONFIG_IDF_TARGET_ESP32C5
-  uint8_t       free_esp32c5_434[18];      // 434  - Due to smaller mytmplt
+  uint8_t       free_esp32c5_438[14];      // 438  - Due to smaller mytmplt
   #elif CONFIG_IDF_TARGET_ESP32C6 
   uint8_t       free_esp32c6_43C[10];      // 43C  - Due to smaller mytmplt
   #endif  // CONFIG_IDF_TARGET_ESP32C2/3/5/6

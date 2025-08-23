@@ -1787,7 +1787,7 @@ bool FlashPin(uint32_t pin) {
 #elif CONFIG_IDF_TARGET_ESP32C3
   return ((pin > 13) && (pin < 18));   // ESP32C3 has GPIOs 11-17 reserved for Flash, with some boards GPIOs 11 12 13 are useable
 #elif CONFIG_IDF_TARGET_ESP32C5
-  return ((pin >= 16) && (pin <= 22));  // ESP32C5: GPIOs 16-22 reserved for SPI Flash/PSRAM (SPICS0, SPICLK, SPID, SPIQ, SPIHD, SPIWP, VDD_SPI)
+  return ((pin > 15) && (pin < 23));   // ESP32C5 has GPIOs 16-22 reserved for Flash
 #elif CONFIG_IDF_TARGET_ESP32C6
   return ((pin == 24) || (pin == 25) || (pin == 27) || (pin == 29) || (pin == 30));  // ESP32C6 has GPIOs 24-30 reserved for Flash, with some boards GPIOs 26 28 are useable
 #elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
@@ -1796,7 +1796,7 @@ bool FlashPin(uint32_t pin) {
   return false;                        // ESP32P4 has no flash pins, but GPIOs 34-38 are strapping pins
 #else
   return (pin >= 28) && (pin <= 31);   // ESP32 skip 28-31
-#endif  // ESP32C2/C3/C6 and S2/S3
+#endif  // ESP32C2/C3/C5/C6 and S2/S3
 #endif  // ESP32
 }
 
@@ -1810,7 +1810,7 @@ bool RedPin(uint32_t pin) {            // Pin may be dangerous to change, displa
 #elif CONFIG_IDF_TARGET_ESP32C3
   return (11 == pin) || (12 == pin) || (13 == pin);  // ESP32C3: GPIOs 11 12 13 are usually used for Flash (mode QIO/QOUT)
 #elif CONFIG_IDF_TARGET_ESP32C5
-  return ((pin == 2) || (pin == 3) || (pin == 7) || (pin == 25) || (pin == 26) || (pin == 27) || (pin == 28));  // ESP32C5: Strapping pins (MTMS, MTDI, JTAG, Boot Mode Control, SDIO Sampling, ROM Messages, Crystal Freq)
+  return (2 == pin) || (7 == pin) || (25 == pin) || (27 == pin) || (28 == pin);  // ESP32C5: GPIO2,7,25,27,28 are strapping pins
 #elif CONFIG_IDF_TARGET_ESP32C6
   return (26 == pin) || (28 == pin);   // ESP32C6: GPIOs 26 28 are usually used for Flash (mode QIO/QOUT)
 #elif CONFIG_IDF_TARGET_ESP32S2
