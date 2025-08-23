@@ -40,79 +40,79 @@ def run_all_tests()
   print("")
   
   var test_files = [
-    "lib/libesp32/berry_animation/tests/sine_int_test.be",
+    "lib/libesp32/berry_animation/src/tests/sine_int_test.be",
 
     # Core framework tests
-    "lib/libesp32/berry_animation/tests/frame_buffer_test.be",
-    "lib/libesp32/berry_animation/tests/nillable_parameter_test.be",
-    "lib/libesp32/berry_animation/tests/parameterized_object_test.be",  # Tests parameter management base class
-    "lib/libesp32/berry_animation/tests/animation_test.be",
-    "lib/libesp32/berry_animation/tests/animation_engine_test.be",
-    "lib/libesp32/berry_animation/tests/fast_loop_integration_test.be",
-    "lib/libesp32/berry_animation/tests/solid_animation_test.be",  # Tests unified solid() function
-    "lib/libesp32/berry_animation/tests/solid_unification_test.be",  # Tests solid unification
+    "lib/libesp32/berry_animation/src/tests/frame_buffer_test.be",
+    "lib/libesp32/berry_animation/src/tests/nillable_parameter_test.be",
+    "lib/libesp32/berry_animation/src/tests/parameterized_object_test.be",  # Tests parameter management base class
+    "lib/libesp32/berry_animation/src/tests/animation_test.be",
+    "lib/libesp32/berry_animation/src/tests/animation_engine_test.be",
+    "lib/libesp32/berry_animation/src/tests/fast_loop_integration_test.be",
+    "lib/libesp32/berry_animation/src/tests/solid_animation_test.be",  # Tests unified solid() function
+    "lib/libesp32/berry_animation/src/tests/solid_unification_test.be",  # Tests solid unification
     
     # Animation effect tests
-    "lib/libesp32/berry_animation/tests/filled_animation_test.be",
-    "lib/libesp32/berry_animation/tests/pulse_animation_test.be",
-    "lib/libesp32/berry_animation/tests/breathe_animation_test.be",
-    "lib/libesp32/berry_animation/tests/color_cycle_animation_test.be",
-    "lib/libesp32/berry_animation/tests/rich_palette_animation_test.be",
-    "lib/libesp32/berry_animation/tests/rich_palette_animation_class_test.be",
-    "lib/libesp32/berry_animation/tests/comet_animation_test.be",
-    "lib/libesp32/berry_animation/tests/fire_animation_test.be",
-    "lib/libesp32/berry_animation/tests/twinkle_animation_test.be",
-    "lib/libesp32/berry_animation/tests/crenel_position_animation_test.be",
-    "lib/libesp32/berry_animation/tests/beacon_animation_test.be",
-    "lib/libesp32/berry_animation/tests/gradient_animation_test.be",
-    "lib/libesp32/berry_animation/tests/noise_animation_test.be",
-    "lib/libesp32/berry_animation/tests/plasma_animation_test.be",
-    "lib/libesp32/berry_animation/tests/sparkle_animation_test.be",
-    "lib/libesp32/berry_animation/tests/wave_animation_test.be",
-    "lib/libesp32/berry_animation/tests/palette_pattern_animation_test.be",
+    "lib/libesp32/berry_animation/src/tests/filled_animation_test.be",
+    "lib/libesp32/berry_animation/src/tests/pulse_animation_test.be",
+    "lib/libesp32/berry_animation/src/tests/breathe_animation_test.be",
+    "lib/libesp32/berry_animation/src/tests/color_cycle_animation_test.be",
+    "lib/libesp32/berry_animation/src/tests/rich_palette_animation_test.be",
+    "lib/libesp32/berry_animation/src/tests/rich_palette_animation_class_test.be",
+    "lib/libesp32/berry_animation/src/tests/comet_animation_test.be",
+    "lib/libesp32/berry_animation/src/tests/fire_animation_test.be",
+    "lib/libesp32/berry_animation/src/tests/twinkle_animation_test.be",
+    "lib/libesp32/berry_animation/src/tests/crenel_position_animation_test.be",
+    "lib/libesp32/berry_animation/src/tests/beacon_animation_test.be",
+    "lib/libesp32/berry_animation/src/tests/gradient_animation_test.be",
+    "lib/libesp32/berry_animation/src/tests/noise_animation_test.be",
+    "lib/libesp32/berry_animation/src/tests/plasma_animation_test.be",
+    "lib/libesp32/berry_animation/src/tests/sparkle_animation_test.be",
+    "lib/libesp32/berry_animation/src/tests/wave_animation_test.be",
+    "lib/libesp32/berry_animation/src/tests/palette_pattern_animation_test.be",
     
     # Motion effects tests
-    "lib/libesp32/berry_animation/tests/shift_animation_test.be",
-    "lib/libesp32/berry_animation/tests/bounce_animation_test.be",
-    "lib/libesp32/berry_animation/tests/scale_animation_test.be",
-    "lib/libesp32/berry_animation/tests/jitter_animation_test.be",
-    "lib/libesp32/berry_animation/tests/motion_effects_test.be",
+    "lib/libesp32/berry_animation/src/tests/shift_animation_test.be",
+    "lib/libesp32/berry_animation/src/tests/bounce_animation_test.be",
+    "lib/libesp32/berry_animation/src/tests/scale_animation_test.be",
+    "lib/libesp32/berry_animation/src/tests/jitter_animation_test.be",
+    "lib/libesp32/berry_animation/src/tests/motion_effects_test.be",
     
     # Color and parameter tests
-    "lib/libesp32/berry_animation/tests/crenel_position_color_test.be",
-    "lib/libesp32/berry_animation/tests/get_param_value_test.be",
-    "lib/libesp32/berry_animation/tests/parameter_validation_test.be",
+    "lib/libesp32/berry_animation/src/tests/crenel_position_color_test.be",
+    "lib/libesp32/berry_animation/src/tests/get_param_value_test.be",
+    "lib/libesp32/berry_animation/src/tests/parameter_validation_test.be",
     
     # Sequence and timing tests
-    "lib/libesp32/berry_animation/tests/sequence_manager_test.be",
-    "lib/libesp32/berry_animation/tests/sequence_manager_layering_test.be",
+    "lib/libesp32/berry_animation/src/tests/sequence_manager_test.be",
+    "lib/libesp32/berry_animation/src/tests/sequence_manager_layering_test.be",
     
     # Value provider tests
-    "lib/libesp32/berry_animation/tests/core_value_provider_test.be",
-    "lib/libesp32/berry_animation/tests/test_time_ms_requirement.be",
-    "lib/libesp32/berry_animation/tests/value_provider_test.be",
-    "lib/libesp32/berry_animation/tests/oscillator_value_provider_test.be",
-    "lib/libesp32/berry_animation/tests/oscillator_ease_test.be",
-    "lib/libesp32/berry_animation/tests/oscillator_elastic_bounce_test.be",
-    "lib/libesp32/berry_animation/tests/breathe_color_provider_test.be",
+    "lib/libesp32/berry_animation/src/tests/core_value_provider_test.be",
+    "lib/libesp32/berry_animation/src/tests/test_time_ms_requirement.be",
+    "lib/libesp32/berry_animation/src/tests/value_provider_test.be",
+    "lib/libesp32/berry_animation/src/tests/oscillator_value_provider_test.be",
+    "lib/libesp32/berry_animation/src/tests/oscillator_ease_test.be",
+    "lib/libesp32/berry_animation/src/tests/oscillator_elastic_bounce_test.be",
+    "lib/libesp32/berry_animation/src/tests/breathe_color_provider_test.be",
     
     # DSL tests
-    "lib/libesp32/berry_animation/tests/dsl_lexer_test.be",
-    "lib/libesp32/berry_animation/tests/token_test.be",
-    "lib/libesp32/berry_animation/tests/global_variable_test.be",
-    "lib/libesp32/berry_animation/tests/dsl_transpiler_test.be",
-    "lib/libesp32/berry_animation/tests/dsl_core_processing_test.be",
-    "lib/libesp32/berry_animation/tests/simplified_transpiler_test.be",
-    "lib/libesp32/berry_animation/tests/symbol_registry_test.be",
-    "lib/libesp32/berry_animation/tests/dsl_runtime_test.be",
-    "lib/libesp32/berry_animation/tests/nested_function_calls_test.be",
-    "lib/libesp32/berry_animation/tests/user_functions_test.be",
-    "lib/libesp32/berry_animation/tests/palette_dsl_test.be",
-    "lib/libesp32/berry_animation/tests/dsl_parameter_validation_test.be",
-    "lib/libesp32/berry_animation/tests/dsl_value_provider_validation_test.be",
+    "lib/libesp32/berry_animation/src/tests/dsl_lexer_test.be",
+    "lib/libesp32/berry_animation/src/tests/token_test.be",
+    "lib/libesp32/berry_animation/src/tests/global_variable_test.be",
+    "lib/libesp32/berry_animation/src/tests/dsl_transpiler_test.be",
+    "lib/libesp32/berry_animation/src/tests/dsl_core_processing_test.be",
+    "lib/libesp32/berry_animation/src/tests/simplified_transpiler_test.be",
+    "lib/libesp32/berry_animation/src/tests/symbol_registry_test.be",
+    "lib/libesp32/berry_animation/src/tests/dsl_runtime_test.be",
+    "lib/libesp32/berry_animation/src/tests/nested_function_calls_test.be",
+    "lib/libesp32/berry_animation/src/tests/user_functions_test.be",
+    "lib/libesp32/berry_animation/src/tests/palette_dsl_test.be",
+    "lib/libesp32/berry_animation/src/tests/dsl_parameter_validation_test.be",
+    "lib/libesp32/berry_animation/src/tests/dsl_value_provider_validation_test.be",
     
     # Event system tests
-    "lib/libesp32/berry_animation/tests/event_system_test.be"
+    "lib/libesp32/berry_animation/src/tests/event_system_test.be"
   ]
   
   var total_tests = size(test_files)

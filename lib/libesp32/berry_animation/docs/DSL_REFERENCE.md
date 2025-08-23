@@ -12,7 +12,8 @@ Comments use the `#` character and extend to the end of the line:
 
 ```dsl
 # This is a full-line comment
-strip length 30  # This is an inline comment
+# strip length 30  # This is an inline comment (TEMPORARILY DISABLED)
+color red = #FF0000  # This is an inline comment
 ```
 
 Comments are preserved in the generated code and can appear anywhere in the DSL.
@@ -22,8 +23,8 @@ Comments are preserved in the generated code and can appear anywhere in the DSL.
 A DSL program consists of statements that can appear in any order:
 
 ```dsl
-# Optional strip configuration (must be first if present)
-strip length 60
+# Strip configuration is handled automatically
+# strip length 60  # TEMPORARILY DISABLED
 
 # Color definitions
 color red = #FF0000
@@ -52,7 +53,7 @@ run demo
 The following keywords are reserved and cannot be used as identifiers:
 
 **Configuration Keywords:**
-- `strip` - Strip configuration
+- `strip` - Strip configuration (temporarily disabled, reserved keyword)
 - `set` - Variable assignment
 
 **Definition Keywords:**
@@ -179,13 +180,15 @@ Color123        # Valid identifier
 
 ### Strip Configuration
 
-The `strip` statement configures the LED strip and must be the first statement if present:
+**Note: The `strip` directive is temporarily disabled.** Strip configuration is handled automatically by the host system.
+
+~~The `strip` statement configures the LED strip and must be the first statement if present:~~
 
 ```dsl
-strip length 60     # Set strip length to 60 LEDs
+# strip length 60     # TEMPORARILY DISABLED
 ```
 
-If omitted, the system uses the configured strip length from the host system.
+~~If omitted,~~ The system uses the configured strip length from the host system.
 
 ### Variable Assignment
 
@@ -578,8 +581,8 @@ statement = config_stmt
           | execution_stmt ;
 
 (* Configuration *)
-config_stmt = strip_config | variable_assignment ;
-strip_config = "strip" "length" number ;
+config_stmt = variable_assignment ;
+(* strip_config = "strip" "length" number ; -- TEMPORARILY DISABLED *)
 variable_assignment = "set" identifier "=" expression ;
 
 (* Definitions *)

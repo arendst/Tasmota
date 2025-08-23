@@ -32,7 +32,7 @@ def test_user_function_in_dsl()
   print("Testing user function call in DSL...")
   
   var dsl_code = 
-    "strip length 30\n"
+    "# strip length 30  # TEMPORARILY DISABLED\n"
     "color custom_red = 0xFF0000\n"
     "animation red_breathing = breathing(custom_red, 4s)\n"
     "run red_breathing"
@@ -63,7 +63,7 @@ def test_nested_user_function_calls()
   animation.register_user_function("complex", complex_effect)
   
   var dsl_code = 
-    "strip length 30\n"
+    "# strip length 30  # TEMPORARILY DISABLED\n"
     "color custom_blue = 0x0000FF\n"
     "animation complex_blue = complex(custom_blue, 2s)\n"
     "run complex_blue"
@@ -88,7 +88,7 @@ def test_user_function_multiple_parameters()
   print("Testing user function with multiple parameters...")
   
   var dsl_code = 
-    "strip length 30\n"
+    "# strip length 30  # TEMPORARILY DISABLED\n"
     "animation sparkles = sparkle(red, white, 15%)\n"
     "run sparkles"
   
@@ -114,7 +114,7 @@ def test_user_function_in_nested_calls()
   print("Testing user function in nested calls...")
   
   var dsl_code = 
-    "strip length 30\n"
+    "# strip length 30  # TEMPORARILY DISABLED\n"
     "color custom_red = 0xFF0000\n"
     "animation complex = pulsating_animation(color=breathing(custom_red, 3s), period=2s)\n"
     "run complex"
@@ -141,7 +141,7 @@ def test_generated_code_validity()
   print("Testing generated code validity with user functions...")
   
   var dsl_code = 
-    "strip length 30\n"
+    "# strip length 30  # TEMPORARILY DISABLED\n"
     "color custom_red = 0xFF0000\n"
     "animation red_fire = fire(200, 500ms)\n"
     "run red_fire"

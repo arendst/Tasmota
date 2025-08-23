@@ -9,7 +9,7 @@ def test_basic_transpilation()
   
   # Create a simple DSL program with custom color names (not predefined ones)
   var dsl_code = 
-    "strip length 30\n"
+    "# strip length 30  # TEMPORARILY DISABLED\n"
     "color my_red = 0xFF0000\n"
     "color my_blue = 0x0000FF\n"
     "animation solid_red = solid(color=my_red)\n"
@@ -37,7 +37,7 @@ def test_color_resolution()
   
   # Test that named colors work
   var dsl_code = 
-    "strip length 10\n"
+    "# strip length 10  # TEMPORARILY DISABLED\n"
     "animation red_pattern = solid(color=red)\n"
     "animation blue_pattern = solid(color=blue)\n"
     "run red_pattern"
@@ -64,7 +64,7 @@ def test_function_calls()
   print("Testing function calls...")
   
   var dsl_code = 
-    "strip length 20\n"
+    "# strip length 20  # TEMPORARILY DISABLED\n"
     "animation solid_red = solid(color=red)\n"
     "animation test_anim = pulsating_animation(color=red, period=1000)\n"
     "run test_anim"

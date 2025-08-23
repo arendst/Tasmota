@@ -12,7 +12,7 @@ import string
 def test_basic_transpilation()
   print("Testing basic DSL transpilation...")
   
-  var dsl_source = "strip length 60\n" +
+  var dsl_source = "# strip length 60  # TEMPORARILY DISABLED\n" +
     "color custom_red = 0xFF0000\n" +
     "animation solid_red = solid(color=custom_red)\n" +
     "animation red_anim = solid_red\n" +
@@ -26,7 +26,7 @@ def test_basic_transpilation()
   var berry_code = animation_dsl.compile(dsl_source)
   
   assert(berry_code != nil, "Should generate Berry code")
-  assert(string.find(berry_code, "var engine = animation.init_strip(60)") >= 0, "Should generate strip configuration")
+  assert(string.find(berry_code, "var engine = animation.init_strip()") >= 0, "Should generate strip configuration")
   assert(string.find(berry_code, "var custom_red_ = 0xFFFF0000") >= 0, "Should generate color definition")
   assert(string.find(berry_code, "def sequence_demo()") >= 0, "Should generate sequence function")
   assert(string.find(berry_code, "sequence_demo()") >= 0, "Should generate sequence call")
@@ -97,10 +97,11 @@ end
 def test_strip_configuration()
   print("Testing strip configuration...")
   
+  # Strip directive tests are temporarily disabled
   var config_tests = [
-    ["strip length 30", "var engine = animation.init_strip(30)"],
-    ["strip length 60", "var engine = animation.init_strip(60)"],
-    ["strip length 120", "var engine = animation.init_strip(120)"]
+    # ["strip length 30", "var engine = animation.init_strip(30)"],  # TEMPORARILY DISABLED
+    # ["strip length 60", "var engine = animation.init_strip(60)"],  # TEMPORARILY DISABLED
+    # ["strip length 120", "var engine = animation.init_strip(120)"] # TEMPORARILY DISABLED
   ]
   
   for test : config_tests
@@ -170,7 +171,7 @@ def test_multiple_run_statements()
   print("Testing multiple run statements...")
   
   # Test with multiple animations
-  var dsl_source = "strip length 30\n" +
+  var dsl_source = "# strip length 30  # TEMPORARILY DISABLED\n" +
     "color custom_red = 0xFF0000\n" +
     "color custom_blue = 0x0000FF\n" +
     "color custom_green = 0x00FF00\n" +
@@ -224,7 +225,7 @@ def test_multiple_run_statements()
   assert(start_line_index > last_add_line_index, "engine.start() should come after all engine.add_* calls")
   
   # Test with mixed animations and sequences
-  var mixed_dsl = "strip length 30\n" +
+  var mixed_dsl = "# strip length 30  # TEMPORARILY DISABLED\n" +
     "color custom_red = 0xFF0000\n" +
     "color custom_blue = 0x0000FF\n" +
     "\n" +
@@ -264,13 +265,13 @@ end
 def test_variable_assignments()
   print("Testing variable assignments...")
   
-  var dsl_source = "set strip_length = 60\n" +
+  var dsl_source = "set my_length = 60\n" +
     "set brightness = 80%\n" +
     "set cycle_time = 5s"
   
   var berry_code = animation_dsl.compile(dsl_source)
   assert(berry_code != nil, "Should compile variables")
-  assert(string.find(berry_code, "var strip_length_ = 60") >= 0, "Should define numeric variable")
+  assert(string.find(berry_code, "var my_length_ = 60") >= 0, "Should define numeric variable")
   assert(string.find(berry_code, "var brightness_ = 204") >= 0, "Should convert percentage to 0-255 range")
   assert(string.find(berry_code, "var cycle_time_ = 5000") >= 0, "Should convert time to milliseconds")
   
@@ -351,7 +352,7 @@ def test_complex_dsl()
   print("Testing complex DSL example...")
   
   var complex_dsl = "# LED Strip Configuration\n" +
-    "strip length 60\n" +
+    "# strip length 60  # TEMPORARILY DISABLED\n" +
     "\n" +
     "# Color Definitions\n" +
     "color custom_red = 0xFF0000\n" +
@@ -388,7 +389,7 @@ def test_complex_dsl()
     print("Complex DSL compiled successfully!")
     
     # Check for key components
-    assert(string.find(berry_code, "var engine = animation.init_strip(60)") >= 0, "Should have strip config")
+    assert(string.find(berry_code, "var engine = animation.init_strip()") >= 0, "Should have default strip initialization")
     assert(string.find(berry_code, "var custom_red_ = 0xFFFF0000") >= 0, "Should have color definitions")
     assert(string.find(berry_code, "def sequence_demo()") >= 0, "Should have sequence definition")
     assert(string.find(berry_code, "sequence_demo()") >= 0, "Should have execution")
@@ -485,7 +486,7 @@ end
 def test_event_system_dsl()
   print("Testing event system DSL compilation...")
   
-  var event_dsl = "strip length 30\n" +
+  var event_dsl = "# strip length 30  # TEMPORARILY DISABLED\n" +
     "color custom_red = 0xFF0000\n" +
     "color custom_blue = 0x0000FF\n" +
     "\n" +
@@ -564,7 +565,7 @@ def test_comment_preservation()
   print("Testing comment preservation...")
   
   var dsl_with_comments = "# Header comment\n" +
-    "strip length 30  # Strip config comment\n" +
+    "# strip length 30  # Strip config comment (TEMPORARILY DISABLED)\n" +
     "# Color section\n" +
     "color custom_red = 0xFF0000  # Red color\n" +
     "animation solid_red = solid(color=custom_red)  # Red animation\n" +
@@ -609,7 +610,7 @@ end
 def test_easing_keywords()
   print("Testing easing keywords...")
   
-  var dsl_with_easing = "strip length 30\n" +
+  var dsl_with_easing = "# strip length 30  # TEMPORARILY DISABLED\n" +
     "# Test all easing keywords\n" +
     "animation linear_anim = solid(color=linear)\n" +
     "animation smooth_anim = solid(color=smooth)\n" +
@@ -630,7 +631,7 @@ def test_easing_keywords()
   end
   
   # Test easing keywords as function calls (regression test for breathing_colors.anim issue)
-  var dsl_with_function_calls = "strip length 30\n" +
+  var dsl_with_function_calls = "# strip length 30  # TEMPORARILY DISABLED\n" +
     "color custom_red = 0xFF0000\n" +
     "animation test_anim = solid(color=custom_red)\n" +
     "test_anim.opacity = 128\n" +
@@ -651,7 +652,7 @@ def test_animation_type_checking()
   print("Testing animation type checking...")
   
   # Test valid animation factory functions
-  var valid_animation_dsl = "strip length 30\n" +
+  var valid_animation_dsl = "# strip length 30  # TEMPORARILY DISABLED\n" +
     "color custom_red = 0xFF0000\n" +
     "animation pulse_red = pulsating_animation(color=custom_red, period=2000)\n" +
     "animation solid_blue = solid(color=0x0000FF)\n" +
@@ -663,7 +664,7 @@ def test_animation_type_checking()
   assert(string.find(berry_code, "animation.solid(engine)") >= 0, "Should generate solid call")
   
   # Test invalid animation factory function (should fail at transpile time)
-  var invalid_animation_dsl = "strip length 30\n" +
+  var invalid_animation_dsl = "# strip length 30  # TEMPORARILY DISABLED\n" +
     "animation invalid_anim = non_existent_animation(color=custom_red)"
   
   try
@@ -674,7 +675,7 @@ def test_animation_type_checking()
   end
   
   # Test color provider assigned to animation (should fail at transpile time)
-  var color_provider_as_animation_dsl = "strip length 30\n" +
+  var color_provider_as_animation_dsl = "# strip length 30  # TEMPORARILY DISABLED\n" +
     "animation invalid_anim = rich_palette(palette=breathe_palette)"
   
   try
@@ -693,7 +694,7 @@ def test_color_type_checking()
   print("Testing color type checking...")
   
   # Test simple color values
-  var simple_color_dsl = "strip length 30\n" +
+  var simple_color_dsl = "# strip length 30  # TEMPORARILY DISABLED\n" +
     "color custom_red = 0xFF0000\n" +
     "color custom_blue = 0x0000FF\n" +
     "color named_green = green\n" +
@@ -706,7 +707,7 @@ def test_color_type_checking()
   assert(string.find(berry_code, "var custom_blue_ = 0xFF0000FF") >= 0, "Should generate blue color")
   
   # Test color provider functions (if they exist)
-  var color_provider_dsl = "strip length 30\n" +
+  var color_provider_dsl = "# strip length 30  # TEMPORARILY DISABLED\n" +
     "color cycle_colors = color_cycle(palette=[0xFF0000, 0x00FF00, 0x0000FF])\n" +
     "animation cycle_anim = solid(color=cycle_colors)\n" +
     "run cycle_anim"
@@ -724,7 +725,7 @@ def test_color_type_checking()
   end
   
   # Test invalid color provider function (should fail at transpile time)
-  var invalid_color_dsl = "strip length 30\n" +
+  var invalid_color_dsl = "# strip length 30  # TEMPORARILY DISABLED\n" +
     "color invalid_color = non_existent_color_provider(param=value)"
   
   try

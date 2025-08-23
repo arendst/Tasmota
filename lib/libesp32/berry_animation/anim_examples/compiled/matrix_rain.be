@@ -13,7 +13,7 @@
 # 
 # # Dark background
 # color matrix_bg = 0x000000
-# animation background = solid(color=matrix_bg)
+# animation background = solid(color=matrix_bg, priority=50)
 # 
 # # Define matrix green palette
 # palette matrix_greens = [
@@ -29,33 +29,34 @@
 # animation stream1 = comet_animation(
 #   color=stream1_pattern, # color source
 #   tail_length=15,        # long tail
-#   speed=1.5s             # speed
+#   speed=1.5s,            # speed
+#   priority = 10
 # )
-# stream1.priority = 10
+# 
 # 
 # color stream2_pattern = rich_palette(palette=matrix_greens, cycle_period=1.8s, transition_type=LINEAR, brightness=200)
 # animation stream2 = comet_animation(
 #   color=stream2_pattern, # color source
 #   tail_length=12,        # medium tail
-#   speed=2.2s             # different speed
+#   speed=2.2s,            # different speed
+#   priority = 8
 # )
-# stream2.priority = 8
 # 
 # color stream3_pattern = rich_palette(palette=matrix_greens, cycle_period=2.5s, transition_type=LINEAR, brightness=180)
 # animation stream3 = comet_animation(
 #   color=stream3_pattern, # color source
 #   tail_length=10,        # shorter tail
-#   speed=1.8s             # another speed
+#   speed=1.8s,            # another speed
+#   priority = 6
 # )
-# stream3.priority = 6
 # 
 # # Add random bright flashes (like code highlights)
 # animation code_flash = twinkle_animation(
 #   color=0x00FFAA,  # Bright cyan-green
 #   density=3,       # density (few flashes)
-#   twinkle_speed=150ms # twinkle speed (quick flash)
+#   twinkle_speed=150ms, # twinkle speed (quick flash)
+#   priority = 20
 # )
-# code_flash.priority = 20
 # 
 # # Start all animations
 # run background
@@ -76,6 +77,7 @@ var engine = animation.init_strip()
 var matrix_bg_ = 0xFF000000
 var background_ = animation.solid(engine)
 background_.color = animation.global('matrix_bg_', 'matrix_bg')
+background_.priority = 50
 # Define matrix green palette
 var matrix_greens_ = bytes("00000000" "40003300" "80006600" "C000AA00" "FF00FF00")
 # Create multiple cascading streams
@@ -87,8 +89,8 @@ stream1_pattern_.brightness = 255
 var stream1_ = animation.comet_animation(engine)
 stream1_.color = animation.global('stream1_pattern_', 'stream1_pattern')
 stream1_.tail_length = 15
-stream1_.speed = 1500  # speed
-animation.global('stream1_').priority = 10
+stream1_.speed = 1500
+stream1_.priority = 10
 var stream2_pattern_ = animation.rich_palette(engine)
 stream2_pattern_.palette = animation.global('matrix_greens_', 'matrix_greens')
 stream2_pattern_.cycle_period = 1800
@@ -97,8 +99,8 @@ stream2_pattern_.brightness = 200
 var stream2_ = animation.comet_animation(engine)
 stream2_.color = animation.global('stream2_pattern_', 'stream2_pattern')
 stream2_.tail_length = 12
-stream2_.speed = 2200  # different speed
-animation.global('stream2_').priority = 8
+stream2_.speed = 2200
+stream2_.priority = 8
 var stream3_pattern_ = animation.rich_palette(engine)
 stream3_pattern_.palette = animation.global('matrix_greens_', 'matrix_greens')
 stream3_pattern_.cycle_period = 2500
@@ -107,14 +109,14 @@ stream3_pattern_.brightness = 180
 var stream3_ = animation.comet_animation(engine)
 stream3_.color = animation.global('stream3_pattern_', 'stream3_pattern')
 stream3_.tail_length = 10
-stream3_.speed = 1800  # another speed
-animation.global('stream3_').priority = 6
+stream3_.speed = 1800
+stream3_.priority = 6
 # Add random bright flashes (like code highlights)
 var code_flash_ = animation.twinkle_animation(engine)
 code_flash_.color = 0xFF00FFAA
 code_flash_.density = 3
-code_flash_.twinkle_speed = 150  # twinkle speed (quick flash)
-animation.global('code_flash_').priority = 20
+code_flash_.twinkle_speed = 150
+code_flash_.priority = 20
 # Start all animations
 # Start all animations/sequences
 if global.contains('sequence_background')

@@ -11,7 +11,7 @@ def test_basic_nested_calls()
   print("Testing basic nested function calls...")
   
   var dsl_code = 
-    "strip length 30\n"
+    "# strip length 30  # TEMPORARILY DISABLED\n"
     "color custom_red = 0xFF0000\n"
     "animation pulse_red = pulsating_animation(color=static_color(color=custom_red), period=3s)\n"
     "run pulse_red"
@@ -38,7 +38,7 @@ def test_deep_nesting()
   print("Testing deep nesting...")
   
   var dsl_code = 
-    "strip length 30\n"
+    "# strip length 30  # TEMPORARILY DISABLED\n"
     "animation complex = pulsating_animation(color=static_color(color=red), period=2s)\n"
     "run complex"
   
@@ -62,7 +62,7 @@ def test_mixed_parameter_types()
   print("Testing nested calls with mixed parameter types...")
   
   var dsl_code = 
-    "strip length 30\n"
+    "# strip length 30  # TEMPORARILY DISABLED\n"
     "animation mixed = pulsating_animation(color=static_color(color=blue), period=2s, max_brightness=80%)\n"
     "run mixed"
   
@@ -88,7 +88,7 @@ def test_nested_calls_in_arrays()
   print("Testing nested calls in array literals...")
   
   var dsl_code = 
-    "strip length 30\n"
+    "# strip length 30  # TEMPORARILY DISABLED\n"
     "animation cycle = pulsating_animation(color=static_color(color=red), period=5s)\n"
     "run cycle"
   
@@ -115,7 +115,7 @@ def test_error_handling()
   
   # Test unclosed parentheses
   var dsl_code1 = 
-    "strip length 30\n"
+    "# strip length 30  # TEMPORARILY DISABLED\n"
     "animation bad = pulsating_animation(color=static_color(color=red)\n"  # Missing closing paren
     "run bad"
   
@@ -128,7 +128,7 @@ def test_error_handling()
   
   # Test invalid function name
   var dsl_code2 = 
-    "strip length 30\n"
+    "# strip length 30  # TEMPORARILY DISABLED\n"
     "animation bad = invalid_function(color=red)\n"
     "run bad"
   
@@ -148,7 +148,7 @@ def test_complex_real_world_example()
   print("Testing complex real-world example...")
   
   var dsl_code = 
-    "strip length 60\n"
+    "# strip length 60  # TEMPORARILY DISABLED\n"
     "color sunset_red = 0xFF4500\n"
     "animation evening = pulsating_animation(\n"
     "  color=static_color(color=sunset_red),\n"
@@ -176,7 +176,7 @@ def test_generated_code_validity()
   print("Testing generated code validity...")
   
   var dsl_code = 
-    "strip length 30\n"
+    "# strip length 30  # TEMPORARILY DISABLED\n"
     "color custom_red = 0xFF0000\n"
     "animation test = pulsating_animation(color=static_color(color=custom_red), period=3s)\n"
     "run test"

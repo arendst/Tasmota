@@ -154,15 +154,6 @@ else
 fi
 ((TOTAL_COUNT++))
 
-echo -n "Testing pattern_animation_demo.be... "
-if $BERRY_CMD "$COMPILED_DIR/pattern_animation_demo.be" > /dev/null 2>&1; then
-    echo "✓"
-    ((SUCCESS_COUNT++))
-else
-    echo "✗"
-fi
-((TOTAL_COUNT++))
-
 echo -n "Testing plasma_wave.be... "
 if $BERRY_CMD "$COMPILED_DIR/plasma_wave.be" > /dev/null 2>&1; then
     echo "✓"

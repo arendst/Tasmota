@@ -28,7 +28,7 @@ class DSLParameterValidationTest
   # Test valid parameters - should compile without errors
   def test_valid_parameters()
     var dsl_code = 
-      "strip length 30\n"
+      "# strip length 30  # TEMPORARILY DISABLED\n"
       "animation breathe_test = breathe_animation(color=0xFF0000FF, period=2000, min_brightness=50)\n"
       "run breathe_test"
     
@@ -55,7 +55,7 @@ class DSLParameterValidationTest
   # Test invalid parameter - should fail compilation with specific error
   def test_invalid_parameter()
     var dsl_code = 
-      "strip length 30\n"
+      "# strip length 30  # TEMPORARILY DISABLED\n"
       "animation breathe_test = breathe_animation(color=0xFF0000FF, invalid_param=123)\n"
       "run breathe_test"
     
@@ -85,7 +85,7 @@ class DSLParameterValidationTest
   # Test mixed valid and invalid parameters
   def test_mixed_parameters()
     var dsl_code = 
-      "strip length 30\n"
+      "# strip length 30  # TEMPORARILY DISABLED\n"
       "animation breathe_test = breathe_animation(color=0xFF0000FF, period=2000, nonexistent_param=456)\n"
       "run breathe_test"
     
@@ -115,7 +115,7 @@ class DSLParameterValidationTest
   # Test nested function calls with invalid parameters
   def test_nested_function_invalid_parameters()
     var dsl_code = 
-      "strip length 30\n"
+      "# strip length 30  # TEMPORARILY DISABLED\n"
       "animation main_anim = pulsating_animation(color=breathe_animation(color=0xFF0000FF, bad_param=789))\n"
       "run main_anim"
     
@@ -150,7 +150,7 @@ class DSLParameterValidationTest
     end)
     
     var dsl_code = 
-      "strip length 30\n"
+      "# strip length 30  # TEMPORARILY DISABLED\n"
       "animation custom_test = my_custom_anim(123, 456)\n"
       "run custom_test"
     
@@ -170,7 +170,7 @@ class DSLParameterValidationTest
   # Test multiple animations with different parameter validation results
   def test_multiple_animations_validation()
     var dsl_code = 
-      "strip length 30\n"
+      "# strip length 30  # TEMPORARILY DISABLED\n"
       "animation valid_anim = breathe_animation(color=0xFF0000FF, period=2000)\n"
       "animation invalid_anim = breathe_animation(color=0xFF00FF00, wrong_param=999)\n"
       "run valid_anim"

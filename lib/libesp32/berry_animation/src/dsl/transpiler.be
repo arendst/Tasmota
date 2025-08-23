@@ -102,12 +102,10 @@ class SimpleDSLTranspiler
     # Handle keywords
     if tok.type == animation_dsl.Token.KEYWORD
       if tok.value == "strip"
-        if !is_first_real_statement
-          self.error("'strip' declaration must be the first statement")
-          self.skip_statement()
-          return
-        end
-        self.process_strip()
+        # Strip directive is temporarily disabled but remains a reserved keyword
+        self.error("'strip' directive is temporarily disabled. Strip configuration is handled automatically.")
+        self.skip_statement()
+        return
       else
         # For any other statement, ensure strip is initialized
         if !self.strip_initialized
@@ -324,16 +322,17 @@ class SimpleDSLTranspiler
   end
   
   # Process strip configuration: strip length 60
-  def process_strip()
-    self.next()  # skip 'strip'
-    var prop = self.expect_identifier()
-    if prop == "length"
-      var length = self.expect_number()
-      var inline_comment = self.collect_inline_comment()
-      self.add(f"var engine = animation.init_strip({length}){inline_comment}")
-      self.strip_initialized = true  # Mark that strip was initialized
-    end
-  end
+  # Temporarily disabled
+  # def process_strip()
+  #   self.next()  # skip 'strip'
+  #   var prop = self.expect_identifier()
+  #   if prop == "length"
+  #     var length = self.expect_number()
+  #     var inline_comment = self.collect_inline_comment()
+  #     self.add(f"var engine = animation.init_strip({length}){inline_comment}")
+  #     self.strip_initialized = true  # Mark that strip was initialized
+  #   end
+  # end
   
   # Process variable assignment: set brightness = 80%
   def process_set()

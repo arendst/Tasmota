@@ -1,11 +1,11 @@
 # DSL Compilation Report
 
-Generated: Ven  1 aoû 2025 18:49:41 CEST
+Generated: Sam 23 aoû 2025 10:30:34 CEST
 
 ## Summary
 
-- **Total files**: 25
-- **Successfully compiled**: 25
+- **Total files**: 24
+- **Successfully compiled**: 24
 - **Failed to compile**: 0
 - **Success rate**: 100%
 
@@ -27,7 +27,6 @@ Generated: Ven  1 aoû 2025 18:49:41 CEST
 - ✅ ocean_waves.anim
 - ✅ palette_demo.anim
 - ✅ palette_showcase.anim
-- ✅ pattern_animation_demo.anim
 - ✅ plasma_wave.anim
 - ✅ police_lights.anim
 - ✅ property_assignment_demo.anim

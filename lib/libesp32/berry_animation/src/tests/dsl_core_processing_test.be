@@ -141,10 +141,11 @@ end
 def test_strip_configuration()
   print("Testing strip configuration...")
   
+  # Strip directive tests are temporarily disabled
   var strip_tests = [
-    ["strip length 30", "var engine = animation.init_strip(30)"],
-    ["strip length 60", "var engine = animation.init_strip(60)"],
-    ["strip length 120", "var engine = animation.init_strip(120)"]
+    # ["strip length 30", "var engine = animation.init_strip(30)"],  # TEMPORARILY DISABLED
+    # ["strip length 60", "var engine = animation.init_strip(60)"],  # TEMPORARILY DISABLED
+    # ["strip length 120", "var engine = animation.init_strip(120)"] # TEMPORARILY DISABLED
   ]
   
   for test : strip_tests

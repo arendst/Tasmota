@@ -23,7 +23,7 @@ def test_dsl_runtime()
   print("\nTest 1: Basic DSL loading")
   
   var simple_dsl =
-    "strip length 30\n"
+    "# strip length 30  # TEMPORARILY DISABLED\n"
     "color custom_red = 0xFF0000\n"
     "animation red_anim = pulsating_animation(color=static_color(color=custom_red), period=2s)\n"
     "sequence demo {\n"
@@ -107,7 +107,7 @@ def test_dsl_runtime()
   print("\nTest 6: Multiple DSL sources")
   
   var dsl1 = 
-    "strip length 30\n" +
+    "# strip length 30  # TEMPORARILY DISABLED\n" +
     "color custom_blue = 0x0000FF\n" +
     "animation blue_anim = pulsating_animation(color=static_color(color=custom_blue), period=2s)\n" +
     "sequence blue_demo {\n" +
@@ -116,7 +116,7 @@ def test_dsl_runtime()
     "run blue_demo"
   
   var dsl2 = 
-    "strip length 30\n" +
+    "# strip length 30  # TEMPORARILY DISABLED\n" +
     "color custom_green = 0x00FF00\n" +
     "animation green_anim = pulsating_animation(color=static_color(color=custom_green), period=2s)\n" +
     "sequence green_demo {\n" +
@@ -173,7 +173,7 @@ def test_dsl_file_operations()
   
   # Create a test DSL file
   var test_filename = "/tmp/test_animation.dsl"
-  var test_dsl_content = "strip length 20\n" +
+  var test_dsl_content = "# strip length 20  # TEMPORARILY DISABLED\n" +
     "color custom_purple = 0x800080\n" +
     "animation purple_anim = pulsating_animation(color=static_color(color=custom_purple), period=2s)\n" +
     "sequence file_test {\n" +
