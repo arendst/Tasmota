@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Syslog RFC5424 compliance (#23509)
+- Berry fix calling `setmember` with a function
 
 ### Removed
 - `user-scalable=no` from HTTP HEADER (#23798)
