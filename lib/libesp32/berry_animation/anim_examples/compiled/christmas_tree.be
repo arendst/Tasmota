@@ -27,26 +27,26 @@
 # # Colorful ornaments as twinkling lights
 # color ornament_pattern = rich_palette(palette=ornament_colors, cycle_period=3s, transition_type=LINEAR, brightness=255)
 # animation ornaments = twinkle_animation(
-#   color=ornament_pattern, # color source
-#   density=15,             # density (many ornaments)
-#   twinkle_speed=800ms     # twinkle speed (slow twinkle)
+#   color=ornament_pattern # color source
+#   density=15             # density (many ornaments)
+#   twinkle_speed=800ms    # twinkle speed (slow twinkle)
 # )
 # ornaments.priority = 10
 # 
 # # Star on top (bright yellow pulse)
 # animation tree_star = beacon_animation(
-#   color=0xFFFF00,  # Bright yellow
-#   pos=58,          # position (near the top)
-#   beacon_size=3,    # star size
-#   slew_size=1      # sharp edges
+#   color=0xFFFF00  # Bright yellow
+#   pos=58          # position (near the top)
+#   beacon_size=3   # star size
+#   slew_size=1     # sharp edges
 # )
 # tree_star.priority = 20
 # tree_star.opacity = smooth(min_value=200, max_value=255, duration=2s)  # Gentle pulsing
 # 
 # # Add some white sparkles for snow/magic
 # animation snow_sparkles = twinkle_animation(
-#   color=0xFFFFFF,  # White snow
-#   density=8,       # density (sparkle count)
+#   color=0xFFFFFF  # White snow
+#   density=8       # density (sparkle count)
 #   twinkle_speed=400ms # twinkle speed (quick sparkles)
 # )
 # snow_sparkles.priority = 15
@@ -54,9 +54,9 @@
 # # Garland effect - moving colored lights
 # color garland_pattern = rich_palette(palette=ornament_colors, cycle_period=2s, transition_type=LINEAR, brightness=200)
 # animation garland = comet_animation(
-#   color=garland_pattern, # color source
-#   tail_length=6,         # garland length (tail length)
-#   speed=4s               # slow movement (speed)
+#   color=garland_pattern # color source
+#   tail_length=6         # garland length (tail length)
+#   speed=4s              # slow movement (speed)
 # )
 # garland.priority = 5
 # 
@@ -88,26 +88,26 @@ ornament_pattern_.cycle_period = 3000
 ornament_pattern_.transition_type = animation.global('LINEAR_', 'LINEAR')
 ornament_pattern_.brightness = 255
 var ornaments_ = animation.twinkle_animation(engine)
-ornaments_.color = animation.global('ornament_pattern_', 'ornament_pattern')
-ornaments_.density = 15
+ornaments_.color = animation.global('ornament_pattern_', 'ornament_pattern')  # color source
+ornaments_.density = 15  # density (many ornaments)
 ornaments_.twinkle_speed = 800  # twinkle speed (slow twinkle)
 animation.global('ornaments_').priority = 10
 # Star on top (bright yellow pulse)
 var tree_star_ = animation.beacon_animation(engine)
-tree_star_.color = 0xFFFFFF00
-tree_star_.pos = 58
-tree_star_.beacon_size = 3
+tree_star_.color = 0xFFFFFF00  # Bright yellow
+tree_star_.pos = 58  # position (near the top)
+tree_star_.beacon_size = 3  # star size
 tree_star_.slew_size = 1  # sharp edges
 animation.global('tree_star_').priority = 20
-var temp_smooth_175 = animation.smooth(engine)
-temp_smooth_175.min_value = 200
-temp_smooth_175.max_value = 255
-temp_smooth_175.duration = 2000
-animation.global('tree_star_').opacity = temp_smooth_175  # Gentle pulsing
+var temp_smooth_170 = animation.smooth(engine)
+temp_smooth_170.min_value = 200
+temp_smooth_170.max_value = 255
+temp_smooth_170.duration = 2000
+animation.global('tree_star_').opacity = temp_smooth_170  # Gentle pulsing
 # Add some white sparkles for snow/magic
 var snow_sparkles_ = animation.twinkle_animation(engine)
-snow_sparkles_.color = 0xFFFFFFFF
-snow_sparkles_.density = 8
+snow_sparkles_.color = 0xFFFFFFFF  # White snow
+snow_sparkles_.density = 8  # density (sparkle count)
 snow_sparkles_.twinkle_speed = 400  # twinkle speed (quick sparkles)
 animation.global('snow_sparkles_').priority = 15
 # Garland effect - moving colored lights
@@ -117,8 +117,8 @@ garland_pattern_.cycle_period = 2000
 garland_pattern_.transition_type = animation.global('LINEAR_', 'LINEAR')
 garland_pattern_.brightness = 200
 var garland_ = animation.comet_animation(engine)
-garland_.color = animation.global('garland_pattern_', 'garland_pattern')
-garland_.tail_length = 6
+garland_.color = animation.global('garland_pattern_', 'garland_pattern')  # color source
+garland_.tail_length = 6  # garland length (tail length)
 garland_.speed = 4000  # slow movement (speed)
 animation.global('garland_').priority = 5
 # Start all animations

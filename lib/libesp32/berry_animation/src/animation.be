@@ -169,7 +169,7 @@ def animation_init_strip(*l)
   import animation
   import introspect
   # we keep a hash of strip configurations to reuse existing engines
-  if !introspect.contains(animation, "_engines")
+  if !introspect.contains(animation, "_strips")
     animation._engines = {}
   end
 
@@ -182,7 +182,6 @@ def animation_init_strip(*l)
   else
     var strip = call(global.Leds, l)    # call global.Leds() with vararg
     engine = animation.create_engine(strip)
-    animation._engines[l_as_string] = engine
   end
 
   return engine

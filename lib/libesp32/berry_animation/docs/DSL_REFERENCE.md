@@ -237,23 +237,33 @@ color pulsing_blue = pulsating_color(
 
 ## Palette Definitions
 
-Palettes define color gradients using position-color pairs and support two encoding formats:
+Palettes define color gradients using position-color pairs and support two encoding formats with flexible syntax:
 
 ### Value-Based Palettes (Recommended)
 
 Standard palettes use value positions from 0-255:
 
 ```dsl
+# Traditional syntax with commas
 palette fire_colors = [
   (0, 0x000000),     # Position 0: Black
   (128, 0xFF0000),   # Position 128: Red
   (255, 0xFFFF00)    # Position 255: Yellow
 ]
 
+# New syntax without commas (when entries are on separate lines)
 palette ocean_palette = [
-  (0, navy),         # Using named colors
-  (128, cyan),
+  (0, navy)          # Using named colors
+  (128, cyan)
   (255, green)
+]
+
+# Mixed syntax also works
+palette matrix_greens = [
+  (0, 0x000000), (64, 0x003300)    # Multiple entries on one line
+  (128, 0x006600)                  # Single entry on separate line
+  (192, 0x00AA00)
+  (255, 0x00FF00)
 ]
 ```
 
@@ -424,22 +434,56 @@ run sequence_name       # Run a sequence
 
 ## Function Calls
 
-Functions use named parameter syntax:
+Functions use named parameter syntax with flexible formatting:
 
 ```dsl
+# Single line (commas required)
 function_name(param1=value1, param2=value2)
 
-# Examples
+# Multi-line (commas optional when parameters are on separate lines)
+function_name(
+  param1=value1
+  param2=value2
+  param3=value3
+)
+
+# Mixed syntax (both commas and newlines work)
+function_name(
+  param1=value1, param2=value2
+  param3=value3
+)
+```
+
+**Examples:**
+```dsl
+# Traditional single-line syntax
 solid(color=red)
 pulsating_animation(color=blue, period=2s)
-triangle(min_value=0, max_value=255, period=3s)
+
+# New multi-line syntax (no commas needed)
+pulsating_animation(
+  color=blue
+  period=2s
+  brightness=255
+)
+
+# Mixed syntax
+comet_animation(
+  color=stream_pattern, tail_length=15
+  speed=1.5s
+  priority=10
+)
 ```
 
 **Nested Function Calls:**
 ```dsl
 pulsating_animation(
-  color=solid(color=red),
-  period=smooth(min_value=1000, max_value=3000, period=10s)
+  color=solid(color=red)
+  period=smooth(
+    min_value=1000
+    max_value=3000
+    period=10s
+  )
 )
 ```
 
@@ -667,6 +711,46 @@ whitespace = " " | "\t" | "\r" | "\n" ;
 newline = "\n" | "\r\n" ;
 ```
 
+## Flexible Parameter Syntax
+
+The DSL supports flexible parameter syntax that makes multi-line function calls more readable:
+
+### Traditional Syntax (Commas Required)
+```dsl
+animation stream = comet_animation(color=red, tail_length=15, speed=1.5s, priority=10)
+```
+
+### New Multi-Line Syntax (Commas Optional)
+```dsl
+animation stream = comet_animation(
+  color=red
+  tail_length=15
+  speed=1.5s
+  priority=10
+)
+```
+
+### Mixed Syntax (Both Supported)
+```dsl
+animation stream = comet_animation(
+  color=red, tail_length=15
+  speed=1.5s
+  priority=10
+)
+```
+
+### Rules
+- **Single line**: Commas are required between parameters
+- **Multi-line**: Commas are optional when parameters are on separate lines
+- **Mixed**: You can use both commas and newlines as separators
+- **Comments**: Inline comments work with both syntaxes
+
+This applies to:
+- Animation function calls
+- Color provider function calls  
+- Value provider function calls
+- Palette entries
+
 ## Language Features Summary
 
 ### ✅ Currently Implemented
@@ -682,6 +766,7 @@ newline = "\n" | "\r\n" ;
 - Parameter validation at compile time
 - Execution statements
 - User-defined functions (with engine-first parameter pattern) - see **[User Functions Guide](USER_FUNCTIONS.md)**
+- **Flexible parameter syntax**: Commas optional when parameters are on separate lines
 
 ### 🚧 Partially Implemented
 - Expression evaluation (basic support)

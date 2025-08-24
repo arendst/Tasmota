@@ -16,20 +16,20 @@
 # 
 # # Left side red flashing
 # animation left_red = beacon_animation(
-#   color=0xFF0000,  # Bright red
-#   pos=15,          # center of left half
-#   beacon_size=15,   # half the strip
-#   slew_size=2      # sharp edges
+#   color=0xFF0000  # Bright red
+#   pos=15          # center of left half
+#   beacon_size=15  # half the strip
+#   slew_size=2     # sharp edges
 # )
 # left_red.priority = 10
 # left_red.opacity = square(min_value=0, max_value=255, duration=400ms, duty_cycle=50)  # 50% duty cycle
 # 
 # # Right side blue flashing (opposite phase)
 # animation right_blue = beacon_animation(
-#   color=0x0000FF,  # Bright blue
-#   pos=45,          # center of right half
-#   beacon_size=15,   # half the strip
-#   slew_size=2      # sharp edges
+#   color=0x0000FF  # Bright blue
+#   pos=45          # center of right half
+#   beacon_size=15  # half the strip
+#   slew_size=2     # sharp edges
 # )
 # right_blue.priority = 10
 # right_blue.opacity = square(min_value=255, max_value=0, duration=400ms, duty_cycle=50)  # Opposite phase
@@ -56,39 +56,39 @@ var engine = animation.init_strip()
 var half_length_ = 30
 # Left side red flashing
 var left_red_ = animation.beacon_animation(engine)
-left_red_.color = 0xFFFF0000
-left_red_.pos = 15
-left_red_.beacon_size = 15
+left_red_.color = 0xFFFF0000  # Bright red
+left_red_.pos = 15  # center of left half
+left_red_.beacon_size = 15  # half the strip
 left_red_.slew_size = 2  # sharp edges
 animation.global('left_red_').priority = 10
-var temp_square_60 = animation.square(engine)
-temp_square_60.min_value = 0
-temp_square_60.max_value = 255
-temp_square_60.duration = 400
-temp_square_60.duty_cycle = 50
-animation.global('left_red_').opacity = temp_square_60  # 50% duty cycle
+var temp_square_57 = animation.square(engine)
+temp_square_57.min_value = 0
+temp_square_57.max_value = 255
+temp_square_57.duration = 400
+temp_square_57.duty_cycle = 50
+animation.global('left_red_').opacity = temp_square_57  # 50% duty cycle
 # Right side blue flashing (opposite phase)
 var right_blue_ = animation.beacon_animation(engine)
-right_blue_.color = 0xFF0000FF
-right_blue_.pos = 45
-right_blue_.beacon_size = 15
+right_blue_.color = 0xFF0000FF  # Bright blue
+right_blue_.pos = 45  # center of right half
+right_blue_.beacon_size = 15  # half the strip
 right_blue_.slew_size = 2  # sharp edges
 animation.global('right_blue_').priority = 10
-var temp_square_124 = animation.square(engine)
-temp_square_124.min_value = 255
-temp_square_124.max_value = 0
-temp_square_124.duration = 400
-temp_square_124.duty_cycle = 50
-animation.global('right_blue_').opacity = temp_square_124  # Opposite phase
+var temp_square_118 = animation.square(engine)
+temp_square_118.min_value = 255
+temp_square_118.max_value = 0
+temp_square_118.duration = 400
+temp_square_118.duty_cycle = 50
+animation.global('right_blue_').opacity = temp_square_118  # Opposite phase
 # Add white strobe overlay occasionally
 var white_strobe_ = animation.solid(engine)
 white_strobe_.color = 0xFFFFFFFF
-var temp_square_161 = animation.square(engine)
-temp_square_161.min_value = 0
-temp_square_161.max_value = 255
-temp_square_161.duration = 100
-temp_square_161.duty_cycle = 5
-animation.global('white_strobe_').opacity = temp_square_161  # Quick bright flashes
+var temp_square_155 = animation.square(engine)
+temp_square_155.min_value = 0
+temp_square_155.max_value = 255
+temp_square_155.duration = 100
+temp_square_155.duty_cycle = 5
+animation.global('white_strobe_').opacity = temp_square_155  # Quick bright flashes
 animation.global('white_strobe_').priority = 20
 # Start all animations
 # Start all animations/sequences

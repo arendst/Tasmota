@@ -231,12 +231,14 @@ def run_all_dsl_runtime_tests()
     print("✓ Core runtime tests: PASSED")
   else
     print("✗ Core runtime tests: FAILED")
+    raise "failed_tests"
   end
   
   if file_tests_passed
     print("✓ File operation tests: PASSED")
   else
     print("✓ File operation tests: SKIPPED (filesystem not available)")
+    raise "failed_tests"
   end
   
   return basic_tests_passed

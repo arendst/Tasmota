@@ -29,9 +29,9 @@
 # # Add subtle position variation for more realism
 # color flicker_pattern = rich_palette(palette=fire_colors, cycle_period=2s, transition_type=LINEAR, brightness=255)
 # animation fire_flicker = twinkle_animation(
-#   color=flicker_pattern, # color source
-#   density=12,            # density (number of flickers)
-#   twinkle_speed=200ms    # twinkle speed (flicker duration)
+#   color=flicker_pattern # color source
+#   density=12            # density (number of flickers)
+#   twinkle_speed=200ms   # twinkle speed (flicker duration)
 # )
 # fire_flicker.priority = 10
 # 
@@ -68,8 +68,8 @@ flicker_pattern_.cycle_period = 2000
 flicker_pattern_.transition_type = animation.global('LINEAR_', 'LINEAR')
 flicker_pattern_.brightness = 255
 var fire_flicker_ = animation.twinkle_animation(engine)
-fire_flicker_.color = animation.global('flicker_pattern_', 'flicker_pattern')
-fire_flicker_.density = 12
+fire_flicker_.color = animation.global('flicker_pattern_', 'flicker_pattern')  # color source
+fire_flicker_.density = 12  # density (number of flickers)
 fire_flicker_.twinkle_speed = 200  # twinkle speed (flicker duration)
 animation.global('fire_flicker_').priority = 10
 # Start both animations

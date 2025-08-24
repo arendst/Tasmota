@@ -19,10 +19,10 @@ lightning_main.priority = 20
 
 # Secondary lightning - partial strip
 animation lightning_partial = beacon_animation(
-  color=0xFFFFAA,  # Slightly yellow white
-  pos=30,          # center position
-  beacon_size=20,   # covers part of strip
-  slew_size=5      # soft edges
+  color=0xFFFFAA  # Slightly yellow white
+  pos=30          # center position
+  beacon_size=20  # covers part of strip
+  slew_size=5     # soft edges
 )
 lightning_partial.priority = 15
 lightning_partial.opacity = square(min_value=0, max_value=200, duration=120ms, duty_cycle=4)  # Different timing
@@ -34,8 +34,8 @@ afterglow.priority = 10
 
 # Distant thunder (dim flashes)
 animation distant_flash = twinkle_animation(
-  color=0x666699,  # Dim blue-white
-  density=4,       # density (few flashes)
+  color=0x666699  # Dim blue-white
+  density=4       # density (few flashes)
   twinkle_speed=300ms # twinkle speed (medium duration)
 )
 distant_flash.priority = 5

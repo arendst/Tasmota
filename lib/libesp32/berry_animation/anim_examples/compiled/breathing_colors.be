@@ -30,16 +30,16 @@
 # 
 # # Create a rich palette color provider
 # color palette_pattern = rich_palette(
-#   palette=breathe_palette, # palette
-#   cycle_period=15s         # cycle period (defaults: smooth transition, 255 brightness)
+#   palette=breathe_palette # palette
+#   cycle_period=15s        # cycle period (defaults: smooth transition, 255 brightness)
 # )
 # 
 # # Create breathing animation using the palette
 # animation breathing = breathe_animation(
-#   color=palette_pattern, # base animation
-#   min_brightness=100,             # min brightness
-#   max_brightness=255,             # max brightness
-#   period=4s                       # breathing period (4 seconds)
+#   color=palette_pattern # base animation
+#   min_brightness=100    # min brightness
+#   max_brightness=255    # max brightness
+#   period=4s             # breathing period (4 seconds)
 # )
 # 
 # # Add gentle opacity breathing
@@ -66,20 +66,20 @@ var breathe_orange_ = 0xFFFF8000
 var breathe_palette_ = bytes("00FF0000" "33FF8000" "66FFFF00" "9900FF00" "CC0000FF" "FF800080")
 # Create a rich palette color provider
 var palette_pattern_ = animation.rich_palette(engine)
-palette_pattern_.palette = animation.global('breathe_palette_', 'breathe_palette')
+palette_pattern_.palette = animation.global('breathe_palette_', 'breathe_palette')  # palette
 palette_pattern_.cycle_period = 15000  # cycle period (defaults: smooth transition, 255 brightness)
 # Create breathing animation using the palette
 var breathing_ = animation.breathe_animation(engine)
-breathing_.color = animation.global('palette_pattern_', 'palette_pattern')
-breathing_.min_brightness = 100
-breathing_.max_brightness = 255
+breathing_.color = animation.global('palette_pattern_', 'palette_pattern')  # base animation
+breathing_.min_brightness = 100  # min brightness
+breathing_.max_brightness = 255  # max brightness
 breathing_.period = 4000  # breathing period (4 seconds)
 # Add gentle opacity breathing
-var temp_smooth_156 = animation.smooth(engine)
-temp_smooth_156.min_value = 100
-temp_smooth_156.max_value = 255
-temp_smooth_156.duration = 4000
-animation.global('breathing_').opacity = temp_smooth_156
+var temp_smooth_152 = animation.smooth(engine)
+temp_smooth_152.min_value = 100
+temp_smooth_152.max_value = 255
+temp_smooth_152.duration = 4000
+animation.global('breathing_').opacity = temp_smooth_152
 # Start the animation
 # Start all animations/sequences
 if global.contains('sequence_breathing')

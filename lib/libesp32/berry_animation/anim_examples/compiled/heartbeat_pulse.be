@@ -34,10 +34,10 @@
 # 
 # # Add center pulse for emphasis
 # animation center_pulse = beacon_animation(
-#   color=0xFFFFFF,  # White center
-#   pos=30,          # center of strip
-#   beacon_size=4,    # small center
-#   slew_size=2      # soft edges
+#   color=0xFFFFFF  # White center
+#   pos=30          # center of strip
+#   beacon_size=4   # small center
+#   slew_size=2     # soft edges
 # )
 # center_pulse.priority = 20
 # center_pulse.opacity = square(min_value=0, max_value=200, duration=100ms, duty_cycle=10)  # Quick white flash
@@ -97,17 +97,17 @@ animation.global('heart_glow_').opacity = temp_smooth_136  # Gentle breathing gl
 animation.global('heart_glow_').priority = 5
 # Add center pulse for emphasis
 var center_pulse_ = animation.beacon_animation(engine)
-center_pulse_.color = 0xFFFFFFFF
-center_pulse_.pos = 30
-center_pulse_.beacon_size = 4
+center_pulse_.color = 0xFFFFFFFF  # White center
+center_pulse_.pos = 30  # center of strip
+center_pulse_.beacon_size = 4  # small center
 center_pulse_.slew_size = 2  # soft edges
 animation.global('center_pulse_').priority = 20
-var temp_square_202 = animation.square(engine)
-temp_square_202.min_value = 0
-temp_square_202.max_value = 200
-temp_square_202.duration = 100
-temp_square_202.duty_cycle = 10
-animation.global('center_pulse_').opacity = temp_square_202  # Quick white flash
+var temp_square_199 = animation.square(engine)
+temp_square_199.min_value = 0
+temp_square_199.max_value = 200
+temp_square_199.duration = 100
+temp_square_199.duty_cycle = 10
+animation.global('center_pulse_').opacity = temp_square_199  # Quick white flash
 # Start all animations
 # Start all animations/sequences
 if global.contains('sequence_background')

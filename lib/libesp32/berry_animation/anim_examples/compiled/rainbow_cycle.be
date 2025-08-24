@@ -13,7 +13,7 @@
 # 
 # # Create smooth rainbow cycle animation
 # color rainbow_cycle = color_cycle(
-#   palette=[0xFF0000, 0xFF8000, 0xFFFF00, 0x00FF00, 0x0000FF, 0x8000FF, 0xFF00FF], # rainbow colors
+#   palette=[0xFF0000, 0xFF8000, 0xFFFF00, 0x00FF00, 0x0000FF, 0x8000FF, 0xFF00FF] # rainbow colors
 #   cycle_period=5s  # cycle period
 # )
 # animation rainbow_animation = solid(color=rainbow_cycle)
@@ -31,7 +31,7 @@ import animation
 var engine = animation.init_strip()
 
 var rainbow_cycle_ = animation.color_cycle(engine)
-rainbow_cycle_.palette = [0xFFFF0000, 0xFFFF8000, 0xFFFFFF00, 0xFF00FF00, 0xFF0000FF, 0xFF8000FF, 0xFFFF00FF]
+rainbow_cycle_.palette = [0xFFFF0000, 0xFFFF8000, 0xFFFFFF00, 0xFF00FF00, 0xFF0000FF, 0xFF8000FF, 0xFFFF00FF]  # rainbow colors
 rainbow_cycle_.cycle_period = 5000  # cycle period
 var rainbow_animation_ = animation.solid(engine)
 rainbow_animation_.color = animation.global('rainbow_cycle_', 'rainbow_cycle')

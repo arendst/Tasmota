@@ -17,10 +17,10 @@
 # 
 # # Main scanner pulse that bounces
 # animation scanner = beacon_animation(
-#   color=0xFF0000,  # Bright red
-#   pos=2,           # initial position
-#   beacon_size=3,    # pulse width
-#   slew_size=2      # fade region
+#   color=0xFF0000  # Bright red
+#   pos=2           # initial position
+#   beacon_size=3   # pulse width
+#   slew_size=2     # fade region
 # )
 # scanner.priority = 10
 # 
@@ -29,10 +29,10 @@
 # 
 # # Add trailing glow effect
 # animation scanner_trail = beacon_animation(
-#   color=0x660000,  # Dim red trail
-#   pos=2,           # initial position
-#   beacon_size=6,    # wider trail
-#   slew_size=4      # more fade
+#   color=0x660000  # Dim red trail
+#   pos=2           # initial position
+#   beacon_size=6   # wider trail
+#   slew_size=4     # more fade
 # )
 # scanner_trail.priority = 5
 # set pos_test = triangle(min_value=2, max_value=57, duration=2s)
@@ -58,29 +58,29 @@ var background_ = animation.solid(engine)
 background_.color = animation.global('scanner_bg_', 'scanner_bg')
 # Main scanner pulse that bounces
 var scanner_ = animation.beacon_animation(engine)
-scanner_.color = 0xFFFF0000
-scanner_.pos = 2
-scanner_.beacon_size = 3
+scanner_.color = 0xFFFF0000  # Bright red
+scanner_.pos = 2  # initial position
+scanner_.beacon_size = 3  # pulse width
 scanner_.slew_size = 2  # fade region
 animation.global('scanner_').priority = 10
 # Bouncing position from left to right and back
-var temp_triangle_73 = animation.triangle(engine)
-temp_triangle_73.min_value = 2
-temp_triangle_73.max_value = 57
-temp_triangle_73.duration = 2000
-animation.global('scanner_').pos = temp_triangle_73
+var temp_triangle_70 = animation.triangle(engine)
+temp_triangle_70.min_value = 2
+temp_triangle_70.max_value = 57
+temp_triangle_70.duration = 2000
+animation.global('scanner_').pos = temp_triangle_70
 # Add trailing glow effect
 var scanner_trail_ = animation.beacon_animation(engine)
-scanner_trail_.color = 0xFF660000
-scanner_trail_.pos = 2
-scanner_trail_.beacon_size = 6
+scanner_trail_.color = 0xFF660000  # Dim red trail
+scanner_trail_.pos = 2  # initial position
+scanner_trail_.beacon_size = 6  # wider trail
 scanner_trail_.slew_size = 4  # more fade
 animation.global('scanner_trail_').priority = 5
-var temp_triangle_131 = animation.triangle(engine)
-temp_triangle_131.min_value = 2
-temp_triangle_131.max_value = 57
-temp_triangle_131.duration = 2000
-var pos_test_ = temp_triangle_131
+var temp_triangle_125 = animation.triangle(engine)
+temp_triangle_125.min_value = 2
+temp_triangle_125.max_value = 57
+temp_triangle_125.duration = 2000
+var pos_test_ = temp_triangle_125
 animation.global('scanner_trail_').pos = animation.global('pos_test_', 'pos_test')
 animation.global('scanner_trail_').opacity = 128  # Half brightness
 # Start all animations

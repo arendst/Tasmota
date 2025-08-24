@@ -21,10 +21,10 @@ animation daylight_cycle = rich_palette_animation(palette=daylight_colors, cycle
 
 # Add sun position effect - bright spot that moves
 animation sun_position = beacon_animation(
-  color=0xFFFFAA,  # Bright yellow sun
-  pos=5,           # initial position
-  beacon_size=8,    # sun size
-  slew_size=4      # soft glow
+  color=0xFFFFAA  # Bright yellow sun
+  pos=5           # initial position
+  beacon_size=8   # sun size
+  slew_size=4     # soft glow
 )
 sun_position.priority = 10
 sun_position.pos = smooth(min_value=5, max_value=55, duration=30s)  # Sun arc across sky
@@ -32,10 +32,10 @@ sun_position.opacity = smooth(min_value=0, max_value=255, duration=30s)  # Fade 
 
 # Add atmospheric glow around sun
 animation sun_glow = beacon_animation(
-  color=0xFFCC88,  # Warm glow
-  pos=5,           # initial position
-  beacon_size=16,   # larger glow
-  slew_size=8      # very soft
+  color=0xFFCC88  # Warm glow
+  pos=5           # initial position
+  beacon_size=16  # larger glow
+  slew_size=8     # very soft
 )
 sun_glow.priority = 5
 sun_glow.pos = smooth(min_value=5, max_value=55, duration=30s)  # Follow sun
@@ -43,8 +43,8 @@ sun_glow.opacity = smooth(min_value=0, max_value=150, duration=30s)  # Dimmer gl
 
 # Add twinkling stars during night phases
 animation stars = twinkle_animation(
-  color=0xFFFFFF,  # White stars
-  density=6,       # density (star count)
+  color=0xFFFFFF  # White stars
+  density=6       # density (star count)
   twinkle_speed=1s # twinkle speed (slow twinkle)
 )
 stars.priority = 15

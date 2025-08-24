@@ -110,6 +110,7 @@ def run_all_tests()
     "lib/libesp32/berry_animation/src/tests/palette_dsl_test.be",
     "lib/libesp32/berry_animation/src/tests/dsl_parameter_validation_test.be",
     "lib/libesp32/berry_animation/src/tests/dsl_value_provider_validation_test.be",
+    "lib/libesp32/berry_animation/src/tests/dsl_newline_syntax_test.be",
     
     # Event system tests
     "lib/libesp32/berry_animation/src/tests/event_system_test.be"

@@ -29,10 +29,10 @@
 # 
 # # Add sun position effect - bright spot that moves
 # animation sun_position = beacon_animation(
-#   color=0xFFFFAA,  # Bright yellow sun
-#   pos=5,           # initial position
-#   beacon_size=8,    # sun size
-#   slew_size=4      # soft glow
+#   color=0xFFFFAA  # Bright yellow sun
+#   pos=5           # initial position
+#   beacon_size=8   # sun size
+#   slew_size=4     # soft glow
 # )
 # sun_position.priority = 10
 # sun_position.pos = smooth(min_value=5, max_value=55, duration=30s)  # Sun arc across sky
@@ -40,10 +40,10 @@
 # 
 # # Add atmospheric glow around sun
 # animation sun_glow = beacon_animation(
-#   color=0xFFCC88,  # Warm glow
-#   pos=5,           # initial position
-#   beacon_size=16,   # larger glow
-#   slew_size=8      # very soft
+#   color=0xFFCC88  # Warm glow
+#   pos=5           # initial position
+#   beacon_size=16  # larger glow
+#   slew_size=8     # very soft
 # )
 # sun_glow.priority = 5
 # sun_glow.pos = smooth(min_value=5, max_value=55, duration=30s)  # Follow sun
@@ -51,8 +51,8 @@
 # 
 # # Add twinkling stars during night phases
 # animation stars = twinkle_animation(
-#   color=0xFFFFFF,  # White stars
-#   density=6,       # density (star count)
+#   color=0xFFFFFF  # White stars
+#   density=6       # density (star count)
 #   twinkle_speed=1s # twinkle speed (slow twinkle)
 # )
 # stars.priority = 15
@@ -80,49 +80,49 @@ daylight_cycle_.palette = animation.global('daylight_colors_', 'daylight_colors'
 daylight_cycle_.cycle_period = 60000
 # Add sun position effect - bright spot that moves
 var sun_position_ = animation.beacon_animation(engine)
-sun_position_.color = 0xFFFFFFAA
-sun_position_.pos = 5
-sun_position_.beacon_size = 8
+sun_position_.color = 0xFFFFFFAA  # Bright yellow sun
+sun_position_.pos = 5  # initial position
+sun_position_.beacon_size = 8  # sun size
 sun_position_.slew_size = 4  # soft glow
 animation.global('sun_position_').priority = 10
-var temp_smooth_150 = animation.smooth(engine)
-temp_smooth_150.min_value = 5
-temp_smooth_150.max_value = 55
-temp_smooth_150.duration = 30000
-animation.global('sun_position_').pos = temp_smooth_150  # Sun arc across sky
-var temp_smooth_170 = animation.smooth(engine)
-temp_smooth_170.min_value = 0
-temp_smooth_170.max_value = 255
-temp_smooth_170.duration = 30000
-animation.global('sun_position_').opacity = temp_smooth_170  # Fade in and out
+var temp_smooth_147 = animation.smooth(engine)
+temp_smooth_147.min_value = 5
+temp_smooth_147.max_value = 55
+temp_smooth_147.duration = 30000
+animation.global('sun_position_').pos = temp_smooth_147  # Sun arc across sky
+var temp_smooth_167 = animation.smooth(engine)
+temp_smooth_167.min_value = 0
+temp_smooth_167.max_value = 255
+temp_smooth_167.duration = 30000
+animation.global('sun_position_').opacity = temp_smooth_167  # Fade in and out
 # Add atmospheric glow around sun
 var sun_glow_ = animation.beacon_animation(engine)
-sun_glow_.color = 0xFFFFCC88
-sun_glow_.pos = 5
-sun_glow_.beacon_size = 16
+sun_glow_.color = 0xFFFFCC88  # Warm glow
+sun_glow_.pos = 5  # initial position
+sun_glow_.beacon_size = 16  # larger glow
 sun_glow_.slew_size = 8  # very soft
 animation.global('sun_glow_').priority = 5
-var temp_smooth_230 = animation.smooth(engine)
-temp_smooth_230.min_value = 5
-temp_smooth_230.max_value = 55
-temp_smooth_230.duration = 30000
-animation.global('sun_glow_').pos = temp_smooth_230  # Follow sun
-var temp_smooth_250 = animation.smooth(engine)
-temp_smooth_250.min_value = 0
-temp_smooth_250.max_value = 150
-temp_smooth_250.duration = 30000
-animation.global('sun_glow_').opacity = temp_smooth_250  # Dimmer glow
+var temp_smooth_224 = animation.smooth(engine)
+temp_smooth_224.min_value = 5
+temp_smooth_224.max_value = 55
+temp_smooth_224.duration = 30000
+animation.global('sun_glow_').pos = temp_smooth_224  # Follow sun
+var temp_smooth_244 = animation.smooth(engine)
+temp_smooth_244.min_value = 0
+temp_smooth_244.max_value = 150
+temp_smooth_244.duration = 30000
+animation.global('sun_glow_').opacity = temp_smooth_244  # Dimmer glow
 # Add twinkling stars during night phases
 var stars_ = animation.twinkle_animation(engine)
-stars_.color = 0xFFFFFFFF
-stars_.density = 6
+stars_.color = 0xFFFFFFFF  # White stars
+stars_.density = 6  # density (star count)
 stars_.twinkle_speed = 1000  # twinkle speed (slow twinkle)
 animation.global('stars_').priority = 15
-var temp_smooth_304 = animation.smooth(engine)
-temp_smooth_304.min_value = 255
-temp_smooth_304.max_value = 0
-temp_smooth_304.duration = 30000
-animation.global('stars_').opacity = temp_smooth_304  # Fade out during day
+var temp_smooth_296 = animation.smooth(engine)
+temp_smooth_296.min_value = 255
+temp_smooth_296.max_value = 0
+temp_smooth_296.duration = 30000
+animation.global('stars_').opacity = temp_smooth_296  # Fade out during day
 # Start all animations
 # Start all animations/sequences
 if global.contains('sequence_daylight_cycle')

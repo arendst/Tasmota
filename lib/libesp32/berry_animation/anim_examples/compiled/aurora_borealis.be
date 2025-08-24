@@ -31,10 +31,10 @@
 # 
 # # Base aurora animation with slow flowing colors
 # animation aurora_base = rich_palette_animation(
-#   palette=aurora_colors,  # palette
-#   cycle_period=10s,       # cycle period
-#   transition_type=SINE,          # transition type (explicit for clarity)
-#   brightness=180          # brightness (dimmed for aurora effect)
+#   palette=aurora_colors  # palette
+#   cycle_period=10s       # cycle period
+#   transition_type=SINE   # transition type (explicit for clarity)
+#   brightness=180         # brightness (dimmed for aurora effect)
 # )
 # 
 # sequence demo {
@@ -57,9 +57,9 @@ var aurora_colors_ = bytes("00000022" "40004400" "8000AA44" "C044AA88" "FF88FFAA
 var aurora_purple_ = bytes("00220022" "40440044" "808800AA" "C0AA44CC" "FFCCAAFF")
 # Base aurora animation with slow flowing colors
 var aurora_base_ = animation.rich_palette_animation(engine)
-aurora_base_.palette = animation.global('aurora_colors_', 'aurora_colors')
-aurora_base_.cycle_period = 10000
-aurora_base_.transition_type = animation.global('SINE_', 'SINE')
+aurora_base_.palette = animation.global('aurora_colors_', 'aurora_colors')  # palette
+aurora_base_.cycle_period = 10000  # cycle period
+aurora_base_.transition_type = animation.global('SINE_', 'SINE')  # transition type (explicit for clarity)
 aurora_base_.brightness = 180  # brightness (dimmed for aurora effect)
 def sequence_demo()
   var steps = []

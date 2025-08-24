@@ -33,34 +33,34 @@
 # # Add neon tube segments with gaps
 # color segment_pattern = rich_palette(palette=neon_colors, cycle_period=4s, transition_type=LINEAR, brightness=255)
 # animation segment1 = beacon_animation(
-#   color=segment_pattern, # color source
-#   pos=6,                 # position
-#   beacon_size=12,         # segment length
-#   slew_size=1            # sharp edges
+#   color=segment_pattern # color source
+#   pos=6                 # position
+#   beacon_size=12        # segment length
+#   slew_size=1           # sharp edges
 # )
 # segment1.priority = 10
 # 
 # animation segment2 = beacon_animation(
-#   color=segment_pattern, # color source
-#   pos=24,                # position
-#   beacon_size=12,         # segment length
-#   slew_size=1            # sharp edges
+#   color=segment_pattern # color source
+#   pos=24                # position
+#   beacon_size=12        # segment length
+#   slew_size=1           # sharp edges
 # )
 # segment2.priority = 10
 # 
 # animation segment3 = beacon_animation(
-#   color=segment_pattern, # color source
-#   pos=42,                # position
-#   beacon_size=12,         # segment length
-#   slew_size=1            # sharp edges
+#   color=segment_pattern # color source
+#   pos=42                # position
+#   beacon_size=12        # segment length
+#   slew_size=1           # sharp edges
 # )
 # segment3.priority = 10
 # 
 # # Add electrical arcing between segments
 # animation arc_sparkles = twinkle_animation(
-#   color=0xAAAAFF,  # Electric blue
-#   density=4,       # density (few arcs)
-#   twinkle_speed=100ms  # twinkle speed (quick arcs)
+#   color=0xAAAAFF  # Electric blue
+#   density=4       # density (few arcs)
+#   twinkle_speed=100ms # twinkle speed (quick arcs)
 # )
 # arc_sparkles.priority = 15
 # 
@@ -112,27 +112,27 @@ segment_pattern_.cycle_period = 4000
 segment_pattern_.transition_type = animation.global('LINEAR_', 'LINEAR')
 segment_pattern_.brightness = 255
 var segment1_ = animation.beacon_animation(engine)
-segment1_.color = animation.global('segment_pattern_', 'segment_pattern')
-segment1_.pos = 6
-segment1_.beacon_size = 12
+segment1_.color = animation.global('segment_pattern_', 'segment_pattern')  # color source
+segment1_.pos = 6  # position
+segment1_.beacon_size = 12  # segment length
 segment1_.slew_size = 1  # sharp edges
 animation.global('segment1_').priority = 10
 var segment2_ = animation.beacon_animation(engine)
-segment2_.color = animation.global('segment_pattern_', 'segment_pattern')
-segment2_.pos = 24
-segment2_.beacon_size = 12
+segment2_.color = animation.global('segment_pattern_', 'segment_pattern')  # color source
+segment2_.pos = 24  # position
+segment2_.beacon_size = 12  # segment length
 segment2_.slew_size = 1  # sharp edges
 animation.global('segment2_').priority = 10
 var segment3_ = animation.beacon_animation(engine)
-segment3_.color = animation.global('segment_pattern_', 'segment_pattern')
-segment3_.pos = 42
-segment3_.beacon_size = 12
+segment3_.color = animation.global('segment_pattern_', 'segment_pattern')  # color source
+segment3_.pos = 42  # position
+segment3_.beacon_size = 12  # segment length
 segment3_.slew_size = 1  # sharp edges
 animation.global('segment3_').priority = 10
 # Add electrical arcing between segments
 var arc_sparkles_ = animation.twinkle_animation(engine)
-arc_sparkles_.color = 0xFFAAAAFF
-arc_sparkles_.density = 4
+arc_sparkles_.color = 0xFFAAAAFF  # Electric blue
+arc_sparkles_.density = 4  # density (few arcs)
 arc_sparkles_.twinkle_speed = 100  # twinkle speed (quick arcs)
 animation.global('arc_sparkles_').priority = 15
 # Start all animations

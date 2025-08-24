@@ -27,9 +27,9 @@
 # # Add multiple wave layers for complexity
 # color wave1_pattern = rich_palette(palette=plasma_colors, cycle_period=4s, transition_type=SINE, brightness=255)
 # animation plasma_wave1 = beacon_animation(
-#   color=wave1_pattern, # color source
-#   pos=0,               # initial position
-#   beacon_size=20,            # wide wave
+#   color=wave1_pattern # color source
+#   pos=0               # initial position
+#   beacon_size=20      # wide wave
 #   slew_size=10        # very smooth
 # )
 # plasma_wave1.priority = 10
@@ -37,9 +37,9 @@
 # 
 # color wave2_pattern = rich_palette(palette=plasma_colors, cycle_period=5s, transition_type=SINE, brightness=180)
 # animation plasma_wave2 = beacon_animation(
-#   color=wave2_pattern, # color source
-#   pos=45,              # initial position
-#   beacon_size=15,            # medium wave
+#   color=wave2_pattern # color source
+#   pos=45              # initial position
+#   beacon_size=15      # medium wave
 #   slew_size=8         # smooth
 # )
 # plasma_wave2.priority = 8
@@ -47,9 +47,9 @@
 # 
 # color wave3_pattern = rich_palette(palette=plasma_colors, cycle_period=3s, transition_type=SINE, brightness=220)
 # animation plasma_wave3 = beacon_animation(
-#   color=wave3_pattern, # color source
-#   pos=20,              # initial position
-#   beacon_size=12,            # smaller wave
+#   color=wave3_pattern # color source
+#   pos=20              # initial position
+#   beacon_size=12      # smaller wave
 #   slew_size=6         # smooth
 # )
 # plasma_wave3.priority = 12
@@ -87,54 +87,54 @@ wave1_pattern_.cycle_period = 4000
 wave1_pattern_.transition_type = animation.global('SINE_', 'SINE')
 wave1_pattern_.brightness = 255
 var plasma_wave1_ = animation.beacon_animation(engine)
-plasma_wave1_.color = animation.global('wave1_pattern_', 'wave1_pattern')
-plasma_wave1_.pos = 0
-plasma_wave1_.beacon_size = 20
+plasma_wave1_.color = animation.global('wave1_pattern_', 'wave1_pattern')  # color source
+plasma_wave1_.pos = 0  # initial position
+plasma_wave1_.beacon_size = 20  # wide wave
 plasma_wave1_.slew_size = 10  # very smooth
 animation.global('plasma_wave1_').priority = 10
-var temp_smooth_156 = animation.smooth(engine)
-temp_smooth_156.min_value = 0
-temp_smooth_156.max_value = 40
-temp_smooth_156.duration = 8000
-animation.global('plasma_wave1_').pos = temp_smooth_156
+var temp_smooth_153 = animation.smooth(engine)
+temp_smooth_153.min_value = 0
+temp_smooth_153.max_value = 40
+temp_smooth_153.duration = 8000
+animation.global('plasma_wave1_').pos = temp_smooth_153
 var wave2_pattern_ = animation.rich_palette(engine)
 wave2_pattern_.palette = animation.global('plasma_colors_', 'plasma_colors')
 wave2_pattern_.cycle_period = 5000
 wave2_pattern_.transition_type = animation.global('SINE_', 'SINE')
 wave2_pattern_.brightness = 180
 var plasma_wave2_ = animation.beacon_animation(engine)
-plasma_wave2_.color = animation.global('wave2_pattern_', 'wave2_pattern')
-plasma_wave2_.pos = 45
-plasma_wave2_.beacon_size = 15
+plasma_wave2_.color = animation.global('wave2_pattern_', 'wave2_pattern')  # color source
+plasma_wave2_.pos = 45  # initial position
+plasma_wave2_.beacon_size = 15  # medium wave
 plasma_wave2_.slew_size = 8  # smooth
 animation.global('plasma_wave2_').priority = 8
-var temp_smooth_235 = animation.smooth(engine)
-temp_smooth_235.min_value = 45
-temp_smooth_235.max_value = 15
-temp_smooth_235.duration = 10000
-animation.global('plasma_wave2_').pos = temp_smooth_235  # Opposite direction
+var temp_smooth_229 = animation.smooth(engine)
+temp_smooth_229.min_value = 45
+temp_smooth_229.max_value = 15
+temp_smooth_229.duration = 10000
+animation.global('plasma_wave2_').pos = temp_smooth_229  # Opposite direction
 var wave3_pattern_ = animation.rich_palette(engine)
 wave3_pattern_.palette = animation.global('plasma_colors_', 'plasma_colors')
 wave3_pattern_.cycle_period = 3000
 wave3_pattern_.transition_type = animation.global('SINE_', 'SINE')
 wave3_pattern_.brightness = 220
 var plasma_wave3_ = animation.beacon_animation(engine)
-plasma_wave3_.color = animation.global('wave3_pattern_', 'wave3_pattern')
-plasma_wave3_.pos = 20
-plasma_wave3_.beacon_size = 12
+plasma_wave3_.color = animation.global('wave3_pattern_', 'wave3_pattern')  # color source
+plasma_wave3_.pos = 20  # initial position
+plasma_wave3_.beacon_size = 12  # smaller wave
 plasma_wave3_.slew_size = 6  # smooth
 animation.global('plasma_wave3_').priority = 12
-var temp_smooth_315 = animation.smooth(engine)
-temp_smooth_315.min_value = 20
-temp_smooth_315.max_value = 50
-temp_smooth_315.duration = 6000
-animation.global('plasma_wave3_').pos = temp_smooth_315  # Different speed
+var temp_smooth_306 = animation.smooth(engine)
+temp_smooth_306.min_value = 20
+temp_smooth_306.max_value = 50
+temp_smooth_306.duration = 6000
+animation.global('plasma_wave3_').pos = temp_smooth_306  # Different speed
 # Add subtle intensity variation
-var temp_smooth_338 = animation.smooth(engine)
-temp_smooth_338.min_value = 150
-temp_smooth_338.max_value = 255
-temp_smooth_338.duration = 12000
-animation.global('plasma_base_').opacity = temp_smooth_338
+var temp_smooth_329 = animation.smooth(engine)
+temp_smooth_329.min_value = 150
+temp_smooth_329.max_value = 255
+temp_smooth_329.duration = 12000
+animation.global('plasma_base_').opacity = temp_smooth_329
 # Start all animations
 # Start all animations/sequences
 if global.contains('sequence_plasma_base')

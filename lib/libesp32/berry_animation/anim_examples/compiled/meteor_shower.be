@@ -17,45 +17,45 @@
 # 
 # # Multiple meteors with different speeds and colors
 # animation meteor1 = comet_animation(
-#   color=0xFFFFFF,  # Bright white
-#   tail_length=12,  # long trail
-#   speed=1.5s       # fast speed
+#   color=0xFFFFFF  # Bright white
+#   tail_length=12  # long trail
+#   speed=1.5s      # fast speed
 # )
 # meteor1.priority = 15
 # 
 # animation meteor2 = comet_animation(
-#   color=0xFFAA00,  # Orange
-#   tail_length=10,  # medium trail
-#   speed=2s         # medium speed
+#   color=0xFFAA00  # Orange
+#   tail_length=10  # medium trail
+#   speed=2s        # medium speed
 # )
 # meteor2.priority = 12
 # 
 # animation meteor3 = comet_animation(
-#   color=0xAAAAFF,  # Blue-white
-#   tail_length=8,   # shorter trail
-#   speed=1.8s       # fast speed
+#   color=0xAAAAFF  # Blue-white
+#   tail_length=8   # shorter trail
+#   speed=1.8s      # fast speed
 # )
 # meteor3.priority = 10
 # 
 # animation meteor4 = comet_animation(
-#   color=0xFFAAAA,  # Pink-white
-#   tail_length=14,  # long trail
-#   speed=2.5s       # slower speed
+#   color=0xFFAAAA  # Pink-white
+#   tail_length=14  # long trail
+#   speed=2.5s      # slower speed
 # )
 # meteor4.priority = 8
 # 
 # # Add distant stars
 # animation stars = twinkle_animation(
-#   color=0xCCCCCC,  # Dim white
-#   density=12,      # density (many stars)
+#   color=0xCCCCCC  # Dim white
+#   density=12      # density (many stars)
 #   twinkle_speed=2s # twinkle speed (slow twinkle)
 # )
 # stars.priority = 5
 # 
 # # Add occasional bright flash (meteor explosion)
 # animation meteor_flash = twinkle_animation(
-#   color=0xFFFFFF,  # Bright white
-#   density=1,       # density (single flash)
+#   color=0xFFFFFF  # Bright white
+#   density=1       # density (single flash)
 #   twinkle_speed=100ms # twinkle speed (very quick)
 # )
 # meteor_flash.priority = 25
@@ -83,35 +83,35 @@ var background_ = animation.solid(engine)
 background_.color = animation.global('space_bg_', 'space_bg')
 # Multiple meteors with different speeds and colors
 var meteor1_ = animation.comet_animation(engine)
-meteor1_.color = 0xFFFFFFFF
-meteor1_.tail_length = 12
+meteor1_.color = 0xFFFFFFFF  # Bright white
+meteor1_.tail_length = 12  # long trail
 meteor1_.speed = 1500  # fast speed
 animation.global('meteor1_').priority = 15
 var meteor2_ = animation.comet_animation(engine)
-meteor2_.color = 0xFFFFAA00
-meteor2_.tail_length = 10
+meteor2_.color = 0xFFFFAA00  # Orange
+meteor2_.tail_length = 10  # medium trail
 meteor2_.speed = 2000  # medium speed
 animation.global('meteor2_').priority = 12
 var meteor3_ = animation.comet_animation(engine)
-meteor3_.color = 0xFFAAAAFF
-meteor3_.tail_length = 8
+meteor3_.color = 0xFFAAAAFF  # Blue-white
+meteor3_.tail_length = 8  # shorter trail
 meteor3_.speed = 1800  # fast speed
 animation.global('meteor3_').priority = 10
 var meteor4_ = animation.comet_animation(engine)
-meteor4_.color = 0xFFFFAAAA
-meteor4_.tail_length = 14
+meteor4_.color = 0xFFFFAAAA  # Pink-white
+meteor4_.tail_length = 14  # long trail
 meteor4_.speed = 2500  # slower speed
 animation.global('meteor4_').priority = 8
 # Add distant stars
 var stars_ = animation.twinkle_animation(engine)
-stars_.color = 0xFFCCCCCC
-stars_.density = 12
+stars_.color = 0xFFCCCCCC  # Dim white
+stars_.density = 12  # density (many stars)
 stars_.twinkle_speed = 2000  # twinkle speed (slow twinkle)
 animation.global('stars_').priority = 5
 # Add occasional bright flash (meteor explosion)
 var meteor_flash_ = animation.twinkle_animation(engine)
-meteor_flash_.color = 0xFFFFFFFF
-meteor_flash_.density = 1
+meteor_flash_.color = 0xFFFFFFFF  # Bright white
+meteor_flash_.density = 1  # density (single flash)
 meteor_flash_.twinkle_speed = 100  # twinkle speed (very quick)
 animation.global('meteor_flash_').priority = 25
 # Start all animations

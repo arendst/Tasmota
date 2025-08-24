@@ -27,10 +27,10 @@
 # 
 # # Secondary lightning - partial strip
 # animation lightning_partial = beacon_animation(
-#   color=0xFFFFAA,  # Slightly yellow white
-#   pos=30,          # center position
-#   beacon_size=20,   # covers part of strip
-#   slew_size=5      # soft edges
+#   color=0xFFFFAA  # Slightly yellow white
+#   pos=30          # center position
+#   beacon_size=20  # covers part of strip
+#   slew_size=5     # soft edges
 # )
 # lightning_partial.priority = 15
 # lightning_partial.opacity = square(min_value=0, max_value=200, duration=120ms, duty_cycle=4)  # Different timing
@@ -42,8 +42,8 @@
 # 
 # # Distant thunder (dim flashes)
 # animation distant_flash = twinkle_animation(
-#   color=0x666699,  # Dim blue-white
-#   density=4,       # density (few flashes)
+#   color=0x666699  # Dim blue-white
+#   density=4       # density (few flashes)
 #   twinkle_speed=300ms # twinkle speed (medium duration)
 # )
 # distant_flash.priority = 5
@@ -83,32 +83,32 @@ animation.global('lightning_main_').opacity = temp_square_82  # Quick bright fla
 animation.global('lightning_main_').priority = 20
 # Secondary lightning - partial strip
 var lightning_partial_ = animation.beacon_animation(engine)
-lightning_partial_.color = 0xFFFFFFAA
-lightning_partial_.pos = 30
-lightning_partial_.beacon_size = 20
+lightning_partial_.color = 0xFFFFFFAA  # Slightly yellow white
+lightning_partial_.pos = 30  # center position
+lightning_partial_.beacon_size = 20  # covers part of strip
 lightning_partial_.slew_size = 5  # soft edges
 animation.global('lightning_partial_').priority = 15
-var temp_square_152 = animation.square(engine)
-temp_square_152.min_value = 0
-temp_square_152.max_value = 200
-temp_square_152.duration = 120
-temp_square_152.duty_cycle = 4
-animation.global('lightning_partial_').opacity = temp_square_152  # Different timing
+var temp_square_149 = animation.square(engine)
+temp_square_149.min_value = 0
+temp_square_149.max_value = 200
+temp_square_149.duration = 120
+temp_square_149.duty_cycle = 4
+animation.global('lightning_partial_').opacity = temp_square_149  # Different timing
 # Add blue afterglow
 var afterglow_ = animation.solid(engine)
 afterglow_.color = 0xFF4444FF
 # Blue glow
-var temp_square_190 = animation.square(engine)
-temp_square_190.min_value = 0
-temp_square_190.max_value = 80
-temp_square_190.duration = 200
-temp_square_190.duty_cycle = 8
-animation.global('afterglow_').opacity = temp_square_190  # Longer, dimmer glow
+var temp_square_187 = animation.square(engine)
+temp_square_187.min_value = 0
+temp_square_187.max_value = 80
+temp_square_187.duration = 200
+temp_square_187.duty_cycle = 8
+animation.global('afterglow_').opacity = temp_square_187  # Longer, dimmer glow
 animation.global('afterglow_').priority = 10
 # Distant thunder (dim flashes)
 var distant_flash_ = animation.twinkle_animation(engine)
-distant_flash_.color = 0xFF666699
-distant_flash_.density = 4
+distant_flash_.color = 0xFF666699  # Dim blue-white
+distant_flash_.density = 4  # density (few flashes)
 distant_flash_.twinkle_speed = 300  # twinkle speed (medium duration)
 animation.global('distant_flash_').priority = 5
 # Start all animations

@@ -36,19 +36,19 @@
 # # Add colored sparkles
 # color sparkle_pattern = rich_palette(palette=disco_colors, cycle_period=500ms, transition_type=LINEAR, brightness=255)
 # animation disco_sparkles = twinkle_animation(
-#   color=sparkle_pattern, # color source
-#   density=12,            # density (many sparkles)
-#   twinkle_speed=80ms             # twinkle speed (very quick)
+#   color=sparkle_pattern # color source
+#   density=12            # density (many sparkles)
+#   twinkle_speed=80ms    # twinkle speed (very quick)
 # )
 # disco_sparkles.priority = 15
 # 
 # # Add moving pulse for extra effect
 # color pulse_pattern = rich_palette(palette=disco_colors, cycle_period=800ms, transition_type=LINEAR, brightness=255)
 # animation disco_pulse = beacon_animation(
-#   color=pulse_pattern, # color source
-#   pos=4,               # initial position
-#   beacon_size=8,        # pulse width
-#   slew_size=2          # sharp edges (slew size)
+#   color=pulse_pattern # color source
+#   pos=4               # initial position
+#   beacon_size=8       # pulse width
+#   slew_size=2         # sharp edges (slew size)
 # )
 # disco_pulse.priority = 10
 # disco_pulse.pos = sawtooth(min_value=4, max_value=56, duration=2s)  # Fast movement
@@ -99,8 +99,8 @@ sparkle_pattern_.cycle_period = 500
 sparkle_pattern_.transition_type = animation.global('LINEAR_', 'LINEAR')
 sparkle_pattern_.brightness = 255
 var disco_sparkles_ = animation.twinkle_animation(engine)
-disco_sparkles_.color = animation.global('sparkle_pattern_', 'sparkle_pattern')
-disco_sparkles_.density = 12
+disco_sparkles_.color = animation.global('sparkle_pattern_', 'sparkle_pattern')  # color source
+disco_sparkles_.density = 12  # density (many sparkles)
 disco_sparkles_.twinkle_speed = 80  # twinkle speed (very quick)
 animation.global('disco_sparkles_').priority = 15
 # Add moving pulse for extra effect
@@ -110,16 +110,16 @@ pulse_pattern_.cycle_period = 800
 pulse_pattern_.transition_type = animation.global('LINEAR_', 'LINEAR')
 pulse_pattern_.brightness = 255
 var disco_pulse_ = animation.beacon_animation(engine)
-disco_pulse_.color = animation.global('pulse_pattern_', 'pulse_pattern')
-disco_pulse_.pos = 4
-disco_pulse_.beacon_size = 8
+disco_pulse_.color = animation.global('pulse_pattern_', 'pulse_pattern')  # color source
+disco_pulse_.pos = 4  # initial position
+disco_pulse_.beacon_size = 8  # pulse width
 disco_pulse_.slew_size = 2  # sharp edges (slew size)
 animation.global('disco_pulse_').priority = 10
-var temp_sawtooth_290 = animation.sawtooth(engine)
-temp_sawtooth_290.min_value = 4
-temp_sawtooth_290.max_value = 56
-temp_sawtooth_290.duration = 2000
-animation.global('disco_pulse_').pos = temp_sawtooth_290  # Fast movement
+var temp_sawtooth_285 = animation.sawtooth(engine)
+temp_sawtooth_285.min_value = 4
+temp_sawtooth_285.max_value = 56
+temp_sawtooth_285.duration = 2000
+animation.global('disco_pulse_').pos = temp_sawtooth_285  # Fast movement
 # Start all animations
 # Start all animations/sequences
 if global.contains('sequence_disco_base')

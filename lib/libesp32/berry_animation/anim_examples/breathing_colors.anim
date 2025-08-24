@@ -22,16 +22,16 @@ palette breathe_palette = [
 
 # Create a rich palette color provider
 color palette_pattern = rich_palette(
-  palette=breathe_palette, # palette
-  cycle_period=15s         # cycle period (defaults: smooth transition, 255 brightness)
+  palette=breathe_palette # palette
+  cycle_period=15s        # cycle period (defaults: smooth transition, 255 brightness)
 )
 
 # Create breathing animation using the palette
 animation breathing = breathe_animation(
-  color=palette_pattern, # base animation
-  min_brightness=100,             # min brightness
-  max_brightness=255,             # max brightness
-  period=4s                       # breathing period (4 seconds)
+  color=palette_pattern # base animation
+  min_brightness=100    # min brightness
+  max_brightness=255    # max brightness
+  period=4s             # breathing period (4 seconds)
 )
 
 # Add gentle opacity breathing
