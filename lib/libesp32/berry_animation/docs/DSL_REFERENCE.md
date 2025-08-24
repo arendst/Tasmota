@@ -496,6 +496,7 @@ Value providers create dynamic values that change over time:
 | Function | Description |
 |----------|-------------|
 | `static_value` | Returns a constant value |
+| `strip_length` | Returns the LED strip length in pixels |
 | `oscillator_value` | Oscillates between min/max values with various waveforms |
 
 **Oscillator Aliases:**
@@ -530,6 +531,7 @@ bounce(min_value=0, max_value=255, period=2s)      # Bouncing ball effect
 set brightness_oscillator = smooth(min_value=50, max_value=255, period=3s)
 set position_sweep = triangle(min_value=0, max_value=29, period=5s)
 set elastic_movement = elastic(min_value=0, max_value=30, period=4s)
+set strip_len = strip_length()  # Get the current strip length
 ```
 
 ### Color Providers

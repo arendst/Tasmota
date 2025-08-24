@@ -93,6 +93,8 @@ import "providers/static_value_provider.be" as static_value_provider
 register_to_animation(static_value_provider)
 import "providers/oscillator_value_provider.be" as oscillator_value_provider
 register_to_animation(oscillator_value_provider)
+import "providers/strip_length_provider.be" as strip_length_provider
+register_to_animation(strip_length_provider)
 
 # Import color providers
 import "providers/color_provider.be" as color_provider

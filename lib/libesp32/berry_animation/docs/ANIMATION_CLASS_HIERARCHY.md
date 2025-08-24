@@ -40,6 +40,7 @@ ParameterizedObject
 │   └── (other animation classes)
 └── ValueProvider
     ├── StaticValueProvider
+    ├── StripLengthProvider
     ├── OscillatorValueProvider
     └── ColorProvider
         ├── StaticColorProvider
@@ -102,6 +103,18 @@ Wraps static values to provide ValueProvider interface. Inherits from `ValueProv
 | `value` | any | nil | - | The static value to return |
 
 **Factory**: `animation.static_value(engine)`
+
+### StripLengthProvider
+
+Provides access to the LED strip length as a dynamic value. Inherits from `ValueProvider`.
+
+| Parameter | Type | Default | Constraints | Description |
+|-----------|------|---------|-------------|-------------|
+| *(none)* | - | - | - | No parameters - strip length obtained from engine |
+
+**Usage**: Returns the 1D length of the LED strip in pixels. Useful for animations that need to know the strip dimensions for positioning, scaling, or boundary calculations.
+
+**Factory**: `animation.strip_length(engine)`
 
 ### OscillatorValueProvider
 

@@ -94,6 +94,7 @@ def run_all_tests()
     "lib/libesp32/berry_animation/src/tests/oscillator_value_provider_test.be",
     "lib/libesp32/berry_animation/src/tests/oscillator_ease_test.be",
     "lib/libesp32/berry_animation/src/tests/oscillator_elastic_bounce_test.be",
+    "lib/libesp32/berry_animation/src/tests/strip_length_provider_test.be",
     "lib/libesp32/berry_animation/src/tests/breathe_color_provider_test.be",
     
     # DSL tests
