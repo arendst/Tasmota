@@ -24,7 +24,7 @@
 # set base_speed = 2.0
 # animation stream2 = comet_animation(
 #   color=blue
-#   tail_length=strip_len / 8 + 2  # computed with addition
+#   tail_length=strip_len / 8 + (2 * strip_len) -10  # computed with addition
 #   speed=base_speed * 1.5         # computed with multiplication
 #   direction=-1
 #   priority=5
@@ -51,14 +51,14 @@ var strip_len_ = temp_strip_length_11
 # Create animation with computed values
 var stream1_ = animation.comet_animation(engine)
 stream1_.color = 0xFFFF0000
-stream1_.tail_length = animation.create_closure_value(engine, def (self, param_name, time_ms) return (self.abs(self.resolve(self.resolve(strip_len_, param_name, time_ms), param_name, time_ms) / 4)) end)  # computed value
+stream1_.tail_length = animation.create_closure_value(engine, def (self, param_name, time_ms) return (self.abs(self.resolve(strip_len_, param_name, time_ms) / 4)) end)  # computed value
 stream1_.speed = 1.5
 stream1_.priority = 10
 # More complex computed values
 var base_speed_ = 2.0
 var stream2_ = animation.comet_animation(engine)
 stream2_.color = 0xFF0000FF
-stream2_.tail_length = animation.create_closure_value(engine, def (self, param_name, time_ms) return (self.resolve(strip_len_, param_name, time_ms) / 8 + 2) end)  # computed with addition
+stream2_.tail_length = animation.create_closure_value(engine, def (self, param_name, time_ms) return (self.resolve(strip_len_, param_name, time_ms) / 8 + (2 * self.resolve(strip_len_, param_name, time_ms)) - 10) end)  # computed with addition
 stream2_.speed = animation.create_closure_value(engine, def (self, param_name, time_ms) return (self.resolve(base_speed_, param_name, time_ms) * 1.5) end)  # computed with multiplication
 stream2_.direction = (-1)
 stream2_.priority = 5

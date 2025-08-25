@@ -561,32 +561,32 @@ class SimpleDSLTranspiler
   
   # Process any value - unified approach
   def process_value(context)
-    return self.process_expression(context)
+    return self.process_expression(context)  # This calls process_additive_expression with is_top_level=true
   end
   
   # Process expressions with arithmetic operations
   def process_expression(context)
-    return self.process_additive_expression(context)
+    return self.process_additive_expression(context, true)  # true = top-level expression
   end
   
   # Process additive expressions (+ and -)
-  def process_additive_expression(context)
-    var left = self.process_multiplicative_expression(context)
+  def process_additive_expression(context, is_top_level)
+    var left = self.process_multiplicative_expression(context, is_top_level)
     
     while !self.at_end()
       var tok = self.current()
       if tok != nil && (tok.type == animation_dsl.Token.PLUS || tok.type == animation_dsl.Token.MINUS)
         var op = tok.value
         self.next()  # consume operator
-        var right = self.process_multiplicative_expression(context)
+        var right = self.process_multiplicative_expression(context, false)  # sub-expressions are not top-level
         left = f"{left} {op} {right}"
       else
         break
       end
     end
     
-    # Check if the entire expression needs a closure (after building the full expression)
-    if self.is_computed_expression_string(left)
+    # Only create closures at the top level
+    if is_top_level && self.is_computed_expression_string(left)
       return self.create_computation_closure_from_string(left)
     else
       return left
@@ -594,15 +594,15 @@ class SimpleDSLTranspiler
   end
   
   # Process multiplicative expressions (* and /)
-  def process_multiplicative_expression(context)
-    var left = self.process_unary_expression(context)
+  def process_multiplicative_expression(context, is_top_level)
+    var left = self.process_unary_expression(context, is_top_level)
     
     while !self.at_end()
       var tok = self.current()
       if tok != nil && (tok.type == animation_dsl.Token.MULTIPLY || tok.type == animation_dsl.Token.DIVIDE)
         var op = tok.value
         self.next()  # consume operator
-        var right = self.process_unary_expression(context)
+        var right = self.process_unary_expression(context, false)  # sub-expressions are not top-level
         left = f"{left} {op} {right}"
       else
         break
@@ -613,7 +613,7 @@ class SimpleDSLTranspiler
   end
   
   # Process unary expressions (- and +)
-  def process_unary_expression(context)
+  def process_unary_expression(context, is_top_level)
     var tok = self.current()
     if tok == nil
       self.error("Expected value")
@@ -623,21 +623,21 @@ class SimpleDSLTranspiler
     # Handle unary minus for negative numbers
     if tok.type == animation_dsl.Token.MINUS
       self.next()  # consume the minus
-      var expr = self.process_unary_expression(context)
+      var expr = self.process_unary_expression(context, false)  # sub-expressions are not top-level
       return f"(-{expr})"
     end
     
     # Handle unary plus (optional)
     if tok.type == animation_dsl.Token.PLUS
       self.next()  # consume the plus
-      return self.process_unary_expression(context)
+      return self.process_unary_expression(context, false)  # sub-expressions are not top-level
     end
     
-    return self.process_primary_expression(context)
+    return self.process_primary_expression(context, is_top_level)
   end
   
   # Process primary expressions (literals, identifiers, function calls, parentheses)
-  def process_primary_expression(context)
+  def process_primary_expression(context, is_top_level)
     var tok = self.current()
     if tok == nil
       self.error("Expected value")
@@ -647,7 +647,7 @@ class SimpleDSLTranspiler
     # Parenthesized expression
     if tok.type == animation_dsl.Token.LEFT_PAREN
       self.next()  # consume '('
-      var expr = self.process_expression(context)
+      var expr = self.process_additive_expression(context, false)  # parenthesized expressions are not top-level
       self.expect_right_paren()
       return f"({expr})"
     end
@@ -894,15 +894,22 @@ class SimpleDSLTranspiler
         start_pos -= 1
       end
       
-      # Check if this is a user variable (not preceded by "animation." or "self.")
+      # Check if this is a user variable (not preceded by "animation." or "self." or already inside a resolve call)
       var is_user_var = true
-      if start_pos >= 10
+      if start_pos >= 13
+        var check_start = start_pos >= 13 ? start_pos - 13 : 0
+        var prefix = result[check_start..start_pos-1]
+        if string.find(prefix, "self.resolve(") >= 0
+          is_user_var = false
+        end
+      end
+      if is_user_var && start_pos >= 10
         var check_start = start_pos >= 10 ? start_pos - 10 : 0
         var prefix = result[check_start..start_pos-1]
         if string.find(prefix, "animation.") >= 0 || string.find(prefix, "self.") >= 0
           is_user_var = false
         end
-      elif start_pos >= 5
+      elif is_user_var && start_pos >= 5
         var check_start = start_pos >= 5 ? start_pos - 5 : 0
         var prefix = result[check_start..start_pos-1]
         if string.find(prefix, "self.") >= 0

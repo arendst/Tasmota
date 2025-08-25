@@ -20,8 +20,8 @@
 #   color=0xFFFFFF  # White head
 #   tail_length=10  # tail length
 #   speed=2s        # speed
+#   priority = 7
 # )
-# comet_main.priority = 7
 # 
 # # Secondary comet in different color, opposite direction
 # animation comet_secondary = comet_animation(
@@ -29,16 +29,16 @@
 #   tail_length=8   # shorter tail
 #   speed=3s        # slower speed
 #   direction=-1    # other direction
+#   priority = 5
 # )
-# comet_secondary.priority = 5
 # 
 # # Add sparkle trail behind comets but on top of blue background
 # animation comet_sparkles = twinkle_animation(
 #   color=0xAAAAFF  # Light blue sparkles
 #   density=8       # density (moderate sparkles)
 #   twinkle_speed=400ms # twinkle speed (quick sparkle)
+#   priority = 8
 # )
-# comet_sparkles.priority = 8
 # 
 # # Start all animations
 # run background

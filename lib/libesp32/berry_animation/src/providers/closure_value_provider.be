@@ -187,7 +187,7 @@ end
 # @param closure: function - the closure to evaluate at run-time
 # @return ClosureValueProvider - New ClosureValueProvider instance
 def create_closure_value(engine, closure)
-  var provider = animation.closure_value(engine)
+  var provider = ClosureValueProvider(engine)
   provider.closure = closure
   return provider
 end
