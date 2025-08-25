@@ -11,7 +11,7 @@ Get up and running with the Berry Animation Framework in 5 minutes using the DSL
 
 Create a simple pulsing red light:
 
-```dsl
+```berry
 # Define colors
 color red = #FF0000
 
@@ -26,7 +26,7 @@ run pulse_red
 
 Create smooth color transitions:
 
-```dsl
+```berry
 # Use predefined rainbow palette
 animation rainbow_cycle = rich_palette(
   palette=PALETTE_RAINBOW,
@@ -41,7 +41,7 @@ run rainbow_cycle
 
 Create your own color palettes:
 
-```dsl
+```berry
 # Define a sunset palette
 palette sunset = [
   (0, #191970),    # Midnight blue
@@ -65,7 +65,7 @@ run sunset_glow
 
 Create complex shows with sequences:
 
-```dsl
+```berry
 animation red_pulse = pulsating_animation(color=red, period=2s)
 animation green_pulse = pulsating_animation(color=green, period=2s)
 animation blue_pulse = pulsating_animation(color=blue, period=2s)
@@ -90,7 +90,7 @@ run rgb_show
 
 Add movement and variation to your animations:
 
-```dsl
+```berry
 # Breathing effect with smooth oscillation
 animation breathing = pulsating_animation(
   color=blue,
@@ -119,7 +119,7 @@ run breathing
 ## Common Patterns
 
 ### Fire Effect
-```dsl
+```berry
 animation fire = rich_palette(
   palette=PALETTE_FIRE,
   cycle_period=2s,
@@ -130,7 +130,7 @@ run fire
 ```
 
 ### Ocean Waves
-```dsl
+```berry
 animation ocean = rich_palette(
   palette=PALETTE_OCEAN,
   cycle_period=6s,
@@ -177,7 +177,7 @@ end
 animation.register_user_function("sparkle", my_sparkle)
 ```
 
-```dsl
+```berry
 # Use in DSL - engine is automatically passed
 animation gold_sparkles = sparkle(#FFD700, 8, 500ms)
 run gold_sparkles

@@ -32,7 +32,7 @@ animation.register_user_function("breathing", my_breathing)
 
 Call your function just like built-in animations:
 
-```dsl
+```berry
 # Use your custom function
 animation calm = breathing(blue, 4s)
 animation energetic = breathing(red, 1s)
@@ -60,7 +60,7 @@ end
 animation.register_user_function("bright", solid_bright)
 ```
 
-```dsl
+```berry
 animation bright_red = bright(red, 80%)
 animation dim_blue = bright(blue, 30%)
 ```
@@ -82,7 +82,7 @@ end
 animation.register_user_function("fire", custom_fire)
 ```
 
-```dsl
+```berry
 animation campfire = fire(200, 2s)
 animation torch = fire(255, 500ms)
 ```
@@ -101,7 +101,7 @@ end
 animation.register_user_function("sparkles", sparkles)
 ```
 
-```dsl
+```berry
 animation stars = sparkles(white, 12, 300ms)
 animation fairy_dust = sparkles(#FFD700, 8, 500ms)
 ```
@@ -121,7 +121,7 @@ end
 animation.register_user_function("pulse_at", pulse_at)
 ```
 
-```dsl
+```berry
 animation left_pulse = pulse_at(green, 5, 3, 2s)
 animation right_pulse = pulse_at(blue, 25, 3, 2s)
 ```
@@ -174,7 +174,7 @@ animation.register_user_function("strobe", warning_strobe)
 animation.register_user_function("alert", gentle_alert)
 ```
 
-```dsl
+```berry
 animation emergency = strobe()
 animation notification = alert()
 animation custom_police = police(500ms)
@@ -299,7 +299,7 @@ User functions can be used in computed parameter expressions alongside mathemati
 
 ### Simple User Function in Computed Parameter
 
-```dsl
+```berry
 # Simple user function call in property assignment
 animation base = solid(color=blue, priority=10)
 base.opacity = rand_demo()  # User function as computed parameter
@@ -307,7 +307,7 @@ base.opacity = rand_demo()  # User function as computed parameter
 
 ### User Functions with Mathematical Operations
 
-```dsl
+```berry
 # Get strip length for calculations
 set strip_len = strip_length()
 
@@ -321,7 +321,7 @@ animation dynamic_solid = solid(
 
 ### User Functions in Complex Expressions
 
-```dsl
+```berry
 # Use user function in arithmetic expressions
 animation random_effect = solid(
   color=cyan
@@ -340,7 +340,7 @@ When you use user functions in computed parameters:
 4. **Mixed Operations**: User functions work seamlessly with mathematical functions and arithmetic
 
 **Generated Code Example:**
-```dsl
+```berry
 # DSL code
 animation.opacity = max(100, breathing(red, 2000))
 ```
@@ -436,7 +436,7 @@ end
 ### How the DSL Transpiler Works
 
 When you write DSL like this:
-```dsl
+```berry
 animation my_anim = my_function(arg1, arg2)
 ```
 

@@ -184,7 +184,7 @@ The ClosureValueProvider includes built-in mathematical helper methods that can 
 
 These methods are automatically available in DSL computed expressions:
 
-```dsl
+```berry
 # Example: Dynamic brightness based on strip position
 set strip_len = strip_length()
 animation pulse = pulsating_animation(
@@ -224,7 +224,7 @@ Returns a single, static color. Inherits from `ColorProvider`.
 
 #### Usage Examples
 
-```dsl
+```berry
 # Using predefined colors
 color static_red = solid(color=red)
 color static_blue = solid(color=blue)
@@ -254,7 +254,7 @@ Cycles through a custom list of colors with smooth transitions. Inherits from `C
 
 #### Usage Examples
 
-```dsl
+```berry
 # RGB cycle with smooth transitions
 color rgb_cycle = color_cycle(
   palette=[red, green, blue],
@@ -305,7 +305,7 @@ Generates colors from predefined palettes with smooth transitions and profession
 
 #### Usage Examples
 
-```dsl
+```berry
 # Rainbow palette with smooth transitions
 color rainbow_colors = rich_palette(
   palette=PALETTE_RAINBOW,
@@ -353,7 +353,7 @@ Creates breathing/pulsing color effects by modulating the brightness of a base c
 
 #### Usage Examples
 
-```dsl
+```berry
 # Natural breathing effect
 color breathing_red = breathe_color(
   base_color=red,
@@ -480,7 +480,7 @@ Each sparkle follows a predictable lifecycle:
 
 #### Usage Examples
 
-```dsl
+```berry
 # Basic white starfield
 animation starfield = sparkle_animation(
   color=white,
@@ -536,7 +536,7 @@ Creates physics-based bouncing effects with configurable gravity, damping, and m
 
 #### Usage Examples
 
-```dsl
+```berry
 # Bouncing ball effect with gravity
 animation ball = pulsating_animation(color=green, period=2s)
 animation bouncing_ball = bounce_animation(
@@ -611,7 +611,7 @@ Adds random shake effects to patterns with configurable intensity, frequency, an
 
 #### Usage Examples
 
-```dsl
+```berry
 # Digital glitch effect
 animation base_pattern = gradient_animation(color=rainbow_cycle)
 animation glitch_effect = jitter_animation(
@@ -665,7 +665,7 @@ Creates pseudo-random noise patterns with configurable scale, speed, and fractal
 
 #### Usage Examples
 
-```dsl
+```berry
 # Rainbow noise with medium detail
 animation rainbow_noise = noise_animation(
   scale=60,
@@ -739,7 +739,7 @@ The plasma effect combines two sine waves with different frequencies to create i
 
 #### Usage Examples
 
-```dsl
+```berry
 # Classic rainbow plasma
 animation rainbow_plasma = plasma_animation(
   freq_x=32,
@@ -835,7 +835,7 @@ The pulse consists of:
 
 #### Usage Examples
 
-```dsl
+```berry
 # Sharp pulse at center
 animation sharp_pulse = beacon_animation(
   color=red,
@@ -869,7 +869,7 @@ run spotlight
 #### Common Use Cases
 
 **Spotlight Effects:**
-```dsl
+```berry
 # Moving spotlight with soft edges
 animation moving_spotlight = beacon_animation(
   color=white,
@@ -881,7 +881,7 @@ moving_spotlight.pos = triangle(min_value=0, max_value=29, period=3s)
 ```
 
 **Position Markers:**
-```dsl
+```berry
 # Sharp position marker
 animation position_marker = beacon_animation(
   color=red,
@@ -892,7 +892,7 @@ animation position_marker = beacon_animation(
 ```
 
 **Breathing Spots:**
-```dsl
+```berry
 # Breathing effect at specific position
 animation breathing_spot = beacon_animation(
   color=blue,
@@ -960,7 +960,7 @@ The full period of the pattern is `pulse_size + low_size` pixels.
 #### Common Use Cases
 
 **Status Indicators:**
-```dsl
+```berry
 # Slow blinking pattern for status indication
 animation status_indicator = crenel_position_animation(
   color=green,
@@ -970,7 +970,7 @@ animation status_indicator = crenel_position_animation(
 ```
 
 **Rhythmic Effects:**
-```dsl
+```berry
 # Fast rhythmic pattern
 animation rhythm_pattern = crenel_position_animation(
   color=red,
@@ -980,7 +980,7 @@ animation rhythm_pattern = crenel_position_animation(
 ```
 
 **Decorative Borders:**
-```dsl
+```berry
 # Decorative border pattern
 color gold = 0xFFFFD700
 animation border_pattern = crenel_position_animation(
@@ -992,7 +992,7 @@ animation border_pattern = crenel_position_animation(
 ```
 
 **Progress Indicators:**
-```dsl
+```berry
 # Progress bar with limited pulses
 animation progress_bar = crenel_position_animation(
   color=0xFF0080FF,
@@ -1097,7 +1097,7 @@ Creates mathematical waveforms that can move along the LED strip. Perfect for rh
 
 #### Usage Examples
 
-```dsl
+```berry
 # Rainbow sine wave
 animation rainbow_wave = wave_animation(
   wave_type=0,
@@ -1153,7 +1153,7 @@ Creates scrolling and translation effects by moving patterns horizontally across
 
 #### Usage Examples
 
-```dsl
+```berry
 # Scrolling text effect
 animation text_pattern = solid(color=white)
 animation scrolling_text = shift_animation(
@@ -1197,7 +1197,7 @@ Creates size transformation effects with multiple animation modes including stat
 
 #### Usage Examples
 
-```dsl
+```berry
 # Breathing effect with oscillating scale
 animation base_pattern = gradient_animation(color=rainbow_cycle)
 animation breathing_effect = scale_animation(
@@ -1271,7 +1271,7 @@ Motion effects are transformation animations that apply movement, scaling, and d
 
 Motion effects can be chained to create sophisticated transformations:
 
-```dsl
+```berry
 # Base animation
 animation base_pulse = pulsating_animation(color=blue, period=3s)
 

@@ -102,7 +102,7 @@ The Animation DSL uses a declarative syntax with named parameters. All animation
 
 ### Basic Structure
 
-```dsl
+```berry
 # Optional strip configuration
 strip length 60
 
@@ -133,7 +133,7 @@ The DSL transpiler uses intelligent symbol resolution at compile time to optimiz
 
 When the DSL encounters an identifier (like `SINE` or `red`), it checks at transpile time whether the symbol exists in the `animation` module using Berry's introspection capabilities:
 
-```dsl
+```berry
 # If SINE exists in animation module
 animation wave = wave_animation(waveform=SINE)
 # Transpiles to: animation.SINE (direct access)
@@ -168,7 +168,7 @@ animation solid_red = solid(color=custom_color)
 
 Property assignments also use the same resolution logic:
 
-```dsl
+```berry
 # Built-in symbol (if 'engine' existed in animation module)
 engine.brightness = 200
 # Would transpile to: animation.engine.brightness = 200
@@ -200,7 +200,7 @@ end
 animation.register_user_function("sparkle", custom_sparkle)
 ```
 
-```dsl
+```berry
 # Use in DSL - engine is automatically passed as first argument
 animation gold_sparkle = sparkle(#FFD700, 8, 500ms)
 animation blue_sparkle = sparkle(blue, 12, 300ms)
@@ -215,7 +215,7 @@ For comprehensive examples and best practices, see the **[User Functions Guide](
 
 Define event handlers that respond to triggers:
 
-```dsl
+```berry
 # Define animations for different states
 color normal = #000080
 color alert = #FF0000
@@ -243,7 +243,7 @@ run normal_state
 
 DSL supports nested function calls for complex compositions:
 
-```dsl
+```berry
 # Nested calls in animation definitions (now supported)
 animation complex = pulsating_animation(
   source=shift_animation(
@@ -280,7 +280,7 @@ end
 The DSL performs comprehensive validation during compilation:
 
 **Animation Factory Validation:**
-```dsl
+```berry
 # Error: Function doesn't exist
 animation bad = nonexistent_animation(color=red)
 # Transpiler error: "Animation factory function 'nonexistent_animation' does not exist"
@@ -291,7 +291,7 @@ animation bad2 = math_function(value=10)
 ```
 
 **Parameter Validation:**
-```dsl
+```berry
 # Error: Invalid parameter name
 animation pulse = pulsating_animation(invalid_param=123)
 # Transpiler error: "Parameter 'invalid_param' is not valid for pulsating_animation"
@@ -302,7 +302,7 @@ animation comet = comet_animation(tail_length=-5)
 ```
 
 **Color Provider Validation:**
-```dsl
+```berry
 # Error: Color provider doesn't exist
 color bad = nonexistent_color_provider(period=2s)
 # Transpiler error: "Color provider factory 'nonexistent_color_provider' does not exist"
@@ -313,7 +313,7 @@ color bad2 = pulsating_animation(color=red)
 ```
 
 **Reference Validation:**
-```dsl
+```berry
 # Error: Undefined color reference
 animation pulse = pulsating_animation(color=undefined_color)
 # Transpiler error: "Undefined reference: 'undefined_color'"
@@ -428,7 +428,7 @@ webserver.on("/execute_dsl", web_execute_dsl)
 ## Best Practices
 
 1. **Structure your DSL files**:
-   ```dsl
+   ```berry
    # Strip configuration first
    strip length 60
    
@@ -453,7 +453,7 @@ webserver.on("/execute_dsl", web_execute_dsl)
    ```
 
 2. **Use meaningful names**:
-   ```dsl
+   ```berry
    # Good
    color warning_red = #FF0000
    animation door_alert = pulsating_animation(color=warning_red, period=500ms)
@@ -464,7 +464,7 @@ webserver.on("/execute_dsl", web_execute_dsl)
    ```
 
 3. **Comment your DSL**:
-   ```dsl
+   ```berry
    # Security system colors
    color normal_blue = #000080    # Idle state
    color alert_red = #FF0000      # Alert state

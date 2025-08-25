@@ -81,7 +81,7 @@ end
 **Common Solutions:**
 
 1. **Missing Strip Declaration:**
-   ```dsl
+   ```berry
    # Add explicit strip length if needed
    strip length 30
    
@@ -91,7 +91,7 @@ end
    ```
 
 2. **Animation Not Executed:**
-   ```dsl
+   ```berry
    # Make sure you have a 'run' statement
    color red = 0xFF0000
    animation red_anim = solid(color=red)
@@ -99,7 +99,7 @@ end
    ```
 
 3. **Strip Auto-Detection Issues:**
-   ```dsl
+   ```berry
    # Force strip length if auto-detection fails
    strip length 30  # Must be first statement
    
@@ -115,7 +115,7 @@ end
 **Common Issues:**
 
 1. **Missing Alpha Channel:**
-   ```dsl
+   ```berry
    # Note: 0xFF0000 is valid RGB format (alpha defaults to 0xFF)
    color red = 0xFF0000      # RGB format (alpha=255 assumed)
    
@@ -125,7 +125,7 @@ end
    ```
 
 2. **Color Format Confusion:**
-   ```dsl
+   ```berry
    # ARGB format: 0xAARRGGBB
    color red = 0xFFFF0000      # Alpha=FF, Red=FF, Green=00, Blue=00
    color green = 0xFF00FF00    # Alpha=FF, Red=00, Green=FF, Blue=00
@@ -133,7 +133,7 @@ end
    ```
 
 3. **Brightness Issues:**
-   ```dsl
+   ```berry
    # Use opacity parameter or property assignment
    animation red_anim = solid(color=red, opacity=255)  # Full brightness
    
@@ -154,14 +154,14 @@ end
 **Solutions:**
 
 1. **Check Time Units:**
-   ```dsl
+   ```berry
    # DSL uses time units (converted to milliseconds)
    animation pulse_anim = pulsating_animation(color=red, period=2s)    # 2 seconds
    animation fast_pulse = pulsating_animation(color=blue, period=500ms) # 0.5 seconds
    ```
 
 2. **Adjust Periods:**
-   ```dsl
+   ```berry
    # Too fast - increase period
    animation slow_pulse = pulsating_animation(color=red, period=5s)   # 5 seconds
    
@@ -170,7 +170,7 @@ end
    ```
 
 3. **Performance Limitations:**
-   ```dsl
+   ```berry
    # Use sequences instead of multiple simultaneous animations
    sequence optimized_show {
      play animation1 for 3s
@@ -204,7 +204,7 @@ end
 **Common DSL Errors:**
 
 1. **Undefined Colors:**
-   ```dsl
+   ```berry
    # Wrong - color not defined
    animation red_anim = solid(color=red)
    
@@ -214,7 +214,7 @@ end
    ```
 
 2. **Invalid Color Format:**
-   ```dsl
+   ```berry
    # Wrong - # prefix not supported (conflicts with comments)
    color red = #FF0000
    
@@ -223,7 +223,7 @@ end
    ```
 
 3. **Missing Time Units:**
-   ```dsl
+   ```berry
    # Wrong - no time unit
    animation pulse_anim = pulsating_animation(color=red, period=2000)
    
@@ -232,7 +232,7 @@ end
    ```
 
 4. **Reserved Name Conflicts:**
-   ```dsl
+   ```berry
    # Wrong - 'red' is a predefined color
    color red = 0x800000
    
@@ -241,7 +241,7 @@ end
    ```
 
 5. **Invalid Parameter Names:**
-   ```dsl
+   ```berry
    # Wrong - invalid parameter name
    animation pulse_anim = pulsating_animation(color=red, invalid_param=123)
    # Error: "Parameter 'invalid_param' is not valid for pulsating_animation"
@@ -251,7 +251,7 @@ end
    ```
 
 6. **Parameter Constraint Violations:**
-   ```dsl
+   ```berry
    # Wrong - negative period not allowed
    animation bad_pulse = pulsating_animation(color=red, period=-2s)
    # Error: "Parameter 'period' value -2000 violates constraint: min=1"
@@ -272,7 +272,7 @@ end
 **Common Issues:**
 
 1. **Strip Not Initialized:**
-   ```dsl
+   ```berry
    # Add strip declaration if needed
    strip length 30
    
@@ -282,7 +282,7 @@ end
    ```
 
 2. **Sequence Issues:**
-   ```dsl
+   ```berry
    # Make sure animations are defined before sequences
    color red = 0xFF0000
    animation red_anim = solid(color=red)  # Define first
@@ -295,7 +295,7 @@ end
    ```
 
 3. **Undefined References:**
-   ```dsl
+   ```berry
    # Wrong - using undefined animation in sequence
    sequence bad_demo {
      play undefined_animation for 3s
@@ -321,7 +321,7 @@ end
 **Solutions:**
 
 1. **Use Sequences Instead of Multiple Animations:**
-   ```dsl
+   ```berry
    # Good - sequential playback
    sequence smooth_show {
      play animation1 for 3s
@@ -337,7 +337,7 @@ end
    ```
 
 2. **Increase Animation Periods:**
-   ```dsl
+   ```berry
    # Smooth - longer periods
    animation smooth_pulse = pulsating_animation(color=red, period=3s)
    
@@ -346,7 +346,7 @@ end
    ```
 
 3. **Optimize Value Providers:**
-   ```dsl
+   ```berry
    # Efficient - reuse providers
    set breathing = smooth(min_value=50, max_value=255, period=2s)
    
@@ -374,7 +374,7 @@ end
    ```
 
 2. **Limit Palette Size:**
-   ```dsl
+   ```berry
    # Good - reasonable palette size
    palette simple_fire = [
      (0, #000000),
@@ -389,7 +389,7 @@ end
    ```
 
 3. **Use Sequences Instead of Simultaneous Animations:**
-   ```dsl
+   ```berry
    # Memory efficient - sequential playback
    sequence show {
      play animation1 for 5s
@@ -637,7 +637,7 @@ When asking for help, include:
 - ESP32 with 5V/2A power supply
 
 **Code:**
-```dsl
+```berry
 color red = 0xFF0000
 animation red_anim = solid(color=red)
 run red_anim
@@ -708,21 +708,21 @@ This format helps identify issues quickly and provide targeted solutions.
 ## Quick Reference: Common DSL Patterns
 
 ### Basic Animation
-```dsl
+```berry
 color red = 0xFF0000
 animation red_solid = solid(color=red)
 run red_solid
 ```
 
 ### Animation with Parameters
-```dsl
+```berry
 color blue = 0x0000FF
 animation blue_pulse = pulsating_animation(color=blue, period=2s, opacity=200)
 run blue_pulse
 ```
 
 ### Using Value Providers
-```dsl
+```berry
 set breathing = smooth(min_value=50, max_value=255, period=3s)
 color green = 0x00FF00
 animation breathing_green = solid(color=green)
@@ -731,7 +731,7 @@ run breathing_green
 ```
 
 ### Sequences
-```dsl
+```berry
 color red = 0xFF0000
 color blue = 0x0000FF
 
@@ -747,7 +747,7 @@ run demo
 ```
 
 ### Multiple Strip Lengths
-```dsl
+```berry
 strip length 60  # Must be first statement
 
 color rainbow = rainbow_color_provider(period=5s)
