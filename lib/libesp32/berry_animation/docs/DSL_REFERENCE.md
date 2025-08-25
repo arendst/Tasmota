@@ -13,7 +13,7 @@ Comments use the `#` character and extend to the end of the line:
 ```berry
 # This is a full-line comment
 # strip length 30  # This is an inline comment (TEMPORARILY DISABLED)
-color red = #FF0000  # This is an inline comment
+color bordeaux = 0x6F2C4F  # This is an inline comment
 ```
 
 Comments are preserved in the generated code and can appear anywhere in the DSL.
@@ -27,18 +27,18 @@ A DSL program consists of statements that can appear in any order:
 # strip length 60  # TEMPORARILY DISABLED
 
 # Color definitions
-color red = #FF0000
-color blue = #0000FF
+color bordeaux = 0x6F2C4F
+color majorelle = 0x6050DC
 
 # Animation definitions
-animation pulse_red = pulsating_animation(color=red, period=2s)
+animation pulse_bordeaux = pulsating_animation(color=bordeaux, period=2s)
 
 # Property assignments
 pulse_red.priority = 10
 
 # Sequences
 sequence demo {
-  play pulse_red for 5s
+  play pulse_bordeaux for 5s
   wait 1s
 }
 
@@ -213,27 +213,27 @@ The `color` keyword defines static colors or color providers:
 
 ```berry
 # Static colors
-color red = 0xFF0000                # Static hex color
-color blue = 0x0000FF               # Static hex color
+color bordeaux = 0x6F2C4F           # Static hex color
+color majorelle = 0x6050DC          # Static hex color
 color semi_red = 0x80FF0000         # Static color with alpha channel
 color my_white = white              # Reference to predefined color
 
 # Color providers for dynamic colors
 color rainbow_cycle = color_cycle(
-  palette=[red, green, blue], 
+  palette=[red, green, blue]
   cycle_period=5s
 )
 color breathing_red = breathe_color(
-  base_color=red,
-  min_brightness=20,
-  max_brightness=255,
-  duration=3s,
+  base_color=red
+  min_brightness=5%
+  max_brightness=100%
+  duration=3s
   curve_factor=2
 )
 color pulsing_blue = pulsating_color(
-  base_color=blue,
-  min_brightness=50,
-  max_brightness=200,
+  base_color=blue
+  min_brightness=20%
+  max_brightness=80%
   duration=1s
 )
 ```
@@ -249,8 +249,8 @@ Standard palettes use value positions from 0-255:
 ```berry
 # Traditional syntax with commas
 palette fire_colors = [
-  (0, 0x000000),     # Position 0: Black
-  (128, 0xFF0000),   # Position 128: Red
+  (0, 0x000000)      # Position 0: Black
+  (128, 0xFF0000)    # Position 128: Red
   (255, 0xFFFF00)    # Position 255: Yellow
 ]
 
@@ -276,8 +276,8 @@ Palettes can also use tick counts for timing-based transitions:
 
 ```berry
 palette timed_colors = [
-  (10, 0xFF0000),    # Red for 10 ticks
-  (20, 0x00FF00),    # Green for 20 ticks  
+  (10, 0xFF0000)     # Red for 10 ticks
+  (20, 0x00FF00)     # Green for 20 ticks  
   (15, 0x0000FF)     # Blue for 15 ticks
 ]
 ```
@@ -298,14 +298,14 @@ The `animation` keyword defines instances of animation classes (subclasses of An
 animation red_solid = solid(color=red)
 
 animation pulse_effect = pulsating_animation(
-  color=blue,
+  color=blue
   period=2s
 )
 
 animation comet_trail = comet_animation(
-  color=white,
-  tail_length=10,
-  speed=1500,
+  color=white
+  tail_length=10
+  speed=1500
   direction=1
 )
 ```
