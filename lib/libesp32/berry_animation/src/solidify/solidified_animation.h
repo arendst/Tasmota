@@ -6794,33 +6794,34 @@ be_local_closure(shift_fast_scroll,   /* name */
 );
 /*******************************************************************/
 
---> Unsupported upvals in closure in 'create_closure_value' <---
+
 /********************************************************************
 ** Solidified function: create_closure_value
 ********************************************************************/
 be_local_closure(create_closure_value,   /* name */
   be_nested_proto(
-    4,                          /* nstack */
+    5,                          /* nstack */
     2,                          /* argc */
     0,                          /* varg */
-    1,                          /* has upvals */
-    ( &(const bupvaldesc[ 1]) {  /* upvals */
-      be_local_const_upval(1, 0),
-    }),
+    0,                          /* has upvals */
+    NULL,                       /* no upvals */
     0,                          /* has sup protos */
     NULL,                       /* no sub protos */
     1,                          /* has constants */
-    ( &(const bvalue[ 1]) {     /* constants */
-    /* K0   */  be_nested_str_weak(closure),
+    ( &(const bvalue[ 3]) {     /* constants */
+    /* K0   */  be_nested_str_weak(animation),
+    /* K1   */  be_nested_str_weak(closure_value),
+    /* K2   */  be_nested_str_weak(closure),
     }),
     be_str_weak(create_closure_value),
     &be_const_str_solidified,
-    ( &(const binstruction[ 5]) {  /* code */
-      0x68080000,  //  0000  GETUPV	R2	U0
-      0x5C0C0000,  //  0001  MOVE	R3	R0
-      0x7C080200,  //  0002  CALL	R2	1
-      0x900A0001,  //  0003  SETMBR	R2	K0	R1
-      0x80040400,  //  0004  RET	1	R2
+    ( &(const binstruction[ 6]) {  /* code */
+      0xB80A0000,  //  0000  GETNGBL	R2	K0
+      0x8C080501,  //  0001  GETMET	R2	R2	K1
+      0x5C100000,  //  0002  MOVE	R4	R0
+      0x7C080400,  //  0003  CALL	R2	2
+      0x900A0401,  //  0004  SETMBR	R2	K2	R1
+      0x80040400,  //  0005  RET	1	R2
     })
   )
 );
