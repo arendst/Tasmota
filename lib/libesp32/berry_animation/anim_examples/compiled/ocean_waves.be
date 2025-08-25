@@ -70,73 +70,52 @@ var engine = animation.init_strip()
 var ocean_colors_ = bytes("00000080" "400040C0" "800080FF" "C040C0FF" "FF80FFFF")
 # Base ocean animation with slow color cycling
 var ocean_base_ = animation.rich_palette_animation(engine)
-ocean_base_.palette = animation.global('ocean_colors_', 'ocean_colors')
+ocean_base_.palette = ocean_colors_
 ocean_base_.cycle_period = 8000
-ocean_base_.transition_type = animation.global('SINE_', 'SINE')
+ocean_base_.transition_type = animation.SINE
 ocean_base_.brightness = 200
 # Add wave motion with moving pulses
 var wave1_pattern_ = animation.rich_palette(engine)
-wave1_pattern_.palette = animation.global('ocean_colors_', 'ocean_colors')
+wave1_pattern_.palette = ocean_colors_
 wave1_pattern_.cycle_period = 6000
-wave1_pattern_.transition_type = animation.global('SINE_', 'SINE')
+wave1_pattern_.transition_type = animation.SINE
 wave1_pattern_.brightness = 255
 var wave1_ = animation.beacon_animation(engine)
-wave1_.color = animation.global('wave1_pattern_', 'wave1_pattern')  # color source
+wave1_.color = wave1_pattern_  # color source
 wave1_.pos = 0  # initial position
 wave1_.beacon_size = 12  # wave width
 wave1_.slew_size = 6  # soft edges
-animation.global('wave1_').priority = 10
+wave1_.priority = 10
 var temp_sawtooth_145 = animation.sawtooth(engine)
 temp_sawtooth_145.min_value = 0
 temp_sawtooth_145.max_value = 48
 temp_sawtooth_145.duration = 5000
-animation.global('wave1_').pos = temp_sawtooth_145  # 60-12 = 48
+wave1_.pos = temp_sawtooth_145  # 60-12 = 48
 var wave2_pattern_ = animation.rich_palette(engine)
-wave2_pattern_.palette = animation.global('ocean_colors_', 'ocean_colors')
+wave2_pattern_.palette = ocean_colors_
 wave2_pattern_.cycle_period = 4000
-wave2_pattern_.transition_type = animation.global('SINE_', 'SINE')
+wave2_pattern_.transition_type = animation.SINE
 wave2_pattern_.brightness = 180
 var wave2_ = animation.beacon_animation(engine)
-wave2_.color = animation.global('wave2_pattern_', 'wave2_pattern')  # color source
+wave2_.color = wave2_pattern_  # color source
 wave2_.pos = 52  # initial position
 wave2_.beacon_size = 8  # smaller wave
 wave2_.slew_size = 4  # soft edges
-animation.global('wave2_').priority = 8
+wave2_.priority = 8
 var temp_sawtooth_222 = animation.sawtooth(engine)
 temp_sawtooth_222.min_value = 52
 temp_sawtooth_222.max_value = 8
 temp_sawtooth_222.duration = 7000
-animation.global('wave2_').pos = temp_sawtooth_222  # Opposite direction
+wave2_.pos = temp_sawtooth_222  # Opposite direction
 # Add foam sparkles
 var foam_ = animation.twinkle_animation(engine)
 foam_.color = 0xFFFFFFFF  # White foam
 foam_.density = 6  # density (sparkle count)
 foam_.twinkle_speed = 300  # twinkle speed (quick sparkles)
-animation.global('foam_').priority = 15
+foam_.priority = 15
 # Start all animations
-# Start all animations/sequences
-if global.contains('sequence_ocean_base')
-  var seq_manager = global.sequence_ocean_base()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('ocean_base_'))
-end
-if global.contains('sequence_wave1')
-  var seq_manager = global.sequence_wave1()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('wave1_'))
-end
-if global.contains('sequence_wave2')
-  var seq_manager = global.sequence_wave2()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('wave2_'))
-end
-if global.contains('sequence_foam')
-  var seq_manager = global.sequence_foam()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('foam_'))
-end
+engine.add_animation(ocean_base_)
+engine.add_animation(wave1_)
+engine.add_animation(wave2_)
+engine.add_animation(foam_)
 engine.start()

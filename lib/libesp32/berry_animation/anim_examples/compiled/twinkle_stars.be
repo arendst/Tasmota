@@ -47,37 +47,21 @@ var engine = animation.init_strip()
 
 var night_sky_ = 0xFF000033
 var background_ = animation.solid(engine)
-background_.color = animation.global('night_sky_', 'night_sky')
+background_.color = night_sky_
 # White twinkling stars
 var stars_ = animation.twinkle_animation(engine)
 stars_.color = 0xFFFFFFFF  # White stars
 stars_.density = 8  # density (number of stars)
 stars_.twinkle_speed = 500  # twinkle speed (twinkle duration)
-animation.global('stars_').priority = 10
+stars_.priority = 10
 # Add occasional bright flash
 var bright_flash_ = animation.twinkle_animation(engine)
 bright_flash_.color = 0xFFFFFFAA  # Bright yellow-white
 bright_flash_.density = 2  # density (fewer bright flashes)
 bright_flash_.twinkle_speed = 300  # twinkle speed (quick flash)
-animation.global('bright_flash_').priority = 15
+bright_flash_.priority = 15
 # Start all animations
-# Start all animations/sequences
-if global.contains('sequence_background')
-  var seq_manager = global.sequence_background()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('background_'))
-end
-if global.contains('sequence_stars')
-  var seq_manager = global.sequence_stars()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('stars_'))
-end
-if global.contains('sequence_bright_flash')
-  var seq_manager = global.sequence_bright_flash()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('bright_flash_'))
-end
+engine.add_animation(background_)
+engine.add_animation(stars_)
+engine.add_animation(bright_flash_)
 engine.start()

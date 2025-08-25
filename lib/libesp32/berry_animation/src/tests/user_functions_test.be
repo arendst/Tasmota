@@ -13,13 +13,12 @@ def test_user_function_registration()
   print("Testing user function registration...")
   
   # Check that functions are registered
-  assert(animation.is_user_function("breathing"), "breathing function should be registered")
-  assert(animation.is_user_function("fire"), "fire function should be registered")
+  assert(animation.is_user_function("rand_demo"), "rand_demo function should be registered")
   assert(!animation.is_user_function("nonexistent"), "nonexistent function should not be registered")
   
   # Check that we can get functions
-  var breathing_func = animation.get_user_function("breathing")
-  assert(breathing_func != nil, "Should be able to get breathing function")
+  var rand_demo_func = animation.get_user_function("rand_demo")
+  assert(rand_demo_func != nil, "Should be able to get rand_demo function")
   
   var nonexistent_func = animation.get_user_function("nonexistent")
   assert(nonexistent_func == nil, "Should return nil for nonexistent function")
@@ -27,15 +26,14 @@ def test_user_function_registration()
   print("✓ User function registration test passed")
 end
 
-# Test user function call in DSL
-def test_user_function_in_dsl()
-  print("Testing user function call in DSL...")
+# Test user function call in computed parameters
+def test_user_function_in_computed_parameters()
+  print("Testing user function in computed parameters...")
   
   var dsl_code = 
-    "# strip length 30  # TEMPORARILY DISABLED\n"
-    "color custom_red = 0xFF0000\n"
-    "animation red_breathing = breathing(custom_red, 4s)\n"
-    "run red_breathing"
+    "animation random_base = solid(color=blue, priority=10)\n"
+    "random_base.opacity = rand_demo()\n"
+    "run random_base"
   
   try
     var berry_code = animation_dsl.compile(dsl_code)
@@ -43,94 +41,93 @@ def test_user_function_in_dsl()
   
     # Check that the generated code contains the user function call
     import string
-    assert(string.find(berry_code, "animation.get_user_function('breathing')") >= 0, 
+    assert(string.find(berry_code, "animation.get_user_function('rand_demo')") >= 0, 
            "Generated code should contain user function call")
     
-    print("✓ User function in DSL test passed")
+    print("✓ User function in computed parameters test passed")
   except "dsl_compilation_error" as e, msg
     assert(false, f"DSL compilation should not fail: {msg}")
   end
 end
 
-# Test nested user function calls
-def test_nested_user_function_calls()
-  print("Testing nested user function calls...")
-  
-  # Register a function that calls another user function
-  def complex_effect(base_color, speed)
-    return animation.get_user_function("breathing")(base_color, speed)
-  end
-  animation.register_user_function("complex", complex_effect)
+# Test user function with mathematical operations
+def test_user_function_with_math()
+  print("Testing user function with mathematical operations...")
   
   var dsl_code = 
-    "# strip length 30  # TEMPORARILY DISABLED\n"
-    "color custom_blue = 0x0000FF\n"
-    "animation complex_blue = complex(custom_blue, 2s)\n"
-    "run complex_blue"
+    "animation random_bounded = solid(color=orange, priority=8)\n"
+    "random_bounded.opacity = max(50, min(255, rand_demo() + 100))\n"
+    "run random_bounded"
   
   try
     var berry_code = animation_dsl.compile(dsl_code)
     assert(berry_code != nil, "Generated Berry code should not be nil")
   
-    # Check that the generated code contains the user function call
+    # Check that the generated code contains both user function and math functions
     import string
-    assert(string.find(berry_code, "animation.get_user_function('complex')") >= 0, 
-           "Generated code should contain nested user function call")
+    assert(string.find(berry_code, "animation.get_user_function('rand_demo')") >= 0, 
+           "Generated code should contain user function call")
+    assert(string.find(berry_code, "self.max(") >= 0, 
+           "Generated code should contain math function call")
     
-    print("✓ Nested user function calls test passed")
+    print("✓ User function with math test passed")
   except "dsl_compilation_error" as e, msg
     assert(false, f"DSL compilation should not fail: {msg}")
   end
 end
 
-# Test user function with multiple parameters
-def test_user_function_multiple_parameters()
-  print("Testing user function with multiple parameters...")
+# Test user function in arithmetic expressions
+def test_user_function_in_arithmetic()
+  print("Testing user function in arithmetic expressions...")
   
   var dsl_code = 
-    "# strip length 30  # TEMPORARILY DISABLED\n"
-    "animation sparkles = sparkle(red, white, 15%)\n"
-    "run sparkles"
+    "animation random_variation = solid(color=purple, priority=15)\n"
+    "random_variation.opacity = abs(rand_demo() - 128) + 64\n"
+    "run random_variation"
   
   try
     var berry_code = animation_dsl.compile(dsl_code)
     assert(berry_code != nil, "Generated Berry code should not be nil")
   
-    # Check that the generated code contains the user function call with parameters
+    # Check that the generated code contains the user function call in arithmetic
     import string
-    assert(string.find(berry_code, "animation.get_user_function('sparkle')") >= 0, 
+    assert(string.find(berry_code, "animation.get_user_function('rand_demo')") >= 0, 
            "Generated code should contain user function call")
-    assert(string.find(berry_code, "0xFFFF0000, 0xFFFFFFFF") >= 0, 
-           "Generated code should contain color parameters")
+    assert(string.find(berry_code, "self.abs(") >= 0, 
+           "Generated code should contain abs function call")
     
-    print("✓ User function multiple parameters test passed")
+    print("✓ User function in arithmetic test passed")
   except "dsl_compilation_error" as e, msg
     assert(false, f"DSL compilation should not fail: {msg}")
   end
 end
 
-# Test user function in nested calls
-def test_user_function_in_nested_calls()
-  print("Testing user function in nested calls...")
+# Test complex expressions with user functions
+def test_complex_user_function_expressions()
+  print("Testing complex expressions with user functions...")
   
   var dsl_code = 
-    "# strip length 30  # TEMPORARILY DISABLED\n"
-    "color custom_red = 0xFF0000\n"
-    "animation complex = pulsating_animation(color=breathing(custom_red, 3s), period=2s)\n"
-    "run complex"
+    "animation random_complex = solid(color=white, priority=20)\n"
+    "random_complex.opacity = round((rand_demo() + 128) / 2 + abs(rand_demo() - 100))\n"
+    "run random_complex"
   
   try
     var berry_code = animation_dsl.compile(dsl_code)
     assert(berry_code != nil, "Generated Berry code should not be nil")
   
-    # Check that both user and built-in functions are handled correctly
+    # Check that the generated code contains multiple user function calls
     import string
-    assert(string.find(berry_code, "animation.get_user_function('breathing')") >= 0, 
-           "Generated code should contain user function call")
-    assert(string.find(berry_code, "animation.pulsating_animation(") >= 0, 
-           "Generated code should contain built-in function call")
+    var rand_demo_count = 0
+    var pos = 0
+    while true
+      pos = string.find(berry_code, "animation.get_user_function('rand_demo')", pos)
+      if pos < 0 break end
+      rand_demo_count += 1
+      pos += 1
+    end
+    assert(rand_demo_count >= 2, "Generated code should contain multiple rand_demo calls")
     
-    print("✓ User function in nested calls test passed")
+    print("✓ Complex user function expressions test passed")
   except "dsl_compilation_error" as e, msg
     assert(false, f"DSL compilation should not fail: {msg}")
   end
@@ -141,10 +138,10 @@ def test_generated_code_validity()
   print("Testing generated code validity with user functions...")
   
   var dsl_code = 
-    "# strip length 30  # TEMPORARILY DISABLED\n"
-    "color custom_red = 0xFF0000\n"
-    "animation red_fire = fire(200, 500ms)\n"
-    "run red_fire"
+    "animation random_multi = solid(color=cyan, priority=12)\n"
+    "random_multi.opacity = rand_demo()\n"
+    "random_multi.brightness = max(100, rand_demo())\n"
+    "run random_multi"
   
   try
     var berry_code = animation_dsl.compile(dsl_code)
@@ -173,10 +170,10 @@ def run_user_functions_tests()
   
   try
     test_user_function_registration()
-    test_user_function_in_dsl()
-    test_nested_user_function_calls()
-    test_user_function_multiple_parameters()
-    test_user_function_in_nested_calls()
+    test_user_function_in_computed_parameters()
+    test_user_function_with_math()
+    test_user_function_in_arithmetic()
+    test_complex_user_function_expressions()
     test_generated_code_validity()
     
     print("=== All user functions tests passed! ===")

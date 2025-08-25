@@ -64,30 +64,30 @@ var blue_custom_ = 0xFF0000FF
 var green_custom_ = 0xFF00FF00
 # Create animations
 var left_pulse_ = animation.beacon_animation(engine)
-left_pulse_.color = animation.global('red_custom_', 'red_custom')
+left_pulse_.color = red_custom_
 left_pulse_.pos = 15
 left_pulse_.beacon_size = 15
 left_pulse_.slew_size = 3
 var center_pulse_ = animation.beacon_animation(engine)
-center_pulse_.color = animation.global('blue_custom_', 'blue_custom')
+center_pulse_.color = blue_custom_
 center_pulse_.pos = 30
 center_pulse_.beacon_size = 15
 center_pulse_.slew_size = 3
 var right_pulse_ = animation.beacon_animation(engine)
-right_pulse_.color = animation.global('green_custom_', 'green_custom')
+right_pulse_.color = green_custom_
 right_pulse_.pos = 45
 right_pulse_.beacon_size = 15
 right_pulse_.slew_size = 3
 # Set different opacities
-animation.global('left_pulse_').opacity = 255  # Full slew_size
-animation.global('center_pulse_').opacity = 200  # Slightly dimmed
-animation.global('right_pulse_').opacity = 150  # More dimmed
+left_pulse_.opacity = 255  # Full slew_size
+center_pulse_.opacity = 200  # Slightly dimmed
+right_pulse_.opacity = 150  # More dimmed
 # Set priorities (higher numbers have priority)
-animation.global('left_pulse_').priority = 10
-animation.global('center_pulse_').priority = 15  # Center has highest priority
-animation.global('right_pulse_').priority = 5
+left_pulse_.priority = 10
+center_pulse_.priority = 15  # Center has highest priority
+right_pulse_.priority = 5
 # Create a sequence that shows all three
-def sequence_demo()
+var demo_ = (def (engine)
   var steps = []
   steps.push(animation.create_play_step(animation.global('left_pulse_'), 3000))
   steps.push(animation.create_wait_step(500))
@@ -105,12 +105,6 @@ def sequence_demo()
   var seq_manager = animation.SequenceManager(engine)
   seq_manager.start_sequence(steps)
   return seq_manager
-end
-# Start all animations/sequences
-if global.contains('sequence_demo')
-  var seq_manager = global.sequence_demo()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('demo_'))
-end
+end)(engine)
+engine.add_sequence_manager(demo_)
 engine.start()

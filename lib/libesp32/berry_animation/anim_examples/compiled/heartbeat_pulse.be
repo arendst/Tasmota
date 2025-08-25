@@ -60,7 +60,7 @@ var engine = animation.init_strip()
 
 var heart_bg_ = 0xFF110000
 var background_ = animation.solid(engine)
-background_.color = animation.global('heart_bg_', 'heart_bg')
+background_.color = heart_bg_
 # Define heartbeat timing - double pulse animation
 # First pulse (stronger)
 var heartbeat1_ = animation.solid(engine)
@@ -71,8 +71,8 @@ temp_square_46.min_value = 0
 temp_square_46.max_value = 255
 temp_square_46.duration = 150
 temp_square_46.duty_cycle = 20
-animation.global('heartbeat1_').opacity = temp_square_46  # Quick strong pulse
-animation.global('heartbeat1_').priority = 10
+heartbeat1_.opacity = temp_square_46  # Quick strong pulse
+heartbeat1_.priority = 10
 # Second pulse (weaker, slightly delayed)
 var heartbeat2_ = animation.solid(engine)
 heartbeat2_.color = 0xFFCC0000
@@ -83,8 +83,8 @@ temp_square_92.min_value = 0
 temp_square_92.max_value = 180
 temp_square_92.duration = 150
 temp_square_92.duty_cycle = 15
-animation.global('heartbeat2_').opacity = temp_square_92  # Weaker pulse
-animation.global('heartbeat2_').priority = 8
+heartbeat2_.opacity = temp_square_92  # Weaker pulse
+heartbeat2_.priority = 8
 # Add subtle glow effect
 var heart_glow_ = animation.solid(engine)
 heart_glow_.color = 0xFF660000
@@ -93,51 +93,25 @@ var temp_smooth_136 = animation.smooth(engine)
 temp_smooth_136.min_value = 30
 temp_smooth_136.max_value = 100
 temp_smooth_136.duration = 1000
-animation.global('heart_glow_').opacity = temp_smooth_136  # Gentle breathing glow
-animation.global('heart_glow_').priority = 5
+heart_glow_.opacity = temp_smooth_136  # Gentle breathing glow
+heart_glow_.priority = 5
 # Add center pulse for emphasis
 var center_pulse_ = animation.beacon_animation(engine)
 center_pulse_.color = 0xFFFFFFFF  # White center
 center_pulse_.pos = 30  # center of strip
 center_pulse_.beacon_size = 4  # small center
 center_pulse_.slew_size = 2  # soft edges
-animation.global('center_pulse_').priority = 20
+center_pulse_.priority = 20
 var temp_square_199 = animation.square(engine)
 temp_square_199.min_value = 0
 temp_square_199.max_value = 200
 temp_square_199.duration = 100
 temp_square_199.duty_cycle = 10
-animation.global('center_pulse_').opacity = temp_square_199  # Quick white flash
+center_pulse_.opacity = temp_square_199  # Quick white flash
 # Start all animations
-# Start all animations/sequences
-if global.contains('sequence_background')
-  var seq_manager = global.sequence_background()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('background_'))
-end
-if global.contains('sequence_heart_glow')
-  var seq_manager = global.sequence_heart_glow()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('heart_glow_'))
-end
-if global.contains('sequence_heartbeat1')
-  var seq_manager = global.sequence_heartbeat1()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('heartbeat1_'))
-end
-if global.contains('sequence_heartbeat2')
-  var seq_manager = global.sequence_heartbeat2()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('heartbeat2_'))
-end
-if global.contains('sequence_center_pulse')
-  var seq_manager = global.sequence_center_pulse()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('center_pulse_'))
-end
+engine.add_animation(background_)
+engine.add_animation(heart_glow_)
+engine.add_animation(heartbeat1_)
+engine.add_animation(heartbeat2_)
+engine.add_animation(center_pulse_)
 engine.start()

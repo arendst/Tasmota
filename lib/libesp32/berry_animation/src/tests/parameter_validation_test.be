@@ -41,7 +41,7 @@ def test_parameter_accepts_value_providers()
   # Test that invalid types are rejected (no type conversion)
   assert(test_anim.set_param("opacity", "invalid") == false, "Should reject string")
   assert(test_anim.set_param("opacity", true) == false, "Should reject boolean")
-  assert(test_anim.set_param("opacity", 3.14) == false, "Should reject real")
+  assert(test_anim.set_param("opacity", 3.14) == true, "Should accept real (recent change to accept real for int parameters)")
   
   print("✓ Parameter validation with ValueProviders test passed")
 end
@@ -70,7 +70,7 @@ def test_loop_boolean_validation()
   
   # Test loop with other invalid types
   assert(test_anim.set_param("loop", "true") == false, "Should reject string for loop")
-  assert(test_anim.set_param("loop", 3.14) == false, "Should reject real for loop")
+  assert(test_anim.set_param("loop", 3.14) == false, "Should reject real for loop (boolean parameter)")
   
   print("✓ Loop boolean validation test passed")
 end
@@ -157,7 +157,7 @@ def test_type_validation()
   assert(test_obj.set_param("int_param", 123) == true, "Should accept int for int_param")
   assert(test_obj.set_param("int_param", "string") == false, "Should reject string for int_param")
   assert(test_obj.set_param("int_param", true) == false, "Should reject bool for int_param")
-  assert(test_obj.set_param("int_param", 3.14) == false, "Should reject real for int_param")
+  assert(test_obj.set_param("int_param", 3.14) == true, "Should accept real for int_param (recent change)")
   
   # Test explicit int parameter
   assert(test_obj.set_param("explicit_int_param", 456) == true, "Should accept int for explicit_int_param")

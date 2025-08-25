@@ -1,5 +1,6 @@
-# Test for global variable access with new animation.global() signature
-# Verifies that generated code properly uses animation.global(name, module_name)
+# Test for global variable access with new transpiler symbol resolution
+# Verifies that generated code uses animation.symbol for animation module symbols
+# and symbol_ for user-defined variables (no more animation.global calls)
 #
 # Command to run test is:
 #    ./berry -s -g -m lib/libesp32/berry_animation -e "import tasmota" lib/libesp32/berry_animation/tests/global_variable_test.be
@@ -25,8 +26,8 @@ def test_global_variable_access()
   assert(string.find(berry_code, "var red_alt_ = 0xFFFF0100") >= 0, "Should define red_alt variable")
   assert(string.find(berry_code, "var solid_red_ = animation.solid(engine)") >= 0, "Should define solid_red variable with new pattern")
   
-  # Variable references should use new two-parameter animation.global() calls
-  assert(string.find(berry_code, "solid_red_.color = animation.global('red_alt_', 'red_alt')") >= 0, "Should use animation.global('red_alt_', 'red_alt') for variable reference")
+  # Variable references should now use direct underscore notation (no animation.global)
+  assert(string.find(berry_code, "solid_red_.color = red_alt_") >= 0, "Should use red_alt_ directly for variable reference")
   
   # Verify the generated code actually compiles by executing it
   try
@@ -49,20 +50,17 @@ def test_undefined_variable_exception()
   
   assert(berry_code != nil, "Should compile DSL code")
   
-  # Check that animation.global() is used for the fallback with new two-parameter format
+  # Check that undefined variables use direct underscore notation (no animation.global)
   import string
-  assert(string.find(berry_code, "test_.color = animation.global('undefined_var_', 'undefined_var')") >= 0, "Should use animation.global('undefined_var_', 'undefined_var') for undefined variable")
+  assert(string.find(berry_code, "test_.color = undefined_var_") >= 0, "Should use undefined_var_ directly for undefined variable")
   
-  # Verify the generated code compiles
-  var compiled_code = compile(berry_code)
-  assert(compiled_code != nil, "Generated code should compile")
-  
-  # Verify it raises an exception when executed (due to undefined variable)
+  # Verify the generated code fails to compile (due to undefined variable)
+  # This is better than the old behavior - we catch undefined variables at compile time!
   try
-    compiled_code()
-    assert(false, "Should have raised an exception for undefined variable")
+    var compiled_code = compile(berry_code)
+    assert(false, "Should have failed to compile due to undefined variable")
   except .. as e, msg
-    print(f"✓ Correctly raised exception for undefined variable: {e}")
+    print(f"✓ Correctly failed to compile due to undefined variable: {e}")
   end
   
   print("✓ Undefined variable exception test passed")

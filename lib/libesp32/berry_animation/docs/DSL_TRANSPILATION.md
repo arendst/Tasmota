@@ -124,6 +124,62 @@ run pulse_red
 ```
 
 The DSL transpiles to Berry code where each animation gets an engine parameter and named parameters are set individually.
+
+## Symbol Resolution
+
+The DSL transpiler uses intelligent symbol resolution at compile time to optimize generated code and eliminate runtime lookups:
+
+### Transpile-Time Symbol Resolution
+
+When the DSL encounters an identifier (like `SINE` or `red`), it checks at transpile time whether the symbol exists in the `animation` module using Berry's introspection capabilities:
+
+```dsl
+# If SINE exists in animation module
+animation wave = wave_animation(waveform=SINE)
+# Transpiles to: animation.SINE (direct access)
+
+# If custom_color doesn't exist in animation module  
+color custom_color = #FF0000
+animation solid_red = solid(color=custom_color)
+# Transpiles to: custom_color_ (user-defined variable)
+```
+
+### Benefits
+
+- **Performance**: Eliminates runtime symbol lookups for built-in constants
+- **Error Detection**: Catches undefined symbols at compile time
+- **Code Clarity**: Generated Berry code clearly shows built-in vs user-defined symbols
+- **Optimization**: Direct access to animation module symbols is faster
+
+### Symbol Categories
+
+**Built-in Symbols** (resolved to `animation.<symbol>`):
+- Animation factory functions: `solid`, `pulsating_animation`, `comet_animation`
+- Value providers: `triangle`, `smooth`, `sine`, `static_value`
+- Color providers: `color_cycle`, `breathe_color`, `rich_palette`
+- Constants: `PALETTE_RAINBOW`, `SINE`, `TRIANGLE`, etc.
+
+**User-defined Symbols** (resolved to `<symbol>_`):
+- Custom colors: `my_red`, `fire_color`
+- Custom animations: `pulse_effect`, `rainbow_wave`
+- Variables: `brightness_level`, `cycle_time`
+
+### Property Assignment Resolution
+
+Property assignments also use the same resolution logic:
+
+```dsl
+# Built-in symbol (if 'engine' existed in animation module)
+engine.brightness = 200
+# Would transpile to: animation.engine.brightness = 200
+
+# User-defined symbol
+my_animation.priority = 10
+# Transpiles to: my_animation_.priority = 10
+```
+
+This intelligent resolution ensures optimal performance while maintaining clear separation between framework and user code.
+
 ## Advanced DSL Features
 
 ### User-Defined Functions

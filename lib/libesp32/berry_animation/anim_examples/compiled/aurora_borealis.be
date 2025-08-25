@@ -57,22 +57,16 @@ var aurora_colors_ = bytes("00000022" "40004400" "8000AA44" "C044AA88" "FF88FFAA
 var aurora_purple_ = bytes("00220022" "40440044" "808800AA" "C0AA44CC" "FFCCAAFF")
 # Base aurora animation with slow flowing colors
 var aurora_base_ = animation.rich_palette_animation(engine)
-aurora_base_.palette = animation.global('aurora_colors_', 'aurora_colors')  # palette
+aurora_base_.palette = aurora_colors_  # palette
 aurora_base_.cycle_period = 10000  # cycle period
-aurora_base_.transition_type = animation.global('SINE_', 'SINE')  # transition type (explicit for clarity)
+aurora_base_.transition_type = animation.SINE  # transition type (explicit for clarity)
 aurora_base_.brightness = 180  # brightness (dimmed for aurora effect)
-def sequence_demo()
+var demo_ = (def (engine)
   var steps = []
   steps.push(animation.create_play_step(animation.global('aurora_base_'), 0))  # infinite duration (no 'for' clause)
   var seq_manager = animation.SequenceManager(engine)
   seq_manager.start_sequence(steps)
   return seq_manager
-end
-# Start all animations/sequences
-if global.contains('sequence_demo')
-  var seq_manager = global.sequence_demo()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('demo_'))
-end
+end)(engine)
+engine.add_sequence_manager(demo_)
 engine.start()

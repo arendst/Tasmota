@@ -84,16 +84,16 @@ var engine = animation.init_strip()
 var neon_colors_ = bytes("00FF0080" "5500FF80" "AA8000FF" "FFFF8000")
 # Main neon glow with color cycling
 var neon_main_ = animation.rich_palette_animation(engine)
-neon_main_.palette = animation.global('neon_colors_', 'neon_colors')
+neon_main_.palette = neon_colors_
 neon_main_.cycle_period = 4000
-neon_main_.transition_type = animation.global('LINEAR_', 'LINEAR')
+neon_main_.transition_type = animation.LINEAR
 neon_main_.brightness = 255
 # Add electrical flickering
 var temp_smooth_81 = animation.smooth(engine)
 temp_smooth_81.min_value = 220
 temp_smooth_81.max_value = 255
 temp_smooth_81.duration = 200
-animation.global('neon_main_').opacity = temp_smooth_81
+neon_main_.opacity = temp_smooth_81
 # Add occasional electrical surge
 var neon_surge_ = animation.solid(engine)
 neon_surge_.color = 0xFFFFFFFF
@@ -103,74 +103,43 @@ temp_square_114.min_value = 0
 temp_square_114.max_value = 255
 temp_square_114.duration = 50
 temp_square_114.duty_cycle = 2
-animation.global('neon_surge_').opacity = temp_square_114  # Quick bright surges
-animation.global('neon_surge_').priority = 20
+neon_surge_.opacity = temp_square_114  # Quick bright surges
+neon_surge_.priority = 20
 # Add neon tube segments with gaps
 var segment_pattern_ = animation.rich_palette(engine)
-segment_pattern_.palette = animation.global('neon_colors_', 'neon_colors')
+segment_pattern_.palette = neon_colors_
 segment_pattern_.cycle_period = 4000
-segment_pattern_.transition_type = animation.global('LINEAR_', 'LINEAR')
+segment_pattern_.transition_type = animation.LINEAR
 segment_pattern_.brightness = 255
 var segment1_ = animation.beacon_animation(engine)
-segment1_.color = animation.global('segment_pattern_', 'segment_pattern')  # color source
+segment1_.color = segment_pattern_  # color source
 segment1_.pos = 6  # position
 segment1_.beacon_size = 12  # segment length
 segment1_.slew_size = 1  # sharp edges
-animation.global('segment1_').priority = 10
+segment1_.priority = 10
 var segment2_ = animation.beacon_animation(engine)
-segment2_.color = animation.global('segment_pattern_', 'segment_pattern')  # color source
+segment2_.color = segment_pattern_  # color source
 segment2_.pos = 24  # position
 segment2_.beacon_size = 12  # segment length
 segment2_.slew_size = 1  # sharp edges
-animation.global('segment2_').priority = 10
+segment2_.priority = 10
 var segment3_ = animation.beacon_animation(engine)
-segment3_.color = animation.global('segment_pattern_', 'segment_pattern')  # color source
+segment3_.color = segment_pattern_  # color source
 segment3_.pos = 42  # position
 segment3_.beacon_size = 12  # segment length
 segment3_.slew_size = 1  # sharp edges
-animation.global('segment3_').priority = 10
+segment3_.priority = 10
 # Add electrical arcing between segments
 var arc_sparkles_ = animation.twinkle_animation(engine)
 arc_sparkles_.color = 0xFFAAAAFF  # Electric blue
 arc_sparkles_.density = 4  # density (few arcs)
 arc_sparkles_.twinkle_speed = 100  # twinkle speed (quick arcs)
-animation.global('arc_sparkles_').priority = 15
+arc_sparkles_.priority = 15
 # Start all animations
-# Start all animations/sequences
-if global.contains('sequence_neon_main')
-  var seq_manager = global.sequence_neon_main()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('neon_main_'))
-end
-if global.contains('sequence_neon_surge')
-  var seq_manager = global.sequence_neon_surge()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('neon_surge_'))
-end
-if global.contains('sequence_segment1')
-  var seq_manager = global.sequence_segment1()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('segment1_'))
-end
-if global.contains('sequence_segment2')
-  var seq_manager = global.sequence_segment2()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('segment2_'))
-end
-if global.contains('sequence_segment3')
-  var seq_manager = global.sequence_segment3()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('segment3_'))
-end
-if global.contains('sequence_arc_sparkles')
-  var seq_manager = global.sequence_arc_sparkles()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('arc_sparkles_'))
-end
+engine.add_animation(neon_main_)
+engine.add_animation(neon_surge_)
+engine.add_animation(segment1_)
+engine.add_animation(segment2_)
+engine.add_animation(segment3_)
+engine.add_animation(arc_sparkles_)
 engine.start()

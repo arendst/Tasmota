@@ -42,21 +42,15 @@ var engine = animation.init_strip()
 var rainbow_ = bytes("00FF0000" "40FFA500" "80FFFF00" "C0008000" "FF0000FF")
 # Create an animation using the palette
 var rainbow_cycle_ = animation.rich_palette_animation(engine)
-rainbow_cycle_.palette = animation.global('rainbow_', 'rainbow')
+rainbow_cycle_.palette = rainbow_
 rainbow_cycle_.cycle_period = 3000
 # Simple sequence
-def sequence_demo()
+var demo_ = (def (engine)
   var steps = []
   steps.push(animation.create_play_step(animation.global('rainbow_cycle_'), 15000))
   var seq_manager = animation.SequenceManager(engine)
   seq_manager.start_sequence(steps)
   return seq_manager
-end
-# Start all animations/sequences
-if global.contains('sequence_demo')
-  var seq_manager = global.sequence_demo()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('demo_'))
-end
+end)(engine)
+engine.add_sequence_manager(demo_)
 engine.start()

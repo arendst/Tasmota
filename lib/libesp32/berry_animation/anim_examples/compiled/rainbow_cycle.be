@@ -34,13 +34,7 @@ var rainbow_cycle_ = animation.color_cycle(engine)
 rainbow_cycle_.palette = [0xFFFF0000, 0xFFFF8000, 0xFFFFFF00, 0xFF00FF00, 0xFF0000FF, 0xFF8000FF, 0xFFFF00FF]  # rainbow colors
 rainbow_cycle_.cycle_period = 5000  # cycle period
 var rainbow_animation_ = animation.solid(engine)
-rainbow_animation_.color = animation.global('rainbow_cycle_', 'rainbow_cycle')
+rainbow_animation_.color = rainbow_cycle_
 # Start the animation
-# Start all animations/sequences
-if global.contains('sequence_rainbow_animation')
-  var seq_manager = global.sequence_rainbow_animation()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('rainbow_animation_'))
-end
+engine.add_animation(rainbow_animation_)
 engine.start()

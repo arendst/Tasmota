@@ -202,6 +202,9 @@ set opacity_level = 80%     # Static percentage (converted to 204)
 # Value providers for dynamic values
 set brightness_osc = smooth(min_value=50, max_value=255, period=3s)
 set position_sweep = triangle(min_value=0, max_value=29, period=5s)
+
+# Computed values using strip length
+set strip_len = strip_length()  # Get current strip length
 ```
 
 ## Color Definitions
@@ -327,6 +330,11 @@ pulse_red.position = 15
 # Dynamic properties using value providers
 pulse_red.position = triangle(min_value=0, max_value=29, period=5s)
 pulse_red.opacity = smooth(min_value=100, max_value=255, period=2s)
+
+# Computed properties using arithmetic expressions
+set strip_len = strip_length()
+pulse_red.position = strip_len / 2      # Center position
+pulse_red.opacity = strip_len * 4       # Scale with strip size
 ```
 
 **Common Properties:**
@@ -335,6 +343,151 @@ pulse_red.opacity = smooth(min_value=100, max_value=255, period=2s)
 - `position` - Position on strip
 - `speed` - Speed multiplier
 - `phase` - Phase offset
+
+## Computed Values
+
+The DSL supports computed values using arithmetic expressions with value providers and mathematical functions:
+
+```dsl
+# Get strip dimensions
+set strip_len = strip_length()
+
+# Use computed values in animation parameters
+animation stream1 = comet_animation(
+  color=red
+  tail_length=strip_len / 4    # Computed: quarter of strip length
+  speed=1.5
+  priority=10
+)
+
+# Complex expressions with multiple operations
+set base_speed = 2.0
+animation stream2 = comet_animation(
+  color=blue
+  tail_length=strip_len / 8 + 2    # Computed: eighth of strip + 2
+  speed=base_speed * 1.5           # Computed: base speed × 1.5
+)
+
+# Computed values in property assignments
+stream1.position = strip_len / 2     # Center of strip
+stream2.opacity = strip_len * 4      # Scale opacity with strip size
+
+# Using mathematical functions in computed values
+animation pulse = pulsating_animation(
+  color=red
+  period=2s
+)
+pulse.opacity = abs(sine(strip_len) * 128 + 127)    # Sine wave opacity
+pulse.position = max(0, min(strip_len - 1, round(strip_len / 2)))  # Clamped center position
+```
+
+**Supported Operations:**
+- Addition: `+`
+- Subtraction: `-`
+- Multiplication: `*`
+- Division: `/`
+- Parentheses for grouping: `(expression)`
+
+**Mathematical Functions:**
+The following mathematical functions are available in computed parameters and are automatically detected by the transpiler:
+
+| Function | Description | Parameters | Return Value |
+|----------|-------------|------------|--------------|
+| `min(a, b, ...)` | Returns the minimum value | Two or more numbers | Minimum value |
+| `max(a, b, ...)` | Returns the maximum value | Two or more numbers | Maximum value |
+| `abs(x)` | Returns the absolute value | One number | Absolute value |
+| `round(x)` | Rounds to nearest integer | One number | Rounded integer |
+| `sqrt(x)` | Returns the square root | One number | Square root (scaled for integers) |
+| `scale(v, from_min, from_max, to_min, to_max)` | Scales value from one range to another | Value and range parameters | Scaled integer |
+| `sine(angle)` | Returns sine of angle | Angle in 0-255 range (0-360°) | Sine value in -255 to 255 range |
+| `cosine(angle)` | Returns cosine of angle | Angle in 0-255 range (0-360°) | Cosine value in -255 to 255 range |
+
+**Mathematical Function Examples:**
+```dsl
+# Basic math functions
+set strip_len = strip_length()
+animation test = pulsating_animation(color=red, period=2s)
+
+# Absolute value for ensuring positive results
+test.opacity = abs(strip_len - 200)
+
+# Min/max for clamping values
+test.position = max(0, min(strip_len - 1, 15))  # Clamp position to valid range
+
+# Rounding for integer positions
+test.position = round(strip_len / 2.5)
+
+# Square root for non-linear scaling
+test.brightness = sqrt(strip_len * 4)  # Non-linear brightness based on strip size
+
+# Scaling values between ranges
+test.opacity = scale(strip_len, 10, 60, 50, 255)  # Scale strip length to opacity range
+
+# Trigonometric functions for wave patterns
+set angle = 128  # 180 degrees in 0-255 range
+test.opacity = sine(angle) + 128      # Sine wave shifted to positive range
+test.brightness = cosine(angle) + 128  # Cosine wave shifted to positive range
+
+# Complex expressions combining multiple functions
+test.position = max(0, round(abs(sine(strip_len * 2)) * (strip_len - 1) / 255))
+test.opacity = min(255, max(50, scale(sqrt(strip_len), 0, 16, 100, 255)))
+```
+
+**Special Notes:**
+- **Integer Optimization**: `sqrt()` function automatically handles integer scaling for 0-255 range values
+- **Trigonometric Range**: `sine()` and `cosine()` use 0-255 input range (mapped to 0-360°) and return -255 to 255 output range
+- **Automatic Detection**: Mathematical functions are automatically detected at transpile time using dynamic introspection
+- **Closure Context**: In computed parameters, mathematical functions are called as `self.<function>()` in the generated closure context
+
+**How It Works:**
+When the DSL detects arithmetic expressions containing value providers, variable references, or mathematical functions, it automatically creates closure functions that capture the computation. These closures are called with `(self, param_name, time_ms)` parameters, allowing the computation to be re-evaluated dynamically as needed. Mathematical functions are automatically prefixed with `self.` in the closure context to access the ClosureValueProvider's mathematical methods.
+
+**User Functions in Computed Parameters:**
+User-defined functions can also be used in computed parameter expressions, providing powerful custom effects:
+
+```dsl
+# Simple user function in computed parameter
+animation base = solid(color=blue)
+base.opacity = rand_demo()
+
+# User functions mixed with math operations
+animation dynamic = solid(
+  color=purple
+  opacity=max(50, min(255, rand_demo() + 100))
+)
+```
+
+### User Functions
+
+User functions are custom Berry functions that can be called from computed parameters. They provide dynamic values that change over time.
+
+**Available User Functions:**
+- `rand_demo()` - Returns random values for demonstration purposes
+
+**Usage in Computed Parameters:**
+```dsl
+# Simple user function
+animation.opacity = rand_demo()
+
+# User function with math operations
+animation.opacity = max(100, rand_demo())
+
+# User function in arithmetic expressions
+animation.opacity = abs(rand_demo() - 128) + 64
+```
+
+**Available User Functions:**
+The following user functions are available by default (see [User Functions Guide](USER_FUNCTIONS.md) for details):
+
+| Function | Parameters | Description |
+|----------|------------|-------------|
+| `rand_demo()` | none | Returns a random value (0-255) for demonstration |
+
+**User Function Behavior:**
+- User functions are automatically detected by the transpiler
+- They receive `self.engine` as the first parameter in closure context
+- They can be mixed with mathematical functions and arithmetic operations
+- The entire expression is wrapped in a single efficient closure
 
 ## Sequences
 
@@ -485,6 +638,21 @@ pulsating_animation(
     period=10s
   )
 )
+```
+
+**Mathematical Functions in Computed Parameters:**
+Mathematical functions can be used in computed parameter expressions and are automatically detected by the transpiler:
+
+```dsl
+animation wave = pulsating_animation(
+  color=blue
+  period=2s
+)
+
+# Mathematical functions in property assignments
+wave.opacity = abs(sine(strip_length()) - 128)           # Sine wave opacity
+wave.position = max(0, min(strip_length() - 1, 15))      # Clamped position
+wave.brightness = round(sqrt(strip_length()) * 4)        # Non-linear scaling
 ```
 
 ## Supported Classes
@@ -768,7 +936,10 @@ This applies to:
 - Parameter validation at compile time
 - Execution statements
 - User-defined functions (with engine-first parameter pattern) - see **[User Functions Guide](USER_FUNCTIONS.md)**
+- **User functions in computed parameters**: User functions can be used in arithmetic expressions alongside mathematical functions
 - **Flexible parameter syntax**: Commas optional when parameters are on separate lines
+- **Computed values**: Arithmetic expressions with value providers automatically create closures
+- **Mathematical functions**: `min`, `max`, `abs`, `round`, `sqrt`, `scale`, `sine`, `cosine` in computed parameters
 
 ### 🚧 Partially Implemented
 - Expression evaluation (basic support)
@@ -778,7 +949,6 @@ This applies to:
 ### ❌ Planned Features
 - Advanced control flow (if/else, choose random)
 - Event system and handlers
-- Mathematical expressions
 - Variable references with $ syntax
 - Spatial operations and zones
 - 2D matrix support

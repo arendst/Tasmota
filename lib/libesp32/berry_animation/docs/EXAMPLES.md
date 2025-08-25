@@ -96,9 +96,43 @@ sequence sunrise_show {
 run sunrise_show
 ```
 
+## User Functions in Computed Parameters
+
+### 9. Simple User Function
+```dsl
+# Simple user function in computed parameter
+animation random_base = solid(color=blue, priority=10)
+random_base.opacity = rand_demo()
+run random_base
+```
+
+### 10. User Function with Math Operations
+```dsl
+# Mix user functions with mathematical functions
+animation random_bounded = solid(
+  color=purple
+  opacity=max(50, min(255, rand_demo() + 100))
+  priority=15
+)
+run random_bounded
+```
+
+### 11. User Function in Arithmetic Expression
+```dsl
+# Use user function in arithmetic expressions
+animation random_variation = solid(
+  color=cyan
+  opacity=abs(rand_demo() - 128) + 64
+  priority=12
+)
+run random_variation
+```
+
+See `anim_examples/user_functions_demo.anim` for a complete working example.
+
 ## Advanced Examples
 
-### 9. Dynamic Position
+### 13. Dynamic Position
 ```dsl
 strip length 60
 
@@ -114,7 +148,7 @@ animation moving_pulse = beacon_animation(
 run moving_pulse
 ```
 
-### 10. Multi-Layer Effect
+### 14. Multi-Layer Effect
 ```dsl
 # Base layer - slow breathing
 set breathing = smooth(min_value=100, max_value=255, period=4s)

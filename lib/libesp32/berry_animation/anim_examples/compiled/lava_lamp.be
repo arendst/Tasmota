@@ -82,100 +82,74 @@ var engine = animation.init_strip()
 var lava_colors_ = bytes("00330000" "40660000" "80CC3300" "C0FF6600" "FFFFAA00")
 # Base lava animation - very slow color changes
 var lava_base_ = animation.rich_palette_animation(engine)
-lava_base_.palette = animation.global('lava_colors_', 'lava_colors')
+lava_base_.palette = lava_colors_
 lava_base_.cycle_period = 15000
-lava_base_.transition_type = animation.global('SINE_', 'SINE')
+lava_base_.transition_type = animation.SINE
 lava_base_.brightness = 180
 # Add slow-moving lava blobs
 var blob1_pattern_ = animation.rich_palette(engine)
-blob1_pattern_.palette = animation.global('lava_colors_', 'lava_colors')
+blob1_pattern_.palette = lava_colors_
 blob1_pattern_.cycle_period = 12000
-blob1_pattern_.transition_type = animation.global('SINE_', 'SINE')
+blob1_pattern_.transition_type = animation.SINE
 blob1_pattern_.brightness = 255
 var lava_blob1_ = animation.beacon_animation(engine)
-lava_blob1_.color = animation.global('blob1_pattern_', 'blob1_pattern')  # color source
+lava_blob1_.color = blob1_pattern_  # color source
 lava_blob1_.pos = 9  # initial position
 lava_blob1_.beacon_size = 18  # large blob
 lava_blob1_.slew_size = 12  # very soft edges
-animation.global('lava_blob1_').priority = 10
+lava_blob1_.priority = 10
 var temp_smooth_145 = animation.smooth(engine)
 temp_smooth_145.min_value = 9
 temp_smooth_145.max_value = 51
 temp_smooth_145.duration = 20000
-animation.global('lava_blob1_').pos = temp_smooth_145  # Very slow movement
+lava_blob1_.pos = temp_smooth_145  # Very slow movement
 var blob2_pattern_ = animation.rich_palette(engine)
-blob2_pattern_.palette = animation.global('lava_colors_', 'lava_colors')
+blob2_pattern_.palette = lava_colors_
 blob2_pattern_.cycle_period = 10000
-blob2_pattern_.transition_type = animation.global('SINE_', 'SINE')
+blob2_pattern_.transition_type = animation.SINE
 blob2_pattern_.brightness = 220
 var lava_blob2_ = animation.beacon_animation(engine)
-lava_blob2_.color = animation.global('blob2_pattern_', 'blob2_pattern')  # color source
+lava_blob2_.color = blob2_pattern_  # color source
 lava_blob2_.pos = 46  # initial position
 lava_blob2_.beacon_size = 14  # medium blob
 lava_blob2_.slew_size = 10  # soft edges
-animation.global('lava_blob2_').priority = 8
+lava_blob2_.priority = 8
 var temp_smooth_222 = animation.smooth(engine)
 temp_smooth_222.min_value = 46
 temp_smooth_222.max_value = 14
 temp_smooth_222.duration = 25000
-animation.global('lava_blob2_').pos = temp_smooth_222  # Opposite direction, slower
+lava_blob2_.pos = temp_smooth_222  # Opposite direction, slower
 var blob3_pattern_ = animation.rich_palette(engine)
-blob3_pattern_.palette = animation.global('lava_colors_', 'lava_colors')
+blob3_pattern_.palette = lava_colors_
 blob3_pattern_.cycle_period = 8000
-blob3_pattern_.transition_type = animation.global('SINE_', 'SINE')
+blob3_pattern_.transition_type = animation.SINE
 blob3_pattern_.brightness = 200
 var lava_blob3_ = animation.beacon_animation(engine)
-lava_blob3_.color = animation.global('blob3_pattern_', 'blob3_pattern')  # color source
+lava_blob3_.color = blob3_pattern_  # color source
 lava_blob3_.pos = 25  # initial position
 lava_blob3_.beacon_size = 10  # smaller blob
 lava_blob3_.slew_size = 8  # soft edges
-animation.global('lava_blob3_').priority = 6
+lava_blob3_.priority = 6
 var temp_smooth_299 = animation.smooth(engine)
 temp_smooth_299.min_value = 25
 temp_smooth_299.max_value = 35
 temp_smooth_299.duration = 18000
-animation.global('lava_blob3_').pos = temp_smooth_299  # Small movement range
+lava_blob3_.pos = temp_smooth_299  # Small movement range
 # Add subtle heat shimmer effect
 var shimmer_pattern_ = animation.rich_palette(engine)
-shimmer_pattern_.palette = animation.global('lava_colors_', 'lava_colors')
+shimmer_pattern_.palette = lava_colors_
 shimmer_pattern_.cycle_period = 6000
-shimmer_pattern_.transition_type = animation.global('SINE_', 'SINE')
+shimmer_pattern_.transition_type = animation.SINE
 shimmer_pattern_.brightness = 255
 var heat_shimmer_ = animation.twinkle_animation(engine)
-heat_shimmer_.color = animation.global('shimmer_pattern_', 'shimmer_pattern')  # color source
+heat_shimmer_.color = shimmer_pattern_  # color source
 heat_shimmer_.density = 6  # density (shimmer points)
 heat_shimmer_.twinkle_speed = 1500  # twinkle speed (slow shimmer)
-animation.global('heat_shimmer_').priority = 15
+heat_shimmer_.priority = 15
 # Start all animations
-# Start all animations/sequences
-if global.contains('sequence_lava_base')
-  var seq_manager = global.sequence_lava_base()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('lava_base_'))
-end
-if global.contains('sequence_lava_blob1')
-  var seq_manager = global.sequence_lava_blob1()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('lava_blob1_'))
-end
-if global.contains('sequence_lava_blob2')
-  var seq_manager = global.sequence_lava_blob2()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('lava_blob2_'))
-end
-if global.contains('sequence_lava_blob3')
-  var seq_manager = global.sequence_lava_blob3()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('lava_blob3_'))
-end
-if global.contains('sequence_heat_shimmer')
-  var seq_manager = global.sequence_heat_shimmer()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('heat_shimmer_'))
-end
+engine.add_animation(lava_base_)
+engine.add_animation(lava_blob1_)
+engine.add_animation(lava_blob2_)
+engine.add_animation(lava_blob3_)
+engine.add_animation(heat_shimmer_)
 engine.start()

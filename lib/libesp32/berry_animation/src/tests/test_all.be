@@ -95,6 +95,7 @@ def run_all_tests()
     "lib/libesp32/berry_animation/src/tests/oscillator_ease_test.be",
     "lib/libesp32/berry_animation/src/tests/oscillator_elastic_bounce_test.be",
     "lib/libesp32/berry_animation/src/tests/strip_length_provider_test.be",
+    "lib/libesp32/berry_animation/src/tests/closure_value_provider_test.be",
     "lib/libesp32/berry_animation/src/tests/breathe_color_provider_test.be",
     
     # DSL tests
@@ -112,6 +113,8 @@ def run_all_tests()
     "lib/libesp32/berry_animation/src/tests/dsl_parameter_validation_test.be",
     "lib/libesp32/berry_animation/src/tests/dsl_value_provider_validation_test.be",
     "lib/libesp32/berry_animation/src/tests/dsl_newline_syntax_test.be",
+    "lib/libesp32/berry_animation/src/tests/test_math_method_transpilation.be",
+    "lib/libesp32/berry_animation/src/tests/test_user_functions_in_computed_parameters.be",
     
     # Event system tests
     "lib/libesp32/berry_animation/src/tests/event_system_test.be"

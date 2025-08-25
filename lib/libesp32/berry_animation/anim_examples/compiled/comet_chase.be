@@ -57,50 +57,29 @@ var engine = animation.init_strip()
 
 var space_blue_ = 0xFF000066  # Note: opaque 0xFF alpha channel is implicitly added
 var background_ = animation.solid(engine)
-background_.color = animation.global('space_blue_', 'space_blue')
+background_.color = space_blue_
 # Main comet with bright white head
 var comet_main_ = animation.comet_animation(engine)
 comet_main_.color = 0xFFFFFFFF  # White head
 comet_main_.tail_length = 10  # tail length
 comet_main_.speed = 2000  # speed
-animation.global('comet_main_').priority = 7
+comet_main_.priority = 7
 # Secondary comet in different color, opposite direction
 var comet_secondary_ = animation.comet_animation(engine)
 comet_secondary_.color = 0xFFFF4500  # Orange head
 comet_secondary_.tail_length = 8  # shorter tail
 comet_secondary_.speed = 3000  # slower speed
-comet_secondary_.direction = -1  # other direction
-animation.global('comet_secondary_').priority = 5
+comet_secondary_.direction = (-1)  # other direction
+comet_secondary_.priority = 5
 # Add sparkle trail behind comets but on top of blue background
 var comet_sparkles_ = animation.twinkle_animation(engine)
 comet_sparkles_.color = 0xFFAAAAFF  # Light blue sparkles
 comet_sparkles_.density = 8  # density (moderate sparkles)
 comet_sparkles_.twinkle_speed = 400  # twinkle speed (quick sparkle)
-animation.global('comet_sparkles_').priority = 8
+comet_sparkles_.priority = 8
 # Start all animations
-# Start all animations/sequences
-if global.contains('sequence_background')
-  var seq_manager = global.sequence_background()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('background_'))
-end
-if global.contains('sequence_comet_main')
-  var seq_manager = global.sequence_comet_main()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('comet_main_'))
-end
-if global.contains('sequence_comet_secondary')
-  var seq_manager = global.sequence_comet_secondary()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('comet_secondary_'))
-end
-if global.contains('sequence_comet_sparkles')
-  var seq_manager = global.sequence_comet_sparkles()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('comet_sparkles_'))
-end
+engine.add_animation(background_)
+engine.add_animation(comet_main_)
+engine.add_animation(comet_secondary_)
+engine.add_animation(comet_sparkles_)
 engine.start()

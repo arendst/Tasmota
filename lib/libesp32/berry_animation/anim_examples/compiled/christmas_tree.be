@@ -78,79 +78,53 @@ var engine = animation.init_strip()
 
 var tree_green_ = 0xFF006600
 var tree_base_ = animation.solid(engine)
-tree_base_.color = animation.global('tree_green_', 'tree_green')
+tree_base_.color = tree_green_
 # Define ornament colors
 var ornament_colors_ = bytes("00FF0000" "40FFD700" "800000FF" "C0FFFFFF" "FFFF00FF")
 # Colorful ornaments as twinkling lights
 var ornament_pattern_ = animation.rich_palette(engine)
-ornament_pattern_.palette = animation.global('ornament_colors_', 'ornament_colors')
+ornament_pattern_.palette = ornament_colors_
 ornament_pattern_.cycle_period = 3000
-ornament_pattern_.transition_type = animation.global('LINEAR_', 'LINEAR')
+ornament_pattern_.transition_type = animation.LINEAR
 ornament_pattern_.brightness = 255
 var ornaments_ = animation.twinkle_animation(engine)
-ornaments_.color = animation.global('ornament_pattern_', 'ornament_pattern')  # color source
+ornaments_.color = ornament_pattern_  # color source
 ornaments_.density = 15  # density (many ornaments)
 ornaments_.twinkle_speed = 800  # twinkle speed (slow twinkle)
-animation.global('ornaments_').priority = 10
+ornaments_.priority = 10
 # Star on top (bright yellow pulse)
 var tree_star_ = animation.beacon_animation(engine)
 tree_star_.color = 0xFFFFFF00  # Bright yellow
 tree_star_.pos = 58  # position (near the top)
 tree_star_.beacon_size = 3  # star size
 tree_star_.slew_size = 1  # sharp edges
-animation.global('tree_star_').priority = 20
+tree_star_.priority = 20
 var temp_smooth_170 = animation.smooth(engine)
 temp_smooth_170.min_value = 200
 temp_smooth_170.max_value = 255
 temp_smooth_170.duration = 2000
-animation.global('tree_star_').opacity = temp_smooth_170  # Gentle pulsing
+tree_star_.opacity = temp_smooth_170  # Gentle pulsing
 # Add some white sparkles for snow/magic
 var snow_sparkles_ = animation.twinkle_animation(engine)
 snow_sparkles_.color = 0xFFFFFFFF  # White snow
 snow_sparkles_.density = 8  # density (sparkle count)
 snow_sparkles_.twinkle_speed = 400  # twinkle speed (quick sparkles)
-animation.global('snow_sparkles_').priority = 15
+snow_sparkles_.priority = 15
 # Garland effect - moving colored lights
 var garland_pattern_ = animation.rich_palette(engine)
-garland_pattern_.palette = animation.global('ornament_colors_', 'ornament_colors')
+garland_pattern_.palette = ornament_colors_
 garland_pattern_.cycle_period = 2000
-garland_pattern_.transition_type = animation.global('LINEAR_', 'LINEAR')
+garland_pattern_.transition_type = animation.LINEAR
 garland_pattern_.brightness = 200
 var garland_ = animation.comet_animation(engine)
-garland_.color = animation.global('garland_pattern_', 'garland_pattern')  # color source
+garland_.color = garland_pattern_  # color source
 garland_.tail_length = 6  # garland length (tail length)
 garland_.speed = 4000  # slow movement (speed)
-animation.global('garland_').priority = 5
+garland_.priority = 5
 # Start all animations
-# Start all animations/sequences
-if global.contains('sequence_tree_base')
-  var seq_manager = global.sequence_tree_base()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('tree_base_'))
-end
-if global.contains('sequence_ornaments')
-  var seq_manager = global.sequence_ornaments()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('ornaments_'))
-end
-if global.contains('sequence_tree_star')
-  var seq_manager = global.sequence_tree_star()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('tree_star_'))
-end
-if global.contains('sequence_snow_sparkles')
-  var seq_manager = global.sequence_snow_sparkles()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('snow_sparkles_'))
-end
-if global.contains('sequence_garland')
-  var seq_manager = global.sequence_garland()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('garland_'))
-end
+engine.add_animation(tree_base_)
+engine.add_animation(ornaments_)
+engine.add_animation(tree_star_)
+engine.add_animation(snow_sparkles_)
+engine.add_animation(garland_)
 engine.start()

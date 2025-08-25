@@ -61,13 +61,13 @@ var fire_colors_ = bytes("00000000" "40800000" "80FF0000" "C0FF8000" "FFFFFF00")
 var ocean_colors_ = bytes("00000080" "400000FF" "8000FFFF" "C000FF80" "FF008000")
 # Create animations using the palettes
 var fire_anim_ = animation.rich_palette_animation(engine)
-fire_anim_.palette = animation.global('fire_colors_', 'fire_colors')
+fire_anim_.palette = fire_colors_
 fire_anim_.cycle_period = 5000
 var ocean_anim_ = animation.rich_palette_animation(engine)
-ocean_anim_.palette = animation.global('ocean_colors_', 'ocean_colors')
+ocean_anim_.palette = ocean_colors_
 ocean_anim_.cycle_period = 8000
 # Sequence to show both palettes
-def sequence_palette_demo()
+var palette_demo_ = (def (engine)
   var steps = []
   steps.push(animation.create_play_step(animation.global('fire_anim_'), 10000))
   steps.push(animation.create_wait_step(1000))
@@ -80,12 +80,6 @@ def sequence_palette_demo()
   var seq_manager = animation.SequenceManager(engine)
   seq_manager.start_sequence(steps)
   return seq_manager
-end
-# Start all animations/sequences
-if global.contains('sequence_palette_demo')
-  var seq_manager = global.sequence_palette_demo()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('palette_demo_'))
-end
+end)(engine)
+engine.add_sequence_manager(palette_demo_)
 engine.start()

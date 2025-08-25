@@ -71,9 +71,9 @@ var engine = animation.init_strip()
 var disco_colors_ = bytes("00FF0000" "2AFF8000" "55FFFF00" "8000FF00" "AA0000FF" "D58000FF" "FFFF00FF")
 # Fast color cycling base
 var disco_base_ = animation.rich_palette_animation(engine)
-disco_base_.palette = animation.global('disco_colors_', 'disco_colors')
+disco_base_.palette = disco_colors_
 disco_base_.cycle_period = 1000
-disco_base_.transition_type = animation.global('LINEAR_', 'LINEAR')
+disco_base_.transition_type = animation.LINEAR
 disco_base_.brightness = 255
 # Add strobe effect
 var temp_square_105 = animation.square(engine)
@@ -81,7 +81,7 @@ temp_square_105.min_value = 0
 temp_square_105.max_value = 255
 temp_square_105.duration = 100
 temp_square_105.duty_cycle = 30
-animation.global('disco_base_').opacity = temp_square_105  # Fast strobe
+disco_base_.opacity = temp_square_105  # Fast strobe
 # Add white flash overlay
 var white_flash_ = animation.solid(engine)
 white_flash_.color = 0xFFFFFFFF
@@ -90,60 +90,39 @@ temp_square_142.min_value = 0
 temp_square_142.max_value = 255
 temp_square_142.duration = 50
 temp_square_142.duty_cycle = 10
-animation.global('white_flash_').opacity = temp_square_142  # Quick white flashes
-animation.global('white_flash_').priority = 20
+white_flash_.opacity = temp_square_142  # Quick white flashes
+white_flash_.priority = 20
 # Add colored sparkles
 var sparkle_pattern_ = animation.rich_palette(engine)
-sparkle_pattern_.palette = animation.global('disco_colors_', 'disco_colors')
+sparkle_pattern_.palette = disco_colors_
 sparkle_pattern_.cycle_period = 500
-sparkle_pattern_.transition_type = animation.global('LINEAR_', 'LINEAR')
+sparkle_pattern_.transition_type = animation.LINEAR
 sparkle_pattern_.brightness = 255
 var disco_sparkles_ = animation.twinkle_animation(engine)
-disco_sparkles_.color = animation.global('sparkle_pattern_', 'sparkle_pattern')  # color source
+disco_sparkles_.color = sparkle_pattern_  # color source
 disco_sparkles_.density = 12  # density (many sparkles)
 disco_sparkles_.twinkle_speed = 80  # twinkle speed (very quick)
-animation.global('disco_sparkles_').priority = 15
+disco_sparkles_.priority = 15
 # Add moving pulse for extra effect
 var pulse_pattern_ = animation.rich_palette(engine)
-pulse_pattern_.palette = animation.global('disco_colors_', 'disco_colors')
+pulse_pattern_.palette = disco_colors_
 pulse_pattern_.cycle_period = 800
-pulse_pattern_.transition_type = animation.global('LINEAR_', 'LINEAR')
+pulse_pattern_.transition_type = animation.LINEAR
 pulse_pattern_.brightness = 255
 var disco_pulse_ = animation.beacon_animation(engine)
-disco_pulse_.color = animation.global('pulse_pattern_', 'pulse_pattern')  # color source
+disco_pulse_.color = pulse_pattern_  # color source
 disco_pulse_.pos = 4  # initial position
 disco_pulse_.beacon_size = 8  # pulse width
 disco_pulse_.slew_size = 2  # sharp edges (slew size)
-animation.global('disco_pulse_').priority = 10
+disco_pulse_.priority = 10
 var temp_sawtooth_285 = animation.sawtooth(engine)
 temp_sawtooth_285.min_value = 4
 temp_sawtooth_285.max_value = 56
 temp_sawtooth_285.duration = 2000
-animation.global('disco_pulse_').pos = temp_sawtooth_285  # Fast movement
+disco_pulse_.pos = temp_sawtooth_285  # Fast movement
 # Start all animations
-# Start all animations/sequences
-if global.contains('sequence_disco_base')
-  var seq_manager = global.sequence_disco_base()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('disco_base_'))
-end
-if global.contains('sequence_white_flash')
-  var seq_manager = global.sequence_white_flash()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('white_flash_'))
-end
-if global.contains('sequence_disco_sparkles')
-  var seq_manager = global.sequence_disco_sparkles()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('disco_sparkles_'))
-end
-if global.contains('sequence_disco_pulse')
-  var seq_manager = global.sequence_disco_pulse()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('disco_pulse_'))
-end
+engine.add_animation(disco_base_)
+engine.add_animation(white_flash_)
+engine.add_animation(disco_sparkles_)
+engine.add_animation(disco_pulse_)
 engine.start()

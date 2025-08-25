@@ -30,7 +30,7 @@ def test_basic_symbol_registration()
   # Check that definitions appear in generated code (with underscore suffix)
   assert(string.find(berry_code, "var custom_red_ = 0xFFFF0000") >= 0, "Should generate color definition")
   assert(string.find(berry_code, "var solid_red_ = animation.solid(engine)") >= 0, "Should generate animation definition")
-  assert(string.find(berry_code, "solid_red_.color = animation.global('custom_red_', 'custom_red')") >= 0, "Should set color parameter")
+  assert(string.find(berry_code, "solid_red_.color = custom_red_") >= 0, "Should set color parameter")
   assert(string.find(berry_code, "var red_anim_") >= 0, "Should generate animation reference")
   
   print("✓ Basic symbol registration test passed")
@@ -58,7 +58,7 @@ def test_forward_reference_resolution()
   # Check generated code contains both definitions (with underscore suffix)
   assert(string.find(berry_code, "var custom_red_ = 0xFFFF0000") >= 0, "Should define custom_red color")
   assert(string.find(berry_code, "var fire_pattern_ = animation.solid(engine)") >= 0, "Should define fire animation")
-  assert(string.find(berry_code, "fire_pattern_.color = animation.global('custom_red_', 'custom_red')") >= 0, "Should reference custom_red")
+  assert(string.find(berry_code, "fire_pattern_.color = custom_red_") >= 0, "Should reference custom_red")
   
   print("✓ Forward reference resolution test passed")
   return true
@@ -77,23 +77,21 @@ def test_undefined_reference_handling()
   
   var berry_code = transpiler.transpile()
   
-  # Simplified transpiler compiles successfully but uses runtime resolution
-  assert(berry_code != nil, "Should compile with runtime resolution")
+  # New behavior: transpiler generates direct reference to undefined_color_
+  assert(berry_code != nil, "Should compile with direct reference")
   assert(!transpiler.has_errors(), "Should have no compile-time errors")
   
-  # Check that runtime resolution code is generated with new two-parameter format
-  assert(string.find(berry_code, "animation.global('undefined_color_', 'undefined_color')") >= 0, "Should generate runtime resolution")
+  # Check that direct reference is generated (since undefined_color doesn't exist in animation module)
+  assert(string.find(berry_code, "undefined_color_") >= 0, "Should generate runtime resolution")
   
-  # Verify the generated code compiles but will fail at runtime
-  var compiled_code = compile(berry_code)
-  assert(compiled_code != nil, "Generated code should compile")
-  
-  # Should raise exception when executed due to undefined variable
+  # With new behavior, Berry compilation will fail due to undefined variable
+  # This is actually better than runtime errors as it catches issues earlier
   try
-    compiled_code()
-    assert(false, "Should raise exception at runtime for undefined variable")
+    var compiled_code = compile(berry_code)
+    assert(false, "Should fail to compile due to undefined variable")
   except .. as e, msg
-    print(f"✓ Correctly deferred error to runtime: {e}")
+    print(f"✓ Correctly caught undefined variable at compile time: {e}")
+    assert(string.find(str(msg), "undefined_color_") >= 0, "Error should mention undefined variable")
   end
   
   print("✓ Undefined reference handling test passed")
@@ -177,7 +175,7 @@ def test_complex_forward_references()
   assert(string.find(berry_code, "var primary_color_") >= 0, "Should define primary color")
   assert(string.find(berry_code, "var gradient_pattern_") >= 0, "Should define gradient pattern")
   assert(string.find(berry_code, "var complex_anim_") >= 0, "Should define complex animation")
-  assert(string.find(berry_code, "def sequence_demo()") >= 0, "Should define sequence")
+  assert(string.find(berry_code, "var demo_ = (def (engine)") >= 0, "Should define sequence")
   
   print("✓ Complex forward references test passed")
   return true

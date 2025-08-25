@@ -106,25 +106,25 @@ var aurora_borealis_ = bytes("00000022" "40004400" "8000AA44" "C044AA88" "FF88FF
 var sunset_sky_ = bytes("00191970" "40800080" "80FF69B4" "C0FFA500" "FFFFFF00")
 # Create animations using each palette
 var fire_effect_ = animation.rich_palette_animation(engine)
-fire_effect_.palette = animation.global('fire_gradient_', 'fire_gradient')
+fire_effect_.palette = fire_gradient_
 fire_effect_.cycle_period = 3000
 var ocean_waves_ = animation.rich_palette_animation(engine)
-ocean_waves_.palette = animation.global('ocean_depths_', 'ocean_depths')
+ocean_waves_.palette = ocean_depths_
 ocean_waves_.cycle_period = 8000
-ocean_waves_.transition_type = animation.global('SINE_', 'SINE')
+ocean_waves_.transition_type = animation.SINE
 ocean_waves_.brightness = 200
 var aurora_lights_ = animation.rich_palette_animation(engine)
-aurora_lights_.palette = animation.global('aurora_borealis_', 'aurora_borealis')
+aurora_lights_.palette = aurora_borealis_
 aurora_lights_.cycle_period = 12000
-aurora_lights_.transition_type = animation.global('SINE_', 'SINE')
+aurora_lights_.transition_type = animation.SINE
 aurora_lights_.brightness = 180
 var sunset_glow_ = animation.rich_palette_animation(engine)
-sunset_glow_.palette = animation.global('sunset_sky_', 'sunset_sky')
+sunset_glow_.palette = sunset_sky_
 sunset_glow_.cycle_period = 6000
-sunset_glow_.transition_type = animation.global('SINE_', 'SINE')
+sunset_glow_.transition_type = animation.SINE
 sunset_glow_.brightness = 220
 # Sequence to showcase all palettes
-def sequence_palette_showcase()
+var palette_showcase_ = (def (engine)
   var steps = []
   # Fire effect
   steps.push(animation.create_play_step(animation.global('fire_effect_'), 8000))
@@ -148,12 +148,6 @@ def sequence_palette_showcase()
   var seq_manager = animation.SequenceManager(engine)
   seq_manager.start_sequence(steps)
   return seq_manager
-end
-# Start all animations/sequences
-if global.contains('sequence_palette_showcase')
-  var seq_manager = global.sequence_palette_showcase()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('palette_showcase_'))
-end
+end)(engine)
+engine.add_sequence_manager(palette_showcase_)
 engine.start()

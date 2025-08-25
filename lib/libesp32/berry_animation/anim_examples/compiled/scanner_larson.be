@@ -55,52 +55,36 @@ var engine = animation.init_strip()
 
 var scanner_bg_ = 0xFF110000
 var background_ = animation.solid(engine)
-background_.color = animation.global('scanner_bg_', 'scanner_bg')
+background_.color = scanner_bg_
 # Main scanner pulse that bounces
 var scanner_ = animation.beacon_animation(engine)
 scanner_.color = 0xFFFF0000  # Bright red
 scanner_.pos = 2  # initial position
 scanner_.beacon_size = 3  # pulse width
 scanner_.slew_size = 2  # fade region
-animation.global('scanner_').priority = 10
+scanner_.priority = 10
 # Bouncing position from left to right and back
 var temp_triangle_70 = animation.triangle(engine)
 temp_triangle_70.min_value = 2
 temp_triangle_70.max_value = 57
 temp_triangle_70.duration = 2000
-animation.global('scanner_').pos = temp_triangle_70
+scanner_.pos = temp_triangle_70
 # Add trailing glow effect
 var scanner_trail_ = animation.beacon_animation(engine)
 scanner_trail_.color = 0xFF660000  # Dim red trail
 scanner_trail_.pos = 2  # initial position
 scanner_trail_.beacon_size = 6  # wider trail
 scanner_trail_.slew_size = 4  # more fade
-animation.global('scanner_trail_').priority = 5
+scanner_trail_.priority = 5
 var temp_triangle_125 = animation.triangle(engine)
 temp_triangle_125.min_value = 2
 temp_triangle_125.max_value = 57
 temp_triangle_125.duration = 2000
 var pos_test_ = temp_triangle_125
-animation.global('scanner_trail_').pos = animation.global('pos_test_', 'pos_test')
-animation.global('scanner_trail_').opacity = 128  # Half brightness
+scanner_trail_.pos = pos_test_
+scanner_trail_.opacity = 128  # Half brightness
 # Start all animations
-# Start all animations/sequences
-if global.contains('sequence_background')
-  var seq_manager = global.sequence_background()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('background_'))
-end
-if global.contains('sequence_scanner_trail')
-  var seq_manager = global.sequence_scanner_trail()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('scanner_trail_'))
-end
-if global.contains('sequence_scanner')
-  var seq_manager = global.sequence_scanner()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('scanner_'))
-end
+engine.add_animation(background_)
+engine.add_animation(scanner_trail_)
+engine.add_animation(scanner_)
 engine.start()

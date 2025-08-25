@@ -60,26 +60,26 @@ left_red_.color = 0xFFFF0000  # Bright red
 left_red_.pos = 15  # center of left half
 left_red_.beacon_size = 15  # half the strip
 left_red_.slew_size = 2  # sharp edges
-animation.global('left_red_').priority = 10
+left_red_.priority = 10
 var temp_square_57 = animation.square(engine)
 temp_square_57.min_value = 0
 temp_square_57.max_value = 255
 temp_square_57.duration = 400
 temp_square_57.duty_cycle = 50
-animation.global('left_red_').opacity = temp_square_57  # 50% duty cycle
+left_red_.opacity = temp_square_57  # 50% duty cycle
 # Right side blue flashing (opposite phase)
 var right_blue_ = animation.beacon_animation(engine)
 right_blue_.color = 0xFF0000FF  # Bright blue
 right_blue_.pos = 45  # center of right half
 right_blue_.beacon_size = 15  # half the strip
 right_blue_.slew_size = 2  # sharp edges
-animation.global('right_blue_').priority = 10
+right_blue_.priority = 10
 var temp_square_118 = animation.square(engine)
 temp_square_118.min_value = 255
 temp_square_118.max_value = 0
 temp_square_118.duration = 400
 temp_square_118.duty_cycle = 50
-animation.global('right_blue_').opacity = temp_square_118  # Opposite phase
+right_blue_.opacity = temp_square_118  # Opposite phase
 # Add white strobe overlay occasionally
 var white_strobe_ = animation.solid(engine)
 white_strobe_.color = 0xFFFFFFFF
@@ -88,26 +88,10 @@ temp_square_155.min_value = 0
 temp_square_155.max_value = 255
 temp_square_155.duration = 100
 temp_square_155.duty_cycle = 5
-animation.global('white_strobe_').opacity = temp_square_155  # Quick bright flashes
-animation.global('white_strobe_').priority = 20
+white_strobe_.opacity = temp_square_155  # Quick bright flashes
+white_strobe_.priority = 20
 # Start all animations
-# Start all animations/sequences
-if global.contains('sequence_left_red')
-  var seq_manager = global.sequence_left_red()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('left_red_'))
-end
-if global.contains('sequence_right_blue')
-  var seq_manager = global.sequence_right_blue()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('right_blue_'))
-end
-if global.contains('sequence_white_strobe')
-  var seq_manager = global.sequence_white_strobe()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('white_strobe_'))
-end
+engine.add_animation(left_red_)
+engine.add_animation(right_blue_)
+engine.add_animation(white_strobe_)
 engine.start()

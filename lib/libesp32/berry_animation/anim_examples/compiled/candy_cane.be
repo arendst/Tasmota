@@ -67,52 +67,52 @@ var candy_white_ = 0xFFFFFFFF
 # Create alternating red and white animation
 # Using multiple pulse positions to create stripes
 var stripe1_ = animation.beacon_animation(engine)
-stripe1_.color = animation.global('candy_red_', 'candy_red')
+stripe1_.color = candy_red_
 stripe1_.pos = 3
 stripe1_.beacon_size = 4
 stripe1_.slew_size = 1
 var stripe2_ = animation.beacon_animation(engine)
-stripe2_.color = animation.global('candy_white_', 'candy_white')
+stripe2_.color = candy_white_
 stripe2_.pos = 9
 stripe2_.beacon_size = 4
 stripe2_.slew_size = 1
 var stripe3_ = animation.beacon_animation(engine)
-stripe3_.color = animation.global('candy_red_', 'candy_red')
+stripe3_.color = candy_red_
 stripe3_.pos = 15
 stripe3_.beacon_size = 4
 stripe3_.slew_size = 1
 var stripe4_ = animation.beacon_animation(engine)
-stripe4_.color = animation.global('candy_white_', 'candy_white')
+stripe4_.color = candy_white_
 stripe4_.pos = 21
 stripe4_.beacon_size = 4
 stripe4_.slew_size = 1
 var stripe5_ = animation.beacon_animation(engine)
-stripe5_.color = animation.global('candy_red_', 'candy_red')
+stripe5_.color = candy_red_
 stripe5_.pos = 27
 stripe5_.beacon_size = 4
 stripe5_.slew_size = 1
 var stripe6_ = animation.beacon_animation(engine)
-stripe6_.color = animation.global('candy_white_', 'candy_white')
+stripe6_.color = candy_white_
 stripe6_.pos = 33
 stripe6_.beacon_size = 4
 stripe6_.slew_size = 1
 var stripe7_ = animation.beacon_animation(engine)
-stripe7_.color = animation.global('candy_red_', 'candy_red')
+stripe7_.color = candy_red_
 stripe7_.pos = 39
 stripe7_.beacon_size = 4
 stripe7_.slew_size = 1
 var stripe8_ = animation.beacon_animation(engine)
-stripe8_.color = animation.global('candy_white_', 'candy_white')
+stripe8_.color = candy_white_
 stripe8_.pos = 45
 stripe8_.beacon_size = 4
 stripe8_.slew_size = 1
 var stripe9_ = animation.beacon_animation(engine)
-stripe9_.color = animation.global('candy_red_', 'candy_red')
+stripe9_.color = candy_red_
 stripe9_.pos = 51
 stripe9_.beacon_size = 4
 stripe9_.slew_size = 1
 var stripe10_ = animation.beacon_animation(engine)
-stripe10_.color = animation.global('candy_white_', 'candy_white')
+stripe10_.color = candy_white_
 stripe10_.pos = 57
 stripe10_.beacon_size = 4
 stripe10_.slew_size = 1
@@ -121,113 +121,62 @@ var move_speed_ = 8000
 var temp_sawtooth_258 = animation.sawtooth(engine)
 temp_sawtooth_258.min_value = 3
 temp_sawtooth_258.max_value = 63
-temp_sawtooth_258.duration = animation.global('move_speed_', 'move_speed')
-animation.global('stripe1_').pos = temp_sawtooth_258
+temp_sawtooth_258.duration = move_speed_
+stripe1_.pos = temp_sawtooth_258
 var temp_sawtooth_277 = animation.sawtooth(engine)
 temp_sawtooth_277.min_value = 9
 temp_sawtooth_277.max_value = 69
-temp_sawtooth_277.duration = animation.global('move_speed_', 'move_speed')
-animation.global('stripe2_').pos = temp_sawtooth_277
+temp_sawtooth_277.duration = move_speed_
+stripe2_.pos = temp_sawtooth_277
 var temp_sawtooth_296 = animation.sawtooth(engine)
 temp_sawtooth_296.min_value = 15
 temp_sawtooth_296.max_value = 75
-temp_sawtooth_296.duration = animation.global('move_speed_', 'move_speed')
-animation.global('stripe3_').pos = temp_sawtooth_296
+temp_sawtooth_296.duration = move_speed_
+stripe3_.pos = temp_sawtooth_296
 var temp_sawtooth_315 = animation.sawtooth(engine)
 temp_sawtooth_315.min_value = 21
 temp_sawtooth_315.max_value = 81
-temp_sawtooth_315.duration = animation.global('move_speed_', 'move_speed')
-animation.global('stripe4_').pos = temp_sawtooth_315
+temp_sawtooth_315.duration = move_speed_
+stripe4_.pos = temp_sawtooth_315
 var temp_sawtooth_334 = animation.sawtooth(engine)
 temp_sawtooth_334.min_value = 27
 temp_sawtooth_334.max_value = 87
-temp_sawtooth_334.duration = animation.global('move_speed_', 'move_speed')
-animation.global('stripe5_').pos = temp_sawtooth_334
+temp_sawtooth_334.duration = move_speed_
+stripe5_.pos = temp_sawtooth_334
 var temp_sawtooth_353 = animation.sawtooth(engine)
 temp_sawtooth_353.min_value = 33
 temp_sawtooth_353.max_value = 93
-temp_sawtooth_353.duration = animation.global('move_speed_', 'move_speed')
-animation.global('stripe6_').pos = temp_sawtooth_353
+temp_sawtooth_353.duration = move_speed_
+stripe6_.pos = temp_sawtooth_353
 var temp_sawtooth_372 = animation.sawtooth(engine)
 temp_sawtooth_372.min_value = 39
 temp_sawtooth_372.max_value = 99
-temp_sawtooth_372.duration = animation.global('move_speed_', 'move_speed')
-animation.global('stripe7_').pos = temp_sawtooth_372
+temp_sawtooth_372.duration = move_speed_
+stripe7_.pos = temp_sawtooth_372
 var temp_sawtooth_391 = animation.sawtooth(engine)
 temp_sawtooth_391.min_value = 45
 temp_sawtooth_391.max_value = 105
-temp_sawtooth_391.duration = animation.global('move_speed_', 'move_speed')
-animation.global('stripe8_').pos = temp_sawtooth_391
+temp_sawtooth_391.duration = move_speed_
+stripe8_.pos = temp_sawtooth_391
 var temp_sawtooth_410 = animation.sawtooth(engine)
 temp_sawtooth_410.min_value = 51
 temp_sawtooth_410.max_value = 111
-temp_sawtooth_410.duration = animation.global('move_speed_', 'move_speed')
-animation.global('stripe9_').pos = temp_sawtooth_410
+temp_sawtooth_410.duration = move_speed_
+stripe9_.pos = temp_sawtooth_410
 var temp_sawtooth_429 = animation.sawtooth(engine)
 temp_sawtooth_429.min_value = 57
 temp_sawtooth_429.max_value = 117
-temp_sawtooth_429.duration = animation.global('move_speed_', 'move_speed')
-animation.global('stripe10_').pos = temp_sawtooth_429
+temp_sawtooth_429.duration = move_speed_
+stripe10_.pos = temp_sawtooth_429
 # Start all stripes
-# Start all animations/sequences
-if global.contains('sequence_stripe1')
-  var seq_manager = global.sequence_stripe1()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('stripe1_'))
-end
-if global.contains('sequence_stripe2')
-  var seq_manager = global.sequence_stripe2()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('stripe2_'))
-end
-if global.contains('sequence_stripe3')
-  var seq_manager = global.sequence_stripe3()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('stripe3_'))
-end
-if global.contains('sequence_stripe4')
-  var seq_manager = global.sequence_stripe4()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('stripe4_'))
-end
-if global.contains('sequence_stripe5')
-  var seq_manager = global.sequence_stripe5()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('stripe5_'))
-end
-if global.contains('sequence_stripe6')
-  var seq_manager = global.sequence_stripe6()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('stripe6_'))
-end
-if global.contains('sequence_stripe7')
-  var seq_manager = global.sequence_stripe7()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('stripe7_'))
-end
-if global.contains('sequence_stripe8')
-  var seq_manager = global.sequence_stripe8()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('stripe8_'))
-end
-if global.contains('sequence_stripe9')
-  var seq_manager = global.sequence_stripe9()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('stripe9_'))
-end
-if global.contains('sequence_stripe10')
-  var seq_manager = global.sequence_stripe10()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('stripe10_'))
-end
+engine.add_animation(stripe1_)
+engine.add_animation(stripe2_)
+engine.add_animation(stripe3_)
+engine.add_animation(stripe4_)
+engine.add_animation(stripe5_)
+engine.add_animation(stripe6_)
+engine.add_animation(stripe7_)
+engine.add_animation(stripe8_)
+engine.add_animation(stripe9_)
+engine.add_animation(stripe10_)
 engine.start()

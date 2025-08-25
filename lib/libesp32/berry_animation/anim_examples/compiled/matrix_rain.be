@@ -76,38 +76,38 @@ var engine = animation.init_strip()
 
 var matrix_bg_ = 0xFF000000
 var background_ = animation.solid(engine)
-background_.color = animation.global('matrix_bg_', 'matrix_bg')
+background_.color = matrix_bg_
 background_.priority = 50
 # Define matrix green palette
 var matrix_greens_ = bytes("00000000" "40003300" "80006600" "C000AA00" "FF00FF00")
 # Create multiple cascading streams
 var stream1_pattern_ = animation.rich_palette(engine)
-stream1_pattern_.palette = animation.global('matrix_greens_', 'matrix_greens')
+stream1_pattern_.palette = matrix_greens_
 stream1_pattern_.cycle_period = 2000
-stream1_pattern_.transition_type = animation.global('LINEAR_', 'LINEAR')
+stream1_pattern_.transition_type = animation.LINEAR
 stream1_pattern_.brightness = 255
 var stream1_ = animation.comet_animation(engine)
-stream1_.color = animation.global('stream1_pattern_', 'stream1_pattern')  # color source
+stream1_.color = stream1_pattern_  # color source
 stream1_.tail_length = 15  # long tail
 stream1_.speed = 1500  # speed
 stream1_.priority = 10
 var stream2_pattern_ = animation.rich_palette(engine)
-stream2_pattern_.palette = animation.global('matrix_greens_', 'matrix_greens')
+stream2_pattern_.palette = matrix_greens_
 stream2_pattern_.cycle_period = 1800
-stream2_pattern_.transition_type = animation.global('LINEAR_', 'LINEAR')
+stream2_pattern_.transition_type = animation.LINEAR
 stream2_pattern_.brightness = 200
 var stream2_ = animation.comet_animation(engine)
-stream2_.color = animation.global('stream2_pattern_', 'stream2_pattern')  # color source
+stream2_.color = stream2_pattern_  # color source
 stream2_.tail_length = 12  # medium tail
 stream2_.speed = 2200  # different speed
 stream2_.priority = 8
 var stream3_pattern_ = animation.rich_palette(engine)
-stream3_pattern_.palette = animation.global('matrix_greens_', 'matrix_greens')
+stream3_pattern_.palette = matrix_greens_
 stream3_pattern_.cycle_period = 2500
-stream3_pattern_.transition_type = animation.global('LINEAR_', 'LINEAR')
+stream3_pattern_.transition_type = animation.LINEAR
 stream3_pattern_.brightness = 180
 var stream3_ = animation.comet_animation(engine)
-stream3_.color = animation.global('stream3_pattern_', 'stream3_pattern')  # color source
+stream3_.color = stream3_pattern_  # color source
 stream3_.tail_length = 10  # shorter tail
 stream3_.speed = 1800  # another speed
 stream3_.priority = 6
@@ -118,35 +118,9 @@ code_flash_.density = 3  # density (few flashes)
 code_flash_.twinkle_speed = 150  # twinkle speed (quick flash)
 code_flash_.priority = 20
 # Start all animations
-# Start all animations/sequences
-if global.contains('sequence_background')
-  var seq_manager = global.sequence_background()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('background_'))
-end
-if global.contains('sequence_stream1')
-  var seq_manager = global.sequence_stream1()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('stream1_'))
-end
-if global.contains('sequence_stream2')
-  var seq_manager = global.sequence_stream2()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('stream2_'))
-end
-if global.contains('sequence_stream3')
-  var seq_manager = global.sequence_stream3()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('stream3_'))
-end
-if global.contains('sequence_code_flash')
-  var seq_manager = global.sequence_code_flash()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('code_flash_'))
-end
+engine.add_animation(background_)
+engine.add_animation(stream1_)
+engine.add_animation(stream2_)
+engine.add_animation(stream3_)
+engine.add_animation(code_flash_)
 engine.start()

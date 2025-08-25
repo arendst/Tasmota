@@ -66,9 +66,9 @@ var engine = animation.init_strip()
 
 var storm_colors_ = bytes("00000011" "80110022" "FF220033")
 var storm_bg_ = animation.rich_palette_animation(engine)
-storm_bg_.palette = animation.global('storm_colors_', 'storm_colors')
+storm_bg_.palette = storm_colors_
 storm_bg_.cycle_period = 12000
-storm_bg_.transition_type = animation.global('SINE_', 'SINE')
+storm_bg_.transition_type = animation.SINE
 storm_bg_.brightness = 100
 # Random lightning flashes - full strip
 var lightning_main_ = animation.solid(engine)
@@ -79,21 +79,21 @@ temp_square_82.min_value = 0
 temp_square_82.max_value = 255
 temp_square_82.duration = 80
 temp_square_82.duty_cycle = 3
-animation.global('lightning_main_').opacity = temp_square_82  # Quick bright flashes
-animation.global('lightning_main_').priority = 20
+lightning_main_.opacity = temp_square_82  # Quick bright flashes
+lightning_main_.priority = 20
 # Secondary lightning - partial strip
 var lightning_partial_ = animation.beacon_animation(engine)
 lightning_partial_.color = 0xFFFFFFAA  # Slightly yellow white
 lightning_partial_.pos = 30  # center position
 lightning_partial_.beacon_size = 20  # covers part of strip
 lightning_partial_.slew_size = 5  # soft edges
-animation.global('lightning_partial_').priority = 15
+lightning_partial_.priority = 15
 var temp_square_149 = animation.square(engine)
 temp_square_149.min_value = 0
 temp_square_149.max_value = 200
 temp_square_149.duration = 120
 temp_square_149.duty_cycle = 4
-animation.global('lightning_partial_').opacity = temp_square_149  # Different timing
+lightning_partial_.opacity = temp_square_149  # Different timing
 # Add blue afterglow
 var afterglow_ = animation.solid(engine)
 afterglow_.color = 0xFF4444FF
@@ -103,44 +103,18 @@ temp_square_187.min_value = 0
 temp_square_187.max_value = 80
 temp_square_187.duration = 200
 temp_square_187.duty_cycle = 8
-animation.global('afterglow_').opacity = temp_square_187  # Longer, dimmer glow
-animation.global('afterglow_').priority = 10
+afterglow_.opacity = temp_square_187  # Longer, dimmer glow
+afterglow_.priority = 10
 # Distant thunder (dim flashes)
 var distant_flash_ = animation.twinkle_animation(engine)
 distant_flash_.color = 0xFF666699  # Dim blue-white
 distant_flash_.density = 4  # density (few flashes)
 distant_flash_.twinkle_speed = 300  # twinkle speed (medium duration)
-animation.global('distant_flash_').priority = 5
+distant_flash_.priority = 5
 # Start all animations
-# Start all animations/sequences
-if global.contains('sequence_storm_bg')
-  var seq_manager = global.sequence_storm_bg()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('storm_bg_'))
-end
-if global.contains('sequence_lightning_main')
-  var seq_manager = global.sequence_lightning_main()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('lightning_main_'))
-end
-if global.contains('sequence_lightning_partial')
-  var seq_manager = global.sequence_lightning_partial()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('lightning_partial_'))
-end
-if global.contains('sequence_afterglow')
-  var seq_manager = global.sequence_afterglow()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('afterglow_'))
-end
-if global.contains('sequence_distant_flash')
-  var seq_manager = global.sequence_distant_flash()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('distant_flash_'))
-end
+engine.add_animation(storm_bg_)
+engine.add_animation(lightning_main_)
+engine.add_animation(lightning_partial_)
+engine.add_animation(afterglow_)
+engine.add_animation(distant_flash_)
 engine.start()

@@ -51,39 +51,28 @@ var engine = animation.init_strip()
 var fire_colors_ = bytes("00000000" "40800000" "80FF0000" "C0FF4500" "FFFFFF00")
 # Create base fire animation with palette
 var fire_base_ = animation.rich_palette_animation(engine)
-fire_base_.palette = animation.global('fire_colors_', 'fire_colors')
+fire_base_.palette = fire_colors_
 fire_base_.cycle_period = 3000
-fire_base_.transition_type = animation.global('LINEAR_', 'LINEAR')
+fire_base_.transition_type = animation.LINEAR
 fire_base_.brightness = 255
 # Add flickering effect with random intensity changes
 var temp_smooth_89 = animation.smooth(engine)
 temp_smooth_89.min_value = 180
 temp_smooth_89.max_value = 255
 temp_smooth_89.duration = 800
-animation.global('fire_base_').opacity = temp_smooth_89
+fire_base_.opacity = temp_smooth_89
 # Add subtle position variation for more realism
 var flicker_pattern_ = animation.rich_palette(engine)
-flicker_pattern_.palette = animation.global('fire_colors_', 'fire_colors')
+flicker_pattern_.palette = fire_colors_
 flicker_pattern_.cycle_period = 2000
-flicker_pattern_.transition_type = animation.global('LINEAR_', 'LINEAR')
+flicker_pattern_.transition_type = animation.LINEAR
 flicker_pattern_.brightness = 255
 var fire_flicker_ = animation.twinkle_animation(engine)
-fire_flicker_.color = animation.global('flicker_pattern_', 'flicker_pattern')  # color source
+fire_flicker_.color = flicker_pattern_  # color source
 fire_flicker_.density = 12  # density (number of flickers)
 fire_flicker_.twinkle_speed = 200  # twinkle speed (flicker duration)
-animation.global('fire_flicker_').priority = 10
+fire_flicker_.priority = 10
 # Start both animations
-# Start all animations/sequences
-if global.contains('sequence_fire_base')
-  var seq_manager = global.sequence_fire_base()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('fire_base_'))
-end
-if global.contains('sequence_fire_flicker')
-  var seq_manager = global.sequence_fire_flicker()
-  engine.add_sequence_manager(seq_manager)
-else
-  engine.add_animation(animation.global('fire_flicker_'))
-end
+engine.add_animation(fire_base_)
+engine.add_animation(fire_flicker_)
 engine.start()

@@ -42,6 +42,7 @@ ParameterizedObject
     ├── StaticValueProvider
     ├── StripLengthProvider
     ├── OscillatorValueProvider
+    ├── ClosureValueProvider (internal use only)
     └── ColorProvider
         ├── StaticColorProvider
         ├── ColorCycleColorProvider
@@ -143,6 +144,61 @@ Generates oscillating values using various waveforms. Inherits from `ValueProvid
 **Factories**: `animation.ramp(engine)`, `animation.sawtooth(engine)`, `animation.linear(engine)`, `animation.triangle(engine)`, `animation.smooth(engine)`, `animation.sine(engine)`, `animation.square(engine)`, `animation.ease_in(engine)`, `animation.ease_out(engine)`, `animation.elastic(engine)`, `animation.bounce(engine)`, `animation.oscillator_value(engine)`
 
 **See Also**: [Oscillation Patterns](OSCILLATION_PATTERNS.md) - Visual examples and usage patterns for oscillation waveforms
+
+### ClosureValueProvider
+
+**⚠️ INTERNAL USE ONLY - NOT FOR DIRECT USE**
+
+Wraps a closure/function as a value provider for internal transpiler use. This class is used internally by the DSL transpiler to handle computed values and should not be used directly by users.
+
+| Parameter | Type | Default | Constraints | Description |
+|-----------|------|---------|-------------|-------------|
+| `closure` | function | nil | - | The closure function to call for value generation |
+
+**Internal Usage**: This provider is automatically created by the DSL transpiler when it encounters computed expressions or arithmetic operations involving value providers. The closure is called with `(self, param_name, time_ms)` parameters.
+
+#### Mathematical Helper Methods
+
+The ClosureValueProvider includes built-in mathematical helper methods that can be used within closures for computed values:
+
+| Method | Description | Parameters | Return Type | Example |
+|--------|-------------|------------|-------------|---------|
+| `min(a, b, ...)` | Minimum of two or more values | `a, b, *args: number` | `number` | `self.min(5, 3, 8)` → `3` |
+| `max(a, b, ...)` | Maximum of two or more values | `a, b, *args: number` | `number` | `self.max(5, 3, 8)` → `8` |
+| `abs(x)` | Absolute value | `x: number` | `number` | `self.abs(-5)` → `5` |
+| `round(x)` | Round to nearest integer | `x: number` | `int` | `self.round(3.7)` → `4` |
+| `sqrt(x)` | Square root with integer handling | `x: number` | `number` | `self.sqrt(64)` → `128` (for 0-255 range) |
+| `scale(v, from_min, from_max, to_min, to_max)` | Scale value between ranges | `v, from_min, from_max, to_min, to_max: number` | `int` | `self.scale(50, 0, 100, 0, 255)` → `127` |
+| `sine(angle)` | Sine function (0-255 input range) | `angle: number` | `int` | `self.sine(64)` → `255` (90°) |
+| `cosine(angle)` | Cosine function (0-255 input range) | `angle: number` | `int` | `self.cosine(0)` → `-255` (matches oscillator behavior) |
+
+**Mathematical Method Notes:**
+
+- **Integer Handling**: `sqrt()` treats integers in 0-255 range as normalized values (255 = 1.0)
+- **Angle Range**: `sine()` and `cosine()` use 0-255 input range (0-360 degrees)
+- **Output Range**: Trigonometric functions return -255 to 255 (mapped from -1.0 to 1.0)
+- **Cosine Behavior**: Matches oscillator COSINE waveform (starts at minimum, not maximum)
+- **Scale Function**: Uses `tasmota.scale_int()` for efficient integer scaling
+
+#### Usage in Computed Values
+
+These methods are automatically available in DSL computed expressions:
+
+```dsl
+# Example: Dynamic brightness based on strip position
+set strip_len = strip_length()
+animation pulse = pulsating_animation(
+  color=red
+  brightness=strip_len / 4 + 50    # Uses built-in arithmetic
+)
+
+# Complex mathematical expressions are automatically wrapped in closures
+# that have access to all mathematical helper methods
+```
+
+**Factory**: `animation.closure_value(engine)` (internal use only)
+
+**Note**: Users should not create ClosureValueProvider instances directly. Instead, use the DSL's computed value syntax which automatically creates these providers as needed.
 
 ## Color Providers
 

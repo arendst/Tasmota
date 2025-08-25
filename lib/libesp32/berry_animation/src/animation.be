@@ -86,6 +86,14 @@ register_to_animation(event_handler)
 import "core/user_functions" as user_functions
 register_to_animation(user_functions)
 
+# Import and register actual user functions
+try
+  import "user_functions" as user_funcs  # This registers the actual user functions
+except .. as e, msg
+  # User functions are optional - continue without them if not available
+  print(f"Note: User functions not loaded: {msg}")
+end
+
 # Import value providers
 import "providers/value_provider.be" as value_provider
 register_to_animation(value_provider)
@@ -95,6 +103,8 @@ import "providers/oscillator_value_provider.be" as oscillator_value_provider
 register_to_animation(oscillator_value_provider)
 import "providers/strip_length_provider.be" as strip_length_provider
 register_to_animation(strip_length_provider)
+import "providers/closure_value_provider.be" as closure_value_provider
+register_to_animation(closure_value_provider)
 
 # Import color providers
 import "providers/color_provider.be" as color_provider
@@ -171,7 +181,7 @@ def animation_init_strip(*l)
   import animation
   import introspect
   # we keep a hash of strip configurations to reuse existing engines
-  if !introspect.contains(animation, "_strips")
+  if !introspect.contains(animation, "_engines")
     animation._engines = {}
   end
 
@@ -184,6 +194,7 @@ def animation_init_strip(*l)
   else
     var strip = call(global.Leds, l)    # call global.Leds() with vararg
     engine = animation.create_engine(strip)
+    animation._engines[l_as_string] = engine
   end
 
   return engine

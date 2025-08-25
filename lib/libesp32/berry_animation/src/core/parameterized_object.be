@@ -142,7 +142,7 @@ class ParameterizedObject
   def _set_parameter_value(name, value)
     # Validate the value (skip validation for ValueProvider instances)
     if !animation.is_value_provider(value)
-      self._validate_param(name, value)  # This will raise exception with details if invalid
+      value = self._validate_param(name, value)  # Get potentially converted value
     end
     
     # Store the value
@@ -182,7 +182,8 @@ class ParameterizedObject
   # Raises detailed exceptions for validation failures
   #
   # @param name: string - Parameter name
-  # @param value: any - Value to validate
+  # @param value: any - Value to validate (may be modified for real->int conversion)
+  # @return any - Validated value (potentially converted from real to int)
   def _validate_param(name, value)
     var constraints = self._get_param_def(name)
     if constraints == nil
@@ -191,19 +192,19 @@ class ParameterizedObject
     
     # Accept ValueProvider instances for all parameters
     if animation.is_value_provider(value)
-      return
+      return value
     end
     
     # Handle nil values
     if value == nil
       # Check if nil is explicitly allowed via nillable attribute
       if constraints.contains("nillable") && constraints["nillable"] == true
-        return  # nil is allowed for this parameter
+        return value  # nil is allowed for this parameter
       end
       
       # Check if there's a default value (nil is acceptable if there's a default)
       if constraints.contains("default")
-        return  # nil is acceptable, will use default
+        return value  # nil is acceptable, will use default
       end
       
       # nil is not allowed for this parameter
@@ -221,8 +222,12 @@ class ParameterizedObject
     
     # Skip type validation if expected type is "any"
     if expected_type != "any"
-      # Validate type
-      if expected_type != actual_type
+      # Special case: accept real values for int parameters and convert them
+      if expected_type == "int" && actual_type == "real"
+        import math
+        value = int(math.round(value))
+        actual_type = "int"
+      elif expected_type != actual_type
         raise "value_error", f"Parameter '{name}' expects type '{expected_type}' but got '{actual_type}' (value: {value})"
       end
     end
@@ -256,6 +261,8 @@ class ParameterizedObject
         raise "value_error", f"Parameter '{name}' value {value} is not in allowed values {enum_list}"
       end
     end
+    
+    return value
   end
   
   # Set a parameter value with validation
