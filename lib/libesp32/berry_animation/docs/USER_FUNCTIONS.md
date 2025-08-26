@@ -379,17 +379,16 @@ import animation
 load("user_animations.be")
 
 # Now they're available in DSL
-var dsl_code = '''
-animation my_fire = fire(200, 1500ms)
-animation my_sparkles = sparkle(white, 8, 400ms)
-
-sequence show {
-  play my_fire for 10s
-  play my_sparkles for 5s
-}
-
-run show
-'''
+var dsl_code = 
+  "animation my_fire = fire(200, 1500ms)\n"
+  "animation my_sparkles = sparkle(white, 8, 400ms)\n"
+  "\n"
+  "sequence show {\n"
+  "  play my_fire for 10s\n"
+  "  play my_sparkles for 5s\n"
+  "}\n"
+  "\n
+  "run show"
 
 animation_dsl.execute(dsl_code)
 ```
@@ -398,17 +397,16 @@ animation_dsl.execute(dsl_code)
 
 ```berry
 # Save DSL with custom functions
-var my_show = '''
-animation campfire = fire(180, 2s)
-animation stars = sparkle(#FFFFFF, 6, 600ms)
-
-sequence night_scene {
-  play campfire for 30s
-  play stars for 10s
-}
-
-run night_scene
-'''
+var my_show =
+  "animation campfire = fire(180, 2s)\n"
+  "animation stars = sparkle(#FFFFFF, 6, 600ms)\n"
+  "\n"
+  "sequence night_scene {\n"
+  "  play campfire for 30s\n"
+  "  play stars for 10s\n"
+  "}\n"
+  "\n"
+  "run night_scene"
 
 # Save to file
 var f = open("night_scene.anim", "w")

@@ -383,63 +383,63 @@ def test_closure_math_methods()
   assert(scale_neg == 0, f"Expected scale(0,-50,50,-100,100)=0, got {scale_neg}")
   print("✓ scale function works correctly")
   
-  # Test 6: sine function
+  # Test 6: sin function
   provider.closure = def(self, name, time_ms)
-    if name == "sine_0"
-      return self.sine(0)        # sin(0°) = 0
-    elif name == "sine_64"
-      return self.sine(64)       # sin(90°) = 1 -> 255
-    elif name == "sine_128"
-      return self.sine(128)      # sin(180°) = 0
-    elif name == "sine_192"
-      return self.sine(192)      # sin(270°) = -1 -> -255
+    if name == "sin_0"
+      return self.sin(0)        # sin(0°) = 0
+    elif name == "sin_64"
+      return self.sin(64)       # sin(90°) = 1 -> 255
+    elif name == "sin_128"
+      return self.sin(128)      # sin(180°) = 0
+    elif name == "sin_192"
+      return self.sin(192)      # sin(270°) = -1 -> -255
     else
       return 0
     end
   end
   
-  var sine_0 = provider.produce_value("sine_0", 1000)
-  var sine_64 = provider.produce_value("sine_64", 1000)
-  var sine_128 = provider.produce_value("sine_128", 1000)
-  var sine_192 = provider.produce_value("sine_192", 1000)
+  var sin_0 = provider.produce_value("sin_0", 1000)
+  var sin_64 = provider.produce_value("sin_64", 1000)
+  var sin_128 = provider.produce_value("sin_128", 1000)
+  var sin_192 = provider.produce_value("sin_192", 1000)
   
-  assert(sine_0 >= -5 && sine_0 <= 5, f"Expected sine(0)~0, got {sine_0}")
-  assert(sine_64 >= 250 && sine_64 <= 255, f"Expected sine(64)~255, got {sine_64}")
-  assert(sine_128 >= -5 && sine_128 <= 5, f"Expected sine(128)~0, got {sine_128}")
-  assert(sine_192 >= -255 && sine_192 <= -250, f"Expected sine(192)~-255, got {sine_192}")
-  print("✓ sine function works correctly")
+  assert(sin_0 >= -5 && sin_0 <= 5, f"Expected sin(0)~0, got {sin_0}")
+  assert(sin_64 >= 250 && sin_64 <= 255, f"Expected sin(64)~255, got {sin_64}")
+  assert(sin_128 >= -5 && sin_128 <= 5, f"Expected sin(128)~0, got {sin_128}")
+  assert(sin_192 >= -255 && sin_192 <= -250, f"Expected sin(192)~-255, got {sin_192}")
+  print("✓ sin function works correctly")
   
-  # Test 7: cosine function (matches oscillator COSINE behavior)
+  # Test 7: cos function (matches oscillator COSINE behavior)
   provider.closure = def(self, name, time_ms)
-    if name == "cosine_0"
-      return self.cosine(0)      # Oscillator cosine at 0° = minimum -> -255
-    elif name == "cosine_64"
-      return self.cosine(64)     # Oscillator cosine at 90° = ~0
-    elif name == "cosine_128"
-      return self.cosine(128)    # Oscillator cosine at 180° = maximum -> 255
-    elif name == "cosine_192"
-      return self.cosine(192)    # Oscillator cosine at 270° = ~0
+    if name == "cos_0"
+      return self.cos(0)      # Oscillator cosine at 0° = minimum -> -255
+    elif name == "cos_64"
+      return self.cos(64)     # Oscillator cosine at 90° = ~0
+    elif name == "cos_128"
+      return self.cos(128)    # Oscillator cosine at 180° = maximum -> 255
+    elif name == "cos_192"
+      return self.cos(192)    # Oscillator cosine at 270° = ~0
     else
       return 0
     end
   end
   
-  var cosine_0 = provider.produce_value("cosine_0", 1000)
-  var cosine_64 = provider.produce_value("cosine_64", 1000)
-  var cosine_128 = provider.produce_value("cosine_128", 1000)
-  var cosine_192 = provider.produce_value("cosine_192", 1000)
+  var cos_0 = provider.produce_value("cos_0", 1000)
+  var cos_64 = provider.produce_value("cos_64", 1000)
+  var cos_128 = provider.produce_value("cos_128", 1000)
+  var cos_192 = provider.produce_value("cos_192", 1000)
   
-  assert(cosine_0 >= -255 && cosine_0 <= -250, f"Expected cosine(0)~-255, got {cosine_0}")
-  assert(cosine_64 >= -5 && cosine_64 <= 5, f"Expected cosine(64)~0, got {cosine_64}")
-  assert(cosine_128 >= 250 && cosine_128 <= 255, f"Expected cosine(128)~255, got {cosine_128}")
-  assert(cosine_192 >= -5 && cosine_192 <= 5, f"Expected cosine(192)~0, got {cosine_192}")
-  print("✓ cosine function works correctly")
+  assert(cos_0 >= -255 && cos_0 <= -250, f"Expected cos(0)~-255, got {cos_0}")
+  assert(cos_64 >= -5 && cos_64 <= 5, f"Expected cos(64)~0, got {cos_64}")
+  assert(cos_128 >= 250 && cos_128 <= 255, f"Expected cos(128)~255, got {cos_128}")
+  assert(cos_192 >= -5 && cos_192 <= 5, f"Expected cos(192)~0, got {cos_192}")
+  print("✓ cos function works correctly")
   
   # Test 8: Complex expression using multiple math functions
   provider.closure = def(self, name, time_ms)
     if name == "complex_math"
       var angle = time_ms % 256  # 0-255 angle based on time
-      var sine_val = self.abs(self.sine(angle))  # Absolute sine value
+      var sine_val = self.abs(self.sin(angle))  # Absolute sine value
       var scaled = self.scale(sine_val, 0, 255, 50, 200)  # Scale to 50-200 range
       return self.min(self.max(scaled, 75), 175)  # Clamp to 75-175 range
     else

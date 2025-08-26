@@ -142,7 +142,7 @@ class ClosureValueProvider : animation.value_provider
   #
   # @param angle: number - Angle in 0-255 range (0-360 degrees)
   # @return int - Sine value in -255 to 255 range
-  def sine(angle)
+  def sin(angle)
     # Map angle from 0-255 to 0-32767 (tasmota.sine_int input range)
     var tasmota_angle = tasmota.scale_int(angle, 0, 255, 0, 32767)
     
@@ -160,7 +160,7 @@ class ClosureValueProvider : animation.value_provider
   #
   # @param angle: number - Angle in 0-255 range (0-360 degrees)
   # @return int - Cosine value in -255 to 255 range
-  def cosine(angle)
+  def cos(angle)
     # Map angle from 0-255 to 0-32767 (tasmota.sine_int input range)
     var tasmota_angle = tasmota.scale_int(angle, 0, 255, 0, 32767)
     

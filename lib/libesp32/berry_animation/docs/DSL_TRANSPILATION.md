@@ -355,12 +355,12 @@ run nonexistent_animation
 2. **Use programmatic API for performance-critical code**:
    ```berry
    # DSL for high-level structure
-   animation_dsl.execute('''
-   sequence main {
-     play performance_critical_anim for 10s
-   }
-   run main
-   ''')
+   animation_dsl.execute(
+     "sequence main {\n"
+       "play performance_critical_anim for 10s\n"
+    "}\n"
+    "run main"
+   )
    
    # Programmatic for performance-critical animations
    var performance_critical_anim = animation.create_optimized_animation()

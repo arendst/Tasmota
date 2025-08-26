@@ -92,18 +92,9 @@ class BeaconAnimation : animation.animation
       
       i = left_slew_min
       while i < left_slew_max
-        # Calculate blend factor (255 = background, 0 = beacon color)
-        var blend_factor
-        if slew_size == 1
-          # For single pixel slew, use 50% blend
-          blend_factor = 128
-        else
-          blend_factor = tasmota.scale_uint(i, pos - slew_size, pos - 1, 255, 0)
-        end
-        # Create color with appropriate alpha for blending
-        var alpha = 255 - blend_factor  # Invert so 0 = transparent, 255 = opaque
-        var blend_color = (alpha << 24) | (color & 0x00FFFFFF)
-        var blended_color = frame.blend(back_color, blend_color)
+        # Calculate blend factor - blend from 255 (back) to 0 (fore) like original
+        var blend_factor = tasmota.scale_int(i, pos - slew_size - 1, pos, 255, 0)
+        var blended_color = frame.blend_linear(back_color, color, blend_factor)
         frame.set_pixel_color(i, blended_color)
         i += 1
       end
@@ -121,18 +112,9 @@ class BeaconAnimation : animation.animation
       
       i = right_slew_min
       while i < right_slew_max
-        # Calculate blend factor (0 = beacon color, 255 = background)
-        var blend_factor
-        if slew_size == 1
-          # For single pixel slew, use 50% blend
-          blend_factor = 128
-        else
-          blend_factor = tasmota.scale_uint(i, pos + beacon_size, pos + beacon_size + slew_size - 1, 0, 255)
-        end
-        # Create color with appropriate alpha for blending
-        var alpha = 255 - blend_factor  # Start opaque, fade to transparent
-        var blend_color = (alpha << 24) | (color & 0x00FFFFFF)
-        var blended_color = frame.blend(back_color, blend_color)
+        # Calculate blend factor - blend from 0 (fore) to 255 (back) like original
+        var blend_factor = tasmota.scale_int(i, pos + beacon_size - 1, pos + beacon_size + slew_size, 0, 255)
+        var blended_color = frame.blend_linear(back_color, color, blend_factor)
         frame.set_pixel_color(i, blended_color)
         i += 1
       end

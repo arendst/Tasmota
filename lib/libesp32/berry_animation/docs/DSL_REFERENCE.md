@@ -399,8 +399,8 @@ The following mathematical functions are available in computed parameters and ar
 | `round(x)` | Rounds to nearest integer | One number | Rounded integer |
 | `sqrt(x)` | Returns the square root | One number | Square root (scaled for integers) |
 | `scale(v, from_min, from_max, to_min, to_max)` | Scales value from one range to another | Value and range parameters | Scaled integer |
-| `sine(angle)` | Returns sine of angle | Angle in 0-255 range (0-360°) | Sine value in -255 to 255 range |
-| `cosine(angle)` | Returns cosine of angle | Angle in 0-255 range (0-360°) | Cosine value in -255 to 255 range |
+| `sin(angle)` | Returns sine of angle | Angle in 0-255 range (0-360°) | Sine value in -255 to 255 range |
+| `cos(angle)` | Returns cosine of angle | Angle in 0-255 range (0-360°) | Cosine value in -255 to 255 range |
 
 **Mathematical Function Examples:**
 ```berry
@@ -425,17 +425,17 @@ test.opacity = scale(strip_len, 10, 60, 50, 255)  # Scale strip length to opacit
 
 # Trigonometric functions for wave patterns
 set angle = 128  # 180 degrees in 0-255 range
-test.opacity = sine(angle) + 128      # Sine wave shifted to positive range
-test.brightness = cosine(angle) + 128  # Cosine wave shifted to positive range
+test.opacity = sin(angle) + 128      # Mathematical sine function (not oscillator)
+test.brightness = cos(angle) + 128  # Mathematical cosine function (not oscillator)
 
 # Complex expressions combining multiple functions
-test.position = max(0, round(abs(sine(strip_len * 2)) * (strip_len - 1) / 255))
+test.position = max(0, round(abs(sin(strip_len * 2)) * (strip_len - 1) / 255))
 test.opacity = min(255, max(50, scale(sqrt(strip_len), 0, 16, 100, 255)))
 ```
 
 **Special Notes:**
 - **Integer Optimization**: `sqrt()` function automatically handles integer scaling for 0-255 range values
-- **Trigonometric Range**: `sine()` and `cosine()` use 0-255 input range (mapped to 0-360°) and return -255 to 255 output range
+- **Trigonometric Range**: `sin()` and `cos()` use 0-255 input range (mapped to 0-360°) and return -255 to 255 output range
 - **Automatic Detection**: Mathematical functions are automatically detected at transpile time using dynamic introspection
 - **Closure Context**: In computed parameters, mathematical functions are called as `self.<function>()` in the generated closure context
 
@@ -672,7 +672,8 @@ Value providers create dynamic values that change over time:
 |----------|-------------|
 | `triangle` | Triangle wave oscillation (alias for oscillator with triangle waveform) |
 | `smooth` | Smooth cosine wave (alias for oscillator with smooth waveform) |
-| `sine` | Pure sine wave oscillation (alias for oscillator with sine waveform) |
+| `cosine_osc` | Cosine wave oscillation (alias for smooth - cosine waveform) |
+| `sine_osc` | Pure sine wave oscillation (alias for oscillator with sine waveform) |
 | `linear` | Linear progression (alias for oscillator with linear waveform) |
 | `ramp` | Sawtooth wave (alias for oscillator with ramp waveform) |
 | `sawtooth` | Sawtooth wave (alias for ramp) |
@@ -686,7 +687,8 @@ Value providers create dynamic values that change over time:
 # Direct oscillator usage
 triangle(min_value=0, max_value=255, period=2s)    # Triangle wave
 smooth(min_value=50, max_value=200, period=3s)     # Smooth cosine
-sine(min_value=0, max_value=255, period=2s)        # Pure sine wave
+cosine_osc(min_value=3, max_value=1, period=5s)    # Cosine wave (alias for smooth)
+sine_osc(min_value=0, max_value=255, period=2s)    # Pure sine wave
 linear(min_value=0, max_value=100, period=1s)      # Linear progression
 ramp(min_value=0, max_value=255, period=2s)        # Sawtooth wave
 square(min_value=0, max_value=255, period=1s)      # Square wave
@@ -699,6 +701,8 @@ bounce(min_value=0, max_value=255, period=2s)      # Bouncing ball effect
 set brightness_oscillator = smooth(min_value=50, max_value=255, period=3s)
 set position_sweep = triangle(min_value=0, max_value=29, period=5s)
 set elastic_movement = elastic(min_value=0, max_value=30, period=4s)
+set sine_wave = sine_osc(min_value=0, max_value=255, period=2s)
+set cosine_wave = cosine_osc(min_value=50, max_value=200, period=3s)
 set strip_len = strip_length()  # Get the current strip length
 ```
 

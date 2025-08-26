@@ -26,7 +26,7 @@ ParameterizedObject
 │   ├── NoiseAnimation
 │   ├── PlasmaAnimation
 │   ├── PulseAnimation
-│   ├── PulsePositionAnimation
+│   ├── BeaconAnimation
 │   ├── CrenelPositionAnimation
 │   ├── RichPaletteAnimation
 │   ├── TwinkleAnimation
@@ -141,7 +141,7 @@ Generates oscillating values using various waveforms. Inherits from `ValueProvid
 - `8` (ELASTIC) - Spring-like overshoot and oscillation
 - `9` (BOUNCE) - Ball-like bouncing with decreasing amplitude
 
-**Factories**: `animation.ramp(engine)`, `animation.sawtooth(engine)`, `animation.linear(engine)`, `animation.triangle(engine)`, `animation.smooth(engine)`, `animation.sine(engine)`, `animation.square(engine)`, `animation.ease_in(engine)`, `animation.ease_out(engine)`, `animation.elastic(engine)`, `animation.bounce(engine)`, `animation.oscillator_value(engine)`
+**Factories**: `animation.ramp(engine)`, `animation.sawtooth(engine)`, `animation.linear(engine)`, `animation.triangle(engine)`, `animation.smooth(engine)`, `animation.sine_osc(engine)`, `animation.cosine_osc(engine)`, `animation.square(engine)`, `animation.ease_in(engine)`, `animation.ease_out(engine)`, `animation.elastic(engine)`, `animation.bounce(engine)`, `animation.oscillator_value(engine)`
 
 **See Also**: [Oscillation Patterns](OSCILLATION_PATTERNS.md) - Visual examples and usage patterns for oscillation waveforms
 
@@ -169,13 +169,13 @@ The ClosureValueProvider includes built-in mathematical helper methods that can 
 | `round(x)` | Round to nearest integer | `x: number` | `int` | `self.round(3.7)` → `4` |
 | `sqrt(x)` | Square root with integer handling | `x: number` | `number` | `self.sqrt(64)` → `128` (for 0-255 range) |
 | `scale(v, from_min, from_max, to_min, to_max)` | Scale value between ranges | `v, from_min, from_max, to_min, to_max: number` | `int` | `self.scale(50, 0, 100, 0, 255)` → `127` |
-| `sine(angle)` | Sine function (0-255 input range) | `angle: number` | `int` | `self.sine(64)` → `255` (90°) |
-| `cosine(angle)` | Cosine function (0-255 input range) | `angle: number` | `int` | `self.cosine(0)` → `-255` (matches oscillator behavior) |
+| `sin(angle)` | Sine function (0-255 input range) | `angle: number` | `int` | `self.sin(64)` → `255` (90°) |
+| `cos(angle)` | Cosine function (0-255 input range) | `angle: number` | `int` | `self.cos(0)` → `-255` (matches oscillator behavior) |
 
 **Mathematical Method Notes:**
 
 - **Integer Handling**: `sqrt()` treats integers in 0-255 range as normalized values (255 = 1.0)
-- **Angle Range**: `sine()` and `cosine()` use 0-255 input range (0-360 degrees)
+- **Angle Range**: `sin()` and `cos()` use 0-255 input range (0-360 degrees)
 - **Output Range**: Trigonometric functions return -255 to 255 (mapped from -1.0 to 1.0)
 - **Cosine Behavior**: Matches oscillator COSINE waveform (starts at minimum, not maximum)
 - **Scale Function**: Uses `tasmota.scale_int()` for efficient integer scaling
@@ -787,7 +787,7 @@ Creates a pulsing effect oscillating between min and max brightness. Inherits fr
 
 **Factory**: `animation.pulsating_animation(engine)`
 
-### PulsePositionAnimation
+### BeaconAnimation
 
 Creates a pulse effect at a specific position with optional fade regions. Inherits from `Animation`.
 
@@ -812,7 +812,7 @@ Where:
 The pulse consists of:
 - **Core pulse**: Full brightness region of `beacon_size` pixels
 - **Fade regions**: Optional `slew_size` pixels on each side with gradual fade
-- **Total width**: `beacon_sizee + (2 * slew_size)` pixels
+- **Total width**: `beacon_size + (2 * slew_size)` pixels
 
 #### Parameters
 
@@ -840,7 +840,7 @@ The pulse consists of:
 animation sharp_pulse = beacon_animation(
   color=red,
   pos=10,
-  beacon_sizee=3,
+  beacon_size=3,
   slew_size=0
 )
 

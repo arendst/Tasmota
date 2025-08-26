@@ -585,8 +585,8 @@ class SimpleDSLTranspiler
       end
     end
     
-    # Only create closures at the top level
-    if is_top_level && self.is_computed_expression_string(left)
+    # Only create closures at the top level, but not for anonymous functions
+    if is_top_level && self.is_computed_expression_string(left) && !self.is_anonymous_function(left)
       return self.create_computation_closure_from_string(left)
     else
       return left
@@ -656,8 +656,12 @@ class SimpleDSLTranspiler
     if (tok.type == animation_dsl.Token.KEYWORD || tok.type == animation_dsl.Token.IDENTIFIER) && 
        self.peek() != nil && self.peek().type == animation_dsl.Token.LEFT_PAREN
       
+      # Check if this is a simple function call first
+      var func_name = tok.value
+      if self._is_simple_function_call(func_name)
+        return self.process_function_call(context)
       # Check if this is a nested function call or a variable assignment with named parameters
-      if context == "argument" || context == "property" || context == "variable"
+      elif context == "argument" || context == "property" || context == "variable"
         return self.process_nested_function_call()
       else
         return self.process_function_call(context)
@@ -745,6 +749,13 @@ class SimpleDSLTranspiler
     return "nil"
   end
   
+  # Check if an expression is already an anonymous function
+  def is_anonymous_function(expr_str)
+    import string
+    # Check if the expression starts with "(def " and ends with ")(engine)"
+    return string.find(expr_str, "(def ") == 0 && string.find(expr_str, ")(engine)") >= 0
+  end
+
   # Check if an expression string contains computed values that need a closure
   def is_computed_expression_string(expr_str)
     import string
@@ -758,14 +769,25 @@ class SimpleDSLTranspiler
     )
     
     # Check for function calls (parentheses with identifiers before them)
-    # This excludes simple parenthesized literals like (-1)
+    # This excludes simple parenthesized literals like (-1) and simple function calls
     var has_function_calls = false
     var paren_pos = string.find(expr_str, "(")
     if paren_pos > 0
       # Check if there's an identifier before the parenthesis (indicating a function call)
       var char_before = expr_str[paren_pos-1]
       if self.is_identifier_char(char_before)
-        has_function_calls = true
+        # Extract the function name to check if it's a simple function
+        var func_start = paren_pos - 1
+        while func_start >= 0 && self.is_identifier_char(expr_str[func_start])
+          func_start -= 1
+        end
+        func_start += 1
+        var func_name = expr_str[func_start..paren_pos-1]
+        
+        # Only mark as needing closure if it's NOT a simple function
+        if !self._is_simple_function_call(func_name)
+          has_function_calls = true
+        end
       end
     end
     
@@ -1032,9 +1054,12 @@ class SimpleDSLTranspiler
       var full_args = args != "" ? f"engine, {args}" : "engine"
       return f"animation.get_user_function('{func_name}')({full_args})"
     else
-      # All functions are resolved from the animation module
-      # No context-specific mapping needed with unified architecture
-      return f"animation.{func_name}({args})"
+      # All functions are resolved from the animation module and need engine as first parameter
+      if args != ""
+        return f"animation.{func_name}(engine, {args})"
+      else
+        return f"animation.{func_name}(engine)"
+      end
     end
   end
   
@@ -1416,25 +1441,27 @@ class SimpleDSLTranspiler
       var full_args = args != "" ? f"self.engine, {args}" : "self.engine"
       return f"animation.get_user_function('{func_name}')({full_args})"
     else
-      # Built-in functions use the new engine-first + named parameters pattern
-      # Validate that the factory function exists at transpilation time
-      if !self._validate_animation_factory_exists(func_name)
-        self.error(f"Animation factory function '{func_name}' does not exist. Check the function name and ensure it's available in the animation module.")
-        self.skip_function_arguments()  # Skip the arguments to avoid parsing errors
-        return "nil"
+      # Check if this is a simple function call without named parameters
+      if self._is_simple_function_call(func_name)
+        # For simple functions like strip_length(), do direct assignment
+        var args = self.process_function_arguments()
+        if args != ""
+          return f"animation.{func_name}(engine, {args})"
+        else
+          return f"animation.{func_name}(engine)"
+        end
+      else
+        # Built-in functions use the new engine-first + named parameters pattern
+        # Validate that the factory function exists at transpilation time
+        if !self._validate_animation_factory_exists(func_name)
+          self.error(f"Animation factory function '{func_name}' does not exist. Check the function name and ensure it's available in the animation module.")
+          self.skip_function_arguments()  # Skip the arguments to avoid parsing errors
+          return "nil"
+        end
+        
+        # Generate anonymous function that creates and configures the provider
+        return self._generate_anonymous_function_call(func_name)
       end
-      
-      # Generate unique temporary variable name using position
-      var temp_var = f"temp_{func_name}_{self.pos}"
-      
-      # Generate the base function call
-      self.add(f"var {temp_var} = animation.{func_name}(engine)")
-      
-      # Process named arguments for the temporary variable with validation
-      self._process_named_arguments_for_animation(temp_var, func_name)
-      
-      # Return the temporary variable name
-      return temp_var
     end
   end
   
@@ -2167,6 +2194,98 @@ class SimpleDSLTranspiler
   # Process named arguments for color provider declarations with parameter validation
   def _process_named_arguments_for_color_provider(var_name, func_name)
     self._process_named_arguments_generic(var_name, func_name)
+  end
+
+  # Check if this is a simple function call that doesn't need anonymous function treatment
+  def _is_simple_function_call(func_name)
+    # Functions that return simple values and don't use named parameters
+    var simple_functions = [
+      "strip_length",
+      "static_value"
+    ]
+    
+    for simple_func : simple_functions
+      if func_name == simple_func
+        return true
+      end
+    end
+    return false
+  end
+
+  # Generate anonymous function call that creates and configures a provider without temporary variables
+  def _generate_anonymous_function_call(func_name)
+    # Start building the anonymous function
+    var lines = []
+    lines.push("(def (engine)")
+    lines.push(f"  var provider = animation.{func_name}(engine)")
+    
+    # Process named arguments and collect them
+    self.expect_left_paren()
+    
+    # Create animation instance once for parameter validation
+    var animation_instance = self._create_animation_instance_for_validation(func_name)
+    
+    while !self.at_end() && !self.check_right_paren()
+      self.skip_whitespace_including_newlines()
+      
+      if self.check_right_paren()
+        break
+      end
+      
+      # Parse named argument: param_name=value
+      var param_name = self.expect_identifier()
+      
+      # Validate parameter immediately as it's parsed
+      if animation_instance != nil
+        self._validate_single_parameter(func_name, param_name, animation_instance)
+      end
+      
+      self.expect_assign()
+      var param_value = self.process_value("argument")
+      var inline_comment = self.collect_inline_comment()
+      
+      # Add parameter assignment to the anonymous function
+      lines.push(f"  provider.{param_name} = {param_value}{inline_comment}")
+      
+      # Skip whitespace but preserve newlines for separator detection
+      while !self.at_end()
+        var tok = self.current()
+        if tok != nil && tok.type == animation_dsl.Token.COMMENT
+          self.next()
+        else
+          break
+        end
+      end
+      
+      # Check for parameter separator: comma OR newline OR end of parameters
+      if self.current() != nil && self.current().type == animation_dsl.Token.COMMA
+        self.next()  # skip comma
+        self.skip_whitespace_including_newlines()
+      elif self.current() != nil && self.current().type == animation_dsl.Token.NEWLINE
+        # Newline acts as parameter separator - skip it and continue
+        self.next()  # skip newline
+        self.skip_whitespace_including_newlines()
+      elif !self.check_right_paren()
+        self.error("Expected ',' or ')' in function arguments")
+        break
+      end
+    end
+    
+    self.expect_right_paren()
+    
+    # Complete the anonymous function
+    lines.push("  return provider")
+    lines.push("end)(engine)")
+    
+    # Join all lines into a single expression
+    var result = ""
+    for i : 0..size(lines)-1
+      if i > 0
+        result += "\n"
+      end
+      result += lines[i]
+    end
+    return result
   end
 
 end

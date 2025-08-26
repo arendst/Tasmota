@@ -73,6 +73,24 @@ class FrameBuffer
     self.pixels.resize(self.width * 4)  # resize to full size filled with transparent black (all zeroes)
   end
   
+  # Resize the frame buffer to a new width
+  # This is more efficient than creating a new frame buffer object
+  def resize(new_width)
+    if new_width <= 0
+      raise "value_error", "width must be positive"
+    end
+    
+    if new_width == self.width
+      return  # No change needed
+    end
+    
+    self.width = new_width
+    # Resize the underlying bytes buffer
+    self.pixels.resize(self.width * 4)
+    # Clear to ensure all new pixels are transparent black
+    self.clear()
+  end
+  
   # Convert separate a, r, g, b components to a 32-bit color value
   # r: red component (0-255)
   # g: green component (0-255)
@@ -156,6 +174,46 @@ class FrameBuffer
     
     # Combine components into a 32-bit value (ARGB format - 0xAARRGGBB)
     return (int(a) << 24) | (int(r) << 16) | (int(g) << 8) | int(b)
+  end
+
+  # Linear interpolation between two colors using explicit blend factor
+  # Returns the blended color as a 32-bit integer (ARGB format - 0xAARRGGBB)
+  # 
+  # This function matches the original berry_animate frame.blend(color1, color2, blend_factor) behavior
+  # Used for creating smooth gradients like beacon slew regions
+  #
+  # color1: destination/background color (ARGB format - 0xAARRGGBB)
+  # color2: source/foreground color (ARGB format - 0xAARRGGBB)
+  # blend_factor: blend factor (0-255 integer)
+  #   - 0 = full color2 (foreground)
+  #   - 255 = full color1 (background)
+  def blend_linear(color1, color2, blend_factor)
+    # Extract components from color1 (background/destination)
+    var back_a = (color1 >> 24) & 0xFF
+    var back_r = (color1 >> 16) & 0xFF
+    var back_g = (color1 >> 8) & 0xFF
+    var back_b = color1 & 0xFF
+    
+    # Extract components from color2 (foreground/source)
+    var fore_a = (color2 >> 24) & 0xFF
+    var fore_r = (color2 >> 16) & 0xFF
+    var fore_g = (color2 >> 8) & 0xFF
+    var fore_b = color2 & 0xFF
+    
+    # Linear interpolation: result = fore + (back - fore) * blend_factor / 255
+    var result_a = fore_a + (back_a - fore_a) * blend_factor / 255
+    var result_r = fore_r + (back_r - fore_r) * blend_factor / 255
+    var result_g = fore_g + (back_g - fore_g) * blend_factor / 255
+    var result_b = fore_b + (back_b - fore_b) * blend_factor / 255
+    
+    # Ensure values are in valid range
+    result_a = result_a < 0 ? 0 : (result_a > 255 ? 255 : result_a)
+    result_r = result_r < 0 ? 0 : (result_r > 255 ? 255 : result_r)
+    result_g = result_g < 0 ? 0 : (result_g > 255 ? 255 : result_g)
+    result_b = result_b < 0 ? 0 : (result_b > 255 ? 255 : result_b)
+    
+    # Combine components into a 32-bit value (ARGB format)
+    return (int(result_a) << 24) | (int(result_r) << 16) | (int(result_g) << 8) | int(result_b)
   end
   
   # Blend this frame buffer with another frame buffer using per-pixel alpha

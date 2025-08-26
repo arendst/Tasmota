@@ -150,8 +150,10 @@ def test_nested_function_calls()
   
   assert(berry_code != nil, "Should compile nested function calls with newline syntax")
   assert(string.find(berry_code, "var nested_ = animation.pulsating_animation(engine)") >= 0, "Should generate main animation")
-  assert(string.find(berry_code, "var temp_solid_") >= 0, "Should generate nested solid call")
-  assert(string.find(berry_code, "var temp_triangle_") >= 0, "Should generate nested triangle call")
+  assert(string.find(berry_code, "nested_.color = (def (engine)") >= 0, "Should generate nested solid call as anonymous function")
+  assert(string.find(berry_code, "nested_.period = (def (engine)") >= 0, "Should generate nested triangle call as anonymous function")
+  assert(string.find(berry_code, "var provider = animation.solid(engine)") >= 0, "Should generate solid provider in anonymous function")
+  assert(string.find(berry_code, "var provider = animation.triangle(engine)") >= 0, "Should generate triangle provider in anonymous function")
   
   print("✓ Nested function calls test passed")
   return true

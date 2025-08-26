@@ -32,7 +32,8 @@ set bouncing = oscillator_value(min_value=10, max_value=240, duration=4000, form
 ```berry
 # These are equivalent to oscillator_value with specific forms
 set smooth_fade = smooth(min_value=50, max_value=255, duration=3000)      # form=COSINE
-set sine_wave = sine(min_value=50, max_value=255, duration=3000)          # form=SINE
+set sine_wave = sine_osc(min_value=50, max_value=255, duration=3000)      # form=SINE
+set cosine_wave = cosine_osc(min_value=50, max_value=255, duration=3000)  # form=COSINE (alias for smooth)
 set linear_sweep = linear(min_value=0, max_value=255, duration=2000)      # form=SAWTOOTH  
 set triangle_wave = triangle(min_value=10, max_value=240, duration=4000)  # form=TRIANGLE
 ```
@@ -100,7 +101,7 @@ Value
 ```
 
 ```berry
-set wave_motion = sine(min_value=0, max_value=255, duration=2000)
+set wave_motion = sine_osc(min_value=0, max_value=255, duration=2000)
 ```
 
 ### TRIANGLE

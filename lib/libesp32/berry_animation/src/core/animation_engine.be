@@ -168,6 +168,9 @@ class AnimationEngine
       current_time = tasmota.millis()
     end
     
+    # Check if strip length changed since last time
+    self.check_strip_length()
+    
     # Update engine time
     self.time_ms = current_time
     
@@ -356,6 +359,7 @@ class AnimationEngine
   end
   
   def get_strip_length()
+    self.check_strip_length()
     return self.width
   end
   
@@ -369,6 +373,34 @@ class AnimationEngine
   
   def get_animations()
     return self.animations
+  end
+  
+  # Check if the length of the strip changes
+  #
+  # @return bool - True if strip lengtj was changed, false otherwise
+  def check_strip_length()
+    var current_length = self.strip.length()
+    if current_length != self.width
+      self._handle_strip_length_change(current_length)
+      return true  # Length changed
+    end
+    return false  # No change
+  end
+  
+  # Handle strip length changes by resizing buffers
+  def _handle_strip_length_change(new_length)
+    if new_length <= 0
+      return  # Invalid length, ignore
+    end
+    
+    self.width = new_length
+    
+    # Resize existing frame buffers instead of creating new ones
+    self.frame_buffer.resize(new_length)
+    self.temp_buffer.resize(new_length)
+    
+    # Force a render to clear any stale pixels
+    self.render_needed = true
   end
   
   # Cleanup method for proper resource management

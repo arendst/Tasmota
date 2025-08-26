@@ -173,6 +173,9 @@ def test_cosine_waveform()
   var value_75 = osc.produce_value("test", start_time + 750) # t=750ms (75% - falling)
   var value_100 = osc.produce_value("test", start_time + 999) # t=999ms (back to minimum)
   
+  # Print actual values for debugging
+  print(f"  COSINE values: t=0%: {value_0}, t=25%: {value_25}, t=50%: {value_50}, t=75%: {value_75}, t=99.9%: {value_100}")
+  
   # Cosine should be smooth curve from min to max and back
   # Note: The cosine implementation uses sine with phase shift, so values may differ from pure cosine
   assert(value_0 >= 0 && value_0 <= 10, f"Value at 0% should be ~0, got {value_0}")
@@ -180,6 +183,12 @@ def test_cosine_waveform()
   assert(value_50 >= 90 && value_50 <= 100, f"Value at 50% should be ~100, got {value_50}")
   assert(value_75 >= 40 && value_75 <= 60, f"Value at 75% should be ~50, got {value_75}")
   assert(value_100 >= 0 && value_100 <= 10, f"Value at 99.9% should be ~0, got {value_100}")
+  
+  # Verify values are actually changing over time
+  assert(value_0 != value_25, "COSINE values should change between 0% and 25%")
+  assert(value_25 != value_50, "COSINE values should change between 25% and 50%")
+  assert(value_50 != value_75, "COSINE values should change between 50% and 75%")
+  assert(value_75 != value_100, "COSINE values should change between 75% and 99.9%")
   
   print("✓ COSINE waveform test passed")
 end
@@ -204,6 +213,9 @@ def test_sine_waveform()
   var value_75 = osc.produce_value("test", start_time + 750) # t=750ms (75% - minimum)
   var value_100 = osc.produce_value("test", start_time + 999) # t=999ms (back to middle)
   
+  # Print actual values for debugging
+  print(f"  SINE values: t=0%: {value_0}, t=25%: {value_25}, t=50%: {value_50}, t=75%: {value_75}, t=99.9%: {value_100}")
+  
   # Sine should be smooth curve starting at middle, going to max, middle, min, middle
   # At t=0: sine(0) = 0, which maps to middle value (50)
   # At t=25%: sine(π/2) = 1, which maps to max value (100)
@@ -214,6 +226,12 @@ def test_sine_waveform()
   assert(value_50 >= 45 && value_50 <= 55, f"Value at 50% should be ~50 (middle), got {value_50}")
   assert(value_75 >= 0 && value_75 <= 10, f"Value at 75% should be ~0 (min), got {value_75}")
   assert(value_100 >= 45 && value_100 <= 55, f"Value at 99.9% should be ~50 (back to middle), got {value_100}")
+  
+  # Verify values are actually changing over time
+  assert(value_0 != value_25, "SINE values should change between 0% and 25%")
+  assert(value_25 != value_50, "SINE values should change between 25% and 50%")
+  assert(value_50 != value_75, "SINE values should change between 50% and 75%")
+  assert(value_75 != value_100, "SINE values should change between 75% and 99.9%")
   
   print("✓ SINE waveform test passed")
 end
@@ -282,15 +300,25 @@ def test_static_constructors()
   var smooth1 = animation.smooth(mock_engine)
   assert(smooth1.form == animation.COSINE, "smooth() should use COSINE")
   
-  # Test sine() constructor
-  var sine1 = animation.sine(mock_engine)
+  # Test sine_osc() constructor
+  var sine1 = animation.sine_osc(mock_engine)
   sine1.min_value = 0
   sine1.max_value = 255
   sine1.duration = 2000
-  assert(sine1.form == animation.SINE, "sine() should use SINE")
-  assert(sine1.min_value == 0, "sine() should set min_value")
-  assert(sine1.max_value == 255, "sine() should set max_value")
-  assert(sine1.duration == 2000, "sine() should set duration")
+  assert(sine1.form == animation.SINE, "sine_osc() should use SINE")
+  assert(sine1.min_value == 0, "sine_osc() should set min_value")
+  assert(sine1.max_value == 255, "sine_osc() should set max_value")
+  assert(sine1.duration == 2000, "sine_osc() should set duration")
+  
+  # Test cosine_osc() constructor (alias for smooth)
+  var cosine1 = animation.cosine_osc(mock_engine)
+  cosine1.min_value = 25
+  cosine1.max_value = 200
+  cosine1.duration = 1800
+  assert(cosine1.form == animation.COSINE, "cosine_osc() should use COSINE")
+  assert(cosine1.min_value == 25, "cosine_osc() should set min_value")
+  assert(cosine1.max_value == 200, "cosine_osc() should set max_value")
+  assert(cosine1.duration == 1800, "cosine_osc() should set duration")
   
   # Test square() constructor
   var square1 = animation.square(mock_engine)
@@ -399,6 +427,79 @@ def test_edge_cases()
   print("✓ Edge cases test passed")
 end
 
+# Test time evolution of COSINE and SINE waveforms
+def test_cosine_sine_time_evolution()
+  print("Testing COSINE and SINE time evolution...")
+  
+  # Test COSINE evolution over time
+  var cosine_osc = animation.oscillator_value(mock_engine)
+  cosine_osc.min_value = 0
+  cosine_osc.max_value = 255
+  cosine_osc.duration = 5000  # 5 second cycle
+  cosine_osc.form = animation.COSINE
+  
+  var start_time = 10000
+  cosine_osc.start(start_time)
+  
+  print("  COSINE waveform evolution (0-255 range, 5000ms duration):")
+  var cosine_values = []
+  for i: 0..10
+    var time_offset = i * 500  # Every 500ms (10% of cycle)
+    var value = cosine_osc.produce_value("test", start_time + time_offset)
+    cosine_values.push(value)
+    var percentage = (i * 10)
+    print(f"    t={percentage}% ({time_offset}ms): {value}")
+  end
+  
+  # Test SINE evolution over time
+  var sine_osc = animation.oscillator_value(mock_engine)
+  sine_osc.min_value = 0
+  sine_osc.max_value = 255
+  sine_osc.duration = 5000  # 5 second cycle
+  sine_osc.form = animation.SINE
+  
+  sine_osc.start(start_time)
+  
+  print("  SINE waveform evolution (0-255 range, 5000ms duration):")
+  var sine_values = []
+  for i: 0..10
+    var time_offset = i * 500  # Every 500ms (10% of cycle)
+    var value = sine_osc.produce_value("test", start_time + time_offset)
+    sine_values.push(value)
+    var percentage = (i * 10)
+    print(f"    t={percentage}% ({time_offset}ms): {value}")
+  end
+  
+  # Verify that values are actually changing for both waveforms
+  var cosine_changes = 0
+  var sine_changes = 0
+  
+  for i: 1..10
+    if cosine_values[i] != cosine_values[i-1]
+      cosine_changes += 1
+    end
+    if sine_values[i] != sine_values[i-1]
+      sine_changes += 1
+    end
+  end
+  
+  assert(cosine_changes >= 8, f"COSINE should change values at least 8 times out of 10 steps, got {cosine_changes}")
+  assert(sine_changes >= 8, f"SINE should change values at least 8 times out of 10 steps, got {sine_changes}")
+  
+  # Verify COSINE starts at minimum and reaches maximum at 50%
+  assert(cosine_values[0] <= 10, f"COSINE should start near minimum (0), got {cosine_values[0]}")
+  assert(cosine_values[5] >= 245, f"COSINE should reach near maximum (255) at 50%, got {cosine_values[5]}")
+  assert(cosine_values[10] <= 10, f"COSINE should return near minimum (0) at 100%, got {cosine_values[10]}")
+  
+  # Verify SINE starts at middle and follows expected pattern
+  assert(sine_values[0] >= 120 && sine_values[0] <= 135, f"SINE should start near middle (127), got {sine_values[0]}")
+  assert(sine_values[2] >= 240, f"SINE should reach near maximum around 25%, got {sine_values[2]} at 20%")
+  assert(sine_values[5] >= 120 && sine_values[5] <= 135, f"SINE should return to middle at 50%, got {sine_values[5]}")
+  assert(sine_values[7] <= 15, f"SINE should reach near minimum around 75%, got {sine_values[7]} at 70%")
+  
+  print("✓ COSINE and SINE time evolution test passed")
+end
+
 # Test tostring() method
 def test_tostring()
   print("Testing tostring() method...")
@@ -433,6 +534,7 @@ def run_oscillator_value_provider_tests()
     test_square_waveform()
     test_cosine_waveform()
     test_sine_waveform()
+    test_cosine_sine_time_evolution()
     test_phase_shift()
     test_static_constructors()
     test_produce_value_method()
