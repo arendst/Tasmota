@@ -301,9 +301,7 @@ BERRY_API bint be_str2int(const char *str, const char **endstr)
         /* hex literal */
         str += 2;       /* skip 0x or 0X */
         while ((c = be_char2hex(*str++)) >= 0) {
-            if (sum > M_IMAX / 16) goto overflow_pos;
             sum = sum * 16 + c;
-            if (sum < 0) goto overflow_pos; /* overflow check */
         }
         if (endstr) {
             *endstr = str - 1;
