@@ -146,7 +146,7 @@ def test_sequences()
   print("Testing sequences...")
   
   var dsl_source = "color custom_blue = 0x0000FF\n"
-    "animation blue_anim = custom_blue\n"
+    "animation blue_anim = solid(color=custom_blue)\n"
     "\n"
     "sequence test_seq {\n"
     "  play blue_anim for 3s\n"
@@ -179,9 +179,9 @@ def test_multiple_run_statements()
     "animation blue_anim = solid(color=custom_blue)\n" +
     "animation green_anim = solid(color=custom_green)\n" +
     "\n" +
-    "red_anim.pos = 5\n" +
-    "blue_anim.pos = 15\n" +
-    "green_anim.pos = 25\n" +
+    "red_anim.priority = 5\n" +
+    "blue_anim.priority = 15\n" +
+    "green_anim.priority = 25\n" +
     "\n" +
     "run red_anim\n" +
     "run blue_anim\n" +
@@ -307,7 +307,7 @@ def test_computed_values()
   assert(computed_code != nil, "Should compile computed values")
   
   # Check for single resolve calls (no double wrapping)
-  var expected_single_resolve = "self.abs(self.resolve(strip_len_, param_name, time_ms) / 4)"
+  var expected_single_resolve = "self.abs(self.resolve(strip_len_) / 4)"
   assert(string.find(computed_code, expected_single_resolve) >= 0, "Should generate single resolve call in computed expression")
   
   # Check that there are no double resolve calls
@@ -371,13 +371,13 @@ def test_computed_values()
   assert(nested_closure_count == 0, f"Should have no nested closures, found {nested_closure_count}")
   
   # Verify specific complex expression patterns
-  var expected_complex_tail = "self.resolve(strip_len_, param_name, time_ms) / 8 + (2 * self.resolve(strip_len_, param_name, time_ms)) - 10"
+  var expected_complex_tail = "self.resolve(strip_len_) / 8 + (2 * self.resolve(strip_len_)) - 10"
   assert(string.find(complex_code, expected_complex_tail) >= 0, "Should generate correct complex tail_length expression")
   
-  var expected_complex_speed = "(self.resolve(base_value_, param_name, time_ms) + self.resolve(strip_len_, param_name, time_ms)) * 2.5"
+  var expected_complex_speed = "(self.resolve(base_value_) + self.resolve(strip_len_)) * 2.5"
   assert(string.find(complex_code, expected_complex_speed) >= 0, "Should generate correct complex speed expression")
   
-  var expected_complex_priority = "self.max(1, self.min(10, self.resolve(strip_len_, param_name, time_ms) / 6))"
+  var expected_complex_priority = "self.max(1, self.min(10, self.resolve(strip_len_) / 6))"
   assert(string.find(complex_code, expected_complex_priority) >= 0, "Should generate correct complex priority expression with math functions")
   
   # Test simple expressions that don't need closures
@@ -658,7 +658,6 @@ def test_property_assignments()
   
   var dsl_with_properties = "color custom_red = 0xFF0000\n" +
     "animation red_anim = solid(color=custom_red)\n" +
-    "red_anim.pos = 15\n" +
     "red_anim.opacity = 128\n" +
     "red_anim.priority = 10"
   
@@ -667,7 +666,6 @@ def test_property_assignments()
   assert(berry_code != nil, "Should generate Berry code with property assignments")
   
   # Check that property assignments are generated correctly (new behavior: direct underscore access)
-  assert(string.find(berry_code, "red_anim_.pos = 15") >= 0, "Should generate pos property assignment")
   assert(string.find(berry_code, "red_anim_.opacity = 128") >= 0, "Should generate opacity property assignment")
   assert(string.find(berry_code, "red_anim_.priority = 10") >= 0, "Should generate priority property assignment")
   

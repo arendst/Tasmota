@@ -767,6 +767,8 @@ The DSL validates class and parameter existence during compilation, catching err
 - **Parameter Names**: Checks that all named parameters are valid for the specific class
 - **Parameter Constraints**: Validates parameter values against defined constraints (min/max, enums, types)
 - **Nested Validation**: Validates parameters in nested function calls and value providers
+- **Property Assignment Validation**: Validates parameter names in property assignments (e.g., `animation.invalid_param = value`) against the actual class parameters
+- **Object Reference Validation**: Validates that referenced objects exist in `run` statements and sequence `play` statements
 
 ### Common Errors
 
@@ -774,15 +776,28 @@ The DSL validates class and parameter existence during compilation, catching err
 # Invalid: Redefining predefined color
 color red = 0x800000                # Error: Cannot redefine 'red'
 
-# Invalid: Unknown parameter
+# Invalid: Unknown parameter in constructor
 animation bad = pulsating_animation(invalid_param=123)  # Error: Unknown parameter
 
-# Invalid: Undefined reference
+# Invalid: Unknown parameter in property assignment
+animation pulse = pulsating_animation(color=red, period=2s)
+pulse.wrong_arg = 15                # Error: Parameter 'wrong_arg' not valid for PulseAnimation
+
+# Invalid: Undefined reference in color definition
 animation ref = solid(color=undefined_color)        # Error: Undefined reference
+
+# Invalid: Undefined reference in run statement
+run undefined_animation             # Error: Undefined reference 'undefined_animation' in run
+
+# Invalid: Undefined reference in sequence
+sequence demo {
+  play undefined_animation for 5s   # Error: Undefined reference 'undefined_animation' in sequence play
+}
 
 # Valid alternatives
 color my_red = 0x800000             # OK: Different name
 animation good = pulsating_animation(color=red, period=2s)  # OK: Valid parameters
+good.priority = 10                  # OK: Valid parameter assignment
 ```
 
 ## Formal Grammar (EBNF)

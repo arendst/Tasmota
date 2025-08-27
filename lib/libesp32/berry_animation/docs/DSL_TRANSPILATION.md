@@ -292,9 +292,14 @@ animation bad2 = math_function(value=10)
 
 **Parameter Validation:**
 ```berry
-# Error: Invalid parameter name
+# Error: Invalid parameter name in constructor
 animation pulse = pulsating_animation(invalid_param=123)
 # Transpiler error: "Parameter 'invalid_param' is not valid for pulsating_animation"
+
+# Error: Invalid parameter name in property assignment
+animation pulse = pulsating_animation(color=red, period=2s)
+pulse.wrong_arg = 15
+# Transpiler error: "Animation 'PulseAnimation' does not have parameter 'wrong_arg'"
 
 # Error: Parameter constraint violation
 animation comet = comet_animation(tail_length=-5)
@@ -318,16 +323,23 @@ color bad2 = pulsating_animation(color=red)
 animation pulse = pulsating_animation(color=undefined_color)
 # Transpiler error: "Undefined reference: 'undefined_color'"
 
-# Error: Undefined animation reference
+# Error: Undefined animation reference in run statement
 run nonexistent_animation
-# Transpiler error: "Undefined reference: 'nonexistent_animation'"
+# Transpiler error: "Undefined reference 'nonexistent_animation' in run"
+
+# Error: Undefined animation reference in sequence
+sequence demo {
+  play nonexistent_animation for 5s
+}
+# Transpiler error: "Undefined reference 'nonexistent_animation' in sequence play"
 ```
 
 ### Error Categories
 
 - **Syntax errors**: Invalid DSL syntax (lexer/parser errors)
 - **Factory validation**: Non-existent or invalid animation/color provider factories
-- **Parameter validation**: Invalid parameter names or constraint violations
+- **Parameter validation**: Invalid parameter names in constructors or property assignments
+- **Constraint validation**: Parameter values that violate defined constraints (min/max, enums, types)
 - **Reference validation**: Using undefined colors, animations, or variables
 - **Type validation**: Incorrect parameter types or incompatible assignments
 - **Runtime errors**: Errors during Berry code execution (rare with good validation)

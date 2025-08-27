@@ -9598,8 +9598,8 @@ be_local_closure(linear,   /* name */
 );
 /*******************************************************************/
 
-// compact class 'ClosureValueProvider' ktab size: 20, total: 33 (saved 104 bytes)
-static const bvalue be_ktab_class_ClosureValueProvider[20] = {
+// compact class 'ClosureValueProvider' ktab size: 26, total: 39 (saved 104 bytes)
+static const bvalue be_ktab_class_ClosureValueProvider[26] = {
   /* K0   */  be_nested_str_weak(closure),
   /* K1   */  be_nested_str_weak(_closure),
   /* K2   */  be_nested_str_weak(math),
@@ -9620,6 +9620,12 @@ static const bvalue be_ktab_class_ClosureValueProvider[20] = {
   /* K17  */  be_nested_str_weak(animation),
   /* K18  */  be_nested_str_weak(is_value_provider),
   /* K19  */  be_nested_str_weak(produce_value),
+  /* K20  */  be_nested_str_weak(engine),
+  /* K21  */  be_nested_str_weak(time_ms),
+  /* K22  */  be_nested_str_weak(parameterized_object),
+  /* K23  */  be_nested_str_weak(value_error),
+  /* K24  */  be_nested_str_weak(Parameter_X20name_X20cannot_X20be_X20nil_X20when_X20resolving_X20object_X20parameter),
+  /* K25  */  be_nested_str_weak(get_param_value),
 };
 
 
@@ -9978,8 +9984,8 @@ be_local_closure(class_ClosureValueProvider_produce_value,   /* name */
 ********************************************************************/
 be_local_closure(class_ClosureValueProvider_resolve,   /* name */
   be_nested_proto(
-    8,                          /* nstack */
-    4,                          /* argc */
+    7,                          /* nstack */
+    3,                          /* argc */
     10,                          /* varg */
     0,                          /* has upvals */
     NULL,                       /* no upvals */
@@ -9989,20 +9995,41 @@ be_local_closure(class_ClosureValueProvider_resolve,   /* name */
     &be_ktab_class_ClosureValueProvider,     /* shared constants */
     be_str_weak(resolve),
     &be_const_str_solidified,
-    ( &(const binstruction[13]) {  /* code */
-      0xB8122200,  //  0000  GETNGBL	R4	K17
-      0x8C100912,  //  0001  GETMET	R4	R4	K18
-      0x5C180200,  //  0002  MOVE	R6	R1
-      0x7C100400,  //  0003  CALL	R4	2
-      0x78120005,  //  0004  JMPF	R4	#000B
-      0x8C100313,  //  0005  GETMET	R4	R1	K19
-      0x5C180400,  //  0006  MOVE	R6	R2
-      0x5C1C0600,  //  0007  MOVE	R7	R3
-      0x7C100600,  //  0008  CALL	R4	3
-      0x80040800,  //  0009  RET	1	R4
-      0x70020000,  //  000A  JMP		#000C
-      0x80040200,  //  000B  RET	1	R1
-      0x80000000,  //  000C  RET	0
+    ( &(const binstruction[34]) {  /* code */
+      0xB80E2200,  //  0000  GETNGBL	R3	K17
+      0x8C0C0712,  //  0001  GETMET	R3	R3	K18
+      0x5C140200,  //  0002  MOVE	R5	R1
+      0x7C0C0400,  //  0003  CALL	R3	2
+      0x780E0006,  //  0004  JMPF	R3	#000C
+      0x8C0C0313,  //  0005  GETMET	R3	R1	K19
+      0x5C140400,  //  0006  MOVE	R5	R2
+      0x88180114,  //  0007  GETMBR	R6	R0	K20
+      0x88180D15,  //  0008  GETMBR	R6	R6	K21
+      0x7C0C0600,  //  0009  CALL	R3	3
+      0x80040600,  //  000A  RET	1	R3
+      0x70020014,  //  000B  JMP		#0021
+      0x4C0C0000,  //  000C  LDNIL	R3
+      0x200C0203,  //  000D  NE	R3	R1	R3
+      0x780E0010,  //  000E  JMPF	R3	#0020
+      0x600C000F,  //  000F  GETGBL	R3	G15
+      0x5C100200,  //  0010  MOVE	R4	R1
+      0xB8162200,  //  0011  GETNGBL	R5	K17
+      0x88140B16,  //  0012  GETMBR	R5	R5	K22
+      0x7C0C0400,  //  0013  CALL	R3	2
+      0x780E000A,  //  0014  JMPF	R3	#0020
+      0x4C0C0000,  //  0015  LDNIL	R3
+      0x1C0C0403,  //  0016  EQ	R3	R2	R3
+      0x780E0000,  //  0017  JMPF	R3	#0019
+      0xB0062F18,  //  0018  RAISE	1	K23	K24
+      0x8C0C0319,  //  0019  GETMET	R3	R1	K25
+      0x5C140400,  //  001A  MOVE	R5	R2
+      0x88180114,  //  001B  GETMBR	R6	R0	K20
+      0x88180D15,  //  001C  GETMBR	R6	R6	K21
+      0x7C0C0600,  //  001D  CALL	R3	3
+      0x80040600,  //  001E  RET	1	R3
+      0x70020000,  //  001F  JMP		#0021
+      0x80040200,  //  0020  RET	1	R1
+      0x80000000,  //  0021  RET	0
     })
   )
 );

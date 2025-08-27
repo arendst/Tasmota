@@ -18,31 +18,31 @@ var random_base_ = animation.solid(engine)
 random_base_.color = 0xFF0000FF
 random_base_.priority = 10
 # Use user function in property assignment
-random_base_.opacity = animation.create_closure_value(engine, def (self, param_name, time_ms) return (animation.get_user_function('rand_demo')(self.engine)) end)
+random_base_.opacity = animation.create_closure_value(engine, def (self) return animation.get_user_function('rand_demo')(self.engine) end)
 # Example 2: User function with mathematical operations
 var random_bounded_ = animation.solid(engine)
 random_bounded_.color = 0xFFFFA500
 random_bounded_.priority = 8
 # User function with bounds using math functions
-random_bounded_.opacity = animation.create_closure_value(engine, def (self, param_name, time_ms) return (self.max(50, self.min(255, animation.get_user_function('rand_demo')(self.engine) + 100))) end)
+random_bounded_.opacity = animation.create_closure_value(engine, def (self) return self.max(50, self.min(255, animation.get_user_function('rand_demo')(self.engine) + 100)) end)
 # Example 3: User function in arithmetic expressions
 var random_variation_ = animation.solid(engine)
 random_variation_.color = 0xFF800080
 random_variation_.priority = 15
 # Mix user function with arithmetic operations
-random_variation_.opacity = animation.create_closure_value(engine, def (self, param_name, time_ms) return (self.abs(animation.get_user_function('rand_demo')(self.engine) - 128) + 64) end)
+random_variation_.opacity = animation.create_closure_value(engine, def (self) return self.abs(animation.get_user_function('rand_demo')(self.engine) - 128) + 64 end)
 # Example 4: User function affecting different properties
 var random_multi_ = animation.solid(engine)
 random_multi_.color = 0xFF00FFFF
 random_multi_.priority = 12
 # Use user function for multiple properties
-random_multi_.opacity = animation.create_closure_value(engine, def (self, param_name, time_ms) return (self.max(100, animation.get_user_function('rand_demo')(self.engine))) end)
+random_multi_.opacity = animation.create_closure_value(engine, def (self) return self.max(100, animation.get_user_function('rand_demo')(self.engine)) end)
 # Example 5: Complex expression with user function
 var random_complex_ = animation.solid(engine)
 random_complex_.color = 0xFFFFFFFF
 random_complex_.priority = 20
 # Complex expression with user function and math operations
-random_complex_.opacity = animation.create_closure_value(engine, def (self, param_name, time_ms) return (self.round((animation.get_user_function('rand_demo')(self.engine) + 128) / 2 + self.abs(animation.get_user_function('rand_demo')(self.engine) - 100))) end)
+random_complex_.opacity = animation.create_closure_value(engine, def (self) return self.round((animation.get_user_function('rand_demo')(self.engine) + 128) / 2 + self.abs(animation.get_user_function('rand_demo')(self.engine) - 100)) end)
 # Run all animations to demonstrate the effects
 engine.add_animation(random_base_)
 engine.add_animation(random_bounded_)

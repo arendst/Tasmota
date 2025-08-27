@@ -198,6 +198,149 @@ class DSLParameterValidationTest
     end
   end
   
+  # Test valid object property references - should compile successfully
+  def test_valid_object_property_references()
+    var dsl_code = 
+      "# strip length 30  # TEMPORARILY DISABLED\n"
+      "animation red_eye = beacon_animation(color=red, pos=10)\n"
+      "animation green_eye = beacon_animation(color=green, pos=red_eye.pos)\n"
+      "run red_eye\n"
+      "run green_eye"
+    
+    var berry_code = animation_dsl.compile_dsl(dsl_code)
+    
+    if berry_code == nil
+      raise "compilation_error", "Valid object property references should compile successfully"
+    end
+    
+    # Check that the generated code contains the expected object reference
+    if string.find(berry_code, "self.resolve(red_eye_, 'pos')") == -1
+      raise "generation_error", "Generated code should contain object property reference"
+    end
+  end
+  
+  # Test invalid object property references - should fail compilation
+  def test_invalid_object_property_references()
+    var dsl_code = 
+      "# strip length 30  # TEMPORARILY DISABLED\n"
+      "animation red_eye = beacon_animation(color=red, pos=10)\n"
+      "animation green_eye = beacon_animation(color=green, pos=red_eye.invalid_param)\n"
+      "run red_eye\n"
+      "run green_eye"
+    
+    var compilation_failed = false
+    var error_message = ""
+    
+    try
+      var berry_code = animation_dsl.compile_dsl(dsl_code)
+      if berry_code == nil
+        compilation_failed = true
+      end
+    except "dsl_compilation_error" as e, msg
+      compilation_failed = true
+      error_message = msg
+    end
+    
+    if !compilation_failed
+      raise "validation_error", "Invalid object property reference should cause compilation to fail"
+    end
+    
+    # Check that the error message mentions the invalid parameter
+    if string.find(error_message, "invalid_param") == -1
+      raise "error_message_error", f"Error message should mention 'invalid_param', got: {error_message}"
+    end
+    
+    # Check that the error message mentions it's a BeaconAnimation parameter issue
+    if string.find(error_message, "BeaconAnimation") == -1
+      raise "error_message_error", f"Error message should mention 'BeaconAnimation', got: {error_message}"
+    end
+  end
+  
+  # Test object property references in computed expressions - should validate parameters
+  def test_object_property_references_in_expressions()
+    var dsl_code = 
+      "set strip_len = strip_length()\n"
+      "animation red_eye = beacon_animation(color=red, pos=10)\n"
+      "animation blue_eye = beacon_animation(color=blue, pos=strip_len - red_eye.nonexistent)\n"
+      "run red_eye\n"
+      "run blue_eye"
+    
+    var compilation_failed = false
+    var error_message = ""
+    
+    try
+      var berry_code = animation_dsl.compile_dsl(dsl_code)
+      if berry_code == nil
+        compilation_failed = true
+      end
+    except "dsl_compilation_error" as e, msg
+      compilation_failed = true
+      error_message = msg
+    end
+    
+    if !compilation_failed
+      raise "validation_error", "Invalid object property reference in expression should cause compilation to fail"
+    end
+    
+    # Check that the error message mentions the invalid parameter
+    if string.find(error_message, "nonexistent") == -1
+      raise "error_message_error", f"Error message should mention 'nonexistent', got: {error_message}"
+    end
+  end
+  
+  # Test sequence property references - should fail with specific error
+  def test_sequence_property_references()
+    var dsl_code = 
+      "sequence demo {\n"
+      "  play solid(color=red) for 5s\n"
+      "}\n"
+      "animation test = beacon_animation(color=blue, pos=demo.pos)\n"
+      "run test"
+    
+    var compilation_failed = false
+    var error_message = ""
+    
+    try
+      var berry_code = animation_dsl.compile_dsl(dsl_code)
+      if berry_code == nil
+        compilation_failed = true
+      end
+    except "dsl_compilation_error" as e, msg
+      compilation_failed = true
+      error_message = msg
+    end
+    
+    if !compilation_failed
+      raise "validation_error", "Sequence property reference should cause compilation to fail"
+    end
+    
+    # Check that the error message mentions sequences don't have properties
+    if string.find(error_message, "Sequences") == -1 || string.find(error_message, "do not have properties") == -1
+      raise "error_message_error", f"Error message should mention that sequences don't have properties, got: {error_message}"
+    end
+  end
+  
+  # Test valid computed object property references - should compile successfully
+  def test_valid_computed_object_property_references()
+    var dsl_code = 
+      "set strip_len = strip_length()\n"
+      "animation red_eye = beacon_animation(color=red, pos=10)\n"
+      "animation blue_eye = beacon_animation(color=blue, pos=strip_len - red_eye.pos)\n"
+      "run red_eye\n"
+      "run blue_eye"
+    
+    var berry_code = animation_dsl.compile_dsl(dsl_code)
+    
+    if berry_code == nil
+      raise "compilation_error", "Valid computed object property references should compile successfully"
+    end
+    
+    # Check that the generated code contains the expected computed expression
+    if string.find(berry_code, "self.resolve(strip_len_) - self.resolve(red_eye_, 'pos')") == -1
+      raise "generation_error", "Generated code should contain computed object property reference"
+    end
+  end
+  
   # Run all tests
   def run_all_tests()
     print("Running DSL Parameter Validation Tests...")
@@ -212,7 +355,12 @@ class DSLParameterValidationTest
       ["Mixed Parameters", / -> self.test_mixed_parameters()],
       ["Nested Function Invalid Parameters", / -> self.test_nested_function_invalid_parameters()],
       ["User Function Not Validated", / -> self.test_user_function_not_validated()],
-      ["Multiple Animations Validation", / -> self.test_multiple_animations_validation()]
+      ["Multiple Animations Validation", / -> self.test_multiple_animations_validation()],
+      ["Valid Object Property References", / -> self.test_valid_object_property_references()],
+      ["Invalid Object Property References", / -> self.test_invalid_object_property_references()],
+      ["Object Property References in Expressions", / -> self.test_object_property_references_in_expressions()],
+      ["Sequence Property References", / -> self.test_sequence_property_references()],
+      ["Valid Computed Object Property References", / -> self.test_valid_computed_object_property_references()]
     ]
     
     for test : tests

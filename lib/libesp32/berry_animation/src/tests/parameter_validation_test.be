@@ -4,6 +4,7 @@
 # ValueProvider instances for integer and real parameters.
 
 import animation
+import global
 
 # Test that parameters accept ValueProviders and integers only
 def test_parameter_accepts_value_providers()
@@ -197,6 +198,259 @@ def test_type_validation()
   print("✓ Type validation test passed")
 end
 
+# Test DSL compile-time parameter validation
+def test_dsl_parameter_validation()
+  print("Testing DSL compile-time parameter validation...")
+  
+  import animation_dsl
+  
+  # Test valid animation parameter
+  var valid_dsl = "animation red_eye = beacon_animation(color = red)\n" +
+                  "red_eye.back_color = blue"
+  
+  var result = animation_dsl.compile(valid_dsl)
+  assert(result != nil, "Valid parameter should compile successfully")
+  
+  # Test invalid animation parameter
+  var invalid_dsl = "animation red_eye = beacon_animation(color = red)\n" +
+                    "red_eye.invalid_param = 123"
+  
+  try
+    animation_dsl.compile(invalid_dsl)
+    assert(false, "Invalid parameter should cause compilation error")
+  except .. as e
+    # Expected - invalid parameter should be caught
+    assert(true, "Invalid parameter correctly rejected")
+  end
+  
+  # Test valid color provider parameter
+  var valid_color_dsl = "color solid_red = static_color(color = red)\n" +
+                        "solid_red.color = blue"
+  
+  var result2 = animation_dsl.compile(valid_color_dsl)
+  assert(result2 != nil, "Valid color provider parameter should compile successfully")
+  
+  # Test invalid color provider parameter
+  var invalid_color_dsl = "color solid_red = static_color(color = red)\n" +
+                          "solid_red.invalid_param = 123"
+  
+  try
+    animation_dsl.compile(invalid_color_dsl)
+    assert(false, "Invalid color provider parameter should cause compilation error")
+  except .. as e
+    # Expected - invalid parameter should be caught
+    assert(true, "Invalid color provider parameter correctly rejected")
+  end
+  
+  # Test unknown objects skip validation (no error)
+  var unknown_dsl = "unknown_object.some_param = 123"
+  var result3 = animation_dsl.compile(unknown_dsl)
+  assert(result3 != nil, "Unknown objects should not cause validation errors")
+  
+  print("✓ DSL compile-time parameter validation test passed")
+end
+
+# Test DSL object reference validation
+def test_dsl_object_reference_validation()
+  print("Testing DSL object reference validation...")
+  
+  import animation_dsl
+  
+  # Test valid run statement
+  var valid_run = "animation red_eye = beacon_animation(color = red)\n" +
+                  "run red_eye"
+  
+  var result = animation_dsl.compile(valid_run)
+  assert(result != nil, "Valid run statement should compile successfully")
+  
+  # Test invalid run statement (undefined object)
+  var invalid_run = "animation red_eye = beacon_animation(color = red)\n" +
+                    "run undefined_animation"
+  
+  try
+    animation_dsl.compile(invalid_run)
+    assert(false, "Invalid run statement should cause compilation error")
+  except .. as e
+    # Expected - undefined reference should be caught
+    assert(true, "Undefined reference in run statement correctly rejected")
+  end
+  
+  # Test valid sequence with play statement
+  var valid_sequence = "animation red_eye = beacon_animation(color = red)\n" +
+                       "sequence demo {\n" +
+                       "  play red_eye for 5s\n" +
+                       "  wait 1s\n" +
+                       "}"
+  
+  var result2 = animation_dsl.compile(valid_sequence)
+  assert(result2 != nil, "Valid sequence should compile successfully")
+  
+  # Test invalid sequence with undefined play reference
+  var invalid_sequence = "animation red_eye = beacon_animation(color = red)\n" +
+                         "sequence demo {\n" +
+                         "  play undefined_animation for 5s\n" +
+                         "  wait 1s\n" +
+                         "}"
+  
+  try
+    animation_dsl.compile(invalid_sequence)
+    assert(false, "Invalid sequence should cause compilation error")
+  except .. as e
+    # Expected - undefined reference should be caught
+    assert(true, "Undefined reference in sequence play statement correctly rejected")
+  end
+  
+  print("✓ DSL object reference validation test passed")
+end
+
+# Test DSL sequence symbol table registration
+def test_dsl_sequence_symbol_table_registration()
+  print("Testing DSL sequence symbol table registration...")
+  
+  import animation_dsl
+  
+  # Test 1: Valid sequence should be registered and runnable
+  var valid_sequence_dsl = "animation red_anim = beacon_animation(color = red)\n" +
+                           "sequence demo {\n" +
+                           "  play red_anim for 2s\n" +
+                           "}\n" +
+                           "run demo"
+  
+  var result = animation_dsl.compile(valid_sequence_dsl)
+  assert(result != nil, "Valid sequence should compile successfully")
+  
+  # Test 2: Sequence with invalid animation reference should fail at sequence processing
+  var invalid_anim_sequence_dsl = "animation red_anim = nonexistent_function(color = red)\n" +
+                                  "sequence demo {\n" +
+                                  "  play red_anim for 2s\n" +
+                                  "}\n" +
+                                  "run demo"
+  
+  try
+    animation_dsl.compile(invalid_anim_sequence_dsl)
+    assert(false, "Invalid animation reference should cause compilation error")
+  except .. as e
+    # Expected - invalid animation should be caught
+    assert(true, "Invalid animation reference correctly rejected")
+  end
+  
+  # Test 3: Sequence with undefined identifier should fail
+  var undefined_identifier_dsl = "sequence demo {\n" +
+                                 "  play undefined_anim for 2s\n" +
+                                 "}\n" +
+                                 "run demo"
+  
+  try
+    animation_dsl.compile(undefined_identifier_dsl)
+    assert(false, "Undefined identifier in sequence should cause compilation error")
+  except .. as e
+    # Expected - undefined identifier should be caught
+    assert(true, "Undefined identifier in sequence correctly rejected")
+  end
+  
+  print("✓ DSL sequence symbol table registration test passed")
+end
+
+# Test DSL symbol table mixed types handling
+def test_dsl_symbol_table_mixed_types()
+  print("Testing DSL symbol table mixed types handling...")
+  
+  import animation_dsl
+  
+  # Test 1: Valid property assignment on animation (instance in symbol table)
+  var animation_property_dsl = "animation red_anim = beacon_animation(color = red)\n" +
+                               "red_anim.back_color = blue"
+  
+  var result1 = animation_dsl.compile(animation_property_dsl)
+  assert(result1 != nil, "Animation property assignment should work")
+  
+  # Test 2: Valid property assignment on color provider (instance in symbol table)
+  var color_property_dsl = "color solid_red = static_color(color = red)\n" +
+                           "solid_red.color = blue"
+  
+  var result2 = animation_dsl.compile(color_property_dsl)
+  assert(result2 != nil, "Color provider property assignment should work")
+  
+  # Test 3: Invalid property assignment on sequence (string in symbol table)
+  var sequence_property_dsl = "animation red_anim = beacon_animation(color = red)\n" +
+                              "sequence demo {\n" +
+                              "  play red_anim for 2s\n" +
+                              "}\n" +
+                              "demo.invalid_property = 123"
+  
+  try
+    animation_dsl.compile(sequence_property_dsl)
+    assert(false, "Sequence property assignment should cause compilation error")
+  except .. as e
+    # Expected - sequence property assignment should be rejected
+    assert(true, "Sequence property assignment correctly rejected")
+  end
+  
+  # Test 4: Mixed symbol table with sequences and instances
+  var mixed_dsl = "animation red_anim = beacon_animation(color = red)\n" +
+                  "color solid_blue = static_color(color = blue)\n" +
+                  "sequence demo {\n" +
+                  "  play red_anim for 2s\n" +
+                  "}\n" +
+                  "red_anim.back_color = solid_blue\n" +
+                  "run demo"
+  
+  var result4 = animation_dsl.compile(mixed_dsl)
+  assert(result4 != nil, "Mixed symbol table operations should work")
+  
+  print("✓ DSL symbol table mixed types handling test passed")
+end
+
+# Test DSL identifier reference symbol table registration
+def test_dsl_identifier_reference_symbol_table()
+  print("Testing DSL identifier reference symbol table registration...")
+  
+  import animation_dsl
+  
+  # Test 1: Animation reference should be added to symbol table
+  var animation_ref_dsl = "animation solid_red = solid(color=red)\n" +
+                          "animation red_anim = solid_red\n" +
+                          "sequence demo {\n" +
+                          "  play red_anim for 2s\n" +
+                          "}\n" +
+                          "run demo"
+  
+  var result1 = animation_dsl.compile(animation_ref_dsl)
+  assert(result1 != nil, "Animation reference should compile successfully")
+  
+  # Test 2: Parameter validation on referenced animation
+  var param_validation_dsl = "animation solid_red = solid(color=red)\n" +
+                             "animation red_anim = solid_red\n" +
+                             "red_anim.color = blue"
+  
+  var result2 = animation_dsl.compile(param_validation_dsl)
+  assert(result2 != nil, "Parameter validation on referenced animation should work")
+  
+  # Test 3: Color provider reference should be added to symbol table
+  var color_ref_dsl = "color base_red = static_color(color=red)\n" +
+                      "color my_red = base_red\n" +
+                      "animation red_anim = solid(color=my_red)\n" +
+                      "my_red.color = blue"
+  
+  var result3 = animation_dsl.compile(color_ref_dsl)
+  assert(result3 != nil, "Color provider reference should work")
+  
+  # Test 4: Invalid parameter on referenced animation should fail
+  var invalid_param_dsl = "animation solid_red = solid(color=red)\n" +
+                          "animation red_anim = solid_red\n" +
+                          "red_anim.invalid_param = 123"
+  
+  try
+    animation_dsl.compile(invalid_param_dsl)
+    assert(false, "Invalid parameter on referenced animation should cause compilation error")
+  except .. as e
+    # Expected - invalid parameter should be caught
+    assert(true, "Invalid parameter on referenced animation correctly rejected")
+  end
+  
+  print("✓ DSL identifier reference symbol table registration test passed")
+end
+
 # Run all tests
 def run_parameter_validation_tests()
   print("=== Parameter Validation System Tests ===")
@@ -207,6 +461,11 @@ def run_parameter_validation_tests()
     test_range_validation()
     test_range_validation_with_providers()
     test_type_validation()
+    test_dsl_parameter_validation()
+    test_dsl_object_reference_validation()
+    test_dsl_sequence_symbol_table_registration()
+    test_dsl_symbol_table_mixed_types()
+    test_dsl_identifier_reference_symbol_table()
     
     print("=== All parameter validation tests passed! ===")
     return true

@@ -38,8 +38,6 @@ class ValueProvider : animation.parameterized_object
   def produce_value(name, time_ms)
     return module("undefined")  # Default behavior - return undefined
   end
-  
-
 end
 
 # Add a method to check if an object is a value provider

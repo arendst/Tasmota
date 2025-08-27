@@ -191,7 +191,7 @@ def test_sequence_processing()
   
   # Test basic sequence
   var basic_seq_dsl = "color custom_red = 0xFF0000\n" +
-    "animation red_anim = custom_red\n" +
+    "animation red_anim = solid(color=custom_red)\n" +
     "sequence demo {\n" +
     "  play red_anim for 2s\n" +
     "}\n" +
@@ -208,7 +208,7 @@ def test_sequence_processing()
   
   # Test repeat in sequence
   var repeat_seq_dsl = "color custom_blue = 0x0000FF\n" +
-    "animation blue_anim = custom_blue\n" +
+    "animation blue_anim = solid(color=custom_blue)\n" +
     "sequence test {\n" +
     "  repeat 3 times:\n" +
     "    play blue_anim for 1s\n" +
@@ -277,8 +277,8 @@ def test_property_assignments()
   print("Testing property assignments...")
   
   var property_tests = [
-    ["color custom_red = 0xFF0000\nanimation red_anim = solid(color=custom_red)\nred_anim.pos = 15", 
-     "red_anim_.pos = 15"],
+    ["color custom_red = 0xFF0000\nanimation red_anim = solid(color=custom_red)\nred_anim.priority = 15", 
+     "red_anim_.priority = 15"],
     ["animation test_anim = solid(color=red)\ntest_anim.opacity = 128", 
      "test_anim_.opacity = 128"],
     ["animation solid_red = solid(color=red)\nanimation pulse_anim = pulsating_animation(color=red, period=2000)\npulse_anim.priority = 5", 

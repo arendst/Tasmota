@@ -140,7 +140,7 @@ def test_generated_code_validity()
   var dsl_code = 
     "animation random_multi = solid(color=cyan, priority=12)\n"
     "random_multi.opacity = rand_demo()\n"
-    "random_multi.brightness = max(100, rand_demo())\n"
+    "random_multi.duration = max(100, rand_demo())\n"
     "run random_multi"
   
   try

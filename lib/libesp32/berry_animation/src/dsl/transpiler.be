@@ -25,6 +25,7 @@ class SimpleDSLTranspiler
   var first_statement # Track if we're processing the first statement
   var strip_initialized # Track if strip was initialized
   var sequence_names  # Track which names are sequences
+  var symbol_table    # Track created objects: name -> instance
   
   # Static color mapping for named colors (helps with solidification)
   static var named_colors = {
@@ -52,6 +53,7 @@ class SimpleDSLTranspiler
     self.first_statement = true  # Track if we're processing the first statement
     self.strip_initialized = false  # Track if strip was initialized
     self.sequence_names = {}  # Track which names are sequences
+    self.symbol_table = {}  # Track created objects: name -> instance
   end
   
   # Main transpilation method - single pass
@@ -191,14 +193,36 @@ class SimpleDSLTranspiler
         # Generate the base function call immediately
         self.add(f"var {name}_ = animation.{func_name}(engine){inline_comment}")
         
+        # Track this symbol in our symbol table
+        var instance = self._create_instance_for_validation(func_name)
+        if instance != nil
+          self.symbol_table[name] = instance
+        end
+        
         # Process named arguments with validation
         self._process_named_arguments_for_color_provider(f"{name}_", func_name)
       end
     else
+      # Check if this is a simple identifier reference before processing
+      var current_tok = self.current()
+      var is_simple_identifier = (current_tok != nil && current_tok.type == animation_dsl.Token.IDENTIFIER && 
+                                  (self.peek() == nil || self.peek().type != animation_dsl.Token.LEFT_PAREN))
+      var ref_name = is_simple_identifier ? current_tok.value : nil
+      
       # Regular value assignment (simple color value)
       var value = self.process_value("color")
       var inline_comment = self.collect_inline_comment()
       self.add(f"var {name}_ = {value}{inline_comment}")
+      
+      # If this is an identifier reference to another color provider in our symbol table,
+      # add this name to the symbol table as well for compile-time validation
+      if is_simple_identifier && ref_name != nil && self.symbol_table.contains(ref_name)
+        var ref_instance = self.symbol_table[ref_name]
+        # Only copy instances, not sequence markers
+        if type(ref_instance) != "string"
+          self.symbol_table[name] = ref_instance
+        end
+      end
     end
   end
   
@@ -323,14 +347,36 @@ class SimpleDSLTranspiler
         # Generate the base function call immediately
         self.add(f"var {name}_ = animation.{func_name}(engine){inline_comment}")
         
+        # Track this symbol in our symbol table
+        var instance = self._create_instance_for_validation(func_name)
+        if instance != nil
+          self.symbol_table[name] = instance
+        end
+        
         # Process named arguments with validation
         self._process_named_arguments_for_animation(f"{name}_", func_name)
       end
     else
+      # Check if this is a simple identifier reference before processing
+      var current_tok = self.current()
+      var is_simple_identifier = (current_tok != nil && current_tok.type == animation_dsl.Token.IDENTIFIER && 
+                                  (self.peek() == nil || self.peek().type != animation_dsl.Token.LEFT_PAREN))
+      var ref_name = is_simple_identifier ? current_tok.value : nil
+      
       # Regular value assignment (identifier, color, etc.)
       var value = self.process_value("animation")
       var inline_comment = self.collect_inline_comment()
       self.add(f"var {name}_ = {value}{inline_comment}")
+      
+      # If this is an identifier reference to another animation in our symbol table,
+      # add this name to the symbol table as well for compile-time validation
+      if is_simple_identifier && ref_name != nil && self.symbol_table.contains(ref_name)
+        var ref_instance = self.symbol_table[ref_name]
+        # Only copy instances, not sequence markers
+        if type(ref_instance) != "string"
+          self.symbol_table[name] = ref_instance
+        end
+      end
       
       # Note: For identifier references, type checking happens at runtime via animation.global()
     end
@@ -379,6 +425,10 @@ class SimpleDSLTranspiler
     
     # Track that this name is a sequence
     self.sequence_names[name] = true
+    
+    # Also add to symbol table with a special marker for sequences
+    # We use a string marker since sequences don't have real instances
+    self.symbol_table[name] = "sequence"
     
     self.expect_left_brace()
     
@@ -431,6 +481,10 @@ class SimpleDSLTranspiler
       else
         # This is an identifier reference - sequences need runtime resolution
         var anim_name = self.expect_identifier()
+        
+        # Validate that the referenced object exists
+        self._validate_object_reference(anim_name, "sequence play")
+        
         anim_ref = f"animation.global('{anim_name}_')"
       end
       
@@ -486,6 +540,10 @@ class SimpleDSLTranspiler
           else
             # This is an identifier reference - sequences need runtime resolution
             var anim_name = self.expect_identifier()
+            
+            # Validate that the referenced object exists
+            self._validate_object_reference(anim_name, "sequence play")
+            
             anim_ref = f"animation.global('{anim_name}_')"
           end
           
@@ -518,6 +576,10 @@ class SimpleDSLTranspiler
   def process_run()
     self.next()  # skip 'run'
     var name = self.expect_identifier()
+    
+    # Validate that the referenced object exists
+    self._validate_object_reference(name, "run")
+    
     var inline_comment = self.collect_inline_comment()
     
     # Store run statement for later processing
@@ -535,6 +597,23 @@ class SimpleDSLTranspiler
     if self.current() != nil && self.current().type == animation_dsl.Token.DOT
       self.next()  # skip '.'
       var property_name = self.expect_identifier()
+      
+      # Validate parameter if we have this object in our symbol table
+      if self.symbol_table.contains(object_name)
+        var instance = self.symbol_table[object_name]
+        
+        # Only validate parameters for actual instances, not sequence markers
+        if type(instance) != "string"
+          var class_name = classname(instance)
+          
+          # Use the existing parameter validation logic
+          self._validate_single_parameter(class_name, property_name, instance)
+        else
+          # This is a sequence marker - sequences don't have properties
+          self.error(f"Sequences like '{object_name}' do not have properties. Property assignments are only valid for animations and color providers.")
+        end
+      end
+      
       self.expect_assign()
       var value = self.process_value("property")
       var inline_comment = self.collect_inline_comment()
@@ -703,10 +782,45 @@ class SimpleDSLTranspiler
       return self.process_array_literal()
     end
     
-    # Identifier - could be color, animation, or variable
+    # Identifier - could be color, animation, variable, or object property reference
     if tok.type == animation_dsl.Token.IDENTIFIER
       var name = tok.value
       self.next()
+      
+      # Check if this is an object property reference (identifier.property)
+      if self.current() != nil && self.current().type == animation_dsl.Token.DOT
+        self.next()  # consume '.'
+        var property_name = self.expect_identifier()
+        
+        # Validate that the property exists on the referenced object
+        if self.symbol_table.contains(name)
+          var instance = self.symbol_table[name]
+          # Only validate parameters for actual instances, not sequence markers
+          if type(instance) != "string"
+            var class_name = classname(instance)
+            self._validate_single_parameter(class_name, property_name, instance)
+          else
+            # This is a sequence marker - sequences don't have properties
+            self.error(f"Sequences like '{name}' do not have properties. Property references are only valid for animations and color providers.")
+            return "nil"
+          end
+        end
+        
+        # Create a closure that resolves the object property at runtime
+        # Use symbol resolution logic for the object reference
+        import introspect
+        var object_ref = ""
+        if introspect.contains(animation, name)
+          # Symbol exists in animation module, use it directly
+          object_ref = f"animation.{name}"
+        else
+          # Symbol doesn't exist in animation module, use underscore suffix
+          object_ref = f"{name}_"
+        end
+        
+        # Return a closure expression that will be wrapped by the caller if needed
+        return f"self.resolve({object_ref}, '{property_name}')"
+      end
       
       # Check for palette constants
       import string
@@ -823,7 +937,7 @@ class SimpleDSLTranspiler
       transformed_expr = string.replace(transformed_expr, "  ", " ")
     end
     
-    var closure_code = f"def (self, param_name, time_ms) return ({transformed_expr}) end"
+    var closure_code = f"def (self) return {transformed_expr} end"
     
     # Return a closure value provider instance
     return f"animation.create_closure_value(engine, {closure_code})"
@@ -848,7 +962,7 @@ class SimpleDSLTranspiler
       right_expr = string.replace(right_expr, "  ", " ")
     end
     
-    var closure_code = f"def (self, param_name, time_ms) return ({left_expr} {op} {right_expr}) end"
+    var closure_code = f"def (self) return {left_expr} {op} {right_expr} end"
     
     # Return a closure value provider instance
     return f"animation.create_closure_value(engine, {closure_code})"
@@ -947,7 +1061,7 @@ class SimpleDSLTranspiler
         var end_pos = underscore_pos + 1
         if end_pos >= size(result) || !self.is_identifier_char(result[end_pos])
           # Replace the variable with the resolve call
-          var replacement = f"self.resolve({var_name}, param_name, time_ms)"
+          var replacement = f"self.resolve({var_name})"
           var before = start_pos > 0 ? result[0..start_pos-1] : ""
           var after = end_pos < size(result) ? result[end_pos..] : ""
           result = before + replacement + after
@@ -1019,7 +1133,7 @@ class SimpleDSLTranspiler
     
     if has_underscore && !has_operators && !has_paren && !has_animation_prefix
       # This looks like a simple user variable that might be a ValueProvider
-      return f"self.resolve({operand}, param_name, time_ms)"
+      return f"self.resolve({operand})"
     else
       # For other expressions (literals, animation module calls, complex expressions), use as-is
       return operand
@@ -1401,11 +1515,47 @@ class SimpleDSLTranspiler
       return f'"{value}"'
     end
     
-    # Identifier - variable reference
+    # Identifier - variable reference or object property reference
     if tok.type == animation_dsl.Token.IDENTIFIER
       var name = tok.value
       self.next()
-      return f"self.resolve({name}_, param_name, time_ms)"
+      
+      # Check if this is an object property reference (identifier.property)
+      if self.current() != nil && self.current().type == animation_dsl.Token.DOT
+        self.next()  # consume '.'
+        var property_name = self.expect_identifier()
+        
+        # Validate that the property exists on the referenced object
+        if self.symbol_table.contains(name)
+          var instance = self.symbol_table[name]
+          # Only validate parameters for actual instances, not sequence markers
+          if type(instance) != "string"
+            var class_name = classname(instance)
+            self._validate_single_parameter(class_name, property_name, instance)
+          else
+            # This is a sequence marker - sequences don't have properties
+            self.error(f"Sequences like '{name}' do not have properties. Property references are only valid for animations and color providers.")
+            return "nil"
+          end
+        end
+        
+        # Use symbol resolution logic for the object reference
+        import introspect
+        var object_ref = ""
+        if introspect.contains(animation, name)
+          # Symbol exists in animation module, use it directly
+          object_ref = f"animation.{name}"
+        else
+          # Symbol doesn't exist in animation module, use underscore suffix
+          object_ref = f"{name}_"
+        end
+        
+        # Return a resolve call for the object property
+        return f"self.resolve({object_ref}, '{property_name}')"
+      end
+      
+      # Regular variable reference
+      return f"self.resolve({name}_)"
     end
     
     self.error(f"Unexpected token in expression: {tok.value}")
@@ -1483,7 +1633,7 @@ class SimpleDSLTranspiler
     # Create animation instance once for parameter validation
     var animation_instance = nil
     if func_name != ""
-      animation_instance = self._create_animation_instance_for_validation(func_name)
+      animation_instance = self._create_instance_for_validation(func_name)
     end
     
     while !self.at_end() && !self.check_right_paren()
@@ -1982,7 +2132,7 @@ class SimpleDSLTranspiler
     self.expect_left_paren()
     
     # Create animation instance once for parameter validation
-    var animation_instance = self._create_animation_instance_for_validation(func_name)
+    var animation_instance = self._create_instance_for_validation(func_name)
     
     while !self.at_end() && !self.check_right_paren()
       self.skip_whitespace_including_newlines()
@@ -2051,11 +2201,6 @@ class SimpleDSLTranspiler
     end
   end
   
-  # Create animation instance for parameter validation
-  def _create_animation_instance_for_validation(func_name)
-    return self._create_instance_for_validation(func_name)
-  end
-  
   # Validate a single parameter immediately as it's parsed
   #
   # @param func_name: string - Name of the animation function
@@ -2072,6 +2217,38 @@ class SimpleDSLTranspiler
           self.error(f"Animation '{func_name}' does not have parameter '{param_name}'. Check the animation documentation for valid parameters.")
         end
       end
+      
+    except .. as e, msg
+      # If validation fails for any reason, just continue
+      # This ensures the transpiler is robust even if validation has issues
+    end
+  end
+  
+  # Validate that a referenced object exists in the symbol table or animation module
+  #
+  # @param object_name: string - Name of the object being referenced
+  # @param context: string - Context where the reference occurs (for error messages)
+  def _validate_object_reference(object_name, context)
+    try
+      import introspect
+      
+      # Check if object exists in symbol table (user-defined)
+      if self.symbol_table.contains(object_name)
+        return  # Object exists, validation passed
+      end
+      
+      # Check if object exists in animation module (built-in)
+      if introspect.contains(animation, object_name)
+        return  # Object exists, validation passed
+      end
+      
+      # Check if it's a sequence name
+      if self.sequence_names.contains(object_name)
+        return  # Sequence exists, validation passed
+      end
+      
+      # Object not found - report error
+      self.error(f"Undefined reference '{object_name}' in {context}. Make sure the object is defined before use.")
       
     except .. as e, msg
       # If validation fails for any reason, just continue
@@ -2223,7 +2400,7 @@ class SimpleDSLTranspiler
     self.expect_left_paren()
     
     # Create animation instance once for parameter validation
-    var animation_instance = self._create_animation_instance_for_validation(func_name)
+    var animation_instance = self._create_instance_for_validation(func_name)
     
     while !self.at_end() && !self.check_right_paren()
       self.skip_whitespace_including_newlines()

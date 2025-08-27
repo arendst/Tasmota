@@ -39,13 +39,19 @@ class ClosureValueProvider : animation.value_provider
   # This is equivalent to 'resolve_param' but with a shorter name
   # and available at first dereferencing of method name (hence faster)
   #
-  # @param value: any - Static value or value provider instance
+  # @param value: any - Static value, value provider instance, or parameterized object
   # @param param_name: string - Parameter name for specific produce_value() method lookup
-  # @param time_ms: int - Current time in milliseconds
-  # @return any - The resolved value (static or from provider)
-  def resolve(value, param_name, time_ms)
+  # @return any - The resolved value (static, from provider, or from object parameter)
+  def resolve(value, param_name)
     if animation.is_value_provider(value)
-      return value.produce_value(param_name, time_ms)
+      return value.produce_value(param_name, self.engine.time_ms)
+    elif value != nil && isinstance(value, animation.parameterized_object)
+      # Handle parameterized objects (animations, etc.) by accessing their parameters
+      # Check that param_name is not nil to prevent runtime errors
+      if param_name == nil
+        raise "value_error", "Parameter name cannot be nil when resolving object parameter"
+      end
+      return value.get_param_value(param_name, self.engine.time_ms)
     else
       return value
     end
