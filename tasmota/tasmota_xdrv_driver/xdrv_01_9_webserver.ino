@@ -2591,7 +2591,7 @@ void HandleWifiConfiguration(void) {
                   for (uint32_t k = 0; k < 4; ++k) {
                     WSContentSend_P(PSTR("<i class='b%d%s'></i>"), k, (num_bars < k) ? PSTR(" o30") : PSTR(""));
                   }
-                  WSContentSend_P(PSTR("</span></div></div>"));
+                  WSContentSend_P(PSTR("</div></span></div>"));
                 } else {
                   if (ssid_showed <= networksToShow ) { networksToShow++; }
                 }
