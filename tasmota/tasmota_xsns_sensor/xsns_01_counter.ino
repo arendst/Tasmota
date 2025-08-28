@@ -237,7 +237,7 @@ void CounterShow(bool json)
         }
 #ifdef USE_WEBSERVER
       } else {
-        WSContentSend_PD(PSTR("{s}" D_COUNTER "%d{m}%s%s{e}"),
+        WSContentSend_PD(PSTR("{s}" D_COUNTER " %d{m}%s%s{e}"),
           i +1, counter, (bitRead(Settings->pulse_counter_type, i)) ? " " D_UNIT_SECOND : "");
 #endif  // USE_WEBSERVER
       }

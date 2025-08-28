@@ -531,7 +531,7 @@ void CmndSunrise(void) {
 #define WEB_HANDLE_TIMER "tm"
 
 const char HTTP_BTN_MENU_TIMER[] PROGMEM =
-  "<p><form action='" WEB_HANDLE_TIMER "' method='get'><button>" D_CONFIGURE_TIMER "</button></form></p>";
+  "<p></p><form action='" WEB_HANDLE_TIMER "' method='get'><button>" D_CONFIGURE_TIMER "</button></form>";
 
 #ifdef USE_UNISHOX_COMPRESSION
 const size_t HTTP_TIMER_SCRIPT1_SIZE = 106;

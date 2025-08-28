@@ -616,10 +616,10 @@ void HxShow(bool json) {
 #define WEB_HANDLE_HX711 "s34"
 
 const char HTTP_BTN_MENU_MAIN_HX711[] PROGMEM =
-  "<p><form action='" WEB_HANDLE_HX711 "' method='get'><button name='reset'>" D_RESET_HX711 "</button></form></p>";
+  "<p></p><form action='" WEB_HANDLE_HX711 "' method='get'><button name='reset'>" D_RESET_HX711 "</button></form>";
 
 const char HTTP_BTN_MENU_HX711[] PROGMEM =
-  "<p><form action='" WEB_HANDLE_HX711 "' method='get'><button>" D_CONFIGURE_HX711 "</button></form></p>";
+  "<p></p><form action='" WEB_HANDLE_HX711 "' method='get'><button>" D_CONFIGURE_HX711 "</button></form>";
 
 const char HTTP_FORM_HX711[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_CALIBRATION "&nbsp;</b></legend>"

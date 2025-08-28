@@ -516,7 +516,7 @@ void Pcf8574ModuleInitMode1(void) {
 #define WEB_HANDLE_PCF8574 "pcf"
 
 const char HTTP_BTN_MENU_PCF8574[] PROGMEM =
-  "<p><form action='" WEB_HANDLE_PCF8574 "' method='get'><button>" D_CONFIGURE_PCF8574 "</button></form></p>";
+  "<p></p><form action='" WEB_HANDLE_PCF8574 "' method='get'><button>" D_CONFIGURE_PCF8574 "</button></form>";
 
 const char HTTP_FORM_I2C_PCF8574_1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_PCF8574_PARAMETERS "&nbsp;</b></legend>"
