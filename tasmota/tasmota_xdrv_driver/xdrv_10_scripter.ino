@@ -9800,7 +9800,7 @@ void Scripter_save_pvars(void) {
 #define WEB_HANDLE_SCRIPT "s10"
 
 const char HTTP_BTN_MENU_RULES[] PROGMEM =
-  "</p><p><form action='" WEB_HANDLE_SCRIPT "' method='get'><button>" D_CONFIGURE_SCRIPT "</button></form>";
+  "<p></p><form action='" WEB_HANDLE_SCRIPT "' method='get'><button>" D_CONFIGURE_SCRIPT "</button></form>";
 
 
 const char HTTP_FORM_SCRIPT[] PROGMEM =
