@@ -152,19 +152,25 @@ class Animation : animation.parameterized_object
     
     # Access parameters via virtual members (auto-resolves ValueProviders)
     var current_color = self.color
-    var current_opacity = self.opacity
     
     # Fill the entire frame with the current color if not transparent
     if (current_color != 0x00000000)
       frame.fill_pixels(current_color)
     end
     
-    # Handle opacity - can be number, frame buffer, or animation
-    self._apply_opacity(frame, current_opacity, time_ms)
-    
     return true
   end
   
+  # Post-processing of rendering
+  #
+  # @param frame: FrameBuffer - The frame buffer to render to
+  # @param time_ms: int - Current time in milliseconds
+  def post_render(frame, time_ms)
+    # Handle opacity - can be number, frame buffer, or animation
+    var current_opacity = self.opacity
+    self._apply_opacity(frame, current_opacity, time_ms)
+  end
+
   # Apply opacity to frame buffer - handles numbers and animations
   #
   # @param frame: FrameBuffer - The frame buffer to apply opacity to

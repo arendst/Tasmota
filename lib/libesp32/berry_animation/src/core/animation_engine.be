@@ -256,6 +256,7 @@ class AnimationEngine
       var rendered = anim.render(self.temp_buffer, time_ms)
       
       if rendered
+        anim.post_render(self.temp_buffer, time_ms)
         # Blend temp buffer into main buffer
         self.frame_buffer.blend_pixels(self.temp_buffer)
       end
